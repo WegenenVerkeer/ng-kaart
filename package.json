@@ -117,6 +117,6 @@
     "glob": "7.1.1"
   },
   "publishConfig": {
-    "registry": "https://collab.mow.vlaanderen.be/artifacts/repository/npm-internal/"
+    "registry": "https://registry.npmjs.org/"
   }
 }
