@@ -1,0 +1,105 @@
+<h1>AWV Commons</h1>
+
+<h2>Kaart</h2>
+
+<div class="qa-protractor">
+  <h3>Kaart voor protractor</h3>
+
+  <awv-kaart class="qa-kaart" [breedte]="800">
+    <awv-kaart-ortho-laag [titel]="'Ortho'"></awv-kaart-ortho-laag>
+  </awv-kaart>
+</div>
+
+<h3>Zonder controls, enkel dienstkaart in kleur,</h3>
+
+<div>
+  <awv-kaart [breedte]="800">
+    <awv-kaart-wdb-laag [titel]="'Dienstkaart kleur'" [laag]="'dienstkaart-kleur'"></awv-kaart-wdb-laag>
+  </awv-kaart>
+</div>
+
+<h3>Ingezoomd + 1 feature + onclick event voor feature + schaal + volledig scherm knop</h3>
+
+<div>
+  <awv-kaart [breedte]="800" [zoom]="7" [middelpunt]="installatie">
+    <awv-kaart-wdb-laag [titel]="'Dienstkaart grijs'" [laag]="'dienstkaart-grijs'"></awv-kaart-wdb-laag>
+    <awv-kaart-toon-features [features]="installaties"
+                             (featureGeselecteerd)="installatieGeselecteed($event)"></awv-kaart-toon-features>
+    <awv-kaart-schaal></awv-kaart-schaal>
+    <awv-kaart-knop-volledig-scherm></awv-kaart-knop-volledig-scherm>
+  </awv-kaart>
+
+  <pre *ngFor="let event of installatieGeselecteerdEvents">
+    Event gegooid: {{ event | json }}
+  </pre>
+</div>
+
+<h3>Ingezoomd dmv extent + schaal</h3>
+
+<div>
+  <p>Vul zelf lengtegraad en breedtegraad in.</p>
+  <awv-kaart [breedte]="800" [zoom]="2" [extent]="installatieExtent">
+    <awv-kaart-wdb-laag [titel]="'Dienstkaart grijs'" [laag]="'dienstkaart-grijs'"></awv-kaart-wdb-laag>
+    <awv-kaart-schaal></awv-kaart-schaal>
+  </awv-kaart>
+</div>
+
+<h3>Ingezoomd (met WGS 84 coordinaten) + schaal</h3>
+
+<div>
+  <p>Vul zelf lengtegraad en breedtegraad in.</p>
+  <p><label>Lengtegraad: </label><input [(ngModel)]="lat" type="number"/></p>
+  <p><label>Breedtegraad: </label><input [(ngModel)]="long" type="number"/></p>
+  <awv-kaart [breedte]="800" [zoom]="7" [middelpunt]="coordinatenService.transformWgs84(lat, long)">
+    <awv-kaart-wdb-laag [titel]="'Dienstkaart kleur'" [laag]="'dienstkaart-kleur'"></awv-kaart-wdb-laag>
+    <awv-kaart-schaal></awv-kaart-schaal>
+  </awv-kaart>
+</div>
+
+<h3>Orhto laag + teken polygoon</h3>
+
+<div>
+  <awv-kaart [breedte]="800">
+    <awv-kaart-ortho-laag [titel]="'Ortho'"></awv-kaart-ortho-laag>
+    <awv-kaart-teken-polygoon-laag (polygonGetekend)="polygoonGetekend($event)"></awv-kaart-teken-polygoon-laag>
+  </awv-kaart>
+
+  <pre *ngFor="let event of polygoonEvents">
+    Event gegooid: {{ event | json }}
+  </pre>
+</div>
+
+<h3>Dienstkaart (meerdere lagen), volledige breedte + alle controls + locatiezoeker</h3>
+
+<div>
+  <input [(ngModel)]="locatieQuery" type="text"/>
+  <button (click)="zoekLocaties(locatieQuery)">Zoek</button>
+  <p><strong>Opgelet!</strong> Dit voert een CORS request uit via een SSH tunnel:</p>
+  <ul>
+    <li>
+      <p>Leg een SSH tunnel naar de apigateway van dev:</p>
+      <pre>ssh -L 5100:apigateway.dev.awv.internal:80 management.apps.mow.vlaanderen.be</pre>
+    </li>
+    <li>
+      <p>Zet chrome open zonder web security om dit te testen.</p>
+      <p>macos:</p>
+      <pre>open -a Google\ Chrome --args --disable-web-security --user-data-dir</pre>
+      <p>*nix:</p>
+      <pre>chromium-browser --disable-web-security --user-data-dir</pre>
+    </li>
+  </ul>
+  <awv-kaart>
+    <awv-kaart-wdb-laag [titel]="'Dienstkaart kleur'" [laag]="'dienstkaart-kleur'" [type]="'base'"></awv-kaart-wdb-laag>
+    <awv-kaart-wdb-laag [titel]="'Dienstkaart grijs'" [laag]="'dienstkaart-grijs'" [type]="'base'" [zichtbaar]="false"></awv-kaart-wdb-laag>
+    <awv-kaart-ortho-laag [titel]="'Ortho'" [type]="'base'" [zichtbaar]="false"></awv-kaart-ortho-laag>
+    <awv-kaart-wdb-laag [titel]="'Ident8 labels (WDB)'" [laag]="'ident8'" [versie]="'1.1.1'"></awv-kaart-wdb-laag>
+    <awv-kaart-wdb-laag [titel]="'Referentiepunten (WDB)'" [laag]="'referentiepunten'" [versie]="'1.1.1'"></awv-kaart-wdb-laag>
+    <awv-kaart-toon-features [features]="zoekresultaten"></awv-kaart-toon-features>
+    <awv-kaart-schaal></awv-kaart-schaal>
+    <awv-kaart-knop-laag-kiezer></awv-kaart-knop-laag-kiezer>
+    <awv-kaart-knop-volledig-scherm></awv-kaart-knop-volledig-scherm>
+    <awv-kaart-knop-zoom-slider></awv-kaart-knop-zoom-slider>
+    <awv-kaart-standaard-knoppen></awv-kaart-standaard-knoppen>
+    <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
+  </awv-kaart>
+</div>

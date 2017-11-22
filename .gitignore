@@ -1,0 +1,13 @@
+dist
+out
+reports
+node_modules
+*.iml
+.idea
+npm-debug.log
+src/**/*.js
+src/**/*.d.ts
+src/**/*.js.map
+e2e/**/*.js
+e2e/**/*.d.ts
+e2e/**/*.js.map

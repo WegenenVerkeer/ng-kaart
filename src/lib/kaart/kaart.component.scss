@@ -1,0 +1,38 @@
+.fullscreen-container {
+
+  &:-moz-full-screen {
+    height: 100% !important;
+    width: 100% !important;
+    display: block;
+    overflow: auto;
+  }
+
+  &:-webkit-full-screen {
+    height: 100% !important;
+    width: 100% !important;
+    display: block;
+    overflow: auto;
+  }
+
+  &:-ms-fullscreen {
+    height: 100% !important;
+    width: 100% !important;
+    display: block;
+    overflow: auto;
+  }
+
+  &:fullscreen {
+    height: 100% !important;
+    width: 100% !important;
+    display: block;
+    overflow: auto;
+  }
+}
+
+.ol-control {
+  background-color: rgba(255, 255, 255, 0.8);
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.9);
+  }
+}
