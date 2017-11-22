@@ -1,7 +1,7 @@
 {
   "name": "@wegenenverkeer/ng-kaart",
   "version": "1.0.0",
-  "description": "AWV Angular 2+ kaart component",
+  "description": "AWV Angular 2+ kaart component.",
   "keywords": ["AWV", "Kaart", "Angular", "Google locator"],
   "author": "AWV",
   "license": "MIT",
