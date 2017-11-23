@@ -8,8 +8,7 @@ before_install:
 deploy:
   provider: npm
   email: geert.premereur+awv@ictects.com
-  api_key:
-    secure: WKlh7zNVTkaviTyX1rpdM/IvK+FqPCYF0Qkzad3WonkC9hYGnva/jhNk/+MQ/1o/SmccluBFn2xYe51l76f3v7VnL5GANjlmQ6gslWypU0woavAV1nIG131JDJlLNoHP8aPQlRn22sDd0oTcIjCzDfUOCVSJ4X76KvwwHd0BUKOMagG1f0GB6YG3YA7kFki3x5Xjus5/OA5Kwx7oCuaiwkiEk8pUYDno+iyFvfb2LOxneRQWryG0q5cCnq7s1R1iGI87W699x3eVKQRS/ogbOnJkfItER84t1mbb5VChWKjLVjiLrItqbwgkccl1gypsqNvzLLsa8FvGUE3M/G9xjs2lscfQEXXoePZBaU0uLuLfgHbYJTJNcMqbZliF5UqhgZQfM6p0OasDpEYjz/x4dfPyQNrUmgZUqOR/0tpyiy5ZIGgNJA+jI71oih9LtKoh81nGj3pg0Mgg0QJS4fI8elDEnd8tQgfLcrMWiJAmpuzucX8WwDoiyVvDHI8Kd4hrnwpj52XRFAqrsSPIBsJGJZOZQGaND1z/BeuaCWs3RYOqaCVhbW2hOxo+c8l3jUdnTVrrSoaEyB2Gt5himmvOw8j07qrSbALaAYZwmqmMDQeiu+cyWH30wDnFb7Aot830yICD14TdI9KHuooexyNG5Z4Qz//niC5p2saowfrTaXQ=
+  api_key: "$NPM_TOKEN"
   on:
     tags: true
 notifications:
