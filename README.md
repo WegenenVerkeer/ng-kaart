@@ -1,8 +1,12 @@
 # AWV commons angular
 
-[![Build Status](https://travis-ci.org/WegenenVerkeer/kaart.svg?branch=master)](https://travis-ci.org/WegenenVerkeer/kaart)
+[![Build Status](https://travis-ci.org/WegenenVerkeer/ng-kaart.svg?branch=master)](https://travis-ci.org/WegenenVerkeer/ng-kaart)
 
-Angular kaart component genaseerd op open layers voor gebruik bij AWV.
+Angular kaart component gebaseerd op open layers voor gebruik bij AWV.
+
+## Waar te vinden?
+
+Deze component is gepubliceerd als `@wegenenverkeer/ng-kaart` op [NPM](https://www.npmjs.com/package/@wegenenverkeer/ng-kaart).
 
 ## Hoe werkt het?
 
@@ -52,7 +56,7 @@ De code style wordt automatisch afgedwongen via tslint + prettier. Deze is inges
 
 ## Publish
 
-We gebruiken travish als CI tool
+We gebruiken [travis-ci](https://travis-ci.org/WegenenVerkeer/ng-kaart) als CI tool
 
 # Resources
 

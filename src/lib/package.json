@@ -7,7 +7,7 @@
   "typings": "./ng-kaart.d.ts",
   "repository": {
     "type": "git",
-    "url": "git@github.com:WegenenVerkeer/kaart.git"
+    "url": "git@github.com:WegenenVerkeer/ng-kaart.git"
   },
   "peerDependencies": {
     "@angular/animations": "^4.3.6",
