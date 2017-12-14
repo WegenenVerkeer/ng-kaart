@@ -5,6 +5,8 @@ cache:
   directories:
   - node_modules
 before_install: 
+before_deploy:
+  - cd dist
 deploy:
   provider: npm
   email: geert.subcribe1+npm@gmail.com

@@ -6,7 +6,7 @@ import "rxjs/add/operator/map";
 import {CoordinatenService} from "../lib/kaart/coordinaten.service";
 
 @Component({
-  selector: "ng-kaart-test-app",
+  selector: "awv-ng-kaart-test-app",
   templateUrl: "./app.component.html"
 })
 export class AppComponent {
