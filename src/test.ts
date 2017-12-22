@@ -8,8 +8,8 @@ import "zone.js/dist/sync-test";
 import "zone.js/dist/jasmine-patch";
 import "zone.js/dist/async-test";
 import "zone.js/dist/fake-async-test";
-import {getTestBed} from "@angular/core/testing";
-import {BrowserDynamicTestingModule, platformBrowserDynamicTesting} from "@angular/platform-browser-dynamic/testing";
+import { getTestBed } from "@angular/core/testing";
+import { BrowserDynamicTestingModule, platformBrowserDynamicTesting } from "@angular/platform-browser-dynamic/testing";
 
 // Er zijn geen typings voor karma, definieer als any
 declare var __karma__: any;

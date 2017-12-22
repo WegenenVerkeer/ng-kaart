@@ -1,9 +1,11 @@
 export class KaartConfig {
   wdb = {
-    urls: []
+    urls: [] as string[]
   };
 
   orthofotomozaiek = {
-    urls: []
+    urls: [] as string[]
   };
+
+  srs = "EPSG:31370";
 }

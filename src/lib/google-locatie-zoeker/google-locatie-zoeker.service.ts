@@ -1,6 +1,6 @@
-import {Injectable} from "@angular/core";
-import {Http, URLSearchParams, Response, QueryEncoder} from "@angular/http"; // TODO port naar nieuwe httpclient
-import {Observable} from "rxjs/Observable";
+import { Injectable } from "@angular/core";
+import { Http, URLSearchParams, Response, QueryEncoder } from "@angular/http"; // TODO port naar nieuwe httpclient
+import { Observable } from "rxjs/Observable";
 import "rxjs/add/observable/of";
 import "rxjs/add/operator/map";
 import "rxjs/add/operator/mergeAll";
@@ -10,7 +10,7 @@ import "rxjs/add/operator/catch";
 
 import * as ol from "openlayers";
 import {} from "googlemaps";
-import {GoogleLocatieZoekerConfig} from "./google-locatie-zoeker.config";
+import { GoogleLocatieZoekerConfig } from "./google-locatie-zoeker.config";
 
 const googleApiKey = "AIzaSyApbXMl5DGL60g17JU6MazMxNcUGooey7I";
 const googleUrl = `https://maps.googleapis.com/maps/api/js?key=${googleApiKey}&libraries=places&language=nl&callback=__onGoogleLoaded`;
@@ -122,7 +122,7 @@ export class GoogleLocatieZoekerService {
     params.set("legacy", "false");
 
     return this.http
-      .get(this.locatieZoekerUrl + "/zoek", {search: params})
+      .get(this.locatieZoekerUrl + "/zoek", { search: params })
       .map(this.parseResult, this)
       .mergeAll()
       .catch(this.handleError);
@@ -156,7 +156,9 @@ export class GoogleLocatieZoekerService {
           });
         } else {
           // Promise[List[Prediction]]
-          const predictionsPromise: Promise<google.maps.places.QueryAutocompletePrediction[]> = this.getAutocompleteQueryPredictions(locatie.omschrijving).catch(err => {
+          const predictionsPromise: Promise<google.maps.places.QueryAutocompletePrediction[]> = this.getAutocompleteQueryPredictions(
+            locatie.omschrijving
+          ).catch(err => {
             // als predictionPromise faalt
             if (err === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
               zoekResultaten.fouten.push("Geen resultaten gevonden via Google Autocomplete");
@@ -278,7 +280,8 @@ export class GoogleLocatieZoekerService {
 
       const zoekResultatenPromise: Promise<ZoekResultaten> = alleResultatenPromise.then(resultatenLijst => {
         resultatenLijst.forEach(resultaat => {
-          resultaat.locatie = resultaat.locatie || this.wgs84ToLambert72GeoJson(resultaat.geometry.location.lng(), resultaat.geometry.location.lat());
+          resultaat.locatie =
+            resultaat.locatie || this.wgs84ToLambert72GeoJson(resultaat.geometry.location.lng(), resultaat.geometry.location.lat());
         });
         const locaties = resultaten.locaties.concat(resultatenLijst);
         if (locaties.length === 30) {
@@ -423,11 +426,15 @@ export class GoogleLocatieZoekerService {
       let gemeenteNaam =
         resultaat.address_components == null
           ? null
-          : resultaat.address_components.filter(address_component => address_component.types.indexOf("locality") > -1).map(address_component => address_component.short_name)[0];
+          : resultaat.address_components
+              .filter(address_component => address_component.types.indexOf("locality") > -1)
+              .map(address_component => address_component.short_name)[0];
       gemeenteNaam = gemeenteNaam || resultaat.name;
 
       const url =
-        `${this.locatieZoekerUrl}/gemeente?naam=${gemeenteNaam}&latLng=${resultaat.geometry.location.lat()},${resultaat.geometry.location.lng()}` +
+        `${
+          this.locatieZoekerUrl
+        }/gemeente?naam=${gemeenteNaam}&latLng=${resultaat.geometry.location.lat()},${resultaat.geometry.location.lng()}` +
         `&isGemeente=${isGemeente}&isDeelgemeente=${isDeelgemeente}`;
 
       return this.http

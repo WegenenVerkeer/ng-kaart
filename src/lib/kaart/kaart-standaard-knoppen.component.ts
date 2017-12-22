@@ -1,28 +1,29 @@
-import {Component, NgZone, OnDestroy, OnInit, ViewEncapsulation} from "@angular/core";
+import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 
 import * as ol from "openlayers";
-import {KaartComponent} from "./kaart.component";
+
+import { KaartComponent } from "./kaart.component";
+import { KaartComponentBase } from "./kaart-component-base";
 
 @Component({
   selector: "awv-kaart-standaard-knoppen",
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class KaartStandaardKnoppenComponent implements OnInit, OnDestroy {
-  defaults: ol.Collection<ol.control.Control>;
+export class KaartStandaardKnoppenComponent extends KaartComponentBase implements OnInit, OnDestroy {
+  private controls: ol.control.Control[];
 
-  constructor(protected kaart: KaartComponent, private zone: NgZone) {}
+  constructor(private readonly kaart: KaartComponent, zone: NgZone) {
+    super(zone);
+  }
 
   ngOnInit(): void {
-    this.zone.runOutsideAngular(() => {
-      this.defaults = ol.control.defaults();
-      this.defaults.forEach(control => this.kaart.map.addControl(control));
-    });
+    super.ngOnInit();
+    this.controls = this.kaart.voegControlsToe(ol.control.defaults({ attribution: false }).getArray());
   }
 
   ngOnDestroy(): void {
-    this.zone.runOutsideAngular(() => {
-      this.defaults.forEach(control => this.kaart.map.removeControl(control));
-    });
+    this.kaart.verwijderControls(this.controls);
+    super.ngOnDestroy();
   }
 }

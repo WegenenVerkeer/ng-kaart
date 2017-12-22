@@ -1,28 +1,30 @@
-import {Component, NgZone, OnDestroy, OnInit, ViewEncapsulation} from "@angular/core";
+import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 
 import * as ol from "openlayers";
-import {KaartComponent} from "./kaart.component";
+
+import { KaartComponent } from "./kaart.component";
+import { KaartComponentBase } from "./kaart-component-base";
 
 @Component({
   selector: "awv-kaart-standaard-interacties",
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class KaartStandaardInteractiesComponent implements OnInit, OnDestroy {
-  defaults: ol.Collection<ol.interaction.Interaction>;
+export class KaartStandaardInteractiesComponent extends KaartComponentBase implements OnInit, OnDestroy {
+  private interactions: ol.interaction.Interaction[];
 
-  constructor(protected kaart: KaartComponent, private zone: NgZone) {}
+  constructor(private readonly kaart: KaartComponent, zone: NgZone) {
+    super(zone);
+    console.log("KSIC", kaart);
+  }
 
   ngOnInit(): void {
-    this.zone.runOutsideAngular(() => {
-      this.defaults = ol.interaction.defaults();
-      this.defaults.forEach(interaction => this.kaart.map.addInteraction(interaction));
-    });
+    super.ngOnInit();
+    this.interactions = this.kaart.voegInteractionsToe(ol.interaction.defaults().getArray());
   }
 
   ngOnDestroy(): void {
-    this.zone.runOutsideAngular(() => {
-      this.defaults.forEach(interaction => this.kaart.map.removeInteraction(interaction));
-    });
+    this.kaart.verwijderInteractions(ol.interaction.defaults().getArray());
+    super.ngOnDestroy();
   }
 }

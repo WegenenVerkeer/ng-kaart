@@ -1,6 +1,6 @@
-import {Component, DoCheck, EventEmitter, Input, NgZone, OnDestroy, OnInit, Output, ViewEncapsulation} from "@angular/core";
-import {KaartComponent} from "./kaart.component";
-import {KaartVectorLaagComponent} from "./kaart-vector-laag.component";
+import { Component, DoCheck, EventEmitter, Input, NgZone, OnDestroy, OnInit, Output, ViewEncapsulation } from "@angular/core";
+import { KaartComponent } from "./kaart.component";
+import { KaartVectorLaagComponent } from "./kaart-vector-laag.component";
 
 import isEqual from "lodash-es/isEqual";
 
@@ -25,14 +25,14 @@ export class KaartToonFeaturesComponent extends KaartVectorLaagComponent impleme
   ngOnInit(): void {
     super.ngOnInit();
     this.zone.runOutsideAngular(() => {
-      this.renderFeatures(this.features);
+      // this.renderFeatures(this.features);
     });
   }
 
   ngOnDestroy(): void {
     super.ngOnDestroy();
     this.zone.runOutsideAngular(() => {
-      this.clear();
+      // this.clear();
     });
   }
 
@@ -43,37 +43,37 @@ export class KaartToonFeaturesComponent extends KaartVectorLaagComponent impleme
 
     if (!isEqual(this.vorigeFeatures, this.features.getArray())) {
       this.zone.runOutsideAngular(() => {
-        this.clear();
-        this.renderFeatures(this.features);
+        // this.clear();
+        // this.renderFeatures(this.features);
       });
     }
   }
 
-  private renderFeatures(features: ol.Collection<ol.Feature>) {
-    this.vectorLaag.getSource().addFeatures(features.getArray());
-    this.vorigeFeatures = features.getArray();
+  // private renderFeatures(features: ol.Collection<ol.Feature>) {
+  //   this.vectorLaag.getSource().addFeatures(features.getArray());
+  //   this.vorigeFeatures = features.getArray();
 
-    if (!this.selecteerFeatureInteraction) {
-      this.selecteerFeatureInteraction = new ol.interaction.Select({
-        features: features,
-        layers: layer => layer.get("selectable") === true,
-        condition: ol.events.condition.singleClick
-      });
+  //   if (!this.selecteerFeatureInteraction) {
+  //     this.selecteerFeatureInteraction = new ol.interaction.Select({
+  //       features: features,
+  //       layers: layer => layer.get('selectable') === true,
+  //       condition: ol.events.condition.singleClick
+  //     });
 
-      this.selecteerFeatureInteraction.on("select", event => {
-        if (event.selected.length > 0) {
-          this.zone.run(() => {
-            this.featureGeselecteerd.emit(event.selected[0]);
-          });
-        }
-      });
+  //     this.selecteerFeatureInteraction.on('select', (event: any) => {
+  //       if (event.selected.length > 0) {
+  //         this.zone.run(() => {
+  //           this.featureGeselecteerd.emit(event.selected[0]);
+  //         });
+  //       }
+  //     });
 
-      this.kaart.map.addInteraction(this.selecteerFeatureInteraction);
-    }
-  }
+  //     this.kaart.map.addInteraction(this.selecteerFeatureInteraction);
+  //   }
+  // }
 
-  private clear() {
-    this.vectorLaag.getSource().clear(true);
-    this.kaart.map.removeInteraction(this.selecteerFeatureInteraction);
-  }
+  // private clear() {
+  //   this.vectorLaag.getSource().clear(true);
+  //   this.kaart.map.removeInteraction(this.selecteerFeatureInteraction);
+  // }
 }

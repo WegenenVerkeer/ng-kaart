@@ -1,4 +1,4 @@
-import {Injectable} from "@angular/core";
+import { Injectable } from "@angular/core";
 
 import * as ol from "openlayers";
 import proj4 from "proj4";

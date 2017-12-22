@@ -1,9 +1,9 @@
-import {Component} from "@angular/core";
+import { Component } from "@angular/core";
 import * as ol from "openlayers";
-import {GoogleLocatieZoekerService} from "../lib/google-locatie-zoeker/google-locatie-zoeker.service";
+import { GoogleLocatieZoekerService } from "../lib/google-locatie-zoeker/google-locatie-zoeker.service";
 import "rxjs/add/operator/mergeMap";
 import "rxjs/add/operator/map";
-import {CoordinatenService} from "../lib/kaart/coordinaten.service";
+import { CoordinatenService } from "../lib/kaart/coordinaten.service";
 
 @Component({
   selector: "awv-ng-kaart-test-app",
@@ -36,7 +36,7 @@ export class AppComponent {
       }),
       text: new ol.style.Text({
         font: "12px 'Helvetica Neue', sans-serif",
-        fill: new ol.style.Fill({color: "#000"}),
+        fill: new ol.style.Fill({ color: "#000" }),
         offsetY: -60,
         stroke: new ol.style.Stroke({
           color: "#fff",

@@ -1,10 +1,10 @@
-import {inject, TestBed} from "@angular/core/testing";
-import {CoordinatenService} from "./coordinaten.service";
-import {KaartModule} from "./index";
+import { inject, TestBed } from "@angular/core/testing";
+import { CoordinatenService } from "./coordinaten.service";
+import { KaartModule } from "./index";
 
 describe("CoordinatenService", () => {
   beforeEach(() => {
-    TestBed.configureTestingModule({imports: [KaartModule]});
+    TestBed.configureTestingModule({ imports: [KaartModule] });
   });
 
   let coordinatenService: CoordinatenService;

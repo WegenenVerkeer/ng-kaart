@@ -1,6 +1,6 @@
-import {Component, EventEmitter, Input, NgZone, OnDestroy, OnInit, Output, ViewEncapsulation} from "@angular/core";
-import {KaartComponent} from "./kaart.component";
-import {KaartVectorLaagComponent} from "./kaart-vector-laag.component";
+import { Component, EventEmitter, Input, NgZone, OnDestroy, OnInit, Output, ViewEncapsulation } from "@angular/core";
+import { KaartComponent } from "./kaart.component";
+import { KaartVectorLaagComponent } from "./kaart-vector-laag.component";
 
 import * as ol from "openlayers";
 
@@ -14,18 +14,17 @@ export class KaartTekenPolygoonLaagComponent extends KaartVectorLaagComponent im
 
   interactie: ol.interaction.Interaction;
 
-  constructor(protected kaart: KaartComponent, protected zone: NgZone) {
+  constructor(kaart: KaartComponent, zone: NgZone) {
     super(kaart, zone);
 
-    this.source = new ol.source.Vector({wrapX: false});
+    this.source = new ol.source.Vector({ wrapX: false });
     this.titel = "Poly";
   }
 
   ngOnInit(): void {
     super.ngOnInit();
     this.zone.runOutsideAngular(() => {
-      this.maakTekenPolygoonInteractie();
-      this.kaart.map.addInteraction(this.interactie);
+      this.interactie = this.kaart.voegInteractionToe(this.maakTekenPolygoonInteractie());
       this.vectorLaag.setZIndex(100);
     });
   }
@@ -33,22 +32,22 @@ export class KaartTekenPolygoonLaagComponent extends KaartVectorLaagComponent im
   ngOnDestroy(): void {
     super.ngOnDestroy();
     this.zone.runOutsideAngular(() => {
-      this.kaart.map.removeInteraction(this.interactie);
+      this.kaart.verwijderInteraction(this.interactie);
     });
   }
 
-  maakTekenPolygoonInteractie(): void {
+  maakTekenPolygoonInteractie(): ol.interaction.Draw {
     const interactie = new ol.interaction.Draw({
       source: this.source,
       type: "Polygon"
     });
 
-    interactie.on("drawend", drawevent => {
+    interactie.on("drawend", (drawevent: any) => {
       this.zone.run(() => {
         this.polygonGetekend.emit(drawevent.feature);
       });
     });
 
-    this.interactie = interactie;
+    return interactie;
   }
 }

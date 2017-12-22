@@ -1,27 +1,27 @@
-import {Component, NgZone, OnDestroy, OnInit} from "@angular/core";
+import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 
 import * as ol from "openlayers";
-import {KaartComponent} from "./kaart.component";
+import { KaartComponent } from "./kaart.component";
+import { KaartComponentBase } from "./kaart-component-base";
 
 @Component({
   selector: "awv-kaart-schaal",
   template: "<ng-content></ng-content>"
 })
-export class KaartSchaalComponent implements OnInit, OnDestroy {
-  scaleLine: ol.control.ScaleLine;
+export class KaartSchaalComponent extends KaartComponentBase implements OnInit, OnDestroy {
+  private scaleLine: ol.control.Control;
 
-  constructor(protected kaart: KaartComponent, protected zone: NgZone) {}
+  constructor(private readonly kaart: KaartComponent, zone: NgZone) {
+    super(zone);
+  }
 
   ngOnInit(): void {
-    this.zone.runOutsideAngular(() => {
-      this.scaleLine = new ol.control.ScaleLine();
-      this.kaart.map.addControl(this.scaleLine);
-    });
+    super.ngOnInit();
+    this.scaleLine = this.kaart.voegControlToe(new ol.control.ScaleLine());
   }
 
   ngOnDestroy(): void {
-    this.zone.runOutsideAngular(() => {
-      this.kaart.map.removeControl(this.scaleLine);
-    });
+    this.kaart.verwijderControl(this.scaleLine);
+    super.ngOnDestroy();
   }
 }

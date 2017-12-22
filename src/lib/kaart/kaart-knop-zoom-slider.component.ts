@@ -1,28 +1,28 @@
-import {Component, NgZone, OnDestroy, OnInit, ViewEncapsulation} from "@angular/core";
+import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 
 import * as ol from "openlayers";
-import {KaartComponent} from "./kaart.component";
+import { KaartComponent } from "./kaart.component";
+import { KaartComponentBase } from "./kaart-component-base";
 
 @Component({
   selector: "awv-kaart-knop-zoom-slider",
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class KaartKnopZoomSliderComponent implements OnInit, OnDestroy {
-  zoomSlider: ol.control.ZoomSlider;
+export class KaartKnopZoomSliderComponent extends KaartComponentBase implements OnInit, OnDestroy {
+  private zoomSlider: ol.control.ZoomSlider;
 
-  constructor(protected kaart: KaartComponent, private zone: NgZone) {}
+  constructor(private readonly kaart: KaartComponent, zone: NgZone) {
+    super(zone);
+  }
 
   ngOnInit(): void {
-    this.zone.runOutsideAngular(() => {
-      this.zoomSlider = new ol.control.ZoomSlider();
-      this.kaart.map.addControl(this.zoomSlider);
-    });
+    super.ngOnInit();
+    this.zoomSlider = this.kaart.voegControlToe(new ol.control.ZoomSlider());
   }
 
   ngOnDestroy(): void {
-    this.zone.runOutsideAngular(() => {
-      this.kaart.map.removeControl(this.zoomSlider);
-    });
+    this.kaart.verwijderControl(this.zoomSlider);
+    super.ngOnDestroy();
   }
 }
