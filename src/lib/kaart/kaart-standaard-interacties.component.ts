@@ -2,29 +2,25 @@ import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angula
 
 import * as ol from "openlayers";
 
+import * as prt from "./kaart-protocol";
 import { KaartComponent } from "./kaart.component";
-import { KaartComponentBase } from "./kaart-component-base";
+import { KaartClassicComponent } from "./kaart-classic.component";
 
 @Component({
   selector: "awv-kaart-standaard-interacties",
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class KaartStandaardInteractiesComponent extends KaartComponentBase implements OnInit, OnDestroy {
+export class KaartStandaardInteractiesComponent implements OnInit, OnDestroy {
   private interactions: ol.interaction.Interaction[];
 
-  constructor(private readonly kaart: KaartComponent, zone: NgZone) {
-    super(zone);
-    console.log("KSIC", kaart);
-  }
+  constructor(private readonly kaart: KaartClassicComponent) {}
 
   ngOnInit(): void {
-    super.ngOnInit();
-    this.interactions = this.kaart.voegInteractionsToe(ol.interaction.defaults().getArray());
+    this.kaart.dispatcher.dispatch(new prt.AddedStandaardInteracties());
   }
 
   ngOnDestroy(): void {
-    this.kaart.verwijderInteractions(ol.interaction.defaults().getArray());
-    super.ngOnDestroy();
+    this.kaart.dispatcher.dispatch(new prt.RemovedStandaardInteracties());
   }
 }

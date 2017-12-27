@@ -2,41 +2,26 @@ import { Component, Input, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "
 import { KaartComponent } from "./kaart.component";
 
 import * as ol from "openlayers";
+import * as ke from "./kaart-elementen";
+import { KaartClassicComponent } from "./kaart-classic.component";
+import { KaartLaagComponent } from "./kaart-laag.component";
 
 @Component({
   selector: "awv-kaart-vector-laag",
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class KaartVectorLaagComponent implements OnInit, OnDestroy {
-  @Input() titel = "";
+export class KaartVectorLaagComponent extends KaartLaagComponent {
   @Input() source = new ol.source.Vector();
   @Input() style: ol.style.Style;
   @Input() zichtbaar = true;
   @Input() selecteerbaar = true;
 
-  vectorLaag: ol.layer.Vector;
-
-  constructor(protected kaart: KaartComponent, protected zone: NgZone) {}
-
-  ngOnInit(): void {
-    this.zone.runOutsideAngular(() => {
-      this.vectorLaag = this.maakVectorLayer();
-      this.kaart.voegLaagToe(this.vectorLaag);
-    });
+  constructor(kaart: KaartClassicComponent) {
+    super(kaart);
   }
 
-  ngOnDestroy(): void {
-    this.zone.runOutsideAngular(() => {
-      this.kaart.verwijderLaag(this.vectorLaag);
-    });
-  }
-
-  maakVectorLayer(): ol.layer.Vector {
-    return new ol.layer.Vector({
-      source: this.source,
-      style: this.style,
-      visible: this.zichtbaar
-    });
+  createLayer() {
+    return new ke.VectorLaag(this.titel, this.source, this.style, this.selecteerbaar);
   }
 }

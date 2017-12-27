@@ -1,25 +1,23 @@
-import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
+import { Component, ViewEncapsulation } from "@angular/core";
+import { List } from "immutable";
+
+import * as ke from "./kaart-elementen";
 import { KaartComponent } from "./kaart.component";
-import { KaartLaagComponent } from "./kaart-laag.component";
 import { KaartConfig } from "./kaart.config";
 import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
+import { KaartClassicComponent } from "./kaart-classic.component";
 
 @Component({
   selector: "awv-kaart-wdb-laag",
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class KaartWdbLaagComponent extends KaartWmsLaagComponent implements OnInit, OnDestroy {
-  constructor(kaart: KaartComponent, kaartConfig: KaartConfig, zone: NgZone) {
-    super(kaart, kaartConfig, zone);
+export class KaartWdbLaagComponent extends KaartWmsLaagComponent {
+  constructor(kaart: KaartClassicComponent, private readonly config: KaartConfig) {
+    super(kaart);
   }
 
-  ngOnInit(): void {
-    this.urls = this.config.wdb.urls;
-    super.ngOnInit();
-  }
-
-  ngOnDestroy(): void {
-    super.ngOnDestroy();
+  createLayer(): ke.Laag {
+    return new ke.WmsLaag(this.titel, this.laagNaam, this.extent, List(this.config.wdb.urls), this.versie);
   }
 }

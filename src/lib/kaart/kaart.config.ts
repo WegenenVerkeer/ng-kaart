@@ -4,6 +4,7 @@ export class KaartConfig {
   };
 
   orthofotomozaiek = {
+    naam: "Ortho",
     urls: [] as string[]
   };
 

@@ -26,7 +26,8 @@
     "proj4": "2.4.4",
     "rxjs": "5.5.5",
     "zone.js": "0.8.17",
-    "lodash": "4.17.4"
+    "lodash": "4.17.4",
+    "immutable": "3.8.2"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",

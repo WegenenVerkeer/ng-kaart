@@ -1,39 +1,29 @@
 import { Component, Input, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 import { KaartComponent } from "./kaart.component";
 
-import * as ol from "openlayers";
-import { KaartComponentBase } from "./kaart-component-base";
-import { KaartConfig } from "./kaart.config";
+import * as prt from "./kaart-protocol";
+import * as ke from "./kaart-elementen";
 
-export abstract class KaartLaagComponent extends KaartComponentBase implements OnInit, OnDestroy {
+import { KaartClassicComponent } from "./kaart-classic.component";
+import { KaartEventDispatcher } from "./kaart-event-dispatcher";
+
+export abstract class KaartLaagComponent implements OnInit, OnDestroy {
   @Input() titel = "";
   @Input() zichtbaar = true;
 
-  private layer: ol.layer.Layer;
-
-  constructor(protected readonly kaart: KaartComponent, protected readonly config: KaartConfig, zone: NgZone) {
-    super(zone);
-  }
+  constructor(protected readonly kaart: KaartClassicComponent) {}
 
   ngOnInit(): void {
-    this.runAsapOutsideAngular(() => {
-      this.layer = this.createLayer();
-      if (!this.layer) {
-        throw new Error("Geen laag gedefinieerd");
-      }
-      this.kaart.voegLaagToe(this.layer);
-    });
+    this.dispatch(new prt.AddedLaagOnTop(this.createLayer()));
   }
 
   ngOnDestroy(): void {
-    this.runAsapOutsideAngular(() => {
-      this.kaart.verwijderLaag(this.layer);
-    });
+    this.dispatch(new prt.RemovedLaag(this.titel));
   }
 
-  public get srs(): string {
-    return this.config.srs;
+  protected dispatch(evt: prt.KaartEvnt) {
+    this.kaart.dispatcher.dispatch(evt);
   }
 
-  abstract createLayer(): ol.layer.Layer;
+  abstract createLayer(): ke.Laag;
 }

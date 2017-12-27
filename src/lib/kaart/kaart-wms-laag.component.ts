@@ -1,17 +1,16 @@
-import { Component, Input, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
-import { KaartComponent } from "./kaart.component";
+import { Component, Input, ViewEncapsulation } from "@angular/core";
+import { List } from "immutable";
 
-import * as ol from "openlayers";
-import { KaartComponentBase } from "./kaart-component-base";
+import * as ke from "./kaart-elementen";
 import { KaartLaagComponent } from "./kaart-laag.component";
-import { KaartConfig } from "./kaart.config";
+import { KaartClassicComponent } from "./kaart-classic.component";
 
 @Component({
   selector: "awv-kaart-wms-laag",
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class KaartWmsLaagComponent extends KaartLaagComponent implements OnInit, OnDestroy {
+export class KaartWmsLaagComponent extends KaartLaagComponent {
   @Input() laagNaam: string;
   @Input() urls: string[];
   @Input() tiled = true;
@@ -19,24 +18,11 @@ export class KaartWmsLaagComponent extends KaartLaagComponent implements OnInit,
   @Input() versie?: string;
   @Input() extent: ol.Extent = [18000.0, 152999.75, 280144.0, 415143.75];
 
-  constructor(kaart: KaartComponent, config: KaartConfig, zone: NgZone) {
-    super(kaart, config, zone);
+  constructor(kaart: KaartClassicComponent) {
+    super(kaart);
   }
 
-  createLayer(): ol.layer.Layer {
-    return new ol.layer.Tile({
-      visible: this.zichtbaar,
-      extent: this.extent,
-      source: new ol.source.TileWMS({
-        projection: null,
-        urls: this.urls,
-        params: {
-          LAYERS: this.laagNaam,
-          TILED: this.tiled,
-          SRS: this.srs,
-          version: this.versie
-        }
-      })
-    });
+  createLayer(): ke.Laag {
+    return new ke.WmsLaag(this.titel, this.laagNaam, this.extent, List(this.urls), this.versie);
   }
 }

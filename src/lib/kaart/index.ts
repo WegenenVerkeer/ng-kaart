@@ -1,6 +1,7 @@
 import { ModuleWithProviders, NgModule } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { KaartComponent } from "./kaart.component";
+import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartKnopZoomSliderComponent } from "./kaart-knop-zoom-slider.component";
 import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
 import { KaartVectorLaagComponent } from "./kaart-vector-laag.component";
@@ -15,9 +16,11 @@ import { KaartOrthoLaagComponent } from "./kaart-ortho-laag.component";
 import { CoordinatenService } from "./coordinaten.service";
 import { KaartStandaardInteractiesComponent } from "./kaart-standaard-interacties.component";
 import { KaartStandaardKnoppenComponent } from "./kaart-standaard-knoppen.component";
+import { KaartEventDispatcher } from "./kaart-event-dispatcher";
 
 const components: any[] = [
   KaartComponent,
+  KaartClassicComponent,
   KaartKnopLaagKiezerComponent,
   KaartKnopVolledigSchermComponent,
   KaartKnopZoomSliderComponent,
@@ -36,13 +39,13 @@ const components: any[] = [
   imports: [CommonModule],
   declarations: [components],
   exports: [components],
-  providers: [CoordinatenService]
+  providers: [CoordinatenService, KaartEventDispatcher]
 })
 export class KaartModule {
   static forRoot(config: KaartConfig): ModuleWithProviders {
     return {
       ngModule: KaartModule,
-      providers: [{ provide: KaartConfig, useValue: config }]
+      providers: [{ provide: KaartConfig, useValue: config }, KaartEventDispatcher]
     };
   }
 
@@ -56,6 +59,7 @@ export class KaartModule {
         ]
       },
       orthofotomozaiek: {
+        naam: "Ortho",
         urls: ["http://geoservices.informatievlaanderen.be/raadpleegdiensten/omwrgbmrvl/wms"]
       },
       srs: "EPSG:31370"
@@ -64,6 +68,7 @@ export class KaartModule {
 }
 
 export * from "./coordinaten.service";
+export * from "./kaart-classic.component";
 export * from "./kaart-component-base";
 export * from "./kaart-knop-laag-kiezer.component";
 export * from "./kaart-knop-volledig-scherm.component";
@@ -78,3 +83,4 @@ export * from "./kaart-vector-laag.component";
 export * from "./kaart-wdb-laag.component";
 export * from "./kaart-wms-laag.component";
 export * from "./kaart.component";
+export * from "./kaart-event-dispatcher";

@@ -5,14 +5,16 @@ import "rxjs/add/observable/combineLatest";
 import "rxjs/add/observable/empty";
 import "rxjs/add/observable/never";
 import "rxjs/add/operator/concat";
+import "rxjs/add/operator/switchMap";
 import "rxjs/add/operator/first";
 import "rxjs/add/operator/let";
 import "rxjs/add/operator/map";
 import "rxjs/add/operator/observeOn";
+import "rxjs/add/operator/reduce";
 import "rxjs/add/operator/shareReplay";
 import { asap } from "rxjs/scheduler/asap";
+import { List, Map } from "immutable";
 
-import * as _ from "lodash";
 import * as ol from "openlayers";
 
 import { KaartConfig } from "./kaart.config";
@@ -21,6 +23,10 @@ import { KaartComponentBase } from "./kaart-component-base";
 import { Scheduler } from "rxjs/Scheduler";
 import "../util/leave-zone";
 import "../util/observable-run";
+import * as ke from "./kaart-elementen";
+import * as prt from "./kaart-protocol";
+import * as kwi from "./kaart-with-info";
+import * as red from "./kaart-reducer";
 
 @Component({
   selector: "awv-kaart",
@@ -35,12 +41,14 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   @Input() middelpunt$: Observable<ol.Coordinate> = Observable.of<ol.Coordinate>([130000, 184000]);
   @Input() extent$: Observable<ol.Extent> = Observable.empty();
   @Input() viewportSize$: Observable<ol.Size> = Observable.of<ol.Size>([undefined, 400]); // std volledige breedte en 400 px hoog
+  @Input() kaartEvt$: Observable<prt.KaartEvnt> = Observable.empty(); // TODO de commandos moeten in 1 observable komen
+
   @Input() minZoom = 2; // TODO naar config
   @Input() maxZoom = 13; // TODO naar config
 
   private kaart: ol.Map; // we kunnen dit ook een Observable laten zijn, maar het sop is de kool niet waard
 
-  constructor(@Input() public config: KaartConfig, zone: NgZone, private coordinatenService: CoordinatenService) {
+  constructor(readonly config: KaartConfig, zone: NgZone, private coordinatenService: CoordinatenService) {
     super(zone);
   }
 
@@ -104,14 +112,18 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   }
 
   private bindObservables() {
+    console.log("bind observables");
+
     // We willen de kaart in een observable zodat we veilig kunnen combineren, maar we willen ook dat de observable open blijft
     // want als de kaart observable afgesloten zou worden, dan zouden ook de combinaties afgesloten worden.
     const kaart$ = Observable.combineLatest(this.middelpunt$, this.zoom$, this.viewportSize$)
+      .do(c => console.log("kaart combo", c))
       .observeOn(asap)
       .leaveZone(this.zone)
       .first() // we willen maar 1 kaart, dus maar 1 middelpunt transformeren
       .map(([middel, zoom, size]) => this.maakKaart(middel, zoom, size)) // maak een kaart obv middelpunt en zoom
-      .do(kaart => (this.kaart = kaart))
+      .concat(Observable.never<ol.Map>())
+      .do(kaart => (this.kaart = kaart)) // TODO dit mag weg wanneer we volledig met observables werken
       .shareReplay(); // alle toekomstige subscribers krijgen de ene kaart
 
     Observable.combineLatest(kaart$, this.destroying)
@@ -128,12 +140,21 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       .subscribe(([kaart, middelpunt, zoom]) => this.updateMiddelpuntAndZoom(kaart, middelpunt, zoom));
 
     Observable.combineLatest(kaart$, this.extent$)
+      .do(x => console.log("extent$", x))
       .terminateOnDestroyAndRunAsapOutsideOfAngular(this.zone, this.destroying)
       .subscribe(([kaart, extent]) => this.updateExtent(kaart, extent));
 
     Observable.combineLatest(kaart$, this.viewportSize$)
       .terminateOnDestroyAndRunAsapOutsideOfAngular(this.zone, this.destroying)
       .subscribe(([kaart, size]) => this.updateSize(kaart, size));
+
+    kaart$
+      .switchMap(kaart =>
+        this.kaartEvt$
+          .do(evt => console.log("event ontvangen", evt), e => console.log("e", e), () => console.log("geen commandos meer"))
+          .reduce(red.kaartReducer, new kwi.KaartWithInfo(this.config, kaart))
+      )
+      .subscribe(x => console.log("reduced", x), e => console.log("error", e), () => console.log("kaart & cmd terminated"));
   }
 
   private updateMiddelpuntAndZoom(kaart: ol.Map, middelpunt: ol.Coordinate, zoom: number) {
@@ -142,18 +163,20 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   }
 
   private updateExtent(kaart: ol.Map, extent: ol.Extent) {
-    kaart.getView().fit(extent);
+    console.log("update extent", extent);
+    // kaart.getView().fit(extent);
     // TODO publish ol.extent.getCenter(extent) to service
   }
 
   private updateSize(kaart: ol.Map, size: ol.Size) {
-    // rechstreeks manipulatie van DOM omdat we hier buiten de Angular zitten
+    // rechstreekse manipulatie van DOM omdat we hier buiten de Angular zone zitten
     this.mapElement.nativeElement.parentElement.style.height = `${size[1]}px`;
     kaart.setSize(size);
     kaart.updateSize(); // ingeval een dimensie undefined is
   }
 
   private maakKaart(middelpunt: ol.Coordinate, zoom: number, size: ol.Size): ol.Map {
+    console.log("de kaart maken", size);
     const dienstkaartProjectie: ol.proj.Projection = ol.proj.get("EPSG:31370");
     dienstkaartProjectie.setExtent([18000.0, 152999.75, 280144.0, 415143.75]); // zet de extent op die van de dienstkaart
 
@@ -172,8 +195,8 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
         zoom: zoom
       })
     });
-    console.log("De grootte zetten op", size);
     map.setSize(size);
+    console.log("De grootte zetten op", size);
     return map;
   }
 }
