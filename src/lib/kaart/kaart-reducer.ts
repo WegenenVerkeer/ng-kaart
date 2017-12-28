@@ -28,6 +28,8 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWit
       return updateZoom(kaart, (cmd as prt.ZoomChanged).zoom);
     case prt.KaartEvntTypes.EXTENT_CHANGED:
       return updateExtent(kaart, (cmd as prt.ExtentChanged).extent);
+    case prt.KaartEvntTypes.VIEWPORT_CHANGED:
+      return updateViewport(kaart, (cmd as prt.ViewportChanged).size);
     default:
       console.log("onverwacht commando", cmd);
       return kaart;
@@ -38,6 +40,8 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWit
 // de reducers hieronder zijn dus geen pure functies. Ze hebben allen een neveneffect op de openlayers map.
 // de reden is dat enerzijds Map statefull is en anderzijds dat het niet triviaal is om een efficiente differ
 // te maken op KaartWithInfo (en de object daarin) zodat we enkel de gepaste operaties op Map kunnen uitvoeren.
+// In principe zouden we dit moeten opsplitsen in transformaties naar het nieuwe model en iterpretaties van dat 
+// model.
 
 /**
  *  Toevoegen bovenaan de kaart.
@@ -116,6 +120,17 @@ function updateExtent(kaart: KaartWithInfo, extent: ol.Extent): KaartWithInfo {
     ...kaart,
     middelpunt: kaart.map.getView().getCenter(),
     zoom: kaart.map.getView().getZoom(),
+    extent: kaart.map.getView().calculateExtent(kaart.map.getSize())
+  };
+}
+
+function updateViewport(kaart: KaartWithInfo, size: ol.Size): KaartWithInfo {
+  kaart.container.style.height = `${size[1]}px`; // eerst de container aanpassen of de kaart is uitgerekt
+  kaart.map.setSize(size);
+  kaart.map.updateSize();
+  return {
+    ...kaart,
+    size: kaart.map.getSize(),
     extent: kaart.map.getView().calculateExtent(kaart.map.getSize())
   };
 }

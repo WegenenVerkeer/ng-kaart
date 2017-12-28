@@ -10,7 +10,8 @@ export enum KaartEvntTypes {
   REMOVED_STD_INT,
   MIDDELPUNT_CHANGED,
   ZOOM_CHANGED,
-  EXTENT_CHANGED
+  EXTENT_CHANGED,
+  VIEWPORT_CHANGED
 }
 
 export interface KaartEvnt {
@@ -69,4 +70,10 @@ export class ExtentChanged implements KaartEvnt {
   readonly type = KaartEvntTypes.EXTENT_CHANGED;
 
   constructor(readonly extent: ol.Extent) {}
+}
+
+export class ViewportChanged implements KaartEvnt {
+  readonly type = KaartEvntTypes.VIEWPORT_CHANGED;
+
+  constructor(readonly size: ol.Size) {}
 }

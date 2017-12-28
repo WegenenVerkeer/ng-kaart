@@ -65,7 +65,8 @@ export class KaartModule {
       srs: "EPSG:31370",
       defaults: {
         zoom: 2,
-        middelpunt: [130000, 193000]
+        middelpunt: [130000, 193000],
+        grootte: [undefined, 500]
       }
     });
   }

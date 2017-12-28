@@ -15,15 +15,6 @@ export class KaartStandaardKnoppenComponent extends KaartComponentBase implement
 
   constructor(private readonly kaart: KaartComponent, zone: NgZone) {
     super(zone);
-  }
-
-  ngOnInit(): void {
-    super.ngOnInit();
-    this.controls = this.kaart.voegControlsToe(ol.control.defaults({ attribution: false }).getArray());
-  }
-
-  ngOnDestroy(): void {
-    this.kaart.verwijderControls(this.controls);
-    super.ngOnDestroy();
+    throw new Error("nog niet geïmplementeerd");
   }
 }

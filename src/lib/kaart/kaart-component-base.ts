@@ -23,7 +23,7 @@ export abstract class KaartComponentBase implements OnInit, OnDestroy {
     return source.let(o => o.takeUntil(this.destroyingSubj));
   }
 
-  public get destroying(): Observable<void> {
+  public get destroying$(): Observable<void> {
     return this.destroyingSubj;
   }
 

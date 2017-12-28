@@ -37,13 +37,11 @@ import * as red from "./kaart-reducer";
 export class KaartComponent extends KaartComponentBase implements OnInit, OnDestroy {
   @ViewChild("map") mapElement: ElementRef;
 
-  @Input() viewportSize$: Observable<ol.Size> = Observable.of<ol.Size>([undefined, 400]); // std volledige breedte en 400 px hoog
-  @Input() kaartEvt$: Observable<prt.KaartEvnt> = Observable.empty(); // TODO de commandos moeten in 1 observable komen
+  @Input() kaartEvt$: Observable<prt.KaartEvnt> = Observable.empty();
 
   @Input() minZoom = 2; // TODO naar config
   @Input() maxZoom = 13; // TODO naar config
-
-  private kaart: ol.Map; // we kunnen dit ook een Observable laten zijn, maar het sop is de kool niet waard
+  @Input() naam = "kaart";
 
   constructor(readonly config: KaartConfig, zone: NgZone, private coordinatenService: CoordinatenService) {
     super(zone);
@@ -58,106 +56,33 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     super.ngOnDestroy();
   }
 
-  voegLaagToe(laag: ol.layer.Layer) {
-    this.voegLagenToe([laag]);
-  }
-
-  voegLagenToe(lagen: ol.layer.Layer[]) {
-    this.runAsapOutsideAngular(() => lagen.forEach(l => this.kaart.addLayer(l)));
-  }
-
-  verwijderLaag(laag: ol.layer.Layer) {
-    this.verwijderLagen([laag]);
-  }
-
-  verwijderLagen(lagen: ol.layer.Layer[]) {
-    this.runAsapOutsideAngular(() => lagen.forEach(l => this.kaart.removeLayer(l)));
-  }
-
-  voegControlToe(control: ol.control.Control): ol.control.Control {
-    return this.voegControlsToe([control])[0];
-  }
-
-  voegControlsToe(controls: ol.control.Control[]): ol.control.Control[] {
-    this.runAsapOutsideAngular(() => controls.forEach(c => this.kaart.addControl(c)));
-    return controls;
-  }
-
-  verwijderControl(control: ol.control.Control) {
-    this.verwijderControls([control]);
-  }
-
-  verwijderControls(controls: ol.control.Control[]) {
-    this.runAsapOutsideAngular(() => controls.forEach(c => this.kaart.removeControl(c)));
-  }
-
-  voegInteractionToe(interaction: ol.interaction.Interaction): ol.interaction.Interaction {
-    return this.voegInteractionsToe([interaction])[0];
-  }
-
-  voegInteractionsToe(interactions: ol.interaction.Interaction[]): ol.interaction.Interaction[] {
-    this.runAsapOutsideAngular(() => interactions.forEach(i => this.kaart.addInteraction(i)));
-    return interactions;
-  }
-
-  verwijderInteraction(interaction: ol.interaction.Interaction) {
-    this.verwijderInteractions([interaction]);
-  }
-
-  verwijderInteractions(interactions: ol.interaction.Interaction[]) {
-    this.runAsapOutsideAngular(() => interactions.forEach(i => this.kaart.removeInteraction(i)));
-  }
-
   private bindObservables() {
     // We willen de kaart in een observable zodat we veilig kunnen combineren, maar we willen ook dat de observable open blijft
     // want als de kaart observable afgesloten zou worden, dan zouden ook de combinaties afgesloten worden.
-    const kaart$ = this.viewportSize$
+    const kaart$: Observable<KaartWithInfo> = Observable.of([]) // er is geen unit in TS
       .observeOn(asap)
       .leaveZone(this.zone)
-      .first() // we willen maar 1 kaart, dus maar 1 middelpunt transformeren
-      .map(size => this.maakKaart(size)) // maak een kaart obv middelpunt en zoom
-      .concat(Observable.never<ol.Map>())
-      .do(kaart => (this.kaart = kaart)) // TODO dit mag weg wanneer we volledig met observables werken
+      .map(_ => this.maakKaart()) // maak een kaart obv middelpunt en zoom
+      .concat(Observable.never<KaartWithInfo>())
       .shareReplay(); // alle toekomstige subscribers krijgen de ene kaart
 
-    Observable.combineLatest(kaart$, this.destroying)
-      .map(([kaart, x]) => kaart)
+    Observable.combineLatest(kaart$, this.destroying$)
+      .map(([kaart, _]) => kaart)
       .observeOn(asap)
       .leaveZone(this.zone)
       .subscribe(k => {
         console.log("Kaart opkuisen", k);
-        k.setTarget(null);
+        k.map.setTarget(null);
       });
 
-    Observable.combineLatest(kaart$, this.viewportSize$)
-      .terminateOnDestroyAndRunAsapOutsideOfAngular(this.zone, this.destroying)
-      .subscribe(([kaart, size]) => this.updateSize(kaart, size));
-
     kaart$
-      .switchMap(kaart => this.kaartEvt$.reduce(red.kaartReducer, new KaartWithInfo(this.config, kaart)))
+      .switchMap(kaart => this.kaartEvt$.reduce(red.kaartReducer, kaart))
       .subscribe(x => console.log("reduced", x), e => console.log("error", e), () => console.log("kaart & cmd terminated"));
   }
 
-  private updateMiddelpuntAndZoom(kaart: ol.Map, middelpunt: ol.Coordinate, zoom: number) {
-    kaart.getView().setCenter(middelpunt);
-    kaart.getView().setZoom(zoom);
-  }
-
-  private updateExtent(kaart: ol.Map, extent: ol.Extent) {
-    console.log("update extent", extent);
-    // kaart.getView().fit(extent);
-    // TODO publish ol.extent.getCenter(extent) to service
-  }
-
-  private updateSize(kaart: ol.Map, size: ol.Size) {
-    // rechstreekse manipulatie van DOM omdat we hier buiten de Angular zone zitten
-    this.mapElement.nativeElement.parentElement.style.height = `${size[1]}px`;
-    kaart.setSize(size);
-    kaart.updateSize(); // ingeval een dimensie undefined is
-  }
-
-  private maakKaart(size: ol.Size): ol.Map {
+  private maakKaart(): KaartWithInfo {
     const dienstkaartProjectie: ol.proj.Projection = ol.proj.get("EPSG:31370");
+    // Zonder deze extent zoomen we op de hele wereld en Vlaanderen is daar maar een heeel klein deeltje van
     dienstkaartProjectie.setExtent([18000.0, 152999.75, 280144.0, 415143.75]); // zet de extent op die van de dienstkaart
 
     const map = new ol.Map({
@@ -175,7 +100,6 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
         zoom: this.config.defaults.zoom
       })
     });
-    map.setSize(size);
-    return map;
+    return new KaartWithInfo(this.config, this.naam, this.mapElement.nativeElement.parentElement, map);
   }
 }

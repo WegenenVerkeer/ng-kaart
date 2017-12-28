@@ -15,23 +15,6 @@ export class KaartKnopVolledigSchermComponent extends KaartComponentBase impleme
 
   constructor(private readonly kaart: KaartComponent, zone: NgZone) {
     super(zone);
-  }
-
-  ngOnInit(): void {
-    super.ngOnInit();
-    const fullScreenCtrl = this.runOutsideAngular(
-      () =>
-        new ol.control.FullScreen({
-          className: "full-screen-control-left",
-          source: this.kaart.mapElement.nativeElement.parentElement
-        })
-    );
-    this.fullScreen = this.kaart.voegControlToe(fullScreenCtrl);
-    super.ngOnInit();
-  }
-
-  ngOnDestroy(): void {
-    this.kaart.verwijderControl(this.fullScreen);
-    super.ngOnDestroy();
+    throw new Error("nog niet geïmplementeerd");
   }
 }

@@ -2,6 +2,8 @@
 
 <h2>Kaart</h2>
 
+<!--
+-->
 <div class="qa-protractor">
   <h3>Kaart voor protractor</h3>
   
@@ -12,12 +14,10 @@
 <h3>Zonder controls, enkel dienstkaart in kleur,</h3>
 
 <div>
-  <awv-kaart-classic [breedte]="800">
+  <awv-kaart-classic [naam]="'kleursimpel'" [breedte]="800">
     <awv-kaart-wdb-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-wdb-laag>
   </awv-kaart-classic>
 </div>
-<!--
--->
 <!--
 <h3>Ingezoomd + 1 feature + onclick event voor feature + schaal + volledig scherm knop</h3>
 
@@ -72,7 +72,7 @@
 --> 
 
 <h3>Dienstkaart, std interacties</h3>
-<awv-kaart-classic>
+<awv-kaart-classic [naam]="'grijsstdinteracties'" >
   <awv-kaart-wdb-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-wdb-laag>
   <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
 </awv-kaart-classic>

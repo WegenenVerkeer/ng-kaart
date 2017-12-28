@@ -14,15 +14,6 @@ export class KaartKnopZoomSliderComponent extends KaartComponentBase implements 
 
   constructor(private readonly kaart: KaartComponent, zone: NgZone) {
     super(zone);
-  }
-
-  ngOnInit(): void {
-    super.ngOnInit();
-    this.zoomSlider = this.kaart.voegControlToe(new ol.control.ZoomSlider());
-  }
-
-  ngOnDestroy(): void {
-    this.kaart.verwijderControl(this.zoomSlider);
-    super.ngOnDestroy();
+    throw new Error("nog niet geïmplementeerd");
   }
 }
