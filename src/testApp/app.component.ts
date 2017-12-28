@@ -19,7 +19,7 @@ export class AppComponent {
   zoekresultaten: ol.Collection<ol.Feature> = new ol.Collection();
 
   installatie: ol.Coordinate = [180055.62, 190922.71];
-  installatieExtent: ol.Extent = [180187.32699999958, 190705.7360999994, 180221.3849999979, 190732.32290000096];
+  installatieExtent: ol.Extent = [179187.32699999958, 190705.7360999994, 180221.3849999979, 190732.32290000096];
 
   lat = 4.7970553;
   long = 51.0257317;

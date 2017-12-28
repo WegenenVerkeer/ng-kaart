@@ -26,6 +26,8 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWit
       return updateMiddelpunt(kaart, (cmd as prt.MiddelpuntChanged).coordinate);
     case prt.KaartEvntTypes.ZOOM_CHANGED:
       return updateZoom(kaart, (cmd as prt.ZoomChanged).zoom);
+    case prt.KaartEvntTypes.EXTENT_CHANGED:
+      return updateExtent(kaart, (cmd as prt.ExtentChanged).extent);
     default:
       console.log("onverwacht commando", cmd);
       return kaart;
@@ -100,12 +102,22 @@ function removeStandaardInteracties(kaart: KaartWithInfo): KaartWithInfo {
 
 function updateMiddelpunt(kaart: KaartWithInfo, coordinate: [number, number]): KaartWithInfo {
   kaart.map.getView().setCenter(coordinate);
-  return { ...kaart, middelpunt: kaart.map.getView().getCenter() };
+  return { ...kaart, middelpunt: kaart.map.getView().getCenter(), extent: kaart.map.getView().calculateExtent(kaart.map.getSize()) };
 }
 
 function updateZoom(kaart: KaartWithInfo, zoom: number): KaartWithInfo {
   kaart.map.getView().setZoom(zoom);
-  return { ...kaart, zoom: kaart.map.getView().getZoom() };
+  return { ...kaart, zoom: kaart.map.getView().getZoom(), extent: kaart.map.getView().calculateExtent(kaart.map.getSize()) };
+}
+
+function updateExtent(kaart: KaartWithInfo, extent: ol.Extent): KaartWithInfo {
+  kaart.map.getView().fit(extent);
+  return {
+    ...kaart,
+    middelpunt: kaart.map.getView().getCenter(),
+    zoom: kaart.map.getView().getZoom(),
+    extent: kaart.map.getView().calculateExtent(kaart.map.getSize())
+  };
 }
 
 function toOlLayer(config: KaartConfig, laag: ke.Laag) {

@@ -1,3 +1,4 @@
+import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";
 
 export enum KaartEvntTypes {
@@ -8,7 +9,8 @@ export enum KaartEvntTypes {
   ADDED_STD_INT,
   REMOVED_STD_INT,
   MIDDELPUNT_CHANGED,
-  ZOOM_CHANGED
+  ZOOM_CHANGED,
+  EXTENT_CHANGED
 }
 
 export interface KaartEvnt {
@@ -54,11 +56,17 @@ export class RemovedStandaardInteracties implements KaartEvnt {
 export class MiddelpuntChanged implements KaartEvnt {
   readonly type = KaartEvntTypes.MIDDELPUNT_CHANGED;
 
-  constructor(readonly coordinate: [number, number]) {}
+  constructor(readonly coordinate: ol.Coordinate) {}
 }
 
 export class ZoomChanged implements KaartEvnt {
   readonly type = KaartEvntTypes.ZOOM_CHANGED;
 
   constructor(readonly zoom: number) {}
+}
+
+export class ExtentChanged implements KaartEvnt {
+  readonly type = KaartEvntTypes.EXTENT_CHANGED;
+
+  constructor(readonly extent: ol.Extent) {}
 }

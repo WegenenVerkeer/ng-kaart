@@ -37,7 +37,6 @@ import * as red from "./kaart-reducer";
 export class KaartComponent extends KaartComponentBase implements OnInit, OnDestroy {
   @ViewChild("map") mapElement: ElementRef;
 
-  @Input() extent$: Observable<ol.Extent> = Observable.empty();
   @Input() viewportSize$: Observable<ol.Size> = Observable.of<ol.Size>([undefined, 400]); // std volledige breedte en 400 px hoog
   @Input() kaartEvt$: Observable<prt.KaartEvnt> = Observable.empty(); // TODO de commandos moeten in 1 observable komen
 
@@ -129,11 +128,6 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
         console.log("Kaart opkuisen", k);
         k.setTarget(null);
       });
-
-    Observable.combineLatest(kaart$, this.extent$)
-      .do(x => console.log("extent$", x))
-      .terminateOnDestroyAndRunAsapOutsideOfAngular(this.zone, this.destroying)
-      .subscribe(([kaart, extent]) => this.updateExtent(kaart, extent));
 
     Observable.combineLatest(kaart$, this.viewportSize$)
       .terminateOnDestroyAndRunAsapOutsideOfAngular(this.zone, this.destroying)

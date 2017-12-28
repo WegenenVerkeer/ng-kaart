@@ -12,9 +12,11 @@ export class KaartWithInfo {
     readonly schaal: ol.control.Control = null, // to option or not to option, that is the question?
     readonly stdInteracties: List<ol.interaction.Interaction> = List<ol.interaction.Interaction>(), // TODO beter gewoon interacties
     readonly middelpunt: ol.Coordinate = null,
-    readonly zoom: number = 2
+    readonly zoom: number = null,
+    readonly extent: ol.Extent = null
   ) {
     this.middelpunt = map.getView().getCenter();
     this.zoom = map.getView().getZoom();
+    this.extent = map.getView().calculateExtent(map.getSize());
   }
 }

@@ -31,7 +31,6 @@ export default {
     '@angular/common',
     '@angular/core',
     '@angular/http',
-    'lodash',
     'lodash-es/isEqual',
     'openlayers',
     'proj4',
