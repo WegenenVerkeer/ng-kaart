@@ -18,7 +18,6 @@ export class KaartOrthoLaagComponent extends KaartWmsLaagComponent {
   }
 
   createLayer(): ke.Laag {
-    console.log("ortho laag wordt gemaakt");
     return new ke.WmsLaag(this.titel, this.config.orthofotomozaiek.naam, this.extent, List(this.config.orthofotomozaiek.urls), this.versie);
   }
 }

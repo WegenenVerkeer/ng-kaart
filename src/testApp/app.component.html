@@ -36,7 +36,6 @@
 </div>
 
 <h3>Ingezoomd dmv extent + schaal</h3>
--->
 
 <div>
   <awv-kaart-classic [breedte]="800" [extent]="installatieExtent">
@@ -44,19 +43,20 @@
     <awv-kaart-schaal></awv-kaart-schaal>
   </awv-kaart-classic>
 </div>
-<!--
 <h3>Ingezoomd (met WGS 84 coordinaten) + schaal</h3>
+-->
 
 <div>
   <p>Vul zelf lengtegraad en breedtegraad in.</p>
   <p><label>Lengtegraad: </label><input [(ngModel)]="lat" type="number"/></p>
   <p><label>Breedtegraad: </label><input [(ngModel)]="long" type="number"/></p>
-  <awv-kaart [breedte]="800" [zoom]="7" [middelpunt]="coordinatenService.transformWgs84(lat, long)">
-    <awv-kaart-wdb-laag [titel]="'Dienstkaart kleur'" [laag]="'dienstkaart-kleur'"></awv-kaart-wdb-laag>
+  <awv-kaart-classic [breedte]="800" [zoom]="7" [middelpunt]="coordinatenService.transformWgs84(lat, long)">
+    <awv-kaart-wdb-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-wdb-laag>
     <awv-kaart-schaal></awv-kaart-schaal>
-  </awv-kaart>
+  </awv-kaart-classic>
 </div>
 
+<!--
 <h3>Orhto laag + teken polygoon</h3>
 
 <div>

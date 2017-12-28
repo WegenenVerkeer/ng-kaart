@@ -5,9 +5,9 @@ import * as ol from "openlayers";
 import { KaartConfig } from "./kaart.config";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
-import * as kwi from "./kaart-with-info";
+import { KaartWithInfo } from "./kaart-with-info";
 
-export function kaartReducer(kaart: kwi.KaartWithInfo, cmd: prt.KaartEvnt): kwi.KaartWithInfo {
+export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWithInfo {
   console.log("kaart reducer", kaart, cmd);
   switch (cmd.type) {
     case prt.KaartEvntTypes.ADDED_LAAG_ON_TOP:
@@ -22,16 +22,23 @@ export function kaartReducer(kaart: kwi.KaartWithInfo, cmd: prt.KaartEvnt): kwi.
       return addStandaardInteracties(kaart);
     case prt.KaartEvntTypes.REMOVED_STD_INT:
       return removeStandaardInteracties(kaart);
+    case prt.KaartEvntTypes.MIDDELPUNT_CHANGED:
+      return updateMiddelpunt(kaart, (cmd as prt.MiddelpuntChanged).coordinate);
     default:
       console.log("onverwacht commando", cmd);
       return kaart;
   }
 }
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// de reducers hieronder zijn dus geen pure functies. Ze hebben allen een neveneffect op de openlayers map.
+// de reden is dat enerzijds Map statefull is en anderzijds dat het niet triviaal is om een efficiente differ
+// te maken op KaartWithInfo (en de object daarin) zodat we enkel de gepaste operaties op Map kunnen uitvoeren.
+
 /**
  *  Toevoegen bovenaan de kaart.
  */
-function addLaagOnTop(kaart: kwi.KaartWithInfo, laag: ke.Laag): kwi.KaartWithInfo {
+function addLaagOnTop(kaart: KaartWithInfo, laag: ke.Laag): KaartWithInfo {
   kaart.map.addLayer(toOlLayer(kaart.config, laag)); // Eikes!
   return { ...kaart, lagen: kaart.lagen.push(laag) };
 }
@@ -39,7 +46,7 @@ function addLaagOnTop(kaart: kwi.KaartWithInfo, laag: ke.Laag): kwi.KaartWithInf
 /**
  * Een laag verwijderen. De titel van de laag bepaalt welke er verwijderd wordt.
  */
-function removeLaag(kaart: kwi.KaartWithInfo, titel: string): kwi.KaartWithInfo {
+function removeLaag(kaart: KaartWithInfo, titel: string): KaartWithInfo {
   const teVerwijderen = kaart.lagen.findIndex(l => l.titel === titel);
   if (teVerwijderen >= 0) {
     const layers = kaart.map.getLayers();
@@ -51,7 +58,7 @@ function removeLaag(kaart: kwi.KaartWithInfo, titel: string): kwi.KaartWithInfo 
   }
 }
 
-function addSchaal(kaart: kwi.KaartWithInfo): kwi.KaartWithInfo {
+function addSchaal(kaart: KaartWithInfo): KaartWithInfo {
   if (!kaart.schaal) {
     const schaal = new ol.control.ScaleLine();
     kaart.map.addControl(schaal);
@@ -61,7 +68,7 @@ function addSchaal(kaart: kwi.KaartWithInfo): kwi.KaartWithInfo {
   }
 }
 
-function removeSchaal(kaart: kwi.KaartWithInfo): kwi.KaartWithInfo {
+function removeSchaal(kaart: KaartWithInfo): KaartWithInfo {
   if (kaart.schaal) {
     kaart.map.removeControl(kaart.schaal);
     return { ...kaart, schaal: null };
@@ -70,7 +77,7 @@ function removeSchaal(kaart: kwi.KaartWithInfo): kwi.KaartWithInfo {
   }
 }
 
-function addStandaardInteracties(kaart: kwi.KaartWithInfo): kwi.KaartWithInfo {
+function addStandaardInteracties(kaart: KaartWithInfo): KaartWithInfo {
   if (!kaart.stdInteracties || kaart.stdInteracties.isEmpty()) {
     const interacties = List(ol.interaction.defaults().getArray());
     interacties.forEach(i => kaart.map.addInteraction(i));
@@ -80,13 +87,18 @@ function addStandaardInteracties(kaart: kwi.KaartWithInfo): kwi.KaartWithInfo {
   }
 }
 
-function removeStandaardInteracties(kaart: kwi.KaartWithInfo): kwi.KaartWithInfo {
+function removeStandaardInteracties(kaart: KaartWithInfo): KaartWithInfo {
   if (kaart.stdInteracties) {
     kaart.stdInteracties.forEach(i => kaart.map.removeInteraction(i));
     return { ...kaart, stdInteracties: null };
   } else {
     return kaart;
   }
+}
+
+function updateMiddelpunt(kaart: KaartWithInfo, coordinate: [number, number]): KaartWithInfo {
+  kaart.map.getView().setCenter(coordinate);
+  return { ...kaart, middelpunt: kaart.map.getView().getCenter() };
 }
 
 function toOlLayer(config: KaartConfig, laag: ke.Laag) {

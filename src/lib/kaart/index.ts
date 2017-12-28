@@ -62,7 +62,11 @@ export class KaartModule {
         naam: "Ortho",
         urls: ["http://geoservices.informatievlaanderen.be/raadpleegdiensten/omwrgbmrvl/wms"]
       },
-      srs: "EPSG:31370"
+      srs: "EPSG:31370",
+      defaults: {
+        zoom: 2,
+        middelpunt: [130000, 193000]
+      }
     });
   }
 }

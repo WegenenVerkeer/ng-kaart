@@ -6,7 +6,8 @@ export enum KaartEvntTypes {
   ADDED_SCHAAL,
   REMOVED_SCHAAL,
   ADDED_STD_INT,
-  REMOVED_STD_INT
+  REMOVED_STD_INT,
+  MIDDELPUNT_CHANGED
 }
 
 export interface KaartEvnt {
@@ -47,4 +48,10 @@ export class RemovedStandaardInteracties implements KaartEvnt {
   readonly type = KaartEvntTypes.REMOVED_STD_INT;
 
   constructor() {}
+}
+
+export class MiddelpuntChanged implements KaartEvnt {
+  readonly type = KaartEvntTypes.MIDDELPUNT_CHANGED;
+
+  constructor(readonly coordinate: [number, number]) {}
 }

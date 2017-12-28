@@ -21,7 +21,6 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
 
   // We gebruiken ReplaySubjects omdat de observer van de subjects nog niet bestaat op het moment dat de component geïnitialiseerd wordt
   readonly zoomSubj = new ReplaySubject<number>(1);
-  readonly middelpuntSubj = new ReplaySubject<ol.Coordinate>(1);
   readonly extentSubj = new ReplaySubject<ol.Extent>(1);
   readonly viewportSizeSubj = new ReplaySubject<ol.Size>(1);
 
@@ -31,7 +30,6 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
 
   ngOnInit() {
     this.zoomSubj.next(this.zoom);
-    this.middelpuntSubj.next(this.middelpunt);
     this.extentSubj.next(this.extent);
     this.viewportSizeSubj.next([this.breedte, this.hoogte]);
   }
@@ -39,13 +37,11 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
   ngOnDestroy() {}
 
   ngOnChanges(changes: SimpleChanges) {
-    console.log("changes", changes);
     if ("zoom" in changes) {
-      console.log("injecting zoom");
       this.zoomSubj.next(changes.zoom.currentValue);
     }
     if ("middelpunt" in changes) {
-      this.middelpuntSubj.next(changes.middelpunt.currentValue);
+      this.dispatcher.dispatch(new prt.MiddelpuntChanged(changes.middelpunt.currentValue));
     }
     if ("extent" in changes) {
       this.extentSubj.next(changes.extent.currentValue);
