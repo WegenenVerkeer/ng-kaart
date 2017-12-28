@@ -14,6 +14,6 @@ export class KaartConfig {
 
   defaults = {
     zoom: 2 as number,
-    middelpunt: [130000, 184000] as ol.Coordinate
+    middelpunt: [130000, 193000] as ol.Coordinate
   };
 }

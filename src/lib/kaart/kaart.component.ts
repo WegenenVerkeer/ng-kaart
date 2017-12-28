@@ -37,7 +37,6 @@ import * as red from "./kaart-reducer";
 export class KaartComponent extends KaartComponentBase implements OnInit, OnDestroy {
   @ViewChild("map") mapElement: ElementRef;
 
-  @Input() zoom$ = Observable.of(2);
   @Input() extent$: Observable<ol.Extent> = Observable.empty();
   @Input() viewportSize$: Observable<ol.Size> = Observable.of<ol.Size>([undefined, 400]); // std volledige breedte en 400 px hoog
   @Input() kaartEvt$: Observable<prt.KaartEvnt> = Observable.empty(); // TODO de commandos moeten in 1 observable komen
@@ -113,11 +112,11 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   private bindObservables() {
     // We willen de kaart in een observable zodat we veilig kunnen combineren, maar we willen ook dat de observable open blijft
     // want als de kaart observable afgesloten zou worden, dan zouden ook de combinaties afgesloten worden.
-    const kaart$ = Observable.combineLatest(this.zoom$, this.viewportSize$)
+    const kaart$ = this.viewportSize$
       .observeOn(asap)
       .leaveZone(this.zone)
       .first() // we willen maar 1 kaart, dus maar 1 middelpunt transformeren
-      .map(([zoom, size]) => this.maakKaart(zoom, size)) // maak een kaart obv middelpunt en zoom
+      .map(size => this.maakKaart(size)) // maak een kaart obv middelpunt en zoom
       .concat(Observable.never<ol.Map>())
       .do(kaart => (this.kaart = kaart)) // TODO dit mag weg wanneer we volledig met observables werken
       .shareReplay(); // alle toekomstige subscribers krijgen de ene kaart
@@ -163,7 +162,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     kaart.updateSize(); // ingeval een dimensie undefined is
   }
 
-  private maakKaart(zoom: number, size: ol.Size): ol.Map {
+  private maakKaart(size: ol.Size): ol.Map {
     const dienstkaartProjectie: ol.proj.Projection = ol.proj.get("EPSG:31370");
     dienstkaartProjectie.setExtent([18000.0, 152999.75, 280144.0, 415143.75]); // zet de extent op die van de dienstkaart
 
@@ -179,7 +178,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
         center: this.config.defaults.middelpunt,
         minZoom: this.minZoom,
         maxZoom: this.maxZoom,
-        zoom: zoom
+        zoom: this.config.defaults.zoom
       })
     });
     map.setSize(size);

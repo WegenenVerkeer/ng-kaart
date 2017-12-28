@@ -24,6 +24,8 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWit
       return removeStandaardInteracties(kaart);
     case prt.KaartEvntTypes.MIDDELPUNT_CHANGED:
       return updateMiddelpunt(kaart, (cmd as prt.MiddelpuntChanged).coordinate);
+    case prt.KaartEvntTypes.ZOOM_CHANGED:
+      return updateZoom(kaart, (cmd as prt.ZoomChanged).zoom);
     default:
       console.log("onverwacht commando", cmd);
       return kaart;
@@ -99,6 +101,11 @@ function removeStandaardInteracties(kaart: KaartWithInfo): KaartWithInfo {
 function updateMiddelpunt(kaart: KaartWithInfo, coordinate: [number, number]): KaartWithInfo {
   kaart.map.getView().setCenter(coordinate);
   return { ...kaart, middelpunt: kaart.map.getView().getCenter() };
+}
+
+function updateZoom(kaart: KaartWithInfo, zoom: number): KaartWithInfo {
+  kaart.map.getView().setZoom(zoom);
+  return { ...kaart, zoom: kaart.map.getView().getZoom() };
 }
 
 function toOlLayer(config: KaartConfig, laag: ke.Laag) {

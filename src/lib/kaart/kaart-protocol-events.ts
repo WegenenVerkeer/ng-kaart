@@ -7,7 +7,8 @@ export enum KaartEvntTypes {
   REMOVED_SCHAAL,
   ADDED_STD_INT,
   REMOVED_STD_INT,
-  MIDDELPUNT_CHANGED
+  MIDDELPUNT_CHANGED,
+  ZOOM_CHANGED
 }
 
 export interface KaartEvnt {
@@ -54,4 +55,10 @@ export class MiddelpuntChanged implements KaartEvnt {
   readonly type = KaartEvntTypes.MIDDELPUNT_CHANGED;
 
   constructor(readonly coordinate: [number, number]) {}
+}
+
+export class ZoomChanged implements KaartEvnt {
+  readonly type = KaartEvntTypes.ZOOM_CHANGED;
+
+  constructor(readonly zoom: number) {}
 }

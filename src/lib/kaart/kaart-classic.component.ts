@@ -14,13 +14,12 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
   @Input() zoom = 2;
   @Input() minZoom = 2; // TODO moet nog doorgegeven worden
   @Input() maxZoom = 13;
-  @Input() middelpunt: ol.Coordinate = [130000, 184000]; // "extent" heeft voorrang
+  @Input() middelpunt: ol.Coordinate = [130000, 193000]; // "extent" heeft voorrang
   @Input() breedte; // neem standaard de hele breedte in
   @Input() hoogte = 400;
   @Input() extent: ol.Extent = [18000.0, 152999.75, 280144.0, 415143.75];
 
   // We gebruiken ReplaySubjects omdat de observer van de subjects nog niet bestaat op het moment dat de component geïnitialiseerd wordt
-  readonly zoomSubj = new ReplaySubject<number>(1);
   readonly extentSubj = new ReplaySubject<ol.Extent>(1);
   readonly viewportSizeSubj = new ReplaySubject<ol.Size>(1);
 
@@ -29,7 +28,8 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
   constructor(private readonly zone: NgZone, private readonly coordinatenService: CoordinatenService) {}
 
   ngOnInit() {
-    this.zoomSubj.next(this.zoom);
+    this.dispatcher.dispatch(new prt.ZoomChanged(this.zoom));
+    this.dispatcher.dispatch(new prt.MiddelpuntChanged(this.middelpunt));
     this.extentSubj.next(this.extent);
     this.viewportSizeSubj.next([this.breedte, this.hoogte]);
   }
@@ -38,7 +38,7 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     if ("zoom" in changes) {
-      this.zoomSubj.next(changes.zoom.currentValue);
+      this.dispatcher.dispatch(new prt.ZoomChanged(changes.zoom.currentValue));
     }
     if ("middelpunt" in changes) {
       this.dispatcher.dispatch(new prt.MiddelpuntChanged(changes.middelpunt.currentValue));
