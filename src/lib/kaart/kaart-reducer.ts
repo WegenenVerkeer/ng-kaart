@@ -40,7 +40,7 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWit
 // de reducers hieronder zijn dus geen pure functies. Ze hebben allen een neveneffect op de openlayers map.
 // de reden is dat enerzijds Map statefull is en anderzijds dat het niet triviaal is om een efficiente differ
 // te maken op KaartWithInfo (en de object daarin) zodat we enkel de gepaste operaties op Map kunnen uitvoeren.
-// In principe zouden we dit moeten opsplitsen in transformaties naar het nieuwe model en iterpretaties van dat 
+// In principe zouden we dit moeten opsplitsen in transformaties naar het nieuwe model en interpretaties van dat
 // model.
 
 /**
