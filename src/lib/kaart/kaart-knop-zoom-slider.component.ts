@@ -1,4 +1,4 @@
-import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
+import { Component, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 
 import * as ol from "openlayers";
 import { KaartComponent } from "./kaart.component";
@@ -9,11 +9,8 @@ import { KaartComponentBase } from "./kaart-component-base";
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class KaartKnopZoomSliderComponent extends KaartComponentBase implements OnInit, OnDestroy {
-  private zoomSlider: ol.control.ZoomSlider;
-
-  constructor(private readonly kaart: KaartComponent, zone: NgZone) {
-    super(zone);
+export class KaartKnopZoomSliderComponent {
+  constructor() {
     throw new Error("nog niet geïmplementeerd");
   }
 }

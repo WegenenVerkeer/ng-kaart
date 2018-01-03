@@ -1,8 +1,9 @@
 import { Component } from "@angular/core";
 import * as ol from "openlayers";
-import { GoogleLocatieZoekerService } from "../lib/google-locatie-zoeker/google-locatie-zoeker.service";
 import "rxjs/add/operator/mergeMap";
 import "rxjs/add/operator/map";
+
+import { GoogleLocatieZoekerService } from "../lib/google-locatie-zoeker/google-locatie-zoeker.service";
 import { CoordinatenService } from "../lib/kaart/coordinaten.service";
 
 @Component({

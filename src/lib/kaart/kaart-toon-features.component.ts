@@ -1,4 +1,4 @@
-import { Component, DoCheck, EventEmitter, Input, NgZone, OnDestroy, OnInit, Output, ViewEncapsulation } from "@angular/core";
+import { Component, DoCheck, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from "@angular/core";
 import { KaartComponent } from "./kaart.component";
 import { KaartVectorLaagComponent } from "./kaart-vector-laag.component";
 import { KaartClassicComponent } from "./kaart-classic.component";

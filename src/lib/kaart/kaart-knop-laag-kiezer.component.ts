@@ -1,4 +1,4 @@
-import { Component, Input, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
+import { Component, Input, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 import { KaartComponent } from "./kaart.component";
 
 @Component({
@@ -12,7 +12,7 @@ export class KaartKnopLaagKiezerComponent implements OnInit, OnDestroy {
 
   // laagKiezer: LayerSwitcher;
 
-  constructor(protected kaart: KaartComponent, private zone: NgZone) {}
+  constructor(protected kaart: KaartComponent) {}
 
   ngOnInit(): void {
     // this.zone.runOutsideAngular(() => {

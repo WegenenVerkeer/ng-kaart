@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
+import { Component, ElementRef, Input, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation, Inject } from "@angular/core";
 import { Observable } from "rxjs/Observable";
 import "rxjs/add/observable/of";
 import "rxjs/add/observable/combineLatest";
@@ -16,9 +16,9 @@ import { asap } from "rxjs/scheduler/asap";
 import { List, Map } from "immutable";
 
 import * as ol from "openlayers";
+import proj4 from "proj4";
 
-import { KaartConfig } from "./kaart.config";
-import { CoordinatenService } from "./coordinaten.service";
+import { KaartConfig, KAART_CFG } from "./kaart.config";
 import { KaartComponentBase } from "./kaart-component-base";
 import { Scheduler } from "rxjs/Scheduler";
 import { KaartWithInfo } from "./kaart-with-info";
@@ -35,6 +35,8 @@ import * as red from "./kaart-reducer";
   encapsulation: ViewEncapsulation.Native
 })
 export class KaartComponent extends KaartComponentBase implements OnInit, OnDestroy {
+  private static readonly lambert72 = KaartComponent.configureerLambert72();
+
   @ViewChild("map") mapElement: ElementRef;
 
   @Input() kaartEvt$: Observable<prt.KaartEvnt> = Observable.empty();
@@ -43,7 +45,16 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   @Input() maxZoom = 13; // TODO naar config
   @Input() naam = "kaart";
 
-  constructor(readonly config: KaartConfig, zone: NgZone, private coordinatenService: CoordinatenService) {
+  private static configureerLambert72() {
+    ol.proj.setProj4(proj4);
+    proj4.defs(
+      "EPSG:31370",
+      "+proj=lcc +lat_1=51.16666723333333 +lat_2=49.8333339 +lat_0=90 +lon_0=4.367486666666666 +x_0=150000.013 +y_0=5400088.438 " +
+        "+ellps=intl +towgs84=-125.8,79.9,-100.5 +units=m +no_defs"
+    );
+  }
+
+  constructor(@Inject(KAART_CFG) readonly config: KaartConfig, zone: NgZone) {
     super(zone);
   }
 
@@ -57,27 +68,19 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   }
 
   private bindObservables() {
-    // We willen de kaart in een observable zodat we veilig kunnen combineren, maar we willen ook dat de observable open blijft
-    // want als de kaart observable afgesloten zou worden, dan zouden ook de combinaties afgesloten worden.
-    const kaart$: Observable<KaartWithInfo> = Observable.of([]) // er is geen unit in TS
-      .observeOn(asap)
-      .leaveZone(this.zone)
-      .map(_ => this.maakKaart()) // maak een kaart obv middelpunt en zoom
-      .concat(Observable.never<KaartWithInfo>())
-      .shareReplay(); // alle toekomstige subscribers krijgen de ene kaart
+    this.runAsapOutsideAngular(() => {
+      const kaart = this.maakKaart();
 
-    Observable.combineLatest(kaart$, this.destroying$)
-      .map(([kaart, _]) => kaart)
-      .observeOn(asap)
-      .leaveZone(this.zone)
-      .subscribe(k => {
-        console.log("Kaart opkuisen", k);
-        k.map.setTarget(null);
+      this.destroying$.leaveZone(this.zone).subscribe(_ => {
+        console.log("kaart opkuisen");
+        kaart.map.setTarget(null);
       });
 
-    kaart$
-      .switchMap(kaart => this.kaartEvt$.reduce(red.kaartReducer, kaart))
-      .subscribe(x => console.log("reduced", x), e => console.log("error", e), () => console.log("kaart & cmd terminated"));
+      this.kaartEvt$
+        .leaveZone(this.zone)
+        .reduce(red.kaartReducer, kaart)
+        .subscribe(x => console.log("reduced", x), e => console.log("error", e), () => console.log("kaart & cmd terminated"));
+    });
   }
 
   private maakKaart(): KaartWithInfo {

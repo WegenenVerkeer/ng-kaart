@@ -1,4 +1,4 @@
-import {KaartPage} from "../pages/kaart.po";
+import { KaartPage } from "../pages/kaart.po";
 
 describe("Als ik de kaart component bekijk", function() {
   const page: KaartPage = new KaartPage();

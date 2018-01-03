@@ -47,20 +47,20 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWit
  *  Toevoegen bovenaan de kaart.
  */
 function addLaagOnTop(kaart: KaartWithInfo, laag: ke.Laag): KaartWithInfo {
-  kaart.map.addLayer(toOlLayer(kaart.config, laag)); // Eikes!
-  return { ...kaart, lagen: kaart.lagen.push(laag) };
+  const layer = toOlLayer(kaart.config, laag);
+  kaart.map.addLayer(layer);
+  return { ...kaart, lagen: kaart.lagen.set(laag.titel, layer) };
 }
 
 /**
  * Een laag verwijderen. De titel van de laag bepaalt welke er verwijderd wordt.
  */
 function removeLaag(kaart: KaartWithInfo, titel: string): KaartWithInfo {
-  const teVerwijderen = kaart.lagen.findIndex(l => l.titel === titel);
-  if (teVerwijderen >= 0) {
+  const teVerwijderen = kaart.lagen.get(titel);
+  if (teVerwijderen) {
     const layers = kaart.map.getLayers();
-    // we gaan er van uit dat de bovenste lagen achteraan staan bij ol
-    kaart.map.removeLayer(layers[teVerwijderen]); // Eikes!
-    return { ...kaart, lagen: kaart.lagen.delete(teVerwijderen) };
+    kaart.map.removeLayer(teVerwijderen);
+    return { ...kaart, lagen: kaart.lagen.delete(titel) };
   } else {
     return kaart;
   }
@@ -136,48 +136,33 @@ function updateViewport(kaart: KaartWithInfo, size: ol.Size): KaartWithInfo {
 }
 
 function toOlLayer(config: KaartConfig, laag: ke.Laag) {
-  // we weten dat er maar 3 types zijn anders moeten we met option werken
-  if (laag instanceof ke.WmsLaag) {
-    const l = laag as ke.WmsLaag;
-    return new ol.layer.Tile(<olx.layer.TileOptions>{
-      title: l.titel,
-      visible: true,
-      extent: l.extent,
-      source: new ol.source.TileWMS({
-        projection: null,
-        urls: l.urls.toArray(),
-        params: {
-          LAYERS: l.naam,
-          TILED: true,
-          SRS: config.srs,
-          version: l.versie
-        }
-      })
-    });
-  } else if (laag instanceof ke.WdbLaag) {
-    const l = laag as ke.WdbLaag;
-    return new ol.layer.Tile(<olx.layer.TileOptions>{
-      title: l.titel,
-      visible: true,
-      extent: l.extent,
-      source: new ol.source.TileWMS({
-        projection: null,
-        urls: [l.url],
-        params: {
-          LAYERS: l.naam,
-          TILED: true,
-          SRS: config.srs,
-          version: l.versie
-        }
-      })
-    });
-  } else {
-    const l = laag as ke.VectorLaag;
-    return new ol.layer.Vector(<olx.layer.VectorOptions>{
-      title: l.titel,
-      source: l.source,
-      visible: true,
-      style: l.style
-    });
+  switch (laag.type) {
+    case ke.ElementType.WMSLAAG: {
+      const l = laag as ke.WmsLaag;
+      return new ol.layer.Tile(<olx.layer.TileOptions>{
+        title: l.titel,
+        visible: true,
+        extent: l.extent,
+        source: new ol.source.TileWMS({
+          projection: null,
+          urls: l.urls.toArray(),
+          params: {
+            LAYERS: l.naam,
+            TILED: true,
+            SRS: config.srs,
+            version: l.versie
+          }
+        })
+      });
+    }
+    case ke.ElementType.VECTORLAAG: {
+      const l = laag as ke.VectorLaag;
+      return new ol.layer.Vector(<olx.layer.VectorOptions>{
+        title: l.titel,
+        source: l.source,
+        visible: true,
+        style: l.style
+      });
+    }
   }
 }

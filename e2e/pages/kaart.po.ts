@@ -1,7 +1,8 @@
-import {browser, by, element, ElementFinder} from "protractor";
-import {BasePage} from "./base.po";
+import { browser, protractor, by, element, ElementFinder, ProtractorExpectedConditions } from "protractor";
 
-export class KaartPage extends BasePage {
+export class KaartPage {
+  expectedConditions: ProtractorExpectedConditions = protractor.ExpectedConditions;
+
   kaartComponent: ElementFinder = element(by.css(".qa-kaart"));
 
   async gaNaarPagina(): Promise<any> {

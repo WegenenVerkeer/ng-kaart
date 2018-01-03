@@ -1,4 +1,5 @@
-import { Component, EventEmitter, Input, NgZone, OnDestroy, OnInit, Output, ViewEncapsulation } from "@angular/core";
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from "@angular/core";
+
 import { KaartVectorLaagComponent } from "./kaart-vector-laag.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
 
@@ -8,10 +9,6 @@ import { KaartClassicComponent } from "./kaart-classic.component";
   encapsulation: ViewEncapsulation.None
 })
 export class KaartTekenPolygoonLaagComponent extends KaartVectorLaagComponent {
-  @Output() polygonGetekend = new EventEmitter<ol.Feature>();
-
-  interactie: ol.interaction.Interaction;
-
   constructor(kaart: KaartClassicComponent) {
     super(kaart);
     throw new Error("Nog niet geïmplementeerd");

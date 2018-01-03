@@ -1,5 +1,6 @@
 import { Component, Input, ViewEncapsulation } from "@angular/core";
 import { List } from "immutable";
+import * as ol from "openlayers";
 
 import * as ke from "./kaart-elementen";
 import { KaartLaagComponent } from "./kaart-laag.component";
@@ -16,13 +17,20 @@ export class KaartWmsLaagComponent extends KaartLaagComponent {
   @Input() tiled = true;
   @Input() type: string;
   @Input() versie?: string;
-  @Input() extent: ol.Extent = [18000.0, 152999.75, 280144.0, 415143.75];
+  @Input() extent?: ol.Extent = [18000.0, 152999.75, 280144.0, 415143.75];
 
   constructor(kaart: KaartClassicComponent) {
     super(kaart);
   }
 
-  createLayer(): ke.Laag {
-    return new ke.WmsLaag(this.titel, this.laagNaam, this.extent, List(this.urls), this.versie);
+  createLayer(): ke.WmsLaag {
+    return {
+      type: ke.ElementType.WMSLAAG,
+      titel: this.titel,
+      naam: this.laagNaam,
+      extent: this.extent,
+      urls: List(this.urls),
+      versie: this.versie
+    };
   }
 }

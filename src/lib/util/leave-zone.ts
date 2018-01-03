@@ -8,8 +8,6 @@ import { ZoneLike } from "./zone-like";
  * Gebaseerd op https://github.com/ksachdeva/rxjs-zone-operators
  */
 
-type LeaveZoneSignature<T> = (zone: ZoneLike) => Observable<T>;
-
 class LeaveZoneSubscriber<T> extends Subscriber<T> {
   constructor(destination: Subscriber<T>, private _zone: ZoneLike) {
     super(destination);
@@ -37,7 +35,6 @@ Observable.prototype.leaveZone = leaveZone;
 declare module "rxjs/Observable" {
   // tslint:disable-next-line:no-shadowed-variable
   interface Observable<T> {
-    // leaveZone: LeaveZoneSignature<T>;
     leaveZone: typeof leaveZone;
   }
 }

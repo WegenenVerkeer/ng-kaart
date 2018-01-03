@@ -2,8 +2,6 @@
 
 <h2>Kaart</h2>
 
-<!--
--->
 <div class="qa-protractor">
   <h3>Kaart voor protractor</h3>
   
@@ -11,16 +9,16 @@
     <awv-kaart-ortho-laag [titel]="'Ortho'"></awv-kaart-ortho-laag>
   </awv-kaart-classic>
 </div>
-<h3>Zonder controls, enkel dienstkaart in kleur,</h3>
 
+<h3>Zonder controls, enkel dienstkaart in kleur</h3>
 <div>
   <awv-kaart-classic [naam]="'kleursimpel'" [breedte]="800">
     <awv-kaart-wdb-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-wdb-laag>
   </awv-kaart-classic>
 </div>
+
 <!--
 <h3>Ingezoomd + 1 feature + onclick event voor feature + schaal + volledig scherm knop</h3>
-
 <div>
   <awv-kaart [breedte]="800" [zoom]="7" [middelpunt]="installatie">
     <awv-kaart-wdb-laag [titel]="'Dienstkaart grijs'" [laag]="'dienstkaart-grijs'"></awv-kaart-wdb-laag>
@@ -37,7 +35,6 @@
 -->
 
 <h3>Ingezoomd dmv extent + schaal</h3>
-
 <div>
   <awv-kaart-classic [breedte]="800" [extent]="installatieExtent">
     <awv-kaart-wdb-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-wdb-laag>

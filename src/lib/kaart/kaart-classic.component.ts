@@ -1,7 +1,7 @@
-import { Component, ElementRef, Input, NgZone, OnDestroy, OnInit, OnChanges, SimpleChanges } from "@angular/core";
+import { Component, ElementRef, Input, OnDestroy, OnInit, OnChanges, SimpleChanges } from "@angular/core";
 import isEqual from "lodash-es/isEqual";
+import * as ol from "openlayers";
 
-import { CoordinatenService } from "./coordinaten.service";
 import { KaartEventDispatcher } from "./kaart-event-dispatcher";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol-events";
@@ -24,7 +24,7 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
 
   readonly dispatcher: KaartEventDispatcher = new KaartEventDispatcher();
 
-  constructor(private readonly zone: NgZone, private readonly coordinatenService: CoordinatenService) {}
+  constructor() {}
 
   ngOnInit() {
     // De volgorde van de dispatching hier is van belang voor wat de overhand heeft

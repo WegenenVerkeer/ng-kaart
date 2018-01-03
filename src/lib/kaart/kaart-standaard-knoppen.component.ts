@@ -1,4 +1,4 @@
-import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
+import { Component, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 
 import * as ol from "openlayers";
 
@@ -10,11 +10,10 @@ import { KaartComponentBase } from "./kaart-component-base";
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class KaartStandaardKnoppenComponent extends KaartComponentBase implements OnInit, OnDestroy {
+export class KaartStandaardKnoppenComponent {
   private controls: ol.control.Control[];
 
-  constructor(private readonly kaart: KaartComponent, zone: NgZone) {
-    super(zone);
+  constructor(private readonly kaart: KaartComponent) {
     throw new Error("nog niet geïmplementeerd");
   }
 }

@@ -1,23 +1,31 @@
-import { Component, ViewEncapsulation } from "@angular/core";
+import { Component, ViewEncapsulation, Inject } from "@angular/core";
 import { List } from "immutable";
 
 import * as ke from "./kaart-elementen";
 import { KaartComponent } from "./kaart.component";
-import { KaartConfig } from "./kaart.config";
+import { KaartConfig, KAART_CFG } from "./kaart.config";
 import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
 
+// TODO uitvissen waarom die speficieke URL zo belangrijk is.
 @Component({
   selector: "awv-kaart-wdb-laag",
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
 export class KaartWdbLaagComponent extends KaartWmsLaagComponent {
-  constructor(kaart: KaartClassicComponent, private readonly config: KaartConfig) {
+  constructor(kaart: KaartClassicComponent, @Inject(KAART_CFG) private readonly config: KaartConfig) {
     super(kaart);
   }
 
-  createLayer(): ke.Laag {
-    return new ke.WmsLaag(this.titel, this.laagNaam, this.extent, List(this.config.wdb.urls), this.versie);
+  createLayer(): ke.WmsLaag {
+    return {
+      type: ke.ElementType.WMSLAAG,
+      titel: this.titel,
+      naam: this.laagNaam,
+      extent: this.extent,
+      urls: List(this.config.wdb.urls),
+      versie: this.versie
+    };
   }
 }

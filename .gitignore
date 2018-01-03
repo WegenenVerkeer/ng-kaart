@@ -11,3 +11,4 @@ src/**/*.js.map
 e2e/**/*.js
 e2e/**/*.d.ts
 e2e/**/*.js.map
+.vscode/

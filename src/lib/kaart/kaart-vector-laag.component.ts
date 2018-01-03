@@ -1,4 +1,4 @@
-import { Component, Input, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
+import { Component, Input, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 import { KaartComponent } from "./kaart.component";
 
 import * as ol from "openlayers";
@@ -21,7 +21,13 @@ export class KaartVectorLaagComponent extends KaartLaagComponent {
     super(kaart);
   }
 
-  createLayer() {
-    return new ke.VectorLaag(this.titel, this.source, this.style, this.selecteerbaar);
+  createLayer(): ke.VectorLaag {
+    return {
+      type: ke.ElementType.VECTORLAAG,
+      titel: this.titel,
+      source: this.source,
+      style: this.style,
+      selecteerbaar: this.selecteerbaar
+    };
   }
 }

@@ -10,7 +10,7 @@ import { KaartTekenPolygoonLaagComponent } from "./kaart-teken-polygoon-laag.com
 import { KaartToonFeaturesComponent } from "./kaart-toon-features.component";
 import { KaartKnopVolledigSchermComponent } from "./kaart-knop-volledig-scherm.component";
 import { KaartSchaalComponent } from "./kaart-schaal.component";
-import { KaartConfig } from "./kaart.config";
+import { KaartConfig, KAART_CFG } from "./kaart.config";
 import { KaartWdbLaagComponent } from "./kaart-wdb-laag.component";
 import { KaartOrthoLaagComponent } from "./kaart-ortho-laag.component";
 import { CoordinatenService } from "./coordinaten.service";
@@ -42,33 +42,35 @@ const components: any[] = [
   providers: [CoordinatenService, KaartEventDispatcher]
 })
 export class KaartModule {
+  static defaultConfig: KaartConfig = {
+    wdb: {
+      urls: [
+        "https://wms1.apps.mow.vlaanderen.be/geoserver/wms",
+        "https://wms2.apps.mow.vlaanderen.be/geoserver/wms",
+        "https://wms3.apps.mow.vlaanderen.be/geoserver/wms"
+      ]
+    },
+    orthofotomozaiek: {
+      naam: "Ortho",
+      urls: ["http://geoservices.informatievlaanderen.be/raadpleegdiensten/omwrgbmrvl/wms"]
+    },
+    srs: "EPSG:31370",
+    defaults: {
+      zoom: 2,
+      middelpunt: [130000, 193000],
+      grootte: [undefined, 500]
+    }
+  };
+
   static forRoot(config: KaartConfig): ModuleWithProviders {
     return {
       ngModule: KaartModule,
-      providers: [{ provide: KaartConfig, useValue: config }, KaartEventDispatcher]
+      providers: [{ provide: KAART_CFG, useValue: config }, KaartEventDispatcher, KaartClassicComponent]
     };
   }
 
   static withDefaults(): ModuleWithProviders {
-    return KaartModule.forRoot({
-      wdb: {
-        urls: [
-          "https://wms1.apps.mow.vlaanderen.be/geoserver/wms",
-          "https://wms2.apps.mow.vlaanderen.be/geoserver/wms",
-          "https://wms3.apps.mow.vlaanderen.be/geoserver/wms"
-        ]
-      },
-      orthofotomozaiek: {
-        naam: "Ortho",
-        urls: ["http://geoservices.informatievlaanderen.be/raadpleegdiensten/omwrgbmrvl/wms"]
-      },
-      srs: "EPSG:31370",
-      defaults: {
-        zoom: 2,
-        middelpunt: [130000, 193000],
-        grootte: [undefined, 500]
-      }
-    });
+    return KaartModule.forRoot(KaartModule.defaultConfig);
   }
 }
 
@@ -89,3 +91,5 @@ export * from "./kaart-wdb-laag.component";
 export * from "./kaart-wms-laag.component";
 export * from "./kaart.component";
 export * from "./kaart-event-dispatcher";
+export * from "./kaart-protocol";
+export * from "./kaart-elementen";
