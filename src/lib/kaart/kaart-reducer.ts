@@ -47,9 +47,13 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWit
  *  Toevoegen bovenaan de kaart.
  */
 function addLaagOnTop(kaart: KaartWithInfo, laag: ke.Laag): KaartWithInfo {
-  const layer = toOlLayer(kaart.config, laag);
-  kaart.map.addLayer(layer);
-  return { ...kaart, lagen: kaart.lagen.set(laag.titel, layer) };
+  if (!kaart.lagen.has(laag.titel)) {
+    const layer = toOlLayer(kaart.config, laag);
+    kaart.map.addLayer(layer);
+    return { ...kaart, lagen: kaart.lagen.set(laag.titel, layer) };
+  } else {
+    return kaart;
+  }
 }
 
 /**
