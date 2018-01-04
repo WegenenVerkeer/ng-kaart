@@ -6,6 +6,8 @@ export enum KaartEvntTypes {
   REMOVED_LAAG,
   ADDED_SCHAAL,
   REMOVED_SCHAAL,
+  ADDED_FULL_SCREEN,
+  REMOVED_FULL_SCREEN,
   ADDED_STD_INT,
   REMOVED_STD_INT,
   MIDDELPUNT_CHANGED,
@@ -40,6 +42,18 @@ export class AddedSchaal implements KaartEvnt {
 
 export class RemovedSchaal implements KaartEvnt {
   readonly type = KaartEvntTypes.REMOVED_SCHAAL;
+
+  constructor() {}
+}
+
+export class AddedFullScreen implements KaartEvnt {
+  readonly type = KaartEvntTypes.ADDED_FULL_SCREEN;
+
+  constructor() {}
+}
+
+export class RemovedFullScreen implements KaartEvnt {
+  readonly type = KaartEvntTypes.REMOVED_FULL_SCREEN;
 
   constructor() {}
 }

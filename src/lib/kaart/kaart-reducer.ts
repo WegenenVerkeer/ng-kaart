@@ -18,6 +18,10 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWit
       return addSchaal(kaart);
     case prt.KaartEvntTypes.REMOVED_SCHAAL:
       return removeSchaal(kaart);
+    case prt.KaartEvntTypes.ADDED_FULL_SCREEN:
+      return addFullScreen(kaart);
+    case prt.KaartEvntTypes.REMOVED_FULL_SCREEN:
+      return removeFullScreen(kaart);
     case prt.KaartEvntTypes.ADDED_STD_INT:
       return addStandaardInteracties(kaart, (cmd as prt.AddedStandaardInteracties).scrollZoomOnFocus);
     case prt.KaartEvntTypes.REMOVED_STD_INT:
@@ -88,6 +92,25 @@ function removeSchaal(kaart: KaartWithInfo): KaartWithInfo {
   if (kaart.schaal) {
     kaart.map.removeControl(kaart.schaal);
     return { ...kaart, schaal: null };
+  } else {
+    return kaart;
+  }
+}
+
+function addFullScreen(kaart: KaartWithInfo): KaartWithInfo {
+  if (!kaart.fullScreen) {
+    const fullScreen = new ol.control.FullScreen();
+    kaart.map.addControl(fullScreen);
+    return { ...kaart, fullScreen: fullScreen };
+  } else {
+    return kaart;
+  }
+}
+
+function removeFullScreen(kaart: KaartWithInfo): KaartWithInfo {
+  if (kaart.fullScreen) {
+    kaart.map.removeControl(kaart.fullScreen);
+    return { ...kaart, fullScreen: null };
   } else {
     return kaart;
   }

@@ -17,22 +17,20 @@
   </awv-kaart-classic>
 </div>
 
-<!--
 <h3>Ingezoomd + 1 feature + onclick event voor feature + schaal + volledig scherm knop</h3>
 <div>
-  <awv-kaart [breedte]="800" [zoom]="7" [middelpunt]="installatie">
-    <awv-kaart-wdb-laag [titel]="'Dienstkaart grijs'" [laag]="'dienstkaart-grijs'"></awv-kaart-wdb-laag>
-    <awv-kaart-toon-features [features]="installaties"
-                             (featureGeselecteerd)="installatieGeselecteed($event)"></awv-kaart-toon-features>
+  <awv-kaart-classic [breedte]="800" [zoom]="7" [middelpunt]="installatie">
+    <awv-kaart-wdb-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-wdb-laag>
+    <!--<awv-kaart-toon-features [features]="installaties"-->
+                             <!--(featureGeselecteerd)="installatieGeselecteed($event)"></awv-kaart-toon-features>-->
     <awv-kaart-schaal></awv-kaart-schaal>
     <awv-kaart-knop-volledig-scherm></awv-kaart-knop-volledig-scherm>
-  </awv-kaart>
+  </awv-kaart-classic>
 
   <pre *ngFor="let event of installatieGeselecteerdEvents">
     Event gegooid: {{ event | json }}
   </pre>
 </div>
--->
 
 <h3>Ingezoomd dmv extent + schaal</h3>
 <div>
