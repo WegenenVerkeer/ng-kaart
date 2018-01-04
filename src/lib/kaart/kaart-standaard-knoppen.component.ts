@@ -1,9 +1,8 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
-
-import * as ol from "openlayers";
+import { Component, ViewEncapsulation } from "@angular/core";
 
 import { KaartComponent } from "./kaart.component";
-import { KaartComponentBase } from "./kaart-component-base";
+
+import * as ol from "openlayers";
 
 @Component({
   selector: "awv-kaart-standaard-knoppen",

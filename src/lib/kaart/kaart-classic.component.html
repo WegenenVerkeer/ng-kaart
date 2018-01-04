@@ -1,5 +1,7 @@
-<awv-kaart 
+<awv-kaart
 [kaartEvt$]='dispatcher.event$'
 [naam]='naam'
 [minZoom]='minZoom'
-[maxZoom]='maxZoom'></awv-kaart>
+[maxZoom]='maxZoom'
+(click)="focus()"
+(clickOutside)="geenFocus()"></awv-kaart>

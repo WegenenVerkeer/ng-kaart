@@ -11,7 +11,9 @@ export enum KaartEvntTypes {
   MIDDELPUNT_CHANGED,
   ZOOM_CHANGED,
   EXTENT_CHANGED,
-  VIEWPORT_CHANGED
+  VIEWPORT_CHANGED,
+  FOCUS_ON_MAP,
+  LOSE_FOCUS_ON_MAP
 }
 
 export interface KaartEvnt {
@@ -45,7 +47,7 @@ export class RemovedSchaal implements KaartEvnt {
 export class AddedStandaardInteracties implements KaartEvnt {
   readonly type = KaartEvntTypes.ADDED_STD_INT;
 
-  constructor() {}
+  constructor(readonly scrollZoomOnFocus = false) {}
 }
 
 export class RemovedStandaardInteracties implements KaartEvnt {
@@ -76,4 +78,16 @@ export class ViewportChanged implements KaartEvnt {
   readonly type = KaartEvntTypes.VIEWPORT_CHANGED;
 
   constructor(readonly size: ol.Size) {}
+}
+
+export class FocusOnMap implements KaartEvnt {
+  readonly type = KaartEvntTypes.FOCUS_ON_MAP;
+
+  constructor() {}
+}
+
+export class LoseFocusOnMap implements KaartEvnt {
+  readonly type = KaartEvntTypes.LOSE_FOCUS_ON_MAP;
+
+  constructor() {}
 }

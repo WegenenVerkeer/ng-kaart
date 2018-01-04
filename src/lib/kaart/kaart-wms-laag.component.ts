@@ -1,10 +1,11 @@
 import { Component, Input, ViewEncapsulation } from "@angular/core";
 import { List } from "immutable";
+
 import * as ol from "openlayers";
 
-import * as ke from "./kaart-elementen";
 import { KaartLaagComponent } from "./kaart-laag.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
+import { ElementType, WmsLaag } from "./kaart-elementen";
 
 @Component({
   selector: "awv-kaart-wms-laag",
@@ -23,9 +24,9 @@ export class KaartWmsLaagComponent extends KaartLaagComponent {
     super(kaart);
   }
 
-  createLayer(): ke.WmsLaag {
+  createLayer(): WmsLaag {
     return {
-      type: ke.ElementType.WMSLAAG,
+      type: ElementType.WMSLAAG,
       titel: this.titel,
       naam: this.laagNaam,
       extent: this.extent,

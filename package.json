@@ -44,10 +44,12 @@
     "precommit": "lint-staged"
   },
   "lint-staged": {
-    "src/**/*.ts": [
-      "tslint --type-check --project tsconfig.json --fix",
-      "git add"
-    ]
+    "linters": {
+      "src/**/*.ts": [
+        "tslint --type-check --project tsconfig.json --fix",
+        "git add"
+      ]
+    }
   },
   "dependencies": {
     "@angular/animations": "5.1.2",
@@ -65,6 +67,7 @@
     "immutable": "3.8.2",
     "lodash-es": "4.17.4",
     "material-design-icons": "^3.0.1",
+    "ng4-click-outside": "1.0.1",
     "ol3-layerswitcher": "walkermatt/ol3-layerswitcher#d0c59c29089fe7e54584f6d2a40bbbf1deffafc4",
     "openlayers": "4.3.4",
     "proj4": "2.4.4",

@@ -1,11 +1,10 @@
 import { Component, ViewEncapsulation, Inject } from "@angular/core";
 import { List } from "immutable";
 
-import * as ke from "./kaart-elementen";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartConfig, KAART_CFG } from "./kaart.config";
 import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
-import { KaartEventDispatcher } from "./kaart-event-dispatcher";
+import { ElementType, WmsLaag } from "./kaart-elementen";
 
 @Component({
   selector: "awv-kaart-ortho-laag",
@@ -17,9 +16,9 @@ export class KaartOrthoLaagComponent extends KaartWmsLaagComponent {
     super(kaart);
   }
 
-  createLayer(): ke.WmsLaag {
+  createLayer(): WmsLaag {
     return {
-      type: ke.ElementType.WMSLAAG,
+      type: ElementType.WMSLAAG,
       titel: this.titel,
       naam: this.config.orthofotomozaiek.naam,
       extent: this.extent,

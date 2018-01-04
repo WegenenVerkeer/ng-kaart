@@ -1,10 +1,7 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
+import { Component, Input, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 
-import * as ol from "openlayers";
-
-import * as prt from "./kaart-protocol";
-import { KaartComponent } from "./kaart.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
+import { AddedStandaardInteracties, RemovedStandaardInteracties } from "./kaart-protocol-events";
 
 @Component({
   selector: "awv-kaart-standaard-interacties",
@@ -12,15 +9,15 @@ import { KaartClassicComponent } from "./kaart-classic.component";
   encapsulation: ViewEncapsulation.None
 })
 export class KaartStandaardInteractiesComponent implements OnInit, OnDestroy {
-  private interactions: ol.interaction.Interaction[];
+  @Input() focusVoorZoom = false;
 
   constructor(private readonly kaart: KaartClassicComponent) {}
 
   ngOnInit(): void {
-    this.kaart.dispatcher.dispatch(new prt.AddedStandaardInteracties());
+    this.kaart.dispatcher.dispatch(new AddedStandaardInteracties(this.focusVoorZoom));
   }
 
   ngOnDestroy(): void {
-    this.kaart.dispatcher.dispatch(new prt.RemovedStandaardInteracties());
+    this.kaart.dispatcher.dispatch(new RemovedStandaardInteracties());
   }
 }

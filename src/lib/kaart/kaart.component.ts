@@ -12,19 +12,15 @@ import "rxjs/add/operator/map";
 import "rxjs/add/operator/observeOn";
 import "rxjs/add/operator/reduce";
 import "rxjs/add/operator/shareReplay";
-import { asap } from "rxjs/scheduler/asap";
-import { List, Map } from "immutable";
 
 import * as ol from "openlayers";
 import proj4 from "proj4";
 
 import { KaartConfig, KAART_CFG } from "./kaart.config";
 import { KaartComponentBase } from "./kaart-component-base";
-import { Scheduler } from "rxjs/Scheduler";
 import { KaartWithInfo } from "./kaart-with-info";
 import "../util/leave-zone";
 import "../util/observable-run";
-import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import * as red from "./kaart-reducer";
 
