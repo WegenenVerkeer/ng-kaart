@@ -15,7 +15,10 @@ export enum KaartEvntTypes {
   EXTENT_CHANGED,
   VIEWPORT_CHANGED,
   FOCUS_ON_MAP,
-  LOSE_FOCUS_ON_MAP
+  LOSE_FOCUS_ON_MAP,
+  RENDER_FEATURES,
+  CLEAR_FEATURES,
+  REPLACE_FEATURES
 }
 
 export interface KaartEvnt {
@@ -104,4 +107,22 @@ export class LoseFocusOnMap implements KaartEvnt {
   readonly type = KaartEvntTypes.LOSE_FOCUS_ON_MAP;
 
   constructor() {}
+}
+
+export class RenderFeatures implements KaartEvnt {
+  readonly type = KaartEvntTypes.RENDER_FEATURES;
+
+  constructor(readonly titel: string, readonly features: ol.Collection<ol.Feature>) {}
+}
+
+export class ClearFeatures implements KaartEvnt {
+  readonly type = KaartEvntTypes.CLEAR_FEATURES;
+
+  constructor(readonly titel: string) {}
+}
+
+export class ReplaceFeatures implements KaartEvnt {
+  readonly type = KaartEvntTypes.REPLACE_FEATURES;
+
+  constructor(readonly titel: string, readonly features: ol.Collection<ol.Feature>) {}
 }

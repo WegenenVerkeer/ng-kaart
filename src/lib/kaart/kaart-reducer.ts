@@ -38,6 +38,14 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWit
       return focusOnMap(kaart);
     case prt.KaartEvntTypes.LOSE_FOCUS_ON_MAP:
       return loseFocusOnMap(kaart);
+    case prt.KaartEvntTypes.RENDER_FEATURES:
+      const renderFeaturesEvent = cmd as prt.RenderFeatures;
+      return renderFeatures(kaart, renderFeaturesEvent.titel, renderFeaturesEvent.features);
+    case prt.KaartEvntTypes.CLEAR_FEATURES:
+      return clearFeatures(kaart, (cmd as prt.ClearFeatures).titel);
+    case prt.KaartEvntTypes.REPLACE_FEATURES:
+      const replaceFeaturesEvent = cmd as prt.ReplaceFeatures;
+      return replaceFeatures(kaart, replaceFeaturesEvent.titel, replaceFeaturesEvent.features);
     default:
       console.log("onverwacht commando", cmd);
       return kaart;
@@ -70,7 +78,6 @@ function addLaagOnTop(kaart: KaartWithInfo, laag: ke.Laag): KaartWithInfo {
 function removeLaag(kaart: KaartWithInfo, titel: string): KaartWithInfo {
   const teVerwijderen = kaart.lagen.get(titel);
   if (teVerwijderen) {
-    const layers = kaart.map.getLayers();
     kaart.map.removeLayer(teVerwijderen);
     return { ...kaart, lagen: kaart.lagen.delete(titel) };
   } else {
@@ -188,6 +195,31 @@ function updateViewport(kaart: KaartWithInfo, size: ol.Size): KaartWithInfo {
     size: kaart.map.getSize(),
     extent: kaart.map.getView().calculateExtent(kaart.map.getSize())
   };
+}
+
+function renderFeatures(kaart: KaartWithInfo, titel: string, features: ol.Collection<ol.Feature>): KaartWithInfo {
+  const laag = <ol.layer.Vector>kaart.lagen.get(titel);
+  if (laag) {
+    laag.getSource().addFeatures(features.getArray());
+  }
+  return kaart;
+}
+
+function clearFeatures(kaart: KaartWithInfo, titel: string): KaartWithInfo {
+  const laag = <ol.layer.Vector>kaart.lagen.get(titel);
+  if (laag) {
+    laag.getSource().clear(true);
+  }
+  return kaart;
+}
+
+function replaceFeatures(kaart: KaartWithInfo, titel: string, features: ol.Collection<ol.Feature>): KaartWithInfo {
+  const laag = <ol.layer.Vector>kaart.lagen.get(titel);
+  if (laag) {
+    laag.getSource().clear(true);
+    laag.getSource().addFeatures(features.getArray());
+  }
+  return kaart;
 }
 
 function toOlLayer(config: KaartConfig, laag: ke.Laag) {
