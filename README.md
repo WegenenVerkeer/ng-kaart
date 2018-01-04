@@ -14,9 +14,14 @@ Dit project ambieert de implementatie van Angular Package Format v4.0.
 
 Er is nog geen support voor een dergelijke packaging in Angular-CLI. We baseren ons op [https://github.com/filipesilva/angular-quickstart-lib]()
 
+## Beperkingen
+
+Deze component is enkel ontwikkeld om gebruikt te worden op Google Chrome. Om in Firefox te werken bijvoorbeeld zijn een aantal shims nodig. Zie ook de openlayers website. 
+
 ## Development
 
-TODO
+Deze component is gebaseerd op de source code van de kaartcomponent gebruikt door district center. 
+Nog niet alle features van de oorspronkelijke component zijn geïmplementeerd. Gelieve voor noodzakelijke features een featurerequest in github aan te maken.
 
 ### Code testen
 
@@ -33,6 +38,8 @@ Dit laat je ook toe om protractors te schrijven.
 Tot slot vormt de source code van deze pagina de gebruiksaanwijzing van de componenten.
 
 ### Locatie zoeker testen
+
+*Dit is nog niet getest sinds de refactoring*
 
 Dit doet CORS requests via een SSH tunnel:
 
