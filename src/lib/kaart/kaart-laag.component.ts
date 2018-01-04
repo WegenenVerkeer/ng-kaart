@@ -1,11 +1,8 @@
-import { Component, Input, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
-import { KaartComponent } from "./kaart.component";
-
-import * as prt from "./kaart-protocol";
-import * as ke from "./kaart-elementen";
+import { Input, OnDestroy, OnInit } from "@angular/core";
 
 import { KaartClassicComponent } from "./kaart-classic.component";
-import { KaartEventDispatcher } from "./kaart-event-dispatcher";
+import { AddedLaagOnTop, KaartEvnt, RemovedLaag } from "./kaart-protocol-events";
+import { Laag } from "./kaart-elementen";
 
 export abstract class KaartLaagComponent implements OnInit, OnDestroy {
   @Input() titel = "";
@@ -14,16 +11,16 @@ export abstract class KaartLaagComponent implements OnInit, OnDestroy {
   constructor(protected readonly kaart: KaartClassicComponent) {}
 
   ngOnInit(): void {
-    this.dispatch(new prt.AddedLaagOnTop(this.createLayer()));
+    this.dispatch(new AddedLaagOnTop(this.createLayer()));
   }
 
   ngOnDestroy(): void {
-    this.dispatch(new prt.RemovedLaag(this.titel));
+    this.dispatch(new RemovedLaag(this.titel));
   }
 
-  protected dispatch(evt: prt.KaartEvnt) {
+  protected dispatch(evt: KaartEvnt) {
     this.kaart.dispatcher.dispatch(evt);
   }
 
-  abstract createLayer(): ke.Laag;
+  abstract createLayer(): Laag;
 }

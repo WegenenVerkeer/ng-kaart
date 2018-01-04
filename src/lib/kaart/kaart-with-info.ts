@@ -16,7 +16,8 @@ export class KaartWithInfo {
     readonly middelpunt: ol.Coordinate = null,
     readonly zoom: number = null,
     readonly extent: ol.Extent = null,
-    readonly size: [number, number] = null
+    readonly size: [number, number] = null,
+    readonly scrollZoomOnFocus = false
   ) {
     this.middelpunt = map.getView().getCenter();
     this.zoom = map.getView().getZoom();

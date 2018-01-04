@@ -6,6 +6,7 @@ import { AppComponent } from "./app.component";
 import { FormsModule } from "@angular/forms";
 import { GoogleLocatieZoekerModule } from "../lib/google-locatie-zoeker/index";
 import { HttpModule } from "@angular/http";
+import { ClickOutsideModule } from "ng4-click-outside";
 
 @NgModule({
   declarations: [AppComponent],
@@ -17,6 +18,7 @@ import { HttpModule } from "@angular/http";
       // ssh tunnel naar apigateway van dev - ssh -L 5100:apigateway.dev.awv.internal:80 management.apps.mow.vlaanderen.be
       url: "http://apigateway:5100/locatiezoeker"
     }),
+    ClickOutsideModule,
     HttpModule
   ],
   providers: [],

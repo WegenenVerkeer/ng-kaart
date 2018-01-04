@@ -19,7 +19,7 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWit
     case prt.KaartEvntTypes.REMOVED_SCHAAL:
       return removeSchaal(kaart);
     case prt.KaartEvntTypes.ADDED_STD_INT:
-      return addStandaardInteracties(kaart);
+      return addStandaardInteracties(kaart, (cmd as prt.AddedStandaardInteracties).scrollZoomOnFocus);
     case prt.KaartEvntTypes.REMOVED_STD_INT:
       return removeStandaardInteracties(kaart);
     case prt.KaartEvntTypes.MIDDELPUNT_CHANGED:
@@ -30,6 +30,10 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWit
       return updateExtent(kaart, (cmd as prt.ExtentChanged).extent);
     case prt.KaartEvntTypes.VIEWPORT_CHANGED:
       return updateViewport(kaart, (cmd as prt.ViewportChanged).size);
+    case prt.KaartEvntTypes.FOCUS_ON_MAP:
+      return focusOnMap(kaart);
+    case prt.KaartEvntTypes.LOSE_FOCUS_ON_MAP:
+      return loseFocusOnMap(kaart);
     default:
       console.log("onverwacht commando", cmd);
       return kaart;
@@ -89,23 +93,47 @@ function removeSchaal(kaart: KaartWithInfo): KaartWithInfo {
   }
 }
 
-function addStandaardInteracties(kaart: KaartWithInfo): KaartWithInfo {
+function addStandaardInteracties(kaart: KaartWithInfo, scrollZoomOnFocus: boolean): KaartWithInfo {
   if (!kaart.stdInteracties || kaart.stdInteracties.isEmpty()) {
     const interacties = List(ol.interaction.defaults().getArray());
     interacties.forEach(i => kaart.map.addInteraction(i));
-    return { ...kaart, stdInteracties: interacties };
-  } else {
-    return kaart;
+    kaart = { ...kaart, stdInteracties: interacties, scrollZoomOnFocus: scrollZoomOnFocus };
+    if (scrollZoomOnFocus) {
+      toggleScrollZoomOnFocus(kaart, false);
+    }
   }
+  return kaart;
 }
 
 function removeStandaardInteracties(kaart: KaartWithInfo): KaartWithInfo {
   if (kaart.stdInteracties) {
     kaart.stdInteracties.forEach(i => kaart.map.removeInteraction(i));
-    return { ...kaart, stdInteracties: null };
+    return { ...kaart, stdInteracties: null, scrollZoomOnFocus: false };
   } else {
     return kaart;
   }
+}
+
+function focusOnMap(kaart: KaartWithInfo): KaartWithInfo {
+  if (kaart.scrollZoomOnFocus) {
+    toggleScrollZoomOnFocus(kaart, true);
+  }
+  return kaart;
+}
+
+function loseFocusOnMap(kaart: KaartWithInfo): KaartWithInfo {
+  if (kaart.scrollZoomOnFocus) {
+    toggleScrollZoomOnFocus(kaart, false);
+  }
+  return kaart;
+}
+
+function toggleScrollZoomOnFocus(kaart: KaartWithInfo, active: boolean) {
+  kaart.stdInteracties.forEach(interaction => {
+    if (interaction instanceof ol.interaction.MouseWheelZoom) {
+      interaction.setActive(active);
+    }
+  });
 }
 
 function updateMiddelpunt(kaart: KaartWithInfo, coordinate: [number, number]): KaartWithInfo {

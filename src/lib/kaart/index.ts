@@ -17,6 +17,7 @@ import { CoordinatenService } from "./coordinaten.service";
 import { KaartStandaardInteractiesComponent } from "./kaart-standaard-interacties.component";
 import { KaartStandaardKnoppenComponent } from "./kaart-standaard-knoppen.component";
 import { KaartEventDispatcher } from "./kaart-event-dispatcher";
+import { ClickOutsideModule } from "ng4-click-outside";
 
 const components: any[] = [
   KaartComponent,
@@ -36,7 +37,7 @@ const components: any[] = [
 ];
 
 @NgModule({
-  imports: [CommonModule],
+  imports: [CommonModule, ClickOutsideModule],
   declarations: [components],
   exports: [components],
   providers: [CoordinatenService, KaartEventDispatcher]
