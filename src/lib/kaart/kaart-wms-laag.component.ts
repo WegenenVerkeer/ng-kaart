@@ -1,12 +1,11 @@
 import { Component, Input, ViewEncapsulation } from "@angular/core";
 import { List } from "immutable";
 
+import * as ol from "openlayers";
+
 import { KaartLaagComponent } from "./kaart-laag.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
-
 import { ElementType, WmsLaag } from "./kaart-elementen";
-
-import * as ol from "openlayers";
 
 @Component({
   selector: "awv-kaart-wms-laag",

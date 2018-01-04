@@ -1,5 +1,6 @@
 import { ModuleWithProviders, NgModule } from "@angular/core";
 import { CommonModule } from "@angular/common";
+import { ClickOutsideModule } from "ng4-click-outside";
 import { KaartComponent } from "./kaart.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartKnopZoomSliderComponent } from "./kaart-knop-zoom-slider.component";
@@ -17,7 +18,6 @@ import { CoordinatenService } from "./coordinaten.service";
 import { KaartStandaardInteractiesComponent } from "./kaart-standaard-interacties.component";
 import { KaartStandaardKnoppenComponent } from "./kaart-standaard-knoppen.component";
 import { KaartEventDispatcher } from "./kaart-event-dispatcher";
-import { ClickOutsideModule } from "ng4-click-outside";
 
 const components: any[] = [
   KaartComponent,
