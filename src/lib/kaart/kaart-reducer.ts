@@ -96,13 +96,12 @@ function removeSchaal(kaart: KaartWithInfo): KaartWithInfo {
 function addStandaardInteracties(kaart: KaartWithInfo, scrollZoomOnFocus: boolean): KaartWithInfo {
   if (!kaart.stdInteracties || kaart.stdInteracties.isEmpty()) {
     const interacties = List(ol.interaction.defaults().getArray());
-    interacties.forEach(i => kaart.map.addInteraction(i));
-    kaart = { ...kaart, stdInteracties: interacties, scrollZoomOnFocus: scrollZoomOnFocus };
-    if (scrollZoomOnFocus) {
-      toggleScrollZoomOnFocus(kaart, false);
-    }
+    interacties.forEach(i => kaart.map.addInteraction(i)); // side effects :-(
+    const newKaart = { ...kaart, stdInteracties: interacties, scrollZoomOnFocus: scrollZoomOnFocus };
+    return activateMouseWheelZoom(newKaart, !scrollZoomOnFocus);
+  } else {
+    return kaart;
   }
-  return kaart;
 }
 
 function removeStandaardInteracties(kaart: KaartWithInfo): KaartWithInfo {
@@ -116,24 +115,25 @@ function removeStandaardInteracties(kaart: KaartWithInfo): KaartWithInfo {
 
 function focusOnMap(kaart: KaartWithInfo): KaartWithInfo {
   if (kaart.scrollZoomOnFocus) {
-    toggleScrollZoomOnFocus(kaart, true);
+    return activateMouseWheelZoom(kaart, true);
+  } else {
+    return kaart;
   }
-  return kaart;
 }
 
 function loseFocusOnMap(kaart: KaartWithInfo): KaartWithInfo {
   if (kaart.scrollZoomOnFocus) {
-    toggleScrollZoomOnFocus(kaart, false);
+    return activateMouseWheelZoom(kaart, false);
+  } else {
+    return kaart;
   }
-  return kaart;
 }
 
-function toggleScrollZoomOnFocus(kaart: KaartWithInfo, active: boolean) {
-  kaart.stdInteracties.forEach(interaction => {
-    if (interaction instanceof ol.interaction.MouseWheelZoom) {
-      interaction.setActive(active);
-    }
-  });
+function activateMouseWheelZoom(kaart: KaartWithInfo, active: boolean): KaartWithInfo {
+  kaart.stdInteracties
+    .filter(interaction => interaction instanceof ol.interaction.MouseWheelZoom)
+    .forEach(interaction => interaction.setActive(active));
+  return kaart;
 }
 
 function updateMiddelpunt(kaart: KaartWithInfo, coordinate: [number, number]): KaartWithInfo {

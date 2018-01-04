@@ -1,10 +1,10 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
-import { KaartEventDispatcher } from "./kaart-event-dispatcher";
-import { ExtentChanged, FocusOnMap, LoseFocusOnMap, MiddelpuntChanged, ViewportChanged, ZoomChanged } from "./kaart-protocol-events";
-
 import isEqual from "lodash-es/isEqual";
 
 import * as ol from "openlayers";
+
+import { KaartEventDispatcher } from "./kaart-event-dispatcher";
+import { ExtentChanged, FocusOnMap, LoseFocusOnMap, MiddelpuntChanged, ViewportChanged, ZoomChanged } from "./kaart-protocol-events";
 
 @Component({
   selector: "awv-kaart-classic",
