@@ -63,7 +63,7 @@ De code style wordt automatisch afgedwongen via tslint + prettier. Deze is inges
 
 ## Publish
 
-We gebruiken [travis-ci](https://travis-ci.org/WegenenVerkeer/ng-kaart) als CI tool
+We gebruiken [travis-ci](https://travis-ci.org/WegenenVerkeer/ng-kaart) als CI tool.
 
 # Resources
 
