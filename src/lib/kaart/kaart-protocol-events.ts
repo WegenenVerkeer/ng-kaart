@@ -1,3 +1,5 @@
+import { List } from "immutable";
+
 import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";
 
@@ -16,9 +18,7 @@ export enum KaartEvntTypes {
   VIEWPORT_CHANGED,
   FOCUS_ON_MAP,
   LOSE_FOCUS_ON_MAP,
-  RENDER_FEATURES,
-  CLEAR_FEATURES,
-  REPLACE_FEATURES
+  SHOW_FEATURES
 }
 
 export interface KaartEvnt {
@@ -109,20 +109,8 @@ export class LoseFocusOnMap implements KaartEvnt {
   constructor() {}
 }
 
-export class RenderFeatures implements KaartEvnt {
-  readonly type = KaartEvntTypes.RENDER_FEATURES;
-
-  constructor(readonly titel: string, readonly features: ol.Collection<ol.Feature>) {}
-}
-
-export class ClearFeatures implements KaartEvnt {
-  readonly type = KaartEvntTypes.CLEAR_FEATURES;
-
-  constructor(readonly titel: string) {}
-}
-
 export class ReplaceFeatures implements KaartEvnt {
-  readonly type = KaartEvntTypes.REPLACE_FEATURES;
+  readonly type = KaartEvntTypes.SHOW_FEATURES;
 
-  constructor(readonly titel: string, readonly features: ol.Collection<ol.Feature>) {}
+  constructor(readonly titel: string, readonly features: List<ol.Feature>) {}
 }

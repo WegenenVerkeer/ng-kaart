@@ -38,12 +38,7 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWit
       return focusOnMap(kaart);
     case prt.KaartEvntTypes.LOSE_FOCUS_ON_MAP:
       return loseFocusOnMap(kaart);
-    case prt.KaartEvntTypes.RENDER_FEATURES:
-      const renderFeaturesEvent = cmd as prt.RenderFeatures;
-      return renderFeatures(kaart, renderFeaturesEvent.titel, renderFeaturesEvent.features);
-    case prt.KaartEvntTypes.CLEAR_FEATURES:
-      return clearFeatures(kaart, (cmd as prt.ClearFeatures).titel);
-    case prt.KaartEvntTypes.REPLACE_FEATURES:
+    case prt.KaartEvntTypes.SHOW_FEATURES:
       const replaceFeaturesEvent = cmd as prt.ReplaceFeatures;
       return replaceFeatures(kaart, replaceFeaturesEvent.titel, replaceFeaturesEvent.features);
     default:
@@ -60,16 +55,14 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWit
 // model.
 
 /**
- *  Toevoegen bovenaan de kaart.
+ *  Toevoegen bovenaan de kaart. Als er al een laag was met delfde titel, dan wordt die eerst verwijderd.
  */
 function addLaagOnTop(kaart: KaartWithInfo, laag: ke.Laag): KaartWithInfo {
-  if (!kaart.lagen.has(laag.titel)) {
-    const layer = toOlLayer(kaart.config, laag);
-    kaart.map.addLayer(layer);
-    return { ...kaart, lagen: kaart.lagen.set(laag.titel, layer) };
-  } else {
-    return kaart;
-  }
+  // is er een state monad voor TS?
+  const kaartNaVerwijdering = removeLaag(kaart, laag.titel);
+  const layer = toOlLayer(kaartNaVerwijdering.config, laag);
+  kaartNaVerwijdering.map.addLayer(layer);
+  return { ...kaartNaVerwijdering, lagen: kaartNaVerwijdering.lagen.set(laag.titel, layer) };
 }
 
 /**
@@ -187,7 +180,13 @@ function updateExtent(kaart: KaartWithInfo, extent: ol.Extent): KaartWithInfo {
 }
 
 function updateViewport(kaart: KaartWithInfo, size: ol.Size): KaartWithInfo {
-  kaart.container.style.height = `${size[1]}px`; // eerst de container aanpassen of de kaart is uitgerekt
+  // eerst de container aanpassen of de kaart is uitgerekt
+  if (size[0]) {
+    kaart.container.style.width = `${size[0]}px`;
+  }
+  if (size[1]) {
+    kaart.container.style.height = `${size[1]}px`;
+  }
   kaart.map.setSize(size);
   kaart.map.updateSize();
   return {
@@ -197,27 +196,11 @@ function updateViewport(kaart: KaartWithInfo, size: ol.Size): KaartWithInfo {
   };
 }
 
-function renderFeatures(kaart: KaartWithInfo, titel: string, features: ol.Collection<ol.Feature>): KaartWithInfo {
+function replaceFeatures(kaart: KaartWithInfo, titel: string, features: List<ol.Feature>): KaartWithInfo {
   const laag = <ol.layer.Vector>kaart.lagen.get(titel);
-  if (laag) {
-    laag.getSource().addFeatures(features.getArray());
-  }
-  return kaart;
-}
-
-function clearFeatures(kaart: KaartWithInfo, titel: string): KaartWithInfo {
-  const laag = <ol.layer.Vector>kaart.lagen.get(titel);
-  if (laag) {
+  if (laag && laag.getSource) {
     laag.getSource().clear(true);
-  }
-  return kaart;
-}
-
-function replaceFeatures(kaart: KaartWithInfo, titel: string, features: ol.Collection<ol.Feature>): KaartWithInfo {
-  const laag = <ol.layer.Vector>kaart.lagen.get(titel);
-  if (laag) {
-    laag.getSource().clear(true);
-    laag.getSource().addFeatures(features.getArray());
+    laag.getSource().addFeatures(features.toArray());
   }
   return kaart;
 }

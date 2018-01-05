@@ -1,45 +1,47 @@
 import { Component, DoCheck, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from "@angular/core";
+import { List } from "immutable";
 
-import isEqual from "lodash-es/isEqual";
 import * as ol from "openlayers";
 
 import { KaartVectorLaagComponent } from "./kaart-vector-laag.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
-import { ClearFeatures, RenderFeatures, ReplaceFeatures } from "./kaart-protocol-events";
+import { AddedLaagOnTop, ReplaceFeatures } from "./kaart-protocol-events";
+import { VectorLaag } from "./kaart-elementen";
 
 @Component({
-  selector: "awv-kaart-toon-features",
+  selector: "awv-kaart-features-laag",
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class KaartToonFeaturesComponent extends KaartVectorLaagComponent implements OnInit, OnDestroy, DoCheck {
-  @Input() features = new ol.Collection<ol.Feature>();
+export class KaartFeaturesLaagComponent extends KaartVectorLaagComponent implements OnInit, OnDestroy, DoCheck {
+  @Input() features = [] as ol.Feature[];
 
   // TODO combineren met 'selecteerbaar' van kaart-vector-laag
   @Output() featureGeselecteerd: EventEmitter<ol.Feature> = new EventEmitter<ol.Feature>();
 
-  private vorigeFeatures: ol.Feature[] = [];
+  private vorigeFeatures: List<ol.Feature> = List();
 
   constructor(kaart: KaartClassicComponent) {
     super(kaart);
   }
 
   ngOnInit(): void {
-    super.ngOnInit();
-    this.vorigeFeatures = this.features.getArray();
-    this.dispatch(new RenderFeatures(this.titel, this.features));
+    super.ngOnInit(); // dit voegt een vectorlaag toe
+    this.vorigeFeatures = List(this.features);
+    this.dispatch(new ReplaceFeatures(this.titel, this.vorigeFeatures));
   }
 
   ngOnDestroy(): void {
-    this.dispatch(new ClearFeatures(this.titel));
-    super.ngOnDestroy();
+    this.dispatch(new ReplaceFeatures(this.titel, List()));
+    super.ngOnDestroy(); // dit verwijdert de laag weer
   }
 
   ngDoCheck(): void {
     // deze check ipv ngOnChanges want wijziging aan features staat niet in SimpleChanges
-    if (!isEqual(this.vorigeFeatures, this.features.getArray())) {
-      this.vorigeFeatures = this.features.getArray();
-      this.dispatch(new ReplaceFeatures(this.titel, this.features));
+    const features = List(this.features);
+    if (!this.vorigeFeatures.equals(features)) {
+      this.vorigeFeatures = features;
+      this.dispatch(new ReplaceFeatures(this.titel, features));
     }
   }
 }

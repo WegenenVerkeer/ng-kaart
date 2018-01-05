@@ -16,40 +16,52 @@ export class AppComponent {
   geoJsonFormatter = new ol.format.GeoJSON();
 
   locatieQuery: string;
-  installaties: ol.Collection<ol.Feature> = new ol.Collection();
+  installaties: ol.Feature[] = [];
   zoekresultaten: ol.Collection<ol.Feature> = new ol.Collection();
 
-  installatie: ol.Coordinate = [180055.62, 190922.71];
-  installatieExtent: ol.Extent = [179187.32699999958, 190705.7360999994, 180221.3849999979, 190732.32290000096];
+  installatie: ol.Coordinate = [169500, 190500];
+  installatieExtent: ol.Extent = [180000, 190000, 181000, 191000];
 
   lat = 4.7970553;
   long = 51.0257317;
 
-  constructor(private googleLocatieZoekerService: GoogleLocatieZoekerService, public coordinatenService: CoordinatenService) {
-    const pinIcon = new ol.style.Style({
-      image: new ol.style.Icon({
-        anchor: [0.5, 1],
-        anchorXUnits: "fraction",
-        anchorYUnits: "fraction",
-        scale: 1,
-        opacity: 1,
-        src: "./material-design-icons/maps/svg/production/ic_place_48px.svg"
+  private readonly pinIcon = new ol.style.Style({
+    image: new ol.style.Icon({
+      anchor: [0.5, 1],
+      anchorXUnits: "fraction",
+      anchorYUnits: "fraction",
+      scale: 1,
+      opacity: 1,
+      src: "./material-design-icons/maps/svg/production/ic_place_48px.svg"
+    }),
+    text: new ol.style.Text({
+      font: "12px 'Helvetica Neue', sans-serif",
+      fill: new ol.style.Fill({ color: "#000" }),
+      offsetY: -60,
+      stroke: new ol.style.Stroke({
+        color: "#fff",
+        width: 2
       }),
-      text: new ol.style.Text({
-        font: "12px 'Helvetica Neue', sans-serif",
-        fill: new ol.style.Fill({ color: "#000" }),
-        offsetY: -60,
-        stroke: new ol.style.Stroke({
-          color: "#fff",
-          width: 2
-        }),
-        text: "Zis is a pin"
-      })
-    });
+      text: "Zis is a pin"
+    })
+  });
 
-    const feature = new ol.Feature(new ol.geom.Point(this.installatie));
-    feature.setStyle(pinIcon);
+  constructor(private googleLocatieZoekerService: GoogleLocatieZoekerService, public coordinatenService: CoordinatenService) {
+    this.addIcon();
+  }
+
+  private addIcon() {
+    if (this.installaties.length > 20) {
+      this.installaties = [];
+    }
+    const locatie: [number, number] = [
+      this.installatie[0] + (Math.random() - 0.5) * 3000,
+      this.installatie[1] + (Math.random() - 0.5) * 3000
+    ];
+    const feature = new ol.Feature(new ol.geom.Point(locatie));
+    feature.setStyle(this.pinIcon);
     this.installaties.push(feature);
+    setTimeout(() => this.addIcon(), 1000);
   }
 
   polygoonGetekend(feature: ol.Feature) {

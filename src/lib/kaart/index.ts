@@ -8,7 +8,7 @@ import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
 import { KaartVectorLaagComponent } from "./kaart-vector-laag.component";
 import { KaartKnopLaagKiezerComponent } from "./kaart-knop-laag-kiezer.component";
 import { KaartTekenPolygoonLaagComponent } from "./kaart-teken-polygoon-laag.component";
-import { KaartToonFeaturesComponent } from "./kaart-toon-features.component";
+import { KaartFeaturesLaagComponent } from "./kaart-toon-features.component";
 import { KaartKnopVolledigSchermComponent } from "./kaart-knop-volledig-scherm.component";
 import { KaartSchaalComponent } from "./kaart-schaal.component";
 import { KaartConfig, KAART_CFG } from "./kaart.config";
@@ -30,7 +30,7 @@ const components: any[] = [
   KaartStandaardInteractiesComponent,
   KaartStandaardKnoppenComponent,
   KaartTekenPolygoonLaagComponent,
-  KaartToonFeaturesComponent,
+  KaartFeaturesLaagComponent,
   KaartVectorLaagComponent,
   KaartWdbLaagComponent,
   KaartWmsLaagComponent

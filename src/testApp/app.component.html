@@ -5,24 +5,24 @@
 <div class="qa-protractor">
   <h3>Kaart voor protractor</h3>
 
-  <awv-kaart-classic class="qa-kaart" [breedte]="800">
+  <awv-kaart-classic class="qa-kaart">
     <awv-kaart-ortho-laag [titel]="'Ortho'"></awv-kaart-ortho-laag>
   </awv-kaart-classic>
 </div>
 
 <h3>Zonder controls, enkel dienstkaart in kleur</h3>
 <div>
-  <awv-kaart-classic [naam]="'kleursimpel'" [breedte]="800">
+  <awv-kaart-classic [naam]="'kleursimpel'">
     <awv-kaart-wdb-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-wdb-laag>
   </awv-kaart-classic>
 </div>
 
 <!--<h3>Ingezoomd + 1 feature + onclick event voor feature + schaal + volledig scherm knop</h3>-->
-<h3>Ingezoomd + 1 feature + schaal + volledig scherm knop</h3>
+<h3>Ingezoomd + 1 feature + schaal + volledig scherm knop + hoogte &amp; breedte</h3>
 <div>
-  <awv-kaart-classic [breedte]="800" [zoom]="7" [middelpunt]="installatie">
+  <awv-kaart-classic [breedte]="600" [hoogte]="600" [zoom]="6" [middelpunt]="installatie">
     <awv-kaart-wdb-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-wdb-laag>
-    <awv-kaart-toon-features [features]="installaties"></awv-kaart-toon-features>
+    <awv-kaart-features-laag [features]="installaties" [titel]="'features'"></awv-kaart-features-laag>
                              <!--[selecteerbaar]="true"-->
                              <!--(featureGeselecteerd)="installatieGeselecteed($event)"></awv-kaart-toon-features>-->
     <awv-kaart-schaal></awv-kaart-schaal>
@@ -36,7 +36,7 @@
 
 <h3>Ingezoomd dmv extent + schaal</h3>
 <div>
-  <awv-kaart-classic [breedte]="800" [extent]="installatieExtent">
+  <awv-kaart-classic [extent]="installatieExtent">
     <awv-kaart-wdb-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-wdb-laag>
     <awv-kaart-schaal></awv-kaart-schaal>
   </awv-kaart-classic>
@@ -47,7 +47,7 @@
   <p>Vul zelf lengtegraad en breedtegraad in.</p>
   <p><label>Lengtegraad: </label><input [(ngModel)]="lat" type="number"/></p>
   <p><label>Breedtegraad: </label><input [(ngModel)]="long" type="number"/></p>
-  <awv-kaart-classic [breedte]="800" [zoom]="7" [middelpunt]="coordinatenService.transformWgs84(lat, long)">
+  <awv-kaart-classic [zoom]="7" [middelpunt]="coordinatenService.transformWgs84(lat, long)">
     <awv-kaart-wdb-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-wdb-laag>
     <awv-kaart-schaal></awv-kaart-schaal>
   </awv-kaart-classic>
