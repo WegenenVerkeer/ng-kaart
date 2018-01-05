@@ -12,6 +12,7 @@ export class KaartWithInfo {
     readonly map: ol.Map, // de volgende parameters worden geacht niet gezet te worden initieel (brrr)
     readonly lagen: Map<string, ol.layer.Base> = Map(),
     readonly schaal: ol.control.Control = null, // to option or not to option, that is the question?
+    readonly fullScreen: ol.control.FullScreen = null, // to option or not to option, that is the question?
     readonly stdInteracties: List<ol.interaction.Interaction> = List<ol.interaction.Interaction>(), // TODO beter gewoon interacties
     readonly middelpunt: ol.Coordinate = null,
     readonly zoom: number = null,

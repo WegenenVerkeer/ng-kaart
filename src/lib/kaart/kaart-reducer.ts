@@ -18,6 +18,10 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWit
       return addSchaal(kaart);
     case prt.KaartEvntTypes.REMOVED_SCHAAL:
       return removeSchaal(kaart);
+    case prt.KaartEvntTypes.ADDED_FULL_SCREEN:
+      return addFullScreen(kaart);
+    case prt.KaartEvntTypes.REMOVED_FULL_SCREEN:
+      return removeFullScreen(kaart);
     case prt.KaartEvntTypes.ADDED_STD_INT:
       return addStandaardInteracties(kaart, (cmd as prt.AddedStandaardInteracties).scrollZoomOnFocus);
     case prt.KaartEvntTypes.REMOVED_STD_INT:
@@ -34,6 +38,9 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWit
       return focusOnMap(kaart);
     case prt.KaartEvntTypes.LOSE_FOCUS_ON_MAP:
       return loseFocusOnMap(kaart);
+    case prt.KaartEvntTypes.SHOW_FEATURES:
+      const replaceFeaturesEvent = cmd as prt.ReplaceFeatures;
+      return replaceFeatures(kaart, replaceFeaturesEvent.titel, replaceFeaturesEvent.features);
     default:
       console.log("onverwacht commando", cmd);
       return kaart;
@@ -48,16 +55,14 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWit
 // model.
 
 /**
- *  Toevoegen bovenaan de kaart.
+ *  Toevoegen bovenaan de kaart. Als er al een laag was met delfde titel, dan wordt die eerst verwijderd.
  */
 function addLaagOnTop(kaart: KaartWithInfo, laag: ke.Laag): KaartWithInfo {
-  if (!kaart.lagen.has(laag.titel)) {
-    const layer = toOlLayer(kaart.config, laag);
-    kaart.map.addLayer(layer);
-    return { ...kaart, lagen: kaart.lagen.set(laag.titel, layer) };
-  } else {
-    return kaart;
-  }
+  // is er een state monad voor TS?
+  const kaartNaVerwijdering = removeLaag(kaart, laag.titel);
+  const layer = toOlLayer(kaartNaVerwijdering.config, laag);
+  kaartNaVerwijdering.map.addLayer(layer);
+  return { ...kaartNaVerwijdering, lagen: kaartNaVerwijdering.lagen.set(laag.titel, layer) };
 }
 
 /**
@@ -66,7 +71,6 @@ function addLaagOnTop(kaart: KaartWithInfo, laag: ke.Laag): KaartWithInfo {
 function removeLaag(kaart: KaartWithInfo, titel: string): KaartWithInfo {
   const teVerwijderen = kaart.lagen.get(titel);
   if (teVerwijderen) {
-    const layers = kaart.map.getLayers();
     kaart.map.removeLayer(teVerwijderen);
     return { ...kaart, lagen: kaart.lagen.delete(titel) };
   } else {
@@ -88,6 +92,25 @@ function removeSchaal(kaart: KaartWithInfo): KaartWithInfo {
   if (kaart.schaal) {
     kaart.map.removeControl(kaart.schaal);
     return { ...kaart, schaal: null };
+  } else {
+    return kaart;
+  }
+}
+
+function addFullScreen(kaart: KaartWithInfo): KaartWithInfo {
+  if (!kaart.fullScreen) {
+    const fullScreen = new ol.control.FullScreen();
+    kaart.map.addControl(fullScreen);
+    return { ...kaart, fullScreen: fullScreen };
+  } else {
+    return kaart;
+  }
+}
+
+function removeFullScreen(kaart: KaartWithInfo): KaartWithInfo {
+  if (kaart.fullScreen) {
+    kaart.map.removeControl(kaart.fullScreen);
+    return { ...kaart, fullScreen: null };
   } else {
     return kaart;
   }
@@ -157,7 +180,13 @@ function updateExtent(kaart: KaartWithInfo, extent: ol.Extent): KaartWithInfo {
 }
 
 function updateViewport(kaart: KaartWithInfo, size: ol.Size): KaartWithInfo {
-  kaart.container.style.height = `${size[1]}px`; // eerst de container aanpassen of de kaart is uitgerekt
+  // eerst de container aanpassen of de kaart is uitgerekt
+  if (size[0]) {
+    kaart.container.style.width = `${size[0]}px`;
+  }
+  if (size[1]) {
+    kaart.container.style.height = `${size[1]}px`;
+  }
   kaart.map.setSize(size);
   kaart.map.updateSize();
   return {
@@ -165,6 +194,15 @@ function updateViewport(kaart: KaartWithInfo, size: ol.Size): KaartWithInfo {
     size: kaart.map.getSize(),
     extent: kaart.map.getView().calculateExtent(kaart.map.getSize())
   };
+}
+
+function replaceFeatures(kaart: KaartWithInfo, titel: string, features: List<ol.Feature>): KaartWithInfo {
+  const laag = <ol.layer.Vector>kaart.lagen.get(titel);
+  if (laag && laag.getSource) {
+    laag.getSource().clear(true);
+    laag.getSource().addFeatures(features.toArray());
+  }
+  return kaart;
 }
 
 function toOlLayer(config: KaartConfig, laag: ke.Laag) {
