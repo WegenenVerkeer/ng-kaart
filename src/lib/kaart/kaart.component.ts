@@ -11,6 +11,7 @@ import "rxjs/add/operator/let";
 import "rxjs/add/operator/map";
 import "rxjs/add/operator/observeOn";
 import "rxjs/add/operator/reduce";
+import "rxjs/add/operator/scan";
 import "rxjs/add/operator/shareReplay";
 
 import * as ol from "openlayers";
@@ -74,7 +75,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
       this.kaartEvt$
         .leaveZone(this.zone)
-        .reduce(red.kaartReducer, kaart)
+        .scan(red.kaartReducer, kaart)
         .subscribe(x => console.log("reduced", x), e => console.log("error", e), () => console.log("kaart & cmd terminated"));
     });
   }

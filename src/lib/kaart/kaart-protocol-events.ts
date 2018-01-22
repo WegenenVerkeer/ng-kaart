@@ -18,7 +18,8 @@ export enum KaartEvntTypes {
   VIEWPORT_CHANGED,
   FOCUS_ON_MAP,
   LOSE_FOCUS_ON_MAP,
-  SHOW_FEATURES
+  SHOW_FEATURES,
+  INSERTED_LAAG
 }
 
 export interface KaartEvnt {
@@ -35,6 +36,12 @@ export class RemovedLaag implements KaartEvnt {
   readonly type = KaartEvntTypes.REMOVED_LAAG;
 
   constructor(readonly titel: string) {}
+}
+
+export class InsertedLaag implements KaartEvnt {
+  readonly type = KaartEvntTypes.INSERTED_LAAG;
+
+  constructor(readonly positie: number, readonly laag: ke.Laag) {}
 }
 
 export class AddedSchaal implements KaartEvnt {

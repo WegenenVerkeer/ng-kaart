@@ -8,12 +8,15 @@ import * as prt from "./kaart-protocol";
 import { KaartWithInfo } from "./kaart-with-info";
 
 export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWithInfo {
-  console.log("kaart reducer", kaart, cmd);
+  console.log("kaart reducer", cmd);
   switch (cmd.type) {
     case prt.KaartEvntTypes.ADDED_LAAG_ON_TOP:
       return addLaagOnTop(kaart, (cmd as prt.AddedLaagOnTop).laag);
     case prt.KaartEvntTypes.REMOVED_LAAG:
       return removeLaag(kaart, (cmd as prt.RemovedLaag).titel);
+    case prt.KaartEvntTypes.INSERTED_LAAG:
+      const inserted = cmd as prt.InsertedLaag;
+      return insertLaag(kaart, inserted.positie, inserted.laag);
     case prt.KaartEvntTypes.ADDED_SCHAAL:
       return addSchaal(kaart);
     case prt.KaartEvntTypes.REMOVED_SCHAAL:
@@ -55,27 +58,35 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWit
 // model.
 
 /**
- *  Toevoegen bovenaan de kaart. Als er al een laag was met delfde titel, dan wordt die eerst verwijderd.
+ *  Toevoegen bovenaan de kaart. Als er al een laag was met dezelfde titel, dan wordt die eerst verwijderd.
  */
 function addLaagOnTop(kaart: KaartWithInfo, laag: ke.Laag): KaartWithInfo {
   // is er een state monad voor TS?
   const kaartNaVerwijdering = removeLaag(kaart, laag.titel);
   const layer = toOlLayer(kaartNaVerwijdering.config, laag);
   kaartNaVerwijdering.map.addLayer(layer);
-  return { ...kaartNaVerwijdering, lagen: kaartNaVerwijdering.lagen.set(laag.titel, layer) };
+  return { ...kaartNaVerwijdering, lagenOpTitel: kaartNaVerwijdering.lagenOpTitel.set(laag.titel, layer) };
 }
 
 /**
  * Een laag verwijderen. De titel van de laag bepaalt welke er verwijderd wordt.
  */
 function removeLaag(kaart: KaartWithInfo, titel: string): KaartWithInfo {
-  const teVerwijderen = kaart.lagen.get(titel);
+  const teVerwijderen = kaart.lagenOpTitel.get(titel);
   if (teVerwijderen) {
     kaart.map.removeLayer(teVerwijderen);
-    return { ...kaart, lagen: kaart.lagen.delete(titel) };
+    return { ...kaart, lagenOpTitel: kaart.lagenOpTitel.delete(titel) };
   } else {
     return kaart;
   }
+}
+
+function insertLaag(kaart: KaartWithInfo, positie: number, laag: ke.Laag) {
+  const kaartNaVerwijdering = removeLaag(kaart, laag.titel);
+  const layer = toOlLayer(kaartNaVerwijdering.config, laag);
+  const layers = kaartNaVerwijdering.map.getLayers();
+  layers.insertAt(0, layer);
+  return { ...kaartNaVerwijdering, lagenOpTitel: kaartNaVerwijdering.lagenOpTitel.set(laag.titel, layer) };
 }
 
 function addSchaal(kaart: KaartWithInfo): KaartWithInfo {
@@ -197,7 +208,7 @@ function updateViewport(kaart: KaartWithInfo, size: ol.Size): KaartWithInfo {
 }
 
 function replaceFeatures(kaart: KaartWithInfo, titel: string, features: List<ol.Feature>): KaartWithInfo {
-  const laag = <ol.layer.Vector>kaart.lagen.get(titel);
+  const laag = <ol.layer.Vector>kaart.lagenOpTitel.get(titel);
   if (laag && laag.getSource) {
     laag.getSource().clear(true);
     laag.getSource().addFeatures(features.toArray());
