@@ -6,9 +6,10 @@ import { KaartConfig } from "./kaart.config";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { KaartWithInfo } from "./kaart-with-info";
+import { kaartLogger } from "./log";
 
 export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWithInfo {
-  console.log("kaart reducer", cmd);
+  kaartLogger.debug("kaart reducer", cmd);
   switch (cmd.type) {
     case prt.KaartEvntTypes.ADDED_LAAG_ON_TOP:
       return addLaagOnTop(kaart, (cmd as prt.AddedLaagOnTop).laag);
@@ -45,7 +46,7 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWit
       const replaceFeaturesEvent = cmd as prt.ReplaceFeatures;
       return replaceFeatures(kaart, replaceFeaturesEvent.titel, replaceFeaturesEvent.features);
     default:
-      console.log("onverwacht commando", cmd);
+      kaartLogger.warn("onverwacht commando", cmd);
       return kaart;
   }
 }

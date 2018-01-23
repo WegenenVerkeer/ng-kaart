@@ -2,9 +2,7 @@ import { NgZone, OnInit, OnDestroy } from "@angular/core";
 import { Observable } from "rxjs/Observable";
 import { Subject } from "rxjs/Subject";
 import { Subscription } from "rxjs/Subscription";
-import { asap } from "rxjs/scheduler/asap";
-import "rxjs/add/operator/let";
-import "rxjs/add/operator/takeUntil";
+import { takeUntil } from "rxjs/operators";
 
 import { leaveZone } from "../util/leave-zone";
 
@@ -20,7 +18,7 @@ export abstract class KaartComponentBase implements OnInit, OnDestroy {
   }
 
   bindToLifeCycle<T>(source: Observable<T>): Observable<T> {
-    return source.let(o => o.takeUntil(this.destroyingSubj));
+    return source.pipe(takeUntil(this.destroyingSubj));
   }
 
   public get destroying$(): Observable<void> {

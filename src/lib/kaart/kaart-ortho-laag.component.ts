@@ -20,6 +20,7 @@ export class KaartOrthoLaagComponent extends KaartWmsLaagComponent {
     return {
       type: ElementType.WMSLAAG,
       titel: this.titel,
+      dekkend: true,
       naam: this.config.orthofotomozaiek.naam,
       extent: this.extent,
       urls: List(this.config.orthofotomozaiek.urls),

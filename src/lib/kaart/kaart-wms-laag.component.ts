@@ -28,6 +28,7 @@ export class KaartWmsLaagComponent extends KaartLaagComponent {
     return {
       type: ElementType.WMSLAAG,
       titel: this.titel,
+      dekkend: true,
       naam: this.laagNaam,
       extent: this.extent,
       urls: List(this.urls),

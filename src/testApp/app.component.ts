@@ -5,6 +5,7 @@ import "rxjs/add/operator/map";
 
 import { GoogleLocatieZoekerService } from "../lib/google-locatie-zoeker/google-locatie-zoeker.service";
 import { CoordinatenService } from "../lib/kaart/coordinaten.service";
+import { kaartLogger } from "../lib/public_api";
 
 @Component({
   selector: "awv-ng-kaart-test-app",
@@ -47,6 +48,7 @@ export class AppComponent {
   });
 
   constructor(private googleLocatieZoekerService: GoogleLocatieZoekerService, public coordinatenService: CoordinatenService) {
+    kaartLogger.setLevel("DEBUG");
     this.addIcon();
   }
 

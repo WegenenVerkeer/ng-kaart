@@ -4,24 +4,17 @@ import "rxjs/add/observable/of";
 import "rxjs/add/observable/combineLatest";
 import "rxjs/add/observable/empty";
 import "rxjs/add/observable/never";
-import "rxjs/add/operator/concat";
-import "rxjs/add/operator/switchMap";
-import "rxjs/add/operator/first";
-import "rxjs/add/operator/let";
-import "rxjs/add/operator/map";
-import "rxjs/add/operator/observeOn";
-import "rxjs/add/operator/reduce";
-import "rxjs/add/operator/scan";
-import "rxjs/add/operator/shareReplay";
+import { scan, map, tap } from "rxjs/operators";
 
-import * as ol from "openlayers";
 import proj4 from "proj4";
+import * as ol from "openlayers";
 
 import { KaartConfig, KAART_CFG } from "./kaart.config";
 import { KaartComponentBase } from "./kaart-component-base";
 import { KaartWithInfo } from "./kaart-with-info";
-import "../util/leave-zone";
-import "../util/observable-run";
+import { leaveZone } from "../util/leave-zone";
+import { terminateOnDestroyAndRunAsapOutsideOfAngular } from "../util/observable-run";
+import { kaartLogger } from "./log";
 import * as prt from "./kaart-protocol";
 import * as red from "./kaart-reducer";
 
@@ -67,16 +60,24 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   private bindObservables() {
     this.runAsapOutsideAngular(() => {
       const kaart = this.maakKaart();
+      kaartLogger.info(`Kaart ${this.naam} aangemaakt`);
 
-      this.destroying$.leaveZone(this.zone).subscribe(_ => {
-        console.log("kaart opkuisen");
+      this.destroying$.pipe(leaveZone(this.zone)).subscribe(_ => {
+        kaartLogger.info(`kaart ${this.naam} opkuisen`);
         kaart.map.setTarget(null);
       });
 
       this.kaartEvt$
-        .leaveZone(this.zone)
-        .scan(red.kaartReducer, kaart)
-        .subscribe(x => console.log("reduced", x), e => console.log("error", e), () => console.log("kaart & cmd terminated"));
+        .pipe(
+          tap(x => kaartLogger.debug("kaart event", x)),
+          leaveZone(this.zone), //
+          scan(red.kaartReducer, kaart)
+        )
+        .subscribe(
+          x => kaartLogger.debug("reduced to", x),
+          e => kaartLogger.error("error", e),
+          () => kaartLogger.info("kaart & cmd terminated")
+        );
     });
   }
 
@@ -85,7 +86,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     // Zonder deze extent zoomen we op de hele wereld en Vlaanderen is daar maar een heeel klein deeltje van
     dienstkaartProjectie.setExtent([18000.0, 152999.75, 280144.0, 415143.75]); // zet de extent op die van de dienstkaart
 
-    const map = new ol.Map({
+    const kaart = new ol.Map({
       controls: [],
       interactions: [],
       layers: [],
@@ -100,6 +101,6 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
         zoom: this.config.defaults.zoom
       })
     });
-    return new KaartWithInfo(this.config, this.naam, this.mapElement.nativeElement.parentElement, map);
+    return new KaartWithInfo(this.config, this.naam, this.mapElement.nativeElement.parentElement, kaart);
   }
 }

@@ -1,12 +1,8 @@
 import { Injectable } from "@angular/core";
 import { Http, URLSearchParams, Response, QueryEncoder } from "@angular/http"; // TODO port naar nieuwe httpclient
 import { Observable } from "rxjs/Observable";
-import "rxjs/add/observable/of";
-import "rxjs/add/operator/map";
-import "rxjs/add/operator/mergeAll";
+import { map, flatMap, catchError, mergeAll } from "rxjs/operators";
 import "rxjs/add/observable/fromPromise";
-import "rxjs/add/operator/toPromise";
-import "rxjs/add/operator/catch";
 
 import * as ol from "openlayers";
 import {} from "googlemaps";
@@ -121,13 +117,12 @@ export class GoogleLocatieZoekerService {
     params.set("query", zoekterm);
     params.set("legacy", "false");
 
-    return this.http
-      .get(this.locatieZoekerUrl + "/zoek", { search: params })
-      .map(this.parseResult, this)
-      .mergeAll()
-      .catch(this.handleError);
+    return this.http.get(this.locatieZoekerUrl + "/zoek", { search: params }).pipe(
+      flatMap(resp => this.parseResult(resp)), //
+      mergeAll(),
+      catchError(err => this.handleError(err))
+    );
   }
-
   parseResult(response: Response): Observable<ZoekResultaten> {
     const zoekResultaten = new ZoekResultaten();
 
@@ -439,10 +434,12 @@ export class GoogleLocatieZoekerService {
 
       return this.http
         .get(url)
-        .map(res => {
-          resultaat.locatie = res.json();
-          return resultaat;
-        })
+        .pipe(
+          map(res => {
+            resultaat.locatie = res.json();
+            return resultaat;
+          })
+        )
         .toPromise();
     } else {
       return Observable.of(resultaat).toPromise();
