@@ -1,13 +1,15 @@
-import { Component, OnInit, Input, Output, EventEmitter, ChangeDetectionStrategy, ChangeDetectorRef } from "@angular/core";
+import { Component, OnInit, Input, Output, EventEmitter, ChangeDetectionStrategy, ChangeDetectorRef, NgZone } from "@angular/core";
 import { trigger, state, style, transition, animate } from "@angular/animations";
 import { Observable } from "rxjs/Observable";
 import { BehaviorSubject } from "rxjs/BehaviorSubject";
 
 import { Laag, WmsLaag } from "./kaart-elementen";
-import { KaartClassicComponent } from "./kaart-classic.component";
-import { combineLatest, map, filter, first } from "rxjs/operators";
+import { combineLatest, map, filter, first, tap } from "rxjs/operators";
 import { KaartWithInfo } from "./kaart-with-info";
 import { InsertedLaag, RemovedLaag } from "./kaart-protocol-events";
+import { KaartComponentBase } from "./kaart-component-base";
+import { KaartComponent } from "./kaart.component";
+import { KaartClassicComponent } from "./kaart-classic.component";
 
 enum DisplayMode {
   SHOWING_STATUS,
@@ -61,31 +63,41 @@ const Invisible = "invisible";
   ],
   changeDetection: ChangeDetectionStrategy.OnPush // Bij default is er een endless loop van updates
 })
-export class KaartAchtergrondSelectorComponent implements OnInit {
+export class KaartAchtergrondSelectorComponent extends KaartComponentBase implements OnInit {
   // component state is aanvaardbaar zolang de html view er niet direct aan komt
   private displayMode: DisplayMode = DisplayMode.SHOWING_STATUS;
   private achtergrondTitel = "";
 
-  readonly backgroundTiles$: Observable<WmsLaag[]>;
+  backgroundTiles$: Observable<WmsLaag[]> = Observable.empty();
 
   show = false;
 
-  @Output() geselecteerdeTitel: EventEmitter<string> = new EventEmitter<string>();
+  @Input() kaartModel$: Observable<KaartWithInfo>;
 
-  constructor(private readonly kaart: KaartClassicComponent, private readonly cdr: ChangeDetectorRef) {
-    kaart.kaartModel$
-      .pipe(
-        map(model => model.possibleBackgrounds),
-        first(bgs => !bgs.isEmpty()), // De eerste keer dat er achtergronden gezet worden
-        map(bgs => bgs.get(0).titel) // gebruiken we die om er de achtergrondtitel mee te initialiseren
-      )
-      .subscribe(titel => (this.achtergrondTitel = titel));
-    this.backgroundTiles$ = kaart.kaartModel$.pipe(map(model => model.possibleBackgrounds.toArray()));
+  constructor(private readonly kaart: KaartClassicComponent, private readonly cdr: ChangeDetectorRef, zone: NgZone) {
+    super(zone);
   }
 
   ngOnInit() {
     // hackadihack -> er is een raceconditie in de change detection van Angular. Zonder wordt soms de selectiecomponent niet getoond.
-    setTimeout(() => this.cdr.detectChanges(), 300);
+    setTimeout(() => this.cdr.detectChanges(), 1000);
+    this.runAsapOutsideAngular(() => {
+      console.log("constructing achtergrond selector");
+      this.kaartModel$
+        .pipe(
+          tap(m => console.log("voor map 0", m)),
+          map(model => model.possibleBackgrounds),
+          first(bgs => !bgs.isEmpty()), // De eerste keer dat er achtergronden gezet worden
+          map(bgs => bgs.get(0).titel) // gebruiken we die om er de achtergrondtitel mee te initialiseren
+        )
+        .subscribe(titel => (this.achtergrondTitel = titel));
+      this.backgroundTiles$ = this.kaartModel$.pipe(
+        tap(m => console.log("Voor map", m)),
+        map(model => model.possibleBackgrounds.toArray()),
+        tap(ls => console.log("Na map", ls))
+      );
+      console.log("constructie gedaan", this.kaartModel$);
+    });
   }
 
   kies(laag: WmsLaag): void {

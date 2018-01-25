@@ -1,4 +1,4 @@
-<div class="selector">
+<div class="selector">{{(backgroundTiles$ | async | json)}}
   <div *ngFor="let laag of (backgroundTiles$ | async)">
     <awv-kaart-achtergrond-tile 
       [laag]="laag"

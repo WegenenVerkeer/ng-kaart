@@ -5,7 +5,7 @@ import "rxjs/add/observable/of";
 import "rxjs/add/observable/combineLatest";
 import "rxjs/add/observable/empty";
 import "rxjs/add/observable/never";
-import { scan, map, tap, distinctUntilChanged, filter } from "rxjs/operators";
+import { scan, map, tap, distinctUntilChanged, filter, shareReplay, merge, combineLatest } from "rxjs/operators";
 
 import proj4 from "proj4";
 import * as ol from "openlayers";
@@ -45,6 +45,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   @Input() modelConsumer: prt.ModelConsumer<KaartWithInfo> = prt.noOpModelConsumer;
 
   showBackgroundSelector$: Observable<boolean> = Observable.empty();
+  kaartModel$: Observable<KaartWithInfo> = Observable.empty();
 
   private static configureerLambert72() {
     ol.proj.setProj4(proj4);
@@ -69,6 +70,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   }
 
   private bindObservables() {
+    console.log("binding observables");
     this.runAsapOutsideAngular(() => {
       const kaart = this.maakKaart();
       kaartLogger.info(`Kaart ${this.naam} aangemaakt`);
@@ -78,31 +80,33 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
         kaart.map.setTarget(null);
       });
 
-      const kaartModel$: Observable<KaartWithInfo> = this.kaartEvt$.pipe(
+      this.kaartModel$ = this.kaartEvt$.pipe(
         tap(x => kaartLogger.debug("kaart event", x)),
         leaveZone(this.zone), //
-        scan(red.kaartReducer, kaart) // TODO: zorg er voor dat de unsubscribe gebeurt
+        scan(red.kaartReducer, kaart), // TODO: zorg er voor dat de unsubscribe gebeurt
+        shareReplay(1000, 5000)
       );
+      console.log("kaart model obs is gemaakt");
 
-      kaartModel$
+      this.kaartModel$
         .pipe(
           map(model => model.lagen.get(0)), // dit geeft undefined als er geen lagen zijn
-          filter(laag => !!laag), // misschien zijn er geen lagen
+          filter(laag => !!laag), // misschien zijn er geen lagen, hou rekening met undefined
           distinctUntilChanged() // de meeste modelwijzigingen hebben niks met de onderste laag te maken
         )
         .subscribe(laag => this.achtergrondTitelSelectieConsumer(laag.titel));
 
-      kaartModel$.subscribe(
+      this.kaartModel$.subscribe(
         model => {
           kaartLogger.debug("reduced to", model);
-          this.modelConsumer(model); // Heel belangrijk: laat diegene die ons embed weten wat het huidige model is
+          //this.modelConsumer(model); // Heel belangrijk: laat diegene die ons embed weten wat het huidige model is
         },
         e => kaartLogger.error("error", e),
         () => kaartLogger.info("kaart & cmd terminated")
       );
 
-      // Deze zorgt er voor dat de achtergrondselectieknop getoond wordt ifv het model
-      this.showBackgroundSelector$ = kaartModel$.pipe(map(k => k.showBackgroundSelector), distinctUntilChanged());
+      // Deze zorgt er voor dat de achtergrondselectieknop getoond wordt obv het model
+      this.showBackgroundSelector$ = this.kaartModel$.pipe(map(k => k.showBackgroundSelector), distinctUntilChanged());
     });
   }
 

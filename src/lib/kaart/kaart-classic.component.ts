@@ -35,10 +35,10 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
   @Input() naam = "kaart" + KaartClassicComponent.counter++;
 
   private readonly dispatcher: KaartEventDispatcher = new KaartEventDispatcher();
-  private readonly modelSubj = new ReplaySubject<KaartWithInfo>(100, 500);
+  // private readonly modelSubj = new ReplaySubject<KaartWithInfo>(100, 1000);
   private hasFocus = false;
 
-  readonly modelConsumer: ModelConsumer<KaartWithInfo> = (model: KaartWithInfo) => this.modelSubj.next(model);
+  // readonly modelConsumer: ModelConsumer<KaartWithInfo> = (model: KaartWithInfo) => this.modelSubj.next(model);
 
   constructor() {}
 
@@ -86,9 +86,9 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
     return this.dispatcher.event$;
   }
 
-  get kaartModel$(): Observable<KaartWithInfo> {
-    return this.modelSubj;
-  }
+  // get kaartModel$(): Observable<KaartWithInfo> {
+  //   return this.modelSubj;
+  // }
 
   focus(): void {
     // Voor performantie

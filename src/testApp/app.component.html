@@ -17,17 +17,18 @@
   </awv-kaart-classic>
 </div>
 
+<!--
 <h3>Ingezoomd + 1 feature + schaal + volledig scherm knop + hoogte &amp; breedte</h3>
 <div>
   <awv-kaart-classic [breedte]="600" [hoogte]="600" [zoom]="6" [middelpunt]="installatie">
     <awv-kaart-features-laag [features]="installaties" [titel]="'features'"></awv-kaart-features-laag>
     <awv-kaart-wdb-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-wdb-laag>
-    <!--[selecteerbaar]="true"
-        (featureGeselecteerd)="installatieGeselecteed($event)"></awv-kaart-toon-features>-->
+    <!-[selecteerbaar]="true"
+        (featureGeselecteerd)="installatieGeselecteed($event)"></awv-kaart-toon-features>->
     <awv-kaart-schaal></awv-kaart-schaal>
     <awv-kaart-knop-volledig-scherm></awv-kaart-knop-volledig-scherm>
   </awv-kaart-classic>
-  
+-->
 <!--
   <pre *ngFor="let event of installatieGeselecteerdEvents">
     Event gegooid: {{ event | json }}
@@ -35,6 +36,7 @@
 </div>
 -->
 
+<!--
 <h3>Ingezoomd dmv extent + schaal</h3>
 <div>
   <awv-kaart-classic [extent]="installatieExtent">
@@ -43,7 +45,6 @@
   </awv-kaart-classic>
 </div>
 
-<!--
 <h3>Ingezoomd (met WGS 84 coordinaten) + schaal</h3>
 <div>
   <p>Vul zelf lengtegraad en breedtegraad in.</p>
