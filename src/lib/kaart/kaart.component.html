@@ -1,4 +1,10 @@
 <div class="fullscreen-container">
-  <div class="kaart" #map style="height: 100%; width: 100%;"></div>
-  <ng-content></ng-content>
+  <div id="kaart-container">
+    <div class="kaart" #map style="height: 100%; width: 100%;"></div>
+  </div>
+  <div id="overlay">
+    <div *ngIf="showBackgroundSelector$ | async">
+      <awv-kaart-achtergrond-selector></awv-kaart-achtergrond-selector>
+    </div>
+  </div>
 </div>

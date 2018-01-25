@@ -1,4 +1,4 @@
-import { Component } from "@angular/core";
+import { Component, ViewEncapsulation } from "@angular/core";
 import * as ol from "openlayers";
 import "rxjs/add/operator/mergeMap";
 import "rxjs/add/operator/map";
@@ -9,7 +9,9 @@ import { kaartLogger } from "../lib/public_api";
 
 @Component({
   selector: "awv-ng-kaart-test-app",
-  templateUrl: "./app.component.html"
+  templateUrl: "./app.component.html",
+  styleUrls: ["app.component.scss"],
+  encapsulation: ViewEncapsulation.None
 })
 export class AppComponent {
   polygoonEvents: string[] = [];

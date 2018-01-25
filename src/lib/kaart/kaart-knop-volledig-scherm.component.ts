@@ -13,10 +13,10 @@ export class KaartKnopVolledigSchermComponent implements OnInit, OnDestroy {
   constructor(private readonly kaart: KaartClassicComponent) {}
 
   ngOnInit(): void {
-    this.kaart.dispatcher.dispatch(new AddedFullScreen());
+    this.kaart.dispatch(new AddedFullScreen());
   }
 
   ngOnDestroy(): void {
-    this.kaart.dispatcher.dispatch(new RemovedFullScreen());
+    this.kaart.dispatch(new RemovedFullScreen());
   }
 }

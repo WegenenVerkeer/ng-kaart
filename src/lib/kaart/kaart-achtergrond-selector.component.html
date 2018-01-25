@@ -1,0 +1,9 @@
+<div class="selector">
+  <div *ngFor="let laag of (backgroundTiles$ | async)">
+    <awv-kaart-achtergrond-tile 
+      [laag]="laag"
+      [isCurrent]="isCurrentlyBackground(laag)"
+      [@visibility]="tileVisibility(laag)"
+      (click)=kies(laag)></awv-kaart-achtergrond-tile>
+  </div>
+</div>

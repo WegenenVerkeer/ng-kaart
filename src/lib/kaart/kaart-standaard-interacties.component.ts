@@ -14,10 +14,10 @@ export class KaartStandaardInteractiesComponent implements OnInit, OnDestroy {
   constructor(private readonly kaart: KaartClassicComponent) {}
 
   ngOnInit(): void {
-    this.kaart.dispatcher.dispatch(new AddedStandaardInteracties(this.focusVoorZoom));
+    this.kaart.dispatch(new AddedStandaardInteracties(this.focusVoorZoom));
   }
 
   ngOnDestroy(): void {
-    this.kaart.dispatcher.dispatch(new RemovedStandaardInteracties());
+    this.kaart.dispatch(new RemovedStandaardInteracties());
   }
 }

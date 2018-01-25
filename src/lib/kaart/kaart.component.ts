@@ -1,10 +1,11 @@
-import { Component, ElementRef, Input, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation, Inject } from "@angular/core";
+import { Component, ElementRef, Input, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation, Inject, Output } from "@angular/core";
 import { Observable } from "rxjs/Observable";
+import { ReplaySubject } from "rxjs/ReplaySubject";
 import "rxjs/add/observable/of";
 import "rxjs/add/observable/combineLatest";
 import "rxjs/add/observable/empty";
 import "rxjs/add/observable/never";
-import { scan, map, tap } from "rxjs/operators";
+import { scan, map, tap, distinctUntilChanged, filter } from "rxjs/operators";
 
 import proj4 from "proj4";
 import * as ol from "openlayers";
@@ -22,18 +23,28 @@ import * as red from "./kaart-reducer";
   selector: "awv-kaart",
   templateUrl: "./kaart.component.html",
   styleUrls: ["../../../node_modules/openlayers/css/ol.css", "./kaart.component.scss"],
-  encapsulation: ViewEncapsulation.Native
+  encapsulation: ViewEncapsulation.Emulated // Omwille hiervan kunnen we geen globale CSS gebruiken, maar met Native werken animaties niet
 })
 export class KaartComponent extends KaartComponentBase implements OnInit, OnDestroy {
   private static readonly lambert72 = KaartComponent.configureerLambert72();
 
   @ViewChild("map") mapElement: ElementRef;
 
+  /**
+   * Dit houdt heel de constructie bij elkaar. Ofwel awv-kaart-classic (in geval van declaratief gebruik) ofwel
+   * een component van de gebruikende applicatie (in geval van programmatorisch gebruik) zet hier een Observable
+   * waarmee events naar de component gestuurd kunnen worden.
+   */
   @Input() kaartEvt$: Observable<prt.KaartEvnt> = Observable.empty();
 
   @Input() minZoom = 2; // TODO naar config
   @Input() maxZoom = 13; // TODO naar config
   @Input() naam = "kaart";
+
+  @Input() achtergrondTitelSelectieConsumer: prt.ModelConsumer<string> = prt.noOpModelConsumer;
+  @Input() modelConsumer: prt.ModelConsumer<KaartWithInfo> = prt.noOpModelConsumer;
+
+  showBackgroundSelector$: Observable<boolean> = Observable.empty();
 
   private static configureerLambert72() {
     ol.proj.setProj4(proj4);
@@ -67,17 +78,31 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
         kaart.map.setTarget(null);
       });
 
-      this.kaartEvt$
+      const kaartModel$: Observable<KaartWithInfo> = this.kaartEvt$.pipe(
+        tap(x => kaartLogger.debug("kaart event", x)),
+        leaveZone(this.zone), //
+        scan(red.kaartReducer, kaart) // TODO: zorg er voor dat de unsubscribe gebeurt
+      );
+
+      kaartModel$
         .pipe(
-          tap(x => kaartLogger.debug("kaart event", x)),
-          leaveZone(this.zone), //
-          scan(red.kaartReducer, kaart)
+          map(model => model.lagen.get(0)), // dit geeft undefined als er geen lagen zijn
+          filter(laag => !!laag), // misschien zijn er geen lagen
+          distinctUntilChanged() // de meeste modelwijzigingen hebben niks met de onderste laag te maken
         )
-        .subscribe(
-          x => kaartLogger.debug("reduced to", x),
-          e => kaartLogger.error("error", e),
-          () => kaartLogger.info("kaart & cmd terminated")
-        );
+        .subscribe(laag => this.achtergrondTitelSelectieConsumer(laag.titel));
+
+      kaartModel$.subscribe(
+        model => {
+          kaartLogger.debug("reduced to", model);
+          this.modelConsumer(model); // Heel belangrijk: laat diegene die ons embed weten wat het huidige model is
+        },
+        e => kaartLogger.error("error", e),
+        () => kaartLogger.info("kaart & cmd terminated")
+      );
+
+      // Deze zorgt er voor dat de achtergrondselectieknop getoond wordt ifv het model
+      this.showBackgroundSelector$ = kaartModel$.pipe(map(k => k.showBackgroundSelector), distinctUntilChanged());
     });
   }
 

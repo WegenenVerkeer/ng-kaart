@@ -27,6 +27,8 @@
     display: block;
     overflow: auto;
   }
+  
+  position: relative;
 }
 
 .ol-control {
@@ -34,5 +36,22 @@
 
   &:hover {
     background-color: rgba(255, 255, 255, 0.9);
-  }
+  } 
+}
+
+#kaart-container {
+  position: absolute;
+  height: 1000px;
+  width: 100%;
+  top: 0px;
+  left: 0px;
+}
+
+#overlay {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  top: 0px;
+  left: 0px;
+  pointer-events: none;
 }

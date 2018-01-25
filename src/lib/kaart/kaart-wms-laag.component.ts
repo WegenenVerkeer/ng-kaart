@@ -19,6 +19,7 @@ export class KaartWmsLaagComponent extends KaartLaagComponent {
   @Input() type: string;
   @Input() versie?: string;
   @Input() extent?: ol.Extent = [18000.0, 152999.75, 280144.0, 415143.75];
+  @Input() dekkend = true;
 
   constructor(kaart: KaartClassicComponent) {
     super(kaart);
@@ -28,7 +29,7 @@ export class KaartWmsLaagComponent extends KaartLaagComponent {
     return {
       type: ElementType.WMSLAAG,
       titel: this.titel,
-      dekkend: true,
+      dekkend: this.dekkend,
       naam: this.laagNaam,
       extent: this.extent,
       urls: List(this.urls),

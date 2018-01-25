@@ -25,7 +25,6 @@ export class KaartVectorLaagComponent extends KaartLaagComponent {
     return {
       type: ke.ElementType.VECTORLAAG,
       titel: this.titel,
-      dekkend: false,
       source: this.source,
       style: this.style,
       selecteerbaar: this.selecteerbaar

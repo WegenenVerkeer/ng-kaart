@@ -1,4 +1,4 @@
-import { List } from "immutable";
+import { List, Iterable } from "immutable";
 
 import * as ol from "openlayers";
 
@@ -8,125 +8,124 @@ import * as prt from "./kaart-protocol";
 import { KaartWithInfo } from "./kaart-with-info";
 import { kaartLogger } from "./log";
 
-export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWithInfo {
-  kaartLogger.debug("kaart reducer", cmd);
-  switch (cmd.type) {
-    case prt.KaartEvntTypes.ADDED_LAAG_ON_TOP:
-      return addLaagOnTop(kaart, (cmd as prt.AddedLaagOnTop).laag);
-    case prt.KaartEvntTypes.REMOVED_LAAG:
-      return removeLaag(kaart, (cmd as prt.RemovedLaag).titel);
-    case prt.KaartEvntTypes.INSERTED_LAAG:
-      const inserted = cmd as prt.InsertedLaag;
-      return insertLaag(kaart, inserted.positie, inserted.laag);
-    case prt.KaartEvntTypes.ADDED_SCHAAL:
-      return addSchaal(kaart);
-    case prt.KaartEvntTypes.REMOVED_SCHAAL:
-      return removeSchaal(kaart);
-    case prt.KaartEvntTypes.ADDED_FULL_SCREEN:
-      return addFullScreen(kaart);
-    case prt.KaartEvntTypes.REMOVED_FULL_SCREEN:
-      return removeFullScreen(kaart);
-    case prt.KaartEvntTypes.ADDED_STD_INT:
-      return addStandaardInteracties(kaart, (cmd as prt.AddedStandaardInteracties).scrollZoomOnFocus);
-    case prt.KaartEvntTypes.REMOVED_STD_INT:
-      return removeStandaardInteracties(kaart);
-    case prt.KaartEvntTypes.MIDDELPUNT_CHANGED:
-      return updateMiddelpunt(kaart, (cmd as prt.MiddelpuntChanged).coordinate);
-    case prt.KaartEvntTypes.ZOOM_CHANGED:
-      return updateZoom(kaart, (cmd as prt.ZoomChanged).zoom);
-    case prt.KaartEvntTypes.EXTENT_CHANGED:
-      return updateExtent(kaart, (cmd as prt.ExtentChanged).extent);
-    case prt.KaartEvntTypes.VIEWPORT_CHANGED:
-      return updateViewport(kaart, (cmd as prt.ViewportChanged).size);
-    case prt.KaartEvntTypes.FOCUS_ON_MAP:
-      return focusOnMap(kaart);
-    case prt.KaartEvntTypes.LOSE_FOCUS_ON_MAP:
-      return loseFocusOnMap(kaart);
-    case prt.KaartEvntTypes.SHOW_FEATURES:
-      const replaceFeaturesEvent = cmd as prt.ReplaceFeatures;
-      return replaceFeatures(kaart, replaceFeaturesEvent.titel, replaceFeaturesEvent.features);
-    default:
-      kaartLogger.warn("onverwacht commando", cmd);
-      return kaart;
-  }
+///////////////////////////////////
+// Hulpfuncties
+//
+
+// Dit type helpt om het updaten van het model iets minder repetitief te maken.
+type ModelUpdater = (kaart: KaartWithInfo) => KaartWithInfo;
+
+/**
+ * Functiecompositie waar f eerst uitgevoerd wordt en dan g.
+ */
+function andThen<A, B, C>(f: (a: A) => B, g: (b: B) => C) {
+  return (a: A) => g(f(a));
+}
+
+/**
+ * Functiecompositie van endofuncties.
+ */
+function chained<A>(...fs: ((a: A) => A)[]): (a: A) => A {
+  return (a: A) => fs.reduce((acc, f) => f(acc), a);
+}
+
+function updateModel(partial: Partial<KaartWithInfo>): ModelUpdater {
+  return (model: KaartWithInfo) => ({ ...model, ...partial } as KaartWithInfo);
+}
+
+const keepModel: ModelUpdater = (model: KaartWithInfo) => model;
+
+function guardedUpdate(pred: (kaart: KaartWithInfo) => boolean, updater: ModelUpdater): ModelUpdater {
+  return (model: KaartWithInfo) => (pred(model) ? updater(model) : model);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// de reducers hieronder zijn dus geen pure functies. Ze hebben allen een neveneffect op de openlayers map.
+// de reducers hieronder zijn dus geen pure functies. Ze hebben bijna allen een neveneffect op de openlayers map.
 // de reden is dat enerzijds Map statefull is en anderzijds dat het niet triviaal is om een efficiente differ
 // te maken op KaartWithInfo (en de object daarin) zodat we enkel de gepaste operaties op Map kunnen uitvoeren.
 // In principe zouden we dit moeten opsplitsen in transformaties naar het nieuwe model en interpretaties van dat
 // model.
+//
 
 /**
  *  Toevoegen bovenaan de kaart. Als er al een laag was met dezelfde titel, dan wordt die eerst verwijderd.
  */
-function addLaagOnTop(kaart: KaartWithInfo, laag: ke.Laag): KaartWithInfo {
-  // is er een state monad voor TS?
-  const kaartNaVerwijdering = removeLaag(kaart, laag.titel);
-  const layer = toOlLayer(kaartNaVerwijdering.config, laag);
-  kaartNaVerwijdering.map.addLayer(layer);
-  return { ...kaartNaVerwijdering, lagenOpTitel: kaartNaVerwijdering.lagenOpTitel.set(laag.titel, layer) };
+function addLaagOnTop(laag: ke.Laag): ModelUpdater {
+  return insertLaag(Number.MAX_SAFE_INTEGER, laag);
 }
 
 /**
  * Een laag verwijderen. De titel van de laag bepaalt welke er verwijderd wordt.
  */
-function removeLaag(kaart: KaartWithInfo, titel: string): KaartWithInfo {
-  const teVerwijderen = kaart.lagenOpTitel.get(titel);
-  if (teVerwijderen) {
-    kaart.map.removeLayer(teVerwijderen);
-    return { ...kaart, lagenOpTitel: kaart.lagenOpTitel.delete(titel) };
-  } else {
-    return kaart;
-  }
+function removeLaag(titel: string): ModelUpdater {
+  return (kaart: KaartWithInfo) => {
+    const teVerwijderen = kaart.lagenOpTitel.get(titel);
+    if (teVerwijderen) {
+      kaart.map.removeLayer(teVerwijderen); // Oesje. Side-effect. Gelukkig idempotent.
+      return updateModel({
+        lagenOpTitel: kaart.lagenOpTitel.delete(titel),
+        lagen: kaart.lagen.filterNot(l => l.titel === titel).toList()
+      })(kaart);
+    } else {
+      return kaart;
+    }
+  };
 }
 
-function insertLaag(kaart: KaartWithInfo, positie: number, laag: ke.Laag) {
-  const kaartNaVerwijdering = removeLaag(kaart, laag.titel);
-  const layer = toOlLayer(kaartNaVerwijdering.config, laag);
-  const layers = kaartNaVerwijdering.map.getLayers();
-  layers.insertAt(0, layer);
-  return { ...kaartNaVerwijdering, lagenOpTitel: kaartNaVerwijdering.lagenOpTitel.set(laag.titel, layer) };
+/**
+ * Een laag invoegen op een bepaaalde positie zonder er rekening mee te houden dat er al een laag met die titel bestaat.
+ * Maw samen te gebruiker met removeLaag.
+ */
+function insertLaagNoRemoveAt(positie: number, laag: ke.Laag): ModelUpdater {
+  return (kaart: KaartWithInfo) => {
+    const layer = toOlLayer(kaart.config, laag);
+    const effectivePosition = Math.max(0, Math.min(positie, kaart.lagen.size));
+    kaart.map.getLayers().insertAt(effectivePosition, layer);
+    return updateModel({
+      lagenOpTitel: kaart.lagenOpTitel.set(laag.titel, layer),
+      lagen: kaart.lagen.insert(effectivePosition, laag)
+    })(kaart);
+  };
 }
 
-function addSchaal(kaart: KaartWithInfo): KaartWithInfo {
-  if (!kaart.schaal) {
+function insertLaag(positie: number, laag: ke.Laag): ModelUpdater {
+  // De positie is absoluut (als er genoeg lagen zijn), maar niet noodzakelijk relatief als er al een laag met de titel bestond
+  return andThen(removeLaag(laag.titel), insertLaagNoRemoveAt(positie, laag));
+}
+
+const addSchaal: ModelUpdater = guardedUpdate(
+  kaart => !kaart.schaal,
+  kaart => {
     const schaal = new ol.control.ScaleLine();
     kaart.map.addControl(schaal);
-    return { ...kaart, schaal: schaal }; // we zouden schalen kunnen tellen zodat we enkel de laatste effectief verwijderen
-  } else {
-    return kaart;
+    return updateModel({ schaal: schaal })(kaart);
   }
-}
+);
 
-function removeSchaal(kaart: KaartWithInfo): KaartWithInfo {
-  if (kaart.schaal) {
+const removeSchaal: ModelUpdater = guardedUpdate(
+  kaart => !!kaart.schaal,
+  kaart => {
     kaart.map.removeControl(kaart.schaal);
     return { ...kaart, schaal: null };
-  } else {
-    return kaart;
   }
-}
+);
 
-function addFullScreen(kaart: KaartWithInfo): KaartWithInfo {
-  if (!kaart.fullScreen) {
+const addFullScreen: ModelUpdater = guardedUpdate(
+  kaart => !kaart.fullScreen,
+  kaart => {
     const fullScreen = new ol.control.FullScreen();
     kaart.map.addControl(fullScreen);
     return { ...kaart, fullScreen: fullScreen };
-  } else {
-    return kaart;
   }
-}
+);
 
-function removeFullScreen(kaart: KaartWithInfo): KaartWithInfo {
-  if (kaart.fullScreen) {
+const removeFullScreen: ModelUpdater = guardedUpdate(
+  kaart => !!kaart.fullScreen,
+  kaart => {
     kaart.map.removeControl(kaart.fullScreen);
     return { ...kaart, fullScreen: null };
-  } else {
-    return kaart;
   }
-}
+);
 
 function addStandaardInteracties(kaart: KaartWithInfo, scrollZoomOnFocus: boolean): KaartWithInfo {
   if (!kaart.stdInteracties || kaart.stdInteracties.isEmpty()) {
@@ -191,20 +190,24 @@ function updateExtent(kaart: KaartWithInfo, extent: ol.Extent): KaartWithInfo {
   };
 }
 
-function updateViewport(kaart: KaartWithInfo, size: ol.Size): KaartWithInfo {
-  // eerst de container aanpassen of de kaart is uitgerekt
-  if (size[0]) {
-    kaart.container.style.width = `${size[0]}px`;
-  }
-  if (size[1]) {
-    kaart.container.style.height = `${size[1]}px`;
-  }
-  kaart.map.setSize(size);
-  kaart.map.updateSize();
-  return {
-    ...kaart,
-    size: kaart.map.getSize(),
-    extent: kaart.map.getView().calculateExtent(kaart.map.getSize())
+function updateViewport(size: ol.Size): ModelUpdater {
+  return (kaart: KaartWithInfo) => {
+    // eerst de container aanpassen of de kaart is uitgerekt
+    if (size[0]) {
+      kaart.container.style.width = `${size[0]}px`;
+      kaart.container.parentElement.style.width = `${size[0]}px`;
+    }
+    if (size[1]) {
+      kaart.container.style.height = `${size[1]}px`;
+      kaart.container.parentElement.style.height = `${size[1]}px`;
+    }
+    kaart.map.setSize(size);
+    kaart.map.updateSize();
+    return {
+      ...kaart,
+      size: kaart.map.getSize(),
+      extent: kaart.map.getView().calculateExtent(kaart.map.getSize())
+    };
   };
 }
 
@@ -246,5 +249,86 @@ function toOlLayer(config: KaartConfig, laag: ke.Laag) {
         style: l.style
       });
     }
+  }
+}
+
+// Als we een achtergrondselectie willen, dan mag er ook maar 1 achtergrond zijn. Om daar voor te zorgen,
+// verwijderen we alle mogelijk achtergrondlagen behalve de laagste van de openlayers map.
+const keepOnlyFirstBackground: ModelUpdater = (kaart: KaartWithInfo) =>
+  kaart.possibleBackgrounds
+    .map(l => l.titel)
+    .rest() // De eerste niet verwijderen
+    .reduce((model, titel) => removeLaag(titel)(model), kaart);
+
+// We willlen er ook zeker van zijn dat de eerste kaart van de mogelijke achtergronden de initiële achtergrond
+// is. Dat kan rare effecten geven als er meer dan 1 keer gevraagd wordt om een achtergrondselector te tonen.
+const addFirstBackground: ModelUpdater = (kaart: KaartWithInfo) => {
+  const eerste = kaart.possibleBackgrounds.first();
+  if (eerste) {
+    return insertLaag(0, eerste)(kaart);
+  } else {
+    return kaart;
+  }
+};
+
+function setBackgrounds(backgrounds: List<ke.WmsLaag>): ModelUpdater {
+  return updateModel({ possibleBackgrounds: backgrounds });
+}
+
+function showBackgroundSelector(show: boolean): ModelUpdater {
+  return updateModel({ showBackgroundSelector: show });
+}
+
+export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWithInfo {
+  switch (cmd.type) {
+    case prt.KaartEvntTypes.ADDED_LAAG_ON_TOP:
+      return addLaagOnTop((cmd as prt.AddedLaagOnTop).laag)(kaart);
+    case prt.KaartEvntTypes.REMOVED_LAAG:
+      return removeLaag((cmd as prt.RemovedLaag).titel)(kaart);
+    case prt.KaartEvntTypes.INSERTED_LAAG:
+      const inserted = cmd as prt.InsertedLaag;
+      return insertLaag(inserted.positie, inserted.laag)(kaart);
+    case prt.KaartEvntTypes.ADDED_SCHAAL:
+      return addSchaal(kaart);
+    case prt.KaartEvntTypes.REMOVED_SCHAAL:
+      return removeSchaal(kaart);
+    case prt.KaartEvntTypes.ADDED_FULL_SCREEN:
+      return addFullScreen(kaart);
+    case prt.KaartEvntTypes.REMOVED_FULL_SCREEN:
+      return removeFullScreen(kaart);
+    case prt.KaartEvntTypes.ADDED_STD_INT:
+      return addStandaardInteracties(kaart, (cmd as prt.AddedStandaardInteracties).scrollZoomOnFocus);
+    case prt.KaartEvntTypes.REMOVED_STD_INT:
+      return removeStandaardInteracties(kaart);
+    case prt.KaartEvntTypes.MIDDELPUNT_CHANGED:
+      return updateMiddelpunt(kaart, (cmd as prt.MiddelpuntChanged).coordinate);
+    case prt.KaartEvntTypes.ZOOM_CHANGED:
+      return updateZoom(kaart, (cmd as prt.ZoomChanged).zoom);
+    case prt.KaartEvntTypes.EXTENT_CHANGED:
+      return updateExtent(kaart, (cmd as prt.ExtentChanged).extent);
+    case prt.KaartEvntTypes.VIEWPORT_CHANGED:
+      return updateViewport((cmd as prt.ViewportChanged).size)(kaart);
+    case prt.KaartEvntTypes.FOCUS_ON_MAP:
+      return focusOnMap(kaart);
+    case prt.KaartEvntTypes.LOSE_FOCUS_ON_MAP:
+      return loseFocusOnMap(kaart);
+    case prt.KaartEvntTypes.SHOW_FEATURES:
+      const replaceFeaturesEvent = cmd as prt.ReplaceFeatures;
+      return replaceFeatures(kaart, replaceFeaturesEvent.titel, replaceFeaturesEvent.features);
+    case prt.KaartEvntTypes.SHOW_BG_SELECTOR:
+      return guardedUpdate(
+        model => !model.showBackgroundSelector,
+        chained(
+          setBackgrounds((cmd as prt.ShowBackgroundSelector).backgrounds),
+          keepOnlyFirstBackground,
+          addFirstBackground,
+          showBackgroundSelector(true)
+        )
+      )(kaart);
+    case prt.KaartEvntTypes.HIDE_BG_SELECTOR:
+      return showBackgroundSelector(false)(kaart);
+    default:
+      kaartLogger.warn("onverwacht commando", cmd);
+      return keepModel(kaart);
   }
 }

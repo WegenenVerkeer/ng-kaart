@@ -19,7 +19,9 @@ export enum KaartEvntTypes {
   FOCUS_ON_MAP,
   LOSE_FOCUS_ON_MAP,
   SHOW_FEATURES,
-  INSERTED_LAAG
+  INSERTED_LAAG,
+  SHOW_BG_SELECTOR,
+  HIDE_BG_SELECTOR
 }
 
 export interface KaartEvnt {
@@ -121,3 +123,13 @@ export class ReplaceFeatures implements KaartEvnt {
 
   constructor(readonly titel: string, readonly features: List<ol.Feature>) {}
 }
+
+export class ShowBackgroundSelector implements KaartEvnt {
+  readonly type = KaartEvntTypes.SHOW_BG_SELECTOR;
+
+  constructor(readonly backgrounds: List<ke.WmsLaag>) {}
+}
+
+export const HideBackgroundSelector = {
+  type: KaartEvntTypes.HIDE_BG_SELECTOR
+};

@@ -1,0 +1,11 @@
+.selector {
+  display: flex;
+  flex-direction: row;
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+}
+
+.selector div {
+  display: initial; // de parent is flex, maar we willen terug naar block
+}

@@ -18,7 +18,7 @@ export abstract class KaartComponentBase implements OnInit, OnDestroy {
   }
 
   bindToLifeCycle<T>(source: Observable<T>): Observable<T> {
-    return source.pipe(takeUntil(this.destroyingSubj));
+    return source ? source.pipe(takeUntil(this.destroyingSubj)) : source;
   }
 
   public get destroying$(): Observable<void> {

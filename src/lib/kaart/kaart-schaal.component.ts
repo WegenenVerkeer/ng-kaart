@@ -11,10 +11,10 @@ export class KaartSchaalComponent implements OnInit, OnDestroy {
   constructor(private readonly kaart: KaartClassicComponent) {}
 
   ngOnInit(): void {
-    this.kaart.dispatcher.dispatch(new AddedSchaal());
+    this.kaart.dispatch(new AddedSchaal());
   }
 
   ngOnDestroy(): void {
-    this.kaart.dispatcher.dispatch(new RemovedSchaal());
+    this.kaart.dispatch(new RemovedSchaal());
   }
 }

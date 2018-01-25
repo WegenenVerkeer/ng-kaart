@@ -17,6 +17,8 @@ import { KaartOrthoLaagComponent } from "./kaart-ortho-laag.component";
 import { CoordinatenService } from "./coordinaten.service";
 import { KaartStandaardInteractiesComponent } from "./kaart-standaard-interacties.component";
 import { KaartStandaardKnoppenComponent } from "./kaart-standaard-knoppen.component";
+import { KaartAchtergrondSelectorComponent } from "./kaart-achtergrond-selector.component";
+import { KaartAchtergrondTileComponent } from "./kaart-achtergrond-tile.component";
 import { KaartEventDispatcher } from "./kaart-event-dispatcher";
 
 const components: any[] = [
@@ -33,7 +35,9 @@ const components: any[] = [
   KaartFeaturesLaagComponent,
   KaartVectorLaagComponent,
   KaartWdbLaagComponent,
-  KaartWmsLaagComponent
+  KaartWmsLaagComponent,
+  KaartAchtergrondSelectorComponent,
+  KaartAchtergrondTileComponent
 ];
 
 @NgModule({
