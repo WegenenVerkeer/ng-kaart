@@ -19,7 +19,7 @@ import { KaartStandaardInteractiesComponent } from "./kaart-standaard-interactie
 import { KaartStandaardKnoppenComponent } from "./kaart-standaard-knoppen.component";
 import { KaartAchtergrondSelectorComponent } from "./kaart-achtergrond-selector.component";
 import { KaartAchtergrondTileComponent } from "./kaart-achtergrond-tile.component";
-import { KaartEventDispatcher } from "./kaart-event-dispatcher";
+import { ReplaySubjectKaartEventDispatcher } from "./kaart-event-dispatcher";
 
 const components: any[] = [
   KaartComponent,
@@ -44,7 +44,7 @@ const components: any[] = [
   imports: [CommonModule, ClickOutsideModule],
   declarations: [components],
   exports: [components],
-  providers: [CoordinatenService, KaartEventDispatcher]
+  providers: [CoordinatenService, ReplaySubjectKaartEventDispatcher]
 })
 export class KaartModule {
   static defaultConfig: KaartConfig = {
@@ -70,7 +70,7 @@ export class KaartModule {
   static forRoot(config: KaartConfig): ModuleWithProviders {
     return {
       ngModule: KaartModule,
-      providers: [{ provide: KAART_CFG, useValue: config }, KaartEventDispatcher, KaartClassicComponent]
+      providers: [{ provide: KAART_CFG, useValue: config }, ReplaySubjectKaartEventDispatcher, KaartClassicComponent]
     };
   }
 

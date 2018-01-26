@@ -5,6 +5,7 @@ import * as ke from "./kaart-elementen";
 
 export enum KaartEvntTypes {
   ADDED_LAAG_ON_TOP,
+  PROVIDED_LAAG,
   REMOVED_LAAG,
   ADDED_SCHAAL,
   REMOVED_SCHAAL,
@@ -20,10 +21,10 @@ export enum KaartEvntTypes {
   LOSE_FOCUS_ON_MAP,
   SHOW_FEATURES,
   INSERTED_LAAG,
-  SHOW_BG_SELECTOR,
-  HIDE_BG_SELECTOR,
-  HIDE_LAAG,
-  SHOW_LAAG
+  BG_SELECTOR_SHOWN,
+  BG_SELECTOR_HIDDEN,
+  LAAG_HIDDEN,
+  LAAG_SHOWN
 }
 
 export interface KaartEvnt {
@@ -126,24 +127,30 @@ export class ReplaceFeatures implements KaartEvnt {
   constructor(readonly titel: string, readonly features: List<ol.Feature>) {}
 }
 
-export class ShowBackgroundSelector implements KaartEvnt {
-  readonly type = KaartEvntTypes.SHOW_BG_SELECTOR;
+export class BackgroundSelectorShown implements KaartEvnt {
+  readonly type = KaartEvntTypes.BG_SELECTOR_SHOWN;
 
   constructor(readonly backgrounds: List<ke.WmsLaag>) {}
 }
 
 export const HideBackgroundSelector = {
-  type: KaartEvntTypes.HIDE_BG_SELECTOR
+  type: KaartEvntTypes.BG_SELECTOR_HIDDEN
 };
 
-export class ShowLaag implements KaartEvnt {
-  readonly type = KaartEvntTypes.SHOW_LAAG;
+export class LaagShown implements KaartEvnt {
+  readonly type = KaartEvntTypes.LAAG_SHOWN;
 
   constructor(readonly titel: string) {}
 }
 
-export class HideLaag implements KaartEvnt {
-  readonly type = KaartEvntTypes.HIDE_LAAG;
+export class LaagHidden implements KaartEvnt {
+  readonly type = KaartEvntTypes.LAAG_HIDDEN;
 
   constructor(readonly titel: string) {}
+}
+
+export class ProvidedLaag implements KaartEvnt {
+  readonly type = KaartEvntTypes.PROVIDED_LAAG;
+
+  constructor(readonly laag: ke.Laag) {}
 }

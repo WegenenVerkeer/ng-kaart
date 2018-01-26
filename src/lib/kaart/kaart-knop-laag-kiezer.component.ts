@@ -3,7 +3,7 @@ import { map, debounceTime, distinctUntilChanged, scan } from "rxjs/operators";
 import { List, Set } from "immutable";
 
 import { KaartComponent } from "./kaart.component";
-import { ShowBackgroundSelector, HideBackgroundSelector } from "./kaart-protocol-events";
+import { BackgroundSelectorShown, HideBackgroundSelector } from "./kaart-protocol-events";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartComponentBase } from "./kaart-component-base";
 import { isWmsLaag, WmsLaag } from "./kaart-elementen";
@@ -33,7 +33,7 @@ export class KaartKnopLaagKiezerComponent extends KaartComponentBase implements 
         scan((alleLagenOoit: Set<WmsLaag>, lagen: Set<WmsLaag>) => alleLagenOoit.union(lagen), Set<WmsLaag>()),
         obs => this.bindToLifeCycle(obs) // zorg ervoor dat de subscription afgesloten wordt op het gepaste moment
       )
-      .subscribe(lagen => this.kaart.dispatch(new ShowBackgroundSelector(lagen.toList())));
+      .subscribe(lagen => this.kaart.dispatch(new BackgroundSelectorShown(lagen.toList())));
   }
 
   ngOnDestroy(): void {

@@ -4,7 +4,7 @@
   </div>
   <div id="overlay">
     <div *ngIf="showBackgroundSelector$ | async">
-      <awv-kaart-achtergrond-selector [kaartModel$]="kaartModel$"></awv-kaart-achtergrond-selector>
+      <awv-kaart-achtergrond-selector [kaartModel$]="kaartModel$" [dispatcher]="dispatcher"></awv-kaart-achtergrond-selector>
     </div>
   </div>
 </div>

@@ -6,10 +6,11 @@ import { BehaviorSubject } from "rxjs/BehaviorSubject";
 import { Laag, WmsLaag } from "./kaart-elementen";
 import { combineLatest, map, filter, first, tap } from "rxjs/operators";
 import { KaartWithInfo } from "./kaart-with-info";
-import { InsertedLaag, RemovedLaag, HideLaag, ShowLaag } from "./kaart-protocol-events";
+import { InsertedLaag, RemovedLaag, LaagHidden, LaagShown } from "./kaart-protocol-events";
 import { KaartComponentBase } from "./kaart-component-base";
 import { KaartComponent } from "./kaart.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
+import { ReplaySubjectKaartEventDispatcher, VacuousDispatcher, KaartEventDispatcher } from "./kaart-event-dispatcher";
 
 enum DisplayMode {
   SHOWING_STATUS,
@@ -73,15 +74,16 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
   show = false;
 
   @Input() kaartModel$: Observable<KaartWithInfo> = Observable.never();
+  @Input() dispatcher: KaartEventDispatcher = VacuousDispatcher;
 
-  constructor(private readonly kaart: KaartClassicComponent, private readonly cdr: ChangeDetectorRef, zone: NgZone) {
+  constructor(private readonly cdr: ChangeDetectorRef, zone: NgZone) {
     super(zone);
   }
 
   ngOnInit() {
     // hackadihack -> er is een raceconditie in de change detection van Angular. Zonder wordt soms de selectiecomponent niet getoond.
     setTimeout(() => this.cdr.detectChanges(), 1000);
-    console.log("km ->", this.kaartModel$);
+    console.log("km ->", this.dispatcher);
     this.runAsapOutsideAngular(() => {
       console.log("constructing achtergrond selector", this.kaartModel$);
       this.kaartModel$
@@ -116,8 +118,8 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
       // setTimeout(() => (this.displayMode = DisplayMode.SHOWING_STATUS), 10);
       this.displayMode = DisplayMode.SHOWING_STATUS;
       if (laag.titel !== this.achtergrondTitel) {
-        this.kaart.dispatch(new ShowLaag(laag.titel));
-        this.kaart.dispatch(new HideLaag(this.achtergrondTitel));
+        this.dispatcher.dispatch(new LaagShown(laag.titel));
+        this.dispatcher.dispatch(new LaagHidden(this.achtergrondTitel));
         this.achtergrondTitel = laag.titel;
       }
     } else {

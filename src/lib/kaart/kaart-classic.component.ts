@@ -5,7 +5,7 @@ import isEqual from "lodash-es/isEqual";
 
 import * as ol from "openlayers";
 
-import { KaartEventDispatcher } from "./kaart-event-dispatcher";
+import { ReplaySubjectKaartEventDispatcher } from "./kaart-event-dispatcher";
 import {
   ExtentChanged,
   FocusOnMap,
@@ -34,7 +34,7 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
   @Input() extent: ol.Extent;
   @Input() naam = "kaart" + KaartClassicComponent.counter++;
 
-  private readonly dispatcher: KaartEventDispatcher = new KaartEventDispatcher();
+  private readonly dispatcher: ReplaySubjectKaartEventDispatcher = new ReplaySubjectKaartEventDispatcher();
   private readonly modelSubj = new ReplaySubject<KaartWithInfo>(100, 1000);
   private hasFocus = false;
 

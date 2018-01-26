@@ -13,6 +13,7 @@ import * as ol from "openlayers";
 import { KaartConfig, KAART_CFG } from "./kaart.config";
 import { KaartComponentBase } from "./kaart-component-base";
 import { KaartWithInfo } from "./kaart-with-info";
+import { ReplaySubjectKaartEventDispatcher, KaartEventDispatcher } from "./kaart-event-dispatcher";
 import { leaveZone } from "../util/leave-zone";
 import { terminateOnDestroyAndRunAsapOutsideOfAngular } from "../util/observable-run";
 import { kaartLogger } from "./log";
@@ -36,6 +37,13 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
    * waarmee events naar de component gestuurd kunnen worden.
    */
   @Input() kaartEvt$: Observable<prt.KaartEvnt> = Observable.empty();
+
+  /**
+   * Dit is een beetje ongelukkig, maar ook componenten die door de KaartComponent zelf aangemaakt worden moeten events kunnen sturen
+   * naar de KaartComponent. Een alternatief zou kunnen zijn één dispatcher hier te maken en de KaartClassicComponent die te laten
+   * ophalen in afterViewInit.
+   */
+  private readonly internalEventDispatcher = new ReplaySubjectKaartEventDispatcher();
 
   @Input() minZoom = 2; // TODO naar config
   @Input() maxZoom = 13; // TODO naar config
@@ -82,6 +90,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       });
 
       this.kaartModel$ = this.kaartEvt$.pipe(
+        merge(this.internalEventDispatcher.event$), // hoe rekening met de events van de interne componenten
         tap(x => kaartLogger.debug("kaart event", x)),
         leaveZone(this.zone), //
         scan(red.kaartReducer, initieelModel), // TODO: zorg er voor dat de unsubscribe gebeurt
@@ -134,5 +143,9 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       })
     });
     return new KaartWithInfo(this.config, this.naam, this.mapElement.nativeElement.parentElement, kaart);
+  }
+
+  get dispatcher(): KaartEventDispatcher {
+    return this.internalEventDispatcher;
   }
 }

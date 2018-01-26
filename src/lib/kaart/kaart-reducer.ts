@@ -29,6 +29,10 @@ function chained<A>(...fs: ((a: A) => A)[]): (a: A) => A {
   return (a: A) => fs.reduce((acc, f) => f(acc), a);
 }
 
+function pipe<A>(a: A, ...fs: ((a: A) => A)[]): A {
+  return chained(...fs)(a);
+}
+
 function updateModel(partial: Partial<KaartWithInfo>): ModelUpdater {
   return (model: KaartWithInfo) => ({ ...model, ...partial } as KaartWithInfo);
 }
@@ -55,7 +59,7 @@ function guardedUpdate(pred: (kaart: KaartWithInfo) => boolean, updater: ModelUp
  *  Toevoegen bovenaan de kaart. Als er al een laag was met dezelfde titel, dan wordt die eerst verwijderd.
  */
 function addLaagOnTop(laag: ke.Laag): ModelUpdater {
-  return insertLaag(Number.MAX_SAFE_INTEGER, laag);
+  return insertLaag(Number.MAX_SAFE_INTEGER, laag, true);
 }
 
 /**
@@ -106,9 +110,10 @@ function doForLayer(titel: string, updater: (kaart: KaartWithInfo, layer: ol.lay
  * Een laag invoegen op een bepaaalde positie zonder er rekening mee te houden dat er al een laag met die titel bestaat.
  * Maw samen te gebruiker met removeLaag.
  */
-function insertLaagNoRemoveAt(positie: number, laag: ke.Laag): ModelUpdater {
+function insertLaagNoRemoveAt(positie: number, laag: ke.Laag, visible: boolean): ModelUpdater {
   return (kaart: KaartWithInfo) => {
     const layer = toOlLayer(kaart.config, laag);
+    layer.setVisible(visible);
     const effectivePosition = Math.max(0, Math.min(positie, kaart.lagen.size));
     kaart.map.getLayers().insertAt(effectivePosition, layer);
     return updateModel({
@@ -118,9 +123,9 @@ function insertLaagNoRemoveAt(positie: number, laag: ke.Laag): ModelUpdater {
   };
 }
 
-function insertLaag(positie: number, laag: ke.Laag): ModelUpdater {
+function insertLaag(positie: number, laag: ke.Laag, visible: boolean): ModelUpdater {
   // De positie is absoluut (als er genoeg lagen zijn), maar niet noodzakelijk relatief als er al een laag met de titel bestond
-  return andThen(removeLaag(laag.titel), insertLaagNoRemoveAt(positie, laag));
+  return andThen(removeLaag(laag.titel), insertLaagNoRemoveAt(positie, laag, visible));
 }
 
 const addSchaal: ModelUpdater = guardedUpdate(
@@ -295,10 +300,14 @@ const keepOnlyFirstBackgroundVisible: ModelUpdater = (kaart: KaartWithInfo) =>
 const addFirstBackground: ModelUpdater = (kaart: KaartWithInfo) => {
   const eerste = kaart.possibleBackgrounds.first();
   if (eerste) {
-    return andThen(insertLaag(0, eerste), showLaag(eerste.titel))(kaart);
+    return andThen(insertLaag(0, eerste, true), showLaag(eerste.titel))(kaart);
   } else {
     return kaart;
   }
+};
+
+const addNewBackgroundsToMap: ModelUpdater = (kaart: KaartWithInfo) => {
+  return kaart.possibleBackgrounds.reduce((model, laag, index) => insertLaag(0, laag, index === 0)(model), kaart);
 };
 
 function setBackgrounds(backgrounds: List<ke.WmsLaag>): ModelUpdater {
@@ -317,7 +326,7 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWit
       return removeLaag((cmd as prt.RemovedLaag).titel)(kaart);
     case prt.KaartEvntTypes.INSERTED_LAAG:
       const inserted = cmd as prt.InsertedLaag;
-      return insertLaag(inserted.positie, inserted.laag)(kaart);
+      return insertLaag(inserted.positie, inserted.laag, true)(kaart);
     case prt.KaartEvntTypes.ADDED_SCHAAL:
       return addSchaal(kaart);
     case prt.KaartEvntTypes.REMOVED_SCHAAL:
@@ -342,22 +351,26 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWit
       return focusOnMap(kaart);
     case prt.KaartEvntTypes.LOSE_FOCUS_ON_MAP:
       return loseFocusOnMap(kaart);
-    case prt.KaartEvntTypes.SHOW_LAAG:
-      return showLaag((cmd as prt.ShowLaag).titel)(kaart);
-    case prt.KaartEvntTypes.HIDE_LAAG:
-      return hideLaag((cmd as prt.HideLaag).titel)(kaart);
+    case prt.KaartEvntTypes.LAAG_SHOWN:
+      return showLaag((cmd as prt.LaagShown).titel)(kaart);
+    case prt.KaartEvntTypes.LAAG_HIDDEN:
+      return hideLaag((cmd as prt.LaagHidden).titel)(kaart);
     case prt.KaartEvntTypes.SHOW_FEATURES:
       const replaceFeaturesEvent = cmd as prt.ReplaceFeatures;
       return replaceFeatures(kaart, replaceFeaturesEvent.titel, replaceFeaturesEvent.features);
-    case prt.KaartEvntTypes.SHOW_BG_SELECTOR:
-      return chained(
-        setBackgrounds((cmd as prt.ShowBackgroundSelector).backgrounds),
-        keepOnlyFirstBackgroundVisible,
-        addFirstBackground,
+    case prt.KaartEvntTypes.BG_SELECTOR_SHOWN:
+      return pipe(
+        kaart,
+        setBackgrounds((cmd as prt.BackgroundSelectorShown).backgrounds),
+        addNewBackgroundsToMap,
         showBackgroundSelector(true)
-      )(kaart);
-    case prt.KaartEvntTypes.HIDE_BG_SELECTOR:
+      );
+    case prt.KaartEvntTypes.BG_SELECTOR_HIDDEN:
       return showBackgroundSelector(false)(kaart); // moeten we alle lagen weer zichtbaar maken?
+    case prt.KaartEvntTypes.PROVIDED_LAAG: {
+      const laag = (cmd as prt.ProvidedLaag).laag;
+      return pipe(kaart, addLaagOnTop(laag), hideLaag(laag.titel));
+    }
     default:
       kaartLogger.warn("onverwacht commando", cmd);
       return keepModel(kaart);
