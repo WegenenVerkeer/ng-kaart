@@ -36,7 +36,11 @@ function updateModel(partial: Partial<KaartWithInfo>): ModelUpdater {
 const keepModel: ModelUpdater = (model: KaartWithInfo) => model;
 
 function guardedUpdate(pred: (kaart: KaartWithInfo) => boolean, updater: ModelUpdater): ModelUpdater {
-  return (model: KaartWithInfo) => (pred(model) ? updater(model) : model);
+  // return (model: KaartWithInfo) => (pred(model) ? updater(model) : model);
+  return (model: KaartWithInfo) => {
+    console.log("in guarded update", model, pred(model));
+    return pred(model) ? updater(model) : model;
+  };
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -58,14 +62,40 @@ function addLaagOnTop(laag: ke.Laag): ModelUpdater {
  * Een laag verwijderen. De titel van de laag bepaalt welke er verwijderd wordt.
  */
 function removeLaag(titel: string): ModelUpdater {
+  return doForLayer(titel, (kaart, layer) => {
+    kaart.map.removeLayer(layer); // Oesje. Side-effect. Gelukkig idempotent.
+    return updateModel({
+      lagenOpTitel: kaart.lagenOpTitel.delete(titel),
+      lagen: kaart.lagen.filterNot(l => l.titel === titel).toList()
+    });
+  });
+}
+
+/**
+ * Een laag onzichtbaar maken. De titel van de laag bepaalt welke er verborgen wordt.
+ */
+function hideLaag(titel: string): ModelUpdater {
+  return doForLayer(titel, (kaart, layer) => {
+    layer.setVisible(false);
+    return keepModel; // We moeten die niet weten in het model (we leggen niet op dat er maar 1 tegelijk zichtbaar is)
+  });
+}
+
+/**
+ * Een laag zichtbaar maken. De titel van de laag bepaalt welke er getoond wordt.
+ */
+function showLaag(titel: string): ModelUpdater {
+  return doForLayer(titel, (kaart, layer) => {
+    layer.setVisible(true);
+    return keepModel;
+  });
+}
+
+function doForLayer(titel: string, updater: (kaart: KaartWithInfo, layer: ol.layer.Base) => ModelUpdater): ModelUpdater {
   return (kaart: KaartWithInfo) => {
-    const teVerwijderen = kaart.lagenOpTitel.get(titel);
-    if (teVerwijderen) {
-      kaart.map.removeLayer(teVerwijderen); // Oesje. Side-effect. Gelukkig idempotent.
-      return updateModel({
-        lagenOpTitel: kaart.lagenOpTitel.delete(titel),
-        lagen: kaart.lagen.filterNot(l => l.titel === titel).toList()
-      })(kaart);
+    const layerToUpdate = kaart.lagenOpTitel.get(titel);
+    if (layerToUpdate) {
+      return updater(kaart, layerToUpdate)(kaart);
     } else {
       return kaart;
     }
@@ -254,18 +284,18 @@ function toOlLayer(config: KaartConfig, laag: ke.Laag) {
 
 // Als we een achtergrondselectie willen, dan mag er ook maar 1 achtergrond zijn. Om daar voor te zorgen,
 // verwijderen we alle mogelijk achtergrondlagen behalve de laagste van de openlayers map.
-const keepOnlyFirstBackground: ModelUpdater = (kaart: KaartWithInfo) =>
+const keepOnlyFirstBackgroundVisible: ModelUpdater = (kaart: KaartWithInfo) =>
   kaart.possibleBackgrounds
     .map(l => l.titel)
-    .rest() // De eerste niet verwijderen
-    .reduce((model, titel) => removeLaag(titel)(model), kaart);
+    .rest() // De eerste niet onzichtbaar maken
+    .reduce((model, titel) => hideLaag(titel)(model), kaart);
 
 // We willlen er ook zeker van zijn dat de eerste kaart van de mogelijke achtergronden de initiële achtergrond
 // is. Dat kan rare effecten geven als er meer dan 1 keer gevraagd wordt om een achtergrondselector te tonen.
 const addFirstBackground: ModelUpdater = (kaart: KaartWithInfo) => {
   const eerste = kaart.possibleBackgrounds.first();
   if (eerste) {
-    return insertLaag(0, eerste)(kaart);
+    return andThen(insertLaag(0, eerste), showLaag(eerste.titel))(kaart);
   } else {
     return kaart;
   }
@@ -312,21 +342,22 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWit
       return focusOnMap(kaart);
     case prt.KaartEvntTypes.LOSE_FOCUS_ON_MAP:
       return loseFocusOnMap(kaart);
+    case prt.KaartEvntTypes.SHOW_LAAG:
+      return showLaag((cmd as prt.ShowLaag).titel)(kaart);
+    case prt.KaartEvntTypes.HIDE_LAAG:
+      return hideLaag((cmd as prt.HideLaag).titel)(kaart);
     case prt.KaartEvntTypes.SHOW_FEATURES:
       const replaceFeaturesEvent = cmd as prt.ReplaceFeatures;
       return replaceFeatures(kaart, replaceFeaturesEvent.titel, replaceFeaturesEvent.features);
     case prt.KaartEvntTypes.SHOW_BG_SELECTOR:
-      return guardedUpdate(
-        model => !model.showBackgroundSelector,
-        chained(
-          setBackgrounds((cmd as prt.ShowBackgroundSelector).backgrounds),
-          keepOnlyFirstBackground,
-          addFirstBackground,
-          showBackgroundSelector(true)
-        )
+      return chained(
+        setBackgrounds((cmd as prt.ShowBackgroundSelector).backgrounds),
+        keepOnlyFirstBackgroundVisible,
+        addFirstBackground,
+        showBackgroundSelector(true)
       )(kaart);
     case prt.KaartEvntTypes.HIDE_BG_SELECTOR:
-      return showBackgroundSelector(false)(kaart);
+      return showBackgroundSelector(false)(kaart); // moeten we alle lagen weer zichtbaar maken?
     default:
       kaartLogger.warn("onverwacht commando", cmd);
       return keepModel(kaart);

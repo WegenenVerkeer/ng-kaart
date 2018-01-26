@@ -58,6 +58,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
   constructor(@Inject(KAART_CFG) readonly config: KaartConfig, zone: NgZone) {
     super(zone);
+    console.log("constructing kc");
   }
 
   ngOnInit() {
@@ -72,18 +73,18 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   private bindObservables() {
     console.log("binding observables");
     this.runAsapOutsideAngular(() => {
-      const kaart = this.maakKaart();
+      const initieelModel = this.initieelModel();
       kaartLogger.info(`Kaart ${this.naam} aangemaakt`);
 
       this.destroying$.pipe(leaveZone(this.zone)).subscribe(_ => {
         kaartLogger.info(`kaart ${this.naam} opkuisen`);
-        kaart.map.setTarget(null);
+        initieelModel.map.setTarget(null);
       });
 
       this.kaartModel$ = this.kaartEvt$.pipe(
         tap(x => kaartLogger.debug("kaart event", x)),
         leaveZone(this.zone), //
-        scan(red.kaartReducer, kaart), // TODO: zorg er voor dat de unsubscribe gebeurt
+        scan(red.kaartReducer, initieelModel), // TODO: zorg er voor dat de unsubscribe gebeurt
         shareReplay(1000, 5000)
       );
       console.log("kaart model obs is gemaakt");
@@ -99,7 +100,8 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       this.kaartModel$.subscribe(
         model => {
           kaartLogger.debug("reduced to", model);
-          //this.modelConsumer(model); // Heel belangrijk: laat diegene die ons embed weten wat het huidige model is
+          // TODO dubbels opvangen (zie versie)
+          this.modelConsumer(model); // Heel belangrijk: laat diegene die ons embed weten wat het huidige model is.
         },
         e => kaartLogger.error("error", e),
         () => kaartLogger.info("kaart & cmd terminated")
@@ -107,10 +109,11 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
       // Deze zorgt er voor dat de achtergrondselectieknop getoond wordt obv het model
       this.showBackgroundSelector$ = this.kaartModel$.pipe(map(k => k.showBackgroundSelector), distinctUntilChanged());
+      this.showBackgroundSelector$.subscribe(s => console.log("show bs", s));
     });
   }
 
-  private maakKaart(): KaartWithInfo {
+  private initieelModel(): KaartWithInfo {
     const dienstkaartProjectie: ol.proj.Projection = ol.proj.get("EPSG:31370");
     // Zonder deze extent zoomen we op de hele wereld en Vlaanderen is daar maar een heeel klein deeltje van
     dienstkaartProjectie.setExtent([18000.0, 152999.75, 280144.0, 415143.75]); // zet de extent op die van de dienstkaart

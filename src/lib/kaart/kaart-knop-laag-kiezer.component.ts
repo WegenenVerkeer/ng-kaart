@@ -1,5 +1,6 @@
 import { Component, Input, OnDestroy, OnInit, ViewEncapsulation, NgZone } from "@angular/core";
-import { map, debounceTime, distinctUntilChanged } from "rxjs/operators";
+import { map, debounceTime, distinctUntilChanged, scan } from "rxjs/operators";
+import { List, Set } from "immutable";
 
 import { KaartComponent } from "./kaart.component";
 import { ShowBackgroundSelector, HideBackgroundSelector } from "./kaart-protocol-events";
@@ -25,13 +26,14 @@ export class KaartKnopLaagKiezerComponent extends KaartComponentBase implements 
             .filter(isWmsLaag)
             .map(laag => laag as WmsLaag)
             .filter(laag => laag.dekkend)
-            .toList()
+            .toSet()
         ), // Luister naar lagen die beschikbaar komen
         debounceTime(100), // maar geef het model wat tijd om te stabiliseren
         distinctUntilChanged((l1, l2) => l1.equals(l2)), // na een map is er geen referential equality meer
+        scan((alleLagenOoit: Set<WmsLaag>, lagen: Set<WmsLaag>) => alleLagenOoit.union(lagen), Set<WmsLaag>()),
         obs => this.bindToLifeCycle(obs) // zorg ervoor dat de subscription afgesloten wordt op het gepaste moment
       )
-      .subscribe(lagen => this.kaart.dispatch(new ShowBackgroundSelector(lagen)));
+      .subscribe(lagen => this.kaart.dispatch(new ShowBackgroundSelector(lagen.toList())));
   }
 
   ngOnDestroy(): void {

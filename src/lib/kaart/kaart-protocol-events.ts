@@ -21,7 +21,9 @@ export enum KaartEvntTypes {
   SHOW_FEATURES,
   INSERTED_LAAG,
   SHOW_BG_SELECTOR,
-  HIDE_BG_SELECTOR
+  HIDE_BG_SELECTOR,
+  HIDE_LAAG,
+  SHOW_LAAG
 }
 
 export interface KaartEvnt {
@@ -133,3 +135,15 @@ export class ShowBackgroundSelector implements KaartEvnt {
 export const HideBackgroundSelector = {
   type: KaartEvntTypes.HIDE_BG_SELECTOR
 };
+
+export class ShowLaag implements KaartEvnt {
+  readonly type = KaartEvntTypes.SHOW_LAAG;
+
+  constructor(readonly titel: string) {}
+}
+
+export class HideLaag implements KaartEvnt {
+  readonly type = KaartEvntTypes.HIDE_LAAG;
+
+  constructor(readonly titel: string) {}
+}

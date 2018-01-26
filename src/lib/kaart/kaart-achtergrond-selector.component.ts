@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter, ChangeDetectionStrategy, ChangeDetectorRef, NgZone } from "@angular/core";
+import { Component, OnInit, Input, ChangeDetectionStrategy, ChangeDetectorRef, NgZone, OnDestroy } from "@angular/core";
 import { trigger, state, style, transition, animate } from "@angular/animations";
 import { Observable } from "rxjs/Observable";
 import { BehaviorSubject } from "rxjs/BehaviorSubject";
@@ -6,7 +6,7 @@ import { BehaviorSubject } from "rxjs/BehaviorSubject";
 import { Laag, WmsLaag } from "./kaart-elementen";
 import { combineLatest, map, filter, first, tap } from "rxjs/operators";
 import { KaartWithInfo } from "./kaart-with-info";
-import { InsertedLaag, RemovedLaag } from "./kaart-protocol-events";
+import { InsertedLaag, RemovedLaag, HideLaag, ShowLaag } from "./kaart-protocol-events";
 import { KaartComponentBase } from "./kaart-component-base";
 import { KaartComponent } from "./kaart.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
@@ -63,7 +63,7 @@ const Invisible = "invisible";
   ],
   changeDetection: ChangeDetectionStrategy.OnPush // Bij default is er een endless loop van updates
 })
-export class KaartAchtergrondSelectorComponent extends KaartComponentBase implements OnInit {
+export class KaartAchtergrondSelectorComponent extends KaartComponentBase implements OnInit, OnDestroy {
   // component state is aanvaardbaar zolang de html view er niet direct aan komt
   private displayMode: DisplayMode = DisplayMode.SHOWING_STATUS;
   private achtergrondTitel = "";
@@ -72,7 +72,7 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
 
   show = false;
 
-  @Input() kaartModel$: Observable<KaartWithInfo>;
+  @Input() kaartModel$: Observable<KaartWithInfo> = Observable.never();
 
   constructor(private readonly kaart: KaartClassicComponent, private readonly cdr: ChangeDetectorRef, zone: NgZone) {
     super(zone);
@@ -81,14 +81,16 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
   ngOnInit() {
     // hackadihack -> er is een raceconditie in de change detection van Angular. Zonder wordt soms de selectiecomponent niet getoond.
     setTimeout(() => this.cdr.detectChanges(), 1000);
+    console.log("km ->", this.kaartModel$);
     this.runAsapOutsideAngular(() => {
-      console.log("constructing achtergrond selector");
+      console.log("constructing achtergrond selector", this.kaartModel$);
       this.kaartModel$
         .pipe(
           tap(m => console.log("voor map 0", m)),
           map(model => model.possibleBackgrounds),
           first(bgs => !bgs.isEmpty()), // De eerste keer dat er achtergronden gezet worden
-          map(bgs => bgs.get(0).titel) // gebruiken we die om er de achtergrondtitel mee te initialiseren
+          map(bgs => bgs.get(0).titel), // gebruiken we die om er de achtergrondtitel mee te initialiseren
+          tap(t => console.log("achtergrondtitel", t))
         )
         .subscribe(titel => (this.achtergrondTitel = titel));
       this.backgroundTiles$ = this.kaartModel$.pipe(
@@ -100,6 +102,11 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
     });
   }
 
+  ngOnDestroy() {
+    console.log("destroying kasc");
+    super.ngOnDestroy();
+  }
+
   kies(laag: WmsLaag): void {
     if (this.displayMode === DisplayMode.SELECTING) {
       // We wachten een beetje met de lijst te laten samen klappen zodat de tile met de nieuwe achtergrondlaag
@@ -109,8 +116,8 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
       // setTimeout(() => (this.displayMode = DisplayMode.SHOWING_STATUS), 10);
       this.displayMode = DisplayMode.SHOWING_STATUS;
       if (laag.titel !== this.achtergrondTitel) {
-        this.kaart.dispatch(new RemovedLaag(this.achtergrondTitel));
-        this.kaart.dispatch(new InsertedLaag(0, laag));
+        this.kaart.dispatch(new ShowLaag(laag.titel));
+        this.kaart.dispatch(new HideLaag(this.achtergrondTitel));
         this.achtergrondTitel = laag.titel;
       }
     } else {
