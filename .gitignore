@@ -12,3 +12,4 @@ e2e/**/*.js
 e2e/**/*.d.ts
 e2e/**/*.js.map
 .vscode/
+package-lock.json
