@@ -1,5 +1,4 @@
-import { Component, Input, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
-import { KaartComponent } from "./kaart.component";
+import { Component, Input, ViewEncapsulation } from "@angular/core";
 
 import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";

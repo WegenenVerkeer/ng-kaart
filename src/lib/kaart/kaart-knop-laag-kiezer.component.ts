@@ -1,8 +1,7 @@
-import { Component, Input, OnDestroy, OnInit, ViewEncapsulation, NgZone } from "@angular/core";
+import { Component, OnDestroy, OnInit, ViewEncapsulation, NgZone } from "@angular/core";
 import { map, debounceTime, distinctUntilChanged, scan } from "rxjs/operators";
-import { List, Set } from "immutable";
+import { Set } from "immutable";
 
-import { KaartComponent } from "./kaart.component";
 import { BackgroundSelectorShown, HideBackgroundSelector } from "./kaart-protocol-events";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartComponentBase } from "./kaart-component-base";

@@ -1,4 +1,4 @@
-import { List, Iterable } from "immutable";
+import { List } from "immutable";
 
 import * as ol from "openlayers";
 
@@ -286,25 +286,6 @@ function toOlLayer(config: KaartConfig, laag: ke.Laag) {
     }
   }
 }
-
-// Als we een achtergrondselectie willen, dan mag er ook maar 1 achtergrond zijn. Om daar voor te zorgen,
-// verwijderen we alle mogelijk achtergrondlagen behalve de laagste van de openlayers map.
-const keepOnlyFirstBackgroundVisible: ModelUpdater = (kaart: KaartWithInfo) =>
-  kaart.possibleBackgrounds
-    .map(l => l.titel)
-    .rest() // De eerste niet onzichtbaar maken
-    .reduce((model, titel) => hideLaag(titel)(model), kaart);
-
-// We willlen er ook zeker van zijn dat de eerste kaart van de mogelijke achtergronden de initiële achtergrond
-// is. Dat kan rare effecten geven als er meer dan 1 keer gevraagd wordt om een achtergrondselector te tonen.
-const addFirstBackground: ModelUpdater = (kaart: KaartWithInfo) => {
-  const eerste = kaart.possibleBackgrounds.first();
-  if (eerste) {
-    return andThen(insertLaag(0, eerste, true), showLaag(eerste.titel))(kaart);
-  } else {
-    return kaart;
-  }
-};
 
 const addNewBackgroundsToMap: ModelUpdater = (kaart: KaartWithInfo) => {
   return kaart.possibleBackgrounds.reduce((model, laag, index) => insertLaag(0, laag, index === 0)(model), kaart);

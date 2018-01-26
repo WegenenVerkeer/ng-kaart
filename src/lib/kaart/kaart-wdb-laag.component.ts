@@ -1,9 +1,8 @@
-import { Component, ViewEncapsulation, Inject } from "@angular/core";
+import { Component, Inject, ViewEncapsulation } from "@angular/core";
 import { List } from "immutable";
 
 import * as ke from "./kaart-elementen";
-import { KaartComponent } from "./kaart.component";
-import { KaartConfig, KAART_CFG } from "./kaart.config";
+import { KAART_CFG, KaartConfig } from "./kaart.config";
 import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
 

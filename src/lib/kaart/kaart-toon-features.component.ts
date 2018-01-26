@@ -5,8 +5,7 @@ import * as ol from "openlayers";
 
 import { KaartVectorLaagComponent } from "./kaart-vector-laag.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
-import { AddedLaagOnTop, ReplaceFeatures } from "./kaart-protocol-events";
-import { VectorLaag } from "./kaart-elementen";
+import { ReplaceFeatures } from "./kaart-protocol-events";
 
 @Component({
   selector: "awv-kaart-features-laag",

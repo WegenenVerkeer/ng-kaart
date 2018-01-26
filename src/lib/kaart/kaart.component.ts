@@ -1,11 +1,10 @@
-import { Component, ElementRef, Input, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation, Inject, Output } from "@angular/core";
+import { Component, ElementRef, Input, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation, Inject } from "@angular/core";
 import { Observable } from "rxjs/Observable";
-import { ReplaySubject } from "rxjs/ReplaySubject";
 import "rxjs/add/observable/of";
 import "rxjs/add/observable/combineLatest";
 import "rxjs/add/observable/empty";
 import "rxjs/add/observable/never";
-import { scan, map, tap, distinctUntilChanged, filter, shareReplay, merge, combineLatest } from "rxjs/operators";
+import { scan, map, tap, distinctUntilChanged, filter, shareReplay, merge } from "rxjs/operators";
 
 import proj4 from "proj4";
 import * as ol from "openlayers";
@@ -14,8 +13,8 @@ import { KaartConfig, KAART_CFG } from "./kaart.config";
 import { KaartComponentBase } from "./kaart-component-base";
 import { KaartWithInfo } from "./kaart-with-info";
 import { ReplaySubjectKaartEventDispatcher, KaartEventDispatcher } from "./kaart-event-dispatcher";
+// noinspection TypeScriptPreferShortImport
 import { leaveZone } from "../util/leave-zone";
-import { terminateOnDestroyAndRunAsapOutsideOfAngular } from "../util/observable-run";
 import { kaartLogger } from "./log";
 import * as prt from "./kaart-protocol";
 import * as red from "./kaart-reducer";
@@ -27,6 +26,7 @@ import * as red from "./kaart-reducer";
   encapsulation: ViewEncapsulation.Emulated // Omwille hiervan kunnen we geen globale CSS gebruiken, maar met Native werken animaties niet
 })
 export class KaartComponent extends KaartComponentBase implements OnInit, OnDestroy {
+  // noinspection JSUnusedLocalSymbols
   private static readonly lambert72 = KaartComponent.configureerLambert72();
 
   @ViewChild("map") mapElement: ElementRef;
@@ -84,6 +84,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       const initieelModel = this.initieelModel();
       kaartLogger.info(`Kaart ${this.naam} aangemaakt`);
 
+      // noinspection JSUnusedLocalSymbols
       this.destroying$.pipe(leaveZone(this.zone)).subscribe(_ => {
         kaartLogger.info(`kaart ${this.naam} opkuisen`);
         initieelModel.map.setTarget(null);

@@ -1,16 +1,13 @@
 import { Component, OnInit, Input, ChangeDetectionStrategy, ChangeDetectorRef, NgZone, OnDestroy } from "@angular/core";
 import { trigger, state, style, transition, animate } from "@angular/animations";
 import { Observable } from "rxjs/Observable";
-import { BehaviorSubject } from "rxjs/BehaviorSubject";
 
-import { Laag, WmsLaag } from "./kaart-elementen";
-import { combineLatest, map, filter, first, tap } from "rxjs/operators";
+import { WmsLaag } from "./kaart-elementen";
+import { map, first } from "rxjs/operators";
 import { KaartWithInfo } from "./kaart-with-info";
-import { InsertedLaag, RemovedLaag, LaagHidden, LaagShown } from "./kaart-protocol-events";
+import { LaagHidden, LaagShown } from "./kaart-protocol-events";
 import { KaartComponentBase } from "./kaart-component-base";
-import { KaartComponent } from "./kaart.component";
-import { KaartClassicComponent } from "./kaart-classic.component";
-import { ReplaySubjectKaartEventDispatcher, VacuousDispatcher, KaartEventDispatcher } from "./kaart-event-dispatcher";
+import { VacuousDispatcher, KaartEventDispatcher } from "./kaart-event-dispatcher";
 
 enum DisplayMode {
   SHOWING_STATUS,
@@ -83,22 +80,16 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
   ngOnInit() {
     // hackadihack -> er is een raceconditie in de change detection van Angular. Zonder wordt soms de selectiecomponent niet getoond.
     setTimeout(() => this.cdr.detectChanges(), 1000);
-    console.log("km ->", this.dispatcher);
     this.runAsapOutsideAngular(() => {
-      console.log("constructing achtergrond selector", this.kaartModel$);
       this.kaartModel$
         .pipe(
-          tap(m => console.log("voor map 0", m)),
           map(model => model.possibleBackgrounds),
           first(bgs => !bgs.isEmpty()), // De eerste keer dat er achtergronden gezet worden
-          map(bgs => bgs.get(0).titel), // gebruiken we die om er de achtergrondtitel mee te initialiseren
-          tap(t => console.log("achtergrondtitel", t))
+          map(bgs => bgs.get(0).titel) // gebruiken we die om er de achtergrondtitel mee te initialiseren
         )
         .subscribe(titel => (this.achtergrondTitel = titel));
       this.backgroundTiles$ = this.kaartModel$.pipe(
-        tap(m => console.log("Voor map", m)),
-        map(model => model.possibleBackgrounds.toArray()),
-        tap(ls => console.log("Na map", ls))
+        map(model => model.possibleBackgrounds.toArray()) //
       );
       console.log("constructie gedaan", this.kaartModel$);
     });
@@ -135,11 +126,9 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
   tileVisibility(laag: WmsLaag): string {
     switch (this.displayMode) {
       case DisplayMode.SHOWING_STATUS: {
-        console.log(`laag: ${laag.titel}`, this.isCurrentlyBackground(laag) ? Visible : Invisible);
         return this.isCurrentlyBackground(laag) ? Visible : Invisible;
       }
       case DisplayMode.SELECTING: {
-        console.log(`laag: ${laag.titel}`, "visible");
         return Visible;
       }
     }

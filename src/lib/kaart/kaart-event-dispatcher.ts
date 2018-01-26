@@ -24,6 +24,7 @@ export class ReplaySubjectKaartEventDispatcher implements KaartEventDispatcher, 
   }
 }
 
+// noinspection JSUnusedLocalSymbols
 export const VacuousDispatcher: KaartEventDispatcher = {
   dispatch(evt: prt.KaartEvnt) {}
 };
