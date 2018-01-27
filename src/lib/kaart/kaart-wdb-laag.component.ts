@@ -19,7 +19,7 @@ export class KaartWdbLaagComponent extends KaartWmsLaagComponent {
 
   createLayer(): ke.WmsLaag {
     return {
-      type: ke.ElementType.WMSLAAG,
+      type: ke.WmsType,
       titel: this.titel,
       dekkend: true,
       naam: this.laagNaam,

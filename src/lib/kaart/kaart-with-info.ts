@@ -1,5 +1,6 @@
 import * as ol from "openlayers";
 import { List, Map } from "immutable";
+import { Option } from "fp-ts/lib/Option";
 
 import * as ke from "./kaart-elementen";
 import { KaartConfig } from "./kaart.config";
@@ -11,7 +12,7 @@ export class KaartWithInfo {
     readonly naam: String,
     readonly container: any,
     readonly map: ol.Map, // de volgende parameters worden geacht niet gezet te worden initieel (brrr)
-    readonly lagenOpTitel: Map<string, ol.layer.Base> = Map(),
+    readonly lagenOpTitel: Map<string, Option<ol.layer.Base>> = Map(),
     readonly lagen: List<ke.Laag> = List(),
     readonly schaal: ol.control.Control = null, // to option or not to option, that is the question?
     readonly fullScreen: ol.control.FullScreen = null, // to option or not to option, that is the question?

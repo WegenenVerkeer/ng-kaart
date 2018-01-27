@@ -1,4 +1,5 @@
 import { List } from "immutable";
+import { none, Option, some } from "fp-ts/lib/Option";
 
 import * as ol from "openlayers";
 
@@ -97,12 +98,11 @@ function showLaag(titel: string): ModelUpdater {
 
 function doForLayer(titel: string, updater: (kaart: KaartWithInfo, layer: ol.layer.Base) => ModelUpdater): ModelUpdater {
   return (kaart: KaartWithInfo) => {
-    const layerToUpdate = kaart.lagenOpTitel.get(titel);
-    if (layerToUpdate) {
-      return updater(kaart, layerToUpdate)(kaart);
-    } else {
-      return kaart;
-    }
+    const maybeLayerToUpdate = kaart.lagenOpTitel.get(titel) || none;
+    return maybeLayerToUpdate.fold(
+      () => kaart, // een blanco laag bijv.
+      layerToUpdate => updater(kaart, layerToUpdate)(kaart)
+    );
   };
 }
 
@@ -112,12 +112,15 @@ function doForLayer(titel: string, updater: (kaart: KaartWithInfo, layer: ol.lay
  */
 function insertLaagNoRemoveAt(positie: number, laag: ke.Laag, visible: boolean): ModelUpdater {
   return (kaart: KaartWithInfo) => {
-    const layer = toOlLayer(kaart.config, laag);
-    layer.setVisible(visible);
     const effectivePosition = Math.max(0, Math.min(positie, kaart.lagen.size));
-    kaart.map.getLayers().insertAt(effectivePosition, layer);
+    const maybeLayer = toOlLayer(kaart.config, laag);
+    maybeLayer.map(layer => {
+      // In het geval van de blanco laag, hebben we geen openlayers layer
+      layer.setVisible(visible);
+      kaart.map.getLayers().insertAt(effectivePosition, layer);
+    });
     return updateModel({
-      lagenOpTitel: kaart.lagenOpTitel.set(laag.titel, layer),
+      lagenOpTitel: kaart.lagenOpTitel.set(laag.titel, maybeLayer),
       lagen: kaart.lagen.insert(effectivePosition, laag)
     })(kaart);
   };
@@ -247,43 +250,56 @@ function updateViewport(size: ol.Size): ModelUpdater {
 }
 
 function replaceFeatures(kaart: KaartWithInfo, titel: string, features: List<ol.Feature>): KaartWithInfo {
-  const laag = <ol.layer.Vector>kaart.lagenOpTitel.get(titel);
-  if (laag && laag.getSource) {
-    laag.getSource().clear(true);
-    laag.getSource().addFeatures(features.toArray());
-  }
-  return kaart;
+  const maybeLayer = (kaart.lagenOpTitel.get(titel) || none).chain(asVectorLayer);
+  return maybeLayer.fold(
+    () => kaart,
+    layer => {
+      layer.getSource().clear(true);
+      layer.getSource().addFeatures(features.toArray());
+      return kaart;
+    }
+  );
 }
 
-function toOlLayer(config: KaartConfig, laag: ke.Laag) {
+function asVectorLayer(layer: ol.layer.Base): Option<ol.layer.Vector> {
+  return layer.hasOwnProperty("getSource") ? some(layer as ol.layer.Vector) : none;
+}
+
+function toOlLayer(config: KaartConfig, laag: ke.Laag): Option<ol.layer.Base> {
   switch (laag.type) {
-    case ke.ElementType.WMSLAAG: {
+    case ke.WmsType: {
       const l = laag as ke.WmsLaag;
-      return new ol.layer.Tile(<olx.layer.TileOptions>{
-        title: l.titel,
-        visible: true,
-        extent: l.extent,
-        source: new ol.source.TileWMS({
-          projection: null,
-          urls: l.urls.toArray(),
-          params: {
-            LAYERS: l.naam,
-            TILED: true,
-            SRS: config.srs,
-            version: l.versie
-          }
+      return some(
+        new ol.layer.Tile(<olx.layer.TileOptions>{
+          title: l.titel,
+          visible: true,
+          extent: l.extent,
+          source: new ol.source.TileWMS({
+            projection: null,
+            urls: l.urls.toArray(),
+            params: {
+              LAYERS: l.naam,
+              TILED: true,
+              SRS: config.srs,
+              version: l.versie
+            }
+          })
         })
-      });
+      );
     }
-    case ke.ElementType.VECTORLAAG: {
+    case ke.VectorType: {
       const l = laag as ke.VectorLaag;
-      return new ol.layer.Vector(<olx.layer.VectorOptions>{
-        title: l.titel,
-        source: l.source,
-        visible: true,
-        style: l.style
-      });
+      return some(
+        new ol.layer.Vector(<olx.layer.VectorOptions>{
+          title: l.titel,
+          source: l.source,
+          visible: true,
+          style: l.style
+        })
+      );
     }
+    default:
+      return none;
   }
 }
 

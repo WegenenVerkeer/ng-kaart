@@ -5,7 +5,7 @@ import * as ol from "openlayers";
 
 import { KaartLaagComponent } from "./kaart-laag.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
-import { ElementType, WmsLaag } from "./kaart-elementen";
+import { WmsLaag, WmsType } from "./kaart-elementen";
 
 @Component({
   selector: "awv-kaart-wms-laag",
@@ -27,7 +27,7 @@ export class KaartWmsLaagComponent extends KaartLaagComponent {
 
   createLayer(): WmsLaag {
     return {
-      type: ElementType.WMSLAAG,
+      type: WmsType,
       titel: this.titel,
       dekkend: this.dekkend,
       naam: this.laagNaam,

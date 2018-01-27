@@ -22,7 +22,7 @@ export class KaartVectorLaagComponent extends KaartLaagComponent {
 
   createLayer(): ke.VectorLaag {
     return {
-      type: ke.ElementType.VECTORLAAG,
+      type: ke.VectorType,
       titel: this.titel,
       source: this.source,
       style: this.style,

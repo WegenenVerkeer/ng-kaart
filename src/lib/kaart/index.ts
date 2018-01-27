@@ -6,6 +6,7 @@ import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartKnopZoomSliderComponent } from "./kaart-knop-zoom-slider.component";
 import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
 import { KaartVectorLaagComponent } from "./kaart-vector-laag.component";
+import { KaartBlancoLaagComponent } from "./kaart-blanco-laag.component";
 import { KaartKnopLaagKiezerComponent } from "./kaart-knop-laag-kiezer.component";
 import { KaartTekenPolygoonLaagComponent } from "./kaart-teken-polygoon-laag.component";
 import { KaartFeaturesLaagComponent } from "./kaart-toon-features.component";
@@ -36,6 +37,7 @@ const components: any[] = [
   KaartVectorLaagComponent,
   KaartWdbLaagComponent,
   KaartWmsLaagComponent,
+  KaartBlancoLaagComponent,
   KaartAchtergrondSelectorComponent,
   KaartAchtergrondTileComponent
 ];
@@ -94,6 +96,7 @@ export * from "./kaart-toon-features.component";
 export * from "./kaart-vector-laag.component";
 export * from "./kaart-wdb-laag.component";
 export * from "./kaart-wms-laag.component";
+export * from "./kaart-blanco-laag.component";
 export * from "./kaart.component";
 export * from "./kaart-event-dispatcher";
 export * from "./kaart-protocol";

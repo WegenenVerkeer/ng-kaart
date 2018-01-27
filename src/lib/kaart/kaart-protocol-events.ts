@@ -34,7 +34,7 @@ export interface KaartEvnt {
 export class AddedLaagOnTop implements KaartEvnt {
   readonly type = KaartEvntTypes.ADDED_LAAG_ON_TOP;
 
-  constructor(readonly laag: ke.VectorLaag | ke.WmsLaag) {}
+  constructor(readonly laag: ke.Laag) {}
 }
 
 export class RemovedLaag implements KaartEvnt {

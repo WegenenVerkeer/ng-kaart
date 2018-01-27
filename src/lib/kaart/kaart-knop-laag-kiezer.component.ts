@@ -5,7 +5,7 @@ import { Set } from "immutable";
 import { BackgroundSelectorShown, HideBackgroundSelector } from "./kaart-protocol-events";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartComponentBase } from "./kaart-component-base";
-import { isWmsLaag, WmsLaag } from "./kaart-elementen";
+import {isBlancoLaag, isWmsLaag, WmsLaag} from "./kaart-elementen";
 
 @Component({
   selector: "awv-kaart-knop-laag-kiezer",
@@ -23,8 +23,8 @@ export class KaartKnopLaagKiezerComponent extends KaartComponentBase implements 
         map(model =>
           model.lagen
             .filter(isWmsLaag)
-            .map(laag => laag as WmsLaag)
-            .filter(laag => laag.dekkend)
+            .filter(laag => (laag as WmsLaag).dekkend)
+            .concat(model.lagen.filter(isBlancoLaag))
             .toSet()
         ), // Luister naar lagen die beschikbaar komen
         debounceTime(100), // maar geef het model wat tijd om te stabiliseren
