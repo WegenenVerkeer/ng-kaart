@@ -52,9 +52,9 @@ export class KaartModule {
   static defaultConfig: KaartConfig = {
     wdb: {
       urls: [
-        "https://wms1.apps.mow.vlaanderen.be/geoserver/wms",
-        "https://wms2.apps.mow.vlaanderen.be/geoserver/wms",
-        "https://wms3.apps.mow.vlaanderen.be/geoserver/wms"
+        "https://wms1.apps.mow.vlaanderen.be/geowebcache/service/wms",
+        "https://wms2.apps.mow.vlaanderen.be/geowebcache/service/wms",
+        "https://wms3.apps.mow.vlaanderen.be/geowebcache/service/wms"
       ]
     },
     orthofotomozaiek: {
