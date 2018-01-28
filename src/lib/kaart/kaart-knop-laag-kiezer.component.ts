@@ -5,7 +5,7 @@ import { Set } from "immutable";
 import { BackgroundSelectorShown, HideBackgroundSelector } from "./kaart-protocol-events";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartComponentBase } from "./kaart-component-base";
-import {isBlancoLaag, isWmsLaag, WmsLaag} from "./kaart-elementen";
+import { isBlancoLaag, isWmsLaag, WmsLaag } from "./kaart-elementen";
 
 @Component({
   selector: "awv-kaart-knop-laag-kiezer",
