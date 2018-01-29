@@ -66,7 +66,6 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
   constructor(@Inject(KAART_CFG) readonly config: KaartConfig, zone: NgZone) {
     super(zone);
-    console.log("constructing kc");
   }
 
   ngOnInit() {
@@ -79,7 +78,6 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   }
 
   private bindObservables() {
-    console.log("binding observables");
     this.runAsapOutsideAngular(() => {
       const initieelModel = this.initieelModel();
       kaartLogger.info(`Kaart ${this.naam} aangemaakt`);
@@ -97,15 +95,14 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
         scan(red.kaartReducer, initieelModel), // TODO: zorg er voor dat de unsubscribe gebeurt
         shareReplay(1000, 5000)
       );
-      console.log("kaart model obs is gemaakt");
 
       this.kaartModel$
         .pipe(
-          map(model => model.lagen.get(0)), // dit geeft undefined als er geen lagen zijn
-          filter(laag => !!laag), // misschien zijn er geen lagen, hou rekening met undefined
-          distinctUntilChanged() // de meeste modelwijzigingen hebben niks met de onderste laag te maken
+          map(model => model.achtergrondlaagtitel),
+          filter(titel => !!titel), // misschien is er nog geen achtergrondlaag
+          distinctUntilChanged() // de meeste modelwijzigingen hebben niks met de achtergrondtitel te maken
         )
-        .subscribe(laag => this.achtergrondTitelSelectieConsumer(laag.titel));
+        .subscribe(titel => this.achtergrondTitelSelectieConsumer(titel));
 
       this.kaartModel$.subscribe(
         model => {
@@ -119,7 +116,6 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
       // Deze zorgt er voor dat de achtergrondselectieknop getoond wordt obv het model
       this.showBackgroundSelector$ = this.kaartModel$.pipe(map(k => k.showBackgroundSelector), distinctUntilChanged());
-      this.showBackgroundSelector$.subscribe(s => console.log("show bs", s));
     });
   }
 

@@ -23,8 +23,9 @@ export enum KaartEvntTypes {
   INSERTED_LAAG,
   BG_SELECTOR_SHOWN,
   BG_SELECTOR_HIDDEN,
-  LAAG_HIDDEN,
-  LAAG_SHOWN
+  // LAAG_HIDDEN,
+  // LAAG_SHOWN,
+  BG_SELECTED
 }
 
 export interface KaartEvnt {
@@ -130,21 +131,27 @@ export class ReplaceFeatures implements KaartEvnt {
 export class BackgroundSelectorShown implements KaartEvnt {
   readonly type = KaartEvntTypes.BG_SELECTOR_SHOWN;
 
-  constructor(readonly backgrounds: List<ke.WmsLaag>) {}
+  constructor(readonly backgrounds: List<ke.WmsLaag | ke.BlancoLaag>) {}
 }
 
 export const HideBackgroundSelector = {
   type: KaartEvntTypes.BG_SELECTOR_HIDDEN
 };
 
-export class LaagShown implements KaartEvnt {
-  readonly type = KaartEvntTypes.LAAG_SHOWN;
+// export class LaagShown implements KaartEvnt {
+//   readonly type = KaartEvntTypes.LAAG_SHOWN;
 
-  constructor(readonly titel: string) {}
-}
+//   constructor(readonly titel: string) {}
+// }
 
-export class LaagHidden implements KaartEvnt {
-  readonly type = KaartEvntTypes.LAAG_HIDDEN;
+// export class LaagHidden implements KaartEvnt {
+//   readonly type = KaartEvntTypes.LAAG_HIDDEN;
+
+//   constructor(readonly titel: string) {}
+// }
+
+export class BackgroundSelected implements KaartEvnt {
+  readonly type = KaartEvntTypes.BG_SELECTED;
 
   constructor(readonly titel: string) {}
 }

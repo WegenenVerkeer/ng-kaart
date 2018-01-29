@@ -1,5 +1,5 @@
 import { List } from "immutable";
-import { none, Option, some } from "fp-ts/lib/Option";
+import { none, of, Option, some } from "fp-ts/lib/Option";
 
 import * as ol from "openlayers";
 
@@ -96,9 +96,13 @@ function showLaag(titel: string): ModelUpdater {
   });
 }
 
+const hideAchtergrond: ModelUpdater = (kaart: KaartWithInfo) => hideLaag(kaart.achtergrondlaagtitel)(kaart);
+
+const showAchtergrond: ModelUpdater = (kaart: KaartWithInfo) => showLaag(kaart.achtergrondlaagtitel)(kaart);
+
 function doForLayer(titel: string, updater: (kaart: KaartWithInfo, layer: ol.layer.Base) => ModelUpdater): ModelUpdater {
   return (kaart: KaartWithInfo) => {
-    const maybeLayerToUpdate = kaart.lagenOpTitel.get(titel) || none;
+    const maybeLayerToUpdate: Option<ol.layer.Base> = kaart.lagenOpTitel.get(titel, none);
     return maybeLayerToUpdate.fold(
       () => kaart, // een blanco laag bijv.
       layerToUpdate => updater(kaart, layerToUpdate)(kaart)
@@ -250,7 +254,7 @@ function updateViewport(size: ol.Size): ModelUpdater {
 }
 
 function replaceFeatures(kaart: KaartWithInfo, titel: string, features: List<ol.Feature>): KaartWithInfo {
-  const maybeLayer = (kaart.lagenOpTitel.get(titel) || none).chain(asVectorLayer);
+  const maybeLayer = kaart.lagenOpTitel.get(titel, none).chain(asVectorLayer);
   return maybeLayer.fold(
     () => kaart,
     layer => {
@@ -307,8 +311,8 @@ const addNewBackgroundsToMap: ModelUpdater = (kaart: KaartWithInfo) => {
   return kaart.possibleBackgrounds.reduce((model, laag, index) => insertLaag(0, laag, index === 0)(model), kaart);
 };
 
-function setBackgrounds(backgrounds: List<ke.WmsLaag>): ModelUpdater {
-  return updateModel({ possibleBackgrounds: backgrounds });
+function setBackgrounds(backgrounds: List<ke.WmsLaag | ke.BlancoLaag>): ModelUpdater {
+  return updateModel({ possibleBackgrounds: backgrounds, achtergrondlaagtitel: backgrounds.isEmpty() ? "" : backgrounds.get(0).titel });
 }
 
 function showBackgroundSelector(show: boolean): ModelUpdater {
@@ -348,10 +352,13 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWit
       return focusOnMap(kaart);
     case prt.KaartEvntTypes.LOSE_FOCUS_ON_MAP:
       return loseFocusOnMap(kaart);
-    case prt.KaartEvntTypes.LAAG_SHOWN:
-      return showLaag((cmd as prt.LaagShown).titel)(kaart);
-    case prt.KaartEvntTypes.LAAG_HIDDEN:
-      return hideLaag((cmd as prt.LaagHidden).titel)(kaart);
+    case prt.KaartEvntTypes.BG_SELECTED:
+      return pipe(
+        kaart, //
+        hideAchtergrond,
+        updateModel({ achtergrondlaagtitel: (cmd as prt.BackgroundSelected).titel }),
+        showAchtergrond
+      );
     case prt.KaartEvntTypes.SHOW_FEATURES:
       const replaceFeaturesEvent = cmd as prt.ReplaceFeatures;
       return replaceFeatures(kaart, replaceFeaturesEvent.titel, replaceFeaturesEvent.features);

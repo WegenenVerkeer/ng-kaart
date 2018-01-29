@@ -2,10 +2,10 @@ import { Component, OnInit, Input, ChangeDetectionStrategy, ChangeDetectorRef, N
 import { trigger, state, style, transition, animate } from "@angular/animations";
 import { Observable } from "rxjs/Observable";
 
-import { WmsLaag } from "./kaart-elementen";
+import { WmsLaag, BlancoLaag } from "./kaart-elementen";
 import { map, first } from "rxjs/operators";
 import { KaartWithInfo } from "./kaart-with-info";
-import { LaagHidden, LaagShown } from "./kaart-protocol-events";
+import { BackgroundSelected } from "./kaart-protocol-events";
 import { KaartComponentBase } from "./kaart-component-base";
 import { VacuousDispatcher, KaartEventDispatcher } from "./kaart-event-dispatcher";
 
@@ -66,7 +66,7 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
   private displayMode: DisplayMode = DisplayMode.SHOWING_STATUS;
   private achtergrondTitel = "";
 
-  backgroundTiles$: Observable<WmsLaag[]> = Observable.empty();
+  backgroundTiles$: Observable<Array<WmsLaag | BlancoLaag>> = Observable.empty();
 
   show = false;
 
@@ -91,12 +91,10 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
       this.backgroundTiles$ = this.kaartModel$.pipe(
         map(model => model.possibleBackgrounds.toArray()) //
       );
-      console.log("constructie gedaan", this.kaartModel$);
     });
   }
 
   ngOnDestroy() {
-    console.log("destroying kasc");
     super.ngOnDestroy();
   }
 
@@ -109,8 +107,9 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
       // setTimeout(() => (this.displayMode = DisplayMode.SHOWING_STATUS), 10);
       this.displayMode = DisplayMode.SHOWING_STATUS;
       if (laag.titel !== this.achtergrondTitel) {
-        this.dispatcher.dispatch(new LaagShown(laag.titel));
-        this.dispatcher.dispatch(new LaagHidden(this.achtergrondTitel));
+        this.dispatcher.dispatch(new BackgroundSelected(laag.titel));
+        // this.dispatcher.dispatch(new LaagShown(laag.titel));
+        // this.dispatcher.dispatch(new LaagHidden(this.achtergrondTitel));
         this.achtergrondTitel = laag.titel;
       }
     } else {
