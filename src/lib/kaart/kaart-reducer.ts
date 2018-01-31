@@ -296,8 +296,7 @@ function toOlLayer(config: KaartConfig, laag: ke.Laag): Option<ol.layer.Base> {
     case ke.VectorType: {
       const l = laag as ke.VectorLaag;
       return some(
-        new ol.layer.Vector(<olx.layer.VectorOptions>{
-          title: l.titel,
+        new ol.layer.Vector({
           source: l.source,
           visible: true,
           style: l.style
