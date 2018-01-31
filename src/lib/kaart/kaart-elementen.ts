@@ -13,7 +13,6 @@ export interface WmsLaag {
   readonly type: WmsType;
   readonly titel: string;
   readonly naam: string;
-  readonly dekkend: boolean;
   readonly urls: List<string>;
   readonly extent?: ol.Extent;
   readonly versie?: string;

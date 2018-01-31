@@ -7,7 +7,7 @@ import { KaartKnopZoomSliderComponent } from "./kaart-knop-zoom-slider.component
 import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
 import { KaartVectorLaagComponent } from "./kaart-vector-laag.component";
 import { KaartBlancoLaagComponent } from "./kaart-blanco-laag.component";
-import { KaartKnopLaagKiezerComponent } from "./kaart-knop-laag-kiezer.component";
+import { KaartKnopAchtergrondLaagKiezerComponent } from "./kaart-knop-achtergrondlaag-kiezer.component";
 import { KaartTekenPolygoonLaagComponent } from "./kaart-teken-polygoon-laag.component";
 import { KaartFeaturesLaagComponent } from "./kaart-toon-features.component";
 import { KaartKnopVolledigSchermComponent } from "./kaart-knop-volledig-scherm.component";
@@ -25,7 +25,7 @@ import { ReplaySubjectKaartEventDispatcher } from "./kaart-event-dispatcher";
 const components: any[] = [
   KaartComponent,
   KaartClassicComponent,
-  KaartKnopLaagKiezerComponent,
+  KaartKnopAchtergrondLaagKiezerComponent,
   KaartKnopVolledigSchermComponent,
   KaartKnopZoomSliderComponent,
   KaartOrthoLaagComponent,
@@ -84,7 +84,7 @@ export class KaartModule {
 export * from "./coordinaten.service";
 export * from "./kaart-classic.component";
 export * from "./kaart-component-base";
-export * from "./kaart-knop-laag-kiezer.component";
+export * from "./kaart-knop-achtergrondlaag-kiezer.component";
 export * from "./kaart-knop-volledig-scherm.component";
 export * from "./kaart-knop-zoom-slider.component";
 export * from "./kaart-laag.component";

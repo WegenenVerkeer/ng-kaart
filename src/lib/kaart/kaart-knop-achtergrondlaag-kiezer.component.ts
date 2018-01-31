@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation, NgZone } from "@angular/core";
+import { Component, OnDestroy, OnInit, ViewEncapsulation, NgZone, Input } from "@angular/core";
 import { map, debounceTime, distinctUntilChanged, scan } from "rxjs/operators";
 import { Set } from "immutable";
 
@@ -8,11 +8,13 @@ import { KaartComponentBase } from "./kaart-component-base";
 import { isBlancoLaag, isWmsLaag, WmsLaag } from "./kaart-elementen";
 
 @Component({
-  selector: "awv-kaart-knop-laag-kiezer",
+  selector: "awv-kaart-knop-achtergrondlaag-kiezer",
   template: "<awv-kaart-achtergrond-selector></awv-kaart-achtergrond-selector>",
   encapsulation: ViewEncapsulation.None
 })
-export class KaartKnopLaagKiezerComponent extends KaartComponentBase implements OnInit, OnDestroy {
+export class KaartKnopAchtergrondLaagKiezerComponent extends KaartComponentBase implements OnInit, OnDestroy {
+  @Input() titels: Array<string> = [""];
+
   constructor(private readonly kaart: KaartClassicComponent, zone: NgZone) {
     super(zone);
   }
@@ -23,7 +25,7 @@ export class KaartKnopLaagKiezerComponent extends KaartComponentBase implements 
         map(model =>
           model.lagen
             .filter(isWmsLaag)
-            .filter(laag => (laag as WmsLaag).dekkend)
+            .filter(laag => this.titels.indexOf((laag as WmsLaag).titel) > -1)
             .concat(model.lagen.filter(isBlancoLaag))
             .toSet()
         ), // Luister naar lagen die beschikbaar komen
