@@ -11,7 +11,7 @@ export abstract class KaartLaagComponent implements OnInit, OnDestroy {
   constructor(protected readonly kaart: KaartClassicComponent) {}
 
   ngOnInit(): void {
-    setTimeout(() => this.dispatch(new AddedLaagOnTop(this.createLayer())), 250);
+    setTimeout(() => this.dispatch(new AddedLaagOnTop(this.createLayer())), 0);
   }
 
   ngOnDestroy(): void {

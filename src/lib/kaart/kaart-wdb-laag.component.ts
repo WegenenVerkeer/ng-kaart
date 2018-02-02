@@ -21,7 +21,6 @@ export class KaartWdbLaagComponent extends KaartWmsLaagComponent {
     return {
       type: ke.WmsType,
       titel: this.titel,
-      dekkend: true,
       naam: this.laagNaam,
       extent: this.extent,
       urls: List(this.config.wdb.urls),

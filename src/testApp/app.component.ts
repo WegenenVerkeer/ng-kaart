@@ -5,7 +5,7 @@ import "rxjs/add/operator/map";
 
 import { GoogleLocatieZoekerService } from "../lib/google-locatie-zoeker/google-locatie-zoeker.service";
 import { CoordinatenService } from "../lib/kaart/coordinaten.service";
-import { kaartLogger } from "../lib/public_api";
+import { kaartLogger, definitieToStyle } from "../lib/public_api";
 
 @Component({
   selector: "awv-ng-kaart-test-app",
@@ -27,6 +27,27 @@ export class AppComponent {
 
   lat = 4.7970553;
   long = 51.0257317;
+
+  // Dit werkt alleen als apigateway bereikbaar is. Zie CORS waarschuwing in README.
+  readonly districtSource: ol.source.Vector = new ol.source.Vector({
+    format: new ol.format.GeoJSON(),
+    url: function(extent) {
+      return (
+        `http://apigateway/geoserver/wfs/?service=WFS&version=1.1.0&request=GetFeature&` +
+        `typename=awv:districten&` +
+        "outputFormat=application/json&srsname=EPSG:31370&" +
+        `bbox=${extent.join(",")},EPSG:31370`
+      );
+    },
+    strategy: ol.loadingstrategy.bbox
+  });
+
+  readonly districtStyle: ol.style.Style = definitieToStyle(
+    "json",
+    '{"versie": "awv-v0", "definitie": {"stroke": {"color": "rgba(0,127,255,0.8)", "width": 1.5}}}'
+  ).getOrElse(() => {
+    throw new Error("slecht formaat");
+  });
 
   private readonly pinIcon = new ol.style.Style({
     image: new ol.style.Icon({

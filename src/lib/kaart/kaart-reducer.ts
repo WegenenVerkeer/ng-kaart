@@ -1,5 +1,5 @@
 import { List } from "immutable";
-import { none, of, Option, some } from "fp-ts/lib/Option";
+import { none, Option, some } from "fp-ts/lib/Option";
 
 import * as ol from "openlayers";
 
@@ -140,6 +140,7 @@ const addSchaal: ModelUpdater = guardedUpdate(
   kaart => {
     const schaal = new ol.control.ScaleLine();
     kaart.map.addControl(schaal);
+    console.log("Added control", schaal);
     return updateModel({ schaal: schaal })(kaart);
   }
 );
@@ -157,6 +158,7 @@ const addFullScreen: ModelUpdater = guardedUpdate(
   kaart => {
     const fullScreen = new ol.control.FullScreen();
     kaart.map.addControl(fullScreen);
+    console.log("Added control", fullScreen);
     return { ...kaart, fullScreen: fullScreen };
   }
 );
@@ -294,8 +296,7 @@ function toOlLayer(config: KaartConfig, laag: ke.Laag): Option<ol.layer.Base> {
     case ke.VectorType: {
       const l = laag as ke.VectorLaag;
       return some(
-        new ol.layer.Vector(<olx.layer.VectorOptions>{
-          title: l.titel,
+        new ol.layer.Vector({
           source: l.source,
           visible: true,
           style: l.style
