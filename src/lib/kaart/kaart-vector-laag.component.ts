@@ -33,7 +33,9 @@ export class KaartVectorLaagComponent extends KaartLaagComponent {
       titel: this.titel,
       source: this.source,
       style: this.style,
-      selecteerbaar: this.selecteerbaar
+      selecteerbaar: this.selecteerbaar,
+      minZoom: 13,
+      maxZoom: 3
     };
   }
 }
