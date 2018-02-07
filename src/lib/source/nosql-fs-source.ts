@@ -1,7 +1,6 @@
 import * as ol from "openlayers";
 
 export class NosqlFsSource extends ol.source.Vector {
-  private queryUrl = "/geolatte-nosqlfs/api/databases/featureserver/query";
   private defaultView = "default";
   private featureDelimiter = "\n";
 
@@ -9,7 +8,7 @@ export class NosqlFsSource extends ol.source.Vector {
 
   private currentPosition = 0;
 
-  constructor(public laag: String, public filter?: String, public view?: String) {
+  constructor(public database, public collection: String, public filter?: String, public view?: String) {
     super({
       format: new ol.format.GeoJSON(),
       loader: function(extent, resolution, projection) {
@@ -19,7 +18,7 @@ export class NosqlFsSource extends ol.source.Vector {
           ...filter ? { query: encodeURIComponent(this.filter) } : {}
         };
 
-        const url = `${this.queryUrl}/${this.laag}?${Object.keys(params)
+        const url = `/geolatte-nosqlfs/api/databases/${database}/query/${collection}?${Object.keys(params)
           .map(function(key) {
             return key + "=" + params[key];
           })

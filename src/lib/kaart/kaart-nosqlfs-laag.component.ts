@@ -19,7 +19,8 @@ const stdStijl: ol.style.Style = new ol.style.Style({
   encapsulation: ViewEncapsulation.None
 })
 export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
-  @Input() laag: String;
+  @Input() database: String;
+  @Input() collection: String;
   @Input() style: ol.style.Style = stdStijl;
   @Input() zichtbaar = true;
   @Input() selecteerbaar = true;
@@ -34,7 +35,7 @@ export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
     return {
       type: ke.VectorType,
       titel: this.titel,
-      source: new NosqlFsSource(this.laag),
+      source: new NosqlFsSource(this.database, this.collection),
       style: this.style,
       selecteerbaar: this.selecteerbaar,
       minZoom: 13,
