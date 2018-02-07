@@ -19,8 +19,8 @@ const stdStijl: ol.style.Style = new ol.style.Style({
   encapsulation: ViewEncapsulation.None
 })
 export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
-  @Input() database: String;
-  @Input() collection: String;
+  @Input() database: string;
+  @Input() collection: string;
   @Input() style: ol.style.Style = stdStijl;
   @Input() zichtbaar = true;
   @Input() selecteerbaar = true;

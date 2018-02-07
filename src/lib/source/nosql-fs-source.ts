@@ -1,31 +1,34 @@
 import * as ol from "openlayers";
 
 export class NosqlFsSource extends ol.source.Vector {
-  private defaultView = "default";
   private featureDelimiter = "\n";
-
   private xhr = null;
-
   private currentPosition = 0;
 
-  constructor(public database, public collection: String, public filter?: String, public view?: String) {
+  constructor(
+    public database: string,
+    public collection: string,
+    public url = "/geolatte-nosqlfs",
+    public view = "default",
+    public filter?: string
+  ) {
     super({
       format: new ol.format.GeoJSON(),
       loader: function(extent, resolution, projection) {
         const params = {
           bbox: extent.join(","),
-          "with-view": encodeURIComponent(this.view ? this.view : this.defaultView),
-          ...filter ? { query: encodeURIComponent(this.filter) } : {}
+          "with-view": encodeURIComponent(view),
+          ...filter ? { query: encodeURIComponent(filter) } : {}
         };
 
-        const url = `/geolatte-nosqlfs/api/databases/${database}/query/${collection}?${Object.keys(params)
+        const httpUrl = `${url}/api/databases/${database}/query/${collection}?${Object.keys(params)
           .map(function(key) {
             return key + "=" + params[key];
           })
           .join("&")}`;
 
         this.xhr = new XMLHttpRequest();
-        this.xhr.open("GET", url, true);
+        this.xhr.open("GET", httpUrl, true);
         this.xhr.setRequestHeader("Accept", "application/json");
 
         this.xhr.addEventListener("progress", this.xhrProgressFunction.bind(this), false);
