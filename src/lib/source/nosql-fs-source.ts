@@ -21,7 +21,7 @@ export class NosqlFsSource extends ol.source.Vector {
           ...filter ? { query: encodeURIComponent(filter) } : {}
         };
 
-        const httpUrl = `${url}/api/databases/${database}/query/${collection}?${Object.keys(params)
+        const httpUrl = `${url}/api/databases/${database}/${collection}/query?${Object.keys(params)
           .map(function(key) {
             return key + "=" + params[key];
           })
