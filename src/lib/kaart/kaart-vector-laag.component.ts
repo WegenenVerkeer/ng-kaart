@@ -22,8 +22,8 @@ export class KaartVectorLaagComponent extends KaartLaagComponent {
   @Input() style: ol.style.Style = stdStijl;
   @Input() zichtbaar = true;
   @Input() selecteerbaar = true;
-  @Input() minResolution: number;
-  @Input() maxResolution: number;
+  @Input() minResolution = 0.03125;
+  @Input() maxResolution = 4.0;
 
   constructor(kaart: KaartClassicComponent) {
     super(kaart);

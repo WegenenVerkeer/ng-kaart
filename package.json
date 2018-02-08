@@ -1,6 +1,6 @@
 {
   "name": "@wegenenverkeer/ng-kaart",
-  "version": "2.0.7",
+  "version": "2.0.8-SNAPSHOT",
   "description": "AWV Angular 5 kaart component.",
   "keywords": [
     "AWV",
