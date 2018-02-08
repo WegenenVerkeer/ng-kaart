@@ -1,9 +1,15 @@
 import * as ol from "openlayers";
+import { kaartLogger } from "../kaart/log";
+
+interface GeoJsonLike {
+  type: string;
+  id: any;
+  properties: any;
+  geometry: any;
+}
 
 export class NosqlFsSource extends ol.source.Vector {
-  private featureDelimiter = "\n";
-  private xhr = null;
-  private currentPosition = 0;
+  private static readonly featureDelimiter = "\n";
 
   constructor(
     public database: string,
@@ -13,7 +19,6 @@ export class NosqlFsSource extends ol.source.Vector {
     public filter?: string
   ) {
     super({
-      format: new ol.format.GeoJSON(),
       loader: function(extent, resolution, projection) {
         const params = {
           bbox: extent.join(","),
@@ -27,47 +32,60 @@ export class NosqlFsSource extends ol.source.Vector {
           })
           .join("&")}`;
 
-        this.xhr = new XMLHttpRequest();
-        this.xhr.open("GET", httpUrl, true);
-        this.xhr.setRequestHeader("Accept", "application/json");
+        const xhr = new XMLHttpRequest();
+        xhr.open("GET", httpUrl, true);
+        xhr.setRequestHeader("Accept", "application/json");
 
-        this.xhr.addEventListener("progress", this.xhrProgressFunction.bind(this), false);
-        this.xhr.addEventListener("load", this.xhrLoadFunction.bind(this), false);
+        let currentPosition = 0;
+        const source = this;
+        const format = new ol.format.GeoJSON();
+        xhr.onprogress = () => {
+          if (xhr.status !== 200) {
+            return;
+          }
 
-        this.xhr.addEventListener("error", this.xhrFailFunction.bind(this), false);
-        this.xhr.addEventListener("timeout", this.xhrFailFunction.bind(this), false);
+          const positionLastDelimiter = xhr.response.lastIndexOf(NosqlFsSource.featureDelimiter);
+          if (positionLastDelimiter === -1) {
+            return;
+          }
 
-        this.xhr.send();
+          const tokens: string[] = xhr.response.slice(currentPosition, positionLastDelimiter).split(NosqlFsSource.featureDelimiter);
+          currentPosition = positionLastDelimiter;
+
+          const features = tokens.filter(token => token.length > 0).map(token => {
+            const geojson: GeoJsonLike = JSON.parse(token);
+            return new ol.Feature({
+              id: geojson.id,
+              properties: geojson.properties,
+              geometry: format.readGeometry(geojson.geometry)
+            });
+          });
+          kaartLogger.debug(`Adding ${features.length} features`);
+          source.addFeatures(features);
+        };
+        xhr.onloadstart = () => {
+          source.clear();
+        };
+
+        xhr.onerror = (event: ErrorEvent) => {
+          kaartLogger.error("Fout bij laden nosqlfs data", event.message);
+        };
+        xhr.onload = () => {
+          kaartLogger.debug("onload");
+        };
+        xhr.onloadend = () => {
+          kaartLogger.debug("onloadend");
+        };
+        xhr.ontimeout = () => {
+          kaartLogger.debug("ontimeout");
+        };
+        xhr.onabort = () => {
+          kaartLogger.debug("onabort");
+        };
+
+        xhr.send();
       },
       strategy: ol.loadingstrategy.bbox
     });
-  }
-
-  private xhrLoadFunction() {
-    console.log("Load");
-  }
-
-  private xhrFailFunction() {
-    console.log("Failed");
-  }
-
-  private xhrProgressFunction() {
-    console.log("Progress");
-
-    if (this.xhr.status !== 200) {
-      return;
-    }
-
-    const positionLastDelimiter = this.xhr.response.lastIndexOf(this.featureDelimiter);
-    if (positionLastDelimiter === -1) {
-      return;
-    }
-
-    const tokens: string[] = this.xhr.response.slice(this.currentPosition, positionLastDelimiter).split(this.featureDelimiter);
-    this.currentPosition = positionLastDelimiter;
-
-    tokens.map(function(token) {
-      this.addFeature(this.getFormat().readFeature(token));
-    }, this);
   }
 }
