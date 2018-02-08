@@ -64,6 +64,8 @@ export class NosqlFsSource extends ol.source.Vector {
           source.addFeatures(features);
         };
         xhr.onloadstart = () => {
+          kaartLogger.debug("onloadstart");
+          kaartLogger.debug("Clearing features");
           source.clear();
         };
 
