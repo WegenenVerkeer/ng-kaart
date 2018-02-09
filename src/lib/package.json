@@ -1,7 +1,7 @@
 {
   "name": "@wegenenverkeer/ng-kaart",
   "author": "Team Blauw/Rood",
-  "version": "2.0.7",
+  "version": "2.0.8",
   "module": "./ng-kaart.es5.js",
   "es2015": "./ng-kaart.js",
   "typings": "./ng-kaart.d.ts",
