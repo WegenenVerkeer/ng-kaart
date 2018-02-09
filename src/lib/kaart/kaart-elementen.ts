@@ -24,6 +24,8 @@ export interface VectorLaag {
   readonly source: ol.source.Vector;
   readonly style: ol.style.Style;
   readonly selecteerbaar: boolean;
+  readonly minResolution: number;
+  readonly maxResolution: number;
 }
 
 export interface BlancoLaag {
