@@ -111,13 +111,13 @@ function doForLayer(titel: string, updater: (kaart: KaartWithInfo, layer: ol.lay
 }
 
 /**
- * Een laag invoegen op een bepaaalde positie zonder er rekening mee te houden dat er al een laag met die titel bestaat.
+ * Een laag invoegen op een bepaalde positie zonder er rekening mee te houden dat er al een laag met die titel bestaat.
  * Maw samen te gebruiker met removeLaag.
  */
 function insertLaagNoRemoveAt(positie: number, laag: ke.Laag, visible: boolean): ModelUpdater {
   return (kaart: KaartWithInfo) => {
     const effectivePosition = Math.max(0, Math.min(positie, kaart.lagen.size));
-    const maybeLayer = toOlLayer(kaart.config, laag);
+    const maybeLayer = toOlLayer(kaart, laag);
     maybeLayer.map(layer => {
       // In het geval van de blanco laag, hebben we geen openlayers layer
       layer.setVisible(visible);
@@ -271,7 +271,7 @@ function asVectorLayer(layer: ol.layer.Base): Option<ol.layer.Vector> {
   return layer.hasOwnProperty("getSource") ? some(layer as ol.layer.Vector) : none;
 }
 
-function toOlLayer(config: KaartConfig, laag: ke.Laag): Option<ol.layer.Base> {
+function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {
   switch (laag.type) {
     case ke.WmsType: {
       const l = laag as ke.WmsLaag;
@@ -286,7 +286,7 @@ function toOlLayer(config: KaartConfig, laag: ke.Laag): Option<ol.layer.Base> {
             params: {
               LAYERS: l.naam,
               TILED: true,
-              SRS: config.srs,
+              SRS: kaart.config.srs,
               version: l.versie
             }
           })
@@ -299,7 +299,10 @@ function toOlLayer(config: KaartConfig, laag: ke.Laag): Option<ol.layer.Base> {
         new ol.layer.Vector({
           source: l.source,
           visible: true,
-          style: l.style
+          style: l.style,
+          //   resolutions: [256.0, 128.0, 64.0, 32.0, 16.0, 8.0, 4.0, 2.0, 1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125],
+          minResolution: 0.03125,
+          maxResolution: 32.0
         })
       );
     }
