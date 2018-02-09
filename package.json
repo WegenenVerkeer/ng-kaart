@@ -128,7 +128,6 @@
     "typescript": "2.5.2"
   },
   "publishConfig": {
-    "registry": "https://registry.npmjs.org/",
-    "access": "public"
+    "registry": "https://collab.mow.vlaanderen.be/artifacts/repository/npm-internal/"
   }
 }
