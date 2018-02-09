@@ -63,7 +63,20 @@ De code style wordt automatisch afgedwongen via tslint + prettier. Deze is inges
 
 ## Publish
 
-We gebruiken [travis-ci](https://travis-ci.org/WegenenVerkeer/ng-kaart) als CI tool.
+We gebruiken [travis-ci](https://travis-ci.org/WegenenVerkeer/ng-kaart) als CI tool. 
+Travis wordt automatisch gestart bij een push naar github.
+
+Vooraleer je aan een nieuwe feature/bug fix begint te werken, moet de versie in `package.json` opgehoogd worden.
+Dat doe je best door gebruik te maken van de betreffende [npm commandos](https://docs.npmjs.com/cli/version). 
+Dus bijv. om een nieuwe feature te starten: 
+
+    npm version preminor
+
+En wanneer de feature klaar is, en het is nog steeds maar een feature, doe dan:
+
+    npm version minor -m 'Release van %s: mijn feature naam'
+
+TODO: een postversion hook maken die `src/lib/package.json` in sync houdt.
 
 # Resources
 
