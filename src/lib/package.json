@@ -1,7 +1,7 @@
 {
   "name": "@wegenenverkeer/ng-kaart",
   "author": "Team Blauw/Rood",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "module": "./ng-kaart.es5.js",
   "es2015": "./ng-kaart.js",
   "typings": "./ng-kaart.d.ts",
@@ -32,6 +32,7 @@
     "loglevel": "1.6.1"
   },
   "publishConfig": {
-    "registry": "https://collab.mow.vlaanderen.be/artifacts/repository/npm-internal/"
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
   }
 }

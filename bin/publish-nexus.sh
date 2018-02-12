@@ -6,7 +6,9 @@ echo ""
 . $(dirname "$0")/_init.sh
 cd $BASEDIR/dist
 if [ ! -z $BAMBOO_AGENT_HOME ]; then
-  npm publish --registry https://collab.mow.vlaanderen.be/artifacts/repository/npm-internal/
+  npm config get registry
+  npm config set registry https://collab.mow.vlaanderen.be/artifacts/repository/npm-internal/ 
+  npm publish
 else
   echo "Lokaal kan je niet naar Nexus publishen, enkel Bamboo kan dat"
 fi
