@@ -19,6 +19,7 @@ const stdStijl: ol.style.Style = new ol.style.Style({
   encapsulation: ViewEncapsulation.None
 })
 export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
+  @Input() url = "/geolatte-nosqlfs";
   @Input() database: string;
   @Input() collection: string;
   @Input() style: ol.style.Style = stdStijl;
@@ -37,7 +38,7 @@ export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
     return {
       type: ke.VectorType,
       titel: this.titel,
-      source: new NosqlFsSource(this.database, this.collection),
+      source: new NosqlFsSource(this.database, this.collection, this.url),
       style: this.style,
       selecteerbaar: this.selecteerbaar,
       minResolution: this.minResolution,
