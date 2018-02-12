@@ -41,11 +41,7 @@ function updateModel(partial: Partial<KaartWithInfo>): ModelUpdater {
 const keepModel: ModelUpdater = (model: KaartWithInfo) => model;
 
 function guardedUpdate(pred: (kaart: KaartWithInfo) => boolean, updater: ModelUpdater): ModelUpdater {
-  // return (model: KaartWithInfo) => (pred(model) ? updater(model) : model);
-  return (model: KaartWithInfo) => {
-    console.log("in guarded update", model, pred(model));
-    return pred(model) ? updater(model) : model;
-  };
+  return (model: KaartWithInfo) => (pred(model) ? updater(model) : model);
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -140,7 +136,6 @@ const addSchaal: ModelUpdater = guardedUpdate(
   kaart => {
     const schaal = new ol.control.ScaleLine();
     kaart.map.addControl(schaal);
-    console.log("Added control", schaal);
     return updateModel({ schaal: schaal })(kaart);
   }
 );
@@ -158,7 +153,6 @@ const addFullScreen: ModelUpdater = guardedUpdate(
   kaart => {
     const fullScreen = new ol.control.FullScreen();
     kaart.map.addControl(fullScreen);
-    console.log("Added control", fullScreen);
     return { ...kaart, fullScreen: fullScreen };
   }
 );
