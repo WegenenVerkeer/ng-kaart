@@ -1,5 +1,4 @@
 import * as ol from "openlayers";
-import { Option, none, some } from "fp-ts/lib/Option";
 
 import { Validation, fail, str, field } from "./json-object-interpreting";
 import { jsonAwvV0Style } from "./json-awv0-interpreter";

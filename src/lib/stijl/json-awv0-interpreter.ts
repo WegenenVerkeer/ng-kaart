@@ -1,8 +1,3 @@
-import { Option, none, some } from "fp-ts/lib/Option";
-import * as traversable from "fp-ts/lib/Traversable";
-import * as validation from "fp-ts/lib/Validation";
-import * as array from "fp-ts/lib/Array";
-
 import * as ol from "openlayers";
 
 import { Interpreter, map, map2, map3, field, str, num, option, ok, Validation } from "./json-object-interpreting";
