@@ -14,6 +14,11 @@ import { kaartLogger, definitieToStyle } from "../lib/public_api";
   encapsulation: ViewEncapsulation.None
 })
 export class AppComponent {
+  private readonly zichtbaarheid = {
+    orthomap: true,
+    kleursimpel: false // standard falsey
+  };
+
   polygoonEvents: string[] = [];
   installatieGeselecteerdEvents: string[] = [];
   geoJsonFormatter = new ol.format.GeoJSON();
@@ -45,8 +50,16 @@ export class AppComponent {
   readonly districtStyle: ol.style.Style = definitieToStyle(
     "json",
     '{"versie": "awv-v0", "definitie": {"stroke": {"color": "rgba(0,127,255,0.8)", "width": 1.5}}}'
-  ).getOrElse(() => {
-    throw new Error("slecht formaat");
+  ).getOrElse(msg => {
+    throw new Error(`slecht formaat ${msg}`);
+  });
+
+  readonly kolkStyle: ol.style.Style = definitieToStyle(
+    "json",
+    // tslint:disable-next-line:max-line-length
+    '{"versie": "awv-v0", "definitie": {"circle": {"stroke": {"color": "navy", "width": 1.5}, "fill": {"color": "dodgerblue"}, "radius": 6}}}'
+  ).getOrElse(msg => {
+    throw new Error(`slecht formaat ${msg}`);
   });
 
   private readonly pinIcon = new ol.style.Style({
@@ -73,6 +86,14 @@ export class AppComponent {
   constructor(private googleLocatieZoekerService: GoogleLocatieZoekerService, public coordinatenService: CoordinatenService) {
     kaartLogger.setLevel("DEBUG");
     this.addIcon();
+  }
+
+  isZichtbaar(part: string): boolean {
+    return this.zichtbaarheid[part];
+  }
+
+  maakZichtbaar(part: string, zichtbaar: boolean) {
+    this.zichtbaarheid[part] = zichtbaar;
   }
 
   private addIcon() {

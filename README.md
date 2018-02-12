@@ -37,7 +37,9 @@ Dit laat je ook toe om protractors te schrijven.
 
 Tot slot vormt de source code van deze pagina de gebruiksaanwijzing van de componenten.
 
-### Locatie zoeker testen
+### CORS requests
+
+#### Locatiezoeker
 
 *Dit is nog niet getest sinds de refactoring*
 
@@ -56,6 +58,10 @@ Dit doet CORS requests via een SSH tunnel:
     *nix:
     
         chromium-browser --disable-web-security --user-data-dir
+
+#### NosqlFs laag
+
+Ook de NosqlFs laag demo maakt een verbinding met een server die niet op op localhost:4420 draait. CORS requestvalidatie afzetten is hier eveneens de oplossing.
 
 ### Code style
 
