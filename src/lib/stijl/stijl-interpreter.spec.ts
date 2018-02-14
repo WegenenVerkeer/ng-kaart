@@ -91,7 +91,7 @@ describe("De stijl interpreter", () => {
             })
           )
         );
-        pending("Om één of andere reden faalt de equal. Ook wanneer de target met zichzelf vergeleken wordt.");
+        pending("Jasmine struikelt over het 'canvas' element dat openlayers aanmaakt.");
       });
     });
   });
