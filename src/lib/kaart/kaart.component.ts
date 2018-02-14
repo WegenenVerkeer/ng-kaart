@@ -85,7 +85,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       // noinspection JSUnusedLocalSymbols
       this.destroying$.pipe(leaveZone(this.zone)).subscribe(_ => {
         kaartLogger.info(`kaart ${this.naam} opkuisen`);
-        initieelModel.map.setTarget(null);
+        initieelModel.map.setTarget((undefined as any) as string); // Hack omdat openlayers typedefs kaduuk zijn
       });
 
       this.kaartModel$ = this.kaartEvt$.pipe(
@@ -98,8 +98,8 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
       this.kaartModel$
         .pipe(
-          map(model => model.achtergrondlaagtitel),
-          filter(titel => !!titel), // misschien is er nog geen achtergrondlaag
+          filter(model => model.achtergrondlaagtitel.isSome()), // misschien is er nog geen achtergrondlaag
+          map(model => model.achtergrondlaagtitel.getOrElseValue("")), // veilig wegens filter
           distinctUntilChanged() // de meeste modelwijzigingen hebben niks met de achtergrondtitel te maken
         )
         .subscribe(titel => this.achtergrondTitelSelectieConsumer(titel));

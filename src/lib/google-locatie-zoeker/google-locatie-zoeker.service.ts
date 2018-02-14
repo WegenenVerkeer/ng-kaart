@@ -67,8 +67,8 @@ export class ZoekResultaat {
     this.locatie = locatie.locatie;
     this.geometry = new ol.format.GeoJSON(<olx.format.GeoJSONOptions>{
       ignoreExtraDims: true,
-      defaultDataProjection: null,
-      featureProjection: null
+      defaultDataProjection: undefined,
+      featureProjection: undefined
     }).readGeometry(locatie.locatie);
     this.omschrijving = locatie.omschrijving;
     this.bron = locatie.bron;
@@ -88,7 +88,7 @@ export class ZoekResultaten {
 
 @Injectable()
 export class GoogleLocatieZoekerService {
-  private _cache: Promise<GoogleServices> = null;
+  private _cache: Promise<GoogleServices> | null = null;
   locatieZoekerUrl = this.googleLocatieZoekerConfig.url;
 
   constructor(private http: Http, private googleLocatieZoekerConfig: GoogleLocatieZoekerConfig) {}
@@ -164,7 +164,7 @@ export class GoogleLocatieZoekerService {
           });
 
           // Promise[List[PlaceDetails]]
-          const placeDetailsPromises = predictionsPromise.then(predictions => {
+          const placeDetailsPromises: Promise<ExtendedPlaceResult[] | undefined> = predictionsPromise.then(predictions => {
             // List[Promise[PlaceDetails]]
             const geocodedPredictionPromises = predictions.map(prediction => {
               // return geocode(prediction.description)
@@ -191,7 +191,7 @@ export class GoogleLocatieZoekerService {
                       }
                       // geocodedPrediction.bron = 'Google Autocomplete/Geocode'
                     });
-                    return vorigeResultaten.concat(geocodeResultsPrediction);
+                    return vorigeResultaten!.concat(geocodeResultsPrediction);
                   }
                 });
               });
@@ -212,9 +212,9 @@ export class GoogleLocatieZoekerService {
           // Promise[ List[GeocodedPrediction] + List[GeocodedPlaces] ]
           return placeDetailsPromises.then(predictions => {
             return placesSearchPromise.then(places => {
-              const alleResultaten = [];
-              const besteResultaten = [];
-              const establishments = [];
+              const alleResultaten: Array<ExtendedPlaceResult> = [];
+              const besteResultaten: Array<ExtendedPlaceResult> = [];
+              const establishments: Array<ExtendedPlaceResult> = [];
               const voegToe = nieuw => {
                 const zitErAlIn =
                   alleResultaten.find(bestaande => {
@@ -234,7 +234,7 @@ export class GoogleLocatieZoekerService {
               };
 
               places.forEach(voegToe);
-              predictions.forEach(voegToe);
+              predictions!.forEach(voegToe);
 
               // zoek gemeente geometrie op voor besteresultaten (niet voor establishments)
 
@@ -253,7 +253,7 @@ export class GoogleLocatieZoekerService {
                     return vorigeResultaten.concat(resultaat);
                   });
                 });
-              }, Promise.resolve([]));
+              }, Promise.resolve(new Array<ExtendedPlaceResult>()));
 
               // Promise[besteResultaten + establishments]
               return alleResultatenPromise2.then(besteResultatenMetGeometrie => {
