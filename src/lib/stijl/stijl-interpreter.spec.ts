@@ -1,7 +1,7 @@
 import * as ol from "openlayers";
 
 import { definitieToStyle } from "./stijl-interpreter";
-import { ok, fail } from "./json-object-interpreting";
+import { ok } from "./json-object-interpreting";
 
 describe("De stijl interpreter", () => {
   beforeEach(() => {});

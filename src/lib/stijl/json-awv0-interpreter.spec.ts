@@ -4,6 +4,8 @@ import { jsonAwvV0Style, circle } from "./json-awv0-interpreter";
 import { ok, fail, Validation } from "./json-object-interpreting";
 
 describe("De json AWV V0 interpreter", () => {
+  // Het probleem met onderstaande tester is dat er een andere custom equality tester geregistreerd is (allicht door jasmine-jquery)
+  // die maakt dat deze functie niet opgeroepen wordt voor DomNodes. En die andere functie faalt.
   // const htmlNodeEquality = (o1: any, o2: any) => {
   //   console.log("comparing ", o1, " to ", o2);
   //   const isHtmlNode = (o: any) => o !== null && o !== undefined && o.hasOwnProperty("innerHTML");
@@ -83,6 +85,93 @@ describe("De json AWV V0 interpreter", () => {
             }),
             fill: new ol.style.Fill({
               color: "green;"
+            })
+          })
+        })
+      )
+    );
+    pending("Jasmine struikelt over het 'canvas' element dat openlayers aanmaakt.");
+  });
+
+  it("moet een Text met alle opties maken", () => {
+    const result = jsonAwvV0Style({
+      text: {
+        font: "Arial",
+        offsetX: 1,
+        offsetY: 2,
+        scale: 1.1,
+        rotateWithView: false,
+        rotation: 45,
+        text: "text",
+        textAlign: "center",
+        textBaseline: "middle",
+        placement: "point",
+        fill: {
+          color: "red"
+        },
+        stroke: {
+          width: 6
+        }
+      }
+    });
+    expect(result).toEqual(
+      ok(
+        new ol.style.Style({
+          text: new ol.style.Text({
+            font: "Arial",
+            offsetX: 1,
+            offsetY: 2,
+            scale: 1.1,
+            rotateWithView: false,
+            rotation: 45,
+            text: "text",
+            textAlign: "center",
+            textBaseline: "middle",
+            placement: "point",
+            fill: new ol.style.Fill({
+              color: "red"
+            }),
+            stroke: new ol.style.Stroke({
+              width: 6
+            })
+          } as any)
+        })
+      )
+    );
+  });
+
+  it("moet een RegularShape met alle opties maken", () => {
+    const result = jsonAwvV0Style({
+      regularShape: {
+        points: 8,
+        radius: 20,
+        radius1: 30,
+        radius2: 10,
+        angle: 0,
+        snapToPixel: true,
+        fill: {
+          color: "red"
+        },
+        stroke: {
+          width: 6
+        }
+      }
+    });
+    expect(result).toEqual(
+      ok(
+        new ol.style.Style({
+          image: new ol.style.RegularShape({
+            points: 8,
+            radius: 20,
+            radius1: 30,
+            radius2: 10,
+            angle: 0,
+            snapToPixel: true,
+            fill: new ol.style.Fill({
+              color: "red"
+            }),
+            stroke: new ol.style.Stroke({
+              width: 6
             })
           })
         })

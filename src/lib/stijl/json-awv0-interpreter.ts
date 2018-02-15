@@ -8,16 +8,11 @@ import * as olc from "./openlayer-constructors";
 // Openlayer types interpreters
 //
 
-interface StyleOption {
-  stroke?: ol.style.Stroke;
-  fill?: ol.style.Fill;
-}
-
-const fill: Interpreter<ol.style.Fill> = st.mapRecord(olc.Fill, {
+export const fill: Interpreter<ol.style.Fill> = st.mapRecord(olc.Fill, {
   color: st.optField("color", st.str) // ol ondersteunt meer dan enkel een string, maar wij niet
 });
 
-const stroke: Interpreter<ol.style.Stroke> = st.mapRecord(olc.Stroke, {
+export const stroke: Interpreter<ol.style.Stroke> = st.mapRecord(olc.Stroke, {
   color: st.optField("color", st.str),
   lineCap: st.optField("lineCap", st.str),
   lineJoin: st.optField("lineJoin", st.str),
@@ -28,7 +23,7 @@ const stroke: Interpreter<ol.style.Stroke> = st.mapRecord(olc.Stroke, {
 });
 
 export const circle: Interpreter<ol.style.Circle> = st.mapRecord(olc.Circle, {
-  radius: st.required(st.field("radius", st.num)),
+  radius: st.reqField("radius", st.num),
   fill: st.optField("fill", fill),
   stroke: st.optField("stroke", stroke),
   snapToPixel: st.optField("snapToPixel", st.bool)
@@ -39,6 +34,17 @@ export const circle: Interpreter<ol.style.Circle> = st.mapRecord(olc.Circle, {
 //   (st.optField("offsetX", st.num)))
 // )(st.optField("optionY", st.num)));
 
+const placement: Interpreter<olc.TextPlacement> = st.enu<olc.TextPlacement>("point", "line");
+const textAlign: Interpreter<olc.TextAlign> = st.enu<olc.TextAlign>("left", "right", "center", "end", "start");
+const textBaseline: Interpreter<olc.TextBaseline> = st.enu<olc.TextBaseline>(
+  "bottom",
+  "top",
+  "middle",
+  "alphabetic",
+  "hanging",
+  "ideographic"
+);
+
 export const text: Interpreter<ol.style.Text> = st.mapRecord(olc.Text, {
   font: st.optField("font", st.str),
   offsetX: st.optField("offsetX", st.num),
@@ -47,19 +53,55 @@ export const text: Interpreter<ol.style.Text> = st.mapRecord(olc.Text, {
   rotateWithView: st.optField("rotateWithView", st.bool),
   rotation: st.optField("rotation", st.num),
   text: st.optField("text", st.str),
-  textAlign: st.optField("textAlign", st.str),
-  textBaseline: st.optField("textBaseline", st.str),
+  textAlign: st.optField("textAlign", textAlign),
+  textBaseline: st.optField("textBaseline", textBaseline),
+  placement: st.optField("placement", placement),
   fill: st.optField("fill", fill),
   stroke: st.optField("stroke", stroke)
 });
 
-export const jsonAwvV0Style: Interpreter<ol.style.Style> = st.map3(
-  olc.Style,
-  st.optField("fill", fill),
-  st.optField("stroke", stroke),
-  st.optField("circle", circle)
-);
+const iconOrigin: Interpreter<ol.style.IconOrigin> = st.enu<ol.style.IconOrigin>("bottom-left", "bottom-right", "top-left", "top-right");
+const iconAnchorUnits: Interpreter<ol.style.IconAnchorUnits> = st.enu<ol.style.IconAnchorUnits>("fraction", "pixels");
+const size: Interpreter<ol.Size> = st.arrSize(2, st.num) as Interpreter<[number, number]>;
+const color: Interpreter<ol.Color | string> = st.str;
 
-interface FillOptions {
-  color?: ol.Color | ol.ColorLike;
-}
+const icon: Interpreter<ol.style.Icon> = st.mapRecord(olc.Icon, {
+  anchor: st.optField("anchor", st.arr(st.num)),
+  anchorOrigin: st.optField("anchorOrigin", iconOrigin),
+  anchorXUnits: st.optField("anchorXUnits", iconAnchorUnits),
+  anchorYUnits: st.optField("anchorYUnits", iconAnchorUnits),
+  color: st.optField("color", color),
+  crossOrigin: st.optField("crossOrigin", st.str),
+  offset: st.optField("offset", st.arr(st.num)),
+  offsetOrigin: st.optField("offsetOrigin", iconOrigin),
+  opacity: st.optField("opacity", st.num),
+  scale: st.optField("scale", st.num),
+  snapToPixel: st.optField("snapToPixel", st.bool),
+  rotateWithView: st.optField("rotateWithView", st.bool),
+  rotation: st.optField("rotation", st.num),
+  size: st.optField("size", size),
+  imgSize: st.optField("imgSize", size),
+  src: st.optField("src", st.str)
+});
+
+const regularShape: Interpreter<ol.style.RegularShape> = st.mapRecord(olc.RegularShape, {
+  fill: st.optField("fill", fill),
+  points: st.reqField("points", st.num),
+  radius: st.optField("radius", st.num),
+  radius1: st.optField("radius1", st.num),
+  radius2: st.optField("radius2", st.num),
+  angle: st.optField("angle", st.num),
+  snapToPixel: st.optField("snapToPixel", st.bool),
+  stroke: st.optField("stroke", stroke)
+});
+
+export const jsonAwvV0Style: Interpreter<ol.style.Style> = st.mapRecord(olc.Style, {
+  fill: st.optField("fill", fill),
+  stroke: st.optField("stroke", stroke),
+  text: st.optField("text", text),
+  image: st.atMostOneOf<ol.style.Image>(
+    st.optField("circle", circle), //
+    st.optField("icon", icon),
+    st.optField("regularShape", regularShape)
+  )
+});

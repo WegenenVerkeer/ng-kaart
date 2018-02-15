@@ -1,19 +1,4 @@
 import * as ol from "openlayers";
-// export declare namespace ol {
-//   export type Color = any;
-//   export type ColorLike = any;
-
-//   namespace style {
-//     // tslint:disable-next-line:no-shadowed-variable
-//     export type Fill = any;
-//     // tslint:disable-next-line:no-shadowed-variable
-//     export type Stroke = any;
-//     // tslint:disable-next-line:no-shadowed-variable
-//     export type Circle = any;
-//   }
-// }
-
-import { Option } from "fp-ts/lib/Option";
 
 ///////////////////////////////////////////
 // Functionele constructors voor openlayers
@@ -46,6 +31,10 @@ export function Circle(circleOptions: {
   return new ol.style.Circle(circleOptions);
 }
 
+export type TextAlign = "left" | "right" | "center" | "end" | "start";
+export type TextBaseline = "bottom" | "top" | "middle" | "alphabetic" | "hanging" | "ideographic";
+export type TextPlacement = "point" | "line";
+
 export function Text(textOptions: {
   font?: string;
   offsetX?: number;
@@ -54,18 +43,55 @@ export function Text(textOptions: {
   rotateWithView?: boolean;
   rotation?: number;
   text?: string;
-  textAlign?: string;
-  textBaseline?: string;
+  textAlign?: TextAlign;
+  textBaseline?: TextBaseline;
+  placement?: TextPlacement;
   fill?: ol.style.Fill;
   stroke?: ol.style.Stroke;
 }): ol.style.Text {
   return new ol.style.Text(textOptions);
 }
 
-export function Style(fill: Option<ol.style.Fill>, stroke: Option<ol.style.Stroke>, image: Option<ol.style.Image>) {
-  return new ol.style.Style({
-    fill: fill.toUndefined(),
-    stroke: stroke.toUndefined(),
-    image: image.toUndefined()
-  });
+export function Icon(iconOptions: {
+  anchor?: number[];
+  anchorOrigin?: ol.style.IconOrigin;
+  anchorXUnits?: ol.style.IconAnchorUnits;
+  anchorYUnits?: ol.style.IconAnchorUnits;
+  color?: ol.Color | string;
+  crossOrigin?: string;
+  // img?: any | HTMLCanvasElement;
+  offset?: number[];
+  offsetOrigin?: ol.style.IconOrigin;
+  opacity?: number;
+  scale?: number;
+  snapToPixel?: boolean;
+  rotateWithView?: boolean;
+  rotation?: number;
+  size?: ol.Size;
+  imgSize?: ol.Size;
+  src?: string;
+}): ol.style.Icon {
+  return new ol.style.Icon(iconOptions);
+}
+
+export function RegularShape(regularShapeOptions: {
+  fill?: ol.style.Fill;
+  points: number;
+  radius?: number;
+  radius1?: number;
+  radius2?: number;
+  angle?: number;
+  snapToPixel?: boolean;
+  stroke?: ol.style.Stroke;
+}): ol.style.RegularShape {
+  return new ol.style.RegularShape(regularShapeOptions);
+}
+
+export function Style(styleOptions: {
+  fill?: ol.style.Fill; //
+  stroke?: ol.style.Stroke;
+  text?: ol.style.Text;
+  image?: ol.style.Image;
+}) {
+  return new ol.style.Style(styleOptions);
 }

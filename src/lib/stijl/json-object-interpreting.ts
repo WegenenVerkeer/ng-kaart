@@ -1,4 +1,4 @@
-import { Option, none, some, Some } from "fp-ts/lib/Option";
+import { Option, none, some } from "fp-ts/lib/Option";
 import { monoidString } from "fp-ts/lib/Monoid";
 import * as array from "fp-ts/lib/Array";
 import * as validation from "fp-ts/lib/Validation";
@@ -60,12 +60,21 @@ export function at<T>(nest: Array<string>, interpreter: Interpreter<T>): Interpr
   );
 }
 
-export function required<T>(interpreter: Interpreter<T>): Interpreter<Option<T>> {
-  return map<T, Option<T>>(some, interpreter);
+export function reqField<T>(name: string, interpreter: Interpreter<T>): Interpreter<Option<T>> {
+  return map<T, Option<T>>(some, field(name, interpreter));
 }
 
 export function optField<T>(name: string, interpreter: Interpreter<T>): Interpreter<Option<T>> {
+  // Kan ook met een fold op field, maar gezien deze methode meer gebruikt wordt en de velden doorgaans undefined zijn, is dit effciënter.
   return (json: Object) => (json.hasOwnProperty(name) ? interpreter(json[name]).map(some) : ok(none));
+}
+
+function validateArray<T>(jsonArray: Array<T>, interpreter: Interpreter<T>): Validation<Array<T>> {
+  return array.reduce(
+    (vts: Validation<Array<T>>, json: Object) => vts.chain(ts => interpreter(json).map(array.snoc(ts))),
+    ok(new Array<T>()),
+    jsonArray as Array<Object>
+  );
 }
 
 export function arr<T>(interpreter: Interpreter<T>): Interpreter<Array<T>> {
@@ -73,12 +82,47 @@ export function arr<T>(interpreter: Interpreter<T>): Interpreter<Array<T>> {
     if (!Array.isArray(jsonArray)) {
       return fail(`${toString(jsonArray)} is geen array`);
     } else {
-      return array.reduce(
-        (vts: Validation<Array<T>>, json: Object) => vts.chain(ts => interpreter(json).map(array.snoc(ts))),
-        ok(new Array<T>()),
-        jsonArray as Array<Object>
-      );
+      return validateArray(jsonArray, interpreter);
     }
+  };
+}
+
+export function arrSize<T>(size: number, interpreter: Interpreter<T>): Interpreter<Array<T>> {
+  return (jsonArray: Object) => {
+    if (!Array.isArray(jsonArray)) {
+      return fail(`${toString(jsonArray)} is geen array`);
+    } else if (jsonArray.length !== size) {
+      return fail(`${toString(jsonArray)} heeft niet precies ${size} elementen`);
+    } else {
+      return validateArray(jsonArray, interpreter);
+    }
+  };
+}
+
+export function enu<T extends string>(...values: T[]): Interpreter<T> {
+  return (json: Object) =>
+    str(json).chain(
+      jsonString =>
+        (values as string[]).indexOf(jsonString) < 0 //
+          ? fail(`'${jsonString}' is niet één van '${values}'`)
+          : ok(jsonString as T)
+    );
+}
+
+export function atMostOneOf<T>(...interpreters: Interpreter<Option<T>>[]): Interpreter<Option<T>> {
+  return (json: Object) => {
+    const validations: Validation<Array<Option<T>>> = sequence(array.map(i => i(json), interpreters));
+    const presentValidations: Validation<Array<T>> = validations.map(array.catOptions);
+    return presentValidations.chain(values => {
+      switch (values.length) {
+        case 0:
+          return ok(none);
+        case 1:
+          return ok(array.head(values));
+        default:
+          return fail("Er mag maar 1 waarde aanwezig zijn");
+      }
+    });
   };
 }
 
@@ -284,7 +328,7 @@ export function map11<A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, Value>(
 }
 
 export function pure<T>(t: T): Interpreter<T> {
-  return (json: Object) => ok(t);
+  return (_: Object) => ok(t);
 }
 
 export function andMap<A, B>(interpreterA: Interpreter<A>, interpreterFA: Interpreter<(a: A) => B>): Interpreter<B> {
@@ -308,20 +352,18 @@ function interpretRecord<A>(record: InterpreterOptionalRecord<A>): Interpreter<A
       // combineer alle fails, map de ok's weg (probleem is dat die allemaal een ander type hebben)
       validations.push(validationOutcome.map(_ => {}));
     }
-    // De gesequencete validation is ok als alle deelvalidations ok zijn
-    return traversable
-      .sequence(validation, array)(validations)
-      .map(_ => result as A); // we hebben het echte resultaat al in de for loop gezet
+    // De gesequencte validation is ok als alle deelvalidations ok zijn
+    return sequence(validations).map(_ => result as A); // we hebben het echte resultaat al in de for loop gezet
   };
+}
+
+function sequence<T>(validations: Array<Validation<T>>) {
+  return traversable.sequence(validation, array)(validations);
 }
 
 export function mapRecord<A, B>(f: (a: A) => B, record: InterpreterOptionalRecord<A>): Interpreter<B> {
   return map(f, interpretRecord(record));
 }
-
-// function toOlType<T>(interpreterRecord: InterpreterRecord<T>): Interpreter<T> {
-//   return (json: object) =>
-// }
 
 export function toString(json: Object): string {
   return JSON.stringify(json);
