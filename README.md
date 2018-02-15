@@ -40,14 +40,6 @@ Tot slot vormt de source code van deze pagina de gebruiksaanwijzing van de compo
 ### CORS requests
 
 #### Locatiezoeker
-
-*Dit is nog niet getest sinds de refactoring*
-
-Dit doet CORS requests via een SSH tunnel:
-
-* Leg een SSH tunnel naar de apigateway van dev:
-
-        ssh -L 5100:apigateway.dev.awv.internal:80 management.apps.mow.vlaanderen.be
                           
 * Zet chrome open zonder web security om dit te testen.
 
