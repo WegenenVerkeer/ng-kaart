@@ -46,13 +46,15 @@ export class NosqlFsSource extends ol.source.Vector {
 
           const positionLastDelimiter = xhr.response.lastIndexOf(NosqlFsSource.featureDelimiter);
           if (positionLastDelimiter === -1) {
-            return;
+            return; // geen delimiter gevonden
           }
 
           const tokens: string[] = xhr.response.slice(currentPosition, positionLastDelimiter).split(NosqlFsSource.featureDelimiter);
           currentPosition = positionLastDelimiter;
 
           const features = tokens.filter(token => token.length > 0).map(token => {
+            // format.readFeature(token) werkt hier niet vermits in de properties een 'geometry' veld zit en daar kan de ol parser
+            // niet mee om. Daarom via tussenstap.
             const geojson: GeoJsonLike = JSON.parse(token);
             return new ol.Feature({
               id: geojson.id,
@@ -60,29 +62,29 @@ export class NosqlFsSource extends ol.source.Vector {
               geometry: format.readGeometry(geojson.geometry)
             });
           });
-          kaartLogger.debug(`Adding ${features.length} features`);
+          kaartLogger.debug(`nosql: adding ${features.length} features`);
           source.addFeatures(features);
         };
         xhr.onloadstart = () => {
-          kaartLogger.debug("onloadstart");
-          kaartLogger.debug("Clearing features");
+          kaartLogger.debug("nosql: onloadstart");
+          kaartLogger.debug("nosql: clearing features");
           source.clear();
         };
 
         xhr.onerror = (event: ErrorEvent) => {
-          kaartLogger.error("Fout bij laden nosqlfs data", event.message);
+          kaartLogger.error("nosql: fout bij laden nosqlfs data", event.message);
         };
         xhr.onload = () => {
-          kaartLogger.debug("onload");
+          kaartLogger.debug("nosql: onload");
         };
         xhr.onloadend = () => {
-          kaartLogger.debug("onloadend");
+          kaartLogger.debug("nosql: onloadend ");
         };
         xhr.ontimeout = () => {
-          kaartLogger.debug("ontimeout");
+          kaartLogger.debug("nosql: ontimeout");
         };
         xhr.onabort = () => {
-          kaartLogger.debug("onabort");
+          kaartLogger.debug("nosql: onabort");
         };
 
         xhr.send();
