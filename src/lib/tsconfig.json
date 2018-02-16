@@ -6,6 +6,7 @@
     "rootDir": "./",
     "baseUrl": "",
     "experimentalDecorators": true,
+    "strictNullChecks": true,
     "types": []
   },
   "files": [

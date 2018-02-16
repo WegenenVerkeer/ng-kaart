@@ -1,5 +1,5 @@
 import { List } from "immutable";
-import { none, Option, some } from "fp-ts/lib/Option";
+import { none, Option, some, fromNullable } from "fp-ts/lib/Option";
 
 import * as ol from "openlayers";
 
@@ -40,10 +40,6 @@ function updateModel(partial: Partial<KaartWithInfo>): ModelUpdater {
 
 const keepModel: ModelUpdater = (model: KaartWithInfo) => model;
 
-function guardedUpdate(pred: (kaart: KaartWithInfo) => boolean, updater: ModelUpdater): ModelUpdater {
-  return (model: KaartWithInfo) => (pred(model) ? updater(model) : model);
-}
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // de reducers hieronder zijn dus geen pure functies. Ze hebben bijna allen een neveneffect op de openlayers map.
 // de reden is dat enerzijds Map statefull is en anderzijds dat het niet triviaal is om een efficiente differ
@@ -67,7 +63,7 @@ function removeLaag(titel: string): ModelUpdater {
     kaart.map.removeLayer(layer); // Oesje. Side-effect. Gelukkig idempotent.
     return updateModel({
       lagenOpTitel: kaart.lagenOpTitel.delete(titel),
-      lagen: kaart.lagen.filterNot(l => l.titel === titel).toList()
+      lagen: kaart.lagen.filterNot(l => l!.titel === titel).toList()
     });
   });
 }
@@ -92,9 +88,13 @@ function showLaag(titel: string): ModelUpdater {
   });
 }
 
-const hideAchtergrond: ModelUpdater = (kaart: KaartWithInfo) => hideLaag(kaart.achtergrondlaagtitel)(kaart);
+const hideAchtergrond: ModelUpdater = withAchtergrondTitel(hideLaag);
 
-const showAchtergrond: ModelUpdater = (kaart: KaartWithInfo) => showLaag(kaart.achtergrondlaagtitel)(kaart);
+const showAchtergrond: ModelUpdater = withAchtergrondTitel(showLaag);
+
+function withAchtergrondTitel(f: (titel: string) => ModelUpdater): ModelUpdater {
+  return (kaart: KaartWithInfo) => kaart.achtergrondlaagtitel.map(f).getOrElseValue(keepModel)(kaart);
+}
 
 function doForLayer(titel: string, updater: (kaart: KaartWithInfo, layer: ol.layer.Base) => ModelUpdater): ModelUpdater {
   return (kaart: KaartWithInfo) => {
@@ -131,44 +131,49 @@ function insertLaag(positie: number, laag: ke.Laag, visible: boolean): ModelUpda
   return andThen(removeLaag(laag.titel), insertLaagNoRemoveAt(positie, laag, visible));
 }
 
-const addSchaal: ModelUpdater = guardedUpdate(
-  kaart => !kaart.schaal,
-  kaart => {
-    const schaal = new ol.control.ScaleLine();
-    kaart.map.addControl(schaal);
-    return updateModel({ schaal: schaal })(kaart);
-  }
-);
+// De volgende 4 functies zouden een stuk generieker kunnen met lenzen
+const addSchaal: ModelUpdater = (kaart: KaartWithInfo) =>
+  kaart.schaal.fold(
+    () => {
+      const schaal = new ol.control.ScaleLine();
+      kaart.map.addControl(schaal);
+      return updateModel({ schaal: some(schaal) })(kaart);
+    },
+    _ => keepModel(kaart)
+  );
 
-const removeSchaal: ModelUpdater = guardedUpdate(
-  kaart => !!kaart.schaal,
-  kaart => {
-    kaart.map.removeControl(kaart.schaal);
-    return { ...kaart, schaal: null };
-  }
-);
+const removeSchaal: ModelUpdater = (kaart: KaartWithInfo) =>
+  kaart.schaal.fold(
+    () => kaart,
+    schaal => {
+      kaart.map.removeControl(schaal);
+      return { ...kaart, schaal: none };
+    }
+  );
 
-const addFullScreen: ModelUpdater = guardedUpdate(
-  kaart => !kaart.fullScreen,
-  kaart => {
-    const fullScreen = new ol.control.FullScreen();
-    kaart.map.addControl(fullScreen);
-    return { ...kaart, fullScreen: fullScreen };
-  }
-);
+const addFullScreen: ModelUpdater = (kaart: KaartWithInfo) =>
+  kaart.fullScreen.fold(
+    () => {
+      const fullScreen = new ol.control.FullScreen();
+      kaart.map.addControl(fullScreen);
+      return { ...kaart, fullScreen: some(fullScreen) };
+    },
+    _ => keepModel(kaart)
+  );
 
-const removeFullScreen: ModelUpdater = guardedUpdate(
-  kaart => !!kaart.fullScreen,
-  kaart => {
-    kaart.map.removeControl(kaart.fullScreen);
-    return { ...kaart, fullScreen: null };
-  }
-);
+const removeFullScreen: ModelUpdater = (kaart: KaartWithInfo) =>
+  kaart.fullScreen.fold(
+    () => kaart,
+    fullScreen => {
+      kaart.map.removeControl(fullScreen);
+      return { ...kaart, fullScreen: none };
+    }
+  );
 
 function addStandaardInteracties(kaart: KaartWithInfo, scrollZoomOnFocus: boolean): KaartWithInfo {
   if (!kaart.stdInteracties || kaart.stdInteracties.isEmpty()) {
     const interacties = List(ol.interaction.defaults().getArray());
-    interacties.forEach(i => kaart.map.addInteraction(i)); // side effects :-(
+    interacties.forEach(i => kaart.map.addInteraction(i!)); // side effects :-(
     const newKaart = { ...kaart, stdInteracties: interacties, scrollZoomOnFocus: scrollZoomOnFocus };
     return activateMouseWheelZoom(newKaart, !scrollZoomOnFocus);
   } else {
@@ -178,8 +183,8 @@ function addStandaardInteracties(kaart: KaartWithInfo, scrollZoomOnFocus: boolea
 
 function removeStandaardInteracties(kaart: KaartWithInfo): KaartWithInfo {
   if (kaart.stdInteracties) {
-    kaart.stdInteracties.forEach(i => kaart.map.removeInteraction(i));
-    return { ...kaart, stdInteracties: null, scrollZoomOnFocus: false };
+    kaart.stdInteracties.forEach(i => kaart.map.removeInteraction(i!));
+    return { ...kaart, stdInteracties: List<ol.interaction.Interaction>(), scrollZoomOnFocus: false };
   } else {
     return kaart;
   }
@@ -204,27 +209,31 @@ function loseFocusOnMap(kaart: KaartWithInfo): KaartWithInfo {
 function activateMouseWheelZoom(kaart: KaartWithInfo, active: boolean): KaartWithInfo {
   kaart.stdInteracties
     .filter(interaction => interaction instanceof ol.interaction.MouseWheelZoom)
-    .forEach(interaction => interaction.setActive(active));
+    .forEach(interaction => interaction!.setActive(active));
   return kaart;
 }
 
 function updateMiddelpunt(kaart: KaartWithInfo, coordinate: [number, number]): KaartWithInfo {
   kaart.map.getView().setCenter(coordinate);
-  return { ...kaart, middelpunt: kaart.map.getView().getCenter(), extent: kaart.map.getView().calculateExtent(kaart.map.getSize()) };
+  return {
+    ...kaart,
+    middelpunt: some(kaart.map.getView().getCenter()),
+    extent: some(kaart.map.getView().calculateExtent(kaart.map.getSize()))
+  };
 }
 
 function updateZoom(kaart: KaartWithInfo, zoom: number): KaartWithInfo {
   kaart.map.getView().setZoom(zoom);
-  return { ...kaart, zoom: kaart.map.getView().getZoom(), extent: kaart.map.getView().calculateExtent(kaart.map.getSize()) };
+  return { ...kaart, zoom: some(kaart.map.getView().getZoom()), extent: some(kaart.map.getView().calculateExtent(kaart.map.getSize())) };
 }
 
 function updateExtent(kaart: KaartWithInfo, extent: ol.Extent): KaartWithInfo {
   kaart.map.getView().fit(extent);
   return {
     ...kaart,
-    middelpunt: kaart.map.getView().getCenter(),
-    zoom: kaart.map.getView().getZoom(),
-    extent: kaart.map.getView().calculateExtent(kaart.map.getSize())
+    middelpunt: some(kaart.map.getView().getCenter()),
+    zoom: some(kaart.map.getView().getZoom()),
+    extent: some(kaart.map.getView().calculateExtent(kaart.map.getSize()))
   };
 }
 
@@ -243,8 +252,8 @@ function updateViewport(size: ol.Size): ModelUpdater {
     kaart.map.updateSize();
     return {
       ...kaart,
-      size: kaart.map.getSize(),
-      extent: kaart.map.getView().calculateExtent(kaart.map.getSize())
+      size: some(kaart.map.getSize()),
+      extent: some(kaart.map.getView().calculateExtent(kaart.map.getSize()))
     };
   };
 }
@@ -275,7 +284,7 @@ function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {
           visible: true,
           extent: l.extent,
           source: new ol.source.TileWMS({
-            projection: null,
+            projection: undefined,
             urls: l.urls.toArray(),
             params: {
               LAYERS: l.naam,
@@ -306,11 +315,14 @@ function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {
 }
 
 const addNewBackgroundsToMap: ModelUpdater = (kaart: KaartWithInfo) => {
-  return kaart.possibleBackgrounds.reduce((model, laag, index) => insertLaag(0, laag, index === 0)(model), kaart);
+  return kaart.possibleBackgrounds.reduce((model, laag, index) => insertLaag(0, laag!, index === 0)(model!), kaart);
 };
 
 function setBackgrounds(backgrounds: List<ke.WmsLaag | ke.BlancoLaag>): ModelUpdater {
-  return updateModel({ possibleBackgrounds: backgrounds, achtergrondlaagtitel: backgrounds.isEmpty() ? "" : backgrounds.get(0).titel });
+  return updateModel({
+    possibleBackgrounds: backgrounds,
+    achtergrondlaagtitel: fromNullable(backgrounds.first()).map(bg => bg.titel)
+  });
 }
 
 function showBackgroundSelector(show: boolean): ModelUpdater {
@@ -354,7 +366,7 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWit
       return pipe(
         kaart, //
         hideAchtergrond,
-        updateModel({ achtergrondlaagtitel: (cmd as prt.BackgroundSelected).titel }),
+        updateModel({ achtergrondlaagtitel: some((cmd as prt.BackgroundSelected).titel) }),
         showAchtergrond
       );
     case prt.KaartEvntTypes.SHOW_FEATURES:

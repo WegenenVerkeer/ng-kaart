@@ -16,6 +16,6 @@ export interface KaartConfig {
   readonly defaults: {
     zoom: number;
     middelpunt: ol.Coordinate;
-    grootte: [number, number];
+    grootte: [number | undefined, number | undefined];
   };
 }
