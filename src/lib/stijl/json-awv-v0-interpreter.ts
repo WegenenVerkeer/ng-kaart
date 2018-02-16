@@ -1,8 +1,9 @@
 import * as ol from "openlayers";
 
-import { Interpreter } from "./json-object-interpreting";
+import { Interpreter, succeed } from "./json-object-interpreting";
 import * as st from "./json-object-interpreting";
 import * as olc from "./openlayer-constructors";
+import { Option, some } from "fp-ts/lib/Option";
 
 ///////////////////////////////
 // Openlayer types interpreters
@@ -106,3 +107,30 @@ export const jsonAwvV0Style: Interpreter<ol.style.Style> = st.mapRecord(olc.Styl
     st.optField("regularShape", regularShape)
   )
 });
+
+////////////////////////
+// shortcut interpreters
+//
+
+// Dit zijn macros die veelgebruikte constructies makkelijker manueel manipuleerbaar maken
+
+const lineShortcut: Interpreter<Object> = st.field(
+  "fullLine",
+  st.mapRecord(
+    (record: { color: string; width: number }) => ({
+      stroke: {
+        color: record.color,
+        width: record.width
+      }
+    }),
+    {
+      color: st.reqField("color", st.str),
+      width: st.reqField("width", st.num)
+    }
+  )
+);
+
+export const shortcutStyles: Interpreter<Object> = st.map(
+  (maybeJson: Option<Object>) => maybeJson.getOrElseValue({}),
+  st.optField("shortcut", st.firstOf(lineShortcut))
+);

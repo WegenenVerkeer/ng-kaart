@@ -1,7 +1,9 @@
 import * as ol from "openlayers";
 
-import { Validation, fail, str, field } from "./json-object-interpreting";
-import { jsonAwvV0Style } from "./json-awv-v0-interpreter";
+import { Validation, Interpreter } from "./json-object-interpreting";
+import { jsonAwvV0Style, shortcutStyles } from "./json-awv-v0-interpreter";
+
+import * as oi from "./json-object-interpreting";
 
 // Door de beschrijvingsstijl in de kaartcomponent te steken, kunnen ook andere applicaties er gebruik van maken.
 // Nog beter is om (op termijn) dit in een afzonderlijke module te steken.
@@ -14,7 +16,7 @@ export function definitieToStyle(formaat: string, definitieText: string): Stijld
   if (formaat === "json") {
     return jsonDefinitieStringToStyle(definitieText);
   } else {
-    return fail(`Formaat '${formaat}' wordt niet ondersteund`);
+    return oi.fail(`Formaat '${formaat}' wordt niet ondersteund`);
   }
 }
 
@@ -23,17 +25,22 @@ function jsonDefinitieStringToStyle(definitieText: string): StijldefinitieTransf
     const object = JSON.parse(definitieText);
     return interpretJson(object);
   } catch (error) {
-    return fail("De gegeven definitie was niet in het JSON formaat");
+    return oi.fail("De gegeven definitie was niet in het JSON formaat");
   }
 }
 
 function interpretJson(definitie: Object): Validation<ol.style.Style> {
-  return field("versie", str)(definitie).chain(versie => {
-    switch (versie) {
-      case "awv-v0":
-        return field("definitie", jsonAwvV0Style)(definitie);
-      default:
-        return fail(`Json versie '${versie}' wordt niet ondersteund`);
-    }
-  });
+  return oi
+    .field("versie", oi.str)(definitie)
+    .chain(versie => {
+      switch (versie) {
+        case "awv-v0":
+          return oi.chain(
+            shortcutStyles, //
+            (shortcutJson: Object) => oi.field("definitie", oi.injectFirst(shortcutJson, jsonAwvV0Style))
+          )(definitie);
+        default:
+          return oi.fail(`Json versie '${versie}' wordt niet ondersteund`);
+      }
+    });
 }

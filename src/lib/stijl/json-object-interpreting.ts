@@ -52,6 +52,10 @@ export function field<T>(name: string, interpreter: Interpreter<T>): Interpreter
   return (json: Object) => (json.hasOwnProperty(name) ? interpreter(json[name]) : fail(`'${toString(json)}' heeft geen veld '${name}'`));
 }
 
+export function optional<T>(interpreter: Interpreter<T>): Interpreter<Option<T>> {
+  return firstOf(map<T, Option<T>>(some, interpreter), succeed(none));
+}
+
 export function at<T>(nest: Array<string>, interpreter: Interpreter<T>): Interpreter<T> {
   return array.fold(
     () => interpreter, //
@@ -67,6 +71,10 @@ export function reqField<T>(name: string, interpreter: Interpreter<T>): Interpre
 export function optField<T>(name: string, interpreter: Interpreter<T>): Interpreter<Option<T>> {
   // Kan ook met een fold op field, maar gezien deze methode meer gebruikt wordt en de velden doorgaans undefined zijn, is dit effciënter.
   return (json: Object) => (json.hasOwnProperty(name) ? interpreter(json[name]).map(some) : ok(none));
+}
+
+export function succeed<T>(t: T): Interpreter<T> {
+  return () => ok(t);
 }
 
 function validateArray<T>(jsonArray: Array<T>, interpreter: Interpreter<T>): Validation<Array<T>> {
@@ -109,6 +117,10 @@ export function enu<T extends string>(...values: T[]): Interpreter<T> {
     );
 }
 
+/**
+ * Selecteert de eerste interpreter die een niet-none resultaat oplevert. Indien geen enkele interpreter een niet-none resultaat oplevert,
+ * is het resultaat none. Geen enkele van de interpreters mag een failure geven.
+ */
 export function atMostOneOf<T>(...interpreters: Interpreter<Option<T>>[]): Interpreter<Option<T>> {
   return (json: Object) => {
     const validations: Validation<Array<Option<T>>> = sequence(array.map(i => i(json), interpreters));
@@ -123,6 +135,21 @@ export function atMostOneOf<T>(...interpreters: Interpreter<Option<T>>[]): Inter
           return fail("Er mag maar 1 waarde aanwezig zijn");
       }
     });
+  };
+}
+
+/**
+ * Probeert de interpreters tot er één succesvolle validatie oplevert. Faalt als er zo geen gevonden kan worden.
+ */
+export function firstOf<T>(...interpreters: Interpreter<T>[]): Interpreter<T> {
+  return (json: Object) => {
+    for (const interpreter of interpreters) {
+      const validated = interpreter(json);
+      if (validated.isSuccess()) {
+        return validated;
+      }
+    }
+    return fail("Er moet 1 waarde aanwezig zijn");
   };
 }
 
@@ -337,6 +364,12 @@ export function andMap<A, B>(interpreterA: Interpreter<A>, interpreterFA: Interp
 
 export const ap = <A, B>(interpreterFA: Interpreter<(a: A) => B>) => (interpreterA: Interpreter<A>): Interpreter<B> => (json: Object) =>
   interpreterA(json).chain(a => interpreterFA(json).map(fa => fa(a)));
+
+export const chain = <A, B>(interpreterA: Interpreter<A>, fa: (a: A) => Interpreter<B>): Interpreter<B> => (json: Object) =>
+  interpreterA(json).chain(a => fa(a)(json));
+
+export const injectFirst = <A>(extraJson: Object, interpreterA: Interpreter<A>): Interpreter<A> => (json: Object) =>
+  interpreterA({ ...extraJson, ...json });
 
 export type InterpreterOptionalRecord<A> = { readonly [P in keyof A]: Interpreter<Option<A[P]>> };
 

@@ -129,6 +129,31 @@ describe("De stijl interpreter", () => {
     });
   });
 
+  describe("bij het converteren van een shortcut stijl", () => {
+    describe("Met alleen een shortcutstijl", () => {
+      it("moet een lijnstijl expanderen", () => {
+        const result = definitieToStyle(
+          "json",
+          JSON.stringify({
+            versie: "awv-v0",
+            shortcut: { fullLine: { color: "yellow", width: 5 } },
+            definitie: {}
+          })
+        );
+        expect(result).toEqual(
+          ok(
+            new ol.style.Style({
+              stroke: new ol.style.Stroke({
+                color: "yellow",
+                width: 5
+              })
+            })
+          )
+        );
+      });
+    });
+  });
+
   describe("Bij het converteren van een ongeldige stijl", () => {
     describe("wanneer het format niet ondersteund is", () => {
       it("moet een fout mbt tot het ontbrekende veldje geven", () => {
