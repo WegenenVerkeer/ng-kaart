@@ -8,12 +8,14 @@ import * as olc from "./openlayer-constructors";
 // Openlayer types interpreters
 //
 
+const color: Interpreter<ol.Color | string> = st.str;
+
 export const fill: Interpreter<ol.style.Fill> = st.mapRecord(olc.Fill, {
-  color: st.optField("color", st.str) // ol ondersteunt meer dan enkel een string, maar wij niet
+  color: st.optField("color", color) // ol ondersteunt meer dan enkel een string, maar wij niet
 });
 
 export const stroke: Interpreter<ol.style.Stroke> = st.mapRecord(olc.Stroke, {
-  color: st.optField("color", st.str),
+  color: st.optField("color", color),
   lineCap: st.optField("lineCap", st.str),
   lineJoin: st.optField("lineJoin", st.str),
   lineDash: st.optField("lineDash", st.arr(st.num)),
@@ -63,7 +65,6 @@ export const text: Interpreter<ol.style.Text> = st.mapRecord(olc.Text, {
 const iconOrigin: Interpreter<ol.style.IconOrigin> = st.enu<ol.style.IconOrigin>("bottom-left", "bottom-right", "top-left", "top-right");
 const iconAnchorUnits: Interpreter<ol.style.IconAnchorUnits> = st.enu<ol.style.IconAnchorUnits>("fraction", "pixels");
 const size: Interpreter<ol.Size> = st.arrSize(2, st.num) as Interpreter<[number, number]>;
-const color: Interpreter<ol.Color | string> = st.str;
 
 const icon: Interpreter<ol.style.Icon> = st.mapRecord(olc.Icon, {
   anchor: st.optField("anchor", st.arr(st.num)),

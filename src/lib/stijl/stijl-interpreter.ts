@@ -1,7 +1,7 @@
 import * as ol from "openlayers";
 
 import { Validation, fail, str, field } from "./json-object-interpreting";
-import { jsonAwvV0Style } from "./json-awv0-interpreter";
+import { jsonAwvV0Style } from "./json-awv-v0-interpreter";
 
 // Door de beschrijvingsstijl in de kaartcomponent te steken, kunnen ook andere applicaties er gebruik van maken.
 // Nog beter is om (op termijn) dit in een afzonderlijke module te steken.

@@ -1,7 +1,7 @@
 import * as ol from "openlayers";
 
-import { jsonAwvV0Style, circle } from "./json-awv0-interpreter";
-import { ok, fail, Validation } from "./json-object-interpreting";
+import { jsonAwvV0Style } from "./json-awv-v0-interpreter";
+import { ok } from "./json-object-interpreting";
 
 describe("De json AWV V0 interpreter", () => {
   // Het probleem met onderstaande tester is dat er een andere custom equality tester geregistreerd is (allicht door jasmine-jquery)
