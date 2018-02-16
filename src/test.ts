@@ -22,7 +22,7 @@ __karma__.loaded = () => {};
 getTestBed().initTestEnvironment(BrowserDynamicTestingModule, platformBrowserDynamicTesting());
 
 // Zoek alle testen op
-const context = require.context("./", true, /*\.spec\.ts$/);
+const context = require.context("./", true, /\.spec\.ts$/);
 
 // Laad de modules in
 context.keys().map(context);
