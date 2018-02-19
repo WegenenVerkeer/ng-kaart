@@ -4,7 +4,10 @@ import * as ol from "openlayers";
 export const KAART_CFG = new InjectionToken<KaartConfig>("kaartcfg");
 
 export interface KaartConfig {
-  readonly wdb: {
+  readonly tilecache: {
+    readonly urls: string[];
+  };
+  readonly geoserver: {
     readonly urls: string[];
   };
   readonly orthofotomozaiek: {

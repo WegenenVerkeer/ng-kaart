@@ -14,7 +14,8 @@ import { KaartFeaturesLaagComponent } from "./kaart-toon-features.component";
 import { KaartKnopVolledigSchermComponent } from "./kaart-knop-volledig-scherm.component";
 import { KaartSchaalComponent } from "./kaart-schaal.component";
 import { KaartConfig, KAART_CFG } from "./kaart.config";
-import { KaartWdbLaagComponent } from "./kaart-wdb-laag.component";
+import { KaartTilecacheLaagComponent } from "./kaart-tilecache-laag.component";
+import { KaartGeoserverLaagComponent } from "./kaart-geoserver-laag.component";
 import { KaartOrthoLaagComponent } from "./kaart-ortho-laag.component";
 import { CoordinatenService } from "./coordinaten.service";
 import { KaartStandaardInteractiesComponent } from "./kaart-standaard-interacties.component";
@@ -37,7 +38,8 @@ const components: any[] = [
   KaartFeaturesLaagComponent,
   KaartVectorLaagComponent,
   KaartNosqlfsLaagComponent,
-  KaartWdbLaagComponent,
+  KaartTilecacheLaagComponent,
+  KaartGeoserverLaagComponent,
   KaartWmsLaagComponent,
   KaartBlancoLaagComponent,
   KaartAchtergrondSelectorComponent,
@@ -52,7 +54,14 @@ const components: any[] = [
 })
 export class KaartModule {
   static defaultConfig: KaartConfig = {
-    wdb: {
+    geoserver: {
+      urls: [
+        "https://wms1.apps.mow.vlaanderen.be/geoserver/service/wms",
+        "https://wms2.apps.mow.vlaanderen.be/geoserver/service/wms",
+        "https://wms3.apps.mow.vlaanderen.be/geoserver/service/wms"
+      ]
+    },
+    tilecache: {
       urls: [
         "https://wms1.apps.mow.vlaanderen.be/geowebcache/service/wms",
         "https://wms2.apps.mow.vlaanderen.be/geowebcache/service/wms",
@@ -97,7 +106,8 @@ export * from "./kaart-teken-polygoon-laag.component";
 export * from "./kaart-toon-features.component";
 export * from "./kaart-vector-laag.component";
 export * from "./kaart-nosqlfs-laag.component";
-export * from "./kaart-wdb-laag.component";
+export * from "./kaart-geoserver-laag.component";
+export * from "./kaart-tilecache-laag.component";
 export * from "./kaart-wms-laag.component";
 export * from "./kaart-blanco-laag.component";
 export * from "./kaart.component";
