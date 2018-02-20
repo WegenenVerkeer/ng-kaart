@@ -278,24 +278,52 @@ function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {
   switch (laag.type) {
     case ke.WmsType: {
       const l = laag as ke.WmsLaag;
-      return some(
-        new ol.layer.Tile(<olx.layer.TileOptions>{
-          title: l.titel,
-          visible: true,
-          extent: l.extent,
-          source: new ol.source.TileWMS({
-            projection: undefined,
-            urls: l.urls.toArray(),
-            params: {
-              LAYERS: l.naam,
-              TILED: true,
-              SRS: kaart.config.srs,
-              version: l.versie
-            }
+
+      if (l.singleTile) {
+        const source = new ol.source.ImageWMS({
+          url: l.urls.first(),
+          params: {
+            layers: l.naam,
+            srs: kaart.config.srs,
+            version: l.versie,
+            format: l.format ? l.format : "image/png"
+          },
+          projection: kaart.config.srs
+        });
+
+        return some(
+          new ol.layer.Image({
+            source: source
           })
-        })
-      );
+        );
+      } else {
+        const source = new ol.source.TileWMS({
+          projection: undefined,
+          urls: l.urls.toArray(),
+          tileGrid: new ol.tilegrid.TileGrid({
+            resolutions: kaart.config.defaults.resolutions,
+            tileSize: l.tileSize ? l.tileSize : 256
+          }),
+          params: {
+            layers: l.naam,
+            tiled: true,
+            srs: kaart.config.srs,
+            version: l.versie,
+            format: l.format ? l.format : "image/png"
+          }
+        });
+
+        return some(
+          new ol.layer.Tile(<olx.layer.TileOptions>{
+            title: l.titel,
+            visible: true,
+            extent: l.extent,
+            source: source
+          })
+        );
+      }
     }
+
     case ke.VectorType: {
       const l = laag as ke.VectorLaag;
       return some(
@@ -303,9 +331,8 @@ function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {
           source: l.source,
           visible: true,
           style: l.style,
-          //   resolutions: [256.0, 128.0, 64.0, 32.0, 16.0, 8.0, 4.0, 2.0, 1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125],
-          minResolution: 0.03125,
-          maxResolution: 32.0
+          minResolution: kaart.config.defaults.resolutions[l.minZoom],
+          maxResolution: kaart.config.defaults.resolutions[l.maxZoom]
         })
       );
     }

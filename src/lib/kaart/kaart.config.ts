@@ -20,5 +20,6 @@ export interface KaartConfig {
     zoom: number;
     middelpunt: ol.Coordinate;
     grootte: [number | undefined, number | undefined];
+    resolutions: [number];
   };
 }

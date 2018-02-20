@@ -16,6 +16,9 @@ export interface WmsLaag {
   readonly urls: List<string>;
   readonly extent?: ol.Extent;
   readonly versie?: string;
+  readonly singleTile?: boolean;
+  readonly tileSize?: number;
+  readonly format?: string;
 }
 
 export interface VectorLaag {
@@ -24,8 +27,8 @@ export interface VectorLaag {
   readonly source: ol.source.Vector;
   readonly style: ol.style.Style;
   readonly selecteerbaar: boolean;
-  readonly minResolution: number;
-  readonly maxResolution: number;
+  readonly minZoom: number;
+  readonly maxZoom: number;
 }
 
 export interface BlancoLaag {
