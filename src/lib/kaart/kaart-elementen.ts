@@ -1,22 +1,23 @@
 import { List } from "immutable";
 import * as ol from "openlayers";
 
-export const WmsType = "LaagType.WMS";
-export type WmsType = "LaagType.WMS";
+export const SingleTileWmsType = "LaagType.SingleTileWms";
+export type SingleTileWmsType = "LaagType.SingleTileWms";
+export const TiledWmsType = "LaagType.TiledWms";
+export type TiledWmsType = "LaagType.TiledWms";
 export const VectorType = "LaagType.Vector";
 export type VectorType = "LaagType.Vector";
 export const BlancoType = "LaagType.Blanco";
 export type BlancoType = "LaagType.Blanco";
-export type LaagType = WmsType | VectorType | BlancoType;
+export type LaagType = SingleTileWmsType | TiledWmsType | VectorType | BlancoType;
 
 export interface WmsLaag {
-  readonly type: WmsType;
+  readonly type: SingleTileWmsType | TiledWmsType;
   readonly titel: string;
   readonly naam: string;
   readonly urls: List<string>;
   readonly extent?: ol.Extent;
   readonly versie?: string;
-  readonly singleTile?: boolean;
   readonly tileSize?: number;
   readonly format?: string;
 }
@@ -39,7 +40,7 @@ export interface BlancoLaag {
 export type Laag = WmsLaag | VectorLaag | BlancoLaag;
 
 export function isWmsLaag(laag: Laag): boolean {
-  return laag.type === WmsType;
+  return laag.type === SingleTileWmsType || laag.type === TiledWmsType;
 }
 
 export function isBlancoLaag(laag: Laag): boolean {

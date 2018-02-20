@@ -139,7 +139,7 @@ const addSchaal: ModelUpdater = (kaart: KaartWithInfo) =>
       kaart.map.addControl(schaal);
       return updateModel({ schaal: some(schaal) })(kaart);
     },
-    _ => keepModel(kaart)
+    () => keepModel(kaart)
   );
 
 const removeSchaal: ModelUpdater = (kaart: KaartWithInfo) =>
@@ -158,7 +158,7 @@ const addFullScreen: ModelUpdater = (kaart: KaartWithInfo) =>
       kaart.map.addControl(fullScreen);
       return { ...kaart, fullScreen: some(fullScreen) };
     },
-    _ => keepModel(kaart)
+    () => keepModel(kaart)
   );
 
 const removeFullScreen: ModelUpdater = (kaart: KaartWithInfo) =>
@@ -276,63 +276,70 @@ function asVectorLayer(layer: ol.layer.Base): Option<ol.layer.Vector> {
 
 function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {
   switch (laag.type) {
-    case ke.WmsType: {
+    case ke.TiledWmsType: {
       const l = laag as ke.WmsLaag;
+      const source = new ol.source.TileWMS({
+        projection: undefined,
+        urls: l.urls.toArray(),
+        tileGrid: new ol.tilegrid.TileGrid({
+          resolutions: kaart.config.defaults.resolutions,
+          tileSize: l.tileSize ? l.tileSize : 256
+        }),
+        params: {
+          layers: l.naam,
+          tiled: true,
+          srs: kaart.config.srs,
+          version: l.versie,
+          format: l.format ? l.format : "image/png"
+        }
+      });
 
-      if (l.singleTile) {
-        const source = new ol.source.ImageWMS({
-          url: l.urls.first(),
-          params: {
-            layers: l.naam,
-            srs: kaart.config.srs,
-            version: l.versie,
-            format: l.format ? l.format : "image/png"
-          },
-          projection: kaart.config.srs
-        });
+      return some(
+        new ol.layer.Tile(<olx.layer.TileOptions>{
+          title: l.titel,
+          visible: true,
+          extent: l.extent,
+          source: source
+        })
+      );
+    }
 
-        return some(
-          new ol.layer.Image({
-            source: source
-          })
-        );
-      } else {
-        const source = new ol.source.TileWMS({
-          projection: undefined,
-          urls: l.urls.toArray(),
-          tileGrid: new ol.tilegrid.TileGrid({
-            resolutions: kaart.config.defaults.resolutions,
-            tileSize: l.tileSize ? l.tileSize : 256
-          }),
-          params: {
-            layers: l.naam,
-            tiled: true,
-            srs: kaart.config.srs,
-            version: l.versie,
-            format: l.format ? l.format : "image/png"
-          }
-        });
+    case ke.SingleTileWmsType: {
+      const l = laag as ke.WmsLaag;
+      const source = new ol.source.ImageWMS({
+        url: l.urls.first(),
+        params: {
+          layers: l.naam,
+          srs: kaart.config.srs,
+          version: l.versie,
+          format: l.format ? l.format : "image/png"
+        },
+        projection: kaart.config.srs
+      });
 
-        return some(
-          new ol.layer.Tile(<olx.layer.TileOptions>{
-            title: l.titel,
-            visible: true,
-            extent: l.extent,
-            source: source
-          })
-        );
-      }
+      return some(
+        new ol.layer.Image({
+          source: source
+        })
+      );
     }
 
     case ke.VectorType: {
       const l = laag as ke.VectorLaag;
+
+      if (l.minZoom < 0 || l.minZoom >= kaart.config.defaults.resolutions.length) {
+        kaartLogger.error(`Ongeldige minZoom: ${l.minZoom}, moet tussen 0 en ${kaart.config.defaults.resolutions.length - 1} liggen`);
+      }
+      if (l.maxZoom < 0 || l.maxZoom >= kaart.config.defaults.resolutions.length) {
+        kaartLogger.error(`Ongeldige maxZoom: ${l.maxZoom}, moet tussen 0 en ${kaart.config.defaults.resolutions.length - 1} liggen`);
+      }
       return some(
         new ol.layer.Vector({
           source: l.source,
           visible: true,
           style: l.style,
-          minResolution: kaart.config.defaults.resolutions[l.minZoom],
-          maxResolution: kaart.config.defaults.resolutions[l.maxZoom]
+          minResolution: kaart.config.defaults.resolutions[Math.min(Math.max(l.minZoom, 0), kaart.config.defaults.resolutions.length - 1)],
+          maxResolution: kaart.config.defaults.resolutions[Math.min(Math.max(l.maxZoom, 0), kaart.config.defaults.resolutions.length - 1)]
         })
       );
     }

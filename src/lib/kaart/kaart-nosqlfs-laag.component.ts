@@ -28,7 +28,7 @@ export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
   @Input() minZoom = 7;
   @Input() maxZoom = 13;
   @Input() view = "default";
-  @Input() filter;
+  @Input() filter: string;
 
   constructor(kaart: KaartClassicComponent) {
     super(kaart);

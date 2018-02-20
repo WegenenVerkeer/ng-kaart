@@ -18,7 +18,7 @@ export class KaartTilecacheLaagComponent extends KaartWmsLaagComponent {
 
   createLayer(): ke.WmsLaag {
     return {
-      type: ke.WmsType,
+      type: ke.TiledWmsType,
       titel: this.titel,
       naam: this.laagNaam,
       extent: this.extent,
