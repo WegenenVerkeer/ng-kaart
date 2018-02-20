@@ -2,6 +2,7 @@ import { List } from "immutable";
 import { none, Option, some, fromNullable } from "fp-ts/lib/Option";
 
 import * as ol from "openlayers";
+import * as array from "fp-ts/lib/Array";
 
 import { KaartConfig } from "./kaart.config";
 import * as ke from "./kaart-elementen";
@@ -281,16 +282,15 @@ function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {
       const source = new ol.source.TileWMS({
         projection: undefined,
         urls: l.urls.toArray(),
-        tileGrid: new ol.tilegrid.TileGrid({
-          resolutions: kaart.config.defaults.resolutions,
-          tileSize: l.tileSize ? l.tileSize : 256
+        tileGrid: ol.tilegrid.createXYZ({
+          tileSize: l.tileSize || 256
         }),
         params: {
-          layers: l.naam,
-          tiled: true,
-          srs: kaart.config.srs,
-          version: l.versie,
-          format: l.format ? l.format : "image/png"
+          LAYERS: l.naam,
+          TILED: true,
+          SRS: kaart.config.srs,
+          VERSION: l.versie || "1.3.0",
+          FORMAT: l.format || "image/png"
         }
       });
 
@@ -309,10 +309,10 @@ function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {
       const source = new ol.source.ImageWMS({
         url: l.urls.first(),
         params: {
-          layers: l.naam,
-          srs: kaart.config.srs,
-          version: l.versie,
-          format: l.format ? l.format : "image/png"
+          LAYERS: l.naam,
+          SRS: kaart.config.srs,
+          VERSION: l.versie || "1.3.0",
+          FORMAT: l.format || "image/png"
         },
         projection: kaart.config.srs
       });
@@ -327,10 +327,10 @@ function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {
     case ke.VectorType: {
       const l = laag as ke.VectorLaag;
 
-      if (l.minZoom < 0 || l.minZoom >= kaart.config.defaults.resolutions.length) {
+      if (array.isOutOfBound(l.minZoom)(kaart.config.defaults.resolutions)) {
         kaartLogger.error(`Ongeldige minZoom: ${l.minZoom}, moet tussen 0 en ${kaart.config.defaults.resolutions.length - 1} liggen`);
       }
-      if (l.maxZoom < 0 || l.maxZoom >= kaart.config.defaults.resolutions.length) {
+      if (array.isOutOfBound(l.maxZoom)(kaart.config.defaults.resolutions)) {
         kaartLogger.error(`Ongeldige maxZoom: ${l.maxZoom}, moet tussen 0 en ${kaart.config.defaults.resolutions.length - 1} liggen`);
       }
       return some(
@@ -338,8 +338,18 @@ function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {
           source: l.source,
           visible: true,
           style: l.style,
-          minResolution: kaart.config.defaults.resolutions[Math.min(Math.max(l.minZoom, 0), kaart.config.defaults.resolutions.length - 1)],
-          maxResolution: kaart.config.defaults.resolutions[Math.min(Math.max(l.maxZoom, 0), kaart.config.defaults.resolutions.length - 1)]
+          minResolution:
+            kaart.config.defaults.resolutions[
+              array
+                .index(l.minZoom)(kaart.config.defaults.resolutions)
+                .getOrElseValue(0)
+            ],
+          maxResolution:
+            kaart.config.defaults.resolutions[
+              array
+                .index(l.maxZoom)(kaart.config.defaults.resolutions)
+                .getOrElseValue(kaart.config.defaults.resolutions.length - 1)
+            ]
         })
       );
     }
