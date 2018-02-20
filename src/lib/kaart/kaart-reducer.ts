@@ -279,47 +279,46 @@ function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {
   switch (laag.type) {
     case ke.TiledWmsType: {
       const l = laag as ke.WmsLaag;
-      const source = new ol.source.TileWMS({
-        projection: undefined,
-        urls: l.urls.toArray(),
-        tileGrid: ol.tilegrid.createXYZ({
-          tileSize: l.tileSize || 256
-        }),
-        params: {
-          LAYERS: l.naam,
-          TILED: true,
-          SRS: kaart.config.srs,
-          VERSION: l.versie || "1.3.0",
-          FORMAT: l.format || "image/png"
-        }
-      });
 
       return some(
         new ol.layer.Tile(<olx.layer.TileOptions>{
           title: l.titel,
           visible: true,
           extent: l.extent,
-          source: source
+          source: new ol.source.TileWMS({
+            projection: undefined,
+            urls: l.urls.toArray(),
+            tileGrid: ol.tilegrid.createXYZ({
+              extent: kaart.config.defaults.extent,
+              tileSize: l.tileSize || 256
+            }),
+            params: {
+              LAYERS: l.naam,
+              TILED: true,
+              SRS: kaart.config.srs,
+              VERSION: l.versie || "1.3.0",
+              FORMAT: l.format || "image/png"
+            }
+          })
         })
       );
     }
 
     case ke.SingleTileWmsType: {
       const l = laag as ke.WmsLaag;
-      const source = new ol.source.ImageWMS({
-        url: l.urls.first(),
-        params: {
-          LAYERS: l.naam,
-          SRS: kaart.config.srs,
-          VERSION: l.versie || "1.3.0",
-          FORMAT: l.format || "image/png"
-        },
-        projection: kaart.config.srs
-      });
 
       return some(
         new ol.layer.Image({
-          source: source
+          source: new ol.source.ImageWMS({
+            url: l.urls.first(),
+            params: {
+              LAYERS: l.naam,
+              SRS: kaart.config.srs,
+              VERSION: l.versie || "1.3.0",
+              FORMAT: l.format || "image/png"
+            },
+            projection: kaart.config.srs
+          })
         })
       );
     }

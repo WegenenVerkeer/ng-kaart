@@ -21,5 +21,6 @@ export interface KaartConfig {
     middelpunt: ol.Coordinate;
     grootte: [number | undefined, number | undefined];
     resolutions: [number];
+    extent: ol.Extent;
   };
 }
