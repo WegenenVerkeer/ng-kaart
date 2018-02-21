@@ -1,11 +1,8 @@
-import { Option, none, some } from "fp-ts/lib/Option";
+import { Option, none, some, fromNullable } from "fp-ts/lib/Option";
 import { monoidString } from "fp-ts/lib/Monoid";
 import * as array from "fp-ts/lib/Array";
 import * as validation from "fp-ts/lib/Validation";
 import * as traversable from "fp-ts/lib/Traversable";
-
-// De error zou enkel voor ontwikkelaars mogen zijn. Als ook gebruikers vrij definities mogen opladen,
-// dan zou een echte Validation beter zijn.
 
 export type Error = string;
 export type Validation<T> = validation.Validation<string, T>;
@@ -15,16 +12,12 @@ export type Interpreter<T> = (obj: Object) => Validation<T>;
 // Basis functies
 //
 
-const failure = [
-  validation.success<string, number>(1),
-  validation.failure(monoidString)("[fail 1]"),
-  validation.failure(monoidString)("[fail 2]")
-];
-
+// TODO een list ipv monoidString
 export const fail = <T>(error: Error) => validation.failure(monoidString)<T>(error);
 export const ok = <T>(style: T) => validation.success<Error, T>(style);
 
 export const str: Interpreter<string> = (json: Object) => {
+  // noinspection SuspiciousTypeOfGuard
   if (typeof json === "string") {
     return ok(json as string);
   } else {
@@ -33,6 +26,7 @@ export const str: Interpreter<string> = (json: Object) => {
 };
 
 export const num: Interpreter<number> = (json: Object) => {
+  // noinspection SuspiciousTypeOfGuard
   if (typeof json === "number") {
     return ok(json as number);
   } else {
@@ -41,6 +35,7 @@ export const num: Interpreter<number> = (json: Object) => {
 };
 
 export const bool: Interpreter<boolean> = (json: Object) => {
+  // noinspection SuspiciousTypeOfGuard
   if (typeof json === "boolean") {
     return ok(json as boolean);
   } else {
@@ -355,7 +350,7 @@ export function map11<A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, Value>(
 }
 
 export function pure<T>(t: T): Interpreter<T> {
-  return (_: Object) => ok(t);
+  return () => ok(t);
 }
 
 export function andMap<A, B>(interpreterA: Interpreter<A>, interpreterFA: Interpreter<(a: A) => B>): Interpreter<B> {
@@ -376,17 +371,18 @@ export type InterpreterOptionalRecord<A> = { readonly [P in keyof A]: Interprete
 function interpretRecord<A>(record: InterpreterOptionalRecord<A>): Interpreter<A> {
   return (json: Object) => {
     const result = {} as Partial<A>; // Omdat we overal undefined willen kunnen zetten
-    const validations = new Array<Validation<any>>();
+    const validations = new Array<Validation<void>>();
     // tslint:disable-next-line:forin
     for (const k in record) {
+      // noinspection JSUnfilteredForInLoop
       const validationOutcome: Validation<Option<A[keyof A]>> = record[k](json);
       // zet alle resultaten waarvoor de validation ok is
       validationOutcome.map(maybeValue => (result[k] = maybeValue.toUndefined())); // forEach
       // combineer alle fails, map de ok's weg (probleem is dat die allemaal een ander type hebben)
-      validations.push(validationOutcome.map(_ => {}));
+      validations.push(validationOutcome.map(() => {}));
     }
     // De gesequencte validation is ok als alle deelvalidations ok zijn
-    return sequence(validations).map(_ => result as A); // we hebben het echte resultaat al in de for loop gezet
+    return sequence(validations).map(() => result as A); // we hebben het echte resultaat al in de for loop gezet
   };
 }
 
@@ -396,6 +392,14 @@ function sequence<T>(validations: Array<Validation<T>>) {
 
 export function mapRecord<A, B>(f: (a: A) => B, record: InterpreterOptionalRecord<A>): Interpreter<B> {
   return map(f, interpretRecord(record));
+}
+
+export function byTypeDiscriminator<T>(discriminatorField: string, interpretersByKind: { [k: string]: Interpreter<T> }): Interpreter<T> {
+  return (json: Object) => {
+    return chain(field(discriminatorField, str), (kind: string) =>
+      fromNullable(interpretersByKind[kind]).getOrElseValue(() => fail<T>(`Het typediscriminatieveld bevat een onbekend type '${kind}'`))
+    )(json);
+  };
 }
 
 export function toString(json: Object): string {

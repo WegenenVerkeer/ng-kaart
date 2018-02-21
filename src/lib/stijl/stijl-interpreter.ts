@@ -1,6 +1,6 @@
 import * as ol from "openlayers";
 
-import { Validation, Interpreter } from "./json-object-interpreting";
+import { Validation } from "./json-object-interpreting";
 import { jsonAwvV0Style, shortcutStyles } from "./json-awv-v0-interpreter";
 
 import * as oi from "./json-object-interpreting";
@@ -10,26 +10,26 @@ import * as oi from "./json-object-interpreting";
 // Best wachten we tot de interface min of meer stabiel is.
 
 // Vanaf hier zou het iets stabieler moeten zijn
-export type StijldefinitieTransformation = Validation<ol.style.Style>;
+export type ValidatedOlStyle = Validation<ol.style.Style>;
 
-export function definitieToStyle(formaat: string, definitieText: string): StijldefinitieTransformation {
-  if (formaat === "json") {
+export function definitieToStyle(encoding: string, definitieText: string): ValidatedOlStyle {
+  if (encoding === "json") {
     return jsonDefinitieStringToStyle(definitieText);
   } else {
-    return oi.fail(`Formaat '${formaat}' wordt niet ondersteund`);
+    return oi.fail(`Encoding '${encoding}' wordt niet ondersteund`);
   }
 }
 
-function jsonDefinitieStringToStyle(definitieText: string): StijldefinitieTransformation {
+function jsonDefinitieStringToStyle(definitieText: string): ValidatedOlStyle {
   try {
     const object = JSON.parse(definitieText);
     return interpretJson(object);
   } catch (error) {
-    return oi.fail("De gegeven definitie was niet in het JSON formaat");
+    return oi.fail("De gegeven definitie was geen geldige JSON");
   }
 }
 
-function interpretJson(definitie: Object): Validation<ol.style.Style> {
+export function interpretJson(definitie: Object): Validation<ol.style.Style> {
   return oi
     .field("versie", oi.str)(definitie)
     .chain(versie => {
@@ -40,7 +40,7 @@ function interpretJson(definitie: Object): Validation<ol.style.Style> {
             (shortcutJson: Object) => oi.field("definitie", oi.injectFirst(shortcutJson, jsonAwvV0Style))
           )(definitie);
         default:
-          return oi.fail(`Json versie '${versie}' wordt niet ondersteund`);
+          return oi.fail(`Versie '${versie}' wordt niet ondersteund`);
       }
     });
 }
