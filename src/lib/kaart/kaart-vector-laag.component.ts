@@ -5,10 +5,23 @@ import * as ke from "./kaart-elementen";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartLaagComponent } from "./kaart-laag.component";
 
-const stdStijl: ol.style.Style = new ol.style.Style({
+const stdStijl = new ol.style.Style({
+  fill: new ol.style.Fill({
+    color: "gray"
+  }),
   stroke: new ol.style.Stroke({
-    color: "rgba(0, 0, 255, 1.0)",
-    width: 2
+    color: "darkslateblue ",
+    width: 4
+  }),
+  image: new ol.style.Circle({
+    fill: new ol.style.Fill({
+      color: "maroon"
+    }),
+    stroke: new ol.style.Stroke({
+      color: "gray",
+      width: 1.25
+    }),
+    radius: 5
   })
 });
 
