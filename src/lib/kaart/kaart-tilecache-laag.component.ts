@@ -5,6 +5,7 @@ import * as ke from "./kaart-elementen";
 import { KAART_CFG, KaartConfig } from "./kaart.config";
 import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
+import { fromNullable } from "fp-ts/lib/Option";
 
 @Component({
   selector: "awv-kaart-tilecache-laag",
@@ -21,9 +22,11 @@ export class KaartTilecacheLaagComponent extends KaartWmsLaagComponent {
       type: ke.TiledWmsType,
       titel: this.titel,
       naam: this.laagNaam,
-      extent: this.extent,
       urls: List(this.config.tilecache.urls),
-      versie: this.versie
+      extent: fromNullable(this.extent),
+      versie: fromNullable(this.versie),
+      tileSize: fromNullable(this.tileSize),
+      format: fromNullable(this.format)
     };
   }
 }

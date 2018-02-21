@@ -284,20 +284,20 @@ function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {
         new ol.layer.Tile(<olx.layer.TileOptions>{
           title: l.titel,
           visible: true,
-          extent: l.extent,
+          extent: l.extent.getOrElseValue(kaart.config.defaults.extent),
           source: new ol.source.TileWMS({
             projection: undefined,
             urls: l.urls.toArray(),
             tileGrid: ol.tilegrid.createXYZ({
               extent: kaart.config.defaults.extent,
-              tileSize: l.tileSize || 256
+              tileSize: l.tileSize.getOrElseValue(256)
             }),
             params: {
               LAYERS: l.naam,
               TILED: true,
               SRS: kaart.config.srs,
-              VERSION: l.versie || "1.3.0",
-              FORMAT: l.format || "image/png"
+              VERSION: l.versie.getOrElseValue("1.3.0"),
+              FORMAT: l.format.getOrElseValue("image/png")
             }
           })
         })
@@ -314,8 +314,8 @@ function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {
             params: {
               LAYERS: l.naam,
               SRS: kaart.config.srs,
-              VERSION: l.versie || "1.3.0",
-              FORMAT: l.format || "image/png"
+              VERSION: l.versie.getOrElseValue("1.3.0"),
+              FORMAT: l.format.getOrElseValue("image/png")
             },
             projection: kaart.config.srs
           })

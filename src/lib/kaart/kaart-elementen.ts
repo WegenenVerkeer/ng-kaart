@@ -1,5 +1,6 @@
 import { List } from "immutable";
 import * as ol from "openlayers";
+import { Option } from "fp-ts/lib/Option";
 
 export const SingleTileWmsType = "LaagType.SingleTileWms";
 export type SingleTileWmsType = "LaagType.SingleTileWms";
@@ -16,10 +17,10 @@ export interface WmsLaag {
   readonly titel: string;
   readonly naam: string;
   readonly urls: List<string>;
-  readonly extent?: ol.Extent;
-  readonly versie?: string;
-  readonly tileSize?: number;
-  readonly format?: string;
+  readonly extent: Option<ol.Extent>;
+  readonly versie: Option<string>;
+  readonly tileSize: Option<number>;
+  readonly format: Option<string>;
 }
 
 export interface VectorLaag {

@@ -5,6 +5,7 @@ import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartConfig, KAART_CFG } from "./kaart.config";
 import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
 import { WmsLaag, TiledWmsType } from "./kaart-elementen";
+import { fromNullable } from "fp-ts/lib/Option";
 
 @Component({
   selector: "awv-kaart-ortho-laag",
@@ -21,9 +22,11 @@ export class KaartOrthoLaagComponent extends KaartWmsLaagComponent {
       type: TiledWmsType,
       titel: this.titel,
       naam: this.config.orthofotomozaiek.naam,
-      extent: this.extent,
       urls: List(this.config.orthofotomozaiek.urls),
-      versie: this.versie
+      extent: fromNullable(this.extent),
+      versie: fromNullable(this.versie),
+      tileSize: fromNullable(this.tileSize),
+      format: fromNullable(this.format)
     };
   }
 }

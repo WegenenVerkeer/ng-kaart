@@ -6,6 +6,7 @@ import * as ol from "openlayers";
 import { KaartLaagComponent } from "./kaart-laag.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { WmsLaag, TiledWmsType } from "./kaart-elementen";
+import { fromNullable } from "fp-ts/lib/Option";
 
 @Component({
   selector: "awv-kaart-wms-laag",
@@ -31,11 +32,11 @@ export class KaartWmsLaagComponent extends KaartLaagComponent {
       type: TiledWmsType,
       titel: this.titel,
       naam: this.laagNaam,
-      extent: this.extent,
       urls: List(this.urls),
-      versie: this.versie,
-      format: this.format,
-      tileSize: this.tileSize
+      extent: fromNullable(this.extent),
+      versie: fromNullable(this.versie),
+      tileSize: fromNullable(this.tileSize),
+      format: fromNullable(this.format)
     };
   }
 }
