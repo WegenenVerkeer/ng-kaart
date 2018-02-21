@@ -14,7 +14,7 @@
 <div>
   <button (click)="maakZichtbaar('kleurdistricten', !isZichtbaar('kleurdistricten'))">{{isZichtbaar('kleurdistricten')?'Verberg':'Toon'}}</button>
   <awv-kaart-classic *ngIf="isZichtbaar('kleurdistricten')" [naam]="'kleurdistricten'">
-    <awv-kaart-wdb-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-wdb-laag>
+    <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
     <awv-kaart-vector-laag [titel]="'Districten'" [source]="districtSource" [style]="districtStyle"></awv-kaart-vector-laag>
   </awv-kaart-classic>
 </div>
@@ -24,7 +24,7 @@
 <div>
     <button (click)="maakZichtbaar('kleursimpel', !isZichtbaar('kleursimpel'))">{{isZichtbaar('kleursimpel')?'Verberg':'Toon'}}</button>
     <awv-kaart-classic *ngIf="isZichtbaar('kleursimpel')" [naam]="'kleursimpel'">
-      <awv-kaart-wdb-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-wdb-laag>
+      <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
   </awv-kaart-classic>
 </div>
 
@@ -33,7 +33,7 @@
   <button (click)="maakZichtbaar('ingezoomd', !isZichtbaar('ingezoomd'))">{{isZichtbaar('ingezoomd')?'Verberg':'Toon'}}</button>
   <awv-kaart-classic *ngIf="isZichtbaar('ingezoomd')" [breedte]="600" [hoogte]="600" [zoom]="6" [middelpunt]="installatie">
     <awv-kaart-features-laag [features]="installaties" [titel]="'features'"></awv-kaart-features-laag>
-    <awv-kaart-wdb-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-wdb-laag>
+    <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
     <!--[selecteerbaar]="true"
         (featureGeselecteerd)="installatieGeselecteed($event)"></awv-kaart-toon-features>-->
     <awv-kaart-schaal></awv-kaart-schaal>
@@ -49,7 +49,7 @@
 <h3>Ingezoomd dmv extent + schaal</h3>
 <div>
   <awv-kaart-classic [extent]="installatieExtent">
-    <awv-kaart-wdb-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-wdb-laag>
+    <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-wdb-laag>
     <awv-kaart-schaal></awv-kaart-schaal>
   </awv-kaart-classic>
 </div>
@@ -60,7 +60,7 @@
   <p><label>Lengtegraad: </label><input [(ngModel)]="lat" type="number"/></p>
   <p><label>Breedtegraad: </label><input [(ngModel)]="long" type="number"/></p>
   <awv-kaart-classic [zoom]="7" [middelpunt]="coordinatenService.transformWgs84(lat, long)">
-    <awv-kaart-wdb-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-wdb-laag>
+    <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-wdb-laag>
     <awv-kaart-schaal></awv-kaart-schaal>
   </awv-kaart-classic>
 </div>
@@ -91,8 +91,9 @@
 <div>
   <button (click)="maakZichtbaar('achtergronden', !isZichtbaar('achtergronden'))">{{isZichtbaar('achtergronden')?'Verberg':'Toon'}}</button>
   <awv-kaart-classic *ngIf="isZichtbaar('achtergronden')" [naam]="'achtergronden'">
-    <awv-kaart-wdb-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-wdb-laag>
-    <awv-kaart-wdb-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-wdb-laag>
+    <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+    <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
+    <awv-kaart-geoserver-laag [titel]="'Referentiepunten (WDB)'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'"></awv-kaart-geoserver-laag>
     <awv-kaart-blanco-laag [titel]="'Leeg'"></awv-kaart-blanco-laag>
     <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
     <awv-kaart-knop-achtergrondlaag-kiezer [titels]="['Dienstkaart grijs', 'Dienstkaart kleur']"></awv-kaart-knop-achtergrondlaag-kiezer>
@@ -103,9 +104,9 @@
 <div>
   <button (click)="maakZichtbaar('straatkolken', !isZichtbaar('straatkolken'))">{{isZichtbaar('straatkolken')?'Verberg':'Toon'}}</button>
   <awv-kaart-classic *ngIf="isZichtbaar('straatkolken')" [naam]="'achtergronden'">
-    <awv-kaart-wdb-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-wdb-laag>
+    <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
     <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
-    <awv-kaart-nosqlfs-laag [titel]="'Straatkolken'" [url]="'http://apigateway/geolatte-nosqlfs'" [database]="'featureserver'" [collection]="'straatkolken'" [style]="kolkStyle" minResolution="0.03125" maxResolution="4.0"></awv-kaart-nosqlfs-laag>
+    <awv-kaart-nosqlfs-laag [titel]="'Straatkolken'" [url]="'http://apigateway/geolatte-nosqlfs'" [database]="'featureserver'" [collection]="'straatkolken'" [style]="kolkStyle" [maxZoom]=6 ></awv-kaart-nosqlfs-laag>
   </awv-kaart-classic>
 </div>
 
@@ -115,12 +116,7 @@
 <div>
   <input [(ngModel)]="locatieQuery" type="text"/>
   <button (click)="zoekLocaties(locatieQuery)">Zoek</button>
-  <p><strong>Opgelet!</strong> Dit voert een CORS request uit via een SSH tunnel:</p>
   <ul>
-    <li>
-      <p>Leg een SSH tunnel naar de apigateway van dev:</p>
-      <pre>ssh -L 5100:apigateway.dev.awv.internal:80 management.apps.mow.vlaanderen.be</pre>
-    </li>
     <li>
       <p>Zet chrome open zonder web security om dit te testen.</p>
       <p>macos:</p>
@@ -130,11 +126,11 @@
     </li>
   </ul>
   <awv-kaart>
-    <awv-kaart-wdb-laag [titel]="'Dienstkaart kleur'" [laag]="'dienstkaart-kleur'" [type]="'base'"></awv-kaart-wdb-laag>
-    <awv-kaart-wdb-laag [titel]="'Dienstkaart grijs'" [laag]="'dienstkaart-grijs'" [type]="'base'" [zichtbaar]="false"></awv-kaart-wdb-laag>
+    <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'" [type]="'base'"></awv-kaart-tilecache-laag>
+    <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'" [type]="'base'" [zichtbaar]="false"></awv-kaart-tilecache-laag>
     <awv-kaart-ortho-laag [titel]="'Ortho'" [type]="'base'" [zichtbaar]="false"></awv-kaart-ortho-laag>
-    <awv-kaart-wdb-laag [titel]="'Ident8 labels (WDB)'" [laag]="'ident8'" [versie]="'1.1.1'"></awv-kaart-wdb-laag>
-    <awv-kaart-wdb-laag [titel]="'Referentiepunten (WDB)'" [laag]="'referentiepunten'" [versie]="'1.1.1'"></awv-kaart-wdb-laag>
+    <awv-kaart-geoserver-laag [titel]="'Ident8 labels (WDB)'" [laagNaam]="'ident8'" [versie]="'1.1.1'"></awv-kaart-geoserver-laag>
+    <awv-kaart-geoserver-laag [titel]="'Referentiepunten (WDB)'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'"></awv-kaart-geoserver-laag>
     <awv-kaart-toon-features [features]="zoekresultaten"></awv-kaart-toon-features>
     <awv-kaart-schaal></awv-kaart-schaal>
     <awv-kaart-knop-laag-kiezer></awv-kaart-knop-laag-kiezer>

@@ -4,7 +4,7 @@ import { List } from "immutable";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartConfig, KAART_CFG } from "./kaart.config";
 import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
-import { WmsLaag, WmsType } from "./kaart-elementen";
+import { WmsLaag, TiledWmsType } from "./kaart-elementen";
 
 @Component({
   selector: "awv-kaart-ortho-laag",
@@ -18,7 +18,7 @@ export class KaartOrthoLaagComponent extends KaartWmsLaagComponent {
 
   createLayer(): WmsLaag {
     return {
-      type: WmsType,
+      type: TiledWmsType,
       titel: this.titel,
       naam: this.config.orthofotomozaiek.naam,
       extent: this.extent,

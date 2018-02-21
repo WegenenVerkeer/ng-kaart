@@ -6,24 +6,23 @@ import { KAART_CFG, KaartConfig } from "./kaart.config";
 import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
 
-// TODO uitvissen waarom die speficieke URL zo belangrijk is.
 @Component({
-  selector: "awv-kaart-wdb-laag",
+  selector: "awv-kaart-tilecache-laag",
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class KaartWdbLaagComponent extends KaartWmsLaagComponent {
+export class KaartTilecacheLaagComponent extends KaartWmsLaagComponent {
   constructor(kaart: KaartClassicComponent, @Inject(KAART_CFG) private readonly config: KaartConfig) {
     super(kaart);
   }
 
   createLayer(): ke.WmsLaag {
     return {
-      type: ke.WmsType,
+      type: ke.TiledWmsType,
       titel: this.titel,
       naam: this.laagNaam,
       extent: this.extent,
-      urls: List(this.config.wdb.urls),
+      urls: List(this.config.tilecache.urls),
       versie: this.versie
     };
   }
