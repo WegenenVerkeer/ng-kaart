@@ -1,7 +1,7 @@
 import * as ol from "openlayers";
 
 import { Validation } from "./json-object-interpreting";
-import { jsonAwvV0Style, shortcutStyles } from "./json-awv-v0-interpreter";
+import { shortcutOrFullStyle } from "./json-awv-v0-interpreter";
 
 import * as oi from "./json-object-interpreting";
 
@@ -29,16 +29,13 @@ function jsonDefinitieStringToStyle(definitieText: string): ValidatedOlStyle {
   }
 }
 
-export function interpretJson(definitie: Object): Validation<ol.style.Style> {
+function interpretJson(definitie: Object): Validation<ol.style.Style> {
   return oi
     .field("versie", oi.str)(definitie)
     .chain(versie => {
       switch (versie) {
         case "awv-v0":
-          return oi.chain(
-            shortcutStyles, //
-            (shortcutJson: Object) => oi.field("definitie", oi.injectFirst(shortcutJson, jsonAwvV0Style))
-          )(definitie);
+          return shortcutOrFullStyle(definitie);
         default:
           return oi.fail(`Versie '${versie}' wordt niet ondersteund`);
       }

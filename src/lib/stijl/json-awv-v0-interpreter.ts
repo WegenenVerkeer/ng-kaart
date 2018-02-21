@@ -4,6 +4,7 @@ import { Interpreter, succeed } from "./json-object-interpreting";
 import * as st from "./json-object-interpreting";
 import * as olc from "./openlayer-constructors";
 import { Option, some } from "fp-ts/lib/Option";
+import * as oi from "./json-object-interpreting";
 
 ///////////////////////////////
 // Openlayer types interpreters
@@ -133,4 +134,9 @@ const lineShortcut: Interpreter<Object> = st.field(
 export const shortcutStyles: Interpreter<Object> = st.map(
   (maybeJson: Option<Object>) => maybeJson.getOrElseValue({}),
   st.optField("shortcut", st.firstOf(lineShortcut))
+);
+
+export const shortcutOrFullStyle: Interpreter<ol.style.Style> = oi.chain(
+  shortcutStyles, //
+  (shortcutJson: Object) => oi.field("definitie", oi.injectFirst(shortcutJson, jsonAwvV0Style))
 );

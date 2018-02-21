@@ -5,7 +5,7 @@ import * as ol from "openlayers";
 
 import { Interpreter, ok, fail, Validation } from "./json-object-interpreting";
 import * as oi from "./json-object-interpreting";
-import { interpretJson as interpretStyleJson } from "./stijl-interpreter";
+import { shortcutOrFullStyle } from "./json-awv-v0-interpreter";
 
 ///////////////////////////////////////////
 // De types die alles in goede banen leiden
@@ -19,7 +19,7 @@ export interface RuleConfig {
 // Rules worden beschreven adhv expressies die een boolean opleven en een beschrijving van de stijl.
 export interface Rule {
   condition: Expression;
-  style: object;
+  style: object; // dit zou een verwijzing naar het type van de custom stijl kunnen zijn mochten we dat hebben
 }
 
 // Net zoals een RuleConfig, maar het verschil is dat de individuele rules al een OL style hebben ipv een een definitie.
@@ -143,7 +143,7 @@ const Between = (value: Expression, lower: Expression, upper: Expression) => ({
 // Typechecking en compilatie van de regels tot een StyleFunction
 //
 
-function compileRules(ruleCfg: RuleConfig): Validation<ol.StyleFunction> {
+function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
   // Een abstractie van het tuple (feature, resolution). Laat toe om de functies hierna wat compacter te schrijven, minder gegevens op de
   // stack te moeten zetten en eventueel eenvoudig andere "environment"-variabelen toe te voegen.
   interface Context {
@@ -314,17 +314,14 @@ function compileRules(ruleCfg: RuleConfig): Validation<ol.StyleFunction> {
 
   // De regels controleren en combineren zodat at run-time ze één voor één geprobeerd worden totdat er een match is
   const validatedCombinedRuleExpression: Validation<RuleExpression> = array.reduce(
-    (combinedRuleValidation: Validation<RuleExpression>, rule: Rule) =>
+    (combinedRuleValidation: Validation<RuleExpression>, rule: RuleStyle) =>
       // Hang een regel bij de vorige regels
       combinedRuleValidation.chain(combinedRule =>
-        // De stijldefinitie moet kosjer zijn
-        interpretStyleJson(rule.style).chain(style =>
-          // De conditie moet kosjer zijn
-          compileCondition(rule.condition).map(typedEvaluator => (ctx: Context) =>
-            combinedRule(ctx).fold(
-              () => typedEvaluator.evaluator(ctx).chain(outcome => ((outcome as boolean) ? some(style) : none)),
-              stl => some(stl) // (orElse ontbreekt) De verse regel wordt niet meer uitgevoerd als er al een resultaat is.
-            )
+        // De conditie moet kosjer zijn
+        compileCondition(rule.condition).map(typedEvaluator => (ctx: Context) =>
+          combinedRule(ctx).fold(
+            () => typedEvaluator.evaluator(ctx).chain(outcome => ((outcome as boolean) ? some(rule.style) : none)),
+            stl => some(stl) // (orElse ontbreekt) De verse regel wordt niet meer uitgevoerd als er al een resultaat is.
           )
         )
       ),
@@ -380,7 +377,7 @@ function compileRuleJson(definitie: Object): Validation<ol.StyleFunction> {
 const jsonAwvV0RuleConfig: Interpreter<RuleStyleConfig> = (json: Object) => {
   const typeType: Interpreter<TypeType> = (o: string) =>
     o === "boolean" || o === "string" || o === "number" ? ok(o as TypeType) : fail(`Het type moet 'boolean' of 'string' of 'number' zijn`);
-  const constant: Interpreter<Expression> = oi.map(Constant, oi.field("value", oi.str));
+  const constant: Interpreter<Expression> = oi.map(Constant, oi.field("value", oi.firstOf<ValueType>(oi.str, oi.bool, oi.num)));
   const environment: Interpreter<Expression> = oi.map2(EnvironmentExtraction, oi.field("type", typeType), oi.field("ref", oi.str));
   const feature: Interpreter<Expression> = oi.map2(FeatureExtraction, oi.field("type", typeType), oi.field("ref", oi.str));
   const featureExists: Interpreter<Expression> = oi.map(Exists("FeatureExists"), oi.field("ref", oi.str));
@@ -410,11 +407,11 @@ const jsonAwvV0RuleConfig: Interpreter<RuleStyleConfig> = (json: Object) => {
     "!=": comparison("!="),
     "&&": combination("&&"),
     "||": combination("||"),
-    "!": negation("!"),
-    "<=>": between("<=>")
+    "!": negation,
+    "<=>": between
   });
 
-  const rule = oi.map2(RuleStyle, oi.field("condition", expression), oi.field("style", interpretStyleJson));
+  const rule = oi.map2(RuleStyle, oi.field("condition", expression), oi.field("style", shortcutOrFullStyle));
 
   const ruleConfig = oi.map(RuleStyleConfig, oi.arr(rule));
 

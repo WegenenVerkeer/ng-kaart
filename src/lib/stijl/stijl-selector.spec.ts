@@ -23,7 +23,9 @@ describe("de stijl selector", () => {
                   kind: "Constant",
                   value: true
                 },
-                styleDef: {}
+                style: {
+                  definitie: {}
+                }
               }
             ]
           }
@@ -55,11 +57,13 @@ describe("de stijl selector", () => {
                     upper: { kind: "Constant", value: 2048 }
                   }
                 },
-                styleDef: {
-                  offsetLijn: {
-                    offset: -25,
-                    width: 5,
-                    color: "#FFFF00"
+                style: {
+                  shortcut: {
+                    offsetLijn: {
+                      offset: -25,
+                      width: 5,
+                      color: "#FFFF00"
+                    }
                   }
                 }
               }
