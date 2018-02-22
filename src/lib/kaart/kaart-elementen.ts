@@ -17,7 +17,6 @@ export interface WmsLaag {
   readonly titel: string;
   readonly naam: string;
   readonly urls: List<string>;
-  readonly extent: Option<ol.Extent>;
   readonly versie: Option<string>;
   readonly tileSize: Option<number>;
   readonly format: Option<string>;

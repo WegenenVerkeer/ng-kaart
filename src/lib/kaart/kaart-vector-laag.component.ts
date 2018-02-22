@@ -36,7 +36,7 @@ export class KaartVectorLaagComponent extends KaartLaagComponent {
   @Input() zichtbaar = true;
   @Input() selecteerbaar = true;
   @Input() minZoom = 7;
-  @Input() maxZoom = 13;
+  @Input() maxZoom = 15;
 
   constructor(kaart: KaartClassicComponent) {
     super(kaart);

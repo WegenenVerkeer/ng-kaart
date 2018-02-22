@@ -23,6 +23,16 @@ Deze component is enkel ontwikkeld om gebruikt te worden op Google Chrome. Om in
 Deze component is gebaseerd op de source code van de kaartcomponent gebruikt door district center. 
 Nog niet alle features van de oorspronkelijke component zijn geïmplementeerd. Gelieve voor noodzakelijke features een featurerequest in github aan te maken.
 
+### Zoom niveau's en resoluties
+
+Er worden op de AWV dienstkaart standaard 16 zoomniveau's voorzien.
+Het hoogste zoomniveau (gans Vlaanderen) is zoomniveau 0 (enkel districtkleuren en nummers te zien). 
+Standaard starten we alle applicaties met een kaart op zoomniveau 2 (de hoofdsnelwegen en districtkleuren zichtbaar).
+Het diepste zoomniveau is zoom niveau 15. Dit is aanpasbaar door de minZoom en maxZoom parameters aan te passen in het kaart object.
+
+OpenLayers gebruikt zoomniveau's en resoluties door elkaar. De overeenkomende resoluties van onze kaart zijn [1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5, 0.25, 0.125, 0.0625, 0.03125].
+Dwz standaard start de kaart op zoom niveau 2, resolutie 256.
+
 ### Code testen
 
 Deze component library is voorzien van een test Angular app.
