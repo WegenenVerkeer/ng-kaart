@@ -19,7 +19,6 @@ export class KaartWmsLaagComponent extends KaartLaagComponent {
   @Input() tiled = true;
   @Input() type: string;
   @Input() versie?: string;
-  @Input() extent?: ol.Extent = [18000.0, 152999.75, 280144.0, 415143.75];
   @Input() format? = "image/png";
   @Input() tileSize? = 256;
 
@@ -33,7 +32,6 @@ export class KaartWmsLaagComponent extends KaartLaagComponent {
       titel: this.titel,
       naam: this.laagNaam,
       urls: List(this.urls),
-      extent: fromNullable(this.extent),
       versie: fromNullable(this.versie),
       tileSize: fromNullable(this.tileSize),
       format: fromNullable(this.format)

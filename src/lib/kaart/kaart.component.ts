@@ -46,7 +46,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   private readonly internalEventDispatcher = new ReplaySubjectKaartEventDispatcher();
 
   @Input() minZoom = 2; // TODO naar config
-  @Input() maxZoom = 13; // TODO naar config
+  @Input() maxZoom = 15; // TODO naar config
   @Input() naam = "kaart";
 
   @Input() achtergrondTitelSelectieConsumer: prt.ModelConsumer<string> = prt.noOpModelConsumer;
