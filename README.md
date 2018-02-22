@@ -30,7 +30,8 @@ Het hoogste zoomniveau (gans Vlaanderen) is zoomniveau 0 (enkel districtkleuren 
 Standaard starten we alle applicaties met een kaart op zoomniveau 2 (de hoofdsnelwegen en districtkleuren zichtbaar).
 Het diepste zoomniveau is zoom niveau 15. Dit is aanpasbaar door de minZoom en maxZoom parameters aan te passen in het kaart object.
 
-OpenLayers gebruikt zoomniveau's en resoluties door elkaar. De overeenkomende resoluties van onze kaart zijn [1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5, 0.25, 0.125, 0.0625, 0.03125].
+Traditioneel gebruikt OpenLayers zoomniveaus en resoluties door elkaar, maar in de kaartcomponent streven we ernaar om enkel met zoomniveau te werken. 
+Ter referentie de overeenkomstige resoluties van onze kaart zijn [1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5, 0.25, 0.125, 0.0625, 0.03125].
 Dwz standaard start de kaart op zoom niveau 2, resolutie 256.
 
 ### Code testen
