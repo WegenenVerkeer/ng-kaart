@@ -1,4 +1,4 @@
-# AWV commons angular
+# AWV angular kaart component
 
 [![Build Status](https://travis-ci.org/WegenenVerkeer/ng-kaart.svg?branch=master)](https://travis-ci.org/WegenenVerkeer/ng-kaart)
 
@@ -16,21 +16,21 @@ Er is nog geen support voor een dergelijke packaging in Angular-CLI. We baseren 
 
 ## Beperkingen
 
-Deze component is enkel ontwikkeld om gebruikt te worden op Google Chrome. Om in Firefox te werken bijvoorbeeld zijn een aantal shims nodig. Zie ook de openlayers website. 
+Deze component is enkel ontwikkeld om gebruikt te worden op Google Chrome. Om in Firefox te werken bijvoorbeeld zijn een aantal shims nodig. Zie ook de openlayers website.
 
 ## Development
 
-Deze component is gebaseerd op de source code van de kaartcomponent gebruikt door district center. 
+Deze component is gebaseerd op de source code van de kaartcomponent gebruikt door district center.
 Nog niet alle features van de oorspronkelijke component zijn geïmplementeerd. Gelieve voor noodzakelijke features een featurerequest in github aan te maken.
 
 ### Zoom niveau's en resoluties
 
 Er worden op de AWV dienstkaart standaard 16 zoomniveau's voorzien.
-Het hoogste zoomniveau (gans Vlaanderen) is zoomniveau 0 (enkel districtkleuren en nummers te zien). 
+Het hoogste zoomniveau (gans Vlaanderen) is zoomniveau 0 (enkel districtkleuren en nummers te zien).
 Standaard starten we alle applicaties met een kaart op zoomniveau 2 (de hoofdsnelwegen en districtkleuren zichtbaar).
 Het diepste zoomniveau is zoom niveau 15. Dit is aanpasbaar door de minZoom en maxZoom parameters aan te passen in het kaart object.
 
-Traditioneel gebruikt OpenLayers zoomniveaus en resoluties door elkaar, maar in de kaartcomponent streven we ernaar om enkel met zoomniveau te werken. 
+Traditioneel gebruikt OpenLayers zoomniveaus en resoluties door elkaar, maar in de kaartcomponent streven we ernaar om enkel met zoomniveau te werken.
 Ter referentie de overeenkomstige resoluties van onze kaart zijn [1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5, 0.25, 0.125, 0.0625, 0.03125].
 Dwz standaard start de kaart op zoom niveau 2, resolutie 256.
 
@@ -39,10 +39,10 @@ Dwz standaard start de kaart op zoom niveau 2, resolutie 256.
 Deze component library is voorzien van een test Angular app.
 
     npm start
-    
+
 Deze is dan te bereiken via http://localhost:4220/
 
-In `src\testApp` kan je je module toevoegen en op de pagina plaatsen om zo door te testen. 
+In `src\testApp` kan je je module toevoegen en op de pagina plaatsen om zo door te testen.
 
 Dit laat je ook toe om protractors te schrijven.
 
@@ -51,15 +51,15 @@ Tot slot vormt de source code van deze pagina de gebruiksaanwijzing van de compo
 ### CORS requests
 
 #### Locatiezoeker
-                          
+
 * Zet chrome open zonder web security om dit te testen.
 
     macos:
-    
-        open -a Google\ Chrome --args --disable-web-security --user-data-dir 
-        
+
+        open -a Google\ Chrome --args --disable-web-security --user-data-dir
+
     *nix:
-    
+
         chromium-browser --disable-web-security --user-data-dir
 
 #### NosqlFs laag
@@ -72,12 +72,12 @@ De code style wordt automatisch afgedwongen via tslint + prettier. Deze is inges
 
 ## Publish
 
-We gebruiken [travis-ci](https://travis-ci.org/WegenenVerkeer/ng-kaart) als CI tool. 
+We gebruiken [travis-ci](https://travis-ci.org/WegenenVerkeer/ng-kaart) als CI tool.
 Travis wordt automatisch gestart bij een push naar github.
 
 Vooraleer je aan een nieuwe feature/bug fix begint te werken, moet de versie in `package.json` opgehoogd worden.
-Dat doe je best door gebruik te maken van de betreffende [npm commandos](https://docs.npmjs.com/cli/version). 
-Dus bijv. om een nieuwe feature te starten: 
+Dat doe je best door gebruik te maken van de betreffende [npm commandos](https://docs.npmjs.com/cli/version).
+Dus bijv. om een nieuwe feature te starten:
 
     npm version preminor
 
