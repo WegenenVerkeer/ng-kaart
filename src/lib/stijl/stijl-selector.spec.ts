@@ -6,6 +6,7 @@ import * as ol from "openlayers";
 describe("de stijl selector", () => {
   describe("bij het evalueren van geldige stijlkiesfuncties", () => {
     const feature = new ol.Feature({
+      offsetZijde: "R",
       textProp: "text",
       numProp: 3.1415,
       boolProp: true
@@ -32,7 +33,7 @@ describe("de stijl selector", () => {
         })
       );
       expect(result.isSuccess()).toBe(true);
-      expect(result.map(f => f(feature, resolution))).toEqual(jsonAwvV0Style("stijl1"));
+      expect(result.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(new ol.style.Style());
     });
 
     it("moet een stijl selecteren adhv een complexe expressie", () => {
@@ -59,12 +60,12 @@ describe("de stijl selector", () => {
                 },
                 style: {
                   shortcut: {
-                    offsetLijn: {
-                      offset: -25,
+                    fullLine: {
                       width: 5,
                       color: "#FFFF00"
                     }
-                  }
+                  },
+                  definitie: {}
                 }
               }
             ]
@@ -72,7 +73,9 @@ describe("de stijl selector", () => {
         })
       );
       expect(result.isSuccess()).toBe(true);
-      expect(result.map(f => f(feature, resolution))).toEqual(jsonAwvV0Style("stijl1"));
+      expect(result.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(
+        new ol.style.Style({ stroke: new ol.style.Stroke({ width: 5, color: "#FFFF00" }) })
+      );
     });
   });
 });

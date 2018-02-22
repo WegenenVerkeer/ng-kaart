@@ -134,7 +134,7 @@ export function atMostOneOf<T>(...interpreters: Interpreter<Option<T>>[]): Inter
 }
 
 /**
- * Probeert de interpreters tot er één succesvolle validatie oplevert. Faalt als er zo geen gevonden kan worden.
+ * Probeert de interpreters tot er één een succesvolle validatie oplevert. Faalt als er zo geen gevonden kan worden.
  */
 export function firstOf<T>(...interpreters: Interpreter<T>[]): Interpreter<T> {
   return (json: Object) => {

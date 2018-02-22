@@ -395,8 +395,8 @@ const jsonAwvV0RuleConfig: Interpreter<RuleStyleConfig> = (json: Object) => {
   );
   const expression = oi.byTypeDiscriminator("kind", {
     Constant: constant,
-    Feature: environment,
-    Environment: feature,
+    Feature: feature,
+    Environment: environment,
     FeatureExists: featureExists,
     EnvironmentExists: environmentExists,
     "<": comparison("<"),

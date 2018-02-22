@@ -159,7 +159,7 @@ describe("De stijl interpreter", () => {
       it("moet een fout mbt tot het ontbrekende veldje geven", () => {
         const result = definitieToStyle("xml", "<style></style>");
         expect(result.isFailure()).toBe(true);
-        expect(result.value).toEqual("Formaat 'xml' wordt niet ondersteund");
+        expect(result.value).toEqual("Encoding 'xml' wordt niet ondersteund");
       });
     });
 
