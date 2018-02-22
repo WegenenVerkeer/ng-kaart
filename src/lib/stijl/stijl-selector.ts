@@ -6,6 +6,7 @@ import * as ol from "openlayers";
 import { Interpreter, ok, fail, Validation } from "./json-object-interpreting";
 import * as oi from "./json-object-interpreting";
 import { shortcutOrFullStyle } from "./json-awv-v0-interpreter";
+import { monoidString } from "fp-ts/lib/Monoid";
 
 ///////////////////////////////////////////
 // De types die alles in goede banen leiden
@@ -33,14 +34,14 @@ interface RuleStyle {
   style: ol.style.Style;
 }
 
-export type Expression = Constant | EnvironmentExtraction | FeatureExtraction | FunctionEvaluation;
+export type Expression = Literal | EnvironmentExtraction | FeatureExtraction | FunctionEvaluation;
 
 export type TypeType = "boolean" | "string" | "number";
 
 export type ValueType = boolean | string | number;
 
-export interface Constant {
-  kind: "Constant";
+export interface Literal {
+  kind: "Literal";
   value: ValueType;
 }
 
@@ -98,7 +99,7 @@ const RuleStyle = (condition: Expression, style: ol.style.Style) => ({
   condition: condition,
   style: style
 });
-const Constant = (value: ValueType) => ({ kind: "Constant", value: value } as Constant);
+const Literal = (value: ValueType) => ({ kind: "Literal", value: value } as Literal);
 const FeatureExtraction = (typeName: TypeType, ref: string) =>
   ({
     kind: "Feature",
@@ -170,14 +171,8 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
     ({ evaluator: evaluator, typeName: typeName } as TypedEvaluator);
 
   // Run-time helpers
-  const getFeat = (key: string, typeName: TypeType) => (ctx: Context) => {
-    const value: any = ctx.feature.get(key);
-    if (value && typeof value === typeName) {
-      return option.fromNullable(ctx.feature.get(key));
-    } else {
-      return none;
-    }
-  };
+  const getFeat = (key: string, typeName: TypeType) => (ctx: Context) =>
+    option.fromNullable(ctx.feature.get(key)).filter(value => typeof value === typeName);
   const checkFeatureDefined = (key: string) => (ctx: Context) => {
     const value: any = ctx.feature.get(key);
     return some(value !== null && value !== undefined);
@@ -185,17 +180,23 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
   const getResolution = (ctx: Context) => some(ctx.resolution);
 
   // Type check functies
-  const typeIs = (targetType: TypeType) => (t1: TypeType) => (t1 === targetType ? ok({}) : fail(`${t1} moet ${targetType} zijn`));
+  const typeIs = (targetType: TypeType) => (t1: TypeType) =>
+    t1 === targetType ? ok({}) : fail(`typecontrole: '${t1}' gevonden, maar '${targetType}' verwacht`);
   const allTypes2 = (targetType: TypeType) => (t1: TypeType, t2: TypeType) =>
-    t1 === targetType && t2 === targetType ? ok({}) : fail(`${t1} en ${t2} moeten ${targetType} zijn`);
+    t1 === targetType && t2 === targetType
+      ? ok({})
+      : fail(`typecontrole: '${t1}' en '${t2}' gevonden, maar telkens '${targetType}' verwacht`);
   const allTypes3 = (targetType: TypeType) => (t1: TypeType, t2: TypeType, t3: TypeType) =>
-    t1 === targetType && t2 === targetType && t3 === targetType ? ok({}) : fail(`${t1}, ${t2} en ${t3}) moeten ${targetType} zijn`);
-  const equalType = (t1: TypeType, t2: TypeType) => (t1 === t2 ? ok({}) : fail(`(${t1}, ${t2}) moeten gelijk zijn`));
+    t1 === targetType && t2 === targetType && t3 === targetType
+      ? ok({})
+      : fail(`typecontrole: '${t1}', '${t2}' en '${t3}' gevonden, maar telkens '${targetType}' verwacht`);
+  const equalType = (t1: TypeType, t2: TypeType) =>
+    t1 === t2 ? ok({}) : fail(`typecontrole: verwacht dat '${t1}' en '${t2}' gelijk zijn`);
 
   // De expressie op het hoogste niveau moet tot een boolean evalueren
   function compileCondition(expression: Expression): ValidatedTypedEvaluator {
     return compile(expression).chain(
-      evaluator => (evaluator.typeName === "boolean" ? ok(evaluator) : fail(`Een conditie moet een boolean opleveren`))
+      evaluator => (evaluator.typeName === "boolean" ? ok(evaluator) : fail(`typecontrole: een conditie moet een 'boolean' opleveren`))
     );
   }
 
@@ -203,23 +204,23 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
   function compile(expression: Expression): ValidatedTypedEvaluator {
     switch (expression.kind) {
       case "&&":
-        return apply2((a, b) => a && b, allTypes2("boolean"), "boolean", compile(expression.left), compile(expression.right));
+        return leftRight((a, b) => a && b, allTypes2("boolean"), "boolean", expression);
       case "||":
-        return apply2((a, b) => a || b, allTypes2("boolean"), "boolean", compile(expression.left), compile(expression.right));
+        return leftRight((a, b) => a || b, allTypes2("boolean"), "boolean", expression);
       case "!":
         return apply1(a => !a, typeIs("boolean"), "boolean", compile(expression.expression));
       case "==":
-        return apply2((a, b) => a === b, equalType, "boolean", compile(expression.left), compile(expression.right));
+        return leftRight((a, b) => a === b, equalType, "boolean", expression);
       case "!=":
-        return apply2((a, b) => a !== b, equalType, "boolean", compile(expression.left), compile(expression.right));
+        return leftRight((a, b) => a !== b, equalType, "boolean", expression);
       case "<":
-        return apply2((a, b) => a < b, allTypes2("number"), "boolean", compile(expression.left), compile(expression.right));
+        return leftRight((a, b) => a < b, allTypes2("number"), "boolean", expression);
       case "<=":
-        return apply2((a, b) => a <= b, allTypes2("number"), "boolean", compile(expression.left), compile(expression.right));
+        return leftRight((a, b) => a <= b, allTypes2("number"), "boolean", expression);
       case ">":
-        return apply2((a, b) => a > b, allTypes2("number"), "boolean", compile(expression.left), compile(expression.right));
+        return leftRight((a, b) => a > b, allTypes2("number"), "boolean", expression);
       case ">=":
-        return apply2((a, b) => a >= b, allTypes2("number"), "boolean", compile(expression.left), compile(expression.right));
+        return leftRight((a, b) => a >= b, allTypes2("number"), "boolean", expression);
       case "FeatureExists":
         return ok(TypedEvaluator(checkFeatureDefined(expression.ref), "boolean"));
       case "EnvironmentExists": {
@@ -235,7 +236,7 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
           compile(expression.lower),
           compile(expression.upper)
         );
-      case "Constant":
+      case "Literal":
         return ok(
           TypedEvaluator(
             () => some(expression.value),
@@ -251,20 +252,14 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
     }
   }
 
-  // "platte" functies omzetten tot Evaluator functies.
-  function liftEvaluator1(f: (v1: ValueType) => ValueType): (ev1: Evaluator) => Evaluator {
-    return (ev1: Evaluator) => (ctx: Context) => ev1(ctx).map(r1 => f(r1));
-  }
-
-  function liftEvaluator2(f: (v1: ValueType, v2: ValueType) => ValueType): (ev1: Evaluator, ev2: Evaluator) => Evaluator {
-    return (ev1: Evaluator, ev2: Evaluator) => (ctx: Context) => ev1(ctx).chain(r1 => ev2(ctx).map(r2 => f(r1, r2)));
-  }
-
-  function liftEvaluator3(
-    f: (v1: ValueType, v2: ValueType, v3: ValueType) => ValueType
-  ): (ev1: Evaluator, ev2: Evaluator, ev3: Evaluator) => Evaluator {
-    return (ev1: Evaluator, ev2: Evaluator, ev3: Evaluator) => (ctx: Context) =>
-      ev1(ctx).chain(r1 => ev2(ctx).chain(r2 => ev3(ctx).map(r3 => f(r1, r2, r3))));
+  // Hulpfunctie voor minder codeduplicatie
+  function leftRight(
+    f: (a1: ValueType, a2: ValueType) => ValueType,
+    check: (t1: TypeType, t2: TypeType) => Validation<{}>,
+    resultType: TypeType,
+    expression: Comparison | Combination
+  ) {
+    return apply2(f, check, resultType, compile(expression.left), compile(expression.right));
   }
 
   // Type checking en aaneenrijgen van de lagere boomknopen in een run-time functie
@@ -308,6 +303,22 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
         )
       )
     );
+  }
+
+  // "platte" functies omzetten tot Evaluator functies.
+  function liftEvaluator1(f: (v1: ValueType) => ValueType): (ev1: Evaluator) => Evaluator {
+    return (ev1: Evaluator) => (ctx: Context) => ev1(ctx).map(r1 => f(r1));
+  }
+
+  function liftEvaluator2(f: (v1: ValueType, v2: ValueType) => ValueType): (ev1: Evaluator, ev2: Evaluator) => Evaluator {
+    return (ev1: Evaluator, ev2: Evaluator) => (ctx: Context) => ev1(ctx).chain(r1 => ev2(ctx).map(r2 => f(r1, r2)));
+  }
+
+  function liftEvaluator3(
+    f: (v1: ValueType, v2: ValueType, v3: ValueType) => ValueType
+  ): (ev1: Evaluator, ev2: Evaluator, ev3: Evaluator) => Evaluator {
+    return (ev1: Evaluator, ev2: Evaluator, ev3: Evaluator) => (ctx: Context) =>
+      ev1(ctx).chain(r1 => ev2(ctx).chain(r2 => ev3(ctx).map(r3 => f(r1, r2, r3))));
   }
 
   type RuleExpression = (ctx: Context) => Option<ol.style.Style>;
@@ -377,7 +388,7 @@ function compileRuleJson(definitie: Object): Validation<ol.StyleFunction> {
 const jsonAwvV0RuleConfig: Interpreter<RuleStyleConfig> = (json: Object) => {
   const typeType: Interpreter<TypeType> = (o: string) =>
     o === "boolean" || o === "string" || o === "number" ? ok(o as TypeType) : fail(`Het type moet 'boolean' of 'string' of 'number' zijn`);
-  const constant: Interpreter<Expression> = oi.map(Constant, oi.field("value", oi.firstOf<ValueType>(oi.str, oi.bool, oi.num)));
+  const literal: Interpreter<Expression> = oi.map(Literal, oi.field("value", oi.firstOf<ValueType>(oi.str, oi.bool, oi.num)));
   const environment: Interpreter<Expression> = oi.map2(EnvironmentExtraction, oi.field("type", typeType), oi.field("ref", oi.str));
   const feature: Interpreter<Expression> = oi.map2(FeatureExtraction, oi.field("type", typeType), oi.field("ref", oi.str));
   const featureExists: Interpreter<Expression> = oi.map(Exists("FeatureExists"), oi.field("ref", oi.str));
@@ -394,7 +405,7 @@ const jsonAwvV0RuleConfig: Interpreter<RuleStyleConfig> = (json: Object) => {
     oi.field("upper", o => expression(o))
   );
   const expression = oi.byTypeDiscriminator("kind", {
-    Constant: constant,
+    Literal: literal,
     Feature: feature,
     Environment: environment,
     FeatureExists: featureExists,
@@ -415,133 +426,9 @@ const jsonAwvV0RuleConfig: Interpreter<RuleStyleConfig> = (json: Object) => {
 
   const ruleConfig = oi.map(RuleStyleConfig, oi.arr(rule));
 
-  return oi.field("rules", ruleConfig)(json);
+  return oi
+    .field("rules", ruleConfig)(json)
+    .mapFailure(monoidString)(msg => `syntaxcontrole: ${msg}`);
 };
 
 const jsonAwvV0RuleCompiler: Interpreter<ol.StyleFunction> = (json: Object) => jsonAwvV0RuleConfig(json).chain(compileRules);
-
-////////////////////////////////////////////////////////////////
-// Evalueren van gevalideerde en voorbereidde regelconfiguraties
-//
-
-// function chooseStyle(cfg: RuleConfig): StyleFunction {
-//   return (feature: ol.Feature, resolution: number) =>
-//     evaluateRules(cfg.rules, feature, resolution).getOrElse(() => {
-//       kaartLogger.warn("Er kon geen stijl bepaald worden");
-//       return null;
-//     });
-// }
-//
-// function evaluateRules(rules: Rule[], feature: ol.Feature, resolution: number): Option<ol.style.Style> {
-//   function evaluateExpression(expression: Expression): Validation<ValueType> {
-//     switch (expression.kind) {
-//       case "Constant":
-//         return ok(expression.value); // Het type is al gevalideerd tijdens het type checken
-//       case "Environment":
-//         return fail("environment nog niet ondersteund");
-//       case "Feature":
-//         return extractFeature(expression.ref, expression.type);
-//       case "∃F":
-//         return featureExists(expression.ref);
-//       case "<":
-//         return evaluateBinaryFunction((a, b) => a < b, expression.left, expression.right);
-//       case "<=":
-//         return evaluateBinaryFunction((a, b) => a <= b, expression.left, expression.right);
-//       case ">":
-//         return evaluateBinaryFunction((a, b) => a > b, expression.left, expression.right);
-//       case ">=":
-//         return evaluateBinaryFunction((a, b) => a >= b, expression.left, expression.right);
-//       case "==":
-//         return evaluateBinaryFunction((a, b) => a === b, expression.left, expression.right);
-//       case "!=":
-//         return evaluateBinaryFunction((a, b) => a !== b, expression.left, expression.right);
-//       case "&&":
-//         return evaluateBinaryFunction((a, b) => a && b, expression.left, expression.right);
-//       case "||":
-//         return evaluateBinaryFunction((a, b) => a || b, expression.left, expression.right);
-//       case "!":
-//         return evaluateUnaryFunction(a => !a, expression.argument);
-//       case "<=>":
-//         return evaluateTernaryFunction((a, b, c) => a >= b && a <= c, expression.value, expression.lower, expression.upper);
-//       default:
-//         return fail(`Implementation error. ${expression.kind} is niet geïmpleenteerd`);
-//     }
-//   }
-//
-//   function extractFeature(key: string, typeName: TypeType): Validation<ValueType> {
-//     return getRawFeatureProperty(key).chain((maybeRawValue: Option<ValueType>) =>
-//       maybeRawValue.fold(
-//         () => fail(`De eigenschap ${key} heeft geen waarde`),
-//         rawValue => validateType(rawValue, typeName, key)
-//       )
-//     );
-//   }
-//
-//   function validateType(rawValue: ValueType, typeName: TypeType, key: string): Validation<ValueType> {
-//     if (typeof rawValue === typeName) {
-//       return ok(rawValue);
-//     } else {
-//       return fail(`Een type '${typeName}' werd verwacht voor '${key}', maar '${rawValue}' werd gevonden`);
-//     }
-//   }
-//
-//   function getRawFeatureProperty(key: string): Validation<Option<ValueType>> {
-//     if (feature.getKeys().indexOf(key) >= 0) {
-//       return ok(option.fromNullable(feature.get(key)));
-//     } else {
-//       return fail(`De feature heeft geen eigenschap '${key}'`);
-//     }
-//   }
-//
-//   function featureExists(key: string): Validation<boolean> {
-//     const value = feature.get(key);
-//     return ok(value !== null && value !== undefined);
-//   }
-//
-//   function evaluateUnaryFunction(f: (a: ValueType) => ValueType, arg1: Expression): Validation<ValueType> {
-//     const validation1: Validation<ValueType> = evaluateExpression(arg1);
-//     return validation1.map(value1 => f(value1));
-//   }
-//
-//   function evaluateBinaryFunction(
-//     f: (a: ValueType, b: ValueType) => ValueType, arg1: Expression, arg2: Expression): Validation<ValueType> {
-//     const validation1 = evaluateExpression(arg1);
-//     const validation2 = evaluateExpression(arg2);
-//     return validation1.chain(value1 => validation2.map(value2 => f(value1, value2)));
-//   }
-//
-//   function evaluateTernaryFunction(
-//     f: (a: ValueType, b: ValueType, c: ValueType) => ValueType,
-//     arg1: Expression,
-//     arg2: Expression,
-//     arg3: Expression
-//   ): Validation<ValueType> {
-//     // Dit kan ook met applicative sequence en ap, maar is niet leesbaarder
-//     const validation1: Validation<ValueType> = evaluateExpression(arg1);
-//     const validation2 = evaluateExpression(arg2);
-//     const validation3 = evaluateExpression(arg3);
-//     return validation1.chain(value1 => validation2.chain(value2 => validation3.map(value3 => f(value1, value2, value3))));
-//   }
-//
-//   // Hier gaan we de rules 1 voor 1 af tot we er één vinden die matcht.
-//   return array.reduce(
-//     (maybeApplicableStyle, rule) => {
-//       return maybeApplicableStyle.fold(
-//         () => {
-//           const validatedRule: Validation<boolean> = evaluateExpression(rule.condition) as Validation<boolean>;
-//           return validatedRule.fold(failureMsg => {
-//             kaartLogger.warn(`regel kon niet geëvalueerd worden wegens ${failureMsg}`, rule);
-//             return none;
-//           }, ruleMatches => (ruleMatches ? stijlDefinitieToStyle(rule.style) : none));
-//         }, //
-//         style => some(style)
-//       );
-//     },
-//     none as Option<ol.style.Style>,
-//     rules
-//   );
-// }
-//
-// function stijlDefinitieToStyle(sd: object): Option<ol.style.Style> {
-//   return none; // FIXME moet Validation worden + precompute van stijlen
-// }

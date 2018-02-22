@@ -5,7 +5,8 @@ import * as ol from "openlayers";
 
 import { KaartLaagComponent } from "./kaart-laag.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
-import { WmsLaag, WmsType } from "./kaart-elementen";
+import { WmsLaag, TiledWmsType } from "./kaart-elementen";
+import { fromNullable } from "fp-ts/lib/Option";
 
 @Component({
   selector: "awv-kaart-wms-laag",
@@ -19,6 +20,8 @@ export class KaartWmsLaagComponent extends KaartLaagComponent {
   @Input() type: string;
   @Input() versie?: string;
   @Input() extent?: ol.Extent = [18000.0, 152999.75, 280144.0, 415143.75];
+  @Input() format? = "image/png";
+  @Input() tileSize? = 256;
 
   constructor(kaart: KaartClassicComponent) {
     super(kaart);
@@ -26,12 +29,14 @@ export class KaartWmsLaagComponent extends KaartLaagComponent {
 
   createLayer(): WmsLaag {
     return {
-      type: WmsType,
+      type: TiledWmsType,
       titel: this.titel,
       naam: this.laagNaam,
-      extent: this.extent,
       urls: List(this.urls),
-      versie: this.versie
+      extent: fromNullable(this.extent),
+      versie: fromNullable(this.versie),
+      tileSize: fromNullable(this.tileSize),
+      format: fromNullable(this.format)
     };
   }
 }

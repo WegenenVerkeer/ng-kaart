@@ -14,7 +14,8 @@ import { KaartFeaturesLaagComponent } from "./kaart-toon-features.component";
 import { KaartKnopVolledigSchermComponent } from "./kaart-knop-volledig-scherm.component";
 import { KaartSchaalComponent } from "./kaart-schaal.component";
 import { KaartConfig, KAART_CFG } from "./kaart.config";
-import { KaartWdbLaagComponent } from "./kaart-wdb-laag.component";
+import { KaartTilecacheLaagComponent } from "./kaart-tilecache-laag.component";
+import { KaartGeoserverLaagComponent } from "./kaart-geoserver-laag.component";
 import { KaartOrthoLaagComponent } from "./kaart-ortho-laag.component";
 import { CoordinatenService } from "./coordinaten.service";
 import { KaartStandaardInteractiesComponent } from "./kaart-standaard-interacties.component";
@@ -37,7 +38,8 @@ const components: any[] = [
   KaartFeaturesLaagComponent,
   KaartVectorLaagComponent,
   KaartNosqlfsLaagComponent,
-  KaartWdbLaagComponent,
+  KaartTilecacheLaagComponent,
+  KaartGeoserverLaagComponent,
   KaartWmsLaagComponent,
   KaartBlancoLaagComponent,
   KaartAchtergrondSelectorComponent,
@@ -52,7 +54,14 @@ const components: any[] = [
 })
 export class KaartModule {
   static defaultConfig: KaartConfig = {
-    wdb: {
+    geoserver: {
+      urls: [
+        "https://wms1.apps.mow.vlaanderen.be/geoserver/service/wms",
+        "https://wms2.apps.mow.vlaanderen.be/geoserver/service/wms",
+        "https://wms3.apps.mow.vlaanderen.be/geoserver/service/wms"
+      ]
+    },
+    tilecache: {
       urls: [
         "https://wms1.apps.mow.vlaanderen.be/geowebcache/service/wms",
         "https://wms2.apps.mow.vlaanderen.be/geowebcache/service/wms",
@@ -67,7 +76,9 @@ export class KaartModule {
     defaults: {
       zoom: 2,
       middelpunt: [130000, 193000],
-      grootte: [undefined, 500]
+      grootte: [undefined, 500],
+      resolutions: [256.0, 128.0, 64.0, 32.0, 16.0, 8.0, 4.0, 2.0, 1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125],
+      extent: [18000.0, 152999.75, 280144.0, 415143.75]
     }
   };
 
@@ -97,7 +108,8 @@ export * from "./kaart-teken-polygoon-laag.component";
 export * from "./kaart-toon-features.component";
 export * from "./kaart-vector-laag.component";
 export * from "./kaart-nosqlfs-laag.component";
-export * from "./kaart-wdb-laag.component";
+export * from "./kaart-geoserver-laag.component";
+export * from "./kaart-tilecache-laag.component";
 export * from "./kaart-wms-laag.component";
 export * from "./kaart-blanco-laag.component";
 export * from "./kaart.component";

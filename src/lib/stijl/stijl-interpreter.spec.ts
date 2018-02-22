@@ -152,6 +152,28 @@ describe("De stijl interpreter", () => {
         );
       });
     });
+    describe("Met een override", () => {
+      it("moet de voorgedefinieerde opties overschrijven", () => {
+        const result = definitieToStyle(
+          "json",
+          JSON.stringify({
+            versie: "awv-v0",
+            shortcut: { fullLine: { color: "yellow", width: 5 } },
+            definitie: { stroke: { color: "red" } }
+          })
+        );
+        expect(result).toEqual(
+          ok(
+            new ol.style.Style({
+              stroke: new ol.style.Stroke({
+                color: "red",
+                width: 5
+              })
+            })
+          )
+        );
+      });
+    });
   });
 
   describe("Bij het converteren van een ongeldige stijl", () => {

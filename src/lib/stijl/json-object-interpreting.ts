@@ -364,7 +364,29 @@ export const chain = <A, B>(interpreterA: Interpreter<A>, fa: (a: A) => Interpre
   interpreterA(json).chain(a => fa(a)(json));
 
 export const injectFirst = <A>(extraJson: Object, interpreterA: Interpreter<A>): Interpreter<A> => (json: Object) =>
-  interpreterA({ ...extraJson, ...json });
+  interpreterA(mergeDeep(extraJson, json));
+
+function isObject(item) {
+  return item && typeof item === "object" && !Array.isArray(item);
+}
+
+function mergeDeep<T>(base: T, overlay: T) {
+  const output = Object.assign({}, base);
+  if (isObject(base) && isObject(overlay)) {
+    Object.keys(overlay).forEach(overlayKey => {
+      if (isObject(overlay[overlayKey])) {
+        if (!(overlayKey in base)) {
+          Object.assign(output, { [overlayKey]: overlay[overlayKey] });
+        } else {
+          output[overlayKey] = mergeDeep(base[overlayKey], overlay[overlayKey]);
+        }
+      } else {
+        Object.assign(output, { [overlayKey]: overlay[overlayKey] });
+      }
+    });
+  }
+  return output;
+}
 
 export type InterpreterOptionalRecord<A> = { readonly [P in keyof A]: Interpreter<Option<A[P]>> };
 

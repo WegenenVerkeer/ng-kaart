@@ -1,28 +1,28 @@
-import { Component, ViewEncapsulation, Inject } from "@angular/core";
+import { Component, Inject, ViewEncapsulation } from "@angular/core";
 import { List } from "immutable";
 
-import { KaartClassicComponent } from "./kaart-classic.component";
-import { KaartConfig, KAART_CFG } from "./kaart.config";
+import * as ke from "./kaart-elementen";
+import { KAART_CFG, KaartConfig } from "./kaart.config";
 import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
-import { WmsLaag, TiledWmsType } from "./kaart-elementen";
+import { KaartClassicComponent } from "./kaart-classic.component";
 import { fromNullable } from "fp-ts/lib/Option";
 
 @Component({
-  selector: "awv-kaart-ortho-laag",
+  selector: "awv-kaart-tilecache-laag",
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class KaartOrthoLaagComponent extends KaartWmsLaagComponent {
+export class KaartTilecacheLaagComponent extends KaartWmsLaagComponent {
   constructor(kaart: KaartClassicComponent, @Inject(KAART_CFG) private readonly config: KaartConfig) {
     super(kaart);
   }
 
-  createLayer(): WmsLaag {
+  createLayer(): ke.WmsLaag {
     return {
-      type: TiledWmsType,
+      type: ke.TiledWmsType,
       titel: this.titel,
-      naam: this.config.orthofotomozaiek.naam,
-      urls: List(this.config.orthofotomozaiek.urls),
+      naam: this.laagNaam,
+      urls: List(this.config.tilecache.urls),
       extent: fromNullable(this.extent),
       versie: fromNullable(this.versie),
       tileSize: fromNullable(this.tileSize),

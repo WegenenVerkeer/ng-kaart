@@ -2,6 +2,7 @@ import { List } from "immutable";
 import { none, Option, some, fromNullable } from "fp-ts/lib/Option";
 
 import * as ol from "openlayers";
+import * as array from "fp-ts/lib/Array";
 
 import { KaartConfig } from "./kaart.config";
 import * as ke from "./kaart-elementen";
@@ -139,7 +140,7 @@ const addSchaal: ModelUpdater = (kaart: KaartWithInfo) =>
       kaart.map.addControl(schaal);
       return updateModel({ schaal: some(schaal) })(kaart);
     },
-    _ => keepModel(kaart)
+    () => keepModel(kaart)
   );
 
 const removeSchaal: ModelUpdater = (kaart: KaartWithInfo) =>
@@ -158,7 +159,7 @@ const addFullScreen: ModelUpdater = (kaart: KaartWithInfo) =>
       kaart.map.addControl(fullScreen);
       return { ...kaart, fullScreen: some(fullScreen) };
     },
-    _ => keepModel(kaart)
+    () => keepModel(kaart)
   );
 
 const removeFullScreen: ModelUpdater = (kaart: KaartWithInfo) =>
@@ -276,36 +277,78 @@ function asVectorLayer(layer: ol.layer.Base): Option<ol.layer.Vector> {
 
 function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {
   switch (laag.type) {
-    case ke.WmsType: {
+    case ke.TiledWmsType: {
       const l = laag as ke.WmsLaag;
+
       return some(
         new ol.layer.Tile(<olx.layer.TileOptions>{
           title: l.titel,
           visible: true,
-          extent: l.extent,
+          extent: l.extent.getOrElseValue(kaart.config.defaults.extent),
           source: new ol.source.TileWMS({
             projection: undefined,
             urls: l.urls.toArray(),
+            tileGrid: ol.tilegrid.createXYZ({
+              extent: kaart.config.defaults.extent,
+              tileSize: l.tileSize.getOrElseValue(256)
+            }),
             params: {
               LAYERS: l.naam,
               TILED: true,
               SRS: kaart.config.srs,
-              version: l.versie
+              VERSION: l.versie.getOrElseValue("1.3.0"),
+              FORMAT: l.format.getOrElseValue("image/png")
             }
           })
         })
       );
     }
+
+    case ke.SingleTileWmsType: {
+      const l = laag as ke.WmsLaag;
+
+      return some(
+        new ol.layer.Image({
+          source: new ol.source.ImageWMS({
+            url: l.urls.first(),
+            params: {
+              LAYERS: l.naam,
+              SRS: kaart.config.srs,
+              VERSION: l.versie.getOrElseValue("1.3.0"),
+              FORMAT: l.format.getOrElseValue("image/png")
+            },
+            projection: kaart.config.srs
+          })
+        })
+      );
+    }
+
     case ke.VectorType: {
       const l = laag as ke.VectorLaag;
+
+      if (array.isOutOfBound(l.minZoom)(kaart.config.defaults.resolutions)) {
+        kaartLogger.error(`Ongeldige minZoom: ${l.minZoom}, moet tussen 0 en ${kaart.config.defaults.resolutions.length - 1} liggen`);
+      }
+      if (array.isOutOfBound(l.maxZoom)(kaart.config.defaults.resolutions)) {
+        kaartLogger.error(`Ongeldige maxZoom: ${l.maxZoom}, moet tussen 0 en ${kaart.config.defaults.resolutions.length - 1} liggen`);
+      }
       return some(
         new ol.layer.Vector({
           source: l.source,
           visible: true,
           style: l.style,
-          //   resolutions: [256.0, 128.0, 64.0, 32.0, 16.0, 8.0, 4.0, 2.0, 1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125],
-          minResolution: l.minResolution,
-          maxResolution: l.maxResolution
+          minResolution:
+            kaart.config.defaults.resolutions[
+              array
+                .index(l.minZoom)(kaart.config.defaults.resolutions)
+                .getOrElseValue(0)
+            ],
+          maxResolution:
+            kaart.config.defaults.resolutions[
+              array
+                .index(l.maxZoom)(kaart.config.defaults.resolutions)
+                .getOrElseValue(kaart.config.defaults.resolutions.length - 1)
+            ]
         })
       );
     }
