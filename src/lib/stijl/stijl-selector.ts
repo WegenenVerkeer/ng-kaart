@@ -370,13 +370,13 @@ function jsonDefinitieStringToRuleExecutor(definitieText: string): Validation<ol
 
 function compileRuleJson(definitie: Object): Validation<ol.StyleFunction> {
   return oi
-    .field("versie", oi.str)(definitie)
-    .chain(versie => {
-      switch (versie) {
+    .field("version", oi.str)(definitie)
+    .chain(version => {
+      switch (version) {
         case "awv-v0":
-          return oi.field("definitie", jsonAwvV0RuleCompiler)(definitie);
+          return oi.field("definition", jsonAwvV0RuleCompiler)(definitie);
         default:
-          return oi.fail(`Versie '${versie}' wordt niet ondersteund`);
+          return oi.fail(`Versie '${version}' wordt niet ondersteund`);
       }
     });
 }

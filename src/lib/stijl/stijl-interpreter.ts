@@ -29,15 +29,15 @@ function jsonDefinitieStringToStyle(definitieText: string): ValidatedOlStyle {
   }
 }
 
-function interpretJson(definitie: Object): Validation<ol.style.Style> {
+function interpretJson(definition: Object): Validation<ol.style.Style> {
   return oi
-    .field("versie", oi.str)(definitie)
-    .chain(versie => {
-      switch (versie) {
+    .field("version", oi.str)(definition)
+    .chain(version => {
+      switch (version) {
         case "awv-v0":
-          return shortcutOrFullStyle(definitie);
+          return shortcutOrFullStyle(definition);
         default:
-          return oi.fail(`Versie '${versie}' wordt niet ondersteund`);
+          return oi.fail(`Versie '${version}' wordt niet ondersteund`);
       }
     });
 }

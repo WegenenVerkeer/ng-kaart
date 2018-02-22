@@ -17,8 +17,8 @@ describe("de stijl selector", () => {
       const result = definitieToRuleExecutor(
         "json",
         JSON.stringify({
-          versie: "awv-v0",
-          definitie: {
+          version: "awv-v0",
+          definition: {
             rules: [
               {
                 condition: {
@@ -26,7 +26,7 @@ describe("de stijl selector", () => {
                   value: true
                 },
                 style: {
-                  definitie: {}
+                  definition: {}
                 }
               }
             ]
@@ -41,8 +41,8 @@ describe("de stijl selector", () => {
       const result = definitieToRuleExecutor(
         "json",
         JSON.stringify({
-          versie: "awv-v0",
-          definitie: {
+          version: "awv-v0",
+          definition: {
             rules: [
               {
                 condition: {
@@ -66,7 +66,7 @@ describe("de stijl selector", () => {
                       color: "#FFFF00"
                     }
                   },
-                  definitie: {}
+                  definition: {}
                 }
               }
             ]
@@ -83,16 +83,16 @@ describe("de stijl selector", () => {
       const result = definitieToRuleExecutor(
         "json",
         JSON.stringify({
-          versie: "awv-v0",
-          definitie: {
+          version: "awv-v0",
+          definition: {
             rules: [
               {
                 condition: { kind: "Literal", value: false },
-                style: { definitie: {} }
+                style: { definition: {} }
               },
               {
                 condition: { kind: "Literal", value: true },
-                style: { definitie: { stroke: { color: "green" } } }
+                style: { definition: { stroke: { color: "green" } } }
               }
             ]
           }
@@ -107,8 +107,8 @@ describe("de stijl selector", () => {
     it("moet de <=> operator interpreteren als 'in het interval'", () => {
       const inBetweenStanza = (value: number, lower: number, upper: number) =>
         JSON.stringify({
-          versie: "awv-v0",
-          definitie: {
+          version: "awv-v0",
+          definition: {
             rules: [
               {
                 condition: {
@@ -118,7 +118,7 @@ describe("de stijl selector", () => {
                   upper: { kind: "Literal", value: upper }
                 },
                 style: {
-                  definitie: {}
+                  definition: {}
                 }
               }
             ]
@@ -143,8 +143,8 @@ describe("de stijl selector", () => {
         const result = definitieToRuleExecutor(
           "json",
           JSON.stringify({
-            versie: "awv-v0",
-            definitie: {
+            version: "awv-v0",
+            definition: {
               rules: [
                 {
                   condition: {
@@ -153,7 +153,7 @@ describe("de stijl selector", () => {
                     right: { kind: "Literal", value: "R" }
                   },
                   style: {
-                    definitie: {}
+                    definition: {}
                   }
                 }
               ]
@@ -169,8 +169,8 @@ describe("de stijl selector", () => {
         const result = definitieToRuleExecutor(
           "json",
           JSON.stringify({
-            versie: "awv-v0",
-            definitie: {
+            version: "awv-v0",
+            definition: {
               rules: [
                 {
                   condition: {
@@ -179,7 +179,7 @@ describe("de stijl selector", () => {
                     right: { kind: "Literal", value: "R" }
                   },
                   style: {
-                    definitie: {}
+                    definition: {}
                   }
                 }
               ]
@@ -195,8 +195,8 @@ describe("de stijl selector", () => {
         const result = definitieToRuleExecutor(
           "json",
           JSON.stringify({
-            versie: "awv-v0",
-            definitie: {
+            version: "awv-v0",
+            definition: {
               rules: [
                 {
                   condition: {
@@ -205,7 +205,7 @@ describe("de stijl selector", () => {
                     right: { kind: "Literal", value: "R" }
                   },
                   style: {
-                    definitie: {}
+                    definition: {}
                   }
                 }
               ]
@@ -221,8 +221,8 @@ describe("de stijl selector", () => {
         const result = definitieToRuleExecutor(
           "json",
           JSON.stringify({
-            versie: "awv-v0",
-            definitie: {
+            version: "awv-v0",
+            definition: {
               rules: [
                 {
                   condition: {
@@ -231,7 +231,7 @@ describe("de stijl selector", () => {
                     right: { kind: "Literal", value: "R" }
                   },
                   style: {
-                    definitie: {}
+                    definition: {}
                   }
                 }
               ]
@@ -247,8 +247,8 @@ describe("de stijl selector", () => {
         const result = definitieToRuleExecutor(
           "json",
           JSON.stringify({
-            versie: "awv-v0",
-            definitie: {
+            version: "awv-v0",
+            definition: {
               rules: [
                 {
                   condition: {
@@ -257,7 +257,7 @@ describe("de stijl selector", () => {
                     right: { kind: "Literal", value: false }
                   },
                   style: {
-                    definitie: {}
+                    definition: {}
                   }
                 }
               ]
@@ -272,8 +272,8 @@ describe("de stijl selector", () => {
         const result = definitieToRuleExecutor(
           "json",
           JSON.stringify({
-            versie: "awv-v0",
-            definitie: {
+            version: "awv-v0",
+            definition: {
               rules: [
                 {
                   condition: {
@@ -282,7 +282,7 @@ describe("de stijl selector", () => {
                     right: { kind: "Literal", value: "R" }
                   },
                   style: {
-                    definitie: {}
+                    definition: {}
                   }
                 }
               ]
@@ -302,12 +302,12 @@ describe("de stijl selector", () => {
         const result = definitieToRuleExecutor(
           "json",
           JSON.stringify({
-            versie: "awv-v0",
-            definitie: {
+            version: "awv-v0",
+            definition: {
               rules: [
                 {
                   condition: { kind: "Literal", value: true },
-                  style: { definitie: {} }
+                  style: { definition: {} }
                 }
               ]
             }
@@ -318,16 +318,16 @@ describe("de stijl selector", () => {
     });
 
     describe("wanneer de regels fouten bevatten", () => {
-      it("mag enkel de awv-v0 versie toelaten", () => {
+      it("mag enkel de awv-v0 version toelaten", () => {
         const result = definitieToRuleExecutor(
           "json",
           JSON.stringify({
-            versie: "awv-v314",
-            definitie: {
+            version: "awv-v314",
+            definition: {
               rules: [
                 {
                   condition: { kind: "Literal", value: "true" },
-                  style: { definitie: {} }
+                  style: { definition: {} }
                 }
               ]
             }
@@ -347,12 +347,12 @@ describe("de stijl selector", () => {
         const result = definitieToRuleExecutor(
           "json",
           JSON.stringify({
-            versie: "awv-v0",
-            definitie: {
+            version: "awv-v0",
+            definition: {
               rules: [
                 {
                   condition: { kind: "Literal", value: "true" },
-                  style: { definitie: {} }
+                  style: { definition: {} }
                 }
               ]
             }
@@ -367,12 +367,12 @@ describe("de stijl selector", () => {
         const result = definitieToRuleExecutor(
           "json",
           JSON.stringify({
-            versie: "awv-v0",
-            definitie: {
+            version: "awv-v0",
+            definition: {
               rules: [
                 {
                   condition: { kind: "<=", left: { kind: "Literal", value: "1" } },
-                  style: { definitie: {} }
+                  style: { definition: {} }
                 }
               ]
             }
@@ -386,12 +386,12 @@ describe("de stijl selector", () => {
         const result = definitieToRuleExecutor(
           "json",
           JSON.stringify({
-            versie: "awv-v0",
-            definitie: {
+            version: "awv-v0",
+            definition: {
               rules: [
                 {
                   condition: { kind: "<=", left: { kind: "Literal", value: "1" }, right: { kind: "Literal", value: "2" } },
-                  style: { definitie: {} }
+                  style: { definition: {} }
                 }
               ]
             }
@@ -405,12 +405,12 @@ describe("de stijl selector", () => {
         const result = definitieToRuleExecutor(
           "json",
           JSON.stringify({
-            versie: "awv-v0",
-            definitie: {
+            version: "awv-v0",
+            definition: {
               rules: [
                 {
                   condition: { kind: "!=", left: { kind: "Literal", value: "1" }, right: { kind: "Literal", value: 2 } },
-                  style: { definitie: {} }
+                  style: { definition: {} }
                 }
               ]
             }

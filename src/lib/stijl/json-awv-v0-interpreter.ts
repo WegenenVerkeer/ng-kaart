@@ -138,5 +138,5 @@ export const shortcutStyles: Interpreter<Object> = st.map(
 
 export const shortcutOrFullStyle: Interpreter<ol.style.Style> = oi.chain(
   shortcutStyles, //
-  (shortcutJson: Object) => oi.field("definitie", oi.injectFirst(shortcutJson, jsonAwvV0Style))
+  (shortcutJson: Object) => oi.field("definition", oi.injectFirst(shortcutJson, jsonAwvV0Style))
 );

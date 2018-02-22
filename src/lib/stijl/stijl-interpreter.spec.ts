@@ -12,8 +12,8 @@ describe("De stijl interpreter", () => {
         const result = definitieToStyle(
           "json",
           JSON.stringify({
-            versie: "awv-v0",
-            definitie: {
+            version: "awv-v0",
+            definition: {
               stroke: {
                 color: "#FF0",
                 width: 5
@@ -37,8 +37,8 @@ describe("De stijl interpreter", () => {
         const result = definitieToStyle(
           "json",
           JSON.stringify({
-            versie: "awv-v0",
-            definitie: {
+            version: "awv-v0",
+            definition: {
               fill: {
                 color: "green"
               }
@@ -60,8 +60,8 @@ describe("De stijl interpreter", () => {
         const result = definitieToStyle(
           "json",
           JSON.stringify({
-            versie: "awv-v0",
-            definitie: {
+            version: "awv-v0",
+            definition: {
               circle: {
                 stroke: {
                   color: "yellow",
@@ -101,8 +101,8 @@ describe("De stijl interpreter", () => {
       const result = definitieToStyle(
         "json",
         JSON.stringify({
-          versie: "awv-v0",
-          definitie: {
+          version: "awv-v0",
+          definition: {
             stroke: {
               color: "red",
               width: 1
@@ -135,9 +135,9 @@ describe("De stijl interpreter", () => {
         const result = definitieToStyle(
           "json",
           JSON.stringify({
-            versie: "awv-v0",
+            version: "awv-v0",
             shortcut: { fullLine: { color: "yellow", width: 5 } },
-            definitie: {}
+            definition: {}
           })
         );
         expect(result).toEqual(
@@ -157,9 +157,9 @@ describe("De stijl interpreter", () => {
         const result = definitieToStyle(
           "json",
           JSON.stringify({
-            versie: "awv-v0",
+            version: "awv-v0",
             shortcut: { fullLine: { color: "yellow", width: 5 } },
-            definitie: { stroke: { color: "red" } }
+            definition: { stroke: { color: "red" } }
           })
         );
         expect(result).toEqual(
@@ -190,12 +190,12 @@ describe("De stijl interpreter", () => {
         const result = definitieToStyle(
           "json",
           JSON.stringify({
-            versie: "awv-v0",
+            version: "awv-v0",
             diefnty: {}
           })
         );
         expect(result.isFailure()).toBe(true);
-        expect(result.value).toContain("geen veld 'definitie'");
+        expect(result.value).toContain("geen veld 'definition'");
       });
     });
   });

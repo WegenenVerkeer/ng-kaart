@@ -49,7 +49,7 @@ export class AppComponent {
 
   readonly districtStyle: ol.style.Style = definitieToStyle(
     "json",
-    '{"versie": "awv-v0", "definitie": {"stroke": {"color": "rgba(0,127,255,0.8)", "width": 1.5}}}'
+    '{"version": "awv-v0", "definition": {"stroke": {"color": "rgba(0,127,255,0.8)", "width": 1.5}}}'
   ).getOrElse(msg => {
     throw new Error(`slecht formaat ${msg}`);
   });
@@ -57,7 +57,7 @@ export class AppComponent {
   readonly kolkStyle: ol.style.Style = definitieToStyle(
     "json",
     // tslint:disable-next-line:max-line-length
-    '{"versie": "awv-v0", "definitie": {"circle": {"stroke": {"color": "navy", "width": 1.5}, "fill": {"color": "dodgerblue"}, "radius": 6}}}'
+    '{"version": "awv-v0", "definition": {"circle": {"stroke": {"color": "navy", "width": 1.5}, "fill": {"color": "dodgerblue"}, "radius": 6}}}'
   ).getOrElse(msg => {
     throw new Error(`slecht formaat ${msg}`);
   });
