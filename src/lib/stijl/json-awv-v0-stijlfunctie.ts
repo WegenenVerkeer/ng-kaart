@@ -77,6 +77,7 @@ const jsonAwvV0RuleConfig: Interpreter<RuleStyleConfig> = (json: Object) => {
     ">=": comparison(">="),
     "==": comparison("=="),
     "!=": comparison("!="),
+    "L==": comparison("L=="),
     "&&": combination("&&"),
     "||": combination("||"),
     "!": negation,
@@ -176,6 +177,8 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
         return leftRight((a, b) => a > b, allTypes2("number"), "boolean", expression);
       case ">=":
         return leftRight((a, b) => a >= b, allTypes2("number"), "boolean", expression);
+      case "L==":
+        return leftRight((a: string, b: string) => a.toLowerCase() === b, allTypes2("string"), "boolean", expression);
       case "FeatureExists":
         return ok(TypedEvaluator(checkFeatureDefined(expression.ref), "boolean"));
       case "EnvironmentExists": {

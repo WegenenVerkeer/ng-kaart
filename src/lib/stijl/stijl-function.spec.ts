@@ -140,6 +140,42 @@ describe("de stijl selector", () => {
       expect(resultAbove.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(undefined);
     });
 
+    it("moet de L== operator interpreteren als 'left lowercase equals'", () => {
+      const lowercaseStanza = (left: string, right: string) =>
+        JSON.stringify({
+          version: "awv-v0",
+          definition: {
+            rules: [
+              {
+                condition: {
+                  kind: "L==",
+                  left: { kind: "Literal", value: left },
+                  right: { kind: "Literal", value: right }
+                },
+                style: {
+                  definition: {}
+                }
+              }
+            ]
+          }
+        });
+
+      const resultInside = definitieToStyleFunction("json", lowercaseStanza("Abc", "abc"));
+      console.log(resultInside);
+      expect(resultInside.isSuccess()).toBe(true);
+      expect(resultInside.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(new ol.style.Style());
+
+      const resultBelow = definitieToStyleFunction("json", lowercaseStanza("abc", "Abc")); // enkel lowercase van left
+      console.log(resultBelow);
+      expect(resultBelow.isSuccess()).toBe(true);
+      expect(resultBelow.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(undefined);
+
+      const resultAbove = definitieToStyleFunction("json", lowercaseStanza("Abc", "Abc")); // right moet lowercase zijn
+      console.log(resultAbove);
+      expect(resultAbove.isSuccess()).toBe(true);
+      expect(resultAbove.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(undefined);
+    });
+
     describe("bij het refereren aan feature properties", () => {
       it("moet de waarde van de feature gebruiken", () => {
         const result = definitieToStyleFunction(

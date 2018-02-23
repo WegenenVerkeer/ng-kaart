@@ -56,7 +56,7 @@ export interface Exists {
   readonly ref: string;
 }
 
-export type ComparisonOperator = "<" | ">" | "<=" | ">=" | "==" | "!=";
+export type ComparisonOperator = "<" | ">" | "<=" | ">=" | "==" | "!=" | "L==";
 
 export interface Comparison {
   readonly kind: ComparisonOperator;
