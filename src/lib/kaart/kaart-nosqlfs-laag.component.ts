@@ -5,7 +5,7 @@ import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartLaagComponent } from "./kaart-laag.component";
-import { NosqlFsSource } from "../source";
+import { NosqlFsSource } from "../source/nosql-fs-source";
 
 @Component({
   selector: "awv-kaart-nosqlfs-laag",
