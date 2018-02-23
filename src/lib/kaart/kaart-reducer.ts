@@ -2,13 +2,12 @@ import { List } from "immutable";
 import { none, Option, some, fromNullable } from "fp-ts/lib/Option";
 
 import * as ol from "openlayers";
-import * as array from "fp-ts/lib/Array";
 
-import { KaartConfig } from "./kaart.config";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { KaartWithInfo } from "./kaart-with-info";
 import { kaartLogger } from "./log";
+import { toOlLayer } from "./laag-converter";
 
 ///////////////////////////////////
 // Hulpfuncties
@@ -275,93 +274,6 @@ function asVectorLayer(layer: ol.layer.Base): Option<ol.layer.Vector> {
   return layer.hasOwnProperty("getSource") ? some(layer as ol.layer.Vector) : none;
 }
 
-function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {
-  switch (laag.type) {
-    case ke.TiledWmsType: {
-      const l = laag as ke.WmsLaag;
-
-      return some(
-        new ol.layer.Tile(<olx.layer.TileOptions>{
-          title: l.titel,
-          visible: true,
-          extent: kaart.config.defaults.extent,
-          source: new ol.source.TileWMS({
-            projection: undefined,
-            urls: l.urls.toArray(),
-            tileGrid: ol.tilegrid.createXYZ({
-              extent: kaart.config.defaults.extent,
-              tileSize: l.tileSize.getOrElseValue(256)
-            }),
-            params: {
-              LAYERS: l.naam,
-              TILED: true,
-              SRS: kaart.config.srs,
-              VERSION: l.versie.getOrElseValue("1.3.0"),
-              FORMAT: l.format.getOrElseValue("image/png")
-            }
-          })
-        })
-      );
-    }
-
-    case ke.SingleTileWmsType: {
-      const l = laag as ke.WmsLaag;
-
-      return some(
-        new ol.layer.Image({
-          source: new ol.source.ImageWMS({
-            url: l.urls.first(),
-            params: {
-              LAYERS: l.naam,
-              SRS: kaart.config.srs,
-              VERSION: l.versie.getOrElseValue("1.3.0"),
-              FORMAT: l.format.getOrElseValue("image/png")
-            },
-            projection: kaart.config.srs
-          })
-        })
-      );
-    }
-
-    case ke.VectorType: {
-      const l = laag as ke.VectorLaag;
-
-      if (array.isOutOfBound(l.minZoom)(kaart.config.defaults.resolutions)) {
-        kaartLogger.error(`Ongeldige minZoom voor ${l.titel}: 
-        ${l.minZoom}, moet tussen 0 en ${kaart.config.defaults.resolutions.length - 1} liggen`);
-      }
-      if (array.isOutOfBound(l.maxZoom)(kaart.config.defaults.resolutions)) {
-        kaartLogger.error(`Ongeldige maxZoom voor ${l.titel}: 
-        ${l.maxZoom}, moet tussen 0 en ${kaart.config.defaults.resolutions.length - 1} liggen`);
-      }
-
-      /**
-       * Er zijn standaard 16 zoomniveau's, van 0 tot 15. De overeenkomende resoluties zijn
-       * [1024.0, 512.0, 256.0, 128.0, 64.0, 32.0, 16.0, 8.0, 4.0, 2.0, 1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125]
-       *
-       * minZoom bepaalt de maxResolution, maxZoom bepaalt de minResolution
-       * maxResolution is exclusief dus bepaalt door minZoom - 1 ("maximum resolution (exclusive) below which this layer will be visible")
-       *
-       */
-      return some(
-        new ol.layer.Vector({
-          source: l.source,
-          visible: true,
-          style: l.style,
-          minResolution: array
-            .index(l.maxZoom)(kaart.config.defaults.resolutions)
-            .getOrElseValue(kaart.config.defaults.resolutions[kaart.config.defaults.resolutions.length - 1]),
-          maxResolution: array
-            .index(l.minZoom - 1)(kaart.config.defaults.resolutions)
-            .getOrElseValue(kaart.config.defaults.resolutions[0])
-        })
-      );
-    }
-    default:
-      return none;
-  }
-}
-
 const addNewBackgroundsToMap: ModelUpdater = (kaart: KaartWithInfo) => {
   return kaart.possibleBackgrounds.reduce((model, laag, index) => insertLaag(0, laag!, index === 0)(model!), kaart);
 };
@@ -401,7 +313,6 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWit
     case prt.KaartEvntTypes.MIDDELPUNT_CHANGED:
       return updateMiddelpunt(kaart, (cmd as prt.MiddelpuntChanged).coordinate);
     case prt.KaartEvntTypes.ZOOM_CHANGED:
-      console.log("Zoom changed");
       return updateZoom(kaart, (cmd as prt.ZoomChanged).zoom);
     case prt.KaartEvntTypes.EXTENT_CHANGED:
       return updateExtent(kaart, (cmd as prt.ExtentChanged).extent);

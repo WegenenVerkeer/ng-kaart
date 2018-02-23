@@ -1,4 +1,4 @@
-import { definitieToRuleExecutor } from "./stijl-selector";
+import { definitieToStyleFunction } from "./stijl-selector";
 
 import * as ol from "openlayers";
 
@@ -14,7 +14,7 @@ describe("de stijl selector", () => {
     });
     const resolution = 32;
     it("moet een stijl selecteren adhv een enkele regel obv een Literal", () => {
-      const result = definitieToRuleExecutor(
+      const result = definitieToStyleFunction(
         "json",
         JSON.stringify({
           version: "awv-v0",
@@ -38,7 +38,7 @@ describe("de stijl selector", () => {
     });
 
     it("moet een stijl selecteren adhv een complexe expressie", () => {
-      const result = definitieToRuleExecutor(
+      const result = definitieToStyleFunction(
         "json",
         JSON.stringify({
           version: "awv-v0",
@@ -80,7 +80,7 @@ describe("de stijl selector", () => {
     });
 
     it("moet een stijl kunnen selecteren adhv de eerste lukkende regel", () => {
-      const result = definitieToRuleExecutor(
+      const result = definitieToStyleFunction(
         "json",
         JSON.stringify({
           version: "awv-v0",
@@ -125,22 +125,22 @@ describe("de stijl selector", () => {
           }
         });
 
-      const resultInside = definitieToRuleExecutor("json", inBetweenStanza(1, 0, 10));
+      const resultInside = definitieToStyleFunction("json", inBetweenStanza(1, 0, 10));
       expect(resultInside.isSuccess()).toBe(true);
       expect(resultInside.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(new ol.style.Style());
 
-      const resultBelow = definitieToRuleExecutor("json", inBetweenStanza(-1, 0, 10));
+      const resultBelow = definitieToStyleFunction("json", inBetweenStanza(-1, 0, 10));
       expect(resultBelow.isSuccess()).toBe(true);
       expect(resultBelow.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(undefined);
 
-      const resultAbove = definitieToRuleExecutor("json", inBetweenStanza(11, 0, 10));
+      const resultAbove = definitieToStyleFunction("json", inBetweenStanza(11, 0, 10));
       expect(resultAbove.isSuccess()).toBe(true);
       expect(resultAbove.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(undefined);
     });
 
     describe("bij het refereren aan feature properties", () => {
       it("moet de waarde van de feature gebruiken", () => {
-        const result = definitieToRuleExecutor(
+        const result = definitieToStyleFunction(
           "json",
           JSON.stringify({
             version: "awv-v0",
@@ -166,7 +166,7 @@ describe("de stijl selector", () => {
       });
 
       it("moet de conditie falen als de propery niet bestaat", () => {
-        const result = definitieToRuleExecutor(
+        const result = definitieToStyleFunction(
           "json",
           JSON.stringify({
             version: "awv-v0",
@@ -192,7 +192,7 @@ describe("de stijl selector", () => {
       });
 
       it("moet de conditie falen als de propery een null waarde heeft", () => {
-        const result = definitieToRuleExecutor(
+        const result = definitieToStyleFunction(
           "json",
           JSON.stringify({
             version: "awv-v0",
@@ -218,7 +218,7 @@ describe("de stijl selector", () => {
       });
 
       it("moet de conditie falen als de propery een undefined waarde heeft", () => {
-        const result = definitieToRuleExecutor(
+        const result = definitieToStyleFunction(
           "json",
           JSON.stringify({
             version: "awv-v0",
@@ -244,7 +244,7 @@ describe("de stijl selector", () => {
       });
 
       it("moet de conditie niet noodzakelijk falen als de propery een false waarde heeft", () => {
-        const result = definitieToRuleExecutor(
+        const result = definitieToStyleFunction(
           "json",
           JSON.stringify({
             version: "awv-v0",
@@ -269,7 +269,7 @@ describe("de stijl selector", () => {
       });
 
       it("moet de conditie falen als het actuele type van de feature niet overeenstemt met het gedeclareerde", () => {
-        const result = definitieToRuleExecutor(
+        const result = definitieToStyleFunction(
           "json",
           JSON.stringify({
             version: "awv-v0",
@@ -299,7 +299,7 @@ describe("de stijl selector", () => {
   describe("Bij het compileren van stijlfuncties", () => {
     describe("wanneer de regels geen fouten bevatten", () => {
       it("moet een succesvolle validatie genereren", () => {
-        const result = definitieToRuleExecutor(
+        const result = definitieToStyleFunction(
           "json",
           JSON.stringify({
             version: "awv-v0",
@@ -319,7 +319,7 @@ describe("de stijl selector", () => {
 
     describe("wanneer de regels fouten bevatten", () => {
       it("mag enkel de awv-v0 version toelaten", () => {
-        const result = definitieToRuleExecutor(
+        const result = definitieToStyleFunction(
           "json",
           JSON.stringify({
             version: "awv-v314",
@@ -338,13 +338,13 @@ describe("de stijl selector", () => {
       });
 
       it("moet een ongeldige JSON detecteren", () => {
-        const result = definitieToRuleExecutor("json", "dit is geen JSON");
+        const result = definitieToStyleFunction("json", "dit is geen JSON");
         expect(result.isFailure()).toBe(true);
         expect(result.value).toContain("geen geldige JSON");
       });
 
       it("mag enkel boolean resultaten toelaten", () => {
-        const result = definitieToRuleExecutor(
+        const result = definitieToStyleFunction(
           "json",
           JSON.stringify({
             version: "awv-v0",
@@ -364,7 +364,7 @@ describe("de stijl selector", () => {
       });
 
       it("mag enkel een vergelijking met 2 argumenten toelaten", () => {
-        const result = definitieToRuleExecutor(
+        const result = definitieToStyleFunction(
           "json",
           JSON.stringify({
             version: "awv-v0",
@@ -383,7 +383,7 @@ describe("de stijl selector", () => {
         expect(result.value).toContain("heeft geen veld 'right'");
       });
       it("mag enkel een groottevergelijking met 2 numerieke argumenten toelaten", () => {
-        const result = definitieToRuleExecutor(
+        const result = definitieToStyleFunction(
           "json",
           JSON.stringify({
             version: "awv-v0",
@@ -402,7 +402,7 @@ describe("de stijl selector", () => {
         expect(result.value).toContain("'string' en 'string' gevonden, maar telkens 'number' verwacht");
       });
       it("mag enkel een vergelijking met 2 gelijke argumenten toelaten", () => {
-        const result = definitieToRuleExecutor(
+        const result = definitieToStyleFunction(
           "json",
           JSON.stringify({
             version: "awv-v0",

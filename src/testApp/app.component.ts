@@ -3,9 +3,10 @@ import * as ol from "openlayers";
 import "rxjs/add/operator/mergeMap";
 import "rxjs/add/operator/map";
 
-import { GoogleLocatieZoekerService } from "../lib/google-locatie-zoeker/google-locatie-zoeker.service";
-import { CoordinatenService } from "../lib/kaart/coordinaten.service";
+import { GoogleLocatieZoekerService } from "../lib/google-locatie-zoeker";
+import { CoordinatenService } from "../lib/kaart";
 import { kaartLogger, definitieToStyle } from "../lib/public_api";
+import { AWV0StyleFunctionDescription, definitieToStyleFunction } from "../lib/stijl";
 
 @Component({
   selector: "awv-ng-kaart-test-app",
@@ -17,6 +18,44 @@ export class AppComponent {
   private readonly zichtbaarheid = {
     orthomap: true,
     kleursimpel: false // standard falsey
+  };
+
+  private readonly fietspadStijlDef: AWV0StyleFunctionDescription = {
+    version: "awv-v0",
+    definition: {
+      rules: [
+        {
+          condition: {
+            kind: "==",
+            left: { kind: "Feature", type: "string", ref: "typefietspad" },
+            right: { kind: "Literal", value: "Vrijliggend" }
+          },
+          style: {
+            definition: { stroke: { color: "green", width: 1.5 } }
+          }
+        },
+        {
+          condition: {
+            kind: "==",
+            left: { kind: "Feature", type: "string", ref: "typefietspad" },
+            right: { kind: "Literal", value: "Aanliggend Verhoogd" }
+          },
+          style: {
+            definition: { stroke: { color: "#FFFF00", width: 1.5 } }
+          }
+        },
+        {
+          condition: {
+            kind: "==",
+            left: { kind: "Feature", type: "string", ref: "typefietspad" },
+            right: { kind: "Literal", value: "Aanliggend" }
+          },
+          style: {
+            definition: { stroke: { color: "#FF7F00", width: 1.5 } }
+          }
+        }
+      ]
+    }
   };
 
   polygoonEvents: string[] = [];
@@ -58,6 +97,14 @@ export class AppComponent {
     "json",
     // tslint:disable-next-line:max-line-length
     '{"version": "awv-v0", "definition": {"circle": {"stroke": {"color": "navy", "width": 1.5}, "fill": {"color": "dodgerblue"}, "radius": 6}}}'
+  ).getOrElse(msg => {
+    throw new Error(`slecht formaat ${msg}`);
+  });
+
+  readonly fietspadStyle: ol.StyleFunction = definitieToStyleFunction(
+    "json",
+    // tslint:disable-next-line:max-line-length
+    JSON.stringify(this.fietspadStijlDef)
   ).getOrElse(msg => {
     throw new Error(`slecht formaat ${msg}`);
   });

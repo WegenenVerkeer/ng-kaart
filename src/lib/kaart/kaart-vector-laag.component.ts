@@ -1,29 +1,10 @@
 import { Component, Input, ViewEncapsulation } from "@angular/core";
+import { fromNullable } from "fp-ts/lib/Option";
 
 import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartLaagComponent } from "./kaart-laag.component";
-
-const stdStijl = new ol.style.Style({
-  fill: new ol.style.Fill({
-    color: "gray"
-  }),
-  stroke: new ol.style.Stroke({
-    color: "darkslateblue ",
-    width: 4
-  }),
-  image: new ol.style.Circle({
-    fill: new ol.style.Fill({
-      color: "maroon"
-    }),
-    stroke: new ol.style.Stroke({
-      color: "gray",
-      width: 1.25
-    }),
-    radius: 5
-  })
-});
 
 @Component({
   selector: "awv-kaart-vector-laag",
@@ -32,7 +13,8 @@ const stdStijl = new ol.style.Style({
 })
 export class KaartVectorLaagComponent extends KaartLaagComponent {
   @Input() source = new ol.source.Vector();
-  @Input() style: ol.style.Style = stdStijl;
+  @Input() style?: ol.style.Style;
+  @Input() styleFunction?: ol.StyleFunction;
   @Input() zichtbaar = true;
   @Input() selecteerbaar = true;
   @Input() minZoom = 7;
@@ -47,7 +29,8 @@ export class KaartVectorLaagComponent extends KaartLaagComponent {
       type: ke.VectorType,
       titel: this.titel,
       source: this.source,
-      style: this.style,
+      style: fromNullable(this.style),
+      styleFunction: fromNullable(this.styleFunction),
       selecteerbaar: this.selecteerbaar,
       minZoom: this.minZoom,
       maxZoom: this.maxZoom

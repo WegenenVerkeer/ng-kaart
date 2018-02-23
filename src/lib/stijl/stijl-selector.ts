@@ -12,26 +12,33 @@ import { monoidString } from "fp-ts/lib/Monoid";
 // De types die alles in goede banen leiden
 //
 
-// Een lijst van Rules. De eerste Rule die als waar geëvalueerd wordt, bepaalt de stijl.
-export interface RuleConfig {
-  rules: Rule[];
+// De exported types zijn ook bruikbaar voor clients zodat de compiler ze kan assisteren met het schrijven van geldige definities.
+
+export interface AWV0StyleFunctionDescription {
+  readonly version: "awv-v0";
+  readonly definition: RuleConfig;
 }
 
-// Rules worden beschreven adhv expressies die een boolean opleven en een beschrijving van de stijl.
+// Een lijst van Rules. De eerste Rule die als waar geëvalueerd wordt, bepaalt de stijl.
+export interface RuleConfig {
+  readonly rules: Rule[];
+}
+
+// Rules worden beschreven adhv expressies die een boolean opleveren en een beschrijving van de stijl.
 export interface Rule {
-  condition: Expression;
-  style: object; // dit zou een verwijzing naar het type van de custom stijl kunnen zijn mochten we dat hebben
+  readonly condition: Expression;
+  readonly style: object; // dit zou een verwijzing naar het type van de custom stijl kunnen zijn mochten we dat hebben
 }
 
 // Net zoals een RuleConfig, maar het verschil is dat de individuele rules al een OL style hebben ipv een een definitie.
 interface RuleStyleConfig {
-  rules: RuleStyle[];
+  readonly rules: RuleStyle[];
 }
 
 // Net zoals een Rule, maar met een gegenereerde OL style ipv een definitie.
 interface RuleStyle {
-  condition: Expression;
-  style: ol.style.Style;
+  readonly condition: Expression;
+  readonly style: ol.style.Style;
 }
 
 export type Expression = Literal | EnvironmentExtraction | FeatureExtraction | FunctionEvaluation;
@@ -41,53 +48,53 @@ export type TypeType = "boolean" | "string" | "number";
 export type ValueType = boolean | string | number;
 
 export interface Literal {
-  kind: "Literal";
-  value: ValueType;
+  readonly kind: "Literal";
+  readonly value: ValueType;
 }
 
 export interface FeatureExtraction {
-  kind: "Feature";
-  type: TypeType;
-  ref: string;
+  readonly kind: "Feature";
+  readonly type: TypeType;
+  readonly ref: string;
 }
 
 export interface EnvironmentExtraction {
-  kind: "Environment";
-  type: TypeType;
-  ref: string;
+  readonly kind: "Environment";
+  readonly type: TypeType;
+  readonly ref: string;
 }
 
 export type FunctionEvaluation = Exists | Comparison | Combination | Negation | Between;
 
 export interface Exists {
-  kind: "FeatureExists" | "EnvironmentExists";
-  ref: string;
+  readonly kind: "FeatureExists" | "EnvironmentExists";
+  readonly ref: string;
 }
 
 export type ComparisonOperator = "<" | ">" | "<=" | ">=" | "==" | "!=";
 
 export interface Comparison {
-  kind: ComparisonOperator;
-  left: Expression;
-  right: Expression;
+  readonly kind: ComparisonOperator;
+  readonly left: Expression;
+  readonly right: Expression;
 }
 
 export interface Combination {
-  kind: "&&" | "||";
-  left: Expression;
-  right: Expression;
+  readonly kind: "&&" | "||";
+  readonly left: Expression;
+  readonly right: Expression;
 }
 
 export interface Negation {
-  kind: "!";
-  expression: Expression;
+  readonly kind: "!";
+  readonly expression: Expression;
 }
 
 export interface Between {
-  kind: "<=>";
-  value: Expression;
-  lower: Expression;
-  upper: Expression;
+  readonly kind: "<=>";
+  readonly value: Expression;
+  readonly lower: Expression;
+  readonly upper: Expression;
 }
 
 //////////////////////
@@ -172,11 +179,12 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
 
   // Run-time helpers
   const getFeat = (key: string, typeName: TypeType) => (ctx: Context) =>
-    option.fromNullable(ctx.feature.get(key)).filter(value => typeof value === typeName);
-  const checkFeatureDefined = (key: string) => (ctx: Context) => {
-    const value: any = ctx.feature.get(key);
-    return some(value !== null && value !== undefined);
-  };
+    option
+      .fromNullable(ctx.feature.get("properties"))
+      .chain(properties => option.fromNullable(properties[key]))
+      .filter(value => typeof value === typeName);
+  const checkFeatureDefined = (key: string) => (ctx: Context) =>
+    option.fromNullable(ctx.feature.get("properties")).map(properties => properties.hasOwnProperty(key));
   const getResolution = (ctx: Context) => some(ctx.resolution);
 
   // Type check functies
@@ -351,7 +359,7 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
 //
 
 // type StyleFunction = (feature: (ol.Feature | ol.render.Feature), resolution: number) => (ol.style.Style | ol.style.Style[]);
-export function definitieToRuleExecutor(encoding: string, definitieText: string): Validation<ol.StyleFunction> {
+export function definitieToStyleFunction(encoding: string, definitieText: string): Validation<ol.StyleFunction> {
   if (encoding === "json") {
     return jsonDefinitieStringToRuleExecutor(definitieText);
   } else {
