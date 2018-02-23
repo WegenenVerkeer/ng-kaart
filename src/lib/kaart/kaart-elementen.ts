@@ -26,7 +26,8 @@ export interface VectorLaag {
   readonly type: VectorType;
   readonly titel: string;
   readonly source: ol.source.Vector;
-  readonly style: ol.style.Style;
+  readonly style: Option<ol.style.Style>;
+  readonly styleFunction: Option<ol.StyleFunction>;
   readonly selecteerbaar: boolean;
   readonly minZoom: number;
   readonly maxZoom: number;

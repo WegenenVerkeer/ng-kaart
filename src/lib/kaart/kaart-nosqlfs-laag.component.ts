@@ -1,30 +1,11 @@
 import { Component, Input, ViewEncapsulation } from "@angular/core";
+import { fromNullable } from "fp-ts/lib/Option";
 
 import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartLaagComponent } from "./kaart-laag.component";
 import { NosqlFsSource } from "../source/nosql-fs-source";
-
-const stdStijl = new ol.style.Style({
-  fill: new ol.style.Fill({
-    color: "gray"
-  }),
-  stroke: new ol.style.Stroke({
-    color: "darkslateblue ",
-    width: 4
-  }),
-  image: new ol.style.Circle({
-    fill: new ol.style.Fill({
-      color: "maroon"
-    }),
-    stroke: new ol.style.Stroke({
-      color: "gray",
-      width: 1.25
-    }),
-    radius: 5
-  })
-});
 
 @Component({
   selector: "awv-kaart-nosqlfs-laag",
@@ -35,7 +16,8 @@ export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
   @Input() url = "/geolatte-nosqlfs";
   @Input() database: string;
   @Input() collection: string;
-  @Input() style: ol.style.Style = stdStijl;
+  @Input() style?: ol.style.Style = undefined;
+  @Input() styleFunction?: ol.StyleFunction = undefined;
   @Input() zichtbaar = true;
   @Input() selecteerbaar = true;
   @Input() minZoom = 7;
@@ -52,7 +34,8 @@ export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
       type: ke.VectorType,
       titel: this.titel,
       source: new NosqlFsSource(this.database, this.collection, this.url, this.view, this.filter),
-      style: this.style,
+      style: fromNullable(this.style),
+      styleFunction: fromNullable(this.styleFunction),
       selecteerbaar: this.selecteerbaar,
       minZoom: this.minZoom,
       maxZoom: this.maxZoom

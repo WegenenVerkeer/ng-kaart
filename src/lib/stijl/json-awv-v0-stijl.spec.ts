@@ -1,6 +1,6 @@
 import * as ol from "openlayers";
 
-import { jsonAwvV0Style } from "./json-awv-v0-interpreter";
+import { jsonAwvV0Style } from "./json-awv-v0-stijl";
 import { ok } from "./json-object-interpreting";
 
 describe("De json AWV V0 interpreter", () => {

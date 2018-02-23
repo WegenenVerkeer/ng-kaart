@@ -15,12 +15,12 @@ import { ClickOutsideModule } from "ng4-click-outside";
     BrowserModule,
     BrowserAnimationsModule,
     KaartModule.withDefaults(),
-    // FormsModule,
+    FormsModule,
     GoogleLocatieZoekerModule.forRoot({
       // ssh tunnel naar apigateway van dev - ssh -L 5100:apigateway.dev.awv.internal:80 management.apps.mow.vlaanderen.be
       url: "http://apigateway:5100/locatiezoeker"
     }),
-    // ClickOutsideModule,
+    ClickOutsideModule,
     HttpModule
   ],
   providers: [],

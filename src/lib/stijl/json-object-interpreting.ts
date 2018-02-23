@@ -1,11 +1,8 @@
-import { Option, none, some } from "fp-ts/lib/Option";
+import { Option, none, some, fromNullable } from "fp-ts/lib/Option";
 import { monoidString } from "fp-ts/lib/Monoid";
 import * as array from "fp-ts/lib/Array";
 import * as validation from "fp-ts/lib/Validation";
 import * as traversable from "fp-ts/lib/Traversable";
-
-// De error zou enkel voor ontwikkelaars mogen zijn. Als ook gebruikers vrij definities mogen opladen,
-// dan zou een echte Validation beter zijn.
 
 export type Error = string;
 export type Validation<T> = validation.Validation<string, T>;
@@ -15,16 +12,12 @@ export type Interpreter<T> = (obj: Object) => Validation<T>;
 // Basis functies
 //
 
-const failure = [
-  validation.success<string, number>(1),
-  validation.failure(monoidString)("[fail 1]"),
-  validation.failure(monoidString)("[fail 2]")
-];
-
+// TODO een list ipv monoidString
 export const fail = <T>(error: Error) => validation.failure(monoidString)<T>(error);
 export const ok = <T>(style: T) => validation.success<Error, T>(style);
 
 export const str: Interpreter<string> = (json: Object) => {
+  // noinspection SuspiciousTypeOfGuard
   if (typeof json === "string") {
     return ok(json as string);
   } else {
@@ -33,6 +26,7 @@ export const str: Interpreter<string> = (json: Object) => {
 };
 
 export const num: Interpreter<number> = (json: Object) => {
+  // noinspection SuspiciousTypeOfGuard
   if (typeof json === "number") {
     return ok(json as number);
   } else {
@@ -41,6 +35,7 @@ export const num: Interpreter<number> = (json: Object) => {
 };
 
 export const bool: Interpreter<boolean> = (json: Object) => {
+  // noinspection SuspiciousTypeOfGuard
   if (typeof json === "boolean") {
     return ok(json as boolean);
   } else {
@@ -50,6 +45,10 @@ export const bool: Interpreter<boolean> = (json: Object) => {
 
 export function field<T>(name: string, interpreter: Interpreter<T>): Interpreter<T> {
   return (json: Object) => (json.hasOwnProperty(name) ? interpreter(json[name]) : fail(`'${toString(json)}' heeft geen veld '${name}'`));
+}
+
+export function optional<T>(interpreter: Interpreter<T>): Interpreter<Option<T>> {
+  return firstOf(map<T, Option<T>>(some, interpreter), succeed(none));
 }
 
 export function at<T>(nest: Array<string>, interpreter: Interpreter<T>): Interpreter<T> {
@@ -67,6 +66,10 @@ export function reqField<T>(name: string, interpreter: Interpreter<T>): Interpre
 export function optField<T>(name: string, interpreter: Interpreter<T>): Interpreter<Option<T>> {
   // Kan ook met een fold op field, maar gezien deze methode meer gebruikt wordt en de velden doorgaans undefined zijn, is dit effciënter.
   return (json: Object) => (json.hasOwnProperty(name) ? interpreter(json[name]).map(some) : ok(none));
+}
+
+export function succeed<T>(t: T): Interpreter<T> {
+  return () => ok(t);
 }
 
 function validateArray<T>(jsonArray: Array<T>, interpreter: Interpreter<T>): Validation<Array<T>> {
@@ -109,6 +112,10 @@ export function enu<T extends string>(...values: T[]): Interpreter<T> {
     );
 }
 
+/**
+ * Selecteert de eerste interpreter die een niet-none resultaat oplevert. Indien geen enkele interpreter een niet-none resultaat oplevert,
+ * is het resultaat none. Geen enkele van de interpreters mag een failure geven.
+ */
 export function atMostOneOf<T>(...interpreters: Interpreter<Option<T>>[]): Interpreter<Option<T>> {
   return (json: Object) => {
     const validations: Validation<Array<Option<T>>> = sequence(array.map(i => i(json), interpreters));
@@ -123,6 +130,21 @@ export function atMostOneOf<T>(...interpreters: Interpreter<Option<T>>[]): Inter
           return fail("Er mag maar 1 waarde aanwezig zijn");
       }
     });
+  };
+}
+
+/**
+ * Probeert de interpreters tot er één een succesvolle validatie oplevert. Faalt als er zo geen gevonden kan worden.
+ */
+export function firstOf<T>(...interpreters: Interpreter<T>[]): Interpreter<T> {
+  return (json: Object) => {
+    for (const interpreter of interpreters) {
+      const validated = interpreter(json);
+      if (validated.isSuccess()) {
+        return validated;
+      }
+    }
+    return fail("Er moet 1 waarde aanwezig zijn");
   };
 }
 
@@ -328,7 +350,7 @@ export function map11<A1, A2, A3, A4, A5, A6, A7, A8, A9, A10, A11, Value>(
 }
 
 export function pure<T>(t: T): Interpreter<T> {
-  return (_: Object) => ok(t);
+  return () => ok(t);
 }
 
 export function andMap<A, B>(interpreterA: Interpreter<A>, interpreterFA: Interpreter<(a: A) => B>): Interpreter<B> {
@@ -338,22 +360,51 @@ export function andMap<A, B>(interpreterA: Interpreter<A>, interpreterFA: Interp
 export const ap = <A, B>(interpreterFA: Interpreter<(a: A) => B>) => (interpreterA: Interpreter<A>): Interpreter<B> => (json: Object) =>
   interpreterA(json).chain(a => interpreterFA(json).map(fa => fa(a)));
 
+export const chain = <A, B>(interpreterA: Interpreter<A>, fa: (a: A) => Interpreter<B>): Interpreter<B> => (json: Object) =>
+  interpreterA(json).chain(a => fa(a)(json));
+
+export const injectFirst = <A>(extraJson: Object, interpreterA: Interpreter<A>): Interpreter<A> => (json: Object) =>
+  interpreterA(mergeDeep(extraJson, json));
+
+function isObject(item) {
+  return item && typeof item === "object" && !Array.isArray(item);
+}
+
+function mergeDeep<T>(base: T, overlay: T) {
+  const output = Object.assign({}, base);
+  if (isObject(base) && isObject(overlay)) {
+    Object.keys(overlay).forEach(overlayKey => {
+      if (isObject(overlay[overlayKey])) {
+        if (!(overlayKey in base)) {
+          Object.assign(output, { [overlayKey]: overlay[overlayKey] });
+        } else {
+          output[overlayKey] = mergeDeep(base[overlayKey], overlay[overlayKey]);
+        }
+      } else {
+        Object.assign(output, { [overlayKey]: overlay[overlayKey] });
+      }
+    });
+  }
+  return output;
+}
+
 export type InterpreterOptionalRecord<A> = { readonly [P in keyof A]: Interpreter<Option<A[P]>> };
 
 function interpretRecord<A>(record: InterpreterOptionalRecord<A>): Interpreter<A> {
   return (json: Object) => {
     const result = {} as Partial<A>; // Omdat we overal undefined willen kunnen zetten
-    const validations = new Array<Validation<any>>();
+    const validations = new Array<Validation<void>>();
     // tslint:disable-next-line:forin
     for (const k in record) {
+      // noinspection JSUnfilteredForInLoop
       const validationOutcome: Validation<Option<A[keyof A]>> = record[k](json);
       // zet alle resultaten waarvoor de validation ok is
       validationOutcome.map(maybeValue => (result[k] = maybeValue.toUndefined())); // forEach
       // combineer alle fails, map de ok's weg (probleem is dat die allemaal een ander type hebben)
-      validations.push(validationOutcome.map(_ => {}));
+      validations.push(validationOutcome.map(() => {}));
     }
     // De gesequencte validation is ok als alle deelvalidations ok zijn
-    return sequence(validations).map(_ => result as A); // we hebben het echte resultaat al in de for loop gezet
+    return sequence(validations).map(() => result as A); // we hebben het echte resultaat al in de for loop gezet
   };
 }
 
@@ -363,6 +414,14 @@ function sequence<T>(validations: Array<Validation<T>>) {
 
 export function mapRecord<A, B>(f: (a: A) => B, record: InterpreterOptionalRecord<A>): Interpreter<B> {
   return map(f, interpretRecord(record));
+}
+
+export function byTypeDiscriminator<T>(discriminatorField: string, interpretersByKind: { [k: string]: Interpreter<T> }): Interpreter<T> {
+  return (json: Object) => {
+    return chain(field(discriminatorField, str), (kind: string) =>
+      fromNullable(interpretersByKind[kind]).getOrElseValue(() => fail<T>(`Het typediscriminatieveld bevat een onbekend type '${kind}'`))
+    )(json);
+  };
 }
 
 export function toString(json: Object): string {

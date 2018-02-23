@@ -1,6 +1,6 @@
 import * as ol from "openlayers";
 
-import { definitieToStyle } from "./stijl-interpreter";
+import { definitieToStyle } from "./stijl-static";
 import { ok } from "./json-object-interpreting";
 
 describe("De stijl interpreter", () => {
@@ -12,8 +12,8 @@ describe("De stijl interpreter", () => {
         const result = definitieToStyle(
           "json",
           JSON.stringify({
-            versie: "awv-v0",
-            definitie: {
+            version: "awv-v0",
+            definition: {
               stroke: {
                 color: "#FF0",
                 width: 5
@@ -37,8 +37,8 @@ describe("De stijl interpreter", () => {
         const result = definitieToStyle(
           "json",
           JSON.stringify({
-            versie: "awv-v0",
-            definitie: {
+            version: "awv-v0",
+            definition: {
               fill: {
                 color: "green"
               }
@@ -60,8 +60,8 @@ describe("De stijl interpreter", () => {
         const result = definitieToStyle(
           "json",
           JSON.stringify({
-            versie: "awv-v0",
-            definitie: {
+            version: "awv-v0",
+            definition: {
               circle: {
                 stroke: {
                   color: "yellow",
@@ -101,8 +101,8 @@ describe("De stijl interpreter", () => {
       const result = definitieToStyle(
         "json",
         JSON.stringify({
-          versie: "awv-v0",
-          definitie: {
+          version: "awv-v0",
+          definition: {
             stroke: {
               color: "red",
               width: 1
@@ -129,12 +129,59 @@ describe("De stijl interpreter", () => {
     });
   });
 
+  describe("bij het converteren van een shortcut stijl", () => {
+    describe("Met alleen een shortcutstijl", () => {
+      it("moet een lijnstijl expanderen", () => {
+        const result = definitieToStyle(
+          "json",
+          JSON.stringify({
+            version: "awv-v0",
+            shortcut: { fullLine: { color: "yellow", width: 5 } },
+            definition: {}
+          })
+        );
+        expect(result).toEqual(
+          ok(
+            new ol.style.Style({
+              stroke: new ol.style.Stroke({
+                color: "yellow",
+                width: 5
+              })
+            })
+          )
+        );
+      });
+    });
+    describe("Met een override", () => {
+      it("moet de voorgedefinieerde opties overschrijven", () => {
+        const result = definitieToStyle(
+          "json",
+          JSON.stringify({
+            version: "awv-v0",
+            shortcut: { fullLine: { color: "yellow", width: 5 } },
+            definition: { stroke: { color: "red" } }
+          })
+        );
+        expect(result).toEqual(
+          ok(
+            new ol.style.Style({
+              stroke: new ol.style.Stroke({
+                color: "red",
+                width: 5
+              })
+            })
+          )
+        );
+      });
+    });
+  });
+
   describe("Bij het converteren van een ongeldige stijl", () => {
     describe("wanneer het format niet ondersteund is", () => {
       it("moet een fout mbt tot het ontbrekende veldje geven", () => {
         const result = definitieToStyle("xml", "<style></style>");
         expect(result.isFailure()).toBe(true);
-        expect(result.value).toEqual("Formaat 'xml' wordt niet ondersteund");
+        expect(result.value).toEqual("Encoding 'xml' wordt niet ondersteund");
       });
     });
 
@@ -143,12 +190,12 @@ describe("De stijl interpreter", () => {
         const result = definitieToStyle(
           "json",
           JSON.stringify({
-            versie: "awv-v0",
+            version: "awv-v0",
             diefnty: {}
           })
         );
         expect(result.isFailure()).toBe(true);
-        expect(result.value).toContain("geen veld 'definitie'");
+        expect(result.value).toContain("geen veld 'definition'");
       });
     });
   });

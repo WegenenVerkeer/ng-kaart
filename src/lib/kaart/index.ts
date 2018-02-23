@@ -13,7 +13,7 @@ import { KaartTekenPolygoonLaagComponent } from "./kaart-teken-polygoon-laag.com
 import { KaartFeaturesLaagComponent } from "./kaart-toon-features.component";
 import { KaartKnopVolledigSchermComponent } from "./kaart-knop-volledig-scherm.component";
 import { KaartSchaalComponent } from "./kaart-schaal.component";
-import { KaartConfig, KAART_CFG } from "./kaart.config";
+import { KaartConfig, defaultKaartConfig, KAART_CFG } from "./kaart.config";
 import { KaartTilecacheLaagComponent } from "./kaart-tilecache-laag.component";
 import { KaartGeoserverLaagComponent } from "./kaart-geoserver-laag.component";
 import { KaartOrthoLaagComponent } from "./kaart-ortho-laag.component";
@@ -53,34 +53,7 @@ const components: any[] = [
   providers: [CoordinatenService, ReplaySubjectKaartEventDispatcher]
 })
 export class KaartModule {
-  static defaultConfig: KaartConfig = {
-    geoserver: {
-      urls: [
-        "https://wms1.apps.mow.vlaanderen.be/geoserver/service/wms",
-        "https://wms2.apps.mow.vlaanderen.be/geoserver/service/wms",
-        "https://wms3.apps.mow.vlaanderen.be/geoserver/service/wms"
-      ]
-    },
-    tilecache: {
-      urls: [
-        "https://wms1.apps.mow.vlaanderen.be/geowebcache/service/wms",
-        "https://wms2.apps.mow.vlaanderen.be/geowebcache/service/wms",
-        "https://wms3.apps.mow.vlaanderen.be/geowebcache/service/wms"
-      ]
-    },
-    orthofotomozaiek: {
-      naam: "Ortho",
-      urls: ["http://geoservices.informatievlaanderen.be/raadpleegdiensten/omwrgbmrvl/wms"]
-    },
-    srs: "EPSG:31370",
-    defaults: {
-      zoom: 2,
-      middelpunt: [130000, 193000],
-      grootte: [undefined, 500],
-      resolutions: [1024.0, 512.0, 256.0, 128.0, 64.0, 32.0, 16.0, 8.0, 4.0, 2.0, 1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125],
-      extent: [18000.0, 152999.75, 280144.0, 415143.75]
-    }
-  };
+  static defaultConfig = defaultKaartConfig;
 
   static forRoot(config: KaartConfig): ModuleWithProviders {
     return {
