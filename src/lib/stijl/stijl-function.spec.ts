@@ -51,7 +51,7 @@ describe("de stijl selector", () => {
                   kind: "&&",
                   left: {
                     kind: "==",
-                    left: { kind: "Feature", type: "string", ref: "offsetZijde" },
+                    left: { kind: "Property", type: "string", ref: "offsetZijde" },
                     right: { kind: "Literal", value: "R" }
                   },
                   right: {
@@ -160,24 +160,21 @@ describe("de stijl selector", () => {
           }
         });
 
-      const resultInside = definitieToStyleFunction("json", lowercaseStanza("Abc", "abc"));
-      console.log(resultInside);
-      expect(resultInside.isSuccess()).toBe(true);
-      expect(resultInside.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(new ol.style.Style());
+      const resultLeftUpper = definitieToStyleFunction("json", lowercaseStanza("Abc", "abc"));
+      expect(resultLeftUpper.isSuccess()).toBe(true);
+      expect(resultLeftUpper.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(new ol.style.Style());
 
-      const resultBelow = definitieToStyleFunction("json", lowercaseStanza("abc", "Abc")); // enkel lowercase van left
-      console.log(resultBelow);
-      expect(resultBelow.isSuccess()).toBe(true);
-      expect(resultBelow.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(undefined);
+      const resultRightUpper = definitieToStyleFunction("json", lowercaseStanza("abc", "Abc")); // enkel lowercase van left
+      expect(resultRightUpper.isSuccess()).toBe(true);
+      expect(resultRightUpper.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(undefined);
 
-      const resultAbove = definitieToStyleFunction("json", lowercaseStanza("Abc", "Abc")); // right moet lowercase zijn
-      console.log(resultAbove);
-      expect(resultAbove.isSuccess()).toBe(true);
-      expect(resultAbove.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(undefined);
+      const resultBothUpper = definitieToStyleFunction("json", lowercaseStanza("Abc", "Abc")); // right moet lowercase zijn
+      expect(resultBothUpper.isSuccess()).toBe(true);
+      expect(resultBothUpper.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(undefined);
     });
 
     describe("bij het refereren aan feature properties", () => {
-      it("moet de waarde van de feature gebruiken", () => {
+      it("moet de waarde van de property gebruiken", () => {
         const result = definitieToStyleFunction(
           "json",
           JSON.stringify({
@@ -187,7 +184,7 @@ describe("de stijl selector", () => {
                 {
                   condition: {
                     kind: "==",
-                    left: { kind: "Feature", type: "string", ref: "offsetZijde" },
+                    left: { kind: "Property", type: "string", ref: "offsetZijde" },
                     right: { kind: "Literal", value: "R" }
                   },
                   style: {
@@ -213,7 +210,7 @@ describe("de stijl selector", () => {
                 {
                   condition: {
                     kind: "==",
-                    left: { kind: "Feature", type: "string", ref: "onbestaand" },
+                    left: { kind: "Property", type: "string", ref: "onbestaand" },
                     right: { kind: "Literal", value: "R" }
                   },
                   style: {
@@ -239,7 +236,7 @@ describe("de stijl selector", () => {
                 {
                   condition: {
                     kind: "==",
-                    left: { kind: "Feature", type: "string", ref: "nullProp" },
+                    left: { kind: "Property", type: "string", ref: "nullProp" },
                     right: { kind: "Literal", value: "R" }
                   },
                   style: {
@@ -265,7 +262,7 @@ describe("de stijl selector", () => {
                 {
                   condition: {
                     kind: "==",
-                    left: { kind: "Feature", type: "string", ref: "undefinedProp" },
+                    left: { kind: "Property", type: "string", ref: "undefinedProp" },
                     right: { kind: "Literal", value: "R" }
                   },
                   style: {
@@ -291,7 +288,7 @@ describe("de stijl selector", () => {
                 {
                   condition: {
                     kind: "==",
-                    left: { kind: "Feature", type: "boolean", ref: "boolProp" },
+                    left: { kind: "Property", type: "boolean", ref: "boolProp" },
                     right: { kind: "Literal", value: false }
                   },
                   style: {
@@ -306,7 +303,7 @@ describe("de stijl selector", () => {
         expect(result.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(new ol.style.Style({}));
       });
 
-      it("moet de conditie falen als het actuele type van de feature niet overeenstemt met het gedeclareerde", () => {
+      it("moet de conditie falen als het actuele type van de property niet overeenstemt met het gedeclareerde", () => {
         const result = definitieToStyleFunction(
           "json",
           JSON.stringify({
@@ -316,7 +313,7 @@ describe("de stijl selector", () => {
                 {
                   condition: {
                     kind: "==",
-                    left: { kind: "Feature", type: "string", ref: "numProp" },
+                    left: { kind: "Property", type: "string", ref: "numProp" },
                     right: { kind: "Literal", value: "R" }
                   },
                   style: {

@@ -26,7 +26,7 @@ export interface Rule {
   readonly style: object; // dit zou een verwijzing naar het type van de custom stijl kunnen zijn mochten we dat hebben
 }
 
-export type Expression = Literal | EnvironmentExtraction | FeatureExtraction | FunctionEvaluation;
+export type Expression = Literal | EnvironmentExtraction | PropertyExtraction | FunctionEvaluation;
 
 export type TypeType = "boolean" | "string" | "number";
 
@@ -37,8 +37,8 @@ export interface Literal {
   readonly value: ValueType;
 }
 
-export interface FeatureExtraction {
-  readonly kind: "Feature";
+export interface PropertyExtraction {
+  readonly kind: "Property";
   readonly type: TypeType;
   readonly ref: string;
 }
@@ -52,7 +52,7 @@ export interface EnvironmentExtraction {
 export type FunctionEvaluation = Exists | Comparison | Combination | Negation | Between;
 
 export interface Exists {
-  readonly kind: "FeatureExists" | "EnvironmentExists";
+  readonly kind: "PropertyExists" | "EnvironmentExists";
   readonly ref: string;
 }
 
@@ -87,19 +87,19 @@ export interface Between {
 //
 
 export const Literal = (value: ValueType) => ({ kind: "Literal", value: value } as Literal);
-export const FeatureExtraction = (typeName: TypeType, ref: string) =>
+export const PropertyExtraction = (typeName: TypeType, ref: string) =>
   ({
-    kind: "Feature",
+    kind: "Property",
     type: typeName,
     ref: ref
-  } as FeatureExtraction);
+  } as PropertyExtraction);
 export const EnvironmentExtraction = (typeName: TypeType, ref: string) =>
   ({
     kind: "Environment",
     type: typeName,
     ref: ref
   } as EnvironmentExtraction);
-export const Exists = (kind: "FeatureExists" | "EnvironmentExists") => (ref: String) =>
+export const Exists = (kind: "PropertyExists" | "EnvironmentExists") => (ref: String) =>
   ({
     kind: kind,
     ref: ref

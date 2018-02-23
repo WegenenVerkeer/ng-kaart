@@ -27,7 +27,7 @@ export class AppComponent {
         {
           condition: {
             kind: "==",
-            left: { kind: "Feature", type: "string", ref: "typefietspad" },
+            left: { kind: "Property", type: "string", ref: "typefietspad" },
             right: { kind: "Literal", value: "Vrijliggend" }
           },
           style: {
@@ -37,7 +37,7 @@ export class AppComponent {
         {
           condition: {
             kind: "==",
-            left: { kind: "Feature", type: "string", ref: "typefietspad" },
+            left: { kind: "Property", type: "string", ref: "typefietspad" },
             right: { kind: "Literal", value: "Aanliggend Verhoogd" }
           },
           style: {
@@ -47,7 +47,7 @@ export class AppComponent {
         {
           condition: {
             kind: "==",
-            left: { kind: "Feature", type: "string", ref: "typefietspad" },
+            left: { kind: "Property", type: "string", ref: "typefietspad" },
             right: { kind: "Literal", value: "Aanliggend" }
           },
           style: {

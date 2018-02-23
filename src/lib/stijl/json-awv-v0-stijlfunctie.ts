@@ -3,7 +3,7 @@ import * as oi from "./json-object-interpreting";
 import { fail, ok, Interpreter, Validation } from "./json-object-interpreting";
 import {
   EnvironmentExtraction,
-  FeatureExtraction,
+  PropertyExtraction,
   Exists,
   Combination,
   Comparison,
@@ -51,8 +51,8 @@ const jsonAwvV0RuleConfig: Interpreter<RuleStyleConfig> = (json: Object) => {
     o === "boolean" || o === "string" || o === "number" ? ok(o as TypeType) : fail(`Het type moet 'boolean' of 'string' of 'number' zijn`);
   const literal: Interpreter<Expression> = oi.map(Literal, oi.field("value", oi.firstOf<ValueType>(oi.str, oi.bool, oi.num)));
   const environment: Interpreter<Expression> = oi.map2(EnvironmentExtraction, oi.field("type", typeType), oi.field("ref", oi.str));
-  const feature: Interpreter<Expression> = oi.map2(FeatureExtraction, oi.field("type", typeType), oi.field("ref", oi.str));
-  const featureExists: Interpreter<Expression> = oi.map(Exists("FeatureExists"), oi.field("ref", oi.str));
+  const property: Interpreter<Expression> = oi.map2(PropertyExtraction, oi.field("type", typeType), oi.field("ref", oi.str));
+  const propertyExists: Interpreter<Expression> = oi.map(Exists("PropertyExists"), oi.field("ref", oi.str));
   const environmentExists: Interpreter<Expression> = oi.map(Exists("EnvironmentExists"), oi.field("ref", oi.str));
   const comparison: (kind: ComparisonOperator) => Interpreter<Expression> = (kind: ComparisonOperator) =>
     oi.map2(Comparison(kind), oi.field("left", o => expression(o)), oi.field("right", o => expression(o)));
@@ -67,9 +67,9 @@ const jsonAwvV0RuleConfig: Interpreter<RuleStyleConfig> = (json: Object) => {
   );
   const expression = oi.byTypeDiscriminator("kind", {
     Literal: literal,
-    Feature: feature,
+    Property: property,
     Environment: environment,
-    FeatureExists: featureExists,
+    PropertyExists: propertyExists,
     EnvironmentExists: environmentExists,
     "<": comparison("<"),
     "<=": comparison("<="),
@@ -179,7 +179,7 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
         return leftRight((a, b) => a >= b, allTypes2("number"), "boolean", expression);
       case "L==":
         return leftRight((a: string, b: string) => a.toLowerCase() === b, allTypes2("string"), "boolean", expression);
-      case "FeatureExists":
+      case "PropertyExists":
         return ok(TypedEvaluator(checkFeatureDefined(expression.ref), "boolean"));
       case "EnvironmentExists": {
         const envIsResolution = some(expression.ref === "resolution"); // berekenen at compile time!
@@ -201,7 +201,7 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
             typeof expression.value as TypeType // Het type van ValueType is TypeType bij constructie
           )
         );
-      case "Feature":
+      case "Property":
         return ok(TypedEvaluator(getFeat(expression.ref, expression.type), expression.type));
       case "Environment":
         return expression.ref === "resolution" && expression.type === "number"
