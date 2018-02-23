@@ -1,16 +1,18 @@
-import { definitieToStyleFunction } from "./stijl-selector";
+import { definitieToStyleFunction } from "./stijl-function";
 
 import * as ol from "openlayers";
 
 describe("de stijl selector", () => {
   describe("bij het evalueren van geldige stijlselectiefuncties", () => {
     const feature = new ol.Feature({
-      offsetZijde: "R",
-      textProp: "text",
-      numProp: 3.1415,
-      boolProp: false,
-      nullProp: null,
-      undefinedProp: undefined
+      properties: {
+        offsetZijde: "R",
+        textProp: "text",
+        numProp: 3.1415,
+        boolProp: false,
+        nullProp: null,
+        undefinedProp: undefined
+      }
     });
     const resolution = 32;
     it("moet een stijl selecteren adhv een enkele regel obv een Literal", () => {

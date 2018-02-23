@@ -1,2 +1,2 @@
-export * from "./stijl-interpreter";
-export * from "./stijl-selector";
+export * from "./stijl-static";
+export * from "./stijl-function";

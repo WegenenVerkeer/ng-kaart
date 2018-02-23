@@ -1,6 +1,6 @@
 import * as ol from "openlayers";
 
-import { definitieToStyle } from "./stijl-interpreter";
+import { definitieToStyle } from "./stijl-static";
 import { ok } from "./json-object-interpreting";
 
 describe("De stijl interpreter", () => {

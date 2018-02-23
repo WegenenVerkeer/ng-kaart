@@ -5,7 +5,7 @@ import * as ol from "openlayers";
 
 import { Interpreter, ok, fail, Validation } from "./json-object-interpreting";
 import * as oi from "./json-object-interpreting";
-import { shortcutOrFullStyle } from "./json-awv-v0-interpreter";
+import { shortcutOrFullStyle } from "./json-awv-v0-stijl";
 import { monoidString } from "fp-ts/lib/Monoid";
 
 ///////////////////////////////////////////
