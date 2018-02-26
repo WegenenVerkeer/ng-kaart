@@ -6,6 +6,7 @@ import * as ke from "./kaart-elementen";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartLaagComponent } from "./kaart-laag.component";
 import { NosqlFsSource } from "../source/nosql-fs-source";
+import { orElse } from "../util/option";
 
 @Component({
   selector: "awv-kaart-nosqlfs-laag",
@@ -34,8 +35,7 @@ export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
       type: ke.VectorType,
       titel: this.titel,
       source: new NosqlFsSource(this.database, this.collection, this.url, this.view, this.filter),
-      style: fromNullable(this.style),
-      styleFunction: fromNullable(this.styleFunction),
+      styleSelector: orElse(fromNullable(this.style).map(ke.StaticStyle), () => fromNullable(this.styleFunction).map(ke.DynamicStyle)),
       selecteerbaar: this.selecteerbaar,
       minZoom: this.minZoom,
       maxZoom: this.maxZoom

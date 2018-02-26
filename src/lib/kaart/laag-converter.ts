@@ -4,7 +4,6 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import { kaartLogger } from "./log";
 import * as ke from "./kaart-elementen";
-import { orElse } from "../util/option";
 
 export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {
   function createdTileWms(l: ke.WmsLaag) {
@@ -79,7 +78,9 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
   type Stylish = ol.StyleFunction | ol.style.Style | ol.style.Style[];
 
   function determineStyle(vectorlaag: ke.VectorLaag, defaultStyle: ol.style.Style): Stylish {
-    return orElse<Stylish>(vectorlaag.styleFunction, () => vectorlaag.style).getOrElseValue(defaultStyle);
+    return vectorlaag.styleSelector
+      .map(selector => (selector.type === "StaticStyle" ? selector.style : selector.styleFunction))
+      .getOrElseValue(defaultStyle);
   }
 
   switch (laag.type) {
