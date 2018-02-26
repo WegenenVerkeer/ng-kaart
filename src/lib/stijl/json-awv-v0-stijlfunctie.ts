@@ -14,7 +14,7 @@ import {
   TypeType,
   ValueType,
   Negation
-} from "./stijl-function";
+} from "./stijl-function-types";
 import { monoidString } from "fp-ts/lib/Monoid";
 import * as ol from "openlayers";
 import * as option from "fp-ts/lib/Option";

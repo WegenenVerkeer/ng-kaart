@@ -12,6 +12,18 @@ export const BlancoType = "LaagType.Blanco";
 export type BlancoType = "LaagType.Blanco";
 export type LaagType = SingleTileWmsType | TiledWmsType | VectorType | BlancoType;
 
+export interface StaticStyle {
+  readonly type: "StaticStyle";
+  readonly style: ol.style.Style;
+}
+
+export interface DynamicStyle {
+  readonly type: "DynamicStyle";
+  readonly styleFunction: ol.StyleFunction;
+}
+
+export type StyleSelector = StaticStyle | DynamicStyle;
+
 export interface WmsLaag {
   readonly type: SingleTileWmsType | TiledWmsType;
   readonly titel: string;
@@ -26,8 +38,7 @@ export interface VectorLaag {
   readonly type: VectorType;
   readonly titel: string;
   readonly source: ol.source.Vector;
-  readonly style: Option<ol.style.Style>;
-  readonly styleFunction: Option<ol.StyleFunction>;
+  readonly styleSelector: Option<StyleSelector>;
   readonly selecteerbaar: boolean;
   readonly minZoom: number;
   readonly maxZoom: number;
@@ -46,4 +57,18 @@ export function isWmsLaag(laag: Laag): boolean {
 
 export function isBlancoLaag(laag: Laag): boolean {
   return laag.type === BlancoType;
+}
+
+export function StaticStyle(style: ol.style.Style): StyleSelector {
+  return {
+    type: "StaticStyle",
+    style: style
+  };
+}
+
+export function DynamicStyle(styleFunction: ol.StyleFunction): StyleSelector {
+  return {
+    type: "DynamicStyle",
+    styleFunction: styleFunction
+  };
 }

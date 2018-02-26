@@ -2,7 +2,7 @@ import { definitieToStyleFunction } from "./stijl-function";
 
 import * as ol from "openlayers";
 
-describe("de stijl selector", () => {
+describe("de stijl functie", () => {
   describe("bij het evalueren van geldige stijlselectiefuncties", () => {
     const feature = new ol.Feature({
       properties: {

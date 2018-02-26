@@ -5,6 +5,7 @@ import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartLaagComponent } from "./kaart-laag.component";
+import { orElse } from "../util/option";
 
 @Component({
   selector: "awv-kaart-vector-laag",
@@ -29,8 +30,7 @@ export class KaartVectorLaagComponent extends KaartLaagComponent {
       type: ke.VectorType,
       titel: this.titel,
       source: this.source,
-      style: fromNullable(this.style),
-      styleFunction: fromNullable(this.styleFunction),
+      styleSelector: orElse(fromNullable(this.style).map(ke.StaticStyle), () => fromNullable(this.styleFunction).map(ke.DynamicStyle)),
       selecteerbaar: this.selecteerbaar,
       minZoom: this.minZoom,
       maxZoom: this.maxZoom
