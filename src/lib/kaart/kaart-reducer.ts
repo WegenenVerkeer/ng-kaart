@@ -271,7 +271,7 @@ function replaceFeatures(kaart: KaartWithInfo, titel: string, features: List<ol.
 }
 
 function asVectorLayer(layer: ol.layer.Base): Option<ol.layer.Vector> {
-  return layer.hasOwnProperty("getSource") ? some(layer as ol.layer.Vector) : none;
+  return layer["getSource"] ? some(layer as ol.layer.Vector) : none; // gebruik geen hasOwnProperty("getSource")! Geeft altijd false
 }
 
 const addNewBackgroundsToMap: ModelUpdater = (kaart: KaartWithInfo) => {
