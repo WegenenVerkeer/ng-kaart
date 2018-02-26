@@ -1,5 +1,5 @@
 import { Component, Input, ViewEncapsulation } from "@angular/core";
-import { fromNullable } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 
 import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";
@@ -33,9 +33,9 @@ export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
     return {
       type: ke.VectorType,
       titel: this.titel,
-      source: new NosqlFsSource(this.database, this.collection, this.url, this.view, this.filter),
-      style: fromNullable(this.style),
-      styleFunction: fromNullable(this.styleFunction),
+      source: new NosqlFsSource(this.database, this.collection, this.url, option.fromNullable(this.view), option.fromNullable(this.filter)),
+      style: option.fromNullable(this.style),
+      styleFunction: option.fromNullable(this.styleFunction),
       selecteerbaar: this.selecteerbaar,
       minZoom: this.minZoom,
       maxZoom: this.maxZoom

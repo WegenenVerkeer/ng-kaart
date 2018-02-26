@@ -1,5 +1,6 @@
 import * as ol from "openlayers";
 import { kaartLogger } from "../kaart/log";
+import { Option } from "fp-ts/lib/Option";
 
 interface GeoJsonLike {
   type: string;
@@ -15,15 +16,15 @@ export class NosqlFsSource extends ol.source.Vector {
     public database: string,
     public collection: string,
     public url = "/geolatte-nosqlfs",
-    public view = "default",
-    public filter?: string
+    public view: Option<string>,
+    public filter: Option<string>
   ) {
     super({
       loader: function(extent, resolution, projection) {
         const params = {
           bbox: extent.join(","),
-          "with-view": encodeURIComponent(view),
-          ...filter ? { query: encodeURIComponent(filter) } : {}
+          ...view.map(v => ({ "with-view": v })),
+          ...filter.map(f => ({ filter: f }))
         };
 
         const httpUrl = `${url}/api/databases/${database}/${collection}/query?${Object.keys(params)
