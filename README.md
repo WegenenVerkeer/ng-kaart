@@ -34,6 +34,12 @@ Traditioneel gebruikt OpenLayers zoomniveaus en resoluties door elkaar, maar in 
 Ter referentie de overeenkomstige resoluties van onze kaart zijn [1024, 512, 256, 128, 64, 32, 16, 8, 4, 2, 1, 0.5, 0.25, 0.125, 0.0625, 0.03125].
 Dwz standaard start de kaart op zoom niveau 2, resolutie 256.
 
+### Volgorde van lagen
+
+Lagen worden toegevoegd aan de kaart in de volgorde die waarin ze gedefinieerd zijn in de html code. De eerste laag wordt onderaan getoond, alle volgende lagen erboven. Zorg
+er daarom voor dat je eerst achtergrondlagen toevoegt en dan pas vectorlagen, vermits achtergrondlagen meestal
+opaak zijn en de vectorlagen anders niet zichtbaar zullen zijn.
+
 ### Code testen
 
 Deze component library is voorzien van een test Angular app.
