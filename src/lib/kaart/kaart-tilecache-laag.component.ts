@@ -2,7 +2,7 @@ import { Component, Inject, ViewEncapsulation } from "@angular/core";
 import { List } from "immutable";
 
 import * as ke from "./kaart-elementen";
-import { KAART_CFG, KaartConfig } from "./kaart.config";
+import { KAART_CFG, KaartConfig } from "./kaart-config";
 import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { fromNullable } from "fp-ts/lib/Option";

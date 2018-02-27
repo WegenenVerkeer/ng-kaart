@@ -13,7 +13,7 @@ import { KaartTekenPolygoonLaagComponent } from "./kaart-teken-polygoon-laag.com
 import { KaartFeaturesLaagComponent } from "./kaart-toon-features.component";
 import { KaartKnopVolledigSchermComponent } from "./kaart-knop-volledig-scherm.component";
 import { KaartSchaalComponent } from "./kaart-schaal.component";
-import { KaartConfig, defaultKaartConfig, KAART_CFG } from "./kaart.config";
+import { KaartConfig, defaultKaartConfig, KAART_CFG } from "./kaart-config";
 import { KaartTilecacheLaagComponent } from "./kaart-tilecache-laag.component";
 import { KaartGeoserverLaagComponent } from "./kaart-geoserver-laag.component";
 import { KaartOrthoLaagComponent } from "./kaart-ortho-laag.component";
@@ -89,4 +89,5 @@ export * from "./kaart.component";
 export * from "./kaart-event-dispatcher";
 export * from "./kaart-protocol";
 export * from "./kaart-elementen";
+export * from "./kaart-config";
 export * from "./log";

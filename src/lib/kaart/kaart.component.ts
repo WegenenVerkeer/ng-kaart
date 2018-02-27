@@ -9,7 +9,7 @@ import { scan, map, tap, distinctUntilChanged, filter, shareReplay, merge } from
 import proj4 from "proj4";
 import * as ol from "openlayers";
 
-import { KaartConfig, KAART_CFG } from "./kaart.config";
+import { KaartConfig, KAART_CFG } from "./kaart-config";
 import { KaartComponentBase } from "./kaart-component-base";
 import { KaartWithInfo } from "./kaart-with-info";
 import { ReplaySubjectKaartEventDispatcher, KaartEventDispatcher } from "./kaart-event-dispatcher";

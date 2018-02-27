@@ -3,7 +3,7 @@ import { List, Map } from "immutable";
 import { Option, none, some } from "fp-ts/lib/Option";
 
 import * as ke from "./kaart-elementen";
-import { KaartConfig } from "./kaart.config";
+import { KaartConfig } from "./kaart-config";
 
 export class KaartWithInfo {
   constructor(
