@@ -1,7 +1,6 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
 import { Observable } from "rxjs/Observable";
 import { ReplaySubject } from "rxjs/ReplaySubject";
-import isEqual from "lodash-es/isEqual";
 
 import * as ol from "openlayers";
 
@@ -65,10 +64,10 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
     if ("zoom" in changes) {
       this.dispatch(new ZoomChanged(changes.zoom.currentValue));
     }
-    if ("middelpunt" in changes && !isEqual(changes.middelpunt.currentValue, changes.middelpunt.previousValue)) {
+    if ("middelpunt" in changes && !coordinateIsEqual(changes.middelpunt.currentValue)(changes.middelpunt.previousValue)) {
       this.dispatch(new MiddelpuntChanged(changes.middelpunt.currentValue));
     }
-    if ("extent" in changes && !isEqual(changes.extent.currentValue, changes.extent.previousValue)) {
+    if ("extent" in changes && !extentIsEqual(changes.extent.currentValue)(changes.extent.previousValue)) {
       this.dispatch(new ExtentChanged(changes.extent.currentValue));
     }
     if ("breedte" in changes) {
@@ -107,3 +106,8 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 }
+
+const coordinateIsEqual = (coor1: ol.Coordinate) => (coor2: ol.Coordinate) => coor1[0] === coor2[0] && coor1[1] === coor2[1];
+
+const extentIsEqual = (ext1: ol.Extent) => (ext2: ol.Extent) =>
+  ext1[0] === ext2[0] && ext1[1] === ext2[1] && ext1[2] === ext2[2] && ext1[3] === ext2[3];

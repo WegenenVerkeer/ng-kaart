@@ -23,8 +23,8 @@ export class NosqlFsSource extends ol.source.Vector {
       loader: function(extent, resolution, projection) {
         const params = {
           bbox: extent.join(","),
-          ...view.isSome() ? { "with-view": view.getOrElseValue("") } : {},
-          ...filter.isSome() ? { query: encodeURIComponent(filter.getOrElseValue("")) } : {}
+          ...view.fold(() => ({}), v => ({ "with-view": v })),
+          ...filter.fold(() => ({}), f => ({ query: encodeURIComponent(f) }))
         };
 
         const httpUrl = `${url}/api/databases/${database}/${collection}/query?${Object.keys(params)
