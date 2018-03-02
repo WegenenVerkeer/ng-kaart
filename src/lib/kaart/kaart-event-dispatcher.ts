@@ -16,7 +16,10 @@ export class ReplaySubjectKaartEventDispatcher implements KaartEventDispatcher, 
   private readonly eventSubj = new ReplaySubject<prt.KaartEvnt>(1000, 500);
 
   dispatch(evt: prt.KaartEvnt) {
-    this.eventSubj.next(evt);
+    // We willen dat events pas uitgevoerd worden nadat de huidige processing gedaan is,
+    // anders kan een eventhandler het model updaten terwijl een commqandhandler nog niet gereed is,
+    // als die commandhandler dan ook het model update, gebeurt dit in de verkeerde volgorde.
+    setTimeout(() => this.eventSubj.next(evt), 0);
   }
 
   get event$(): Observable<prt.KaartEvnt> {

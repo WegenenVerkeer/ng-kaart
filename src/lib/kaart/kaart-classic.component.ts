@@ -11,7 +11,7 @@ import {
   LoseFocusOnMap,
   MiddelpuntChanged,
   ViewportChanged,
-  ZoomChanged,
+  ChangeZoom,
   KaartEvnt
 } from "./kaart-protocol-events";
 import { ModelConsumer } from "./kaart-protocol";
@@ -45,7 +45,7 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
   ngOnInit() {
     // De volgorde van de dispatching hier is van belang voor wat de overhand heeft
     if (this.zoom) {
-      this.dispatch(new ZoomChanged(this.zoom));
+      this.dispatch(new ChangeZoom(this.zoom));
     }
     if (this.extent) {
       this.dispatch(new ExtentChanged(this.extent));
@@ -62,7 +62,7 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     if ("zoom" in changes) {
-      this.dispatch(new ZoomChanged(changes.zoom.currentValue));
+      this.dispatch(new ChangeZoom(changes.zoom.currentValue));
     }
     if ("middelpunt" in changes && !coordinateIsEqual(changes.middelpunt.currentValue)(changes.middelpunt.previousValue)) {
       this.dispatch(new MiddelpuntChanged(changes.middelpunt.currentValue));

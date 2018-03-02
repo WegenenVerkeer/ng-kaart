@@ -14,6 +14,7 @@ export enum KaartEvntTypes {
   ADDED_STD_INT,
   REMOVED_STD_INT,
   MIDDELPUNT_CHANGED,
+  CHANGE_ZOOM,
   ZOOM_CHANGED,
   EXTENT_CHANGED,
   VIEWPORT_CHANGED,
@@ -90,6 +91,12 @@ export class MiddelpuntChanged implements KaartEvnt {
   readonly type = KaartEvntTypes.MIDDELPUNT_CHANGED;
 
   constructor(readonly coordinate: ol.Coordinate) {}
+}
+
+export class ChangeZoom implements KaartEvnt {
+  readonly type = KaartEvntTypes.CHANGE_ZOOM;
+
+  constructor(readonly zoom: number) {}
 }
 
 export class ZoomChanged implements KaartEvnt {

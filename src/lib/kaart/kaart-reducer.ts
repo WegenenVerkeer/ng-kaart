@@ -224,7 +224,11 @@ function updateMiddelpunt(kaart: KaartWithInfo, coordinate: [number, number]): K
 
 function updateZoom(kaart: KaartWithInfo, zoom: number): KaartWithInfo {
   kaart.map.getView().setZoom(zoom);
-  return { ...kaart, zoom: some(kaart.map.getView().getZoom()), extent: some(kaart.map.getView().calculateExtent(kaart.map.getSize())) };
+  return kaart;
+}
+
+function zoomChanged(kaart: KaartWithInfo, zoom: number): KaartWithInfo {
+  return { ...kaart, zoom: kaart.map.getView().getZoom(), extent: some(kaart.map.getView().calculateExtent(kaart.map.getSize())) };
 }
 
 function updateExtent(kaart: KaartWithInfo, extent: ol.Extent): KaartWithInfo {
@@ -232,7 +236,7 @@ function updateExtent(kaart: KaartWithInfo, extent: ol.Extent): KaartWithInfo {
   return {
     ...kaart,
     middelpunt: some(kaart.map.getView().getCenter()),
-    zoom: some(kaart.map.getView().getZoom()),
+    zoom: kaart.map.getView().getZoom(),
     extent: some(kaart.map.getView().calculateExtent(kaart.map.getSize()))
   };
 }
@@ -312,8 +316,10 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWit
       return removeStandaardInteracties(kaart);
     case prt.KaartEvntTypes.MIDDELPUNT_CHANGED:
       return updateMiddelpunt(kaart, (cmd as prt.MiddelpuntChanged).coordinate);
+    case prt.KaartEvntTypes.CHANGE_ZOOM:
+      return updateZoom(kaart, (cmd as prt.ChangeZoom).zoom);
     case prt.KaartEvntTypes.ZOOM_CHANGED:
-      return updateZoom(kaart, (cmd as prt.ZoomChanged).zoom);
+      return zoomChanged(kaart, (cmd as prt.ZoomChanged).zoom);
     case prt.KaartEvntTypes.EXTENT_CHANGED:
       return updateExtent(kaart, (cmd as prt.ExtentChanged).extent);
     case prt.KaartEvntTypes.VIEWPORT_CHANGED:
