@@ -104,12 +104,9 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
       // van stijl kan aangepast worden (gebeurt automagisch door Angular change detection) vooraleer het inklapeffect
       // in werking treedt. Dat ziet er iets beter uit omdat in het andere geval de tile abrupt verspringt na het
       // inklappen.
-      // setTimeout(() => (this.displayMode = DisplayMode.SHOWING_STATUS), 10);
       this.displayMode = DisplayMode.SHOWING_STATUS;
       if (laag.titel !== this.achtergrondTitel) {
         this.dispatcher.dispatch(new BackgroundSelected(laag.titel));
-        // this.dispatcher.dispatch(new LaagShown(laag.titel));
-        // this.dispatcher.dispatch(new LaagHidden(this.achtergrondTitel));
         this.achtergrondTitel = laag.titel;
       }
     } else {
