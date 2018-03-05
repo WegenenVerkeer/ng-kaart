@@ -49,4 +49,5 @@ $title-font-size: 12px;
 .float-box {
   box-shadow: 0px 3px 5px #444444; 
   pointer-events: initial;
+  margin-bottom: -3px; // De box shadow neemt 3px naar onder in  
 }

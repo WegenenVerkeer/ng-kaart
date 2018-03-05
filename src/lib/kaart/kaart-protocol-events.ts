@@ -145,18 +145,6 @@ export const HideBackgroundSelector = {
   type: KaartEvntTypes.BG_SELECTOR_HIDDEN
 };
 
-// export class LaagShown implements KaartEvnt {
-//   readonly type = KaartEvntTypes.LAAG_SHOWN;
-
-//   constructor(readonly titel: string) {}
-// }
-
-// export class LaagHidden implements KaartEvnt {
-//   readonly type = KaartEvntTypes.LAAG_HIDDEN;
-
-//   constructor(readonly titel: string) {}
-// }
-
 export class BackgroundSelected implements KaartEvnt {
   readonly type = KaartEvntTypes.BG_SELECTED;
 
