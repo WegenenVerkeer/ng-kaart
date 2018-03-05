@@ -16,6 +16,7 @@ export enum KaartEvntTypes {
   MIDDELPUNT_CHANGED,
   CHANGE_ZOOM,
   ZOOM_CHANGED,
+  ZOOM_MINMAX_CHANGED,
   EXTENT_CHANGED,
   VIEWPORT_CHANGED,
   FOCUS_ON_MAP,
@@ -103,6 +104,12 @@ export class ZoomChanged implements KaartEvnt {
   readonly type = KaartEvntTypes.ZOOM_CHANGED;
 
   constructor(readonly zoom: number) {}
+}
+
+export class ZoomMinMaxChanged implements KaartEvnt {
+  readonly type = KaartEvntTypes.ZOOM_MINMAX_CHANGED;
+
+  constructor(readonly minZoom: number, readonly maxZoom: number) {}
 }
 
 export class ExtentChanged implements KaartEvnt {

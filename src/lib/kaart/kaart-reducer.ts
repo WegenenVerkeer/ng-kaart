@@ -242,6 +242,14 @@ function zoomChanged(kaart: KaartWithInfo, zoom: number): KaartWithInfo {
   };
 }
 
+function zoomMinMaxChanged(kaart: KaartWithInfo, minZoom: number, maxZoom: number): KaartWithInfo {
+  return {
+    ...kaart,
+    minZoom: minZoom,
+    maxZoom: maxZoom
+  };
+}
+
 function updateExtent(kaart: KaartWithInfo, extent: ol.Extent): KaartWithInfo {
   kaart.map.getView().fit(extent);
   return {
@@ -331,6 +339,9 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartEvnt): KaartWit
       return updateZoom(kaart, (cmd as prt.ChangeZoom).zoom);
     case prt.KaartEvntTypes.ZOOM_CHANGED:
       return zoomChanged(kaart, (cmd as prt.ZoomChanged).zoom);
+    case prt.KaartEvntTypes.ZOOM_MINMAX_CHANGED:
+      const zoomMinMax = cmd as prt.ZoomMinMaxChanged;
+      return zoomMinMaxChanged(kaart, zoomMinMax.minZoom, zoomMinMax.maxZoom);
     case prt.KaartEvntTypes.EXTENT_CHANGED:
       return updateExtent(kaart, (cmd as prt.ExtentChanged).extent);
     case prt.KaartEvntTypes.VIEWPORT_CHANGED:

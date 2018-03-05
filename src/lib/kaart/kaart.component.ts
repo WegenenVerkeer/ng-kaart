@@ -18,7 +18,7 @@ import { leaveZone } from "../util/leave-zone";
 import { kaartLogger } from "./log";
 import * as prt from "./kaart-protocol";
 import * as red from "./kaart-reducer";
-import { ChangeZoom, ZoomChanged } from "./kaart-protocol-events";
+import { ChangeZoom, ZoomChanged, ZoomMinMaxChanged } from "./kaart-protocol-events";
 
 @Component({
   selector: "awv-kaart",
@@ -143,6 +143,10 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
     kaart.getView().on("change:resolution", event => {
       this.dispatcher.dispatch(new ZoomChanged(kaart.getView().getZoom()));
+    });
+
+    kaart.getLayers().on("change:length", event => {
+      this.dispatcher.dispatch(new ZoomMinMaxChanged(kaart.getView().getMinZoom(), kaart.getView().getMaxZoom()));
     });
 
     return new KaartWithInfo(this.config, this.naam, this.mapElement.nativeElement.parentElement, kaart);
