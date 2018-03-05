@@ -1,6 +1,6 @@
 .float-box {
   box-shadow: 0px 3px 5px #444444;
-  margin-bottom: 10px;
+  margin-bottom: -3px;
   pointer-events: initial;
 }
 
@@ -15,8 +15,8 @@
   align-items: center;
   justify-content: space-around;
   position: absolute;
-  bottom: 12px;
-  right: 12px;
+  bottom: 16px;
+  right: 16px;
 }
 
 .actions > .mat-raised-button {

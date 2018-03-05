@@ -17,7 +17,7 @@ export class ReplaySubjectKaartEventDispatcher implements KaartEventDispatcher, 
 
   dispatch(evt: prt.KaartEvnt) {
     // We willen dat events pas uitgevoerd worden nadat de huidige processing gedaan is,
-    // anders kan een eventhandler het model updaten terwijl een commqandhandler nog niet gereed is,
+    // anders kan een eventhandler het model updaten terwijl een commandhandler nog niet gereed is,
     // als die commandhandler dan ook het model update, gebeurt dit in de verkeerde volgorde.
     setTimeout(() => this.eventSubj.next(evt), 0);
   }

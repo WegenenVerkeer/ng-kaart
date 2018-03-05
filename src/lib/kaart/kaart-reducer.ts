@@ -172,7 +172,14 @@ const removeFullScreen: ModelUpdater = (kaart: KaartWithInfo) =>
 
 function addStandaardInteracties(kaart: KaartWithInfo, scrollZoomOnFocus: boolean): KaartWithInfo {
   if (!kaart.stdInteracties || kaart.stdInteracties.isEmpty()) {
-    const interacties = List(ol.interaction.defaults().getArray());
+    // We willen standaard geen rotate operaties.
+    const stdInteracties: ol.interaction.Interaction[] = ol.interaction
+      .defaults()
+      .getArray()
+      .filter(interaction => !(interaction instanceof ol.interaction.DragRotate))
+      .filter(interaction => !(interaction instanceof ol.interaction.PinchRotate));
+
+    const interacties: List<ol.interaction.Interaction> = List<ol.interaction.Interaction>(stdInteracties);
     interacties.forEach(i => kaart.map.addInteraction(i!)); // side effects :-(
     const newKaart = { ...kaart, stdInteracties: interacties, scrollZoomOnFocus: scrollZoomOnFocus };
     return activateMouseWheelZoom(newKaart, !scrollZoomOnFocus);
@@ -228,7 +235,11 @@ function updateZoom(kaart: KaartWithInfo, zoom: number): KaartWithInfo {
 }
 
 function zoomChanged(kaart: KaartWithInfo, zoom: number): KaartWithInfo {
-  return { ...kaart, zoom: kaart.map.getView().getZoom(), extent: some(kaart.map.getView().calculateExtent(kaart.map.getSize())) };
+  return {
+    ...kaart,
+    zoom: kaart.map.getView().getZoom(),
+    extent: some(kaart.map.getView().calculateExtent(kaart.map.getSize()))
+  };
 }
 
 function updateExtent(kaart: KaartWithInfo, extent: ol.Extent): KaartWithInfo {
