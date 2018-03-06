@@ -72,9 +72,9 @@ const stdStijl = new ol.style.Style({
 export const defaultKaartConfig: KaartConfig = {
   geoserver: {
     urls: [
-      "https://wms1.apps.mow.vlaanderen.be/geoserver/service/wms",
-      "https://wms2.apps.mow.vlaanderen.be/geoserver/service/wms",
-      "https://wms3.apps.mow.vlaanderen.be/geoserver/service/wms"
+      "https://wms1.apps.mow.vlaanderen.be/geoserver/wms",
+      "https://wms2.apps.mow.vlaanderen.be/geoserver/wms",
+      "https://wms3.apps.mow.vlaanderen.be/geoserver/wms"
     ]
   },
   tilecache: {
