@@ -107,7 +107,22 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
   }
 }
 
-const coordinateIsEqual = (coor1: ol.Coordinate) => (coor2: ol.Coordinate) => coor1[0] === coor2[0] && coor1[1] === coor2[1];
+const coordinateIsEqual = (coor1: ol.Coordinate) => (coor2: ol.Coordinate) => {
+  if (!coor1 && !coor2) {
+    return true;
+  }
+  if (!coor1 || !coor2) {
+    return false;
+  }
+  return coor1[0] === coor2[0] && coor1[1] === coor2[1];
+};
 
-const extentIsEqual = (ext1: ol.Extent) => (ext2: ol.Extent) =>
-  ext1[0] === ext2[0] && ext1[1] === ext2[1] && ext1[2] === ext2[2] && ext1[3] === ext2[3];
+const extentIsEqual = (ext1: ol.Extent) => (ext2: ol.Extent) => {
+  if (!ext1 && !ext2) {
+    return true;
+  }
+  if (!ext1 || !ext2) {
+    return false;
+  }
+  return ext1[0] === ext2[0] && ext1[1] === ext2[1] && ext1[2] === ext2[2] && ext1[3] === ext2[3];
+};
