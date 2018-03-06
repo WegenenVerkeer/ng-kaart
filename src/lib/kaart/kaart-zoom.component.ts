@@ -5,7 +5,7 @@ import { KaartWithInfo } from "./kaart-with-info";
 import { KaartEventDispatcher, VacuousDispatcher } from "./kaart-event-dispatcher";
 import { KaartComponentBase } from "./kaart-component-base";
 import { SimpleChanges } from "@angular/core/src/metadata/lifecycle_hooks";
-import { ChangeZoom } from "./kaart-protocol-events";
+import { VeranderZoomniveau } from "./kaart-protocol-events";
 import { map } from "rxjs/operators";
 import { enterZone } from "../util/enter-zone";
 
@@ -55,13 +55,13 @@ export class KaartZoomComponent extends KaartComponentBase implements OnChanges,
 
   zoomIn(props: KaartProps) {
     if (props.canZoomIn) {
-      this.dispatcher.dispatch(new ChangeZoom(props.zoom + 1));
+      this.dispatcher.dispatch(new VeranderZoomniveau(props.zoom + 1));
     }
   }
 
   zoomOut(props: KaartProps) {
     if (props.canZoomOut) {
-      this.dispatcher.dispatch(new ChangeZoom(props.zoom - 1));
+      this.dispatcher.dispatch(new VeranderZoomniveau(props.zoom - 1));
     }
   }
 }

@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 
 import { KaartClassicComponent } from "./kaart-classic.component";
-import { AddedFullScreen, RemovedFullScreen } from "./kaart-protocol-events";
+import { VoegVolledigschermToe, VerwijderVolledigscherm } from "./kaart-protocol-events";
 
 @Component({
   selector: "awv-kaart-knop-volledig-scherm",
@@ -13,10 +13,10 @@ export class KaartKnopVolledigSchermComponent implements OnInit, OnDestroy {
   constructor(private readonly kaart: KaartClassicComponent) {}
 
   ngOnInit(): void {
-    this.kaart.dispatch(new AddedFullScreen());
+    this.kaart.dispatch(new VoegVolledigschermToe());
   }
 
   ngOnDestroy(): void {
-    this.kaart.dispatch(new RemovedFullScreen());
+    this.kaart.dispatch(new VerwijderVolledigscherm());
   }
 }

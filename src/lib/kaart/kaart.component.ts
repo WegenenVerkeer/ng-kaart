@@ -18,7 +18,7 @@ import { leaveZone } from "../util/leave-zone";
 import { kaartLogger } from "./log";
 import * as prt from "./kaart-protocol";
 import * as red from "./kaart-reducer";
-import { ChangeZoom, ZoomChanged, ZoomMinMaxChanged } from "./kaart-protocol-events";
+import { VeranderZoomniveau, ZoomniveauVeranderd, ZoomminmaxVeranderd } from "./kaart-protocol-events";
 
 @Component({
   selector: "awv-kaart",
@@ -37,7 +37,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
    * een component van de gebruikende applicatie (in geval van programmatorisch gebruik) zet hier een Observable
    * waarmee events naar de component gestuurd kunnen worden.
    */
-  @Input() kaartEvt$: Observable<prt.KaartEvnt> = Observable.empty();
+  @Input() kaartEvt$: Observable<prt.KaartMessage> = Observable.empty();
 
   /**
    * Dit is een beetje ongelukkig, maar ook componenten die door de KaartComponent zelf aangemaakt worden moeten events kunnen sturen
@@ -142,11 +142,11 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     });
 
     kaart.getView().on("change:resolution", event => {
-      this.dispatcher.dispatch(new ZoomChanged(kaart.getView().getZoom()));
+      this.dispatcher.dispatch(new ZoomniveauVeranderd(kaart.getView().getZoom()));
     });
 
     kaart.getLayers().on("change:length", event => {
-      this.dispatcher.dispatch(new ZoomMinMaxChanged(kaart.getView().getMinZoom(), kaart.getView().getMaxZoom()));
+      this.dispatcher.dispatch(new ZoomminmaxVeranderd(kaart.getView().getMinZoom(), kaart.getView().getMaxZoom()));
     });
 
     return new KaartWithInfo(this.config, this.naam, this.mapElement.nativeElement.parentElement, kaart);

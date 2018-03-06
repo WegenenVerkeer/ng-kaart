@@ -5,7 +5,7 @@ import { Observable } from "rxjs/Observable";
 import { WmsLaag, BlancoLaag } from "./kaart-elementen";
 import { map, first } from "rxjs/operators";
 import { KaartWithInfo } from "./kaart-with-info";
-import { BackgroundSelected } from "./kaart-protocol-events";
+import { KiesAchtergrond } from "./kaart-protocol-events";
 import { KaartComponentBase } from "./kaart-component-base";
 import { VacuousDispatcher, KaartEventDispatcher } from "./kaart-event-dispatcher";
 
@@ -106,7 +106,7 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
       // inklappen.
       this.displayMode = DisplayMode.SHOWING_STATUS;
       if (laag.titel !== this.achtergrondTitel) {
-        this.dispatcher.dispatch(new BackgroundSelected(laag.titel));
+        this.dispatcher.dispatch(new KiesAchtergrond(laag.titel));
         this.achtergrondTitel = laag.titel;
       }
     } else {

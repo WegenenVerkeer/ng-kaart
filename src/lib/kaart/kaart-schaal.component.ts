@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from "@angular/core";
 
 import { KaartClassicComponent } from "./kaart-classic.component";
-import { AddedSchaal, RemovedSchaal } from "./kaart-protocol-events";
+import { VoegSchaalToe, VerwijderSchaal } from "./kaart-protocol-events";
 
 @Component({
   selector: "awv-kaart-schaal",
@@ -11,10 +11,10 @@ export class KaartSchaalComponent implements OnInit, OnDestroy {
   constructor(private readonly kaart: KaartClassicComponent) {}
 
   ngOnInit(): void {
-    this.kaart.dispatch(new AddedSchaal());
+    this.kaart.dispatch(new VoegSchaalToe());
   }
 
   ngOnDestroy(): void {
-    this.kaart.dispatch(new RemovedSchaal());
+    this.kaart.dispatch(new VerwijderSchaal());
   }
 }
