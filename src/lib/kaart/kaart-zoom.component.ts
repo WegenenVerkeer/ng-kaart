@@ -7,7 +7,7 @@ import { KaartComponentBase } from "./kaart-component-base";
 import { SimpleChanges } from "@angular/core/src/metadata/lifecycle_hooks";
 import { VeranderZoomniveau } from "./kaart-protocol-events";
 import { map } from "rxjs/operators";
-import { enterZone } from "../util/enter-zone";
+import { subscribeOnAngular } from "../util/subscribe-on-angular";
 
 export interface KaartProps {
   canZoomIn: boolean;
@@ -40,7 +40,7 @@ export class KaartZoomComponent extends KaartComponentBase implements OnChanges,
 
   ngOnChanges(changes: SimpleChanges) {
     this.kaartProps$ = this.kaartModel$.pipe(
-      enterZone(this.zone),
+      subscribeOnAngular(this.zone),
       map(m => ({
         canZoomIn: KaartZoomComponent.canZoomIn(m),
         canZoomOut: KaartZoomComponent.canZoomOut(m),

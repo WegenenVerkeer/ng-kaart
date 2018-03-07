@@ -16,7 +16,7 @@ export class KaartWithInfo {
     readonly lagen: List<ke.Laag> = List(),
     readonly schaal: Option<ol.control.Control> = none,
     readonly fullScreen: Option<ol.control.FullScreen> = none,
-    readonly stdInteracties: List<ol.interaction.Interaction> = List<ol.interaction.Interaction>(), // TODO beter gewoon interacties
+    readonly stdInteracties: List<ol.interaction.Interaction> = List(), // TODO beter gewoon interacties
     readonly middelpunt: Option<ol.Coordinate> = none,
     readonly zoom: number = -1,
     readonly maxZoom: number = -1,
