@@ -1,0 +1,10 @@
+<div *ngIf="kaartProps$ | async as props">
+  <div class="float-box actions panel">
+    <button mat-raised-button (click)="zoomIn(props)" [disabled]="!props.canZoomIn">
+      <mat-icon aria-label="zoom in">add</mat-icon>
+    </button>
+    <button mat-raised-button (click)="zoomOut(props)" [disabled]="!props.canZoomOut">
+      <mat-icon aria-label="zoom out">remove</mat-icon>
+    </button>
+  </div>
+</div>

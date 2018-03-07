@@ -63,14 +63,31 @@ export class AppComponent {
   geoJsonFormatter = new ol.format.GeoJSON();
 
   locatieQuery: string;
+  installatieCoordinaat: ol.Coordinate = [169500, 190500];
   installaties: ol.Feature[] = [];
+  installatie: ol.Feature[] = [new ol.Feature(new ol.geom.Point(this.installatieCoordinaat))];
   zoekresultaten: ol.Collection<ol.Feature> = new ol.Collection();
 
-  installatie: ol.Coordinate = [169500, 190500];
-  installatieExtent: ol.Extent = [180000, 190000, 181000, 191000];
-
-  lat = 4.7970553;
-  long = 51.0257317;
+  pinIcon = new ol.style.Style({
+    image: new ol.style.Icon({
+      anchor: [0.5, 1],
+      anchorXUnits: "fraction",
+      anchorYUnits: "fraction",
+      scale: 1,
+      opacity: 1,
+      src: "./material-design-icons/maps/svg/production/ic_place_48px.svg"
+    }),
+    text: new ol.style.Text({
+      font: "12px 'Helvetica Neue', sans-serif",
+      fill: new ol.style.Fill({ color: "#000" }),
+      offsetY: -60,
+      stroke: new ol.style.Stroke({
+        color: "#fff",
+        width: 2
+      }),
+      text: "Zis is a pin"
+    })
+  });
 
   // Dit werkt alleen als apigateway bereikbaar is. Zie CORS waarschuwing in README.
   readonly districtSource: ol.source.Vector = new ol.source.Vector({
@@ -109,27 +126,6 @@ export class AppComponent {
     throw new Error(`slecht formaat ${msg}`);
   });
 
-  private readonly pinIcon = new ol.style.Style({
-    image: new ol.style.Icon({
-      anchor: [0.5, 1],
-      anchorXUnits: "fraction",
-      anchorYUnits: "fraction",
-      scale: 1,
-      opacity: 1,
-      src: "./material-design-icons/maps/svg/production/ic_place_48px.svg"
-    }),
-    text: new ol.style.Text({
-      font: "12px 'Helvetica Neue', sans-serif",
-      fill: new ol.style.Fill({ color: "#000" }),
-      offsetY: -60,
-      stroke: new ol.style.Stroke({
-        color: "#fff",
-        width: 2
-      }),
-      text: "Zis is a pin"
-    })
-  });
-
   constructor(private googleLocatieZoekerService: GoogleLocatieZoekerService, public coordinatenService: CoordinatenService) {
     kaartLogger.setLevel("DEBUG");
     this.addIcon();
@@ -148,8 +144,8 @@ export class AppComponent {
       this.installaties = [];
     }
     const locatie: [number, number] = [
-      this.installatie[0] + (Math.random() - 0.5) * 3000,
-      this.installatie[1] + (Math.random() - 0.5) * 3000
+      this.installatieCoordinaat[0] + (Math.random() - 0.5) * 3000,
+      this.installatieCoordinaat[1] + (Math.random() - 0.5) * 3000
     ];
     const feature = new ol.Feature(new ol.geom.Point(locatie));
     feature.setStyle(this.pinIcon);

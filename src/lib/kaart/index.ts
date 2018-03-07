@@ -15,6 +15,7 @@ import { KaartTekenPolygoonLaagComponent } from "./kaart-teken-polygoon-laag.com
 import { KaartFeaturesLaagComponent } from "./kaart-toon-features.component";
 import { KaartKnopVolledigSchermComponent } from "./kaart-knop-volledig-scherm.component";
 import { KaartSchaalComponent } from "./kaart-schaal.component";
+import { KaartZoomComponent } from "./kaart-zoom.component";
 import { KaartConfig, KAART_CFG } from "./kaart-config";
 import { KaartTilecacheLaagComponent } from "./kaart-tilecache-laag.component";
 import { KaartGeoserverLaagComponent } from "./kaart-geoserver-laag.component";
@@ -25,6 +26,7 @@ import { KaartStandaardKnoppenComponent } from "./kaart-standaard-knoppen.compon
 import { KaartAchtergrondSelectorComponent } from "./kaart-achtergrond-selector.component";
 import { KaartAchtergrondTileComponent } from "./kaart-achtergrond-tile.component";
 import { ReplaySubjectKaartEventDispatcher } from "./kaart-event-dispatcher";
+import { MatButtonModule, MatIconModule } from "@angular/material";
 
 const components: any[] = [
   KaartComponent,
@@ -34,6 +36,7 @@ const components: any[] = [
   KaartKnopZoomSliderComponent,
   KaartOrthoLaagComponent,
   KaartSchaalComponent,
+  KaartZoomComponent,
   KaartStandaardInteractiesComponent,
   KaartStandaardKnoppenComponent,
   KaartTekenPolygoonLaagComponent,
@@ -72,9 +75,9 @@ const stdStijl = new ol.style.Style({
 export const defaultKaartConfig: KaartConfig = {
   geoserver: {
     urls: [
-      "https://wms1.apps.mow.vlaanderen.be/geoserver/service/wms",
-      "https://wms2.apps.mow.vlaanderen.be/geoserver/service/wms",
-      "https://wms3.apps.mow.vlaanderen.be/geoserver/service/wms"
+      "https://wms1.apps.mow.vlaanderen.be/geoserver/wms",
+      "https://wms2.apps.mow.vlaanderen.be/geoserver/wms",
+      "https://wms3.apps.mow.vlaanderen.be/geoserver/wms"
     ]
   },
   tilecache: {
@@ -100,7 +103,7 @@ export const defaultKaartConfig: KaartConfig = {
 };
 
 @NgModule({
-  imports: [CommonModule, ClickOutsideModule],
+  imports: [CommonModule, ClickOutsideModule, MatButtonModule, MatIconModule],
   declarations: [components],
   exports: [components],
   providers: [CoordinatenService, ReplaySubjectKaartEventDispatcher]
@@ -138,6 +141,7 @@ export * from "./kaart-geoserver-laag.component";
 export * from "./kaart-tilecache-laag.component";
 export * from "./kaart-wms-laag.component";
 export * from "./kaart-blanco-laag.component";
+export * from "./kaart-zoom.component";
 export * from "./kaart.component";
 export * from "./kaart-event-dispatcher";
 export * from "./kaart-protocol";
