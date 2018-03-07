@@ -1,7 +1,7 @@
 import { Input, OnDestroy, OnInit } from "@angular/core";
 
 import { KaartClassicComponent } from "./kaart-classic.component";
-import { AddedLaagOnTop, KaartEvnt, RemovedLaag } from "./kaart-protocol-events";
+import { VoegLaagBovenToe, KaartMessage, VerwijderLaag } from "./kaart-protocol-events";
 import { Laag } from "./kaart-elementen";
 
 export abstract class KaartLaagComponent implements OnInit, OnDestroy {
@@ -11,14 +11,14 @@ export abstract class KaartLaagComponent implements OnInit, OnDestroy {
   constructor(protected readonly kaart: KaartClassicComponent) {}
 
   ngOnInit(): void {
-    setTimeout(() => this.dispatch(new AddedLaagOnTop(this.createLayer())), 0);
+    this.dispatch(new VoegLaagBovenToe(this.createLayer()));
   }
 
   ngOnDestroy(): void {
-    this.dispatch(new RemovedLaag(this.titel));
+    this.dispatch(new VerwijderLaag(this.titel));
   }
 
-  protected dispatch(evt: KaartEvnt) {
+  protected dispatch(evt: KaartMessage) {
     this.kaart.dispatch(evt);
   }
 

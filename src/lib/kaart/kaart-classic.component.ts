@@ -6,13 +6,13 @@ import * as ol from "openlayers";
 
 import { ReplaySubjectKaartEventDispatcher } from "./kaart-event-dispatcher";
 import {
-  ExtentChanged,
-  FocusOnMap,
-  LoseFocusOnMap,
-  MiddelpuntChanged,
-  ViewportChanged,
-  ZoomChanged,
-  KaartEvnt
+  VeranderExtent,
+  FocusOpKaart,
+  VerliesFocusOpKaart,
+  VeranderMiddelpunt,
+  VeranderViewport,
+  VeranderZoomniveau,
+  KaartMessage
 } from "./kaart-protocol-events";
 import { ModelConsumer } from "./kaart-protocol";
 import { KaartWithInfo } from "./kaart-with-info";
@@ -45,16 +45,16 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
   ngOnInit() {
     // De volgorde van de dispatching hier is van belang voor wat de overhand heeft
     if (this.zoom) {
-      this.dispatch(new ZoomChanged(this.zoom));
+      this.dispatch(new VeranderZoomniveau(this.zoom));
     }
     if (this.extent) {
-      this.dispatch(new ExtentChanged(this.extent));
+      this.dispatch(new VeranderExtent(this.extent));
     }
     if (this.middelpunt) {
-      this.dispatch(new MiddelpuntChanged(this.middelpunt));
+      this.dispatch(new VeranderMiddelpunt(this.middelpunt));
     }
     if (this.breedte || this.hoogte) {
-      this.dispatch(new ViewportChanged([this.breedte, this.hoogte]));
+      this.dispatch(new VeranderViewport([this.breedte, this.hoogte]));
     }
   }
 
@@ -62,27 +62,27 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     if ("zoom" in changes) {
-      this.dispatch(new ZoomChanged(changes.zoom.currentValue));
+      this.dispatch(new VeranderZoomniveau(changes.zoom.currentValue));
     }
     if ("middelpunt" in changes && !coordinateIsEqual(changes.middelpunt.currentValue)(changes.middelpunt.previousValue)) {
-      this.dispatch(new MiddelpuntChanged(changes.middelpunt.currentValue));
+      this.dispatch(new VeranderMiddelpunt(changes.middelpunt.currentValue));
     }
     if ("extent" in changes && !extentIsEqual(changes.extent.currentValue)(changes.extent.previousValue)) {
-      this.dispatch(new ExtentChanged(changes.extent.currentValue));
+      this.dispatch(new VeranderExtent(changes.extent.currentValue));
     }
     if ("breedte" in changes) {
-      this.dispatch(new ViewportChanged([changes.breedte.currentValue, this.hoogte]));
+      this.dispatch(new VeranderViewport([changes.breedte.currentValue, this.hoogte]));
     }
     if ("hoogte" in changes) {
-      this.dispatch(new ViewportChanged([this.breedte, changes.hoogte.currentValue]));
+      this.dispatch(new VeranderViewport([this.breedte, changes.hoogte.currentValue]));
     }
   }
 
-  dispatch(evt: KaartEvnt) {
+  dispatch(evt: KaartMessage) {
     this.dispatcher.dispatch(evt);
   }
 
-  get event$(): Observable<KaartEvnt> {
+  get event$(): Observable<KaartMessage> {
     return this.dispatcher.event$;
   }
 
@@ -94,7 +94,7 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
     // Voor performantie
     if (!this.hasFocus) {
       this.hasFocus = true;
-      this.dispatch(new FocusOnMap());
+      this.dispatch(new FocusOpKaart());
     }
   }
 
@@ -102,7 +102,7 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
     // Stuur enkel enkel indien nodig
     if (this.hasFocus) {
       this.hasFocus = false;
-      this.dispatch(new LoseFocusOnMap());
+      this.dispatch(new VerliesFocusOpKaart());
     }
   }
 }
