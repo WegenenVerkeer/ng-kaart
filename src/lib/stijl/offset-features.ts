@@ -47,18 +47,18 @@ export function offsetStyleFunction(
 /**
  * Geeft een StyleGeometryFunction terug dat ge-embed kan worden in een ol.style.Style om de geometry van het feature te transformeren
  *
- * @param {ol.Feature} feature
- * @param {string} ident8
- * @param {string} zijderijbaan
- * @param {number} offsetPx
- * @param {number} resolution
+ * @param {ol.Feature} feature Het feature met de aan te passen geometry
+ * @param {string} ident8 De ident8 waarde van het feature
+ * @param {string} zijderijbaan De waarde van het zijderijbaan attribuut
+ * @param {number} offsetPixels Aantal pixels dat het feature weg van het wegsegment getekend moet worden
+ * @param {number} resolution De resolutie die getekend moet worden
  * @returns {ol.StyleGeometryFunction}
  */
 export function getOffsetGeometryFunction(
   feature: ol.Feature,
   ident8: string,
   zijderijbaan: string,
-  offsetPx: number,
+  offsetPixels: number,
   resolution: number
 ): ol.StyleGeometryFunction {
   const direction = getDirection(ident8);
@@ -66,7 +66,7 @@ export function getOffsetGeometryFunction(
 
   function getOffsetGeometry(feat: ol.Feature): ol.geom.Geometry {
     const geometry = feat.getGeometry();
-    if (!geometry || offsetPx <= 0) {
+    if (!geometry || offsetPixels <= 0) {
       return geometry;
     }
     if (geometry instanceof ol.geom.LineString) {
@@ -74,7 +74,7 @@ export function getOffsetGeometryFunction(
       const linestring = <ol.geom.LineString>geometry;
       const offsetPoints: Array<ol.Coordinate> = []; // get the point objects from the geometry
       const oPoints = linestring.clone().getCoordinates(); // get the original point objects from the geometry
-      let offset = Math.abs(offsetPx * resolution); // offset in map units (e.g. 'm': meter)
+      let offset = Math.abs(offsetPixels * resolution); // offset in map units (e.g. 'm': meter)
       if (zijde.toLowerCase() === "r") {
         offset = -1 * offset;
       }
