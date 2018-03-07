@@ -23,8 +23,8 @@ export enum KaartEvntTypes {
   INSERTED_LAAG,
   BG_SELECTOR_SHOWN,
   BG_SELECTOR_HIDDEN,
-  // LAAG_HIDDEN,
-  // LAAG_SHOWN,
+  HIDE_LAAG,
+  SHOW_LAAG,
   BG_SELECTED
 }
 
@@ -148,4 +148,16 @@ export class ProvidedLaag implements KaartEvnt {
   readonly type = KaartEvntTypes.PROVIDED_LAAG;
 
   constructor(readonly laag: ke.Laag) {}
+}
+
+export class ShowLaag implements KaartEvnt {
+  readonly type = KaartEvntTypes.SHOW_LAAG;
+
+  constructor(readonly titel: string) {}
+}
+
+export class HideLaag implements KaartEvnt {
+  readonly type = KaartEvntTypes.HIDE_LAAG;
+
+  constructor(readonly titel: string) {}
 }
