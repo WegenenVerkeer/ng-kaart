@@ -3,149 +3,164 @@ import { List } from "immutable";
 import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";
 
-export enum KaartEvntTypes {
-  ADDED_LAAG_ON_TOP,
-  PROVIDED_LAAG,
-  REMOVED_LAAG,
-  ADDED_SCHAAL,
-  REMOVED_SCHAAL,
-  ADDED_FULL_SCREEN,
-  REMOVED_FULL_SCREEN,
-  ADDED_STD_INT,
-  REMOVED_STD_INT,
-  MIDDELPUNT_CHANGED,
-  ZOOM_CHANGED,
-  EXTENT_CHANGED,
-  VIEWPORT_CHANGED,
-  FOCUS_ON_MAP,
-  LOSE_FOCUS_ON_MAP,
-  SHOW_FEATURES,
-  INSERTED_LAAG,
-  BG_SELECTOR_SHOWN,
-  BG_SELECTOR_HIDDEN,
-  // LAAG_HIDDEN,
-  // LAAG_SHOWN,
-  BG_SELECTED
+export enum KaartMessageTypes {
+  // Commands
+  VOEG_LAAG_BOVEN_TOE,
+  VOEG_LAAG_TOE,
+  VOORZIE_LAAG,
+  VERWIJDER_LAAG,
+  VOEG_SCHAAL_TOE,
+  VERWIJDER_SCHAAL,
+  VOEG_VOLLEDIGSCHERM_TOE,
+  VERWIJDER_VOLLEDIGSCHERM,
+  VOEG_STANDAARDINTERACTIES_TOE,
+  VERWIJDER_STANDAARDINTERACTIES,
+  VERANDER_MIDDELPUNT,
+  VERANDER_ZOOMNIVEAU,
+  VERANDER_EXTENT,
+  VERANDER_VIEWPORT,
+  FOCUS_OP_KAART,
+  VERLIES_FOCUS_OP_KAART,
+  VERVANG_FEATURES,
+  TOON_ACHTERGROND_KEUZE,
+  VERBERG_ACHTERGROND_KEUZE,
+  KIES_ACHTERGROND,
+
+  // Events
+  ZOOMNIVEAU_VERANDERD,
+  ZOOMMINMAX_VERANDERD
 }
 
-export interface KaartEvnt {
-  readonly type: KaartEvntTypes;
+export interface KaartMessage {
+  readonly type: KaartMessageTypes;
 }
 
-export class AddedLaagOnTop implements KaartEvnt {
-  readonly type = KaartEvntTypes.ADDED_LAAG_ON_TOP;
+export class VoegLaagBovenToe implements KaartMessage {
+  readonly type = KaartMessageTypes.VOEG_LAAG_BOVEN_TOE;
 
   constructor(readonly laag: ke.Laag) {}
 }
 
-export class RemovedLaag implements KaartEvnt {
-  readonly type = KaartEvntTypes.REMOVED_LAAG;
-
-  constructor(readonly titel: string) {}
-}
-
-export class InsertedLaag implements KaartEvnt {
-  readonly type = KaartEvntTypes.INSERTED_LAAG;
+export class VoegLaagToe implements KaartMessage {
+  readonly type = KaartMessageTypes.VOEG_LAAG_TOE;
 
   constructor(readonly positie: number, readonly laag: ke.Laag) {}
 }
 
-export class AddedSchaal implements KaartEvnt {
-  readonly type = KaartEvntTypes.ADDED_SCHAAL;
-
-  constructor() {}
-}
-
-export class RemovedSchaal implements KaartEvnt {
-  readonly type = KaartEvntTypes.REMOVED_SCHAAL;
-
-  constructor() {}
-}
-
-export class AddedFullScreen implements KaartEvnt {
-  readonly type = KaartEvntTypes.ADDED_FULL_SCREEN;
-
-  constructor() {}
-}
-
-export class RemovedFullScreen implements KaartEvnt {
-  readonly type = KaartEvntTypes.REMOVED_FULL_SCREEN;
-
-  constructor() {}
-}
-
-export class AddedStandaardInteracties implements KaartEvnt {
-  readonly type = KaartEvntTypes.ADDED_STD_INT;
-
-  constructor(readonly scrollZoomOnFocus = false) {}
-}
-
-export class RemovedStandaardInteracties implements KaartEvnt {
-  readonly type = KaartEvntTypes.REMOVED_STD_INT;
-
-  constructor() {}
-}
-
-export class MiddelpuntChanged implements KaartEvnt {
-  readonly type = KaartEvntTypes.MIDDELPUNT_CHANGED;
-
-  constructor(readonly coordinate: ol.Coordinate) {}
-}
-
-export class ZoomChanged implements KaartEvnt {
-  readonly type = KaartEvntTypes.ZOOM_CHANGED;
-
-  constructor(readonly zoom: number) {}
-}
-
-export class ExtentChanged implements KaartEvnt {
-  readonly type = KaartEvntTypes.EXTENT_CHANGED;
-
-  constructor(readonly extent: ol.Extent) {}
-}
-
-export class ViewportChanged implements KaartEvnt {
-  readonly type = KaartEvntTypes.VIEWPORT_CHANGED;
-
-  constructor(readonly size: ol.Size) {}
-}
-
-export class FocusOnMap implements KaartEvnt {
-  readonly type = KaartEvntTypes.FOCUS_ON_MAP;
-
-  constructor() {}
-}
-
-export class LoseFocusOnMap implements KaartEvnt {
-  readonly type = KaartEvntTypes.LOSE_FOCUS_ON_MAP;
-
-  constructor() {}
-}
-
-export class ReplaceFeatures implements KaartEvnt {
-  readonly type = KaartEvntTypes.SHOW_FEATURES;
-
-  constructor(readonly titel: string, readonly features: List<ol.Feature>) {}
-}
-
-export class BackgroundSelectorShown implements KaartEvnt {
-  readonly type = KaartEvntTypes.BG_SELECTOR_SHOWN;
-
-  constructor(readonly backgrounds: List<ke.WmsLaag | ke.BlancoLaag>) {}
-}
-
-export const HideBackgroundSelector = {
-  type: KaartEvntTypes.BG_SELECTOR_HIDDEN
-};
-
-export class BackgroundSelected implements KaartEvnt {
-  readonly type = KaartEvntTypes.BG_SELECTED;
+export class VerwijderLaag implements KaartMessage {
+  readonly type = KaartMessageTypes.VERWIJDER_LAAG;
 
   constructor(readonly titel: string) {}
 }
 
-export class ProvidedLaag implements KaartEvnt {
-  readonly type = KaartEvntTypes.PROVIDED_LAAG;
+export class VoegSchaalToe implements KaartMessage {
+  readonly type = KaartMessageTypes.VOEG_SCHAAL_TOE;
+
+  constructor() {}
+}
+
+export class VerwijderSchaal implements KaartMessage {
+  readonly type = KaartMessageTypes.VERWIJDER_SCHAAL;
+
+  constructor() {}
+}
+
+export class VoegVolledigschermToe implements KaartMessage {
+  readonly type = KaartMessageTypes.VOEG_VOLLEDIGSCHERM_TOE;
+
+  constructor() {}
+}
+
+export class VerwijderVolledigscherm implements KaartMessage {
+  readonly type = KaartMessageTypes.VERWIJDER_VOLLEDIGSCHERM;
+
+  constructor() {}
+}
+
+export class VoegStandaardinteractiesToe implements KaartMessage {
+  readonly type = KaartMessageTypes.VOEG_STANDAARDINTERACTIES_TOE;
+
+  constructor(readonly scrollZoomOnFocus = false) {}
+}
+
+export class VerwijderStandaardinteracties implements KaartMessage {
+  readonly type = KaartMessageTypes.VERWIJDER_STANDAARDINTERACTIES;
+
+  constructor() {}
+}
+
+export class VeranderMiddelpunt implements KaartMessage {
+  readonly type = KaartMessageTypes.VERANDER_MIDDELPUNT;
+
+  constructor(readonly coordinate: ol.Coordinate) {}
+}
+
+export class VeranderZoomniveau implements KaartMessage {
+  readonly type = KaartMessageTypes.VERANDER_ZOOMNIVEAU;
+
+  constructor(readonly zoom: number) {}
+}
+
+export class ZoomniveauVeranderd implements KaartMessage {
+  readonly type = KaartMessageTypes.ZOOMNIVEAU_VERANDERD;
+
+  constructor(readonly zoom: number) {}
+}
+
+export class ZoomminmaxVeranderd implements KaartMessage {
+  readonly type = KaartMessageTypes.ZOOMMINMAX_VERANDERD;
+
+  constructor(readonly minZoom: number, readonly maxZoom: number) {}
+}
+
+export class VeranderExtent implements KaartMessage {
+  readonly type = KaartMessageTypes.VERANDER_EXTENT;
+
+  constructor(readonly extent: ol.Extent) {}
+}
+
+export class VeranderViewport implements KaartMessage {
+  readonly type = KaartMessageTypes.VERANDER_VIEWPORT;
+
+  constructor(readonly size: ol.Size) {}
+}
+
+export class FocusOpKaart implements KaartMessage {
+  readonly type = KaartMessageTypes.FOCUS_OP_KAART;
+
+  constructor() {}
+}
+
+export class VerliesFocusOpKaart implements KaartMessage {
+  readonly type = KaartMessageTypes.VERLIES_FOCUS_OP_KAART;
+
+  constructor() {}
+}
+
+export class VervangFeatures implements KaartMessage {
+  readonly type = KaartMessageTypes.VERVANG_FEATURES;
+
+  constructor(readonly titel: string, readonly features: List<ol.Feature>) {}
+}
+
+export class ToonAchtergrondKeuze implements KaartMessage {
+  readonly type = KaartMessageTypes.TOON_ACHTERGROND_KEUZE;
+
+  constructor(readonly backgrounds: List<ke.WmsLaag | ke.BlancoLaag>) {}
+}
+
+export const VerbergAchtergrondKeuze = {
+  type: KaartMessageTypes.VERBERG_ACHTERGROND_KEUZE
+};
+
+export class KiesAchtergrond implements KaartMessage {
+  readonly type = KaartMessageTypes.KIES_ACHTERGROND;
+
+  constructor(readonly titel: string) {}
+}
+
+export class VoorzieLaag implements KaartMessage {
+  readonly type = KaartMessageTypes.VOORZIE_LAAG;
 
   constructor(readonly laag: ke.Laag) {}
 }

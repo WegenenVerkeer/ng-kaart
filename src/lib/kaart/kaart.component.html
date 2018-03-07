@@ -6,5 +6,6 @@
     <div *ngIf="showBackgroundSelector$ | async">
       <awv-kaart-achtergrond-selector [kaartModel$]="kaartModel$" [dispatcher]="dispatcher"></awv-kaart-achtergrond-selector>
     </div>
+    <awv-kaart-zoom [kaartModel$]="kaartModel$" [dispatcher]="dispatcher"></awv-kaart-zoom>
   </div>
 </div>

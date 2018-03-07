@@ -16,9 +16,11 @@ export class KaartWithInfo {
     readonly lagen: List<ke.Laag> = List(),
     readonly schaal: Option<ol.control.Control> = none,
     readonly fullScreen: Option<ol.control.FullScreen> = none,
-    readonly stdInteracties: List<ol.interaction.Interaction> = List<ol.interaction.Interaction>(), // TODO beter gewoon interacties
+    readonly stdInteracties: List<ol.interaction.Interaction> = List(), // TODO beter gewoon interacties
     readonly middelpunt: Option<ol.Coordinate> = none,
-    readonly zoom: Option<number> = none,
+    readonly zoom: number = -1,
+    readonly maxZoom: number = -1,
+    readonly minZoom: number = -1,
     readonly extent: Option<ol.Extent> = none,
     readonly size: Option<[number, number]> = none,
     readonly scrollZoomOnFocus = false,
@@ -27,7 +29,9 @@ export class KaartWithInfo {
     readonly achtergrondlaagtitel: Option<string> = none
   ) {
     this.middelpunt = some(map.getView().getCenter());
-    this.zoom = some(map.getView().getZoom());
+    this.zoom = map.getView().getZoom();
+    this.maxZoom = map.getView().getMaxZoom();
+    this.minZoom = map.getView().getMinZoom();
     this.extent = some(map.getView().calculateExtent(map.getSize()));
     this.size = some(map.getSize());
   }

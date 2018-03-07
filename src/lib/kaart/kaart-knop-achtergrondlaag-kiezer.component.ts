@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, ViewEncapsulation, NgZone, Input } from "
 import { map, debounceTime, distinctUntilChanged, scan } from "rxjs/operators";
 import { Set } from "immutable";
 
-import { BackgroundSelectorShown, HideBackgroundSelector } from "./kaart-protocol-events";
+import { ToonAchtergrondKeuze, VerbergAchtergrondKeuze } from "./kaart-protocol-events";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartComponentBase } from "./kaart-component-base";
 import { isBlancoLaag, isWmsLaag, WmsLaag } from "./kaart-elementen";
@@ -34,11 +34,11 @@ export class KaartKnopAchtergrondLaagKiezerComponent extends KaartComponentBase 
         scan((alleLagenOoit: Set<WmsLaag>, lagen: Set<WmsLaag>) => alleLagenOoit.union(lagen), Set<WmsLaag>()),
         obs => this.bindToLifeCycle(obs) // zorg ervoor dat de subscription afgesloten wordt op het gepaste moment
       )
-      .subscribe(lagen => this.kaart.dispatch(new BackgroundSelectorShown(lagen.toList())));
+      .subscribe(lagen => this.kaart.dispatch(new ToonAchtergrondKeuze(lagen.toList())));
   }
 
   ngOnDestroy(): void {
-    this.kaart.dispatch(HideBackgroundSelector);
+    this.kaart.dispatch(VerbergAchtergrondKeuze);
     super.ngOnDestroy();
   }
 }
