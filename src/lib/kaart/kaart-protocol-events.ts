@@ -167,13 +167,13 @@ export class VoorzieLaag implements KaartMessage {
   constructor(readonly laag: ke.Laag) {}
 }
 
-export class ShowLaag implements KaartMessage {
+export class MaakLaagZichtbaar implements KaartMessage {
   readonly type = KaartMessageTypes.MAAK_LAAG_ZICHTBAAR;
 
   constructor(readonly titel: string) {}
 }
 
-export class HideLaag implements KaartMessage {
+export class MaakLaagOnzichtbaar implements KaartMessage {
   readonly type = KaartMessageTypes.MAAK_LAAG_ONZICHTBAAR;
 
   constructor(readonly titel: string) {}

@@ -51,6 +51,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   @Input() naam = "kaart";
 
   @Input() achtergrondTitelSelectieConsumer: prt.ModelConsumer<string> = prt.noOpModelConsumer;
+  @Input() zoomniveauConsumer: prt.ModelConsumer<number> = prt.noOpModelConsumer;
   @Input() modelConsumer: prt.ModelConsumer<KaartWithInfo> = prt.noOpModelConsumer;
 
   showBackgroundSelector$: Observable<boolean> = Observable.empty();
@@ -105,10 +106,18 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
         )
         .subscribe(titel => this.achtergrondTitelSelectieConsumer(titel));
 
+      this.kaartModel$
+        .pipe(
+          map(model => model.zoom), //
+          distinctUntilChanged()
+        )
+        .subscribe(zoom => this.zoomniveauConsumer(zoom));
+
       this.kaartModel$.subscribe(
         model => {
           kaartLogger.debug("reduced to", model);
-          // TODO dubbels opvangen (zie versie)
+          // TODO dubbels opvangen (zie versie). Als we een versienummer ophogen telkens we effectief het model aanpassen, dan kunnen we
+          // de modelConsumer werk besparen in die gevallen dat de reducer geen nieuwe toestand heeft gegenereerd.
           this.modelConsumer(model); // Heel belangrijk: laat diegene die ons embed weten wat het huidige model is.
         },
         e => kaartLogger.error("error", e),
