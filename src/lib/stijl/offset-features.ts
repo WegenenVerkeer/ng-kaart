@@ -1,6 +1,66 @@
 import * as ol from "openlayers";
 
-export function getGeometryFunction(feature: ol.Feature, ident8: string, zijderijbaan: string, offsetPx: number): ol.StyleGeometryFunction {
+/**
+ * Gegeven een StyleFunction zonder offset rendering, geef er 1 terug waarbij de features op een offset gerendered worden.
+ *
+ * @param {ol.StyleFunction} styleFunction Oorspronkelijke stijl functie
+ * @param {string} ident8Veld Plaats waar het ident8 veld te vinden is onder feature.properties
+ * @param {string} zijderijbaanVeld Plaats waar de kant van de weg van het feature te vinden is onder feature.properties ('R', 'L', 'M'/'O')
+ * @param {number} offsetPixels Aantal pixels dat het feature weg van het wegsegment getekend moet worden
+ * @returns {ol.StyleFunction}
+ */
+export function offsetStyleFunction(
+  styleFunction: ol.StyleFunction,
+  ident8Veld: string,
+  zijderijbaanVeld: string,
+  offsetPixels: number
+): ol.StyleFunction {
+  function offsetStyleFunc(feature: ol.Feature, resolution: number): ol.style.Style | ol.style.Style[] {
+    const style: ol.style.Style | ol.style.Style[] = styleFunction(feature, resolution);
+
+    if (!style) {
+      return style;
+    }
+
+    const offsetGeometryFunction = getOffsetGeometryFunction(
+      feature,
+      feature.getProperties()["properties"][ident8Veld],
+      feature.getProperties()["properties"][zijderijbaanVeld],
+      offsetPixels,
+      resolution
+    );
+
+    if (style instanceof ol.style.Style) {
+      style.setGeometry(offsetGeometryFunction);
+      return style;
+    } else {
+      return style.map(s => {
+        s.setGeometry(offsetGeometryFunction);
+        return s;
+      });
+    }
+  }
+
+  return offsetStyleFunc;
+}
+
+/**
+ * Geeft een StyleGeometryFunction terug dat ge-embed kan worden in een ol.style.Style om de geometry van het feature te transformeren
+ *
+ * @param {ol.Feature} feature
+ * @param {string} ident8
+ * @param {string} zijderijbaan
+ * @param {number} offsetPx
+ * @param {number} resolution
+ * @returns {ol.StyleGeometryFunction}
+ */
+export function getOffsetGeometryFunction(
+  feature: ol.Feature,
+  ident8: string,
+  zijderijbaan: string,
+  offsetPx: number,
+  resolution: number
+): ol.StyleGeometryFunction {
   const direction = getDirection(ident8);
   const zijde = getZijde(zijderijbaan, direction);
 
@@ -14,7 +74,7 @@ export function getGeometryFunction(feature: ol.Feature, ident8: string, zijderi
       const linestring = <ol.geom.LineString>geometry;
       const offsetPoints: Array<ol.Coordinate> = []; // get the point objects from the geometry
       const oPoints = linestring.clone().getCoordinates(); // get the original point objects from the geometry
-      let offset = Math.abs(offsetPx); // offset in map units (e.g. 'm': meter)
+      let offset = Math.abs(offsetPx * resolution); // offset in map units (e.g. 'm': meter)
       if (zijde.toLowerCase() === "r") {
         offset = -1 * offset;
       }
