@@ -200,10 +200,7 @@ function getValue(feature: ol.Feature, field: string): Option<string> {
 }
 
 function getDirection(ident8) {
-  if (ident8 && ident8.endsWith("2")) {
-    return "down";
-  }
-  return "up";
+  return ident8 && ident8.endsWith("2") ? "down" : "up";
 }
 
 function getZijde(zijderijweg: string, direction: string) {
