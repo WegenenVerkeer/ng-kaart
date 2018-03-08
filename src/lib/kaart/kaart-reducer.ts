@@ -368,6 +368,10 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartMessage): Kaart
       const laag = (cmd as prt.VoorzieLaag).laag;
       return pipe(kaart, voegLaagBovenToe(laag), hideLaag(laag.titel));
     }
+    case prt.KaartMessageTypes.MAAK_LAAG_ONZICHTBAAR:
+      return hideLaag((cmd as prt.MaakLaagOnzichtbaar).titel)(kaart);
+    case prt.KaartMessageTypes.MAAK_LAAG_ZICHTBAAR:
+      return showLaag((cmd as prt.MaakLaagZichtbaar).titel)(kaart);
     default:
       kaartLogger.warn("onverwacht commando", cmd);
       return keepModel(kaart);
