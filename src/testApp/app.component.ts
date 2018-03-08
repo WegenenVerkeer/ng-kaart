@@ -7,7 +7,7 @@ import { GoogleLocatieZoekerService } from "../lib/google-locatie-zoeker";
 import { CoordinatenService } from "../lib/kaart";
 import { kaartLogger, definitieToStyle } from "../lib/public_api";
 import { AWV0StyleFunctionDescription, definitieToStyleFunction } from "../lib/stijl";
-import { getOffsetGeometryFunction, offsetStyleFunction } from "../lib/stijl/offset-features";
+import { offsetStyleFunction } from "../lib/stijl/offset-stijl-function";
 
 @Component({
   selector: "awv-ng-kaart-test-app",

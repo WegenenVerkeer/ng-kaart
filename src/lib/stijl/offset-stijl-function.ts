@@ -1,7 +1,7 @@
 import * as ol from "openlayers";
 import * as option from "fp-ts/lib/Option";
 import { Option } from "fp-ts/lib/Option";
-import { kaartLogger } from "../kaart";
+import { kaartLogger } from "../kaart/log";
 
 /**
  * Gegeven een StyleFunction zonder offset rendering, geef er 1 terug waarbij de features op een offset gerendered worden.
@@ -37,11 +37,11 @@ export function offsetStyleFunction(
             return style;
           },
           zijderijbaan => {
-            const offsetGeometryFunction = getOffsetGeometryFunction(feature, ident8, zijderijbaan, offsetPixels, resolution);
+            const offsetGeometryFunc = offsetGeometryFunction(feature, ident8, zijderijbaan, offsetPixels, resolution);
 
             function setGeometry(s: ol.style.Style) {
               if (s instanceof ol.style.Style) {
-                s.setGeometry(offsetGeometryFunction);
+                s.setGeometry(offsetGeometryFunc);
               }
             }
 
@@ -70,7 +70,7 @@ export function offsetStyleFunction(
  * @param {number} resolution De resolutie die getekend moet worden
  * @returns {ol.StyleGeometryFunction}
  */
-export function getOffsetGeometryFunction(
+function offsetGeometryFunction(
   feature: ol.Feature,
   ident8: string,
   zijderijbaan: string,
