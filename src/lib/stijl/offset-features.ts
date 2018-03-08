@@ -27,13 +27,13 @@ export function offsetStyleFunction(
 
     return getValue(feature, ident8Veld).fold(
       () => {
-        kaartLogger.error(`Ident8 is verplicht, er wordt geen offset getekend voor feature $feature`);
+        kaartLogger.error(`Ident8 is verplicht, er wordt geen offset getekend voor feature ${feature}`);
         return style;
       },
       ident8 => {
         return getValue(feature, zijderijbaanVeld).fold(
           () => {
-            kaartLogger.error(`Zijderijbaan is verplicht, er wordt geen offset getekend voor feature $feature`);
+            kaartLogger.error(`Zijderijbaan is verplicht, er wordt geen offset getekend voor feature ${feature}`);
             return style;
           },
           zijderijbaan => {
