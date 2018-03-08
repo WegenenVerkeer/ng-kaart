@@ -93,7 +93,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       this.kaartModel$ = this.kaartEvt$.pipe(
         merge(this.internalEventDispatcher.event$), // hoe rekening met de events van de interne componenten
         tap(x => kaartLogger.debug("kaart event", x)),
-        leaveZone(this.zone), //
+        leaveZone(this.zone), // voer uit buiten Angular zone
         scan(red.kaartReducer, initieelModel), // TODO: zorg er voor dat de unsubscribe gebeurt
         shareReplay(1000, 5000)
       );
