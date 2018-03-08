@@ -6,11 +6,11 @@ import { kaartLogger } from "../kaart/log";
 /**
  * Gegeven een StyleFunction zonder offset rendering, geef er 1 terug waarbij de features op een offset gerendered worden.
  *
- * @param {ol.StyleFunction} styleFunction Oorspronkelijke stijl functie
- * @param {string} ident8Veld Plaats waar het ident8 veld te vinden is onder feature.properties
- * @param {string} zijderijbaanVeld Plaats waar de kant van de weg van het feature te vinden is onder feature.properties ('R', 'L', 'M'/'O')
- * @param {number} offsetPixels Aantal pixels dat het feature weg van het wegsegment getekend moet worden
- * @returns {ol.StyleFunction}
+ * @param ol.StyleFunction styleFunction Oorspronkelijke stijl functie
+ * @param string ident8Veld Plaats waar het ident8 veld te vinden is onder feature.properties
+ * @param string zijderijbaanVeld Plaats waar de kant van de weg van het feature te vinden is onder feature.properties ('R', 'L', 'M'/'O')
+ * @param number offsetPixels Aantal pixels dat het feature weg van het wegsegment getekend moet worden
+ * @returns ol.StyleFunction
  */
 export function offsetStyleFunction(
   styleFunction: ol.StyleFunction,
@@ -63,12 +63,12 @@ export function offsetStyleFunction(
 /**
  * Geeft een StyleGeometryFunction terug dat ge-embed kan worden in een ol.style.Style om de geometry van het feature te transformeren
  *
- * @param {ol.Feature} feature Het feature met de aan te passen geometry
- * @param {string} ident8 De ident8 waarde van het feature
- * @param {string} zijderijbaan De waarde van het zijderijbaan attribuut
- * @param {number} offsetPixels Aantal pixels dat het feature weg van het wegsegment getekend moet worden
- * @param {number} resolution De resolutie die getekend moet worden
- * @returns {ol.StyleGeometryFunction}
+ * @param ol.Feature feature Het feature met de aan te passen geometry
+ * @param string ident8 De ident8 waarde van het feature
+ * @param string zijderijbaan De waarde van het zijderijbaan attribuut
+ * @param number offsetPixels Aantal pixels dat het feature weg van het wegsegment getekend moet worden
+ * @param number resolution De resolutie die getekend moet worden
+ * @returns ol.StyleGeometryFunction
  */
 function offsetGeometryFunction(
   feature: ol.Feature,
