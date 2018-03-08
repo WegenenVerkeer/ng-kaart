@@ -4,7 +4,7 @@ import "rxjs/add/observable/of";
 import "rxjs/add/observable/combineLatest";
 import "rxjs/add/observable/empty";
 import "rxjs/add/observable/never";
-import { scan, map, tap, distinctUntilChanged, filter, shareReplay, merge } from "rxjs/operators";
+import { scan, map, tap, distinctUntilChanged, filter, shareReplay, merge, debounceTime } from "rxjs/operators";
 
 import proj4 from "proj4";
 import * as ol from "openlayers";
@@ -109,7 +109,8 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       this.kaartModel$
         .pipe(
           map(model => model.zoom), //
-          distinctUntilChanged()
+          distinctUntilChanged(),
+          debounceTime(50)
         )
         .subscribe(zoom => this.zoomniveauConsumer(zoom));
 

@@ -176,11 +176,18 @@ function voegStandaardinteractiesToe(kaart: KaartWithInfo, scrollZoomOnFocus: bo
     const stdInteracties: ol.interaction.Interaction[] = ol.interaction
       .defaults()
       .getArray()
-      .filter(interaction => !(interaction instanceof ol.interaction.DragRotate))
-      .filter(interaction => !(interaction instanceof ol.interaction.PinchRotate));
+      .filter(
+        interaction =>
+          !(
+            interaction instanceof ol.interaction.DragRotate ||
+            interaction instanceof ol.interaction.PinchRotate ||
+            interaction instanceof ol.interaction.MouseWheelZoom
+          ) // we willen zelf de opties op MouseWheelZoom zetten zetten
+      );
 
     const interacties: List<ol.interaction.Interaction> = List<ol.interaction.Interaction>(stdInteracties);
     interacties.forEach(i => kaart.map.addInteraction(i!)); // side effects :-(
+    kaart.map.addInteraction(new ol.interaction.MouseWheelZoom({ duration: 0, constrainResolution: true })); // Geen fractionele resoluties!
     const newKaart = { ...kaart, stdInteracties: interacties, scrollZoomOnFocus: scrollZoomOnFocus };
     return activateMouseWheelZoom(newKaart, !scrollZoomOnFocus);
   } else {
