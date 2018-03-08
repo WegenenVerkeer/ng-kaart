@@ -182,12 +182,12 @@ function voegStandaardinteractiesToe(kaart: KaartWithInfo, scrollZoomOnFocus: bo
             interaction instanceof ol.interaction.DragRotate ||
             interaction instanceof ol.interaction.PinchRotate ||
             interaction instanceof ol.interaction.MouseWheelZoom
-          ) // we willen zelf de opties op MouseWheelZoom zetten zetten
+          ) // we willen zelf de opties op MouseWheelZoom zetten
       );
 
     const interacties: List<ol.interaction.Interaction> = List<ol.interaction.Interaction>(stdInteracties);
     interacties.forEach(i => kaart.map.addInteraction(i!)); // side effects :-(
-    kaart.map.addInteraction(new ol.interaction.MouseWheelZoom({ duration: 0, constrainResolution: true })); // Geen fractionele resoluties!
+    kaart.map.addInteraction(new ol.interaction.MouseWheelZoom({ constrainResolution: true })); // Geen fractionele resoluties!
     const newKaart = { ...kaart, stdInteracties: interacties, scrollZoomOnFocus: scrollZoomOnFocus };
     return activateMouseWheelZoom(newKaart, !scrollZoomOnFocus);
   } else {
@@ -321,13 +321,11 @@ function toonAchtergrondKeuze(show: boolean): ModelUpdater {
 
 export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartMessage): KaartWithInfo {
   switch (cmd.type) {
-    case prt.KaartMessageTypes.VOEG_LAAG_BOVEN_TOE:
-      return voegLaagBovenToe((cmd as prt.VoegLaagBovenToe).laag)(kaart);
     case prt.KaartMessageTypes.VERWIJDER_LAAG:
       return verwijderLaag((cmd as prt.VerwijderLaag).titel)(kaart);
     case prt.KaartMessageTypes.VOEG_LAAG_TOE:
       const inserted = cmd as prt.VoegLaagToe;
-      return voegLaagToe(inserted.positie, inserted.laag, true)(kaart);
+      return voegLaagToe(inserted.positie, inserted.laag, inserted.laadbaar)(kaart);
     case prt.KaartMessageTypes.VOEG_SCHAAL_TOE:
       return voegSchaalToe(kaart);
     case prt.KaartMessageTypes.VERWIJDER_SCHAAL:
@@ -371,10 +369,6 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartMessage): Kaart
       return pipe(kaart, setBackgrounds((cmd as prt.ToonAchtergrondKeuze).backgrounds), addNewBackgroundsToMap, toonAchtergrondKeuze(true));
     case prt.KaartMessageTypes.VERBERG_ACHTERGROND_KEUZE:
       return toonAchtergrondKeuze(false)(kaart); // moeten we alle lagen weer zichtbaar maken?
-    case prt.KaartMessageTypes.VOORZIE_LAAG: {
-      const laag = (cmd as prt.VoorzieLaag).laag;
-      return pipe(kaart, voegLaagBovenToe(laag), hideLaag(laag.titel));
-    }
     case prt.KaartMessageTypes.MAAK_LAAG_ONZICHTBAAR:
       return hideLaag((cmd as prt.MaakLaagOnzichtbaar).titel)(kaart);
     case prt.KaartMessageTypes.MAAK_LAAG_ZICHTBAAR:
