@@ -5,9 +5,7 @@ import * as ke from "./kaart-elementen";
 
 export enum KaartMessageTypes {
   // Commands
-  VOEG_LAAG_BOVEN_TOE,
   VOEG_LAAG_TOE,
-  VOORZIE_LAAG,
   VERWIJDER_LAAG,
   VOEG_SCHAAL_TOE,
   VERWIJDER_SCHAAL,
@@ -25,6 +23,8 @@ export enum KaartMessageTypes {
   TOON_ACHTERGROND_KEUZE,
   VERBERG_ACHTERGROND_KEUZE,
   KIES_ACHTERGROND,
+  MAAK_LAAG_ZICHTBAAR,
+  MAAK_LAAG_ONZICHTBAAR,
 
   // Events
   ZOOMNIVEAU_VERANDERD,
@@ -35,16 +35,10 @@ export interface KaartMessage {
   readonly type: KaartMessageTypes;
 }
 
-export class VoegLaagBovenToe implements KaartMessage {
-  readonly type = KaartMessageTypes.VOEG_LAAG_BOVEN_TOE;
-
-  constructor(readonly laag: ke.Laag) {}
-}
-
 export class VoegLaagToe implements KaartMessage {
   readonly type = KaartMessageTypes.VOEG_LAAG_TOE;
 
-  constructor(readonly positie: number, readonly laag: ke.Laag) {}
+  constructor(readonly positie: number, readonly laag: ke.Laag, readonly laadbaar: boolean) {}
 }
 
 export class VerwijderLaag implements KaartMessage {
@@ -159,8 +153,14 @@ export class KiesAchtergrond implements KaartMessage {
   constructor(readonly titel: string) {}
 }
 
-export class VoorzieLaag implements KaartMessage {
-  readonly type = KaartMessageTypes.VOORZIE_LAAG;
+export class MaakLaagZichtbaar implements KaartMessage {
+  readonly type = KaartMessageTypes.MAAK_LAAG_ZICHTBAAR;
 
-  constructor(readonly laag: ke.Laag) {}
+  constructor(readonly titel: string) {}
+}
+
+export class MaakLaagOnzichtbaar implements KaartMessage {
+  readonly type = KaartMessageTypes.MAAK_LAAG_ONZICHTBAAR;
+
+  constructor(readonly titel: string) {}
 }
