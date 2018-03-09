@@ -7,6 +7,7 @@ import { GoogleLocatieZoekerService } from "../lib/google-locatie-zoeker";
 import { CoordinatenService } from "../lib/kaart";
 import { kaartLogger, definitieToStyle } from "../lib/public_api";
 import { AWV0StyleFunctionDescription, definitieToStyleFunction } from "../lib/stijl";
+import { offsetStyleFunction } from "../lib/stijl/offset-stijl-function";
 
 @Component({
   selector: "awv-ng-kaart-test-app",
@@ -31,7 +32,7 @@ export class AppComponent {
             right: { kind: "Literal", value: "Vrijliggend" }
           },
           style: {
-            definition: { stroke: { color: "green", width: 1.5 } }
+            definition: { stroke: { color: "green", width: 4 } }
           }
         },
         {
@@ -41,7 +42,7 @@ export class AppComponent {
             right: { kind: "Literal", value: "Aanliggend Verhoogd" }
           },
           style: {
-            definition: { stroke: { color: "#FFFF00", width: 1.5 } }
+            definition: { stroke: { color: "#FFFF00", width: 4 } }
           }
         },
         {
@@ -51,7 +52,7 @@ export class AppComponent {
             right: { kind: "Literal", value: "Aanliggend" }
           },
           style: {
-            definition: { stroke: { color: "#FF7F00", width: 1.5 } }
+            definition: { stroke: { color: "#FF7F00", width: 4 } }
           }
         }
       ]
@@ -125,6 +126,8 @@ export class AppComponent {
   ).getOrElse(msg => {
     throw new Error(`slecht formaat ${msg}`);
   });
+
+  fietspadStyleMetOffset = offsetStyleFunction(this.fietspadStyle, "ident8", "zijderijbaan", 1);
 
   constructor(private googleLocatieZoekerService: GoogleLocatieZoekerService, public coordinatenService: CoordinatenService) {
     kaartLogger.setLevel("DEBUG");

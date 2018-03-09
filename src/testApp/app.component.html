@@ -20,9 +20,9 @@
 
 <h3>Zonder controls, enkel dienstkaart in kleur</h3>
 <div>
-    <button (click)="maakZichtbaar('kleursimpel', !isZichtbaar('kleursimpel'))">{{isZichtbaar('kleursimpel')?'Verberg':'Toon'}}</button>
-    <awv-kaart-classic *ngIf="isZichtbaar('kleursimpel')" [naam]="'kleursimpel'">
-      <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
+  <button (click)="maakZichtbaar('kleursimpel', !isZichtbaar('kleursimpel'))">{{isZichtbaar('kleursimpel')?'Verberg':'Toon'}}</button>
+  <awv-kaart-classic *ngIf="isZichtbaar('kleursimpel')" [naam]="'kleursimpel'">
+    <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
   </awv-kaart-classic>
 </div>
 
@@ -134,6 +134,17 @@
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
     <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
     <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'http://apigateway/geolatte-nosqlfs'" [database]="'featureserver'" [collection]="'fietspaden'" [styleFunction]="fietspadStyle" [minZoom]="7"></awv-kaart-nosqlfs-laag>
+  </awv-kaart-classic>
+</div>
+
+
+<h3>Fietspaden met offsets</h3>
+<div>
+  <button (click)="maakZichtbaar('offsets', !isZichtbaar('offsets'))">{{isZichtbaar('offsets')?'Verberg':'Toon'}}</button>
+  <awv-kaart-classic *ngIf="isZichtbaar('offsets')" [naam]="'offsets'">
+    <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+    <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
+    <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'http://apigateway/geolatte-nosqlfs'" [database]="'featureserver'" [collection]="'fietspaden'" [styleFunction]="fietspadStyleMetOffset" [minZoom]="7"></awv-kaart-nosqlfs-laag>
   </awv-kaart-classic>
 </div>
 
