@@ -61,6 +61,10 @@ export function offsetStyleFunction(
   return offsetStyleFunc;
 }
 
+function getValue(feature: ol.Feature, field: string): Option<string> {
+  return option.fromNullable(feature.get("properties")).chain(properties => option.fromNullable(properties[field]));
+}
+
 /**
  * Geeft een StyleGeometryFunction terug dat ge-embed kan worden in een ol.style.Style om de geometry van het feature te transformeren
  *
@@ -194,10 +198,6 @@ function getOffsetLinestring(linestring: ol.geom.LineString, offsetPixels: numbe
   }
   offsetPoints.push([loX, loY]);
   return new ol.geom.LineString(offsetPoints);
-}
-
-function getValue(feature: ol.Feature, field: string): Option<string> {
-  return option.fromNullable(feature.get("properties")).chain(properties => option.fromNullable(properties[field]));
 }
 
 function getDirection(ident8) {
