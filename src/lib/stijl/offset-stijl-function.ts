@@ -90,21 +90,26 @@ function offsetGeometryFunction(
     if (!geometry || offsetPixels <= 0) {
       return geometry;
     }
-    if (geometry instanceof ol.geom.LineString) {
-      return getOffsetLinestring(<ol.geom.LineString>geometry, offsetPixels, resolution, zijdeSpiegeling);
-    } else if (geometry instanceof ol.geom.MultiLineString) {
-      const multilinestring = <ol.geom.MultiLineString>geometry;
-      const offsetMultiLinestring = new ol.geom.MultiLineString([]);
+    try {
+      if (geometry instanceof ol.geom.LineString) {
+        return getOffsetLinestring(<ol.geom.LineString>geometry, offsetPixels, resolution, zijdeSpiegeling);
+      } else if (geometry instanceof ol.geom.MultiLineString) {
+        const multilinestring = <ol.geom.MultiLineString>geometry;
+        const offsetMultiLinestring = new ol.geom.MultiLineString([]);
 
-      multilinestring
-        .getLineStrings()
-        .forEach(linestring =>
-          offsetMultiLinestring.appendLineString(getOffsetLinestring(linestring, offsetPixels, resolution, zijdeSpiegeling))
-        );
+        multilinestring
+          .getLineStrings()
+          .forEach(linestring =>
+            offsetMultiLinestring.appendLineString(getOffsetLinestring(linestring, offsetPixels, resolution, zijdeSpiegeling))
+          );
 
-      return offsetMultiLinestring;
-    } else {
-      kaartLogger.error(`De offset renderer wordt niet ondersteund voor geometries van type ${geometry.getType()}`);
+        return offsetMultiLinestring;
+      } else {
+        kaartLogger.error(`De offset renderer wordt niet ondersteund voor geometries van type ${geometry.getType()}`);
+        return geometry;
+      }
+    } catch (e) {
+      kaartLogger.error(`Kan offset voor geometry niet berekenen. Fout: ${e}`);
       return geometry;
     }
   }
