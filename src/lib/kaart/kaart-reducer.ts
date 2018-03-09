@@ -49,13 +49,6 @@ const keepModel: ModelUpdater = (model: KaartWithInfo) => model;
 //
 
 /**
- *  Toevoegen bovenaan de kaart. Als er al een laag was met dezelfde titel, dan wordt die eerst verwijderd.
- */
-function voegLaagBovenToe(laag: ke.Laag): ModelUpdater {
-  return voegLaagToe(Number.MAX_SAFE_INTEGER, laag, true);
-}
-
-/**
  * Een laag verwijderen. De titel van de laag bepaalt welke er verwijderd wordt.
  */
 function verwijderLaag(titel: string): ModelUpdater {
