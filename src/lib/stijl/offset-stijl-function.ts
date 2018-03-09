@@ -32,34 +32,28 @@ export function offsetStyleFunction(
         return style;
       },
       ident8 => {
-        return getValue(feature, zijderijbaanVeld).fold(
-          () => {
-            kaartLogger.error(`Zijderijbaan is verplicht, er wordt geen offset getekend voor feature ${feature}`);
-            return style;
-          },
-          zijderijbaan => {
-            function setGeometry(s: ol.style.Style) {
-              const offsetGeometryFunc = offsetGeometryFunction(
-                feature,
-                ident8,
-                zijderijbaan,
-                positie * s.getStroke().getWidth(),
-                resolution
-              );
+        function setGeometry(s: ol.style.Style) {
+          const offsetGeometryFunc = offsetGeometryFunction(
+            feature,
+            ident8,
+            // Niet alle lijntypes hebben expliciet een offsetzijde. Indien geen zijderijbaan waarde gevonden,
+            // veronderstellen we rechter zijde
+            getValue(feature, zijderijbaanVeld).getOrElseValue("r"),
+            positie * s.getStroke().getWidth(),
+            resolution
+          );
 
-              if (s instanceof ol.style.Style) {
-                s.setGeometry(offsetGeometryFunc);
-              }
-            }
-
-            if (Array.isArray(style)) {
-              style.forEach(setGeometry);
-            } else {
-              setGeometry(style);
-            }
-            return style;
+          if (s instanceof ol.style.Style) {
+            s.setGeometry(offsetGeometryFunc);
           }
-        );
+        }
+
+        if (Array.isArray(style)) {
+          style.forEach(setGeometry);
+        } else {
+          setGeometry(style);
+        }
+        return style;
       }
     );
   }
