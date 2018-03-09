@@ -28,11 +28,11 @@ export function offsetStyleFunction(
 
     return getValue(feature, ident8Veld).fold(
       () => {
-        kaartLogger.error(`Ident8 is verplicht, er wordt geen offset getekend voor feature ${feature}`);
+        kaartLogger.warning(`Ident8 is verplicht, er wordt geen offset getekend voor feature ${feature}`);
         return style;
       },
       ident8 => {
-        function setGeometry(s: ol.style.Style) {
+        function setGeometryOnStyle(s: ol.style.Style) {
           const offsetGeometryFunc = offsetGeometryFunction(
             feature,
             ident8,
@@ -49,9 +49,9 @@ export function offsetStyleFunction(
         }
 
         if (Array.isArray(style)) {
-          style.forEach(setGeometry);
+          style.forEach(setGeometryOnStyle);
         } else {
-          setGeometry(style);
+          setGeometryOnStyle(style);
         }
         return style;
       }
@@ -83,7 +83,7 @@ function offsetGeometryFunction(
   resolution: number
 ): ol.StyleGeometryFunction {
   const direction = getDirection(ident8);
-  const zijde = getZijde(zijderijbaan, direction);
+  const zijdeSpiegeling = getZijdeSpiegeling(zijderijbaan, direction);
 
   function getOffsetGeometry(feat: ol.Feature): ol.geom.Geometry {
     const geometry = feat.getGeometry();
@@ -91,14 +91,16 @@ function offsetGeometryFunction(
       return geometry;
     }
     if (geometry instanceof ol.geom.LineString) {
-      return getOffsetLinestring(<ol.geom.LineString>geometry, offsetPixels, resolution, zijde);
+      return getOffsetLinestring(<ol.geom.LineString>geometry, offsetPixels, resolution, zijdeSpiegeling);
     } else if (geometry instanceof ol.geom.MultiLineString) {
       const multilinestring = <ol.geom.MultiLineString>geometry;
       const offsetMultiLinestring = new ol.geom.MultiLineString([]);
 
       multilinestring
         .getLineStrings()
-        .forEach(linestring => offsetMultiLinestring.appendLineString(getOffsetLinestring(linestring, offsetPixels, resolution, zijde)));
+        .forEach(linestring =>
+          offsetMultiLinestring.appendLineString(getOffsetLinestring(linestring, offsetPixels, resolution, zijdeSpiegeling))
+        );
 
       return offsetMultiLinestring;
     } else {
@@ -110,13 +112,12 @@ function offsetGeometryFunction(
   return getOffsetGeometry;
 }
 
-function getOffsetLinestring(linestring: ol.geom.LineString, offsetPixels: number, resolution: number, zijde: string) {
+type ZijdeSpiegeling = 1 | -1;
+
+function getOffsetLinestring(linestring: ol.geom.LineString, offsetPixels: number, resolution: number, zijdeSpiegeling: ZijdeSpiegeling) {
   const offsetPoints: Array<ol.Coordinate> = []; // get the point objects from the geometry
   const oPoints = linestring.getCoordinates(); // get the original point objects from the geometry
-  let offset = Math.abs(offsetPixels * resolution); // offset in map units (e.g. 'm': meter)
-  if (zijde.toLowerCase() === "r") {
-    offset = -1 * offset;
-  }
+  const offset = zijdeSpiegeling * Math.abs(offsetPixels * resolution); // offset in map units (e.g. 'm': meter)
   let lastX = 0,
     lastY = 0,
     thisX = 0,
@@ -130,6 +131,8 @@ function getOffsetLinestring(linestring: ol.geom.LineString, offsetPixels: numbe
     offsetX = 0,
     offsetY = 0,
     first = true;
+  const HALF_PI = Math.PI / 2;
+  const QUARTER_PI = Math.PI / 4;
   for (let i = 0; i < oPoints.length; i++) {
     if (i === 0) {
       moveX = lastX = oPoints[i][0];
@@ -145,8 +148,8 @@ function getOffsetLinestring(linestring: ol.geom.LineString, offsetPixels: numbe
     const dy = thisY - lastY;
     // segmentAngle is the angle of the linesegment between last and current points
     const segmentAngle = Math.atan2(dy, dx);
-    offsetX = offset * Math.cos(segmentAngle + Math.PI / 2.0);
-    offsetY = offset * Math.sin(segmentAngle + Math.PI / 2.0);
+    offsetX = offset * Math.cos(segmentAngle + HALF_PI);
+    offsetY = offset * Math.sin(segmentAngle + HALF_PI);
     // point (nloX, nloY) is last point + current offset vector
     const nloX = lastX + offsetX;
     const nloY = lastY + offsetY;
@@ -156,7 +159,7 @@ function getOffsetLinestring(linestring: ol.geom.LineString, offsetPixels: numbe
       offsetPoints.push([moveX, moveY]);
       first = false;
     } else if (nloX !== loX || nloY !== loY) {
-      // the formula for the signed angle between two vectors: ang = atan2(x1*y2-y1*x2,x1*x2+y1*y2
+      // the formula for the signed angle between two vectors: ang = atan2(x1*y2-y1*x2,x1*x2+y1*y2)
       const angleBetweenOffsetVectors = Math.atan2(
         lastOffsetX * offsetY - lastOffsetY * offsetX,
         lastOffsetX * offsetX + lastOffsetY * offsetY
@@ -165,26 +168,24 @@ function getOffsetLinestring(linestring: ol.geom.LineString, offsetPixels: numbe
       // iRadius is the length of the vector along the bisector of the two consecutive offset vectors that starts
       // at the last point, and ends in the intersection of the two offset lines.
       let iRadius = offset / Math.cos(halfOffsetAngle);
-      if (
-        (offset > 0 && halfOffsetAngle < Math.PI / 2 + 0.00001 && halfOffsetAngle > Math.PI / 2 - 0.00001) ||
-        (offset < 0 && halfOffsetAngle > -Math.PI / 2 - 0.00001 && halfOffsetAngle < -Math.PI / 2 + 0.000001)
-      ) {
-        // console.log("info: corner case offset rendering");
-        // do nothing, the calculated iRadius will be extremely large since there offset vectors are
+
+      if ((offset > 0 && closeTo(halfOffsetAngle, HALF_PI)) || (offset < 0 && closeTo(halfOffsetAngle, -HALF_PI))) {
+        // corner case offset rendering
+        // do nothing, the calculated iRadius will be extremely large since their offset vectors are
         // almost parallel
-      } else if ((offset > 0 && halfOffsetAngle < -Math.PI / 4) || (offset < 0 && halfOffsetAngle > Math.PI / 4)) {
+      } else if ((offset > 0 && halfOffsetAngle < -QUARTER_PI) || (offset < 0 && halfOffsetAngle > QUARTER_PI)) {
         // In these cases the offset-lines intersect too far beyond the last point
         // correct iRadius
-        iRadius = offset / Math.cos(Math.PI / 4);
-        let iloX = lastX + iRadius * Math.cos(segmentAngle + Math.PI / 2 - 2 * halfOffsetAngle - Math.sign(offset) * Math.PI / 4);
-        let iloY = lastY + iRadius * Math.sin(segmentAngle + Math.PI / 2 - 2 * halfOffsetAngle - Math.sign(offset) * Math.PI / 4);
+        iRadius = offset / Math.cos(QUARTER_PI);
+        let iloX = lastX + iRadius * Math.cos(segmentAngle + HALF_PI - 2 * halfOffsetAngle - Math.sign(offset) * QUARTER_PI);
+        let iloY = lastY + iRadius * Math.sin(segmentAngle + HALF_PI - 2 * halfOffsetAngle - Math.sign(offset) * QUARTER_PI);
         offsetPoints.push([iloX, iloY]);
-        iloX = lastX + iRadius * Math.cos(segmentAngle + Math.PI / 2 + Math.sign(offset) * Math.PI / 4);
-        iloY = lastY + iRadius * Math.sin(segmentAngle + Math.PI / 2 + Math.sign(offset) * Math.PI / 4);
+        iloX = lastX + iRadius * Math.cos(segmentAngle + HALF_PI + Math.sign(offset) * QUARTER_PI);
+        iloY = lastY + iRadius * Math.sin(segmentAngle + HALF_PI + Math.sign(offset) * QUARTER_PI);
         offsetPoints.push([iloX, iloY]);
       } else {
-        const iloX = lastX + iRadius * Math.cos(segmentAngle + Math.PI / 2 - halfOffsetAngle);
-        const iloY = lastY + iRadius * Math.sin(segmentAngle + Math.PI / 2 - halfOffsetAngle);
+        const iloX = lastX + iRadius * Math.cos(segmentAngle + HALF_PI - halfOffsetAngle);
+        const iloY = lastY + iRadius * Math.sin(segmentAngle + HALF_PI - halfOffsetAngle);
         offsetPoints.push([iloX, iloY]);
       }
     }
@@ -200,10 +201,14 @@ function getOffsetLinestring(linestring: ol.geom.LineString, offsetPixels: numbe
   return new ol.geom.LineString(offsetPoints);
 }
 
+function closeTo(value1: number, value2: number) {
+  return value1 < value2 + 0.00001 && value1 > value2 - 0.00001;
+}
+
 function getDirection(ident8) {
   return ident8 && ident8.endsWith("2") ? "down" : "up";
 }
 
-function getZijde(zijderijweg: string, direction: string) {
-  return (zijderijweg === "l" || zijderijweg === "L") === (direction === "up") ? "l" : "r";
+function getZijdeSpiegeling(zijderijweg: string, direction: string): ZijdeSpiegeling {
+  return (zijderijweg === "l" || zijderijweg === "L") === (direction === "up") ? 1 : -1;
 }
