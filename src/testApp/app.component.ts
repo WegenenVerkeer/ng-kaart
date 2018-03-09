@@ -127,7 +127,7 @@ export class AppComponent {
     throw new Error(`slecht formaat ${msg}`);
   });
 
-  fietspadStyleMetOffset = offsetStyleFunction(this.fietspadStyle, "ident8", "zijderijbaan", 12);
+  fietspadStyleMetOffset = offsetStyleFunction(this.fietspadStyle, "ident8", "zijderijbaan", 1);
 
   constructor(private googleLocatieZoekerService: GoogleLocatieZoekerService, public coordinatenService: CoordinatenService) {
     kaartLogger.setLevel("DEBUG");

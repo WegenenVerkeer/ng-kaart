@@ -63,29 +63,29 @@ export class NosqlFsSource extends ol.source.Vector {
               geometry: format.readGeometry(geojson.geometry)
             });
           });
-          kaartLogger.debug(`nosql: adding ${features.length} features`);
+          // kaartLogger.debug(`nosql: adding ${features.length} features`);
           source.addFeatures(features);
         };
         xhr.onloadstart = () => {
-          kaartLogger.debug("nosql: onloadstart");
-          kaartLogger.debug("nosql: clearing features");
+          // kaartLogger.debug("nosql: onloadstart");
+          // kaartLogger.debug("nosql: clearing features");
           source.clear();
         };
 
         xhr.onerror = (event: ErrorEvent) => {
-          kaartLogger.error("nosql: fout bij laden nosqlfs data", event.message);
+          // kaartLogger.error("nosql: fout bij laden nosqlfs data", event.message);
         };
         xhr.onload = () => {
-          kaartLogger.debug("nosql: onload");
+          // kaartLogger.debug("nosql: onload");
         };
         xhr.onloadend = () => {
-          kaartLogger.debug("nosql: onloadend ");
+          // kaartLogger.debug("nosql: onloadend ");
         };
         xhr.ontimeout = () => {
-          kaartLogger.debug("nosql: ontimeout");
+          // kaartLogger.debug("nosql: ontimeout");
         };
         xhr.onabort = () => {
-          kaartLogger.debug("nosql: onabort");
+          // kaartLogger.debug("nosql: onabort");
         };
 
         xhr.send();

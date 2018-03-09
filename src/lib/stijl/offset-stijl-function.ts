@@ -9,14 +9,15 @@ import { kaartLogger } from "../kaart/log";
  * @param ol.StyleFunction styleFunction Oorspronkelijke stijl functie
  * @param string ident8Veld Plaats waar het ident8 veld te vinden is onder feature.properties
  * @param string zijderijbaanVeld Plaats waar de kant van de weg van het feature te vinden is onder feature.properties ('R', 'L', 'M'/'O')
- * @param number offsetPixels Aantal pixels dat het feature weg van het wegsegment getekend moet worden
+ * @param number positie De index van de te stylen laag.
+ *                       Positie 0 bevat geen offset, positie 1 bevat offset van 1 x strokeWidth van stijl, enz
  * @returns ol.StyleFunction
  */
 export function offsetStyleFunction(
   styleFunction: ol.StyleFunction,
   ident8Veld: string,
   zijderijbaanVeld: string,
-  offsetPixels: number
+  positie: number
 ): ol.StyleFunction {
   function offsetStyleFunc(feature: ol.Feature, resolution: number): ol.style.Style | ol.style.Style[] {
     const style: ol.style.Style | ol.style.Style[] = styleFunction(feature, resolution);
@@ -37,9 +38,15 @@ export function offsetStyleFunction(
             return style;
           },
           zijderijbaan => {
-            const offsetGeometryFunc = offsetGeometryFunction(feature, ident8, zijderijbaan, offsetPixels, resolution);
-
             function setGeometry(s: ol.style.Style) {
+              const offsetGeometryFunc = offsetGeometryFunction(
+                feature,
+                ident8,
+                zijderijbaan,
+                positie * s.getStroke().getWidth(),
+                resolution
+              );
+
               if (s instanceof ol.style.Style) {
                 s.setGeometry(offsetGeometryFunc);
               }
