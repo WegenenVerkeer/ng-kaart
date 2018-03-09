@@ -4,7 +4,7 @@ import "rxjs/add/observable/of";
 import "rxjs/add/observable/combineLatest";
 import "rxjs/add/observable/empty";
 import "rxjs/add/observable/never";
-import { scan, map, tap, distinctUntilChanged, filter, shareReplay, merge } from "rxjs/operators";
+import { scan, map, tap, distinctUntilChanged, filter, shareReplay, merge, debounceTime } from "rxjs/operators";
 
 import proj4 from "proj4";
 import * as ol from "openlayers";
@@ -51,6 +51,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   @Input() naam = "kaart";
 
   @Input() achtergrondTitelSelectieConsumer: prt.ModelConsumer<string> = prt.noOpModelConsumer;
+  @Input() zoomniveauConsumer: prt.ModelConsumer<number> = prt.noOpModelConsumer;
   @Input() modelConsumer: prt.ModelConsumer<KaartWithInfo> = prt.noOpModelConsumer;
 
   showBackgroundSelector$: Observable<boolean> = Observable.empty();
@@ -92,7 +93,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       this.kaartModel$ = this.kaartEvt$.pipe(
         merge(this.internalEventDispatcher.event$), // hoe rekening met de events van de interne componenten
         tap(x => kaartLogger.debug("kaart event", x)),
-        leaveZone(this.zone), //
+        leaveZone(this.zone), // voer uit buiten Angular zone
         scan(red.kaartReducer, initieelModel), // TODO: zorg er voor dat de unsubscribe gebeurt
         shareReplay(1000, 5000)
       );
@@ -105,10 +106,19 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
         )
         .subscribe(titel => this.achtergrondTitelSelectieConsumer(titel));
 
+      this.kaartModel$
+        .pipe(
+          map(model => model.zoom), //
+          distinctUntilChanged(),
+          debounceTime(50)
+        )
+        .subscribe(zoom => this.zoomniveauConsumer(zoom));
+
       this.kaartModel$.subscribe(
         model => {
           kaartLogger.debug("reduced to", model);
-          // TODO dubbels opvangen (zie versie)
+          // TODO dubbels opvangen (zie versie). Als we een versienummer ophogen telkens we effectief het model aanpassen, dan kunnen we
+          // de modelConsumer werk besparen in die gevallen dat de reducer geen nieuwe toestand heeft gegenereerd.
           this.modelConsumer(model); // Heel belangrijk: laat diegene die ons embed weten wat het huidige model is.
         },
         e => kaartLogger.error("error", e),

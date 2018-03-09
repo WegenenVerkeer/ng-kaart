@@ -1,13 +1,13 @@
 import { Component, Input, NgZone, OnDestroy, OnChanges } from "@angular/core";
+import { SimpleChanges } from "@angular/core/src/metadata/lifecycle_hooks";
 import { Observable } from "rxjs/Observable";
+import { map } from "rxjs/operators";
 
 import { KaartWithInfo } from "./kaart-with-info";
 import { KaartEventDispatcher, VacuousDispatcher } from "./kaart-event-dispatcher";
 import { KaartComponentBase } from "./kaart-component-base";
-import { SimpleChanges } from "@angular/core/src/metadata/lifecycle_hooks";
 import { VeranderZoomniveau } from "./kaart-protocol-events";
-import { map } from "rxjs/operators";
-import { subscribeOnAngular } from "../util/subscribe-on-angular";
+import { observeOnAngular } from "../util/observe-on-angular";
 
 export interface KaartProps {
   canZoomIn: boolean;
@@ -40,12 +40,12 @@ export class KaartZoomComponent extends KaartComponentBase implements OnChanges,
 
   ngOnChanges(changes: SimpleChanges) {
     this.kaartProps$ = this.kaartModel$.pipe(
-      subscribeOnAngular(this.zone),
       map(m => ({
         canZoomIn: KaartZoomComponent.canZoomIn(m),
         canZoomOut: KaartZoomComponent.canZoomOut(m),
         zoom: m.zoom
-      }))
+      })),
+      observeOnAngular(this.zone)
     );
   }
 

@@ -2,7 +2,7 @@ import { Observable } from "rxjs/Observable";
 
 import { ZoneLike } from "./zone-like";
 
-export function subscribeOnAngular<T>(zone: ZoneLike) {
+export function observeOnAngular<T>(zone: ZoneLike) {
   return (source: Observable<T>) =>
     new Observable<T>(observer => {
       return source.subscribe({
