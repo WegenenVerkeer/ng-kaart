@@ -112,6 +112,9 @@ function offsetGeometryFunction(
   return getOffsetGeometry;
 }
 
+const HALF_PI = Math.PI / 2;
+const QUARTER_PI = Math.PI / 4;
+
 type ZijdeSpiegeling = 1 | -1;
 
 function getOffsetLinestring(linestring: ol.geom.LineString, offsetPixels: number, resolution: number, zijdeSpiegeling: ZijdeSpiegeling) {
@@ -131,8 +134,7 @@ function getOffsetLinestring(linestring: ol.geom.LineString, offsetPixels: numbe
     offsetX = 0,
     offsetY = 0,
     first = true;
-  const HALF_PI = Math.PI / 2;
-  const QUARTER_PI = Math.PI / 4;
+
   for (let i = 0; i < oPoints.length; i++) {
     if (i === 0) {
       moveX = lastX = oPoints[i][0];
