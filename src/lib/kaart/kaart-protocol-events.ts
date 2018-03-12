@@ -38,7 +38,7 @@ export interface KaartMessage {
 export class VoegLaagToe implements KaartMessage {
   readonly type = KaartMessageTypes.VOEG_LAAG_TOE;
 
-  constructor(readonly positie: number, readonly laag: ke.Laag, readonly laadbaar: boolean) {}
+  constructor(readonly positie: number, readonly laag: ke.Laag, readonly magGetoondWorden: boolean) {}
 }
 
 export class VerwijderLaag implements KaartMessage {
