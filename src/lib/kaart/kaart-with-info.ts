@@ -5,6 +5,9 @@ import { Option, none, some } from "fp-ts/lib/Option";
 import * as ke from "./kaart-elementen";
 import { KaartConfig } from "./kaart-config";
 
+/**
+ * Het model achter de kaartcomponent.
+ */
 export class KaartWithInfo {
   constructor(
     // TODO om de distinctWithInfo te versnellen zouden we als eerste element een versieteller kunnen toevoegen

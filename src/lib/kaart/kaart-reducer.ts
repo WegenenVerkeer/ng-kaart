@@ -108,7 +108,6 @@ function insertLaagNoRemoveAt(positie: number, laag: ke.Laag, visible: boolean):
     const effectivePosition = Math.max(0, Math.min(positie, kaart.lagen.size));
     const maybeLayer = toOlLayer(kaart, laag);
     maybeLayer.map(layer => {
-      // In het geval van de blanco laag, hebben we geen openlayers layer
       layer.setVisible(visible);
       kaart.map.getLayers().insertAt(effectivePosition, layer);
     });
@@ -318,7 +317,7 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartMessage): Kaart
       return verwijderLaag((cmd as prt.VerwijderLaag).titel)(kaart);
     case prt.KaartMessageTypes.VOEG_LAAG_TOE:
       const inserted = cmd as prt.VoegLaagToe;
-      return voegLaagToe(inserted.positie, inserted.laag, inserted.laadbaar)(kaart);
+      return voegLaagToe(inserted.positie, inserted.laag, inserted.magGetoondWorden)(kaart);
     case prt.KaartMessageTypes.VOEG_SCHAAL_TOE:
       return voegSchaalToe(kaart);
     case prt.KaartMessageTypes.VERWIJDER_SCHAAL:

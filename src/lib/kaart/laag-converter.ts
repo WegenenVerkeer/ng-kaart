@@ -75,6 +75,10 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
     });
   }
 
+  function createBlankLayer() {
+    return new ol.layer.Tile(); // Hoe eenvoudig kan het zijn?
+  }
+
   type Stylish = ol.StyleFunction | ol.style.Style | ol.style.Style[];
 
   function determineStyle(vectorlaag: ke.VectorLaag, defaultStyle: ol.style.Style): Stylish {
@@ -90,9 +94,12 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
     case ke.SingleTileWmsType:
       return some(createSingleTileWmsLayer(laag as ke.WmsLaag));
 
-    case ke.VectorType: {
+    case ke.VectorType:
       return some(createVectorLayer(laag as ke.VectorLaag));
-    }
+
+    case ke.BlancoType:
+      return some(createBlankLayer());
+
     default:
       return none;
   }
