@@ -1,4 +1,5 @@
 export * from "./kaart-protocol-events";
+export * from "./kaart-protocol-subscriptions";
 
 export type ModelConsumer<A> = (a: A) => void;
 

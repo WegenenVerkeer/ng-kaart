@@ -4,7 +4,20 @@ import "rxjs/add/observable/of";
 import "rxjs/add/observable/combineLatest";
 import "rxjs/add/observable/empty";
 import "rxjs/add/observable/never";
-import { scan, map, tap, distinctUntilChanged, filter, shareReplay, merge, debounceTime } from "rxjs/operators";
+import {
+  scan,
+  map,
+  tap,
+  distinctUntilChanged,
+  filter,
+  shareReplay,
+  merge,
+  debounceTime,
+  takeUntil,
+  debounce,
+  startWith,
+  pairwise
+} from "rxjs/operators";
 
 import proj4 from "proj4";
 import * as ol from "openlayers";
@@ -19,6 +32,7 @@ import { kaartLogger } from "./log";
 import * as prt from "./kaart-protocol";
 import * as red from "./kaart-reducer";
 import { VeranderZoomniveau, ZoomniveauVeranderd, ZoomminmaxVeranderd } from "./kaart-protocol-events";
+import { Subject } from "rxjs";
 
 @Component({
   selector: "awv-kaart",
@@ -45,6 +59,8 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
    * ophalen in afterViewInit.
    */
   private readonly internalEventDispatcher = new ReplaySubjectKaartEventDispatcher();
+
+  private readonly newSubscriptionsSubj = new Subject<{}>();
 
   @Input() minZoom = 2; // TODO naar config
   @Input() maxZoom = 15; // TODO naar config
@@ -81,23 +97,30 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
   private bindObservables() {
     this.runAsapOutsideAngular(() => {
+      // Initialiseer the model
       const initieelModel = this.initieelModel();
       kaartLogger.info(`Kaart ${this.naam} aangemaakt`);
 
+      // Wanneer de destroying observable emit, maw wanneer de component aan het afsluiten is, dan kuisen we ook
+      // de openlayers kaart op.
       // noinspection JSUnusedLocalSymbols
       this.destroying$.pipe(leaveZone(this.zone)).subscribe(_ => {
         kaartLogger.info(`kaart ${this.naam} opkuisen`);
         initieelModel.map.setTarget((undefined as any) as string); // Hack omdat openlayers typedefs kaduuk zijn
       });
 
+      // Luister naar commands die binnen komen van buiten de kaartcomponent (in eerste instantie) en commands van
+      // interne componentnen (in tweede instantie).
       this.kaartModel$ = this.kaartEvt$.pipe(
         merge(this.internalEventDispatcher.event$), // hoe rekening met de events van de interne componenten
         tap(x => kaartLogger.debug("kaart event", x)),
         leaveZone(this.zone), // voer uit buiten Angular zone
-        scan(red.kaartReducer, initieelModel), // TODO: zorg er voor dat de unsubscribe gebeurt
+        takeUntil(this.destroying$), // als de component stopt, dan ook de subscriptions
+        scan(red.kaartReducer, initieelModel),
         shareReplay(1000, 5000)
       );
 
+      // achtergrondtitels naar buiten sturen
       this.kaartModel$
         .pipe(
           filter(model => model.achtergrondlaagtitel.isSome()), // misschien is er nog geen achtergrondlaag
@@ -106,6 +129,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
         )
         .subscribe(titel => this.achtergrondTitelSelectieConsumer(titel));
 
+      // De zoom naar buiten sturen
       this.kaartModel$
         .pipe(
           map(model => model.zoom), //
@@ -114,6 +138,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
         )
         .subscribe(zoom => this.zoomniveauConsumer(zoom));
 
+      // stuur het model door naar de classic component (in de praktijk toch)
       this.kaartModel$.subscribe(
         model => {
           kaartLogger.debug("reduced to", model);
@@ -164,5 +189,42 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
   get dispatcher(): KaartEventDispatcher {
     return this.internalEventDispatcher;
+  }
+
+  @Input()
+  set subscriptions(obs: Observable<prt.Subscription<any>>) {
+    // emit zodat eventuele subscriptions op een vorige observable unsubscriben. Dit moet gebeuren voor de nieuwe subscription.
+    this.newSubscriptionsSubj.next({});
+    // subscribe op de binnenkomende subscriptions
+    obs
+      .pipe(
+        takeUntil(this.destroying$), //
+        takeUntil(this.newSubscriptionsSubj),
+        startWith(prt.noSubs),
+        pairwise()
+      )
+      .subscribe(sub => {
+        // verschil maken tussen vorige subscriptions en nieuwe en vorige unsubscribe en nieuwe subscriben
+
+      });
+  }
+
+  private subsciber(sub: prt.Subscription<any>): void {
+    switch (sub.type) {
+      case "Zoom":
+        // TODO een command sturen om de OL zoom listener te activeren
+        this.kaartModel$.pipe(map(m => m.zoom), distinctUntilChanged(), debounceTime(250));
+        return;
+      case "Batch":
+        sub.subs.forEach(s => this.subsciber(s));
+        return;
+    }
+  }
+
+  private unsubscriber(sub: prt.Subscription<any>): void {
+    switch (sub.type) {
+      case "Zoom":
+        return;
+    }
   }
 }
