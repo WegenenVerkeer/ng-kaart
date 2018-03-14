@@ -52,7 +52,6 @@ const keepModel: ModelUpdater = (model: KaartWithInfo) => model;
  * Een laag verwijderen. De titel van de laag bepaalt welke er verwijderd wordt.
  */
 function verwijderLaag(titel: string): ModelUpdater {
-  // TODO update zIndex van alle hogere lagen
   return doForLayer(titel, (kaart, layer) => {
     kaart.map.removeLayer(layer); // Oesje. Side-effect. Gelukkig idempotent.
     pasZIndicesAan(-1, layer.getZIndex(), Number.MAX_SAFE_INTEGER, kaart); // Nog een side-effect.
@@ -64,7 +63,7 @@ function verwijderLaag(titel: string): ModelUpdater {
 }
 
 /**
- * Alle lagen in een gegeven bereik van z-indeices aanpassen. Belangrijk om bij toevoegen, verwijderen en verplaatsen,
+ * Alle lagen in een gegeven bereik van z-indices aanpassen. Belangrijk om bij toevoegen, verwijderen en verplaatsen,
  * alle z-indices in een aangesloten interval te behouden.
  */
 function pasZIndicesAan(aanpassing: number, vanaf: number, tot: number, kaart: KaartWithInfo) {
