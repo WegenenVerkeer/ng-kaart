@@ -1,4 +1,4 @@
-import { List } from "immutable";
+import { List, Map } from "immutable";
 import { none, Option, some, fromNullable } from "fp-ts/lib/Option";
 
 import * as ol from "openlayers";
@@ -54,10 +54,24 @@ const keepModel: ModelUpdater = (model: KaartWithInfo) => model;
 function verwijderLaag(titel: string): ModelUpdater {
   return doForLayer(titel, (kaart, layer) => {
     kaart.map.removeLayer(layer); // Oesje. Side-effect. Gelukkig idempotent.
+    pasZIndicesAan(-1, layer.getZIndex(), Number.MAX_SAFE_INTEGER, kaart); // Nog een side-effect.
     return updateModel({
-      lagenOpTitel: kaart.lagenOpTitel.delete(titel),
+      olLayersOpTitel: kaart.olLayersOpTitel.delete(titel),
       lagen: kaart.lagen.filterNot(l => l!.titel === titel).toList()
     });
+  });
+}
+
+/**
+ * Alle lagen in een gegeven bereik van z-indices aanpassen. Belangrijk om bij toevoegen, verwijderen en verplaatsen,
+ * alle z-indices in een aangesloten interval te behouden.
+ */
+function pasZIndicesAan(aanpassing: number, vanaf: number, tot: number, kaart: KaartWithInfo) {
+  kaart.olLayersOpTitel.forEach(layer => {
+    const zIndex = layer!.getZIndex();
+    if (zIndex >= vanaf && zIndex <= tot) {
+      layer!.setZIndex(zIndex + aanpassing);
+    }
   });
 }
 
@@ -91,7 +105,7 @@ function withAchtergrondTitel(f: (titel: string) => ModelUpdater): ModelUpdater 
 
 function doForLayer(titel: string, updater: (kaart: KaartWithInfo, layer: ol.layer.Base) => ModelUpdater): ModelUpdater {
   return (kaart: KaartWithInfo) => {
-    const maybeLayerToUpdate: Option<ol.layer.Base> = kaart.lagenOpTitel.get(titel, none);
+    const maybeLayerToUpdate: Option<ol.layer.Base> = fromNullable(kaart.olLayersOpTitel.get(titel));
     return maybeLayerToUpdate.fold(
       () => kaart, // een blanco laag bijv.
       layerToUpdate => updater(kaart, layerToUpdate)(kaart)
@@ -108,11 +122,13 @@ function insertLaagNoRemoveAt(positie: number, laag: ke.Laag, visible: boolean):
     const effectivePosition = Math.max(0, Math.min(positie, kaart.lagen.size));
     const maybeLayer = toOlLayer(kaart, laag);
     maybeLayer.map(layer => {
+      pasZIndicesAan(1, effectivePosition, Number.MAX_SAFE_INTEGER, kaart);
       layer.setVisible(visible);
-      kaart.map.getLayers().insertAt(effectivePosition, layer);
+      layer.setZIndex(effectivePosition);
+      kaart.map.addLayer(layer);
     });
     return updateModel({
-      lagenOpTitel: kaart.lagenOpTitel.set(laag.titel, maybeLayer),
+      olLayersOpTitel: maybeLayer.map(layer => kaart.olLayersOpTitel.set(laag.titel, layer)).getOrElseValue(kaart.olLayersOpTitel),
       lagen: kaart.lagen.insert(effectivePosition, laag)
     })(kaart);
   };
@@ -121,6 +137,22 @@ function insertLaagNoRemoveAt(positie: number, laag: ke.Laag, visible: boolean):
 function voegLaagToe(positie: number, laag: ke.Laag, visible: boolean): ModelUpdater {
   // De positie is absoluut (als er genoeg lagen zijn), maar niet noodzakelijk relatief als er al een laag met de titel bestond
   return andThen(verwijderLaag(laag.titel), insertLaagNoRemoveAt(positie, laag, visible));
+}
+
+function verplaatsLaag(titel: string, naarPositie: number): ModelUpdater {
+  return (kaart: KaartWithInfo) => {
+    return fromNullable(kaart.olLayersOpTitel.get(titel)).fold(
+      () => kaart,
+      layer => {
+        const vanPositie = layer.getZIndex();
+        // Afhankelijk of we van onder naar boven of van boven naar onder verschuiven, moeten de tussenliggende lagen
+        // naar onder, resp. naar boven verschoven worden.
+        pasZIndicesAan(Math.sign(vanPositie - naarPositie), Math.min(vanPositie, naarPositie), Math.max(vanPositie, naarPositie), kaart);
+        layer.setZIndex(naarPositie);
+        return kaart;
+      }
+    );
+  };
 }
 
 // De volgende 4 functies zouden een stuk generieker kunnen met lenzen
@@ -281,7 +313,7 @@ function veranderViewport(size: ol.Size): ModelUpdater {
 }
 
 function vervangFeatures(kaart: KaartWithInfo, titel: string, features: List<ol.Feature>): KaartWithInfo {
-  const maybeLayer = kaart.lagenOpTitel.get(titel, none).chain(asVectorLayer);
+  const maybeLayer = fromNullable(kaart.olLayersOpTitel.get(titel)).chain(asVectorLayer);
   return maybeLayer.fold(
     () => kaart,
     layer => {
@@ -318,6 +350,9 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartMessage): Kaart
     case prt.KaartMessageTypes.VOEG_LAAG_TOE:
       const inserted = cmd as prt.VoegLaagToe;
       return voegLaagToe(inserted.positie, inserted.laag, inserted.magGetoondWorden)(kaart);
+    case prt.KaartMessageTypes.VERPLAATS_LAAG:
+      const verplaats = cmd as prt.VerplaatsLaag;
+      return verplaatsLaag(verplaats.titel, verplaats.doelPositie)(kaart);
     case prt.KaartMessageTypes.VOEG_SCHAAL_TOE:
       return voegSchaalToe(kaart);
     case prt.KaartMessageTypes.VERWIJDER_SCHAAL:
@@ -366,6 +401,8 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartMessage): Kaart
     case prt.KaartMessageTypes.MAAK_LAAG_ZICHTBAAR:
       return showLaag((cmd as prt.MaakLaagZichtbaar).titel)(kaart);
     default:
+      // Gezien we compileren met --strictNullChecks, geeft de compiler een waarschuwing wanneer we een case zouden missen.
+      // Helaas verhindert dat niet dat externe apps commando's kunnen sturen die (in de huidige versie) niet geïmplementeerd zijn.
       kaartLogger.warn("onverwacht commando", cmd);
       return keepModel(kaart);
   }
