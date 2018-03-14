@@ -15,7 +15,7 @@ export class KaartWithInfo {
     readonly naam: String,
     readonly container: any,
     readonly map: ol.Map, // de volgende parameters worden geacht niet gezet te worden initieel (brrr)
-    readonly lagenOpTitel: Map<string, Option<ol.layer.Base>> = Map(),
+    readonly olLayersOpTitel: Map<string, ol.layer.Base> = Map(),
     readonly lagen: List<ke.Laag> = List(),
     readonly schaal: Option<ol.control.Control> = none,
     readonly fullScreen: Option<ol.control.FullScreen> = none,

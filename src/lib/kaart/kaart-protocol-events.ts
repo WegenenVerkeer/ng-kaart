@@ -7,6 +7,7 @@ export enum KaartMessageTypes {
   // Commands
   VOEG_LAAG_TOE,
   VERWIJDER_LAAG,
+  VERPLAATS_LAAG,
   VOEG_SCHAAL_TOE,
   VERWIJDER_SCHAAL,
   VOEG_VOLLEDIGSCHERM_TOE,
@@ -45,6 +46,12 @@ export class VerwijderLaag implements KaartMessage {
   readonly type = KaartMessageTypes.VERWIJDER_LAAG;
 
   constructor(readonly titel: string) {}
+}
+
+export class VerplaatsLaag implements KaartMessage {
+  readonly type = KaartMessageTypes.VERPLAATS_LAAG;
+
+  constructor(readonly titel: string, readonly doelPositie: number) {}
 }
 
 export class VoegSchaalToe implements KaartMessage {
