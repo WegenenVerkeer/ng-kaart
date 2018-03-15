@@ -27,7 +27,7 @@ export enum KaartMessageTypes {
   KIES_ACHTERGROND,
   MAAK_LAAG_ZICHTBAAR,
   MAAK_LAAG_ONZICHTBAAR,
-  ZET_STIJL,
+  ZET_STIJL_VOOR_LAAG,
 
   // Events
   ZOOMNIVEAU_VERANDERD,
@@ -175,7 +175,7 @@ export class MaakLaagOnzichtbaar implements KaartMessage {
 }
 
 export class ZetStijl implements KaartMessage {
-  readonly type = KaartMessageTypes.ZET_STIJL;
+  readonly type = KaartMessageTypes.ZET_STIJL_VOOR_LAAG;
 
   constructor(readonly titel: string, readonly stijl: StyleSelector) {}
 }

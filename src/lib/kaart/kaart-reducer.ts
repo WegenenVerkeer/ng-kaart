@@ -96,7 +96,7 @@ function showLaag(titel: string): ModelUpdater {
   });
 }
 
-function zetStijl(titel: string, stijl: StyleSelector) {
+function zetStijlVoorLaag(titel: string, stijl: StyleSelector) {
   return doForLayer(titel, (kaart, layer) => {
     asVectorLayer(layer).map(vectorlayer => vectorlayer.setStyle(stijl.type === "StaticStyle" ? stijl.style : stijl.styleFunction));
     return keepModel;
@@ -408,9 +408,9 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartMessage): Kaart
       return hideLaag((cmd as prt.MaakLaagOnzichtbaar).titel)(kaart);
     case prt.KaartMessageTypes.MAAK_LAAG_ZICHTBAAR:
       return showLaag((cmd as prt.MaakLaagZichtbaar).titel)(kaart);
-    case prt.KaartMessageTypes.ZET_STIJL:
+    case prt.KaartMessageTypes.ZET_STIJL_VOOR_LAAG:
       const cmdZetStijl = cmd as prt.ZetStijl;
-      return zetStijl(cmdZetStijl.titel, cmdZetStijl.stijl)(kaart);
+      return zetStijlVoorLaag(cmdZetStijl.titel, cmdZetStijl.stijl)(kaart);
     default:
       // Gezien we compileren met --strictNullChecks, geeft de compiler een waarschuwing wanneer we een case zouden missen.
       // Helaas verhindert dat niet dat externe apps commando's kunnen sturen die (in de huidige versie) niet geïmplementeerd zijn.
