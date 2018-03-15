@@ -2,6 +2,7 @@ import { List } from "immutable";
 
 import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";
+import { StyleSelector } from "./kaart-elementen";
 
 export enum KaartMessageTypes {
   // Commands
@@ -26,6 +27,7 @@ export enum KaartMessageTypes {
   KIES_ACHTERGROND,
   MAAK_LAAG_ZICHTBAAR,
   MAAK_LAAG_ONZICHTBAAR,
+  ZET_STIJL_VOOR_LAAG,
 
   // Events
   ZOOMNIVEAU_VERANDERD,
@@ -170,4 +172,10 @@ export class MaakLaagOnzichtbaar implements KaartMessage {
   readonly type = KaartMessageTypes.MAAK_LAAG_ONZICHTBAAR;
 
   constructor(readonly titel: string) {}
+}
+
+export class ZetStijlVoorLaag implements KaartMessage {
+  readonly type = KaartMessageTypes.ZET_STIJL_VOOR_LAAG;
+
+  constructor(readonly titel: string, readonly stijl: StyleSelector) {}
 }

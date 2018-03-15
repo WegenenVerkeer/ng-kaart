@@ -8,6 +8,7 @@ import * as prt from "./kaart-protocol";
 import { KaartWithInfo } from "./kaart-with-info";
 import { kaartLogger } from "./log";
 import { toOlLayer } from "./laag-converter";
+import { StyleSelector } from "./kaart-elementen";
 
 ///////////////////////////////////
 // Hulpfuncties
@@ -91,6 +92,13 @@ function hideLaag(titel: string): ModelUpdater {
 function showLaag(titel: string): ModelUpdater {
   return doForLayer(titel, (kaart, layer) => {
     layer.setVisible(true);
+    return keepModel;
+  });
+}
+
+function zetStijlVoorLaag(titel: string, stijl: StyleSelector) {
+  return doForLayer(titel, (kaart, layer) => {
+    asVectorLayer(layer).map(vectorlayer => vectorlayer.setStyle(stijl.type === "StaticStyle" ? stijl.style : stijl.styleFunction));
     return keepModel;
   });
 }
@@ -325,7 +333,7 @@ function vervangFeatures(kaart: KaartWithInfo, titel: string, features: List<ol.
 }
 
 function asVectorLayer(layer: ol.layer.Base): Option<ol.layer.Vector> {
-  return layer["getSource"] ? some(layer as ol.layer.Vector) : none; // gebruik geen hasOwnProperty("getSource")! Geeft altijd false
+  return layer["setStyle"] ? some(layer as ol.layer.Vector) : none; // gebruik geen hasOwnProperty("getSource")! Geeft altijd false
 }
 
 const addNewBackgroundsToMap: ModelUpdater = (kaart: KaartWithInfo) => {
@@ -400,6 +408,9 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartMessage): Kaart
       return hideLaag((cmd as prt.MaakLaagOnzichtbaar).titel)(kaart);
     case prt.KaartMessageTypes.MAAK_LAAG_ZICHTBAAR:
       return showLaag((cmd as prt.MaakLaagZichtbaar).titel)(kaart);
+    case prt.KaartMessageTypes.ZET_STIJL_VOOR_LAAG:
+      const cmdZetStijl = cmd as prt.ZetStijlVoorLaag;
+      return zetStijlVoorLaag(cmdZetStijl.titel, cmdZetStijl.stijl)(kaart);
     default:
       // Gezien we compileren met --strictNullChecks, geeft de compiler een waarschuwing wanneer we een case zouden missen.
       // Helaas verhindert dat niet dat externe apps commando's kunnen sturen die (in de huidige versie) niet geïmplementeerd zijn.
