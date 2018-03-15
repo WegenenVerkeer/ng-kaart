@@ -1,7 +1,7 @@
 import { Observable } from "rxjs/Observable";
 import { ReplaySubject } from "rxjs/ReplaySubject";
 
-import * as prt from "./kaart-protocol-events";
+import * as prt from "./kaart-protocol-commands";
 
 export interface KaartEventDispatcher {
   dispatch(evt: prt.KaartMessage): void;

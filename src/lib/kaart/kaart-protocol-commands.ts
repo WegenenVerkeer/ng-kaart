@@ -2,6 +2,7 @@ import { List } from "immutable";
 
 import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";
+import { Subscription } from ".";
 
 export enum KaartMessageTypes {
   // Commands
@@ -170,4 +171,73 @@ export class MaakLaagOnzichtbaar implements KaartMessage {
   readonly type = KaartMessageTypes.MAAK_LAAG_ONZICHTBAAR;
 
   constructor(readonly titel: string) {}
+}
+
+export type Command<Msg> =
+  | SubscriptionCmd<Msg>
+  | VoegLaagToeCmd<Msg>
+  | VerwijderLaagCmd<Msg>
+  | VerplaatsLaagCmd<Msg>
+  | VoegSchaalToeCmd<Msg>
+  | VerwijderSchaalCmd<Msg>
+  | VoegVolledigSchermToeCmd<Msg>
+  | VerwijderVolledigSchermCmd<Msg>
+  | VoegStandaardInteractiesToeCmd<Msg>
+  | VerwijderStandaardInteractiesCmd<Msg>;
+
+export interface SubscriptionCmd<Msg> {
+  readonly type: "Subscription";
+  readonly subscription: Subscription<Msg>;
+}
+
+export interface VoegLaagToeCmd<Msg> {
+  readonly type: "VoegLaagToe";
+  readonly positie: number;
+  readonly laag: ke.Laag;
+  readonly magGetoondWorden: boolean;
+  readonly wrapper: (positie: number) => Msg;
+}
+
+export interface VerwijderLaagCmd<Msg> {
+  readonly type: "VerwijderLaag";
+  readonly titel: string;
+  readonly wrapper: () => Msg;
+}
+
+export interface VoegSchaalToeCmd<Msg> {
+  readonly type: "VoegSchaalToe";
+  readonly wrapper: () => Msg;
+}
+
+export interface VerplaatsLaagCmd<Msg> {
+  readonly type: "VerplaatsLaag";
+  readonly titel: string;
+  readonly naarPositie: number;
+  readonly wrapper: (positie: number) => Msg;
+}
+
+export interface VerwijderSchaalCmd<Msg> {
+  readonly type: "VerwijderSchaal";
+  readonly wrapper: () => Msg;
+}
+
+export interface VoegVolledigSchermToeCmd<Msg> {
+  readonly type: "VoegVolledigSchermToe";
+  readonly wrapper: () => Msg;
+}
+
+export interface VerwijderVolledigSchermCmd<Msg> {
+  readonly type: "VerwijderVolledigScherm";
+  readonly wrapper: () => Msg;
+}
+
+export interface VoegStandaardInteractiesToeCmd<Msg> {
+  readonly type: "VoegStandaardInteractiesToe";
+  readonly scrollZoomOnFocus: boolean;
+  readonly wrapper: () => Msg;
+}
+
+export interface VerwijderStandaardInteractiesCmd<Msg> {
+  readonly type: "VerwijderStandaardInteracties";
+  readonly wrapper: () => Msg;
 }

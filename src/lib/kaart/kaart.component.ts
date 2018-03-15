@@ -31,7 +31,7 @@ import { leaveZone } from "../util/leave-zone";
 import { kaartLogger } from "./log";
 import * as prt from "./kaart-protocol";
 import * as red from "./kaart-reducer";
-import { VeranderZoomniveau, ZoomniveauVeranderd, ZoomminmaxVeranderd } from "./kaart-protocol-events";
+import { VeranderZoomniveau, ZoomniveauVeranderd, ZoomminmaxVeranderd } from "./kaart-protocol-commands";
 import { Subject } from "rxjs";
 
 @Component({
@@ -53,6 +53,8 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
    */
   @Input() kaartEvt$: Observable<prt.KaartMessage> = Observable.empty();
 
+  @Input() kaartCmd$: Observable<prt.Command<any>> = Observable.empty();
+
   /**
    * Dit is een beetje ongelukkig, maar ook componenten die door de KaartComponent zelf aangemaakt worden moeten events kunnen sturen
    * naar de KaartComponent. Een alternatief zou kunnen zijn één dispatcher hier te maken en de KaartClassicComponent die te laten
@@ -69,6 +71,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   @Input() achtergrondTitelSelectieConsumer: prt.ModelConsumer<string> = prt.noOpModelConsumer;
   @Input() zoomniveauConsumer: prt.ModelConsumer<number> = prt.noOpModelConsumer;
   @Input() modelConsumer: prt.ModelConsumer<KaartWithInfo> = prt.noOpModelConsumer;
+  @Input() messageConsumer: prt.MessageConsumer<any> = prt.noOpMessageConsumer;
 
   showBackgroundSelector$: Observable<boolean> = Observable.empty();
   kaartModel$: Observable<KaartWithInfo> = Observable.empty();
@@ -117,6 +120,18 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
         leaveZone(this.zone), // voer uit buiten Angular zone
         takeUntil(this.destroying$), // als de component stopt, dan ook de subscriptions
         scan(red.kaartReducer, initieelModel),
+        shareReplay(1000, 5000)
+      );
+
+      this.kaartCmd$.pipe(
+        tap(c => kaartLogger.debug("kaart command", c)),
+        takeUntil(this.destroying$),
+        leaveZone(this.zone),
+        scan((model: KaartWithInfo, cmd: prt.Command<any>) => {
+          const { model: newModel, result } = red.kaartCmdReducer(cmd)(model);
+          this.messageConsumer(result); // stuur het resultaat terug naar de eigenaar van de kaartcomponent
+          return newModel; // en laat het nieuwe model terugvloeien
+        }, initieelModel),
         shareReplay(1000, 5000)
       );
 
@@ -191,23 +206,22 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     return this.internalEventDispatcher;
   }
 
-  @Input()
-  set subscriptions(obs: Observable<prt.Subscription<any>>) {
-    // emit zodat eventuele subscriptions op een vorige observable unsubscriben. Dit moet gebeuren voor de nieuwe subscription.
-    this.newSubscriptionsSubj.next({});
-    // subscribe op de binnenkomende subscriptions
-    obs
-      .pipe(
-        takeUntil(this.destroying$), //
-        takeUntil(this.newSubscriptionsSubj),
-        startWith(prt.noSubs),
-        pairwise()
-      )
-      .subscribe(sub => {
-        // verschil maken tussen vorige subscriptions en nieuwe en vorige unsubscribe en nieuwe subscriben
-
-      });
-  }
+  // @Input()
+  // set subscriptions(obs: Observable<prt.Subscription<any>>) {
+  //   // emit zodat eventuele subscriptions op een vorige observable unsubscriben. Dit moet gebeuren voor de nieuwe subscription.
+  //   this.newSubscriptionsSubj.next({});
+  //   // subscribe op de binnenkomende subscriptions
+  //   obs
+  //     .pipe(
+  //       takeUntil(this.destroying$), //
+  //       takeUntil(this.newSubscriptionsSubj),
+  //       startWith(prt.noSubs),
+  //       pairwise()
+  //     )
+  //     .subscribe(sub => {
+  //       // verschil maken tussen vorige subscriptions en nieuwe en vorige unsubscribe en nieuwe subscriben
+  //     });
+  // }
 
   private subsciber(sub: prt.Subscription<any>): void {
     switch (sub.type) {

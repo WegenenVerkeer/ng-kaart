@@ -1,7 +1,5 @@
 export type SubscriptionType = "Zoom" | "Middelpunt" | "Achtergrond";
 
-export type Sub<Msg> = () => Msg;
-
 export type Subscription<Msg> =
   | ZoomNiveauSubscription<Msg>
   | MiddelpuntSubscription<Msg>

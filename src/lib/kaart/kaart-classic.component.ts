@@ -13,7 +13,7 @@ import {
   VeranderViewport,
   VeranderZoomniveau,
   KaartMessage
-} from "./kaart-protocol-events";
+} from "./kaart-protocol-commands";
 import { ModelConsumer } from "./kaart-protocol";
 import { KaartWithInfo } from "./kaart-with-info";
 

@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from "@angular/core";
 
 import { KaartClassicComponent } from "./kaart-classic.component";
-import { VoegSchaalToe, VerwijderSchaal } from "./kaart-protocol-events";
+import { VoegSchaalToe, VerwijderSchaal } from "./kaart-protocol-commands";
 
 @Component({
   selector: "awv-kaart-schaal",

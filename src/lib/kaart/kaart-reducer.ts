@@ -5,6 +5,7 @@ import * as ol from "openlayers";
 
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
+import * as res from "../api/Result";
 import { KaartWithInfo } from "./kaart-with-info";
 import { kaartLogger } from "./log";
 import { toOlLayer } from "./laag-converter";
@@ -405,5 +406,231 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartMessage): Kaart
       // Helaas verhindert dat niet dat externe apps commando's kunnen sturen die (in de huidige versie) niet geïmplementeerd zijn.
       kaartLogger.warn("onverwacht commando", cmd);
       return keepModel(kaart);
+  }
+}
+// XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+// experimental stuff
+//
+
+export type KaartCmdResult<Msg> = res.Result<string, Msg>;
+
+export interface ModelWithResult<Msg> {
+  model: KaartWithInfo;
+  result: KaartCmdResult<Msg>;
+}
+
+export type ModelResulter<Msg> = (kaart: KaartWithInfo) => ModelWithResult<Msg>;
+
+export type ModelCmdUpdater<Msg> = (model: KaartWithInfo) => ModelWithResult<Msg>;
+
+function ok<Msg>(msg: Msg, model: KaartWithInfo): ModelWithResult<Msg> {
+  return {
+    model: model,
+    result: res.ok(msg)
+  };
+}
+
+function fail<Msg>(errorMsg: string, model: KaartWithInfo): ModelWithResult<Msg> {
+  return {
+    model: model,
+    result: res.err(errorMsg)
+  };
+}
+
+function checkFailure(failure: boolean, msg: string): KaartCmdResult<{}> {
+  return failure ? res.err(msg) : res.ok({});
+}
+
+const modelWithFail = <Msg>(model: KaartWithInfo) => left => fail<Msg>(left, model);
+
+/**
+ * Een laag toevoegen. Faalt als er al een laag met die titel bestaat.
+ */
+function voegLaagToeCmd<Msg>(cmd: prt.VoegLaagToeCmd<Msg>): ModelResulter<Msg> {
+  return (model: KaartWithInfo) =>
+    valideerLaagBestaaNiet(cmd.laag.titel, model).fold(
+      modelWithFail(model), //
+      () => insertLaagNoRemoveAtCmd(cmd, model)
+    );
+}
+
+/**
+ * Een laag verwijderen. De titel van de laag bepaalt welke er verwijderd wordt.
+ */
+function verwijderLaagCmd<Msg>(cmd: prt.VerwijderLaagCmd<Msg>): ModelResulter<Msg> {
+  return (model: KaartWithInfo) =>
+    valideerLaagBestaat(cmd.titel, model).fold(
+      left => fail(left, model),
+      layer => {
+        model.map.removeLayer(layer); // Oesje. Side-effect. Gelukkig idempotent.
+        pasZIndicesAan(-1, layer.getZIndex(), Number.MAX_SAFE_INTEGER, model); // Nog een side-effect.
+        return ok(cmd.wrapper(), {
+          ...model,
+          olLayersOpTitel: model.olLayersOpTitel.delete(cmd.titel),
+          lagen: model.lagen.filterNot(l => l!.titel === cmd.titel).toList()
+        });
+      }
+    );
+}
+
+function verplaatsLaagCmd<Msg>(cmd: prt.VerplaatsLaagCmd<Msg>): ModelResulter<Msg> {
+  return (model: KaartWithInfo) =>
+    valideerLaagBestaat(cmd.titel, model).fold(
+      modelWithFail(model), //
+      layer => {
+        const vanPositie = layer.getZIndex();
+        const naarPositie = limitPosition(cmd.naarPositie, model);
+        // Afhankelijk of we van onder naar boven of van boven naar onder verschuiven, moeten de tussenliggende lagen
+        // naar onder, resp. naar boven verschoven worden.
+        pasZIndicesAan(Math.sign(vanPositie - naarPositie), Math.min(vanPositie, naarPositie), Math.max(vanPositie, naarPositie), model);
+        layer.setZIndex(naarPositie);
+        return ok(cmd.wrapper(naarPositie), model);
+      }
+    );
+}
+
+function valideerLaagBestaat(titel: string, model: KaartWithInfo): KaartCmdResult<ol.layer.Base> {
+  return fromNullable(model.olLayersOpTitel.get(titel)).fold(
+    () => res.err("Een laag met deze titel bestaat niet"), // TS type inference niet sterk genoeg voor getOrElse
+    layer => res.ok(layer) // en ook niet om gewoon res.ok te gebruiken
+  );
+}
+
+function valideerLaagBestaaNiet(titel: string, model: KaartWithInfo): KaartCmdResult<{}> {
+  return checkFailure(model.olLayersOpTitel.has(titel), "Een laag met deze titel bestaat al");
+}
+
+/**
+ * Een laag invoegen op een bepaalde positie zonder er rekening mee te houden dat er al een laag met die titel bestaat.
+ * Maw samen te gebruiker met verwijderLaag.
+ */
+function insertLaagNoRemoveAtCmd<Msg>(cmd: prt.VoegLaagToeCmd<Msg>, model: KaartWithInfo): ModelWithResult<Msg> {
+  const effectivePosition = limitPosition(cmd.positie, model);
+  const maybeLayer = toOlLayer(model, cmd.laag);
+  maybeLayer.map(layer => {
+    pasZIndicesAan(1, effectivePosition, Number.MAX_SAFE_INTEGER, model);
+    layer.setVisible(cmd.magGetoondWorden);
+    layer.setZIndex(effectivePosition);
+    model.map.addLayer(layer);
+  });
+  return ok(cmd.wrapper(effectivePosition), {
+    ...model,
+    olLayersOpTitel: maybeLayer.map(layer => model.olLayersOpTitel.set(cmd.laag.titel, layer)).getOrElseValue(model.olLayersOpTitel),
+    lagen: model.lagen.insert(effectivePosition, cmd.laag)
+  });
+}
+
+function limitPosition(position: number, model: KaartWithInfo) {
+  return Math.max(0, Math.min(position, model.lagen.size));
+}
+
+function voegSchaalToeCmd<Msg>(cmd: prt.VoegSchaalToeCmd<Msg>): ModelResulter<Msg> {
+  return (model: KaartWithInfo) =>
+    model.schaal.fold(
+      () => {
+        const schaal = new ol.control.ScaleLine();
+        model.map.addControl(schaal);
+        return ok(cmd.wrapper(), updateModel({ schaal: some(schaal) })(model));
+      },
+      () => fail("De schaal was al toegevoegd", model)
+    );
+}
+
+function verwijderSchaalCmd<Msg>(cmd: prt.VerwijderSchaalCmd<Msg>): ModelResulter<Msg> {
+  return (model: KaartWithInfo) =>
+    model.schaal.fold(
+      () => fail("De schaal was nog niet toegevoegd", model),
+      schaal => {
+        model.map.removeControl(schaal);
+        return ok(cmd.wrapper(), { ...model, schaal: none });
+      }
+    );
+}
+
+function voegVolledigSchermToeCmd<Msg>(cmd: prt.VoegVolledigSchermToeCmd<Msg>): ModelResulter<Msg> {
+  return (model: KaartWithInfo) =>
+    model.schaal.fold(
+      () => {
+        const fullScreen = new ol.control.FullScreen();
+        model.map.addControl(fullScreen);
+        return ok(cmd.wrapper(), updateModel({ fullScreen: some(fullScreen) })(model));
+      },
+      () => fail("De volledig scherm knop was al toegevoegd", model)
+    );
+}
+
+function verwijderVolledigSchermCmd<Msg>(cmd: prt.VerwijderVolledigSchermCmd<Msg>): ModelResulter<Msg> {
+  return (model: KaartWithInfo) =>
+    model.schaal.fold(
+      () => fail("De volledig scherm knop was nog niet toegevoegd", model),
+      schaal => {
+        model.map.removeControl(schaal);
+        return ok(cmd.wrapper(), { ...model, fullScreen: none });
+      }
+    );
+}
+
+function voegStandaardInteractiesToeCmd<Msg>(cmd: prt.VoegStandaardInteractiesToeCmd<Msg>): ModelResulter<Msg> {
+  return (model: KaartWithInfo) =>
+    checkFailure(!model.stdInteracties.isEmpty(), "De standaard interacties zijn al ingesteld").fold(
+      modelWithFail(model), //
+      () => {
+        // We willen standaard geen rotate operaties.
+        const stdInteracties: ol.interaction.Interaction[] = ol.interaction
+          .defaults()
+          .getArray()
+          .filter(
+            interaction =>
+              !(
+                interaction instanceof ol.interaction.DragRotate ||
+                interaction instanceof ol.interaction.PinchRotate ||
+                interaction instanceof ol.interaction.MouseWheelZoom
+              ) // we willen zelf de opties op MouseWheelZoom zetten
+          );
+        const interacties: List<ol.interaction.Interaction> = List<ol.interaction.Interaction>(stdInteracties);
+        interacties.forEach(i => model.map.addInteraction(i!)); // side effects :-(
+        model.map.addInteraction(new ol.interaction.MouseWheelZoom({ constrainResolution: true })); // Geen fractionele resoluties!
+        const newModel = { ...model, stdInteracties: interacties, scrollZoomOnFocus: cmd.scrollZoomOnFocus };
+        activateMouseWheelZoom(newModel, !cmd.scrollZoomOnFocus); // TODO: zien of functie direct op interacties kunnen laten werken
+        return ok(cmd.wrapper(), newModel);
+      }
+    );
+}
+
+function verwijderStandaardInteractiesCmd<Msg>(cmd: prt.VerwijderStandaardInteractiesCmd<Msg>): ModelResulter<Msg> {
+  return (kaart: KaartWithInfo) => {
+    return checkFailure(kaart.stdInteracties.isEmpty(), "De standaard interacties zijn niet aanwezig").fold(modelWithFail(kaart), () => {
+      kaart.stdInteracties.forEach(i => kaart.map.removeInteraction(i!));
+      return ok(cmd.wrapper(), { ...kaart, stdInteracties: List<ol.interaction.Interaction>(), scrollZoomOnFocus: false });
+    });
+  };
+}
+
+function handleSubscriptions<Msg>(sub: prt.SubscriptionCmd<Msg>): ModelResulter<Msg> {
+  return (kaart: KaartWithInfo) => ok({} as Msg, kaart); // TODO uitwerken
+}
+
+export function kaartCmdReducer<Msg>(cmd: prt.Command<Msg>): ModelResulter<Msg> {
+  switch (cmd.type) {
+    case "VoegLaagToe":
+      return voegLaagToeCmd(cmd);
+    case "VerwijderLaag":
+      return verwijderLaagCmd(cmd);
+    case "VerplaatsLaag":
+      return verplaatsLaagCmd(cmd);
+    case "VoegSchaalToe":
+      return voegSchaalToeCmd(cmd);
+    case "VerwijderSchaal":
+      return verwijderSchaalCmd(cmd);
+    case "VoegVolledigSchermToe":
+      return voegVolledigSchermToeCmd(cmd);
+    case "VerwijderVolledigScherm":
+      return verwijderVolledigSchermCmd(cmd);
+    case "VoegStandaardInteractiesToe":
+      return voegStandaardInteractiesToeCmd(cmd);
+    case "VerwijderStandaardInteracties":
+      return verwijderStandaardInteractiesCmd(cmd);
+    case "Subscription":
+      return handleSubscriptions(cmd);
   }
 }
