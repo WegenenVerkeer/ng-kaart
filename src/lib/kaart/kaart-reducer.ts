@@ -409,7 +409,7 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartMessage): Kaart
     case prt.KaartMessageTypes.MAAK_LAAG_ZICHTBAAR:
       return showLaag((cmd as prt.MaakLaagZichtbaar).titel)(kaart);
     case prt.KaartMessageTypes.ZET_STIJL_VOOR_LAAG:
-      const cmdZetStijl = cmd as prt.ZetStijl;
+      const cmdZetStijl = cmd as prt.ZetStijlVoorLaag;
       return zetStijlVoorLaag(cmdZetStijl.titel, cmdZetStijl.stijl)(kaart);
     default:
       // Gezien we compileren met --strictNullChecks, geeft de compiler een waarschuwing wanneer we een case zouden missen.

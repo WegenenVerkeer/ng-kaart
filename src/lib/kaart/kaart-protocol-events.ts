@@ -174,7 +174,7 @@ export class MaakLaagOnzichtbaar implements KaartMessage {
   constructor(readonly titel: string) {}
 }
 
-export class ZetStijl implements KaartMessage {
+export class ZetStijlVoorLaag implements KaartMessage {
   readonly type = KaartMessageTypes.ZET_STIJL_VOOR_LAAG;
 
   constructor(readonly titel: string, readonly stijl: StyleSelector) {}
