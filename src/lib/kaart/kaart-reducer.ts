@@ -340,10 +340,16 @@ const addNewBackgroundsToMap: ModelUpdater = (kaart: KaartWithInfo) => {
   return kaart.possibleBackgrounds.reduce((model, laag, index) => voegLaagToe(0, laag!, index === 0)(model!), kaart);
 };
 
-function setBackgrounds(backgrounds: List<ke.WmsLaag | ke.BlancoLaag>): ModelUpdater {
+function setBackgrounds(
+  backgrounds: List<ke.WmsLaag | ke.BlancoLaag>,
+  geselecteerdeLaag: Option<ke.WmsLaag | ke.BlancoLaag>
+): ModelUpdater {
   return updateModel({
     possibleBackgrounds: backgrounds,
-    achtergrondlaagtitel: fromNullable(backgrounds.first()).map(bg => bg.titel)
+    achtergrondlaagtitel: geselecteerdeLaag.fold(
+      () => fromNullable(backgrounds.first()).map(bg => bg.titel), //
+      laag => some(laag.titel)
+    )
   });
 }
 
@@ -401,7 +407,13 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartMessage): Kaart
       const vervangFeaturesEvent = cmd as prt.VervangFeatures;
       return vervangFeatures(kaart, vervangFeaturesEvent.titel, vervangFeaturesEvent.features);
     case prt.KaartMessageTypes.TOON_ACHTERGROND_KEUZE:
-      return pipe(kaart, setBackgrounds((cmd as prt.ToonAchtergrondKeuze).backgrounds), addNewBackgroundsToMap, toonAchtergrondKeuze(true));
+      const toonachtergrondkeuzeCmd = cmd as prt.ToonAchtergrondKeuze;
+      return pipe(
+        kaart,
+        setBackgrounds(toonachtergrondkeuzeCmd.backgrounds, toonachtergrondkeuzeCmd.geselecteerdeLaag),
+        addNewBackgroundsToMap,
+        toonAchtergrondKeuze(true)
+      );
     case prt.KaartMessageTypes.VERBERG_ACHTERGROND_KEUZE:
       return toonAchtergrondKeuze(false)(kaart); // moeten we alle lagen weer zichtbaar maken?
     case prt.KaartMessageTypes.MAAK_LAAG_ONZICHTBAAR:
