@@ -3,6 +3,7 @@ import { List } from "immutable";
 import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";
 import { StyleSelector } from "./kaart-elementen";
+import { Option } from "fp-ts/lib/Option";
 
 export enum KaartMessageTypes {
   // Commands
@@ -149,7 +150,7 @@ export class VervangFeatures implements KaartMessage {
 export class ToonAchtergrondKeuze implements KaartMessage {
   readonly type = KaartMessageTypes.TOON_ACHTERGROND_KEUZE;
 
-  constructor(readonly backgrounds: List<ke.WmsLaag | ke.BlancoLaag>) {}
+  constructor(readonly backgrounds: List<ke.WmsLaag | ke.BlancoLaag>, readonly geselecteerdeLaag: Option<ke.WmsLaag | ke.BlancoLaag>) {}
 }
 
 export const VerbergAchtergrondKeuze = {
