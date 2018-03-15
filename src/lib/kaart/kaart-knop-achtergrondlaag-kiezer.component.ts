@@ -6,6 +6,7 @@ import { ToonAchtergrondKeuze, VerbergAchtergrondKeuze } from "./kaart-protocol-
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartComponentBase } from "./kaart-component-base";
 import { isBlancoLaag, isWmsLaag, WmsLaag } from "./kaart-elementen";
+import { none } from "fp-ts/lib/Option";
 
 @Component({
   selector: "awv-kaart-knop-achtergrondlaag-kiezer",
@@ -34,7 +35,7 @@ export class KaartKnopAchtergrondLaagKiezerComponent extends KaartComponentBase 
         scan((alleLagenOoit: Set<WmsLaag>, lagen: Set<WmsLaag>) => alleLagenOoit.union(lagen), Set<WmsLaag>()),
         obs => this.bindToLifeCycle(obs) // zorg ervoor dat de subscription afgesloten wordt op het gepaste moment
       )
-      .subscribe(lagen => this.kaart.dispatch(new ToonAchtergrondKeuze(lagen.toList())));
+      .subscribe(lagen => this.kaart.dispatch(new ToonAchtergrondKeuze(lagen.toList(), none)));
   }
 
   ngOnDestroy(): void {

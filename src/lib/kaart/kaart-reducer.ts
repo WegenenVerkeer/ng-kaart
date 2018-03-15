@@ -9,6 +9,7 @@ import * as res from "../api/Result";
 import { KaartWithInfo } from "./kaart-with-info";
 import { kaartLogger } from "./log";
 import { toOlLayer } from "./laag-converter";
+import { StyleSelector } from "./kaart-elementen";
 
 ///////////////////////////////////
 // Hulpfuncties
@@ -92,6 +93,13 @@ function hideLaag(titel: string): ModelUpdater {
 function showLaag(titel: string): ModelUpdater {
   return doForLayer(titel, (kaart, layer) => {
     layer.setVisible(true);
+    return keepModel;
+  });
+}
+
+function zetStijlVoorLaag(titel: string, stijl: StyleSelector) {
+  return doForLayer(titel, (kaart, layer) => {
+    asVectorLayer(layer).map(vectorlayer => vectorlayer.setStyle(stijl.type === "StaticStyle" ? stijl.style : stijl.styleFunction));
     return keepModel;
   });
 }
@@ -326,17 +334,23 @@ function vervangFeatures(kaart: KaartWithInfo, titel: string, features: List<ol.
 }
 
 function asVectorLayer(layer: ol.layer.Base): Option<ol.layer.Vector> {
-  return layer["getSource"] ? some(layer as ol.layer.Vector) : none; // gebruik geen hasOwnProperty("getSource")! Geeft altijd false
+  return layer["setStyle"] ? some(layer as ol.layer.Vector) : none; // gebruik geen hasOwnProperty("getSource")! Geeft altijd false
 }
 
 const addNewBackgroundsToMap: ModelUpdater = (kaart: KaartWithInfo) => {
   return kaart.possibleBackgrounds.reduce((model, laag, index) => voegLaagToe(0, laag!, index === 0)(model!), kaart);
 };
 
-function setBackgrounds(backgrounds: List<ke.WmsLaag | ke.BlancoLaag>): ModelUpdater {
+function setBackgrounds(
+  backgrounds: List<ke.WmsLaag | ke.BlancoLaag>,
+  geselecteerdeLaag: Option<ke.WmsLaag | ke.BlancoLaag>
+): ModelUpdater {
   return updateModel({
     possibleBackgrounds: backgrounds,
-    achtergrondlaagtitel: fromNullable(backgrounds.first()).map(bg => bg.titel)
+    achtergrondlaagtitel: geselecteerdeLaag.fold(
+      () => fromNullable(backgrounds.first()).map(bg => bg.titel), //
+      laag => some(laag.titel)
+    )
   });
 }
 
@@ -394,13 +408,22 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartMessage): Kaart
       const vervangFeaturesEvent = cmd as prt.VervangFeatures;
       return vervangFeatures(kaart, vervangFeaturesEvent.titel, vervangFeaturesEvent.features);
     case prt.KaartMessageTypes.TOON_ACHTERGROND_KEUZE:
-      return pipe(kaart, setBackgrounds((cmd as prt.ToonAchtergrondKeuze).backgrounds), addNewBackgroundsToMap, toonAchtergrondKeuze(true));
+      const toonachtergrondkeuzeCmd = cmd as prt.ToonAchtergrondKeuze;
+      return pipe(
+        kaart,
+        setBackgrounds(toonachtergrondkeuzeCmd.backgrounds, toonachtergrondkeuzeCmd.geselecteerdeLaag),
+        addNewBackgroundsToMap,
+        toonAchtergrondKeuze(true)
+      );
     case prt.KaartMessageTypes.VERBERG_ACHTERGROND_KEUZE:
       return toonAchtergrondKeuze(false)(kaart); // moeten we alle lagen weer zichtbaar maken?
     case prt.KaartMessageTypes.MAAK_LAAG_ONZICHTBAAR:
       return hideLaag((cmd as prt.MaakLaagOnzichtbaar).titel)(kaart);
     case prt.KaartMessageTypes.MAAK_LAAG_ZICHTBAAR:
       return showLaag((cmd as prt.MaakLaagZichtbaar).titel)(kaart);
+    case prt.KaartMessageTypes.ZET_STIJL_VOOR_LAAG:
+      const cmdZetStijl = cmd as prt.ZetStijlVoorLaag;
+      return zetStijlVoorLaag(cmdZetStijl.titel, cmdZetStijl.stijl)(kaart);
     default:
       // Gezien we compileren met --strictNullChecks, geeft de compiler een waarschuwing wanneer we een case zouden missen.
       // Helaas verhindert dat niet dat externe apps commando's kunnen sturen die (in de huidige versie) niet geïmplementeerd zijn.

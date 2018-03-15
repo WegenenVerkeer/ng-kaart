@@ -2,7 +2,12 @@ import { List } from "immutable";
 
 import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";
+<<<<<<< HEAD:src/lib/kaart/kaart-protocol-commands.ts
 import { Subscription } from ".";
+=======
+import { StyleSelector } from "./kaart-elementen";
+import { Option } from "fp-ts/lib/Option";
+>>>>>>> origin/develop:src/lib/kaart/kaart-protocol-events.ts
 
 export enum KaartMessageTypes {
   // Commands
@@ -27,6 +32,7 @@ export enum KaartMessageTypes {
   KIES_ACHTERGROND,
   MAAK_LAAG_ZICHTBAAR,
   MAAK_LAAG_ONZICHTBAAR,
+  ZET_STIJL_VOOR_LAAG,
 
   // Events
   ZOOMNIVEAU_VERANDERD,
@@ -148,7 +154,7 @@ export class VervangFeatures implements KaartMessage {
 export class ToonAchtergrondKeuze implements KaartMessage {
   readonly type = KaartMessageTypes.TOON_ACHTERGROND_KEUZE;
 
-  constructor(readonly backgrounds: List<ke.WmsLaag | ke.BlancoLaag>) {}
+  constructor(readonly backgrounds: List<ke.WmsLaag | ke.BlancoLaag>, readonly geselecteerdeLaag: Option<ke.WmsLaag | ke.BlancoLaag>) {}
 }
 
 export const VerbergAchtergrondKeuze = {
@@ -173,6 +179,7 @@ export class MaakLaagOnzichtbaar implements KaartMessage {
   constructor(readonly titel: string) {}
 }
 
+<<<<<<< HEAD:src/lib/kaart/kaart-protocol-commands.ts
 export type Command<Msg> =
   | SubscriptionCmd<Msg>
   | VoegLaagToeCmd<Msg>
@@ -240,4 +247,10 @@ export interface VoegStandaardInteractiesToeCmd<Msg> {
 export interface VerwijderStandaardInteractiesCmd<Msg> {
   readonly type: "VerwijderStandaardInteracties";
   readonly wrapper: () => Msg;
+=======
+export class ZetStijlVoorLaag implements KaartMessage {
+  readonly type = KaartMessageTypes.ZET_STIJL_VOOR_LAAG;
+
+  constructor(readonly titel: string, readonly stijl: StyleSelector) {}
+>>>>>>> origin/develop:src/lib/kaart/kaart-protocol-events.ts
 }
