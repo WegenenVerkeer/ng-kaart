@@ -137,7 +137,6 @@
   </awv-kaart-classic>
 </div>
 
-
 <h3>Fietspaden met offsets</h3>
 <div>
   <button (click)="maakZichtbaar('offsets', !isZichtbaar('offsets'))">{{isZichtbaar('offsets')?'Verberg':'Toon'}}</button>
@@ -146,6 +145,21 @@
     <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
     <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'http://apigateway/geolatte-nosqlfs'" [database]="'featureserver'" [collection]="'fietspaden'" [styleFunction]="fietspadStyleMetOffset" [minZoom]="7"></awv-kaart-nosqlfs-laag>
   </awv-kaart-classic>
+</div>
+
+<h3>Verplaatsen van lagen</h3>
+<div>
+  <button (click)="maakZichtbaar('verplaats', !isZichtbaar('verplaats'))">{{isZichtbaar('verplaats')?'Verberg':'Toon'}}</button>
+  <div *ngIf="isZichtbaar('verplaats')">
+  <p>Verplaats dienstkaar kleur.</p>
+  <p><label>Naar positie: </label><input [(ngModel)]="naarPositie" type="number"/></p>
+  <button (click)="verplaatsLagen()">Verplaats</button>
+  </div>
+  <awv-kaart-classic *ngIf="isZichtbaar('verplaats')" [naam]="'verplaats'" #verplaats>
+    <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+    <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
+    <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
+  </awv-kaart-classic>  
 </div>
 
 <!--

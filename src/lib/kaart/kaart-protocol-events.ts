@@ -2,11 +2,14 @@ import { List } from "immutable";
 
 import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";
+import { StyleSelector } from "./kaart-elementen";
+import { Option } from "fp-ts/lib/Option";
 
 export enum KaartMessageTypes {
   // Commands
   VOEG_LAAG_TOE,
   VERWIJDER_LAAG,
+  VERPLAATS_LAAG,
   VOEG_SCHAAL_TOE,
   VERWIJDER_SCHAAL,
   VOEG_VOLLEDIGSCHERM_TOE,
@@ -25,6 +28,7 @@ export enum KaartMessageTypes {
   KIES_ACHTERGROND,
   MAAK_LAAG_ZICHTBAAR,
   MAAK_LAAG_ONZICHTBAAR,
+  ZET_STIJL_VOOR_LAAG,
 
   // Events
   ZOOMNIVEAU_VERANDERD,
@@ -46,6 +50,12 @@ export class VerwijderLaag implements KaartMessage {
   readonly type = KaartMessageTypes.VERWIJDER_LAAG;
 
   constructor(readonly titel: string) {}
+}
+
+export class VerplaatsLaag implements KaartMessage {
+  readonly type = KaartMessageTypes.VERPLAATS_LAAG;
+
+  constructor(readonly titel: string, readonly doelPositie: number) {}
 }
 
 export class VoegSchaalToe implements KaartMessage {
@@ -141,7 +151,7 @@ export class VervangFeatures implements KaartMessage {
 export class ToonAchtergrondKeuze implements KaartMessage {
   readonly type = KaartMessageTypes.TOON_ACHTERGROND_KEUZE;
 
-  constructor(readonly backgrounds: List<ke.WmsLaag | ke.BlancoLaag>) {}
+  constructor(readonly backgrounds: List<ke.WmsLaag | ke.BlancoLaag>, readonly geselecteerdeLaag: Option<ke.WmsLaag | ke.BlancoLaag>) {}
 }
 
 export const VerbergAchtergrondKeuze = {
@@ -164,6 +174,12 @@ export class MaakLaagOnzichtbaar implements KaartMessage {
   readonly type = KaartMessageTypes.MAAK_LAAG_ONZICHTBAAR;
 
   constructor(readonly titel: string) {}
+}
+
+export class ZetStijlVoorLaag implements KaartMessage {
+  readonly type = KaartMessageTypes.ZET_STIJL_VOOR_LAAG;
+
+  constructor(readonly titel: string, readonly stijl: StyleSelector) {}
 }
 
 export class FoutGebeurd implements KaartMessage {
