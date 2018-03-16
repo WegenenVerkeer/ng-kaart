@@ -11,9 +11,10 @@ import { observeOnAngular } from "../util/observe-on-angular";
 import * as ol from "openlayers";
 
 import { kaartLogger } from "./log";
-import { some } from "fp-ts/lib/Option";
+import { none, Option, some } from "fp-ts/lib/Option";
 import * as ke from "./kaart-elementen";
 import { List } from "immutable";
+import { orElse } from "../util/option";
 
 export interface KaartLocatieProps {
   zoom: number;
@@ -30,10 +31,15 @@ export class KaartMijnLocatieComponent extends KaartComponentBase implements OnC
   kaartProps$: Observable<KaartLocatieProps> = Observable.empty();
 
   mijnLocatieStyle: ol.style.Style;
-  mijnLocatie: ol.Feature[] = [];
+  mijnLocatie: Option<ol.Feature> = none;
 
   @Input() kaartModel$: Observable<KaartWithInfo> = Observable.never();
   @Input() dispatcher: KaartEventDispatcher = VacuousDispatcher;
+
+  static pasFeatureAan(feature: ol.Feature, coordinate: ol.Coordinate): Option<ol.Feature> {
+    feature.setGeometry(new ol.geom.Point(coordinate));
+    return some(feature);
+  }
 
   constructor(zone: NgZone) {
     super(zone);
@@ -74,20 +80,23 @@ export class KaartMijnLocatieComponent extends KaartComponentBase implements OnC
     }
 
     const longLat: ol.Coordinate = [position.coords.longitude, position.coords.latitude];
+
     const coordinate = ol.proj.fromLonLat(longLat, "EPSG:31370");
     this.dispatcher.dispatch(new VeranderMiddelpunt(coordinate));
 
-    if (this.mijnLocatie.length === 0) {
-      const feature = new ol.Feature(new ol.geom.Point(coordinate));
-      feature.setStyle(this.mijnLocatieStyle);
-      this.mijnLocatie.push(feature);
-      this.dispatcher.dispatch(new VervangFeatures(MijnLocatieLaagNaam, List(this.mijnLocatie)));
-    } else {
-      this.mijnLocatie[0].setGeometry(new ol.geom.Point(coordinate));
-    }
+    this.mijnLocatie = orElse(this.mijnLocatie.chain(feature => KaartMijnLocatieComponent.pasFeatureAan(feature, coordinate)), () =>
+      this.maakNieuwFeature(coordinate)
+    );
   }
 
-  meldFout(fout: PositionError) {
+  maakNieuwFeature(coordinate: ol.Coordinate): Option<ol.Feature> {
+    const feature = new ol.Feature(new ol.geom.Point(coordinate));
+    feature.setStyle(this.mijnLocatieStyle);
+    this.dispatcher.dispatch(new VervangFeatures(MijnLocatieLaagNaam, List([feature])));
+    return some(feature);
+  }
+
+  meldFout(fout: PositionError | string) {
     kaartLogger.error("error", fout);
     this.dispatcher.dispatch(
       new FoutGebeurd("Zoomen naar huidige locatie niet mogelijk\nDe toepassing heeft geen toestemming om locatie te gebruiken")
@@ -102,10 +111,7 @@ export class KaartMijnLocatieComponent extends KaartComponentBase implements OnC
         maximumAge: 50000
       });
     } else {
-      kaartLogger.error("error", "Geen geolocatie mogelijk");
-      this.dispatcher.dispatch(
-        new FoutGebeurd("Zoomen naar huidige locatie niet mogelijk\nDe toepassing heeft geen toestemming om locatie te gebruiken")
-      );
+      this.meldFout("Geen geolocatie mogelijk");
     }
   }
 
