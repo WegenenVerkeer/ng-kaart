@@ -16,6 +16,7 @@ import { KaartFeaturesLaagComponent } from "./kaart-toon-features.component";
 import { KaartKnopVolledigSchermComponent } from "./kaart-knop-volledig-scherm.component";
 import { KaartSchaalComponent } from "./kaart-schaal.component";
 import { KaartZoomComponent } from "./kaart-zoom.component";
+import { KaartMijnLocatieComponent } from "./kaart-mijn-locatie.component";
 import { KaartConfig, KAART_CFG } from "./kaart-config";
 import { KaartTilecacheLaagComponent } from "./kaart-tilecache-laag.component";
 import { KaartGeoserverLaagComponent } from "./kaart-geoserver-laag.component";
@@ -37,6 +38,7 @@ const components: any[] = [
   KaartOrthoLaagComponent,
   KaartSchaalComponent,
   KaartZoomComponent,
+  KaartMijnLocatieComponent,
   KaartStandaardInteractiesComponent,
   KaartStandaardKnoppenComponent,
   KaartTekenPolygoonLaagComponent,
@@ -142,6 +144,7 @@ export * from "./kaart-tilecache-laag.component";
 export * from "./kaart-wms-laag.component";
 export * from "./kaart-blanco-laag.component";
 export * from "./kaart-zoom.component";
+export * from "./kaart-mijn-locatie.component";
 export * from "./kaart.component";
 export * from "./kaart-event-dispatcher";
 export * from "./kaart-protocol";

@@ -268,6 +268,13 @@ function veranderMiddelpunt(kaart: KaartWithInfo, coordinate: [number, number]):
   };
 }
 
+function handelFoutAf(kaart: KaartWithInfo, fout: string): KaartWithInfo {
+  return {
+    ...kaart,
+    fout: some(fout)
+  };
+}
+
 function veranderZoomniveau(kaart: KaartWithInfo, zoom: number): KaartWithInfo {
   kaart.map.getView().setZoom(zoom);
   return kaart;
@@ -420,6 +427,8 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartMessage): Kaart
       return hideLaag((cmd as prt.MaakLaagOnzichtbaar).titel)(kaart);
     case prt.KaartMessageTypes.MAAK_LAAG_ZICHTBAAR:
       return showLaag((cmd as prt.MaakLaagZichtbaar).titel)(kaart);
+    case prt.KaartMessageTypes.FOUT_GEBEURD:
+      return handelFoutAf(kaart, (cmd as prt.FoutGebeurd).fout);
     case prt.KaartMessageTypes.ZET_STIJL_VOOR_LAAG:
       const cmdZetStijl = cmd as prt.ZetStijlVoorLaag;
       return zetStijlVoorLaag(cmdZetStijl.titel, cmdZetStijl.stijl)(kaart);
