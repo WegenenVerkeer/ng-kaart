@@ -1,10 +1,10 @@
-import { Component, ViewEncapsulation } from "@angular/core";
+import { Component, ViewEncapsulation, ViewChild } from "@angular/core";
 import * as ol from "openlayers";
 import "rxjs/add/operator/mergeMap";
 import "rxjs/add/operator/map";
 
 import { GoogleLocatieZoekerService } from "../lib/google-locatie-zoeker";
-import { CoordinatenService } from "../lib/kaart";
+import { CoordinatenService, KaartClassicComponent, VerplaatsLaag } from "../lib/kaart";
 import { kaartLogger, definitieToStyle } from "../lib/public_api";
 import { AWV0StyleFunctionDescription, definitieToStyleFunction } from "../lib/stijl";
 import { offsetStyleFunction } from "../lib/stijl/offset-stijl-function";
@@ -68,6 +68,8 @@ export class AppComponent {
   installaties: ol.Feature[] = [];
   installatie: ol.Feature[] = [new ol.Feature(new ol.geom.Point(this.installatieCoordinaat))];
   zoekresultaten: ol.Collection<ol.Feature> = new ol.Collection();
+  vanPositie = 0;
+  naarPositie = 0;
 
   pinIcon = new ol.style.Style({
     image: new ol.style.Icon({
@@ -129,7 +131,11 @@ export class AppComponent {
 
   fietspadStyleMetOffset = offsetStyleFunction(this.fietspadStyle, "ident8", "zijderijbaan", 1);
 
-  constructor(private googleLocatieZoekerService: GoogleLocatieZoekerService, public coordinatenService: CoordinatenService) {
+  constructor(
+    @ViewChild("verplaats") private verplaatsKaart: KaartClassicComponent,
+    private googleLocatieZoekerService: GoogleLocatieZoekerService,
+    public coordinatenService: CoordinatenService
+  ) {
     kaartLogger.setLevel("DEBUG");
     this.addIcon();
   }
@@ -171,5 +177,12 @@ export class AppComponent {
       .map(zoekresultaat => zoekresultaat.geometry)
       .map(geometry => new ol.Feature(geometry))
       .subscribe(feature => this.zoekresultaten.push(feature));
+  }
+
+  verplaatsLagen() {
+    // Dit werkt niet, maar ik laat het voorlopig staan tot de inspiratie komt om het te laten werken.
+    // Het probleem is dat het Subject waarnaar gedispatched wordt een ander is dan dat dat door de kaartcomponent
+    // opgepikt wordt. Een issue in de volgorde van initialisatie???
+    this.verplaatsKaart.dispatch(new VerplaatsLaag("dienstkaart-kleur", this.naarPositie));
   }
 }
