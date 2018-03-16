@@ -49,6 +49,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   @Input() minZoom = 2; // TODO naar config
   @Input() maxZoom = 15; // TODO naar config
   @Input() naam = "kaart";
+  @Input() mijnLocatieZoom: number | null;
 
   @Input() achtergrondTitelSelectieConsumer: prt.ModelConsumer<string> = prt.noOpModelConsumer;
   @Input() zoomniveauConsumer: prt.ModelConsumer<number> = prt.noOpModelConsumer;

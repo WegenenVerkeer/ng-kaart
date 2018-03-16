@@ -35,6 +35,7 @@ export class KaartMijnLocatieComponent extends KaartComponentBase implements OnC
 
   @Input() kaartModel$: Observable<KaartWithInfo> = Observable.never();
   @Input() dispatcher: KaartEventDispatcher = VacuousDispatcher;
+  @Input() zoomniveau: number;
 
   static pasFeatureAan(feature: ol.Feature, coordinate: ol.Coordinate): Option<ol.Feature> {
     feature.setGeometry(new ol.geom.Point(coordinate));
@@ -76,7 +77,7 @@ export class KaartMijnLocatieComponent extends KaartComponentBase implements OnC
   zetMijnPositie(zoom: boolean, position: Position) {
     if (zoom) {
       // We zitten nu op heel Vlaanderen, dus gaan we eerst inzoomen.
-      this.dispatcher.dispatch(new VeranderZoomniveau(11));
+      this.dispatcher.dispatch(new VeranderZoomniveau(this.zoomniveau));
     }
 
     const longLat: ol.Coordinate = [position.coords.longitude, position.coords.latitude];
