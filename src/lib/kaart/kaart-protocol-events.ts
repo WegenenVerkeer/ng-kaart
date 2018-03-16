@@ -28,7 +28,8 @@ export enum KaartMessageTypes {
 
   // Events
   ZOOMNIVEAU_VERANDERD,
-  ZOOMMINMAX_VERANDERD
+  ZOOMMINMAX_VERANDERD,
+  FOUT_GEBEURD
 }
 
 export interface KaartMessage {
@@ -163,4 +164,10 @@ export class MaakLaagOnzichtbaar implements KaartMessage {
   readonly type = KaartMessageTypes.MAAK_LAAG_ONZICHTBAAR;
 
   constructor(readonly titel: string) {}
+}
+
+export class FoutGebeurd implements KaartMessage {
+  readonly type = KaartMessageTypes.FOUT_GEBEURD;
+
+  constructor(readonly fout: string) {}
 }

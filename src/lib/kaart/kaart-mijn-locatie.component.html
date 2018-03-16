@@ -1,0 +1,7 @@
+<div *ngIf="kaartProps$ | async as props">
+  <div class="float-box actions panel">
+    <button mat-raised-button (click)="zoomNaarMijnLocatie(props)">
+      <mat-icon aria-label="mijn locatie">gps_fixed</mat-icon>
+    </button>
+  </div>
+</div>

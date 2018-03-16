@@ -29,7 +29,8 @@ export class KaartWithInfo {
     readonly scrollZoomOnFocus = false,
     readonly showBackgroundSelector = false,
     readonly possibleBackgrounds: List<ke.WmsLaag | ke.BlancoLaag> = List(),
-    readonly achtergrondlaagtitel: Option<string> = none
+    readonly achtergrondlaagtitel: Option<string> = none,
+    readonly fout: Option<string> = none
   ) {
     this.middelpunt = some(map.getView().getCenter());
     this.zoom = map.getView().getZoom();
