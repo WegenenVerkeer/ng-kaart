@@ -1,15 +1,21 @@
-export type SubscriptionType = "Zoom" | "Middelpunt" | "Achtergrond";
+export type SubscriptionType = "Zoom" | "Zoombereik" | "Middelpunt" | "Achtergrond";
 
 export type Subscription<Msg> =
   | ZoomNiveauSubscription<Msg>
   | MiddelpuntSubscription<Msg>
-  | AchtergrondTitelSubscription<Msg>
-  | BatchSubscription<Msg>
-  | NoneSubscription;
+  | ZoomBereikSubscription<Msg>
+  | AchtergrondTitelSubscription<Msg>;
+// | BatchSubscription<Msg>
+// | NoneSubscription;
 
 export interface ZoomNiveauSubscription<Msg> {
   readonly type: "Zoom";
   readonly wrapper: (zoom: number) => Msg;
+}
+
+export interface ZoomBereikSubscription<Msg> {
+  readonly type: "Zoombereik";
+  readonly wrapper: (zoomMin: number, zoomMax: number) => Msg;
 }
 
 export interface MiddelpuntSubscription<Msg> {
@@ -22,41 +28,48 @@ export interface AchtergrondTitelSubscription<Msg> {
   readonly wrapper: (titel: string) => Msg;
 }
 
-export interface BatchSubscription<Msg> {
-  readonly type: "Batch";
-  readonly subs: Subscription<Msg>[];
-}
+// export interface BatchSubscrription<Msg> {
+//   readonly type: "Batch";
+//   readonly subs: Subscription<Msg>[];
+// }
 
-export interface NoneSubscription {
-  readonly type: "None";
-}
+// export interface NoneSubscription {
+//   readonly type: "None";
+// }
 
-export function ZoomNiveauSubscription<Msg>(f: (zoom: number) => Msg): Subscription<Msg> {
+export function ZoomNiveauSubscription<Msg>(wrapper: (zoom: number) => Msg): Subscription<Msg> {
   return {
     type: "Zoom",
-    wrapper: f
+    wrapper: wrapper
   };
 }
 
-export function MiddelpuntSubscription<Msg>(f: (x: number, y: number) => Msg): Subscription<Msg> {
+export function ZoomBereikSubscription<Msg>(wrapper: (min: number, max: number) => Msg): Subscription<Msg> {
+  return {
+    type: "Zoombereik",
+    wrapper: wrapper
+  };
+}
+
+export function MiddelpuntSubscription<Msg>(wrapper: (x: number, y: number) => Msg): Subscription<Msg> {
   return {
     type: "Middelpunt",
-    wrapper: f
+    wrapper: wrapper
   };
 }
 
-export function AchtergrondTitelSubscription<Msg>(f: (titel: string) => Msg): Subscription<Msg> {
+export function AchtergrondTitelSubscription<Msg>(wrapper: (titel: string) => Msg): Subscription<Msg> {
   return {
     type: "Achtergrond",
-    wrapper: f
+    wrapper: wrapper
   };
 }
 
-export function BatchSubscription<Msg>(...subs: Subscription<Msg>[]): Subscription<Msg> {
-  return {
-    type: "Batch",
-    subs: subs
-  };
-}
+// export function BatchSubscription<Msg>(...subs: Subscription<Msg>[]): Subscription<Msg> {
+//   return {
+//     type: "Batch",
+//     subs: subs
+//   };
+// }
 
-export const noSubs: Subscription<any> = { type: "None" };
+// export const noSubs: Subscription<any> = { type: "None" };

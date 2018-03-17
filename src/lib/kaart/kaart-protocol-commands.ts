@@ -2,12 +2,9 @@ import { List } from "immutable";
 
 import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";
-<<<<<<< HEAD:src/lib/kaart/kaart-protocol-commands.ts
-import { Subscription } from ".";
-=======
+import { Subscription, SubscriptionType } from ".";
 import { StyleSelector } from "./kaart-elementen";
 import { Option } from "fp-ts/lib/Option";
->>>>>>> origin/develop:src/lib/kaart/kaart-protocol-events.ts
 
 export enum KaartMessageTypes {
   // Commands
@@ -179,9 +176,15 @@ export class MaakLaagOnzichtbaar implements KaartMessage {
   constructor(readonly titel: string) {}
 }
 
-<<<<<<< HEAD:src/lib/kaart/kaart-protocol-commands.ts
+export class ZetStijlVoorLaag implements KaartMessage {
+  readonly type = KaartMessageTypes.ZET_STIJL_VOOR_LAAG;
+
+  constructor(readonly titel: string, readonly stijl: StyleSelector) {}
+}
+
 export type Command<Msg> =
   | SubscriptionCmd<Msg>
+  | UnsubscriptionCmd<Msg>
   | VoegLaagToeCmd<Msg>
   | VerwijderLaagCmd<Msg>
   | VerplaatsLaagCmd<Msg>
@@ -190,11 +193,31 @@ export type Command<Msg> =
   | VoegVolledigSchermToeCmd<Msg>
   | VerwijderVolledigSchermCmd<Msg>
   | VoegStandaardInteractiesToeCmd<Msg>
-  | VerwijderStandaardInteractiesCmd<Msg>;
+  | VerwijderStandaardInteractiesCmd<Msg>
+  | VeranderMiddelpuntCmd<Msg>
+  | VeranderZoomCmd<Msg>
+  | VeranderExtentCmd<Msg>
+  | VeranderViewportCmd<Msg>
+  | ZetFocusOpKaartCmd<Msg>
+  | VerliesFocusOpKaartCmd<Msg>
+  | VervangFeaturesCmd<Msg>
+  | ToonAchtergrondKeuzeCmd<Msg>
+  | VerbergAchtergrondKeuzeCmd<Msg>
+  | KiesAchtergrondCmd<Msg>
+  | MaakLaagZichtbaarCmd<Msg>
+  | MaakLaagOnzichtbaarCmd<Msg>
+  | ZetStijlVoorLaagCmd<Msg>;
 
 export interface SubscriptionCmd<Msg> {
   readonly type: "Subscription";
   readonly subscription: Subscription<Msg>;
+  readonly wrapper: () => Msg; // Msg zal hoogstwschl een union type zijn
+}
+
+export interface UnsubscriptionCmd<Msg> {
+  readonly type: "Unsubscription";
+  readonly subscriptionType: SubscriptionType;
+  readonly wrapper: () => Msg;
 }
 
 export interface VoegLaagToeCmd<Msg> {
@@ -247,10 +270,82 @@ export interface VoegStandaardInteractiesToeCmd<Msg> {
 export interface VerwijderStandaardInteractiesCmd<Msg> {
   readonly type: "VerwijderStandaardInteracties";
   readonly wrapper: () => Msg;
-=======
-export class ZetStijlVoorLaag implements KaartMessage {
-  readonly type = KaartMessageTypes.ZET_STIJL_VOOR_LAAG;
+}
 
-  constructor(readonly titel: string, readonly stijl: StyleSelector) {}
->>>>>>> origin/develop:src/lib/kaart/kaart-protocol-events.ts
+export interface VeranderMiddelpuntCmd<Msg> {
+  readonly type: "VeranderMiddelpunt";
+  readonly coordinate: ol.Coordinate;
+  readonly wrapper: () => Msg;
+}
+
+export interface VeranderZoomCmd<Msg> {
+  readonly type: "VeranderZoom";
+  readonly zoom: number;
+  readonly wrapper: () => Msg;
+}
+
+export interface VeranderExtentCmd<Msg> {
+  readonly type: "VeranderExtent";
+  readonly extent: ol.Extent;
+  readonly wrapper: () => Msg;
+}
+
+export interface VeranderViewportCmd<Msg> {
+  readonly type: "VeranderViewport";
+  readonly size: ol.Size;
+  readonly wrapper: () => Msg;
+}
+
+export interface ZetFocusOpKaartCmd<Msg> {
+  readonly type: "FocusOpKaart";
+  readonly wrapper: () => Msg;
+}
+
+export interface VerliesFocusOpKaartCmd<Msg> {
+  readonly type: "VerliesFocusOpKaart";
+  readonly wrapper: () => Msg;
+}
+
+export interface VervangFeaturesCmd<Msg> {
+  readonly type: "VervangFeatures";
+  readonly titel: string;
+  readonly features: List<ol.Feature>;
+  readonly wrapper: () => Msg;
+}
+
+export interface ToonAchtergrondKeuzeCmd<Msg> {
+  readonly type: "ToonAchtergrondKeuze";
+  readonly achtergrondTitels: List<string>;
+  readonly geselecteerdeLaagTitel: Option<string>;
+  readonly wrapper: () => Msg;
+}
+
+export interface VerbergAchtergrondKeuzeCmd<Msg> {
+  readonly type: "VerbergAchtergrondKeuze";
+  readonly wrapper: () => Msg;
+}
+
+export interface KiesAchtergrondCmd<Msg> {
+  readonly type: "KiesAchtergrond";
+  readonly titel: string;
+  readonly wrapper: () => Msg;
+}
+
+export interface MaakLaagZichtbaarCmd<Msg> {
+  readonly type: "MaakLaagZichtbaar";
+  readonly titel: string;
+  readonly wrapper: () => Msg;
+}
+
+export interface MaakLaagOnzichtbaarCmd<Msg> {
+  readonly type: "MaakLaagOnzichtbaar";
+  readonly titel: string;
+  readonly wrapper: () => Msg;
+}
+
+export interface ZetStijlVoorLaagCmd<Msg> {
+  readonly type: "ZetStijlVoorLaag";
+  readonly titel: string;
+  readonly stijl: StyleSelector;
+  readonly wrapper: () => Msg;
 }
