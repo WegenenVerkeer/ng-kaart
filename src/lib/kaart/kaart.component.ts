@@ -67,11 +67,12 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   @Input() minZoom = 2; // TODO naar config
   @Input() maxZoom = 15; // TODO naar config
   @Input() naam = "kaart";
+  @Input() mijnLocatieZoom: number | undefined;
 
   @Input() achtergrondTitelSelectieConsumer: prt.ModelConsumer<string> = prt.noOpModelConsumer;
   @Input() zoomniveauConsumer: prt.ModelConsumer<number> = prt.noOpModelConsumer;
   @Input() modelConsumer: prt.ModelConsumer<KaartWithInfo> = prt.noOpModelConsumer;
-  @Input() messageConsumer: prt.MessageConsumer<any> = prt.noOpMessageConsumer;
+  @Input() messageConsumer: prt.MessageConsumer<any, any> = prt.noOpMessageConsumer;
 
   showBackgroundSelector$: Observable<boolean> = Observable.empty();
   kaartModel$: Observable<KaartWithInfo> = Observable.empty();
@@ -222,23 +223,4 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   //       // verschil maken tussen vorige subscriptions en nieuwe en vorige unsubscribe en nieuwe subscriben
   //     });
   // }
-
-  private subsciber(sub: prt.Subscription<any>): void {
-    switch (sub.type) {
-      case "Zoom":
-        // TODO een command sturen om de OL zoom listener te activeren
-        this.kaartModel$.pipe(map(m => m.zoom), distinctUntilChanged(), debounceTime(250));
-        return;
-      case "Batch":
-        sub.subs.forEach(s => this.subsciber(s));
-        return;
-    }
-  }
-
-  private unsubscriber(sub: prt.Subscription<any>): void {
-    switch (sub.type) {
-      case "Zoom":
-        return;
-    }
-  }
 }

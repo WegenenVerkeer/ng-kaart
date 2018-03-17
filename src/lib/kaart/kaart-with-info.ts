@@ -31,10 +31,10 @@ export class KaartWithInfo {
     readonly possibleBackgrounds: List<ke.WmsLaag | ke.BlancoLaag> = List(), // TODO mag weg
     readonly achtergrondlaagtitel: Option<string> = none, // TODO mag weg
     readonly achtergrondLayer: Option<ol.layer.Base> = none,
-    readonly zoomniveauListener: Option<ol.EventsKey>,
-    readonly zoombereikListener: Option<ol.EventsKey>,
-    readonly middelpuntListener: Option<ol.EventsKey>,
-    readonly achtergrondlaagtitelListener: Option<(titel: string) => void>
+    readonly zoomniveauListener: Option<ol.EventsKey> = none,
+    readonly zoombereikListener: Option<ol.EventsKey> = none,
+    readonly middelpuntListener: Option<ol.EventsKey> = none,
+    readonly achtergrondlaagtitelListener: Option<(titel: string) => void> = none
   ) {
     this.middelpunt = some(map.getView().getCenter());
     this.zoom = map.getView().getZoom();

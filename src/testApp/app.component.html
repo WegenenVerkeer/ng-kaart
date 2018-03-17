@@ -107,7 +107,7 @@
 <h3>Dienstkaart, std interacties, achtergrondselectie</h3>
 <div>
   <button (click)="maakZichtbaar('achtergronden', !isZichtbaar('achtergronden'))">{{isZichtbaar('achtergronden')?'Verberg':'Toon'}}</button>
-  <awv-kaart-classic *ngIf="isZichtbaar('achtergronden')" [naam]="'achtergronden'">
+  <awv-kaart-classic *ngIf="isZichtbaar('achtergronden')" [naam]="'achtergronden'" [mijnLocatieZoom]="8">
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
     <awv-kaart-geoserver-laag [titel]="'Referentiepunten (WDB)'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'"></awv-kaart-geoserver-laag>
@@ -159,7 +159,7 @@
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
     <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
-  </awv-kaart-classic>  
+  </awv-kaart-classic>
 </div>
 
 <!--

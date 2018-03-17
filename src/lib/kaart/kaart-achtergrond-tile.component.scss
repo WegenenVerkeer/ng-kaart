@@ -13,7 +13,7 @@ $title-font-size: 12px;
   background-color: $map-background-color;
   width: $tile-width; // zo groot willen we zijn
   height: $tile-height;
-  max-height: inherit; // We willen dat we passen in de parent 
+  max-height: inherit; // We willen dat we passen in de parent
   max-width: inherit;
   overflow: hidden;
   cursor: pointer; // Toon de gebruiker dat er geklikt kan worden

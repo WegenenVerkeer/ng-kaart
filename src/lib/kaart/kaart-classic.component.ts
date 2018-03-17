@@ -30,6 +30,7 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
   @Input() middelpunt: ol.Coordinate; // = [130000, 193000]; // "extent" heeft voorrang
   @Input() breedte; // neem standaard de hele breedte in
   @Input() hoogte = 400;
+  @Input() mijnLocatieZoom: number | undefined;
   @Input() extent: ol.Extent;
   @Input() naam = "kaart" + KaartClassicComponent.counter++;
 

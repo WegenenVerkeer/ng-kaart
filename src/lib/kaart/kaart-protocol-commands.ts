@@ -33,7 +33,8 @@ export enum KaartMessageTypes {
 
   // Events
   ZOOMNIVEAU_VERANDERD,
-  ZOOMMINMAX_VERANDERD
+  ZOOMMINMAX_VERANDERD,
+  FOUT_GEBEURD
 }
 
 export interface KaartMessage {
