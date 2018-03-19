@@ -1,5 +1,5 @@
 import { List, Map } from "immutable";
-import { none, Option, some, fromNullable } from "fp-ts/lib/Option";
+import { none, Option, some, fromNullable, isNone, isSome } from "fp-ts/lib/Option";
 import * as validation from "fp-ts/lib/Validation";
 import * as array from "fp-ts/lib/Array";
 import { sequence } from "fp-ts/lib/Traversable";
@@ -15,7 +15,7 @@ import { kaartLogger } from "./log";
 import { toOlLayer } from "./laag-converter";
 import { StyleSelector } from "./kaart-elementen";
 import { forEach } from "../util/option";
-import { Predicate } from "@angular/core";
+import { MessageConsumer as MsgConsumer } from "./kaart-protocol";
 
 ///////////////////////////////////
 // Hulpfuncties
@@ -444,112 +444,71 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartMessage): Kaart
 // experimental stuff
 //
 
-export type KaartCmdResult<Msg> = res.Result<string, Msg>;
-export type KaartCmdValidation<T> = validation.Validation<string[], T>;
+export type Model = KaartWithInfo;
 
 export interface ModelWithResult<Msg> {
   model: KaartWithInfo;
-  result: KaartCmdResult<Msg>;
+  message: Msg;
 }
 
-export type MsgConsumer<Msg> = prt.MessageConsumer<string, Msg>;
+function ModelWithResult<Msg>(message: Msg, model: Model) {
+  return {
+    model: model,
+    message: message
+  };
+}
 
-export type Model = KaartWithInfo;
 export type ModelUpdater = (model: Model) => Model;
-export type ModelConsumerResulter<Msg> = (model: Model, msgConsumer: MsgConsumer<Msg>) => Model;
+export type ModelConsumerResulter<Msg extends prt.KaartMsg> = (model: Model, msgConsumer: MsgConsumer<Msg>) => Model;
 
-export function kaartCmdReducer<Msg>(cmd: prt.Command<Msg>): ModelConsumerResulter<Msg> {
-  return (model: KaartWithInfo, msgConsumer: MsgConsumer<Msg>) => {
-    function ok(msg: Msg, newModel: Model): Model {
-      msgConsumer(res.ok(msg));
-      return newModel;
+export function kaartCmdReducer<Msg extends prt.KaartMsg>(
+  cmd: prt.Command<Msg>
+): (model: Model, msgConsumer: prt.MessageConsumer<Msg>) => ModelWithResult<Msg> {
+  return (model: Model, msgConsumer: prt.MessageConsumer<Msg>) => {
+    interface KaartCmdResult<T> {
+      model: Model;
+      value: T;
+      subscriber: Option<prt.Subscriber<Msg>>;
     }
 
-    function fail(errorMsg: string, newModel: Model): Model {
-      msgConsumer(res.err(errorMsg));
-      return newModel;
+    function KaartCmdResult<T>(value: T, mdl: Model, sub: Option<prt.Subscriber<Msg>> = none): KaartCmdResult<T> {
+      return {
+        model: mdl,
+        value: value,
+        subscriber: sub
+      };
     }
 
-    function failMulti(errorMsgs: string[], newModel: Model): Model {
-      errorMsgs.map(res.err).forEach(msgConsumer);
-      return newModel;
+    function toModelWithResult<T>(wrapper: prt.Wrapper<T, Msg>, val: prt.KaartCmdValidation<KaartCmdResult<T>>): ModelWithResult<Msg> {
+      return {
+        model: val.map(v => v.model).getOrElseValue(model),
+        message: wrapper(val.map(v => v.value))
+      };
     }
 
-    function sendOk(msg: Msg): void {
-      msgConsumer(res.ok(msg));
+    const allOf = sequence(validation, array);
+    const success = <T>(t: T) => validation.success<string[], T>(t);
+
+    function fromOption<T>(maybe: Option<T>, errorMsg: string): prt.KaartCmdValidation<T> {
+      return maybe.map(t => validation.success<string[], T>(t)).getOrElse(() => validation.failure(getArrayMonoid<string>())([errorMsg]));
     }
 
-    function checkFailure(failure: boolean, msg: string): KaartCmdResult<{}> {
-      return failure ? res.err(msg) : res.ok({});
+    function fromPredicate<T>(t: T, pred: (t: T) => boolean, errMsg: string): prt.KaartCmdValidation<T> {
+      return validation.fromPredicate(getArrayMonoid<string>())(pred, () => [errMsg])(t);
     }
 
-    function checkFailureOrDo(failure: boolean, errorMsg: string, ifGood: () => [Msg, Model]): Model {
-      if (failure) {
-        msgConsumer(res.err(errorMsg));
-        return model;
-      } else {
-        const [msg, newModel] = ifGood();
-        msgConsumer(res.ok(msg));
-        return newModel;
-      }
+    function fromBoolean<T>(thruth: boolean, errMsg: string): prt.KaartCmdValidation<{}> {
+      return thruth ? validation.success({}) : validation.failure(getArrayMonoid<string>())([errMsg]);
     }
 
-    const modelWithFail = (left: string) => fail(left, model); // TODO vervangen door functie hieronder
-    const modelWithFails = (failureMsgs: string[]) => failMulti(failureMsgs, model);
-
-    function toValidation(result: boolean, errMsg: string): KaartCmdValidation<any> {
-      return result ? validation.failure(getArrayMonoid<string>())<{}>([errMsg]) : validation.success({});
-    }
-
-    /**
-     * Een laag toevoegen. Faalt als er al een laag met die titel bestaat.
-     */
-    function voegLaagToeCmd(cmnd: prt.VoegLaagToeCmd<Msg>): Model {
-      return valideerLayerBestaatNiet(cmnd.laag.titel).fold(
-        modelWithFails, //
-        () => insertLaagNoRemoveAtCmd(cmnd)
-      );
-    }
-
-    /**
-     * Een laag verwijderen. De titel van de laag bepaalt welke er verwijderd wordt.
-     */
-    function verwijderLaagCmd(cmnd: prt.VerwijderLaagCmd<Msg>): Model {
-      return valideerLayerBestaat(cmnd.titel).fold(modelWithFails, layer => {
-        model.map.removeLayer(layer); // Oesje. Side-effect. Gelukkig idempotent.
-        pasZIndicesAan(-1, layer.getZIndex(), Number.MAX_SAFE_INTEGER, model); // Nog een side-effect.
-        return ok(cmnd.wrapper(), {
-          ...model,
-          olLayersOpTitel: model.olLayersOpTitel.delete(cmnd.titel),
-          lagen: model.lagen.filterNot(l => l!.titel === cmnd.titel).toList()
-        });
-      });
-    }
-
-    function verplaatsLaagCmd(cmnd: prt.VerplaatsLaagCmd<Msg>): Model {
-      return valideerLayerBestaat(cmnd.titel).fold(
-        // TODO mag ook geen achtergrondlaag zijn
-        modelWithFails,
-        layer => {
-          const vanPositie = layer.getZIndex();
-          const naarPositie = limitPosition(cmnd.naarPositie);
-          // Afhankelijk of we van onder naar boven of van boven naar onder verschuiven, moeten de tussenliggende lagen
-          // naar onder, resp. naar boven verschoven worden.
-          pasZIndicesAan(Math.sign(vanPositie - naarPositie), Math.min(vanPositie, naarPositie), Math.max(vanPositie, naarPositie), model);
-          layer.setZIndex(naarPositie);
-          return ok(cmnd.wrapper(naarPositie), model);
-        }
-      );
-    }
-
-    function valideerLayerBestaat(titel: string): KaartCmdValidation<ol.layer.Base> {
+    function valideerLayerBestaat(titel: string): prt.KaartCmdValidation<ol.layer.Base> {
       return validation.fromPredicate(getArrayMonoid<string>())(
         (l: ol.layer.Base) => l !== undefined,
         () => [`Een laag met titel ${titel} bestaat niet`]
       )(model.olLayersOpTitel.get(titel));
     }
 
-    function valideerVectorLayerBestaat(titel: string): KaartCmdValidation<ol.layer.Vector> {
+    function valideerVectorLayerBestaat(titel: string): prt.KaartCmdValidation<ol.layer.Vector> {
       return valideerLayerBestaat(titel).chain(
         layer =>
           layer["setStyle"]
@@ -558,92 +517,140 @@ export function kaartCmdReducer<Msg>(cmd: prt.Command<Msg>): ModelConsumerResult
       );
     }
 
-    function valideerLayerBestaatNiet(titel: string): KaartCmdValidation<{}> {
-      return validation.fromPredicate(getArrayMonoid<string>())(
-        (mdl: Model) => !mdl.olLayersOpTitel.has(titel),
-        () => [`Een laag met titel ${titel} bestaat al`]
-      )(model);
+    function valideerLayerBestaatNiet(titel: string): prt.KaartCmdValidation<{}> {
+      return fromPredicate(model, (mdl: Model) => !mdl.olLayersOpTitel.has(titel), `Een laag met titel ${titel} bestaat al`);
+    }
+
+    const valideerIsAchtergrondLaag: (layer: ol.layer.Base) => prt.KaartCmdValidation<ol.layer.Base> = (layer: ol.layer.Base) =>
+      fromPredicate(layer, (layr: ol.layer.Base) => layr.getZIndex() === 0, "De laag is geen achtergrondlaag");
+
+    const valideerIsGeenAchtergrondLaag: (layer: ol.layer.Base) => prt.KaartCmdValidation<ol.layer.Base> = (layer: ol.layer.Base) =>
+      fromPredicate(layer, (layr: ol.layer.Base) => layr.getZIndex() !== 0, "De laag is een achtergrondlaag");
+
+    const valideerAlsLayer: (laag: ke.Laag) => prt.KaartCmdValidation<ol.layer.Base> = (laag: ke.Laag) =>
+      fromOption(toOlLayer(model, laag), "De laagbeschrijving kon niet naar een openlayers laag omgezet");
+
+    /**
+     * Een laag toevoegen. Faalt als er al een laag met die titel bestaat.
+     */
+    function voegLaagToeCmd(cmnd: prt.VoegLaagToeCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithResult(
+        cmd.wrapper,
+        valideerLayerBestaatNiet(cmnd.laag.titel).map(() => {
+          const effectivePosition = limitPosition(cmnd.positie);
+          const maybeLayer = toOlLayer(model, cmnd.laag); // TODO maak dit een validatie
+          maybeLayer.map(layer => {
+            pasZIndicesAan(1, effectivePosition, Number.MAX_SAFE_INTEGER, model);
+            layer.setVisible(cmnd.magGetoondWorden);
+            layer.setZIndex(effectivePosition);
+            model.map.addLayer(layer);
+          });
+          return KaartCmdResult(effectivePosition, {
+            ...model,
+            olLayersOpTitel: maybeLayer
+              .map(layer => model.olLayersOpTitel.set(cmnd.laag.titel, layer))
+              .getOrElseValue(model.olLayersOpTitel),
+            lagen: model.lagen.push(cmnd.laag)
+          });
+        })
+      );
     }
 
     /**
-     * Een laag invoegen op een bepaalde positie zonder er rekening mee te houden dat er al een laag met die titel bestaat.
-     * Maw samen te gebruiker met verwijderLaag.
-     * TODO: fout geven als layer niet aangemaakt kon worden.
+     * Een laag verwijderen. De titel van de laag bepaalt welke er verwijderd wordt.
      */
-    function insertLaagNoRemoveAtCmd(cmnd: prt.VoegLaagToeCmd<Msg>): Model {
-      const effectivePosition = limitPosition(cmnd.positie);
-      const maybeLayer = toOlLayer(model, cmnd.laag);
-      maybeLayer.map(layer => {
-        pasZIndicesAan(1, effectivePosition, Number.MAX_SAFE_INTEGER, model);
-        layer.setVisible(cmnd.magGetoondWorden);
-        layer.setZIndex(effectivePosition);
-        model.map.addLayer(layer);
-      });
-      return ok(cmnd.wrapper(effectivePosition), {
-        ...model,
-        olLayersOpTitel: maybeLayer.map(layer => model.olLayersOpTitel.set(cmnd.laag.titel, layer)).getOrElseValue(model.olLayersOpTitel),
-        lagen: model.lagen.insert(effectivePosition, cmnd.laag)
-      });
+    function verwijderLaagCmd(cmnd: prt.VerwijderLaagCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithResult(
+        cmd.wrapper,
+        valideerLayerBestaat(cmnd.titel).map(layer => {
+          model.map.removeLayer(layer); // Oesje. Side-effect. Gelukkig idempotent.
+          pasZIndicesAan(-1, layer.getZIndex(), Number.MAX_SAFE_INTEGER, model); // Nog een side-effect.
+          return KaartCmdResult(
+            {},
+            {
+              ...model,
+              olLayersOpTitel: model.olLayersOpTitel.delete(cmnd.titel),
+              lagen: model.lagen.filterNot(l => l!.titel === cmnd.titel).toList()
+            }
+          );
+        })
+      );
     }
 
-    function addLaagToModel(layer: ol.layer.Base, laag: ke.Laag, mdl: Model): Model {
-      return {
-        ...model,
-        olLayersOpTitel: model.olLayersOpTitel.set(laag.titel, layer),
-        lagen: model.lagen.push(laag)
-      };
+    function verplaatsLaagCmd(cmnd: prt.VerplaatsLaagCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithResult(
+        cmd.wrapper,
+        valideerLayerBestaat(cmnd.titel)
+          .chain(valideerIsGeenAchtergrondLaag)
+          .map(layer => {
+            const vanPositie = layer.getZIndex();
+            const naarPositie = limitPosition(cmnd.naarPositie);
+            // Afhankelijk of we van onder naar boven of van boven naar onder verschuiven, moeten de tussenliggende lagen
+            // naar onder, resp. naar boven verschoven worden.
+            pasZIndicesAan(
+              Math.sign(vanPositie - naarPositie),
+              Math.min(vanPositie, naarPositie),
+              Math.max(vanPositie, naarPositie),
+              model
+            );
+            layer.setZIndex(naarPositie);
+            return KaartCmdResult(naarPositie, model);
+          })
+      );
     }
 
     function limitPosition(position: number) {
-      return Math.max(1, Math.min(position, model.lagen.size - 1)); // 0 is voorbehouden voor achtergrondlagen
+      // 0 is voorbehouden voor achtergrondlagen, dat wil zeggen dat voorgrondlagen vanaf 1 beginnen.
+      // Achtergrondlagen beginnen hun leven als voorgrondlaag om dan later op z_index 0 gezet te worden.
+      return 1 + Math.max(0, Math.min(position, model.lagen.size));
     }
 
-    function voegSchaalToeCmd(cmnd: prt.VoegSchaalToeCmd<Msg>): Model {
-      return model.schaal.fold(
-        () => {
+    function voegSchaalToeCmd(cmnd: prt.VoegSchaalToeCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithResult(
+        cmd.wrapper,
+        fromPredicate(model.schaal, isNone, "De schaal is al toegevoegd").map(() => {
           const schaal = new ol.control.ScaleLine();
           model.map.addControl(schaal);
-          return ok(cmnd.wrapper(), { ...model, schaal: some(schaal) });
-        },
-        () => fail("De schaal was al toegevoegd", model)
+          return KaartCmdResult({}, { ...model, schaal: some(schaal) });
+        })
       );
     }
 
-    function verwijderSchaalCmd(cmnd: prt.VerwijderSchaalCmd<Msg>): Model {
-      return model.schaal.fold(
-        () => fail("De schaal was nog niet toegevoegd", model),
-        schaal => {
+    function verwijderSchaalCmd(cmnd: prt.VerwijderSchaalCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithResult(
+        cmd.wrapper,
+        fromOption(model.schaal, "De schaal is nog niet toegevoegd").map((schaal: ol.control.Control) => {
           model.map.removeControl(schaal);
-          return ok(cmnd.wrapper(), { ...model, schaal: none });
-        }
+          return KaartCmdResult({}, { ...model, schaal: none });
+        })
       );
     }
 
-    function voegVolledigSchermToeCmd(cmnd: prt.VoegVolledigSchermToeCmd<Msg>): Model {
-      return model.schaal.fold(
-        () => {
+    function voegVolledigSchermToeCmd(cmnd: prt.VoegVolledigSchermToeCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithResult(
+        cmd.wrapper,
+        fromPredicate(model.fullScreen, isNone, "De volledig scherm knop is al toegevoegd").map(() => {
           const fullScreen = new ol.control.FullScreen();
           model.map.addControl(fullScreen);
-          return ok(cmnd.wrapper(), { ...model, fullScreen: some(fullScreen) });
-        },
-        () => fail("De volledig scherm knop was al toegevoegd", model)
+          return KaartCmdResult({}, { ...model, fullScreen: some(fullScreen) });
+        })
       );
     }
 
-    function verwijderVolledigSchermCmd(cmnd: prt.VerwijderVolledigSchermCmd<Msg>): Model {
-      return model.schaal.fold(
-        () => fail("De volledig scherm knop was nog niet toegevoegd", model),
-        schaal => {
-          model.map.removeControl(schaal);
-          return ok(cmnd.wrapper(), { ...model, fullScreen: none });
-        }
+    function verwijderVolledigSchermCmd(cmnd: prt.VerwijderVolledigSchermCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithResult(
+        cmd.wrapper,
+        fromOption(model.fullScreen, "De volledig scherm knop is nog niet toegevoegd").map((fullScreen: ol.control.Control) => {
+          model.map.removeControl(fullScreen);
+          return KaartCmdResult({}, { ...model, fullScreen: none });
+        })
       );
     }
 
-    function voegStandaardInteractiesToeCmd(cmnd: prt.VoegStandaardInteractiesToeCmd<Msg>): Model {
-      return checkFailure(!model.stdInteracties.isEmpty(), "De standaard interacties zijn al ingesteld").fold(
-        modelWithFail, //
-        () => {
+    function voegStandaardInteractiesToeCmd(cmnd: prt.VoegStandaardInteractiesToeCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithResult(
+        cmd.wrapper,
+        fromPredicate(model.stdInteracties, l => l.isEmpty(), "De standaard interacties zijn al ingesteld").map(() => {
           // We willen standaard geen rotate operaties.
           const stdInteracties: ol.interaction.Interaction[] = ol.interaction
             .defaults()
@@ -661,38 +668,48 @@ export function kaartCmdReducer<Msg>(cmd: prt.Command<Msg>): ModelConsumerResult
           model.map.addInteraction(new ol.interaction.MouseWheelZoom({ constrainResolution: true })); // Geen fractionele resoluties!
           const newModel = { ...model, stdInteracties: interacties, scrollZoomOnFocus: cmnd.scrollZoomOnFocus };
           activateMouseWheelZoom(newModel, !cmnd.scrollZoomOnFocus); // TODO: zien of functie direct op interacties kunnen laten werken
-          return ok(cmnd.wrapper(), newModel);
-        }
+          return KaartCmdResult({}, newModel);
+        })
       );
     }
 
-    function verwijderStandaardInteractiesCmd(cmnd: prt.VerwijderStandaardInteractiesCmd<Msg>): Model {
-      return checkFailure(model.stdInteracties.isEmpty(), "De standaard interacties zijn niet aanwezig").fold(
-        modelWithFail, //
-        () => {
-          model.stdInteracties.forEach(i => model.map.removeInteraction(i!));
-          return ok(cmnd.wrapper(), { ...model, stdInteracties: List<ol.interaction.Interaction>(), scrollZoomOnFocus: false });
-        }
+    function verwijderStandaardInteractiesCmd(cmnd: prt.VerwijderStandaardInteractiesCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithResult(
+        cmd.wrapper,
+        fromPredicate(model.stdInteracties, l => !l.isEmpty(), "De standaard interacties zijn niet aanwezig").map(
+          (stdInteracties: List<ol.interaction.Interaction>) => {
+            stdInteracties.forEach(i => model.map.removeInteraction(i!));
+            return KaartCmdResult({}, { ...model, fullScreen: none });
+          }
+        )
       );
     }
 
-    function veranderMiddelpuntCmd(cmnd: prt.VeranderMiddelpuntCmd<Msg>): Model {
+    function veranderMiddelpuntCmd(cmnd: prt.VeranderMiddelpuntCmd<Msg>): ModelWithResult<Msg> {
       model.map.getView().setCenter(cmnd.coordinate);
-      return ok(cmnd.wrapper(), {
-        ...model,
-        middelpunt: some(model.map.getView().getCenter()),
-        extent: some(model.map.getView().calculateExtent(model.map.getSize()))
-      });
+      return toModelWithResult(
+        cmd.wrapper,
+        success(
+          KaartCmdResult(
+            {},
+            {
+              ...model,
+              middelpunt: some(model.map.getView().getCenter()), // TODO hebben we dat echt nodig? Komt toch uit listener?
+              extent: some(model.map.getView().calculateExtent(model.map.getSize())) // TODO idem (evt listener maken)
+            }
+          )
+        )
+      );
     }
 
-    function veranderZoomniveauCmd(cmnd: prt.VeranderZoomCmd<Msg>): Model {
+    function veranderZoomniveauCmd(cmnd: prt.VeranderZoomCmd<Msg>): ModelWithResult<Msg> {
       model.map.getView().setZoom(cmnd.zoom);
-      return ok(cmnd.wrapper(), model);
+      return ModelWithResult(cmnd.wrapper(success({})), model);
     }
 
-    function veranderExtentCmd(cmnd: prt.VeranderExtentCmd<Msg>): Model {
+    function veranderExtentCmd(cmnd: prt.VeranderExtentCmd<Msg>): ModelWithResult<Msg> {
       model.map.getView().fit(cmnd.extent);
-      return ok(cmnd.wrapper(), {
+      return ModelWithResult(cmnd.wrapper(success({})), {
         ...model,
         middelpunt: some(model.map.getView().getCenter()),
         zoom: model.map.getView().getZoom(),
@@ -700,7 +717,7 @@ export function kaartCmdReducer<Msg>(cmd: prt.Command<Msg>): ModelConsumerResult
       });
     }
 
-    function veranderViewportCmd(cmnd: prt.VeranderViewportCmd<Msg>): Model {
+    function veranderViewportCmd(cmnd: prt.VeranderViewportCmd<Msg>): ModelWithResult<Msg> {
       // eerst de container aanpassen of de kaart is uitgerekt
       if (cmnd.size[0]) {
         model.container.style.width = `${cmnd.size[0]}px`;
@@ -712,58 +729,56 @@ export function kaartCmdReducer<Msg>(cmd: prt.Command<Msg>): ModelConsumerResult
       }
       model.map.setSize(cmnd.size);
       model.map.updateSize();
-      return ok(cmnd.wrapper(), {
+      return ModelWithResult(cmnd.wrapper(success({})), {
         ...model,
         size: some(model.map.getSize()),
         extent: some(model.map.getView().calculateExtent(model.map.getSize()))
       });
     }
 
-    function focusOpKaartCmd(cmnd: prt.ZetFocusOpKaartCmd<Msg>): Model {
+    function focusOpKaartCmd(cmnd: prt.ZetFocusOpKaartCmd<Msg>): ModelWithResult<Msg> {
+      activateMouseWheelZoomIfAllowed(true);
+      return ModelWithResult(cmnd.wrapper(success({})), model);
+    }
+
+    function verliesFocusOpKaartCmd(cmnd: prt.VerliesFocusOpKaartCmd<Msg>): ModelWithResult<Msg> {
+      activateMouseWheelZoomIfAllowed(false);
+      return ModelWithResult(cmnd.wrapper(success({})), model);
+    }
+
+    function activateMouseWheelZoomIfAllowed(active: boolean): void {
       if (model.scrollZoomOnFocus) {
-        return activateMouseWheelZoomCmd(true);
-      } else {
-        return model;
+        model.stdInteracties
+          .filter(interaction => interaction instanceof ol.interaction.MouseWheelZoom)
+          .forEach(interaction => interaction!.setActive(active));
       }
     }
 
-    function verliesFocusOpKaartCmd(cmnd: prt.VerliesFocusOpKaartCmd<Msg>): Model {
-      if (model.scrollZoomOnFocus) {
-        return activateMouseWheelZoomCmd(false);
-      } else {
-        return model;
-      }
+    function vervangFeaturesCmd(cmnd: prt.VervangFeaturesCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithResult(
+        cmnd.wrapper,
+        valideerVectorLayerBestaat(cmnd.titel).map(layer => {
+          layer.getSource().clear(true);
+          layer.getSource().addFeatures(cmnd.features.toArray());
+          return KaartCmdResult({}, model);
+        })
+      );
     }
 
-    function activateMouseWheelZoomCmd(active: boolean): Model {
-      model.stdInteracties
-        .filter(interaction => interaction instanceof ol.interaction.MouseWheelZoom)
-        .forEach(interaction => interaction!.setActive(active));
-      return model;
-    }
-
-    function vervangFeaturesCmd(cmnd: prt.VervangFeaturesCmd<Msg>): Model {
-      return valideerVectorLayerBestaat(cmnd.titel).fold(modelWithFails, layer => {
-        layer.getSource().clear(true);
-        layer.getSource().addFeatures(cmnd.features.toArray());
-        return ok(cmnd.wrapper(), model);
-      });
-    }
-
-    function toonAchtergrondKeuzeCmd(cmnd: prt.ToonAchtergrondKeuzeCmd<Msg>): Model {
+    function toonAchtergrondKeuzeCmd(cmnd: prt.ToonAchtergrondKeuzeCmd<Msg>): ModelWithResult<Msg> {
       const onbekendeTitels = cmnd.achtergrondTitels.filterNot(titel => model.olLayersOpTitel.has(titel!));
       const geselecteerdeTitelIsAchtergrondTitel = cmnd.geselecteerdeLaagTitel
         .map(t => cmnd.achtergrondTitels.contains(t))
-        .getOrElseValue(false);
+        .getOrElseValue(true);
 
-      return sequence(validation, array)([
-        toValidation(model.showBackgroundSelector, "De achtergrondkeuze is al actief"),
-        toValidation(onbekendeTitels.isEmpty(), `Er zijn geen lagen gedefinieerd met deze titels: [${onbekendeTitels.join()}]`),
-        toValidation(cmnd.achtergrondTitels.isEmpty(), "Er moet minstens 1 achtergrondtitel zijn"),
-        toValidation(geselecteerdeTitelIsAchtergrondTitel, "De titel van de geselecteerde laag is geen achtergrondlaag")
-      ]).fold(
-        modelWithFails, //
-        () => {
+      return toModelWithResult(
+        cmnd.wrapper,
+        allOf([
+          fromBoolean(!model.showBackgroundSelector, "De achtergrondkeuze is al actief"),
+          fromBoolean(onbekendeTitels.isEmpty(), `Er zijn geen lagen gedefinieerd met deze titels: [${onbekendeTitels.join()}]`),
+          fromBoolean(!cmnd.achtergrondTitels.isEmpty(), "Er moet minstens 1 achtergrondtitel zijn"),
+          fromBoolean(geselecteerdeTitelIsAchtergrondTitel, "De titel van de geselecteerde laag is geen achtergrondlaag")
+        ]).map(() => {
           // Het idee is dat achtergrondlagen, lagen zijn die gewoon tussen de andere lagen tussen staan, maar dat
           // hun z-index allemaal op 0 staat (en die van de gewone lagen minstens op 1).
           const achtergrondLayers = cmnd.achtergrondTitels.map(titel => model.olLayersOpTitel.get(titel!));
@@ -775,139 +790,164 @@ export function kaartCmdReducer<Msg>(cmd: prt.Command<Msg>): ModelConsumerResult
           const teSelecterenTitel: string = cmnd.geselecteerdeLaagTitel.getOrElse(() => cmnd.achtergrondTitels.first());
           const achtergrondLayer = model.olLayersOpTitel.get(teSelecterenTitel);
           achtergrondLayer.setVisible(true);
-          return ok(cmnd.wrapper(), { ...model, achtergrondLayer: some(achtergrondLayer), showBackgroundSelector: true });
-        }
+          return KaartCmdResult({}, { ...model, achtergrondLayer: some(achtergrondLayer), showBackgroundSelector: true });
+        })
       );
     }
 
-    function verbergAchtergrondKeuzeCmd(cmnd: prt.VerbergAchtergrondKeuzeCmd<Msg>): Model {
-      return toValidation(!model.showBackgroundSelector, "De achtergrondkeuze is niet actief") //
-        .fold(modelWithFails, () => ok(cmnd.wrapper(), { ...model, showBackgroundSelector: false }));
+    function verbergAchtergrondKeuzeCmd(cmnd: prt.VerbergAchtergrondKeuzeCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithResult(
+        cmnd.wrapper,
+        fromBoolean(model.showBackgroundSelector, "De achtergrondkeuze is niet actief") //
+          .map(() => KaartCmdResult({}, { ...model, showBackgroundSelector: false }))
+      );
     }
 
-    function kiesAchtergrondCmd(cmnd: prt.KiesAchtergrondCmd<Msg>): Model {
-      return fromNullable(model.olLayersOpTitel.get(cmnd.titel)).fold(
-        () => fail("Er is geen laag met deze titel", model),
-        layer => {
-          return toValidation(
-            !model.possibleBackgrounds.some(l => !!l && l.titel === cmnd.titel),
-            "De gekozen laag is geen achtergrond"
-          ).fold(modelWithFails, () => {
+    function kiesAchtergrondCmd(cmnd: prt.KiesAchtergrondCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithResult(
+        cmnd.wrapper,
+        valideerLayerBestaat(cmnd.titel)
+          .chain(valideerIsAchtergrondLaag)
+          .map(layer => {
             forEach(model.achtergrondlaagtitelListener, listener => listener(cmnd.titel));
             forEach(model.achtergrondLayer, l => l.setVisible(false));
             layer.setVisible(true);
-            return ok(cmnd.wrapper(), { ...model, achtergrondLayer: some(layer) });
-          });
-        }
+            return KaartCmdResult({}, { ...model, achtergrondLayer: some(layer) });
+          })
       );
     }
 
-    function maakLaagZichtbaarCmd(cmnd: prt.MaakLaagZichtbaarCmd<Msg>): Model {
-      return valideerLayerBestaat(cmnd.titel).fold(modelWithFails, layer => {
-        layer.setVisible(true);
-        return ok(cmnd.wrapper(), model);
-      });
+    function maakLaagZichtbaarCmd(cmnd: prt.MaakLaagZichtbaarCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithResult(
+        cmnd.wrapper,
+        valideerLayerBestaat(cmnd.titel).map(layer => {
+          layer.setVisible(true);
+          return KaartCmdResult({}, model);
+        })
+      );
     }
 
-    function maakLaagOnzichtbaarCmd(cmnd: prt.MaakLaagOnzichtbaarCmd<Msg>): Model {
-      return valideerLayerBestaat(cmnd.titel).fold(modelWithFails, layer => {
-        layer.setVisible(true);
-        return ok(cmnd.wrapper(), model);
-      });
+    function maakLaagOnzichtbaarCmd(cmnd: prt.MaakLaagOnzichtbaarCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithResult(
+        cmd.wrapper,
+        valideerLayerBestaat(cmnd.titel).map(layer => {
+          layer.setVisible(true);
+          return KaartCmdResult({}, model);
+        })
+      );
     }
 
-    function zetStijlVoorLaagCmd(cmnd: prt.ZetStijlVoorLaagCmd<Msg>): Model {
-      return valideerVectorLayerBestaat(cmnd.titel).fold(modelWithFails, vectorlayer => {
-        vectorlayer.setStyle(cmnd.stijl.type === "StaticStyle" ? cmnd.stijl.style : cmnd.stijl.styleFunction);
-        return ok(cmnd.wrapper(), model);
-      });
+    function zetStijlVoorLaagCmd(cmnd: prt.ZetStijlVoorLaagCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithResult(
+        cmd.wrapper,
+        valideerVectorLayerBestaat(cmnd.titel).map(vectorlayer => {
+          vectorlayer.setStyle(cmnd.stijl.type === "StaticStyle" ? cmnd.stijl.style : cmnd.stijl.styleFunction);
+          return KaartCmdResult({}, model);
+        })
+      );
     }
 
-    function handleSubscriptions(subCmd: prt.SubscriptionCmd<Msg>): Model {
+    function handleSubscriptions(cmnd: prt.SubscriptionCmd<Msg>): ModelWithResult<Msg> {
       const map = model.map;
 
-      function validateNotListening(listener: Option<any>, msg: string): KaartCmdResult<{}> {
-        return checkFailure(listener.isSome(), msg);
-      }
+      // FIXME: er mag wel degelijk meer dan een listener zijn omdat de listeners verschillende wrappers kunnen hebben
+      const validateNotListening = (listener: Option<any>, msg: string) => fromPredicate(listener, isNone, msg);
 
-      function subscribeToZoom(sub: prt.ZoomNiveauSubscription<Msg>): Model {
-        return validateNotListening(model.zoomniveauListener, "Er is al ingeschreven op het zoomniveau").fold(modelWithFail, () =>
-          ok(subCmd.wrapper(), {
-            ...model,
-            zoomniveauListener: fromNullable(map
-              .getView() //
-              .on("change:resolution", event => sendOk(sub.wrapper(map.getView().getZoom()))) as ol.EventsKey)
+      function subscribeToZoom(sub: prt.ZoomNiveauSubscription<Msg>): ModelWithResult<Msg> {
+        return toModelWithResult(
+          cmnd.wrapper,
+          validateNotListening(model.zoomniveauListener, "Er is al ingeschreven op het zoomniveau").map(() => {
+            const key = map.getView().on("change:resolution", event => msgConsumer(sub.wrapper(map.getView().getZoom()))) as ol.EventsKey;
+            return KaartCmdResult({}, { ...model, zoomniveauListener: some(key) });
           })
         );
       }
 
-      function subscribeToZoombereik(sub: prt.ZoomBereikSubscription<Msg>): Model {
-        return validateNotListening(model.zoombereikListener, "Er is al ingeschreven op het zoombereik").fold(modelWithFail, () =>
-          ok(subCmd.wrapper(), {
-            ...model,
-            zoombereikListener: fromNullable(map
-              .getView() //
-              .on("change:length", event => sendOk(sub.wrapper(map.getView().getMinZoom(), map.getView().getMaxZoom()))) as ol.EventsKey)
+      function subscribeToZoombereik(sub: prt.ZoombereikSubscription<Msg>): ModelWithResult<Msg> {
+        return toModelWithResult(
+          cmnd.wrapper,
+          validateNotListening(model.zoombereikListener, "Er is al ingeschreven op het zoombereik").map(() => {
+            const key = map
+              .getLayers()
+              .on("change:length", event =>
+                msgConsumer(sub.wrapper(map.getView().getMinZoom(), map.getView().getMaxZoom()))
+              ) as ol.EventsKey;
+            return KaartCmdResult({}, { ...model, zoombereikListener: some(key) });
           })
         );
       }
 
-      function subscribeToMiddelpunt(sub: prt.MiddelpuntSubscription<Msg>): Model {
-        return validateNotListening(model.middelpuntListener, "Er is al ingeschreven op het middelpunt").fold(modelWithFail, () =>
-          ok(subCmd.wrapper(), {
-            ...model,
-            middelpuntListener: fromNullable(map
-              .getView() //
+      function subscribeToMiddelpunt(sub: prt.MiddelpuntSubscription<Msg>): ModelWithResult<Msg> {
+        return toModelWithResult(
+          cmnd.wrapper,
+          validateNotListening(model.middelpuntListener, "Er is al ingeschreven op het middelpunt").map(() => {
+            const key = map
+              .getView()
               .on("change:center", event =>
-                sendOk(sub.wrapper(map.getView().getCenter()[0], map.getView().getCenter()[1]))
-              ) as ol.EventsKey)
+                msgConsumer(sub.wrapper(map.getView().getCenter()[0], map.getView().getCenter()[1]))
+              ) as ol.EventsKey;
+            return KaartCmdResult({}, { ...model, middelpuntListener: some(key) });
           })
         );
       }
 
-      function subscribeToAchtergrondTitel(sub: prt.AchtergrondTitelSubscription<Msg>): Model {
-        return validateNotListening(model.achtergrondlaagtitelListener, "Er is al ingeschreven op het zoombereik").fold(modelWithFail, () =>
-          ok(subCmd.wrapper(), {
-            ...model,
-            achtergrondlaagtitelListener: some((titel: string) => sendOk(sub.wrapper(titel)))
+      function subscribeToAchtergrondTitel(sub: prt.AchtergrondTitelSubscription<Msg>): ModelWithResult<Msg> {
+        return toModelWithResult(
+          cmnd.wrapper,
+          validateNotListening(model.achtergrondlaagtitelListener, "Er is al ingeschreven op de achtergrondtitel").map(() => {
+            return KaartCmdResult({}, { ...model, achtergrondlaagtitelListener: some((titel: string) => msgConsumer(sub.wrapper(titel))) });
           })
         );
       }
 
-      switch (subCmd.subscription.type) {
+      switch (cmnd.subscription.type) {
         case "Zoom":
-          return subscribeToZoom(subCmd.subscription);
+          return subscribeToZoom(cmnd.subscription);
         case "Zoombereik":
-          return subscribeToZoombereik(subCmd.subscription);
+          return subscribeToZoombereik(cmnd.subscription);
         case "Middelpunt":
-          return subscribeToMiddelpunt(subCmd.subscription);
+          return subscribeToMiddelpunt(cmnd.subscription);
         case "Achtergrond":
-          return subscribeToAchtergrondTitel(subCmd.subscription);
+          return subscribeToAchtergrondTitel(cmnd.subscription);
       }
     }
 
-    function handleUnsubscriptions(cmnd: prt.UnsubscriptionCmd<Msg>): Model {
-      const validateListening = (listener: Option<any>, msg: string) => checkFailure(listener.isNone(), msg);
+    function handleUnsubscriptions(cmnd: prt.UnsubscriptionCmd<Msg>): ModelWithResult<Msg> {
+      const validateListening = fromOption;
 
-      const unsubscribeFromZoom = () =>
-        validateListening(model.zoomniveauListener, "Er is nog niet ingeschreven op het zoomniveau").fold(modelWithFail, () =>
-          ok(cmnd.wrapper(), { ...model, zoomniveauListener: none })
+      const unsubscribeFromZoom: () => ModelWithResult<Msg> = () =>
+        toModelWithResult(
+          cmnd.wrapper,
+          validateListening(model.zoomniveauListener, "Er is nog niet ingeschreven op het zoomniveau").map((key: ol.EventsKey) => {
+            ol.Observable.unByKey(key);
+            return KaartCmdResult({}, { ...model, zoomniveauListener: none });
+          })
         );
 
-      const unsubscribeFromZoombereik = () =>
-        validateListening(model.zoombereikListener, "Er is nog niet ingeschreven op het zoombereik").fold(modelWithFail, () =>
-          ok(cmnd.wrapper(), { ...model, zoombereikListener: none })
+      const unsubscribeFromZoombereik: () => ModelWithResult<Msg> = () =>
+        toModelWithResult(
+          cmnd.wrapper,
+          validateListening(model.zoombereikListener, "Er is nog niet ingeschreven op het zoombereik").map((key: ol.EventsKey) => {
+            ol.Observable.unByKey(key);
+            return KaartCmdResult({}, { ...model, zoombereikListener: none });
+          })
         );
 
-      const unsubscribeFromMiddelpunt = () =>
-        validateListening(model.middelpuntListener, "Er is nog niet ingeschreven op het middelpunt").fold(modelWithFail, () =>
-          ok(cmnd.wrapper(), { ...model, middelpuntListener: none })
+      const unsubscribeFromMiddelpunt: () => ModelWithResult<Msg> = () =>
+        toModelWithResult(
+          cmnd.wrapper,
+          validateListening(model.middelpuntListener, "Er is nog niet ingeschreven op het middelpunt").map((key: ol.EventsKey) => {
+            ol.Observable.unByKey(key);
+            return KaartCmdResult({}, { ...model, middelpuntListener: none });
+          })
         );
 
-      const unsubscribeFromAchtergrondTitel = () =>
-        validateListening(model.achtergrondlaagtitelListener, "Er is nog niet ingeschreven op de achtergrondtitel").fold(
-          modelWithFail,
-          () => ok(cmnd.wrapper(), { ...model, achtergrondlaagtitelListener: none })
+      const unsubscribeFromAchtergrondTitel: () => ModelWithResult<Msg> = () =>
+        toModelWithResult(
+          cmnd.wrapper,
+          validateListening(model.achtergrondlaagtitelListener, "Er is nog niet ingeschreven op de achtergrondtitel").map(() => {
+            return KaartCmdResult({}, { ...model, achtergrondlaagtitelListener: none });
+          })
         );
 
       switch (cmnd.subscriptionType) {

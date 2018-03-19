@@ -7,7 +7,7 @@
       <awv-kaart-achtergrond-selector [kaartModel$]="kaartModel$" [dispatcher]="dispatcher"></awv-kaart-achtergrond-selector>
     </div>
     <div *ngIf="mijnLocatieZoom">
-      <awv-kaart-mijn-locatie [zoomniveau]="mijnLocatieZoom" [kaartModel$]="kaartModel$" [dispatcher]="dispatcher"></awv-kaart-mijn-locatie>
+      <awv-kaart-mijn-locatie [zoomniveau]="mijnLocatieZoom" [internalMessage$]="internalMessage$" [dispatcher]="dispatcher"></awv-kaart-mijn-locatie>
     </div>
     <awv-kaart-zoom [kaartModel$]="kaartModel$" [dispatcher]="dispatcher"></awv-kaart-zoom>
   </div>

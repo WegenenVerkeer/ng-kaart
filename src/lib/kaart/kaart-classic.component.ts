@@ -4,7 +4,7 @@ import { ReplaySubject } from "rxjs/ReplaySubject";
 
 import * as ol from "openlayers";
 
-import { ReplaySubjectKaartEventDispatcher } from "./kaart-event-dispatcher";
+import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import {
   VeranderExtent,
   FocusOpKaart,
@@ -12,10 +12,14 @@ import {
   VeranderMiddelpunt,
   VeranderViewport,
   VeranderZoomniveau,
-  KaartMessage
+  KaartMessage,
+  Command
 } from "./kaart-protocol-commands";
+import * as prt from "./kaart-protocol";
 import { ModelConsumer } from "./kaart-protocol";
 import { KaartWithInfo } from "./kaart-with-info";
+import { KaartInternalMsg, forgetWrapper } from "./kaart-internal-messages";
+import { KaartMsgObservableConsumer } from ".";
 
 @Component({
   selector: "awv-kaart-classic",
@@ -34,68 +38,81 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
   @Input() extent: ol.Extent;
   @Input() naam = "kaart" + KaartClassicComponent.counter++;
 
-  private readonly dispatcher: ReplaySubjectKaartEventDispatcher = new ReplaySubjectKaartEventDispatcher();
-  private readonly modelSubj = new ReplaySubject<KaartWithInfo>(100, 1000);
+  private readonly dispatcher: ReplaySubjectKaartCmdDispatcher<KaartInternalMsg> = new ReplaySubjectKaartCmdDispatcher();
   private hasFocus = false;
+  message$: Observable<prt.KaartMsg> = Observable.never();
 
   // Deze zorgt ervoor dat we het model van de kaart component krijgen elke keer wanneer het (potentieel) veranderd.
-  readonly modelConsumer: ModelConsumer<KaartWithInfo> = (model: KaartWithInfo) => this.modelSubj.next(model);
-
+  // readonly modelConsumer: ModelConsumer<KaartWithInfo> = (model: KaartWithInfo) => this.modelSubj.next(model);
   constructor() {}
 
   ngOnInit() {
     // De volgorde van de dispatching hier is van belang voor wat de overhand heeft
     if (this.zoom) {
-      this.dispatch(new VeranderZoomniveau(this.zoom));
+      this.dispatch({ type: "VeranderZoom", zoom: this.zoom, wrapper: forgetWrapper });
     }
     if (this.extent) {
-      this.dispatch(new VeranderExtent(this.extent));
+      this.dispatch({ type: "VeranderExtent", extent: this.extent, wrapper: forgetWrapper });
     }
     if (this.middelpunt) {
-      this.dispatch(new VeranderMiddelpunt(this.middelpunt));
+      this.dispatch({ type: "VeranderMiddelpunt", coordinate: this.middelpunt, wrapper: forgetWrapper });
     }
     if (this.breedte || this.hoogte) {
-      this.dispatch(new VeranderViewport([this.breedte, this.hoogte]));
+      this.dispatch({ type: "VeranderViewport", size: [this.breedte, this.hoogte], wrapper: forgetWrapper });
     }
+    this.message$.subscribe(m => console.log("we kregen msg", m));
   }
 
   ngOnDestroy() {}
 
   ngOnChanges(changes: SimpleChanges) {
     if ("zoom" in changes) {
-      this.dispatch(new VeranderZoomniveau(changes.zoom.currentValue));
+      this.dispatch({ type: "VeranderZoom", zoom: changes.zoom.currentValue, wrapper: forgetWrapper });
     }
     if ("middelpunt" in changes && !coordinateIsEqual(changes.middelpunt.currentValue)(changes.middelpunt.previousValue)) {
-      this.dispatch(new VeranderMiddelpunt(changes.middelpunt.currentValue));
+      this.dispatch({ type: "VeranderMiddelpunt", coordinate: changes.middelpunt.currentValue, wrapper: forgetWrapper });
     }
     if ("extent" in changes && !extentIsEqual(changes.extent.currentValue)(changes.extent.previousValue)) {
-      this.dispatch(new VeranderExtent(changes.extent.currentValue));
+      this.dispatch({ type: "VeranderExtent", extent: changes.extent.currentValue, wrapper: forgetWrapper });
     }
     if ("breedte" in changes) {
-      this.dispatch(new VeranderViewport([changes.breedte.currentValue, this.hoogte]));
+      this.dispatch({ type: "VeranderMiddelpunt", coordinate: [changes.breedte.currentValue, this.hoogte], wrapper: forgetWrapper });
     }
     if ("hoogte" in changes) {
-      this.dispatch(new VeranderViewport([this.breedte, changes.hoogte.currentValue]));
+      this.dispatch({ type: "VeranderViewport", size: [this.breedte, changes.hoogte.currentValue], wrapper: forgetWrapper });
     }
   }
 
-  dispatch(evt: KaartMessage) {
-    this.dispatcher.dispatch(evt);
+  messageObsConsumer(): KaartMsgObservableConsumer {
+    return (msg$: Observable<prt.KaartMsg>) => {
+      this.message$ = msg$;
+    };
   }
 
-  get event$(): Observable<KaartMessage> {
-    return this.dispatcher.event$;
+  // messageConsumer(): prt.MessageConsumer<prt.KaartMsg> {
+  //   return (msg: prt.KaartMsg) => {
+  //     if (msg.type === "KaartInternal") {
+  //       console.log("interne msg gevonden", msg);
+  //       setTimeout(0, () => this.msgSubj.next(msg as KaartInternalMsg));
+  //     } else {
+  //       console.log("externe msg gevonden", msg);
+  //     }
+  //   };
+  // }
+
+  dispatch(cmd: prt.Command<KaartInternalMsg>) {
+    this.dispatcher.dispatch(cmd);
   }
 
-  get kaartModel$(): Observable<KaartWithInfo> {
-    return this.modelSubj;
+  get kaartCmd$(): Observable<Command<prt.KaartMsg>> {
+    return this.dispatcher.commands$;
   }
 
   focus(): void {
     // Voor performantie
     if (!this.hasFocus) {
       this.hasFocus = true;
-      this.dispatch(new FocusOpKaart());
+      this.dispatch({ type: "FocusOpKaart", wrapper: forgetWrapper });
     }
   }
 
@@ -103,7 +120,7 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
     // Stuur enkel enkel indien nodig
     if (this.hasFocus) {
       this.hasFocus = false;
-      this.dispatch(new VerliesFocusOpKaart());
+      this.dispatch({ type: "VerliesFocusOpKaart", wrapper: forgetWrapper });
     }
   }
 }

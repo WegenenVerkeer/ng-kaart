@@ -183,6 +183,6 @@ export class AppComponent {
     // Dit werkt niet, maar ik laat het voorlopig staan tot de inspiratie komt om het te laten werken.
     // Het probleem is dat het Subject waarnaar gedispatched wordt een ander is dan dat dat door de kaartcomponent
     // opgepikt wordt. Een issue in de volgorde van initialisatie???
-    this.verplaatsKaart.dispatch(new VerplaatsLaag("dienstkaart-kleur", this.naarPositie));
+    // this.verplaatsKaart.dispatch(new VerplaatsLaag("dienstkaart-kleur", this.naarPositie));
   }
 }

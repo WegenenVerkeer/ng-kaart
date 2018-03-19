@@ -2,7 +2,7 @@ import { List } from "immutable";
 
 import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";
-import { Subscription, SubscriptionType } from ".";
+import { Subscription, SubscriptionType, Wrapper, VoidWrapper, KaartMsg } from ".";
 import { StyleSelector } from "./kaart-elementen";
 import { Option } from "fp-ts/lib/Option";
 
@@ -183,7 +183,7 @@ export class ZetStijlVoorLaag implements KaartMessage {
   constructor(readonly titel: string, readonly stijl: StyleSelector) {}
 }
 
-export type Command<Msg> =
+export type Command<Msg extends KaartMsg> =
   | SubscriptionCmd<Msg>
   | UnsubscriptionCmd<Msg>
   | VoegLaagToeCmd<Msg>
@@ -209,144 +209,144 @@ export type Command<Msg> =
   | MaakLaagOnzichtbaarCmd<Msg>
   | ZetStijlVoorLaagCmd<Msg>;
 
-export interface SubscriptionCmd<Msg> {
+export interface SubscriptionCmd<Msg extends KaartMsg> {
   readonly type: "Subscription";
   readonly subscription: Subscription<Msg>;
-  readonly wrapper: () => Msg; // Msg zal hoogstwschl een union type zijn
+  readonly wrapper: VoidWrapper<Msg>;
 }
 
-export interface UnsubscriptionCmd<Msg> {
+export interface UnsubscriptionCmd<Msg extends KaartMsg> {
   readonly type: "Unsubscription";
   readonly subscriptionType: SubscriptionType;
-  readonly wrapper: () => Msg;
+  readonly wrapper: VoidWrapper<Msg>;
 }
 
-export interface VoegLaagToeCmd<Msg> {
+export interface VoegLaagToeCmd<Msg extends KaartMsg> {
   readonly type: "VoegLaagToe";
   readonly positie: number;
   readonly laag: ke.Laag;
   readonly magGetoondWorden: boolean;
-  readonly wrapper: (positie: number) => Msg;
+  readonly wrapper: Wrapper<number, Msg>;
 }
 
-export interface VerwijderLaagCmd<Msg> {
+export interface VerwijderLaagCmd<Msg extends KaartMsg> {
   readonly type: "VerwijderLaag";
   readonly titel: string;
-  readonly wrapper: () => Msg;
+  readonly wrapper: VoidWrapper<Msg>;
 }
 
-export interface VoegSchaalToeCmd<Msg> {
+export interface VoegSchaalToeCmd<Msg extends KaartMsg> {
   readonly type: "VoegSchaalToe";
-  readonly wrapper: () => Msg;
+  readonly wrapper: VoidWrapper<Msg>;
 }
 
-export interface VerplaatsLaagCmd<Msg> {
+export interface VerplaatsLaagCmd<Msg extends KaartMsg> {
   readonly type: "VerplaatsLaag";
   readonly titel: string;
   readonly naarPositie: number;
-  readonly wrapper: (positie: number) => Msg;
+  readonly wrapper: Wrapper<number, Msg>;
 }
 
-export interface VerwijderSchaalCmd<Msg> {
+export interface VerwijderSchaalCmd<Msg extends KaartMsg> {
   readonly type: "VerwijderSchaal";
-  readonly wrapper: () => Msg;
+  readonly wrapper: VoidWrapper<Msg>;
 }
 
-export interface VoegVolledigSchermToeCmd<Msg> {
+export interface VoegVolledigSchermToeCmd<Msg extends KaartMsg> {
   readonly type: "VoegVolledigSchermToe";
-  readonly wrapper: () => Msg;
+  readonly wrapper: VoidWrapper<Msg>;
 }
 
-export interface VerwijderVolledigSchermCmd<Msg> {
+export interface VerwijderVolledigSchermCmd<Msg extends KaartMsg> {
   readonly type: "VerwijderVolledigScherm";
-  readonly wrapper: () => Msg;
+  readonly wrapper: VoidWrapper<Msg>;
 }
 
-export interface VoegStandaardInteractiesToeCmd<Msg> {
+export interface VoegStandaardInteractiesToeCmd<Msg extends KaartMsg> {
   readonly type: "VoegStandaardInteractiesToe";
   readonly scrollZoomOnFocus: boolean;
-  readonly wrapper: () => Msg;
+  readonly wrapper: VoidWrapper<Msg>;
 }
 
-export interface VerwijderStandaardInteractiesCmd<Msg> {
+export interface VerwijderStandaardInteractiesCmd<Msg extends KaartMsg> {
   readonly type: "VerwijderStandaardInteracties";
-  readonly wrapper: () => Msg;
+  readonly wrapper: VoidWrapper<Msg>;
 }
 
-export interface VeranderMiddelpuntCmd<Msg> {
+export interface VeranderMiddelpuntCmd<Msg extends KaartMsg> {
   readonly type: "VeranderMiddelpunt";
   readonly coordinate: ol.Coordinate;
-  readonly wrapper: () => Msg;
+  readonly wrapper: VoidWrapper<Msg>;
 }
 
-export interface VeranderZoomCmd<Msg> {
+export interface VeranderZoomCmd<Msg extends KaartMsg> {
   readonly type: "VeranderZoom";
   readonly zoom: number;
-  readonly wrapper: () => Msg;
+  readonly wrapper: VoidWrapper<Msg>;
 }
 
-export interface VeranderExtentCmd<Msg> {
+export interface VeranderExtentCmd<Msg extends KaartMsg> {
   readonly type: "VeranderExtent";
   readonly extent: ol.Extent;
-  readonly wrapper: () => Msg;
+  readonly wrapper: VoidWrapper<Msg>;
 }
 
-export interface VeranderViewportCmd<Msg> {
+export interface VeranderViewportCmd<Msg extends KaartMsg> {
   readonly type: "VeranderViewport";
   readonly size: ol.Size;
-  readonly wrapper: () => Msg;
+  readonly wrapper: VoidWrapper<Msg>;
 }
 
-export interface ZetFocusOpKaartCmd<Msg> {
+export interface ZetFocusOpKaartCmd<Msg extends KaartMsg> {
   readonly type: "FocusOpKaart";
-  readonly wrapper: () => Msg;
+  readonly wrapper: VoidWrapper<Msg>;
 }
 
-export interface VerliesFocusOpKaartCmd<Msg> {
+export interface VerliesFocusOpKaartCmd<Msg extends KaartMsg> {
   readonly type: "VerliesFocusOpKaart";
-  readonly wrapper: () => Msg;
+  readonly wrapper: VoidWrapper<Msg>;
 }
 
-export interface VervangFeaturesCmd<Msg> {
+export interface VervangFeaturesCmd<Msg extends KaartMsg> {
   readonly type: "VervangFeatures";
   readonly titel: string;
   readonly features: List<ol.Feature>;
-  readonly wrapper: () => Msg;
+  readonly wrapper: VoidWrapper<Msg>;
 }
 
-export interface ToonAchtergrondKeuzeCmd<Msg> {
+export interface ToonAchtergrondKeuzeCmd<Msg extends KaartMsg> {
   readonly type: "ToonAchtergrondKeuze";
   readonly achtergrondTitels: List<string>;
   readonly geselecteerdeLaagTitel: Option<string>;
-  readonly wrapper: () => Msg;
+  readonly wrapper: VoidWrapper<Msg>;
 }
 
-export interface VerbergAchtergrondKeuzeCmd<Msg> {
+export interface VerbergAchtergrondKeuzeCmd<Msg extends KaartMsg> {
   readonly type: "VerbergAchtergrondKeuze";
-  readonly wrapper: () => Msg;
+  readonly wrapper: VoidWrapper<Msg>;
 }
 
-export interface KiesAchtergrondCmd<Msg> {
+export interface KiesAchtergrondCmd<Msg extends KaartMsg> {
   readonly type: "KiesAchtergrond";
   readonly titel: string;
-  readonly wrapper: () => Msg;
+  readonly wrapper: VoidWrapper<Msg>;
 }
 
-export interface MaakLaagZichtbaarCmd<Msg> {
+export interface MaakLaagZichtbaarCmd<Msg extends KaartMsg> {
   readonly type: "MaakLaagZichtbaar";
   readonly titel: string;
-  readonly wrapper: () => Msg;
+  readonly wrapper: VoidWrapper<Msg>;
 }
 
-export interface MaakLaagOnzichtbaarCmd<Msg> {
+export interface MaakLaagOnzichtbaarCmd<Msg extends KaartMsg> {
   readonly type: "MaakLaagOnzichtbaar";
   readonly titel: string;
-  readonly wrapper: () => Msg;
+  readonly wrapper: VoidWrapper<Msg>;
 }
 
-export interface ZetStijlVoorLaagCmd<Msg> {
+export interface ZetStijlVoorLaagCmd<Msg extends KaartMsg> {
   readonly type: "ZetStijlVoorLaag";
   readonly titel: string;
   readonly stijl: StyleSelector;
-  readonly wrapper: () => Msg;
+  readonly wrapper: VoidWrapper<Msg>;
 }

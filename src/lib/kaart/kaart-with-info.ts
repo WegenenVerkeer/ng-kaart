@@ -12,7 +12,7 @@ export class KaartWithInfo {
   constructor(
     // TODO om de distinctWithInfo te versnellen zouden we als eerste element een versieteller kunnen toevoegen
     readonly config: KaartConfig,
-    readonly naam: String,
+    readonly naam: string,
     readonly container: any,
     readonly map: ol.Map, // de volgende parameters worden geacht niet gezet te worden initieel (brrr)
     readonly olLayersOpTitel: Map<string, ol.layer.Base> = Map(),

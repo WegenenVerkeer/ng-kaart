@@ -5,9 +5,10 @@ import { Observable } from "rxjs/Observable";
 import { WmsLaag, BlancoLaag } from "./kaart-elementen";
 import { map, first } from "rxjs/operators";
 import { KaartWithInfo } from "./kaart-with-info";
-import { KiesAchtergrond } from "./kaart-protocol-events";
+import { KiesAchtergrond } from "./kaart-protocol-commands";
 import { KaartComponentBase } from "./kaart-component-base";
-import { VacuousDispatcher, KaartEventDispatcher } from "./kaart-event-dispatcher";
+import { VacuousDispatcher, KaartCmdDispatcher } from "./kaart-event-dispatcher";
+import { KaartInternalMsg } from "./kaart-internal-messages";
 
 enum DisplayMode {
   SHOWING_STATUS,
@@ -71,7 +72,7 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
   show = false;
 
   @Input() kaartModel$: Observable<KaartWithInfo> = Observable.never();
-  @Input() dispatcher: KaartEventDispatcher = VacuousDispatcher;
+  @Input() dispatcher: KaartCmdDispatcher<KaartInternalMsg> = VacuousDispatcher;
 
   constructor(private readonly cdr: ChangeDetectorRef, zone: NgZone) {
     super(zone);
@@ -106,7 +107,7 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
       // inklappen.
       this.displayMode = DisplayMode.SHOWING_STATUS;
       if (laag.titel !== this.achtergrondTitel) {
-        this.dispatcher.dispatch(new KiesAchtergrond(laag.titel));
+        // this.dispatcher.dispatch(new KiesAchtergrond(laag.titel));
         this.achtergrondTitel = laag.titel;
       }
     } else {

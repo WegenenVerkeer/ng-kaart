@@ -1,19 +1,19 @@
+import { KaartMsg } from ".";
+
 export type SubscriptionType = "Zoom" | "Zoombereik" | "Middelpunt" | "Achtergrond";
 
-export type Subscription<Msg> =
+export type Subscription<Msg extends KaartMsg> =
   | ZoomNiveauSubscription<Msg>
   | MiddelpuntSubscription<Msg>
-  | ZoomBereikSubscription<Msg>
+  | ZoombereikSubscription<Msg>
   | AchtergrondTitelSubscription<Msg>;
-// | BatchSubscription<Msg>
-// | NoneSubscription;
 
-export interface ZoomNiveauSubscription<Msg> {
+export interface ZoomNiveauSubscription<Msg extends KaartMsg> {
   readonly type: "Zoom";
   readonly wrapper: (zoom: number) => Msg;
 }
 
-export interface ZoomBereikSubscription<Msg> {
+export interface ZoombereikSubscription<Msg> {
   readonly type: "Zoombereik";
   readonly wrapper: (zoomMin: number, zoomMax: number) => Msg;
 }
@@ -28,48 +28,30 @@ export interface AchtergrondTitelSubscription<Msg> {
   readonly wrapper: (titel: string) => Msg;
 }
 
-// export interface BatchSubscrription<Msg> {
-//   readonly type: "Batch";
-//   readonly subs: Subscription<Msg>[];
-// }
-
-// export interface NoneSubscription {
-//   readonly type: "None";
-// }
-
-export function ZoomNiveauSubscription<Msg>(wrapper: (zoom: number) => Msg): Subscription<Msg> {
+export function ZoomNiveauSubscription<Msg extends KaartMsg>(wrapper: (zoom: number) => Msg): Subscription<Msg> {
   return {
     type: "Zoom",
     wrapper: wrapper
   };
 }
 
-export function ZoomBereikSubscription<Msg>(wrapper: (min: number, max: number) => Msg): Subscription<Msg> {
+export function ZoomBereikSubscription<Msg extends KaartMsg>(wrapper: (min: number, max: number) => Msg): Subscription<Msg> {
   return {
     type: "Zoombereik",
     wrapper: wrapper
   };
 }
 
-export function MiddelpuntSubscription<Msg>(wrapper: (x: number, y: number) => Msg): Subscription<Msg> {
+export function MiddelpuntSubscription<Msg extends KaartMsg>(wrapper: (x: number, y: number) => Msg): Subscription<Msg> {
   return {
     type: "Middelpunt",
     wrapper: wrapper
   };
 }
 
-export function AchtergrondTitelSubscription<Msg>(wrapper: (titel: string) => Msg): Subscription<Msg> {
+export function AchtergrondTitelSubscription<Msg extends KaartMsg>(wrapper: (titel: string) => Msg): Subscription<Msg> {
   return {
     type: "Achtergrond",
     wrapper: wrapper
   };
 }
-
-// export function BatchSubscription<Msg>(...subs: Subscription<Msg>[]): Subscription<Msg> {
-//   return {
-//     type: "Batch",
-//     subs: subs
-//   };
-// }
-
-// export const noSubs: Subscription<any> = { type: "None" };
