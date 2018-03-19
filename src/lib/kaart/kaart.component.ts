@@ -49,10 +49,12 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   @Input() minZoom = 2; // TODO naar config
   @Input() maxZoom = 15; // TODO naar config
   @Input() naam = "kaart";
+  @Input() mijnLocatieZoom: number | undefined;
 
   @Input() achtergrondTitelSelectieConsumer: prt.ModelConsumer<string> = prt.noOpModelConsumer;
   @Input() zoomniveauConsumer: prt.ModelConsumer<number> = prt.noOpModelConsumer;
   @Input() modelConsumer: prt.ModelConsumer<KaartWithInfo> = prt.noOpModelConsumer;
+  @Input() foutConsumer: prt.ModelConsumer<string> = prt.noOpModelConsumer;
 
   showBackgroundSelector$: Observable<boolean> = Observable.empty();
   kaartModel$: Observable<KaartWithInfo> = Observable.empty();
@@ -113,6 +115,16 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
           debounceTime(50)
         )
         .subscribe(zoom => this.zoomniveauConsumer(zoom));
+
+      this.kaartModel$
+        .pipe(
+          map(model => model.fout), //
+          distinctUntilChanged(),
+          filter(fout => fout.isSome()),
+          map(fout => fout.getOrElseValue("")),
+          debounceTime(50)
+        )
+        .subscribe(fout => this.foutConsumer(fout));
 
       this.kaartModel$.subscribe(
         model => {
