@@ -1,8 +1,12 @@
-import * as prt from "./kaart-protocol";
+import { Observable } from "rxjs/Observable";
+import { pipe } from "rxjs/Rx";
 import { Option, some, none } from "fp-ts/lib/Option";
-import { kaartLogger } from "./log";
 
-export type KaartInternalSubMsg = SuccessMsg | ZoomGezetMsg;
+import { kaartLogger } from "./log";
+import { Zoominstellingen } from "./kaart-protocol";
+import * as prt from "./kaart-protocol";
+
+export type KaartInternalSubMsg = SuccessMsg | ZoominstellingenGezetMsg;
 
 export interface KaartInternalMsg extends prt.KaartMsg {
   type: "KaartInternal";
@@ -19,7 +23,7 @@ function KaartInternalMsg(payload: Option<KaartInternalSubMsg>): KaartInternalMs
 // Dit is echt "fire and forget". Geen enkele informatie komt terug
 export const forgetWrapper: prt.VoidWrapper<KaartInternalMsg> = (v: prt.KaartCmdValidation<KaartInternalMsg>) => {
   if (v.isFailure()) {
-    kaartLogger.error("Een internet command gaf eem fout", v.value);
+    kaartLogger.error("Een intern command gaf een fout", v.value);
   }
   return {
     type: "KaartInternal",
@@ -43,16 +47,15 @@ export function successWrapper(): prt.VoidWrapper<KaartInternalMsg> {
   });
 }
 
-export interface ZoomGezetMsg {
-  type: "ZoomGezet";
-  zoom: number;
+export interface ZoominstellingenGezetMsg {
+  type: "ZoominstellingenGezet";
+  zoominstellingen: Zoominstellingen;
 }
 
-function ZoomGezetMsg(zoom: number): ZoomGezetMsg {
-  return { type: "ZoomGezet", zoom: zoom };
+function ZoominstellingenGezetMsg(instellingen: Zoominstellingen): ZoominstellingenGezetMsg {
+  return { type: "ZoominstellingenGezet", zoominstellingen: instellingen };
 }
 
-export const zoomGezetWrapper = (zoom: number) => {
-  console.log("De zoom wordt gezet", zoom);
-  return KaartInternalMsg(some(ZoomGezetMsg(zoom)));
+export const zoominstellingenGezetWrapper = (instellingen: Zoominstellingen) => {
+  return KaartInternalMsg(some(ZoominstellingenGezetMsg(instellingen)));
 };

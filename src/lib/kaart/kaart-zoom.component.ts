@@ -1,14 +1,22 @@
 import { Component, Input, NgZone, OnDestroy, OnChanges } from "@angular/core";
-import { SimpleChanges } from "@angular/core/src/metadata/lifecycle_hooks";
+import { SimpleChanges, OnInit } from "@angular/core/src/metadata/lifecycle_hooks";
 import { Observable } from "rxjs/Observable";
-import { map } from "rxjs/operators";
+import { map, tap, filter } from "rxjs/operators";
 
 import { KaartWithInfo } from "./kaart-with-info";
 import { KaartCmdDispatcher, VacuousDispatcher } from "./kaart-event-dispatcher";
 import { KaartComponentBase } from "./kaart-component-base";
 import { VeranderZoomniveau } from "./kaart-protocol-commands";
 import { observeOnAngular } from "../util/observe-on-angular";
-import { KaartInternalMsg } from "./kaart-internal-messages";
+import {
+  KaartInternalMsg,
+  KaartInternalSubMsg,
+  forgetWrapper,
+  zoominstellingenGezetWrapper,
+  ZoominstellingenGezetMsg
+} from "./kaart-internal-messages";
+import { emitSome, ofType } from "../util/operators";
+import * as prt from "./kaart-protocol";
 
 export interface KaartProps {
   canZoomIn: boolean;
@@ -21,22 +29,30 @@ export interface KaartProps {
   templateUrl: "./kaart-zoom.component.html",
   styleUrls: ["./kaart-zoom.component.scss"]
 })
-export class KaartZoomComponent extends KaartComponentBase implements OnChanges, OnDestroy {
+export class KaartZoomComponent extends KaartComponentBase implements OnInit, OnChanges, OnDestroy {
   kaartProps$: Observable<KaartProps> = Observable.empty();
 
-  @Input() kaartModel$: Observable<KaartWithInfo> = Observable.never();
   @Input() dispatcher: KaartCmdDispatcher<KaartInternalMsg> = VacuousDispatcher;
-
-  private static canZoomIn(m: KaartWithInfo): boolean {
-    return m.zoom + 1 <= m.maxZoom;
-  }
-
-  private static canZoomOut(m: KaartWithInfo): boolean {
-    return m.zoom - 1 >= m.minZoom;
-  }
+  @Input() internalMessage$: Observable<KaartInternalSubMsg> = Observable.never();
 
   constructor(zone: NgZone) {
     super(zone);
+  }
+
+  ngOnInit() {
+    this.dispatcher.dispatch({
+      type: "Subscription",
+      subscription: prt.ZoominstellingenSubscription(zoominstellingenGezetWrapper),
+      wrapper: forgetWrapper // TODO we moeten hier de subscription opvangen
+    });
+    this.kaartProps$ = this.internalMessage$.pipe(
+      ofType<KaartInternalSubMsg, ZoominstellingenGezetMsg>("ZoominstellingenGezet"),
+      map(m => ({
+        canZoomIn: m.zoominstellingen.zoom + 1 <= m.zoominstellingen.maxZoom,
+        canZoomOut: m.zoominstellingen.zoom - 1 >= m.zoominstellingen.minZoom,
+        zoom: m.zoominstellingen.zoom
+      }))
+    );
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -56,13 +72,13 @@ export class KaartZoomComponent extends KaartComponentBase implements OnChanges,
 
   zoomIn(props: KaartProps) {
     if (props.canZoomIn) {
-      // this.dispatcher.dispatch(new VeranderZoomniveau(props.zoom + 1));
+      this.dispatcher.dispatch({ type: "VeranderZoom", zoom: props.zoom + 1, wrapper: forgetWrapper });
     }
   }
 
   zoomOut(props: KaartProps) {
     if (props.canZoomOut) {
-      // this.dispatcher.dispatch(new VeranderZoomniveau(props.zoom - 1));
+      this.dispatcher.dispatch({ type: "VeranderZoom", zoom: props.zoom - 1, wrapper: forgetWrapper });
     }
   }
 }

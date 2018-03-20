@@ -4,6 +4,8 @@ import { Option, none, some } from "fp-ts/lib/Option";
 
 import * as ke from "./kaart-elementen";
 import { KaartConfig } from "./kaart-config";
+import { Subject, ReplaySubject } from "rxjs";
+import { Zoominstellingen } from ".";
 
 /**
  * Het model achter de kaartcomponent.
@@ -31,10 +33,9 @@ export class KaartWithInfo {
     readonly possibleBackgrounds: List<ke.WmsLaag | ke.BlancoLaag> = List(), // TODO mag weg
     readonly achtergrondlaagtitel: Option<string> = none, // TODO mag weg
     readonly achtergrondLayer: Option<ol.layer.Base> = none,
-    readonly zoomniveauListener: Option<ol.EventsKey> = none,
-    readonly zoombereikListener: Option<ol.EventsKey> = none,
-    readonly middelpuntListener: Option<ol.EventsKey> = none,
-    readonly achtergrondlaagtitelListener: Option<(titel: string) => void> = none
+    readonly zoominstellingenSubj: Subject<Zoominstellingen> = new ReplaySubject<Zoominstellingen>(1),
+    readonly middelpuntSubj: Subject<[number, number]> = new ReplaySubject<[number, number]>(1),
+    readonly achtergrondlaagtitelSubj: Subject<string> = new ReplaySubject<string>(1)
   ) {
     this.middelpunt = some(map.getView().getCenter());
     this.zoom = map.getView().getZoom();
@@ -42,5 +43,20 @@ export class KaartWithInfo {
     this.minZoom = map.getView().getMinZoom();
     this.extent = some(map.getView().calculateExtent(map.getSize()));
     this.size = some(map.getSize());
+    const zetInstellingen = () =>
+      this.zoominstellingenSubj.next({
+        zoom: map.getView().getZoom(),
+        minZoom: map.getView().getMinZoom(),
+        maxZoom: map.getView().getMaxZoom()
+      });
+    map.getView().on("change:resolution", () => {
+      const zoomNiveau = map.getView().getZoom();
+      // OL genereert een heleboel tussenliggende zooms tijden het animeren.
+      if (Number.isInteger(zoomNiveau)) {
+        zetInstellingen();
+      }
+    });
+    map.getLayers().on("change:length", zetInstellingen);
+    map.getView().on("change:center", () => this.middelpuntSubj.next(map.getView().getCenter()));
   }
 }

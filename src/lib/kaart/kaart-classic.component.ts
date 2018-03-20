@@ -60,7 +60,6 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
     if (this.breedte || this.hoogte) {
       this.dispatch({ type: "VeranderViewport", size: [this.breedte, this.hoogte], wrapper: forgetWrapper });
     }
-    this.message$.subscribe(m => console.log("we kregen msg", m));
   }
 
   ngOnDestroy() {}

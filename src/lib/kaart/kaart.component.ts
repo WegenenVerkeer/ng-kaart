@@ -36,6 +36,7 @@ import { VeranderZoomniveau, ZoomniveauVeranderd, ZoomminmaxVeranderd } from "./
 import { Subject, ReplaySubject } from "rxjs";
 import { KaartInternalMsg, KaartInternalSubMsg } from "./kaart-internal-messages";
 import { asap } from "../util/asap";
+import { emitSome } from "../util/operators";
 
 // Om enkel met @Input properties te moeten werken. Op deze manier kan een stream van KaartMsg naar de caller gestuurd worden
 export type KaartMsgObservableConsumer = (msg$: Observable<prt.KaartMsg>) => void;
@@ -96,12 +97,10 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   constructor(@Inject(KAART_CFG) readonly config: KaartConfig, zone: NgZone) {
     super(zone);
     this.internalMessage$ = this.msgSubj.pipe(
-      tap(m => console.log("een message werd ontvangen:", m)),
       filter(m => m.type === "KaartInternal"), //
       map(m => (m as KaartInternalMsg).payload),
-      tap(p => console.log("De interne payload is", p)),
-      filter(isSome),
-      map(p => p.value),
+      emitSome,
+      tap(m => kaartLogger.debug("een interne message werd ontvangen:", m)),
       shareReplay(1)
     );
   }
@@ -139,8 +138,6 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       //   scan(red.kaartReducer, initieelModel),
       //   shareReplay(1000, 5000)
       // );
-
-      console.log("cmd$", this.kaartCmd$);
 
       const messageConsumer = (msg: prt.KaartMsg) => {
         asap(() => this.msgSubj.next(msg));

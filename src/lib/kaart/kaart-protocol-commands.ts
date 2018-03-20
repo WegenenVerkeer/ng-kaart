@@ -1,10 +1,11 @@
 import { List } from "immutable";
+import { Option } from "fp-ts/lib/Option";
+import { Subscription as RxSubscription } from "rxjs/Subscription";
 
 import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";
-import { Subscription, SubscriptionType, Wrapper, VoidWrapper, KaartMsg } from ".";
+import { Subscription, Wrapper, VoidWrapper, KaartMsg } from ".";
 import { StyleSelector } from "./kaart-elementen";
-import { Option } from "fp-ts/lib/Option";
 
 export enum KaartMessageTypes {
   // Commands
@@ -212,13 +213,13 @@ export type Command<Msg extends KaartMsg> =
 export interface SubscriptionCmd<Msg extends KaartMsg> {
   readonly type: "Subscription";
   readonly subscription: Subscription<Msg>;
-  readonly wrapper: VoidWrapper<Msg>;
+  readonly wrapper: Wrapper<RxSubscription, Msg>;
 }
 
 export interface UnsubscriptionCmd<Msg extends KaartMsg> {
   readonly type: "Unsubscription";
-  readonly subscriptionType: SubscriptionType;
-  readonly wrapper: VoidWrapper<Msg>;
+  readonly subscription: RxSubscription;
+  readonly wrapper: VoidWrapper<Msg>; // TODO weg, zoals de meeste voidwrappers
 }
 
 export interface VoegLaagToeCmd<Msg extends KaartMsg> {

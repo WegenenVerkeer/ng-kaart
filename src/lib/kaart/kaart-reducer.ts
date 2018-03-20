@@ -405,7 +405,7 @@ export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartMessage): Kaart
     case prt.KaartMessageTypes.VERLIES_FOCUS_OP_KAART:
       return verliesFocusOpKaart(kaart);
     case prt.KaartMessageTypes.KIES_ACHTERGROND:
-      forEach(kaart.achtergrondlaagtitelListener, listener => listener((cmd as prt.KiesAchtergrond).titel));
+      // forEach(kaart.achtergrondlaagtitelListener, listener => listener((cmd as prt.KiesAchtergrond).titel));
       return pipe(
         kaart, //
         hideAchtergrond,
@@ -809,7 +809,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         valideerLayerBestaat(cmnd.titel)
           .chain(valideerIsAchtergrondLaag)
           .map(layer => {
-            forEach(model.achtergrondlaagtitelListener, listener => listener(cmnd.titel));
+            model.achtergrondlaagtitelSubj.next(cmnd.titel);
             forEach(model.achtergrondLayer, l => l.setVisible(false));
             layer.setVisible(true);
             return KaartCmdResult({}, { ...model, achtergrondLayer: some(layer) });
@@ -853,58 +853,24 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       // FIXME: er mag wel degelijk meer dan een listener zijn omdat de listeners verschillende wrappers kunnen hebben
       const validateNotListening = (listener: Option<any>, msg: string) => fromPredicate(listener, isNone, msg);
 
-      function subscribeToZoom(sub: prt.ZoomNiveauSubscription<Msg>): ModelWithResult<Msg> {
-        return toModelWithResult(
-          cmnd.wrapper,
-          validateNotListening(model.zoomniveauListener, "Er is al ingeschreven op het zoomniveau").map(() => {
-            const key = map.getView().on("change:resolution", event => msgConsumer(sub.wrapper(map.getView().getZoom()))) as ol.EventsKey;
-            return KaartCmdResult({}, { ...model, zoomniveauListener: some(key) });
-          })
-        );
-      }
-
-      function subscribeToZoombereik(sub: prt.ZoombereikSubscription<Msg>): ModelWithResult<Msg> {
-        return toModelWithResult(
-          cmnd.wrapper,
-          validateNotListening(model.zoombereikListener, "Er is al ingeschreven op het zoombereik").map(() => {
-            const key = map
-              .getLayers()
-              .on("change:length", event =>
-                msgConsumer(sub.wrapper(map.getView().getMinZoom(), map.getView().getMaxZoom()))
-              ) as ol.EventsKey;
-            return KaartCmdResult({}, { ...model, zoombereikListener: some(key) });
-          })
-        );
+      function subscribeToZoominstellingen(sub: prt.ZoominstellingenSubscription<Msg>): ModelWithResult<Msg> {
+        const subscription = model.zoominstellingenSubj.subscribe(z => msgConsumer(sub.wrapper(z)));
+        return toModelWithResult(cmnd.wrapper, success(KaartCmdResult(subscription, model)));
       }
 
       function subscribeToMiddelpunt(sub: prt.MiddelpuntSubscription<Msg>): ModelWithResult<Msg> {
-        return toModelWithResult(
-          cmnd.wrapper,
-          validateNotListening(model.middelpuntListener, "Er is al ingeschreven op het middelpunt").map(() => {
-            const key = map
-              .getView()
-              .on("change:center", event =>
-                msgConsumer(sub.wrapper(map.getView().getCenter()[0], map.getView().getCenter()[1]))
-              ) as ol.EventsKey;
-            return KaartCmdResult({}, { ...model, middelpuntListener: some(key) });
-          })
-        );
+        const subscription = model.middelpuntSubj.subscribe(m => msgConsumer(sub.wrapper(m[0], m[1])));
+        return toModelWithResult(cmnd.wrapper, success(KaartCmdResult(subscription, model)));
       }
 
       function subscribeToAchtergrondTitel(sub: prt.AchtergrondTitelSubscription<Msg>): ModelWithResult<Msg> {
-        return toModelWithResult(
-          cmnd.wrapper,
-          validateNotListening(model.achtergrondlaagtitelListener, "Er is al ingeschreven op de achtergrondtitel").map(() => {
-            return KaartCmdResult({}, { ...model, achtergrondlaagtitelListener: some((titel: string) => msgConsumer(sub.wrapper(titel))) });
-          })
-        );
+        const subscription = model.achtergrondlaagtitelSubj.subscribe(t => msgConsumer(sub.wrapper(t)));
+        return toModelWithResult(cmnd.wrapper, success(KaartCmdResult(subscription, model)));
       }
 
       switch (cmnd.subscription.type) {
-        case "Zoom":
-          return subscribeToZoom(cmnd.subscription);
-        case "Zoombereik":
-          return subscribeToZoombereik(cmnd.subscription);
+        case "Zoominstellingen":
+          return subscribeToZoominstellingen(cmnd.subscription);
         case "Middelpunt":
           return subscribeToMiddelpunt(cmnd.subscription);
         case "Achtergrond":
@@ -913,53 +879,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function handleUnsubscriptions(cmnd: prt.UnsubscriptionCmd<Msg>): ModelWithResult<Msg> {
-      const validateListening = fromOption;
-
-      const unsubscribeFromZoom: () => ModelWithResult<Msg> = () =>
-        toModelWithResult(
-          cmnd.wrapper,
-          validateListening(model.zoomniveauListener, "Er is nog niet ingeschreven op het zoomniveau").map((key: ol.EventsKey) => {
-            ol.Observable.unByKey(key);
-            return KaartCmdResult({}, { ...model, zoomniveauListener: none });
-          })
-        );
-
-      const unsubscribeFromZoombereik: () => ModelWithResult<Msg> = () =>
-        toModelWithResult(
-          cmnd.wrapper,
-          validateListening(model.zoombereikListener, "Er is nog niet ingeschreven op het zoombereik").map((key: ol.EventsKey) => {
-            ol.Observable.unByKey(key);
-            return KaartCmdResult({}, { ...model, zoombereikListener: none });
-          })
-        );
-
-      const unsubscribeFromMiddelpunt: () => ModelWithResult<Msg> = () =>
-        toModelWithResult(
-          cmnd.wrapper,
-          validateListening(model.middelpuntListener, "Er is nog niet ingeschreven op het middelpunt").map((key: ol.EventsKey) => {
-            ol.Observable.unByKey(key);
-            return KaartCmdResult({}, { ...model, middelpuntListener: none });
-          })
-        );
-
-      const unsubscribeFromAchtergrondTitel: () => ModelWithResult<Msg> = () =>
-        toModelWithResult(
-          cmnd.wrapper,
-          validateListening(model.achtergrondlaagtitelListener, "Er is nog niet ingeschreven op de achtergrondtitel").map(() => {
-            return KaartCmdResult({}, { ...model, achtergrondlaagtitelListener: none });
-          })
-        );
-
-      switch (cmnd.subscriptionType) {
-        case "Zoom":
-          return unsubscribeFromZoom();
-        case "Zoombereik":
-          return unsubscribeFromZoombereik();
-        case "Middelpunt":
-          return unsubscribeFromMiddelpunt();
-        case "Achtergrond":
-          return unsubscribeFromAchtergrondTitel();
-      }
+      cmnd.subscription.unsubscribe();
+      return toModelWithResult(cmnd.wrapper, success(KaartCmdResult({}, model)));
     }
 
     switch (cmd.type) {

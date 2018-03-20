@@ -1,21 +1,19 @@
 import { KaartMsg } from ".";
 
-export type SubscriptionType = "Zoom" | "Zoombereik" | "Middelpunt" | "Achtergrond";
-
 export type Subscription<Msg extends KaartMsg> =
-  | ZoomNiveauSubscription<Msg>
+  | ZoominstellingenSubscription<Msg>
   | MiddelpuntSubscription<Msg>
-  | ZoombereikSubscription<Msg>
   | AchtergrondTitelSubscription<Msg>;
 
-export interface ZoomNiveauSubscription<Msg extends KaartMsg> {
-  readonly type: "Zoom";
-  readonly wrapper: (zoom: number) => Msg;
+export interface Zoominstellingen {
+  zoom: number;
+  minZoom: number;
+  maxZoom: number;
 }
 
-export interface ZoombereikSubscription<Msg> {
-  readonly type: "Zoombereik";
-  readonly wrapper: (zoomMin: number, zoomMax: number) => Msg;
+export interface ZoominstellingenSubscription<Msg> {
+  readonly type: "Zoominstellingen";
+  readonly wrapper: (instellingen: Zoominstellingen) => Msg;
 }
 
 export interface MiddelpuntSubscription<Msg> {
@@ -28,16 +26,9 @@ export interface AchtergrondTitelSubscription<Msg> {
   readonly wrapper: (titel: string) => Msg;
 }
 
-export function ZoomNiveauSubscription<Msg extends KaartMsg>(wrapper: (zoom: number) => Msg): Subscription<Msg> {
+export function ZoominstellingenSubscription<Msg extends KaartMsg>(wrapper: (settings: Zoominstellingen) => Msg): Subscription<Msg> {
   return {
-    type: "Zoom",
-    wrapper: wrapper
-  };
-}
-
-export function ZoomBereikSubscription<Msg extends KaartMsg>(wrapper: (min: number, max: number) => Msg): Subscription<Msg> {
-  return {
-    type: "Zoombereik",
+    type: "Zoominstellingen",
     wrapper: wrapper
   };
 }

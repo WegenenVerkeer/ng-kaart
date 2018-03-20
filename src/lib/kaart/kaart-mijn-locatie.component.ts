@@ -14,7 +14,13 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import * as ke from "./kaart-elementen";
 import { List } from "immutable";
 import { orElse } from "../util/option";
-import { KaartInternalMsg, forgetWrapper, zoomGezetWrapper, KaartInternalSubMsg, ZoomGezetMsg } from "./kaart-internal-messages";
+import {
+  KaartInternalMsg,
+  forgetWrapper,
+  KaartInternalSubMsg,
+  zoominstellingenGezetWrapper,
+  ZoominstellingenGezetMsg
+} from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
 
 const MijnLocatieLaagNaam = "Mijn Locatie";
@@ -63,12 +69,12 @@ export class KaartMijnLocatieComponent extends KaartComponentBase implements OnC
     });
     this.dispatcher.dispatch({
       type: "Subscription",
-      subscription: prt.ZoomNiveauSubscription(zoomGezetWrapper),
+      subscription: prt.ZoominstellingenSubscription(zoominstellingenGezetWrapper),
       wrapper: forgetWrapper
     });
     this.zoom$ = this.internalMessage$.pipe(
-      filter(m => m.type === "ZoomGezet"), //
-      map(m => (m as ZoomGezetMsg).zoom),
+      filter(m => m.type === "ZoominstellingenGezet"), //
+      map(m => (m as ZoominstellingenGezetMsg).zoominstellingen.zoom),
       observeOnAngular(this.zone)
     );
   }
