@@ -18,6 +18,7 @@ import {
   startWith,
   pairwise
 } from "rxjs/operators";
+import { isSome, none } from "fp-ts/lib/Option";
 
 import proj4 from "proj4";
 import * as ol from "openlayers";
@@ -25,7 +26,7 @@ import * as ol from "openlayers";
 import { KaartConfig, KAART_CFG } from "./kaart-config";
 import { KaartComponentBase } from "./kaart-component-base";
 import { KaartWithInfo } from "./kaart-with-info";
-import { ReplaySubjectKaartCmdDispatcher, KaartCmdDispatcher } from "./kaart-event-dispatcher";
+import { ReplaySubjectKaartCmdDispatcher, KaartCmdDispatcher, VacuousDispatcher } from "./kaart-event-dispatcher";
 // noinspection TypeScriptPreferShortImport
 import { leaveZone } from "../util/leave-zone";
 import { kaartLogger } from "./log";
@@ -34,8 +35,9 @@ import * as red from "./kaart-reducer";
 import { VeranderZoomniveau, ZoomniveauVeranderd, ZoomminmaxVeranderd } from "./kaart-protocol-commands";
 import { Subject, ReplaySubject } from "rxjs";
 import { KaartInternalMsg, KaartInternalSubMsg } from "./kaart-internal-messages";
-import { isSome } from "fp-ts/lib/Option";
+import { asap } from "../util/asap";
 
+// Om enkel met @Input properties te moeten werken. Op deze manier kan een stream van KaartMsg naar de caller gestuurd worden
 export type KaartMsgObservableConsumer = (msg$: Observable<prt.KaartMsg>) => void;
 export const vacuousKaartMsgObservableConsumer: KaartMsgObservableConsumer = (msg$: Observable<prt.KaartMsg>) => ({});
 
@@ -57,7 +59,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
    * waarmee events naar de component gestuurd kunnen worden.
    */
   @Input() kaartCmd$: Observable<prt.Command<prt.KaartMsg>> = Observable.empty();
-
+  @Input() commandDispatcher: KaartCmdDispatcher<prt.KaartMsg> = VacuousDispatcher;
   @Input() messageObsConsumer: KaartMsgObservableConsumer = vacuousKaartMsgObservableConsumer;
 
   /**
@@ -65,7 +67,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
    * naar de KaartComponent. Een alternatief zou kunnen zijn één dispatcher hier te maken en de KaartClassicComponent die te laten
    * ophalen in afterViewInit.
    */
-  private readonly internalEventDispatcher = new ReplaySubjectKaartCmdDispatcher();
+  // private readonly internalEventDispatcher = new ReplaySubjectKaartCmdDispatcher();
 
   private readonly msgSubj = new ReplaySubject<prt.KaartMsg>(1000, 500);
 
@@ -80,6 +82,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
   showBackgroundSelector$: Observable<boolean> = Observable.empty();
   kaartModel$: Observable<KaartWithInfo> = Observable.empty(); // TODO: moet weg -> geen afhankelijkheid van model
+  internalMessage$: Observable<KaartInternalSubMsg> = Observable.empty();
 
   private static configureerLambert72() {
     ol.proj.setProj4(proj4);
@@ -92,6 +95,15 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
   constructor(@Inject(KAART_CFG) readonly config: KaartConfig, zone: NgZone) {
     super(zone);
+    this.internalMessage$ = this.msgSubj.pipe(
+      tap(m => console.log("een message werd ontvangen:", m)),
+      filter(m => m.type === "KaartInternal"), //
+      map(m => (m as KaartInternalMsg).payload),
+      tap(p => console.log("De interne payload is", p)),
+      filter(isSome),
+      map(p => p.value),
+      shareReplay(1)
+    );
   }
 
   ngOnInit() {
@@ -131,7 +143,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       console.log("cmd$", this.kaartCmd$);
 
       const messageConsumer = (msg: prt.KaartMsg) => {
-        setTimeout(0, () => this.msgSubj.next(msg));
+        asap(() => this.msgSubj.next(msg));
       };
 
       const kaartModel$: Observable<KaartWithInfo> = this.kaartCmd$.pipe(
@@ -158,6 +170,9 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
         e => kaartLogger.error("error", e),
         () => kaartLogger.info("kaart & cmd terminated")
       );
+
+      // Zorg ervoor dat wie de messageObsConsumer @Input gezet heeft een observable van messages krijgt
+      this.messageObsConsumer(this.msgSubj);
 
       // // Deze zorgt er voor dat de achtergrondselectieknop getoond wordt obv het model
       // this.showBackgroundSelector$ = this.kaartModel$.pipe(map(k => k.showBackgroundSelector), distinctUntilChanged());
@@ -196,22 +211,10 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     return new KaartWithInfo(this.config, this.naam, this.mapElement.nativeElement.parentElement, kaart);
   }
 
-  get dispatcher(): KaartCmdDispatcher<KaartInternalMsg> {
-    return this.internalEventDispatcher;
-  }
-
   get message$(): Observable<prt.KaartMsg> {
     return this.msgSubj;
   }
 
-  get internalMessage$(): Observable<KaartInternalSubMsg> {
-    return this.msgSubj.pipe(
-      filter(m => m.type === "InternalKaart"), //
-      map(m => (m as KaartInternalMsg).payload),
-      filter(isSome),
-      map(p => p.value)
-    );
-  }
   // @Input()
   // set subscriptions(obs: Observable<prt.Subscription<any>>) {
   //   // emit zodat eventuele subscriptions op een vorige observable unsubscriben. Dit moet gebeuren voor de nieuwe subscription.

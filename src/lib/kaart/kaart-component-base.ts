@@ -5,6 +5,7 @@ import { Subscription } from "rxjs/Subscription";
 import { takeUntil } from "rxjs/operators";
 
 import { leaveZone } from "../util/leave-zone";
+import { asap } from "../util/asap";
 
 export abstract class KaartComponentBase implements OnInit, OnDestroy {
   private readonly destroyingSubj: Subject<void> = new Subject<void>();
@@ -30,7 +31,7 @@ export abstract class KaartComponentBase implements OnInit, OnDestroy {
    * @param f de uit te voeren functie
    */
   protected runAsapOutsideAngular(f: () => void): void {
-    this.zone.runOutsideAngular(() => setTimeout(f, 0));
+    this.zone.runOutsideAngular(() => asap(f));
   }
 
   protected runOutsideAngular<T>(f: () => T): T {

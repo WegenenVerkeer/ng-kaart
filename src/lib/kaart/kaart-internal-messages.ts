@@ -52,4 +52,7 @@ function ZoomGezetMsg(zoom: number): ZoomGezetMsg {
   return { type: "ZoomGezet", zoom: zoom };
 }
 
-export const zoomGezetWrapper = (zoom: number) => KaartInternalMsg(some(ZoomGezetMsg(zoom)));
+export const zoomGezetWrapper = (zoom: number) => {
+  console.log("De zoom wordt gezet", zoom);
+  return KaartInternalMsg(some(ZoomGezetMsg(zoom)));
+};

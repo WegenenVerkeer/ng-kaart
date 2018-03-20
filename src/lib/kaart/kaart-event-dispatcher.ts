@@ -2,6 +2,7 @@ import { Observable } from "rxjs/Observable";
 import { ReplaySubject } from "rxjs/ReplaySubject";
 
 import * as prt from "./kaart-protocol";
+import { asap } from "../util/asap";
 
 export interface KaartCmdDispatcher<Msg extends prt.KaartMsg> {
   dispatch(cmd: prt.Command<Msg>): void;
@@ -19,7 +20,7 @@ export class ReplaySubjectKaartCmdDispatcher<Msg extends prt.KaartMsg> implement
     // We willen dat events pas uitgevoerd worden nadat de huidige processing gedaan is,
     // anders kan een eventhandler het model updaten terwijl een commandhandler nog niet gereed is,
     // als die commandhandler dan ook het model update, gebeurt dit in de verkeerde volgorde.
-    setTimeout(() => this.eventSubj.next(cmd), 0);
+    asap(() => this.eventSubj.next(cmd));
   }
 
   get commands$(): Observable<prt.Command<Msg>> {

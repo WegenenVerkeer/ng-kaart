@@ -1,7 +1,7 @@
 import { Component, Input, NgZone, OnDestroy, OnChanges, OnInit } from "@angular/core";
 import { SimpleChanges } from "@angular/core/src/metadata/lifecycle_hooks";
 import { Observable } from "rxjs/Observable";
-import { map } from "rxjs/operators";
+import { map, filter } from "rxjs/operators";
 
 import { KaartWithInfo } from "./kaart-with-info";
 import { KaartCmdDispatcher, VacuousDispatcher } from "./kaart-event-dispatcher";
@@ -66,7 +66,11 @@ export class KaartMijnLocatieComponent extends KaartComponentBase implements OnC
       subscription: prt.ZoomNiveauSubscription(zoomGezetWrapper),
       wrapper: forgetWrapper
     });
-    this.zoom$ = this.internalMessage$.filter(m => m.type === "ZoomGezet").map(m => (m as ZoomGezetMsg).zoom);
+    this.zoom$ = this.internalMessage$.pipe(
+      filter(m => m.type === "ZoomGezet"), //
+      map(m => (m as ZoomGezetMsg).zoom),
+      observeOnAngular(this.zone)
+    );
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -80,19 +84,19 @@ export class KaartMijnLocatieComponent extends KaartComponentBase implements OnC
 
   ngOnDestroy() {
     super.ngOnDestroy();
-    // this.dispatcher.dispatch(new VerwijderLaag(MijnLocatieLaagNaam));
+    this.dispatcher.dispatch({ type: "VerwijderLaag", titel: MijnLocatieLaagNaam, wrapper: forgetWrapper });
   }
 
   zetMijnPositie(zoom: boolean, position: Position) {
     if (zoom) {
       // We zitten nu op heel Vlaanderen, dus gaan we eerst inzoomen.
-      // this.dispatcher.dispatch(new VeranderZoomniveau(this.zoomniveau));
+      this.dispatcher.dispatch({ type: "VeranderZoom", zoom: this.zoomniveau, wrapper: forgetWrapper });
     }
 
     const longLat: ol.Coordinate = [position.coords.longitude, position.coords.latitude];
 
     const coordinate = ol.proj.fromLonLat(longLat, "EPSG:31370");
-    // this.dispatcher.dispatch(new VeranderMiddelpunt(coordinate));
+    this.dispatcher.dispatch({ type: "VeranderMiddelpunt", coordinate: coordinate, wrapper: forgetWrapper });
 
     this.mijnLocatie = orElse(this.mijnLocatie.chain(feature => KaartMijnLocatieComponent.pasFeatureAan(feature, coordinate)), () =>
       this.maakNieuwFeature(coordinate)
@@ -102,7 +106,7 @@ export class KaartMijnLocatieComponent extends KaartComponentBase implements OnC
   maakNieuwFeature(coordinate: ol.Coordinate): Option<ol.Feature> {
     const feature = new ol.Feature(new ol.geom.Point(coordinate));
     feature.setStyle(this.mijnLocatieStyle);
-    // this.dispatcher.dispatch(new VervangFeatures(MijnLocatieLaagNaam, List([feature])));
+    this.dispatcher.dispatch({ type: "VervangFeatures", titel: MijnLocatieLaagNaam, features: List.of(feature), wrapper: forgetWrapper });
     return some(feature);
   }
 
