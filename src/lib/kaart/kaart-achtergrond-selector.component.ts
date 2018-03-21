@@ -14,8 +14,7 @@ import {
   forgetWrapper,
   achtergrondtitelGezetWrapper,
   AchtergrondlagenGezetMsg,
-  AchtergrondtitelGezetMsg,
-  successWrapper
+  AchtergrondtitelGezetMsg
 } from "./kaart-internal-messages";
 import { emitSome, ofType } from "../util/operators";
 import { observeOnAngular } from "../util/observe-on-angular";
@@ -132,7 +131,7 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
       // inklappen.
       this.displayMode = DisplayMode.SHOWING_STATUS;
       if (laag.titel !== this.achtergrondTitel) {
-        this.dispatcher.dispatch({ type: "KiesAchtergrond", titel: laag.titel, wrapper: successWrapper() });
+        this.dispatcher.dispatch({ type: "KiesAchtergrond", titel: laag.titel, wrapper: forgetWrapper });
         this.achtergrondTitel = laag.titel;
       }
     } else {

@@ -36,6 +36,7 @@ import { Subject, ReplaySubject } from "rxjs";
 import { KaartInternalMsg, KaartInternalSubMsg } from "./kaart-internal-messages";
 import { asap } from "../util/asap";
 import { emitSome } from "../util/operators";
+import { forEach } from "../util/option";
 
 // Om enkel met @Input properties te moeten werken. Op deze manier kan een stream van KaartMsg naar de caller gestuurd worden
 export type KaartMsgObservableConsumer = (msg$: Observable<prt.KaartMsg>) => void;
@@ -140,7 +141,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
         scan((model: KaartWithInfo, cmd: prt.Command<any>) => {
           const { model: newModel, message } = red.kaartCmdReducer(cmd)(model, messageConsumer);
           kaartLogger.debug("produceert", message);
-          messageConsumer(message); // stuur het resultaat terug naar de eigenaar van de kaartcomponent
+          forEach(message, messageConsumer); // stuur het resultaat terug naar de eigenaar van de kaartcomponent
           return newModel; // en laat het nieuwe model terugvloeien
         }, initieelModel),
         shareReplay(1000, 5000)

@@ -8,7 +8,7 @@ import * as prt from "./kaart-protocol";
 import { AchtergrondLaag } from ".";
 import { List } from "immutable";
 
-export type KaartInternalSubMsg = SuccessMsg | ZoominstellingenGezetMsg | AchtergrondtitelGezetMsg | AchtergrondlagenGezetMsg;
+export type KaartInternalSubMsg = ZoominstellingenGezetMsg | AchtergrondtitelGezetMsg | AchtergrondlagenGezetMsg;
 
 export interface KaartInternalMsg extends prt.KaartMsg {
   type: "KaartInternal";
@@ -22,8 +22,8 @@ function KaartInternalMsg(payload: Option<KaartInternalSubMsg>): KaartInternalMs
   };
 }
 
-// Dit is echt "fire and forget". Geen enkele informatie komt terug
-export const forgetWrapper: prt.VoidWrapper<KaartInternalMsg> = (v: prt.KaartCmdValidation<KaartInternalMsg>) => {
+// Dit is echt "fire and forget". Geen enkele informatie komt terug ook al zou dat kunnen
+export const forgetWrapper: prt.ValidationWrapper<any, KaartInternalMsg> = (v: prt.KaartCmdValidation<any>) => {
   if (v.isFailure()) {
     kaartLogger.error("Een intern command gaf een fout", v.value);
   }
@@ -33,21 +33,23 @@ export const forgetWrapper: prt.VoidWrapper<KaartInternalMsg> = (v: prt.KaartCmd
   };
 };
 
-export interface SuccessMsg {
-  type: "SuccessOrNot";
-  payload: prt.KaartCmdValidation<any>;
-}
+// Te gebruiken in Geoloket
 
-export function SuccessMsg(v: prt.KaartCmdValidation<any>): SuccessMsg {
-  return { type: "SuccessOrNot", payload: v };
-}
+// export interface SuccessMsg {
+//   type: "SuccessOrNot";
+//   payload: prt.KaartCmdValidation<any>;
+// }
 
-export function successWrapper(): prt.VoidWrapper<KaartInternalMsg> {
-  return (v: prt.KaartCmdValidation<any>) => ({
-    type: "KaartInternal",
-    payload: some(SuccessMsg(v))
-  });
-}
+// export function SuccessMsg(v: prt.KaartCmdValidation<any>): SuccessMsg {
+//   return { type: "SuccessOrNot", payload: v };
+// }
+
+// export function successWrapper(): prt.VoidWrapper<KaartInternalMsg> {
+//   return (v: prt.KaartCmdValidation<any>) => ({
+//     type: "KaartInternal",
+//     payload: some(SuccessMsg(v))
+//   });
+// }
 
 export interface ZoominstellingenGezetMsg {
   type: "ZoominstellingenGezet";

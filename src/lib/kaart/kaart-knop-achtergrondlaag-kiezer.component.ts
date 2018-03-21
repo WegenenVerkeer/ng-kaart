@@ -6,7 +6,7 @@ import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartComponentBase } from "./kaart-component-base";
 import { isBlancoLaag, isWmsLaag, WmsLaag } from "./kaart-elementen";
 import { none } from "fp-ts/lib/Option";
-import { successWrapper } from "./kaart-internal-messages";
+import { forgetWrapper } from "./kaart-internal-messages";
 
 @Component({
   selector: "awv-kaart-knop-achtergrondlaag-kiezer",
@@ -27,7 +27,7 @@ export class KaartKnopAchtergrondLaagKiezerComponent extends KaartComponentBase 
       type: "ToonAchtergrondKeuze",
       achtergrondTitels: List(this.titels),
       geselecteerdeLaagTitel: none,
-      wrapper: successWrapper()
+      wrapper: forgetWrapper
     });
     // this.kaart.model$
     //   .pipe(
@@ -50,7 +50,7 @@ export class KaartKnopAchtergrondLaagKiezerComponent extends KaartComponentBase 
   ngOnDestroy(): void {
     this.kaart.dispatch({
       type: "VerbergAchtergrondKeuze",
-      wrapper: successWrapper()
+      wrapper: forgetWrapper
     });
     super.ngOnDestroy();
   }

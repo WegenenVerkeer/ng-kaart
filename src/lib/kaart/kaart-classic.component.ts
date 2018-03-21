@@ -44,13 +44,13 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
       this.dispatch({ type: "VeranderZoom", zoom: this.zoom, wrapper: forgetWrapper });
     }
     if (this.extent) {
-      this.dispatch({ type: "VeranderExtent", extent: this.extent, wrapper: forgetWrapper });
+      this.dispatch({ type: "VeranderExtent", extent: this.extent });
     }
     if (this.middelpunt) {
-      this.dispatch({ type: "VeranderMiddelpunt", coordinate: this.middelpunt, wrapper: forgetWrapper });
+      this.dispatch({ type: "VeranderMiddelpunt", coordinate: this.middelpunt });
     }
     if (this.breedte || this.hoogte) {
-      this.dispatch({ type: "VeranderViewport", size: [this.breedte, this.hoogte], wrapper: forgetWrapper });
+      this.dispatch({ type: "VeranderViewport", size: [this.breedte, this.hoogte] });
     }
   }
 
@@ -61,16 +61,16 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
       this.dispatch({ type: "VeranderZoom", zoom: changes.zoom.currentValue, wrapper: forgetWrapper });
     }
     if ("middelpunt" in changes && !coordinateIsEqual(changes.middelpunt.currentValue)(changes.middelpunt.previousValue)) {
-      this.dispatch({ type: "VeranderMiddelpunt", coordinate: changes.middelpunt.currentValue, wrapper: forgetWrapper });
+      this.dispatch({ type: "VeranderMiddelpunt", coordinate: changes.middelpunt.currentValue });
     }
     if ("extent" in changes && !extentIsEqual(changes.extent.currentValue)(changes.extent.previousValue)) {
-      this.dispatch({ type: "VeranderExtent", extent: changes.extent.currentValue, wrapper: forgetWrapper });
+      this.dispatch({ type: "VeranderExtent", extent: changes.extent.currentValue });
     }
     if ("breedte" in changes) {
-      this.dispatch({ type: "VeranderMiddelpunt", coordinate: [changes.breedte.currentValue, this.hoogte], wrapper: forgetWrapper });
+      this.dispatch({ type: "VeranderMiddelpunt", coordinate: [changes.breedte.currentValue, this.hoogte] });
     }
     if ("hoogte" in changes) {
-      this.dispatch({ type: "VeranderViewport", size: [this.breedte, changes.hoogte.currentValue], wrapper: forgetWrapper });
+      this.dispatch({ type: "VeranderViewport", size: [this.breedte, changes.hoogte.currentValue] });
     }
   }
 
@@ -109,7 +109,7 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
     // Voor performantie
     if (!this.hasFocus) {
       this.hasFocus = true;
-      this.dispatch({ type: "FocusOpKaart", wrapper: forgetWrapper });
+      this.dispatch({ type: "FocusOpKaart" });
     }
   }
 
@@ -117,7 +117,7 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
     // Stuur enkel enkel indien nodig
     if (this.hasFocus) {
       this.hasFocus = false;
-      this.dispatch({ type: "VerliesFocusOpKaart", wrapper: forgetWrapper });
+      this.dispatch({ type: "VerliesFocusOpKaart" });
     }
   }
 }
