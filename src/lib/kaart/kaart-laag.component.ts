@@ -1,7 +1,6 @@
 import { Input, OnDestroy, OnInit } from "@angular/core";
 
 import { KaartClassicComponent } from "./kaart-classic.component";
-import { VoegLaagToe, KaartMessage, VerwijderLaag } from "./kaart-protocol-commands";
 import { Laag } from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { KaartInternalMsg, forgetWrapper } from "./kaart-internal-messages";

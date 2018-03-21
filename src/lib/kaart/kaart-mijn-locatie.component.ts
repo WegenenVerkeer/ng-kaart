@@ -19,7 +19,8 @@ import {
   forgetWrapper,
   KaartInternalSubMsg,
   zoominstellingenGezetWrapper,
-  ZoominstellingenGezetMsg
+  ZoominstellingenGezetMsg,
+  successWrapper
 } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
 
@@ -118,9 +119,11 @@ export class KaartMijnLocatieComponent extends KaartComponentBase implements OnC
 
   meldFout(fout: PositionError | string) {
     kaartLogger.error("error", fout);
-    // this.dispatcher.dispatch(
-    //   new FoutGebeurd("Zoomen naar huidige locatie niet mogelijk\nDe toepassing heeft geen toestemming om locatie te gebruiken")
-    // );
+    this.dispatcher.dispatch({
+      type: "MeldComponentFout",
+      fouten: List.of("Zoomen naar huidige locatie niet mogelijk", "De toepassing heeft geen toestemming om locatie te gebruiken"),
+      wrapper: forgetWrapper
+    });
   }
 
   zoomNaarMijnLocatie(zoom: number) {

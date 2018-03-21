@@ -32,7 +32,6 @@ import { leaveZone } from "../util/leave-zone";
 import { kaartLogger } from "./log";
 import * as prt from "./kaart-protocol";
 import * as red from "./kaart-reducer";
-import { VeranderZoomniveau, ZoomniveauVeranderd, ZoomminmaxVeranderd } from "./kaart-protocol-commands";
 import { Subject, ReplaySubject } from "rxjs";
 import { KaartInternalMsg, KaartInternalSubMsg } from "./kaart-internal-messages";
 import { asap } from "../util/asap";

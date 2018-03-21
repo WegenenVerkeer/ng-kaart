@@ -5,16 +5,7 @@ import { ReplaySubject } from "rxjs/ReplaySubject";
 import * as ol from "openlayers";
 
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
-import {
-  VeranderExtent,
-  FocusOpKaart,
-  VerliesFocusOpKaart,
-  VeranderMiddelpunt,
-  VeranderViewport,
-  VeranderZoomniveau,
-  KaartMessage,
-  Command
-} from "./kaart-protocol-commands";
+import { Command } from "./kaart-protocol-commands";
 import * as prt from "./kaart-protocol";
 import { ModelConsumer } from "./kaart-protocol";
 import { KaartWithInfo } from "./kaart-with-info";

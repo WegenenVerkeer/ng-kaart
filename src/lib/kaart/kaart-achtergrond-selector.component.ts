@@ -108,7 +108,6 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
     this.backgroundTiles$ = this.internalMessage$.pipe(
       ofType<KaartInternalSubMsg, AchtergrondlagenGezetMsg>("AchtergrondlagenGezet"),
       map(a => a.achtergrondlagen.toArray()),
-      tap(im => console.log("*****----", im)),
       observeOnAngular(this.zone)
     );
 

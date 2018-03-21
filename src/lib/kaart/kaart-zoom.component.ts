@@ -6,7 +6,6 @@ import { map, tap, filter } from "rxjs/operators";
 import { KaartWithInfo } from "./kaart-with-info";
 import { KaartCmdDispatcher, VacuousDispatcher } from "./kaart-event-dispatcher";
 import { KaartComponentBase } from "./kaart-component-base";
-import { VeranderZoomniveau } from "./kaart-protocol-commands";
 import { observeOnAngular } from "../util/observe-on-angular";
 import {
   KaartInternalMsg,

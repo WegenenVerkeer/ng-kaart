@@ -1,7 +1,6 @@
 import { Component, Input, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 
 import { KaartClassicComponent } from "./kaart-classic.component";
-import { VoegStandaardinteractiesToe, VerwijderStandaardinteracties } from "./kaart-protocol-commands";
 import { forgetWrapper } from "./kaart-internal-messages";
 
 @Component({

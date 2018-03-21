@@ -1,7 +1,6 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 
 import { KaartClassicComponent } from "./kaart-classic.component";
-import { VoegVolledigschermToe, VerwijderVolledigscherm } from "./kaart-protocol-commands";
 import { forgetWrapper } from "./kaart-internal-messages";
 
 @Component({

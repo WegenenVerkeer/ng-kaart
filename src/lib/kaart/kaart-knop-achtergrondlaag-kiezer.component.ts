@@ -2,7 +2,6 @@ import { Component, OnDestroy, OnInit, ViewEncapsulation, NgZone, Input } from "
 import { map, debounceTime, distinctUntilChanged, scan } from "rxjs/operators";
 import { Set, List } from "immutable";
 
-import { ToonAchtergrondKeuze, VerbergAchtergrondKeuze } from "./kaart-protocol-commands";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartComponentBase } from "./kaart-component-base";
 import { isBlancoLaag, isWmsLaag, WmsLaag } from "./kaart-elementen";

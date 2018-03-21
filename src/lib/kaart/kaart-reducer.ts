@@ -15,7 +15,7 @@ import { kaartLogger } from "./log";
 import { toOlLayer } from "./laag-converter";
 import { StyleSelector } from "./kaart-elementen";
 import { forEach } from "../util/option";
-import { MessageConsumer as MsgConsumer } from "./kaart-protocol";
+import { MessageConsumer as MsgConsumer, MeldComponentFoutCmd } from "./kaart-protocol";
 import { Subscription } from "rxjs";
 
 ///////////////////////////////////
@@ -448,6 +448,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
+    function meldComponentFout(cmnd: MeldComponentFoutCmd<Msg>): ModelWithResult<Msg> {
+      model.componentFoutSubj.next(cmnd.fouten);
+      return ModelWithResult(cmnd.wrapper(success({})), model);
+    }
+
     function handleSubscriptions(cmnd: prt.SubscriptionCmd<Msg>): ModelWithResult<Msg> {
       const map = model.map;
 
@@ -540,6 +545,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return handleSubscriptions(cmd);
       case "Unsubscription":
         return handleUnsubscriptions(cmd);
+      case "MeldComponentFout":
+        return meldComponentFout(cmd);
     }
   };
 }

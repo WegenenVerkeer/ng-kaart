@@ -18,8 +18,6 @@ export class KaartWithInfo {
   readonly stdInteracties: List<ol.interaction.Interaction> = List(); // TODO beter gewoon interacties
   readonly middelpunt: Option<ol.Coordinate> = none;
   readonly zoom: number = -1;
-  readonly maxZoom: number = -1;
-  readonly minZoom: number = -1;
   readonly extent: Option<ol.Extent> = none;
   readonly size: Option<[number, number]> = none;
   readonly scrollZoomOnFocus: boolean = false;
@@ -29,6 +27,7 @@ export class KaartWithInfo {
   readonly middelpuntSubj: Subject<[number, number]> = new ReplaySubject<[number, number]>(1);
   readonly achtergrondlaagtitelSubj: Subject<string> = new ReplaySubject<string>(1);
   readonly achtergrondlagenSubj: Subject<List<ke.AchtergrondLaag>> = new ReplaySubject<List<ke.AchtergrondLaag>>(1);
+  readonly componentFoutSubj: Subject<List<string>> = new ReplaySubject<List<string>>(1);
 
   constructor(
     // TODO om de distinctWithInfo te versnellen zouden we als eerste element een versieteller kunnen toevoegen
@@ -39,8 +38,6 @@ export class KaartWithInfo {
   ) {
     this.middelpunt = some(map.getView().getCenter());
     this.zoom = map.getView().getZoom();
-    this.maxZoom = map.getView().getMaxZoom();
-    this.minZoom = map.getView().getMinZoom();
     this.extent = some(map.getView().calculateExtent(map.getSize()));
     this.size = some(map.getSize());
     const zetInstellingen = () =>
