@@ -126,8 +126,12 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
     ({ evaluator: evaluator, typeName: typeName } as TypedEvaluator);
 
   // Run-time helpers
-  const getNestedProperty = (propertyKey: string, object: Object) =>
-    propertyKey != null ? propertyKey.split(".").reduce((obj, key) => (obj && obj[key] ? obj[key] : null), object) : null;
+  const isDefined = value => value !== undefined && value !== null;
+  const getNestedProperty = (propertyKey: string, object: Object) => {
+    return isDefined(propertyKey)
+      ? propertyKey.split(".").reduce((obj, key) => (isDefined(obj) && isDefined(obj[key]) ? obj[key] : null), object)
+      : null;
+  };
   const getProperty = (key: string, typeName: TypeType) => (ctx: Context): Option<any> =>
     option
       .fromNullable(ctx.feature.get("properties"))
