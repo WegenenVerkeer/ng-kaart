@@ -62,7 +62,6 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
    * waarmee events naar de component gestuurd kunnen worden.
    */
   @Input() kaartCmd$: Observable<prt.Command<prt.KaartMsg>> = Observable.empty();
-  @Input() commandDispatcher: KaartCmdDispatcher<prt.KaartMsg> = VacuousDispatcher;
   @Input() messageObsConsumer: KaartMsgObservableConsumer = vacuousKaartMsgObservableConsumer;
   // Enkel voor gebruik van kaart-classic, maar we kunnen dat niet afdwingen
   @Input() modelObsConsumer: ModelObservableConsumer = vacuousModelObservableConsumer;
@@ -72,7 +71,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
    * naar de KaartComponent. Een alternatief zou kunnen zijn één dispatcher hier te maken en de KaartClassicComponent die te laten
    * ophalen in afterViewInit.
    */
-  // private readonly internalEventDispatcher = new ReplaySubjectKaartCmdDispatcher();
+  readonly internalCmdDispatcher: ReplaySubjectKaartCmdDispatcher<KaartInternalMsg> = new ReplaySubjectKaartCmdDispatcher();
 
   private readonly msgSubj = new ReplaySubject<prt.KaartMsg>(1000, 500);
 
@@ -83,7 +82,6 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
   // Dit dient om messages naar toe te sturen
 
-  showBackgroundSelector$: Observable<boolean> = Observable.empty();
   kaartModel$: Observable<KaartWithInfo> = Observable.empty(); // TODO: moet weg -> geen afhankelijkheid van model
   internalMessage$: Observable<KaartInternalSubMsg> = Observable.empty();
 
@@ -135,6 +133,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       };
 
       const kaartModel$: Observable<KaartWithInfo> = this.kaartCmd$.pipe(
+        merge(this.internalCmdDispatcher.commands$),
         tap(c => kaartLogger.debug("kaart command", c)),
         takeUntil(this.destroying$),
         leaveZone(this.zone),
@@ -162,9 +161,6 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
       // Zorg ervoor dat wie de messageObsConsumer @Input gezet heeft een observable van messages krijgt
       this.messageObsConsumer(this.msgSubj);
-
-      // // Deze zorgt er voor dat de achtergrondselectieknop getoond wordt obv het model
-      // this.showBackgroundSelector$ = this.kaartModel$.pipe(map(k => k.showBackgroundSelector), distinctUntilChanged());
     });
   }
 
