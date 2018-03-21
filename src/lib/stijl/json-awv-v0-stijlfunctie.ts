@@ -126,10 +126,12 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
     ({ evaluator: evaluator, typeName: typeName } as TypedEvaluator);
 
   // Run-time helpers
-  const getFeat = (key: string, typeName: TypeType) => (ctx: Context) =>
+  const getNestedProperty = (propertyKey: string, object: Object) =>
+    propertyKey != null ? propertyKey.split(".").reduce((obj, key) => (obj && obj[key] ? obj[key] : null), object) : null;
+  const getProperty = (key: string, typeName: TypeType) => (ctx: Context): Option<any> =>
     option
       .fromNullable(ctx.feature.get("properties"))
-      .chain(properties => option.fromNullable(properties[key]))
+      .chain(properties => option.fromNullable(getNestedProperty(key, properties)))
       .filter(value => typeof value === typeName);
   const checkFeatureDefined = (key: string) => (ctx: Context) =>
     option.fromNullable(ctx.feature.get("properties")).map(properties => properties.hasOwnProperty(key));
@@ -202,7 +204,7 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
           )
         );
       case "Property":
-        return ok(TypedEvaluator(getFeat(expression.ref, expression.type), expression.type));
+        return ok(TypedEvaluator(getProperty(expression.ref, expression.type), expression.type));
       case "Environment":
         return expression.ref === "resolution" && expression.type === "number"
           ? ok(TypedEvaluator(getResolution, "number"))
