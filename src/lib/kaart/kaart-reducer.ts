@@ -19,26 +19,6 @@ import { Subscription } from "rxjs";
 // Hulpfuncties
 //
 
-/**
- * Alle lagen in een gegeven bereik van z-indices aanpassen. Belangrijk om bij toevoegen, verwijderen en verplaatsen,
- * alle z-indices in een aangesloten interval te behouden.
- */
-function pasZIndicesAan(aanpassing: number, vanaf: number, tot: number, kaart: KaartWithInfo) {
-  kaart.olLayersOpTitel.forEach(layer => {
-    const zIndex = layer!.getZIndex();
-    if (zIndex >= vanaf && zIndex <= tot) {
-      layer!.setZIndex(zIndex + aanpassing);
-    }
-  });
-}
-
-function activateMouseWheelZoom(kaart: KaartWithInfo, active: boolean): KaartWithInfo {
-  kaart.stdInteracties
-    .filter(interaction => interaction instanceof ol.interaction.MouseWheelZoom)
-    .forEach(interaction => interaction!.setActive(active));
-  return kaart;
-}
-
 export type Model = KaartWithInfo;
 
 export interface ModelWithResult<Msg> {
@@ -142,6 +122,19 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       fromOption(toOlLayer(model, laag), "De laagbeschrijving kon niet naar een openlayers laag omgezet");
 
     const valideerAlsGeheel = (num: number) => fromPredicate(num, Number.isInteger, `'${num}' is geen geheel getal`);
+
+    /**
+     * Alle lagen in een gegeven bereik van z-indices aanpassen. Belangrijk om bij toevoegen, verwijderen en verplaatsen,
+     * alle z-indices in een aangesloten interval te behouden.
+     */
+    function pasZIndicesAan(aanpassing: number, vanaf: number, tot: number, kaart: KaartWithInfo) {
+      kaart.olLayersOpTitel.forEach(layer => {
+        const zIndex = layer!.getZIndex();
+        if (zIndex >= vanaf && zIndex <= tot) {
+          layer!.setZIndex(zIndex + aanpassing);
+        }
+      });
+    }
 
     /**
      * Een laag toevoegen. Faalt als er al een laag met die titel bestaat.
@@ -276,11 +269,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                   interaction instanceof ol.interaction.MouseWheelZoom
                 ) // we willen zelf de opties op MouseWheelZoom zetten
             );
-          const interacties: List<ol.interaction.Interaction> = List<ol.interaction.Interaction>(stdInteracties);
+          const interacties: List<ol.interaction.Interaction> = List<ol.interaction.Interaction>(stdInteracties).push(
+            new ol.interaction.MouseWheelZoom({ constrainResolution: true }) // Geen fractionele resoluties!
+          );
           interacties.forEach(i => model.map.addInteraction(i!)); // side effects :-(
-          model.map.addInteraction(new ol.interaction.MouseWheelZoom({ constrainResolution: true })); // Geen fractionele resoluties!
           const newModel: Model = { ...model, stdInteracties: interacties, scrollZoomOnFocus: cmnd.scrollZoomOnFocus };
-          activateMouseWheelZoom(newModel, !cmnd.scrollZoomOnFocus); // TODO: zien of functie direct op interacties kunnen laten werken
+          activateMouseWheelZoomIfAllowed(!cmnd.scrollZoomOnFocus, newModel);
           return ModelOnly(newModel);
         })
       );
@@ -356,9 +350,9 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
-    function activateMouseWheelZoomIfAllowed(active: boolean): void {
-      if (model.scrollZoomOnFocus) {
-        model.stdInteracties
+    function activateMouseWheelZoomIfAllowed(active: boolean, mdl: Model = model): void {
+      if (mdl.scrollZoomOnFocus) {
+        mdl.stdInteracties
           .filter(interaction => interaction instanceof ol.interaction.MouseWheelZoom)
           .forEach(interaction => interaction!.setActive(active));
       }
