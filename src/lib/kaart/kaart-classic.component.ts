@@ -19,7 +19,7 @@ import * as prt from "./kaart-protocol";
 import { ModelConsumer } from "./kaart-protocol";
 import { KaartWithInfo } from "./kaart-with-info";
 import { KaartInternalMsg, forgetWrapper } from "./kaart-internal-messages";
-import { KaartMsgObservableConsumer } from ".";
+import { KaartMsgObservableConsumer, ModelObservableConsumer } from ".";
 
 @Component({
   selector: "awv-kaart-classic",
@@ -41,6 +41,7 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
   private hasFocus = false;
   readonly dispatcher: ReplaySubjectKaartCmdDispatcher<KaartInternalMsg> = new ReplaySubjectKaartCmdDispatcher();
   message$: Observable<prt.KaartMsg> = Observable.never();
+  model$: Observable<KaartWithInfo> = Observable.never();
 
   // Deze zorgt ervoor dat we het model van de kaart component krijgen elke keer wanneer het (potentieel) veranderd.
   // readonly modelConsumer: ModelConsumer<KaartWithInfo> = (model: KaartWithInfo) => this.modelSubj.next(model);
@@ -85,6 +86,12 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
   messageObsConsumer(): KaartMsgObservableConsumer {
     return (msg$: Observable<prt.KaartMsg>) => {
       this.message$ = msg$;
+    };
+  }
+
+  modelObsConsumer(): ModelObservableConsumer {
+    return (model$: Observable<KaartWithInfo>) => {
+      this.model$ = model$;
     };
   }
 

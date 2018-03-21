@@ -1,5 +1,5 @@
 import { Component, Input } from "@angular/core";
-import { BlancoLaag, isWmsLaag, WmsLaag } from "./kaart-elementen";
+import { isWmsLaag, WmsLaag, AchtergrondLaag } from "./kaart-elementen";
 
 // Deze component wordt intern gebruikt in de achtergrond selector. Het is niet de bedoeling om deze zelf te gebruiken.
 
@@ -9,7 +9,7 @@ import { BlancoLaag, isWmsLaag, WmsLaag } from "./kaart-elementen";
   styleUrls: ["./kaart-achtergrond-tile.component.scss"]
 })
 export class KaartAchtergrondTileComponent {
-  @Input() laag: WmsLaag | BlancoLaag;
+  @Input() laag: AchtergrondLaag;
   @Input() isCurrent: boolean;
 
   constructor() {}

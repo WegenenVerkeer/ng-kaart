@@ -42,4 +42,4 @@ export const emitSome: <A>(o: Observable<Option<A>>) => Observable<A> = <A>(o: O
   );
 
 export const ofType = <A extends { type: string }, B extends A>(type: string) => (o: Observable<A>) =>
-  o.pipe(filter(a => a.type === type), map(a => a as B));
+  o.pipe(filter(a => a.type === type)) as Observable<B>;

@@ -5,8 +5,10 @@ import { Option, some, none } from "fp-ts/lib/Option";
 import { kaartLogger } from "./log";
 import { Zoominstellingen } from "./kaart-protocol";
 import * as prt from "./kaart-protocol";
+import { AchtergrondLaag } from ".";
+import { List } from "immutable";
 
-export type KaartInternalSubMsg = SuccessMsg | ZoominstellingenGezetMsg;
+export type KaartInternalSubMsg = SuccessMsg | ZoominstellingenGezetMsg | AchtergrondtitelGezetMsg | AchtergrondlagenGezetMsg;
 
 export interface KaartInternalMsg extends prt.KaartMsg {
   type: "KaartInternal";
@@ -56,6 +58,27 @@ function ZoominstellingenGezetMsg(instellingen: Zoominstellingen): Zoominstellin
   return { type: "ZoominstellingenGezet", zoominstellingen: instellingen };
 }
 
-export const zoominstellingenGezetWrapper = (instellingen: Zoominstellingen) => {
-  return KaartInternalMsg(some(ZoominstellingenGezetMsg(instellingen)));
-};
+export const zoominstellingenGezetWrapper = (instellingen: Zoominstellingen) =>
+  KaartInternalMsg(some(ZoominstellingenGezetMsg(instellingen)));
+
+export interface AchtergrondtitelGezetMsg {
+  type: "AchtergrondtitelGezet";
+  titel: string;
+}
+
+function AchtergrondtitelGezetMsg(titel: string): AchtergrondtitelGezetMsg {
+  return { type: "AchtergrondtitelGezet", titel: titel };
+}
+
+export const achtergrondtitelGezetWrapper = (titel: string) => KaartInternalMsg(some(AchtergrondtitelGezetMsg(titel)));
+
+export interface AchtergrondlagenGezetMsg {
+  type: "AchtergrondlagenGezet";
+  achtergrondlagen: List<AchtergrondLaag>;
+}
+
+function AchtergrondlagenGezetMsg(achtergrondlagen: List<AchtergrondLaag>): AchtergrondlagenGezetMsg {
+  return { type: "AchtergrondlagenGezet", achtergrondlagen: achtergrondlagen };
+}
+
+export const achtergrondlagenGezetWrapper = (lagen: List<AchtergrondLaag>) => KaartInternalMsg(some(AchtergrondlagenGezetMsg(lagen)));

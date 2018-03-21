@@ -40,7 +40,9 @@ import { emitSome } from "../util/operators";
 
 // Om enkel met @Input properties te moeten werken. Op deze manier kan een stream van KaartMsg naar de caller gestuurd worden
 export type KaartMsgObservableConsumer = (msg$: Observable<prt.KaartMsg>) => void;
+export type ModelObservableConsumer = (msg$: Observable<KaartWithInfo>) => void;
 export const vacuousKaartMsgObservableConsumer: KaartMsgObservableConsumer = (msg$: Observable<prt.KaartMsg>) => ({});
+export const vacuousModelObservableConsumer: ModelObservableConsumer = (model$: Observable<KaartWithInfo>) => ({});
 
 @Component({
   selector: "awv-kaart",
@@ -62,6 +64,8 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   @Input() kaartCmd$: Observable<prt.Command<prt.KaartMsg>> = Observable.empty();
   @Input() commandDispatcher: KaartCmdDispatcher<prt.KaartMsg> = VacuousDispatcher;
   @Input() messageObsConsumer: KaartMsgObservableConsumer = vacuousKaartMsgObservableConsumer;
+  // Enkel voor gebruik van kaart-classic, maar we kunnen dat niet afdwingen
+  @Input() modelObsConsumer: ModelObservableConsumer = vacuousModelObservableConsumer;
 
   /**
    * Dit is een beetje ongelukkig, maar ook componenten die door de KaartComponent zelf aangemaakt worden moeten events kunnen sturen
@@ -77,9 +81,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   @Input() naam = "kaart";
   @Input() mijnLocatieZoom: number | undefined;
 
-  // @Input() modelConsumer: prt.ModelConsumer<KaartWithInfo> = prt.noOpModelConsumer;
   // Dit dient om messages naar toe te sturen
-  // @Input() messageConsumer: prt.MessageConsumer<any> = prt.noOpMessageConsumer;
 
   showBackgroundSelector$: Observable<boolean> = Observable.empty();
   kaartModel$: Observable<KaartWithInfo> = Observable.empty(); // TODO: moet weg -> geen afhankelijkheid van model
@@ -128,17 +130,6 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
         initieelModel.map.setTarget((undefined as any) as string); // Hack omdat openlayers typedefs kaduuk zijn
       });
 
-      // Luister naar commands die binnen komen van buiten de kaartcomponent (in eerste instantie) en commands van
-      // interne componentnen (in tweede instantie).
-      // this.kaartModel$ = this.kaartEvt$.pipe(
-      //   merge(this.internalEventDispatcher.commands$), // hoe rekening met de events van de interne componenten
-      //   tap(x => kaartLogger.debug("kaart event", x)),
-      //   leaveZone(this.zone), // voer uit buiten Angular zone
-      //   takeUntil(this.destroying$), // als de component stopt, dan ook de subscriptions
-      //   scan(red.kaartReducer, initieelModel),
-      //   shareReplay(1000, 5000)
-      // );
-
       const messageConsumer = (msg: prt.KaartMsg) => {
         asap(() => this.msgSubj.next(msg));
       };
@@ -155,6 +146,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
         }, initieelModel),
         shareReplay(1000, 5000)
       );
+      this.modelObsConsumer(kaartModel$);
 
       // subscribe op het model om de zaak aan gang te zwengelen
       kaartModel$.subscribe(
@@ -197,35 +189,10 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       })
     });
 
-    // kaart.getView().on("change:resolution", event => {
-    //   this.dispatcher.dispatch(new ZoomniveauVeranderd(kaart.getView().getZoom()));
-    // });
-
-    // kaart.getLayers().on("change:length", event => {
-    //   this.dispatcher.dispatch(new ZoomminmaxVeranderd(kaart.getView().getMinZoom(), kaart.getView().getMaxZoom()));
-    // });
-
     return new KaartWithInfo(this.config, this.naam, this.mapElement.nativeElement.parentElement, kaart);
   }
 
   get message$(): Observable<prt.KaartMsg> {
     return this.msgSubj;
   }
-
-  // @Input()
-  // set subscriptions(obs: Observable<prt.Subscription<any>>) {
-  //   // emit zodat eventuele subscriptions op een vorige observable unsubscriben. Dit moet gebeuren voor de nieuwe subscription.
-  //   this.newSubscriptionsSubj.next({});
-  //   // subscribe op de binnenkomende subscriptions
-  //   obs
-  //     .pipe(
-  //       takeUntil(this.destroying$), //
-  //       takeUntil(this.newSubscriptionsSubj),
-  //       startWith(prt.noSubs),
-  //       pairwise()
-  //     )
-  //     .subscribe(sub => {
-  //       // verschil maken tussen vorige subscriptions en nieuwe en vorige unsubscribe en nieuwe subscriben
-  //     });
-  // }
 }

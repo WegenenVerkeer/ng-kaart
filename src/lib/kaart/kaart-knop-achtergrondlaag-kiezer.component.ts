@@ -1,12 +1,13 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation, NgZone, Input } from "@angular/core";
 import { map, debounceTime, distinctUntilChanged, scan } from "rxjs/operators";
-import { Set } from "immutable";
+import { Set, List } from "immutable";
 
 import { ToonAchtergrondKeuze, VerbergAchtergrondKeuze } from "./kaart-protocol-commands";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartComponentBase } from "./kaart-component-base";
 import { isBlancoLaag, isWmsLaag, WmsLaag } from "./kaart-elementen";
 import { none } from "fp-ts/lib/Option";
+import { successWrapper } from "./kaart-internal-messages";
 
 @Component({
   selector: "awv-kaart-knop-achtergrondlaag-kiezer",
@@ -21,7 +22,15 @@ export class KaartKnopAchtergrondLaagKiezerComponent extends KaartComponentBase 
   }
 
   ngOnInit(): void {
-    // this.kaart.kaartModel$
+    // Dit commando mag maar verstuurd worden als de achtergrondlagen al in het model zitten. Dat is zo als de
+    // tag in de html na de lagen tags komt.
+    this.kaart.dispatch({
+      type: "ToonAchtergrondKeuze",
+      achtergrondTitels: List(this.titels),
+      geselecteerdeLaagTitel: none,
+      wrapper: successWrapper()
+    });
+    // this.kaart.model$
     //   .pipe(
     //     map(model =>
     //       model.lagen
@@ -37,12 +46,13 @@ export class KaartKnopAchtergrondLaagKiezerComponent extends KaartComponentBase 
     //   )
     //   .subscribe(lagen => /*this.kaart.dispatch(new ToonAchtergrondKeuze(lagen.toList(), none))*/ {
     //   });
-    //
-    // TODO deze moet zichzelf subscriben op achtergrondlagen
   }
 
   ngOnDestroy(): void {
-    // this.kaart.dispatch(VerbergAchtergrondKeuze);
+    this.kaart.dispatch({
+      type: "VerbergAchtergrondKeuze",
+      wrapper: successWrapper()
+    });
     super.ngOnDestroy();
   }
 }

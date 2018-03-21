@@ -1,14 +1,25 @@
 import { Component, OnInit, Input, ChangeDetectionStrategy, ChangeDetectorRef, NgZone, OnDestroy } from "@angular/core";
 import { trigger, state, style, transition, animate } from "@angular/animations";
 import { Observable } from "rxjs/Observable";
+import { map, first, tap } from "rxjs/operators";
 
-import { WmsLaag, BlancoLaag } from "./kaart-elementen";
-import { map, first } from "rxjs/operators";
+import { WmsLaag, BlancoLaag, AchtergrondLaag } from "./kaart-elementen";
 import { KaartWithInfo } from "./kaart-with-info";
-import { KiesAchtergrond } from "./kaart-protocol-commands";
 import { KaartComponentBase } from "./kaart-component-base";
 import { VacuousDispatcher, KaartCmdDispatcher } from "./kaart-event-dispatcher";
-import { KaartInternalMsg } from "./kaart-internal-messages";
+import {
+  KaartInternalMsg,
+  KaartInternalSubMsg,
+  achtergrondlagenGezetWrapper,
+  forgetWrapper,
+  achtergrondtitelGezetWrapper,
+  AchtergrondlagenGezetMsg,
+  AchtergrondtitelGezetMsg,
+  successWrapper
+} from "./kaart-internal-messages";
+import { emitSome, ofType } from "../util/operators";
+import { observeOnAngular } from "../util/observe-on-angular";
+import * as prt from "./kaart-protocol";
 
 enum DisplayMode {
   SHOWING_STATUS,
@@ -67,12 +78,12 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
   private displayMode: DisplayMode = DisplayMode.SHOWING_STATUS;
   private achtergrondTitel = "";
 
-  backgroundTiles$: Observable<Array<WmsLaag | BlancoLaag>> = Observable.empty();
+  backgroundTiles$: Observable<Array<AchtergrondLaag>> = Observable.empty();
 
   show = false;
 
-  @Input() kaartModel$: Observable<KaartWithInfo> = Observable.never();
   @Input() dispatcher: KaartCmdDispatcher<KaartInternalMsg> = VacuousDispatcher;
+  @Input() internalMessage$: Observable<KaartInternalSubMsg> = Observable.never();
 
   constructor(private readonly cdr: ChangeDetectorRef, zone: NgZone) {
     super(zone);
@@ -81,18 +92,33 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
   ngOnInit() {
     // hackadihack -> er is een raceconditie in de change detection van Angular. Zonder wordt soms de selectiecomponent niet getoond.
     setTimeout(() => this.cdr.detectChanges(), 1000);
-    this.runAsapOutsideAngular(() => {
-      this.kaartModel$
-        .pipe(
-          map(model => model.possibleBackgrounds),
-          first(bgs => !bgs.isEmpty()), // De eerste keer dat er achtergronden gezet worden
-          map(bgs => bgs.get(0).titel) // gebruiken we die om er de achtergrondtitel mee te initialiseren
-        )
-        .subscribe(titel => (this.achtergrondTitel = titel));
-      this.backgroundTiles$ = this.kaartModel$.pipe(
-        map(model => model.possibleBackgrounds.toArray()) //
-      );
+
+    this.dispatcher.dispatch({
+      type: "Subscription",
+      subscription: prt.AchtergrondlagenSubscription(achtergrondlagenGezetWrapper),
+      wrapper: forgetWrapper // TODO we moeten hier de subscription opvangen
     });
+
+    this.dispatcher.dispatch({
+      type: "Subscription",
+      subscription: prt.AchtergrondTitelSubscription(achtergrondtitelGezetWrapper),
+      wrapper: forgetWrapper // TODO we moeten hier de subscription opvangen
+    });
+
+    this.backgroundTiles$ = this.internalMessage$.pipe(
+      ofType<KaartInternalSubMsg, AchtergrondlagenGezetMsg>("AchtergrondlagenGezet"),
+      map(a => a.achtergrondlagen.toArray()),
+      tap(im => console.log("*****----", im)),
+      observeOnAngular(this.zone)
+    );
+
+    this.internalMessage$
+      .pipe(
+        ofType<KaartInternalSubMsg, AchtergrondtitelGezetMsg>("AchtergrondtitelGezet"), //
+        map(a => a.titel),
+        observeOnAngular(this.zone)
+      )
+      .subscribe(titel => (this.achtergrondTitel = titel));
   }
 
   ngOnDestroy() {
@@ -107,7 +133,7 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
       // inklappen.
       this.displayMode = DisplayMode.SHOWING_STATUS;
       if (laag.titel !== this.achtergrondTitel) {
-        // this.dispatcher.dispatch(new KiesAchtergrond(laag.titel));
+        this.dispatcher.dispatch({ type: "KiesAchtergrond", titel: laag.titel, wrapper: successWrapper() });
         this.achtergrondTitel = laag.titel;
       }
     } else {
