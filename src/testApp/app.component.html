@@ -62,6 +62,17 @@
   </pre> -->
 </div>
 
+
+<h3>Kaart zoals in A&V</h3>
+<div>
+  <button (click)="maakZichtbaar('issueAV', !isZichtbaar('issueAV'))">{{isZichtbaar('issueAV')?'Verberg':'Toon'}}</button>
+  <awv-av-kaart *ngIf="isZichtbaar('issueAV')"></awv-av-kaart>
+
+  <!-- <pre *ngFor="let event of installatieGeselecteerdEvents">
+    Event gegooid: {{ event | json }}
+  </pre> -->
+</div>
+
 <!--
 <h3>Ingezoomd dmv extent + schaal</h3>
 <div>
