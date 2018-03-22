@@ -8,9 +8,11 @@ import { FormsModule } from "@angular/forms";
 import { GoogleLocatieZoekerModule } from "../lib/google-locatie-zoeker/index";
 import { HttpModule } from "@angular/http";
 import { ClickOutsideModule } from "ng4-click-outside";
+import { AvKaartComponent } from "./av-kaart.component";
+import { AvKaartInnerComponent } from "./av-kaart-inner.component";
 
 @NgModule({
-  declarations: [AppComponent],
+  declarations: [AppComponent, AvKaartComponent, AvKaartInnerComponent],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
