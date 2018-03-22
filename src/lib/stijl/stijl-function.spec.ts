@@ -11,7 +11,11 @@ describe("de stijl functie", () => {
         numProp: 3.1415,
         boolProp: false,
         nullProp: null,
-        undefinedProp: undefined
+        undefinedProp: undefined,
+        nestedProp: {
+          numProp: 3.1415,
+          boolProp: false
+        }
       }
     });
     const resolution = 32;
@@ -200,7 +204,33 @@ describe("de stijl functie", () => {
         expect(result.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(new ol.style.Style({}));
       });
 
-      it("moet de conditie falen als de propery niet bestaat", () => {
+      it("moet de waarde van de geneste property gebruiken", () => {
+        const result = definitieToStyleFunction(
+          "json",
+          JSON.stringify({
+            version: "awv-v0",
+            definition: {
+              rules: [
+                {
+                  condition: {
+                    kind: "==",
+                    left: { kind: "Property", type: "number", ref: "nestedProp.numProp" },
+                    right: { kind: "Literal", value: 3.1415 }
+                  },
+                  style: {
+                    definition: {}
+                  }
+                }
+              ]
+            }
+          })
+        );
+
+        expect(result.isSuccess()).toBe(true);
+        expect(result.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(new ol.style.Style({}));
+      });
+
+      it("moet de conditie falen als de property niet bestaat", () => {
         const result = definitieToStyleFunction(
           "json",
           JSON.stringify({
@@ -226,7 +256,33 @@ describe("de stijl functie", () => {
         expect(result.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(undefined);
       });
 
-      it("moet de conditie falen als de propery een null waarde heeft", () => {
+      it("moet de conditie falen als de geneste property niet bestaat", () => {
+        const result = definitieToStyleFunction(
+          "json",
+          JSON.stringify({
+            version: "awv-v0",
+            definition: {
+              rules: [
+                {
+                  condition: {
+                    kind: "==",
+                    left: { kind: "Property", type: "string", ref: "nestedProp.onbestaand" },
+                    right: { kind: "Literal", value: "R" }
+                  },
+                  style: {
+                    definition: {}
+                  }
+                }
+              ]
+            }
+          })
+        );
+
+        expect(result.isSuccess()).toBe(true);
+        expect(result.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(undefined);
+      });
+
+      it("moet de conditie falen als de property een null waarde heeft", () => {
         const result = definitieToStyleFunction(
           "json",
           JSON.stringify({
@@ -252,7 +308,7 @@ describe("de stijl functie", () => {
         expect(result.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(undefined);
       });
 
-      it("moet de conditie falen als de propery een undefined waarde heeft", () => {
+      it("moet de conditie falen als de property een undefined waarde heeft", () => {
         const result = definitieToStyleFunction(
           "json",
           JSON.stringify({
@@ -278,7 +334,7 @@ describe("de stijl functie", () => {
         expect(result.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(undefined);
       });
 
-      it("moet de conditie niet noodzakelijk falen als de propery een false waarde heeft", () => {
+      it("moet de conditie niet noodzakelijk falen als de property een false waarde heeft", () => {
         const result = definitieToStyleFunction(
           "json",
           JSON.stringify({
@@ -289,6 +345,31 @@ describe("de stijl functie", () => {
                   condition: {
                     kind: "==",
                     left: { kind: "Property", type: "boolean", ref: "boolProp" },
+                    right: { kind: "Literal", value: false }
+                  },
+                  style: {
+                    definition: {}
+                  }
+                }
+              ]
+            }
+          })
+        );
+        expect(result.isSuccess()).toBe(true);
+        expect(result.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(new ol.style.Style({}));
+      });
+
+      it("moet de conditie niet noodzakelijk falen als de geneste property een false waarde heeft", () => {
+        const result = definitieToStyleFunction(
+          "json",
+          JSON.stringify({
+            version: "awv-v0",
+            definition: {
+              rules: [
+                {
+                  condition: {
+                    kind: "==",
+                    left: { kind: "Property", type: "boolean", ref: "nestedProp.boolProp" },
                     right: { kind: "Literal", value: false }
                   },
                   style: {
