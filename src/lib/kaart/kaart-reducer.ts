@@ -10,7 +10,6 @@ import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { KaartWithInfo } from "./kaart-with-info";
-import { kaartLogger } from "./log";
 import { toOlLayer } from "./laag-converter";
 import { forEach } from "../util/option";
 import { Subscription } from "rxjs";

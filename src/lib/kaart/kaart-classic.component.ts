@@ -1,16 +1,13 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
 import { Observable } from "rxjs/Observable";
-import { ReplaySubject } from "rxjs/ReplaySubject";
 
 import * as ol from "openlayers";
 
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { Command } from "./kaart-protocol-commands";
 import * as prt from "./kaart-protocol";
-import { ModelConsumer } from "./kaart-protocol";
-import { KaartWithInfo } from "./kaart-with-info";
 import { KaartInternalMsg, forgetWrapper } from "./kaart-internal-messages";
-import { KaartMsgObservableConsumer, ModelObservableConsumer } from ".";
+import { KaartMsgObservableConsumer } from ".";
 
 @Component({
   selector: "awv-kaart-classic",
@@ -32,10 +29,7 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
   private hasFocus = false;
   readonly dispatcher: ReplaySubjectKaartCmdDispatcher<KaartInternalMsg> = new ReplaySubjectKaartCmdDispatcher();
   message$: Observable<prt.KaartMsg> = Observable.never();
-  model$: Observable<KaartWithInfo> = Observable.never();
 
-  // Deze zorgt ervoor dat we het model van de kaart component krijgen elke keer wanneer het (potentieel) veranderd.
-  // readonly modelConsumer: ModelConsumer<KaartWithInfo> = (model: KaartWithInfo) => this.modelSubj.next(model);
   constructor() {}
 
   ngOnInit() {
@@ -79,23 +73,6 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
       this.message$ = msg$;
     };
   }
-
-  modelObsConsumer(): ModelObservableConsumer {
-    return (model$: Observable<KaartWithInfo>) => {
-      this.model$ = model$;
-    };
-  }
-
-  // messageConsumer(): prt.MessageConsumer<prt.KaartMsg> {
-  //   return (msg: prt.KaartMsg) => {
-  //     if (msg.type === "KaartInternal") {
-  //       console.log("interne msg gevonden", msg);
-  //       setTimeout(0, () => this.msgSubj.next(msg as KaartInternalMsg));
-  //     } else {
-  //       console.log("externe msg gevonden", msg);
-  //     }
-  //   };
-  // }
 
   dispatch(cmd: prt.Command<KaartInternalMsg>) {
     this.dispatcher.dispatch(cmd);

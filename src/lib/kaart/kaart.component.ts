@@ -4,21 +4,7 @@ import "rxjs/add/observable/of";
 import "rxjs/add/observable/combineLatest";
 import "rxjs/add/observable/empty";
 import "rxjs/add/observable/never";
-import {
-  scan,
-  map,
-  tap,
-  distinctUntilChanged,
-  filter,
-  shareReplay,
-  merge,
-  debounceTime,
-  takeUntil,
-  debounce,
-  startWith,
-  pairwise
-} from "rxjs/operators";
-import { isSome, none } from "fp-ts/lib/Option";
+import { scan, map, tap, filter, shareReplay, merge, takeUntil } from "rxjs/operators";
 
 import proj4 from "proj4";
 import * as ol from "openlayers";
@@ -26,13 +12,13 @@ import * as ol from "openlayers";
 import { KaartConfig, KAART_CFG } from "./kaart-config";
 import { KaartComponentBase } from "./kaart-component-base";
 import { KaartWithInfo } from "./kaart-with-info";
-import { ReplaySubjectKaartCmdDispatcher, KaartCmdDispatcher, VacuousDispatcher } from "./kaart-event-dispatcher";
+import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 // noinspection TypeScriptPreferShortImport
 import { leaveZone } from "../util/leave-zone";
 import { kaartLogger } from "./log";
 import * as prt from "./kaart-protocol";
 import * as red from "./kaart-reducer";
-import { Subject, ReplaySubject } from "rxjs";
+import { ReplaySubject } from "rxjs";
 import { KaartInternalMsg, KaartInternalSubMsg } from "./kaart-internal-messages";
 import { asap } from "../util/asap";
 import { emitSome } from "../util/operators";
@@ -40,9 +26,7 @@ import { forEach } from "../util/option";
 
 // Om enkel met @Input properties te moeten werken. Op deze manier kan een stream van KaartMsg naar de caller gestuurd worden
 export type KaartMsgObservableConsumer = (msg$: Observable<prt.KaartMsg>) => void;
-export type ModelObservableConsumer = (msg$: Observable<KaartWithInfo>) => void;
 export const vacuousKaartMsgObservableConsumer: KaartMsgObservableConsumer = (msg$: Observable<prt.KaartMsg>) => ({});
-export const vacuousModelObservableConsumer: ModelObservableConsumer = (model$: Observable<KaartWithInfo>) => ({});
 
 @Component({
   selector: "awv-kaart",
@@ -63,8 +47,6 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
    */
   @Input() kaartCmd$: Observable<prt.Command<prt.KaartMsg>> = Observable.empty();
   @Input() messageObsConsumer: KaartMsgObservableConsumer = vacuousKaartMsgObservableConsumer;
-  // Enkel voor gebruik van kaart-classic, maar we kunnen dat niet afdwingen
-  @Input() modelObsConsumer: ModelObservableConsumer = vacuousModelObservableConsumer;
 
   /**
    * Dit is een beetje ongelukkig, maar ook componenten die door de KaartComponent zelf aangemaakt worden moeten events kunnen sturen
@@ -82,7 +64,6 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
   // Dit dient om messages naar toe te sturen
 
-  kaartModel$: Observable<KaartWithInfo> = Observable.empty(); // TODO: moet weg -> geen afhankelijkheid van model
   internalMessage$: Observable<KaartInternalSubMsg> = Observable.empty();
 
   private static configureerLambert72() {
@@ -145,7 +126,6 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
         }, initieelModel),
         shareReplay(1000, 5000)
       );
-      this.modelObsConsumer(kaartModel$);
 
       // subscribe op het model om de zaak aan gang te zwengelen
       kaartModel$.subscribe(
