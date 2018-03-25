@@ -174,3 +174,95 @@ export interface MeldComponentFoutCmd<Msg extends KaartMsg> {
   readonly type: "MeldComponentFout";
   readonly fouten: List<string>;
 }
+
+////////////////////////
+// constructor functies
+//
+
+export function VoegStandaardInteractiesToe<Msg extends KaartMsg>(
+  scrollZoomOnFocus: boolean,
+  wrapper: BareValidationWrapper<Msg>
+): VoegStandaardInteractiesToeCmd<Msg> {
+  return { type: "VoegStandaardInteractiesToe", scrollZoomOnFocus: scrollZoomOnFocus, wrapper: wrapper };
+}
+
+export function VoegLaagToeCmd<Msg extends KaartMsg>(
+  positie: number,
+  laag: ke.Laag,
+  magGetoondWorden: boolean,
+  wrapper: ValidationWrapper<number, Msg>
+): VoegLaagToeCmd<Msg> {
+  return { type: "VoegLaagToe", positie: positie, laag: laag, magGetoondWorden: magGetoondWorden, wrapper: wrapper };
+}
+
+export function VerwijderLaagCmd<Msg extends KaartMsg>(titel: string, wrapper: BareValidationWrapper<Msg>): VerwijderLaagCmd<Msg> {
+  return { type: "VerwijderLaag", titel: titel, wrapper: wrapper };
+}
+
+export function VerplaatsLaagCmd<Msg extends KaartMsg>(
+  titel: string,
+  naarPositie: number,
+  wrapper: ValidationWrapper<number, Msg>
+): VerplaatsLaagCmd<Msg> {
+  return { type: "VerplaatsLaag", titel: titel, naarPositie: naarPositie, wrapper: wrapper };
+}
+
+export function ZetStijlVoorLaagCmd<Msg extends KaartMsg>(
+  titel: string,
+  stijl: StyleSelector,
+  wrapper: BareValidationWrapper<Msg>
+): ZetStijlVoorLaagCmd<Msg> {
+  return { type: "ZetStijlVoorLaag", stijl: stijl, titel: titel, wrapper: wrapper };
+}
+
+export function VeranderMiddelpuntCmd<Msg extends KaartMsg>(coordinate: ol.Coordinate): VeranderMiddelpuntCmd<Msg> {
+  return { type: "VeranderMiddelpunt", coordinate: coordinate };
+}
+
+export function VeranderZoomCmd<Msg extends KaartMsg>(zoom: number, wrapper: BareValidationWrapper<Msg>): VeranderZoomCmd<Msg> {
+  return { type: "VeranderZoom", zoom: zoom, wrapper: wrapper };
+}
+
+export function VeranderExtentCmd<Msg extends KaartMsg>(extent: ol.Extent): VeranderExtentCmd<Msg> {
+  return { type: "VeranderExtent", extent: extent };
+}
+
+export function VeranderViewportCmd<Msg extends KaartMsg>(size: ol.Size): VeranderViewportCmd<Msg> {
+  return { type: "VeranderViewport", size: size };
+}
+
+export function MeldComponentFoutCmd<Msg extends KaartMsg>(fouten: List<string>): MeldComponentFoutCmd<Msg> {
+  return { type: "MeldComponentFout", fouten: fouten };
+}
+
+export function KiesAchtergrondCmd<Msg extends KaartMsg>(titel: string, wrapper: BareValidationWrapper<Msg>): KiesAchtergrondCmd<Msg> {
+  return { type: "KiesAchtergrond", titel: titel, wrapper: wrapper };
+}
+
+export function MaakLaagZichtbaarCmd<Msg extends KaartMsg>(titel: string, wrapper: BareValidationWrapper<Msg>): MaakLaagZichtbaarCmd<Msg> {
+  return { type: "MaakLaagZichtbaar", titel: titel, wrapper: wrapper };
+}
+
+export function MaakLaagOnzichtbaarCmd<Msg extends KaartMsg>(
+  titel: string,
+  wrapper: BareValidationWrapper<Msg>
+): MaakLaagOnzichtbaarCmd<Msg> {
+  return { type: "MaakLaagOnzichtbaar", titel: titel, wrapper: wrapper };
+}
+
+export function ToonAchtergrondKeuzeCmd<Msg extends KaartMsg>(
+  achtergrondTitels: List<string>,
+  geselecteerdeLaagTitel: Option<string>,
+  wrapper: BareValidationWrapper<Msg>
+): ToonAchtergrondKeuzeCmd<Msg> {
+  return {
+    type: "ToonAchtergrondKeuze",
+    achtergrondTitels: achtergrondTitels,
+    geselecteerdeLaagTitel: geselecteerdeLaagTitel,
+    wrapper: wrapper
+  };
+}
+
+export function VerbergAchtergrondKeuzeCmd<Msg extends KaartMsg>(wrapper: BareValidationWrapper<Msg>): VerbergAchtergrondKeuzeCmd<Msg> {
+  return { type: "VerbergAchtergrondKeuze", wrapper: wrapper };
+}

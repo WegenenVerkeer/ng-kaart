@@ -1,10 +1,9 @@
 import { Component, OnInit, Input, ChangeDetectionStrategy, ChangeDetectorRef, NgZone, OnDestroy } from "@angular/core";
 import { trigger, state, style, transition, animate } from "@angular/animations";
 import { Observable } from "rxjs/Observable";
-import { map, first, tap } from "rxjs/operators";
+import { map } from "rxjs/operators";
 
-import { WmsLaag, BlancoLaag, AchtergrondLaag } from "./kaart-elementen";
-import { KaartWithInfo } from "./kaart-with-info";
+import { AchtergrondLaag } from "./kaart-elementen";
 import { KaartComponentBase } from "./kaart-component-base";
 import { VacuousDispatcher, KaartCmdDispatcher } from "./kaart-event-dispatcher";
 import {
@@ -16,7 +15,7 @@ import {
   AchtergrondlagenGezetMsg,
   AchtergrondtitelGezetMsg
 } from "./kaart-internal-messages";
-import { emitSome, ofType } from "../util/operators";
+import { ofType } from "../util/operators";
 import { observeOnAngular } from "../util/observe-on-angular";
 import * as prt from "./kaart-protocol";
 
@@ -75,11 +74,9 @@ const Invisible = "invisible";
 export class KaartAchtergrondSelectorComponent extends KaartComponentBase implements OnInit, OnDestroy {
   // component state is aanvaardbaar zolang de html view er niet direct aan komt
   private displayMode: DisplayMode = DisplayMode.SHOWING_STATUS;
-  private achtergrondTitel = "";
+  achtergrondTitel = "";
 
   backgroundTiles$: Observable<Array<AchtergrondLaag>> = Observable.empty();
-
-  show = false;
 
   @Input() dispatcher: KaartCmdDispatcher<KaartInternalMsg> = VacuousDispatcher;
   @Input() internalMessage$: Observable<KaartInternalSubMsg> = Observable.never();
@@ -90,7 +87,7 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
 
   ngOnInit() {
     // hackadihack -> er is een raceconditie in de change detection van Angular. Zonder wordt soms de selectiecomponent niet getoond.
-    setTimeout(() => this.cdr.detectChanges(), 1000);
+    // setTimeout(() => this.cdr.detectChanges(), 2000);
 
     this.dispatcher.dispatch({
       type: "Subscription",
@@ -116,14 +113,17 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
         map(a => a.titel),
         observeOnAngular(this.zone)
       )
-      .subscribe(titel => (this.achtergrondTitel = titel));
+      .subscribe(titel => {
+        this.achtergrondTitel = titel;
+        this.cdr.detectChanges(); // We zitten nochthans in observeOnAngular.
+      });
   }
 
   ngOnDestroy() {
     super.ngOnDestroy();
   }
 
-  kies(laag: WmsLaag): void {
+  kies(laag: AchtergrondLaag): void {
     if (this.displayMode === DisplayMode.SELECTING) {
       // We wachten een beetje met de lijst te laten samen klappen zodat de tile met de nieuwe achtergrondlaag
       // van stijl kan aangepast worden (gebeurt automagisch door Angular change detection) vooraleer het inklapeffect
@@ -140,11 +140,11 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
     this.cdr.detectChanges();
   }
 
-  isCurrentlyBackground(laag: WmsLaag): boolean {
+  isCurrentlyBackground(laag: AchtergrondLaag): boolean {
     return laag.titel === this.achtergrondTitel;
   }
 
-  tileVisibility(laag: WmsLaag): string {
+  tileVisibility(laag: AchtergrondLaag): string {
     switch (this.displayMode) {
       case DisplayMode.SHOWING_STATUS: {
         return this.isCurrentlyBackground(laag) ? Visible : Invisible;

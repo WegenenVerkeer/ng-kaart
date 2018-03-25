@@ -122,6 +122,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     const valideerAlsGeheel = (num: number) => fromPredicate(num, Number.isInteger, `'${num}' is geen geheel getal`);
 
+    interface LaagPositieAanpassing {
+      titel: string;
+    }
+
     /**
      * Alle lagen in een gegeven bereik van z-indices aanpassen. Belangrijk om bij toevoegen, verwijderen en verplaatsen,
      * alle z-indices in een aangesloten interval te behouden.

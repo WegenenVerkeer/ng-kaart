@@ -28,7 +28,7 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
 
   private hasFocus = false;
   readonly dispatcher: ReplaySubjectKaartCmdDispatcher<KaartInternalMsg> = new ReplaySubjectKaartCmdDispatcher();
-  message$: Observable<prt.KaartMsg> = Observable.never();
+  // message$: Observable<prt.KaartMsg> = Observable.never();
 
   constructor() {}
 
@@ -68,11 +68,11 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  messageObsConsumer(): KaartMsgObservableConsumer {
-    return (msg$: Observable<prt.KaartMsg>) => {
-      this.message$ = msg$;
-    };
-  }
+  // messageObsConsumer(): KaartMsgObservableConsumer {
+  //   return (msg$: Observable<prt.KaartMsg>) => {
+  //     this.message$ = msg$;
+  //   };
+  // }
 
   dispatch(cmd: prt.Command<KaartInternalMsg>) {
     this.dispatcher.dispatch(cmd);
