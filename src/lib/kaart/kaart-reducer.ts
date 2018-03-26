@@ -48,8 +48,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       };
     }
 
-    function ModelOnly(mdl: Model): KaartCmdResult<any> {
-      return { model: mdl, value: none };
+    function ModelAndEmptyResult(mdl: Model): KaartCmdResult<any> {
+      return {
+        model: mdl,
+        value: some({})
+      };
     }
 
     function toModelWithValueResult<T>(
@@ -59,22 +62,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return {
         model: resultValidation.map(v => v.model).getOrElseValue(model),
         message: resultValidation.fold(
-          // fail => some(wrapper(val.map(() => ({} as T)))), // we mogen de right wegmappen gezien we een left hebben
           fail => some(wrapper(validation.failure(getArrayMonoid<string>())(fail))),
           v => v.value.map(x => wrapper(success(x)))
         )
       };
     }
-
-    // function toModelWithValueResult(
-    //   wrapper: prt.BareValidationWrapper<Msg>,
-    //   val: prt.KaartCmdValidation<ModelOnlyResult>
-    // ): ModelWithResult<Msg> {
-    //   return {
-    //     model: val.map(v => v.model).getOrElseValue(model),
-    //     message: some(wrapper(val.map(v => undefined))) // wis het model
-    //   };
-    // }
 
     const allOf = sequence(validation, array);
     const success = <T>(t: T) => validation.success<string[], T>(t);
@@ -177,7 +169,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         valideerLayerBestaat(cmnd.titel).map(layer => {
           model.map.removeLayer(layer); // Oesje. Side-effect. Gelukkig idempotent.
           pasZIndicesAan(-1, layer.getZIndex(), Number.MAX_SAFE_INTEGER, model); // Nog een side-effect.
-          return ModelOnly({
+          return ModelAndEmptyResult({
             ...model,
             olLayersOpTitel: model.olLayersOpTitel.delete(cmnd.titel),
             lagen: model.lagen.filterNot(l => l!.titel === cmnd.titel).toList()
@@ -220,7 +212,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         fromPredicate(model.schaal, isNone, "De schaal is al toegevoegd").map(() => {
           const schaal = new ol.control.ScaleLine();
           model.map.addControl(schaal);
-          return ModelOnly({ ...model, schaal: some(schaal) });
+          return ModelAndEmptyResult({ ...model, schaal: some(schaal) });
         })
       );
     }
@@ -230,7 +222,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         cmnd.wrapper,
         fromOption(model.schaal, "De schaal is nog niet toegevoegd").map((schaal: ol.control.Control) => {
           model.map.removeControl(schaal);
-          return ModelOnly({ ...model, schaal: none });
+          return ModelAndEmptyResult({ ...model, schaal: none });
         })
       );
     }
@@ -241,7 +233,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         fromPredicate(model.fullScreen, isNone, "De volledig scherm knop is al toegevoegd").map(() => {
           const fullScreen = new ol.control.FullScreen();
           model.map.addControl(fullScreen);
-          return ModelOnly({ ...model, fullScreen: some(fullScreen) });
+          return ModelAndEmptyResult({ ...model, fullScreen: some(fullScreen) });
         })
       );
     }
@@ -251,7 +243,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         cmnd.wrapper,
         fromOption(model.fullScreen, "De volledig scherm knop is nog niet toegevoegd").map((fullScreen: ol.control.Control) => {
           model.map.removeControl(fullScreen);
-          return ModelOnly({ ...model, fullScreen: none });
+          return ModelAndEmptyResult({ ...model, fullScreen: none });
         })
       );
     }
@@ -278,7 +270,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           interacties.forEach(i => model.map.addInteraction(i!)); // side effects :-(
           const newModel: Model = { ...model, stdInteracties: interacties, scrollZoomOnFocus: cmnd.scrollZoomOnFocus };
           activateMouseWheelZoomIfAllowed(!cmnd.scrollZoomOnFocus, newModel);
-          return ModelOnly(newModel);
+          return ModelAndEmptyResult(newModel);
         })
       );
     }
@@ -289,7 +281,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         fromPredicate(model.stdInteracties, l => !l.isEmpty(), "De standaard interacties zijn niet aanwezig").map(
           (stdInteracties: List<ol.interaction.Interaction>) => {
             stdInteracties.forEach(i => model.map.removeInteraction(i!));
-            return ModelOnly({ ...model, fullScreen: none });
+            return ModelAndEmptyResult({ ...model, fullScreen: none });
           }
         )
       );
@@ -309,7 +301,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         cmnd.wrapper,
         valideerAlsGeheel(cmnd.zoom).map(zoom => {
           model.map.getView().setZoom(cmnd.zoom);
-          return ModelOnly(model);
+          return ModelAndEmptyResult(model);
         })
       );
     }
@@ -367,7 +359,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         valideerVectorLayerBestaat(cmnd.titel).map(layer => {
           layer.getSource().clear(true);
           layer.getSource().addFeatures(cmnd.features.toArray());
-          return ModelOnly(model);
+          return ModelAndEmptyResult(model);
         })
       );
     }
@@ -403,7 +395,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           const achtergrondlagen = model.lagen.filter(l => cmnd.achtergrondTitels.contains(l!.titel)).toList();
           model.achtergrondlagenSubj.next(achtergrondlagen as List<ke.AchtergrondLaag>);
           model.achtergrondlaagtitelSubj.next(teSelecterenTitel);
-          return ModelOnly({ ...model, achtergrondLayer: some(achtergrondLayer), showBackgroundSelector: true });
+          return ModelAndEmptyResult({ ...model, achtergrondLayer: some(achtergrondLayer), showBackgroundSelector: true });
         })
       );
     }
@@ -412,7 +404,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         cmnd.wrapper,
         fromBoolean(model.showBackgroundSelector, "De achtergrondkeuze is niet actief") //
-          .map(() => ModelOnly({ ...model, showBackgroundSelector: false }))
+          .map(() => ModelAndEmptyResult({ ...model, showBackgroundSelector: false }))
       );
     }
 
@@ -425,7 +417,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             model.achtergrondlaagtitelSubj.next(cmnd.titel);
             forEach(model.achtergrondLayer, l => l.setVisible(false));
             layer.setVisible(true);
-            return ModelOnly({ ...model, achtergrondLayer: some(layer) });
+            return ModelAndEmptyResult({ ...model, achtergrondLayer: some(layer) });
           })
       );
     }
@@ -435,7 +427,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         cmnd.wrapper,
         valideerLayerBestaat(cmnd.titel).map(layer => {
           layer.setVisible(true);
-          return ModelOnly(model);
+          return ModelAndEmptyResult(model);
         })
       );
     }
@@ -444,8 +436,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         cmnd.wrapper,
         valideerLayerBestaat(cmnd.titel).map(layer => {
-          layer.setVisible(true);
-          return ModelOnly(model);
+          layer.setVisible(false);
+          return ModelAndEmptyResult(model);
         })
       );
     }
@@ -455,7 +447,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         cmnd.wrapper,
         valideerVectorLayerBestaat(cmnd.titel).map(vectorlayer => {
           vectorlayer.setStyle(cmnd.stijl.type === "StaticStyle" ? cmnd.stijl.style : cmnd.stijl.styleFunction);
-          return ModelOnly(model);
+          return ModelAndEmptyResult(model);
         })
       );
     }

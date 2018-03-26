@@ -3,6 +3,7 @@ import { monoidString } from "fp-ts/lib/Monoid";
 import * as array from "fp-ts/lib/Array";
 import * as validation from "fp-ts/lib/Validation";
 import * as traversable from "fp-ts/lib/Traversable";
+import { kaartLogger } from "../kaart/log";
 
 export type Error = string;
 export type Validation<T> = validation.Validation<string, T>;
@@ -145,6 +146,14 @@ export function firstOf<T>(...interpreters: Interpreter<T>[]): Interpreter<T> {
       }
     }
     return fail("Er moet 1 waarde aanwezig zijn");
+  };
+}
+
+export function logger<T>(interpreter: Interpreter<T>): Interpreter<T> {
+  return (json: object) => {
+    kaartLogger.debug("object in", json);
+    kaartLogger.debug("object out", interpreter(json));
+    return interpreter(json);
   };
 }
 

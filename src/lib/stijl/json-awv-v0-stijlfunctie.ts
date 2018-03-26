@@ -289,17 +289,19 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
 
   // De regels controleren en combineren zodat at run-time ze één voor één geprobeerd worden totdat er een match is
   const validatedCombinedRuleExpression: Validation<RuleExpression> = array.reduce(
-    (combinedRuleValidation: Validation<RuleExpression>, rule: RuleStyle) =>
+    (combinedRuleValidation: Validation<RuleExpression>, rule: RuleStyle) => {
       // Hang een regel bij de vorige regels
-      combinedRuleValidation.chain(combinedRule =>
+      return combinedRuleValidation.chain(combinedRule => {
+        // WTF? Deze lambda moet blijkbaar in een {} block zitten of het faalt wanneer gebruikt in externe applicatie.
         // De conditie moet kosjer zijn
-        compileCondition(rule.condition).map(typedEvaluator => (ctx: Context) =>
+        return compileCondition(rule.condition).map(typedEvaluator => (ctx: Context) =>
           combinedRule(ctx).fold(
             () => typedEvaluator.evaluator(ctx).chain(outcome => ((outcome as boolean) ? some(rule.style) : none)),
             stl => some(stl) // (orElse ontbreekt) De verse regel wordt niet meer uitgevoerd als er al een resultaat is.
           )
-        )
-      ),
+        );
+      });
+    },
     ok(() => none),
     ruleCfg.rules
   );
