@@ -266,3 +266,14 @@ export function ToonAchtergrondKeuzeCmd<Msg extends KaartMsg>(
 export function VerbergAchtergrondKeuzeCmd<Msg extends KaartMsg>(wrapper: BareValidationWrapper<Msg>): VerbergAchtergrondKeuzeCmd<Msg> {
   return { type: "VerbergAchtergrondKeuze", wrapper: wrapper };
 }
+
+export function SubscriptionCmd<Msg extends KaartMsg>(
+  subscription: Subscription<Msg>,
+  wrapper: ValidationWrapper<RxSubscription, Msg>
+): SubscriptionCmd<Msg> {
+  return { type: "Subscription", subscription: subscription, wrapper: wrapper };
+}
+
+export function UnsubscriptionCmd<Msg extends KaartMsg>(subscription: RxSubscription): UnsubscriptionCmd<Msg> {
+  return { type: "Unsubscription", subscription: subscription };
+}
