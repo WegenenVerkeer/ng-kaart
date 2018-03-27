@@ -45,30 +45,35 @@ export interface UnsubscriptionCmd<Msg extends KaartMsg> {
   readonly subscription: RxSubscription;
 }
 
+export interface PositieAanpassing {
+  readonly titel: string;
+  readonly positie: number;
+}
+
 export interface VoegLaagToeCmd<Msg extends KaartMsg> {
   readonly type: "VoegLaagToe";
   readonly positie: number;
   readonly laag: ke.Laag;
   readonly magGetoondWorden: boolean;
-  readonly wrapper: ValidationWrapper<number, Msg>;
+  readonly wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>;
 }
 
 export interface VerwijderLaagCmd<Msg extends KaartMsg> {
   readonly type: "VerwijderLaag";
   readonly titel: string;
-  readonly wrapper: BareValidationWrapper<Msg>;
-}
-
-export interface VoegSchaalToeCmd<Msg extends KaartMsg> {
-  readonly type: "VoegSchaalToe";
-  readonly wrapper: BareValidationWrapper<Msg>;
+  readonly wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>;
 }
 
 export interface VerplaatsLaagCmd<Msg extends KaartMsg> {
   readonly type: "VerplaatsLaag";
   readonly titel: string;
   readonly naarPositie: number;
-  readonly wrapper: ValidationWrapper<number, Msg>;
+  readonly wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>;
+}
+
+export interface VoegSchaalToeCmd<Msg extends KaartMsg> {
+  readonly type: "VoegSchaalToe";
+  readonly wrapper: BareValidationWrapper<Msg>;
 }
 
 export interface VerwijderSchaalCmd<Msg extends KaartMsg> {
@@ -137,7 +142,7 @@ export interface ToonAchtergrondKeuzeCmd<Msg extends KaartMsg> {
   readonly type: "ToonAchtergrondKeuze";
   readonly achtergrondTitels: List<string>;
   readonly geselecteerdeLaagTitel: Option<string>;
-  readonly wrapper: BareValidationWrapper<Msg>;
+  readonly wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>;
 }
 
 export interface VerbergAchtergrondKeuzeCmd<Msg extends KaartMsg> {
@@ -190,19 +195,22 @@ export function VoegLaagToeCmd<Msg extends KaartMsg>(
   positie: number,
   laag: ke.Laag,
   magGetoondWorden: boolean,
-  wrapper: ValidationWrapper<number, Msg>
+  wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>
 ): VoegLaagToeCmd<Msg> {
   return { type: "VoegLaagToe", positie: positie, laag: laag, magGetoondWorden: magGetoondWorden, wrapper: wrapper };
 }
 
-export function VerwijderLaagCmd<Msg extends KaartMsg>(titel: string, wrapper: BareValidationWrapper<Msg>): VerwijderLaagCmd<Msg> {
+export function VerwijderLaagCmd<Msg extends KaartMsg>(
+  titel: string,
+  wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>
+): VerwijderLaagCmd<Msg> {
   return { type: "VerwijderLaag", titel: titel, wrapper: wrapper };
 }
 
 export function VerplaatsLaagCmd<Msg extends KaartMsg>(
   titel: string,
   naarPositie: number,
-  wrapper: ValidationWrapper<number, Msg>
+  wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>
 ): VerplaatsLaagCmd<Msg> {
   return { type: "VerplaatsLaag", titel: titel, naarPositie: naarPositie, wrapper: wrapper };
 }
@@ -253,7 +261,7 @@ export function MaakLaagOnzichtbaarCmd<Msg extends KaartMsg>(
 export function ToonAchtergrondKeuzeCmd<Msg extends KaartMsg>(
   achtergrondTitels: List<string>,
   geselecteerdeLaagTitel: Option<string>,
-  wrapper: BareValidationWrapper<Msg>
+  wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>
 ): ToonAchtergrondKeuzeCmd<Msg> {
   return {
     type: "ToonAchtergrondKeuze",
