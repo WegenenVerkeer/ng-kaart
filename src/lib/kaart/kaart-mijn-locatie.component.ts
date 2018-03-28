@@ -62,9 +62,10 @@ export class KaartMijnLocatieComponent extends KaartComponentBase implements OnC
   ngOnInit(): void {
     this.dispatcher.dispatch({
       type: "VoegLaagToe",
-      positie: Number.MAX_SAFE_INTEGER,
+      positie: 0,
       laag: this.createLayer(),
       magGetoondWorden: true,
+      laaggroep: "Tools",
       wrapper: forgetWrapper
     });
     this.dispatcher.dispatch({

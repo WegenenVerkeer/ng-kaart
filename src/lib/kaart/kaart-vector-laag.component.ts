@@ -6,6 +6,7 @@ import * as ke from "./kaart-elementen";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartLaagComponent } from "./kaart-laag.component";
 import { orElse } from "../util/option";
+import { Laaggroep } from "./kaart-protocol-commands";
 
 @Component({
   selector: "awv-kaart-vector-laag",
@@ -35,5 +36,9 @@ export class KaartVectorLaagComponent extends KaartLaagComponent {
       minZoom: this.minZoom,
       maxZoom: this.maxZoom
     };
+  }
+
+  laaggroep(): Laaggroep {
+    return "Voorgrond";
   }
 }

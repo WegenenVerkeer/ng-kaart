@@ -5,7 +5,7 @@
   <h3>Kaart voor protractor</h3>
   <button (click)="maakZichtbaar('orthomap', !isZichtbaar('orthomap'))">{{isZichtbaar('orthomap')?'Verberg':'Toon'}}</button>
   <awv-kaart-classic *ngIf="isZichtbaar('orthomap')" class="qa-kaart" [naam]="'qa-kaart'">
-    <awv-kaart-ortho-laag [titel]="'Ortho'"></awv-kaart-ortho-laag>
+    <awv-kaart-ortho-laag [titel]="'Ortho'" [groep]="'Voorgrond'"></awv-kaart-ortho-laag>
   </awv-kaart-classic>
 </div>
 

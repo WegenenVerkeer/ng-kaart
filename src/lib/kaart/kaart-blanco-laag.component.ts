@@ -3,6 +3,7 @@ import { Component, Input, ViewEncapsulation } from "@angular/core";
 import { KaartLaagComponent } from "./kaart-laag.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { BlancoLaag, BlancoType } from "./kaart-elementen";
+import { Laaggroep } from "./kaart-protocol-commands";
 
 @Component({
   selector: "awv-kaart-blanco-laag",
@@ -21,5 +22,9 @@ export class KaartBlancoLaagComponent extends KaartLaagComponent {
       type: BlancoType,
       titel: this.titel
     };
+  }
+
+  laaggroep(): Laaggroep {
+    return "Achtergrond";
   }
 }

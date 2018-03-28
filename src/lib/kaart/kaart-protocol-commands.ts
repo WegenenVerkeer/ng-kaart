@@ -1,5 +1,4 @@
 import { List } from "immutable";
-import { Option } from "fp-ts/lib/Option";
 import { Subscription as RxSubscription } from "rxjs/Subscription";
 
 import * as ol from "openlayers";
@@ -45,6 +44,8 @@ export interface UnsubscriptionCmd<Msg extends KaartMsg> {
   readonly subscription: RxSubscription;
 }
 
+export type Laaggroep = "Achtergrond" | "Voorgrond" | "Tools";
+
 export interface PositieAanpassing {
   readonly titel: string;
   readonly positie: number;
@@ -55,6 +56,7 @@ export interface VoegLaagToeCmd<Msg extends KaartMsg> {
   readonly positie: number;
   readonly laag: ke.Laag;
   readonly magGetoondWorden: boolean;
+  readonly laaggroep: Laaggroep;
   readonly wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>;
 }
 
@@ -140,9 +142,7 @@ export interface VervangFeaturesCmd<Msg extends KaartMsg> {
 
 export interface ToonAchtergrondKeuzeCmd<Msg extends KaartMsg> {
   readonly type: "ToonAchtergrondKeuze";
-  readonly achtergrondTitels: List<string>;
-  readonly geselecteerdeLaagTitel: Option<string>;
-  readonly wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>;
+  readonly wrapper: BareValidationWrapper<Msg>;
 }
 
 export interface VerbergAchtergrondKeuzeCmd<Msg extends KaartMsg> {
@@ -195,9 +195,10 @@ export function VoegLaagToeCmd<Msg extends KaartMsg>(
   positie: number,
   laag: ke.Laag,
   magGetoondWorden: boolean,
+  laagGroep: Laaggroep,
   wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>
 ): VoegLaagToeCmd<Msg> {
-  return { type: "VoegLaagToe", positie: positie, laag: laag, magGetoondWorden: magGetoondWorden, wrapper: wrapper };
+  return { type: "VoegLaagToe", positie: positie, laag: laag, magGetoondWorden: magGetoondWorden, laaggroep: laagGroep, wrapper: wrapper };
 }
 
 export function VerwijderLaagCmd<Msg extends KaartMsg>(
@@ -258,15 +259,9 @@ export function MaakLaagOnzichtbaarCmd<Msg extends KaartMsg>(
   return { type: "MaakLaagOnzichtbaar", titel: titel, wrapper: wrapper };
 }
 
-export function ToonAchtergrondKeuzeCmd<Msg extends KaartMsg>(
-  achtergrondTitels: List<string>,
-  geselecteerdeLaagTitel: Option<string>,
-  wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>
-): ToonAchtergrondKeuzeCmd<Msg> {
+export function ToonAchtergrondKeuzeCmd<Msg extends KaartMsg>(wrapper: BareValidationWrapper<Msg>): ToonAchtergrondKeuzeCmd<Msg> {
   return {
     type: "ToonAchtergrondKeuze",
-    achtergrondTitels: achtergrondTitels,
-    geselecteerdeLaagTitel: geselecteerdeLaagTitel,
     wrapper: wrapper
   };
 }

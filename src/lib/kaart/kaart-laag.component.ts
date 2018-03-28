@@ -16,6 +16,7 @@ export abstract class KaartLaagComponent implements OnInit, OnDestroy {
       type: "VoegLaagToe",
       positie: Number.MAX_SAFE_INTEGER,
       laag: this.createLayer(),
+      laaggroep: this.laaggroep(),
       magGetoondWorden: this.zichtbaar,
       wrapper: forgetWrapper
     });
@@ -30,4 +31,6 @@ export abstract class KaartLaagComponent implements OnInit, OnDestroy {
   }
 
   abstract createLayer(): Laag;
+
+  abstract laaggroep(): prt.Laaggroep;
 }
