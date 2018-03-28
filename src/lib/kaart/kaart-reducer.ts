@@ -509,6 +509,16 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
+    function beginTekenenLengteOppervlakte(cmnd: prt.BeginMetenLengteOppervlakteCmd<Msg>): ModelWithResult<Msg> {
+      console.log("Begin tekenen omtrek oppervlakte" + cmnd);
+      return ModelWithResult(model);
+    }
+
+    function stopTekenenLengteOppervlakte(cmnd: prt.StopMetenLengteOppervlakteCmd<Msg>): ModelWithResult<Msg> {
+      console.log("Stop tekenen omtrek oppervlakte" + cmnd);
+      return ModelWithResult(model);
+    }
+
     function handleSubscriptions(cmnd: prt.SubscribeCmd<Msg>): ModelWithResult<Msg> {
       function subscribe(subscription: Subscription): ModelWithResult<Msg> {
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
@@ -606,6 +616,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return handleUnsubscriptions(cmd);
       case "MeldComponentFout":
         return meldComponentFout(cmd);
+      case "BeginMetenLengteOppervlakte":
+        return beginTekenenLengteOppervlakte(cmd);
+      case "StopMetenLengteOppervlakte":
+        return stopTekenenLengteOppervlakte(cmd);
     }
   };
 }

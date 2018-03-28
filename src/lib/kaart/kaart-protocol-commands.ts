@@ -32,7 +32,9 @@ export type Command<Msg extends KaartMsg> =
   | MaakLaagZichtbaarCmd<Msg>
   | MaakLaagOnzichtbaarCmd<Msg>
   | ZetStijlVoorLaagCmd<Msg>
-  | MeldComponentFoutCmd<Msg>;
+  | MeldComponentFoutCmd<Msg>
+  | BeginMetenLengteOppervlakteCmd<Msg>
+  | StopMetenLengteOppervlakteCmd<Msg>;
 
 // SubscriptionResult is maar een type alias, maar ook een encapsulatie naar clients toe
 export type SubscriptionResult = RxSubscription;
@@ -297,4 +299,12 @@ export function SubscriptionCmd<Msg extends KaartMsg>(
 
 export function UnsubscriptionCmd<Msg extends KaartMsg>(subscription: SubscriptionResult): UnsubscribeCmd<Msg> {
   return { type: "Unsubscription", subscription: subscription };
+}
+
+export interface BeginMetenLengteOppervlakteCmd<Msg extends KaartMsg> {
+  readonly type: "BeginMetenLengteOppervlakte";
+}
+
+export interface StopMetenLengteOppervlakteCmd<Msg extends KaartMsg> {
+  readonly type: "StopMetenLengteOppervlakte";
 }
