@@ -1,33 +1,34 @@
 import { Observable } from "rxjs/Observable";
 import { ReplaySubject } from "rxjs/ReplaySubject";
 
-import * as prt from "./kaart-protocol-events";
+import * as prt from "./kaart-protocol";
+import { asap } from "../util/asap";
 
-export interface KaartEventDispatcher {
-  dispatch(evt: prt.KaartMessage): void;
+export interface KaartCmdDispatcher<Msg extends prt.KaartMsg> {
+  dispatch(cmd: prt.Command<Msg>): void;
 }
 
 export interface KaartEventSource {
-  event$: Observable<prt.KaartMessage>;
+  commands$: Observable<prt.Command<any>>;
 }
 
-export class ReplaySubjectKaartEventDispatcher implements KaartEventDispatcher, KaartEventSource {
+export class ReplaySubjectKaartCmdDispatcher<Msg extends prt.KaartMsg> implements KaartCmdDispatcher<Msg>, KaartEventSource {
   // Er worden al events gegenereerd voordat de kaartcomponent actief is. Daarom tot 1000 events onthouden 500ms lang.
-  private readonly eventSubj = new ReplaySubject<prt.KaartMessage>(1000, 500);
+  private readonly eventSubj = new ReplaySubject<prt.Command<Msg>>(1000, 500);
 
-  dispatch(evt: prt.KaartMessage) {
+  dispatch(cmd: prt.Command<Msg>) {
     // We willen dat events pas uitgevoerd worden nadat de huidige processing gedaan is,
     // anders kan een eventhandler het model updaten terwijl een commandhandler nog niet gereed is,
     // als die commandhandler dan ook het model update, gebeurt dit in de verkeerde volgorde.
-    setTimeout(() => this.eventSubj.next(evt), 0);
+    asap(() => this.eventSubj.next(cmd));
   }
 
-  get event$(): Observable<prt.KaartMessage> {
+  get commands$(): Observable<prt.Command<Msg>> {
     return this.eventSubj;
   }
 }
 
 // noinspection JSUnusedLocalSymbols
-export const VacuousDispatcher: KaartEventDispatcher = {
-  dispatch(evt: prt.KaartMessage) {}
+export const VacuousDispatcher: KaartCmdDispatcher<any> = {
+  dispatch(cmd: prt.Command<any>) {}
 };

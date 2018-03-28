@@ -26,7 +26,7 @@ import { KaartStandaardInteractiesComponent } from "./kaart-standaard-interactie
 import { KaartStandaardKnoppenComponent } from "./kaart-standaard-knoppen.component";
 import { KaartAchtergrondSelectorComponent } from "./kaart-achtergrond-selector.component";
 import { KaartAchtergrondTileComponent } from "./kaart-achtergrond-tile.component";
-import { ReplaySubjectKaartEventDispatcher } from "./kaart-event-dispatcher";
+import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { MatButtonModule, MatIconModule } from "@angular/material";
 
 const components: any[] = [
@@ -108,7 +108,7 @@ export const defaultKaartConfig: KaartConfig = {
   imports: [CommonModule, ClickOutsideModule, MatButtonModule, MatIconModule],
   declarations: [components],
   exports: [components],
-  providers: [CoordinatenService, ReplaySubjectKaartEventDispatcher]
+  providers: [CoordinatenService, ReplaySubjectKaartCmdDispatcher]
 })
 export class KaartModule {
   static defaultConfig = defaultKaartConfig;
@@ -116,7 +116,7 @@ export class KaartModule {
   static forRoot(config: KaartConfig): ModuleWithProviders {
     return {
       ngModule: KaartModule,
-      providers: [{ provide: KAART_CFG, useValue: config }, ReplaySubjectKaartEventDispatcher, KaartClassicComponent]
+      providers: [{ provide: KAART_CFG, useValue: config }, ReplaySubjectKaartCmdDispatcher, KaartClassicComponent]
     };
   }
 

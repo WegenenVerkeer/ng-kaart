@@ -24,6 +24,8 @@ export interface DynamicStyle {
 
 export type StyleSelector = StaticStyle | DynamicStyle;
 
+export type AchtergrondLaag = WmsLaag | BlancoLaag;
+
 export interface WmsLaag {
   readonly type: SingleTileWmsType | TiledWmsType;
   readonly titel: string;

@@ -25,7 +25,7 @@ function jsonDefinitieStringToStyle(definitieText: string): ValidatedOlStyle {
     const object = JSON.parse(definitieText);
     return interpretJson(object);
   } catch (error) {
-    return oi.fail("De gegeven definitie was geen geldige JSON");
+    return oi.fail(`De gegeven stijldefinitie was geen geldige JSON: ${error}`);
   }
 }
 

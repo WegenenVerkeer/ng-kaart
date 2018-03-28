@@ -22,7 +22,7 @@ function jsonDefinitieStringToRuleExecutor(definitieText: string): Validation<ol
     const unvalidatedJson = JSON.parse(definitieText);
     return compileRuleJson(unvalidatedJson);
   } catch (error) {
-    return oi.fail("De gegeven definitie was geen geldige JSON");
+    return oi.fail(`De gegeven regeldefinitie was geen geldige JSON: ${error}`);
   }
 }
 
