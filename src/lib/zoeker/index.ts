@@ -8,13 +8,15 @@ import { GoogleLocatieZoekerConfig } from "./google-locatie-zoeker.config";
   imports: [CommonModule, HttpModule],
   providers: [GoogleLocatieZoekerService]
 })
-export class GoogleLocatieZoekerModule {
+export class ZoekerModule {
   static forRoot(config: GoogleLocatieZoekerConfig): ModuleWithProviders {
     return {
-      ngModule: GoogleLocatieZoekerModule,
+      ngModule: ZoekerModule,
       providers: [{ provide: GoogleLocatieZoekerConfig, useValue: config }]
     };
   }
 }
 
 export * from "./google-locatie-zoeker.service";
+export * from "./combinatie-zoeker";
+export * from "./abstract-zoeker";

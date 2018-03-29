@@ -3,7 +3,7 @@ import * as ol from "openlayers";
 import "rxjs/add/operator/mergeMap";
 import "rxjs/add/operator/map";
 
-import { GoogleLocatieZoekerService } from "../lib/google-locatie-zoeker";
+import { GoogleLocatieZoekerService } from "../lib/zoeker";
 import { CoordinatenService, KaartClassicComponent } from "../lib/kaart";
 import { kaartLogger, definitieToStyle } from "../lib/public_api";
 import { AWV0StyleFunctionDescription, definitieToStyleFunction } from "../lib/stijl";

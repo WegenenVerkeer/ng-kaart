@@ -7,9 +7,33 @@ import "rxjs/add/observable/fromPromise";
 import * as ol from "openlayers";
 import {} from "googlemaps";
 import { GoogleLocatieZoekerConfig } from "./google-locatie-zoeker.config";
+import { AbstractZoeker, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
 
 const googleApiKey = "AIzaSyApbXMl5DGL60g17JU6MazMxNcUGooey7I";
 const googleUrl = `https://maps.googleapis.com/maps/api/js?key=${googleApiKey}&libraries=places&language=nl&callback=__onGoogleLoaded`;
+
+export class GoogleZoekResultaat implements ZoekResultaat {
+  partialMatch: boolean;
+  index: number;
+  omschrijving: string;
+  bron: string;
+  geometry: any;
+  locatie: any;
+  selected = false;
+
+  constructor(locatie, index: number) {
+    this.partialMatch = locatie.partialMatch;
+    this.index = index + 1;
+    this.locatie = locatie.locatie;
+    this.geometry = new ol.format.GeoJSON(<olx.format.GeoJSONOptions>{
+      ignoreExtraDims: true,
+      defaultDataProjection: undefined,
+      featureProjection: undefined
+    }).readGeometry(locatie.locatie);
+    this.omschrijving = locatie.omschrijving;
+    this.bron = locatie.bron;
+  }
+}
 
 // Deze URL encoder gaat alles encoden. De standaard encoder encode volgende characters NIET:
 // ! $ \' ( ) * + , ; A 9 - . _ ~ ? /     (zie https://tools.ietf.org/html/rfc3986)
@@ -52,42 +76,8 @@ interface ExtendedPlaceResult extends google.maps.places.PlaceResult, ExtendedRe
   locatie: any;
 }
 
-export class ZoekResultaat {
-  partialMatch: boolean;
-  index: number;
-  omschrijving: string;
-  bron: string;
-  geometry: any;
-  locatie: any;
-  selected = false;
-
-  constructor(locatie, index: number) {
-    this.partialMatch = locatie.partialMatch;
-    this.index = index + 1;
-    this.locatie = locatie.locatie;
-    this.geometry = new ol.format.GeoJSON(<olx.format.GeoJSONOptions>{
-      ignoreExtraDims: true,
-      defaultDataProjection: undefined,
-      featureProjection: undefined
-    }).readGeometry(locatie.locatie);
-    this.omschrijving = locatie.omschrijving;
-    this.bron = locatie.bron;
-  }
-}
-
-export class ZoekResultaten {
-  resultaten: ZoekResultaat[] = [];
-  fouten: string[] = [];
-
-  constructor(error?: string) {
-    if (error != null) {
-      this.fouten.push(error);
-    }
-  }
-}
-
 @Injectable()
-export class GoogleLocatieZoekerService {
+export class GoogleLocatieZoekerService implements AbstractZoeker {
   private _cache: Promise<GoogleServices> | null = null;
   locatieZoekerUrl = this.googleLocatieZoekerConfig.url;
 
@@ -123,6 +113,7 @@ export class GoogleLocatieZoekerService {
       catchError(err => this.handleError(err))
     );
   }
+
   parseResult(response: Response): Observable<ZoekResultaten> {
     const zoekResultaten = new ZoekResultaten();
 
@@ -283,7 +274,7 @@ export class GoogleLocatieZoekerService {
           zoekResultaten.fouten.push("Er werden meer dan 30 resultaten gevonden, de eerste 30 worden hier opgelijst");
         }
         locaties.forEach((locatie, index) => {
-          zoekResultaten.resultaten.push(new ZoekResultaat(locatie, index));
+          zoekResultaten.resultaten.push(new GoogleZoekResultaat(locatie, index));
         });
         return zoekResultaten;
       });
