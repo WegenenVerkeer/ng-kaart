@@ -86,9 +86,6 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
   }
 
   ngOnInit() {
-    // hackadihack -> er is een raceconditie in de change detection van Angular. Zonder wordt soms de selectiecomponent niet getoond.
-    // setTimeout(() => this.cdr.detectChanges(), 2000);
-
     this.dispatcher.dispatch({
       type: "Subscription",
       subscription: prt.AchtergrondlagenSubscription(achtergrondlagenGezetWrapper),

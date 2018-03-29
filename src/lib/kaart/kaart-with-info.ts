@@ -9,7 +9,7 @@ import { Zoominstellingen, Laaggroep } from ".";
 
 export interface Groeplagen {
   readonly laaggroep: Laaggroep;
-  readonly titels: List<string>;
+  readonly lagen: List<ke.Laag>;
 }
 
 /**

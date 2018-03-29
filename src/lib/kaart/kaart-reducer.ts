@@ -13,7 +13,7 @@ import { KaartWithInfo } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
 import { forEach } from "../util/option";
 import { Subscription } from "rxjs";
-import { debounceTime, filter, map, tap } from "rxjs/operators";
+import { debounceTime, filter } from "rxjs/operators";
 import { Laaggroep, PositieAanpassing } from "./kaart-protocol-commands";
 
 ///////////////////////////////////
@@ -113,7 +113,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       fromBoolean(model.groepOpTitel.get(titel) === "Achtergrond", "De laag is geen achtergrondlaag");
 
     const valideerIsVoorgrondlaag: (layer: ol.layer.Base) => prt.KaartCmdValidation<ol.layer.Base> = (layer: ol.layer.Base) =>
-      fromPredicate(layer, (layr: ol.layer.Base) => zIndexNaarLaaggroep(layr.getZIndex()) === "Voorgrond", "De laag is geen voorgrondlaag");
+      fromPredicate(layer, (layr: ol.layer.Base) => layerNaarLaaggroep(layr) === "Voorgrond", "De laag is geen voorgrondlaag");
 
     const valideerAlsLayer: (laag: ke.Laag) => prt.KaartCmdValidation<ol.layer.Base> = (laag: ke.Laag) =>
       fromOption(toOlLayer(model, laag), "De laagbeschrijving kon niet naar een openlayers laag omgezet");
@@ -129,7 +129,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         const groepPositie = layerIndexNaarGroepIndex(layer!, groep);
         if (groepPositie >= vanaf && groepPositie <= tot) {
           const positie = groepPositie + aanpassing;
-          layer!.setZIndex(groepIndexNaarZIndex(positie, groep));
+          zetLayerIndex(layer!, positie, groep);
           return updates!.push({ titel: titel!, positie: positie });
         } else {
           return updates!;
@@ -159,8 +159,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
     }
 
-    function zIndexNaarLaaggroep(zIndex: number): Laaggroep {
-      switch (zIndex) {
+    function layerNaarLaaggroep(layer: ol.layer.Base): Laaggroep {
+      switch (layer.getZIndex()) {
         case AchtergrondIndex:
           return "Achtergrond";
         case ToolIndex:
@@ -184,7 +184,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function zendLagenInGroep(mdl: Model, groep: Laaggroep): void {
       mdl.groeplagenSubj.next({
         laaggroep: groep,
-        titels: mdl.titelsOpGroep.get(groep)
+        lagen: mdl.titelsOpGroep
+          .get(groep)
+          .map(
+            titel => mdl.lagen.find(l => l!.titel === titel) //
+          )
+          .toList()
       });
     }
 
@@ -239,7 +244,13 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           const updatedModel = {
             ...model,
             olLayersOpTitel: model.olLayersOpTitel.delete(titel),
-            titelsOpGroep: model.titelsOpGroep.set(groep, model.titelsOpGroep.get(groep).push(titel)),
+            titelsOpGroep: model.titelsOpGroep.set(
+              groep,
+              model.titelsOpGroep
+                .get(groep)
+                .filter(t => t !== titel)
+                .toList()
+            ),
             groepOpTitel: model.groepOpTitel.delete(titel),
             lagen: model.lagen.filterNot(l => l!.titel === titel).toList()
           };
@@ -265,8 +276,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               vanPositie < naarPositie
                 ? pasZIndicesAan(-1, vanPositie + 1, naarPositie, groep)
                 : pasZIndicesAan(1, naarPositie, vanPositie - 1, groep);
-            layer.setZIndex(naarPositie);
-            return ModelAndValue(model, movedLayers.push({ titel: cmnd.titel, positie: naarPositie - 1 }));
+            zetLayerIndex(layer, naarPositie, groep);
+            return ModelAndValue(model, movedLayers.push({ titel: cmnd.titel, positie: naarPositie }));
           })
       );
     }
@@ -535,13 +546,9 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         subscribe(
           model.groeplagenSubj
             .pipe(
-              tap(gl => console.log("----->", gl)),
-              filter(groeplagen => groeplagen.laaggroep === "Achtergrond"), //
-              map(groeplagen =>
-                groeplagen.titels.map(titel => model.lagen.find(laag => laag!.titel === titel!) as ke.AchtergrondLaag).toList()
-              )
+              filter(groeplagen => groeplagen.laaggroep === "Achtergrond") //
             )
-            .subscribe(l => msgConsumer(wrapper(l)))
+            .subscribe(groeplagen => msgConsumer(wrapper(groeplagen.lagen as List<ke.AchtergrondLaag>)))
         );
 
       switch (cmnd.subscription.type) {
