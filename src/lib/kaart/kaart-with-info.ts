@@ -5,13 +5,20 @@ import { Option, none, some } from "fp-ts/lib/Option";
 import * as ke from "./kaart-elementen";
 import { KaartConfig } from "./kaart-config";
 import { Subject, ReplaySubject } from "rxjs";
-import { Zoominstellingen } from ".";
+import { Zoominstellingen, Laaggroep } from ".";
+
+export interface Groeplagen {
+  readonly laaggroep: Laaggroep;
+  readonly lagen: List<ke.Laag>;
+}
 
 /**
  * Het model achter de kaartcomponent.
  */
 export class KaartWithInfo {
   readonly olLayersOpTitel: Map<string, ol.layer.Base> = Map();
+  readonly titelsOpGroep: Map<Laaggroep, List<string>> = Map([["Voorgrond", List()], ["Achtergrond", List()], ["Tools", List()]]);
+  readonly groepOpTitel: Map<string, Laaggroep> = Map();
   readonly lagen: List<ke.Laag> = List();
   readonly schaal: Option<ol.control.Control> = none;
   readonly fullScreen: Option<ol.control.FullScreen> = none;
@@ -22,11 +29,10 @@ export class KaartWithInfo {
   readonly size: Option<[number, number]> = none;
   readonly scrollZoomOnFocus: boolean = false;
   readonly showBackgroundSelector: boolean = false;
-  readonly achtergrondLayer: Option<ol.layer.Base> = none;
   readonly zoominstellingenSubj: Subject<Zoominstellingen> = new ReplaySubject<Zoominstellingen>(1);
   readonly middelpuntSubj: Subject<[number, number]> = new ReplaySubject<[number, number]>(1);
   readonly achtergrondlaagtitelSubj: Subject<string> = new ReplaySubject<string>(1);
-  readonly achtergrondlagenSubj: Subject<List<ke.AchtergrondLaag>> = new ReplaySubject<List<ke.AchtergrondLaag>>(1);
+  readonly groeplagenSubj: Subject<Groeplagen> = new ReplaySubject<Groeplagen>(1);
   readonly componentFoutSubj: Subject<List<string>> = new ReplaySubject<List<string>>(1);
 
   constructor(

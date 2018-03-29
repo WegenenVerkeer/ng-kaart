@@ -7,6 +7,7 @@ import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartLaagComponent } from "./kaart-laag.component";
 import { NosqlFsSource } from "../source/nosql-fs-source";
 import { orElse } from "../util/option";
+import { Laaggroep } from "./kaart-protocol-commands";
 
 @Component({
   selector: "awv-kaart-nosqlfs-laag",
@@ -42,5 +43,9 @@ export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
       minZoom: this.minZoom,
       maxZoom: this.maxZoom
     };
+  }
+
+  laaggroep(): Laaggroep {
+    return "Voorgrond";
   }
 }

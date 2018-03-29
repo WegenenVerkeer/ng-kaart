@@ -1,5 +1,3 @@
-import { Observable } from "rxjs/Observable";
-import { pipe } from "rxjs/Rx";
 import { Option, some, none } from "fp-ts/lib/Option";
 
 import { kaartLogger } from "./log";
@@ -32,24 +30,6 @@ export const forgetWrapper: prt.ValidationWrapper<any, KaartInternalMsg> = (v: p
     payload: none
   };
 };
-
-// Te gebruiken in Geoloket
-
-// export interface SuccessMsg {
-//   type: "SuccessOrNot";
-//   payload: prt.KaartCmdValidation<any>;
-// }
-
-// export function SuccessMsg(v: prt.KaartCmdValidation<any>): SuccessMsg {
-//   return { type: "SuccessOrNot", payload: v };
-// }
-
-// export function successWrapper(): prt.VoidWrapper<KaartInternalMsg> {
-//   return (v: prt.KaartCmdValidation<any>) => ({
-//     type: "KaartInternal",
-//     payload: some(SuccessMsg(v))
-//   });
-// }
 
 export interface ZoominstellingenGezetMsg {
   type: "ZoominstellingenGezet";

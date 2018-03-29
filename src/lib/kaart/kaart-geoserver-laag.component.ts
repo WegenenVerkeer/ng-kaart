@@ -6,6 +6,7 @@ import { KAART_CFG, KaartConfig } from "./kaart-config";
 import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { fromNullable } from "fp-ts/lib/Option";
+import { Laaggroep } from "./kaart-protocol-commands";
 
 @Component({
   selector: "awv-kaart-geoserver-laag",
@@ -27,5 +28,9 @@ export class KaartGeoserverLaagComponent extends KaartWmsLaagComponent {
       tileSize: fromNullable(this.tileSize),
       format: fromNullable(this.format)
     };
+  }
+
+  laaggroep(): Laaggroep {
+    return "Voorgrond";
   }
 }
