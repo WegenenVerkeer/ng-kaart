@@ -5,7 +5,8 @@ import * as ol from "openlayers";
 
 import { KaartVectorLaagComponent } from "./kaart-vector-laag.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
-import { VervangFeatures } from "./kaart-protocol-events";
+import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
+import * as prt from "./kaart-protocol";
 
 @Component({
   selector: "awv-kaart-features-laag",
@@ -27,11 +28,11 @@ export class KaartFeaturesLaagComponent extends KaartVectorLaagComponent impleme
   ngOnInit(): void {
     super.ngOnInit(); // dit voegt een vectorlaag toe
     this.vorigeFeatures = List(this.features);
-    this.dispatch(new VervangFeatures(this.titel, this.vorigeFeatures));
+    this.dispatchVervangFeatures(this.vorigeFeatures);
   }
 
   ngOnDestroy(): void {
-    this.dispatch(new VervangFeatures(this.titel, List()));
+    this.dispatchVervangFeatures(List());
     super.ngOnDestroy(); // dit verwijdert de laag weer
   }
 
@@ -40,7 +41,11 @@ export class KaartFeaturesLaagComponent extends KaartVectorLaagComponent impleme
     const features = List(this.features);
     if (!this.vorigeFeatures.equals(features)) {
       this.vorigeFeatures = features;
-      this.dispatch(new VervangFeatures(this.titel, features));
+      this.dispatchVervangFeatures(features);
     }
+  }
+
+  private dispatchVervangFeatures(features: List<ol.Feature>) {
+    this.dispatch(prt.VervangFeaturesCmd(this.titel, features, kaartLogOnlyWrapper));
   }
 }

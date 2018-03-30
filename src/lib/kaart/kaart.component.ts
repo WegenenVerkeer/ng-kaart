@@ -4,7 +4,7 @@ import "rxjs/add/observable/of";
 import "rxjs/add/observable/combineLatest";
 import "rxjs/add/observable/empty";
 import "rxjs/add/observable/never";
-import { scan, map, tap, distinctUntilChanged, filter, shareReplay, merge, debounceTime } from "rxjs/operators";
+import { scan, map, tap, filter, shareReplay, merge, takeUntil } from "rxjs/operators";
 
 import proj4 from "proj4";
 import * as ol from "openlayers";
@@ -12,13 +12,20 @@ import * as ol from "openlayers";
 import { KaartConfig, KAART_CFG } from "./kaart-config";
 import { KaartComponentBase } from "./kaart-component-base";
 import { KaartWithInfo } from "./kaart-with-info";
-import { ReplaySubjectKaartEventDispatcher, KaartEventDispatcher } from "./kaart-event-dispatcher";
-// noinspection TypeScriptPreferShortImport
-import { leaveZone } from "../util/leave-zone";
+import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
+import { observerOutsideAngular } from "../util/observer-outside-angular";
 import { kaartLogger } from "./log";
 import * as prt from "./kaart-protocol";
 import * as red from "./kaart-reducer";
-import { VeranderZoomniveau, ZoomniveauVeranderd, ZoomminmaxVeranderd } from "./kaart-protocol-events";
+import { ReplaySubject } from "rxjs";
+import { KaartInternalMsg, KaartInternalSubMsg } from "./kaart-internal-messages";
+import { asap } from "../util/asap";
+import { emitSome } from "../util/operators";
+import { forEach } from "../util/option";
+
+// Om enkel met @Input properties te moeten werken. Op deze manier kan een stream van KaartMsg naar de caller gestuurd worden
+export type KaartMsgObservableConsumer = (msg$: Observable<prt.KaartMsg>) => void;
+export const vacuousKaartMsgObservableConsumer: KaartMsgObservableConsumer = (msg$: Observable<prt.KaartMsg>) => ({});
 
 @Component({
   selector: "awv-kaart",
@@ -37,27 +44,26 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
    * een component van de gebruikende applicatie (in geval van programmatorisch gebruik) zet hier een Observable
    * waarmee events naar de component gestuurd kunnen worden.
    */
-  @Input() kaartEvt$: Observable<prt.KaartMessage> = Observable.empty();
+  @Input() kaartCmd$: Observable<prt.Command<prt.KaartMsg>> = Observable.empty();
+  @Input() messageObsConsumer: KaartMsgObservableConsumer = vacuousKaartMsgObservableConsumer;
 
   /**
    * Dit is een beetje ongelukkig, maar ook componenten die door de KaartComponent zelf aangemaakt worden moeten events kunnen sturen
    * naar de KaartComponent. Een alternatief zou kunnen zijn één dispatcher hier te maken en de KaartClassicComponent die te laten
    * ophalen in afterViewInit.
    */
-  private readonly internalEventDispatcher = new ReplaySubjectKaartEventDispatcher();
+  readonly internalCmdDispatcher: ReplaySubjectKaartCmdDispatcher<KaartInternalMsg> = new ReplaySubjectKaartCmdDispatcher();
+
+  private readonly msgSubj = new ReplaySubject<prt.KaartMsg>(1000, 500);
 
   @Input() minZoom = 2; // TODO naar config
   @Input() maxZoom = 15; // TODO naar config
   @Input() naam = "kaart";
   @Input() mijnLocatieZoom: number | undefined;
 
-  @Input() achtergrondTitelSelectieConsumer: prt.ModelConsumer<string> = prt.noOpModelConsumer;
-  @Input() zoomniveauConsumer: prt.ModelConsumer<number> = prt.noOpModelConsumer;
-  @Input() modelConsumer: prt.ModelConsumer<KaartWithInfo> = prt.noOpModelConsumer;
-  @Input() foutConsumer: prt.ModelConsumer<string> = prt.noOpModelConsumer;
+  // Dit dient om messages naar toe te sturen
 
-  showBackgroundSelector$: Observable<boolean> = Observable.empty();
-  kaartModel$: Observable<KaartWithInfo> = Observable.empty();
+  internalMessage$: Observable<KaartInternalSubMsg> = Observable.empty();
 
   private static configureerLambert72() {
     ol.proj.setProj4(proj4);
@@ -70,6 +76,13 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
   constructor(@Inject(KAART_CFG) readonly config: KaartConfig, zone: NgZone) {
     super(zone);
+    this.internalMessage$ = this.msgSubj.pipe(
+      filter(m => m.type === "KaartInternal"), //
+      map(m => (m as KaartInternalMsg).payload),
+      emitSome,
+      tap(m => kaartLogger.debug("een interne message werd ontvangen:", m)),
+      shareReplay(1)
+    );
   }
 
   ngOnInit() {
@@ -83,62 +96,49 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
   private bindObservables() {
     this.runAsapOutsideAngular(() => {
+      // Initialiseer the model
       const initieelModel = this.initieelModel();
       kaartLogger.info(`Kaart ${this.naam} aangemaakt`);
 
+      // Wanneer de destroying observable emit, maw wanneer de component aan het afsluiten is, dan kuisen we ook
+      // de openlayers kaart op.
       // noinspection JSUnusedLocalSymbols
-      this.destroying$.pipe(leaveZone(this.zone)).subscribe(_ => {
+      this.destroying$.pipe(observerOutsideAngular(this.zone)).subscribe(_ => {
         kaartLogger.info(`kaart ${this.naam} opkuisen`);
         initieelModel.map.setTarget((undefined as any) as string); // Hack omdat openlayers typedefs kaduuk zijn
       });
 
-      this.kaartModel$ = this.kaartEvt$.pipe(
-        merge(this.internalEventDispatcher.event$), // hoe rekening met de events van de interne componenten
-        tap(x => kaartLogger.debug("kaart event", x)),
-        leaveZone(this.zone), // voer uit buiten Angular zone
-        scan(red.kaartReducer, initieelModel), // TODO: zorg er voor dat de unsubscribe gebeurt
-        shareReplay(1000, 5000)
+      const messageConsumer = (msg: prt.KaartMsg) => {
+        asap(() => this.msgSubj.next(msg));
+      };
+
+      const kaartModel$: Observable<KaartWithInfo> = this.kaartCmd$.pipe(
+        merge(this.internalCmdDispatcher.commands$),
+        tap(c => kaartLogger.debug("kaart command", c)),
+        takeUntil(this.destroying$),
+        observerOutsideAngular(this.zone),
+        scan((model: KaartWithInfo, cmd: prt.Command<any>) => {
+          const { model: newModel, message } = red.kaartCmdReducer(cmd)(model, messageConsumer);
+          kaartLogger.debug("produceert", message);
+          forEach(message, messageConsumer); // stuur het resultaat terug naar de eigenaar van de kaartcomponent
+          return newModel; // en laat het nieuwe model terugvloeien
+        }, initieelModel)
       );
 
-      this.kaartModel$
-        .pipe(
-          filter(model => model.achtergrondlaagtitel.isSome()), // misschien is er nog geen achtergrondlaag
-          map(model => model.achtergrondlaagtitel.getOrElseValue("")), // veilig wegens filter
-          distinctUntilChanged() // de meeste modelwijzigingen hebben niks met de achtergrondtitel te maken
-        )
-        .subscribe(titel => this.achtergrondTitelSelectieConsumer(titel));
-
-      this.kaartModel$
-        .pipe(
-          map(model => model.zoom), //
-          distinctUntilChanged(),
-          debounceTime(50)
-        )
-        .subscribe(zoom => this.zoomniveauConsumer(zoom));
-
-      this.kaartModel$
-        .pipe(
-          map(model => model.fout), //
-          distinctUntilChanged(),
-          filter(fout => fout.isSome()),
-          map(fout => fout.getOrElseValue("")),
-          debounceTime(50)
-        )
-        .subscribe(fout => this.foutConsumer(fout));
-
-      this.kaartModel$.subscribe(
+      // subscribe op het model om de zaak aan gang te zwengelen
+      kaartModel$.subscribe(
         model => {
           kaartLogger.debug("reduced to", model);
           // TODO dubbels opvangen (zie versie). Als we een versienummer ophogen telkens we effectief het model aanpassen, dan kunnen we
           // de modelConsumer werk besparen in die gevallen dat de reducer geen nieuwe toestand heeft gegenereerd.
-          this.modelConsumer(model); // Heel belangrijk: laat diegene die ons embed weten wat het huidige model is.
+          // this.modelConsumer(model); // Heel belangrijk: laat diegene die ons embed weten wat het huidige model is.
         },
         e => kaartLogger.error("error", e),
         () => kaartLogger.info("kaart & cmd terminated")
       );
 
-      // Deze zorgt er voor dat de achtergrondselectieknop getoond wordt obv het model
-      this.showBackgroundSelector$ = this.kaartModel$.pipe(map(k => k.showBackgroundSelector), distinctUntilChanged());
+      // Zorg ervoor dat wie de messageObsConsumer @Input gezet heeft een observable van messages krijgt
+      this.messageObsConsumer(this.msgSubj);
     });
   }
 
@@ -163,18 +163,10 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       })
     });
 
-    kaart.getView().on("change:resolution", event => {
-      this.dispatcher.dispatch(new ZoomniveauVeranderd(kaart.getView().getZoom()));
-    });
-
-    kaart.getLayers().on("change:length", event => {
-      this.dispatcher.dispatch(new ZoomminmaxVeranderd(kaart.getView().getMinZoom(), kaart.getView().getMaxZoom()));
-    });
-
     return new KaartWithInfo(this.config, this.naam, this.mapElement.nativeElement.parentElement, kaart);
   }
 
-  get dispatcher(): KaartEventDispatcher {
-    return this.internalEventDispatcher;
+  get message$(): Observable<prt.KaartMsg> {
+    return this.msgSubj;
   }
 }

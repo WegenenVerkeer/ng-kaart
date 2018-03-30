@@ -1,12 +1,9 @@
-import { Component, Input, NgZone, OnDestroy, OnChanges, OnInit } from "@angular/core";
-import { SimpleChanges } from "@angular/core/src/metadata/lifecycle_hooks";
+import { Component, Input, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { Observable } from "rxjs/Observable";
 import { map } from "rxjs/operators";
 
-import { KaartWithInfo } from "./kaart-with-info";
-import { KaartEventDispatcher, VacuousDispatcher } from "./kaart-event-dispatcher";
+import { KaartCmdDispatcher, VacuousDispatcher } from "./kaart-event-dispatcher";
 import { KaartComponentBase } from "./kaart-component-base";
-import { FoutGebeurd, VeranderMiddelpunt, VeranderZoomniveau, VervangFeatures, VerwijderLaag, VoegLaagToe } from "./kaart-protocol-events";
 import { observeOnAngular } from "../util/observe-on-angular";
 import * as ol from "openlayers";
 
@@ -15,10 +12,17 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import * as ke from "./kaart-elementen";
 import { List } from "immutable";
 import { orElse } from "../util/option";
-
-export interface KaartLocatieProps {
-  zoom: number;
-}
+import {
+  KaartInternalMsg,
+  kaartLogOnlyWrapper,
+  subscribedWrapper,
+  KaartInternalSubMsg,
+  zoominstellingenGezetWrapper,
+  ZoominstellingenGezetMsg,
+  SubscribedMsg
+} from "./kaart-internal-messages";
+import { ofType } from "../util/operators";
+import * as prt from "./kaart-protocol";
 
 const MijnLocatieLaagNaam = "Mijn Locatie";
 
@@ -27,14 +31,15 @@ const MijnLocatieLaagNaam = "Mijn Locatie";
   templateUrl: "./kaart-mijn-locatie.component.html",
   styleUrls: ["./kaart-mijn-locatie.component.scss"]
 })
-export class KaartMijnLocatieComponent extends KaartComponentBase implements OnChanges, OnDestroy, OnInit {
-  kaartProps$: Observable<KaartLocatieProps> = Observable.empty();
+export class KaartMijnLocatieComponent extends KaartComponentBase implements OnDestroy, OnInit {
+  private readonly subscriptions: prt.SubscriptionResult[] = [];
+  zoom$: Observable<number> = Observable.empty();
 
   mijnLocatieStyle: ol.style.Style;
   mijnLocatie: Option<ol.Feature> = none;
 
-  @Input() kaartModel$: Observable<KaartWithInfo> = Observable.never();
-  @Input() dispatcher: KaartEventDispatcher = VacuousDispatcher;
+  @Input() dispatcher: KaartCmdDispatcher<KaartInternalMsg> = VacuousDispatcher;
+  @Input() internalMessage$: Observable<KaartInternalSubMsg> = Observable.never();
   @Input() zoomniveau: number;
 
   static pasFeatureAan(feature: ol.Feature, coordinate: ol.Coordinate): Option<ol.Feature> {
@@ -57,33 +62,51 @@ export class KaartMijnLocatieComponent extends KaartComponentBase implements OnC
   }
 
   ngOnInit(): void {
-    this.dispatcher.dispatch(new VoegLaagToe(Number.MAX_SAFE_INTEGER, this.createLayer(), true));
-  }
-
-  ngOnChanges(changes: SimpleChanges) {
-    this.kaartProps$ = this.kaartModel$.pipe(
-      map(m => ({
-        zoom: m.zoom
-      })),
+    this.dispatcher.dispatch({
+      type: "VoegLaagToe",
+      positie: 0,
+      laag: this.createLayer(),
+      magGetoondWorden: true,
+      laaggroep: "Tools",
+      wrapper: kaartLogOnlyWrapper
+    });
+    this.dispatcher.dispatch({
+      type: "Subscription",
+      subscription: prt.ZoominstellingenSubscription(zoominstellingenGezetWrapper),
+      wrapper: subscribedWrapper({})
+    });
+    this.zoom$ = this.internalMessage$.pipe(
+      ofType<ZoominstellingenGezetMsg>("ZoominstellingenGezet"), //
+      map(m => m.zoominstellingen.zoom),
       observeOnAngular(this.zone)
     );
+    this.internalMessage$
+      .pipe(ofType<SubscribedMsg>("Subscribed")) //
+      .subscribe(sm =>
+        sm.subscription.fold(
+          kaartLogger.error, //
+          sub => this.subscriptions.push(sub)
+        )
+      );
   }
 
   ngOnDestroy() {
+    this.subscriptions.forEach(sub => this.dispatcher.dispatch(prt.UnsubscriptionCmd(sub)));
+    this.subscriptions.splice(0, this.subscriptions.length);
+    this.dispatcher.dispatch(prt.VerwijderLaagCmd(MijnLocatieLaagNaam, kaartLogOnlyWrapper));
     super.ngOnDestroy();
-    this.dispatcher.dispatch(new VerwijderLaag(MijnLocatieLaagNaam));
   }
 
   zetMijnPositie(zoom: boolean, position: Position) {
     if (zoom) {
       // We zitten nu op heel Vlaanderen, dus gaan we eerst inzoomen.
-      this.dispatcher.dispatch(new VeranderZoomniveau(this.zoomniveau));
+      this.dispatcher.dispatch(prt.VeranderZoomCmd(this.zoomniveau, kaartLogOnlyWrapper));
     }
 
     const longLat: ol.Coordinate = [position.coords.longitude, position.coords.latitude];
 
     const coordinate = ol.proj.fromLonLat(longLat, "EPSG:31370");
-    this.dispatcher.dispatch(new VeranderMiddelpunt(coordinate));
+    this.dispatcher.dispatch(prt.VeranderMiddelpuntCmd(coordinate));
 
     this.mijnLocatie = orElse(this.mijnLocatie.chain(feature => KaartMijnLocatieComponent.pasFeatureAan(feature, coordinate)), () =>
       this.maakNieuwFeature(coordinate)
@@ -93,20 +116,22 @@ export class KaartMijnLocatieComponent extends KaartComponentBase implements OnC
   maakNieuwFeature(coordinate: ol.Coordinate): Option<ol.Feature> {
     const feature = new ol.Feature(new ol.geom.Point(coordinate));
     feature.setStyle(this.mijnLocatieStyle);
-    this.dispatcher.dispatch(new VervangFeatures(MijnLocatieLaagNaam, List([feature])));
+    this.dispatcher.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, List.of(feature), kaartLogOnlyWrapper));
     return some(feature);
   }
 
   meldFout(fout: PositionError | string) {
     kaartLogger.error("error", fout);
     this.dispatcher.dispatch(
-      new FoutGebeurd("Zoomen naar huidige locatie niet mogelijk\nDe toepassing heeft geen toestemming om locatie te gebruiken")
+      prt.MeldComponentFoutCmd(
+        List.of("Zoomen naar huidige locatie niet mogelijk", "De toepassing heeft geen toestemming om locatie te gebruiken")
+      )
     );
   }
 
-  zoomNaarMijnLocatie(props: KaartLocatieProps) {
+  zoomNaarMijnLocatie(zoom: number) {
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(positie => this.zetMijnPositie(props.zoom <= 2, positie), fout => this.meldFout(fout), {
+      navigator.geolocation.getCurrentPosition(positie => this.zetMijnPositie(zoom <= 2, positie), fout => this.meldFout(fout), {
         enableHighAccuracy: true,
         timeout: 10000,
         maximumAge: 50000

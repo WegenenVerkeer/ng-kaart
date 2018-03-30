@@ -20,7 +20,7 @@ export interface KaartConfig {
     zoom: number;
     middelpunt: ol.Coordinate;
     grootte: [number | undefined, number | undefined];
-    resolutions: [number];
+    resolutions: number[];
     extent: ol.Extent;
     style: ol.style.Style;
   };

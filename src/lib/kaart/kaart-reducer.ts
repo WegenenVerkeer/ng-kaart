@@ -1,441 +1,611 @@
-import { List, Map } from "immutable";
-import { none, Option, some, fromNullable } from "fp-ts/lib/Option";
+import { List } from "immutable";
+import { none, Option, some, isNone, fromNullable } from "fp-ts/lib/Option";
+import * as validation from "fp-ts/lib/Validation";
+import * as array from "fp-ts/lib/Array";
+import { sequence } from "fp-ts/lib/Traversable";
+import { getArrayMonoid } from "fp-ts/lib/Monoid";
 
 import * as ol from "openlayers";
 
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { KaartWithInfo } from "./kaart-with-info";
-import { kaartLogger } from "./log";
 import { toOlLayer } from "./laag-converter";
-import { StyleSelector } from "./kaart-elementen";
+import { forEach } from "../util/option";
+import { Subscription } from "rxjs";
+import { debounceTime, filter } from "rxjs/operators";
+import { Laaggroep, PositieAanpassing } from "./kaart-protocol-commands";
 
 ///////////////////////////////////
 // Hulpfuncties
 //
 
-// Dit type helpt om het updaten van het model iets minder repetitief te maken.
-type ModelUpdater = (kaart: KaartWithInfo) => KaartWithInfo;
+export type Model = KaartWithInfo;
 
-/**
- * Functiecompositie waar f eerst uitgevoerd wordt en dan g.
- */
-function andThen<A, B, C>(f: (a: A) => B, g: (b: B) => C) {
-  return (a: A) => g(f(a));
+export interface ModelWithResult<Msg> {
+  model: KaartWithInfo;
+  message: Option<Msg>;
 }
 
-/**
- * Functiecompositie van endofuncties.
- */
-function chained<A>(...fs: ((a: A) => A)[]): (a: A) => A {
-  return (a: A) => fs.reduce((acc, f) => f(acc), a);
+const AchtergrondIndex = 0;
+const VoorgrondIndexStart = 1;
+const ToolIndex = 1000000;
+
+function ModelWithResult<Msg>(model: Model, message: Option<Msg> = none): ModelWithResult<Msg> {
+  return {
+    model: model,
+    message: message
+  };
 }
 
-function pipe<A>(a: A, ...fs: ((a: A) => A)[]): A {
-  return chained(...fs)(a);
-}
-
-function updateModel(partial: Partial<KaartWithInfo>): ModelUpdater {
-  return (model: KaartWithInfo) => ({ ...model, ...partial } as KaartWithInfo);
-}
-
-const keepModel: ModelUpdater = (model: KaartWithInfo) => model;
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// de reducers hieronder zijn dus geen pure functies. Ze hebben bijna allen een neveneffect op de openlayers map.
-// de reden is dat enerzijds Map statefull is en anderzijds dat het niet triviaal is om een efficiente differ
-// te maken op KaartWithInfo (en de object daarin) zodat we enkel de gepaste operaties op Map kunnen uitvoeren.
-// In principe zouden we dit moeten opsplitsen in transformaties naar het nieuwe model en interpretaties van dat
-// model.
-//
-
-/**
- * Een laag verwijderen. De titel van de laag bepaalt welke er verwijderd wordt.
- */
-function verwijderLaag(titel: string): ModelUpdater {
-  return doForLayer(titel, (kaart, layer) => {
-    kaart.map.removeLayer(layer); // Oesje. Side-effect. Gelukkig idempotent.
-    pasZIndicesAan(-1, layer.getZIndex(), Number.MAX_SAFE_INTEGER, kaart); // Nog een side-effect.
-    return updateModel({
-      olLayersOpTitel: kaart.olLayersOpTitel.delete(titel),
-      lagen: kaart.lagen.filterNot(l => l!.titel === titel).toList()
-    });
-  });
-}
-
-/**
- * Alle lagen in een gegeven bereik van z-indices aanpassen. Belangrijk om bij toevoegen, verwijderen en verplaatsen,
- * alle z-indices in een aangesloten interval te behouden.
- */
-function pasZIndicesAan(aanpassing: number, vanaf: number, tot: number, kaart: KaartWithInfo) {
-  kaart.olLayersOpTitel.forEach(layer => {
-    const zIndex = layer!.getZIndex();
-    if (zIndex >= vanaf && zIndex <= tot) {
-      layer!.setZIndex(zIndex + aanpassing);
+export function kaartCmdReducer<Msg extends prt.KaartMsg>(
+  cmd: prt.Command<Msg>
+): (model: Model, msgConsumer: prt.MessageConsumer<Msg>) => ModelWithResult<Msg> {
+  return (model: Model, msgConsumer: prt.MessageConsumer<Msg>) => {
+    interface KaartCmdResult<T> {
+      model: Model;
+      value: Option<T>;
     }
-  });
-}
 
-/**
- * Een laag onzichtbaar maken. De titel van de laag bepaalt welke er verborgen wordt.
- */
-function hideLaag(titel: string): ModelUpdater {
-  return doForLayer(titel, (kaart, layer) => {
-    layer.setVisible(false);
-    return keepModel; // We moeten die niet weten in het model (we leggen niet op dat er maar 1 tegelijk zichtbaar is)
-  });
-}
+    function ModelAndValue<T>(mdl: Model, value: T): KaartCmdResult<T> {
+      return {
+        model: mdl,
+        value: some(value)
+      };
+    }
 
-/**
- * Een laag zichtbaar maken. De titel van de laag bepaalt welke er getoond wordt.
- */
-function showLaag(titel: string): ModelUpdater {
-  return doForLayer(titel, (kaart, layer) => {
-    layer.setVisible(true);
-    return keepModel;
-  });
-}
+    function ModelAndEmptyResult(mdl: Model): KaartCmdResult<any> {
+      return {
+        model: mdl,
+        value: some({})
+      };
+    }
 
-function zetStijlVoorLaag(titel: string, stijl: StyleSelector) {
-  return doForLayer(titel, (kaart, layer) => {
-    asVectorLayer(layer).map(vectorlayer => vectorlayer.setStyle(stijl.type === "StaticStyle" ? stijl.style : stijl.styleFunction));
-    return keepModel;
-  });
-}
+    function toModelWithValueResult<T>(
+      wrapper: prt.ValidationWrapper<T, Msg>,
+      resultValidation: prt.KaartCmdValidation<KaartCmdResult<T>>
+    ): ModelWithResult<Msg> {
+      return {
+        model: resultValidation.map(v => v.model).getOrElseValue(model),
+        message: resultValidation.fold(
+          fail => some(wrapper(validation.failure(getArrayMonoid<string>())(fail))),
+          v => v.value.map(x => wrapper(success(x)))
+        )
+      };
+    }
 
-const hideAchtergrond: ModelUpdater = withAchtergrondTitel(hideLaag);
+    const allOf = sequence(validation, array);
+    const success = <T>(t: T) => validation.success<string[], T>(t);
 
-const showAchtergrond: ModelUpdater = withAchtergrondTitel(showLaag);
+    function fromOption<T>(maybe: Option<T>, errorMsg: string): prt.KaartCmdValidation<T> {
+      return maybe.map(t => validation.success<string[], T>(t)).getOrElse(() => validation.failure(getArrayMonoid<string>())([errorMsg]));
+    }
 
-function withAchtergrondTitel(f: (titel: string) => ModelUpdater): ModelUpdater {
-  return (kaart: KaartWithInfo) => kaart.achtergrondlaagtitel.map(f).getOrElseValue(keepModel)(kaart);
-}
+    function fromPredicate<T>(t: T, pred: (t: T) => boolean, errMsg: string): prt.KaartCmdValidation<T> {
+      return validation.fromPredicate(getArrayMonoid<string>())(pred, () => [errMsg])(t);
+    }
 
-function doForLayer(titel: string, updater: (kaart: KaartWithInfo, layer: ol.layer.Base) => ModelUpdater): ModelUpdater {
-  return (kaart: KaartWithInfo) => {
-    const maybeLayerToUpdate: Option<ol.layer.Base> = fromNullable(kaart.olLayersOpTitel.get(titel));
-    return maybeLayerToUpdate.fold(
-      () => kaart, // een blanco laag bijv.
-      layerToUpdate => updater(kaart, layerToUpdate)(kaart)
-    );
-  };
-}
+    function fromBoolean<T>(thruth: boolean, errMsg: string): prt.KaartCmdValidation<{}> {
+      return thruth ? validation.success({}) : validation.failure(getArrayMonoid<string>())([errMsg]);
+    }
 
-/**
- * Een laag invoegen op een bepaalde positie zonder er rekening mee te houden dat er al een laag met die titel bestaat.
- * Maw samen te gebruiker met verwijderLaag.
- */
-function insertLaagNoRemoveAt(positie: number, laag: ke.Laag, visible: boolean): ModelUpdater {
-  return (kaart: KaartWithInfo) => {
-    const effectivePosition = Math.max(0, Math.min(positie, kaart.lagen.size));
-    const maybeLayer = toOlLayer(kaart, laag);
-    maybeLayer.map(layer => {
-      pasZIndicesAan(1, effectivePosition, Number.MAX_SAFE_INTEGER, kaart);
-      layer.setVisible(visible);
-      layer.setZIndex(effectivePosition);
-      kaart.map.addLayer(layer);
-    });
-    return updateModel({
-      olLayersOpTitel: maybeLayer.map(layer => kaart.olLayersOpTitel.set(laag.titel, layer)).getOrElseValue(kaart.olLayersOpTitel),
-      lagen: kaart.lagen.insert(effectivePosition, laag)
-    })(kaart);
-  };
-}
+    function valideerLayerBestaat(titel: string): prt.KaartCmdValidation<ol.layer.Base> {
+      return validation.fromPredicate(getArrayMonoid<string>())(
+        (l: ol.layer.Base) => l !== undefined,
+        () => [`Een laag met titel ${titel} bestaat niet`]
+      )(model.olLayersOpTitel.get(titel));
+    }
 
-function voegLaagToe(positie: number, laag: ke.Laag, visible: boolean): ModelUpdater {
-  // De positie is absoluut (als er genoeg lagen zijn), maar niet noodzakelijk relatief als er al een laag met de titel bestond
-  return andThen(verwijderLaag(laag.titel), insertLaagNoRemoveAt(positie, laag, visible));
-}
+    function valideerVectorLayerBestaat(titel: string): prt.KaartCmdValidation<ol.layer.Vector> {
+      return valideerLayerBestaat(titel).chain(
+        layer =>
+          layer["setStyle"]
+            ? validation.success(layer as ol.layer.Vector)
+            : validation.failure(getArrayMonoid<string>())([`De laag met titel ${titel} is geen vectorlaag`])
+      );
+    }
 
-function verplaatsLaag(titel: string, naarPositie: number): ModelUpdater {
-  return (kaart: KaartWithInfo) => {
-    return fromNullable(kaart.olLayersOpTitel.get(titel)).fold(
-      () => kaart,
-      layer => {
-        const vanPositie = layer.getZIndex();
-        // Afhankelijk of we van onder naar boven of van boven naar onder verschuiven, moeten de tussenliggende lagen
-        // naar onder, resp. naar boven verschoven worden.
-        pasZIndicesAan(Math.sign(vanPositie - naarPositie), Math.min(vanPositie, naarPositie), Math.max(vanPositie, naarPositie), kaart);
-        layer.setZIndex(naarPositie);
-        return kaart;
+    function valideerLaagTitelBestaatNiet(titel: string): prt.KaartCmdValidation<{}> {
+      return fromPredicate(model, (mdl: Model) => !mdl.olLayersOpTitel.has(titel), `Een laag met titel ${titel} bestaat al`);
+    }
+
+    const valideerIsAchtergrondLaag: (titel: string) => prt.KaartCmdValidation<{}> = (titel: string) =>
+      fromBoolean(model.groepOpTitel.get(titel) === "Achtergrond", "De laag is geen achtergrondlaag");
+
+    const valideerIsVoorgrondlaag: (layer: ol.layer.Base) => prt.KaartCmdValidation<ol.layer.Base> = (layer: ol.layer.Base) =>
+      fromPredicate(layer, (layr: ol.layer.Base) => layerNaarLaaggroep(layr) === "Voorgrond", "De laag is geen voorgrondlaag");
+
+    const valideerAlsLayer: (laag: ke.Laag) => prt.KaartCmdValidation<ol.layer.Base> = (laag: ke.Laag) =>
+      fromOption(toOlLayer(model, laag), "De laagbeschrijving kon niet naar een openlayers laag omgezet");
+
+    const valideerAlsGeheel = (num: number) => fromPredicate(num, Number.isInteger, `'${num}' is geen geheel getal`);
+
+    /**
+     * Alle lagen in een gegeven bereik van z-indices aanpassen. Belangrijk om bij toevoegen, verwijderen en verplaatsen,
+     * alle z-indices in een aangesloten interval te behouden.
+     */
+    function pasZIndicesAan(aanpassing: number, vanaf: number, tot: number, groep: Laaggroep): List<PositieAanpassing> {
+      return model.olLayersOpTitel.reduce((updates, layer, titel) => {
+        const groepPositie = layerIndexNaarGroepIndex(layer!, groep);
+        if (groepPositie >= vanaf && groepPositie <= tot) {
+          const positie = groepPositie + aanpassing;
+          zetLayerIndex(layer!, positie, groep);
+          return updates!.push({ titel: titel!, positie: positie });
+        } else {
+          return updates!;
+        }
+      }, List<prt.PositieAanpassing>());
+    }
+
+    function groepIndexNaarZIndex(index: number, groep: Laaggroep): number {
+      switch (groep) {
+        case "Achtergrond":
+          return AchtergrondIndex;
+        case "Tools":
+          return ToolIndex;
+        case "Voorgrond":
+          return VoorgrondIndexStart + index;
       }
-    );
-  };
-}
-
-// De volgende 4 functies zouden een stuk generieker kunnen met lenzen
-const voegSchaalToe: ModelUpdater = (kaart: KaartWithInfo) =>
-  kaart.schaal.fold(
-    () => {
-      const schaal = new ol.control.ScaleLine();
-      kaart.map.addControl(schaal);
-      return updateModel({ schaal: some(schaal) })(kaart);
-    },
-    () => keepModel(kaart)
-  );
-
-const verwijderSchaal: ModelUpdater = (kaart: KaartWithInfo) =>
-  kaart.schaal.fold(
-    () => kaart,
-    schaal => {
-      kaart.map.removeControl(schaal);
-      return { ...kaart, schaal: none };
     }
-  );
 
-const voegVolledigschermToe: ModelUpdater = (kaart: KaartWithInfo) =>
-  kaart.fullScreen.fold(
-    () => {
-      const fullScreen = new ol.control.FullScreen();
-      kaart.map.addControl(fullScreen);
-      return { ...kaart, fullScreen: some(fullScreen) };
-    },
-    () => keepModel(kaart)
-  );
-
-const verwijderVolledigscherm: ModelUpdater = (kaart: KaartWithInfo) =>
-  kaart.fullScreen.fold(
-    () => kaart,
-    fullScreen => {
-      kaart.map.removeControl(fullScreen);
-      return { ...kaart, fullScreen: none };
+    function layerIndexNaarGroepIndex(layer: ol.layer.Base, groep: Laaggroep): number {
+      switch (groep) {
+        case "Achtergrond":
+          return 0;
+        case "Tools":
+          return 0;
+        case "Voorgrond":
+          return layer.getZIndex() - VoorgrondIndexStart;
+      }
     }
-  );
 
-function voegStandaardinteractiesToe(kaart: KaartWithInfo, scrollZoomOnFocus: boolean): KaartWithInfo {
-  if (!kaart.stdInteracties || kaart.stdInteracties.isEmpty()) {
-    // We willen standaard geen rotate operaties.
-    const stdInteracties: ol.interaction.Interaction[] = ol.interaction
-      .defaults()
-      .getArray()
-      .filter(
-        interaction =>
-          !(
-            interaction instanceof ol.interaction.DragRotate ||
-            interaction instanceof ol.interaction.PinchRotate ||
-            interaction instanceof ol.interaction.MouseWheelZoom
-          ) // we willen zelf de opties op MouseWheelZoom zetten
+    function layerNaarLaaggroep(layer: ol.layer.Base): Laaggroep {
+      switch (layer.getZIndex()) {
+        case AchtergrondIndex:
+          return "Achtergrond";
+        case ToolIndex:
+          return "Tools";
+        default:
+          return "Voorgrond"; // We zouden range check kunnen doen, maar dan moeten we exceptie smijten of validation gebruiken
+      }
+    }
+
+    function maxIndexInGroep(groep: Laaggroep) {
+      switch (groep) {
+        case "Achtergrond":
+          return AchtergrondIndex;
+        case "Voorgrond":
+          return ToolIndex - 1;
+        case "Tools":
+          return ToolIndex;
+      }
+    }
+
+    function zendLagenInGroep(mdl: Model, groep: Laaggroep): void {
+      mdl.groeplagenSubj.next({
+        laaggroep: groep,
+        lagen: mdl.titelsOpGroep
+          .get(groep)
+          .map(
+            titel => mdl.lagen.find(l => l!.titel === titel) //
+          )
+          .toList()
+      });
+    }
+
+    function zetLayerIndex(layer: ol.layer.Base, groepIndex: number, groep: Laaggroep): void {
+      layer.setZIndex(groepIndexNaarZIndex(groepIndex, groep));
+    }
+
+    function limitPosition(position: number, groep: Laaggroep) {
+      // laat 1 positie voorbij het einde toe om laag kunnen toe te voegen
+      return Math.max(0, Math.min(position, model.titelsOpGroep.get(groep).size));
+    }
+
+    /**
+     * Een laag toevoegen. Faalt als er al een laag met die titel bestaat.
+     */
+    function voegLaagToeCmd(cmnd: prt.VoegLaagToeCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        valideerLaagTitelBestaatNiet(cmnd.laag.titel)
+          .chain(() => valideerAlsLayer(cmnd.laag))
+          .map(layer => {
+            const titel = cmnd.laag.titel;
+            const groep = cmnd.laaggroep;
+            const groepPositie = limitPosition(cmnd.positie, groep);
+            const movedLayers = pasZIndicesAan(1, groepPositie, maxIndexInGroep(groep), groep);
+            layer.setVisible(cmnd.magGetoondWorden); // achtergrondlagen expliciet zichtbaar maken!
+            zetLayerIndex(layer, groepPositie, groep);
+            model.map.addLayer(layer);
+            const updatedModel = {
+              ...model,
+              olLayersOpTitel: model.olLayersOpTitel.set(titel, layer),
+              titelsOpGroep: model.titelsOpGroep.set(groep, model.titelsOpGroep.get(groep).push(titel)),
+              groepOpTitel: model.groepOpTitel.set(titel, groep),
+              lagen: model.lagen.push(cmnd.laag)
+            };
+            zendLagenInGroep(updatedModel, cmnd.laaggroep);
+            return ModelAndValue(updatedModel, movedLayers.push({ titel: titel, positie: groepPositie }));
+          })
       );
-
-    const interacties: List<ol.interaction.Interaction> = List<ol.interaction.Interaction>(stdInteracties);
-    interacties.forEach(i => kaart.map.addInteraction(i!)); // side effects :-(
-    kaart.map.addInteraction(new ol.interaction.MouseWheelZoom({ constrainResolution: true })); // Geen fractionele resoluties!
-    const newKaart = { ...kaart, stdInteracties: interacties, scrollZoomOnFocus: scrollZoomOnFocus };
-    return activateMouseWheelZoom(newKaart, !scrollZoomOnFocus);
-  } else {
-    return kaart;
-  }
-}
-
-function verwijderStandaardinteracties(kaart: KaartWithInfo): KaartWithInfo {
-  if (kaart.stdInteracties) {
-    kaart.stdInteracties.forEach(i => kaart.map.removeInteraction(i!));
-    return { ...kaart, stdInteracties: List<ol.interaction.Interaction>(), scrollZoomOnFocus: false };
-  } else {
-    return kaart;
-  }
-}
-
-function focusOpKaart(kaart: KaartWithInfo): KaartWithInfo {
-  if (kaart.scrollZoomOnFocus) {
-    return activateMouseWheelZoom(kaart, true);
-  } else {
-    return kaart;
-  }
-}
-
-function verliesFocusOpKaart(kaart: KaartWithInfo): KaartWithInfo {
-  if (kaart.scrollZoomOnFocus) {
-    return activateMouseWheelZoom(kaart, false);
-  } else {
-    return kaart;
-  }
-}
-
-function activateMouseWheelZoom(kaart: KaartWithInfo, active: boolean): KaartWithInfo {
-  kaart.stdInteracties
-    .filter(interaction => interaction instanceof ol.interaction.MouseWheelZoom)
-    .forEach(interaction => interaction!.setActive(active));
-  return kaart;
-}
-
-function veranderMiddelpunt(kaart: KaartWithInfo, coordinate: [number, number]): KaartWithInfo {
-  kaart.map.getView().setCenter(coordinate);
-  return {
-    ...kaart,
-    middelpunt: some(kaart.map.getView().getCenter()),
-    extent: some(kaart.map.getView().calculateExtent(kaart.map.getSize()))
-  };
-}
-
-function handelFoutAf(kaart: KaartWithInfo, fout: string): KaartWithInfo {
-  return {
-    ...kaart,
-    fout: some(fout)
-  };
-}
-
-function veranderZoomniveau(kaart: KaartWithInfo, zoom: number): KaartWithInfo {
-  kaart.map.getView().setZoom(zoom);
-  return kaart;
-}
-
-function zoomniveauVeranderd(kaart: KaartWithInfo, zoom: number): KaartWithInfo {
-  return {
-    ...kaart,
-    zoom: kaart.map.getView().getZoom(),
-    extent: some(kaart.map.getView().calculateExtent(kaart.map.getSize()))
-  };
-}
-
-function zoomminmaxVeranderd(kaart: KaartWithInfo, minZoom: number, maxZoom: number): KaartWithInfo {
-  return {
-    ...kaart,
-    minZoom: minZoom,
-    maxZoom: maxZoom
-  };
-}
-
-function veranderExtent(kaart: KaartWithInfo, extent: ol.Extent): KaartWithInfo {
-  kaart.map.getView().fit(extent);
-  return {
-    ...kaart,
-    middelpunt: some(kaart.map.getView().getCenter()),
-    zoom: kaart.map.getView().getZoom(),
-    extent: some(kaart.map.getView().calculateExtent(kaart.map.getSize()))
-  };
-}
-
-function veranderViewport(size: ol.Size): ModelUpdater {
-  return (kaart: KaartWithInfo) => {
-    // eerst de container aanpassen of de kaart is uitgerekt
-    if (size[0]) {
-      kaart.container.style.width = `${size[0]}px`;
-      kaart.container.parentElement.style.width = `${size[0]}px`;
     }
-    if (size[1]) {
-      kaart.container.style.height = `${size[1]}px`;
-      kaart.container.parentElement.style.height = `${size[1]}px`;
-    }
-    kaart.map.setSize(size);
-    kaart.map.updateSize();
-    return {
-      ...kaart,
-      size: some(kaart.map.getSize()),
-      extent: some(kaart.map.getView().calculateExtent(kaart.map.getSize()))
-    };
-  };
-}
-
-function vervangFeatures(kaart: KaartWithInfo, titel: string, features: List<ol.Feature>): KaartWithInfo {
-  const maybeLayer = fromNullable(kaart.olLayersOpTitel.get(titel)).chain(asVectorLayer);
-  return maybeLayer.fold(
-    () => kaart,
-    layer => {
-      layer.getSource().clear(true);
-      layer.getSource().addFeatures(features.toArray());
-      return kaart;
-    }
-  );
-}
-
-function asVectorLayer(layer: ol.layer.Base): Option<ol.layer.Vector> {
-  return layer["setStyle"] ? some(layer as ol.layer.Vector) : none; // gebruik geen hasOwnProperty("getSource")! Geeft altijd false
-}
-
-const addNewBackgroundsToMap: ModelUpdater = (kaart: KaartWithInfo) => {
-  return kaart.possibleBackgrounds.reduce((model, laag, index) => voegLaagToe(0, laag!, index === 0)(model!), kaart);
-};
-
-function setBackgrounds(
-  backgrounds: List<ke.WmsLaag | ke.BlancoLaag>,
-  geselecteerdeLaag: Option<ke.WmsLaag | ke.BlancoLaag>
-): ModelUpdater {
-  return updateModel({
-    possibleBackgrounds: backgrounds,
-    achtergrondlaagtitel: geselecteerdeLaag.fold(
-      () => fromNullable(backgrounds.first()).map(bg => bg.titel), //
-      laag => some(laag.titel)
-    )
-  });
-}
-
-function toonAchtergrondKeuze(show: boolean): ModelUpdater {
-  return updateModel({ showBackgroundSelector: show });
-}
-
-export function kaartReducer(kaart: KaartWithInfo, cmd: prt.KaartMessage): KaartWithInfo {
-  switch (cmd.type) {
-    case prt.KaartMessageTypes.VERWIJDER_LAAG:
-      return verwijderLaag((cmd as prt.VerwijderLaag).titel)(kaart);
-    case prt.KaartMessageTypes.VOEG_LAAG_TOE:
-      const inserted = cmd as prt.VoegLaagToe;
-      return voegLaagToe(inserted.positie, inserted.laag, inserted.magGetoondWorden)(kaart);
-    case prt.KaartMessageTypes.VERPLAATS_LAAG:
-      const verplaats = cmd as prt.VerplaatsLaag;
-      return verplaatsLaag(verplaats.titel, verplaats.doelPositie)(kaart);
-    case prt.KaartMessageTypes.VOEG_SCHAAL_TOE:
-      return voegSchaalToe(kaart);
-    case prt.KaartMessageTypes.VERWIJDER_SCHAAL:
-      return verwijderSchaal(kaart);
-    case prt.KaartMessageTypes.VOEG_VOLLEDIGSCHERM_TOE:
-      return voegVolledigschermToe(kaart);
-    case prt.KaartMessageTypes.VERWIJDER_VOLLEDIGSCHERM:
-      return verwijderVolledigscherm(kaart);
-    case prt.KaartMessageTypes.VOEG_STANDAARDINTERACTIES_TOE:
-      return voegStandaardinteractiesToe(kaart, (cmd as prt.VoegStandaardinteractiesToe).scrollZoomOnFocus);
-    case prt.KaartMessageTypes.VERWIJDER_STANDAARDINTERACTIES:
-      return verwijderStandaardinteracties(kaart);
-    case prt.KaartMessageTypes.VERANDER_MIDDELPUNT:
-      return veranderMiddelpunt(kaart, (cmd as prt.VeranderMiddelpunt).coordinate);
-    case prt.KaartMessageTypes.VERANDER_ZOOMNIVEAU:
-      return veranderZoomniveau(kaart, (cmd as prt.VeranderZoomniveau).zoom);
-    case prt.KaartMessageTypes.ZOOMNIVEAU_VERANDERD:
-      return zoomniveauVeranderd(kaart, (cmd as prt.ZoomniveauVeranderd).zoom);
-    case prt.KaartMessageTypes.ZOOMMINMAX_VERANDERD:
-      const zoomMinMax = cmd as prt.ZoomminmaxVeranderd;
-      return zoomminmaxVeranderd(kaart, zoomMinMax.minZoom, zoomMinMax.maxZoom);
-    case prt.KaartMessageTypes.VERANDER_EXTENT:
-      return veranderExtent(kaart, (cmd as prt.VeranderExtent).extent);
-    case prt.KaartMessageTypes.VERANDER_VIEWPORT:
-      return veranderViewport((cmd as prt.VeranderViewport).size)(kaart);
-    case prt.KaartMessageTypes.FOCUS_OP_KAART:
-      return focusOpKaart(kaart);
-    case prt.KaartMessageTypes.VERLIES_FOCUS_OP_KAART:
-      return verliesFocusOpKaart(kaart);
-    case prt.KaartMessageTypes.KIES_ACHTERGROND:
-      return pipe(
-        kaart, //
-        hideAchtergrond,
-        updateModel({ achtergrondlaagtitel: some((cmd as prt.KiesAchtergrond).titel) }),
-        showAchtergrond
+    /**
+     * Een laag verwijderen. De titel van de laag bepaalt welke er verwijderd wordt.
+     */
+    function verwijderLaagCmd(cmnd: prt.VerwijderLaagCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        valideerLayerBestaat(cmnd.titel).map(layer => {
+          model.map.removeLayer(layer); // Oesje. Side-effect. Gelukkig idempotent.
+          const titel = cmnd.titel;
+          const groep = model.groepOpTitel.get(titel);
+          const movedLayers = pasZIndicesAan(-1, layerIndexNaarGroepIndex(layer, groep) + 1, maxIndexInGroep(groep), groep);
+          const updatedModel = {
+            ...model,
+            olLayersOpTitel: model.olLayersOpTitel.delete(titel),
+            titelsOpGroep: model.titelsOpGroep.set(
+              groep,
+              model.titelsOpGroep
+                .get(groep)
+                .filter(t => t !== titel)
+                .toList()
+            ),
+            groepOpTitel: model.groepOpTitel.delete(titel),
+            lagen: model.lagen.filterNot(l => l!.titel === titel).toList()
+          };
+          zendLagenInGroep(updatedModel, groep);
+          return ModelAndValue(updatedModel, movedLayers); // De verwijderde laag zelf wordt niet teruggegeven
+        })
       );
-    case prt.KaartMessageTypes.VERVANG_FEATURES:
-      const vervangFeaturesEvent = cmd as prt.VervangFeatures;
-      return vervangFeatures(kaart, vervangFeaturesEvent.titel, vervangFeaturesEvent.features);
-    case prt.KaartMessageTypes.TOON_ACHTERGROND_KEUZE:
-      const toonachtergrondkeuzeCmd = cmd as prt.ToonAchtergrondKeuze;
-      return pipe(
-        kaart,
-        setBackgrounds(toonachtergrondkeuzeCmd.backgrounds, toonachtergrondkeuzeCmd.geselecteerdeLaag),
-        addNewBackgroundsToMap,
-        toonAchtergrondKeuze(true)
+    }
+
+    function verplaatsLaagCmd(cmnd: prt.VerplaatsLaagCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        valideerLayerBestaat(cmnd.titel)
+          .chain(valideerIsVoorgrondlaag) // enkel zinvol om voorgrondlagen te verplaatsen
+          .map(layer => {
+            const titel = cmnd.titel;
+            const groep = model.groepOpTitel.get(titel);
+            const vanPositie = layerIndexNaarGroepIndex(layer, groep);
+            const naarPositie = limitPosition(cmnd.naarPositie, groep); // uitgedrukt in z-index waarden
+            // Afhankelijk of we van onder naar boven of van boven naar onder verschuiven, moeten de tussenliggende lagen
+            // naar onder, resp. naar boven verschoven worden.
+            const movedLayers =
+              vanPositie < naarPositie
+                ? pasZIndicesAan(-1, vanPositie + 1, naarPositie, groep)
+                : pasZIndicesAan(1, naarPositie, vanPositie - 1, groep);
+            zetLayerIndex(layer, naarPositie, groep);
+            return ModelAndValue(model, movedLayers.push({ titel: cmnd.titel, positie: naarPositie }));
+          })
       );
-    case prt.KaartMessageTypes.VERBERG_ACHTERGROND_KEUZE:
-      return toonAchtergrondKeuze(false)(kaart); // moeten we alle lagen weer zichtbaar maken?
-    case prt.KaartMessageTypes.MAAK_LAAG_ONZICHTBAAR:
-      return hideLaag((cmd as prt.MaakLaagOnzichtbaar).titel)(kaart);
-    case prt.KaartMessageTypes.MAAK_LAAG_ZICHTBAAR:
-      return showLaag((cmd as prt.MaakLaagZichtbaar).titel)(kaart);
-    case prt.KaartMessageTypes.FOUT_GEBEURD:
-      return handelFoutAf(kaart, (cmd as prt.FoutGebeurd).fout);
-    case prt.KaartMessageTypes.ZET_STIJL_VOOR_LAAG:
-      const cmdZetStijl = cmd as prt.ZetStijlVoorLaag;
-      return zetStijlVoorLaag(cmdZetStijl.titel, cmdZetStijl.stijl)(kaart);
-    default:
-      // Gezien we compileren met --strictNullChecks, geeft de compiler een waarschuwing wanneer we een case zouden missen.
-      // Helaas verhindert dat niet dat externe apps commando's kunnen sturen die (in de huidige versie) niet geïmplementeerd zijn.
-      kaartLogger.warn("onverwacht commando", cmd);
-      return keepModel(kaart);
-  }
+    }
+
+    function voegSchaalToeCmd(cmnd: prt.VoegSchaalToeCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        fromPredicate(model.schaal, isNone, "De schaal is al toegevoegd").map(() => {
+          const schaal = new ol.control.ScaleLine();
+          model.map.addControl(schaal);
+          return ModelAndEmptyResult({ ...model, schaal: some(schaal) });
+        })
+      );
+    }
+
+    function verwijderSchaalCmd(cmnd: prt.VerwijderSchaalCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        fromOption(model.schaal, "De schaal is nog niet toegevoegd").map((schaal: ol.control.Control) => {
+          model.map.removeControl(schaal);
+          return ModelAndEmptyResult({ ...model, schaal: none });
+        })
+      );
+    }
+
+    function voegVolledigSchermToeCmd(cmnd: prt.VoegVolledigSchermToeCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        fromPredicate(model.fullScreen, isNone, "De volledig scherm knop is al toegevoegd").map(() => {
+          const fullScreen = new ol.control.FullScreen();
+          model.map.addControl(fullScreen);
+          return ModelAndEmptyResult({ ...model, fullScreen: some(fullScreen) });
+        })
+      );
+    }
+
+    function verwijderVolledigSchermCmd(cmnd: prt.VerwijderVolledigSchermCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        fromOption(model.fullScreen, "De volledig scherm knop is nog niet toegevoegd").map((fullScreen: ol.control.Control) => {
+          model.map.removeControl(fullScreen);
+          return ModelAndEmptyResult({ ...model, fullScreen: none });
+        })
+      );
+    }
+
+    function voegStandaardInteractiesToeCmd(cmnd: prt.VoegStandaardInteractiesToeCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        fromPredicate(model.stdInteracties, l => l.isEmpty(), "De standaard interacties zijn al ingesteld").map(() => {
+          // We willen standaard geen rotate operaties.
+          const stdInteracties: ol.interaction.Interaction[] = ol.interaction
+            .defaults()
+            .getArray()
+            .filter(
+              interaction =>
+                !(
+                  interaction instanceof ol.interaction.DragRotate ||
+                  interaction instanceof ol.interaction.PinchRotate ||
+                  interaction instanceof ol.interaction.MouseWheelZoom
+                ) // we willen zelf de opties op MouseWheelZoom zetten
+            );
+          const interacties: List<ol.interaction.Interaction> = List<ol.interaction.Interaction>(stdInteracties).push(
+            new ol.interaction.MouseWheelZoom({ constrainResolution: true }) // Geen fractionele resoluties!
+          );
+          interacties.forEach(i => model.map.addInteraction(i!)); // side effects :-(
+          const newModel: Model = { ...model, stdInteracties: interacties, scrollZoomOnFocus: cmnd.scrollZoomOnFocus };
+          activateMouseWheelZoomIfAllowed(!cmnd.scrollZoomOnFocus, newModel);
+          return ModelAndEmptyResult(newModel);
+        })
+      );
+    }
+
+    function verwijderStandaardInteractiesCmd(cmnd: prt.VerwijderStandaardInteractiesCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        fromPredicate(model.stdInteracties, l => !l.isEmpty(), "De standaard interacties zijn niet aanwezig").map(
+          (stdInteracties: List<ol.interaction.Interaction>) => {
+            stdInteracties.forEach(i => model.map.removeInteraction(i!));
+            return ModelAndEmptyResult({ ...model, fullScreen: none });
+          }
+        )
+      );
+    }
+
+    function veranderMiddelpuntCmd(cmnd: prt.VeranderMiddelpuntCmd<Msg>): ModelWithResult<Msg> {
+      model.map.getView().setCenter(cmnd.coordinate);
+      return ModelWithResult(model);
+    }
+
+    function veranderZoomniveauCmd(cmnd: prt.VeranderZoomCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        valideerAlsGeheel(cmnd.zoom).map(zoom => {
+          model.map.getView().setZoom(cmnd.zoom);
+          return ModelAndEmptyResult(model);
+        })
+      );
+    }
+
+    function veranderExtentCmd(cmnd: prt.VeranderExtentCmd<Msg>): ModelWithResult<Msg> {
+      model.map.getView().fit(cmnd.extent);
+      return ModelWithResult(model);
+    }
+
+    function veranderViewportCmd(cmnd: prt.VeranderViewportCmd<Msg>): ModelWithResult<Msg> {
+      // eerst de container aanpassen of de kaart is uitgerekt
+      if (cmnd.size[0]) {
+        model.container.style.width = `${cmnd.size[0]}px`;
+        model.container.parentElement.style.width = `${cmnd.size[0]}px`;
+      }
+      if (cmnd.size[1]) {
+        model.container.style.height = `${cmnd.size[1]}px`;
+        model.container.parentElement.style.height = `${cmnd.size[1]}px`;
+      }
+      model.map.setSize(cmnd.size);
+      model.map.updateSize();
+      return ModelWithResult(model);
+    }
+
+    function focusOpKaartCmd(cmnd: prt.ZetFocusOpKaartCmd<Msg>): ModelWithResult<Msg> {
+      activateMouseWheelZoomIfAllowed(true);
+      return ModelWithResult(model);
+    }
+
+    function verliesFocusOpKaartCmd(cmnd: prt.VerliesFocusOpKaartCmd<Msg>): ModelWithResult<Msg> {
+      activateMouseWheelZoomIfAllowed(false);
+      return ModelWithResult(model);
+    }
+
+    function activateMouseWheelZoomIfAllowed(active: boolean, mdl: Model = model): void {
+      if (mdl.scrollZoomOnFocus) {
+        mdl.stdInteracties
+          .filter(interaction => interaction instanceof ol.interaction.MouseWheelZoom)
+          .forEach(interaction => interaction!.setActive(active));
+      }
+    }
+
+    function vervangFeaturesCmd(cmnd: prt.VervangFeaturesCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        valideerVectorLayerBestaat(cmnd.titel).map(layer => {
+          layer.getSource().clear(true);
+          layer.getSource().addFeatures(cmnd.features.toArray());
+          return ModelAndEmptyResult(model);
+        })
+      );
+    }
+
+    function toonAchtergrondKeuzeCmd(cmnd: prt.ToonAchtergrondKeuzeCmd<Msg>): ModelWithResult<Msg> {
+      const achtergrondTitels = model.titelsOpGroep.get("Achtergrond");
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        allOf([
+          fromBoolean(!model.showBackgroundSelector, "De achtergrondkeuze is al actief"),
+          fromBoolean(!achtergrondTitels.isEmpty(), "Er moet minstens 1 achtergrondlaag zijn")
+        ]).map(() => {
+          achtergrondTitels.forEach(titel => model.olLayersOpTitel.get(titel!).setVisible(false));
+          const geselecteerdeTitel = fromNullable(achtergrondTitels.find(titel => model.olLayersOpTitel.get(titel!).getVisible()));
+          const teSelecterenTitel = geselecteerdeTitel.getOrElse(() => achtergrondTitels.first()); // er is er minstens 1 wegens validatie
+          const achtergrondLayer = model.olLayersOpTitel.get(teSelecterenTitel);
+          achtergrondLayer.setVisible(true);
+          model.achtergrondlaagtitelSubj.next(teSelecterenTitel);
+          return ModelAndEmptyResult({ ...model, showBackgroundSelector: true });
+        })
+      );
+    }
+
+    function verbergAchtergrondKeuzeCmd(cmnd: prt.VerbergAchtergrondKeuzeCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        fromBoolean(model.showBackgroundSelector, "De achtergrondkeuze is niet actief") //
+          .map(() => ModelAndEmptyResult({ ...model, showBackgroundSelector: false }))
+      );
+    }
+
+    function kiesAchtergrondCmd(cmnd: prt.KiesAchtergrondCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        valideerIsAchtergrondLaag(cmnd.titel)
+          .chain(() => valideerLayerBestaat(cmnd.titel))
+          .map(nieuweAchtergrond => {
+            const achtergrondTitels = model.titelsOpGroep.get("Achtergrond");
+            const vorigeTitel = fromNullable(achtergrondTitels.find(titel => model.olLayersOpTitel.get(titel!).getVisible()));
+            const vorigeAchtergrond = vorigeTitel.map(titel => model.olLayersOpTitel.get(titel));
+            forEach(vorigeAchtergrond, l => l.setVisible(false));
+            nieuweAchtergrond.setVisible(true);
+            model.achtergrondlaagtitelSubj.next(cmnd.titel);
+            return ModelAndEmptyResult(model);
+          })
+      );
+    }
+
+    function maakLaagZichtbaarCmd(cmnd: prt.MaakLaagZichtbaarCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        valideerLayerBestaat(cmnd.titel).map(layer => {
+          layer.setVisible(true);
+          return ModelAndEmptyResult(model);
+        })
+      );
+    }
+
+    function maakLaagOnzichtbaarCmd(cmnd: prt.MaakLaagOnzichtbaarCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        valideerLayerBestaat(cmnd.titel).map(layer => {
+          layer.setVisible(false);
+          return ModelAndEmptyResult(model);
+        })
+      );
+    }
+
+    function zetStijlVoorLaagCmd(cmnd: prt.ZetStijlVoorLaagCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        valideerVectorLayerBestaat(cmnd.titel).map(vectorlayer => {
+          const sf = (feature: ol.Feature, resolution: number) => {
+            return (cmnd.stijl as ke.DynamicStyle).styleFunction(feature, resolution);
+          };
+          vectorlayer.setStyle(cmnd.stijl.type === "StaticStyle" ? cmnd.stijl.style : sf);
+          return ModelAndEmptyResult(model);
+        })
+      );
+    }
+
+    function meldComponentFout(cmnd: prt.MeldComponentFoutCmd<Msg>): ModelWithResult<Msg> {
+      model.componentFoutSubj.next(cmnd.fouten);
+      return ModelWithResult(model);
+    }
+
+    function handleSubscriptions(cmnd: prt.SubscribeCmd<Msg>): ModelWithResult<Msg> {
+      function subscribe(subscription: Subscription): ModelWithResult<Msg> {
+        return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
+      }
+
+      function subscribeToZoominstellingen(sub: prt.ZoominstellingenSubscription<Msg>): ModelWithResult<Msg> {
+        const subscription = model.zoominstellingenSubj.pipe(debounceTime(100)).subscribe(z => msgConsumer(sub.wrapper(z)));
+        return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
+      }
+
+      function subscribeToMiddelpunt(sub: prt.MiddelpuntSubscription<Msg>): ModelWithResult<Msg> {
+        const subscription = model.middelpuntSubj.pipe(debounceTime(100)).subscribe(m => msgConsumer(sub.wrapper(m[0], m[1])));
+        return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
+      }
+
+      function subscribeToAchtergrondTitel(sub: prt.AchtergrondTitelSubscription<Msg>): ModelWithResult<Msg> {
+        const subscription = model.achtergrondlaagtitelSubj.subscribe(t => msgConsumer(sub.wrapper(t)));
+        return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
+      }
+
+      const subscribeToAchtergrondlagen = (wrapper: (achtergrondlagen: List<ke.AchtergrondLaag>) => Msg) =>
+        subscribe(
+          model.groeplagenSubj
+            .pipe(
+              filter(groeplagen => groeplagen.laaggroep === "Achtergrond") //
+            )
+            .subscribe(groeplagen => msgConsumer(wrapper(groeplagen.lagen as List<ke.AchtergrondLaag>)))
+        );
+
+      switch (cmnd.subscription.type) {
+        case "Zoominstellingen":
+          return subscribeToZoominstellingen(cmnd.subscription);
+        case "Middelpunt":
+          return subscribeToMiddelpunt(cmnd.subscription);
+        case "Achtergrond":
+          return subscribeToAchtergrondTitel(cmnd.subscription);
+        case "Achtergrondlagen":
+          return subscribeToAchtergrondlagen(cmnd.subscription.wrapper);
+      }
+    }
+
+    function handleUnsubscriptions(cmnd: prt.UnsubscribeCmd<Msg>): ModelWithResult<Msg> {
+      cmnd.subscription.unsubscribe();
+      return ModelWithResult(model);
+    }
+
+    switch (cmd.type) {
+      case "VoegLaagToe":
+        return voegLaagToeCmd(cmd);
+      case "VerwijderLaag":
+        return verwijderLaagCmd(cmd);
+      case "VerplaatsLaag":
+        return verplaatsLaagCmd(cmd);
+      case "VoegSchaalToe":
+        return voegSchaalToeCmd(cmd);
+      case "VerwijderSchaal":
+        return verwijderSchaalCmd(cmd);
+      case "VoegVolledigSchermToe":
+        return voegVolledigSchermToeCmd(cmd);
+      case "VerwijderVolledigScherm":
+        return verwijderVolledigSchermCmd(cmd);
+      case "VoegStandaardInteractiesToe":
+        return voegStandaardInteractiesToeCmd(cmd);
+      case "VerwijderStandaardInteracties":
+        return verwijderStandaardInteractiesCmd(cmd);
+      case "VeranderMiddelpunt":
+        return veranderMiddelpuntCmd(cmd);
+      case "VeranderZoom":
+        return veranderZoomniveauCmd(cmd);
+      case "VeranderExtent":
+        return veranderExtentCmd(cmd);
+      case "VeranderViewport":
+        return veranderViewportCmd(cmd);
+      case "FocusOpKaart":
+        return focusOpKaartCmd(cmd);
+      case "VerliesFocusOpKaart":
+        return verliesFocusOpKaartCmd(cmd);
+      case "VervangFeatures":
+        return vervangFeaturesCmd(cmd);
+      case "ToonAchtergrondKeuze":
+        return toonAchtergrondKeuzeCmd(cmd);
+      case "VerbergAchtergrondKeuze":
+        return verbergAchtergrondKeuzeCmd(cmd);
+      case "KiesAchtergrond":
+        return kiesAchtergrondCmd(cmd);
+      case "MaakLaagZichtbaar":
+        return maakLaagZichtbaarCmd(cmd);
+      case "MaakLaagOnzichtbaar":
+        return maakLaagOnzichtbaarCmd(cmd);
+      case "ZetStijlVoorLaag":
+        return zetStijlVoorLaagCmd(cmd);
+      case "Subscription":
+        return handleSubscriptions(cmd);
+      case "Unsubscription":
+        return handleUnsubscriptions(cmd);
+      case "MeldComponentFout":
+        return meldComponentFout(cmd);
+    }
+  };
 }

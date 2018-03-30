@@ -4,7 +4,7 @@ import { asap } from "rxjs/scheduler/asap";
 import { takeUntil, observeOn } from "rxjs/operators";
 
 import { ZoneLike } from "./zone-like";
-import { leaveZone } from "../util/leave-zone";
+import { observerOutsideAngular } from "./observer-outside-angular";
 
 export function terminateOnDestroyAndRunAsapOutsideOfAngular<T>(
   zone: ZoneLike,
@@ -13,6 +13,6 @@ export function terminateOnDestroyAndRunAsapOutsideOfAngular<T>(
   return pipe(
     takeUntil(termination$), // terminate wanneer ngOnDestry aangeroepen wordt
     observeOn(asap), // voer uit onmiddellijk na de productie van een waarde (en niet in-lijn met de productie)
-    leaveZone(zone) // voer uit buiten change detectie van Angular, want dat is traaaag
+    observerOutsideAngular(zone) // voer uit buiten change detectie van Angular, want dat is traaaag
   );
 }
