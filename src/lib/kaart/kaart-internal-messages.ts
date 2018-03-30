@@ -20,8 +20,11 @@ function KaartInternalMsg(payload: Option<KaartInternalSubMsg>): KaartInternalMs
   };
 }
 
-// Dit is echt "fire and forget". Geen enkele informatie komt terug ook al zou dat kunnen
-export const forgetWrapper: prt.ValidationWrapper<any, KaartInternalMsg> = (v: prt.KaartCmdValidation<any>) => {
+/**
+ * Dit is echt "fire and forget". Geen enkele informatie komt terug ook al zou dat kunnen.
+ * Enkel de fouten worden gelogd.
+ */
+export const kaartLogOnlyWrapper: prt.ValidationWrapper<any, KaartInternalMsg> = (v: prt.KaartCmdValidation<any>) => {
   if (v.isFailure()) {
     kaartLogger.error("Een intern command gaf een fout", v.value);
   }

@@ -3,8 +3,9 @@ import { Subscription as RxSubscription } from "rxjs/Subscription";
 
 import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";
-import { Subscription, Wrapper, VoidWrapper, KaartMsg, ValidationWrapper, BareValidationWrapper } from ".";
+import { Subscription, Wrapper, VoidWrapper, KaartMsg, KaartCmdValidation, ValidationWrapper, BareValidationWrapper } from ".";
 import { StyleSelector } from "./kaart-elementen";
+import { Logger } from "loglevel";
 
 export type Command<Msg extends KaartMsg> =
   | SubscribeCmd<Msg>
@@ -187,11 +188,17 @@ export interface MeldComponentFoutCmd<Msg extends KaartMsg> {
 // constructor functies
 //
 
-export function VoegStandaardInteractiesToe<Msg extends KaartMsg>(
+export function VoegStandaardInteractiesToeCmd<Msg extends KaartMsg>(
   scrollZoomOnFocus: boolean,
   wrapper: BareValidationWrapper<Msg>
 ): VoegStandaardInteractiesToeCmd<Msg> {
   return { type: "VoegStandaardInteractiesToe", scrollZoomOnFocus: scrollZoomOnFocus, wrapper: wrapper };
+}
+
+export function VerwijderStandaardInteractiesCmd<Msg extends KaartMsg>(
+  wrapper: BareValidationWrapper<Msg>
+): VerwijderStandaardInteractiesCmd<Msg> {
+  return { type: "VerwijderStandaardInteracties", wrapper: wrapper };
 }
 
 export function VoegLaagToeCmd<Msg extends KaartMsg>(

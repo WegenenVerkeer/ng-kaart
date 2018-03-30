@@ -2,7 +2,8 @@ import { Component, OnDestroy, OnInit, ViewEncapsulation, NgZone, Input } from "
 
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartComponentBase } from "./kaart-component-base";
-import { forgetWrapper } from "./kaart-internal-messages";
+import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
+import * as prt from "./kaart-protocol";
 
 @Component({
   selector: "awv-kaart-knop-achtergrondlaag-kiezer",
@@ -19,17 +20,11 @@ export class KaartKnopAchtergrondLaagKiezerComponent extends KaartComponentBase 
   ngOnInit(): void {
     // Dit commando mag maar verstuurd worden als de achtergrondlagen al in het model zitten. Dat is zo als de
     // tag in de html na de lagen tags komt.
-    this.kaart.dispatch({
-      type: "ToonAchtergrondKeuze",
-      wrapper: forgetWrapper
-    });
+    this.kaart.dispatch(prt.ToonAchtergrondKeuzeCmd(kaartLogOnlyWrapper));
   }
 
   ngOnDestroy(): void {
-    this.kaart.dispatch({
-      type: "VerbergAchtergrondKeuze",
-      wrapper: forgetWrapper
-    });
+    this.kaart.dispatch(prt.VerbergAchtergrondKeuzeCmd(kaartLogOnlyWrapper));
     super.ngOnDestroy();
   }
 }

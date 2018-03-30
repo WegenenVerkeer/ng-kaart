@@ -10,7 +10,7 @@ import {
   KaartInternalMsg,
   KaartInternalSubMsg,
   achtergrondlagenGezetWrapper,
-  forgetWrapper,
+  kaartLogOnlyWrapper,
   achtergrondtitelGezetWrapper,
   AchtergrondlagenGezetMsg,
   AchtergrondtitelGezetMsg,
@@ -134,7 +134,7 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
       // inklappen.
       this.displayMode = DisplayMode.SHOWING_STATUS;
       if (laag.titel !== this.achtergrondTitel) {
-        this.dispatcher.dispatch(prt.KiesAchtergrondCmd(laag.titel, forgetWrapper));
+        this.dispatcher.dispatch(prt.KiesAchtergrondCmd(laag.titel, kaartLogOnlyWrapper));
         this.achtergrondTitel = laag.titel;
       }
     } else {

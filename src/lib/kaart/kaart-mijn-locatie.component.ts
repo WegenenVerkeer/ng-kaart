@@ -14,7 +14,7 @@ import { List } from "immutable";
 import { orElse } from "../util/option";
 import {
   KaartInternalMsg,
-  forgetWrapper,
+  kaartLogOnlyWrapper,
   subscribedWrapper,
   KaartInternalSubMsg,
   zoominstellingenGezetWrapper,
@@ -68,7 +68,7 @@ export class KaartMijnLocatieComponent extends KaartComponentBase implements OnD
       laag: this.createLayer(),
       magGetoondWorden: true,
       laaggroep: "Tools",
-      wrapper: forgetWrapper
+      wrapper: kaartLogOnlyWrapper
     });
     this.dispatcher.dispatch({
       type: "Subscription",
@@ -93,14 +93,14 @@ export class KaartMijnLocatieComponent extends KaartComponentBase implements OnD
   ngOnDestroy() {
     this.subscriptions.forEach(sub => this.dispatcher.dispatch(prt.UnsubscriptionCmd(sub)));
     this.subscriptions.splice(0, this.subscriptions.length);
-    this.dispatcher.dispatch(prt.VerwijderLaagCmd(MijnLocatieLaagNaam, forgetWrapper));
+    this.dispatcher.dispatch(prt.VerwijderLaagCmd(MijnLocatieLaagNaam, kaartLogOnlyWrapper));
     super.ngOnDestroy();
   }
 
   zetMijnPositie(zoom: boolean, position: Position) {
     if (zoom) {
       // We zitten nu op heel Vlaanderen, dus gaan we eerst inzoomen.
-      this.dispatcher.dispatch(prt.VeranderZoomCmd(this.zoomniveau, forgetWrapper));
+      this.dispatcher.dispatch(prt.VeranderZoomCmd(this.zoomniveau, kaartLogOnlyWrapper));
     }
 
     const longLat: ol.Coordinate = [position.coords.longitude, position.coords.latitude];
@@ -116,7 +116,7 @@ export class KaartMijnLocatieComponent extends KaartComponentBase implements OnD
   maakNieuwFeature(coordinate: ol.Coordinate): Option<ol.Feature> {
     const feature = new ol.Feature(new ol.geom.Point(coordinate));
     feature.setStyle(this.mijnLocatieStyle);
-    this.dispatcher.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, List.of(feature), forgetWrapper));
+    this.dispatcher.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, List.of(feature), kaartLogOnlyWrapper));
     return some(feature);
   }
 

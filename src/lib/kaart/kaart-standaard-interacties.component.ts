@@ -1,7 +1,8 @@
 import { Component, Input, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 
 import { KaartClassicComponent } from "./kaart-classic.component";
-import { forgetWrapper } from "./kaart-internal-messages";
+import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
+import * as prt from "./kaart-protocol";
 
 @Component({
   selector: "awv-kaart-standaard-interacties",
@@ -14,10 +15,10 @@ export class KaartStandaardInteractiesComponent implements OnInit, OnDestroy {
   constructor(private readonly kaart: KaartClassicComponent) {}
 
   ngOnInit(): void {
-    this.kaart.dispatch({ type: "VoegStandaardInteractiesToe", scrollZoomOnFocus: this.focusVoorZoom, wrapper: forgetWrapper });
+    this.kaart.dispatch(prt.VoegStandaardInteractiesToeCmd(this.focusVoorZoom, kaartLogOnlyWrapper));
   }
 
   ngOnDestroy(): void {
-    this.kaart.dispatch({ type: "VerwijderStandaardInteracties", wrapper: forgetWrapper });
+    this.kaart.dispatch(prt.VerwijderStandaardInteractiesCmd(kaartLogOnlyWrapper));
   }
 }

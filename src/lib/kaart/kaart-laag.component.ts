@@ -3,7 +3,7 @@ import { Input, OnDestroy, OnInit } from "@angular/core";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { Laag } from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
-import { KaartInternalMsg, forgetWrapper } from "./kaart-internal-messages";
+import { KaartInternalMsg, kaartLogOnlyWrapper } from "./kaart-internal-messages";
 
 export abstract class KaartLaagComponent implements OnInit, OnDestroy {
   @Input() titel = "";
@@ -18,12 +18,12 @@ export abstract class KaartLaagComponent implements OnInit, OnDestroy {
       laag: this.createLayer(),
       laaggroep: this.laaggroep(),
       magGetoondWorden: this.zichtbaar,
-      wrapper: forgetWrapper
+      wrapper: kaartLogOnlyWrapper
     });
   }
 
   ngOnDestroy(): void {
-    this.dispatch({ type: "VerwijderLaag", titel: this.titel, wrapper: forgetWrapper });
+    this.dispatch(prt.VerwijderLaagCmd(this.titel, kaartLogOnlyWrapper));
   }
 
   protected dispatch(evt: prt.Command<KaartInternalMsg>) {

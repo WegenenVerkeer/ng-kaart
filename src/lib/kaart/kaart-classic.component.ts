@@ -6,7 +6,7 @@ import * as ol from "openlayers";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { Command } from "./kaart-protocol-commands";
 import * as prt from "./kaart-protocol";
-import { KaartInternalMsg, forgetWrapper } from "./kaart-internal-messages";
+import { KaartInternalMsg, kaartLogOnlyWrapper } from "./kaart-internal-messages";
 import { KaartMsgObservableConsumer } from ".";
 
 @Component({
@@ -28,23 +28,22 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
 
   private hasFocus = false;
   readonly dispatcher: ReplaySubjectKaartCmdDispatcher<KaartInternalMsg> = new ReplaySubjectKaartCmdDispatcher();
-  // message$: Observable<prt.KaartMsg> = Observable.never();
 
   constructor() {}
 
   ngOnInit() {
     // De volgorde van de dispatching hier is van belang voor wat de overhand heeft
     if (this.zoom) {
-      this.dispatch({ type: "VeranderZoom", zoom: this.zoom, wrapper: forgetWrapper });
+      this.dispatch(prt.VeranderZoomCmd(this.zoom, kaartLogOnlyWrapper));
     }
     if (this.extent) {
-      this.dispatch({ type: "VeranderExtent", extent: this.extent });
+      this.dispatch(prt.VeranderExtentCmd(this.extent));
     }
     if (this.middelpunt) {
-      this.dispatch({ type: "VeranderMiddelpunt", coordinate: this.middelpunt });
+      this.dispatch(prt.VeranderMiddelpuntCmd(this.middelpunt));
     }
     if (this.breedte || this.hoogte) {
-      this.dispatch({ type: "VeranderViewport", size: [this.breedte, this.hoogte] });
+      this.dispatch(prt.VeranderViewportCmd([this.breedte, this.hoogte]));
     }
   }
 
@@ -52,27 +51,21 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     if ("zoom" in changes) {
-      this.dispatch({ type: "VeranderZoom", zoom: changes.zoom.currentValue, wrapper: forgetWrapper });
+      this.dispatch(prt.VeranderZoomCmd(changes.zoom.currentValue, kaartLogOnlyWrapper));
     }
     if ("middelpunt" in changes && !coordinateIsEqual(changes.middelpunt.currentValue)(changes.middelpunt.previousValue)) {
-      this.dispatch({ type: "VeranderMiddelpunt", coordinate: changes.middelpunt.currentValue });
+      this.dispatch(prt.VeranderMiddelpuntCmd(changes.middelpunt.currentValue));
     }
     if ("extent" in changes && !extentIsEqual(changes.extent.currentValue)(changes.extent.previousValue)) {
-      this.dispatch({ type: "VeranderExtent", extent: changes.extent.currentValue });
+      this.dispatch(prt.VeranderExtentCmd(changes.extent.currentValue));
     }
     if ("breedte" in changes) {
-      this.dispatch({ type: "VeranderMiddelpunt", coordinate: [changes.breedte.currentValue, this.hoogte] });
+      this.dispatch(prt.VeranderViewportCmd([changes.breedte.currentValue, this.hoogte]));
     }
     if ("hoogte" in changes) {
-      this.dispatch({ type: "VeranderViewport", size: [this.breedte, changes.hoogte.currentValue] });
+      this.dispatch(prt.VeranderViewportCmd([this.breedte, changes.hoogte.currentValue]));
     }
   }
-
-  // messageObsConsumer(): KaartMsgObservableConsumer {
-  //   return (msg$: Observable<prt.KaartMsg>) => {
-  //     this.message$ = msg$;
-  //   };
-  // }
 
   dispatch(cmd: prt.Command<KaartInternalMsg>) {
     this.dispatcher.dispatch(cmd);

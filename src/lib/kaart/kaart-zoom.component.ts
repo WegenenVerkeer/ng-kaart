@@ -7,7 +7,7 @@ import { KaartComponentBase } from "./kaart-component-base";
 import {
   KaartInternalMsg,
   KaartInternalSubMsg,
-  forgetWrapper,
+  kaartLogOnlyWrapper,
   zoominstellingenGezetWrapper,
   ZoominstellingenGezetMsg,
   subscribedWrapper,
@@ -68,13 +68,13 @@ export class KaartZoomComponent extends KaartComponentBase implements OnInit, On
 
   zoomIn(props: KaartProps) {
     if (props.canZoomIn) {
-      this.dispatcher.dispatch({ type: "VeranderZoom", zoom: props.zoom + 1, wrapper: forgetWrapper });
+      this.dispatcher.dispatch(prt.VeranderZoomCmd(props.zoom + 1, kaartLogOnlyWrapper));
     }
   }
 
   zoomOut(props: KaartProps) {
     if (props.canZoomOut) {
-      this.dispatcher.dispatch({ type: "VeranderZoom", zoom: props.zoom - 1, wrapper: forgetWrapper });
+      this.dispatcher.dispatch(prt.VeranderZoomCmd(props.zoom - 1, kaartLogOnlyWrapper));
     }
   }
 }
