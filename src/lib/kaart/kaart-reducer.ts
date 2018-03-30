@@ -509,7 +509,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
-    function handleSubscriptions(cmnd: prt.SubscriptionCmd<Msg>): ModelWithResult<Msg> {
+    function handleSubscriptions(cmnd: prt.SubscribeCmd<Msg>): ModelWithResult<Msg> {
       function subscribe(subscription: Subscription): ModelWithResult<Msg> {
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
       }
@@ -550,7 +550,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
     }
 
-    function handleUnsubscriptions(cmnd: prt.UnsubscriptionCmd<Msg>): ModelWithResult<Msg> {
+    function handleUnsubscriptions(cmnd: prt.UnsubscribeCmd<Msg>): ModelWithResult<Msg> {
       cmnd.subscription.unsubscribe();
       return ModelWithResult(model);
     }

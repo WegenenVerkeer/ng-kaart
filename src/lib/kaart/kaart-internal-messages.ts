@@ -1,12 +1,12 @@
 import { Option, some, none } from "fp-ts/lib/Option";
-
-import { kaartLogger } from "./log";
-import { Zoominstellingen } from "./kaart-protocol";
-import * as prt from "./kaart-protocol";
-import { AchtergrondLaag } from ".";
 import { List } from "immutable";
 
-export type KaartInternalSubMsg = ZoominstellingenGezetMsg | AchtergrondtitelGezetMsg | AchtergrondlagenGezetMsg;
+import { kaartLogger } from "./log";
+import { Zoominstellingen, SubscriptionResult, KaartCmdValidation } from "./kaart-protocol";
+import * as prt from "./kaart-protocol";
+import { AchtergrondLaag } from "./kaart-elementen";
+
+export type KaartInternalSubMsg = ZoominstellingenGezetMsg | AchtergrondtitelGezetMsg | AchtergrondlagenGezetMsg | SubscribedMsg;
 
 export interface KaartInternalMsg extends prt.KaartMsg {
   type: "KaartInternal";
@@ -64,3 +64,17 @@ function AchtergrondlagenGezetMsg(achtergrondlagen: List<AchtergrondLaag>): Acht
 }
 
 export const achtergrondlagenGezetWrapper = (lagen: List<AchtergrondLaag>) => KaartInternalMsg(some(AchtergrondlagenGezetMsg(lagen)));
+
+export interface SubscribedMsg {
+  type: "Subscribed";
+  subscription: KaartCmdValidation<SubscriptionResult>;
+  reference: any;
+}
+
+function SubscribedMsg(subscription: KaartCmdValidation<SubscriptionResult>, reference: any): SubscribedMsg {
+  return { type: "Subscribed", reference: reference, subscription: subscription };
+}
+
+export const subscribedWrapper: (ref: any) => (v: KaartCmdValidation<SubscriptionResult>) => KaartInternalMsg = (reference: any) => (
+  v: prt.KaartCmdValidation<SubscriptionResult>
+) => KaartInternalMsg(some(SubscribedMsg(v, reference)));

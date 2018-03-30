@@ -1,9 +1,7 @@
-import { Component, Input, NgZone, OnDestroy, OnChanges, OnInit } from "@angular/core";
-import { SimpleChanges } from "@angular/core/src/metadata/lifecycle_hooks";
+import { Component, Input, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { Observable } from "rxjs/Observable";
-import { map, filter } from "rxjs/operators";
+import { map } from "rxjs/operators";
 
-import { KaartWithInfo } from "./kaart-with-info";
 import { KaartCmdDispatcher, VacuousDispatcher } from "./kaart-event-dispatcher";
 import { KaartComponentBase } from "./kaart-component-base";
 import { observeOnAngular } from "../util/observe-on-angular";
@@ -17,10 +15,13 @@ import { orElse } from "../util/option";
 import {
   KaartInternalMsg,
   forgetWrapper,
+  subscribedWrapper,
   KaartInternalSubMsg,
   zoominstellingenGezetWrapper,
-  ZoominstellingenGezetMsg
+  ZoominstellingenGezetMsg,
+  SubscribedMsg
 } from "./kaart-internal-messages";
+import { ofType } from "../util/operators";
 import * as prt from "./kaart-protocol";
 
 const MijnLocatieLaagNaam = "Mijn Locatie";
@@ -30,7 +31,8 @@ const MijnLocatieLaagNaam = "Mijn Locatie";
   templateUrl: "./kaart-mijn-locatie.component.html",
   styleUrls: ["./kaart-mijn-locatie.component.scss"]
 })
-export class KaartMijnLocatieComponent extends KaartComponentBase implements OnChanges, OnDestroy, OnInit {
+export class KaartMijnLocatieComponent extends KaartComponentBase implements OnDestroy, OnInit {
+  private readonly subscriptions: prt.SubscriptionResult[] = [];
   zoom$: Observable<number> = Observable.empty();
 
   mijnLocatieStyle: ol.style.Style;
@@ -71,39 +73,40 @@ export class KaartMijnLocatieComponent extends KaartComponentBase implements OnC
     this.dispatcher.dispatch({
       type: "Subscription",
       subscription: prt.ZoominstellingenSubscription(zoominstellingenGezetWrapper),
-      wrapper: forgetWrapper
+      wrapper: subscribedWrapper({})
     });
     this.zoom$ = this.internalMessage$.pipe(
-      filter(m => m.type === "ZoominstellingenGezet"), //
-      map(m => (m as ZoominstellingenGezetMsg).zoominstellingen.zoom),
+      ofType<ZoominstellingenGezetMsg>("ZoominstellingenGezet"), //
+      map(m => m.zoominstellingen.zoom),
       observeOnAngular(this.zone)
     );
-  }
-
-  ngOnChanges(changes: SimpleChanges) {
-    // this.kaartProps$ = this.kaartModel$.pipe(
-    //   map(m => ({
-    //     zoom: m.zoom
-    //   })),
-    //   observeOnAngular(this.zone)
-    // );
+    this.internalMessage$
+      .pipe(ofType<SubscribedMsg>("Subscribed")) //
+      .subscribe(sm =>
+        sm.subscription.fold(
+          kaartLogger.error, //
+          sub => this.subscriptions.push(sub)
+        )
+      );
   }
 
   ngOnDestroy() {
+    this.subscriptions.forEach(sub => this.dispatcher.dispatch(prt.UnsubscriptionCmd(sub)));
+    this.subscriptions.splice(0, this.subscriptions.length);
+    this.dispatcher.dispatch(prt.VerwijderLaagCmd(MijnLocatieLaagNaam, forgetWrapper));
     super.ngOnDestroy();
-    this.dispatcher.dispatch({ type: "VerwijderLaag", titel: MijnLocatieLaagNaam, wrapper: forgetWrapper });
   }
 
   zetMijnPositie(zoom: boolean, position: Position) {
     if (zoom) {
       // We zitten nu op heel Vlaanderen, dus gaan we eerst inzoomen.
-      this.dispatcher.dispatch({ type: "VeranderZoom", zoom: this.zoomniveau, wrapper: forgetWrapper });
+      this.dispatcher.dispatch(prt.VeranderZoomCmd(this.zoomniveau, forgetWrapper));
     }
 
     const longLat: ol.Coordinate = [position.coords.longitude, position.coords.latitude];
 
     const coordinate = ol.proj.fromLonLat(longLat, "EPSG:31370");
-    this.dispatcher.dispatch({ type: "VeranderMiddelpunt", coordinate: coordinate });
+    this.dispatcher.dispatch(prt.VeranderMiddelpuntCmd(coordinate));
 
     this.mijnLocatie = orElse(this.mijnLocatie.chain(feature => KaartMijnLocatieComponent.pasFeatureAan(feature, coordinate)), () =>
       this.maakNieuwFeature(coordinate)
@@ -113,16 +116,17 @@ export class KaartMijnLocatieComponent extends KaartComponentBase implements OnC
   maakNieuwFeature(coordinate: ol.Coordinate): Option<ol.Feature> {
     const feature = new ol.Feature(new ol.geom.Point(coordinate));
     feature.setStyle(this.mijnLocatieStyle);
-    this.dispatcher.dispatch({ type: "VervangFeatures", titel: MijnLocatieLaagNaam, features: List.of(feature), wrapper: forgetWrapper });
+    this.dispatcher.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, List.of(feature), forgetWrapper));
     return some(feature);
   }
 
   meldFout(fout: PositionError | string) {
     kaartLogger.error("error", fout);
-    this.dispatcher.dispatch({
-      type: "MeldComponentFout",
-      fouten: List.of("Zoomen naar huidige locatie niet mogelijk", "De toepassing heeft geen toestemming om locatie te gebruiken")
-    });
+    this.dispatcher.dispatch(
+      prt.MeldComponentFoutCmd(
+        List.of("Zoomen naar huidige locatie niet mogelijk", "De toepassing heeft geen toestemming om locatie te gebruiken")
+      )
+    );
   }
 
   zoomNaarMijnLocatie(zoom: number) {

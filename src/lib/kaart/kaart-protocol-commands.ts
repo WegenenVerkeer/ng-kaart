@@ -7,8 +7,8 @@ import { Subscription, Wrapper, VoidWrapper, KaartMsg, ValidationWrapper, BareVa
 import { StyleSelector } from "./kaart-elementen";
 
 export type Command<Msg extends KaartMsg> =
-  | SubscriptionCmd<Msg>
-  | UnsubscriptionCmd<Msg>
+  | SubscribeCmd<Msg>
+  | UnsubscribeCmd<Msg>
   | VoegLaagToeCmd<Msg>
   | VerwijderLaagCmd<Msg>
   | VerplaatsLaagCmd<Msg>
@@ -33,15 +33,18 @@ export type Command<Msg extends KaartMsg> =
   | ZetStijlVoorLaagCmd<Msg>
   | MeldComponentFoutCmd<Msg>;
 
-export interface SubscriptionCmd<Msg extends KaartMsg> {
+// SubscriptionResult is maar een type alias, maar ook een encapsulatie naar clients toe
+export type SubscriptionResult = RxSubscription;
+
+export interface SubscribeCmd<Msg extends KaartMsg> {
   readonly type: "Subscription";
   readonly subscription: Subscription<Msg>;
-  readonly wrapper: ValidationWrapper<RxSubscription, Msg>;
+  readonly wrapper: ValidationWrapper<SubscriptionResult, Msg>;
 }
 
-export interface UnsubscriptionCmd<Msg extends KaartMsg> {
+export interface UnsubscribeCmd<Msg extends KaartMsg> {
   readonly type: "Unsubscription";
-  readonly subscription: RxSubscription;
+  readonly subscription: SubscriptionResult;
 }
 
 export type Laaggroep = "Achtergrond" | "Voorgrond" | "Tools";
@@ -240,6 +243,14 @@ export function VeranderViewportCmd<Msg extends KaartMsg>(size: ol.Size): Verand
   return { type: "VeranderViewport", size: size };
 }
 
+export function VervangFeaturesCmd<Msg extends KaartMsg>(
+  titel: string,
+  features: List<ol.Feature>,
+  wrapper: BareValidationWrapper<Msg>
+): VervangFeaturesCmd<Msg> {
+  return { type: "VervangFeatures", titel: titel, features: features, wrapper: wrapper };
+}
+
 export function MeldComponentFoutCmd<Msg extends KaartMsg>(fouten: List<string>): MeldComponentFoutCmd<Msg> {
   return { type: "MeldComponentFout", fouten: fouten };
 }
@@ -273,10 +284,10 @@ export function VerbergAchtergrondKeuzeCmd<Msg extends KaartMsg>(wrapper: BareVa
 export function SubscriptionCmd<Msg extends KaartMsg>(
   subscription: Subscription<Msg>,
   wrapper: ValidationWrapper<RxSubscription, Msg>
-): SubscriptionCmd<Msg> {
+): SubscribeCmd<Msg> {
   return { type: "Subscription", subscription: subscription, wrapper: wrapper };
 }
 
-export function UnsubscriptionCmd<Msg extends KaartMsg>(subscription: RxSubscription): UnsubscriptionCmd<Msg> {
+export function UnsubscriptionCmd<Msg extends KaartMsg>(subscription: SubscriptionResult): UnsubscribeCmd<Msg> {
   return { type: "Unsubscription", subscription: subscription };
 }
