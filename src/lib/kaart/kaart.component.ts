@@ -13,8 +13,7 @@ import { KaartConfig, KAART_CFG } from "./kaart-config";
 import { KaartComponentBase } from "./kaart-component-base";
 import { KaartWithInfo } from "./kaart-with-info";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
-// noinspection TypeScriptPreferShortImport
-import { leaveZone } from "../util/leave-zone";
+import { observerOutsideAngular } from "../util/observer-outside-angular";
 import { kaartLogger } from "./log";
 import * as prt from "./kaart-protocol";
 import * as red from "./kaart-reducer";
@@ -104,7 +103,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       // Wanneer de destroying observable emit, maw wanneer de component aan het afsluiten is, dan kuisen we ook
       // de openlayers kaart op.
       // noinspection JSUnusedLocalSymbols
-      this.destroying$.pipe(leaveZone(this.zone)).subscribe(_ => {
+      this.destroying$.pipe(observerOutsideAngular(this.zone)).subscribe(_ => {
         kaartLogger.info(`kaart ${this.naam} opkuisen`);
         initieelModel.map.setTarget((undefined as any) as string); // Hack omdat openlayers typedefs kaduuk zijn
       });
@@ -117,14 +116,13 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
         merge(this.internalCmdDispatcher.commands$),
         tap(c => kaartLogger.debug("kaart command", c)),
         takeUntil(this.destroying$),
-        leaveZone(this.zone),
+        observerOutsideAngular(this.zone),
         scan((model: KaartWithInfo, cmd: prt.Command<any>) => {
           const { model: newModel, message } = red.kaartCmdReducer(cmd)(model, messageConsumer);
           kaartLogger.debug("produceert", message);
           forEach(message, messageConsumer); // stuur het resultaat terug naar de eigenaar van de kaartcomponent
           return newModel; // en laat het nieuwe model terugvloeien
-        }, initieelModel),
-        shareReplay(1000, 5000)
+        }, initieelModel)
       );
 
       // subscribe op het model om de zaak aan gang te zwengelen
