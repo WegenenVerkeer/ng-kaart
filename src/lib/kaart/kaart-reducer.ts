@@ -509,13 +509,33 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
-    function beginTekenenLengteOppervlakte(cmnd: prt.BeginMetenLengteOppervlakteCmd<Msg>): ModelWithResult<Msg> {
-      console.log("Begin tekenen omtrek oppervlakte" + cmnd);
+    function publishGeometry(cmnd: prt.PublishGeometryCmd<Msg>): ModelWithResult<Msg> {
+      model.geometryChangedSubj.next(cmnd.geometry);
       return ModelWithResult(model);
     }
 
-    function stopTekenenLengteOppervlakte(cmnd: prt.StopMetenLengteOppervlakteCmd<Msg>): ModelWithResult<Msg> {
-      console.log("Stop tekenen omtrek oppervlakte" + cmnd);
+    function metenLengteOppervlakte(cmnd: prt.MetenLengteOppervlakteCmd<Msg>): ModelWithResult<Msg> {
+      model.metenLengteOppervlakteSubj.next(cmnd.meten);
+      return ModelWithResult(model);
+    }
+
+    function voegInteractieToe(cmnd: prt.VoegInteractieToeCmd<Msg>): ModelWithResult<Msg> {
+      model.map.addInteraction(cmnd.interactie);
+      return ModelWithResult(model);
+    }
+
+    function verwijderInteractie(cmnd: prt.VerwijderInteractieCmd<Msg>): ModelWithResult<Msg> {
+      model.map.removeInteraction(cmnd.interactie);
+      return ModelWithResult(model);
+    }
+
+    function voegOverlayToe(cmnd: prt.VoegOverlayToeCmd<Msg>): ModelWithResult<Msg> {
+      model.map.addOverlay(cmnd.overlay);
+      return ModelWithResult(model);
+    }
+
+    function verwijderOverlays(cmnd: prt.VerwijderOverlaysCmd<Msg>): ModelWithResult<Msg> {
+      cmnd.overlays.forEach(overlay => model.map.removeOverlay(overlay));
       return ModelWithResult(model);
     }
 
@@ -548,6 +568,16 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             .subscribe(groeplagen => msgConsumer(wrapper(groeplagen.lagen as List<ke.AchtergrondLaag>)))
         );
 
+      function subscribeToGeometryChanged(sub: prt.GeometryChangedSubscription<Msg>): ModelWithResult<Msg> {
+        const subscription = model.geometryChangedSubj.pipe(debounceTime(100)).subscribe(pm => msgConsumer(sub.wrapper(pm)));
+        return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
+      }
+
+      function subscribeToMetenLengteOppervlakte(sub: prt.MetenLengteOppervlakteSubscription<Msg>): ModelWithResult<Msg> {
+        const subscription = model.metenLengteOppervlakteSubj.subscribe(pm => msgConsumer(sub.wrapper(pm)));
+        return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
+      }
+
       switch (cmnd.subscription.type) {
         case "Zoominstellingen":
           return subscribeToZoominstellingen(cmnd.subscription);
@@ -557,6 +587,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToAchtergrondTitel(cmnd.subscription);
         case "Achtergrondlagen":
           return subscribeToAchtergrondlagen(cmnd.subscription.wrapper);
+        case "GeometryChanged":
+          return subscribeToGeometryChanged(cmnd.subscription);
+        case "MetenLengteOppervlakte":
+          return subscribeToMetenLengteOppervlakte(cmnd.subscription);
       }
     }
 
@@ -616,10 +650,18 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return handleUnsubscriptions(cmd);
       case "MeldComponentFout":
         return meldComponentFout(cmd);
-      case "BeginMetenLengteOppervlakte":
-        return beginTekenenLengteOppervlakte(cmd);
-      case "StopMetenLengteOppervlakte":
-        return stopTekenenLengteOppervlakte(cmd);
+      case "MetenLengteOppervlakte":
+        return metenLengteOppervlakte(cmd);
+      case "VoegInteractieToe":
+        return voegInteractieToe(cmd);
+      case "VerwijderInteractie":
+        return verwijderInteractie(cmd);
+      case "VoegOverlayToe":
+        return voegOverlayToe(cmd);
+      case "VerwijderOverlays":
+        return verwijderOverlays(cmd);
+      case "PublishGeometry":
+        return publishGeometry(cmd);
     }
   };
 }

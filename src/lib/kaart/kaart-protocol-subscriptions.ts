@@ -5,7 +5,9 @@ export type Subscription<Msg extends KaartMsg> =
   | ZoominstellingenSubscription<Msg>
   | MiddelpuntSubscription<Msg>
   | AchtergrondTitelSubscription<Msg>
-  | AchtergrondlagenSubscription<Msg>;
+  | AchtergrondlagenSubscription<Msg>
+  | GeometryChangedSubscription<Msg>
+  | MetenLengteOppervlakteSubscription<Msg>;
 
 export interface Zoominstellingen {
   zoom: number;
@@ -31,6 +33,16 @@ export interface AchtergrondTitelSubscription<Msg> {
 export interface AchtergrondlagenSubscription<Msg> {
   readonly type: "Achtergrondlagen";
   readonly wrapper: (achtergrondlagen: List<AchtergrondLaag>) => Msg;
+}
+
+export interface GeometryChangedSubscription<Msg> {
+  readonly type: "GeometryChanged";
+  readonly wrapper: (evt: ol.geom.Geometry) => Msg;
+}
+
+export interface MetenLengteOppervlakteSubscription<Msg> {
+  readonly type: "MetenLengteOppervlakte";
+  readonly wrapper: (boolean) => Msg;
 }
 
 export function ZoominstellingenSubscription<Msg extends KaartMsg>(wrapper: (settings: Zoominstellingen) => Msg): Subscription<Msg> {
@@ -59,6 +71,20 @@ export function AchtergrondlagenSubscription<Msg extends KaartMsg>(
 ): Subscription<Msg> {
   return {
     type: "Achtergrondlagen",
+    wrapper: wrapper
+  };
+}
+
+export function GeometryChangedSubscription<Msg extends KaartMsg>(wrapper: (evt: ol.geom.Geometry) => Msg): Subscription<Msg> {
+  return {
+    type: "GeometryChanged",
+    wrapper: wrapper
+  };
+}
+
+export function MetenLengteOppervlakteSubscription<Msg extends KaartMsg>(wrapper: (boolean) => Msg): Subscription<Msg> {
+  return {
+    type: "MetenLengteOppervlakte",
     wrapper: wrapper
   };
 }

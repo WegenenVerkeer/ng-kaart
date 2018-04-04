@@ -6,7 +6,13 @@ import { Zoominstellingen, SubscriptionResult, KaartCmdValidation } from "./kaar
 import * as prt from "./kaart-protocol";
 import { AchtergrondLaag } from "./kaart-elementen";
 
-export type KaartInternalSubMsg = ZoominstellingenGezetMsg | AchtergrondtitelGezetMsg | AchtergrondlagenGezetMsg | SubscribedMsg;
+export type KaartInternalSubMsg =
+  | ZoominstellingenGezetMsg
+  | AchtergrondtitelGezetMsg
+  | AchtergrondlagenGezetMsg
+  | GeometryChangedMsg
+  | MetenLengteOppervlakteMsg
+  | SubscribedMsg;
 
 export interface KaartInternalMsg extends prt.KaartMsg {
   type: "KaartInternal";
@@ -67,6 +73,31 @@ function AchtergrondlagenGezetMsg(achtergrondlagen: List<AchtergrondLaag>): Acht
 }
 
 export const achtergrondlagenGezetWrapper = (lagen: List<AchtergrondLaag>) => KaartInternalMsg(some(AchtergrondlagenGezetMsg(lagen)));
+
+export interface GeometryChangedMsg {
+  type: "GeometryChanged";
+  geometry: ol.geom.Geometry;
+}
+
+function GeometryChangedMsg(geometry: ol.geom.Geometry): GeometryChangedMsg {
+  return { type: "GeometryChanged", geometry: geometry };
+}
+
+export const geometryChangedWrapper = (geometry: ol.geom.Geometry) => KaartInternalMsg(some(GeometryChangedMsg(geometry)));
+
+export interface MetenLengteOppervlakteMsg {
+  type: "MetenLengteOppervlakte";
+  meten: boolean;
+}
+
+function MetenLengteOppervlakteMsg(meten: boolean): MetenLengteOppervlakteMsg {
+  return {
+    type: "MetenLengteOppervlakte",
+    meten: meten
+  };
+}
+
+export const metenLengteOppervlakteWrapper = (meten: boolean) => KaartInternalMsg(some(MetenLengteOppervlakteMsg(meten)));
 
 export interface SubscribedMsg {
   type: "Subscribed";

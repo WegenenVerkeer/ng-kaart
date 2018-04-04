@@ -33,8 +33,12 @@ export type Command<Msg extends KaartMsg> =
   | MaakLaagOnzichtbaarCmd<Msg>
   | ZetStijlVoorLaagCmd<Msg>
   | MeldComponentFoutCmd<Msg>
-  | BeginMetenLengteOppervlakteCmd<Msg>
-  | StopMetenLengteOppervlakteCmd<Msg>;
+  | VoegInteractieToeCmd<Msg>
+  | VerwijderInteractieCmd<Msg>
+  | VoegOverlayToeCmd<Msg>
+  | VerwijderOverlaysCmd<Msg>
+  | PublishGeometryCmd<Msg>
+  | MetenLengteOppervlakteCmd<Msg>;
 
 // SubscriptionResult is maar een type alias, maar ook een encapsulatie naar clients toe
 export type SubscriptionResult = RxSubscription;
@@ -186,6 +190,36 @@ export interface MeldComponentFoutCmd<Msg extends KaartMsg> {
   readonly fouten: List<string>;
 }
 
+export interface MetenLengteOppervlakteCmd<Msg extends KaartMsg> {
+  readonly type: "MetenLengteOppervlakte";
+  readonly meten: boolean;
+}
+
+export interface VoegInteractieToeCmd<Msg extends KaartMsg> {
+  readonly type: "VoegInteractieToe";
+  readonly interactie: ol.interaction.Draw;
+}
+
+export interface VerwijderInteractieCmd<Msg extends KaartMsg> {
+  readonly type: "VerwijderInteractie";
+  readonly interactie: ol.interaction.Draw;
+}
+
+export interface VoegOverlayToeCmd<Msg extends KaartMsg> {
+  readonly type: "VoegOverlayToe";
+  readonly overlay: ol.Overlay;
+}
+
+export interface VerwijderOverlaysCmd<Msg extends KaartMsg> {
+  readonly type: "VerwijderOverlays";
+  readonly overlays: Array<ol.Overlay>;
+}
+
+export interface PublishGeometryCmd<Msg extends KaartMsg> {
+  readonly type: "PublishGeometry";
+  readonly geometry: ol.geom.Geometry;
+}
+
 ////////////////////////
 // constructor functies
 //
@@ -290,6 +324,41 @@ export function VerbergAchtergrondKeuzeCmd<Msg extends KaartMsg>(wrapper: BareVa
   return { type: "VerbergAchtergrondKeuze", wrapper: wrapper };
 }
 
+export function VoegInteractieToeCmd<Msg extends KaartMsg>(interactie: ol.interaction.Draw): VoegInteractieToeCmd<Msg> {
+  return {
+    type: "VoegInteractieToe",
+    interactie: interactie
+  };
+}
+
+export function VerwijderInteractieCmd<Msg extends KaartMsg>(interactie: ol.interaction.Draw): VerwijderInteractieCmd<Msg> {
+  return {
+    type: "VerwijderInteractie",
+    interactie: interactie
+  };
+}
+
+export function VoegOverlayToeCmd<Msg extends KaartMsg>(overlay: ol.Overlay): VoegOverlayToeCmd<Msg> {
+  return {
+    type: "VoegOverlayToe",
+    overlay: overlay
+  };
+}
+
+export function VerwijderOverlaysCmd<Msg extends KaartMsg>(overlays: Array<ol.Overlay>): VerwijderOverlaysCmd<Msg> {
+  return {
+    type: "VerwijderOverlays",
+    overlays: overlays
+  };
+}
+
+export function PublishGeometryCmd<Msg extends KaartMsg>(geometry: ol.geom.Geometry): PublishGeometryCmd<Msg> {
+  return {
+    type: "PublishGeometry",
+    geometry: geometry
+  };
+}
+
 export function SubscriptionCmd<Msg extends KaartMsg>(
   subscription: Subscription<Msg>,
   wrapper: ValidationWrapper<RxSubscription, Msg>
@@ -299,12 +368,4 @@ export function SubscriptionCmd<Msg extends KaartMsg>(
 
 export function UnsubscriptionCmd<Msg extends KaartMsg>(subscription: SubscriptionResult): UnsubscribeCmd<Msg> {
   return { type: "Unsubscription", subscription: subscription };
-}
-
-export interface BeginMetenLengteOppervlakteCmd<Msg extends KaartMsg> {
-  readonly type: "BeginMetenLengteOppervlakte";
-}
-
-export interface StopMetenLengteOppervlakteCmd<Msg extends KaartMsg> {
-  readonly type: "StopMetenLengteOppervlakte";
 }

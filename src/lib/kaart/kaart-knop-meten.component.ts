@@ -1,37 +1,47 @@
 import { Component, Input, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
-import { none, Option, some } from "fp-ts/lib/Option";
-import { Observable } from "rxjs/Observable";
-import * as ol from "openlayers";
 
 import { KaartCmdDispatcher, VacuousDispatcher } from "./kaart-event-dispatcher";
 import { KaartComponentBase } from "./kaart-component-base";
-import { KaartClassicComponent } from "./kaart-classic.component";
-import { KaartInternalMsg, KaartInternalSubMsg } from "./kaart-internal-messages";
-
+import { KaartInternalMsg, KaartInternalSubMsg, kaartLogOnlyWrapper } from "./kaart-internal-messages";
+import * as prt from "./kaart-protocol";
 import * as ke from "./kaart-elementen";
+import { ofType } from "../util/operators";
+import { kaartLogger } from "./log";
 
 @Component({
   selector: "awv-kaart-knop-meten",
   templateUrl: "./kaart-knop-meten.component.html",
   styleUrls: ["./kaart-knop-meten.component.scss"]
 })
-export class KaartTekenLengteOppervlakteLaagComponent extends KaartComponentBase implements OnInit, OnDestroy {
+export class KaartKnopMekenLengteOppervlakteComponent extends KaartComponentBase implements OnInit, OnDestroy {
   @Input() dispatcher: KaartCmdDispatcher<KaartInternalMsg> = VacuousDispatcher;
-  @Input() internalMessage$: Observable<KaartInternalSubMsg> = Observable.never();
+
+  private metende: boolean;
 
   constructor(zone: NgZone) {
     super(zone);
-  }
-
-  ngOnInit(): void {
-    console.log("Start meten component");
+    this.metende = false;
   }
 
   ngOnDestroy(): void {
-    this.dispatcher.dispatch({ type: "StopMetenLengteOppervlakte" });
+    this.stopMetMeten();
   }
 
-  meet(): void {
-    this.dispatcher.dispatch({ type: "BeginMetenLengteOppervlakte" });
+  startMetMeten(): void {
+    this.dispatcher.dispatch({ type: "MetenLengteOppervlakte", meten: true });
+    this.metende = true;
+  }
+
+  stopMetMeten(): void {
+    this.dispatcher.dispatch({ type: "MetenLengteOppervlakte", meten: false });
+    this.metende = false;
+  }
+
+  toggleMeten(): void {
+    if (this.metende) {
+      this.stopMetMeten();
+    } else {
+      this.startMetMeten();
+    }
   }
 }
