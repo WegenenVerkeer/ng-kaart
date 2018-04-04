@@ -1,5 +1,5 @@
-import { List } from "immutable";
-import { none, Option, some, isNone, fromNullable } from "fp-ts/lib/Option";
+import { List, Map } from "immutable";
+import { none, Option, some, isNone, fromNullable, Some } from "fp-ts/lib/Option";
 import * as validation from "fp-ts/lib/Validation";
 import * as array from "fp-ts/lib/Array";
 import { sequence } from "fp-ts/lib/Traversable";
@@ -15,6 +15,7 @@ import { forEach } from "../util/option";
 import { Subscription } from "rxjs";
 import { debounceTime, filter } from "rxjs/operators";
 import { Laaggroep, PositieAanpassing } from "./kaart-protocol-commands";
+import { AbstractZoeker, ZoekResultaten } from "../zoeker";
 
 ///////////////////////////////////
 // Hulpfuncties
@@ -107,6 +108,26 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function valideerLaagTitelBestaatNiet(titel: string): prt.KaartCmdValidation<{}> {
       return fromPredicate(model, (mdl: Model) => !mdl.olLayersOpTitel.has(titel), `Een laag met titel ${titel} bestaat al`);
+    }
+
+    function valideerZoekerBestaatNiet(naam: string): prt.KaartCmdValidation<{}> {
+      return fromPredicate(
+        model,
+        (mdl: Model) => mdl.zoekers.every(zoeker => zoeker.naam() !== naam),
+        `Een zoeker met naam ${naam} bestaat al`
+      );
+    }
+
+    function valideerZoekerBestaat(naam: string): prt.KaartCmdValidation<{}> {
+      return fromPredicate(
+        model,
+        (mdl: Model) => mdl.zoekers.some(zoeker => zoeker.naam() === naam),
+        `Een zoeker met naam ${naam} bestaat niet`
+      );
+    }
+
+    function valideerMinstens1ZoekerGeregistreerd(): prt.KaartCmdValidation<{}> {
+      return fromPredicate(model, (mdl: Model) => mdl.zoekers.length > 0, `Er moet minstens 1 zoeker geregistreerd zijn`);
     }
 
     const valideerIsAchtergrondLaag: (titel: string) => prt.KaartCmdValidation<{}> = (titel: string) =>
@@ -522,6 +543,54 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
+    function voegZoekerToe(cmnd: prt.VoegZoekerToeCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        valideerZoekerBestaatNiet(cmnd.zoeker.naam()).map(() => {
+          return ModelAndEmptyResult({ ...model, zoekers: model.zoekers.concat(cmnd.zoeker) });
+        })
+      );
+    }
+
+    function unsubscribeZoeker(subscription: Subscription, zoekerNaam: string) {
+      // Stuur leeg zoekresultaat voor de zoekers met subscriptions.
+      model.zoekerSubj.next(new ZoekResultaten(zoekerNaam));
+      subscription.unsubscribe();
+    }
+
+    function verwijderZoeker(cmnd: prt.VerwijderZoekerCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        valideerZoekerBestaat(cmnd.zoeker).map(() => {
+          fromNullable(model.zoekerSubscriptions.get(cmnd.zoeker)).map(subscription => unsubscribeZoeker(subscription, cmnd.zoeker));
+
+          // verwijder de zoeker en de subscriptions uit het model.
+          return ModelAndEmptyResult({
+            ...model,
+            zoekers: model.zoekers.filter(zoeker => zoeker.naam() !== cmnd.zoeker),
+            zoekerSubscriptions: model.zoekerSubscriptions.delete(cmnd.zoeker)
+          });
+        })
+      );
+    }
+
+    function zoek(cmnd: prt.ZoekCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        valideerMinstens1ZoekerGeregistreerd().map(() => {
+          // Annuleer bestaande zoekOpdrachten.
+          model.zoekerSubscriptions.forEach((subscription, zoekerNaam) => unsubscribeZoeker(subscription, zoekerNaam));
+          // Stuur zoek comando naar alle geregistreerde zoekers
+          const nieuweSubscriptions = model.zoekers.reduce(
+            (subscriptions, zoeker) =>
+              subscriptions.set(zoeker.naam(), zoeker.zoek(cmnd.input).subscribe(zoekResultaat => model.zoekerSubj.next(zoekResultaat))),
+            Map<string, Subscription>()
+          );
+          return ModelAndEmptyResult({ ...model, zoekerSubscriptions: nieuweSubscriptions });
+        })
+      );
+    }
+
     function handleSubscriptions(cmnd: prt.SubscriptionCmd<Msg>): ModelWithResult<Msg> {
       function subscribe(subscription: Subscription): ModelWithResult<Msg> {
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
@@ -551,6 +620,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             .subscribe(groeplagen => msgConsumer(wrapper(groeplagen.lagen as List<ke.AchtergrondLaag>)))
         );
 
+      function subscribeToZoeker(sub: prt.ZoekerSubscription<Msg>): ModelWithResult<Msg> {
+        const subscription = model.zoekerSubj.subscribe(m => msgConsumer(sub.wrapper(m)));
+        return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
+      }
+
       switch (cmnd.subscription.type) {
         case "Zoominstellingen":
           return subscribeToZoominstellingen(cmnd.subscription);
@@ -560,6 +634,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToAchtergrondTitel(cmnd.subscription);
         case "Achtergrondlagen":
           return subscribeToAchtergrondlagen(cmnd.subscription.wrapper);
+        case "Zoeker":
+          return subscribeToZoeker(cmnd.subscription);
       }
     }
 
@@ -619,6 +695,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return handleUnsubscriptions(cmd);
       case "MeldComponentFout":
         return meldComponentFout(cmd);
+      case "VoegZoekerToe":
+        return voegZoekerToe(cmd);
+      case "VerwijderZoeker":
+        return verwijderZoeker(cmd);
+      case "Zoek":
+        return zoek(cmd);
     }
   };
 }

@@ -115,7 +115,7 @@
 </awv-kaart-classic>
 -->
 
-<h3>Dienstkaart, std interacties, achtergrondselectie</h3>
+<h3>Dienstkaart, std interacties, achtergrondselectie, locatiezoeker</h3>
 <div>
   <button (click)="maakZichtbaar('achtergronden', !isZichtbaar('achtergronden'))">{{isZichtbaar('achtergronden')?'Verberg':'Toon'}}</button>
   <awv-kaart-classic *ngIf="isZichtbaar('achtergronden')" [naam]="'achtergronden'" [mijnLocatieZoom]="8">
@@ -125,6 +125,7 @@
     <awv-kaart-blanco-laag [titel]="'Leeg'"></awv-kaart-blanco-laag>
     <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
     <awv-kaart-knop-achtergrondlaag-kiezer [titels]="['Dienstkaart grijs', 'Dienstkaart kleur']"></awv-kaart-knop-achtergrondlaag-kiezer>
+    <awv-google-locatie-zoeker></awv-google-locatie-zoeker>
   </awv-kaart-classic>
 </div>
 

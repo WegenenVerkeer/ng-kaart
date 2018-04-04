@@ -5,6 +5,7 @@ import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";
 import { Subscription, Wrapper, VoidWrapper, KaartMsg, ValidationWrapper, BareValidationWrapper } from ".";
 import { StyleSelector } from "./kaart-elementen";
+import { AbstractZoeker } from "../zoeker";
 
 export type Command<Msg extends KaartMsg> =
   | SubscriptionCmd<Msg>
@@ -31,7 +32,10 @@ export type Command<Msg extends KaartMsg> =
   | MaakLaagZichtbaarCmd<Msg>
   | MaakLaagOnzichtbaarCmd<Msg>
   | ZetStijlVoorLaagCmd<Msg>
-  | MeldComponentFoutCmd<Msg>;
+  | MeldComponentFoutCmd<Msg>
+  | VoegZoekerToeCmd<Msg>
+  | VerwijderZoekerCmd<Msg>
+  | ZoekCmd<Msg>;
 
 export interface SubscriptionCmd<Msg extends KaartMsg> {
   readonly type: "Subscription";
@@ -178,6 +182,24 @@ export interface ZetStijlVoorLaagCmd<Msg extends KaartMsg> {
 export interface MeldComponentFoutCmd<Msg extends KaartMsg> {
   readonly type: "MeldComponentFout";
   readonly fouten: List<string>;
+}
+
+export interface VoegZoekerToeCmd<Msg extends KaartMsg> {
+  readonly type: "VoegZoekerToe";
+  readonly zoeker: AbstractZoeker;
+  readonly wrapper: BareValidationWrapper<Msg>;
+}
+
+export interface VerwijderZoekerCmd<Msg extends KaartMsg> {
+  readonly type: "VerwijderZoeker";
+  readonly zoeker: string;
+  readonly wrapper: BareValidationWrapper<Msg>;
+}
+
+export interface ZoekCmd<Msg extends KaartMsg> {
+  readonly type: "Zoek";
+  readonly input: string;
+  readonly wrapper: BareValidationWrapper<Msg>;
 }
 
 ////////////////////////

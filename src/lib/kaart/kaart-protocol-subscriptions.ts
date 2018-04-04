@@ -1,11 +1,13 @@
 import { KaartMsg, AchtergrondLaag } from ".";
 import { List } from "immutable";
+import { ZoekResultaten } from "../zoeker";
 
 export type Subscription<Msg extends KaartMsg> =
   | ZoominstellingenSubscription<Msg>
   | MiddelpuntSubscription<Msg>
   | AchtergrondTitelSubscription<Msg>
-  | AchtergrondlagenSubscription<Msg>;
+  | AchtergrondlagenSubscription<Msg>
+  | ZoekerSubscription<Msg>;
 
 export interface Zoominstellingen {
   zoom: number;
@@ -31,6 +33,11 @@ export interface AchtergrondTitelSubscription<Msg> {
 export interface AchtergrondlagenSubscription<Msg> {
   readonly type: "Achtergrondlagen";
   readonly wrapper: (achtergrondlagen: List<AchtergrondLaag>) => Msg;
+}
+
+export interface ZoekerSubscription<Msg> {
+  readonly type: "Zoeker";
+  readonly wrapper: (resultaten: ZoekResultaten) => Msg;
 }
 
 export function ZoominstellingenSubscription<Msg extends KaartMsg>(wrapper: (settings: Zoominstellingen) => Msg): Subscription<Msg> {
@@ -59,6 +66,13 @@ export function AchtergrondlagenSubscription<Msg extends KaartMsg>(
 ): Subscription<Msg> {
   return {
     type: "Achtergrondlagen",
+    wrapper: wrapper
+  };
+}
+
+export function ZoekerSubscription<Msg extends KaartMsg>(wrapper: (resultaten: ZoekResultaten) => Msg): Subscription<Msg> {
+  return {
+    type: "Zoeker",
     wrapper: wrapper
   };
 }

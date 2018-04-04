@@ -14,20 +14,14 @@ export class ZoekResultaten {
   resultaten: ZoekResultaat[] = [];
   fouten: string[] = [];
 
-  constructor(error?: string) {
+  constructor(private zoeker: string, error?: string) {
     if (error != null) {
       this.fouten.push(error);
     }
   }
-
-  merge(ander: ZoekResultaten): ZoekResultaten {
-    const resultaat: ZoekResultaten = new ZoekResultaten();
-    resultaat.resultaten = this.resultaten.concat(ander.resultaten);
-    resultaat.fouten = this.fouten.concat(ander.fouten);
-    return resultaat;
-  }
 }
 
 export interface AbstractZoeker {
+  naam(): string;
   zoek(zoekterm: string): Observable<ZoekResultaten>;
 }

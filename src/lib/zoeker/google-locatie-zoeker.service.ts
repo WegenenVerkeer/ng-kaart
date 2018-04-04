@@ -101,7 +101,7 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
 
   zoek(zoekterm): Observable<ZoekResultaten> {
     if (zoekterm.trim().length === 0) {
-      return Observable.of(new ZoekResultaten());
+      return Observable.of(new ZoekResultaten(this.naam()));
     }
     const params: URLSearchParams = new URLSearchParams("", new EncodeAllesQueryEncoder());
     params.set("query", zoekterm);
@@ -115,7 +115,7 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
   }
 
   parseResult(response: Response): Observable<ZoekResultaten> {
-    const zoekResultaten = new ZoekResultaten();
+    const zoekResultaten = new ZoekResultaten(this.naam());
 
     // parse result
     const resultaten = response.json();
@@ -293,7 +293,7 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
         // toon http foutmelding indien geen 200 teruggehad
         error = `Fout bij opvragen locatie: ${response.responseText || response.statusText || response}`;
     }
-    return Observable.of(new ZoekResultaten(error));
+    return Observable.of(new ZoekResultaten(this.naam(), error));
   }
 
   private geocode(omschrijving): Promise<ExtendedGeocoderResult[]> {
@@ -448,5 +448,9 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
     node.src = googleUrl;
     node.type = "text/javascript";
     document.getElementsByTagName("head")[0].appendChild(node);
+  }
+
+  naam(): string {
+    return "GoogleLocatieZoeker";
   }
 }
