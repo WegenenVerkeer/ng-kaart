@@ -41,5 +41,9 @@ export const emitSome: <A>(o: Observable<Option<A>>) => Observable<A> = <A>(o: O
     map(v => v.value) // omwill van filter hierboven nooit undefined
   );
 
-export const ofType = <A extends { type: string }, B extends A>(type: string) => (o: Observable<A>) =>
-  o.pipe(filter(a => a.type === type)) as Observable<B>;
+export interface TypedRecord {
+  type: string;
+}
+
+export const ofType = <Target extends TypedRecord>(type: string) => (o: Observable<TypedRecord>) =>
+  o.pipe(filter(a => a.type === type)) as Observable<Target>;

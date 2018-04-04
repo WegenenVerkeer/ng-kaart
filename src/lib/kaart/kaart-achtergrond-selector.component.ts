@@ -10,11 +10,14 @@ import {
   KaartInternalMsg,
   KaartInternalSubMsg,
   achtergrondlagenGezetWrapper,
-  forgetWrapper,
+  kaartLogOnlyWrapper,
   achtergrondtitelGezetWrapper,
   AchtergrondlagenGezetMsg,
-  AchtergrondtitelGezetMsg
+  AchtergrondtitelGezetMsg,
+  subscribedWrapper,
+  SubscribedMsg
 } from "./kaart-internal-messages";
+import { kaartLogger } from "./log";
 import { ofType } from "../util/operators";
 import { observeOnAngular } from "../util/observe-on-angular";
 import * as prt from "./kaart-protocol";
@@ -72,7 +75,7 @@ const Invisible = "invisible";
   changeDetection: ChangeDetectionStrategy.OnPush // Bij default is er een endless loop van updates
 })
 export class KaartAchtergrondSelectorComponent extends KaartComponentBase implements OnInit, OnDestroy {
-  // component state is aanvaardbaar zolang de html view er niet direct aan komt
+  private readonly subscriptions: prt.SubscriptionResult[] = [];
   private displayMode: DisplayMode = DisplayMode.SHOWING_STATUS;
   achtergrondTitel = "";
 
@@ -86,27 +89,19 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
   }
 
   ngOnInit() {
-    this.dispatcher.dispatch({
-      type: "Subscription",
-      subscription: prt.AchtergrondlagenSubscription(achtergrondlagenGezetWrapper),
-      wrapper: forgetWrapper // TODO we moeten hier de subscription opvangen
-    });
+    this.dispatcher.dispatch(prt.SubscriptionCmd(prt.AchtergrondlagenSubscription(achtergrondlagenGezetWrapper), subscribedWrapper({})));
 
-    this.dispatcher.dispatch({
-      type: "Subscription",
-      subscription: prt.AchtergrondTitelSubscription(achtergrondtitelGezetWrapper),
-      wrapper: forgetWrapper // TODO we moeten hier de subscription opvangen
-    });
+    this.dispatcher.dispatch(prt.SubscriptionCmd(prt.AchtergrondTitelSubscription(achtergrondtitelGezetWrapper), subscribedWrapper({})));
 
     this.backgroundTiles$ = this.internalMessage$.pipe(
-      ofType<KaartInternalSubMsg, AchtergrondlagenGezetMsg>("AchtergrondlagenGezet"),
+      ofType<AchtergrondlagenGezetMsg>("AchtergrondlagenGezet"),
       map(a => a.achtergrondlagen.toArray()),
       observeOnAngular(this.zone)
     );
 
     this.internalMessage$
       .pipe(
-        ofType<KaartInternalSubMsg, AchtergrondtitelGezetMsg>("AchtergrondtitelGezet"), //
+        ofType<AchtergrondtitelGezetMsg>("AchtergrondtitelGezet"), //
         map(a => a.titel),
         observeOnAngular(this.zone)
       )
@@ -114,9 +109,20 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
         this.achtergrondTitel = titel;
         this.cdr.detectChanges(); // We zitten nochthans in observeOnAngular.
       });
+
+    this.internalMessage$
+      .pipe(ofType<SubscribedMsg>("Subscribed")) //
+      .subscribe(sm =>
+        sm.subscription.fold(
+          kaartLogger.error, //
+          sub => this.subscriptions.push(sub)
+        )
+      );
   }
 
   ngOnDestroy() {
+    this.subscriptions.forEach(sub => this.dispatcher.dispatch(prt.UnsubscriptionCmd(sub)));
+    this.subscriptions.splice(0, this.subscriptions.length);
     super.ngOnDestroy();
   }
 
@@ -128,7 +134,7 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
       // inklappen.
       this.displayMode = DisplayMode.SHOWING_STATUS;
       if (laag.titel !== this.achtergrondTitel) {
-        this.dispatcher.dispatch({ type: "KiesAchtergrond", titel: laag.titel, wrapper: forgetWrapper });
+        this.dispatcher.dispatch(prt.KiesAchtergrondCmd(laag.titel, kaartLogOnlyWrapper));
         this.achtergrondTitel = laag.titel;
       }
     } else {

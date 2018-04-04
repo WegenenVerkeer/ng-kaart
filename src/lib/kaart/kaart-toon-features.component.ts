@@ -5,7 +5,8 @@ import * as ol from "openlayers";
 
 import { KaartVectorLaagComponent } from "./kaart-vector-laag.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
-import { forgetWrapper } from "./kaart-internal-messages";
+import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
+import * as prt from "./kaart-protocol";
 
 @Component({
   selector: "awv-kaart-features-laag",
@@ -45,6 +46,6 @@ export class KaartFeaturesLaagComponent extends KaartVectorLaagComponent impleme
   }
 
   private dispatchVervangFeatures(features: List<ol.Feature>) {
-    this.dispatch({ type: "VervangFeatures", titel: this.titel, features: features, wrapper: forgetWrapper });
+    this.dispatch(prt.VervangFeaturesCmd(this.titel, features, kaartLogOnlyWrapper));
   }
 }

@@ -386,11 +386,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function veranderMiddelpuntCmd(cmnd: prt.VeranderMiddelpuntCmd<Msg>): ModelWithResult<Msg> {
       model.map.getView().setCenter(cmnd.coordinate);
-      return ModelWithResult({
-        ...model,
-        middelpunt: some(model.map.getView().getCenter()), // TODO hebben we dat echt nodig? Komt toch uit listener?
-        extent: some(model.map.getView().calculateExtent(model.map.getSize())) // TODO idem (evt listener maken)
-      });
+      return ModelWithResult(model);
     }
 
     function veranderZoomniveauCmd(cmnd: prt.VeranderZoomCmd<Msg>): ModelWithResult<Msg> {
@@ -405,12 +401,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function veranderExtentCmd(cmnd: prt.VeranderExtentCmd<Msg>): ModelWithResult<Msg> {
       model.map.getView().fit(cmnd.extent);
-      return ModelWithResult({
-        ...model,
-        middelpunt: some(model.map.getView().getCenter()),
-        zoom: model.map.getView().getZoom(),
-        extent: some(model.map.getView().calculateExtent(model.map.getSize()))
-      });
+      return ModelWithResult(model);
     }
 
     function veranderViewportCmd(cmnd: prt.VeranderViewportCmd<Msg>): ModelWithResult<Msg> {
@@ -425,11 +416,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
       model.map.setSize(cmnd.size);
       model.map.updateSize();
-      return ModelWithResult({
-        ...model,
-        size: some(model.map.getSize()),
-        extent: some(model.map.getView().calculateExtent(model.map.getSize()))
-      });
+      return ModelWithResult(model);
     }
 
     function focusOpKaartCmd(cmnd: prt.ZetFocusOpKaartCmd<Msg>): ModelWithResult<Msg> {
@@ -591,7 +578,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
-    function handleSubscriptions(cmnd: prt.SubscriptionCmd<Msg>): ModelWithResult<Msg> {
+    function handleSubscriptions(cmnd: prt.SubscribeCmd<Msg>): ModelWithResult<Msg> {
       function subscribe(subscription: Subscription): ModelWithResult<Msg> {
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
       }
@@ -639,7 +626,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
     }
 
-    function handleUnsubscriptions(cmnd: prt.UnsubscriptionCmd<Msg>): ModelWithResult<Msg> {
+    function handleUnsubscriptions(cmnd: prt.UnsubscribeCmd<Msg>): ModelWithResult<Msg> {
       cmnd.subscription.unsubscribe();
       return ModelWithResult(model);
     }

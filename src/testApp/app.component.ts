@@ -8,6 +8,8 @@ import { CoordinatenService, KaartClassicComponent } from "../lib/kaart";
 import { kaartLogger, definitieToStyle } from "../lib/public_api";
 import { AWV0StyleFunctionDescription, definitieToStyleFunction } from "../lib/stijl";
 import { offsetStyleFunction } from "../lib/stijl/offset-stijl-function";
+import * as prt from "../lib/kaart/kaart-protocol";
+import { kaartLogOnlyWrapper } from "../lib/kaart/kaart-internal-messages";
 
 @Component({
   selector: "awv-ng-kaart-test-app",
@@ -180,9 +182,9 @@ export class AppComponent {
   }
 
   verplaatsLagen() {
-    // Dit werkt niet, maar ik laat het voorlopig staan tot de inspiratie komt om het te laten werken.
+    // TODO: Dit werkt niet, maar ik laat het voorlopig staan tot de inspiratie komt om het te laten werken.
     // Het probleem is dat het Subject waarnaar gedispatched wordt een ander is dan dat dat door de kaartcomponent
     // opgepikt wordt. Een issue in de volgorde van initialisatie???
-    // this.verplaatsKaart.dispatch(new VerplaatsLaag("dienstkaart-kleur", this.naarPositie));
+    this.verplaatsKaart.dispatch(prt.VerplaatsLaagCmd("dienstkaart-kleur", this.naarPositie, kaartLogOnlyWrapper));
   }
 }

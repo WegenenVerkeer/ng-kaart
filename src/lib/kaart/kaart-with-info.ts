@@ -25,10 +25,6 @@ export class KaartWithInfo {
   readonly schaal: Option<ol.control.Control> = none;
   readonly fullScreen: Option<ol.control.FullScreen> = none;
   readonly stdInteracties: List<ol.interaction.Interaction> = List(); // TODO beter gewoon interacties
-  readonly middelpunt: Option<ol.Coordinate> = none;
-  readonly zoom: number = -1;
-  readonly extent: Option<ol.Extent> = none;
-  readonly size: Option<[number, number]> = none;
   readonly scrollZoomOnFocus: boolean = false;
   readonly showBackgroundSelector: boolean = false;
   readonly zoominstellingenSubj: Subject<Zoominstellingen> = new ReplaySubject<Zoominstellingen>(1);
@@ -47,10 +43,6 @@ export class KaartWithInfo {
     readonly container: any,
     readonly map: ol.Map
   ) {
-    this.middelpunt = some(map.getView().getCenter());
-    this.zoom = map.getView().getZoom();
-    this.extent = some(map.getView().calculateExtent(map.getSize()));
-    this.size = some(map.getSize());
     const zetInstellingen = () =>
       this.zoominstellingenSubj.next({
         zoom: map.getView().getZoom(),

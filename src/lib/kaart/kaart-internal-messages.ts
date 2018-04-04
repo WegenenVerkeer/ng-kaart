@@ -1,12 +1,12 @@
 import { Option, some, none } from "fp-ts/lib/Option";
-
-import { kaartLogger } from "./log";
-import { Zoominstellingen } from "./kaart-protocol";
-import * as prt from "./kaart-protocol";
-import { AchtergrondLaag } from ".";
 import { List } from "immutable";
 
-export type KaartInternalSubMsg = ZoominstellingenGezetMsg | AchtergrondtitelGezetMsg | AchtergrondlagenGezetMsg;
+import { kaartLogger } from "./log";
+import { Zoominstellingen, SubscriptionResult, KaartCmdValidation } from "./kaart-protocol";
+import * as prt from "./kaart-protocol";
+import { AchtergrondLaag } from "./kaart-elementen";
+
+export type KaartInternalSubMsg = ZoominstellingenGezetMsg | AchtergrondtitelGezetMsg | AchtergrondlagenGezetMsg | SubscribedMsg;
 
 export interface KaartInternalMsg extends prt.KaartMsg {
   type: "KaartInternal";
@@ -20,8 +20,11 @@ function KaartInternalMsg(payload: Option<KaartInternalSubMsg>): KaartInternalMs
   };
 }
 
-// Dit is echt "fire and forget". Geen enkele informatie komt terug ook al zou dat kunnen
-export const forgetWrapper: prt.ValidationWrapper<any, KaartInternalMsg> = (v: prt.KaartCmdValidation<any>) => {
+/**
+ * Dit is echt "fire and forget". Geen enkele informatie komt terug ook al zou dat kunnen.
+ * Enkel de fouten worden gelogd.
+ */
+export const kaartLogOnlyWrapper: prt.ValidationWrapper<any, KaartInternalMsg> = (v: prt.KaartCmdValidation<any>) => {
   if (v.isFailure()) {
     kaartLogger.error("Een intern command gaf een fout", v.value);
   }
@@ -64,3 +67,17 @@ function AchtergrondlagenGezetMsg(achtergrondlagen: List<AchtergrondLaag>): Acht
 }
 
 export const achtergrondlagenGezetWrapper = (lagen: List<AchtergrondLaag>) => KaartInternalMsg(some(AchtergrondlagenGezetMsg(lagen)));
+
+export interface SubscribedMsg {
+  type: "Subscribed";
+  subscription: KaartCmdValidation<SubscriptionResult>;
+  reference: any;
+}
+
+function SubscribedMsg(subscription: KaartCmdValidation<SubscriptionResult>, reference: any): SubscribedMsg {
+  return { type: "Subscribed", reference: reference, subscription: subscription };
+}
+
+export const subscribedWrapper: (ref: any) => (v: KaartCmdValidation<SubscriptionResult>) => KaartInternalMsg = (reference: any) => (
+  v: prt.KaartCmdValidation<SubscriptionResult>
+) => KaartInternalMsg(some(SubscribedMsg(v, reference)));
