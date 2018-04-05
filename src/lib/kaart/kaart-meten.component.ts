@@ -4,6 +4,7 @@ import { Observable } from "rxjs/Observable";
 import { map } from "rxjs/operators";
 import * as ol from "openlayers";
 
+import { KaartComponent } from "./kaart.component";
 import { KaartCmdDispatcher, VacuousDispatcher } from "./kaart-event-dispatcher";
 import { KaartComponentBase } from "./kaart-component-base";
 import { KaartClassicComponent } from "./kaart-classic.component";
@@ -45,7 +46,8 @@ const MetenStyle = new ol.style.Style({
 @Component({
   selector: "awv-kaart-meten",
   template: "<ng-content></ng-content>",
-  styleUrls: ["./kaart-meten.component.scss"]
+  styleUrls: ["./kaart-meten.component.scss"],
+  encapsulation: ViewEncapsulation.None
 })
 export class KaartMetenLengteOppervlakteLaagComponent extends KaartComponentBase implements OnInit, OnDestroy {
   private metenSubscription: Subscription;
@@ -53,27 +55,27 @@ export class KaartMetenLengteOppervlakteLaagComponent extends KaartComponentBase
   geometries$: Observable<ol.geom.Geometry> = Observable.empty();
 
   @Input() focusVoorZoom = false;
-  @Input() dispatcher: KaartCmdDispatcher<KaartInternalMsg> = VacuousDispatcher;
-  @Input() internalMessage$: Observable<KaartInternalSubMsg> = Observable.never();
 
   private draw: ol.interaction.Draw;
   private overlays: Array<ol.Overlay> = [];
 
-  constructor(zone: NgZone) {
+  constructor(private readonly kaartComponent: KaartComponent, zone: NgZone) {
     super(zone);
   }
 
   ngOnInit(): void {
-    this.dispatcher.dispatch(
+    this.kaartComponent.internalCmdDispatcher.dispatch(
       prt.SubscriptionCmd(prt.MetenLengteOppervlakteSubscription(metenLengteOppervlakteWrapper), subscribedWrapper({}))
     );
-    this.metenSubscription = this.internalMessage$.pipe(ofType<MetenLengteOppervlakteMsg>("MetenLengteOppervlakte")).subscribe(msg => {
-      if (msg.meten) {
-        this.startMetMeten();
-      } else {
-        this.stopMetMeten();
-      }
-    });
+    this.metenSubscription = this.kaartComponent.internalMessage$
+      .pipe(ofType<MetenLengteOppervlakteMsg>("MetenLengteOppervlakte"))
+      .subscribe(msg => {
+        if (msg.meten) {
+          this.startMetMeten();
+        } else {
+          this.stopMetMeten();
+        }
+      });
   }
 
   ngOnDestroy(): void {
@@ -82,10 +84,8 @@ export class KaartMetenLengteOppervlakteLaagComponent extends KaartComponentBase
   }
 
   startMetMeten(): void {
-    this.dispatcher.dispatch(prt.SubscriptionCmd(prt.GeometryChangedSubscription(geometryChangedWrapper), subscribedWrapper({})));
-
     const source = new ol.source.Vector();
-    this.dispatcher.dispatch({
+    this.kaartComponent.internalCmdDispatcher.dispatch({
       type: "VoegLaagToe",
       positie: 0,
       laag: this.createLayer(source),
@@ -94,23 +94,27 @@ export class KaartMetenLengteOppervlakteLaagComponent extends KaartComponentBase
       wrapper: kaartLogOnlyWrapper
     });
 
-    this.dispatcher.dispatch(prt.VerwijderStandaardInteractiesCmd(kaartLogOnlyWrapper));
+    this.kaartComponent.internalCmdDispatcher.dispatch(prt.VerwijderStandaardInteractiesCmd(kaartLogOnlyWrapper));
 
     this.draw = this.createDrawInteraction(source);
 
-    this.dispatcher.dispatch({
+    this.kaartComponent.internalCmdDispatcher.dispatch({
       type: "VoegInteractieToe",
       interactie: this.draw
     });
 
-    this.geometries$ = this.internalMessage$.pipe(ofType<GeometryChangedMsg>("GeometryChanged"), map(msg => msg.geometry));
+    this.kaartComponent.internalCmdDispatcher.dispatch(
+      prt.SubscriptionCmd(prt.GeometryChangedSubscription(geometryChangedWrapper), subscribedWrapper({}))
+    );
+
+    this.geometries$ = this.kaartComponent.internalMessage$.pipe(ofType<GeometryChangedMsg>("GeometryChanged"), map(msg => msg.geometry));
 
     this.geometries$.subscribe(geometry => {
       console.log("naar Geoloket");
       console.log(geometry);
     });
 
-    this.internalMessage$
+    this.kaartComponent.internalMessage$
       .pipe(ofType<SubscribedMsg>("Subscribed")) //
       .subscribe(sm =>
         sm.subscription.fold(
@@ -118,23 +122,21 @@ export class KaartMetenLengteOppervlakteLaagComponent extends KaartComponentBase
           sub => this.subscriptions.push(sub)
         )
       );
-
-    this.internalMessage$.pipe();
   }
 
   stopMetMeten(): void {
-    this.dispatcher.dispatch({
+    this.kaartComponent.internalCmdDispatcher.dispatch({
       type: "VerwijderInteractie",
       interactie: this.draw
     });
-    this.dispatcher.dispatch({
+    this.kaartComponent.internalCmdDispatcher.dispatch({
       type: "VerwijderOverlays",
       overlays: this.overlays
     });
-    this.dispatcher.dispatch(prt.VerwijderLaagCmd(MetenLaagNaam, kaartLogOnlyWrapper));
-    this.dispatcher.dispatch(prt.VoegStandaardInteractiesToeCmd(this.focusVoorZoom, kaartLogOnlyWrapper));
+    this.kaartComponent.internalCmdDispatcher.dispatch(prt.VerwijderLaagCmd(MetenLaagNaam, kaartLogOnlyWrapper));
+    this.kaartComponent.internalCmdDispatcher.dispatch(prt.VoegStandaardInteractiesToeCmd(this.focusVoorZoom, kaartLogOnlyWrapper));
 
-    this.subscriptions.forEach(sub => this.dispatcher.dispatch(prt.UnsubscriptionCmd(sub)));
+    this.subscriptions.forEach(sub => this.kaartComponent.internalCmdDispatcher.dispatch(prt.UnsubscriptionCmd(sub)));
     this.subscriptions.splice(0, this.subscriptions.length);
   }
 
@@ -159,7 +161,7 @@ export class KaartMetenLengteOppervlakteLaagComponent extends KaartComponentBase
       positioning: "bottom-center"
     });
 
-    this.dispatcher.dispatch({
+    this.kaartComponent.internalCmdDispatcher.dispatch({
       type: "VoegOverlayToe",
       overlay: measureTooltip
     });
@@ -218,7 +220,7 @@ export class KaartMetenLengteOppervlakteLaagComponent extends KaartComponentBase
               // console.log(output);
               tooltipCoord = geometry.getLastCoordinate();
             }
-            this.dispatcher.dispatch(prt.PublishGeometryCmd(geometry));
+            this.kaartComponent.internalCmdDispatcher.dispatch(prt.PublishGeometryCmd(geometry));
             measureTooltipElement.innerHTML = output;
             measureTooltip.setPosition(tooltipCoord);
           },

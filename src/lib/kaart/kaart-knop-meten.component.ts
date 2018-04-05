@@ -7,18 +7,17 @@ import * as prt from "./kaart-protocol";
 import * as ke from "./kaart-elementen";
 import { ofType } from "../util/operators";
 import { kaartLogger } from "./log";
+import { KaartClassicComponent } from "./kaart-classic.component";
 
 @Component({
   selector: "awv-kaart-knop-meten",
   templateUrl: "./kaart-knop-meten.component.html",
   styleUrls: ["./kaart-knop-meten.component.scss"]
 })
-export class KaartKnopMekenLengteOppervlakteComponent extends KaartComponentBase implements OnInit, OnDestroy {
-  @Input() dispatcher: KaartCmdDispatcher<KaartInternalMsg> = VacuousDispatcher;
-
+export class KaartKnopMetenLengteOppervlakteComponent extends KaartComponentBase implements OnInit, OnDestroy {
   private metende: boolean;
 
-  constructor(zone: NgZone) {
+  constructor(zone: NgZone, private readonly kaartClassicComponent: KaartClassicComponent) {
     super(zone);
     this.metende = false;
   }
@@ -28,12 +27,12 @@ export class KaartKnopMekenLengteOppervlakteComponent extends KaartComponentBase
   }
 
   startMetMeten(): void {
-    this.dispatcher.dispatch({ type: "MetenLengteOppervlakte", meten: true });
+    this.kaartClassicComponent.dispatch({ type: "MetenLengteOppervlakte", meten: true });
     this.metende = true;
   }
 
   stopMetMeten(): void {
-    this.dispatcher.dispatch({ type: "MetenLengteOppervlakte", meten: false });
+    this.kaartClassicComponent.dispatch({ type: "MetenLengteOppervlakte", meten: false });
     this.metende = false;
   }
 

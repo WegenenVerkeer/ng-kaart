@@ -66,6 +66,8 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
   internalMessage$: Observable<KaartInternalSubMsg> = Observable.empty();
 
+  private readonly kaartModelObsSubj = new ReplaySubject<Observable<KaartWithInfo>>(1);
+
   private static configureerLambert72() {
     ol.proj.setProj4(proj4);
     proj4.defs(
@@ -127,6 +129,8 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
         share()
       );
 
+      this.kaartModelObsSubj.next(kaartModel$);
+
       // subscribe op het model om de zaak aan gang te zwengelen
       kaartModel$.subscribe(
         model => {
@@ -170,5 +174,9 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
   get message$(): Observable<prt.KaartMsg> {
     return this.msgSubj;
+  }
+
+  get kaartModel$$(): Observable<Observable<KaartWithInfo>> {
+    return this.kaartModelObsSubj;
   }
 }

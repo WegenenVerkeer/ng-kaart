@@ -8,10 +8,9 @@
       <awv-kaart-mijn-locatie [zoomniveau]="mijnLocatieZoom" [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-mijn-locatie>
     </div>
     <awv-kaart-zoom [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-zoom>
+    <awv-kaart-meten></awv-kaart-meten>
     <div *ngIf="meten">
-      <awv-kaart-knop-meten [dispatcher]="internalCmdDispatcher"></awv-kaart-knop-meten>
-      <awv-kaart-meten [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-meten>
+      <awv-kaart-knop-meten></awv-kaart-knop-meten>
     </div>
-
   </div>
 </div>
