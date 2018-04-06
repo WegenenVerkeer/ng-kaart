@@ -29,7 +29,8 @@ import { KaartStandaardKnoppenComponent } from "./kaart-standaard-knoppen.compon
 import { KaartAchtergrondSelectorComponent } from "./kaart-achtergrond-selector.component";
 import { KaartAchtergrondTileComponent } from "./kaart-achtergrond-tile.component";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
-import { MatButtonModule, MatIconModule } from "@angular/material";
+import { MatButtonModule, MatIconModule, MatButtonToggleModule } from "@angular/material";
+import { HttpClientModule } from "@angular/common/http";
 
 const components: any[] = [
   KaartComponent,
@@ -109,7 +110,7 @@ export const defaultKaartConfig: KaartConfig = {
 };
 
 @NgModule({
-  imports: [CommonModule, ClickOutsideModule, MatButtonModule, MatIconModule],
+  imports: [CommonModule, ClickOutsideModule, MatButtonModule, MatIconModule, MatButtonToggleModule, HttpClientModule],
   declarations: [components],
   exports: [components],
   providers: [CoordinatenService, ReplaySubjectKaartCmdDispatcher]
