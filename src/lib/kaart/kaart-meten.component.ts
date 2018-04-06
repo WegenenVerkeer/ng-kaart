@@ -54,7 +54,6 @@ const MetenStyle = new ol.style.Style({
 export class KaartMetenLengteOppervlakteLaagComponent extends KaartComponentBase implements OnInit, OnDestroy {
   private metenSubscription: Subscription;
   private readonly subscriptions: prt.SubscriptionResult[] = [];
-  geometries$: Observable<ol.geom.Geometry> = Observable.empty();
 
   private focusVoorZoom = false;
   private focusVoorZoomSubscription: Subscription;
@@ -119,13 +118,6 @@ export class KaartMetenLengteOppervlakteLaagComponent extends KaartComponentBase
     this.kaartComponent.internalCmdDispatcher.dispatch(
       prt.SubscriptionCmd(prt.GeometryChangedSubscription(geometryChangedWrapper), subscribedWrapper({}))
     );
-
-    this.geometries$ = this.kaartComponent.internalMessage$.pipe(ofType<GeometryChangedMsg>("GeometryChanged"), map(msg => msg.geometry));
-
-    this.geometries$.subscribe(geometry => {
-      console.log("naar Geoloket");
-      console.log(geometry);
-    });
 
     this.kaartComponent.internalMessage$
       .pipe(ofType<SubscribedMsg>("Subscribed")) //
