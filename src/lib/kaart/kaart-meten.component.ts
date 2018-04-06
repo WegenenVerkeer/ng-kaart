@@ -1,7 +1,8 @@
 import { Component, Input, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 import { none, Option, some } from "fp-ts/lib/Option";
+import { Subject, ReplaySubject, Subscription } from "rxjs";
 import { Observable } from "rxjs/Observable";
-import { map } from "rxjs/operators";
+import { map, distinctUntilChanged, concatAll, mergeAll } from "rxjs/operators";
 import * as ol from "openlayers";
 
 import { KaartComponent } from "./kaart.component";
@@ -22,9 +23,10 @@ import {
 import * as prt from "./kaart-protocol";
 import * as ke from "./kaart-elementen";
 import { ofType } from "../util/operators";
+import { forEach } from "../util/option";
 import { kaartLogger } from "./log";
 import { MetenLengteOppervlakteCmd } from "./kaart-protocol";
-import { Subscription } from "rxjs";
+import { KaartWithInfo } from "./kaart-with-info";
 
 const MetenLaagNaam = "Meten afstand en oppervlakte";
 const MetenStyle = new ol.style.Style({
@@ -54,7 +56,10 @@ export class KaartMetenLengteOppervlakteLaagComponent extends KaartComponentBase
   private readonly subscriptions: prt.SubscriptionResult[] = [];
   geometries$: Observable<ol.geom.Geometry> = Observable.empty();
 
-  @Input() focusVoorZoom = false;
+  private focusVoorZoom = false;
+  private focusVoorZoomSubscription: Subscription;
+
+  private map: ol.Map;
 
   private draw: ol.interaction.Draw;
   private overlays: Array<ol.Overlay> = [];
@@ -64,6 +69,13 @@ export class KaartMetenLengteOppervlakteLaagComponent extends KaartComponentBase
   }
 
   ngOnInit(): void {
+    // TODO geen casting meer in RxJS 6
+    const kaartObs: Observable<KaartWithInfo> = (this.kaartComponent.kaartModel$$.pipe(concatAll()) as any) as Observable<KaartWithInfo>;
+
+    this.focusVoorZoomSubscription = kaartObs
+      .pipe(map(kaart => kaart.scrollZoomOnFocus), distinctUntilChanged())
+      .subscribe(scrollZoomOnFocus => (this.focusVoorZoom = scrollZoomOnFocus));
+
     this.kaartComponent.internalCmdDispatcher.dispatch(
       prt.SubscriptionCmd(prt.MetenLengteOppervlakteSubscription(metenLengteOppervlakteWrapper), subscribedWrapper({}))
     );
@@ -81,6 +93,7 @@ export class KaartMetenLengteOppervlakteLaagComponent extends KaartComponentBase
   ngOnDestroy(): void {
     this.stopMetMeten();
     this.metenSubscription.unsubscribe();
+    this.focusVoorZoomSubscription.unsubscribe();
   }
 
   startMetMeten(): void {
