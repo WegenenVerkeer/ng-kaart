@@ -509,11 +509,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
-    function publishGeometry(cmnd: prt.PublishGeometryCmd<Msg>): ModelWithResult<Msg> {
-      model.geometryChangedSubj.next(cmnd.geometry);
-      return ModelWithResult(model);
-    }
-
     function metenLengteOppervlakte(cmnd: prt.MetenLengteOppervlakteCmd<Msg>): ModelWithResult<Msg> {
       model.metenLengteOppervlakteSubj.next(cmnd.meten);
       return ModelWithResult(model);
@@ -660,8 +655,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return voegOverlayToe(cmd);
       case "VerwijderOverlays":
         return verwijderOverlays(cmd);
-      case "PublishGeometry":
-        return publishGeometry(cmd);
     }
   };
 }

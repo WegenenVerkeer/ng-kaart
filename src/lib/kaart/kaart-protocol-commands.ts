@@ -37,7 +37,6 @@ export type Command<Msg extends KaartMsg> =
   | VerwijderInteractieCmd<Msg>
   | VoegOverlayToeCmd<Msg>
   | VerwijderOverlaysCmd<Msg>
-  | PublishGeometryCmd<Msg>
   | MetenLengteOppervlakteCmd<Msg>;
 
 // SubscriptionResult is maar een type alias, maar ook een encapsulatie naar clients toe
@@ -215,11 +214,6 @@ export interface VerwijderOverlaysCmd<Msg extends KaartMsg> {
   readonly overlays: Array<ol.Overlay>;
 }
 
-export interface PublishGeometryCmd<Msg extends KaartMsg> {
-  readonly type: "PublishGeometry";
-  readonly geometry: ol.geom.Geometry;
-}
-
 ////////////////////////
 // constructor functies
 //
@@ -349,13 +343,6 @@ export function VerwijderOverlaysCmd<Msg extends KaartMsg>(overlays: Array<ol.Ov
   return {
     type: "VerwijderOverlays",
     overlays: overlays
-  };
-}
-
-export function PublishGeometryCmd<Msg extends KaartMsg>(geometry: ol.geom.Geometry): PublishGeometryCmd<Msg> {
-  return {
-    type: "PublishGeometry",
-    geometry: geometry
   };
 }
 

@@ -55,8 +55,9 @@ export class KaartMetenLengteOppervlakteLaagComponent extends KaartComponentBase
   private readonly subscriptions: prt.SubscriptionResult[] = [];
 
   private focusVoorZoom = false;
-
   private map: ol.Map;
+
+  private changedGeometriesSubj: Subject<ol.geom.Geometry>;
 
   private draw: ol.interaction.Draw;
   private overlays: Array<ol.Overlay> = [];
@@ -73,6 +74,10 @@ export class KaartMetenLengteOppervlakteLaagComponent extends KaartComponentBase
     kaartObs
       .pipe(map(kaart => kaart.scrollZoomOnFocus), distinctUntilChanged())
       .subscribe(scrollZoomOnFocus => (this.focusVoorZoom = scrollZoomOnFocus));
+
+    kaartObs
+      .pipe(map(kaart => kaart.geometryChangedSubj), distinctUntilChanged())
+      .subscribe(gcSubj => (this.changedGeometriesSubj = gcSubj));
 
     this.kaartComponent.internalCmdDispatcher.dispatch(
       prt.SubscriptionCmd(prt.MetenLengteOppervlakteSubscription(metenLengteOppervlakteWrapper), subscribedWrapper({}))
@@ -220,7 +225,7 @@ export class KaartMetenLengteOppervlakteLaagComponent extends KaartComponentBase
               // console.log(output);
               tooltipCoord = geometry.getLastCoordinate();
             }
-            this.kaartComponent.internalCmdDispatcher.dispatch(prt.PublishGeometryCmd(geometry));
+            this.changedGeometriesSubj.next(geometry);
             measureTooltipElement.innerHTML = output;
             measureTooltip.setPosition(tooltipCoord);
           },
