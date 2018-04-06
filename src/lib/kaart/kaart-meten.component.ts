@@ -52,11 +52,9 @@ const MetenStyle = new ol.style.Style({
   encapsulation: ViewEncapsulation.None
 })
 export class KaartMetenLengteOppervlakteLaagComponent extends KaartComponentBase implements OnInit, OnDestroy {
-  private metenSubscription: Subscription;
   private readonly subscriptions: prt.SubscriptionResult[] = [];
 
   private focusVoorZoom = false;
-  private focusVoorZoomSubscription: Subscription;
 
   private map: ol.Map;
 
@@ -70,29 +68,26 @@ export class KaartMetenLengteOppervlakteLaagComponent extends KaartComponentBase
   ngOnInit(): void {
     // TODO geen casting meer in RxJS 6
     const kaartObs: Observable<KaartWithInfo> = (this.kaartComponent.kaartModel$$.pipe(concatAll()) as any) as Observable<KaartWithInfo>;
+    this.bindToLifeCycle(kaartObs);
 
-    this.focusVoorZoomSubscription = kaartObs
+    kaartObs
       .pipe(map(kaart => kaart.scrollZoomOnFocus), distinctUntilChanged())
       .subscribe(scrollZoomOnFocus => (this.focusVoorZoom = scrollZoomOnFocus));
 
     this.kaartComponent.internalCmdDispatcher.dispatch(
       prt.SubscriptionCmd(prt.MetenLengteOppervlakteSubscription(metenLengteOppervlakteWrapper), subscribedWrapper({}))
     );
-    this.metenSubscription = this.kaartComponent.internalMessage$
-      .pipe(ofType<MetenLengteOppervlakteMsg>("MetenLengteOppervlakte"))
-      .subscribe(msg => {
-        if (msg.meten) {
-          this.startMetMeten();
-        } else {
-          this.stopMetMeten();
-        }
-      });
+    this.kaartComponent.internalMessage$.pipe(ofType<MetenLengteOppervlakteMsg>("MetenLengteOppervlakte")).subscribe(msg => {
+      if (msg.meten) {
+        this.startMetMeten();
+      } else {
+        this.stopMetMeten();
+      }
+    });
   }
 
   ngOnDestroy(): void {
     this.stopMetMeten();
-    this.metenSubscription.unsubscribe();
-    this.focusVoorZoomSubscription.unsubscribe();
   }
 
   startMetMeten(): void {
