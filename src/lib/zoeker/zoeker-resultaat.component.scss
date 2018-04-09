@@ -1,0 +1,86 @@
+.zoek-resultaat {
+  overflow: auto;
+  box-shadow: 0 3px 1px -2px rgba(0, 0, 0, .2), 0 2px 2px 0 rgba(0, 0, 0, .14), 0 1px 5px 0 rgba(0, 0, 0, .12);
+  margin-bottom: -3px;
+  pointer-events: initial;
+  align-items: left;
+  justify-content: space-around;
+  position: absolute;
+  top: 100px;
+  left: 16px;
+  max-height: calc(100% - 224px);
+  background: white;
+}
+
+.locatiezoeker_resultaat p {
+  display: table;
+  margin-top: 12px;
+}
+
+.locatiezoeker_resultaat span {
+  padding-left: 4px;
+  padding-right: 4px;
+  vertical-align: middle;
+  display: table-cell;
+}
+
+.locatiezoeker_resultaat img {
+  padding-left: 4px;
+  width: 22px;
+  height: 24px;
+}
+
+.locatiezoeker_fout {
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+.locatiezoeker_fadein {
+  animation: fadein 2s;
+  -moz-animation: fadein 2s; /* Firefox */
+  -webkit-animation: fadein 2s; /* Safari and Chrome */
+  -o-animation: fadein 2s; /* Opera */
+}
+
+.locatiezoeker_showpointer {
+  cursor: pointer;
+}
+
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@-moz-keyframes fadein {
+  /* Firefox */
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@-webkit-keyframes fadein {
+  /* Safari and Chrome */
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@-o-keyframes fadein {
+  /* Opera */
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

@@ -570,7 +570,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           // Stuur zoek comando naar alle geregistreerde zoekers
           const nieuweSubscriptions = model.zoekers.reduce(
             (subscriptions, zoeker) =>
-              subscriptions.set(zoeker.naam(), zoeker.zoek(cmnd.input).subscribe(zoekResultaat => model.zoekerSubj.next(zoekResultaat))),
+              subscriptions.set(
+                zoeker.naam(),
+                zoeker.zoek(cmnd.input).subscribe(zoekResultaat => {
+                  model.zoekerSubj.next(zoekResultaat);
+                })
+              ),
             Map<string, Subscription>()
           );
           return ModelAndEmptyResult({ ...model, zoekerSubscriptions: nieuweSubscriptions });

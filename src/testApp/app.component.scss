@@ -3,3 +3,12 @@ body {
   padding: 0px;
   box-sizing: border-box;
 }
+
+#zoeker-overlay {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  top: 0px;
+  left: 0px;
+  pointer-events: none;
+}

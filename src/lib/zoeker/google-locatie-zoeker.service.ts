@@ -107,11 +107,9 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
     params.set("query", zoekterm);
     params.set("legacy", "false");
 
-    return this.http.get(this.locatieZoekerUrl + "/zoek", { search: params }).pipe(
-      flatMap(resp => this.parseResult(resp)), //
-      mergeAll(),
-      catchError(err => this.handleError(err))
-    );
+    return this.http
+      .get(this.locatieZoekerUrl + "/zoek", { search: params })
+      .pipe(flatMap(resp => this.parseResult(resp)), catchError(err => this.handleError(err)));
   }
 
   parseResult(response: Response): Observable<ZoekResultaten> {

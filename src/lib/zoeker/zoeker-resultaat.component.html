@@ -1,0 +1,46 @@
+<div class="zoek-resultaat">
+  <div *ngIf="toonResultaat">
+    <div *ngFor="let error of zoekResultaat?.fouten" class="locatiezoeker_fout">
+      {{error}}
+    </div>
+    <div *ngFor="let resultaat of zoekResultaat?.resultaten"
+         class="locatiezoeker_resultaat locatiezoeker_fadein locatiezoeker_showpointer"
+         (click)="selectMarker(resultaat)">
+      <p>
+        <img src="{{image(resultaat)}}">
+        <span>{{resultaat.omschrijving}} ({{resultaat.bron}})</span>
+      </p>
+    </div>
+  </div>
+  <div *ngIf="toonHelp">
+    <br><b>Voorbeelden</b>
+    <br>
+    <div class="locatiezoeker_resultaat">Kapelstraat 12 Kortrijk
+      <br>&nbsp;&nbsp;<i>zoek het opgegeven adres</i></div>
+    <div class="locatiezoeker_resultaat">N0080001 12.0
+      <br>&nbsp;&nbsp;<i>zoek op de weg met ident8 N0080001 het referentiepunt 12.0</i></div>
+    <div class="locatiezoeker_resultaat">R1
+      <br>&nbsp;&nbsp;<i>zoek de weg met ident8 R0010001</i></div>
+    <div class="locatiezoeker_resultaat">N8 12.0
+      <br>&nbsp;&nbsp;<i>zoek op de weg met ident8 N0080001 het referentiepunt 12.0</i></div>
+    <div class="locatiezoeker_resultaat">N8 12.0-8
+      <br>&nbsp;&nbsp;<i>zoek op de weg met ident8 N0080001 het referentiepunt 12.0 met afstand -8</i></div>
+    <div class="locatiezoeker_resultaat">E17 5.0
+      <br>&nbsp;&nbsp;<i>zoek op de E17 het referentiepunt 5.0</i></div>
+    <div class="locatiezoeker_resultaat">N8 178 Kortrijk
+      <br>&nbsp;&nbsp;<i>zoek op de weg met ident8 N0080001 in Kortrijk huisnummer 178 (gemeente verplicht)</i></div>
+    <div class="locatiezoeker_resultaat">em G1586/WV
+      <br>&nbsp;&nbsp;<i>zoek het EM onderdeel met 'G1586/WV' in het Naampad</i></div>
+    <div class="locatiezoeker_resultaat">kw 0.010.031.1
+      <br>&nbsp;&nbsp;<i>zoek het kunstwerk met Bryggja id '0.010.031.1'</i></div>
+    <div class="locatiezoeker_resultaat">
+      <br><b>Legende</b><br>
+      <p>
+        <img src='{{image(null, false, 1)}}'><span>Exact resultaat</span>
+      </p>
+      <p>
+        <img src='{{image(null, true, 1)}}'><span>Benaderd resultaat</span>
+      </p>
+    </div>
+  </div>
+</div>

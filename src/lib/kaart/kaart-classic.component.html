@@ -1,8 +1,12 @@
 <awv-kaart
-[naam]='naam'
-[minZoom]='minZoom'
-[maxZoom]='maxZoom'
-[kaartCmd$]='kaartCmd$'
-[mijnLocatieZoom]='mijnLocatieZoom'
-(click)="focus()"
-(clickOutside)="geenFocus()"></awv-kaart>
+  [naam]='naam'
+  [minZoom]='minZoom'
+  [maxZoom]='maxZoom'
+  [kaartCmd$]='kaartCmd$'
+  [mijnLocatieZoom]='mijnLocatieZoom'
+  (click)="focus()"
+  (clickOutside)="geenFocus()">
+  <div kaart-overlay>
+    <ng-content select="[kaart-overlay]"></ng-content>
+  </div>
+</awv-kaart>
