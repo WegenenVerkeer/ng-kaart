@@ -4,7 +4,7 @@ import "rxjs/add/observable/of";
 import "rxjs/add/observable/combineLatest";
 import "rxjs/add/observable/empty";
 import "rxjs/add/observable/never";
-import { scan, map, tap, filter, shareReplay, merge, takeUntil, share } from "rxjs/operators";
+import { scan, map, tap, filter, shareReplay, merge, takeUntil, share, concatAll } from "rxjs/operators";
 
 import proj4 from "proj4";
 import * as ol from "openlayers";
@@ -176,7 +176,8 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     return this.msgSubj;
   }
 
-  get kaartModel$$(): Observable<Observable<KaartWithInfo>> {
-    return this.kaartModelObsSubj;
+  get kaartModel$(): Observable<KaartWithInfo> {
+    // TODO geen casting meer in RxJS 6
+    return (this.kaartModelObsSubj.pipe(concatAll()) as any) as Observable<KaartWithInfo>;
   }
 }

@@ -346,6 +346,13 @@ export function VerwijderOverlaysCmd<Msg extends KaartMsg>(overlays: Array<ol.Ov
   };
 }
 
+export function MetenLengteOppervlakteCmd<Msg extends KaartMsg>(meten: boolean): MetenLengteOppervlakteCmd<Msg> {
+  return {
+    type: "MetenLengteOppervlakte",
+    meten: meten
+  };
+}
+
 export function SubscriptionCmd<Msg extends KaartMsg>(
   subscription: Subscription<Msg>,
   wrapper: ValidationWrapper<RxSubscription, Msg>

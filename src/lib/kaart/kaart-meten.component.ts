@@ -54,7 +54,6 @@ const MetenStyle = new ol.style.Style({
 export class KaartMetenLengteOppervlakteLaagComponent extends KaartComponentBase implements OnInit, OnDestroy {
   private readonly subscriptions: prt.SubscriptionResult[] = [];
 
-  private focusVoorZoom = false;
   private map: ol.Map;
 
   private changedGeometriesSubj: Subject<ol.geom.Geometry>;
@@ -68,12 +67,8 @@ export class KaartMetenLengteOppervlakteLaagComponent extends KaartComponentBase
 
   ngOnInit(): void {
     // TODO geen casting meer in RxJS 6
-    const kaartObs: Observable<KaartWithInfo> = (this.kaartComponent.kaartModel$$.pipe(concatAll()) as any) as Observable<KaartWithInfo>;
+    const kaartObs: Observable<KaartWithInfo> = this.kaartComponent.kaartModel$;
     this.bindToLifeCycle(kaartObs);
-
-    kaartObs
-      .pipe(map(kaart => kaart.scrollZoomOnFocus), distinctUntilChanged())
-      .subscribe(scrollZoomOnFocus => (this.focusVoorZoom = scrollZoomOnFocus));
 
     kaartObs
       .pipe(map(kaart => kaart.geometryChangedSubj), distinctUntilChanged())
@@ -106,18 +101,12 @@ export class KaartMetenLengteOppervlakteLaagComponent extends KaartComponentBase
       wrapper: kaartLogOnlyWrapper
     });
 
-    this.kaartComponent.internalCmdDispatcher.dispatch(prt.VerwijderStandaardInteractiesCmd(kaartLogOnlyWrapper));
-
     this.draw = this.createDrawInteraction(source);
 
     this.kaartComponent.internalCmdDispatcher.dispatch({
       type: "VoegInteractieToe",
       interactie: this.draw
     });
-
-    this.kaartComponent.internalCmdDispatcher.dispatch(
-      prt.SubscriptionCmd(prt.GeometryChangedSubscription(geometryChangedWrapper), subscribedWrapper({}))
-    );
 
     this.kaartComponent.internalMessage$
       .pipe(ofType<SubscribedMsg>("Subscribed")) //
@@ -139,7 +128,6 @@ export class KaartMetenLengteOppervlakteLaagComponent extends KaartComponentBase
       overlays: this.overlays
     });
     this.kaartComponent.internalCmdDispatcher.dispatch(prt.VerwijderLaagCmd(MetenLaagNaam, kaartLogOnlyWrapper));
-    this.kaartComponent.internalCmdDispatcher.dispatch(prt.VoegStandaardInteractiesToeCmd(this.focusVoorZoom, kaartLogOnlyWrapper));
 
     this.subscriptions.forEach(sub => this.kaartComponent.internalCmdDispatcher.dispatch(prt.UnsubscriptionCmd(sub)));
     this.subscriptions.splice(0, this.subscriptions.length);
