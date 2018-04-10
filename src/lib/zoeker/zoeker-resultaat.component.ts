@@ -12,6 +12,7 @@ import { ZoekResultaat } from "./abstract-zoeker";
 import * as ol from "openlayers";
 import * as ke from "../kaart/kaart-elementen";
 import { List, Map } from "immutable";
+import { MapIcons } from "./mapicons/mapicons";
 
 const ZoekerLaagNaam = "Zoeker";
 
@@ -143,7 +144,11 @@ export class ZoekerResultaatComponent implements OnInit, OnDestroy {
   }
 
   image(resultaat: ZoekResultaat) {
-    return require("./mapicons/" + (resultaat.partialMatch ? "partial/" : "") + "number_" + resultaat.index + ".png");
+    return this.baseimage(resultaat.partialMatch, resultaat.index);
+  }
+
+  baseimage(partialMatch: boolean, index: number) {
+    return MapIcons.get("./" + (partialMatch ? "partial/" : "") + "number_" + index + ".png");
   }
 
   createLayer(): ke.VectorLaag {

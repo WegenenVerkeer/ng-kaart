@@ -83,7 +83,7 @@ export class AppComponent {
       anchorYUnits: "fraction",
       scale: 1,
       opacity: 1,
-      src: "./material-design-icons/maps/svg/production/ic_place_48px.svg"
+      src: require("material-design-icons/maps/svg/production/ic_place_48px.svg")
     }),
     text: new ol.style.Text({
       font: "12px 'Helvetica Neue', sans-serif",

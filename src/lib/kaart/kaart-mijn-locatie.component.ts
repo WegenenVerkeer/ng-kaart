@@ -56,7 +56,7 @@ export class KaartMijnLocatieComponent extends KaartComponentBase implements OnD
         anchorYUnits: "fraction",
         scale: 0.5,
         color: "#00a2c5",
-        src: "./material-design-icons/maps/2x_web/ic_my_location_white_18dp.png"
+        src: require("material-design-icons/maps/2x_web/ic_my_location_white_18dp.png")
       })
     });
   }
