@@ -11,7 +11,7 @@ import { SubscriptionResult } from "../kaart/kaart-protocol";
 import { ZoekResultaat } from "./abstract-zoeker";
 import * as ol from "openlayers";
 import * as ke from "../kaart/kaart-elementen";
-import { List } from "immutable";
+import { List, Map } from "immutable";
 
 const ZoekerLaagNaam = "Zoeker";
 
@@ -22,7 +22,7 @@ const ZoekerLaagNaam = "Zoeker";
 })
 export class ZoekerResultaatComponent implements OnInit, OnDestroy {
   subscription: Option<Subscription> = none;
-  zoekResultaat: ZoekResultaten = null;
+  alleZoekResultaten: ZoekResultaten[] = [];
   @Input() toonResultaat = true;
   @Input() toonHelp = false;
 
@@ -56,16 +56,18 @@ export class ZoekerResultaatComponent implements OnInit, OnDestroy {
     this.kaart.dispatch(prt.VerwijderLaagCmd(ZoekerLaagNaam, kaartLogOnlyWrapper));
   }
 
-  processZoekerAntwoord(resultaten: ZoekResultaten): KaartInternalMsg {
-    this.zoekResultaat = resultaten;
+  processZoekerAntwoord(nieuweResultaten: ZoekResultaten): KaartInternalMsg {
+    this.alleZoekResultaten = this.alleZoekResultaten
+      .filter(resultaat => resultaat.zoeker !== nieuweResultaten.zoeker)
+      .concat(nieuweResultaten);
 
-    const features: List<ol.Feature> = resultaten.resultaten.reduce(
+    const features: List<ol.Feature> = nieuweResultaten.resultaten.reduce(
       (list, resultaat) => list.push(...this.maakNieuwFeature(resultaat)),
       List<ol.Feature>()
     );
     const extent: ol.Extent = features
-      .map(feature => feature.getGeometry().getExtent())
-      .reduce((maxExtent, huidigeExtent) => ol.extent.extend(maxExtent, huidigeExtent), ol.extent.createEmpty());
+      .map(feature => feature!.getGeometry().getExtent())
+      .reduce((maxExtent, huidigeExtent) => ol.extent.extend(maxExtent!, huidigeExtent!), ol.extent.createEmpty());
 
     this.kaart.dispatch(prt.VervangFeaturesCmd(ZoekerLaagNaam, features, kaartLogOnlyWrapper));
     if (!ol.extent.isEmpty(extent)) {
@@ -83,7 +85,7 @@ export class ZoekerResultaatComponent implements OnInit, OnDestroy {
     feature.setId(resultaat.index);
     feature.setStyle(this.styleFunction(feature));
 
-    let middlePoint = null;
+    let middlePoint: ol.geom.Point | undefined = undefined;
     if (resultaat.locatie.type === "MultiLineString") {
       // voeg een puntelement toe ergens op de linestring om een icoon met nummer te tonen
       const lineStrings = resultaat.geometry.getLineStrings();
@@ -94,7 +96,7 @@ export class ZoekerResultaatComponent implements OnInit, OnDestroy {
       const extent = resultaat.geometry.getExtent();
       middlePoint = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
     }
-    if (middlePoint != null) {
+    if (middlePoint !== undefined) {
       const middelpuntFeature = new ol.Feature({ data: resultaat, geometry: middlePoint, name: resultaat.omschrijving });
       middelpuntFeature.setStyle(this.styleFunction(middelpuntFeature));
       return [feature, middelpuntFeature];
@@ -131,12 +133,8 @@ export class ZoekerResultaatComponent implements OnInit, OnDestroy {
     };
   }
 
-  image(resultaat?: ZoekResultaat, partial?: boolean, index?: number) {
-    if (resultaat !== null) {
-      partial = resultaat.partialMatch;
-      index = resultaat.index;
-    }
-    return require("./mapicons/" + (partial ? "partial/" : "") + "number_" + index + ".png");
+  image(resultaat: ZoekResultaat) {
+    return require("./mapicons/" + (resultaat.partialMatch ? "partial/" : "") + "number_" + resultaat.index + ".png");
   }
 
   createLayer(): ke.VectorLaag {

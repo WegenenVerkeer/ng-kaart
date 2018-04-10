@@ -1,15 +1,19 @@
 <div class="zoek-resultaat">
   <div *ngIf="toonResultaat">
-    <div *ngFor="let error of zoekResultaat?.fouten" class="locatiezoeker_fout">
-      {{error}}
+    <div *ngFor="let zoeker of alleZoekResultaten">
+      <div *ngFor="let error of zoeker.fouten" class="locatiezoeker_fout">
+        {{error}}
+      </div>
     </div>
-    <div *ngFor="let resultaat of zoekResultaat?.resultaten"
-         class="locatiezoeker_resultaat locatiezoeker_fadein locatiezoeker_showpointer"
-         (click)="selectMarker(resultaat)">
-      <p>
-        <img src="{{image(resultaat)}}">
-        <span>{{resultaat.omschrijving}} ({{resultaat.bron}})</span>
-      </p>
+    <div *ngFor="let zoeker of alleZoekResultaten">
+      <div *ngFor="let resultaat of zoeker.resultaten"
+           class="locatiezoeker_resultaat locatiezoeker_fadein locatiezoeker_showpointer"
+           (click)="selectMarker(resultaat)">
+        <p>
+          <img src="{{image(resultaat)}}">
+          <span>{{resultaat.omschrijving}} ({{resultaat.bron}})</span>
+        </p>
+      </div>
     </div>
   </div>
   <div *ngIf="toonHelp">
@@ -36,10 +40,10 @@
     <div class="locatiezoeker_resultaat">
       <br><b>Legende</b><br>
       <p>
-        <img src='{{image(null, false, 1)}}'><span>Exact resultaat</span>
+        <img src='./mapicons/number_1.png'><span>Exact resultaat</span>
       </p>
       <p>
-        <img src='{{image(null, true, 1)}}'><span>Benaderd resultaat</span>
+        <img src='./mapicons/partial/number_1.png'><span>Benaderd resultaat</span>
       </p>
     </div>
   </div>

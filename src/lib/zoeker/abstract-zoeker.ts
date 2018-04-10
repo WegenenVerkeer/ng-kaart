@@ -13,8 +13,10 @@ export interface ZoekResultaat {
 export class ZoekResultaten {
   resultaten: ZoekResultaat[] = [];
   fouten: string[] = [];
+  zoeker: string;
 
-  constructor(private zoeker: string, error?: string) {
+  constructor(zoeker: string, error?: string) {
+    this.zoeker = zoeker;
     if (error != null) {
       this.fouten.push(error);
     }

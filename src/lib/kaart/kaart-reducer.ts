@@ -15,7 +15,7 @@ import { forEach } from "../util/option";
 import { Subscription } from "rxjs";
 import { debounceTime, filter } from "rxjs/operators";
 import { Laaggroep, PositieAanpassing } from "./kaart-protocol-commands";
-import { AbstractZoeker, ZoekResultaten } from "../zoeker";
+import { ZoekResultaten } from "../zoeker/abstract-zoeker";
 
 ///////////////////////////////////
 // Hulpfuncties
@@ -110,24 +110,28 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return fromPredicate(model, (mdl: Model) => !mdl.olLayersOpTitel.has(titel), `Een laag met titel ${titel} bestaat al`);
     }
 
-    function valideerZoekerBestaatNiet(naam: string): prt.KaartCmdValidation<{}> {
+    function valideerZoekerIsNietGeregistreerd(naam: string): prt.KaartCmdValidation<{}> {
       return fromPredicate(
         model,
-        (mdl: Model) => mdl.zoekers.every(zoeker => zoeker.naam() !== naam),
+        (mdl: Model) => !mdl.zoekerCoordinator.isZoekerGeregistreerd(naam),
         `Een zoeker met naam ${naam} bestaat al`
       );
     }
 
-    function valideerZoekerBestaat(naam: string): prt.KaartCmdValidation<{}> {
+    function valideerZoekerIsGeregistreerd(naam: string): prt.KaartCmdValidation<{}> {
       return fromPredicate(
         model,
-        (mdl: Model) => mdl.zoekers.some(zoeker => zoeker.naam() === naam),
+        (mdl: Model) => mdl.zoekerCoordinator.isZoekerGeregistreerd(naam),
         `Een zoeker met naam ${naam} bestaat niet`
       );
     }
 
     function valideerMinstens1ZoekerGeregistreerd(): prt.KaartCmdValidation<{}> {
-      return fromPredicate(model, (mdl: Model) => mdl.zoekers.length > 0, `Er moet minstens 1 zoeker geregistreerd zijn`);
+      return fromPredicate(
+        model,
+        (mdl: Model) => mdl.zoekerCoordinator.isMinstens1ZoekerGeregistreerd(),
+        `Er moet minstens 1 zoeker geregistreerd zijn`
+      );
     }
 
     const valideerIsAchtergrondLaag: (titel: string) => prt.KaartCmdValidation<{}> = (titel: string) =>
@@ -533,30 +537,19 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function voegZoekerToe(cmnd: prt.VoegZoekerToeCmd<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerZoekerBestaatNiet(cmnd.zoeker.naam()).map(() => {
-          return ModelAndEmptyResult({ ...model, zoekers: model.zoekers.concat(cmnd.zoeker) });
+        valideerZoekerIsNietGeregistreerd(cmnd.zoeker.naam()).map(() => {
+          model.zoekerCoordinator.voegZoekerToe(cmnd.zoeker);
+          return ModelAndEmptyResult(model);
         })
       );
-    }
-
-    function unsubscribeZoeker(subscription: Subscription, zoekerNaam: string) {
-      // Stuur leeg zoekresultaat voor de zoekers met subscriptions.
-      model.zoekerSubj.next(new ZoekResultaten(zoekerNaam));
-      subscription.unsubscribe();
     }
 
     function verwijderZoeker(cmnd: prt.VerwijderZoekerCmd<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerZoekerBestaat(cmnd.zoeker).map(() => {
-          fromNullable(model.zoekerSubscriptions.get(cmnd.zoeker)).map(subscription => unsubscribeZoeker(subscription, cmnd.zoeker));
-
-          // verwijder de zoeker en de subscriptions uit het model.
-          return ModelAndEmptyResult({
-            ...model,
-            zoekers: model.zoekers.filter(zoeker => zoeker.naam() !== cmnd.zoeker),
-            zoekerSubscriptions: model.zoekerSubscriptions.delete(cmnd.zoeker)
-          });
+        valideerZoekerIsGeregistreerd(cmnd.zoeker).map(() => {
+          model.zoekerCoordinator.verwijderZoeker(cmnd.zoeker);
+          return ModelAndEmptyResult(model);
         })
       );
     }
@@ -565,20 +558,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         cmnd.wrapper,
         valideerMinstens1ZoekerGeregistreerd().map(() => {
-          // Annuleer bestaande zoekOpdrachten.
-          model.zoekerSubscriptions.forEach((subscription, zoekerNaam) => unsubscribeZoeker(subscription, zoekerNaam));
-          // Stuur zoek comando naar alle geregistreerde zoekers
-          const nieuweSubscriptions = model.zoekers.reduce(
-            (subscriptions, zoeker) =>
-              subscriptions.set(
-                zoeker.naam(),
-                zoeker.zoek(cmnd.input).subscribe(zoekResultaat => {
-                  model.zoekerSubj.next(zoekResultaat);
-                })
-              ),
-            Map<string, Subscription>()
-          );
-          return ModelAndEmptyResult({ ...model, zoekerSubscriptions: nieuweSubscriptions });
+          model.zoekerCoordinator.zoek(cmnd.input);
+          return ModelAndEmptyResult(model);
         })
       );
     }

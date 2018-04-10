@@ -8,6 +8,7 @@ import { Subject, ReplaySubject } from "rxjs";
 import { Zoominstellingen, Laaggroep } from ".";
 import { AbstractZoeker, ZoekResultaten } from "../zoeker";
 import { Subscription } from "rxjs/Subscription";
+import { ZoekerCoordinator } from "../zoeker/zoeker-coordinator";
 
 export interface Groeplagen {
   readonly laaggroep: Laaggroep;
@@ -33,8 +34,7 @@ export class KaartWithInfo {
   readonly groeplagenSubj: Subject<Groeplagen> = new ReplaySubject<Groeplagen>(1);
   readonly zoekerSubj: Subject<ZoekResultaten> = new ReplaySubject<ZoekResultaten>(1);
   readonly componentFoutSubj: Subject<List<string>> = new ReplaySubject<List<string>>(1);
-  readonly zoekers: Array<AbstractZoeker> = Array();
-  readonly zoekerSubscriptions: Map<string, Subscription> = Map();
+  readonly zoekerCoordinator: ZoekerCoordinator = new ZoekerCoordinator(this.zoekerSubj);
 
   constructor(
     // TODO om de distinctWithInfo te versnellen zouden we als eerste element een versieteller kunnen toevoegen

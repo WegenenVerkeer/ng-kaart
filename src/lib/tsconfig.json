@@ -7,7 +7,9 @@
     "baseUrl": "",
     "experimentalDecorators": true,
     "strictNullChecks": true,
-    "types": []
+    "types": [
+      "node"
+    ]
   },
   "files": [
     "./public_api.ts"
