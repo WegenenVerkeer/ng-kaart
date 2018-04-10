@@ -25,7 +25,8 @@ export class KaartTilecacheLaagComponent extends KaartWmsLaagComponent {
       urls: List(this.config.tilecache.urls),
       versie: fromNullable(this.versie),
       tileSize: fromNullable(this.tileSize),
-      format: fromNullable(this.format)
+      format: fromNullable(this.format),
+      opacity: fromNullable(this.opacity)
     };
   }
 }

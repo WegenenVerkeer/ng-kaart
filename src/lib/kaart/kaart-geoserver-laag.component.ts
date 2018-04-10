@@ -26,7 +26,8 @@ export class KaartGeoserverLaagComponent extends KaartWmsLaagComponent {
       urls: List(this.config.geoserver.urls),
       versie: fromNullable(this.versie),
       tileSize: fromNullable(this.tileSize),
-      format: fromNullable(this.format)
+      format: fromNullable(this.format),
+      opacity: fromNullable(this.opacity)
     };
   }
 
