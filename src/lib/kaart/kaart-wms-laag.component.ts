@@ -20,6 +20,7 @@ export class KaartWmsLaagComponent extends KaartLaagComponent implements OnInit 
   @Input() versie?: string;
   @Input() format? = "image/png";
   @Input() tileSize? = 256;
+  @Input() opacity?: number;
   @Input() groep: Laaggroep = "Achtergrond";
 
   constructor(kaart: KaartClassicComponent) {
@@ -41,7 +42,8 @@ export class KaartWmsLaagComponent extends KaartLaagComponent implements OnInit 
       urls: List(this.urls),
       versie: fromNullable(this.versie),
       tileSize: fromNullable(this.tileSize),
-      format: fromNullable(this.format)
+      format: fromNullable(this.format),
+      opacity: fromNullable(this.opacity)
     };
   }
 

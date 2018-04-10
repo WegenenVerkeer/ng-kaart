@@ -34,6 +34,7 @@ export interface WmsLaag {
   readonly versie: Option<string>;
   readonly tileSize: Option<number>;
   readonly format: Option<string>;
+  readonly opacity: Option<number>;
 }
 
 export interface VectorLaag {

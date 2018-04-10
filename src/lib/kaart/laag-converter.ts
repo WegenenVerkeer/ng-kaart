@@ -11,6 +11,7 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
       title: l.titel,
       visible: true,
       extent: kaart.config.defaults.extent,
+      opacity: l.opacity.toUndefined(),
       source: new ol.source.TileWMS({
         projection: undefined,
         urls: l.urls.toArray(),
@@ -31,6 +32,7 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
 
   function createSingleTileWmsLayer(l: ke.WmsLaag) {
     return new ol.layer.Image({
+      opacity: l.opacity.toUndefined(),
       source: new ol.source.ImageWMS({
         url: l.urls.first(),
         params: {
