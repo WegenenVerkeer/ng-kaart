@@ -2,6 +2,7 @@ import { KaartWithInfo } from "./kaart-with-info";
 import * as array from "fp-ts/lib/Array";
 import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
+import { olx } from "openlayers";
 import { kaartLogger } from "./log";
 import * as ke from "./kaart-elementen";
 
@@ -48,11 +49,11 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
 
   function createVectorLayer(vectorlaag: ke.VectorLaag) {
     if (array.isOutOfBound(vectorlaag.minZoom)(kaart.config.defaults.resolutions)) {
-      kaartLogger.error(`Ongeldige minZoom voor ${vectorlaag.titel}: 
+      kaartLogger.error(`Ongeldige minZoom voor ${vectorlaag.titel}:
         ${vectorlaag.minZoom}, moet tussen 0 en ${kaart.config.defaults.resolutions.length - 1} liggen`);
     }
     if (array.isOutOfBound(vectorlaag.maxZoom)(kaart.config.defaults.resolutions)) {
-      kaartLogger.error(`Ongeldige maxZoom voor ${vectorlaag.titel}: 
+      kaartLogger.error(`Ongeldige maxZoom voor ${vectorlaag.titel}:
         ${vectorlaag.maxZoom}, moet tussen 0 en ${kaart.config.defaults.resolutions.length - 1} liggen`);
     }
 

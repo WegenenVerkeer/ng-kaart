@@ -1,6 +1,8 @@
 import { Option, some, none } from "fp-ts/lib/Option";
 import { List } from "immutable";
 
+import * as ol from "openlayers";
+
 import { kaartLogger } from "./log";
 import { Zoominstellingen, SubscriptionResult, KaartCmdValidation } from "./kaart-protocol";
 import * as prt from "./kaart-protocol";

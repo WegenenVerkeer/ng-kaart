@@ -196,12 +196,12 @@ export class KaartMetenLengteOppervlakteLaagComponent extends KaartComponentBase
       "drawstart",
       event => {
         // set sketch
-        const sketch = event.feature;
+        const sketch = (event as ol.interaction.Draw.Event).feature;
 
         listener = sketch.getGeometry().on(
           "change",
           evt => {
-            const geometry = evt.target;
+            const geometry = evt.target as ol.geom.Geometry;
             let output;
             let tooltipCoord;
             if (geometry instanceof ol.geom.Polygon) {

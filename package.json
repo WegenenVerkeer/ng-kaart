@@ -75,7 +75,7 @@
     "loglevel": "1.6.1",
     "material-design-icons": "3.0.1",
     "ng4-click-outside": "1.0.1",
-    "openlayers": "4.6.4",
+    "openlayers": "4.6.5",
     "proj4": "2.4.4",
     "rxjs": "5.5.8",
     "zone.js": "0.8.18"
@@ -91,7 +91,7 @@
     "@types/jasmine": "2.5.54",
     "@types/jasmine-jquery": "1.5.32",
     "@types/node": "8.5.1",
-    "@types/openlayers": "4.6.1",
+    "@types/openlayers": "4.6.7",
     "chance": "1.0.11",
     "codelyzer": "4.0.2",
     "glob": "7.1.1",

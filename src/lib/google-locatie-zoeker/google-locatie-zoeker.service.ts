@@ -5,6 +5,7 @@ import { map, flatMap, catchError, mergeAll } from "rxjs/operators";
 import "rxjs/add/observable/fromPromise";
 
 import * as ol from "openlayers";
+import { olx } from "openlayers";
 import {} from "googlemaps";
 import { GoogleLocatieZoekerConfig } from "./google-locatie-zoeker.config";
 
