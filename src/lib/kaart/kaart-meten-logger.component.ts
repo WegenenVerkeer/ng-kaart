@@ -48,5 +48,9 @@ export class KaartMetenLoggerComponent extends KaartComponentBase implements OnI
 
   ngOnDestroy(): void {
     this.geometriesSubscription.unsubscribe();
+    // TODO deftige unsubscibe
+    // this.kaartComponent.internalCmdDispatcher.dispatch(
+    //   prt.UnsubscriptionCmd();
+    // );
   }
 }

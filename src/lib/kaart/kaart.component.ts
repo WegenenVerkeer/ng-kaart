@@ -177,7 +177,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   }
 
   get kaartModel$(): Observable<KaartWithInfo> {
-    // TODO geen casting meer in RxJS 6
+    // TODO geen casting meer in RxJs 6
     return (this.kaartModelObsSubj.pipe(concatAll()) as any) as Observable<KaartWithInfo>;
   }
 }

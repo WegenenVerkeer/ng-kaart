@@ -66,7 +66,6 @@ export class KaartMetenLengteOppervlakteLaagComponent extends KaartComponentBase
   }
 
   ngOnInit(): void {
-    // TODO geen casting meer in RxJS 6
     const kaartObs: Observable<KaartWithInfo> = this.kaartComponent.kaartModel$;
     this.bindToLifeCycle(kaartObs);
 
