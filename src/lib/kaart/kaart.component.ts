@@ -4,7 +4,7 @@ import "rxjs/add/observable/of";
 import "rxjs/add/observable/combineLatest";
 import "rxjs/add/observable/empty";
 import "rxjs/add/observable/never";
-import { scan, map, tap, filter, shareReplay, merge, takeUntil } from "rxjs/operators";
+import { scan, map, tap, filter, shareReplay, merge, takeUntil, share } from "rxjs/operators";
 
 import proj4 from "proj4";
 import * as ol from "openlayers";
@@ -122,7 +122,8 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
           kaartLogger.debug("produceert", message);
           forEach(message, messageConsumer); // stuur het resultaat terug naar de eigenaar van de kaartcomponent
           return newModel; // en laat het nieuwe model terugvloeien
-        }, initieelModel)
+        }, initieelModel),
+        share()
       );
 
       // subscribe op het model om de zaak aan gang te zwengelen

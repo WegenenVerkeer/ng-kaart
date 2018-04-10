@@ -25,7 +25,8 @@ export class KaartOrthoLaagComponent extends KaartWmsLaagComponent {
       urls: List(this.config.orthofotomozaiek.urls),
       versie: fromNullable(this.versie),
       tileSize: fromNullable(this.tileSize),
-      format: fromNullable(this.format)
+      format: fromNullable(this.format),
+      opacity: fromNullable(this.opacity)
     };
   }
 }
