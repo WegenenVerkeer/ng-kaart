@@ -26,19 +26,24 @@ export class ZoekerResultaatComponent implements OnInit, OnDestroy {
   @Input() toonResultaat = true;
   @Input() toonHelp = false;
 
-  private _imageStyles: ol.style.Style[] = [];
+  private imageStyles: ol.style.Style[] = [];
 
   constructor(private readonly kaart: KaartClassicComponent) {}
 
   ngOnInit(): void {
-    this.kaart.dispatch({
-      type: "VoegLaagToe",
-      positie: 0,
-      laag: this.createLayer(),
-      magGetoondWorden: true,
-      laaggroep: "Tools",
-      wrapper: kaartLogOnlyWrapper
-    });
+    // Moet delayed worden, anders wordt de laagselector niet getoond!
+    setTimeout(
+      () =>
+        this.kaart.dispatch({
+          type: "VoegLaagToe",
+          positie: 1,
+          laag: this.createLayer(),
+          magGetoondWorden: true,
+          laaggroep: "Tools",
+          wrapper: kaartLogOnlyWrapper
+        }),
+      0
+    );
     this.kaart.dispatch({
       type: "Subscription",
       subscription: prt.ZoekerSubscription(r => this.processZoekerAntwoord(r)),
@@ -97,7 +102,11 @@ export class ZoekerResultaatComponent implements OnInit, OnDestroy {
       middlePoint = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
     }
     if (middlePoint !== undefined) {
-      const middelpuntFeature = new ol.Feature({ data: resultaat, geometry: middlePoint, name: resultaat.omschrijving });
+      const middelpuntFeature = new ol.Feature({
+        data: resultaat,
+        geometry: middlePoint,
+        name: resultaat.omschrijving
+      });
       middelpuntFeature.setStyle(this.styleFunction(middelpuntFeature));
       return [feature, middelpuntFeature];
     } else {
@@ -107,8 +116,8 @@ export class ZoekerResultaatComponent implements OnInit, OnDestroy {
 
   private styleFunction(feature: ol.Feature | ol.render.Feature): ol.style.Style {
     const data: ZoekResultaat = feature.get("data");
-    if (!this._imageStyles[data.index]) {
-      this._imageStyles[data.index] = new ol.style.Style({
+    if (!this.imageStyles[data.index]) {
+      this.imageStyles[data.index] = new ol.style.Style({
         stroke: new ol.style.Stroke({
           color: "red",
           width: 1
@@ -122,7 +131,7 @@ export class ZoekerResultaatComponent implements OnInit, OnDestroy {
         })
       });
     }
-    return this._imageStyles[data.index];
+    return this.imageStyles[data.index];
   }
 
   subscribed(v: KaartCmdValidation<SubscriptionResult>): KaartInternalMsg {
