@@ -1,8 +1,9 @@
-import { Component, EventEmitter, OnInit, Output } from "@angular/core";
+import { Component, EventEmitter, Input, OnInit, Output } from "@angular/core";
 
 import { KaartClassicComponent } from "../kaart/kaart-classic.component";
-import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
+import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import { FormControl } from "@angular/forms";
+import { KaartCmdDispatcher } from "../kaart/kaart-event-dispatcher";
 
 @Component({
   selector: "awv-zoeker-input",
@@ -13,11 +14,16 @@ export class ZoekerInputComponent implements OnInit {
   zoekVeld = new FormControl();
   @Output() toonResultaat = new EventEmitter<boolean>();
   @Output() toonHelp = new EventEmitter<boolean>();
+  @Input() dispatcher: KaartCmdDispatcher<KaartInternalMsg>;
 
   private toonHelpStatus = false;
   private toonResultaatStatus = true;
 
-  constructor(private readonly kaart: KaartClassicComponent) {}
+  constructor(kaart?: KaartClassicComponent) {
+    if (kaart) {
+      this.dispatcher = kaart;
+    }
+  }
 
   ngOnInit(): void {
     this.zoekVeld.valueChanges
@@ -26,7 +32,7 @@ export class ZoekerInputComponent implements OnInit {
       .subscribe(value => {
         this.toonResultaatStatus = true;
         this.toonResultaat.emit(this.toonResultaatStatus);
-        this.kaart.dispatch({ type: "Zoek", input: value, wrapper: kaartLogOnlyWrapper });
+        this.dispatcher.dispatch({ type: "Zoek", input: value, wrapper: kaartLogOnlyWrapper });
       });
   }
 

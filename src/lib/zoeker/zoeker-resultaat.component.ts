@@ -13,6 +13,7 @@ import * as ol from "openlayers";
 import * as ke from "../kaart/kaart-elementen";
 import { List, Map } from "immutable";
 import { MapIcons } from "./mapicons/mapicons";
+import { KaartCmdDispatcher } from "../kaart/kaart-event-dispatcher";
 
 const ZoekerLaagNaam = "Zoeker";
 
@@ -24,16 +25,21 @@ const ZoekerLaagNaam = "Zoeker";
 export class ZoekerResultaatComponent implements OnInit, OnDestroy {
   subscription: Option<Subscription> = none;
   alleZoekResultaten: ZoekResultaten[] = [];
+  @Input() dispatcher: KaartCmdDispatcher<KaartInternalMsg>;
 
   private imageStyles: ol.style.Style[] = [];
 
-  constructor(private readonly kaart: KaartClassicComponent) {}
+  constructor(kaart?: KaartClassicComponent) {
+    if (kaart) {
+      this.dispatcher = kaart;
+    }
+  }
 
   ngOnInit(): void {
     // Moet delayed worden, anders wordt de laagselector niet getoond!
     setTimeout(
       () =>
-        this.kaart.dispatch({
+        this.dispatcher.dispatch({
           type: "VoegLaagToe",
           positie: 1,
           laag: this.createLayer(),
@@ -43,7 +49,7 @@ export class ZoekerResultaatComponent implements OnInit, OnDestroy {
         }),
       0
     );
-    this.kaart.dispatch({
+    this.dispatcher.dispatch({
       type: "Subscription",
       subscription: prt.ZoekerSubscription(r => this.processZoekerAntwoord(r)),
       wrapper: v => this.subscribed(v)
@@ -52,12 +58,12 @@ export class ZoekerResultaatComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.subscription.map(subscription =>
-      this.kaart.dispatch({
+      this.dispatcher.dispatch({
         type: "Unsubscription",
         subscription: subscription
       })
     );
-    this.kaart.dispatch(prt.VerwijderLaagCmd(ZoekerLaagNaam, kaartLogOnlyWrapper));
+    this.dispatcher.dispatch(prt.VerwijderLaagCmd(ZoekerLaagNaam, kaartLogOnlyWrapper));
   }
 
   processZoekerAntwoord(nieuweResultaten: ZoekResultaten): KaartInternalMsg {
@@ -73,9 +79,9 @@ export class ZoekerResultaatComponent implements OnInit, OnDestroy {
       .map(feature => feature!.getGeometry().getExtent())
       .reduce((maxExtent, huidigeExtent) => ol.extent.extend(maxExtent!, huidigeExtent!), ol.extent.createEmpty());
 
-    this.kaart.dispatch(prt.VervangFeaturesCmd(ZoekerLaagNaam, features, kaartLogOnlyWrapper));
+    this.dispatcher.dispatch(prt.VervangFeaturesCmd(ZoekerLaagNaam, features, kaartLogOnlyWrapper));
     if (!ol.extent.isEmpty(extent)) {
-      this.kaart.dispatch(prt.VeranderExtentCmd(extent));
+      this.dispatcher.dispatch(prt.VeranderExtentCmd(extent));
     }
 
     return {

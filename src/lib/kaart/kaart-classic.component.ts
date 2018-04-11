@@ -3,7 +3,7 @@ import { Observable } from "rxjs/Observable";
 
 import * as ol from "openlayers";
 
-import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
+import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { Command } from "./kaart-protocol-commands";
 import * as prt from "./kaart-protocol";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "./kaart-internal-messages";
@@ -13,7 +13,7 @@ import { KaartMsgObservableConsumer } from ".";
   selector: "awv-kaart-classic",
   templateUrl: "./kaart-classic.component.html"
 })
-export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
+export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, KaartCmdDispatcher<KaartInternalMsg> {
   private static counter = 1;
 
   @Input() zoom: number;
