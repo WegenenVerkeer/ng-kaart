@@ -144,10 +144,15 @@
     <awv-kaart-knop-achtergrondlaag-kiezer
       [titels]="['Dienstkaart grijs', 'Dienstkaart kleur']"></awv-kaart-knop-achtergrondlaag-kiezer>
     <awv-google-locatie-zoeker></awv-google-locatie-zoeker>
-    <div kaart-overlay>
-      <awv-zoeker-input (toonHelp)="onToonZoekerHelp($event)"
-                        (toonResultaat)="onToonZoekerResultaat($event)"></awv-zoeker-input>
-      <awv-zoeker-resultaat [toonHelp]="toonZoekerHelp" [toonResultaat]="toonZoekerResultaat"></awv-zoeker-resultaat>
+    <div class="kaart-overlay">
+      <div class="zoeker-input float-box">
+        <awv-zoeker-input (toonHelp)="onToonZoekerHelp($event)"
+                          (toonResultaat)="onToonZoekerResultaat($event)"></awv-zoeker-input>
+      </div>
+      <div class="zoeker-paneel float-box">
+        <awv-zoeker-help *ngIf="toonZoekerHelp"></awv-zoeker-help>
+        <awv-zoeker-resultaat *ngIf="toonZoekerResultaat"></awv-zoeker-resultaat>
+      </div>
     </div>
   </awv-kaart-classic>
 </div>

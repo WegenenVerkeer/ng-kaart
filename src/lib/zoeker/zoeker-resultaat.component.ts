@@ -24,8 +24,6 @@ const ZoekerLaagNaam = "Zoeker";
 export class ZoekerResultaatComponent implements OnInit, OnDestroy {
   subscription: Option<Subscription> = none;
   alleZoekResultaten: ZoekResultaten[] = [];
-  @Input() toonResultaat = true;
-  @Input() toonHelp = false;
 
   private imageStyles: ol.style.Style[] = [];
 
@@ -144,11 +142,7 @@ export class ZoekerResultaatComponent implements OnInit, OnDestroy {
   }
 
   image(resultaat: ZoekResultaat) {
-    return this.baseimage(resultaat.partialMatch, resultaat.index);
-  }
-
-  baseimage(partialMatch: boolean, index: number) {
-    return MapIcons.get("./" + (partialMatch ? "partial/" : "") + "number_" + index + ".png");
+    return MapIcons.get("./" + (resultaat.partialMatch ? "partial/" : "") + "number_" + resultaat.index + ".png");
   }
 
   createLayer(): ke.VectorLaag {

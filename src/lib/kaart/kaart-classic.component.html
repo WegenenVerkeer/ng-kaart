@@ -6,7 +6,7 @@
   [mijnLocatieZoom]='mijnLocatieZoom'
   (click)="focus()"
   (clickOutside)="geenFocus()">
-  <div kaart-overlay>
-    <ng-content select="[kaart-overlay]"></ng-content>
+  <div class="kaart-overlay">
+    <ng-content select=".kaart-overlay"></ng-content>
   </div>
 </awv-kaart>

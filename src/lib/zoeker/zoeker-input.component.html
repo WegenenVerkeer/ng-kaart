@@ -1,7 +1,5 @@
-<div class="float-box actions panel">
-  <mat-form-field>
-    <input matInput placeholder="Zoek" [formControl]="zoekVeld">
-    <mat-icon matPrefix (click)="toggleResultaat()" [ngClass]="{'inactief':!toonResultaatStatus}">search</mat-icon>
-    <mat-icon matSuffix (click)="toggleHelp()" [ngClass]="{'inactief':!toonHelpStatus}">help</mat-icon>
-  </mat-form-field>
+<div>
+  <mat-icon matPrefix (click)="toggleResultaat()" [ngClass]="{'inactief':!toonResultaatStatus}">search</mat-icon>
+  <input placeholder="Zoek" [formControl]="zoekVeld">
+  <mat-icon matSuffix (click)="toggleHelp()" [ngClass]="{'inactief':!toonHelpStatus}">help</mat-icon>
 </div>
