@@ -1,6 +1,6 @@
 import { Component, Input, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { Observable } from "rxjs/Observable";
-import { map } from "rxjs/operators";
+import { map, filter } from "rxjs/operators";
 
 import { KaartCmdDispatcher, VacuousDispatcher } from "./kaart-event-dispatcher";
 import { KaartComponentBase } from "./kaart-component-base";
@@ -73,7 +73,7 @@ export class KaartMijnLocatieComponent extends KaartComponentBase implements OnD
     this.dispatcher.dispatch({
       type: "Subscription",
       subscription: prt.ZoominstellingenSubscription(zoominstellingenGezetWrapper),
-      wrapper: subscribedWrapper({})
+      wrapper: subscribedWrapper(this)
     });
     this.zoom$ = this.internalMessage$.pipe(
       ofType<ZoominstellingenGezetMsg>("ZoominstellingenGezet"), //
@@ -81,7 +81,10 @@ export class KaartMijnLocatieComponent extends KaartComponentBase implements OnD
       observeOnAngular(this.zone)
     );
     this.internalMessage$
-      .pipe(ofType<SubscribedMsg>("Subscribed")) //
+      .pipe(
+        ofType<SubscribedMsg>("Subscribed"), //
+        filter(sm => sm.reference === this)
+      )
       .subscribe(sm =>
         sm.subscription.fold(
           kaartLogger.error, //

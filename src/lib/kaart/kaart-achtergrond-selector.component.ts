@@ -1,7 +1,7 @@
 import { Component, OnInit, Input, ChangeDetectionStrategy, ChangeDetectorRef, NgZone, OnDestroy } from "@angular/core";
 import { trigger, state, style, transition, animate } from "@angular/animations";
 import { Observable } from "rxjs/Observable";
-import { map } from "rxjs/operators";
+import { map, filter } from "rxjs/operators";
 
 import { AchtergrondLaag } from "./kaart-elementen";
 import { KaartComponentBase } from "./kaart-component-base";
@@ -89,9 +89,19 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
   }
 
   ngOnInit() {
-    this.dispatcher.dispatch(prt.SubscriptionCmd(prt.AchtergrondlagenSubscription(achtergrondlagenGezetWrapper), subscribedWrapper({})));
+    this.dispatcher.dispatch(
+      prt.SubscriptionCmd(
+        prt.AchtergrondlagenSubscription(achtergrondlagenGezetWrapper),
+        subscribedWrapper(this) // genoeg gegevens meegeven om de juist unsubcribe te kunnen doen
+      )
+    );
 
-    this.dispatcher.dispatch(prt.SubscriptionCmd(prt.AchtergrondTitelSubscription(achtergrondtitelGezetWrapper), subscribedWrapper({})));
+    this.dispatcher.dispatch(
+      prt.SubscriptionCmd(
+        prt.AchtergrondTitelSubscription(achtergrondtitelGezetWrapper),
+        subscribedWrapper(this) // genoeg gegevens meegeven om de juist unsubcribe te kunnen doen
+      )
+    );
 
     this.backgroundTiles$ = this.internalMessage$.pipe(
       ofType<AchtergrondlagenGezetMsg>("AchtergrondlagenGezet"),
@@ -111,7 +121,10 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
       });
 
     this.internalMessage$
-      .pipe(ofType<SubscribedMsg>("Subscribed")) //
+      .pipe(
+        ofType<SubscribedMsg>("Subscribed"), // het maakt niet uit welke van de 2 subscriptions
+        filter(sm => sm.reference === this) // als het maar die van deze component is
+      )
       .subscribe(sm =>
         sm.subscription.fold(
           kaartLogger.error, //

@@ -1,6 +1,6 @@
 import { Component, Input, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { Observable } from "rxjs/Observable";
-import { map } from "rxjs/operators";
+import { map, filter } from "rxjs/operators";
 
 import { KaartCmdDispatcher, VacuousDispatcher } from "./kaart-event-dispatcher";
 import { KaartComponentBase } from "./kaart-component-base";
@@ -40,7 +40,12 @@ export class KaartZoomComponent extends KaartComponentBase implements OnInit, On
   }
 
   ngOnInit() {
-    this.dispatcher.dispatch(prt.SubscriptionCmd(prt.ZoominstellingenSubscription(zoominstellingenGezetWrapper), subscribedWrapper({})));
+    this.dispatcher.dispatch(
+      prt.SubscriptionCmd(
+        prt.ZoominstellingenSubscription(zoominstellingenGezetWrapper), //
+        subscribedWrapper(this) // zorg er voor dat we de juiste subscription kunnen filteren
+      )
+    );
 
     this.kaartProps$ = this.internalMessage$.pipe(
       ofType<ZoominstellingenGezetMsg>("ZoominstellingenGezet"),
@@ -51,7 +56,10 @@ export class KaartZoomComponent extends KaartComponentBase implements OnInit, On
       }))
     );
     this.internalMessage$
-      .pipe(ofType<SubscribedMsg>("Subscribed")) //
+      .pipe(
+        ofType<SubscribedMsg>("Subscribed"), //
+        filter(sm => sm.reference === this)
+      )
       .subscribe(sm =>
         sm.subscription.fold(
           kaartLogger.error, //
