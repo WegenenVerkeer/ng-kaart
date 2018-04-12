@@ -1,9 +1,10 @@
 import { Component, EventEmitter, Input, OnInit, Output } from "@angular/core";
 
 import { KaartClassicComponent } from "../kaart/kaart-classic.component";
-import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
+import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import { FormControl } from "@angular/forms";
 import { KaartCmdDispatcher } from "../kaart/kaart-event-dispatcher";
+import { KaartMsg } from "../kaart";
 
 @Component({
   selector: "awv-zoeker-input",
@@ -14,7 +15,7 @@ export class ZoekerInputComponent implements OnInit {
   zoekVeld = new FormControl();
   @Output() toonResultaat = new EventEmitter<boolean>();
   @Output() toonHelp = new EventEmitter<boolean>();
-  @Input() dispatcher: KaartCmdDispatcher<KaartInternalMsg>;
+  @Input() dispatcher: KaartCmdDispatcher<KaartMsg>;
 
   private toonHelpStatus = false;
   private toonResultaatStatus = true;

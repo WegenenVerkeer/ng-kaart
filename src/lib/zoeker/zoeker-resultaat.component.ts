@@ -3,7 +3,7 @@ import { Component, Input, OnDestroy, OnInit } from "@angular/core";
 import { KaartClassicComponent } from "../kaart/kaart-classic.component";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as prt from "../kaart/kaart-protocol";
-import { none, Option, some } from "fp-ts/lib/Option";
+import { none, Option } from "fp-ts/lib/Option";
 import { ZoekResultaten } from "./index";
 import { Subscription } from "rxjs/Subscription";
 import { KaartCmdValidation } from "../kaart/kaart-protocol";
@@ -11,9 +11,10 @@ import { SubscriptionResult } from "../kaart/kaart-protocol";
 import { ZoekResultaat } from "./abstract-zoeker";
 import * as ol from "openlayers";
 import * as ke from "../kaart/kaart-elementen";
-import { List, Map } from "immutable";
+import { List } from "immutable";
 import { MapIcons } from "./mapicons/mapicons";
 import { KaartCmdDispatcher } from "../kaart/kaart-event-dispatcher";
+import { KaartMsg } from "../kaart";
 
 const ZoekerLaagNaam = "Zoeker";
 
@@ -25,7 +26,7 @@ const ZoekerLaagNaam = "Zoeker";
 export class ZoekerResultaatComponent implements OnInit, OnDestroy {
   subscription: Option<Subscription> = none;
   alleZoekResultaten: ZoekResultaten[] = [];
-  @Input() dispatcher: KaartCmdDispatcher<KaartInternalMsg>;
+  @Input() dispatcher: KaartCmdDispatcher<KaartMsg>;
 
   private imageStyles: ol.style.Style[] = [];
 
