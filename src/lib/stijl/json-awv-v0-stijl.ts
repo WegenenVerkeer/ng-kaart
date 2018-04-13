@@ -132,7 +132,7 @@ const lineShortcut: Interpreter<Object> = st.field(
 );
 
 export const shortcutStyles: Interpreter<Object> = st.map(
-  (maybeJson: Option<Object>) => maybeJson.getOrElseValue({}),
+  (maybeJson: Option<Object>) => maybeJson.getOrElse({}),
   st.optField("shortcut", st.firstOf(lineShortcut))
 );
 

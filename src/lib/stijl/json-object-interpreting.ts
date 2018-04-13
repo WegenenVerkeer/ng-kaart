@@ -75,7 +75,7 @@ export function succeed<T>(t: T): Interpreter<T> {
 
 function validateArray<T>(jsonArray: Array<T>, interpreter: Interpreter<T>): Validation<Array<T>> {
   return array.reduce(
-    (vts: Validation<Array<T>>, json: Object) => vts.chain(ts => interpreter(json).map(array.snoc(ts))),
+    (vts: Validation<Array<T>>, json: Object) => vts.chain(ts => interpreter(json).map(t => array.snoc(ts, t))),
     ok(new Array<T>()),
     jsonArray as Array<Object>
   );
@@ -428,7 +428,7 @@ export function mapRecord<A, B>(f: (a: A) => B, record: InterpreterOptionalRecor
 export function byTypeDiscriminator<T>(discriminatorField: string, interpretersByKind: { [k: string]: Interpreter<T> }): Interpreter<T> {
   return (json: Object) => {
     return chain(field(discriminatorField, str), (kind: string) =>
-      fromNullable(interpretersByKind[kind]).getOrElseValue(() => fail<T>(`Het typediscriminatieveld bevat een onbekend type '${kind}'`))
+      fromNullable(interpretersByKind[kind]).getOrElse(() => fail<T>(`Het typediscriminatieveld bevat een onbekend type '${kind}'`))
     )(json);
   };
 }

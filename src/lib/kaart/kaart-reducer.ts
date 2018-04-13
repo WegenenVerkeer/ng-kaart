@@ -3,7 +3,8 @@ import { none, Option, some, isNone, fromNullable } from "fp-ts/lib/Option";
 import * as validation from "fp-ts/lib/Validation";
 import * as array from "fp-ts/lib/Array";
 import { sequence } from "fp-ts/lib/Traversable";
-import { getArrayMonoid } from "fp-ts/lib/Monoid";
+import { getArrayMonoid, monoidString } from "fp-ts/lib/Monoid";
+import { getArraySemigroup, semigroupString } from "fp-ts/lib/Semigroup";
 
 import * as ol from "openlayers";
 
@@ -15,6 +16,7 @@ import { forEach } from "../util/option";
 import { Subscription } from "rxjs";
 import { debounceTime, filter } from "rxjs/operators";
 import { Laaggroep, PositieAanpassing } from "./kaart-protocol-commands";
+import { semigroup } from "fp-ts";
 
 ///////////////////////////////////
 // Hulpfuncties
@@ -66,34 +68,30 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       resultValidation: prt.KaartCmdValidation<KaartCmdResult<T>>
     ): ModelWithResult<Msg> {
       return {
-        model: resultValidation.map(v => v.model).getOrElseValue(model),
-        message: resultValidation.fold(
-          fail => some(wrapper(validation.failure(getArrayMonoid<string>())(fail))),
-          v => v.value.map(x => wrapper(success(x)))
-        )
+        model: resultValidation.map(v => v.model).getOrElse(model),
+        message: resultValidation.fold(fail => some(wrapper(validation.failure(fail))), v => v.value.map(x => wrapper(success(x))))
       };
     }
 
-    const allOf = sequence(validation, array);
+    const allOf = sequence(validation.getApplicative(getArraySemigroup<string>()), array.array);
     const success = <T>(t: T) => validation.success<string[], T>(t);
 
     function fromOption<T>(maybe: Option<T>, errorMsg: string): prt.KaartCmdValidation<T> {
-      return maybe.map(t => validation.success<string[], T>(t)).getOrElse(() => validation.failure(getArrayMonoid<string>())([errorMsg]));
+      return maybe.map(t => validation.success<string[], T>(t)).getOrElse(validation.failure([errorMsg]));
     }
 
     function fromPredicate<T>(t: T, pred: (t: T) => boolean, errMsg: string): prt.KaartCmdValidation<T> {
-      return validation.fromPredicate(getArrayMonoid<string>())(pred, () => [errMsg])(t);
+      return validation.fromPredicate(pred, () => [errMsg])(t);
     }
 
     function fromBoolean<T>(thruth: boolean, errMsg: string): prt.KaartCmdValidation<{}> {
-      return thruth ? validation.success({}) : validation.failure(getArrayMonoid<string>())([errMsg]);
+      return thruth ? validation.success({}) : validation.failure([errMsg]);
     }
 
     function valideerLayerBestaat(titel: string): prt.KaartCmdValidation<ol.layer.Base> {
-      return validation.fromPredicate(getArrayMonoid<string>())(
-        (l: ol.layer.Base) => l !== undefined,
-        () => [`Een laag met titel ${titel} bestaat niet`]
-      )(model.olLayersOpTitel.get(titel));
+      return validation.fromPredicate((l: ol.layer.Base) => l !== undefined, () => [`Een laag met titel ${titel} bestaat niet`])(
+        model.olLayersOpTitel.get(titel)
+      );
     }
 
     function valideerVectorLayerBestaat(titel: string): prt.KaartCmdValidation<ol.layer.Vector> {
@@ -101,7 +99,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         layer =>
           layer["setStyle"]
             ? validation.success(layer as ol.layer.Vector)
-            : validation.failure(getArrayMonoid<string>())([`De laag met titel ${titel} is geen vectorlaag`])
+            : validation.failure([`De laag met titel ${titel} is geen vectorlaag`])
       );
     }
 
@@ -437,7 +435,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         ]).map(() => {
           achtergrondTitels.forEach(titel => model.olLayersOpTitel.get(titel!).setVisible(false));
           const geselecteerdeTitel = fromNullable(achtergrondTitels.find(titel => model.olLayersOpTitel.get(titel!).getVisible()));
-          const teSelecterenTitel = geselecteerdeTitel.getOrElse(() => achtergrondTitels.first()); // er is er minstens 1 wegens validatie
+          const teSelecterenTitel = geselecteerdeTitel.getOrElse(achtergrondTitels.first()); // er is er minstens 1 wegens validatie
           const achtergrondLayer = model.olLayersOpTitel.get(teSelecterenTitel);
           achtergrondLayer.setVisible(true);
           model.achtergrondlaagtitelSubj.next(teSelecterenTitel);

@@ -67,7 +67,7 @@
     "@types/loglevel": "1.5.3",
     "copy-webpack-plugin": "4.4.1",
     "core-js": "2.5.3",
-    "fp-ts": "0.6.8",
+    "fp-ts": "1.2.0",
     "googlemaps": "1.12.0",
     "hammerjs": "2.0.8",
     "immutable": "3.8.2",

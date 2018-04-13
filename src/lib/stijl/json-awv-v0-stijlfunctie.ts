@@ -308,6 +308,6 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
 
   return validatedCombinedRuleExpression.map((ruleExpression: RuleExpression) => (feature: ol.Feature, resolution: number) => {
     // openlayers kan undefined wel aan, maar de typedefinitie declareert dat niet zo. Zucht.
-    return ruleExpression({ feature: feature, resolution: resolution }).getOrElseValue((undefined as any) as ol.style.Style);
+    return ruleExpression({ feature: feature, resolution: resolution }).getOrElse((undefined as any) as ol.style.Style);
   });
 }

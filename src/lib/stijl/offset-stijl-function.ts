@@ -38,7 +38,7 @@ export function offsetStyleFunction(
             ident8,
             // Niet alle lijntypes hebben expliciet een offsetzijde. Indien geen zijderijbaan waarde gevonden,
             // veronderstellen we rechter zijde
-            getValue(feature, zijderijbaanVeld).getOrElseValue("r"),
+            getValue(feature, zijderijbaanVeld).getOrElse("r"),
             positie * s.getStroke().getWidth(),
             resolution
           );
