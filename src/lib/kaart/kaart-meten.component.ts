@@ -2,7 +2,7 @@ import { Component, Input, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "
 import { none, Option, some } from "fp-ts/lib/Option";
 import { Subject, ReplaySubject, Subscription } from "rxjs";
 import { Observable } from "rxjs/Observable";
-import { map, distinctUntilChanged, concatAll, mergeAll } from "rxjs/operators";
+import { map, distinctUntilChanged, concatAll, mergeAll, filter } from "rxjs/operators";
 import * as ol from "openlayers";
 
 import { KaartComponent } from "./kaart.component";
@@ -66,15 +66,25 @@ export class KaartMetenLengteOppervlakteLaagComponent extends KaartComponentBase
   }
 
   ngOnInit(): void {
+    this.kaartComponent.internalMessage$
+      .pipe(
+        ofType<SubscribedMsg>("Subscribed"), //
+        filter(sm => sm.reference === this)
+      )
+      .subscribe(sm => sm.subscription.fold(kaartLogger.error, sub => this.subscriptions.push(sub)));
+
     const kaartObs: Observable<KaartWithInfo> = this.kaartComponent.kaartModel$;
     this.bindToLifeCycle(kaartObs);
 
     kaartObs
-      .pipe(map(kaart => kaart.geometryChangedSubj), distinctUntilChanged())
+      .pipe(
+        distinctUntilChanged((k1, k2) => k1.geometryChangedSubj === k2.geometryChangedSubj), //
+        map(kaart => kaart.geometryChangedSubj)
+      )
       .subscribe(gcSubj => (this.changedGeometriesSubj = gcSubj));
 
     this.kaartComponent.internalCmdDispatcher.dispatch(
-      prt.SubscriptionCmd(prt.MetenLengteOppervlakteSubscription(metenLengteOppervlakteWrapper), subscribedWrapper({}))
+      prt.SubscriptionCmd(prt.MetenLengteOppervlakteSubscription(metenLengteOppervlakteWrapper), subscribedWrapper(this))
     );
     this.kaartComponent.internalMessage$.pipe(ofType<MetenLengteOppervlakteMsg>("MetenLengteOppervlakte")).subscribe(msg => {
       if (msg.meten) {
@@ -87,6 +97,9 @@ export class KaartMetenLengteOppervlakteLaagComponent extends KaartComponentBase
 
   ngOnDestroy(): void {
     this.stopMetMeten();
+
+    this.subscriptions.forEach(sub => this.kaartComponent.internalCmdDispatcher.dispatch(prt.UnsubscriptionCmd(sub)));
+    this.subscriptions.splice(0, this.subscriptions.length);
   }
 
   startMetMeten(): void {
@@ -102,34 +115,13 @@ export class KaartMetenLengteOppervlakteLaagComponent extends KaartComponentBase
 
     this.draw = this.createDrawInteraction(source);
 
-    this.kaartComponent.internalCmdDispatcher.dispatch({
-      type: "VoegInteractieToe",
-      interactie: this.draw
-    });
-
-    this.kaartComponent.internalMessage$
-      .pipe(ofType<SubscribedMsg>("Subscribed")) //
-      .subscribe(sm =>
-        sm.subscription.fold(
-          kaartLogger.error, //
-          sub => this.subscriptions.push(sub)
-        )
-      );
+    this.kaartComponent.internalCmdDispatcher.dispatch(prt.VoegInteractieToeCmd(this.draw));
   }
 
   stopMetMeten(): void {
-    this.kaartComponent.internalCmdDispatcher.dispatch({
-      type: "VerwijderInteractie",
-      interactie: this.draw
-    });
-    this.kaartComponent.internalCmdDispatcher.dispatch({
-      type: "VerwijderOverlays",
-      overlays: this.overlays
-    });
+    this.kaartComponent.internalCmdDispatcher.dispatch(prt.VerwijderInteractieCmd(this.draw));
+    this.kaartComponent.internalCmdDispatcher.dispatch(prt.VerwijderOverlaysCmd(this.overlays));
     this.kaartComponent.internalCmdDispatcher.dispatch(prt.VerwijderLaagCmd(MetenLaagNaam, kaartLogOnlyWrapper));
-
-    this.subscriptions.forEach(sub => this.kaartComponent.internalCmdDispatcher.dispatch(prt.UnsubscriptionCmd(sub)));
-    this.subscriptions.splice(0, this.subscriptions.length);
   }
 
   createLayer(source: ol.source.Vector): ke.VectorLaag {
