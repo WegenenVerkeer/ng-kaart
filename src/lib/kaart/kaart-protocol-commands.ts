@@ -288,13 +288,13 @@ export function VerbergAchtergrondKeuzeCmd<Msg extends KaartMsg>(wrapper: BareVa
   return { type: "VerbergAchtergrondKeuze", wrapper: wrapper };
 }
 
-export function SubscriptionCmd<Msg extends KaartMsg>(
+export function SubscribeCmd<Msg extends KaartMsg>(
   subscription: Subscription<Msg>,
   wrapper: ValidationWrapper<RxSubscription, Msg>
 ): SubscribeCmd<Msg> {
   return { type: "Subscription", subscription: subscription, wrapper: wrapper };
 }
 
-export function UnsubscriptionCmd<Msg extends KaartMsg>(subscription: SubscriptionResult): UnsubscribeCmd<Msg> {
+export function UnsubscribeCmd<Msg extends KaartMsg>(subscription: SubscriptionResult): UnsubscribeCmd<Msg> {
   return { type: "Unsubscription", subscription: subscription };
 }

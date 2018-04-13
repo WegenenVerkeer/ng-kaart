@@ -1,28 +1,28 @@
 import { Component, Input, NgZone, OnDestroy, OnInit } from "@angular/core";
-import { Observable } from "rxjs/Observable";
-import { map, filter } from "rxjs/operators";
-
-import { KaartCmdDispatcher, VacuousDispatcher } from "./kaart-event-dispatcher";
-import { KaartComponentBase } from "./kaart-component-base";
-import { observeOnAngular } from "../util/observe-on-angular";
-import * as ol from "openlayers";
-
-import { kaartLogger } from "./log";
 import { none, Option, some } from "fp-ts/lib/Option";
-import * as ke from "./kaart-elementen";
 import { List } from "immutable";
-import { orElse } from "../util/option";
+import * as ol from "openlayers";
+import { Observable } from "rxjs/Observable";
+import { filter, map } from "rxjs/operators";
+import { Subscription as RxSubscription } from "rxjs/Subscription";
+
+import { observeOnAngular } from "../util/observe-on-angular";
+import { ofType } from "../util/operators";
+import { forEach, orElse } from "../util/option";
+import { KaartComponentBase } from "./kaart-component-base";
+import * as ke from "./kaart-elementen";
+import { KaartCmdDispatcher, VacuousDispatcher } from "./kaart-event-dispatcher";
 import {
   KaartInternalMsg,
-  kaartLogOnlyWrapper,
-  subscribedWrapper,
   KaartInternalSubMsg,
-  zoominstellingenGezetWrapper,
+  kaartLogOnlyWrapper,
+  SubscribedMsg,
   ZoominstellingenGezetMsg,
-  SubscribedMsg
+  zoominstellingenGezetWrapper
 } from "./kaart-internal-messages";
-import { ofType } from "../util/operators";
 import * as prt from "./kaart-protocol";
+import { kaartLogger } from "./log";
+import { internalMsgSubscriptionCmdOperator } from "./subscription-helper";
 
 const MijnLocatieLaagNaam = "Mijn Locatie";
 
@@ -32,7 +32,7 @@ const MijnLocatieLaagNaam = "Mijn Locatie";
   styleUrls: ["./kaart-mijn-locatie.component.scss"]
 })
 export class KaartMijnLocatieComponent extends KaartComponentBase implements OnDestroy, OnInit {
-  private readonly subscriptions: prt.SubscriptionResult[] = [];
+  private subHelperSub: RxSubscription = new RxSubscription();
   zoom$: Observable<number> = Observable.empty();
 
   mijnLocatieStyle: ol.style.Style;
@@ -62,6 +62,11 @@ export class KaartMijnLocatieComponent extends KaartComponentBase implements OnD
   }
 
   ngOnInit(): void {
+    this.subHelperSub.unsubscribe(); // voor de zekerheid
+    this.subHelperSub = this.internalMessage$
+      .lift(internalMsgSubscriptionCmdOperator(this.dispatcher, prt.ZoominstellingenSubscription(zoominstellingenGezetWrapper)))
+      .subscribe(err => kaartLogger.error);
+
     this.dispatcher.dispatch({
       type: "VoegLaagToe",
       positie: 0,
@@ -70,33 +75,16 @@ export class KaartMijnLocatieComponent extends KaartComponentBase implements OnD
       laaggroep: "Tools",
       wrapper: kaartLogOnlyWrapper
     });
-    this.dispatcher.dispatch({
-      type: "Subscription",
-      subscription: prt.ZoominstellingenSubscription(zoominstellingenGezetWrapper),
-      wrapper: subscribedWrapper(this)
-    });
+
     this.zoom$ = this.internalMessage$.pipe(
       ofType<ZoominstellingenGezetMsg>("ZoominstellingenGezet"), //
       map(m => m.zoominstellingen.zoom),
       observeOnAngular(this.zone)
     );
-    this.internalMessage$
-      .pipe(
-        ofType<SubscribedMsg>("Subscribed"), //
-        filter(sm => sm.reference === this)
-      )
-      .subscribe(sm =>
-        sm.subscription.fold(
-          kaartLogger.error, //
-          sub => this.subscriptions.push(sub)
-        )
-      );
   }
 
   ngOnDestroy() {
-    this.subscriptions.forEach(sub => this.dispatcher.dispatch(prt.UnsubscriptionCmd(sub)));
-    this.subscriptions.splice(0, this.subscriptions.length);
-    this.dispatcher.dispatch(prt.VerwijderLaagCmd(MijnLocatieLaagNaam, kaartLogOnlyWrapper));
+    this.subHelperSub.unsubscribe(); // Stop met luisteren op subscriptions
     super.ngOnDestroy();
   }
 

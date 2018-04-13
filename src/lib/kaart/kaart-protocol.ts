@@ -3,9 +3,11 @@ import { Validation } from "fp-ts/lib/Validation";
 export * from "./kaart-protocol-commands";
 export * from "./kaart-protocol-subscriptions";
 
-export interface KaartMsg {
+export interface TypedRecord {
   type: string;
 }
+
+export type KaartMsg = TypedRecord;
 
 export type ModelConsumer<A> = (a: A) => void;
 export type MessageConsumer<Msg extends KaartMsg> = (msg: Msg) => void;

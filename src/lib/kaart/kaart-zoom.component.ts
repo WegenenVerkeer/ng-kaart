@@ -1,21 +1,21 @@
 import { Component, Input, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { Observable } from "rxjs/Observable";
-import { map, filter } from "rxjs/operators";
+import { map } from "rxjs/operators";
+import { Subscription as RxSubscription } from "rxjs/Subscription";
 
-import { KaartCmdDispatcher, VacuousDispatcher } from "./kaart-event-dispatcher";
+import { ofType } from "../util/operators";
 import { KaartComponentBase } from "./kaart-component-base";
+import { KaartCmdDispatcher, VacuousDispatcher } from "./kaart-event-dispatcher";
 import {
   KaartInternalMsg,
   KaartInternalSubMsg,
   kaartLogOnlyWrapper,
-  zoominstellingenGezetWrapper,
   ZoominstellingenGezetMsg,
-  subscribedWrapper,
-  SubscribedMsg
+  zoominstellingenGezetWrapper
 } from "./kaart-internal-messages";
-import { ofType } from "../util/operators";
-import { kaartLogger } from "./log";
 import * as prt from "./kaart-protocol";
+import { kaartLogger } from "./log";
+import { internalMsgSubscriptionCmdOperator } from "./subscription-helper";
 
 export interface KaartProps {
   canZoomIn: boolean;
@@ -29,7 +29,7 @@ export interface KaartProps {
   styleUrls: ["./kaart-zoom.component.scss"]
 })
 export class KaartZoomComponent extends KaartComponentBase implements OnInit, OnDestroy {
-  private readonly subscriptions: prt.SubscriptionResult[] = [];
+  private subHelperSub: RxSubscription = new RxSubscription();
   kaartProps$: Observable<KaartProps> = Observable.empty();
 
   @Input() dispatcher: KaartCmdDispatcher<KaartInternalMsg> = VacuousDispatcher;
@@ -40,12 +40,10 @@ export class KaartZoomComponent extends KaartComponentBase implements OnInit, On
   }
 
   ngOnInit() {
-    this.dispatcher.dispatch(
-      prt.SubscriptionCmd(
-        prt.ZoominstellingenSubscription(zoominstellingenGezetWrapper), //
-        subscribedWrapper(this) // zorg er voor dat we de juiste subscription kunnen filteren
-      )
-    );
+    this.subHelperSub.unsubscribe(); // voor de zekerheid
+    this.subHelperSub = this.internalMessage$
+      .lift(internalMsgSubscriptionCmdOperator(this.dispatcher, prt.ZoominstellingenSubscription(zoominstellingenGezetWrapper)))
+      .subscribe(err => kaartLogger.error);
 
     this.kaartProps$ = this.internalMessage$.pipe(
       ofType<ZoominstellingenGezetMsg>("ZoominstellingenGezet"),
@@ -55,22 +53,10 @@ export class KaartZoomComponent extends KaartComponentBase implements OnInit, On
         zoom: m.zoominstellingen.zoom
       }))
     );
-    this.internalMessage$
-      .pipe(
-        ofType<SubscribedMsg>("Subscribed"), //
-        filter(sm => sm.reference === this)
-      )
-      .subscribe(sm =>
-        sm.subscription.fold(
-          kaartLogger.error, //
-          sub => this.subscriptions.push(sub)
-        )
-      );
   }
 
   ngOnDestroy() {
-    this.subscriptions.forEach(sub => this.dispatcher.dispatch(prt.UnsubscriptionCmd(sub)));
-    this.subscriptions.splice(0, this.subscriptions.length);
+    this.subHelperSub.unsubscribe(); // Stop met luisteren op subscriptions
     super.ngOnDestroy();
   }
 

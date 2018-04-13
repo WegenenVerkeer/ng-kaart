@@ -1,26 +1,29 @@
-import { Component, OnInit, Input, ChangeDetectionStrategy, ChangeDetectorRef, NgZone, OnDestroy } from "@angular/core";
-import { trigger, state, style, transition, animate } from "@angular/animations";
+import { animate, state, style, transition, trigger } from "@angular/animations";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, NgZone, OnDestroy, OnInit } from "@angular/core";
+import { none, Option, some } from "fp-ts/lib/Option";
 import { Observable } from "rxjs/Observable";
-import { map, filter } from "rxjs/operators";
+import { map } from "rxjs/operators";
+import { Subscription as RxSubscription } from "rxjs/Subscription";
 
-import { AchtergrondLaag } from "./kaart-elementen";
+import { observeOnAngular } from "../util/observe-on-angular";
+import { ofType } from "../util/operators";
+import { forEach } from "../util/option";
 import { KaartComponentBase } from "./kaart-component-base";
-import { VacuousDispatcher, KaartCmdDispatcher } from "./kaart-event-dispatcher";
+import { AchtergrondLaag } from "./kaart-elementen";
+import { KaartCmdDispatcher, VacuousDispatcher } from "./kaart-event-dispatcher";
 import {
+  AchtergrondlagenGezetMsg,
+  achtergrondlagenGezetWrapper,
+  AchtergrondtitelGezetMsg,
+  achtergrondtitelGezetWrapper,
   KaartInternalMsg,
   KaartInternalSubMsg,
-  achtergrondlagenGezetWrapper,
   kaartLogOnlyWrapper,
-  achtergrondtitelGezetWrapper,
-  AchtergrondlagenGezetMsg,
-  AchtergrondtitelGezetMsg,
-  subscribedWrapper,
-  SubscribedMsg
+  subscribedWrapper
 } from "./kaart-internal-messages";
-import { kaartLogger } from "./log";
-import { ofType } from "../util/operators";
-import { observeOnAngular } from "../util/observe-on-angular";
 import * as prt from "./kaart-protocol";
+import { kaartLogger } from "./log";
+import { internalMsgSubscriptionCmdOperator } from "./subscription-helper";
 
 enum DisplayMode {
   SHOWING_STATUS,
@@ -75,7 +78,7 @@ const Invisible = "invisible";
   changeDetection: ChangeDetectionStrategy.OnPush // Bij default is er een endless loop van updates
 })
 export class KaartAchtergrondSelectorComponent extends KaartComponentBase implements OnInit, OnDestroy {
-  private readonly subscriptions: prt.SubscriptionResult[] = [];
+  private subHelperSub: RxSubscription = new RxSubscription();
   private displayMode: DisplayMode = DisplayMode.SHOWING_STATUS;
   achtergrondTitel = "";
 
@@ -89,20 +92,19 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
   }
 
   ngOnInit() {
-    this.dispatcher.dispatch(
-      prt.SubscriptionCmd(
-        prt.AchtergrondlagenSubscription(achtergrondlagenGezetWrapper),
-        subscribedWrapper(this) // genoeg gegevens meegeven om de juist unsubcribe te kunnen doen
+    // Eerst er voor zorgen dat we een notificatie krijgen van nieuwe achtergrondlagen en het externe zetten van de achtergrondlaag
+    this.subHelperSub.unsubscribe(); // voor de zekerheid
+    this.subHelperSub = this.internalMessage$
+      .lift(
+        internalMsgSubscriptionCmdOperator(
+          this.dispatcher,
+          prt.AchtergrondlagenSubscription(achtergrondlagenGezetWrapper),
+          prt.AchtergrondTitelSubscription(achtergrondtitelGezetWrapper)
+        )
       )
-    );
+      .subscribe(err => kaartLogger.error);
 
-    this.dispatcher.dispatch(
-      prt.SubscriptionCmd(
-        prt.AchtergrondTitelSubscription(achtergrondtitelGezetWrapper),
-        subscribedWrapper(this) // genoeg gegevens meegeven om de juist unsubcribe te kunnen doen
-      )
-    );
-
+    // Dan subscriben op nieuwe achtergrondlagen en het externe zetten van de achtergrondlaag
     this.backgroundTiles$ = this.internalMessage$.pipe(
       ofType<AchtergrondlagenGezetMsg>("AchtergrondlagenGezet"),
       map(a => a.achtergrondlagen.toArray()),
@@ -119,23 +121,10 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
         this.achtergrondTitel = titel;
         this.cdr.detectChanges(); // We zitten nochthans in observeOnAngular.
       });
-
-    this.internalMessage$
-      .pipe(
-        ofType<SubscribedMsg>("Subscribed"), // het maakt niet uit welke van de 2 subscriptions
-        filter(sm => sm.reference === this) // als het maar die van deze component is
-      )
-      .subscribe(sm =>
-        sm.subscription.fold(
-          kaartLogger.error, //
-          sub => this.subscriptions.push(sub)
-        )
-      );
   }
 
   ngOnDestroy() {
-    this.subscriptions.forEach(sub => this.dispatcher.dispatch(prt.UnsubscriptionCmd(sub)));
-    this.subscriptions.splice(0, this.subscriptions.length);
+    this.subHelperSub.unsubscribe(); // Stop met luisteren op subscriptions
     super.ngOnDestroy();
   }
 
