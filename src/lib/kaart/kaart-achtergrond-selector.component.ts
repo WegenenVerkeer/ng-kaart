@@ -1,29 +1,21 @@
 import { animate, state, style, transition, trigger } from "@angular/animations";
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, NgZone, OnDestroy, OnInit } from "@angular/core";
-import { none, Option, some } from "fp-ts/lib/Option";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnInit } from "@angular/core";
 import { Observable } from "rxjs/Observable";
 import { map } from "rxjs/operators";
-import { Subscription as RxSubscription } from "rxjs/Subscription";
 
 import { observeOnAngular } from "../util/observe-on-angular";
 import { ofType } from "../util/operators";
-import { forEach } from "../util/option";
-import { KaartComponentBase } from "./kaart-component-base";
+import { KaartChildComponentBase } from "./kaart-child-component-base";
 import { AchtergrondLaag } from "./kaart-elementen";
-import { KaartCmdDispatcher, VacuousDispatcher } from "./kaart-event-dispatcher";
 import {
   AchtergrondlagenGezetMsg,
   achtergrondlagenGezetWrapper,
   AchtergrondtitelGezetMsg,
   achtergrondtitelGezetWrapper,
   KaartInternalMsg,
-  KaartInternalSubMsg,
-  kaartLogOnlyWrapper,
-  subscribedWrapper
+  kaartLogOnlyWrapper
 } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
-import { kaartLogger } from "./log";
-import { internalMsgSubscriptionCmdOperator } from "./subscription-helper";
 
 enum DisplayMode {
   SHOWING_STATUS,
@@ -77,34 +69,26 @@ const Invisible = "invisible";
   ],
   changeDetection: ChangeDetectionStrategy.OnPush // Bij default is er een endless loop van updates
 })
-export class KaartAchtergrondSelectorComponent extends KaartComponentBase implements OnInit, OnDestroy {
-  private subHelperSub: RxSubscription = new RxSubscription();
+export class KaartAchtergrondSelectorComponent extends KaartChildComponentBase implements OnInit {
   private displayMode: DisplayMode = DisplayMode.SHOWING_STATUS;
   achtergrondTitel = "";
 
   backgroundTiles$: Observable<Array<AchtergrondLaag>> = Observable.empty();
 
-  @Input() dispatcher: KaartCmdDispatcher<KaartInternalMsg> = VacuousDispatcher;
-  @Input() internalMessage$: Observable<KaartInternalSubMsg> = Observable.never();
-
   constructor(private readonly cdr: ChangeDetectorRef, zone: NgZone) {
     super(zone);
   }
 
-  ngOnInit() {
-    // Eerst er voor zorgen dat we een notificatie krijgen van nieuwe achtergrondlagen en het externe zetten van de achtergrondlaag
-    this.subHelperSub.unsubscribe(); // voor de zekerheid
-    this.subHelperSub = this.internalMessage$
-      .lift(
-        internalMsgSubscriptionCmdOperator(
-          this.dispatcher,
-          prt.AchtergrondlagenSubscription(achtergrondlagenGezetWrapper),
-          prt.AchtergrondTitelSubscription(achtergrondtitelGezetWrapper)
-        )
-      )
-      .subscribe(err => kaartLogger.error);
+  protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
+    return [
+      prt.AchtergrondlagenSubscription(achtergrondlagenGezetWrapper), //
+      prt.AchtergrondTitelSubscription(achtergrondtitelGezetWrapper)
+    ];
+  }
 
-    // Dan subscriben op nieuwe achtergrondlagen en het externe zetten van de achtergrondlaag
+  ngOnInit() {
+    super.ngOnInit();
+
     this.backgroundTiles$ = this.internalMessage$.pipe(
       ofType<AchtergrondlagenGezetMsg>("AchtergrondlagenGezet"),
       map(a => a.achtergrondlagen.toArray()),
@@ -121,11 +105,6 @@ export class KaartAchtergrondSelectorComponent extends KaartComponentBase implem
         this.achtergrondTitel = titel;
         this.cdr.detectChanges(); // We zitten nochthans in observeOnAngular.
       });
-  }
-
-  ngOnDestroy() {
-    this.subHelperSub.unsubscribe(); // Stop met luisteren op subscriptions
-    super.ngOnDestroy();
   }
 
   kies(laag: AchtergrondLaag): void {
