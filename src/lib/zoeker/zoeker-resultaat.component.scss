@@ -1,5 +1,10 @@
+.zoek-resultaat {
+  display: flex;
+  flex-direction: column;
+}
+
 .locatiezoeker_resultaat p {
-  display: table;
+  display: flex;
   margin-top: 12px;
 }
 
@@ -7,7 +12,9 @@
   padding-left: 4px;
   padding-right: 4px;
   vertical-align: middle;
-  display: table-cell;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .locatiezoeker_resultaat img {

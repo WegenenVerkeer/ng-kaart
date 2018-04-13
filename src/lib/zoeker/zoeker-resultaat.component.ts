@@ -37,19 +37,14 @@ export class ZoekerResultaatComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Moet delayed worden, anders wordt de laagselector niet getoond!
-    setTimeout(
-      () =>
-        this.dispatcher.dispatch({
-          type: "VoegLaagToe",
-          positie: 1,
-          laag: this.createLayer(),
-          magGetoondWorden: true,
-          laaggroep: "Tools",
-          wrapper: kaartLogOnlyWrapper
-        }),
-      0
-    );
+    this.dispatcher.dispatch({
+      type: "VoegLaagToe",
+      positie: 1,
+      laag: this.createLayer(),
+      magGetoondWorden: true,
+      laaggroep: "Tools",
+      wrapper: kaartLogOnlyWrapper
+    });
     this.dispatcher.dispatch({
       type: "Subscription",
       subscription: prt.ZoekerSubscription(r => this.processZoekerAntwoord(r)),

@@ -4,9 +4,9 @@
       {{error}}
     </div>
   </div>
-  <div *ngFor="let zoeker of alleZoekResultaten">
+  <div *ngFor="let zoeker of alleZoekResultaten" class="zoek-resultaat">
     <div *ngFor="let resultaat of zoeker.resultaten"
-         class="locatiezoeker_resultaat locatiezoeker_fadein locatiezoeker_showpointer"
+         class="locatiezoeker_resultaat locatiezoeker_fadein locatiezoeker_showpointer zoek-resultaat"
          (click)="selectMarker(resultaat)">
       <p>
         <img src="{{image(resultaat)}}">

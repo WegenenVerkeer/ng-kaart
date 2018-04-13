@@ -14,13 +14,15 @@ body {
 }
 
 .zoeker-paneel {
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   align-items: left;
   justify-content: space-around;
   position: absolute;
   top: 64px;
   left: 16px;
   max-height: calc(100% - 188px);
+  max-width: 400px;
 }
 
 .zoeker-input {
