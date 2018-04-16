@@ -73,9 +73,6 @@ export class AppComponent {
   vanPositie = 0;
   naarPositie = 0;
 
-  toonZoekerHelp = false;
-  toonZoekerResultaat = true;
-
   pinIcon = new ol.style.Style({
     image: new ol.style.Icon({
       anchor: [0.5, 1],
@@ -189,13 +186,5 @@ export class AppComponent {
     // Het probleem is dat het Subject waarnaar gedispatched wordt een ander is dan dat dat door de kaartcomponent
     // opgepikt wordt. Een issue in de volgorde van initialisatie???
     this.verplaatsKaart.dispatch(prt.VerplaatsLaagCmd("dienstkaart-kleur", this.naarPositie, kaartLogOnlyWrapper));
-  }
-
-  onToonZoekerHelp(toon: boolean) {
-    this.toonZoekerHelp = toon;
-  }
-
-  onToonZoekerResultaat(toon: boolean) {
-    this.toonZoekerResultaat = toon;
   }
 }

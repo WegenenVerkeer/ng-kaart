@@ -8,6 +8,11 @@
       <awv-kaart-mijn-locatie [zoomniveau]="mijnLocatieZoom" [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-mijn-locatie>
     </div>
     <awv-kaart-zoom [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-zoom>
-    <ng-content select=".kaart-overlay"></ng-content>
+    <awv-google-locatie-zoeker></awv-google-locatie-zoeker>
+    <div class="kaart-links">
+      <awv-zoeker [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-zoeker>
+      <ng-content select=".kaart-links"></ng-content>
+    </div>
   </div>
+  <awv-google-locatie-zoeker [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-google-locatie-zoeker>
 </div>

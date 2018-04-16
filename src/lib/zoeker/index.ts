@@ -4,13 +4,11 @@ import { CommonModule } from "@angular/common";
 import { HttpModule } from "@angular/http";
 import { GoogleLocatieZoekerConfig } from "./google-locatie-zoeker.config";
 import { GoogleLocatieZoekerComponent } from "./google-locatie-zoeker.component";
-import { ZoekerInputComponent } from "./zoeker-input.component";
-import { ZoekerResultaatComponent } from "./zoeker-resultaat.component";
+import { ZoekerComponent } from "./zoeker.component";
 import { MatIconModule, MatFormFieldModule, MatInputModule } from "@angular/material";
 import { ReactiveFormsModule } from "@angular/forms";
-import { ZoekerHelpComponent } from "./zoeker-help.component";
 
-const components: any[] = [GoogleLocatieZoekerComponent, ZoekerInputComponent, ZoekerResultaatComponent, ZoekerHelpComponent];
+const components: any[] = [GoogleLocatieZoekerComponent, ZoekerComponent];
 
 @NgModule({
   imports: [CommonModule, HttpModule, ReactiveFormsModule, MatIconModule, MatInputModule, MatFormFieldModule],
@@ -29,7 +27,5 @@ export class ZoekerModule {
 
 export * from "./google-locatie-zoeker.service";
 export * from "./google-locatie-zoeker.component";
-export * from "./zoeker-input.component";
-export * from "./zoeker-resultaat.component";
-export * from "./zoeker-help.component";
+export * from "./zoeker.component";
 export * from "./abstract-zoeker";

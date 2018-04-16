@@ -1,4 +1,9 @@
-<div class="zoeker-help">
+<div class="zoeker-input float-box">
+  <mat-icon matPrefix (click)="toggleResultaat()" [ngClass]="{'inactief':!toonResultaat}">search</mat-icon>
+  <input placeholder="Zoek" [formControl]="zoekVeld">
+  <mat-icon matSuffix (click)="toggleHelp()" [ngClass]="{'inactief':!toonHelp}">help</mat-icon>
+</div>
+<div class="zoeker-help float-box" *ngIf="toonHelp">
   <br><b>Voorbeelden</b>
   <br>
   <div class="locatiezoeker_resultaat">Kapelstraat 12 Kortrijk
@@ -27,5 +32,22 @@
     <p>
       <img src="{{baseimage(true)}}"><span>Benaderd resultaat</span>
     </p>
+  </div>
+</div>
+<div class="zoeker-resultaat float-box" *ngIf="toonResultaat">
+  <div *ngFor="let zoeker of alleZoekResultaten">
+    <div *ngFor="let error of zoeker.fouten" class="locatiezoeker_fout">
+      {{error}}
+    </div>
+  </div>
+  <div *ngFor="let zoeker of alleZoekResultaten" class="zoeker-resultaat">
+    <div *ngFor="let resultaat of zoeker.resultaten"
+         class="locatiezoeker_resultaat locatiezoeker_fadein locatiezoeker_showpointer zoek-resultaat"
+         (click)="selectMarker(resultaat)">
+      <p>
+        <img src="{{image(resultaat)}}">
+        <span>{{resultaat.omschrijving}} ({{resultaat.bron}})</span>
+      </p>
+    </div>
   </div>
 </div>

@@ -28,6 +28,7 @@ import { KaartAchtergrondSelectorComponent } from "./kaart-achtergrond-selector.
 import { KaartAchtergrondTileComponent } from "./kaart-achtergrond-tile.component";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { MatButtonModule, MatIconModule } from "@angular/material";
+import { ZoekerModule } from "../zoeker/index";
 
 const components: any[] = [
   KaartComponent,
@@ -105,7 +106,16 @@ export const defaultKaartConfig: KaartConfig = {
 };
 
 @NgModule({
-  imports: [CommonModule, ClickOutsideModule, MatButtonModule, MatIconModule],
+  imports: [
+    CommonModule,
+    ClickOutsideModule,
+    MatButtonModule,
+    MatIconModule,
+    ZoekerModule.forRoot({
+      // ssh tunnel naar apigateway van dev - ssh -L 5100:apigateway.dev.awv.internal:80 management.apps.mow.vlaanderen.be
+      url: "http://localhost:5100/locatiezoeker"
+    })
+  ],
   declarations: [components],
   exports: [components],
   providers: [CoordinatenService, ReplaySubjectKaartCmdDispatcher]

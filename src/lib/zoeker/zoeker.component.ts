@@ -1,42 +1,50 @@
 import { Component, Input, OnDestroy, OnInit } from "@angular/core";
 
-import { KaartClassicComponent } from "../kaart/kaart-classic.component";
-import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
-import * as prt from "../kaart/kaart-protocol";
+import { KaartInternalMsg, KaartInternalSubMsg, kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
+import { FormControl } from "@angular/forms";
+import { KaartCmdDispatcher, VacuousDispatcher } from "../kaart/kaart-event-dispatcher";
 import { none, Option } from "fp-ts/lib/Option";
-import { ZoekResultaten } from "./index";
-import { Subscription } from "rxjs/Subscription";
 import { KaartCmdValidation } from "../kaart/kaart-protocol";
-import { SubscriptionResult } from "../kaart/kaart-protocol";
-import { ZoekResultaat } from "./abstract-zoeker";
-import * as ol from "openlayers";
+import { Subscription } from "rxjs/Subscription";
 import * as ke from "../kaart/kaart-elementen";
-import { List } from "immutable";
+import * as ol from "openlayers";
 import { MapIcons } from "./mapicons/mapicons";
-import { KaartCmdDispatcher } from "../kaart/kaart-event-dispatcher";
-import { KaartMsg } from "../kaart";
+import { ZoekResultaat } from "./abstract-zoeker";
+import * as prt from "../kaart/kaart-protocol";
+import { ZoekResultaten } from "./index";
+import { Observable } from "rxjs/Observable";
+import { List } from "immutable";
+import { SubscriptionResult } from "../kaart";
 
 const ZoekerLaagNaam = "Zoeker";
 
 @Component({
-  selector: "awv-zoeker-resultaat",
-  templateUrl: "./zoeker-resultaat.component.html",
-  styleUrls: ["./zoeker-resultaat.component.scss"]
+  selector: "awv-zoeker",
+  templateUrl: "./zoeker.component.html",
+  styleUrls: ["./zoeker.component.scss"]
 })
-export class ZoekerResultaatComponent implements OnInit, OnDestroy {
-  subscription: Option<Subscription> = none;
-  alleZoekResultaten: ZoekResultaten[] = [];
-  @Input() dispatcher: KaartCmdDispatcher<KaartMsg>;
+export class ZoekerComponent implements OnInit, OnDestroy {
+  @Input() dispatcher: KaartCmdDispatcher<KaartInternalMsg> = VacuousDispatcher;
+  @Input() internalMessage$: Observable<KaartInternalSubMsg> = Observable.never();
 
+  zoekVeld = new FormControl();
+  alleZoekResultaten: ZoekResultaten[] = [];
+  toonHelp = false;
+  toonResultaat = true;
+
+  private subscription: Option<Subscription> = none;
   private imageStyles: ol.style.Style[] = [];
 
-  constructor(kaart?: KaartClassicComponent) {
-    if (kaart) {
-      this.dispatcher = kaart;
-    }
-  }
+  constructor() {}
 
   ngOnInit(): void {
+    this.zoekVeld.valueChanges
+      .debounceTime(800)
+      .distinctUntilChanged()
+      .subscribe(value => {
+        this.toonResultaat = true;
+        this.dispatcher.dispatch({ type: "Zoek", input: value, wrapper: kaartLogOnlyWrapper });
+      });
     this.dispatcher.dispatch({
       type: "VoegLaagToe",
       positie: 1,
@@ -60,6 +68,14 @@ export class ZoekerResultaatComponent implements OnInit, OnDestroy {
       })
     );
     this.dispatcher.dispatch(prt.VerwijderLaagCmd(ZoekerLaagNaam, kaartLogOnlyWrapper));
+  }
+
+  toggleResultaat() {
+    this.toonResultaat = !this.toonResultaat;
+  }
+
+  toggleHelp() {
+    this.toonHelp = !this.toonHelp;
   }
 
   processZoekerAntwoord(nieuweResultaten: ZoekResultaten): KaartInternalMsg {
@@ -145,6 +161,10 @@ export class ZoekerResultaatComponent implements OnInit, OnDestroy {
 
   image(resultaat: ZoekResultaat) {
     return MapIcons.get("./" + (resultaat.partialMatch ? "partial/" : "") + "number_" + resultaat.index + ".png");
+  }
+
+  baseimage(partialMatch: boolean) {
+    return MapIcons.get("./" + (partialMatch ? "partial/" : "") + "number_" + 1 + ".png");
   }
 
   createLayer(): ke.VectorLaag {
