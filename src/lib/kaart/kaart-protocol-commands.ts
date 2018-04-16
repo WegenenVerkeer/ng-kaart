@@ -37,7 +37,7 @@ export type Command<Msg extends KaartMsg> =
   | VerwijderInteractieCmd<Msg>
   | VoegOverlayToeCmd<Msg>
   | VerwijderOverlaysCmd<Msg>
-  | MetenLengteOppervlakteCmd<Msg>;
+  | TekenCmd<Msg>;
 
 // SubscriptionResult is maar een type alias, maar ook een encapsulatie naar clients toe
 export type SubscriptionResult = RxSubscription;
@@ -189,9 +189,9 @@ export interface MeldComponentFoutCmd<Msg extends KaartMsg> {
   readonly fouten: List<string>;
 }
 
-export interface MetenLengteOppervlakteCmd<Msg extends KaartMsg> {
-  readonly type: "MetenLengteOppervlakte";
-  readonly meten: boolean;
+export interface TekenCmd<Msg extends KaartMsg> {
+  readonly type: "Teken";
+  readonly teken: boolean;
 }
 
 export interface VoegInteractieToeCmd<Msg extends KaartMsg> {
@@ -346,10 +346,10 @@ export function VerwijderOverlaysCmd<Msg extends KaartMsg>(overlays: Array<ol.Ov
   };
 }
 
-export function MetenLengteOppervlakteCmd<Msg extends KaartMsg>(meten: boolean): MetenLengteOppervlakteCmd<Msg> {
+export function TekenCmd<Msg extends KaartMsg>(meten: boolean): TekenCmd<Msg> {
   return {
-    type: "MetenLengteOppervlakte",
-    meten: meten
+    type: "Teken",
+    teken: meten
   };
 }
 

@@ -7,19 +7,13 @@ import * as ol from "openlayers";
 
 import { KaartComponent } from "./kaart.component";
 import { KaartComponentBase } from "./kaart-component-base";
-import {
-  MetenLengteOppervlakteMsg,
-  SubscribedMsg,
-  subscribedWrapper,
-  GeometryChangedMsg,
-  geometryChangedWrapper
-} from "./kaart-internal-messages";
+import { TekenMsg, SubscribedMsg, subscribedWrapper, GeometryChangedMsg, geometryChangedWrapper } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
 import * as ke from "./kaart-elementen";
 import { ofType } from "../util/operators";
 import { forEach } from "../util/option";
 import { kaartLogger } from "./log";
-import { MetenLengteOppervlakteCmd } from "./kaart-protocol";
+import { TekenCmd } from "./kaart-protocol";
 import { KaartWithInfo } from "./kaart-with-info";
 
 @Component({

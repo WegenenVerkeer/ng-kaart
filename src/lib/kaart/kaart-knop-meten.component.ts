@@ -27,12 +27,12 @@ export class KaartKnopMetenLengteOppervlakteComponent extends KaartComponentBase
   }
 
   startMetMeten(): void {
-    this.kaartClassicComponent.dispatch({ type: "MetenLengteOppervlakte", meten: true });
+    this.kaartClassicComponent.dispatch({ type: "Teken", teken: true });
     this.metende = true;
   }
 
   stopMetMeten(): void {
-    this.kaartClassicComponent.dispatch({ type: "MetenLengteOppervlakte", meten: false });
+    this.kaartClassicComponent.dispatch({ type: "Teken", teken: false });
     this.metende = false;
   }
 

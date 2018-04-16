@@ -509,8 +509,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
-    function metenLengteOppervlakte(cmnd: prt.MetenLengteOppervlakteCmd<Msg>): ModelWithResult<Msg> {
-      model.metenLengteOppervlakteSubj.next(cmnd.meten);
+    function teken(cmnd: prt.TekenCmd<Msg>): ModelWithResult<Msg> {
+      model.tekenSubj.next(cmnd.teken);
       return ModelWithResult(model);
     }
 
@@ -568,8 +568,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
       }
 
-      function subscribeToMetenLengteOppervlakte(sub: prt.MetenLengteOppervlakteSubscription<Msg>): ModelWithResult<Msg> {
-        const subscription = model.metenLengteOppervlakteSubj.subscribe(pm => msgConsumer(sub.wrapper(pm)));
+      function subscribeToTekenen(sub: prt.TekenenSubscription<Msg>): ModelWithResult<Msg> {
+        const subscription = model.tekenSubj.subscribe(pm => msgConsumer(sub.wrapper(pm)));
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
       }
 
@@ -584,8 +584,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToAchtergrondlagen(cmnd.subscription.wrapper);
         case "GeometryChanged":
           return subscribeToGeometryChanged(cmnd.subscription);
-        case "MetenLengteOppervlakte":
-          return subscribeToMetenLengteOppervlakte(cmnd.subscription);
+        case "Tekenen":
+          return subscribeToTekenen(cmnd.subscription);
       }
     }
 
@@ -645,8 +645,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return handleUnsubscriptions(cmd);
       case "MeldComponentFout":
         return meldComponentFout(cmd);
-      case "MetenLengteOppervlakte":
-        return metenLengteOppervlakte(cmd);
+      case "Teken":
+        return teken(cmd);
       case "VoegInteractieToe":
         return voegInteractieToe(cmd);
       case "VerwijderInteractie":

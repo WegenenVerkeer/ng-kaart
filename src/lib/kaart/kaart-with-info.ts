@@ -31,7 +31,7 @@ export class KaartWithInfo {
   readonly groeplagenSubj: Subject<Groeplagen> = new ReplaySubject<Groeplagen>(1);
   readonly componentFoutSubj: Subject<List<string>> = new ReplaySubject<List<string>>(1);
   readonly geometryChangedSubj: Subject<ol.geom.Geometry> = new Subject<ol.geom.Geometry>();
-  readonly metenLengteOppervlakteSubj: Subject<boolean> = new ReplaySubject<boolean>(1);
+  readonly tekenSubj: Subject<boolean> = new ReplaySubject<boolean>(1);
 
   constructor(
     // TODO om de distinctWithInfo te versnellen zouden we als eerste element een versieteller kunnen toevoegen

@@ -13,7 +13,7 @@ export type KaartInternalSubMsg =
   | AchtergrondtitelGezetMsg
   | AchtergrondlagenGezetMsg
   | GeometryChangedMsg
-  | MetenLengteOppervlakteMsg
+  | TekenMsg
   | SubscribedMsg;
 
 export interface KaartInternalMsg extends prt.KaartMsg {
@@ -87,19 +87,19 @@ function GeometryChangedMsg(geometry: ol.geom.Geometry): GeometryChangedMsg {
 
 export const geometryChangedWrapper = (geometry: ol.geom.Geometry) => KaartInternalMsg(some(GeometryChangedMsg(geometry)));
 
-export interface MetenLengteOppervlakteMsg {
-  type: "MetenLengteOppervlakte";
-  meten: boolean;
+export interface TekenMsg {
+  type: "Teken";
+  teken: boolean;
 }
 
-function MetenLengteOppervlakteMsg(meten: boolean): MetenLengteOppervlakteMsg {
+function TekenMsg(teken: boolean): TekenMsg {
   return {
-    type: "MetenLengteOppervlakte",
-    meten: meten
+    type: "Teken",
+    teken: teken
   };
 }
 
-export const metenLengteOppervlakteWrapper = (meten: boolean) => KaartInternalMsg(some(MetenLengteOppervlakteMsg(meten)));
+export const tekenWrapper = (meten: boolean) => KaartInternalMsg(some(TekenMsg(meten)));
 
 export interface SubscribedMsg {
   type: "Subscribed";

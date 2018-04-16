@@ -13,8 +13,8 @@ import {
   KaartInternalMsg,
   KaartInternalSubMsg,
   kaartLogOnlyWrapper,
-  metenLengteOppervlakteWrapper,
-  MetenLengteOppervlakteMsg,
+  tekenWrapper,
+  TekenMsg,
   SubscribedMsg,
   subscribedWrapper,
   GeometryChangedMsg,
@@ -25,7 +25,7 @@ import * as ke from "./kaart-elementen";
 import { ofType } from "../util/operators";
 import { forEach } from "../util/option";
 import { kaartLogger } from "./log";
-import { MetenLengteOppervlakteCmd } from "./kaart-protocol";
+import { TekenCmd } from "./kaart-protocol";
 import { KaartWithInfo } from "./kaart-with-info";
 
 const MetenLaagNaam = "Meten afstand en oppervlakte";
@@ -51,7 +51,7 @@ const MetenStyle = new ol.style.Style({
   styleUrls: ["./kaart-meten.component.scss"],
   encapsulation: ViewEncapsulation.None
 })
-export class KaartMetenLengteOppervlakteLaagComponent extends KaartComponentBase implements OnInit, OnDestroy {
+export class KaartTekenLaagComponent extends KaartComponentBase implements OnInit, OnDestroy {
   private readonly subscriptions: prt.SubscriptionResult[] = [];
 
   private map: ol.Map;
@@ -83,11 +83,9 @@ export class KaartMetenLengteOppervlakteLaagComponent extends KaartComponentBase
       )
       .subscribe(gcSubj => (this.changedGeometriesSubj = gcSubj));
 
-    this.kaartComponent.internalCmdDispatcher.dispatch(
-      prt.SubscriptionCmd(prt.MetenLengteOppervlakteSubscription(metenLengteOppervlakteWrapper), subscribedWrapper(this))
-    );
-    this.kaartComponent.internalMessage$.pipe(ofType<MetenLengteOppervlakteMsg>("MetenLengteOppervlakte")).subscribe(msg => {
-      if (msg.meten) {
+    this.kaartComponent.internalCmdDispatcher.dispatch(prt.SubscriptionCmd(prt.TekenenSubscription(tekenWrapper), subscribedWrapper(this)));
+    this.kaartComponent.internalMessage$.pipe(ofType<TekenMsg>("Teken")).subscribe(msg => {
+      if (msg.teken) {
         this.startMetMeten();
       } else {
         this.stopMetMeten();
