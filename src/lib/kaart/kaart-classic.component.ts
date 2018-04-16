@@ -23,7 +23,7 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
   @Input() breedte; // neem standaard de hele breedte in
   @Input() hoogte = 400;
   @Input() mijnLocatieZoom: number | undefined;
-  @Input() meten: boolean | undefined;
+  @Input() tekenen: boolean | undefined;
   @Input() extent: ol.Extent;
   @Input() naam = "kaart" + KaartClassicComponent.counter++;
 

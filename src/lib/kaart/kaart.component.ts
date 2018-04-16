@@ -60,7 +60,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   @Input() maxZoom = 15; // TODO naar config
   @Input() naam = "kaart";
   @Input() mijnLocatieZoom: number | undefined;
-  @Input() meten: boolean | undefined;
+  @Input() tekenen: boolean | undefined;
 
   // Dit dient om messages naar toe te sturen
 

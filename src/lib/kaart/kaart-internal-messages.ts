@@ -99,7 +99,7 @@ function TekenMsg(teken: boolean): TekenMsg {
   };
 }
 
-export const tekenWrapper = (meten: boolean) => KaartInternalMsg(some(TekenMsg(meten)));
+export const tekenWrapper = (tekenen: boolean) => KaartInternalMsg(some(TekenMsg(tekenen)));
 
 export interface SubscribedMsg {
   type: "Subscribed";

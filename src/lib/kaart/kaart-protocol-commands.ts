@@ -346,10 +346,10 @@ export function VerwijderOverlaysCmd<Msg extends KaartMsg>(overlays: Array<ol.Ov
   };
 }
 
-export function TekenCmd<Msg extends KaartMsg>(meten: boolean): TekenCmd<Msg> {
+export function TekenCmd<Msg extends KaartMsg>(tekenen: boolean): TekenCmd<Msg> {
   return {
     type: "Teken",
-    teken: meten
+    teken: tekenen
   };
 }
 

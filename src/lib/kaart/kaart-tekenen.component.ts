@@ -28,8 +28,8 @@ import { kaartLogger } from "./log";
 import { TekenCmd } from "./kaart-protocol";
 import { KaartWithInfo } from "./kaart-with-info";
 
-const MetenLaagNaam = "Meten afstand en oppervlakte";
-const MetenStyle = new ol.style.Style({
+const TekenLaagNaam = "Tekenen van geometrie";
+const TekenStyle = new ol.style.Style({
   fill: new ol.style.Fill({
     color: "rgba(255, 255, 255, 0.2)"
   }),
@@ -46,9 +46,9 @@ const MetenStyle = new ol.style.Style({
 });
 
 @Component({
-  selector: "awv-kaart-meten",
+  selector: "awv-kaart-tekenen",
   template: "<ng-content></ng-content>",
-  styleUrls: ["./kaart-meten.component.scss"],
+  styleUrls: ["./kaart-tekenen.component.scss"],
   encapsulation: ViewEncapsulation.None
 })
 export class KaartTekenLaagComponent extends KaartComponentBase implements OnInit, OnDestroy {
@@ -86,21 +86,21 @@ export class KaartTekenLaagComponent extends KaartComponentBase implements OnIni
     this.kaartComponent.internalCmdDispatcher.dispatch(prt.SubscriptionCmd(prt.TekenenSubscription(tekenWrapper), subscribedWrapper(this)));
     this.kaartComponent.internalMessage$.pipe(ofType<TekenMsg>("Teken")).subscribe(msg => {
       if (msg.teken) {
-        this.startMetMeten();
+        this.startMetTekenen();
       } else {
-        this.stopMetMeten();
+        this.stopMetTekenen();
       }
     });
   }
 
   ngOnDestroy(): void {
-    this.stopMetMeten();
+    this.stopMetTekenen();
 
     this.subscriptions.forEach(sub => this.kaartComponent.internalCmdDispatcher.dispatch(prt.UnsubscriptionCmd(sub)));
     this.subscriptions.splice(0, this.subscriptions.length);
   }
 
-  startMetMeten(): void {
+  startMetTekenen(): void {
     const source = new ol.source.Vector();
     this.kaartComponent.internalCmdDispatcher.dispatch({
       type: "VoegLaagToe",
@@ -116,18 +116,18 @@ export class KaartTekenLaagComponent extends KaartComponentBase implements OnIni
     this.kaartComponent.internalCmdDispatcher.dispatch(prt.VoegInteractieToeCmd(this.draw));
   }
 
-  stopMetMeten(): void {
+  stopMetTekenen(): void {
     this.kaartComponent.internalCmdDispatcher.dispatch(prt.VerwijderInteractieCmd(this.draw));
     this.kaartComponent.internalCmdDispatcher.dispatch(prt.VerwijderOverlaysCmd(this.overlays));
-    this.kaartComponent.internalCmdDispatcher.dispatch(prt.VerwijderLaagCmd(MetenLaagNaam, kaartLogOnlyWrapper));
+    this.kaartComponent.internalCmdDispatcher.dispatch(prt.VerwijderLaagCmd(TekenLaagNaam, kaartLogOnlyWrapper));
   }
 
   createLayer(source: ol.source.Vector): ke.VectorLaag {
     return {
       type: ke.VectorType,
-      titel: MetenLaagNaam,
+      titel: TekenLaagNaam,
       source: source,
-      styleSelector: some(ke.StaticStyle(MetenStyle)),
+      styleSelector: some(ke.StaticStyle(TekenStyle)),
       selecteerbaar: true,
       minZoom: 2,
       maxZoom: 15
