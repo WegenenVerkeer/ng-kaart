@@ -1,4 +1,4 @@
-import { Input, OnDestroy, OnInit } from "@angular/core";
+import { Input, OnDestroy, OnInit, NgZone } from "@angular/core";
 import * as rx from "rxjs";
 
 import { KaartComponentBase } from "./kaart-component-base";
@@ -13,6 +13,10 @@ export abstract class KaartChildComponentBase extends KaartComponentBase impleme
 
   @Input() dispatcher: KaartCmdDispatcher<prt.TypedRecord> = VacuousDispatcher;
   @Input() internalMessage$: rx.Observable<KaartInternalSubMsg> = rx.Observable.never();
+
+  constructor(zone: NgZone) {
+    super(zone);
+  }
 
   protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
     return [];
