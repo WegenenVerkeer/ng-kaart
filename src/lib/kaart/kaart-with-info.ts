@@ -1,11 +1,11 @@
-import * as ol from "openlayers";
+import { none, Option } from "fp-ts/lib/Option";
 import { List, Map } from "immutable";
-import { Option, none, some } from "fp-ts/lib/Option";
+import * as ol from "openlayers";
+import { ReplaySubject, Subject } from "rxjs";
 
-import * as ke from "./kaart-elementen";
+import { Laaggroep, Zoominstellingen } from ".";
 import { KaartConfig } from "./kaart-config";
-import { Subject, ReplaySubject } from "rxjs";
-import { Zoominstellingen, Laaggroep } from ".";
+import * as ke from "./kaart-elementen";
 
 export interface Groeplagen {
   readonly laaggroep: Laaggroep;
@@ -30,6 +30,7 @@ export class KaartWithInfo {
   readonly achtergrondlaagtitelSubj: Subject<string> = new ReplaySubject<string>(1);
   readonly groeplagenSubj: Subject<Groeplagen> = new ReplaySubject<Groeplagen>(1);
   readonly componentFoutSubj: Subject<List<string>> = new ReplaySubject<List<string>>(1);
+  readonly mijnLocatieZoomDoelSubj: Subject<Option<number>> = new ReplaySubject<Option<number>>(1);
 
   constructor(
     // TODO om de distinctWithInfo te versnellen zouden we als eerste element een versieteller kunnen toevoegen

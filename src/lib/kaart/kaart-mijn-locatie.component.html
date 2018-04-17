@@ -1,6 +1,6 @@
-<div *ngIf="zoom$ | async as zoom">
+<div *ngIf="enabled$ | async">
   <div class="float-box actions panel">
-    <button mat-raised-button (click)="zoomNaarMijnLocatie(zoom)">
+    <button #locateBtn mat-raised-button>
       <mat-icon aria-label="mijn locatie">gps_fixed</mat-icon>
     </button>
   </div>

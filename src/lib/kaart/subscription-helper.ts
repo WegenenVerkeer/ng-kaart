@@ -40,12 +40,12 @@ export function subscriptionCmdOperator<MsgIn extends TypedRecord, MsgOut extend
   const subscriptionResults: SubscriptionResult[] = [];
 
   class InternalSubscriber extends rx.Subscriber<SubscribedMsg> {
-    constructor(subscriber) {
+    constructor(private readonly subscriber) {
       super(subscriber); // Dit is de reden dat we moeten afleiden: we mogen de subscription ketting niet breken
     }
     _next(msg: SubscribedMsg): void {
       msg.subscription.fold(
-        err => this.destination.next(err), // De errors zenden we downstream
+        err => this.subscriber.next(err), // De errors zenden we downstream
         sub => subscriptionResults.push(sub) // De SubscriptionResults houden we bij om later te unsubscriben
       );
     }

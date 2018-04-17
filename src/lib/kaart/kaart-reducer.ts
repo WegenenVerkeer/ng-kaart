@@ -1,20 +1,19 @@
-import { List } from "immutable";
-import { none, Option, some, isNone, fromNullable } from "fp-ts/lib/Option";
-import * as validation from "fp-ts/lib/Validation";
 import * as array from "fp-ts/lib/Array";
-import { sequence } from "fp-ts/lib/Traversable";
 import { getArrayMonoid } from "fp-ts/lib/Monoid";
-
+import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
+import { sequence } from "fp-ts/lib/Traversable";
+import * as validation from "fp-ts/lib/Validation";
+import { List } from "immutable";
 import * as ol from "openlayers";
-
-import * as ke from "./kaart-elementen";
-import * as prt from "./kaart-protocol";
-import { KaartWithInfo } from "./kaart-with-info";
-import { toOlLayer } from "./laag-converter";
-import { forEach } from "../util/option";
 import { Subscription } from "rxjs";
 import { debounceTime, filter } from "rxjs/operators";
-import { Laaggroep, PositieAanpassing } from "./kaart-protocol-commands";
+
+import { forEach } from "../util/option";
+import * as ke from "./kaart-elementen";
+import * as prt from "./kaart-protocol";
+import { Laaggroep, PositieAanpassing, ZetMijnLocatieZoomCmd } from "./kaart-protocol-commands";
+import { KaartWithInfo } from "./kaart-with-info";
+import { toOlLayer } from "./laag-converter";
 
 ///////////////////////////////////
 // Hulpfuncties
@@ -378,12 +377,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
-    function veranderExtentCmd(cmnd: prt.VeranderExtentCmd<Msg>): ModelWithResult<Msg> {
+    function veranderExtentCmd(cmnd: prt.VeranderExtentCmd): ModelWithResult<Msg> {
       model.map.getView().fit(cmnd.extent);
       return ModelWithResult(model);
     }
 
-    function veranderViewportCmd(cmnd: prt.VeranderViewportCmd<Msg>): ModelWithResult<Msg> {
+    function veranderViewportCmd(cmnd: prt.VeranderViewportCmd): ModelWithResult<Msg> {
       // eerst de container aanpassen of de kaart is uitgerekt
       if (cmnd.size[0]) {
         model.container.style.width = `${cmnd.size[0]}px`;
@@ -398,12 +397,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
-    function focusOpKaartCmd(cmnd: prt.ZetFocusOpKaartCmd<Msg>): ModelWithResult<Msg> {
+    function focusOpKaartCmd(cmnd: prt.ZetFocusOpKaartCmd): ModelWithResult<Msg> {
       activateMouseWheelZoomIfAllowed(true);
       return ModelWithResult(model);
     }
 
-    function verliesFocusOpKaartCmd(cmnd: prt.VerliesFocusOpKaartCmd<Msg>): ModelWithResult<Msg> {
+    function verliesFocusOpKaartCmd(cmnd: prt.VerliesFocusOpKaartCmd): ModelWithResult<Msg> {
       activateMouseWheelZoomIfAllowed(false);
       return ModelWithResult(model);
     }
@@ -504,8 +503,13 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
-    function meldComponentFout(cmnd: prt.MeldComponentFoutCmd<Msg>): ModelWithResult<Msg> {
+    function meldComponentFout(cmnd: prt.MeldComponentFoutCmd): ModelWithResult<Msg> {
       model.componentFoutSubj.next(cmnd.fouten);
+      return ModelWithResult(model);
+    }
+
+    function zetMijnLocatieZoom(cmnd: prt.ZetMijnLocatieZoomCmd): ModelWithResult<Msg> {
+      model.mijnLocatieZoomDoelSubj.next(cmnd.doelniveau);
       return ModelWithResult(model);
     }
 
@@ -538,6 +542,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             .subscribe(groeplagen => msgConsumer(wrapper(groeplagen.lagen as List<ke.AchtergrondLaag>)))
         );
 
+      function subscribeToMijnLocatieZoomdoel(sub: prt.MijnLocatieZoomdoelSubscription<Msg>): ModelWithResult<Msg> {
+        const subscription = model.mijnLocatieZoomDoelSubj.subscribe(t => msgConsumer(sub.wrapper(t)));
+        return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
+      }
+
       switch (cmnd.subscription.type) {
         case "Zoominstellingen":
           return subscribeToZoominstellingen(cmnd.subscription);
@@ -547,10 +556,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToAchtergrondTitel(cmnd.subscription);
         case "Achtergrondlagen":
           return subscribeToAchtergrondlagen(cmnd.subscription.wrapper);
+        case "MijnLocatieZoomdoel":
+          return subscribeToMijnLocatieZoomdoel(cmnd.subscription);
       }
     }
 
-    function handleUnsubscriptions(cmnd: prt.UnsubscribeCmd<Msg>): ModelWithResult<Msg> {
+    function handleUnsubscriptions(cmnd: prt.UnsubscribeCmd): ModelWithResult<Msg> {
       cmnd.subscription.unsubscribe();
       return ModelWithResult(model);
     }
@@ -606,6 +617,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return handleUnsubscriptions(cmd);
       case "MeldComponentFout":
         return meldComponentFout(cmd);
+      case "ZetMijnLocatieZoomStatus":
+        return zetMijnLocatieZoom(cmd);
     }
   };
 }
