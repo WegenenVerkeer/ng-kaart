@@ -1,39 +1,35 @@
-import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
-import { none, Option, some } from "fp-ts/lib/Option";
-import { Subject, ReplaySubject, Subscription } from "rxjs";
-import { Observable } from "rxjs/Observable";
-import { map, distinctUntilChanged, concatAll, mergeAll } from "rxjs/operators";
+import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import * as ol from "openlayers";
+import { Subscription } from "rxjs";
+import { Observable } from "rxjs/Observable";
+import { map } from "rxjs/operators";
 
-import { KaartComponent } from "./kaart.component";
-import { KaartComponentBase } from "./kaart-component-base";
-import { TekenMsg, SubscribedMsg, subscribedWrapper, GeometryChangedMsg, geometryChangedWrapper } from "./kaart-internal-messages";
-import * as prt from "./kaart-protocol";
-import * as ke from "./kaart-elementen";
 import { ofType } from "../util/operators";
-import { forEach } from "../util/option";
+import { KaartInternalMsg, GeometryChangedMsg, geometryChangedWrapper, subscribedWrapper } from "./kaart-internal-messages";
+import * as prt from "./kaart-protocol";
+import { KaartComponent } from "./kaart.component";
 import { kaartLogger } from "./log";
-import { TekenCmd } from "./kaart-protocol";
-import { KaartWithInfo } from "./kaart-with-info";
+import { KaartChildComponentBase } from "./kaart-child-component-base";
 
 @Component({
   selector: "awv-kaart-meten-logger",
   template: "<ng-content></ng-content>"
 })
-export class KaartMetenLoggerComponent extends KaartComponentBase implements OnInit, OnDestroy {
+export class KaartMetenLoggerComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
   private geometries$: Observable<ol.geom.Geometry> = Observable.empty();
   private geometriesSubscription: Subscription;
 
-  constructor(private readonly kaartComponent: KaartComponent, zone: NgZone) {
+  constructor(zone: NgZone) {
     super(zone);
   }
 
-  ngOnInit(): void {
-    this.kaartComponent.internalCmdDispatcher.dispatch(
-      prt.SubscriptionCmd(prt.GeometryChangedSubscription(geometryChangedWrapper), subscribedWrapper({}))
-    );
+  protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
+    return [prt.GeometryChangedSubscription(geometryChangedWrapper)];
+  }
 
-    this.geometries$ = this.kaartComponent.internalMessage$.pipe(ofType<GeometryChangedMsg>("GeometryChanged"), map(msg => msg.geometry));
+  ngOnInit(): void {
+    super.ngOnInit();
+    this.geometries$ = this.internalMessage$.pipe(ofType<GeometryChangedMsg>("GeometryChanged"), map(msg => msg.geometry));
 
     this.geometriesSubscription = this.geometries$.subscribe(geometry => {
       kaartLogger.debug("----------------Te meten geometry is aangepast------------------");
@@ -42,9 +38,6 @@ export class KaartMetenLoggerComponent extends KaartComponentBase implements OnI
 
   ngOnDestroy(): void {
     this.geometriesSubscription.unsubscribe();
-    // TODO deftige unsubscibe
-    // this.kaartComponent.internalCmdDispatcher.dispatch(
-    //   prt.UnsubscriptionCmd();
-    // );
+    super.ngOnDestroy();
   }
 }

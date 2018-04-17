@@ -82,7 +82,7 @@ export function GeometryChangedSubscription<Msg extends KaartMsg>(wrapper: (evt:
   };
 }
 
-export function TekenenSubscription<Msg extends KaartMsg>(wrapper: (boolean) => Msg): Subscription<Msg> {
+export function TekenenSubscription<Msg extends KaartMsg>(wrapper: (boolean) => Msg): TekenenSubscription<Msg> {
   return {
     type: "Tekenen",
     wrapper: wrapper

@@ -1,32 +1,18 @@
-import { Component, Input, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
-import { none, Option, some } from "fp-ts/lib/Option";
-import { Subject, ReplaySubject, Subscription } from "rxjs";
-import { Observable } from "rxjs/Observable";
-import { map, distinctUntilChanged, concatAll, mergeAll, filter } from "rxjs/operators";
+import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
+import { some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
+import { Subject, Subscription } from "rxjs";
+import { Observable } from "rxjs/Observable";
+import { distinctUntilChanged, filter, map } from "rxjs/operators";
 
-import { KaartComponent } from "./kaart.component";
-import { KaartCmdDispatcher, VacuousDispatcher } from "./kaart-event-dispatcher";
-import { KaartComponentBase } from "./kaart-component-base";
-import { KaartClassicComponent } from "./kaart-classic.component";
-import {
-  KaartInternalMsg,
-  KaartInternalSubMsg,
-  kaartLogOnlyWrapper,
-  tekenWrapper,
-  TekenMsg,
-  SubscribedMsg,
-  subscribedWrapper,
-  GeometryChangedMsg,
-  geometryChangedWrapper
-} from "./kaart-internal-messages";
-import * as prt from "./kaart-protocol";
-import * as ke from "./kaart-elementen";
 import { ofType } from "../util/operators";
-import { forEach } from "../util/option";
-import { kaartLogger } from "./log";
-import { TekenCmd } from "./kaart-protocol";
+import { KaartChildComponentBase } from "./kaart-child-component-base";
+import * as ke from "./kaart-elementen";
+import { KaartInternalMsg, kaartLogOnlyWrapper, SubscribedMsg, TekenMsg, tekenWrapper } from "./kaart-internal-messages";
+import * as prt from "./kaart-protocol";
 import { KaartWithInfo } from "./kaart-with-info";
+import { KaartComponent } from "./kaart.component";
+import { kaartLogger } from "./log";
 
 const TekenLaagNaam = "Tekenen van geometrie";
 const TekenStyle = new ol.style.Style({
@@ -51,11 +37,8 @@ const TekenStyle = new ol.style.Style({
   styleUrls: ["./kaart-tekenen.component.scss"],
   encapsulation: ViewEncapsulation.None
 })
-export class KaartTekenLaagComponent extends KaartComponentBase implements OnInit, OnDestroy {
-  private readonly subscriptions: prt.SubscriptionResult[] = [];
-
+export class KaartTekenLaagComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
   private map: ol.Map;
-
   private changedGeometriesSubj: Subject<ol.geom.Geometry>;
 
   private draw: ol.interaction.Draw;
@@ -65,13 +48,12 @@ export class KaartTekenLaagComponent extends KaartComponentBase implements OnIni
     super(zone);
   }
 
+  protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
+    return [prt.TekenenSubscription(tekenWrapper)];
+  }
+
   ngOnInit(): void {
-    this.kaartComponent.internalMessage$
-      .pipe(
-        ofType<SubscribedMsg>("Subscribed"), //
-        filter(sm => sm.reference === this)
-      )
-      .subscribe(sm => sm.subscription.fold(kaartLogger.error, sub => this.subscriptions.push(sub)));
+    super.ngOnInit();
 
     const kaartObs: Observable<KaartWithInfo> = this.kaartComponent.kaartModel$;
     this.bindToLifeCycle(kaartObs);
@@ -83,8 +65,7 @@ export class KaartTekenLaagComponent extends KaartComponentBase implements OnIni
       )
       .subscribe(gcSubj => (this.changedGeometriesSubj = gcSubj));
 
-    this.kaartComponent.internalCmdDispatcher.dispatch(prt.SubscriptionCmd(prt.TekenenSubscription(tekenWrapper), subscribedWrapper(this)));
-    this.kaartComponent.internalMessage$.pipe(ofType<TekenMsg>("Teken")).subscribe(msg => {
+    this.internalMessage$.pipe(ofType<TekenMsg>("Teken")).subscribe(msg => {
       if (msg.teken) {
         this.startMetTekenen();
       } else {
@@ -95,14 +76,12 @@ export class KaartTekenLaagComponent extends KaartComponentBase implements OnIni
 
   ngOnDestroy(): void {
     this.stopMetTekenen();
-
-    this.subscriptions.forEach(sub => this.kaartComponent.internalCmdDispatcher.dispatch(prt.UnsubscriptionCmd(sub)));
-    this.subscriptions.splice(0, this.subscriptions.length);
+    super.ngOnDestroy();
   }
 
   startMetTekenen(): void {
     const source = new ol.source.Vector();
-    this.kaartComponent.internalCmdDispatcher.dispatch({
+    this.dispatch({
       type: "VoegLaagToe",
       positie: 0,
       laag: this.createLayer(source),
@@ -113,13 +92,13 @@ export class KaartTekenLaagComponent extends KaartComponentBase implements OnIni
 
     this.draw = this.createDrawInteraction(source);
 
-    this.kaartComponent.internalCmdDispatcher.dispatch(prt.VoegInteractieToeCmd(this.draw));
+    this.dispatch(prt.VoegInteractieToeCmd(this.draw));
   }
 
   stopMetTekenen(): void {
-    this.kaartComponent.internalCmdDispatcher.dispatch(prt.VerwijderInteractieCmd(this.draw));
-    this.kaartComponent.internalCmdDispatcher.dispatch(prt.VerwijderOverlaysCmd(this.overlays));
-    this.kaartComponent.internalCmdDispatcher.dispatch(prt.VerwijderLaagCmd(TekenLaagNaam, kaartLogOnlyWrapper));
+    this.dispatch(prt.VerwijderInteractieCmd(this.draw));
+    this.dispatch(prt.VerwijderOverlaysCmd(this.overlays));
+    this.dispatch(prt.VerwijderLaagCmd(TekenLaagNaam, kaartLogOnlyWrapper));
   }
 
   createLayer(source: ol.source.Vector): ke.VectorLaag {
@@ -143,7 +122,7 @@ export class KaartTekenLaagComponent extends KaartComponentBase implements OnIni
       positioning: "bottom-center"
     });
 
-    this.kaartComponent.internalCmdDispatcher.dispatch({
+    this.dispatch({
       type: "VoegOverlayToe",
       overlay: measureTooltip
     });

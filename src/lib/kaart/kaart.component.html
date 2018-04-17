@@ -8,10 +8,10 @@
       <awv-kaart-mijn-locatie [zoomniveau]="mijnLocatieZoom" [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-mijn-locatie>
     </div>
     <awv-kaart-zoom [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-zoom>
-    <awv-kaart-tekenen></awv-kaart-tekenen>
+    <awv-kaart-tekenen [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-tekenen>
     <div *ngIf="tekenen">
       <awv-kaart-knop-meten></awv-kaart-knop-meten>
     </div>
-    <!--awv-kaart-meten-logger></awv-kaart-meten-logger-->
+    <!--awv-kaart-meten-logger [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-meten-logger-->
   </div>
 </div>
