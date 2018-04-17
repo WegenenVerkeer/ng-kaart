@@ -8,7 +8,7 @@ import * as ke from "./kaart-elementen";
 
 export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {
   function createdTileWms(l: ke.WmsLaag) {
-    return new ol.layer.Tile(<ol.olx.layer.TileOptions>{
+    return new ol.layer.Tile(<olx.layer.TileOptions>{
       title: l.titel,
       visible: true,
       extent: kaart.config.defaults.extent,

@@ -1,5 +1,6 @@
 import { KaartMsg, AchtergrondLaag } from ".";
 import { List } from "immutable";
+import * as ol from "openlayers";
 
 export type Subscription<Msg extends KaartMsg> =
   | ZoominstellingenSubscription<Msg>

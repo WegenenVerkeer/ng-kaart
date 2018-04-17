@@ -66,7 +66,7 @@ export class ZoekResultaat {
     this.partialMatch = locatie.partialMatch;
     this.index = index + 1;
     this.locatie = locatie.locatie;
-    this.geometry = new ol.format.GeoJSON(<ol.olx.format.GeoJSONOptions>{
+    this.geometry = new ol.format.GeoJSON(<olx.format.GeoJSONOptions>{
       ignoreExtraDims: true,
       defaultDataProjection: undefined,
       featureProjection: undefined
