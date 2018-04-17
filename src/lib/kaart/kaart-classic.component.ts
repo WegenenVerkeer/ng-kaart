@@ -1,13 +1,14 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
+import { Component, Input, Output, OnChanges, OnDestroy, OnInit, SimpleChanges, EventEmitter } from "@angular/core";
 import { Observable } from "rxjs/Observable";
 
 import * as ol from "openlayers";
 
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
-import { Command } from "./kaart-protocol-commands";
+import { Command, SelectieModus } from "./kaart-protocol-commands";
 import * as prt from "./kaart-protocol";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "./kaart-internal-messages";
 import { KaartMsgObservableConsumer } from ".";
+import { List } from "immutable";
 
 @Component({
   selector: "awv-kaart-classic",
@@ -24,7 +25,10 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
   @Input() hoogte = 400;
   @Input() mijnLocatieZoom: number | undefined;
   @Input() extent: ol.Extent;
+  @Input() selectieModus: SelectieModus = "none";
   @Input() naam = "kaart" + KaartClassicComponent.counter++;
+
+  @Output() geselecteerdeFeatures: EventEmitter<List<ol.Feature>> = new EventEmitter<List<ol.Feature>>();
 
   private hasFocus = false;
   readonly dispatcher: ReplaySubjectKaartCmdDispatcher<KaartInternalMsg> = new ReplaySubjectKaartCmdDispatcher();

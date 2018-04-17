@@ -1,4 +1,16 @@
-import { Component, ElementRef, Input, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation, Inject } from "@angular/core";
+import {
+  Component,
+  ElementRef,
+  Input,
+  NgZone,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  ViewEncapsulation,
+  Inject,
+  Output,
+  EventEmitter
+} from "@angular/core";
 import { Observable } from "rxjs/Observable";
 import "rxjs/add/observable/of";
 import "rxjs/add/observable/combineLatest";
@@ -22,6 +34,8 @@ import { KaartInternalMsg, KaartInternalSubMsg } from "./kaart-internal-messages
 import { asap } from "../util/asap";
 import { emitSome } from "../util/operators";
 import { forEach } from "../util/option";
+import { SelectieModus } from "./kaart-protocol-commands";
+import { List } from "immutable";
 
 // Om enkel met @Input properties te moeten werken. Op deze manier kan een stream van KaartMsg naar de caller gestuurd worden
 export type KaartMsgObservableConsumer = (msg$: Observable<prt.KaartMsg>) => void;
@@ -60,6 +74,9 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   @Input() maxZoom = 15; // TODO naar config
   @Input() naam = "kaart";
   @Input() mijnLocatieZoom: number | undefined;
+  @Input() selectieModus: SelectieModus = "none";
+
+  @Output() geselecteerdeFeatures: EventEmitter<List<ol.Feature>> = new EventEmitter<List<ol.Feature>>();
 
   // Dit dient om messages naar toe te sturen
 

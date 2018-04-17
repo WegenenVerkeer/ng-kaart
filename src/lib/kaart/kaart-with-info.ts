@@ -26,6 +26,8 @@ export class KaartWithInfo {
   readonly scrollZoomOnFocus: boolean = false;
   readonly showBackgroundSelector: boolean = false;
   readonly zoominstellingenSubj: Subject<Zoominstellingen> = new ReplaySubject<Zoominstellingen>(1);
+  readonly geselecteerdeFeaturesSubj: Subject<List<ol.Feature>> = new ReplaySubject<List<ol.Feature>>(1);
+  readonly geselecteerdeFeatures: ol.Collection<ol.Feature> = new ol.Collection<ol.Feature>();
   readonly middelpuntSubj: Subject<[number, number]> = new ReplaySubject<[number, number]>(1);
   readonly achtergrondlaagtitelSubj: Subject<string> = new ReplaySubject<string>(1);
   readonly groeplagenSubj: Subject<Groeplagen> = new ReplaySubject<Groeplagen>(1);
@@ -53,5 +55,12 @@ export class KaartWithInfo {
     });
     map.getLayers().on("change:length", zetInstellingen);
     map.getView().on("change:center", () => this.middelpuntSubj.next(map.getView().getCenter()));
+
+    this.geselecteerdeFeatures.on("add", () => {
+      this.geselecteerdeFeaturesSubj.next(List.of(...this.geselecteerdeFeatures.getArray()));
+    });
+    this.geselecteerdeFeatures.on("remove", () => {
+      this.geselecteerdeFeaturesSubj.next(List.of(...this.geselecteerdeFeatures.getArray()));
+    });
   }
 }

@@ -4,6 +4,7 @@ import { List } from "immutable";
 export type Subscription<Msg extends KaartMsg> =
   | ZoominstellingenSubscription<Msg>
   | MiddelpuntSubscription<Msg>
+  | GeselecteerdeFeaturesSubscription<Msg>
   | AchtergrondTitelSubscription<Msg>
   | AchtergrondlagenSubscription<Msg>;
 
@@ -21,6 +22,11 @@ export interface ZoominstellingenSubscription<Msg> {
 export interface MiddelpuntSubscription<Msg> {
   readonly type: "Middelpunt";
   readonly wrapper: (x: number, y: number) => Msg;
+}
+
+export interface GeselecteerdeFeaturesSubscription<Msg> {
+  readonly type: "GeselecteerdeFeatures";
+  readonly wrapper: (geselecteerdeFeatures: List<ol.Feature>) => Msg;
 }
 
 export interface AchtergrondTitelSubscription<Msg> {
@@ -43,6 +49,15 @@ export function ZoominstellingenSubscription<Msg extends KaartMsg>(wrapper: (set
 export function MiddelpuntSubscription<Msg extends KaartMsg>(wrapper: (x: number, y: number) => Msg): Subscription<Msg> {
   return {
     type: "Middelpunt",
+    wrapper: wrapper
+  };
+}
+
+export function GeselecteerdeFeaturesSubscription<Msg extends KaartMsg>(
+  wrapper: (geselecteerdeFeatures: List<ol.Feature>) => Msg
+): Subscription<Msg> {
+  return {
+    type: "GeselecteerdeFeatures",
     wrapper: wrapper
   };
 }
