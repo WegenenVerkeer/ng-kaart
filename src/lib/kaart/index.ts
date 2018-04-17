@@ -28,7 +28,6 @@ import { KaartAchtergrondSelectorComponent } from "./kaart-achtergrond-selector.
 import { KaartAchtergrondTileComponent } from "./kaart-achtergrond-tile.component";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { MatButtonModule, MatIconModule } from "@angular/material";
-import { KaartFeatureSelectieComponent } from "./kaart-feature-selectie.component";
 
 const components: any[] = [
   KaartComponent,
@@ -50,7 +49,6 @@ const components: any[] = [
   KaartGeoserverLaagComponent,
   KaartWmsLaagComponent,
   KaartBlancoLaagComponent,
-  KaartFeatureSelectieComponent,
   KaartAchtergrondSelectorComponent,
   KaartAchtergrondTileComponent
 ];
@@ -135,7 +133,6 @@ export * from "./kaart-knop-volledig-scherm.component";
 export * from "./kaart-knop-zoom-slider.component";
 export * from "./kaart-laag.component";
 export * from "./kaart-schaal.component";
-export * from "./kaart-feature-selectie.component";
 export * from "./kaart-standaard-interacties.component";
 export * from "./kaart-standaard-knoppen.component";
 export * from "./kaart-teken-polygoon-laag.component";

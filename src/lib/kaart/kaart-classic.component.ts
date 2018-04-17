@@ -6,9 +6,17 @@ import * as ol from "openlayers";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { Command, SelectieModus } from "./kaart-protocol-commands";
 import * as prt from "./kaart-protocol";
-import { KaartInternalMsg, kaartLogOnlyWrapper } from "./kaart-internal-messages";
+import {
+  FeatureSelectieAangepastMsg,
+  featureSelectieAangepastMsgWrapper,
+  KaartInternalMsg,
+  kaartLogOnlyWrapper,
+  subscribedWrapper
+} from "./kaart-internal-messages";
 import { KaartMsgObservableConsumer } from ".";
+import { filter, map, shareReplay } from "rxjs/operators";
 import { List } from "immutable";
+import { ofType, emitSome } from "../util/operators";
 
 @Component({
   selector: "awv-kaart-classic",
@@ -30,10 +38,24 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
 
   @Output() geselecteerdeFeatures: EventEmitter<List<ol.Feature>> = new EventEmitter<List<ol.Feature>>();
 
+  readonly kaartMsgObservableConsumer: KaartMsgObservableConsumer;
+
   private hasFocus = false;
   readonly dispatcher: ReplaySubjectKaartCmdDispatcher<KaartInternalMsg> = new ReplaySubjectKaartCmdDispatcher();
 
-  constructor() {}
+  constructor() {
+    this.kaartMsgObservableConsumer = (msg$: Observable<prt.KaartMsg>) => {
+      msg$
+        .pipe(
+          filter(m => m.type === "KaartInternal"), //
+          map(m => (m as KaartInternalMsg).payload),
+          emitSome,
+          shareReplay(1)
+        )
+        .pipe(ofType<FeatureSelectieAangepastMsg>("FeatureSelectieAangepast"))
+        .subscribe(msg => this.geselecteerdeFeatures.emit(msg.geselecteerdeFeatures));
+    };
+  }
 
   ngOnInit() {
     // De volgorde van de dispatching hier is van belang voor wat de overhand heeft
@@ -49,6 +71,12 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
     if (this.breedte || this.hoogte) {
       this.dispatch(prt.VeranderViewportCmd([this.breedte, this.hoogte]));
     }
+    if (this.selectieModus) {
+      this.dispatch(prt.ActiveerSelectieModusCmd(this.selectieModus));
+    }
+    this.dispatcher.dispatch(
+      prt.SubscribeCmd(prt.GeselecteerdeFeaturesSubscription(featureSelectieAangepastMsgWrapper), subscribedWrapper({}))
+    );
   }
 
   ngOnDestroy() {}

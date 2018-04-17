@@ -35,7 +35,6 @@ import { asap } from "../util/asap";
 import { emitSome } from "../util/operators";
 import { forEach } from "../util/option";
 import { SelectieModus } from "./kaart-protocol-commands";
-import { List } from "immutable";
 
 // Om enkel met @Input properties te moeten werken. Op deze manier kan een stream van KaartMsg naar de caller gestuurd worden
 export type KaartMsgObservableConsumer = (msg$: Observable<prt.KaartMsg>) => void;
@@ -75,8 +74,6 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   @Input() naam = "kaart";
   @Input() mijnLocatieZoom: number | undefined;
   @Input() selectieModus: SelectieModus = "none";
-
-  @Output() geselecteerdeFeatures: EventEmitter<List<ol.Feature>> = new EventEmitter<List<ol.Feature>>();
 
   // Dit dient om messages naar toe te sturen
 
