@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 import { Input, NgZone, OnDestroy, OnInit } from "@angular/core";
-=======
-import { Input, OnDestroy, OnInit, NgZone } from "@angular/core";
->>>>>>> origin/develop
 import * as rx from "rxjs";
 
 import { KaartComponentBase } from "./kaart-component-base";
