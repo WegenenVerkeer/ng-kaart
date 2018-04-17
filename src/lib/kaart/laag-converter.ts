@@ -7,7 +7,7 @@ import * as ke from "./kaart-elementen";
 
 export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {
   function createdTileWms(l: ke.WmsLaag) {
-    return new ol.layer.Tile(<olx.layer.TileOptions>{
+    return new ol.layer.Tile(<ol.olx.layer.TileOptions>{
       title: l.titel,
       visible: true,
       extent: kaart.config.defaults.extent,
@@ -48,11 +48,11 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
 
   function createVectorLayer(vectorlaag: ke.VectorLaag) {
     if (array.isOutOfBound(vectorlaag.minZoom)(kaart.config.defaults.resolutions)) {
-      kaartLogger.error(`Ongeldige minZoom voor ${vectorlaag.titel}: 
+      kaartLogger.error(`Ongeldige minZoom voor ${vectorlaag.titel}:
         ${vectorlaag.minZoom}, moet tussen 0 en ${kaart.config.defaults.resolutions.length - 1} liggen`);
     }
     if (array.isOutOfBound(vectorlaag.maxZoom)(kaart.config.defaults.resolutions)) {
-      kaartLogger.error(`Ongeldige maxZoom voor ${vectorlaag.titel}: 
+      kaartLogger.error(`Ongeldige maxZoom voor ${vectorlaag.titel}:
         ${vectorlaag.maxZoom}, moet tussen 0 en ${kaart.config.defaults.resolutions.length - 1} liggen`);
     }
 
