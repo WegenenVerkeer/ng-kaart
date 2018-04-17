@@ -8,6 +8,8 @@ import * as ol from "openlayers";
 import {} from "googlemaps";
 import { GoogleLocatieZoekerConfig } from "./google-locatie-zoeker.config";
 import { AbstractZoeker, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
+import { Map } from "immutable";
+import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 
 const googleApiKey = "AIzaSyApbXMl5DGL60g17JU6MazMxNcUGooey7I";
 const googleUrl = `https://maps.googleapis.com/maps/api/js?key=${googleApiKey}&libraries=places&language=nl&callback=__onGoogleLoaded`;
@@ -17,11 +19,13 @@ export class GoogleZoekResultaat implements ZoekResultaat {
   index: number;
   omschrijving: string;
   bron: string;
+  zoeker: string;
   geometry: any;
   locatie: any;
-  selected = false;
+  icoon: SafeHtml; // Ieder zoekresultaat heeft hetzelfde icoon.
+  style: ol.style.Style;
 
-  constructor(locatie, index: number) {
+  constructor(locatie, index: number, zoeker: string, icoon: SafeHtml, style: ol.style.Style) {
     this.partialMatch = locatie.partialMatch;
     this.index = index + 1;
     this.locatie = locatie.locatie;
@@ -32,6 +36,9 @@ export class GoogleZoekResultaat implements ZoekResultaat {
     }).readGeometry(locatie.locatie);
     this.omschrijving = locatie.omschrijving;
     this.bron = locatie.bron;
+    this.zoeker = zoeker;
+    this.icoon = icoon;
+    this.style = style;
   }
 }
 
@@ -79,9 +86,36 @@ interface ExtendedPlaceResult extends google.maps.places.PlaceResult, ExtendedRe
 @Injectable()
 export class GoogleLocatieZoekerService implements AbstractZoeker {
   private _cache: Promise<GoogleServices> | null = null;
+  private legende: Map<string, SafeHtml>;
+  private style: ol.style.Style; // 1 style voor ieder resultaat. We maken geen onderscheid per bron.
+  private icoon: SafeHtml;
+
   locatieZoekerUrl = this.googleLocatieZoekerConfig.url;
 
-  constructor(private http: Http, private googleLocatieZoekerConfig: GoogleLocatieZoekerConfig) {}
+  constructor(private http: Http, private googleLocatieZoekerConfig: GoogleLocatieZoekerConfig, private sanitizer: DomSanitizer) {
+    // We moeten hier al de expanded html zetten, want angular directives worden niet geexpandeerd in innerHtml met SafeHtml.
+    this.icoon = this.sanitizer.bypassSecurityTrustHtml("<mat-icon class='mat-icon material-icons'>place</mat-icon>");
+    this.legende = Map.of(this.naam(), this.icoon);
+    this.style = new ol.style.Style({
+      stroke: new ol.style.Stroke({
+        color: "#F7902D", // TODO: configureren?
+        width: 1
+      }),
+      fill: new ol.style.Fill({
+        color: [247, 144, 45, 0.2] // TODO: configureren?
+      }),
+      text: new ol.style.Text({
+        text: "\uE55F", // place
+        font: "normal 24px Material Icons",
+        textBaseline: "bottom",
+        fill: new ol.style.Fill({
+          color: "#F7902D" // TODO: configureren?
+        }),
+        offsetX: 0.5,
+        offsetY: 1.0
+      })
+    });
+  }
 
   private init(): Promise<GoogleServices> {
     if (this._cache) {
@@ -99,9 +133,15 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
     }
   }
 
+  private maakZoekResultaten(error?: string): ZoekResultaten {
+    const resultaten = new ZoekResultaten(this.naam(), error);
+    resultaten.legende = this.legende;
+    return resultaten;
+  }
+
   zoek(zoekterm): Observable<ZoekResultaten> {
     if (zoekterm.trim().length === 0) {
-      return Observable.of(new ZoekResultaten(this.naam()));
+      return Observable.of(this.maakZoekResultaten());
     }
     const params: URLSearchParams = new URLSearchParams("", new EncodeAllesQueryEncoder());
     params.set("query", zoekterm);
@@ -113,7 +153,7 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
   }
 
   parseResult(response: Response): Observable<ZoekResultaten> {
-    const zoekResultaten = new ZoekResultaten(this.naam());
+    const zoekResultaten = this.maakZoekResultaten();
 
     // parse result
     const resultaten = response.json();
@@ -268,11 +308,14 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
             resultaat.locatie || this.wgs84ToLambert72GeoJson(resultaat.geometry.location.lng(), resultaat.geometry.location.lat());
         });
         const locaties = resultaten.locaties.concat(resultatenLijst);
-        if (locaties.length === 30) {
-          zoekResultaten.fouten.push("Er werden meer dan 30 resultaten gevonden, de eerste 30 worden hier opgelijst");
+        if (locaties.length >= this.googleLocatieZoekerConfig.maxAantal) {
+          zoekResultaten.fouten.push(
+            `Er werden meer dan ${this.googleLocatieZoekerConfig.maxAantal} resultaten gevonden, ` +
+              `de eerste ${this.googleLocatieZoekerConfig.maxAantal} worden hier opgelijst`
+          );
         }
-        locaties.forEach((locatie, index) => {
-          zoekResultaten.resultaten.push(new GoogleZoekResultaat(locatie, index));
+        locaties.slice(0, this.googleLocatieZoekerConfig.maxAantal).forEach((locatie, index) => {
+          zoekResultaten.resultaten.push(new GoogleZoekResultaat(locatie, index, this.naam(), this.icoon, this.style));
         });
         return zoekResultaten;
       });
@@ -291,7 +334,7 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
         // toon http foutmelding indien geen 200 teruggehad
         error = `Fout bij opvragen locatie: ${response.responseText || response.statusText || response}`;
     }
-    return Observable.of(new ZoekResultaten(this.naam(), error));
+    return Observable.of(this.maakZoekResultaten(error));
   }
 
   private geocode(omschrijving): Promise<ExtendedGeocoderResult[]> {
@@ -449,6 +492,6 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
   }
 
   naam(): string {
-    return "GoogleLocatieZoeker";
+    return "Google/WDB LocatieZoeker";
   }
 }

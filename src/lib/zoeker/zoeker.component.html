@@ -1,53 +1,51 @@
 <div class="zoeker-input float-box">
-  <mat-icon matPrefix (click)="toggleResultaat()" [ngClass]="{'inactief':!toonResultaat}">search</mat-icon>
-  <input placeholder="Zoek" [formControl]="zoekVeld">
-  <mat-icon matSuffix (click)="toggleHelp()" [ngClass]="{'inactief':!toonHelp}">help</mat-icon>
+  <a (click)="toggleResultaat()">
+    <mat-icon matPrefix [ngClass]="{'inactief':!toonResultaat}" class="klikbaar">search</mat-icon>
+  </a>
+  <input placeholder="Zoek" [formControl]="zoekVeld" (keyup)="onKey($event)">
+  <a (click)="toggleHelp()">
+    <mat-icon matSuffix [ngClass]="{'inactief':!toonHelp}" class="klikbaar">help</mat-icon>
+  </a>
 </div>
 <div class="zoeker-help float-box" *ngIf="toonHelp">
   <br><b>Voorbeelden</b>
   <br>
-  <div class="locatiezoeker_resultaat">Kapelstraat 12 Kortrijk
+  <div>Kapelstraat 12 Kortrijk
     <br>&nbsp;&nbsp;<i>zoek het opgegeven adres</i></div>
-  <div class="locatiezoeker_resultaat">N0080001 12.0
+  <div>N0080001 12.0
     <br>&nbsp;&nbsp;<i>zoek op de weg met ident8 N0080001 het referentiepunt 12.0</i></div>
-  <div class="locatiezoeker_resultaat">R1
+  <div>R1
     <br>&nbsp;&nbsp;<i>zoek de weg met ident8 R0010001</i></div>
-  <div class="locatiezoeker_resultaat">N8 12.0
+  <div>N8 12.0
     <br>&nbsp;&nbsp;<i>zoek op de weg met ident8 N0080001 het referentiepunt 12.0</i></div>
-  <div class="locatiezoeker_resultaat">N8 12.0-8
+  <div>N8 12.0-8
     <br>&nbsp;&nbsp;<i>zoek op de weg met ident8 N0080001 het referentiepunt 12.0 met afstand -8</i></div>
-  <div class="locatiezoeker_resultaat">E17 5.0
+  <div>E17 5.0
     <br>&nbsp;&nbsp;<i>zoek op de E17 het referentiepunt 5.0</i></div>
-  <div class="locatiezoeker_resultaat">N8 178 Kortrijk
+  <div>N8 178 Kortrijk
     <br>&nbsp;&nbsp;<i>zoek op de weg met ident8 N0080001 in Kortrijk huisnummer 178 (gemeente verplicht)</i></div>
-  <div class="locatiezoeker_resultaat">em G1586/WV
+  <div>em G1586/WV
     <br>&nbsp;&nbsp;<i>zoek het EM onderdeel met 'G1586/WV' in het Naampad</i></div>
-  <div class="locatiezoeker_resultaat">kw 0.010.031.1
+  <div>kw 0.010.031.1
     <br>&nbsp;&nbsp;<i>zoek het kunstwerk met Bryggja id '0.010.031.1'</i></div>
-  <div class="locatiezoeker_resultaat">
+  <br>
+  <div *ngIf="legende.size > 0">
     <br><b>Legende</b><br>
-    <p>
-      <img src="{{baseimage(false)}}"><span>Exact resultaat</span>
-    </p>
-    <p>
-      <img src="{{baseimage(true)}}"><span>Benaderd resultaat</span>
-    </p>
+    <div *ngFor="let key of legendeKeys" class="zoeker-resultaat">
+      <span [innerHTML]="legende.get(key)"></span>
+      <span>{{key}}</span>
+    </div>
   </div>
 </div>
-<div class="zoeker-resultaat float-box" *ngIf="toonResultaat">
-  <div *ngFor="let zoeker of alleZoekResultaten">
-    <div *ngFor="let error of zoeker.fouten" class="locatiezoeker_fout">
-      {{error}}
-    </div>
+<div class="float-box" *ngIf="toonResultaat">
+  <div *ngFor="let fout of alleFouten" class="zoeker-resultaat zoeker-fout">
+    <mat-icon>announcement</mat-icon>
+    <span>{{fout.zoeker}}: {{fout.fout}}</span>
   </div>
-  <div *ngFor="let zoeker of alleZoekResultaten" class="zoeker-resultaat">
-    <div *ngFor="let resultaat of zoeker.resultaten"
-         class="locatiezoeker_resultaat locatiezoeker_fadein locatiezoeker_showpointer zoek-resultaat"
-         (click)="selectMarker(resultaat)">
-      <p>
-        <img src="{{image(resultaat)}}">
-        <span>{{resultaat.omschrijving}} ({{resultaat.bron}})</span>
-      </p>
-    </div>
+  <div *ngIf="alleFouten.length > 0 && alleZoekResultaten.length > 0" class="divider"></div>
+  <div *ngFor="let resultaat of alleZoekResultaten" class="zoeker-resultaat klikbaar"
+       (click)="zoomNaarResultaat(resultaat)">
+    <span [innerHTML]="resultaat.icoon"></span>
+    <span [innerHTML]="resultaat.omschrijving | highlight: zoekVeld.value"></span>
   </div>
 </div>

@@ -6,8 +6,7 @@ import * as ke from "./kaart-elementen";
 import { KaartConfig } from "./kaart-config";
 import { Subject, ReplaySubject } from "rxjs";
 import { Zoominstellingen, Laaggroep } from ".";
-import { AbstractZoeker, ZoekResultaten } from "../zoeker";
-import { Subscription } from "rxjs/Subscription";
+import { ZoekResultaten } from "../zoeker";
 import { ZoekerCoordinator } from "../zoeker/zoeker-coordinator";
 
 export interface Groeplagen {

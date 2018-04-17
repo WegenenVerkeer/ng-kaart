@@ -20,7 +20,8 @@ import { AvKaartInnerComponent } from "./av-kaart-inner.component";
     FormsModule,
     ZoekerModule.forRoot({
       // ssh tunnel naar apigateway van dev - ssh -L 5100:apigateway.dev.awv.internal:80 management.apps.mow.vlaanderen.be
-      url: "http://localhost:5100/locatiezoeker"
+      url: "http://localhost:5100/locatiezoeker",
+      maxAantal: 10
     }),
     ClickOutsideModule,
     HttpModule

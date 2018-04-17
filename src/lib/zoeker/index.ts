@@ -7,8 +7,9 @@ import { GoogleLocatieZoekerComponent } from "./google-locatie-zoeker.component"
 import { ZoekerComponent } from "./zoeker.component";
 import { MatIconModule, MatFormFieldModule, MatInputModule } from "@angular/material";
 import { ReactiveFormsModule } from "@angular/forms";
+import { ZoekerHighlightPipe } from "./zoeker-highlight.pipe";
 
-const components: any[] = [GoogleLocatieZoekerComponent, ZoekerComponent];
+const components: any[] = [GoogleLocatieZoekerComponent, ZoekerComponent, ZoekerHighlightPipe];
 
 @NgModule({
   imports: [CommonModule, HttpModule, ReactiveFormsModule, MatIconModule, MatInputModule, MatFormFieldModule],
@@ -27,5 +28,6 @@ export class ZoekerModule {
 
 export * from "./google-locatie-zoeker.service";
 export * from "./google-locatie-zoeker.component";
+export * from "./zoeker-highlight.pipe";
 export * from "./zoeker.component";
 export * from "./abstract-zoeker";

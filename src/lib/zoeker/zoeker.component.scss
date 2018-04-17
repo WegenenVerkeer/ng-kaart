@@ -10,19 +10,11 @@ input {
   margin: 8px;
 }
 
-.mat-icon {
-  cursor: pointer;
-}
-
-.mat-icon.inactief {
-  color: rgba(0, 0, 0, 0.26);;
-}
-
 .zoeker-input {
-  padding: 8px 16px;
+  padding: 8px 8px;
   background: white;
   min-width: 104px;
-  max-width: 50%;
+  max-width: 100%;
   display: flex;
   flex-direction: row;
   flex-wrap: nowrap;
@@ -31,44 +23,46 @@ input {
 }
 
 .zoeker-resultaat {
-  display: flex;
-  flex-direction: column;
-}
-
-.locatiezoeker_resultaat p {
-  display: flex;
-  margin-top: 12px;
-}
-
-.locatiezoeker_resultaat span {
-  padding-left: 4px;
-  padding-right: 4px;
-  vertical-align: middle;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
-}
-
-.locatiezoeker_resultaat img {
-  padding-left: 4px;
-  width: 22px;
-  height: 24px;
-}
-
-.locatiezoeker_fout {
-  padding-left: 4px;
-  padding-right: 4px;
-}
-
-.locatiezoeker_fadein {
+  padding-left: 8px;
+  padding-right: 8px;
   animation: fadein 2s;
   -moz-animation: fadein 2s; /* Firefox */
   -webkit-animation: fadein 2s; /* Safari and Chrome */
   -o-animation: fadein 2s; /* Opera */
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  min-height: 36px;
 }
 
-.locatiezoeker_showpointer {
+:host ::ng-deep .zoeker-resultaat .mat-icon {
+  vertical-align: middle;
+}
+
+.zoeker-fout {
+  text-overflow: revert;
+  white-space: normal;
+  overflow: visible;
+}
+
+.zoeker-help {
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.klikbaar {
   cursor: pointer;
+}
+
+.divider {
+  flex-grow: 1;
+  margin: 8px;
+  height: 1px;
+  background-color: lightgrey;
+}
+
+:host ::ng-deep .awv-zoeker-highlight {
+  font-weight: bold;
 }
 
 @keyframes fadein {
