@@ -3,10 +3,8 @@
     <div class="kaart" #map style="height: 100%; width: 100%;"></div>
   </div>
   <div id="overlay">
-    <awv-kaart-achtergrond-selector [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-achtergrond-selector>
-    <div *ngIf="mijnLocatieZoom">
-      <awv-kaart-mijn-locatie [zoomniveau]="mijnLocatieZoom" [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-mijn-locatie>
-    </div>
+    <awv-kaart-achtergrond-selector [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-achtergrond-selector>    
+    <awv-kaart-mijn-locatie [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-mijn-locatie>
     <awv-kaart-zoom [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-zoom>
   </div>
 </div>

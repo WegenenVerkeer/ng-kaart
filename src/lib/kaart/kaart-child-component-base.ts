@@ -1,4 +1,4 @@
-import { Input, OnDestroy, OnInit, NgZone } from "@angular/core";
+import { Input, NgZone, OnDestroy, OnInit } from "@angular/core";
 import * as rx from "rxjs";
 
 import { KaartComponentBase } from "./kaart-component-base";

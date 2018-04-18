@@ -1,16 +1,47 @@
-import { Option, some, none } from "fp-ts/lib/Option";
+import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 
-import { kaartLogger } from "./log";
-import { Zoominstellingen, SubscriptionResult, KaartCmdValidation } from "./kaart-protocol";
-import * as prt from "./kaart-protocol";
 import { AchtergrondLaag } from "./kaart-elementen";
+import { KaartCmdValidation, SubscriptionResult, Zoominstellingen } from "./kaart-protocol";
+import * as prt from "./kaart-protocol";
+import { kaartLogger } from "./log";
 
-export type KaartInternalSubMsg = ZoominstellingenGezetMsg | AchtergrondtitelGezetMsg | AchtergrondlagenGezetMsg | SubscribedMsg;
+export type KaartInternalSubMsg =
+  | ZoominstellingenGezetMsg
+  | AchtergrondtitelGezetMsg
+  | AchtergrondlagenGezetMsg
+  | SubscribedMsg
+  | MijnLocatieZoomdoelGezetMsg;
 
-export interface KaartInternalMsg extends prt.KaartMsg {
-  type: "KaartInternal";
-  payload: Option<KaartInternalSubMsg>;
+export interface ZoominstellingenGezetMsg {
+  readonly type: "ZoominstellingenGezet";
+  readonly zoominstellingen: Zoominstellingen;
+}
+
+export interface AchtergrondtitelGezetMsg {
+  readonly type: "AchtergrondtitelGezet";
+  readonly titel: string;
+}
+
+export interface AchtergrondlagenGezetMsg {
+  readonly type: "AchtergrondlagenGezet";
+  readonly achtergrondlagen: List<AchtergrondLaag>;
+}
+
+export interface SubscribedMsg {
+  readonly type: "Subscribed";
+  readonly subscription: KaartCmdValidation<SubscriptionResult>;
+  readonly reference: any;
+}
+
+export interface MijnLocatieZoomdoelGezetMsg {
+  readonly type: "MijnLocatieZoomdoelGezet";
+  readonly mijnLocatieZoomdoel: Option<number>;
+}
+
+export interface KaartInternalMsg {
+  readonly type: "KaartInternal";
+  readonly payload: Option<KaartInternalSubMsg>;
 }
 
 function KaartInternalMsg(payload: Option<KaartInternalSubMsg>): KaartInternalMsg {
@@ -34,11 +65,6 @@ export const kaartLogOnlyWrapper: prt.ValidationWrapper<any, KaartInternalMsg> =
   };
 };
 
-export interface ZoominstellingenGezetMsg {
-  type: "ZoominstellingenGezet";
-  zoominstellingen: Zoominstellingen;
-}
-
 function ZoominstellingenGezetMsg(instellingen: Zoominstellingen): ZoominstellingenGezetMsg {
   return { type: "ZoominstellingenGezet", zoominstellingen: instellingen };
 }
@@ -46,33 +72,17 @@ function ZoominstellingenGezetMsg(instellingen: Zoominstellingen): Zoominstellin
 export const zoominstellingenGezetWrapper = (instellingen: Zoominstellingen) =>
   KaartInternalMsg(some(ZoominstellingenGezetMsg(instellingen)));
 
-export interface AchtergrondtitelGezetMsg {
-  type: "AchtergrondtitelGezet";
-  titel: string;
-}
-
 function AchtergrondtitelGezetMsg(titel: string): AchtergrondtitelGezetMsg {
   return { type: "AchtergrondtitelGezet", titel: titel };
 }
 
 export const achtergrondtitelGezetWrapper = (titel: string) => KaartInternalMsg(some(AchtergrondtitelGezetMsg(titel)));
 
-export interface AchtergrondlagenGezetMsg {
-  type: "AchtergrondlagenGezet";
-  achtergrondlagen: List<AchtergrondLaag>;
-}
-
 function AchtergrondlagenGezetMsg(achtergrondlagen: List<AchtergrondLaag>): AchtergrondlagenGezetMsg {
   return { type: "AchtergrondlagenGezet", achtergrondlagen: achtergrondlagen };
 }
 
 export const achtergrondlagenGezetWrapper = (lagen: List<AchtergrondLaag>) => KaartInternalMsg(some(AchtergrondlagenGezetMsg(lagen)));
-
-export interface SubscribedMsg {
-  type: "Subscribed";
-  subscription: KaartCmdValidation<SubscriptionResult>;
-  reference: any;
-}
 
 function SubscribedMsg(subscription: KaartCmdValidation<SubscriptionResult>, reference: any): SubscribedMsg {
   return { type: "Subscribed", reference: reference, subscription: subscription };
@@ -81,3 +91,9 @@ function SubscribedMsg(subscription: KaartCmdValidation<SubscriptionResult>, ref
 export const subscribedWrapper: (ref: any) => (v: KaartCmdValidation<SubscriptionResult>) => KaartInternalMsg = (reference: any) => (
   v: prt.KaartCmdValidation<SubscriptionResult>
 ) => KaartInternalMsg(some(SubscribedMsg(v, reference)));
+
+function MijnLocatieZoomdoelGezetMsg(d: Option<number>): MijnLocatieZoomdoelGezetMsg {
+  return { type: "MijnLocatieZoomdoelGezet", mijnLocatieZoomdoel: d };
+}
+
+export const MijnLocatieZoomdoelGezetWrapper = (d: Option<number>) => KaartInternalMsg(some(MijnLocatieZoomdoelGezetMsg(d)));
