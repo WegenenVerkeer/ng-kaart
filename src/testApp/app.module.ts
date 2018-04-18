@@ -21,7 +21,8 @@ import { GoogleLocatieZoekerConfig } from "../lib/zoeker/google-locatie-zoeker.c
     FormsModule,
     ZoekerModule.forRoot({
       // ssh tunnel naar apigateway van dev - ssh -L 5100:apigateway.dev.awv.internal:80 management.apps.mow.vlaanderen.be
-      url: "http://localhost:5100/locatiezoeker"
+      url: "http://localhost:5100/locatiezoeker",
+      apiKey: "AIzaSyApbXMl5DGL60g17JU6MazMxNcUGooey7I"
     }),
     ClickOutsideModule,
     HttpModule

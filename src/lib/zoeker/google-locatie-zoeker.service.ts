@@ -11,9 +11,6 @@ import { AbstractZoeker, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker
 import { Map } from "immutable";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 
-const googleApiKey = "AIzaSyApbXMl5DGL60g17JU6MazMxNcUGooey7I";
-const googleUrl = `https://maps.googleapis.com/maps/api/js?key=${googleApiKey}&libraries=places&language=nl&callback=__onGoogleLoaded`;
-
 export class GoogleZoekResultaat implements ZoekResultaat {
   partialMatch: boolean;
   index: number;
@@ -486,7 +483,9 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
 
   private loadScript() {
     const node = document.createElement("script");
-    node.src = googleUrl;
+    node.src = `https://maps.googleapis.com/maps/api/js?key=${
+      this.googleLocatieZoekerConfig.apiKey
+    }&libraries=places&language=nl&callback=__onGoogleLoaded`;
     node.type = "text/javascript";
     document.getElementsByTagName("head")[0].appendChild(node);
   }
