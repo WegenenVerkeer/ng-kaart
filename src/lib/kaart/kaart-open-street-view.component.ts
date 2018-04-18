@@ -46,6 +46,7 @@ export class KaartOpenStreetViewComponent extends KaartChildComponentBase implem
         observeOnAngular(this.zone)
       )
       .skipUntil(Observable.timer(0)) // only messages after subscribe() is called
+      .take(1)
       .subscribe(msg => {
         this.openGoogleStreetView(msg.clickCoordinaat);
       });
