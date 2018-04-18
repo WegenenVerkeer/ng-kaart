@@ -1,9 +1,7 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
 import * as option from "fp-ts/lib/Option";
-import { Observable } from "rxjs/Observable";
-
 import * as ol from "openlayers";
-
+import { Observable } from "rxjs/Observable";
 import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";

@@ -5,6 +5,8 @@ import { sequence } from "fp-ts/lib/Traversable";
 import * as validation from "fp-ts/lib/Validation";
 import { List } from "immutable";
 import * as ol from "openlayers";
+import { Subscription } from "rxjs";
+import { debounceTime, filter } from "rxjs/operators";
 
 import { forEach } from "../util/option";
 import * as ke from "./kaart-elementen";
@@ -12,9 +14,6 @@ import * as prt from "./kaart-protocol";
 import { Laaggroep, PositieAanpassing, ZetMijnLocatieZoomCmd } from "./kaart-protocol-commands";
 import { KaartWithInfo } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
-import { Subscription } from "rxjs";
-import { debounceTime, filter } from "rxjs/operators";
-import { ZoekResultaten } from "../zoeker/abstract-zoeker";
 
 ///////////////////////////////////
 // Hulpfuncties
