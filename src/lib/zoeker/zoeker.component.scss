@@ -1,6 +1,7 @@
 input {
   flex-grow: 100;
   border: none;
+  margin-left: 4px;
   outline: none;
 }
 
@@ -22,6 +23,10 @@ input {
   align-items: center;
 }
 
+.zoeker-input a {
+  width: 40px;
+}
+
 .zoeker-resultaat {
   font-family: Roboto, "Helvetica Neue", sans-serif;
   padding-left: 8px;
@@ -38,6 +43,7 @@ input {
 
 :host ::ng-deep .zoeker-resultaat .mat-icon {
   vertical-align: middle;
+  width: 40px;
 }
 
 .zoeker-fout {
