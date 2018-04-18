@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from "@angular/core";
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from "@angular/core";
 import * as option from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
@@ -39,7 +39,7 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
   @Input() selectieModus: prt.SelectieModus = "none";
   @Input() naam = "kaart" + KaartClassicComponent.counter++;
 
-  @Output() geselecteerdeFeatures: Observable<List<ol.Feature>> = Observable.empty();
+  @Output() geselecteerdeFeatures: EventEmitter<List<ol.Feature>> = new EventEmitter();
 
   // TODO deze klasse en child components verhuizen naar classic directory, maar nog even wachten of we krijgen te veel merge conflicts
   constructor() {
@@ -65,10 +65,12 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
         .pipe(takeUntil(this.destroyingSubj)) // Autounsubscribe moet na de lift komen: anders wordt er geen unsubscribe gestuurd
         .subscribe(err => classicLogger.error(err));
       // We kunnen in dit geval onze stream rechtstreeks naar de @Output sturen
-      this.geselecteerdeFeatures = kaartClassicSubMsg$.pipe(
-        ofType<FeatureSelectieAangepastMsg>("FeatureSelectieAangepast"),
-        map(m => m.geselecteerdeFeatures)
-      );
+      kaartClassicSubMsg$
+        .pipe(
+          ofType<FeatureSelectieAangepastMsg>("FeatureSelectieAangepast"), //
+          map(m => m.geselecteerdeFeatures)
+        )
+        .subscribe(features => this.geselecteerdeFeatures.emit(features));
       // We kunnen hier makkelijk een mini-reducer zetten voor KaartClassicSubMsg mocht dat nodig zijn
     };
   }

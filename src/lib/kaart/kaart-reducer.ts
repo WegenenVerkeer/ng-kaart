@@ -482,8 +482,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function activeerSelectieModus(cmnd: prt.ActiveerSelectieModusCmd<Msg>): ModelWithResult<Msg> {
-      console.log("Setting selectiemodus to " + cmnd.selectieModus);
-
       model.map.getInteractions().forEach(interaction => {
         if (interaction instanceof ol.interaction.Select) {
           model.map.removeInteraction(interaction);
