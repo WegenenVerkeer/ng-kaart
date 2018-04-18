@@ -25,7 +25,7 @@ export class KaartWithInfo {
   readonly stdInteracties: List<ol.interaction.Interaction> = List(); // TODO beter gewoon interacties
   readonly scrollZoomOnFocus: boolean = false;
   readonly showBackgroundSelector: boolean = false;
-  readonly clickSubj: Subject<ol.Coordinate> = new ReplaySubject<ol.Coordinate>(0);
+  readonly clickSubj: Subject<ol.Coordinate> = new ReplaySubject<ol.Coordinate>(1);
   readonly zoominstellingenSubj: Subject<Zoominstellingen> = new ReplaySubject<Zoominstellingen>(1);
   readonly middelpuntSubj: Subject<[number, number]> = new ReplaySubject<[number, number]>(1);
   readonly achtergrondlaagtitelSubj: Subject<string> = new ReplaySubject<string>(1);

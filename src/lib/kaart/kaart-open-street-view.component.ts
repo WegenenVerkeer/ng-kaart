@@ -6,6 +6,7 @@ import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { ofType } from "../util/operators";
 import * as prt from "./kaart-protocol";
+import { Observable } from "rxjs/Observable";
 
 @Component({
   selector: "awv-kaart-open-street-view",
@@ -44,6 +45,7 @@ export class KaartOpenStreetViewComponent extends KaartChildComponentBase implem
         ofType<KaartClickMsg>("KaartClick"), //
         observeOnAngular(this.zone)
       )
+      .skipUntil(Observable.timer(0)) // only messages after subscribe() is called
       .subscribe(msg => {
         this.openGoogleStreetView(msg.clickCoordinaat);
       });
