@@ -101,17 +101,11 @@ export function MijnLocatieZoomdoelSubscription<Msg extends TypedRecord>(
 }
 
 export function GeometryChangedSubscription<Msg extends TypedRecord>(
-  wrapper: (evt: ol.geom.Geometry) => Msg
+  wrapper: (geom: ol.geom.Geometry) => Msg
 ): GeometryChangedSubscription<Msg> {
-  return {
-    type: "GeometryChanged",
-    wrapper: wrapper
-  };
+  return { type: "GeometryChanged", wrapper: wrapper };
 }
 
 export function TekenenSubscription<Msg extends TypedRecord>(wrapper: (boolean) => Msg): TekenenSubscription<Msg> {
-  return {
-    type: "Tekenen",
-    wrapper: wrapper
-  };
+  return { type: "Tekenen", wrapper: wrapper };
 }

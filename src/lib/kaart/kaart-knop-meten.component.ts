@@ -1,14 +1,7 @@
-import { Component, Input, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
+import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 
-import { KaartCmdDispatcher, VacuousDispatcher } from "./kaart-event-dispatcher";
-import { KaartComponentBase } from "./kaart-component-base";
-import { KaartInternalMsg, KaartInternalSubMsg, kaartLogOnlyWrapper } from "./kaart-internal-messages";
-import * as prt from "./kaart-protocol";
-import * as ke from "./kaart-elementen";
-import { ofType } from "../util/operators";
-import { kaartLogger } from "./log";
 import { KaartClassicComponent } from "./kaart-classic.component";
-import { StartTekenenCmd, StopTekenenCmd } from "./kaart-protocol";
+import { KaartComponentBase } from "./kaart-component-base";
 
 @Component({
   selector: "awv-kaart-knop-meten",
@@ -28,12 +21,12 @@ export class KaartKnopMetenLengteOppervlakteComponent extends KaartComponentBase
   }
 
   startMetMeten(): void {
-    this.kaartClassicComponent.dispatch(StartTekenenCmd());
+    // TODO subscribe op GeometryChanged
     this.metende = true;
   }
 
   stopMetMeten(): void {
-    this.kaartClassicComponent.dispatch(StopTekenenCmd());
+    // TODO unsubscribe van GeometryChanged
     this.metende = false;
   }
 

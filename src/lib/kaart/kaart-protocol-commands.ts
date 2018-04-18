@@ -39,9 +39,7 @@ export type Command<Msg extends KaartMsg> =
   | VoegInteractieToeCmd<Msg>
   | VerwijderInteractieCmd<Msg>
   | VoegOverlayToeCmd<Msg>
-  | VerwijderOverlaysCmd<Msg>
-  | StartTekenenCmd<Msg>
-  | StopTekenenCmd<Msg>;
+  | VerwijderOverlaysCmd<Msg>;
 
 // SubscriptionResult is maar een type alias, maar ook een encapsulatie naar clients toe
 export type SubscriptionResult = RxSubscription;
@@ -205,14 +203,6 @@ export interface ZetMijnLocatieZoomCmd {
   readonly doelniveau: Option<number>;
 }
 
-export interface StartTekenenCmd<Msg extends KaartMsg> {
-  readonly type: "StartTekenen";
-}
-
-export interface StopTekenenCmd<Msg extends KaartMsg> {
-  readonly type: "StopTekenen";
-}
-
 export interface VoegInteractieToeCmd<Msg extends KaartMsg> {
   readonly type: "VoegInteractieToe";
   readonly interactie: ol.interaction.Draw;
@@ -366,18 +356,6 @@ export function VerwijderOverlaysCmd<Msg extends KaartMsg>(overlays: Array<ol.Ov
   return {
     type: "VerwijderOverlays",
     overlays: overlays
-  };
-}
-
-export function StartTekenenCmd<Msg extends KaartMsg>(): StartTekenenCmd<Msg> {
-  return {
-    type: "StartTekenen"
-  };
-}
-
-export function StopTekenenCmd<Msg extends KaartMsg>(): StopTekenenCmd<Msg> {
-  return {
-    type: "StopTekenen"
   };
 }
 
