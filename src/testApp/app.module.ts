@@ -10,6 +10,7 @@ import { HttpModule } from "@angular/http";
 import { ClickOutsideModule } from "ng4-click-outside";
 import { AvKaartComponent } from "./av-kaart.component";
 import { AvKaartInnerComponent } from "./av-kaart-inner.component";
+import { GoogleLocatieZoekerConfig } from "../lib/zoeker/google-locatie-zoeker.config";
 
 @NgModule({
   declarations: [AppComponent, AvKaartComponent, AvKaartInnerComponent],
@@ -20,8 +21,7 @@ import { AvKaartInnerComponent } from "./av-kaart-inner.component";
     FormsModule,
     ZoekerModule.forRoot({
       // ssh tunnel naar apigateway van dev - ssh -L 5100:apigateway.dev.awv.internal:80 management.apps.mow.vlaanderen.be
-      url: "http://localhost:5100/locatiezoeker",
-      maxAantal: 10
+      url: "http://localhost:5100/locatiezoeker"
     }),
     ClickOutsideModule,
     HttpModule

@@ -98,18 +98,18 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
     this.legende = Map.of(this.naam(), this.icoon);
     this.style = new ol.style.Style({
       stroke: new ol.style.Stroke({
-        color: "#F7902D", // TODO: configureren?
+        color: this.googleLocatieZoekerConfig.kleur,
         width: 1
       }),
       fill: new ol.style.Fill({
-        color: [247, 144, 45, 0.2] // TODO: configureren?
+        color: this.googleLocatieZoekerConfig.lichtereKleur()
       }),
       text: new ol.style.Text({
         text: "\uE55F", // place
         font: "normal 24px Material Icons",
         textBaseline: "bottom",
         fill: new ol.style.Fill({
-          color: "#F7902D" // TODO: configureren?
+          color: this.googleLocatieZoekerConfig.kleur
         }),
         offsetX: 0.5,
         offsetY: 1.0

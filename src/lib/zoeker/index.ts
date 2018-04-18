@@ -2,7 +2,7 @@ import { GoogleLocatieZoekerService } from "./google-locatie-zoeker.service";
 import { ModuleWithProviders, NgModule } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { HttpModule } from "@angular/http";
-import { GoogleLocatieZoekerConfig } from "./google-locatie-zoeker.config";
+import { GoogleLocatieZoekerConfig, GoogleLocatieZoekerConfigData } from "./google-locatie-zoeker.config";
 import { GoogleLocatieZoekerComponent } from "./google-locatie-zoeker.component";
 import { ZoekerComponent } from "./zoeker.component";
 import { MatIconModule, MatFormFieldModule, MatInputModule } from "@angular/material";
@@ -18,10 +18,10 @@ const components: any[] = [GoogleLocatieZoekerComponent, ZoekerComponent, Zoeker
   providers: [GoogleLocatieZoekerService]
 })
 export class ZoekerModule {
-  static forRoot(config: GoogleLocatieZoekerConfig): ModuleWithProviders {
+  static forRoot(config: GoogleLocatieZoekerConfigData): ModuleWithProviders {
     return {
       ngModule: ZoekerModule,
-      providers: [{ provide: GoogleLocatieZoekerConfig, useValue: config }]
+      providers: [{ provide: GoogleLocatieZoekerConfig, useValue: new GoogleLocatieZoekerConfig(config) }]
     };
   }
 }
