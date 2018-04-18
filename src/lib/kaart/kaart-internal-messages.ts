@@ -8,14 +8,9 @@ import { Zoominstellingen, SubscriptionResult, KaartCmdValidation } from "./kaar
 import * as prt from "./kaart-protocol";
 import { AchtergrondLaag } from "./kaart-elementen";
 
-export type KaartInternalSubMsg =
-  | FeatureSelectieAangepastMsg
-  | ZoominstellingenGezetMsg
-  | AchtergrondtitelGezetMsg
-  | AchtergrondlagenGezetMsg
-  | SubscribedMsg;
+export type KaartInternalSubMsg = ZoominstellingenGezetMsg | AchtergrondtitelGezetMsg | AchtergrondlagenGezetMsg | SubscribedMsg;
 
-export interface KaartInternalMsg extends prt.KaartMsg {
+export interface KaartInternalMsg {
   type: "KaartInternal";
   payload: Option<KaartInternalSubMsg>;
 }
@@ -52,21 +47,6 @@ function ZoominstellingenGezetMsg(instellingen: Zoominstellingen): Zoominstellin
 
 export const zoominstellingenGezetWrapper = (instellingen: Zoominstellingen) =>
   KaartInternalMsg(some(ZoominstellingenGezetMsg(instellingen)));
-
-export interface FeatureSelectieAangepastMsg {
-  type: "FeatureSelectieAangepast";
-  geselecteerdeFeatures: List<ol.Feature>;
-}
-
-function FeatureSelectieAangepastMsg(geselecteerdeFeatures: List<ol.Feature>): FeatureSelectieAangepastMsg {
-  return {
-    type: "FeatureSelectieAangepast",
-    geselecteerdeFeatures: geselecteerdeFeatures
-  };
-}
-
-export const featureSelectieAangepastMsgWrapper = (geselecteerdeFeatures: List<ol.Feature>) =>
-  KaartInternalMsg(some(FeatureSelectieAangepastMsg(geselecteerdeFeatures)));
 
 export interface AchtergrondtitelGezetMsg {
   type: "AchtergrondtitelGezet";

@@ -11,6 +11,7 @@ import { offsetStyleFunction } from "../lib/stijl/offset-stijl-function";
 import * as prt from "../lib/kaart/kaart-protocol";
 import { kaartLogOnlyWrapper } from "../lib/kaart/kaart-internal-messages";
 import { List } from "immutable";
+import { classicLogger } from "../lib/kaart-classic/log";
 
 @Component({
   selector: "awv-ng-kaart-test-app",
@@ -147,6 +148,7 @@ export class AppComponent {
     public coordinatenService: CoordinatenService
   ) {
     kaartLogger.setLevel("DEBUG");
+    classicLogger.setLevel("DEBUG");
     this.addIcon();
   }
 

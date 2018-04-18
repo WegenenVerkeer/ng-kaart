@@ -57,10 +57,10 @@ export class KaartWithInfo {
     map.getView().on("change:center", () => this.middelpuntSubj.next(map.getView().getCenter()));
 
     this.geselecteerdeFeatures.on("add", () => {
-      this.geselecteerdeFeaturesSubj.next(List.of(...this.geselecteerdeFeatures.getArray()));
+      this.geselecteerdeFeaturesSubj.next(List(this.geselecteerdeFeatures.getArray()));
     });
     this.geselecteerdeFeatures.on("remove", () => {
-      this.geselecteerdeFeaturesSubj.next(List.of(...this.geselecteerdeFeatures.getArray()));
+      this.geselecteerdeFeaturesSubj.next(List(this.geselecteerdeFeatures.getArray()));
     });
   }
 }
