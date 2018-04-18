@@ -1,40 +1,27 @@
-import {
-  Component,
-  ElementRef,
-  Input,
-  NgZone,
-  OnDestroy,
-  OnInit,
-  ViewChild,
-  ViewEncapsulation,
-  Inject,
-  Output,
-  EventEmitter
-} from "@angular/core";
-import { Observable } from "rxjs/Observable";
-import "rxjs/add/observable/of";
 import "rxjs/add/observable/combineLatest";
 import "rxjs/add/observable/empty";
 import "rxjs/add/observable/never";
-import { scan, map, tap, filter, shareReplay, merge, takeUntil, share } from "rxjs/operators";
+import "rxjs/add/observable/of";
 
-import proj4 from "proj4";
+import { Component, ElementRef, Inject, Input, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
 import * as ol from "openlayers";
-
-import { KaartConfig, KAART_CFG } from "./kaart-config";
-import { KaartComponentBase } from "./kaart-component-base";
-import { KaartWithInfo } from "./kaart-with-info";
-import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
-import { observerOutsideAngular } from "../util/observer-outside-angular";
-import { kaartLogger } from "./log";
-import * as prt from "./kaart-protocol";
-import * as red from "./kaart-reducer";
+import proj4 from "proj4";
 import { ReplaySubject } from "rxjs";
-import { KaartInternalMsg, KaartInternalSubMsg } from "./kaart-internal-messages";
+import { Observable } from "rxjs/Observable";
+import { filter, map, merge, scan, shareReplay, takeUntil, tap } from "rxjs/operators";
+
 import { asap } from "../util/asap";
+import { observerOutsideAngular } from "../util/observer-outside-angular";
 import { emitSome } from "../util/operators";
 import { forEach } from "../util/option";
-import { SelectieModus } from "./kaart-protocol-commands";
+import { KaartComponentBase } from "./kaart-component-base";
+import { KAART_CFG, KaartConfig } from "./kaart-config";
+import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
+import { KaartInternalMsg, KaartInternalSubMsg } from "./kaart-internal-messages";
+import * as prt from "./kaart-protocol";
+import * as red from "./kaart-reducer";
+import { KaartWithInfo } from "./kaart-with-info";
+import { kaartLogger } from "./log";
 
 // Om enkel met @Input properties te moeten werken. Op deze manier kan een stream van KaartMsg naar de caller gestuurd worden
 export type KaartMsgObservableConsumer = (msg$: Observable<prt.KaartMsg>) => void;
@@ -49,6 +36,7 @@ export const vacuousKaartMsgObservableConsumer: KaartMsgObservableConsumer = (ms
 export class KaartComponent extends KaartComponentBase implements OnInit, OnDestroy {
   // noinspection JSUnusedLocalSymbols
   private static readonly lambert72 = KaartComponent.configureerLambert72();
+  kaartModel$: Observable<KaartWithInfo> = Observable.empty();
 
   @ViewChild("map") mapElement: ElementRef;
 
@@ -72,8 +60,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   @Input() minZoom = 2; // TODO naar config
   @Input() maxZoom = 15; // TODO naar config
   @Input() naam = "kaart";
-  @Input() mijnLocatieZoom: number | undefined;
-  @Input() selectieModus: SelectieModus = "none";
+  @Input() selectieModus: prt.SelectieModus = "none";
 
   // Dit dient om messages naar toe te sturen
 
@@ -126,7 +113,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
         asap(() => this.msgSubj.next(msg));
       };
 
-      const kaartModel$: Observable<KaartWithInfo> = this.kaartCmd$.pipe(
+      this.kaartModel$ = this.kaartCmd$.pipe(
         merge(this.internalCmdDispatcher.commands$),
         tap(c => kaartLogger.debug("kaart command", c)),
         takeUntil(this.destroying$),
@@ -137,11 +124,11 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
           forEach(message, messageConsumer); // stuur het resultaat terug naar de eigenaar van de kaartcomponent
           return newModel; // en laat het nieuwe model terugvloeien
         }, initieelModel),
-        share()
+        shareReplay(1)
       );
 
       // subscribe op het model om de zaak aan gang te zwengelen
-      kaartModel$.subscribe(
+      this.kaartModel$.subscribe(
         model => {
           kaartLogger.debug("reduced to", model);
           // TODO dubbels opvangen (zie versie). Als we een versienummer ophogen telkens we effectief het model aanpassen, dan kunnen we

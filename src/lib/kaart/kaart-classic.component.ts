@@ -1,4 +1,5 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from "@angular/core";
+import * as option from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
@@ -10,6 +11,7 @@ import { FeatureSelectieAangepastMsg, KaartClassicMsg, KaartClassicSubMsg, logOn
 import { ofType, TypedRecord } from "../util/operators";
 import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import * as prt from "./kaart-protocol";
+import { Command } from "./kaart-protocol-commands";
 import { KaartMsgObservableConsumer } from "./kaart.component";
 import { subscriptionCmdOperator } from "./subscription-helper";
 
@@ -109,6 +111,9 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
     }
     if ("hoogte" in changes) {
       this.dispatch(prt.VeranderViewportCmd([this.breedte, changes.hoogte.currentValue]));
+    }
+    if ("mijnLocatieZoom" in changes) {
+      this.dispatch(prt.ZetMijnLocatieZoomCmd(option.fromNullable(changes.mijnLocatieZoom.currentValue)));
     }
   }
 
