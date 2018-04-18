@@ -9,8 +9,6 @@ import { kaartLogger } from "./log";
 import { internalMsgSubscriptionCmdOperator } from "./subscription-helper";
 
 export abstract class KaartChildComponentBase extends KaartComponentBase implements OnInit, OnDestroy {
-  private subHelperSub: rx.Subscription = new rx.Subscription();
-
   @Input() dispatcher: KaartCmdDispatcher<prt.TypedRecord> = VacuousDispatcher;
   @Input() internalMessage$: rx.Observable<KaartInternalSubMsg> = rx.Observable.never();
 
@@ -25,15 +23,13 @@ export abstract class KaartChildComponentBase extends KaartComponentBase impleme
   ngOnInit() {
     super.ngOnInit();
     if (this.kaartSubscriptions().length > 0) {
-      this.subHelperSub.unsubscribe(); // voor de zekerheid
-      this.subHelperSub = this.internalMessage$
-        .lift(internalMsgSubscriptionCmdOperator(this.dispatcher, ...this.kaartSubscriptions()))
-        .subscribe(err => kaartLogger.error);
+      this.bindToLifeCycle(
+        this.internalMessage$.lift(internalMsgSubscriptionCmdOperator(this.dispatcher, ...this.kaartSubscriptions()))
+      ).subscribe(err => kaartLogger.error);
     }
   }
 
   ngOnDestroy() {
-    this.subHelperSub.unsubscribe(); // Stop met luisteren op subscriptions
     super.ngOnDestroy();
   }
 
