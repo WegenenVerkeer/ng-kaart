@@ -1,11 +1,11 @@
-import * as ol from "openlayers";
+import { none, Option } from "fp-ts/lib/Option";
 import { List, Map } from "immutable";
-import { Option, none, some } from "fp-ts/lib/Option";
+import * as ol from "openlayers";
 
-import * as ke from "./kaart-elementen";
+import { Laaggroep, Zoominstellingen } from ".";
 import { KaartConfig } from "./kaart-config";
+import * as ke from "./kaart-elementen";
 import { Subject, ReplaySubject } from "rxjs";
-import { Zoominstellingen, Laaggroep } from ".";
 import { ZoekResultaten } from "../zoeker";
 import { ZoekerCoordinator } from "../zoeker/zoeker-coordinator";
 
@@ -34,6 +34,7 @@ export class KaartWithInfo {
   readonly zoekerSubj: Subject<ZoekResultaten> = new ReplaySubject<ZoekResultaten>(1);
   readonly componentFoutSubj: Subject<List<string>> = new ReplaySubject<List<string>>(1);
   readonly zoekerCoordinator: ZoekerCoordinator = new ZoekerCoordinator(this.zoekerSubj);
+  readonly mijnLocatieZoomDoelSubj: Subject<Option<number>> = new ReplaySubject<Option<number>>(1);
 
   constructor(
     // TODO om de distinctWithInfo te versnellen zouden we als eerste element een versieteller kunnen toevoegen

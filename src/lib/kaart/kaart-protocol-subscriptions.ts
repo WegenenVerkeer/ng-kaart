@@ -1,13 +1,20 @@
-import { KaartMsg, AchtergrondLaag } from ".";
+import { Option } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import { ZoekResultaten } from "../zoeker";
 
-export type Subscription<Msg extends KaartMsg> =
+import { AchtergrondLaag, TypedRecord } from ".";
+
+/////////
+// Types
+//
+
+export type Subscription<Msg extends TypedRecord> =
   | ZoominstellingenSubscription<Msg>
   | MiddelpuntSubscription<Msg>
   | AchtergrondTitelSubscription<Msg>
   | AchtergrondlagenSubscription<Msg>
-  | ZoekerSubscription<Msg>;
+  | ZoekerSubscription<Msg>
+  | MijnLocatieZoomdoelSubscription<Msg>;
 
 export interface Zoominstellingen {
   zoom: number;
@@ -40,39 +47,44 @@ export interface ZoekerSubscription<Msg> {
   readonly wrapper: (resultaten: ZoekResultaten) => Msg;
 }
 
-export function ZoominstellingenSubscription<Msg extends KaartMsg>(wrapper: (settings: Zoominstellingen) => Msg): Subscription<Msg> {
-  return {
-    type: "Zoominstellingen",
-    wrapper: wrapper
-  };
+export interface MijnLocatieZoomdoelSubscription<Msg> {
+  readonly type: "MijnLocatieZoomdoel";
+  readonly wrapper: (doel: Option<number>) => Msg;
 }
 
-export function MiddelpuntSubscription<Msg extends KaartMsg>(wrapper: (x: number, y: number) => Msg): Subscription<Msg> {
-  return {
-    type: "Middelpunt",
-    wrapper: wrapper
-  };
+///////////////
+// Constructors
+//
+
+export function ZoominstellingenSubscription<Msg extends TypedRecord>(
+  wrapper: (settings: Zoominstellingen) => Msg
+): ZoominstellingenSubscription<Msg> {
+  return { type: "Zoominstellingen", wrapper: wrapper };
 }
 
-export function AchtergrondTitelSubscription<Msg extends KaartMsg>(wrapper: (titel: string) => Msg): Subscription<Msg> {
-  return {
-    type: "Achtergrond",
-    wrapper: wrapper
-  };
+export function MiddelpuntSubscription<Msg extends TypedRecord>(wrapper: (x: number, y: number) => Msg): MiddelpuntSubscription<Msg> {
+  return { type: "Middelpunt", wrapper: wrapper };
 }
 
-export function AchtergrondlagenSubscription<Msg extends KaartMsg>(
+export function AchtergrondTitelSubscription<Msg extends TypedRecord>(wrapper: (titel: string) => Msg): AchtergrondTitelSubscription<Msg> {
+  return { type: "Achtergrond", wrapper: wrapper };
+}
+
+export function AchtergrondlagenSubscription<Msg extends TypedRecord>(
   wrapper: (achtergrondlagen: List<AchtergrondLaag>) => Msg
-): Subscription<Msg> {
-  return {
-    type: "Achtergrondlagen",
-    wrapper: wrapper
-  };
+): AchtergrondlagenSubscription<Msg> {
+  return { type: "Achtergrondlagen", wrapper: wrapper };
 }
 
-export function ZoekerSubscription<Msg extends KaartMsg>(wrapper: (resultaten: ZoekResultaten) => Msg): Subscription<Msg> {
+export function ZoekerSubscription<Msg extends TypedRecord>(wrapper: (resultaten: ZoekResultaten) => Msg): Subscription<Msg> {
   return {
     type: "Zoeker",
     wrapper: wrapper
   };
+}
+
+export function MijnLocatieZoomdoelSubscription<Msg extends TypedRecord>(
+  wrapper: (doel: Option<number>) => Msg
+): MijnLocatieZoomdoelSubscription<Msg> {
+  return { type: "MijnLocatieZoomdoel", wrapper: wrapper };
 }

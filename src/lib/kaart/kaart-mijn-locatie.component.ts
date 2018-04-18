@@ -1,28 +1,29 @@
-import { Component, Input, NgZone, OnDestroy, OnInit } from "@angular/core";
-import { Observable } from "rxjs/Observable";
-import { map } from "rxjs/operators";
-
-import { KaartCmdDispatcher, VacuousDispatcher } from "./kaart-event-dispatcher";
-import { KaartComponentBase } from "./kaart-component-base";
-import { observeOnAngular } from "../util/observe-on-angular";
-import * as ol from "openlayers";
-
-import { kaartLogger } from "./log";
+import { Component, Input, NgZone, OnInit, ViewChild, ViewChildren, QueryList, ElementRef, AfterViewInit } from "@angular/core";
 import { none, Option, some } from "fp-ts/lib/Option";
-import * as ke from "./kaart-elementen";
 import { List } from "immutable";
+import * as ol from "openlayers";
+import { Observable } from "rxjs/Observable";
+import { map, shareReplay, take, switchMap, tap, share, combineLatest, mapTo } from "rxjs/operators";
+
+import { observeOnAngular } from "../util/observe-on-angular";
+import { ofType, emitSome } from "../util/operators";
 import { orElse } from "../util/option";
+import { KaartChildComponentBase } from "./kaart-child-component-base";
+import * as ke from "./kaart-elementen";
 import {
   KaartInternalMsg,
   kaartLogOnlyWrapper,
-  subscribedWrapper,
-  KaartInternalSubMsg,
-  zoominstellingenGezetWrapper,
   ZoominstellingenGezetMsg,
-  SubscribedMsg
+  zoominstellingenGezetWrapper,
+  MijnLocatieZoomdoelGezetWrapper,
+  MijnLocatieZoomdoelGezetMsg
 } from "./kaart-internal-messages";
-import { ofType } from "../util/operators";
 import * as prt from "./kaart-protocol";
+import { kaartLogger } from "./log";
+import { Zoominstellingen } from "./kaart-protocol";
+import { MatButton } from "@angular/material";
+import { KaartComponent } from "./kaart.component";
+import { KaartWithInfo } from "./kaart-with-info";
 
 const MijnLocatieLaagNaam = "Mijn Locatie";
 
@@ -31,23 +32,24 @@ const MijnLocatieLaagNaam = "Mijn Locatie";
   templateUrl: "./kaart-mijn-locatie.component.html",
   styleUrls: ["./kaart-mijn-locatie.component.scss"]
 })
-export class KaartMijnLocatieComponent extends KaartComponentBase implements OnDestroy, OnInit {
-  private readonly subscriptions: prt.SubscriptionResult[] = [];
-  zoom$: Observable<number> = Observable.empty();
+export class KaartMijnLocatieComponent extends KaartChildComponentBase implements OnInit, AfterViewInit {
+  private zoomInstellingen$: Observable<Zoominstellingen> = Observable.empty();
+  private zoomdoelSetting$: Observable<Option<number>> = Observable.empty();
+
+  kaartModel$: Observable<KaartWithInfo> = Observable.empty();
+  enabled$: Observable<boolean> = Observable.of(true);
+
+  @ViewChildren("locateBtn") locateBtnQry: QueryList<MatButton>;
 
   mijnLocatieStyle: ol.style.Style;
   mijnLocatie: Option<ol.Feature> = none;
-
-  @Input() dispatcher: KaartCmdDispatcher<KaartInternalMsg> = VacuousDispatcher;
-  @Input() internalMessage$: Observable<KaartInternalSubMsg> = Observable.never();
-  @Input() zoomniveau: number;
 
   static pasFeatureAan(feature: ol.Feature, coordinate: ol.Coordinate): Option<ol.Feature> {
     feature.setGeometry(new ol.geom.Point(coordinate));
     return some(feature);
   }
 
-  constructor(zone: NgZone) {
+  constructor(zone: NgZone, parent: KaartComponent) {
     super(zone);
     this.mijnLocatieStyle = new ol.style.Style({
       image: new ol.style.Icon({
@@ -59,9 +61,19 @@ export class KaartMijnLocatieComponent extends KaartComponentBase implements OnD
         src: require("material-design-icons/maps/2x_web/ic_my_location_white_18dp.png")
       })
     });
+    this.kaartModel$ = parent.kaartModel$;
+  }
+
+  protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
+    return [
+      prt.ZoominstellingenSubscription(zoominstellingenGezetWrapper),
+      prt.MijnLocatieZoomdoelSubscription(MijnLocatieZoomdoelGezetWrapper)
+    ];
   }
 
   ngOnInit(): void {
+    super.ngOnInit();
+
     this.dispatcher.dispatch({
       type: "VoegLaagToe",
       positie: 0,
@@ -70,37 +82,70 @@ export class KaartMijnLocatieComponent extends KaartComponentBase implements OnD
       laaggroep: "Tools",
       wrapper: kaartLogOnlyWrapper
     });
-    this.dispatcher.dispatch({
-      type: "Subscription",
-      subscription: prt.ZoominstellingenSubscription(zoominstellingenGezetWrapper),
-      wrapper: subscribedWrapper({})
-    });
-    this.zoom$ = this.internalMessage$.pipe(
+
+    this.zoomInstellingen$ = this.internalMessage$.pipe(
       ofType<ZoominstellingenGezetMsg>("ZoominstellingenGezet"), //
-      map(m => m.zoominstellingen.zoom),
-      observeOnAngular(this.zone)
+      map(m => m.zoominstellingen),
+      observeOnAngular(this.zone), //  --> Breekt de locatieClicks op één of andere manier
+      shareReplay(1)
     );
-    this.internalMessage$
-      .pipe(ofType<SubscribedMsg>("Subscribed")) //
-      .subscribe(sm =>
-        sm.subscription.fold(
-          kaartLogger.error, //
-          sub => this.subscriptions.push(sub)
+    this.zoomdoelSetting$ = this.internalMessage$.pipe(
+      ofType<MijnLocatieZoomdoelGezetMsg>("MijnLocatieZoomdoelGezet"), //
+      map(m => m.mijnLocatieZoomdoel),
+      shareReplay(1)
+    );
+    this.enabled$ = this.zoomdoelSetting$.pipe(map(m => m.isSome()));
+  }
+
+  ngAfterViewInit() {
+    const zoomdoel$: Observable<number> = this.zoomdoelSetting$.pipe(emitSome); // Hou enkel de effectieve zoomniveaudoelen over
+
+    this.bindToLifeCycle(
+      // Omdat de button in een ngIf zit, moeten we op zoek naar de button in ngAfterViewInit
+      this.locateBtnQry.changes.pipe(
+        switchMap(ql =>
+          this.zoomInstellingen$.pipe(
+            combineLatest(zoomdoel$, (zi, doel) => [zi.zoom, doel]), // Blijf op de hoogte van huidige en gewenste zoom
+            switchMap(params => Observable.fromEvent(ql.first._getHostElement(), "click").pipe(mapTo(params))) // van click naar zoom
+          )
         )
-      );
+      )
+    ).subscribe(([zoom, doelniveau]) => this.zoomNaarMijnLocatie(zoom, doelniveau));
   }
 
-  ngOnDestroy() {
-    this.subscriptions.forEach(sub => this.dispatcher.dispatch(prt.UnsubscriptionCmd(sub)));
-    this.subscriptions.splice(0, this.subscriptions.length);
-    this.dispatcher.dispatch(prt.VerwijderLaagCmd(MijnLocatieLaagNaam, kaartLogOnlyWrapper));
-    super.ngOnDestroy();
+  private maakNieuwFeature(coordinate: ol.Coordinate): Option<ol.Feature> {
+    const feature = new ol.Feature(new ol.geom.Point(coordinate));
+    feature.setStyle(this.mijnLocatieStyle);
+    this.dispatcher.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, List.of(feature), kaartLogOnlyWrapper));
+    return some(feature);
   }
 
-  zetMijnPositie(zoom: boolean, position: Position) {
-    if (zoom) {
+  private meldFout(fout: PositionError | string) {
+    kaartLogger.error("error", fout);
+    this.dispatcher.dispatch(
+      prt.MeldComponentFoutCmd(
+        List.of("Zoomen naar huidige locatie niet mogelijk", "De toepassing heeft geen toestemming om locatie te gebruiken")
+      )
+    );
+  }
+
+  private zoomNaarMijnLocatie(zoom: number, doelzoom: number) {
+    console.log("Zoom naar", zoom, doelzoom);
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(positie => this.zetMijnPositie(positie, zoom, doelzoom), fout => this.meldFout(fout), {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 50000
+      });
+    } else {
+      this.meldFout("Geen geolocatie mogelijk");
+    }
+  }
+
+  private zetMijnPositie(position: Position, zoom: number, doelzoom: number) {
+    if (zoom <= 2) {
       // We zitten nu op heel Vlaanderen, dus gaan we eerst inzoomen.
-      this.dispatcher.dispatch(prt.VeranderZoomCmd(this.zoomniveau, kaartLogOnlyWrapper));
+      this.dispatcher.dispatch(prt.VeranderZoomCmd(doelzoom, kaartLogOnlyWrapper));
     }
 
     const longLat: ol.Coordinate = [position.coords.longitude, position.coords.latitude];
@@ -111,34 +156,6 @@ export class KaartMijnLocatieComponent extends KaartComponentBase implements OnD
     this.mijnLocatie = orElse(this.mijnLocatie.chain(feature => KaartMijnLocatieComponent.pasFeatureAan(feature, coordinate)), () =>
       this.maakNieuwFeature(coordinate)
     );
-  }
-
-  maakNieuwFeature(coordinate: ol.Coordinate): Option<ol.Feature> {
-    const feature = new ol.Feature(new ol.geom.Point(coordinate));
-    feature.setStyle(this.mijnLocatieStyle);
-    this.dispatcher.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, List.of(feature), kaartLogOnlyWrapper));
-    return some(feature);
-  }
-
-  meldFout(fout: PositionError | string) {
-    kaartLogger.error("error", fout);
-    this.dispatcher.dispatch(
-      prt.MeldComponentFoutCmd(
-        List.of("Zoomen naar huidige locatie niet mogelijk", "De toepassing heeft geen toestemming om locatie te gebruiken")
-      )
-    );
-  }
-
-  zoomNaarMijnLocatie(zoom: number) {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(positie => this.zetMijnPositie(zoom <= 2, positie), fout => this.meldFout(fout), {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 50000
-      });
-    } else {
-      this.meldFout("Geen geolocatie mogelijk");
-    }
   }
 
   createLayer(): ke.VectorLaag {
