@@ -26,6 +26,7 @@ import { KaartStandaardInteractiesComponent } from "./kaart-standaard-interactie
 import { KaartStandaardKnoppenComponent } from "./kaart-standaard-knoppen.component";
 import { KaartAchtergrondSelectorComponent } from "./kaart-achtergrond-selector.component";
 import { KaartAchtergrondTileComponent } from "./kaart-achtergrond-tile.component";
+import { KaartOpenStreetViewComponent } from "./kaart-open-street-view.component";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { MatButtonModule, MatIconModule } from "@angular/material";
 
@@ -50,7 +51,8 @@ const components: any[] = [
   KaartWmsLaagComponent,
   KaartBlancoLaagComponent,
   KaartAchtergrondSelectorComponent,
-  KaartAchtergrondTileComponent
+  KaartAchtergrondTileComponent,
+  KaartOpenStreetViewComponent
 ];
 
 // Weersta de drang om deze 2 variabelen in een andere module te plaatsen, want dat geeft problemen met gebruik in AOT app.
@@ -145,6 +147,7 @@ export * from "./kaart-wms-laag.component";
 export * from "./kaart-blanco-laag.component";
 export * from "./kaart-zoom.component";
 export * from "./kaart-mijn-locatie.component";
+export * from "./kaart-open-street-view.component";
 export * from "./kaart.component";
 export * from "./kaart-event-dispatcher";
 export * from "./kaart-protocol";

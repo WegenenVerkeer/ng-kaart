@@ -6,7 +6,12 @@ import { Zoominstellingen, SubscriptionResult, KaartCmdValidation } from "./kaar
 import * as prt from "./kaart-protocol";
 import { AchtergrondLaag } from "./kaart-elementen";
 
-export type KaartInternalSubMsg = ZoominstellingenGezetMsg | AchtergrondtitelGezetMsg | AchtergrondlagenGezetMsg | SubscribedMsg;
+export type KaartInternalSubMsg =
+  | ZoominstellingenGezetMsg
+  | AchtergrondtitelGezetMsg
+  | AchtergrondlagenGezetMsg
+  | KaartClickMsg
+  | SubscribedMsg;
 
 export interface KaartInternalMsg extends prt.KaartMsg {
   type: "KaartInternal";
@@ -33,6 +38,17 @@ export const kaartLogOnlyWrapper: prt.ValidationWrapper<any, KaartInternalMsg> =
     payload: none
   };
 };
+
+export const kaartClickWrapper = (clickCoordinaat: ol.Coordinate) => KaartInternalMsg(some(KaartClickMsg(clickCoordinaat)));
+
+export interface KaartClickMsg {
+  type: "KaartClick";
+  clickCoordinaat: ol.Coordinate;
+}
+
+function KaartClickMsg(clickCoordinaat: ol.Coordinate): KaartClickMsg {
+  return { type: "KaartClick", clickCoordinaat: clickCoordinaat };
+}
 
 export interface ZoominstellingenGezetMsg {
   type: "ZoominstellingenGezet";

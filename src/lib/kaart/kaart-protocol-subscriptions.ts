@@ -2,6 +2,7 @@ import { KaartMsg, AchtergrondLaag } from ".";
 import { List } from "immutable";
 
 export type Subscription<Msg extends KaartMsg> =
+  | KaartClickSubscription<Msg>
   | ZoominstellingenSubscription<Msg>
   | MiddelpuntSubscription<Msg>
   | AchtergrondTitelSubscription<Msg>
@@ -33,6 +34,11 @@ export interface AchtergrondlagenSubscription<Msg> {
   readonly wrapper: (achtergrondlagen: List<AchtergrondLaag>) => Msg;
 }
 
+export interface KaartClickSubscription<Msg> {
+  readonly type: "KaartClick";
+  readonly wrapper: (coordinaat: ol.Coordinate) => Msg;
+}
+
 export function ZoominstellingenSubscription<Msg extends KaartMsg>(wrapper: (settings: Zoominstellingen) => Msg): Subscription<Msg> {
   return {
     type: "Zoominstellingen",
@@ -59,6 +65,13 @@ export function AchtergrondlagenSubscription<Msg extends KaartMsg>(
 ): Subscription<Msg> {
   return {
     type: "Achtergrondlagen",
+    wrapper: wrapper
+  };
+}
+
+export function KaartClickSubscription<Msg extends KaartMsg>(wrapper: (coordinaat: ol.Coordinate) => Msg): Subscription<Msg> {
+  return {
+    type: "KaartClick",
     wrapper: wrapper
   };
 }
