@@ -14,7 +14,6 @@ import { KaartKnopAchtergrondLaagKiezerComponent } from "./kaart-knop-achtergron
 import { KaartTekenPolygoonLaagComponent } from "./kaart-teken-polygoon-laag.component";
 import { KaartKnopMetenLengteOppervlakteComponent } from "./kaart-knop-meten.component";
 import { KaartTekenLaagComponent } from "./kaart-tekenen.component";
-import { KaartMetenLoggerComponent } from "./kaart-meten-logger.component";
 import { KaartFeaturesLaagComponent } from "./kaart-toon-features.component";
 import { KaartKnopVolledigSchermComponent } from "./kaart-knop-volledig-scherm.component";
 import { KaartSchaalComponent } from "./kaart-schaal.component";
@@ -48,7 +47,6 @@ const components: any[] = [
   KaartTekenPolygoonLaagComponent,
   KaartKnopMetenLengteOppervlakteComponent,
   KaartTekenLaagComponent,
-  KaartMetenLoggerComponent,
   KaartFeaturesLaagComponent,
   KaartVectorLaagComponent,
   KaartNosqlfsLaagComponent,

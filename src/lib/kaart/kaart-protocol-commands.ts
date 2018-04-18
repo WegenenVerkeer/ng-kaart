@@ -37,7 +37,8 @@ export type Command<Msg extends KaartMsg> =
   | VerwijderInteractieCmd<Msg>
   | VoegOverlayToeCmd<Msg>
   | VerwijderOverlaysCmd<Msg>
-  | TekenCmd<Msg>;
+  | StartTekenenCmd<Msg>
+  | StopTekenenCmd<Msg>;
 
 // SubscriptionResult is maar een type alias, maar ook een encapsulatie naar clients toe
 export type SubscriptionResult = RxSubscription;
@@ -189,9 +190,12 @@ export interface MeldComponentFoutCmd<Msg extends KaartMsg> {
   readonly fouten: List<string>;
 }
 
-export interface TekenCmd<Msg extends KaartMsg> {
-  readonly type: "Teken";
-  readonly teken: boolean;
+export interface StartTekenenCmd<Msg extends KaartMsg> {
+  readonly type: "StartTekenen";
+}
+
+export interface StopTekenenCmd<Msg extends KaartMsg> {
+  readonly type: "StopTekenen";
 }
 
 export interface VoegInteractieToeCmd<Msg extends KaartMsg> {
@@ -346,10 +350,15 @@ export function VerwijderOverlaysCmd<Msg extends KaartMsg>(overlays: Array<ol.Ov
   };
 }
 
-export function TekenCmd<Msg extends KaartMsg>(tekenen: boolean): TekenCmd<Msg> {
+export function StartTekenenCmd<Msg extends KaartMsg>(): StartTekenenCmd<Msg> {
   return {
-    type: "Teken",
-    teken: tekenen
+    type: "StartTekenen"
+  };
+}
+
+export function StopTekenenCmd<Msg extends KaartMsg>(): StopTekenenCmd<Msg> {
+  return {
+    type: "StopTekenen"
   };
 }
 

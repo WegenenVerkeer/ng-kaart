@@ -1,11 +1,12 @@
-import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
-import { some } from "fp-ts/lib/Option";
+import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation, Input } from "@angular/core";
+import { some, none, Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import { Subject, Subscription } from "rxjs";
 import { Observable } from "rxjs/Observable";
 import { distinctUntilChanged, filter, map } from "rxjs/operators";
 
 import { ofType } from "../util/operators";
+import { forEach } from "../util/option";
 import { KaartChildComponentBase } from "./kaart-child-component-base";
 import * as ke from "./kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper, SubscribedMsg, TekenMsg, tekenWrapper } from "./kaart-internal-messages";
@@ -15,22 +16,6 @@ import { KaartComponent } from "./kaart.component";
 import { kaartLogger } from "./log";
 
 const TekenLaagNaam = "Tekenen van geometrie";
-const TekenStyle = new ol.style.Style({
-  fill: new ol.style.Fill({
-    color: "rgba(255, 255, 255, 0.2)"
-  }),
-  stroke: new ol.style.Stroke({
-    color: "#ffcc33",
-    width: 2
-  }),
-  image: new ol.style.Circle({
-    radius: 7,
-    fill: new ol.style.Fill({
-      color: "#ffcc33"
-    })
-  })
-});
-
 @Component({
   selector: "awv-kaart-tekenen",
   template: "<ng-content></ng-content>",
@@ -38,6 +23,44 @@ const TekenStyle = new ol.style.Style({
   encapsulation: ViewEncapsulation.None
 })
 export class KaartTekenLaagComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
+  @Input()
+  tekenStyle = new ol.style.Style({
+    fill: new ol.style.Fill({
+      color: "rgba(255, 255, 255, 0.2)"
+    }),
+    stroke: new ol.style.Stroke({
+      color: "#ffcc33",
+      width: 2
+    }),
+    image: new ol.style.Circle({
+      radius: 7,
+      fill: new ol.style.Fill({
+        color: "#ffcc33"
+      })
+    })
+  });
+
+  @Input()
+  drawStyle = new ol.style.Style({
+    fill: new ol.style.Fill({
+      color: "rgba(255, 255, 255, 0.2)"
+    }),
+    stroke: new ol.style.Stroke({
+      color: "rgba(0, 0, 0, 0.5)",
+      lineDash: [10, 10],
+      width: 2
+    }),
+    image: new ol.style.Circle({
+      radius: 5,
+      stroke: new ol.style.Stroke({
+        color: "rgba(0, 0, 0, 0.7)"
+      }),
+      fill: new ol.style.Fill({
+        color: "rgba(255, 255, 255, 0.2)"
+      })
+    })
+  });
+
   private map: ol.Map;
   private changedGeometriesSubj: Subject<ol.geom.Geometry>;
 
@@ -106,7 +129,7 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
       type: ke.VectorType,
       titel: TekenLaagNaam,
       source: source,
-      styleSelector: some(ke.StaticStyle(TekenStyle)),
+      styleSelector: some(ke.StaticStyle(this.tekenStyle)),
       selecteerbaar: true,
       minZoom: 2,
       maxZoom: 15
@@ -139,25 +162,7 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
     const draw = new ol.interaction.Draw({
       source: source,
       type: "LineString",
-      style: new ol.style.Style({
-        fill: new ol.style.Fill({
-          color: "rgba(255, 255, 255, 0.2)"
-        }),
-        stroke: new ol.style.Stroke({
-          color: "rgba(0, 0, 0, 0.5)",
-          lineDash: [10, 10],
-          width: 2
-        }),
-        image: new ol.style.Circle({
-          radius: 5,
-          stroke: new ol.style.Stroke({
-            color: "rgba(0, 0, 0, 0.7)"
-          }),
-          fill: new ol.style.Fill({
-            color: "rgba(255, 255, 255, 0.2)"
-          })
-        })
-      })
+      style: this.drawStyle
     });
 
     draw.on(
@@ -170,20 +175,9 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
           "change",
           evt => {
             const geometry = evt.target as ol.geom.Geometry;
-            let output;
-            let tooltipCoord;
-            if (geometry instanceof ol.geom.Polygon) {
-              output = this.formatArea(geometry);
-              // console.log(output);
-              tooltipCoord = geometry.getInteriorPoint().getCoordinates();
-            } else if (geometry instanceof ol.geom.LineString) {
-              output = this.formatLength(geometry);
-              // console.log(output);
-              tooltipCoord = geometry.getLastCoordinate();
-            }
             this.changedGeometriesSubj.next(geometry);
-            measureTooltipElement.innerHTML = output;
-            measureTooltip.setPosition(tooltipCoord);
+            forEach(this.tooltipText(geometry), toolTip => (measureTooltipElement.innerHTML = toolTip));
+            forEach(this.tooltipCoord(geometry), coord => measureTooltip.setPosition(coord));
           },
           this
         );
@@ -196,14 +190,6 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
       () => {
         measureTooltipElement.className = "tooltip tooltip-static";
         measureTooltip.setOffset([0, -7]);
-        // unset sketch
-        // this.sketch = null;
-        // if (measureTooltipElement.parentNode) {
-        //   measureTooltipElement.parentNode.removeChild(measureTooltipElement);
-        // }
-
-        // unset tooltip so that a new one can be created
-        // measureTooltipElement = null;
         [measureTooltipElement, measureTooltip] = this.createMeasureTooltip();
         ol.Observable.unByKey(listener);
       },
@@ -213,25 +199,37 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
     return draw;
   }
 
-  formatArea(polygon: ol.geom.Polygon): String {
-    const area = ol.Sphere.getArea(polygon);
-    let output;
-    if (area > 10000) {
-      output = Math.round(area / 1000000 * 100) / 100 + " " + "km<sup>2</sup>";
-    } else {
-      output = Math.round(area * 100) / 100 + " " + "m<sup>2</sup>";
+  tooltipText(geometry: ol.geom.Geometry): Option<string> {
+    switch (geometry.getType()) {
+      case "Polygon":
+        return some(this.formatArea(geometry as ol.geom.Polygon));
+      case "LineString":
+        return some(this.formatLength(geometry as ol.geom.LineString));
+      default:
+        return none;
     }
-    return output;
   }
 
-  formatLength(line: ol.geom.LineString): String {
-    const length = ol.Sphere.getLength(line);
-    let output;
-    if (length > 100) {
-      output = Math.round(length / 1000 * 100) / 100 + " " + "km";
-    } else {
-      output = Math.round(length * 100) / 100 + " " + "m";
+  tooltipCoord(geometry: ol.geom.Geometry): Option<ol.Coordinate> {
+    switch (geometry.getType()) {
+      case "Polygon":
+        return some((geometry as ol.geom.Polygon).getInteriorPoint().getCoordinates());
+      case "LineString":
+        return some((geometry as ol.geom.LineString).getLastCoordinate());
+      default:
+        return none;
     }
-    return output;
+  }
+
+  formatArea(polygon: ol.geom.Polygon): string {
+    const area = ol.Sphere.getArea(polygon);
+    return area > 10000
+      ? Math.round(area / 1000000 * 100) / 100 + " " + "km<sup>2</sup>"
+      : Math.round(area * 100) / 100 + " " + "m<sup>2</sup>";
+  }
+
+  formatLength(line: ol.geom.LineString): string {
+    const length = ol.Sphere.getLength(line);
+    return length > 100 ? Math.round(length / 1000 * 100) / 100 + " " + "km" : Math.round(length * 100) / 100 + " " + "m";
   }
 }

@@ -509,8 +509,13 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
-    function teken(cmnd: prt.TekenCmd<Msg>): ModelWithResult<Msg> {
-      model.tekenSubj.next(cmnd.teken);
+    function startTekenen(cmnd: prt.StartTekenenCmd<Msg>): ModelWithResult<Msg> {
+      model.tekenSubj.next(true);
+      return ModelWithResult(model);
+    }
+
+    function stopTekenen(cmnd: prt.StopTekenenCmd<Msg>): ModelWithResult<Msg> {
+      model.tekenSubj.next(false);
       return ModelWithResult(model);
     }
 
@@ -645,8 +650,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return handleUnsubscriptions(cmd);
       case "MeldComponentFout":
         return meldComponentFout(cmd);
-      case "Teken":
-        return teken(cmd);
+      case "StartTekenen":
+        return startTekenen(cmd);
+      case "StopTekenen":
+        return stopTekenen(cmd);
       case "VoegInteractieToe":
         return voegInteractieToe(cmd);
       case "VerwijderInteractie":

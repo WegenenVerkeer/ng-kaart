@@ -8,6 +8,7 @@ import * as ke from "./kaart-elementen";
 import { ofType } from "../util/operators";
 import { kaartLogger } from "./log";
 import { KaartClassicComponent } from "./kaart-classic.component";
+import { StartTekenenCmd, StopTekenenCmd } from "./kaart-protocol";
 
 @Component({
   selector: "awv-kaart-knop-meten",
@@ -27,12 +28,12 @@ export class KaartKnopMetenLengteOppervlakteComponent extends KaartComponentBase
   }
 
   startMetMeten(): void {
-    this.kaartClassicComponent.dispatch({ type: "Teken", teken: true });
+    this.kaartClassicComponent.dispatch(StartTekenenCmd());
     this.metende = true;
   }
 
   stopMetMeten(): void {
-    this.kaartClassicComponent.dispatch({ type: "Teken", teken: false });
+    this.kaartClassicComponent.dispatch(StopTekenenCmd());
     this.metende = false;
   }
 

@@ -10,9 +10,10 @@ import { HttpModule } from "@angular/http";
 import { ClickOutsideModule } from "ng4-click-outside";
 import { AvKaartComponent } from "./av-kaart.component";
 import { AvKaartInnerComponent } from "./av-kaart-inner.component";
+import { KaartMetenLoggerComponent } from "./kaart-meten-logger.component";
 
 @NgModule({
-  declarations: [AppComponent, AvKaartComponent, AvKaartInnerComponent],
+  declarations: [AppComponent, AvKaartComponent, AvKaartInnerComponent, KaartMetenLoggerComponent],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
