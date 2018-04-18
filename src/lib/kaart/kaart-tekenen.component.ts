@@ -78,7 +78,7 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
   ngOnInit(): void {
     super.ngOnInit();
 
-    const kaartObs: Observable<KaartWithInfo> = this.kaartComponent.kaartModel$;
+    const kaartObs: Observable<KaartWithInfo> = this.kaartComponent.kaartWithInfo$;
     this.bindToLifeCycle(kaartObs);
 
     kaartObs
