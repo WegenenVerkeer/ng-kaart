@@ -5,6 +5,7 @@ import { sequence } from "fp-ts/lib/Traversable";
 import * as validation from "fp-ts/lib/Validation";
 import { List } from "immutable";
 import * as ol from "openlayers";
+import { olx } from "openlayers";
 import { Subscription } from "rxjs";
 import { debounceTime, filter } from "rxjs/operators";
 
@@ -480,6 +481,38 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
+    function activeerSelectieModus(cmnd: prt.ActiveerSelectieModusCmd<Msg>): ModelWithResult<Msg> {
+      model.map.getInteractions().forEach(interaction => {
+        if (interaction instanceof ol.interaction.Select) {
+          model.map.removeInteraction(interaction);
+        }
+      });
+
+      function getSelectInteraction(modus: prt.SelectieModus): Option<olx.interaction.SelectOptions> {
+        switch (modus) {
+          case "single":
+            return some({
+              condition: ol.events.condition.click,
+              features: model.geselecteerdeFeatures
+            });
+          case "multiple":
+            return some({
+              condition: ol.events.condition.click,
+              features: model.geselecteerdeFeatures,
+              multi: true
+            });
+          case "none":
+            return none;
+        }
+      }
+
+      getSelectInteraction(cmnd.selectieModus).map(selectInteraction =>
+        model.map.addInteraction(new ol.interaction.Select(selectInteraction))
+      );
+
+      return ModelWithResult(model);
+    }
+
     function maakLaagOnzichtbaarCmd(cmnd: prt.MaakLaagOnzichtbaarCmd<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
@@ -553,6 +586,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
       }
 
+      function subscribeToGeselecteerdeFeatures(sub: prt.GeselecteerdeFeaturesSubscription<Msg>): ModelWithResult<Msg> {
+        const subscription = model.geselecteerdeFeaturesSubj.subscribe(pm => msgConsumer(sub.wrapper(pm)));
+        return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
+      }
+
       function subscribeToMiddelpunt(sub: prt.MiddelpuntSubscription<Msg>): ModelWithResult<Msg> {
         const subscription = model.middelpuntSubj.pipe(debounceTime(100)).subscribe(m => msgConsumer(sub.wrapper(m[0], m[1])));
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
@@ -594,6 +632,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToMiddelpunt(cmnd.subscription);
         case "Achtergrond":
           return subscribeToAchtergrondTitel(cmnd.subscription);
+        case "GeselecteerdeFeatures":
+          return subscribeToGeselecteerdeFeatures(cmnd.subscription);
         case "Achtergrondlagen":
           return subscribeToAchtergrondlagen(cmnd.subscription.wrapper);
         case "MijnLocatieZoomdoel":
@@ -643,6 +683,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return verliesFocusOpKaartCmd(cmd);
       case "VervangFeatures":
         return vervangFeaturesCmd(cmd);
+      case "ActiveerSelectieModus":
+        return activeerSelectieModus(cmd);
       case "ToonAchtergrondKeuze":
         return toonAchtergrondKeuzeCmd(cmd);
       case "VerbergAchtergrondKeuze":

@@ -10,6 +10,8 @@ import { AWV0StyleFunctionDescription, definitieToStyleFunction } from "../lib/s
 import { offsetStyleFunction } from "../lib/stijl/offset-stijl-function";
 import * as prt from "../lib/kaart/kaart-protocol";
 import { kaartLogOnlyWrapper } from "../lib/kaart/kaart-internal-messages";
+import { List } from "immutable";
+import { classicLogger } from "../lib/kaart-classic/log";
 
 @Component({
   selector: "awv-ng-kaart-test-app",
@@ -19,7 +21,7 @@ import { kaartLogOnlyWrapper } from "../lib/kaart/kaart-internal-messages";
 })
 export class AppComponent {
   private readonly zichtbaarheid = {
-    orthomap: true,
+    ingezoomd: true,
     kleursimpel: false // standard falsey
   };
 
@@ -68,7 +70,12 @@ export class AppComponent {
   locatieQuery: string;
   installatieCoordinaat: ol.Coordinate = [169500, 190500];
   installaties: ol.Feature[] = [];
-  installatie: ol.Feature[] = [new ol.Feature(new ol.geom.Point(this.installatieCoordinaat))];
+  installatie: ol.Feature[] = [
+    new ol.Feature({
+      id: 1,
+      geometry: new ol.geom.Point(this.installatieCoordinaat)
+    })
+  ];
   zoekresultaten: ol.Collection<ol.Feature> = new ol.Collection();
   vanPositie = 0;
   naarPositie = 0;
@@ -93,6 +100,8 @@ export class AppComponent {
       text: "Zis is a pin"
     })
   });
+
+  geselecteerdeFeatures: List<ol.Feature> = List();
 
   // Dit werkt alleen als apigateway bereikbaar is. Zie CORS waarschuwing in README.
   readonly districtSource: ol.source.Vector = new ol.source.Vector({
@@ -139,6 +148,7 @@ export class AppComponent {
     public coordinatenService: CoordinatenService
   ) {
     kaartLogger.setLevel("DEBUG");
+    classicLogger.setLevel("DEBUG");
     this.addIcon();
   }
 
@@ -170,6 +180,10 @@ export class AppComponent {
 
   installatieGeselecteed(feature: ol.Feature) {
     this.installatieGeselecteerdEvents.push(this.geoJsonFormatter.writeFeature(feature));
+  }
+
+  featuresGeselecteerd(event) {
+    this.geselecteerdeFeatures = event;
   }
 
   zoekLocaties(locatieQuery: String) {

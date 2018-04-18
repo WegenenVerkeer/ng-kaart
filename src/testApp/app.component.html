@@ -27,21 +27,25 @@
 </div>
 
 
-<h3>Ingezoomd + 1 vast feature + schaal + volledig scherm knop + hoogte &amp; breedte</h3>
+<h3>Ingezoomd + 1 vast feature + schaal + volledig scherm knop + hoogte &amp; breedte + single selectiemodus</h3>
 <div>
   <button (click)="maakZichtbaar('ingezoomd', !isZichtbaar('ingezoomd'))">{{isZichtbaar('ingezoomd')?'Verberg':'Toon'}}</button>
-  <awv-kaart-classic *ngIf="isZichtbaar('ingezoomd')" [breedte]="600" [hoogte]="600" [zoom]="6" [middelpunt]="installatieCoordinaat">
+  <awv-kaart-classic *ngIf="isZichtbaar('ingezoomd')" [breedte]="600" [hoogte]="600" [zoom]="6" [middelpunt]="installatieCoordinaat"
+                     (geselecteerdeFeatures)="featuresGeselecteerd($event)" [selectieModus]="'single'">
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
     <awv-kaart-features-laag [features]="installatie" [titel]="'features'" [style]="pinIcon" [minZoom]="2"></awv-kaart-features-laag>
-    <!--[selecteerbaar]="true"
-        (featureGeselecteerd)="installatieGeselecteed($event)"></awv-kaart-toon-features>-->
     <awv-kaart-schaal></awv-kaart-schaal>
     <awv-kaart-knop-volledig-scherm></awv-kaart-knop-volledig-scherm>
+
   </awv-kaart-classic>
 
-  <!-- <pre *ngFor="let event of installatieGeselecteerdEvents">
-    Event gegooid: {{ event | json }}
-  </pre> -->
+  <div *ngIf="isZichtbaar('ingezoomd')">
+    Geselecteerd:
+    <span *ngFor="let feature of geselecteerdeFeatures">
+      ID: {{ feature.get('id') }}
+    </span>
+  </div>
+
 </div>
 
 
