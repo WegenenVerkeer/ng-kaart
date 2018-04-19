@@ -220,6 +220,6 @@
   <div *ngIf="isZichtbaar('metenVoorbeeld')">
     <button *ngIf="isTekenenActief()" (click)="stopTekenen()">Stop</button>
     <button *ngIf="!isTekenenActief()" (click)="startTekenen()">Start</button>
-    Geom type: {{ tekenGeom }}
+    Geom lengte: {{ tekenGeomLength }}
   </div>
 </div>

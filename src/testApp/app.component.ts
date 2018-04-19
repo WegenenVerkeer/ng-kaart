@@ -213,8 +213,11 @@ export class AppComponent {
     this.getekendeGeom = none;
   }
 
-  get tekenGeom() {
-    return this.getekendeGeom.map(g => g.getType().toString()).getOrElseValue("(leeg)");
+  get tekenGeomLength() {
+    return this.getekendeGeom
+      .filter(g => g.getType() === "LineString")
+      .map(g => Math.round(ol.Sphere.getLength(g as ol.geom.LineString) / 1000 * 100) / 100 + "km")
+      .getOrElseValue("(leeg)");
   }
 
   geomGetekend(geom: ol.geom.Geometry) {
