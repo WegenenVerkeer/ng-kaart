@@ -2,7 +2,7 @@ import { Option } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 
-import { AchtergrondLaag, TypedRecord } from ".";
+import { AchtergrondLaag, TekenSettings, TypedRecord } from ".";
 
 /////////
 // Types
@@ -57,11 +57,12 @@ export interface MijnLocatieZoomdoelSubscription<Msg> {
 export interface GeometryChangedSubscription<Msg> {
   readonly type: "GeometryChanged";
   readonly wrapper: (evt: ol.geom.Geometry) => Msg;
+  readonly tekenSettings: TekenSettings;
 }
 
 export interface TekenenSubscription<Msg> {
   readonly type: "Tekenen";
-  readonly wrapper: (boolean) => Msg;
+  readonly wrapper: (settings: Option<TekenSettings>) => Msg;
 }
 
 ///////////////
@@ -101,11 +102,12 @@ export function MijnLocatieZoomdoelSubscription<Msg extends TypedRecord>(
 }
 
 export function GeometryChangedSubscription<Msg extends TypedRecord>(
-  wrapper: (geom: ol.geom.Geometry) => Msg
+  wrapper: (geom: ol.geom.Geometry) => Msg,
+  tekenSettings: TekenSettings
 ): GeometryChangedSubscription<Msg> {
-  return { type: "GeometryChanged", wrapper: wrapper };
+  return { type: "GeometryChanged", wrapper: wrapper, tekenSettings: tekenSettings };
 }
 
-export function TekenenSubscription<Msg extends TypedRecord>(wrapper: (boolean) => Msg): TekenenSubscription<Msg> {
+export function TekenenSubscription<Msg extends TypedRecord>(wrapper: (settings: Option<TekenSettings>) => Msg): TekenenSubscription<Msg> {
   return { type: "Tekenen", wrapper: wrapper };
 }

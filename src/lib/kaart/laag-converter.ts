@@ -82,11 +82,18 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
     return new ol.layer.Tile(); // Hoe eenvoudig kan het zijn?
   }
 
-  type Stylish = ol.StyleFunction | ol.style.Style | ol.style.Style[];
-
   function determineStyle(vectorlaag: ke.VectorLaag, defaultStyle: ol.style.Style): Stylish {
     return vectorlaag.styleSelector
-      .map(selector => (selector.type === "StaticStyle" ? selector.style : selector.styleFunction))
+      .map(selector => {
+        switch (selector.type) {
+          case "StaticStyle":
+            return selector.style;
+          case "DynamicStyle":
+            return selector.styleFunction;
+          case "Styles":
+            return selector.styles;
+        }
+      })
       .getOrElseValue(defaultStyle);
   }
 
@@ -105,5 +112,21 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
 
     default:
       return none;
+  }
+}
+
+export type Stylish = ol.StyleFunction | ol.style.Style | ol.style.Style[];
+
+export function determineStyleSelector(stp: Stylish): Option<ke.StyleSelector> {
+  if (stp instanceof ol.style.Style) {
+    return some(ke.StaticStyle(stp));
+    // FIXME
+    // }
+    // else if ((ol.StyleFunction = typeof stp)) {
+    //   return some(ke.DynamicStyle(stp as ol.StyleFunction));
+  } else if (stp instanceof Array) {
+    return some(ke.Styles(stp as ol.style.Style[]));
+  } else {
+    return none;
   }
 }

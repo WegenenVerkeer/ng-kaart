@@ -1,47 +1,61 @@
-import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation, Input } from "@angular/core";
-import { some, none, Option } from "fp-ts/lib/Option";
+import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
+import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
-import { Subject, Subscription } from "rxjs";
+import { BehaviorSubject, Subject, Subscription } from "rxjs";
 import { Observable } from "rxjs/Observable";
-import { distinctUntilChanged, filter, map } from "rxjs/operators";
+import { distinctUntilChanged, map } from "rxjs/operators";
 
 import { ofType } from "../util/operators";
 import { forEach } from "../util/option";
 import { KaartChildComponentBase } from "./kaart-child-component-base";
 import * as ke from "./kaart-elementen";
-import { KaartInternalMsg, kaartLogOnlyWrapper, SubscribedMsg, TekenMsg, tekenWrapper } from "./kaart-internal-messages";
+import { KaartInternalMsg, kaartLogOnlyWrapper, TekenMsg, tekenWrapper } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
 import { KaartWithInfo } from "./kaart-with-info";
 import { KaartComponent } from "./kaart.component";
-import { kaartLogger } from "./log";
+import { determineStyleSelector } from "./laag-converter";
 
 const TekenLaagNaam = "Tekenen van geometrie";
 @Component({
-  selector: "awv-kaart-tekenen",
+  selector: "awv-kaart-tekenen-laag",
   template: "<ng-content></ng-content>",
-  styleUrls: ["./kaart-tekenen.component.scss"],
+  styleUrls: ["./kaart-tekenen-laag.component.scss"],
   encapsulation: ViewEncapsulation.None
 })
 export class KaartTekenLaagComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
-  @Input()
-  tekenStyle = new ol.style.Style({
-    fill: new ol.style.Fill({
-      color: "rgba(255, 255, 255, 0.2)"
-    }),
-    stroke: new ol.style.Stroke({
-      color: "#ffcc33",
-      width: 2
-    }),
-    image: new ol.style.Circle({
-      radius: 7,
+  defaultlaagStyle: Array<ol.style.Style> = [
+    /* We are using two different styles for the polygons:
+     *  - The first style is for the polygons themselves.
+     *  - The second style is to draw the vertices of the polygons.
+     *    In a custom `geometry` function the vertices of a polygon are
+     *    returned as `MultiPoint` geometry, which will be used to render
+     *    the style.
+     */
+    new ol.style.Style({
+      stroke: new ol.style.Stroke({
+        color: "blue",
+        width: 3
+      }),
       fill: new ol.style.Fill({
-        color: "#ffcc33"
+        color: "rgba(0, 0, 255, 0.1)"
       })
+    }),
+    new ol.style.Style({
+      image: new ol.style.Circle({
+        radius: 5,
+        fill: new ol.style.Fill({
+          color: "orange"
+        })
+      }),
+      geometry: function(feature) {
+        // return the coordinates of the first ring of the polygon
+        const coordinates = (feature.getGeometry() as ol.geom.Polygon).getCoordinates()[0];
+        return new ol.geom.MultiPoint(coordinates);
+      }
     })
-  });
+  ];
 
-  @Input()
-  drawStyle = new ol.style.Style({
+  defaultDrawStyle = new ol.style.Style({
     fill: new ol.style.Fill({
       color: "rgba(255, 255, 255, 0.2)"
     }),
@@ -62,9 +76,12 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
   });
 
   private map: ol.Map;
+  private tekenenSettingsSubj: BehaviorSubject<Option<ke.TekenSettings>>;
   private changedGeometriesSubj: Subject<ol.geom.Geometry>;
 
-  private draw: ol.interaction.Draw;
+  private drawInteraction: ol.interaction.Draw;
+  private modifyInteraction: ol.interaction.Modify;
+  private snapInteraction: ol.interaction.Snap;
   private overlays: Array<ol.Overlay> = [];
 
   constructor(private readonly kaartComponent: KaartComponent, zone: NgZone) {
@@ -84,16 +101,24 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
     kaartObs
       .pipe(
         distinctUntilChanged((k1, k2) => k1.geometryChangedSubj === k2.geometryChangedSubj), //
-        map(kaart => kaart.geometryChangedSubj)
+        map(kwi => kwi.geometryChangedSubj)
       )
       .subscribe(gcSubj => (this.changedGeometriesSubj = gcSubj));
 
+    kaartObs
+      .pipe(
+        distinctUntilChanged((k1, k2) => k1.tekenenSettingsSubj === k2.tekenenSettingsSubj), //
+        map(kwi => kwi.tekenenSettingsSubj)
+      )
+      .subscribe(tekenenSettingsSubj => {
+        this.tekenenSettingsSubj = tekenenSettingsSubj;
+      });
+
     this.internalMessage$.pipe(ofType<TekenMsg>("Teken")).subscribe(msg => {
-      if (msg.teken) {
-        this.startMetTekenen();
-      } else {
-        this.stopMetTekenen();
-      }
+      msg.settings.fold(
+        () => this.stopMetTekenen(), //
+        s => this.startMetTekenen() //
+      );
     });
   }
 
@@ -113,13 +138,20 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
       wrapper: kaartLogOnlyWrapper
     });
 
-    this.draw = this.createDrawInteraction(source);
+    this.drawInteraction = this.createDrawInteraction(source);
+    this.dispatch(prt.VoegInteractieToeCmd(this.drawInteraction));
 
-    this.dispatch(prt.VoegInteractieToeCmd(this.draw));
+    this.modifyInteraction = new ol.interaction.Modify({ source: source });
+    this.dispatch(prt.VoegInteractieToeCmd(this.modifyInteraction));
+
+    this.snapInteraction = new ol.interaction.Snap({ source: source });
+    this.dispatch(prt.VoegInteractieToeCmd(this.snapInteraction));
   }
 
   stopMetTekenen(): void {
-    this.dispatch(prt.VerwijderInteractieCmd(this.draw));
+    this.dispatch(prt.VerwijderInteractieCmd(this.drawInteraction));
+    this.dispatch(prt.VerwijderInteractieCmd(this.modifyInteraction));
+    this.dispatch(prt.VerwijderInteractieCmd(this.snapInteraction));
     this.dispatch(prt.VerwijderOverlaysCmd(this.overlays));
     this.dispatch(prt.VerwijderLaagCmd(TekenLaagNaam, kaartLogOnlyWrapper));
   }
@@ -129,7 +161,12 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
       type: ke.VectorType,
       titel: TekenLaagNaam,
       source: source,
-      styleSelector: some(ke.StaticStyle(this.tekenStyle)),
+      styleSelector: determineStyleSelector(
+        this.tekenenSettingsSubj
+          .getValue()
+          .map(s => s.laagStyle)
+          .getOrElseValue(this.defaultlaagStyle)
+      ),
       selecteerbaar: true,
       minZoom: 2,
       maxZoom: 15
@@ -157,21 +194,24 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
 
   createDrawInteraction(source: ol.source.Vector): ol.interaction.Draw {
     let listener;
-    let [measureTooltipElement, measureTooltip] = this.createMeasureTooltip();
+    const [measureTooltipElement, measureTooltip] = this.createMeasureTooltip();
 
     const draw = new ol.interaction.Draw({
       source: source,
-      type: "LineString",
-      style: this.drawStyle
+      type: this.tekenenSettingsSubj.getValue().fold(
+        () => "LineString" as ol.geom.GeometryType, //
+        settings => settings.geometryType
+      ),
+      style: this.tekenenSettingsSubj
+        .getValue()
+        .map(s => s.drawStyle)
+        .getOrElseValue(this.defaultDrawStyle)
     });
 
     draw.on(
       "drawstart",
       event => {
-        // set sketch
-        const sketch = (event as ol.interaction.Draw.Event).feature;
-
-        listener = sketch.getGeometry().on(
+        listener = (event as ol.interaction.Draw.Event).feature.getGeometry().on(
           "change",
           evt => {
             const geometry = evt.target as ol.geom.Geometry;
@@ -186,13 +226,8 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
     );
 
     draw.on(
-      "drawend",
-      () => {
-        measureTooltipElement.className = "tooltip tooltip-static";
-        measureTooltip.setOffset([0, -7]);
-        [measureTooltipElement, measureTooltip] = this.createMeasureTooltip();
-        ol.Observable.unByKey(listener);
-      },
+      "drawend", //
+      () => this.dispatch(prt.VerwijderInteractieCmd(this.drawInteraction)), //
       this
     );
 
@@ -202,9 +237,9 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
   tooltipText(geometry: ol.geom.Geometry): Option<string> {
     switch (geometry.getType()) {
       case "Polygon":
-        return some(this.formatArea(geometry as ol.geom.Polygon));
+        return some(this.formatArea(geometry));
       case "LineString":
-        return some(this.formatLength(geometry as ol.geom.LineString));
+        return some(this.formatLength(geometry));
       default:
         return none;
     }
@@ -221,15 +256,15 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
     }
   }
 
-  formatArea(polygon: ol.geom.Polygon): string {
-    const area = ol.Sphere.getArea(polygon);
+  formatArea(geometry: ol.geom.Geometry): string {
+    const area = ol.Sphere.getArea(geometry);
     return area > 10000
       ? Math.round(area / 1000000 * 100) / 100 + " " + "km<sup>2</sup>"
       : Math.round(area * 100) / 100 + " " + "m<sup>2</sup>";
   }
 
-  formatLength(line: ol.geom.LineString): string {
-    const length = ol.Sphere.getLength(line);
+  formatLength(geometry: ol.geom.Geometry): string {
+    const length = ol.Sphere.getLength(geometry);
     return length > 100 ? Math.round(length / 1000 * 100) / 100 + " " + "km" : Math.round(length * 100) / 100 + " " + "m";
   }
 }

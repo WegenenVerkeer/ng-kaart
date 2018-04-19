@@ -1,11 +1,10 @@
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
-
 import * as ol from "openlayers";
 
-import { kaartLogger } from "./log";
+import { AchtergrondLaag, TekenSettings } from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
-import { AchtergrondLaag } from "./kaart-elementen";
+import { kaartLogger } from "./log";
 
 export type KaartInternalSubMsg =
   | ZoominstellingenGezetMsg
@@ -38,7 +37,7 @@ export interface GeometryChangedMsg {
 
 export interface TekenMsg {
   type: "Teken";
-  teken: boolean;
+  settings: Option<TekenSettings>;
 }
 
 export interface SubscribedMsg {
@@ -103,14 +102,14 @@ function GeometryChangedMsg(geometry: ol.geom.Geometry): GeometryChangedMsg {
 
 export const geometryChangedWrapper = (geometry: ol.geom.Geometry) => KaartInternalMsg(some(GeometryChangedMsg(geometry)));
 
-function TekenMsg(teken: boolean): TekenMsg {
+function TekenMsg(settings: Option<TekenSettings>): TekenMsg {
   return {
     type: "Teken",
-    teken: teken
+    settings: settings
   };
 }
 
-export const tekenWrapper = (tekenen: boolean) => KaartInternalMsg(some(TekenMsg(tekenen)));
+export const tekenWrapper = (settings: Option<TekenSettings>) => KaartInternalMsg(some(TekenMsg(settings)));
 
 function SubscribedMsg(subscription: prt.KaartCmdValidation<prt.SubscriptionResult>, reference: any): SubscribedMsg {
   return { type: "Subscribed", reference: reference, subscription: subscription };

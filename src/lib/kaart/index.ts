@@ -13,7 +13,8 @@ import { KaartBlancoLaagComponent } from "./kaart-blanco-laag.component";
 import { KaartKnopAchtergrondLaagKiezerComponent } from "./kaart-knop-achtergrondlaag-kiezer.component";
 import { KaartTekenPolygoonLaagComponent } from "./kaart-teken-polygoon-laag.component";
 import { KaartKnopMetenLengteOppervlakteComponent } from "./kaart-knop-meten.component";
-import { KaartTekenLaagComponent } from "./kaart-tekenen.component";
+import { KaartTekenLaagComponent } from "./kaart-tekenen-laag.component";
+import { KaartTekenenSettingsComponent } from "./kaart-tekenen-settings.component";
 import { KaartFeaturesLaagComponent } from "./kaart-toon-features.component";
 import { KaartKnopVolledigSchermComponent } from "./kaart-knop-volledig-scherm.component";
 import { KaartSchaalComponent } from "./kaart-schaal.component";
@@ -47,6 +48,7 @@ const components: any[] = [
   KaartTekenPolygoonLaagComponent,
   KaartKnopMetenLengteOppervlakteComponent,
   KaartTekenLaagComponent,
+  KaartTekenenSettingsComponent,
   KaartFeaturesLaagComponent,
   KaartVectorLaagComponent,
   KaartNosqlfsLaagComponent,

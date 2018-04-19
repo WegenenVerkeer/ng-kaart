@@ -215,8 +215,8 @@ export class AppComponent {
 
   get tekenGeomLength() {
     return this.getekendeGeom
-      .filter(g => g.getType() === "LineString")
-      .map(g => Math.round(ol.Sphere.getLength(g as ol.geom.LineString) / 1000 * 100) / 100 + "km")
+      .filter(g => g.getType() === "LineString" || g.getType() === "Polygon")
+      .map(g => Math.round(ol.Sphere.getLength(g) / 1000 * 100) / 100 + "km")
       .getOrElseValue("(leeg)");
   }
 
