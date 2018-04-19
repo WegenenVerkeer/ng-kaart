@@ -1,5 +1,5 @@
 <div class="float-box actions panel">
-  <button mat-raised-button [disabled]="actief" (click)="startLuisterenOpClickEvents()">
+  <button mat-raised-button (click)="clickButton()" [class.actief]="actief">
     <mat-icon aria-label="open google street view">streetview</mat-icon>
   </button>
 </div>
