@@ -58,7 +58,8 @@
 
 .kaart-links {
   position: absolute;
-  height: calc(100% - 32px);
+  max-height: calc(100% - 32px);
+  height: auto;
   width: 480px;
   top: 16px;
   left: 16px;
