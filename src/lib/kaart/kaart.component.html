@@ -2,7 +2,7 @@
   <div id="kaart-container">
     <div class="kaart" #map style="height: 100%; width: 100%;"></div>
   </div>
-  <div id="overlay" layout="row" layout-align="center center">
+  <div id="overlay">
     <awv-kaart-achtergrond-selector [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-achtergrond-selector>
     <div *ngIf="mijnLocatieZoom">
     <awv-kaart-mijn-locatie [zoomniveau]="mijnLocatieZoom" [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-mijn-locatie>
