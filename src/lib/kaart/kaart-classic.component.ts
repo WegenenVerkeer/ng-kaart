@@ -1,20 +1,32 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
-import { Observable } from "rxjs/Observable";
-
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from "@angular/core";
+import * as option from "fp-ts/lib/Option";
+import { List } from "immutable";
 import * as ol from "openlayers";
+import * as rx from "rxjs";
+import { Observable } from "rxjs/Observable";
+import { map, share, takeUntil, tap } from "rxjs/operators";
 
-import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
-import { Command } from "./kaart-protocol-commands";
+import { classicLogger } from "../kaart-classic/log";
+import { FeatureSelectieAangepastMsg, KaartClassicMsg, KaartClassicSubMsg, logOnlyWrapper, SubscribedMsg } from "../kaart-classic/messages";
+import { ofType, TypedRecord } from "../util/operators";
+import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import * as prt from "./kaart-protocol";
-import { KaartInternalMsg, kaartLogOnlyWrapper } from "./kaart-internal-messages";
-import { KaartMsgObservableConsumer } from ".";
+import { Command } from "./kaart-protocol-commands";
+import { KaartMsgObservableConsumer } from "./kaart.component";
+import { subscriptionCmdOperator } from "./subscription-helper";
 
 @Component({
   selector: "awv-kaart-classic",
   templateUrl: "./kaart-classic.component.html"
 })
-export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
+export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, KaartCmdDispatcher<prt.TypedRecord> {
   private static counter = 1;
+
+  private readonly destroyingSubj: rx.Subject<void> = new rx.Subject<void>();
+  private hasFocus = false;
+
+  readonly dispatcher: ReplaySubjectKaartCmdDispatcher<TypedRecord> = new ReplaySubjectKaartCmdDispatcher();
+  readonly kaartMsgObservableConsumer: KaartMsgObservableConsumer;
 
   @Input() zoom: number;
   @Input() minZoom = 0;
@@ -24,17 +36,49 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
   @Input() hoogte = 400;
   @Input() mijnLocatieZoom: number | undefined;
   @Input() extent: ol.Extent;
+  @Input() selectieModus: prt.SelectieModus = "none";
   @Input() naam = "kaart" + KaartClassicComponent.counter++;
 
-  private hasFocus = false;
-  readonly dispatcher: ReplaySubjectKaartCmdDispatcher<KaartInternalMsg> = new ReplaySubjectKaartCmdDispatcher();
+  @Output() geselecteerdeFeatures: EventEmitter<List<ol.Feature>> = new EventEmitter();
 
-  constructor() {}
+  // TODO deze klasse en child components verhuizen naar classic directory, maar nog even wachten of we krijgen te veel merge conflicts
+  constructor() {
+    this.kaartMsgObservableConsumer = (msg$: Observable<prt.KaartMsg>) => {
+      // We zijn enkel geïnteresseerd in messages van ons eigen type
+      const kaartClassicSubMsg$: Observable<KaartClassicSubMsg> = msg$.pipe(
+        ofType<KaartClassicMsg>("KaartClassic"),
+        map(m => m.payload),
+        tap(m => classicLogger.debug("Een classic msg werd ontvangen", m)),
+        share() // 1 rx subscription naar boven toe is genoeg
+      );
+      // Een beetje overkill voor de ene kaart subscription die we nu hebben, maar het volgende zorgt voor automatisch beheer van de
+      // kaart subscriptions.
+      kaartClassicSubMsg$
+        .lift(
+          classicMsgSubscriptionCmdOperator(
+            this.dispatcher,
+            prt.GeselecteerdeFeaturesSubscription(geselecteerdeFeatures =>
+              KaartClassicMsg(FeatureSelectieAangepastMsg(geselecteerdeFeatures))
+            )
+          )
+        )
+        .pipe(takeUntil(this.destroyingSubj)) // Autounsubscribe moet na de lift komen: anders wordt er geen unsubscribe gestuurd
+        .subscribe(err => classicLogger.error(err));
+      // We kunnen in dit geval onze stream rechtstreeks naar de @Output sturen
+      kaartClassicSubMsg$
+        .pipe(
+          ofType<FeatureSelectieAangepastMsg>("FeatureSelectieAangepast"), //
+          map(m => m.geselecteerdeFeatures)
+        )
+        .subscribe(features => this.geselecteerdeFeatures.emit(features));
+      // We kunnen hier makkelijk een mini-reducer zetten voor KaartClassicSubMsg mocht dat nodig zijn
+    };
+  }
 
   ngOnInit() {
     // De volgorde van de dispatching hier is van belang voor wat de overhand heeft
     if (this.zoom) {
-      this.dispatch(prt.VeranderZoomCmd(this.zoom, kaartLogOnlyWrapper));
+      this.dispatch(prt.VeranderZoomCmd(this.zoom, logOnlyWrapper));
     }
     if (this.extent) {
       this.dispatch(prt.VeranderExtentCmd(this.extent));
@@ -45,13 +89,18 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
     if (this.breedte || this.hoogte) {
       this.dispatch(prt.VeranderViewportCmd([this.breedte, this.hoogte]));
     }
+    if (this.selectieModus) {
+      this.dispatch(prt.ActiveerSelectieModusCmd(this.selectieModus));
+    }
   }
 
-  ngOnDestroy() {}
+  ngOnDestroy() {
+    this.destroyingSubj.next();
+  }
 
   ngOnChanges(changes: SimpleChanges) {
     if ("zoom" in changes) {
-      this.dispatch(prt.VeranderZoomCmd(changes.zoom.currentValue, kaartLogOnlyWrapper));
+      this.dispatch(prt.VeranderZoomCmd(changes.zoom.currentValue, logOnlyWrapper));
     }
     if ("middelpunt" in changes && !coordinateIsEqual(changes.middelpunt.currentValue)(changes.middelpunt.previousValue)) {
       this.dispatch(prt.VeranderMiddelpuntCmd(changes.middelpunt.currentValue));
@@ -65,13 +114,16 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
     if ("hoogte" in changes) {
       this.dispatch(prt.VeranderViewportCmd([this.breedte, changes.hoogte.currentValue]));
     }
+    if ("mijnLocatieZoom" in changes) {
+      this.dispatch(prt.ZetMijnLocatieZoomCmd(option.fromNullable(changes.mijnLocatieZoom.currentValue)));
+    }
   }
 
-  dispatch(cmd: prt.Command<KaartInternalMsg>) {
+  dispatch(cmd: prt.Command<TypedRecord>) {
     this.dispatcher.dispatch(cmd);
   }
 
-  get kaartCmd$(): Observable<Command<prt.KaartMsg>> {
+  get kaartCmd$(): Observable<prt.Command<prt.TypedRecord>> {
     return this.dispatcher.commands$;
   }
 
@@ -111,3 +163,13 @@ const extentIsEqual = (ext1: ol.Extent) => (ext2: ol.Extent) => {
   }
   return ext1[0] === ext2[0] && ext1[1] === ext2[1] && ext1[2] === ext2[2] && ext1[3] === ext2[3];
 };
+
+/**
+ * Een specialisatie van de subscriptionCmdOperator die specifiek werkt met KaartClassicMessages.
+ */
+export function classicMsgSubscriptionCmdOperator(
+  dispatcher: KaartCmdDispatcher<KaartClassicMsg>,
+  ...subscriptions: prt.Subscription<KaartClassicMsg>[]
+): rx.Operator<KaartClassicSubMsg, string[]> {
+  return subscriptionCmdOperator(dispatcher, ref => validation => KaartClassicMsg(SubscribedMsg(validation, ref)), ...subscriptions);
+}

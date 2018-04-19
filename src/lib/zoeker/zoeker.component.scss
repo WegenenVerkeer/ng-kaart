@@ -1,0 +1,113 @@
+input {
+  flex-grow: 100;
+  border: none;
+  margin-left: 4px;
+  outline: none;
+}
+
+.float-box {
+  box-shadow: 0 3px 1px -2px rgba(0, 0, 0, .2), 0 2px 2px 0 rgba(0, 0, 0, .14), 0 1px 5px 0 rgba(0, 0, 0, .12);
+  background: white;
+  margin: 8px;
+}
+
+.zoeker-input {
+  padding: 8px 8px;
+  background: white;
+  min-width: 104px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.zoeker-input a {
+  width: 28px;
+}
+
+.zoeker-resultaat {
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  padding-left: 8px;
+  padding-right: 8px;
+  animation: fadein 2s;
+  -moz-animation: fadein 2s; /* Firefox */
+  -webkit-animation: fadein 2s; /* Safari and Chrome */
+  -o-animation: fadein 2s; /* Opera */
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  overflow: hidden;
+  min-height: 36px;
+}
+
+:host ::ng-deep .zoeker-resultaat .mat-icon {
+  vertical-align: middle;
+  width: 28px;
+}
+
+.zoeker-fout {
+  text-overflow: revert;
+  white-space: normal;
+  overflow: visible;
+}
+
+.zoeker-help {
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.klikbaar {
+  cursor: pointer;
+}
+
+.divider {
+  flex-grow: 1;
+  margin: 8px;
+  height: 1px;
+  background-color: lightgrey;
+}
+
+:host ::ng-deep .awv-zoeker-highlight {
+  font-weight: bold;
+}
+
+@keyframes fadein {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@-moz-keyframes fadein {
+  /* Firefox */
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@-webkit-keyframes fadein {
+  /* Safari and Chrome */
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@-o-keyframes fadein {
+  /* Opera */
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

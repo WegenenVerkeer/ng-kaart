@@ -5,11 +5,13 @@ import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";
 import { Subscription, Wrapper, VoidWrapper, KaartMsg, KaartCmdValidation, ValidationWrapper, BareValidationWrapper } from ".";
 import { StyleSelector } from "./kaart-elementen";
+import { AbstractZoeker } from "../zoeker";
 import { Logger } from "loglevel";
+import { Option } from "fp-ts/lib/Option";
 
 export type Command<Msg extends KaartMsg> =
   | SubscribeCmd<Msg>
-  | UnsubscribeCmd<Msg>
+  | UnsubscribeCmd
   | VoegLaagToeCmd<Msg>
   | VerwijderLaagCmd<Msg>
   | VerplaatsLaagCmd<Msg>
@@ -21,18 +23,23 @@ export type Command<Msg extends KaartMsg> =
   | VerwijderStandaardInteractiesCmd<Msg>
   | VeranderMiddelpuntCmd<Msg>
   | VeranderZoomCmd<Msg>
-  | VeranderExtentCmd<Msg>
-  | VeranderViewportCmd<Msg>
-  | ZetFocusOpKaartCmd<Msg>
-  | VerliesFocusOpKaartCmd<Msg>
+  | VeranderExtentCmd
+  | VeranderViewportCmd
+  | ZetFocusOpKaartCmd
+  | VerliesFocusOpKaartCmd
   | VervangFeaturesCmd<Msg>
   | ToonAchtergrondKeuzeCmd<Msg>
   | VerbergAchtergrondKeuzeCmd<Msg>
   | KiesAchtergrondCmd<Msg>
   | MaakLaagZichtbaarCmd<Msg>
   | MaakLaagOnzichtbaarCmd<Msg>
+  | ActiveerSelectieModusCmd<Msg>
   | ZetStijlVoorLaagCmd<Msg>
-  | MeldComponentFoutCmd<Msg>;
+  | VoegZoekerToeCmd<Msg>
+  | VerwijderZoekerCmd<Msg>
+  | ZoekCmd<Msg>
+  | MeldComponentFoutCmd
+  | ZetMijnLocatieZoomCmd;
 
 // SubscriptionResult is maar een type alias, maar ook een encapsulatie naar clients toe
 export type SubscriptionResult = RxSubscription;
@@ -43,7 +50,7 @@ export interface SubscribeCmd<Msg extends KaartMsg> {
   readonly wrapper: ValidationWrapper<SubscriptionResult, Msg>;
 }
 
-export interface UnsubscribeCmd<Msg extends KaartMsg> {
+export interface UnsubscribeCmd {
   readonly type: "Unsubscription";
   readonly subscription: SubscriptionResult;
 }
@@ -119,21 +126,21 @@ export interface VeranderZoomCmd<Msg extends KaartMsg> {
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
-export interface VeranderExtentCmd<Msg extends KaartMsg> {
+export interface VeranderExtentCmd {
   readonly type: "VeranderExtent";
   readonly extent: ol.Extent;
 }
 
-export interface VeranderViewportCmd<Msg extends KaartMsg> {
+export interface VeranderViewportCmd {
   readonly type: "VeranderViewport";
   readonly size: ol.Size;
 }
 
-export interface ZetFocusOpKaartCmd<Msg extends KaartMsg> {
+export interface ZetFocusOpKaartCmd {
   readonly type: "FocusOpKaart";
 }
 
-export interface VerliesFocusOpKaartCmd<Msg extends KaartMsg> {
+export interface VerliesFocusOpKaartCmd {
   readonly type: "VerliesFocusOpKaart";
 }
 
@@ -142,6 +149,13 @@ export interface VervangFeaturesCmd<Msg extends KaartMsg> {
   readonly titel: string;
   readonly features: List<ol.Feature>;
   readonly wrapper: BareValidationWrapper<Msg>;
+}
+
+export type SelectieModus = "single" | "multiple" | "none";
+
+export interface ActiveerSelectieModusCmd<Msg extends KaartMsg> {
+  readonly type: "ActiveerSelectieModus";
+  readonly selectieModus: SelectieModus;
 }
 
 export interface ToonAchtergrondKeuzeCmd<Msg extends KaartMsg> {
@@ -179,9 +193,32 @@ export interface ZetStijlVoorLaagCmd<Msg extends KaartMsg> {
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
-export interface MeldComponentFoutCmd<Msg extends KaartMsg> {
+export interface MeldComponentFoutCmd {
   readonly type: "MeldComponentFout";
   readonly fouten: List<string>;
+}
+
+export interface VoegZoekerToeCmd<Msg extends KaartMsg> {
+  readonly type: "VoegZoekerToe";
+  readonly zoeker: AbstractZoeker;
+  readonly wrapper: BareValidationWrapper<Msg>;
+}
+
+export interface VerwijderZoekerCmd<Msg extends KaartMsg> {
+  readonly type: "VerwijderZoeker";
+  readonly zoeker: string;
+  readonly wrapper: BareValidationWrapper<Msg>;
+}
+
+export interface ZoekCmd<Msg extends KaartMsg> {
+  readonly type: "Zoek";
+  readonly input: string;
+  readonly wrapper: BareValidationWrapper<Msg>;
+}
+
+export interface ZetMijnLocatieZoomCmd {
+  readonly type: "ZetMijnLocatieZoomStatus";
+  readonly doelniveau: Option<number>;
 }
 
 ////////////////////////
@@ -242,11 +279,11 @@ export function VeranderZoomCmd<Msg extends KaartMsg>(zoom: number, wrapper: Bar
   return { type: "VeranderZoom", zoom: zoom, wrapper: wrapper };
 }
 
-export function VeranderExtentCmd<Msg extends KaartMsg>(extent: ol.Extent): VeranderExtentCmd<Msg> {
+export function VeranderExtentCmd<Msg extends KaartMsg>(extent: ol.Extent): VeranderExtentCmd {
   return { type: "VeranderExtent", extent: extent };
 }
 
-export function VeranderViewportCmd<Msg extends KaartMsg>(size: ol.Size): VeranderViewportCmd<Msg> {
+export function VeranderViewportCmd<Msg extends KaartMsg>(size: ol.Size): VeranderViewportCmd {
   return { type: "VeranderViewport", size: size };
 }
 
@@ -258,7 +295,11 @@ export function VervangFeaturesCmd<Msg extends KaartMsg>(
   return { type: "VervangFeatures", titel: titel, features: features, wrapper: wrapper };
 }
 
-export function MeldComponentFoutCmd<Msg extends KaartMsg>(fouten: List<string>): MeldComponentFoutCmd<Msg> {
+export function ActiveerSelectieModusCmd<Msg extends KaartMsg>(selectieModus: SelectieModus): ActiveerSelectieModusCmd<Msg> {
+  return { type: "ActiveerSelectieModus", selectieModus: selectieModus };
+}
+
+export function MeldComponentFoutCmd<Msg extends KaartMsg>(fouten: List<string>): MeldComponentFoutCmd {
   return { type: "MeldComponentFout", fouten: fouten };
 }
 
@@ -295,6 +336,10 @@ export function SubscribeCmd<Msg extends KaartMsg>(
   return { type: "Subscription", subscription: subscription, wrapper: wrapper };
 }
 
-export function UnsubscribeCmd<Msg extends KaartMsg>(subscription: SubscriptionResult): UnsubscribeCmd<Msg> {
+export function UnsubscribeCmd<Msg extends KaartMsg>(subscription: SubscriptionResult): UnsubscribeCmd {
   return { type: "Unsubscription", subscription: subscription };
+}
+
+export function ZetMijnLocatieZoomCmd(doelniveau: Option<number>): ZetMijnLocatieZoomCmd {
+  return { type: "ZetMijnLocatieZoomStatus", doelniveau: doelniveau };
 }
