@@ -20,7 +20,8 @@ import { GoogleLocatieZoekerConfig } from "../lib/zoeker/google-locatie-zoeker.c
     KaartModule.withDefaults(),
     FormsModule,
     ZoekerModule.forRoot({
-      url: "http://localhost:5100/locatiezoeker"
+      url: "http://localhost:5100/locatiezoeker",
+      apiKey: "AIzaSyApbXMl5DGL60g17JU6MazMxNcUGooey7I"
     }),
     ClickOutsideModule,
     HttpModule
