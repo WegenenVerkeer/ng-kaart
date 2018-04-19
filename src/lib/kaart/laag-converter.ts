@@ -30,6 +30,29 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
     });
   }
 
+  function createdWmts(l: ke.WmtsLaag) {
+    return new ol.layer.Tile(<ol.olx.layer.TileOptions>{
+      title: l.titel,
+      visible: true,
+      extent: kaart.config.defaults.extent,
+      opacity: l.opacity.toUndefined(),
+      source: new ol.source.WMTS({
+        projection: kaart.config.srs,
+        urls: l.urls.toArray(),
+        tileGrid: new ol.tilegrid.WMTS({
+          origin: l.origin.toUndefined(),
+          resolutions: kaart.config.defaults.resolutions,
+          // extent: kaart.config.defaults.extent,
+          matrixIds: l.matrixIds
+        }),
+        layer: l.naam,
+        style: l.style.getOrElseValue(""),
+        format: l.format.getOrElseValue("image/png"),
+        matrixSet: l.matrixSet
+      })
+    });
+  }
+
   function createSingleTileWmsLayer(l: ke.WmsLaag) {
     return new ol.layer.Image({
       opacity: l.opacity.toUndefined(),
@@ -92,6 +115,9 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
   switch (laag.type) {
     case ke.TiledWmsType:
       return some(createdTileWms(laag as ke.WmsLaag));
+
+    case ke.WmtsType:
+      return some(createdWmts(laag as ke.WmtsLaag));
 
     case ke.SingleTileWmsType:
       return some(createSingleTileWmsLayer(laag as ke.WmsLaag));

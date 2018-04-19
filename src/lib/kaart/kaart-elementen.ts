@@ -6,11 +6,13 @@ export const SingleTileWmsType = "LaagType.SingleTileWms";
 export type SingleTileWmsType = "LaagType.SingleTileWms";
 export const TiledWmsType = "LaagType.TiledWms";
 export type TiledWmsType = "LaagType.TiledWms";
+export const WmtsType = "LaagType.Wmts";
+export type WmtsType = "LaagType.Wmts";
 export const VectorType = "LaagType.Vector";
 export type VectorType = "LaagType.Vector";
 export const BlancoType = "LaagType.Blanco";
 export type BlancoType = "LaagType.Blanco";
-export type LaagType = SingleTileWmsType | TiledWmsType | VectorType | BlancoType;
+export type LaagType = SingleTileWmsType | TiledWmsType | WmtsType | VectorType | BlancoType;
 
 export interface StaticStyle {
   readonly type: "StaticStyle";
@@ -37,6 +39,20 @@ export interface WmsLaag {
   readonly opacity: Option<number>;
 }
 
+export interface WmtsLaag {
+  readonly type: WmtsType;
+  readonly titel: string;
+  readonly naam: string;
+  readonly urls: List<string>;
+  readonly versie: Option<string>;
+  readonly format: Option<string>;
+  readonly opacity: Option<number>;
+  readonly matrixIds: string[];
+  readonly style: Option<string>;
+  readonly matrixSet: string;
+  readonly origin: Option<ol.Coordinate>;
+}
+
 export interface VectorLaag {
   readonly type: VectorType;
   readonly titel: string;
@@ -52,7 +68,7 @@ export interface BlancoLaag {
   readonly titel: string;
 }
 
-export type Laag = WmsLaag | VectorLaag | BlancoLaag;
+export type Laag = WmsLaag | WmtsLaag | VectorLaag | BlancoLaag;
 
 export function isWmsLaag(laag: Laag): boolean {
   return laag.type === SingleTileWmsType || laag.type === TiledWmsType;
