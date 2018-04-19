@@ -60,6 +60,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   @Input() minZoom = 2; // TODO naar config
   @Input() maxZoom = 15; // TODO naar config
   @Input() naam = "kaart";
+  @Input() selectieModus: prt.SelectieModus = "none";
 
   // Dit dient om messages naar toe te sturen
 

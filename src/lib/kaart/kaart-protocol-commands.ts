@@ -33,6 +33,7 @@ export type Command<Msg extends KaartMsg> =
   | KiesAchtergrondCmd<Msg>
   | MaakLaagZichtbaarCmd<Msg>
   | MaakLaagOnzichtbaarCmd<Msg>
+  | ActiveerSelectieModusCmd<Msg>
   | ZetStijlVoorLaagCmd<Msg>
   | VoegZoekerToeCmd<Msg>
   | VerwijderZoekerCmd<Msg>
@@ -148,6 +149,13 @@ export interface VervangFeaturesCmd<Msg extends KaartMsg> {
   readonly titel: string;
   readonly features: List<ol.Feature>;
   readonly wrapper: BareValidationWrapper<Msg>;
+}
+
+export type SelectieModus = "single" | "multiple" | "none";
+
+export interface ActiveerSelectieModusCmd<Msg extends KaartMsg> {
+  readonly type: "ActiveerSelectieModus";
+  readonly selectieModus: SelectieModus;
 }
 
 export interface ToonAchtergrondKeuzeCmd<Msg extends KaartMsg> {
@@ -285,6 +293,10 @@ export function VervangFeaturesCmd<Msg extends KaartMsg>(
   wrapper: BareValidationWrapper<Msg>
 ): VervangFeaturesCmd<Msg> {
   return { type: "VervangFeatures", titel: titel, features: features, wrapper: wrapper };
+}
+
+export function ActiveerSelectieModusCmd<Msg extends KaartMsg>(selectieModus: SelectieModus): ActiveerSelectieModusCmd<Msg> {
+  return { type: "ActiveerSelectieModus", selectieModus: selectieModus };
 }
 
 export function MeldComponentFoutCmd<Msg extends KaartMsg>(fouten: List<string>): MeldComponentFoutCmd {

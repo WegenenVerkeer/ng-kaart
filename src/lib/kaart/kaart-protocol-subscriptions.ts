@@ -11,6 +11,7 @@ import { AchtergrondLaag, TypedRecord } from ".";
 export type Subscription<Msg extends TypedRecord> =
   | ZoominstellingenSubscription<Msg>
   | MiddelpuntSubscription<Msg>
+  | GeselecteerdeFeaturesSubscription<Msg>
   | AchtergrondTitelSubscription<Msg>
   | AchtergrondlagenSubscription<Msg>
   | ZoekerSubscription<Msg>
@@ -30,6 +31,11 @@ export interface ZoominstellingenSubscription<Msg> {
 export interface MiddelpuntSubscription<Msg> {
   readonly type: "Middelpunt";
   readonly wrapper: (x: number, y: number) => Msg;
+}
+
+export interface GeselecteerdeFeaturesSubscription<Msg> {
+  readonly type: "GeselecteerdeFeatures";
+  readonly wrapper: (geselecteerdeFeatures: List<ol.Feature>) => Msg;
 }
 
 export interface AchtergrondTitelSubscription<Msg> {
@@ -60,6 +66,12 @@ export function ZoominstellingenSubscription<Msg extends TypedRecord>(
   wrapper: (settings: Zoominstellingen) => Msg
 ): ZoominstellingenSubscription<Msg> {
   return { type: "Zoominstellingen", wrapper: wrapper };
+}
+
+export function GeselecteerdeFeaturesSubscription<Msg extends TypedRecord>(
+  wrapper: (geselecteerdeFeatures: List<ol.Feature>) => Msg
+): GeselecteerdeFeaturesSubscription<Msg> {
+  return { type: "GeselecteerdeFeatures", wrapper: wrapper };
 }
 
 export function MiddelpuntSubscription<Msg extends TypedRecord>(wrapper: (x: number, y: number) => Msg): MiddelpuntSubscription<Msg> {

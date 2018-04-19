@@ -130,7 +130,6 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
   }
 
   private zoomNaarMijnLocatie(zoom: number, doelzoom: number) {
-    console.log("Zoom naar", zoom, doelzoom);
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(positie => this.zetMijnPositie(positie, zoom, doelzoom), fout => this.meldFout(fout), {
         enableHighAccuracy: true,
