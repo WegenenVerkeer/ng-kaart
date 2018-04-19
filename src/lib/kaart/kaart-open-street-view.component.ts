@@ -7,6 +7,7 @@ import * as rx from "rxjs";
 import { ofType } from "../util/operators";
 import * as prt from "./kaart-protocol";
 import { Observable } from "rxjs/Observable";
+import { skipUntil, take, takeUntil } from "rxjs/operators";
 
 @Component({
   selector: "awv-kaart-open-street-view",
@@ -46,10 +47,11 @@ export class KaartOpenStreetViewComponent extends KaartChildComponentBase implem
     this.clickSubscription = this.internalMessage$
       .pipe(
         ofType<KaartClickMsg>("KaartClick"), //
-        observeOnAngular(this.zone)
+        observeOnAngular(this.zone),
+        takeUntil(this.destroying$), // autounsubscribe bij destroy component
+        skipUntil(Observable.timer(0)), // enkel geinteresseerd in messages nadat subscribe() wordt opgeroepen
+        take(1) // 1 click message is genoeg
       )
-      .skipUntil(Observable.timer(0)) // enkel geinteresseerd in messages nadat subscribe() wordt opgeroepen
-      .take(1) // 1 click message is genoeg
       .subscribe(msg => {
         this.openGoogleStreetView(msg.clickCoordinaat);
       });
