@@ -1,5 +1,15 @@
 @import "~material-design-icons/iconfont/material-icons.css";
+@import "~@angular/material/prebuilt-themes/indigo-pink.css";
 
 body {
   font: 14px "Helvetica Neue", Arial, sans-serif
 }
+
+.mat-icon {
+  color: #F7902D;
+}
+
+.mat-icon.inactief:not(:hover) {
+  color: rgba(0, 0, 0, 0.26);
+}
+

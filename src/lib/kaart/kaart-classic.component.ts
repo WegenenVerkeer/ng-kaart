@@ -28,7 +28,7 @@ const TekenRef = {};
   selector: "awv-kaart-classic",
   templateUrl: "./kaart-classic.component.html"
 })
-export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
+export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, KaartCmdDispatcher<prt.TypedRecord> {
   private static counter = 1;
 
   private kaartClassicSubMsg$: Observable<KaartClassicSubMsg> = Observable.empty();

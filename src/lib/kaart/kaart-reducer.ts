@@ -110,6 +110,30 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return fromPredicate(model, (mdl: Model) => !mdl.olLayersOpTitel.has(titel), `Een laag met titel ${titel} bestaat al`);
     }
 
+    function valideerZoekerIsNietGeregistreerd(naam: string): prt.KaartCmdValidation<{}> {
+      return fromPredicate(
+        model,
+        (mdl: Model) => !mdl.zoekerCoordinator.isZoekerGeregistreerd(naam),
+        `Een zoeker met naam ${naam} bestaat al`
+      );
+    }
+
+    function valideerZoekerIsGeregistreerd(naam: string): prt.KaartCmdValidation<{}> {
+      return fromPredicate(
+        model,
+        (mdl: Model) => mdl.zoekerCoordinator.isZoekerGeregistreerd(naam),
+        `Een zoeker met naam ${naam} bestaat niet`
+      );
+    }
+
+    function valideerMinstens1ZoekerGeregistreerd(): prt.KaartCmdValidation<{}> {
+      return fromPredicate(
+        model,
+        (mdl: Model) => mdl.zoekerCoordinator.isMinstens1ZoekerGeregistreerd(),
+        `Er moet minstens 1 zoeker geregistreerd zijn`
+      );
+    }
+
     const valideerIsAchtergrondLaag: (titel: string) => prt.KaartCmdValidation<{}> = (titel: string) =>
       fromBoolean(model.groepOpTitel.get(titel) === "Achtergrond", "De laag is geen achtergrondlaag");
 
@@ -542,6 +566,36 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
+    function voegZoekerToe(cmnd: prt.VoegZoekerToeCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        valideerZoekerIsNietGeregistreerd(cmnd.zoeker.naam()).map(() => {
+          model.zoekerCoordinator.voegZoekerToe(cmnd.zoeker);
+          return ModelAndEmptyResult(model);
+        })
+      );
+    }
+
+    function verwijderZoeker(cmnd: prt.VerwijderZoekerCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        valideerZoekerIsGeregistreerd(cmnd.zoeker).map(() => {
+          model.zoekerCoordinator.verwijderZoeker(cmnd.zoeker);
+          return ModelAndEmptyResult(model);
+        })
+      );
+    }
+
+    function zoek(cmnd: prt.ZoekCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        valideerMinstens1ZoekerGeregistreerd().map(() => {
+          model.zoekerCoordinator.zoek(cmnd.input);
+          return ModelAndEmptyResult(model);
+        })
+      );
+    }
+
     function zetMijnLocatieZoom(cmnd: prt.ZetMijnLocatieZoomCmd): ModelWithResult<Msg> {
       model.mijnLocatieZoomDoelSubj.next(cmnd.doelniveau);
       return ModelWithResult(model);
@@ -601,6 +655,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             .subscribe(groeplagen => msgConsumer(wrapper(groeplagen.lagen as List<ke.AchtergrondLaag>)))
         );
 
+      function subscribeToZoeker(sub: prt.ZoekerSubscription<Msg>): ModelWithResult<Msg> {
+        const subscription = model.zoekerSubj.subscribe(m => msgConsumer(sub.wrapper(m)));
+        return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
+      }
+
       function subscribeToMijnLocatieZoomdoel(sub: prt.MijnLocatieZoomdoelSubscription<Msg>): ModelWithResult<Msg> {
         const subscription = model.mijnLocatieZoomDoelSubj.subscribe(t => msgConsumer(sub.wrapper(t)));
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
@@ -637,6 +696,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToAchtergrondlagen(cmnd.subscription.wrapper);
         case "MijnLocatieZoomdoel":
           return subscribeToMijnLocatieZoomdoel(cmnd.subscription);
+        case "Zoeker":
+          return subscribeToZoeker(cmnd.subscription);
         case "GeometryChanged":
           return subscribeToGeometryChanged(cmnd.subscription);
         case "Tekenen":
@@ -702,6 +763,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return handleUnsubscriptions(cmd);
       case "MeldComponentFout":
         return meldComponentFout(cmd);
+      case "VoegZoekerToe":
+        return voegZoekerToe(cmd);
+      case "VerwijderZoeker":
+        return verwijderZoeker(cmd);
+      case "Zoek":
+        return zoek(cmd);
       case "ZetMijnLocatieZoomStatus":
         return zetMijnLocatieZoom(cmd);
       case "VoegInteractieToe":

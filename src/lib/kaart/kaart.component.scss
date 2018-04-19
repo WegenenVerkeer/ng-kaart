@@ -27,7 +27,7 @@
     display: block;
     overflow: auto;
   }
-  
+
   position: relative;
 }
 
@@ -36,7 +36,7 @@
 
   &:hover {
     background-color: rgba(255, 255, 255, 0.9);
-  } 
+  }
 }
 
 #kaart-container {
@@ -54,4 +54,40 @@
   top: 0px;
   left: 0px;
   pointer-events: none;
+}
+
+.kaart-links {
+  position: absolute;
+  max-height: calc(100% - 32px);
+  height: auto;
+  width: 480px;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  flex-direction: column;
+//  flex-wrap: nowrap;
+  overflow-x: hidden;
+  overflow-y: auto;
+  pointer-events: initial;
+}
+
+awv-zoeker {
+  order: 100;
+}
+
+.kaart-links::-webkit-scrollbar-track
+{
+  -webkit-box-shadow: inset 0 0 6px rgba(0,0,0,0.3);
+  background-color: #F5F5F5;
+}
+
+.kaart-links::-webkit-scrollbar
+{
+  width: 6px;
+  background-color: #F5F5F5;
+}
+
+.kaart-links::-webkit-scrollbar-thumb
+{
+  background-color: #555;
 }

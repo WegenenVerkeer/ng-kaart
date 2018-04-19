@@ -30,6 +30,8 @@ import { KaartAchtergrondSelectorComponent } from "./kaart-achtergrond-selector.
 import { KaartAchtergrondTileComponent } from "./kaart-achtergrond-tile.component";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { MatButtonModule, MatIconModule, MatButtonToggleModule } from "@angular/material";
+import { ZoekerModule } from "../zoeker/index";
+import { GoogleLocatieZoekerConfig } from "../zoeker/google-locatie-zoeker.config";
 import { HttpClientModule } from "@angular/common/http";
 
 const components: any[] = [
@@ -110,7 +112,15 @@ export const defaultKaartConfig: KaartConfig = {
 };
 
 @NgModule({
-  imports: [CommonModule, ClickOutsideModule, MatButtonModule, MatIconModule, MatButtonToggleModule, HttpClientModule],
+  imports: [
+    CommonModule,
+    ClickOutsideModule,
+    MatButtonModule,
+    MatIconModule,
+    MatButtonToggleModule,
+    HttpClientModule,
+    ZoekerModule.forRoot({})
+  ],
   declarations: [components],
   exports: [components],
   providers: [CoordinatenService, ReplaySubjectKaartCmdDispatcher]

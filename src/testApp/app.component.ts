@@ -6,7 +6,7 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 
-import { GoogleLocatieZoekerService } from "../lib/google-locatie-zoeker";
+import { GoogleLocatieZoekerService } from "../lib/zoeker";
 import { CoordinatenService, KaartClassicComponent } from "../lib/kaart";
 import { classicLogger } from "../lib/kaart-classic/log";
 import { kaartLogOnlyWrapper } from "../lib/kaart/kaart-internal-messages";
@@ -23,6 +23,7 @@ import { offsetStyleFunction } from "../lib/stijl/offset-stijl-function";
 })
 export class AppComponent {
   private readonly zichtbaarheid = {
+    orthomap: true,
     metenVoorbeeld: true,
     kleursimpel: false // standard falsey
   };
@@ -89,7 +90,7 @@ export class AppComponent {
       anchorYUnits: "fraction",
       scale: 1,
       opacity: 1,
-      src: "./material-design-icons/maps/svg/production/ic_place_48px.svg"
+      src: require("material-design-icons/maps/svg/production/ic_place_48px.svg")
     }),
     text: new ol.style.Text({
       font: "12px 'Helvetica Neue', sans-serif",

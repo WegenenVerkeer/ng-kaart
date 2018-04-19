@@ -15,8 +15,8 @@
   justify-content: space-around;
   position: absolute;
   right: 16px;
-  bottom: 16px;
-}
+  bottom: 19px; // om -3 van floatbox te compenseren
+ }
 
 .actions > .mat-raised-button {
   min-width: 24px;
