@@ -1,21 +1,19 @@
-import { Component, Input, OnDestroy, OnInit } from "@angular/core";
-
-import { KaartInternalMsg, KaartInternalSubMsg, kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
+import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { KaartCmdDispatcher, VacuousDispatcher } from "../kaart/kaart-event-dispatcher";
-import { none, Option } from "fp-ts/lib/Option";
-import { KaartCmdValidation } from "../kaart/kaart-protocol";
-import { Subscription } from "rxjs/Subscription";
-import * as ke from "../kaart/kaart-elementen";
-import * as ol from "openlayers";
-import { ZoekResultaat, compareResultaten } from "./abstract-zoeker";
-import * as prt from "../kaart/kaart-protocol";
-import { ZoekResultaten } from "./index";
-import { Observable } from "rxjs/Observable";
-import { List } from "immutable";
-import { SubscriptionResult } from "../kaart";
-import { debounce, distinctUntilChanged } from "rxjs/operators";
 import { SafeHtml } from "@angular/platform-browser";
+import { none, Option } from "fp-ts/lib/Option";
+import { List } from "immutable";
+import * as ol from "openlayers";
+import { debounce, distinctUntilChanged } from "rxjs/operators";
+import { Subscription } from "rxjs/Subscription";
+
+import { SubscriptionResult } from "../kaart";
+import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
+import * as ke from "../kaart/kaart-elementen";
+import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
+import * as prt from "../kaart/kaart-protocol";
+import { KaartCmdValidation } from "../kaart/kaart-protocol";
+import { compareResultaten, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
 
 const ZoekerLaagNaam = "Zoeker";
 
@@ -28,10 +26,7 @@ export class Fout {
   templateUrl: "./zoeker.component.html",
   styleUrls: ["./zoeker.component.scss"]
 })
-export class ZoekerComponent implements OnInit, OnDestroy {
-  @Input() dispatcher: KaartCmdDispatcher<KaartInternalMsg> = VacuousDispatcher;
-  @Input() internalMessage$: Observable<KaartInternalSubMsg> = Observable.never();
-
+export class ZoekerComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
   zoekVeld = new FormControl();
   alleZoekResultaten: ZoekResultaat[] = [];
   alleFouten: Fout[] = [];
@@ -85,11 +80,18 @@ export class ZoekerComponent implements OnInit, OnDestroy {
     }
   }
 
-  constructor() {}
+  constructor(zone: NgZone) {
+    super(zone);
+  }
+
+  protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
+    return [prt.ZoekerSubscription(r => this.processZoekerAntwoord(r))];
+  }
 
   ngOnInit(): void {
-    this.zoekVeld.valueChanges
-      .pipe(
+    super.ngOnInit();
+    this.bindToLifeCycle(
+      this.zoekVeld.valueChanges.pipe(
         debounce((value: string) => {
           // Form changes worden debounced tot deze promise geresolved wordt.
           return new Promise(resolve => {
@@ -104,14 +106,14 @@ export class ZoekerComponent implements OnInit, OnDestroy {
         }),
         distinctUntilChanged()
       )
-      .subscribe(value => {
-        this.toonResultaat = true;
-        this.maakResultaatLeeg();
+    ).subscribe(value => {
+      this.toonResultaat = true;
+      this.maakResultaatLeeg();
 
-        if (value.length > 0) {
-          this.dispatcher.dispatch({ type: "Zoek", input: value, wrapper: kaartLogOnlyWrapper });
-        }
-      });
+      if (value.length > 0) {
+        this.dispatcher.dispatch({ type: "Zoek", input: value, wrapper: kaartLogOnlyWrapper });
+      }
+    });
     this.dispatcher.dispatch({
       type: "VoegLaagToe",
       positie: 1,
@@ -120,21 +122,11 @@ export class ZoekerComponent implements OnInit, OnDestroy {
       laaggroep: "Tools",
       wrapper: kaartLogOnlyWrapper
     });
-    this.dispatcher.dispatch({
-      type: "Subscription",
-      subscription: prt.ZoekerSubscription(r => this.processZoekerAntwoord(r)),
-      wrapper: v => this.subscribed(v)
-    });
   }
 
   ngOnDestroy(): void {
-    this.subscription.map(subscription =>
-      this.dispatcher.dispatch({
-        type: "Unsubscription",
-        subscription: subscription
-      })
-    );
     this.dispatcher.dispatch(prt.VerwijderLaagCmd(ZoekerLaagNaam, kaartLogOnlyWrapper));
+    super.ngOnDestroy();
   }
 
   toggleResultaat() {
@@ -207,13 +199,5 @@ export class ZoekerComponent implements OnInit, OnDestroy {
     if (!ol.extent.isEmpty(this.extent)) {
       this.dispatcher.dispatch(prt.VeranderExtentCmd(this.extent));
     }
-  }
-
-  private subscribed(v: KaartCmdValidation<SubscriptionResult>): KaartInternalMsg {
-    this.subscription = v.toOption();
-    return {
-      type: "KaartInternal",
-      payload: none
-    };
   }
 }

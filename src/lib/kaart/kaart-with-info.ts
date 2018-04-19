@@ -1,13 +1,13 @@
 import { none, Option } from "fp-ts/lib/Option";
 import { List, Map } from "immutable";
 import * as ol from "openlayers";
+import { ReplaySubject, Subject } from "rxjs";
 
 import { Laaggroep, Zoominstellingen } from ".";
-import { KaartConfig } from "./kaart-config";
-import * as ke from "./kaart-elementen";
-import { Subject, ReplaySubject } from "rxjs";
 import { ZoekResultaten } from "../zoeker";
 import { ZoekerCoordinator } from "../zoeker/zoeker-coordinator";
+import { KaartConfig } from "./kaart-config";
+import * as ke from "./kaart-elementen";
 
 export interface Groeplagen {
   readonly laaggroep: Laaggroep;

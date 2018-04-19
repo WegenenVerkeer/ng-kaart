@@ -6,11 +6,10 @@
     <awv-kaart-achtergrond-selector [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-achtergrond-selector>    
     <awv-kaart-mijn-locatie [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-mijn-locatie>
     <awv-kaart-zoom [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-zoom>
-    <awv-google-locatie-zoeker></awv-google-locatie-zoeker>
+    <awv-google-locatie-zoeker [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-google-locatie-zoeker>
     <div class="kaart-links">
       <awv-zoeker [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-zoeker>
       <ng-content select=".kaart-links"></ng-content>
     </div>
   </div>
-  <awv-google-locatie-zoeker [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-google-locatie-zoeker>
 </div>

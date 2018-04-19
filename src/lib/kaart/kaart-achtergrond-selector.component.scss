@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: row;
   position: absolute;
-  bottom: 13px; // 13 omdat er geen shadow van -3px rond zit.
+  bottom: 14px; // 14 omdat er geen shadow van -3px rond zit, 1px voor border
   right: 48px;
 }
 
