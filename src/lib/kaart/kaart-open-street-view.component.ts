@@ -17,10 +17,14 @@ import { skipUntil, take, takeUntil } from "rxjs/operators";
 export class KaartOpenStreetViewComponent extends KaartChildComponentBase implements OnInit {
   private clickSubscription: rx.Subscription = new rx.Subscription();
 
-  actief = false;
+  private actief = false;
 
   constructor(zone: NgZone) {
     super(zone);
+  }
+
+  public get isActief(): boolean {
+    return this.actief;
   }
 
   protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
