@@ -2,8 +2,8 @@
   display: flex;
   flex-direction: row;
   position: absolute;
-  bottom: 16px;
-  left: 16px;
+  bottom: 14px; // 14 omdat er geen shadow van -3px rond zit, 1px voor border
+  right: 48px;
 }
 
 .selector div {
