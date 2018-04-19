@@ -27,6 +27,8 @@ export class KaartOpenStreetViewComponent extends KaartChildComponentBase implem
 
   private clickSubscription: rx.Subscription = new rx.Subscription();
 
+  actief = false;
+
   constructor(zone: NgZone) {
     super(zone);
   }
@@ -39,20 +41,26 @@ export class KaartOpenStreetViewComponent extends KaartChildComponentBase implem
   }
 
   startLuisterenOpClickEvents(): void {
+    this.actief = true;
+    document.body.style.cursor = "crosshair";
+
     this.clickSubscription.unsubscribe();
     this.clickSubscription = this.internalMessage$
       .pipe(
         ofType<KaartClickMsg>("KaartClick"), //
         observeOnAngular(this.zone)
       )
-      .skipUntil(Observable.timer(0)) // only messages after subscribe() is called
-      .take(1)
+      .skipUntil(Observable.timer(0)) // enkel geinteresseerd in messages nadat subscribe() wordt opgeroepen
+      .take(1) // 1 click message is genoeg
       .subscribe(msg => {
         this.openGoogleStreetView(msg.clickCoordinaat);
       });
   }
 
   stopLuisterenOpClickEvents(): void {
+    this.actief = false;
+    document.body.style.cursor = "default";
+
     this.clickSubscription.unsubscribe();
   }
 
