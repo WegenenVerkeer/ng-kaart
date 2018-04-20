@@ -1,5 +1,6 @@
 import { Option } from "fp-ts/lib/Option";
 import { List } from "immutable";
+import { ZoekResultaten } from "../zoeker";
 import * as ol from "openlayers";
 
 import { AchtergrondLaag, TekenSettings, TypedRecord } from ".";
@@ -14,6 +15,7 @@ export type Subscription<Msg extends TypedRecord> =
   | GeselecteerdeFeaturesSubscription<Msg>
   | AchtergrondTitelSubscription<Msg>
   | AchtergrondlagenSubscription<Msg>
+  | ZoekerSubscription<Msg>
   | MijnLocatieZoomdoelSubscription<Msg>
   | GeometryChangedSubscription<Msg>
   | TekenenSubscription<Msg>;
@@ -47,6 +49,11 @@ export interface AchtergrondTitelSubscription<Msg> {
 export interface AchtergrondlagenSubscription<Msg> {
   readonly type: "Achtergrondlagen";
   readonly wrapper: (achtergrondlagen: List<AchtergrondLaag>) => Msg;
+}
+
+export interface ZoekerSubscription<Msg> {
+  readonly type: "Zoeker";
+  readonly wrapper: (resultaten: ZoekResultaten) => Msg;
 }
 
 export interface MijnLocatieZoomdoelSubscription<Msg> {
@@ -93,6 +100,13 @@ export function AchtergrondlagenSubscription<Msg extends TypedRecord>(
   wrapper: (achtergrondlagen: List<AchtergrondLaag>) => Msg
 ): AchtergrondlagenSubscription<Msg> {
   return { type: "Achtergrondlagen", wrapper: wrapper };
+}
+
+export function ZoekerSubscription<Msg extends TypedRecord>(wrapper: (resultaten: ZoekResultaten) => Msg): Subscription<Msg> {
+  return {
+    type: "Zoeker",
+    wrapper: wrapper
+  };
 }
 
 export function MijnLocatieZoomdoelSubscription<Msg extends TypedRecord>(

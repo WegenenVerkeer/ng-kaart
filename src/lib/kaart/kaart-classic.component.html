@@ -1,12 +1,15 @@
 <awv-kaart
-[naam]='naam'
-[minZoom]='minZoom'
-[maxZoom]='maxZoom'
-[selectieModus]='selectieModus'
-[kaartCmd$]='kaartCmd$'
-[messageObsConsumer]='kaartMsgObservableConsumer'
-(click)="focus()"
-(clickOutside)="geenFocus()">
+  [naam]='naam'
+  [minZoom]='minZoom'
+  [maxZoom]='maxZoom'
+  [selectieModus]='selectieModus'
+  [kaartCmd$]='kaartCmd$'
+  [messageObsConsumer]='kaartMsgObservableConsumer'
+  (click)="focus()"
+  (clickOutside)="geenFocus()">
+  <ng-container class="kaart-links">
+      <ng-content select=".kaart-links"></ng-content>
+    </ng-container>
   <awv-kaart-tekenen-settings
     [geometryType] = "'Polygon'"></awv-kaart-tekenen-settings>
 </awv-kaart>
