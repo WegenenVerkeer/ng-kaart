@@ -5,7 +5,7 @@ import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";
 import { Subscription, Wrapper, VoidWrapper, KaartMsg, KaartCmdValidation, ValidationWrapper, BareValidationWrapper } from ".";
 import { StyleSelector } from "./kaart-elementen";
-import { AbstractZoeker } from "../zoeker";
+import { AbstractZoeker } from "../zoeker/abstract-zoeker";
 import { Logger } from "loglevel";
 import { Option } from "fp-ts/lib/Option";
 

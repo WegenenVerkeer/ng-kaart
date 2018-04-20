@@ -1,11 +1,10 @@
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
-
 import * as ol from "openlayers";
 
-import { kaartLogger } from "./log";
-import * as prt from "./kaart-protocol";
 import { AchtergrondLaag } from "./kaart-elementen";
+import * as prt from "./kaart-protocol";
+import { kaartLogger } from "./log";
 
 export type KaartInternalSubMsg =
   | ZoominstellingenGezetMsg
@@ -13,6 +12,7 @@ export type KaartInternalSubMsg =
   | AchtergrondlagenGezetMsg
   | GeometryChangedMsg
   | TekenMsg
+  | KaartClickMsg
   | SubscribedMsg
   | MijnLocatieZoomdoelGezetMsg;
 
@@ -57,6 +57,11 @@ export interface KaartInternalMsg {
   readonly payload: Option<KaartInternalSubMsg>;
 }
 
+export interface KaartClickMsg {
+  readonly type: "KaartClick";
+  readonly clickCoordinaat: ol.Coordinate;
+}
+
 function KaartInternalMsg(payload: Option<KaartInternalSubMsg>): KaartInternalMsg {
   return {
     type: "KaartInternal",
@@ -77,6 +82,12 @@ export const kaartLogOnlyWrapper: prt.ValidationWrapper<any, KaartInternalMsg> =
     payload: none
   };
 };
+
+export const kaartClickWrapper = (clickCoordinaat: ol.Coordinate) => KaartInternalMsg(some(KaartClickMsg(clickCoordinaat)));
+
+function KaartClickMsg(clickCoordinaat: ol.Coordinate): KaartClickMsg {
+  return { type: "KaartClick", clickCoordinaat: clickCoordinaat };
+}
 
 function ZoominstellingenGezetMsg(instellingen: prt.Zoominstellingen): ZoominstellingenGezetMsg {
   return { type: "ZoominstellingenGezet", zoominstellingen: instellingen };
