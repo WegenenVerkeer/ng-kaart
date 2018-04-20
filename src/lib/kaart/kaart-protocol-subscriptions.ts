@@ -1,8 +1,8 @@
 import { Option } from "fp-ts/lib/Option";
 import { List } from "immutable";
-import { ZoekResultaten } from "../zoeker";
 
-import { AchtergrondLaag, TypedRecord } from ".";
+import { AchtergrondLaag } from ".";
+import { ZoekResultaten } from "../zoeker/abstract-zoeker";
 
 /////////
 // Types

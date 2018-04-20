@@ -4,7 +4,7 @@ import * as ol from "openlayers";
 import { ReplaySubject, Subject } from "rxjs";
 
 import { Laaggroep, Zoominstellingen } from ".";
-import { ZoekResultaten } from "../zoeker";
+import { ZoekResultaten } from "../zoeker/abstract-zoeker";
 import { ZoekerCoordinator } from "../zoeker/zoeker-coordinator";
 import { KaartConfig } from "./kaart-config";
 import * as ke from "./kaart-elementen";
