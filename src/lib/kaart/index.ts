@@ -1,35 +1,34 @@
+import { CommonModule } from "@angular/common";
+import { ModuleWithProviders, NgModule } from "@angular/core";
+import { MatButtonModule, MatIconModule } from "@angular/material";
+import { ClickOutsideModule } from "ng4-click-outside";
 import * as ol from "openlayers";
 
-import { ModuleWithProviders, NgModule } from "@angular/core";
-import { CommonModule } from "@angular/common";
-import { ClickOutsideModule } from "ng4-click-outside";
-import { KaartComponent } from "./kaart.component";
-import { KaartClassicComponent } from "./kaart-classic.component";
-import { KaartKnopZoomSliderComponent } from "./kaart-knop-zoom-slider.component";
-import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
-import { KaartVectorLaagComponent } from "./kaart-vector-laag.component";
-import { KaartNosqlfsLaagComponent } from "./kaart-nosqlfs-laag.component";
-import { KaartBlancoLaagComponent } from "./kaart-blanco-laag.component";
-import { KaartKnopAchtergrondLaagKiezerComponent } from "./kaart-knop-achtergrondlaag-kiezer.component";
-import { KaartTekenPolygoonLaagComponent } from "./kaart-teken-polygoon-laag.component";
-import { KaartFeaturesLaagComponent } from "./kaart-toon-features.component";
-import { KaartKnopVolledigSchermComponent } from "./kaart-knop-volledig-scherm.component";
-import { KaartSchaalComponent } from "./kaart-schaal.component";
-import { KaartZoomComponent } from "./kaart-zoom.component";
-import { KaartMijnLocatieComponent } from "./kaart-mijn-locatie.component";
-import { KaartConfig, KAART_CFG } from "./kaart-config";
-import { KaartTilecacheLaagComponent } from "./kaart-tilecache-laag.component";
-import { KaartGeoserverLaagComponent } from "./kaart-geoserver-laag.component";
-import { KaartOrthoLaagComponent } from "./kaart-ortho-laag.component";
-import { CoordinatenService } from "./coordinaten.service";
-import { KaartStandaardInteractiesComponent } from "./kaart-standaard-interacties.component";
-import { KaartStandaardKnoppenComponent } from "./kaart-standaard-knoppen.component";
+import { ZoekerModule } from "../zoeker";
 import { KaartAchtergrondSelectorComponent } from "./kaart-achtergrond-selector.component";
 import { KaartAchtergrondTileComponent } from "./kaart-achtergrond-tile.component";
+import { KaartBlancoLaagComponent } from "./kaart-blanco-laag.component";
+import { KaartClassicComponent } from "./kaart-classic.component";
+import { KAART_CFG, KaartConfig } from "./kaart-config";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
-import { MatButtonModule, MatIconModule } from "@angular/material";
-import { ZoekerModule } from "../zoeker/index";
-import { GoogleLocatieZoekerConfig } from "../zoeker/google-locatie-zoeker.config";
+import { KaartGeoserverLaagComponent } from "./kaart-geoserver-laag.component";
+import { KaartKnopAchtergrondLaagKiezerComponent } from "./kaart-knop-achtergrondlaag-kiezer.component";
+import { KaartKnopVolledigSchermComponent } from "./kaart-knop-volledig-scherm.component";
+import { KaartKnopZoomSliderComponent } from "./kaart-knop-zoom-slider.component";
+import { KaartMijnLocatieComponent } from "./kaart-mijn-locatie.component";
+import { KaartNosqlfsLaagComponent } from "./kaart-nosqlfs-laag.component";
+import { KaartOpenStreetViewComponent } from "./kaart-open-street-view.component";
+import { KaartOrthoLaagComponent } from "./kaart-ortho-laag.component";
+import { KaartSchaalComponent } from "./kaart-schaal.component";
+import { KaartStandaardInteractiesComponent } from "./kaart-standaard-interacties.component";
+import { KaartStandaardKnoppenComponent } from "./kaart-standaard-knoppen.component";
+import { KaartTekenPolygoonLaagComponent } from "./kaart-teken-polygoon-laag.component";
+import { KaartTilecacheLaagComponent } from "./kaart-tilecache-laag.component";
+import { KaartFeaturesLaagComponent } from "./kaart-toon-features.component";
+import { KaartVectorLaagComponent } from "./kaart-vector-laag.component";
+import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
+import { KaartZoomComponent } from "./kaart-zoom.component";
+import { KaartComponent } from "./kaart.component";
 
 const components: any[] = [
   KaartComponent,
@@ -52,7 +51,8 @@ const components: any[] = [
   KaartWmsLaagComponent,
   KaartBlancoLaagComponent,
   KaartAchtergrondSelectorComponent,
-  KaartAchtergrondTileComponent
+  KaartAchtergrondTileComponent,
+  KaartOpenStreetViewComponent
 ];
 
 // Weersta de drang om deze 2 variabelen in een andere module te plaatsen, want dat geeft problemen met gebruik in AOT app.
@@ -110,7 +110,7 @@ export const defaultKaartConfig: KaartConfig = {
   imports: [CommonModule, ClickOutsideModule, MatButtonModule, MatIconModule, ZoekerModule.forRoot({})],
   declarations: [components],
   exports: [components],
-  providers: [CoordinatenService, ReplaySubjectKaartCmdDispatcher]
+  providers: [ReplaySubjectKaartCmdDispatcher]
 })
 export class KaartModule {
   static defaultConfig = defaultKaartConfig;
@@ -147,6 +147,7 @@ export * from "./kaart-wms-laag.component";
 export * from "./kaart-blanco-laag.component";
 export * from "./kaart-zoom.component";
 export * from "./kaart-mijn-locatie.component";
+export * from "./kaart-open-street-view.component";
 export * from "./kaart.component";
 export * from "./kaart-event-dispatcher";
 export * from "./kaart-protocol";

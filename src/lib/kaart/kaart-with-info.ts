@@ -27,6 +27,7 @@ export class KaartWithInfo {
   readonly stdInteracties: List<ol.interaction.Interaction> = List(); // TODO beter gewoon interacties
   readonly scrollZoomOnFocus: boolean = false;
   readonly showBackgroundSelector: boolean = false;
+  readonly clickSubj: Subject<ol.Coordinate> = new ReplaySubject<ol.Coordinate>(1);
   readonly zoominstellingenSubj: Subject<Zoominstellingen> = new ReplaySubject<Zoominstellingen>(1);
   readonly geselecteerdeFeaturesSubj: Subject<List<ol.Feature>> = new ReplaySubject<List<ol.Feature>>(1);
   readonly geselecteerdeFeatures: ol.Collection<ol.Feature> = new ol.Collection<ol.Feature>();
@@ -60,7 +61,9 @@ export class KaartWithInfo {
     });
     map.getLayers().on("change:length", zetInstellingen);
     map.getView().on("change:center", () => this.middelpuntSubj.next(map.getView().getCenter()));
-
+    map.on("click", (event: ol.MapBrowserEvent) => {
+      return this.clickSubj.next(event.coordinate);
+    });
     this.geselecteerdeFeatures.on("add", () => {
       this.geselecteerdeFeaturesSubj.next(List(this.geselecteerdeFeatures.getArray()));
     });

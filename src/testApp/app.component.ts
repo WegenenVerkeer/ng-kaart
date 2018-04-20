@@ -1,17 +1,18 @@
-import { Component, ViewEncapsulation, ViewChild } from "@angular/core";
-import * as ol from "openlayers";
-import "rxjs/add/operator/mergeMap";
 import "rxjs/add/operator/map";
+import "rxjs/add/operator/mergeMap";
 
-import { GoogleLocatieZoekerService } from "../lib/zoeker";
-import { CoordinatenService, KaartClassicComponent } from "../lib/kaart";
-import { kaartLogger, definitieToStyle } from "../lib/public_api";
+import { Component, ViewChild, ViewEncapsulation } from "@angular/core";
+import { List } from "immutable";
+import * as ol from "openlayers";
+
+import { KaartClassicComponent } from "../lib/kaart";
+import { classicLogger } from "../lib/kaart-classic/log";
+import { kaartLogOnlyWrapper } from "../lib/kaart/kaart-internal-messages";
+import * as prt from "../lib/kaart/kaart-protocol";
+import { definitieToStyle, kaartLogger } from "../lib/public_api";
 import { AWV0StyleFunctionDescription, definitieToStyleFunction } from "../lib/stijl";
 import { offsetStyleFunction } from "../lib/stijl/offset-stijl-function";
-import * as prt from "../lib/kaart/kaart-protocol";
-import { kaartLogOnlyWrapper } from "../lib/kaart/kaart-internal-messages";
-import { List } from "immutable";
-import { classicLogger } from "../lib/kaart-classic/log";
+import { GoogleLocatieZoekerService } from "../lib/zoeker";
 
 @Component({
   selector: "awv-ng-kaart-test-app",
@@ -144,8 +145,7 @@ export class AppComponent {
 
   constructor(
     @ViewChild("verplaats") private verplaatsKaart: KaartClassicComponent,
-    private googleLocatieZoekerService: GoogleLocatieZoekerService,
-    public coordinatenService: CoordinatenService
+    private googleLocatieZoekerService: GoogleLocatieZoekerService
   ) {
     kaartLogger.setLevel("DEBUG");
     classicLogger.setLevel("DEBUG");

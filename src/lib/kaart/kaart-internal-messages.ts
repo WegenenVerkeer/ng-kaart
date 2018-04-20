@@ -11,6 +11,7 @@ export type KaartInternalSubMsg =
   | ZoominstellingenGezetMsg
   | AchtergrondtitelGezetMsg
   | AchtergrondlagenGezetMsg
+  | KaartClickMsg
   | SubscribedMsg
   | MijnLocatieZoomdoelGezetMsg;
 
@@ -45,6 +46,11 @@ export interface KaartInternalMsg {
   readonly payload: Option<KaartInternalSubMsg>;
 }
 
+export interface KaartClickMsg {
+  readonly type: "KaartClick";
+  readonly clickCoordinaat: ol.Coordinate;
+}
+
 function KaartInternalMsg(payload: Option<KaartInternalSubMsg>): KaartInternalMsg {
   return {
     type: "KaartInternal",
@@ -65,6 +71,12 @@ export const kaartLogOnlyWrapper: prt.ValidationWrapper<any, KaartInternalMsg> =
     payload: none
   };
 };
+
+export const kaartClickWrapper = (clickCoordinaat: ol.Coordinate) => KaartInternalMsg(some(KaartClickMsg(clickCoordinaat)));
+
+function KaartClickMsg(clickCoordinaat: ol.Coordinate): KaartClickMsg {
+  return { type: "KaartClick", clickCoordinaat: clickCoordinaat };
+}
 
 function ZoominstellingenGezetMsg(instellingen: prt.Zoominstellingen): ZoominstellingenGezetMsg {
   return { type: "ZoominstellingenGezet", zoominstellingen: instellingen };

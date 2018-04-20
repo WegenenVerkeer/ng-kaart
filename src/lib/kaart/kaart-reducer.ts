@@ -625,6 +625,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
       }
 
+      function subscribeToKaartClick(sub: prt.KaartClickSubscription<Msg>): ModelWithResult<Msg> {
+        const subscription = model.clickSubj.subscribe(t => msgConsumer(sub.wrapper(t)));
+        return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
+      }
+
       const subscribeToAchtergrondlagen = (wrapper: (achtergrondlagen: List<ke.AchtergrondLaag>) => Msg) =>
         subscribe(
           model.groeplagenSubj
@@ -655,6 +660,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToGeselecteerdeFeatures(cmnd.subscription);
         case "Achtergrondlagen":
           return subscribeToAchtergrondlagen(cmnd.subscription.wrapper);
+        case "KaartClick":
+          return subscribeToKaartClick(cmnd.subscription);
         case "MijnLocatieZoomdoel":
           return subscribeToMijnLocatieZoomdoel(cmnd.subscription);
         case "Zoeker":
