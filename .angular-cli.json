@@ -8,9 +8,7 @@
       "outDir": "out/testApp",
       "assets": [
         "testApp/assets",
-        "favicon.ico",
-        { "glob": "**/*.svg", "input": "../node_modules/material-design-icons/", "output": "./material-design-icons/" },
-        { "glob": "**/*.png", "input": "../node_modules/material-design-icons/maps/2x_web/", "output": "./material-design-icons/maps/2x_web/" }
+        "favicon.ico"
       ],
       "index": "index.html",
       "main": "main.ts",

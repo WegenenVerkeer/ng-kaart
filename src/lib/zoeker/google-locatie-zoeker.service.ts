@@ -7,9 +7,37 @@ import "rxjs/add/observable/fromPromise";
 import * as ol from "openlayers";
 import {} from "googlemaps";
 import { GoogleLocatieZoekerConfig } from "./google-locatie-zoeker.config";
+import { AbstractZoeker, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
+import { Map } from "immutable";
+import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 
-const googleApiKey = "AIzaSyApbXMl5DGL60g17JU6MazMxNcUGooey7I";
-const googleUrl = `https://maps.googleapis.com/maps/api/js?key=${googleApiKey}&libraries=places&language=nl&callback=__onGoogleLoaded`;
+export class GoogleZoekResultaat implements ZoekResultaat {
+  partialMatch: boolean;
+  index: number;
+  omschrijving: string;
+  bron: string;
+  zoeker: string;
+  geometry: any;
+  locatie: any;
+  icoon: SafeHtml; // Ieder zoekresultaat heeft hetzelfde icoon.
+  style: ol.style.Style;
+
+  constructor(locatie, index: number, zoeker: string, icoon: SafeHtml, style: ol.style.Style) {
+    this.partialMatch = locatie.partialMatch;
+    this.index = index + 1;
+    this.locatie = locatie.locatie;
+    this.geometry = new ol.format.GeoJSON(<ol.olx.format.GeoJSONOptions>{
+      ignoreExtraDims: true,
+      defaultDataProjection: undefined,
+      featureProjection: undefined
+    }).readGeometry(locatie.locatie);
+    this.omschrijving = locatie.omschrijving;
+    this.bron = locatie.bron;
+    this.zoeker = zoeker;
+    this.icoon = icoon;
+    this.style = style;
+  }
+}
 
 // Deze URL encoder gaat alles encoden. De standaard encoder encode volgende characters NIET:
 // ! $ \' ( ) * + , ; A 9 - . _ ~ ? /     (zie https://tools.ietf.org/html/rfc3986)
@@ -52,46 +80,39 @@ interface ExtendedPlaceResult extends google.maps.places.PlaceResult, ExtendedRe
   locatie: any;
 }
 
-export class ZoekResultaat {
-  partialMatch: boolean;
-  index: number;
-  omschrijving: string;
-  bron: string;
-  geometry: any;
-  locatie: any;
-  selected = false;
-
-  constructor(locatie, index: number) {
-    this.partialMatch = locatie.partialMatch;
-    this.index = index + 1;
-    this.locatie = locatie.locatie;
-    this.geometry = new ol.format.GeoJSON(<ol.olx.format.GeoJSONOptions>{
-      ignoreExtraDims: true,
-      defaultDataProjection: undefined,
-      featureProjection: undefined
-    }).readGeometry(locatie.locatie);
-    this.omschrijving = locatie.omschrijving;
-    this.bron = locatie.bron;
-  }
-}
-
-export class ZoekResultaten {
-  resultaten: ZoekResultaat[] = [];
-  fouten: string[] = [];
-
-  constructor(error?: string) {
-    if (error != null) {
-      this.fouten.push(error);
-    }
-  }
-}
-
 @Injectable()
-export class GoogleLocatieZoekerService {
+export class GoogleLocatieZoekerService implements AbstractZoeker {
   private _cache: Promise<GoogleServices> | null = null;
+  private legende: Map<string, SafeHtml>;
+  private style: ol.style.Style; // 1 style voor ieder resultaat. We maken geen onderscheid per bron.
+  private icoon: SafeHtml;
+
   locatieZoekerUrl = this.googleLocatieZoekerConfig.url;
 
-  constructor(private http: Http, private googleLocatieZoekerConfig: GoogleLocatieZoekerConfig) {}
+  constructor(private http: Http, private googleLocatieZoekerConfig: GoogleLocatieZoekerConfig, private sanitizer: DomSanitizer) {
+    // We moeten hier al de expanded html zetten, want angular directives worden niet geexpandeerd in innerHtml met SafeHtml.
+    this.icoon = this.sanitizer.bypassSecurityTrustHtml("<mat-icon class='mat-icon material-icons'>place</mat-icon>");
+    this.legende = Map.of(this.naam(), this.icoon);
+    this.style = new ol.style.Style({
+      stroke: new ol.style.Stroke({
+        color: this.googleLocatieZoekerConfig.kleur,
+        width: 1
+      }),
+      fill: new ol.style.Fill({
+        color: this.googleLocatieZoekerConfig.lichtereKleur()
+      }),
+      text: new ol.style.Text({
+        text: "\uE55F", // place
+        font: "normal 24px Material Icons",
+        textBaseline: "bottom",
+        fill: new ol.style.Fill({
+          color: this.googleLocatieZoekerConfig.kleur
+        }),
+        offsetX: 0.5,
+        offsetY: 1.0
+      })
+    });
+  }
 
   private init(): Promise<GoogleServices> {
     if (this._cache) {
@@ -109,22 +130,27 @@ export class GoogleLocatieZoekerService {
     }
   }
 
+  private maakZoekResultaten(error?: string): ZoekResultaten {
+    const resultaten = new ZoekResultaten(this.naam(), error);
+    resultaten.legende = this.legende;
+    return resultaten;
+  }
+
   zoek(zoekterm): Observable<ZoekResultaten> {
     if (zoekterm.trim().length === 0) {
-      return Observable.of(new ZoekResultaten());
+      return Observable.of(this.maakZoekResultaten());
     }
     const params: URLSearchParams = new URLSearchParams("", new EncodeAllesQueryEncoder());
     params.set("query", zoekterm);
     params.set("legacy", "false");
 
-    return this.http.get(this.locatieZoekerUrl + "/zoek", { search: params }).pipe(
-      flatMap(resp => this.parseResult(resp)), //
-      mergeAll(),
-      catchError(err => this.handleError(err))
-    );
+    return this.http
+      .get(this.locatieZoekerUrl + "/zoek", { search: params })
+      .pipe(flatMap(resp => this.parseResult(resp)), catchError(err => this.handleError(err)));
   }
+
   parseResult(response: Response): Observable<ZoekResultaten> {
-    const zoekResultaten = new ZoekResultaten();
+    const zoekResultaten = this.maakZoekResultaten();
 
     // parse result
     const resultaten = response.json();
@@ -279,11 +305,14 @@ export class GoogleLocatieZoekerService {
             resultaat.locatie || this.wgs84ToLambert72GeoJson(resultaat.geometry.location.lng(), resultaat.geometry.location.lat());
         });
         const locaties = resultaten.locaties.concat(resultatenLijst);
-        if (locaties.length === 30) {
-          zoekResultaten.fouten.push("Er werden meer dan 30 resultaten gevonden, de eerste 30 worden hier opgelijst");
+        if (locaties.length >= this.googleLocatieZoekerConfig.maxAantal) {
+          zoekResultaten.fouten.push(
+            `Er werden meer dan ${this.googleLocatieZoekerConfig.maxAantal} resultaten gevonden, ` +
+              `de eerste ${this.googleLocatieZoekerConfig.maxAantal} worden hier opgelijst`
+          );
         }
-        locaties.forEach((locatie, index) => {
-          zoekResultaten.resultaten.push(new ZoekResultaat(locatie, index));
+        locaties.slice(0, this.googleLocatieZoekerConfig.maxAantal).forEach((locatie, index) => {
+          zoekResultaten.resultaten.push(new GoogleZoekResultaat(locatie, index, this.naam(), this.icoon, this.style));
         });
         return zoekResultaten;
       });
@@ -302,7 +331,7 @@ export class GoogleLocatieZoekerService {
         // toon http foutmelding indien geen 200 teruggehad
         error = `Fout bij opvragen locatie: ${response.responseText || response.statusText || response}`;
     }
-    return Observable.of(new ZoekResultaten(error));
+    return Observable.of(this.maakZoekResultaten(error));
   }
 
   private geocode(omschrijving): Promise<ExtendedGeocoderResult[]> {
@@ -454,8 +483,14 @@ export class GoogleLocatieZoekerService {
 
   private loadScript() {
     const node = document.createElement("script");
-    node.src = googleUrl;
+    node.src = `https://maps.googleapis.com/maps/api/js?key=${
+      this.googleLocatieZoekerConfig.apiKey
+    }&libraries=places&language=nl&callback=__onGoogleLoaded`;
     node.type = "text/javascript";
     document.getElementsByTagName("head")[0].appendChild(node);
+  }
+
+  naam(): string {
+    return "Google/WDB LocatieZoeker";
   }
 }

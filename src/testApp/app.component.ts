@@ -3,7 +3,7 @@ import * as ol from "openlayers";
 import "rxjs/add/operator/mergeMap";
 import "rxjs/add/operator/map";
 
-import { GoogleLocatieZoekerService } from "../lib/google-locatie-zoeker";
+import { GoogleLocatieZoekerService } from "../lib/zoeker";
 import { CoordinatenService, KaartClassicComponent } from "../lib/kaart";
 import { kaartLogger, definitieToStyle } from "../lib/public_api";
 import { AWV0StyleFunctionDescription, definitieToStyleFunction } from "../lib/stijl";
@@ -21,7 +21,7 @@ import { classicLogger } from "../lib/kaart-classic/log";
 })
 export class AppComponent {
   private readonly zichtbaarheid = {
-    ingezoomd: true,
+    orthomap: true,
     kleursimpel: false // standard falsey
   };
 
@@ -87,7 +87,7 @@ export class AppComponent {
       anchorYUnits: "fraction",
       scale: 1,
       opacity: 1,
-      src: "./material-design-icons/maps/svg/production/ic_place_48px.svg"
+      src: require("material-design-icons/maps/svg/production/ic_place_48px.svg")
     }),
     text: new ol.style.Text({
       font: "12px 'Helvetica Neue', sans-serif",

@@ -19,7 +19,7 @@ import { subscriptionCmdOperator } from "./subscription-helper";
   selector: "awv-kaart-classic",
   templateUrl: "./kaart-classic.component.html"
 })
-export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges {
+export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, KaartCmdDispatcher<prt.TypedRecord> {
   private static counter = 1;
 
   private readonly destroyingSubj: rx.Subject<void> = new rx.Subject<void>();
