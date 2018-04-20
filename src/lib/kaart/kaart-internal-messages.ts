@@ -47,8 +47,8 @@ export interface KaartInternalMsg {
 }
 
 export interface KaartClickMsg {
-  type: "KaartClick";
-  clickCoordinaat: ol.Coordinate;
+  readonly type: "KaartClick";
+  readonly clickCoordinaat: ol.Coordinate;
 }
 
 function KaartInternalMsg(payload: Option<KaartInternalSubMsg>): KaartInternalMsg {

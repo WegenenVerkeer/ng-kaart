@@ -8,6 +8,7 @@ import { ofType } from "../util/operators";
 import * as prt from "./kaart-protocol";
 import { Observable } from "rxjs/Observable";
 import { skipUntil, take, takeUntil } from "rxjs/operators";
+import { lambert72ToWgs84 } from "./coordinaten.service";
 
 @Component({
   selector: "awv-kaart-open-street-view",
@@ -35,7 +36,7 @@ export class KaartOpenStreetViewComponent extends KaartChildComponentBase implem
     super.ngOnInit();
   }
 
-  clickButton(): void {
+  toggleLuisterenOpKaartClicks(): void {
     if (this.actief) {
       this.stopLuisterenOpClickEvents();
     } else {
@@ -69,10 +70,11 @@ export class KaartOpenStreetViewComponent extends KaartChildComponentBase implem
   }
 
   private openGoogleStreetView(coordinaat: ol.Coordinate): void {
-    const wsg84xy = ol.proj.transform(coordinaat, ol.proj.get("EPSG:31370"), ol.proj.get("EPSG:4326"));
-    const strtv_url = `http://maps.google.com/?cbll= ${wsg84xy[1]},${wsg84xy[0]} &cbp=12,0,0,0,0&layer=c&source=embed&z=14&output=svembed`;
+    // const wsg84xy = ol.proj.transform(coordinaat, ol.proj.get("EPSG:31370"), ol.proj.get("EPSG:4326"));
+    const wsg84xy = lambert72ToWgs84(coordinaat);
+    const strtvUrl = `http://maps.google.com/?cbll= ${wsg84xy[1]},${wsg84xy[0]} &cbp=12,0,0,0,0&layer=c&source=embed&z=14&output=svembed`;
 
-    window.open(strtv_url);
+    window.open(strtvUrl);
 
     this.stopLuisterenOpClickEvents();
   }
