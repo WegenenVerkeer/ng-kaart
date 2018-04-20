@@ -4,7 +4,7 @@ import { MatButtonModule, MatIconModule } from "@angular/material";
 import { ClickOutsideModule } from "ng4-click-outside";
 import * as ol from "openlayers";
 
-import { ZoekerModule } from "../zoeker";
+import { ZoekerModule } from "../zoeker/index";
 import { KaartAchtergrondSelectorComponent } from "./kaart-achtergrond-selector.component";
 import { KaartAchtergrondTileComponent } from "./kaart-achtergrond-tile.component";
 import { KaartBlancoLaagComponent } from "./kaart-blanco-laag.component";
