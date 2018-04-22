@@ -1,5 +1,7 @@
-import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation, Input } from "@angular/core";
+import { Component, Input } from "@angular/core";
 import * as ol from "openlayers";
+
+import { KaartClassicComponent } from "./kaart-classic.component";
 import { TekenSettings } from "./kaart-elementen";
 
 const defaultLaagStyle = new ol.style.Style({
@@ -38,15 +40,34 @@ const defaultDrawStyle = new ol.style.Style({
 });
 
 @Component({
-  selector: "awv-kaart-tekenen-settings",
+  selector: "awv-kaart-teken-settings",
   template: "<ng-content></ng-content>"
 })
 export class KaartTekenenSettingsComponent {
-  @Input() geometryType: ol.geom.GeometryType = "LineString";
-  @Input() laagStyle = defaultLaagStyle;
-  @Input() drawStyle = defaultDrawStyle;
+  private _geometryType: ol.geom.GeometryType = "LineString";
+  @Input()
+  set geometryType(gtype: ol.geom.GeometryType) {
+    this._geometryType = gtype;
+    this.propagateSettings();
+  }
+  private _laagStyle = defaultLaagStyle;
+  @Input()
+  set laagStyle(style: ol.style.Style) {
+    this._laagStyle = style;
+    this.propagateSettings();
+  }
+  private _drawStyle = defaultDrawStyle;
+  @Input()
+  set drawStyle(style: ol.style.Style) {
+    this._drawStyle = style;
+    this.propagateSettings();
+  }
 
-  get tekenSettings(): TekenSettings {
-    return TekenSettings(this.geometryType, this.laagStyle, this.drawStyle);
+  constructor(readonly kaart: KaartClassicComponent) {
+    this.propagateSettings();
+  }
+
+  propagateSettings() {
+    this.kaart.tekenSettings = TekenSettings(this._geometryType, this._laagStyle, this._drawStyle);
   }
 }

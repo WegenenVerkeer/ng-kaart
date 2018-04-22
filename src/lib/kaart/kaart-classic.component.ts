@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, ViewChild } from "@angular/core";
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from "@angular/core";
 import * as option from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
@@ -16,10 +16,10 @@ import {
   TekenGeomAangepastMsg
 } from "../kaart-classic/messages";
 import { ofType, TypedRecord } from "../util/operators";
+import { TekenSettings } from "./kaart-elementen";
 import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import * as prt from "./kaart-protocol";
 import { Command } from "./kaart-protocol-commands";
-import { KaartTekenenSettingsComponent } from "./kaart-tekenen-settings.component";
 import { KaartMsgObservableConsumer } from "./kaart.component";
 import { subscriptionCmdOperator } from "./subscription-helper";
 
@@ -31,10 +31,10 @@ const TekenRef = {};
 })
 export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, KaartCmdDispatcher<prt.TypedRecord> {
   private static counter = 1;
-
   private kaartClassicSubMsg$: Observable<KaartClassicSubMsg> = Observable.empty();
   private readonly destroyingSubj: rx.Subject<void> = new rx.Subject<void>();
   private stopTekenenSubj: rx.Subject<void> = new rx.Subject<void>();
+  private _tekenSettings: TekenSettings;
   private hasFocus = false;
 
   readonly dispatcher: ReplaySubjectKaartCmdDispatcher<TypedRecord> = new ReplaySubjectKaartCmdDispatcher();
@@ -51,8 +51,6 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, Kaar
   @Input() extent: ol.Extent;
   @Input() selectieModus: prt.SelectieModus = "none";
   @Input() naam = "kaart" + KaartClassicComponent.counter++;
-
-  @ViewChild(KaartTekenenSettingsComponent) tekenenSettingsComponent: KaartTekenenSettingsComponent;
 
   @Output() geselecteerdeFeatures: EventEmitter<List<ol.Feature>> = new EventEmitter();
   @Output() getekendeGeom: EventEmitter<ol.geom.Geometry> = new EventEmitter();
@@ -170,12 +168,16 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, Kaar
     }
   }
 
+  set tekenSettings(settings: TekenSettings) {
+    this._tekenSettings = settings;
+  }
+
   private startTekenen() {
     this.kaartClassicSubMsg$
       .lift(
         classicMsgSubscriptionCmdOperator(
           this.dispatcher,
-          prt.GeometryChangedSubscription(geom => KaartClassicMsg(TekenGeomAangepastMsg(geom)), this.tekenenSettingsComponent.tekenSettings)
+          prt.GeometryChangedSubscription(geom => KaartClassicMsg(TekenGeomAangepastMsg(geom)), this._tekenSettings)
         )
       )
       .pipe(
