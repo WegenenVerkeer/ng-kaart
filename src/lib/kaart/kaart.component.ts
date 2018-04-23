@@ -73,7 +73,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       map(m => (m as KaartInternalMsg).payload),
       emitSome,
       tap(m => kaartLogger.debug("een interne message werd ontvangen:", m)),
-      shareReplay(1)
+      shareReplay(1) // Waarom hebben we eigenlijk het vorige commando nog nodig?
     );
   }
 
