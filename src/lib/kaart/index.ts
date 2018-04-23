@@ -14,7 +14,6 @@ import { KAART_CFG, KaartConfig } from "./kaart-config";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { KaartGeoserverLaagComponent } from "./kaart-geoserver-laag.component";
 import { KaartKnopAchtergrondLaagKiezerComponent } from "./kaart-knop-achtergrondlaag-kiezer.component";
-import { KaartKnopMetenLengteOppervlakteComponent } from "./kaart-knop-meten.component";
 import { KaartKnopVolledigSchermComponent } from "./kaart-knop-volledig-scherm.component";
 import { KaartKnopZoomSliderComponent } from "./kaart-knop-zoom-slider.component";
 import { KaartMijnLocatieComponent } from "./kaart-mijn-locatie.component";
@@ -46,7 +45,6 @@ const components: any[] = [
   KaartStandaardInteractiesComponent,
   KaartStandaardKnoppenComponent,
   KaartTekenPolygoonLaagComponent,
-  KaartKnopMetenLengteOppervlakteComponent,
   KaartTekenLaagComponent,
   KaartFeaturesLaagComponent,
   KaartVectorLaagComponent,
