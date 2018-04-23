@@ -1,15 +1,15 @@
 import { Option } from "fp-ts/lib/Option";
 import { List } from "immutable";
-import { ZoekResultaten } from "../zoeker";
 import * as ol from "openlayers";
 
-import { AchtergrondLaag, TekenSettings, TypedRecord } from ".";
+import { AchtergrondLaag, TekenSettings } from ".";
+import { ZoekResultaten } from "../zoeker/abstract-zoeker";
 
 /////////
 // Types
 //
 
-export type Subscription<Msg extends TypedRecord> =
+export type Subscription<Msg> =
   | ZoominstellingenSubscription<Msg>
   | MiddelpuntSubscription<Msg>
   | GeselecteerdeFeaturesSubscription<Msg>
@@ -18,7 +18,8 @@ export type Subscription<Msg extends TypedRecord> =
   | ZoekerSubscription<Msg>
   | MijnLocatieZoomdoelSubscription<Msg>
   | GeometryChangedSubscription<Msg>
-  | TekenenSubscription<Msg>;
+  | TekenenSubscription<Msg>
+  | KaartClickSubscription<Msg>;
 
 export interface Zoominstellingen {
   zoom: number;
@@ -51,6 +52,11 @@ export interface AchtergrondlagenSubscription<Msg> {
   readonly wrapper: (achtergrondlagen: List<AchtergrondLaag>) => Msg;
 }
 
+export interface KaartClickSubscription<Msg> {
+  readonly type: "KaartClick";
+  readonly wrapper: (coordinaat: ol.Coordinate) => Msg;
+}
+
 export interface ZoekerSubscription<Msg> {
   readonly type: "Zoeker";
   readonly wrapper: (resultaten: ZoekResultaten) => Msg;
@@ -76,52 +82,49 @@ export interface TekenenSubscription<Msg> {
 // Constructors
 //
 
-export function ZoominstellingenSubscription<Msg extends TypedRecord>(
-  wrapper: (settings: Zoominstellingen) => Msg
-): ZoominstellingenSubscription<Msg> {
+export function ZoominstellingenSubscription<Msg>(wrapper: (settings: Zoominstellingen) => Msg): ZoominstellingenSubscription<Msg> {
   return { type: "Zoominstellingen", wrapper: wrapper };
 }
 
-export function GeselecteerdeFeaturesSubscription<Msg extends TypedRecord>(
+export function GeselecteerdeFeaturesSubscription<Msg>(
   wrapper: (geselecteerdeFeatures: List<ol.Feature>) => Msg
 ): GeselecteerdeFeaturesSubscription<Msg> {
   return { type: "GeselecteerdeFeatures", wrapper: wrapper };
 }
 
-export function MiddelpuntSubscription<Msg extends TypedRecord>(wrapper: (x: number, y: number) => Msg): MiddelpuntSubscription<Msg> {
+export function MiddelpuntSubscription<Msg>(wrapper: (x: number, y: number) => Msg): MiddelpuntSubscription<Msg> {
   return { type: "Middelpunt", wrapper: wrapper };
 }
 
-export function AchtergrondTitelSubscription<Msg extends TypedRecord>(wrapper: (titel: string) => Msg): AchtergrondTitelSubscription<Msg> {
+export function AchtergrondTitelSubscription<Msg>(wrapper: (titel: string) => Msg): AchtergrondTitelSubscription<Msg> {
   return { type: "Achtergrond", wrapper: wrapper };
 }
 
-export function AchtergrondlagenSubscription<Msg extends TypedRecord>(
+export function AchtergrondlagenSubscription<Msg>(
   wrapper: (achtergrondlagen: List<AchtergrondLaag>) => Msg
 ): AchtergrondlagenSubscription<Msg> {
   return { type: "Achtergrondlagen", wrapper: wrapper };
 }
 
-export function ZoekerSubscription<Msg extends TypedRecord>(wrapper: (resultaten: ZoekResultaten) => Msg): Subscription<Msg> {
-  return {
-    type: "Zoeker",
-    wrapper: wrapper
-  };
+export function ZoekerSubscription<Msg>(wrapper: (resultaten: ZoekResultaten) => Msg): Subscription<Msg> {
+  return { type: "Zoeker", wrapper: wrapper };
 }
 
-export function MijnLocatieZoomdoelSubscription<Msg extends TypedRecord>(
-  wrapper: (doel: Option<number>) => Msg
-): MijnLocatieZoomdoelSubscription<Msg> {
+export function KaartClickSubscription<Msg>(wrapper: (coordinaat: ol.Coordinate) => Msg): Subscription<Msg> {
+  return { type: "KaartClick", wrapper: wrapper };
+}
+
+export function MijnLocatieZoomdoelSubscription<Msg>(wrapper: (doel: Option<number>) => Msg): MijnLocatieZoomdoelSubscription<Msg> {
   return { type: "MijnLocatieZoomdoel", wrapper: wrapper };
 }
 
-export function GeometryChangedSubscription<Msg extends TypedRecord>(
+export function GeometryChangedSubscription<Msg>(
   wrapper: (geom: ol.geom.Geometry) => Msg,
   tekenSettings: TekenSettings
 ): GeometryChangedSubscription<Msg> {
   return { type: "GeometryChanged", wrapper: wrapper, tekenSettings: tekenSettings };
 }
 
-export function TekenenSubscription<Msg extends TypedRecord>(wrapper: (settings: Option<TekenSettings>) => Msg): TekenenSubscription<Msg> {
+export function TekenenSubscription<Msg>(wrapper: (settings: Option<TekenSettings>) => Msg): TekenenSubscription<Msg> {
   return { type: "Tekenen", wrapper: wrapper };
 }

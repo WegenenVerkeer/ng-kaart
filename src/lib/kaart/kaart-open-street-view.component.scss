@@ -15,7 +15,7 @@
   justify-content: space-around;
   position: absolute;
   right: 16px;
-  bottom: 100px;
+  bottom: 72px;
 }
 
 .actions > .mat-raised-button {
@@ -23,4 +23,8 @@
   padding-left: 0;
   padding-right: 0;
   line-height: 24px;
+}
+
+.actief {
+  color: darkred;
 }

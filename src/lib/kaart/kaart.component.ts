@@ -5,10 +5,9 @@ import "rxjs/add/observable/of";
 
 import { Component, ElementRef, Inject, Input, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
 import * as ol from "openlayers";
-import proj4 from "proj4";
 import { ReplaySubject } from "rxjs";
 import { Observable } from "rxjs/Observable";
-import { filter, map, merge, scan, shareReplay, takeUntil, tap, concatAll } from "rxjs/operators";
+import { concatAll, filter, map, merge, scan, shareReplay, takeUntil, tap } from "rxjs/operators";
 
 import { asap } from "../util/asap";
 import { observerOutsideAngular } from "../util/observer-outside-angular";
@@ -35,7 +34,6 @@ export const vacuousKaartMsgObservableConsumer: KaartMsgObservableConsumer = (ms
 })
 export class KaartComponent extends KaartComponentBase implements OnInit, OnDestroy {
   // noinspection JSUnusedLocalSymbols
-  private static readonly lambert72 = KaartComponent.configureerLambert72();
   kaartModel$: Observable<KaartWithInfo> = Observable.empty();
 
   @ViewChild("map") mapElement: ElementRef;
@@ -67,15 +65,6 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   internalMessage$: Observable<KaartInternalSubMsg> = Observable.empty();
 
   private readonly kaartModelObsSubj = new ReplaySubject<Observable<KaartWithInfo>>(1);
-
-  private static configureerLambert72() {
-    ol.proj.setProj4(proj4);
-    proj4.defs(
-      "EPSG:31370",
-      "+proj=lcc +lat_1=51.16666723333333 +lat_2=49.8333339 +lat_0=90 +lon_0=4.367486666666666 +x_0=150000.013 +y_0=5400088.438 " +
-        "+ellps=intl +towgs84=-125.8,79.9,-100.5 +units=m +no_defs"
-    );
-  }
 
   constructor(@Inject(KAART_CFG) readonly config: KaartConfig, zone: NgZone) {
     super(zone);

@@ -6,14 +6,14 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 
-import { GoogleLocatieZoekerService } from "../lib/zoeker";
-import { CoordinatenService, KaartClassicComponent } from "../lib/kaart";
+import { KaartClassicComponent } from "../lib/kaart";
 import { classicLogger } from "../lib/kaart-classic/log";
 import { kaartLogOnlyWrapper } from "../lib/kaart/kaart-internal-messages";
 import * as prt from "../lib/kaart/kaart-protocol";
 import { definitieToStyle, kaartLogger } from "../lib/public_api";
 import { AWV0StyleFunctionDescription, definitieToStyleFunction } from "../lib/stijl";
 import { offsetStyleFunction } from "../lib/stijl/offset-stijl-function";
+import { GoogleLocatieZoekerService } from "../lib/zoeker";
 
 @Component({
   selector: "awv-ng-kaart-test-app",
@@ -150,8 +150,7 @@ export class AppComponent {
 
   constructor(
     @ViewChild("verplaats") private verplaatsKaart: KaartClassicComponent,
-    private googleLocatieZoekerService: GoogleLocatieZoekerService,
-    public coordinatenService: CoordinatenService
+    private googleLocatieZoekerService: GoogleLocatieZoekerService
   ) {
     kaartLogger.setLevel("DEBUG");
     classicLogger.setLevel("DEBUG");

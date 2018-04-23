@@ -1,15 +1,16 @@
-import { Injectable } from "@angular/core";
-import { Http, URLSearchParams, Response, QueryEncoder } from "@angular/http"; // TODO port naar nieuwe httpclient
-import { Observable } from "rxjs/Observable";
-import { map, flatMap, catchError, mergeAll } from "rxjs/operators";
 import "rxjs/add/observable/fromPromise";
 
-import * as ol from "openlayers";
-import {} from "googlemaps";
-import { GoogleLocatieZoekerConfig } from "./google-locatie-zoeker.config";
-import { AbstractZoeker, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
-import { Map } from "immutable";
+import { Inject, Injectable } from "@angular/core";
+import { Http, QueryEncoder, Response, URLSearchParams } from "@angular/http";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
+import {} from "googlemaps";
+import { Map } from "immutable";
+import * as ol from "openlayers";
+import { Observable } from "rxjs/Observable";
+import { catchError, flatMap, map } from "rxjs/operators";
+
+import { AbstractZoeker, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
+import { GOOGLE_LOCATIE_ZOEKER_CFG, GoogleLocatieZoekerConfig, GoogleLocatieZoekerConfigData } from "./google-locatie-zoeker.config";
 
 export class GoogleZoekResultaat implements ZoekResultaat {
   partialMatch: boolean;
@@ -82,14 +83,21 @@ interface ExtendedPlaceResult extends google.maps.places.PlaceResult, ExtendedRe
 
 @Injectable()
 export class GoogleLocatieZoekerService implements AbstractZoeker {
+  private readonly googleLocatieZoekerConfig: GoogleLocatieZoekerConfig;
   private _cache: Promise<GoogleServices> | null = null;
   private legende: Map<string, SafeHtml>;
   private style: ol.style.Style; // 1 style voor ieder resultaat. We maken geen onderscheid per bron.
   private icoon: SafeHtml;
 
-  locatieZoekerUrl = this.googleLocatieZoekerConfig.url;
+  private readonly locatieZoekerUrl: string;
 
-  constructor(private http: Http, private googleLocatieZoekerConfig: GoogleLocatieZoekerConfig, private sanitizer: DomSanitizer) {
+  constructor(
+    private readonly http: Http,
+    @Inject(GOOGLE_LOCATIE_ZOEKER_CFG) googleLocatieZoekerConfigData: GoogleLocatieZoekerConfigData,
+    private readonly sanitizer: DomSanitizer
+  ) {
+    this.googleLocatieZoekerConfig = new GoogleLocatieZoekerConfig(googleLocatieZoekerConfigData);
+    this.locatieZoekerUrl = this.googleLocatieZoekerConfig.url;
     // We moeten hier al de expanded html zetten, want angular directives worden niet geexpandeerd in innerHtml met SafeHtml.
     this.icoon = this.sanitizer.bypassSecurityTrustHtml("<mat-icon class='mat-icon material-icons'>place</mat-icon>");
     this.legende = Map.of(this.naam(), this.icoon);
