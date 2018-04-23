@@ -1,7 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { HttpClientModule } from "@angular/common/http";
 import { ModuleWithProviders, NgModule } from "@angular/core";
-import { MatButtonModule, MatButtonToggleModule, MatIconModule } from "@angular/material";
+import { MatButtonModule, MatButtonToggleModule, MatIconModule, MatCardModule } from "@angular/material";
 import { ClickOutsideModule } from "ng4-click-outside";
 import * as ol from "openlayers";
 
@@ -19,6 +19,7 @@ import { KaartKnopZoomSliderComponent } from "./kaart-knop-zoom-slider.component
 import { KaartMijnLocatieComponent } from "./kaart-mijn-locatie.component";
 import { KaartNosqlfsLaagComponent } from "./kaart-nosqlfs-laag.component";
 import { KaartOpenStreetViewComponent } from "./kaart-open-street-view.component";
+import { KaartInfoBoodschappenComponent } from "./kaart-info-boodschappen.component";
 import { KaartOrthoLaagComponent } from "./kaart-ortho-laag.component";
 import { KaartSchaalComponent } from "./kaart-schaal.component";
 import { KaartStandaardInteractiesComponent } from "./kaart-standaard-interacties.component";
@@ -55,7 +56,8 @@ const components: any[] = [
   KaartBlancoLaagComponent,
   KaartAchtergrondSelectorComponent,
   KaartAchtergrondTileComponent,
-  KaartOpenStreetViewComponent
+  KaartOpenStreetViewComponent,
+  KaartInfoBoodschappenComponent
 ];
 
 // Weersta de drang om deze 2 variabelen in een andere module te plaatsen, want dat geeft problemen met gebruik in AOT app.
@@ -116,6 +118,7 @@ export const defaultKaartConfig: KaartConfig = {
     MatButtonModule,
     MatIconModule,
     MatButtonToggleModule,
+    MatCardModule,
     HttpClientModule,
     ZoekerModule.forRoot({})
   ],

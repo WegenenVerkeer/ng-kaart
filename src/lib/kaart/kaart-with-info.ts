@@ -14,6 +14,12 @@ export interface Groeplagen {
   readonly lagen: List<ke.Laag>;
 }
 
+export interface InfoBoodschap {
+  readonly id: string;
+  readonly titel: string;
+  readonly inhoud: string;
+}
+
 /**
  * Het model achter de kaartcomponent.
  */
