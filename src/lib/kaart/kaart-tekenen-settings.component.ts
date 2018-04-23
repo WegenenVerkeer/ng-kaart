@@ -48,26 +48,26 @@ export class KaartTekenenSettingsComponent {
   @Input()
   set geometryType(gtype: ol.geom.GeometryType) {
     this._geometryType = gtype;
-    this.propagateSettings();
+    this.propagateTekenSettings();
   }
   private _laagStyle = defaultLaagStyle;
   @Input()
   set laagStyle(style: ol.style.Style) {
     this._laagStyle = style;
-    this.propagateSettings();
+    this.propagateTekenSettings();
   }
   private _drawStyle = defaultDrawStyle;
   @Input()
   set drawStyle(style: ol.style.Style) {
     this._drawStyle = style;
-    this.propagateSettings();
+    this.propagateTekenSettings();
   }
 
   constructor(readonly kaart: KaartClassicComponent) {
-    this.propagateSettings();
+    this.propagateTekenSettings();
   }
 
-  propagateSettings() {
+  propagateTekenSettings() {
     this.kaart.tekenSettings = TekenSettings(this._geometryType, this._laagStyle, this._drawStyle);
   }
 }

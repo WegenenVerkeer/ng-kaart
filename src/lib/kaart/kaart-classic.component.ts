@@ -23,8 +23,6 @@ import { Command } from "./kaart-protocol-commands";
 import { KaartMsgObservableConsumer } from "./kaart.component";
 import { subscriptionCmdOperator } from "./subscription-helper";
 
-const TekenRef = {};
-
 @Component({
   selector: "awv-kaart-classic",
   templateUrl: "./kaart-classic.component.html"

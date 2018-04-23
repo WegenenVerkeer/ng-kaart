@@ -117,14 +117,12 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
 
 export type Stylish = ol.StyleFunction | ol.style.Style | ol.style.Style[];
 
-export function determineStyleSelector(stp: Stylish): Option<ke.StyleSelector> {
+export function determineStyleSelector(stp?: Stylish): Option<ke.StyleSelector> {
   if (stp instanceof ol.style.Style) {
     return some(ke.StaticStyle(stp));
-    // FIXME
-    // }
-    // else if ((ol.StyleFunction = typeof stp)) {
-    //   return some(ke.DynamicStyle(stp as ol.StyleFunction));
-  } else if (stp instanceof Array) {
+  } else if (typeof stp === "function") {
+    return some(ke.DynamicStyle(stp as ol.StyleFunction));
+  } else if (Array.isArray(stp)) {
     return some(ke.Styles(stp as ol.style.Style[]));
   } else {
     return none;

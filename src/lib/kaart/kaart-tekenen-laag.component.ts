@@ -6,7 +6,7 @@ import { Observable } from "rxjs/Observable";
 import { distinctUntilChanged, map } from "rxjs/operators";
 
 import { ofType } from "../util/operators";
-import { forEach } from "../util/option";
+import { forEach, orElse } from "../util/option";
 import { KaartChildComponentBase } from "./kaart-child-component-base";
 import * as ke from "./kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper, TekenMsg, tekenWrapper } from "./kaart-internal-messages";
@@ -161,11 +161,9 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
       type: ke.VectorType,
       titel: TekenLaagNaam,
       source: source,
-      styleSelector: determineStyleSelector(
-        this.tekenenSettingsSubj
-          .getValue()
-          .map(s => s.laagStyle)
-          .getOrElseValue(this.defaultlaagStyle)
+      styleSelector: orElse(
+        this.tekenenSettingsSubj.getValue().chain(s => determineStyleSelector(s.laagStyle)), //
+        () => determineStyleSelector(this.defaultlaagStyle)
       ),
       selecteerbaar: true,
       minZoom: 2,
