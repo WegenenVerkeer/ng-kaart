@@ -151,11 +151,15 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
      */
     function pasZIndicesAan(aanpassing: number, vanaf: number, tot: number, groep: Laaggroep): List<PositieAanpassing> {
       return model.olLayersOpTitel.reduce((updates, layer, titel) => {
-        const groepPositie = layerIndexNaarGroepIndex(layer!, groep);
-        if (groepPositie >= vanaf && groepPositie <= tot) {
-          const positie = groepPositie + aanpassing;
-          zetLayerIndex(layer!, positie, groep);
-          return updates!.push({ titel: titel!, positie: positie });
+        if (layerNaarLaaggroep(<ol.layer.Base>layer) === groep) {
+          const groepPositie = layerIndexNaarGroepIndex(layer!, groep);
+          if (groepPositie >= vanaf && groepPositie <= tot) {
+            const positie = groepPositie + aanpassing;
+            zetLayerIndex(layer!, positie, groep);
+            return updates!.push({ titel: titel!, positie: positie });
+          } else {
+            return updates!;
+          }
         } else {
           return updates!;
         }
@@ -240,6 +244,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             const groep = cmnd.laaggroep;
             const groepPositie = limitPosition(cmnd.positie, groep);
             const movedLayers = pasZIndicesAan(1, groepPositie, maxIndexInGroep(groep), groep);
+            layer.set("titel", titel);
             layer.setVisible(cmnd.magGetoondWorden); // achtergrondlagen expliciet zichtbaar maken!
             zetLayerIndex(layer, groepPositie, groep);
             model.map.addLayer(layer);
