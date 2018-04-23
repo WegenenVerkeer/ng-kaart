@@ -3,6 +3,7 @@ import * as ol from "openlayers";
 
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { TekenSettings } from "./kaart-elementen";
+import { determineStyleSelector } from "./laag-converter";
 
 @Component({
   selector: "awv-kaart-teken-settings",
@@ -33,6 +34,10 @@ export class KaartTekenenSettingsComponent {
   }
 
   propagateTekenSettings() {
-    this.kaart.tekenSettings = TekenSettings(this._geometryType, this._laagStyle, this._drawStyle);
+    this.kaart.tekenSettings = TekenSettings(
+      this._geometryType,
+      determineStyleSelector(this._laagStyle),
+      determineStyleSelector(this._drawStyle)
+    );
   }
 }

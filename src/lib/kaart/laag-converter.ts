@@ -68,7 +68,7 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
     return new ol.layer.Vector({
       source: vectorlaag.source,
       visible: true,
-      style: determineStyle(vectorlaag, kaart.config.defaults.style),
+      style: determineStyle(vectorlaag.styleSelector, kaart.config.defaults.style),
       minResolution: array
         .index(vectorlaag.maxZoom)(kaart.config.defaults.resolutions)
         .getOrElseValue(kaart.config.defaults.resolutions[kaart.config.defaults.resolutions.length - 1]),
@@ -80,21 +80,6 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
 
   function createBlankLayer() {
     return new ol.layer.Tile(); // Hoe eenvoudig kan het zijn?
-  }
-
-  function determineStyle(vectorlaag: ke.VectorLaag, defaultStyle: ol.style.Style): Stylish {
-    return vectorlaag.styleSelector
-      .map(selector => {
-        switch (selector.type) {
-          case "StaticStyle":
-            return selector.style;
-          case "DynamicStyle":
-            return selector.styleFunction;
-          case "Styles":
-            return selector.styles;
-        }
-      })
-      .getOrElseValue(defaultStyle);
   }
 
   switch (laag.type) {
@@ -116,6 +101,21 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
 }
 
 export type Stylish = ol.StyleFunction | ol.style.Style | ol.style.Style[];
+
+export function determineStyle(styleSelector: Option<ke.StyleSelector>, defaultStyle: ol.style.Style): Stylish {
+  return styleSelector
+    .map(selector => {
+      switch (selector.type) {
+        case "StaticStyle":
+          return selector.style;
+        case "DynamicStyle":
+          return selector.styleFunction;
+        case "Styles":
+          return selector.styles;
+      }
+    })
+    .getOrElseValue(defaultStyle);
+}
 
 export function determineStyleSelector(stp?: Stylish): Option<ke.StyleSelector> {
   if (stp instanceof ol.style.Style) {

@@ -61,8 +61,8 @@ export type Laag = WmsLaag | VectorLaag | BlancoLaag;
 
 export interface TekenSettings {
   readonly geometryType: ol.geom.GeometryType;
-  readonly laagStyle?: ol.style.Style | ol.style.Style[] | ol.StyleFunction;
-  readonly drawStyle?: ol.style.Style | ol.style.Style[] | ol.StyleFunction;
+  readonly laagStyle: Option<StyleSelector>;
+  readonly drawStyle: Option<StyleSelector>;
 }
 
 export function isWmsLaag(laag: Laag): boolean {
@@ -96,8 +96,8 @@ export function Styles(styles: Array<ol.style.Style>): StyleSelector {
 
 export function TekenSettings(
   geometryType: ol.geom.GeometryType,
-  laagStyle?: ol.style.Style | ol.style.Style[] | ol.StyleFunction,
-  drawStyle?: ol.style.Style | ol.style.Style[] | ol.StyleFunction
+  laagStyle: Option<StyleSelector>,
+  drawStyle: Option<StyleSelector>
 ): TekenSettings {
   return {
     geometryType: geometryType,

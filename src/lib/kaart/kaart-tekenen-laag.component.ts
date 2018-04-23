@@ -13,7 +13,7 @@ import { KaartInternalMsg, kaartLogOnlyWrapper, TekenMsg, tekenWrapper } from ".
 import * as prt from "./kaart-protocol";
 import { KaartWithInfo } from "./kaart-with-info";
 import { KaartComponent } from "./kaart.component";
-import { determineStyleSelector } from "./laag-converter";
+import { determineStyle, determineStyleSelector } from "./laag-converter";
 
 const TekenLaagNaam = "Tekenen van geometrie";
 @Component({
@@ -161,7 +161,7 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
       titel: TekenLaagNaam,
       source: source,
       styleSelector: orElse(
-        this.tekenenSettingsSubj.getValue().chain(s => determineStyleSelector(s.laagStyle)), //
+        this.tekenenSettingsSubj.getValue().chain(s => s.laagStyle), //
         () => determineStyleSelector(this.defaultlaagStyle)
       ),
       selecteerbaar: true,
@@ -200,7 +200,7 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
       ),
       style: this.tekenenSettingsSubj
         .getValue()
-        .map(s => s.drawStyle)
+        .map(s => determineStyle(s.drawStyle, this.defaultDrawStyle))
         .getOrElseValue(this.defaultDrawStyle)
     });
 
