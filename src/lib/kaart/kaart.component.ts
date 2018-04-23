@@ -7,7 +7,7 @@ import { Component, ElementRef, Inject, Input, NgZone, OnDestroy, OnInit, ViewCh
 import * as ol from "openlayers";
 import { ReplaySubject } from "rxjs";
 import { Observable } from "rxjs/Observable";
-import { filter, map, merge, scan, shareReplay, takeUntil, tap } from "rxjs/operators";
+import { concatAll, filter, map, merge, scan, shareReplay, takeUntil, tap } from "rxjs/operators";
 
 import { asap } from "../util/asap";
 import { observerOutsideAngular } from "../util/observer-outside-angular";
@@ -64,6 +64,8 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
   internalMessage$: Observable<KaartInternalSubMsg> = Observable.empty();
 
+  private readonly kaartModelObsSubj = new ReplaySubject<Observable<KaartWithInfo>>(1);
+
   constructor(@Inject(KAART_CFG) readonly config: KaartConfig, zone: NgZone) {
     super(zone);
     this.internalMessage$ = this.msgSubj.pipe(
@@ -71,7 +73,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       map(m => (m as KaartInternalMsg).payload),
       emitSome,
       tap(m => kaartLogger.debug("een interne message werd ontvangen:", m)),
-      shareReplay(1)
+      shareReplay(1) // Waarom hebben we eigenlijk het vorige commando nog nodig?
     );
   }
 
@@ -116,6 +118,8 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
         shareReplay(1)
       );
 
+      this.kaartModelObsSubj.next(this.kaartModel$);
+
       // subscribe op het model om de zaak aan gang te zwengelen
       this.kaartModel$.subscribe(
         model => {
@@ -159,5 +163,10 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
   get message$(): Observable<prt.KaartMsg> {
     return this.msgSubj;
+  }
+
+  get kaartWithInfo$(): Observable<KaartWithInfo> {
+    // TODO geen casting meer in RxJs 6
+    return (this.kaartModelObsSubj.pipe(concatAll()) as any) as Observable<KaartWithInfo>;
   }
 }

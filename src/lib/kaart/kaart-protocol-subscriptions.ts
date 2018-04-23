@@ -1,5 +1,6 @@
 import { Option } from "fp-ts/lib/Option";
 import { List } from "immutable";
+import * as ol from "openlayers";
 
 import { AchtergrondLaag } from ".";
 import { ZoekResultaten } from "../zoeker/abstract-zoeker";
@@ -16,6 +17,8 @@ export type Subscription<Msg> =
   | AchtergrondlagenSubscription<Msg>
   | ZoekerSubscription<Msg>
   | MijnLocatieZoomdoelSubscription<Msg>
+  | GeometryChangedSubscription<Msg>
+  | TekenenSubscription<Msg>
   | KaartClickSubscription<Msg>;
 
 export interface Zoominstellingen {
@@ -64,6 +67,16 @@ export interface MijnLocatieZoomdoelSubscription<Msg> {
   readonly wrapper: (doel: Option<number>) => Msg;
 }
 
+export interface GeometryChangedSubscription<Msg> {
+  readonly type: "GeometryChanged";
+  readonly wrapper: (evt: ol.geom.Geometry) => Msg;
+}
+
+export interface TekenenSubscription<Msg> {
+  readonly type: "Tekenen";
+  readonly wrapper: (boolean) => Msg;
+}
+
 ///////////////
 // Constructors
 //
@@ -102,4 +115,12 @@ export function KaartClickSubscription<Msg>(wrapper: (coordinaat: ol.Coordinate)
 
 export function MijnLocatieZoomdoelSubscription<Msg>(wrapper: (doel: Option<number>) => Msg): MijnLocatieZoomdoelSubscription<Msg> {
   return { type: "MijnLocatieZoomdoel", wrapper: wrapper };
+}
+
+export function GeometryChangedSubscription<Msg>(wrapper: (geom: ol.geom.Geometry) => Msg): GeometryChangedSubscription<Msg> {
+  return { type: "GeometryChanged", wrapper: wrapper };
+}
+
+export function TekenenSubscription<Msg>(wrapper: (boolean) => Msg): TekenenSubscription<Msg> {
+  return { type: "Tekenen", wrapper: wrapper };
 }

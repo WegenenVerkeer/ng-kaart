@@ -1,6 +1,7 @@
 import { CommonModule } from "@angular/common";
+import { HttpClientModule } from "@angular/common/http";
 import { ModuleWithProviders, NgModule } from "@angular/core";
-import { MatButtonModule, MatIconModule } from "@angular/material";
+import { MatButtonModule, MatButtonToggleModule, MatIconModule } from "@angular/material";
 import { ClickOutsideModule } from "ng4-click-outside";
 import * as ol from "openlayers";
 
@@ -23,6 +24,7 @@ import { KaartSchaalComponent } from "./kaart-schaal.component";
 import { KaartStandaardInteractiesComponent } from "./kaart-standaard-interacties.component";
 import { KaartStandaardKnoppenComponent } from "./kaart-standaard-knoppen.component";
 import { KaartTekenPolygoonLaagComponent } from "./kaart-teken-polygoon-laag.component";
+import { KaartTekenLaagComponent } from "./kaart-tekenen.component";
 import { KaartTilecacheLaagComponent } from "./kaart-tilecache-laag.component";
 import { KaartFeaturesLaagComponent } from "./kaart-toon-features.component";
 import { KaartVectorLaagComponent } from "./kaart-vector-laag.component";
@@ -43,6 +45,7 @@ const components: any[] = [
   KaartStandaardInteractiesComponent,
   KaartStandaardKnoppenComponent,
   KaartTekenPolygoonLaagComponent,
+  KaartTekenLaagComponent,
   KaartFeaturesLaagComponent,
   KaartVectorLaagComponent,
   KaartNosqlfsLaagComponent,
@@ -107,7 +110,15 @@ export const defaultKaartConfig: KaartConfig = {
 };
 
 @NgModule({
-  imports: [CommonModule, ClickOutsideModule, MatButtonModule, MatIconModule, ZoekerModule.forRoot({})],
+  imports: [
+    CommonModule,
+    ClickOutsideModule,
+    MatButtonModule,
+    MatIconModule,
+    MatButtonToggleModule,
+    HttpClientModule,
+    ZoekerModule.forRoot({})
+  ],
   declarations: [components],
   exports: [components],
   providers: [ReplaySubjectKaartCmdDispatcher]

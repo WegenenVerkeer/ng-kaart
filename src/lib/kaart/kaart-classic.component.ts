@@ -7,13 +7,22 @@ import { Observable } from "rxjs/Observable";
 import { map, share, takeUntil, tap } from "rxjs/operators";
 
 import { classicLogger } from "../kaart-classic/log";
-import { FeatureSelectieAangepastMsg, KaartClassicMsg, KaartClassicSubMsg, logOnlyWrapper, SubscribedMsg } from "../kaart-classic/messages";
+import {
+  FeatureSelectieAangepastMsg,
+  KaartClassicMsg,
+  KaartClassicSubMsg,
+  logOnlyWrapper,
+  SubscribedMsg,
+  TekenGeomAangepastMsg
+} from "../kaart-classic/messages";
 import { ofType, TypedRecord } from "../util/operators";
 import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import * as prt from "./kaart-protocol";
 import { Command } from "./kaart-protocol-commands";
 import { KaartMsgObservableConsumer } from "./kaart.component";
 import { subscriptionCmdOperator } from "./subscription-helper";
+
+const TekenRef = {};
 
 @Component({
   selector: "awv-kaart-classic",
@@ -22,7 +31,9 @@ import { subscriptionCmdOperator } from "./subscription-helper";
 export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, KaartCmdDispatcher<prt.TypedRecord> {
   private static counter = 1;
 
+  private kaartClassicSubMsg$: Observable<KaartClassicSubMsg> = Observable.empty();
   private readonly destroyingSubj: rx.Subject<void> = new rx.Subject<void>();
+  private stopTekenenSubj: rx.Subject<void> = new rx.Subject<void>();
   private hasFocus = false;
 
   readonly dispatcher: ReplaySubjectKaartCmdDispatcher<TypedRecord> = new ReplaySubjectKaartCmdDispatcher();
@@ -35,25 +46,28 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, Kaar
   @Input() breedte; // neem standaard de hele breedte in
   @Input() hoogte = 400;
   @Input() mijnLocatieZoom: number | undefined;
+  @Input() tekenen = false;
   @Input() extent: ol.Extent;
   @Input() selectieModus: prt.SelectieModus = "none";
   @Input() naam = "kaart" + KaartClassicComponent.counter++;
 
   @Output() geselecteerdeFeatures: EventEmitter<List<ol.Feature>> = new EventEmitter();
+  @Output() getekendeGeom: EventEmitter<ol.geom.Geometry> = new EventEmitter();
 
   // TODO deze klasse en child components verhuizen naar classic directory, maar nog even wachten of we krijgen te veel merge conflicts
   constructor() {
     this.kaartMsgObservableConsumer = (msg$: Observable<prt.KaartMsg>) => {
       // We zijn enkel geïnteresseerd in messages van ons eigen type
-      const kaartClassicSubMsg$: Observable<KaartClassicSubMsg> = msg$.pipe(
+      this.kaartClassicSubMsg$ = msg$.pipe(
         ofType<KaartClassicMsg>("KaartClassic"),
         map(m => m.payload),
         tap(m => classicLogger.debug("Een classic msg werd ontvangen", m)),
         share() // 1 rx subscription naar boven toe is genoeg
       );
+
       // Een beetje overkill voor de ene kaart subscription die we nu hebben, maar het volgende zorgt voor automatisch beheer van de
       // kaart subscriptions.
-      kaartClassicSubMsg$
+      this.kaartClassicSubMsg$
         .lift(
           classicMsgSubscriptionCmdOperator(
             this.dispatcher,
@@ -64,13 +78,24 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, Kaar
         )
         .pipe(takeUntil(this.destroyingSubj)) // Autounsubscribe moet na de lift komen: anders wordt er geen unsubscribe gestuurd
         .subscribe(err => classicLogger.error(err));
-      // We kunnen in dit geval onze stream rechtstreeks naar de @Output sturen
-      kaartClassicSubMsg$
+
+      // Zorg ervoor dat de geselecteerde features in de @Output terecht komen
+      this.kaartClassicSubMsg$
         .pipe(
           ofType<FeatureSelectieAangepastMsg>("FeatureSelectieAangepast"), //
-          map(m => m.geselecteerdeFeatures)
+          map(m => m.geselecteerdeFeatures),
+          takeUntil(this.destroyingSubj)
         )
         .subscribe(features => this.geselecteerdeFeatures.emit(features));
+
+      // Zorg ervoor dat de getekende geom in de @Output terecht komen
+      this.kaartClassicSubMsg$
+        .pipe(
+          ofType<TekenGeomAangepastMsg>("TekenGeomAangepast"), //
+          map(m => m.geom),
+          takeUntil(this.destroyingSubj)
+        )
+        .subscribe(geom => this.getekendeGeom.emit(geom));
       // We kunnen hier makkelijk een mini-reducer zetten voor KaartClassicSubMsg mocht dat nodig zijn
     };
   }
@@ -99,24 +124,23 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, Kaar
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if ("zoom" in changes) {
-      this.dispatch(prt.VeranderZoomCmd(changes.zoom.currentValue, logOnlyWrapper));
+    function forChangedValue(
+      prop: string,
+      action: (cur: any, prev: any) => void,
+      pred: (cur: any, prev: any) => boolean = () => true
+    ): void {
+      if (prop in changes && (!changes[prop].previousValue || pred(changes[prop].currentValue, changes[prop].previousValue))) {
+        action(changes[prop].currentValue, changes[prop].previousValue);
+      }
     }
-    if ("middelpunt" in changes && !coordinateIsEqual(changes.middelpunt.currentValue)(changes.middelpunt.previousValue)) {
-      this.dispatch(prt.VeranderMiddelpuntCmd(changes.middelpunt.currentValue));
-    }
-    if ("extent" in changes && !extentIsEqual(changes.extent.currentValue)(changes.extent.previousValue)) {
-      this.dispatch(prt.VeranderExtentCmd(changes.extent.currentValue));
-    }
-    if ("breedte" in changes) {
-      this.dispatch(prt.VeranderViewportCmd([changes.breedte.currentValue, this.hoogte]));
-    }
-    if ("hoogte" in changes) {
-      this.dispatch(prt.VeranderViewportCmd([this.breedte, changes.hoogte.currentValue]));
-    }
-    if ("mijnLocatieZoom" in changes) {
-      this.dispatch(prt.ZetMijnLocatieZoomCmd(option.fromNullable(changes.mijnLocatieZoom.currentValue)));
-    }
+
+    forChangedValue("zoom", zoom => this.dispatch(prt.VeranderZoomCmd(zoom, logOnlyWrapper)));
+    forChangedValue("middelpunt", middelpunt => this.dispatch(prt.VeranderMiddelpuntCmd(middelpunt)), coordinateIsDifferent);
+    forChangedValue("extent", extent => this.dispatch(prt.VeranderExtentCmd(extent)), extentIsDifferent);
+    forChangedValue("breedte", breedte => this.dispatch(prt.VeranderViewportCmd([breedte, this.hoogte])));
+    forChangedValue("hoogte", hoogte => this.dispatch(prt.VeranderViewportCmd([this.breedte, hoogte])));
+    forChangedValue("mijnLocatieZoom", zoom => this.dispatch(prt.ZetMijnLocatieZoomCmd(option.fromNullable(zoom))));
+    forChangedValue("tekenen", tekenen => (tekenen ? this.startTekenen() : this.stopTekenen()));
   }
 
   dispatch(cmd: prt.Command<TypedRecord>) {
@@ -142,9 +166,29 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, Kaar
       this.dispatch({ type: "VerliesFocusOpKaart" });
     }
   }
+
+  private startTekenen() {
+    this.kaartClassicSubMsg$
+      .lift(
+        classicMsgSubscriptionCmdOperator(
+          this.dispatcher,
+          prt.GeometryChangedSubscription(geom => KaartClassicMsg(TekenGeomAangepastMsg(geom)))
+        )
+      )
+      .pipe(
+        takeUntil(this.destroyingSubj), // Autounsubscribe by stoppen van de component
+        takeUntil(this.stopTekenenSubj) // En bij stoppen met tekenen
+      )
+      .subscribe(err => classicLogger.error(err));
+  }
+
+  private stopTekenen() {
+    this.stopTekenenSubj.next(); // zorg dat de unsubscribe gebeurt
+    this.stopTekenenSubj = new rx.Subject(); // en maak ons klaar voor de volgende ronde
+  }
 }
 
-const coordinateIsEqual = (coor1: ol.Coordinate) => (coor2: ol.Coordinate) => {
+const coordinateIsEqual = (coor1: ol.Coordinate, coor2: ol.Coordinate) => {
   if (!coor1 && !coor2) {
     return true;
   }
@@ -153,8 +197,9 @@ const coordinateIsEqual = (coor1: ol.Coordinate) => (coor2: ol.Coordinate) => {
   }
   return coor1[0] === coor2[0] && coor1[1] === coor2[1];
 };
+const coordinateIsDifferent = (coor1: ol.Coordinate, coor2: ol.Coordinate) => !coordinateIsEqual(coor1, coor2);
 
-const extentIsEqual = (ext1: ol.Extent) => (ext2: ol.Extent) => {
+const extentIsEqual = (ext1: ol.Extent, ext2: ol.Extent) => {
   if (!ext1 && !ext2) {
     return true;
   }
@@ -163,6 +208,7 @@ const extentIsEqual = (ext1: ol.Extent) => (ext2: ol.Extent) => {
   }
   return ext1[0] === ext2[0] && ext1[1] === ext2[1] && ext1[2] === ext2[2] && ext1[3] === ext2[3];
 };
+const extentIsDifferent = (ext1: ol.Extent, ext2: ol.Extent) => !extentIsEqual(ext1, ext2);
 
 /**
  * Een specialisatie van de subscriptionCmdOperator die specifiek werkt met KaartClassicMessages.

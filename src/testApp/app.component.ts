@@ -2,6 +2,7 @@ import "rxjs/add/operator/map";
 import "rxjs/add/operator/mergeMap";
 
 import { Component, ViewChild, ViewEncapsulation } from "@angular/core";
+import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 
@@ -23,6 +24,7 @@ import { GoogleLocatieZoekerService } from "../lib/zoeker";
 export class AppComponent {
   private readonly zichtbaarheid = {
     orthomap: true,
+    metenVoorbeeld: true,
     kleursimpel: false // standard falsey
   };
 
@@ -103,6 +105,9 @@ export class AppComponent {
   });
 
   geselecteerdeFeatures: List<ol.Feature> = List();
+
+  private tekenenActief = false;
+  private getekendeGeom: Option<ol.geom.Geometry> = none;
 
   // Dit werkt alleen als apigateway bereikbaar is. Zie CORS waarschuwing in README.
   readonly districtSource: ol.source.Vector = new ol.source.Vector({
@@ -193,6 +198,30 @@ export class AppComponent {
       .map(zoekresultaat => zoekresultaat.geometry)
       .map(geometry => new ol.Feature(geometry))
       .subscribe(feature => this.zoekresultaten.push(feature));
+  }
+
+  isTekenenActief() {
+    return this.tekenenActief;
+  }
+
+  startTekenen() {
+    this.tekenenActief = true;
+  }
+
+  stopTekenen() {
+    this.tekenenActief = false;
+    this.getekendeGeom = none;
+  }
+
+  get tekenGeomLength() {
+    return this.getekendeGeom
+      .filter(g => g.getType() === "LineString")
+      .map(g => Math.round(ol.Sphere.getLength(g as ol.geom.LineString) / 1000 * 100) / 100 + "km")
+      .getOrElseValue("(leeg)");
+  }
+
+  geomGetekend(geom: ol.geom.Geometry) {
+    this.getekendeGeom = some(geom);
   }
 
   verplaatsLagen() {

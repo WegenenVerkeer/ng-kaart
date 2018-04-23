@@ -54,7 +54,7 @@ export class KaartOpenStreetViewComponent extends KaartChildComponentBase implem
         ofType<KaartClickMsg>("KaartClick"), //
         observeOnAngular(this.zone),
         takeUntil(this.destroying$), // autounsubscribe bij destroy component
-        skipUntil(Observable.timer(0)), // enkel geinteresseerd in messages nadat subscribe() wordt opgeroepen
+        skipUntil(Observable.timer(0)), // beperk tot messages nadat subscribe opgeroepen is: oorzaak is shareReplay(1) in internalmessages$
         take(1) // 1 click message is genoeg
       )
       .subscribe(msg => {
