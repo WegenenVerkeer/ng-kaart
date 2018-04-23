@@ -75,7 +75,6 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
     })
   });
 
-  private map: ol.Map;
   private tekenenSettingsSubj: BehaviorSubject<Option<ke.TekenSettings>>;
   private changedGeometriesSubj: Subject<ol.geom.Geometry>;
 
@@ -191,7 +190,6 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
   }
 
   createDrawInteraction(source: ol.source.Vector): ol.interaction.Draw {
-    let listener;
     const [measureTooltipElement, measureTooltip] = this.createMeasureTooltip();
 
     const draw = new ol.interaction.Draw({
@@ -209,7 +207,7 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
     draw.on(
       "drawstart",
       event => {
-        listener = (event as ol.interaction.Draw.Event).feature.getGeometry().on(
+        (event as ol.interaction.Draw.Event).feature.getGeometry().on(
           "change",
           evt => {
             const geometry = evt.target as ol.geom.Geometry;
