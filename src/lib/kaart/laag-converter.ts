@@ -4,6 +4,7 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import { kaartLogger } from "./log";
 import * as ke from "./kaart-elementen";
+import { WmtsCapaConfig } from "./kaart-elementen";
 
 export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {
   function createdTileWms(l: ke.WmsLaag) {
@@ -31,25 +32,33 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
   }
 
   function createdWmts(l: ke.WmtsLaag) {
+    let source: ol.source.WMTS;
+    if (l.config.type === "Capa") {
+      const config = l.config as ke.WmtsCapaConfig;
+      source = new ol.source.WMTS(config.wmtsOptions);
+    } else {
+      const config = l.config as ke.WmtsManualConfig;
+      source = new ol.source.WMTS({
+        projection: kaart.config.srs,
+        urls: config.urls.toArray(),
+        tileGrid: new ol.tilegrid.WMTS({
+          origin: config.origin.toUndefined(),
+          resolutions: kaart.config.defaults.resolutions,
+          // extent: kaart.config.defaults.extent,
+          matrixIds: config.matrixIds
+        }),
+        layer: l.naam,
+        style: config.style.getOrElseValue(""),
+        format: l.format.getOrElseValue("image/png"),
+        matrixSet: l.matrixSet
+      });
+    }
     return new ol.layer.Tile(<ol.olx.layer.TileOptions>{
       title: l.titel,
       visible: true,
       extent: kaart.config.defaults.extent,
       opacity: l.opacity.toUndefined(),
-      source: new ol.source.WMTS({
-        projection: kaart.config.srs,
-        urls: l.urls.toArray(),
-        tileGrid: new ol.tilegrid.WMTS({
-          origin: l.origin.toUndefined(),
-          resolutions: kaart.config.defaults.resolutions,
-          // extent: kaart.config.defaults.extent,
-          matrixIds: l.matrixIds
-        }),
-        layer: l.naam,
-        style: l.style.getOrElseValue(""),
-        format: l.format.getOrElseValue("image/png"),
-        matrixSet: l.matrixSet
-      })
+      source: source
     });
   }
 

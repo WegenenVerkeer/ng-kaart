@@ -5,6 +5,8 @@ import { KaartClassicComponent } from "./kaart-classic.component";
 import { BlancoLaag, BlancoType } from "./kaart-elementen";
 import { Laaggroep } from "./kaart-protocol-commands";
 
+const blancoLaag = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
+
 @Component({
   selector: "awv-kaart-blanco-laag",
   template: "<ng-content></ng-content>",
@@ -20,7 +22,8 @@ export class KaartBlancoLaagComponent extends KaartLaagComponent {
   createLayer(): BlancoLaag {
     return {
       type: BlancoType,
-      titel: this.titel
+      titel: this.titel,
+      backgroundUrl: blancoLaag
     };
   }
 

@@ -26,12 +26,13 @@ export interface DynamicStyle {
 
 export type StyleSelector = StaticStyle | DynamicStyle;
 
-export type AchtergrondLaag = WmsLaag | BlancoLaag;
+export type AchtergrondLaag = WmsLaag | WmtsLaag | BlancoLaag;
 
 export interface WmsLaag {
   readonly type: SingleTileWmsType | TiledWmsType;
   readonly titel: string;
   readonly naam: string;
+  readonly backgroundUrl: string;
   readonly urls: List<string>;
   readonly versie: Option<string>;
   readonly tileSize: Option<number>;
@@ -39,18 +40,30 @@ export interface WmsLaag {
   readonly opacity: Option<number>;
 }
 
+export interface WmtsCapaConfig {
+  readonly type: "Capa";
+  readonly url: string;
+  readonly wmtsOptions: ol.olx.source.WMTSOptions;
+}
+
+export interface WmtsManualConfig {
+  readonly type: "Manual";
+  readonly urls: List<string>;
+  readonly style: Option<string>;
+  readonly matrixIds: string[];
+  readonly origin: Option<ol.Coordinate>;
+}
+
 export interface WmtsLaag {
   readonly type: WmtsType;
   readonly titel: string;
   readonly naam: string;
-  readonly urls: List<string>;
+  readonly backgroundUrl: string;
+  readonly opacity: Option<number>;
   readonly versie: Option<string>;
   readonly format: Option<string>;
-  readonly opacity: Option<number>;
-  readonly matrixIds: string[];
-  readonly style: Option<string>;
   readonly matrixSet: string;
-  readonly origin: Option<ol.Coordinate>;
+  readonly config: WmtsCapaConfig | WmtsManualConfig;
 }
 
 export interface VectorLaag {
@@ -66,6 +79,7 @@ export interface VectorLaag {
 export interface BlancoLaag {
   readonly type: BlancoType;
   readonly titel: string;
+  readonly backgroundUrl: string;
 }
 
 export type Laag = WmsLaag | WmtsLaag | VectorLaag | BlancoLaag;
