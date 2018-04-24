@@ -679,21 +679,19 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         // Deze is een klein beetje speciaal omdat we de unsubcribe willen opvangen om evt. het tekenen te stoppen
         const subscription = rx.Observable.create((observer: rx.Observer<ol.geom.Geometry>) => {
           const innerSub = model.geometryChangedSubj.pipe(debounceTime(100)).subscribe(observer);
-          model.tekenenSettingsSubj.next(some(sub.tekenSettings));
+          model.tekenSettingsSubj.next(some(sub.tekenSettings));
           return () => {
             innerSub.unsubscribe();
-            // model.geometryChangedSubj.observers.forEach()
-            // one unsubscribes for all
-            model.tekenenSettingsSubj.next(none);
+            if (model.geometryChangedSubj.observers.length === 0) {
+              model.tekenSettingsSubj.next(none);
+            }
           };
         }).subscribe(pm => msgConsumer(sub.wrapper(pm)));
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
       }
 
       function subscribeToTekenen(sub: prt.TekenenSubscription<Msg>): ModelWithResult<Msg> {
-        const subscription = model.tekenenSettingsSubj
-          .pipe(distinctUntilChanged())
-          .subscribe(settings => msgConsumer(sub.wrapper(settings)));
+        const subscription = model.tekenSettingsSubj.pipe(distinctUntilChanged()).subscribe(settings => msgConsumer(sub.wrapper(settings)));
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
       }
 

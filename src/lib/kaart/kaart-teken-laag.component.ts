@@ -1,7 +1,7 @@
 import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
-import { BehaviorSubject, Subject, Subscription } from "rxjs";
+import { Subject, Subscription } from "rxjs";
 import { Observable } from "rxjs/Observable";
 import { distinctUntilChanged, map } from "rxjs/operators";
 
@@ -17,43 +17,27 @@ import { determineStyle, determineStyleSelector } from "./laag-converter";
 
 const TekenLaagNaam = "Tekenen van geometrie";
 @Component({
-  selector: "awv-kaart-tekenen-laag",
+  selector: "awv-kaart-teken-laag",
   template: "<ng-content></ng-content>",
-  styleUrls: ["./kaart-tekenen-laag.component.scss"],
+  styleUrls: ["./kaart-teken-laag.component.scss"],
   encapsulation: ViewEncapsulation.None
 })
 export class KaartTekenLaagComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
-  defaultlaagStyle: Array<ol.style.Style> = [
-    /* We are using two different styles for the polygons:
-     *  - The first style is for the polygons themselves.
-     *  - The second style is to draw the vertices of the polygons.
-     *    In a custom `geometry` function the vertices of a polygon are
-     *    returned as `MultiPoint` geometry, which will be used to render
-     *    the style.
-     */
-    new ol.style.Style({
-      stroke: new ol.style.Stroke({
-        color: "blue",
-        width: 3
-      }),
-      fill: new ol.style.Fill({
-        color: "rgba(0, 0, 255, 0.1)"
-      })
+  defaultlaagStyle = new ol.style.Style({
+    fill: new ol.style.Fill({
+      color: "rgba(255, 255, 255, 0.2)"
     }),
-    new ol.style.Style({
-      image: new ol.style.Circle({
-        radius: 5,
-        fill: new ol.style.Fill({
-          color: "orange"
-        })
-      }),
-      geometry: function(feature) {
-        // return the coordinates of the first ring of the polygon
-        const coordinates = (feature.getGeometry() as ol.geom.Polygon).getCoordinates()[0];
-        return new ol.geom.MultiPoint(coordinates);
-      }
+    stroke: new ol.style.Stroke({
+      color: "#ffcc33",
+      width: 2
+    }),
+    image: new ol.style.Circle({
+      radius: 7,
+      fill: new ol.style.Fill({
+        color: "#ffcc33"
+      })
     })
-  ];
+  });
 
   defaultDrawStyle = new ol.style.Style({
     fill: new ol.style.Fill({
@@ -75,7 +59,7 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
     })
   });
 
-  private tekenenSettingsSubj: BehaviorSubject<Option<ke.TekenSettings>>;
+  private tekenSettings: Option<ke.TekenSettings>;
   private changedGeometriesSubj: Subject<ol.geom.Geometry>;
 
   private drawInteraction: ol.interaction.Draw;
@@ -97,26 +81,26 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
     const kaartObs: Observable<KaartWithInfo> = this.kaartComponent.kaartWithInfo$;
     this.bindToLifeCycle(kaartObs);
 
-    kaartObs
-      .pipe(
+    this.bindToLifeCycle(
+      kaartObs.pipe(
         distinctUntilChanged((k1, k2) => k1.geometryChangedSubj === k2.geometryChangedSubj), //
         map(kwi => kwi.geometryChangedSubj)
       )
-      .subscribe(gcSubj => (this.changedGeometriesSubj = gcSubj));
+    ).subscribe(gcSubj => (this.changedGeometriesSubj = gcSubj));
 
-    kaartObs
-      .pipe(
-        distinctUntilChanged((k1, k2) => k1.tekenenSettingsSubj === k2.tekenenSettingsSubj), //
-        map(kwi => kwi.tekenenSettingsSubj)
+    this.bindToLifeCycle(
+      kaartObs.pipe(
+        distinctUntilChanged((k1, k2) => k1.tekenSettingsSubj === k2.tekenSettingsSubj), //
+        map(kwi => kwi.tekenSettingsSubj)
       )
-      .subscribe(tekenenSettingsSubj => {
-        this.tekenenSettingsSubj = tekenenSettingsSubj;
-      });
+    ).subscribe(tekenenSettingsSubj => {
+      this.tekenSettings = tekenenSettingsSubj.getValue();
+    });
 
     this.internalMessage$.pipe(ofType<TekenMsg>("Teken")).subscribe(msg => {
       msg.settings.fold(
         () => this.stopMetTekenen(), //
-        s => this.startMetTekenen() //
+        () => this.startMetTekenen() //
       );
     });
   }
@@ -161,7 +145,7 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
       titel: TekenLaagNaam,
       source: source,
       styleSelector: orElse(
-        this.tekenenSettingsSubj.getValue().chain(s => s.laagStyle), //
+        this.tekenSettings.chain(s => s.laagStyle), //
         () => determineStyleSelector(this.defaultlaagStyle)
       ),
       selecteerbaar: true,
@@ -194,19 +178,16 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
 
     const draw = new ol.interaction.Draw({
       source: source,
-      type: this.tekenenSettingsSubj.getValue().fold(
+      type: this.tekenSettings.fold(
         () => "LineString" as ol.geom.GeometryType, //
         settings => settings.geometryType
       ),
-      style: this.tekenenSettingsSubj
-        .getValue()
-        .map(s => determineStyle(s.drawStyle, this.defaultDrawStyle))
-        .getOrElseValue(this.defaultDrawStyle)
+      style: this.tekenSettings.map(s => determineStyle(s.drawStyle, this.defaultDrawStyle)).getOrElseValue(this.defaultDrawStyle)
     });
 
     draw.on(
       "drawstart",
-      event => {
+      (event: ol.interaction.Draw.Event) => {
         (event as ol.interaction.Draw.Event).feature.getGeometry().on(
           "change",
           evt => {

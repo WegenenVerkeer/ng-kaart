@@ -4,7 +4,7 @@
   </div>
   <div id="overlay">
     <awv-kaart-open-street-view [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-open-street-view>
-    <awv-kaart-achtergrond-selector [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-achtergrond-selector>    
+    <awv-kaart-achtergrond-selector [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-achtergrond-selector>
     <awv-kaart-mijn-locatie [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-mijn-locatie>
     <awv-kaart-zoom [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-zoom>
     <awv-google-locatie-zoeker [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-google-locatie-zoeker>
@@ -12,6 +12,6 @@
       <awv-zoeker [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-zoeker>
       <ng-content select=".kaart-links"></ng-content>
     </div>
-    <awv-kaart-tekenen-laag [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-tekenen-laag>
+    <awv-kaart-teken-laag [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-teken-laag>
   </div>
 </div>

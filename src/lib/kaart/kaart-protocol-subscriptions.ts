@@ -69,8 +69,8 @@ export interface MijnLocatieZoomdoelSubscription<Msg> {
 
 export interface GeometryChangedSubscription<Msg> {
   readonly type: "GeometryChanged";
-  readonly wrapper: (evt: ol.geom.Geometry) => Msg;
   readonly tekenSettings: TekenSettings;
+  readonly wrapper: (evt: ol.geom.Geometry) => Msg;
 }
 
 export interface TekenenSubscription<Msg> {
@@ -119,10 +119,10 @@ export function MijnLocatieZoomdoelSubscription<Msg>(wrapper: (doel: Option<numb
 }
 
 export function GeometryChangedSubscription<Msg>(
-  wrapper: (geom: ol.geom.Geometry) => Msg,
-  tekenSettings: TekenSettings
+  tekenSettings: TekenSettings,
+  wrapper: (geom: ol.geom.Geometry) => Msg
 ): GeometryChangedSubscription<Msg> {
-  return { type: "GeometryChanged", wrapper: wrapper, tekenSettings: tekenSettings };
+  return { type: "GeometryChanged", tekenSettings: tekenSettings, wrapper: wrapper };
 }
 
 export function TekenenSubscription<Msg>(wrapper: (settings: Option<TekenSettings>) => Msg): TekenenSubscription<Msg> {
