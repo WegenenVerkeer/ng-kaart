@@ -38,9 +38,9 @@
   <button (click)="maakZichtbaar('ingezoomd', !isZichtbaar('ingezoomd'))">
     {{isZichtbaar('ingezoomd')?'Verberg':'Toon'}}
   </button>
-  <awv-kaart-classic *ngIf="isZichtbaar('ingezoomd')" [breedte]="600" [hoogte]="600" [zoom]="6" 
+  <awv-kaart-classic *ngIf="isZichtbaar('ingezoomd')" [breedte]="600" [hoogte]="600" [zoom]="6"
                      [middelpunt]="installatieCoordinaat"
-                     (geselecteerdeFeatures)="featuresGeselecteerd($event)" [selectieModus]="'single'">
+                     #selectie (geselecteerdeFeatures)="featuresGeselecteerd($event)" [selectieModus]="'single'">
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
     <awv-kaart-features-laag [features]="installatie" [titel]="'features'" [style]="pinIcon"
                              [minZoom]="2"></awv-kaart-features-laag>

@@ -1,10 +1,9 @@
-<div class="float-box" *ngFor="let boodschap of boodschappen">
+<div class="float-box" *ngFor="let boodschap of infoBoodschappen$ | async">
   <mat-card>
     <mat-card-title>
       {{ boodschap.titel }}
     </mat-card-title>
-    <mat-card-content>
-      {{ boodschap.inhoud }}
+    <mat-card-content [innerHtml]="boodschap.inhoud">
     </mat-card-content>
   </mat-card>
 </div>

@@ -22,6 +22,9 @@ import { GoogleLocatieZoekerService } from "../lib/zoeker";
   encapsulation: ViewEncapsulation.None
 })
 export class AppComponent {
+  @ViewChild("verplaats") private verplaatsKaart: KaartClassicComponent;
+  @ViewChild("selectie") private selectieKaart: KaartClassicComponent;
+
   private readonly zichtbaarheid = {
     orthomap: true,
     metenVoorbeeld: true,
@@ -76,6 +79,9 @@ export class AppComponent {
   installatie: ol.Feature[] = [
     new ol.Feature({
       id: 1,
+      laag: "Fietspaden",
+      ident8: "R0010001",
+      type: "Vrijliggend",
       geometry: new ol.geom.Point(this.installatieCoordinaat)
     })
   ];
@@ -148,10 +154,7 @@ export class AppComponent {
 
   fietspadStyleMetOffset = offsetStyleFunction(this.fietspadStyle, "ident8", "zijderijbaan", 1);
 
-  constructor(
-    @ViewChild("verplaats") private verplaatsKaart: KaartClassicComponent,
-    private googleLocatieZoekerService: GoogleLocatieZoekerService
-  ) {
+  constructor(private googleLocatieZoekerService: GoogleLocatieZoekerService) {
     kaartLogger.setLevel("DEBUG");
     classicLogger.setLevel("DEBUG");
     this.addIcon();
@@ -183,12 +186,22 @@ export class AppComponent {
     this.polygoonEvents.push(this.geoJsonFormatter.writeFeature(feature));
   }
 
-  installatieGeselecteed(feature: ol.Feature) {
+  installatieGeselecteerd(feature: ol.Feature) {
     this.installatieGeselecteerdEvents.push(this.geoJsonFormatter.writeFeature(feature));
   }
 
-  featuresGeselecteerd(event) {
+  featuresGeselecteerd(event: List<ol.Feature>) {
+    // verwijder de bestaande info boodschappen voor features die niet meer geselecteerd zijn
+    const nietLangerGeselecteerd = this.geselecteerdeFeatures //
+      .filter(feature => !event.map(f => f.getId()).contains(feature.get("id")));
+    nietLangerGeselecteerd.forEach(feature => this.selectieKaart.verbergInfoBoodschap(feature.get("id").toString()));
+
+    // voeg de nieuwe toe
     this.geselecteerdeFeatures = event;
+    this.geselecteerdeFeatures.forEach(feature =>
+      this.selectieKaart //
+        .toonInfoBoodschap(feature.get("id").toString(), feature.get("laag"), feature.get("ident8") + "<br>" + feature.get("type"))
+    );
   }
 
   zoekLocaties(locatieQuery: String) {

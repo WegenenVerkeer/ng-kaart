@@ -21,6 +21,7 @@ import * as prt from "./kaart-protocol";
 import { Command } from "./kaart-protocol-commands";
 import { KaartMsgObservableConsumer } from "./kaart.component";
 import { subscriptionCmdOperator } from "./subscription-helper";
+import { InfoBoodschap } from "./kaart-with-info";
 
 const TekenRef = {};
 
@@ -165,6 +166,14 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, Kaar
       this.hasFocus = false;
       this.dispatch({ type: "VerliesFocusOpKaart" });
     }
+  }
+
+  toonInfoBoodschap(id: string, titel: string, inhoud: string): void {
+    this.dispatch(prt.ToonInfoBoodschapCmd(id, titel, inhoud));
+  }
+
+  verbergInfoBoodschap(id: string): void {
+    this.dispatch(prt.VerbergInfoBoodschapCmd(id));
   }
 
   private startTekenen() {

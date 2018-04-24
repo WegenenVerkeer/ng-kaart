@@ -566,6 +566,27 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
+    function toonInfoBoodschap(cmnd: prt.ToonInfoBoodschapCmd<Msg>): ModelWithResult<Msg> {
+      model.infoBoodschapSubj.next(
+        model.infoBoodschapSubj //
+          .getValue()
+          .filter(boodschap => boodschap.id !== cmnd.boodschap.id)
+          .concat(cmnd.boodschap)
+          .toList()
+      );
+      return ModelWithResult(model);
+    }
+
+    function verbergInfoBoodschap(cmnd: prt.VerbergInfoBoodschapCmd<Msg>): ModelWithResult<Msg> {
+      model.infoBoodschapSubj.next(
+        model.infoBoodschapSubj //
+          .getValue()
+          .filter(boodschap => boodschap.id !== cmnd.id)
+          .toList()
+      );
+      return ModelWithResult(model);
+    }
+
     function meldComponentFout(cmnd: prt.MeldComponentFoutCmd): ModelWithResult<Msg> {
       model.componentFoutSubj.next(cmnd.fouten);
       return ModelWithResult(model);
@@ -693,6 +714,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
       }
 
+      function subscribeToInfoBoodschap(sub: prt.InfoBoodschapSubscription<Msg>): ModelWithResult<Msg> {
+        const subscription = model.infoBoodschapSubj.subscribe(t => msgConsumer(sub.wrapper(t)));
+        return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
+      }
+
       switch (cmnd.subscription.type) {
         case "Zoominstellingen":
           return subscribeToZoominstellingen(cmnd.subscription);
@@ -714,6 +740,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToGeometryChanged(cmnd.subscription);
         case "Tekenen":
           return subscribeToTekenen(cmnd.subscription);
+        case "InfoBoodschap":
+          return subscribeToInfoBoodschap(cmnd.subscription);
       }
     }
 
@@ -791,6 +819,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return voegOverlayToe(cmd);
       case "VerwijderOverlays":
         return verwijderOverlays(cmd);
+      case "ToonInfoBoodschap":
+        return toonInfoBoodschap(cmd);
+      case "VerbergInfoBoodschap":
+        return verbergInfoBoodschap(cmd);
     }
   };
 }

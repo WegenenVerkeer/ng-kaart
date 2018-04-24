@@ -4,6 +4,7 @@ import * as ol from "openlayers";
 
 import { AchtergrondLaag } from ".";
 import { ZoekResultaten } from "../zoeker/abstract-zoeker";
+import { InfoBoodschap } from "./kaart-with-info";
 
 /////////
 // Types
@@ -19,7 +20,8 @@ export type Subscription<Msg> =
   | MijnLocatieZoomdoelSubscription<Msg>
   | GeometryChangedSubscription<Msg>
   | TekenenSubscription<Msg>
-  | KaartClickSubscription<Msg>;
+  | KaartClickSubscription<Msg>
+  | InfoBoodschapSubscription<Msg>;
 
 export interface Zoominstellingen {
   zoom: number;
@@ -77,6 +79,11 @@ export interface TekenenSubscription<Msg> {
   readonly wrapper: (boolean) => Msg;
 }
 
+export interface InfoBoodschapSubscription<Msg> {
+  readonly type: "InfoBoodschap";
+  readonly wrapper: (infoBoodschappen: List<InfoBoodschap>) => Msg;
+}
+
 ///////////////
 // Constructors
 //
@@ -111,6 +118,10 @@ export function ZoekerSubscription<Msg>(wrapper: (resultaten: ZoekResultaten) =>
 
 export function KaartClickSubscription<Msg>(wrapper: (coordinaat: ol.Coordinate) => Msg): Subscription<Msg> {
   return { type: "KaartClick", wrapper: wrapper };
+}
+
+export function InfoBoodschapSubscription<Msg>(wrapper: (boodschappen: List<InfoBoodschap>) => Msg): Subscription<Msg> {
+  return { type: "InfoBoodschap", wrapper: wrapper };
 }
 
 export function MijnLocatieZoomdoelSubscription<Msg>(wrapper: (doel: Option<number>) => Msg): MijnLocatieZoomdoelSubscription<Msg> {

@@ -8,6 +8,7 @@ import { ZoekResultaten } from "../zoeker/abstract-zoeker";
 import { ZoekerCoordinator } from "../zoeker/zoeker-coordinator";
 import { KaartConfig } from "./kaart-config";
 import * as ke from "./kaart-elementen";
+import { BehaviorSubject } from "rxjs/BehaviorSubject";
 
 export interface Groeplagen {
   readonly laaggroep: Laaggroep;
@@ -46,6 +47,7 @@ export class KaartWithInfo {
   readonly mijnLocatieZoomDoelSubj: Subject<Option<number>> = new ReplaySubject<Option<number>>(1);
   readonly geometryChangedSubj: Subject<ol.geom.Geometry> = new Subject<ol.geom.Geometry>();
   readonly bezigMetTekenenSubj: Subject<boolean> = new ReplaySubject<boolean>(1);
+  readonly infoBoodschapSubj: BehaviorSubject<List<InfoBoodschap>> = new BehaviorSubject<List<InfoBoodschap>>(List());
 
   constructor(
     // TODO om de distinctWithInfo te versnellen zouden we als eerste element een versieteller kunnen toevoegen

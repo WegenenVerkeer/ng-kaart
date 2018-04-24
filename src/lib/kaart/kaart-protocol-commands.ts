@@ -8,6 +8,7 @@ import { StyleSelector } from "./kaart-elementen";
 import { AbstractZoeker } from "../zoeker/abstract-zoeker";
 import { Logger } from "loglevel";
 import { Option } from "fp-ts/lib/Option";
+import { InfoBoodschap } from "./kaart-with-info";
 
 export type Command<Msg extends KaartMsg> =
   | SubscribeCmd<Msg>
@@ -43,7 +44,9 @@ export type Command<Msg extends KaartMsg> =
   | VoegInteractieToeCmd<Msg>
   | VerwijderInteractieCmd<Msg>
   | VoegOverlayToeCmd<Msg>
-  | VerwijderOverlaysCmd<Msg>;
+  | VerwijderOverlaysCmd<Msg>
+  | ToonInfoBoodschapCmd<Msg>
+  | VerbergInfoBoodschapCmd<Msg>;
 
 // SubscriptionResult is maar een type alias, maar ook een encapsulatie naar clients toe
 export type SubscriptionResult = RxSubscription;
@@ -245,6 +248,16 @@ export interface VerwijderOverlaysCmd<Msg extends KaartMsg> {
   readonly overlays: Array<ol.Overlay>;
 }
 
+export interface ToonInfoBoodschapCmd<Msg extends KaartMsg> {
+  readonly type: "ToonInfoBoodschap";
+  readonly boodschap: InfoBoodschap;
+}
+
+export interface VerbergInfoBoodschapCmd<Msg extends KaartMsg> {
+  readonly type: "VerbergInfoBoodschap";
+  readonly id: string;
+}
+
 ////////////////////////
 // constructor functies
 //
@@ -394,4 +407,22 @@ export function UnsubscribeCmd<Msg extends KaartMsg>(subscription: SubscriptionR
 
 export function ZetMijnLocatieZoomCmd(doelniveau: Option<number>): ZetMijnLocatieZoomCmd {
   return { type: "ZetMijnLocatieZoomStatus", doelniveau: doelniveau };
+}
+
+export function ToonInfoBoodschapCmd<Msg extends KaartMsg>(id: string, titel: string, inhoud: string): ToonInfoBoodschapCmd<Msg> {
+  return {
+    type: "ToonInfoBoodschap",
+    boodschap: {
+      id: id,
+      titel: titel,
+      inhoud: inhoud
+    }
+  };
+}
+
+export function VerbergInfoBoodschapCmd<Msg extends KaartMsg>(id: string): VerbergInfoBoodschapCmd<Msg> {
+  return {
+    type: "VerbergInfoBoodschap",
+    id: id
+  };
 }
