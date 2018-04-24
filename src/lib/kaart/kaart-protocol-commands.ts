@@ -5,7 +5,7 @@ import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";
 import { Subscription, Wrapper, VoidWrapper, KaartMsg, KaartCmdValidation, ValidationWrapper, BareValidationWrapper } from ".";
 import { StyleSelector } from "./kaart-elementen";
-import { AbstractZoeker } from "../zoeker";
+import { AbstractZoeker } from "../zoeker/abstract-zoeker";
 import { Logger } from "loglevel";
 import { Option } from "fp-ts/lib/Option";
 
@@ -39,7 +39,11 @@ export type Command<Msg extends KaartMsg> =
   | VerwijderZoekerCmd<Msg>
   | ZoekCmd<Msg>
   | MeldComponentFoutCmd
-  | ZetMijnLocatieZoomCmd;
+  | ZetMijnLocatieZoomCmd
+  | VoegInteractieToeCmd<Msg>
+  | VerwijderInteractieCmd<Msg>
+  | VoegOverlayToeCmd<Msg>
+  | VerwijderOverlaysCmd<Msg>;
 
 // SubscriptionResult is maar een type alias, maar ook een encapsulatie naar clients toe
 export type SubscriptionResult = RxSubscription;
@@ -221,6 +225,26 @@ export interface ZetMijnLocatieZoomCmd {
   readonly doelniveau: Option<number>;
 }
 
+export interface VoegInteractieToeCmd<Msg extends KaartMsg> {
+  readonly type: "VoegInteractieToe";
+  readonly interactie: ol.interaction.Draw;
+}
+
+export interface VerwijderInteractieCmd<Msg extends KaartMsg> {
+  readonly type: "VerwijderInteractie";
+  readonly interactie: ol.interaction.Draw;
+}
+
+export interface VoegOverlayToeCmd<Msg extends KaartMsg> {
+  readonly type: "VoegOverlayToe";
+  readonly overlay: ol.Overlay;
+}
+
+export interface VerwijderOverlaysCmd<Msg extends KaartMsg> {
+  readonly type: "VerwijderOverlays";
+  readonly overlays: Array<ol.Overlay>;
+}
+
 ////////////////////////
 // constructor functies
 //
@@ -327,6 +351,34 @@ export function ToonAchtergrondKeuzeCmd<Msg extends KaartMsg>(wrapper: BareValid
 
 export function VerbergAchtergrondKeuzeCmd<Msg extends KaartMsg>(wrapper: BareValidationWrapper<Msg>): VerbergAchtergrondKeuzeCmd<Msg> {
   return { type: "VerbergAchtergrondKeuze", wrapper: wrapper };
+}
+
+export function VoegInteractieToeCmd<Msg extends KaartMsg>(interactie: ol.interaction.Draw): VoegInteractieToeCmd<Msg> {
+  return {
+    type: "VoegInteractieToe",
+    interactie: interactie
+  };
+}
+
+export function VerwijderInteractieCmd<Msg extends KaartMsg>(interactie: ol.interaction.Draw): VerwijderInteractieCmd<Msg> {
+  return {
+    type: "VerwijderInteractie",
+    interactie: interactie
+  };
+}
+
+export function VoegOverlayToeCmd<Msg extends KaartMsg>(overlay: ol.Overlay): VoegOverlayToeCmd<Msg> {
+  return {
+    type: "VoegOverlayToe",
+    overlay: overlay
+  };
+}
+
+export function VerwijderOverlaysCmd<Msg extends KaartMsg>(overlays: Array<ol.Overlay>): VerwijderOverlaysCmd<Msg> {
+  return {
+    type: "VerwijderOverlays",
+    overlays: overlays
+  };
 }
 
 export function SubscribeCmd<Msg extends KaartMsg>(

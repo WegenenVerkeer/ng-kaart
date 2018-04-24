@@ -1,18 +1,19 @@
-import { Injectable } from "@angular/core";
+import { InjectionToken } from "@angular/core";
+
+export const GOOGLE_LOCATIE_ZOEKER_CFG = new InjectionToken<GoogleLocatieZoekerConfigData>("GoogleLocatieZoekerCfg");
 
 export interface GoogleLocatieZoekerConfigData {
-  url?: string;
-  maxAantal?: number;
-  kleur?: [number, number, number, number];
-  apiKey?: string;
+  readonly url?: string;
+  readonly maxAantal?: number;
+  readonly kleur?: [number, number, number, number];
+  readonly apiKey?: string;
 }
 
-@Injectable()
 export class GoogleLocatieZoekerConfig {
-  url = "/locatiezoeker";
-  maxAantal = 10;
-  kleur: [number, number, number, number] = [247, 144, 45, 1.0];
-  apiKey: string | undefined = undefined;
+  readonly url: string = "/locatiezoeker";
+  readonly maxAantal: number = 10;
+  readonly kleur: [number, number, number, number] = [247, 144, 45, 1.0];
+  readonly apiKey: string | undefined = undefined;
 
   constructor(data: GoogleLocatieZoekerConfigData) {
     if (data.url) {

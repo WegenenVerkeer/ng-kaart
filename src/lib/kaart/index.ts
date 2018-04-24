@@ -1,12 +1,11 @@
 import { CommonModule } from "@angular/common";
 import { HttpClientModule } from "@angular/common/http";
 import { ModuleWithProviders, NgModule } from "@angular/core";
-import { MatButtonModule, MatIconModule } from "@angular/material";
+import { MatButtonModule, MatButtonToggleModule, MatIconModule } from "@angular/material";
 import { ClickOutsideModule } from "ng4-click-outside";
 import * as ol from "openlayers";
 
 import { ZoekerModule } from "../zoeker";
-import { CoordinatenService } from "./coordinaten.service";
 import { KaartAchtergrondSelectorComponent } from "./kaart-achtergrond-selector.component";
 import { KaartAchtergrondTileComponent } from "./kaart-achtergrond-tile.component";
 import { KaartBlancoLaagComponent } from "./kaart-blanco-laag.component";
@@ -19,18 +18,20 @@ import { KaartKnopVolledigSchermComponent } from "./kaart-knop-volledig-scherm.c
 import { KaartKnopZoomSliderComponent } from "./kaart-knop-zoom-slider.component";
 import { KaartMijnLocatieComponent } from "./kaart-mijn-locatie.component";
 import { KaartNosqlfsLaagComponent } from "./kaart-nosqlfs-laag.component";
+import { KaartOpenStreetViewComponent } from "./kaart-open-street-view.component";
 import { KaartOrthoLaagComponent } from "./kaart-ortho-laag.component";
 import { KaartSchaalComponent } from "./kaart-schaal.component";
 import { KaartStandaardInteractiesComponent } from "./kaart-standaard-interacties.component";
 import { KaartStandaardKnoppenComponent } from "./kaart-standaard-knoppen.component";
 import { KaartTekenPolygoonLaagComponent } from "./kaart-teken-polygoon-laag.component";
+import { KaartTekenLaagComponent } from "./kaart-tekenen.component";
 import { KaartTilecacheLaagComponent } from "./kaart-tilecache-laag.component";
 import { KaartFeaturesLaagComponent } from "./kaart-toon-features.component";
 import { KaartVectorLaagComponent } from "./kaart-vector-laag.component";
 import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
-import { KaartWmtsLaagComponent } from "./kaart-wmts-laag.component";
 import { KaartZoomComponent } from "./kaart-zoom.component";
 import { KaartComponent } from "./kaart.component";
+import { KaartWmtsLaagComponent } from "./kaart-wmts-laag.component";
 
 const components: any[] = [
   KaartComponent,
@@ -45,6 +46,7 @@ const components: any[] = [
   KaartStandaardInteractiesComponent,
   KaartStandaardKnoppenComponent,
   KaartTekenPolygoonLaagComponent,
+  KaartTekenLaagComponent,
   KaartFeaturesLaagComponent,
   KaartVectorLaagComponent,
   KaartNosqlfsLaagComponent,
@@ -54,7 +56,8 @@ const components: any[] = [
   KaartWmtsLaagComponent,
   KaartBlancoLaagComponent,
   KaartAchtergrondSelectorComponent,
-  KaartAchtergrondTileComponent
+  KaartAchtergrondTileComponent,
+  KaartOpenStreetViewComponent
 ];
 
 // Weersta de drang om deze 2 variabelen in een andere module te plaatsen, want dat geeft problemen met gebruik in AOT app.
@@ -109,10 +112,18 @@ export const defaultKaartConfig: KaartConfig = {
 };
 
 @NgModule({
-  imports: [CommonModule, ClickOutsideModule, HttpClientModule, MatButtonModule, MatIconModule, ZoekerModule.forRoot({})],
+  imports: [
+    CommonModule,
+    ClickOutsideModule,
+    MatButtonModule,
+    MatIconModule,
+    MatButtonToggleModule,
+    HttpClientModule,
+    ZoekerModule.forRoot({})
+  ],
   declarations: [components],
   exports: [components],
-  providers: [CoordinatenService, ReplaySubjectKaartCmdDispatcher]
+  providers: [ReplaySubjectKaartCmdDispatcher]
 })
 export class KaartModule {
   static defaultConfig = defaultKaartConfig;
@@ -150,6 +161,7 @@ export * from "./kaart-wmts-laag.component";
 export * from "./kaart-blanco-laag.component";
 export * from "./kaart-zoom.component";
 export * from "./kaart-mijn-locatie.component";
+export * from "./kaart-open-street-view.component";
 export * from "./kaart.component";
 export * from "./kaart-event-dispatcher";
 export * from "./kaart-protocol";

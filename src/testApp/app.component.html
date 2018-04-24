@@ -247,3 +247,17 @@
   </awv-kaart>
 </div>
 -->
+
+<h3>Meten van omtrek en oppervlakte</h3>
+<div>
+  <button (click)="maakZichtbaar('metenVoorbeeld', !isZichtbaar('metenVoorbeeld'))">{{isZichtbaar('metenVoorbeeld')?'Verberg':'Toon'}}</button>
+  <awv-kaart-classic *ngIf="isZichtbaar('metenVoorbeeld')" [naam]="'metenVoorbeeld'" [tekenen]="isTekenenActief()" (getekendeGeom)="geomGetekend($event)">
+    <awv-kaart-ortho-laag [titel]="'Ortho'"></awv-kaart-ortho-laag>
+    <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
+  </awv-kaart-classic>
+  <div *ngIf="isZichtbaar('metenVoorbeeld')">
+    <button *ngIf="isTekenenActief()" (click)="stopTekenen()">Stop</button>
+    <button *ngIf="!isTekenenActief()" (click)="startTekenen()">Start</button>
+    Geom lengte: {{ tekenGeomLength }}
+  </div>
+</div>

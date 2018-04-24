@@ -1,16 +1,18 @@
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
-
 import * as ol from "openlayers";
 
-import { kaartLogger } from "./log";
-import * as prt from "./kaart-protocol";
 import { AchtergrondLaag } from "./kaart-elementen";
+import * as prt from "./kaart-protocol";
+import { kaartLogger } from "./log";
 
 export type KaartInternalSubMsg =
   | ZoominstellingenGezetMsg
   | AchtergrondtitelGezetMsg
   | AchtergrondlagenGezetMsg
+  | GeometryChangedMsg
+  | TekenMsg
+  | KaartClickMsg
   | SubscribedMsg
   | MijnLocatieZoomdoelGezetMsg;
 
@@ -29,6 +31,16 @@ export interface AchtergrondlagenGezetMsg {
   readonly achtergrondlagen: List<AchtergrondLaag>;
 }
 
+export interface GeometryChangedMsg {
+  type: "GeometryChanged";
+  geometry: ol.geom.Geometry;
+}
+
+export interface TekenMsg {
+  type: "Teken";
+  teken: boolean;
+}
+
 export interface SubscribedMsg {
   readonly type: "Subscribed";
   readonly subscription: prt.KaartCmdValidation<prt.SubscriptionResult>;
@@ -43,6 +55,11 @@ export interface MijnLocatieZoomdoelGezetMsg {
 export interface KaartInternalMsg {
   readonly type: "KaartInternal";
   readonly payload: Option<KaartInternalSubMsg>;
+}
+
+export interface KaartClickMsg {
+  readonly type: "KaartClick";
+  readonly clickCoordinaat: ol.Coordinate;
 }
 
 function KaartInternalMsg(payload: Option<KaartInternalSubMsg>): KaartInternalMsg {
@@ -66,6 +83,12 @@ export const kaartLogOnlyWrapper: prt.ValidationWrapper<any, KaartInternalMsg> =
   };
 };
 
+export const kaartClickWrapper = (clickCoordinaat: ol.Coordinate) => KaartInternalMsg(some(KaartClickMsg(clickCoordinaat)));
+
+function KaartClickMsg(clickCoordinaat: ol.Coordinate): KaartClickMsg {
+  return { type: "KaartClick", clickCoordinaat: clickCoordinaat };
+}
+
 function ZoominstellingenGezetMsg(instellingen: prt.Zoominstellingen): ZoominstellingenGezetMsg {
   return { type: "ZoominstellingenGezet", zoominstellingen: instellingen };
 }
@@ -84,6 +107,21 @@ function AchtergrondlagenGezetMsg(achtergrondlagen: List<AchtergrondLaag>): Acht
 }
 
 export const achtergrondlagenGezetWrapper = (lagen: List<AchtergrondLaag>) => KaartInternalMsg(some(AchtergrondlagenGezetMsg(lagen)));
+
+function GeometryChangedMsg(geometry: ol.geom.Geometry): GeometryChangedMsg {
+  return { type: "GeometryChanged", geometry: geometry };
+}
+
+export const geometryChangedWrapper = (geometry: ol.geom.Geometry) => KaartInternalMsg(some(GeometryChangedMsg(geometry)));
+
+function TekenMsg(teken: boolean): TekenMsg {
+  return {
+    type: "Teken",
+    teken: teken
+  };
+}
+
+export const tekenWrapper = (tekenen: boolean) => KaartInternalMsg(some(TekenMsg(tekenen)));
 
 function SubscribedMsg(subscription: prt.KaartCmdValidation<prt.SubscriptionResult>, reference: any): SubscribedMsg {
   return { type: "Subscribed", reference: reference, subscription: subscription };

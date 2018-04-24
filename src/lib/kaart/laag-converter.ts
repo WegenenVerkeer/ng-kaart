@@ -2,13 +2,14 @@ import { KaartWithInfo } from "./kaart-with-info";
 import * as array from "fp-ts/lib/Array";
 import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
+import { olx } from "openlayers";
 import { kaartLogger } from "./log";
 import * as ke from "./kaart-elementen";
 import { WmtsCapaConfig } from "./kaart-elementen";
 
 export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {
   function createdTileWms(l: ke.WmsLaag) {
-    return new ol.layer.Tile(<ol.olx.layer.TileOptions>{
+    return new ol.layer.Tile(<olx.layer.TileOptions>{
       title: l.titel,
       visible: true,
       extent: kaart.config.defaults.extent,

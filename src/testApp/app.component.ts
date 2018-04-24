@@ -1,17 +1,19 @@
-import { Component, ViewEncapsulation, ViewChild } from "@angular/core";
-import * as ol from "openlayers";
-import "rxjs/add/operator/mergeMap";
 import "rxjs/add/operator/map";
+import "rxjs/add/operator/mergeMap";
 
-import { GoogleLocatieZoekerService } from "../lib/zoeker";
-import { CoordinatenService, KaartClassicComponent } from "../lib/kaart";
-import { kaartLogger, definitieToStyle } from "../lib/public_api";
+import { Component, ViewChild, ViewEncapsulation } from "@angular/core";
+import { none, Option, some } from "fp-ts/lib/Option";
+import { List } from "immutable";
+import * as ol from "openlayers";
+
+import { KaartClassicComponent } from "../lib/kaart";
+import { classicLogger } from "../lib/kaart-classic/log";
+import { kaartLogOnlyWrapper } from "../lib/kaart/kaart-internal-messages";
+import * as prt from "../lib/kaart/kaart-protocol";
+import { definitieToStyle, kaartLogger } from "../lib/public_api";
 import { AWV0StyleFunctionDescription, definitieToStyleFunction } from "../lib/stijl";
 import { offsetStyleFunction } from "../lib/stijl/offset-stijl-function";
-import * as prt from "../lib/kaart/kaart-protocol";
-import { kaartLogOnlyWrapper } from "../lib/kaart/kaart-internal-messages";
-import { List } from "immutable";
-import { classicLogger } from "../lib/kaart-classic/log";
+import { GoogleLocatieZoekerService } from "../lib/zoeker";
 
 @Component({
   selector: "awv-ng-kaart-test-app",
@@ -22,6 +24,7 @@ import { classicLogger } from "../lib/kaart-classic/log";
 export class AppComponent {
   private readonly zichtbaarheid = {
     orthomap: true,
+    metenVoorbeeld: true,
     kleursimpel: false // standard falsey
   };
 
@@ -103,6 +106,9 @@ export class AppComponent {
 
   geselecteerdeFeatures: List<ol.Feature> = List();
 
+  private tekenenActief = false;
+  private getekendeGeom: Option<ol.geom.Geometry> = none;
+
   // Dit werkt alleen als apigateway bereikbaar is. Zie CORS waarschuwing in README.
   readonly districtSource: ol.source.Vector = new ol.source.Vector({
     format: new ol.format.GeoJSON(),
@@ -144,8 +150,7 @@ export class AppComponent {
 
   constructor(
     @ViewChild("verplaats") private verplaatsKaart: KaartClassicComponent,
-    private googleLocatieZoekerService: GoogleLocatieZoekerService,
-    public coordinatenService: CoordinatenService
+    private googleLocatieZoekerService: GoogleLocatieZoekerService
   ) {
     kaartLogger.setLevel("DEBUG");
     classicLogger.setLevel("DEBUG");
@@ -193,6 +198,30 @@ export class AppComponent {
       .map(zoekresultaat => zoekresultaat.geometry)
       .map(geometry => new ol.Feature(geometry))
       .subscribe(feature => this.zoekresultaten.push(feature));
+  }
+
+  isTekenenActief() {
+    return this.tekenenActief;
+  }
+
+  startTekenen() {
+    this.tekenenActief = true;
+  }
+
+  stopTekenen() {
+    this.tekenenActief = false;
+    this.getekendeGeom = none;
+  }
+
+  get tekenGeomLength() {
+    return this.getekendeGeom
+      .filter(g => g.getType() === "LineString")
+      .map(g => Math.round(ol.Sphere.getLength(g as ol.geom.LineString) / 1000 * 100) / 100 + "km")
+      .getOrElseValue("(leeg)");
+  }
+
+  geomGetekend(geom: ol.geom.Geometry) {
+    this.getekendeGeom = some(geom);
   }
 
   verplaatsLagen() {

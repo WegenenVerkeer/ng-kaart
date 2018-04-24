@@ -7,7 +7,8 @@ import { List } from "immutable";
 import * as ol from "openlayers";
 import { olx } from "openlayers";
 import { Subscription } from "rxjs";
-import { debounceTime, filter } from "rxjs/operators";
+import { debounceTime, filter, distinctUntilChanged } from "rxjs/operators";
+import * as rx from "rxjs";
 
 import { forEach } from "../util/option";
 import * as ke from "./kaart-elementen";
@@ -150,11 +151,15 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
      */
     function pasZIndicesAan(aanpassing: number, vanaf: number, tot: number, groep: Laaggroep): List<PositieAanpassing> {
       return model.olLayersOpTitel.reduce((updates, layer, titel) => {
-        const groepPositie = layerIndexNaarGroepIndex(layer!, groep);
-        if (groepPositie >= vanaf && groepPositie <= tot) {
-          const positie = groepPositie + aanpassing;
-          zetLayerIndex(layer!, positie, groep);
-          return updates!.push({ titel: titel!, positie: positie });
+        if (layerNaarLaaggroep(<ol.layer.Base>layer) === groep) {
+          const groepPositie = layerIndexNaarGroepIndex(layer!, groep);
+          if (groepPositie >= vanaf && groepPositie <= tot) {
+            const positie = groepPositie + aanpassing;
+            zetLayerIndex(layer!, positie, groep);
+            return updates!.push({ titel: titel!, positie: positie });
+          } else {
+            return updates!;
+          }
         } else {
           return updates!;
         }
@@ -239,6 +244,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             const groep = cmnd.laaggroep;
             const groepPositie = limitPosition(cmnd.positie, groep);
             const movedLayers = pasZIndicesAan(1, groepPositie, maxIndexInGroep(groep), groep);
+            layer.set("titel", titel);
             layer.setVisible(cmnd.magGetoondWorden); // achtergrondlagen expliciet zichtbaar maken!
             zetLayerIndex(layer, groepPositie, groep);
             model.map.addLayer(layer);
@@ -600,6 +606,26 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
+    function voegInteractieToe(cmnd: prt.VoegInteractieToeCmd<Msg>): ModelWithResult<Msg> {
+      model.map.addInteraction(cmnd.interactie);
+      return ModelWithResult(model);
+    }
+
+    function verwijderInteractie(cmnd: prt.VerwijderInteractieCmd<Msg>): ModelWithResult<Msg> {
+      model.map.removeInteraction(cmnd.interactie);
+      return ModelWithResult(model);
+    }
+
+    function voegOverlayToe(cmnd: prt.VoegOverlayToeCmd<Msg>): ModelWithResult<Msg> {
+      model.map.addOverlay(cmnd.overlay);
+      return ModelWithResult(model);
+    }
+
+    function verwijderOverlays(cmnd: prt.VerwijderOverlaysCmd<Msg>): ModelWithResult<Msg> {
+      cmnd.overlays.forEach(overlay => model.map.removeOverlay(overlay));
+      return ModelWithResult(model);
+    }
+
     function handleSubscriptions(cmnd: prt.SubscribeCmd<Msg>): ModelWithResult<Msg> {
       function subscribe(subscription: Subscription): ModelWithResult<Msg> {
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
@@ -625,6 +651,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
       }
 
+      function subscribeToKaartClick(sub: prt.KaartClickSubscription<Msg>): ModelWithResult<Msg> {
+        const subscription = model.clickSubj.subscribe(t => msgConsumer(sub.wrapper(t)));
+        return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
+      }
+
       const subscribeToAchtergrondlagen = (wrapper: (achtergrondlagen: List<ke.AchtergrondLaag>) => Msg) =>
         subscribe(
           model.groeplagenSubj
@@ -644,6 +675,24 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
       }
 
+      function subscribeToGeometryChanged(sub: prt.GeometryChangedSubscription<Msg>): ModelWithResult<Msg> {
+        // Deze is een klein beetje speciaal omdat we de unsubcribe willen opvangen om evt. het tekenen te stoppen
+        const subscription = rx.Observable.create((observer: rx.Observer<ol.geom.Geometry>) => {
+          const innerSub = model.geometryChangedSubj.pipe(debounceTime(100)).subscribe(observer);
+          model.bezigMetTekenenSubj.next(true);
+          return () => {
+            innerSub.unsubscribe();
+            model.bezigMetTekenenSubj.next(model.geometryChangedSubj.observers.length > 0);
+          };
+        }).subscribe(pm => msgConsumer(sub.wrapper(pm)));
+        return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
+      }
+
+      function subscribeToTekenen(sub: prt.TekenenSubscription<Msg>): ModelWithResult<Msg> {
+        const subscription = model.bezigMetTekenenSubj.pipe(distinctUntilChanged()).subscribe(pm => msgConsumer(sub.wrapper(pm)));
+        return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
+      }
+
       switch (cmnd.subscription.type) {
         case "Zoominstellingen":
           return subscribeToZoominstellingen(cmnd.subscription);
@@ -655,10 +704,16 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToGeselecteerdeFeatures(cmnd.subscription);
         case "Achtergrondlagen":
           return subscribeToAchtergrondlagen(cmnd.subscription.wrapper);
+        case "KaartClick":
+          return subscribeToKaartClick(cmnd.subscription);
         case "MijnLocatieZoomdoel":
           return subscribeToMijnLocatieZoomdoel(cmnd.subscription);
         case "Zoeker":
           return subscribeToZoeker(cmnd.subscription);
+        case "GeometryChanged":
+          return subscribeToGeometryChanged(cmnd.subscription);
+        case "Tekenen":
+          return subscribeToTekenen(cmnd.subscription);
       }
     }
 
@@ -728,6 +783,14 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return zoek(cmd);
       case "ZetMijnLocatieZoomStatus":
         return zetMijnLocatieZoom(cmd);
+      case "VoegInteractieToe":
+        return voegInteractieToe(cmd);
+      case "VerwijderInteractie":
+        return verwijderInteractie(cmd);
+      case "VoegOverlayToe":
+        return voegOverlayToe(cmd);
+      case "VerwijderOverlays":
+        return verwijderOverlays(cmd);
     }
   };
 }
