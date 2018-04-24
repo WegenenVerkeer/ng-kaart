@@ -200,7 +200,13 @@ export class AppComponent {
     this.geselecteerdeFeatures = event;
     this.geselecteerdeFeatures.forEach(feature =>
       this.selectieKaart //
-        .toonInfoBoodschap(feature.get("id").toString(), feature.get("laag"), feature.get("ident8") + "<br>" + feature.get("type"))
+        .toonInfoBoodschap(
+          feature.get("id").toString(),
+          feature.get("laag"),
+          `Id: ${feature.get("id")}<br>` + //
+          `Ident8: ${feature.get("ident8")}<br>` + //
+            `Type: ${feature.get("type")}`
+        )
     );
   }
 
