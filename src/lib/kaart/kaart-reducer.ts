@@ -570,7 +570,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       model.infoBoodschapSubj.next(
         model.infoBoodschapSubj //
           .getValue()
-          .filter(boodschap => boodschap.id !== cmnd.boodschap.id)
+          .filter(boodschap => boodschap !== undefined && boodschap.id !== cmnd.boodschap.id)
           .concat(cmnd.boodschap)
           .toList()
       );
@@ -581,7 +581,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       model.infoBoodschapSubj.next(
         model.infoBoodschapSubj //
           .getValue()
-          .filter(boodschap => boodschap.id !== cmnd.id)
+          .filter(boodschap => boodschap !== undefined && boodschap.id !== cmnd.id)
           .toList()
       );
       return ModelWithResult(model);
