@@ -16,6 +16,40 @@ import { KaartComponent } from "./kaart.component";
 import { determineStyle, determineStyleSelector } from "./laag-converter";
 
 const TekenLaagNaam = "Tekenen van geometrie";
+const defaultlaagStyle = new ol.style.Style({
+  fill: new ol.style.Fill({
+    color: "rgba(255, 255, 255, 0.2)"
+  }),
+  stroke: new ol.style.Stroke({
+    color: "#ffcc33",
+    width: 2
+  }),
+  image: new ol.style.Circle({
+    radius: 7,
+    fill: new ol.style.Fill({
+      color: "#ffcc33"
+    })
+  })
+});
+const defaultDrawStyle = new ol.style.Style({
+  fill: new ol.style.Fill({
+    color: "rgba(255, 255, 255, 0.2)"
+  }),
+  stroke: new ol.style.Stroke({
+    color: "rgba(0, 0, 0, 0.5)",
+    lineDash: [10, 10],
+    width: 2
+  }),
+  image: new ol.style.Circle({
+    radius: 5,
+    stroke: new ol.style.Stroke({
+      color: "rgba(0, 0, 0, 0.7)"
+    }),
+    fill: new ol.style.Fill({
+      color: "rgba(255, 255, 255, 0.2)"
+    })
+  })
+});
 @Component({
   selector: "awv-kaart-teken-laag",
   template: "<ng-content></ng-content>",
@@ -23,43 +57,6 @@ const TekenLaagNaam = "Tekenen van geometrie";
   encapsulation: ViewEncapsulation.None
 })
 export class KaartTekenLaagComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
-  defaultlaagStyle = new ol.style.Style({
-    fill: new ol.style.Fill({
-      color: "rgba(255, 255, 255, 0.2)"
-    }),
-    stroke: new ol.style.Stroke({
-      color: "#ffcc33",
-      width: 2
-    }),
-    image: new ol.style.Circle({
-      radius: 7,
-      fill: new ol.style.Fill({
-        color: "#ffcc33"
-      })
-    })
-  });
-
-  defaultDrawStyle = new ol.style.Style({
-    fill: new ol.style.Fill({
-      color: "rgba(255, 255, 255, 0.2)"
-    }),
-    stroke: new ol.style.Stroke({
-      color: "rgba(0, 0, 0, 0.5)",
-      lineDash: [10, 10],
-      width: 2
-    }),
-    image: new ol.style.Circle({
-      radius: 5,
-      stroke: new ol.style.Stroke({
-        color: "rgba(0, 0, 0, 0.7)"
-      }),
-      fill: new ol.style.Fill({
-        color: "rgba(255, 255, 255, 0.2)"
-      })
-    })
-  });
-
-  private tekenSettings: Option<ke.TekenSettings>;
   private changedGeometriesSubj: Subject<ol.geom.Geometry>;
 
   private drawInteraction: ol.interaction.Draw;
@@ -90,17 +87,13 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
 
     this.bindToLifeCycle(
       kaartObs.pipe(
-        distinctUntilChanged((k1, k2) => k1.tekenSettingsSubj === k2.tekenSettingsSubj), //
-        map(kwi => kwi.tekenSettingsSubj)
+        map(kwi => kwi.tekenSettingsSubj.getValue()), //
+        distinctUntilChanged()
       )
-    ).subscribe(tekenenSettingsSubj => {
-      this.tekenSettings = tekenenSettingsSubj.getValue();
-    });
-
-    this.internalMessage$.pipe(ofType<TekenMsg>("Teken")).subscribe(msg => {
-      msg.settings.fold(
+    ).subscribe(settings => {
+      settings.fold(
         () => this.stopMetTekenen(), //
-        () => this.startMetTekenen() //
+        ts => this.startMetTekenen(ts) //
       );
     });
   }
@@ -110,18 +103,18 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
     super.ngOnDestroy();
   }
 
-  startMetTekenen(): void {
+  private startMetTekenen(tekenSettings: ke.TekenSettings): void {
     const source = new ol.source.Vector();
     this.dispatch({
       type: "VoegLaagToe",
       positie: 0,
-      laag: this.createLayer(source),
+      laag: this.createLayer(source, tekenSettings),
       magGetoondWorden: true,
       laaggroep: "Tools",
       wrapper: kaartLogOnlyWrapper
     });
 
-    this.drawInteraction = this.createDrawInteraction(source);
+    this.drawInteraction = this.createDrawInteraction(source, tekenSettings);
     this.dispatch(prt.VoegInteractieToeCmd(this.drawInteraction));
 
     this.modifyInteraction = new ol.interaction.Modify({ source: source });
@@ -131,7 +124,7 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
     this.dispatch(prt.VoegInteractieToeCmd(this.snapInteraction));
   }
 
-  stopMetTekenen(): void {
+  private stopMetTekenen(): void {
     this.dispatch(prt.VerwijderInteractieCmd(this.drawInteraction));
     this.dispatch(prt.VerwijderInteractieCmd(this.modifyInteraction));
     this.dispatch(prt.VerwijderInteractieCmd(this.snapInteraction));
@@ -139,22 +132,19 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
     this.dispatch(prt.VerwijderLaagCmd(TekenLaagNaam, kaartLogOnlyWrapper));
   }
 
-  createLayer(source: ol.source.Vector): ke.VectorLaag {
+  private createLayer(source: ol.source.Vector, tekenSettings: ke.TekenSettings): ke.VectorLaag {
     return {
       type: ke.VectorType,
       titel: TekenLaagNaam,
       source: source,
-      styleSelector: orElse(
-        this.tekenSettings.chain(s => s.laagStyle), //
-        () => determineStyleSelector(this.defaultlaagStyle)
-      ),
+      styleSelector: orElse(tekenSettings.laagStyle, () => determineStyleSelector(defaultlaagStyle)),
       selecteerbaar: true,
       minZoom: 2,
       maxZoom: 15
     };
   }
 
-  createMeasureTooltip(): [HTMLDivElement, ol.Overlay] {
+  private createMeasureTooltip(): [HTMLDivElement, ol.Overlay] {
     const measureTooltipElement: HTMLDivElement = document.createElement("div");
     measureTooltipElement.className = "tooltip tooltip-measure";
     const measureTooltip = new ol.Overlay({
@@ -173,16 +163,13 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
     return [measureTooltipElement, measureTooltip];
   }
 
-  createDrawInteraction(source: ol.source.Vector): ol.interaction.Draw {
+  private createDrawInteraction(source: ol.source.Vector, tekenSettings: ke.TekenSettings): ol.interaction.Draw {
     const [measureTooltipElement, measureTooltip] = this.createMeasureTooltip();
 
     const draw = new ol.interaction.Draw({
       source: source,
-      type: this.tekenSettings.fold(
-        () => "LineString" as ol.geom.GeometryType, //
-        settings => settings.geometryType
-      ),
-      style: this.tekenSettings.map(s => determineStyle(s.drawStyle, this.defaultDrawStyle)).getOrElseValue(this.defaultDrawStyle)
+      type: tekenSettings.geometryType,
+      style: determineStyle(tekenSettings.drawStyle, defaultDrawStyle)
     });
 
     draw.on(
