@@ -137,7 +137,7 @@
   <awv-kaart-classic *ngIf="isZichtbaar('achtergronden')" [naam]="'achtergronden'" [mijnLocatieZoom]="8">
     <awv-kaart-wmts-laag [titel]="'GRB'" [laagNaam]="'grb_bsk'" [urls]="['http://tile.informatievlaanderen.be/ws/raadpleegdiensten/wmts']"
                          [matrixSet]="'BPL72VL'" [matrixIds]="['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15']"
-                         [origin]="[9928.000000, 329072.000000]"></awv-kaart-wmts-laag>
+                         [extent]="[9928.0, 66928.0, 272072.0, 329072.0]"></awv-kaart-wmts-laag>
     <!--
       Autoconfig werkt (nog) niet voor GRB. Zie:
       https://github.com/openlayers/openlayers/issues/6699 -->
@@ -145,7 +145,7 @@
       [matrixSet]="'BPL72VL'">
     </awv-kaart-wmts-laag> -->
     
-    <awv-kaart-wmts-laag [titel]="'Dienstkaart kleur wmts'" [laagNaam]="'dienstkaart-kleur'" [capurl]="'https://apps-dev.mow.vlaanderen.be/geoserver/gwc/service/wmts?REQUEST=GetCapabilities'" [matrixSet]="'AWV-gridset-Lambert72'"></awv-kaart-wmts-laag>
+    <!--<awv-kaart-wmts-laag [titel]="'Dienstkaart kleur wmts'" [laagNaam]="'dienstkaart-kleur'" [capurl]="'https://apps-dev.mow.vlaanderen.be/geoserver/gwc/service/wmts?REQUEST=GetCapabilities'" [matrixSet]="'AWV-gridset-Lambert72'"></awv-kaart-wmts-laag>-->
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
     <awv-kaart-geoserver-laag [titel]="'Referentiepunten (WDB)'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'"></awv-kaart-geoserver-laag>

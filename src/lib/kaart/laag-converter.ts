@@ -34,18 +34,20 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
 
   function createdWmts(l: ke.WmtsLaag) {
     let source: ol.source.WMTS;
+    let extent: ol.Extent;
     if (l.config.type === "Capa") {
       const config = l.config as ke.WmtsCapaConfig;
+      extent = kaart.config.defaults.extent;
       source = new ol.source.WMTS(config.wmtsOptions);
     } else {
       const config = l.config as ke.WmtsManualConfig;
+      extent = config.extent.getOrElseValue(kaart.config.defaults.extent);
       source = new ol.source.WMTS({
         projection: kaart.config.srs,
         urls: config.urls.toArray(),
         tileGrid: new ol.tilegrid.WMTS({
-          origin: config.origin.toUndefined(),
+          origin: config.origin.getOrElseValue(ol.extent.getTopLeft(extent)),
           resolutions: kaart.config.defaults.resolutions,
-          // extent: kaart.config.defaults.extent,
           matrixIds: config.matrixIds
         }),
         layer: l.naam,
@@ -57,7 +59,7 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
     return new ol.layer.Tile(<ol.olx.layer.TileOptions>{
       title: l.titel,
       visible: true,
-      extent: kaart.config.defaults.extent,
+      extent: extent,
       opacity: l.opacity.toUndefined(),
       source: source
     });

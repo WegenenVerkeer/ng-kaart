@@ -52,6 +52,7 @@ export interface WmtsManualConfig {
   readonly style: Option<string>;
   readonly matrixIds: string[];
   readonly origin: Option<ol.Coordinate>;
+  readonly extent: Option<ol.Extent>;
 }
 
 export interface WmtsLaag {

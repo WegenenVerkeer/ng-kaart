@@ -30,6 +30,7 @@ export class KaartWmtsLaagComponent extends KaartLaagComponent implements OnInit
   @Input() matrixIds: string[];
   @Input() style?: string;
   @Input() origin?: [number, number];
+  @Input() extent?: [number, number, number, number];
 
   private wmtsOptions: ol.olx.source.WMTSOptions;
 
@@ -71,7 +72,8 @@ export class KaartWmtsLaagComponent extends KaartLaagComponent implements OnInit
         urls: List(this.urls),
         matrixIds: this.matrixIds,
         style: fromNullable(this.style),
-        origin: fromNullable(this.origin)
+        origin: fromNullable(this.origin),
+        extent: fromNullable(this.extent)
       };
     }
 
