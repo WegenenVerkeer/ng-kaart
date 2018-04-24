@@ -1,10 +1,9 @@
 import { Component, EventEmitter, NgZone, OnInit, Output } from "@angular/core";
 import { KaartChildComponentBase } from "./kaart-child-component-base";
-import { InfoBoodschappenMsg, infoBoodschapWrapper, KaartInternalMsg } from "./kaart-internal-messages";
+import { InfoBoodschappenMsg, infoBoodschappenMsgGen, KaartInternalMsg } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
 import { List } from "immutable";
 import { InfoBoodschap, KaartWithInfo } from "./kaart-with-info";
-import { takeUntil } from "rxjs/operators";
 import { ofType } from "../util/operators";
 import { observeOnAngular } from "../util/observe-on-angular";
 import { Observable } from "rxjs/Observable";
@@ -23,7 +22,7 @@ export class KaartInfoBoodschappenComponent extends KaartChildComponentBase impl
   }
 
   protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
-    return [prt.InfoBoodschappenSubscription(infoBoodschapWrapper)];
+    return [prt.InfoBoodschappenSubscription(infoBoodschappenMsgGen)];
   }
 
   ngOnInit(): void {

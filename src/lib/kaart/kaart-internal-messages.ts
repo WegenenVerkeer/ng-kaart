@@ -90,7 +90,7 @@ export const kaartLogOnlyWrapper: prt.ValidationWrapper<any, KaartInternalMsg> =
   };
 };
 
-export const infoBoodschapWrapper = (infoBoodschappen: List<InfoBoodschap>) =>
+export const infoBoodschappenMsgGen = (infoBoodschappen: List<InfoBoodschap>) =>
   KaartInternalMsg(some(InfoBoodschappenMsg(infoBoodschappen)));
 
 function InfoBoodschappenMsg(infoBoodschappen: List<InfoBoodschap>): InfoBoodschappenMsg {
