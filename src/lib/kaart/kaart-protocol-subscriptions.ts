@@ -21,7 +21,7 @@ export type Subscription<Msg> =
   | GeometryChangedSubscription<Msg>
   | TekenenSubscription<Msg>
   | KaartClickSubscription<Msg>
-  | InfoBoodschapSubscription<Msg>;
+  | InfoBoodschappenSubscription<Msg>;
 
 export interface Zoominstellingen {
   zoom: number;
@@ -79,7 +79,7 @@ export interface TekenenSubscription<Msg> {
   readonly wrapper: (boolean) => Msg;
 }
 
-export interface InfoBoodschapSubscription<Msg> {
+export interface InfoBoodschappenSubscription<Msg> {
   readonly type: "InfoBoodschap";
   readonly wrapper: (infoBoodschappen: List<InfoBoodschap>) => Msg;
 }
@@ -120,7 +120,7 @@ export function KaartClickSubscription<Msg>(wrapper: (coordinaat: ol.Coordinate)
   return { type: "KaartClick", wrapper: wrapper };
 }
 
-export function InfoBoodschapSubscription<Msg>(wrapper: (boodschappen: List<InfoBoodschap>) => Msg): Subscription<Msg> {
+export function InfoBoodschappenSubscription<Msg>(wrapper: (boodschappen: List<InfoBoodschap>) => Msg): Subscription<Msg> {
   return { type: "InfoBoodschap", wrapper: wrapper };
 }
 

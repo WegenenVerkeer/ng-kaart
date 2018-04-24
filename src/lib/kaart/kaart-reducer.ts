@@ -714,7 +714,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
       }
 
-      function subscribeToInfoBoodschap(sub: prt.InfoBoodschapSubscription<Msg>): ModelWithResult<Msg> {
+      function subscribeToInfoBoodschap(sub: prt.InfoBoodschappenSubscription<Msg>): ModelWithResult<Msg> {
         const subscription = model.infoBoodschapSubj.subscribe(t => msgConsumer(sub.wrapper(t)));
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
       }

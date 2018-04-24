@@ -23,7 +23,7 @@ export class KaartInfoBoodschappenComponent extends KaartChildComponentBase impl
   }
 
   protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
-    return [prt.InfoBoodschapSubscription(infoBoodschapWrapper)];
+    return [prt.InfoBoodschappenSubscription(infoBoodschapWrapper)];
   }
 
   ngOnInit(): void {
