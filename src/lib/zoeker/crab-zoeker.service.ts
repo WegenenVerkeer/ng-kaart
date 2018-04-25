@@ -7,8 +7,9 @@ import { Observable } from "rxjs/Observable";
 import { Http } from "@angular/http";
 import { ZoekerConfigData, ZOEKER_CFG } from "./zoeker.config";
 import { HttpClient, HttpParams } from "@angular/common/http";
-import { map, reduce } from "rxjs/operators";
+import { map, reduce, concatMap, mergeAll, combineLatest, mergeMap } from "rxjs/operators";
 import { Map } from "immutable";
+import { from } from "rxjs/observable/from";
 
 export interface LambertLocation {
   readonly X_Lambert72: number;
@@ -23,6 +24,10 @@ export interface LocatorServiceResult {
 
 export interface LocatorServiceResults {
   readonly LocationResult: LocatorServiceResult[];
+}
+
+export interface SuggestionServiceResults {
+  readonly SuggestionResult: string[];
 }
 
 export class CrabZoekResultaat implements ZoekResultaat {
@@ -108,48 +113,47 @@ export class CrabZoekerService implements AbstractZoeker {
     return zoekResultaten;
   }
 
+  private zoekDetail(zoekterm: string): Observable<LocatorServiceResults> {
+    const options = { params: new HttpParams().set("query", zoekterm) };
+
+    return this.http.get<LocatorServiceResults>(this.crabZoekerConfig.url + "/rest/geolocation/location", options);
+  }
+
+  private zoekSuggesties(zoekterm: string): Observable<SuggestionServiceResults> {
+    const options = { params: new HttpParams().set("query", zoekterm) };
+
+    return this.http.get<SuggestionServiceResults>(this.crabZoekerConfig.url + "/rest/geolocation/suggestion", options);
+  }
+
+  private limiteerAantalResultaten(zoekResultaten: ZoekResultaten): ZoekResultaten {
+    if (zoekResultaten.resultaten.length >= this.crabZoekerConfig.maxAantal) {
+      zoekResultaten.fouten.push(
+        `Er werden meer dan ${this.crabZoekerConfig.maxAantal} resultaten gevonden, ` +
+          `de eerste ${this.crabZoekerConfig.maxAantal} worden hier opgelijst`
+      );
+    }
+    zoekResultaten.resultaten = zoekResultaten.resultaten.slice(0, this.crabZoekerConfig.maxAantal);
+    return zoekResultaten;
+  }
+
   zoek(zoekterm: string): Observable<ZoekResultaten> {
     const options = { params: new HttpParams().set("query", zoekterm) };
 
-    return this.http
-      .get<LocatorServiceResults>(this.crabZoekerConfig.url + "/rest/geolocation/location", options)
+    return this.zoekSuggesties(zoekterm)
+      .pipe(
+        map(suggestieResultaten =>
+          from(suggestieResultaten.SuggestionResult).pipe(
+            mergeMap(suggestie => <Observable<LocatorServiceResults>>this.zoekDetail(suggestie))
+          )
+        )
+      )
+      .mergeAll()
       .pipe(
         reduce<LocatorServiceResults, ZoekResultaten>(
           (zoekResultaten, crabResultaten) => this.voegCrabResultatenToe(zoekResultaten, crabResultaten),
           this.maakZoekResultaten()
-        )
+        ),
+        map(resultaten => this.limiteerAantalResultaten(resultaten))
       );
-
-    /* locatorservices/rest/geolocation/suggestion?query=kerkstraat
-    const res = {
-      SuggestionResult: [
-        "Kerkstraat, Aalst",
-        "Kerkstraat, Aalter",
-        "Kerkstraat, Aarschot",
-        "Kerkstraat, Affligem",
-        "Kerkstraat, Sint-Agatha-Berchem"
-      ]
-    };*/
-
-    /* locatorservices/rest/geolocation/location?query=kerkstraat
-    const res = {
-      LocationResult: [
-        {
-          Municipality: "Aalst",
-          Zipcode: "9300",
-          Thoroughfarename: "Kerkstraat",
-          Housenumber: null,
-          ID: 61841,
-          FormattedAddress: "Kerkstraat, Aalst",
-          Location: { Lat_WGS84: 50.938108398029627, Lon_WGS84: 4.0400732293316519, X_Lambert72: 126897.5, Y_Lambert72: 180918.95 },
-          LocationType: "crab_straat",
-          BoundingBox: {
-            LowerLeft: { Lat_WGS84: 50.93806641135145, Lon_WGS84: 4.0393310091158243, X_Lambert72: 126845.31, Y_Lambert72: 180914.51 },
-            UpperRight: { Lat_WGS84: 50.938162860380089, Lon_WGS84: 4.0405197235360761, X_Lambert72: 126928.91, Y_Lambert72: 180924.87 }
-          }
-        }
-      ]
-    };
-    */
   }
 }
