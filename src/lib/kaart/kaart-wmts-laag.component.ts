@@ -2,12 +2,13 @@ import { HttpClient } from "@angular/common/http";
 import { Component, Input, OnInit, ViewEncapsulation } from "@angular/core";
 import { fromNullable } from "fp-ts/lib/Option";
 import { List } from "immutable";
+import * as ol from "openlayers";
 
+import { classicLogger } from "../kaart-classic/log";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { WmtsCapaConfig, WmtsLaag, WmtsManualConfig, WmtsType } from "./kaart-elementen";
 import { KaartLaagComponent } from "./kaart-laag.component";
 import { Laaggroep } from "./kaart-protocol-commands";
-import * as ol from "openlayers";
 
 @Component({
   selector: "awv-kaart-wmts-laag",
@@ -116,13 +117,18 @@ export class KaartWmtsLaagComponent extends KaartLaagComponent implements OnInit
     }
   }
 
-  private vraagCapabilitiesOp(): any {
+  private vraagCapabilitiesOp(): void {
     if (this.capurl) {
-      this.http.get(this.capurl, { responseType: "text" }).subscribe(cap => this.prepareCapabilities(cap));
+      this.http
+        .get(this.capurl, { responseType: "text" }) //
+        .subscribe(
+          cap => this.addLaagWithCapabilities(cap), //
+          err => classicLogger.error("Kon capabilities niet ophalen", err)
+        );
     }
   }
 
-  private prepareCapabilities(cap) {
+  private addLaagWithCapabilities(cap) {
     const parser = new ol.format.WMTSCapabilities();
 
     const result = parser.read(cap);
