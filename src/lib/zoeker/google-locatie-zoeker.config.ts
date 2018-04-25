@@ -1,7 +1,3 @@
-import { InjectionToken } from "@angular/core";
-
-export const GOOGLE_LOCATIE_ZOEKER_CFG = new InjectionToken<GoogleLocatieZoekerConfigData>("GoogleLocatieZoekerCfg");
-
 export interface GoogleLocatieZoekerConfigData {
   readonly url?: string;
   readonly maxAantal?: number;
@@ -15,18 +11,20 @@ export class GoogleLocatieZoekerConfig {
   readonly kleur: [number, number, number, number] = [247, 144, 45, 1.0];
   readonly apiKey: string | undefined = undefined;
 
-  constructor(data: GoogleLocatieZoekerConfigData) {
-    if (data.url) {
-      this.url = data.url;
-    }
-    if (data.maxAantal) {
-      this.maxAantal = data.maxAantal;
-    }
-    if (data.kleur) {
-      this.kleur = data.kleur;
-    }
-    if (data.apiKey) {
-      this.apiKey = data.apiKey;
+  constructor(data?: GoogleLocatieZoekerConfigData) {
+    if (data) {
+      if (data.url) {
+        this.url = data.url;
+      }
+      if (data.maxAantal) {
+        this.maxAantal = data.maxAantal;
+      }
+      if (data.kleur) {
+        this.kleur = data.kleur;
+      }
+      if (data.apiKey) {
+        this.apiKey = data.apiKey;
+      }
     }
   }
 

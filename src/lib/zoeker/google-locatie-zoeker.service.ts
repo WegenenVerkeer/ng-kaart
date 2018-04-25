@@ -10,7 +10,8 @@ import { Observable } from "rxjs/Observable";
 import { catchError, flatMap, map } from "rxjs/operators";
 
 import { AbstractZoeker, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
-import { GOOGLE_LOCATIE_ZOEKER_CFG, GoogleLocatieZoekerConfig, GoogleLocatieZoekerConfigData } from "./google-locatie-zoeker.config";
+import { GoogleLocatieZoekerConfig, GoogleLocatieZoekerConfigData } from "./google-locatie-zoeker.config";
+import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
 
 export class GoogleZoekResultaat implements ZoekResultaat {
   partialMatch: boolean;
@@ -93,10 +94,10 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
 
   constructor(
     private readonly http: Http,
-    @Inject(GOOGLE_LOCATIE_ZOEKER_CFG) googleLocatieZoekerConfigData: GoogleLocatieZoekerConfigData,
+    @Inject(ZOEKER_CFG) zoekerConfigData: ZoekerConfigData,
     private readonly sanitizer: DomSanitizer
   ) {
-    this.googleLocatieZoekerConfig = new GoogleLocatieZoekerConfig(googleLocatieZoekerConfigData);
+    this.googleLocatieZoekerConfig = new GoogleLocatieZoekerConfig(zoekerConfigData.google);
     this.locatieZoekerUrl = this.googleLocatieZoekerConfig.url;
     // We moeten hier al de expanded html zetten, want angular directives worden niet geexpandeerd in innerHtml met SafeHtml.
     this.icoon = this.sanitizer.bypassSecurityTrustHtml("<mat-icon class='mat-icon material-icons'>place</mat-icon>");

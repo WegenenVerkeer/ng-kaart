@@ -19,8 +19,10 @@ import { AvKaartComponent } from "./av-kaart.component";
     KaartModule.withDefaults(),
     FormsModule,
     ZoekerModule.forRoot({
-      url: "http://localhost:5100/locatiezoeker",
-      apiKey: "AIzaSyApbXMl5DGL60g17JU6MazMxNcUGooey7I"
+      google: {
+        url: "http://localhost:5100/locatiezoeker",
+        apiKey: "AIzaSyApbXMl5DGL60g17JU6MazMxNcUGooey7I"
+      }
     }),
     ClickOutsideModule,
     HttpModule
