@@ -31,6 +31,7 @@ export class KaartWmtsLaagComponent extends KaartLaagComponent implements OnInit
   @Input() style?: string;
   @Input() origin?: [number, number];
   @Input() extent?: [number, number, number, number];
+  @Input() projection = "EPSG:31370";
 
   private wmtsOptions: ol.olx.source.WMTSOptions;
 
@@ -95,7 +96,6 @@ export class KaartWmtsLaagComponent extends KaartLaagComponent implements OnInit
   }
 
   backgroundUrl(config: WmtsCapaConfig | WmtsManualConfig): string {
-    // TODO: bepalen op basis van de echte parameters. Rekening houden met config.
     if (config.type === "Manual") {
       return (
         this.urls[0] +
@@ -111,6 +111,7 @@ export class KaartWmtsLaagComponent extends KaartLaagComponent implements OnInit
         "&TileMatrix=9&TileCol=185&TileRow=273"
       );
     } else {
+      // TODO: bepalen op basis van de echte parameters. Rekening houden met config.
       return "";
     }
   }
@@ -128,9 +129,8 @@ export class KaartWmtsLaagComponent extends KaartLaagComponent implements OnInit
     this.wmtsOptions = ol.source.WMTS.optionsFromCapabilities(result, {
       layer: this.laagNaam,
       matrixSet: this.matrixSet,
-      projection: "EPSG:31370"
+      projection: this.projection
     });
-    console.log("****", this.wmtsOptions);
     this.voegLaagToe();
   }
 }
