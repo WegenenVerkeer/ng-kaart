@@ -24,7 +24,8 @@ import { KaartSchaalComponent } from "./kaart-schaal.component";
 import { KaartStandaardInteractiesComponent } from "./kaart-standaard-interacties.component";
 import { KaartStandaardKnoppenComponent } from "./kaart-standaard-knoppen.component";
 import { KaartTekenPolygoonLaagComponent } from "./kaart-teken-polygoon-laag.component";
-import { KaartTekenLaagComponent } from "./kaart-tekenen.component";
+import { KaartTekenLaagComponent } from "./kaart-teken-laag.component";
+import { KaartTekenComponent } from "./kaart-teken.component";
 import { KaartTilecacheLaagComponent } from "./kaart-tilecache-laag.component";
 import { KaartFeaturesLaagComponent } from "./kaart-toon-features.component";
 import { KaartVectorLaagComponent } from "./kaart-vector-laag.component";
@@ -46,6 +47,7 @@ const components: any[] = [
   KaartStandaardKnoppenComponent,
   KaartTekenPolygoonLaagComponent,
   KaartTekenLaagComponent,
+  KaartTekenComponent,
   KaartFeaturesLaagComponent,
   KaartVectorLaagComponent,
   KaartNosqlfsLaagComponent,

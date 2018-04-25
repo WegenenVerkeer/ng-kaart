@@ -229,12 +229,12 @@ export interface ZetMijnLocatieZoomCmd {
 
 export interface VoegInteractieToeCmd<Msg extends KaartMsg> {
   readonly type: "VoegInteractieToe";
-  readonly interactie: ol.interaction.Draw;
+  readonly interactie: ol.interaction.Pointer;
 }
 
 export interface VerwijderInteractieCmd<Msg extends KaartMsg> {
   readonly type: "VerwijderInteractie";
-  readonly interactie: ol.interaction.Draw;
+  readonly interactie: ol.interaction.Pointer;
 }
 
 export interface VoegOverlayToeCmd<Msg extends KaartMsg> {
@@ -355,14 +355,14 @@ export function VerbergAchtergrondKeuzeCmd<Msg extends KaartMsg>(wrapper: BareVa
   return { type: "VerbergAchtergrondKeuze", wrapper: wrapper };
 }
 
-export function VoegInteractieToeCmd<Msg extends KaartMsg>(interactie: ol.interaction.Draw): VoegInteractieToeCmd<Msg> {
+export function VoegInteractieToeCmd<Msg extends KaartMsg>(interactie: ol.interaction.Pointer): VoegInteractieToeCmd<Msg> {
   return {
     type: "VoegInteractieToe",
     interactie: interactie
   };
 }
 
-export function VerwijderInteractieCmd<Msg extends KaartMsg>(interactie: ol.interaction.Draw): VerwijderInteractieCmd<Msg> {
+export function VerwijderInteractieCmd<Msg extends KaartMsg>(interactie: ol.interaction.Pointer): VerwijderInteractieCmd<Msg> {
   return {
     type: "VerwijderInteractie",
     interactie: interactie
