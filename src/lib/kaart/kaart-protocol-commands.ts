@@ -45,8 +45,10 @@ export type Command<Msg extends KaartMsg> =
   | VoegOverlayToeCmd<Msg>
   | VerwijderOverlaysCmd<Msg>;
 
-// SubscriptionResult is maar een type alias, maar ook een encapsulatie naar clients toe
-export type SubscriptionResult = RxSubscription;
+export interface SubscriptionResult {
+  readonly subscription: RxSubscription;
+  readonly subscriberName: string;
+}
 
 export interface SubscribeCmd<Msg extends KaartMsg> {
   readonly type: "Subscription";
@@ -56,7 +58,7 @@ export interface SubscribeCmd<Msg extends KaartMsg> {
 
 export interface UnsubscribeCmd {
   readonly type: "Unsubscription";
-  readonly subscription: SubscriptionResult;
+  readonly subscriptionResult: SubscriptionResult;
 }
 
 export type Laaggroep = "Achtergrond" | "Voorgrond" | "Tools";
@@ -383,13 +385,13 @@ export function VerwijderOverlaysCmd<Msg extends KaartMsg>(overlays: Array<ol.Ov
 
 export function SubscribeCmd<Msg extends KaartMsg>(
   subscription: Subscription<Msg>,
-  wrapper: ValidationWrapper<RxSubscription, Msg>
+  wrapper: ValidationWrapper<SubscriptionResult, Msg>
 ): SubscribeCmd<Msg> {
   return { type: "Subscription", subscription: subscription, wrapper: wrapper };
 }
 
-export function UnsubscribeCmd<Msg extends KaartMsg>(subscription: SubscriptionResult): UnsubscribeCmd {
-  return { type: "Unsubscription", subscription: subscription };
+export function UnsubscribeCmd<Msg extends KaartMsg>(subscriptionResult: SubscriptionResult): UnsubscribeCmd {
+  return { type: "Unsubscription", subscriptionResult: subscriptionResult };
 }
 
 export function ZetMijnLocatieZoomCmd(doelniveau: Option<number>): ZetMijnLocatieZoomCmd {

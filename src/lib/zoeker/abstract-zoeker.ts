@@ -1,6 +1,7 @@
-import { Observable } from "rxjs/Observable";
-import { Map } from "immutable";
 import { SafeHtml } from "@angular/platform-browser";
+import { Map } from "immutable";
+import * as ol from "openlayers";
+import { Observable } from "rxjs/Observable";
 
 export interface ZoekResultaat {
   partialMatch: boolean;
