@@ -7,7 +7,7 @@ import * as prt from "./kaart-protocol";
 
 @Component({
   selector: "awv-kaart-knop-achtergrondlaag-kiezer",
-  template: "<awv-kaart-achtergrond-selector></awv-kaart-achtergrond-selector>",
+  template: "",
   encapsulation: ViewEncapsulation.None
 })
 export class KaartKnopAchtergrondLaagKiezerComponent extends KaartComponentBase implements OnInit, OnDestroy {

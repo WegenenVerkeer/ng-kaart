@@ -7,10 +7,13 @@ import { asap } from "../util/asap";
 
 export abstract class KaartComponentBase implements OnInit, OnDestroy {
   private readonly destroyingSubj: Subject<void> = new Subject<void>();
+  private readonly initialisingSubj: Subject<void> = new Subject<void>();
 
   constructor(readonly zone: NgZone) {}
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.initialisingSubj.next();
+  }
 
   ngOnDestroy() {
     this.destroyingSubj.next();
@@ -18,6 +21,10 @@ export abstract class KaartComponentBase implements OnInit, OnDestroy {
 
   bindToLifeCycle<T>(source: Observable<T>): Observable<T> {
     return source ? source.pipe(takeUntil(this.destroyingSubj)) : source;
+  }
+
+  public get initialising$(): Observable<void> {
+    return this.initialisingSubj;
   }
 
   public get destroying$(): Observable<void> {

@@ -4,7 +4,7 @@ import { ReplaySubject } from "rxjs/ReplaySubject";
 import * as prt from "./kaart-protocol";
 import { asap } from "../util/asap";
 
-export interface KaartCmdDispatcher<Msg extends prt.KaartMsg> {
+export interface KaartCmdDispatcher<Msg extends prt.TypedRecord> {
   dispatch(cmd: prt.Command<Msg>): void;
 }
 
@@ -12,7 +12,7 @@ export interface KaartEventSource {
   commands$: Observable<prt.Command<any>>;
 }
 
-export class ReplaySubjectKaartCmdDispatcher<Msg extends prt.KaartMsg> implements KaartCmdDispatcher<Msg>, KaartEventSource {
+export class ReplaySubjectKaartCmdDispatcher<Msg extends prt.TypedRecord> implements KaartCmdDispatcher<Msg>, KaartEventSource {
   // Er worden al events gegenereerd voordat de kaartcomponent actief is. Daarom tot 1000 events onthouden 500ms lang.
   private readonly eventSubj = new ReplaySubject<prt.Command<Msg>>(1000, 500);
 

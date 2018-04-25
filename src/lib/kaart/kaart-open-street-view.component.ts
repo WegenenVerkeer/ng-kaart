@@ -1,14 +1,16 @@
 import { Component, NgZone, OnInit } from "@angular/core";
-import { observeOnAngular } from "../util/observe-on-angular";
-import { KaartChildComponentBase } from "./kaart-child-component-base";
-import { KaartClickMsg, kaartClickWrapper, KaartInternalMsg } from "./kaart-internal-messages";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { ofType } from "../util/operators";
-import * as prt from "./kaart-protocol";
 import { Observable } from "rxjs/Observable";
 import { skipUntil, take, takeUntil } from "rxjs/operators";
+
+import { observeOnAngular } from "../util/observe-on-angular";
+import { ofType } from "../util/operators";
 import { lambert72ToWgs84 } from "./coordinaten.service";
+import { KaartChildComponentBase } from "./kaart-child-component-base";
+import { KaartClickMsg, kaartClickWrapper, KaartInternalMsg } from "./kaart-internal-messages";
+import * as prt from "./kaart-protocol";
+import { KaartComponent } from "./kaart.component";
 
 @Component({
   selector: "awv-kaart-open-street-view",
@@ -20,8 +22,8 @@ export class KaartOpenStreetViewComponent extends KaartChildComponentBase implem
 
   private actief = false;
 
-  constructor(zone: NgZone) {
-    super(zone);
+  constructor(kaartComponent: KaartComponent, zone: NgZone) {
+    super(kaartComponent, zone);
   }
 
   public get isActief(): boolean {
