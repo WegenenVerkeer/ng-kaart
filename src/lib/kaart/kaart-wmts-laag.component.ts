@@ -128,7 +128,7 @@ export class KaartWmtsLaagComponent extends KaartLaagComponent implements OnInit
     }
   }
 
-  private addLaagWithCapabilities(cap) {
+  private addLaagWithCapabilities(cap: string) {
     const parser = new ol.format.WMTSCapabilities();
 
     const result = parser.read(cap);
