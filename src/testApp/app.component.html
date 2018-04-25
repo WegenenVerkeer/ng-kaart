@@ -17,8 +17,7 @@
   </button>
   <awv-kaart-classic *ngIf="isZichtbaar('kleurdistricten')" [naam]="'kleurdistricten'">
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
-    <awv-kaart-vector-laag [titel]="'Districten'" [source]="districtSource" [style]="districtStyle"
-                           [minZoom]="2"></awv-kaart-vector-laag>
+    <awv-kaart-vector-laag [titel]="'Districten'" [source]="districtSource" [style]="districtStyle" [minZoom]="2"></awv-kaart-vector-laag>
   </awv-kaart-classic>
 </div>
 
@@ -38,12 +37,10 @@
   <button (click)="maakZichtbaar('ingezoomd', !isZichtbaar('ingezoomd'))">
     {{isZichtbaar('ingezoomd')?'Verberg':'Toon'}}
   </button>
-  <awv-kaart-classic *ngIf="isZichtbaar('ingezoomd')" [breedte]="600" [hoogte]="600" [zoom]="6"
-                     [middelpunt]="installatieCoordinaat"
-                     (geselecteerdeFeatures)="featuresGeselecteerd($event)" [selectieModus]="'single'">
+  <awv-kaart-classic *ngIf="isZichtbaar('ingezoomd')" [breedte]="600" [hoogte]="600" [zoom]="6" [middelpunt]="installatieCoordinaat"
+    (geselecteerdeFeatures)="featuresGeselecteerd($event)" [selectieModus]="'single'">
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
-    <awv-kaart-features-laag [features]="installatie" [titel]="'features'" [style]="pinIcon"
-                             [minZoom]="2"></awv-kaart-features-laag>
+    <awv-kaart-features-laag [features]="installatie" [titel]="'features'" [style]="pinIcon" [minZoom]="2"></awv-kaart-features-laag>
     <awv-kaart-schaal></awv-kaart-schaal>
     <awv-kaart-knop-volledig-scherm></awv-kaart-knop-volledig-scherm>
 
@@ -64,8 +61,7 @@
   <button (click)="maakZichtbaar('dynamischefeatures', !isZichtbaar('dynamischefeatures'))">
     {{isZichtbaar('dynamischefeatures')?'Verberg':'Toon'}}
   </button>
-  <awv-kaart-classic *ngIf="isZichtbaar('dynamischefeatures')" [breedte]="600" [hoogte]="600" [zoom]="6"
-                     [middelpunt]="installatieCoordinaat">
+  <awv-kaart-classic *ngIf="isZichtbaar('dynamischefeatures')" [breedte]="600" [hoogte]="600" [zoom]="6" [middelpunt]="installatieCoordinaat">
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
     <awv-kaart-features-laag [features]="installaties" [titel]="'features'" [minZoom]="2"></awv-kaart-features-laag>
     <!--[selecteerbaar]="true"
@@ -139,14 +135,23 @@
     {{isZichtbaar('achtergronden')?'Verberg':'Toon'}}
   </button>
   <awv-kaart-classic *ngIf="isZichtbaar('achtergronden')" [naam]="'achtergronden'" [mijnLocatieZoom]="8">
+    <awv-kaart-wmts-laag [titel]="'GRB'" [laagNaam]="'grb_bsk'" [urls]="['http://tile.informatievlaanderen.be/ws/raadpleegdiensten/wmts']"
+                         [matrixSet]="'BPL72VL'" [matrixIds]="['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15']"
+                         [extent]="[9928.0, 66928.0, 272072.0, 329072.0]"></awv-kaart-wmts-laag>
+    <!--
+      Autoconfig werkt (nog) niet voor GRB. Zie:
+      https://github.com/openlayers/openlayers/issues/6699 -->
+    <!-- <awv-kaart-wmts-laag [titel]="'GRB2'" [laagNaam]="'grb_bsk'" [capurl]="'https://tile.informatievlaanderen.be/ws/raadpleegdiensten/wmts?request=getcapabilities&service=wmts&version=1.0.0'"
+      [matrixSet]="'BPL72VL'">
+    </awv-kaart-wmts-laag> -->
+    
+    <!--<awv-kaart-wmts-laag [titel]="'Dienstkaart kleur wmts'" [laagNaam]="'dienstkaart-kleur'" [capurl]="'https://apps-dev.mow.vlaanderen.be/geoserver/gwc/service/wmts?REQUEST=GetCapabilities'" [matrixSet]="'AWV-gridset-Lambert72'"></awv-kaart-wmts-laag>-->
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
-    <awv-kaart-geoserver-laag [titel]="'Referentiepunten (WDB)'" [laagNaam]="'referentiepunten'"
-                              [versie]="'1.1.1'"></awv-kaart-geoserver-laag>
+    <awv-kaart-geoserver-laag [titel]="'Referentiepunten (WDB)'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'"></awv-kaart-geoserver-laag>
     <awv-kaart-blanco-laag [titel]="'Leeg'"></awv-kaart-blanco-laag>
     <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
-    <awv-kaart-knop-achtergrondlaag-kiezer
-      [titels]="['Dienstkaart grijs', 'Dienstkaart kleur']"></awv-kaart-knop-achtergrondlaag-kiezer>
+    <awv-kaart-knop-achtergrondlaag-kiezer [titels]="['Dienstkaart grijs', 'Dienstkaart kleur']"></awv-kaart-knop-achtergrondlaag-kiezer>
     <div class="kaart-links boven">Boven</div>
     <div class="kaart-links midden">Midden</div>
     <div class="kaart-links onder">Onder</div>
@@ -161,9 +166,8 @@
   <awv-kaart-classic *ngIf="isZichtbaar('straatkolken')" [naam]="'straatkolken'">
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
     <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
-    <awv-kaart-nosqlfs-laag [titel]="'Straatkolken'" [url]="'http://apigateway/geolatte-nosqlfs'"
-                            [database]="'featureserver'" [collection]="'straatkolken'" [style]="kolkStyle"
-                            [minZoom]="9"></awv-kaart-nosqlfs-laag>
+    <awv-kaart-nosqlfs-laag [titel]="'Straatkolken'" [url]="'http://apigateway/geolatte-nosqlfs'" [database]="'featureserver'"
+      [collection]="'straatkolken'" [style]="kolkStyle" [minZoom]="9"></awv-kaart-nosqlfs-laag>
   </awv-kaart-classic>
 </div>
 
@@ -175,9 +179,8 @@
   <awv-kaart-classic *ngIf="isZichtbaar('fietspaden')" [naam]="'fietspaden'">
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
     <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
-    <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'http://apigateway/geolatte-nosqlfs'"
-                            [database]="'featureserver'" [collection]="'fietspaden'" [styleFunction]="fietspadStyle"
-                            [minZoom]="7"></awv-kaart-nosqlfs-laag>
+    <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'http://apigateway/geolatte-nosqlfs'" [database]="'featureserver'"
+      [collection]="'fietspaden'" [styleFunction]="fietspadStyle" [minZoom]="7"></awv-kaart-nosqlfs-laag>
   </awv-kaart-classic>
 </div>
 
@@ -188,9 +191,8 @@
   <awv-kaart-classic *ngIf="isZichtbaar('offsets')" [naam]="'offsets'">
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
     <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
-    <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'http://apigateway/geolatte-nosqlfs'"
-                            [database]="'featureserver'" [collection]="'fietspaden'"
-                            [styleFunction]="fietspadStyleMetOffset" [minZoom]="7"></awv-kaart-nosqlfs-laag>
+    <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'http://apigateway/geolatte-nosqlfs'" [database]="'featureserver'"
+      [collection]="'fietspaden'" [styleFunction]="fietspadStyleMetOffset" [minZoom]="7"></awv-kaart-nosqlfs-laag>
   </awv-kaart-classic>
 </div>
 
@@ -201,7 +203,10 @@
   </button>
   <div *ngIf="isZichtbaar('verplaats')">
     <p>Verplaats dienstkaar kleur.</p>
-    <p><label>Naar positie: </label><input [(ngModel)]="naarPositie" type="number"/></p>
+    <p>
+      <label>Naar positie: </label>
+      <input [(ngModel)]="naarPositie" type="number" />
+    </p>
     <button (click)="verplaatsLagen()">Verplaats</button>
   </div>
   <awv-kaart-classic *ngIf="isZichtbaar('verplaats')" [naam]="'verplaats'" #verplaats>

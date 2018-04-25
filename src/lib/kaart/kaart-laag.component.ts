@@ -9,9 +9,21 @@ export abstract class KaartLaagComponent implements OnInit, OnDestroy {
   @Input() titel = "";
   @Input() zichtbaar = true;
 
+  protected voegLaagToeBijStart = true;
+
   constructor(protected readonly kaart: KaartClassicComponent) {}
 
   ngOnInit(): void {
+    if (this.voegLaagToeBijStart) {
+      this.voegLaagToe();
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.dispatch(prt.VerwijderLaagCmd(this.titel, kaartLogOnlyWrapper));
+  }
+
+  protected voegLaagToe() {
     this.dispatch({
       type: "VoegLaagToe",
       positie: Number.MAX_SAFE_INTEGER,
@@ -20,10 +32,6 @@ export abstract class KaartLaagComponent implements OnInit, OnDestroy {
       magGetoondWorden: this.zichtbaar,
       wrapper: kaartLogOnlyWrapper
     });
-  }
-
-  ngOnDestroy(): void {
-    this.dispatch(prt.VerwijderLaagCmd(this.titel, kaartLogOnlyWrapper));
   }
 
   protected dispatch(evt: prt.Command<KaartInternalMsg>) {
