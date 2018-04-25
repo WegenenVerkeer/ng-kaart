@@ -6,8 +6,8 @@ import * as ke from "./kaart-elementen";
 import { Subscription, Wrapper, VoidWrapper, KaartMsg, KaartCmdValidation, ValidationWrapper, BareValidationWrapper } from ".";
 import { StyleSelector } from "./kaart-elementen";
 import { AbstractZoeker } from "../zoeker/abstract-zoeker";
-import { Logger } from "loglevel";
 import { Option } from "fp-ts/lib/Option";
+import { InfoBoodschap } from "./info-boodschap";
 
 export type Command<Msg extends KaartMsg> =
   | SubscribeCmd<Msg>
@@ -43,7 +43,9 @@ export type Command<Msg extends KaartMsg> =
   | VoegInteractieToeCmd<Msg>
   | VerwijderInteractieCmd<Msg>
   | VoegOverlayToeCmd<Msg>
-  | VerwijderOverlaysCmd<Msg>;
+  | VerwijderOverlaysCmd<Msg>
+  | ToonInfoBoodschapCmd<Msg>
+  | VerbergInfoBoodschapCmd<Msg>;
 
 export interface SubscriptionResult {
   readonly subscription: RxSubscription;
@@ -229,12 +231,12 @@ export interface ZetMijnLocatieZoomCmd {
 
 export interface VoegInteractieToeCmd<Msg extends KaartMsg> {
   readonly type: "VoegInteractieToe";
-  readonly interactie: ol.interaction.Draw;
+  readonly interactie: ol.interaction.Pointer;
 }
 
 export interface VerwijderInteractieCmd<Msg extends KaartMsg> {
   readonly type: "VerwijderInteractie";
-  readonly interactie: ol.interaction.Draw;
+  readonly interactie: ol.interaction.Pointer;
 }
 
 export interface VoegOverlayToeCmd<Msg extends KaartMsg> {
@@ -245,6 +247,16 @@ export interface VoegOverlayToeCmd<Msg extends KaartMsg> {
 export interface VerwijderOverlaysCmd<Msg extends KaartMsg> {
   readonly type: "VerwijderOverlays";
   readonly overlays: Array<ol.Overlay>;
+}
+
+export interface ToonInfoBoodschapCmd<Msg extends KaartMsg> {
+  readonly type: "ToonInfoBoodschap";
+  readonly boodschap: InfoBoodschap;
+}
+
+export interface VerbergInfoBoodschapCmd<Msg extends KaartMsg> {
+  readonly type: "VerbergInfoBoodschap";
+  readonly id: string;
 }
 
 ////////////////////////
@@ -355,14 +367,14 @@ export function VerbergAchtergrondKeuzeCmd<Msg extends KaartMsg>(wrapper: BareVa
   return { type: "VerbergAchtergrondKeuze", wrapper: wrapper };
 }
 
-export function VoegInteractieToeCmd<Msg extends KaartMsg>(interactie: ol.interaction.Draw): VoegInteractieToeCmd<Msg> {
+export function VoegInteractieToeCmd<Msg extends KaartMsg>(interactie: ol.interaction.Pointer): VoegInteractieToeCmd<Msg> {
   return {
     type: "VoegInteractieToe",
     interactie: interactie
   };
 }
 
-export function VerwijderInteractieCmd<Msg extends KaartMsg>(interactie: ol.interaction.Draw): VerwijderInteractieCmd<Msg> {
+export function VerwijderInteractieCmd<Msg extends KaartMsg>(interactie: ol.interaction.Pointer): VerwijderInteractieCmd<Msg> {
   return {
     type: "VerwijderInteractie",
     interactie: interactie
@@ -396,4 +408,22 @@ export function UnsubscribeCmd<Msg extends KaartMsg>(subscriptionResult: Subscri
 
 export function ZetMijnLocatieZoomCmd(doelniveau: Option<number>): ZetMijnLocatieZoomCmd {
   return { type: "ZetMijnLocatieZoomStatus", doelniveau: doelniveau };
+}
+
+export function ToonInfoBoodschapCmd<Msg extends KaartMsg>(id: string, titel: string, inhoud: string): ToonInfoBoodschapCmd<Msg> {
+  return {
+    type: "ToonInfoBoodschap",
+    boodschap: {
+      id: id,
+      titel: titel,
+      inhoud: inhoud
+    }
+  };
+}
+
+export function VerbergInfoBoodschapCmd<Msg extends KaartMsg>(id: string): VerbergInfoBoodschapCmd<Msg> {
+  return {
+    type: "VerbergInfoBoodschap",
+    id: id
+  };
 }

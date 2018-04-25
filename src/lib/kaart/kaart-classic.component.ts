@@ -18,11 +18,8 @@ import {
 import { ofType, TypedRecord } from "../util/operators";
 import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import * as prt from "./kaart-protocol";
-import { Command } from "./kaart-protocol-commands";
 import { KaartMsgObservableConsumer } from "./kaart.component";
 import { subscriptionCmdOperator } from "./subscription-helper";
-
-const TekenRef = {};
 
 @Component({
   selector: "awv-kaart-classic",
@@ -30,10 +27,8 @@ const TekenRef = {};
 })
 export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, KaartCmdDispatcher<prt.TypedRecord> {
   private static counter = 1;
-
-  private kaartClassicSubMsg$: Observable<KaartClassicSubMsg> = Observable.empty();
+  kaartClassicSubMsg$: Observable<KaartClassicSubMsg> = Observable.empty();
   private readonly destroyingSubj: rx.Subject<void> = new rx.Subject<void>();
-  private stopTekenenSubj: rx.Subject<void> = new rx.Subject<void>();
   private hasFocus = false;
 
   readonly dispatcher: ReplaySubjectKaartCmdDispatcher<TypedRecord> = new ReplaySubjectKaartCmdDispatcher();
@@ -46,13 +41,11 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, Kaar
   @Input() breedte; // neem standaard de hele breedte in
   @Input() hoogte = 400;
   @Input() mijnLocatieZoom: number | undefined;
-  @Input() tekenen = false;
   @Input() extent: ol.Extent;
   @Input() selectieModus: prt.SelectieModus = "none";
   @Input() naam = "kaart" + KaartClassicComponent.counter++;
 
   @Output() geselecteerdeFeatures: EventEmitter<List<ol.Feature>> = new EventEmitter();
-  @Output() getekendeGeom: EventEmitter<ol.geom.Geometry> = new EventEmitter();
 
   // TODO deze klasse en child components verhuizen naar classic directory, maar nog even wachten of we krijgen te veel merge conflicts
   constructor() {
@@ -88,14 +81,6 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, Kaar
         )
         .subscribe(features => this.geselecteerdeFeatures.emit(features));
 
-      // Zorg ervoor dat de getekende geom in de @Output terecht komen
-      this.kaartClassicSubMsg$
-        .pipe(
-          ofType<TekenGeomAangepastMsg>("TekenGeomAangepast"), //
-          map(m => m.geom),
-          takeUntil(this.destroyingSubj)
-        )
-        .subscribe(geom => this.getekendeGeom.emit(geom));
       // We kunnen hier makkelijk een mini-reducer zetten voor KaartClassicSubMsg mocht dat nodig zijn
     };
   }
@@ -140,7 +125,6 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, Kaar
     forChangedValue("breedte", breedte => this.dispatch(prt.VeranderViewportCmd([breedte, this.hoogte])));
     forChangedValue("hoogte", hoogte => this.dispatch(prt.VeranderViewportCmd([this.breedte, hoogte])));
     forChangedValue("mijnLocatieZoom", zoom => this.dispatch(prt.ZetMijnLocatieZoomCmd(option.fromNullable(zoom))));
-    forChangedValue("tekenen", tekenen => (tekenen ? this.startTekenen() : this.stopTekenen()));
   }
 
   dispatch(cmd: prt.Command<TypedRecord>) {
@@ -167,24 +151,12 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, Kaar
     }
   }
 
-  private startTekenen() {
-    this.kaartClassicSubMsg$
-      .lift(
-        classicMsgSubscriptionCmdOperator(
-          this.dispatcher,
-          prt.GeometryChangedSubscription(geom => KaartClassicMsg(TekenGeomAangepastMsg(geom)))
-        )
-      )
-      .pipe(
-        takeUntil(this.destroyingSubj), // Autounsubscribe by stoppen van de component
-        takeUntil(this.stopTekenenSubj) // En bij stoppen met tekenen
-      )
-      .subscribe(err => classicLogger.error(err));
+  toonInfoBoodschap(id: string, titel: string, inhoud: string): void {
+    this.dispatch(prt.ToonInfoBoodschapCmd(id, titel, inhoud));
   }
 
-  private stopTekenen() {
-    this.stopTekenenSubj.next(); // zorg dat de unsubscribe gebeurt
-    this.stopTekenenSubj = new rx.Subject(); // en maak ons klaar voor de volgende ronde
+  verbergInfoBoodschap(id: string): void {
+    this.dispatch(prt.VerbergInfoBoodschapCmd(id));
   }
 }
 

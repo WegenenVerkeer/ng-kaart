@@ -18,7 +18,7 @@ export class KaartWmsLaagComponent extends KaartLaagComponent implements OnInit 
   @Input() tiled = true;
   @Input() type: string;
   @Input() versie?: string;
-  @Input() format? = "image/png";
+  @Input() format = "image/png";
   @Input() tileSize? = 256;
   @Input() opacity?: number;
   @Input() groep: Laaggroep = "Achtergrond";
@@ -43,11 +43,29 @@ export class KaartWmsLaagComponent extends KaartLaagComponent implements OnInit 
       versie: fromNullable(this.versie),
       tileSize: fromNullable(this.tileSize),
       format: fromNullable(this.format),
-      opacity: fromNullable(this.opacity)
+      opacity: fromNullable(this.opacity),
+      backgroundUrl: this.backgroundUrl(List(this.urls), this.laagNaam)
     };
   }
 
   laaggroep(): Laaggroep {
     return this.groep;
+  }
+
+  backgroundUrl(urls: List<string>, laagNaam: string): string {
+    // TODO: rekening houden met echte config.
+    return (
+      urls.get(0) + // mag wat veiliger
+      "?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap" +
+      "&FORMAT=" +
+      encodeURIComponent(this.format) +
+      "&TRANSPARENT=false&LAYERS=" +
+      encodeURIComponent(laagNaam) +
+      "&TILED=true" +
+      "&SRS=EPSG%3A31370" +
+      "&CRS=EPSG%3A31370" +
+      "&WIDTH=256&HEIGHT=256" +
+      "&STYLES=&BBOX=104528%2C188839.75%2C105040%2C189351.75"
+    );
   }
 }

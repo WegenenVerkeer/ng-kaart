@@ -5,6 +5,7 @@ import * as ol from "openlayers";
 import { olx } from "openlayers";
 import { kaartLogger } from "./log";
 import * as ke from "./kaart-elementen";
+import { WmtsCapaConfig } from "./kaart-elementen";
 
 export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {
   function createdTileWms(l: ke.WmsLaag) {
@@ -28,6 +29,39 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
           FORMAT: l.format.getOrElseValue("image/png")
         }
       })
+    });
+  }
+
+  function createdWmts(l: ke.WmtsLaag) {
+    let source: ol.source.WMTS;
+    let extent: ol.Extent;
+    if (l.config.type === "Capa") {
+      const config = l.config as ke.WmtsCapaConfig;
+      extent = kaart.config.defaults.extent;
+      source = new ol.source.WMTS(config.wmtsOptions);
+    } else {
+      const config = l.config as ke.WmtsManualConfig;
+      extent = config.extent.getOrElseValue(kaart.config.defaults.extent);
+      source = new ol.source.WMTS({
+        projection: kaart.config.srs,
+        urls: config.urls.toArray(),
+        tileGrid: new ol.tilegrid.WMTS({
+          origin: config.origin.getOrElseValue(ol.extent.getTopLeft(extent)),
+          resolutions: kaart.config.defaults.resolutions,
+          matrixIds: config.matrixIds
+        }),
+        layer: l.naam,
+        style: config.style.getOrElseValue(""),
+        format: l.format.getOrElseValue("image/png"),
+        matrixSet: l.matrixSet
+      });
+    }
+    return new ol.layer.Tile(<ol.olx.layer.TileOptions>{
+      title: l.titel,
+      visible: true,
+      extent: extent,
+      opacity: l.opacity.toUndefined(),
+      source: source
     });
   }
 
@@ -68,7 +102,7 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
     return new ol.layer.Vector({
       source: vectorlaag.source,
       visible: true,
-      style: determineStyle(vectorlaag, kaart.config.defaults.style),
+      style: determineStyle(vectorlaag.styleSelector, kaart.config.defaults.style),
       minResolution: array
         .index(vectorlaag.maxZoom)(kaart.config.defaults.resolutions)
         .getOrElseValue(kaart.config.defaults.resolutions[kaart.config.defaults.resolutions.length - 1]),
@@ -82,17 +116,12 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
     return new ol.layer.Tile(); // Hoe eenvoudig kan het zijn?
   }
 
-  type Stylish = ol.StyleFunction | ol.style.Style | ol.style.Style[];
-
-  function determineStyle(vectorlaag: ke.VectorLaag, defaultStyle: ol.style.Style): Stylish {
-    return vectorlaag.styleSelector
-      .map(selector => (selector.type === "StaticStyle" ? selector.style : selector.styleFunction))
-      .getOrElseValue(defaultStyle);
-  }
-
   switch (laag.type) {
     case ke.TiledWmsType:
       return some(createdTileWms(laag as ke.WmsLaag));
+
+    case ke.WmtsType:
+      return some(createdWmts(laag as ke.WmtsLaag));
 
     case ke.SingleTileWmsType:
       return some(createSingleTileWmsLayer(laag as ke.WmsLaag));
@@ -105,5 +134,34 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
 
     default:
       return none;
+  }
+}
+
+export type Stylish = ol.StyleFunction | ol.style.Style | ol.style.Style[];
+
+export function determineStyle(styleSelector: Option<ke.StyleSelector>, defaultStyle: ol.style.Style): Stylish {
+  return styleSelector
+    .map(selector => {
+      switch (selector.type) {
+        case "StaticStyle":
+          return selector.style;
+        case "DynamicStyle":
+          return selector.styleFunction;
+        case "Styles":
+          return selector.styles;
+      }
+    })
+    .getOrElseValue(defaultStyle);
+}
+
+export function determineStyleSelector(stp?: Stylish): Option<ke.StyleSelector> {
+  if (stp instanceof ol.style.Style) {
+    return some(ke.StaticStyle(stp));
+  } else if (typeof stp === "function") {
+    return some(ke.DynamicStyle(stp as ol.StyleFunction));
+  } else if (Array.isArray(stp)) {
+    return some(ke.Styles(stp as ol.style.Style[]));
+  } else {
+    return none;
   }
 }

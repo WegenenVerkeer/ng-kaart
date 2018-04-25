@@ -1,13 +1,14 @@
 import { none, Option } from "fp-ts/lib/Option";
 import { List, Map } from "immutable";
 import * as ol from "openlayers";
-import { ReplaySubject, Subject } from "rxjs";
+import { BehaviorSubject, ReplaySubject, Subject } from "rxjs";
 
 import { Laaggroep, Zoominstellingen } from ".";
 import { ZoekResultaten } from "../zoeker/abstract-zoeker";
 import { ZoekerCoordinator } from "../zoeker/zoeker-coordinator";
 import { KaartConfig } from "./kaart-config";
 import * as ke from "./kaart-elementen";
+import { InfoBoodschap } from "./info-boodschap";
 
 export interface Groeplagen {
   readonly laaggroep: Laaggroep;
@@ -39,7 +40,8 @@ export class KaartWithInfo {
   readonly zoekerCoordinator: ZoekerCoordinator = new ZoekerCoordinator(this.zoekerSubj);
   readonly mijnLocatieZoomDoelSubj: Subject<Option<number>> = new ReplaySubject<Option<number>>(1);
   readonly geometryChangedSubj: Subject<ol.geom.Geometry> = new Subject<ol.geom.Geometry>();
-  readonly bezigMetTekenenSubj: Subject<boolean> = new ReplaySubject<boolean>(1);
+  readonly infoBoodschappenSubj: BehaviorSubject<Map<string, InfoBoodschap>> = new BehaviorSubject<Map<string, InfoBoodschap>>(Map());
+  readonly tekenSettingsSubj: BehaviorSubject<Option<ke.TekenSettings>> = new BehaviorSubject<Option<ke.TekenSettings>>(none);
 
   constructor(
     // TODO om de distinctWithInfo te versnellen zouden we als eerste element een versieteller kunnen toevoegen

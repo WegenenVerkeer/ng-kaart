@@ -566,6 +566,16 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
+    function toonInfoBoodschap(cmnd: prt.ToonInfoBoodschapCmd<Msg>): ModelWithResult<Msg> {
+      model.infoBoodschappenSubj.next(model.infoBoodschappenSubj.getValue().set(cmnd.boodschap.id, cmnd.boodschap));
+      return ModelWithResult(model);
+    }
+
+    function verbergInfoBoodschap(cmnd: prt.VerbergInfoBoodschapCmd<Msg>): ModelWithResult<Msg> {
+      model.infoBoodschappenSubj.next(model.infoBoodschappenSubj.getValue().delete(cmnd.id));
+      return ModelWithResult(model);
+    }
+
     function meldComponentFout(cmnd: prt.MeldComponentFoutCmd): ModelWithResult<Msg> {
       model.componentFoutSubj.next(cmnd.fouten);
       return ModelWithResult(model);
@@ -675,18 +685,24 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       function subscribeToGeometryChanged(sub: prt.GeometryChangedSubscription<Msg>): ModelWithResult<Msg> {
         // Deze is een klein beetje speciaal omdat we de unsubcribe willen opvangen om evt. het tekenen te stoppen
         const subscription = rx.Observable.create((observer: rx.Observer<ol.geom.Geometry>) => {
+          model.tekenSettingsSubj.next(some(sub.tekenSettings));
           const innerSub = model.geometryChangedSubj.pipe(debounceTime(100)).subscribe(observer);
-          model.bezigMetTekenenSubj.next(true);
           return () => {
             innerSub.unsubscribe();
-            model.bezigMetTekenenSubj.next(model.geometryChangedSubj.observers.length > 0);
+            if (model.geometryChangedSubj.observers.length === 0) {
+              model.tekenSettingsSubj.next(none);
+            }
           };
         }).subscribe(pm => msgConsumer(sub.wrapper(pm)));
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
       }
 
       function subscribeToTekenen(sub: prt.TekenenSubscription<Msg>): ModelWithResult<Msg> {
-        return subscribe("Tekenen", model.bezigMetTekenenSubj.pipe(distinctUntilChanged()).subscribe(pm => msgConsumer(sub.wrapper(pm))));
+        return subscribe("Tekenen", model.tekenSettingsSubj.pipe(distinctUntilChanged()).subscribe(pm => msgConsumer(sub.wrapper(pm))));
+      }
+
+      function subscribeToInfoBoodschappen(sub: prt.InfoBoodschappenSubscription<Msg>): ModelWithResult<Msg> {
+        return subscribe("InfoBoodschappen", model.infoBoodschappenSubj.subscribe(t => msgConsumer(sub.wrapper(t))));
       }
 
       switch (cmnd.subscription.type) {
@@ -710,6 +726,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToGeometryChanged(cmnd.subscription);
         case "Tekenen":
           return subscribeToTekenen(cmnd.subscription);
+        case "InfoBoodschap":
+          return subscribeToInfoBoodschappen(cmnd.subscription);
       }
     }
 
@@ -787,6 +805,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return voegOverlayToe(cmd);
       case "VerwijderOverlays":
         return verwijderOverlays(cmd);
+      case "ToonInfoBoodschap":
+        return toonInfoBoodschap(cmd);
+      case "VerbergInfoBoodschap":
+        return verbergInfoBoodschap(cmd);
     }
   };
 }
