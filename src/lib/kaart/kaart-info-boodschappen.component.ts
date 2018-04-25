@@ -1,4 +1,5 @@
 import { Component, EventEmitter, NgZone, OnInit, Output } from "@angular/core";
+import { animate, state, style, transition, trigger } from "@angular/animations";
 import { KaartChildComponentBase } from "./kaart-child-component-base";
 import { InfoBoodschappenMsg, infoBoodschappenMsgGen, KaartInternalMsg } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
@@ -8,7 +9,6 @@ import { observeOnAngular } from "../util/observe-on-angular";
 import { Observable } from "rxjs/Observable";
 import { KaartComponent } from "./kaart.component";
 import { List } from "immutable";
-import { animate, state, style, transition, trigger } from "@angular/animations";
 import { InfoBoodschap } from "./info-boodschap";
 
 @Component({
