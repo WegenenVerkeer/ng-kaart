@@ -6,8 +6,8 @@ import * as ke from "./kaart-elementen";
 import { Subscription, Wrapper, VoidWrapper, KaartMsg, KaartCmdValidation, ValidationWrapper, BareValidationWrapper } from ".";
 import { StyleSelector } from "./kaart-elementen";
 import { AbstractZoeker } from "../zoeker/abstract-zoeker";
-import { Logger } from "loglevel";
 import { Option } from "fp-ts/lib/Option";
+import { InfoBoodschap } from "./info-boodschap";
 
 export type Command<Msg extends KaartMsg> =
   | SubscribeCmd<Msg>
@@ -43,7 +43,9 @@ export type Command<Msg extends KaartMsg> =
   | VoegInteractieToeCmd<Msg>
   | VerwijderInteractieCmd<Msg>
   | VoegOverlayToeCmd<Msg>
-  | VerwijderOverlaysCmd<Msg>;
+  | VerwijderOverlaysCmd<Msg>
+  | ToonInfoBoodschapCmd<Msg>
+  | VerbergInfoBoodschapCmd<Msg>;
 
 export interface SubscriptionResult {
   readonly subscription: RxSubscription;
@@ -247,6 +249,16 @@ export interface VerwijderOverlaysCmd<Msg extends KaartMsg> {
   readonly overlays: Array<ol.Overlay>;
 }
 
+export interface ToonInfoBoodschapCmd<Msg extends KaartMsg> {
+  readonly type: "ToonInfoBoodschap";
+  readonly boodschap: InfoBoodschap;
+}
+
+export interface VerbergInfoBoodschapCmd<Msg extends KaartMsg> {
+  readonly type: "VerbergInfoBoodschap";
+  readonly id: string;
+}
+
 ////////////////////////
 // constructor functies
 //
@@ -396,4 +408,22 @@ export function UnsubscribeCmd<Msg extends KaartMsg>(subscriptionResult: Subscri
 
 export function ZetMijnLocatieZoomCmd(doelniveau: Option<number>): ZetMijnLocatieZoomCmd {
   return { type: "ZetMijnLocatieZoomStatus", doelniveau: doelniveau };
+}
+
+export function ToonInfoBoodschapCmd<Msg extends KaartMsg>(id: string, titel: string, inhoud: string): ToonInfoBoodschapCmd<Msg> {
+  return {
+    type: "ToonInfoBoodschap",
+    boodschap: {
+      id: id,
+      titel: titel,
+      inhoud: inhoud
+    }
+  };
+}
+
+export function VerbergInfoBoodschapCmd<Msg extends KaartMsg>(id: string): VerbergInfoBoodschapCmd<Msg> {
+  return {
+    type: "VerbergInfoBoodschap",
+    id: id
+  };
 }

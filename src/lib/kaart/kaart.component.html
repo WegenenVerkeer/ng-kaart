@@ -10,6 +10,7 @@
     <awv-google-locatie-zoeker [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-google-locatie-zoeker>
     <div class="kaart-links">
       <awv-zoeker [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-zoeker>
+      <awv-kaart-info-boodschappen [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-info-boodschappen>
       <ng-content select=".kaart-links"></ng-content>
     </div>
     <awv-kaart-teken-laag [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-teken-laag>

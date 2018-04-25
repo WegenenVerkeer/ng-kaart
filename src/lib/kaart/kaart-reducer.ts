@@ -566,6 +566,16 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
+    function toonInfoBoodschap(cmnd: prt.ToonInfoBoodschapCmd<Msg>): ModelWithResult<Msg> {
+      model.infoBoodschappenSubj.next(model.infoBoodschappenSubj.getValue().set(cmnd.boodschap.id, cmnd.boodschap));
+      return ModelWithResult(model);
+    }
+
+    function verbergInfoBoodschap(cmnd: prt.VerbergInfoBoodschapCmd<Msg>): ModelWithResult<Msg> {
+      model.infoBoodschappenSubj.next(model.infoBoodschappenSubj.getValue().delete(cmnd.id));
+      return ModelWithResult(model);
+    }
+
     function meldComponentFout(cmnd: prt.MeldComponentFoutCmd): ModelWithResult<Msg> {
       model.componentFoutSubj.next(cmnd.fouten);
       return ModelWithResult(model);
@@ -691,6 +701,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return subscribe("Tekenen", model.tekenSettingsSubj.pipe(distinctUntilChanged()).subscribe(pm => msgConsumer(sub.wrapper(pm))));
       }
 
+      function subscribeToInfoBoodschappen(sub: prt.InfoBoodschappenSubscription<Msg>): ModelWithResult<Msg> {
+        return subscribe("InfoBoodschappen", model.infoBoodschappenSubj.subscribe(t => msgConsumer(sub.wrapper(t))));
+      }
+
       switch (cmnd.subscription.type) {
         case "Zoominstellingen":
           return subscribeToZoominstellingen(cmnd.subscription);
@@ -712,6 +726,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToGeometryChanged(cmnd.subscription);
         case "Tekenen":
           return subscribeToTekenen(cmnd.subscription);
+        case "InfoBoodschap":
+          return subscribeToInfoBoodschappen(cmnd.subscription);
       }
     }
 
@@ -789,6 +805,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return voegOverlayToe(cmd);
       case "VerwijderOverlays":
         return verwijderOverlays(cmd);
+      case "ToonInfoBoodschap":
+        return toonInfoBoodschap(cmd);
+      case "VerbergInfoBoodschap":
+        return verbergInfoBoodschap(cmd);
     }
   };
 }

@@ -18,7 +18,6 @@ import {
 import { ofType, TypedRecord } from "../util/operators";
 import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import * as prt from "./kaart-protocol";
-import { Command } from "./kaart-protocol-commands";
 import { KaartMsgObservableConsumer } from "./kaart.component";
 import { subscriptionCmdOperator } from "./subscription-helper";
 
@@ -150,6 +149,14 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, Kaar
       this.hasFocus = false;
       this.dispatch({ type: "VerliesFocusOpKaart" });
     }
+  }
+
+  toonInfoBoodschap(id: string, titel: string, inhoud: string): void {
+    this.dispatch(prt.ToonInfoBoodschapCmd(id, titel, inhoud));
+  }
+
+  verbergInfoBoodschap(id: string): void {
+    this.dispatch(prt.VerbergInfoBoodschapCmd(id));
   }
 }
 

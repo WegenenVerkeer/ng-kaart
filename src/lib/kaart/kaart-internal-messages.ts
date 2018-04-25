@@ -1,10 +1,11 @@
 import { none, Option, some } from "fp-ts/lib/Option";
-import { List } from "immutable";
+import { List, Map } from "immutable";
 import * as ol from "openlayers";
 
 import { AchtergrondLaag, TekenSettings } from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { kaartLogger } from "./log";
+import { InfoBoodschap } from "./info-boodschap";
 
 export type KaartInternalSubMsg =
   | ZoominstellingenGezetMsg
@@ -14,7 +15,8 @@ export type KaartInternalSubMsg =
   | TekenMsg
   | KaartClickMsg
   | SubscribedMsg
-  | MijnLocatieZoomdoelGezetMsg;
+  | MijnLocatieZoomdoelGezetMsg
+  | InfoBoodschappenMsg;
 
 export interface ZoominstellingenGezetMsg {
   readonly type: "ZoominstellingenGezet";
@@ -62,6 +64,11 @@ export interface KaartClickMsg {
   readonly clickCoordinaat: ol.Coordinate;
 }
 
+export interface InfoBoodschappenMsg {
+  readonly type: "InfoBoodschappen";
+  readonly infoBoodschappen: Map<string, InfoBoodschap>;
+}
+
 function KaartInternalMsg(payload: Option<KaartInternalSubMsg>): KaartInternalMsg {
   return {
     type: "KaartInternal",
@@ -82,6 +89,13 @@ export const kaartLogOnlyWrapper: prt.ValidationWrapper<any, KaartInternalMsg> =
     payload: none
   };
 };
+
+export const infoBoodschappenMsgGen = (infoBoodschappen: Map<string, InfoBoodschap>) =>
+  KaartInternalMsg(some(InfoBoodschappenMsg(infoBoodschappen)));
+
+function InfoBoodschappenMsg(infoBoodschappen: Map<string, InfoBoodschap>): InfoBoodschappenMsg {
+  return { type: "InfoBoodschappen", infoBoodschappen: infoBoodschappen };
+}
 
 export const kaartClickWrapper = (clickCoordinaat: ol.Coordinate) => KaartInternalMsg(some(KaartClickMsg(clickCoordinaat)));
 
