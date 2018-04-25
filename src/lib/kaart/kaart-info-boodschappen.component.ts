@@ -18,8 +18,8 @@ import { InfoBoodschap } from "./info-boodschap";
   animations: [
     trigger("fadeIn", [
       state("visible", style({ opacity: 1 })),
-      transition(":enter", [style({ opacity: 0 }), animate(150)]),
-      transition(":leave", animate(150, style({ opacity: 0 })))
+      transition(":enter", [style({ opacity: 0 }), animate(200)]),
+      transition(":leave", animate(200, style({ opacity: 0 })))
     ])
   ]
 })
