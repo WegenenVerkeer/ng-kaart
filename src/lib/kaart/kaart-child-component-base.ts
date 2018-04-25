@@ -25,7 +25,11 @@ export abstract class KaartChildComponentBase extends KaartComponentBase impleme
     if (this.kaartSubscriptions().length > 0) {
       this.bindToLifeCycle(
         this.internalMessage$.lift(internalMsgSubscriptionCmdOperator(this.dispatcher, ...this.kaartSubscriptions()))
-      ).subscribe(err => kaartLogger.error);
+      ).subscribe(
+        err => kaartLogger.error("De subscription gaf een logische fout", err),
+        err => kaartLogger.error("De subscription gaf een technische fout", err),
+        () => kaartLogger.debug("De source is gestopt")
+      );
     }
   }
 

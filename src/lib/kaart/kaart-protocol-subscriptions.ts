@@ -2,7 +2,7 @@ import { Option } from "fp-ts/lib/Option";
 import { List, Map } from "immutable";
 import * as ol from "openlayers";
 
-import { AchtergrondLaag } from ".";
+import { AchtergrondLaag, TekenSettings } from ".";
 import { ZoekResultaten } from "../zoeker/abstract-zoeker";
 import { InfoBoodschap } from "./info-boodschap";
 
@@ -71,12 +71,13 @@ export interface MijnLocatieZoomdoelSubscription<Msg> {
 
 export interface GeometryChangedSubscription<Msg> {
   readonly type: "GeometryChanged";
+  readonly tekenSettings: TekenSettings;
   readonly wrapper: (evt: ol.geom.Geometry) => Msg;
 }
 
 export interface TekenenSubscription<Msg> {
   readonly type: "Tekenen";
-  readonly wrapper: (boolean) => Msg;
+  readonly wrapper: (settings: Option<TekenSettings>) => Msg;
 }
 
 export interface InfoBoodschappenSubscription<Msg> {
@@ -128,10 +129,13 @@ export function MijnLocatieZoomdoelSubscription<Msg>(wrapper: (doel: Option<numb
   return { type: "MijnLocatieZoomdoel", wrapper: wrapper };
 }
 
-export function GeometryChangedSubscription<Msg>(wrapper: (geom: ol.geom.Geometry) => Msg): GeometryChangedSubscription<Msg> {
-  return { type: "GeometryChanged", wrapper: wrapper };
+export function GeometryChangedSubscription<Msg>(
+  tekenSettings: TekenSettings,
+  wrapper: (geom: ol.geom.Geometry) => Msg
+): GeometryChangedSubscription<Msg> {
+  return { type: "GeometryChanged", tekenSettings: tekenSettings, wrapper: wrapper };
 }
 
-export function TekenenSubscription<Msg>(wrapper: (boolean) => Msg): TekenenSubscription<Msg> {
+export function TekenenSubscription<Msg>(wrapper: (settings: Option<TekenSettings>) => Msg): TekenenSubscription<Msg> {
   return { type: "Tekenen", wrapper: wrapper };
 }

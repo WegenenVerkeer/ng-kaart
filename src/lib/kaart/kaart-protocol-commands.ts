@@ -47,8 +47,10 @@ export type Command<Msg extends KaartMsg> =
   | ToonInfoBoodschapCmd<Msg>
   | VerbergInfoBoodschapCmd<Msg>;
 
-// SubscriptionResult is maar een type alias, maar ook een encapsulatie naar clients toe
-export type SubscriptionResult = RxSubscription;
+export interface SubscriptionResult {
+  readonly subscription: RxSubscription;
+  readonly subscriberName: string;
+}
 
 export interface SubscribeCmd<Msg extends KaartMsg> {
   readonly type: "Subscription";
@@ -58,7 +60,7 @@ export interface SubscribeCmd<Msg extends KaartMsg> {
 
 export interface UnsubscribeCmd {
   readonly type: "Unsubscription";
-  readonly subscription: SubscriptionResult;
+  readonly subscriptionResult: SubscriptionResult;
 }
 
 export type Laaggroep = "Achtergrond" | "Voorgrond" | "Tools";
@@ -229,12 +231,12 @@ export interface ZetMijnLocatieZoomCmd {
 
 export interface VoegInteractieToeCmd<Msg extends KaartMsg> {
   readonly type: "VoegInteractieToe";
-  readonly interactie: ol.interaction.Draw;
+  readonly interactie: ol.interaction.Pointer;
 }
 
 export interface VerwijderInteractieCmd<Msg extends KaartMsg> {
   readonly type: "VerwijderInteractie";
-  readonly interactie: ol.interaction.Draw;
+  readonly interactie: ol.interaction.Pointer;
 }
 
 export interface VoegOverlayToeCmd<Msg extends KaartMsg> {
@@ -365,14 +367,14 @@ export function VerbergAchtergrondKeuzeCmd<Msg extends KaartMsg>(wrapper: BareVa
   return { type: "VerbergAchtergrondKeuze", wrapper: wrapper };
 }
 
-export function VoegInteractieToeCmd<Msg extends KaartMsg>(interactie: ol.interaction.Draw): VoegInteractieToeCmd<Msg> {
+export function VoegInteractieToeCmd<Msg extends KaartMsg>(interactie: ol.interaction.Pointer): VoegInteractieToeCmd<Msg> {
   return {
     type: "VoegInteractieToe",
     interactie: interactie
   };
 }
 
-export function VerwijderInteractieCmd<Msg extends KaartMsg>(interactie: ol.interaction.Draw): VerwijderInteractieCmd<Msg> {
+export function VerwijderInteractieCmd<Msg extends KaartMsg>(interactie: ol.interaction.Pointer): VerwijderInteractieCmd<Msg> {
   return {
     type: "VerwijderInteractie",
     interactie: interactie
@@ -395,13 +397,13 @@ export function VerwijderOverlaysCmd<Msg extends KaartMsg>(overlays: Array<ol.Ov
 
 export function SubscribeCmd<Msg extends KaartMsg>(
   subscription: Subscription<Msg>,
-  wrapper: ValidationWrapper<RxSubscription, Msg>
+  wrapper: ValidationWrapper<SubscriptionResult, Msg>
 ): SubscribeCmd<Msg> {
   return { type: "Subscription", subscription: subscription, wrapper: wrapper };
 }
 
-export function UnsubscribeCmd<Msg extends KaartMsg>(subscription: SubscriptionResult): UnsubscribeCmd {
-  return { type: "Unsubscription", subscription: subscription };
+export function UnsubscribeCmd<Msg extends KaartMsg>(subscriptionResult: SubscriptionResult): UnsubscribeCmd {
+  return { type: "Unsubscription", subscriptionResult: subscriptionResult };
 }
 
 export function ZetMijnLocatieZoomCmd(doelniveau: Option<number>): ZetMijnLocatieZoomCmd {
