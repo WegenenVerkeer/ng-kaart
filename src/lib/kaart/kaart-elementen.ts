@@ -1,6 +1,6 @@
+import { Option } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
-import { Option } from "fp-ts/lib/Option";
 
 export const SingleTileWmsType = "LaagType.SingleTileWms";
 export type SingleTileWmsType = "LaagType.SingleTileWms";
@@ -24,7 +24,12 @@ export interface DynamicStyle {
   readonly styleFunction: ol.StyleFunction;
 }
 
-export type StyleSelector = StaticStyle | DynamicStyle;
+export interface Styles {
+  readonly type: "Styles";
+  readonly styles: Array<ol.style.Style>;
+}
+
+export type StyleSelector = StaticStyle | DynamicStyle | Styles;
 
 export type AchtergrondLaag = WmsLaag | WmtsLaag | BlancoLaag;
 
@@ -85,6 +90,12 @@ export interface BlancoLaag {
 
 export type Laag = WmsLaag | WmtsLaag | VectorLaag | BlancoLaag;
 
+export interface TekenSettings {
+  readonly geometryType: ol.geom.GeometryType;
+  readonly laagStyle: Option<StyleSelector>;
+  readonly drawStyle: Option<StyleSelector>;
+}
+
 export function isWmsLaag(laag: Laag): boolean {
   return laag.type === SingleTileWmsType || laag.type === TiledWmsType;
 }
@@ -104,5 +115,24 @@ export function DynamicStyle(styleFunction: ol.StyleFunction): StyleSelector {
   return {
     type: "DynamicStyle",
     styleFunction: styleFunction
+  };
+}
+
+export function Styles(styles: Array<ol.style.Style>): StyleSelector {
+  return {
+    type: "Styles",
+    styles: styles
+  };
+}
+
+export function TekenSettings(
+  geometryType: ol.geom.GeometryType,
+  laagStyle: Option<StyleSelector>,
+  drawStyle: Option<StyleSelector>
+): TekenSettings {
+  return {
+    geometryType: geometryType,
+    laagStyle: laagStyle,
+    drawStyle: drawStyle
   };
 }
