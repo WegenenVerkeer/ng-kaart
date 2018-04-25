@@ -18,10 +18,8 @@ import {
 import { ofType, TypedRecord } from "../util/operators";
 import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import * as prt from "./kaart-protocol";
-import { Command } from "./kaart-protocol-commands";
 import { KaartMsgObservableConsumer } from "./kaart.component";
 import { subscriptionCmdOperator } from "./subscription-helper";
-import { InfoBoodschap } from "./kaart-with-info";
 
 const TekenRef = {};
 

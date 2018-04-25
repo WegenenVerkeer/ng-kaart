@@ -9,16 +9,11 @@ import { ZoekerCoordinator } from "../zoeker/zoeker-coordinator";
 import { KaartConfig } from "./kaart-config";
 import * as ke from "./kaart-elementen";
 import { BehaviorSubject } from "rxjs/BehaviorSubject";
+import { InfoBoodschap } from "./info-boodschap";
 
 export interface Groeplagen {
   readonly laaggroep: Laaggroep;
   readonly lagen: List<ke.Laag>;
-}
-
-export interface InfoBoodschap {
-  readonly id: string;
-  readonly titel: string;
-  readonly inhoud: string;
 }
 
 /**

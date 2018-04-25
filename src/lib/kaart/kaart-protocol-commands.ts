@@ -6,9 +6,8 @@ import * as ke from "./kaart-elementen";
 import { Subscription, Wrapper, VoidWrapper, KaartMsg, KaartCmdValidation, ValidationWrapper, BareValidationWrapper } from ".";
 import { StyleSelector } from "./kaart-elementen";
 import { AbstractZoeker } from "../zoeker/abstract-zoeker";
-import { Logger } from "loglevel";
 import { Option } from "fp-ts/lib/Option";
-import { InfoBoodschap } from "./kaart-with-info";
+import { InfoBoodschap } from "./info-boodschap";
 
 export type Command<Msg extends KaartMsg> =
   | SubscribeCmd<Msg>

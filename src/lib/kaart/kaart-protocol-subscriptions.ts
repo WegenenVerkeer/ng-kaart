@@ -4,7 +4,7 @@ import * as ol from "openlayers";
 
 import { AchtergrondLaag } from ".";
 import { ZoekResultaten } from "../zoeker/abstract-zoeker";
-import { InfoBoodschap } from "./kaart-with-info";
+import { InfoBoodschap } from "./info-boodschap";
 
 /////////
 // Types
