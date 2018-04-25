@@ -1,4 +1,4 @@
-<div class="float-box" *ngFor="let boodschap of infoBoodschappen$ | async">
+<div class="float-box" *ngFor="let boodschap of infoBoodschappen$ | async" [@fadeIn]="'visible'">
   <mat-card>
     <mat-card-title>
       {{ boodschap.titel }}

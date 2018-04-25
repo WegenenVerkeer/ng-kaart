@@ -1,5 +1,5 @@
 import { none, Option, some } from "fp-ts/lib/Option";
-import { List } from "immutable";
+import { List, Map } from "immutable";
 import * as ol from "openlayers";
 
 import { AchtergrondLaag } from "./kaart-elementen";
@@ -66,7 +66,7 @@ export interface KaartClickMsg {
 
 export interface InfoBoodschappenMsg {
   readonly type: "InfoBoodschappen";
-  readonly infoBoodschappen: List<InfoBoodschap>;
+  readonly infoBoodschappen: Map<string, InfoBoodschap>;
 }
 
 function KaartInternalMsg(payload: Option<KaartInternalSubMsg>): KaartInternalMsg {
@@ -90,10 +90,10 @@ export const kaartLogOnlyWrapper: prt.ValidationWrapper<any, KaartInternalMsg> =
   };
 };
 
-export const infoBoodschappenMsgGen = (infoBoodschappen: List<InfoBoodschap>) =>
+export const infoBoodschappenMsgGen = (infoBoodschappen: Map<string, InfoBoodschap>) =>
   KaartInternalMsg(some(InfoBoodschappenMsg(infoBoodschappen)));
 
-function InfoBoodschappenMsg(infoBoodschappen: List<InfoBoodschap>): InfoBoodschappenMsg {
+function InfoBoodschappenMsg(infoBoodschappen: Map<string, InfoBoodschap>): InfoBoodschappenMsg {
   return { type: "InfoBoodschappen", infoBoodschappen: infoBoodschappen };
 }
 

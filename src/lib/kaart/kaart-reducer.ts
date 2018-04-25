@@ -567,23 +567,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function toonInfoBoodschap(cmnd: prt.ToonInfoBoodschapCmd<Msg>): ModelWithResult<Msg> {
-      model.infoBoodschapSubj.next(
-        model.infoBoodschapSubj //
-          .getValue()
-          .filter(boodschap => boodschap !== undefined && boodschap.id !== cmnd.boodschap.id)
-          .concat(cmnd.boodschap)
-          .toList()
-      );
+      model.infoBoodschappenSubj.next(model.infoBoodschappenSubj.getValue().set(cmnd.boodschap.id, cmnd.boodschap));
       return ModelWithResult(model);
     }
 
     function verbergInfoBoodschap(cmnd: prt.VerbergInfoBoodschapCmd<Msg>): ModelWithResult<Msg> {
-      model.infoBoodschapSubj.next(
-        model.infoBoodschapSubj //
-          .getValue()
-          .filter(boodschap => boodschap !== undefined && boodschap.id !== cmnd.id)
-          .toList()
-      );
+      model.infoBoodschappenSubj.next(model.infoBoodschappenSubj.getValue().delete(cmnd.id));
       return ModelWithResult(model);
     }
 
@@ -715,7 +704,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
 
       function subscribeToInfoBoodschap(sub: prt.InfoBoodschappenSubscription<Msg>): ModelWithResult<Msg> {
-        const subscription = model.infoBoodschapSubj.subscribe(t => msgConsumer(sub.wrapper(t)));
+        const subscription = model.infoBoodschappenSubj.subscribe(t => msgConsumer(sub.wrapper(t)));
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
       }
 

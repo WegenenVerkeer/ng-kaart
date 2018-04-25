@@ -1,5 +1,5 @@
 import { Option } from "fp-ts/lib/Option";
-import { List } from "immutable";
+import { List, Map } from "immutable";
 import * as ol from "openlayers";
 
 import { AchtergrondLaag } from ".";
@@ -81,7 +81,7 @@ export interface TekenenSubscription<Msg> {
 
 export interface InfoBoodschappenSubscription<Msg> {
   readonly type: "InfoBoodschap";
-  readonly wrapper: (infoBoodschappen: List<InfoBoodschap>) => Msg;
+  readonly wrapper: (infoBoodschappen: Map<string, InfoBoodschap>) => Msg;
 }
 
 ///////////////
@@ -120,7 +120,7 @@ export function KaartClickSubscription<Msg>(wrapper: (coordinaat: ol.Coordinate)
   return { type: "KaartClick", wrapper: wrapper };
 }
 
-export function InfoBoodschappenSubscription<Msg>(wrapper: (boodschappen: List<InfoBoodschap>) => Msg): Subscription<Msg> {
+export function InfoBoodschappenSubscription<Msg>(wrapper: (boodschappen: Map<string, InfoBoodschap>) => Msg): Subscription<Msg> {
   return { type: "InfoBoodschap", wrapper: wrapper };
 }
 
