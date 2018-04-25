@@ -33,6 +33,7 @@ import { KaartVectorLaagComponent } from "./kaart-vector-laag.component";
 import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
 import { KaartZoomComponent } from "./kaart-zoom.component";
 import { KaartComponent } from "./kaart.component";
+import { KaartWmtsLaagComponent } from "./kaart-wmts-laag.component";
 
 const components: any[] = [
   KaartComponent,
@@ -55,6 +56,7 @@ const components: any[] = [
   KaartTilecacheLaagComponent,
   KaartGeoserverLaagComponent,
   KaartWmsLaagComponent,
+  KaartWmtsLaagComponent,
   KaartBlancoLaagComponent,
   KaartAchtergrondSelectorComponent,
   KaartAchtergrondTileComponent,
@@ -160,6 +162,7 @@ export * from "./kaart-nosqlfs-laag.component";
 export * from "./kaart-geoserver-laag.component";
 export * from "./kaart-tilecache-laag.component";
 export * from "./kaart-wms-laag.component";
+export * from "./kaart-wmts-laag.component";
 export * from "./kaart-blanco-laag.component";
 export * from "./kaart-zoom.component";
 export * from "./kaart-mijn-locatie.component";
