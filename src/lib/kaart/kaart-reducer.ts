@@ -701,7 +701,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return subscribe("Tekenen", model.tekenSettingsSubj.pipe(distinctUntilChanged()).subscribe(pm => msgConsumer(sub.wrapper(pm))));
       }
 
-      function subscribeToInfoBoodschap(sub: prt.InfoBoodschappenSubscription<Msg>): ModelWithResult<Msg> {
+      function subscribeToInfoBoodschappen(sub: prt.InfoBoodschappenSubscription<Msg>): ModelWithResult<Msg> {
         return subscribe("InfoBoodschappen", model.infoBoodschappenSubj.subscribe(t => msgConsumer(sub.wrapper(t))));
       }
 
@@ -727,7 +727,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         case "Tekenen":
           return subscribeToTekenen(cmnd.subscription);
         case "InfoBoodschap":
-          return subscribeToInfoBoodschap(cmnd.subscription);
+          return subscribeToInfoBoodschappen(cmnd.subscription);
       }
     }
 
