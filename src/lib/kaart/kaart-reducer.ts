@@ -627,37 +627,36 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function handleSubscriptions(cmnd: prt.SubscribeCmd<Msg>): ModelWithResult<Msg> {
-      function subscribe(subscription: Subscription): ModelWithResult<Msg> {
-        return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
+      function subscribe(name: string, subscription: Subscription): ModelWithResult<Msg> {
+        return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, { subscription: subscription, subscriberName: name })));
       }
 
       function subscribeToZoominstellingen(sub: prt.ZoominstellingenSubscription<Msg>): ModelWithResult<Msg> {
-        const subscription = model.zoominstellingenSubj.pipe(debounceTime(100)).subscribe(z => msgConsumer(sub.wrapper(z)));
-        return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
+        return subscribe(
+          "Zoominstellingen",
+          model.zoominstellingenSubj.pipe(debounceTime(100)).subscribe(z => msgConsumer(sub.wrapper(z)))
+        );
       }
 
       function subscribeToGeselecteerdeFeatures(sub: prt.GeselecteerdeFeaturesSubscription<Msg>): ModelWithResult<Msg> {
-        const subscription = model.geselecteerdeFeaturesSubj.subscribe(pm => msgConsumer(sub.wrapper(pm)));
-        return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
+        return subscribe("GeselecteerdeFeatures", model.geselecteerdeFeaturesSubj.subscribe(pm => msgConsumer(sub.wrapper(pm))));
       }
 
       function subscribeToMiddelpunt(sub: prt.MiddelpuntSubscription<Msg>): ModelWithResult<Msg> {
-        const subscription = model.middelpuntSubj.pipe(debounceTime(100)).subscribe(m => msgConsumer(sub.wrapper(m[0], m[1])));
-        return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
+        return subscribe("Middelpunt", model.middelpuntSubj.pipe(debounceTime(100)).subscribe(m => msgConsumer(sub.wrapper(m[0], m[1]))));
       }
 
       function subscribeToAchtergrondTitel(sub: prt.AchtergrondTitelSubscription<Msg>): ModelWithResult<Msg> {
-        const subscription = model.achtergrondlaagtitelSubj.subscribe(t => msgConsumer(sub.wrapper(t)));
-        return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
+        return subscribe("AchtergrondTitel", model.achtergrondlaagtitelSubj.subscribe(t => msgConsumer(sub.wrapper(t))));
       }
 
       function subscribeToKaartClick(sub: prt.KaartClickSubscription<Msg>): ModelWithResult<Msg> {
-        const subscription = model.clickSubj.subscribe(t => msgConsumer(sub.wrapper(t)));
-        return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
+        return subscribe("KaartClick", model.clickSubj.subscribe(t => msgConsumer(sub.wrapper(t))));
       }
 
       const subscribeToAchtergrondlagen = (wrapper: (achtergrondlagen: List<ke.AchtergrondLaag>) => Msg) =>
         subscribe(
+          "Achtergrondlagen",
           model.groeplagenSubj
             .pipe(
               filter(groeplagen => groeplagen.laaggroep === "Achtergrond") //
@@ -666,13 +665,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         );
 
       function subscribeToZoeker(sub: prt.ZoekerSubscription<Msg>): ModelWithResult<Msg> {
-        const subscription = model.zoekerSubj.subscribe(m => msgConsumer(sub.wrapper(m)));
-        return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
+        return subscribe("Zoeker", model.zoekerSubj.subscribe(m => msgConsumer(sub.wrapper(m))));
       }
 
       function subscribeToMijnLocatieZoomdoel(sub: prt.MijnLocatieZoomdoelSubscription<Msg>): ModelWithResult<Msg> {
-        const subscription = model.mijnLocatieZoomDoelSubj.subscribe(t => msgConsumer(sub.wrapper(t)));
-        return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
+        return subscribe("MijnLocatieZoomdoel", model.mijnLocatieZoomDoelSubj.subscribe(t => msgConsumer(sub.wrapper(t))));
       }
 
       function subscribeToGeometryChanged(sub: prt.GeometryChangedSubscription<Msg>): ModelWithResult<Msg> {
@@ -689,8 +686,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
 
       function subscribeToTekenen(sub: prt.TekenenSubscription<Msg>): ModelWithResult<Msg> {
-        const subscription = model.bezigMetTekenenSubj.pipe(distinctUntilChanged()).subscribe(pm => msgConsumer(sub.wrapper(pm)));
-        return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
+        return subscribe("Tekenen", model.bezigMetTekenenSubj.pipe(distinctUntilChanged()).subscribe(pm => msgConsumer(sub.wrapper(pm))));
       }
 
       switch (cmnd.subscription.type) {
@@ -718,7 +714,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function handleUnsubscriptions(cmnd: prt.UnsubscribeCmd): ModelWithResult<Msg> {
-      cmnd.subscription.unsubscribe();
+      cmnd.subscriptionResult.subscription.unsubscribe();
       return ModelWithResult(model);
     }
 
