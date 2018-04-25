@@ -9,7 +9,7 @@ import { observeOnAngular } from "../util/observe-on-angular";
 import { Observable } from "rxjs/Observable";
 import { KaartComponent } from "./kaart.component";
 import { List } from "immutable";
-import { InfoBoodschap } from "./info-boodschap";
+import { InfoBoodschap } from "./kaart-with-info-model";
 
 @Component({
   selector: "awv-kaart-info-boodschappen",

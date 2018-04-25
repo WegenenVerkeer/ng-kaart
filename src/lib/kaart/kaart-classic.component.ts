@@ -7,14 +7,7 @@ import { Observable } from "rxjs/Observable";
 import { map, share, takeUntil, tap } from "rxjs/operators";
 
 import { classicLogger } from "../kaart-classic/log";
-import {
-  FeatureSelectieAangepastMsg,
-  KaartClassicMsg,
-  KaartClassicSubMsg,
-  logOnlyWrapper,
-  SubscribedMsg,
-  TekenGeomAangepastMsg
-} from "../kaart-classic/messages";
+import { FeatureSelectieAangepastMsg, KaartClassicMsg, KaartClassicSubMsg, logOnlyWrapper, SubscribedMsg } from "../kaart-classic/messages";
 import { ofType, TypedRecord } from "../util/operators";
 import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import * as prt from "./kaart-protocol";
@@ -79,7 +72,7 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, Kaar
           map(m => m.geselecteerdeFeatures),
           takeUntil(this.destroyingSubj)
         )
-        .subscribe(features => this.geselecteerdeFeatures.emit(features));
+        .subscribe(features => this.geselecteerdeFeatures.emit(features.geselecteerd));
 
       // We kunnen hier makkelijk een mini-reducer zetten voor KaartClassicSubMsg mocht dat nodig zijn
     };

@@ -3,6 +3,7 @@ import * as ol from "openlayers";
 
 import * as prt from "../kaart/kaart-protocol";
 import { classicLogger } from "./log";
+import { GeselecteerdeFeatures } from "../kaart/kaart-with-info-model";
 
 export interface KaartClassicMsg {
   readonly type: "KaartClassic";
@@ -17,7 +18,7 @@ export type KaartClassicSubMsg = FeatureSelectieAangepastMsg | TekenGeomAangepas
 
 export interface FeatureSelectieAangepastMsg {
   readonly type: "FeatureSelectieAangepast";
-  readonly geselecteerdeFeatures: List<ol.Feature>;
+  readonly geselecteerdeFeatures: GeselecteerdeFeatures;
 }
 
 export interface TekenGeomAangepastMsg {
@@ -43,7 +44,7 @@ export function KaartClassicMsg(payload: KaartClassicSubMsg): KaartClassicMsg {
   return { type: "KaartClassic", payload: payload };
 }
 
-export function FeatureSelectieAangepastMsg(geselecteerdeFeatures: List<ol.Feature>): FeatureSelectieAangepastMsg {
+export function FeatureSelectieAangepastMsg(geselecteerdeFeatures: GeselecteerdeFeatures): FeatureSelectieAangepastMsg {
   return { type: "FeatureSelectieAangepast", geselecteerdeFeatures: geselecteerdeFeatures };
 }
 

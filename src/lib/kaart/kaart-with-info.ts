@@ -1,5 +1,5 @@
-import { none, Option } from "fp-ts/lib/Option";
-import { List, Map } from "immutable";
+import { none, some, Option } from "fp-ts/lib/Option";
+import { List, Map, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 import { BehaviorSubject, ReplaySubject, Subject } from "rxjs";
 
@@ -8,12 +8,7 @@ import { ZoekResultaten } from "../zoeker/abstract-zoeker";
 import { ZoekerCoordinator } from "../zoeker/zoeker-coordinator";
 import { KaartConfig } from "./kaart-config";
 import * as ke from "./kaart-elementen";
-import { InfoBoodschap } from "./info-boodschap";
-
-export interface Groeplagen {
-  readonly laaggroep: Laaggroep;
-  readonly lagen: List<ke.Laag>;
-}
+import { InfoBoodschap, GeselecteerdeFeatures, Groeplagen } from "./kaart-with-info-model";
 
 /**
  * Het model achter de kaartcomponent.
@@ -30,7 +25,7 @@ export class KaartWithInfo {
   readonly showBackgroundSelector: boolean = false;
   readonly clickSubj: Subject<ol.Coordinate> = new Subject<ol.Coordinate>();
   readonly zoominstellingenSubj: Subject<Zoominstellingen> = new ReplaySubject<Zoominstellingen>(1);
-  readonly geselecteerdeFeaturesSubj: Subject<List<ol.Feature>> = new ReplaySubject<List<ol.Feature>>(1);
+  readonly geselecteerdeFeaturesSubj: Subject<GeselecteerdeFeatures> = new Subject<GeselecteerdeFeatures>();
   readonly geselecteerdeFeatures: ol.Collection<ol.Feature> = new ol.Collection<ol.Feature>();
   readonly middelpuntSubj: Subject<[number, number]> = new ReplaySubject<[number, number]>(1);
   readonly achtergrondlaagtitelSubj: Subject<string> = new ReplaySubject<string>(1);
@@ -40,8 +35,8 @@ export class KaartWithInfo {
   readonly zoekerCoordinator: ZoekerCoordinator = new ZoekerCoordinator(this.zoekerSubj);
   readonly mijnLocatieZoomDoelSubj: Subject<Option<number>> = new ReplaySubject<Option<number>>(1);
   readonly geometryChangedSubj: Subject<ol.geom.Geometry> = new Subject<ol.geom.Geometry>();
-  readonly infoBoodschappenSubj: BehaviorSubject<Map<string, InfoBoodschap>> = new BehaviorSubject<Map<string, InfoBoodschap>>(Map());
   readonly tekenSettingsSubj: BehaviorSubject<Option<ke.TekenSettings>> = new BehaviorSubject<Option<ke.TekenSettings>>(none);
+  readonly infoBoodschappenSubj = new BehaviorSubject<OrderedMap<string, InfoBoodschap>>(OrderedMap());
 
   constructor(
     // TODO om de distinctWithInfo te versnellen zouden we als eerste element een versieteller kunnen toevoegen
@@ -68,11 +63,19 @@ export class KaartWithInfo {
     map.on("click", (event: ol.MapBrowserEvent) => {
       return this.clickSubj.next(event.coordinate);
     });
-    this.geselecteerdeFeatures.on("add", () => {
-      this.geselecteerdeFeaturesSubj.next(List(this.geselecteerdeFeatures.getArray()));
-    });
-    this.geselecteerdeFeatures.on("remove", () => {
-      this.geselecteerdeFeaturesSubj.next(List(this.geselecteerdeFeatures.getArray()));
-    });
+    this.geselecteerdeFeatures.on("add", (event: ol.Collection.Event) =>
+      this.geselecteerdeFeaturesSubj.next({
+        geselecteerd: List(this.geselecteerdeFeatures.getArray()),
+        toegevoegd: some(event.element),
+        verwijderd: none
+      })
+    );
+    this.geselecteerdeFeatures.on("remove", (event: ol.Collection.Event) =>
+      this.geselecteerdeFeaturesSubj.next({
+        geselecteerd: List(this.geselecteerdeFeatures.getArray()),
+        toegevoegd: none,
+        verwijderd: some(event.element)
+      })
+    );
   }
 }
