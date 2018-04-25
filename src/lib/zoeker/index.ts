@@ -9,12 +9,14 @@ import { GoogleLocatieZoekerService } from "./google-locatie-zoeker.service";
 import { ZoekerHighlightPipe } from "./zoeker-highlight.pipe";
 import { ZoekerComponent } from "./zoeker.component";
 import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
-import { CrabZoekerService, CrabZoekerComponent } from ".";
+import { CrabZoekerComponent } from "./crab-zoeker.component";
+import { CrabZoekerService } from "./crab-zoeker.service";
+import { HttpClientModule } from "@angular/common/http";
 
 const components: any[] = [GoogleLocatieZoekerComponent, CrabZoekerComponent, ZoekerComponent, ZoekerHighlightPipe];
 
 @NgModule({
-  imports: [CommonModule, HttpModule, ReactiveFormsModule, MatIconModule, MatInputModule, MatFormFieldModule],
+  imports: [CommonModule, HttpModule, HttpClientModule, ReactiveFormsModule, MatIconModule, MatInputModule, MatFormFieldModule],
   declarations: [components],
   exports: [components],
   providers: [GoogleLocatieZoekerService, CrabZoekerService]

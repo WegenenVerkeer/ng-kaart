@@ -53,7 +53,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
 
   private static maakNieuwFeature(resultaat: ZoekResultaat): ol.Feature[] {
     const feature = new ol.Feature({ data: resultaat, geometry: resultaat.geometry, name: resultaat.omschrijving });
-    feature.setId(resultaat.index);
+    feature.setId(resultaat.bron + "_" + resultaat.index);
     feature.setStyle(resultaat.style);
 
     let middlePoint: ol.geom.Point | undefined = undefined;
