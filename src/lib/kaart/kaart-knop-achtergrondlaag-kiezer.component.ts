@@ -11,15 +11,14 @@ import * as prt from "./kaart-protocol";
   encapsulation: ViewEncapsulation.None
 })
 export class KaartKnopAchtergrondLaagKiezerComponent extends KaartComponentBase implements OnInit, OnDestroy {
-  @Input() titels: Array<string> = [""];
+  @Input() titels: Array<string> = [""]; // FIXME: dit wordt nog/niet meer gebruikt, maar lijkt wel handig
 
   constructor(private readonly kaart: KaartClassicComponent, zone: NgZone) {
     super(zone);
   }
 
   ngOnInit(): void {
-    // Dit commando mag maar verstuurd worden als de achtergrondlagen al in het model zitten. Dat is zo als de
-    // tag in de html na de lagen tags komt.
+    super.ngOnInit();
     this.kaart.dispatch(prt.ToonAchtergrondKeuzeCmd(kaartLogOnlyWrapper));
   }
 

@@ -14,7 +14,7 @@ const components: any[] = [LagenkiezerComponent, LagenkiezerConfigComponent];
   exports: [components]
 })
 export class LagenkiezerModule {
-  static withDefaults() {
+  static withDefaults(): ModuleWithProviders {
     return LagenkiezerModule.forRoot({});
   }
   static forRoot(config: LagenkiezerConfig): ModuleWithProviders {
@@ -26,4 +26,5 @@ export class LagenkiezerModule {
 }
 
 export * from "./lagenkiezer.component";
+export * from "./lagenkiezer-config.component";
 export * from "./lagenkiezer-config";
