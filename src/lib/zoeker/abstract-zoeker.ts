@@ -19,7 +19,7 @@ export class ZoekResultaten {
   resultaten: ZoekResultaat[] = [];
   fouten: string[] = [];
   zoeker: string;
-  legende: Map<string, SafeHtml> = Map();
+  legende: Map<string, string> = Map();
 
   constructor(zoeker: string, error?: string) {
     this.zoeker = zoeker;

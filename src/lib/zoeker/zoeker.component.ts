@@ -14,6 +14,7 @@ import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart/kaart-internal-m
 import * as prt from "../kaart/kaart-protocol";
 import { KaartCmdValidation } from "../kaart/kaart-protocol";
 import { compareResultaten, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
+import { ZoekerInjectorComponent } from "./zoeker-injector.component";
 
 const ZoekerLaagNaam = "Zoeker";
 
@@ -30,7 +31,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
   zoekVeld = new FormControl();
   alleZoekResultaten: ZoekResultaat[] = [];
   alleFouten: Fout[] = [];
-  legende: Map<string, SafeHtml> = new Map<string, SafeHtml>();
+  legende: Map<string, string> = new Map<string, string>();
   legendeKeys: string[] = [];
   toonHelp = false;
   toonResultaat = true;

@@ -6,10 +6,12 @@ import { CrabZoekerConfig } from "./crab-zoeker.config";
 import { Observable } from "rxjs/Observable";
 import { Http } from "@angular/http";
 import { ZoekerConfigData, ZOEKER_CFG } from "./zoeker.config";
+import { pin_c_vierkant } from "./zoeker.icons";
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { map, reduce, concatMap, mergeAll, combineLatest, mergeMap } from "rxjs/operators";
 import { Map } from "immutable";
 import { from } from "rxjs/observable/from";
+import { MatIconRegistry } from "@angular/material";
 
 export interface LambertLocation {
   readonly X_Lambert72: number;
@@ -38,10 +40,10 @@ export class CrabZoekResultaat implements ZoekResultaat {
   zoeker: string;
   geometry: any;
   locatie: any;
-  icoon: SafeHtml; // Ieder zoekresultaat heeft hetzelfde icoon.
+  icoon: string; // Ieder zoekresultaat heeft hetzelfde icoon.
   style: ol.style.Style;
 
-  constructor(locatie: LocatorServiceResult, index: number, zoeker: string, icoon: SafeHtml, style: ol.style.Style) {
+  constructor(locatie: LocatorServiceResult, index: number, zoeker: string, icoon: string, style: ol.style.Style) {
     this.index = index + 1;
     this.geometry = new ol.geom.Point([locatie.Location.X_Lambert72, locatie.Location.Y_Lambert72]);
     this.locatie = new ol.format.GeoJSON(<ol.olx.format.GeoJSONOptions>{
@@ -61,16 +63,18 @@ export class CrabZoekResultaat implements ZoekResultaat {
 export class CrabZoekerService implements AbstractZoeker {
   private readonly crabZoekerConfig: CrabZoekerConfig;
   private style: ol.style.Style; // 1 style voor ieder resultaat. We maken geen onderscheid per bron.
-  private legende: Map<string, SafeHtml>;
-  private icoon: SafeHtml;
+  private legende: Map<string, string>;
+  private icoon: string;
 
   constructor(
     private readonly http: HttpClient,
     @Inject(ZOEKER_CFG) zoekerConfigData: ZoekerConfigData,
+    private matIconRegistry: MatIconRegistry,
     private readonly sanitizer: DomSanitizer
   ) {
+    this.matIconRegistry.addSvgIcon("pin_c_vierkant", this.sanitizer.bypassSecurityTrustResourceUrl(pin_c_vierkant));
     this.crabZoekerConfig = new CrabZoekerConfig(zoekerConfigData.crab);
-    this.icoon = this.sanitizer.bypassSecurityTrustHtml("<mat-icon class='mat-icon material-icons'>pin_drop</mat-icon>");
+    this.icoon = "pin_c_vierkant";
     this.legende = Map.of(this.naam(), this.icoon);
     this.style = new ol.style.Style({
       stroke: new ol.style.Stroke({
@@ -80,15 +84,11 @@ export class CrabZoekerService implements AbstractZoeker {
       fill: new ol.style.Fill({
         color: this.crabZoekerConfig.kleur
       }),
-      text: new ol.style.Text({
-        text: "\uE55E", // place
-        font: "normal 24px Material Icons",
-        textBaseline: "bottom",
-        fill: new ol.style.Fill({
-          color: this.crabZoekerConfig.kleur
-        }),
-        offsetX: 0.5,
-        offsetY: 1.0
+      image: new ol.style.Icon({
+        color: this.crabZoekerConfig.kleur,
+        anchor: [0.5, 1.0],
+        scale: 0.2,
+        src: pin_c_vierkant
       })
     });
   }

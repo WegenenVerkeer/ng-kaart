@@ -32,7 +32,7 @@
   <div *ngIf="legende.size > 0">
     <br><b>Legende</b><br>
     <div *ngFor="let key of legendeKeys" class="zoeker-resultaat">
-      <span [innerHTML]="legende.get(key)"></span>
+      <mat-icon [svgIcon]="legende.get(key)"></mat-icon>
       <span>{{key}}</span>
     </div>
   </div>
@@ -45,7 +45,7 @@
   <div *ngIf="alleFouten.length > 0 && alleZoekResultaten.length > 0" class="divider"></div>
   <div *ngFor="let resultaat of alleZoekResultaten" class="zoeker-resultaat klikbaar"
        (click)="zoomNaarResultaat(resultaat)">
-    <span [innerHTML]="resultaat.icoon"></span>
+    <mat-icon [svgIcon]="resultaat.icoon"></mat-icon>
     <span [innerHTML]="resultaat.omschrijving | highlight: zoekVeld.value"></span>
   </div>
 </div>

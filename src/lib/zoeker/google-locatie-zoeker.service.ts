@@ -12,6 +12,11 @@ import { catchError, flatMap, map } from "rxjs/operators";
 import { AbstractZoeker, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
 import { GoogleLocatieZoekerConfig, GoogleLocatieZoekerConfigData } from "./google-locatie-zoeker.config";
 import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
+import { MatIconRegistry } from "@angular/material";
+import { pin_g_vierkant, pin_w_vierkant } from "./zoeker.icons";
+
+const googleIcoon = "pin_g_vierkant";
+const wdbIcoon = "pin_w_vierkant";
 
 export class GoogleZoekResultaat implements ZoekResultaat {
   partialMatch: boolean;
@@ -21,10 +26,10 @@ export class GoogleZoekResultaat implements ZoekResultaat {
   zoeker: string;
   geometry: any;
   locatie: any;
-  icoon: SafeHtml; // Ieder zoekresultaat heeft hetzelfde icoon.
+  icoon: string; // Ieder zoekresultaat heeft hetzelfde icoon.
   style: ol.style.Style;
 
-  constructor(locatie, index: number, zoeker: string, icoon: SafeHtml, style: ol.style.Style) {
+  constructor(locatie, index: number, zoeker: string, style: ol.style.Style) {
     this.partialMatch = locatie.partialMatch;
     this.index = index + 1;
     this.locatie = locatie.locatie;
@@ -36,7 +41,7 @@ export class GoogleZoekResultaat implements ZoekResultaat {
     this.omschrijving = locatie.omschrijving;
     this.bron = locatie.bron;
     this.zoeker = zoeker;
-    this.icoon = icoon;
+    this.icoon = this.bron.startsWith("WDB") ? wdbIcoon : googleIcoon;
     this.style = style;
   }
 }
@@ -86,22 +91,22 @@ interface ExtendedPlaceResult extends google.maps.places.PlaceResult, ExtendedRe
 export class GoogleLocatieZoekerService implements AbstractZoeker {
   private readonly googleLocatieZoekerConfig: GoogleLocatieZoekerConfig;
   private _cache: Promise<GoogleServices> | null = null;
-  private legende: Map<string, SafeHtml>;
+  private legende: Map<string, string>;
   private style: ol.style.Style; // 1 style voor ieder resultaat. We maken geen onderscheid per bron.
-  private icoon: SafeHtml;
 
   private readonly locatieZoekerUrl: string;
 
   constructor(
     private readonly http: Http,
     @Inject(ZOEKER_CFG) zoekerConfigData: ZoekerConfigData,
+    private matIconRegistry: MatIconRegistry,
     private readonly sanitizer: DomSanitizer
   ) {
     this.googleLocatieZoekerConfig = new GoogleLocatieZoekerConfig(zoekerConfigData.google);
     this.locatieZoekerUrl = this.googleLocatieZoekerConfig.url;
-    // We moeten hier al de expanded html zetten, want angular directives worden niet geexpandeerd in innerHtml met SafeHtml.
-    this.icoon = this.sanitizer.bypassSecurityTrustHtml("<mat-icon class='mat-icon material-icons'>place</mat-icon>");
-    this.legende = Map.of(this.naam(), this.icoon);
+    this.matIconRegistry.addSvgIcon(googleIcoon, this.sanitizer.bypassSecurityTrustResourceUrl(pin_g_vierkant));
+    this.matIconRegistry.addSvgIcon(wdbIcoon, this.sanitizer.bypassSecurityTrustResourceUrl(pin_w_vierkant));
+    this.legende = Map.of("Google Locatiezoeker", googleIcoon, "WDB Locatiezoeker", wdbIcoon);
     this.style = new ol.style.Style({
       stroke: new ol.style.Stroke({
         color: this.googleLocatieZoekerConfig.kleur,
@@ -321,7 +326,7 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
           );
         }
         locaties.slice(0, this.googleLocatieZoekerConfig.maxAantal).forEach((locatie, index) => {
-          zoekResultaten.resultaten.push(new GoogleZoekResultaat(locatie, index, this.naam(), this.icoon, this.style));
+          zoekResultaten.resultaten.push(new GoogleZoekResultaat(locatie, index, this.naam(), this.style));
         });
         return zoekResultaten;
       });

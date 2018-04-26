@@ -10,14 +10,22 @@ import { ZoekerHighlightPipe } from "./zoeker-highlight.pipe";
 import { ZoekerComponent } from "./zoeker.component";
 import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
 import { CrabZoekerComponent } from "./crab-zoeker.component";
+import { ZoekerInjectorComponent } from "./zoeker-injector.component";
 import { CrabZoekerService } from "./crab-zoeker.service";
 import { HttpClientModule } from "@angular/common/http";
 
-const components: any[] = [GoogleLocatieZoekerComponent, CrabZoekerComponent, ZoekerComponent, ZoekerHighlightPipe];
+const components: any[] = [
+  GoogleLocatieZoekerComponent,
+  CrabZoekerComponent,
+  ZoekerComponent,
+  ZoekerHighlightPipe,
+  ZoekerInjectorComponent
+];
 
 @NgModule({
   imports: [CommonModule, HttpModule, HttpClientModule, ReactiveFormsModule, MatIconModule, MatInputModule, MatFormFieldModule],
   declarations: [components],
+  entryComponents: [ZoekerInjectorComponent],
   exports: [components],
   providers: [GoogleLocatieZoekerService, CrabZoekerService]
 })
