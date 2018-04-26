@@ -10,6 +10,18 @@ import { KaartConfig } from "./kaart-config";
 import * as ke from "./kaart-elementen";
 import { InfoBoodschap, GeselecteerdeFeatures, Groeplagen } from "./kaart-with-info-model";
 
+// Spijtig genoeg kan die niet in het model zelf zitten vermits de stijl functie in de interaction.Select control wordt
+// gecreeerd wanneer het model nog leeg is, en het model van dat moment in zijn scope zit
+const STIJL_OP_LAAG = "stijlOpLaag";
+
+export function setStyleFunction(model: KaartWithInfo, laagnaam: string, stijl: ol.StyleFunction) {
+  model.map.set(STIJL_OP_LAAG, model.map.get(STIJL_OP_LAAG).set(laagnaam, stijl));
+}
+
+export function getStyleFunction(model: KaartWithInfo, laagnaam: string): ol.StyleFunction {
+  return model.map.get(STIJL_OP_LAAG).get(laagnaam);
+}
+
 /**
  * Het model achter de kaartcomponent.
  */
@@ -77,5 +89,6 @@ export class KaartWithInfo {
         verwijderd: some(event.element)
       })
     );
+    this.map.set(STIJL_OP_LAAG, Map<string, ol.StyleFunction>());
   }
 }

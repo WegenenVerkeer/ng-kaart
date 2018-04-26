@@ -14,8 +14,9 @@ import { forEach } from "../util/option";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { Laaggroep, PositieAanpassing, ZetMijnLocatieZoomCmd } from "./kaart-protocol-commands";
-import { KaartWithInfo } from "./kaart-with-info";
+import { KaartWithInfo, setStyleFunction, getStyleFunction } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
+import { kaartLogger } from "./log";
 
 ///////////////////////////////////
 // Hulpfuncties
@@ -518,27 +519,58 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         }
       });
 
+      const applySelectFunction = function(feature: ol.Feature, resolution: number): ol.style.Style | ol.style.Style[] {
+        const applySelectionColor = function(style: ol.style.Style): ol.style.Style {
+          const selectionStyle = style.clone();
+          selectionStyle.getStroke().setColor([0, 153, 255, 1]);
+          return selectionStyle;
+        };
+
+        const styleFunction = getStyleFunction(model, feature.get("laagnaam"));
+        if (styleFunction) {
+          const toegepasteStijl = styleFunction(feature, resolution);
+          if (toegepasteStijl instanceof ol.style.Style) {
+            return applySelectionColor(toegepasteStijl);
+          } else {
+            return toegepasteStijl.map(style => applySelectionColor(style));
+          }
+        } else {
+          kaartLogger.warn("Geen stijl gevonden voor feature:");
+          kaartLogger.warn(feature);
+          return []; // geen stijl functie gevonden.. Is dit een nosql vector laag?
+        }
+      };
+
       function getSelectInteraction(modus: prt.SelectieModus): Option<olx.interaction.SelectOptions> {
         switch (modus) {
           case "single":
             return some({
               condition: ol.events.condition.click,
-              features: model.geselecteerdeFeatures
+              features: model.geselecteerdeFeatures,
+              multi: true,
+              style: cmnd.selectieStyle.getOrElseValue(applySelectFunction)
             });
           case "multiple":
             return some({
               condition: ol.events.condition.click,
+              toggleCondition: ol.events.condition.click,
               features: model.geselecteerdeFeatures,
-              multi: true
+              multi: true,
+              style: cmnd.selectieStyle.getOrElseValue(applySelectFunction)
             });
           case "none":
             return none;
         }
       }
 
-      getSelectInteraction(cmnd.selectieModus).map(selectInteraction =>
-        model.map.addInteraction(new ol.interaction.Select(selectInteraction))
-      );
+      getSelectInteraction(cmnd.selectieModus).map(selectInteraction => {
+        model.map.addInteraction(new ol.interaction.Select(selectInteraction));
+        model.map.addInteraction(
+          new ol.interaction.DragBox({
+            condition: ol.events.condition.platformModifierKeyOnly
+          })
+        );
+      });
 
       return ModelWithResult(model);
     }
@@ -560,7 +592,9 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           const sf = (feature: ol.Feature, resolution: number) => {
             return (cmnd.stijl as ke.DynamicStyle).styleFunction(feature, resolution);
           };
-          vectorlayer.setStyle(cmnd.stijl.type === "StaticStyle" ? cmnd.stijl.style : sf);
+          const stijl = cmnd.stijl.type === "StaticStyle" ? cmnd.stijl.style : sf;
+          vectorlayer.setStyle(stijl);
+          setStyleFunction(model, cmnd.titel, sf);
           return ModelAndEmptyResult(model);
         })
       );

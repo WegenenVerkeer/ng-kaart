@@ -7,7 +7,9 @@ import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartLaagComponent } from "./kaart-laag.component";
 import { NosqlFsSource } from "../source/nosql-fs-source";
 import { orElse } from "../util/option";
-import { Laaggroep } from "./kaart-protocol-commands";
+import { Laaggroep, ZetStijlVoorLaagCmd } from "./kaart-protocol-commands";
+import { DynamicStyle } from "./kaart-elementen";
+import { logOnlyWrapper } from "../kaart-classic/messages";
 
 @Component({
   selector: "awv-kaart-nosqlfs-laag",
@@ -32,10 +34,18 @@ export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
   }
 
   createLayer(): ke.VectorLaag {
+    // this.dispatch(ZetStijlVoorLaagCmd(this.titel, DynamicStyle(this.styleFunction), logOnlyWrapper));
     return {
       type: ke.VectorType,
       titel: this.titel,
-      source: new NosqlFsSource(this.database, this.collection, this.url, option.fromNullable(this.view), option.fromNullable(this.filter)),
+      source: new NosqlFsSource(
+        this.database,
+        this.collection,
+        this.url,
+        option.fromNullable(this.view),
+        option.fromNullable(this.filter),
+        this.titel
+      ),
       styleSelector: orElse(option.fromNullable(this.style).map(ke.StaticStyle), () =>
         option.fromNullable(this.styleFunction).map(ke.DynamicStyle)
       ),

@@ -154,6 +154,21 @@ export class AppComponent {
 
   fietspadStyleMetOffset = offsetStyleFunction(this.fietspadStyle, "ident8", "zijderijbaan", 1);
 
+  fietspadSelectieStyleMetOffset = function(feature: ol.Feature, resolution: number): ol.style.Style | ol.style.Style[] {
+    const applySelectionColor = function(s: ol.style.Style): ol.style.Style {
+      const selectionStyle = s.clone();
+      selectionStyle.getStroke().setColor([0, 153, 255, 1]);
+      return selectionStyle;
+    };
+    const offsetFunc = offsetStyleFunction(this!.fietspadStyle, "ident8", "zijderijbaan", 1);
+    const style = offsetFunc(feature, resolution);
+    if (style instanceof ol.style.Style) {
+      return applySelectionColor(style);
+    } else {
+      return style.map(s => applySelectionColor(s));
+    }
+  }.bind(this);
+
   constructor(private googleLocatieZoekerService: GoogleLocatieZoekerService) {
     kaartLogger.setLevel("DEBUG");
     classicLogger.setLevel("DEBUG");
@@ -176,7 +191,14 @@ export class AppComponent {
       this.installatieCoordinaat[0] + (Math.random() - 0.5) * 3000,
       this.installatieCoordinaat[1] + (Math.random() - 0.5) * 3000
     ];
-    const feature = new ol.Feature(new ol.geom.Point(locatie));
+
+    const feature = new ol.Feature({
+      id: this.installaties.length,
+      laag: "Fietspaden",
+      ident8: "R0010001",
+      type: "Vrijliggend",
+      geometry: new ol.geom.Point(locatie)
+    });
     feature.setStyle(this.pinIcon);
     this.installaties.push(feature);
     setTimeout(() => this.addIcon(), 1000);

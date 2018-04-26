@@ -17,7 +17,8 @@ export class NosqlFsSource extends ol.source.Vector {
     public collection: string,
     public url = "/geolatte-nosqlfs",
     public view: Option<string>,
-    public filter: Option<string>
+    public filter: Option<string>,
+    public laagnaam: string
   ) {
     super({
       loader: function(extent, resolution, projection) {
@@ -60,7 +61,8 @@ export class NosqlFsSource extends ol.source.Vector {
             return new ol.Feature({
               id: geojson.id,
               properties: geojson.properties,
-              geometry: format.readGeometry(geojson.geometry)
+              geometry: format.readGeometry(geojson.geometry),
+              laagnaam: this!.laagnaam
             });
           });
           kaartLogger.debug(`nosql: adding ${features.length} features`);

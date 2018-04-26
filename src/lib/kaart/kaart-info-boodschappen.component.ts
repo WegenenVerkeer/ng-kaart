@@ -19,7 +19,7 @@ import { InfoBoodschap } from "./kaart-with-info-model";
     trigger("fadeIn", [
       state("visible", style({ opacity: 1 })),
       transition(":enter", [style({ opacity: 0 }), animate(200)]),
-      transition(":leave", animate(200, style({ opacity: 0 })))
+      transition(":leave", animate(0, style({ opacity: 0 })))
     ])
   ]
 })
@@ -46,7 +46,12 @@ export class KaartInfoBoodschappenComponent extends KaartChildComponentBase impl
         observeOnAngular(this.zone)
       )
       .subscribe(msg => {
-        this.infoBoodschappen$.emit(msg.infoBoodschappen.toList());
+        this.infoBoodschappen$.emit(
+          msg.infoBoodschappen
+            .toList()
+            .reverse() // nieuwste bovenaan
+            .toList()
+        );
       });
   }
 }

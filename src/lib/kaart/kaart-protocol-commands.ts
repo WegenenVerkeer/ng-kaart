@@ -164,6 +164,7 @@ export type SelectieModus = "single" | "multiple" | "none";
 export interface ActiveerSelectieModusCmd<Msg extends KaartMsg> {
   readonly type: "ActiveerSelectieModus";
   readonly selectieModus: SelectieModus;
+  readonly selectieStyle: Option<ol.style.Style | ol.style.Style[] | ol.StyleFunction>;
 }
 
 export interface ToonAchtergrondKeuzeCmd<Msg extends KaartMsg> {
@@ -333,8 +334,11 @@ export function VervangFeaturesCmd<Msg extends KaartMsg>(
   return { type: "VervangFeatures", titel: titel, features: features, wrapper: wrapper };
 }
 
-export function ActiveerSelectieModusCmd<Msg extends KaartMsg>(selectieModus: SelectieModus): ActiveerSelectieModusCmd<Msg> {
-  return { type: "ActiveerSelectieModus", selectieModus: selectieModus };
+export function ActiveerSelectieModusCmd<Msg extends KaartMsg>(
+  selectieModus: SelectieModus,
+  selectieStyle: Option<ol.style.Style | ol.style.Style[] | ol.StyleFunction>
+): ActiveerSelectieModusCmd<Msg> {
+  return { type: "ActiveerSelectieModus", selectieModus: selectieModus, selectieStyle: selectieStyle };
 }
 
 export function MeldComponentFoutCmd<Msg extends KaartMsg>(fouten: List<string>): MeldComponentFoutCmd {
