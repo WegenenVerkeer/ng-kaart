@@ -1,29 +1,38 @@
 export const pin_c_vierkant =
-  "data:image/svg+xml;utf8,%3Csvg%20viewBox%3D%220%200%2024%2024%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20" +
-  "fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20stroke-linejoin%3D%22round%22%20stroke-miterlimit%3D%221.414%22%3E%3C" +
-  "path%20d%3D%22M19%202H5a2%202%200%200%200-2%202v14a2%202%200%200%200%202%202h4l3%203%203-3h4c1.1%200%202-.9%202-2V4c0-1.1-.9-2-2-2zm-7" +
-  "%203.3c1.49%200%202.7%201.21%202.7%202.7%200%201.49-1.21%202.7-2.7%202.7-1.49%200-2.7-1.21-2.7-2.7%200-1.49%201.21-2.7%202.7-2.7zM18" +
-  "%2016H6v-.9c0-2%204-3.1%206-3.1s6%201.1%206%203.1v.9z%22%20fill-rule%3D%22nonzero%22%20stroke%3D%22%23fff%22%20stroke-width%3D" +
-  "%22.3%22%2F%3E%3Cpath%20fill%3D%22none%22%20d%3D%22M0%200h24v24H0z%22%2F%3E%3Cpath%20d%3D%22M4.886%203.837h14.229v14.229H4.886z" +
-  "%22%2F%3E%3Ctext%20x%3D%226.777%22%20y%3D%2216.651%22%20font-family%3D%22%27Roboto-Medium%27%2C%27Roboto%27%22%20font-weight" +
-  "%3D%22500%22%20font-size%3D%2216%22%20fill%3D%22%23fff%22%3EC%3C%2Ftext%3E%3C%2Fsvg%3E";
-
+  // tslint:disable-next-line:max-line-length
+  '<svg x="0px" y="0px" width="24px" height="24px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd" clip-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="1.414"><path d="M19 2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4l3 3 3-3h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 3.3c1.49 0 2.7 1.21 2.7 2.7 0 1.49-1.21 2.7-2.7 2.7-1.49 0-2.7-1.21-2.7-2.7 0-1.49 1.21-2.7 2.7-2.7zM18 16H6v-.9c0-2 4-3.1 6-3.1s6 1.1 6 3.1v.9z" fill-rule="nonzero" stroke="#fff" stroke-width=".3"/><path fill="none" d="M0 0h24v24H0z"/><path d="M4.886 3.837h14.229v14.229H4.886z"/><text x="6.777" y="16.651" font-family="Roboto-Medium,Roboto" font-weight="500" font-size="16" fill="#fff">C</text></svg>';
 export const pin_g_vierkant =
-  "data:image/svg+xml;utf8,%3Csvg%20viewBox%3D%220%200%2024%2024%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20" +
-  "fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20stroke-linejoin%3D%22round%22%20stroke-miterlimit%3D%221.414%22%3E%3C" +
-  "path%20d%3D%22M19%202H5a2%202%200%200%200-2%202v14a2%202%200%200%200%202%202h4l3%203%203-3h4c1.1%200%202-.9%202-2V4c0-1.1-.9-2-2-2zm-7" +
-  "%203.3c1.49%200%202.7%201.21%202.7%202.7%200%201.49-1.21%202.7-2.7%202.7-1.49%200-2.7-1.21-2.7-2.7%200-1.49%201.21-2.7%202.7-2.7zM18" +
-  "%2016H6v-.9c0-2%204-3.1%206-3.1s6%201.1%206%203.1v.9z%22%20fill-rule%3D%22nonzero%22%20stroke%3D%22%23fff%22%20stroke-width%3D" +
-  "%22.3%22%2F%3E%3Cpath%20fill%3D%22none%22%20d%3D%22M0%200h24v24H0z%22%2F%3E%3Cpath%20d%3D%22M4.886%203.837h14.229v14.229H4.886z" +
-  "%22%2F%3E%3Ctext%20x%3D%226.555%22%20y%3D%2216.622%22%20font-family%3D%22%27Roboto-Medium%27%2C%27Roboto%27%22%20font-weight" +
-  "%3D%22500%22%20font-size%3D%2216%22%20fill%3D%22%23fff%22%3EG%3C%2Ftext%3E%3C%2Fsvg%3E";
-
+  // tslint:disable-next-line:max-line-length
+  '<svg x="0px" y="0px" width="24px" height="24px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd" clip-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="1.414"><path d="M19 2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4l3 3 3-3h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 3.3c1.49 0 2.7 1.21 2.7 2.7 0 1.49-1.21 2.7-2.7 2.7-1.49 0-2.7-1.21-2.7-2.7 0-1.49 1.21-2.7 2.7-2.7zM18 16H6v-.9c0-2 4-3.1 6-3.1s6 1.1 6 3.1v.9z" fill-rule="nonzero" stroke="#fff" stroke-width=".3"/><path fill="none" d="M0 0h24v24H0z"/><path d="M4.886 3.837h14.229v14.229H4.886z"/><text x="6.555" y="16.622" font-family="Roboto-Medium,Roboto" font-weight="500" font-size="16" fill="#fff">G</text></svg>';
 export const pin_w_vierkant =
-  "data:image/svg+xml;utf8,%3Csvg%20viewBox%3D%220%200%2024%2024%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20" +
-  "fill-rule%3D%22evenodd%22%20clip-rule%3D%22evenodd%22%20stroke-linejoin%3D%22round%22%20stroke-miterlimit%3D%221.414%22%3E%3C" +
-  "path%20d%3D%22M19%202H5a2%202%200%200%200-2%202v14a2%202%200%200%200%202%202h4l3%203%203-3h4c1.1%200%202-.9%202-2V4c0-1.1-.9-2-2-2zm-7" +
-  "%203.3c1.49%200%202.7%201.21%202.7%202.7%200%201.49-1.21%202.7-2.7%202.7-1.49%200-2.7-1.21-2.7-2.7%200-1.49%201.21-2.7%202.7-2.7zM18" +
-  "%2016H6v-.9c0-2%204-3.1%206-3.1s6%201.1%206%203.1v.9z%22%20fill-rule%3D%22nonzero%22%20stroke%3D%22%23fff%22%20stroke-width%3D" +
-  "%22.3%22%2F%3E%3Cpath%20fill%3D%22none%22%20d%3D%22M0%200h24v24H0z%22%2F%3E%3Cpath%20d%3D%22M4.886%203.837h14.229v14.229H4.886z" +
-  "%22%2F%3E%3Ctext%20x%3D%224.961%22%20y%3D%2216.633%22%20font-family%3D%22%27Roboto-Medium%27%2C%27Roboto%27%22%20font-weight" +
-  "%3D%22500%22%20font-size%3D%2216%22%20fill%3D%22%23fff%22%3EW%3C%2Ftext%3E%3C%2Fsvg%3E";
+  // tslint:disable-next-line:max-line-length
+  '<svg x="0px" y="0px" width="24px" height="24px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill-rule="evenodd" clip-rule="evenodd" stroke-linejoin="round" stroke-miterlimit="1.414"><path d="M19 2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4l3 3 3-3h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 3.3c1.49 0 2.7 1.21 2.7 2.7 0 1.49-1.21 2.7-2.7 2.7-1.49 0-2.7-1.21-2.7-2.7 0-1.49 1.21-2.7 2.7-2.7zM18 16H6v-.9c0-2 4-3.1 6-3.1s6 1.1 6 3.1v.9z" fill-rule="nonzero" stroke="#fff" stroke-width=".3"/><path fill="none" d="M0 0h24v24H0z"/><path d="M4.886 3.837h14.229v14.229H4.886z"/><text x="4.961" y="16.633" font-family="Roboto-Medium,Roboto" font-weight="500" font-size="16" fill="#fff">W</text></svg>';
+
+export function pin_data(pin: string): string {
+  return "data:image/svg+xml;utf8," + encodeURIComponent(pin);
+}
+
+export function pin_ol(pin: string, kleur: [number, number, number, number]): string {
+  function vullFillIn(nodes: NodeListOf<SVGGraphicsElement>, fillKleur: string) {
+    for (let i = 0; i < nodes.length; i++) {
+      const node = nodes.item(i);
+      if (!node.hasAttribute("fill")) {
+        node.setAttribute("fill", fillKleur);
+      }
+    }
+  }
+
+  // Openlayers zijn color replacement werkt niet zoals we verwachten. Wit wordt vervangen door de opgegeven kleur.
+  // Wij hebben juist wit in ons icoon nodig.
+  // Daarom gaan we zelf de svg processen. We gaan er van uit dat alle path en text elementen waar geen fill op zit,
+  // we de vervangende kleur moeten gebruiken.
+  const parser = new DOMParser();
+  const xmlDoc = parser.parseFromString(pin, "text/xml");
+
+  const kleurString = "#" + kleur[0].toString(16) + kleur[1].toString(16) + kleur[2].toString(16);
+
+  vullFillIn(xmlDoc.getElementsByTagName("path"), kleurString);
+  vullFillIn(xmlDoc.getElementsByTagName("text"), kleurString);
+
+  return "data:image/svg+xml;utf8," + encodeURIComponent(new XMLSerializer().serializeToString(xmlDoc.documentElement));
+}

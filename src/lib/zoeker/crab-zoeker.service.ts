@@ -1,17 +1,17 @@
-import { ZoekResultaat, AbstractZoeker, ZoekResultaten } from "./abstract-zoeker";
-import { SafeHtml, DomSanitizer } from "@angular/platform-browser";
-import * as ol from "openlayers";
-import { Injectable, Inject } from "@angular/core";
-import { CrabZoekerConfig } from "./crab-zoeker.config";
-import { Observable } from "rxjs/Observable";
-import { Http } from "@angular/http";
-import { ZoekerConfigData, ZOEKER_CFG } from "./zoeker.config";
-import { pin_c_vierkant } from "./zoeker.icons";
 import { HttpClient, HttpParams } from "@angular/common/http";
-import { map, reduce, concatMap, mergeAll, combineLatest, mergeMap } from "rxjs/operators";
-import { Map } from "immutable";
-import { from } from "rxjs/observable/from";
+import { Inject, Injectable } from "@angular/core";
 import { MatIconRegistry } from "@angular/material";
+import { DomSanitizer } from "@angular/platform-browser";
+import { Map } from "immutable";
+import * as ol from "openlayers";
+import { Observable } from "rxjs/Observable";
+import { from } from "rxjs/observable/from";
+import { map, mergeMap, reduce } from "rxjs/operators";
+
+import { AbstractZoeker, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
+import { CrabZoekerConfig } from "./crab-zoeker.config";
+import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
+import { pin_c_vierkant, pin_data, pin_ol } from "./zoeker.icons";
 
 export interface LambertLocation {
   readonly X_Lambert72: number;
@@ -72,7 +72,7 @@ export class CrabZoekerService implements AbstractZoeker {
     private matIconRegistry: MatIconRegistry,
     private readonly sanitizer: DomSanitizer
   ) {
-    this.matIconRegistry.addSvgIcon("pin_c_vierkant", this.sanitizer.bypassSecurityTrustResourceUrl(pin_c_vierkant));
+    this.matIconRegistry.addSvgIcon("pin_c_vierkant", this.sanitizer.bypassSecurityTrustResourceUrl(pin_data(pin_c_vierkant)));
     this.crabZoekerConfig = new CrabZoekerConfig(zoekerConfigData.crab);
     this.icoon = "pin_c_vierkant";
     this.legende = Map.of(this.naam(), this.icoon);
@@ -85,10 +85,8 @@ export class CrabZoekerService implements AbstractZoeker {
         color: this.crabZoekerConfig.kleur
       }),
       image: new ol.style.Icon({
-        color: this.crabZoekerConfig.kleur,
         anchor: [0.5, 1.0],
-        scale: 0.2,
-        src: pin_c_vierkant
+        src: pin_ol(pin_c_vierkant, this.crabZoekerConfig.kleur)
       })
     });
   }

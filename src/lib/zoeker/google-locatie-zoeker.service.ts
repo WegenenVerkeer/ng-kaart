@@ -2,18 +2,18 @@ import "rxjs/add/observable/fromPromise";
 
 import { Inject, Injectable } from "@angular/core";
 import { Http, QueryEncoder, Response, URLSearchParams } from "@angular/http";
-import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
-import {} from "googlemaps";
+import { MatIconRegistry } from "@angular/material";
+import { DomSanitizer } from "@angular/platform-browser";
 import { Map } from "immutable";
+import {} from "googlemaps";
 import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
 import { catchError, flatMap, map } from "rxjs/operators";
 
 import { AbstractZoeker, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
-import { GoogleLocatieZoekerConfig, GoogleLocatieZoekerConfigData } from "./google-locatie-zoeker.config";
+import { GoogleLocatieZoekerConfig } from "./google-locatie-zoeker.config";
 import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
-import { MatIconRegistry } from "@angular/material";
-import { pin_g_vierkant, pin_w_vierkant } from "./zoeker.icons";
+import { pin_data, pin_g_vierkant, pin_ol, pin_w_vierkant } from "./zoeker.icons";
 
 const googleIcoon = "pin_g_vierkant";
 const wdbIcoon = "pin_w_vierkant";
@@ -92,7 +92,8 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
   private readonly googleLocatieZoekerConfig: GoogleLocatieZoekerConfig;
   private _cache: Promise<GoogleServices> | null = null;
   private legende: Map<string, string>;
-  private style: ol.style.Style; // 1 style voor ieder resultaat. We maken geen onderscheid per bron.
+  private googleStyle: ol.style.Style;
+  private wdbStyle: ol.style.Style;
 
   private readonly locatieZoekerUrl: string;
 
@@ -104,10 +105,10 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
   ) {
     this.googleLocatieZoekerConfig = new GoogleLocatieZoekerConfig(zoekerConfigData.google);
     this.locatieZoekerUrl = this.googleLocatieZoekerConfig.url;
-    this.matIconRegistry.addSvgIcon(googleIcoon, this.sanitizer.bypassSecurityTrustResourceUrl(pin_g_vierkant));
-    this.matIconRegistry.addSvgIcon(wdbIcoon, this.sanitizer.bypassSecurityTrustResourceUrl(pin_w_vierkant));
+    this.matIconRegistry.addSvgIcon(googleIcoon, this.sanitizer.bypassSecurityTrustResourceUrl(pin_data(pin_g_vierkant)));
+    this.matIconRegistry.addSvgIcon(wdbIcoon, this.sanitizer.bypassSecurityTrustResourceUrl(pin_data(pin_w_vierkant)));
     this.legende = Map.of("Google Locatiezoeker", googleIcoon, "WDB Locatiezoeker", wdbIcoon);
-    this.style = new ol.style.Style({
+    this.googleStyle = new ol.style.Style({
       stroke: new ol.style.Stroke({
         color: this.googleLocatieZoekerConfig.kleur,
         width: 1
@@ -115,15 +116,22 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
       fill: new ol.style.Fill({
         color: this.googleLocatieZoekerConfig.lichtereKleur()
       }),
-      text: new ol.style.Text({
-        text: "\uE55F", // place
-        font: "normal 24px Material Icons",
-        textBaseline: "bottom",
-        fill: new ol.style.Fill({
-          color: this.googleLocatieZoekerConfig.kleur
-        }),
-        offsetX: 0.5,
-        offsetY: 1.0
+      image: new ol.style.Icon({
+        anchor: [0.5, 1.0],
+        src: pin_ol(pin_g_vierkant, this.googleLocatieZoekerConfig.kleur)
+      })
+    });
+    this.wdbStyle = new ol.style.Style({
+      stroke: new ol.style.Stroke({
+        color: this.googleLocatieZoekerConfig.kleur,
+        width: 1
+      }),
+      fill: new ol.style.Fill({
+        color: this.googleLocatieZoekerConfig.lichtereKleur()
+      }),
+      image: new ol.style.Icon({
+        anchor: [0.5, 1.0],
+        src: pin_ol(pin_w_vierkant, this.googleLocatieZoekerConfig.kleur)
       })
     });
   }
@@ -326,7 +334,9 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
           );
         }
         locaties.slice(0, this.googleLocatieZoekerConfig.maxAantal).forEach((locatie, index) => {
-          zoekResultaten.resultaten.push(new GoogleZoekResultaat(locatie, index, this.naam(), this.style));
+          zoekResultaten.resultaten.push(
+            new GoogleZoekResultaat(locatie, index, this.naam(), locatie.bron.startsWith("WDB") ? this.wdbStyle : this.googleStyle)
+          );
         });
         return zoekResultaten;
       });

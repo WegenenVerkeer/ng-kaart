@@ -1,20 +1,16 @@
 import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { SafeHtml } from "@angular/platform-browser";
 import { none, Option } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 import { debounce, distinctUntilChanged } from "rxjs/operators";
 import { Subscription } from "rxjs/Subscription";
 
-import { SubscriptionResult } from "../kaart";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import * as ke from "../kaart/kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as prt from "../kaart/kaart-protocol";
-import { KaartCmdValidation } from "../kaart/kaart-protocol";
 import { compareResultaten, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
-import { ZoekerInjectorComponent } from "./zoeker-injector.component";
 
 const ZoekerLaagNaam = "Zoeker";
 
