@@ -1,14 +1,12 @@
-import { Input, NgZone, OnDestroy, OnInit } from "@angular/core";
+import { NgZone, OnDestroy, OnInit } from "@angular/core";
 import * as rx from "rxjs";
 
 import { KaartComponentBase } from "./kaart-component-base";
-import { KaartCmdDispatcher, VacuousDispatcher } from "./kaart-event-dispatcher";
 import { KaartInternalMsg, KaartInternalSubMsg } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
 import { kaartLogger } from "./log";
 import { internalMsgSubscriptionCmdOperator } from "./subscription-helper";
-import { KaartComponent } from ".";
-import { Observable } from "openlayers";
+import { KaartComponent } from "./kaart.component";
 import { KaartWithInfo } from "./kaart-with-info";
 
 /**
