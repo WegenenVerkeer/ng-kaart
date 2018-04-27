@@ -2,7 +2,7 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import { List, Map } from "immutable";
 import * as ol from "openlayers";
 
-import { AchtergrondLaag, TekenSettings } from "./kaart-elementen";
+import { AchtergrondLaag, Laag, TekenSettings, Laaggroep } from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { kaartLogger } from "./log";
 import { InfoBoodschap } from "./info-boodschap";
@@ -16,7 +16,8 @@ export type KaartInternalSubMsg =
   | KaartClickMsg
   | SubscribedMsg
   | MijnLocatieZoomdoelGezetMsg
-  | InfoBoodschappenMsg;
+  | InfoBoodschappenMsg
+  | VoorgrondlagenGezetMsg;
 
 export interface ZoominstellingenGezetMsg {
   readonly type: "ZoominstellingenGezet";
@@ -31,6 +32,12 @@ export interface AchtergrondtitelGezetMsg {
 export interface AchtergrondlagenGezetMsg {
   readonly type: "AchtergrondlagenGezet";
   readonly achtergrondlagen: List<AchtergrondLaag>;
+}
+
+export interface VoorgrondlagenGezetMsg {
+  readonly type: "VoorgrondlagenGezet";
+  readonly groep: Laaggroep;
+  readonly lagen: List<Laag>;
 }
 
 export interface GeometryChangedMsg {
@@ -150,3 +157,6 @@ function MijnLocatieZoomdoelGezetMsg(d: Option<number>): MijnLocatieZoomdoelGeze
 }
 
 export const MijnLocatieZoomdoelGezetWrapper = (d: Option<number>) => KaartInternalMsg(some(MijnLocatieZoomdoelGezetMsg(d)));
+
+export const voorgrondlagenGezetMsgGen = (groep: Laaggroep) => (lagen: List<Laag>) =>
+  KaartInternalMsg(some({ type: "VoorgrondlagenGezet" as "VoorgrondlagenGezet", lagen: lagen, groep: groep }));

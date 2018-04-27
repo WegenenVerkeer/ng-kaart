@@ -1,5 +1,5 @@
 import { none, Option } from "fp-ts/lib/Option";
-import { List, Map } from "immutable";
+import { List, Map, Set } from "immutable";
 import * as ol from "openlayers";
 import { BehaviorSubject, ReplaySubject, Subject } from "rxjs";
 
@@ -33,6 +33,7 @@ export class KaartWithInfo {
   readonly stdInteracties: List<ol.interaction.Interaction> = List(); // TODO beter gewoon interacties
   readonly scrollZoomOnFocus: boolean = false;
   readonly showBackgroundSelector: boolean = false;
+
   readonly clickSubj: Subject<ol.Coordinate> = new Subject<ol.Coordinate>();
   readonly zoominstellingenSubj: Subject<Zoominstellingen> = new ReplaySubject<Zoominstellingen>(1);
   readonly geselecteerdeFeaturesSubj: Subject<List<ol.Feature>> = new ReplaySubject<List<ol.Feature>>(1);
@@ -41,8 +42,8 @@ export class KaartWithInfo {
   readonly achtergrondlaagtitelSubj: Subject<string> = new ReplaySubject<string>(1);
   readonly groeplagenSubj: Subject<Groeplagen> = new ReplaySubject<Groeplagen>(100);
   readonly zoekerSubj: Subject<ZoekResultaten> = new ReplaySubject<ZoekResultaten>(1);
-  readonly componentFoutSubj: Subject<List<string>> = new ReplaySubject<List<string>>(1);
   readonly zoekerCoordinator: ZoekerCoordinator = new ZoekerCoordinator(this.zoekerSubj);
+  readonly componentFoutSubj: Subject<List<string>> = new ReplaySubject<List<string>>(1);
   readonly mijnLocatieZoomDoelSubj: Subject<Option<number>> = new ReplaySubject<Option<number>>(1);
   readonly geometryChangedSubj: Subject<ol.geom.Geometry> = new Subject<ol.geom.Geometry>();
   readonly infoBoodschappenSubj: BehaviorSubject<Map<string, InfoBoodschap>> = new BehaviorSubject<Map<string, InfoBoodschap>>(Map());

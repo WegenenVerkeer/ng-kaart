@@ -1,5 +1,7 @@
 import { KaartClassicComponent } from "../kaart/kaart-classic.component";
 import { Component, OnInit, OnDestroy, Input } from "@angular/core";
+import { LagenUISelector } from "./lagenkiezer.component";
+import { VoegUIElementToe, VerwijderUIElement } from "../kaart/kaart-protocol-commands";
 
 @Component({
   selector: "awv-kaart-lagenkiezer-config",
@@ -10,7 +12,11 @@ export class LagenkiezerConfigComponent implements OnInit, OnDestroy {
 
   @Input() titels: string[] = [];
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.kaart.dispatch(VoegUIElementToe(LagenUISelector));
+  }
 
-  ngOnDestroy() {}
+  ngOnDestroy() {
+    this.kaart.dispatch(VerwijderUIElement(LagenUISelector));
+  }
 }

@@ -15,6 +15,7 @@ import { KaartWithInfo } from "./kaart-with-info";
 import { KaartComponent } from "./kaart.component";
 import { determineStyle, determineStyleSelector } from "./laag-converter";
 
+export const TekenenUISelector = "Kaarttekenen";
 const TekenLaagNaam = "Tekenen van geometrie";
 const defaultlaagStyle = new ol.style.Style({
   fill: new ol.style.Fill({

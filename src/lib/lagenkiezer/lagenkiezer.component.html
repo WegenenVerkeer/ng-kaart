@@ -1,1 +1,7 @@
-Dit is de lagenkiezer
+<div *ngFor="let laag of (lagenHoog$ | async)">
+  {{ laag.titel }}
+</div>
+<hr>
+<div *ngFor="let laag of (lagenLaag$ | async)">
+    {{ laag.titel }}
+</div>

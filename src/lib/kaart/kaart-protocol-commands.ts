@@ -40,12 +40,14 @@ export type Command<Msg extends KaartMsg> =
   | ZoekCmd<Msg>
   | MeldComponentFoutCmd
   | ZetMijnLocatieZoomCmd
-  | VoegInteractieToeCmd<Msg>
-  | VerwijderInteractieCmd<Msg>
-  | VoegOverlayToeCmd<Msg>
-  | VerwijderOverlaysCmd<Msg>
-  | ToonInfoBoodschapCmd<Msg>
-  | VerbergInfoBoodschapCmd<Msg>;
+  | VoegInteractieToeCmd
+  | VerwijderInteractieCmd
+  | VoegOverlayToeCmd
+  | VerwijderOverlaysCmd
+  | ToonInfoBoodschapCmd
+  | VerbergInfoBoodschapCmd
+  | VoegUIElementToe
+  | VerwijderUIElement;
 
 export interface SubscriptionResult {
   readonly subscription: RxSubscription;
@@ -227,34 +229,44 @@ export interface ZetMijnLocatieZoomCmd {
   readonly doelniveau: Option<number>;
 }
 
-export interface VoegInteractieToeCmd<Msg extends KaartMsg> {
+export interface VoegInteractieToeCmd {
   readonly type: "VoegInteractieToe";
   readonly interactie: ol.interaction.Pointer;
 }
 
-export interface VerwijderInteractieCmd<Msg extends KaartMsg> {
+export interface VerwijderInteractieCmd {
   readonly type: "VerwijderInteractie";
   readonly interactie: ol.interaction.Pointer;
 }
 
-export interface VoegOverlayToeCmd<Msg extends KaartMsg> {
+export interface VoegOverlayToeCmd {
   readonly type: "VoegOverlayToe";
   readonly overlay: ol.Overlay;
 }
 
-export interface VerwijderOverlaysCmd<Msg extends KaartMsg> {
+export interface VerwijderOverlaysCmd {
   readonly type: "VerwijderOverlays";
   readonly overlays: Array<ol.Overlay>;
 }
 
-export interface ToonInfoBoodschapCmd<Msg extends KaartMsg> {
+export interface ToonInfoBoodschapCmd {
   readonly type: "ToonInfoBoodschap";
   readonly boodschap: InfoBoodschap;
 }
 
-export interface VerbergInfoBoodschapCmd<Msg extends KaartMsg> {
+export interface VerbergInfoBoodschapCmd {
   readonly type: "VerbergInfoBoodschap";
   readonly id: string;
+}
+
+export interface VoegUIElementToe {
+  readonly type: "VoegUIElementToe";
+  readonly naam: string;
+}
+
+export interface VerwijderUIElement {
+  readonly type: "VerwijderUIElement";
+  readonly naam: string;
 }
 
 ////////////////////////
@@ -365,28 +377,28 @@ export function VerbergAchtergrondKeuzeCmd<Msg extends KaartMsg>(wrapper: BareVa
   return { type: "VerbergAchtergrondKeuze", wrapper: wrapper };
 }
 
-export function VoegInteractieToeCmd<Msg extends KaartMsg>(interactie: ol.interaction.Pointer): VoegInteractieToeCmd<Msg> {
+export function VoegInteractieToeCmd<Msg extends KaartMsg>(interactie: ol.interaction.Pointer): VoegInteractieToeCmd {
   return {
     type: "VoegInteractieToe",
     interactie: interactie
   };
 }
 
-export function VerwijderInteractieCmd<Msg extends KaartMsg>(interactie: ol.interaction.Pointer): VerwijderInteractieCmd<Msg> {
+export function VerwijderInteractieCmd<Msg extends KaartMsg>(interactie: ol.interaction.Pointer): VerwijderInteractieCmd {
   return {
     type: "VerwijderInteractie",
     interactie: interactie
   };
 }
 
-export function VoegOverlayToeCmd<Msg extends KaartMsg>(overlay: ol.Overlay): VoegOverlayToeCmd<Msg> {
+export function VoegOverlayToeCmd<Msg extends KaartMsg>(overlay: ol.Overlay): VoegOverlayToeCmd {
   return {
     type: "VoegOverlayToe",
     overlay: overlay
   };
 }
 
-export function VerwijderOverlaysCmd<Msg extends KaartMsg>(overlays: Array<ol.Overlay>): VerwijderOverlaysCmd<Msg> {
+export function VerwijderOverlaysCmd<Msg extends KaartMsg>(overlays: Array<ol.Overlay>): VerwijderOverlaysCmd {
   return {
     type: "VerwijderOverlays",
     overlays: overlays
@@ -408,7 +420,7 @@ export function ZetMijnLocatieZoomCmd(doelniveau: Option<number>): ZetMijnLocati
   return { type: "ZetMijnLocatieZoomStatus", doelniveau: doelniveau };
 }
 
-export function ToonInfoBoodschapCmd<Msg extends KaartMsg>(id: string, titel: string, inhoud: string): ToonInfoBoodschapCmd<Msg> {
+export function ToonInfoBoodschapCmd<Msg extends KaartMsg>(id: string, titel: string, inhoud: string): ToonInfoBoodschapCmd {
   return {
     type: "ToonInfoBoodschap",
     boodschap: {
@@ -419,9 +431,14 @@ export function ToonInfoBoodschapCmd<Msg extends KaartMsg>(id: string, titel: st
   };
 }
 
-export function VerbergInfoBoodschapCmd<Msg extends KaartMsg>(id: string): VerbergInfoBoodschapCmd<Msg> {
-  return {
-    type: "VerbergInfoBoodschap",
-    id: id
-  };
+export function VerbergInfoBoodschapCmd<Msg extends KaartMsg>(id: string): VerbergInfoBoodschapCmd {
+  return { type: "VerbergInfoBoodschap", id: id };
+}
+
+export function VoegUIElementToe(naam: string): VoegUIElementToe {
+  return { type: "VoegUIElementToe", naam: naam };
+}
+
+export function VerwijderUIElement(naam: string): VerwijderUIElement {
+  return { type: "VerwijderUIElement", naam: naam };
 }

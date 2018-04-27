@@ -2,18 +2,18 @@
   <div id="kaart-container">
     <div class="kaart" #map style="height: 100%; width: 100%;"></div>
   </div>
-  <div id="overlay">
+  <div id="overlay" *ngIf="aanwezigeElementen$ | async as aanwezigeElementen">
     <awv-kaart-open-street-view></awv-kaart-open-street-view>
-    <awv-kaart-achtergrond-selector></awv-kaart-achtergrond-selector>
+    <awv-kaart-achtergrond-selector *ngIf="aanwezigeElementen.contains('Achtergrondkeuze')"></awv-kaart-achtergrond-selector>
     <awv-kaart-mijn-locatie></awv-kaart-mijn-locatie>
     <awv-kaart-zoom></awv-kaart-zoom>
     <awv-google-locatie-zoeker></awv-google-locatie-zoeker>
     <div class="kaart-links">
       <awv-zoeker></awv-zoeker>
       <awv-kaart-info-boodschappen></awv-kaart-info-boodschappen>
-      <awv-lagenkiezer></awv-lagenkiezer>
+      <awv-lagenkiezer *ngIf="aanwezigeElementen.contains('Lagenkiezer')"></awv-lagenkiezer>
       <ng-content select=".kaart-links"></ng-content>
     </div>
-    <awv-kaart-teken-laag></awv-kaart-teken-laag>
+    <awv-kaart-teken-laag *ngIf="aanwezigeElementen.contains('Kaarttekenen')"></awv-kaart-teken-laag>
   </div>
 </div>
