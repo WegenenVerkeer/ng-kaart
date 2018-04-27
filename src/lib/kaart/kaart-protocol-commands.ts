@@ -63,8 +63,6 @@ export interface UnsubscribeCmd {
   readonly subscriptionResult: SubscriptionResult;
 }
 
-export type Laaggroep = "Achtergrond" | "Voorgrond" | "Tools";
-
 export interface PositieAanpassing {
   readonly titel: string;
   readonly positie: number;
@@ -75,7 +73,7 @@ export interface VoegLaagToeCmd<Msg extends KaartMsg> {
   readonly positie: number;
   readonly laag: ke.Laag;
   readonly magGetoondWorden: boolean;
-  readonly laaggroep: Laaggroep;
+  readonly laaggroep: ke.Laaggroep;
   readonly wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>;
 }
 
@@ -280,7 +278,7 @@ export function VoegLaagToeCmd<Msg extends KaartMsg>(
   positie: number,
   laag: ke.Laag,
   magGetoondWorden: boolean,
-  laagGroep: Laaggroep,
+  laagGroep: ke.Laaggroep,
   wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>
 ): VoegLaagToeCmd<Msg> {
   return { type: "VoegLaagToe", positie: positie, laag: laag, magGetoondWorden: magGetoondWorden, laaggroep: laagGroep, wrapper: wrapper };

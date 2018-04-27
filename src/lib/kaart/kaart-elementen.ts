@@ -33,6 +33,8 @@ export type StyleSelector = StaticStyle | DynamicStyle | Styles;
 
 export type AchtergrondLaag = WmsLaag | WmtsLaag | BlancoLaag;
 
+export type Laaggroep = "Achtergrond" | "Voorgrond.Hoog" | "Voorgrond.Laag" | "Tools";
+
 export interface WmsLaag {
   readonly type: SingleTileWmsType | TiledWmsType;
   readonly titel: string;

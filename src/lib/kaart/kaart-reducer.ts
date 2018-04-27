@@ -13,7 +13,7 @@ import * as rx from "rxjs";
 import { forEach } from "../util/option";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
-import { Laaggroep, PositieAanpassing, ZetMijnLocatieZoomCmd } from "./kaart-protocol-commands";
+import { PositieAanpassing, ZetMijnLocatieZoomCmd } from "./kaart-protocol-commands";
 import { KaartWithInfo } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
 
@@ -29,7 +29,8 @@ export interface ModelWithResult<Msg> {
 }
 
 const AchtergrondIndex = 0;
-const VoorgrondIndexStart = 1;
+const VoorgrondLaagIndexStart = 1;
+const VoorgrondHoogIndexStart = 100001;
 const ToolIndex = 1000000;
 
 function ModelWithResult<Msg>(model: Model, message: Option<Msg> = none): ModelWithResult<Msg> {
@@ -138,7 +139,14 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       fromBoolean(model.groepOpTitel.get(titel) === "Achtergrond", "De laag is geen achtergrondlaag");
 
     const valideerIsVoorgrondlaag: (layer: ol.layer.Base) => prt.KaartCmdValidation<ol.layer.Base> = (layer: ol.layer.Base) =>
-      fromPredicate(layer, (layr: ol.layer.Base) => layerNaarLaaggroep(layr) === "Voorgrond", "De laag is geen voorgrondlaag");
+      fromPredicate(
+        layer,
+        (layr: ol.layer.Base) => {
+          const groep = layerNaarLaaggroep(layr);
+          return groep === "Voorgrond.Hoog" || groep === "Voorgrond.Laag";
+        },
+        "De laag is geen voorgrondlaag"
+      );
 
     const valideerAlsLayer: (laag: ke.Laag) => prt.KaartCmdValidation<ol.layer.Base> = (laag: ke.Laag) =>
       fromOption(toOlLayer(model, laag), "De laagbeschrijving kon niet naar een openlayers laag omgezet");
@@ -149,7 +157,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
      * Alle lagen in een gegeven bereik van z-indices aanpassen. Belangrijk om bij toevoegen, verwijderen en verplaatsen,
      * alle z-indices in een aangesloten interval te behouden.
      */
-    function pasZIndicesAan(aanpassing: number, vanaf: number, tot: number, groep: Laaggroep): List<PositieAanpassing> {
+    function pasZIndicesAan(aanpassing: number, vanaf: number, tot: number, groep: ke.Laaggroep): List<PositieAanpassing> {
       return model.olLayersOpTitel.reduce((updates, layer, titel) => {
         if (layerNaarLaaggroep(<ol.layer.Base>layer) === groep) {
           const groepPositie = layerIndexNaarGroepIndex(layer!, groep);
@@ -166,51 +174,58 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }, List<prt.PositieAanpassing>());
     }
 
-    function groepIndexNaarZIndex(index: number, groep: Laaggroep): number {
+    function groepIndexNaarZIndex(index: number, groep: ke.Laaggroep): number {
       switch (groep) {
         case "Achtergrond":
           return AchtergrondIndex;
         case "Tools":
           return ToolIndex;
-        case "Voorgrond":
-          return VoorgrondIndexStart + index;
+        case "Voorgrond.Hoog":
+          return VoorgrondHoogIndexStart + index;
+        case "Voorgrond.Laag":
+          return VoorgrondLaagIndexStart + index;
       }
     }
 
-    function layerIndexNaarGroepIndex(layer: ol.layer.Base, groep: Laaggroep): number {
+    function layerIndexNaarGroepIndex(layer: ol.layer.Base, groep: ke.Laaggroep): number {
       switch (groep) {
         case "Achtergrond":
           return 0;
         case "Tools":
           return 0;
-        case "Voorgrond":
-          return layer.getZIndex() - VoorgrondIndexStart;
+        case "Voorgrond.Hoog":
+          return layer.getZIndex() - VoorgrondHoogIndexStart;
+        case "Voorgrond.Laag":
+          return layer.getZIndex() - VoorgrondLaagIndexStart;
       }
     }
 
-    function layerNaarLaaggroep(layer: ol.layer.Base): Laaggroep {
+    function layerNaarLaaggroep(layer: ol.layer.Base): ke.Laaggroep {
       switch (layer.getZIndex()) {
         case AchtergrondIndex:
           return "Achtergrond";
         case ToolIndex:
           return "Tools";
         default:
-          return "Voorgrond"; // We zouden range check kunnen doen, maar dan moeten we exceptie smijten of validation gebruiken
+          // We zouden range check kunnen doen, maar dan moeten we exceptie smijten of validation gebruiken
+          return layer.getZIndex() < VoorgrondHoogIndexStart ? "Voorgrond.Laag" : "Voorgrond.Hoog";
       }
     }
 
-    function maxIndexInGroep(groep: Laaggroep) {
+    function maxIndexInGroep(groep: ke.Laaggroep) {
       switch (groep) {
         case "Achtergrond":
           return AchtergrondIndex;
-        case "Voorgrond":
+        case "Voorgrond.Laag":
+          return VoorgrondHoogIndexStart - 1;
+        case "Voorgrond.Hoog":
           return ToolIndex - 1;
         case "Tools":
           return ToolIndex;
       }
     }
 
-    function zendLagenInGroep(mdl: Model, groep: Laaggroep): void {
+    function zendLagenInGroep(mdl: Model, groep: ke.Laaggroep): void {
       mdl.groeplagenSubj.next({
         laaggroep: groep,
         lagen: mdl.titelsOpGroep
@@ -222,11 +237,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       });
     }
 
-    function zetLayerIndex(layer: ol.layer.Base, groepIndex: number, groep: Laaggroep): void {
+    function zetLayerIndex(layer: ol.layer.Base, groepIndex: number, groep: ke.Laaggroep): void {
       layer.setZIndex(groepIndexNaarZIndex(groepIndex, groep));
     }
 
-    function limitPosition(position: number, groep: Laaggroep) {
+    function limitPosition(position: number, groep: ke.Laaggroep) {
       // laat 1 positie voorbij het einde toe om laag kunnen toe te voegen
       return Math.max(0, Math.min(position, model.titelsOpGroep.get(groep).size));
     }
@@ -674,7 +689,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         // Op het moment van de subscription is het heel goed mogelijk dat de lagen al toegevoegd zijn. Het is daarom dat de
         // groeplagenSubj een vrij grote replay waarde heeft.
         modelWithSubscriptionResult(
-          "Achtergrondlagen",
+          "LagenInGroep",
           model.groeplagenSubj
             .pipe(
               filter(groeplagen => groeplagen.laaggroep === "Achtergrond") //
@@ -730,7 +745,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToAchtergrondTitel(cmnd.subscription);
         case "GeselecteerdeFeatures":
           return subscribeToGeselecteerdeFeatures(cmnd.subscription);
-        case "Achtergrondlagen":
+        case "LagenInGroep":
           return subscribeToAchtergrondlagen(cmnd.subscription.wrapper);
         case "KaartClick":
           return subscribeToKaartClick(cmnd.subscription);

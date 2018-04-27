@@ -20,7 +20,12 @@ export interface Groeplagen {
  */
 export class KaartWithInfo {
   readonly olLayersOpTitel: Map<string, ol.layer.Base> = Map();
-  readonly titelsOpGroep: Map<Laaggroep, List<string>> = Map([["Voorgrond", List()], ["Achtergrond", List()], ["Tools", List()]]);
+  readonly titelsOpGroep: Map<Laaggroep, List<string>> = Map([
+    ["Voorgrond.Laag", List()],
+    ["Voorgrond.Hoog", List()],
+    ["Achtergrond", List()],
+    ["Tools", List()]
+  ]);
   readonly groepOpTitel: Map<string, Laaggroep> = Map();
   readonly lagen: List<ke.Laag> = List();
   readonly schaal: Option<ol.control.Control> = none;

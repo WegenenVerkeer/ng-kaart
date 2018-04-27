@@ -3,9 +3,8 @@ import { List } from "immutable";
 
 import { KaartLaagComponent } from "./kaart-laag.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
-import { WmsLaag, TiledWmsType } from "./kaart-elementen";
+import { WmsLaag, TiledWmsType, Laaggroep } from "./kaart-elementen";
 import { fromNullable } from "fp-ts/lib/Option";
-import { Laaggroep } from "./kaart-protocol-commands";
 
 @Component({
   selector: "awv-kaart-wms-laag",
@@ -21,15 +20,14 @@ export class KaartWmsLaagComponent extends KaartLaagComponent implements OnInit 
   @Input() format = "image/png";
   @Input() tileSize? = 256;
   @Input() opacity?: number;
-  @Input() groep: Laaggroep = "Achtergrond";
 
   constructor(kaart: KaartClassicComponent) {
     super(kaart);
   }
 
   ngOnInit() {
-    if (["Voorgrond", "Achtergrond"].indexOf(this.groep) < 0) {
-      throw new Error("groep moet 'Voorgrond' of 'Achtergrond' zijn");
+    if (["Voorgrond.Laag", "Voorgrond.Hoog", "Achtergrond"].indexOf(this.gekozenLaagGroep()) < 0) {
+      throw new Error("groep moet 'Voorgrond.Laag', 'Voorgrond.Hoog' of 'Achtergrond' zijn");
     }
     super.ngOnInit();
   }
@@ -49,7 +47,7 @@ export class KaartWmsLaagComponent extends KaartLaagComponent implements OnInit 
   }
 
   laaggroep(): Laaggroep {
-    return this.groep;
+    return "Achtergrond";
   }
 
   backgroundUrl(urls: List<string>, laagNaam: string): string {

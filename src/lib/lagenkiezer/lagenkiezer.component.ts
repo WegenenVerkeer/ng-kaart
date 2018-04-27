@@ -1,6 +1,15 @@
 import { Component, OnInit, OnDestroy, NgZone } from "@angular/core";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { KaartComponent } from "../kaart/kaart.component";
+import * as prt from "../kaart/kaart-protocol";
+import {
+  AchtergrondlagenGezetMsg,
+  achtergrondlagenGezetWrapper,
+  AchtergrondtitelGezetMsg,
+  achtergrondtitelGezetWrapper,
+  KaartInternalMsg,
+  kaartLogOnlyWrapper
+} from "../kaart/kaart-internal-messages";
 
 @Component({
   selector: "awv-lagenkiezer",
@@ -12,12 +21,10 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
     super(parent, ngZone);
   }
 
-  ngOnInit() {
-    super.ngOnInit();
-    console.log("Init lagenkiezer");
-  }
-
-  ngOnDestroy() {
-    super.ngOnDestroy();
+  protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
+    return [
+      prt.LagenInGroepSubscription("Achtergrond", achtergrondlagenGezetWrapper), //
+      prt.AchtergrondTitelSubscription(achtergrondtitelGezetWrapper)
+    ];
   }
 }

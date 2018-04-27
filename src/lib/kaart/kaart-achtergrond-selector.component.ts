@@ -82,7 +82,7 @@ export class KaartAchtergrondSelectorComponent extends KaartChildComponentBase i
 
   protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
     return [
-      prt.AchtergrondlagenSubscription(achtergrondlagenGezetWrapper), //
+      prt.LagenInGroepSubscription("Achtergrond", achtergrondlagenGezetWrapper), //
       prt.AchtergrondTitelSubscription(achtergrondtitelGezetWrapper)
     ];
   }

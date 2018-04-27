@@ -2,9 +2,9 @@ import { Option } from "fp-ts/lib/Option";
 import { List, Map } from "immutable";
 import * as ol from "openlayers";
 
-import { AchtergrondLaag, TekenSettings } from ".";
 import { ZoekResultaten } from "../zoeker/abstract-zoeker";
 import { InfoBoodschap } from "./info-boodschap";
+import * as ke from "./kaart-elementen";
 
 /////////
 // Types
@@ -15,7 +15,7 @@ export type Subscription<Msg> =
   | MiddelpuntSubscription<Msg>
   | GeselecteerdeFeaturesSubscription<Msg>
   | AchtergrondTitelSubscription<Msg>
-  | AchtergrondlagenSubscription<Msg>
+  | LagenInGroepSubscription<Msg>
   | ZoekerSubscription<Msg>
   | MijnLocatieZoomdoelSubscription<Msg>
   | GeometryChangedSubscription<Msg>
@@ -49,9 +49,10 @@ export interface AchtergrondTitelSubscription<Msg> {
   readonly wrapper: (titel: string) => Msg;
 }
 
-export interface AchtergrondlagenSubscription<Msg> {
-  readonly type: "Achtergrondlagen";
-  readonly wrapper: (achtergrondlagen: List<AchtergrondLaag>) => Msg;
+export interface LagenInGroepSubscription<Msg> {
+  readonly type: "LagenInGroep";
+  readonly groep: ke.Laaggroep;
+  readonly wrapper: (lagen: List<ke.Laag>) => Msg;
 }
 
 export interface KaartClickSubscription<Msg> {
@@ -71,13 +72,13 @@ export interface MijnLocatieZoomdoelSubscription<Msg> {
 
 export interface GeometryChangedSubscription<Msg> {
   readonly type: "GeometryChanged";
-  readonly tekenSettings: TekenSettings;
+  readonly tekenSettings: ke.TekenSettings;
   readonly wrapper: (evt: ol.geom.Geometry) => Msg;
 }
 
 export interface TekenenSubscription<Msg> {
   readonly type: "Tekenen";
-  readonly wrapper: (settings: Option<TekenSettings>) => Msg;
+  readonly wrapper: (settings: Option<ke.TekenSettings>) => Msg;
 }
 
 export interface InfoBoodschappenSubscription<Msg> {
@@ -107,10 +108,8 @@ export function AchtergrondTitelSubscription<Msg>(wrapper: (titel: string) => Ms
   return { type: "Achtergrond", wrapper: wrapper };
 }
 
-export function AchtergrondlagenSubscription<Msg>(
-  wrapper: (achtergrondlagen: List<AchtergrondLaag>) => Msg
-): AchtergrondlagenSubscription<Msg> {
-  return { type: "Achtergrondlagen", wrapper: wrapper };
+export function LagenInGroepSubscription<Msg>(groep: ke.Laaggroep, msgGen: (lagen: List<ke.Laag>) => Msg): LagenInGroepSubscription<Msg> {
+  return { type: "LagenInGroep", groep: groep, wrapper: msgGen };
 }
 
 export function ZoekerSubscription<Msg>(wrapper: (resultaten: ZoekResultaten) => Msg): Subscription<Msg> {
@@ -130,12 +129,12 @@ export function MijnLocatieZoomdoelSubscription<Msg>(wrapper: (doel: Option<numb
 }
 
 export function GeometryChangedSubscription<Msg>(
-  tekenSettings: TekenSettings,
+  tekenSettings: ke.TekenSettings,
   wrapper: (geom: ol.geom.Geometry) => Msg
 ): GeometryChangedSubscription<Msg> {
   return { type: "GeometryChanged", tekenSettings: tekenSettings, wrapper: wrapper };
 }
 
-export function TekenenSubscription<Msg>(wrapper: (settings: Option<TekenSettings>) => Msg): TekenenSubscription<Msg> {
+export function TekenenSubscription<Msg>(wrapper: (settings: Option<ke.TekenSettings>) => Msg): TekenenSubscription<Msg> {
   return { type: "Tekenen", wrapper: wrapper };
 }

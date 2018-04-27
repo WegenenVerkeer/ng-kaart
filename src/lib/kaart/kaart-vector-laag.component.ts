@@ -1,12 +1,11 @@
 import { Component, Input, ViewEncapsulation } from "@angular/core";
 import { fromNullable } from "fp-ts/lib/Option";
-
 import * as ol from "openlayers";
-import * as ke from "./kaart-elementen";
-import { KaartClassicComponent } from "./kaart-classic.component";
-import { KaartLaagComponent } from "./kaart-laag.component";
+
 import { orElse } from "../util/option";
-import { Laaggroep } from "./kaart-protocol-commands";
+import { KaartClassicComponent } from "./kaart-classic.component";
+import * as ke from "./kaart-elementen";
+import { KaartLaagComponent } from "./kaart-laag.component";
 
 @Component({
   selector: "awv-kaart-vector-laag",
@@ -38,7 +37,7 @@ export class KaartVectorLaagComponent extends KaartLaagComponent {
     };
   }
 
-  laaggroep(): Laaggroep {
-    return "Voorgrond";
+  laaggroep(): ke.Laaggroep {
+    return "Voorgrond.Hoog";
   }
 }
