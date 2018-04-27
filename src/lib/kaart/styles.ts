@@ -2,9 +2,6 @@ import * as ol from "openlayers";
 
 export function getDefaultStyleFunction(): ol.StyleFunction {
   return function(feature, resolution) {
-    if (!feature.getGeometry()) {
-      return null;
-    }
     return new ol.style.Style({
       fill: new ol.style.Fill({
         color: "#5555FF40"
@@ -31,9 +28,6 @@ export function getDefaultSelectionStyleFunction(): ol.StyleFunction {
   const styles = createEditingStyle();
 
   return function(feature, resolution) {
-    if (!feature.getGeometry()) {
-      return null;
-    }
     return styles[feature.getGeometry().getType()];
   };
 }

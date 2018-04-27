@@ -12,6 +12,7 @@ import * as prt from "./kaart-protocol";
 import { StyleSelector } from "./kaart-elementen";
 import { getDefaultSelectionStyleFunction, getDefaultStyleFunction } from "./styles";
 import { some } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
 
 @Component({
   selector: "awv-kaart-vector-laag",
@@ -53,8 +54,10 @@ export class KaartVectorLaagComponent extends KaartLaagComponent {
     this.dispatch(
       prt.ZetStijlVoorLaagCmd(
         this.titel,
-        this.style ? StyleSelector(this.style) : StyleSelector(this.styleFunction),
-        some(StyleSelector(this.selectieStyle)),
+        orElse(option.fromNullable(this.style).map(ke.StaticStyle), () =>
+          option.fromNullable(this.styleFunction).map(ke.DynamicStyle)
+        ).getOrElseValue(StyleSelector(getDefaultStyleFunction())),
+        option.fromNullable(this.selectieStyle).map(StyleSelector),
         kaartLogOnlyWrapper
       )
     );
