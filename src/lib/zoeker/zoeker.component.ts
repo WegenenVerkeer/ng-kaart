@@ -3,7 +3,7 @@ import { FormControl } from "@angular/forms";
 import { none, Option } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
-import { debounce, distinctUntilChanged } from "rxjs/operators";
+import { debounce, distinctUntilChanged, map } from "rxjs/operators";
 import { Subscription } from "rxjs/Subscription";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
@@ -89,6 +89,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
     super.ngOnInit();
     this.bindToLifeCycle(
       this.zoekVeld.valueChanges.pipe(
+        map(value => value.trim()),
         debounce((value: string) => {
           // Form changes worden debounced tot deze promise geresolved wordt.
           return new Promise(resolve => {
@@ -104,8 +105,8 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
         distinctUntilChanged()
       )
     ).subscribe(value => {
-      this.toonResultaat = true;
       this.maakResultaatLeeg();
+      this.toonResultaat = true;
 
       if (value.length > 0) {
         this.dispatcher.dispatch({ type: "Zoek", input: value, wrapper: kaartLogOnlyWrapper });
