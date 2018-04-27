@@ -9,17 +9,27 @@ import { ZoekerCoordinator } from "../zoeker/zoeker-coordinator";
 import { KaartConfig } from "./kaart-config";
 import * as ke from "./kaart-elementen";
 import { InfoBoodschap, GeselecteerdeFeatures, Groeplagen } from "./kaart-with-info-model";
+import { StyleSelector } from "./kaart-elementen";
 
 // Spijtig genoeg kan die niet in het model zelf zitten vermits de stijl functie in de interaction.Select control wordt
 // gecreeerd wanneer het model nog leeg is, en het model van dat moment in zijn scope zit
 const STIJL_OP_LAAG = "stijlOpLaag";
+const SELECTIE_STIJL_OP_LAAG = "stijlOpLaag";
 
-export function setStyleFunction(model: KaartWithInfo, laagnaam: string, stijl: ol.StyleFunction) {
+export function setStyleSelector(model: KaartWithInfo, laagnaam: string, stijl: StyleSelector) {
   model.map.set(STIJL_OP_LAAG, model.map.get(STIJL_OP_LAAG).set(laagnaam, stijl));
 }
 
-export function getStyleFunction(model: KaartWithInfo, laagnaam: string): ol.StyleFunction {
+export function getStyleSelector(model: KaartWithInfo, laagnaam: string): StyleSelector {
   return model.map.get(STIJL_OP_LAAG).get(laagnaam);
+}
+
+export function setSelectionStyleSelector(model: KaartWithInfo, laagnaam: string, stijl: StyleSelector) {
+  model.map.set(SELECTIE_STIJL_OP_LAAG, model.map.get(SELECTIE_STIJL_OP_LAAG).set(laagnaam, stijl));
+}
+
+export function getSelectionStyleSelector(model: KaartWithInfo, laagnaam: string): StyleSelector {
+  return model.map.get(SELECTIE_STIJL_OP_LAAG).get(laagnaam);
 }
 
 /**
@@ -89,6 +99,7 @@ export class KaartWithInfo {
         verwijderd: some(event.element)
       })
     );
-    this.map.set(STIJL_OP_LAAG, Map<string, ol.StyleFunction>());
+    this.map.set(STIJL_OP_LAAG, Map<string, StyleSelector>());
+    this.map.set(SELECTIE_STIJL_OP_LAAG, Map<string, StyleSelector>());
   }
 }

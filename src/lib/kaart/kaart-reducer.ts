@@ -14,9 +14,10 @@ import { forEach } from "../util/option";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { Laaggroep, PositieAanpassing, ZetMijnLocatieZoomCmd } from "./kaart-protocol-commands";
-import { KaartWithInfo, setStyleFunction, getStyleFunction } from "./kaart-with-info";
+import { KaartWithInfo, setStyleSelector, getStyleSelector, setSelectionStyleSelector, getSelectionStyleSelector } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
 import { kaartLogger } from "./log";
+import { DynamicStyle, fromStyleSelector, StaticStyle, Styles } from "./kaart-elementen";
 
 ///////////////////////////////////
 // Hulpfuncties
@@ -526,13 +527,19 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return selectionStyle;
         };
 
-        const styleFunction = getStyleFunction(model, feature.get("laagnaam"));
-        if (styleFunction) {
-          const toegepasteStijl = styleFunction(feature, resolution);
-          if (toegepasteStijl instanceof ol.style.Style) {
-            return applySelectionColor(toegepasteStijl);
+        const styleSelector = getSelectionStyleSelector(model, feature.get("laagnaam"));
+        if (styleSelector) {
+          if (styleSelector instanceof StaticStyle) {
+            return (styleSelector as StaticStyle).style;
+          } else if (styleSelector instanceof Styles) {
+            return (styleSelector as Styles).styles;
           } else {
-            return toegepasteStijl.map(style => applySelectionColor(style));
+            const toegepasteStijl = (styleSelector as DynamicStyle).styleFunction(feature, resolution);
+            if (toegepasteStijl instanceof ol.style.Style) {
+              return applySelectionColor(toegepasteStijl);
+            } else {
+              return toegepasteStijl.map(style => applySelectionColor(style));
+            }
           }
         } else {
           kaartLogger.warn("Geen stijl gevonden voor feature:");
@@ -589,12 +596,9 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         cmnd.wrapper,
         valideerVectorLayerBestaat(cmnd.titel).map(vectorlayer => {
-          const sf = (feature: ol.Feature, resolution: number) => {
-            return (cmnd.stijl as ke.DynamicStyle).styleFunction(feature, resolution);
-          };
-          const stijl = cmnd.stijl.type === "StaticStyle" ? cmnd.stijl.style : sf;
-          vectorlayer.setStyle(stijl);
-          setStyleFunction(model, cmnd.titel, sf);
+          vectorlayer.setStyle(fromStyleSelector(cmnd.stijl));
+          setStyleSelector(model, cmnd.titel, cmnd.stijl);
+          cmnd.selectieStijl.map(selectieStijl => setSelectionStyleSelector(model, cmnd.titel, selectieStijl));
           return ModelAndEmptyResult(model);
         })
       );
