@@ -548,7 +548,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               condition: ol.events.condition.click,
               features: model.geselecteerdeFeatures,
               multi: true,
-              style: cmnd.selectieStyle.getOrElseValue(applySelectFunction)
+              style: applySelectFunction
             });
           case "multiple":
             return some({
@@ -556,7 +556,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               toggleCondition: ol.events.condition.click,
               features: model.geselecteerdeFeatures,
               multi: true,
-              style: cmnd.selectieStyle.getOrElseValue(applySelectFunction)
+              style: applySelectFunction
             });
           case "none":
             return none;
@@ -705,6 +705,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
 
       const subscribeToAchtergrondlagen = (wrapper: (achtergrondlagen: List<ke.AchtergrondLaag>) => Msg) =>
+        // Op het moment van de subscription is het heel goed mogelijk dat de lagen al toegevoegd zijn. Het is daarom dat de
+        // groeplagenSubj een vrij grote replay waarde heeft.
         modelWithSubscriptionResult(
           "Achtergrondlagen",
           model.groeplagenSubj

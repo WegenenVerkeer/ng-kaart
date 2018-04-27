@@ -164,7 +164,6 @@ export type SelectieModus = "single" | "multiple" | "none";
 export interface ActiveerSelectieModusCmd<Msg extends KaartMsg> {
   readonly type: "ActiveerSelectieModus";
   readonly selectieModus: SelectieModus;
-  readonly selectieStyle: Option<ol.style.Style | ol.style.Style[] | ol.StyleFunction>;
 }
 
 export interface ToonAchtergrondKeuzeCmd<Msg extends KaartMsg> {
@@ -199,6 +198,7 @@ export interface ZetStijlVoorLaagCmd<Msg extends KaartMsg> {
   readonly type: "ZetStijlVoorLaag";
   readonly titel: string;
   readonly stijl: StyleSelector;
+  readonly selectieStijl: Option<StyleSelector>;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -305,9 +305,10 @@ export function VerplaatsLaagCmd<Msg extends KaartMsg>(
 export function ZetStijlVoorLaagCmd<Msg extends KaartMsg>(
   titel: string,
   stijl: StyleSelector,
+  selectieStijl: Option<StyleSelector>,
   wrapper: BareValidationWrapper<Msg>
 ): ZetStijlVoorLaagCmd<Msg> {
-  return { type: "ZetStijlVoorLaag", stijl: stijl, titel: titel, wrapper: wrapper };
+  return { type: "ZetStijlVoorLaag", stijl: stijl, selectieStijl: selectieStijl, titel: titel, wrapper: wrapper };
 }
 
 export function VeranderMiddelpuntCmd<Msg extends KaartMsg>(coordinate: ol.Coordinate): VeranderMiddelpuntCmd<Msg> {
@@ -334,11 +335,8 @@ export function VervangFeaturesCmd<Msg extends KaartMsg>(
   return { type: "VervangFeatures", titel: titel, features: features, wrapper: wrapper };
 }
 
-export function ActiveerSelectieModusCmd<Msg extends KaartMsg>(
-  selectieModus: SelectieModus,
-  selectieStyle: Option<ol.style.Style | ol.style.Style[] | ol.StyleFunction>
-): ActiveerSelectieModusCmd<Msg> {
-  return { type: "ActiveerSelectieModus", selectieModus: selectieModus, selectieStyle: selectieStyle };
+export function ActiveerSelectieModusCmd<Msg extends KaartMsg>(selectieModus: SelectieModus): ActiveerSelectieModusCmd<Msg> {
+  return { type: "ActiveerSelectieModus", selectieModus: selectieModus };
 }
 
 export function MeldComponentFoutCmd<Msg extends KaartMsg>(fouten: List<string>): MeldComponentFoutCmd {

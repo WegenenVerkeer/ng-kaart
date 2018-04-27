@@ -3,7 +3,7 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import { Subject, Subscription } from "rxjs";
 import { Observable } from "rxjs/Observable";
-import { distinctUntilChanged, map } from "rxjs/operators";
+import { distinctUntilChanged, map, tap, skipUntil, skipWhile } from "rxjs/operators";
 
 import { ofType } from "../util/operators";
 import { forEach, orElse } from "../util/option";
@@ -64,8 +64,8 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
   private snapInteraction: ol.interaction.Snap;
   private overlays: Array<ol.Overlay> = [];
 
-  constructor(private readonly kaartComponent: KaartComponent, zone: NgZone) {
-    super(zone);
+  constructor(parent: KaartComponent, zone: NgZone) {
+    super(parent, zone);
   }
 
   protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
@@ -75,20 +75,18 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
   ngOnInit(): void {
     super.ngOnInit();
 
-    const kaartObs: Observable<KaartWithInfo> = this.kaartComponent.kaartWithInfo$;
-    this.bindToLifeCycle(kaartObs);
-
     this.bindToLifeCycle(
-      kaartObs.pipe(
+      this.kaartModel$.pipe(
         distinctUntilChanged((k1, k2) => k1.geometryChangedSubj === k2.geometryChangedSubj), //
         map(kwi => kwi.geometryChangedSubj)
       )
     ).subscribe(gcSubj => (this.changedGeometriesSubj = gcSubj));
 
     this.bindToLifeCycle(
-      kaartObs.pipe(
+      this.kaartModel$.pipe(
         map(kwi => kwi.tekenSettingsSubj.getValue()), //
-        distinctUntilChanged()
+        distinctUntilChanged(),
+        skipWhile(settings => settings.isNone()) // De eerste keer willen we startMetTekenen emitten
       )
     ).subscribe(settings => {
       settings.fold(

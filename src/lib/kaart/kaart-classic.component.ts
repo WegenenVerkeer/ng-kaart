@@ -37,7 +37,6 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, Kaar
   @Input() mijnLocatieZoom: number | undefined;
   @Input() extent: ol.Extent;
   @Input() selectieModus: prt.SelectieModus = "none";
-  @Input() selectieStyle?: ol.style.Style | ol.style.Style[] | ol.StyleFunction = undefined;
   @Input() naam = "kaart" + KaartClassicComponent.counter++;
 
   @Output() geselecteerdeFeatures: EventEmitter<List<ol.Feature>> = new EventEmitter();
@@ -95,7 +94,7 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, Kaar
       this.dispatch(prt.VeranderViewportCmd([this.breedte, this.hoogte]));
     }
     if (this.selectieModus) {
-      this.dispatch(prt.ActiveerSelectieModusCmd(this.selectieModus, fromNullable(this.selectieStyle)));
+      this.dispatch(prt.ActiveerSelectieModusCmd(this.selectieModus));
     }
   }
 

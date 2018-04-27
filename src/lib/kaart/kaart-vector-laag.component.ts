@@ -7,6 +7,11 @@ import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartLaagComponent } from "./kaart-laag.component";
 import { orElse } from "../util/option";
 import { Laaggroep } from "./kaart-protocol-commands";
+import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
+import * as prt from "./kaart-protocol";
+import { StyleSelector } from "./kaart-elementen";
+import { getDefaultSelectionStyleFunction, getDefaultStyleFunction } from "./styles";
+import { some } from "fp-ts/lib/Option";
 
 @Component({
   selector: "awv-kaart-vector-laag",
@@ -15,8 +20,9 @@ import { Laaggroep } from "./kaart-protocol-commands";
 })
 export class KaartVectorLaagComponent extends KaartLaagComponent {
   @Input() source = new ol.source.Vector();
-  @Input() style?: ol.style.Style;
-  @Input() styleFunction?: ol.StyleFunction;
+  @Input() style?: ol.style.Style = undefined;
+  @Input() styleFunction?: ol.StyleFunction = getDefaultStyleFunction();
+  @Input() selectieStyle?: ol.style.Style | ol.style.Style[] | ol.StyleFunction = getDefaultSelectionStyleFunction();
   @Input() zichtbaar = true;
   @Input() selecteerbaar = true;
   @Input() minZoom = 7;
@@ -40,5 +46,17 @@ export class KaartVectorLaagComponent extends KaartLaagComponent {
 
   laaggroep(): Laaggroep {
     return "Voorgrond";
+  }
+
+  voegLaagToe() {
+    super.voegLaagToe();
+    this.dispatch(
+      prt.ZetStijlVoorLaagCmd(
+        this.titel,
+        this.style ? StyleSelector(this.style) : StyleSelector(this.styleFunction),
+        some(StyleSelector(this.selectieStyle)),
+        kaartLogOnlyWrapper
+      )
+    );
   }
 }

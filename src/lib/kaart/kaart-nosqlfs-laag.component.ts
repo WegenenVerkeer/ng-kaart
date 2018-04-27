@@ -1,5 +1,6 @@
 import { Component, Input, ViewEncapsulation } from "@angular/core";
 import { option } from "fp-ts";
+import { some } from "fp-ts/lib/Option";
 
 import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";
@@ -8,8 +9,12 @@ import { KaartLaagComponent } from "./kaart-laag.component";
 import { NosqlFsSource } from "../source/nosql-fs-source";
 import { orElse } from "../util/option";
 import { Laaggroep, ZetStijlVoorLaagCmd } from "./kaart-protocol-commands";
-import { DynamicStyle } from "./kaart-elementen";
+import { StaticStyle, DynamicStyle, Styles, StyleSelector } from "./kaart-elementen";
 import { logOnlyWrapper } from "../kaart-classic/messages";
+import { getDefaultStyleFunction, getDefaultSelectionStyleFunction } from "./styles";
+import { fromNullable } from "fp-ts/lib/Option";
+import * as prt from "./kaart-protocol";
+import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
 
 @Component({
   selector: "awv-kaart-nosqlfs-laag",
@@ -21,7 +26,8 @@ export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
   @Input() database: string;
   @Input() collection: string;
   @Input() style?: ol.style.Style = undefined;
-  @Input() styleFunction?: ol.StyleFunction = undefined;
+  @Input() styleFunction?: ol.StyleFunction = getDefaultStyleFunction();
+  @Input() selectieStyle?: ol.style.Style | ol.style.Style[] | ol.StyleFunction = getDefaultSelectionStyleFunction();
   @Input() zichtbaar = true;
   @Input() selecteerbaar = true;
   @Input() minZoom = 7;
@@ -34,7 +40,6 @@ export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
   }
 
   createLayer(): ke.VectorLaag {
-    // this.dispatch(ZetStijlVoorLaagCmd(this.titel, DynamicStyle(this.styleFunction), logOnlyWrapper));
     return {
       type: ke.VectorType,
       titel: this.titel,
@@ -57,5 +62,18 @@ export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
 
   laaggroep(): Laaggroep {
     return "Voorgrond";
+  }
+
+  voegLaagToe() {
+    super.voegLaagToe();
+
+    this.dispatch(
+      prt.ZetStijlVoorLaagCmd(
+        this.titel,
+        this.style ? StyleSelector(this.style) : StyleSelector(this.styleFunction),
+        some(StyleSelector(this.selectieStyle)),
+        kaartLogOnlyWrapper
+      )
+    );
   }
 }

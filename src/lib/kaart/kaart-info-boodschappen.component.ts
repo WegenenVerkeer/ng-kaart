@@ -1,15 +1,14 @@
-import { Component, EventEmitter, NgZone, OnInit, Output } from "@angular/core";
 import { animate, state, style, transition, trigger } from "@angular/animations";
+import { Component, EventEmitter, NgZone, OnInit, Output } from "@angular/core";
+import { List } from "immutable";
+
+import { observeOnAngular } from "../util/observe-on-angular";
+import { ofType } from "../util/operators";
+import { InfoBoodschap } from "./kaart-with-info-model";
 import { KaartChildComponentBase } from "./kaart-child-component-base";
 import { InfoBoodschappenMsg, infoBoodschappenMsgGen, KaartInternalMsg } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
-import { KaartWithInfo } from "./kaart-with-info";
-import { ofType } from "../util/operators";
-import { observeOnAngular } from "../util/observe-on-angular";
-import { Observable } from "rxjs/Observable";
 import { KaartComponent } from "./kaart.component";
-import { List } from "immutable";
-import { InfoBoodschap } from "./kaart-with-info-model";
 
 @Component({
   selector: "awv-kaart-info-boodschappen",
@@ -26,8 +25,8 @@ import { InfoBoodschap } from "./kaart-with-info-model";
 export class KaartInfoBoodschappenComponent extends KaartChildComponentBase implements OnInit {
   @Output() infoBoodschappen$: EventEmitter<List<InfoBoodschap>> = new EventEmitter();
 
-  constructor(private readonly kaartComponent: KaartComponent, zone: NgZone) {
-    super(zone);
+  constructor(parent: KaartComponent, zone: NgZone) {
+    super(parent, zone);
   }
 
   protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
@@ -37,21 +36,13 @@ export class KaartInfoBoodschappenComponent extends KaartChildComponentBase impl
   ngOnInit(): void {
     super.ngOnInit();
 
-    const kaartObs: Observable<KaartWithInfo> = this.kaartComponent.kaartWithInfo$;
-    this.bindToLifeCycle(kaartObs);
-
     this.internalMessage$
       .pipe(
         ofType<InfoBoodschappenMsg>("InfoBoodschappen"), //
         observeOnAngular(this.zone)
       )
       .subscribe(msg => {
-        this.infoBoodschappen$.emit(
-          msg.infoBoodschappen
-            .toList()
-            .reverse() // nieuwste bovenaan
-            .toList()
-        );
+        this.infoBoodschappen$.emit(msg.infoBoodschappen.reverse().toList());
       });
   }
 }

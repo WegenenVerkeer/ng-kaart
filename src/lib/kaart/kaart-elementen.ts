@@ -104,6 +104,16 @@ export function isBlancoLaag(laag: Laag): boolean {
   return laag.type === BlancoType;
 }
 
+export function StyleSelector(style: ol.style.Style | ol.style.Style[] | ol.StyleFunction): StyleSelector {
+  if (style instanceof ol.style.Style) {
+    return StaticStyle(style);
+  } else if (style instanceof Array) {
+    return Styles(style);
+  } else {
+    return DynamicStyle(style);
+  }
+}
+
 export function StaticStyle(style: ol.style.Style): StyleSelector {
   return {
     type: "StaticStyle",
