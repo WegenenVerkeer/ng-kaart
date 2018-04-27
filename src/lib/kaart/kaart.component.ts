@@ -7,7 +7,7 @@ import { Component, ElementRef, Inject, Input, NgZone, OnDestroy, OnInit, ViewCh
 import * as ol from "openlayers";
 import { ReplaySubject } from "rxjs";
 import { Observable } from "rxjs/Observable";
-import { concatAll, filter, map, merge, scan, shareReplay, takeUntil, tap } from "rxjs/operators";
+import { concatAll, filter, map, merge, scan, shareReplay, takeUntil, tap, switchMap, last } from "rxjs/operators";
 
 import { asap } from "../util/asap";
 import { observerOutsideAngular } from "../util/observer-outside-angular";
@@ -75,66 +75,60 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       tap(m => kaartLogger.debug("een interne message werd ontvangen:", m)),
       shareReplay(1) // Waarom hebben we eigenlijk het vorige commando nog nodig?
     );
+
+    this.kaartModel$ = this.initialising$.pipe(
+      observerOutsideAngular(zone),
+      tap(() => this.messageObsConsumer(this.msgSubj)), // Wie de messageObsConsumer @Input gezet heeft, krijgt een observable van messages
+      switchMap(() => this.createMapModelForCommands()),
+      takeUntil(this.destroying$),
+      shareReplay(1)
+    );
+
+    this.kaartModel$.subscribe(
+      model => {
+        kaartLogger.debug("reduced to", model);
+        // TODO dubbels opvangen. Als we een versienummer ophogen telkens we effectief het model aanpassen, dan kunnen we
+        // de modelConsumer werk besparen in die gevallen dat de reducer geen nieuwe toestand heeft gegenereerd.
+      },
+      e => kaartLogger.error("error", e),
+      () => kaartLogger.info("kaart & cmd terminated")
+    );
+
+    // Het laatste model is dat net voor de stream van model unsubscribed is, dus bij ngOnDestroy
+    this.kaartModel$.pipe(last()).subscribe(model => {
+      kaartLogger.info(`kaart ${this.naam} opkuisen`);
+      model.map.setTarget((undefined as any) as string); // Hack omdat openlayers typedefs kaduuk zijn
+    });
   }
 
   ngOnInit() {
     super.ngOnInit();
-    this.bindObservables();
   }
 
   ngOnDestroy() {
     super.ngOnDestroy();
   }
 
-  private bindObservables() {
-    this.runAsapOutsideAngular(() => {
-      // Initialiseer the model
-      const initieelModel = this.initieelModel();
-      kaartLogger.info(`Kaart ${this.naam} aangemaakt`);
+  private createMapModelForCommands(): Observable<KaartWithInfo> {
+    const initieelModel = this.initieelModel();
+    kaartLogger.info(`Kaart ${this.naam} aangemaakt`);
 
-      // Wanneer de destroying observable emit, maw wanneer de component aan het afsluiten is, dan kuisen we ook
-      // de openlayers kaart op.
-      // noinspection JSUnusedLocalSymbols
-      this.destroying$.pipe(observerOutsideAngular(this.zone)).subscribe(_ => {
-        kaartLogger.info(`kaart ${this.naam} opkuisen`);
-        initieelModel.map.setTarget((undefined as any) as string); // Hack omdat openlayers typedefs kaduuk zijn
-      });
+    const messageConsumer = (msg: prt.KaartMsg) => {
+      asap(() => this.msgSubj.next(msg));
+    };
 
-      const messageConsumer = (msg: prt.KaartMsg) => {
-        asap(() => this.msgSubj.next(msg));
-      };
-
-      this.kaartModel$ = this.kaartCmd$.pipe(
-        merge(this.internalCmdDispatcher.commands$),
-        tap(c => kaartLogger.debug("kaart command", c)),
-        takeUntil(this.destroying$),
-        observerOutsideAngular(this.zone),
-        scan((model: KaartWithInfo, cmd: prt.Command<any>) => {
-          const { model: newModel, message } = red.kaartCmdReducer(cmd)(model, messageConsumer);
-          kaartLogger.debug("produceert", message);
-          forEach(message, messageConsumer); // stuur het resultaat terug naar de eigenaar van de kaartcomponent
-          return newModel; // en laat het nieuwe model terugvloeien
-        }, initieelModel),
-        shareReplay(1)
-      );
-
-      this.kaartModelObsSubj.next(this.kaartModel$);
-
-      // subscribe op het model om de zaak aan gang te zwengelen
-      this.kaartModel$.subscribe(
-        model => {
-          kaartLogger.debug("reduced to", model);
-          // TODO dubbels opvangen (zie versie). Als we een versienummer ophogen telkens we effectief het model aanpassen, dan kunnen we
-          // de modelConsumer werk besparen in die gevallen dat de reducer geen nieuwe toestand heeft gegenereerd.
-          // this.modelConsumer(model); // Heel belangrijk: laat diegene die ons embed weten wat het huidige model is.
-        },
-        e => kaartLogger.error("error", e),
-        () => kaartLogger.info("kaart & cmd terminated")
-      );
-
-      // Zorg ervoor dat wie de messageObsConsumer @Input gezet heeft een observable van messages krijgt
-      this.messageObsConsumer(this.msgSubj);
-    });
+    return this.kaartCmd$.pipe(
+      merge(this.internalCmdDispatcher.commands$),
+      tap(c => kaartLogger.debug("kaart command", c)),
+      takeUntil(this.destroying$),
+      observerOutsideAngular(this.zone),
+      scan((model: KaartWithInfo, cmd: prt.Command<any>) => {
+        const { model: newModel, message } = red.kaartCmdReducer(cmd)(model, messageConsumer);
+        kaartLogger.debug("produceert", message);
+        forEach(message, messageConsumer); // stuur het resultaat terug naar de eigenaar van de kaartcomponent
+        return newModel; // en laat het nieuwe model terugvloeien
+      }, initieelModel)
+    );
   }
 
   private initieelModel(): KaartWithInfo {

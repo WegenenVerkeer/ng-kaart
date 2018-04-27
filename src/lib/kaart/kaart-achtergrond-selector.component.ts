@@ -16,6 +16,7 @@ import {
   kaartLogOnlyWrapper
 } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
+import { KaartComponent } from "./kaart.component";
 
 enum DisplayMode {
   SHOWING_STATUS,
@@ -75,8 +76,8 @@ export class KaartAchtergrondSelectorComponent extends KaartChildComponentBase i
 
   backgroundTiles$: Observable<Array<AchtergrondLaag>> = Observable.empty();
 
-  constructor(private readonly cdr: ChangeDetectorRef, zone: NgZone) {
-    super(zone);
+  constructor(private readonly cdr: ChangeDetectorRef, kaartComponent: KaartComponent, zone: NgZone) {
+    super(kaartComponent, zone);
   }
 
   protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
@@ -115,7 +116,7 @@ export class KaartAchtergrondSelectorComponent extends KaartChildComponentBase i
       // inklappen.
       this.displayMode = DisplayMode.SHOWING_STATUS;
       if (laag.titel !== this.achtergrondTitel) {
-        this.dispatcher.dispatch(prt.KiesAchtergrondCmd(laag.titel, kaartLogOnlyWrapper));
+        this.dispatch(prt.KiesAchtergrondCmd(laag.titel, kaartLogOnlyWrapper));
         this.achtergrondTitel = laag.titel;
       }
     } else {

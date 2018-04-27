@@ -671,6 +671,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
 
       const subscribeToAchtergrondlagen = (wrapper: (achtergrondlagen: List<ke.AchtergrondLaag>) => Msg) =>
+        // Op het moment van de subscription is het heel goed mogelijk dat de lagen al toegevoegd zijn. Het is daarom dat de
+        // groeplagenSubj een vrij grote replay waarde heeft.
         modelWithSubscriptionResult(
           "Achtergrondlagen",
           model.groeplagenSubj

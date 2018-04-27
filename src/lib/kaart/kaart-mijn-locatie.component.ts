@@ -36,7 +36,6 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
   private zoomInstellingen$: Observable<Zoominstellingen> = Observable.empty();
   private zoomdoelSetting$: Observable<Option<number>> = Observable.empty();
 
-  kaartModel$: Observable<KaartWithInfo> = Observable.empty();
   enabled$: Observable<boolean> = Observable.of(true);
 
   @ViewChildren("locateBtn") locateBtnQry: QueryList<MatButton>;
@@ -50,7 +49,7 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
   }
 
   constructor(zone: NgZone, parent: KaartComponent) {
-    super(zone);
+    super(parent, zone);
     this.mijnLocatieStyle = new ol.style.Style({
       image: new ol.style.Icon({
         anchor: [0.5, 0.5],
@@ -61,7 +60,6 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
         src: require("material-design-icons/maps/2x_web/ic_my_location_white_18dp.png")
       })
     });
-    this.kaartModel$ = parent.kaartModel$;
   }
 
   protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
@@ -74,7 +72,7 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
   ngOnInit(): void {
     super.ngOnInit();
 
-    this.dispatcher.dispatch({
+    this.dispatch({
       type: "VoegLaagToe",
       positie: 0,
       laag: this.createLayer(),
@@ -116,13 +114,13 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
   private maakNieuwFeature(coordinate: ol.Coordinate): Option<ol.Feature> {
     const feature = new ol.Feature(new ol.geom.Point(coordinate));
     feature.setStyle(this.mijnLocatieStyle);
-    this.dispatcher.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, List.of(feature), kaartLogOnlyWrapper));
+    this.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, List.of(feature), kaartLogOnlyWrapper));
     return some(feature);
   }
 
   private meldFout(fout: PositionError | string) {
     kaartLogger.error("error", fout);
-    this.dispatcher.dispatch(
+    this.dispatch(
       prt.MeldComponentFoutCmd(
         List.of("Zoomen naar huidige locatie niet mogelijk", "De toepassing heeft geen toestemming om locatie te gebruiken")
       )
@@ -144,13 +142,13 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
   private zetMijnPositie(position: Position, zoom: number, doelzoom: number) {
     if (zoom <= 2) {
       // We zitten nu op heel Vlaanderen, dus gaan we eerst inzoomen.
-      this.dispatcher.dispatch(prt.VeranderZoomCmd(doelzoom, kaartLogOnlyWrapper));
+      this.dispatch(prt.VeranderZoomCmd(doelzoom, kaartLogOnlyWrapper));
     }
 
     const longLat: ol.Coordinate = [position.coords.longitude, position.coords.latitude];
 
     const coordinate = ol.proj.fromLonLat(longLat, "EPSG:31370");
-    this.dispatcher.dispatch(prt.VeranderMiddelpuntCmd(coordinate));
+    this.dispatch(prt.VeranderMiddelpuntCmd(coordinate));
 
     this.mijnLocatie = orElse(this.mijnLocatie.chain(feature => KaartMijnLocatieComponent.pasFeatureAan(feature, coordinate)), () =>
       this.maakNieuwFeature(coordinate)
