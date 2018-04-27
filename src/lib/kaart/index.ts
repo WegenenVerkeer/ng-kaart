@@ -1,10 +1,11 @@
 import { CommonModule } from "@angular/common";
 import { HttpClientModule } from "@angular/common/http";
 import { ModuleWithProviders, NgModule } from "@angular/core";
-import { MatButtonModule, MatButtonToggleModule, MatIconModule, MatCardModule } from "@angular/material";
+import { MatButtonModule, MatButtonToggleModule, MatCardModule, MatIconModule } from "@angular/material";
 import { ClickOutsideModule } from "ng4-click-outside";
 import * as ol from "openlayers";
 
+import { LagenkiezerModule } from "../lagenkiezer/index";
 import { ZoekerModule } from "../zoeker/index";
 import { KaartAchtergrondSelectorComponent } from "./kaart-achtergrond-selector.component";
 import { KaartAchtergrondTileComponent } from "./kaart-achtergrond-tile.component";
@@ -13,27 +14,27 @@ import { KaartClassicComponent } from "./kaart-classic.component";
 import { KAART_CFG, KaartConfig } from "./kaart-config";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { KaartGeoserverLaagComponent } from "./kaart-geoserver-laag.component";
+import { KaartInfoBoodschappenComponent } from "./kaart-info-boodschappen.component";
 import { KaartKnopAchtergrondLaagKiezerComponent } from "./kaart-knop-achtergrondlaag-kiezer.component";
 import { KaartKnopVolledigSchermComponent } from "./kaart-knop-volledig-scherm.component";
 import { KaartKnopZoomSliderComponent } from "./kaart-knop-zoom-slider.component";
 import { KaartMijnLocatieComponent } from "./kaart-mijn-locatie.component";
 import { KaartNosqlfsLaagComponent } from "./kaart-nosqlfs-laag.component";
 import { KaartOpenStreetViewComponent } from "./kaart-open-street-view.component";
-import { KaartInfoBoodschappenComponent } from "./kaart-info-boodschappen.component";
 import { KaartOrthoLaagComponent } from "./kaart-ortho-laag.component";
 import { KaartSchaalComponent } from "./kaart-schaal.component";
 import { KaartStandaardInteractiesComponent } from "./kaart-standaard-interacties.component";
 import { KaartStandaardKnoppenComponent } from "./kaart-standaard-knoppen.component";
-import { KaartTekenPolygoonLaagComponent } from "./kaart-teken-polygoon-laag.component";
 import { KaartTekenLaagComponent } from "./kaart-teken-laag.component";
+import { KaartTekenPolygoonLaagComponent } from "./kaart-teken-polygoon-laag.component";
 import { KaartTekenComponent } from "./kaart-teken.component";
 import { KaartTilecacheLaagComponent } from "./kaart-tilecache-laag.component";
 import { KaartFeaturesLaagComponent } from "./kaart-toon-features.component";
 import { KaartVectorLaagComponent } from "./kaart-vector-laag.component";
 import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
+import { KaartWmtsLaagComponent } from "./kaart-wmts-laag.component";
 import { KaartZoomComponent } from "./kaart-zoom.component";
 import { KaartComponent } from "./kaart.component";
-import { KaartWmtsLaagComponent } from "./kaart-wmts-laag.component";
 
 const components: any[] = [
   KaartComponent,
@@ -124,7 +125,8 @@ export const defaultKaartConfig: KaartConfig = {
     MatButtonToggleModule,
     MatCardModule,
     HttpClientModule,
-    ZoekerModule.forRoot({})
+    ZoekerModule.forRoot({}),
+    LagenkiezerModule.withDefaults()
   ],
   declarations: [components],
   exports: [components],

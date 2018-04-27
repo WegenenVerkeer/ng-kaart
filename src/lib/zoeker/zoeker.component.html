@@ -50,6 +50,7 @@
     </div>
     <br>
     <div *ngIf="legende.size > 0">
+      <div class="divider"></div>
       <br>
       <b>Legende</b>
       <br>
@@ -59,6 +60,7 @@
       </div>
     </div>
   </div>
+  <div *ngIf="toonHelp && toonResultaat && (alleFouten.length > 0 || alleZoekResultaten.length > 0)" class="divider"></div>
   <div class="zoeker-resultaat-box" *ngIf="toonResultaat">
     <div *ngFor="let fout of alleFouten" class="zoeker-resultaat zoeker-fout">
       <mat-icon>announcement</mat-icon>

@@ -6,6 +6,7 @@ import { ofType } from "../util/operators";
 import { KaartChildComponentBase } from "./kaart-child-component-base";
 import { KaartInternalMsg, kaartLogOnlyWrapper, ZoominstellingenGezetMsg, zoominstellingenGezetWrapper } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
+import { KaartComponent } from "./kaart.component";
 
 export interface KaartProps {
   canZoomIn: boolean;
@@ -21,8 +22,8 @@ export interface KaartProps {
 export class KaartZoomComponent extends KaartChildComponentBase implements OnInit {
   kaartProps$: Observable<KaartProps> = Observable.empty();
 
-  constructor(zone: NgZone) {
-    super(zone);
+  constructor(parent: KaartComponent, zone: NgZone) {
+    super(parent, zone);
   }
 
   protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {

@@ -637,35 +637,43 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function handleSubscriptions(cmnd: prt.SubscribeCmd<Msg>): ModelWithResult<Msg> {
-      function subscribe(name: string, subscription: Subscription): ModelWithResult<Msg> {
+      function modelWithSubscriptionResult(name: string, subscription: Subscription): ModelWithResult<Msg> {
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, { subscription: subscription, subscriberName: name })));
       }
 
       function subscribeToZoominstellingen(sub: prt.ZoominstellingenSubscription<Msg>): ModelWithResult<Msg> {
-        return subscribe(
+        return modelWithSubscriptionResult(
           "Zoominstellingen",
           model.zoominstellingenSubj.pipe(debounceTime(100)).subscribe(z => msgConsumer(sub.wrapper(z)))
         );
       }
 
       function subscribeToGeselecteerdeFeatures(sub: prt.GeselecteerdeFeaturesSubscription<Msg>): ModelWithResult<Msg> {
-        return subscribe("GeselecteerdeFeatures", model.geselecteerdeFeaturesSubj.subscribe(pm => msgConsumer(sub.wrapper(pm))));
+        return modelWithSubscriptionResult(
+          "GeselecteerdeFeatures",
+          model.geselecteerdeFeaturesSubj.subscribe(pm => msgConsumer(sub.wrapper(pm)))
+        );
       }
 
       function subscribeToMiddelpunt(sub: prt.MiddelpuntSubscription<Msg>): ModelWithResult<Msg> {
-        return subscribe("Middelpunt", model.middelpuntSubj.pipe(debounceTime(100)).subscribe(m => msgConsumer(sub.wrapper(m[0], m[1]))));
+        return modelWithSubscriptionResult(
+          "Middelpunt",
+          model.middelpuntSubj.pipe(debounceTime(100)).subscribe(m => msgConsumer(sub.wrapper(m[0], m[1])))
+        );
       }
 
       function subscribeToAchtergrondTitel(sub: prt.AchtergrondTitelSubscription<Msg>): ModelWithResult<Msg> {
-        return subscribe("AchtergrondTitel", model.achtergrondlaagtitelSubj.subscribe(t => msgConsumer(sub.wrapper(t))));
+        return modelWithSubscriptionResult("AchtergrondTitel", model.achtergrondlaagtitelSubj.subscribe(t => msgConsumer(sub.wrapper(t))));
       }
 
       function subscribeToKaartClick(sub: prt.KaartClickSubscription<Msg>): ModelWithResult<Msg> {
-        return subscribe("KaartClick", model.clickSubj.subscribe(t => msgConsumer(sub.wrapper(t))));
+        return modelWithSubscriptionResult("KaartClick", model.clickSubj.subscribe(t => msgConsumer(sub.wrapper(t))));
       }
 
       const subscribeToAchtergrondlagen = (wrapper: (achtergrondlagen: List<ke.AchtergrondLaag>) => Msg) =>
-        subscribe(
+        // Op het moment van de subscription is het heel goed mogelijk dat de lagen al toegevoegd zijn. Het is daarom dat de
+        // groeplagenSubj een vrij grote replay waarde heeft.
+        modelWithSubscriptionResult(
           "Achtergrondlagen",
           model.groeplagenSubj
             .pipe(
@@ -675,34 +683,42 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         );
 
       function subscribeToZoeker(sub: prt.ZoekerSubscription<Msg>): ModelWithResult<Msg> {
-        return subscribe("Zoeker", model.zoekerSubj.subscribe(m => msgConsumer(sub.wrapper(m))));
+        return modelWithSubscriptionResult("Zoeker", model.zoekerSubj.subscribe(m => msgConsumer(sub.wrapper(m))));
       }
 
       function subscribeToMijnLocatieZoomdoel(sub: prt.MijnLocatieZoomdoelSubscription<Msg>): ModelWithResult<Msg> {
-        return subscribe("MijnLocatieZoomdoel", model.mijnLocatieZoomDoelSubj.subscribe(t => msgConsumer(sub.wrapper(t))));
+        return modelWithSubscriptionResult(
+          "MijnLocatieZoomdoel",
+          model.mijnLocatieZoomDoelSubj.subscribe(t => msgConsumer(sub.wrapper(t)))
+        );
       }
 
       function subscribeToGeometryChanged(sub: prt.GeometryChangedSubscription<Msg>): ModelWithResult<Msg> {
         // Deze is een klein beetje speciaal omdat we de unsubcribe willen opvangen om evt. het tekenen te stoppen
-        const subscription = rx.Observable.create((observer: rx.Observer<ol.geom.Geometry>) => {
-          model.tekenSettingsSubj.next(some(sub.tekenSettings));
-          const innerSub = model.geometryChangedSubj.pipe(debounceTime(100)).subscribe(observer);
-          return () => {
-            innerSub.unsubscribe();
-            if (model.geometryChangedSubj.observers.length === 0) {
-              model.tekenSettingsSubj.next(none);
-            }
-          };
-        }).subscribe(pm => msgConsumer(sub.wrapper(pm)));
-        return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, subscription)));
+        return modelWithSubscriptionResult(
+          "TekenGeometryChanged",
+          rx.Observable.create((observer: rx.Observer<ol.geom.Geometry>) => {
+            model.tekenSettingsSubj.next(some(sub.tekenSettings));
+            const innerSub = model.geometryChangedSubj.pipe(debounceTime(100)).subscribe(observer);
+            return () => {
+              innerSub.unsubscribe();
+              if (model.geometryChangedSubj.observers.length === 0) {
+                model.tekenSettingsSubj.next(none);
+              }
+            };
+          }).subscribe(pm => msgConsumer(sub.wrapper(pm)))
+        );
       }
 
       function subscribeToTekenen(sub: prt.TekenenSubscription<Msg>): ModelWithResult<Msg> {
-        return subscribe("Tekenen", model.tekenSettingsSubj.pipe(distinctUntilChanged()).subscribe(pm => msgConsumer(sub.wrapper(pm))));
+        return modelWithSubscriptionResult(
+          "Tekenen",
+          model.tekenSettingsSubj.pipe(distinctUntilChanged()).subscribe(pm => msgConsumer(sub.wrapper(pm)))
+        );
       }
 
       function subscribeToInfoBoodschappen(sub: prt.InfoBoodschappenSubscription<Msg>): ModelWithResult<Msg> {
-        return subscribe("InfoBoodschappen", model.infoBoodschappenSubj.subscribe(t => msgConsumer(sub.wrapper(t))));
+        return modelWithSubscriptionResult("InfoBoodschappen", model.infoBoodschappenSubj.subscribe(t => msgConsumer(sub.wrapper(t))));
       }
 
       switch (cmnd.subscription.type) {

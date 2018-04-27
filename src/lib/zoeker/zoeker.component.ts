@@ -10,6 +10,7 @@ import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import * as ke from "../kaart/kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as prt from "../kaart/kaart-protocol";
+import { KaartComponent } from "../kaart/kaart.component";
 import { compareResultaten, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
 
 const ZoekerLaagNaam = "Zoeker";
@@ -77,8 +78,8 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
     }
   }
 
-  constructor(zone: NgZone) {
-    super(zone);
+  constructor(parent: KaartComponent, zone: NgZone) {
+    super(parent, zone);
   }
 
   protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
@@ -109,10 +110,10 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
       this.toonResultaat = true;
 
       if (value.length > 0) {
-        this.dispatcher.dispatch({ type: "Zoek", input: value, wrapper: kaartLogOnlyWrapper });
+        this.dispatch({ type: "Zoek", input: value, wrapper: kaartLogOnlyWrapper });
       }
     });
-    this.dispatcher.dispatch({
+    this.dispatch({
       type: "VoegLaagToe",
       positie: 1,
       laag: ZoekerComponent.createLayer(),
@@ -123,7 +124,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
   }
 
   ngOnDestroy(): void {
-    this.dispatcher.dispatch(prt.VerwijderLaagCmd(ZoekerLaagNaam, kaartLogOnlyWrapper));
+    this.dispatch(prt.VerwijderLaagCmd(ZoekerLaagNaam, kaartLogOnlyWrapper));
     super.ngOnDestroy();
   }
 
@@ -143,7 +144,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
     this.toonHelp = false;
     const extent = resultaat.geometry.getExtent();
     if (!ol.extent.isEmpty(extent)) {
-      this.dispatcher.dispatch(prt.VeranderExtentCmd(extent));
+      this.dispatch(prt.VeranderExtentCmd(extent));
     }
   }
 
@@ -160,7 +161,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
     this.extent = ol.extent.createEmpty();
     this.legende.clear();
     this.legendeKeys = [];
-    this.dispatcher.dispatch(prt.VervangFeaturesCmd(ZoekerLaagNaam, List(), kaartLogOnlyWrapper));
+    this.dispatch(prt.VervangFeaturesCmd(ZoekerLaagNaam, List(), kaartLogOnlyWrapper));
   }
 
   private processZoekerAntwoord(nieuweResultaten: ZoekResultaten): KaartInternalMsg {
@@ -183,7 +184,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
       .map(feature => feature!.getGeometry().getExtent())
       .reduce((maxExtent, huidigeExtent) => ol.extent.extend(maxExtent!, huidigeExtent!), ol.extent.createEmpty());
 
-    this.dispatcher.dispatch(prt.VervangFeaturesCmd(ZoekerLaagNaam, features, kaartLogOnlyWrapper));
+    this.dispatch(prt.VervangFeaturesCmd(ZoekerLaagNaam, features, kaartLogOnlyWrapper));
 
     this.zoomNaarVolledigeExtent();
 
@@ -195,7 +196,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
 
   private zoomNaarVolledigeExtent() {
     if (!ol.extent.isEmpty(this.extent)) {
-      this.dispatcher.dispatch(prt.VeranderExtentCmd(this.extent));
+      this.dispatch(prt.VeranderExtentCmd(this.extent));
     }
   }
 }

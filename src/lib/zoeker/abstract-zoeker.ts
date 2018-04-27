@@ -72,7 +72,7 @@ function compareOpBronEnInhoud(a: ZoekResultaat, b: ZoekResultaat): number {
 function bronNaarNummer(res: ZoekResultaat): number {
   if (res.bron.toLowerCase().startsWith("wdb")) {
     return 1;
-  } else if (res.bron.toLowerCase() === "crab") {
+  } else if (res.bron.toLowerCase().startsWith("crab")) {
     return 2;
   } else {
     return 3;

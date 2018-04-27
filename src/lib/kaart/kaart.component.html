@@ -3,17 +3,18 @@
     <div class="kaart" #map style="height: 100%; width: 100%;"></div>
   </div>
   <div id="overlay">
-    <awv-kaart-open-street-view [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-open-street-view>
-    <awv-kaart-achtergrond-selector [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-achtergrond-selector>
-    <awv-kaart-mijn-locatie [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-mijn-locatie>
-    <awv-kaart-zoom [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-zoom>
-    <awv-google-locatie-zoeker [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-google-locatie-zoeker>
-    <awv-crab-zoeker [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-crab-zoeker>
+    <awv-kaart-open-street-view></awv-kaart-open-street-view>
+    <awv-kaart-achtergrond-selector></awv-kaart-achtergrond-selector>
+    <awv-kaart-mijn-locatie></awv-kaart-mijn-locatie>
+    <awv-kaart-zoom></awv-kaart-zoom>
+    <awv-google-locatie-zoeker></awv-google-locatie-zoeker>
+    <awv-crab-zoeker></awv-crab-zoeker>
     <div class="kaart-links">
-      <awv-zoeker [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-zoeker>
-      <awv-kaart-info-boodschappen [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-info-boodschappen>
+      <awv-zoeker></awv-zoeker>
+      <awv-kaart-info-boodschappen></awv-kaart-info-boodschappen>
+      <awv-lagenkiezer></awv-lagenkiezer>
       <ng-content select=".kaart-links"></ng-content>
     </div>
-    <awv-kaart-teken-laag [internalMessage$]="internalMessage$" [dispatcher]="internalCmdDispatcher"></awv-kaart-teken-laag>
+    <awv-kaart-teken-laag></awv-kaart-teken-laag>
   </div>
 </div>

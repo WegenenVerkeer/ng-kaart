@@ -6,6 +6,7 @@ import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { ClickOutsideModule } from "ng4-click-outside";
 
 import { KaartModule } from "../lib/kaart/index";
+import { LagenkiezerModule } from "../lib/lagenkiezer";
 import { ZoekerModule } from "../lib/zoeker/index";
 import { AppComponent } from "./app.component";
 import { AvKaartInnerComponent } from "./av-kaart-inner.component";
@@ -27,6 +28,7 @@ import { AvKaartComponent } from "./av-kaart.component";
         url: "http://localhost:5101/locatorservices"
       }
     }),
+    LagenkiezerModule.withDefaults(),
     ClickOutsideModule,
     HttpModule
   ],
