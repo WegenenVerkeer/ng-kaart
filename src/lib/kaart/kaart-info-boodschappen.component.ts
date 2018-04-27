@@ -42,7 +42,7 @@ export class KaartInfoBoodschappenComponent extends KaartChildComponentBase impl
         observeOnAngular(this.zone)
       )
       .subscribe(msg => {
-        this.infoBoodschappen$.emit(msg.infoBoodschappen.reverse().toList());
+        this.infoBoodschappen$.emit(msg.infoBoodschappen.reverse().toList()); // laatste boodschap bovenaan tonen
       });
   }
 }
