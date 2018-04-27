@@ -708,10 +708,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return modelWithSubscriptionResult("KaartClick", model.clickSubj.subscribe(t => msgConsumer(sub.wrapper(t))));
       }
 
-      const subscribeToAchtergrondlagen = (wrapper: (achtergrondlagen: List<ke.AchtergrondLaag>) => Msg) =>
+      function subscribeToAchtergrondlagen(wrapper: (achtergrondlagen: List<ke.AchtergrondLaag>) => Msg) {
         // Op het moment van de subscription is het heel goed mogelijk dat de lagen al toegevoegd zijn. Het is daarom dat de
         // groeplagenSubj een vrij grote replay waarde heeft.
-        modelWithSubscriptionResult(
+        return modelWithSubscriptionResult(
           "Achtergrondlagen",
           model.groeplagenSubj
             .pipe(
@@ -719,6 +719,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             )
             .subscribe(groeplagen => msgConsumer(wrapper(groeplagen.lagen as List<ke.AchtergrondLaag>)))
         );
+      }
 
       function subscribeToZoeker(sub: prt.ZoekerSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult("Zoeker", model.zoekerSubj.subscribe(m => msgConsumer(sub.wrapper(m))));
