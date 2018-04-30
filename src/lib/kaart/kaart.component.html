@@ -10,8 +10,8 @@
     <awv-google-locatie-zoeker></awv-google-locatie-zoeker>
     <div class="kaart-links">
       <awv-zoeker></awv-zoeker>
-      <awv-kaart-info-boodschappen></awv-kaart-info-boodschappen>
       <awv-lagenkiezer *ngIf="aanwezigeElementen.contains('Lagenkiezer')"></awv-lagenkiezer>
+      <awv-kaart-info-boodschappen></awv-kaart-info-boodschappen>
       <ng-content select=".kaart-links"></ng-content>
     </div>
     <awv-kaart-teken-laag *ngIf="aanwezigeElementen.contains('Kaarttekenen')"></awv-kaart-teken-laag>

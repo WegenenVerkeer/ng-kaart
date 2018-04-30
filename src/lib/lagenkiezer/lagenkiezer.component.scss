@@ -1,2 +1,13 @@
 @import "../kaart/kaart.component-common.scss";
 
+.lagen-lijst {
+  font-family: Roboto, "Helvetica Neue", sans-serif;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  padding: 0;
+}
+
+.laag-info {
+  overflow-x: hidden;
+}
+

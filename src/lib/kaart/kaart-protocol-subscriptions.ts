@@ -52,7 +52,7 @@ export interface AchtergrondTitelSubscription<Msg> {
 export interface LagenInGroepSubscription<Msg> {
   readonly type: "LagenInGroep";
   readonly groep: ke.Laaggroep;
-  readonly wrapper: (lagen: List<ke.Laag>) => Msg;
+  readonly wrapper: (lagen: List<ke.ToegevoegdeLaag>) => Msg;
 }
 
 export interface KaartClickSubscription<Msg> {
@@ -108,7 +108,10 @@ export function AchtergrondTitelSubscription<Msg>(wrapper: (titel: string) => Ms
   return { type: "Achtergrond", wrapper: wrapper };
 }
 
-export function LagenInGroepSubscription<Msg>(groep: ke.Laaggroep, msgGen: (lagen: List<ke.Laag>) => Msg): LagenInGroepSubscription<Msg> {
+export function LagenInGroepSubscription<Msg>(
+  groep: ke.Laaggroep,
+  msgGen: (lagen: List<ke.ToegevoegdeLaag>) => Msg
+): LagenInGroepSubscription<Msg> {
   return { type: "LagenInGroep", groep: groep, wrapper: msgGen };
 }
 

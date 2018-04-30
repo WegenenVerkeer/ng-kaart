@@ -152,7 +152,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       })
     });
 
-    return new KaartWithInfo(this.config, this.naam, this.mapElement.nativeElement.parentElement, kaart);
+    return new KaartWithInfo(this.config, this.naam, this.mapElement.nativeElement.parentElement, kaart, this.modelChanger);
   }
 
   get message$(): Observable<prt.KaartMsg> {

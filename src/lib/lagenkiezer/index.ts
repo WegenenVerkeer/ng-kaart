@@ -1,15 +1,16 @@
 import { CommonModule } from "@angular/common";
 import { ModuleWithProviders, NgModule } from "@angular/core";
-import { MatIconModule, MatInputModule } from "@angular/material";
+import { MatIconModule, MatInputModule, MatButtonModule, MatTooltipModule } from "@angular/material";
 
 import { LAGENKIEZER_CFG, LagenkiezerConfig } from "./lagenkiezer-config";
 import { LagenkiezerConfigComponent } from "./lagenkiezer-config.component";
 import { LagenkiezerComponent } from "./lagenkiezer.component";
+import { LaagmanipulatieComponent } from "./laagmanipulatie.component";
 
-const components: any[] = [LagenkiezerComponent, LagenkiezerConfigComponent];
+const components: any[] = [LagenkiezerComponent, LagenkiezerConfigComponent, LaagmanipulatieComponent];
 
 @NgModule({
-  imports: [CommonModule, MatIconModule, MatInputModule],
+  imports: [CommonModule, MatIconModule, MatInputModule, MatButtonModule, MatTooltipModule],
   declarations: [components],
   exports: [components]
 })
@@ -28,3 +29,4 @@ export class LagenkiezerModule {
 export * from "./lagenkiezer.component";
 export * from "./lagenkiezer-config.component";
 export * from "./lagenkiezer-config";
+export * from "./laagmanipulatie.component";

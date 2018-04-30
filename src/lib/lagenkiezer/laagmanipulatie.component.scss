@@ -1,0 +1,32 @@
+@import "~@angular/material/theming";
+@import "../kaart/kaart.component-common.scss";
+
+.line {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-height: 40px;
+  color: $kaart-primary-text-color;
+}
+
+.visibility {
+  width: 40px;
+}
+
+.title {
+  flex-grow: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+}
+
+.invisible .title {
+  color: $kaart-secondary-text-color;
+}
+
+.actions {
+  width: 40px;
+  padding-right: 8px;
+}

@@ -4,7 +4,6 @@ import { KaartComponent } from "../kaart/kaart.component";
 import * as prt from "../kaart/kaart-protocol";
 import {
   AchtergrondlagenGezetMsg,
-  achtergrondlagenGezetWrapper,
   AchtergrondtitelGezetMsg,
   achtergrondtitelGezetWrapper,
   KaartInternalMsg,
@@ -16,7 +15,7 @@ import { switchMap, filter, map, tap } from "rxjs/operators";
 import { ofType } from "../util/operators";
 import { Observable } from "rxjs/Observable";
 import { List } from "immutable";
-import { Laag } from "../kaart/kaart-elementen";
+import { Laag, ToegevoegdeLaag } from "../kaart/kaart-elementen";
 
 export const LagenUISelector = "Lagenkiezer";
 
@@ -26,8 +25,8 @@ export const LagenUISelector = "Lagenkiezer";
   styleUrls: ["lagenkiezer.component.scss"]
 })
 export class LagenkiezerComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
-  readonly lagenHoog$: Observable<List<Laag>>;
-  readonly lagenLaag$: Observable<List<Laag>>;
+  readonly lagenHoog$: Observable<List<ToegevoegdeLaag>>;
+  readonly lagenLaag$: Observable<List<ToegevoegdeLaag>>;
 
   constructor(parent: KaartComponent, ngZone: NgZone) {
     super(parent, ngZone);

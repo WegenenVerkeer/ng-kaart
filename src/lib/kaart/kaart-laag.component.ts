@@ -10,6 +10,8 @@ export abstract class KaartLaagComponent implements OnInit, OnDestroy {
   @Input() titel = "";
   @Input() zichtbaar = true;
   @Input() groep: Laaggroep | undefined; // Heeft voorrang op std ingesteld via laaggroep
+  @Input() minZoom = 2;
+  @Input() maxZoom = 16;
 
   protected voegLaagToeBijStart = true;
 

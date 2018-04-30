@@ -1,6 +1,7 @@
 import * as rx from "rxjs";
 import { Set } from "immutable";
 import { Tuple } from "fp-ts/lib/Tuple";
+import { Zoominstellingen } from "./kaart-protocol-subscriptions";
 
 export interface UIElementSelectie {
   naam: string;
@@ -15,16 +16,20 @@ export interface UIElementSelectie {
  */
 export interface ModelChanger {
   readonly uiElementenSelectieSubj: rx.Subject<UIElementSelectie>;
+  readonly huidigeZoomSubj: rx.Subject<Zoominstellingen>;
 }
 
 export const modelChanger: ModelChanger = {
-  uiElementenSelectieSubj: new rx.Subject<UIElementSelectie>()
+  uiElementenSelectieSubj: new rx.Subject<UIElementSelectie>(),
+  huidigeZoomSubj: new rx.ReplaySubject(1)
 };
 
 export interface ModelChanges {
   readonly uiElementenSelectie$: rx.Observable<UIElementSelectie>;
+  readonly huidigeZoom$: rx.Observable<Zoominstellingen>;
 }
 
 export const modelChanges: (changer: ModelChanger) => ModelChanges = changer => ({
-  uiElementenSelectie$: changer.uiElementenSelectieSubj.asObservable()
+  uiElementenSelectie$: changer.uiElementenSelectieSubj.asObservable(),
+  huidigeZoom$: changer.huidigeZoomSubj.asObservable()
 });

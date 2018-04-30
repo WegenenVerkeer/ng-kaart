@@ -1,7 +1,9 @@
-<div *ngFor="let laag of (lagenHoog$ | async)">
-  {{ laag.titel }}
-</div>
-<hr>
-<div *ngFor="let laag of (lagenLaag$ | async)">
-    {{ laag.titel }}
+<div class="lagen-lijst float-box">
+  <div *ngFor="let laag of (lagenHoog$ | async)" class="laag-info">
+    <div awvLaagmanipulatie [laag]="laag"></div>
+  </div>
+  <div class="divider"></div>
+  <div *ngFor="let laag of (lagenLaag$ | async)"  class="laag-info">
+    <div awvLaagmanipulatie [laag]="laag"></div>
+  </div>
 </div>

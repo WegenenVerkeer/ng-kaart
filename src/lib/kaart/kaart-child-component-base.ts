@@ -14,9 +14,6 @@ import { internalMsgSubscriptionCmdOperator } from "./subscription-helper";
  * Voor classes die view children zijn van kaart.component
  */
 export abstract class KaartChildComponentBase extends KaartComponentBase implements OnInit, OnDestroy {
-  // @Input() dispatcher: KaartCmdDispatcher<prt.TypedRecord> = VacuousDispatcher;
-  // @Input() internalMessage$: rx.Observable<KaartInternalSubMsg> = rx.Observable.never();
-
   constructor(private readonly kaartComponent: KaartComponent, zone: NgZone) {
     super(zone);
   }

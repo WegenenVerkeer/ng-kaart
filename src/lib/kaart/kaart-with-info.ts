@@ -9,17 +9,18 @@ import { ZoekerCoordinator } from "../zoeker/zoeker-coordinator";
 import { KaartConfig } from "./kaart-config";
 import * as ke from "./kaart-elementen";
 import { InfoBoodschap } from "./info-boodschap";
+import { ModelChanger } from "./model-changes";
 
 export interface Groeplagen {
   readonly laaggroep: Laaggroep;
-  readonly lagen: List<ke.Laag>;
+  readonly lagen: List<ke.ToegevoegdeLaag>;
 }
 
 /**
  * Het model achter de kaartcomponent.
  */
 export class KaartWithInfo {
-  readonly olLayersOpTitel: Map<string, ol.layer.Base> = Map();
+  readonly toegevoegdeLagenOpTitel: Map<string, ke.ToegevoegdeLaag> = Map();
   readonly titelsOpGroep: Map<Laaggroep, List<string>> = Map([
     ["Voorgrond.Laag", List()],
     ["Voorgrond.Hoog", List()],
@@ -27,7 +28,7 @@ export class KaartWithInfo {
     ["Tools", List()]
   ]);
   readonly groepOpTitel: Map<string, Laaggroep> = Map();
-  readonly lagen: List<ke.Laag> = List();
+  // readonly lagen: List<ke.ToegevoegdeLaag> = List();
   readonly schaal: Option<ol.control.Control> = none;
   readonly fullScreen: Option<ol.control.FullScreen> = none;
   readonly stdInteracties: List<ol.interaction.Interaction> = List(); // TODO beter gewoon interacties
@@ -54,14 +55,22 @@ export class KaartWithInfo {
     readonly config: KaartConfig,
     readonly naam: string,
     readonly container: any,
-    readonly map: ol.Map
+    readonly map: ol.Map,
+    changer: ModelChanger
   ) {
-    const zetInstellingen = () =>
+    const zetInstellingen = () => {
+      // Deze mag weg wanneer alles naar changer gemigreerd is
       this.zoominstellingenSubj.next({
         zoom: map.getView().getZoom(),
         minZoom: map.getView().getMinZoom(),
         maxZoom: map.getView().getMaxZoom()
       });
+      changer.huidigeZoomSubj.next({
+        zoom: map.getView().getZoom(),
+        minZoom: map.getView().getMinZoom(),
+        maxZoom: map.getView().getMaxZoom()
+      });
+    };
     map.getView().on("change:resolution", () => {
       const zoomNiveau = map.getView().getZoom();
       // OL genereert een heleboel tussenliggende zooms tijden het animeren.

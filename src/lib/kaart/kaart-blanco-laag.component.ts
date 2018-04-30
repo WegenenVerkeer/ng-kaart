@@ -23,7 +23,9 @@ export class KaartBlancoLaagComponent extends KaartLaagComponent {
     return {
       type: BlancoType,
       titel: this.titel,
-      backgroundUrl: blancoLaag
+      backgroundUrl: blancoLaag,
+      minZoom: this.minZoom,
+      maxZoom: this.maxZoom
     };
   }
 

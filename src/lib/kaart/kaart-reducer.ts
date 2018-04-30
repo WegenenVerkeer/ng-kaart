@@ -92,24 +92,31 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return thruth ? validation.success({}) : validation.failure(getArrayMonoid<string>())([errMsg]);
     }
 
-    function valideerLayerBestaat(titel: string): prt.KaartCmdValidation<ol.layer.Base> {
+    // function valideerLayerBestaat(titel: string): prt.KaartCmdValidation<ol.layer.Base> {
+    //   return validation.fromPredicate(getArrayMonoid<string>())(
+    //     (l: ol.layer.Base) => l !== undefined,
+    //     () => [`Een laag met titel ${titel} bestaat niet`]
+    //   )(model.olLayersOpTitel.get(titel));
+    // }
+
+    function valideerToegevoegdLaagBestaat(titel: string): prt.KaartCmdValidation<ke.ToegevoegdeLaag> {
       return validation.fromPredicate(getArrayMonoid<string>())(
-        (l: ol.layer.Base) => l !== undefined,
+        (l: ke.ToegevoegdeLaag) => l !== undefined,
         () => [`Een laag met titel ${titel} bestaat niet`]
-      )(model.olLayersOpTitel.get(titel));
+      )(model.toegevoegdeLagenOpTitel.get(titel));
     }
 
     function valideerVectorLayerBestaat(titel: string): prt.KaartCmdValidation<ol.layer.Vector> {
-      return valideerLayerBestaat(titel).chain(
-        layer =>
-          layer["setStyle"]
-            ? validation.success(layer as ol.layer.Vector)
+      return valideerToegevoegdLaagBestaat(titel).chain(
+        laag =>
+          laag.layer["setStyle"]
+            ? validation.success(laag.layer as ol.layer.Vector)
             : validation.failure(getArrayMonoid<string>())([`De laag met titel ${titel} is geen vectorlaag`])
       );
     }
 
     function valideerLaagTitelBestaatNiet(titel: string): prt.KaartCmdValidation<{}> {
-      return fromPredicate(model, (mdl: Model) => !mdl.olLayersOpTitel.has(titel), `Een laag met titel ${titel} bestaat al`);
+      return fromPredicate(model, (mdl: Model) => !mdl.toegevoegdeLagenOpTitel.has(titel), `Een laag met titel ${titel} bestaat al`);
     }
 
     function valideerZoekerIsNietGeregistreerd(naam: string): prt.KaartCmdValidation<{}> {
@@ -139,13 +146,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     const valideerIsAchtergrondLaag: (titel: string) => prt.KaartCmdValidation<{}> = (titel: string) =>
       fromBoolean(model.groepOpTitel.get(titel) === "Achtergrond", "De laag is geen achtergrondlaag");
 
-    const valideerIsVoorgrondlaag: (layer: ol.layer.Base) => prt.KaartCmdValidation<ol.layer.Base> = (layer: ol.layer.Base) =>
+    const valideerIsVoorgrondlaag: (laag: ke.ToegevoegdeLaag) => prt.KaartCmdValidation<ke.ToegevoegdeLaag> = (laag: ke.ToegevoegdeLaag) =>
       fromPredicate(
-        layer,
-        (layr: ol.layer.Base) => {
-          const groep = layerNaarLaaggroep(layr);
-          return groep === "Voorgrond.Hoog" || groep === "Voorgrond.Laag";
-        },
+        laag,
+        (lg: ke.ToegevoegdeLaag) => lg.laaggroep === "Voorgrond.Hoog" || lg.laaggroep === "Voorgrond.Laag",
         "De laag is geen voorgrondlaag"
       );
 
@@ -159,12 +163,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
      * alle z-indices in een aangesloten interval te behouden.
      */
     function pasZIndicesAan(aanpassing: number, vanaf: number, tot: number, groep: ke.Laaggroep): List<PositieAanpassing> {
-      return model.olLayersOpTitel.reduce((updates, layer, titel) => {
-        if (layerNaarLaaggroep(<ol.layer.Base>layer) === groep) {
-          const groepPositie = layerIndexNaarGroepIndex(layer!, groep);
+      return model.toegevoegdeLagenOpTitel.reduce((updates, laag, titel) => {
+        if (layerNaarLaaggroep(<ol.layer.Base>laag!.layer) === groep) {
+          const groepPositie = layerIndexNaarGroepIndex(laag!.layer, groep);
           if (groepPositie >= vanaf && groepPositie <= tot) {
             const positie = groepPositie + aanpassing;
-            zetLayerIndex(layer!, positie, groep);
+            zetLayerIndex(laag!.layer, positie, groep);
             return updates!.push({ titel: titel!, positie: positie });
           } else {
             return updates!;
@@ -231,10 +235,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         laaggroep: groep,
         lagen: mdl.titelsOpGroep
           .get(groep)
-          .map(
-            titel => mdl.lagen.find(l => l!.titel === titel) //
-          )
-          .sortBy(l => -mdl.olLayersOpTitel.get(l!.titel).getZIndex())
+          .map(titel => mdl.toegevoegdeLagenOpTitel.get(titel!)) // we vertrekken van geldige groepen
+          .sortBy(laag => -laag!.layer.getZIndex()) // en dus ook geldige titels
           .toList()
       });
     }
@@ -261,16 +263,23 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             const groep = cmnd.laaggroep;
             const groepPositie = limitPosition(cmnd.positie, groep);
             const movedLayers = pasZIndicesAan(1, groepPositie, maxIndexInGroep(groep), groep);
+            const toegevoegdeLaag: ke.ToegevoegdeLaag = {
+              bron: cmnd.laag,
+              layer: layer,
+              titel: cmnd.laag.titel,
+              laaggroep: groep,
+              positieInGroep: groepPositie,
+              magGetoondWorden: cmnd.magGetoondWorden
+            };
             layer.set("titel", titel);
             layer.setVisible(cmnd.magGetoondWorden); // achtergrondlagen expliciet zichtbaar maken!
             zetLayerIndex(layer, groepPositie, groep);
             model.map.addLayer(layer);
             const updatedModel = {
               ...model,
-              olLayersOpTitel: model.olLayersOpTitel.set(titel, layer),
+              toegevoegdeLagenOpTitel: model.toegevoegdeLagenOpTitel.set(titel, toegevoegdeLaag),
               titelsOpGroep: model.titelsOpGroep.set(groep, model.titelsOpGroep.get(groep).push(titel)),
-              groepOpTitel: model.groepOpTitel.set(titel, groep),
-              lagen: model.lagen.push(cmnd.laag)
+              groepOpTitel: model.groepOpTitel.set(titel, groep)
             };
             zendLagenInGroep(updatedModel, cmnd.laaggroep);
             return ModelAndValue(updatedModel, movedLayers.push({ titel: titel, positie: groepPositie }));
@@ -283,14 +292,15 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function verwijderLaagCmd(cmnd: prt.VerwijderLaagCmd<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerLayerBestaat(cmnd.titel).map(layer => {
+        valideerToegevoegdLaagBestaat(cmnd.titel).map(laag => {
+          const layer = laag.layer;
           model.map.removeLayer(layer); // Oesje. Side-effect. Gelukkig idempotent.
           const titel = cmnd.titel;
           const groep = model.groepOpTitel.get(titel);
           const movedLayers = pasZIndicesAan(-1, layerIndexNaarGroepIndex(layer, groep) + 1, maxIndexInGroep(groep), groep);
           const updatedModel = {
             ...model,
-            olLayersOpTitel: model.olLayersOpTitel.delete(titel),
+            olLayersOpTitel: model.toegevoegdeLagenOpTitel.delete(titel),
             titelsOpGroep: model.titelsOpGroep.set(
               groep,
               model.titelsOpGroep
@@ -298,8 +308,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                 .filter(t => t !== titel)
                 .toList()
             ),
-            groepOpTitel: model.groepOpTitel.delete(titel),
-            lagen: model.lagen.filterNot(l => l!.titel === titel).toList()
+            groepOpTitel: model.groepOpTitel.delete(titel)
           };
           zendLagenInGroep(updatedModel, groep);
           return ModelAndValue(updatedModel, movedLayers); // De verwijderde laag zelf wordt niet teruggegeven
@@ -310,12 +319,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function verplaatsLaagCmd(cmnd: prt.VerplaatsLaagCmd<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerLayerBestaat(cmnd.titel)
+        valideerToegevoegdLaagBestaat(cmnd.titel)
           .chain(valideerIsVoorgrondlaag) // enkel zinvol om voorgrondlagen te verplaatsen
-          .map(layer => {
+          .map(laag => {
             const titel = cmnd.titel;
             const groep = model.groepOpTitel.get(titel);
-            const vanPositie = layerIndexNaarGroepIndex(layer, groep);
+            const vanPositie = layerIndexNaarGroepIndex(laag.layer, groep);
             const naarPositie = limitPosition(cmnd.naarPositie, groep); // uitgedrukt in z-index waarden
             // Afhankelijk of we van onder naar boven of van boven naar onder verschuiven, moeten de tussenliggende lagen
             // naar onder, resp. naar boven verschoven worden.
@@ -323,7 +332,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               vanPositie < naarPositie
                 ? pasZIndicesAan(-1, vanPositie + 1, naarPositie, groep)
                 : pasZIndicesAan(1, naarPositie, vanPositie - 1, groep);
-            zetLayerIndex(layer, naarPositie, groep);
+            zetLayerIndex(laag.layer, naarPositie, groep);
             return ModelAndValue(model, movedLayers.push({ titel: cmnd.titel, positie: naarPositie }));
           })
       );
@@ -474,6 +483,16 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
+    function pasZichtbaarheidAan(laag: ke.ToegevoegdeLaag, magGetoondWorden: boolean): ke.ToegevoegdeLaag {
+      laag.layer.setVisible(magGetoondWorden);
+      return laag.magGetoondWorden === magGetoondWorden ? laag : { ...laag, magGetoondWorden: magGetoondWorden };
+    }
+
+    function pasLaagAan(mdl: Model, laag: ke.ToegevoegdeLaag): Model {
+      // Uiteraard is het *nooit* de bedoeling om de titel van een laag aan te passen.
+      return { ...mdl, toegevoegdeLagenOpTitel: mdl.toegevoegdeLagenOpTitel.set(laag.titel, laag) };
+    }
+
     function toonAchtergrondkeuzeCmd(cmnd: prt.ToonAchtergrondKeuzeCmd<Msg>): ModelWithResult<Msg> {
       const achtergrondTitels = model.titelsOpGroep.get("Achtergrond");
       return toModelWithValueResult(
@@ -482,14 +501,23 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           fromBoolean(!model.showBackgroundSelector, "De achtergrondkeuze is al actief"),
           fromBoolean(!achtergrondTitels.isEmpty(), "Er moet minstens 1 achtergrondlaag zijn")
         ]).map(() => {
-          achtergrondTitels.forEach(titel => model.olLayersOpTitel.get(titel!).setVisible(false));
-          const geselecteerdeTitel = fromNullable(achtergrondTitels.find(titel => model.olLayersOpTitel.get(titel!).getVisible()));
-          const teSelecterenTitel = geselecteerdeTitel.getOrElse(() => achtergrondTitels.first()); // er is er minstens 1 wegens validatie
-          const achtergrondLayer = model.olLayersOpTitel.get(teSelecterenTitel);
-          achtergrondLayer.setVisible(true);
-          model.achtergrondlaagtitelSubj.next(teSelecterenTitel);
+          const achtergrondLagen: List<ke.ToegevoegdeLaag> = model.titelsOpGroep
+            .get("Achtergrond")
+            .map(titel => model.toegevoegdeLagenOpTitel.get(titel!)) // de titels bestaan bij constructie
+            .toList();
+          const geselecteerdeLaag = fromNullable(achtergrondLagen.find(laag => laag!.magGetoondWorden));
+          const teSelecterenLaag = geselecteerdeLaag.getOrElse(() => achtergrondLagen.first()); // er is er minstens 1 wegens validatie
+
+          // Zorg ervoor dat er juist 1 achtergrondlaag zichtbaar is
+          const aangepasteAchtergronden = achtergrondLagen.map(laag => pasZichtbaarheidAan(laag!, laag!.titel === teSelecterenLaag.titel));
+          const modelMetAangepasteLagen = aangepasteAchtergronden.reduce((mdl, laag) => pasLaagAan(mdl!, laag!), model);
+
+          model.achtergrondlaagtitelSubj.next(teSelecterenLaag.titel);
           modelChanger.uiElementenSelectieSubj.next({ naam: "Achtergrondkeuze", aan: true });
-          return ModelAndEmptyResult({ ...model, showBackgroundSelector: true });
+          return ModelAndEmptyResult({
+            ...modelMetAangepasteLagen,
+            showBackgroundSelector: true
+          });
         })
       );
     }
@@ -509,13 +537,13 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         cmnd.wrapper,
         valideerIsAchtergrondLaag(cmnd.titel)
-          .chain(() => valideerLayerBestaat(cmnd.titel))
-          .map(nieuweAchtergrond => {
-            const achtergrondTitels = model.titelsOpGroep.get("Achtergrond");
-            const vorigeTitel = fromNullable(achtergrondTitels.find(titel => model.olLayersOpTitel.get(titel!).getVisible()));
-            const vorigeAchtergrond = vorigeTitel.map(titel => model.olLayersOpTitel.get(titel));
-            forEach(vorigeAchtergrond, l => l.setVisible(false));
-            nieuweAchtergrond.setVisible(true);
+          .chain(() => valideerToegevoegdLaagBestaat(cmnd.titel))
+          .map((nieuweAchtergrond: ke.ToegevoegdeLaag) => {
+            const vorigeAchtergrond = fromNullable(
+              model.toegevoegdeLagenOpTitel.find(laag => laag!.laaggroep === "Achtergrond" && laag!.magGetoondWorden)
+            );
+            forEach(vorigeAchtergrond, l => l.layer.setVisible(false));
+            nieuweAchtergrond.layer.setVisible(true);
             model.achtergrondlaagtitelSubj.next(cmnd.titel);
             return ModelAndEmptyResult(model);
           })
@@ -523,11 +551,20 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function maakLaagZichtbaarCmd(cmnd: prt.MaakLaagZichtbaarCmd<Msg>): ModelWithResult<Msg> {
+      return zetLaagZichtbaarheid(cmnd.titel, true, cmnd.wrapper);
+    }
+
+    function maakLaagOnzichtbaarCmd(cmnd: prt.MaakLaagOnzichtbaarCmd<Msg>): ModelWithResult<Msg> {
+      return zetLaagZichtbaarheid(cmnd.titel, false, cmnd.wrapper);
+    }
+
+    function zetLaagZichtbaarheid(titel: string, magGetoondWorden: boolean, wrapper: prt.BareValidationWrapper<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
-        cmnd.wrapper,
-        valideerLayerBestaat(cmnd.titel).map(layer => {
-          layer.setVisible(true);
-          return ModelAndEmptyResult(model);
+        wrapper,
+        valideerToegevoegdLaagBestaat(titel).map(laag => {
+          const aangepastModel = pasLaagAan(model, pasZichtbaarheidAan(laag, magGetoondWorden));
+          zendLagenInGroep(aangepastModel, laag.laaggroep);
+          return ModelAndEmptyResult(aangepastModel);
         })
       );
     }
@@ -562,16 +599,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
 
       return ModelWithResult(model);
-    }
-
-    function maakLaagOnzichtbaarCmd(cmnd: prt.MaakLaagOnzichtbaarCmd<Msg>): ModelWithResult<Msg> {
-      return toModelWithValueResult(
-        cmnd.wrapper,
-        valideerLayerBestaat(cmnd.titel).map(layer => {
-          layer.setVisible(false);
-          return ModelAndEmptyResult(model);
-        })
-      );
     }
 
     function zetStijlVoorLaagCmd(cmnd: prt.ZetStijlVoorLaagCmd<Msg>): ModelWithResult<Msg> {

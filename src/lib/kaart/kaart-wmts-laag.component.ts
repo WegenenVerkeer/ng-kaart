@@ -86,7 +86,9 @@ export class KaartWmtsLaagComponent extends KaartLaagComponent implements OnInit
       opacity: fromNullable(this.opacity),
       matrixSet: this.matrixSet,
       config: config,
-      backgroundUrl: this.backgroundUrl(config)
+      backgroundUrl: this.backgroundUrl(config),
+      minZoom: this.minZoom,
+      maxZoom: this.maxZoom
     };
   }
 
