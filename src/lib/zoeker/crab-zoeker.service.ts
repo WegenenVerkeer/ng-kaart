@@ -9,9 +9,9 @@ import { from } from "rxjs/observable/from";
 import { map, mergeMap, reduce, mergeAll } from "rxjs/operators";
 
 import { AbstractZoeker, ZoekResultaat, ZoekResultaten, geoJSONOptions } from "./abstract-zoeker";
+import { ZOEKER_REPRESENTATIE, AbstractRepresentatieService } from "./zoeker-representatie.service";
 import { CrabZoekerConfig } from "./crab-zoeker.config";
 import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
-import { crabMarker, pin_data, pin_ol } from "./zoeker.icons";
 import { pipe } from "rxjs";
 import { OperatorFunction } from "rxjs/interfaces";
 
@@ -60,33 +60,15 @@ export class CrabZoekResultaat implements ZoekResultaat {
 @Injectable()
 export class CrabZoekerService implements AbstractZoeker {
   private readonly crabZoekerConfig: CrabZoekerConfig;
-  private style: ol.style.Style; // 1 style voor ieder resultaat. We maken geen onderscheid per bron.
   private legende: Map<string, string>;
-  private icoon: string;
 
   constructor(
     private readonly http: HttpClient,
     @Inject(ZOEKER_CFG) zoekerConfigData: ZoekerConfigData,
-    private matIconRegistry: MatIconRegistry,
-    private readonly sanitizer: DomSanitizer
+    @Inject(ZOEKER_REPRESENTATIE) private zoekerRepresentatie: AbstractRepresentatieService
   ) {
-    this.matIconRegistry.addSvgIcon("pin_c_vierkant", this.sanitizer.bypassSecurityTrustResourceUrl(pin_data(crabMarker)));
     this.crabZoekerConfig = new CrabZoekerConfig(zoekerConfigData.crab);
-    this.icoon = "pin_c_vierkant";
-    this.legende = Map.of(this.naam(), this.icoon);
-    this.style = new ol.style.Style({
-      stroke: new ol.style.Stroke({
-        color: this.crabZoekerConfig.kleur,
-        width: 1
-      }),
-      fill: new ol.style.Fill({
-        color: this.crabZoekerConfig.kleur
-      }),
-      image: new ol.style.Icon({
-        anchor: [0.5, 1.0],
-        src: pin_ol(crabMarker, this.crabZoekerConfig.kleur)
-      })
-    });
+    this.legende = Map.of(this.naam(), this.zoekerRepresentatie.getSvgNaam("Crab"));
   }
 
   naam(): string {
@@ -102,7 +84,16 @@ export class CrabZoekerService implements AbstractZoeker {
         //  we hebben daar toch alleen het middelpunt van. Google geeft een beter resultaat.
         //  Maar voorlopig zitten ze er nog in, de gebruikers moeten beslissen.
         // .filter(crabResultaat => crabResultaat.LocationType !== "crab_gemeente")
-        .map((crabResultaat, index) => new CrabZoekResultaat(crabResultaat, startIndex + index, this.naam(), this.icoon, this.style))
+        .map(
+          (crabResultaat, index) =>
+            new CrabZoekResultaat(
+              crabResultaat,
+              startIndex + index,
+              this.naam(),
+              this.zoekerRepresentatie.getSvgNaam("Crab"),
+              this.zoekerRepresentatie.getOlStyle("Crab")
+            )
+        )
     );
     return result;
   }
