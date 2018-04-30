@@ -7,8 +7,8 @@ import { MatFormFieldModule, MatIconModule, MatInputModule } from "@angular/mate
 
 import { CrabZoekerComponent } from "./crab-zoeker.component";
 import { CrabZoekerService } from "./crab-zoeker.service";
-import { GoogleLocatieZoekerComponent } from "./google-locatie-zoeker.component";
-import { GoogleLocatieZoekerService } from "./google-locatie-zoeker.service";
+import { GoogleWdbLocatieZoekerComponent } from "./google-wdb-locatie-zoeker.component";
+import { GoogleWdbLocatieZoekerService } from "./google-wdb-locatie-zoeker.service";
 import { ZoekerHighlightPipe } from "./zoeker-highlight.pipe";
 import { ZoekerInjectorComponent } from "./zoeker-injector.component";
 import { DefaultRepresentatieService, ZOEKER_REPRESENTATIE } from "./zoeker-representatie.service";
@@ -16,7 +16,7 @@ import { ZoekerComponent } from "./zoeker.component";
 import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
 
 const components: any[] = [
-  GoogleLocatieZoekerComponent,
+  GoogleWdbLocatieZoekerComponent,
   CrabZoekerComponent,
   ZoekerComponent,
   ZoekerHighlightPipe,
@@ -28,7 +28,7 @@ const components: any[] = [
   declarations: [components],
   entryComponents: [ZoekerInjectorComponent],
   exports: [components],
-  providers: [GoogleLocatieZoekerService, CrabZoekerService]
+  providers: [GoogleWdbLocatieZoekerService, CrabZoekerService]
 })
 export class ZoekerModule {
   static forRoot(config: ZoekerConfigData): ModuleWithProviders {
@@ -39,9 +39,9 @@ export class ZoekerModule {
   }
 }
 
-export * from "./google-locatie-zoeker.service";
-export * from "./google-locatie-zoeker.component";
-export * from "./google-locatie-zoeker.config";
+export * from "./google-wdb-locatie-zoeker.service";
+export * from "./google-wdb-locatie-zoeker.component";
+export * from "./google-wdb-locatie-zoeker.config";
 
 export * from "./crab-zoeker.service";
 export * from "./crab-zoeker.component";

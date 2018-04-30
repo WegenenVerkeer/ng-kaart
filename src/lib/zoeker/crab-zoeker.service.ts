@@ -75,7 +75,7 @@ export class CrabZoekerService implements AbstractZoeker {
   private voegCrabResultatenToe(result: ZoekResultaten, crabResultaten: LocatorServiceResults): ZoekResultaten {
     const startIndex = result.resultaten.length;
     result.resultaten = result.resultaten.concat(
-      // We willen geen gemeenten van CRAB zien, we hebben daar toch alleen het middelpunt van. google geeft een beter resultaat.
+      // We willen geen gemeenten van CRAB zien, we hebben daar toch alleen het middelpunt van. googleWdb geeft een beter resultaat.
       crabResultaten.LocationResult
         // Waarschijnlijk gaan we de crab gemeenten niet laten zien,
         //  we hebben daar toch alleen het middelpunt van. Google geeft een beter resultaat.

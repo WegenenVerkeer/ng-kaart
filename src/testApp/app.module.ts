@@ -20,7 +20,7 @@ import { AvKaartComponent } from "./av-kaart.component";
     KaartModule.withDefaults(),
     FormsModule,
     ZoekerModule.forRoot({
-      google: {
+      googleWdb: {
         url: "http://localhost:5100/locatiezoeker",
         apiKey: "AIzaSyApbXMl5DGL60g17JU6MazMxNcUGooey7I"
       },

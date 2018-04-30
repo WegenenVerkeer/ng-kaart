@@ -4,7 +4,7 @@ import { DomSanitizer } from "@angular/platform-browser";
 import * as ol from "openlayers";
 
 import { CrabZoekerConfig } from "./crab-zoeker.config";
-import { GoogleLocatieZoekerConfig } from "./google-locatie-zoeker.config";
+import { GoogleWdbLocatieZoekerConfig } from "./google-wdb-locatie-zoeker.config";
 import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
 
 export const ZOEKER_REPRESENTATIE = new InjectionToken<AbstractRepresentatieService>("ZoekerRepresentatie");
@@ -33,7 +33,7 @@ const wdbMarker =
 @Injectable()
 export class DefaultRepresentatieService implements AbstractRepresentatieService {
   private readonly crabZoekerConfig: CrabZoekerConfig;
-  private readonly googleLocatieZoekerConfig: GoogleLocatieZoekerConfig;
+  private readonly googleLocatieZoekerConfig: GoogleWdbLocatieZoekerConfig;
   private googleStyle: ol.style.Style;
   private wdbStyle: ol.style.Style;
   private crabStyle: ol.style.Style;
@@ -89,7 +89,7 @@ export class DefaultRepresentatieService implements AbstractRepresentatieService
     }
 
     this.crabZoekerConfig = new CrabZoekerConfig(zoekerConfigData.crab);
-    this.googleLocatieZoekerConfig = new GoogleLocatieZoekerConfig(zoekerConfigData.google);
+    this.googleLocatieZoekerConfig = new GoogleWdbLocatieZoekerConfig(zoekerConfigData.googleWdb);
 
     this.matIconRegistry.addSvgIcon(crabSvgNaam, this.sanitizer.bypassSecurityTrustResourceUrl(maakDataUrl(crabMarker)));
     this.matIconRegistry.addSvgIcon(googleSvgNaam, this.sanitizer.bypassSecurityTrustResourceUrl(maakDataUrl(googleMarker)));

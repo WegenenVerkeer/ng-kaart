@@ -9,11 +9,11 @@ import { Observable } from "rxjs/Observable";
 import { catchError, flatMap, map } from "rxjs/operators";
 
 import { AbstractZoeker, geoJSONOptions, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
-import { GoogleLocatieZoekerConfig } from "./google-locatie-zoeker.config";
+import { GoogleWdbLocatieZoekerConfig } from "./google-wdb-locatie-zoeker.config";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE, ZoekerRepresentatieType } from "./zoeker-representatie.service";
 import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
 
-export class GoogleZoekResultaat implements ZoekResultaat {
+export class GoogleWdbZoekResultaat implements ZoekResultaat {
   readonly partialMatch: boolean;
   readonly index: number;
   readonly omschrijving: string;
@@ -79,8 +79,8 @@ interface ExtendedPlaceResult extends google.maps.places.PlaceResult, ExtendedRe
 }
 
 @Injectable()
-export class GoogleLocatieZoekerService implements AbstractZoeker {
-  private readonly googleLocatieZoekerConfig: GoogleLocatieZoekerConfig;
+export class GoogleWdbLocatieZoekerService implements AbstractZoeker {
+  private readonly googleWdbLocatieZoekerConfig: GoogleWdbLocatieZoekerConfig;
   private _cache: Promise<GoogleServices> | null = null;
   private legende: Map<string, string>;
 
@@ -91,8 +91,8 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
     @Inject(ZOEKER_CFG) zoekerConfigData: ZoekerConfigData,
     @Inject(ZOEKER_REPRESENTATIE) private zoekerRepresentatie: AbstractRepresentatieService
   ) {
-    this.googleLocatieZoekerConfig = new GoogleLocatieZoekerConfig(zoekerConfigData.google);
-    this.locatieZoekerUrl = this.googleLocatieZoekerConfig.url;
+    this.googleWdbLocatieZoekerConfig = new GoogleWdbLocatieZoekerConfig(zoekerConfigData.googleWdb);
+    this.locatieZoekerUrl = this.googleWdbLocatieZoekerConfig.url;
     this.legende = Map.of(
       "Google Locatiezoeker",
       this.zoekerRepresentatie.getSvgNaam("Google"),
@@ -289,7 +289,7 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
         locaties.forEach((locatie, index) => {
           const zoekerType: ZoekerRepresentatieType = locatie.bron.startsWith("WDB") ? "WDB" : "Google";
           zoekResultaten.resultaten.push(
-            new GoogleZoekResultaat(
+            new GoogleWdbZoekResultaat(
               locatie,
               index,
               this.naam(),
@@ -298,7 +298,7 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
             )
           );
         });
-        return zoekResultaten.limiteerAantalResultaten(this.googleLocatieZoekerConfig.maxAantal);
+        return zoekResultaten.limiteerAantalResultaten(this.googleWdbLocatieZoekerConfig.maxAantal);
       });
 
       return Observable.fromPromise(zoekResultatenPromise);
@@ -468,7 +468,7 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
   private loadScript() {
     const node = document.createElement("script");
     node.src = `https://maps.googleapis.com/maps/api/js?key=${
-      this.googleLocatieZoekerConfig.apiKey
+      this.googleWdbLocatieZoekerConfig.apiKey
     }&libraries=places&language=nl&callback=__onGoogleLoaded`;
     node.type = "text/javascript";
     document.getElementsByTagName("head")[0].appendChild(node);
