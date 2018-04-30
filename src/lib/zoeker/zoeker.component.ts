@@ -3,7 +3,7 @@ import { FormControl } from "@angular/forms";
 import { none, Option } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
-import { debounce, distinctUntilChanged, map } from "rxjs/operators";
+import { debounce, distinctUntilChanged, map, filter } from "rxjs/operators";
 import { Subscription } from "rxjs/Subscription";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
@@ -12,12 +12,16 @@ import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart/kaart-internal-m
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
 import { compareResultaten, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
+import { PerceelService, PerceelGemeente } from "./perceel.service";
+import { Observable } from "rxjs/Observable";
 
 const ZoekerLaagNaam = "Zoeker";
 
 export class Fout {
   constructor(readonly zoeker: string, readonly fout: string) {}
 }
+
+export type ZoekerType = "Geoloket" | "Perceel";
 
 @Component({
   selector: "awv-zoeker",
@@ -26,12 +30,18 @@ export class Fout {
 })
 export class ZoekerComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
   zoekVeld = new FormControl();
+  perceelGemeente = new FormControl();
+  perceelAfdeling = new FormControl({ value: "", disabled: true });
+  perceelSectie = new FormControl({ value: "", disabled: true });
+  perceelPerceel = new FormControl({ value: "", disabled: true });
   alleZoekResultaten: ZoekResultaat[] = [];
   alleFouten: Fout[] = [];
   legende: Map<string, string> = new Map<string, string>();
   legendeKeys: string[] = [];
   toonHelp = false;
   toonResultaat = true;
+  actieveZoeker: ZoekerType = "Geoloket";
+  gemeenten$: Observable<PerceelGemeente[]>;
 
   private subscription: Option<Subscription> = none;
   private byPassDebounce: () => void;
@@ -78,7 +88,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
     }
   }
 
-  constructor(parent: KaartComponent, zone: NgZone) {
+  constructor(private perceelService: PerceelService, parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
   }
 
@@ -90,6 +100,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
     super.ngOnInit();
     this.bindToLifeCycle(
       this.zoekVeld.valueChanges.pipe(
+        filter(value => value !== null),
         map(value => value.trim()),
         debounce((value: string) => {
           // Form changes worden debounced tot deze promise geresolved wordt.
@@ -121,6 +132,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
       laaggroep: "Tools",
       wrapper: kaartLogOnlyWrapper
     });
+    this.maakPerceelFormLeeg();
   }
 
   ngOnDestroy(): void {
@@ -153,6 +165,33 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
     if (event.keyCode === 13 && event.srcElement.value.length >= 2 && this.byPassDebounce) {
       this.byPassDebounce();
     }
+  }
+
+  heeftResultaatOfFout(): boolean {
+    return this.alleFouten.length > 0 || this.alleZoekResultaten.length > 0;
+  }
+
+  kiesZoeker(zoeker: ZoekerType) {
+    this.actieveZoeker = zoeker;
+    if (this.actieveZoeker !== "Geoloket") {
+      this.zoekVeld.disable();
+    } else {
+      this.zoekVeld.enable();
+    }
+  }
+
+  getPlaceholder(): string {
+    switch (this.actieveZoeker) {
+      case "Geoloket":
+        return "Zoek";
+      case "Perceel":
+        return "Zoek op perceel";
+    }
+  }
+
+  private maakPerceelFormLeeg() {
+    this.perceelGemeente.setValue("");
+    this.gemeenten$ = this.perceelService.getAlleGemeenten();
   }
 
   private maakResultaatLeeg() {

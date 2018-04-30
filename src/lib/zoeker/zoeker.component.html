@@ -1,14 +1,52 @@
 <div class="float-box">
   <div class="zoeker-input">
-    <a (click)="toggleResultaat()">
+
+    <mat-menu #zoekerMenu="matMenu">
+      <button mat-menu-item (click)="kiesZoeker('Geoloket')" [disabled]="actieveZoeker === 'Geoloket'">
+        <mat-icon>search</mat-icon>
+        <span>Zoek in geoloket</span>
+      </button>
+      <button mat-menu-item (click)="kiesZoeker('Perceel')" [disabled]="actieveZoeker === 'Perceel'">
+        <mat-icon>search</mat-icon>
+        <span>Zoek perceel</span>
+      </button>
+    </mat-menu>
+
+    <a (click)="toggleResultaat()" *ngIf="heeftResultaatOfFout()">
       <mat-icon matPrefix [ngClass]="{'inactief':!toonResultaat}" class="klikbaar">search</mat-icon>
     </a>
-    <input placeholder="Zoek" [formControl]="zoekVeld" (keyup)="onKey($event)">
+    <a *ngIf="!heeftResultaatOfFout()" [matMenuTriggerFor]="zoekerMenu">
+      <mat-icon matPrefix [ngClass]="{'inactief':!toonResultaat}" class="klikbaar">search</mat-icon>
+    </a>
+    <input placeholder="{{getPlaceholder()}}" [formControl]="zoekVeld" (keyup)="onKey($event)">
     <a (click)="toggleHelp()">
       <mat-icon matSuffix [ngClass]="{'inactief':!toonHelp}" class="klikbaar">help</mat-icon>
     </a>
   </div>
-  <div class="zoeker-help" *ngIf="toonHelp">
+  <div *ngIf="actieveZoeker === 'Perceel'" class="perceel-form">
+    <mat-form-field>
+      <input matInput placeholder="Gemeente" [formControl]="perceelGemeente" [matAutocomplete]="gemeenteAuto">
+    </mat-form-field>
+    <mat-autocomplete #gemeenteAuto="matAutocomplete">
+      <mat-option *ngFor="let gemeente of gemeenten | async" [value]="gemeente">
+        {{ gemeente.naam }}
+      </mat-option>
+    </mat-autocomplete>
+    <mat-form-field>
+      <input matInput placeholder="Afdeling" [formControl]="perceelAfdeling">
+    </mat-form-field>
+    <mat-form-field>
+      <input matInput placeholder="Sectie" [formControl]="perceelSectie">
+    </mat-form-field>
+    <mat-form-field>
+      <input matInput placeholder="Perceel" [formControl]="perceelPerceel">
+    </mat-form-field>
+    <div class="perceel-buttons">
+      <button mat-button (click)="maakPerceelFormLeeg()">Maak leeg</button>
+      <button mat-button>Toon op kaart</button>
+    </div>
+  </div>
+  <div class="zoeker-help" *ngIf="toonHelp && (actieveZoeker === 'Geoloket')">
     <br>
     <b>Voorbeelden</b>
     <br>
@@ -60,13 +98,13 @@
       </div>
     </div>
   </div>
-  <div *ngIf="toonHelp && toonResultaat && (alleFouten.length > 0 || alleZoekResultaten.length > 0)" class="divider"></div>
+  <div *ngIf="toonHelp && toonResultaat && heeftResultaatOfFout()" class="divider"></div>
   <div class="zoeker-resultaat-box" *ngIf="toonResultaat">
     <div *ngFor="let fout of alleFouten" class="zoeker-resultaat zoeker-fout">
       <mat-icon>announcement</mat-icon>
       <span>{{fout.zoeker}}: {{fout.fout}}</span>
     </div>
-    <div *ngIf="alleFouten.length > 0 && alleZoekResultaten.length > 0" class="divider"></div>
+    <div *ngIf="heeftResultaatOfFout()" class="divider"></div>
     <div *ngFor="let resultaat of alleZoekResultaten" class="zoeker-resultaat klikbaar" (click)="zoomNaarResultaat(resultaat)">
       <mat-icon [svgIcon]="resultaat.icoon"></mat-icon>
       <span [innerHTML]="resultaat.omschrijving | highlight: zoekVeld.value"></span>
