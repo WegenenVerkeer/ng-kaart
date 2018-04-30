@@ -13,6 +13,7 @@ import { CrabZoekerConfig } from "./crab-zoeker.config";
 import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
 import { crabMarker, pin_data, pin_ol } from "./zoeker.icons";
 import { pipe } from "rxjs";
+import { OperatorFunction } from "rxjs/interfaces";
 
 export interface LambertLocation {
   readonly X_Lambert72: number;
@@ -119,15 +120,15 @@ export class CrabZoekerService implements AbstractZoeker {
     const zoekSuggesties$ = suggestie =>
       this.http.get<SuggestionServiceResults>(this.crabZoekerConfig.url + "/rest/geolocation/suggestion", options(suggestie));
 
-    return zoekSuggesties$(zoekterm)
-      .pipe(map(suggestieResultaten => from(suggestieResultaten.SuggestionResult).pipe(mergeMap(suggestie => zoekDetail$(suggestie)))))
-      .mergeAll(5) // mergall zit niet in de pipe door https://github.com/ReactiveX/rxjs/issues/3290
-      .pipe(
-        reduce<LocatorServiceResults, ZoekResultaten>(
-          (zoekResultaten, crabResultaten) => this.voegCrabResultatenToe(zoekResultaten, crabResultaten),
-          new ZoekResultaten(this.naam(), [], [], this.legende)
-        ),
-        map(resultaten => resultaten.limiteerAantalResultaten(this.crabZoekerConfig.maxAantal))
-      );
+    return zoekSuggesties$(zoekterm).pipe(
+      map(suggestieResultaten => from(suggestieResultaten.SuggestionResult).pipe(mergeMap(suggestie => zoekDetail$(suggestie)))),
+      // mergall moet gecast worden omdat de standaard definitie fout is: https://github.com/ReactiveX/rxjs/issues/3290
+      mergeAll(5) as OperatorFunction<Observable<LocatorServiceResults>, LocatorServiceResults>,
+      reduce<LocatorServiceResults, ZoekResultaten>(
+        (zoekResultaten, crabResultaten) => this.voegCrabResultatenToe(zoekResultaten, crabResultaten),
+        new ZoekResultaten(this.naam(), [], [], this.legende)
+      ),
+      map(resultaten => resultaten.limiteerAantalResultaten(this.crabZoekerConfig.maxAantal))
+    );
   }
 }
