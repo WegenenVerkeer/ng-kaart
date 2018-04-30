@@ -1,19 +1,16 @@
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { Inject, Injectable } from "@angular/core";
-import { MatIconRegistry } from "@angular/material";
-import { DomSanitizer } from "@angular/platform-browser";
 import { Map } from "immutable";
 import * as ol from "openlayers";
+import { OperatorFunction } from "rxjs/interfaces";
 import { Observable } from "rxjs/Observable";
 import { from } from "rxjs/observable/from";
-import { map, mergeMap, reduce, mergeAll } from "rxjs/operators";
+import { map, mergeAll, mergeMap, reduce } from "rxjs/operators";
 
-import { AbstractZoeker, ZoekResultaat, ZoekResultaten, geoJSONOptions } from "./abstract-zoeker";
-import { ZOEKER_REPRESENTATIE, AbstractRepresentatieService } from "./zoeker-representatie.service";
+import { AbstractZoeker, geoJSONOptions, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
 import { CrabZoekerConfig } from "./crab-zoeker.config";
+import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "./zoeker-representatie.service";
 import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
-import { pipe } from "rxjs";
-import { OperatorFunction } from "rxjs/interfaces";
 
 export interface LambertLocation {
   readonly X_Lambert72: number;

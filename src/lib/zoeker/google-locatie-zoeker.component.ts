@@ -1,11 +1,9 @@
-import { Component, Input, OnDestroy, OnInit, NgZone } from "@angular/core";
+import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 
-import { KaartInternalMsg, KaartInternalSubMsg, kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
-import { GoogleLocatieZoekerService } from "./google-locatie-zoeker.service";
-import { KaartCmdDispatcher, VacuousDispatcher } from "../kaart/kaart-event-dispatcher";
-import { Observable } from "rxjs/Observable";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
+import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import { KaartComponent } from "../kaart/kaart.component";
+import { GoogleLocatieZoekerService } from "./google-locatie-zoeker.service";
 
 @Component({
   selector: "awv-google-locatie-zoeker",
@@ -23,8 +21,8 @@ export class GoogleLocatieZoekerComponent extends KaartChildComponentBase implem
   }
 
   ngOnDestroy(): void {
-    super.ngOnDestroy();
-
     this.dispatch({ type: "VerwijderZoeker", zoeker: this.zoeker.naam(), wrapper: kaartLogOnlyWrapper });
+
+    super.ngOnDestroy();
   }
 }

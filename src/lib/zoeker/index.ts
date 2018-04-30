@@ -1,19 +1,19 @@
 import { CommonModule } from "@angular/common";
+import { HttpClientModule } from "@angular/common/http";
 import { ModuleWithProviders, NgModule } from "@angular/core";
 import { ReactiveFormsModule } from "@angular/forms";
 import { HttpModule } from "@angular/http";
 import { MatFormFieldModule, MatIconModule, MatInputModule } from "@angular/material";
 
+import { CrabZoekerComponent } from "./crab-zoeker.component";
+import { CrabZoekerService } from "./crab-zoeker.service";
 import { GoogleLocatieZoekerComponent } from "./google-locatie-zoeker.component";
 import { GoogleLocatieZoekerService } from "./google-locatie-zoeker.service";
 import { ZoekerHighlightPipe } from "./zoeker-highlight.pipe";
+import { ZoekerInjectorComponent } from "./zoeker-injector.component";
+import { DefaultRepresentatieService, ZOEKER_REPRESENTATIE } from "./zoeker-representatie.service";
 import { ZoekerComponent } from "./zoeker.component";
 import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
-import { CrabZoekerComponent } from "./crab-zoeker.component";
-import { ZoekerInjectorComponent } from "./zoeker-injector.component";
-import { CrabZoekerService } from "./crab-zoeker.service";
-import { HttpClientModule } from "@angular/common/http";
-import { DefaultRepresentatieService, ZOEKER_REPRESENTATIE } from "./zoeker-representatie.service";
 
 const components: any[] = [
   GoogleLocatieZoekerComponent,

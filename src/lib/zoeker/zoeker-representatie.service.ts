@@ -1,11 +1,11 @@
-import { InjectionToken, Injectable, Inject } from "@angular/core";
-import { ZoekerConfigData, ZOEKER_CFG } from "./zoeker.config";
+import { Inject, Injectable, InjectionToken } from "@angular/core";
 import { MatIconRegistry } from "@angular/material";
 import { DomSanitizer } from "@angular/platform-browser";
+import * as ol from "openlayers";
+
 import { CrabZoekerConfig } from "./crab-zoeker.config";
 import { GoogleLocatieZoekerConfig } from "./google-locatie-zoeker.config";
-
-import * as ol from "openlayers";
+import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
 
 export const ZOEKER_REPRESENTATIE = new InjectionToken<AbstractRepresentatieService>("ZoekerRepresentatie");
 

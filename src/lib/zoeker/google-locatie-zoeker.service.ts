@@ -2,18 +2,16 @@ import "rxjs/add/observable/fromPromise";
 
 import { Inject, Injectable } from "@angular/core";
 import { Http, QueryEncoder, Response, URLSearchParams } from "@angular/http";
-import { MatIconRegistry } from "@angular/material";
-import { DomSanitizer } from "@angular/platform-browser";
 import { Map } from "immutable";
 import {} from "googlemaps";
 import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
 import { catchError, flatMap, map } from "rxjs/operators";
 
-import { AbstractZoeker, ZoekResultaat, ZoekResultaten, geoJSONOptions } from "./abstract-zoeker";
+import { AbstractZoeker, geoJSONOptions, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
 import { GoogleLocatieZoekerConfig } from "./google-locatie-zoeker.config";
+import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE, ZoekerRepresentatieType } from "./zoeker-representatie.service";
 import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
-import { ZOEKER_REPRESENTATIE, AbstractRepresentatieService, ZoekerRepresentatieType } from "./zoeker-representatie.service";
 
 export class GoogleZoekResultaat implements ZoekResultaat {
   readonly partialMatch: boolean;

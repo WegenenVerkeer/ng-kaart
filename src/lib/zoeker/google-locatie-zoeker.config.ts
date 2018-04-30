@@ -13,18 +13,10 @@ export class GoogleLocatieZoekerConfig {
 
   constructor(data?: GoogleLocatieZoekerConfigData) {
     if (data) {
-      if (data.url) {
-        this.url = data.url;
-      }
-      if (data.maxAantal) {
-        this.maxAantal = data.maxAantal;
-      }
-      if (data.kleur) {
-        this.kleur = data.kleur;
-      }
-      if (data.apiKey) {
-        this.apiKey = data.apiKey;
-      }
+      this.url = data.url || this.url;
+      this.maxAantal = data.maxAantal || this.maxAantal;
+      this.kleur = data.kleur || this.kleur;
+      this.apiKey = data.apiKey || this.apiKey;
     }
   }
 
