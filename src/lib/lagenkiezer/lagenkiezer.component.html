@@ -2,8 +2,9 @@
   <div *ngFor="let laag of (lagenHoog$ | async)" class="laag-info">
     <div awvLaagmanipulatie [laag]="laag"></div>
   </div>
-  <div class="divider"></div>
+  <div class="divider" *ngIf="heeftDivider$ | async"></div>
   <div *ngFor="let laag of (lagenLaag$ | async)"  class="laag-info">
     <div awvLaagmanipulatie [laag]="laag"></div>
   </div>
+  <div class="geen-lagen" *ngIf="geenLagen$ | async">Er zijn geen voorgrondlagen</div>
 </div>
