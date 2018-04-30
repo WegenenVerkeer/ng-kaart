@@ -45,7 +45,7 @@ export class ZoekerCoordinator {
       (subscriptions, zoeker) =>
         subscriptions.set(
           zoeker.naam(),
-          zoeker.zoek(input).subscribe(zoekResultaat => {
+          zoeker.zoek$(input).subscribe(zoekResultaat => {
             this.zoekerSubject.next(zoekResultaat);
           })
         ),

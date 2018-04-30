@@ -6,12 +6,13 @@ import { Map } from "immutable";
 import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
 import { from } from "rxjs/observable/from";
-import { map, mergeMap, reduce } from "rxjs/operators";
+import { map, mergeMap, reduce, mergeAll } from "rxjs/operators";
 
-import { AbstractZoeker, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
+import { AbstractZoeker, ZoekResultaat, ZoekResultaten, geoJSONOptions } from "./abstract-zoeker";
 import { CrabZoekerConfig } from "./crab-zoeker.config";
 import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
-import { pin_c_vierkant, pin_data, pin_ol } from "./zoeker.icons";
+import { crabMarker, pin_data, pin_ol } from "./zoeker.icons";
+import { pipe } from "rxjs";
 
 export interface LambertLocation {
   readonly X_Lambert72: number;
@@ -33,24 +34,20 @@ export interface SuggestionServiceResults {
 }
 
 export class CrabZoekResultaat implements ZoekResultaat {
-  partialMatch = false;
-  index: number;
-  omschrijving: string;
-  bron: string;
-  zoeker: string;
-  geometry: any;
-  locatie: any;
-  icoon: string; // Ieder zoekresultaat heeft hetzelfde icoon.
-  style: ol.style.Style;
+  readonly partialMatch = false;
+  readonly index: number;
+  readonly omschrijving: string;
+  readonly bron: string;
+  readonly zoeker: string;
+  readonly geometry: any;
+  readonly locatie: any;
+  readonly icoon: string; // Ieder zoekresultaat heeft hetzelfde icoon.
+  readonly style: ol.style.Style;
 
   constructor(locatie: LocatorServiceResult, index: number, zoeker: string, icoon: string, style: ol.style.Style) {
     this.index = index + 1;
     this.geometry = new ol.geom.Point([locatie.Location.X_Lambert72, locatie.Location.Y_Lambert72]);
-    this.locatie = new ol.format.GeoJSON(<ol.olx.format.GeoJSONOptions>{
-      ignoreExtraDims: true,
-      defaultDataProjection: undefined,
-      featureProjection: undefined
-    }).writeGeometry(this.geometry);
+    this.locatie = new ol.format.GeoJSON(geoJSONOptions).writeGeometry(this.geometry);
     this.omschrijving = locatie.FormattedAddress;
     this.bron = locatie.LocationType;
     this.zoeker = zoeker;
@@ -72,7 +69,7 @@ export class CrabZoekerService implements AbstractZoeker {
     private matIconRegistry: MatIconRegistry,
     private readonly sanitizer: DomSanitizer
   ) {
-    this.matIconRegistry.addSvgIcon("pin_c_vierkant", this.sanitizer.bypassSecurityTrustResourceUrl(pin_data(pin_c_vierkant)));
+    this.matIconRegistry.addSvgIcon("pin_c_vierkant", this.sanitizer.bypassSecurityTrustResourceUrl(pin_data(crabMarker)));
     this.crabZoekerConfig = new CrabZoekerConfig(zoekerConfigData.crab);
     this.icoon = "pin_c_vierkant";
     this.legende = Map.of(this.naam(), this.icoon);
@@ -86,7 +83,7 @@ export class CrabZoekerService implements AbstractZoeker {
       }),
       image: new ol.style.Icon({
         anchor: [0.5, 1.0],
-        src: pin_ol(pin_c_vierkant, this.crabZoekerConfig.kleur)
+        src: pin_ol(crabMarker, this.crabZoekerConfig.kleur)
       })
     });
   }
@@ -109,53 +106,28 @@ export class CrabZoekerService implements AbstractZoeker {
     return result;
   }
 
-  private maakZoekResultaten(): ZoekResultaten {
-    const zoekResultaten = new ZoekResultaten(this.naam());
-    zoekResultaten.legende = this.legende;
-    return zoekResultaten;
-  }
-
-  private zoekDetail(zoekterm: string): Observable<LocatorServiceResults> {
-    const options = { params: new HttpParams().set("query", zoekterm) };
-
-    return this.http.get<LocatorServiceResults>(this.crabZoekerConfig.url + "/rest/geolocation/location", options);
-  }
-
-  private zoekSuggesties(zoekterm: string): Observable<SuggestionServiceResults> {
-    const options = { params: new HttpParams().set("query", zoekterm) };
-
-    return this.http.get<SuggestionServiceResults>(this.crabZoekerConfig.url + "/rest/geolocation/suggestion", options);
-  }
-
-  private limiteerAantalResultaten(zoekResultaten: ZoekResultaten): ZoekResultaten {
-    if (zoekResultaten.resultaten.length >= this.crabZoekerConfig.maxAantal) {
-      zoekResultaten.fouten.push(
-        `Er werden meer dan ${this.crabZoekerConfig.maxAantal} resultaten gevonden, ` +
-          `de eerste ${this.crabZoekerConfig.maxAantal} worden hier opgelijst`
-      );
+  zoek$(zoekterm: string): Observable<ZoekResultaten> {
+    function options(waarde) {
+      return {
+        params: new HttpParams().set("query", waarde)
+      };
     }
-    zoekResultaten.resultaten = zoekResultaten.resultaten.slice(0, this.crabZoekerConfig.maxAantal);
-    return zoekResultaten;
-  }
 
-  zoek(zoekterm: string): Observable<ZoekResultaten> {
-    const options = { params: new HttpParams().set("query", zoekterm) };
+    const zoekDetail$ = detail =>
+      this.http.get<LocatorServiceResults>(this.crabZoekerConfig.url + "/rest/geolocation/location", options(detail));
 
-    return this.zoekSuggesties(zoekterm)
-      .pipe(
-        map(suggestieResultaten =>
-          from(suggestieResultaten.SuggestionResult).pipe(
-            mergeMap(suggestie => <Observable<LocatorServiceResults>>this.zoekDetail(suggestie))
-          )
-        )
-      )
-      .mergeAll()
+    const zoekSuggesties$ = suggestie =>
+      this.http.get<SuggestionServiceResults>(this.crabZoekerConfig.url + "/rest/geolocation/suggestion", options(suggestie));
+
+    return zoekSuggesties$(zoekterm)
+      .pipe(map(suggestieResultaten => from(suggestieResultaten.SuggestionResult).pipe(mergeMap(suggestie => zoekDetail$(suggestie)))))
+      .mergeAll(5) // mergall zit niet in de pipe door https://github.com/ReactiveX/rxjs/issues/3290
       .pipe(
         reduce<LocatorServiceResults, ZoekResultaten>(
           (zoekResultaten, crabResultaten) => this.voegCrabResultatenToe(zoekResultaten, crabResultaten),
-          this.maakZoekResultaten()
+          new ZoekResultaten(this.naam(), [], [], this.legende)
         ),
-        map(resultaten => this.limiteerAantalResultaten(resultaten))
+        map(resultaten => resultaten.limiteerAantalResultaten(this.crabZoekerConfig.maxAantal))
       );
   }
 }

@@ -211,7 +211,7 @@ export class AppComponent {
 
   zoekLocaties(locatieQuery: String) {
     this.googleLocatieZoekerService
-      .zoek(locatieQuery)
+      .zoek$(locatieQuery)
       .flatMap(res => res.resultaten)
       .map(zoekresultaat => zoekresultaat.geometry)
       .map(geometry => new ol.Feature(geometry))

@@ -11,15 +11,9 @@ export class CrabZoekerConfig {
 
   constructor(data?: CrabZoekerConfigData) {
     if (data) {
-      if (data.url) {
-        this.url = data.url;
-      }
-      if (data.maxAantal) {
-        this.maxAantal = data.maxAantal;
-      }
-      if (data.kleur) {
-        this.kleur = data.kleur;
-      }
+      this.url = data.url || this.url;
+      this.maxAantal = data.maxAantal || this.maxAantal;
+      this.kleur = data.kleur || this.kleur;
     }
   }
 }
