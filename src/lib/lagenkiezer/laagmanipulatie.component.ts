@@ -53,6 +53,6 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
   }
 
   remove() {
-    // this.dispatch(kaartMsg.verwijderToegevoegdeLaag(this.laag.laagId));
+    this.dispatch(cmd.VerwijderLaagCmd(this.laag.titel, kaartLogOnlyWrapper));
   }
 }
