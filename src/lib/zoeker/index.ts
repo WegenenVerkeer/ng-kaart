@@ -5,24 +5,35 @@ import { HttpModule } from "@angular/http";
 import { MatFormFieldModule, MatIconModule, MatInputModule } from "@angular/material";
 
 import { GoogleLocatieZoekerComponent } from "./google-locatie-zoeker.component";
-import { GOOGLE_LOCATIE_ZOEKER_CFG, GoogleLocatieZoekerConfigData } from "./google-locatie-zoeker.config";
 import { GoogleLocatieZoekerService } from "./google-locatie-zoeker.service";
 import { ZoekerHighlightPipe } from "./zoeker-highlight.pipe";
 import { ZoekerComponent } from "./zoeker.component";
+import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
+import { CrabZoekerComponent } from "./crab-zoeker.component";
+import { ZoekerInjectorComponent } from "./zoeker-injector.component";
+import { CrabZoekerService } from "./crab-zoeker.service";
+import { HttpClientModule } from "@angular/common/http";
 
-const components: any[] = [GoogleLocatieZoekerComponent, ZoekerComponent, ZoekerHighlightPipe];
+const components: any[] = [
+  GoogleLocatieZoekerComponent,
+  CrabZoekerComponent,
+  ZoekerComponent,
+  ZoekerHighlightPipe,
+  ZoekerInjectorComponent
+];
 
 @NgModule({
-  imports: [CommonModule, HttpModule, ReactiveFormsModule, MatIconModule, MatInputModule, MatFormFieldModule],
+  imports: [CommonModule, HttpModule, HttpClientModule, ReactiveFormsModule, MatIconModule, MatInputModule, MatFormFieldModule],
   declarations: [components],
+  entryComponents: [ZoekerInjectorComponent],
   exports: [components],
-  providers: [GoogleLocatieZoekerService]
+  providers: [GoogleLocatieZoekerService, CrabZoekerService]
 })
 export class ZoekerModule {
-  static forRoot(config: GoogleLocatieZoekerConfigData): ModuleWithProviders {
+  static forRoot(config: ZoekerConfigData): ModuleWithProviders {
     return {
       ngModule: ZoekerModule,
-      providers: [{ provide: GOOGLE_LOCATIE_ZOEKER_CFG, useValue: config }]
+      providers: [{ provide: ZOEKER_CFG, useValue: config }]
     };
   }
 }
@@ -30,6 +41,11 @@ export class ZoekerModule {
 export * from "./google-locatie-zoeker.service";
 export * from "./google-locatie-zoeker.component";
 export * from "./google-locatie-zoeker.config";
+
+export * from "./crab-zoeker.service";
+export * from "./crab-zoeker.component";
+export * from "./crab-zoeker.config";
+
 export * from "./zoeker-highlight.pipe";
 export * from "./zoeker.component";
 export * from "./abstract-zoeker";

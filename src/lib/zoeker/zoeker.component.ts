@@ -1,10 +1,9 @@
 import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { SafeHtml } from "@angular/platform-browser";
 import { none, Option } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
-import { debounce, distinctUntilChanged } from "rxjs/operators";
+import { debounce, distinctUntilChanged, map } from "rxjs/operators";
 import { Subscription } from "rxjs/Subscription";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
@@ -29,7 +28,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
   zoekVeld = new FormControl();
   alleZoekResultaten: ZoekResultaat[] = [];
   alleFouten: Fout[] = [];
-  legende: Map<string, SafeHtml> = new Map<string, SafeHtml>();
+  legende: Map<string, string> = new Map<string, string>();
   legendeKeys: string[] = [];
   toonHelp = false;
   toonResultaat = true;
@@ -52,7 +51,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
 
   private static maakNieuwFeature(resultaat: ZoekResultaat): ol.Feature[] {
     const feature = new ol.Feature({ data: resultaat, geometry: resultaat.geometry, name: resultaat.omschrijving });
-    feature.setId(resultaat.index);
+    feature.setId(resultaat.bron + "_" + resultaat.index);
     feature.setStyle(resultaat.style);
 
     let middlePoint: ol.geom.Point | undefined = undefined;
@@ -91,6 +90,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
     super.ngOnInit();
     this.bindToLifeCycle(
       this.zoekVeld.valueChanges.pipe(
+        map(value => value.trim()),
         debounce((value: string) => {
           // Form changes worden debounced tot deze promise geresolved wordt.
           return new Promise(resolve => {
@@ -106,8 +106,8 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
         distinctUntilChanged()
       )
     ).subscribe(value => {
-      this.toonResultaat = true;
       this.maakResultaatLeeg();
+      this.toonResultaat = true;
 
       if (value.length > 0) {
         this.dispatch({ type: "Zoek", input: value, wrapper: kaartLogOnlyWrapper });
