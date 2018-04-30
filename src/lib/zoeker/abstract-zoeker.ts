@@ -3,6 +3,12 @@ import { Map } from "immutable";
 import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
 
+export const geoJSONOptions = <ol.olx.format.GeoJSONOptions>{
+  ignoreExtraDims: true,
+  defaultDataProjection: undefined,
+  featureProjection: undefined
+};
+
 export interface ZoekResultaat {
   partialMatch: boolean;
   index: number;
@@ -16,22 +22,30 @@ export interface ZoekResultaat {
 }
 
 export class ZoekResultaten {
-  resultaten: ZoekResultaat[] = [];
-  fouten: string[] = [];
-  zoeker: string;
-  legende: Map<string, string> = Map();
+  constructor(
+    public zoeker: string,
+    public fouten: string[] = [],
+    public resultaten: ZoekResultaat[] = [],
+    public legende: Map<string, string> = Map()
+  ) {}
 
-  constructor(zoeker: string, error?: string) {
-    this.zoeker = zoeker;
-    if (error != null) {
-      this.fouten.push(error);
+  limiteerAantalResultaten(maxAantal: number): ZoekResultaten {
+    if (this.resultaten.length >= maxAantal) {
+      return new ZoekResultaten(
+        this.zoeker,
+        this.fouten.concat([`Er werden meer dan ${maxAantal} resultaten gevonden, ` + `de eerste ${maxAantal} worden hier opgelijst`]),
+        this.resultaten.slice(0, maxAantal),
+        this.legende
+      );
+    } else {
+      return this;
     }
   }
 }
 
 export interface AbstractZoeker {
   naam(): string;
-  zoek(zoekterm: string): Observable<ZoekResultaten>;
+  zoek$(zoekterm: string): Observable<ZoekResultaten>;
 }
 
 // De resultaten worden getoond volgens een bepaalde hiërarchie

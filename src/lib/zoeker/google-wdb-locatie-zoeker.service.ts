@@ -2,46 +2,37 @@ import "rxjs/add/observable/fromPromise";
 
 import { Inject, Injectable } from "@angular/core";
 import { Http, QueryEncoder, Response, URLSearchParams } from "@angular/http";
-import { MatIconRegistry } from "@angular/material";
-import { DomSanitizer } from "@angular/platform-browser";
 import { Map } from "immutable";
 import {} from "googlemaps";
 import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
 import { catchError, flatMap, map } from "rxjs/operators";
 
-import { AbstractZoeker, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
-import { GoogleLocatieZoekerConfig } from "./google-locatie-zoeker.config";
+import { AbstractZoeker, geoJSONOptions, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
+import { GoogleWdbLocatieZoekerConfig } from "./google-wdb-locatie-zoeker.config";
+import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE, ZoekerRepresentatieType } from "./zoeker-representatie.service";
 import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
-import { pin_data, pin_g_vierkant, pin_ol, pin_w_vierkant } from "./zoeker.icons";
 
-const googleIcoon = "pin_g_vierkant";
-const wdbIcoon = "pin_w_vierkant";
+export class GoogleWdbZoekResultaat implements ZoekResultaat {
+  readonly partialMatch: boolean;
+  readonly index: number;
+  readonly omschrijving: string;
+  readonly bron: string;
+  readonly zoeker: string;
+  readonly geometry: any;
+  readonly locatie: any;
+  readonly icoon: string; // Ieder zoekresultaat heeft hetzelfde icoon.
+  readonly style: ol.style.Style;
 
-export class GoogleZoekResultaat implements ZoekResultaat {
-  partialMatch: boolean;
-  index: number;
-  omschrijving: string;
-  bron: string;
-  zoeker: string;
-  geometry: any;
-  locatie: any;
-  icoon: string; // Ieder zoekresultaat heeft hetzelfde icoon.
-  style: ol.style.Style;
-
-  constructor(locatie, index: number, zoeker: string, style: ol.style.Style) {
+  constructor(locatie, index: number, zoeker: string, style: ol.style.Style, icoon: string) {
     this.partialMatch = locatie.partialMatch;
     this.index = index + 1;
     this.locatie = locatie.locatie;
-    this.geometry = new ol.format.GeoJSON(<ol.olx.format.GeoJSONOptions>{
-      ignoreExtraDims: true,
-      defaultDataProjection: undefined,
-      featureProjection: undefined
-    }).readGeometry(locatie.locatie);
+    this.geometry = new ol.format.GeoJSON(geoJSONOptions).readGeometry(locatie.locatie);
     this.omschrijving = locatie.omschrijving;
     this.bron = locatie.bron;
     this.zoeker = zoeker;
-    this.icoon = this.bron.startsWith("WDB") ? wdbIcoon : googleIcoon;
+    this.icoon = icoon;
     this.style = style;
   }
 }
@@ -88,52 +79,26 @@ interface ExtendedPlaceResult extends google.maps.places.PlaceResult, ExtendedRe
 }
 
 @Injectable()
-export class GoogleLocatieZoekerService implements AbstractZoeker {
-  private readonly googleLocatieZoekerConfig: GoogleLocatieZoekerConfig;
+export class GoogleWdbLocatieZoekerService implements AbstractZoeker {
+  private readonly googleWdbLocatieZoekerConfig: GoogleWdbLocatieZoekerConfig;
   private _cache: Promise<GoogleServices> | null = null;
   private legende: Map<string, string>;
-  private googleStyle: ol.style.Style;
-  private wdbStyle: ol.style.Style;
 
   private readonly locatieZoekerUrl: string;
 
   constructor(
     private readonly http: Http,
     @Inject(ZOEKER_CFG) zoekerConfigData: ZoekerConfigData,
-    private matIconRegistry: MatIconRegistry,
-    private readonly sanitizer: DomSanitizer
+    @Inject(ZOEKER_REPRESENTATIE) private zoekerRepresentatie: AbstractRepresentatieService
   ) {
-    this.googleLocatieZoekerConfig = new GoogleLocatieZoekerConfig(zoekerConfigData.google);
-    this.locatieZoekerUrl = this.googleLocatieZoekerConfig.url;
-    this.matIconRegistry.addSvgIcon(googleIcoon, this.sanitizer.bypassSecurityTrustResourceUrl(pin_data(pin_g_vierkant)));
-    this.matIconRegistry.addSvgIcon(wdbIcoon, this.sanitizer.bypassSecurityTrustResourceUrl(pin_data(pin_w_vierkant)));
-    this.legende = Map.of("Google Locatiezoeker", googleIcoon, "WDB Locatiezoeker", wdbIcoon);
-    this.googleStyle = new ol.style.Style({
-      stroke: new ol.style.Stroke({
-        color: this.googleLocatieZoekerConfig.kleur,
-        width: 1
-      }),
-      fill: new ol.style.Fill({
-        color: this.googleLocatieZoekerConfig.lichtereKleur()
-      }),
-      image: new ol.style.Icon({
-        anchor: [0.5, 1.0],
-        src: pin_ol(pin_g_vierkant, this.googleLocatieZoekerConfig.kleur)
-      })
-    });
-    this.wdbStyle = new ol.style.Style({
-      stroke: new ol.style.Stroke({
-        color: this.googleLocatieZoekerConfig.kleur,
-        width: 1
-      }),
-      fill: new ol.style.Fill({
-        color: this.googleLocatieZoekerConfig.lichtereKleur()
-      }),
-      image: new ol.style.Icon({
-        anchor: [0.5, 1.0],
-        src: pin_ol(pin_w_vierkant, this.googleLocatieZoekerConfig.kleur)
-      })
-    });
+    this.googleWdbLocatieZoekerConfig = new GoogleWdbLocatieZoekerConfig(zoekerConfigData.googleWdb);
+    this.locatieZoekerUrl = this.googleWdbLocatieZoekerConfig.url;
+    this.legende = Map.of(
+      "Google Locatiezoeker",
+      this.zoekerRepresentatie.getSvgNaam("Google"),
+      "WDB Locatiezoeker",
+      this.zoekerRepresentatie.getSvgNaam("WDB")
+    );
   }
 
   private init(): Promise<GoogleServices> {
@@ -152,15 +117,9 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
     }
   }
 
-  private maakZoekResultaten(error?: string): ZoekResultaten {
-    const resultaten = new ZoekResultaten(this.naam(), error);
-    resultaten.legende = this.legende;
-    return resultaten;
-  }
-
-  zoek(zoekterm): Observable<ZoekResultaten> {
+  zoek$(zoekterm): Observable<ZoekResultaten> {
     if (zoekterm.trim().length === 0) {
-      return Observable.of(this.maakZoekResultaten());
+      return Observable.of(new ZoekResultaten(this.naam(), [], [], this.legende));
     }
     const params: URLSearchParams = new URLSearchParams("", new EncodeAllesQueryEncoder());
     params.set("query", zoekterm);
@@ -172,7 +131,7 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
   }
 
   parseResult(response: Response): Observable<ZoekResultaten> {
-    const zoekResultaten = this.maakZoekResultaten();
+    const zoekResultaten = new ZoekResultaten(this.naam(), [], [], this.legende);
 
     // parse result
     const resultaten = response.json();
@@ -327,18 +286,19 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
             resultaat.locatie || this.wgs84ToLambert72GeoJson(resultaat.geometry.location.lng(), resultaat.geometry.location.lat());
         });
         const locaties = resultaten.locaties.concat(resultatenLijst);
-        if (locaties.length >= this.googleLocatieZoekerConfig.maxAantal) {
-          zoekResultaten.fouten.push(
-            `Er werden meer dan ${this.googleLocatieZoekerConfig.maxAantal} resultaten gevonden, ` +
-              `de eerste ${this.googleLocatieZoekerConfig.maxAantal} worden hier opgelijst`
-          );
-        }
-        locaties.slice(0, this.googleLocatieZoekerConfig.maxAantal).forEach((locatie, index) => {
+        locaties.forEach((locatie, index) => {
+          const zoekerType: ZoekerRepresentatieType = locatie.bron.startsWith("WDB") ? "WDB" : "Google";
           zoekResultaten.resultaten.push(
-            new GoogleZoekResultaat(locatie, index, this.naam(), locatie.bron.startsWith("WDB") ? this.wdbStyle : this.googleStyle)
+            new GoogleWdbZoekResultaat(
+              locatie,
+              index,
+              this.naam(),
+              this.zoekerRepresentatie.getOlStyle(zoekerType),
+              this.zoekerRepresentatie.getSvgNaam(zoekerType)
+            )
           );
         });
-        return zoekResultaten;
+        return zoekResultaten.limiteerAantalResultaten(this.googleWdbLocatieZoekerConfig.maxAantal);
       });
 
       return Observable.fromPromise(zoekResultatenPromise);
@@ -355,7 +315,7 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
         // toon http foutmelding indien geen 200 teruggehad
         error = `Fout bij opvragen locatie: ${response.responseText || response.statusText || response}`;
     }
-    return Observable.of(this.maakZoekResultaten(error));
+    return Observable.of(new ZoekResultaten(this.naam(), [error], [], this.legende));
   }
 
   private geocode(omschrijving): Promise<ExtendedGeocoderResult[]> {
@@ -508,7 +468,7 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
   private loadScript() {
     const node = document.createElement("script");
     node.src = `https://maps.googleapis.com/maps/api/js?key=${
-      this.googleLocatieZoekerConfig.apiKey
+      this.googleWdbLocatieZoekerConfig.apiKey
     }&libraries=places&language=nl&callback=__onGoogleLoaded`;
     node.type = "text/javascript";
     document.getElementsByTagName("head")[0].appendChild(node);

@@ -3,14 +3,14 @@ import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import { KaartComponent } from "../kaart/kaart.component";
-import { CrabZoekerService } from "./crab-zoeker.service";
+import { GoogleWdbLocatieZoekerService } from "./google-wdb-locatie-zoeker.service";
 
 @Component({
-  selector: "awv-crab-zoeker",
+  selector: "awv-google-wdb-locatie-zoeker",
   template: "<ng-content></ng-content>"
 })
-export class CrabZoekerComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
-  constructor(parent: KaartComponent, zone: NgZone, private readonly zoeker: CrabZoekerService) {
+export class GoogleWdbLocatieZoekerComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
+  constructor(parent: KaartComponent, zone: NgZone, private readonly zoeker: GoogleWdbLocatieZoekerService) {
     super(parent, zone);
   }
 
