@@ -23,29 +23,7 @@
       <mat-icon matSuffix [ngClass]="{'inactief':!toonHelp}" class="klikbaar">help</mat-icon>
     </a>
   </div>
-  <div *ngIf="actieveZoeker === 'Perceel'" class="perceel-form">
-    <mat-form-field>
-      <input matInput placeholder="Gemeente" [formControl]="perceelGemeente" [matAutocomplete]="gemeenteAuto">
-    </mat-form-field>
-    <mat-autocomplete #gemeenteAuto="matAutocomplete">
-      <mat-option *ngFor="let gemeente of gemeenten | async" [value]="gemeente">
-        {{ gemeente.naam }}
-      </mat-option>
-    </mat-autocomplete>
-    <mat-form-field>
-      <input matInput placeholder="Afdeling" [formControl]="perceelAfdeling">
-    </mat-form-field>
-    <mat-form-field>
-      <input matInput placeholder="Sectie" [formControl]="perceelSectie">
-    </mat-form-field>
-    <mat-form-field>
-      <input matInput placeholder="Perceel" [formControl]="perceelPerceel">
-    </mat-form-field>
-    <div class="perceel-buttons">
-      <button mat-button (click)="maakPerceelFormLeeg()">Maak leeg</button>
-      <button mat-button>Toon op kaart</button>
-    </div>
-  </div>
+  <awv-perceel-zoeker *ngIf="actieveZoeker === 'Perceel'"></awv-perceel-zoeker>
   <div class="zoeker-help" *ngIf="toonHelp && (actieveZoeker === 'Geoloket')">
     <br>
     <b>Voorbeelden</b>

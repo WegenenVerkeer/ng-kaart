@@ -16,6 +16,7 @@ import { CrabZoekerComponent } from "./crab-zoeker.component";
 import { CrabZoekerService } from "./crab-zoeker.service";
 import { GoogleWdbLocatieZoekerComponent } from "./google-wdb-locatie-zoeker.component";
 import { GoogleWdbLocatieZoekerService } from "./google-wdb-locatie-zoeker.service";
+import { PerceelZoekerComponent } from "./perceel-zoeker.component";
 import { PerceelService } from "./perceel.service";
 import { ZoekerHighlightPipe } from "./zoeker-highlight.pipe";
 import { ZoekerInjectorComponent } from "./zoeker-injector.component";
@@ -28,7 +29,8 @@ const components: any[] = [
   CrabZoekerComponent,
   ZoekerComponent,
   ZoekerHighlightPipe,
-  ZoekerInjectorComponent
+  ZoekerInjectorComponent,
+  PerceelZoekerComponent
 ];
 
 @NgModule({
@@ -65,7 +67,9 @@ export * from "./google-wdb-locatie-zoeker.config";
 export * from "./crab-zoeker.service";
 export * from "./crab-zoeker.component";
 export * from "./crab-zoeker.config";
+
 export * from "./perceel.service";
+export * from "./perceel-zoeker.component";
 
 export * from "./zoeker-highlight.pipe";
 export * from "./zoeker.component";

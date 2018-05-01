@@ -1,9 +1,10 @@
-import { PipeTransform, Pipe } from "@angular/core";
+import { Pipe, PipeTransform } from "@angular/core";
 
 @Pipe({ name: "highlight" })
 export class ZoekerHighlightPipe implements PipeTransform {
   transform(text: string, search): string {
-    if (search && text) {
+    let result: string;
+    if (search && typeof search === "string" && text) {
       let pattern = search.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
       pattern = pattern
         .split(" ")
@@ -13,9 +14,10 @@ export class ZoekerHighlightPipe implements PipeTransform {
         .join("|");
       const regex = new RegExp(pattern, "gi");
 
-      return text.replace(regex, match => `<span class="awv-zoeker-highlight">${match}</span>`);
+      result = text.replace(regex, match => `<span class="awv-zoeker-highlight">${match}</span>`);
     } else {
-      return text;
+      result = text;
     }
+    return `<span class="awv-zoeker-highlighter">${result}</span>`;
   }
 }

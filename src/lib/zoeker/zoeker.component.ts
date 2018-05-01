@@ -3,7 +3,7 @@ import { FormControl } from "@angular/forms";
 import { none, Option } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
-import { debounce, distinctUntilChanged, map, filter } from "rxjs/operators";
+import { debounce, distinctUntilChanged, filter, map } from "rxjs/operators";
 import { Subscription } from "rxjs/Subscription";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
@@ -12,8 +12,6 @@ import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart/kaart-internal-m
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
 import { compareResultaten, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
-import { PerceelService, PerceelGemeente } from "./perceel.service";
-import { Observable } from "rxjs/Observable";
 
 const ZoekerLaagNaam = "Zoeker";
 
@@ -30,10 +28,6 @@ export type ZoekerType = "Geoloket" | "Perceel";
 })
 export class ZoekerComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
   zoekVeld = new FormControl();
-  perceelGemeente = new FormControl();
-  perceelAfdeling = new FormControl({ value: "", disabled: true });
-  perceelSectie = new FormControl({ value: "", disabled: true });
-  perceelPerceel = new FormControl({ value: "", disabled: true });
   alleZoekResultaten: ZoekResultaat[] = [];
   alleFouten: Fout[] = [];
   legende: Map<string, string> = new Map<string, string>();
@@ -41,7 +35,6 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
   toonHelp = false;
   toonResultaat = true;
   actieveZoeker: ZoekerType = "Geoloket";
-  gemeenten$: Observable<PerceelGemeente[]>;
 
   private subscription: Option<Subscription> = none;
   private byPassDebounce: () => void;
@@ -88,7 +81,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
     }
   }
 
-  constructor(private perceelService: PerceelService, parent: KaartComponent, zone: NgZone) {
+  constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
   }
 
@@ -132,7 +125,6 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
       laaggroep: "Tools",
       wrapper: kaartLogOnlyWrapper
     });
-    this.maakPerceelFormLeeg();
   }
 
   ngOnDestroy(): void {
@@ -187,11 +179,6 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
       case "Perceel":
         return "Zoek op perceel";
     }
-  }
-
-  private maakPerceelFormLeeg() {
-    this.perceelGemeente.setValue("");
-    this.gemeenten$ = this.perceelService.getAlleGemeenten();
   }
 
   private maakResultaatLeeg() {
