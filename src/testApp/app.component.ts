@@ -78,9 +78,11 @@ export class AppComponent {
   installatie: ol.Feature[] = [
     new ol.Feature({
       id: 1,
-      laag: "Fietspaden",
-      ident8: "R0010001",
-      type: "Vrijliggend",
+      laagnaam: "Fietspaden",
+      properties: {
+        ident8: "R0010001",
+        typefietspad: "Vrijliggend"
+      },
       geometry: new ol.geom.Point(this.installatieCoordinaat)
     })
   ];
@@ -193,9 +195,11 @@ export class AppComponent {
 
     const feature = new ol.Feature({
       id: this.installaties.length,
-      laag: "Fietspaden",
-      ident8: "R0010001",
-      type: "Vrijliggend",
+      laagnaam: "Fietspaden",
+      properties: {
+        ident8: "R0010001",
+        typefietspad: "Vrijliggend"
+      },
       geometry: new ol.geom.Point(locatie)
     });
     feature.setStyle(this.pinIcon);
@@ -223,10 +227,10 @@ export class AppComponent {
       this.selectieKaart //
         .toonInfoBoodschap(
           feature.get("id").toString(),
-          feature.get("laag"),
+          feature.get("laagnaam"),
           `Id: ${feature.get("id")}<br>` + //
-          `Ident8: ${feature.get("ident8")}<br>` + //
-            `Type: ${feature.get("type")}`
+          `Ident8: ${feature.getProperties()["properties"]["ident8"]}<br>` + //
+            `Type: ${feature.getProperties()["properties"]["typefietspad"]}`
         )
     );
   }
