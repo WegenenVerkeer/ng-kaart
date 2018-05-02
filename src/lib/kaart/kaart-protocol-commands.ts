@@ -46,8 +46,9 @@ export type Command<Msg extends KaartMsg> =
   | VerwijderOverlaysCmd
   | ToonInfoBoodschapCmd
   | VerbergInfoBoodschapCmd
-  | VoegUIElementToe
-  | VerwijderUIElement;
+  | VoegUiElementToe
+  | VerwijderUiElement
+  | ZetUiElementOpties;
 
 export interface SubscriptionResult {
   readonly subscription: RxSubscription;
@@ -259,14 +260,26 @@ export interface VerbergInfoBoodschapCmd {
   readonly id: string;
 }
 
-export interface VoegUIElementToe {
-  readonly type: "VoegUIElementToe";
+export interface UiElementOpties {
+  naam: string;
+  [k: string]: any;
+}
+
+// TODO toevoegen van een selector wanneer er meerdere elementen van hetzelfde type beschikbaar zijn
+export interface VoegUiElementToe {
+  readonly type: "VoegUiElementToe";
   readonly naam: string;
 }
 
-export interface VerwijderUIElement {
-  readonly type: "VerwijderUIElement";
+export interface VerwijderUiElement {
+  readonly type: "VerwijderUiElement";
   readonly naam: string;
+}
+
+export interface ZetUiElementOpties {
+  readonly type: "ZetUiElementOpties";
+  readonly naam: string;
+  readonly opties: UiElementOpties;
 }
 
 ////////////////////////
@@ -435,10 +448,14 @@ export function VerbergInfoBoodschapCmd<Msg extends KaartMsg>(id: string): Verbe
   return { type: "VerbergInfoBoodschap", id: id };
 }
 
-export function VoegUIElementToe(naam: string): VoegUIElementToe {
-  return { type: "VoegUIElementToe", naam: naam };
+export function VoegUiElementToe(naam: string): VoegUiElementToe {
+  return { type: "VoegUiElementToe", naam: naam };
 }
 
-export function VerwijderUIElement(naam: string): VerwijderUIElement {
-  return { type: "VerwijderUIElement", naam: naam };
+export function VerwijderUiElement(naam: string): VerwijderUiElement {
+  return { type: "VerwijderUiElement", naam: naam };
+}
+
+export function ZetUiElementOpties(naam: string, opties: UiElementOpties): ZetUiElementOpties {
+  return { type: "ZetUiElementOpties", naam: naam, opties: opties };
 }

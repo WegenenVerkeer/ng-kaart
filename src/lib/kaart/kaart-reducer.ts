@@ -13,7 +13,7 @@ import * as rx from "rxjs";
 import { forEach } from "../util/option";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
-import { PositieAanpassing, ZetMijnLocatieZoomCmd, VoegUIElementToe } from "./kaart-protocol-commands";
+import { PositieAanpassing, ZetMijnLocatieZoomCmd, VoegUiElementToe, ZetUiElementOpties } from "./kaart-protocol-commands";
 import { KaartWithInfo } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
 import { ModelChanger } from "./model-changes";
@@ -513,7 +513,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           const modelMetAangepasteLagen = aangepasteAchtergronden.reduce((mdl, laag) => pasLaagAan(mdl!, laag!), model);
 
           model.achtergrondlaagtitelSubj.next(teSelecterenLaag.titel);
-          modelChanger.uiElementenSelectieSubj.next({ naam: "Achtergrondkeuze", aan: true });
+          modelChanger.uiElementSelectieSubj.next({ naam: "Achtergrondkeuze", aan: true });
           return ModelAndEmptyResult({
             ...modelMetAangepasteLagen,
             showBackgroundSelector: true
@@ -527,7 +527,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         cmnd.wrapper,
         fromBoolean(model.showBackgroundSelector, "De achtergrondkeuze is niet actief") //
           .map(() => {
-            modelChanger.uiElementenSelectieSubj.next({ naam: "Achtergrondkeuze", aan: false });
+            modelChanger.uiElementSelectieSubj.next({ naam: "Achtergrondkeuze", aan: false });
             return ModelAndEmptyResult({ ...model, showBackgroundSelector: false });
           })
       );
@@ -684,13 +684,18 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
-    function voegUIElementToe(cmnd: prt.VoegUIElementToe): ModelWithResult<Msg> {
-      modelChanger.uiElementenSelectieSubj.next({ naam: cmnd.naam, aan: true });
+    function voegUiElementToe(cmnd: prt.VoegUiElementToe): ModelWithResult<Msg> {
+      modelChanger.uiElementSelectieSubj.next({ naam: cmnd.naam, aan: true });
       return ModelWithResult(model);
     }
 
-    function verwijderUIElement(cmnd: prt.VerwijderUIElement): ModelWithResult<Msg> {
-      modelChanger.uiElementenSelectieSubj.next({ naam: cmnd.naam, aan: false });
+    function verwijderUiElement(cmnd: prt.VerwijderUiElement): ModelWithResult<Msg> {
+      modelChanger.uiElementSelectieSubj.next({ naam: cmnd.naam, aan: false });
+      return ModelWithResult(model);
+    }
+
+    function zetUiElementOpties(cmdn: prt.ZetUiElementOpties): ModelWithResult<Msg> {
+      modelChanger.uiElementOptiesSubj.next({ naam: cmdn.naam, opties: cmdn.opties });
       return ModelWithResult(model);
     }
 
@@ -883,10 +888,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return toonInfoBoodschap(cmd);
       case "VerbergInfoBoodschap":
         return verbergInfoBoodschap(cmd);
-      case "VoegUIElementToe":
-        return voegUIElementToe(cmd);
-      case "VerwijderUIElement":
-        return verwijderUIElement(cmd);
+      case "VoegUiElementToe":
+        return voegUiElementToe(cmd);
+      case "VerwijderUiElement":
+        return verwijderUiElement(cmd);
+      case "ZetUiElementOpties":
+        return zetUiElementOpties(cmd);
     }
   };
 }

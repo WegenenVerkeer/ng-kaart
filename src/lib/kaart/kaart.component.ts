@@ -21,7 +21,7 @@ import * as prt from "./kaart-protocol";
 import * as red from "./kaart-reducer";
 import { KaartWithInfo } from "./kaart-with-info";
 import { kaartLogger } from "./log";
-import { modelChanger, ModelChanger, ModelChanges, modelChanges, UIElementSelectie } from "./model-changes";
+import { modelChanger, ModelChanger, ModelChanges, modelChanges, UiElementSelectie } from "./model-changes";
 import { Set } from "immutable";
 
 // Om enkel met @Input properties te moeten werken. Op deze manier kan een stream van KaartMsg naar de caller gestuurd worden
@@ -104,8 +104,8 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       model.map.setTarget((undefined as any) as string); // Hack omdat openlayers typedefs kaduuk zijn
     });
 
-    this.aanwezigeElementen$ = this.modelChanges.uiElementenSelectie$.pipe(
-      scan((st: Set<string>, selectie: UIElementSelectie) => (selectie.aan ? st.add(selectie.naam) : st.delete(selectie.naam)), Set())
+    this.aanwezigeElementen$ = this.modelChanges.uiElementSelectie$.pipe(
+      scan((st: Set<string>, selectie: UiElementSelectie) => (selectie.aan ? st.add(selectie.naam) : st.delete(selectie.naam)), Set())
     );
   }
 

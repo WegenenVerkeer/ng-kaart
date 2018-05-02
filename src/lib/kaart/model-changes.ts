@@ -1,9 +1,9 @@
 import * as rx from "rxjs";
-import { Set } from "immutable";
-import { Tuple } from "fp-ts/lib/Tuple";
+
+import { UiElementOpties } from "./kaart-protocol-commands";
 import { Zoominstellingen } from "./kaart-protocol-subscriptions";
 
-export interface UIElementSelectie {
+export interface UiElementSelectie {
   naam: string;
   aan: boolean;
 }
@@ -15,21 +15,25 @@ export interface UIElementSelectie {
  * met directe subjects/observables is dus performanter.
  */
 export interface ModelChanger {
-  readonly uiElementenSelectieSubj: rx.Subject<UIElementSelectie>;
+  readonly uiElementSelectieSubj: rx.Subject<UiElementSelectie>;
+  readonly uiElementOptiesSubj: rx.Subject<UiElementOpties>;
   readonly huidigeZoomSubj: rx.Subject<Zoominstellingen>;
 }
 
 export const modelChanger: ModelChanger = {
-  uiElementenSelectieSubj: new rx.Subject<UIElementSelectie>(),
-  huidigeZoomSubj: new rx.ReplaySubject(1)
+  uiElementSelectieSubj: new rx.Subject<UiElementSelectie>(),
+  uiElementOptiesSubj: new rx.ReplaySubject<UiElementOpties>(1),
+  huidigeZoomSubj: new rx.ReplaySubject<Zoominstellingen>(1)
 };
 
 export interface ModelChanges {
-  readonly uiElementenSelectie$: rx.Observable<UIElementSelectie>;
+  readonly uiElementSelectie$: rx.Observable<UiElementSelectie>;
+  readonly uiElementOpties$: rx.Observable<UiElementOpties>;
   readonly huidigeZoom$: rx.Observable<Zoominstellingen>;
 }
 
 export const modelChanges: (changer: ModelChanger) => ModelChanges = changer => ({
-  uiElementenSelectie$: changer.uiElementenSelectieSubj.asObservable(),
+  uiElementSelectie$: changer.uiElementSelectieSubj.asObservable(),
+  uiElementOpties$: changer.uiElementOptiesSubj.asObservable(),
   huidigeZoom$: changer.huidigeZoomSubj.asObservable()
 });

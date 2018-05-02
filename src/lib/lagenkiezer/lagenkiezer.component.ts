@@ -1,24 +1,20 @@
-import { Component, OnInit, OnDestroy, NgZone } from "@angular/core";
-import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
-import { KaartComponent } from "../kaart/kaart.component";
-import * as prt from "../kaart/kaart-protocol";
-import {
-  AchtergrondlagenGezetMsg,
-  AchtergrondtitelGezetMsg,
-  achtergrondtitelGezetWrapper,
-  KaartInternalMsg,
-  kaartLogOnlyWrapper,
-  voorgrondlagenGezetMsgGen,
-  VoorgrondlagenGezetMsg
-} from "../kaart/kaart-internal-messages";
-import { switchMap, filter, map, tap, combineLatest, startWith, shareReplay } from "rxjs/operators";
-import { ofType } from "../util/operators";
-import { Observable } from "rxjs/Observable";
+import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { List } from "immutable";
-import { Laag, ToegevoegdeLaag } from "../kaart/kaart-elementen";
-import * as rx from "rxjs";
+import { Observable } from "rxjs/Observable";
+import { combineLatest, filter, map, shareReplay, startWith } from "rxjs/operators";
 
-export const LagenUISelector = "Lagenkiezer";
+import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
+import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
+import { KaartInternalMsg, VoorgrondlagenGezetMsg, voorgrondlagenGezetMsgGen } from "../kaart/kaart-internal-messages";
+import * as prt from "../kaart/kaart-protocol";
+import { KaartComponent } from "../kaart/kaart.component";
+import { ofType } from "../util/operators";
+
+export const LagenUiSelector = "Lagenkiezer";
+
+export interface LagenUiOpties {
+  toonLegende: boolean;
+}
 
 @Component({
   selector: "awv-lagenkiezer",
@@ -31,6 +27,7 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
   readonly lagenLaag$: Observable<List<ToegevoegdeLaag>>;
   readonly heeftDivider$: Observable<boolean>;
   readonly geenLagen$: Observable<boolean>;
+  readonly opties$: Observable<LagenUiOpties>;
 
   constructor(parent: KaartComponent, ngZone: NgZone) {
     super(parent, ngZone);
@@ -54,6 +51,14 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
     this.geenLagen$ = this.lagenHoog$.pipe(
       combineLatest(this.lagenLaag$, (h, l) => h.isEmpty() && l.isEmpty()),
       startWith(true),
+      shareReplay(1)
+    );
+    this.opties$ = this.modelChanges.uiElementOpties$.pipe(
+      filter(o => o.naam === LagenUiSelector),
+      map(o => o.opties as LagenUiOpties),
+      startWith({
+        toonLegende: false
+      }),
       shareReplay(1)
     );
   }

@@ -8,6 +8,7 @@ import * as prt from "./kaart-protocol";
 import { KaartWithInfo } from "./kaart-with-info";
 import { KaartComponent } from "./kaart.component";
 import { kaartLogger } from "./log";
+import { ModelChanges } from "./model-changes";
 import { internalMsgSubscriptionCmdOperator } from "./subscription-helper";
 
 /**
@@ -51,5 +52,9 @@ export abstract class KaartChildComponentBase extends KaartComponentBase impleme
 
   protected get kaartModel$(): rx.Observable<KaartWithInfo> {
     return this.kaartComponent.kaartModel$;
+  }
+
+  protected get modelChanges(): ModelChanges {
+    return this.kaartComponent.modelChanges;
   }
 }

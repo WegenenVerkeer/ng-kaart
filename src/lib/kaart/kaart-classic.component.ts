@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from "@angular/core";
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, NgZone } from "@angular/core";
 import * as option from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
@@ -20,15 +20,15 @@ import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "./kaart-eve
 import * as prt from "./kaart-protocol";
 import { KaartMsgObservableConsumer } from "./kaart.component";
 import { subscriptionCmdOperator } from "./subscription-helper";
+import { KaartComponentBase } from "./kaart-component-base";
 
 @Component({
   selector: "awv-kaart-classic",
   templateUrl: "./kaart-classic.component.html"
 })
-export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, KaartCmdDispatcher<prt.TypedRecord> {
+export class KaartClassicComponent extends KaartComponentBase implements OnInit, OnDestroy, OnChanges, KaartCmdDispatcher<prt.TypedRecord> {
   private static counter = 1;
   kaartClassicSubMsg$: Observable<KaartClassicSubMsg> = Observable.empty();
-  private readonly destroyingSubj: rx.Subject<void> = new rx.Subject<void>();
   private hasFocus = false;
 
   readonly dispatcher: ReplaySubjectKaartCmdDispatcher<TypedRecord> = new ReplaySubjectKaartCmdDispatcher();
@@ -48,7 +48,8 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, Kaar
   @Output() geselecteerdeFeatures: EventEmitter<List<ol.Feature>> = new EventEmitter();
 
   // TODO deze klasse en child components verhuizen naar classic directory, maar nog even wachten of we krijgen te veel merge conflicts
-  constructor() {
+  constructor(zone: NgZone) {
+    super(zone);
     this.kaartMsgObservableConsumer = (msg$: Observable<prt.KaartMsg>) => {
       // We zijn enkel geïnteresseerd in messages van ons eigen type
       this.kaartClassicSubMsg$ = msg$.pipe(
@@ -60,8 +61,8 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, Kaar
 
       // Een beetje overkill voor de ene kaart subscription die we nu hebben, maar het volgende zorgt voor automatisch beheer van de
       // kaart subscriptions.
-      this.kaartClassicSubMsg$
-        .lift(
+      this.bindToLifeCycle(
+        this.kaartClassicSubMsg$.lift(
           classicMsgSubscriptionCmdOperator(
             this.dispatcher,
             prt.GeselecteerdeFeaturesSubscription(geselecteerdeFeatures =>
@@ -69,23 +70,25 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, Kaar
             )
           )
         )
-        .pipe(takeUntil(this.destroyingSubj)) // Autounsubscribe moet na de lift komen: anders wordt er geen unsubscribe gestuurd
+      )
+        // .pipe(takeUntil(this.destroyingSubj)) // Autounsubscribe moet na de lift komen: anders wordt er geen unsubscribe gestuurd
         .subscribe(err => classicLogger.error(err));
 
       // Zorg ervoor dat de geselecteerde features in de @Output terecht komen
-      this.kaartClassicSubMsg$
-        .pipe(
+      this.bindToLifeCycle(
+        this.kaartClassicSubMsg$.pipe(
           ofType<FeatureSelectieAangepastMsg>("FeatureSelectieAangepast"), //
-          map(m => m.geselecteerdeFeatures),
-          takeUntil(this.destroyingSubj)
+          map(m => m.geselecteerdeFeatures)
+          // takeUntil(this.destroyingSubj)
         )
-        .subscribe(features => this.geselecteerdeFeatures.emit(features));
+      ).subscribe(features => this.geselecteerdeFeatures.emit(features));
 
       // We kunnen hier makkelijk een mini-reducer zetten voor KaartClassicSubMsg mocht dat nodig zijn
     };
   }
 
   ngOnInit() {
+    super.ngOnInit();
     // De volgorde van de dispatching hier is van belang voor wat de overhand heeft
     if (this.zoom) {
       this.dispatch(prt.VeranderZoomCmd(this.zoom, logOnlyWrapper));
@@ -102,10 +105,6 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, Kaar
     if (this.selectieModus) {
       this.dispatch(prt.ActiveerSelectieModusCmd(this.selectieModus));
     }
-  }
-
-  ngOnDestroy() {
-    this.destroyingSubj.next();
   }
 
   ngOnChanges(changes: SimpleChanges) {

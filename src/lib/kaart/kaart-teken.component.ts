@@ -44,8 +44,8 @@ export class KaartTekenComponent extends KaartComponentBase implements OnInit {
   constructor(readonly kaart: KaartClassicComponent, zone: NgZone) {
     super(zone);
 
-    this.initialising$.subscribe(() => this.kaart.dispatch(prt.VoegUIElementToe(TekenenUISelector)));
-    this.destroying$.subscribe(() => this.kaart.dispatch(prt.VerwijderUIElement(TekenenUISelector)));
+    this.initialising$.subscribe(() => this.kaart.dispatch(prt.VoegUiElementToe(TekenenUISelector)));
+    this.destroying$.subscribe(() => this.kaart.dispatch(prt.VerwijderUiElement(TekenenUISelector)));
   }
 
   ngOnInit() {
