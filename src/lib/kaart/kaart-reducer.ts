@@ -452,7 +452,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         cmnd.wrapper,
         valideerVectorLayerBestaat(cmnd.titel).map(layer => {
-          layer.getSource().clear(true);
+          layer.getSource().clear(false);
           layer.getSource().addFeatures(cmnd.features.toArray());
           return ModelAndEmptyResult(model);
         })
