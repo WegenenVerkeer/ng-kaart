@@ -13,7 +13,7 @@ import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "./kaart-eve
 import * as prt from "./kaart-protocol";
 import { KaartMsgObservableConsumer } from "./kaart.component";
 import { subscriptionCmdOperator } from "./subscription-helper";
-import { fromNullable } from "fp-ts/lib/Option";
+import { some, fromNullable } from "fp-ts/lib/Option";
 
 @Component({
   selector: "awv-kaart-classic",
@@ -146,7 +146,7 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, Kaar
   }
 
   toonInfoBoodschap(id: string, titel: string, inhoud: string): void {
-    this.dispatch(prt.ToonInfoBoodschapCmd(id, titel, inhoud));
+    this.dispatch(prt.ToonInfoBoodschapCmd(id, titel, inhoud, some(prt.DeselecteerFeatureCmd(id))));
   }
 
   verbergInfoBoodschap(id: string): void {

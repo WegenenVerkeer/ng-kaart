@@ -8,6 +8,8 @@ import { StyleSelector } from "./kaart-elementen";
 import { AbstractZoeker } from "../zoeker/abstract-zoeker";
 import { Option } from "fp-ts/lib/Option";
 import { InfoBoodschap } from "./kaart-with-info-model";
+import { KaartInternalMsg } from "./kaart-internal-messages";
+import * as prt from "./kaart-protocol";
 
 export type Command<Msg extends KaartMsg> =
   | SubscribeCmd<Msg>
@@ -45,7 +47,8 @@ export type Command<Msg extends KaartMsg> =
   | VoegOverlayToeCmd<Msg>
   | VerwijderOverlaysCmd<Msg>
   | ToonInfoBoodschapCmd<Msg>
-  | VerbergInfoBoodschapCmd<Msg>;
+  | VerbergInfoBoodschapCmd<Msg>
+  | DeselecteerFeatureCmd<Msg>;
 
 export interface SubscriptionResult {
   readonly subscription: RxSubscription;
@@ -260,6 +263,11 @@ export interface VerbergInfoBoodschapCmd<Msg extends KaartMsg> {
   readonly id: string;
 }
 
+export interface DeselecteerFeatureCmd<Msg extends KaartMsg> {
+  readonly type: "DeselecteerFeature";
+  readonly id: string;
+}
+
 ////////////////////////
 // constructor functies
 //
@@ -412,13 +420,19 @@ export function ZetMijnLocatieZoomCmd(doelniveau: Option<number>): ZetMijnLocati
   return { type: "ZetMijnLocatieZoomStatus", doelniveau: doelniveau };
 }
 
-export function ToonInfoBoodschapCmd<Msg extends KaartMsg>(id: string, titel: string, inhoud: string): ToonInfoBoodschapCmd<Msg> {
+export function ToonInfoBoodschapCmd<Msg extends KaartMsg>(
+  id: string,
+  titel: string,
+  inhoud: string,
+  verbergMsg: Option<prt.Command<KaartInternalMsg>>
+): ToonInfoBoodschapCmd<Msg> {
   return {
     type: "ToonInfoBoodschap",
     boodschap: {
       id: id,
       titel: titel,
-      inhoud: inhoud
+      inhoud: inhoud,
+      verbergMsg: verbergMsg
     }
   };
 }
@@ -426,6 +440,13 @@ export function ToonInfoBoodschapCmd<Msg extends KaartMsg>(id: string, titel: st
 export function VerbergInfoBoodschapCmd<Msg extends KaartMsg>(id: string): VerbergInfoBoodschapCmd<Msg> {
   return {
     type: "VerbergInfoBoodschap",
+    id: id
+  };
+}
+
+export function DeselecteerFeatureCmd<Msg extends KaartMsg>(id: string): DeselecteerFeatureCmd<Msg> {
+  return {
+    type: "DeselecteerFeature",
     id: id
   };
 }

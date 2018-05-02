@@ -614,6 +614,16 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
+    function deselecteerFeature(cmnd: prt.DeselecteerFeatureCmd<Msg>): ModelWithResult<Msg> {
+      const maybeSelectedFeature = fromNullable(model.geselecteerdeFeatures.getArray().find(f => f.get("id") === cmnd.id));
+      maybeSelectedFeature.map(selected => model.geselecteerdeFeatures.remove(selected));
+      const updatedModel = {
+        ...model,
+        geselecteerdeFeatures: model.geselecteerdeFeatures
+      };
+      return ModelWithResult(updatedModel);
+    }
+
     function meldComponentFout(cmnd: prt.MeldComponentFoutCmd): ModelWithResult<Msg> {
       model.componentFoutSubj.next(cmnd.fouten);
       return ModelWithResult(model);
@@ -864,6 +874,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return toonInfoBoodschap(cmd);
       case "VerbergInfoBoodschap":
         return verbergInfoBoodschap(cmd);
+      case "DeselecteerFeature":
+        return deselecteerFeature(cmd);
     }
   };
 }

@@ -9,6 +9,7 @@ import { KaartChildComponentBase } from "./kaart-child-component-base";
 import { InfoBoodschappenMsg, infoBoodschappenMsgGen, KaartInternalMsg } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
 import { KaartComponent } from "./kaart.component";
+import { Option } from "fp-ts/lib/Option";
 
 @Component({
   selector: "awv-kaart-info-boodschappen",
@@ -44,5 +45,9 @@ export class KaartInfoBoodschappenComponent extends KaartChildComponentBase impl
       .subscribe(msg => {
         this.infoBoodschappen$.emit(msg.infoBoodschappen.reverse().toList()); // laatste boodschap bovenaan tonen
       });
+  }
+
+  verwijder(verwijderBoodschapMsg: Option<prt.Command<KaartInternalMsg>>): void {
+    verwijderBoodschapMsg.map(msg => this.dispatch(msg));
   }
 }
