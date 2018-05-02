@@ -13,7 +13,7 @@ import * as prt from "../lib/kaart/kaart-protocol";
 import { definitieToStyle, kaartLogger } from "../lib/public_api";
 import { AWV0StyleFunctionDescription, definitieToStyleFunction } from "../lib/stijl";
 import { offsetStyleFunction } from "../lib/stijl/offset-stijl-function";
-import { GoogleLocatieZoekerService } from "../lib/zoeker";
+import { GoogleWdbLocatieZoekerService } from "../lib/zoeker";
 
 @Component({
   selector: "awv-ng-kaart-test-app",
@@ -153,7 +153,7 @@ export class AppComponent {
 
   fietspadStyleMetOffset = offsetStyleFunction(this.fietspadStyle, "ident8", "zijderijbaan", 1);
 
-  constructor(private googleLocatieZoekerService: GoogleLocatieZoekerService) {
+  constructor(private googleLocatieZoekerService: GoogleWdbLocatieZoekerService) {
     kaartLogger.setLevel("DEBUG");
     classicLogger.setLevel("DEBUG");
     this.addIcon();
@@ -211,7 +211,7 @@ export class AppComponent {
 
   zoekLocaties(locatieQuery: String) {
     this.googleLocatieZoekerService
-      .zoek(locatieQuery)
+      .zoek$(locatieQuery)
       .flatMap(res => res.resultaten)
       .map(zoekresultaat => zoekresultaat.geometry)
       .map(geometry => new ol.Feature(geometry))
