@@ -24,7 +24,7 @@ import { Option } from "fp-ts/lib/Option";
   ]
 })
 export class KaartInfoBoodschappenComponent extends KaartChildComponentBase implements OnInit {
-  @Output() infoBoodschappen$: EventEmitter<List<InfoBoodschap>> = new EventEmitter();
+  infoBoodschappen$: EventEmitter<List<InfoBoodschap>> = new EventEmitter();
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
