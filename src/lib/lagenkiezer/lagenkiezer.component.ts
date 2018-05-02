@@ -11,7 +11,7 @@ import {
   voorgrondlagenGezetMsgGen,
   VoorgrondlagenGezetMsg
 } from "../kaart/kaart-internal-messages";
-import { switchMap, filter, map, tap, combineLatest, startWith } from "rxjs/operators";
+import { switchMap, filter, map, tap, combineLatest, startWith, shareReplay } from "rxjs/operators";
 import { ofType } from "../util/operators";
 import { Observable } from "rxjs/Observable";
 import { List } from "immutable";
@@ -26,6 +26,7 @@ export const LagenUISelector = "Lagenkiezer";
   styleUrls: ["lagenkiezer.component.scss"]
 })
 export class LagenkiezerComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
+  private compact = false;
   readonly lagenHoog$: Observable<List<ToegevoegdeLaag>>;
   readonly lagenLaag$: Observable<List<ToegevoegdeLaag>>;
   readonly heeftDivider$: Observable<boolean>;
@@ -35,10 +36,26 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
     super(parent, ngZone);
 
     const voorgrondLagen$ = this.internalMessage$.pipe(ofType<VoorgrondlagenGezetMsg>("VoorgrondlagenGezet"));
-    this.lagenHoog$ = voorgrondLagen$.pipe(filter(m => m.groep === "Voorgrond.Hoog"), map(m => m.lagen));
-    this.lagenLaag$ = voorgrondLagen$.pipe(filter(m => m.groep === "Voorgrond.Laag"), map(m => m.lagen));
-    this.heeftDivider$ = this.lagenHoog$.pipe(combineLatest(this.lagenLaag$, (h, l) => !(h.isEmpty() || l.isEmpty())), startWith(false));
-    this.geenLagen$ = this.lagenHoog$.pipe(combineLatest(this.lagenLaag$, (h, l) => h.isEmpty() && l.isEmpty()), startWith(true));
+    this.lagenHoog$ = voorgrondLagen$.pipe(
+      filter(m => m.groep === "Voorgrond.Hoog"),
+      map(m => m.lagen),
+      shareReplay(1) // Omdat observable in ngIf zit, moeten we de laatste toestand cachen
+    );
+    this.lagenLaag$ = voorgrondLagen$.pipe(
+      filter(m => m.groep === "Voorgrond.Laag"),
+      map(m => m.lagen),
+      shareReplay(1) //
+    );
+    this.heeftDivider$ = this.lagenHoog$.pipe(
+      combineLatest(this.lagenLaag$, (h, l) => !(h.isEmpty() || l.isEmpty())),
+      startWith(false),
+      shareReplay(1)
+    );
+    this.geenLagen$ = this.lagenHoog$.pipe(
+      combineLatest(this.lagenLaag$, (h, l) => h.isEmpty() && l.isEmpty()),
+      startWith(true),
+      shareReplay(1)
+    );
   }
 
   protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
@@ -46,5 +63,21 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
       prt.LagenInGroepSubscription("Voorgrond.Hoog", voorgrondlagenGezetMsgGen("Voorgrond.Hoog")),
       prt.LagenInGroepSubscription("Voorgrond.Laag", voorgrondlagenGezetMsgGen("Voorgrond.Laag"))
     ];
+  }
+
+  get uitgeklapt() {
+    return !this.compact;
+  }
+
+  get ingeklapt() {
+    return this.compact;
+  }
+
+  verbergLijst() {
+    this.compact = true;
+  }
+
+  toonLijst() {
+    this.compact = false;
   }
 }

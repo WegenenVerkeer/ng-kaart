@@ -2,6 +2,7 @@
 
 .lagen-lijst {
   font-family: Roboto, "Helvetica Neue", sans-serif;
+  color: $kaart-primary-text-color;
   white-space: nowrap;
   text-overflow: ellipsis;
   padding: 0;
@@ -17,4 +18,16 @@
   padding-left: 16px;
   padding-top: 8px;
   padding-bottom: 8px
+}
+
+.lagen-titel {
+  padding: 0px;
+  background: white;
+  min-width: 104px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  align-items: center;
 }
