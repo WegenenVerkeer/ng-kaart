@@ -5,7 +5,7 @@ export interface CrabZoekerConfigData {
 }
 
 export class CrabZoekerConfig {
-  readonly url: string = "/locatorzoeker";
+  readonly url: string = "/locatorservices";
   readonly maxAantal: number = 10;
   readonly kleur: [number, number, number, number] = [247, 144, 45, 1.0];
 
