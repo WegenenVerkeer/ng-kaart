@@ -33,6 +33,21 @@ export interface Perceel {
   perceelsnummer: string;
 }
 
+export interface PerceelDetails {
+  macht: string;
+  capakey: string;
+  sectiecode: string;
+  grondnummer: string;
+  afdelingcode: string;
+  bisnummer: string;
+  niscode: string;
+  perceelsnummer: string;
+  exponent: string;
+  shape: string;
+  boundingbox: string;
+  center: string;
+}
+
 @Injectable()
 export class PerceelService {
   private readonly crabZoekerConfig: CrabZoekerConfig;
@@ -61,5 +76,9 @@ export class PerceelService {
     return this.http.get<PerceelNummer[]>(
       this.crabZoekerConfig.url + "/rest/capakey/perceelsnummers/" + niscode + "/" + afdelingcode + "/" + sectiecode
     );
+  }
+
+  getPerceelDetails(capakey: string): Observable<PerceelDetails> {
+    return this.http.get<PerceelDetails>(this.crabZoekerConfig.url + "/rest/capakey/perceel/" + capakey);
   }
 }

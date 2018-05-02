@@ -1,12 +1,17 @@
+import { HttpErrorResponse } from "@angular/common/http";
 import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { FormControl } from "@angular/forms";
+import { List } from "immutable";
 import { UnaryFunction } from "rxjs/interfaces";
 import { Observable } from "rxjs/Observable";
-import { combineLatest, distinctUntilChanged, filter, map, startWith, switchMap } from "rxjs/operators";
+import { combineLatest, distinctUntilChanged, filter, map, startWith, switchMap, tap } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
+import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
-import { Afdeling, Gemeente, PerceelNummer, PerceelService, Sectie } from "./perceel.service";
+import { kaartLogger } from "../kaart/log";
+import { Afdeling, Gemeente, PerceelNummer, PerceelService, Sectie, PerceelDetails } from "./perceel.service";
+import { ZoekResultaten } from "./abstract-zoeker";
 
 function isNotNullObject(object) {
   return object && object instanceof Object;
@@ -68,10 +73,13 @@ export class PerceelZoekerComponent extends KaartChildComponentBase implements O
   ngOnInit(): void {
     super.ngOnInit();
     this.maakPerceelFormLeeg();
-    this.bindToLifeCycle(this.perceelService.getAlleGemeenten()).subscribe(gemeenten => {
-      this.alleGemeenten = gemeenten;
-      this.gefilterdeGemeenten = this.alleGemeenten;
-    });
+    this.bindToLifeCycle(this.perceelService.getAlleGemeenten()).subscribe(
+      gemeenten => {
+        this.alleGemeenten = gemeenten;
+        this.gefilterdeGemeenten = this.alleGemeenten;
+      },
+      error => this.meldFout(error)
+    );
 
     this.bindToLifeCycle(
       this.gemeenteControl.valueChanges.pipe(
@@ -92,25 +100,25 @@ export class PerceelZoekerComponent extends KaartChildComponentBase implements O
 
     // Gebruik de waarde van de vorige control om een request te doen,
     // filter het antwoord daarvan met de (eventuele) waarde van onze control.
+    // Wanneer de waardes leeg zijn, mag je de control disablen.
+    // Dat is met een tap gedaan omdat de request anders 2 maal gestuurd wordt (1 keer voor iedere subscribe).
     this.afdelingen$ = this.gemeenteControl.valueChanges.pipe(
       safeProvider(gemeente => this.perceelService.getAfdelingen(gemeente.niscode)),
-      filterMetWaarde(this.afdelingControl, "naam")
+      filterMetWaarde(this.afdelingControl, "naam"),
+      tap(afdelingen => disableWanneerLeeg(this.afdelingControl, afdelingen), error => this.meldFout(error))
     );
 
     this.secties$ = this.afdelingControl.valueChanges.pipe(
       safeProvider(afdeling => this.perceelService.getSecties(afdeling.niscode, afdeling.code)),
-      filterMetWaarde(this.sectieControl, "code")
+      filterMetWaarde(this.sectieControl, "code"),
+      tap(secties => disableWanneerLeeg(this.sectieControl, secties), error => this.meldFout(error))
     );
 
     this.percelen$ = this.sectieControl.valueChanges.pipe(
       safeProvider(sectie => this.perceelService.getPerceelNummers(sectie.niscode, sectie.afdelingcode, sectie.code)),
-      filterMetWaarde(this.perceelControl, "capakey")
+      filterMetWaarde(this.perceelControl, "capakey"),
+      tap(percelen => disableWanneerLeeg(this.perceelControl, percelen), error => this.meldFout(error))
     );
-
-    // Wanneer de waardes leeg zijn, mag je de control disablen.
-    this.bindToLifeCycle(this.afdelingen$).subscribe(afdelingen => disableWanneerLeeg(this.afdelingControl, afdelingen));
-    this.bindToLifeCycle(this.secties$).subscribe(secties => disableWanneerLeeg(this.sectieControl, secties));
-    this.bindToLifeCycle(this.percelen$).subscribe(percelen => disableWanneerLeeg(this.perceelControl, percelen));
   }
 
   ngOnDestroy(): void {
@@ -131,6 +139,11 @@ export class PerceelZoekerComponent extends KaartChildComponentBase implements O
 
   toonPerceel(perceel?: PerceelNummer): string | undefined {
     return perceel ? perceel.capakey : undefined;
+  }
+
+  private meldFout(fout: HttpErrorResponse) {
+    kaartLogger.error("error", fout);
+    this.dispatch(prt.MeldComponentFoutCmd(List.of("Fout bij ophalen perceel gegevens", fout.message)));
   }
 
   private maakPerceelFormLeeg() {
