@@ -31,3 +31,17 @@
   justify-content: flex-start;
   align-items: center;
 }
+
+.lagen-lijst ::ng-deep .mat-tab-group.mat-primary .mat-ink-bar, .mat-tab-nav-bar.mat-primary .mat-ink-bar {
+  background-color: $kaart-icon-button-active;
+  top: 0;
+}
+
+.lagen-lijst ::ng-deep .mat-tab-label {
+  height: 40px;
+}
+
+.lagen-lijst ::ng-deep .mat-tab-header {
+  border-top: 1px solid rgba(0,0,0,.12);
+  border-bottom: none;
+}

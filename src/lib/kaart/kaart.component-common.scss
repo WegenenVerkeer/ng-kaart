@@ -2,6 +2,7 @@
 
 $kaart-primary-text-color: rgba(black, 0.87);
 $kaart-secondary-text-color: rgba(black, 0.58);
+$kaart-tertiary-text-color: rgba(black, 0.12);
 
 $kaart-primary-color: $awv-primary-2;
 $kaart-accent-color: $awv-primary-1;
@@ -22,7 +23,7 @@ $kaart-icon-button-active: $kaart-primary-color;
   margin-right: auto;
   padding: 0px;
   height: 1px;
-  background-color: $awv-secondary-d2;
+  background-color: $awv-secondary-d3;
 }
 
 :host ::ng-deep .mat-icon-button[disabled] {

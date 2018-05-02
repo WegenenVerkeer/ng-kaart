@@ -1,19 +1,28 @@
 <div class="lagen-lijst float-box">
   <div class="lagen-titel">
     <div>
-      <button mat-icon-button (click)="verbergLijst()" *ngIf="uitgeklapt" class="active"><mat-icon>layers</mat-icon></button>
-      <button mat-icon-button (click)="toonLijst()" *ngIf="ingeklapt"><mat-icon>layers</mat-icon></button>
+      <button mat-icon-button (click)="verbergLijst()" *ngIf="uitgeklapt" class="active">
+        <mat-icon>layers</mat-icon>
+      </button>
+      <button mat-icon-button (click)="toonLijst()" *ngIf="ingeklapt">
+        <mat-icon>layers</mat-icon>
+      </button>
     </div>
     <div>Lagen en legende</div>
   </div>
   <div *ngIf="uitgeklapt">
-    <div *ngFor="let laag of (lagenHoog$ | async)" class="laag-info">
-      <div awvLaagmanipulatie [laag]="laag"></div>
-    </div>
-    <div class="divider" *ngIf="heeftDivider$ | async"></div>
-    <div *ngFor="let laag of (lagenLaag$ | async)"  class="laag-info">
-      <div awvLaagmanipulatie [laag]="laag"></div>
-    </div>
-    <div class="geen-lagen" *ngIf="geenLagen$ | async">Er zijn geen voorgrondlagen</div>
+    <mat-tab-group [headerPosition]="'above'">
+      <mat-tab label="Lagen">
+        <div *ngFor="let laag of (lagenHoog$ | async)" class="laag-info">
+          <div awvLaagmanipulatie [laag]="laag"></div>
+        </div>
+        <div class="divider" *ngIf="heeftDivider$ | async"></div>
+        <div *ngFor="let laag of (lagenLaag$ | async)" class="laag-info">
+          <div awvLaagmanipulatie [laag]="laag"></div>
+        </div>
+        <div class="geen-lagen" *ngIf="geenLagen$ | async">Er zijn geen voorgrondlagen</div>
+      </mat-tab>
+      <mat-tab label="legende">Legende niet geïmplementeerd</mat-tab>
+    </mat-tab-group>
   </div>
 </div>
