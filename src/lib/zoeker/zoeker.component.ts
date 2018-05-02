@@ -1,7 +1,7 @@
 import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { none, Option } from "fp-ts/lib/Option";
-import { List } from "immutable";
+import { List, Set } from "immutable";
 import * as ol from "openlayers";
 import { debounce, distinctUntilChanged, filter, map } from "rxjs/operators";
 import { Subscription } from "rxjs/Subscription";
@@ -110,11 +110,10 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
         distinctUntilChanged()
       )
     ).subscribe(value => {
-      this.maakResultaatLeeg();
       this.toonResultaat = true;
 
       if (value.length > 0) {
-        this.dispatch({ type: "Zoek", input: value, wrapper: kaartLogOnlyWrapper });
+        this.dispatch({ type: "Zoek", input: value, zoekers: Set(), wrapper: kaartLogOnlyWrapper });
       }
     });
     this.dispatch({
@@ -164,6 +163,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
   }
 
   kiesZoeker(zoeker: ZoekerType) {
+    this.maakResultaatLeeg();
     this.actieveZoeker = zoeker;
     if (this.actieveZoeker !== "Geoloket") {
       this.zoekVeld.disable();
@@ -182,6 +182,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
   }
 
   private maakResultaatLeeg() {
+    this.zoekVeld.setValue("");
     this.alleFouten = [];
     this.alleZoekResultaten = [];
     this.extent = ol.extent.createEmpty();

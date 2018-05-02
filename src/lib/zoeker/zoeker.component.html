@@ -12,10 +12,10 @@
       </button>
     </mat-menu>
 
-    <a (click)="toggleResultaat()" *ngIf="heeftResultaatOfFout()">
-      <mat-icon matPrefix [ngClass]="{'inactief':!toonResultaat}" class="klikbaar">search</mat-icon>
+    <a [matMenuTriggerFor]="zoekerMenu">
+        <mat-icon matPrefix class="klikbaar">menu</mat-icon>
     </a>
-    <a *ngIf="!heeftResultaatOfFout()" [matMenuTriggerFor]="zoekerMenu">
+    <a (click)="toggleResultaat()">
       <mat-icon matPrefix [ngClass]="{'inactief':!toonResultaat}" class="klikbaar">search</mat-icon>
     </a>
     <input placeholder="{{getPlaceholder()}}" [formControl]="zoekVeld" (keyup)="onKey($event)">
@@ -24,47 +24,49 @@
     </a>
   </div>
   <awv-perceel-zoeker *ngIf="actieveZoeker === 'Perceel'"></awv-perceel-zoeker>
-  <div class="zoeker-help" *ngIf="toonHelp && (actieveZoeker === 'Geoloket')">
-    <br>
-    <b>Voorbeelden</b>
-    <br>
-    <div>Kapelstraat 12 Kortrijk
-      <br>&nbsp;&nbsp;
-      <i>zoek het opgegeven adres</i>
+  <div class="zoeker-help" *ngIf="toonHelp">
+    <div *ngIf="actieveZoeker === 'Geoloket'">
+      <br>
+      <b>Voorbeelden</b>
+      <br>
+      <div>Kapelstraat 12 Kortrijk
+        <br>&nbsp;&nbsp;
+        <i>zoek het opgegeven adres</i>
+      </div>
+      <div>N0080001 12.0
+        <br>&nbsp;&nbsp;
+        <i>zoek op de weg met ident8 N0080001 het referentiepunt 12.0</i>
+      </div>
+      <div>R1
+        <br>&nbsp;&nbsp;
+        <i>zoek de weg met ident8 R0010001</i>
+      </div>
+      <div>N8 12.0
+        <br>&nbsp;&nbsp;
+        <i>zoek op de weg met ident8 N0080001 het referentiepunt 12.0</i>
+      </div>
+      <div>N8 12.0-8
+        <br>&nbsp;&nbsp;
+        <i>zoek op de weg met ident8 N0080001 het referentiepunt 12.0 met afstand -8</i>
+      </div>
+      <div>E17 5.0
+        <br>&nbsp;&nbsp;
+        <i>zoek op de E17 het referentiepunt 5.0</i>
+      </div>
+      <div>N8 178 Kortrijk
+        <br>&nbsp;&nbsp;
+        <i>zoek op de weg met ident8 N0080001 in Kortrijk huisnummer 178 (gemeente verplicht)</i>
+      </div>
+      <div>em G1586/WV
+        <br>&nbsp;&nbsp;
+        <i>zoek het EM onderdeel met 'G1586/WV' in het Naampad</i>
+      </div>
+      <div>kw 0.010.031.1
+        <br>&nbsp;&nbsp;
+        <i>zoek het kunstwerk met Bryggja id '0.010.031.1'</i>
+      </div>
+      <br>
     </div>
-    <div>N0080001 12.0
-      <br>&nbsp;&nbsp;
-      <i>zoek op de weg met ident8 N0080001 het referentiepunt 12.0</i>
-    </div>
-    <div>R1
-      <br>&nbsp;&nbsp;
-      <i>zoek de weg met ident8 R0010001</i>
-    </div>
-    <div>N8 12.0
-      <br>&nbsp;&nbsp;
-      <i>zoek op de weg met ident8 N0080001 het referentiepunt 12.0</i>
-    </div>
-    <div>N8 12.0-8
-      <br>&nbsp;&nbsp;
-      <i>zoek op de weg met ident8 N0080001 het referentiepunt 12.0 met afstand -8</i>
-    </div>
-    <div>E17 5.0
-      <br>&nbsp;&nbsp;
-      <i>zoek op de E17 het referentiepunt 5.0</i>
-    </div>
-    <div>N8 178 Kortrijk
-      <br>&nbsp;&nbsp;
-      <i>zoek op de weg met ident8 N0080001 in Kortrijk huisnummer 178 (gemeente verplicht)</i>
-    </div>
-    <div>em G1586/WV
-      <br>&nbsp;&nbsp;
-      <i>zoek het EM onderdeel met 'G1586/WV' in het Naampad</i>
-    </div>
-    <div>kw 0.010.031.1
-      <br>&nbsp;&nbsp;
-      <i>zoek het kunstwerk met Bryggja id '0.010.031.1'</i>
-    </div>
-    <br>
     <div *ngIf="legende.size > 0">
       <div class="divider"></div>
       <br>

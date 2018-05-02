@@ -605,7 +605,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         cmnd.wrapper,
         valideerMinstens1ZoekerGeregistreerd().map(() => {
-          model.zoekerCoordinator.zoek(cmnd.input);
+          model.zoekerCoordinator.zoek(cmnd.input, cmnd.zoekers);
           return ModelAndEmptyResult(model);
         })
       );

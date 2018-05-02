@@ -17,7 +17,7 @@ import { CrabZoekerService } from "./crab-zoeker.service";
 import { GoogleWdbLocatieZoekerComponent } from "./google-wdb-locatie-zoeker.component";
 import { GoogleWdbLocatieZoekerService } from "./google-wdb-locatie-zoeker.service";
 import { PerceelZoekerComponent } from "./perceel-zoeker.component";
-import { PerceelService } from "./perceel.service";
+import { PerceelZoekerService } from "./perceel-zoeker.service";
 import { ZoekerHighlightPipe } from "./zoeker-highlight.pipe";
 import { ZoekerInjectorComponent } from "./zoeker-injector.component";
 import { DefaultRepresentatieService, ZOEKER_REPRESENTATIE } from "./zoeker-representatie.service";
@@ -49,7 +49,7 @@ const components: any[] = [
   declarations: [components],
   entryComponents: [ZoekerInjectorComponent],
   exports: [components],
-  providers: [GoogleWdbLocatieZoekerService, CrabZoekerService, PerceelService]
+  providers: [GoogleWdbLocatieZoekerService, CrabZoekerService, PerceelZoekerService]
 })
 export class ZoekerModule {
   static forRoot(config: ZoekerConfigData): ModuleWithProviders {
@@ -68,7 +68,7 @@ export * from "./crab-zoeker.service";
 export * from "./crab-zoeker.component";
 export * from "./crab-zoeker.config";
 
-export * from "./perceel.service";
+export * from "./perceel-zoeker.service";
 export * from "./perceel-zoeker.component";
 
 export * from "./zoeker-highlight.pipe";

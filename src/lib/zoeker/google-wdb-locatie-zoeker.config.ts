@@ -19,8 +19,4 @@ export class GoogleWdbLocatieZoekerConfig {
       this.apiKey = data.apiKey || this.apiKey;
     }
   }
-
-  lichtereKleur(): [number, number, number, number] {
-    return [this.kleur[0], this.kleur[1], this.kleur[2], this.kleur[3] / 5.0];
-  }
 }

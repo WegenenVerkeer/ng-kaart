@@ -1,4 +1,4 @@
-import { Map } from "immutable";
+import { Map, Set } from "immutable";
 import { Subject } from "rxjs/Rx";
 import { Subscription } from "rxjs/Subscription";
 
@@ -37,11 +37,15 @@ export class ZoekerCoordinator {
     this.zoekers = this.zoekers.concat(zoeker);
   }
 
-  zoek(input: string) {
+  zoek(input: string, zoekers: Set<string>) {
     // Annuleer bestaande zoekOpdrachten.
     this.zoekerSubscriptions.forEach((subscription, zoekerNaam) => this.unsubscribeZoeker(subscription!, zoekerNaam!));
     // Stuur zoek comando naar alle geregistreerde zoekers
-    this.zoekerSubscriptions = this.zoekers.reduce(
+    let gekozenZoekers = this.zoekers;
+    if (!zoekers.isEmpty()) {
+      gekozenZoekers = this.zoekers.filter(zoeker => zoekers.contains(zoeker.naam()));
+    }
+    this.zoekerSubscriptions = gekozenZoekers.reduce(
       (subscriptions, zoeker) =>
         subscriptions.set(
           zoeker.naam(),

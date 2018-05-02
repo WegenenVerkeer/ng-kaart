@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from "@angular/common/http";
 import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { List } from "immutable";
+import { List, Set } from "immutable";
 import { UnaryFunction } from "rxjs/interfaces";
 import { Observable } from "rxjs/Observable";
 import { combineLatest, distinctUntilChanged, filter, map, startWith, switchMap, tap } from "rxjs/operators";
@@ -10,8 +10,9 @@ import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
 import { kaartLogger } from "../kaart/log";
-import { Afdeling, Gemeente, PerceelNummer, PerceelService, Sectie, PerceelDetails } from "./perceel.service";
+import { Afdeling, Gemeente, PerceelNummer, PerceelZoekerService, Sectie, PerceelDetails } from "./perceel-zoeker.service";
 import { ZoekResultaten } from "./abstract-zoeker";
+import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 
 function isNotNullObject(object) {
   return object && object instanceof Object;
@@ -66,14 +67,14 @@ export class PerceelZoekerComponent extends KaartChildComponentBase implements O
   secties$: Observable<Sectie[]> = Observable.empty();
   percelen$: Observable<PerceelNummer[]> = Observable.empty();
 
-  constructor(private perceelService: PerceelService, parent: KaartComponent, zone: NgZone) {
+  constructor(private perceelService: PerceelZoekerService, parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
   }
 
   ngOnInit(): void {
     super.ngOnInit();
     this.maakPerceelFormLeeg();
-    this.bindToLifeCycle(this.perceelService.getAlleGemeenten()).subscribe(
+    this.bindToLifeCycle(this.perceelService.getAlleGemeenten$()).subscribe(
       gemeenten => {
         this.alleGemeenten = gemeenten;
         this.gefilterdeGemeenten = this.alleGemeenten;
@@ -103,25 +104,39 @@ export class PerceelZoekerComponent extends KaartChildComponentBase implements O
     // Wanneer de waardes leeg zijn, mag je de control disablen.
     // Dat is met een tap gedaan omdat de request anders 2 maal gestuurd wordt (1 keer voor iedere subscribe).
     this.afdelingen$ = this.gemeenteControl.valueChanges.pipe(
-      safeProvider(gemeente => this.perceelService.getAfdelingen(gemeente.niscode)),
+      safeProvider(gemeente => this.perceelService.getAfdelingen$(gemeente.niscode)),
       filterMetWaarde(this.afdelingControl, "naam"),
       tap(afdelingen => disableWanneerLeeg(this.afdelingControl, afdelingen), error => this.meldFout(error))
     );
 
     this.secties$ = this.afdelingControl.valueChanges.pipe(
-      safeProvider(afdeling => this.perceelService.getSecties(afdeling.niscode, afdeling.code)),
+      safeProvider(afdeling => this.perceelService.getSecties$(afdeling.niscode, afdeling.code)),
       filterMetWaarde(this.sectieControl, "code"),
       tap(secties => disableWanneerLeeg(this.sectieControl, secties), error => this.meldFout(error))
     );
 
     this.percelen$ = this.sectieControl.valueChanges.pipe(
-      safeProvider(sectie => this.perceelService.getPerceelNummers(sectie.niscode, sectie.afdelingcode, sectie.code)),
+      safeProvider(sectie => this.perceelService.getPerceelNummers$(sectie.niscode, sectie.afdelingcode, sectie.code)),
       filterMetWaarde(this.perceelControl, "capakey"),
       tap(percelen => disableWanneerLeeg(this.perceelControl, percelen), error => this.meldFout(error))
     );
+
+    this.bindToLifeCycle(this.perceelControl.valueChanges.pipe(filter(value => isNotNullObject(value)), distinctUntilChanged())).subscribe(
+      perceelDetails =>
+        this.dispatch({
+          type: "Zoek",
+          input: perceelDetails.capakey,
+          zoekers: Set.of(this.perceelService.naam()),
+          wrapper: kaartLogOnlyWrapper
+        })
+    );
+
+    this.dispatch({ type: "VoegZoekerToe", zoeker: this.perceelService, wrapper: kaartLogOnlyWrapper });
   }
 
   ngOnDestroy(): void {
+    this.dispatch({ type: "VerwijderZoeker", zoeker: this.perceelService.naam(), wrapper: kaartLogOnlyWrapper });
+
     super.ngOnDestroy();
   }
 
