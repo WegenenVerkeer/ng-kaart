@@ -9,7 +9,7 @@ import { forEach, orElse } from "../util/option";
 import { Laaggroep } from "./kaart-protocol-commands";
 import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
-import { StyleSelector } from "./kaart-elementen";
+import { StyleSelector, Stylish } from "./kaart-elementen";
 import { getDefaultSelectionStyleFunction, getDefaultStyleFunction } from "./styles";
 import { option } from "fp-ts";
 import { determineStyleSelector } from "./kaart-elementen";
@@ -23,7 +23,7 @@ export class KaartVectorLaagComponent extends KaartLaagComponent {
   @Input() source = new ol.source.Vector();
   @Input() style?: ol.style.Style = undefined;
   @Input() styleFunction?: ol.StyleFunction = getDefaultStyleFunction();
-  @Input() selectieStyle?: ol.style.Style | ol.style.Style[] | ol.StyleFunction = getDefaultSelectionStyleFunction();
+  @Input() selectieStyle?: Stylish = getDefaultSelectionStyleFunction();
   @Input() zichtbaar = true;
   @Input() selecteerbaar = true;
   @Input() minZoom = 7;

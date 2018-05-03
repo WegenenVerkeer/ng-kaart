@@ -1,5 +1,5 @@
 import { animate, state, style, transition, trigger } from "@angular/animations";
-import { Component, EventEmitter, NgZone, OnInit, Output } from "@angular/core";
+import { Component, NgZone, OnInit } from "@angular/core";
 import { List } from "immutable";
 
 import { observeOnAngular } from "../util/observe-on-angular";
@@ -11,7 +11,6 @@ import * as prt from "./kaart-protocol";
 import { KaartComponent } from "./kaart.component";
 import { Option } from "fp-ts/lib/Option";
 import { SluitInfoBoodschapCmd } from "./kaart-protocol-commands";
-import { forEach } from "../util/option";
 import { Observable } from "rxjs/Observable";
 
 @Component({
@@ -40,10 +39,12 @@ export class KaartInfoBoodschappenComponent extends KaartChildComponentBase impl
   ngOnInit(): void {
     super.ngOnInit();
 
-    this.internalMessage$.pipe(
-      ofType<InfoBoodschappenMsg>("InfoBoodschappen"), //
-      observeOnAngular(this.zone)
-    );
+    this.infoBoodschappen$ = this.internalMessage$
+      .pipe(
+        ofType<InfoBoodschappenMsg>("InfoBoodschappen"), //
+        observeOnAngular(this.zone)
+      )
+      .map(msg => msg.infoBoodschappen.reverse().toList()); // laatste boodschap bovenaan
   }
 
   verwijder(id: string, verwijderBoodschapMsgGen: () => Option<prt.TypedRecord>): void {

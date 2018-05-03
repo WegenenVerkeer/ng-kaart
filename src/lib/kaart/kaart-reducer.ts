@@ -530,17 +530,18 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
         const styleSelector = getSelectionStyleSelector(model, feature.get("laagnaam"));
         if (styleSelector) {
-          if (styleSelector instanceof StaticStyle) {
-            return (styleSelector as StaticStyle).style;
-          } else if (styleSelector instanceof Styles) {
-            return (styleSelector as Styles).styles;
-          } else {
-            const toegepasteStijl = (styleSelector as DynamicStyle).styleFunction(feature, resolution);
-            if (toegepasteStijl instanceof ol.style.Style) {
-              return applySelectionColor(toegepasteStijl);
-            } else {
-              return toegepasteStijl.map(style => applySelectionColor(style));
-            }
+          switch (styleSelector.type) {
+            case "StaticStyle":
+              return styleSelector.style;
+            case "Styles":
+              return styleSelector.styles;
+            case "DynamicStyle":
+              const toegepasteStijl = styleSelector.styleFunction(feature, resolution);
+              if (Array.isArray(toegepasteStijl)) {
+                return toegepasteStijl.map(style => applySelectionColor(style));
+              } else {
+                return applySelectionColor(toegepasteStijl);
+              }
           }
         } else {
           kaartLogger.warn("Geen stijl gevonden voor feature:");

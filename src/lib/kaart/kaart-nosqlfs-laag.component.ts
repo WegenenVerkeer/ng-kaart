@@ -9,7 +9,7 @@ import { KaartLaagComponent } from "./kaart-laag.component";
 import { NosqlFsSource } from "../source/nosql-fs-source";
 import { orElse, forEach } from "../util/option";
 import { Laaggroep, ZetStijlVoorLaagCmd } from "./kaart-protocol-commands";
-import { StaticStyle, DynamicStyle, Styles, StyleSelector } from "./kaart-elementen";
+import { StaticStyle, DynamicStyle, Styles, StyleSelector, Stylish } from "./kaart-elementen";
 import { getDefaultStyleFunction, getDefaultSelectionStyleFunction } from "./styles";
 import { fromNullable } from "fp-ts/lib/Option";
 import * as prt from "./kaart-protocol";
@@ -27,7 +27,7 @@ export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
   @Input() collection: string;
   @Input() style?: ol.style.Style = undefined;
   @Input() styleFunction?: ol.StyleFunction = getDefaultStyleFunction();
-  @Input() selectieStyle?: ol.style.Style | ol.style.Style[] | ol.StyleFunction = getDefaultSelectionStyleFunction();
+  @Input() selectieStyle?: Stylish = getDefaultSelectionStyleFunction();
   @Input() zichtbaar = true;
   @Input() selecteerbaar = true;
   @Input() minZoom = 7;
