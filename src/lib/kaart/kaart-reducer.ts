@@ -542,6 +542,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               } else {
                 return applySelectionColor(toegepasteStijl);
               }
+            default:
+              kaartLogger.error("Ongekend styleSelector type");
+              kaartLogger.error(feature);
+              return [];
           }
         } else {
           kaartLogger.warn("Geen stijl gevonden voor feature:");
