@@ -10,6 +10,9 @@ import { InfoBoodschappenMsg, infoBoodschappenMsgGen, KaartInternalMsg } from ".
 import * as prt from "./kaart-protocol";
 import { KaartComponent } from "./kaart.component";
 import { Option } from "fp-ts/lib/Option";
+import { SluitInfoBoodschapCmd } from "./kaart-protocol-commands";
+import { forEach } from "../util/option";
+import { Observable } from "rxjs/Observable";
 
 @Component({
   selector: "awv-kaart-info-boodschappen",
@@ -24,7 +27,7 @@ import { Option } from "fp-ts/lib/Option";
   ]
 })
 export class KaartInfoBoodschappenComponent extends KaartChildComponentBase implements OnInit {
-  infoBoodschappen$: EventEmitter<List<InfoBoodschap>> = new EventEmitter();
+  infoBoodschappen$: Observable<List<InfoBoodschap>> = Observable.empty();
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
@@ -37,17 +40,13 @@ export class KaartInfoBoodschappenComponent extends KaartChildComponentBase impl
   ngOnInit(): void {
     super.ngOnInit();
 
-    this.internalMessage$
-      .pipe(
-        ofType<InfoBoodschappenMsg>("InfoBoodschappen"), //
-        observeOnAngular(this.zone)
-      )
-      .subscribe(msg => {
-        this.infoBoodschappen$.emit(msg.infoBoodschappen.reverse().toList()); // laatste boodschap bovenaan tonen
-      });
+    this.internalMessage$.pipe(
+      ofType<InfoBoodschappenMsg>("InfoBoodschappen"), //
+      observeOnAngular(this.zone)
+    );
   }
 
-  verwijder(verwijderBoodschapMsg: Option<prt.Command<KaartInternalMsg>>): void {
-    verwijderBoodschapMsg.map(msg => this.dispatch(msg));
+  verwijder(id: string, verwijderBoodschapMsgGen: () => Option<prt.TypedRecord>): void {
+    this.dispatch(SluitInfoBoodschapCmd(id, verwijderBoodschapMsgGen));
   }
 }

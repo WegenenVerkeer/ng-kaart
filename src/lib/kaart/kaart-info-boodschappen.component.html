@@ -2,7 +2,7 @@
   <mat-card>
     <mat-card-title>
       {{ boodschap.titel }}
-      <button mat-button (click)="verwijder(boodschap.verbergMsg)" class="mat-titel-button">
+      <button mat-button (click)="verwijder(boodschap.id, boodschap.verbergMsgGen)" class="mat-titel-button">
         <mat-icon>close</mat-icon>
       </button>
     </mat-card-title>

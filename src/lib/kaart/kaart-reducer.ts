@@ -13,11 +13,12 @@ import * as rx from "rxjs";
 import { forEach } from "../util/option";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
-import { Laaggroep, PositieAanpassing, ZetMijnLocatieZoomCmd } from "./kaart-protocol-commands";
-import { KaartWithInfo, setStyleSelector, getStyleSelector, setSelectionStyleSelector, getSelectionStyleSelector } from "./kaart-with-info";
+import { Laaggroep, PositieAanpassing, SluitInfoBoodschapCmd } from "./kaart-protocol-commands";
+import { KaartWithInfo, setStyleSelector, setSelectionStyleSelector, getSelectionStyleSelector } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
 import { kaartLogger } from "./log";
-import { DynamicStyle, fromStyleSelector, StaticStyle, Styles } from "./kaart-elementen";
+import { DynamicStyle, StaticStyle, Styles, determineStyle } from "./kaart-elementen";
+import { getDefaultStyle } from "./styles";
 
 ///////////////////////////////////
 // Hulpfuncties
@@ -596,7 +597,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         cmnd.wrapper,
         valideerVectorLayerBestaat(cmnd.titel).map(vectorlayer => {
-          vectorlayer.setStyle(fromStyleSelector(cmnd.stijl));
+          vectorlayer.setStyle(determineStyle(some(cmnd.stijl), getDefaultStyle()));
           setStyleSelector(model, cmnd.titel, cmnd.stijl);
           cmnd.selectieStijl.map(selectieStijl => setSelectionStyleSelector(model, cmnd.titel, selectieStijl));
           return ModelAndEmptyResult(model);
@@ -606,22 +607,33 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function toonInfoBoodschap(cmnd: prt.ToonInfoBoodschapCmd<Msg>): ModelWithResult<Msg> {
       model.infoBoodschappenSubj.next(model.infoBoodschappenSubj.getValue().set(cmnd.boodschap.id, cmnd.boodschap));
-      return ModelWithResult(model);
+      return ModelWithResult<Msg>(model);
     }
 
-    function verbergInfoBoodschap(cmnd: prt.VerbergInfoBoodschapCmd<Msg>): ModelWithResult<Msg> {
+    function deleteInfoBoodschap(cmnd: prt.VerbergInfoBoodschapCmd<Msg>): ModelWithResult<Msg> {
       model.infoBoodschappenSubj.next(model.infoBoodschappenSubj.getValue().delete(cmnd.id));
       return ModelWithResult(model);
     }
 
     function deselecteerFeature(cmnd: prt.DeselecteerFeatureCmd<Msg>): ModelWithResult<Msg> {
       const maybeSelectedFeature = fromNullable(model.geselecteerdeFeatures.getArray().find(f => f.get("id") === cmnd.id));
-      maybeSelectedFeature.map(selected => model.geselecteerdeFeatures.remove(selected));
-      const updatedModel = {
-        ...model,
-        geselecteerdeFeatures: model.geselecteerdeFeatures
-      };
-      return ModelWithResult(updatedModel);
+      forEach(maybeSelectedFeature, selected => model.geselecteerdeFeatures.remove(selected));
+      return ModelWithResult(model);
+    }
+
+    function sluitInfoBoodschap(cmnd: prt.SluitInfoBoodschapCmd<Msg>): ModelWithResult<Msg> {
+      const maybeMsg = cmnd.msgGen() as Option<Msg>;
+      return maybeMsg.fold(
+        () => {
+          // geen message uit functie, sluit de info boodschap zelf
+          model.infoBoodschappenSubj.next(model.infoBoodschappenSubj.getValue().delete(cmnd.id));
+          return ModelWithResult(model);
+        },
+        msg => {
+          // stuur sluit message door
+          return ModelWithResult(model, some(msg));
+        }
+      );
     }
 
     function meldComponentFout(cmnd: prt.MeldComponentFoutCmd): ModelWithResult<Msg> {
@@ -873,9 +885,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       case "ToonInfoBoodschap":
         return toonInfoBoodschap(cmd);
       case "VerbergInfoBoodschap":
-        return verbergInfoBoodschap(cmd);
+        return deleteInfoBoodschap(cmd);
       case "DeselecteerFeature":
         return deselecteerFeature(cmd);
+      case "SluitInfoBoodschap":
+        return sluitInfoBoodschap(cmd);
     }
   };
 }

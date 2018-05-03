@@ -3,14 +3,13 @@ import { List } from "immutable";
 import { Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import { Laaggroep } from "./kaart-protocol-commands";
-import { KaartInternalMsg } from "./kaart-internal-messages";
-import * as prt from "./kaart-protocol";
+import { TypedRecord } from "./kaart-protocol";
 
 export interface InfoBoodschap {
   readonly id: string;
   readonly titel: string;
   readonly inhoud: string;
-  readonly verbergMsg: Option<prt.Command<KaartInternalMsg>>;
+  readonly verbergMsgGen: () => Option<TypedRecord>;
 }
 
 export interface Groeplagen {

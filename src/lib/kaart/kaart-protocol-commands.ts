@@ -48,7 +48,8 @@ export type Command<Msg extends KaartMsg> =
   | VerwijderOverlaysCmd<Msg>
   | ToonInfoBoodschapCmd<Msg>
   | VerbergInfoBoodschapCmd<Msg>
-  | DeselecteerFeatureCmd<Msg>;
+  | DeselecteerFeatureCmd<Msg>
+  | SluitInfoBoodschapCmd<Msg>;
 
 export interface SubscriptionResult {
   readonly subscription: RxSubscription;
@@ -268,6 +269,12 @@ export interface DeselecteerFeatureCmd<Msg extends KaartMsg> {
   readonly id: string;
 }
 
+export interface SluitInfoBoodschapCmd<Msg extends KaartMsg> {
+  readonly type: "SluitInfoBoodschap";
+  readonly id: string;
+  readonly msgGen: () => Option<prt.TypedRecord>;
+}
+
 ////////////////////////
 // constructor functies
 //
@@ -424,7 +431,7 @@ export function ToonInfoBoodschapCmd<Msg extends KaartMsg>(
   id: string,
   titel: string,
   inhoud: string,
-  verbergMsg: Option<prt.Command<KaartInternalMsg>>
+  verbergMsgGen: () => Option<Msg>
 ): ToonInfoBoodschapCmd<Msg> {
   return {
     type: "ToonInfoBoodschap",
@@ -432,7 +439,7 @@ export function ToonInfoBoodschapCmd<Msg extends KaartMsg>(
       id: id,
       titel: titel,
       inhoud: inhoud,
-      verbergMsg: verbergMsg
+      verbergMsgGen: verbergMsgGen
     }
   };
 }
@@ -448,5 +455,13 @@ export function DeselecteerFeatureCmd<Msg extends KaartMsg>(id: string): Deselec
   return {
     type: "DeselecteerFeature",
     id: id
+  };
+}
+
+export function SluitInfoBoodschapCmd<Msg extends KaartMsg>(id: string, msgGen: () => Option<prt.TypedRecord>): SluitInfoBoodschapCmd<Msg> {
+  return {
+    type: "SluitInfoBoodschap",
+    id: id,
+    msgGen: msgGen
   };
 }

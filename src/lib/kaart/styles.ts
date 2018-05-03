@@ -1,26 +1,30 @@
 import * as ol from "openlayers";
 
-export function getDefaultStyleFunction(): ol.StyleFunction {
-  return function(feature, resolution) {
-    return new ol.style.Style({
+export function getDefaultStyle(): ol.style.Style {
+  return new ol.style.Style({
+    fill: new ol.style.Fill({
+      color: "#5555FF40"
+    }),
+    stroke: new ol.style.Stroke({
+      color: "darkslateblue ",
+      width: 4
+    }),
+    image: new ol.style.Circle({
       fill: new ol.style.Fill({
-        color: "#5555FF40"
+        color: "maroon"
       }),
       stroke: new ol.style.Stroke({
-        color: "darkslateblue ",
-        width: 4
+        color: "gray",
+        width: 1.25
       }),
-      image: new ol.style.Circle({
-        fill: new ol.style.Fill({
-          color: "maroon"
-        }),
-        stroke: new ol.style.Stroke({
-          color: "gray",
-          width: 1.25
-        }),
-        radius: 5
-      })
-    });
+      radius: 5
+    })
+  });
+}
+
+export function getDefaultStyleFunction(): ol.StyleFunction {
+  return function(feature, resolution) {
+    return getDefaultStyle();
   };
 }
 

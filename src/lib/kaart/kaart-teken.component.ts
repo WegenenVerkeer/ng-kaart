@@ -8,9 +8,8 @@ import { KaartClassicMsg, TekenGeomAangepastMsg } from "../kaart-classic/message
 import { ofType } from "../util/operators";
 import { classicMsgSubscriptionCmdOperator, KaartClassicComponent } from "./kaart-classic.component";
 import { KaartComponentBase } from "./kaart-component-base";
-import { TekenSettings } from "./kaart-elementen";
+import { determineStyleSelector, TekenSettings } from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
-import { determineStyleSelector } from "./laag-converter";
 
 @Component({
   selector: "awv-kaart-teken",

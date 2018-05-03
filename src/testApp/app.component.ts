@@ -219,13 +219,13 @@ export class AppComponent {
     // verwijder de bestaande info boodschappen voor features die niet meer geselecteerd zijn
     const nietLangerGeselecteerd = this.geselecteerdeFeatures //
       .filter(feature => !event.map(f => f.getId()).contains(feature.get("id")));
-    nietLangerGeselecteerd.forEach(feature => this.selectieKaart.verbergInfoBoodschap(feature.get("id").toString()));
+    nietLangerGeselecteerd.forEach(feature => this.selectieKaart.verbergIdentifyInformatie(feature.get("id").toString()));
 
     // voeg de nieuwe toe
     this.geselecteerdeFeatures = event;
     this.geselecteerdeFeatures.forEach(feature =>
       this.selectieKaart //
-        .toonInfoBoodschap(
+        .toonIdentifyInformatie(
           feature.get("id").toString(),
           feature.get("laagnaam"),
           `Id: ${feature.get("id")}<br>` + //

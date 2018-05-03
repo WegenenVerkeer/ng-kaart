@@ -1,4 +1,4 @@
-import { Option } from "fp-ts/lib/Option";
+import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 
@@ -104,24 +104,32 @@ export function isBlancoLaag(laag: Laag): boolean {
   return laag.type === BlancoType;
 }
 
-export function fromStyleSelector(styleselector: StyleSelector): ol.style.Style | ol.style.Style[] | ol.StyleFunction {
-  switch (styleselector.type) {
-    case "StaticStyle":
-      return (styleselector as StaticStyle).style;
-    case "Styles":
-      return (styleselector as Styles).styles;
-    case "DynamicStyle":
-      return (styleselector as DynamicStyle).styleFunction;
-  }
+export type Stylish = ol.StyleFunction | ol.style.Style | ol.style.Style[];
+
+export function determineStyle(styleSelector: Option<StyleSelector>, defaultStyle: ol.style.Style): Stylish {
+  return styleSelector
+    .map(selector => {
+      switch (selector.type) {
+        case "StaticStyle":
+          return selector.style;
+        case "DynamicStyle":
+          return selector.styleFunction;
+        case "Styles":
+          return selector.styles;
+      }
+    })
+    .getOrElseValue(defaultStyle);
 }
 
-export function StyleSelector(style: ol.style.Style | ol.style.Style[] | ol.StyleFunction): StyleSelector {
-  if (style instanceof ol.style.Style) {
-    return StaticStyle(style);
-  } else if (style instanceof Array) {
-    return Styles(style);
+export function determineStyleSelector(stp?: Stylish): Option<StyleSelector> {
+  if (stp instanceof ol.style.Style) {
+    return some(StaticStyle(stp));
+  } else if (typeof stp === "function") {
+    return some(DynamicStyle(stp as ol.StyleFunction));
+  } else if (Array.isArray(stp)) {
+    return some(Styles(stp as ol.style.Style[]));
   } else {
-    return DynamicStyle(style);
+    return none;
   }
 }
 

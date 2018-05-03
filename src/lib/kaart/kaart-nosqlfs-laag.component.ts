@@ -1,19 +1,20 @@
 import { Component, Input, ViewEncapsulation } from "@angular/core";
 import { option } from "fp-ts";
-import { some } from "fp-ts/lib/Option";
+import { some, Option, none } from "fp-ts/lib/Option";
 
 import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartLaagComponent } from "./kaart-laag.component";
 import { NosqlFsSource } from "../source/nosql-fs-source";
-import { orElse } from "../util/option";
+import { orElse, forEach } from "../util/option";
 import { Laaggroep, ZetStijlVoorLaagCmd } from "./kaart-protocol-commands";
 import { StaticStyle, DynamicStyle, Styles, StyleSelector } from "./kaart-elementen";
 import { getDefaultStyleFunction, getDefaultSelectionStyleFunction } from "./styles";
 import { fromNullable } from "fp-ts/lib/Option";
 import * as prt from "./kaart-protocol";
 import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
+import { determineStyle, determineStyleSelector } from "./kaart-elementen";
 
 @Component({
   selector: "awv-kaart-nosqlfs-laag",
@@ -63,17 +64,22 @@ export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
     return "Voorgrond";
   }
 
+  private getMaybeStyleSelector(): Option<StyleSelector> {
+    return orElse(fromNullable(this.style).map(ke.StaticStyle), () => fromNullable(this.styleFunction).map(ke.DynamicStyle));
+  }
+
   voegLaagToe() {
     super.voegLaagToe();
-    this.dispatch(
-      prt.ZetStijlVoorLaagCmd(
-        this.titel,
-        orElse(option.fromNullable(this.style).map(ke.StaticStyle), () =>
-          option.fromNullable(this.styleFunction).map(ke.DynamicStyle)
-        ).getOrElseValue(StyleSelector(getDefaultStyleFunction())),
-        option.fromNullable(this.selectieStyle).map(StyleSelector),
-        kaartLogOnlyWrapper
-      )
-    );
+
+    forEach(this.getMaybeStyleSelector(), styleselector => {
+      this.dispatch(
+        prt.ZetStijlVoorLaagCmd(
+          this.titel,
+          styleselector,
+          fromNullable(this.selectieStyle).chain(determineStyleSelector),
+          kaartLogOnlyWrapper
+        )
+      );
+    });
   }
 }
