@@ -65,27 +65,7 @@ const components: any[] = [
   KaartInfoBoodschappenComponent
 ];
 
-// Weersta de drang om deze 2 variabelen in een andere module te plaatsen, want dat geeft problemen met gebruik in AOT app.
-const stdStijl = new ol.style.Style({
-  fill: new ol.style.Fill({
-    color: "#5555FF40"
-  }),
-  stroke: new ol.style.Stroke({
-    color: "darkslateblue ",
-    width: 4
-  }),
-  image: new ol.style.Circle({
-    fill: new ol.style.Fill({
-      color: "maroon"
-    }),
-    stroke: new ol.style.Stroke({
-      color: "gray",
-      width: 1.25
-    }),
-    radius: 5
-  })
-});
-
+// Weersta de drang om deze variabele in een andere module te plaatsen, want dat geeft problemen met gebruik in AOT app.
 export const defaultKaartConfig: KaartConfig = {
   geoserver: {
     urls: [
@@ -174,3 +154,4 @@ export * from "./kaart-event-dispatcher";
 export * from "./kaart-protocol";
 export * from "./kaart-elementen";
 export * from "./log";
+export * from "./styles";

@@ -13,13 +13,14 @@ import {
   KaartClassicSubMsg,
   logOnlyWrapper,
   SubscribedMsg,
-  TekenGeomAangepastMsg
+  FeatureGedeselecteerdMsg
 } from "../kaart-classic/messages";
 import { ofType, TypedRecord } from "../util/operators";
 import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import * as prt from "./kaart-protocol";
 import { KaartMsgObservableConsumer } from "./kaart.component";
 import { subscriptionCmdOperator } from "./subscription-helper";
+import { some } from "fp-ts/lib/Option";
 
 @Component({
   selector: "awv-kaart-classic",
@@ -79,7 +80,16 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, Kaar
           map(m => m.geselecteerdeFeatures),
           takeUntil(this.destroyingSubj)
         )
-        .subscribe(features => this.geselecteerdeFeatures.emit(features));
+        .subscribe(features => this.geselecteerdeFeatures.emit(features.geselecteerd));
+
+      // Zorg ervoor dat deselecteer van een feature via infoboodschap terug naar kaart-reducer gaat
+      this.kaartClassicSubMsg$
+        .pipe(
+          ofType<FeatureGedeselecteerdMsg>("FeatureGedeselecteerd"), //
+          map(m => m.featureid),
+          takeUntil(this.destroyingSubj)
+        )
+        .subscribe(featureid => this.dispatch(prt.DeselecteerFeatureCmd(featureid)));
 
       // We kunnen hier makkelijk een mini-reducer zetten voor KaartClassicSubMsg mocht dat nodig zijn
     };
@@ -151,11 +161,11 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, Kaar
     }
   }
 
-  toonInfoBoodschap(id: string, titel: string, inhoud: string): void {
-    this.dispatch(prt.ToonInfoBoodschapCmd(id, titel, inhoud));
+  toonIdentifyInformatie(id: string, titel: string, inhoud: string): void {
+    this.dispatch(prt.ToonInfoBoodschapCmd(id, titel, inhoud, () => some(KaartClassicMsg(FeatureGedeselecteerdMsg(id)))));
   }
 
-  verbergInfoBoodschap(id: string): void {
+  verbergIdentifyInformatie(id: string): void {
     this.dispatch(prt.VerbergInfoBoodschapCmd(id));
   }
 }

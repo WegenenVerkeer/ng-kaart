@@ -1,19 +1,16 @@
 import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
-import { Subject, Subscription } from "rxjs";
-import { Observable } from "rxjs/Observable";
-import { distinctUntilChanged, map, tap, skipUntil, skipWhile } from "rxjs/operators";
+import { Subject } from "rxjs";
+import { distinctUntilChanged, map, skipWhile } from "rxjs/operators";
 
-import { ofType } from "../util/operators";
 import { forEach, orElse } from "../util/option";
 import { KaartChildComponentBase } from "./kaart-child-component-base";
 import * as ke from "./kaart-elementen";
-import { KaartInternalMsg, kaartLogOnlyWrapper, TekenMsg, tekenWrapper } from "./kaart-internal-messages";
+import { KaartInternalMsg, kaartLogOnlyWrapper, tekenWrapper } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
-import { KaartWithInfo } from "./kaart-with-info";
 import { KaartComponent } from "./kaart.component";
-import { determineStyle, determineStyleSelector } from "./laag-converter";
+import { determineStyle, determineStyleSelector } from "./kaart-elementen";
 
 const TekenLaagNaam = "Tekenen van geometrie";
 const defaultlaagStyle = new ol.style.Style({
