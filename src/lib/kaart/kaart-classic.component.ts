@@ -71,16 +71,13 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
             )
           )
         )
-      )
-        // .pipe(takeUntil(this.destroyingSubj)) // Autounsubscribe moet na de lift komen: anders wordt er geen unsubscribe gestuurd
-        .subscribe(err => classicLogger.error(err));
+      ).subscribe(err => classicLogger.error(err));
 
       // Zorg ervoor dat de geselecteerde features in de @Output terecht komen
       this.bindToLifeCycle(
         this.kaartClassicSubMsg$.pipe(
           ofType<FeatureSelectieAangepastMsg>("FeatureSelectieAangepast"), //
           map(m => m.geselecteerdeFeatures)
-          // takeUntil(this.destroyingSubj)
         )
       ).subscribe(features => this.geselecteerdeFeatures.emit(features.geselecteerd));
 
