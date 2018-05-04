@@ -1,7 +1,17 @@
-
 <div class="ident8">{{ prop("ident8") }}</div>
-<div class="vantot">van {{ van( ) }} {{ vanAfstand() }} tot {{ tot() }} {{ totAfstand() }} / {{ zijderijbaan() }} +{{ prop("afstandrijbaan") }} </div>
-<div class="dimensies"><mat-icon class="dimensies">straighten</mat-icon>{{dimensies()}}</div>
+<div class="vantot">van {{ van( ) }}
+  <span class="afstand">{{ vanAfstand() }}</span>
+  tot {{ tot() }}
+  <span class="afstand">{{ totAfstand() }}</span>
+  / {{ zijderijbaan() }}
+  <span class="afstand">+{{ prop("afstandrijbaan") }}cm</span>
+</div>
+
+
+<div class="dimensies">
+  <mat-icon class="dimensies-icon">straighten</mat-icon>
+  {{ dimensies() }}
+</div>
 
 <div class="velden">
   <div class="veldnamen">

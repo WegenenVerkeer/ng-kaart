@@ -60,7 +60,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   van(): string {
     return fromNullable(this.prop("locatie"))
       .chain(loc => fromNullable(loc["begin"]))
-      .map(beginLocatie => `${beginLocatie["positie"]}`)
+      .map(beginLocatie => `${Math.round(beginLocatie["positie"] * 10) / 10}`)
       .fold(() => "", pos => pos);
   }
 
@@ -69,7 +69,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
       .chain(loc => fromNullable(loc["begin"]))
       .map(beginLocatie => beginLocatie["afstand"])
       .map(afstand => {
-        if (afstand > 0) {
+        if (afstand >= 0) {
           return `+${afstand}`;
         } else {
           return `${afstand}`;
@@ -81,7 +81,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   tot(): string {
     return fromNullable(this.prop("locatie"))
       .chain(loc => fromNullable(loc["eind"]))
-      .map(beginLocatie => `${beginLocatie["positie"]}}`)
+      .map(eindLocatie => `${Math.round(eindLocatie["positie"] * 10) / 10}`)
       .fold(() => "", pos => pos);
   }
 
@@ -90,7 +90,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
       .chain(loc => fromNullable(loc["eind"]))
       .map(beginLocatie => beginLocatie["afstand"])
       .map(afstand => {
-        if (afstand > 0) {
+        if (afstand >= 0) {
           return `+${afstand}`;
         } else {
           return `${afstand}`;
