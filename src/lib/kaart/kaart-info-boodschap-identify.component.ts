@@ -104,7 +104,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
 
     const properties: Object = this.feature.getProperties()["properties"];
 
-    return Object.keys(properties).filter(key => properties[key] !== null && !teVerbergenProperties.contains(key));
+    return Object.keys(properties).filter(key => properties[key] && properties[key] !== "" && !teVerbergenProperties.contains(key));
   }
 
   prop(name: string): string {
