@@ -7,7 +7,9 @@ import { Subscription, Wrapper, VoidWrapper, KaartMsg, KaartCmdValidation, Valid
 import { StyleSelector } from "./kaart-elementen";
 import { AbstractZoeker } from "../zoeker/abstract-zoeker";
 import { Option } from "fp-ts/lib/Option";
-import { InfoBoodschap } from "./info-boodschap";
+import { InfoBoodschap } from "./kaart-with-info-model";
+import { KaartInternalMsg } from "./kaart-internal-messages";
+import * as prt from "./kaart-protocol";
 
 export type Command<Msg extends KaartMsg> =
   | SubscribeCmd<Msg>
@@ -46,6 +48,8 @@ export type Command<Msg extends KaartMsg> =
   | VerwijderOverlaysCmd
   | ToonInfoBoodschapCmd
   | VerbergInfoBoodschapCmd
+  | DeselecteerFeatureCmd
+  | SluitInfoBoodschapCmd<Msg>
   | VoegUiElementToe
   | VerwijderUiElement
   | ZetUiElementOpties;
@@ -199,6 +203,7 @@ export interface ZetStijlVoorLaagCmd<Msg extends KaartMsg> {
   readonly type: "ZetStijlVoorLaag";
   readonly titel: string;
   readonly stijl: StyleSelector;
+  readonly selectieStijl: Option<StyleSelector>;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -282,6 +287,17 @@ export interface ZetUiElementOpties {
   readonly opties: UiElementOpties;
 }
 
+export interface DeselecteerFeatureCmd {
+  readonly type: "DeselecteerFeature";
+  readonly id: string;
+}
+
+export interface SluitInfoBoodschapCmd<Msg extends prt.TypedRecord> {
+  readonly type: "SluitInfoBoodschap";
+  readonly id: string;
+  readonly msgGen: () => Option<Msg>;
+}
+
 ////////////////////////
 // constructor functies
 //
@@ -327,9 +343,10 @@ export function VerplaatsLaagCmd<Msg extends KaartMsg>(
 export function ZetStijlVoorLaagCmd<Msg extends KaartMsg>(
   titel: string,
   stijl: StyleSelector,
+  selectieStijl: Option<StyleSelector>,
   wrapper: BareValidationWrapper<Msg>
 ): ZetStijlVoorLaagCmd<Msg> {
-  return { type: "ZetStijlVoorLaag", stijl: stijl, titel: titel, wrapper: wrapper };
+  return { type: "ZetStijlVoorLaag", stijl: stijl, selectieStijl: selectieStijl, titel: titel, wrapper: wrapper };
 }
 
 export function VeranderMiddelpuntCmd<Msg extends KaartMsg>(coordinate: ol.Coordinate): VeranderMiddelpuntCmd<Msg> {
@@ -433,18 +450,24 @@ export function ZetMijnLocatieZoomCmd(doelniveau: Option<number>): ZetMijnLocati
   return { type: "ZetMijnLocatieZoomStatus", doelniveau: doelniveau };
 }
 
-export function ToonInfoBoodschapCmd<Msg extends KaartMsg>(id: string, titel: string, inhoud: string): ToonInfoBoodschapCmd {
+export function ToonInfoBoodschapCmd<Msg extends KaartMsg>(
+  id: string,
+  titel: string,
+  inhoud: string,
+  verbergMsgGen: () => Option<Msg>
+): ToonInfoBoodschapCmd {
   return {
     type: "ToonInfoBoodschap",
     boodschap: {
       id: id,
       titel: titel,
-      inhoud: inhoud
+      inhoud: inhoud,
+      verbergMsgGen: verbergMsgGen
     }
   };
 }
 
-export function VerbergInfoBoodschapCmd<Msg extends KaartMsg>(id: string): VerbergInfoBoodschapCmd {
+export function VerbergInfoBoodschapCmd(id: string): VerbergInfoBoodschapCmd {
   return { type: "VerbergInfoBoodschap", id: id };
 }
 
@@ -458,4 +481,19 @@ export function VerwijderUiElement(naam: string): VerwijderUiElement {
 
 export function ZetUiElementOpties(naam: string, opties: UiElementOpties): ZetUiElementOpties {
   return { type: "ZetUiElementOpties", naam: naam, opties: opties };
+}
+
+export function DeselecteerFeatureCmd(id: string): DeselecteerFeatureCmd {
+  return {
+    type: "DeselecteerFeature",
+    id: id
+  };
+}
+
+export function SluitInfoBoodschapCmd<Msg extends prt.TypedRecord>(id: string, msgGen: () => Option<Msg>): SluitInfoBoodschapCmd<Msg> {
+  return {
+    type: "SluitInfoBoodschap",
+    id: id,
+    msgGen: msgGen
+  };
 }

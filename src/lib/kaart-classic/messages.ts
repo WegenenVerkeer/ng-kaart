@@ -1,8 +1,8 @@
-import { List } from "immutable";
 import * as ol from "openlayers";
 
 import * as prt from "../kaart/kaart-protocol";
 import { classicLogger } from "./log";
+import { GeselecteerdeFeatures } from "../kaart/kaart-with-info-model";
 
 export interface KaartClassicMsg {
   readonly type: "KaartClassic";
@@ -13,11 +13,11 @@ export interface KaartClassicMsg {
 // Inner types
 //
 
-export type KaartClassicSubMsg = FeatureSelectieAangepastMsg | TekenGeomAangepastMsg | SubscribedMsg | DummyMsg;
+export type KaartClassicSubMsg = FeatureGedeselecteerdMsg | FeatureSelectieAangepastMsg | TekenGeomAangepastMsg | SubscribedMsg | DummyMsg;
 
 export interface FeatureSelectieAangepastMsg {
   readonly type: "FeatureSelectieAangepast";
-  readonly geselecteerdeFeatures: List<ol.Feature>;
+  readonly geselecteerdeFeatures: GeselecteerdeFeatures;
 }
 
 export interface TekenGeomAangepastMsg {
@@ -31,6 +31,11 @@ export interface SubscribedMsg {
   reference: any;
 }
 
+export interface FeatureGedeselecteerdMsg {
+  readonly type: "FeatureGedeselecteerd";
+  readonly featureid: string;
+}
+
 export interface DummyMsg {
   readonly type: "Dummy";
 }
@@ -39,11 +44,15 @@ export interface DummyMsg {
 // Constructors
 //
 
+export function FeatureGedeselecteerdMsg(featureid: string): FeatureGedeselecteerdMsg {
+  return { type: "FeatureGedeselecteerd", featureid: featureid };
+}
+
 export function KaartClassicMsg(payload: KaartClassicSubMsg): KaartClassicMsg {
   return { type: "KaartClassic", payload: payload };
 }
 
-export function FeatureSelectieAangepastMsg(geselecteerdeFeatures: List<ol.Feature>): FeatureSelectieAangepastMsg {
+export function FeatureSelectieAangepastMsg(geselecteerdeFeatures: GeselecteerdeFeatures): FeatureSelectieAangepastMsg {
   return { type: "FeatureSelectieAangepast", geselecteerdeFeatures: geselecteerdeFeatures };
 }
 

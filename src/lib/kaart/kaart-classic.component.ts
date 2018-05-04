@@ -1,26 +1,27 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges, NgZone } from "@angular/core";
+import { Component, EventEmitter, Input, NgZone, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from "@angular/core";
 import * as option from "fp-ts/lib/Option";
+import { some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { Observable } from "rxjs/Observable";
-import { map, share, takeUntil, tap } from "rxjs/operators";
+import { map, share, tap } from "rxjs/operators";
 
 import { classicLogger } from "../kaart-classic/log";
 import {
+  FeatureGedeselecteerdMsg,
   FeatureSelectieAangepastMsg,
   KaartClassicMsg,
   KaartClassicSubMsg,
   logOnlyWrapper,
-  SubscribedMsg,
-  TekenGeomAangepastMsg
+  SubscribedMsg
 } from "../kaart-classic/messages";
 import { ofType, TypedRecord } from "../util/operators";
+import { KaartComponentBase } from "./kaart-component-base";
 import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import * as prt from "./kaart-protocol";
 import { KaartMsgObservableConsumer } from "./kaart.component";
 import { subscriptionCmdOperator } from "./subscription-helper";
-import { KaartComponentBase } from "./kaart-component-base";
 
 @Component({
   selector: "awv-kaart-classic",
@@ -81,7 +82,15 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
           map(m => m.geselecteerdeFeatures)
           // takeUntil(this.destroyingSubj)
         )
-      ).subscribe(features => this.geselecteerdeFeatures.emit(features));
+      ).subscribe(features => this.geselecteerdeFeatures.emit(features.geselecteerd));
+
+      // Zorg ervoor dat deselecteer van een feature via infoboodschap terug naar kaart-reducer gaat
+      this.bindToLifeCycle(
+        this.kaartClassicSubMsg$.pipe(
+          ofType<FeatureGedeselecteerdMsg>("FeatureGedeselecteerd"), //
+          map(m => m.featureid)
+        )
+      ).subscribe(featureid => this.dispatch(prt.DeselecteerFeatureCmd(featureid)));
 
       // We kunnen hier makkelijk een mini-reducer zetten voor KaartClassicSubMsg mocht dat nodig zijn
     };
@@ -150,11 +159,11 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
     }
   }
 
-  toonInfoBoodschap(id: string, titel: string, inhoud: string): void {
-    this.dispatch(prt.ToonInfoBoodschapCmd(id, titel, inhoud));
+  toonIdentifyInformatie(id: string, titel: string, inhoud: string): void {
+    this.dispatch(prt.ToonInfoBoodschapCmd(id, titel, inhoud, () => some(KaartClassicMsg(FeatureGedeselecteerdMsg(id)))));
   }
 
-  verbergInfoBoodschap(id: string): void {
+  verbergIdentifyInformatie(id: string): void {
     this.dispatch(prt.VerbergInfoBoodschapCmd(id));
   }
 }

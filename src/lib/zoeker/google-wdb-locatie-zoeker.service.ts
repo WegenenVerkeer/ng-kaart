@@ -2,36 +2,33 @@ import "rxjs/add/observable/fromPromise";
 
 import { Inject, Injectable } from "@angular/core";
 import { Http, QueryEncoder, Response, URLSearchParams } from "@angular/http";
-import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
-import {} from "googlemaps";
 import { Map } from "immutable";
+import {} from "googlemaps";
 import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
 import { catchError, flatMap, map } from "rxjs/operators";
 
-import { AbstractZoeker, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
-import { GOOGLE_LOCATIE_ZOEKER_CFG, GoogleLocatieZoekerConfig, GoogleLocatieZoekerConfigData } from "./google-locatie-zoeker.config";
+import { AbstractZoeker, geoJSONOptions, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
+import { GoogleWdbLocatieZoekerConfig } from "./google-wdb-locatie-zoeker.config";
+import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE, ZoekerRepresentatieType } from "./zoeker-representatie.service";
+import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
 
-export class GoogleZoekResultaat implements ZoekResultaat {
-  partialMatch: boolean;
-  index: number;
-  omschrijving: string;
-  bron: string;
-  zoeker: string;
-  geometry: any;
-  locatie: any;
-  icoon: SafeHtml; // Ieder zoekresultaat heeft hetzelfde icoon.
-  style: ol.style.Style;
+export class GoogleWdbZoekResultaat implements ZoekResultaat {
+  readonly partialMatch: boolean;
+  readonly index: number;
+  readonly omschrijving: string;
+  readonly bron: string;
+  readonly zoeker: string;
+  readonly geometry: any;
+  readonly locatie: any;
+  readonly icoon: string; // Ieder zoekresultaat heeft hetzelfde icoon.
+  readonly style: ol.style.Style;
 
-  constructor(locatie, index: number, zoeker: string, icoon: SafeHtml, style: ol.style.Style) {
+  constructor(locatie, index: number, zoeker: string, style: ol.style.Style, icoon: string) {
     this.partialMatch = locatie.partialMatch;
     this.index = index + 1;
     this.locatie = locatie.locatie;
-    this.geometry = new ol.format.GeoJSON(<ol.olx.format.GeoJSONOptions>{
-      ignoreExtraDims: true,
-      defaultDataProjection: undefined,
-      featureProjection: undefined
-    }).readGeometry(locatie.locatie);
+    this.geometry = new ol.format.GeoJSON(geoJSONOptions).readGeometry(locatie.locatie);
     this.omschrijving = locatie.omschrijving;
     this.bron = locatie.bron;
     this.zoeker = zoeker;
@@ -82,44 +79,26 @@ interface ExtendedPlaceResult extends google.maps.places.PlaceResult, ExtendedRe
 }
 
 @Injectable()
-export class GoogleLocatieZoekerService implements AbstractZoeker {
-  private readonly googleLocatieZoekerConfig: GoogleLocatieZoekerConfig;
+export class GoogleWdbLocatieZoekerService implements AbstractZoeker {
+  private readonly googleWdbLocatieZoekerConfig: GoogleWdbLocatieZoekerConfig;
   private _cache: Promise<GoogleServices> | null = null;
-  private legende: Map<string, SafeHtml>;
-  private style: ol.style.Style; // 1 style voor ieder resultaat. We maken geen onderscheid per bron.
-  private icoon: SafeHtml;
+  private legende: Map<string, string>;
 
   private readonly locatieZoekerUrl: string;
 
   constructor(
     private readonly http: Http,
-    @Inject(GOOGLE_LOCATIE_ZOEKER_CFG) googleLocatieZoekerConfigData: GoogleLocatieZoekerConfigData,
-    private readonly sanitizer: DomSanitizer
+    @Inject(ZOEKER_CFG) zoekerConfigData: ZoekerConfigData,
+    @Inject(ZOEKER_REPRESENTATIE) private zoekerRepresentatie: AbstractRepresentatieService
   ) {
-    this.googleLocatieZoekerConfig = new GoogleLocatieZoekerConfig(googleLocatieZoekerConfigData);
-    this.locatieZoekerUrl = this.googleLocatieZoekerConfig.url;
-    // We moeten hier al de expanded html zetten, want angular directives worden niet geexpandeerd in innerHtml met SafeHtml.
-    this.icoon = this.sanitizer.bypassSecurityTrustHtml("<mat-icon class='mat-icon material-icons'>place</mat-icon>");
-    this.legende = Map.of(this.naam(), this.icoon);
-    this.style = new ol.style.Style({
-      stroke: new ol.style.Stroke({
-        color: this.googleLocatieZoekerConfig.kleur,
-        width: 1
-      }),
-      fill: new ol.style.Fill({
-        color: this.googleLocatieZoekerConfig.lichtereKleur()
-      }),
-      text: new ol.style.Text({
-        text: "\uE55F", // place
-        font: "normal 24px Material Icons",
-        textBaseline: "bottom",
-        fill: new ol.style.Fill({
-          color: this.googleLocatieZoekerConfig.kleur
-        }),
-        offsetX: 0.5,
-        offsetY: 1.0
-      })
-    });
+    this.googleWdbLocatieZoekerConfig = new GoogleWdbLocatieZoekerConfig(zoekerConfigData.googleWdb);
+    this.locatieZoekerUrl = this.googleWdbLocatieZoekerConfig.url;
+    this.legende = Map.of(
+      "Google Locatiezoeker",
+      this.zoekerRepresentatie.getSvgNaam("Google"),
+      "WDB Locatiezoeker",
+      this.zoekerRepresentatie.getSvgNaam("WDB")
+    );
   }
 
   private init(): Promise<GoogleServices> {
@@ -138,15 +117,9 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
     }
   }
 
-  private maakZoekResultaten(error?: string): ZoekResultaten {
-    const resultaten = new ZoekResultaten(this.naam(), error);
-    resultaten.legende = this.legende;
-    return resultaten;
-  }
-
-  zoek(zoekterm): Observable<ZoekResultaten> {
+  zoek$(zoekterm): Observable<ZoekResultaten> {
     if (zoekterm.trim().length === 0) {
-      return Observable.of(this.maakZoekResultaten());
+      return Observable.of(new ZoekResultaten(this.naam(), [], [], this.legende));
     }
     const params: URLSearchParams = new URLSearchParams("", new EncodeAllesQueryEncoder());
     params.set("query", zoekterm);
@@ -158,7 +131,7 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
   }
 
   parseResult(response: Response): Observable<ZoekResultaten> {
-    const zoekResultaten = this.maakZoekResultaten();
+    const zoekResultaten = new ZoekResultaten(this.naam(), [], [], this.legende);
 
     // parse result
     const resultaten = response.json();
@@ -313,16 +286,19 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
             resultaat.locatie || this.wgs84ToLambert72GeoJson(resultaat.geometry.location.lng(), resultaat.geometry.location.lat());
         });
         const locaties = resultaten.locaties.concat(resultatenLijst);
-        if (locaties.length >= this.googleLocatieZoekerConfig.maxAantal) {
-          zoekResultaten.fouten.push(
-            `Er werden meer dan ${this.googleLocatieZoekerConfig.maxAantal} resultaten gevonden, ` +
-              `de eerste ${this.googleLocatieZoekerConfig.maxAantal} worden hier opgelijst`
+        locaties.forEach((locatie, index) => {
+          const zoekerType: ZoekerRepresentatieType = locatie.bron.startsWith("WDB") ? "WDB" : "Google";
+          zoekResultaten.resultaten.push(
+            new GoogleWdbZoekResultaat(
+              locatie,
+              index,
+              this.naam(),
+              this.zoekerRepresentatie.getOlStyle(zoekerType),
+              this.zoekerRepresentatie.getSvgNaam(zoekerType)
+            )
           );
-        }
-        locaties.slice(0, this.googleLocatieZoekerConfig.maxAantal).forEach((locatie, index) => {
-          zoekResultaten.resultaten.push(new GoogleZoekResultaat(locatie, index, this.naam(), this.icoon, this.style));
         });
-        return zoekResultaten;
+        return zoekResultaten.limiteerAantalResultaten(this.googleWdbLocatieZoekerConfig.maxAantal);
       });
 
       return Observable.fromPromise(zoekResultatenPromise);
@@ -339,7 +315,7 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
         // toon http foutmelding indien geen 200 teruggehad
         error = `Fout bij opvragen locatie: ${response.responseText || response.statusText || response}`;
     }
-    return Observable.of(this.maakZoekResultaten(error));
+    return Observable.of(new ZoekResultaten(this.naam(), [error], [], this.legende));
   }
 
   private geocode(omschrijving): Promise<ExtendedGeocoderResult[]> {
@@ -492,7 +468,7 @@ export class GoogleLocatieZoekerService implements AbstractZoeker {
   private loadScript() {
     const node = document.createElement("script");
     node.src = `https://maps.googleapis.com/maps/api/js?key=${
-      this.googleLocatieZoekerConfig.apiKey
+      this.googleWdbLocatieZoekerConfig.apiKey
     }&libraries=places&language=nl&callback=__onGoogleLoaded`;
     node.type = "text/javascript";
     document.getElementsByTagName("head")[0].appendChild(node);

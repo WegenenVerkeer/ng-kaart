@@ -3,8 +3,8 @@ import { List, Map } from "immutable";
 import * as ol from "openlayers";
 
 import { ZoekResultaten } from "../zoeker/abstract-zoeker";
-import { InfoBoodschap } from "./info-boodschap";
 import * as ke from "./kaart-elementen";
+import { InfoBoodschap } from "./kaart-with-info-model";
 
 /////////
 // Types
@@ -29,6 +29,12 @@ export interface Zoominstellingen {
   maxZoom: number;
 }
 
+export interface GeselecteerdeFeatures {
+  geselecteerd: List<ol.Feature>;
+  toegevoegd: Option<ol.Feature>;
+  verwijderd: Option<ol.Feature>;
+}
+
 export interface ZoominstellingenSubscription<Msg> {
   readonly type: "Zoominstellingen";
   readonly wrapper: (instellingen: Zoominstellingen) => Msg;
@@ -41,7 +47,7 @@ export interface MiddelpuntSubscription<Msg> {
 
 export interface GeselecteerdeFeaturesSubscription<Msg> {
   readonly type: "GeselecteerdeFeatures";
-  readonly wrapper: (geselecteerdeFeatures: List<ol.Feature>) => Msg;
+  readonly wrapper: (geselecteerdeFeatures: GeselecteerdeFeatures) => Msg;
 }
 
 export interface AchtergrondTitelSubscription<Msg> {
@@ -95,7 +101,7 @@ export function ZoominstellingenSubscription<Msg>(wrapper: (settings: Zoominstel
 }
 
 export function GeselecteerdeFeaturesSubscription<Msg>(
-  wrapper: (geselecteerdeFeatures: List<ol.Feature>) => Msg
+  wrapper: (geselecteerdeFeatures: GeselecteerdeFeatures) => Msg
 ): GeselecteerdeFeaturesSubscription<Msg> {
   return { type: "GeselecteerdeFeatures", wrapper: wrapper };
 }

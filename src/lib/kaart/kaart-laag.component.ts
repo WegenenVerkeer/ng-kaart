@@ -1,10 +1,10 @@
 import { Input, OnDestroy, OnInit } from "@angular/core";
+import { fromNullable } from "fp-ts/lib/Option";
 
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { Laag, Laaggroep } from "./kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
-import { fromNullable } from "fp-ts/lib/Option";
 
 export abstract class KaartLaagComponent implements OnInit, OnDestroy {
   @Input() titel = "";

@@ -1,19 +1,41 @@
-import { none, Option } from "fp-ts/lib/Option";
-import { List, Map, Set } from "immutable";
+import { none, some, Option } from "fp-ts/lib/Option";
+import { List, Map, OrderedMap, Set } from "immutable";
 import * as ol from "openlayers";
 import { BehaviorSubject, ReplaySubject, Subject } from "rxjs";
 
-import { Laaggroep, Zoominstellingen } from ".";
+import { TypedRecord, Zoominstellingen } from "./kaart-protocol";
 import { ZoekResultaten } from "../zoeker/abstract-zoeker";
 import { ZoekerCoordinator } from "../zoeker/zoeker-coordinator";
 import { KaartConfig } from "./kaart-config";
 import * as ke from "./kaart-elementen";
-import { InfoBoodschap } from "./info-boodschap";
 import { ModelChanger } from "./model-changes";
+import { InfoBoodschap, GeselecteerdeFeatures, Groeplagen } from "./kaart-with-info-model";
+import { StyleSelector } from "./kaart-elementen";
 
 export interface Groeplagen {
-  readonly laaggroep: Laaggroep;
+  readonly laaggroep: ke.Laaggroep;
   readonly lagen: List<ke.ToegevoegdeLaag>;
+}
+
+// Spijtig genoeg kan die niet in het model zelf zitten vermits de stijl functie in de interaction.Select control wordt
+// gecreëerd wanneer het model nog leeg is, en het model van dat moment in zijn scope zit
+const STIJL_OP_LAAG = "stijlOpLaag";
+const SELECTIE_STIJL_OP_LAAG = "stijlOpLaag";
+
+export function setStyleSelector(model: KaartWithInfo, laagnaam: string, stijl: StyleSelector) {
+  model.map.set(STIJL_OP_LAAG, model.map.get(STIJL_OP_LAAG).set(laagnaam, stijl));
+}
+
+export function getStyleSelector(model: KaartWithInfo, laagnaam: string): StyleSelector {
+  return model.map.get(STIJL_OP_LAAG).get(laagnaam);
+}
+
+export function setSelectionStyleSelector(model: KaartWithInfo, laagnaam: string, stijl: StyleSelector) {
+  model.map.set(SELECTIE_STIJL_OP_LAAG, model.map.get(SELECTIE_STIJL_OP_LAAG).set(laagnaam, stijl));
+}
+
+export function getSelectionStyleSelector(model: KaartWithInfo, laagnaam: string): StyleSelector {
+  return model.map.get(SELECTIE_STIJL_OP_LAAG).get(laagnaam);
 }
 
 /**
@@ -21,13 +43,13 @@ export interface Groeplagen {
  */
 export class KaartWithInfo {
   readonly toegevoegdeLagenOpTitel: Map<string, ke.ToegevoegdeLaag> = Map();
-  readonly titelsOpGroep: Map<Laaggroep, List<string>> = Map([
+  readonly titelsOpGroep: Map<ke.Laaggroep, List<string>> = Map([
     ["Voorgrond.Laag", List()],
     ["Voorgrond.Hoog", List()],
     ["Achtergrond", List()],
     ["Tools", List()]
   ]);
-  readonly groepOpTitel: Map<string, Laaggroep> = Map();
+  readonly groepOpTitel: Map<string, ke.Laaggroep> = Map();
   // readonly lagen: List<ke.ToegevoegdeLaag> = List();
   readonly schaal: Option<ol.control.Control> = none;
   readonly fullScreen: Option<ol.control.FullScreen> = none;
@@ -37,7 +59,7 @@ export class KaartWithInfo {
 
   readonly clickSubj: Subject<ol.Coordinate> = new Subject<ol.Coordinate>();
   readonly zoominstellingenSubj: Subject<Zoominstellingen> = new ReplaySubject<Zoominstellingen>(1);
-  readonly geselecteerdeFeaturesSubj: Subject<List<ol.Feature>> = new ReplaySubject<List<ol.Feature>>(1);
+  readonly geselecteerdeFeaturesSubj: Subject<GeselecteerdeFeatures> = new Subject<GeselecteerdeFeatures>();
   readonly geselecteerdeFeatures: ol.Collection<ol.Feature> = new ol.Collection<ol.Feature>();
   readonly middelpuntSubj: Subject<[number, number]> = new ReplaySubject<[number, number]>(1);
   readonly achtergrondlaagtitelSubj: Subject<string> = new ReplaySubject<string>(1);
@@ -47,8 +69,8 @@ export class KaartWithInfo {
   readonly componentFoutSubj: Subject<List<string>> = new ReplaySubject<List<string>>(1);
   readonly mijnLocatieZoomDoelSubj: Subject<Option<number>> = new ReplaySubject<Option<number>>(1);
   readonly geometryChangedSubj: Subject<ol.geom.Geometry> = new Subject<ol.geom.Geometry>();
-  readonly infoBoodschappenSubj: BehaviorSubject<Map<string, InfoBoodschap>> = new BehaviorSubject<Map<string, InfoBoodschap>>(Map());
   readonly tekenSettingsSubj: BehaviorSubject<Option<ke.TekenSettings>> = new BehaviorSubject<Option<ke.TekenSettings>>(none);
+  readonly infoBoodschappenSubj = new BehaviorSubject<OrderedMap<string, InfoBoodschap>>(OrderedMap());
 
   constructor(
     // TODO om de distinctWithInfo te versnellen zouden we als eerste element een versieteller kunnen toevoegen
@@ -83,11 +105,21 @@ export class KaartWithInfo {
     map.on("click", (event: ol.MapBrowserEvent) => {
       return this.clickSubj.next(event.coordinate);
     });
-    this.geselecteerdeFeatures.on("add", () => {
-      this.geselecteerdeFeaturesSubj.next(List(this.geselecteerdeFeatures.getArray()));
-    });
-    this.geselecteerdeFeatures.on("remove", () => {
-      this.geselecteerdeFeaturesSubj.next(List(this.geselecteerdeFeatures.getArray()));
-    });
+    this.geselecteerdeFeatures.on("add", (event: ol.Collection.Event) =>
+      this.geselecteerdeFeaturesSubj.next({
+        geselecteerd: List(this.geselecteerdeFeatures.getArray()),
+        toegevoegd: some(event.element),
+        verwijderd: none
+      })
+    );
+    this.geselecteerdeFeatures.on("remove", (event: ol.Collection.Event) =>
+      this.geselecteerdeFeaturesSubj.next({
+        geselecteerd: List(this.geselecteerdeFeatures.getArray()),
+        toegevoegd: none,
+        verwijderd: some(event.element)
+      })
+    );
+    this.map.set(STIJL_OP_LAAG, Map<string, StyleSelector>());
+    this.map.set(SELECTIE_STIJL_OP_LAAG, Map<string, StyleSelector>());
   }
 }

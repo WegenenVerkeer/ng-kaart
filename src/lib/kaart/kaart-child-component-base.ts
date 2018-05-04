@@ -1,5 +1,4 @@
 import { NgZone, OnDestroy, OnInit } from "@angular/core";
-import { Observable } from "openlayers";
 import * as rx from "rxjs";
 
 import { KaartComponentBase } from "./kaart-component-base";

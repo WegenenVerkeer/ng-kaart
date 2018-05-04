@@ -13,10 +13,13 @@ import * as rx from "rxjs";
 import { forEach } from "../util/option";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
-import { PositieAanpassing, ZetMijnLocatieZoomCmd, VoegUiElementToe, ZetUiElementOpties } from "./kaart-protocol-commands";
-import { KaartWithInfo } from "./kaart-with-info";
-import { toOlLayer } from "./laag-converter";
 import { ModelChanger } from "./model-changes";
+import { PositieAanpassing, ZetMijnLocatieZoomCmd, VoegUiElementToe, ZetUiElementOpties } from "./kaart-protocol-commands";
+import { KaartWithInfo, setStyleSelector, setSelectionStyleSelector, getSelectionStyleSelector } from "./kaart-with-info";
+import { toOlLayer } from "./laag-converter";
+import { kaartLogger } from "./log";
+import { DynamicStyle, StaticStyle, Styles, determineStyle } from "./kaart-elementen";
+import { getDefaultStyle } from "./styles";
 
 ///////////////////////////////////
 // Hulpfuncties
@@ -481,7 +484,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         cmnd.wrapper,
         valideerVectorLayerBestaat(cmnd.titel).map(layer => {
-          layer.getSource().clear(true);
+          layer.getSource().clear(false);
           layer.getSource().addFeatures(cmnd.features.toArray());
           return ModelAndEmptyResult(model);
         })
@@ -581,27 +584,69 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         }
       });
 
+      const applySelectFunction = function(feature: ol.Feature, resolution: number): ol.style.Style | ol.style.Style[] {
+        const applySelectionColor = function(style: ol.style.Style): ol.style.Style {
+          const selectionStyle = style.clone();
+          selectionStyle.getStroke().setColor([0, 153, 255, 1]);
+          return selectionStyle;
+        };
+
+        const styleSelector = getSelectionStyleSelector(model, feature.get("laagnaam"));
+        if (styleSelector) {
+          switch (styleSelector.type) {
+            case "StaticStyle":
+              return styleSelector.style;
+            case "Styles":
+              return styleSelector.styles;
+            case "DynamicStyle":
+              const toegepasteStijl = styleSelector.styleFunction(feature, resolution);
+              if (Array.isArray(toegepasteStijl)) {
+                return toegepasteStijl.map(style => applySelectionColor(style));
+              } else {
+                return applySelectionColor(toegepasteStijl);
+              }
+            default:
+              kaartLogger.error("Ongekend styleSelector type");
+              kaartLogger.error(feature);
+              return [];
+          }
+        } else {
+          kaartLogger.warn("Geen stijl gevonden voor feature:");
+          kaartLogger.warn(feature);
+          return []; // geen stijl functie gevonden.. Is dit een nosql vector laag?
+        }
+      };
+
       function getSelectInteraction(modus: prt.SelectieModus): Option<olx.interaction.SelectOptions> {
         switch (modus) {
           case "single":
             return some({
               condition: ol.events.condition.click,
-              features: model.geselecteerdeFeatures
+              features: model.geselecteerdeFeatures,
+              multi: true,
+              style: applySelectFunction
             });
           case "multiple":
             return some({
               condition: ol.events.condition.click,
+              toggleCondition: ol.events.condition.click,
               features: model.geselecteerdeFeatures,
-              multi: true
+              multi: true,
+              style: applySelectFunction
             });
           case "none":
             return none;
         }
       }
 
-      getSelectInteraction(cmnd.selectieModus).map(selectInteraction =>
-        model.map.addInteraction(new ol.interaction.Select(selectInteraction))
-      );
+      getSelectInteraction(cmnd.selectieModus).map(selectInteraction => {
+        model.map.addInteraction(new ol.interaction.Select(selectInteraction));
+        model.map.addInteraction(
+          new ol.interaction.DragBox({
+            condition: ol.events.condition.platformModifierKeyOnly
+          })
+        );
+      });
 
       return ModelWithResult(model);
     }
@@ -610,10 +655,9 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         cmnd.wrapper,
         valideerVectorLayerBestaat(cmnd.titel).map(vectorlayer => {
-          const sf = (feature: ol.Feature, resolution: number) => {
-            return (cmnd.stijl as ke.DynamicStyle).styleFunction(feature, resolution);
-          };
-          vectorlayer.setStyle(cmnd.stijl.type === "StaticStyle" ? cmnd.stijl.style : sf);
+          vectorlayer.setStyle(determineStyle(some(cmnd.stijl), getDefaultStyle()));
+          setStyleSelector(model, cmnd.titel, cmnd.stijl);
+          cmnd.selectieStijl.map(selectieStijl => setSelectionStyleSelector(model, cmnd.titel, selectieStijl));
           return ModelAndEmptyResult(model);
         })
       );
@@ -624,9 +668,30 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
-    function verbergInfoBoodschap(cmnd: prt.VerbergInfoBoodschapCmd): ModelWithResult<Msg> {
+    function deleteInfoBoodschap(cmnd: prt.VerbergInfoBoodschapCmd): ModelWithResult<Msg> {
       model.infoBoodschappenSubj.next(model.infoBoodschappenSubj.getValue().delete(cmnd.id));
       return ModelWithResult(model);
+    }
+
+    function deselecteerFeature(cmnd: prt.DeselecteerFeatureCmd): ModelWithResult<Msg> {
+      const maybeSelectedFeature = fromNullable(model.geselecteerdeFeatures.getArray().find(f => f.get("id") === cmnd.id));
+      forEach(maybeSelectedFeature, selected => model.geselecteerdeFeatures.remove(selected));
+      return ModelWithResult(model);
+    }
+
+    function sluitInfoBoodschap(cmnd: prt.SluitInfoBoodschapCmd<Msg>): ModelWithResult<Msg> {
+      const maybeMsg = cmnd.msgGen() as Option<Msg>;
+      return maybeMsg.fold(
+        () => {
+          // geen message uit functie, sluit de info boodschap zelf
+          model.infoBoodschappenSubj.next(model.infoBoodschappenSubj.getValue().delete(cmnd.id));
+          return ModelWithResult(model);
+        },
+        msg => {
+          // stuur sluit message door
+          return ModelWithResult(model, some(msg));
+        }
+      );
     }
 
     function meldComponentFout(cmnd: prt.MeldComponentFoutCmd): ModelWithResult<Msg> {
@@ -738,10 +803,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return modelWithSubscriptionResult("KaartClick", model.clickSubj.subscribe(t => msgConsumer(sub.wrapper(t))));
       }
 
-      const subscribeToLagenInGroep = (sub: prt.LagenInGroepSubscription<Msg>) =>
+      const subscribeToLagenInGroep = (sub: prt.LagenInGroepSubscription<Msg>) => {
         // Op het moment van de subscription is het heel goed mogelijk dat de lagen al toegevoegd zijn. Het is daarom dat de
         // groeplagenSubj een vrij grote replay waarde heeft.
-        modelWithSubscriptionResult(
+        return modelWithSubscriptionResult(
           "LagenInGroep",
           model.groeplagenSubj
             .pipe(
@@ -749,6 +814,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             )
             .subscribe(groeplagen => msgConsumer(sub.wrapper(groeplagen.lagen)))
         );
+      };
 
       function subscribeToZoeker(sub: prt.ZoekerSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult("Zoeker", model.zoekerSubj.subscribe(m => msgConsumer(sub.wrapper(m))));
@@ -892,7 +958,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       case "ToonInfoBoodschap":
         return toonInfoBoodschap(cmd);
       case "VerbergInfoBoodschap":
-        return verbergInfoBoodschap(cmd);
+        return deleteInfoBoodschap(cmd);
+      case "DeselecteerFeature":
+        return deselecteerFeature(cmd);
+      case "SluitInfoBoodschap":
+        return sluitInfoBoodschap(cmd);
       case "VoegUiElementToe":
         return voegUiElementToe(cmd);
       case "VerwijderUiElement":

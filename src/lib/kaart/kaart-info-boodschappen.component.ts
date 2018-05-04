@@ -1,14 +1,17 @@
 import { animate, state, style, transition, trigger } from "@angular/animations";
-import { Component, EventEmitter, NgZone, OnInit, Output } from "@angular/core";
+import { Component, NgZone, OnInit } from "@angular/core";
 import { List } from "immutable";
 
 import { observeOnAngular } from "../util/observe-on-angular";
 import { ofType } from "../util/operators";
-import { InfoBoodschap } from "./info-boodschap";
+import { InfoBoodschap } from "./kaart-with-info-model";
 import { KaartChildComponentBase } from "./kaart-child-component-base";
 import { InfoBoodschappenMsg, infoBoodschappenMsgGen, KaartInternalMsg } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
 import { KaartComponent } from "./kaart.component";
+import { Option } from "fp-ts/lib/Option";
+import { SluitInfoBoodschapCmd } from "./kaart-protocol-commands";
+import { Observable } from "rxjs/Observable";
 
 @Component({
   selector: "awv-kaart-info-boodschappen",
@@ -18,12 +21,12 @@ import { KaartComponent } from "./kaart.component";
     trigger("fadeIn", [
       state("visible", style({ opacity: 1 })),
       transition(":enter", [style({ opacity: 0 }), animate(200)]),
-      transition(":leave", animate(200, style({ opacity: 0 })))
+      transition(":leave", animate(0, style({ opacity: 0 })))
     ])
   ]
 })
 export class KaartInfoBoodschappenComponent extends KaartChildComponentBase implements OnInit {
-  @Output() infoBoodschappen$: EventEmitter<List<InfoBoodschap>> = new EventEmitter();
+  infoBoodschappen$: Observable<List<InfoBoodschap>> = Observable.empty();
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
@@ -36,13 +39,15 @@ export class KaartInfoBoodschappenComponent extends KaartChildComponentBase impl
   ngOnInit(): void {
     super.ngOnInit();
 
-    this.internalMessage$
+    this.infoBoodschappen$ = this.internalMessage$
       .pipe(
         ofType<InfoBoodschappenMsg>("InfoBoodschappen"), //
         observeOnAngular(this.zone)
       )
-      .subscribe(msg => {
-        this.infoBoodschappen$.emit(msg.infoBoodschappen.toList());
-      });
+      .map(msg => msg.infoBoodschappen.reverse().toList()); // laatste boodschap bovenaan
+  }
+
+  verwijder(id: string, verwijderBoodschapMsgGen: () => Option<KaartInternalMsg>): void {
+    this.dispatch(SluitInfoBoodschapCmd(id, verwijderBoodschapMsgGen));
   }
 }
