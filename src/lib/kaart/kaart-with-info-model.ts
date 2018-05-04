@@ -8,8 +8,18 @@ import { TypedRecord } from "./kaart-protocol";
 export interface InfoBoodschap {
   readonly id: string;
   readonly titel: string;
-  readonly inhoud: string;
+  readonly type: string;
   readonly verbergMsgGen: () => Option<TypedRecord>;
+}
+
+export interface InfoBoodschapSimple extends InfoBoodschap {
+  readonly type: "InfoBoodschapSimple";
+  readonly inhoud: string;
+}
+
+export interface InfoBoodschapIdentify extends InfoBoodschap {
+  readonly type: "InfoBoodschapIdentify";
+  readonly feature: ol.Feature;
 }
 
 export interface Groeplagen {

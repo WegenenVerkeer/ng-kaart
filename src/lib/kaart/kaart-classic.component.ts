@@ -161,8 +161,17 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, Kaar
     }
   }
 
-  toonIdentifyInformatie(id: string, titel: string, inhoud: string): void {
-    this.dispatch(prt.ToonInfoBoodschapCmd(id, titel, inhoud, () => some(KaartClassicMsg(FeatureGedeselecteerdMsg(id)))));
+  toonIdentifyInformatie(feature: ol.Feature): void {
+    const featureId = feature.get("id").toString();
+    this.dispatch(
+      prt.ToonInfoBoodschapCmd({
+        id: featureId,
+        type: "InfoBoodschapIdentify",
+        titel: feature.get("laagnaam"),
+        feature: feature,
+        verbergMsgGen: () => some(KaartClassicMsg(FeatureGedeselecteerdMsg(featureId)))
+      })
+    );
   }
 
   verbergIdentifyInformatie(id: string): void {

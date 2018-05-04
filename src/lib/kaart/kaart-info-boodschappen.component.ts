@@ -46,8 +46,4 @@ export class KaartInfoBoodschappenComponent extends KaartChildComponentBase impl
       )
       .map(msg => msg.infoBoodschappen.reverse().toList()); // laatste boodschap bovenaan
   }
-
-  verwijder(id: string, verwijderBoodschapMsgGen: () => Option<prt.TypedRecord>): void {
-    this.dispatch(SluitInfoBoodschapCmd(id, verwijderBoodschapMsgGen));
-  }
 }

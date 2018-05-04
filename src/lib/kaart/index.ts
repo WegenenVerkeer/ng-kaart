@@ -15,6 +15,8 @@ import { KAART_CFG, KaartConfig } from "./kaart-config";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { KaartGeoserverLaagComponent } from "./kaart-geoserver-laag.component";
 import { KaartInfoBoodschappenComponent } from "./kaart-info-boodschappen.component";
+import { KaartInfoBoodschapComponent } from "./kaart-info-boodschap.component";
+import { KaartInfoBoodschapIdentifyComponent } from "./kaart-info-boodschap-identify.component";
 import { KaartKnopAchtergrondLaagKiezerComponent } from "./kaart-knop-achtergrondlaag-kiezer.component";
 import { KaartKnopVolledigSchermComponent } from "./kaart-knop-volledig-scherm.component";
 import { KaartKnopZoomSliderComponent } from "./kaart-knop-zoom-slider.component";
@@ -62,7 +64,9 @@ const components: any[] = [
   KaartAchtergrondSelectorComponent,
   KaartAchtergrondTileComponent,
   KaartOpenStreetViewComponent,
-  KaartInfoBoodschappenComponent
+  KaartInfoBoodschappenComponent,
+  KaartInfoBoodschapComponent,
+  KaartInfoBoodschapIdentifyComponent
 ];
 
 // Weersta de drang om deze variabele in een andere module te plaatsen, want dat geeft problemen met gebruik in AOT app.

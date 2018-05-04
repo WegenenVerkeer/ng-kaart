@@ -1,0 +1,70 @@
+.float-box {
+  box-shadow: 0 3px 1px -2px rgba(0, 0, 0, .2), 0 2px 2px 0 rgba(0, 0, 0, .14), 0 1px 5px 0 rgba(0, 0, 0, .12);
+  background: white;
+  margin: 8px;
+}
+
+.mat-card-title {
+  font-size: 16px;
+  line-height: 16px;
+}
+
+.mat-titel-button {
+  float: right;
+  padding-left: 0;
+  padding-right: 0;
+  line-height: 16px;
+  min-width: 24px;
+}
+
+.ident8 {
+  line-height: 26px;
+  font-size: 18px;
+  font-weight: bold;
+  color: rgba(51, 51, 51, 0.87);
+}
+
+.vantot {
+  line-height: 24px;
+  font-weight: bold;
+  font-size: 16px;
+  color: rgba(51, 51, 51, 0.87);
+}
+
+.dimensies {
+  line-height: 24px;
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.87);
+  vertical-align: text-bottom;
+}
+
+.velden {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: flex-start;
+}
+
+.veldnamen {
+  order: 1;
+  flex-basis: 33%;
+}
+
+.veldwaarden {
+  order: 2;
+  flex-basis: 67%;
+}
+
+.veldnaam {
+  line-height: 20px;
+  font-size: 14px;
+  font-weight: 300;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.veldwaarde {
+  line-height: 20px;
+  font-size: 14px;
+  font-weight: 300;
+  color: rgba(0, 0, 0, 0.87);
+}

@@ -1,0 +1,17 @@
+
+<div class="ident8">{{ prop("ident8") }}</div>
+<div class="vantot">van {{ van( ) }} {{ vanAfstand() }} tot {{ tot() }} {{ totAfstand() }} / {{ zijderijbaan() }} </div>
+<div class="dimensies"><mat-icon class="dimensies">straighten</mat-icon>{{dimensies()}}</div>
+
+<div class="velden">
+  <div class="veldnamen">
+    <div class="veldnaam" *ngFor="let veld of properties()">
+      {{ veld }}
+    </div>
+  </div>
+  <div class="veldwaarden">
+    <div class="veldwaarde" *ngFor="let veld of properties()">
+      {{ prop(veld) }}
+    </div>
+  </div>
+</div>

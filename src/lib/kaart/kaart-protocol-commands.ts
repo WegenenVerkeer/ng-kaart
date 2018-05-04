@@ -427,20 +427,10 @@ export function ZetMijnLocatieZoomCmd(doelniveau: Option<number>): ZetMijnLocati
   return { type: "ZetMijnLocatieZoomStatus", doelniveau: doelniveau };
 }
 
-export function ToonInfoBoodschapCmd<Msg extends KaartMsg>(
-  id: string,
-  titel: string,
-  inhoud: string,
-  verbergMsgGen: () => Option<Msg>
-): ToonInfoBoodschapCmd<Msg> {
+export function ToonInfoBoodschapCmd<Msg extends KaartMsg, Bdschap extends InfoBoodschap>(boodschap: Bdschap): ToonInfoBoodschapCmd<Msg> {
   return {
     type: "ToonInfoBoodschap",
-    boodschap: {
-      id: id,
-      titel: titel,
-      inhoud: inhoud,
-      verbergMsgGen: verbergMsgGen
-    }
+    boodschap: boodschap
   };
 }
 
