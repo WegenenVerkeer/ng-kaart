@@ -37,11 +37,67 @@
   top: 0;
 }
 
+$laag-height: 40px;
+
 .lagen-lijst ::ng-deep .mat-tab-label {
-  height: 40px;
+  height: $laag-height;
 }
 
 .lagen-lijst ::ng-deep .mat-tab-header {
   border-top: 1px solid rgba(0,0,0,.12);
   border-bottom: none;
+}
+
+.drag-busy {
+  transition: all 150ms linear;
+}
+
+.drag-busy > * {
+  pointer-events: none;
+}
+
+.start-move {
+  max-height: $laag-height;
+  transform-origin: top;
+  color: white;
+  background-color: white;
+}
+
+.start-move ::ng-deep .mat-icon-button {
+  color: white;
+}
+
+.start-move ::ng-deep .mat-icon-button[disabled] {
+  color: white;
+}
+
+::ng-deep .invisible .title {
+  color: $kaart-secondary-text-color;
+}
+
+.start-move ::ng-deep .invisible .title {
+  color: white;
+}
+
+.replaced {
+  max-height: 0px;
+  overflow: hidden;
+  background-color: white;
+}
+
+.gap-on-top {
+  max-height: $laag-height + $laag-height;
+  box-sizing: content-box;
+  border-top: $laag-height solid white;
+}
+
+.gap-below {
+  max-height: $laag-height + $laag-height;
+  box-sizing: content-box;
+  border-bottom: $laag-height solid white;
+}
+
+.no-drag {
+  height: $laag-height;
+  max-height: $laag-height;
 }

@@ -25,7 +25,7 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
 
   constructor(private readonly parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
-    this.zoom$ = parent.modelChanges.huidigeZoom$.pipe(map(zi => zi.zoom), distinctUntilChanged(), observeOnAngular(zone));
+    this.zoom$ = parent.modelChanges.zoomInstellingen$.pipe(map(zi => zi.zoom), distinctUntilChanged(), observeOnAngular(zone));
   }
 
   ngOnInit() {

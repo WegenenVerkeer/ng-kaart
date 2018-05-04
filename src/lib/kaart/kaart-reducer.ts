@@ -92,13 +92,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return thruth ? validation.success({}) : validation.failure(getArrayMonoid<string>())([errMsg]);
     }
 
-    // function valideerLayerBestaat(titel: string): prt.KaartCmdValidation<ol.layer.Base> {
-    //   return validation.fromPredicate(getArrayMonoid<string>())(
-    //     (l: ol.layer.Base) => l !== undefined,
-    //     () => [`Een laag met titel ${titel} bestaat niet`]
-    //   )(model.olLayersOpTitel.get(titel));
-    // }
-
     function valideerToegevoegdLaagBestaat(titel: string): prt.KaartCmdValidation<ke.ToegevoegdeLaag> {
       return validation.fromPredicate(getArrayMonoid<string>())(
         (l: ke.ToegevoegdeLaag) => l !== undefined,
@@ -286,6 +279,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           })
       );
     }
+
     /**
      * Een laag verwijderen. De titel van de laag bepaalt welke er verwijderd wordt.
      */
@@ -300,7 +294,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           const movedLayers = pasZIndicesAan(-1, layerIndexNaarGroepIndex(layer, groep) + 1, maxIndexInGroep(groep), groep);
           const updatedModel = {
             ...model,
-            olLayersOpTitel: model.toegevoegdeLagenOpTitel.delete(titel),
+            toegevoegdeLagenOpTitel: model.toegevoegdeLagenOpTitel.delete(titel),
             titelsOpGroep: model.titelsOpGroep.set(
               groep,
               model.titelsOpGroep
@@ -328,12 +322,23 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             const naarPositie = limitPosition(cmnd.naarPositie, groep); // uitgedrukt in z-index waarden
             // Afhankelijk of we van onder naar boven of van boven naar onder verschuiven, moeten de tussenliggende lagen
             // naar onder, resp. naar boven verschoven worden.
-            const movedLayers =
-              vanPositie < naarPositie
-                ? pasZIndicesAan(-1, vanPositie + 1, naarPositie, groep)
-                : pasZIndicesAan(1, naarPositie, vanPositie - 1, groep);
+            const verplaatsteTitels = (vanPositie < naarPositie
+              ? pasZIndicesAan(-1, vanPositie + 1, naarPositie, groep)
+              : pasZIndicesAan(1, naarPositie, vanPositie - 1, groep)
+            ).push({ titel: cmnd.titel, positie: naarPositie }); // De geïmpacteerde lagen + de verplaatste laag
             zetLayerIndex(laag.layer, naarPositie, groep);
-            return ModelAndValue(model, movedLayers.push({ titel: cmnd.titel, positie: naarPositie }));
+            const updatedToegevoegdeLagenOpTitel = verplaatsteTitels.reduce(
+              (lagen, laagPos) =>
+                lagen!.set(laagPos!.titel, {
+                  // We veranderen niks aan de keys, dus kunnen we vertrouwen op get
+                  ...lagen!.get(laagPos!.titel),
+                  positieInGroep: laagPos!.positie
+                }),
+              model.toegevoegdeLagenOpTitel
+            );
+            const updatedModel = { ...model, toegevoegdeLagenOpTitel: updatedToegevoegdeLagenOpTitel };
+            zendLagenInGroep(updatedModel, groep);
+            return ModelAndValue(updatedModel, verplaatsteTitels);
           })
       );
     }

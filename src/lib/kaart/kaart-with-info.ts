@@ -65,7 +65,7 @@ export class KaartWithInfo {
         minZoom: map.getView().getMinZoom(),
         maxZoom: map.getView().getMaxZoom()
       });
-      changer.huidigeZoomSubj.next({
+      changer.zoominstellingenSubj.next({
         zoom: map.getView().getZoom(),
         minZoom: map.getView().getMinZoom(),
         maxZoom: map.getView().getMaxZoom()

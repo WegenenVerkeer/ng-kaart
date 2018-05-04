@@ -17,23 +17,23 @@ export interface UiElementSelectie {
 export interface ModelChanger {
   readonly uiElementSelectieSubj: rx.Subject<UiElementSelectie>;
   readonly uiElementOptiesSubj: rx.Subject<UiElementOpties>;
-  readonly huidigeZoomSubj: rx.Subject<Zoominstellingen>;
+  readonly zoominstellingenSubj: rx.Subject<Zoominstellingen>;
 }
 
 export const modelChanger: ModelChanger = {
   uiElementSelectieSubj: new rx.Subject<UiElementSelectie>(),
   uiElementOptiesSubj: new rx.ReplaySubject<UiElementOpties>(1),
-  huidigeZoomSubj: new rx.ReplaySubject<Zoominstellingen>(1)
+  zoominstellingenSubj: new rx.ReplaySubject<Zoominstellingen>(1)
 };
 
 export interface ModelChanges {
   readonly uiElementSelectie$: rx.Observable<UiElementSelectie>;
   readonly uiElementOpties$: rx.Observable<UiElementOpties>;
-  readonly huidigeZoom$: rx.Observable<Zoominstellingen>;
+  readonly zoomInstellingen$: rx.Observable<Zoominstellingen>;
 }
 
 export const modelChanges: (changer: ModelChanger) => ModelChanges = changer => ({
   uiElementSelectie$: changer.uiElementSelectieSubj.asObservable(),
   uiElementOpties$: changer.uiElementOptiesSubj.asObservable(),
-  huidigeZoom$: changer.huidigeZoomSubj.asObservable()
+  zoomInstellingen$: changer.zoominstellingenSubj.asObservable()
 });

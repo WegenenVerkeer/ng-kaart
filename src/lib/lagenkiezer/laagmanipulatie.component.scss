@@ -6,7 +6,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  max-height: 40px;
 }
 
 .visibility {
@@ -21,9 +20,13 @@
   font-size: 14px;
 }
 
-.invisible .title {
-  color: $kaart-secondary-text-color;
-}
+// .invisible .title {
+//   color: $kaart-secondary-text-color;
+// }
+
+:host .start-move > .invisible .title { // Deze werkt nog niet
+  color: red;
+} 
 
 .actions {
   width: 40px;
