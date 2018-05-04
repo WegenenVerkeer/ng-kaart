@@ -427,7 +427,7 @@ export function ZetMijnLocatieZoomCmd(doelniveau: Option<number>): ZetMijnLocati
   return { type: "ZetMijnLocatieZoomStatus", doelniveau: doelniveau };
 }
 
-export function ToonInfoBoodschapCmd<Msg extends KaartMsg, Bdschap extends InfoBoodschap>(boodschap: Bdschap): ToonInfoBoodschapCmd<Msg> {
+export function ToonInfoBoodschapCmd<Msg extends KaartMsg, Bdschp extends InfoBoodschap>(boodschap: Bdschp): ToonInfoBoodschapCmd<Msg> {
   return {
     type: "ToonInfoBoodschap",
     boodschap: boodschap

@@ -4,7 +4,7 @@ import { List } from "immutable";
 
 import { observeOnAngular } from "../util/observe-on-angular";
 import { ofType } from "../util/operators";
-import { InfoBoodschap } from "./kaart-with-info-model";
+import { InfoBoodschap, InfoBoodschapAlert } from "./kaart-with-info-model";
 import { KaartChildComponentBase } from "./kaart-child-component-base";
 import { InfoBoodschappenMsg, infoBoodschappenMsgGen, KaartInternalMsg } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
@@ -45,5 +45,13 @@ export class KaartInfoBoodschappenComponent extends KaartChildComponentBase impl
         observeOnAngular(this.zone)
       )
       .map(msg => msg.infoBoodschappen.reverse().toList()); // laatste boodschap bovenaan
+  }
+
+  isIdentify(boodschap: InfoBoodschap): boolean {
+    return boodschap.type === "InfoBoodschapIdentify";
+  }
+
+  isAlert(boodschap: InfoBoodschap): boolean {
+    return boodschap.type === "InfoBoodschapAlert";
   }
 }

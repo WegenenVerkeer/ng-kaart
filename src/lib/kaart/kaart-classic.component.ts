@@ -172,6 +172,17 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, Kaar
         verbergMsgGen: () => some(KaartClassicMsg(FeatureGedeselecteerdMsg(featureId)))
       })
     );
+    // Gewoon alert:
+    //
+    // this.dispatch(
+    //   prt.ToonInfoBoodschapCmd({
+    //     id: "alert-" + featureId,
+    //     type: "InfoBoodschapAlert",
+    //     titel: feature.get("laagnaam"),
+    //     message: "Feature " + featureId + " geselecteerd",
+    //     verbergMsgGen: () => some(KaartClassicMsg(FeatureGedeselecteerdMsg(featureId)))
+    //   })
+    // );
   }
 
   verbergIdentifyInformatie(id: string): void {

@@ -12,9 +12,9 @@ export interface InfoBoodschap {
   readonly verbergMsgGen: () => Option<TypedRecord>;
 }
 
-export interface InfoBoodschapSimple extends InfoBoodschap {
-  readonly type: "InfoBoodschapSimple";
-  readonly inhoud: string;
+export interface InfoBoodschapAlert extends InfoBoodschap {
+  readonly type: "InfoBoodschapAlert";
+  readonly message: string;
 }
 
 export interface InfoBoodschapIdentify extends InfoBoodschap {

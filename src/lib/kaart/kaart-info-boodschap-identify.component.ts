@@ -99,8 +99,8 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
       .fold(() => "", pos => pos);
   }
 
-  properties(): string[] {
-    const teVerbergenProperties = List.of("geometry", "locatie");
+  zichtbareEigenschappen(): string[] {
+    const teVerbergenProperties = List.of("geometry", "locatie", "ident8", "afstandrijbaan", "zijderijbaan", "breedte");
 
     const properties: Object = this.feature.getProperties()["properties"];
 
