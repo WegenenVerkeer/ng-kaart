@@ -20,14 +20,6 @@
   font-size: 14px;
 }
 
-// .invisible .title {
-//   color: $kaart-secondary-text-color;
-// }
-
-:host .start-move > .invisible .title { // Deze werkt nog niet
-  color: red;
-} 
-
 .actions {
   width: 40px;
   padding-right: 8px;
