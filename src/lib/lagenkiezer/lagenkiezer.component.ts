@@ -6,7 +6,7 @@ import { combineLatest, filter, map, shareReplay, startWith } from "rxjs/operato
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
-import { KaartInternalMsg, VoorgrondlagenGezetMsg, voorgrondlagenGezetMsgGen, kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
+import { KaartInternalMsg, kaartLogOnlyWrapper, VoorgrondlagenGezetMsg, voorgrondlagenGezetMsgGen } from "../kaart/kaart-internal-messages";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
 import { ofType } from "../util/operators";
@@ -49,7 +49,7 @@ const elementPos = (elt: HTMLElement) => [elt.getBoundingClientRect().top, elt.g
 @Component({
   selector: "awv-lagenkiezer",
   templateUrl: "./lagenkiezer.component.html",
-  styleUrls: ["lagenkiezer.component.scss"],
+  styleUrls: ["./lagenkiezer.component.scss"],
   changeDetection: ChangeDetectionStrategy.OnPush // Omdat angular anders veel te veel change detection uitvoert
 })
 export class LagenkiezerComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
@@ -75,16 +75,10 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
       map(m => m.lagen),
       shareReplay(1) //
     );
-    this.heeftDivider$ = this.lagenHoog$.pipe(
-      combineLatest(this.lagenLaag$, (h, l) => !(h.isEmpty() || l.isEmpty())),
-      startWith(false),
-      shareReplay(1)
-    );
-    this.geenLagen$ = this.lagenHoog$.pipe(
-      combineLatest(this.lagenLaag$, (h, l) => h.isEmpty() && l.isEmpty()),
-      startWith(true),
-      shareReplay(1)
-    );
+    const lagenHoogLeeg$ = this.lagenHoog$.pipe(map(l => l.isEmpty()), startWith(true)); // zorg dat er zeker output is
+    const lagenLaagLeeg$ = this.lagenLaag$.pipe(map(l => l.isEmpty()), startWith(true)); // en geen lagen is leeg
+    this.heeftDivider$ = lagenHoogLeeg$.pipe(combineLatest(lagenLaagLeeg$, (h, l) => !h && !l), shareReplay(1));
+    this.geenLagen$ = lagenHoogLeeg$.pipe(combineLatest(lagenLaagLeeg$, (h, l) => h && l), shareReplay(1));
     this.opties$ = this.modelChanges.uiElementOpties$.pipe(
       filter(o => o.naam === LagenUiSelector),
       map(o => o.opties as LagenUiOpties),

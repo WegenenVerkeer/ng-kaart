@@ -107,9 +107,9 @@ function inlineStyle(content, urlResolver) {
         // const styleFile = path.resolve(process.cwd(), urlResolver(styleUrl));
         // console.log(styleFile);
         let styleContent = fs.readFileSync(styleFile, 'utf-8');
-        // console.log(styleContent);
         if (styleContent) {
-          styleContent = sass.renderSync({data: styleContent}).css.toString('utf8');
+          const includePaths = [ path.dirname(styleFile) ];
+          styleContent = sass.renderSync({data: styleContent, includePaths: includePaths}).css.toString('utf8');
         }
         const shortenedStyle = styleContent
           .replace(/([\n\r]\s*)+/gm, ' ')
