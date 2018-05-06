@@ -158,18 +158,17 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
     }
   }
 
+  heeftFout(): boolean {
+    return this.alleFouten.length > 0;
+  }
+
   heeftResultaatOfFout(): boolean {
-    return this.alleFouten.length > 0 || this.alleZoekResultaten.length > 0;
+    return this.heeftFout() || this.alleZoekResultaten.length > 0;
   }
 
   kiesZoeker(zoeker: ZoekerType) {
     this.maakResultaatLeeg();
     this.actieveZoeker = zoeker;
-    if (this.actieveZoeker !== "Geoloket") {
-      this.zoekVeld.disable();
-    } else {
-      this.zoekVeld.enable();
-    }
   }
 
   getPlaceholder(): string {

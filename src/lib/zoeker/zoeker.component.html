@@ -18,7 +18,7 @@
     <a (click)="toggleResultaat()">
       <mat-icon matPrefix [ngClass]="{'inactief':!toonResultaat}" class="klikbaar">search</mat-icon>
     </a>
-    <input placeholder="{{getPlaceholder()}}" [formControl]="zoekVeld" (keyup)="onKey($event)">
+    <input placeholder="{{getPlaceholder()}}" [formControl]="zoekVeld" [readOnly]="this.actieveZoeker !== 'Geoloket'" (keyup)="onKey($event)">
     <a (click)="toggleHelp()">
       <mat-icon matSuffix [ngClass]="{'inactief':!toonHelp}" class="klikbaar">help</mat-icon>
     </a>
@@ -84,7 +84,7 @@
       <mat-icon>announcement</mat-icon>
       <span>{{fout.zoeker}}: {{fout.fout}}</span>
     </div>
-    <div *ngIf="heeftResultaatOfFout()" class="divider"></div>
+    <div *ngIf="heeftFout()" class="divider"></div>
     <div *ngFor="let resultaat of alleZoekResultaten" class="zoeker-resultaat klikbaar" (click)="zoomNaarResultaat(resultaat)">
       <mat-icon [svgIcon]="resultaat.icoon"></mat-icon>
       <span [innerHTML]="resultaat.omschrijving | highlight: zoekVeld.value"></span>
