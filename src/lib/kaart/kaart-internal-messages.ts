@@ -5,7 +5,7 @@ import * as ol from "openlayers";
 import { AchtergrondLaag, TekenSettings } from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { kaartLogger } from "./log";
-import { InfoBoodschap } from "./info-boodschap";
+import { InfoBoodschap } from "./kaart-with-info-model";
 
 export type KaartInternalSubMsg =
   | ZoominstellingenGezetMsg

@@ -78,9 +78,11 @@ export class AppComponent {
   installatie: ol.Feature[] = [
     new ol.Feature({
       id: 1,
-      laag: "Fietspaden",
-      ident8: "R0010001",
-      type: "Vrijliggend",
+      laagnaam: "Fietspaden",
+      properties: {
+        ident8: "R0010001",
+        typefietspad: "Vrijliggend"
+      },
       geometry: new ol.geom.Point(this.installatieCoordinaat)
     })
   ];
@@ -153,6 +155,21 @@ export class AppComponent {
 
   fietspadStyleMetOffset = offsetStyleFunction(this.fietspadStyle, "ident8", "zijderijbaan", 1);
 
+  fietspadSelectieStyleMetOffset = function(feature: ol.Feature, resolution: number): ol.style.Style | ol.style.Style[] {
+    const applySelectionColor = function(s: ol.style.Style): ol.style.Style {
+      const selectionStyle = s.clone();
+      selectionStyle.getStroke().setColor([0, 153, 255, 1]);
+      return selectionStyle;
+    };
+    const offsetFunc = offsetStyleFunction(this!.fietspadStyle, "ident8", "zijderijbaan", 1);
+    const style = offsetFunc(feature, resolution);
+    if (style instanceof ol.style.Style) {
+      return applySelectionColor(style);
+    } else {
+      return style.map(s => applySelectionColor(s));
+    }
+  }.bind(this);
+
   constructor(private googleLocatieZoekerService: GoogleWdbLocatieZoekerService) {
     kaartLogger.setLevel("DEBUG");
     classicLogger.setLevel("DEBUG");
@@ -175,7 +192,16 @@ export class AppComponent {
       this.installatieCoordinaat[0] + (Math.random() - 0.5) * 3000,
       this.installatieCoordinaat[1] + (Math.random() - 0.5) * 3000
     ];
-    const feature = new ol.Feature(new ol.geom.Point(locatie));
+
+    const feature = new ol.Feature({
+      id: this.installaties.length,
+      laagnaam: "Fietspaden",
+      properties: {
+        ident8: "R0010001",
+        typefietspad: "Vrijliggend"
+      },
+      geometry: new ol.geom.Point(locatie)
+    });
     feature.setStyle(this.pinIcon);
     this.installaties.push(feature);
     setTimeout(() => this.addIcon(), 1000);
@@ -193,18 +219,18 @@ export class AppComponent {
     // verwijder de bestaande info boodschappen voor features die niet meer geselecteerd zijn
     const nietLangerGeselecteerd = this.geselecteerdeFeatures //
       .filter(feature => !event.map(f => f.getId()).contains(feature.get("id")));
-    nietLangerGeselecteerd.forEach(feature => this.selectieKaart.verbergInfoBoodschap(feature.get("id").toString()));
+    nietLangerGeselecteerd.forEach(feature => this.selectieKaart.verbergIdentifyInformatie(feature.get("id").toString()));
 
     // voeg de nieuwe toe
     this.geselecteerdeFeatures = event;
     this.geselecteerdeFeatures.forEach(feature =>
       this.selectieKaart //
-        .toonInfoBoodschap(
+        .toonIdentifyInformatie(
           feature.get("id").toString(),
-          feature.get("laag"),
+          feature.get("laagnaam"),
           `Id: ${feature.get("id")}<br>` + //
-          `Ident8: ${feature.get("ident8")}<br>` + //
-            `Type: ${feature.get("type")}`
+          `Ident8: ${feature.getProperties()["properties"]["ident8"]}<br>` + //
+            `Type: ${feature.getProperties()["properties"]["typefietspad"]}`
         )
     );
   }

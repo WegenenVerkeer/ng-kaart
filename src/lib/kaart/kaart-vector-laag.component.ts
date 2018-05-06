@@ -1,12 +1,18 @@
 import { Component, Input, ViewEncapsulation } from "@angular/core";
-import { fromNullable } from "fp-ts/lib/Option";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 
 import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartLaagComponent } from "./kaart-laag.component";
-import { orElse } from "../util/option";
+import { forEach, orElse } from "../util/option";
 import { Laaggroep } from "./kaart-protocol-commands";
+import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
+import * as prt from "./kaart-protocol";
+import { StyleSelector, Stylish } from "./kaart-elementen";
+import { getDefaultSelectionStyleFunction, getDefaultStyleFunction } from "./styles";
+import { option } from "fp-ts";
+import { determineStyleSelector } from "./kaart-elementen";
 
 @Component({
   selector: "awv-kaart-vector-laag",
@@ -15,8 +21,9 @@ import { Laaggroep } from "./kaart-protocol-commands";
 })
 export class KaartVectorLaagComponent extends KaartLaagComponent {
   @Input() source = new ol.source.Vector();
-  @Input() style?: ol.style.Style;
-  @Input() styleFunction?: ol.StyleFunction;
+  @Input() style?: ol.style.Style = undefined;
+  @Input() styleFunction?: ol.StyleFunction = getDefaultStyleFunction();
+  @Input() selectieStyle?: Stylish = getDefaultSelectionStyleFunction();
   @Input() zichtbaar = true;
   @Input() selecteerbaar = true;
   @Input() minZoom = 7;
@@ -40,5 +47,24 @@ export class KaartVectorLaagComponent extends KaartLaagComponent {
 
   laaggroep(): Laaggroep {
     return "Voorgrond";
+  }
+
+  private getMaybeStyleSelector(): Option<StyleSelector> {
+    return orElse(fromNullable(this.style).map(ke.StaticStyle), () => fromNullable(this.styleFunction).map(ke.DynamicStyle));
+  }
+
+  voegLaagToe() {
+    super.voegLaagToe();
+
+    forEach(this.getMaybeStyleSelector(), styleselector => {
+      this.dispatch(
+        prt.ZetStijlVoorLaagCmd(
+          this.titel,
+          styleselector,
+          fromNullable(this.selectieStyle).chain(determineStyleSelector),
+          kaartLogOnlyWrapper
+        )
+      );
+    });
   }
 }

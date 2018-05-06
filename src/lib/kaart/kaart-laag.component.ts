@@ -1,9 +1,11 @@
 import { Input, OnDestroy, OnInit } from "@angular/core";
 
 import { KaartClassicComponent } from "./kaart-classic.component";
-import { Laag } from "./kaart-elementen";
+import { Laag, StyleSelector } from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "./kaart-internal-messages";
+import * as ol from "openlayers";
+import { getDefaultSelectionStyleFunction } from "./styles";
 
 export abstract class KaartLaagComponent implements OnInit, OnDestroy {
   @Input() titel = "";

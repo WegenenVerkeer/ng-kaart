@@ -13,11 +13,12 @@ export class NosqlFsSource extends ol.source.Vector {
   private static readonly featureDelimiter = "\n";
 
   constructor(
-    public database: string,
-    public collection: string,
-    public url = "/geolatte-nosqlfs",
-    public view: Option<string>,
-    public filter: Option<string>
+    private readonly database: string,
+    private readonly collection: string,
+    private readonly url = "/geolatte-nosqlfs",
+    private readonly view: Option<string>,
+    private readonly filter: Option<string>,
+    private readonly laagnaam: string
   ) {
     super({
       loader: function(extent, resolution, projection) {
@@ -60,7 +61,8 @@ export class NosqlFsSource extends ol.source.Vector {
             return new ol.Feature({
               id: geojson.id,
               properties: geojson.properties,
-              geometry: format.readGeometry(geojson.geometry)
+              geometry: format.readGeometry(geojson.geometry),
+              laagnaam: laagnaam
             });
           });
           kaartLogger.debug(`nosql: adding ${features.length} features`);

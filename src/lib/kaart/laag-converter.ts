@@ -5,7 +5,7 @@ import * as ol from "openlayers";
 import { olx } from "openlayers";
 import { kaartLogger } from "./log";
 import * as ke from "./kaart-elementen";
-import { WmtsCapaConfig } from "./kaart-elementen";
+import { determineStyle } from "./kaart-elementen";
 
 export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {
   function createdTileWms(l: ke.WmsLaag) {
@@ -134,34 +134,5 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
 
     default:
       return none;
-  }
-}
-
-export type Stylish = ol.StyleFunction | ol.style.Style | ol.style.Style[];
-
-export function determineStyle(styleSelector: Option<ke.StyleSelector>, defaultStyle: ol.style.Style): Stylish {
-  return styleSelector
-    .map(selector => {
-      switch (selector.type) {
-        case "StaticStyle":
-          return selector.style;
-        case "DynamicStyle":
-          return selector.styleFunction;
-        case "Styles":
-          return selector.styles;
-      }
-    })
-    .getOrElseValue(defaultStyle);
-}
-
-export function determineStyleSelector(stp?: Stylish): Option<ke.StyleSelector> {
-  if (stp instanceof ol.style.Style) {
-    return some(ke.StaticStyle(stp));
-  } else if (typeof stp === "function") {
-    return some(ke.DynamicStyle(stp as ol.StyleFunction));
-  } else if (Array.isArray(stp)) {
-    return some(ke.Styles(stp as ol.style.Style[]));
-  } else {
-    return none;
   }
 }
