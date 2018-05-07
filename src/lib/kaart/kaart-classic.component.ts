@@ -1,35 +1,35 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from "@angular/core";
+import { Component, EventEmitter, Input, NgZone, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from "@angular/core";
 import * as option from "fp-ts/lib/Option";
+import { some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { Observable } from "rxjs/Observable";
-import { map, share, takeUntil, tap } from "rxjs/operators";
+import { map, share, tap } from "rxjs/operators";
 
 import { classicLogger } from "../kaart-classic/log";
 import {
+  FeatureGedeselecteerdMsg,
   FeatureSelectieAangepastMsg,
   KaartClassicMsg,
   KaartClassicSubMsg,
   logOnlyWrapper,
-  SubscribedMsg,
-  FeatureGedeselecteerdMsg
+  SubscribedMsg
 } from "../kaart-classic/messages";
 import { ofType, TypedRecord } from "../util/operators";
+import { KaartComponentBase } from "./kaart-component-base";
 import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import * as prt from "./kaart-protocol";
 import { KaartMsgObservableConsumer } from "./kaart.component";
 import { subscriptionCmdOperator } from "./subscription-helper";
-import { some } from "fp-ts/lib/Option";
 
 @Component({
   selector: "awv-kaart-classic",
   templateUrl: "./kaart-classic.component.html"
 })
-export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, KaartCmdDispatcher<prt.TypedRecord> {
+export class KaartClassicComponent extends KaartComponentBase implements OnInit, OnDestroy, OnChanges, KaartCmdDispatcher<prt.TypedRecord> {
   private static counter = 1;
   kaartClassicSubMsg$: Observable<KaartClassicSubMsg> = Observable.empty();
-  private readonly destroyingSubj: rx.Subject<void> = new rx.Subject<void>();
   private hasFocus = false;
 
   readonly dispatcher: ReplaySubjectKaartCmdDispatcher<TypedRecord> = new ReplaySubjectKaartCmdDispatcher();
@@ -49,7 +49,8 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, Kaar
   @Output() geselecteerdeFeatures: EventEmitter<List<ol.Feature>> = new EventEmitter();
 
   // TODO deze klasse en child components verhuizen naar classic directory, maar nog even wachten of we krijgen te veel merge conflicts
-  constructor() {
+  constructor(zone: NgZone) {
+    super(zone);
     this.kaartMsgObservableConsumer = (msg$: Observable<prt.KaartMsg>) => {
       // We zijn enkel geïnteresseerd in messages van ons eigen type
       this.kaartClassicSubMsg$ = msg$.pipe(
@@ -61,8 +62,8 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, Kaar
 
       // Een beetje overkill voor de ene kaart subscription die we nu hebben, maar het volgende zorgt voor automatisch beheer van de
       // kaart subscriptions.
-      this.kaartClassicSubMsg$
-        .lift(
+      this.bindToLifeCycle(
+        this.kaartClassicSubMsg$.lift(
           classicMsgSubscriptionCmdOperator(
             this.dispatcher,
             prt.GeselecteerdeFeaturesSubscription(geselecteerdeFeatures =>
@@ -70,32 +71,30 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, Kaar
             )
           )
         )
-        .pipe(takeUntil(this.destroyingSubj)) // Autounsubscribe moet na de lift komen: anders wordt er geen unsubscribe gestuurd
-        .subscribe(err => classicLogger.error(err));
+      ).subscribe(err => classicLogger.error(err));
 
       // Zorg ervoor dat de geselecteerde features in de @Output terecht komen
-      this.kaartClassicSubMsg$
-        .pipe(
+      this.bindToLifeCycle(
+        this.kaartClassicSubMsg$.pipe(
           ofType<FeatureSelectieAangepastMsg>("FeatureSelectieAangepast"), //
-          map(m => m.geselecteerdeFeatures),
-          takeUntil(this.destroyingSubj)
+          map(m => m.geselecteerdeFeatures)
         )
-        .subscribe(features => this.geselecteerdeFeatures.emit(features.geselecteerd));
+      ).subscribe(features => this.geselecteerdeFeatures.emit(features.geselecteerd));
 
       // Zorg ervoor dat deselecteer van een feature via infoboodschap terug naar kaart-reducer gaat
-      this.kaartClassicSubMsg$
-        .pipe(
+      this.bindToLifeCycle(
+        this.kaartClassicSubMsg$.pipe(
           ofType<FeatureGedeselecteerdMsg>("FeatureGedeselecteerd"), //
-          map(m => m.featureid),
-          takeUntil(this.destroyingSubj)
+          map(m => m.featureid)
         )
-        .subscribe(featureid => this.dispatch(prt.DeselecteerFeatureCmd(featureid)));
+      ).subscribe(featureid => this.dispatch(prt.DeselecteerFeatureCmd(featureid)));
 
       // We kunnen hier makkelijk een mini-reducer zetten voor KaartClassicSubMsg mocht dat nodig zijn
     };
   }
 
   ngOnInit() {
+    super.ngOnInit();
     // De volgorde van de dispatching hier is van belang voor wat de overhand heeft
     if (this.zoom) {
       this.dispatch(prt.VeranderZoomCmd(this.zoom, logOnlyWrapper));
@@ -112,10 +111,6 @@ export class KaartClassicComponent implements OnInit, OnDestroy, OnChanges, Kaar
     if (this.selectieModus) {
       this.dispatch(prt.ActiveerSelectieModusCmd(this.selectieModus));
     }
-  }
-
-  ngOnDestroy() {
-    this.destroyingSubj.next();
   }
 
   ngOnChanges(changes: SimpleChanges) {

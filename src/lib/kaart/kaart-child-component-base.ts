@@ -4,18 +4,16 @@ import * as rx from "rxjs";
 import { KaartComponentBase } from "./kaart-component-base";
 import { KaartInternalMsg, KaartInternalSubMsg } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
-import { kaartLogger } from "./log";
-import { internalMsgSubscriptionCmdOperator } from "./subscription-helper";
-import { KaartComponent } from "./kaart.component";
 import { KaartWithInfo } from "./kaart-with-info";
+import { KaartComponent } from "./kaart.component";
+import { kaartLogger } from "./log";
+import { ModelChanges } from "./model-changes";
+import { internalMsgSubscriptionCmdOperator } from "./subscription-helper";
 
 /**
  * Voor classes die view children zijn van kaart.component
  */
 export abstract class KaartChildComponentBase extends KaartComponentBase implements OnInit, OnDestroy {
-  // @Input() dispatcher: KaartCmdDispatcher<prt.TypedRecord> = VacuousDispatcher;
-  // @Input() internalMessage$: rx.Observable<KaartInternalSubMsg> = rx.Observable.never();
-
   constructor(private readonly kaartComponent: KaartComponent, zone: NgZone) {
     super(zone);
   }
@@ -53,5 +51,9 @@ export abstract class KaartChildComponentBase extends KaartComponentBase impleme
 
   protected get kaartModel$(): rx.Observable<KaartWithInfo> {
     return this.kaartComponent.kaartModel$;
+  }
+
+  protected get modelChanges(): ModelChanges {
+    return this.kaartComponent.modelChanges;
   }
 }

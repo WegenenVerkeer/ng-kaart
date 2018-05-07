@@ -2,11 +2,11 @@ import { Component, Input, ViewEncapsulation } from "@angular/core";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 
 import * as ol from "openlayers";
-import * as ke from "./kaart-elementen";
+
 import { KaartClassicComponent } from "./kaart-classic.component";
+import * as ke from "./kaart-elementen";
 import { KaartLaagComponent } from "./kaart-laag.component";
 import { forEach, orElse } from "../util/option";
-import { Laaggroep } from "./kaart-protocol-commands";
 import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
 import { StyleSelector, Stylish } from "./kaart-elementen";
@@ -45,8 +45,8 @@ export class KaartVectorLaagComponent extends KaartLaagComponent {
     };
   }
 
-  laaggroep(): Laaggroep {
-    return "Voorgrond";
+  laaggroep(): ke.Laaggroep {
+    return "Voorgrond.Hoog";
   }
 
   private getMaybeStyleSelector(): Option<StyleSelector> {

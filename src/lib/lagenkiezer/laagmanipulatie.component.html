@@ -1,0 +1,17 @@
+<div class="line" [ngClass]="{ 'invisible': (onzichtbaar$ | async) }">
+    <div class="visibility">
+      <button mat-icon-button (click)="toggleGekozen()" [disabled]="onzichtbaar$ | async">
+        <mat-icon *ngIf="gekozen && (zichtbaar$ | async)" matTooltip="verberg laag" [matTooltipPosition]="'right'">visibility</mat-icon>
+        <mat-icon *ngIf="!gekozen && (zichtbaar$ | async)" matTooltip="toon laag" [matTooltipPosition]="'right'">visibility_off</mat-icon>
+        <mat-icon *ngIf="gekozen && (onzichtbaar$ | async)" matTooltip="laag niet zichtbaar wegens zoomniveau" [matTooltipPosition]="'right'">visibility</mat-icon>
+        <mat-icon *ngIf="!gekozen && (onzichtbaar$ | async)" matTooltip="laag niet zichtbaar wegens zoomniveau" [matTooltipPosition]="'right'">visibility_off</mat-icon>
+      </button>
+    </div>
+    <div class="title">{{ title }}</div>
+    <div class="actions">
+      <button mat-icon-button matTooltip="verwijderen uit lagenlijst" [matTooltipPosition]="'right'" (click)="remove()">
+        <mat-icon>indeterminate_check_box</mat-icon>
+      </button>
+    </div>
+  </div>
+  

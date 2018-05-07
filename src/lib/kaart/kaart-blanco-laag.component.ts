@@ -3,7 +3,7 @@ import { Component, Input, ViewEncapsulation } from "@angular/core";
 import { KaartLaagComponent } from "./kaart-laag.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { BlancoLaag, BlancoType } from "./kaart-elementen";
-import { Laaggroep } from "./kaart-protocol-commands";
+import { Laaggroep } from "./kaart-elementen";
 
 const blancoLaag = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
 
@@ -23,7 +23,9 @@ export class KaartBlancoLaagComponent extends KaartLaagComponent {
     return {
       type: BlancoType,
       titel: this.titel,
-      backgroundUrl: blancoLaag
+      backgroundUrl: blancoLaag,
+      minZoom: this.minZoom,
+      maxZoom: this.maxZoom
     };
   }
 

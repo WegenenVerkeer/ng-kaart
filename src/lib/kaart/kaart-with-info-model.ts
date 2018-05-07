@@ -1,8 +1,8 @@
-import * as ke from "./kaart-elementen";
-import { List } from "immutable";
 import { Option } from "fp-ts/lib/Option";
+import { List } from "immutable";
 import * as ol from "openlayers";
-import { Laaggroep } from "./kaart-protocol-commands";
+
+import * as ke from "./kaart-elementen";
 import { TypedRecord } from "./kaart-protocol";
 
 export interface InfoBoodschap {
@@ -13,8 +13,8 @@ export interface InfoBoodschap {
 }
 
 export interface Groeplagen {
-  readonly laaggroep: Laaggroep;
-  readonly lagen: List<ke.Laag>;
+  readonly laaggroep: ke.Laaggroep;
+  readonly lagen: List<ke.ToegevoegdeLaag>;
 }
 
 export interface GeselecteerdeFeatures {
