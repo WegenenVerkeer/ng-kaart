@@ -6,10 +6,10 @@ import { map } from "rxjs/operators";
 import { observeOnAngular } from "../util/observe-on-angular";
 import { ofType } from "../util/operators";
 import { KaartChildComponentBase } from "./kaart-child-component-base";
-import { AchtergrondLaag } from "./kaart-elementen";
+import { AchtergrondLaag, ToegevoegdeLaag } from "./kaart-elementen";
 import {
   AchtergrondlagenGezetMsg,
-  achtergrondlagenGezetWrapper,
+  achtergrondlagenGezetMsgGen,
   AchtergrondtitelGezetMsg,
   achtergrondtitelGezetWrapper,
   KaartInternalMsg,
@@ -74,7 +74,7 @@ export class KaartAchtergrondSelectorComponent extends KaartChildComponentBase i
   private displayMode: DisplayMode = DisplayMode.SHOWING_STATUS;
   achtergrondTitel = "";
 
-  backgroundTiles$: Observable<Array<AchtergrondLaag>> = Observable.empty();
+  backgroundTiles$: Observable<Array<ToegevoegdeLaag>> = Observable.empty();
 
   constructor(private readonly cdr: ChangeDetectorRef, kaartComponent: KaartComponent, zone: NgZone) {
     super(kaartComponent, zone);
@@ -82,7 +82,7 @@ export class KaartAchtergrondSelectorComponent extends KaartChildComponentBase i
 
   protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
     return [
-      prt.AchtergrondlagenSubscription(achtergrondlagenGezetWrapper), //
+      prt.LagenInGroepSubscription("Achtergrond", achtergrondlagenGezetMsgGen), //
       prt.AchtergrondTitelSubscription(achtergrondtitelGezetWrapper)
     ];
   }

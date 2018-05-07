@@ -1,0 +1,25 @@
+@import "../css/kaart.component-common.scss";
+
+.line {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.visibility {
+  width: 40px;
+}
+
+.title {
+  flex-grow: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 14px;
+}
+
+.actions {
+  width: 40px;
+  padding-right: 8px;
+}

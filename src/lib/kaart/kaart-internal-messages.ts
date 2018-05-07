@@ -2,7 +2,7 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import { List, Map } from "immutable";
 import * as ol from "openlayers";
 
-import { AchtergrondLaag, TekenSettings } from "./kaart-elementen";
+import { AchtergrondLaag, Laag, TekenSettings, Laaggroep, ToegevoegdeLaag } from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { kaartLogger } from "./log";
 import { InfoBoodschap } from "./kaart-with-info-model";
@@ -16,7 +16,8 @@ export type KaartInternalSubMsg =
   | KaartClickMsg
   | SubscribedMsg
   | MijnLocatieZoomdoelGezetMsg
-  | InfoBoodschappenMsg;
+  | InfoBoodschappenMsg
+  | VoorgrondlagenGezetMsg;
 
 export interface ZoominstellingenGezetMsg {
   readonly type: "ZoominstellingenGezet";
@@ -30,7 +31,13 @@ export interface AchtergrondtitelGezetMsg {
 
 export interface AchtergrondlagenGezetMsg {
   readonly type: "AchtergrondlagenGezet";
-  readonly achtergrondlagen: List<AchtergrondLaag>;
+  readonly achtergrondlagen: List<ToegevoegdeLaag>;
+}
+
+export interface VoorgrondlagenGezetMsg {
+  readonly type: "VoorgrondlagenGezet";
+  readonly groep: Laaggroep;
+  readonly lagen: List<ToegevoegdeLaag>;
 }
 
 export interface GeometryChangedMsg {
@@ -116,11 +123,11 @@ function AchtergrondtitelGezetMsg(titel: string): AchtergrondtitelGezetMsg {
 
 export const achtergrondtitelGezetWrapper = (titel: string) => KaartInternalMsg(some(AchtergrondtitelGezetMsg(titel)));
 
-function AchtergrondlagenGezetMsg(achtergrondlagen: List<AchtergrondLaag>): AchtergrondlagenGezetMsg {
+function AchtergrondlagenGezetMsg(achtergrondlagen: List<ToegevoegdeLaag>): AchtergrondlagenGezetMsg {
   return { type: "AchtergrondlagenGezet", achtergrondlagen: achtergrondlagen };
 }
 
-export const achtergrondlagenGezetWrapper = (lagen: List<AchtergrondLaag>) => KaartInternalMsg(some(AchtergrondlagenGezetMsg(lagen)));
+export const achtergrondlagenGezetMsgGen = (lagen: List<ToegevoegdeLaag>) => KaartInternalMsg(some(AchtergrondlagenGezetMsg(lagen)));
 
 function GeometryChangedMsg(geometry: ol.geom.Geometry): GeometryChangedMsg {
   return { type: "GeometryChanged", geometry: geometry };
@@ -150,3 +157,6 @@ function MijnLocatieZoomdoelGezetMsg(d: Option<number>): MijnLocatieZoomdoelGeze
 }
 
 export const MijnLocatieZoomdoelGezetWrapper = (d: Option<number>) => KaartInternalMsg(some(MijnLocatieZoomdoelGezetMsg(d)));
+
+export const voorgrondlagenGezetMsgGen = (groep: Laaggroep) => (lagen: List<ToegevoegdeLaag>) =>
+  KaartInternalMsg(some({ type: "VoorgrondlagenGezet" as "VoorgrondlagenGezet", lagen: lagen, groep: groep }));

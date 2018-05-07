@@ -7,7 +7,7 @@ import { Component, ElementRef, Inject, Input, NgZone, OnDestroy, OnInit, ViewCh
 import * as ol from "openlayers";
 import { ReplaySubject } from "rxjs";
 import { Observable } from "rxjs/Observable";
-import { concatAll, filter, map, merge, scan, shareReplay, takeUntil, tap, switchMap, last } from "rxjs/operators";
+import { concatAll, filter, map, merge, scan, shareReplay, takeUntil, tap, switchMap, last, startWith } from "rxjs/operators";
 
 import { asap } from "../util/asap";
 import { observerOutsideAngular } from "../util/observer-outside-angular";
@@ -21,6 +21,8 @@ import * as prt from "./kaart-protocol";
 import * as red from "./kaart-reducer";
 import { KaartWithInfo } from "./kaart-with-info";
 import { kaartLogger } from "./log";
+import { modelChanger, ModelChanger, ModelChanges, modelChanges, UiElementSelectie } from "./model-changes";
+import { Set } from "immutable";
 
 // Om enkel met @Input properties te moeten werken. Op deze manier kan een stream van KaartMsg naar de caller gestuurd worden
 export type KaartMsgObservableConsumer = (msg$: Observable<prt.KaartMsg>) => void;
@@ -33,8 +35,10 @@ export const vacuousKaartMsgObservableConsumer: KaartMsgObservableConsumer = (ms
   encapsulation: ViewEncapsulation.Emulated // Omwille hiervan kunnen we geen globale CSS gebruiken, maar met Native werken animaties niet
 })
 export class KaartComponent extends KaartComponentBase implements OnInit, OnDestroy {
-  // noinspection JSUnusedLocalSymbols
-  kaartModel$: Observable<KaartWithInfo> = Observable.empty();
+  private readonly modelChanger: ModelChanger = modelChanger;
+  readonly modelChanges: ModelChanges = modelChanges(this.modelChanger);
+  readonly kaartModel$: Observable<KaartWithInfo> = Observable.empty();
+  readonly aanwezigeElementen$: Observable<Set<string>>;
 
   @ViewChild("map") mapElement: ElementRef;
 
@@ -99,14 +103,11 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       kaartLogger.info(`kaart ${this.naam} opkuisen`);
       model.map.setTarget((undefined as any) as string); // Hack omdat openlayers typedefs kaduuk zijn
     });
-  }
 
-  ngOnInit() {
-    super.ngOnInit();
-  }
-
-  ngOnDestroy() {
-    super.ngOnDestroy();
+    this.aanwezigeElementen$ = this.modelChanges.uiElementSelectie$.pipe(
+      scan((st: Set<string>, selectie: UiElementSelectie) => (selectie.aan ? st.add(selectie.naam) : st.delete(selectie.naam)), Set()),
+      startWith(Set())
+    );
   }
 
   private createMapModelForCommands(): Observable<KaartWithInfo> {
@@ -123,7 +124,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       takeUntil(this.destroying$),
       observerOutsideAngular(this.zone),
       scan((model: KaartWithInfo, cmd: prt.Command<any>) => {
-        const { model: newModel, message } = red.kaartCmdReducer(cmd)(model, messageConsumer);
+        const { model: newModel, message } = red.kaartCmdReducer(cmd)(model, this.modelChanger, messageConsumer);
         kaartLogger.debug("produceert", message);
         forEach(message, messageConsumer); // stuur het resultaat terug naar de eigenaar van de kaartcomponent
         return newModel; // en laat het nieuwe model terugvloeien
@@ -152,7 +153,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       })
     });
 
-    return new KaartWithInfo(this.config, this.naam, this.mapElement.nativeElement.parentElement, kaart);
+    return new KaartWithInfo(this.config, this.naam, this.mapElement.nativeElement.parentElement, kaart, this.modelChanger);
   }
 
   get message$(): Observable<prt.KaartMsg> {

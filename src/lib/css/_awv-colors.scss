@@ -1,0 +1,165 @@
+// Gebaseerd op https://collab.mow.vlaanderen.be/confluence/download/attachments/34211006/Stijlgids%20AWV%20-%20Kleurenpalet%20Niveau.pdf?version=1&modificationDate=1477573610679&api=v2
+$awv-primary-1: #B35F35;
+$awv-primary-2: #DB6C30;
+$awv-primary-3: #F7902D;
+$awv-primary-4: #443025;
+
+$awv-secondary-a1: #507B22;
+$awv-secondary-a2: #68A527;
+$awv-secondary-a3: #7DC131;
+
+$awv-secondary-b1: #0E5A69;
+$awv-secondary-b2: #2189AC;
+$awv-secondary-b3: #24A3C9;
+
+$awv-secondary-c1: #806A57;
+$awv-secondary-c2: #B38F59;
+$awv-secondary-c3: #CF9E50;
+
+$awv-secondary-d1: #A9A9A9;
+$awv-secondary-d2: #DCDCDC;
+$awv-secondary-d3: #EAEAEA;
+$awv-secondary-d4: #F1F1F1;
+
+$awv-mat-primary-1: (
+  100: lighten($awv-primary-1, 20%),
+  500: $awv-primary-1,
+  600: darken($awv-primary-1, 20%),
+  contrast: (
+    100: rgba(black, 0.87),
+    500: white,
+    600: white
+  )
+);
+
+$awv-mat-primary-2: (
+  100: lighten($awv-primary-2, 20%),
+  500: $awv-primary-2,
+  600: darken($awv-primary-2, 20%),
+  contrast: (
+    100: rgba(black, 0.87),
+    500: white,
+    600: white
+  )
+);
+
+$awv-mat-primary-3: (
+  100: lighten($awv-primary-3, 20%),
+  500: $awv-primary-3,
+  600: darken($awv-primary-3, 20%),
+  contrast: (
+    100: rgba(black, 0.87),
+    500: white,
+    600: white
+  )
+);
+
+$awv-mat-primary-4: (
+  100: lighten($awv-primary-4, 20%),
+  500: $awv-primary-4,
+  600: darken($awv-primary-4, 20%),
+  contrast: (
+    100: rgba(black, 0.87),
+    500: white,
+    600: white
+  )
+);
+
+$awv-mat-secondary-a1: (
+  100: lighten($awv-secondary-a1, 20%),
+  500: $awv-secondary-a1,
+  600: darken($awv-secondary-a1, 20%),
+  contrast: (
+    100: rgba(black, 0.87),
+    500: white,
+    600: white
+  )
+);
+
+$awv-mat-secondary-a2: (
+  100: lighten($awv-secondary-a2, 20%),
+  500: $awv-secondary-a2,
+  600: darken($awv-secondary-a2, 20%),
+  contrast: (
+    100: rgba(black, 0.87),
+    500: white,
+    600: white
+  )
+);
+
+$awv-mat-secondary-a3: (
+  100: lighten($awv-secondary-a3, 20%),
+  500: $awv-secondary-a3,
+  600: darken($awv-secondary-a3, 20%),
+  contrast: (
+    100: rgba(black, 0.87),
+    500: white,
+    600: white
+  )
+);
+
+$awv-mat-secondary-b1: (
+  100: lighten($awv-secondary-b1, 20%),
+  500: $awv-secondary-b1,
+  600: darken($awv-secondary-b1, 20%),
+  contrast: (
+    100: rgba(black, 0.87),
+    500: white,
+    600: white
+  )
+);
+
+$awv-mat-secondary-b2: (
+  100: lighten($awv-secondary-b2, 20%),
+  500: $awv-secondary-b2,
+  600: darken($awv-secondary-b2, 20%),
+  contrast: (
+    100: rgba(black, 0.87),
+    500: white,
+    600: white
+  )
+);
+
+$awv-mat-secondary-b3: (
+  100: lighten($awv-secondary-b3, 20%),
+  500: $awv-secondary-b3,
+  600: darken($awv-secondary-b3, 20%),
+  contrast: (
+    100: rgba(black, 0.87),
+    500: white,
+    600: white
+  )
+);
+
+$awv-mat-secondary-c1: (
+  100: lighten($awv-secondary-c1, 20%),
+  500: $awv-secondary-c1,
+  600: darken($awv-secondary-c1, 20%),
+  contrast: (
+    100: rgba(black, 0.87),
+    500: white,
+    600: white
+  )
+);
+
+$awv-mat-secondary-c2: (
+  100: lighten($awv-secondary-c2, 20%),
+  500: $awv-secondary-c2,
+  600: darken($awv-secondary-c2, 20%),
+  contrast: (
+    100: rgba(black, 0.87),
+    500: white,
+    600: white
+  )
+);
+
+$awv-mat-secondary-c3: (
+  100: lighten($awv-secondary-c3, 20%),
+  500: $awv-secondary-c3,
+  600: darken($awv-secondary-c3, 20%),
+  contrast: (
+    100: rgba(black, 0.87),
+    500: white,
+    600: white
+  )
+);

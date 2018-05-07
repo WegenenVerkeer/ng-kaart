@@ -6,7 +6,7 @@ import { KAART_CFG, KaartConfig } from "./kaart-config";
 import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { fromNullable } from "fp-ts/lib/Option";
-import { Laaggroep } from "./kaart-protocol-commands";
+import { Laaggroep } from "./kaart-elementen";
 
 @Component({
   selector: "awv-kaart-geoserver-laag",
@@ -28,11 +28,13 @@ export class KaartGeoserverLaagComponent extends KaartWmsLaagComponent {
       tileSize: fromNullable(this.tileSize),
       format: fromNullable(this.format),
       opacity: fromNullable(this.opacity),
-      backgroundUrl: this.backgroundUrl(List(this.config.geoserver.urls), this.laagNaam)
+      backgroundUrl: this.backgroundUrl(List(this.config.geoserver.urls), this.laagNaam),
+      minZoom: this.minZoom,
+      maxZoom: this.maxZoom
     };
   }
 
   laaggroep(): Laaggroep {
-    return "Voorgrond";
+    return "Voorgrond.Laag";
   }
 }

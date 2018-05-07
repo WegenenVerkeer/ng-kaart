@@ -33,6 +33,8 @@ export type StyleSelector = StaticStyle | DynamicStyle | Styles;
 
 export type AchtergrondLaag = WmsLaag | WmtsLaag | BlancoLaag;
 
+export type Laaggroep = "Achtergrond" | "Voorgrond.Hoog" | "Voorgrond.Laag" | "Tools";
+
 export interface WmsLaag {
   readonly type: SingleTileWmsType | TiledWmsType;
   readonly titel: string;
@@ -43,6 +45,8 @@ export interface WmsLaag {
   readonly tileSize: Option<number>;
   readonly format: Option<string>;
   readonly opacity: Option<number>;
+  readonly minZoom: number;
+  readonly maxZoom: number;
 }
 
 export interface WmtsCapaConfig {
@@ -70,6 +74,8 @@ export interface WmtsLaag {
   readonly format: Option<string>;
   readonly matrixSet: string;
   readonly config: WmtsCapaConfig | WmtsManualConfig;
+  readonly minZoom: number;
+  readonly maxZoom: number;
 }
 
 export interface VectorLaag {
@@ -86,6 +92,8 @@ export interface BlancoLaag {
   readonly type: BlancoType;
   readonly titel: string;
   readonly backgroundUrl: string;
+  readonly minZoom: number;
+  readonly maxZoom: number;
 }
 
 export type Laag = WmsLaag | WmtsLaag | VectorLaag | BlancoLaag;
@@ -94,6 +102,18 @@ export interface TekenSettings {
   readonly geometryType: ol.geom.GeometryType;
   readonly laagStyle: Option<StyleSelector>;
   readonly drawStyle: Option<StyleSelector>;
+}
+
+/**
+ * Dit is een wrapper rond Laag die naast de laag zelf ook het gebruik van de laag bij houdt.
+ */
+export interface ToegevoegdeLaag {
+  readonly bron: Laag;
+  readonly layer: ol.layer.Base;
+  readonly titel: string; // copie omdat dit veel gebruikt wordt
+  readonly laaggroep: Laaggroep;
+  readonly positieInGroep: number;
+  readonly magGetoondWorden: boolean;
 }
 
 export function isWmsLaag(laag: Laag): boolean {
