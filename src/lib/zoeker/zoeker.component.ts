@@ -180,7 +180,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
     }
   }
 
-  private maakResultaatLeeg() {
+  maakResultaatLeeg() {
     this.zoekVeld.setValue("");
     this.alleFouten = [];
     this.alleZoekResultaten = [];

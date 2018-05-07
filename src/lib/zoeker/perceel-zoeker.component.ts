@@ -13,6 +13,7 @@ import { kaartLogger } from "../kaart/log";
 import { Afdeling, Gemeente, PerceelNummer, PerceelZoekerService, Sectie, PerceelDetails } from "./perceel-zoeker.service";
 import { ZoekResultaten } from "./abstract-zoeker";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
+import { ZoekerComponent } from "./zoeker.component";
 
 function isNotNullObject(object) {
   return object && object instanceof Object;
@@ -67,8 +68,13 @@ export class PerceelZoekerComponent extends KaartChildComponentBase implements O
   secties$: Observable<Sectie[]> = Observable.empty();
   percelen$: Observable<PerceelNummer[]> = Observable.empty();
 
-  constructor(private perceelService: PerceelZoekerService, parent: KaartComponent, zone: NgZone) {
-    super(parent, zone);
+  constructor(
+    private perceelService: PerceelZoekerService,
+    kaartComponent: KaartComponent,
+    zone: NgZone,
+    private zoekerComponent: ZoekerComponent
+  ) {
+    super(kaartComponent, zone);
   }
 
   ngOnInit(): void {
@@ -168,5 +174,7 @@ export class PerceelZoekerComponent extends KaartChildComponentBase implements O
     this.afdelingControl.setValue(null);
     this.sectieControl.setValue(null);
     this.perceelControl.setValue(null);
+
+    this.zoekerComponent.maakResultaatLeeg();
   }
 }
