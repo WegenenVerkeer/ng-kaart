@@ -6,6 +6,7 @@ import { KaartComponent } from "./kaart.component";
 import { List } from "immutable";
 import * as ol from "openlayers";
 import { fromNullable, Option } from "fp-ts/lib/Option";
+import { VectorLaag } from "./kaart-elementen";
 
 @Component({
   selector: "awv-kaart-info-boodschap-identify",
@@ -14,6 +15,7 @@ import { fromNullable, Option } from "fp-ts/lib/Option";
 })
 export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase implements OnInit {
   @Input() feature: ol.Feature;
+  @Input() laag: Option<VectorLaag>;
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
@@ -28,11 +30,11 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   }
 
   lengte(): Option<number> {
-    return fromNullable(this.prop("locatie")["lengte"]).map(Math.round);
+    return fromNullable(this.waarde("locatie")["lengte"]).map(Math.round);
   }
 
   breedte(): Option<string> {
-    return fromNullable(this.prop("breedte"));
+    return fromNullable(this.waarde("breedte"));
   }
 
   dimensies(): string {
@@ -43,7 +45,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   }
 
   zijderijbaan(): string {
-    switch (this.prop("zijderijbaan")) {
+    switch (this.waarde("zijderijbaan")) {
       case "R":
         return "Rechts";
       case "L":
@@ -53,19 +55,19 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
       case "O":
         return "Op";
       default:
-        return this.prop("zijderijbaan");
+        return this.waarde("zijderijbaan");
     }
   }
 
   van(): string {
-    return fromNullable(this.prop("locatie"))
+    return fromNullable(this.waarde("locatie"))
       .chain(loc => fromNullable(loc["begin"]))
       .map(beginLocatie => `${Math.round(beginLocatie["positie"] * 10) / 10}`)
       .fold(() => "", pos => pos);
   }
 
   vanAfstand(): string {
-    return fromNullable(this.prop("locatie"))
+    return fromNullable(this.waarde("locatie"))
       .chain(loc => fromNullable(loc["begin"]))
       .map(beginLocatie => beginLocatie["afstand"])
       .map(afstand => {
@@ -79,14 +81,14 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   }
 
   tot(): string {
-    return fromNullable(this.prop("locatie"))
+    return fromNullable(this.waarde("locatie"))
       .chain(loc => fromNullable(loc["eind"]))
       .map(eindLocatie => `${Math.round(eindLocatie["positie"] * 10) / 10}`)
       .fold(() => "", pos => pos);
   }
 
   totAfstand(): string {
-    return fromNullable(this.prop("locatie"))
+    return fromNullable(this.waarde("locatie"))
       .chain(loc => fromNullable(loc["eind"]))
       .map(beginLocatie => beginLocatie["afstand"])
       .map(afstand => {
@@ -99,6 +101,13 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
       .fold(() => "", pos => pos);
   }
 
+  label(veld: string): string {
+    return this.laag
+      .chain(l => fromNullable(l.getLabel))
+      .map(getLabel => getLabel(veld))
+      .getOrElseValue(veld);
+  }
+
   zichtbareEigenschappen(): string[] {
     const teVerbergenProperties = List.of("geometry", "locatie", "ident8", "afstandrijbaan", "zijderijbaan", "breedte");
 
@@ -107,7 +116,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
     return Object.keys(properties).filter(key => properties[key] && properties[key] !== "" && !teVerbergenProperties.contains(key));
   }
 
-  prop(name: string): string {
+  waarde(name: string): string {
     return this.feature.getProperties()["properties"][name];
   }
 }

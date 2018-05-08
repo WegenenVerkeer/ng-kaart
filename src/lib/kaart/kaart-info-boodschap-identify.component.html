@@ -1,10 +1,10 @@
-<div class="ident8">{{ prop("ident8") }}</div>
+<div class="ident8">{{ waarde("ident8") }}</div>
 <div class="vantot">van {{ van( ) }}
   <span class="afstand">{{ vanAfstand() }}</span>
   tot {{ tot() }}
   <span class="afstand">{{ totAfstand() }}</span>
   / {{ zijderijbaan() }}
-  <span class="afstand">+{{ prop("afstandrijbaan") }}cm</span>
+  <span class="afstand">+{{ waarde("afstandrijbaan") }}cm</span>
 </div>
 
 
@@ -16,12 +16,12 @@
 <div class="velden">
   <div class="veldnamen">
     <div class="veldnaam" *ngFor="let veld of zichtbareEigenschappen()">
-      {{ veld }}
+      {{ label(veld) }}
     </div>
   </div>
   <div class="veldwaarden">
     <div class="veldwaarde" *ngFor="let veld of zichtbareEigenschappen()">
-      {{ prop(veld) }}
+      {{ waarde(veld) }}
     </div>
   </div>
 </div>

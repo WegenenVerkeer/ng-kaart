@@ -1,6 +1,6 @@
 <div class="float-box" *ngFor="let boodschap of infoBoodschappen$ | async" [@fadeIn]="'visible'">
     <awv-kaart-info-boodschap [boodschap]="boodschap">
-      <awv-kaart-info-boodschap-identify *ngIf="isIdentify(boodschap)" [feature]="boodschap.feature"></awv-kaart-info-boodschap-identify>
+      <awv-kaart-info-boodschap-identify *ngIf="isIdentify(boodschap)" [feature]="boodschap.feature" [laag]="boodschap.laag"></awv-kaart-info-boodschap-identify>
       <awv-kaart-info-boodschap-alert *ngIf="isAlert(boodschap)" [message]="boodschap.message"></awv-kaart-info-boodschap-alert>
     </awv-kaart-info-boodschap>
 </div>

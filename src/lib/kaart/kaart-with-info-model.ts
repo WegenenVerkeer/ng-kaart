@@ -4,6 +4,7 @@ import * as ol from "openlayers";
 
 import * as ke from "./kaart-elementen";
 import { TypedRecord } from "./kaart-protocol";
+import { VectorLaag } from "./kaart-elementen";
 
 export interface InfoBoodschap {
   readonly id: string;
@@ -20,6 +21,7 @@ export interface InfoBoodschapAlert extends InfoBoodschap {
 export interface InfoBoodschapIdentify extends InfoBoodschap {
   readonly type: "InfoBoodschapIdentify";
   readonly feature: ol.Feature;
+  readonly laag: VectorLaag;
 }
 
 export interface Groeplagen {

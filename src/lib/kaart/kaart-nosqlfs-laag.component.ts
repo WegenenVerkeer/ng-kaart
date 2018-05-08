@@ -56,7 +56,18 @@ export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
       ),
       selecteerbaar: this.selecteerbaar,
       minZoom: this.minZoom,
-      maxZoom: this.maxZoom
+      maxZoom: this.maxZoom,
+      getLabel: function(veld: string) {
+        return fromNullable(veld)
+          .map(v => {
+            if (v.length > 1) {
+              return v.charAt(0).toUpperCase() + v.substring(1).toLowerCase();
+            } else {
+              return v;
+            }
+          })
+          .getOrElseValue(veld);
+      }
     };
   }
 
