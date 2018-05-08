@@ -493,12 +493,13 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     // Lensaardig met side-effect
-    const pasZichtbaarheidAan: (toon: boolean) => (laag: ke.ToegevoegdeLaag) => ke.ToegevoegdeLaag = magGetoondWorden => laag => {
+    const pasLaagZichtbaarheidAan: (toon: boolean) => (laag: ke.ToegevoegdeLaag) => ke.ToegevoegdeLaag = magGetoondWorden => laag => {
       laag.layer.setVisible(magGetoondWorden);
       return laag.magGetoondWorden === magGetoondWorden ? laag : { ...laag, magGetoondWorden: magGetoondWorden };
     };
 
-    const pasLaagAan: (mdl: Model) => (laag: ke.ToegevoegdeLaag) => Model = mdl => laag => ({
+    // Uiteraard is het *nooit* de bedoeling om de titel van een laag aan te passen.
+    const pasLaagInModelAan: (mdl: Model) => (laag: ke.ToegevoegdeLaag) => Model = mdl => laag => ({
       ...mdl,
       toegevoegdeLagenOpTitel: mdl.toegevoegdeLagenOpTitel.set(laag.titel, laag)
     });
@@ -520,7 +521,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
           // Zorg ervoor dat er juist 1 achtergrondlaag zichtbaar is
           const modelMetAangepasteLagen = achtergrondLagen.reduce(
-            (mdl, laag) => pipe(pasZichtbaarheidAan(laag!.titel === teSelecterenLaag.titel), pasLaagAan(mdl!))(laag!),
+            (mdl, laag) => pipe(pasLaagZichtbaarheidAan(laag!.titel === teSelecterenLaag.titel), pasLaagInModelAan(mdl!))(laag!),
             model
           );
 
@@ -555,11 +556,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             const maybeVorigeAchtergrond = fromNullable(
               model.toegevoegdeLagenOpTitel.find(laag => laag!.laaggroep === "Achtergrond" && laag!.magGetoondWorden)
             );
-            const modelMetNieuweZichtbaarheid = pipe(pasZichtbaarheidAan(true), pasLaagAan(model))(nieuweAchtergrond);
+            const modelMetNieuweZichtbaarheid = pipe(pasLaagZichtbaarheidAan(true), pasLaagInModelAan(model))(nieuweAchtergrond);
             return maybeVorigeAchtergrond.fold(
               () => ModelAndEmptyResult(modelMetNieuweZichtbaarheid), //
               vorigeAchtergrond =>
-                ModelAndEmptyResult(pipe(pasZichtbaarheidAan(false), pasLaagAan(modelMetNieuweZichtbaarheid))(vorigeAchtergrond))
+                ModelAndEmptyResult(pipe(pasLaagZichtbaarheidAan(false), pasLaagInModelAan(modelMetNieuweZichtbaarheid))(vorigeAchtergrond))
             );
           })
       );
@@ -577,7 +578,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         wrapper,
         valideerToegevoegdLaagBestaat(titel).map(laag => {
-          const aangepastModel = pipe(pasZichtbaarheidAan(magGetoondWorden), pasLaagAan(model))(laag);
+          const aangepastModel = pipe(pasLaagZichtbaarheidAan(magGetoondWorden), pasLaagInModelAan(model))(laag);
           zendLagenInGroep(aangepastModel, laag.laaggroep);
           return ModelAndEmptyResult(aangepastModel);
         })
