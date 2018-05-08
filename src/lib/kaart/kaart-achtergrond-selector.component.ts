@@ -1,7 +1,7 @@
 import { animate, state, style, transition, trigger } from "@angular/animations";
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnInit } from "@angular/core";
 import { Observable } from "rxjs/Observable";
-import { map, tap, switchMap } from "rxjs/operators";
+import { map, switchMap, takeUntil } from "rxjs/operators";
 
 import { observeOnAngular } from "../util/observe-on-angular";
 import { ofType } from "../util/operators";
@@ -84,7 +84,8 @@ export class KaartAchtergrondSelectorComponent extends KaartChildComponentBase i
         this.internalMessage$.pipe(
           ofType<AchtergrondlagenGezetMsg>("AchtergrondlagenGezet"),
           map(a => a.achtergrondlagen.toArray()),
-          observeOnAngular(this.zone)
+          observeOnAngular(this.zone),
+          takeUntil(this.destroying$)
         )
       )
     );
@@ -94,8 +95,8 @@ export class KaartAchtergrondSelectorComponent extends KaartChildComponentBase i
         switchMap(() =>
           this.internalMessage$.pipe(
             ofType<AchtergrondtitelGezetMsg>("AchtergrondtitelGezet"), //
-            map(a => a.titel) // ,
-            // observeOnAngular(this.zone)
+            map(a => a.titel),
+            takeUntil(this.destroying$)
           )
         )
       )
