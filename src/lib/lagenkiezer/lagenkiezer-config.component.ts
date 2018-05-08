@@ -1,9 +1,8 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
 
 import { KaartClassicComponent } from "../kaart/kaart-classic.component";
-import { VerwijderUiElement, VoegUiElementToe, ZetUiElementOpties } from "../kaart/kaart-protocol-commands";
+import { UiElementOpties, VerwijderUiElement, VoegUiElementToe, ZetUiElementOpties } from "../kaart/kaart-protocol-commands";
 import { LagenUiSelector } from "./lagenkiezer.component";
-import { forChangedValue } from "../kaart/kaart-component-base";
 
 @Component({
   selector: "awv-kaart-lagenkiezer-config",
@@ -26,11 +25,10 @@ export class LagenkiezerConfigComponent implements OnInit, OnDestroy, OnChanges 
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    console.log("-----> changes", changes);
     this.kaart.dispatch(ZetUiElementOpties(LagenUiSelector, this.opties()));
   }
 
-  private opties(): any {
+  private opties(): UiElementOpties {
     return {
       toonLegende: this.toonLegende
     };

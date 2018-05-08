@@ -1,7 +1,7 @@
 import { animate, state, style, transition, trigger } from "@angular/animations";
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnInit } from "@angular/core";
 import { Observable } from "rxjs/Observable";
-import { map } from "rxjs/operators";
+import { map, switchMap, takeUntil } from "rxjs/operators";
 
 import { observeOnAngular } from "../util/observe-on-angular";
 import { ofType } from "../util/operators";
@@ -74,10 +74,36 @@ export class KaartAchtergrondSelectorComponent extends KaartChildComponentBase i
   private displayMode: DisplayMode = DisplayMode.SHOWING_STATUS;
   achtergrondTitel = "";
 
-  backgroundTiles$: Observable<Array<ToegevoegdeLaag>> = Observable.empty();
+  readonly backgroundTiles$: Observable<Array<ToegevoegdeLaag>> = Observable.empty();
 
   constructor(private readonly cdr: ChangeDetectorRef, kaartComponent: KaartComponent, zone: NgZone) {
     super(kaartComponent, zone);
+
+    this.backgroundTiles$ = this.initialising$.pipe(
+      switchMap(() =>
+        this.internalMessage$.pipe(
+          ofType<AchtergrondlagenGezetMsg>("AchtergrondlagenGezet"),
+          map(a => a.achtergrondlagen.toArray()),
+          observeOnAngular(this.zone),
+          takeUntil(this.destroying$)
+        )
+      )
+    );
+
+    this.initialising$
+      .pipe(
+        switchMap(() =>
+          this.internalMessage$.pipe(
+            ofType<AchtergrondtitelGezetMsg>("AchtergrondtitelGezet"), //
+            map(a => a.titel),
+            takeUntil(this.destroying$)
+          )
+        )
+      )
+      .subscribe(titel => {
+        this.achtergrondTitel = titel;
+        this.cdr.detectChanges();
+      });
   }
 
   protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
@@ -85,27 +111,6 @@ export class KaartAchtergrondSelectorComponent extends KaartChildComponentBase i
       prt.LagenInGroepSubscription("Achtergrond", achtergrondlagenGezetMsgGen), //
       prt.AchtergrondTitelSubscription(achtergrondtitelGezetWrapper)
     ];
-  }
-
-  ngOnInit() {
-    super.ngOnInit();
-
-    this.backgroundTiles$ = this.internalMessage$.pipe(
-      ofType<AchtergrondlagenGezetMsg>("AchtergrondlagenGezet"),
-      map(a => a.achtergrondlagen.toArray()),
-      observeOnAngular(this.zone)
-    );
-
-    this.internalMessage$
-      .pipe(
-        ofType<AchtergrondtitelGezetMsg>("AchtergrondtitelGezet"), //
-        map(a => a.titel),
-        observeOnAngular(this.zone)
-      )
-      .subscribe(titel => {
-        this.achtergrondTitel = titel;
-        this.cdr.detectChanges(); // We zitten nochthans in observeOnAngular.
-      });
   }
 
   kies(laag: AchtergrondLaag): void {
