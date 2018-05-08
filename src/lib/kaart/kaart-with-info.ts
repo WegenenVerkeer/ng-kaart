@@ -9,13 +9,8 @@ import { ZoekerCoordinator } from "../zoeker/zoeker-coordinator";
 import { KaartConfig } from "./kaart-config";
 import * as ke from "./kaart-elementen";
 import { ModelChanger } from "./model-changes";
-import { InfoBoodschap, GeselecteerdeFeatures, Groeplagen } from "./kaart-with-info-model";
+import { InfoBoodschap, GeselecteerdeFeatures } from "./kaart-with-info-model";
 import { StyleSelector } from "./kaart-elementen";
-
-export interface Groeplagen {
-  readonly laaggroep: ke.Laaggroep;
-  readonly lagen: List<ke.ToegevoegdeLaag>;
-}
 
 // Spijtig genoeg kan die niet in het model zelf zitten vermits de stijl functie in de interaction.Select control wordt
 // gecreëerd wanneer het model nog leeg is, en het model van dat moment in zijn scope zit
@@ -63,7 +58,6 @@ export class KaartWithInfo {
   readonly geselecteerdeFeatures: ol.Collection<ol.Feature> = new ol.Collection<ol.Feature>();
   readonly middelpuntSubj: Subject<[number, number]> = new ReplaySubject<[number, number]>(1);
   readonly achtergrondlaagtitelSubj: Subject<string> = new ReplaySubject<string>(1);
-  readonly groeplagenSubj: Subject<Groeplagen> = new ReplaySubject<Groeplagen>(100);
   readonly zoekerSubj: Subject<ZoekResultaten> = new ReplaySubject<ZoekResultaten>(1);
   readonly zoekerCoordinator: ZoekerCoordinator = new ZoekerCoordinator(this.zoekerSubj);
   readonly componentFoutSubj: Subject<List<string>> = new ReplaySubject<List<string>>(1);
