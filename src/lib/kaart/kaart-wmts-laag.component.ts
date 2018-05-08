@@ -6,9 +6,8 @@ import * as ol from "openlayers";
 
 import { classicLogger } from "../kaart-classic/log";
 import { KaartClassicComponent } from "./kaart-classic.component";
-import { WmtsCapaConfig, WmtsLaag, WmtsManualConfig, WmtsType } from "./kaart-elementen";
+import { WmtsCapaConfig, WmtsLaag, WmtsManualConfig, WmtsType, Laaggroep } from "./kaart-elementen";
 import { KaartLaagComponent } from "./kaart-laag.component";
-import { Laaggroep } from "./kaart-protocol-commands";
 
 @Component({
   selector: "awv-kaart-wmts-laag",
@@ -19,7 +18,6 @@ export class KaartWmtsLaagComponent extends KaartLaagComponent implements OnInit
   @Input() laagNaam: string;
   @Input() tiled = true;
   @Input() type: string;
-  @Input() groep: Laaggroep = "Achtergrond";
   @Input() matrixSet: string;
 
   @Input() capurl?: string;
@@ -41,8 +39,8 @@ export class KaartWmtsLaagComponent extends KaartLaagComponent implements OnInit
   }
 
   ngOnInit() {
-    if (["Voorgrond", "Achtergrond"].indexOf(this.groep) < 0) {
-      throw new Error("groep moet 'Voorgrond' of 'Achtergrond' zijn");
+    if (["Voorgrond.Laag", "Voorgrond.Hoog", "Achtergrond"].indexOf(this.gekozenLaagGroep()) < 0) {
+      throw new Error("groep moet 'Voorgrond.Laag', 'Voorgrond.Hoog' of 'Achtergrond' zijn");
     }
     if (!this.matrixSet) {
       throw new Error("matrixSet moet opgegeven zijn");
@@ -88,12 +86,14 @@ export class KaartWmtsLaagComponent extends KaartLaagComponent implements OnInit
       opacity: fromNullable(this.opacity),
       matrixSet: this.matrixSet,
       config: config,
-      backgroundUrl: this.backgroundUrl(config)
+      backgroundUrl: this.backgroundUrl(config),
+      minZoom: this.minZoom,
+      maxZoom: this.maxZoom
     };
   }
 
   laaggroep(): Laaggroep {
-    return this.groep;
+    return "Achtergrond";
   }
 
   backgroundUrl(config: WmtsCapaConfig | WmtsManualConfig): string {

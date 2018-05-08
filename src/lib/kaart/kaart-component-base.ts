@@ -1,13 +1,14 @@
-import { NgZone, OnInit, OnDestroy } from "@angular/core";
+import { NgZone, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
+import { ReplaySubject } from "rxjs";
 import { Observable } from "rxjs/Observable";
-import { Subject } from "rxjs/Subject";
 import { takeUntil } from "rxjs/operators";
+import { Subject } from "rxjs/Subject";
 
 import { asap } from "../util/asap";
 
 export abstract class KaartComponentBase implements OnInit, OnDestroy {
-  private readonly destroyingSubj: Subject<void> = new Subject<void>();
-  private readonly initialisingSubj: Subject<void> = new Subject<void>();
+  private readonly destroyingSubj: Subject<void> = new ReplaySubject<void>(1); // ReplaySubject zodat laatkomers toch nog event krijgen
+  private readonly initialisingSubj: Subject<void> = new ReplaySubject<void>(1);
 
   constructor(readonly zone: NgZone) {}
 
@@ -19,15 +20,15 @@ export abstract class KaartComponentBase implements OnInit, OnDestroy {
     this.destroyingSubj.next();
   }
 
-  bindToLifeCycle<T>(source: Observable<T>): Observable<T> {
+  protected bindToLifeCycle<T>(source: Observable<T>): Observable<T> {
     return source ? source.pipe(takeUntil(this.destroyingSubj)) : source;
   }
 
-  public get initialising$(): Observable<void> {
-    return this.initialisingSubj;
+  protected get initialising$(): Observable<void> {
+    return this.initialisingSubj.pipe(takeUntil(this.destroyingSubj));
   }
 
-  public get destroying$(): Observable<void> {
+  protected get destroying$(): Observable<void> {
     return this.destroyingSubj;
   }
 
@@ -41,5 +42,16 @@ export abstract class KaartComponentBase implements OnInit, OnDestroy {
 
   protected runOutsideAngular<T>(f: () => T): T {
     return this.zone.runOutsideAngular(f);
+  }
+}
+
+export function forChangedValue(
+  changes: SimpleChanges,
+  prop: string,
+  action: (cur: any, prev: any) => void,
+  pred: (cur: any, prev: any) => boolean = () => true
+): void {
+  if (prop in changes && (!changes[prop].previousValue || pred(changes[prop].currentValue, changes[prop].previousValue))) {
+    action(changes[prop].currentValue, changes[prop].previousValue);
   }
 }

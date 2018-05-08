@@ -1,15 +1,17 @@
 import { Input, OnDestroy, OnInit } from "@angular/core";
+import { fromNullable } from "fp-ts/lib/Option";
 
 import { KaartClassicComponent } from "./kaart-classic.component";
-import { Laag, StyleSelector } from "./kaart-elementen";
-import * as prt from "./kaart-protocol";
+import { Laag, Laaggroep } from "./kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "./kaart-internal-messages";
-import * as ol from "openlayers";
-import { getDefaultSelectionStyleFunction } from "./styles";
+import * as prt from "./kaart-protocol";
 
 export abstract class KaartLaagComponent implements OnInit, OnDestroy {
   @Input() titel = "";
   @Input() zichtbaar = true;
+  @Input() groep: Laaggroep | undefined; // Heeft voorrang op std ingesteld via laaggroep
+  @Input() minZoom = 2;
+  @Input() maxZoom = 16;
 
   protected voegLaagToeBijStart = true;
 
@@ -30,10 +32,14 @@ export abstract class KaartLaagComponent implements OnInit, OnDestroy {
       type: "VoegLaagToe",
       positie: Number.MAX_SAFE_INTEGER,
       laag: this.createLayer(),
-      laaggroep: this.laaggroep(),
+      laaggroep: this.gekozenLaagGroep(),
       magGetoondWorden: this.zichtbaar,
       wrapper: kaartLogOnlyWrapper
     });
+  }
+
+  protected gekozenLaagGroep(): Laaggroep {
+    return fromNullable(this.groep).getOrElseValue(this.laaggroep());
   }
 
   protected dispatch(evt: prt.Command<KaartInternalMsg>) {
@@ -42,5 +48,5 @@ export abstract class KaartLaagComponent implements OnInit, OnDestroy {
 
   abstract createLayer(): Laag;
 
-  abstract laaggroep(): prt.Laaggroep;
+  abstract laaggroep(): Laaggroep;
 }

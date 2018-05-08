@@ -8,7 +8,7 @@ import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartLaagComponent } from "./kaart-laag.component";
 import { NosqlFsSource } from "../source/nosql-fs-source";
 import { orElse, forEach } from "../util/option";
-import { Laaggroep, ZetStijlVoorLaagCmd } from "./kaart-protocol-commands";
+import { ZetStijlVoorLaagCmd } from "./kaart-protocol-commands";
 import { StaticStyle, DynamicStyle, Styles, StyleSelector, Stylish } from "./kaart-elementen";
 import { getDefaultStyleFunction, getDefaultSelectionStyleFunction } from "./styles";
 import { fromNullable } from "fp-ts/lib/Option";
@@ -60,8 +60,8 @@ export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
     };
   }
 
-  laaggroep(): Laaggroep {
-    return "Voorgrond";
+  laaggroep(): ke.Laaggroep {
+    return "Voorgrond.Hoog";
   }
 
   private getMaybeStyleSelector(): Option<StyleSelector> {

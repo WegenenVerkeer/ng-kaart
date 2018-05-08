@@ -1,18 +1,24 @@
 import { none, some, Option } from "fp-ts/lib/Option";
-import { List, Map, OrderedMap } from "immutable";
+import { List, Map, OrderedMap, Set } from "immutable";
 import * as ol from "openlayers";
 import { BehaviorSubject, ReplaySubject, Subject } from "rxjs";
 
-import { Laaggroep, Zoominstellingen } from ".";
+import { TypedRecord, Zoominstellingen } from "./kaart-protocol";
 import { ZoekResultaten } from "../zoeker/abstract-zoeker";
 import { ZoekerCoordinator } from "../zoeker/zoeker-coordinator";
 import { KaartConfig } from "./kaart-config";
 import * as ke from "./kaart-elementen";
+import { ModelChanger } from "./model-changes";
 import { InfoBoodschap, GeselecteerdeFeatures, Groeplagen } from "./kaart-with-info-model";
 import { StyleSelector } from "./kaart-elementen";
 
+export interface Groeplagen {
+  readonly laaggroep: ke.Laaggroep;
+  readonly lagen: List<ke.ToegevoegdeLaag>;
+}
+
 // Spijtig genoeg kan die niet in het model zelf zitten vermits de stijl functie in de interaction.Select control wordt
-// gecreeerd wanneer het model nog leeg is, en het model van dat moment in zijn scope zit
+// gecreëerd wanneer het model nog leeg is, en het model van dat moment in zijn scope zit
 const STIJL_OP_LAAG = "stijlOpLaag";
 const SELECTIE_STIJL_OP_LAAG = "stijlOpLaag";
 
@@ -36,15 +42,21 @@ export function getSelectionStyleSelector(model: KaartWithInfo, laagnaam: string
  * Het model achter de kaartcomponent.
  */
 export class KaartWithInfo {
-  readonly olLayersOpTitel: Map<string, ol.layer.Base> = Map();
-  readonly titelsOpGroep: Map<Laaggroep, List<string>> = Map([["Voorgrond", List()], ["Achtergrond", List()], ["Tools", List()]]);
-  readonly groepOpTitel: Map<string, Laaggroep> = Map();
-  readonly lagen: List<ke.Laag> = List();
+  readonly toegevoegdeLagenOpTitel: Map<string, ke.ToegevoegdeLaag> = Map();
+  readonly titelsOpGroep: Map<ke.Laaggroep, List<string>> = Map([
+    ["Voorgrond.Laag", List()],
+    ["Voorgrond.Hoog", List()],
+    ["Achtergrond", List()],
+    ["Tools", List()]
+  ]);
+  readonly groepOpTitel: Map<string, ke.Laaggroep> = Map();
+  // readonly lagen: List<ke.ToegevoegdeLaag> = List();
   readonly schaal: Option<ol.control.Control> = none;
   readonly fullScreen: Option<ol.control.FullScreen> = none;
   readonly stdInteracties: List<ol.interaction.Interaction> = List(); // TODO beter gewoon interacties
   readonly scrollZoomOnFocus: boolean = false;
   readonly showBackgroundSelector: boolean = false;
+
   readonly clickSubj: Subject<ol.Coordinate> = new Subject<ol.Coordinate>();
   readonly zoominstellingenSubj: Subject<Zoominstellingen> = new ReplaySubject<Zoominstellingen>(1);
   readonly geselecteerdeFeaturesSubj: Subject<GeselecteerdeFeatures> = new Subject<GeselecteerdeFeatures>();
@@ -53,8 +65,8 @@ export class KaartWithInfo {
   readonly achtergrondlaagtitelSubj: Subject<string> = new ReplaySubject<string>(1);
   readonly groeplagenSubj: Subject<Groeplagen> = new ReplaySubject<Groeplagen>(100);
   readonly zoekerSubj: Subject<ZoekResultaten> = new ReplaySubject<ZoekResultaten>(1);
-  readonly componentFoutSubj: Subject<List<string>> = new ReplaySubject<List<string>>(1);
   readonly zoekerCoordinator: ZoekerCoordinator = new ZoekerCoordinator(this.zoekerSubj);
+  readonly componentFoutSubj: Subject<List<string>> = new ReplaySubject<List<string>>(1);
   readonly mijnLocatieZoomDoelSubj: Subject<Option<number>> = new ReplaySubject<Option<number>>(1);
   readonly geometryChangedSubj: Subject<ol.geom.Geometry> = new Subject<ol.geom.Geometry>();
   readonly tekenSettingsSubj: BehaviorSubject<Option<ke.TekenSettings>> = new BehaviorSubject<Option<ke.TekenSettings>>(none);
@@ -65,14 +77,22 @@ export class KaartWithInfo {
     readonly config: KaartConfig,
     readonly naam: string,
     readonly container: any,
-    readonly map: ol.Map
+    readonly map: ol.Map,
+    changer: ModelChanger
   ) {
-    const zetInstellingen = () =>
+    const zetInstellingen = () => {
+      // Deze mag weg wanneer alles naar changer gemigreerd is
       this.zoominstellingenSubj.next({
         zoom: map.getView().getZoom(),
         minZoom: map.getView().getMinZoom(),
         maxZoom: map.getView().getMaxZoom()
       });
+      changer.zoominstellingenSubj.next({
+        zoom: map.getView().getZoom(),
+        minZoom: map.getView().getMinZoom(),
+        maxZoom: map.getView().getMaxZoom()
+      });
+    };
     map.getView().on("change:resolution", () => {
       const zoomNiveau = map.getView().getZoom();
       // OL genereert een heleboel tussenliggende zooms tijden het animeren.
