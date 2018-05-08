@@ -265,7 +265,6 @@ export interface VerbergInfoBoodschapCmd {
 }
 
 export interface UiElementOpties {
-  naam: string;
   [k: string]: any;
 }
 
