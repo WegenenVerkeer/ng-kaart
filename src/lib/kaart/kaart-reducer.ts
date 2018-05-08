@@ -3,6 +3,7 @@ import { getArrayMonoid } from "fp-ts/lib/Monoid";
 import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
 import { sequence } from "fp-ts/lib/Traversable";
 import * as validation from "fp-ts/lib/Validation";
+import { pipe } from "fp-ts/lib/function";
 import { List } from "immutable";
 import * as ol from "openlayers";
 import { olx } from "openlayers";
@@ -491,15 +492,16 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
-    function pasZichtbaarheidAan(laag: ke.ToegevoegdeLaag, magGetoondWorden: boolean): ke.ToegevoegdeLaag {
+    // Lensaardig met side-effect
+    const pasZichtbaarheidAan: (toon: boolean) => (laag: ke.ToegevoegdeLaag) => ke.ToegevoegdeLaag = magGetoondWorden => laag => {
       laag.layer.setVisible(magGetoondWorden);
       return laag.magGetoondWorden === magGetoondWorden ? laag : { ...laag, magGetoondWorden: magGetoondWorden };
-    }
+    };
 
-    function pasLaagAan(mdl: Model, laag: ke.ToegevoegdeLaag): Model {
-      // Uiteraard is het *nooit* de bedoeling om de titel van een laag aan te passen.
-      return { ...mdl, toegevoegdeLagenOpTitel: mdl.toegevoegdeLagenOpTitel.set(laag.titel, laag) };
-    }
+    const pasLaagAan: (mdl: Model) => (laag: ke.ToegevoegdeLaag) => Model = mdl => laag => ({
+      ...mdl,
+      toegevoegdeLagenOpTitel: mdl.toegevoegdeLagenOpTitel.set(laag.titel, laag)
+    });
 
     function toonAchtergrondkeuzeCmd(cmnd: prt.ToonAchtergrondKeuzeCmd<Msg>): ModelWithResult<Msg> {
       const achtergrondTitels = model.titelsOpGroep.get("Achtergrond");
@@ -517,8 +519,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           const teSelecterenLaag = geselecteerdeLaag.getOrElse(() => achtergrondLagen.first()); // er is er minstens 1 wegens validatie
 
           // Zorg ervoor dat er juist 1 achtergrondlaag zichtbaar is
-          const aangepasteAchtergronden = achtergrondLagen.map(laag => pasZichtbaarheidAan(laag!, laag!.titel === teSelecterenLaag.titel));
-          const modelMetAangepasteLagen = aangepasteAchtergronden.reduce((mdl, laag) => pasLaagAan(mdl!, laag!), model);
+          const modelMetAangepasteLagen = achtergrondLagen.reduce(
+            (mdl, laag) => pipe(pasZichtbaarheidAan(laag!.titel === teSelecterenLaag.titel), pasLaagAan(mdl!))(laag!),
+            model
+          );
 
           model.achtergrondlaagtitelSubj.next(teSelecterenLaag.titel);
           modelChanger.uiElementSelectieSubj.next({ naam: "Achtergrondkeuze", aan: true });
@@ -547,13 +551,16 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         valideerIsAchtergrondLaag(cmnd.titel)
           .chain(() => valideerToegevoegdLaagBestaat(cmnd.titel))
           .map((nieuweAchtergrond: ke.ToegevoegdeLaag) => {
-            const vorigeAchtergrond = fromNullable(
+            model.achtergrondlaagtitelSubj.next(cmnd.titel);
+            const maybeVorigeAchtergrond = fromNullable(
               model.toegevoegdeLagenOpTitel.find(laag => laag!.laaggroep === "Achtergrond" && laag!.magGetoondWorden)
             );
-            forEach(vorigeAchtergrond, l => l.layer.setVisible(false));
-            nieuweAchtergrond.layer.setVisible(true);
-            model.achtergrondlaagtitelSubj.next(cmnd.titel);
-            return ModelAndEmptyResult(model);
+            const modelMetNieuweZichtbaarheid = pipe(pasZichtbaarheidAan(true), pasLaagAan(model))(nieuweAchtergrond);
+            return maybeVorigeAchtergrond.fold(
+              () => ModelAndEmptyResult(modelMetNieuweZichtbaarheid), //
+              vorigeAchtergrond =>
+                ModelAndEmptyResult(pipe(pasZichtbaarheidAan(false), pasLaagAan(modelMetNieuweZichtbaarheid))(vorigeAchtergrond))
+            );
           })
       );
     }
@@ -570,7 +577,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         wrapper,
         valideerToegevoegdLaagBestaat(titel).map(laag => {
-          const aangepastModel = pasLaagAan(model, pasZichtbaarheidAan(laag, magGetoondWorden));
+          const aangepastModel = pipe(pasZichtbaarheidAan(magGetoondWorden), pasLaagAan(model))(laag);
           zendLagenInGroep(aangepastModel, laag.laaggroep);
           return ModelAndEmptyResult(aangepastModel);
         })

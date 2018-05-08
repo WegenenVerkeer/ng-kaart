@@ -189,7 +189,7 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
         if (Math.abs(ds.lastY - y) < 40 || now - ds.startTime > 100) {
           const [topPos, bottomPos] = elementPos(evt.target as HTMLElement);
           const hitEltTop = y <= ds.gapTop;
-          console.log("dnd dragenter", ds.gapBottom, ds.gap, hitEltTop, topPos, bottomPos, ds);
+          // console.log("dnd dragenter", ds.gapBottom, ds.gap, hitEltTop, topPos, bottomPos, ds);
           this.dragState = some({
             ...ds,
             lastY: y,
@@ -233,7 +233,7 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
     // aangeduid heeft. Dat kan als we buiten de lijst gaan met de cursor.
     this.dragState.map(ds => {
       if (isTarget(laag)(ds)) {
-        console.log("dnd dragleave", ds.gapBottom, ds.gap, ds);
+        // console.log("dnd dragleave", ds.gapBottom, ds.gap, ds);
         this.dragState = some({
           ...ds,
           currentDrop: ds.from,
