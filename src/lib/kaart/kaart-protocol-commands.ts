@@ -1,4 +1,4 @@
-import { List } from "immutable";
+import { List, Set } from "immutable";
 import { Subscription as RxSubscription } from "rxjs/Subscription";
 
 import * as ol from "openlayers";
@@ -227,6 +227,7 @@ export interface VerwijderZoekerCmd<Msg extends KaartMsg> {
 export interface ZoekCmd<Msg extends KaartMsg> {
   readonly type: "Zoek";
   readonly input: string;
+  readonly zoekers: Set<string>;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 

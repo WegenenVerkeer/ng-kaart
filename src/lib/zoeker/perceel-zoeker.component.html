@@ -1,0 +1,37 @@
+<div class="perceel-form">
+  <mat-form-field>
+    <input matInput placeholder="Gemeente" [formControl]="gemeenteControl" [matAutocomplete]="gemeenteAuto">
+  </mat-form-field>
+  <mat-autocomplete autoActiveFirstOption #gemeenteAuto="matAutocomplete" [displayWith]="toonGemeente">
+    <mat-option *ngFor="let gemeente of gefilterdeGemeenten" [value]="gemeente" [innerHtml]="gemeente.naam | highlight: gemeenteControl.value">
+    </mat-option>
+  </mat-autocomplete>
+
+  <mat-form-field>
+    <input matInput placeholder="Afdeling" [formControl]="afdelingControl" [matAutocomplete]="afdelingAuto">
+  </mat-form-field>
+  <mat-autocomplete autoActiveFirstOption #afdelingAuto="matAutocomplete" [displayWith]="toonAfdeling">
+    <mat-option *ngFor="let afdeling of afdelingen$ | async" [value]="afdeling" [innerHtml]="afdeling.naam | highlight: afdelingControl.value">
+    </mat-option>
+  </mat-autocomplete>
+
+  <mat-form-field>
+    <input matInput placeholder="Sectie" [formControl]="sectieControl" [matAutocomplete]="sectieAuto">
+  </mat-form-field>
+  <mat-autocomplete autoActiveFirstOption #sectieAuto="matAutocomplete" [displayWith]="toonSectie">
+    <mat-option *ngFor="let sectie of secties$ | async" [value]="sectie" [innerHtml]="sectie.code | highlight: sectieControl.value">
+    </mat-option>
+  </mat-autocomplete>
+
+  <mat-form-field>
+    <input matInput placeholder="Perceel" [formControl]="perceelControl" [matAutocomplete]="perceelAuto">
+  </mat-form-field>
+  <mat-autocomplete autoActiveFirstOption #perceelAuto="matAutocomplete" [displayWith]="toonPerceel">
+    <mat-option *ngFor="let perceel of percelen$ | async" [value]="perceel" [innerHtml]="perceel.capakey | highlight: perceelControl.value">
+    </mat-option>
+  </mat-autocomplete>
+
+  <div class="perceel-buttons">
+    <button mat-button (click)="maakVeldenLeeg('alles')">Maak leeg</button>
+  </div>
+</div>

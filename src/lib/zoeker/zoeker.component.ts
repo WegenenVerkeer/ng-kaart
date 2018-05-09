@@ -1,9 +1,9 @@
 import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { none, Option } from "fp-ts/lib/Option";
-import { List } from "immutable";
+import { List, Set } from "immutable";
 import * as ol from "openlayers";
-import { debounce, distinctUntilChanged, map } from "rxjs/operators";
+import { debounce, distinctUntilChanged, filter, map } from "rxjs/operators";
 import { Subscription } from "rxjs/Subscription";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
@@ -19,6 +19,8 @@ export class Fout {
   constructor(readonly zoeker: string, readonly fout: string) {}
 }
 
+export type ZoekerType = "Geoloket" | "Perceel";
+
 @Component({
   selector: "awv-zoeker",
   templateUrl: "./zoeker.component.html",
@@ -32,6 +34,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
   legendeKeys: string[] = [];
   toonHelp = false;
   toonResultaat = true;
+  actieveZoeker: ZoekerType = "Geoloket";
 
   private subscription: Option<Subscription> = none;
   private byPassDebounce: () => void;
@@ -90,6 +93,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
     super.ngOnInit();
     this.bindToLifeCycle(
       this.zoekVeld.valueChanges.pipe(
+        filter(value => value !== null),
         map(value => value.trim()),
         debounce((value: string) => {
           // Form changes worden debounced tot deze promise geresolved wordt.
@@ -106,11 +110,10 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
         distinctUntilChanged()
       )
     ).subscribe(value => {
-      this.maakResultaatLeeg();
       this.toonResultaat = true;
 
       if (value.length > 0) {
-        this.dispatch({ type: "Zoek", input: value, wrapper: kaartLogOnlyWrapper });
+        this.dispatch({ type: "Zoek", input: value, zoekers: Set(), wrapper: kaartLogOnlyWrapper });
       }
     });
     this.dispatch({
@@ -155,7 +158,30 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
     }
   }
 
-  private maakResultaatLeeg() {
+  heeftFout(): boolean {
+    return this.alleFouten.length > 0;
+  }
+
+  heeftResultaatOfFout(): boolean {
+    return this.heeftFout() || this.alleZoekResultaten.length > 0;
+  }
+
+  kiesZoeker(zoeker: ZoekerType) {
+    this.maakResultaatLeeg();
+    this.actieveZoeker = zoeker;
+  }
+
+  getPlaceholder(): string {
+    switch (this.actieveZoeker) {
+      case "Geoloket":
+        return "Zoek";
+      case "Perceel":
+        return "Zoek op perceel";
+    }
+  }
+
+  maakResultaatLeeg() {
+    this.zoekVeld.setValue("");
     this.alleFouten = [];
     this.alleZoekResultaten = [];
     this.extent = ol.extent.createEmpty();
