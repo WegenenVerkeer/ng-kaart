@@ -17,7 +17,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   @Input() feature: ol.Feature;
   @Input() laag: Option<VectorLaag>;
 
-  teVerbergenProperties = List.of("geometry", "locatie", "ident8", "afstandrijbaan", "zijderijbaan", "breedte");
+  teVerbergenProperties = List.of("geometry", "locatie", "ident8", "afstandrijbaan", "zijderijbaan", "breedte", "hm", "verpl");
 
   properties = () => this.feature.getProperties()["properties"];
 
