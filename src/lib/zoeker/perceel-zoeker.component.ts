@@ -49,6 +49,8 @@ function disableWanneerLeeg<T>(control: FormControl, array: T[]) {
   }
 }
 
+type MaakLeegType = "alles" | "vanafgemeente" | "vanafafdeling" | "vanafsectie" | "vanafperceel";
+
 @Component({
   selector: "awv-perceel-zoeker",
   templateUrl: "./perceel-zoeker.component.html",
@@ -138,24 +140,9 @@ export class PerceelZoekerComponent extends KaartChildComponentBase implements O
     );
 
     // Wanneer de waardes leeg zijn, mag je de control disablen, maak ook de volgende velden leeg.
-    this.bindToLifeCycle(this.afdelingen$).subscribe(
-      afdelingen => {
-        disableWanneerLeeg(this.afdelingControl, afdelingen);
-        this.maakVeldenLeeg("vanafafdeling");
-      },
-      error => this.meldFout(error)
-    );
-    this.bindToLifeCycle(this.secties$).subscribe(
-      secties => {
-        disableWanneerLeeg(this.sectieControl, secties);
-        this.maakVeldenLeeg("vanafsectie");
-      },
-      error => this.meldFout(error)
-    );
-    this.bindToLifeCycle(this.percelen$).subscribe(
-      percelen => disableWanneerLeeg(this.perceelControl, percelen),
-      error => this.meldFout(error)
-    );
+    this.subscribeToDisableWhenEmpty(this.afdelingen$, this.afdelingControl, "vanafafdeling");
+    this.subscribeToDisableWhenEmpty(this.secties$, this.sectieControl, "vanafsectie");
+    this.subscribeToDisableWhenEmpty(this.percelen$, this.perceelControl, "vanafperceel");
 
     // Hier gaan we onze capakey doorsturen naar de zoekers, we willen alleen de perceelzoeker triggeren.
     this.bindToLifeCycle(this.perceelControl.valueChanges.pipe(filter(isNotNullObject), distinctUntilChanged())).subscribe(perceelDetails =>
@@ -197,7 +184,17 @@ export class PerceelZoekerComponent extends KaartChildComponentBase implements O
     this.dispatch(prt.MeldComponentFoutCmd(List.of("Fout bij ophalen perceel gegevens", fout.message)));
   }
 
-  private maakVeldenLeeg(niveau: "alles" | "vanafgemeente" | "vanafafdeling" | "vanafsectie") {
+  private subscribeToDisableWhenEmpty<T>(observable: Observable<T[]>, formControl: FormControl, maakLeegType: MaakLeegType) {
+    this.bindToLifeCycle(observable).subscribe(
+      waardes => {
+        disableWanneerLeeg<T>(formControl, waardes);
+        this.maakVeldenLeeg(maakLeegType);
+      },
+      error => this.meldFout(error)
+    );
+  }
+
+  private maakVeldenLeeg(niveau: MaakLeegType) {
     if (niveau === "alles") {
       this.gefilterdeGemeenten = this.alleGemeenten;
       this.gemeenteControl.setValue(null);
