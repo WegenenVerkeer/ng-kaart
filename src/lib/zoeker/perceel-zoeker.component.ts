@@ -109,7 +109,7 @@ export class PerceelZoekerComponent extends KaartChildComponentBase implements O
       this.gefilterdeGemeenten = this.alleGemeenten.filter(
         gemeente => gemeente.naam.toLocaleLowerCase().includes(gemeenteOfNis) || gemeente.niscode.toString().includes(gemeenteOfNis)
       );
-      // Iedere keer als er iets veranderd, moeten we de volgende controls leegmaken.
+      // Iedere keer als er iets verandert, moeten we de volgende controls leegmaken.
       this.maakVeldenLeeg("vanafgemeente");
     });
 
@@ -138,21 +138,24 @@ export class PerceelZoekerComponent extends KaartChildComponentBase implements O
     );
 
     // Wanneer de waardes leeg zijn, mag je de control disablen, maak ook de volgende velden leeg.
-    this.afdelingen$.subscribe(
+    this.bindToLifeCycle(this.afdelingen$).subscribe(
       afdelingen => {
         disableWanneerLeeg(this.afdelingControl, afdelingen);
         this.maakVeldenLeeg("vanafafdeling");
       },
       error => this.meldFout(error)
     );
-    this.secties$.subscribe(
+    this.bindToLifeCycle(this.secties$).subscribe(
       secties => {
         disableWanneerLeeg(this.sectieControl, secties);
         this.maakVeldenLeeg("vanafsectie");
       },
       error => this.meldFout(error)
     );
-    this.percelen$.subscribe(percelen => disableWanneerLeeg(this.perceelControl, percelen), error => this.meldFout(error));
+    this.bindToLifeCycle(this.percelen$).subscribe(
+      percelen => disableWanneerLeeg(this.perceelControl, percelen),
+      error => this.meldFout(error)
+    );
 
     // Hier gaan we onze capakey doorsturen naar de zoekers, we willen alleen de perceelzoeker triggeren.
     this.bindToLifeCycle(this.perceelControl.valueChanges.pipe(filter(isNotNullObject), distinctUntilChanged())).subscribe(perceelDetails =>
