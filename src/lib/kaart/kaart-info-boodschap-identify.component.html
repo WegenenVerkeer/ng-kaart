@@ -25,3 +25,19 @@
     </div>
   </div>
 </div>
+
+<div class="booleanwaarden">
+  <div class="booleanwaarde" *ngFor="let veld of booleanEigenschappen()">
+
+    <div *ngIf="waarde(veld)">
+      <mat-icon class="boolean-icon groen">done</mat-icon>
+      {{ label(veld) }}
+    </div>
+
+    <div *ngIf="!waarde(veld)">
+      <mat-icon class="boolean-icon rood">clear</mat-icon>
+      {{ label(veld) }}
+    </div>
+
+  </div>
+</div>

@@ -53,10 +53,10 @@
 }
 
 .velden {
+  padding-top: 16px;
   display: flex;
   flex-wrap: wrap;
   flex-direction: row;
-  justify-content: flex-start;
 }
 
 .veldnamen {
@@ -81,4 +81,34 @@
   font-size: 14px;
   font-weight: 300;
   color: rgba(0, 0, 0, 0.87);
+}
+
+.booleanwaarden {
+  padding-top: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+}
+
+.booleanwaarde {
+  white-space: nowrap;
+  flex-basis: 50%;
+  line-height: 20px;
+  font-size: 14px;
+  font-weight: 300;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.boolean-icon {
+  line-height: 20px;
+  font-size: 14px;
+  font-weight: 300;
+}
+
+.rood {
+  color: rgba(242, 68, 61, 0.87);
+}
+
+.groen {
+  color: rgba(97, 186, 117, 0.87);
 }

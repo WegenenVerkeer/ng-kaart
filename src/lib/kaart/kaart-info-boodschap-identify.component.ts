@@ -101,6 +101,13 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
       .fold(() => "", pos => pos);
   }
 
+  isBoolean(veld: string): boolean {
+    return this.laag
+      .chain(l => fromNullable(l.getType))
+      .map(getType => getType(veld) === "boolean")
+      .getOrElseValue(false);
+  }
+
   label(veld: string): string {
     return this.laag
       .chain(l => fromNullable(l.getLabel))
@@ -108,12 +115,23 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
       .getOrElseValue(veld);
   }
 
-  zichtbareEigenschappen(): string[] {
+  booleanEigenschappen(): string[] {
+    return this.zichtbareEigenschappen(true);
+  }
+
+  zichtbareEigenschappen(onlyBooleans = false): string[] {
     const teVerbergenProperties = List.of("geometry", "locatie", "ident8", "afstandrijbaan", "zijderijbaan", "breedte");
 
     const properties: Object = this.feature.getProperties()["properties"];
 
-    return Object.keys(properties).filter(key => properties[key] && properties[key] !== "" && !teVerbergenProperties.contains(key));
+    return Object.keys(properties).filter(
+      key =>
+        properties[key] !== undefined &&
+        properties[key] !== null &&
+        properties[key] !== "" &&
+        !teVerbergenProperties.contains(key) &&
+        this.isBoolean(key) === onlyBooleans
+    );
   }
 
   waarde(name: string): string {
