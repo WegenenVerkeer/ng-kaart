@@ -12,11 +12,6 @@ export interface InfoBoodschap {
   readonly verbergMsgGen: () => Option<TypedRecord>;
 }
 
-export interface Groeplagen {
-  readonly laaggroep: ke.Laaggroep;
-  readonly lagen: List<ke.ToegevoegdeLaag>;
-}
-
 export interface GeselecteerdeFeatures {
   readonly geselecteerd: List<ol.Feature>;
   readonly toegevoegd: Option<ol.Feature>;
