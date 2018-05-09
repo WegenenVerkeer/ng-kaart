@@ -10,14 +10,12 @@ import { InfoBoodschap } from "./kaart-with-info-model";
 export type KaartInternalSubMsg =
   | ZoominstellingenGezetMsg
   | AchtergrondtitelGezetMsg
-  | AchtergrondlagenGezetMsg
   | GeometryChangedMsg
   | TekenMsg
   | KaartClickMsg
   | SubscribedMsg
   | MijnLocatieZoomdoelGezetMsg
-  | InfoBoodschappenMsg
-  | VoorgrondlagenGezetMsg;
+  | InfoBoodschappenMsg;
 
 export interface ZoominstellingenGezetMsg {
   readonly type: "ZoominstellingenGezet";
@@ -27,17 +25,6 @@ export interface ZoominstellingenGezetMsg {
 export interface AchtergrondtitelGezetMsg {
   readonly type: "AchtergrondtitelGezet";
   readonly titel: string;
-}
-
-export interface AchtergrondlagenGezetMsg {
-  readonly type: "AchtergrondlagenGezet";
-  readonly achtergrondlagen: List<ToegevoegdeLaag>;
-}
-
-export interface VoorgrondlagenGezetMsg {
-  readonly type: "VoorgrondlagenGezet";
-  readonly groep: Laaggroep;
-  readonly lagen: List<ToegevoegdeLaag>;
 }
 
 export interface GeometryChangedMsg {
@@ -123,12 +110,6 @@ function AchtergrondtitelGezetMsg(titel: string): AchtergrondtitelGezetMsg {
 
 export const achtergrondtitelGezetWrapper = (titel: string) => KaartInternalMsg(some(AchtergrondtitelGezetMsg(titel)));
 
-function AchtergrondlagenGezetMsg(achtergrondlagen: List<ToegevoegdeLaag>): AchtergrondlagenGezetMsg {
-  return { type: "AchtergrondlagenGezet", achtergrondlagen: achtergrondlagen };
-}
-
-export const achtergrondlagenGezetMsgGen = (lagen: List<ToegevoegdeLaag>) => KaartInternalMsg(some(AchtergrondlagenGezetMsg(lagen)));
-
 function GeometryChangedMsg(geometry: ol.geom.Geometry): GeometryChangedMsg {
   return { type: "GeometryChanged", geometry: geometry };
 }
@@ -157,6 +138,3 @@ function MijnLocatieZoomdoelGezetMsg(d: Option<number>): MijnLocatieZoomdoelGeze
 }
 
 export const MijnLocatieZoomdoelGezetWrapper = (d: Option<number>) => KaartInternalMsg(some(MijnLocatieZoomdoelGezetMsg(d)));
-
-export const voorgrondlagenGezetMsgGen = (groep: Laaggroep) => (lagen: List<ToegevoegdeLaag>) =>
-  KaartInternalMsg(some({ type: "VoorgrondlagenGezet" as "VoorgrondlagenGezet", lagen: lagen, groep: groep }));

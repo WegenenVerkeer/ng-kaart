@@ -228,14 +228,13 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function zendLagenInGroep(mdl: Model, groep: ke.Laaggroep): void {
-      mdl.groeplagenSubj.next({
-        laaggroep: groep,
-        lagen: mdl.titelsOpGroep
+      modelChanger.lagenOpGroepSubj.get(groep).next(
+        mdl.titelsOpGroep
           .get(groep)
           .map(titel => mdl.toegevoegdeLagenOpTitel.get(titel!)) // we vertrekken van geldige groepen
           .sortBy(laag => -laag!.layer.getZIndex()) // en dus ook geldige titels
           .toList()
-      });
+      );
     }
 
     function zetLayerIndex(layer: ol.layer.Base, groepIndex: number, groep: ke.Laaggroep): void {
@@ -812,15 +811,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
 
       const subscribeToLagenInGroep = (sub: prt.LagenInGroepSubscription<Msg>) => {
-        // Op het moment van de subscription is het heel goed mogelijk dat de lagen al toegevoegd zijn. Het is daarom dat de
-        // groeplagenSubj een vrij grote replay waarde heeft.
         return modelWithSubscriptionResult(
           "LagenInGroep",
-          model.groeplagenSubj
-            .pipe(
-              filter(groeplagen => groeplagen.laaggroep === sub.groep) //
-            )
-            .subscribe(groeplagen => msgConsumer(sub.wrapper(groeplagen.lagen)))
+          modelChanger.lagenOpGroepSubj
+            .get(sub.groep) // we vertrouwen op de typechecker
+            .subscribe(pipe(sub.wrapper, msgConsumer))
         );
       };
 

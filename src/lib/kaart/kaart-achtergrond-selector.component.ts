@@ -3,18 +3,10 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnInit }
 import { Observable } from "rxjs/Observable";
 import { map, switchMap, takeUntil } from "rxjs/operators";
 
-import { observeOnAngular } from "../util/observe-on-angular";
 import { ofType } from "../util/operators";
 import { KaartChildComponentBase } from "./kaart-child-component-base";
 import { AchtergrondLaag, ToegevoegdeLaag } from "./kaart-elementen";
-import {
-  AchtergrondlagenGezetMsg,
-  achtergrondlagenGezetMsgGen,
-  AchtergrondtitelGezetMsg,
-  achtergrondtitelGezetWrapper,
-  KaartInternalMsg,
-  kaartLogOnlyWrapper
-} from "./kaart-internal-messages";
+import { AchtergrondtitelGezetMsg, achtergrondtitelGezetWrapper, KaartInternalMsg, kaartLogOnlyWrapper } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
 import { KaartComponent } from "./kaart.component";
 
@@ -80,14 +72,7 @@ export class KaartAchtergrondSelectorComponent extends KaartChildComponentBase i
     super(kaartComponent, zone);
 
     this.backgroundTiles$ = this.initialising$.pipe(
-      switchMap(() =>
-        this.internalMessage$.pipe(
-          ofType<AchtergrondlagenGezetMsg>("AchtergrondlagenGezet"),
-          map(a => a.achtergrondlagen.toArray()),
-          observeOnAngular(this.zone),
-          takeUntil(this.destroying$)
-        )
-      )
+      switchMap(() => this.modelChanges.lagenOpGroep$.get("Achtergrond").pipe(map(lgn => lgn.toArray())))
     );
 
     this.initialising$
@@ -107,10 +92,7 @@ export class KaartAchtergrondSelectorComponent extends KaartChildComponentBase i
   }
 
   protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
-    return [
-      prt.LagenInGroepSubscription("Achtergrond", achtergrondlagenGezetMsgGen), //
-      prt.AchtergrondTitelSubscription(achtergrondtitelGezetWrapper)
-    ];
+    return [prt.AchtergrondTitelSubscription(achtergrondtitelGezetWrapper)];
   }
 
   kies(laag: AchtergrondLaag): void {
