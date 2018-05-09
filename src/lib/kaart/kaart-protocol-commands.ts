@@ -81,20 +81,20 @@ export interface VoegLaagToeCmd<Msg extends KaartMsg> {
   readonly laag: ke.Laag;
   readonly magGetoondWorden: boolean;
   readonly laaggroep: ke.Laaggroep;
-  readonly wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>;
+  readonly wrapper: BareValidationWrapper<Msg>;
 }
 
 export interface VerwijderLaagCmd<Msg extends KaartMsg> {
   readonly type: "VerwijderLaag";
   readonly titel: string;
-  readonly wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>;
+  readonly wrapper: BareValidationWrapper<Msg>;
 }
 
 export interface VerplaatsLaagCmd<Msg extends KaartMsg> {
   readonly type: "VerplaatsLaag";
   readonly titel: string;
   readonly naarPositie: number;
-  readonly wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>;
+  readonly wrapper: BareValidationWrapper<Msg>;
 }
 
 export interface VoegSchaalToeCmd<Msg extends KaartMsg> {
@@ -320,22 +320,19 @@ export function VoegLaagToeCmd<Msg extends KaartMsg>(
   laag: ke.Laag,
   magGetoondWorden: boolean,
   laagGroep: ke.Laaggroep,
-  wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>
+  wrapper: BareValidationWrapper<Msg>
 ): VoegLaagToeCmd<Msg> {
   return { type: "VoegLaagToe", positie: positie, laag: laag, magGetoondWorden: magGetoondWorden, laaggroep: laagGroep, wrapper: wrapper };
 }
 
-export function VerwijderLaagCmd<Msg extends KaartMsg>(
-  titel: string,
-  wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>
-): VerwijderLaagCmd<Msg> {
+export function VerwijderLaagCmd<Msg extends KaartMsg>(titel: string, wrapper: BareValidationWrapper<Msg>): VerwijderLaagCmd<Msg> {
   return { type: "VerwijderLaag", titel: titel, wrapper: wrapper };
 }
 
 export function VerplaatsLaagCmd<Msg extends KaartMsg>(
   titel: string,
   naarPositie: number,
-  wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>
+  wrapper: BareValidationWrapper<Msg>
 ): VerplaatsLaagCmd<Msg> {
   return { type: "VerplaatsLaag", titel: titel, naarPositie: naarPositie, wrapper: wrapper };
 }

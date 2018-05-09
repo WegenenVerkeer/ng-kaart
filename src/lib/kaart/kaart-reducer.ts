@@ -157,9 +157,9 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     /**
      * Alle lagen in een gegeven bereik van z-indices aanpassen. Belangrijk om bij toevoegen, verwijderen en verplaatsen,
-     * alle z-indices in een aangesloten interval te behouden.
+     * alle z-indices in een aaneengesloten interval te behouden.
      */
-    function pasZIndicesAan(aanpassing: number, vanaf: number, tot: number, groep: ke.Laaggroep): List<PositieAanpassing> {
+    function pasZIndicesAan2(aanpassing: number, vanaf: number, tot: number, groep: ke.Laaggroep): List<PositieAanpassing> {
       return model.toegevoegdeLagenOpTitel.reduce((updates, laag, titel) => {
         if (layerNaarLaaggroep(<ol.layer.Base>laag!.layer) === groep) {
           const groepPositie = layerIndexNaarGroepIndex(laag!.layer, groep);
@@ -174,6 +174,45 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return updates!;
         }
       }, List<prt.PositieAanpassing>());
+    }
+
+    const pasLaagPositieAan: (aanpassing: number) => (laag: ke.ToegevoegdeLaag) => ke.ToegevoegdeLaag = positieAanpassing => laag => {
+      const positie = laag.positieInGroep + positieAanpassing;
+      zetLayerIndex(laag.layer, positie, laag.laaggroep);
+      return { ...laag, positieInGroep: positie };
+    };
+
+    const pasVectorLaagPositieAan: (
+      aanpassing: number
+    ) => (laag: ke.ToegevoegdeVectorLaag) => ke.ToegevoegdeVectorLaag = positieAanpassing => laag => {
+      laag.layer.setStyle(laag.stijl);
+      // TODO ook de selectiestijl aanpassen
+      return { ...laag, stijlPositie: laag.stijlPositie + positieAanpassing };
+    };
+
+    function pasLaagPositiesAan(
+      positieAanpassing: number,
+      impactOpStijlPositie: boolean,
+      vanaf: number,
+      tot: number,
+      groep: ke.Laaggroep
+    ): Model {
+      return lagenInGroep(model, groep).reduce((mdl, laag) => {
+        const groepPositie = layerIndexNaarGroepIndex(laag!.layer, groep);
+        if (groepPositie >= vanaf && groepPositie <= tot && positieAanpassing !== 0) {
+          const positie = groepPositie + positieAanpassing;
+          if (ke.isToegevoegdeVectorLaag(laag!)) {
+            // Bij de vectorlagen moeten we ook de (mogelijk aanwezige) stylefuncties aanpassen
+            return pipe(pasVectorLaagPositieAan(positieAanpassing), pasLaagPositieAan(positieAanpassing), pasLaagInModelAan(mdl!))(
+              laag! as ke.ToegevoegdeVectorLaag
+            );
+          } else {
+            return pipe(pasLaagPositieAan(positieAanpassing), pasLaagInModelAan(mdl!))(laag!);
+          }
+        } else {
+          return mdl!;
+        }
+      }, model);
     }
 
     function groepIndexNaarZIndex(index: number, groep: ke.Laaggroep): number {
@@ -227,11 +266,16 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
     }
 
+    function lagenInGroep(mdl: Model, groep: ke.Laaggroep): List<ke.ToegevoegdeLaag> {
+      return mdl.titelsOpGroep
+        .get(groep) // we vertrekken van geldige groepen
+        .map(titel => mdl.toegevoegdeLagenOpTitel.get(titel!)) // dus hebben we geldige titels
+        .toList();
+    }
+
     function zendLagenInGroep(mdl: Model, groep: ke.Laaggroep): void {
       modelChanger.lagenOpGroepSubj.get(groep).next(
-        mdl.titelsOpGroep
-          .get(groep)
-          .map(titel => mdl.toegevoegdeLagenOpTitel.get(titel!)) // we vertrekken van geldige groepen
+        lagenInGroep(mdl, groep)
           .sortBy(laag => -laag!.layer.getZIndex()) // en dus ook geldige titels
           .toList()
       );
@@ -250,6 +294,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
      * Een laag toevoegen. Faalt als er al een laag met die titel bestaat.
      */
     function voegLaagToeCmd(cmnd: prt.VoegLaagToeCmd<Msg>): ModelWithResult<Msg> {
+      function vectorLaagPositie(groepPositie: number, groep: ke.Laaggroep): number {
+        return lagenInGroep(model, groep).count(tlg => ke.isVectorLaag(tlg!.bron) && tlg!.positieInGroep < groepPositie);
+      }
+
       return toModelWithValueResult(
         cmnd.wrapper,
         valideerLaagTitelBestaatNiet(cmnd.laag.titel)
@@ -258,8 +306,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             const titel = cmnd.laag.titel;
             const groep = cmnd.laaggroep;
             const groepPositie = limitPosition(cmnd.positie, groep);
-            const movedLayers = pasZIndicesAan(1, groepPositie, maxIndexInGroep(groep), groep);
-            const toegevoegdeLaag: ke.ToegevoegdeLaag = {
+            const modelMetAangepasteLagen = pasLaagPositiesAan(1, ke.isVectorLaag(cmnd.laag), groepPositie, maxIndexInGroep(groep), groep);
+            const toegevoegdeLaagCommon: ke.ToegevoegdeLaag = {
               bron: cmnd.laag,
               layer: layer,
               titel: cmnd.laag.titel,
@@ -267,18 +315,27 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               positieInGroep: groepPositie,
               magGetoondWorden: cmnd.magGetoondWorden
             };
+            const toegevoegdeLaag = ke.isVectorLaag(cmnd.laag)
+              ? {
+                  ...toegevoegdeLaagCommon,
+                  stijlPositie: vectorLaagPositie(groepPositie, groep),
+                  stijl: getDefaultStyle()
+                }
+              : toegevoegdeLaagCommon;
             layer.set("titel", titel);
             layer.setVisible(cmnd.magGetoondWorden); // achtergrondlagen expliciet zichtbaar maken!
+            // met positie hoeven we nog geen rekening te houden
+            forEach(ke.asToegevoegdeVectorLaag(toegevoegdeLaag), lg => lg.layer.setStyle(lg.stijl));
             zetLayerIndex(layer, groepPositie, groep);
             model.map.addLayer(layer);
             const updatedModel = {
-              ...model,
-              toegevoegdeLagenOpTitel: model.toegevoegdeLagenOpTitel.set(titel, toegevoegdeLaag),
-              titelsOpGroep: model.titelsOpGroep.set(groep, model.titelsOpGroep.get(groep).push(titel)),
-              groepOpTitel: model.groepOpTitel.set(titel, groep)
+              ...modelMetAangepasteLagen,
+              toegevoegdeLagenOpTitel: modelMetAangepasteLagen.toegevoegdeLagenOpTitel.set(titel, toegevoegdeLaag),
+              titelsOpGroep: modelMetAangepasteLagen.titelsOpGroep.set(groep, model.titelsOpGroep.get(groep).push(titel)),
+              groepOpTitel: modelMetAangepasteLagen.groepOpTitel.set(titel, groep)
             };
             zendLagenInGroep(updatedModel, cmnd.laaggroep);
-            return ModelAndValue(updatedModel, movedLayers.push({ titel: titel, positie: groepPositie }));
+            return ModelAndEmptyResult(updatedModel);
           })
       );
     }
@@ -293,8 +350,14 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           const layer = laag.layer;
           model.map.removeLayer(layer); // Oesje. Side-effect. Gelukkig idempotent.
           const titel = cmnd.titel;
-          const groep = model.groepOpTitel.get(titel);
-          const movedLayers = pasZIndicesAan(-1, layerIndexNaarGroepIndex(layer, groep) + 1, maxIndexInGroep(groep), groep);
+          const groep = laag.laaggroep;
+          const modelMetAangepasteLagen = pasLaagPositiesAan(
+            -1,
+            ke.isToegevoegdeVectorLaag(laag),
+            layerIndexNaarGroepIndex(layer, groep) + 1,
+            maxIndexInGroep(groep),
+            groep
+          );
           const updatedModel = {
             ...model,
             toegevoegdeLagenOpTitel: model.toegevoegdeLagenOpTitel.delete(titel),
@@ -308,7 +371,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             groepOpTitel: model.groepOpTitel.delete(titel)
           };
           zendLagenInGroep(updatedModel, groep);
-          return ModelAndValue(updatedModel, movedLayers); // De verwijderde laag zelf wordt niet teruggegeven
+          return ModelAndEmptyResult(updatedModel);
         })
       );
     }
@@ -321,27 +384,18 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           .map(laag => {
             const titel = cmnd.titel;
             const groep = model.groepOpTitel.get(titel);
+            const isVectorLaag = ke.isToegevoegdeVectorLaag(laag);
             const vanPositie = layerIndexNaarGroepIndex(laag.layer, groep);
             const naarPositie = limitPosition(cmnd.naarPositie, groep); // uitgedrukt in z-index waarden
             // Afhankelijk of we van onder naar boven of van boven naar onder verschuiven, moeten de tussenliggende lagen
             // naar onder, resp. naar boven verschoven worden.
-            const verplaatsteTitels = (vanPositie < naarPositie
-              ? pasZIndicesAan(-1, vanPositie + 1, naarPositie, groep)
-              : pasZIndicesAan(1, naarPositie, vanPositie - 1, groep)
-            ).push({ titel: cmnd.titel, positie: naarPositie }); // De geïmpacteerde lagen + de verplaatste laag
-            zetLayerIndex(laag.layer, naarPositie, groep);
-            const updatedToegevoegdeLagenOpTitel = verplaatsteTitels.reduce(
-              (lagen, laagPos) =>
-                lagen!.set(laagPos!.titel, {
-                  // We veranderen niks aan de keys, dus kunnen we vertrouwen op get
-                  ...lagen!.get(laagPos!.titel),
-                  positieInGroep: laagPos!.positie
-                }),
-              model.toegevoegdeLagenOpTitel
-            );
-            const updatedModel = { ...model, toegevoegdeLagenOpTitel: updatedToegevoegdeLagenOpTitel };
+            const modelMetAangepasteLagen =
+              vanPositie < naarPositie
+                ? pasLaagPositiesAan(-1, isVectorLaag, vanPositie + 1, naarPositie, groep)
+                : pasLaagPositiesAan(1, isVectorLaag, naarPositie, vanPositie - 1, groep);
+            const updatedModel = pipe(pasLaagPositieAan(naarPositie - vanPositie), pasLaagInModelAan(modelMetAangepasteLagen))(laag);
             zendLagenInGroep(updatedModel, groep);
-            return ModelAndValue(updatedModel, verplaatsteTitels);
+            return ModelAndEmptyResult(updatedModel);
           })
       );
     }
@@ -662,6 +716,9 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         cmnd.wrapper,
         valideerVectorLayerBestaat(cmnd.titel).map(vectorlayer => {
+          // TODO Maak gebruik gebruik van een nieuwe functie in de trend van pasVectorLaagPositieAan en verhuis de volgende lijnen
+          // naar daar. Zorg er bovendien voor dat de stijlen gecached wordt en dat de gecachte stijlen in pasVectorLaagPositieAan
+          // gebruikt worden
           vectorlayer.setStyle(determineStyle(some(cmnd.stijl), getDefaultStyle()));
           setStyleSelector(model, cmnd.titel, cmnd.stijl);
           cmnd.selectieStijl.map(selectieStijl => setSelectionStyleSelector(model, cmnd.titel, selectieStijl));

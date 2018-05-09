@@ -1,4 +1,4 @@
-import { none, Option, some } from "fp-ts/lib/Option";
+import { none, Option, some, fromPredicate } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 
@@ -116,13 +116,19 @@ export interface ToegevoegdeLaag {
   readonly magGetoondWorden: boolean;
 }
 
-export function isWmsLaag(laag: Laag): boolean {
-  return laag.type === SingleTileWmsType || laag.type === TiledWmsType;
+export interface ToegevoegdeVectorLaag extends ToegevoegdeLaag {
+  readonly bron: VectorLaag;
+  readonly layer: ol.layer.Vector;
+  readonly stijlPositie: number; // We gaan er van uit dat alle vectorlagen in dezelfde groep zitten!
+  readonly stijl: Stylish; // cache van determineStyle
 }
 
-export function isBlancoLaag(laag: Laag): boolean {
-  return laag.type === BlancoType;
-}
+export const isWmsLaag: (laag: Laag) => boolean = laag => laag.type === SingleTileWmsType || laag.type === TiledWmsType;
+export const isBlancoLaag: (laag: Laag) => boolean = laag => laag.type === BlancoType;
+export const isVectorLaag: (laag: Laag) => boolean = laag => laag.type === VectorType;
+export const isToegevoegdeVectorLaag: (laag: ToegevoegdeLaag) => boolean = laag => isVectorLaag(laag.bron);
+export const asToegevoegdeVectorLaag: (laag: ToegevoegdeLaag) => Option<ToegevoegdeVectorLaag> = laag =>
+  fromPredicate<ToegevoegdeLaag>(lg => isVectorLaag(lg.bron))(laag) as Option<ToegevoegdeVectorLaag>;
 
 export type Stylish = ol.StyleFunction | ol.style.Style | ol.style.Style[];
 
