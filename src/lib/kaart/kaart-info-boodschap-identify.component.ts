@@ -17,6 +17,12 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   @Input() feature: ol.Feature;
   @Input() laag: Option<VectorLaag>;
 
+  teVerbergenProperties = List.of("geometry", "locatie", "ident8", "afstandrijbaan", "zijderijbaan", "breedte");
+
+  properties = () => this.feature.getProperties()["properties"];
+
+  hasValue = value => value !== undefined && value !== null;
+
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
   }
@@ -30,11 +36,11 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   }
 
   lengte(): Option<number> {
-    return fromNullable(this.waarde("locatie")["lengte"]).map(Math.round);
+    return fromNullable(this.waarde("locatie.lengte")).map(Math.round);
   }
 
   breedte(): Option<string> {
-    return fromNullable(this.waarde("breedte"));
+    return fromNullable(this.waarde("breedte").toString());
   }
 
   dimensies(): string {
@@ -55,50 +61,43 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
       case "O":
         return "Op";
       default:
-        return this.waarde("zijderijbaan");
+        return this.waarde("zijderijbaan").toString();
     }
   }
 
+  private pos(beginOfEind: string): string {
+    return fromNullable(this.waarde(`locatie.${beginOfEind}.positie`))
+      .filter(positie => typeof positie === "number")
+      .map(positie => `${Math.round((positie as number) * 10) / 10}`)
+      .fold(() => "", pos => pos);
+  }
+
   van(): string {
-    return fromNullable(this.waarde("locatie"))
-      .chain(loc => fromNullable(loc["begin"]))
-      .map(beginLocatie => `${Math.round(beginLocatie["positie"] * 10) / 10}`)
+    return this.pos("begin");
+  }
+
+  tot(): string {
+    return this.pos("eind");
+  }
+
+  private afstand(beginOfEind: string): string {
+    return fromNullable(this.waarde(`locatie.${beginOfEind}.afstand`))
+      .map(afstand => {
+        if (afstand >= 0) {
+          return `+${afstand}`;
+        } else {
+          return `${afstand}`;
+        }
+      })
       .fold(() => "", pos => pos);
   }
 
   vanAfstand(): string {
-    return fromNullable(this.waarde("locatie"))
-      .chain(loc => fromNullable(loc["begin"]))
-      .map(beginLocatie => beginLocatie["afstand"])
-      .map(afstand => {
-        if (afstand >= 0) {
-          return `+${afstand}`;
-        } else {
-          return `${afstand}`;
-        }
-      })
-      .fold(() => "", pos => pos);
-  }
-
-  tot(): string {
-    return fromNullable(this.waarde("locatie"))
-      .chain(loc => fromNullable(loc["eind"]))
-      .map(eindLocatie => `${Math.round(eindLocatie["positie"] * 10) / 10}`)
-      .fold(() => "", pos => pos);
+    return this.afstand("begin");
   }
 
   totAfstand(): string {
-    return fromNullable(this.waarde("locatie"))
-      .chain(loc => fromNullable(loc["eind"]))
-      .map(beginLocatie => beginLocatie["afstand"])
-      .map(afstand => {
-        if (afstand >= 0) {
-          return `+${afstand}`;
-        } else {
-          return `${afstand}`;
-        }
-      })
-      .fold(() => "", pos => pos);
+    return this.afstand("eind");
   }
 
   isBoolean(veld: string): boolean {
@@ -115,26 +114,31 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
       .getOrElseValue(veld);
   }
 
-  booleanEigenschappen(): string[] {
-    return this.zichtbareEigenschappen(true);
+  zichtbareEigenschappen(): string[] {
+    return this.eigenschappen(key => !this.isBoolean(key));
   }
 
-  zichtbareEigenschappen(onlyBooleans = false): string[] {
-    const teVerbergenProperties = List.of("geometry", "locatie", "ident8", "afstandrijbaan", "zijderijbaan", "breedte");
+  booleanEigenschappen(): string[] {
+    return this.eigenschappen(key => this.isBoolean(key));
+  }
 
-    const properties: Object = this.feature.getProperties()["properties"];
+  waarde(name: string): Object {
+    return this.nestedProperty(name, this.properties());
+  }
 
-    return Object.keys(properties).filter(
+  private eigenschappen(filter: (string) => boolean): string[] {
+    return Object.keys(this.properties()).filter(
       key =>
-        properties[key] !== undefined &&
-        properties[key] !== null &&
-        properties[key] !== "" &&
-        !teVerbergenProperties.contains(key) &&
-        this.isBoolean(key) === onlyBooleans
+        this.hasValue(this.nestedProperty(key, this.properties())) &&
+        this.properties()[key] !== "" &&
+        !this.teVerbergenProperties.contains(key) &&
+        filter(key)
     );
   }
 
-  waarde(name: string): string {
-    return this.feature.getProperties()["properties"][name];
+  private nestedProperty(propertyKey: string, object: Object): Object {
+    return this.hasValue(propertyKey)
+      ? propertyKey.split(".").reduce((obj, key) => (this.hasValue(obj) && this.hasValue(obj[key]) ? obj[key] : null), object)
+      : null;
   }
 }

@@ -78,6 +78,8 @@ export interface WmtsLaag {
   readonly maxZoom: number;
 }
 
+export type VectorVeldType = "string" | "integer" | "double" | "geometry" | "date" | "boolean" | "json";
+
 export interface VectorLaag {
   readonly type: VectorType;
   readonly titel: string;
@@ -89,7 +91,7 @@ export interface VectorLaag {
 
   getLabel?: (veld: string) => string;
   isBasisInfo?: (veld: string) => boolean;
-  getType?: (veld: string) => "string" | "integer" | "double" | "geometry" | "date" | "boolean" | "json";
+  getType?: (veld: string) => VectorVeldType;
 }
 
 export interface BlancoLaag {
