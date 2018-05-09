@@ -44,7 +44,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   }
 
   breedte(): Option<string> {
-    return fromNullable(this.waarde("breedte")).map(toString);
+    return fromNullable(this.waarde("breedte")).map(b => b.toString());
   }
 
   heeftDimensies() {
