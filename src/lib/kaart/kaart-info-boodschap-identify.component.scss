@@ -61,12 +61,14 @@
 
 .veldnamen {
   order: 1;
-  flex-basis: 33%;
+  flex-basis: 40%;
+  max-width: 40%;
 }
 
 .veldwaarden {
   order: 2;
-  flex-basis: 67%;
+  flex-basis: 60%;
+  max-width: 60%;
 }
 
 .veldnaam {
@@ -93,6 +95,7 @@
 .booleanwaarde {
   white-space: nowrap;
   flex-basis: 50%;
+  max-width: 50%;
   line-height: 20px;
   font-size: 14px;
   font-weight: 300;
