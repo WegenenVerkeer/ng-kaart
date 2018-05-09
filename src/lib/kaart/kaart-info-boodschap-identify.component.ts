@@ -21,7 +21,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
 
   properties = () => this.feature.getProperties()["properties"];
 
-  hasValue = value => value !== undefined && value !== null;
+  heeftWaarde = value => value !== undefined && value !== null;
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
@@ -35,12 +35,20 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
     super.ngOnInit();
   }
 
+  heeft(key: string) {
+    return this.heeftWaarde(this.waarde(key));
+  }
+
   lengte(): Option<number> {
     return fromNullable(this.waarde("locatie.lengte")).map(Math.round);
   }
 
   breedte(): Option<string> {
     return fromNullable(this.waarde("breedte")).map(toString);
+  }
+
+  heeftDimensies() {
+    return this.lengte().isSome() && this.breedte().isSome();
   }
 
   dimensies(): string {
@@ -65,11 +73,29 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
     }
   }
 
+  heeftVanTot(): boolean {
+    return this.heeftWaarde(this.waarde("locatie.begin.positie")) && this.heeftWaarde(this.waarde("locatie.eind.positie"));
+  }
+
+  private verpl(): string {
+    return fromNullable(this.waarde("verpl"))
+      .map(this.signed)
+      .fold(() => "", pos => pos);
+  }
+
   private pos(beginOfEind: string): string {
     return fromNullable(this.waarde(`locatie.${beginOfEind}.positie`))
       .filter(positie => typeof positie === "number")
       .map(positie => `${Math.round((positie as number) * 10) / 10}`)
       .fold(() => "", pos => pos);
+  }
+
+  signed(value: number): string {
+    if (value >= 0) {
+      return `+${value}`;
+    } else {
+      return `${value}`;
+    }
   }
 
   van(): string {
@@ -82,13 +108,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
 
   private afstand(beginOfEind: string): string {
     return fromNullable(this.waarde(`locatie.${beginOfEind}.afstand`))
-      .map(afstand => {
-        if (afstand >= 0) {
-          return `+${afstand}`;
-        } else {
-          return `${afstand}`;
-        }
-      })
+      .map(this.signed)
       .fold(() => "", pos => pos);
   }
 
@@ -129,7 +149,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   private eigenschappen(filter: (string) => boolean): string[] {
     return Object.keys(this.properties()).filter(
       key =>
-        this.hasValue(this.nestedProperty(key, this.properties())) &&
+        this.heeftWaarde(this.nestedProperty(key, this.properties())) &&
         this.properties()[key] !== "" &&
         !this.teVerbergenProperties.contains(key) &&
         filter(key)
@@ -137,8 +157,8 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   }
 
   private nestedProperty(propertyKey: string, object: Object): Object {
-    return this.hasValue(propertyKey)
-      ? propertyKey.split(".").reduce((obj, key) => (this.hasValue(obj) && this.hasValue(obj[key]) ? obj[key] : null), object)
+    return this.heeftWaarde(propertyKey)
+      ? propertyKey.split(".").reduce((obj, key) => (this.heeftWaarde(obj) && this.heeftWaarde(obj[key]) ? obj[key] : null), object)
       : null;
   }
 }
