@@ -3,21 +3,24 @@ import { Pipe, PipeTransform } from "@angular/core";
 @Pipe({ name: "highlight" })
 export class ZoekerHighlightPipe implements PipeTransform {
   transform(text: string, search): string {
-    let result: string;
+    // We moeten heel de lijn in een span zetten.
+    const span = res => `<span class="awv-zoeker-highlighter">${res}</span>`;
+
+    // De value van de control (search) kan ook een object zijn, dan doen we de highlighting niet.
+    // Enkel wanneer search een string is, gaan we highlighting doen.
     if (search && typeof search === "string" && text) {
-      let pattern = search.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
-      pattern = pattern
+      // We splitsen onze zoekterm op spaties en gebruiken ieder stukje om te matchen.
+      const pattern = search
+        .replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&")
         .split(" ")
-        .filter(t => {
-          return t.length > 0;
-        })
+        .filter(t => t.length > 0)
         .join("|");
       const regex = new RegExp(pattern, "gi");
 
-      result = text.replace(regex, match => `<span class="awv-zoeker-highlight">${match}</span>`);
+      // Iedere match wordt nog eens in een andere span gezet.
+      return span(text.replace(regex, match => `<span class="awv-zoeker-highlight">${match}</span>`));
     } else {
-      result = text;
+      return span(text);
     }
-    return `<span class="awv-zoeker-highlighter">${result}</span>`;
   }
 }

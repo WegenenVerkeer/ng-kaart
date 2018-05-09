@@ -40,11 +40,8 @@ export class ZoekerCoordinator {
   zoek(input: string, zoekers: Set<string>) {
     // Annuleer bestaande zoekOpdrachten.
     this.zoekerSubscriptions.forEach((subscription, zoekerNaam) => this.unsubscribeZoeker(subscription!, zoekerNaam!));
-    // Stuur zoek comando naar alle geregistreerde zoekers
-    let gekozenZoekers = this.zoekers;
-    if (!zoekers.isEmpty()) {
-      gekozenZoekers = this.zoekers.filter(zoeker => zoekers.contains(zoeker.naam()));
-    }
+    // Stuur zoek comando naar alle geregistreerde zoekers of enkel naar de gespecifieerde.
+    const gekozenZoekers = zoekers.isEmpty() ? this.zoekers : this.zoekers.filter(zoeker => zoekers.contains(zoeker.naam()));
     this.zoekerSubscriptions = gekozenZoekers.reduce(
       (subscriptions, zoeker) =>
         subscriptions.set(
