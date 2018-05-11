@@ -22,7 +22,11 @@ import { KaartMijnLocatieComponent } from "./kaart-mijn-locatie.component";
 import { KaartNosqlfsLaagComponent } from "./kaart-nosqlfs-laag.component";
 import { KaartOpenStreetViewComponent } from "./kaart-open-street-view.component";
 import { KaartOrthoLaagComponent } from "./kaart-ortho-laag.component";
+import { KaartCopyrightComponent } from "./kaart-copyright.component";
+import { KaartOpenLayersStyleComponent } from "./kaart-openlayers.component";
 import { KaartSchaalComponent } from "./kaart-schaal.component";
+import { KaartVoorwaardenComponent } from "./kaart-voorwaarden.component";
+import { KaartVoorwaardenBoxComponent } from "./kaart-voorwaarden-box.component";
 import { KaartStandaardInteractiesComponent } from "./kaart-standaard-interacties.component";
 import { KaartStandaardKnoppenComponent } from "./kaart-standaard-knoppen.component";
 import { KaartTekenLaagComponent } from "./kaart-teken-laag.component";
@@ -54,6 +58,11 @@ const components: any[] = [
   KaartFeaturesLaagComponent,
   KaartVectorLaagComponent,
   KaartNosqlfsLaagComponent,
+  KaartCopyrightComponent,
+  KaartOpenLayersStyleComponent,
+  KaartSchaalComponent,
+  KaartVoorwaardenComponent,
+  KaartVoorwaardenBoxComponent,
   KaartTilecacheLaagComponent,
   KaartGeoserverLaagComponent,
   KaartWmsLaagComponent,
@@ -130,6 +139,11 @@ export class KaartModule {
 export * from "./coordinaten.service";
 export * from "./kaart-classic.component";
 export * from "./kaart-component-base";
+export * from "./kaart-copyright.component";
+export * from "./kaart-openlayers.component";
+export * from "./kaart-schaal.component";
+export * from "./kaart-voorwaarden.component";
+export * from "./kaart-voorwaarden-box.component";
 export * from "./kaart-knop-achtergrondlaag-kiezer.component";
 export * from "./kaart-knop-volledig-scherm.component";
 export * from "./kaart-knop-zoom-slider.component";

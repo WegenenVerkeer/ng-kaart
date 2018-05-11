@@ -27,7 +27,7 @@ export class AppComponent {
 
   private readonly zichtbaarheid = {
     orthomap: false,
-    lagenkiezer: true // standard falsey
+    metenVoorbeeld: true // standard falsey
   };
 
   private readonly fietspadStijlDef: AWV0StyleFunctionDescription = {

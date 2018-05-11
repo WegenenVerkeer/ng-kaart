@@ -346,11 +346,21 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
+    function vraagSchaalAan(cmnd: prt.VraagSchaalAanCmd<Msg>): ModelWithResult<Msg> {
+      modelChanger.uiElementOptiesSubj.next({ naam: "Schaal" });
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        fromPredicate(model.schaal, isNone, "De schaal is al toegevoegd").map(() => ModelAndEmptyResult({ ...model }))
+      );
+    }
+
     function voegSchaalToeCmd(cmnd: prt.VoegSchaalToeCmd<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
         fromPredicate(model.schaal, isNone, "De schaal is al toegevoegd").map(() => {
-          const schaal = new ol.control.ScaleLine();
+          const schaal = cmnd.target
+            .map(t => new ol.control.ScaleLine({ className: "awv-schaal", target: t }))
+            .getOrElseValue(new ol.control.ScaleLine({ className: "awv-schaal" }));
           model.map.addControl(schaal);
           return ModelAndEmptyResult({ ...model, schaal: some(schaal) });
         })
@@ -896,6 +906,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return verwijderLaagCmd(cmd);
       case "VerplaatsLaag":
         return verplaatsLaagCmd(cmd);
+      case "VraagSchaalAan":
+        return vraagSchaalAan(cmd);
       case "VoegSchaalToe":
         return voegSchaalToeCmd(cmd);
       case "VerwijderSchaal":
