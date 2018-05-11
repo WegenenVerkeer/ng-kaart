@@ -1,7 +1,5 @@
-import { Component, Input, NgZone, OnInit } from "@angular/core";
+import { Component, Input, NgZone } from "@angular/core";
 import { KaartChildComponentBase } from "./kaart-child-component-base";
-import { KaartInternalMsg } from "./kaart-internal-messages";
-import * as prt from "./kaart-protocol";
 import { KaartComponent } from "./kaart.component";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import { animate, state, style, transition, trigger } from "@angular/animations";
@@ -19,19 +17,11 @@ import { SluitInfoBoodschapCmd } from "./kaart-protocol-commands";
     ])
   ]
 })
-export class KaartInfoBoodschapComponent extends KaartChildComponentBase implements OnInit {
+export class KaartInfoBoodschapComponent extends KaartChildComponentBase {
   @Input() boodschap: InfoBoodschap;
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
-  }
-
-  protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
-    return [];
-  }
-
-  ngOnInit(): void {
-    super.ngOnInit();
   }
 
   sluit(): void {
