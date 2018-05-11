@@ -38,7 +38,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   }
 
   heeftDimensies() {
-    return this.lengte().isSome() && this.breedte().isSome();
+    return this.lengte().isSome() || this.breedte().isSome();
   }
 
   dimensies(): string {
