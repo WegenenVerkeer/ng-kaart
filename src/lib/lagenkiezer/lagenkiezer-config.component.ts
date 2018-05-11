@@ -2,6 +2,7 @@ import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from "@
 
 import { KaartClassicComponent } from "../kaart/kaart-classic.component";
 import { UiElementOpties, VerwijderUiElement, VoegUiElementToe, ZetUiElementOpties } from "../kaart/kaart-protocol-commands";
+
 import { LagenUiSelector } from "./lagenkiezer.component";
 
 @Component({

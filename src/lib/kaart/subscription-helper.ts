@@ -4,6 +4,7 @@ import { Operator } from "rxjs/Operator";
 import { filter, take } from "rxjs/operators";
 
 import { ofType } from "../util/operators";
+
 import { KaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { KaartInternalMsg, KaartInternalSubMsg, SubscribedMsg, subscribedWrapper } from "./kaart-internal-messages";
 import {

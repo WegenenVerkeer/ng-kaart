@@ -4,14 +4,15 @@ import { FormControl } from "@angular/forms";
 import { List, Set } from "immutable";
 import { UnaryFunction } from "rxjs/interfaces";
 import { Observable } from "rxjs/Observable";
-import { combineLatest, distinctUntilChanged, filter, map, startWith, switchMap, shareReplay } from "rxjs/operators";
+import { combineLatest, distinctUntilChanged, filter, map, shareReplay, startWith, switchMap } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
+import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
 import { kaartLogger } from "../kaart/log";
+
 import { Afdeling, Gemeente, PerceelNummer, PerceelZoekerService, Sectie } from "./perceel-zoeker.service";
-import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import { ZoekerComponent } from "./zoeker.component";
 
 function isNotNullObject(object) {

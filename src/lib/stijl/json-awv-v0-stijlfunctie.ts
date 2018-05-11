@@ -1,25 +1,26 @@
+import * as array from "fp-ts/lib/Array";
+import { monoidString } from "fp-ts/lib/Monoid";
+import * as option from "fp-ts/lib/Option";
+import { none, Option, some } from "fp-ts/lib/Option";
+import * as ol from "openlayers";
+
 import { shortcutOrFullStyle } from "./json-awv-v0-stijl";
 import * as oi from "./json-object-interpreting";
-import { fail, ok, Interpreter, Validation } from "./json-object-interpreting";
+import { fail, Interpreter, ok, Validation } from "./json-object-interpreting";
 import {
-  EnvironmentExtraction,
-  PropertyExtraction,
-  Exists,
+  Between,
   Combination,
   Comparison,
-  Literal,
-  Between,
   ComparisonOperator,
+  EnvironmentExtraction,
+  Exists,
   Expression,
+  Literal,
+  Negation,
+  PropertyExtraction,
   TypeType,
-  ValueType,
-  Negation
+  ValueType
 } from "./stijl-function-types";
-import { monoidString } from "fp-ts/lib/Monoid";
-import * as ol from "openlayers";
-import * as option from "fp-ts/lib/Option";
-import * as array from "fp-ts/lib/Array";
-import { none, some, Option } from "fp-ts/lib/Option";
 
 ////////////////
 // Private types

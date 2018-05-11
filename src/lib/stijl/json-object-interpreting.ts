@@ -1,8 +1,9 @@
-import { Option, none, some, fromNullable } from "fp-ts/lib/Option";
-import { monoidString } from "fp-ts/lib/Monoid";
 import * as array from "fp-ts/lib/Array";
-import * as validation from "fp-ts/lib/Validation";
+import { monoidString } from "fp-ts/lib/Monoid";
+import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import * as traversable from "fp-ts/lib/Traversable";
+import * as validation from "fp-ts/lib/Validation";
+
 import { kaartLogger } from "../kaart/log";
 
 export type Error = string;

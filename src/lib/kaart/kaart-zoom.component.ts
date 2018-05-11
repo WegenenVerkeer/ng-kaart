@@ -3,6 +3,7 @@ import { Observable } from "rxjs/Observable";
 import { map } from "rxjs/operators";
 
 import { ofType } from "../util/operators";
+
 import { KaartChildComponentBase } from "./kaart-child-component-base";
 import { KaartInternalMsg, kaartLogOnlyWrapper, ZoominstellingenGezetMsg, zoominstellingenGezetWrapper } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";

@@ -1,7 +1,7 @@
 import * as ol from "openlayers";
 
-import { Validation } from "./json-object-interpreting";
 import { shortcutOrFullStyle } from "./json-awv-v0-stijl";
+import { Validation } from "./json-object-interpreting";
 
 import * as oi from "./json-object-interpreting";
 

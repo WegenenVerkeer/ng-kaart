@@ -1,15 +1,16 @@
-import { Component, ChangeDetectorRef, ElementRef, NgZone, OnInit, ViewChild, OnDestroy, AfterViewInit } from "@angular/core";
+import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild } from "@angular/core";
 import * as option from "fp-ts/lib/Option";
 import { Observable } from "rxjs/Observable";
 import { combineLatest, filter, map, shareReplay, startWith } from "rxjs/operators";
 
 import { ofType } from "../util/operators";
+
 import { KaartChildComponentBase } from "./kaart-child-component-base";
 import { KaartComponentBase } from "./kaart-component-base";
 import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
-import { KaartComponent } from "./kaart.component";
 import { UiElementOpties } from "./kaart-protocol";
+import { KaartComponent } from "./kaart.component";
 
 export const CopyrightSelector = "Copyright";
 export const VoorwaardenSelector = "Voorwaarden";

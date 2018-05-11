@@ -1,9 +1,10 @@
-import { Component, Input, NgZone } from "@angular/core";
-import { KaartChildComponentBase } from "./kaart-child-component-base";
-import { KaartComponent } from "./kaart.component";
-import { InfoBoodschap } from "./kaart-with-info-model";
 import { animate, state, style, transition, trigger } from "@angular/animations";
+import { Component, Input, NgZone } from "@angular/core";
+
+import { KaartChildComponentBase } from "./kaart-child-component-base";
 import { SluitInfoBoodschapCmd } from "./kaart-protocol-commands";
+import { InfoBoodschap } from "./kaart-with-info-model";
+import { KaartComponent } from "./kaart.component";
 
 @Component({
   selector: "awv-kaart-info-boodschap",
