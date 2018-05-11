@@ -8,7 +8,6 @@ import { StyleSelector } from "./kaart-elementen";
 import { AbstractZoeker } from "../zoeker/abstract-zoeker";
 import { Option } from "fp-ts/lib/Option";
 import { InfoBoodschap } from "./kaart-with-info-model";
-import { KaartInternalMsg } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
 
 export type Command<Msg extends KaartMsg> =
@@ -299,10 +298,10 @@ export interface DeselecteerFeatureCmd {
   readonly id: string;
 }
 
-export interface SluitInfoBoodschapCmd<Msg extends prt.TypedRecord> {
+export interface SluitInfoBoodschapCmd<Msg extends KaartMsg> {
   readonly type: "SluitInfoBoodschap";
   readonly id: string;
-  readonly msgGen: () => Option<Msg>;
+  readonly msgGen: () => Option<prt.TypedRecord>;
 }
 
 ////////////////////////
@@ -475,20 +474,10 @@ export function ZetMijnLocatieZoomCmd(doelniveau: Option<number>): ZetMijnLocati
   return { type: "ZetMijnLocatieZoomStatus", doelniveau: doelniveau };
 }
 
-export function ToonInfoBoodschapCmd<Msg extends KaartMsg>(
-  id: string,
-  titel: string,
-  inhoud: string,
-  verbergMsgGen: () => Option<Msg>
-): ToonInfoBoodschapCmd {
+export function ToonInfoBoodschapCmd<Bdschp extends InfoBoodschap>(boodschap: Bdschp): ToonInfoBoodschapCmd {
   return {
     type: "ToonInfoBoodschap",
-    boodschap: {
-      id: id,
-      titel: titel,
-      inhoud: inhoud,
-      verbergMsgGen: verbergMsgGen
-    }
+    boodschap: boodschap
   };
 }
 
@@ -515,7 +504,7 @@ export function DeselecteerFeatureCmd(id: string): DeselecteerFeatureCmd {
   };
 }
 
-export function SluitInfoBoodschapCmd<Msg extends prt.TypedRecord>(id: string, msgGen: () => Option<Msg>): SluitInfoBoodschapCmd<Msg> {
+export function SluitInfoBoodschapCmd<Msg extends KaartMsg>(id: string, msgGen: () => Option<prt.TypedRecord>): SluitInfoBoodschapCmd<Msg> {
   return {
     type: "SluitInfoBoodschap",
     id: id,

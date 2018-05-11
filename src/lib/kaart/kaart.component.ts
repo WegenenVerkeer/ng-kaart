@@ -8,7 +8,7 @@ import { Set } from "immutable";
 import * as ol from "openlayers";
 import { ReplaySubject } from "rxjs";
 import { Observable } from "rxjs/Observable";
-import { concatAll, filter, last, map, merge, scan, shareReplay, switchMap, takeUntil, tap } from "rxjs/operators";
+import { concatAll, filter, last, map, merge, scan, shareReplay, startWith, switchMap, takeUntil, tap } from "rxjs/operators";
 
 import { asap } from "../util/asap";
 import { observerOutsideAngular } from "../util/observer-outside-angular";
@@ -105,7 +105,8 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     });
 
     this.aanwezigeElementen$ = this.modelChanges.uiElementSelectie$.pipe(
-      scan((st: Set<string>, selectie: UiElementSelectie) => (selectie.aan ? st.add(selectie.naam) : st.delete(selectie.naam)), Set())
+      scan((st: Set<string>, selectie: UiElementSelectie) => (selectie.aan ? st.add(selectie.naam) : st.delete(selectie.naam)), Set()),
+      startWith(Set())
     );
   }
 

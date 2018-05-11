@@ -1,0 +1,50 @@
+<div class="ident8" *ngIf="heeft('ident8')">{{ waarde("ident8") }}</div>
+
+<div class="vantot" *ngIf="heeftVanTot()">van {{ van( ) }}
+  <span class="afstand">{{ vanAfstand() }}</span>
+  tot {{ tot() }}
+  <span class="afstand">{{ totAfstand() }}</span>
+  / {{ zijderijbaan() }}
+  <span class="afstand">+{{ waarde("afstandrijbaan") }}cm</span>
+</div>
+
+
+<div class="vantot" *ngIf="heeft('hm')">{{ waarde("hm") }}
+  <span class="afstand">{{ verpl() }}</span>
+  / {{ zijderijbaan() }}
+  <span class="afstand">+{{ waarde("afstandrijbaan") }}cm</span>
+</div>
+
+<div class="dimensies" *ngIf="heeftDimensies()">
+  <mat-icon class="dimensies-icon">straighten</mat-icon>
+  {{ dimensies() }}
+</div>
+
+<div class="velden">
+  <div class="veldnamen">
+    <div class="veldnaam" *ngFor="let veld of zichtbareEigenschappen()">
+      {{ label(veld) }}
+    </div>
+  </div>
+  <div class="veldwaarden">
+    <div class="veldwaarde" *ngFor="let veld of zichtbareEigenschappen()">
+      {{ waarde(veld) }}
+    </div>
+  </div>
+</div>
+
+<div class="booleanwaarden">
+  <div class="booleanwaarde" *ngFor="let veld of booleanEigenschappen()">
+
+    <div *ngIf="waarde(veld)">
+      <mat-icon class="boolean-icon groen">done</mat-icon>
+      {{ label(veld) }}
+    </div>
+
+    <div *ngIf="!waarde(veld)">
+      <mat-icon class="boolean-icon rood">clear</mat-icon>
+      {{ label(veld) }}
+    </div>
+
+  </div>
+</div>

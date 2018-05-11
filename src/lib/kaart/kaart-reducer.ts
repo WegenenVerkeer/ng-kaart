@@ -19,8 +19,9 @@ import { PositieAanpassing, ZetMijnLocatieZoomCmd, VoegUiElementToe, ZetUiElemen
 import { KaartWithInfo, setStyleSelector, setSelectionStyleSelector, getSelectionStyleSelector } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
 import { kaartLogger } from "./log";
-import { DynamicStyle, StaticStyle, Styles, determineStyle } from "./kaart-elementen";
+import { DynamicStyle, StaticStyle, Styles, determineStyle, VectorLaag } from "./kaart-elementen";
 import { getDefaultStyle } from "./styles";
+import { VectorType } from "./kaart-elementen";
 
 ///////////////////////////////////
 // Hulpfuncties
@@ -681,7 +682,13 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function toonInfoBoodschap(cmnd: prt.ToonInfoBoodschapCmd): ModelWithResult<Msg> {
-      model.infoBoodschappenSubj.next(model.infoBoodschappenSubj.getValue().set(cmnd.boodschap.id, cmnd.boodschap));
+      const boodschap = {
+        ...cmnd.boodschap,
+        laag: fromNullable(model.toegevoegdeLagenOpTitel.get(cmnd.boodschap.titel))
+          .filter(laag => laag.bron.type === VectorType)
+          .map(laag => laag.bron as VectorLaag)
+      };
+      model.infoBoodschappenSubj.next(model.infoBoodschappenSubj.getValue().set(boodschap.id, boodschap));
       return ModelWithResult(model);
     }
 
