@@ -5,7 +5,7 @@ import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";
 import { Subscription, Wrapper, VoidWrapper, KaartMsg, KaartCmdValidation, ValidationWrapper, BareValidationWrapper } from ".";
 import { StyleSelector } from "./kaart-elementen";
-import { AbstractZoeker } from "../zoeker/abstract-zoeker";
+import { AbstractZoeker, ZoekInput } from "../zoeker/abstract-zoeker";
 import { Option } from "fp-ts/lib/Option";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import { KaartInternalMsg } from "./kaart-internal-messages";
@@ -226,7 +226,7 @@ export interface VerwijderZoekerCmd<Msg extends KaartMsg> {
 
 export interface ZoekCmd<Msg extends KaartMsg> {
   readonly type: "Zoek";
-  readonly input: string;
+  readonly input: string | ZoekInput;
   readonly zoekers: Set<string>;
   readonly wrapper: BareValidationWrapper<Msg>;
 }

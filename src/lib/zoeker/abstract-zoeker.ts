@@ -21,6 +21,10 @@ export interface ZoekResultaat {
   style: ol.style.Style;
 }
 
+export interface ZoekInput {
+  readonly type: string;
+}
+
 export class ZoekResultaten {
   constructor(
     public zoeker: string,
@@ -45,7 +49,7 @@ export class ZoekResultaten {
 
 export interface AbstractZoeker {
   naam(): string;
-  zoek$(zoekterm: string): Observable<ZoekResultaten>;
+  zoek$(zoekterm: string | ZoekInput): Observable<ZoekResultaten>;
 }
 
 // De resultaten worden getoond volgens een bepaalde hiërarchie

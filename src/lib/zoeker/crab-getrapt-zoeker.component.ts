@@ -4,13 +4,13 @@ import { FormControl } from "@angular/forms";
 import { List, Set } from "immutable";
 import { UnaryFunction } from "rxjs/interfaces";
 import { Observable } from "rxjs/Observable";
-import { combineLatest, distinctUntilChanged, filter, map, startWith, switchMap, tap, shareReplay } from "rxjs/operators";
+import { combineLatest, distinctUntilChanged, filter, map, startWith, switchMap, tap, shareReplay, take } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
 import { kaartLogger } from "../kaart/log";
-import { ZoekResultaten } from "./abstract-zoeker";
+import { ZoekResultaten, ZoekInput } from "./abstract-zoeker";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import { ZoekerComponent } from "./zoeker.component";
 import { CrabZoekerService, CrabGemeente, CrabStraat, CrabHuisnummer } from "./crab-zoeker.service";
@@ -195,15 +195,21 @@ export class CrabGetraptZoekerComponent extends KaartChildComponentBase implemen
   }
 
   private toonOpKaart() {
+    let zoekInput: ZoekInput;
     if (isNotNullObject(this.huisnummerControl.value)) {
-      console.log("Toon op kaart", this.huisnummerControl.value);
+      zoekInput = this.huisnummerControl.value;
     } else if (isNotNullObject(this.straatControl.value)) {
-      console.log("Toon op kaart", this.straatControl.value);
+      zoekInput = this.straatControl.value;
     } else {
-      console.log("Toon op kaart", this.gemeenteControl.value);
+      zoekInput = this.gemeenteControl.value;
     }
 
-    // TODO: voer het zoekcommando uit.
+    this.dispatch({
+      type: "Zoek",
+      input: zoekInput,
+      zoekers: Set.of(this.crabService.naam()),
+      wrapper: kaartLogOnlyWrapper
+    });
   }
 
   private magTonenOpKaart(): boolean {

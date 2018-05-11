@@ -7,7 +7,7 @@ import { Observable } from "rxjs/Observable";
 import { from } from "rxjs/observable/from";
 import { map, mergeAll, mergeMap, reduce, shareReplay } from "rxjs/operators";
 
-import { AbstractZoeker, geoJSONOptions, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
+import { AbstractZoeker, geoJSONOptions, ZoekResultaat, ZoekResultaten, ZoekInput } from "./abstract-zoeker";
 import { CrabZoekerConfig } from "./crab-zoeker.config";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "./zoeker-representatie.service";
 import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
@@ -31,20 +31,20 @@ export interface SuggestionServiceResults {
   readonly SuggestionResult: string[];
 }
 
-export interface CrabGemeente {
+export interface CrabGemeente extends ZoekInput {
   readonly postcodes: string;
   readonly niscode: number;
   readonly naam: string;
   readonly id: number;
 }
 
-export interface CrabStraat {
+export interface CrabStraat extends ZoekInput {
   readonly naam: string;
   readonly gemeente: CrabGemeente;
   readonly id: number;
 }
 
-export interface CrabHuisnummer {
+export interface CrabHuisnummer extends ZoekInput {
   readonly huisnummer: string;
   readonly niscode: number;
   readonly straat: CrabStraat;
@@ -140,7 +140,9 @@ export class CrabZoekerService implements AbstractZoeker {
   }
 
   getAlleGemeenten$(): Observable<CrabGemeente[]> {
-    return this.http.get<CrabGemeente[]>(this.crabZoekerConfig.url + "/rest/crab/gemeenten").pipe(shareReplay(1));
+    return this.http
+      .get<CrabGemeente[]>(this.crabZoekerConfig.url + "/rest/crab/gemeenten")
+      .pipe(map(gemeentes => gemeentes.map(gemeente => ({ ...gemeente, type: "CrabGemeente" }))), shareReplay(1));
   }
 
   private bboxNaarZoekResultaat(naam: string, bron: string, bbox: CrabBBox): CrabZoekResultaat {
@@ -172,7 +174,7 @@ export class CrabZoekerService implements AbstractZoeker {
     );
   }
 
-  getGemeenteBBox$(gemeente: CrabGemeente): Observable<ZoekResultaten> {
+  private getGemeenteBBox$(gemeente: CrabGemeente): Observable<ZoekResultaten> {
     return this.http
       .get<CrabBBox>(this.crabZoekerConfig.url + "/rest/crab/gemeente/" + gemeente.niscode)
       .pipe(
@@ -184,10 +186,10 @@ export class CrabZoekerService implements AbstractZoeker {
   getStraten$(gemeente: CrabGemeente): Observable<CrabStraat[]> {
     return this.http
       .get<CrabStraat[]>(this.crabZoekerConfig.url + "/rest/crab/straten/" + gemeente.niscode)
-      .pipe(map(straten => straten.map(straat => ({ ...straat, gemeente: gemeente }))), shareReplay(1));
+      .pipe(map(straten => straten.map(straat => ({ ...straat, gemeente: gemeente, type: "CrabStraat" }))), shareReplay(1));
   }
 
-  getStraatBBox$(straat: CrabStraat): Observable<ZoekResultaten> {
+  private getStraatBBox$(straat: CrabStraat): Observable<ZoekResultaten> {
     return this.http
       .get<CrabBBox>(this.crabZoekerConfig.url + "/rest/crab/straat/" + straat.id)
       .pipe(
@@ -207,10 +209,10 @@ export class CrabZoekerService implements AbstractZoeker {
   getHuisnummers$(straat: CrabStraat): Observable<CrabHuisnummer[]> {
     return this.http
       .get<CrabHuisnummer[]>(this.crabZoekerConfig.url + "/rest/crab/huisnummers/" + straat.id)
-      .pipe(map(huisnummers => huisnummers.map(huisnummer => ({ ...huisnummer, straat: straat }))), shareReplay(1));
+      .pipe(map(huisnummers => huisnummers.map(huisnummer => ({ ...huisnummer, straat: straat, type: "CrabNummer" }))), shareReplay(1));
   }
 
-  getHuisnummerPositie$(huisnummer: CrabHuisnummer): Observable<ZoekResultaten> {
+  private getHuisnummerPositie$(huisnummer: CrabHuisnummer): Observable<ZoekResultaten> {
     return this.http
       .get<CrabPositie>(this.crabZoekerConfig.url + "/rest/crab/huisnummer/" + huisnummer.straat.id + "/" + huisnummer.huisnummer)
       .pipe(
@@ -233,28 +235,38 @@ export class CrabZoekerService implements AbstractZoeker {
       );
   }
 
-  zoek$(zoekterm: string): Observable<ZoekResultaten> {
+  zoek$(zoekterm: string | ZoekInput): Observable<ZoekResultaten> {
     function options(waarde) {
       return {
         params: new HttpParams().set("query", waarde)
       };
     }
 
-    const zoekDetail$ = detail =>
-      this.http.get<LocatorServiceResults>(this.crabZoekerConfig.url + "/rest/geolocation/location", options(detail));
+    if (typeof zoekterm === "string") {
+      const zoekDetail$ = detail =>
+        this.http.get<LocatorServiceResults>(this.crabZoekerConfig.url + "/rest/geolocation/location", options(detail));
 
-    const zoekSuggesties$ = suggestie =>
-      this.http.get<SuggestionServiceResults>(this.crabZoekerConfig.url + "/rest/geolocation/suggestion", options(suggestie));
+      const zoekSuggesties$ = suggestie =>
+        this.http.get<SuggestionServiceResults>(this.crabZoekerConfig.url + "/rest/geolocation/suggestion", options(suggestie));
 
-    return zoekSuggesties$(zoekterm).pipe(
-      map(suggestieResultaten => from(suggestieResultaten.SuggestionResult).pipe(mergeMap(suggestie => zoekDetail$(suggestie)))),
-      // mergall moet gecast worden omdat de standaard definitie fout is: https://github.com/ReactiveX/rxjs/issues/3290
-      mergeAll(5) as OperatorFunction<Observable<LocatorServiceResults>, LocatorServiceResults>,
-      reduce<LocatorServiceResults, ZoekResultaten>(
-        (zoekResultaten, crabResultaten) => this.voegCrabResultatenToe(zoekResultaten, crabResultaten),
-        new ZoekResultaten(this.naam(), [], [], this.legende)
-      ),
-      map(resultaten => resultaten.limiteerAantalResultaten(this.crabZoekerConfig.maxAantal))
-    );
+      return zoekSuggesties$(zoekterm).pipe(
+        map(suggestieResultaten => from(suggestieResultaten.SuggestionResult).pipe(mergeMap(suggestie => zoekDetail$(suggestie)))),
+        // mergall moet gecast worden omdat de standaard definitie fout is: https://github.com/ReactiveX/rxjs/issues/3290
+        mergeAll(5) as OperatorFunction<Observable<LocatorServiceResults>, LocatorServiceResults>,
+        reduce<LocatorServiceResults, ZoekResultaten>(
+          (zoekResultaten, crabResultaten) => this.voegCrabResultatenToe(zoekResultaten, crabResultaten),
+          new ZoekResultaten(this.naam(), [], [], this.legende)
+        ),
+        map(resultaten => resultaten.limiteerAantalResultaten(this.crabZoekerConfig.maxAantal))
+      );
+    } else if (zoekterm.type === "CrabGemeente") {
+      return this.getGemeenteBBox$(zoekterm as CrabGemeente);
+    } else if (zoekterm.type === "CrabStraat") {
+      return this.getStraatBBox$(zoekterm as CrabStraat);
+    } else if (zoekterm.type === "CrabNummer") {
+      return this.getHuisnummerPositie$(zoekterm as CrabHuisnummer);
+    } else {
+      return Observable.empty();
+    }
   }
 }
