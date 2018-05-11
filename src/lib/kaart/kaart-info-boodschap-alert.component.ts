@@ -1,7 +1,5 @@
 import { Component, Input, NgZone, OnInit } from "@angular/core";
 import { KaartChildComponentBase } from "./kaart-child-component-base";
-import { KaartInternalMsg } from "./kaart-internal-messages";
-import * as prt from "./kaart-protocol";
 import { KaartComponent } from "./kaart.component";
 
 @Component({
@@ -14,10 +12,6 @@ export class KaartInfoBoodschapAlertComponent extends KaartChildComponentBase im
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
-  }
-
-  protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
-    return [];
   }
 
   ngOnInit(): void {
