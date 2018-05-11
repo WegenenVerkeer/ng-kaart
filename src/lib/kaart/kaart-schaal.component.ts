@@ -1,20 +1,27 @@
-import { Component, OnDestroy, OnInit } from "@angular/core";
+import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 
+import { schaalAangevraagdMsgGen } from "../kaart-classic/messages";
 import { KaartClassicComponent } from "./kaart-classic.component";
+import { KaartComponentBase } from "./kaart-component-base";
 import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
+import * as prt from "./kaart-protocol";
 
 @Component({
   selector: "awv-kaart-schaal",
   template: "<ng-content></ng-content>"
 })
-export class KaartSchaalComponent implements OnInit, OnDestroy {
-  constructor(private readonly kaart: KaartClassicComponent) {}
+export class KaartSchaalComponent extends KaartComponentBase implements OnInit, OnDestroy {
+  constructor(readonly kaart: KaartClassicComponent, zone: NgZone) {
+    super(zone);
+  }
 
   ngOnInit(): void {
-    this.kaart.dispatch({ type: "VoegSchaalToe", wrapper: kaartLogOnlyWrapper });
+    super.ngOnInit();
+    this.kaart.dispatch(prt.VraagSchaalAanCmd(schaalAangevraagdMsgGen));
   }
 
   ngOnDestroy(): void {
-    this.kaart.dispatch({ type: "VerwijderSchaal", wrapper: kaartLogOnlyWrapper });
+    this.kaart.dispatch(prt.VerwijderSchaalCmd(kaartLogOnlyWrapper));
+    super.ngOnDestroy();
   }
 }

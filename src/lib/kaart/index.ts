@@ -11,6 +11,7 @@ import { KaartAchtergrondSelectorComponent } from "./kaart-achtergrond-selector.
 import { KaartAchtergrondTileComponent } from "./kaart-achtergrond-tile.component";
 import { KaartBlancoLaagComponent } from "./kaart-blanco-laag.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
+import { KaartCopyrightComponent } from "./kaart-copyright.component";
 import { KAART_CFG, KaartConfig } from "./kaart-config";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { KaartGeoserverLaagComponent } from "./kaart-geoserver-laag.component";
@@ -21,6 +22,7 @@ import { KaartKnopZoomSliderComponent } from "./kaart-knop-zoom-slider.component
 import { KaartMijnLocatieComponent } from "./kaart-mijn-locatie.component";
 import { KaartNosqlfsLaagComponent } from "./kaart-nosqlfs-laag.component";
 import { KaartOpenStreetViewComponent } from "./kaart-open-street-view.component";
+import { KaartOpenLayersStyleComponent } from "./kaart-openlayers.component";
 import { KaartOrthoLaagComponent } from "./kaart-ortho-laag.component";
 import { KaartSchaalComponent } from "./kaart-schaal.component";
 import { KaartStandaardInteractiesComponent } from "./kaart-standaard-interacties.component";
@@ -31,6 +33,8 @@ import { KaartTekenComponent } from "./kaart-teken.component";
 import { KaartTilecacheLaagComponent } from "./kaart-tilecache-laag.component";
 import { KaartFeaturesLaagComponent } from "./kaart-toon-features.component";
 import { KaartVectorLaagComponent } from "./kaart-vector-laag.component";
+import { KaartVoorwaardenComponent } from "./kaart-voorwaarden.component";
+import { KaartVoorwaardenBoxComponent } from "./kaart-voorwaarden-box.component";
 import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
 import { KaartWmtsLaagComponent } from "./kaart-wmts-laag.component";
 import { KaartZoomComponent } from "./kaart-zoom.component";
@@ -40,6 +44,7 @@ const components: any[] = [
   KaartComponent,
   KaartKnopAchtergrondLaagKiezerComponent,
   KaartClassicComponent,
+  KaartCopyrightComponent,
   KaartKnopVolledigSchermComponent,
   KaartKnopZoomSliderComponent,
   KaartOrthoLaagComponent,
@@ -54,6 +59,7 @@ const components: any[] = [
   KaartFeaturesLaagComponent,
   KaartVectorLaagComponent,
   KaartNosqlfsLaagComponent,
+  KaartOpenLayersStyleComponent,
   KaartTilecacheLaagComponent,
   KaartGeoserverLaagComponent,
   KaartWmsLaagComponent,
@@ -62,7 +68,9 @@ const components: any[] = [
   KaartAchtergrondSelectorComponent,
   KaartAchtergrondTileComponent,
   KaartOpenStreetViewComponent,
-  KaartInfoBoodschappenComponent
+  KaartInfoBoodschappenComponent,
+  KaartVoorwaardenComponent,
+  KaartVoorwaardenBoxComponent
 ];
 
 // Weersta de drang om deze variabele in een andere module te plaatsen, want dat geeft problemen met gebruik in AOT app.

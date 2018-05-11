@@ -31,7 +31,7 @@ export const vacuousKaartMsgObservableConsumer: KaartMsgObservableConsumer = (ms
 @Component({
   selector: "awv-kaart",
   templateUrl: "./kaart.component.html",
-  styleUrls: ["../../../node_modules/openlayers/css/ol.css", "./kaart.component.scss"],
+  styleUrls: ["./kaart.component.scss"],
   encapsulation: ViewEncapsulation.Emulated // Omwille hiervan kunnen we geen globale CSS gebruiken, maar met Native werken animaties niet
 })
 export class KaartComponent extends KaartComponentBase implements OnInit, OnDestroy {

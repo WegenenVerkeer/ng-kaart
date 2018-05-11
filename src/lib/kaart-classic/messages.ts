@@ -1,8 +1,8 @@
 import * as ol from "openlayers";
 
 import * as prt from "../kaart/kaart-protocol";
-import { classicLogger } from "./log";
 import { GeselecteerdeFeatures } from "../kaart/kaart-with-info-model";
+import { classicLogger } from "./log";
 
 export interface KaartClassicMsg {
   readonly type: "KaartClassic";
@@ -13,7 +13,15 @@ export interface KaartClassicMsg {
 // Inner types
 //
 
-export type KaartClassicSubMsg = FeatureGedeselecteerdMsg | FeatureSelectieAangepastMsg | TekenGeomAangepastMsg | SubscribedMsg | DummyMsg;
+export type KaartClassicSubMsg =
+  | FeatureGedeselecteerdMsg
+  | FeatureSelectieAangepastMsg
+  | TekenGeomAangepastMsg
+  | SubscribedMsg
+  | SchaalAangevraagdMsg
+  | ToonCopyrightMsg
+  | ToonVoorwaardenMsg
+  | DummyMsg;
 
 export interface FeatureSelectieAangepastMsg {
   readonly type: "FeatureSelectieAangepast";
@@ -40,6 +48,21 @@ export interface DummyMsg {
   readonly type: "Dummy";
 }
 
+export interface SchaalAangevraagdMsg {
+  readonly type: "SchaalAangevraagd";
+}
+
+export interface ToonVoorwaardenMsg {
+  readonly type: "ToonVoorwaarden";
+  readonly titel: string;
+  readonly href: string;
+}
+
+export interface ToonCopyrightMsg {
+  readonly type: "ToonCopyright";
+  readonly copyright: string;
+}
+
 ///////////////
 // Constructors
 //
@@ -64,6 +87,18 @@ export function SubscribedMsg(subscription: prt.KaartCmdValidation<prt.Subscript
   return { type: "Subscribed", reference: reference, subscription: subscription };
 }
 
+export function SchaalAangevraagdMsg(): SchaalAangevraagdMsg {
+  return { type: "SchaalAangevraagd" };
+}
+
+export function ToonVoorwaardenMsg(titel: string, href: string): ToonVoorwaardenMsg {
+  return { type: "ToonVoorwaarden", titel: titel, href: href };
+}
+
+export function ToonCopyrightMsg(copyright: string): ToonCopyrightMsg {
+  return { type: "ToonCopyright", copyright: copyright };
+}
+
 /////////////////////
 // Message generators
 //
@@ -74,3 +109,9 @@ export const logOnlyWrapper: prt.ValidationWrapper<any, KaartClassicMsg> = (v: p
   }
   return KaartClassicMsg({ type: "Dummy" });
 };
+
+export const schaalAangevraagdMsgGen = () => KaartClassicMsg(SchaalAangevraagdMsg());
+
+export const toonVoorwaardenMsgGen = (titel: string, href: string) => KaartClassicMsg(ToonVoorwaardenMsg(titel, href));
+
+export const toonCopyrightMsgGen = (copyright: string) => KaartClassicMsg(ToonCopyrightMsg(copyright));

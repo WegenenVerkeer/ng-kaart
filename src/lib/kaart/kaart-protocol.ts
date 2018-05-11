@@ -16,6 +16,7 @@ export type Subscriber<Msg extends KaartMsg> = (mc: MessageConsumer<Msg>) => voi
 export type KaartCmdValidation<T> = Validation<string[], T>;
 export type Wrapper<T, Msg extends KaartMsg> = (t: T) => Msg;
 export type VoidWrapper<Msg extends KaartMsg> = Wrapper<undefined, Msg>;
+export type LazyWrapper<Msg extends KaartMsg> = () => Msg;
 export type ValidationWrapper<T, Msg extends KaartMsg> = Wrapper<KaartCmdValidation<T>, Msg>;
 export type BareValidationWrapper<Msg extends KaartMsg> = ValidationWrapper<undefined, Msg>;
 
