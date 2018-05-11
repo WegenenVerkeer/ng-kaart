@@ -1,0 +1,7 @@
+<div class="awv-kaart-voorwaarden-box">
+  <div class="awv-copyright" *ngIf="copyright$ | async as copyright">{{ copyright}}</div>
+  <div class="awv-voorwaarden" *ngIf="voorwaardenOpties$ | async as voorwaarden">
+    <a href="{{ voorwaarden.href }}" target="_blank">{{ voorwaarden.titel }}</a>
+  </div>
+  <div class="awv-schaal" #schaal ></div>
+</div>

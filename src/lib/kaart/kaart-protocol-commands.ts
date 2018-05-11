@@ -3,7 +3,7 @@ import { Subscription as RxSubscription } from "rxjs/Subscription";
 
 import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";
-import { Subscription, Wrapper, VoidWrapper, KaartMsg, KaartCmdValidation, ValidationWrapper, BareValidationWrapper } from ".";
+import { Subscription, Wrapper, LazyWrapper, VoidWrapper, KaartMsg, KaartCmdValidation, ValidationWrapper, BareValidationWrapper } from ".";
 import { StyleSelector } from "./kaart-elementen";
 import { AbstractZoeker } from "../zoeker/abstract-zoeker";
 import { Option } from "fp-ts/lib/Option";
@@ -44,6 +44,7 @@ export type Command<Msg extends KaartMsg> =
   | VoegInteractieToeCmd
   | VerwijderInteractieCmd
   | VoegOverlayToeCmd
+  | VraagSchaalAanCmd<Msg>
   | VerwijderOverlaysCmd
   | ToonInfoBoodschapCmd
   | VerbergInfoBoodschapCmd
@@ -96,8 +97,14 @@ export interface VerplaatsLaagCmd<Msg extends KaartMsg> {
   readonly wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>;
 }
 
+export interface VraagSchaalAanCmd<Msg extends KaartMsg> {
+  readonly type: "VraagSchaalAan";
+  readonly wrapper: BareValidationWrapper<Msg>;
+}
+
 export interface VoegSchaalToeCmd<Msg extends KaartMsg> {
   readonly type: "VoegSchaalToe";
+  readonly target: Option<Element>;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -337,6 +344,24 @@ export function VerplaatsLaagCmd<Msg extends KaartMsg>(
   wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>
 ): VerplaatsLaagCmd<Msg> {
   return { type: "VerplaatsLaag", titel: titel, naarPositie: naarPositie, wrapper: wrapper };
+}
+
+export function VraagSchaalAanCmd<Msg extends KaartMsg>(wrapper: BareValidationWrapper<Msg>): VraagSchaalAanCmd<Msg> {
+  return {
+    type: "VraagSchaalAan",
+    wrapper: wrapper
+  };
+}
+
+export function VoegSchaalToeCmd<Msg extends KaartMsg>(
+  target: Option<Element>,
+  wrapper: BareValidationWrapper<Msg>
+): VoegSchaalToeCmd<Msg> {
+  return { type: "VoegSchaalToe", target: target, wrapper: wrapper };
+}
+
+export function VerwijderSchaalCmd<Msg extends KaartMsg>(wrapper: BareValidationWrapper<Msg>): VerwijderSchaalCmd<Msg> {
+  return { type: "VerwijderSchaal", wrapper: wrapper };
 }
 
 export function ZetStijlVoorLaagCmd<Msg extends KaartMsg>(

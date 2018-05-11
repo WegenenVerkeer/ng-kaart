@@ -26,7 +26,9 @@ export class AppComponent {
   @ViewChild("selectie") private selectieKaart: KaartClassicComponent;
 
   private readonly zichtbaarheid = {
-    offsets: true // standard falsey
+    offsets: true,
+    orthomap: false,
+    metenVoorbeeld: true
   };
 
   private readonly fietspadStijlDef: AWV0StyleFunctionDescription = {
