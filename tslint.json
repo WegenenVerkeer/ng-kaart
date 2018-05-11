@@ -21,6 +21,15 @@
       true
     ],
     "import-spacing": true,
+    "ordered-imports": [
+      true,
+      {
+        "grouped-imports": true,
+        "import-sources-order": "any",
+        "named-imports-order": "case-insensitive",
+        "module-source-path": "full"
+      }
+    ],
     "indent": [
       true,
       "spaces"
