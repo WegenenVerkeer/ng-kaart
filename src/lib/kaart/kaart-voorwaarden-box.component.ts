@@ -35,9 +35,9 @@ export const VoorwaardenOpties = (titel: string, href: string) => ({ titel: tite
 })
 export class KaartVoorwaardenBoxComponent extends KaartChildComponentBase implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild("schaal") schaalElement: ElementRef;
-  private copyright$: Observable<string>;
-  private voorwaardenOpties$: Observable<VoorwaardenOpties>;
-  private schaal$: Observable<UiElementOpties>;
+  copyright$: Observable<string>;
+  voorwaardenOpties$: Observable<VoorwaardenOpties>;
+  schaal$: Observable<UiElementOpties>;
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
