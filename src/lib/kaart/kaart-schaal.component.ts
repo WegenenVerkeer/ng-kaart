@@ -1,6 +1,5 @@
 import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 
-import { schaalAangevraagdMsgGen } from "../kaart-classic/messages";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartComponentBase } from "./kaart-component-base";
 import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
@@ -17,7 +16,7 @@ export class KaartSchaalComponent extends KaartComponentBase implements OnInit, 
 
   ngOnInit(): void {
     super.ngOnInit();
-    this.kaart.dispatch(prt.VraagSchaalAanCmd(schaalAangevraagdMsgGen));
+    this.kaart.dispatch(prt.VraagSchaalAanCmd(kaartLogOnlyWrapper));
   }
 
   ngOnDestroy(): void {

@@ -46,8 +46,6 @@ export type Command<Msg extends KaartMsg> =
   | VerwijderInteractieCmd
   | VoegOverlayToeCmd
   | VraagSchaalAanCmd<Msg>
-  | ToonCopyrightCmd<Msg>
-  | ToonVoorWaardenCmd<Msg>
   | VerwijderOverlaysCmd
   | ToonInfoBoodschapCmd
   | VerbergInfoBoodschapCmd
@@ -100,22 +98,9 @@ export interface VerplaatsLaagCmd<Msg extends KaartMsg> {
   readonly wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>;
 }
 
-export interface ToonCopyrightCmd<Msg extends KaartMsg> {
-  readonly type: "ToonCopyright";
-  readonly copyright: string;
-  readonly wrapper: (copyright: string) => Msg;
-}
-
-export interface ToonVoorWaardenCmd<Msg extends KaartMsg> {
-  readonly type: "ToonVoorWaarden";
-  readonly titel: string;
-  readonly href: string;
-  readonly wrapper: (titel: string, href: string) => Msg;
-}
-
 export interface VraagSchaalAanCmd<Msg extends KaartMsg> {
   readonly type: "VraagSchaalAan";
-  readonly wrapper: LazyWrapper<Msg>;
+  readonly wrapper: BareValidationWrapper<Msg>;
 }
 
 export interface VoegSchaalToeCmd<Msg extends KaartMsg> {
@@ -362,31 +347,7 @@ export function VerplaatsLaagCmd<Msg extends KaartMsg>(
   return { type: "VerplaatsLaag", titel: titel, naarPositie: naarPositie, wrapper: wrapper };
 }
 
-export function ToonCopyrightCmd<Msg extends KaartMsg>(
-  copyright: string, //
-  wrapper: (copyright: string) => Msg
-): ToonCopyrightCmd<Msg> {
-  return {
-    type: "ToonCopyright",
-    copyright: copyright,
-    wrapper: wrapper
-  };
-}
-
-export function ToonVoorWaardenCmd<Msg extends KaartMsg>(
-  titel: string,
-  href: string,
-  wrapper: (titel: string, href: string) => Msg
-): ToonVoorWaardenCmd<Msg> {
-  return {
-    type: "ToonVoorWaarden",
-    titel: titel,
-    href: href,
-    wrapper: wrapper
-  };
-}
-
-export function VraagSchaalAanCmd<Msg extends KaartMsg>(wrapper: LazyWrapper<Msg>): VraagSchaalAanCmd<Msg> {
+export function VraagSchaalAanCmd<Msg extends KaartMsg>(wrapper: BareValidationWrapper<Msg>): VraagSchaalAanCmd<Msg> {
   return {
     type: "VraagSchaalAan",
     wrapper: wrapper

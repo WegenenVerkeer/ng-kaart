@@ -346,16 +346,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
-    function toonCopyrightCmd(cmnd: prt.ToonCopyrightCmd<Msg>): ModelWithResult<Msg> {
-      return ModelWithResult(model, some(cmnd.wrapper(cmnd.copyright)));
-    }
-
-    function toonVoorWaardenCmd(cmnd: prt.ToonVoorWaardenCmd<Msg>): ModelWithResult<Msg> {
-      return ModelWithResult(model, some(cmnd.wrapper(cmnd.titel, cmnd.href)));
-    }
-
     function vraagSchaalAan(cmnd: prt.VraagSchaalAanCmd<Msg>): ModelWithResult<Msg> {
-      return ModelWithResult(model, some(cmnd.wrapper()));
+      modelChanger.uiElementOptiesSubj.next({ naam: "Schaal" });
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        fromPredicate(model.schaal, isNone, "De schaal is al toegevoegd").map(() => ModelAndEmptyResult({ ...model }))
+      );
     }
 
     function voegSchaalToeCmd(cmnd: prt.VoegSchaalToeCmd<Msg>): ModelWithResult<Msg> {
@@ -910,10 +906,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return verwijderLaagCmd(cmd);
       case "VerplaatsLaag":
         return verplaatsLaagCmd(cmd);
-      case "ToonCopyright":
-        return toonCopyrightCmd(cmd);
-      case "ToonVoorWaarden":
-        return toonVoorWaardenCmd(cmd);
       case "VraagSchaalAan":
         return vraagSchaalAan(cmd);
       case "VoegSchaalToe":

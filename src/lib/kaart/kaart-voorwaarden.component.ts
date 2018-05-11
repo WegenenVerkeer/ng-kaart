@@ -1,9 +1,10 @@
 import { Component, Input, NgZone, OnInit } from "@angular/core";
 
-import { toonVoorwaardenMsgGen } from "../kaart-classic/messages";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartComponentBase } from "./kaart-component-base";
 import * as prt from "./kaart-protocol";
+
+import { VoorwaardenSelector, VoorwaardenOpties } from "./kaart-voorwaarden-box.component";
 
 @Component({
   selector: "awv-kaart-voorwaarden",
@@ -19,6 +20,6 @@ export class KaartVoorwaardenComponent extends KaartComponentBase implements OnI
 
   ngOnInit(): void {
     super.ngOnInit();
-    this.kaart.dispatch(prt.ToonVoorWaardenCmd(this.titel, this.href, toonVoorwaardenMsgGen));
+    this.kaart.dispatch(prt.ZetUiElementOpties(VoorwaardenSelector, VoorwaardenOpties(this.titel, this.href)));
   }
 }
