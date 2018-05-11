@@ -4,14 +4,13 @@ import { FormControl } from "@angular/forms";
 import { List, Set } from "immutable";
 import { UnaryFunction } from "rxjs/interfaces";
 import { Observable } from "rxjs/Observable";
-import { combineLatest, distinctUntilChanged, filter, map, startWith, switchMap, tap, shareReplay } from "rxjs/operators";
+import { combineLatest, distinctUntilChanged, filter, map, startWith, switchMap, shareReplay } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
 import { kaartLogger } from "../kaart/log";
-import { Afdeling, Gemeente, PerceelNummer, PerceelZoekerService, Sectie, PerceelDetails } from "./perceel-zoeker.service";
-import { ZoekResultaten } from "./abstract-zoeker";
+import { Afdeling, Gemeente, PerceelNummer, PerceelZoekerService, Sectie } from "./perceel-zoeker.service";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import { ZoekerComponent } from "./zoeker.component";
 
@@ -49,7 +48,7 @@ function disableWanneerLeeg<T>(control: FormControl, array: T[]) {
   }
 }
 
-type MaakLeegType = "alles" | "vanafgemeente" | "vanafafdeling" | "vanafsectie" | "vanafperceel";
+export type MaakLeegType = "alles" | "vanafgemeente" | "vanafafdeling" | "vanafsectie" | "vanafperceel";
 
 @Component({
   selector: "awv-perceel-zoeker",
@@ -194,7 +193,7 @@ export class PerceelZoekerComponent extends KaartChildComponentBase implements O
     );
   }
 
-  private maakVeldenLeeg(niveau: MaakLeegType) {
+  maakVeldenLeeg(niveau: MaakLeegType) {
     if (niveau === "alles") {
       this.gefilterdeGemeenten = this.alleGemeenten;
       this.gemeenteControl.setValue(null);
