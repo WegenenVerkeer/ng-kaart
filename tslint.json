@@ -25,7 +25,7 @@
       true,
       {
         "grouped-imports": true,
-        "import-sources-order": "any",
+        "import-sources-order": "case-insensitive",
         "named-imports-order": "case-insensitive",
         "module-source-path": "full"
       }
