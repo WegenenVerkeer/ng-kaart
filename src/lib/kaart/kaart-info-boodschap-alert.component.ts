@@ -7,14 +7,10 @@ import { KaartComponent } from "./kaart.component";
   templateUrl: "./kaart-info-boodschap-alert.component.html",
   styleUrls: ["./kaart-info-boodschap-alert.component.scss"]
 })
-export class KaartInfoBoodschapAlertComponent extends KaartChildComponentBase implements OnInit {
+export class KaartInfoBoodschapAlertComponent extends KaartChildComponentBase {
   @Input() message: string;
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
-  }
-
-  ngOnInit(): void {
-    super.ngOnInit();
   }
 }

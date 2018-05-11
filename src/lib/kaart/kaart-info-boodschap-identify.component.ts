@@ -11,7 +11,7 @@ import { VectorLaag } from "./kaart-elementen";
   templateUrl: "./kaart-info-boodschap-identify.component.html",
   styleUrls: ["./kaart-info-boodschap-identify.component.scss"]
 })
-export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase implements OnInit {
+export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase {
   @Input() feature: ol.Feature;
   @Input() laag: Option<VectorLaag>;
 
@@ -23,10 +23,6 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
-  }
-
-  ngOnInit(): void {
-    super.ngOnInit();
   }
 
   heeft(key: string) {
