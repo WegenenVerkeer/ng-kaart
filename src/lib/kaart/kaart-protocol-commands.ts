@@ -1,14 +1,15 @@
+import { Option } from "fp-ts/lib/Option";
 import { List, Set } from "immutable";
+import * as ol from "openlayers";
 import { Subscription as RxSubscription } from "rxjs/Subscription";
 
-import * as ol from "openlayers";
-import * as ke from "./kaart-elementen";
-import { Subscription, Wrapper, LazyWrapper, VoidWrapper, KaartMsg, KaartCmdValidation, ValidationWrapper, BareValidationWrapper } from ".";
-import { StyleSelector } from "./kaart-elementen";
 import { AbstractZoeker } from "../zoeker/abstract-zoeker";
-import { Option } from "fp-ts/lib/Option";
-import { InfoBoodschap } from "./kaart-with-info-model";
+
+import { BareValidationWrapper, KaartCmdValidation, KaartMsg, LazyWrapper, Subscription, ValidationWrapper, VoidWrapper, Wrapper } from ".";
+import * as ke from "./kaart-elementen";
+import { StyleSelector } from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
+import { InfoBoodschap } from "./kaart-with-info-model";
 
 export type Command<Msg extends KaartMsg> =
   | SubscribeCmd<Msg>

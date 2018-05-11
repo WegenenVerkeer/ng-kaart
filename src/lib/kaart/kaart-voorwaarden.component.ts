@@ -4,7 +4,7 @@ import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartComponentBase } from "./kaart-component-base";
 import * as prt from "./kaart-protocol";
 
-import { VoorwaardenSelector, VoorwaardenOpties } from "./kaart-voorwaarden-box.component";
+import { VoorwaardenOpties, VoorwaardenSelector } from "./kaart-voorwaarden-box.component";
 
 @Component({
   selector: "awv-kaart-voorwaarden",

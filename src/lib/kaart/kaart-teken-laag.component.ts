@@ -5,12 +5,13 @@ import { Subject } from "rxjs";
 import { distinctUntilChanged, map, skipWhile } from "rxjs/operators";
 
 import { forEach, orElse } from "../util/option";
+
 import { KaartChildComponentBase } from "./kaart-child-component-base";
 import * as ke from "./kaart-elementen";
+import { determineStyle, determineStyleSelector } from "./kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper, tekenWrapper } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
 import { KaartComponent } from "./kaart.component";
-import { determineStyle, determineStyleSelector } from "./kaart-elementen";
 
 export const TekenenUISelector = "Kaarttekenen";
 const TekenLaagNaam = "Tekenen van geometrie";

@@ -3,10 +3,10 @@ import { List } from "immutable";
 
 import * as ol from "openlayers";
 
-import { KaartVectorLaagComponent } from "./kaart-vector-laag.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
+import { KaartVectorLaagComponent } from "./kaart-vector-laag.component";
 
 @Component({
   selector: "awv-kaart-features-laag",

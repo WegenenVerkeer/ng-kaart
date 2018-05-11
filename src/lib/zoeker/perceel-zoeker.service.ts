@@ -1,15 +1,15 @@
 import { HttpClient } from "@angular/common/http";
 import { Inject, Injectable } from "@angular/core";
+import { Map } from "immutable";
+import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
 import { map, shareReplay } from "rxjs/operators";
 
-import { CrabZoekerConfig } from "./crab-zoeker.config";
-import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
 import { AbstractZoeker, geoJSONOptions, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
-import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "./zoeker-representatie.service";
-import { Map } from "immutable";
+import { CrabZoekerConfig } from "./crab-zoeker.config";
 import { LocatorServiceResult } from "./crab-zoeker.service";
-import * as ol from "openlayers";
+import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "./zoeker-representatie.service";
+import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
 
 export interface Gemeente {
   readonly niscode: number;

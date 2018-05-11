@@ -1,20 +1,21 @@
 import { Component, Input, ViewEncapsulation } from "@angular/core";
 import { option } from "fp-ts";
-import { some, Option, none } from "fp-ts/lib/Option";
-
-import * as ol from "openlayers";
-import * as ke from "./kaart-elementen";
-import { KaartClassicComponent } from "./kaart-classic.component";
-import { KaartLaagComponent } from "./kaart-laag.component";
-import { NosqlFsSource } from "../source/nosql-fs-source";
-import { orElse, forEach } from "../util/option";
-import { ZetStijlVoorLaagCmd } from "./kaart-protocol-commands";
-import { StaticStyle, DynamicStyle, Styles, StyleSelector, Stylish } from "./kaart-elementen";
-import { getDefaultStyleFunction, getDefaultSelectionStyleFunction } from "./styles";
+import { none, Option, some } from "fp-ts/lib/Option";
 import { fromNullable } from "fp-ts/lib/Option";
-import * as prt from "./kaart-protocol";
-import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
+import * as ol from "openlayers";
+
+import { NosqlFsSource } from "../source/nosql-fs-source";
+import { forEach, orElse } from "../util/option";
+
+import { KaartClassicComponent } from "./kaart-classic.component";
+import * as ke from "./kaart-elementen";
+import { DynamicStyle, StaticStyle, Styles, StyleSelector, Stylish } from "./kaart-elementen";
 import { determineStyle, determineStyleSelector } from "./kaart-elementen";
+import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
+import { KaartLaagComponent } from "./kaart-laag.component";
+import * as prt from "./kaart-protocol";
+import { ZetStijlVoorLaagCmd } from "./kaart-protocol-commands";
+import { getDefaultSelectionStyleFunction, getDefaultStyleFunction } from "./styles";
 
 @Component({
   selector: "awv-kaart-nosqlfs-laag",

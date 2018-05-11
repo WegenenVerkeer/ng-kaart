@@ -1,11 +1,11 @@
-import { Component, ViewEncapsulation, Inject } from "@angular/core";
+import { Component, Inject, ViewEncapsulation } from "@angular/core";
+import { fromNullable } from "fp-ts/lib/Option";
 import { List } from "immutable";
 
 import { KaartClassicComponent } from "./kaart-classic.component";
-import { KaartConfig, KAART_CFG } from "./kaart-config";
+import { KAART_CFG, KaartConfig } from "./kaart-config";
+import { TiledWmsType, WmsLaag } from "./kaart-elementen";
 import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
-import { WmsLaag, TiledWmsType } from "./kaart-elementen";
-import { fromNullable } from "fp-ts/lib/Option";
 
 @Component({
   selector: "awv-kaart-ortho-laag",

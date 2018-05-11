@@ -1,27 +1,28 @@
 import * as array from "fp-ts/lib/Array";
+import { pipe } from "fp-ts/lib/function";
 import { getArrayMonoid } from "fp-ts/lib/Monoid";
 import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
 import { sequence } from "fp-ts/lib/Traversable";
 import * as validation from "fp-ts/lib/Validation";
-import { pipe } from "fp-ts/lib/function";
 import { List } from "immutable";
 import * as ol from "openlayers";
 import { olx } from "openlayers";
 import { Subscription } from "rxjs";
-import { debounceTime, filter, distinctUntilChanged } from "rxjs/operators";
 import * as rx from "rxjs";
+import { debounceTime, distinctUntilChanged, filter } from "rxjs/operators";
 
 import { forEach } from "../util/option";
+
 import * as ke from "./kaart-elementen";
+import { determineStyle, DynamicStyle, StaticStyle, Styles, VectorLaag } from "./kaart-elementen";
+import { VectorType } from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
-import { ModelChanger } from "./model-changes";
-import { PositieAanpassing, ZetMijnLocatieZoomCmd, VoegUiElementToe, ZetUiElementOpties } from "./kaart-protocol-commands";
-import { KaartWithInfo, setStyleSelector, setSelectionStyleSelector, getSelectionStyleSelector } from "./kaart-with-info";
+import { PositieAanpassing, VoegUiElementToe, ZetMijnLocatieZoomCmd, ZetUiElementOpties } from "./kaart-protocol-commands";
+import { getSelectionStyleSelector, KaartWithInfo, setSelectionStyleSelector, setStyleSelector } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
 import { kaartLogger } from "./log";
-import { DynamicStyle, StaticStyle, Styles, determineStyle, VectorLaag } from "./kaart-elementen";
+import { ModelChanger } from "./model-changes";
 import { getDefaultStyle } from "./styles";
-import { VectorType } from "./kaart-elementen";
 
 ///////////////////////////////////
 // Hulpfuncties

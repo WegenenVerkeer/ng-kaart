@@ -1,6 +1,7 @@
-import * as ol from "openlayers";
-import { kaartLogger } from "../kaart/log";
 import { Option } from "fp-ts/lib/Option";
+import * as ol from "openlayers";
+
+import { kaartLogger } from "../kaart/log";
 
 interface GeoJsonLike {
   type: string;

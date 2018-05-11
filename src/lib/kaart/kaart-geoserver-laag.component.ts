@@ -1,12 +1,12 @@
 import { Component, Inject, ViewEncapsulation } from "@angular/core";
+import { fromNullable } from "fp-ts/lib/Option";
 import { List } from "immutable";
 
-import * as ke from "./kaart-elementen";
-import { KAART_CFG, KaartConfig } from "./kaart-config";
-import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
-import { fromNullable } from "fp-ts/lib/Option";
+import { KAART_CFG, KaartConfig } from "./kaart-config";
+import * as ke from "./kaart-elementen";
 import { Laaggroep } from "./kaart-elementen";
+import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
 
 @Component({
   selector: "awv-kaart-geoserver-laag",

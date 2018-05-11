@@ -3,8 +3,8 @@ import { List } from "immutable";
 import * as ol from "openlayers";
 
 import * as ke from "./kaart-elementen";
-import { TypedRecord } from "./kaart-protocol";
 import { VectorLaag } from "./kaart-elementen";
+import { TypedRecord } from "./kaart-protocol";
 
 export interface InfoBoodschap {
   readonly id: string;
