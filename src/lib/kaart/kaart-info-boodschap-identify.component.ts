@@ -59,7 +59,9 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
       case "O":
         return "Op";
       default:
-        return this.waarde("zijderijbaan").toString();
+        return fromNullable(this.waarde("zijderijbaan"))
+          .map(b => b.toString())
+          .getOrElseValue("");
     }
   }
 
