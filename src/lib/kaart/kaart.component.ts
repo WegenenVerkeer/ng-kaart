@@ -4,10 +4,11 @@ import "rxjs/add/observable/never";
 import "rxjs/add/observable/of";
 
 import { Component, ElementRef, Inject, Input, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
+import { Set } from "immutable";
 import * as ol from "openlayers";
 import { ReplaySubject } from "rxjs";
 import { Observable } from "rxjs/Observable";
-import { concatAll, filter, map, merge, scan, shareReplay, takeUntil, tap, switchMap, last, startWith } from "rxjs/operators";
+import { concatAll, filter, last, map, merge, scan, shareReplay, startWith, switchMap, takeUntil, tap } from "rxjs/operators";
 
 import { asap } from "../util/asap";
 import { observerOutsideAngular } from "../util/observer-outside-angular";
@@ -21,8 +22,7 @@ import * as prt from "./kaart-protocol";
 import * as red from "./kaart-reducer";
 import { KaartWithInfo } from "./kaart-with-info";
 import { kaartLogger } from "./log";
-import { modelChanger, ModelChanger, ModelChanges, modelChanges, UiElementSelectie } from "./model-changes";
-import { Set } from "immutable";
+import { ModelChanger, ModelChanges, modelChanges, UiElementSelectie } from "./model-changes";
 
 // Om enkel met @Input properties te moeten werken. Op deze manier kan een stream van KaartMsg naar de caller gestuurd worden
 export type KaartMsgObservableConsumer = (msg$: Observable<prt.KaartMsg>) => void;
@@ -35,7 +35,7 @@ export const vacuousKaartMsgObservableConsumer: KaartMsgObservableConsumer = (ms
   encapsulation: ViewEncapsulation.Emulated // Omwille hiervan kunnen we geen globale CSS gebruiken, maar met Native werken animaties niet
 })
 export class KaartComponent extends KaartComponentBase implements OnInit, OnDestroy {
-  private readonly modelChanger: ModelChanger = modelChanger;
+  private readonly modelChanger: ModelChanger = ModelChanger();
   readonly modelChanges: ModelChanges = modelChanges(this.modelChanger);
   readonly kaartModel$: Observable<KaartWithInfo> = Observable.empty();
   readonly aanwezigeElementen$: Observable<Set<string>>;
