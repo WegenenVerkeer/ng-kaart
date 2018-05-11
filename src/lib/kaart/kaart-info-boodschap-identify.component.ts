@@ -39,7 +39,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   }
 
   heeftDimensies() {
-    return this.lengte().isSome() && this.breedte().isSome();
+    return this.lengte().isSome() || this.breedte().isSome();
   }
 
   dimensies(): string {
@@ -60,7 +60,9 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
       case "O":
         return "Op";
       default:
-        return this.waarde("zijderijbaan").toString();
+        return fromNullable(this.waarde("zijderijbaan"))
+          .map(b => b.toString())
+          .getOrElseValue("");
     }
   }
 
