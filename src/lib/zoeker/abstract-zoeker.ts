@@ -15,8 +15,8 @@ export interface ZoekResultaat {
   omschrijving: string;
   bron: string;
   zoeker: string;
-  geometry: any;
-  locatie: any;
+  geometry: ol.geom.Geometry;
+  extent: ol.Extent;
   icoon: SafeHtml;
   style: ol.style.Style;
 }

@@ -5,7 +5,7 @@ import * as ol from "openlayers";
 import { OperatorFunction } from "rxjs/interfaces";
 import { Observable } from "rxjs/Observable";
 import { from } from "rxjs/observable/from";
-import { map, mergeAll, mergeMap, reduce } from "rxjs/operators";
+import { map, mergeAll, mergeMap, reduce, shareReplay } from "rxjs/operators";
 
 import { AbstractZoeker, geoJSONOptions, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
 import { CrabZoekerConfig } from "./crab-zoeker.config";
@@ -31,23 +31,65 @@ export interface SuggestionServiceResults {
   readonly SuggestionResult: string[];
 }
 
+export interface CrabGemeente {
+  readonly postcodes: string;
+  readonly niscode: number;
+  readonly naam: string;
+  readonly id: number;
+}
+
+export interface CrabStraat {
+  readonly naam: string;
+  readonly gemeente: CrabGemeente;
+  readonly id: number;
+}
+
+export interface CrabHuisnummer {
+  readonly huisnummer: string;
+  readonly niscode: number;
+  readonly straat: CrabStraat;
+  readonly id: number;
+}
+
+export interface CrabBBox {
+  readonly minimumX: number;
+  readonly maximumX: number;
+  readonly minimumY: number;
+  readonly maximumY: number;
+}
+
+export interface CrabPositie {
+  readonly x: number;
+  readonly y: number;
+}
+
 export class CrabZoekResultaat implements ZoekResultaat {
   readonly partialMatch = false;
   readonly index: number;
   readonly omschrijving: string;
   readonly bron: string;
   readonly zoeker: string;
-  readonly geometry: any;
-  readonly locatie: any;
-  readonly icoon: string; // Ieder zoekresultaat heeft hetzelfde icoon.
+  readonly geometry: ol.geom.Geometry;
+  readonly icoon: string;
   readonly style: ol.style.Style;
+  readonly extent: ol.Extent;
 
-  constructor(locatie: LocatorServiceResult, index: number, zoeker: string, icoon: string, style: ol.style.Style) {
+  constructor(
+    x: number,
+    y: number,
+    omschrijving: string,
+    bron: string,
+    index: number,
+    zoeker: string,
+    icoon: string,
+    style: ol.style.Style,
+    extent?: ol.Extent
+  ) {
     this.index = index + 1;
-    this.geometry = new ol.geom.Point([locatie.Location.X_Lambert72, locatie.Location.Y_Lambert72]);
-    this.locatie = new ol.format.GeoJSON(geoJSONOptions).writeGeometry(this.geometry);
-    this.omschrijving = locatie.FormattedAddress;
-    this.bron = locatie.LocationType;
+    this.geometry = new ol.geom.Point([x, y]);
+    this.extent = extent ? extent : this.geometry.getExtent();
+    this.omschrijving = omschrijving;
+    this.bron = bron;
     this.zoeker = zoeker;
     this.icoon = icoon;
     this.style = style;
@@ -75,7 +117,6 @@ export class CrabZoekerService implements AbstractZoeker {
   private voegCrabResultatenToe(result: ZoekResultaten, crabResultaten: LocatorServiceResults): ZoekResultaten {
     const startIndex = result.resultaten.length;
     result.resultaten = result.resultaten.concat(
-      // We willen geen gemeenten van CRAB zien, we hebben daar toch alleen het middelpunt van. googleWdb geeft een beter resultaat.
       crabResultaten.LocationResult
         // Waarschijnlijk gaan we de crab gemeenten niet laten zien,
         //  we hebben daar toch alleen het middelpunt van. Google geeft een beter resultaat.
@@ -84,7 +125,10 @@ export class CrabZoekerService implements AbstractZoeker {
         .map(
           (crabResultaat, index) =>
             new CrabZoekResultaat(
-              crabResultaat,
+              crabResultaat.Location.X_Lambert72,
+              crabResultaat.Location.Y_Lambert72,
+              crabResultaat.FormattedAddress,
+              crabResultaat.LocationType,
               startIndex + index,
               this.naam(),
               this.zoekerRepresentatie.getSvgNaam("Crab"),
@@ -93,6 +137,100 @@ export class CrabZoekerService implements AbstractZoeker {
         )
     );
     return result;
+  }
+
+  getAlleGemeenten$(): Observable<CrabGemeente[]> {
+    return this.http.get<CrabGemeente[]>(this.crabZoekerConfig.url + "/rest/crab/gemeenten").pipe(shareReplay(1));
+  }
+
+  private bboxNaarZoekResultaat(naam: string, bron: string, bbox: CrabBBox): CrabZoekResultaat {
+    const extent: ol.Extent = [bbox.minimumX, bbox.minimumY, bbox.maximumX, bbox.maximumY];
+    const middlePoint = ol.extent.getCenter(extent);
+    return new CrabZoekResultaat(
+      middlePoint[0],
+      middlePoint[1],
+      naam,
+      bron,
+      0,
+      this.naam(),
+      this.zoekerRepresentatie.getSvgNaam("Crab"),
+      this.zoekerRepresentatie.getOlStyle("Crab"),
+      extent
+    );
+  }
+
+  private positieNaarZoekResultaat(naam: string, bron: string, pos: CrabPositie): CrabZoekResultaat {
+    return new CrabZoekResultaat(
+      pos.x,
+      pos.y,
+      naam,
+      bron,
+      0,
+      this.naam(),
+      this.zoekerRepresentatie.getSvgNaam("Crab"),
+      this.zoekerRepresentatie.getOlStyle("Crab")
+    );
+  }
+
+  getGemeenteBBox$(gemeente: CrabGemeente): Observable<ZoekResultaten> {
+    return this.http
+      .get<CrabBBox>(this.crabZoekerConfig.url + "/rest/crab/gemeente/" + gemeente.niscode)
+      .pipe(
+        map(bbox => new ZoekResultaten(this.naam(), [], [this.bboxNaarZoekResultaat(gemeente.naam, "CrabGemeente", bbox)], this.legende)),
+        shareReplay(1)
+      );
+  }
+
+  getStraten$(gemeente: CrabGemeente): Observable<CrabStraat[]> {
+    return this.http
+      .get<CrabStraat[]>(this.crabZoekerConfig.url + "/rest/crab/straten/" + gemeente.niscode)
+      .pipe(map(straten => straten.map(straat => ({ ...straat, gemeente: gemeente }))), shareReplay(1));
+  }
+
+  getStraatBBox$(straat: CrabStraat): Observable<ZoekResultaten> {
+    return this.http
+      .get<CrabBBox>(this.crabZoekerConfig.url + "/rest/crab/straat/" + straat.id)
+      .pipe(
+        map(
+          bbox =>
+            new ZoekResultaten(
+              this.naam(),
+              [],
+              [this.bboxNaarZoekResultaat(`${straat.naam}, ${straat.gemeente.naam}`, "CrabStraat", bbox)],
+              this.legende
+            )
+        ),
+        shareReplay(1)
+      );
+  }
+
+  getHuisnummers$(straat: CrabStraat): Observable<CrabHuisnummer[]> {
+    return this.http
+      .get<CrabHuisnummer[]>(this.crabZoekerConfig.url + "/rest/crab/huisnummers/" + straat.id)
+      .pipe(map(huisnummers => huisnummers.map(huisnummer => ({ ...huisnummer, straat: straat }))), shareReplay(1));
+  }
+
+  getHuisnummerPositie$(huisnummer: CrabHuisnummer): Observable<ZoekResultaten> {
+    return this.http
+      .get<CrabPositie>(this.crabZoekerConfig.url + "/rest/crab/huisnummer/" + huisnummer.straat.id + "/" + huisnummer.huisnummer)
+      .pipe(
+        map(
+          positie =>
+            new ZoekResultaten(
+              this.naam(),
+              [],
+              [
+                this.positieNaarZoekResultaat(
+                  `${huisnummer.straat.naam} ${huisnummer.huisnummer}, ${huisnummer.straat.gemeente.naam}`,
+                  "CrabHuis",
+                  positie
+                )
+              ],
+              this.legende
+            )
+        ),
+        shareReplay(1)
+      );
   }
 
   zoek$(zoekterm: string): Observable<ZoekResultaten> {

@@ -8,7 +8,11 @@
       </button>
       <button mat-menu-item (click)="kiesZoeker('Perceel')" [disabled]="actieveZoeker === 'Perceel'">
         <mat-icon>search</mat-icon>
-        <span>Zoek perceel</span>
+        <span>Zoek op Perceel</span>
+      </button>
+      <button mat-menu-item (click)="kiesZoeker('Crab')" [disabled]="actieveZoeker === 'Crab'">
+        <mat-icon>search</mat-icon>
+        <span>Zoek op CRAB</span>
       </button>
     </mat-menu>
 
@@ -24,6 +28,7 @@
     </a>
   </div>
   <awv-perceel-zoeker *ngIf="actieveZoeker === 'Perceel'"></awv-perceel-zoeker>
+  <awv-crab-getrapt-zoeker *ngIf="actieveZoeker === 'Crab'"></awv-crab-getrapt-zoeker>
   <div class="zoeker-help" *ngIf="toonHelp">
     <div *ngIf="actieveZoeker === 'Geoloket'">
       <br>

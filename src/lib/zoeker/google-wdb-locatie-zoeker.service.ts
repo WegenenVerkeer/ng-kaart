@@ -19,16 +19,16 @@ export class GoogleWdbZoekResultaat implements ZoekResultaat {
   readonly omschrijving: string;
   readonly bron: string;
   readonly zoeker: string;
-  readonly geometry: any;
-  readonly locatie: any;
+  readonly geometry: ol.geom.Geometry;
   readonly icoon: string; // Ieder zoekresultaat heeft hetzelfde icoon.
   readonly style: ol.style.Style;
+  readonly extent: ol.Extent;
 
   constructor(locatie, index: number, zoeker: string, style: ol.style.Style, icoon: string) {
     this.partialMatch = locatie.partialMatch;
     this.index = index + 1;
-    this.locatie = locatie.locatie;
     this.geometry = new ol.format.GeoJSON(geoJSONOptions).readGeometry(locatie.locatie);
+    this.extent = this.geometry.getExtent();
     this.omschrijving = locatie.omschrijving;
     this.bron = locatie.bron;
     this.zoeker = zoeker;

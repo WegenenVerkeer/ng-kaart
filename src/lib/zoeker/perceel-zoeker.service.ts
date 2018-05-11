@@ -63,11 +63,13 @@ export class PerceelZoekResultaat implements ZoekResultaat {
   readonly locatie: any;
   readonly icoon: string;
   readonly style: ol.style.Style;
+  readonly extent: ol.Extent;
 
   constructor(details: PerceelDetails, index: number, zoeker: string, icoon: string, style: ol.style.Style) {
     this.index = index + 1;
     this.locatie = details.shape;
     this.geometry = new ol.format.GeoJSON(geoJSONOptions).readGeometry(this.locatie);
+    this.extent = this.geometry.getExtent();
     this.omschrijving = details.capakey;
     this.bron = "Perceel";
     this.zoeker = zoeker;

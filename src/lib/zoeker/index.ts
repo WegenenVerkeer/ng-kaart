@@ -12,6 +12,7 @@ import {
   MatMenuModule
 } from "@angular/material";
 
+import { CrabGetraptZoekerComponent } from "./crab-getrapt-zoeker.component";
 import { CrabZoekerComponent } from "./crab-zoeker.component";
 import { CrabZoekerService } from "./crab-zoeker.service";
 import { GoogleWdbLocatieZoekerComponent } from "./google-wdb-locatie-zoeker.component";
@@ -26,6 +27,7 @@ import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
 
 const components: any[] = [
   GoogleWdbLocatieZoekerComponent,
+  CrabGetraptZoekerComponent,
   CrabZoekerComponent,
   ZoekerComponent,
   ZoekerHighlightPipe,
@@ -64,6 +66,7 @@ export * from "./google-wdb-locatie-zoeker.service";
 export * from "./google-wdb-locatie-zoeker.component";
 export * from "./google-wdb-locatie-zoeker.config";
 
+export * from "./crab-getrapt-zoeker.component";
 export * from "./crab-zoeker.service";
 export * from "./crab-zoeker.component";
 export * from "./crab-zoeker.config";

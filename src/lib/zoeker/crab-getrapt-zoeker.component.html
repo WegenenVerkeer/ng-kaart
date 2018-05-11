@@ -1,0 +1,30 @@
+<div class="perceel-form">
+  <mat-form-field>
+    <input matInput placeholder="Gemeente" [formControl]="gemeenteControl" [matAutocomplete]="gemeenteAuto" class="crab-gemeente">
+  </mat-form-field>
+  <mat-autocomplete autoActiveFirstOption #gemeenteAuto="matAutocomplete" [displayWith]="toonGemeente">
+    <mat-option *ngFor="let gemeente of gefilterdeGemeenten" [value]="gemeente" [innerHtml]="toonGemeenteInLijst(gemeente) | highlight: gemeenteControl.value">
+    </mat-option>
+  </mat-autocomplete>
+
+  <mat-form-field>
+    <input matInput placeholder="Straat" [formControl]="straatControl" [matAutocomplete]="straatAuto">
+  </mat-form-field>
+  <mat-autocomplete autoActiveFirstOption #straatAuto="matAutocomplete" [displayWith]="toonStraat">
+    <mat-option *ngFor="let straat of straten$ | async" [value]="straat" [innerHtml]="straat.naam | highlight: straatControl.value">
+    </mat-option>
+  </mat-autocomplete>
+
+  <mat-form-field>
+    <input matInput placeholder="Huisnummer" [formControl]="huisnummerControl" [matAutocomplete]="huisnummerAuto">
+  </mat-form-field>
+  <mat-autocomplete autoActiveFirstOption #huisnummerAuto="matAutocomplete" [displayWith]="toonHuisnummer">
+    <mat-option *ngFor="let huisnummer of huisnummers$ | async" [value]="huisnummer" [innerHtml]="huisnummer.huisnummer | highlight: huisnummerControl.value">
+    </mat-option>
+  </mat-autocomplete>
+
+  <div class="perceel-buttons">
+    <button mat-button (click)="maakVeldenLeeg('alles')">Maak leeg</button>
+    <button mat-button (click)="toonOpKaart()" [disabled]="!magTonenOpKaart()">Toon op kaart</button>
+  </div>
+</div>

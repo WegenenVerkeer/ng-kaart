@@ -19,7 +19,7 @@ export class Fout {
   constructor(readonly zoeker: string, readonly fout: string) {}
 }
 
-export type ZoekerType = "Geoloket" | "Perceel";
+export type ZoekerType = "Geoloket" | "Perceel" | "Crab";
 
 @Component({
   selector: "awv-zoeker",
@@ -58,12 +58,12 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
     feature.setStyle(resultaat.style);
 
     let middlePoint: ol.geom.Point | undefined = undefined;
-    if (resultaat.locatie.type === "MultiLineString") {
+    if (resultaat.geometry instanceof ol.geom.MultiLineString) {
       // voeg een puntelement toe ergens op de linestring om een icoon met nummer te tonen
       const lineStrings = resultaat.geometry.getLineStrings();
       const lineString = lineStrings[Math.floor(lineStrings.length / 2)];
       middlePoint = new ol.geom.Point(lineString.getCoordinateAt(0.5));
-    } else if (resultaat.locatie.type === "Polygon" || resultaat.locatie.type === "MultiPolygon") {
+    } else if (resultaat.geometry instanceof ol.geom.Polygon || resultaat.geometry instanceof ol.geom.MultiPolygon) {
       // in midden van gemeente polygon
       const extent = resultaat.geometry.getExtent();
       middlePoint = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
@@ -176,7 +176,9 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
       case "Geoloket":
         return "Zoek";
       case "Perceel":
-        return "Zoek op perceel";
+        return "Zoek op Perceel";
+      case "Crab":
+        return "Zoek op CRAB";
     }
   }
 
@@ -206,8 +208,8 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
       (list, resultaat) => list.push(...ZoekerComponent.maakNieuwFeature(resultaat)),
       List<ol.Feature>()
     );
-    this.extent = features
-      .map(feature => feature!.getGeometry().getExtent())
+    this.extent = this.alleZoekResultaten
+      .map(resultaat => resultaat.extent)
       .reduce((maxExtent, huidigeExtent) => ol.extent.extend(maxExtent!, huidigeExtent!), ol.extent.createEmpty());
 
     this.dispatch(prt.VervangFeaturesCmd(ZoekerLaagNaam, features, kaartLogOnlyWrapper));
