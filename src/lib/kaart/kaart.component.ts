@@ -7,7 +7,7 @@ import "rxjs/add/observable/empty";
 import "rxjs/add/observable/never";
 import "rxjs/add/observable/of";
 import { Observable } from "rxjs/Observable";
-import { concatAll, filter, last, map, merge, scan, shareReplay, switchMap, takeUntil, tap } from "rxjs/operators";
+import { concatAll, filter, last, map, merge, scan, shareReplay, startWith, switchMap, takeUntil, tap } from "rxjs/operators";
 
 import { asap } from "../util/asap";
 import { observerOutsideAngular } from "../util/observer-outside-angular";
@@ -31,7 +31,7 @@ export const vacuousKaartMsgObservableConsumer: KaartMsgObservableConsumer = (ms
 @Component({
   selector: "awv-kaart",
   templateUrl: "./kaart.component.html",
-  styleUrls: ["../../../node_modules/openlayers/css/ol.css", "./kaart.component.scss"],
+  styleUrls: ["./kaart.component.scss"],
   encapsulation: ViewEncapsulation.Emulated // Omwille hiervan kunnen we geen globale CSS gebruiken, maar met Native werken animaties niet
 })
 export class KaartComponent extends KaartComponentBase implements OnInit, OnDestroy {
@@ -105,7 +105,8 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     });
 
     this.aanwezigeElementen$ = this.modelChanges.uiElementSelectie$.pipe(
-      scan((st: Set<string>, selectie: UiElementSelectie) => (selectie.aan ? st.add(selectie.naam) : st.delete(selectie.naam)), Set())
+      scan((st: Set<string>, selectie: UiElementSelectie) => (selectie.aan ? st.add(selectie.naam) : st.delete(selectie.naam)), Set()),
+      startWith(Set())
     );
   }
 

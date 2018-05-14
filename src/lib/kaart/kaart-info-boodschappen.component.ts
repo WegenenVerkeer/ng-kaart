@@ -11,7 +11,7 @@ import { KaartChildComponentBase } from "./kaart-child-component-base";
 import { InfoBoodschappenMsg, infoBoodschappenMsgGen, KaartInternalMsg } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
 import { SluitInfoBoodschapCmd } from "./kaart-protocol-commands";
-import { InfoBoodschap } from "./kaart-with-info-model";
+import { InfoBoodschap, InfoBoodschapAlert } from "./kaart-with-info-model";
 import { KaartComponent } from "./kaart.component";
 
 @Component({
@@ -48,7 +48,11 @@ export class KaartInfoBoodschappenComponent extends KaartChildComponentBase impl
       .map(msg => msg.infoBoodschappen.reverse().toList()); // laatste boodschap bovenaan
   }
 
-  verwijder(id: string, verwijderBoodschapMsgGen: () => Option<KaartInternalMsg>): void {
-    this.dispatch(SluitInfoBoodschapCmd(id, verwijderBoodschapMsgGen));
+  isIdentify(boodschap: InfoBoodschap): boolean {
+    return boodschap.type === "InfoBoodschapIdentify";
+  }
+
+  isAlert(boodschap: InfoBoodschap): boolean {
+    return boodschap.type === "InfoBoodschapAlert";
   }
 }

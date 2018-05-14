@@ -31,14 +31,6 @@
   position: relative;
 }
 
-.ol-control {
-  background-color: rgba(255, 255, 255, 0.8);
-
-  &:hover {
-    background-color: rgba(255, 255, 255, 0.9);
-  }
-}
-
 #kaart-container {
   position: absolute;
   height: 1000px;

@@ -50,7 +50,7 @@ function disableWanneerLeeg<T>(control: FormControl, array: T[]) {
   }
 }
 
-type MaakLeegType = "alles" | "vanafgemeente" | "vanafafdeling" | "vanafsectie" | "vanafperceel";
+export type MaakLeegType = "alles" | "vanafgemeente" | "vanafafdeling" | "vanafsectie" | "vanafperceel";
 
 @Component({
   selector: "awv-perceel-zoeker",
@@ -195,7 +195,7 @@ export class PerceelZoekerComponent extends KaartChildComponentBase implements O
     );
   }
 
-  private maakVeldenLeeg(niveau: MaakLeegType) {
+  maakVeldenLeeg(niveau: MaakLeegType) {
     if (niveau === "alles") {
       this.gefilterdeGemeenten = this.alleGemeenten;
       this.gemeenteControl.setValue(null);
