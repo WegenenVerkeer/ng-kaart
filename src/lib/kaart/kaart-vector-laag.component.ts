@@ -1,18 +1,18 @@
 import { Component, Input, ViewEncapsulation } from "@angular/core";
+import { option } from "fp-ts";
 import { fromNullable, Option } from "fp-ts/lib/Option";
-
 import * as ol from "openlayers";
+
+import { forEach, orElse } from "../util/option";
 
 import { KaartClassicComponent } from "./kaart-classic.component";
 import * as ke from "./kaart-elementen";
-import { KaartLaagComponent } from "./kaart-laag.component";
-import { forEach, orElse } from "../util/option";
-import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
-import * as prt from "./kaart-protocol";
 import { StyleSelector, Stylish } from "./kaart-elementen";
-import { getDefaultSelectionStyleFunction, getDefaultStyleFunction } from "./styles";
-import { option } from "fp-ts";
 import { determineStyleSelector } from "./kaart-elementen";
+import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
+import { KaartLaagComponent } from "./kaart-laag.component";
+import * as prt from "./kaart-protocol";
+import { getDefaultSelectionStyleFunction, getDefaultStyleFunction } from "./styles";
 
 @Component({
   selector: "awv-kaart-vector-laag",

@@ -1,7 +1,7 @@
 import { Component, ViewEncapsulation } from "@angular/core";
 
-import { KaartVectorLaagComponent } from "./kaart-vector-laag.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
+import { KaartVectorLaagComponent } from "./kaart-vector-laag.component";
 
 @Component({
   selector: "awv-kaart-teken-polygoon-laag",

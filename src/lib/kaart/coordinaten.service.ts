@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
-import proj4 from "proj4";
 import * as ol from "openlayers";
+import proj4 from "proj4";
 
 export function wgs84ToLambert72(coordinate: [number, number]): [number, number] {
   return ol.proj.transform(coordinate, "EPSG:4326", "EPSG:31370");

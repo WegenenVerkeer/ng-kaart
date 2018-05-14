@@ -4,16 +4,17 @@ import { FormControl } from "@angular/forms";
 import { List, Set } from "immutable";
 import { UnaryFunction } from "rxjs/interfaces";
 import { Observable } from "rxjs/Observable";
-import { combineLatest, distinctUntilChanged, filter, map, startWith, switchMap, tap, shareReplay, take } from "rxjs/operators";
+import { combineLatest, distinctUntilChanged, filter, map, shareReplay, startWith, switchMap, take, tap } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
+import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
 import { kaartLogger } from "../kaart/log";
-import { ZoekResultaten, ZoekInput } from "./abstract-zoeker";
-import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
+
+import { ZoekInput, ZoekResultaten } from "./abstract-zoeker";
+import { CrabGemeente, CrabHuisnummer, CrabStraat, CrabZoekerService } from "./crab-zoeker.service";
 import { ZoekerComponent } from "./zoeker.component";
-import { CrabZoekerService, CrabGemeente, CrabStraat, CrabHuisnummer } from "./crab-zoeker.service";
 
 function isNotNullObject(object) {
   return object && object instanceof Object;

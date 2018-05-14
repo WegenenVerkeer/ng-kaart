@@ -1,10 +1,10 @@
 import { Observable } from "rxjs/Observable";
+import { observeOn, takeUntil } from "rxjs/operators";
 import { pipe } from "rxjs/Rx";
 import { asap } from "rxjs/scheduler/asap";
-import { takeUntil, observeOn } from "rxjs/operators";
 
-import { ZoneLike } from "./zone-like";
 import { observerOutsideAngular } from "./observer-outside-angular";
+import { ZoneLike } from "./zone-like";
 
 export function terminateOnDestroyAndRunAsapOutsideOfAngular<T>(
   zone: ZoneLike,

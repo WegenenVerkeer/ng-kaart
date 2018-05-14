@@ -1,10 +1,10 @@
 import { Component, Input, OnInit, ViewEncapsulation } from "@angular/core";
+import { fromNullable } from "fp-ts/lib/Option";
 import { List } from "immutable";
 
-import { KaartLaagComponent } from "./kaart-laag.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
-import { WmsLaag, TiledWmsType, Laaggroep } from "./kaart-elementen";
-import { fromNullable } from "fp-ts/lib/Option";
+import { Laaggroep, TiledWmsType, WmsLaag } from "./kaart-elementen";
+import { KaartLaagComponent } from "./kaart-laag.component";
 
 @Component({
   selector: "awv-kaart-wms-laag",

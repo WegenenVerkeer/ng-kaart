@@ -8,6 +8,7 @@ import { ClickOutsideModule } from "ng4-click-outside";
 import { KaartModule } from "../lib/kaart/index";
 import { LagenkiezerModule } from "../lib/lagenkiezer/index";
 import { ZoekerModule } from "../lib/zoeker/index";
+
 import { AppComponent } from "./app.component";
 import { AvKaartInnerComponent } from "./av-kaart-inner.component";
 import { AvKaartComponent } from "./av-kaart.component";

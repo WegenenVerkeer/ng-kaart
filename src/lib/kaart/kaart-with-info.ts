@@ -1,16 +1,17 @@
-import { none, some, Option } from "fp-ts/lib/Option";
+import { none, Option, some } from "fp-ts/lib/Option";
 import { List, Map, OrderedMap, Set } from "immutable";
 import * as ol from "openlayers";
 import { BehaviorSubject, ReplaySubject, Subject } from "rxjs";
 
-import { TypedRecord, Zoominstellingen } from "./kaart-protocol";
 import { ZoekResultaten } from "../zoeker/abstract-zoeker";
 import { ZoekerCoordinator } from "../zoeker/zoeker-coordinator";
+
 import { KaartConfig } from "./kaart-config";
 import * as ke from "./kaart-elementen";
-import { ModelChanger } from "./model-changes";
-import { InfoBoodschap, GeselecteerdeFeatures } from "./kaart-with-info-model";
 import { StyleSelector } from "./kaart-elementen";
+import { TypedRecord, Zoominstellingen } from "./kaart-protocol";
+import { GeselecteerdeFeatures, InfoBoodschap } from "./kaart-with-info-model";
+import { ModelChanger } from "./model-changes";
 
 // Spijtig genoeg kan die niet in het model zelf zitten vermits de stijl functie in de interaction.Select control wordt
 // gecreëerd wanneer het model nog leeg is, en het model van dat moment in zijn scope zit

@@ -1,12 +1,13 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone, OnInit } from "@angular/core";
 import * as rx from "rxjs";
 import { distinctUntilChanged, map } from "rxjs/operators";
-import * as cmd from "../kaart/kaart-protocol-commands";
+
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
+import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
+import * as cmd from "../kaart/kaart-protocol-commands";
 import { KaartComponent } from "../kaart/kaart.component";
 import { observeOnAngular } from "../util/observe-on-angular";
-import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 
 @Component({
   // Atribuut selector om geen tussentijdse dom elementen te creëeren. Die gooien roet in het eten van de CSS.

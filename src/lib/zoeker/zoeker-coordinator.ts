@@ -2,7 +2,7 @@ import { Map, Set } from "immutable";
 import { Subject } from "rxjs/Rx";
 import { Subscription } from "rxjs/Subscription";
 
-import { AbstractZoeker, ZoekResultaten, ZoekInput } from "./abstract-zoeker";
+import { AbstractZoeker, ZoekInput, ZoekResultaten } from "./abstract-zoeker";
 
 export class ZoekerCoordinator {
   private zoekers: Array<AbstractZoeker> = Array();

@@ -7,7 +7,7 @@ import { Observable } from "rxjs/Observable";
 import { from } from "rxjs/observable/from";
 import { map, mergeAll, mergeMap, reduce, shareReplay } from "rxjs/operators";
 
-import { AbstractZoeker, geoJSONOptions, ZoekResultaat, ZoekResultaten, ZoekInput } from "./abstract-zoeker";
+import { AbstractZoeker, geoJSONOptions, ZoekInput, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
 import { CrabZoekerConfig } from "./crab-zoeker.config";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "./zoeker-representatie.service";
 import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";

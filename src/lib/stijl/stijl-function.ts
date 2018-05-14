@@ -1,7 +1,7 @@
 import * as ol from "openlayers";
 
-import { Validation } from "./json-object-interpreting";
 import { jsonAwvV0RuleCompiler } from "./json-awv-v0-stijlfunctie";
+import { Validation } from "./json-object-interpreting";
 import * as oi from "./json-object-interpreting";
 
 ///////////////////////////////////////////////////

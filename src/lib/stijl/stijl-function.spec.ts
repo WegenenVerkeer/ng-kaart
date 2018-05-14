@@ -1,6 +1,6 @@
-import { definitieToStyleFunction } from "./stijl-function";
-
 import * as ol from "openlayers";
+
+import { definitieToStyleFunction } from "./stijl-function";
 
 describe("de stijl functie", () => {
   describe("bij het evalueren van geldige stijlselectiefuncties", () => {

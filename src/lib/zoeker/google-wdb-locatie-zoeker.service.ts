@@ -2,8 +2,8 @@ import "rxjs/add/observable/fromPromise";
 
 import { Inject, Injectable } from "@angular/core";
 import { Http, QueryEncoder, Response, URLSearchParams } from "@angular/http";
-import { Map } from "immutable";
 import {} from "googlemaps";
+import { Map } from "immutable";
 import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
 import { catchError, flatMap, map } from "rxjs/operators";

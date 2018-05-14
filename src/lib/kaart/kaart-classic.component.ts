@@ -17,6 +17,7 @@ import {
   SubscribedMsg
 } from "../kaart-classic/messages";
 import { ofType, TypedRecord } from "../util/operators";
+
 import { KaartComponentBase } from "./kaart-component-base";
 import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import * as prt from "./kaart-protocol";

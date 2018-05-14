@@ -1,12 +1,11 @@
-import "rxjs/add/observable/combineLatest";
-import "rxjs/add/observable/empty";
-import "rxjs/add/observable/never";
-import "rxjs/add/observable/of";
-
 import { Component, ElementRef, Inject, Input, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
 import { Set } from "immutable";
 import * as ol from "openlayers";
 import { ReplaySubject } from "rxjs";
+import "rxjs/add/observable/combineLatest";
+import "rxjs/add/observable/empty";
+import "rxjs/add/observable/never";
+import "rxjs/add/observable/of";
 import { Observable } from "rxjs/Observable";
 import { concatAll, filter, last, map, merge, scan, shareReplay, switchMap, takeUntil, tap } from "rxjs/operators";
 
@@ -14,6 +13,7 @@ import { asap } from "../util/asap";
 import { observerOutsideAngular } from "../util/observer-outside-angular";
 import { emitSome } from "../util/operators";
 import { forEach } from "../util/option";
+
 import { KaartComponentBase } from "./kaart-component-base";
 import { KAART_CFG, KaartConfig } from "./kaart-config";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";

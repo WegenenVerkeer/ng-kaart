@@ -1,6 +1,6 @@
+import { isSome, Option } from "fp-ts/lib/Option";
 import { Observable } from "rxjs/Observable";
-import { map, filter } from "rxjs/operators";
-import { Option, isSome } from "fp-ts/lib/Option";
+import { filter, map } from "rxjs/operators";
 
 /**
  * Transformeert waarden van A naar waarden van B mbv f, maar verhindert propagatie als

@@ -1,8 +1,9 @@
 import * as ol from "openlayers";
 
 import * as prt from "../kaart/kaart-protocol";
-import { classicLogger } from "./log";
 import { GeselecteerdeFeatures } from "../kaart/kaart-with-info-model";
+
+import { classicLogger } from "./log";
 
 export interface KaartClassicMsg {
   readonly type: "KaartClassic";

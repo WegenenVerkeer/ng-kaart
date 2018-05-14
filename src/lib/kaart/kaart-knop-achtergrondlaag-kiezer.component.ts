@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, ViewEncapsulation, NgZone, Input } from "@angular/core";
+import { Component, Input, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { KaartComponentBase } from "./kaart-component-base";
