@@ -16,6 +16,8 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   @Input() feature: ol.Feature;
   @Input() laag: Option<VectorLaag>;
 
+  alleVeldenZichtbaar = false;
+
   teVerbergenProperties = List.of("geometry", "locatie", "ident8", "afstandrijbaan", "zijderijbaan", "breedte", "hm", "verpl");
 
   properties = () => this.feature.getProperties()["properties"];
@@ -127,12 +129,27 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
       .getOrElseValue(veld);
   }
 
+  isBasisVeld(veld: string): boolean {
+    return this.laag
+      .chain(l => fromNullable(l.isBasisVeld))
+      .map(isBasisVeld => isBasisVeld(veld))
+      .getOrElseValue(true); // indien geen meta informatie functie, toon alle velden
+  }
+
   zichtbareEigenschappen(): string[] {
-    return this.eigenschappen(key => !this.isBoolean(key));
+    return this.eigenschappen(key => !this.isBoolean(key) && this.isBasisVeld(key));
   }
 
   booleanEigenschappen(): string[] {
-    return this.eigenschappen(key => this.isBoolean(key));
+    return this.eigenschappen(key => this.isBoolean(key) && this.isBasisVeld(key));
+  }
+
+  geavanceerdeEigenschappen(): string[] {
+    return this.eigenschappen(key => !this.isBoolean(key) && !this.isBasisVeld(key));
+  }
+
+  geavanceerdeBooleanEigenschappen(): string[] {
+    return this.eigenschappen(key => this.isBoolean(key) && !this.isBasisVeld(key));
   }
 
   waarde(name: string): Object {

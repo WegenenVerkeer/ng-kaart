@@ -48,3 +48,42 @@
 
   </div>
 </div>
+
+<div class="expand-line">
+  <button mat-button class="mat-expand-button" (click)="alleVeldenZichtbaar = true" *ngIf="allesTonen == false">
+    <mat-icon>expand_more</mat-icon>
+  </button>
+
+  <button mat-button class="mat-expand-button" (click)="alleVeldenZichtbaar = false" *ngIf="allesTonen == true">
+    <mat-icon>expand_less</mat-icon>
+  </button>
+</div>
+
+<div class="velden" *ngIf="alleVeldenZichtbaar == true">
+  <div class="veldnamen">
+    <div class="veldnaam" *ngFor="let veld of geavanceerdeEigenschappen()">
+      {{ label(veld) }}
+    </div>
+  </div>
+  <div class="veldwaarden">
+    <div class="veldwaarde" *ngFor="let veld of geavanceerdeEigenschappen()">
+      {{ waarde(veld) }}
+    </div>
+  </div>
+</div>
+
+<div class="booleanwaarden" *ngIf="alleVeldenZichtbaar == true">
+  <div class="booleanwaarde" *ngFor="let veld of geavanceerdeBooleanEigenschappen()">
+
+    <div *ngIf="waarde(veld)">
+      <mat-icon class="boolean-icon groen">done</mat-icon>
+      {{ label(veld) }}
+    </div>
+
+    <div *ngIf="!waarde(veld)">
+      <mat-icon class="boolean-icon rood">clear</mat-icon>
+      {{ label(veld) }}
+    </div>
+
+  </div>
+</div>

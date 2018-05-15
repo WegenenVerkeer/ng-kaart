@@ -96,3 +96,15 @@
 .groen {
   color: rgba(97, 186, 117, 0.87);
 }
+
+.mat-expand-button {
+  float: right;
+  padding-left: 0;
+  padding-right: 0;
+  line-height: 16px;
+  min-width: 24px;
+}
+
+.expand-line {
+  padding-bottom: 16px;
+}
