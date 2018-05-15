@@ -9,7 +9,8 @@ import {
   MatFormFieldModule,
   MatIconModule,
   MatInputModule,
-  MatMenuModule
+  MatMenuModule,
+  MatProgressSpinnerModule
 } from "@angular/material";
 
 import { CrabGetraptZoekerComponent } from "./crab-getrapt-zoeker.component";
@@ -46,7 +47,8 @@ const components: any[] = [
     MatFormFieldModule,
     MatMenuModule,
     MatAutocompleteModule,
-    MatButtonModule
+    MatButtonModule,
+    MatProgressSpinnerModule
   ],
   declarations: [components],
   entryComponents: [ZoekerInjectorComponent],

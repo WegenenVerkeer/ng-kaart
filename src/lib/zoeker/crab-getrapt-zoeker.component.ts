@@ -4,7 +4,19 @@ import { FormControl } from "@angular/forms";
 import { List, Set } from "immutable";
 import { UnaryFunction } from "rxjs/interfaces";
 import { Observable } from "rxjs/Observable";
-import { combineLatest, distinctUntilChanged, filter, map, shareReplay, startWith, switchMap, take, tap } from "rxjs/operators";
+import {
+  catchError,
+  combineLatest,
+  distinctUntilChanged,
+  filter,
+  map,
+  retry,
+  shareReplay,
+  startWith,
+  switchMap,
+  take,
+  tap
+} from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
@@ -35,9 +47,19 @@ function filterMetWaarde<T>(control: FormControl, propertyName: string): UnaryFu
 
 // inputWaarde kan een string of een object zijn. Enkel wanneer het een object is, roepen we de provider op,
 // anders geven we een lege array terug.
-function safeProvider<A, T>(provider: (A) => Observable<T[]>): UnaryFunction<Observable<A>, Observable<T[]>> {
+function safeProvider<A, T>(
+  provider: (A) => Observable<T[]>,
+  meldFout: (HttpErrorResponse) => void
+): UnaryFunction<Observable<A>, Observable<T[]>> {
   return switchMap(inputWaarde => {
-    return isNotNullObject(inputWaarde) ? provider(inputWaarde) : Observable.of([]);
+    return isNotNullObject(inputWaarde)
+      ? provider(inputWaarde).pipe(
+          catchError((error, obs) => {
+            meldFout(error);
+            return Observable.of([]);
+          })
+        )
+      : Observable.of([]);
   });
 }
 
@@ -81,7 +103,7 @@ export class CrabGetraptZoekerComponent extends KaartChildComponentBase implemen
   ngOnInit(): void {
     super.ngOnInit();
     this.maakVeldenLeeg("alles");
-    this.bindToLifeCycle(this.crabService.getAlleGemeenten$()).subscribe(
+    this.bindToLifeCycle(this.busy(this.crabService.getAlleGemeenten$())).subscribe(
       gemeenten => {
         // De gemeentecontrol was disabled tot nu, om te zorgen dat de gebruiker niet kan filteren voordat de gemeenten binnen zijn.
         this.gemeenteControl.enable();
@@ -122,14 +144,14 @@ export class CrabGetraptZoekerComponent extends KaartChildComponentBase implemen
     // Filter het antwoord daarvan met de (eventuele) waarde van onze HUIDIGE control, dit om autocomplete te doen.
     this.straten$ = this.gemeenteControl.valueChanges.pipe(
       distinctUntilChanged(),
-      safeProvider(gemeente => this.crabService.getStraten$(gemeente)),
+      safeProvider(gemeente => this.busy(this.crabService.getStraten$(gemeente)), error => this.meldFout(error)),
       filterMetWaarde(this.straatControl, "naam"),
       shareReplay(1)
     );
 
     this.huisnummers$ = this.straatControl.valueChanges.pipe(
       distinctUntilChanged(),
-      safeProvider(straat => this.crabService.getHuisnummers$(straat)),
+      safeProvider(straat => this.busy(this.crabService.getHuisnummers$(straat)), error => this.meldFout(error)),
       filterMetWaarde(this.huisnummerControl, "huisnummer"),
       shareReplay(1)
     );
@@ -142,6 +164,11 @@ export class CrabGetraptZoekerComponent extends KaartChildComponentBase implemen
     this.bindToLifeCycle(this.huisnummerControl.valueChanges.pipe(filter(isNotNullObject), distinctUntilChanged())).subscribe(v => {
       this.toonOpKaart();
     });
+  }
+
+  busy<T>(observable: Observable<T>): Observable<T> {
+    this.zoekerComponent.setBusy();
+    return observable.pipe(tap(x => this.zoekerComponent.setNotBusy(), error => this.zoekerComponent.setNotBusy()));
   }
 
   ngOnDestroy(): void {
@@ -204,7 +231,7 @@ export class CrabGetraptZoekerComponent extends KaartChildComponentBase implemen
     } else {
       zoekInput = this.gemeenteControl.value;
     }
-
+    this.zoekerComponent.toonResultaat = true;
     this.dispatch({
       type: "Zoek",
       input: zoekInput,

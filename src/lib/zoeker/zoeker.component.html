@@ -17,11 +17,12 @@
     </mat-menu>
 
     <a [matMenuTriggerFor]="zoekerMenu">
-        <mat-icon matPrefix class="klikbaar">menu</mat-icon>
+        <mat-icon matPrefix class="klikbaar">keyboard_arrow_down</mat-icon>
     </a>
     <a (click)="toggleResultaat()">
       <mat-icon matPrefix [ngClass]="{'inactief':!toonResultaat}" class="klikbaar">search</mat-icon>
     </a>
+    <mat-spinner diameter="20" *ngIf="isBusy()"></mat-spinner>
     <input placeholder="{{getPlaceholder()}}" [formControl]="zoekVeld" [readOnly]="this.actieveZoeker !== 'Geoloket'" (keyup)="onKey($event)">
     <a (click)="toggleHelp()">
       <mat-icon matSuffix [ngClass]="{'inactief':!toonHelp}" class="klikbaar">help</mat-icon>
@@ -83,7 +84,7 @@
       </div>
     </div>
   </div>
-  <div *ngIf="toonHelp && toonResultaat && heeftResultaatOfFout()" class="divider"></div>
+  <div *ngIf="toonResultaat && heeftResultaatOfFout()" class="divider"></div>
   <div class="zoeker-resultaat-box" *ngIf="toonResultaat">
     <div *ngFor="let fout of alleFouten" class="zoeker-resultaat zoeker-fout">
       <mat-icon>announcement</mat-icon>

@@ -146,13 +146,16 @@ export class PerceelZoekerComponent extends KaartChildComponentBase implements O
     this.subscribeToDisableWhenEmpty(this.percelen$, this.perceelControl, "vanafperceel");
 
     // Hier gaan we onze capakey doorsturen naar de zoekers, we willen alleen de perceelzoeker triggeren.
-    this.bindToLifeCycle(this.perceelControl.valueChanges.pipe(filter(isNotNullObject), distinctUntilChanged())).subscribe(perceelDetails =>
-      this.dispatch({
-        type: "Zoek",
-        input: perceelDetails.capakey,
-        zoekers: Set.of(this.perceelService.naam()),
-        wrapper: kaartLogOnlyWrapper
-      })
+    this.bindToLifeCycle(this.perceelControl.valueChanges.pipe(filter(isNotNullObject), distinctUntilChanged())).subscribe(
+      perceelDetails => {
+        this.zoekerComponent.toonResultaat = true;
+        this.dispatch({
+          type: "Zoek",
+          input: perceelDetails.capakey,
+          zoekers: Set.of(this.perceelService.naam()),
+          wrapper: kaartLogOnlyWrapper
+        });
+      }
     );
 
     this.dispatch({ type: "VoegZoekerToe", zoeker: this.perceelService, wrapper: kaartLogOnlyWrapper });
@@ -177,7 +180,7 @@ export class PerceelZoekerComponent extends KaartChildComponentBase implements O
   }
 
   toonPerceel(perceel?: PerceelNummer): string | undefined {
-    return perceel ? perceel.capakey : undefined;
+    return perceel ? perceel.perceelsnummer : undefined;
   }
 
   private meldFout(fout: HttpErrorResponse) {

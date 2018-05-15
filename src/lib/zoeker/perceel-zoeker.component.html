@@ -27,7 +27,7 @@
     <input matInput placeholder="Perceel" [formControl]="perceelControl" [matAutocomplete]="perceelAuto">
   </mat-form-field>
   <mat-autocomplete autoActiveFirstOption #perceelAuto="matAutocomplete" [displayWith]="toonPerceel">
-    <mat-option *ngFor="let perceel of percelen$ | async" [value]="perceel" [innerHtml]="perceel.capakey | highlight: perceelControl.value">
+    <mat-option *ngFor="let perceel of percelen$ | async" [value]="perceel" [innerHtml]="perceel.perceelsnummer | highlight: perceelControl.value">
     </mat-option>
   </mat-autocomplete>
 

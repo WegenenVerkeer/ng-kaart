@@ -35,6 +35,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
   legendeKeys: string[] = [];
   toonHelp = false;
   toonResultaat = true;
+  busy = 0;
   actieveZoeker: ZoekerType = "Geoloket";
 
   private subscription: Option<Subscription> = none;
@@ -112,8 +113,8 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
       )
     ).subscribe(value => {
       this.toonResultaat = true;
-
       if (value.length > 0) {
+        this.setBusy();
         this.dispatch({ type: "Zoek", input: value, zoekers: Set(), wrapper: kaartLogOnlyWrapper });
       }
     });
@@ -194,6 +195,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
   }
 
   private processZoekerAntwoord(nieuweResultaten: ZoekResultaten): KaartInternalMsg {
+    this.setNotBusy();
     this.alleZoekResultaten = this.alleZoekResultaten
       .filter(resultaat => resultaat.zoeker !== nieuweResultaten.zoeker)
       .concat(nieuweResultaten.resultaten);
@@ -227,5 +229,17 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
     if (!ol.extent.isEmpty(this.extent)) {
       this.dispatch(prt.VeranderExtentCmd(this.extent));
     }
+  }
+
+  setBusy() {
+    this.busy++;
+  }
+
+  setNotBusy() {
+    this.busy--;
+  }
+
+  isBusy(): boolean {
+    return this.busy > 0;
   }
 }

@@ -1,8 +1,15 @@
+@import "../css/kaart.component-common.scss";
+
 input {
   flex-grow: 100;
   border: none;
   margin-left: 4px;
   outline: none;
+}
+
+.spinner {
+  height: 24px !important;
+  width: 24px !important;
 }
 
 .zoeker-input {

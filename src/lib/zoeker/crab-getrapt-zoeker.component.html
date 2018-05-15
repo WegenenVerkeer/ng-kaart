@@ -1,6 +1,6 @@
 <div class="perceel-form">
   <mat-form-field>
-    <input matInput placeholder="Gemeente" [formControl]="gemeenteControl" [matAutocomplete]="gemeenteAuto" class="crab-gemeente">
+    <input matInput placeholder="Gemeente of postcode" [formControl]="gemeenteControl" [matAutocomplete]="gemeenteAuto" class="crab-gemeente">
   </mat-form-field>
   <mat-autocomplete autoActiveFirstOption #gemeenteAuto="matAutocomplete" [displayWith]="toonGemeente">
     <mat-option *ngFor="let gemeente of gefilterdeGemeenten" [value]="gemeente" [innerHtml]="toonGemeenteInLijst(gemeente) | highlight: gemeenteControl.value">
