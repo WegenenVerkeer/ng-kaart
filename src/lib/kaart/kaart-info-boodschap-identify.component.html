@@ -10,8 +10,10 @@
 
 <div class="vantot" *ngIf="heeft('hm')">{{ waarde("hm") }}
   <span class="afstand">{{ verpl() }}</span>
-  / {{ zijderijbaan() }}
-  <span class="afstand">+{{ waarde("afstandrijbaan") }}cm</span>
+  <span *ngIf="heeft('zijderijbaan') || heeft('afstandrijbaan')">
+    / {{ zijderijbaan() }}
+    <span class="afstand" *ngIf="heeft('afstandrijbaan')">+{{ waarde("afstandrijbaan") }}cm</span>
+  </span>
 </div>
 
 <div class="dimensies" *ngIf="heeftDimensies()">
