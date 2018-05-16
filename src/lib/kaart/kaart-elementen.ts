@@ -1,4 +1,4 @@
-import { fromPredicate, Option } from "fp-ts/lib/Option";
+import { fromNullable, fromPredicate, Option } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 
@@ -122,6 +122,10 @@ export const asVectorLaag: (laag: Laag) => Option<VectorLaag> = fromPredicate(is
 export const isToegevoegdeVectorLaag: (laag: ToegevoegdeLaag) => boolean = laag => isVectorLaag(laag.bron);
 export const asToegevoegdeVectorLaag: (laag: ToegevoegdeLaag) => Option<ToegevoegdeVectorLaag> = laag =>
   fromPredicate<ToegevoegdeLaag>(lg => isVectorLaag(lg.bron))(laag) as Option<ToegevoegdeVectorLaag>;
+
+///////////////
+// Constructors
+//
 
 export function TekenSettings(
   geometryType: ol.geom.GeometryType,
