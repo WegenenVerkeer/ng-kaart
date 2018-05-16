@@ -50,16 +50,16 @@
 </div>
 
 <div class="expand-line">
-  <button mat-button class="mat-expand-button" (click)="alleVeldenZichtbaar = true" *ngIf="alleVeldenZichtbaar == false">
+  <button mat-button class="mat-expand-button" (click)="setAlleVeldenZichtbaar(true)" *ngIf="!alleVeldenZichtbaar()">
     <mat-icon>expand_more</mat-icon>
   </button>
 
-  <button mat-button class="mat-expand-button" (click)="alleVeldenZichtbaar = false" *ngIf="alleVeldenZichtbaar == true">
+  <button mat-button class="mat-expand-button" (click)="setAlleVeldenZichtbaar(false)" *ngIf="alleVeldenZichtbaar()">
     <mat-icon>expand_less</mat-icon>
   </button>
 </div>
 
-<div class="velden" *ngIf="alleVeldenZichtbaar == true">
+<div class="velden" *ngIf="alleVeldenZichtbaar()">
   <div class="veldnamen">
     <div class="veldnaam" *ngFor="let veld of geavanceerdeEigenschappen()">
       {{ label(veld) }}
@@ -72,7 +72,7 @@
   </div>
 </div>
 
-<div class="booleanwaarden" *ngIf="alleVeldenZichtbaar == true">
+<div class="booleanwaarden" *ngIf="alleVeldenZichtbaar()">
   <div class="booleanwaarde" *ngFor="let veld of geavanceerdeBooleanEigenschappen()">
 
     <div *ngIf="waarde(veld)">

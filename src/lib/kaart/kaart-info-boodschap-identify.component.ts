@@ -5,6 +5,7 @@ import * as ol from "openlayers";
 
 import { KaartChildComponentBase } from "./kaart-child-component-base";
 import { VectorLaag } from "./kaart-elementen";
+import { KaartInfoBoodschapComponent } from "./kaart-info-boodschap.component";
 import { KaartComponent } from "./kaart.component";
 
 @Component({
@@ -16,7 +17,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   @Input() feature: ol.Feature;
   @Input() laag: Option<VectorLaag>;
 
-  alleVeldenZichtbaar = false;
+  private _alleVeldenZichtbaar = false;
 
   teVerbergenProperties = List.of("geometry", "locatie", "ident8", "afstandrijbaan", "zijderijbaan", "breedte", "hm", "verpl");
 
@@ -24,8 +25,17 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
 
   heeftWaarde = value => value !== undefined && value !== null;
 
-  constructor(parent: KaartComponent, zone: NgZone) {
+  constructor(parent: KaartComponent, zone: NgZone, private kaartInfoBoodschapComponent: KaartInfoBoodschapComponent) {
     super(parent, zone);
+  }
+
+  alleVeldenZichtbaar() {
+    return this._alleVeldenZichtbaar;
+  }
+
+  setAlleVeldenZichtbaar(zichtbaar: boolean) {
+    this._alleVeldenZichtbaar = zichtbaar;
+    this.kaartInfoBoodschapComponent.scrollIntoView();
   }
 
   heeft(key: string) {
