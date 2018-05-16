@@ -3,7 +3,7 @@ import { getArrayMonoid } from "fp-ts/lib/Monoid";
 import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
 import { sequence } from "fp-ts/lib/Traversable";
 import * as validation from "fp-ts/lib/Validation";
-import { pipe } from "fp-ts/lib/function";
+import { pipe, identity, Endomorphism } from "fp-ts/lib/function";
 import { List } from "immutable";
 import * as ol from "openlayers";
 import { olx } from "openlayers";
@@ -16,12 +16,13 @@ import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { ModelChanger } from "./model-changes";
 import { PositieAanpassing, ZetMijnLocatieZoomCmd, VoegUiElementToe, ZetUiElementOpties } from "./kaart-protocol-commands";
-import { KaartWithInfo, setStyleSelector, setSelectionStyleSelector, getSelectionStyleSelector, getStyleSelector } from "./kaart-with-info";
+import { KaartWithInfo } from "./kaart-with-info";
+import { setFeatureStyleSelector, setSelectionStyleSelector, getSelectionStyleSelector, getFeatureStyleSelector } from "./stijl-selector";
 import { toOlLayer } from "./laag-converter";
 import { kaartLogger } from "./log";
-import { DynamicStyle, StaticStyle, Styles, toStylish } from "./kaart-elementen";
-import { getDefaultStyle, getDefaultStyleSelector } from "./styles";
+import { getDefaultStyle, getDefaultStyleSelector, getDefaultSelectionStyleSelector } from "./styles";
 import { offsetStyleFunction } from "../stijl/offset-stijl-function";
+import * as ss from "./stijl-selector";
 
 ///////////////////////////////////
 // Hulpfuncties
@@ -174,30 +175,25 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     };
 
     const pasVectorLaagStijlToe: (lg: ke.ToegevoegdeVectorLaag) => void = laag => {
-      const effectieveStyle = ke.matchStyleSelector<ke.Stylish>(
-        (s: ke.StaticStyle) => s.style,
-        (s: ke.DynamicStyle) =>
-          laag.bron.offsetveld.fold(
-            () => s.styleFunction,
-            offsetVeld =>
-              offsetStyleFunction(
-                s.styleFunction,
-                "ident8",
-                offsetVeld,
-                laag.stijlPositie + 1 // 0-based, maar eerste laag moet ook offset hebben
-              )
-          ),
-        (s: ke.Styles) => s.styles
-      )(laag.stijlSel.getOrElseValue(getDefaultStyleSelector()));
+      // Er moet een stijl zijn voor het tekenen van de features op de kaart
+      const featureStyleSelector = laag.stijlSel.getOrElseValue(getDefaultStyleSelector());
+      // Maar er moet geen specifieke stijl zijn voor het selecteren van een feature. Als er geen is, dan wordt er teruggevallen
+      // op gemodificeerde stijl tijdens tekenen van selectie.
+      const toOffset: Endomorphism<ss.StyleSelector> = laag.bron.offsetveld.fold(
+        () => identity, // als er geen offsetveld is, dan hoeven we niks te doen
+        offsetveld => ss.offsetStyleSelector("ident8", offsetveld, laag.stijlPositie)
+      );
+      const offsetFeatureStyleSelector = toOffset(featureStyleSelector);
 
-      laag.layer.setStyle(effectieveStyle);
-      forEach(ke.asStyleSelector(effectieveStyle), sel => setStyleSelector(model, laag.titel, sel));
-      forEach(laag.selectiestijlSel, selectieStijl => setSelectionStyleSelector(model, laag.titel, selectieStijl));
+      laag.layer.setStyle(ss.toStylish(offsetFeatureStyleSelector));
+
+      setFeatureStyleSelector(model.map, laag.titel, some(offsetFeatureStyleSelector));
+      setSelectionStyleSelector(model.map, laag.titel, laag.selectiestijlSel.map(toOffset));
     };
 
     const pasVectorLaagStijlAan: (
-      ss: Option<ke.StyleSelector>,
-      sss: Option<ke.StyleSelector>
+      ss: Option<ss.StyleSelector>,
+      sss: Option<ss.StyleSelector>
     ) => (lg: ke.ToegevoegdeVectorLaag) => ke.ToegevoegdeVectorLaag = (maybeStijlSel, maybeSelectieStijlSel) => laag => {
       const updatedLaag = { ...laag, stijlSel: maybeStijlSel, selectiestijlSel: maybeSelectieStijlSel };
       pasVectorLaagStijlToe(updatedLaag); // expliciet als side-effect opgeroepen
@@ -341,7 +337,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                 ...toegevoegdeLaagCommon,
                 stijlPositie: vectorLaagPositie(groepPositie, groep),
                 stijlSel: vlg.styleSelector,
-                selectiestijlSel: none // TODO dit moet ook gezet worden
+                selectiestijlSel: vlg.selectieStyleSelector
               }))
               .getOrElseValue(toegevoegdeLaagCommon);
             layer.set("titel", titel);
@@ -387,6 +383,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             groepOpTitel: model.groepOpTitel.delete(titel)
           };
           zendLagenInGroep(updatedModel, groep);
+          ss.clearFeatureStyleSelector(model.map, laag.titel);
           return ModelAndEmptyResult(updatedModel);
         })
       );
@@ -668,16 +665,17 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       type FeatureStyle = ol.style.Style | ol.style.Style[];
 
       const applySelectFunction = function(feature: ol.Feature, resolution: number): FeatureStyle {
+        console.log("zzz applySelectFunction");
         const applySelectionColor = function(style: ol.style.Style): ol.style.Style {
           const selectionStyle = style.clone();
           selectionStyle.getStroke().setColor([0, 153, 255, 1]); // TODO maak configureerbaar
           return selectionStyle;
         };
 
-        const executeStyleSelector: (_: ke.StyleSelector) => FeatureStyle = ke.matchStyleSelector(
-          (s: ke.StaticStyle) => s.style,
-          (s: ke.DynamicStyle) => s.styleFunction(feature, resolution),
-          (s: ke.Styles) => s.styles
+        const executeStyleSelector: (_: ss.StyleSelector) => FeatureStyle = ss.matchStyleSelector(
+          (s: ss.StaticStyle) => s.style,
+          (s: ss.DynamicStyle) => s.styleFunction(feature, resolution),
+          (s: ss.Styles) => s.styles
         );
 
         const noStyle: FeatureStyle = [];
@@ -688,10 +686,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             return noStyle;
           },
           laagnaam =>
-            fromNullable(getSelectionStyleSelector(model, laagnaam)).fold(
+            getSelectionStyleSelector(model.map, laagnaam).fold(
               () => {
                 kaartLogger.warn("Geen selectiestijl gevonden voor:", feature);
-                return fromNullable(getStyleSelector(model, laagnaam)).fold<FeatureStyle>(
+                return getFeatureStyleSelector(model.map, laagnaam).fold<FeatureStyle>(
                   () => {
                     kaartLogger.error("Ook geen stijlselector gevonden voor:", feature);
                     return noStyle;

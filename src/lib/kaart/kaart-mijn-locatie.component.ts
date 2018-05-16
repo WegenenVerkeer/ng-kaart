@@ -24,6 +24,7 @@ import { Zoominstellingen } from "./kaart-protocol";
 import { MatButton } from "@angular/material";
 import { KaartComponent } from "./kaart.component";
 import { KaartWithInfo } from "./kaart-with-info";
+import * as ss from "./stijl-selector";
 
 const MijnLocatieLaagNaam = "Mijn Locatie";
 
@@ -160,7 +161,8 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
       type: ke.VectorType,
       titel: MijnLocatieLaagNaam,
       source: new ol.source.Vector(),
-      styleSelector: some(ke.StaticStyle(this.mijnLocatieStyle)),
+      styleSelector: some(ss.StaticStyle(this.mijnLocatieStyle)),
+      selectieStyleSelector: none,
       selecteerbaar: false,
       minZoom: 2,
       maxZoom: 15,

@@ -8,9 +8,10 @@ import { KaartClassicMsg, TekenGeomAangepastMsg } from "../kaart-classic/message
 import { ofType } from "../util/operators";
 import { classicMsgSubscriptionCmdOperator, KaartClassicComponent } from "./kaart-classic.component";
 import { KaartComponentBase } from "./kaart-component-base";
-import { asStyleSelector, TekenSettings } from "./kaart-elementen";
+import { TekenSettings } from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { TekenenUISelector } from "./kaart-teken-laag.component";
+import * as ss from "./stijl-selector";
 
 @Component({
   selector: "awv-kaart-teken",
@@ -62,7 +63,7 @@ export class KaartTekenComponent extends KaartComponentBase implements OnInit {
           classicMsgSubscriptionCmdOperator(
             this.kaart.dispatcher,
             prt.GeometryChangedSubscription(
-              TekenSettings(this._geometryType, asStyleSelector(this._laagStyle), asStyleSelector(this._drawStyle)),
+              TekenSettings(this._geometryType, ss.asStyleSelector(this._laagStyle), ss.asStyleSelector(this._drawStyle)),
               geom => KaartClassicMsg(TekenGeomAangepastMsg(geom))
             )
           )

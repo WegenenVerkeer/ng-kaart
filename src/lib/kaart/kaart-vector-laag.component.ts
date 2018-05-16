@@ -9,10 +9,9 @@ import { KaartLaagComponent } from "./kaart-laag.component";
 import { forEach, orElse } from "../util/option";
 import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
-import { StyleSelector, Stylish } from "./kaart-elementen";
 import { getDefaultSelectionStyleFunction, getDefaultStyleFunction } from "./styles";
 import { option } from "fp-ts";
-import { asStyleSelector } from "./kaart-elementen";
+import * as ss from "./stijl-selector";
 
 @Component({
   selector: "awv-kaart-vector-laag",
@@ -23,7 +22,7 @@ export class KaartVectorLaagComponent extends KaartLaagComponent {
   @Input() source = new ol.source.Vector();
   @Input() style?: ol.style.Style = undefined;
   @Input() styleFunction?: ol.StyleFunction = getDefaultStyleFunction();
-  @Input() selectieStyle?: Stylish = getDefaultSelectionStyleFunction();
+  @Input() selectieStyle?: ss.Stylish = getDefaultSelectionStyleFunction();
   @Input() zichtbaar = true;
   @Input() selecteerbaar = true;
   @Input() minZoom = 7;
@@ -40,6 +39,7 @@ export class KaartVectorLaagComponent extends KaartLaagComponent {
       titel: this.titel,
       source: this.source,
       styleSelector: this.getMaybeStyleSelector(),
+      selectieStyleSelector: fromNullable(this.selectieStyle).chain(ss.asStyleSelector),
       selecteerbaar: this.selecteerbaar,
       minZoom: this.minZoom,
       maxZoom: this.maxZoom,
@@ -51,8 +51,8 @@ export class KaartVectorLaagComponent extends KaartLaagComponent {
     return "Voorgrond.Hoog";
   }
 
-  private getMaybeStyleSelector(): Option<StyleSelector> {
-    return orElse(fromNullable(this.style).map(ke.StaticStyle), () => fromNullable(this.styleFunction).map(ke.DynamicStyle));
+  private getMaybeStyleSelector(): Option<ss.StyleSelector> {
+    return orElse(fromNullable(this.style).map(ss.StaticStyle), () => fromNullable(this.styleFunction).map(ss.DynamicStyle));
   }
 
   voegLaagToe() {
@@ -60,7 +60,7 @@ export class KaartVectorLaagComponent extends KaartLaagComponent {
 
     forEach(this.getMaybeStyleSelector(), styleselector => {
       this.dispatch(
-        prt.ZetStijlVoorLaagCmd(this.titel, styleselector, fromNullable(this.selectieStyle).chain(asStyleSelector), kaartLogOnlyWrapper)
+        prt.ZetStijlVoorLaagCmd(this.titel, styleselector, fromNullable(this.selectieStyle).chain(ss.asStyleSelector), kaartLogOnlyWrapper)
       );
     });
   }

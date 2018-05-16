@@ -1,6 +1,6 @@
 import * as ol from "openlayers";
 
-import { StaticStyle, StyleSelector } from "./kaart-elementen";
+import { StaticStyle, StyleSelector } from "./stijl-selector";
 
 export function getDefaultStyle(): ol.style.Style {
   return new ol.style.Style({
@@ -26,6 +26,10 @@ export function getDefaultStyle(): ol.style.Style {
 
 export function getDefaultStyleSelector(): StyleSelector {
   return StaticStyle(getDefaultStyle());
+}
+
+export function getDefaultSelectionStyleSelector(): StyleSelector {
+  return getDefaultStyleSelector();
 }
 
 export function getDefaultStyleFunction(): ol.StyleFunction {

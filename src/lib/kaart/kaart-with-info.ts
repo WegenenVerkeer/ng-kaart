@@ -1,38 +1,16 @@
-import { none, some, Option } from "fp-ts/lib/Option";
-import { List, Map, OrderedMap, Set } from "immutable";
+import { none, Option, some } from "fp-ts/lib/Option";
+import { List, Map, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 import { BehaviorSubject, ReplaySubject, Subject } from "rxjs";
 
-import { TypedRecord, Zoominstellingen } from "./kaart-protocol";
 import { ZoekResultaten } from "../zoeker/abstract-zoeker";
 import { ZoekerCoordinator } from "../zoeker/zoeker-coordinator";
 import { KaartConfig } from "./kaart-config";
 import * as ke from "./kaart-elementen";
+import { Zoominstellingen } from "./kaart-protocol";
+import { GeselecteerdeFeatures, InfoBoodschap } from "./kaart-with-info-model";
 import { ModelChanger } from "./model-changes";
-import { InfoBoodschap, GeselecteerdeFeatures } from "./kaart-with-info-model";
-import { StyleSelector } from "./kaart-elementen";
-
-// Spijtig genoeg kan die niet in het model zelf zitten vermits de stijl functie in de interaction.Select control wordt
-// gecreëerd wanneer het model nog leeg is, en het model van dat moment in zijn scope zit. Boevendien kan de stijl op
-// elk moment aangepast worden.
-const STIJL_OP_LAAG = "stijlOpLaag";
-const SELECTIE_STIJL_OP_LAAG = "stijlOpLaag";
-
-export function setStyleSelector(model: KaartWithInfo, laagnaam: string, stijl: StyleSelector) {
-  model.map.set(STIJL_OP_LAAG, model.map.get(STIJL_OP_LAAG).set(laagnaam, stijl));
-}
-
-export function getStyleSelector(model: KaartWithInfo, laagnaam: string): StyleSelector {
-  return model.map.get(STIJL_OP_LAAG).get(laagnaam);
-}
-
-export function setSelectionStyleSelector(model: KaartWithInfo, laagnaam: string, stijl: StyleSelector) {
-  model.map.set(SELECTIE_STIJL_OP_LAAG, model.map.get(SELECTIE_STIJL_OP_LAAG).set(laagnaam, stijl));
-}
-
-export function getSelectionStyleSelector(model: KaartWithInfo, laagnaam: string): StyleSelector {
-  return model.map.get(SELECTIE_STIJL_OP_LAAG).get(laagnaam);
-}
+import { initStyleSelectorsInMap } from "./stijl-selector";
 
 /**
  * Het model achter de kaartcomponent.
@@ -114,7 +92,6 @@ export class KaartWithInfo {
         verwijderd: some(event.element)
       })
     );
-    this.map.set(STIJL_OP_LAAG, Map<string, StyleSelector>());
-    this.map.set(SELECTIE_STIJL_OP_LAAG, Map<string, StyleSelector>());
+    initStyleSelectorsInMap(map);
   }
 }

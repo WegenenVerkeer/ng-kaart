@@ -3,8 +3,8 @@ import { Subscription as RxSubscription } from "rxjs/Subscription";
 
 import * as ol from "openlayers";
 import * as ke from "./kaart-elementen";
+import * as ss from "./stijl-selector";
 import { Subscription, Wrapper, VoidWrapper, KaartMsg, KaartCmdValidation, ValidationWrapper, BareValidationWrapper } from ".";
-import { StyleSelector } from "./kaart-elementen";
 import { AbstractZoeker } from "../zoeker/abstract-zoeker";
 import { Option } from "fp-ts/lib/Option";
 import { InfoBoodschap } from "./kaart-with-info-model";
@@ -202,8 +202,8 @@ export interface MaakLaagOnzichtbaarCmd<Msg extends KaartMsg> {
 export interface ZetStijlVoorLaagCmd<Msg extends KaartMsg> {
   readonly type: "ZetStijlVoorLaag";
   readonly titel: string;
-  readonly stijl: StyleSelector;
-  readonly selectieStijl: Option<StyleSelector>;
+  readonly stijl: ss.StyleSelector;
+  readonly selectieStijl: Option<ss.StyleSelector>;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -339,8 +339,8 @@ export function VerplaatsLaagCmd<Msg extends KaartMsg>(
 
 export function ZetStijlVoorLaagCmd<Msg extends KaartMsg>(
   titel: string,
-  stijl: StyleSelector,
-  selectieStijl: Option<StyleSelector>,
+  stijl: ss.StyleSelector,
+  selectieStijl: Option<ss.StyleSelector>,
   wrapper: BareValidationWrapper<Msg>
 ): ZetStijlVoorLaagCmd<Msg> {
   return { type: "ZetStijlVoorLaag", stijl: stijl, selectieStijl: selectieStijl, titel: titel, wrapper: wrapper };
