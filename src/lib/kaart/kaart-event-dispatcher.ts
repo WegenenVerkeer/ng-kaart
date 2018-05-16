@@ -1,8 +1,9 @@
 import { Observable } from "rxjs/Observable";
 import { ReplaySubject } from "rxjs/ReplaySubject";
 
-import * as prt from "./kaart-protocol";
 import { asap } from "../util/asap";
+
+import * as prt from "./kaart-protocol";
 
 export interface KaartCmdDispatcher<Msg extends prt.TypedRecord> {
   dispatch(cmd: prt.Command<Msg>): void;

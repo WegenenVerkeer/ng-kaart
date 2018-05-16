@@ -5,8 +5,9 @@ import { List } from "immutable";
 import * as ol from "openlayers";
 
 import { classicLogger } from "../kaart-classic/log";
+
 import { KaartClassicComponent } from "./kaart-classic.component";
-import { WmtsCapaConfig, WmtsLaag, WmtsManualConfig, WmtsType, Laaggroep } from "./kaart-elementen";
+import { Laaggroep, WmtsCapaConfig, WmtsLaag, WmtsManualConfig, WmtsType } from "./kaart-elementen";
 import { KaartLaagComponent } from "./kaart-laag.component";
 
 @Component({

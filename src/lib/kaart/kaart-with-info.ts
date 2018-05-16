@@ -5,6 +5,7 @@ import { BehaviorSubject, ReplaySubject, Subject } from "rxjs";
 
 import { ZoekResultaten } from "../zoeker/abstract-zoeker";
 import { ZoekerCoordinator } from "../zoeker/zoeker-coordinator";
+
 import { KaartConfig } from "./kaart-config";
 import * as ke from "./kaart-elementen";
 import { Zoominstellingen } from "./kaart-protocol";

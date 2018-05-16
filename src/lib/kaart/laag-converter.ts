@@ -1,10 +1,11 @@
-import { KaartWithInfo } from "./kaart-with-info";
 import * as array from "fp-ts/lib/Array";
 import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import { olx } from "openlayers";
-import { kaartLogger } from "./log";
+
 import * as ke from "./kaart-elementen";
+import { KaartWithInfo } from "./kaart-with-info";
+import { kaartLogger } from "./log";
 import { toStylish } from "./stijl-selector";
 
 export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {

@@ -5,6 +5,7 @@ import * as ol from "openlayers";
 
 import { NosqlFsSource } from "../source/nosql-fs-source";
 import { forEach, orElse } from "../util/option";
+
 import { KaartClassicComponent } from "./kaart-classic.component";
 import * as ke from "./kaart-elementen";
 import { kaartLogOnlyWrapper } from "./kaart-internal-messages";

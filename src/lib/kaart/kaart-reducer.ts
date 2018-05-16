@@ -1,28 +1,29 @@
 import * as array from "fp-ts/lib/Array";
+import { Endomorphism, identity, pipe } from "fp-ts/lib/function";
 import { getArrayMonoid } from "fp-ts/lib/Monoid";
 import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
 import { sequence } from "fp-ts/lib/Traversable";
 import * as validation from "fp-ts/lib/Validation";
-import { pipe, identity, Endomorphism } from "fp-ts/lib/function";
 import { List } from "immutable";
 import * as ol from "openlayers";
 import { olx } from "openlayers";
 import { Subscription } from "rxjs";
-import { debounceTime, filter, distinctUntilChanged } from "rxjs/operators";
 import * as rx from "rxjs";
+import { debounceTime, distinctUntilChanged, filter } from "rxjs/operators";
 
+import { offsetStyleFunction } from "../stijl/offset-stijl-function";
 import { forEach } from "../util/option";
+
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
-import { ModelChanger } from "./model-changes";
-import { PositieAanpassing, ZetMijnLocatieZoomCmd, VoegUiElementToe, ZetUiElementOpties } from "./kaart-protocol-commands";
+import { PositieAanpassing, VoegUiElementToe, ZetMijnLocatieZoomCmd, ZetUiElementOpties } from "./kaart-protocol-commands";
 import { KaartWithInfo } from "./kaart-with-info";
-import { setFeatureStyleSelector, setSelectionStyleSelector, getSelectionStyleSelector, getFeatureStyleSelector } from "./stijl-selector";
 import { toOlLayer } from "./laag-converter";
 import { kaartLogger } from "./log";
-import { getDefaultStyle, getDefaultStyleSelector, getDefaultSelectionStyleSelector } from "./styles";
-import { offsetStyleFunction } from "../stijl/offset-stijl-function";
+import { ModelChanger } from "./model-changes";
+import { getFeatureStyleSelector, getSelectionStyleSelector, setFeatureStyleSelector, setSelectionStyleSelector } from "./stijl-selector";
 import * as ss from "./stijl-selector";
+import { getDefaultSelectionStyleSelector, getDefaultStyle, getDefaultStyleSelector } from "./styles";
 
 ///////////////////////////////////
 // Hulpfuncties

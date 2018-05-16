@@ -1,29 +1,30 @@
-import { Component, Input, NgZone, OnInit, ViewChild, ViewChildren, QueryList, ElementRef, AfterViewInit } from "@angular/core";
+import { AfterViewInit, Component, ElementRef, Input, NgZone, OnInit, QueryList, ViewChild, ViewChildren } from "@angular/core";
+import { MatButton } from "@angular/material";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
-import { map, shareReplay, take, switchMap, tap, share, combineLatest, mapTo } from "rxjs/operators";
+import { combineLatest, map, mapTo, share, shareReplay, switchMap, take, tap } from "rxjs/operators";
 
 import { observeOnAngular } from "../util/observe-on-angular";
-import { ofType, emitSome } from "../util/operators";
+import { emitSome, ofType } from "../util/operators";
 import { orElse } from "../util/option";
+
 import { KaartChildComponentBase } from "./kaart-child-component-base";
 import * as ke from "./kaart-elementen";
 import {
   KaartInternalMsg,
   kaartLogOnlyWrapper,
-  ZoominstellingenGezetMsg,
-  zoominstellingenGezetWrapper,
+  MijnLocatieZoomdoelGezetMsg,
   MijnLocatieZoomdoelGezetWrapper,
-  MijnLocatieZoomdoelGezetMsg
+  ZoominstellingenGezetMsg,
+  zoominstellingenGezetWrapper
 } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
-import { kaartLogger } from "./log";
 import { Zoominstellingen } from "./kaart-protocol";
-import { MatButton } from "@angular/material";
-import { KaartComponent } from "./kaart.component";
 import { KaartWithInfo } from "./kaart-with-info";
+import { KaartComponent } from "./kaart.component";
+import { kaartLogger } from "./log";
 import * as ss from "./stijl-selector";
 
 const MijnLocatieLaagNaam = "Mijn Locatie";

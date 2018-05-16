@@ -6,6 +6,7 @@ import { distinctUntilChanged, map, takeUntil } from "rxjs/operators";
 import { classicLogger } from "../kaart-classic/log";
 import { KaartClassicMsg, TekenGeomAangepastMsg } from "../kaart-classic/messages";
 import { ofType } from "../util/operators";
+
 import { classicMsgSubscriptionCmdOperator, KaartClassicComponent } from "./kaart-classic.component";
 import { KaartComponentBase } from "./kaart-component-base";
 import { TekenSettings } from "./kaart-elementen";

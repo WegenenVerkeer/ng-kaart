@@ -3,6 +3,7 @@ import { List, Map } from "immutable";
 import * as ol from "openlayers";
 
 import { ZoekResultaten } from "../zoeker/abstract-zoeker";
+
 import * as ke from "./kaart-elementen";
 import { InfoBoodschap } from "./kaart-with-info-model";
 

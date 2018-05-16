@@ -3,6 +3,7 @@ import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import { KaartComponent } from "../kaart/kaart.component";
+
 import { CrabZoekerService } from "./crab-zoeker.service";
 
 @Component({
