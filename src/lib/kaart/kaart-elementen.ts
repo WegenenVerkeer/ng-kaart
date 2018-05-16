@@ -73,6 +73,10 @@ export interface VectorLaag {
   readonly minZoom: number;
   readonly maxZoom: number;
   readonly offsetveld: Option<string>;
+
+  getLabel?: (veld: string) => string;
+  isBasisInfo?: (veld: string) => boolean;
+  getType?: (veld: string) => string;
 }
 
 export interface BlancoLaag {

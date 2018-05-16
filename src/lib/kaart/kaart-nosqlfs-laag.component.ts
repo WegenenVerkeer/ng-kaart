@@ -1,6 +1,6 @@
 import { Component, Input, ViewEncapsulation } from "@angular/core";
 import { option } from "fp-ts";
-import { fromNullable, none, Option } from "fp-ts/lib/Option";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 
 import { NosqlFsSource } from "../source/nosql-fs-source";

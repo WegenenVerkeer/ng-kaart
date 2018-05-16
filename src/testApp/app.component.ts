@@ -26,8 +26,9 @@ export class AppComponent {
   @ViewChild("selectie") private selectieKaart: KaartClassicComponent;
 
   private readonly zichtbaarheid = {
+    offsets: true,
     orthomap: false,
-    lagenkiezer: true // standard falsey
+    metenVoorbeeld: true
   };
 
   private readonly fietspadStijlDef: AWV0StyleFunctionDescription = {
@@ -245,16 +246,7 @@ export class AppComponent {
 
     // voeg de nieuwe toe
     this.geselecteerdeFeatures = event;
-    this.geselecteerdeFeatures.forEach(feature =>
-      this.selectieKaart //
-        .toonIdentifyInformatie(
-          feature.get("id").toString(),
-          feature.get("laagnaam"),
-          `Id: ${feature.get("id")}<br>` + //
-          `Ident8: ${feature.getProperties()["properties"]["ident8"]}<br>` + //
-            `Type: ${feature.getProperties()["properties"]["typefietspad"]}`
-        )
-    );
+    this.geselecteerdeFeatures.forEach(feature => this.selectieKaart.toonIdentifyInformatie(feature));
   }
 
   zoekLocaties(locatieQuery: String) {

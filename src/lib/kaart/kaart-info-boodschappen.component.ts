@@ -48,7 +48,11 @@ export class KaartInfoBoodschappenComponent extends KaartChildComponentBase impl
       .map(msg => msg.infoBoodschappen.reverse().toList()); // laatste boodschap bovenaan
   }
 
-  verwijder(id: string, verwijderBoodschapMsgGen: () => Option<KaartInternalMsg>): void {
-    this.dispatch(SluitInfoBoodschapCmd(id, verwijderBoodschapMsgGen));
+  isIdentify(boodschap: InfoBoodschap): boolean {
+    return boodschap.type === "InfoBoodschapIdentify";
+  }
+
+  isAlert(boodschap: InfoBoodschap): boolean {
+    return boodschap.type === "InfoBoodschapAlert";
   }
 }

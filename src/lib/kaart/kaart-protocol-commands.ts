@@ -5,9 +5,8 @@ import { Subscription as RxSubscription } from "rxjs/Subscription";
 
 import { AbstractZoeker } from "../zoeker/abstract-zoeker";
 
-import { BareValidationWrapper, KaartCmdValidation, KaartMsg, Subscription, ValidationWrapper, VoidWrapper, Wrapper } from ".";
+import { BareValidationWrapper, KaartCmdValidation, KaartMsg, LazyWrapper, Subscription, ValidationWrapper, VoidWrapper, Wrapper } from ".";
 import * as ke from "./kaart-elementen";
-import { KaartInternalMsg } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import * as ss from "./stijl-selector";
@@ -46,6 +45,7 @@ export type Command<Msg extends KaartMsg> =
   | VoegInteractieToeCmd
   | VerwijderInteractieCmd
   | VoegOverlayToeCmd
+  | VraagSchaalAanCmd<Msg>
   | VerwijderOverlaysCmd
   | ToonInfoBoodschapCmd
   | VerbergInfoBoodschapCmd
@@ -98,8 +98,14 @@ export interface VerplaatsLaagCmd<Msg extends KaartMsg> {
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
+export interface VraagSchaalAanCmd<Msg extends KaartMsg> {
+  readonly type: "VraagSchaalAan";
+  readonly wrapper: BareValidationWrapper<Msg>;
+}
+
 export interface VoegSchaalToeCmd<Msg extends KaartMsg> {
   readonly type: "VoegSchaalToe";
+  readonly target: Option<Element>;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -293,10 +299,10 @@ export interface DeselecteerFeatureCmd {
   readonly id: string;
 }
 
-export interface SluitInfoBoodschapCmd<Msg extends prt.TypedRecord> {
+export interface SluitInfoBoodschapCmd<Msg extends KaartMsg> {
   readonly type: "SluitInfoBoodschap";
   readonly id: string;
-  readonly msgGen: () => Option<Msg>;
+  readonly msgGen: () => Option<prt.TypedRecord>;
 }
 
 ////////////////////////
@@ -336,6 +342,24 @@ export function VerplaatsLaagCmd<Msg extends KaartMsg>(
   wrapper: BareValidationWrapper<Msg>
 ): VerplaatsLaagCmd<Msg> {
   return { type: "VerplaatsLaag", titel: titel, naarPositie: naarPositie, wrapper: wrapper };
+}
+
+export function VraagSchaalAanCmd<Msg extends KaartMsg>(wrapper: BareValidationWrapper<Msg>): VraagSchaalAanCmd<Msg> {
+  return {
+    type: "VraagSchaalAan",
+    wrapper: wrapper
+  };
+}
+
+export function VoegSchaalToeCmd<Msg extends KaartMsg>(
+  target: Option<Element>,
+  wrapper: BareValidationWrapper<Msg>
+): VoegSchaalToeCmd<Msg> {
+  return { type: "VoegSchaalToe", target: target, wrapper: wrapper };
+}
+
+export function VerwijderSchaalCmd<Msg extends KaartMsg>(wrapper: BareValidationWrapper<Msg>): VerwijderSchaalCmd<Msg> {
+  return { type: "VerwijderSchaal", wrapper: wrapper };
 }
 
 export function ZetStijlVoorLaagCmd<Msg extends KaartMsg>(
@@ -448,20 +472,10 @@ export function ZetMijnLocatieZoomCmd(doelniveau: Option<number>): ZetMijnLocati
   return { type: "ZetMijnLocatieZoomStatus", doelniveau: doelniveau };
 }
 
-export function ToonInfoBoodschapCmd<Msg extends KaartMsg>(
-  id: string,
-  titel: string,
-  inhoud: string,
-  verbergMsgGen: () => Option<Msg>
-): ToonInfoBoodschapCmd {
+export function ToonInfoBoodschapCmd<Bdschp extends InfoBoodschap>(boodschap: Bdschp): ToonInfoBoodschapCmd {
   return {
     type: "ToonInfoBoodschap",
-    boodschap: {
-      id: id,
-      titel: titel,
-      inhoud: inhoud,
-      verbergMsgGen: verbergMsgGen
-    }
+    boodschap: boodschap
   };
 }
 
@@ -488,7 +502,7 @@ export function DeselecteerFeatureCmd(id: string): DeselecteerFeatureCmd {
   };
 }
 
-export function SluitInfoBoodschapCmd<Msg extends prt.TypedRecord>(id: string, msgGen: () => Option<Msg>): SluitInfoBoodschapCmd<Msg> {
+export function SluitInfoBoodschapCmd<Msg extends KaartMsg>(id: string, msgGen: () => Option<prt.TypedRecord>): SluitInfoBoodschapCmd<Msg> {
   return {
     type: "SluitInfoBoodschap",
     id: id,

@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, NgZone, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from "@angular/core";
 import * as option from "fp-ts/lib/Option";
-import { some } from "fp-ts/lib/Option";
+import { none, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
@@ -157,8 +157,28 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
     }
   }
 
-  toonIdentifyInformatie(id: string, titel: string, inhoud: string): void {
-    this.dispatch(prt.ToonInfoBoodschapCmd(id, titel, inhoud, () => some(KaartClassicMsg(FeatureGedeselecteerdMsg(id)))));
+  toonIdentifyInformatie(feature: ol.Feature): void {
+    const featureId = feature.get("id").toString();
+    this.dispatch(
+      prt.ToonInfoBoodschapCmd({
+        type: "InfoBoodschapIdentify",
+        id: featureId,
+        titel: feature.get("laagnaam"),
+        feature: feature,
+        verbergMsgGen: () => some(KaartClassicMsg(FeatureGedeselecteerdMsg(featureId)))
+      })
+    );
+    // Gewoon alert:
+    //
+    // this.dispatch(
+    //   prt.ToonInfoBoodschapCmd({
+    //     id: "alert-" + featureId,
+    //     type: "InfoBoodschapAlert",
+    //     titel: feature.get("laagnaam"),
+    //     message: "Feature " + featureId + " geselecteerd",
+    //     verbergMsgGen: () => some(KaartClassicMsg(FeatureGedeselecteerdMsg(featureId)))
+    //   })
+    // );
   }
 
   verbergIdentifyInformatie(id: string): void {
