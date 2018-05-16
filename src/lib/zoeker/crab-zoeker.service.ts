@@ -31,10 +31,8 @@ export interface SuggestionServiceResults {
   readonly SuggestionResult: string[];
 }
 
-export type CrabTypes = "CrabGemeente" | "CrabStraat" | "CrabHuisnummer";
-
 export interface CrabZoekInput {
-  readonly type: CrabTypes;
+  readonly type: "CrabGemeente" | "CrabStraat" | "CrabHuisnummer";
 }
 
 export interface CrabGemeente extends CrabZoekInput {

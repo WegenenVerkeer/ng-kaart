@@ -1,4 +1,4 @@
-<div class="perceel-form">
+<div class="crab-form">
   <mat-form-field>
     <input matInput placeholder="Gemeente of postcode" [formControl]="gemeenteControl" [matAutocomplete]="gemeenteAuto" class="crab-gemeente">
   </mat-form-field>
@@ -23,7 +23,7 @@
     </mat-option>
   </mat-autocomplete>
 
-  <div class="perceel-buttons">
+  <div class="crab-buttons">
     <button mat-button (click)="maakVeldenLeeg(0)">Maak leeg</button>
     <button mat-button (click)="toonOpKaart()" [disabled]="!magTonenOpKaart()">Toon op kaart</button>
   </div>
