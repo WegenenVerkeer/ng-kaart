@@ -19,7 +19,17 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
 
   private _alleVeldenZichtbaar = false;
 
-  teVerbergenProperties = List.of("geometry", "locatie", "ident8", "afstandrijbaan", "zijderijbaan", "breedte", "hm", "verpl");
+  teVerbergenProperties = List.of(
+    "geometry",
+    "locatie",
+    "ident8",
+    "afstandrijbaan",
+    "zijderijbaan",
+    "breedte",
+    "hm",
+    "verpl",
+    "geometry_wkt"
+  );
 
   properties = () => this.feature.getProperties()["properties"];
 

@@ -8,7 +8,6 @@
   <span class="afstand">+{{ waarde("afstandrijbaan") }}cm</span>
 </div>
 
-
 <div class="vantot" *ngIf="heeft('hm')">{{ waarde("hm") }}
   <span class="afstand">{{ verpl() }}</span>
   / {{ zijderijbaan() }}
@@ -20,14 +19,16 @@
   {{ dimensies() }}
 </div>
 
-<div class="velden">
+<div class="separator-na-locatie"></div>
+
+<div class="velden" *ngFor="let veld of zichtbareEigenschappen()">
   <div class="veldnamen">
-    <div class="veldnaam" *ngFor="let veld of zichtbareEigenschappen()">
+    <div class="veldnaam">
       {{ label(veld) }}
     </div>
   </div>
   <div class="veldwaarden">
-    <div class="veldwaarde" *ngFor="let veld of zichtbareEigenschappen()">
+    <div class="veldwaarde">
       {{ waarde(veld) }}
     </div>
   </div>
@@ -59,31 +60,35 @@
   </button>
 </div>
 
-<div class="velden" *ngIf="alleVeldenZichtbaar()">
-  <div class="veldnamen">
-    <div class="veldnaam" *ngFor="let veld of geavanceerdeEigenschappen()">
-      {{ label(veld) }}
+<span *ngIf="alleVeldenZichtbaar()">
+
+  <div class="velden" *ngFor="let veld of geavanceerdeEigenschappen()">
+    <div class="veldnamen">
+      <div class="veldnaam">
+        {{ label(veld) }}
+      </div>
+    </div>
+    <div class="veldwaarden">
+      <div class="veldwaarde">
+        {{ waarde(veld) }}
+      </div>
     </div>
   </div>
-  <div class="veldwaarden">
-    <div class="veldwaarde" *ngFor="let veld of geavanceerdeEigenschappen()">
-      {{ waarde(veld) }}
+
+  <div class="booleanwaarden">
+    <div class="booleanwaarde" *ngFor="let veld of geavanceerdeBooleanEigenschappen()">
+
+      <div *ngIf="waarde(veld)">
+        <mat-icon class="boolean-icon groen">done</mat-icon>
+        {{ label(veld) }}
+      </div>
+
+      <div *ngIf="!waarde(veld)">
+        <mat-icon class="boolean-icon rood">clear</mat-icon>
+        {{ label(veld) }}
+      </div>
+
     </div>
   </div>
-</div>
 
-<div class="booleanwaarden" *ngIf="alleVeldenZichtbaar()">
-  <div class="booleanwaarde" *ngFor="let veld of geavanceerdeBooleanEigenschappen()">
-
-    <div *ngIf="waarde(veld)">
-      <mat-icon class="boolean-icon groen">done</mat-icon>
-      {{ label(veld) }}
-    </div>
-
-    <div *ngIf="!waarde(veld)">
-      <mat-icon class="boolean-icon rood">clear</mat-icon>
-      {{ label(veld) }}
-    </div>
-
-  </div>
-</div>
+</span>

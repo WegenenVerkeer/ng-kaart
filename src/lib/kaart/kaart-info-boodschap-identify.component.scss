@@ -20,9 +20,10 @@
 }
 
 .dimensies {
-   line-height: 24px;
-   font-size: 15px;
-   color: rgba(0, 0, 0, 0.87);
+  line-height: 24px;
+  font-weight: 600;
+  font-size: 15px;
+  color: rgba(51, 51, 51, 0.87);
 }
 
 .dimensies-icon {
@@ -33,8 +34,11 @@
   vertical-align: text-bottom;
 }
 
+.separator-na-locatie {
+  padding-bottom: 8px;
+}
+
 .velden {
-  padding-top: 16px;
   display: flex;
   flex-wrap: wrap;
   flex-direction: row;
@@ -102,8 +106,10 @@
   padding-left: 0;
   padding-right: 0;
   min-width: 24px;
+  line-height: 24px;
 }
 
 .expand-line {
-  padding-bottom: 16px;
+  padding-bottom: 32px;
 }
+
