@@ -10,7 +10,7 @@ import * as ke from "./kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper, tekenWrapper } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
 import { KaartComponent } from "./kaart.component";
-import { determineStyle, determineStyleSelector } from "./kaart-elementen";
+import { toStylish, asStyleSelector } from "./kaart-elementen";
 
 export const TekenenUISelector = "Kaarttekenen";
 const TekenLaagNaam = "Tekenen van geometrie";
@@ -133,10 +133,11 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
       type: ke.VectorType,
       titel: TekenLaagNaam,
       source: source,
-      styleSelector: orElse(tekenSettings.laagStyle, () => determineStyleSelector(defaultlaagStyle)),
+      styleSelector: orElse(tekenSettings.laagStyle, () => asStyleSelector(defaultlaagStyle)),
       selecteerbaar: true,
       minZoom: 2,
-      maxZoom: 15
+      maxZoom: 15,
+      offsetveld: none
     };
   }
 
@@ -165,7 +166,7 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
     const draw = new ol.interaction.Draw({
       source: source,
       type: tekenSettings.geometryType,
-      style: determineStyle(tekenSettings.drawStyle, defaultDrawStyle)
+      style: toStylish(tekenSettings.drawStyle, defaultDrawStyle)
     });
 
     draw.on(

@@ -13,7 +13,8 @@ import { InfoBoodschap, GeselecteerdeFeatures } from "./kaart-with-info-model";
 import { StyleSelector } from "./kaart-elementen";
 
 // Spijtig genoeg kan die niet in het model zelf zitten vermits de stijl functie in de interaction.Select control wordt
-// gecreëerd wanneer het model nog leeg is, en het model van dat moment in zijn scope zit
+// gecreëerd wanneer het model nog leeg is, en het model van dat moment in zijn scope zit. Boevendien kan de stijl op
+// elk moment aangepast worden.
 const STIJL_OP_LAAG = "stijlOpLaag";
 const SELECTIE_STIJL_OP_LAAG = "stijlOpLaag";
 

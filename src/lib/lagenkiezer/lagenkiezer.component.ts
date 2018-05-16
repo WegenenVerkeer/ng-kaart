@@ -150,7 +150,7 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
     }, 0);
   }
 
-  onDragEnd(evt: DragEvent, laag: ToegevoegdeLaag) {
+  onDragEnd() {
     // Wacht een klein beetje met de CSS af te breken. Hopelijk lang genoeg tot de lijst aangepast is.
     // Als we dat niet doen, dan wordt nog even de oorspronkelijke volgorde getoond totdat het command
     // verwerkt is en de nieuwe volgorde uit de observable komt.
@@ -231,6 +231,7 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
   onDrop(evt: DragEvent, laag: ToegevoegdeLaag) {
     const bronLaagtitel = evt.dataTransfer.getData(dndDataType);
     this.dispatch(prt.VerplaatsLaagCmd(bronLaagtitel, laag.positieInGroep, kaartLogOnlyWrapper));
+    this.onDragEnd(); // wordt niet door de browser aangeroepen blijkbaar
     evt.preventDefault();
     evt.stopPropagation();
   }

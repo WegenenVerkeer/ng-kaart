@@ -86,6 +86,7 @@ export interface VectorLaag {
   readonly selecteerbaar: boolean;
   readonly minZoom: number;
   readonly maxZoom: number;
+  readonly offsetveld: Option<string>;
 }
 
 export interface BlancoLaag {
@@ -120,34 +121,39 @@ export interface ToegevoegdeVectorLaag extends ToegevoegdeLaag {
   readonly bron: VectorLaag;
   readonly layer: ol.layer.Vector;
   readonly stijlPositie: number; // We gaan er van uit dat alle vectorlagen in dezelfde groep zitten!
-  readonly stijl: Stylish; // cache van determineStyle
+  readonly stijlSel: Option<StyleSelector>;
+  readonly selectiestijlSel: Option<StyleSelector>;
 }
 
 export const isWmsLaag: (laag: Laag) => boolean = laag => laag.type === SingleTileWmsType || laag.type === TiledWmsType;
 export const isBlancoLaag: (laag: Laag) => boolean = laag => laag.type === BlancoType;
 export const isVectorLaag: (laag: Laag) => boolean = laag => laag.type === VectorType;
+export const asVectorLaag: (laag: Laag) => Option<VectorLaag> = fromPredicate(isVectorLaag) as (_: Laag) => Option<VectorLaag>;
 export const isToegevoegdeVectorLaag: (laag: ToegevoegdeLaag) => boolean = laag => isVectorLaag(laag.bron);
 export const asToegevoegdeVectorLaag: (laag: ToegevoegdeLaag) => Option<ToegevoegdeVectorLaag> = laag =>
   fromPredicate<ToegevoegdeLaag>(lg => isVectorLaag(lg.bron))(laag) as Option<ToegevoegdeVectorLaag>;
 
 export type Stylish = ol.StyleFunction | ol.style.Style | ol.style.Style[];
 
-export function determineStyle(styleSelector: Option<StyleSelector>, defaultStyle: ol.style.Style): Stylish {
-  return styleSelector
-    .map(selector => {
-      switch (selector.type) {
-        case "StaticStyle":
-          return selector.style;
-        case "DynamicStyle":
-          return selector.styleFunction;
-        case "Styles":
-          return selector.styles;
-      }
-    })
-    .getOrElseValue(defaultStyle);
+export function matchStyleSelector<A>(f: (_: StaticStyle) => A, g: (_: DynamicStyle) => A, h: (_: Styles) => A): (_: StyleSelector) => A {
+  return styleSelector => {
+    switch (styleSelector.type) {
+      case "StaticStyle":
+        return f(styleSelector);
+      case "DynamicStyle":
+        return g(styleSelector);
+      case "Styles":
+        return h(styleSelector);
+    }
+  };
 }
 
-export function determineStyleSelector(stp?: Stylish): Option<StyleSelector> {
+export function toStylish(styleSelector: Option<StyleSelector>, defaultStyle: ol.style.Style): Stylish {
+  return styleSelector.map(matchStyleSelector<Stylish>(s => s.style, s => s.styleFunction, s => s.styles)).getOrElseValue(defaultStyle);
+}
+
+export function asStyleSelector(stp: Stylish): Option<StyleSelector> {
+  // TODO kies een of ander unieke property van ol.style.Style
   if (stp instanceof ol.style.Style) {
     return some(StaticStyle(stp));
   } else if (typeof stp === "function") {

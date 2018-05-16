@@ -12,7 +12,7 @@ import * as prt from "./kaart-protocol";
 import { StyleSelector, Stylish } from "./kaart-elementen";
 import { getDefaultSelectionStyleFunction, getDefaultStyleFunction } from "./styles";
 import { option } from "fp-ts";
-import { determineStyleSelector } from "./kaart-elementen";
+import { asStyleSelector } from "./kaart-elementen";
 
 @Component({
   selector: "awv-kaart-vector-laag",
@@ -28,6 +28,7 @@ export class KaartVectorLaagComponent extends KaartLaagComponent {
   @Input() selecteerbaar = true;
   @Input() minZoom = 7;
   @Input() maxZoom = 15;
+  @Input() offsetveld?: string = undefined;
 
   constructor(kaart: KaartClassicComponent) {
     super(kaart);
@@ -38,10 +39,11 @@ export class KaartVectorLaagComponent extends KaartLaagComponent {
       type: ke.VectorType,
       titel: this.titel,
       source: this.source,
-      styleSelector: orElse(fromNullable(this.style).map(ke.StaticStyle), () => fromNullable(this.styleFunction).map(ke.DynamicStyle)),
+      styleSelector: this.getMaybeStyleSelector(),
       selecteerbaar: this.selecteerbaar,
       minZoom: this.minZoom,
-      maxZoom: this.maxZoom
+      maxZoom: this.maxZoom,
+      offsetveld: fromNullable(this.offsetveld)
     };
   }
 
@@ -58,12 +60,7 @@ export class KaartVectorLaagComponent extends KaartLaagComponent {
 
     forEach(this.getMaybeStyleSelector(), styleselector => {
       this.dispatch(
-        prt.ZetStijlVoorLaagCmd(
-          this.titel,
-          styleselector,
-          fromNullable(this.selectieStyle).chain(determineStyleSelector),
-          kaartLogOnlyWrapper
-        )
+        prt.ZetStijlVoorLaagCmd(this.titel, styleselector, fromNullable(this.selectieStyle).chain(asStyleSelector), kaartLogOnlyWrapper)
       );
     });
   }

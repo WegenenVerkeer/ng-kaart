@@ -163,7 +163,8 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
       styleSelector: some(ke.StaticStyle(this.mijnLocatieStyle)),
       selecteerbaar: false,
       minZoom: 2,
-      maxZoom: 15
+      maxZoom: 15,
+      offsetveld: none
     };
   }
 }

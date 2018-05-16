@@ -1,5 +1,7 @@
 import * as ol from "openlayers";
 
+import { StaticStyle, StyleSelector } from "./kaart-elementen";
+
 export function getDefaultStyle(): ol.style.Style {
   return new ol.style.Style({
     fill: new ol.style.Fill({
@@ -20,6 +22,10 @@ export function getDefaultStyle(): ol.style.Style {
       radius: 5
     })
   });
+}
+
+export function getDefaultStyleSelector(): StyleSelector {
+  return StaticStyle(getDefaultStyle());
 }
 
 export function getDefaultStyleFunction(): ol.StyleFunction {
