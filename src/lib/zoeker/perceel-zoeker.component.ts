@@ -1,63 +1,27 @@
-import { HttpErrorResponse } from "@angular/common/http";
 import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { List, Set } from "immutable";
-import { UnaryFunction } from "rxjs/interfaces";
+import { Set } from "immutable";
 import { Observable } from "rxjs/Observable";
-import { combineLatest, distinctUntilChanged, filter, map, shareReplay, startWith, switchMap, tap } from "rxjs/operators";
+import { distinctUntilChanged, filter, map } from "rxjs/operators";
 
-import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
-import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
-import { kaartLogger } from "../kaart/log";
 
-import { ZoekResultaten } from "./abstract-zoeker";
-import { Afdeling, Gemeente, PerceelDetails, PerceelNummer, PerceelZoekerService, Sectie } from "./perceel-zoeker.service";
-import { ZoekerComponent } from "./zoeker.component";
+import { Afdeling, Gemeente, PerceelNummer, PerceelZoekerService, Sectie } from "./perceel-zoeker.service";
+import { GetraptZoekerComponent, isNotNullObject, ZoekerComponent } from "./zoeker.component";
 
-function isNotNullObject(object) {
-  return object && object instanceof Object;
-}
-
-// Filter een array van waardes met de waarde van een filter (control), de filter kan een string of een object zijn.
-function filterMetWaarde<T>(control: FormControl, propertyName: string): UnaryFunction<Observable<T[]>, Observable<T[]>> {
-  return combineLatest(control.valueChanges.pipe(startWith<string | T>(""), distinctUntilChanged()), (waardes, filterWaarde) => {
-    if (!filterWaarde) {
-      return waardes;
-    } else if (typeof filterWaarde === "string") {
-      return waardes.filter(value => value[propertyName].toLocaleLowerCase().includes(filterWaarde.toLocaleLowerCase()));
-    } else {
-      return waardes.filter(value => value[propertyName].toLocaleLowerCase().includes(filterWaarde[propertyName].toLocaleLowerCase()));
-    }
-  });
-}
-
-// inputWaarde kan een string of een object zijn. Enkel wanneer het een object is, roepen we de provider op,
-// anders geven we een lege array terug.
-function safeProvider<A, T>(provider: (A) => Observable<T[]>): UnaryFunction<Observable<A>, Observable<T[]>> {
-  return switchMap(inputWaarde => {
-    return isNotNullObject(inputWaarde) ? provider(inputWaarde) : Observable.of([]);
-  });
-}
-
-// Wanneer de array leeg is, disable de control, enable indien niet leeg of er een filter is opgegeven.
-function disableWanneerLeeg<T>(control: FormControl, array: T[]) {
-  if (array.length > 0 || (control.value && control.value !== "")) {
-    control.enable();
-  } else {
-    control.disable();
-  }
-}
-
-export type MaakLeegType = "alles" | "vanafgemeente" | "vanafafdeling" | "vanafsectie" | "vanafperceel";
+const NIVEAU_ALLES = 0;
+const NIVEAU_VANAFGEMEENTE = 1;
+const NIVEAU_VANAFAFDELING = 2;
+const NIVEAU_VANAFSECTIE = 3;
+const NIVEAU_VANAFPERCEEL = 4;
 
 @Component({
   selector: "awv-perceel-zoeker",
   templateUrl: "./perceel-zoeker.component.html",
   styleUrls: ["./perceel-zoeker.component.scss"]
 })
-export class PerceelZoekerComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
+export class PerceelZoekerComponent extends GetraptZoekerComponent implements OnInit, OnDestroy {
   private alleGemeenten: Gemeente[] = [];
 
   gefilterdeGemeenten: Gemeente[] = [];
@@ -75,15 +39,15 @@ export class PerceelZoekerComponent extends KaartChildComponentBase implements O
     private perceelService: PerceelZoekerService,
     kaartComponent: KaartComponent,
     zone: NgZone,
-    private zoekerComponent: ZoekerComponent
+    zoekerComponent: ZoekerComponent
   ) {
-    super(kaartComponent, zone);
+    super(kaartComponent, zone, zoekerComponent);
   }
 
   ngOnInit(): void {
     super.ngOnInit();
-    this.maakVeldenLeeg("alles");
-    this.bindToLifeCycle(this.perceelService.getAlleGemeenten$()).subscribe(
+    this.maakVeldenLeeg(NIVEAU_ALLES);
+    this.bindToLifeCycle(this.busy(this.perceelService.getAlleGemeenten$())).subscribe(
       gemeenten => {
         // De gemeentecontrol was disabled tot nu, om te zorgen dat de gebruiker niet kan filteren voordat de gemeenten binnen zijn.
         this.gemeenteControl.enable();
@@ -113,48 +77,42 @@ export class PerceelZoekerComponent extends KaartChildComponentBase implements O
         gemeente => gemeente.naam.toLocaleLowerCase().includes(gemeenteOfNis) || gemeente.niscode.toString().includes(gemeenteOfNis)
       );
       // Iedere keer als er iets verandert, moeten we de volgende controls leegmaken.
-      this.maakVeldenLeeg("vanafgemeente");
+      this.maakVeldenLeeg(NIVEAU_VANAFGEMEENTE);
     });
 
     // Gebruik de waarde van de VORIGE control om een request te doen,
     //   maar alleen als die vorige waarde een object was (dus door de gebruiker aangeklikt in de lijst).
     // Filter het antwoord daarvan met de (eventuele) waarde van onze HUIDIGE control, dit om autocomplete te doen.
-    this.afdelingen$ = this.gemeenteControl.valueChanges.pipe(
-      distinctUntilChanged(),
-      safeProvider(gemeente => this.perceelService.getAfdelingen$(gemeente.niscode)),
-      filterMetWaarde(this.afdelingControl, "naam"),
-      shareReplay(1)
+    this.afdelingen$ = this.autocomplete(
+      this.gemeenteControl,
+      gemeente => this.perceelService.getAfdelingen$(gemeente.niscode),
+      this.afdelingControl,
+      "naam"
     );
 
-    this.secties$ = this.afdelingControl.valueChanges.pipe(
-      distinctUntilChanged(),
-      safeProvider(afdeling => this.perceelService.getSecties$(afdeling.niscode, afdeling.code)),
-      filterMetWaarde(this.sectieControl, "code"),
-      shareReplay(1)
+    this.secties$ = this.autocomplete(
+      this.afdelingControl,
+      afdeling => this.perceelService.getSecties$(afdeling.niscode, afdeling.code),
+      this.sectieControl,
+      "code"
     );
 
-    this.percelen$ = this.sectieControl.valueChanges.pipe(
-      distinctUntilChanged(),
-      safeProvider(sectie => this.perceelService.getPerceelNummers$(sectie.niscode, sectie.afdelingcode, sectie.code)),
-      filterMetWaarde(this.perceelControl, "capakey"),
-      shareReplay(1)
+    this.percelen$ = this.autocomplete(
+      this.sectieControl,
+      sectie => this.perceelService.getPerceelNummers$(sectie.niscode, sectie.afdelingcode, sectie.code),
+      this.perceelControl,
+      "capakey"
     );
 
     // Wanneer de waardes leeg zijn, mag je de control disablen, maak ook de volgende velden leeg.
-    this.subscribeToDisableWhenEmpty(this.afdelingen$, this.afdelingControl, "vanafafdeling");
-    this.subscribeToDisableWhenEmpty(this.secties$, this.sectieControl, "vanafsectie");
-    this.subscribeToDisableWhenEmpty(this.percelen$, this.perceelControl, "vanafperceel");
+    this.subscribeToDisableWhenEmpty(this.afdelingen$, this.afdelingControl, NIVEAU_VANAFAFDELING);
+    this.subscribeToDisableWhenEmpty(this.secties$, this.sectieControl, NIVEAU_VANAFSECTIE);
+    this.subscribeToDisableWhenEmpty(this.percelen$, this.perceelControl, NIVEAU_VANAFPERCEEL);
 
     // Hier gaan we onze capakey doorsturen naar de zoekers, we willen alleen de perceelzoeker triggeren.
     this.bindToLifeCycle(this.perceelControl.valueChanges.pipe(filter(isNotNullObject), distinctUntilChanged())).subscribe(
       perceelDetails => {
-        this.zoekerComponent.toonResultaat = true;
-        this.dispatch({
-          type: "Zoek",
-          input: perceelDetails.capakey,
-          zoekers: Set.of(this.perceelService.naam()),
-          wrapper: kaartLogOnlyWrapper
-        });
+        this.zoek(perceelDetails.capakey, Set.of(this.perceelService.naam()));
       }
     );
 
@@ -183,37 +141,22 @@ export class PerceelZoekerComponent extends KaartChildComponentBase implements O
     return perceel ? perceel.perceelsnummer : undefined;
   }
 
-  private meldFout(fout: HttpErrorResponse) {
-    kaartLogger.error("error", fout);
-    this.dispatch(prt.MeldComponentFoutCmd(List.of("Fout bij ophalen perceel gegevens", fout.message)));
-  }
-
-  private subscribeToDisableWhenEmpty<T>(observable: Observable<T[]>, formControl: FormControl, maakLeegType: MaakLeegType) {
-    this.bindToLifeCycle(observable).subscribe(
-      waardes => {
-        disableWanneerLeeg<T>(formControl, waardes);
-        this.maakVeldenLeeg(maakLeegType);
-      },
-      error => this.meldFout(error)
-    );
-  }
-
-  maakVeldenLeeg(niveau: MaakLeegType) {
-    if (niveau === "alles") {
+  maakVeldenLeeg(vanafNiveau: number) {
+    if (vanafNiveau === NIVEAU_ALLES) {
       this.gefilterdeGemeenten = this.alleGemeenten;
       this.gemeenteControl.setValue(null);
     }
-    if (niveau === "alles" || niveau === "vanafgemeente") {
+    if (vanafNiveau <= NIVEAU_VANAFGEMEENTE) {
       this.afdelingControl.setValue(null);
     }
 
-    if (niveau === "alles" || niveau === "vanafgemeente" || niveau === "vanafafdeling") {
+    if (vanafNiveau <= NIVEAU_VANAFAFDELING) {
       this.sectieControl.setValue(null);
     }
-    if (niveau === "alles" || niveau === "vanafgemeente" || niveau === "vanafafdeling" || niveau === "vanafsectie") {
+    if (vanafNiveau <= NIVEAU_VANAFSECTIE) {
       this.perceelControl.setValue(null);
     }
 
-    this.zoekerComponent.maakResultaatLeeg();
+    super.maakVeldenLeeg(vanafNiveau);
   }
 }

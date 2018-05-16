@@ -7,7 +7,7 @@ import { Observable } from "rxjs/Observable";
 import { from } from "rxjs/observable/from";
 import { map, mergeAll, mergeMap, reduce, shareReplay } from "rxjs/operators";
 
-import { AbstractZoeker, geoJSONOptions, ZoekInput, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
+import { AbstractZoeker, geoJSONOptions, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
 import { CrabZoekerConfig } from "./crab-zoeker.config";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "./zoeker-representatie.service";
 import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
@@ -31,20 +31,29 @@ export interface SuggestionServiceResults {
   readonly SuggestionResult: string[];
 }
 
-export interface CrabGemeente extends ZoekInput {
+export type CrabTypes = "CrabGemeente" | "CrabStraat" | "CrabHuisnummer";
+
+export interface CrabZoekInput {
+  readonly type: CrabTypes;
+}
+
+export interface CrabGemeente extends CrabZoekInput {
+  readonly type: "CrabGemeente";
   readonly postcodes: string;
   readonly niscode: number;
   readonly naam: string;
   readonly id: number;
 }
 
-export interface CrabStraat extends ZoekInput {
+export interface CrabStraat extends CrabZoekInput {
+  readonly type: "CrabStraat";
   readonly naam: string;
   readonly gemeente: CrabGemeente;
   readonly id: number;
 }
 
-export interface CrabHuisnummer extends ZoekInput {
+export interface CrabHuisnummer extends CrabZoekInput {
+  readonly type: "CrabHuisnummer";
   readonly huisnummer: string;
   readonly niscode: number;
   readonly straat: CrabStraat;
@@ -142,7 +151,7 @@ export class CrabZoekerService implements AbstractZoeker {
   getAlleGemeenten$(): Observable<CrabGemeente[]> {
     return this.http
       .get<CrabGemeente[]>(this.crabZoekerConfig.url + "/rest/crab/gemeenten")
-      .pipe(map(gemeentes => gemeentes.map(gemeente => ({ ...gemeente, type: "CrabGemeente" }))), shareReplay(1));
+      .pipe(map(gemeentes => gemeentes.map(gemeente => ({ ...gemeente, type: "CrabGemeente" as "CrabGemeente" }))), shareReplay(1));
   }
 
   private bboxNaarZoekResultaat(naam: string, bron: string, bbox: CrabBBox): CrabZoekResultaat {
@@ -186,7 +195,7 @@ export class CrabZoekerService implements AbstractZoeker {
   getStraten$(gemeente: CrabGemeente): Observable<CrabStraat[]> {
     return this.http
       .get<CrabStraat[]>(this.crabZoekerConfig.url + "/rest/crab/straten/" + gemeente.niscode)
-      .pipe(map(straten => straten.map(straat => ({ ...straat, gemeente: gemeente, type: "CrabStraat" }))), shareReplay(1));
+      .pipe(map(straten => straten.map(straat => ({ ...straat, gemeente: gemeente, type: "CrabStraat" as "CrabStraat" }))), shareReplay(1));
   }
 
   private getStraatBBox$(straat: CrabStraat): Observable<ZoekResultaten> {
@@ -209,7 +218,10 @@ export class CrabZoekerService implements AbstractZoeker {
   getHuisnummers$(straat: CrabStraat): Observable<CrabHuisnummer[]> {
     return this.http
       .get<CrabHuisnummer[]>(this.crabZoekerConfig.url + "/rest/crab/huisnummers/" + straat.id)
-      .pipe(map(huisnummers => huisnummers.map(huisnummer => ({ ...huisnummer, straat: straat, type: "CrabNummer" }))), shareReplay(1));
+      .pipe(
+        map(huisnummers => huisnummers.map(huisnummer => ({ ...huisnummer, straat: straat, type: "CrabHuisnummer" as "CrabHuisnummer" }))),
+        shareReplay(1)
+      );
   }
 
   private getHuisnummerPositie$(huisnummer: CrabHuisnummer): Observable<ZoekResultaten> {
@@ -235,7 +247,7 @@ export class CrabZoekerService implements AbstractZoeker {
       );
   }
 
-  zoek$(zoekterm: string | ZoekInput): Observable<ZoekResultaten> {
+  zoek$(zoekterm: string | CrabZoekInput): Observable<ZoekResultaten> {
     function options(waarde) {
       return {
         params: new HttpParams().set("query", waarde)
@@ -263,7 +275,7 @@ export class CrabZoekerService implements AbstractZoeker {
       return this.getGemeenteBBox$(zoekterm as CrabGemeente);
     } else if (zoekterm.type === "CrabStraat") {
       return this.getStraatBBox$(zoekterm as CrabStraat);
-    } else if (zoekterm.type === "CrabNummer") {
+    } else if (zoekterm.type === "CrabHuisnummer") {
       return this.getHuisnummerPositie$(zoekterm as CrabHuisnummer);
     } else {
       return Observable.empty();

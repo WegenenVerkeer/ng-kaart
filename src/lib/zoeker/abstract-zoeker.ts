@@ -21,10 +21,6 @@ export interface ZoekResultaat {
   style: ol.style.Style;
 }
 
-export interface ZoekInput {
-  readonly type: string;
-}
-
 export class ZoekResultaten {
   constructor(
     public zoeker: string,
@@ -49,7 +45,8 @@ export class ZoekResultaten {
 
 export interface AbstractZoeker {
   naam(): string;
-  zoek$(zoekterm: string | ZoekInput): Observable<ZoekResultaten>;
+  // input is een any omdat bepaalde zoekers (zoals Crab) een structured input aanvaarden.
+  zoek$(input: any): Observable<ZoekResultaten>;
 }
 
 // De resultaten worden getoond volgens een bepaalde hiërarchie

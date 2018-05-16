@@ -1,16 +1,30 @@
-import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
+import { HttpErrorResponse } from "@angular/common/http";
+import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { none, Option } from "fp-ts/lib/Option";
+import { none } from "fp-ts/lib/Option";
 import { List, Set } from "immutable";
 import * as ol from "openlayers";
-import { debounce, distinctUntilChanged, filter, map } from "rxjs/operators";
-import { Subscription } from "rxjs/Subscription";
+import { UnaryFunction } from "rxjs/interfaces";
+import { Observable } from "rxjs/Observable";
+import {
+  catchError,
+  combineLatest,
+  debounce,
+  distinctUntilChanged,
+  filter,
+  map,
+  shareReplay,
+  startWith,
+  switchMap,
+  tap
+} from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import * as ke from "../kaart/kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
+import { kaartLogger } from "../kaart/log";
 
 import { compareResultaten, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
 
@@ -21,6 +35,95 @@ export class Fout {
 }
 
 export type ZoekerType = "Geoloket" | "Perceel" | "Crab";
+
+export function isNotNullObject(object) {
+  return object && object instanceof Object;
+}
+
+export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
+  protected constructor(kaartComponent: KaartComponent, zone: NgZone, private zoekerComponent: ZoekerComponent) {
+    super(kaartComponent, zone);
+  }
+
+  maakVeldenLeeg(vanafNiveau: number) {
+    this.zoekerComponent.maakResultaatLeeg();
+  }
+
+  protected meldFout(fout: HttpErrorResponse) {
+    kaartLogger.error("error", fout);
+    this.dispatch(prt.MeldComponentFoutCmd(List.of("Fout bij ophalen perceel gegevens", fout.message)));
+  }
+
+  protected subscribeToDisableWhenEmpty<T>(observable: Observable<T[]>, control: FormControl, maakLeegVanaf: number) {
+    // Wanneer de array leeg is, disable de control, enable indien niet leeg of er een filter is opgegeven.
+    function disableWanneerLeeg(array: T[]) {
+      if (array.length > 0 || (control.value && control.value !== "")) {
+        control.enable();
+      } else {
+        control.disable();
+      }
+    }
+
+    this.bindToLifeCycle(observable).subscribe(
+      waardes => {
+        disableWanneerLeeg(waardes);
+        this.maakVeldenLeeg(maakLeegVanaf);
+      },
+      error => this.meldFout(error)
+    );
+  }
+
+  protected busy<T>(observable: Observable<T>): Observable<T> {
+    this.zoekerComponent.setBusy();
+    return observable.pipe(tap(x => this.zoekerComponent.setNotBusy(), error => this.zoekerComponent.setNotBusy()));
+  }
+
+  protected zoek(zoekInput: any, zoekers: Set<string>) {
+    this.zoekerComponent.toonResultaat = true;
+    this.zoekerComponent.setBusy();
+    this.dispatch({
+      type: "Zoek",
+      input: zoekInput,
+      zoekers: zoekers,
+      wrapper: kaartLogOnlyWrapper
+    });
+  }
+
+  // Gebruik de waarde van de VORIGE control om een request te doen,
+  //   maar alleen als die vorige waarde een object was (dus door de gebruiker aangeklikt in de lijst).
+  // Filter het antwoord daarvan met de (eventuele) waarde van onze HUIDIGE control, dit om autocomplete te doen.
+  protected autocomplete<T, A>(vorige: FormControl, provider: (A) => Observable<T[]>, huidige: FormControl, prop: string): Observable<T[]> {
+    // Filter een array van waardes met de waarde van een filter (control), de filter kan een string of een object zijn.
+    function filterMetWaarde(): UnaryFunction<Observable<T[]>, Observable<T[]>> {
+      return combineLatest(huidige.valueChanges.pipe(startWith<string | T>(""), distinctUntilChanged()), (waardes, filterWaarde) => {
+        if (!filterWaarde) {
+          return waardes;
+        } else if (typeof filterWaarde === "string") {
+          return waardes.filter(value => value[prop].toLocaleLowerCase().includes(filterWaarde.toLocaleLowerCase()));
+        } else {
+          return waardes.filter(value => value[prop].toLocaleLowerCase().includes(filterWaarde[prop].toLocaleLowerCase()));
+        }
+      });
+    }
+
+    return vorige.valueChanges.pipe(distinctUntilChanged(), this.safeProvider(provider), filterMetWaarde(), shareReplay(1));
+  }
+
+  // inputWaarde kan een string of een object zijn. Enkel wanneer het een object is, roepen we de provider op,
+  // anders geven we een lege array terug.
+  private safeProvider<A, T>(provider: (A) => Observable<T[]>): UnaryFunction<Observable<A>, Observable<T[]>> {
+    return switchMap(inputWaarde => {
+      return isNotNullObject(inputWaarde)
+        ? this.busy(provider(inputWaarde)).pipe(
+            catchError((error, obs) => {
+              this.meldFout(error);
+              return Observable.of([]);
+            })
+          )
+        : Observable.of([]);
+    });
+  }
+}
 
 @Component({
   selector: "awv-zoeker",
@@ -38,7 +141,6 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
   busy = 0;
   actieveZoeker: ZoekerType = "Geoloket";
 
-  private subscription: Option<Subscription> = none;
   private byPassDebounce: () => void;
   private extent: ol.Extent = ol.extent.createEmpty();
 
@@ -83,7 +185,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
     }
   }
 
-  constructor(parent: KaartComponent, zone: NgZone) {
+  constructor(parent: KaartComponent, zone: NgZone, private cd: ChangeDetectorRef) {
     super(parent, zone);
   }
 
@@ -170,6 +272,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
 
   kiesZoeker(zoeker: ZoekerType) {
     this.maakResultaatLeeg();
+    this.busy = 0; // Voor alle zekerheid.
     this.actieveZoeker = zoeker;
   }
 
@@ -233,10 +336,14 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
 
   setBusy() {
     this.busy++;
+    this.cd.detectChanges();
   }
 
   setNotBusy() {
-    this.busy--;
+    if (this.busy > 0) {
+      this.busy--;
+      this.cd.detectChanges();
+    }
   }
 
   isBusy(): boolean {

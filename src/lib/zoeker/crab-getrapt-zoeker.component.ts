@@ -1,87 +1,26 @@
-import { HttpErrorResponse } from "@angular/common/http";
-import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
+import { Component, NgZone, OnInit } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { List, Set } from "immutable";
-import { UnaryFunction } from "rxjs/interfaces";
+import { Set } from "immutable";
 import { Observable } from "rxjs/Observable";
-import {
-  catchError,
-  combineLatest,
-  distinctUntilChanged,
-  filter,
-  map,
-  retry,
-  shareReplay,
-  startWith,
-  switchMap,
-  take,
-  tap
-} from "rxjs/operators";
+import { distinctUntilChanged, filter, map } from "rxjs/operators";
 
-import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
-import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
-import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
-import { kaartLogger } from "../kaart/log";
 
-import { ZoekInput, ZoekResultaten } from "./abstract-zoeker";
-import { CrabGemeente, CrabHuisnummer, CrabStraat, CrabZoekerService } from "./crab-zoeker.service";
-import { ZoekerComponent } from "./zoeker.component";
+import { CrabGemeente, CrabHuisnummer, CrabStraat, CrabZoekerService, CrabZoekInput } from "./crab-zoeker.service";
+import { GetraptZoekerComponent, isNotNullObject, ZoekerComponent } from "./zoeker.component";
 
-function isNotNullObject(object) {
-  return object && object instanceof Object;
-}
-
-// Filter een array van waardes met de waarde van een filter (control), de filter kan een string of een object zijn.
-function filterMetWaarde<T>(control: FormControl, propertyName: string): UnaryFunction<Observable<T[]>, Observable<T[]>> {
-  return combineLatest(control.valueChanges.pipe(startWith<string | T>(""), distinctUntilChanged()), (waardes, filterWaarde) => {
-    if (!filterWaarde) {
-      return waardes;
-    } else if (typeof filterWaarde === "string") {
-      return waardes.filter(value => value[propertyName].toLocaleLowerCase().includes(filterWaarde.toLocaleLowerCase()));
-    } else {
-      return waardes.filter(value => value[propertyName].toLocaleLowerCase().includes(filterWaarde[propertyName].toLocaleLowerCase()));
-    }
-  });
-}
-
-// inputWaarde kan een string of een object zijn. Enkel wanneer het een object is, roepen we de provider op,
-// anders geven we een lege array terug.
-function safeProvider<A, T>(
-  provider: (A) => Observable<T[]>,
-  meldFout: (HttpErrorResponse) => void
-): UnaryFunction<Observable<A>, Observable<T[]>> {
-  return switchMap(inputWaarde => {
-    return isNotNullObject(inputWaarde)
-      ? provider(inputWaarde).pipe(
-          catchError((error, obs) => {
-            meldFout(error);
-            return Observable.of([]);
-          })
-        )
-      : Observable.of([]);
-  });
-}
-
-// Wanneer de array leeg is, disable de control, enable indien niet leeg of er een filter is opgegeven.
-function disableWanneerLeeg<T>(control: FormControl, array: T[]) {
-  if (array.length > 0 || (control.value && control.value !== "")) {
-    control.enable();
-  } else {
-    control.disable();
-  }
-}
-
-type MaakLeegType = "alles" | "vanafgemeente" | "vanafstraat" | "vanafhuisnummer";
+const NIVEAU_ALLES = 0;
+const NIVEAU_VANAFGEMEENTE = 1;
+const NIVEAU_VANAFSTRAAT = 2;
+const NIVEAU_VANAFHUISNUMMER = 3;
 
 @Component({
   selector: "awv-crab-getrapt-zoeker",
   templateUrl: "./crab-getrapt-zoeker.component.html",
   styleUrls: ["./crab-getrapt-zoeker.component.scss"]
 })
-export class CrabGetraptZoekerComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
+export class CrabGetraptZoekerComponent extends GetraptZoekerComponent implements OnInit {
   private alleGemeenten: CrabGemeente[] = [];
-
   gefilterdeGemeenten: CrabGemeente[] = [];
 
   gemeenteControl = new FormControl({ value: "", disabled: true });
@@ -91,18 +30,13 @@ export class CrabGetraptZoekerComponent extends KaartChildComponentBase implemen
   straten$: Observable<CrabStraat[]> = Observable.empty();
   huisnummers$: Observable<CrabHuisnummer[]> = Observable.empty();
 
-  constructor(
-    private crabService: CrabZoekerService,
-    kaartComponent: KaartComponent,
-    zone: NgZone,
-    private zoekerComponent: ZoekerComponent
-  ) {
-    super(kaartComponent, zone);
+  constructor(private crabService: CrabZoekerService, kaartComponent: KaartComponent, zone: NgZone, zoekerComponent: ZoekerComponent) {
+    super(kaartComponent, zone, zoekerComponent);
   }
 
   ngOnInit(): void {
     super.ngOnInit();
-    this.maakVeldenLeeg("alles");
+    this.maakVeldenLeeg(NIVEAU_ALLES);
     this.bindToLifeCycle(this.busy(this.crabService.getAlleGemeenten$())).subscribe(
       gemeenten => {
         // De gemeentecontrol was disabled tot nu, om te zorgen dat de gebruiker niet kan filteren voordat de gemeenten binnen zijn.
@@ -128,7 +62,8 @@ export class CrabGetraptZoekerComponent extends KaartChildComponentBase implemen
         distinctUntilChanged()
       )
     ).subscribe(zoekTerm => {
-      // We moeten kunnen filteren op (een deel van) de naam van een gemeente of op (een deel van) de niscode.
+      // We moeten kunnen filteren op (een deel van) de naam van een gemeente of op (een deel van) de niscode
+      // of op (een deel van) de postcode.
       this.gefilterdeGemeenten = this.alleGemeenten.filter(
         gemeente =>
           gemeente.naam.toLocaleLowerCase().includes(zoekTerm) ||
@@ -136,43 +71,25 @@ export class CrabGetraptZoekerComponent extends KaartChildComponentBase implemen
           gemeente.postcodes.includes(zoekTerm)
       );
       // Iedere keer als er iets verandert, moeten we de volgende controls leegmaken.
-      this.maakVeldenLeeg("vanafgemeente");
+      this.maakVeldenLeeg(NIVEAU_VANAFGEMEENTE);
     });
 
-    // Gebruik de waarde van de VORIGE control om een request te doen,
-    //   maar alleen als die vorige waarde een object was (dus door de gebruiker aangeklikt in de lijst).
-    // Filter het antwoord daarvan met de (eventuele) waarde van onze HUIDIGE control, dit om autocomplete te doen.
-    this.straten$ = this.gemeenteControl.valueChanges.pipe(
-      distinctUntilChanged(),
-      safeProvider(gemeente => this.busy(this.crabService.getStraten$(gemeente)), error => this.meldFout(error)),
-      filterMetWaarde(this.straatControl, "naam"),
-      shareReplay(1)
-    );
-
-    this.huisnummers$ = this.straatControl.valueChanges.pipe(
-      distinctUntilChanged(),
-      safeProvider(straat => this.busy(this.crabService.getHuisnummers$(straat)), error => this.meldFout(error)),
-      filterMetWaarde(this.huisnummerControl, "huisnummer"),
-      shareReplay(1)
+    this.straten$ = this.autocomplete(this.gemeenteControl, gemeente => this.crabService.getStraten$(gemeente), this.straatControl, "naam");
+    this.huisnummers$ = this.autocomplete(
+      this.straatControl,
+      straat => this.crabService.getHuisnummers$(straat),
+      this.huisnummerControl,
+      "huisnummer"
     );
 
     // Wanneer de waardes leeg zijn, mag je de control disablen, maak ook de volgende velden leeg.
-    this.subscribeToDisableWhenEmpty(this.straten$, this.straatControl, "vanafstraat");
-    this.subscribeToDisableWhenEmpty(this.huisnummers$, this.huisnummerControl, "vanafhuisnummer");
+    this.subscribeToDisableWhenEmpty(this.straten$, this.straatControl, NIVEAU_VANAFSTRAAT);
+    this.subscribeToDisableWhenEmpty(this.huisnummers$, this.huisnummerControl, NIVEAU_VANAFHUISNUMMER);
 
     // Hier gaan we automatisch zoeken op huisnummer.
     this.bindToLifeCycle(this.huisnummerControl.valueChanges.pipe(filter(isNotNullObject), distinctUntilChanged())).subscribe(v => {
       this.toonOpKaart();
     });
-  }
-
-  busy<T>(observable: Observable<T>): Observable<T> {
-    this.zoekerComponent.setBusy();
-    return observable.pipe(tap(x => this.zoekerComponent.setNotBusy(), error => this.zoekerComponent.setNotBusy()));
-  }
-
-  ngOnDestroy(): void {
-    super.ngOnDestroy();
   }
 
   toonGemeenteInLijst(gemeente?: CrabGemeente): string | undefined {
@@ -191,39 +108,23 @@ export class CrabGetraptZoekerComponent extends KaartChildComponentBase implemen
     return sectie ? sectie.huisnummer : undefined;
   }
 
-  private meldFout(fout: HttpErrorResponse) {
-    kaartLogger.error("error", fout);
-    this.dispatch(prt.MeldComponentFoutCmd(List.of("Fout bij ophalen perceel gegevens", fout.message)));
-  }
-
-  private subscribeToDisableWhenEmpty<T>(observable: Observable<T[]>, formControl: FormControl, maakLeegType: MaakLeegType) {
-    this.bindToLifeCycle(observable).subscribe(
-      waardes => {
-        disableWanneerLeeg<T>(formControl, waardes);
-        this.maakVeldenLeeg(maakLeegType);
-      },
-      error => this.meldFout(error)
-    );
-  }
-
-  private maakVeldenLeeg(niveau: MaakLeegType) {
-    if (niveau === "alles") {
+  maakVeldenLeeg(vanafNiveau: number) {
+    if (vanafNiveau === NIVEAU_ALLES) {
       this.gefilterdeGemeenten = this.alleGemeenten;
       this.gemeenteControl.setValue(null);
     }
-    if (niveau === "alles" || niveau === "vanafgemeente") {
+    if (vanafNiveau <= NIVEAU_VANAFGEMEENTE) {
       this.straatControl.setValue(null);
     }
 
-    if (niveau === "alles" || niveau === "vanafgemeente" || niveau === "vanafstraat") {
+    if (vanafNiveau <= NIVEAU_VANAFSTRAAT) {
       this.huisnummerControl.setValue(null);
     }
-
-    this.zoekerComponent.maakResultaatLeeg();
+    super.maakVeldenLeeg(vanafNiveau);
   }
 
   private toonOpKaart() {
-    let zoekInput: ZoekInput;
+    let zoekInput: CrabZoekInput;
     if (isNotNullObject(this.huisnummerControl.value)) {
       zoekInput = this.huisnummerControl.value;
     } else if (isNotNullObject(this.straatControl.value)) {
@@ -231,13 +132,7 @@ export class CrabGetraptZoekerComponent extends KaartChildComponentBase implemen
     } else {
       zoekInput = this.gemeenteControl.value;
     }
-    this.zoekerComponent.toonResultaat = true;
-    this.dispatch({
-      type: "Zoek",
-      input: zoekInput,
-      zoekers: Set.of(this.crabService.naam()),
-      wrapper: kaartLogOnlyWrapper
-    });
+    this.zoek(zoekInput, Set.of(this.crabService.naam()));
   }
 
   private magTonenOpKaart(): boolean {

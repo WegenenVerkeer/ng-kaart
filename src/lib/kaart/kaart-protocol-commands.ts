@@ -3,7 +3,7 @@ import { List, Set } from "immutable";
 import * as ol from "openlayers";
 import { Subscription as RxSubscription } from "rxjs/Subscription";
 
-import { AbstractZoeker, ZoekInput } from "../zoeker/abstract-zoeker";
+import { AbstractZoeker } from "../zoeker/abstract-zoeker";
 
 import { BareValidationWrapper, KaartCmdValidation, KaartMsg, Subscription, ValidationWrapper, VoidWrapper, Wrapper } from ".";
 import * as ke from "./kaart-elementen";
@@ -233,7 +233,7 @@ export interface VerwijderZoekerCmd<Msg extends KaartMsg> {
 
 export interface ZoekCmd<Msg extends KaartMsg> {
   readonly type: "Zoek";
-  readonly input: string | ZoekInput;
+  readonly input: any; // Dit is een any omdat bepaalde zoekers (zoals Crab) een structured input aanvaarden.
   readonly zoekers: Set<string>;
   readonly wrapper: BareValidationWrapper<Msg>;
 }

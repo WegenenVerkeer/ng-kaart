@@ -2,7 +2,7 @@ import { Map, Set } from "immutable";
 import { Subject } from "rxjs/Rx";
 import { Subscription } from "rxjs/Subscription";
 
-import { AbstractZoeker, ZoekInput, ZoekResultaten } from "./abstract-zoeker";
+import { AbstractZoeker, ZoekResultaten } from "./abstract-zoeker";
 
 export class ZoekerCoordinator {
   private zoekers: Array<AbstractZoeker> = Array();
@@ -37,7 +37,8 @@ export class ZoekerCoordinator {
     this.zoekers = this.zoekers.concat(zoeker);
   }
 
-  zoek(input: string | ZoekInput, zoekers: Set<string>) {
+  // input is een any omdat bepaalde zoekers (zoals Crab) een structured input aanvaarden.
+  zoek(input: any, zoekers: Set<string>) {
     // Annuleer bestaande zoekOpdrachten.
     this.zoekerSubscriptions.forEach((subscription, zoekerNaam) => this.unsubscribeZoeker(subscription!, zoekerNaam!));
     // Stuur zoek comando naar alle geregistreerde zoekers of enkel naar de gespecifieerde.
