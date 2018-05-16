@@ -24,7 +24,7 @@ export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
   @Input() database: string;
   @Input() collection: string;
   @Input() style?: ol.style.Style = undefined; // heeft voorrang op styleFunction
-  @Input() styleFunction: ol.StyleFunction = getDefaultStyleFunction();
+  @Input() styleFunction: ol.StyleFunction = getDefaultStyleFunction(); // TODO combineren met style tot type Stylish
   @Input() selectieStyle: ss.Stylish = getDefaultSelectionStyleFunction();
   @Input() zichtbaar = true;
   @Input() selecteerbaar = true;

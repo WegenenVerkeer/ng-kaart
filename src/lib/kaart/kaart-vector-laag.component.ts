@@ -20,8 +20,8 @@ import { getDefaultSelectionStyleFunction, getDefaultStyleFunction } from "./sty
 })
 export class KaartVectorLaagComponent extends KaartLaagComponent {
   @Input() source = new ol.source.Vector();
-  @Input() style?: ol.style.Style = undefined;
-  @Input() styleFunction?: ol.StyleFunction = getDefaultStyleFunction();
+  @Input() style?: ol.style.Style = undefined; // heeft voorrang op styleFunction
+  @Input() styleFunction?: ol.StyleFunction = getDefaultStyleFunction(); // TODO combineren met style tot type Stylish
   @Input() selectieStyle?: ss.Stylish = getDefaultSelectionStyleFunction();
   @Input() zichtbaar = true;
   @Input() selecteerbaar = true;
