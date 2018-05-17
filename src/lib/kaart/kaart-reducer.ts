@@ -638,11 +638,15 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               model.toegevoegdeLagenOpTitel.find(laag => laag!.laaggroep === "Achtergrond" && laag!.magGetoondWorden)
             );
             const modelMetNieuweZichtbaarheid = pipe(pasLaagZichtbaarheidAan(true), pasLaagInModelAan(model))(nieuweAchtergrond);
-            return maybeVorigeAchtergrond.fold(
-              () => ModelAndEmptyResult(modelMetNieuweZichtbaarheid), //
-              vorigeAchtergrond =>
-                ModelAndEmptyResult(pipe(pasLaagZichtbaarheidAan(false), pasLaagInModelAan(modelMetNieuweZichtbaarheid))(vorigeAchtergrond))
-            );
+            return maybeVorigeAchtergrond
+              .filter(vorige => vorige.titel !== nieuweAchtergrond.titel) // enkel onzichtbaar maken als verschillend
+              .fold(
+                () => ModelAndEmptyResult(modelMetNieuweZichtbaarheid),
+                vorigeAchtergrond =>
+                  pipe(pasLaagZichtbaarheidAan(false), pasLaagInModelAan(modelMetNieuweZichtbaarheid), ModelAndEmptyResult)(
+                    vorigeAchtergrond
+                  )
+              );
           })
       );
     }
