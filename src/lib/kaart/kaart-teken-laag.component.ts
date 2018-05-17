@@ -1,5 +1,6 @@
 import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 import { none, Option, some } from "fp-ts/lib/Option";
+import { OrderedMap } from "immutable";
 import * as ol from "openlayers";
 import { Subject } from "rxjs";
 import { distinctUntilChanged, map, skipWhile } from "rxjs/operators";
@@ -137,7 +138,8 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
       styleSelector: orElse(tekenSettings.laagStyle, () => determineStyleSelector(defaultlaagStyle)),
       selecteerbaar: true,
       minZoom: 2,
-      maxZoom: 15
+      maxZoom: 15,
+      velden: OrderedMap()
     };
   }
 

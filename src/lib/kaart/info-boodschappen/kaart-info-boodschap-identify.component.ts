@@ -138,23 +138,23 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
 
   isBoolean(veld: string): boolean {
     return this.laag
-      .chain(l => fromNullable(l.getType))
-      .map(getType => getType(veld) === "boolean")
+      .chain(l => fromNullable(l.velden.get(veld)))
+      .map(veldInfo => veldInfo.type === "boolean")
       .getOrElseValue(false);
   }
 
   label(veld: string): string {
     return this.laag
-      .chain(l => fromNullable(l.getLabel))
-      .map(getLabel => getLabel(veld))
+      .chain(l => fromNullable(l.velden.get(veld)))
+      .map(veldInfo => veldInfo.label)
       .getOrElseValue(veld);
   }
 
   isBasisVeld(veld: string): boolean {
     return this.laag
-      .chain(l => fromNullable(l.isBasisVeld))
-      .map(isBasisVeld => isBasisVeld(veld))
-      .getOrElseValue(true); // indien geen meta informatie functie, toon alle velden
+      .chain(l => fromNullable(l.velden.get(veld)))
+      .map(veldInfo => veldInfo.isBasisVeld)
+      .getOrElseValue(false); // indien geen meta informatie functie, toon alle velden
   }
 
   zichtbareEigenschappen(): string[] {

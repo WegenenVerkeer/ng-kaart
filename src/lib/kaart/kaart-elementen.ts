@@ -1,5 +1,5 @@
 import { none, Option, some } from "fp-ts/lib/Option";
-import { List } from "immutable";
+import { List, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 
 export const SingleTileWmsType = "LaagType.SingleTileWms";
@@ -78,6 +78,12 @@ export interface WmtsLaag {
   readonly maxZoom: number;
 }
 
+export interface VeldInfo {
+  label: string;
+  type: string;
+  isBasisVeld: boolean;
+}
+
 export interface VectorLaag {
   readonly type: VectorType;
   readonly titel: string;
@@ -86,11 +92,7 @@ export interface VectorLaag {
   readonly selecteerbaar: boolean;
   readonly minZoom: number;
   readonly maxZoom: number;
-
-  // functies om de VectorLaag te verrijken met meta informatie over de velden in de laag
-  getLabel?: (veld: string) => string;
-  isBasisVeld?: (veld: string) => boolean;
-  getType?: (veld: string) => string;
+  readonly velden: OrderedMap<string, VeldInfo>;
 }
 
 export interface BlancoLaag {

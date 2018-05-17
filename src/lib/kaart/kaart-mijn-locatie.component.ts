@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, ElementRef, Input, NgZone, OnInit, QueryList, ViewChild, ViewChildren } from "@angular/core";
 import { MatButton } from "@angular/material";
 import { none, Option, some } from "fp-ts/lib/Option";
-import { List } from "immutable";
+import { List, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
 import { combineLatest, map, mapTo, share, shareReplay, switchMap, take, tap } from "rxjs/operators";
@@ -164,7 +164,8 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
       styleSelector: some(ke.StaticStyle(this.mijnLocatieStyle)),
       selecteerbaar: false,
       minZoom: 2,
-      maxZoom: 15
+      maxZoom: 15,
+      velden: OrderedMap()
     };
   }
 }

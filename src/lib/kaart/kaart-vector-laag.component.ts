@@ -1,6 +1,6 @@
 import { Component, Input, ViewEncapsulation } from "@angular/core";
-import { option } from "fp-ts";
 import { fromNullable, Option } from "fp-ts/lib/Option";
+import { OrderedMap } from "immutable";
 import * as ol from "openlayers";
 
 import { forEach, orElse } from "../util/option";
@@ -41,7 +41,8 @@ export class KaartVectorLaagComponent extends KaartLaagComponent {
       styleSelector: orElse(fromNullable(this.style).map(ke.StaticStyle), () => fromNullable(this.styleFunction).map(ke.DynamicStyle)),
       selecteerbaar: this.selecteerbaar,
       minZoom: this.minZoom,
-      maxZoom: this.maxZoom
+      maxZoom: this.maxZoom,
+      velden: OrderedMap()
     };
   }
 

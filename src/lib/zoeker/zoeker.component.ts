@@ -1,7 +1,7 @@
 import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { none, Option } from "fp-ts/lib/Option";
-import { List, Set } from "immutable";
+import { List, OrderedMap, Set } from "immutable";
 import * as ol from "openlayers";
 import { debounce, distinctUntilChanged, filter, map } from "rxjs/operators";
 import { Subscription } from "rxjs/Subscription";
@@ -49,7 +49,8 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
       styleSelector: none,
       selecteerbaar: true,
       minZoom: 2,
-      maxZoom: 15
+      maxZoom: 15,
+      velden: OrderedMap()
     };
   }
 
