@@ -74,8 +74,9 @@ export interface VectorLaag {
   readonly maxZoom: number;
   readonly offsetveld: Option<string>;
 
+  // functies om de VectorLaag te verrijken met meta informatie over de velden in de laag
   getLabel?: (veld: string) => string;
-  isBasisInfo?: (veld: string) => boolean;
+  isBasisVeld?: (veld: string) => boolean;
   getType?: (veld: string) => string;
 }
 

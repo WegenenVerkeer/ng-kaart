@@ -5,6 +5,7 @@ import * as ol from "openlayers";
 
 import { KaartChildComponentBase } from "./kaart-child-component-base";
 import { VectorLaag } from "./kaart-elementen";
+import { KaartInfoBoodschapComponent } from "./kaart-info-boodschap.component";
 import { KaartComponent } from "./kaart.component";
 
 @Component({
@@ -16,14 +17,35 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   @Input() feature: ol.Feature;
   @Input() laag: Option<VectorLaag>;
 
-  teVerbergenProperties = List.of("geometry", "locatie", "ident8", "afstandrijbaan", "zijderijbaan", "breedte", "hm", "verpl");
+  private _alleVeldenZichtbaar = false;
+
+  teVerbergenProperties = List.of(
+    "geometry",
+    "locatie",
+    "ident8",
+    "afstandrijbaan",
+    "zijderijbaan",
+    "breedte",
+    "hm",
+    "verpl",
+    "geometry_wkt"
+  );
 
   properties = () => this.feature.getProperties()["properties"];
 
   heeftWaarde = value => value !== undefined && value !== null;
 
-  constructor(parent: KaartComponent, zone: NgZone) {
+  constructor(parent: KaartComponent, zone: NgZone, private kaartInfoBoodschapComponent: KaartInfoBoodschapComponent) {
     super(parent, zone);
+  }
+
+  alleVeldenZichtbaar() {
+    return this._alleVeldenZichtbaar;
+  }
+
+  setAlleVeldenZichtbaar(zichtbaar: boolean) {
+    this._alleVeldenZichtbaar = zichtbaar;
+    this.kaartInfoBoodschapComponent.scrollIntoView();
   }
 
   heeft(key: string) {
@@ -127,12 +149,27 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
       .getOrElseValue(veld);
   }
 
+  isBasisVeld(veld: string): boolean {
+    return this.laag
+      .chain(l => fromNullable(l.isBasisVeld))
+      .map(isBasisVeld => isBasisVeld(veld))
+      .getOrElseValue(true); // indien geen meta informatie functie, toon alle velden
+  }
+
   zichtbareEigenschappen(): string[] {
-    return this.eigenschappen(key => !this.isBoolean(key));
+    return this.eigenschappen(key => !this.isBoolean(key) && this.isBasisVeld(key));
   }
 
   booleanEigenschappen(): string[] {
-    return this.eigenschappen(key => this.isBoolean(key));
+    return this.eigenschappen(key => this.isBoolean(key) && this.isBasisVeld(key));
+  }
+
+  geavanceerdeEigenschappen(): string[] {
+    return this.eigenschappen(key => !this.isBoolean(key) && !this.isBasisVeld(key));
+  }
+
+  geavanceerdeBooleanEigenschappen(): string[] {
+    return this.eigenschappen(key => this.isBoolean(key) && !this.isBasisVeld(key));
   }
 
   waarde(name: string): Object {
