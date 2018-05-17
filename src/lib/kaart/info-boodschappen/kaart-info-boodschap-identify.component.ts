@@ -1,12 +1,13 @@
-import { Component, Input, NgZone, OnInit } from "@angular/core";
+import { Component, Input, NgZone } from "@angular/core";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 
-import { KaartChildComponentBase } from "./kaart-child-component-base";
-import { VectorLaag } from "./kaart-elementen";
+import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { VectorLaag } from "../kaart-elementen";
+import { KaartComponent } from "../kaart.component";
+
 import { KaartInfoBoodschapComponent } from "./kaart-info-boodschap.component";
-import { KaartComponent } from "./kaart.component";
 
 @Component({
   selector: "awv-kaart-info-boodschap-identify",
