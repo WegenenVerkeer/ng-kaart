@@ -7,7 +7,7 @@ import { distinctUntilChanged, filter, map } from "rxjs/operators";
 import { KaartComponent } from "../kaart/kaart.component";
 
 import { CrabGemeente, CrabHuisnummer, CrabStraat, CrabZoekerService, CrabZoekInput } from "./crab-zoeker.service";
-import { GetraptZoekerComponent, isNotNullObject, ZoekerComponent } from "./zoeker.component";
+import { GetraptZoekerComponent, isNotNullObject, toNonEmptyDistinctLowercaseString, ZoekerComponent } from "./zoeker.component";
 
 const NIVEAU_ALLES = 0;
 const NIVEAU_VANAFGEMEENTE = 1;
@@ -49,19 +49,7 @@ export class CrabGetraptZoekerComponent extends GetraptZoekerComponent implement
 
     // De gemeente control is speciaal, omdat we met gecachte gemeentes werken.
     // Het heeft geen zin om iedere keer dezelfde lijst van gemeenten op te vragen.
-    this.bindToLifeCycle(
-      this.gemeenteControl.valueChanges.pipe(
-        filter(value => value), // filter de lege waardes eruit
-        // zorg dat we een lowercase waarde hebben zonder leading of trailing spaties.
-        map(value =>
-          value
-            .toString()
-            .trim()
-            .toLocaleLowerCase()
-        ),
-        distinctUntilChanged()
-      )
-    ).subscribe(zoekTerm => {
+    this.bindToLifeCycle(this.gemeenteControl.valueChanges.pipe(toNonEmptyDistinctLowercaseString())).subscribe(zoekTerm => {
       // We moeten kunnen filteren op (een deel van) de naam van een gemeente of op (een deel van) de niscode
       // of op (een deel van) de postcode.
       this.gefilterdeGemeenten = this.alleGemeenten.filter(

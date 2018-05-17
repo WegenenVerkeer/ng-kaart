@@ -4,7 +4,6 @@ import { Map } from "immutable";
 import * as ol from "openlayers";
 import { OperatorFunction } from "rxjs/interfaces";
 import { Observable } from "rxjs/Observable";
-import { from } from "rxjs/observable/from";
 import { map, mergeAll, mergeMap, reduce, shareReplay } from "rxjs/operators";
 
 import { AbstractZoeker, geoJSONOptions, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
@@ -260,7 +259,9 @@ export class CrabZoekerService implements AbstractZoeker {
         this.http.get<SuggestionServiceResults>(this.crabZoekerConfig.url + "/rest/geolocation/suggestion", options(suggestie));
 
       return zoekSuggesties$(zoekterm).pipe(
-        map(suggestieResultaten => from(suggestieResultaten.SuggestionResult).pipe(mergeMap(suggestie => zoekDetail$(suggestie)))),
+        map(suggestieResultaten =>
+          Observable.from(suggestieResultaten.SuggestionResult).pipe(mergeMap(suggestie => zoekDetail$(suggestie)))
+        ),
         // mergall moet gecast worden omdat de standaard definitie fout is: https://github.com/ReactiveX/rxjs/issues/3290
         mergeAll(5) as OperatorFunction<Observable<LocatorServiceResults>, LocatorServiceResults>,
         reduce<LocatorServiceResults, ZoekResultaten>(

@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from "@angular/common/http";
 import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { none } from "fp-ts/lib/Option";
+import { none, Option } from "fp-ts/lib/Option";
 import { List, Set } from "immutable";
 import * as ol from "openlayers";
 import { UnaryFunction } from "rxjs/interfaces";
@@ -19,12 +19,14 @@ import {
   tap
 } from "rxjs/operators";
 
+import { pipe } from "../../../node_modules/rxjs";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import * as ke from "../kaart/kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
 import { kaartLogger } from "../kaart/log";
+import { matchGeometryType } from "../util";
 
 import { compareResultaten, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
 
@@ -38,6 +40,20 @@ export type ZoekerType = "Geoloket" | "Perceel" | "Crab";
 
 export function isNotNullObject(object) {
   return object && object instanceof Object;
+}
+
+export function toNonEmptyDistinctLowercaseString(): UnaryFunction<Observable<any>, Observable<string>> {
+  return pipe(
+    filter(value => value), // filter de lege waardes eruit
+    // zorg dat we een lowercase waarde hebben zonder leading of trailing spaties.
+    map(value =>
+      value
+        .toString()
+        .trim()
+        .toLocaleLowerCase()
+    ),
+    distinctUntilChanged()
+  );
 }
 
 export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
@@ -74,13 +90,15 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
   }
 
   protected busy<T>(observable: Observable<T>): Observable<T> {
-    this.zoekerComponent.setBusy();
-    return observable.pipe(tap(x => this.zoekerComponent.setNotBusy(), error => this.zoekerComponent.setNotBusy()));
+    function noop() {}
+
+    this.zoekerComponent.increaseBusy();
+    return observable.pipe(tap(noop, noop, () => this.zoekerComponent.decreaseBusy()));
   }
 
   protected zoek(zoekInput: any, zoekers: Set<string>) {
     this.zoekerComponent.toonResultaat = true;
-    this.zoekerComponent.setBusy();
+    this.zoekerComponent.increaseBusy();
     this.dispatch({
       type: "Zoek",
       input: zoekInput,
@@ -157,32 +175,44 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
   }
 
   private static maakNieuwFeature(resultaat: ZoekResultaat): ol.Feature[] {
-    const feature = new ol.Feature({ data: resultaat, geometry: resultaat.geometry, name: resultaat.omschrijving });
-    feature.setId(resultaat.bron + "_" + resultaat.index);
-    feature.setStyle(resultaat.style);
-
-    let middlePoint: ol.geom.Point | undefined = undefined;
-    if (resultaat.geometry instanceof ol.geom.MultiLineString) {
+    function multiLineStringMiddlePoint(geometry: ol.geom.MultiLineString): ol.geom.Point {
       // voeg een puntelement toe ergens op de linestring om een icoon met nummer te tonen
-      const lineStrings = resultaat.geometry.getLineStrings();
+      const lineStrings = geometry.getLineStrings();
       const lineString = lineStrings[Math.floor(lineStrings.length / 2)];
-      middlePoint = new ol.geom.Point(lineString.getCoordinateAt(0.5));
-    } else if (resultaat.geometry instanceof ol.geom.Polygon || resultaat.geometry instanceof ol.geom.MultiPolygon) {
-      // in midden van gemeente polygon
-      const extent = resultaat.geometry.getExtent();
-      middlePoint = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
+      return new ol.geom.Point(lineString.getCoordinateAt(0.5));
     }
-    if (middlePoint !== undefined) {
-      const middelpuntFeature = new ol.Feature({
+
+    function polygonMiddlePoint(geometry: ol.geom.Geometry): ol.geom.Point {
+      // in midden van gemeente polygon
+      const extent = geometry.getExtent();
+      return new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
+    }
+
+    function createMiddlePointFeature(middlePoint: ol.geom.Point): ol.Feature {
+      const middlePointFeature = new ol.Feature({
         data: resultaat,
         geometry: middlePoint,
         name: resultaat.omschrijving
       });
-      middelpuntFeature.setStyle(resultaat.style);
-      return [feature, middelpuntFeature];
-    } else {
-      return [feature];
+      middlePointFeature.setStyle(resultaat.style);
+      return middlePointFeature;
     }
+
+    const feature = new ol.Feature({
+      data: resultaat,
+      geometry: resultaat.geometry,
+      name: resultaat.omschrijving
+    });
+    feature.setId(resultaat.bron + "_" + resultaat.index);
+    feature.setStyle(resultaat.style);
+
+    return matchGeometryType(resultaat.geometry, {
+      multiLineString: multiLineStringMiddlePoint,
+      polygon: polygonMiddlePoint,
+      multiPolygon: polygonMiddlePoint
+    })
+      .map(middlePoint => [feature, createMiddlePointFeature(middlePoint)])
+      .getOrElseValue([feature]);
   }
 
   constructor(parent: KaartComponent, zone: NgZone, private cd: ChangeDetectorRef) {
@@ -216,7 +246,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
     ).subscribe(value => {
       this.toonResultaat = true;
       if (value.length > 0) {
-        this.setBusy();
+        this.increaseBusy();
         this.dispatch({ type: "Zoek", input: value, zoekers: Set(), wrapper: kaartLogOnlyWrapper });
       }
     });
@@ -298,7 +328,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
   }
 
   private processZoekerAntwoord(nieuweResultaten: ZoekResultaten): KaartInternalMsg {
-    this.setNotBusy();
+    this.decreaseBusy();
     this.alleZoekResultaten = this.alleZoekResultaten
       .filter(resultaat => resultaat.zoeker !== nieuweResultaten.zoeker)
       .concat(nieuweResultaten.resultaten);
@@ -334,12 +364,12 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
     }
   }
 
-  setBusy() {
+  increaseBusy() {
     this.busy++;
     this.cd.detectChanges();
   }
 
-  setNotBusy() {
+  decreaseBusy() {
     if (this.busy > 0) {
       this.busy--;
       this.cd.detectChanges();
