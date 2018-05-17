@@ -14,7 +14,13 @@ export const LagenUiSelector = "Lagenkiezer";
 
 export interface LagenUiOpties {
   toonLegende: boolean;
+  verwijderbareLagen: boolean;
 }
+
+const DefaultOpties: LagenUiOpties = {
+  toonLegende: false,
+  verwijderbareLagen: false
+};
 
 type GapDirection = "Up" | "Down" | "Here";
 
@@ -72,18 +78,16 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
     this.opties$ = this.modelChanges.uiElementOpties$.pipe(
       filter(o => o.naam === LagenUiSelector),
       map(o => o.opties as LagenUiOpties),
-      startWith({
-        toonLegende: false
-      }),
+      startWith(DefaultOpties),
       shareReplay(1)
     );
   }
 
-  get uitgeklapt() {
+  get uitgeklapt(): boolean {
     return !this.compact;
   }
 
-  get ingeklapt() {
+  get ingeklapt(): boolean {
     return this.compact;
   }
 
