@@ -6,7 +6,7 @@ import { OperatorFunction } from "rxjs/interfaces";
 import { Observable } from "rxjs/Observable";
 import { map, mergeAll, mergeMap, reduce, shareReplay } from "rxjs/operators";
 
-import { AbstractZoeker, geoJSONOptions, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
+import { AbstractZoeker, geoJSONOptions, StringZoekInput, ZoekInput, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
 import { CrabZoekerConfig } from "./crab-zoeker.config";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "./zoeker-representatie.service";
 import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
@@ -30,7 +30,7 @@ export interface SuggestionServiceResults {
   readonly SuggestionResult: string[];
 }
 
-export interface CrabZoekInput {
+export interface CrabZoekInput extends ZoekInput {
   readonly type: "CrabGemeente" | "CrabStraat" | "CrabHuisnummer";
 }
 
@@ -244,21 +244,21 @@ export class CrabZoekerService implements AbstractZoeker {
       );
   }
 
-  zoek$(zoekterm: string | CrabZoekInput): Observable<ZoekResultaten> {
+  zoek$(zoekterm: StringZoekInput | CrabZoekInput): Observable<ZoekResultaten> {
     function options(waarde) {
       return {
         params: new HttpParams().set("query", waarde)
       };
     }
 
-    if (typeof zoekterm === "string") {
+    if (zoekterm.type === "string") {
       const zoekDetail$ = detail =>
         this.http.get<LocatorServiceResults>(this.crabZoekerConfig.url + "/rest/geolocation/location", options(detail));
 
       const zoekSuggesties$ = suggestie =>
         this.http.get<SuggestionServiceResults>(this.crabZoekerConfig.url + "/rest/geolocation/suggestion", options(suggestie));
 
-      return zoekSuggesties$(zoekterm).pipe(
+      return zoekSuggesties$(zoekterm.value).pipe(
         map(suggestieResultaten =>
           Observable.from(suggestieResultaten.SuggestionResult).pipe(mergeMap(suggestie => zoekDetail$(suggestie)))
         ),

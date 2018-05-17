@@ -28,7 +28,7 @@ import { KaartComponent } from "../kaart/kaart.component";
 import { kaartLogger } from "../kaart/log";
 import { matchGeometryType } from "../util";
 
-import { compareResultaten, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
+import { compareResultaten, StringZoekInput, ZoekInput, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
 
 const ZoekerLaagNaam = "Zoeker";
 
@@ -96,7 +96,7 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
     return observable.pipe(tap(noop, noop, () => this.zoekerComponent.decreaseBusy()));
   }
 
-  protected zoek(zoekInput: any, zoekers: Set<string>) {
+  protected zoek(zoekInput: ZoekInput, zoekers: Set<string>) {
     this.zoekerComponent.toonResultaat = true;
     this.zoekerComponent.increaseBusy();
     this.dispatch({
@@ -110,16 +110,29 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
   // Gebruik de waarde van de VORIGE control om een request te doen,
   //   maar alleen als die vorige waarde een object was (dus door de gebruiker aangeklikt in de lijst).
   // Filter het antwoord daarvan met de (eventuele) waarde van onze HUIDIGE control, dit om autocomplete te doen.
-  protected autocomplete<T, A>(vorige: FormControl, provider: (A) => Observable<T[]>, huidige: FormControl, prop: string): Observable<T[]> {
+  protected autocomplete<T, A>(
+    vorige: FormControl,
+    provider: (A) => Observable<T[]>,
+    huidige: FormControl,
+    propertyGetter: (T) => string
+  ): Observable<T[]> {
     // Filter een array van waardes met de waarde van een filter (control), de filter kan een string of een object zijn.
     function filterMetWaarde(): UnaryFunction<Observable<T[]>, Observable<T[]>> {
       return combineLatest(huidige.valueChanges.pipe(startWith<string | T>(""), distinctUntilChanged()), (waardes, filterWaarde) => {
         if (!filterWaarde) {
           return waardes;
         } else if (typeof filterWaarde === "string") {
-          return waardes.filter(value => value[prop].toLocaleLowerCase().includes(filterWaarde.toLocaleLowerCase()));
+          return waardes.filter(value =>
+            propertyGetter(value)
+              .toLocaleLowerCase()
+              .includes(filterWaarde.toLocaleLowerCase())
+          );
         } else {
-          return waardes.filter(value => value[prop].toLocaleLowerCase().includes(filterWaarde[prop].toLocaleLowerCase()));
+          return waardes.filter(value =>
+            propertyGetter(value)
+              .toLocaleLowerCase()
+              .includes(propertyGetter(filterWaarde).toLocaleLowerCase())
+          );
         }
       });
     }
@@ -247,7 +260,12 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
       this.toonResultaat = true;
       if (value.length > 0) {
         this.increaseBusy();
-        this.dispatch({ type: "Zoek", input: value, zoekers: Set(), wrapper: kaartLogOnlyWrapper });
+        this.dispatch({
+          type: "Zoek",
+          input: { type: "string", value: value } as StringZoekInput,
+          zoekers: Set(),
+          wrapper: kaartLogOnlyWrapper
+        });
       }
     });
     this.dispatch({

@@ -7,6 +7,7 @@ import { distinctUntilChanged, filter, map } from "rxjs/operators";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import { KaartComponent } from "../kaart/kaart.component";
 
+import { StringZoekInput } from "./abstract-zoeker";
 import { Afdeling, Gemeente, PerceelNummer, PerceelZoekerService, Sectie } from "./perceel-zoeker.service";
 import { GetraptZoekerComponent, isNotNullObject, toNonEmptyDistinctLowercaseString, ZoekerComponent } from "./zoeker.component";
 
@@ -75,21 +76,21 @@ export class PerceelZoekerComponent extends GetraptZoekerComponent implements On
       this.gemeenteControl,
       gemeente => this.perceelService.getAfdelingen$(gemeente.niscode),
       this.afdelingControl,
-      "naam"
+      gemeente => gemeente.naam
     );
 
     this.secties$ = this.autocomplete(
       this.afdelingControl,
       afdeling => this.perceelService.getSecties$(afdeling.niscode, afdeling.code),
       this.sectieControl,
-      "code"
+      afdeling => afdeling.code
     );
 
     this.percelen$ = this.autocomplete(
       this.sectieControl,
       sectie => this.perceelService.getPerceelNummers$(sectie.niscode, sectie.afdelingcode, sectie.code),
       this.perceelControl,
-      "capakey"
+      sectie => sectie.capakey
     );
 
     // Wanneer de waardes leeg zijn, mag je de control disablen, maak ook de volgende velden leeg.
@@ -100,7 +101,7 @@ export class PerceelZoekerComponent extends GetraptZoekerComponent implements On
     // Hier gaan we onze capakey doorsturen naar de zoekers, we willen alleen de perceelzoeker triggeren.
     this.bindToLifeCycle(this.perceelControl.valueChanges.pipe(filter(isNotNullObject), distinctUntilChanged())).subscribe(
       perceelDetails => {
-        this.zoek(perceelDetails.capakey, Set.of(this.perceelService.naam()));
+        this.zoek({ type: "string", value: perceelDetails.capakey } as StringZoekInput, Set.of(this.perceelService.naam()));
       }
     );
 

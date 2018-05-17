@@ -62,12 +62,17 @@ export class CrabGetraptZoekerComponent extends GetraptZoekerComponent implement
       this.maakVeldenLeeg(NIVEAU_VANAFGEMEENTE);
     });
 
-    this.straten$ = this.autocomplete(this.gemeenteControl, gemeente => this.crabService.getStraten$(gemeente), this.straatControl, "naam");
+    this.straten$ = this.autocomplete(
+      this.gemeenteControl,
+      gemeente => this.crabService.getStraten$(gemeente),
+      this.straatControl,
+      gemeente => gemeente.naam
+    );
     this.huisnummers$ = this.autocomplete(
       this.straatControl,
       straat => this.crabService.getHuisnummers$(straat),
       this.huisnummerControl,
-      "huisnummer"
+      straat => straat.huisnummer
     );
 
     // Wanneer de waardes leeg zijn, mag je de control disablen, maak ook de volgende velden leeg.

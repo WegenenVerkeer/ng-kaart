@@ -8,7 +8,7 @@ import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
 import { catchError, flatMap, map } from "rxjs/operators";
 
-import { AbstractZoeker, geoJSONOptions, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
+import { AbstractZoeker, geoJSONOptions, StringZoekInput, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
 import { GoogleWdbLocatieZoekerConfig } from "./google-wdb-locatie-zoeker.config";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE, ZoekerRepresentatieType } from "./zoeker-representatie.service";
 import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
@@ -117,12 +117,12 @@ export class GoogleWdbLocatieZoekerService implements AbstractZoeker {
     }
   }
 
-  zoek$(zoekterm): Observable<ZoekResultaten> {
-    if (zoekterm.trim().length === 0) {
+  zoek$(zoekterm: StringZoekInput): Observable<ZoekResultaten> {
+    if (zoekterm.value.trim().length === 0) {
       return Observable.of(new ZoekResultaten(this.naam(), [], [], this.legende));
     }
     const params: URLSearchParams = new URLSearchParams("", new EncodeAllesQueryEncoder());
-    params.set("query", zoekterm);
+    params.set("query", zoekterm.value);
     params.set("legacy", "false");
 
     return this.http

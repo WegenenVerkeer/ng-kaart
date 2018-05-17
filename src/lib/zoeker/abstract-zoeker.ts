@@ -43,10 +43,18 @@ export class ZoekResultaten {
   }
 }
 
+export interface ZoekInput {
+  readonly type: string;
+}
+
+export interface StringZoekInput {
+  readonly type: "string";
+  readonly value: string;
+}
+
 export interface AbstractZoeker {
   naam(): string;
-  // input is een any omdat bepaalde zoekers (zoals Crab) een structured input aanvaarden.
-  zoek$(input: any): Observable<ZoekResultaten>;
+  zoek$(input: ZoekInput): Observable<ZoekResultaten>;
 }
 
 // De resultaten worden getoond volgens een bepaalde hiërarchie
