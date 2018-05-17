@@ -1,5 +1,6 @@
 import { animate, state, style, transition, trigger } from "@angular/animations";
-import { Component, Input, NgZone } from "@angular/core";
+import { Component, Input, NgZone, OnInit } from "@angular/core";
+import { fromNullable } from "fp-ts/lib/Option";
 
 import { KaartChildComponentBase } from "./kaart-child-component-base";
 import { SluitInfoBoodschapCmd } from "./kaart-protocol-commands";
@@ -18,11 +19,23 @@ import { KaartComponent } from "./kaart.component";
     ])
   ]
 })
-export class KaartInfoBoodschapComponent extends KaartChildComponentBase {
+export class KaartInfoBoodschapComponent extends KaartChildComponentBase implements OnInit {
   @Input() boodschap: InfoBoodschap;
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
+  }
+
+  ngOnInit() {
+    super.ngOnInit();
+    this.scrollIntoView(); // zorg dat de boodschap altijd in view komt
+  }
+
+  scrollIntoView() {
+    setTimeout(
+      () => fromNullable(document.getElementById("kaart-info-boodschap-" + this.boodschap.id)).map(el => el.scrollIntoView()),
+      200
+    );
   }
 
   sluit(): void {
