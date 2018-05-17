@@ -5,6 +5,7 @@ import { MatButtonModule, MatButtonToggleModule, MatCardModule, MatIconModule } 
 import { ClickOutsideModule } from "ng4-click-outside";
 import * as ol from "openlayers";
 
+import { ClassicSchaalComponent } from "../classic/schaal/classic-schaal.component";
 import { LagenkiezerModule } from "../lagenkiezer/index";
 import { ZoekerModule } from "../zoeker/index";
 
@@ -28,7 +29,6 @@ import { KaartNosqlfsLaagComponent } from "./kaart-nosqlfs-laag.component";
 import { KaartOpenStreetViewComponent } from "./kaart-open-street-view.component";
 import { KaartOpenLayersStyleComponent } from "./kaart-openlayers.component";
 import { KaartOrthoLaagComponent } from "./kaart-ortho-laag.component";
-import { KaartSchaalComponent } from "./kaart-schaal.component";
 import { KaartStandaardInteractiesComponent } from "./kaart-standaard-interacties.component";
 import { KaartStandaardKnoppenComponent } from "./kaart-standaard-knoppen.component";
 import { KaartTekenLaagComponent } from "./kaart-teken-laag.component";
@@ -43,15 +43,16 @@ import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
 import { KaartWmtsLaagComponent } from "./kaart-wmts-laag.component";
 import { KaartZoomComponent } from "./kaart-zoom.component";
 import { KaartComponent } from "./kaart.component";
+import { KaartSchaalComponent } from "./schaal/kaart-schaal.component";
 
 const components: any[] = [
+  ClassicSchaalComponent,
   KaartComponent,
   KaartKnopAchtergrondLaagKiezerComponent,
   KaartClassicComponent,
   KaartKnopVolledigSchermComponent,
   KaartKnopZoomSliderComponent,
   KaartOrthoLaagComponent,
-  KaartSchaalComponent,
   KaartZoomComponent,
   KaartMijnLocatieComponent,
   KaartStandaardInteractiesComponent,
@@ -78,7 +79,8 @@ const components: any[] = [
   KaartInfoBoodschappenComponent,
   KaartInfoBoodschapComponent,
   KaartInfoBoodschapIdentifyComponent,
-  KaartInfoBoodschapAlertComponent
+  KaartInfoBoodschapAlertComponent,
+  KaartSchaalComponent
 ];
 
 // Weersta de drang om deze variabele in een andere module te plaatsen, want dat geeft problemen met gebruik in AOT app.
@@ -143,19 +145,19 @@ export class KaartModule {
   }
 }
 
+export * from "../classic";
 export * from "./coordinaten.service";
 export * from "./kaart-classic.component";
 export * from "./kaart-component-base";
 export * from "./kaart-copyright.component";
 export * from "./kaart-openlayers.component";
-export * from "./kaart-schaal.component";
 export * from "./kaart-voorwaarden.component";
 export * from "./kaart-voorwaarden-box.component";
 export * from "./kaart-knop-achtergrondlaag-kiezer.component";
 export * from "./kaart-knop-volledig-scherm.component";
 export * from "./kaart-knop-zoom-slider.component";
 export * from "./kaart-laag.component";
-export * from "./kaart-schaal.component";
+export * from "./schaal/kaart-schaal.component";
 export * from "./kaart-standaard-interacties.component";
 export * from "./kaart-standaard-knoppen.component";
 export * from "./kaart-teken-polygoon-laag.component";

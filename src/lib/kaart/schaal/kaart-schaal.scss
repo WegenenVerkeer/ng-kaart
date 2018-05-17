@@ -1,0 +1,11 @@
+
+.awv-schaal {
+  float:left;
+  border: 1px solid black;
+  border-top: none;
+  color: black;
+  text-align: center;
+  will-change: contents, width;
+  background: rgba(0, 60, 136, 0.3);
+  width: 100px;
+}

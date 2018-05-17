@@ -349,7 +349,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function vraagSchaalAan(cmnd: prt.VraagSchaalAanCmd<Msg>): ModelWithResult<Msg> {
-      modelChanger.uiElementOptiesSubj.next({ naam: "Schaal" });
+      modelChanger.uiElementSelectieSubj.next({ naam: "Schaal", aan: true });
       return toModelWithValueResult(
         cmnd.wrapper,
         fromPredicate(model.schaal, isNone, "De schaal is al toegevoegd").map(() => ModelAndEmptyResult({ ...model }))
