@@ -688,7 +688,9 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         const applySelectionColor = function(style: ol.style.Style): ol.style.Style {
           const selectionColor: ol.Color = [0, 153, 255, 1]; // TODO maak configureerbaar
           const selectionStyle = style.clone();
-          selectionStyle.getStroke().setColor(selectionColor);
+          if (selectionStyle.getStroke()) {
+            selectionStyle.getStroke().setColor(selectionColor);
+          }
           if (selectionStyle.getImage()) {
             // getekende Point objecten ook inkleuren
             if (selectionStyle.getImage() instanceof ol.style.Circle) {
