@@ -14,6 +14,7 @@ export class ZoekerHighlightPipe implements PipeTransform {
         .replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&")
         .split(" ")
         .filter(t => t.length > 0)
+        .map(expr => "(?<!<[^>]+)" + expr + "(?!>)") // Negeer matches in een tag.
         .join("|");
       const regex = new RegExp(pattern, "gi");
 

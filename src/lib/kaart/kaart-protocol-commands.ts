@@ -3,7 +3,7 @@ import { List, Set } from "immutable";
 import * as ol from "openlayers";
 import { Subscription as RxSubscription } from "rxjs/Subscription";
 
-import { AbstractZoeker } from "../zoeker/abstract-zoeker";
+import { AbstractZoeker, ZoekInput } from "../zoeker/abstract-zoeker";
 
 import { BareValidationWrapper, KaartMsg, Subscription, ValidationWrapper } from ".";
 import * as ke from "./kaart-elementen";
@@ -238,7 +238,7 @@ export interface VerwijderZoekerCmd<Msg extends KaartMsg> {
 
 export interface ZoekCmd<Msg extends KaartMsg> {
   readonly type: "Zoek";
-  readonly input: string;
+  readonly input: ZoekInput;
   readonly zoekers: Set<string>;
   readonly wrapper: BareValidationWrapper<Msg>;
 }

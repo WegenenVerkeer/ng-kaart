@@ -15,8 +15,8 @@ export interface ZoekResultaat {
   omschrijving: string;
   bron: string;
   zoeker: string;
-  geometry: any;
-  locatie: any;
+  geometry: ol.geom.Geometry;
+  extent: ol.Extent;
   icoon: SafeHtml;
   style: ol.style.Style;
 }
@@ -43,9 +43,18 @@ export class ZoekResultaten {
   }
 }
 
+export interface ZoekInput {
+  readonly type: string;
+}
+
+export interface StringZoekInput {
+  readonly type: "string";
+  readonly value: string;
+}
+
 export interface AbstractZoeker {
   naam(): string;
-  zoek$(zoekterm: string): Observable<ZoekResultaten>;
+  zoek$(input: ZoekInput): Observable<ZoekResultaten>;
 }
 
 // De resultaten worden getoond volgens een bepaalde hiërarchie

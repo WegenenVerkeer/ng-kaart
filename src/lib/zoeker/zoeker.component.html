@@ -8,22 +8,28 @@
       </button>
       <button mat-menu-item (click)="kiesZoeker('Perceel')" [disabled]="actieveZoeker === 'Perceel'">
         <mat-icon>search</mat-icon>
-        <span>Zoek perceel</span>
+        <span>Zoek op Perceel</span>
+      </button>
+      <button mat-menu-item (click)="kiesZoeker('Crab')" [disabled]="actieveZoeker === 'Crab'">
+        <mat-icon>search</mat-icon>
+        <span>Zoek op CRAB</span>
       </button>
     </mat-menu>
 
     <a [matMenuTriggerFor]="zoekerMenu">
-        <mat-icon matPrefix class="klikbaar">menu</mat-icon>
+        <mat-icon matPrefix class="klikbaar">keyboard_arrow_down</mat-icon>
     </a>
     <a (click)="toggleResultaat()">
       <mat-icon matPrefix [ngClass]="{'inactief':!toonResultaat}" class="klikbaar">search</mat-icon>
     </a>
+    <mat-spinner diameter="20" *ngIf="isBusy()"></mat-spinner>
     <input placeholder="{{getPlaceholder()}}" [formControl]="zoekVeld" [readOnly]="this.actieveZoeker !== 'Geoloket'" (keyup)="onKey($event)">
     <a (click)="toggleHelp()">
       <mat-icon matSuffix [ngClass]="{'inactief':!toonHelp}" class="klikbaar">help</mat-icon>
     </a>
   </div>
   <awv-perceel-zoeker *ngIf="actieveZoeker === 'Perceel'"></awv-perceel-zoeker>
+  <awv-crab-getrapt-zoeker *ngIf="actieveZoeker === 'Crab'"></awv-crab-getrapt-zoeker>
   <div class="zoeker-help" *ngIf="toonHelp">
     <div *ngIf="actieveZoeker === 'Geoloket'">
       <br>
@@ -78,7 +84,7 @@
       </div>
     </div>
   </div>
-  <div *ngIf="toonHelp && toonResultaat && heeftResultaatOfFout()" class="divider"></div>
+  <div *ngIf="toonResultaat && heeftResultaatOfFout()" class="divider"></div>
   <div class="zoeker-resultaat-box" *ngIf="toonResultaat">
     <div *ngFor="let fout of alleFouten" class="zoeker-resultaat zoeker-fout">
       <mat-icon>announcement</mat-icon>
@@ -86,7 +92,7 @@
     </div>
     <div *ngIf="heeftFout()" class="divider"></div>
     <div *ngFor="let resultaat of alleZoekResultaten" class="zoeker-resultaat klikbaar" (click)="zoomNaarResultaat(resultaat)">
-      <mat-icon [svgIcon]="resultaat.icoon"></mat-icon>
+      <mat-icon class="zoeker-resultaat-icoon" [svgIcon]="resultaat.icoon"></mat-icon>
       <span [innerHTML]="resultaat.omschrijving | highlight: zoekVeld.value"></span>
     </div>
   </div>

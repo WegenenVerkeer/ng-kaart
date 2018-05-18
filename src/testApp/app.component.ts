@@ -253,15 +253,6 @@ export class AppComponent {
     this.geselecteerdeFeatures.forEach(feature => this.selectieKaart.toonIdentifyInformatie(feature));
   }
 
-  zoekLocaties(locatieQuery: String) {
-    this.googleLocatieZoekerService
-      .zoek$(locatieQuery)
-      .flatMap(res => res.resultaten)
-      .map(zoekresultaat => zoekresultaat.geometry)
-      .map(geometry => new ol.Feature(geometry))
-      .subscribe(feature => this.zoekresultaten.push(feature));
-  }
-
   isTekenenActief() {
     return this.tekenenActief;
   }

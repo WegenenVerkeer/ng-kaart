@@ -5,7 +5,7 @@ import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
 import { map, shareReplay } from "rxjs/operators";
 
-import { AbstractZoeker, geoJSONOptions, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
+import { AbstractZoeker, geoJSONOptions, StringZoekInput, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
 import { CrabZoekerConfig } from "./crab-zoeker.config";
 import { LocatorServiceResult } from "./crab-zoeker.service";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "./zoeker-representatie.service";
@@ -60,14 +60,14 @@ export class PerceelZoekResultaat implements ZoekResultaat {
   readonly bron: string;
   readonly zoeker: string;
   readonly geometry: any;
-  readonly locatie: any;
   readonly icoon: string;
   readonly style: ol.style.Style;
+  readonly extent: ol.Extent;
 
   constructor(details: PerceelDetails, index: number, zoeker: string, icoon: string, style: ol.style.Style) {
     this.index = index + 1;
-    this.locatie = details.shape;
-    this.geometry = new ol.format.GeoJSON(geoJSONOptions).readGeometry(this.locatie);
+    this.geometry = new ol.format.GeoJSON(geoJSONOptions).readGeometry(details.shape);
+    this.extent = this.geometry.getExtent();
     this.omschrijving = details.capakey;
     this.bron = "Perceel";
     this.zoeker = zoeker;
@@ -120,8 +120,8 @@ export class PerceelZoekerService implements AbstractZoeker {
     return "Percelen";
   }
 
-  zoek$(zoekterm: string): Observable<ZoekResultaten> {
-    return this.getPerceelDetails$(zoekterm).pipe(
+  zoek$(zoekterm: StringZoekInput): Observable<ZoekResultaten> {
+    return this.getPerceelDetails$(zoekterm.value).pipe(
       map(
         details =>
           new ZoekResultaten(

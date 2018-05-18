@@ -1,0 +1,33 @@
+.crab-form {
+  display: flex;
+  flex-direction: column;
+
+  mat-form-field {
+    margin-left: 8px;
+    margin-right: 8px;
+  }
+}
+
+.crab-gemeente {
+  text-overflow: ellipsis;
+}
+
+::ng-deep .crab-postcodes {
+  font-size: 10px;
+}
+
+.crab-buttons {
+  display: flex;
+  flex-direction: row-reverse;
+  margin-right: 8px;
+  margin-bottom: 8px;
+}
+
+::ng-deep .awv-zoeker-highlight {
+  font-weight: bold !important;
+  white-space:pre;
+}
+
+::ng-deep .awv-zoeker-highlighter {
+  white-space:pre;
+}
