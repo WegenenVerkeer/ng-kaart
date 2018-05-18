@@ -49,7 +49,7 @@ export class PerceelZoekerComponent extends GetraptZoekerComponent implements On
     super.ngOnInit();
     this.maakVeldenLeeg(NIVEAU_ALLES);
     this.bindToLifeCycle(this.busy(this.perceelService.getAlleGemeenten$())).subscribe(
-      gemeenten => {
+      (gemeenten: Gemeente[]) => {
         // De gemeentecontrol was disabled tot nu, om te zorgen dat de gebruiker niet kan filteren voordat de gemeenten binnen zijn.
         this.gemeenteControl.enable();
         this.alleGemeenten = gemeenten;
@@ -60,10 +60,11 @@ export class PerceelZoekerComponent extends GetraptZoekerComponent implements On
 
     // De gemeente control is speciaal, omdat we met gecachte gemeentes werken.
     // Het heeft geen zin om iedere keer dezelfde lijst van gemeenten op te vragen.
-    this.bindToLifeCycle(this.gemeenteControl.valueChanges.pipe(toNonEmptyDistinctLowercaseString())).subscribe(gemeenteOfNis => {
+    this.bindToLifeCycle(this.gemeenteControl.valueChanges.pipe(toNonEmptyDistinctLowercaseString())).subscribe((gemeenteOfNis: string) => {
       // We moeten kunnen filteren op (een deel van) de naam van een gemeente of op (een deel van) de niscode.
       this.gefilterdeGemeenten = this.alleGemeenten.filter(
-        gemeente => gemeente.naam.toLocaleLowerCase().includes(gemeenteOfNis) || gemeente.niscode.toString().includes(gemeenteOfNis)
+        (gemeente: Gemeente) =>
+          gemeente.naam.toLocaleLowerCase().includes(gemeenteOfNis) || gemeente.niscode.toString().includes(gemeenteOfNis)
       );
       // Iedere keer als er iets verandert, moeten we de volgende controls leegmaken.
       this.maakVeldenLeeg(NIVEAU_VANAFGEMEENTE);
@@ -74,23 +75,23 @@ export class PerceelZoekerComponent extends GetraptZoekerComponent implements On
     // Filter het antwoord daarvan met de (eventuele) waarde van onze HUIDIGE control, dit om autocomplete te doen.
     this.afdelingen$ = this.autocomplete(
       this.gemeenteControl,
-      gemeente => this.perceelService.getAfdelingen$(gemeente.niscode),
+      (gemeente: Gemeente) => this.perceelService.getAfdelingen$(gemeente.niscode),
       this.afdelingControl,
-      gemeente => gemeente.naam
+      (afdeling: Afdeling) => afdeling.naam
     );
 
     this.secties$ = this.autocomplete(
       this.afdelingControl,
-      afdeling => this.perceelService.getSecties$(afdeling.niscode, afdeling.code),
+      (afdeling: Afdeling) => this.perceelService.getSecties$(afdeling.niscode, afdeling.code),
       this.sectieControl,
-      afdeling => afdeling.code
+      (sectie: Sectie) => sectie.code
     );
 
     this.percelen$ = this.autocomplete(
       this.sectieControl,
-      sectie => this.perceelService.getPerceelNummers$(sectie.niscode, sectie.afdelingcode, sectie.code),
+      (sectie: Sectie) => this.perceelService.getPerceelNummers$(sectie.niscode, sectie.afdelingcode, sectie.code),
       this.perceelControl,
-      sectie => sectie.capakey
+      (perceelNummer: PerceelNummer) => perceelNummer.capakey
     );
 
     // Wanneer de waardes leeg zijn, mag je de control disablen, maak ook de volgende velden leeg.
@@ -100,7 +101,7 @@ export class PerceelZoekerComponent extends GetraptZoekerComponent implements On
 
     // Hier gaan we onze capakey doorsturen naar de zoekers, we willen alleen de perceelzoeker triggeren.
     this.bindToLifeCycle(this.perceelControl.valueChanges.pipe(filter(isNotNullObject), distinctUntilChanged())).subscribe(
-      perceelDetails => {
+      (perceelDetails: PerceelNummer) => {
         this.zoek({ type: "string", value: perceelDetails.capakey } as StringZoekInput, Set.of(this.perceelService.naam()));
       }
     );

@@ -93,7 +93,7 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
     function noop() {}
 
     this.zoekerComponent.increaseBusy();
-    return observable.pipe(tap(noop, noop, () => this.zoekerComponent.decreaseBusy()));
+    return observable.pipe(tap(noop, () => this.zoekerComponent.decreaseBusy(), () => this.zoekerComponent.decreaseBusy()));
   }
 
   protected zoek(zoekInput: ZoekInput, zoekers: Set<string>) {

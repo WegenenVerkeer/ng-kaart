@@ -38,7 +38,7 @@ export class CrabGetraptZoekerComponent extends GetraptZoekerComponent implement
     super.ngOnInit();
     this.maakVeldenLeeg(NIVEAU_ALLES);
     this.bindToLifeCycle(this.busy(this.crabService.getAlleGemeenten$())).subscribe(
-      gemeenten => {
+      (gemeenten: CrabGemeente[]) => {
         // De gemeentecontrol was disabled tot nu, om te zorgen dat de gebruiker niet kan filteren voordat de gemeenten binnen zijn.
         this.gemeenteControl.enable();
         this.alleGemeenten = gemeenten;
@@ -49,11 +49,11 @@ export class CrabGetraptZoekerComponent extends GetraptZoekerComponent implement
 
     // De gemeente control is speciaal, omdat we met gecachte gemeentes werken.
     // Het heeft geen zin om iedere keer dezelfde lijst van gemeenten op te vragen.
-    this.bindToLifeCycle(this.gemeenteControl.valueChanges.pipe(toNonEmptyDistinctLowercaseString())).subscribe(zoekTerm => {
+    this.bindToLifeCycle(this.gemeenteControl.valueChanges.pipe(toNonEmptyDistinctLowercaseString())).subscribe((zoekTerm: string) => {
       // We moeten kunnen filteren op (een deel van) de naam van een gemeente of op (een deel van) de niscode
       // of op (een deel van) de postcode.
       this.gefilterdeGemeenten = this.alleGemeenten.filter(
-        gemeente =>
+        (gemeente: CrabGemeente) =>
           gemeente.naam.toLocaleLowerCase().includes(zoekTerm) ||
           gemeente.niscode.toString().includes(zoekTerm) ||
           gemeente.postcodes.includes(zoekTerm)
@@ -64,15 +64,15 @@ export class CrabGetraptZoekerComponent extends GetraptZoekerComponent implement
 
     this.straten$ = this.autocomplete(
       this.gemeenteControl,
-      gemeente => this.crabService.getStraten$(gemeente),
+      (gemeente: CrabGemeente) => this.crabService.getStraten$(gemeente),
       this.straatControl,
-      gemeente => gemeente.naam
+      (straat: CrabStraat) => straat.naam
     );
     this.huisnummers$ = this.autocomplete(
       this.straatControl,
-      straat => this.crabService.getHuisnummers$(straat),
+      (straat: CrabStraat) => this.crabService.getHuisnummers$(straat),
       this.huisnummerControl,
-      straat => straat.huisnummer
+      (huisnummer: CrabHuisnummer) => huisnummer.huisnummer
     );
 
     // Wanneer de waardes leeg zijn, mag je de control disablen, maak ook de volgende velden leeg.
