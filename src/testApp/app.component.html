@@ -267,5 +267,5 @@
       <awv-kaart-voorwaarden *ngIf="!!voorwaarden" [titel]="voorwaarden"></awv-kaart-voorwaarden>
       <awv-kaart-schaal></awv-kaart-schaal>
   </awv-kaart-classic>
-  <button (click)="veranderVoorwaarden()">Andere voorwaarden</button>
+  <button *ngIf="isZichtbaar('voorwaarden')" (click)="veranderVoorwaarden()">Andere voorwaarden</button>
 </div>
