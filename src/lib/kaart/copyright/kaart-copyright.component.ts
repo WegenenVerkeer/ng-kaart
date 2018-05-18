@@ -1,6 +1,6 @@
 import { Component, NgZone } from "@angular/core";
 import { Observable } from "rxjs/Observable";
-import { filter, map } from "rxjs/operators";
+import { filter, map, startWith } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { KaartComponent } from "../kaart.component";
@@ -14,6 +14,10 @@ export interface CopyrightOpties {
 
 export const CopyrightOpties = (copyright: string) => ({ copyright: copyright });
 
+const defaultOpties: CopyrightOpties = {
+  copyright: "\u00A9 Agentschap Wegen en Verkeer"
+};
+
 @Component({
   selector: "awv-copyright",
   templateUrl: "./kaart-copyright.html",
@@ -26,7 +30,8 @@ export class KaartCopyrightComponent extends KaartChildComponentBase {
     super(parent, zone);
     this.copyright$ = this.modelChanges.uiElementOpties$.pipe(
       filter(optie => optie.naam === CopyrightSelector),
-      map(o => o.opties.copyright)
+      map(o => o.opties.copyright),
+      startWith(defaultOpties.copyright)
     );
   }
 }
