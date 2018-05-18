@@ -10,8 +10,9 @@ import { KaartComponent } from "../kaart.component";
 
 import { KaartInfoBoodschapComponent } from "./kaart-info-boodschap.component";
 
-const PROPERTIES = "properties";
+// Nosql feature parsing
 
+const PROPERTIES = "properties";
 const GEOMETRY = "geometry";
 const IDENT8 = "ident8";
 const LOCATIE_IDENT8 = "locatie.ident8";
@@ -29,6 +30,13 @@ const AFSTANDRIJBAAN = "afstandrijbaan";
 const BREEDTE = "breedte";
 const HM = "hm";
 const VERPL = "verpl";
+
+const geldigeWaarde = value => value !== undefined && value !== null;
+
+const nestedProperty = (propertyKey: string, object: Object) =>
+  geldigeWaarde(propertyKey)
+    ? propertyKey.split(".").reduce((obj, key) => (geldigeWaarde(obj) && geldigeWaarde(obj[key]) ? obj[key] : null), object)
+    : null;
 
 @Component({
   selector: "awv-kaart-info-boodschap-identify",
@@ -61,12 +69,14 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
     VERPL
   );
 
-  properties = () => this.feature.getProperties()[PROPERTIES];
-
-  heeftWaarde = value => value !== undefined && value !== null && value !== "";
+  private properties = () => this.feature.getProperties()[PROPERTIES];
 
   constructor(parent: KaartComponent, zone: NgZone, private kaartInfoBoodschapComponent: KaartInfoBoodschapComponent) {
     super(parent, zone);
+  }
+
+  heeft(key: string) {
+    return geldigeWaarde(this.waarde(key));
   }
 
   alleVeldenZichtbaar() {
@@ -76,10 +86,6 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   setAlleVeldenZichtbaar(zichtbaar: boolean) {
     this._alleVeldenZichtbaar = zichtbaar;
     this.kaartInfoBoodschapComponent.scrollIntoView();
-  }
-
-  heeft(key: string) {
-    return this.heeftWaarde(this.waarde(key));
   }
 
   lengte(): Option<number> {
@@ -122,28 +128,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   }
 
   heeftVanTot(): boolean {
-    return this.heeftWaarde(this.waarde(BEGIN_POSITIE)) && this.heeftWaarde(this.waarde(EIND_POSITIE));
-  }
-
-  private verpl(): string {
-    return fromNullable(this.waarde("verpl"))
-      .map(this.signed)
-      .fold(() => "", pos => pos);
-  }
-
-  private pos(positieVeld: string): string {
-    return fromNullable(this.waarde(positieVeld))
-      .filter(positie => typeof positie === "number")
-      .map(positie => `${Math.round((positie as number) * 10) / 10}`)
-      .fold(() => "", pos => pos);
-  }
-
-  signed(value: number): string {
-    if (value >= 0) {
-      return `+${value}`;
-    } else {
-      return `${value}`;
-    }
+    return geldigeWaarde(this.waarde(BEGIN_POSITIE)) && geldigeWaarde(this.waarde(EIND_POSITIE));
   }
 
   heeftIdent8(): boolean {
@@ -176,25 +161,11 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
     return this.afstand(EIND_POSITIE);
   }
 
-  isBoolean(veld: string): boolean {
-    return this.laag
-      .chain(l => fromNullable(l.velden.get(veld)))
-      .map(veldInfo => veldInfo.type === "boolean")
-      .getOrElseValue(false);
-  }
-
   label(veld: string): string {
     return this.laag
       .chain(l => fromNullable(l.velden.get(veld)))
       .map(veldInfo => veldInfo.label)
       .getOrElseValue(veld);
-  }
-
-  isBasisVeld(veld: string): boolean {
-    return this.laag
-      .chain(l => fromNullable(l.velden.get(veld)))
-      .map(veldInfo => veldInfo.isBasisVeld)
-      .getOrElseValue(false); // indien geen meta informatie functie, toon alle velden
   }
 
   zichtbareEigenschappen(): string[] {
@@ -214,22 +185,73 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   }
 
   waarde(name: string): Object {
-    return this.nestedProperty(name, this.properties());
+    const waarde = nestedProperty(name, this.properties());
+    if (this.isDatum(name)) {
+      return this.formateerDatum(waarde.toString());
+    } else {
+      return waarde;
+    }
+  }
+
+  private verpl(): string {
+    return fromNullable(this.waarde("verpl"))
+      .map(this.signed)
+      .fold(() => "", pos => pos);
+  }
+
+  private pos(positieVeld: string): string {
+    return fromNullable(this.waarde(positieVeld))
+      .filter(positie => typeof positie === "number")
+      .map(positie => `${Math.round((positie as number) * 10) / 10}`)
+      .fold(() => "", pos => pos);
+  }
+
+  private signed(value: number): string {
+    if (value >= 0) {
+      return `+${value}`;
+    } else {
+      return `${value}`;
+    }
   }
 
   private eigenschappen(filter: (string) => boolean): string[] {
     return this.laag
       .map(l => l.velden)
       .getOrElseValue(OrderedMap())
-      .filter((value, key) => this.heeftWaarde(this.nestedProperty(key!, this.properties())))
       .filter((value, key) => filter(key))
+      .filter((value, key) => geldigeWaarde(nestedProperty(key!, this.properties())))
+      .filter((value, key) => nestedProperty(key!, this.properties()) !== "")
       .keySeq()
       .toArray();
   }
 
-  private nestedProperty(propertyKey: string, object: Object): Object {
-    return this.heeftWaarde(propertyKey)
-      ? propertyKey.split(".").reduce((obj, key) => (this.heeftWaarde(obj) && this.heeftWaarde(obj[key]) ? obj[key] : null), object)
-      : null;
+  private isBasisVeld(veld: string): boolean {
+    return this.laag
+      .chain(l => fromNullable(l.velden.get(veld)))
+      .map(veldInfo => veldInfo.isBasisVeld)
+      .getOrElseValue(false); // indien geen meta informatie functie, toon alle velden
+  }
+
+  private isType(veld: string, type: string): boolean {
+    return this.laag
+      .chain(l => fromNullable(l.velden.get(veld)))
+      .map(veldInfo => veldInfo.type === type)
+      .getOrElseValue(false);
+  }
+
+  private isBoolean(veld: string): boolean {
+    return this.isType(veld, "boolean");
+  }
+
+  private isDatum(veld: string): boolean {
+    return this.isType(veld, "date");
+  }
+
+  private formateerDatum(dateString: string): string {
+    try {
+      return new Date(dateString).toLocaleDateString("nl-BE");
+    } catch {
+      return dateString;
+    }
   }
 }
