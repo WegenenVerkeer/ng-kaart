@@ -76,7 +76,7 @@ Ook de NosqlFs laag demo maakt een verbinding met een server die niet op op loca
 
 De code style wordt automatisch afgedwongen via tslint + prettier. Deze is ingesteld dat de code wordt herschreven on commit, tenzij er brekende wijzigingen zijn (zoals foute typering en dergelijke meer).
 
-## Publish
+## Publish (achterhaald)
 
 We gebruiken [travis-ci](https://travis-ci.org/WegenenVerkeer/ng-kaart) als CI tool.
 Travis wordt automatisch gestart bij een push naar github.
@@ -92,6 +92,43 @@ En wanneer de feature klaar is, en het is nog steeds maar een feature, doe dan:
     npm version minor -m 'Release van %s: mijn feature naam'
 
 TODO: een postversion hook maken die `src/lib/package.json` in sync houdt.
+
+## Filestructuur
+
+### Componenten
+
+We hebben twee grote categorieën van componenten:
+1. componenten die de nodig zijn voor de werking van ng-kaart ongeacht af die aangestuurd wordt door de API of de `awv-kaart-classic` tag
+2. componenten die dienen om ng-kaart aan te sturen op de traditionele Angularmanier.
+
+De eerste komen in directories onder `src/lib/kaart/<component>` en de naam begint met `Kaart`. 
+
+De tweede soort komt in directories onder `src/lib/classic/<component>` en de naam begint met `Classic`.
+
+We hebben dan bijv.:
+
+```
+src
+  lib
+    kaart
+      schaal
+        kaart-schaal.component.ts
+        kaart-chaal.html
+        kaart-schaal.scss
+      ...
+    classic
+      lagenkiezer
+        classic-lagenkiezer.component.ts
+        classic-lagenkiezer.html
+        classic-lagenkiezer.scss
+      ...  
+```
+N
+`kaart-schaal.component.ts` bevat `KaartSchaalComponent` en `classic-lagenkiezer.component` bevat `ClassicLagenkiezerComponent`.
+
+### Reducers e.d.
+
+Voorlopig kunnen die direct onder `src/lib/kaart` blijven.
 
 # Resources
 

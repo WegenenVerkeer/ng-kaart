@@ -5,9 +5,13 @@ import { MatButtonModule, MatButtonToggleModule, MatCardModule, MatIconModule } 
 import { ClickOutsideModule } from "ng4-click-outside";
 import * as ol from "openlayers";
 
+import { ClassicCopyrightComponent } from "../classic/copyright/classic-copyright.component";
+import { ClassicSchaalComponent } from "../classic/schaal/classic-schaal.component";
+import { ClassicVoorwaardenComponent } from "../classic/voorwaarden/classic-voorwaarden.component";
 import { LagenkiezerModule } from "../lagenkiezer/index";
 import { ZoekerModule } from "../zoeker/index";
 
+import { KaartCopyrightComponent } from "./copyright/kaart-copyright.component";
 import { KaartInfoBoodschapAlertComponent } from "./info-boodschappen/kaart-info-boodschap-alert.component";
 import { KaartInfoBoodschapIdentifyComponent } from "./info-boodschappen/kaart-info-boodschap-identify.component";
 import { KaartInfoBoodschapComponent } from "./info-boodschappen/kaart-info-boodschap.component";
@@ -17,7 +21,6 @@ import { KaartAchtergrondTileComponent } from "./kaart-achtergrond-tile.componen
 import { KaartBlancoLaagComponent } from "./kaart-blanco-laag.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { KAART_CFG, KaartConfig } from "./kaart-config";
-import { KaartCopyrightComponent } from "./kaart-copyright.component";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { KaartGeoserverLaagComponent } from "./kaart-geoserver-laag.component";
 import { KaartKnopAchtergrondLaagKiezerComponent } from "./kaart-knop-achtergrondlaag-kiezer.component";
@@ -28,7 +31,6 @@ import { KaartNosqlfsLaagComponent } from "./kaart-nosqlfs-laag.component";
 import { KaartOpenStreetViewComponent } from "./kaart-open-street-view.component";
 import { KaartOpenLayersStyleComponent } from "./kaart-openlayers.component";
 import { KaartOrthoLaagComponent } from "./kaart-ortho-laag.component";
-import { KaartSchaalComponent } from "./kaart-schaal.component";
 import { KaartStandaardInteractiesComponent } from "./kaart-standaard-interacties.component";
 import { KaartStandaardKnoppenComponent } from "./kaart-standaard-knoppen.component";
 import { KaartTekenLaagComponent } from "./kaart-teken-laag.component";
@@ -37,21 +39,23 @@ import { KaartTekenComponent } from "./kaart-teken.component";
 import { KaartTilecacheLaagComponent } from "./kaart-tilecache-laag.component";
 import { KaartFeaturesLaagComponent } from "./kaart-toon-features.component";
 import { KaartVectorLaagComponent } from "./kaart-vector-laag.component";
-import { KaartVoorwaardenBoxComponent } from "./kaart-voorwaarden-box.component";
-import { KaartVoorwaardenComponent } from "./kaart-voorwaarden.component";
 import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
 import { KaartWmtsLaagComponent } from "./kaart-wmts-laag.component";
 import { KaartZoomComponent } from "./kaart-zoom.component";
 import { KaartComponent } from "./kaart.component";
+import { KaartSchaalComponent } from "./schaal/kaart-schaal.component";
+import { KaartVoorwaardenComponent } from "./voorwaarden/kaart-voorwaarden.component";
 
 const components: any[] = [
+  ClassicSchaalComponent,
+  ClassicVoorwaardenComponent,
+  ClassicCopyrightComponent,
   KaartComponent,
   KaartKnopAchtergrondLaagKiezerComponent,
   KaartClassicComponent,
   KaartKnopVolledigSchermComponent,
   KaartKnopZoomSliderComponent,
   KaartOrthoLaagComponent,
-  KaartSchaalComponent,
   KaartZoomComponent,
   KaartMijnLocatieComponent,
   KaartStandaardInteractiesComponent,
@@ -66,7 +70,7 @@ const components: any[] = [
   KaartOpenLayersStyleComponent,
   KaartSchaalComponent,
   KaartVoorwaardenComponent,
-  KaartVoorwaardenBoxComponent,
+  KaartCopyrightComponent,
   KaartTilecacheLaagComponent,
   KaartGeoserverLaagComponent,
   KaartWmsLaagComponent,
@@ -78,7 +82,8 @@ const components: any[] = [
   KaartInfoBoodschappenComponent,
   KaartInfoBoodschapComponent,
   KaartInfoBoodschapIdentifyComponent,
-  KaartInfoBoodschapAlertComponent
+  KaartInfoBoodschapAlertComponent,
+  KaartSchaalComponent
 ];
 
 // Weersta de drang om deze variabele in een andere module te plaatsen, want dat geeft problemen met gebruik in AOT app.
@@ -143,19 +148,19 @@ export class KaartModule {
   }
 }
 
+export * from "../classic/index";
 export * from "./coordinaten.service";
 export * from "./kaart-classic.component";
 export * from "./kaart-component-base";
-export * from "./kaart-copyright.component";
+export * from "./copyright/kaart-copyright.component";
 export * from "./kaart-openlayers.component";
-export * from "./kaart-schaal.component";
-export * from "./kaart-voorwaarden.component";
-export * from "./kaart-voorwaarden-box.component";
+export * from "./voorwaarden/kaart-voorwaarden.component";
+export * from "./copyright/kaart-copyright.component";
 export * from "./kaart-knop-achtergrondlaag-kiezer.component";
 export * from "./kaart-knop-volledig-scherm.component";
 export * from "./kaart-knop-zoom-slider.component";
 export * from "./kaart-laag.component";
-export * from "./kaart-schaal.component";
+export * from "./schaal/kaart-schaal.component";
 export * from "./kaart-standaard-interacties.component";
 export * from "./kaart-standaard-knoppen.component";
 export * from "./kaart-teken-polygoon-laag.component";

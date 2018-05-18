@@ -3,9 +3,9 @@ import { List, Set } from "immutable";
 import * as ol from "openlayers";
 import { Subscription as RxSubscription } from "rxjs/Subscription";
 
-import { AbstractZoeker } from "../zoeker/abstract-zoeker";
+import { AbstractZoeker, ZoekInput } from "../zoeker/abstract-zoeker";
 
-import { BareValidationWrapper, KaartCmdValidation, KaartMsg, LazyWrapper, Subscription, ValidationWrapper, VoidWrapper, Wrapper } from ".";
+import { BareValidationWrapper, KaartMsg, Subscription, ValidationWrapper } from ".";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { InfoBoodschap } from "./kaart-with-info-model";
@@ -14,6 +14,7 @@ import * as ss from "./stijl-selector";
 export type Command<Msg extends KaartMsg> =
   | SubscribeCmd<Msg>
   | UnsubscribeCmd
+  | AbortTileLoadingCmd
   | VoegLaagToeCmd<Msg>
   | VerwijderLaagCmd<Msg>
   | VerplaatsLaagCmd<Msg>
@@ -214,6 +215,10 @@ export interface ZetStijlVoorLaagCmd<Msg extends KaartMsg> {
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
+export interface AbortTileLoadingCmd {
+  readonly type: "AbortTileLoading";
+}
+
 export interface MeldComponentFoutCmd {
   readonly type: "MeldComponentFout";
   readonly fouten: List<string>;
@@ -233,7 +238,7 @@ export interface VerwijderZoekerCmd<Msg extends KaartMsg> {
 
 export interface ZoekCmd<Msg extends KaartMsg> {
   readonly type: "Zoek";
-  readonly input: string;
+  readonly input: ZoekInput;
   readonly zoekers: Set<string>;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
@@ -385,6 +390,10 @@ export function VeranderExtentCmd<Msg extends KaartMsg>(extent: ol.Extent): Vera
 
 export function VeranderViewportCmd<Msg extends KaartMsg>(size: ol.Size): VeranderViewportCmd {
   return { type: "VeranderViewport", size: size };
+}
+
+export function AbortTileLoadingCmd(): AbortTileLoadingCmd {
+  return { type: "AbortTileLoading" };
 }
 
 export function VervangFeaturesCmd<Msg extends KaartMsg>(

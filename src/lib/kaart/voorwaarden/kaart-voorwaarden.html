@@ -1,0 +1,3 @@
+<div class="awv-voorwaarden" *ngIf="voorwaardenOpties$ | async as voorwaarden">
+  <a href="{{ voorwaarden.href }}" target="_blank">{{ voorwaarden.titel }}</a>
+</div>

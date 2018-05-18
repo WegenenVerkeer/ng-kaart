@@ -12,6 +12,7 @@ import { Zoominstellingen } from "./kaart-protocol";
 import { GeselecteerdeFeatures, InfoBoodschap } from "./kaart-with-info-model";
 import { ModelChanger } from "./model-changes";
 import { initStyleSelectorsInMap } from "./stijl-selector";
+import { TileLoader } from "./tile-loader";
 
 /**
  * Het model achter de kaartcomponent.
@@ -45,6 +46,7 @@ export class KaartWithInfo {
   readonly geometryChangedSubj: Subject<ol.geom.Geometry> = new Subject<ol.geom.Geometry>();
   readonly tekenSettingsSubj: BehaviorSubject<Option<ke.TekenSettings>> = new BehaviorSubject<Option<ke.TekenSettings>>(none);
   readonly infoBoodschappenSubj = new BehaviorSubject<OrderedMap<string, InfoBoodschap>>(OrderedMap());
+  readonly tileLoader: TileLoader = new TileLoader();
 
   constructor(
     // TODO om de distinctWithInfo te versnellen zouden we als eerste element een versieteller kunnen toevoegen

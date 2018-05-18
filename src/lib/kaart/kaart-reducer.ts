@@ -9,7 +9,7 @@ import * as ol from "openlayers";
 import { olx } from "openlayers";
 import { Subscription } from "rxjs";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, filter } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged } from "rxjs/operators";
 
 import { offsetStyleFunction } from "../stijl/offset-stijl-function";
 import { forEach } from "../util/option";
@@ -23,7 +23,7 @@ import { kaartLogger } from "./log";
 import { ModelChanger } from "./model-changes";
 import { getFeatureStyleSelector, getSelectionStyleSelector, setFeatureStyleSelector, setSelectionStyleSelector } from "./stijl-selector";
 import * as ss from "./stijl-selector";
-import { getDefaultSelectionStyleSelector, getDefaultStyle, getDefaultStyleSelector } from "./styles";
+import { getDefaultStyleSelector } from "./styles";
 
 ///////////////////////////////////
 // Hulpfuncties
@@ -307,6 +307,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return Math.max(0, Math.min(position, model.titelsOpGroep.get(groep).size));
     }
 
+    function abortTileLoadingCmd(cmnd: prt.AbortTileLoadingCmd) {
+      model.tileLoader.abort();
+      return ModelWithResult(model, none);
+    }
+
     /**
      * Een laag toevoegen. Faalt als er al een laag met die titel bestaat.
      */
@@ -419,7 +424,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function vraagSchaalAan(cmnd: prt.VraagSchaalAanCmd<Msg>): ModelWithResult<Msg> {
-      modelChanger.uiElementOptiesSubj.next({ naam: "Schaal" });
+      modelChanger.uiElementSelectieSubj.next({ naam: "Schaal", aan: true });
       return toModelWithValueResult(
         cmnd.wrapper,
         fromPredicate(model.schaal, isNone, "De schaal is al toegevoegd").map(() => ModelAndEmptyResult({ ...model }))
@@ -431,7 +436,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         cmnd.wrapper,
         fromPredicate(model.schaal, isNone, "De schaal is al toegevoegd").map(() => {
           const schaal = cmnd.target
-            .map(t => new ol.control.ScaleLine({ className: "awv-schaal", target: t }))
+            .map(t => new ol.control.ScaleLine({ className: "awv-schaal", target: t, minWidth: 40 }))
             .getOrElseValue(new ol.control.ScaleLine({ className: "awv-schaal" }));
           model.map.addControl(schaal);
           return ModelAndEmptyResult({ ...model, schaal: some(schaal) });
@@ -1065,6 +1070,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return toonAchtergrondkeuzeCmd(cmd);
       case "VerbergAchtergrondKeuze":
         return verbergAchtergrondkeuzeCmd(cmd);
+      case "AbortTileLoading":
+        return abortTileLoadingCmd(cmd);
       case "KiesAchtergrond":
         return kiesAchtergrondCmd(cmd);
       case "MaakLaagZichtbaar":

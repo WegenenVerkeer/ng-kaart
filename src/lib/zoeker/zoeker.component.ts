@@ -1,18 +1,34 @@
-import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
+import { HttpErrorResponse } from "@angular/common/http";
+import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { none, Option } from "fp-ts/lib/Option";
 import { List, OrderedMap, Set } from "immutable";
 import * as ol from "openlayers";
-import { debounce, distinctUntilChanged, filter, map } from "rxjs/operators";
-import { Subscription } from "rxjs/Subscription";
+import { UnaryFunction } from "rxjs/interfaces";
+import { Observable } from "rxjs/Observable";
+import {
+  catchError,
+  combineLatest,
+  debounce,
+  distinctUntilChanged,
+  filter,
+  map,
+  shareReplay,
+  startWith,
+  switchMap,
+  tap
+} from "rxjs/operators";
+import { pipe } from "rxjs/Rx";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import * as ke from "../kaart/kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
+import { kaartLogger } from "../kaart/log";
+import { matchGeometryType } from "../util/geometryTypes";
 
-import { compareResultaten, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
+import { compareResultaten, StringZoekInput, ZoekInput, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
 
 const ZoekerLaagNaam = "Zoeker";
 
@@ -20,7 +36,125 @@ export class Fout {
   constructor(readonly zoeker: string, readonly fout: string) {}
 }
 
-export type ZoekerType = "Geoloket" | "Perceel";
+export type ZoekerType = "Geoloket" | "Perceel" | "Crab";
+
+export function isNotNullObject(object) {
+  return object && object instanceof Object;
+}
+
+export function toNonEmptyDistinctLowercaseString(): UnaryFunction<Observable<any>, Observable<string>> {
+  return pipe(
+    filter(value => value), // filter de lege waardes eruit
+    // zorg dat we een lowercase waarde hebben zonder leading of trailing spaties.
+    map(value =>
+      value
+        .toString()
+        .trim()
+        .toLocaleLowerCase()
+    ),
+    distinctUntilChanged()
+  );
+}
+
+export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
+  protected constructor(kaartComponent: KaartComponent, private zoekerComponent: ZoekerComponent, zone: NgZone) {
+    super(kaartComponent, zone);
+  }
+
+  maakVeldenLeeg(vanafNiveau: number) {
+    this.zoekerComponent.maakResultaatLeeg();
+  }
+
+  protected meldFout(fout: HttpErrorResponse) {
+    kaartLogger.error("error", fout);
+    this.dispatch(prt.MeldComponentFoutCmd(List.of("Fout bij ophalen perceel gegevens", fout.message)));
+  }
+
+  protected subscribeToDisableWhenEmpty<T>(observable: Observable<T[]>, control: FormControl, maakLeegVanaf: number) {
+    // Wanneer de array leeg is, disable de control, enable indien niet leeg of er een filter is opgegeven.
+    function disableWanneerLeeg(array: T[]) {
+      if (array.length > 0 || (control.value && control.value !== "")) {
+        control.enable();
+      } else {
+        control.disable();
+      }
+    }
+
+    this.bindToLifeCycle(observable).subscribe(
+      waardes => {
+        disableWanneerLeeg(waardes);
+        this.maakVeldenLeeg(maakLeegVanaf);
+      },
+      error => this.meldFout(error)
+    );
+  }
+
+  protected busy<T>(observable: Observable<T>): Observable<T> {
+    function noop() {}
+
+    this.zoekerComponent.increaseBusy();
+    return observable.pipe(tap(noop, () => this.zoekerComponent.decreaseBusy(), () => this.zoekerComponent.decreaseBusy()));
+  }
+
+  protected zoek(zoekInput: ZoekInput, zoekers: Set<string>) {
+    this.zoekerComponent.toonResultaat = true;
+    this.zoekerComponent.increaseBusy();
+    this.dispatch({
+      type: "Zoek",
+      input: zoekInput,
+      zoekers: zoekers,
+      wrapper: kaartLogOnlyWrapper
+    });
+  }
+
+  // Gebruik de waarde van de VORIGE control om een request te doen,
+  //   maar alleen als die vorige waarde een object was (dus door de gebruiker aangeklikt in de lijst).
+  // Filter het antwoord daarvan met de (eventuele) waarde van onze HUIDIGE control, dit om autocomplete te doen.
+  protected autocomplete<T, A>(
+    vorige: FormControl,
+    provider: (A) => Observable<T[]>,
+    huidige: FormControl,
+    propertyGetter: (T) => string
+  ): Observable<T[]> {
+    // Filter een array van waardes met de waarde van een filter (control), de filter kan een string of een object zijn.
+    function filterMetWaarde(): UnaryFunction<Observable<T[]>, Observable<T[]>> {
+      return combineLatest(huidige.valueChanges.pipe(startWith<string | T>(""), distinctUntilChanged()), (waardes, filterWaarde) => {
+        if (!filterWaarde) {
+          return waardes;
+        } else if (typeof filterWaarde === "string") {
+          return waardes.filter(value =>
+            propertyGetter(value)
+              .toLocaleLowerCase()
+              .includes(filterWaarde.toLocaleLowerCase())
+          );
+        } else {
+          return waardes.filter(value =>
+            propertyGetter(value)
+              .toLocaleLowerCase()
+              .includes(propertyGetter(filterWaarde).toLocaleLowerCase())
+          );
+        }
+      });
+    }
+
+    return vorige.valueChanges.pipe(distinctUntilChanged(), this.safeProvider(provider), filterMetWaarde(), shareReplay(1));
+  }
+
+  // inputWaarde kan een string of een object zijn. Enkel wanneer het een object is, roepen we de provider op,
+  // anders geven we een lege array terug.
+  private safeProvider<A, T>(provider: (A) => Observable<T[]>): UnaryFunction<Observable<A>, Observable<T[]>> {
+    return switchMap(inputWaarde => {
+      return isNotNullObject(inputWaarde)
+        ? this.busy(provider(inputWaarde)).pipe(
+            catchError((error, obs) => {
+              this.meldFout(error);
+              return Observable.of([]);
+            })
+          )
+        : Observable.of([]);
+    });
+  }
+}
 
 @Component({
   selector: "awv-zoeker",
@@ -35,9 +169,9 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
   legendeKeys: string[] = [];
   toonHelp = false;
   toonResultaat = true;
+  busy = 0;
   actieveZoeker: ZoekerType = "Geoloket";
 
-  private subscription: Option<Subscription> = none;
   private byPassDebounce: () => void;
   private extent: ol.Extent = ol.extent.createEmpty();
 
@@ -57,35 +191,47 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
   }
 
   private static maakNieuwFeature(resultaat: ZoekResultaat): ol.Feature[] {
-    const feature = new ol.Feature({ data: resultaat, geometry: resultaat.geometry, name: resultaat.omschrijving });
-    feature.setId(resultaat.bron + "_" + resultaat.index);
-    feature.setStyle(resultaat.style);
-
-    let middlePoint: ol.geom.Point | undefined = undefined;
-    if (resultaat.locatie.type === "MultiLineString") {
+    function multiLineStringMiddlePoint(geometry: ol.geom.MultiLineString): ol.geom.Point {
       // voeg een puntelement toe ergens op de linestring om een icoon met nummer te tonen
-      const lineStrings = resultaat.geometry.getLineStrings();
+      const lineStrings = geometry.getLineStrings();
       const lineString = lineStrings[Math.floor(lineStrings.length / 2)];
-      middlePoint = new ol.geom.Point(lineString.getCoordinateAt(0.5));
-    } else if (resultaat.locatie.type === "Polygon" || resultaat.locatie.type === "MultiPolygon") {
-      // in midden van gemeente polygon
-      const extent = resultaat.geometry.getExtent();
-      middlePoint = new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
+      return new ol.geom.Point(lineString.getCoordinateAt(0.5));
     }
-    if (middlePoint !== undefined) {
-      const middelpuntFeature = new ol.Feature({
+
+    function polygonMiddlePoint(geometry: ol.geom.Geometry): ol.geom.Point {
+      // in midden van gemeente polygon
+      const extent = geometry.getExtent();
+      return new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
+    }
+
+    function createMiddlePointFeature(middlePoint: ol.geom.Point): ol.Feature {
+      const middlePointFeature = new ol.Feature({
         data: resultaat,
         geometry: middlePoint,
         name: resultaat.omschrijving
       });
-      middelpuntFeature.setStyle(resultaat.style);
-      return [feature, middelpuntFeature];
-    } else {
-      return [feature];
+      middlePointFeature.setStyle(resultaat.style);
+      return middlePointFeature;
     }
+
+    const feature = new ol.Feature({
+      data: resultaat,
+      geometry: resultaat.geometry,
+      name: resultaat.omschrijving
+    });
+    feature.setId(resultaat.bron + "_" + resultaat.index);
+    feature.setStyle(resultaat.style);
+
+    return matchGeometryType(resultaat.geometry, {
+      multiLineString: multiLineStringMiddlePoint,
+      polygon: polygonMiddlePoint,
+      multiPolygon: polygonMiddlePoint
+    })
+      .map(middlePoint => [feature, createMiddlePointFeature(middlePoint)])
+      .getOrElseValue([feature]);
   }
 
-  constructor(parent: KaartComponent, zone: NgZone) {
+  constructor(parent: KaartComponent, zone: NgZone, private cd: ChangeDetectorRef) {
     super(parent, zone);
   }
 
@@ -115,9 +261,14 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
       )
     ).subscribe(value => {
       this.toonResultaat = true;
-
       if (value.length > 0) {
-        this.dispatch({ type: "Zoek", input: value, zoekers: Set(), wrapper: kaartLogOnlyWrapper });
+        this.increaseBusy();
+        this.dispatch({
+          type: "Zoek",
+          input: { type: "string", value: value } as StringZoekInput,
+          zoekers: Set(),
+          wrapper: kaartLogOnlyWrapper
+        });
       }
     });
     this.dispatch({
@@ -172,6 +323,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
 
   kiesZoeker(zoeker: ZoekerType) {
     this.maakResultaatLeeg();
+    this.busy = 0; // Voor alle zekerheid.
     this.actieveZoeker = zoeker;
   }
 
@@ -180,7 +332,9 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
       case "Geoloket":
         return "Zoek";
       case "Perceel":
-        return "Zoek op perceel";
+        return "Zoek op Perceel";
+      case "Crab":
+        return "Zoek op CRAB";
     }
   }
 
@@ -195,6 +349,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
   }
 
   private processZoekerAntwoord(nieuweResultaten: ZoekResultaten): KaartInternalMsg {
+    this.decreaseBusy();
     this.alleZoekResultaten = this.alleZoekResultaten
       .filter(resultaat => resultaat.zoeker !== nieuweResultaten.zoeker)
       .concat(nieuweResultaten.resultaten);
@@ -210,8 +365,8 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
       (list, resultaat) => list.push(...ZoekerComponent.maakNieuwFeature(resultaat)),
       List<ol.Feature>()
     );
-    this.extent = features
-      .map(feature => feature!.getGeometry().getExtent())
+    this.extent = this.alleZoekResultaten
+      .map(resultaat => resultaat.extent)
       .reduce((maxExtent, huidigeExtent) => ol.extent.extend(maxExtent!, huidigeExtent!), ol.extent.createEmpty());
 
     this.dispatch(prt.VervangFeaturesCmd(ZoekerLaagNaam, features, kaartLogOnlyWrapper));
@@ -228,5 +383,21 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
     if (!ol.extent.isEmpty(this.extent)) {
       this.dispatch(prt.VeranderExtentCmd(this.extent));
     }
+  }
+
+  increaseBusy() {
+    this.busy++;
+    this.cd.detectChanges();
+  }
+
+  decreaseBusy() {
+    if (this.busy > 0) {
+      this.busy--;
+      this.cd.detectChanges();
+    }
+  }
+
+  isBusy(): boolean {
+    return this.busy > 0;
   }
 }
