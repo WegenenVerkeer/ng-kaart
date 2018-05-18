@@ -116,7 +116,7 @@ export class CrabGetraptZoekerComponent extends GetraptZoekerComponent implement
     super.maakVeldenLeeg(vanafNiveau);
   }
 
-  private toonOpKaart() {
+  toonOpKaart() {
     let zoekInput: CrabZoekInput;
     if (isNotNullObject(this.huisnummerControl.value)) {
       zoekInput = this.huisnummerControl.value;
@@ -128,7 +128,7 @@ export class CrabGetraptZoekerComponent extends GetraptZoekerComponent implement
     this.zoek(zoekInput, Set.of(this.crabService.naam()));
   }
 
-  private magTonenOpKaart(): boolean {
+  magTonenOpKaart(): boolean {
     return isNotNullObject(this.gemeenteControl.value);
   }
 }
