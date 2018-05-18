@@ -20,15 +20,15 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
         urls: l.urls.toArray(),
         tileGrid: ol.tilegrid.createXYZ({
           extent: kaart.config.defaults.extent,
-          tileSize: l.tileSize.getOrElseValue(256)
+          tileSize: l.tileSize.getOrElse(256)
         }),
         tileLoadFunction: kaart.tileLoader.tileLoadFunction,
         params: {
           LAYERS: l.naam,
           TILED: true,
           SRS: kaart.config.srs,
-          VERSION: l.versie.getOrElseValue("1.3.0"),
-          FORMAT: l.format.getOrElseValue("image/png")
+          VERSION: l.versie.getOrElse("1.3.0"),
+          FORMAT: l.format.getOrElse("image/png")
         }
       })
     });
@@ -76,8 +76,8 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
         params: {
           LAYERS: l.naam,
           SRS: kaart.config.srs,
-          VERSION: l.versie.getOrElseValue("1.3.0"),
-          FORMAT: l.format.getOrElseValue("image/png")
+          VERSION: l.versie.getOrElse("1.3.0"),
+          FORMAT: l.format.getOrElse("image/png")
         },
         projection: kaart.config.srs
       })
@@ -107,11 +107,9 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
       visible: true,
       style: vectorlaag.styleSelector.map(toStylish).getOrElseValue(kaart.config.defaults.style),
       minResolution: array
-        .index(vectorlaag.maxZoom)(kaart.config.defaults.resolutions)
-        .getOrElseValue(kaart.config.defaults.resolutions[kaart.config.defaults.resolutions.length - 1]),
-      maxResolution: array
-        .index(vectorlaag.minZoom - 1)(kaart.config.defaults.resolutions)
-        .getOrElseValue(kaart.config.defaults.resolutions[0])
+        .index(vectorlaag.maxZoom, kaart.config.defaults.resolutions)
+        .getOrElse(kaart.config.defaults.resolutions[kaart.config.defaults.resolutions.length - 1]),
+      maxResolution: array.index(vectorlaag.minZoom - 1, kaart.config.defaults.resolutions).getOrElse(kaart.config.defaults.resolutions[0])
     });
   }
 
@@ -119,6 +117,17 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
     return new ol.layer.Tile(); // Hoe eenvoudig kan het zijn?
   }
 
+<<<<<<< HEAD
+=======
+  type Stylish = ol.StyleFunction | ol.style.Style | ol.style.Style[];
+
+  function determineStyle(vectorlaag: ke.VectorLaag, defaultStyle: ol.style.Style): Stylish {
+    return vectorlaag.styleSelector
+      .map(selector => (selector.type === "StaticStyle" ? selector.style : selector.styleFunction))
+      .getOrElse(defaultStyle);
+  }
+
+>>>>>>> origin/feature/fp_ts_1.2.0
   switch (laag.type) {
     case ke.TiledWmsType:
       return some(createdTileWms(laag as ke.WmsLaag));
