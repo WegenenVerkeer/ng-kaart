@@ -91,7 +91,7 @@
     "@types/jasmine": "2.5.54",
     "@types/jasmine-jquery": "1.5.32",
     "@types/node": "8.5.1",
-    "@types/openlayers": "4.6.8",
+    "@types/openlayers": "4.6.9",
     "chance": "1.0.11",
     "codelyzer": "4.0.2",
     "glob": "7.1.1",
@@ -129,7 +129,7 @@
     "tslint-config-prettier": "1.6.0",
     "tslint-defocus": "2.0.3",
     "tslint-plugin-prettier": "1.3.0",
-    "typescript": "2.8.1"
+    "typescript": "2.8.3"
   },
   "publishConfig": {
     "registry": "https://collab.mow.vlaanderen.be/artifacts/repository/npm-internal/"

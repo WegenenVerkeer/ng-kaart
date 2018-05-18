@@ -22,6 +22,7 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
           extent: kaart.config.defaults.extent,
           tileSize: l.tileSize.getOrElseValue(256)
         }),
+        tileLoadFunction: kaart.tileLoader.tileLoadFunction,
         params: {
           LAYERS: l.naam,
           TILED: true,
@@ -51,6 +52,7 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
           resolutions: kaart.config.defaults.resolutions,
           matrixIds: config.matrixIds
         }),
+        tileLoadFunction: kaart.tileLoader.tileLoadFunction,
         layer: l.naam,
         style: config.style.getOrElseValue(""),
         format: l.format.getOrElseValue("image/png"),

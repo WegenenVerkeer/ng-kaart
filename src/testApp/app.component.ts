@@ -27,6 +27,7 @@ export class AppComponent {
 
   private readonly zichtbaarheid = {
     orthomap: false,
+    lagenkiezer: true,
     voorwaarden: true
   };
 
