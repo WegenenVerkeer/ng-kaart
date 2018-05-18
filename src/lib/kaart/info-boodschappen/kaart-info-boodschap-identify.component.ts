@@ -5,7 +5,7 @@ import * as ol from "openlayers";
 
 import { orElse } from "../../util/option";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
-import { VectorLaag } from "../kaart-elementen";
+import { VectorLaag, VeldInfo } from "../kaart-elementen";
 import { KaartComponent } from "../kaart.component";
 
 import { KaartInfoBoodschapComponent } from "./kaart-info-boodschap.component";
@@ -217,7 +217,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   private eigenschappen(filter: (string) => boolean): string[] {
     return this.laag
       .map(l => l.velden)
-      .getOrElseValue(OrderedMap())
+      .getOrElseValue(OrderedMap<string, VeldInfo>())
       .filter((value, key) => filter(key))
       .filter((value, key) => geldigeWaarde(nestedProperty(key!, this.properties())))
       .filter((value, key) => nestedProperty(key!, this.properties()) !== "")

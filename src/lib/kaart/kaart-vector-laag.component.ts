@@ -7,6 +7,7 @@ import { forEach, orElse } from "../util/option";
 
 import { KaartClassicComponent } from "./kaart-classic.component";
 import * as ke from "./kaart-elementen";
+import { VeldInfo } from "./kaart-elementen";
 import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
 import { KaartLaagComponent } from "./kaart-laag.component";
 import * as prt from "./kaart-protocol";
@@ -44,7 +45,7 @@ export class KaartVectorLaagComponent extends KaartLaagComponent {
       minZoom: this.minZoom,
       maxZoom: this.maxZoom,
       offsetveld: fromNullable(this.offsetveld),
-      velden: OrderedMap()
+      velden: OrderedMap<string, VeldInfo>()
     };
   }
 

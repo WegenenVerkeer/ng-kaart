@@ -9,6 +9,7 @@ import { forEach, orElse } from "../util/option";
 
 import { KaartChildComponentBase } from "./kaart-child-component-base";
 import * as ke from "./kaart-elementen";
+import { VeldInfo } from "./kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper, tekenWrapper } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
 import { KaartComponent } from "./kaart.component";
@@ -141,7 +142,7 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
       minZoom: 2,
       maxZoom: 15,
       offsetveld: none,
-      velden: OrderedMap()
+      velden: OrderedMap<string, VeldInfo>()
     };
   }
 

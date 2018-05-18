@@ -12,6 +12,7 @@ import { orElse } from "../util/option";
 
 import { KaartChildComponentBase } from "./kaart-child-component-base";
 import * as ke from "./kaart-elementen";
+import { VeldInfo } from "./kaart-elementen";
 import {
   KaartInternalMsg,
   kaartLogOnlyWrapper,
@@ -167,7 +168,7 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
       selecteerbaar: false,
       minZoom: 2,
       maxZoom: 15,
-      velden: OrderedMap(),
+      velden: OrderedMap<string, VeldInfo>(),
       offsetveld: none
     };
   }

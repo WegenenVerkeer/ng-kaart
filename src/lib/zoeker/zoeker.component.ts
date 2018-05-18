@@ -22,6 +22,7 @@ import { pipe } from "rxjs/Rx";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import * as ke from "../kaart/kaart-elementen";
+import { VeldInfo } from "../kaart/kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
@@ -186,7 +187,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
       minZoom: 2,
       maxZoom: 15,
       offsetveld: none,
-      velden: OrderedMap()
+      velden: OrderedMap<string, VeldInfo>()
     };
   }
 
