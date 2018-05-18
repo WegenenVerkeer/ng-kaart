@@ -9,7 +9,7 @@ import * as ol from "openlayers";
 import { olx } from "openlayers";
 import { Subscription } from "rxjs";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, filter } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged } from "rxjs/operators";
 
 import { offsetStyleFunction } from "../stijl/offset-stijl-function";
 import { forEach } from "../util/option";
@@ -23,7 +23,7 @@ import { kaartLogger } from "./log";
 import { ModelChanger } from "./model-changes";
 import { getFeatureStyleSelector, getSelectionStyleSelector, setFeatureStyleSelector, setSelectionStyleSelector } from "./stijl-selector";
 import * as ss from "./stijl-selector";
-import { getDefaultSelectionStyleSelector, getDefaultStyle, getDefaultStyleSelector } from "./styles";
+import { getDefaultStyleSelector } from "./styles";
 
 ///////////////////////////////////
 // Hulpfuncties
@@ -305,6 +305,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function limitPosition(position: number, groep: ke.Laaggroep) {
       // laat 1 positie voorbij het einde toe om laag kunnen toe te voegen
       return Math.max(0, Math.min(position, model.titelsOpGroep.get(groep).size));
+    }
+
+    function abortTileLoadingCmd(cmnd: prt.AbortTileLoadingCmd) {
+      model.tileLoader.abort();
+      return ModelWithResult(model, none);
     }
 
     /**
@@ -1030,6 +1035,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return toonAchtergrondkeuzeCmd(cmd);
       case "VerbergAchtergrondKeuze":
         return verbergAchtergrondkeuzeCmd(cmd);
+      case "AbortTileLoading":
+        return abortTileLoadingCmd(cmd);
       case "KiesAchtergrond":
         return kiesAchtergrondCmd(cmd);
       case "MaakLaagZichtbaar":
