@@ -26,9 +26,8 @@ export class AppComponent {
   @ViewChild("selectie") private selectieKaart: KaartClassicComponent;
 
   private readonly zichtbaarheid = {
-    offsets: true,
     orthomap: false,
-    metenVoorbeeld: true
+    voorwaarden: true
   };
 
   private readonly fietspadStijlDef: AWV0StyleFunctionDescription = {
@@ -138,6 +137,10 @@ export class AppComponent {
 
   private tekenenActief = false;
   private getekendeGeom: Option<ol.geom.Geometry> = none;
+
+  private alleVoorwaarden = ["Er zijn nieuwe voorwaarden", "Er zijn nog nieuwere voorwaarden", undefined];
+  voorwaarden = this.alleVoorwaarden[0];
+  private voorwaardenIndex = 0;
 
   // Dit werkt alleen als apigateway bereikbaar is. Zie CORS waarschuwing in README.
   readonly districtSource: ol.source.Vector = new ol.source.Vector({
@@ -271,6 +274,11 @@ export class AppComponent {
 
   geomGetekend(geom: ol.geom.Geometry) {
     this.getekendeGeom = some(geom);
+  }
+
+  veranderVoorwaarden() {
+    this.voorwaardenIndex = (this.voorwaardenIndex + 1) % this.alleVoorwaarden.length;
+    this.voorwaarden = this.alleVoorwaarden[this.voorwaardenIndex];
   }
 
   verplaatsLagen() {

@@ -6,6 +6,9 @@ import { Subject } from "rxjs/Subject";
 
 import { asap } from "../util/asap";
 
+/**
+ * Algemene basisklasse die gebruikt kan worden voor zowel child components van de kaartcomponent als voor kaart classic helper components.
+ */
 export abstract class KaartComponentBase implements OnInit, OnDestroy {
   private readonly destroyingSubj: Subject<void> = new ReplaySubject<void>(1); // ReplaySubject zodat laatkomers toch nog event krijgen
   private readonly initialisingSubj: Subject<void> = new ReplaySubject<void>(1);

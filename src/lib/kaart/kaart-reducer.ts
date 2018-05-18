@@ -419,7 +419,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function vraagSchaalAan(cmnd: prt.VraagSchaalAanCmd<Msg>): ModelWithResult<Msg> {
-      modelChanger.uiElementOptiesSubj.next({ naam: "Schaal" });
+      modelChanger.uiElementSelectieSubj.next({ naam: "Schaal", aan: true });
       return toModelWithValueResult(
         cmnd.wrapper,
         fromPredicate(model.schaal, isNone, "De schaal is al toegevoegd").map(() => ModelAndEmptyResult({ ...model }))
@@ -431,7 +431,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         cmnd.wrapper,
         fromPredicate(model.schaal, isNone, "De schaal is al toegevoegd").map(() => {
           const schaal = cmnd.target
-            .map(t => new ol.control.ScaleLine({ className: "awv-schaal", target: t }))
+            .map(t => new ol.control.ScaleLine({ className: "awv-schaal", target: t, minWidth: 40 }))
             .getOrElseValue(new ol.control.ScaleLine({ className: "awv-schaal" }));
           model.map.addControl(schaal);
           return ModelAndEmptyResult({ ...model, schaal: some(schaal) });
