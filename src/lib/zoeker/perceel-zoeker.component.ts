@@ -39,10 +39,10 @@ export class PerceelZoekerComponent extends GetraptZoekerComponent implements On
   constructor(
     private perceelService: PerceelZoekerService,
     kaartComponent: KaartComponent,
-    zone: NgZone,
-    zoekerComponent: ZoekerComponent
+    zoekerComponent: ZoekerComponent,
+    zone: NgZone
   ) {
-    super(kaartComponent, zone, zoekerComponent);
+    super(kaartComponent, zoekerComponent, zone);
   }
 
   ngOnInit(): void {

@@ -30,8 +30,8 @@ export class CrabGetraptZoekerComponent extends GetraptZoekerComponent implement
   straten$: Observable<CrabStraat[]> = Observable.empty();
   huisnummers$: Observable<CrabHuisnummer[]> = Observable.empty();
 
-  constructor(private crabService: CrabZoekerService, kaartComponent: KaartComponent, zone: NgZone, zoekerComponent: ZoekerComponent) {
-    super(kaartComponent, zone, zoekerComponent);
+  constructor(private crabService: CrabZoekerService, kaartComponent: KaartComponent, zoekerComponent: ZoekerComponent, zone: NgZone) {
+    super(kaartComponent, zoekerComponent, zone);
   }
 
   ngOnInit(): void {

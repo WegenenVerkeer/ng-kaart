@@ -30,6 +30,40 @@ export interface SuggestionServiceResults {
   readonly SuggestionResult: string[];
 }
 
+// De data zoals we ze van de service krijgen. Zou beter via RAML gaan,
+// maar dat heeft enkel zin wanneer ook de backend die RAML gebruikt.
+
+export interface CrabGemeenteData {
+  readonly postcodes: string;
+  readonly niscode: number;
+  readonly naam: string;
+  readonly id: number;
+}
+
+export interface CrabStraatData {
+  readonly naam: string;
+  readonly id: number;
+}
+
+export interface CrabHuisnummerData {
+  readonly huisnummer: string;
+  readonly id: number;
+}
+
+interface CrabBBoxData {
+  readonly minimumX: number;
+  readonly maximumX: number;
+  readonly minimumY: number;
+  readonly maximumY: number;
+}
+
+interface CrabPositieData {
+  readonly x: number;
+  readonly y: number;
+}
+
+// De verrijkte data die uit de observables komt en ook als input kan dienen voor de zoek$ functie.
+
 export interface CrabZoekInput extends ZoekInput {
   readonly type: "CrabGemeente" | "CrabStraat" | "CrabHuisnummer";
 }
@@ -74,38 +108,6 @@ export class CrabHuisnummer implements CrabZoekInput {
   }
 }
 
-// De data zoals we ze van de service krijgen. Zou beter via RAML gaan,
-// maar dat heeft enkel zin wanneer ook de backend die RAML gebruikt.
-
-export interface CrabGemeenteData {
-  readonly postcodes: string;
-  readonly niscode: number;
-  readonly naam: string;
-  readonly id: number;
-}
-
-export interface CrabStraatData {
-  readonly naam: string;
-  readonly id: number;
-}
-
-export interface CrabHuisnummerData {
-  readonly huisnummer: string;
-  readonly id: number;
-}
-
-export interface CrabBBoxData {
-  readonly minimumX: number;
-  readonly maximumX: number;
-  readonly minimumY: number;
-  readonly maximumY: number;
-}
-
-export interface CrabPositieData {
-  readonly x: number;
-  readonly y: number;
-}
-
 export class CrabZoekResultaat implements ZoekResultaat {
   readonly partialMatch = false;
   readonly index: number;
@@ -118,8 +120,8 @@ export class CrabZoekResultaat implements ZoekResultaat {
   readonly extent: ol.Extent;
 
   constructor(
-    x: number,
-    y: number,
+    x_lambert_72: number,
+    y_lambert_72: number,
     omschrijving: string,
     bron: string,
     index: number,
@@ -129,7 +131,7 @@ export class CrabZoekResultaat implements ZoekResultaat {
     extent?: ol.Extent
   ) {
     this.index = index + 1;
-    this.geometry = new ol.geom.Point([x, y]);
+    this.geometry = new ol.geom.Point([x_lambert_72, y_lambert_72]);
     this.extent = extent ? extent : this.geometry.getExtent();
     this.omschrijving = omschrijving;
     this.bron = bron;

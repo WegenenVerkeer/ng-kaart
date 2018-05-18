@@ -57,7 +57,7 @@ export function toNonEmptyDistinctLowercaseString(): UnaryFunction<Observable<an
 }
 
 export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
-  protected constructor(kaartComponent: KaartComponent, zone: NgZone, private zoekerComponent: ZoekerComponent) {
+  protected constructor(kaartComponent: KaartComponent, private zoekerComponent: ZoekerComponent, zone: NgZone) {
     super(kaartComponent, zone);
   }
 
