@@ -117,17 +117,6 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
     return new ol.layer.Tile(); // Hoe eenvoudig kan het zijn?
   }
 
-<<<<<<< HEAD
-=======
-  type Stylish = ol.StyleFunction | ol.style.Style | ol.style.Style[];
-
-  function determineStyle(vectorlaag: ke.VectorLaag, defaultStyle: ol.style.Style): Stylish {
-    return vectorlaag.styleSelector
-      .map(selector => (selector.type === "StaticStyle" ? selector.style : selector.styleFunction))
-      .getOrElse(defaultStyle);
-  }
-
->>>>>>> origin/feature/fp_ts_1.2.0
   switch (laag.type) {
     case ke.TiledWmsType:
       return some(createdTileWms(laag as ke.WmsLaag));
