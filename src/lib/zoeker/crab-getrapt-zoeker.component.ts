@@ -2,7 +2,7 @@ import { Component, NgZone, OnInit } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { Set } from "immutable";
 import { Observable } from "rxjs/Observable";
-import { distinctUntilChanged, filter, map } from "rxjs/operators";
+import { distinctUntilChanged, filter } from "rxjs/operators";
 
 import { KaartComponent } from "../kaart/kaart.component";
 
