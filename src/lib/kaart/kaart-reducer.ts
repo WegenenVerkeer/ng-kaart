@@ -1,5 +1,5 @@
 import * as array from "fp-ts/lib/Array";
-import { pipe } from "fp-ts/lib/function";
+import { Endomorphism, identity, pipe } from "fp-ts/lib/function";
 import { getArrayMonoid } from "fp-ts/lib/Monoid";
 import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
 import { sequence } from "fp-ts/lib/Traversable";
@@ -11,18 +11,19 @@ import { Subscription } from "rxjs";
 import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, filter } from "rxjs/operators";
 
+import { offsetStyleFunction } from "../stijl/offset-stijl-function";
 import { forEach } from "../util/option";
 
 import * as ke from "./kaart-elementen";
-import { determineStyle, DynamicStyle, StaticStyle, Styles, VectorLaag } from "./kaart-elementen";
-import { VectorType } from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { PositieAanpassing, VoegUiElementToe, ZetMijnLocatieZoomCmd, ZetUiElementOpties } from "./kaart-protocol-commands";
-import { getSelectionStyleSelector, KaartWithInfo, setSelectionStyleSelector, setStyleSelector } from "./kaart-with-info";
+import { KaartWithInfo } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
 import { kaartLogger } from "./log";
 import { ModelChanger } from "./model-changes";
-import { getDefaultStyle } from "./styles";
+import { getFeatureStyleSelector, getSelectionStyleSelector, setFeatureStyleSelector, setSelectionStyleSelector } from "./stijl-selector";
+import * as ss from "./stijl-selector";
+import { getDefaultSelectionStyleSelector, getDefaultStyle, getDefaultStyleSelector } from "./styles";
 
 ///////////////////////////////////
 // Hulpfuncties
@@ -46,6 +47,10 @@ function ModelWithResult<Msg>(model: Model, message: Option<Msg> = none): ModelW
     message: message
   };
 }
+
+////////////////////////
+// De eigenlijke reducer
+//
 
 export function kaartCmdReducer<Msg extends prt.KaartMsg>(
   cmd: prt.Command<Msg>
@@ -98,15 +103,22 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return thruth ? validation.success({}) : validation.failure(getArrayMonoid<string>())([errMsg]);
     }
 
-    function valideerToegevoegdLaagBestaat(titel: string): prt.KaartCmdValidation<ke.ToegevoegdeLaag> {
+    function valideerToegevoegdeLaagBestaat(titel: string): prt.KaartCmdValidation<ke.ToegevoegdeLaag> {
       return validation.fromPredicate(getArrayMonoid<string>())(
         (l: ke.ToegevoegdeLaag) => l !== undefined,
         () => [`Een laag met titel ${titel} bestaat niet`]
       )(model.toegevoegdeLagenOpTitel.get(titel));
     }
 
+    function valideerToegevoegdeVectorLaagBestaat(titel: string): prt.KaartCmdValidation<ke.ToegevoegdeVectorLaag> {
+      return validation.fromPredicate(getArrayMonoid<string>())(
+        (l: ke.ToegevoegdeVectorLaag) => l !== undefined && ke.isToegevoegdeVectorLaag(l),
+        () => [`Een laag met titel ${titel} bestaat niet`]
+      )(model.toegevoegdeLagenOpTitel.get(titel) as ke.ToegevoegdeVectorLaag);
+    }
+
     function valideerVectorLayerBestaat(titel: string): prt.KaartCmdValidation<ol.layer.Vector> {
-      return valideerToegevoegdLaagBestaat(titel).chain(
+      return valideerToegevoegdeLaagBestaat(titel).chain(
         laag =>
           laag.layer["setStyle"]
             ? validation.success(laag.layer as ol.layer.Vector)
@@ -153,29 +165,71 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
 
     const valideerAlsLayer: (laag: ke.Laag) => prt.KaartCmdValidation<ol.layer.Base> = (laag: ke.Laag) =>
-      fromOption(toOlLayer(model, laag), "De laagbeschrijving kon niet naar een openlayers laag omgezet");
+      fromOption(toOlLayer(model, laag), "De laagbeschrijving kon niet naar een openlayers laag omgezet worden");
 
     const valideerAlsGeheel = (num: number) => fromPredicate(num, Number.isInteger, `'${num}' is geen geheel getal`);
 
+    const pasLaagPositieAan: (aanpassing: number) => (laag: ke.ToegevoegdeLaag) => ke.ToegevoegdeLaag = positieAanpassing => laag => {
+      const positie = laag.positieInGroep + positieAanpassing;
+      zetLayerIndex(laag.layer, positie, laag.laaggroep);
+      return { ...laag, positieInGroep: positie };
+    };
+
+    const pasVectorLaagStijlToe: (lg: ke.ToegevoegdeVectorLaag) => void = laag => {
+      // Er moet een stijl zijn voor het tekenen van de features op de kaart
+      const featureStyleSelector = laag.stijlSel.getOrElseValue(getDefaultStyleSelector());
+      // Maar er moet geen specifieke stijl zijn voor het selecteren van een feature. Als er geen is, dan wordt er teruggevallen
+      // op gemodificeerde stijl tijdens tekenen van selectie.
+      const toOffset: Endomorphism<ss.StyleSelector> = laag.bron.offsetveld.fold(
+        () => identity, // als er geen offsetveld is, dan hoeven we niks te doen
+        offsetveld => ss.offsetStyleSelector("ident8", offsetveld, laag.stijlPositie)
+      );
+      const offsetFeatureStyleSelector = toOffset(featureStyleSelector);
+
+      laag.layer.setStyle(ss.toStylish(offsetFeatureStyleSelector));
+
+      setFeatureStyleSelector(model.map, laag.titel, some(offsetFeatureStyleSelector));
+      setSelectionStyleSelector(model.map, laag.titel, laag.selectiestijlSel.map(toOffset));
+    };
+
+    const pasVectorLaagStijlAan: (
+      ss: Option<ss.StyleSelector>,
+      sss: Option<ss.StyleSelector>
+    ) => (lg: ke.ToegevoegdeVectorLaag) => ke.ToegevoegdeVectorLaag = (maybeStijlSel, maybeSelectieStijlSel) => laag => {
+      const updatedLaag = { ...laag, stijlSel: maybeStijlSel, selectiestijlSel: maybeSelectieStijlSel };
+      pasVectorLaagStijlToe(updatedLaag); // expliciet als side-effect opgeroepen
+      return updatedLaag;
+    };
+
+    // Bij de vectorlagen moeten we ook de (mogelijk aanwezige) stylefuncties aanpassen
+    // De manier waarop de stijlpositie aangepast wordt is niet correct als er in de groep ook lagen zitten die geen vectorlaag zijn!
+    const pasVectorLaagStijlPositieAan: (
+      aanpassing: number
+    ) => (laag: ke.ToegevoegdeLaag) => ke.ToegevoegdeLaag = positieAanpassing => laag => {
+      return ke
+        .asToegevoegdeVectorLaag(laag)
+        .map<ke.ToegevoegdeLaag>(tvl =>
+          pasVectorLaagStijlAan(tvl.stijlSel, tvl.selectiestijlSel)({ ...tvl, stijlPositie: tvl.stijlPositie + positieAanpassing })
+        )
+        .getOrElseValue(laag);
+    };
+
     /**
      * Alle lagen in een gegeven bereik van z-indices aanpassen. Belangrijk om bij toevoegen, verwijderen en verplaatsen,
-     * alle z-indices in een aangesloten interval te behouden.
+     * alle z-indices in een aaneengesloten interval te behouden.
      */
-    function pasZIndicesAan(aanpassing: number, vanaf: number, tot: number, groep: ke.Laaggroep): List<PositieAanpassing> {
-      return model.toegevoegdeLagenOpTitel.reduce((updates, laag, titel) => {
-        if (layerNaarLaaggroep(<ol.layer.Base>laag!.layer) === groep) {
-          const groepPositie = layerIndexNaarGroepIndex(laag!.layer, groep);
-          if (groepPositie >= vanaf && groepPositie <= tot) {
-            const positie = groepPositie + aanpassing;
-            zetLayerIndex(laag!.layer, positie, groep);
-            return updates!.push({ titel: titel!, positie: positie });
-          } else {
-            return updates!;
-          }
+    function pasLaagPositiesAan(positieAanpassing: number, vanaf: number, tot: number, groep: ke.Laaggroep): Model {
+      return lagenInGroep(model, groep).reduce((mdl, laag) => {
+        const groepPositie = layerIndexNaarGroepIndex(laag!.layer, groep);
+        if (groepPositie >= vanaf && groepPositie <= tot && positieAanpassing !== 0) {
+          const positie = groepPositie + positieAanpassing;
+          return pipe(pasVectorLaagStijlPositieAan(positieAanpassing), pasLaagPositieAan(positieAanpassing), pasLaagInModelAan(mdl!))(
+            laag! as ke.ToegevoegdeVectorLaag
+          );
         } else {
-          return updates!;
+          return mdl!;
         }
-      }, List<prt.PositieAanpassing>());
+      }, model);
     }
 
     function groepIndexNaarZIndex(index: number, groep: ke.Laaggroep): number {
@@ -229,11 +283,16 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
     }
 
+    function lagenInGroep(mdl: Model, groep: ke.Laaggroep): List<ke.ToegevoegdeLaag> {
+      return mdl.titelsOpGroep
+        .get(groep) // we vertrekken van geldige groepen
+        .map(titel => mdl.toegevoegdeLagenOpTitel.get(titel!)) // dus hebben we geldige titels
+        .toList();
+    }
+
     function zendLagenInGroep(mdl: Model, groep: ke.Laaggroep): void {
       modelChanger.lagenOpGroepSubj.get(groep).next(
-        mdl.titelsOpGroep
-          .get(groep)
-          .map(titel => mdl.toegevoegdeLagenOpTitel.get(titel!)) // we vertrekken van geldige groepen
+        lagenInGroep(mdl, groep)
           .sortBy(laag => -laag!.layer.getZIndex()) // en dus ook geldige titels
           .toList()
       );
@@ -252,6 +311,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
      * Een laag toevoegen. Faalt als er al een laag met die titel bestaat.
      */
     function voegLaagToeCmd(cmnd: prt.VoegLaagToeCmd<Msg>): ModelWithResult<Msg> {
+      function vectorLaagPositie(groepPositie: number, groep: ke.Laaggroep): number {
+        return lagenInGroep(model, groep).count(tlg => ke.isVectorLaag(tlg!.bron) && tlg!.positieInGroep < groepPositie);
+      }
+
       return toModelWithValueResult(
         cmnd.wrapper,
         valideerLaagTitelBestaatNiet(cmnd.laag.titel)
@@ -260,8 +323,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             const titel = cmnd.laag.titel;
             const groep = cmnd.laaggroep;
             const groepPositie = limitPosition(cmnd.positie, groep);
-            const movedLayers = pasZIndicesAan(1, groepPositie, maxIndexInGroep(groep), groep);
-            const toegevoegdeLaag: ke.ToegevoegdeLaag = {
+            const modelMetAangepasteLagen = pasLaagPositiesAan(1, groepPositie, maxIndexInGroep(groep), groep);
+            const toegevoegdeLaagCommon: ke.ToegevoegdeLaag = {
               bron: cmnd.laag,
               layer: layer,
               titel: cmnd.laag.titel,
@@ -269,18 +332,29 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               positieInGroep: groepPositie,
               magGetoondWorden: cmnd.magGetoondWorden
             };
+            const toegevoegdeLaag = ke
+              .asVectorLaag(cmnd.laag)
+              .map<ke.ToegevoegdeLaag>(vlg => ({
+                ...toegevoegdeLaagCommon,
+                stijlPositie: vectorLaagPositie(groepPositie, groep),
+                stijlSel: vlg.styleSelector,
+                selectiestijlSel: vlg.selectieStyleSelector
+              }))
+              .getOrElseValue(toegevoegdeLaagCommon);
             layer.set("titel", titel);
             layer.setVisible(cmnd.magGetoondWorden); // achtergrondlagen expliciet zichtbaar maken!
+            // met positie hoeven we nog geen rekening te houden
+            forEach(ke.asToegevoegdeVectorLaag(toegevoegdeLaag), pasVectorLaagStijlToe);
             zetLayerIndex(layer, groepPositie, groep);
             model.map.addLayer(layer);
             const updatedModel = {
-              ...model,
-              toegevoegdeLagenOpTitel: model.toegevoegdeLagenOpTitel.set(titel, toegevoegdeLaag),
-              titelsOpGroep: model.titelsOpGroep.set(groep, model.titelsOpGroep.get(groep).push(titel)),
-              groepOpTitel: model.groepOpTitel.set(titel, groep)
+              ...modelMetAangepasteLagen,
+              toegevoegdeLagenOpTitel: modelMetAangepasteLagen.toegevoegdeLagenOpTitel.set(titel, toegevoegdeLaag),
+              titelsOpGroep: modelMetAangepasteLagen.titelsOpGroep.set(groep, model.titelsOpGroep.get(groep).push(titel)),
+              groepOpTitel: modelMetAangepasteLagen.groepOpTitel.set(titel, groep)
             };
             zendLagenInGroep(updatedModel, cmnd.laaggroep);
-            return ModelAndValue(updatedModel, movedLayers.push({ titel: titel, positie: groepPositie }));
+            return ModelAndEmptyResult(updatedModel);
           })
       );
     }
@@ -291,12 +365,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function verwijderLaagCmd(cmnd: prt.VerwijderLaagCmd<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerToegevoegdLaagBestaat(cmnd.titel).map(laag => {
+        valideerToegevoegdeLaagBestaat(cmnd.titel).map(laag => {
           const layer = laag.layer;
           model.map.removeLayer(layer); // Oesje. Side-effect. Gelukkig idempotent.
           const titel = cmnd.titel;
-          const groep = model.groepOpTitel.get(titel);
-          const movedLayers = pasZIndicesAan(-1, layerIndexNaarGroepIndex(layer, groep) + 1, maxIndexInGroep(groep), groep);
+          const groep = laag.laaggroep;
+          const modelMetAangepasteLagen = pasLaagPositiesAan(-1, layerIndexNaarGroepIndex(layer, groep) + 1, maxIndexInGroep(groep), groep);
           const updatedModel = {
             ...model,
             toegevoegdeLagenOpTitel: model.toegevoegdeLagenOpTitel.delete(titel),
@@ -310,7 +384,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             groepOpTitel: model.groepOpTitel.delete(titel)
           };
           zendLagenInGroep(updatedModel, groep);
-          return ModelAndValue(updatedModel, movedLayers); // De verwijderde laag zelf wordt niet teruggegeven
+          ss.clearFeatureStyleSelector(model.map, laag.titel);
+          return ModelAndEmptyResult(updatedModel);
         })
       );
     }
@@ -318,7 +393,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function verplaatsLaagCmd(cmnd: prt.VerplaatsLaagCmd<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerToegevoegdLaagBestaat(cmnd.titel)
+        valideerToegevoegdeLaagBestaat(cmnd.titel)
           .chain(valideerIsVoorgrondlaag) // enkel zinvol om voorgrondlagen te verplaatsen
           .map(laag => {
             const titel = cmnd.titel;
@@ -327,23 +402,18 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             const naarPositie = limitPosition(cmnd.naarPositie, groep); // uitgedrukt in z-index waarden
             // Afhankelijk of we van onder naar boven of van boven naar onder verschuiven, moeten de tussenliggende lagen
             // naar onder, resp. naar boven verschoven worden.
-            const verplaatsteTitels = (vanPositie < naarPositie
-              ? pasZIndicesAan(-1, vanPositie + 1, naarPositie, groep)
-              : pasZIndicesAan(1, naarPositie, vanPositie - 1, groep)
-            ).push({ titel: cmnd.titel, positie: naarPositie }); // De geïmpacteerde lagen + de verplaatste laag
-            zetLayerIndex(laag.layer, naarPositie, groep);
-            const updatedToegevoegdeLagenOpTitel = verplaatsteTitels.reduce(
-              (lagen, laagPos) =>
-                lagen!.set(laagPos!.titel, {
-                  // We veranderen niks aan de keys, dus kunnen we vertrouwen op get
-                  ...lagen!.get(laagPos!.titel),
-                  positieInGroep: laagPos!.positie
-                }),
-              model.toegevoegdeLagenOpTitel
-            );
-            const updatedModel = { ...model, toegevoegdeLagenOpTitel: updatedToegevoegdeLagenOpTitel };
+            const modelMetAangepasteLagen =
+              vanPositie < naarPositie
+                ? pasLaagPositiesAan(-1, vanPositie + 1, naarPositie, groep)
+                : pasLaagPositiesAan(1, naarPositie, vanPositie - 1, groep);
+            // En ook de te verplaatsen laag moet een andere positie krijgen uiteraard
+            const updatedModel = pipe(
+              pasVectorLaagStijlPositieAan(naarPositie - vanPositie),
+              pasLaagPositieAan(naarPositie - vanPositie),
+              pasLaagInModelAan(modelMetAangepasteLagen)
+            )(laag);
             zendLagenInGroep(updatedModel, groep);
-            return ModelAndValue(updatedModel, verplaatsteTitels);
+            return ModelAndEmptyResult(updatedModel);
           })
       );
     }
@@ -561,18 +631,22 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         cmnd.wrapper,
         valideerIsAchtergrondLaag(cmnd.titel)
-          .chain(() => valideerToegevoegdLaagBestaat(cmnd.titel))
+          .chain(() => valideerToegevoegdeLaagBestaat(cmnd.titel))
           .map((nieuweAchtergrond: ke.ToegevoegdeLaag) => {
             model.achtergrondlaagtitelSubj.next(cmnd.titel);
             const maybeVorigeAchtergrond = fromNullable(
               model.toegevoegdeLagenOpTitel.find(laag => laag!.laaggroep === "Achtergrond" && laag!.magGetoondWorden)
             );
             const modelMetNieuweZichtbaarheid = pipe(pasLaagZichtbaarheidAan(true), pasLaagInModelAan(model))(nieuweAchtergrond);
-            return maybeVorigeAchtergrond.fold(
-              () => ModelAndEmptyResult(modelMetNieuweZichtbaarheid), //
-              vorigeAchtergrond =>
-                ModelAndEmptyResult(pipe(pasLaagZichtbaarheidAan(false), pasLaagInModelAan(modelMetNieuweZichtbaarheid))(vorigeAchtergrond))
-            );
+            return maybeVorigeAchtergrond
+              .filter(vorige => vorige.titel !== nieuweAchtergrond.titel) // enkel onzichtbaar maken als verschillend
+              .fold(
+                () => ModelAndEmptyResult(modelMetNieuweZichtbaarheid),
+                vorigeAchtergrond =>
+                  pipe(pasLaagZichtbaarheidAan(false), pasLaagInModelAan(modelMetNieuweZichtbaarheid), ModelAndEmptyResult)(
+                    vorigeAchtergrond
+                  )
+              );
           })
       );
     }
@@ -588,7 +662,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function zetLaagZichtbaarheid(titel: string, magGetoondWorden: boolean, wrapper: prt.BareValidationWrapper<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         wrapper,
-        valideerToegevoegdLaagBestaat(titel).map(laag => {
+        valideerToegevoegdeLaagBestaat(titel).map(laag => {
           const aangepastModel = pipe(pasLaagZichtbaarheidAan(magGetoondWorden), pasLaagInModelAan(model))(laag);
           zendLagenInGroep(aangepastModel, laag.laaggroep);
           return ModelAndEmptyResult(aangepastModel);
@@ -603,37 +677,44 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         }
       });
 
-      const applySelectFunction = function(feature: ol.Feature, resolution: number): ol.style.Style | ol.style.Style[] {
+      type FeatureStyle = ol.style.Style | ol.style.Style[];
+
+      const applySelectFunction = function(feature: ol.Feature, resolution: number): FeatureStyle {
+        console.log("zzz applySelectFunction");
         const applySelectionColor = function(style: ol.style.Style): ol.style.Style {
           const selectionStyle = style.clone();
-          selectionStyle.getStroke().setColor([0, 153, 255, 1]);
+          selectionStyle.getStroke().setColor([0, 153, 255, 1]); // TODO maak configureerbaar
           return selectionStyle;
         };
 
-        const styleSelector = getSelectionStyleSelector(model, feature.get("laagnaam"));
-        if (styleSelector) {
-          switch (styleSelector.type) {
-            case "StaticStyle":
-              return styleSelector.style;
-            case "Styles":
-              return styleSelector.styles;
-            case "DynamicStyle":
-              const toegepasteStijl = styleSelector.styleFunction(feature, resolution);
-              if (Array.isArray(toegepasteStijl)) {
-                return toegepasteStijl.map(style => applySelectionColor(style));
-              } else {
-                return applySelectionColor(toegepasteStijl);
-              }
-            default:
-              kaartLogger.error("Ongekend styleSelector type");
-              kaartLogger.error(feature);
-              return [];
-          }
-        } else {
-          kaartLogger.warn("Geen stijl gevonden voor feature:");
-          kaartLogger.warn(feature);
-          return []; // geen stijl functie gevonden.. Is dit een nosql vector laag?
-        }
+        const executeStyleSelector: (_: ss.StyleSelector) => FeatureStyle = ss.matchStyleSelector(
+          (s: ss.StaticStyle) => s.style,
+          (s: ss.DynamicStyle) => s.styleFunction(feature, resolution),
+          (s: ss.Styles) => s.styles
+        );
+
+        const noStyle: FeatureStyle = [];
+
+        return fromNullable(feature.get("laagnaam")).fold(
+          () => {
+            kaartLogger.warn("Geen laagnaam gevonden voor: ", feature);
+            return noStyle;
+          },
+          laagnaam =>
+            getSelectionStyleSelector(model.map, laagnaam).fold(
+              () => {
+                kaartLogger.warn("Geen selectiestijl gevonden voor:", feature);
+                return getFeatureStyleSelector(model.map, laagnaam).fold<FeatureStyle>(
+                  () => {
+                    kaartLogger.error("Ook geen stijlselector gevonden voor:", feature);
+                    return noStyle;
+                  },
+                  pipe(executeStyleSelector, applySelectionColor) // we vallen terug op feature stijl met custom kleurtje
+                );
+              },
+              executeStyleSelector // dit is het perfecte geval: evalueer de selectiestijl selector
+            )
+        );
       };
 
       function getSelectInteraction(modus: prt.SelectieModus): Option<olx.interaction.SelectOptions> {
@@ -658,7 +739,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         }
       }
 
-      getSelectInteraction(cmnd.selectieModus).map(selectInteraction => {
+      forEach(getSelectInteraction(cmnd.selectieModus), selectInteraction => {
         model.map.addInteraction(new ol.interaction.Select(selectInteraction));
         model.map.addInteraction(
           new ol.interaction.DragBox({
@@ -673,12 +754,13 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function zetStijlVoorLaagCmd(cmnd: prt.ZetStijlVoorLaagCmd<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerVectorLayerBestaat(cmnd.titel).map(vectorlayer => {
-          vectorlayer.setStyle(determineStyle(some(cmnd.stijl), getDefaultStyle()));
-          setStyleSelector(model, cmnd.titel, cmnd.stijl);
-          cmnd.selectieStijl.map(selectieStijl => setSelectionStyleSelector(model, cmnd.titel, selectieStijl));
-          return ModelAndEmptyResult(model);
-        })
+        valideerToegevoegdeVectorLaagBestaat(cmnd.titel).map(
+          pipe(
+            pasVectorLaagStijlAan(some(cmnd.stijl), cmnd.selectieStijl), //
+            pasLaagInModelAan(model),
+            ModelAndEmptyResult
+          )
+        )
       );
     }
 
@@ -686,8 +768,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       const boodschap = {
         ...cmnd.boodschap,
         laag: fromNullable(model.toegevoegdeLagenOpTitel.get(cmnd.boodschap.titel))
-          .filter(laag => laag.bron.type === VectorType)
-          .map(laag => laag.bron as VectorLaag)
+          .filter(laag => laag.bron.type === ke.VectorType)
+          .map(laag => laag.bron as ke.VectorLaag)
       };
       model.infoBoodschappenSubj.next(model.infoBoodschappenSubj.getValue().set(boodschap.id, boodschap));
       return ModelWithResult(model);

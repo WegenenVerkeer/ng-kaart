@@ -1,6 +1,8 @@
-import { none, Option, some } from "fp-ts/lib/Option";
+import { fromNullable, fromPredicate, Option } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
+
+import { StyleSelector } from "./stijl-selector";
 
 export const SingleTileWmsType = "LaagType.SingleTileWms";
 export type SingleTileWmsType = "LaagType.SingleTileWms";
@@ -13,23 +15,6 @@ export type VectorType = "LaagType.Vector";
 export const BlancoType = "LaagType.Blanco";
 export type BlancoType = "LaagType.Blanco";
 export type LaagType = SingleTileWmsType | TiledWmsType | WmtsType | VectorType | BlancoType;
-
-export interface StaticStyle {
-  readonly type: "StaticStyle";
-  readonly style: ol.style.Style;
-}
-
-export interface DynamicStyle {
-  readonly type: "DynamicStyle";
-  readonly styleFunction: ol.StyleFunction;
-}
-
-export interface Styles {
-  readonly type: "Styles";
-  readonly styles: Array<ol.style.Style>;
-}
-
-export type StyleSelector = StaticStyle | DynamicStyle | Styles;
 
 export type AchtergrondLaag = WmsLaag | WmtsLaag | BlancoLaag;
 
@@ -83,9 +68,11 @@ export interface VectorLaag {
   readonly titel: string;
   readonly source: ol.source.Vector;
   readonly styleSelector: Option<StyleSelector>;
+  readonly selectieStyleSelector: Option<StyleSelector>;
   readonly selecteerbaar: boolean;
   readonly minZoom: number;
   readonly maxZoom: number;
+  readonly offsetveld: Option<string>;
 
   // functies om de VectorLaag te verrijken met meta informatie over de velden in de laag
   getLabel?: (veld: string) => string;
@@ -121,63 +108,25 @@ export interface ToegevoegdeLaag {
   readonly magGetoondWorden: boolean;
 }
 
-export function isWmsLaag(laag: Laag): boolean {
-  return laag.type === SingleTileWmsType || laag.type === TiledWmsType;
+export interface ToegevoegdeVectorLaag extends ToegevoegdeLaag {
+  readonly bron: VectorLaag;
+  readonly layer: ol.layer.Vector;
+  readonly stijlPositie: number; // We gaan er van uit dat alle vectorlagen in dezelfde groep zitten!
+  readonly stijlSel: Option<StyleSelector>;
+  readonly selectiestijlSel: Option<StyleSelector>;
 }
 
-export function isBlancoLaag(laag: Laag): boolean {
-  return laag.type === BlancoType;
-}
+export const isWmsLaag: (laag: Laag) => boolean = laag => laag.type === SingleTileWmsType || laag.type === TiledWmsType;
+export const isBlancoLaag: (laag: Laag) => boolean = laag => laag.type === BlancoType;
+export const isVectorLaag: (laag: Laag) => boolean = laag => laag.type === VectorType;
+export const asVectorLaag: (laag: Laag) => Option<VectorLaag> = fromPredicate(isVectorLaag) as (_: Laag) => Option<VectorLaag>;
+export const isToegevoegdeVectorLaag: (laag: ToegevoegdeLaag) => boolean = laag => isVectorLaag(laag.bron);
+export const asToegevoegdeVectorLaag: (laag: ToegevoegdeLaag) => Option<ToegevoegdeVectorLaag> = laag =>
+  fromPredicate<ToegevoegdeLaag>(lg => isVectorLaag(lg.bron))(laag) as Option<ToegevoegdeVectorLaag>;
 
-export type Stylish = ol.StyleFunction | ol.style.Style | ol.style.Style[];
-
-export function determineStyle(styleSelector: Option<StyleSelector>, defaultStyle: ol.style.Style): Stylish {
-  return styleSelector
-    .map(selector => {
-      switch (selector.type) {
-        case "StaticStyle":
-          return selector.style;
-        case "DynamicStyle":
-          return selector.styleFunction;
-        case "Styles":
-          return selector.styles;
-      }
-    })
-    .getOrElseValue(defaultStyle);
-}
-
-export function determineStyleSelector(stp?: Stylish): Option<StyleSelector> {
-  if (stp instanceof ol.style.Style) {
-    return some(StaticStyle(stp));
-  } else if (typeof stp === "function") {
-    return some(DynamicStyle(stp as ol.StyleFunction));
-  } else if (Array.isArray(stp)) {
-    return some(Styles(stp as ol.style.Style[]));
-  } else {
-    return none;
-  }
-}
-
-export function StaticStyle(style: ol.style.Style): StyleSelector {
-  return {
-    type: "StaticStyle",
-    style: style
-  };
-}
-
-export function DynamicStyle(styleFunction: ol.StyleFunction): StyleSelector {
-  return {
-    type: "DynamicStyle",
-    styleFunction: styleFunction
-  };
-}
-
-export function Styles(styles: Array<ol.style.Style>): StyleSelector {
-  return {
-    type: "Styles",
-    styles: styles
-  };
-}
+///////////////
+// Constructors
+//
 
 export function TekenSettings(
   geometryType: ol.geom.GeometryType,

@@ -25,6 +25,7 @@ import { Zoominstellingen } from "./kaart-protocol";
 import { KaartWithInfo } from "./kaart-with-info";
 import { KaartComponent } from "./kaart.component";
 import { kaartLogger } from "./log";
+import * as ss from "./stijl-selector";
 
 const MijnLocatieLaagNaam = "Mijn Locatie";
 
@@ -161,10 +162,12 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
       type: ke.VectorType,
       titel: MijnLocatieLaagNaam,
       source: new ol.source.Vector(),
-      styleSelector: some(ke.StaticStyle(this.mijnLocatieStyle)),
+      styleSelector: some(ss.StaticStyle(this.mijnLocatieStyle)),
+      selectieStyleSelector: none,
       selecteerbaar: false,
       minZoom: 2,
-      maxZoom: 15
+      maxZoom: 15,
+      offsetveld: none
     };
   }
 }

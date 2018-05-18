@@ -9,6 +9,8 @@ import * as cmd from "../kaart/kaart-protocol-commands";
 import { KaartComponent } from "../kaart/kaart.component";
 import { observeOnAngular } from "../util/observe-on-angular";
 
+import { LagenkiezerComponent } from "./lagenkiezer.component";
+
 @Component({
   // Atribuut selector om geen tussentijdse dom elementen te creëeren. Die gooien roet in het eten van de CSS.
   // tslint:disable-next-line
@@ -19,22 +21,21 @@ import { observeOnAngular } from "../util/observe-on-angular";
 })
 export class LaagmanipulatieComponent extends KaartChildComponentBase implements OnInit {
   private readonly zoom$: rx.Observable<number>;
-  zichtbaar$: rx.Observable<boolean>;
-  onzichtbaar$: rx.Observable<boolean>;
+  readonly zichtbaar$: rx.Observable<boolean>;
+  readonly onzichtbaar$: rx.Observable<boolean>;
+  readonly kanVerwijderen$: rx.Observable<boolean>;
 
   @Input() laag: ToegevoegdeLaag;
 
-  constructor(private readonly parent: KaartComponent, zone: NgZone) {
-    super(parent, zone);
-    this.zoom$ = parent.modelChanges.zoomInstellingen$.pipe(map(zi => zi.zoom), distinctUntilChanged(), observeOnAngular(zone));
-  }
-
-  ngOnInit() {
+  constructor(private readonly lagenkiezer: LagenkiezerComponent, kaartComponent: KaartComponent, zone: NgZone) {
+    super(kaartComponent, zone);
+    this.zoom$ = kaartComponent.modelChanges.zoomInstellingen$.pipe(map(zi => zi.zoom), distinctUntilChanged(), observeOnAngular(zone));
     this.zichtbaar$ = this.zoom$.pipe(
       map(zoom => zoom >= this.laag.bron.minZoom && zoom <= this.laag.bron.maxZoom),
       observeOnAngular(this.zone)
     );
     this.onzichtbaar$ = this.zichtbaar$.pipe(map(m => !m));
+    this.kanVerwijderen$ = lagenkiezer.opties$.map(o => o.verwijderbareLagen);
   }
 
   get title(): string {
@@ -53,7 +54,7 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
     );
   }
 
-  remove() {
+  verwijder() {
     this.dispatch(cmd.VerwijderLaagCmd(this.laag.titel, kaartLogOnlyWrapper));
   }
 }

@@ -1,5 +1,7 @@
 import * as ol from "openlayers";
 
+import { StaticStyle, StyleSelector } from "./stijl-selector";
+
 export function getDefaultStyle(): ol.style.Style {
   return new ol.style.Style({
     fill: new ol.style.Fill({
@@ -20,6 +22,14 @@ export function getDefaultStyle(): ol.style.Style {
       radius: 5
     })
   });
+}
+
+export function getDefaultStyleSelector(): StyleSelector {
+  return StaticStyle(getDefaultStyle());
+}
+
+export function getDefaultSelectionStyleSelector(): StyleSelector {
+  return getDefaultStyleSelector();
 }
 
 export function getDefaultStyleFunction(): ol.StyleFunction {

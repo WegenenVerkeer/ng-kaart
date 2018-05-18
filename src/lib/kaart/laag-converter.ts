@@ -4,9 +4,9 @@ import * as ol from "openlayers";
 import { olx } from "openlayers";
 
 import * as ke from "./kaart-elementen";
-import { determineStyle } from "./kaart-elementen";
 import { KaartWithInfo } from "./kaart-with-info";
 import { kaartLogger } from "./log";
+import { toStylish } from "./stijl-selector";
 
 export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {
   function createdTileWms(l: ke.WmsLaag) {
@@ -103,7 +103,7 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
     return new ol.layer.Vector({
       source: vectorlaag.source,
       visible: true,
-      style: determineStyle(vectorlaag.styleSelector, kaart.config.defaults.style),
+      style: vectorlaag.styleSelector.map(toStylish).getOrElseValue(kaart.config.defaults.style),
       minResolution: array
         .index(vectorlaag.maxZoom)(kaart.config.defaults.resolutions)
         .getOrElseValue(kaart.config.defaults.resolutions[kaart.config.defaults.resolutions.length - 1]),

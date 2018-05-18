@@ -138,8 +138,8 @@ export class AppComponent {
   private tekenenActief = false;
   private getekendeGeom: Option<ol.geom.Geometry> = none;
 
-  alleVoorwaarden = ["Er zijn nieuwe voorwaarden", "Er zijn nog nieuwere voorwaarden", undefined];
-  private voorwaarden = this.alleVoorwaarden[0];
+  private alleVoorwaarden = ["Er zijn nieuwe voorwaarden", "Er zijn nog nieuwere voorwaarden", undefined];
+  voorwaarden = this.alleVoorwaarden[0];
   private voorwaardenIndex = 0;
 
   // Dit werkt alleen als apigateway bereikbaar is. Zie CORS waarschuwing in README.
