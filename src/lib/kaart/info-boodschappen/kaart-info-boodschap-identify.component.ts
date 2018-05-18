@@ -250,7 +250,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   private formateerDatum(dateString: string): string {
     try {
       return new Date(dateString).toLocaleDateString("nl-BE");
-    } catch {
+    } catch (e) {
       return dateString;
     }
   }
