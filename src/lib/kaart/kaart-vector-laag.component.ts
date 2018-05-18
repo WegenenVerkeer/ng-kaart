@@ -7,11 +7,10 @@ import { forEach, orElse } from "../util/option";
 
 import { KaartClassicComponent } from "./kaart-classic.component";
 import * as ke from "./kaart-elementen";
-import { StyleSelector, Stylish } from "./kaart-elementen";
-import { determineStyleSelector } from "./kaart-elementen";
 import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
 import { KaartLaagComponent } from "./kaart-laag.component";
 import * as prt from "./kaart-protocol";
+import * as ss from "./stijl-selector";
 import { getDefaultSelectionStyleFunction, getDefaultStyleFunction } from "./styles";
 
 @Component({
@@ -21,13 +20,14 @@ import { getDefaultSelectionStyleFunction, getDefaultStyleFunction } from "./sty
 })
 export class KaartVectorLaagComponent extends KaartLaagComponent {
   @Input() source = new ol.source.Vector();
-  @Input() style?: ol.style.Style = undefined;
-  @Input() styleFunction?: ol.StyleFunction = getDefaultStyleFunction();
-  @Input() selectieStyle?: Stylish = getDefaultSelectionStyleFunction();
+  @Input() style?: ol.style.Style = undefined; // heeft voorrang op styleFunction
+  @Input() styleFunction?: ol.StyleFunction = getDefaultStyleFunction(); // TODO combineren met style tot type Stylish
+  @Input() selectieStyle?: ss.Stylish = getDefaultSelectionStyleFunction();
   @Input() zichtbaar = true;
   @Input() selecteerbaar = true;
   @Input() minZoom = 7;
   @Input() maxZoom = 15;
+  @Input() offsetveld?: string = undefined;
 
   constructor(kaart: KaartClassicComponent) {
     super(kaart);
@@ -38,10 +38,12 @@ export class KaartVectorLaagComponent extends KaartLaagComponent {
       type: ke.VectorType,
       titel: this.titel,
       source: this.source,
-      styleSelector: orElse(fromNullable(this.style).map(ke.StaticStyle), () => fromNullable(this.styleFunction).map(ke.DynamicStyle)),
+      styleSelector: this.getMaybeStyleSelector(),
+      selectieStyleSelector: fromNullable(this.selectieStyle).chain(ss.asStyleSelector),
       selecteerbaar: this.selecteerbaar,
       minZoom: this.minZoom,
       maxZoom: this.maxZoom,
+      offsetveld: fromNullable(this.offsetveld),
       velden: OrderedMap()
     };
   }
@@ -50,8 +52,8 @@ export class KaartVectorLaagComponent extends KaartLaagComponent {
     return "Voorgrond.Hoog";
   }
 
-  private getMaybeStyleSelector(): Option<StyleSelector> {
-    return orElse(fromNullable(this.style).map(ke.StaticStyle), () => fromNullable(this.styleFunction).map(ke.DynamicStyle));
+  private getMaybeStyleSelector(): Option<ss.StyleSelector> {
+    return orElse(fromNullable(this.style).map(ss.StaticStyle), () => fromNullable(this.styleFunction).map(ss.DynamicStyle));
   }
 
   voegLaagToe() {
@@ -59,12 +61,7 @@ export class KaartVectorLaagComponent extends KaartLaagComponent {
 
     forEach(this.getMaybeStyleSelector(), styleselector => {
       this.dispatch(
-        prt.ZetStijlVoorLaagCmd(
-          this.titel,
-          styleselector,
-          fromNullable(this.selectieStyle).chain(determineStyleSelector),
-          kaartLogOnlyWrapper
-        )
+        prt.ZetStijlVoorLaagCmd(this.titel, styleselector, fromNullable(this.selectieStyle).chain(ss.asStyleSelector), kaartLogOnlyWrapper)
       );
     });
   }

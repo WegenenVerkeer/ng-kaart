@@ -188,7 +188,7 @@
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
     <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
     <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'https://apps-dev.mow.vlaanderen.be/geolatte-nosqlfs'"
-                            [database]="'featureserver'" [collection]="'fietspaden'" [styleFunction]="fietspadStyle"
+                            [database]="'featureserver'" [collection]="'fietspaden'" [styleFunction]="fietspadStyle" [offsetveld]="'zijderijbaan'"
                             [minZoom]="7"></awv-kaart-nosqlfs-laag>
   </awv-kaart-classic>
 </div>
@@ -295,8 +295,7 @@ en'" [versie]="'1.1.1'"></awv-kaart-geoserver-laag>
     <awv-kaart-features-laag [titel]="'Vliegtuig'" [features]="installatie" [style]="pinIcon2" [minZoom]="3" [zichtbaar]="false"></awv-kaart-features-laag>
     <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
     <awv-kaart-knop-achtergrondlaag-kiezer [titels]="['Dienstkaart grijs', 'Dienstkaart kleur', 'Leeg']"></awv-kaart-knop-achtergrondlaag-kiezer>
-    <awv-kaart-lagenkiezer-config [titels]="['Referentiepunten (WDB)', 'Referentiepunten (WDB) 2', 'features']" [toonLegende]="false"></awv-kaart-lagenkiezer-config>
-    <awv-kaart-lagenkiezer-config [titels]="['Referentiepunten (WDB)', 'Referentiepunten (WDB) 2', 'features']"></awv-kaart-lagenkiezer-config>
+    <awv-kaart-lagenkiezer-config [titels]="['Referentiepunten (WDB)', 'Referentiepunten (WDB) 2', 'features']" [toonLegende]="false" [verwijderbareLagen]="false"></awv-kaart-lagenkiezer-config>
     <awv-kaart-copyright [copyright]="'&copy; Dit is van ons'"></awv-kaart-copyright>
     <awv-kaart-voorwaarden [titel]="'Er zijn nieuwe voorwaarden'"></awv-kaart-voorwaarden>
   </awv-kaart-classic>

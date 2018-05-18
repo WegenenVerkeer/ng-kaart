@@ -5,7 +5,6 @@ import { Observable } from "rxjs/Observable";
 
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { ofType } from "../../util/operators";
-
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { InfoBoodschappenMsg, infoBoodschappenMsgGen, KaartInternalMsg } from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";

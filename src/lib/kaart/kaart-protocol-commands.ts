@@ -7,9 +7,9 @@ import { AbstractZoeker } from "../zoeker/abstract-zoeker";
 
 import { BareValidationWrapper, KaartCmdValidation, KaartMsg, LazyWrapper, Subscription, ValidationWrapper, VoidWrapper, Wrapper } from ".";
 import * as ke from "./kaart-elementen";
-import { StyleSelector } from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { InfoBoodschap } from "./kaart-with-info-model";
+import * as ss from "./stijl-selector";
 
 export type Command<Msg extends KaartMsg> =
   | SubscribeCmd<Msg>
@@ -82,20 +82,20 @@ export interface VoegLaagToeCmd<Msg extends KaartMsg> {
   readonly laag: ke.Laag;
   readonly magGetoondWorden: boolean;
   readonly laaggroep: ke.Laaggroep;
-  readonly wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>;
+  readonly wrapper: BareValidationWrapper<Msg>;
 }
 
 export interface VerwijderLaagCmd<Msg extends KaartMsg> {
   readonly type: "VerwijderLaag";
   readonly titel: string;
-  readonly wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>;
+  readonly wrapper: BareValidationWrapper<Msg>;
 }
 
 export interface VerplaatsLaagCmd<Msg extends KaartMsg> {
   readonly type: "VerplaatsLaag";
   readonly titel: string;
   readonly naarPositie: number;
-  readonly wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>;
+  readonly wrapper: BareValidationWrapper<Msg>;
 }
 
 export interface VraagSchaalAanCmd<Msg extends KaartMsg> {
@@ -209,8 +209,8 @@ export interface MaakLaagOnzichtbaarCmd<Msg extends KaartMsg> {
 export interface ZetStijlVoorLaagCmd<Msg extends KaartMsg> {
   readonly type: "ZetStijlVoorLaag";
   readonly titel: string;
-  readonly stijl: StyleSelector;
-  readonly selectieStijl: Option<StyleSelector>;
+  readonly stijl: ss.StyleSelector;
+  readonly selectieStijl: Option<ss.StyleSelector>;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -327,22 +327,19 @@ export function VoegLaagToeCmd<Msg extends KaartMsg>(
   laag: ke.Laag,
   magGetoondWorden: boolean,
   laagGroep: ke.Laaggroep,
-  wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>
+  wrapper: BareValidationWrapper<Msg>
 ): VoegLaagToeCmd<Msg> {
   return { type: "VoegLaagToe", positie: positie, laag: laag, magGetoondWorden: magGetoondWorden, laaggroep: laagGroep, wrapper: wrapper };
 }
 
-export function VerwijderLaagCmd<Msg extends KaartMsg>(
-  titel: string,
-  wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>
-): VerwijderLaagCmd<Msg> {
+export function VerwijderLaagCmd<Msg extends KaartMsg>(titel: string, wrapper: BareValidationWrapper<Msg>): VerwijderLaagCmd<Msg> {
   return { type: "VerwijderLaag", titel: titel, wrapper: wrapper };
 }
 
 export function VerplaatsLaagCmd<Msg extends KaartMsg>(
   titel: string,
   naarPositie: number,
-  wrapper: ValidationWrapper<List<PositieAanpassing>, Msg>
+  wrapper: BareValidationWrapper<Msg>
 ): VerplaatsLaagCmd<Msg> {
   return { type: "VerplaatsLaag", titel: titel, naarPositie: naarPositie, wrapper: wrapper };
 }
@@ -367,8 +364,8 @@ export function VerwijderSchaalCmd<Msg extends KaartMsg>(wrapper: BareValidation
 
 export function ZetStijlVoorLaagCmd<Msg extends KaartMsg>(
   titel: string,
-  stijl: StyleSelector,
-  selectieStijl: Option<StyleSelector>,
+  stijl: ss.StyleSelector,
+  selectieStijl: Option<ss.StyleSelector>,
   wrapper: BareValidationWrapper<Msg>
 ): ZetStijlVoorLaagCmd<Msg> {
   return { type: "ZetStijlVoorLaag", stijl: stijl, selectieStijl: selectieStijl, titel: titel, wrapper: wrapper };
