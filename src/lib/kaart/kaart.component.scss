@@ -92,3 +92,16 @@ awv-kaart-info-boodschappen {
 {
   background-color: #555;
 }
+
+.kaart-info-box {
+  display: flex;
+  flex-direction: row;
+  background-color:rgba(255, 255, 255, 0.75);
+  position: absolute;
+  bottom: 0px;
+  right: 0px;
+  height: 16px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  box-sizing: border-box;
+}
