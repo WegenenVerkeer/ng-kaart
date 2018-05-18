@@ -181,9 +181,11 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
       titel: ZoekerLaagNaam,
       source: new ol.source.Vector(),
       styleSelector: none,
+      selectieStyleSelector: none,
       selecteerbaar: true,
       minZoom: 2,
-      maxZoom: 15
+      maxZoom: 15,
+      offsetveld: none
     };
   }
 

@@ -3,7 +3,7 @@ import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from "@
 import { KaartClassicComponent } from "../kaart/kaart-classic.component";
 import { UiElementOpties, VerwijderUiElement, VoegUiElementToe, ZetUiElementOpties } from "../kaart/kaart-protocol-commands";
 
-import { LagenUiSelector } from "./lagenkiezer.component";
+import { LagenUiOpties, LagenUiSelector } from "./lagenkiezer.component";
 
 @Component({
   selector: "awv-kaart-lagenkiezer-config",
@@ -15,6 +15,7 @@ export class LagenkiezerConfigComponent implements OnInit, OnDestroy, OnChanges 
   @Input() titels: string[] = []; // TODO nog te implementeren om te beperken tot deze
 
   @Input() toonLegende = false;
+  @Input() verwijderbareLagen = false;
 
   ngOnInit() {
     this.kaart.dispatch(VoegUiElementToe(LagenUiSelector));
@@ -29,9 +30,10 @@ export class LagenkiezerConfigComponent implements OnInit, OnDestroy, OnChanges 
     this.kaart.dispatch(ZetUiElementOpties(LagenUiSelector, this.opties()));
   }
 
-  private opties(): UiElementOpties {
+  private opties(): LagenUiOpties {
     return {
-      toonLegende: this.toonLegende
+      toonLegende: this.toonLegende,
+      verwijderbareLagen: this.verwijderbareLagen
     };
   }
 }
