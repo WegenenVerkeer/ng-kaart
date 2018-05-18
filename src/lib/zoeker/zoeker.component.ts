@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from "@angular/common/http";
 import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { none, Option } from "fp-ts/lib/Option";
+import { none } from "fp-ts/lib/Option";
 import { List, Set } from "immutable";
 import * as ol from "openlayers";
 import { UnaryFunction } from "rxjs/interfaces";
@@ -18,15 +18,15 @@ import {
   switchMap,
   tap
 } from "rxjs/operators";
+import { pipe } from "rxjs/Rx";
 
-import { pipe } from "../../../node_modules/rxjs";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import * as ke from "../kaart/kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
 import { kaartLogger } from "../kaart/log";
-import { matchGeometryType } from "../util";
+import { matchGeometryType } from "../util/geometryTypes";
 
 import { compareResultaten, StringZoekInput, ZoekInput, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
 
