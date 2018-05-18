@@ -1,18 +1,15 @@
 import { animate, state, style, transition, trigger } from "@angular/animations";
 import { Component, NgZone, OnInit } from "@angular/core";
-import { Option } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import { Observable } from "rxjs/Observable";
 
-import { observeOnAngular } from "../util/observe-on-angular";
-import { ofType } from "../util/operators";
-
-import { KaartChildComponentBase } from "./kaart-child-component-base";
-import { InfoBoodschappenMsg, infoBoodschappenMsgGen, KaartInternalMsg } from "./kaart-internal-messages";
-import * as prt from "./kaart-protocol";
-import { SluitInfoBoodschapCmd } from "./kaart-protocol-commands";
-import { InfoBoodschap } from "./kaart-with-info-model";
-import { KaartComponent } from "./kaart.component";
+import { observeOnAngular } from "../../util/observe-on-angular";
+import { ofType } from "../../util/operators";
+import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { InfoBoodschappenMsg, infoBoodschappenMsgGen, KaartInternalMsg } from "../kaart-internal-messages";
+import * as prt from "../kaart-protocol";
+import { InfoBoodschap, InfoBoodschapAlert } from "../kaart-with-info-model";
+import { KaartComponent } from "../kaart.component";
 
 @Component({
   selector: "awv-kaart-info-boodschappen",

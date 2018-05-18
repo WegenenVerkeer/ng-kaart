@@ -1,8 +1,8 @@
 import { HttpErrorResponse } from "@angular/common/http";
 import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { none } from "fp-ts/lib/Option";
-import { List, Set } from "immutable";
+import { none, Option } from "fp-ts/lib/Option";
+import { List, OrderedMap, Set } from "immutable";
 import * as ol from "openlayers";
 import { UnaryFunction } from "rxjs/interfaces";
 import { Observable } from "rxjs/Observable";
@@ -22,6 +22,7 @@ import { pipe } from "rxjs/Rx";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import * as ke from "../kaart/kaart-elementen";
+import { VeldInfo } from "../kaart/kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
@@ -185,7 +186,8 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
       selecteerbaar: true,
       minZoom: 2,
       maxZoom: 15,
-      offsetveld: none
+      offsetveld: none,
+      velden: OrderedMap<string, VeldInfo>()
     };
   }
 

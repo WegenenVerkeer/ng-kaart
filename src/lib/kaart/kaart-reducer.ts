@@ -685,10 +685,47 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       type FeatureStyle = ol.style.Style | ol.style.Style[];
 
       const applySelectFunction = function(feature: ol.Feature, resolution: number): FeatureStyle {
-        console.log("zzz applySelectFunction");
         const applySelectionColor = function(style: ol.style.Style): ol.style.Style {
+          const selectionColor: ol.Color = [0, 153, 255, 1]; // TODO maak configureerbaar
           const selectionStyle = style.clone();
-          selectionStyle.getStroke().setColor([0, 153, 255, 1]); // TODO maak configureerbaar
+          if (selectionStyle.getStroke()) {
+            selectionStyle.getStroke().setColor(selectionColor);
+          }
+          if (selectionStyle.getImage()) {
+            // getekende Point objecten ook inkleuren
+            if (selectionStyle.getImage() instanceof ol.style.Circle) {
+              const circle = selectionStyle.getImage() as ol.style.Circle;
+              circle.getStroke().setColor(selectionColor);
+              circle.getFill().setColor(selectionColor);
+              // volgende is nodig, anders heeft style aanpassing geen effect
+              selectionStyle.setImage(
+                new ol.style.Circle({
+                  radius: circle.getRadius(),
+                  stroke: circle.getStroke(),
+                  fill: circle.getFill(),
+                  snapToPixel: circle.getSnapToPixel()
+                })
+              );
+            } else if (selectionStyle.getImage() instanceof ol.style.RegularShape) {
+              const shape = selectionStyle.getImage() as ol.style.RegularShape;
+              shape.getStroke().setColor(selectionColor);
+              shape.getFill().setColor(selectionColor);
+              // volgende is nodig, anders heeft style aanpassing geen effect
+              selectionStyle.setImage(
+                new ol.style.RegularShape({
+                  fill: shape.getFill(),
+                  points: shape.getPoints(),
+                  radius: shape.getRadius(),
+                  radius1: shape.getRadius(),
+                  radius2: shape.getRadius2(),
+                  angle: shape.getAngle(),
+                  snapToPixel: shape.getSnapToPixel(),
+                  stroke: shape.getStroke(),
+                  rotation: shape.getRotation()
+                })
+              );
+            }
+          }
           return selectionStyle;
         };
 

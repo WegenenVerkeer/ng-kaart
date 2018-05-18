@@ -1,5 +1,6 @@
 import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 import { none, Option, some } from "fp-ts/lib/Option";
+import { OrderedMap } from "immutable";
 import * as ol from "openlayers";
 import { Subject } from "rxjs";
 import { distinctUntilChanged, map, skipWhile } from "rxjs/operators";
@@ -8,6 +9,7 @@ import { forEach, orElse } from "../util/option";
 
 import { KaartChildComponentBase } from "./kaart-child-component-base";
 import * as ke from "./kaart-elementen";
+import { VeldInfo } from "./kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper, tekenWrapper } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
 import { KaartComponent } from "./kaart.component";
@@ -139,7 +141,8 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
       selecteerbaar: true,
       minZoom: 2,
       maxZoom: 15,
-      offsetveld: none
+      offsetveld: none,
+      velden: OrderedMap<string, VeldInfo>()
     };
   }
 

@@ -1,7 +1,7 @@
 import { AfterViewInit, Component, ElementRef, Input, NgZone, OnInit, QueryList, ViewChild, ViewChildren } from "@angular/core";
 import { MatButton } from "@angular/material";
 import { none, Option, some } from "fp-ts/lib/Option";
-import { List } from "immutable";
+import { List, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
 import { combineLatest, map, mapTo, share, shareReplay, switchMap, take, tap } from "rxjs/operators";
@@ -12,6 +12,7 @@ import { orElse } from "../util/option";
 
 import { KaartChildComponentBase } from "./kaart-child-component-base";
 import * as ke from "./kaart-elementen";
+import { VeldInfo } from "./kaart-elementen";
 import {
   KaartInternalMsg,
   kaartLogOnlyWrapper,
@@ -167,6 +168,7 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
       selecteerbaar: false,
       minZoom: 2,
       maxZoom: 15,
+      velden: OrderedMap<string, VeldInfo>(),
       offsetveld: none
     };
   }
