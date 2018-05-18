@@ -174,5 +174,6 @@ export * from "./kaart.component";
 export * from "./kaart-event-dispatcher";
 export * from "./kaart-protocol";
 export * from "./kaart-elementen";
+export * from "./stijl-selector";
 export * from "./log";
 export * from "./styles";

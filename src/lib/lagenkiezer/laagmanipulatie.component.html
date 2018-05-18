@@ -9,7 +9,7 @@
     </div>
     <div class="title">{{ title }}</div>
     <div class="actions">
-      <button mat-icon-button matTooltip="verwijderen uit lagenlijst" [matTooltipPosition]="'right'" (click)="remove()">
+      <button mat-icon-button matTooltip="verwijderen uit lagenlijst" [matTooltipPosition]="'right'" (click)="verwijder()" *ngIf="kanVerwijderen$ | async">
         <mat-icon>indeterminate_check_box</mat-icon>
       </button>
     </div>

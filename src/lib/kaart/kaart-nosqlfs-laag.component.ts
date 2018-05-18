@@ -1,7 +1,6 @@
 import { Component, Input, ViewEncapsulation } from "@angular/core";
 import { option } from "fp-ts";
-import { none, Option, some } from "fp-ts/lib/Option";
-import { fromNullable } from "fp-ts/lib/Option";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 
 import { NosqlFsSource } from "../source/nosql-fs-source";
@@ -9,12 +8,10 @@ import { forEach, orElse } from "../util/option";
 
 import { KaartClassicComponent } from "./kaart-classic.component";
 import * as ke from "./kaart-elementen";
-import { DynamicStyle, StaticStyle, Styles, StyleSelector, Stylish } from "./kaart-elementen";
-import { determineStyle, determineStyleSelector } from "./kaart-elementen";
 import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
 import { KaartLaagComponent } from "./kaart-laag.component";
 import * as prt from "./kaart-protocol";
-import { ZetStijlVoorLaagCmd } from "./kaart-protocol-commands";
+import * as ss from "./stijl-selector";
 import { getDefaultSelectionStyleFunction, getDefaultStyleFunction } from "./styles";
 
 @Component({
@@ -26,15 +23,16 @@ export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
   @Input() url = "/geolatte-nosqlfs";
   @Input() database: string;
   @Input() collection: string;
-  @Input() style?: ol.style.Style = undefined;
-  @Input() styleFunction?: ol.StyleFunction = getDefaultStyleFunction();
-  @Input() selectieStyle?: Stylish = getDefaultSelectionStyleFunction();
+  @Input() style?: ol.style.Style = undefined; // heeft voorrang op styleFunction
+  @Input() styleFunction: ol.StyleFunction = getDefaultStyleFunction(); // TODO combineren met style tot type Stylish
+  @Input() selectieStyle: ss.Stylish = getDefaultSelectionStyleFunction();
   @Input() zichtbaar = true;
   @Input() selecteerbaar = true;
   @Input() minZoom = 7;
   @Input() maxZoom = 15;
   @Input() view = "default";
   @Input() filter: string;
+  @Input() offsetveld?: string = undefined;
 
   constructor(kaart: KaartClassicComponent) {
     super(kaart);
@@ -52,12 +50,12 @@ export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
         option.fromNullable(this.filter),
         this.titel
       ),
-      styleSelector: orElse(option.fromNullable(this.style).map(ke.StaticStyle), () =>
-        option.fromNullable(this.styleFunction).map(ke.DynamicStyle)
-      ),
+      styleSelector: this.getMaybeStyleSelector(),
+      selectieStyleSelector: fromNullable(this.selectieStyle).chain(ss.asStyleSelector),
       selecteerbaar: this.selecteerbaar,
       minZoom: this.minZoom,
-      maxZoom: this.maxZoom
+      maxZoom: this.maxZoom,
+      offsetveld: fromNullable(this.offsetveld)
     };
   }
 
@@ -65,8 +63,8 @@ export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
     return "Voorgrond.Hoog";
   }
 
-  private getMaybeStyleSelector(): Option<StyleSelector> {
-    return orElse(fromNullable(this.style).map(ke.StaticStyle), () => fromNullable(this.styleFunction).map(ke.DynamicStyle));
+  private getMaybeStyleSelector(): Option<ss.StyleSelector> {
+    return orElse(fromNullable(this.style).map(ss.StaticStyle), () => fromNullable(this.styleFunction).map(ss.DynamicStyle));
   }
 
   voegLaagToe() {
@@ -74,12 +72,7 @@ export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
 
     forEach(this.getMaybeStyleSelector(), styleselector => {
       this.dispatch(
-        prt.ZetStijlVoorLaagCmd(
-          this.titel,
-          styleselector,
-          fromNullable(this.selectieStyle).chain(determineStyleSelector),
-          kaartLogOnlyWrapper
-        )
+        prt.ZetStijlVoorLaagCmd(this.titel, styleselector, fromNullable(this.selectieStyle).chain(ss.asStyleSelector), kaartLogOnlyWrapper)
       );
     });
   }
