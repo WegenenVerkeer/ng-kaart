@@ -248,10 +248,12 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   }
 
   private formateerDatum(dateString: string): string {
-    try {
-      return new Date(dateString).toLocaleDateString("nl-BE");
-    } catch (e) {
-      return dateString;
-    }
+    // TODO: safer date parsing
+    return dateString;
+    // try {
+    //   return new Date(dateString).toLocaleDateString("nl-BE");
+    // } catch (e) {
+    //   return dateString;
+    // }
   }
 }
