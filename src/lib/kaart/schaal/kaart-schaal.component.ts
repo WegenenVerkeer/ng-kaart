@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, NgZone, ViewChild } from "@angular/core";
+import { AfterViewInit, Component, ElementRef, NgZone, OnDestroy, ViewChild } from "@angular/core";
 import * as option from "fp-ts/lib/Option";
 
 import { KaartChildComponentBase } from "../kaart-child-component-base";
@@ -13,7 +13,7 @@ export const SchaalUiSelector = "Schaal";
   templateUrl: "./kaart-schaal.html",
   styleUrls: ["./kaart-schaal.scss"]
 })
-export class KaartSchaalComponent extends KaartChildComponentBase implements AfterViewInit {
+export class KaartSchaalComponent extends KaartChildComponentBase implements AfterViewInit, OnDestroy {
   @ViewChild("schaal") schaalElement: ElementRef;
 
   constructor(parent: KaartComponent, zone: NgZone) {
@@ -22,5 +22,9 @@ export class KaartSchaalComponent extends KaartChildComponentBase implements Aft
 
   ngAfterViewInit(): void {
     this.dispatch(prt.VoegSchaalToeCmd(option.fromNullable(this.schaalElement.nativeElement), kaartLogOnlyWrapper));
+  }
+
+  ngOnDestroy(): void {
+    this.dispatch(prt.VerwijderSchaalCmd(kaartLogOnlyWrapper));
   }
 }

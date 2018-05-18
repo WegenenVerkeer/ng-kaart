@@ -1,11 +1,14 @@
+:host ::ng-deep .awv-schaal {
+  width: 104px; // Dit is de kleinste breedte (in veelvouden van 8px) waar de schaal altijd in past
+}
 
-.awv-schaal {
-  float:left;
-  border: 1px solid black;
+:host ::ng-deep .awv-schaal-inner {
+  background: rgba(240, 240, 240, 0.5);
+  border: 2px solid black;
   border-top: none;
   color: black;
+  font-size: 10px;
   text-align: center;
-  will-change: contents, width;
-  background: rgba(0, 60, 136, 0.3);
-  width: 100px;
+  margin: 1px auto;
+  will-change: contents,width;
 }

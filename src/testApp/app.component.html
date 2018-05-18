@@ -125,14 +125,6 @@
 </div>
 -->
 
-<!--
-<h3>Dienstkaart, std interacties bij focus</h3>
-<awv-kaart-classic [naam]="'grijsstdinteractiesfocus'" >
-  <awv-kaart-wdb-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-wdb-laag>
-  <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
-</awv-kaart-classic>
--->
-
 <h3>Dienstkaart, std interacties, achtergrondselectie, locatiezoeker</h3>
 <div>
   <button (click)="maakZichtbaar('achtergronden', !isZichtbaar('achtergronden'))">
@@ -226,41 +218,6 @@
   </awv-kaart-classic>
 </div>
 
-<!--
-<h3>Dienstkaart (meerdere lagen), volledige breedte + alle controls + locatiezoeker</h3>
-
-<div>
-  <input [(ngModel)]="locatieQuery" type="text"/>
-  <button (click)="zoekLocaties(locatieQuery)">Zoek</button>
-  <ul>
-    <li>
-      <p>Zet chrome open zonder web security om dit te testen.</p>
-      <p>macos:</p>
-      <pre>open -a Google\ Chrome --args --disable-web-security --user-data-dir</pre>
-      <p>*nix:</p>
-      <pre>chromium-browser --disable-web-security --user-data-dir</pre>
-    </li>
-  </ul>
-  <awv-kaart>
-    <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'" [type]="'base'"></awv-kaart-tilecache-laag>
-    <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'" [type]="'base'" [zichtbaar]="false"></awv-kaart-tilecache-laag>
-    <awv-kaart-ortho-laag [titel]="'Ortho'" [type]="'base'" [zichtbaar]="false"></awv-kaart-ortho-laag>
-    <awv-kaart-geoserver-laag [titel]="'Ident8 labels (WDB)'" [laagNaam]="'ident8'" [versie]="'1.1.1'"></awv-kaart-geoserver-laag>
-    <awv-kaart-geoserver-laag [titel]="'Referentiepunten (WDB)'" [laagNaam]="'referentiepunt  <button (click)="maakZichtbaar('lagenkiezer'), !isZichtbaar('lagenkiezer')">
-    {{isZichtbaar('lagenkiezer')?'Verberg':'Toon'}}
-  </button>
-en'" [versie]="'1.1.1'"></awv-kaart-geoserver-laag>
-    <awv-kaart-toon-features [features]="zoekresultaten"></awv-kaart-toon-features>
-    <awv-kaart-schaal></awv-kaart-schaal>
-    <awv-kaart-knop-laag-kiezer></awv-kaart-knop-laag-kiezer>
-    <awv-kaart-knop-volledig-scherm></awv-kaart-knop-volledig-scherm>
-    <awv-kaart-knop-zoom-slider></awv-kaart-knop-zoom-slider>
-    <awv-kaart-standaard-knoppen></awv-kaart-standaard-knoppen>
-    <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
-  </awv-kaart>
-</div>
--->
-
 <h3>Meten van omtrek en oppervlakte</h3>
 <div>
   <button (click)="maakZichtbaar('metenVoorbeeld', !isZichtbaar('metenVoorbeeld'))">{{isZichtbaar('metenVoorbeeld')?'Verberg':'Toon'}}</button>
@@ -297,7 +254,19 @@ en'" [versie]="'1.1.1'"></awv-kaart-geoserver-laag>
     <awv-kaart-knop-achtergrondlaag-kiezer [titels]="['Dienstkaart grijs', 'Dienstkaart kleur', 'Leeg']"></awv-kaart-knop-achtergrondlaag-kiezer>
     <awv-kaart-lagenkiezer-config [titels]="['Referentiepunten (WDB)', 'Referentiepunten (WDB) 2', 'features']" [toonLegende]="false"></awv-kaart-lagenkiezer-config>
     <awv-kaart-lagenkiezer-config [titels]="['Referentiepunten (WDB)', 'Referentiepunten (WDB) 2', 'features']"></awv-kaart-lagenkiezer-config>
-    <awv-kaart-copyright [copyright]="'&copy; Dit is van ons'"></awv-kaart-copyright>
-    <awv-kaart-voorwaarden [titel]="'Er zijn nieuwe voorwaarden'"></awv-kaart-voorwaarden>
   </awv-kaart-classic>
+</div>
+
+<h3>Kaart met copyright, voorwaarden en schaal</h3>
+<div>
+  <button (click)="maakZichtbaar('voorwaarden', !isZichtbaar('voorwaarden'))">
+    {{isZichtbaar('voorwaarden')?'Verberg':'Toon'}}
+  </button>
+  <awv-kaart-classic *ngIf="isZichtbaar('voorwaarden')" [naam]="'voorwaarden'">
+      <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+      <awv-kaart-copyright [copyright]="'&copy; Dit is van ons'"></awv-kaart-copyright>
+      <awv-kaart-voorwaarden *ngIf="!!voorwaarden" [titel]="voorwaarden"></awv-kaart-voorwaarden>
+      <awv-kaart-schaal></awv-kaart-schaal>
+  </awv-kaart-classic>
+  <button (click)="veranderVoorwaarden()">Andere voorwaarden</button>
 </div>
