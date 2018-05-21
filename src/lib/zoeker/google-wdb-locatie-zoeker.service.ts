@@ -1,14 +1,14 @@
-import "rxjs/add/observable/fromPromise";
-
 import { Inject, Injectable } from "@angular/core";
 import { Http, QueryEncoder, Response, URLSearchParams } from "@angular/http";
+import { Option, some } from "fp-ts/lib/Option";
 import {} from "googlemaps";
 import { Map } from "immutable";
 import * as ol from "openlayers";
+import "rxjs/add/observable/fromPromise";
 import { Observable } from "rxjs/Observable";
 import { catchError, flatMap, map } from "rxjs/operators";
 
-import { AbstractZoeker, geoJSONOptions, StringZoekInput, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
+import { AbstractZoeker, FontIcon, geoJSONOptions, StringZoekInput, SvgIcon, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
 import { GoogleWdbLocatieZoekerConfig } from "./google-wdb-locatie-zoeker.config";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE, ZoekerRepresentatieType } from "./zoeker-representatie.service";
 import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
@@ -19,16 +19,16 @@ export class GoogleWdbZoekResultaat implements ZoekResultaat {
   readonly omschrijving: string;
   readonly bron: string;
   readonly zoeker: string;
-  readonly geometry: ol.geom.Geometry;
-  readonly icoon: string; // Ieder zoekresultaat heeft hetzelfde icoon.
+  readonly geometry: Option<ol.geom.Geometry>;
+  readonly icoon: SvgIcon | FontIcon;
   readonly style: ol.style.Style;
-  readonly extent: ol.Extent;
+  readonly extent: Option<ol.Extent>;
 
-  constructor(locatie, index: number, zoeker: string, style: ol.style.Style, icoon: string) {
+  constructor(locatie, index: number, zoeker: string, style: ol.style.Style, icoon: SvgIcon) {
     this.partialMatch = locatie.partialMatch;
     this.index = index + 1;
-    this.geometry = new ol.format.GeoJSON(geoJSONOptions).readGeometry(locatie.locatie);
-    this.extent = this.geometry.getExtent();
+    this.geometry = some(new ol.format.GeoJSON(geoJSONOptions).readGeometry(locatie.locatie));
+    this.extent = this.geometry.map(geom => geom.getExtent());
     this.omschrijving = locatie.omschrijving;
     this.bron = locatie.bron;
     this.zoeker = zoeker;
@@ -82,7 +82,7 @@ interface ExtendedPlaceResult extends google.maps.places.PlaceResult, ExtendedRe
 export class GoogleWdbLocatieZoekerService implements AbstractZoeker {
   private readonly googleWdbLocatieZoekerConfig: GoogleWdbLocatieZoekerConfig;
   private _cache: Promise<GoogleServices> | null = null;
-  private legende: Map<string, string>;
+  private legende: Map<string, SvgIcon | FontIcon>;
 
   private readonly locatieZoekerUrl: string;
 
@@ -95,9 +95,9 @@ export class GoogleWdbLocatieZoekerService implements AbstractZoeker {
     this.locatieZoekerUrl = this.googleWdbLocatieZoekerConfig.url;
     this.legende = Map.of(
       "Google Locatiezoeker",
-      this.zoekerRepresentatie.getSvgNaam("Google"),
+      this.zoekerRepresentatie.getSvgIcon("Google"),
       "WDB Locatiezoeker",
-      this.zoekerRepresentatie.getSvgNaam("WDB")
+      this.zoekerRepresentatie.getSvgIcon("WDB")
     );
   }
 
@@ -294,7 +294,7 @@ export class GoogleWdbLocatieZoekerService implements AbstractZoeker {
               index,
               this.naam(),
               this.zoekerRepresentatie.getOlStyle(zoekerType),
-              this.zoekerRepresentatie.getSvgNaam(zoekerType)
+              this.zoekerRepresentatie.getSvgIcon(zoekerType)
             )
           );
         });

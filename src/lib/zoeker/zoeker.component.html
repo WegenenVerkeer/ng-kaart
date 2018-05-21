@@ -79,7 +79,8 @@
       <b>Legende</b>
       <br>
       <div *ngFor="let key of legendeKeys" class="zoeker-resultaat">
-        <mat-icon [svgIcon]="legende.get(key)"></mat-icon>
+        <mat-icon [svgIcon]="legende.get(key).name" *ngIf="legende.get(key).type ==='svg'"></mat-icon>
+        <mat-icon *ngIf="legende.get(key).type === 'font'">{{legende.get(key).name}}</mat-icon>
         <span>{{key}}</span>
       </div>
     </div>
@@ -92,7 +93,8 @@
     </div>
     <div *ngIf="heeftFout()" class="divider"></div>
     <div *ngFor="let resultaat of alleZoekResultaten" class="zoeker-resultaat klikbaar" (click)="zoomNaarResultaat(resultaat)">
-      <mat-icon class="zoeker-resultaat-icoon" [svgIcon]="resultaat.icoon"></mat-icon>
+      <mat-icon class="zoeker-resultaat-icoon" [svgIcon]="resultaat.icoon.name" *ngIf="resultaat.icoon.type ==='svg'"></mat-icon>
+      <mat-icon class="zoeker-resultaat-icoon" *ngIf="resultaat.icoon.type === 'font'">{{resultaat.icoon.name}}</mat-icon>
       <span [innerHTML]="resultaat.omschrijving | highlight: zoekVeld.value"></span>
     </div>
   </div>

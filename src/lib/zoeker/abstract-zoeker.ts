@@ -1,4 +1,5 @@
 import { SafeHtml } from "@angular/platform-browser";
+import { Option } from "fp-ts/lib/Option";
 import { Map } from "immutable";
 import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
@@ -9,15 +10,25 @@ export const geoJSONOptions = <ol.olx.format.GeoJSONOptions>{
   featureProjection: undefined
 };
 
+export interface SvgIcon {
+  type: "svg";
+  readonly name: string;
+}
+
+export interface FontIcon {
+  type: "font";
+  readonly name: string;
+}
+
 export interface ZoekResultaat {
   partialMatch: boolean;
   index: number;
   omschrijving: string;
   bron: string;
   zoeker: string;
-  geometry: ol.geom.Geometry;
-  extent: ol.Extent;
-  icoon: SafeHtml;
+  geometry: Option<ol.geom.Geometry>;
+  extent: Option<ol.Extent>;
+  icoon: SvgIcon | FontIcon;
   style: ol.style.Style;
 }
 
@@ -26,7 +37,7 @@ export class ZoekResultaten {
     public zoeker: string,
     public fouten: string[] = [],
     public resultaten: ZoekResultaat[] = [],
-    public legende: Map<string, string> = Map()
+    public legende: Map<string, SvgIcon | FontIcon> = Map()
   ) {}
 
   limiteerAantalResultaten(maxAantal: number): ZoekResultaten {

@@ -1,13 +1,13 @@
 import { HttpClient } from "@angular/common/http";
 import { Inject, Injectable } from "@angular/core";
+import { Option, some } from "fp-ts/lib/Option";
 import { Map } from "immutable";
 import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
 import { map, shareReplay } from "rxjs/operators";
 
-import { AbstractZoeker, geoJSONOptions, StringZoekInput, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
+import { AbstractZoeker, FontIcon, geoJSONOptions, StringZoekInput, SvgIcon, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
 import { CrabZoekerConfig } from "./crab-zoeker.config";
-import { LocatorServiceResult } from "./crab-zoeker.service";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "./zoeker-representatie.service";
 import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
 
@@ -59,15 +59,15 @@ export class PerceelZoekResultaat implements ZoekResultaat {
   readonly omschrijving: string;
   readonly bron: string;
   readonly zoeker: string;
-  readonly geometry: any;
-  readonly icoon: string;
+  readonly geometry: Option<ol.geom.Geometry>;
+  readonly icoon: SvgIcon | FontIcon;
   readonly style: ol.style.Style;
-  readonly extent: ol.Extent;
+  readonly extent: Option<ol.Extent>;
 
-  constructor(details: PerceelDetails, index: number, zoeker: string, icoon: string, style: ol.style.Style) {
+  constructor(details: PerceelDetails, index: number, zoeker: string, icoon: SvgIcon, style: ol.style.Style) {
     this.index = index + 1;
-    this.geometry = new ol.format.GeoJSON(geoJSONOptions).readGeometry(details.shape);
-    this.extent = this.geometry.getExtent();
+    this.geometry = some(new ol.format.GeoJSON(geoJSONOptions).readGeometry(details.shape));
+    this.extent = this.geometry.map(geom => geom.getExtent());
     this.omschrijving = details.capakey;
     this.bron = "Perceel";
     this.zoeker = zoeker;
@@ -79,7 +79,7 @@ export class PerceelZoekResultaat implements ZoekResultaat {
 @Injectable()
 export class PerceelZoekerService implements AbstractZoeker {
   private readonly crabZoekerConfig: CrabZoekerConfig;
-  private legende: Map<string, string>;
+  private legende: Map<string, SvgIcon | FontIcon>;
 
   constructor(
     private readonly http: HttpClient,
@@ -87,7 +87,7 @@ export class PerceelZoekerService implements AbstractZoeker {
     @Inject(ZOEKER_REPRESENTATIE) private zoekerRepresentatie: AbstractRepresentatieService
   ) {
     this.crabZoekerConfig = new CrabZoekerConfig(zoekerConfigData.crab);
-    this.legende = Map.of(this.naam(), this.zoekerRepresentatie.getSvgNaam("Perceel"));
+    this.legende = Map.of(this.naam(), this.zoekerRepresentatie.getSvgIcon("Perceel"));
   }
 
   getAlleGemeenten$(): Observable<Gemeente[]> {
@@ -132,7 +132,7 @@ export class PerceelZoekerService implements AbstractZoeker {
                 details,
                 0,
                 this.naam(),
-                this.zoekerRepresentatie.getSvgNaam("Perceel"),
+                this.zoekerRepresentatie.getSvgIcon("Perceel"),
                 this.zoekerRepresentatie.getOlStyle("Perceel")
               )
             ],

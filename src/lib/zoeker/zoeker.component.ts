@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from "@angular/common/http";
 import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { none, Option } from "fp-ts/lib/Option";
+import { none } from "fp-ts/lib/Option";
 import { List, OrderedMap, Set } from "immutable";
 import * as ol from "openlayers";
 import { UnaryFunction } from "rxjs/interfaces";
@@ -29,7 +29,7 @@ import { KaartComponent } from "../kaart/kaart.component";
 import { kaartLogger } from "../kaart/log";
 import { matchGeometryType } from "../util/geometryTypes";
 
-import { compareResultaten, StringZoekInput, ZoekInput, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
+import { compareResultaten, FontIcon, StringZoekInput, SvgIcon, ZoekInput, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
 
 const ZoekerLaagNaam = "Zoeker";
 
@@ -166,7 +166,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
   zoekVeld = new FormControl();
   alleZoekResultaten: ZoekResultaat[] = [];
   alleFouten: Fout[] = [];
-  legende: Map<string, string> = new Map<string, string>();
+  legende: Map<string, SvgIcon | FontIcon> = new Map<string, SvgIcon | FontIcon>();
   legendeKeys: string[] = [];
   toonHelp = false;
   toonResultaat = true;
@@ -215,21 +215,28 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
       return middlePointFeature;
     }
 
-    const feature = new ol.Feature({
-      data: resultaat,
-      geometry: resultaat.geometry,
-      name: resultaat.omschrijving
-    });
-    feature.setId(resultaat.bron + "_" + resultaat.index);
-    feature.setStyle(resultaat.style);
+    function createFeature(geometry: ol.geom.Geometry): ol.Feature {
+      const feature = new ol.Feature({
+        data: resultaat,
+        geometry: geometry,
+        name: resultaat.omschrijving
+      });
+      feature.setId(resultaat.bron + "_" + resultaat.index);
+      feature.setStyle(resultaat.style);
+      return feature;
+    }
 
-    return matchGeometryType(resultaat.geometry, {
-      multiLineString: multiLineStringMiddlePoint,
-      polygon: polygonMiddlePoint,
-      multiPolygon: polygonMiddlePoint
-    })
-      .map(middlePoint => [feature, createMiddlePointFeature(middlePoint)])
-      .getOrElseValue([feature]);
+    function createFeatureAndMiddlePoint(geometry: ol.geom.Geometry): ol.Feature[] {
+      return matchGeometryType(geometry, {
+        multiLineString: multiLineStringMiddlePoint,
+        polygon: polygonMiddlePoint,
+        multiPolygon: polygonMiddlePoint
+      })
+        .map(middlePoint => [createFeature(geometry), createMiddlePointFeature(middlePoint)])
+        .getOrElseValue([createFeature(geometry)]);
+    }
+
+    return resultaat.geometry.map(geometry => createFeatureAndMiddlePoint(geometry)).getOrElseValue([]);
   }
 
   constructor(parent: KaartComponent, zone: NgZone, private cd: ChangeDetectorRef) {
@@ -301,10 +308,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
   zoomNaarResultaat(resultaat: ZoekResultaat) {
     this.toonResultaat = false;
     this.toonHelp = false;
-    const extent = resultaat.geometry.getExtent();
-    if (!ol.extent.isEmpty(extent)) {
-      this.dispatch(prt.VeranderExtentCmd(extent));
-    }
+    resultaat.extent.filter(extent => !ol.extent.isEmpty(extent)).map(extent => this.dispatch(prt.VeranderExtentCmd(extent)));
   }
 
   onKey(event: any) {
@@ -368,7 +372,10 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
     );
     this.extent = this.alleZoekResultaten
       .map(resultaat => resultaat.extent)
-      .reduce((maxExtent, huidigeExtent) => ol.extent.extend(maxExtent!, huidigeExtent!), ol.extent.createEmpty());
+      .reduce(
+        (maxExtent, huidigeExtent) => huidigeExtent.map(e => ol.extent.extend(maxExtent!, e)).getOrElseValue(maxExtent),
+        ol.extent.createEmpty()
+      );
 
     this.dispatch(prt.VervangFeaturesCmd(ZoekerLaagNaam, features, kaartLogOnlyWrapper));
 

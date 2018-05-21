@@ -1,12 +1,13 @@
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { Inject, Injectable } from "@angular/core";
+import { Option, some } from "fp-ts/lib/Option";
 import { Map } from "immutable";
 import * as ol from "openlayers";
 import { OperatorFunction } from "rxjs/interfaces";
 import { Observable } from "rxjs/Observable";
 import { map, mergeAll, mergeMap, reduce, shareReplay } from "rxjs/operators";
 
-import { AbstractZoeker, StringZoekInput, ZoekInput, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
+import { AbstractZoeker, FontIcon, StringZoekInput, SvgIcon, ZoekInput, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
 import { CrabZoekerConfig } from "./crab-zoeker.config";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "./zoeker-representatie.service";
 import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
@@ -114,10 +115,10 @@ export class CrabZoekResultaat implements ZoekResultaat {
   readonly omschrijving: string;
   readonly bron: string;
   readonly zoeker: string;
-  readonly geometry: ol.geom.Geometry;
-  readonly icoon: string;
+  readonly geometry: Option<ol.geom.Geometry>;
+  readonly icoon: SvgIcon | FontIcon;
   readonly style: ol.style.Style;
-  readonly extent: ol.Extent;
+  readonly extent: Option<ol.Extent>;
 
   constructor(
     x_lambert_72: number,
@@ -126,13 +127,13 @@ export class CrabZoekResultaat implements ZoekResultaat {
     bron: string,
     index: number,
     zoeker: string,
-    icoon: string,
+    icoon: SvgIcon,
     style: ol.style.Style,
     extent?: ol.Extent
   ) {
     this.index = index + 1;
-    this.geometry = new ol.geom.Point([x_lambert_72, y_lambert_72]);
-    this.extent = extent ? extent : this.geometry.getExtent();
+    this.geometry = some(new ol.geom.Point([x_lambert_72, y_lambert_72]));
+    this.extent = extent ? some(extent) : this.geometry.map(geom => geom.getExtent());
     this.omschrijving = omschrijving;
     this.bron = bron;
     this.zoeker = zoeker;
@@ -144,7 +145,7 @@ export class CrabZoekResultaat implements ZoekResultaat {
 @Injectable()
 export class CrabZoekerService implements AbstractZoeker {
   private readonly crabZoekerConfig: CrabZoekerConfig;
-  private legende: Map<string, string>;
+  private legende: Map<string, SvgIcon | FontIcon>;
 
   constructor(
     private readonly http: HttpClient,
@@ -152,7 +153,7 @@ export class CrabZoekerService implements AbstractZoeker {
     @Inject(ZOEKER_REPRESENTATIE) private zoekerRepresentatie: AbstractRepresentatieService
   ) {
     this.crabZoekerConfig = new CrabZoekerConfig(zoekerConfigData.crab);
-    this.legende = Map.of(this.naam(), this.zoekerRepresentatie.getSvgNaam("Crab"));
+    this.legende = Map.of(this.naam(), this.zoekerRepresentatie.getSvgIcon("Crab"));
   }
 
   naam(): string {
@@ -176,7 +177,7 @@ export class CrabZoekerService implements AbstractZoeker {
               crabResultaat.LocationType,
               startIndex + index,
               this.naam(),
-              this.zoekerRepresentatie.getSvgNaam("Crab"),
+              this.zoekerRepresentatie.getSvgIcon("Crab"),
               this.zoekerRepresentatie.getOlStyle("Crab")
             )
         )
@@ -200,7 +201,7 @@ export class CrabZoekerService implements AbstractZoeker {
       bron,
       0,
       this.naam(),
-      this.zoekerRepresentatie.getSvgNaam("Crab"),
+      this.zoekerRepresentatie.getSvgIcon("Crab"),
       this.zoekerRepresentatie.getOlStyle("Crab"),
       extent
     );
@@ -214,7 +215,7 @@ export class CrabZoekerService implements AbstractZoeker {
       bron,
       0,
       this.naam(),
-      this.zoekerRepresentatie.getSvgNaam("Crab"),
+      this.zoekerRepresentatie.getSvgIcon("Crab"),
       this.zoekerRepresentatie.getOlStyle("Crab")
     );
   }
