@@ -17,6 +17,7 @@ export type Subscription<Msg> =
   | GeselecteerdeFeaturesSubscription<Msg>
   | AchtergrondTitelSubscription<Msg>
   | LagenInGroepSubscription<Msg>
+  | LaagVerwijderdSubscription<Msg>
   | ZoekerSubscription<Msg>
   | MijnLocatieZoomdoelSubscription<Msg>
   | GeometryChangedSubscription<Msg>
@@ -60,6 +61,11 @@ export interface LagenInGroepSubscription<Msg> {
   readonly type: "LagenInGroep";
   readonly groep: ke.Laaggroep;
   readonly wrapper: (lagen: List<ke.ToegevoegdeLaag>) => Msg;
+}
+
+export interface LaagVerwijderdSubscription<Msg> {
+  readonly type: "LaagVerwijderd";
+  readonly wrapper: (laag: ke.ToegevoegdeLaag) => Msg;
 }
 
 export interface KaartClickSubscription<Msg> {
@@ -120,6 +126,10 @@ export function LagenInGroepSubscription<Msg>(
   msgGen: (lagen: List<ke.ToegevoegdeLaag>) => Msg
 ): LagenInGroepSubscription<Msg> {
   return { type: "LagenInGroep", groep: groep, wrapper: msgGen };
+}
+
+export function LaagVerwijderdSubscription<Msg>(msgGen: (laag: ke.ToegevoegdeLaag) => Msg): LaagVerwijderdSubscription<Msg> {
+  return { type: "LaagVerwijderd", wrapper: msgGen };
 }
 
 export function ZoekerSubscription<Msg>(wrapper: (resultaten: ZoekResultaten) => Msg): Subscription<Msg> {
