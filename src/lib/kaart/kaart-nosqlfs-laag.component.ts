@@ -1,6 +1,7 @@
 import { Component, Input, ViewEncapsulation } from "@angular/core";
 import { option } from "fp-ts";
-import { fromNullable, Option } from "fp-ts/lib/Option";
+import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
+import { OrderedMap } from "immutable";
 import * as ol from "openlayers";
 
 import { NosqlFsSource } from "../source/nosql-fs-source";
@@ -8,6 +9,7 @@ import { forEach, orElse } from "../util/option";
 
 import { KaartClassicComponent } from "./kaart-classic.component";
 import * as ke from "./kaart-elementen";
+import { VeldInfo } from "./kaart-elementen";
 import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
 import { KaartLaagComponent } from "./kaart-laag.component";
 import * as prt from "./kaart-protocol";
@@ -55,7 +57,8 @@ export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
       selecteerbaar: this.selecteerbaar,
       minZoom: this.minZoom,
       maxZoom: this.maxZoom,
-      offsetveld: fromNullable(this.offsetveld)
+      offsetveld: fromNullable(this.offsetveld),
+      velden: OrderedMap<string, VeldInfo>()
     };
   }
 

@@ -1,7 +1,7 @@
 import { Component, Input, NgZone, OnInit } from "@angular/core";
 
-import { KaartChildComponentBase } from "./kaart-child-component-base";
-import { KaartComponent } from "./kaart.component";
+import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { KaartComponent } from "../kaart.component";
 
 @Component({
   selector: "awv-kaart-info-boodschap-alert",
