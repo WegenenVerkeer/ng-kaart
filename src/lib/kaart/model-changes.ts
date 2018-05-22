@@ -15,12 +15,14 @@ export interface UiElementSelectie {
  * Dit is isomorf aan het zetten van de overeenkomstige attributen op het model en die laten volgen. Het probleem daarbij
  * is echter dat er veel meer "oninteressante" wijzigingen aan het model gebeuren die genegeerd moeten worden. De aanpak
  * met directe subjects/observables is dus performanter.
+ * Het grote nadeel is dat de reducer die het model aanpast ook expliciet de wijzigingen via de changer moet beschikbaar stellen.
  */
 export interface ModelChanger {
   readonly uiElementSelectieSubj: rx.Subject<UiElementSelectie>;
   readonly uiElementOptiesSubj: rx.Subject<UiElementOpties>;
   readonly zoominstellingenSubj: rx.Subject<Zoominstellingen>;
   readonly lagenOpGroepSubj: Map<ke.Laaggroep, rx.Subject<List<ke.ToegevoegdeLaag>>>;
+  readonly laagVerwijderdSubj: rx.Subject<ke.ToegevoegdeLaag>;
 }
 
 export const ModelChanger: () => ModelChanger = () => ({
@@ -32,7 +34,8 @@ export const ModelChanger: () => ModelChanger = () => ({
     "Voorgrond.Hoog": new rx.BehaviorSubject<List<ke.ToegevoegdeLaag>>(List()),
     "Voorgrond.Laag": new rx.BehaviorSubject<List<ke.ToegevoegdeLaag>>(List()),
     Tools: new rx.BehaviorSubject<List<ke.ToegevoegdeLaag>>(List())
-  })
+  }),
+  laagVerwijderdSubj: new rx.Subject()
 });
 
 export interface ModelChanges {
@@ -40,11 +43,13 @@ export interface ModelChanges {
   readonly uiElementOpties$: rx.Observable<UiElementOpties>;
   readonly zoomInstellingen$: rx.Observable<Zoominstellingen>;
   readonly lagenOpGroep$: Map<ke.Laaggroep, rx.Observable<List<ke.ToegevoegdeLaag>>>;
+  readonly laagVerwijderd$: rx.Observable<ke.ToegevoegdeLaag>;
 }
 
 export const modelChanges: (changer: ModelChanger) => ModelChanges = changer => ({
   uiElementSelectie$: changer.uiElementSelectieSubj.asObservable(),
   uiElementOpties$: changer.uiElementOptiesSubj.asObservable(),
   zoomInstellingen$: changer.zoominstellingenSubj.asObservable(),
-  lagenOpGroep$: changer.lagenOpGroepSubj.map(s => s!.asObservable()).toMap()
+  lagenOpGroep$: changer.lagenOpGroepSubj.map(s => s!.asObservable()).toMap(),
+  laagVerwijderd$: changer.laagVerwijderdSubj.asObservable()
 });

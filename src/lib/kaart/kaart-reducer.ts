@@ -389,6 +389,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             groepOpTitel: model.groepOpTitel.delete(titel)
           };
           zendLagenInGroep(updatedModel, groep);
+          modelChanger.laagVerwijderdSubj.next(laag);
           ss.clearFeatureStyleSelector(model.map, laag.titel);
           return ModelAndEmptyResult(updatedModel);
         })
@@ -957,9 +958,13 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           "LagenInGroep",
           modelChanger.lagenOpGroepSubj
             .get(sub.groep) // we vertrouwen op de typechecker
+            .pipe(debounceTime(50))
             .subscribe(pipe(sub.wrapper, msgConsumer))
         );
       };
+
+      const subscribeToLaagVerwijderd = (sub: prt.LaagVerwijderdSubscription<Msg>) =>
+        modelWithSubscriptionResult("LaagVerwijderd", modelChanger.laagVerwijderdSubj.subscribe(pipe(sub.wrapper, msgConsumer)));
 
       function subscribeToZoeker(sub: prt.ZoekerSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult("Zoeker", model.zoekerSubj.subscribe(m => msgConsumer(sub.wrapper(m))));
@@ -1011,6 +1016,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToGeselecteerdeFeatures(cmnd.subscription);
         case "LagenInGroep":
           return subscribeToLagenInGroep(cmnd.subscription);
+        case "LaagVerwijderd":
+          return subscribeToLaagVerwijderd(cmnd.subscription);
         case "KaartClick":
           return subscribeToKaartClick(cmnd.subscription);
         case "MijnLocatieZoomdoel":
