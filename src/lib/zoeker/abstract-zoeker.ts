@@ -29,7 +29,7 @@ export interface ZoekResultaat {
   geometry: Option<ol.geom.Geometry>;
   extent: Option<ol.Extent>;
   icoon: SvgIcon | FontIcon;
-  style: ol.style.Style;
+  style: Option<ol.style.Style>;
 }
 
 export class ZoekResultaten {

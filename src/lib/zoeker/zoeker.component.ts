@@ -211,7 +211,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
         geometry: middlePoint,
         name: resultaat.omschrijving
       });
-      middlePointFeature.setStyle(resultaat.style);
+      resultaat.style.map(style => middlePointFeature.setStyle(style));
       return middlePointFeature;
     }
 
@@ -222,7 +222,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
         name: resultaat.omschrijving
       });
       feature.setId(resultaat.bron + "_" + resultaat.index);
-      feature.setStyle(resultaat.style);
+      resultaat.style.map(style => feature.setStyle(style));
       return feature;
     }
 

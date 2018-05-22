@@ -117,7 +117,7 @@ export class CrabZoekResultaat implements ZoekResultaat {
   readonly zoeker: string;
   readonly geometry: Option<ol.geom.Geometry>;
   readonly icoon: SvgIcon | FontIcon;
-  readonly style: ol.style.Style;
+  readonly style: Option<ol.style.Style>;
   readonly extent: Option<ol.Extent>;
 
   constructor(
@@ -138,7 +138,7 @@ export class CrabZoekResultaat implements ZoekResultaat {
     this.bron = bron;
     this.zoeker = zoeker;
     this.icoon = icoon;
-    this.style = style;
+    this.style = some(style);
   }
 }
 

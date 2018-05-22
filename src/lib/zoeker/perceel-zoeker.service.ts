@@ -61,7 +61,7 @@ export class PerceelZoekResultaat implements ZoekResultaat {
   readonly zoeker: string;
   readonly geometry: Option<ol.geom.Geometry>;
   readonly icoon: SvgIcon | FontIcon;
-  readonly style: ol.style.Style;
+  readonly style: Option<ol.style.Style>;
   readonly extent: Option<ol.Extent>;
 
   constructor(details: PerceelDetails, index: number, zoeker: string, icoon: SvgIcon, style: ol.style.Style) {
@@ -72,7 +72,7 @@ export class PerceelZoekResultaat implements ZoekResultaat {
     this.bron = "Perceel";
     this.zoeker = zoeker;
     this.icoon = icoon;
-    this.style = style;
+    this.style = some(style);
   }
 }
 
