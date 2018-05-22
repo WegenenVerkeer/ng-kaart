@@ -140,17 +140,17 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   }
 
   van(): string {
-    return this.pos(BEGIN_OPSCHRIFT).fold(() => "", van => van);
+    return this.pos(BEGIN_OPSCHRIFT).getOrElseValue("");
   }
 
   tot(): string {
-    return this.pos(EIND_OPSCHRIFT).fold(() => "", tot => tot);
+    return this.pos(EIND_OPSCHRIFT).getOrElseValue("");
   }
 
   private afstand(afstandVeld: string): string {
     return fromNullable(this.waarde(afstandVeld))
       .map(this.signed)
-      .fold(() => "", pos => pos);
+      .getOrElseValue("");
   }
 
   vanAfstand(): string {
@@ -196,7 +196,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   private verpl(): string {
     return fromNullable(this.waarde("verpl"))
       .map(this.signed)
-      .fold(() => "", verpl => verpl);
+      .getOrElseValue("");
   }
 
   private pos(positieVeld: string): Option<string> {
