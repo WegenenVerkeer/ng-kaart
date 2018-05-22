@@ -211,7 +211,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
         geometry: middlePoint,
         name: resultaat.omschrijving
       });
-      resultaat.style.map(style => middlePointFeature.setStyle(style));
+      resultaat.kaartInfo.map(kaartInfo => middlePointFeature.setStyle(kaartInfo.style));
       return middlePointFeature;
     }
 
@@ -222,7 +222,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
         name: resultaat.omschrijving
       });
       feature.setId(resultaat.bron + "_" + resultaat.index);
-      resultaat.style.map(style => feature.setStyle(style));
+      resultaat.kaartInfo.map(kaartInfo => feature.setStyle(kaartInfo.style));
       return feature;
     }
 
@@ -236,7 +236,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
         .getOrElseValue([createFeature(geometry)]);
     }
 
-    return resultaat.geometry.map(geometry => createFeatureAndMiddlePoint(geometry)).getOrElseValue([]);
+    return resultaat.kaartInfo.map(kaartInfo => createFeatureAndMiddlePoint(kaartInfo.geometry)).getOrElseValue([]);
   }
 
   constructor(parent: KaartComponent, zone: NgZone, private cd: ChangeDetectorRef) {
@@ -308,7 +308,8 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
   zoomNaarResultaat(resultaat: ZoekResultaat) {
     this.toonResultaat = false;
     this.toonHelp = false;
-    resultaat.extent.filter(extent => !ol.extent.isEmpty(extent)).map(extent => this.dispatch(prt.VeranderExtentCmd(extent)));
+    resultaat.onclick(resultaat);
+    resultaat.kaartInfo.filter(info => !ol.extent.isEmpty(info.extent)).map(info => this.dispatch(prt.VeranderExtentCmd(info.extent)));
   }
 
   onKey(event: any) {
@@ -371,9 +372,9 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
       List<ol.Feature>()
     );
     this.extent = this.alleZoekResultaten
-      .map(resultaat => resultaat.extent)
+      .map(resultaat => resultaat.kaartInfo)
       .reduce(
-        (maxExtent, huidigeExtent) => huidigeExtent.map(e => ol.extent.extend(maxExtent!, e)).getOrElseValue(maxExtent),
+        (maxExtent, kaartInfo) => kaartInfo.map(i => ol.extent.extend(maxExtent!, i.extent)).getOrElseValue(maxExtent),
         ol.extent.createEmpty()
       );
 

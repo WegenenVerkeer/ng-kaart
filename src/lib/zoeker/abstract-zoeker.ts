@@ -1,4 +1,3 @@
-import { SafeHtml } from "@angular/platform-browser";
 import { Option } from "fp-ts/lib/Option";
 import { Map } from "immutable";
 import * as ol from "openlayers";
@@ -20,16 +19,21 @@ export interface FontIcon {
   readonly name: string;
 }
 
+export interface ZoekKaartResultaat {
+  readonly geometry: ol.geom.Geometry;
+  readonly extent: ol.Extent;
+  readonly style: ol.style.Style;
+}
+
 export interface ZoekResultaat {
-  partialMatch: boolean;
-  index: number;
-  omschrijving: string;
-  bron: string;
-  zoeker: string;
-  geometry: Option<ol.geom.Geometry>;
-  extent: Option<ol.Extent>;
-  icoon: SvgIcon | FontIcon;
-  style: Option<ol.style.Style>;
+  readonly partialMatch: boolean;
+  readonly index: number;
+  readonly omschrijving: string;
+  readonly bron: string;
+  readonly zoeker: string;
+  readonly kaartInfo: Option<ZoekKaartResultaat>;
+  readonly onclick: (res: ZoekResultaat) => void;
+  readonly icoon: SvgIcon | FontIcon;
 }
 
 export class ZoekResultaten {

@@ -6,7 +6,16 @@ import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
 import { map, shareReplay } from "rxjs/operators";
 
-import { AbstractZoeker, FontIcon, geoJSONOptions, StringZoekInput, SvgIcon, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
+import {
+  AbstractZoeker,
+  FontIcon,
+  geoJSONOptions,
+  StringZoekInput,
+  SvgIcon,
+  ZoekKaartResultaat,
+  ZoekResultaat,
+  ZoekResultaten
+} from "./abstract-zoeker";
 import { CrabZoekerConfig } from "./crab-zoeker.config";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "./zoeker-representatie.service";
 import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
@@ -59,20 +68,23 @@ export class PerceelZoekResultaat implements ZoekResultaat {
   readonly omschrijving: string;
   readonly bron: string;
   readonly zoeker: string;
-  readonly geometry: Option<ol.geom.Geometry>;
   readonly icoon: SvgIcon | FontIcon;
-  readonly style: Option<ol.style.Style>;
-  readonly extent: Option<ol.Extent>;
+  readonly kaartInfo: Option<ZoekKaartResultaat>;
+  readonly onclick: (res: ZoekResultaat) => void;
 
   constructor(details: PerceelDetails, index: number, zoeker: string, icoon: SvgIcon, style: ol.style.Style) {
     this.index = index + 1;
-    this.geometry = some(new ol.format.GeoJSON(geoJSONOptions).readGeometry(details.shape));
-    this.extent = this.geometry.map(geom => geom.getExtent());
+    const geometry = new ol.format.GeoJSON(geoJSONOptions).readGeometry(details.shape);
+    this.kaartInfo = some({
+      geometry: geometry,
+      extent: geometry.getExtent(),
+      style: style
+    });
     this.omschrijving = details.capakey;
     this.bron = "Perceel";
     this.zoeker = zoeker;
     this.icoon = icoon;
-    this.style = some(style);
+    this.onclick = (r: ZoekResultaat) => {};
   }
 }
 

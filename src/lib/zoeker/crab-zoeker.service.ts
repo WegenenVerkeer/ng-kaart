@@ -7,7 +7,16 @@ import { OperatorFunction } from "rxjs/interfaces";
 import { Observable } from "rxjs/Observable";
 import { map, mergeAll, mergeMap, reduce, shareReplay } from "rxjs/operators";
 
-import { AbstractZoeker, FontIcon, StringZoekInput, SvgIcon, ZoekInput, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
+import {
+  AbstractZoeker,
+  FontIcon,
+  StringZoekInput,
+  SvgIcon,
+  ZoekInput,
+  ZoekKaartResultaat,
+  ZoekResultaat,
+  ZoekResultaten
+} from "./abstract-zoeker";
 import { CrabZoekerConfig } from "./crab-zoeker.config";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "./zoeker-representatie.service";
 import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
@@ -115,10 +124,9 @@ export class CrabZoekResultaat implements ZoekResultaat {
   readonly omschrijving: string;
   readonly bron: string;
   readonly zoeker: string;
-  readonly geometry: Option<ol.geom.Geometry>;
   readonly icoon: SvgIcon | FontIcon;
-  readonly style: Option<ol.style.Style>;
-  readonly extent: Option<ol.Extent>;
+  readonly kaartInfo: Option<ZoekKaartResultaat>;
+  readonly onclick: (res: ZoekResultaat) => void;
 
   constructor(
     x_lambert_72: number,
@@ -132,13 +140,17 @@ export class CrabZoekResultaat implements ZoekResultaat {
     extent?: ol.Extent
   ) {
     this.index = index + 1;
-    this.geometry = some(new ol.geom.Point([x_lambert_72, y_lambert_72]));
-    this.extent = extent ? some(extent) : this.geometry.map(geom => geom.getExtent());
+    const geometry = new ol.geom.Point([x_lambert_72, y_lambert_72]);
+    this.kaartInfo = some({
+      style: style,
+      geometry: geometry,
+      extent: extent ? extent : geometry.getExtent()
+    });
     this.omschrijving = omschrijving;
     this.bron = bron;
     this.zoeker = zoeker;
     this.icoon = icoon;
-    this.style = some(style);
+    this.onclick = (r: ZoekResultaat) => {};
   }
 }
 

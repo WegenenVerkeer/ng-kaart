@@ -8,7 +8,16 @@ import "rxjs/add/observable/fromPromise";
 import { Observable } from "rxjs/Observable";
 import { catchError, flatMap, map } from "rxjs/operators";
 
-import { AbstractZoeker, FontIcon, geoJSONOptions, StringZoekInput, SvgIcon, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
+import {
+  AbstractZoeker,
+  FontIcon,
+  geoJSONOptions,
+  StringZoekInput,
+  SvgIcon,
+  ZoekKaartResultaat,
+  ZoekResultaat,
+  ZoekResultaten
+} from "./abstract-zoeker";
 import { GoogleWdbLocatieZoekerConfig } from "./google-wdb-locatie-zoeker.config";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE, ZoekerRepresentatieType } from "./zoeker-representatie.service";
 import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
@@ -19,21 +28,24 @@ export class GoogleWdbZoekResultaat implements ZoekResultaat {
   readonly omschrijving: string;
   readonly bron: string;
   readonly zoeker: string;
-  readonly geometry: Option<ol.geom.Geometry>;
   readonly icoon: SvgIcon | FontIcon;
-  readonly style: Option<ol.style.Style>;
-  readonly extent: Option<ol.Extent>;
+  readonly kaartInfo: Option<ZoekKaartResultaat>;
+  readonly onclick: (res: ZoekResultaat) => void;
 
   constructor(locatie, index: number, zoeker: string, style: ol.style.Style, icoon: SvgIcon) {
     this.partialMatch = locatie.partialMatch;
     this.index = index + 1;
-    this.geometry = some(new ol.format.GeoJSON(geoJSONOptions).readGeometry(locatie.locatie));
-    this.extent = this.geometry.map(geom => geom.getExtent());
+    const geometry = new ol.format.GeoJSON(geoJSONOptions).readGeometry(locatie.locatie);
+    this.kaartInfo = some({
+      geometry: geometry,
+      extent: geometry.getExtent(),
+      style: style
+    });
     this.omschrijving = locatie.omschrijving;
     this.bron = locatie.bron;
     this.zoeker = zoeker;
     this.icoon = icoon;
-    this.style = some(style);
+    this.onclick = (r: ZoekResultaat) => {};
   }
 }
 
