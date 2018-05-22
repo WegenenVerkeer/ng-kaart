@@ -128,7 +128,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   }
 
   heeftVanTot(): boolean {
-    return geldigeWaarde(this.waarde(BEGIN_POSITIE)) && geldigeWaarde(this.waarde(EIND_POSITIE));
+    return geldigeWaarde(this.waarde(BEGIN_OPSCHRIFT)) && geldigeWaarde(this.waarde(EIND_OPSCHRIFT));
   }
 
   heeftIdent8(): boolean {
@@ -140,11 +140,11 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   }
 
   van(): string {
-    return this.pos(BEGIN_POSITIE);
+    return this.pos(BEGIN_OPSCHRIFT).fold(() => "", van => van);
   }
 
   tot(): string {
-    return this.pos(EIND_POSITIE);
+    return this.pos(EIND_OPSCHRIFT).fold(() => "", tot => tot);
   }
 
   private afstand(afstandVeld: string): string {
@@ -154,11 +154,11 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   }
 
   vanAfstand(): string {
-    return this.afstand(BEGIN_POSITIE);
+    return this.afstand(BEGIN_AFSTAND);
   }
 
   totAfstand(): string {
-    return this.afstand(EIND_POSITIE);
+    return this.afstand(EIND_AFSTAND);
   }
 
   label(veld: string): string {
@@ -196,14 +196,13 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   private verpl(): string {
     return fromNullable(this.waarde("verpl"))
       .map(this.signed)
-      .fold(() => "", pos => pos);
+      .fold(() => "", verpl => verpl);
   }
 
-  private pos(positieVeld: string): string {
+  private pos(positieVeld: string): Option<string> {
     return fromNullable(this.waarde(positieVeld))
       .filter(positie => typeof positie === "number")
-      .map(positie => `${Math.round((positie as number) * 10) / 10}`)
-      .fold(() => "", pos => pos);
+      .map(positie => `${Math.round((positie as number) * 10) / 10}`);
   }
 
   private signed(value: number): string {
@@ -248,12 +247,13 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   }
 
   private formateerDatum(dateString: string): string {
-    // TODO: safer date parsing
-    return dateString;
-    // try {
-    //   return new Date(dateString).toLocaleDateString("nl-BE");
-    // } catch (e) {
-    //   return dateString;
-    // }
+    const timestamp = Date.parse(dateString);
+
+    if (!isNaN(timestamp)) {
+      // geldige datum
+      return new Date(dateString).toLocaleDateString("nl-BE");
+    } else {
+      return dateString; // date string niet herkend, geef input terug
+    }
   }
 }
