@@ -1,5 +1,7 @@
 import * as ol from "openlayers";
 
+import { validationChain as chain } from "../util/validation";
+
 import { jsonAwvV0RuleCompiler } from "./json-awv-v0-stijlfunctie";
 import { Validation } from "./json-object-interpreting";
 import * as oi from "./json-object-interpreting";
@@ -27,14 +29,12 @@ function jsonDefinitieStringToRuleExecutor(definitieText: string): Validation<ol
 }
 
 function compileRuleJson(definitie: Object): Validation<ol.StyleFunction> {
-  return oi
-    .field("version", oi.str)(definitie)
-    .chain(version => {
-      switch (version) {
-        case "awv-v0":
-          return oi.field("definition", jsonAwvV0RuleCompiler)(definitie);
-        default:
-          return oi.fail(`Versie '${version}' wordt niet ondersteund`);
-      }
-    });
+  return chain(oi.field("version", oi.str)(definitie), version => {
+    switch (version) {
+      case "awv-v0":
+        return oi.field("definition", jsonAwvV0RuleCompiler)(definitie);
+      default:
+        return oi.fail(`Versie '${version}' wordt niet ondersteund`);
+    }
+  });
 }

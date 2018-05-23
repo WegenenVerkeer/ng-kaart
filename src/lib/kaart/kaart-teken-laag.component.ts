@@ -90,7 +90,7 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
         skipWhile(settings => settings.isNone()) // De eerste keer willen we startMetTekenen emitten
       )
     ).subscribe(settings => {
-      settings.fold(
+      settings.foldL(
         () => this.stopMetTekenen(), //
         ts => this.startMetTekenen(ts) //
       );
@@ -171,7 +171,7 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
     const draw = new ol.interaction.Draw({
       source: source,
       type: tekenSettings.geometryType,
-      style: tekenSettings.drawStyle.map(toStylish).getOrElseValue(defaultDrawStyle)
+      style: tekenSettings.drawStyle.map(toStylish).getOrElse(defaultDrawStyle)
     });
 
     draw.on(

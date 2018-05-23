@@ -20,15 +20,15 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
         urls: l.urls.toArray(),
         tileGrid: ol.tilegrid.createXYZ({
           extent: kaart.config.defaults.extent,
-          tileSize: l.tileSize.getOrElseValue(256)
+          tileSize: l.tileSize.getOrElse(256)
         }),
         tileLoadFunction: kaart.tileLoader.tileLoadFunction,
         params: {
           LAYERS: l.naam,
           TILED: true,
           SRS: kaart.config.srs,
-          VERSION: l.versie.getOrElseValue("1.3.0"),
-          FORMAT: l.format.getOrElseValue("image/png")
+          VERSION: l.versie.getOrElse("1.3.0"),
+          FORMAT: l.format.getOrElse("image/png")
         }
       })
     });
@@ -43,19 +43,19 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
       source = new ol.source.WMTS(config.wmtsOptions);
     } else {
       const config = l.config as ke.WmtsManualConfig;
-      extent = config.extent.getOrElseValue(kaart.config.defaults.extent);
+      extent = config.extent.getOrElse(kaart.config.defaults.extent);
       source = new ol.source.WMTS({
         projection: kaart.config.srs,
         urls: config.urls.toArray(),
         tileGrid: new ol.tilegrid.WMTS({
-          origin: config.origin.getOrElseValue(ol.extent.getTopLeft(extent)),
+          origin: config.origin.getOrElseL(() => ol.extent.getTopLeft(extent)),
           resolutions: kaart.config.defaults.resolutions,
           matrixIds: config.matrixIds
         }),
         tileLoadFunction: kaart.tileLoader.tileLoadFunction,
         layer: l.naam,
-        style: config.style.getOrElseValue(""),
-        format: l.format.getOrElseValue("image/png"),
+        style: config.style.getOrElse(""),
+        format: l.format.getOrElse("image/png"),
         matrixSet: l.matrixSet
       });
     }
@@ -76,8 +76,8 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
         params: {
           LAYERS: l.naam,
           SRS: kaart.config.srs,
-          VERSION: l.versie.getOrElseValue("1.3.0"),
-          FORMAT: l.format.getOrElseValue("image/png")
+          VERSION: l.versie.getOrElse("1.3.0"),
+          FORMAT: l.format.getOrElse("image/png")
         },
         projection: kaart.config.srs
       })
@@ -85,11 +85,11 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
   }
 
   function createVectorLayer(vectorlaag: ke.VectorLaag) {
-    if (array.isOutOfBound(vectorlaag.minZoom)(kaart.config.defaults.resolutions)) {
+    if (array.isOutOfBound(vectorlaag.minZoom, kaart.config.defaults.resolutions)) {
       kaartLogger.error(`Ongeldige minZoom voor ${vectorlaag.titel}:
         ${vectorlaag.minZoom}, moet tussen 0 en ${kaart.config.defaults.resolutions.length - 1} liggen`);
     }
-    if (array.isOutOfBound(vectorlaag.maxZoom)(kaart.config.defaults.resolutions)) {
+    if (array.isOutOfBound(vectorlaag.maxZoom, kaart.config.defaults.resolutions)) {
       kaartLogger.error(`Ongeldige maxZoom voor ${vectorlaag.titel}:
         ${vectorlaag.maxZoom}, moet tussen 0 en ${kaart.config.defaults.resolutions.length - 1} liggen`);
     }
@@ -105,13 +105,11 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
     return new ol.layer.Vector({
       source: vectorlaag.source,
       visible: true,
-      style: vectorlaag.styleSelector.map(toStylish).getOrElseValue(kaart.config.defaults.style),
+      style: vectorlaag.styleSelector.map(toStylish).getOrElse(kaart.config.defaults.style),
       minResolution: array
-        .index(vectorlaag.maxZoom)(kaart.config.defaults.resolutions)
-        .getOrElseValue(kaart.config.defaults.resolutions[kaart.config.defaults.resolutions.length - 1]),
-      maxResolution: array
-        .index(vectorlaag.minZoom - 1)(kaart.config.defaults.resolutions)
-        .getOrElseValue(kaart.config.defaults.resolutions[0])
+        .index(vectorlaag.maxZoom, kaart.config.defaults.resolutions)
+        .getOrElse(kaart.config.defaults.resolutions[kaart.config.defaults.resolutions.length - 1]),
+      maxResolution: array.index(vectorlaag.minZoom - 1, kaart.config.defaults.resolutions).getOrElse(kaart.config.defaults.resolutions[0])
     });
   }
 

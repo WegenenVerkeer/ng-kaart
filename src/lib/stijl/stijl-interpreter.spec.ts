@@ -181,7 +181,7 @@ describe("De stijl interpreter", () => {
       it("moet een fout mbt tot het ontbrekende veldje geven", () => {
         const result = definitieToStyle("xml", "<style></style>");
         expect(result.isFailure()).toBe(true);
-        expect(result.value).toEqual("Encoding 'xml' wordt niet ondersteund");
+        expect(result.value).toEqual(["Encoding 'xml' wordt niet ondersteund"]);
       });
     });
 
@@ -195,7 +195,7 @@ describe("De stijl interpreter", () => {
           })
         );
         expect(result.isFailure()).toBe(true);
-        expect(result.value).toContain("geen veld 'definition'");
+        expect(result.value[0]).toContain("geen veld 'definition'");
       });
     });
   });

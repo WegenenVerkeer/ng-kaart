@@ -27,7 +27,7 @@ export function offsetStyleFunction(
       return style;
     }
 
-    return getValue(feature, ident8Veld).fold(
+    return getValue(feature, ident8Veld).foldL(
       () => {
         kaartLogger.warn(`Ident8 is verplicht, er wordt geen offset getekend voor feature ${feature}`);
         return style;
@@ -39,7 +39,7 @@ export function offsetStyleFunction(
             ident8,
             // Niet alle lijntypes hebben expliciet een offsetzijde. Indien geen zijderijbaan waarde gevonden,
             // veronderstellen we rechter zijde
-            getValue(feature, zijderijbaanVeld).getOrElseValue("r"),
+            getValue(feature, zijderijbaanVeld).getOrElse("r"),
             positie * s.getStroke().getWidth(),
             resolution
           );

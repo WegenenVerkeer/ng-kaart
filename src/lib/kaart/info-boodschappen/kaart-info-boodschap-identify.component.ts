@@ -104,9 +104,9 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   }
 
   dimensies(): string {
-    return this.lengte().fold(
-      () => this.breedte().fold(() => "Geen dimensies", breedte => `${breedte}cm`),
-      lengte => this.breedte().fold(() => `${lengte}m`, breedte => `${lengte}m x ${breedte}cm`)
+    return this.lengte().foldL(
+      () => this.breedte().fold("Geen dimensies", breedte => `${breedte}cm`),
+      lengte => this.breedte().foldL<string>(() => `${lengte}m`, breedte => `${lengte}m x ${breedte}cm`)
     );
   }
 
@@ -123,7 +123,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
       default:
         return fromNullable(this.waarde(ZIJDERIJBAAN))
           .map(b => b.toString())
-          .getOrElseValue("");
+          .getOrElse("");
     }
   }
 
@@ -136,21 +136,21 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   }
 
   ident8() {
-    return orElse(fromNullable(this.waarde(IDENT8)), () => fromNullable(this.waarde(LOCATIE_IDENT8))).getOrElseValue("");
+    return orElse(fromNullable(this.waarde(IDENT8)), () => fromNullable(this.waarde(LOCATIE_IDENT8))).getOrElse("");
   }
 
   van(): string {
-    return this.pos(BEGIN_OPSCHRIFT).getOrElseValue("");
+    return this.pos(BEGIN_OPSCHRIFT).getOrElse("");
   }
 
   tot(): string {
-    return this.pos(EIND_OPSCHRIFT).getOrElseValue("");
+    return this.pos(EIND_OPSCHRIFT).getOrElse("");
   }
 
   private afstand(afstandVeld: string): string {
     return fromNullable(this.waarde(afstandVeld))
       .map(this.signed)
-      .getOrElseValue("");
+      .getOrElse("");
   }
 
   vanAfstand(): string {
@@ -165,7 +165,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
     return this.laag
       .chain(l => fromNullable(l.velden.get(veld)))
       .map(veldInfo => veldInfo.label)
-      .getOrElseValue(veld);
+      .getOrElse(veld);
   }
 
   zichtbareEigenschappen(): string[] {
@@ -196,7 +196,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   private verpl(): string {
     return fromNullable(this.waarde("verpl"))
       .map(this.signed)
-      .getOrElseValue("");
+      .getOrElse("");
   }
 
   private pos(positieVeld: string): Option<string> {
@@ -216,7 +216,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   private eigenschappen(filter: (string) => boolean): string[] {
     return this.laag
       .map(l => l.velden)
-      .getOrElseValue(OrderedMap<string, VeldInfo>())
+      .getOrElse(OrderedMap<string, VeldInfo>())
       .filter((value, key) => filter(key))
       .filter((value, key) => geldigeWaarde(nestedProperty(key!, this.properties())))
       .filter((value, key) => nestedProperty(key!, this.properties()) !== "")
@@ -226,16 +226,12 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
 
   private isBasisVeld(veld: string): boolean {
     return this.laag
-      .chain(l => fromNullable(l.velden.get(veld)))
-      .map(veldInfo => veldInfo.isBasisVeld)
-      .getOrElseValue(false); // indien geen meta informatie functie, toon alle velden
+      .chain(l => fromNullable(l.velden.get(veld))) //
+      .exists(veldInfo => veldInfo.isBasisVeld); // indien geen meta informatie functie, toon alle velden
   }
 
   private isType(veld: string, type: string): boolean {
-    return this.laag
-      .chain(l => fromNullable(l.velden.get(veld)))
-      .map(veldInfo => veldInfo.type === type)
-      .getOrElseValue(false);
+    return this.laag.chain(l => fromNullable(l.velden.get(veld))).exists(veldInfo => veldInfo.type === type);
   }
 
   private isBoolean(veld: string): boolean {

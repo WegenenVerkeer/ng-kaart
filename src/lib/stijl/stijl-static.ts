@@ -1,8 +1,9 @@
 import * as ol from "openlayers";
 
+import { validationChain as chain } from "../util/validation";
+
 import { shortcutOrFullStyle } from "./json-awv-v0-stijl";
 import { Validation } from "./json-object-interpreting";
-
 import * as oi from "./json-object-interpreting";
 
 // Door de beschrijvingsstijl in de kaartcomponent te steken, kunnen ook andere applicaties er gebruik van maken.
@@ -30,14 +31,12 @@ function jsonDefinitieStringToStyle(definitieText: string): ValidatedOlStyle {
 }
 
 function interpretJson(definition: Object): Validation<ol.style.Style> {
-  return oi
-    .field("version", oi.str)(definition)
-    .chain(version => {
-      switch (version) {
-        case "awv-v0":
-          return shortcutOrFullStyle(definition);
-        default:
-          return oi.fail(`Versie '${version}' wordt niet ondersteund`);
-      }
-    });
+  return chain(oi.field("version", oi.str)(definition), version => {
+    switch (version) {
+      case "awv-v0":
+        return shortcutOrFullStyle(definition);
+      default:
+        return oi.fail(`Versie '${version}' wordt niet ondersteund`);
+    }
+  });
 }

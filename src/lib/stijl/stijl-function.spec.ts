@@ -40,7 +40,7 @@ describe("de stijl functie", () => {
         })
       );
       expect(result.isSuccess()).toBe(true);
-      expect(result.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(new ol.style.Style());
+      expect(result.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(new ol.style.Style());
     });
 
     it("moet een stijl selecteren adhv een complexe expressie", () => {
@@ -80,7 +80,7 @@ describe("de stijl functie", () => {
         })
       );
       expect(result.isSuccess()).toBe(true);
-      expect(result.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(
+      expect(result.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(
         new ol.style.Style({ stroke: new ol.style.Stroke({ width: 5, color: "#FFFF00" }) })
       );
     });
@@ -105,7 +105,7 @@ describe("de stijl functie", () => {
         })
       );
       expect(result.isSuccess()).toBe(true);
-      expect(result.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(
+      expect(result.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(
         new ol.style.Style({ stroke: new ol.style.Stroke({ color: "green" }) })
       );
     });
@@ -133,15 +133,15 @@ describe("de stijl functie", () => {
 
       const resultInside = definitieToStyleFunction("json", inBetweenStanza(1, 0, 10));
       expect(resultInside.isSuccess()).toBe(true);
-      expect(resultInside.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(new ol.style.Style());
+      expect(resultInside.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(new ol.style.Style());
 
       const resultBelow = definitieToStyleFunction("json", inBetweenStanza(-1, 0, 10));
       expect(resultBelow.isSuccess()).toBe(true);
-      expect(resultBelow.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(undefined);
+      expect(resultBelow.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(undefined);
 
       const resultAbove = definitieToStyleFunction("json", inBetweenStanza(11, 0, 10));
       expect(resultAbove.isSuccess()).toBe(true);
-      expect(resultAbove.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(undefined);
+      expect(resultAbove.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(undefined);
     });
 
     it("moet de L== operator interpreteren als 'left lowercase equals'", () => {
@@ -166,15 +166,15 @@ describe("de stijl functie", () => {
 
       const resultLeftUpper = definitieToStyleFunction("json", lowercaseStanza("Abc", "abc"));
       expect(resultLeftUpper.isSuccess()).toBe(true);
-      expect(resultLeftUpper.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(new ol.style.Style());
+      expect(resultLeftUpper.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(new ol.style.Style());
 
       const resultRightUpper = definitieToStyleFunction("json", lowercaseStanza("abc", "Abc")); // enkel lowercase van left
       expect(resultRightUpper.isSuccess()).toBe(true);
-      expect(resultRightUpper.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(undefined);
+      expect(resultRightUpper.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(undefined);
 
       const resultBothUpper = definitieToStyleFunction("json", lowercaseStanza("Abc", "Abc")); // right moet lowercase zijn
       expect(resultBothUpper.isSuccess()).toBe(true);
-      expect(resultBothUpper.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(undefined);
+      expect(resultBothUpper.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(undefined);
     });
 
     describe("bij het refereren aan feature properties", () => {
@@ -201,7 +201,7 @@ describe("de stijl functie", () => {
         );
 
         expect(result.isSuccess()).toBe(true);
-        expect(result.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(new ol.style.Style({}));
+        expect(result.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(new ol.style.Style({}));
       });
 
       it("moet de waarde van de geneste property gebruiken", () => {
@@ -227,7 +227,7 @@ describe("de stijl functie", () => {
         );
 
         expect(result.isSuccess()).toBe(true);
-        expect(result.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(new ol.style.Style({}));
+        expect(result.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(new ol.style.Style({}));
       });
 
       it("moet de conditie falen als de property niet bestaat", () => {
@@ -253,7 +253,7 @@ describe("de stijl functie", () => {
         );
 
         expect(result.isSuccess()).toBe(true);
-        expect(result.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(undefined);
+        expect(result.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(undefined);
       });
 
       it("moet de conditie falen als de geneste property niet bestaat", () => {
@@ -279,7 +279,7 @@ describe("de stijl functie", () => {
         );
 
         expect(result.isSuccess()).toBe(true);
-        expect(result.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(undefined);
+        expect(result.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(undefined);
       });
 
       it("moet de conditie falen als de property een null waarde heeft", () => {
@@ -305,7 +305,7 @@ describe("de stijl functie", () => {
         );
 
         expect(result.isSuccess()).toBe(true);
-        expect(result.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(undefined);
+        expect(result.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(undefined);
       });
 
       it("moet de conditie falen als de property een undefined waarde heeft", () => {
@@ -331,7 +331,7 @@ describe("de stijl functie", () => {
         );
 
         expect(result.isSuccess()).toBe(true);
-        expect(result.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(undefined);
+        expect(result.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(undefined);
       });
 
       it("moet de conditie niet noodzakelijk falen als de property een false waarde heeft", () => {
@@ -356,7 +356,7 @@ describe("de stijl functie", () => {
           })
         );
         expect(result.isSuccess()).toBe(true);
-        expect(result.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(new ol.style.Style({}));
+        expect(result.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(new ol.style.Style({}));
       });
 
       it("moet de conditie niet noodzakelijk falen als de geneste property een false waarde heeft", () => {
@@ -381,7 +381,7 @@ describe("de stijl functie", () => {
           })
         );
         expect(result.isSuccess()).toBe(true);
-        expect(result.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(new ol.style.Style({}));
+        expect(result.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(new ol.style.Style({}));
       });
 
       it("moet de conditie falen als het actuele type van de property niet overeenstemt met het gedeclareerde", () => {
@@ -407,7 +407,7 @@ describe("de stijl functie", () => {
         );
 
         expect(result.isSuccess()).toBe(true);
-        expect(result.map(f => f(feature, resolution)).getOrElseValue(undefined)).toEqual(undefined);
+        expect(result.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(undefined);
       });
     });
   });
@@ -450,13 +450,13 @@ describe("de stijl functie", () => {
           })
         );
         expect(result.isFailure()).toBe(true);
-        expect(result.value).toContain("'awv-v314' wordt niet ondersteund");
+        expect(result.value[0]).toContain("'awv-v314' wordt niet ondersteund");
       });
 
       it("moet een ongeldige JSON detecteren", () => {
         const result = definitieToStyleFunction("json", "dit is geen JSON");
         expect(result.isFailure()).toBe(true);
-        expect(result.value).toContain("geen geldige JSON");
+        expect(result.value[0]).toContain("geen geldige JSON");
       });
 
       it("mag enkel boolean resultaten toelaten", () => {
@@ -475,8 +475,8 @@ describe("de stijl functie", () => {
           })
         );
         expect(result.isFailure()).toBe(true);
-        expect(result.value).toContain("typecontrole:");
-        expect(result.value).toContain("moet een 'boolean' opleveren");
+        expect(result.value[0]).toContain("typecontrole:");
+        expect(result.value[0]).toContain("moet een 'boolean' opleveren");
       });
 
       it("mag enkel een vergelijking met 2 argumenten toelaten", () => {
@@ -495,8 +495,8 @@ describe("de stijl functie", () => {
           })
         );
         expect(result.isFailure()).toBe(true);
-        expect(result.value).toContain("syntaxcontrole:");
-        expect(result.value).toContain("heeft geen veld 'right'");
+        expect(result.value[0]).toContain("syntaxcontrole:");
+        expect(result.value[0]).toContain("heeft geen veld 'right'");
       });
       it("mag enkel een groottevergelijking met 2 numerieke argumenten toelaten", () => {
         const result = definitieToStyleFunction(
@@ -514,8 +514,8 @@ describe("de stijl functie", () => {
           })
         );
         expect(result.isFailure()).toBe(true);
-        expect(result.value).toContain("typecontrole:");
-        expect(result.value).toContain("'string' en 'string' gevonden, maar telkens 'number' verwacht");
+        expect(result.value[0]).toContain("typecontrole:");
+        expect(result.value[0]).toContain("'string' en 'string' gevonden, maar telkens 'number' verwacht");
       });
       it("mag enkel een vergelijking met 2 gelijke argumenten toelaten", () => {
         const result = definitieToStyleFunction(
@@ -533,8 +533,8 @@ describe("de stijl functie", () => {
           })
         );
         expect(result.isFailure()).toBe(true);
-        expect(result.value).toContain("typecontrole:");
-        expect(result.value).toContain("verwacht dat 'string' en 'number' gelijk zijn");
+        expect(result.value[0]).toContain("typecontrole:");
+        expect(result.value[0]).toContain("verwacht dat 'string' en 'number' gelijk zijn");
       });
     });
   });

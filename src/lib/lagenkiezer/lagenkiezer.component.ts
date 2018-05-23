@@ -43,7 +43,7 @@ interface DragState {
 const dndDataType = "text/plain";
 
 const setoidGroep = {
-  equals: (x: ToegevoegdeLaag) => (y: ToegevoegdeLaag) => x.laaggroep === y.laaggroep
+  equals: (x: ToegevoegdeLaag, y: ToegevoegdeLaag) => x.laaggroep === y.laaggroep
 };
 
 const isSource = (laag: ToegevoegdeLaag) => (ds: DragState) => ds.from.titel === laag.titel;
@@ -104,7 +104,7 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
   }
 
   dragStyleClasses(laag: ToegevoegdeLaag): string[] {
-    return this.dragState.fold(
+    return this.dragState.foldL(
       () => [""],
       ds => {
         if (ds.from.laaggroep !== laag.laaggroep) {

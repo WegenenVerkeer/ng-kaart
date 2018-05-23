@@ -1,8 +1,10 @@
-import * as array from "fp-ts/lib/Array";
+import { array } from "fp-ts/lib/Array";
 import { monoidString } from "fp-ts/lib/Monoid";
 import * as option from "fp-ts/lib/Option";
 import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
+
+import { applyValidationChain, validationChain as chain } from "../util/validation";
 
 import { shortcutOrFullStyle } from "./json-awv-v0-stijl";
 import * as oi from "./json-object-interpreting";
@@ -91,10 +93,10 @@ const jsonAwvV0RuleConfig: Interpreter<RuleStyleConfig> = (json: Object) => {
 
   return oi
     .field("rules", ruleConfig)(json)
-    .mapFailure(monoidString)(msg => `syntaxcontrole: ${msg}`);
+    .mapFailure(msg => [`syntaxcontrole: ${msg}`]);
 };
 
-export const jsonAwvV0RuleCompiler: Interpreter<ol.StyleFunction> = (json: Object) => jsonAwvV0RuleConfig(json).chain(compileRules);
+export const jsonAwvV0RuleCompiler: Interpreter<ol.StyleFunction> = applyValidationChain(jsonAwvV0RuleConfig, compileRules);
 
 /////////////////////////////////////////////////////////////////
 // Typechecking en compilatie van de regels tot een StyleFunction
@@ -155,13 +157,11 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
       : fail(`typecontrole: '${t1}', '${t2}' en '${t3}' gevonden, maar telkens '${targetType}' verwacht`);
   const equalType = (t1: TypeType, t2: TypeType) =>
     t1 === t2 ? ok({}) : fail(`typecontrole: verwacht dat '${t1}' en '${t2}' gelijk zijn`);
+  const conditionIsBoolean = (evaluator: TypedEvaluator) =>
+    evaluator.typeName === "boolean" ? ok(evaluator) : fail<TypedEvaluator>(`typecontrole: een conditie moet een 'boolean' opleveren`);
 
   // De expressie op het hoogste niveau moet tot een boolean evalueren
-  function compileCondition(expression: Expression): ValidatedTypedEvaluator {
-    return compile(expression).chain(
-      evaluator => (evaluator.typeName === "boolean" ? ok(evaluator) : fail(`typecontrole: een conditie moet een 'boolean' opleveren`))
-    );
-  }
+  const compileCondition: (_: Expression) => ValidatedTypedEvaluator = applyValidationChain(compile, conditionIsBoolean);
 
   // Het hart van de compiler
   function compile(expression: Expression): ValidatedTypedEvaluator {
@@ -234,7 +234,7 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
     resultType: TypeType,
     validation1: ValidatedTypedEvaluator
   ): ValidatedTypedEvaluator {
-    return validation1.chain(val1 => check(val1.typeName).map(() => TypedEvaluator(liftEvaluator1(f)(val1.evaluator), resultType)));
+    return chain(validation1, val1 => check(val1.typeName).map(() => TypedEvaluator(liftEvaluator1(f)(val1.evaluator), resultType)));
   }
 
   function apply2(
@@ -244,8 +244,8 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
     validation1: ValidatedTypedEvaluator,
     validation2: ValidatedTypedEvaluator
   ): ValidatedTypedEvaluator {
-    return validation1.chain(val1 =>
-      validation2.chain(val2 =>
+    return chain(validation1, val1 =>
+      chain(validation2, val2 =>
         check(val1.typeName, val2.typeName).map(() => TypedEvaluator(liftEvaluator2(f)(val1.evaluator, val2.evaluator), resultType))
       )
     );
@@ -259,9 +259,9 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
     validation2: ValidatedTypedEvaluator,
     validation3: ValidatedTypedEvaluator
   ): ValidatedTypedEvaluator {
-    return validation1.chain(val1 =>
-      validation2.chain(val2 =>
-        validation3.chain(val3 =>
+    return chain(validation1, val1 =>
+      chain(validation2, val2 =>
+        chain(validation3, val3 =>
           check(val1.typeName, val2.typeName, val3.typeName).map(() =>
             TypedEvaluator(liftEvaluator3(f)(val1.evaluator, val2.evaluator, val3.evaluator), resultType)
           )
@@ -290,25 +290,25 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
 
   // De regels controleren en combineren zodat at run-time ze één voor één geprobeerd worden totdat er een match is
   const validatedCombinedRuleExpression: Validation<RuleExpression> = array.reduce(
+    ruleCfg.rules,
+    ok(() => none),
     (combinedRuleValidation: Validation<RuleExpression>, rule: RuleStyle) => {
       // Hang een regel bij de vorige regels
-      return combinedRuleValidation.chain(combinedRule => {
+      return chain(combinedRuleValidation, combinedRule => {
         // WTF? Deze lambda moet blijkbaar in een {} block zitten of het faalt wanneer gebruikt in externe applicatie.
         // De conditie moet kosjer zijn
         return compileCondition(rule.condition).map(typedEvaluator => (ctx: Context) =>
-          combinedRule(ctx).fold(
+          combinedRule(ctx).foldL(
             () => typedEvaluator.evaluator(ctx).chain(outcome => ((outcome as boolean) ? some(rule.style) : none)),
             stl => some(stl) // (orElse ontbreekt) De verse regel wordt niet meer uitgevoerd als er al een resultaat is.
           )
         );
       });
-    },
-    ok(() => none),
-    ruleCfg.rules
+    }
   );
 
   return validatedCombinedRuleExpression.map((ruleExpression: RuleExpression) => (feature: ol.Feature, resolution: number) => {
     // openlayers kan undefined wel aan, maar de typedefinitie declareert dat niet zo. Zucht.
-    return ruleExpression({ feature: feature, resolution: resolution }).getOrElseValue((undefined as any) as ol.style.Style);
+    return ruleExpression({ feature: feature, resolution: resolution }).getOrElse((undefined as any) as ol.style.Style);
   });
 }
