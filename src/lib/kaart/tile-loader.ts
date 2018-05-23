@@ -1,6 +1,6 @@
-import { List } from "immutable";
-
 import { fromNullable } from "fp-ts/lib/Option";
+import { List } from "immutable";
+import * as ol from "openlayers";
 
 export class TileLoader {
   private images: List<HTMLImageElement> = List.of<HTMLImageElement>();
