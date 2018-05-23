@@ -306,7 +306,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
   zoomNaarResultaat(resultaat: ZoekResultaat) {
     this.toonResultaat = false;
     this.toonHelp = false;
-    resultaat.onclick(resultaat);
+    this.dispatch(prt.ZoekGekliktCmd(resultaat));
     resultaat.kaartInfo.filter(info => !ol.extent.isEmpty(info.extent)).map(info => this.dispatch(prt.VeranderExtentCmd(info.extent)));
   }
 

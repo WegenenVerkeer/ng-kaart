@@ -2,7 +2,7 @@ import { Option } from "fp-ts/lib/Option";
 import { List, Map } from "immutable";
 import * as ol from "openlayers";
 
-import { ZoekResultaten } from "../zoeker/abstract-zoeker";
+import { ZoekResultaat, ZoekResultaten } from "../zoeker/abstract-zoeker";
 
 import * as ke from "./kaart-elementen";
 import { InfoBoodschap } from "./kaart-with-info-model";
@@ -19,6 +19,7 @@ export type Subscription<Msg> =
   | LagenInGroepSubscription<Msg>
   | LaagVerwijderdSubscription<Msg>
   | ZoekerSubscription<Msg>
+  | ZoekerKlikSubscription<Msg>
   | MijnLocatieZoomdoelSubscription<Msg>
   | GeometryChangedSubscription<Msg>
   | TekenenSubscription<Msg>
@@ -78,6 +79,11 @@ export interface ZoekerSubscription<Msg> {
   readonly wrapper: (resultaten: ZoekResultaten) => Msg;
 }
 
+export interface ZoekerKlikSubscription<Msg> {
+  readonly type: "ZoekerKlik";
+  readonly wrapper: (resultaat: ZoekResultaat) => Msg;
+}
+
 export interface MijnLocatieZoomdoelSubscription<Msg> {
   readonly type: "MijnLocatieZoomdoel";
   readonly wrapper: (doel: Option<number>) => Msg;
@@ -134,6 +140,10 @@ export function LaagVerwijderdSubscription<Msg>(msgGen: (laag: ke.ToegevoegdeLaa
 
 export function ZoekerSubscription<Msg>(wrapper: (resultaten: ZoekResultaten) => Msg): Subscription<Msg> {
   return { type: "Zoeker", wrapper: wrapper };
+}
+
+export function ZoekerKlikSubscription<Msg>(wrapper: (resultaat: ZoekResultaat) => Msg): Subscription<Msg> {
+  return { type: "ZoekerKlik", wrapper: wrapper };
 }
 
 export function KaartClickSubscription<Msg>(wrapper: (coordinaat: ol.Coordinate) => Msg): Subscription<Msg> {

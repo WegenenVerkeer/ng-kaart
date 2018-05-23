@@ -70,7 +70,6 @@ export class PerceelZoekResultaat implements ZoekResultaat {
   readonly zoeker: string;
   readonly icoon: SvgIcon | FontIcon;
   readonly kaartInfo: Option<ZoekKaartResultaat>;
-  readonly onclick: (res: ZoekResultaat) => void;
 
   constructor(details: PerceelDetails, index: number, zoeker: string, icoon: SvgIcon, style: ol.style.Style) {
     this.index = index + 1;
@@ -84,7 +83,6 @@ export class PerceelZoekResultaat implements ZoekResultaat {
     this.bron = "Perceel";
     this.zoeker = zoeker;
     this.icoon = icoon;
-    this.onclick = (r: ZoekResultaat) => {};
   }
 }
 

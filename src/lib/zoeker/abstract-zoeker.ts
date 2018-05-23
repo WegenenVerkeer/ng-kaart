@@ -32,7 +32,6 @@ export interface ZoekResultaat {
   readonly bron: string;
   readonly zoeker: string;
   readonly kaartInfo: Option<ZoekKaartResultaat>;
-  readonly onclick: (res: ZoekResultaat) => void;
   readonly icoon: SvgIcon | FontIcon;
 }
 

@@ -126,7 +126,6 @@ export class CrabZoekResultaat implements ZoekResultaat {
   readonly zoeker: string;
   readonly icoon: SvgIcon | FontIcon;
   readonly kaartInfo: Option<ZoekKaartResultaat>;
-  readonly onclick: (res: ZoekResultaat) => void;
 
   constructor(
     x_lambert_72: number,
@@ -150,7 +149,6 @@ export class CrabZoekResultaat implements ZoekResultaat {
     this.bron = bron;
     this.zoeker = zoeker;
     this.icoon = icoon;
-    this.onclick = (r: ZoekResultaat) => {};
   }
 }
 

@@ -30,7 +30,6 @@ export class GoogleWdbZoekResultaat implements ZoekResultaat {
   readonly zoeker: string;
   readonly icoon: SvgIcon | FontIcon;
   readonly kaartInfo: Option<ZoekKaartResultaat>;
-  readonly onclick: (res: ZoekResultaat) => void;
 
   constructor(locatie, index: number, zoeker: string, style: ol.style.Style, icoon: SvgIcon) {
     this.partialMatch = locatie.partialMatch;
@@ -45,7 +44,6 @@ export class GoogleWdbZoekResultaat implements ZoekResultaat {
     this.bron = locatie.bron;
     this.zoeker = zoeker;
     this.icoon = icoon;
-    this.onclick = (r: ZoekResultaat) => {};
   }
 }
 
