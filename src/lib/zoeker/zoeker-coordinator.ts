@@ -2,13 +2,13 @@ import { Map, Set } from "immutable";
 import { Subject } from "rxjs/Rx";
 import { Subscription } from "rxjs/Subscription";
 
-import { AbstractZoeker, ZoekInput, ZoekResultaten } from "./abstract-zoeker";
+import { AbstractZoeker, ZoekInput, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
 
 export class ZoekerCoordinator {
   private zoekers: Array<AbstractZoeker> = Array();
   private zoekerSubscriptions: Map<string, Subscription> = Map();
 
-  constructor(private zoekerSubject: Subject<ZoekResultaten>) {}
+  constructor(private zoekerSubject: Subject<ZoekResultaten>, private zoekerKlikSubj: Subject<ZoekResultaat>) {}
 
   isZoekerGeregistreerd(naam: string): boolean {
     return this.zoekers.some(zoeker => zoeker.naam() === naam);
@@ -35,6 +35,10 @@ export class ZoekerCoordinator {
 
   voegZoekerToe(zoeker: AbstractZoeker) {
     this.zoekers = this.zoekers.concat(zoeker);
+  }
+
+  zoekGeklikt(resultaat: ZoekResultaat) {
+    this.zoekerKlikSubj.next(resultaat);
   }
 
   zoek(input: ZoekInput, zoekers: Set<string>) {

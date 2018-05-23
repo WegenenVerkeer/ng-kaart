@@ -3,7 +3,7 @@ import { List, Set } from "immutable";
 import * as ol from "openlayers";
 import { Subscription as RxSubscription } from "rxjs/Subscription";
 
-import { AbstractZoeker, ZoekInput } from "../zoeker/abstract-zoeker";
+import { AbstractZoeker, ZoekInput, ZoekResultaat } from "../zoeker/abstract-zoeker";
 
 import { BareValidationWrapper, KaartMsg, Subscription, ValidationWrapper } from ".";
 import * as ke from "./kaart-elementen";
@@ -41,6 +41,7 @@ export type Command<Msg extends KaartMsg> =
   | VoegZoekerToeCmd<Msg>
   | VerwijderZoekerCmd<Msg>
   | ZoekCmd<Msg>
+  | ZoekGekliktCmd
   | MeldComponentFoutCmd
   | ZetMijnLocatieZoomCmd
   | VoegInteractieToeCmd
@@ -243,6 +244,11 @@ export interface ZoekCmd<Msg extends KaartMsg> {
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
+export interface ZoekGekliktCmd {
+  readonly type: "ZoekGeklikt";
+  readonly resultaat: ZoekResultaat;
+}
+
 export interface ZetMijnLocatieZoomCmd {
   readonly type: "ZetMijnLocatieZoomStatus";
   readonly doelniveau: Option<number>;
@@ -386,6 +392,10 @@ export function VeranderZoomCmd<Msg extends KaartMsg>(zoom: number, wrapper: Bar
 
 export function VeranderExtentCmd<Msg extends KaartMsg>(extent: ol.Extent): VeranderExtentCmd {
   return { type: "VeranderExtent", extent: extent };
+}
+
+export function ZoekGekliktCmd<Msg extends KaartMsg>(resultaat: ZoekResultaat): ZoekGekliktCmd {
+  return { type: "ZoekGeklikt", resultaat: resultaat };
 }
 
 export function VeranderViewportCmd<Msg extends KaartMsg>(size: ol.Size): VeranderViewportCmd {

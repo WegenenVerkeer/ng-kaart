@@ -3,6 +3,7 @@ import { MatIconRegistry } from "@angular/material";
 import { DomSanitizer } from "@angular/platform-browser";
 import * as ol from "openlayers";
 
+import { IconDescription } from "./abstract-zoeker";
 import { CrabZoekerConfig } from "./crab-zoeker.config";
 import { GoogleWdbLocatieZoekerConfig } from "./google-wdb-locatie-zoeker.config";
 import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
@@ -13,7 +14,7 @@ export type ZoekerRepresentatieType = "Crab" | "Google" | "WDB" | "Perceel";
 
 export interface AbstractRepresentatieService {
   getOlStyle(type: ZoekerRepresentatieType): ol.style.Style;
-  getSvgNaam(type: ZoekerRepresentatieType): string;
+  getSvgIcon(type: ZoekerRepresentatieType): IconDescription;
 }
 
 const googleSvgNaam = "pin_g_vierkant";
@@ -119,7 +120,12 @@ export class DefaultRepresentatieService implements AbstractRepresentatieService
         return this.perceelStyle;
     }
   }
-  getSvgNaam(type: ZoekerRepresentatieType): string {
+
+  getSvgIcon(type: ZoekerRepresentatieType): IconDescription {
+    return { type: "svg", name: this.getSvgName(type) } as IconDescription;
+  }
+
+  private getSvgName(type: ZoekerRepresentatieType): string {
     switch (type) {
       case "Crab":
         return crabSvgNaam;
