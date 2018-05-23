@@ -231,12 +231,10 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
         multiLineString: multiLineStringMiddlePoint,
         polygon: polygonMiddlePoint,
         multiPolygon: polygonMiddlePoint
-      })
-        .map(middlePoint => [createFeature(geometry), createMiddlePointFeature(middlePoint)])
-        .getOrElseValue([createFeature(geometry)]);
+      }).fold(() => [createFeature(geometry)], middlePoint => [createFeature(geometry), createMiddlePointFeature(middlePoint)]);
     }
 
-    return resultaat.kaartInfo.map(kaartInfo => createFeatureAndMiddlePoint(kaartInfo.geometry)).getOrElseValue([]);
+    return resultaat.kaartInfo.fold(() => [], kaartInfo => createFeatureAndMiddlePoint(kaartInfo.geometry));
   }
 
   constructor(parent: KaartComponent, zone: NgZone, private cd: ChangeDetectorRef) {
@@ -374,7 +372,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
     this.extent = this.alleZoekResultaten
       .map(resultaat => resultaat.kaartInfo)
       .reduce(
-        (maxExtent, kaartInfo) => kaartInfo.map(i => ol.extent.extend(maxExtent!, i.extent)).getOrElseValue(maxExtent),
+        (maxExtent, kaartInfo) => kaartInfo.fold(() => maxExtent, i => ol.extent.extend(maxExtent!, i.extent)),
         ol.extent.createEmpty()
       );
 
