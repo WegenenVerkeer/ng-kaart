@@ -15,11 +15,13 @@ export const LagenUiSelector = "Lagenkiezer";
 export interface LagenUiOpties {
   toonLegende: boolean;
   verwijderbareLagen: boolean;
+  verplaatsbareLagen: boolean;
 }
 
-const DefaultOpties: LagenUiOpties = {
+export const DefaultOpties: LagenUiOpties = {
   toonLegende: false,
-  verwijderbareLagen: false
+  verwijderbareLagen: false,
+  verplaatsbareLagen: true
 };
 
 type GapDirection = "Up" | "Down" | "Here";
@@ -65,6 +67,7 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
   readonly heeftDivider$: Observable<boolean>;
   readonly geenLagen$: Observable<boolean>;
   readonly opties$: Observable<LagenUiOpties>;
+  readonly canDrag$: Observable<boolean>;
 
   constructor(parent: KaartComponent, ngZone: NgZone, private readonly cdr: ChangeDetectorRef) {
     super(parent, ngZone);
