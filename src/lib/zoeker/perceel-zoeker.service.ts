@@ -1,13 +1,21 @@
 import { HttpClient } from "@angular/common/http";
 import { Inject, Injectable } from "@angular/core";
+import { Option, some } from "fp-ts/lib/Option";
 import { Map } from "immutable";
 import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
 import { map, shareReplay } from "rxjs/operators";
 
-import { AbstractZoeker, geoJSONOptions, StringZoekInput, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
+import {
+  AbstractZoeker,
+  geoJSONOptions,
+  IconDescription,
+  StringZoekInput,
+  ZoekKaartResultaat,
+  ZoekResultaat,
+  ZoekResultaten
+} from "./abstract-zoeker";
 import { CrabZoekerConfig } from "./crab-zoeker.config";
-import { LocatorServiceResult } from "./crab-zoeker.service";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "./zoeker-representatie.service";
 import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
 
@@ -59,27 +67,28 @@ export class PerceelZoekResultaat implements ZoekResultaat {
   readonly omschrijving: string;
   readonly bron: string;
   readonly zoeker: string;
-  readonly geometry: any;
-  readonly icoon: string;
-  readonly style: ol.style.Style;
-  readonly extent: ol.Extent;
+  readonly icoon: IconDescription;
+  readonly kaartInfo: Option<ZoekKaartResultaat>;
 
-  constructor(details: PerceelDetails, index: number, zoeker: string, icoon: string, style: ol.style.Style) {
+  constructor(details: PerceelDetails, index: number, zoeker: string, icoon: IconDescription, style: ol.style.Style) {
     this.index = index + 1;
-    this.geometry = new ol.format.GeoJSON(geoJSONOptions).readGeometry(details.shape);
-    this.extent = this.geometry.getExtent();
+    const geometry = new ol.format.GeoJSON(geoJSONOptions).readGeometry(details.shape);
+    this.kaartInfo = some({
+      geometry: geometry,
+      extent: geometry.getExtent(),
+      style: style
+    });
     this.omschrijving = details.capakey;
     this.bron = "Perceel";
     this.zoeker = zoeker;
     this.icoon = icoon;
-    this.style = style;
   }
 }
 
 @Injectable()
 export class PerceelZoekerService implements AbstractZoeker {
   private readonly crabZoekerConfig: CrabZoekerConfig;
-  private legende: Map<string, string>;
+  private legende: Map<string, IconDescription>;
 
   constructor(
     private readonly http: HttpClient,
@@ -87,7 +96,7 @@ export class PerceelZoekerService implements AbstractZoeker {
     @Inject(ZOEKER_REPRESENTATIE) private zoekerRepresentatie: AbstractRepresentatieService
   ) {
     this.crabZoekerConfig = new CrabZoekerConfig(zoekerConfigData.crab);
-    this.legende = Map.of(this.naam(), this.zoekerRepresentatie.getSvgNaam("Perceel"));
+    this.legende = Map.of(this.naam(), this.zoekerRepresentatie.getSvgIcon("Perceel"));
   }
 
   getAlleGemeenten$(): Observable<Gemeente[]> {
@@ -132,7 +141,7 @@ export class PerceelZoekerService implements AbstractZoeker {
                 details,
                 0,
                 this.naam(),
-                this.zoekerRepresentatie.getSvgNaam("Perceel"),
+                this.zoekerRepresentatie.getSvgIcon("Perceel"),
                 this.zoekerRepresentatie.getOlStyle("Perceel")
               )
             ],

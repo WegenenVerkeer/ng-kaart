@@ -866,6 +866,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
+    function zoekGeklikt(cmnd: prt.ZoekGekliktCmd): ModelWithResult<Msg> {
+      model.zoekerCoordinator.zoekGeklikt(cmnd.resultaat);
+      return ModelWithResult(model);
+    }
+
     function zetMijnLocatieZoom(cmnd: prt.ZetMijnLocatieZoomCmd): ModelWithResult<Msg> {
       model.mijnLocatieZoomDoelSubj.next(cmnd.doelniveau);
       return ModelWithResult(model);
@@ -957,6 +962,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return modelWithSubscriptionResult("Zoeker", model.zoekerSubj.subscribe(m => msgConsumer(sub.wrapper(m))));
       }
 
+      function subscribeToZoekerKlik(sub: prt.ZoekerKlikSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult("ZoekerKlik", model.zoekerKlikSubj.subscribe(m => msgConsumer(sub.wrapper(m))));
+      }
+
       function subscribeToMijnLocatieZoomdoel(sub: prt.MijnLocatieZoomdoelSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
           "MijnLocatieZoomdoel",
@@ -1011,6 +1020,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToMijnLocatieZoomdoel(cmnd.subscription);
         case "Zoeker":
           return subscribeToZoeker(cmnd.subscription);
+        case "ZoekerKlik":
+          return subscribeToZoekerKlik(cmnd.subscription);
         case "GeometryChanged":
           return subscribeToGeometryChanged(cmnd.subscription);
         case "Tekenen":
@@ -1088,6 +1099,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return verwijderZoeker(cmd);
       case "Zoek":
         return zoek(cmd);
+      case "ZoekGeklikt":
+        return zoekGeklikt(cmd);
       case "ZetMijnLocatieZoomStatus":
         return zetMijnLocatieZoom(cmd);
       case "VoegInteractieToe":
