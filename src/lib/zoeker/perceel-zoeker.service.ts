@@ -8,10 +8,9 @@ import { map, shareReplay } from "rxjs/operators";
 
 import {
   AbstractZoeker,
-  FontIcon,
   geoJSONOptions,
+  IconDescription,
   StringZoekInput,
-  SvgIcon,
   ZoekKaartResultaat,
   ZoekResultaat,
   ZoekResultaten
@@ -68,10 +67,10 @@ export class PerceelZoekResultaat implements ZoekResultaat {
   readonly omschrijving: string;
   readonly bron: string;
   readonly zoeker: string;
-  readonly icoon: SvgIcon | FontIcon;
+  readonly icoon: IconDescription;
   readonly kaartInfo: Option<ZoekKaartResultaat>;
 
-  constructor(details: PerceelDetails, index: number, zoeker: string, icoon: SvgIcon, style: ol.style.Style) {
+  constructor(details: PerceelDetails, index: number, zoeker: string, icoon: IconDescription, style: ol.style.Style) {
     this.index = index + 1;
     const geometry = new ol.format.GeoJSON(geoJSONOptions).readGeometry(details.shape);
     this.kaartInfo = some({
@@ -89,7 +88,7 @@ export class PerceelZoekResultaat implements ZoekResultaat {
 @Injectable()
 export class PerceelZoekerService implements AbstractZoeker {
   private readonly crabZoekerConfig: CrabZoekerConfig;
-  private legende: Map<string, SvgIcon | FontIcon>;
+  private legende: Map<string, IconDescription>;
 
   constructor(
     private readonly http: HttpClient,

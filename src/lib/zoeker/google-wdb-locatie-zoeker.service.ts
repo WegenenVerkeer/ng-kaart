@@ -10,10 +10,9 @@ import { catchError, flatMap, map } from "rxjs/operators";
 
 import {
   AbstractZoeker,
-  FontIcon,
   geoJSONOptions,
+  IconDescription,
   StringZoekInput,
-  SvgIcon,
   ZoekKaartResultaat,
   ZoekResultaat,
   ZoekResultaten
@@ -28,10 +27,10 @@ export class GoogleWdbZoekResultaat implements ZoekResultaat {
   readonly omschrijving: string;
   readonly bron: string;
   readonly zoeker: string;
-  readonly icoon: SvgIcon | FontIcon;
+  readonly icoon: IconDescription;
   readonly kaartInfo: Option<ZoekKaartResultaat>;
 
-  constructor(locatie, index: number, zoeker: string, style: ol.style.Style, icoon: SvgIcon) {
+  constructor(locatie, index: number, zoeker: string, style: ol.style.Style, icoon: IconDescription) {
     this.partialMatch = locatie.partialMatch;
     this.index = index + 1;
     const geometry = new ol.format.GeoJSON(geoJSONOptions).readGeometry(locatie.locatie);
@@ -92,7 +91,7 @@ interface ExtendedPlaceResult extends google.maps.places.PlaceResult, ExtendedRe
 export class GoogleWdbLocatieZoekerService implements AbstractZoeker {
   private readonly googleWdbLocatieZoekerConfig: GoogleWdbLocatieZoekerConfig;
   private _cache: Promise<GoogleServices> | null = null;
-  private legende: Map<string, SvgIcon | FontIcon>;
+  private legende: Map<string, IconDescription>;
 
   private readonly locatieZoekerUrl: string;
 

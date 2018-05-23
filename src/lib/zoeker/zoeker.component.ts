@@ -29,7 +29,7 @@ import { KaartComponent } from "../kaart/kaart.component";
 import { kaartLogger } from "../kaart/log";
 import { matchGeometryType } from "../util/geometryTypes";
 
-import { compareResultaten, FontIcon, StringZoekInput, SvgIcon, ZoekInput, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
+import { compareResultaten, IconDescription, StringZoekInput, ZoekInput, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
 
 const ZoekerLaagNaam = "Zoeker";
 
@@ -166,7 +166,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
   zoekVeld = new FormControl();
   alleZoekResultaten: ZoekResultaat[] = [];
   alleFouten: Fout[] = [];
-  legende: Map<string, SvgIcon | FontIcon> = new Map<string, SvgIcon | FontIcon>();
+  legende: Map<string, IconDescription> = new Map<string, IconDescription>();
   legendeKeys: string[] = [];
   toonHelp = false;
   toonResultaat = true;

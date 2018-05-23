@@ -9,13 +9,8 @@ export const geoJSONOptions = <ol.olx.format.GeoJSONOptions>{
   featureProjection: undefined
 };
 
-export interface SvgIcon {
-  type: "svg";
-  readonly name: string;
-}
-
-export interface FontIcon {
-  type: "font";
+export interface IconDescription {
+  type: "svg" | "font";
   readonly name: string;
 }
 
@@ -32,7 +27,7 @@ export interface ZoekResultaat {
   readonly bron: string;
   readonly zoeker: string;
   readonly kaartInfo: Option<ZoekKaartResultaat>;
-  readonly icoon: SvgIcon | FontIcon;
+  readonly icoon: IconDescription;
 }
 
 export class ZoekResultaten {
@@ -40,7 +35,7 @@ export class ZoekResultaten {
     public zoeker: string,
     public fouten: string[] = [],
     public resultaten: ZoekResultaat[] = [],
-    public legende: Map<string, SvgIcon | FontIcon> = Map()
+    public legende: Map<string, IconDescription> = Map()
   ) {}
 
   limiteerAantalResultaten(maxAantal: number): ZoekResultaten {

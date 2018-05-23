@@ -9,9 +9,8 @@ import { map, mergeAll, mergeMap, reduce, shareReplay } from "rxjs/operators";
 
 import {
   AbstractZoeker,
-  FontIcon,
+  IconDescription,
   StringZoekInput,
-  SvgIcon,
   ZoekInput,
   ZoekKaartResultaat,
   ZoekResultaat,
@@ -124,7 +123,7 @@ export class CrabZoekResultaat implements ZoekResultaat {
   readonly omschrijving: string;
   readonly bron: string;
   readonly zoeker: string;
-  readonly icoon: SvgIcon | FontIcon;
+  readonly icoon: IconDescription;
   readonly kaartInfo: Option<ZoekKaartResultaat>;
 
   constructor(
@@ -134,7 +133,7 @@ export class CrabZoekResultaat implements ZoekResultaat {
     bron: string,
     index: number,
     zoeker: string,
-    icoon: SvgIcon,
+    icoon: IconDescription,
     style: ol.style.Style,
     extent?: ol.Extent
   ) {
@@ -155,7 +154,7 @@ export class CrabZoekResultaat implements ZoekResultaat {
 @Injectable()
 export class CrabZoekerService implements AbstractZoeker {
   private readonly crabZoekerConfig: CrabZoekerConfig;
-  private legende: Map<string, SvgIcon | FontIcon>;
+  private legende: Map<string, IconDescription>;
 
   constructor(
     private readonly http: HttpClient,
