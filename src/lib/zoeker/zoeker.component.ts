@@ -229,7 +229,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
       multiPolygon: polygonMiddlePoint
     })
       .map(middlePoint => [feature, createMiddlePointFeature(middlePoint)])
-      .getOrElseValue([feature]);
+      .getOrElse([feature]);
   }
 
   constructor(parent: KaartComponent, zone: NgZone, private cd: ChangeDetectorRef) {

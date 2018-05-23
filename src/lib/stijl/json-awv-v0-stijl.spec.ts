@@ -189,6 +189,6 @@ describe("De json AWV V0 interpreter", () => {
       }
     });
     expect(result.isFailure()).toBe(true);
-    expect(result.value).toContain("geen veld 'radius'");
+    expect(result.value[0]).toContain("geen veld 'radius'");
   });
 });

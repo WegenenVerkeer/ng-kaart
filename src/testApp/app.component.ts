@@ -13,6 +13,7 @@ import * as prt from "../lib/kaart/kaart-protocol";
 import { definitieToStyle, kaartLogger } from "../lib/public_api";
 import { AWV0StyleFunctionDescription, definitieToStyleFunction } from "../lib/stijl";
 import { offsetStyleFunction } from "../lib/stijl/offset-stijl-function";
+import { join } from "../lib/util/validation";
 import { GoogleWdbLocatieZoekerService } from "../lib/zoeker";
 
 @Component({
@@ -160,16 +161,16 @@ export class AppComponent {
   readonly districtStyle: ol.style.Style = definitieToStyle(
     "json",
     '{"version": "awv-v0", "definition": {"stroke": {"color": "rgba(0,127,255,0.8)", "width": 1.5}}}'
-  ).getOrElse(msg => {
-    throw new Error(`slecht formaat ${msg}`);
+  ).getOrElseL(msg => {
+    throw new Error(`slecht formaat ${join(msg)}`);
   });
 
   readonly kolkStyle: ol.style.Style = definitieToStyle(
     "json",
     // tslint:disable-next-line:max-line-length
     '{"version": "awv-v0", "definition": {"circle": {"stroke": {"color": "navy", "width": 1.5}, "fill": {"color": "dodgerblue"}, "radius": 6}}}'
-  ).getOrElse(msg => {
-    throw new Error(`slecht formaat ${msg}`);
+  ).getOrElseL(msg => {
+    throw new Error(`slecht formaat ${join(msg)}`);
   });
 
   readonly fietspadStyle: ol.StyleFunction = definitieToStyleFunction(
@@ -270,7 +271,7 @@ export class AppComponent {
     return this.getekendeGeom
       .filter(g => g.getType() === "LineString" || g.getType() === "Polygon")
       .map(g => Math.round(ol.Sphere.getLength(g) / 1000 * 100) / 100 + "km")
-      .getOrElseValue("(leeg)");
+      .getOrElse("(leeg)");
   }
 
   geomGetekend(geom: ol.geom.Geometry) {

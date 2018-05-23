@@ -450,13 +450,13 @@ describe("de stijl functie", () => {
           })
         );
         expect(result.isFailure()).toBe(true);
-        expect(result.value).toContain("'awv-v314' wordt niet ondersteund");
+        expect(result.value[0]).toContain("'awv-v314' wordt niet ondersteund");
       });
 
       it("moet een ongeldige JSON detecteren", () => {
         const result = definitieToStyleFunction("json", "dit is geen JSON");
         expect(result.isFailure()).toBe(true);
-        expect(result.value).toContain("geen geldige JSON");
+        expect(result.value[0]).toContain("geen geldige JSON");
       });
 
       it("mag enkel boolean resultaten toelaten", () => {
@@ -475,8 +475,8 @@ describe("de stijl functie", () => {
           })
         );
         expect(result.isFailure()).toBe(true);
-        expect(result.value).toContain("typecontrole:");
-        expect(result.value).toContain("moet een 'boolean' opleveren");
+        expect(result.value[0]).toContain("typecontrole:");
+        expect(result.value[0]).toContain("moet een 'boolean' opleveren");
       });
 
       it("mag enkel een vergelijking met 2 argumenten toelaten", () => {
@@ -495,8 +495,8 @@ describe("de stijl functie", () => {
           })
         );
         expect(result.isFailure()).toBe(true);
-        expect(result.value).toContain("syntaxcontrole:");
-        expect(result.value).toContain("heeft geen veld 'right'");
+        expect(result.value[0]).toContain("syntaxcontrole:");
+        expect(result.value[0]).toContain("heeft geen veld 'right'");
       });
       it("mag enkel een groottevergelijking met 2 numerieke argumenten toelaten", () => {
         const result = definitieToStyleFunction(
@@ -514,8 +514,8 @@ describe("de stijl functie", () => {
           })
         );
         expect(result.isFailure()).toBe(true);
-        expect(result.value).toContain("typecontrole:");
-        expect(result.value).toContain("'string' en 'string' gevonden, maar telkens 'number' verwacht");
+        expect(result.value[0]).toContain("typecontrole:");
+        expect(result.value[0]).toContain("'string' en 'string' gevonden, maar telkens 'number' verwacht");
       });
       it("mag enkel een vergelijking met 2 gelijke argumenten toelaten", () => {
         const result = definitieToStyleFunction(
@@ -533,8 +533,8 @@ describe("de stijl functie", () => {
           })
         );
         expect(result.isFailure()).toBe(true);
-        expect(result.value).toContain("typecontrole:");
-        expect(result.value).toContain("verwacht dat 'string' en 'number' gelijk zijn");
+        expect(result.value[0]).toContain("typecontrole:");
+        expect(result.value[0]).toContain("verwacht dat 'string' en 'number' gelijk zijn");
       });
     });
   });

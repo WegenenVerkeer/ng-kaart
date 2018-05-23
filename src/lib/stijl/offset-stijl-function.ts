@@ -27,7 +27,7 @@ export function offsetStyleFunction(
       return style;
     }
 
-    return getValue(feature, ident8Veld).fold(
+    return getValue(feature, ident8Veld).foldL(
       () => {
         kaartLogger.warn(`Ident8 is verplicht, er wordt geen offset getekend voor feature ${feature}`);
         return style;

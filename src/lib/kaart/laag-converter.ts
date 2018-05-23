@@ -43,19 +43,19 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
       source = new ol.source.WMTS(config.wmtsOptions);
     } else {
       const config = l.config as ke.WmtsManualConfig;
-      extent = config.extent.getOrElseValue(kaart.config.defaults.extent);
+      extent = config.extent.getOrElse(kaart.config.defaults.extent);
       source = new ol.source.WMTS({
         projection: kaart.config.srs,
         urls: config.urls.toArray(),
         tileGrid: new ol.tilegrid.WMTS({
-          origin: config.origin.getOrElseValue(ol.extent.getTopLeft(extent)),
+          origin: config.origin.getOrElseL(() => ol.extent.getTopLeft(extent)),
           resolutions: kaart.config.defaults.resolutions,
           matrixIds: config.matrixIds
         }),
         tileLoadFunction: kaart.tileLoader.tileLoadFunction,
         layer: l.naam,
-        style: config.style.getOrElseValue(""),
-        format: l.format.getOrElseValue("image/png"),
+        style: config.style.getOrElse(""),
+        format: l.format.getOrElse("image/png"),
         matrixSet: l.matrixSet
       });
     }
@@ -85,11 +85,11 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
   }
 
   function createVectorLayer(vectorlaag: ke.VectorLaag) {
-    if (array.isOutOfBound(vectorlaag.minZoom)(kaart.config.defaults.resolutions)) {
+    if (array.isOutOfBound(vectorlaag.minZoom, kaart.config.defaults.resolutions)) {
       kaartLogger.error(`Ongeldige minZoom voor ${vectorlaag.titel}:
         ${vectorlaag.minZoom}, moet tussen 0 en ${kaart.config.defaults.resolutions.length - 1} liggen`);
     }
-    if (array.isOutOfBound(vectorlaag.maxZoom)(kaart.config.defaults.resolutions)) {
+    if (array.isOutOfBound(vectorlaag.maxZoom, kaart.config.defaults.resolutions)) {
       kaartLogger.error(`Ongeldige maxZoom voor ${vectorlaag.titel}:
         ${vectorlaag.maxZoom}, moet tussen 0 en ${kaart.config.defaults.resolutions.length - 1} liggen`);
     }
@@ -105,7 +105,7 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
     return new ol.layer.Vector({
       source: vectorlaag.source,
       visible: true,
-      style: vectorlaag.styleSelector.map(toStylish).getOrElseValue(kaart.config.defaults.style),
+      style: vectorlaag.styleSelector.map(toStylish).getOrElse(kaart.config.defaults.style),
       minResolution: array
         .index(vectorlaag.maxZoom, kaart.config.defaults.resolutions)
         .getOrElse(kaart.config.defaults.resolutions[kaart.config.defaults.resolutions.length - 1]),

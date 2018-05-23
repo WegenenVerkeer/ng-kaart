@@ -39,7 +39,7 @@ export abstract class KaartLaagComponent implements OnInit, OnDestroy {
   }
 
   protected gekozenLaagGroep(): Laaggroep {
-    return fromNullable(this.groep).getOrElseValue(this.laaggroep());
+    return fromNullable(this.groep).getOrElse(this.laaggroep());
   }
 
   protected dispatch(evt: prt.Command<KaartInternalMsg>) {

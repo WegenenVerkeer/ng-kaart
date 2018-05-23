@@ -104,7 +104,7 @@ export class KaartWmtsLaagComponent extends KaartLaagComponent implements OnInit
         "?layer=" +
         encodeURIComponent(this.laagNaam) +
         "&style=" +
-        encodeURIComponent(config.style.getOrElseValue("")) +
+        encodeURIComponent(config.style.getOrElse("")) +
         "&tilematrixset=" +
         encodeURIComponent(this.matrixSet) +
         "&Service=WMTS&Request=GetTile&Version=1.0.0&WIDTH=256&HEIGHT=256" +
