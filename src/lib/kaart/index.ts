@@ -45,33 +45,16 @@ import { KaartVoorwaardenComponent } from "./voorwaarden/kaart-voorwaarden.compo
 import { KaartZoomComponent } from "./zoom/kaart-zoom.component";
 
 const components: any[] = [
-  ClassicSchaalComponent,
-  ClassicVoorwaardenComponent,
-  ClassicCopyrightComponent,
-  ClassicLagenkiezerComponent,
   KaartComponent,
-  ClassicAchtergrondSelectorComponent,
-  KaartClassicComponent,
-  ClassicVolledigSchermComponent,
-  ClassicOrthoLaagComponent,
   KaartZoomComponent,
   KaartMijnLocatieComponent,
-  ClassicStandaardInteractiesComponent,
   KaartTekenLaagComponent,
   KaartTekenComponent,
-  ClassicFeaturesLaagComponent,
-  ClassicVectorLaagComponent,
-  ClassicNosqlfsLaagComponent,
   KaartCopyrightComponent,
   KaartOpenLayersStyleComponent,
   KaartSchaalComponent,
   KaartVoorwaardenComponent,
   KaartCopyrightComponent,
-  ClassicTilecacheLaagComponent,
-  ClassicGeoserverLaagComponent,
-  ClassicWmsLaagComponent,
-  ClassicWmtsLaagComponent,
-  ClassicBlancoLaagComponent,
   KaartAchtergrondSelectorComponent,
   KaartAchtergrondTileComponent,
   KaartOpenStreetViewComponent,
@@ -135,7 +118,7 @@ export class KaartModule {
   static forRoot(config: KaartConfig): ModuleWithProviders {
     return {
       ngModule: KaartModule,
-      providers: [{ provide: KAART_CFG, useValue: config }, ReplaySubjectKaartCmdDispatcher, KaartClassicComponent]
+      providers: [{ provide: KAART_CFG, useValue: config }, ReplaySubjectKaartCmdDispatcher]
     };
   }
 
