@@ -11,7 +11,7 @@ import { classicMsgSubscriptionCmdOperator, KaartClassicComponent } from "./kaar
 import { KaartComponentBase } from "./kaart-component-base";
 import { TekenSettings } from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
-import { TekenenUISelector } from "./kaart-teken-laag.component";
+import { TekenenUiSelector } from "./kaart-teken-laag.component";
 import * as ss from "./stijl-selector";
 
 @Component({
@@ -45,8 +45,8 @@ export class KaartTekenComponent extends KaartComponentBase implements OnInit {
   constructor(readonly kaart: KaartClassicComponent, zone: NgZone) {
     super(zone);
 
-    this.initialising$.subscribe(() => this.kaart.dispatch(prt.VoegUiElementToe(TekenenUISelector)));
-    this.destroying$.subscribe(() => this.kaart.dispatch(prt.VerwijderUiElement(TekenenUISelector)));
+    this.initialising$.subscribe(() => this.kaart.dispatch(prt.VoegUiElementToe(TekenenUiSelector)));
+    this.destroying$.subscribe(() => this.kaart.dispatch(prt.VerwijderUiElement(TekenenUiSelector)));
   }
 
   ngOnInit() {

@@ -163,6 +163,7 @@ export * from "./kaart-laag.component";
 export * from "./schaal/kaart-schaal.component";
 export * from "./kaart-standaard-interacties.component";
 export * from "./kaart-standaard-knoppen.component";
+export * from "./kaart-teken-laag.component";
 export * from "./kaart-teken-polygoon-laag.component";
 export * from "./kaart-toon-features.component";
 export * from "./kaart-vector-laag.component";
