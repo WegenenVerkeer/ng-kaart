@@ -31,7 +31,7 @@ import { KaartInfoBoodschapComponent } from "./info-boodschappen/kaart-info-bood
 import { KaartInfoBoodschappenComponent } from "./info-boodschappen/kaart-info-boodschappen.component";
 import { KAART_CFG, KaartConfig } from "./kaart-config";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
-import { KaartKnopVolledigSchermComponent } from "./kaart-knop-volledig-scherm.component";
+import { ClassicVolledigSchermComponent } from "../classic/volledig-scherm/classic-volledig-scherm.component";
 import { KaartKnopZoomSliderComponent } from "./kaart-knop-zoom-slider.component";
 import { KaartMijnLocatieComponent } from "./kaart-mijn-locatie.component";
 import { KaartOpenStreetViewComponent } from "./kaart-open-street-view.component";
@@ -55,7 +55,7 @@ const components: any[] = [
   KaartComponent,
   ClassicAchtergrondSelectorComponent,
   KaartClassicComponent,
-  KaartKnopVolledigSchermComponent,
+  ClassicVolledigSchermComponent,
   KaartKnopZoomSliderComponent,
   ClassicOrthoLaagComponent,
   KaartZoomComponent,
@@ -158,7 +158,7 @@ export * from "./copyright/kaart-copyright.component";
 export * from "./kaart-openlayers.component";
 export * from "./voorwaarden/kaart-voorwaarden.component";
 export * from "./copyright/kaart-copyright.component";
-export * from "./kaart-knop-volledig-scherm.component";
+export * from "../classic/volledig-scherm/classic-volledig-scherm.component";
 export * from "./kaart-knop-zoom-slider.component";
 export * from "../classic/lagen/classic-laag.component";
 export * from "./schaal/kaart-schaal.component";

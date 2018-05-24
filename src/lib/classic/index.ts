@@ -12,4 +12,5 @@ export * from "./lagen/classic-wms-laag.component";
 export * from "./lagen/classic-wmts-laag.component";
 export * from "./lagenkiezer/classic-lagenkiezer.component";
 export * from "./schaal/classic-schaal.component";
+export * from "./volledig-scherm/classic-volledig-scherm.component";
 export * from "./voorwaarden/classic-voorwaarden.component";
