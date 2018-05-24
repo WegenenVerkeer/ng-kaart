@@ -15,11 +15,13 @@ export const LagenUiSelector = "Lagenkiezer";
 export interface LagenUiOpties {
   toonLegende: boolean;
   verwijderbareLagen: boolean;
+  verplaatsbareLagen: boolean;
 }
 
-const DefaultOpties: LagenUiOpties = {
+export const DefaultOpties: LagenUiOpties = {
   toonLegende: false,
-  verwijderbareLagen: false
+  verwijderbareLagen: false,
+  verplaatsbareLagen: true
 };
 
 type GapDirection = "Up" | "Down" | "Here";

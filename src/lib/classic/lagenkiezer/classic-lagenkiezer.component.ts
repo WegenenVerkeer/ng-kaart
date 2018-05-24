@@ -1,21 +1,21 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
 
-import { KaartClassicComponent } from "../kaart/kaart-classic.component";
-import { UiElementOpties, VerwijderUiElement, VoegUiElementToe, ZetUiElementOpties } from "../kaart/kaart-protocol-commands";
-
-import { LagenUiOpties, LagenUiSelector } from "./lagenkiezer.component";
+import { KaartClassicComponent } from "../../kaart/kaart-classic.component";
+import { VerwijderUiElement, VoegUiElementToe, ZetUiElementOpties } from "../../kaart/kaart-protocol-commands";
+import { DefaultOpties, LagenUiOpties, LagenUiSelector } from "../../lagenkiezer/lagenkiezer.component";
 
 @Component({
-  selector: "awv-kaart-lagenkiezer-config",
+  selector: "awv-kaart-lagenkiezer",
   template: ""
 })
-export class LagenkiezerConfigComponent implements OnInit, OnDestroy, OnChanges {
+export class ClassicLagenkiezerComponent implements OnInit, OnDestroy, OnChanges {
   constructor(private readonly kaart: KaartClassicComponent) {}
 
   @Input() titels: string[] = []; // TODO nog te implementeren om te beperken tot deze
 
-  @Input() toonLegende = false;
-  @Input() verwijderbareLagen = false;
+  @Input() toonLegende = DefaultOpties.toonLegende;
+  @Input() verwijderbareLagen = DefaultOpties.verwijderbareLagen;
+  @Input() verplaatsbareLagen = DefaultOpties.verplaatsbareLagen;
 
   ngOnInit() {
     this.kaart.dispatch(VoegUiElementToe(LagenUiSelector));
@@ -33,7 +33,8 @@ export class LagenkiezerConfigComponent implements OnInit, OnDestroy, OnChanges 
   private opties(): LagenUiOpties {
     return {
       toonLegende: this.toonLegende,
-      verwijderbareLagen: this.verwijderbareLagen
+      verwijderbareLagen: this.verwijderbareLagen,
+      verplaatsbareLagen: this.verplaatsbareLagen
     };
   }
 }
