@@ -6,7 +6,7 @@ import { KaartInternalMsg, kaartLogOnlyWrapper } from "../../kaart/kaart-interna
 import * as prt from "../../kaart/kaart-protocol";
 import { KaartClassicComponent } from "../kaart-classic.component";
 
-export abstract class KaartLaagComponent implements OnInit, OnDestroy {
+export abstract class ClassicLaagComponent implements OnInit, OnDestroy {
   @Input() titel = "";
   @Input() zichtbaar = true;
   @Input() groep: Laaggroep | undefined; // Heeft voorrang op std ingesteld via laaggroep

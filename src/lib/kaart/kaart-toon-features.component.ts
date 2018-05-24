@@ -3,7 +3,7 @@ import { List } from "immutable";
 import * as ol from "openlayers";
 
 import { KaartClassicComponent } from "../classic/kaart-classic.component";
-import { KaartVectorLaagComponent } from "../classic/lagen/kaart-vector-laag.component";
+import { ClassicVectorLaagComponent } from "../classic/lagen/classic-vector-laag.component";
 
 import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
@@ -13,7 +13,7 @@ import * as prt from "./kaart-protocol";
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class KaartFeaturesLaagComponent extends KaartVectorLaagComponent implements OnInit, OnDestroy, DoCheck {
+export class KaartFeaturesLaagComponent extends ClassicVectorLaagComponent implements OnInit, OnDestroy, DoCheck {
   @Input() features = [] as ol.Feature[];
 
   // TODO combineren met 'selecteerbaar' van kaart-vector-laag

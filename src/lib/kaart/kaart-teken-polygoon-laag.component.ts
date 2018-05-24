@@ -1,6 +1,6 @@
 import { Component, ViewEncapsulation } from "@angular/core";
 
-import { KaartVectorLaagComponent } from "../classic/lagen/kaart-vector-laag.component";
+import { ClassicVectorLaagComponent } from "../classic/lagen/classic-vector-laag.component";
 
 import { KaartClassicComponent } from "../classic/kaart-classic.component";
 
@@ -9,7 +9,7 @@ import { KaartClassicComponent } from "../classic/kaart-classic.component";
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class KaartTekenPolygoonLaagComponent extends KaartVectorLaagComponent {
+export class KaartTekenPolygoonLaagComponent extends ClassicVectorLaagComponent {
   constructor(kaart: KaartClassicComponent) {
     super(kaart);
     throw new Error("Nog niet geïmplementeerd");

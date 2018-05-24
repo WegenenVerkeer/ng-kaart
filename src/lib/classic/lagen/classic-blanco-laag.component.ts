@@ -3,7 +3,7 @@ import { Component, Input, ViewEncapsulation } from "@angular/core";
 import { BlancoLaag, BlancoType, Laaggroep } from "../../kaart/kaart-elementen";
 import { KaartClassicComponent } from "../kaart-classic.component";
 
-import { KaartLaagComponent } from "./kaart-laag.component";
+import { ClassicLaagComponent } from "./classic-laag.component";
 
 const blancoLaag = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
 
@@ -12,7 +12,7 @@ const blancoLaag = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALA
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class KaartBlancoLaagComponent extends KaartLaagComponent {
+export class ClassicBlancoLaagComponent extends ClassicLaagComponent {
   @Input() titel = "Blanco";
 
   constructor(kaart: KaartClassicComponent) {

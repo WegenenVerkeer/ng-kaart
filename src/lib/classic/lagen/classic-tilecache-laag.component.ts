@@ -3,32 +3,32 @@ import { fromNullable } from "fp-ts/lib/Option";
 import { List } from "immutable";
 
 import { KAART_CFG, KaartConfig } from "../../kaart/kaart-config";
-import { TiledWmsType, WmsLaag } from "../../kaart/kaart-elementen";
+import * as ke from "../../kaart/kaart-elementen";
 import { KaartClassicComponent } from "../kaart-classic.component";
 
-import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
+import { ClassicWmsLaagComponent } from "./classic-wms-laag.component";
 
 @Component({
-  selector: "awv-kaart-ortho-laag",
+  selector: "awv-kaart-tilecache-laag",
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class KaartOrthoLaagComponent extends KaartWmsLaagComponent {
+export class ClassicTilecacheLaagComponent extends ClassicWmsLaagComponent {
   constructor(kaart: KaartClassicComponent, @Inject(KAART_CFG) private readonly config: KaartConfig) {
     super(kaart);
   }
 
-  createLayer(): WmsLaag {
+  createLayer(): ke.WmsLaag {
     return {
-      type: TiledWmsType,
+      type: ke.TiledWmsType,
       titel: this.titel,
-      naam: this.config.orthofotomozaiek.naam,
-      urls: List(this.config.orthofotomozaiek.urls),
+      naam: this.laagNaam,
+      urls: List(this.config.tilecache.urls),
       versie: fromNullable(this.versie),
       tileSize: fromNullable(this.tileSize),
       format: fromNullable(this.format),
       opacity: fromNullable(this.opacity),
-      backgroundUrl: this.backgroundUrl(List(this.config.orthofotomozaiek.urls), this.config.orthofotomozaiek.naam),
+      backgroundUrl: this.backgroundUrl(List(this.config.tilecache.urls), this.laagNaam),
       minZoom: this.minZoom,
       maxZoom: this.maxZoom
     };

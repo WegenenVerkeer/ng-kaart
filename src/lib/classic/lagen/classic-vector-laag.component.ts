@@ -11,14 +11,14 @@ import { getDefaultSelectionStyleFunction, getDefaultStyleFunction } from "../..
 import { forEach, orElse } from "../../util/option";
 import { KaartClassicComponent } from "../kaart-classic.component";
 
-import { KaartLaagComponent } from "./kaart-laag.component";
+import { ClassicLaagComponent } from "./classic-laag.component";
 
 @Component({
   selector: "awv-kaart-vector-laag",
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class KaartVectorLaagComponent extends KaartLaagComponent {
+export class ClassicVectorLaagComponent extends ClassicLaagComponent {
   @Input() source = new ol.source.Vector();
   @Input() style?: ol.style.Style = undefined; // heeft voorrang op styleFunction
   @Input() styleFunction?: ol.StyleFunction = getDefaultStyleFunction(); // TODO combineren met style tot type Stylish

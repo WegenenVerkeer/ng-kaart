@@ -8,14 +8,14 @@ import { classicLogger } from "../../kaart-classic/log";
 import * as ke from "../../kaart/kaart-elementen";
 import { KaartClassicComponent } from "../kaart-classic.component";
 
-import { KaartLaagComponent } from "./kaart-laag.component";
+import { ClassicLaagComponent } from "./classic-laag.component";
 
 @Component({
   selector: "awv-kaart-wmts-laag",
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class KaartWmtsLaagComponent extends KaartLaagComponent implements OnInit {
+export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements OnInit {
   @Input() laagNaam: string;
   @Input() tiled = true;
   @Input() type: string;

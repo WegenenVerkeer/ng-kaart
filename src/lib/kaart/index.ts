@@ -8,14 +8,14 @@ import * as ol from "openlayers";
 import { ClassicAchtergrondSelectorComponent } from "../classic/achtergrond-selector/classic-achtergrond-selector.component";
 import { ClassicCopyrightComponent } from "../classic/copyright/classic-copyright.component";
 import { KaartClassicComponent } from "../classic/kaart-classic.component";
-import { KaartBlancoLaagComponent } from "../classic/lagen/kaart-blanco-laag.component";
-import { KaartGeoserverLaagComponent } from "../classic/lagen/kaart-geoserver-laag.component";
-import { KaartNosqlfsLaagComponent } from "../classic/lagen/kaart-nosqlfs-laag.component";
-import { KaartOrthoLaagComponent } from "../classic/lagen/kaart-ortho-laag.component";
-import { KaartTilecacheLaagComponent } from "../classic/lagen/kaart-tilecache-laag.component";
-import { KaartVectorLaagComponent } from "../classic/lagen/kaart-vector-laag.component";
-import { KaartWmsLaagComponent } from "../classic/lagen/kaart-wms-laag.component";
-import { KaartWmtsLaagComponent } from "../classic/lagen/kaart-wmts-laag.component";
+import { ClassicBlancoLaagComponent } from "../classic/lagen/classic-blanco-laag.component";
+import { ClassicGeoserverLaagComponent } from "../classic/lagen/classic-geoserver-laag.component";
+import { ClassicNosqlfsLaagComponent } from "../classic/lagen/classic-nosqlfs-laag.component";
+import { ClassicOrthoLaagComponent } from "../classic/lagen/classic-ortho-laag.component";
+import { ClassicTilecacheLaagComponent } from "../classic/lagen/classic-tilecache-laag.component";
+import { ClassicVectorLaagComponent } from "../classic/lagen/classic-vector-laag.component";
+import { ClassicWmsLaagComponent } from "../classic/lagen/classic-wms-laag.component";
+import { ClassicWmtsLaagComponent } from "../classic/lagen/classic-wmts-laag.component";
 import { ClassicLagenkiezerComponent } from "../classic/lagenkiezer/classic-lagenkiezer.component";
 import { ClassicSchaalComponent } from "../classic/schaal/classic-schaal.component";
 import { ClassicVoorwaardenComponent } from "../classic/voorwaarden/classic-voorwaarden.component";
@@ -57,7 +57,7 @@ const components: any[] = [
   KaartClassicComponent,
   KaartKnopVolledigSchermComponent,
   KaartKnopZoomSliderComponent,
-  KaartOrthoLaagComponent,
+  ClassicOrthoLaagComponent,
   KaartZoomComponent,
   KaartMijnLocatieComponent,
   KaartStandaardInteractiesComponent,
@@ -66,18 +66,18 @@ const components: any[] = [
   KaartTekenLaagComponent,
   KaartTekenComponent,
   KaartFeaturesLaagComponent,
-  KaartVectorLaagComponent,
-  KaartNosqlfsLaagComponent,
+  ClassicVectorLaagComponent,
+  ClassicNosqlfsLaagComponent,
   KaartCopyrightComponent,
   KaartOpenLayersStyleComponent,
   KaartSchaalComponent,
   KaartVoorwaardenComponent,
   KaartCopyrightComponent,
-  KaartTilecacheLaagComponent,
-  KaartGeoserverLaagComponent,
-  KaartWmsLaagComponent,
-  KaartWmtsLaagComponent,
-  KaartBlancoLaagComponent,
+  ClassicTilecacheLaagComponent,
+  ClassicGeoserverLaagComponent,
+  ClassicWmsLaagComponent,
+  ClassicWmtsLaagComponent,
+  ClassicBlancoLaagComponent,
   KaartAchtergrondSelectorComponent,
   KaartAchtergrondTileComponent,
   KaartOpenStreetViewComponent,
@@ -160,20 +160,20 @@ export * from "./voorwaarden/kaart-voorwaarden.component";
 export * from "./copyright/kaart-copyright.component";
 export * from "./kaart-knop-volledig-scherm.component";
 export * from "./kaart-knop-zoom-slider.component";
-export * from "../classic/lagen/kaart-laag.component";
+export * from "../classic/lagen/classic-laag.component";
 export * from "./schaal/kaart-schaal.component";
 export * from "./kaart-standaard-interacties.component";
 export * from "./kaart-standaard-knoppen.component";
 export * from "./kaart-teken-laag.component";
 export * from "./kaart-teken-polygoon-laag.component";
 export * from "./kaart-toon-features.component";
-export * from "../classic/lagen/kaart-vector-laag.component";
-export * from "../classic/lagen/kaart-nosqlfs-laag.component";
-export * from "../classic/lagen/kaart-geoserver-laag.component";
-export * from "../classic/lagen/kaart-tilecache-laag.component";
-export * from "../classic/lagen/kaart-wms-laag.component";
-export * from "../classic/lagen/kaart-wmts-laag.component";
-export * from "../classic/lagen/kaart-blanco-laag.component";
+export * from "../classic/lagen/classic-vector-laag.component";
+export * from "../classic/lagen/classic-nosqlfs-laag.component";
+export * from "../classic/lagen/classic-geoserver-laag.component";
+export * from "../classic/lagen/classic-tilecache-laag.component";
+export * from "../classic/lagen/classic-wms-laag.component";
+export * from "../classic/lagen/classic-wmts-laag.component";
+export * from "../classic/lagen/classic-blanco-laag.component";
 export * from "./kaart-zoom.component";
 export * from "./kaart-mijn-locatie.component";
 export * from "./kaart-open-street-view.component";

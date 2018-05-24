@@ -13,14 +13,14 @@ import { NosqlFsSource } from "../../source/nosql-fs-source";
 import { forEach, orElse } from "../../util/option";
 import { KaartClassicComponent } from "../kaart-classic.component";
 
-import { KaartLaagComponent } from "./kaart-laag.component";
+import { ClassicLaagComponent } from "./classic-laag.component";
 
 @Component({
   selector: "awv-kaart-nosqlfs-laag",
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
+export class ClassicNosqlfsLaagComponent extends ClassicLaagComponent {
   @Input() url = "/geolatte-nosqlfs";
   @Input() database: string;
   @Input() collection: string;
