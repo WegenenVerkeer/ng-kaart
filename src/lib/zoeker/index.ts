@@ -13,6 +13,7 @@ import {
   MatProgressSpinnerModule
 } from "@angular/material";
 
+import { ZoekerBoxComponent } from "./box/zoeker-box.component";
 import { ZOEKER_CFG, ZoekerConfigData } from "./config/zoeker-config";
 import { ZoekerCrabGetraptComponent } from "./crab/zoeker-crab-getrapt.component";
 import { ZoekerCrabComponent } from "./crab/zoeker-crab.component";
@@ -21,18 +22,15 @@ import { ZoekerGoogleWdbComponent } from "./google-wdb/zoeker-google-wdb.compone
 import { ZoekerGoogleWdbService } from "./google-wdb/zoeker-google-wdb.service";
 import { ZoekerPerceelGetraptComponent } from "./perceel/zoeker-perceel-getrapt.component";
 import { ZoekerPerceelService } from "./perceel/zoeker-perceel.service";
-import { ZoekerHighlightPipe } from "./zoeker-component/zoeker-highlight.pipe";
-import { ZoekerComponent } from "./zoeker-component/zoeker.component";
-import { ZoekerInjectorComponent } from "./zoeker-injector.component";
+import { ZoekerHighlightPipe } from "./zoeker-highlight.pipe";
 import { DefaultRepresentatieService, ZOEKER_REPRESENTATIE } from "./zoeker-representatie.service";
 
 const components: any[] = [
   ZoekerGoogleWdbComponent,
   ZoekerCrabGetraptComponent,
   ZoekerCrabComponent,
-  ZoekerComponent,
+  ZoekerBoxComponent,
   ZoekerHighlightPipe,
-  ZoekerInjectorComponent,
   ZoekerPerceelGetraptComponent
 ];
 
@@ -51,7 +49,6 @@ const components: any[] = [
     MatProgressSpinnerModule
   ],
   declarations: [components],
-  entryComponents: [ZoekerInjectorComponent],
   exports: [components],
   providers: [ZoekerGoogleWdbService, ZoekerCrabService, ZoekerPerceelService]
 })
@@ -76,7 +73,7 @@ export * from "./config/zoeker-config-locator-services.config";
 export * from "./perceel/zoeker-perceel.service";
 export * from "./perceel/zoeker-perceel-getrapt.component";
 
-export * from "./zoeker-component/zoeker-highlight.pipe";
-export * from "./zoeker-component/zoeker.component";
-export * from "./abstract-zoeker";
+export * from "./zoeker-highlight.pipe";
+export * from "./box/zoeker-box.component";
+export * from "./zoeker-abstract";
 export * from "./zoeker-representatie.service";

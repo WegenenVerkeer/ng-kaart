@@ -9,8 +9,8 @@ import {
   GetraptZoekerComponent,
   isNotNullObject,
   toNonEmptyDistinctLowercaseString,
-  ZoekerComponent
-} from "../zoeker-component/zoeker.component";
+  ZoekerBoxComponent
+} from "../box/zoeker-box.component";
 
 import { CrabGemeente, CrabHuisnummer, CrabStraat, CrabZoekInput, ZoekerCrabService } from "./zoeker-crab.service";
 
@@ -35,7 +35,7 @@ export class ZoekerCrabGetraptComponent extends GetraptZoekerComponent implement
   straten$: Observable<CrabStraat[]> = Observable.empty();
   huisnummers$: Observable<CrabHuisnummer[]> = Observable.empty();
 
-  constructor(private crabService: ZoekerCrabService, kaartComponent: KaartComponent, zoekerComponent: ZoekerComponent, zone: NgZone) {
+  constructor(private crabService: ZoekerCrabService, kaartComponent: KaartComponent, zoekerComponent: ZoekerBoxComponent, zone: NgZone) {
     super(kaartComponent, zoekerComponent, zone);
   }
 

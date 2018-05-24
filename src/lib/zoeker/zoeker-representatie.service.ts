@@ -3,10 +3,10 @@ import { MatIconRegistry } from "@angular/material";
 import { DomSanitizer } from "@angular/platform-browser";
 import * as ol from "openlayers";
 
-import { IconDescription } from "./abstract-zoeker";
 import { ZOEKER_CFG, ZoekerConfigData } from "./config/zoeker-config";
 import { ZoekerConfigGoogleWdbConfig } from "./config/zoeker-config-google-wdb.config";
 import { ZoekerConfigLocatorServicesConfig } from "./config/zoeker-config-locator-services.config";
+import { IconDescription } from "./zoeker-abstract";
 
 export const ZOEKER_REPRESENTATIE = new InjectionToken<AbstractRepresentatieService>("ZoekerRepresentatie");
 

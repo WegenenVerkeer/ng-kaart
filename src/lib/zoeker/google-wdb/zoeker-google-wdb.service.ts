@@ -8,17 +8,17 @@ import "rxjs/add/observable/fromPromise";
 import { Observable } from "rxjs/Observable";
 import { catchError, flatMap, map } from "rxjs/operators";
 
+import { ZOEKER_CFG, ZoekerConfigData } from "../config/zoeker-config";
+import { ZoekerConfigGoogleWdbConfig } from "../config/zoeker-config-google-wdb.config";
 import {
-  AbstractZoeker,
   geoJSONOptions,
   IconDescription,
   StringZoekInput,
+  ZoekerAbstract,
   ZoekKaartResultaat,
   ZoekResultaat,
   ZoekResultaten
-} from "../abstract-zoeker";
-import { ZOEKER_CFG, ZoekerConfigData } from "../config/zoeker-config";
-import { ZoekerConfigGoogleWdbConfig } from "../config/zoeker-config-google-wdb.config";
+} from "../zoeker-abstract";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE, ZoekerRepresentatieType } from "../zoeker-representatie.service";
 
 export class GoogleWdbZoekResultaat implements ZoekResultaat {
@@ -88,7 +88,7 @@ interface ExtendedPlaceResult extends google.maps.places.PlaceResult, ExtendedRe
 }
 
 @Injectable()
-export class ZoekerGoogleWdbService implements AbstractZoeker {
+export class ZoekerGoogleWdbService implements ZoekerAbstract {
   private readonly googleWdbLocatieZoekerConfig: ZoekerConfigGoogleWdbConfig;
   private _cache: Promise<GoogleServices> | null = null;
   private legende: Map<string, IconDescription>;

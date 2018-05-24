@@ -6,17 +6,17 @@ import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
 import { map, shareReplay } from "rxjs/operators";
 
+import { ZOEKER_CFG, ZoekerConfigData } from "../config/zoeker-config";
+import { ZoekerConfigLocatorServicesConfig } from "../config/zoeker-config-locator-services.config";
 import {
-  AbstractZoeker,
   geoJSONOptions,
   IconDescription,
   StringZoekInput,
+  ZoekerAbstract,
   ZoekKaartResultaat,
   ZoekResultaat,
   ZoekResultaten
-} from "../abstract-zoeker";
-import { ZOEKER_CFG, ZoekerConfigData } from "../config/zoeker-config";
-import { ZoekerConfigLocatorServicesConfig } from "../config/zoeker-config-locator-services.config";
+} from "../zoeker-abstract";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "../zoeker-representatie.service";
 
 export interface Gemeente {
@@ -86,7 +86,7 @@ export class PerceelZoekResultaat implements ZoekResultaat {
 }
 
 @Injectable()
-export class ZoekerPerceelService implements AbstractZoeker {
+export class ZoekerPerceelService implements ZoekerAbstract {
   private readonly locatorServicesConfig: ZoekerConfigLocatorServicesConfig;
   private legende: Map<string, IconDescription>;
 

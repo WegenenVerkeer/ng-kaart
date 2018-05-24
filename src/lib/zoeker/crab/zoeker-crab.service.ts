@@ -7,17 +7,17 @@ import { OperatorFunction } from "rxjs/interfaces";
 import { Observable } from "rxjs/Observable";
 import { map, mergeAll, mergeMap, reduce, shareReplay } from "rxjs/operators";
 
+import { ZOEKER_CFG, ZoekerConfigData } from "../config/zoeker-config";
+import { ZoekerConfigLocatorServicesConfig } from "../config/zoeker-config-locator-services.config";
 import {
-  AbstractZoeker,
   IconDescription,
   StringZoekInput,
+  ZoekerAbstract,
   ZoekInput,
   ZoekKaartResultaat,
   ZoekResultaat,
   ZoekResultaten
-} from "../abstract-zoeker";
-import { ZOEKER_CFG, ZoekerConfigData } from "../config/zoeker-config";
-import { ZoekerConfigLocatorServicesConfig } from "../config/zoeker-config-locator-services.config";
+} from "../zoeker-abstract";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "../zoeker-representatie.service";
 
 export interface LambertLocation {
@@ -152,7 +152,7 @@ export class CrabZoekResultaat implements ZoekResultaat {
 }
 
 @Injectable()
-export class ZoekerCrabService implements AbstractZoeker {
+export class ZoekerCrabService implements ZoekerAbstract {
   private readonly locatorServicesConfig: ZoekerConfigLocatorServicesConfig;
   private legende: Map<string, IconDescription>;
 

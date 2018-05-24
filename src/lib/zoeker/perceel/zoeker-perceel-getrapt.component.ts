@@ -6,13 +6,13 @@ import { distinctUntilChanged, filter, map } from "rxjs/operators";
 
 import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import { KaartComponent } from "../../kaart/kaart.component";
-import { StringZoekInput } from "../abstract-zoeker";
 import {
   GetraptZoekerComponent,
   isNotNullObject,
   toNonEmptyDistinctLowercaseString,
-  ZoekerComponent
-} from "../zoeker-component/zoeker.component";
+  ZoekerBoxComponent
+} from "../box/zoeker-box.component";
+import { StringZoekInput } from "../zoeker-abstract";
 
 import { Afdeling, Gemeente, PerceelNummer, Sectie, ZoekerPerceelService } from "./zoeker-perceel.service";
 
@@ -44,7 +44,7 @@ export class ZoekerPerceelGetraptComponent extends GetraptZoekerComponent implem
   constructor(
     private perceelService: ZoekerPerceelService,
     kaartComponent: KaartComponent,
-    zoekerComponent: ZoekerComponent,
+    zoekerComponent: ZoekerBoxComponent,
     zone: NgZone
   ) {
     super(kaartComponent, zoekerComponent, zone);
