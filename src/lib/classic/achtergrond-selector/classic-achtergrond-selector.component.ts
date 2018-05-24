@@ -1,9 +1,9 @@
 import { Component, Input, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 
-import { KaartClassicComponent } from "../../kaart/kaart-classic.component";
 import { KaartComponentBase } from "../../kaart/kaart-component-base";
 import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import * as prt from "../../kaart/kaart-protocol";
+import { KaartClassicComponent } from "../kaart-classic.component";
 
 @Component({
   selector: "awv-kaart-knop-achtergrondlaag-kiezer",

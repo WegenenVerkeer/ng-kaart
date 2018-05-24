@@ -2,16 +2,17 @@ import { Component, Input, OnInit, ViewEncapsulation } from "@angular/core";
 import { fromNullable } from "fp-ts/lib/Option";
 import { List } from "immutable";
 
-import { KaartClassicComponent } from "./kaart-classic.component";
-import { Laaggroep, TiledWmsType, WmsLaag } from "./kaart-elementen";
-import { KaartLaagComponent } from "./kaart-laag.component";
+import { Laaggroep, TiledWmsType, WmsLaag } from "../../kaart/kaart-elementen";
+import { KaartClassicComponent } from "../kaart-classic.component";
+
+import { ClassicLaagComponent } from "./classic-laag.component";
 
 @Component({
   selector: "awv-kaart-wms-laag",
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class KaartWmsLaagComponent extends KaartLaagComponent implements OnInit {
+export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnInit {
   @Input() laagNaam: string;
   @Input() urls: string[];
   @Input() tiled = true;

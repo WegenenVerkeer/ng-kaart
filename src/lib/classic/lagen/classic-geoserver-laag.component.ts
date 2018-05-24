@@ -2,18 +2,18 @@ import { Component, Inject, ViewEncapsulation } from "@angular/core";
 import { fromNullable } from "fp-ts/lib/Option";
 import { List } from "immutable";
 
-import { KaartClassicComponent } from "./kaart-classic.component";
-import { KAART_CFG, KaartConfig } from "./kaart-config";
-import * as ke from "./kaart-elementen";
-import { Laaggroep } from "./kaart-elementen";
-import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
+import { KAART_CFG, KaartConfig } from "../../kaart/kaart-config";
+import * as ke from "../../kaart/kaart-elementen";
+import { KaartClassicComponent } from "../kaart-classic.component";
+
+import { ClassicWmsLaagComponent } from "./classic-wms-laag.component";
 
 @Component({
   selector: "awv-kaart-geoserver-laag",
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class KaartGeoserverLaagComponent extends KaartWmsLaagComponent {
+export class ClassicGeoserverLaagComponent extends ClassicWmsLaagComponent {
   constructor(kaart: KaartClassicComponent, @Inject(KAART_CFG) private readonly config: KaartConfig) {
     super(kaart);
   }
@@ -34,7 +34,7 @@ export class KaartGeoserverLaagComponent extends KaartWmsLaagComponent {
     };
   }
 
-  laaggroep(): Laaggroep {
+  laaggroep(): ke.Laaggroep {
     return "Voorgrond.Laag";
   }
 }

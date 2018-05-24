@@ -111,18 +111,6 @@
   </awv-kaart-classic>
 </div>
 
-<h3>Orhto laag + teken polygoon</h3>
-
-<div>
-  <awv-kaart [breedte]="800">
-    <awv-kaart-ortho-laag [titel]="'Ortho'"></awv-kaart-ortho-laag>
-    <awv-kaart-teken-polygoon-laag (polygonGetekend)="polygoonGetekend($event)"></awv-kaart-teken-polygoon-laag>
-  </awv-kaart>
-
-  <pre *ngFor="let event of polygoonEvents">
-    Event gegooid: {{ event | json }}
-  </pre>
-</div>
 -->
 
 <h3>Dienstkaart, std interacties, achtergrondselectie, locatiezoeker</h3>

@@ -6,8 +6,8 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 
-import { KaartClassicComponent } from "../lib/kaart";
-import { classicLogger } from "../lib/kaart-classic/log";
+import { KaartClassicComponent } from "../lib/classic/kaart-classic.component";
+import { classicLogger } from "../lib/classic/log";
 import { kaartLogOnlyWrapper } from "../lib/kaart/kaart-internal-messages";
 import * as prt from "../lib/kaart/kaart-protocol";
 import { definitieToStyle, kaartLogger } from "../lib/public_api";

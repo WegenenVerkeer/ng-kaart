@@ -4,14 +4,14 @@ import * as rx from "rxjs";
 import { Observable } from "rxjs/Observable";
 import { skipUntil, take, takeUntil } from "rxjs/operators";
 
-import { observeOnAngular } from "../util/observe-on-angular";
-import { ofType } from "../util/operators";
+import { observeOnAngular } from "../../util/observe-on-angular";
+import { ofType } from "../../util/operators";
 
-import { lambert72ToWgs84 } from "./coordinaten.service";
-import { KaartChildComponentBase } from "./kaart-child-component-base";
-import { KaartClickMsg, kaartClickWrapper, KaartInternalMsg } from "./kaart-internal-messages";
-import * as prt from "./kaart-protocol";
-import { KaartComponent } from "./kaart.component";
+import { lambert72ToWgs84 } from "../../coordinaten/coordinaten.service";
+import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { KaartClickMsg, kaartClickWrapper, KaartInternalMsg } from "../kaart-internal-messages";
+import * as prt from "../kaart-protocol";
+import { KaartComponent } from "../kaart.component";
 
 @Component({
   selector: "awv-kaart-open-street-view",

@@ -5,15 +5,15 @@ import * as ol from "openlayers";
 import { Subject } from "rxjs";
 import { distinctUntilChanged, map, skipWhile } from "rxjs/operators";
 
-import { forEach, orElse } from "../util/option";
+import { forEach, orElse } from "../../util/option";
 
-import { KaartChildComponentBase } from "./kaart-child-component-base";
-import * as ke from "./kaart-elementen";
-import { VeldInfo } from "./kaart-elementen";
-import { KaartInternalMsg, kaartLogOnlyWrapper, tekenWrapper } from "./kaart-internal-messages";
-import * as prt from "./kaart-protocol";
-import { KaartComponent } from "./kaart.component";
-import { asStyleSelector, toStylish } from "./stijl-selector";
+import { KaartChildComponentBase } from "../kaart-child-component-base";
+import * as ke from "../kaart-elementen";
+import { VeldInfo } from "../kaart-elementen";
+import { KaartInternalMsg, kaartLogOnlyWrapper, tekenWrapper } from "../kaart-internal-messages";
+import * as prt from "../kaart-protocol";
+import { KaartComponent } from "../kaart.component";
+import { asStyleSelector, toStylish } from "../stijl-selector";
 
 export const TekenenUiSelector = "Kaarttekenen";
 const TekenLaagNaam = "Tekenen van geometrie";

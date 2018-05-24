@@ -1,8 +1,8 @@
 import { Component, Input } from "@angular/core";
 
-import { KaartClassicComponent } from "../../kaart/kaart-classic.component";
 import { VoorwaardenOpties, VoorwaardenSelector } from "../../kaart/voorwaarden/kaart-voorwaarden.component";
 import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
+import { KaartClassicComponent } from "../kaart-classic.component";
 
 @Component({
   selector: "awv-kaart-voorwaarden",

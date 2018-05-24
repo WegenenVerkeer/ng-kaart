@@ -7,8 +7,22 @@ import * as ol from "openlayers";
 
 import { ClassicAchtergrondSelectorComponent } from "../classic/achtergrond-selector/classic-achtergrond-selector.component";
 import { ClassicCopyrightComponent } from "../classic/copyright/classic-copyright.component";
+import { KaartClassicComponent } from "../classic/kaart-classic.component";
+import { ClassicBlancoLaagComponent } from "../classic/lagen/classic-blanco-laag.component";
+import { ClassicFeaturesLaagComponent } from "../classic/lagen/classic-features-laag.component";
+import { ClassicGeoserverLaagComponent } from "../classic/lagen/classic-geoserver-laag.component";
+import { ClassicNosqlfsLaagComponent } from "../classic/lagen/classic-nosqlfs-laag.component";
+import { ClassicOrthoLaagComponent } from "../classic/lagen/classic-ortho-laag.component";
+import { ClassicTilecacheLaagComponent } from "../classic/lagen/classic-tilecache-laag.component";
+import { ClassicVectorLaagComponent } from "../classic/lagen/classic-vector-laag.component";
+import { ClassicWmsLaagComponent } from "../classic/lagen/classic-wms-laag.component";
+import { ClassicWmtsLaagComponent } from "../classic/lagen/classic-wmts-laag.component";
 import { ClassicLagenkiezerComponent } from "../classic/lagenkiezer/classic-lagenkiezer.component";
+import { KaartOpenLayersStyleComponent } from "../classic/openlayers-style/classic-openlayers-style.component";
 import { ClassicSchaalComponent } from "../classic/schaal/classic-schaal.component";
+import { ClassicStandaardInteractiesComponent } from "../classic/standaard-interacties/classic-standaard-interacties.component";
+import { KaartTekenComponent } from "../classic/tekenen/kaart-teken.component";
+import { ClassicVolledigSchermComponent } from "../classic/volledig-scherm/classic-volledig-scherm.component";
 import { ClassicVoorwaardenComponent } from "../classic/voorwaarden/classic-voorwaarden.component";
 import { LagenkiezerModule } from "../lagenkiezer/index";
 import { ZoekerModule } from "../zoeker/index";
@@ -20,64 +34,27 @@ import { KaartInfoBoodschapAlertComponent } from "./info-boodschappen/kaart-info
 import { KaartInfoBoodschapIdentifyComponent } from "./info-boodschappen/kaart-info-boodschap-identify.component";
 import { KaartInfoBoodschapComponent } from "./info-boodschappen/kaart-info-boodschap.component";
 import { KaartInfoBoodschappenComponent } from "./info-boodschappen/kaart-info-boodschappen.component";
-import { KaartBlancoLaagComponent } from "./kaart-blanco-laag.component";
-import { KaartClassicComponent } from "./kaart-classic.component";
 import { KAART_CFG, KaartConfig } from "./kaart-config";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
-import { KaartGeoserverLaagComponent } from "./kaart-geoserver-laag.component";
-import { KaartKnopVolledigSchermComponent } from "./kaart-knop-volledig-scherm.component";
-import { KaartKnopZoomSliderComponent } from "./kaart-knop-zoom-slider.component";
-import { KaartMijnLocatieComponent } from "./kaart-mijn-locatie.component";
-import { KaartNosqlfsLaagComponent } from "./kaart-nosqlfs-laag.component";
-import { KaartOpenStreetViewComponent } from "./kaart-open-street-view.component";
-import { KaartOpenLayersStyleComponent } from "./kaart-openlayers.component";
-import { KaartOrthoLaagComponent } from "./kaart-ortho-laag.component";
-import { KaartStandaardInteractiesComponent } from "./kaart-standaard-interacties.component";
-import { KaartStandaardKnoppenComponent } from "./kaart-standaard-knoppen.component";
-import { KaartTekenLaagComponent } from "./kaart-teken-laag.component";
-import { KaartTekenPolygoonLaagComponent } from "./kaart-teken-polygoon-laag.component";
-import { KaartTekenComponent } from "./kaart-teken.component";
-import { KaartTilecacheLaagComponent } from "./kaart-tilecache-laag.component";
-import { KaartFeaturesLaagComponent } from "./kaart-toon-features.component";
-import { KaartVectorLaagComponent } from "./kaart-vector-laag.component";
-import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
-import { KaartWmtsLaagComponent } from "./kaart-wmts-laag.component";
-import { KaartZoomComponent } from "./kaart-zoom.component";
 import { KaartComponent } from "./kaart.component";
+import { KaartMijnLocatieComponent } from "./mijn-locatie/kaart-mijn-locatie.component";
+import { KaartOpenStreetViewComponent } from "./open-street-view/kaart-open-street-view.component";
 import { KaartSchaalComponent } from "./schaal/kaart-schaal.component";
+import { KaartTekenLaagComponent } from "./tekenen/kaart-teken-laag.component";
 import { KaartVoorwaardenComponent } from "./voorwaarden/kaart-voorwaarden.component";
+import { KaartZoomComponent } from "./zoom/kaart-zoom.component";
 
 const components: any[] = [
-  ClassicSchaalComponent,
-  ClassicVoorwaardenComponent,
-  ClassicCopyrightComponent,
-  ClassicLagenkiezerComponent,
   KaartComponent,
-  ClassicAchtergrondSelectorComponent,
-  KaartClassicComponent,
-  KaartKnopVolledigSchermComponent,
-  KaartKnopZoomSliderComponent,
-  KaartOrthoLaagComponent,
   KaartZoomComponent,
   KaartMijnLocatieComponent,
-  KaartStandaardInteractiesComponent,
-  KaartStandaardKnoppenComponent,
-  KaartTekenPolygoonLaagComponent,
   KaartTekenLaagComponent,
   KaartTekenComponent,
-  KaartFeaturesLaagComponent,
-  KaartVectorLaagComponent,
-  KaartNosqlfsLaagComponent,
   KaartCopyrightComponent,
   KaartOpenLayersStyleComponent,
   KaartSchaalComponent,
   KaartVoorwaardenComponent,
   KaartCopyrightComponent,
-  KaartTilecacheLaagComponent,
-  KaartGeoserverLaagComponent,
-  KaartWmsLaagComponent,
-  KaartWmtsLaagComponent,
-  KaartBlancoLaagComponent,
   KaartAchtergrondSelectorComponent,
   KaartAchtergrondTileComponent,
   KaartOpenStreetViewComponent,
@@ -141,7 +118,7 @@ export class KaartModule {
   static forRoot(config: KaartConfig): ModuleWithProviders {
     return {
       ngModule: KaartModule,
-      providers: [{ provide: KAART_CFG, useValue: config }, ReplaySubjectKaartCmdDispatcher, KaartClassicComponent]
+      providers: [{ provide: KAART_CFG, useValue: config }, ReplaySubjectKaartCmdDispatcher]
     };
   }
 
@@ -150,33 +127,16 @@ export class KaartModule {
   }
 }
 
-export * from "../classic/index";
-export * from "./coordinaten.service";
-export * from "./kaart-classic.component";
+export * from "../coordinaten/coordinaten.service";
 export * from "./kaart-component-base";
 export * from "./copyright/kaart-copyright.component";
-export * from "./kaart-openlayers.component";
 export * from "./voorwaarden/kaart-voorwaarden.component";
 export * from "./copyright/kaart-copyright.component";
-export * from "./kaart-knop-volledig-scherm.component";
-export * from "./kaart-knop-zoom-slider.component";
-export * from "./kaart-laag.component";
 export * from "./schaal/kaart-schaal.component";
-export * from "./kaart-standaard-interacties.component";
-export * from "./kaart-standaard-knoppen.component";
-export * from "./kaart-teken-laag.component";
-export * from "./kaart-teken-polygoon-laag.component";
-export * from "./kaart-toon-features.component";
-export * from "./kaart-vector-laag.component";
-export * from "./kaart-nosqlfs-laag.component";
-export * from "./kaart-geoserver-laag.component";
-export * from "./kaart-tilecache-laag.component";
-export * from "./kaart-wms-laag.component";
-export * from "./kaart-wmts-laag.component";
-export * from "./kaart-blanco-laag.component";
-export * from "./kaart-zoom.component";
-export * from "./kaart-mijn-locatie.component";
-export * from "./kaart-open-street-view.component";
+export * from "./tekenen/kaart-teken-laag.component";
+export * from "./zoom/kaart-zoom.component";
+export * from "./mijn-locatie/kaart-mijn-locatie.component";
+export * from "./open-street-view/kaart-open-street-view.component";
 export * from "./kaart.component";
 export * from "./kaart-event-dispatcher";
 export * from "./kaart-protocol";

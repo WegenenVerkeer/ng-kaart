@@ -1,8 +1,8 @@
 import { Component, Input } from "@angular/core";
 
 import { CopyrightOpties, CopyrightSelector } from "../../kaart/copyright/kaart-copyright.component";
-import { KaartClassicComponent } from "../../kaart/kaart-classic.component";
 import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
+import { KaartClassicComponent } from "../kaart-classic.component";
 
 @Component({
   selector: "awv-kaart-copyright",
