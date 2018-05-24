@@ -4,12 +4,17 @@ import { Set } from "immutable";
 import { Observable } from "rxjs/Observable";
 import { distinctUntilChanged, filter, map } from "rxjs/operators";
 
-import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
-import { KaartComponent } from "../kaart/kaart.component";
+import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
+import { KaartComponent } from "../../kaart/kaart.component";
+import { StringZoekInput } from "../abstract-zoeker";
+import {
+  GetraptZoekerComponent,
+  isNotNullObject,
+  toNonEmptyDistinctLowercaseString,
+  ZoekerComponent
+} from "../zoeker-component/zoeker.component";
 
-import { StringZoekInput } from "./abstract-zoeker";
-import { Afdeling, Gemeente, PerceelNummer, PerceelZoekerService, Sectie } from "./perceel-zoeker.service";
-import { GetraptZoekerComponent, isNotNullObject, toNonEmptyDistinctLowercaseString, ZoekerComponent } from "./zoeker.component";
+import { Afdeling, Gemeente, PerceelNummer, Sectie, ZoekerPerceelService } from "./zoeker-perceel.service";
 
 const NIVEAU_ALLES = 0;
 const NIVEAU_VANAFGEMEENTE = 1;
@@ -19,10 +24,10 @@ const NIVEAU_VANAFPERCEEL = 4;
 
 @Component({
   selector: "awv-perceel-zoeker",
-  templateUrl: "./perceel-zoeker.component.html",
-  styleUrls: ["./perceel-zoeker.component.scss"]
+  templateUrl: "./zoeker-perceel-getrapt.html",
+  styleUrls: ["./zoeker-perceel-getrapt.scss"]
 })
-export class PerceelZoekerComponent extends GetraptZoekerComponent implements OnInit, OnDestroy {
+export class ZoekerPerceelGetraptComponent extends GetraptZoekerComponent implements OnInit, OnDestroy {
   private alleGemeenten: Gemeente[] = [];
 
   gefilterdeGemeenten: Gemeente[] = [];
@@ -37,7 +42,7 @@ export class PerceelZoekerComponent extends GetraptZoekerComponent implements On
   percelen$: Observable<PerceelNummer[]> = Observable.empty();
 
   constructor(
-    private perceelService: PerceelZoekerService,
+    private perceelService: ZoekerPerceelService,
     kaartComponent: KaartComponent,
     zoekerComponent: ZoekerComponent,
     zone: NgZone

@@ -20,16 +20,16 @@ import {
 } from "rxjs/operators";
 import { pipe } from "rxjs/Rx";
 
-import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
-import * as ke from "../kaart/kaart-elementen";
-import { VeldInfo } from "../kaart/kaart-elementen";
-import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
-import * as prt from "../kaart/kaart-protocol";
-import { KaartComponent } from "../kaart/kaart.component";
-import { kaartLogger } from "../kaart/log";
-import { matchGeometryType } from "../util/geometryTypes";
+import { KaartChildComponentBase } from "../../kaart/kaart-child-component-base";
+import * as ke from "../../kaart/kaart-elementen";
+import { VeldInfo } from "../../kaart/kaart-elementen";
+import { KaartInternalMsg, kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
+import * as prt from "../../kaart/kaart-protocol";
+import { KaartComponent } from "../../kaart/kaart.component";
+import { kaartLogger } from "../../kaart/log";
+import { matchGeometryType } from "../../util/geometryTypes";
 
-import { compareResultaten, IconDescription, StringZoekInput, ZoekInput, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
+import { compareResultaten, IconDescription, StringZoekInput, ZoekInput, ZoekResultaat, ZoekResultaten } from "../abstract-zoeker";
 
 const ZoekerLaagNaam = "Zoeker";
 

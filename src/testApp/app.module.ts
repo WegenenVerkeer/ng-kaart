@@ -25,7 +25,7 @@ import { AvKaartComponent } from "./av-kaart.component";
         url: "http://localhost:5100/locatiezoeker",
         apiKey: "AIzaSyApbXMl5DGL60g17JU6MazMxNcUGooey7I"
       },
-      crab: {
+      locatorServices: {
         url: "http://localhost:5101/locatorservices"
       }
     }),

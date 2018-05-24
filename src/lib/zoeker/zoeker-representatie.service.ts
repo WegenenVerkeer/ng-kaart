@@ -4,9 +4,9 @@ import { DomSanitizer } from "@angular/platform-browser";
 import * as ol from "openlayers";
 
 import { IconDescription } from "./abstract-zoeker";
-import { CrabZoekerConfig } from "./crab-zoeker.config";
-import { GoogleWdbLocatieZoekerConfig } from "./google-wdb-locatie-zoeker.config";
-import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
+import { ZOEKER_CFG, ZoekerConfigData } from "./config/zoeker-config";
+import { ZoekerConfigGoogleWdbConfig } from "./config/zoeker-config-google-wdb.config";
+import { ZoekerConfigLocatorServicesConfig } from "./config/zoeker-config-locator-services.config";
 
 export const ZOEKER_REPRESENTATIE = new InjectionToken<AbstractRepresentatieService>("ZoekerRepresentatie");
 
@@ -37,8 +37,8 @@ const perceelMarker =
 
 @Injectable()
 export class DefaultRepresentatieService implements AbstractRepresentatieService {
-  private readonly crabZoekerConfig: CrabZoekerConfig;
-  private readonly googleLocatieZoekerConfig: GoogleWdbLocatieZoekerConfig;
+  private readonly locatieServicesConfig: ZoekerConfigLocatorServicesConfig;
+  private readonly googleLocatieZoekerConfig: ZoekerConfigGoogleWdbConfig;
   private googleStyle: ol.style.Style;
   private wdbStyle: ol.style.Style;
   private crabStyle: ol.style.Style;
@@ -94,8 +94,8 @@ export class DefaultRepresentatieService implements AbstractRepresentatieService
       });
     }
 
-    this.crabZoekerConfig = new CrabZoekerConfig(zoekerConfigData.crab);
-    this.googleLocatieZoekerConfig = new GoogleWdbLocatieZoekerConfig(zoekerConfigData.googleWdb);
+    this.locatieServicesConfig = new ZoekerConfigLocatorServicesConfig(zoekerConfigData.locatorServices);
+    this.googleLocatieZoekerConfig = new ZoekerConfigGoogleWdbConfig(zoekerConfigData.googleWdb);
 
     this.matIconRegistry.addSvgIcon(crabSvgNaam, this.sanitizer.bypassSecurityTrustResourceUrl(maakDataUrl(crabMarker)));
     this.matIconRegistry.addSvgIcon(googleSvgNaam, this.sanitizer.bypassSecurityTrustResourceUrl(maakDataUrl(googleMarker)));
@@ -104,8 +104,8 @@ export class DefaultRepresentatieService implements AbstractRepresentatieService
 
     this.googleStyle = maakStyle(this.googleLocatieZoekerConfig.kleur, googleMarker);
     this.wdbStyle = maakStyle(this.googleLocatieZoekerConfig.kleur, wdbMarker);
-    this.crabStyle = maakStyle(this.crabZoekerConfig.kleur, crabMarker);
-    this.perceelStyle = maakStyle(this.crabZoekerConfig.kleur, perceelMarker);
+    this.crabStyle = maakStyle(this.locatieServicesConfig.kleur, crabMarker);
+    this.perceelStyle = maakStyle(this.locatieServicesConfig.kleur, perceelMarker);
   }
 
   getOlStyle(type: ZoekerRepresentatieType): ol.style.Style {

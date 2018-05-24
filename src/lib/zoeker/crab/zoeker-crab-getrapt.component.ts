@@ -4,10 +4,15 @@ import { Set } from "immutable";
 import { Observable } from "rxjs/Observable";
 import { distinctUntilChanged, filter } from "rxjs/operators";
 
-import { KaartComponent } from "../kaart/kaart.component";
+import { KaartComponent } from "../../kaart/kaart.component";
+import {
+  GetraptZoekerComponent,
+  isNotNullObject,
+  toNonEmptyDistinctLowercaseString,
+  ZoekerComponent
+} from "../zoeker-component/zoeker.component";
 
-import { CrabGemeente, CrabHuisnummer, CrabStraat, CrabZoekerService, CrabZoekInput } from "./crab-zoeker.service";
-import { GetraptZoekerComponent, isNotNullObject, toNonEmptyDistinctLowercaseString, ZoekerComponent } from "./zoeker.component";
+import { CrabGemeente, CrabHuisnummer, CrabStraat, CrabZoekInput, ZoekerCrabService } from "./zoeker-crab.service";
 
 const NIVEAU_ALLES = 0;
 const NIVEAU_VANAFGEMEENTE = 1;
@@ -16,10 +21,10 @@ const NIVEAU_VANAFHUISNUMMER = 3;
 
 @Component({
   selector: "awv-crab-getrapt-zoeker",
-  templateUrl: "./crab-getrapt-zoeker.component.html",
-  styleUrls: ["./crab-getrapt-zoeker.component.scss"]
+  templateUrl: "./zoeker-crab-getrapt.html",
+  styleUrls: ["./zoeker-crab-getrapt.scss"]
 })
-export class CrabGetraptZoekerComponent extends GetraptZoekerComponent implements OnInit {
+export class ZoekerCrabGetraptComponent extends GetraptZoekerComponent implements OnInit {
   private alleGemeenten: CrabGemeente[] = [];
   gefilterdeGemeenten: CrabGemeente[] = [];
 
@@ -30,7 +35,7 @@ export class CrabGetraptZoekerComponent extends GetraptZoekerComponent implement
   straten$: Observable<CrabStraat[]> = Observable.empty();
   huisnummers$: Observable<CrabHuisnummer[]> = Observable.empty();
 
-  constructor(private crabService: CrabZoekerService, kaartComponent: KaartComponent, zoekerComponent: ZoekerComponent, zone: NgZone) {
+  constructor(private crabService: ZoekerCrabService, kaartComponent: KaartComponent, zoekerComponent: ZoekerComponent, zone: NgZone) {
     super(kaartComponent, zoekerComponent, zone);
   }
 

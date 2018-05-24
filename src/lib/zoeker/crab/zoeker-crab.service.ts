@@ -15,10 +15,10 @@ import {
   ZoekKaartResultaat,
   ZoekResultaat,
   ZoekResultaten
-} from "./abstract-zoeker";
-import { CrabZoekerConfig } from "./crab-zoeker.config";
-import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "./zoeker-representatie.service";
-import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
+} from "../abstract-zoeker";
+import { ZOEKER_CFG, ZoekerConfigData } from "../config/zoeker-config";
+import { ZoekerConfigLocatorServicesConfig } from "../config/zoeker-config-locator-services.config";
+import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "../zoeker-representatie.service";
 
 export interface LambertLocation {
   readonly X_Lambert72: number;
@@ -152,8 +152,8 @@ export class CrabZoekResultaat implements ZoekResultaat {
 }
 
 @Injectable()
-export class CrabZoekerService implements AbstractZoeker {
-  private readonly crabZoekerConfig: CrabZoekerConfig;
+export class ZoekerCrabService implements AbstractZoeker {
+  private readonly locatorServicesConfig: ZoekerConfigLocatorServicesConfig;
   private legende: Map<string, IconDescription>;
 
   constructor(
@@ -161,7 +161,7 @@ export class CrabZoekerService implements AbstractZoeker {
     @Inject(ZOEKER_CFG) zoekerConfigData: ZoekerConfigData,
     @Inject(ZOEKER_REPRESENTATIE) private zoekerRepresentatie: AbstractRepresentatieService
   ) {
-    this.crabZoekerConfig = new CrabZoekerConfig(zoekerConfigData.crab);
+    this.locatorServicesConfig = new ZoekerConfigLocatorServicesConfig(zoekerConfigData.locatorServices);
     this.legende = Map.of(this.naam(), this.zoekerRepresentatie.getSvgIcon("Crab"));
   }
 
@@ -196,7 +196,7 @@ export class CrabZoekerService implements AbstractZoeker {
 
   getAlleGemeenten$(): Observable<CrabGemeente[]> {
     return this.http
-      .get<CrabGemeenteData[]>(this.crabZoekerConfig.url + "/rest/crab/gemeenten")
+      .get<CrabGemeenteData[]>(this.locatorServicesConfig.url + "/rest/crab/gemeenten")
       .pipe(map(gemeentes => gemeentes.map(gemeente => new CrabGemeente(gemeente)), shareReplay(1)));
   }
 
@@ -231,7 +231,7 @@ export class CrabZoekerService implements AbstractZoeker {
 
   private getGemeenteBBox$(gemeente: CrabGemeente): Observable<ZoekResultaten> {
     return this.http
-      .get<CrabBBoxData>(this.crabZoekerConfig.url + "/rest/crab/gemeente/" + gemeente.niscode)
+      .get<CrabBBoxData>(this.locatorServicesConfig.url + "/rest/crab/gemeente/" + gemeente.niscode)
       .pipe(
         map(bbox => new ZoekResultaten(this.naam(), [], [this.bboxNaarZoekResultaat(gemeente.naam, "CrabGemeente", bbox)], this.legende)),
         shareReplay(1)
@@ -240,13 +240,13 @@ export class CrabZoekerService implements AbstractZoeker {
 
   getStraten$(gemeente: CrabGemeente): Observable<CrabStraat[]> {
     return this.http
-      .get<CrabStraatData[]>(this.crabZoekerConfig.url + "/rest/crab/straten/" + gemeente.niscode)
+      .get<CrabStraatData[]>(this.locatorServicesConfig.url + "/rest/crab/straten/" + gemeente.niscode)
       .pipe(map(straten => straten.map(straat => new CrabStraat(gemeente, straat))), shareReplay(1));
   }
 
   private getStraatBBox$(straat: CrabStraat): Observable<ZoekResultaten> {
     return this.http
-      .get<CrabBBoxData>(this.crabZoekerConfig.url + "/rest/crab/straat/" + straat.id)
+      .get<CrabBBoxData>(this.locatorServicesConfig.url + "/rest/crab/straat/" + straat.id)
       .pipe(
         map(
           bbox =>
@@ -263,13 +263,13 @@ export class CrabZoekerService implements AbstractZoeker {
 
   getHuisnummers$(straat: CrabStraat): Observable<CrabHuisnummer[]> {
     return this.http
-      .get<CrabHuisnummerData[]>(this.crabZoekerConfig.url + "/rest/crab/huisnummers/" + straat.id)
+      .get<CrabHuisnummerData[]>(this.locatorServicesConfig.url + "/rest/crab/huisnummers/" + straat.id)
       .pipe(map(huisnummers => huisnummers.map(huisnummer => new CrabHuisnummer(straat, huisnummer))), shareReplay(1));
   }
 
   private getHuisnummerPositie$(huisnummer: CrabHuisnummer): Observable<ZoekResultaten> {
     return this.http
-      .get<CrabPositieData>(this.crabZoekerConfig.url + "/rest/crab/huisnummer/" + huisnummer.straat.id + "/" + huisnummer.huisnummer)
+      .get<CrabPositieData>(this.locatorServicesConfig.url + "/rest/crab/huisnummer/" + huisnummer.straat.id + "/" + huisnummer.huisnummer)
       .pipe(
         map(
           positie =>
@@ -299,10 +299,10 @@ export class CrabZoekerService implements AbstractZoeker {
 
     if (zoekterm.type === "string") {
       const zoekDetail$ = detail =>
-        this.http.get<LocatorServiceResults>(this.crabZoekerConfig.url + "/rest/geolocation/location", options(detail));
+        this.http.get<LocatorServiceResults>(this.locatorServicesConfig.url + "/rest/geolocation/location", options(detail));
 
       const zoekSuggesties$ = suggestie =>
-        this.http.get<SuggestionServiceResults>(this.crabZoekerConfig.url + "/rest/geolocation/suggestion", options(suggestie));
+        this.http.get<SuggestionServiceResults>(this.locatorServicesConfig.url + "/rest/geolocation/suggestion", options(suggestie));
 
       return zoekSuggesties$(zoekterm.value).pipe(
         map(suggestieResultaten =>
@@ -314,7 +314,7 @@ export class CrabZoekerService implements AbstractZoeker {
           (zoekResultaten, crabResultaten) => this.voegCrabResultatenToe(zoekResultaten, crabResultaten),
           new ZoekResultaten(this.naam(), [], [], this.legende)
         ),
-        map(resultaten => resultaten.limiteerAantalResultaten(this.crabZoekerConfig.maxAantal))
+        map(resultaten => resultaten.limiteerAantalResultaten(this.locatorServicesConfig.maxAantal))
       );
     } else if (zoekterm.type === "CrabGemeente") {
       return this.getGemeenteBBox$(zoekterm as CrabGemeente);

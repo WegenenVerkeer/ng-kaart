@@ -16,10 +16,10 @@ import {
   ZoekKaartResultaat,
   ZoekResultaat,
   ZoekResultaten
-} from "./abstract-zoeker";
-import { GoogleWdbLocatieZoekerConfig } from "./google-wdb-locatie-zoeker.config";
-import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE, ZoekerRepresentatieType } from "./zoeker-representatie.service";
-import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
+} from "../abstract-zoeker";
+import { ZOEKER_CFG, ZoekerConfigData } from "../config/zoeker-config";
+import { ZoekerConfigGoogleWdbConfig } from "../config/zoeker-config-google-wdb.config";
+import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE, ZoekerRepresentatieType } from "../zoeker-representatie.service";
 
 export class GoogleWdbZoekResultaat implements ZoekResultaat {
   readonly partialMatch: boolean;
@@ -88,8 +88,8 @@ interface ExtendedPlaceResult extends google.maps.places.PlaceResult, ExtendedRe
 }
 
 @Injectable()
-export class GoogleWdbLocatieZoekerService implements AbstractZoeker {
-  private readonly googleWdbLocatieZoekerConfig: GoogleWdbLocatieZoekerConfig;
+export class ZoekerGoogleWdbService implements AbstractZoeker {
+  private readonly googleWdbLocatieZoekerConfig: ZoekerConfigGoogleWdbConfig;
   private _cache: Promise<GoogleServices> | null = null;
   private legende: Map<string, IconDescription>;
 
@@ -100,7 +100,7 @@ export class GoogleWdbLocatieZoekerService implements AbstractZoeker {
     @Inject(ZOEKER_CFG) zoekerConfigData: ZoekerConfigData,
     @Inject(ZOEKER_REPRESENTATIE) private zoekerRepresentatie: AbstractRepresentatieService
   ) {
-    this.googleWdbLocatieZoekerConfig = new GoogleWdbLocatieZoekerConfig(zoekerConfigData.googleWdb);
+    this.googleWdbLocatieZoekerConfig = new ZoekerConfigGoogleWdbConfig(zoekerConfigData.googleWdb);
     this.locatieZoekerUrl = this.googleWdbLocatieZoekerConfig.url;
     this.legende = Map.of(
       "Google Locatiezoeker",

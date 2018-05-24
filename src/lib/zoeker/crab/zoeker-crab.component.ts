@@ -1,17 +1,17 @@
 import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 
-import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
-import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
-import { KaartComponent } from "../kaart/kaart.component";
+import { KaartChildComponentBase } from "../../kaart/kaart-child-component-base";
+import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
+import { KaartComponent } from "../../kaart/kaart.component";
 
-import { CrabZoekerService } from "./crab-zoeker.service";
+import { ZoekerCrabService } from "./zoeker-crab.service";
 
 @Component({
   selector: "awv-crab-zoeker",
   template: "<ng-content></ng-content>"
 })
-export class CrabZoekerComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
-  constructor(parent: KaartComponent, zone: NgZone, private readonly zoeker: CrabZoekerService) {
+export class ZoekerCrabComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
+  constructor(parent: KaartComponent, zone: NgZone, private readonly zoeker: ZoekerCrabService) {
     super(parent, zone);
   }
 
