@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, NgZone, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from "@angular/core";
 import * as option from "fp-ts/lib/Option";
-import { none, some } from "fp-ts/lib/Option";
+import { some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
@@ -18,11 +18,11 @@ import {
 } from "../kaart-classic/messages";
 import { ofType, TypedRecord } from "../util/operators";
 
-import { KaartComponentBase } from "./kaart-component-base";
-import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
-import * as prt from "./kaart-protocol";
-import { KaartMsgObservableConsumer } from "./kaart.component";
-import { subscriptionCmdOperator } from "./subscription-helper";
+import { forChangedValue, KaartComponentBase } from "../kaart/kaart-component-base";
+import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "../kaart/kaart-event-dispatcher";
+import * as prt from "../kaart/kaart-protocol";
+import { KaartMsgObservableConsumer } from "../kaart/kaart.component";
+import { subscriptionCmdOperator } from "../kaart/subscription-helper";
 
 @Component({
   selector: "awv-kaart-classic",
@@ -115,22 +115,12 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    function forChangedValue(
-      prop: string,
-      action: (cur: any, prev: any) => void,
-      pred: (cur: any, prev: any) => boolean = () => true
-    ): void {
-      if (prop in changes && (!changes[prop].previousValue || pred(changes[prop].currentValue, changes[prop].previousValue))) {
-        action(changes[prop].currentValue, changes[prop].previousValue);
-      }
-    }
-
-    forChangedValue("zoom", zoom => this.dispatch(prt.VeranderZoomCmd(zoom, logOnlyWrapper)));
-    forChangedValue("middelpunt", middelpunt => this.dispatch(prt.VeranderMiddelpuntCmd(middelpunt)), coordinateIsDifferent);
-    forChangedValue("extent", extent => this.dispatch(prt.VeranderExtentCmd(extent)), extentIsDifferent);
-    forChangedValue("breedte", breedte => this.dispatch(prt.VeranderViewportCmd([breedte, this.hoogte])));
-    forChangedValue("hoogte", hoogte => this.dispatch(prt.VeranderViewportCmd([this.breedte, hoogte])));
-    forChangedValue("mijnLocatieZoom", zoom => this.dispatch(prt.ZetMijnLocatieZoomCmd(option.fromNullable(zoom))));
+    forChangedValue(changes, "zoom", zoom => this.dispatch(prt.VeranderZoomCmd(zoom, logOnlyWrapper)));
+    forChangedValue(changes, "middelpunt", middelpunt => this.dispatch(prt.VeranderMiddelpuntCmd(middelpunt)), coordinateIsDifferent);
+    forChangedValue(changes, "extent", extent => this.dispatch(prt.VeranderExtentCmd(extent)), extentIsDifferent);
+    forChangedValue(changes, "breedte", breedte => this.dispatch(prt.VeranderViewportCmd([breedte, this.hoogte])));
+    forChangedValue(changes, "hoogte", hoogte => this.dispatch(prt.VeranderViewportCmd([this.breedte, hoogte])));
+    forChangedValue(changes, "mijnLocatieZoom", zoom => this.dispatch(prt.ZetMijnLocatieZoomCmd(option.fromNullable(zoom))));
   }
 
   dispatch(cmd: prt.Command<TypedRecord>) {

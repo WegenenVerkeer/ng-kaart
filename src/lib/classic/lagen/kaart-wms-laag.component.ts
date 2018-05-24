@@ -2,8 +2,9 @@ import { Component, Input, OnInit, ViewEncapsulation } from "@angular/core";
 import { fromNullable } from "fp-ts/lib/Option";
 import { List } from "immutable";
 
-import { KaartClassicComponent } from "./kaart-classic.component";
-import { Laaggroep, TiledWmsType, WmsLaag } from "./kaart-elementen";
+import { Laaggroep, TiledWmsType, WmsLaag } from "../../kaart/kaart-elementen";
+import { KaartClassicComponent } from "../kaart-classic.component";
+
 import { KaartLaagComponent } from "./kaart-laag.component";
 
 @Component({

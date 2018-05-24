@@ -4,10 +4,10 @@ import { fromNullable } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 
-import { classicLogger } from "../kaart-classic/log";
+import { classicLogger } from "../../kaart-classic/log";
+import * as ke from "../../kaart/kaart-elementen";
+import { KaartClassicComponent } from "../kaart-classic.component";
 
-import { KaartClassicComponent } from "./kaart-classic.component";
-import { Laaggroep, WmtsCapaConfig, WmtsLaag, WmtsManualConfig, WmtsType } from "./kaart-elementen";
 import { KaartLaagComponent } from "./kaart-laag.component";
 
 @Component({
@@ -59,8 +59,8 @@ export class KaartWmtsLaagComponent extends KaartLaagComponent implements OnInit
     super.ngOnInit();
   }
 
-  createLayer(): WmtsLaag {
-    let config: WmtsCapaConfig | WmtsManualConfig;
+  createLayer(): ke.WmtsLaag {
+    let config: ke.WmtsCapaConfig | ke.WmtsManualConfig;
     if (this.capurl) {
       config = {
         type: "Capa",
@@ -79,7 +79,7 @@ export class KaartWmtsLaagComponent extends KaartLaagComponent implements OnInit
     }
 
     return {
-      type: WmtsType,
+      type: ke.WmtsType,
       titel: this.titel,
       naam: this.laagNaam,
       versie: fromNullable(this.versie),
@@ -93,11 +93,11 @@ export class KaartWmtsLaagComponent extends KaartLaagComponent implements OnInit
     };
   }
 
-  laaggroep(): Laaggroep {
+  laaggroep(): ke.Laaggroep {
     return "Achtergrond";
   }
 
-  backgroundUrl(config: WmtsCapaConfig | WmtsManualConfig): string {
+  backgroundUrl(config: ke.WmtsCapaConfig | ke.WmtsManualConfig): string {
     if (config.type === "Manual") {
       return (
         this.urls[0] +

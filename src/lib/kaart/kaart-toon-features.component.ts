@@ -1,12 +1,12 @@
 import { Component, DoCheck, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from "@angular/core";
 import { List } from "immutable";
-
 import * as ol from "openlayers";
 
-import { KaartClassicComponent } from "./kaart-classic.component";
+import { KaartClassicComponent } from "../classic/kaart-classic.component";
+import { KaartVectorLaagComponent } from "../classic/lagen/kaart-vector-laag.component";
+
 import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
-import { KaartVectorLaagComponent } from "./kaart-vector-laag.component";
 
 @Component({
   selector: "awv-kaart-features-laag",

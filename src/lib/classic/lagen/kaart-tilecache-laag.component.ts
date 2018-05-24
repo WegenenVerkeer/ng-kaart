@@ -2,18 +2,18 @@ import { Component, Inject, ViewEncapsulation } from "@angular/core";
 import { fromNullable } from "fp-ts/lib/Option";
 import { List } from "immutable";
 
-import { KaartClassicComponent } from "./kaart-classic.component";
-import { KAART_CFG, KaartConfig } from "./kaart-config";
-import * as ke from "./kaart-elementen";
-import { Laaggroep } from "./kaart-elementen";
+import { KAART_CFG, KaartConfig } from "../../kaart/kaart-config";
+import * as ke from "../../kaart/kaart-elementen";
+import { KaartClassicComponent } from "../kaart-classic.component";
+
 import { KaartWmsLaagComponent } from "./kaart-wms-laag.component";
 
 @Component({
-  selector: "awv-kaart-geoserver-laag",
+  selector: "awv-kaart-tilecache-laag",
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class KaartGeoserverLaagComponent extends KaartWmsLaagComponent {
+export class KaartTilecacheLaagComponent extends KaartWmsLaagComponent {
   constructor(kaart: KaartClassicComponent, @Inject(KAART_CFG) private readonly config: KaartConfig) {
     super(kaart);
   }
@@ -23,18 +23,14 @@ export class KaartGeoserverLaagComponent extends KaartWmsLaagComponent {
       type: ke.TiledWmsType,
       titel: this.titel,
       naam: this.laagNaam,
-      urls: List(this.config.geoserver.urls),
+      urls: List(this.config.tilecache.urls),
       versie: fromNullable(this.versie),
       tileSize: fromNullable(this.tileSize),
       format: fromNullable(this.format),
       opacity: fromNullable(this.opacity),
-      backgroundUrl: this.backgroundUrl(List(this.config.geoserver.urls), this.laagNaam),
+      backgroundUrl: this.backgroundUrl(List(this.config.tilecache.urls), this.laagNaam),
       minZoom: this.minZoom,
       maxZoom: this.maxZoom
     };
-  }
-
-  laaggroep(): Laaggroep {
-    return "Voorgrond.Laag";
   }
 }

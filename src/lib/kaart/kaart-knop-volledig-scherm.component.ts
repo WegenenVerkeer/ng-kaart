@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 
-import { KaartClassicComponent } from "./kaart-classic.component";
+import { KaartClassicComponent } from "../classic/kaart-classic.component";
+
 import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
 
 @Component({

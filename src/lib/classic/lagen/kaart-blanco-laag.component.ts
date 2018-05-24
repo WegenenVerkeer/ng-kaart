@@ -1,8 +1,8 @@
 import { Component, Input, ViewEncapsulation } from "@angular/core";
 
-import { KaartClassicComponent } from "./kaart-classic.component";
-import { BlancoLaag, BlancoType } from "./kaart-elementen";
-import { Laaggroep } from "./kaart-elementen";
+import { BlancoLaag, BlancoType, Laaggroep } from "../../kaart/kaart-elementen";
+import { KaartClassicComponent } from "../kaart-classic.component";
+
 import { KaartLaagComponent } from "./kaart-laag.component";
 
 const blancoLaag = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
