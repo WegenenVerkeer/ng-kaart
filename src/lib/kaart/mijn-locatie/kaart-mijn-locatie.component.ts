@@ -1,18 +1,18 @@
-import { AfterViewInit, Component, ElementRef, Input, NgZone, OnInit, QueryList, ViewChild, ViewChildren } from "@angular/core";
+import { AfterViewInit, Component, NgZone, OnInit, QueryList, ViewChildren } from "@angular/core";
 import { MatButton } from "@angular/material";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
-import { combineLatest, map, mapTo, share, shareReplay, switchMap, take, tap } from "rxjs/operators";
+import { combineLatest, map, mapTo, shareReplay, switchMap } from "rxjs/operators";
 
-import { observeOnAngular } from "../util/observe-on-angular";
-import { emitSome, ofType } from "../util/operators";
-import { orElse } from "../util/option";
+import { observeOnAngular } from "../../util/observe-on-angular";
+import { emitSome, ofType } from "../../util/operators";
+import { orElse } from "../../util/option";
 
-import { KaartChildComponentBase } from "./kaart-child-component-base";
-import * as ke from "./kaart-elementen";
-import { VeldInfo } from "./kaart-elementen";
+import { KaartChildComponentBase } from "../kaart-child-component-base";
+import * as ke from "../kaart-elementen";
+import { VeldInfo } from "../kaart-elementen";
 import {
   KaartInternalMsg,
   kaartLogOnlyWrapper,
@@ -20,13 +20,12 @@ import {
   MijnLocatieZoomdoelGezetWrapper,
   ZoominstellingenGezetMsg,
   zoominstellingenGezetWrapper
-} from "./kaart-internal-messages";
-import * as prt from "./kaart-protocol";
-import { Zoominstellingen } from "./kaart-protocol";
-import { KaartWithInfo } from "./kaart-with-info";
-import { KaartComponent } from "./kaart.component";
-import { kaartLogger } from "./log";
-import * as ss from "./stijl-selector";
+} from "../kaart-internal-messages";
+import * as prt from "../kaart-protocol";
+import { Zoominstellingen } from "../kaart-protocol";
+import { KaartComponent } from "../kaart.component";
+import { kaartLogger } from "../log";
+import * as ss from "../stijl-selector";
 
 const MijnLocatieLaagNaam = "Mijn Locatie";
 
