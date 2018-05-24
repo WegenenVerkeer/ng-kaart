@@ -4,9 +4,9 @@ import { fromNullable } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 
-import { classicLogger } from "../../kaart-classic/log";
 import * as ke from "../../kaart/kaart-elementen";
 import { KaartClassicComponent } from "../kaart-classic.component";
+import { classicLogger } from "../log";
 
 import { ClassicLaagComponent } from "./classic-laag.component";
 

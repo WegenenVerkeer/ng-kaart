@@ -13,6 +13,7 @@ export * from "./lagen/classic-vector-laag.component";
 export * from "./lagen/classic-wms-laag.component";
 export * from "./lagen/classic-wmts-laag.component";
 export * from "./lagenkiezer/classic-lagenkiezer.component";
+export * from "./log";
 export * from "./openlayers-style/classic-openlayers-style.component";
 export * from "./schaal/classic-schaal.component";
 export * from "./standaard-interacties/classic-standaard-interacties.component";

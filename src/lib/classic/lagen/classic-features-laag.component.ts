@@ -2,11 +2,11 @@ import { Component, DoCheck, EventEmitter, Input, OnDestroy, OnInit, Output, Vie
 import { List } from "immutable";
 import * as ol from "openlayers";
 
-import { KaartClassicComponent } from "../kaart-classic.component";
-import { ClassicVectorLaagComponent } from "./classic-vector-laag.component";
-
 import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import * as prt from "../../kaart/kaart-protocol";
+import { KaartClassicComponent } from "../kaart-classic.component";
+
+import { ClassicVectorLaagComponent } from "./classic-vector-laag.component";
 
 @Component({
   selector: "awv-kaart-features-laag",

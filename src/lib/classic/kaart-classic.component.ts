@@ -7,7 +7,14 @@ import * as rx from "rxjs";
 import { Observable } from "rxjs/Observable";
 import { map, share, tap } from "rxjs/operators";
 
-import { classicLogger } from "../kaart-classic/log";
+import { forChangedValue, KaartComponentBase } from "../kaart/kaart-component-base";
+import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "../kaart/kaart-event-dispatcher";
+import * as prt from "../kaart/kaart-protocol";
+import { KaartMsgObservableConsumer } from "../kaart/kaart.component";
+import { subscriptionCmdOperator } from "../kaart/subscription-helper";
+import { ofType, TypedRecord } from "../util/operators";
+
+import { classicLogger } from "./log";
 import {
   FeatureGedeselecteerdMsg,
   FeatureSelectieAangepastMsg,
@@ -15,14 +22,7 @@ import {
   KaartClassicSubMsg,
   logOnlyWrapper,
   SubscribedMsg
-} from "../kaart-classic/messages";
-import { ofType, TypedRecord } from "../util/operators";
-
-import { forChangedValue, KaartComponentBase } from "../kaart/kaart-component-base";
-import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "../kaart/kaart-event-dispatcher";
-import * as prt from "../kaart/kaart-protocol";
-import { KaartMsgObservableConsumer } from "../kaart/kaart.component";
-import { subscriptionCmdOperator } from "../kaart/subscription-helper";
+} from "./messages";
 
 @Component({
   selector: "awv-kaart-classic",
