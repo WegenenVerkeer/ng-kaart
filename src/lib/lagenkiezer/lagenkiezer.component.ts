@@ -67,7 +67,6 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
   readonly heeftDivider$: Observable<boolean>;
   readonly geenLagen$: Observable<boolean>;
   readonly opties$: Observable<LagenUiOpties>;
-  readonly canDrag$: Observable<boolean>;
 
   constructor(parent: KaartComponent, ngZone: NgZone, private readonly cdr: ChangeDetectorRef) {
     super(parent, ngZone);
