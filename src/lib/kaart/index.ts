@@ -145,7 +145,7 @@ export class KaartModule {
 }
 
 export * from "../classic/index";
-export * from "./coordinaten.service";
+export * from "../coordinaten/coordinaten.service";
 export * from "./kaart-component-base";
 export * from "./copyright/kaart-copyright.component";
 export * from "./voorwaarden/kaart-voorwaarden.component";
