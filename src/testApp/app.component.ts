@@ -7,7 +7,7 @@ import { List } from "immutable";
 import * as ol from "openlayers";
 
 import { classicLogger } from "../lib/classic/log";
-import { KaartClassicComponent } from "../lib/kaart";
+import { KaartClassicComponent } from "../lib/classic/kaart-classic.component";
 import { kaartLogOnlyWrapper } from "../lib/kaart/kaart-internal-messages";
 import * as prt from "../lib/kaart/kaart-protocol";
 import { definitieToStyle, kaartLogger } from "../lib/public_api";
