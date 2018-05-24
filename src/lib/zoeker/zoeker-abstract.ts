@@ -61,7 +61,7 @@ export interface StringZoekInput {
   readonly value: string;
 }
 
-export interface AbstractZoeker {
+export interface ZoekerAbstract {
   naam(): string;
   zoek$(input: ZoekInput): Observable<ZoekResultaten>;
 }
