@@ -1,16 +1,16 @@
 import { Component, Input, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 
-import { KaartClassicComponent } from "../classic/kaart-classic.component";
+import { KaartClassicComponent } from "../kaart-classic.component";
 
-import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
-import * as prt from "./kaart-protocol";
+import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
+import * as prt from "../../kaart/kaart-protocol";
 
 @Component({
   selector: "awv-kaart-standaard-interacties",
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class KaartStandaardInteractiesComponent implements OnInit, OnDestroy {
+export class ClassicStandaardInteractiesComponent implements OnInit, OnDestroy {
   @Input() focusVoorZoom = false;
 
   constructor(private readonly kaart: KaartClassicComponent) {}
