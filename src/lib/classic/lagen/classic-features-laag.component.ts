@@ -2,18 +2,18 @@ import { Component, DoCheck, EventEmitter, Input, OnDestroy, OnInit, Output, Vie
 import { List } from "immutable";
 import * as ol from "openlayers";
 
-import { KaartClassicComponent } from "../classic/kaart-classic.component";
-import { ClassicVectorLaagComponent } from "../classic/lagen/classic-vector-laag.component";
+import { KaartClassicComponent } from "../kaart-classic.component";
+import { ClassicVectorLaagComponent } from "./classic-vector-laag.component";
 
-import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
-import * as prt from "./kaart-protocol";
+import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
+import * as prt from "../../kaart/kaart-protocol";
 
 @Component({
   selector: "awv-kaart-features-laag",
-  template: "<ng-content></ng-content>",
+  template: "",
   encapsulation: ViewEncapsulation.None
 })
-export class KaartFeaturesLaagComponent extends ClassicVectorLaagComponent implements OnInit, OnDestroy, DoCheck {
+export class ClassicFeaturesLaagComponent extends ClassicVectorLaagComponent implements OnInit, OnDestroy, DoCheck {
   @Input() features = [] as ol.Feature[];
 
   // TODO combineren met 'selecteerbaar' van kaart-vector-laag

@@ -3,16 +3,16 @@ import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { distinctUntilChanged, map, takeUntil } from "rxjs/operators";
 
-import { classicMsgSubscriptionCmdOperator, KaartClassicComponent } from "../classic/kaart-classic.component";
-import { classicLogger } from "../kaart-classic/log";
-import { KaartClassicMsg, TekenGeomAangepastMsg } from "../kaart-classic/messages";
-import { ofType } from "../util/operators";
+import { classicMsgSubscriptionCmdOperator, KaartClassicComponent } from "../kaart-classic.component";
+import { classicLogger } from "../../kaart-classic/log";
+import { KaartClassicMsg, TekenGeomAangepastMsg } from "../../kaart-classic/messages";
+import { ofType } from "../../util/operators";
 
-import { KaartComponentBase } from "./kaart-component-base";
-import { TekenSettings } from "./kaart-elementen";
-import * as prt from "./kaart-protocol";
-import { TekenenUiSelector } from "./kaart-teken-laag.component";
-import * as ss from "./stijl-selector";
+import { KaartComponentBase } from "../../kaart/kaart-component-base";
+import { TekenSettings } from "../../kaart/kaart-elementen";
+import * as prt from "../../kaart/kaart-protocol";
+import { TekenenUiSelector } from "../../kaart/tekenen/kaart-teken-laag.component";
+import * as ss from "../../kaart/stijl-selector";
 
 @Component({
   selector: "awv-kaart-teken",
