@@ -15,7 +15,7 @@ import * as prt from "./kaart-protocol";
 import { KaartComponent } from "./kaart.component";
 import { asStyleSelector, toStylish } from "./stijl-selector";
 
-export const TekenenUISelector = "Kaarttekenen";
+export const TekenenUiSelector = "Kaarttekenen";
 const TekenLaagNaam = "Tekenen van geometrie";
 const defaultlaagStyle = new ol.style.Style({
   fill: new ol.style.Fill({
