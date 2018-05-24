@@ -6,6 +6,7 @@ import { ClickOutsideModule } from "ng4-click-outside";
 import * as ol from "openlayers";
 
 import { ClassicCopyrightComponent } from "../classic/copyright/classic-copyright.component";
+import { ClassicLagenkiezerComponent } from "../classic/lagenkiezer/classic-lagenkiezer.component";
 import { ClassicSchaalComponent } from "../classic/schaal/classic-schaal.component";
 import { ClassicVoorwaardenComponent } from "../classic/voorwaarden/classic-voorwaarden.component";
 import { LagenkiezerModule } from "../lagenkiezer/index";
@@ -50,6 +51,7 @@ const components: any[] = [
   ClassicSchaalComponent,
   ClassicVoorwaardenComponent,
   ClassicCopyrightComponent,
+  ClassicLagenkiezerComponent,
   KaartComponent,
   KaartKnopAchtergrondLaagKiezerComponent,
   KaartClassicComponent,
