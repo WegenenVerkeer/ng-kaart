@@ -1,6 +1,6 @@
 import { Component, Input } from "@angular/core";
 
-import { AchtergrondLaag, isWmsLaag, Laag, ToegevoegdeLaag, WmsLaag } from "./kaart-elementen";
+import { AchtergrondLaag, Laag, ToegevoegdeLaag } from "../kaart-elementen";
 
 // Deze component wordt intern gebruikt in de achtergrond selector. Het is niet de bedoeling om deze zelf te gebruiken.
 
