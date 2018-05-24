@@ -5,6 +5,7 @@ import { MatButtonModule, MatButtonToggleModule, MatCardModule, MatIconModule } 
 import { ClickOutsideModule } from "ng4-click-outside";
 import * as ol from "openlayers";
 
+import { ClassicAchtergrondSelectorComponent } from "../classic/achtergrond-selector/classic-achtergrond-selector.component";
 import { ClassicCopyrightComponent } from "../classic/copyright/classic-copyright.component";
 import { ClassicLagenkiezerComponent } from "../classic/lagenkiezer/classic-lagenkiezer.component";
 import { ClassicSchaalComponent } from "../classic/schaal/classic-schaal.component";
@@ -12,19 +13,18 @@ import { ClassicVoorwaardenComponent } from "../classic/voorwaarden/classic-voor
 import { LagenkiezerModule } from "../lagenkiezer/index";
 import { ZoekerModule } from "../zoeker/index";
 
+import { KaartAchtergrondSelectorComponent } from "./achtergrond-selector/kaart-achtergrond-selector.component";
+import { KaartAchtergrondTileComponent } from "./achtergrond-selector/kaart-achtergrond-tile.component";
 import { KaartCopyrightComponent } from "./copyright/kaart-copyright.component";
 import { KaartInfoBoodschapAlertComponent } from "./info-boodschappen/kaart-info-boodschap-alert.component";
 import { KaartInfoBoodschapIdentifyComponent } from "./info-boodschappen/kaart-info-boodschap-identify.component";
 import { KaartInfoBoodschapComponent } from "./info-boodschappen/kaart-info-boodschap.component";
 import { KaartInfoBoodschappenComponent } from "./info-boodschappen/kaart-info-boodschappen.component";
-import { KaartAchtergrondSelectorComponent } from "./kaart-achtergrond-selector.component";
-import { KaartAchtergrondTileComponent } from "./kaart-achtergrond-tile.component";
 import { KaartBlancoLaagComponent } from "./kaart-blanco-laag.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { KAART_CFG, KaartConfig } from "./kaart-config";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { KaartGeoserverLaagComponent } from "./kaart-geoserver-laag.component";
-import { KaartKnopAchtergrondLaagKiezerComponent } from "./kaart-knop-achtergrondlaag-kiezer.component";
 import { KaartKnopVolledigSchermComponent } from "./kaart-knop-volledig-scherm.component";
 import { KaartKnopZoomSliderComponent } from "./kaart-knop-zoom-slider.component";
 import { KaartMijnLocatieComponent } from "./kaart-mijn-locatie.component";
@@ -53,7 +53,7 @@ const components: any[] = [
   ClassicCopyrightComponent,
   ClassicLagenkiezerComponent,
   KaartComponent,
-  KaartKnopAchtergrondLaagKiezerComponent,
+  ClassicAchtergrondSelectorComponent,
   KaartClassicComponent,
   KaartKnopVolledigSchermComponent,
   KaartKnopZoomSliderComponent,
@@ -158,7 +158,6 @@ export * from "./copyright/kaart-copyright.component";
 export * from "./kaart-openlayers.component";
 export * from "./voorwaarden/kaart-voorwaarden.component";
 export * from "./copyright/kaart-copyright.component";
-export * from "./kaart-knop-achtergrondlaag-kiezer.component";
 export * from "./kaart-knop-volledig-scherm.component";
 export * from "./kaart-knop-zoom-slider.component";
 export * from "./kaart-laag.component";

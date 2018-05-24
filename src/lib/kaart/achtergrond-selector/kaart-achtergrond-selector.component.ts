@@ -3,13 +3,13 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnInit }
 import { Observable } from "rxjs/Observable";
 import { map, switchMap, takeUntil } from "rxjs/operators";
 
-import { ofType } from "../util/operators";
+import { ofType } from "../../util/operators";
 
-import { KaartChildComponentBase } from "./kaart-child-component-base";
-import { AchtergrondLaag, ToegevoegdeLaag } from "./kaart-elementen";
-import { AchtergrondtitelGezetMsg, achtergrondtitelGezetWrapper, KaartInternalMsg, kaartLogOnlyWrapper } from "./kaart-internal-messages";
-import * as prt from "./kaart-protocol";
-import { KaartComponent } from "./kaart.component";
+import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { AchtergrondLaag, ToegevoegdeLaag } from "../kaart-elementen";
+import { AchtergrondtitelGezetMsg, achtergrondtitelGezetWrapper, KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-messages";
+import * as prt from "../kaart-protocol";
+import { KaartComponent } from "../kaart.component";
 
 enum DisplayMode {
   SHOWING_STATUS,
