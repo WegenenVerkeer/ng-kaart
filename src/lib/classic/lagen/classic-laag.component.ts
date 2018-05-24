@@ -2,9 +2,9 @@ import { Input, OnDestroy, OnInit } from "@angular/core";
 import { fromNullable } from "fp-ts/lib/Option";
 
 import { Laag, Laaggroep } from "../../kaart/kaart-elementen";
-import { KaartInternalMsg, kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import * as prt from "../../kaart/kaart-protocol";
 import { KaartClassicComponent } from "../kaart-classic.component";
+import { KaartClassicMsg, logOnlyWrapper } from "../messages";
 
 export abstract class ClassicLaagComponent implements OnInit, OnDestroy {
   @Input() titel = "";
@@ -24,7 +24,7 @@ export abstract class ClassicLaagComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.dispatch(prt.VerwijderLaagCmd(this.titel, kaartLogOnlyWrapper));
+    this.dispatch(prt.VerwijderLaagCmd(this.titel, logOnlyWrapper));
   }
 
   protected voegLaagToe() {
@@ -34,7 +34,7 @@ export abstract class ClassicLaagComponent implements OnInit, OnDestroy {
       laag: this.createLayer(),
       laaggroep: this.gekozenLaagGroep(),
       magGetoondWorden: this.zichtbaar,
-      wrapper: kaartLogOnlyWrapper
+      wrapper: logOnlyWrapper
     });
   }
 
@@ -42,7 +42,7 @@ export abstract class ClassicLaagComponent implements OnInit, OnDestroy {
     return fromNullable(this.groep).getOrElse(this.laaggroep());
   }
 
-  protected dispatch(evt: prt.Command<KaartInternalMsg>) {
+  protected dispatch(evt: prt.Command<KaartClassicMsg>) {
     this.kaart.dispatch(evt);
   }
 

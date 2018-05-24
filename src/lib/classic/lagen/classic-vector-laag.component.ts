@@ -4,12 +4,12 @@ import { OrderedMap } from "immutable";
 import * as ol from "openlayers";
 
 import * as ke from "../../kaart/kaart-elementen";
-import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import * as prt from "../../kaart/kaart-protocol";
 import * as ss from "../../kaart/stijl-selector";
 import { getDefaultSelectionStyleFunction, getDefaultStyleFunction } from "../../kaart/styles";
 import { forEach, orElse } from "../../util/option";
 import { KaartClassicComponent } from "../kaart-classic.component";
+import { logOnlyWrapper } from "../messages";
 
 import { ClassicLaagComponent } from "./classic-laag.component";
 
@@ -61,7 +61,7 @@ export class ClassicVectorLaagComponent extends ClassicLaagComponent {
 
     forEach(this.getMaybeStyleSelector(), styleselector => {
       this.dispatch(
-        prt.ZetStijlVoorLaagCmd(this.titel, styleselector, fromNullable(this.selectieStyle).chain(ss.asStyleSelector), kaartLogOnlyWrapper)
+        prt.ZetStijlVoorLaagCmd(this.titel, styleselector, fromNullable(this.selectieStyle).chain(ss.asStyleSelector), logOnlyWrapper)
       );
     });
   }

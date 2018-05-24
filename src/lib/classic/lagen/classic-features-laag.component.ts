@@ -2,9 +2,9 @@ import { Component, DoCheck, EventEmitter, Input, OnDestroy, OnInit, Output, Vie
 import { List } from "immutable";
 import * as ol from "openlayers";
 
-import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import * as prt from "../../kaart/kaart-protocol";
 import { KaartClassicComponent } from "../kaart-classic.component";
+import { logOnlyWrapper } from "../messages";
 
 import { ClassicVectorLaagComponent } from "./classic-vector-laag.component";
 
@@ -46,6 +46,6 @@ export class ClassicFeaturesLaagComponent extends ClassicVectorLaagComponent imp
   }
 
   private dispatchVervangFeatures(features: List<ol.Feature>) {
-    this.dispatch(prt.VervangFeaturesCmd(this.titel, features, kaartLogOnlyWrapper));
+    this.dispatch(prt.VervangFeaturesCmd(this.titel, features, logOnlyWrapper));
   }
 }
