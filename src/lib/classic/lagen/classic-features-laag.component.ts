@@ -1,19 +1,19 @@
 import { Component, DoCheck, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from "@angular/core";
 import { List } from "immutable";
-
 import * as ol from "openlayers";
 
-import { KaartClassicComponent } from "./kaart-classic.component";
-import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
-import * as prt from "./kaart-protocol";
-import { KaartVectorLaagComponent } from "./kaart-vector-laag.component";
+import * as prt from "../../kaart/kaart-protocol";
+import { KaartClassicComponent } from "../kaart-classic.component";
+import { logOnlyWrapper } from "../messages";
+
+import { ClassicVectorLaagComponent } from "./classic-vector-laag.component";
 
 @Component({
   selector: "awv-kaart-features-laag",
-  template: "<ng-content></ng-content>",
+  template: "",
   encapsulation: ViewEncapsulation.None
 })
-export class KaartFeaturesLaagComponent extends KaartVectorLaagComponent implements OnInit, OnDestroy, DoCheck {
+export class ClassicFeaturesLaagComponent extends ClassicVectorLaagComponent implements OnInit, OnDestroy, DoCheck {
   @Input() features = [] as ol.Feature[];
 
   // TODO combineren met 'selecteerbaar' van kaart-vector-laag
@@ -46,6 +46,6 @@ export class KaartFeaturesLaagComponent extends KaartVectorLaagComponent impleme
   }
 
   private dispatchVervangFeatures(features: List<ol.Feature>) {
-    this.dispatch(prt.VervangFeaturesCmd(this.titel, features, kaartLogOnlyWrapper));
+    this.dispatch(prt.VervangFeaturesCmd(this.titel, features, logOnlyWrapper));
   }
 }

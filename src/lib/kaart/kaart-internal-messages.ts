@@ -1,8 +1,8 @@
 import { none, Option, some } from "fp-ts/lib/Option";
-import { List, Map } from "immutable";
+import { Map } from "immutable";
 import * as ol from "openlayers";
 
-import { AchtergrondLaag, Laag, Laaggroep, TekenSettings, ToegevoegdeLaag } from "./kaart-elementen";
+import { TekenSettings } from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import { kaartLogger } from "./log";

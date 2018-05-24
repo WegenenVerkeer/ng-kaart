@@ -2,12 +2,12 @@ import { Component, NgZone, OnInit } from "@angular/core";
 import { Observable } from "rxjs/Observable";
 import { map } from "rxjs/operators";
 
-import { ofType } from "../util/operators";
+import { ofType } from "../../util/operators";
 
-import { KaartChildComponentBase } from "./kaart-child-component-base";
-import { KaartInternalMsg, kaartLogOnlyWrapper, ZoominstellingenGezetMsg, zoominstellingenGezetWrapper } from "./kaart-internal-messages";
-import * as prt from "./kaart-protocol";
-import { KaartComponent } from "./kaart.component";
+import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { KaartInternalMsg, kaartLogOnlyWrapper, ZoominstellingenGezetMsg, zoominstellingenGezetWrapper } from "../kaart-internal-messages";
+import * as prt from "../kaart-protocol";
+import { KaartComponent } from "../kaart.component";
 
 export interface KaartProps {
   canZoomIn: boolean;

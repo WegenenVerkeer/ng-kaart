@@ -1,7 +1,7 @@
 import { OnChanges, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
 
-import { KaartClassicComponent } from "../../kaart/kaart-classic.component";
 import * as prt from "../../kaart/kaart-protocol";
+import { KaartClassicComponent } from "../kaart-classic.component";
 
 export abstract class ClassicUIElementSelectorComponentBase implements OnInit, OnDestroy, OnChanges {
   constructor(readonly uiSelector: string, readonly kaart: KaartClassicComponent) {}

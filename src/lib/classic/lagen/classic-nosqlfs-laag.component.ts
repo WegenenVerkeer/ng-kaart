@@ -1,27 +1,26 @@
 import { Component, Input, ViewEncapsulation } from "@angular/core";
 import { option } from "fp-ts";
-import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 import { OrderedMap } from "immutable";
 import * as ol from "openlayers";
 
-import { NosqlFsSource } from "../source/nosql-fs-source";
-import { forEach, orElse } from "../util/option";
+import * as ke from "../../kaart/kaart-elementen";
+import * as prt from "../../kaart/kaart-protocol";
+import * as ss from "../../kaart/stijl-selector";
+import { getDefaultSelectionStyleFunction, getDefaultStyleFunction } from "../../kaart/styles";
+import { NosqlFsSource } from "../../source/nosql-fs-source";
+import { forEach, orElse } from "../../util/option";
+import { KaartClassicComponent } from "../kaart-classic.component";
+import { logOnlyWrapper } from "../messages";
 
-import { KaartClassicComponent } from "./kaart-classic.component";
-import * as ke from "./kaart-elementen";
-import { VeldInfo } from "./kaart-elementen";
-import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
-import { KaartLaagComponent } from "./kaart-laag.component";
-import * as prt from "./kaart-protocol";
-import * as ss from "./stijl-selector";
-import { getDefaultSelectionStyleFunction, getDefaultStyleFunction } from "./styles";
+import { ClassicLaagComponent } from "./classic-laag.component";
 
 @Component({
   selector: "awv-kaart-nosqlfs-laag",
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
+export class ClassicNosqlfsLaagComponent extends ClassicLaagComponent {
   @Input() url = "/geolatte-nosqlfs";
   @Input() database: string;
   @Input() collection: string;
@@ -58,7 +57,7 @@ export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
       minZoom: this.minZoom,
       maxZoom: this.maxZoom,
       offsetveld: fromNullable(this.offsetveld),
-      velden: OrderedMap<string, VeldInfo>()
+      velden: OrderedMap<string, ke.VeldInfo>()
     };
   }
 
@@ -75,7 +74,7 @@ export class KaartNosqlfsLaagComponent extends KaartLaagComponent {
 
     forEach(this.getMaybeStyleSelector(), styleselector => {
       this.dispatch(
-        prt.ZetStijlVoorLaagCmd(this.titel, styleselector, fromNullable(this.selectieStyle).chain(ss.asStyleSelector), kaartLogOnlyWrapper)
+        prt.ZetStijlVoorLaagCmd(this.titel, styleselector, fromNullable(this.selectieStyle).chain(ss.asStyleSelector), logOnlyWrapper)
       );
     });
   }

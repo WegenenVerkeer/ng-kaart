@@ -5,6 +5,7 @@ import { BrowserModule } from "@angular/platform-browser";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { ClickOutsideModule } from "ng4-click-outside";
 
+import { ClassicModule } from "../lib/classic";
 import { KaartModule } from "../lib/kaart/index";
 import { LagenkiezerModule } from "../lib/lagenkiezer/index";
 import { ZoekerModule } from "../lib/zoeker/index";
@@ -19,6 +20,7 @@ import { AvKaartComponent } from "./av-kaart.component";
     BrowserModule,
     BrowserAnimationsModule,
     KaartModule.withDefaults(),
+    ClassicModule,
     FormsModule,
     ZoekerModule.forRoot({
       googleWdb: {
