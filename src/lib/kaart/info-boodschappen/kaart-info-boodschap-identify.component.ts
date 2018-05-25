@@ -1,6 +1,5 @@
 import { Component, Input, NgZone } from "@angular/core";
 import { fromNullable, Option } from "fp-ts/lib/Option";
-import { getOrElse } from "fp-ts/lib/OptionT";
 import { List, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 
