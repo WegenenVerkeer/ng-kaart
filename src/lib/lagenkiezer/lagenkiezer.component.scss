@@ -1,7 +1,6 @@
 @import "../css/kaart.component-common.scss";
 
 .lagen-lijst {
-  font-family: Roboto, "Helvetica Neue", sans-serif;
   color: $kaart-primary-text-color;
   white-space: nowrap;
   text-overflow: ellipsis;
@@ -20,9 +19,8 @@
   padding-bottom: 8px
 }
 
-.lagen-titel {
-  padding: 0px;
-  background: white;
+.lagen-header {
+  padding: 0px 8px;
   min-width: 104px;
   max-width: 100%;
   display: flex;
@@ -30,10 +28,20 @@
   flex-wrap: nowrap;
   justify-content: flex-start;
   align-items: center;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+    cursor: pointer;
+  }
+}
+
+.lagen-titel {
+  margin-left: 4px;
+  font-size: 16px;
+  flex-grow: 1;
 }
 
 .lagen-lijst ::ng-deep .mat-tab-group.mat-primary .mat-ink-bar, .mat-tab-nav-bar.mat-primary .mat-ink-bar {
-  background-color: $kaart-icon-button-active;
   top: 0;
 }
 
