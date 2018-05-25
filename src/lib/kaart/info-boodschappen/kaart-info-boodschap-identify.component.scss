@@ -56,6 +56,28 @@
   max-width: 60%;
 }
 
+.veldlinks {
+  order: 1;
+  flex-basis: 100%;
+  max-width: 100%;
+}
+
+.veldlinks a {
+  line-height: 20px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 300;
+  color: rgba(247, 144, 45, 0.87);
+}
+
+.link-icon {
+  line-height: 32px;
+  font-size: 16px;
+  color: rgba(247, 144, 45, 0.87);
+  width: 16px;
+  vertical-align: text-bottom;
+}
+
 .veldnaam {
   line-height: 20px;
   font-size: 14px;
