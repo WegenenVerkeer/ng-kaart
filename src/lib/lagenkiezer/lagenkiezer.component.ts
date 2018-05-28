@@ -93,12 +93,8 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
     return this.compact;
   }
 
-  verbergLijst() {
-    this.compact = true;
-  }
-
-  toonLijst() {
-    this.compact = false;
+  toggleCompact() {
+    this.compact = !this.compact;
   }
 
   isDropZone(laag: ToegevoegdeLaag): boolean {

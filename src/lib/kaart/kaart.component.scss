@@ -50,14 +50,13 @@
 
 .kaart-links {
   position: absolute;
-  max-height: calc(100% - 32px);
+  max-height: 100%;
   height: auto;
   width: 480px;
-  top: 16px;
-  left: 16px;
+  top: 0;
+  left: 0;
   display: flex;
   flex-direction: column;
-//  flex-wrap: nowrap;
   overflow-x: hidden;
   overflow-y: auto;
   pointer-events: initial;
@@ -65,14 +64,17 @@
 
 awv-zoeker {
   order: 100;
+  margin: 8px 8px 0 8px;
 }
 
 awv-lagenkiezer {
   order: 100;
+  margin: 8px 8px 0 8px;
 }
 
 awv-kaart-info-boodschappen {
   order: 200;
+  margin: 8px 8px 0 8px;
 }
 
 .kaart-links::-webkit-scrollbar-track

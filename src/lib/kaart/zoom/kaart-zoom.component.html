@@ -1,5 +1,5 @@
 <div *ngIf="kaartProps$ | async as props">
-  <div class="float-box actions panel">
+  <div class="kaart-widget actions panel">
     <button mat-raised-button (click)="zoomIn(props)" [disabled]="!props.canZoomIn">
       <mat-icon aria-label="zoom in">add</mat-icon>
     </button>

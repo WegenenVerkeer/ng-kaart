@@ -1,15 +1,17 @@
 @import "../../css/kaart.component-common";
 
 input {
-  flex-grow: 100;
+  flex-grow: 1;
   border: none;
+  padding: 0;
   margin-left: 4px;
   outline: none;
+  font-size: 16px;
+  height: 24px;
 }
 
 .zoeker-input {
-  padding: 8px 8px;
-  background: white;
+  padding: 0 8px;
   min-width: 104px;
   max-width: 100%;
   display: flex;
@@ -19,14 +21,21 @@ input {
   align-items: center;
 }
 
-.zoeker-input a {
-  width: 28px;
+::ng-deep .mat-menu-content {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+::ng-deep .mat-menu-item .mat-icon {
+  margin-right: 4px !important;
+}
+
+.zoek-bezig-indicator {
+  margin-right: 10px;
 }
 
 .zoeker-resultaat {
-  font-family: Roboto, "Helvetica Neue", sans-serif;
-  padding-left: 8px;
-  padding-right: 8px;
+  padding: 8px 16px;
   animation: fadein 2s;
   -moz-animation: fadein 2s; /* Firefox */
   -webkit-animation: fadein 2s; /* Safari and Chrome */
@@ -34,12 +43,16 @@ input {
   text-overflow: ellipsis;
   white-space: nowrap;
   overflow: hidden;
-  min-height: 36px;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+    cursor: pointer;
+  }
 }
 
 :host ::ng-deep .zoeker-resultaat .mat-icon {
   vertical-align: middle;
-  width: 28px;
+  margin-right: 4px;
 }
 
 .zoeker-fout {
@@ -48,19 +61,34 @@ input {
   overflow: visible;
 }
 
-.zoeker-help {
-  font-family: Roboto, "Helvetica Neue", sans-serif;
-  padding-left: 8px;
-  padding-right: 8px;
+.zoeker-help-header {
+  padding: 0 8px 0 16px;
+  display: flex;
+  align-items: center;
+
+  .zoeker-help-titel {
+    font-size: 16px;
+    flex-grow: 1;
+    margin-left: 12px;
+  }
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+    cursor: pointer;
+  }
 }
 
-.klikbaar {
-  cursor: pointer;
+.zoeker-help-content {
+  padding: 0 8px 8px 16px;
+}
+
+.zoeker-subtitel {
+  padding: 8px 8px 8px 16px;
+  font-weight: bold;
 }
 
 .divider {
   flex-grow: 1;
-  margin: 8px;
   height: 1px;
   background-color: lightgrey;
 }
