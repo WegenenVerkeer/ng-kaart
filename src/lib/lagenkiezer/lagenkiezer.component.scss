@@ -28,10 +28,10 @@
   flex-wrap: nowrap;
   justify-content: flex-start;
   align-items: center;
+  cursor: pointer;
 
   &:hover {
     background-color: rgba(0, 0, 0, 0.04);
-    cursor: pointer;
   }
 }
 
@@ -52,68 +52,51 @@ $laag-height: 40px;
 }
 
 .lagen-lijst ::ng-deep .mat-tab-header {
-  border-top: 1px solid rgba(0,0,0,.12);
+  border-top: 1px solid rgba(0, 0, 0, .12);
   border-bottom: none;
-}
-
-.drag-busy {
-  transition: all 150ms linear;
-}
-
-.drag-busy > * {
-  pointer-events: none;
 }
 
 // De bedoeling is be de start van de drag het te verplaatsen element wit te kleuren zodat het nog even veel plaats
 // inneemt maar effectief onzichtbaar is.
-$bg-color: white;
 .start-move {
-  max-height: $laag-height;
-  transform-origin: top;
-  color: $bg-color;
-  background-color: $bg-color;
+  background: repeating-linear-gradient(
+      -45deg,
+      rgba(0, 0, 0, 0.04),
+      rgba(0, 0, 0, 0.04) 10px,
+      white 10px,
+      white 20px
+  );
 }
 
-.start-move ::ng-deep .mat-icon-button {
-  color: $bg-color;
+.no-drag ::before {
+  font-family: "Material Icons";
+  content: '\e14b';
+  @include mat-icon-size(24px);
+  position: absolute;
+  right: 24px;
+  margin-top: 8px;
+  color: $kaart-warn-color;
 }
 
-.start-move ::ng-deep .mat-icon-button[disabled] {
-  color: $bg-color;
-}
-
-// De volgende 2 stijlen zouden beter bij laagmanipulatie gedefinieerd zijn, maar ik vind niet hoe die te overriden
-// wanneer er gedragged wordt
-::ng-deep .invisible .title {
-  color: $kaart-secondary-text-color;
-}
-
-.start-move ::ng-deep .invisible .title {
-  color: $bg-color;
-}
+// Volgende css-classes worden momenteel nog niet gebruikt - en dus voorlopig in commentaar gezet
 
 // De bedoeling van de volgende 3 stijlen is dat wanneer er over een element gehovered wordt dat een potentieel
 // doelwit is dat het bron element geen ruimte meer inneemt en dat de padding op 1 ander element zo gezet wordt dat
 // dat de ruimte voorstelt waar het bronelement op gedropped kan worden.
-.replaced {
-  max-height: 0px;
-  overflow: hidden;
-  background-color: $bg-color;
-}
-
-.gap-on-top {
-  max-height: $laag-height + $laag-height;
-  box-sizing: content-box;
-  border-top: $laag-height solid $bg-color;
-}
-
-.gap-below {
-  max-height: $laag-height + $laag-height;
-  box-sizing: content-box;
-  border-bottom: $laag-height solid $bg-color;
-}
-
-.no-drag {
-  height: $laag-height;
-  max-height: $laag-height;
-}
+//.replaced {
+//  max-height: 0px;
+//  overflow: hidden;
+//  background-color: $bg-color;
+//}
+//
+//.gap-on-top {
+//  max-height: $laag-height + $laag-height;
+//  box-sizing: content-box;
+//  border-top: $laag-height solid $bg-color;
+//}
+//
+//.gap-below {
+//  max-height: $laag-height + $laag-height;
+//  box-sizing: content-box;
+//  border-bottom: $laag-height solid $bg-color;
+//}
