@@ -1,5 +1,6 @@
 import { Component, Input, NgZone } from "@angular/core";
 import { fromNullable, Option } from "fp-ts/lib/Option";
+
 import { List, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 
@@ -197,20 +198,30 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   }
 
   constante(veld: string): Option<string> {
-    return this.laag // indien 'value' veld start met http
-      .chain(l => fromNullable(l.velden.get(veld))) //
-      .chain(veldInfo => fromNullable(veldInfo.constante));
+    return (
+      this.laag
+        .chain(l => fromNullable(l.velden.get(veld)))
+        .chain(veldInfo => fromNullable(veldInfo.constante))
+        // vervang elke instantie van {id} in de waarde van 'constante' door de effectieve id :
+        .map(waarde =>
+          this.laag
+            .map(l => l.velden)
+            .getOrElse(OrderedMap<string, VeldInfo>())
+            .keySeq()
+            .toArray()
+            .reduce((result, eigenschap) => {
+              const token = `{${eigenschap}}`;
+              return result.includes(token) ? result.replace(token, `${this.waarde(eigenschap)}`) : result;
+            }, waarde)
+        )
+    );
   }
 
   waarde(name: string): Object {
     // indien er een 'constante' object in de definitie is, geef dat terug, anders geeft de waarde in het veld terug
     return this.constante(name).getOrElseL(() => {
       const waarde = nestedProperty(name, this.properties());
-      if (this.isDatum(name)) {
-        return this.formateerDatum(waarde.toString());
-      } else {
-        return waarde;
-      }
+      return this.isDatum(name) ? this.formateerDatum(waarde.toString()) : waarde;
     });
   }
 

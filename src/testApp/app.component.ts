@@ -14,7 +14,7 @@ import { definitieToStyle, kaartLogger } from "../lib/public_api";
 import { AWV0StyleFunctionDescription, definitieToStyleFunction } from "../lib/stijl";
 import { offsetStyleFunction } from "../lib/stijl/offset-stijl-function";
 import { join } from "../lib/util/validation";
-import { GoogleWdbLocatieZoekerService } from "../lib/zoeker";
+import { ZoekerGoogleWdbService } from "../lib/zoeker";
 
 @Component({
   selector: "awv-ng-kaart-test-app",
@@ -198,7 +198,7 @@ export class AppComponent {
     }
   }.bind(this);
 
-  constructor(private googleLocatieZoekerService: GoogleWdbLocatieZoekerService) {
+  constructor(private googleLocatieZoekerService: ZoekerGoogleWdbService) {
     kaartLogger.setLevel("DEBUG");
     classicLogger.setLevel("DEBUG");
     this.addIcon();

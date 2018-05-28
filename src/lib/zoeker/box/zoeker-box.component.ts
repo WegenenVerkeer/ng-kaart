@@ -20,16 +20,16 @@ import {
 } from "rxjs/operators";
 import { pipe } from "rxjs/Rx";
 
-import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
-import * as ke from "../kaart/kaart-elementen";
-import { VeldInfo } from "../kaart/kaart-elementen";
-import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
-import * as prt from "../kaart/kaart-protocol";
-import { KaartComponent } from "../kaart/kaart.component";
-import { kaartLogger } from "../kaart/log";
-import { matchGeometryType } from "../util/geometryTypes";
+import { KaartChildComponentBase } from "../../kaart/kaart-child-component-base";
+import * as ke from "../../kaart/kaart-elementen";
+import { VeldInfo } from "../../kaart/kaart-elementen";
+import { KaartInternalMsg, kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
+import * as prt from "../../kaart/kaart-protocol";
+import { KaartComponent } from "../../kaart/kaart.component";
+import { kaartLogger } from "../../kaart/log";
+import { matchGeometryType } from "../../util/geometryTypes";
 
-import { compareResultaten, IconDescription, StringZoekInput, ZoekInput, ZoekResultaat, ZoekResultaten } from "./abstract-zoeker";
+import { compareResultaten, IconDescription, StringZoekInput, ZoekInput, ZoekResultaat, ZoekResultaten } from "../zoeker-base";
 
 const ZoekerLaagNaam = "Zoeker";
 
@@ -58,7 +58,7 @@ export function toNonEmptyDistinctLowercaseString(): UnaryFunction<Observable<an
 }
 
 export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
-  protected constructor(kaartComponent: KaartComponent, private zoekerComponent: ZoekerComponent, zone: NgZone) {
+  protected constructor(kaartComponent: KaartComponent, private zoekerComponent: ZoekerBoxComponent, zone: NgZone) {
     super(kaartComponent, zone);
   }
 
@@ -159,10 +159,10 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
 
 @Component({
   selector: "awv-zoeker",
-  templateUrl: "./zoeker.component.html",
-  styleUrls: ["./zoeker.component.scss"]
+  templateUrl: "./zoeker-box.html",
+  styleUrls: ["./zoeker-box.scss"]
 })
-export class ZoekerComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
+export class ZoekerBoxComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
   zoekVeld = new FormControl();
   alleZoekResultaten: ZoekResultaat[] = [];
   alleFouten: Fout[] = [];
@@ -280,7 +280,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
     this.dispatch({
       type: "VoegLaagToe",
       positie: 1,
-      laag: ZoekerComponent.createLayer(),
+      laag: ZoekerBoxComponent.createLayer(),
       magGetoondWorden: true,
       laaggroep: "Tools",
       wrapper: kaartLogOnlyWrapper
@@ -366,7 +366,7 @@ export class ZoekerComponent extends KaartChildComponentBase implements OnInit, 
       .concat(nieuweResultaten.fouten.map(fout => new Fout(nieuweResultaten.zoeker, fout)));
 
     const features: List<ol.Feature> = this.alleZoekResultaten.reduce(
-      (list, resultaat) => list.push(...ZoekerComponent.maakNieuwFeature(resultaat)),
+      (list, resultaat) => list.push(...ZoekerBoxComponent.maakNieuwFeature(resultaat)),
       List<ol.Feature>()
     );
     this.extent = this.alleZoekResultaten
