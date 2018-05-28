@@ -1,7 +1,7 @@
-<div class="float-box">
+<div class="kaart-widget">
   <div class="zoeker-input">
 
-    <mat-menu #zoekerMenu="matMenu">
+    <mat-menu #zoekerMenu="matMenu" class="zoeker-menu">
       <button mat-menu-item (click)="kiesZoeker('Geoloket')" [disabled]="actieveZoeker === 'Geoloket'">
         <mat-icon>search</mat-icon>
         <span>Zoek in geoloket</span>
@@ -14,27 +14,41 @@
         <mat-icon>search</mat-icon>
         <span>Zoek op CRAB</span>
       </button>
+      <button mat-menu-item (click)="toggleHelp()" *ngIf="actieveZoeker === 'Geoloket'">
+        <mat-icon>help</mat-icon>
+        <span *ngIf="!toonHelp">Toon hulp bij zoeken</span>
+        <span *ngIf="toonHelp">Verberg hulp bij zoeken</span>
+      </button>
     </mat-menu>
 
-    <a [matMenuTriggerFor]="zoekerMenu">
-        <mat-icon matPrefix class="klikbaar">keyboard_arrow_down</mat-icon>
-    </a>
-    <a (click)="toggleResultaat()">
-      <mat-icon matPrefix [ngClass]="{'inactief':!toonResultaat}" class="klikbaar">search</mat-icon>
-    </a>
-    <mat-spinner diameter="20" *ngIf="isBusy()"></mat-spinner>
+    <button mat-icon-button [matMenuTriggerFor]="zoekerMenu">
+      <mat-icon>menu</mat-icon>
+    </button>
     <input placeholder="{{getPlaceholder()}}" [formControl]="zoekVeld" [readOnly]="this.actieveZoeker !== 'Geoloket'" (keyup)="onKey($event)">
-    <a (click)="toggleHelp()">
-      <mat-icon matSuffix [ngClass]="{'inactief':!toonHelp}" class="klikbaar">help</mat-icon>
-    </a>
+    <div class="zoek-bezig-indicator" *ngIf="isBusy()">
+      <mat-spinner diameter="20"></mat-spinner>
+    </div>
+    <button mat-icon-button (click)="toggleResultaat()" *ngIf="!isBusy()">
+      <mat-icon *ngIf="!heeftResultaatOfFout()">search</mat-icon>
+      <mat-icon *ngIf="heeftResultaatOfFout() && toonResultaat">expand_less</mat-icon>
+      <mat-icon *ngIf="heeftResultaatOfFout() && !toonResultaat">expand_more</mat-icon>
+    </button>
   </div>
   <awv-perceel-zoeker *ngIf="actieveZoeker === 'Perceel'"></awv-perceel-zoeker>
   <awv-crab-getrapt-zoeker *ngIf="actieveZoeker === 'Crab'"></awv-crab-getrapt-zoeker>
-  <div class="zoeker-help" *ngIf="toonHelp">
-    <div *ngIf="actieveZoeker === 'Geoloket'">
-      <br>
-      <b>Voorbeelden</b>
-      <br>
+  <div class="divider" *ngIf="toonHelp && actieveZoeker === 'Geoloket'"></div>
+  <div class="zoeker-help" *ngIf="toonHelp && actieveZoeker === 'Geoloket'">
+    <div class="zoeker-help-header" (click)="toggleHelp()">
+      <mat-icon>help</mat-icon>
+      <div class="zoeker-help-titel">
+        Hulp bij zoeken
+      </div>
+      <button mat-icon-button>
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    <div class="zoeker-subtitel">Voorbeelden</div>
+    <div class="zoeker-help-content">
       <div>Kapelstraat 12 Kortrijk
         <br>&nbsp;&nbsp;
         <i>zoek het opgegeven adres</i>
@@ -71,13 +85,9 @@
         <br>&nbsp;&nbsp;
         <i>zoek het kunstwerk met Bryggja id '0.010.031.1'</i>
       </div>
-      <br>
     </div>
     <div *ngIf="legende.size > 0">
-      <div class="divider"></div>
-      <br>
-      <b>Legende</b>
-      <br>
+      <div class="zoeker-subtitel">Legende</div>
       <div *ngFor="let key of legendeKeys" class="zoeker-resultaat">
         <span [ngSwitch]="legende.get(key).type">
           <mat-icon *ngSwitchCase="'svg'" class="zoeker-resultaat-icoon" [svgIcon]="legende.get(key).name"></mat-icon>
@@ -94,7 +104,7 @@
       <span>{{fout.zoeker}}: {{fout.fout}}</span>
     </div>
     <div *ngIf="heeftFout()" class="divider"></div>
-    <div *ngFor="let resultaat of alleZoekResultaten" class="zoeker-resultaat klikbaar" (click)="zoomNaarResultaat(resultaat)">
+    <div *ngFor="let resultaat of alleZoekResultaten" class="zoeker-resultaat" (click)="zoomNaarResultaat(resultaat)">
       <span [ngSwitch]="resultaat.icoon.type">
         <mat-icon *ngSwitchCase="'svg'" class="zoeker-resultaat-icoon" [svgIcon]="resultaat.icoon.name"></mat-icon>
         <mat-icon *ngSwitchCase="'font'" class="zoeker-resultaat-icoon">{{resultaat.icoon.name}}</mat-icon>
