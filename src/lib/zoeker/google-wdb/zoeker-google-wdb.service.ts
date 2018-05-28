@@ -14,11 +14,11 @@ import {
   geoJSONOptions,
   IconDescription,
   StringZoekInput,
-  ZoekerAbstract,
+  ZoekerBase,
   ZoekKaartResultaat,
   ZoekResultaat,
   ZoekResultaten
-} from "../zoeker-abstract";
+} from "../zoeker-base";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE, ZoekerRepresentatieType } from "../zoeker-representatie.service";
 
 export class GoogleWdbZoekResultaat implements ZoekResultaat {
@@ -88,7 +88,7 @@ interface ExtendedPlaceResult extends google.maps.places.PlaceResult, ExtendedRe
 }
 
 @Injectable()
-export class ZoekerGoogleWdbService implements ZoekerAbstract {
+export class ZoekerGoogleWdbService implements ZoekerBase {
   private readonly googleWdbLocatieZoekerConfig: ZoekerConfigGoogleWdbConfig;
   private _cache: Promise<GoogleServices> | null = null;
   private legende: Map<string, IconDescription>;

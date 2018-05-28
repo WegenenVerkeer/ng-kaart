@@ -3,7 +3,7 @@ import { List, Set } from "immutable";
 import * as ol from "openlayers";
 import { Subscription as RxSubscription } from "rxjs/Subscription";
 
-import { ZoekerAbstract, ZoekInput, ZoekResultaat } from "../zoeker/zoeker-abstract";
+import { ZoekerBase, ZoekInput, ZoekResultaat } from "../zoeker/zoeker-base";
 
 import { BareValidationWrapper, KaartMsg, Subscription, ValidationWrapper } from ".";
 import * as ke from "./kaart-elementen";
@@ -227,7 +227,7 @@ export interface MeldComponentFoutCmd {
 
 export interface VoegZoekerToeCmd<Msg extends KaartMsg> {
   readonly type: "VoegZoekerToe";
-  readonly zoeker: ZoekerAbstract;
+  readonly zoeker: ZoekerBase;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 

@@ -12,11 +12,11 @@ import {
   geoJSONOptions,
   IconDescription,
   StringZoekInput,
-  ZoekerAbstract,
+  ZoekerBase,
   ZoekKaartResultaat,
   ZoekResultaat,
   ZoekResultaten
-} from "../zoeker-abstract";
+} from "../zoeker-base";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "../zoeker-representatie.service";
 
 export interface Gemeente {
@@ -86,7 +86,7 @@ export class PerceelZoekResultaat implements ZoekResultaat {
 }
 
 @Injectable()
-export class ZoekerPerceelService implements ZoekerAbstract {
+export class ZoekerPerceelService implements ZoekerBase {
   private readonly locatorServicesConfig: ZoekerConfigLocatorServicesConfig;
   private legende: Map<string, IconDescription>;
 

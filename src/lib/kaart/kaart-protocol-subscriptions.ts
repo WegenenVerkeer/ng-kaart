@@ -2,7 +2,7 @@ import { Option } from "fp-ts/lib/Option";
 import { List, Map } from "immutable";
 import * as ol from "openlayers";
 
-import { ZoekResultaat, ZoekResultaten } from "../zoeker/zoeker-abstract";
+import { ZoekResultaat, ZoekResultaten } from "../zoeker/zoeker-base";
 
 import * as ke from "./kaart-elementen";
 import { InfoBoodschap } from "./kaart-with-info-model";

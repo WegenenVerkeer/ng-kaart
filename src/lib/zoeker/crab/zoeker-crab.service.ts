@@ -9,15 +9,7 @@ import { map, mergeAll, mergeMap, reduce, shareReplay } from "rxjs/operators";
 
 import { ZOEKER_CFG, ZoekerConfigData } from "../config/zoeker-config";
 import { ZoekerConfigLocatorServicesConfig } from "../config/zoeker-config-locator-services.config";
-import {
-  IconDescription,
-  StringZoekInput,
-  ZoekerAbstract,
-  ZoekInput,
-  ZoekKaartResultaat,
-  ZoekResultaat,
-  ZoekResultaten
-} from "../zoeker-abstract";
+import { IconDescription, StringZoekInput, ZoekerBase, ZoekInput, ZoekKaartResultaat, ZoekResultaat, ZoekResultaten } from "../zoeker-base";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "../zoeker-representatie.service";
 
 export interface LambertLocation {
@@ -152,7 +144,7 @@ export class CrabZoekResultaat implements ZoekResultaat {
 }
 
 @Injectable()
-export class ZoekerCrabService implements ZoekerAbstract {
+export class ZoekerCrabService implements ZoekerBase {
   private readonly locatorServicesConfig: ZoekerConfigLocatorServicesConfig;
   private legende: Map<string, IconDescription>;
 

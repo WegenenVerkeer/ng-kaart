@@ -3,7 +3,7 @@ import { List, Map, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 import { BehaviorSubject, ReplaySubject, Subject } from "rxjs";
 
-import { ZoekResultaat, ZoekResultaten } from "../zoeker/zoeker-abstract";
+import { ZoekResultaat, ZoekResultaten } from "../zoeker/zoeker-base";
 import { ZoekerCoordinator } from "../zoeker/zoeker-coordinator";
 
 import { KaartConfig } from "./kaart-config";

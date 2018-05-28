@@ -75,5 +75,5 @@ export * from "./perceel/zoeker-perceel-getrapt.component";
 
 export * from "./zoeker-highlight.pipe";
 export * from "./box/zoeker-box.component";
-export * from "./zoeker-abstract";
+export * from "./zoeker-base";
 export * from "./zoeker-representatie.service";

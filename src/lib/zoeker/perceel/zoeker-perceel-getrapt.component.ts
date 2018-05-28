@@ -12,7 +12,7 @@ import {
   toNonEmptyDistinctLowercaseString,
   ZoekerBoxComponent
 } from "../box/zoeker-box.component";
-import { StringZoekInput } from "../zoeker-abstract";
+import { StringZoekInput } from "../zoeker-base";
 
 import { Afdeling, Gemeente, PerceelNummer, Sectie, ZoekerPerceelService } from "./zoeker-perceel.service";
 
