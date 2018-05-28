@@ -6,6 +6,7 @@ $kaart-tertiary-text-color: rgba(black, 0.38);
 
 $kaart-primary-color: $awv-primary-2;
 $kaart-accent-color: $awv-primary-1;
+$kaart-warn-color: #D32F2F;
 
 $kaart-icon-button: rgba(black, 0.60);
 $kaart-icon-button-disabled: rgba(black, 0.38);
@@ -38,4 +39,10 @@ $kaart-icon-button-hover: rgba(black, 0.87);
 
 :host ::ng-deep .mat-icon-button:hover {
   color: $kaart-icon-button-hover;
+}
+
+@mixin mat-icon-size($size: 24px) {
+  font-size: $size;
+  height: $size;
+  width: $size;
 }
