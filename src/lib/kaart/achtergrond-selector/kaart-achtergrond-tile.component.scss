@@ -1,3 +1,5 @@
+@import "../../css/kaart.component-common.scss";
+
 $map-border-color: #aa8;
 $map-background-color: whitesmoke;
 // We zouden dit moeten van de AWV theme halen
@@ -38,16 +40,9 @@ $title-font-size: 12px;
   font-stretch: normal;
   font-size: $title-font-size;
   line-height: $title-height;
-  font-family: Roboto, "Helvetica Neue", sans-serif;
 }
 
 .current {
   color: $map-background-color; // inverteer de kleuren van de titelblak
   background-color: $map-title-main-color;
-}
-
-.float-box {
-  box-shadow: 0 3px 1px -2px rgba(0, 0, 0, .2), 0 2px 2px 0 rgba(0, 0, 0, .14), 0 1px 5px 0 rgba(0, 0, 0, .12);
-  pointer-events: initial;
-  margin-bottom: -3px; // De box shadow neemt 3px naar onder in
 }

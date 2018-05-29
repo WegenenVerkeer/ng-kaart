@@ -670,17 +670,23 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
       const applySelectFunction = function(feature: ol.Feature, resolution: number): FeatureStyle {
         const applySelectionColor = function(style: ol.style.Style): ol.style.Style {
-          const selectionColor: ol.Color = [0, 153, 255, 1]; // TODO maak configureerbaar
+          const selectionStrokeColor: ol.Color = [0, 153, 255, 1]; // TODO maak configureerbaar
+          const selectionFillColor: ol.Color = [112, 198, 255, 0.7]; // TODO maak configureerbaar
+          const selectionIconColor: ol.Color = [0, 51, 153, 0.7]; // TODO maak configureerbaar
+
           const selectionStyle = style.clone();
           if (selectionStyle.getStroke()) {
-            selectionStyle.getStroke().setColor(selectionColor);
+            selectionStyle.getStroke().setColor(selectionStrokeColor);
+          }
+          if (selectionStyle.getFill()) {
+            selectionStyle.getFill().setColor(selectionFillColor);
           }
           if (selectionStyle.getImage()) {
             // getekende Point objecten ook inkleuren
             if (selectionStyle.getImage() instanceof ol.style.Circle) {
               const circle = selectionStyle.getImage() as ol.style.Circle;
-              circle.getStroke().setColor(selectionColor);
-              circle.getFill().setColor(selectionColor);
+              circle.getStroke().setColor(selectionStrokeColor);
+              circle.getFill().setColor(selectionFillColor);
               // volgende is nodig, anders heeft style aanpassing geen effect
               selectionStyle.setImage(
                 new ol.style.Circle({
@@ -692,8 +698,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               );
             } else if (selectionStyle.getImage() instanceof ol.style.RegularShape) {
               const shape = selectionStyle.getImage() as ol.style.RegularShape;
-              shape.getStroke().setColor(selectionColor);
-              shape.getFill().setColor(selectionColor);
+              shape.getStroke().setColor(selectionStrokeColor);
+              shape.getFill().setColor(selectionFillColor);
               // volgende is nodig, anders heeft style aanpassing geen effect
               selectionStyle.setImage(
                 new ol.style.RegularShape({
@@ -706,6 +712,14 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                   snapToPixel: shape.getSnapToPixel(),
                   stroke: shape.getStroke(),
                   rotation: shape.getRotation()
+                })
+              );
+            } else if (selectionStyle.getImage() instanceof ol.style.Icon) {
+              const icon = selectionStyle.getImage() as ol.style.Icon;
+              selectionStyle.setImage(
+                new ol.style.Icon({
+                  color: selectionIconColor,
+                  src: icon.getSrc()
                 })
               );
             }

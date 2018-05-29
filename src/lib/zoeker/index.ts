@@ -13,27 +13,25 @@ import {
   MatProgressSpinnerModule
 } from "@angular/material";
 
-import { CrabGetraptZoekerComponent } from "./crab-getrapt-zoeker.component";
-import { CrabZoekerComponent } from "./crab-zoeker.component";
-import { CrabZoekerService } from "./crab-zoeker.service";
-import { GoogleWdbLocatieZoekerComponent } from "./google-wdb-locatie-zoeker.component";
-import { GoogleWdbLocatieZoekerService } from "./google-wdb-locatie-zoeker.service";
-import { PerceelZoekerComponent } from "./perceel-zoeker.component";
-import { PerceelZoekerService } from "./perceel-zoeker.service";
+import { ZoekerBoxComponent } from "./box/zoeker-box.component";
+import { ZOEKER_CFG, ZoekerConfigData } from "./config/zoeker-config";
+import { ZoekerCrabGetraptComponent } from "./crab/zoeker-crab-getrapt.component";
+import { ZoekerCrabComponent } from "./crab/zoeker-crab.component";
+import { ZoekerCrabService } from "./crab/zoeker-crab.service";
+import { ZoekerGoogleWdbComponent } from "./google-wdb/zoeker-google-wdb.component";
+import { ZoekerGoogleWdbService } from "./google-wdb/zoeker-google-wdb.service";
+import { ZoekerPerceelGetraptComponent } from "./perceel/zoeker-perceel-getrapt.component";
+import { ZoekerPerceelService } from "./perceel/zoeker-perceel.service";
 import { ZoekerHighlightPipe } from "./zoeker-highlight.pipe";
-import { ZoekerInjectorComponent } from "./zoeker-injector.component";
 import { DefaultRepresentatieService, ZOEKER_REPRESENTATIE } from "./zoeker-representatie.service";
-import { ZoekerComponent } from "./zoeker.component";
-import { ZOEKER_CFG, ZoekerConfigData } from "./zoeker.config";
 
 const components: any[] = [
-  GoogleWdbLocatieZoekerComponent,
-  CrabGetraptZoekerComponent,
-  CrabZoekerComponent,
-  ZoekerComponent,
+  ZoekerGoogleWdbComponent,
+  ZoekerCrabGetraptComponent,
+  ZoekerCrabComponent,
+  ZoekerBoxComponent,
   ZoekerHighlightPipe,
-  ZoekerInjectorComponent,
-  PerceelZoekerComponent
+  ZoekerPerceelGetraptComponent
 ];
 
 @NgModule({
@@ -51,9 +49,8 @@ const components: any[] = [
     MatProgressSpinnerModule
   ],
   declarations: [components],
-  entryComponents: [ZoekerInjectorComponent],
   exports: [components],
-  providers: [GoogleWdbLocatieZoekerService, CrabZoekerService, PerceelZoekerService]
+  providers: [ZoekerGoogleWdbService, ZoekerCrabService, ZoekerPerceelService]
 })
 export class ZoekerModule {
   static forRoot(config: ZoekerConfigData): ModuleWithProviders {
@@ -64,19 +61,19 @@ export class ZoekerModule {
   }
 }
 
-export * from "./google-wdb-locatie-zoeker.service";
-export * from "./google-wdb-locatie-zoeker.component";
-export * from "./google-wdb-locatie-zoeker.config";
+export * from "./google-wdb/zoeker-google-wdb.service";
+export * from "./google-wdb/zoeker-google-wdb.component";
+export * from "./config/zoeker-config-google-wdb.config";
 
-export * from "./crab-getrapt-zoeker.component";
-export * from "./crab-zoeker.service";
-export * from "./crab-zoeker.component";
-export * from "./crab-zoeker.config";
+export * from "./crab/zoeker-crab-getrapt.component";
+export * from "./crab/zoeker-crab.service";
+export * from "./crab/zoeker-crab.component";
+export * from "./config/zoeker-config-locator-services.config";
 
-export * from "./perceel-zoeker.service";
-export * from "./perceel-zoeker.component";
+export * from "./perceel/zoeker-perceel.service";
+export * from "./perceel/zoeker-perceel-getrapt.component";
 
 export * from "./zoeker-highlight.pipe";
-export * from "./zoeker.component";
-export * from "./abstract-zoeker";
+export * from "./box/zoeker-box.component";
+export * from "./zoeker-base";
 export * from "./zoeker-representatie.service";

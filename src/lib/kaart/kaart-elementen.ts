@@ -67,6 +67,7 @@ export interface VeldInfo {
   label: string;
   type: string;
   isBasisVeld: boolean;
+  constante: string;
 }
 
 export interface VectorLaag {
@@ -80,11 +81,6 @@ export interface VectorLaag {
   readonly maxZoom: number;
   readonly velden: OrderedMap<string, VeldInfo>;
   readonly offsetveld: Option<string>;
-
-  // functies om de VectorLaag te verrijken met meta informatie over de velden in de laag
-  getLabel?: (veld: string) => string;
-  isBasisVeld?: (veld: string) => boolean;
-  getType?: (veld: string) => string;
 }
 
 export interface BlancoLaag {
