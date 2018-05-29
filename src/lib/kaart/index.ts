@@ -4,26 +4,8 @@ import { ModuleWithProviders, NgModule } from "@angular/core";
 import { MatButtonModule, MatButtonToggleModule, MatCardModule, MatIconModule } from "@angular/material";
 import { ClickOutsideModule } from "ng4-click-outside";
 import * as ol from "openlayers";
-
-import { ClassicAchtergrondSelectorComponent } from "../classic/achtergrond-selector/classic-achtergrond-selector.component";
-import { ClassicCopyrightComponent } from "../classic/copyright/classic-copyright.component";
-import { KaartClassicComponent } from "../classic/kaart-classic.component";
-import { ClassicBlancoLaagComponent } from "../classic/lagen/classic-blanco-laag.component";
-import { ClassicFeaturesLaagComponent } from "../classic/lagen/classic-features-laag.component";
-import { ClassicGeoserverLaagComponent } from "../classic/lagen/classic-geoserver-laag.component";
-import { ClassicNosqlfsLaagComponent } from "../classic/lagen/classic-nosqlfs-laag.component";
-import { ClassicOrthoLaagComponent } from "../classic/lagen/classic-ortho-laag.component";
-import { ClassicTilecacheLaagComponent } from "../classic/lagen/classic-tilecache-laag.component";
-import { ClassicVectorLaagComponent } from "../classic/lagen/classic-vector-laag.component";
-import { ClassicWmsLaagComponent } from "../classic/lagen/classic-wms-laag.component";
-import { ClassicWmtsLaagComponent } from "../classic/lagen/classic-wmts-laag.component";
-import { ClassicLagenkiezerComponent } from "../classic/lagenkiezer/classic-lagenkiezer.component";
 import { KaartOpenLayersStyleComponent } from "../classic/openlayers-style/classic-openlayers-style.component";
-import { ClassicSchaalComponent } from "../classic/schaal/classic-schaal.component";
-import { ClassicStandaardInteractiesComponent } from "../classic/standaard-interacties/classic-standaard-interacties.component";
 import { KaartTekenComponent } from "../classic/tekenen/kaart-teken.component";
-import { ClassicVolledigSchermComponent } from "../classic/volledig-scherm/classic-volledig-scherm.component";
-import { ClassicVoorwaardenComponent } from "../classic/voorwaarden/classic-voorwaarden.component";
 import { LagenkiezerModule } from "../lagenkiezer/index";
 import { ZoekerModule } from "../zoeker/index";
 

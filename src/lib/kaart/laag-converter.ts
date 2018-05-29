@@ -85,9 +85,9 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
   }
 
   function createVectorLayer(vectorlaag: ke.VectorLaag) {
-    if (array.isOutOfBound(vectorlaag.minZoom, kaart.config.defaults.resolutions)) {
+    if (array.isOutOfBound(vectorlaag.minZoom - 1, kaart.config.defaults.resolutions)) {
       kaartLogger.error(`Ongeldige minZoom voor ${vectorlaag.titel}:
-        ${vectorlaag.minZoom}, moet tussen 0 en ${kaart.config.defaults.resolutions.length - 1} liggen`);
+        ${vectorlaag.minZoom}, moet tussen 1 en ${kaart.config.defaults.resolutions.length - 1} liggen`);
     }
     if (array.isOutOfBound(vectorlaag.maxZoom, kaart.config.defaults.resolutions)) {
       kaartLogger.error(`Ongeldige maxZoom voor ${vectorlaag.titel}:
@@ -99,8 +99,7 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
      * [1024.0, 512.0, 256.0, 128.0, 64.0, 32.0, 16.0, 8.0, 4.0, 2.0, 1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125]
      *
      * minZoom bepaalt de maxResolution, maxZoom bepaalt de minResolution
-     * maxResolution is exclusief dus bepaalt door minZoom - 1 ("maximum resolution (exclusive) below which this layer will be visible")
-     *
+     * maxResolution is exclusief dus bepaald door minZoom - 1 ("maximum resolution (exclusive) below which this layer will be visible")
      */
     return new ol.layer.Vector({
       source: vectorlaag.source,

@@ -1,19 +1,19 @@
-import { fromNullable, fromPredicate, Option } from "fp-ts/lib/Option";
+import { fromPredicate, Option } from "fp-ts/lib/Option";
 import { List, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 
 import { StyleSelector } from "./stijl-selector";
 
 export const SingleTileWmsType = "LaagType.SingleTileWms";
-export type SingleTileWmsType = "LaagType.SingleTileWms";
+export type SingleTileWmsType = typeof SingleTileWmsType;
 export const TiledWmsType = "LaagType.TiledWms";
-export type TiledWmsType = "LaagType.TiledWms";
+export type TiledWmsType = typeof TiledWmsType;
 export const WmtsType = "LaagType.Wmts";
-export type WmtsType = "LaagType.Wmts";
+export type WmtsType = typeof WmtsType;
 export const VectorType = "LaagType.Vector";
-export type VectorType = "LaagType.Vector";
+export type VectorType = typeof VectorType;
 export const BlancoType = "LaagType.Blanco";
-export type BlancoType = "LaagType.Blanco";
+export type BlancoType = typeof BlancoType;
 export type LaagType = SingleTileWmsType | TiledWmsType | WmtsType | VectorType | BlancoType;
 
 export type AchtergrondLaag = WmsLaag | WmtsLaag | BlancoLaag;
@@ -130,6 +130,8 @@ export const asVectorLaag: (laag: Laag) => Option<VectorLaag> = fromPredicate(is
 export const isToegevoegdeVectorLaag: (laag: ToegevoegdeLaag) => boolean = laag => isVectorLaag(laag.bron);
 export const asToegevoegdeVectorLaag: (laag: ToegevoegdeLaag) => Option<ToegevoegdeVectorLaag> = laag =>
   fromPredicate<ToegevoegdeLaag>(lg => isVectorLaag(lg.bron))(laag) as Option<ToegevoegdeVectorLaag>;
+export const isZichtbaar: (_: number) => (_: ToegevoegdeLaag) => boolean = currentRes => laag =>
+  laag.layer.getMinResolution() <= currentRes && laag.layer.getMaxResolution() > currentRes && laag.layer.getVisible();
 
 ///////////////
 // Constructors

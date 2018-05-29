@@ -48,6 +48,10 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
    * waarmee events naar de component gestuurd kunnen worden.
    */
   @Input() kaartCmd$: Observable<prt.Command<prt.KaartMsg>> = Observable.empty();
+  /**
+   * Hier wordt een callback verwacht die een Msg observable zal krijgen. Die observable kan dan gebruikt worden
+   * op te luisteren op feedback van commands of uitvoer van subscriptions.
+   */
   @Input() messageObsConsumer: KaartMsgObservableConsumer = vacuousKaartMsgObservableConsumer;
 
   /**

@@ -8,7 +8,6 @@ import { ZoekerCoordinator } from "../zoeker/zoeker-coordinator";
 
 import { KaartConfig } from "./kaart-config";
 import * as ke from "./kaart-elementen";
-import { Zoominstellingen } from "./kaart-protocol";
 import { GeselecteerdeFeatures, InfoBoodschap } from "./kaart-with-info-model";
 import { ModelChanger } from "./model-changes";
 import { initStyleSelectorsInMap } from "./stijl-selector";
@@ -34,10 +33,8 @@ export class KaartWithInfo {
   readonly showBackgroundSelector: boolean = false;
 
   readonly clickSubj: Subject<ol.Coordinate> = new Subject<ol.Coordinate>();
-  readonly zoominstellingenSubj: Subject<Zoominstellingen> = new ReplaySubject<Zoominstellingen>(1);
   readonly geselecteerdeFeaturesSubj: Subject<GeselecteerdeFeatures> = new Subject<GeselecteerdeFeatures>();
   readonly geselecteerdeFeatures: ol.Collection<ol.Feature> = new ol.Collection<ol.Feature>();
-  readonly middelpuntSubj: Subject<[number, number]> = new ReplaySubject<[number, number]>(1);
   readonly achtergrondlaagtitelSubj: Subject<string> = new ReplaySubject<string>(1);
   readonly zoekerSubj: Subject<ZoekResultaten> = new ReplaySubject<ZoekResultaten>(1);
   readonly zoekerKlikSubj: Subject<ZoekResultaat> = new ReplaySubject<ZoekResultaat>(1);
@@ -57,28 +54,25 @@ export class KaartWithInfo {
     readonly map: ol.Map,
     changer: ModelChanger
   ) {
-    const zetInstellingen = () => {
-      // Deze mag weg wanneer alles naar changer gemigreerd is
-      this.zoominstellingenSubj.next({
+    const zetViewinstellingen = () => {
+      changer.viewinstellingenSubj.next({
         zoom: map.getView().getZoom(),
         minZoom: map.getView().getMinZoom(),
-        maxZoom: map.getView().getMaxZoom()
-      });
-      changer.zoominstellingenSubj.next({
-        zoom: map.getView().getZoom(),
-        minZoom: map.getView().getMinZoom(),
-        maxZoom: map.getView().getMaxZoom()
+        maxZoom: map.getView().getMaxZoom(),
+        resolution: map.getView().getResolution(),
+        extent: map.getView().calculateExtent(map.getSize()),
+        center: map.getView().getCenter()
       });
     };
     map.getView().on("change:resolution", () => {
       const zoomNiveau = map.getView().getZoom();
       // OL genereert een heleboel tussenliggende zooms tijden het animeren.
       if (Number.isInteger(zoomNiveau)) {
-        zetInstellingen();
+        zetViewinstellingen();
       }
     });
-    map.getLayers().on("change:length", zetInstellingen);
-    map.getView().on("change:center", () => this.middelpuntSubj.next(map.getView().getCenter()));
+    map.getLayers().on("change:length", zetViewinstellingen);
+    map.getView().on("change:center", zetViewinstellingen);
     map.on("click", (event: ol.MapBrowserEvent) => {
       return this.clickSubj.next(event.coordinate);
     });

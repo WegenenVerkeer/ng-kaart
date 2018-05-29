@@ -8,7 +8,7 @@ import { InfoBoodschap } from "./kaart-with-info-model";
 import { kaartLogger } from "./log";
 
 export type KaartInternalSubMsg =
-  | ZoominstellingenGezetMsg
+  | ViewinstellingenGezetMsg
   | AchtergrondtitelGezetMsg
   | GeometryChangedMsg
   | TekenMsg
@@ -17,9 +17,9 @@ export type KaartInternalSubMsg =
   | MijnLocatieZoomdoelGezetMsg
   | InfoBoodschappenMsg;
 
-export interface ZoominstellingenGezetMsg {
-  readonly type: "ZoominstellingenGezet";
-  readonly zoominstellingen: prt.Zoominstellingen;
+export interface ViewinstellingenGezetMsg {
+  readonly type: "ViewinstellingenGezet";
+  readonly viewinstellingen: prt.Viewinstellingen;
 }
 
 export interface AchtergrondtitelGezetMsg {
@@ -97,12 +97,12 @@ function KaartClickMsg(clickCoordinaat: ol.Coordinate): KaartClickMsg {
   return { type: "KaartClick", clickCoordinaat: clickCoordinaat };
 }
 
-function ZoominstellingenGezetMsg(instellingen: prt.Zoominstellingen): ZoominstellingenGezetMsg {
-  return { type: "ZoominstellingenGezet", zoominstellingen: instellingen };
+function ViewinstellingenGezetMsg(instellingen: prt.Viewinstellingen): ViewinstellingenGezetMsg {
+  return { type: "ViewinstellingenGezet", viewinstellingen: instellingen };
 }
 
-export const zoominstellingenGezetWrapper = (instellingen: prt.Zoominstellingen) =>
-  KaartInternalMsg(some(ZoominstellingenGezetMsg(instellingen)));
+export const viewinstellingenGezetWrapper = (instellingen: prt.Viewinstellingen) =>
+  KaartInternalMsg(some(ViewinstellingenGezetMsg(instellingen)));
 
 function AchtergrondtitelGezetMsg(titel: string): AchtergrondtitelGezetMsg {
   return { type: "AchtergrondtitelGezet", titel: titel };

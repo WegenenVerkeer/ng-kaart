@@ -5,7 +5,7 @@ import { map } from "rxjs/operators";
 import { ofType } from "../../util/operators";
 
 import { KaartChildComponentBase } from "../kaart-child-component-base";
-import { KaartInternalMsg, kaartLogOnlyWrapper, ZoominstellingenGezetMsg, zoominstellingenGezetWrapper } from "../kaart-internal-messages";
+import { KaartInternalMsg, kaartLogOnlyWrapper, ViewinstellingenGezetMsg, viewinstellingenGezetWrapper } from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 
@@ -28,18 +28,18 @@ export class KaartZoomComponent extends KaartChildComponentBase implements OnIni
   }
 
   protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
-    return [prt.ZoominstellingenSubscription(zoominstellingenGezetWrapper)];
+    return [prt.ViewinstellingenSubscription(viewinstellingenGezetWrapper)];
   }
 
   ngOnInit() {
     super.ngOnInit();
 
     this.kaartProps$ = this.internalMessage$.pipe(
-      ofType<ZoominstellingenGezetMsg>("ZoominstellingenGezet"),
+      ofType<ViewinstellingenGezetMsg>("ViewinstellingenGezet"),
       map(m => ({
-        canZoomIn: m.zoominstellingen.zoom + 1 <= m.zoominstellingen.maxZoom,
-        canZoomOut: m.zoominstellingen.zoom - 1 >= m.zoominstellingen.minZoom,
-        zoom: m.zoominstellingen.zoom
+        canZoomIn: m.viewinstellingen.zoom + 1 <= m.viewinstellingen.maxZoom,
+        canZoomOut: m.viewinstellingen.zoom - 1 >= m.viewinstellingen.minZoom,
+        zoom: m.viewinstellingen.zoom
       }))
     );
   }

@@ -1,23 +1,18 @@
-import * as array from "fp-ts/lib/Array";
 import { Endomorphism, identity, pipe } from "fp-ts/lib/function";
-import { getArrayMonoid } from "fp-ts/lib/Monoid";
 import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
-import { sequence } from "fp-ts/lib/Traversable";
 import * as validation from "fp-ts/lib/Validation";
 import { List } from "immutable";
 import * as ol from "openlayers";
 import { olx } from "openlayers";
 import { Subscription } from "rxjs";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
 
-import { offsetStyleFunction } from "../stijl/offset-stijl-function";
 import { forEach } from "../util/option";
 import { allOf, fromBoolean, fromOption, fromPredicate, success, validationChain as chain } from "../util/validation";
 
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
-import { PositieAanpassing, VoegUiElementToe, ZetMijnLocatieZoomCmd, ZetUiElementOpties } from "./kaart-protocol-commands";
 import { KaartWithInfo } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
 import { kaartLogger } from "./log";
@@ -916,10 +911,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, { subscription: subscription, subscriberName: name })));
       }
 
-      function subscribeToZoominstellingen(sub: prt.ZoominstellingenSubscription<Msg>): ModelWithResult<Msg> {
+      function subscribeToViewinstellingen(sub: prt.ViewinstellingenSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
-          "Zoominstellingen",
-          model.zoominstellingenSubj.pipe(debounceTime(100)).subscribe(z => msgConsumer(sub.wrapper(z)))
+          "Viewinstellingen",
+          modelChanger.viewinstellingenSubj.pipe(debounceTime(100)).subscribe(pipe(sub.wrapper, msgConsumer))
         );
       }
 
@@ -933,7 +928,14 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       function subscribeToMiddelpunt(sub: prt.MiddelpuntSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
           "Middelpunt",
-          model.middelpuntSubj.pipe(debounceTime(100)).subscribe(m => msgConsumer(sub.wrapper(m[0], m[1])))
+          modelChanger.viewinstellingenSubj.pipe(debounceTime(100), map(i => i.center)).subscribe(pipe(sub.wrapper, msgConsumer))
+        );
+      }
+
+      function subscribeToExtent(sub: prt.ExtentSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult(
+          "Extent",
+          modelChanger.viewinstellingenSubj.pipe(debounceTime(100), map(i => i.extent)).subscribe(pipe(sub.wrapper, msgConsumer))
         );
       }
 
@@ -1002,10 +1004,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
 
       switch (cmnd.subscription.type) {
-        case "Zoominstellingen":
-          return subscribeToZoominstellingen(cmnd.subscription);
+        case "Viewinstellingen":
+          return subscribeToViewinstellingen(cmnd.subscription);
         case "Middelpunt":
           return subscribeToMiddelpunt(cmnd.subscription);
+        case "Extent":
+          return subscribeToExtent(cmnd.subscription);
         case "Achtergrond":
           return subscribeToAchtergrondTitel(cmnd.subscription);
         case "GeselecteerdeFeatures":

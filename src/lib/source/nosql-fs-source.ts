@@ -23,6 +23,7 @@ export class NosqlFsSource extends ol.source.Vector {
   ) {
     super({
       loader: function(extent, resolution, projection) {
+        console.log("#### resolution", resolution);
         const params = {
           bbox: extent.join(","),
           ...view.fold({}, v => ({ "with-view": v })),

@@ -1,9 +1,10 @@
 import { List, Map } from "immutable";
+import * as ol from "openlayers";
 import * as rx from "rxjs";
 
 import * as ke from "./kaart-elementen";
 import { UiElementOpties } from "./kaart-protocol-commands";
-import { Zoominstellingen } from "./kaart-protocol-subscriptions";
+import { Viewinstellingen } from "./kaart-protocol-subscriptions";
 
 export interface UiElementSelectie {
   naam: string;
@@ -20,20 +21,20 @@ export interface UiElementSelectie {
 export interface ModelChanger {
   readonly uiElementSelectieSubj: rx.Subject<UiElementSelectie>;
   readonly uiElementOptiesSubj: rx.Subject<UiElementOpties>;
-  readonly zoominstellingenSubj: rx.Subject<Zoominstellingen>;
+  readonly viewinstellingenSubj: rx.Subject<Viewinstellingen>;
   readonly lagenOpGroepSubj: Map<ke.Laaggroep, rx.Subject<List<ke.ToegevoegdeLaag>>>;
   readonly laagVerwijderdSubj: rx.Subject<ke.ToegevoegdeLaag>;
 }
 
 export const ModelChanger: () => ModelChanger = () => ({
-  uiElementSelectieSubj: new rx.Subject<UiElementSelectie>(),
-  uiElementOptiesSubj: new rx.ReplaySubject<UiElementOpties>(1),
-  zoominstellingenSubj: new rx.ReplaySubject<Zoominstellingen>(1),
+  uiElementSelectieSubj: new rx.Subject(),
+  uiElementOptiesSubj: new rx.ReplaySubject(1),
+  viewinstellingenSubj: new rx.ReplaySubject(1), // bekende beperking: geen output wanneer viewport wijzigt
   lagenOpGroepSubj: Map<ke.Laaggroep, rx.Subject<List<ke.ToegevoegdeLaag>>>({
-    Achtergrond: new rx.BehaviorSubject<List<ke.ToegevoegdeLaag>>(List()),
-    "Voorgrond.Hoog": new rx.BehaviorSubject<List<ke.ToegevoegdeLaag>>(List()),
-    "Voorgrond.Laag": new rx.BehaviorSubject<List<ke.ToegevoegdeLaag>>(List()),
-    Tools: new rx.BehaviorSubject<List<ke.ToegevoegdeLaag>>(List())
+    Achtergrond: new rx.BehaviorSubject(List()),
+    "Voorgrond.Hoog": new rx.BehaviorSubject(List()),
+    "Voorgrond.Laag": new rx.BehaviorSubject(List()),
+    Tools: new rx.BehaviorSubject(List())
   }),
   laagVerwijderdSubj: new rx.Subject()
 });
@@ -41,15 +42,15 @@ export const ModelChanger: () => ModelChanger = () => ({
 export interface ModelChanges {
   readonly uiElementSelectie$: rx.Observable<UiElementSelectie>;
   readonly uiElementOpties$: rx.Observable<UiElementOpties>;
-  readonly zoomInstellingen$: rx.Observable<Zoominstellingen>;
+  readonly viewInstellingen$: rx.Observable<Viewinstellingen>;
   readonly lagenOpGroep$: Map<ke.Laaggroep, rx.Observable<List<ke.ToegevoegdeLaag>>>;
   readonly laagVerwijderd$: rx.Observable<ke.ToegevoegdeLaag>;
 }
 
-export const modelChanges: (changer: ModelChanger) => ModelChanges = changer => ({
+export const modelChanges: (_: ModelChanger) => ModelChanges = changer => ({
   uiElementSelectie$: changer.uiElementSelectieSubj.asObservable(),
   uiElementOpties$: changer.uiElementOptiesSubj.asObservable(),
-  zoomInstellingen$: changer.zoominstellingenSubj.asObservable(),
+  viewInstellingen$: changer.viewinstellingenSubj.asObservable(),
   lagenOpGroep$: changer.lagenOpGroepSubj.map(s => s!.asObservable()).toMap(),
   laagVerwijderd$: changer.laagVerwijderdSubj.asObservable()
 });

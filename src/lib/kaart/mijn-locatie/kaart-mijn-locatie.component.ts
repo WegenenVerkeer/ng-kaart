@@ -18,11 +18,11 @@ import {
   kaartLogOnlyWrapper,
   MijnLocatieZoomdoelGezetMsg,
   MijnLocatieZoomdoelGezetWrapper,
-  ZoominstellingenGezetMsg,
-  zoominstellingenGezetWrapper
+  ViewinstellingenGezetMsg,
+  viewinstellingenGezetWrapper
 } from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
-import { Zoominstellingen } from "../kaart-protocol";
+import { Viewinstellingen } from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 import { kaartLogger } from "../log";
 import * as ss from "../stijl-selector";
@@ -35,7 +35,7 @@ const MijnLocatieLaagNaam = "Mijn Locatie";
   styleUrls: ["./kaart-mijn-locatie.component.scss"]
 })
 export class KaartMijnLocatieComponent extends KaartChildComponentBase implements OnInit, AfterViewInit {
-  private zoomInstellingen$: Observable<Zoominstellingen> = Observable.empty();
+  private viewinstellingen$: Observable<Viewinstellingen> = Observable.empty();
   private zoomdoelSetting$: Observable<Option<number>> = Observable.empty();
 
   enabled$: Observable<boolean> = Observable.of(true);
@@ -66,7 +66,7 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
 
   protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
     return [
-      prt.ZoominstellingenSubscription(zoominstellingenGezetWrapper),
+      prt.ViewinstellingenSubscription(viewinstellingenGezetWrapper),
       prt.MijnLocatieZoomdoelSubscription(MijnLocatieZoomdoelGezetWrapper)
     ];
   }
@@ -83,9 +83,9 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
       wrapper: kaartLogOnlyWrapper
     });
 
-    this.zoomInstellingen$ = this.internalMessage$.pipe(
-      ofType<ZoominstellingenGezetMsg>("ZoominstellingenGezet"), //
-      map(m => m.zoominstellingen),
+    this.viewinstellingen$ = this.internalMessage$.pipe(
+      ofType<ViewinstellingenGezetMsg>("ViewinstellingenGezet"), //
+      map(m => m.viewinstellingen),
       observeOnAngular(this.zone), //  --> Breekt de locatieClicks op één of andere manier
       shareReplay(1)
     );
@@ -104,7 +104,7 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
       // Omdat de button in een ngIf zit, moeten we op zoek naar de button in ngAfterViewInit
       this.locateBtnQry.changes.pipe(
         switchMap(ql =>
-          this.zoomInstellingen$.pipe(
+          this.viewinstellingen$.pipe(
             combineLatest(zoomdoel$, (zi, doel) => [zi.zoom, doel]), // Blijf op de hoogte van huidige en gewenste zoom
             switchMap(params => Observable.fromEvent(ql.first._getHostElement(), "click").pipe(mapTo(params))) // van click naar zoom
           )
