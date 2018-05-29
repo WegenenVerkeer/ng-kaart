@@ -221,7 +221,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
     // indien er een 'constante' object in de definitie is, geef dat terug, anders geeft de waarde in het veld terug
     return this.constante(name).getOrElseL(() => {
       const waarde = nestedProperty(name, this.properties());
-      return this.isDatum(name) ? this.formateerDatum(waarde.toString()) : waarde;
+      return this.isDatum(name) && waarde ? this.formateerDatum(waarde.toString()) : waarde;
     });
   }
 
