@@ -1,6 +1,7 @@
 import { List, Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
+import { debounceTime, distinctUntilChanged, map, shareReplay } from "rxjs/operators";
 
 import * as ke from "./kaart-elementen";
 import { UiElementOpties } from "./kaart-protocol-commands";
@@ -21,7 +22,7 @@ export interface UiElementSelectie {
 export interface ModelChanger {
   readonly uiElementSelectieSubj: rx.Subject<UiElementSelectie>;
   readonly uiElementOptiesSubj: rx.Subject<UiElementOpties>;
-  readonly viewinstellingenSubj: rx.Subject<Viewinstellingen>;
+  readonly viewSubj: rx.Subject<ol.Map>; // Deze zit met opzet niet in de ModelChanges
   readonly lagenOpGroepSubj: Map<ke.Laaggroep, rx.Subject<List<ke.ToegevoegdeLaag>>>;
   readonly laagVerwijderdSubj: rx.Subject<ke.ToegevoegdeLaag>;
 }
@@ -29,7 +30,7 @@ export interface ModelChanger {
 export const ModelChanger: () => ModelChanger = () => ({
   uiElementSelectieSubj: new rx.Subject(),
   uiElementOptiesSubj: new rx.ReplaySubject(1),
-  viewinstellingenSubj: new rx.ReplaySubject(1), // bekende beperking: geen output wanneer viewport wijzigt
+  viewSubj: new rx.Subject(),
   lagenOpGroepSubj: Map<ke.Laaggroep, rx.Subject<List<ke.ToegevoegdeLaag>>>({
     Achtergrond: new rx.BehaviorSubject(List()),
     "Voorgrond.Hoog": new rx.BehaviorSubject(List()),
@@ -42,15 +43,27 @@ export const ModelChanger: () => ModelChanger = () => ({
 export interface ModelChanges {
   readonly uiElementSelectie$: rx.Observable<UiElementSelectie>;
   readonly uiElementOpties$: rx.Observable<UiElementOpties>;
-  readonly viewInstellingen$: rx.Observable<Viewinstellingen>;
+  readonly viewinstellingen$: rx.Observable<Viewinstellingen>;
   readonly lagenOpGroep$: Map<ke.Laaggroep, rx.Observable<List<ke.ToegevoegdeLaag>>>;
   readonly laagVerwijderd$: rx.Observable<ke.ToegevoegdeLaag>;
 }
 
+const viewinstellingen = (olmap: ol.Map) => {
+  console.log("viewinstellingen");
+  return ({
+    zoom: olmap.getView().getZoom(),
+    minZoom: olmap.getView().getMinZoom(),
+    maxZoom: olmap.getView().getMaxZoom(),
+    resolution: olmap.getView().getResolution(),
+    extent: olmap.getView().calculateExtent(olmap.getSize()),
+    center: olmap.getView().getCenter()
+  });
+};
+
 export const modelChanges: (_: ModelChanger) => ModelChanges = changer => ({
   uiElementSelectie$: changer.uiElementSelectieSubj.asObservable(),
   uiElementOpties$: changer.uiElementOptiesSubj.asObservable(),
-  viewInstellingen$: changer.viewinstellingenSubj.asObservable(),
+  viewinstellingen$: changer.viewSubj.asObservable().pipe(debounceTime(100), map(viewinstellingen), distinctUntilChanged(), shareReplay(1)),
   lagenOpGroep$: changer.lagenOpGroepSubj.map(s => s!.asObservable()).toMap(),
   laagVerwijderd$: changer.laagVerwijderdSubj.asObservable()
 });

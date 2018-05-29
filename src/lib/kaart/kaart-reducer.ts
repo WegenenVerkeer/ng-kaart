@@ -16,7 +16,7 @@ import * as prt from "./kaart-protocol";
 import { KaartWithInfo } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
 import { kaartLogger } from "./log";
-import { ModelChanger } from "./model-changes";
+import { ModelChanger, ModelChanges } from "./model-changes";
 import { getFeatureStyleSelector, getSelectionStyleSelector, setFeatureStyleSelector, setSelectionStyleSelector } from "./stijl-selector";
 import * as ss from "./stijl-selector";
 import { getDefaultStyleSelector } from "./styles";
@@ -50,8 +50,8 @@ function ModelWithResult<Msg>(model: Model, message: Option<Msg> = none): ModelW
 
 export function kaartCmdReducer<Msg extends prt.KaartMsg>(
   cmd: prt.Command<Msg>
-): (model: Model, modelChanger: ModelChanger, msgConsumer: prt.MessageConsumer<Msg>) => ModelWithResult<Msg> {
-  return (model: Model, modelChanger: ModelChanger, msgConsumer: prt.MessageConsumer<Msg>) => {
+): (model: Model, modelChanger: ModelChanger, modelChanges: ModelChanges, msgConsumer: prt.MessageConsumer<Msg>) => ModelWithResult<Msg> {
+  return (model: Model, modelChanger: ModelChanger, modelChanges: ModelChanges, msgConsumer: prt.MessageConsumer<Msg>) => {
     interface KaartCmdResult<T> {
       model: Model;
       value: Option<T>;
@@ -530,6 +530,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
       model.map.setSize(cmnd.size);
       model.map.updateSize();
+      modelChanger.viewSubj.next(model.map); // Omdat extent wschl gewijzigd wordt
       return ModelWithResult(model);
     }
 
@@ -914,7 +915,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       function subscribeToViewinstellingen(sub: prt.ViewinstellingenSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
           "Viewinstellingen",
-          modelChanger.viewinstellingenSubj.pipe(debounceTime(100)).subscribe(pipe(sub.wrapper, msgConsumer))
+          modelChanges.viewinstellingen$.pipe(debounceTime(100)).subscribe(pipe(sub.wrapper, msgConsumer))
         );
       }
 
@@ -928,14 +929,14 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       function subscribeToMiddelpunt(sub: prt.MiddelpuntSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
           "Middelpunt",
-          modelChanger.viewinstellingenSubj.pipe(debounceTime(100), map(i => i.center)).subscribe(pipe(sub.wrapper, msgConsumer))
+          modelChanges.viewinstellingen$.pipe(debounceTime(100), map(i => i.center)).subscribe(pipe(sub.wrapper, msgConsumer))
         );
       }
 
       function subscribeToExtent(sub: prt.ExtentSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
           "Extent",
-          modelChanger.viewinstellingenSubj.pipe(debounceTime(100), map(i => i.extent)).subscribe(pipe(sub.wrapper, msgConsumer))
+          modelChanges.viewinstellingen$.pipe(debounceTime(100), map(i => i.extent)).subscribe(pipe(sub.wrapper, msgConsumer))
         );
       }
 

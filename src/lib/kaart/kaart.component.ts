@@ -20,7 +20,7 @@ import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { KaartInternalMsg, KaartInternalSubMsg } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
 import * as red from "./kaart-reducer";
-import { KaartWithInfo } from "./kaart-with-info";
+import { cleanup, KaartWithInfo } from "./kaart-with-info";
 import { kaartLogger } from "./log";
 import { ModelChanger, ModelChanges, modelChanges, UiElementSelectie } from "./model-changes";
 
@@ -105,7 +105,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     // Het laatste model is dat net voor de stream van model unsubscribed is, dus bij ngOnDestroy
     this.kaartModel$.pipe(last()).subscribe(model => {
       kaartLogger.info(`kaart ${this.naam} opkuisen`);
-      model.map.setTarget((undefined as any) as string); // Hack omdat openlayers typedefs kaduuk zijn
+      cleanup(model);
     });
 
     this.aanwezigeElementen$ = this.modelChanges.uiElementSelectie$.pipe(
@@ -128,7 +128,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       takeUntil(this.destroying$),
       observerOutsideAngular(this.zone),
       scan((model: KaartWithInfo, cmd: prt.Command<any>) => {
-        const { model: newModel, message } = red.kaartCmdReducer(cmd)(model, this.modelChanger, messageConsumer);
+        const { model: newModel, message } = red.kaartCmdReducer(cmd)(model, this.modelChanger, this.modelChanges, messageConsumer);
         kaartLogger.debug("produceert", message);
         forEach(message, messageConsumer); // stuur het resultaat terug naar de eigenaar van de kaartcomponent
         return newModel; // en laat het nieuwe model terugvloeien

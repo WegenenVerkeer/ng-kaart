@@ -46,33 +46,27 @@ export class KaartWithInfo {
   readonly infoBoodschappenSubj = new BehaviorSubject<OrderedMap<string, InfoBoodschap>>(OrderedMap());
   readonly tileLoader: TileLoader = new TileLoader();
 
+  readonly kickViewSubj: (x) => void; // beetje rare constructie omwille van removeEventListener
+
   constructor(
     // TODO om de distinctWithInfo te versnellen zouden we als eerste element een versieteller kunnen toevoegen
     readonly config: KaartConfig,
     readonly naam: string,
     readonly container: any,
     readonly map: ol.Map,
-    changer: ModelChanger
+    readonly changer: ModelChanger
   ) {
-    const zetViewinstellingen = () => {
-      changer.viewinstellingenSubj.next({
-        zoom: map.getView().getZoom(),
-        minZoom: map.getView().getMinZoom(),
-        maxZoom: map.getView().getMaxZoom(),
-        resolution: map.getView().getResolution(),
-        extent: map.getView().calculateExtent(map.getSize()),
-        center: map.getView().getCenter()
-      });
-    };
+    this.kickViewSubj = () => this.changer.viewSubj.next(this.map);
     map.getView().on("change:resolution", () => {
       const zoomNiveau = map.getView().getZoom();
       // OL genereert een heleboel tussenliggende zooms tijden het animeren.
       if (Number.isInteger(zoomNiveau)) {
-        zetViewinstellingen();
+        this.kickViewSubj("zoom");
       }
     });
-    map.getLayers().on("change:length", zetViewinstellingen);
-    map.getView().on("change:center", zetViewinstellingen);
+    map.getLayers().on("change:length", this.kickViewSubj);
+    map.getView().on("change:center", this.kickViewSubj);
+    window.addEventListener("resize", this.kickViewSubj);
     map.on("click", (event: ol.MapBrowserEvent) => {
       return this.clickSubj.next(event.coordinate);
     });
@@ -93,3 +87,8 @@ export class KaartWithInfo {
     initStyleSelectorsInMap(map);
   }
 }
+
+export const cleanup: (model: KaartWithInfo) => void = model => {
+  window.removeEventListener("resize", model.kickViewSubj);
+  model.map.setTarget((undefined as any) as string); // Hack omdat openlayers typedefs kaduuk zijn
+};
