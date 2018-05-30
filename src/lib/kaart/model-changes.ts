@@ -22,7 +22,9 @@ export interface UiElementSelectie {
 export interface ModelChanger {
   readonly uiElementSelectieSubj: rx.Subject<UiElementSelectie>;
   readonly uiElementOptiesSubj: rx.Subject<UiElementOpties>;
-  readonly viewSubj: rx.Subject<ol.Map>; // Deze zit met opzet niet in de ModelChanges
+  // viewSubj zit met opzet niet in de ModelChanges, maar wel de afgeleide viewinstellingen omdat het enerzijds handiger is voor de
+  // aanroepers om ol.Map te pushen, maar dat we naar de observers toe enkel de viewinstellingen willen ter beschikking stellen.
+  readonly viewSubj: rx.Subject<ol.Map>;
   readonly lagenOpGroepSubj: Map<ke.Laaggroep, rx.Subject<List<ke.ToegevoegdeLaag>>>;
   readonly laagVerwijderdSubj: rx.Subject<ke.ToegevoegdeLaag>;
 }
@@ -48,17 +50,14 @@ export interface ModelChanges {
   readonly laagVerwijderd$: rx.Observable<ke.ToegevoegdeLaag>;
 }
 
-const viewinstellingen = (olmap: ol.Map) => {
-  console.log("viewinstellingen");
-  return ({
-    zoom: olmap.getView().getZoom(),
-    minZoom: olmap.getView().getMinZoom(),
-    maxZoom: olmap.getView().getMaxZoom(),
-    resolution: olmap.getView().getResolution(),
-    extent: olmap.getView().calculateExtent(olmap.getSize()),
-    center: olmap.getView().getCenter()
-  });
-};
+const viewinstellingen = (olmap: ol.Map) => ({
+  zoom: olmap.getView().getZoom(),
+  minZoom: olmap.getView().getMinZoom(),
+  maxZoom: olmap.getView().getMaxZoom(),
+  resolution: olmap.getView().getResolution(),
+  extent: olmap.getView().calculateExtent(olmap.getSize()),
+  center: olmap.getView().getCenter()
+});
 
 export const modelChanges: (_: ModelChanger) => ModelChanges = changer => ({
   uiElementSelectie$: changer.uiElementSelectieSubj.asObservable(),

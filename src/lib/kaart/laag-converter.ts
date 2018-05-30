@@ -87,7 +87,7 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
   function createVectorLayer(vectorlaag: ke.VectorLaag) {
     if (array.isOutOfBound(vectorlaag.minZoom - 1, kaart.config.defaults.resolutions)) {
       kaartLogger.error(`Ongeldige minZoom voor ${vectorlaag.titel}:
-        ${vectorlaag.minZoom}, moet tussen 1 en ${kaart.config.defaults.resolutions.length - 1} liggen`);
+        ${vectorlaag.minZoom}, moet tussen 1 en ${kaart.config.defaults.resolutions.length} liggen`);
     }
     if (array.isOutOfBound(vectorlaag.maxZoom, kaart.config.defaults.resolutions)) {
       kaartLogger.error(`Ongeldige maxZoom voor ${vectorlaag.titel}:

@@ -93,13 +93,6 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
       const vectorlagen$ = this.kaartClassicSubMsg$.pipe(ofType<VectorLagenAangepastMsg>("VectorLagenAangepast"), map(lagen));
       const view$ = this.kaartClassicSubMsg$.pipe(ofType<ViewAangepastMsg>("ViewAangepast"), map(view));
 
-      // Subscribe via Openlayers op alle feature changes van alle vectorlagen.
-      const subscribeToChanges: (_: List<ke.ToegevoegdeVectorLaag>) => ol.EventsKey[] = vlgn =>
-        array.chain(
-          vlgn.toArray(), // Onnodig te luisteren naar onzichtbare lagen, maar in de praktijk zal OL daarvoor toch geen events genereren.
-          vlg => vlg.layer.getSource().on(["addfeature", "removefeature", "clear"], () => featuresChangedSubj.next({})) as ol.EventsKey[]
-        );
-
       // Om te weten welke features er zichtbaar zijn op een pagina zou het voldoende moeten zijn om te weten welke lagen er zijn, welke van
       // die lagen zichtbaar zijn en welke features er op de lagen in de huidige extent staan. Op zich is dat ook zo, maar het probleem is
       // dat openlayers features ophaalt in de background. Wanneer je naar een bepaalde extent gaat, zal er direct een event uit de view$
@@ -107,9 +100,16 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
       // resultaten opleveren. Daarom voegen we nog een extra event toe wanneer openlayers klaar is met laden.
       // We gebruiker de addfeature en removefeature, and clear. Het interesseert ons daarbij niet wat de features zijn. Het is ons enkel te
       // doen om de change event (de generieke change event op zich blijkt geen events te genereren).
+
+      const subscribeToOlChanges: (_: List<ke.ToegevoegdeVectorLaag>) => ol.EventsKey[] = vlgn =>
+        array.chain(
+          vlgn.toArray(), // Onnodig te luisteren naar onzichtbare lagen, maar in de praktijk zal OL daarvoor toch geen events genereren.
+          vlg => vlg.layer.getSource().on(["addfeature", "removefeature", "clear"], () => featuresChangedSubj.next({})) as ol.EventsKey[]
+        );
+
       const featuresChangedSubj = new rx.Subject<object>();
       const eventKeys$: rx.Observable<[ol.EventsKey[], ol.EventsKey[]]> = vectorlagen$.pipe(
-        map(subscribeToChanges),
+        map(subscribeToOlChanges),
         takeUntil(this.destroying$), // bindToLifecycle niet bruikbaar omdat dan de concat hierna niet gebeurt
         concat(rx.Observable.of([] as ol.EventsKey[])), // eindig met een lege lijst zodat we de laatste keys nog unsubscriben
         pairwise() // we altijd de vorige keys hebben om te kunnen unsubscriber
