@@ -19,6 +19,7 @@ $tile-size: 76px;
 
 .title {
   overflow: hidden;
+  user-select: none;
   color: white;
   font-size: 12px;
   padding: 24px 4px 4px 4px;
