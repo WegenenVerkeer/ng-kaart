@@ -1,5 +1,7 @@
 :host ::ng-deep .awv-schaal {
-  width: 104px; // Dit is de kleinste breedte (in veelvouden van 8px) waar de schaal altijd in past
+  //INFO: vaste breedte lijkt mij overbodig, verspringing is minimaal en is minder storend dat de wit-ruimte (google-maps heeft ook verspringing)
+  //width: 104px; // Dit is de kleinste breedte (in veelvouden van 8px) waar de schaal altijd in past
+  margin: 0 8px 0 4px;
 }
 
 :host ::ng-deep .awv-schaal-inner {
@@ -10,5 +12,5 @@
   font-size: 10px;
   text-align: center;
   margin: 1px auto;
-  will-change: contents,width;
+  will-change: contents, width;
 }
