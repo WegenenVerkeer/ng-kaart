@@ -51,6 +51,7 @@ export type Command<Msg extends KaartMsg> =
   | VerwijderOverlaysCmd
   | ToonInfoBoodschapCmd
   | VerbergInfoBoodschapCmd
+  | SelecteerFeaturesCmd
   | DeselecteerFeatureCmd
   | SluitInfoBoodschapCmd<Msg>
   | VoegUiElementToe
@@ -305,6 +306,15 @@ export interface ZetUiElementOpties {
   readonly opties: UiElementOpties;
 }
 
+// De features zullen "geselecteerd" worden, ook al zouden ze geen onderdeel uitmaken van één van de lagen. Het is dus de
+// verantwoordelijkheid van de zender om enkel feature mee te geven die zichtbaar zijn.
+// De gegeven features vervangen de eventueel reeds geselecteerde features. Maw, om alles te deslecteren, kan dit commando verzonden worden
+// met een lege verzameling features.
+export interface SelecteerFeaturesCmd {
+  readonly type: "SelecteerFeatures";
+  readonly features: List<ol.Feature>;
+}
+
 export interface DeselecteerFeatureCmd {
   readonly type: "DeselecteerFeature";
   readonly id: string;
@@ -512,6 +522,10 @@ export function VerwijderUiElement(naam: string): VerwijderUiElement {
 
 export function ZetUiElementOpties(naam: string, opties: UiElementOpties): ZetUiElementOpties {
   return { type: "ZetUiElementOpties", naam: naam, opties: opties };
+}
+
+export function SelecteerFeaturesCmd(features: List<ol.Feature>): SelecteerFeaturesCmd {
+  return { type: "SelecteerFeatures", features: features };
 }
 
 export function DeselecteerFeatureCmd(id: string): DeselecteerFeatureCmd {

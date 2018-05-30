@@ -56,8 +56,9 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   @Input() extent: ol.Extent;
   @Input() selectieModus: prt.SelectieModus = "none";
   @Input() naam = "kaart" + KaartClassicComponent.counter++;
+  @Input() geselecteerdeFeatures: List<ol.Feature> = List();
 
-  @Output() geselecteerdeFeatures: EventEmitter<List<ol.Feature>> = new EventEmitter();
+  @Output() geselecteerdeFeaturesChange: EventEmitter<List<ol.Feature>> = new EventEmitter();
   @Output() middelpuntChange: EventEmitter<ol.Coordinate> = new EventEmitter();
   @Output() zoomChange: EventEmitter<number> = new EventEmitter();
   @Output() extentChange: EventEmitter<ol.Extent> = new EventEmitter();
@@ -100,7 +101,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
           vlg => vlg.layer.getSource().on(["addfeature", "removefeature", "clear"], () => featuresChangedSubj.next({})) as ol.EventsKey[]
         );
 
-      // Om te weten welke features er zichtbaar zijn op een pagina zou het voldoende moeten zijn om te weten welke lagen er zijn, welke van
+      // Om te weten welke features er zichtbaar zijn op een kaart zou het voldoende moeten zijn om te weten welke lagen er zijn, welke van
       // die lagen zichtbaar zijn en welke features er op de lagen in de huidige extent staan. Op zich is dat ook zo, maar het probleem is
       // dat openlayers features ophaalt in de background. Wanneer je naar een bepaalde extent gaat, zal er direct een event uit de view$
       // komen, maar de features zelf zijn er op dat moment nog niet noodzakelijk. De call naar getFeaturesInExtent zal dan te weinig
@@ -128,7 +129,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
         switch (msg.type) {
           case "FeatureSelectieAangepast":
             // Zorg ervoor dat de geselecteerde features in de @Output terecht komen
-            return this.geselecteerdeFeatures.emit(msg.geselecteerdeFeatures.geselecteerd);
+            return this.geselecteerdeFeaturesChange.emit(msg.geselecteerdeFeatures.geselecteerd);
           case "FeatureGedeselecteerd":
             // Zorg ervoor dat deselecteer van een feature via infoboodschap terug naar kaart-reducer gaat
             return this.dispatch(prt.DeselecteerFeatureCmd(msg.featureid));
@@ -168,12 +169,14 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   }
 
   ngOnChanges(changes: SimpleChanges) {
+    const dispatch: (cmd: prt.Command<TypedRecord>) => void = cmd => this.dispatch(cmd);
     forChangedValue(changes, "zoom", zoom => this.dispatch(prt.VeranderZoomCmd(zoom, logOnlyWrapper)));
-    forChangedValue(changes, "middelpunt", center => this.dispatch(prt.VeranderMiddelpuntCmd(center)), coordinateIsDifferent);
-    forChangedValue(changes, "extent", ext => this.dispatch(prt.VeranderExtentCmd(ext)), extentIsDifferent);
-    forChangedValue(changes, "breedte", breedte => this.dispatch(prt.VeranderViewportCmd([breedte, this.hoogte])));
-    forChangedValue(changes, "hoogte", hoogte => this.dispatch(prt.VeranderViewportCmd([this.breedte, hoogte])));
-    forChangedValue(changes, "mijnLocatieZoom", zoom => this.dispatch(prt.ZetMijnLocatieZoomCmd(option.fromNullable(zoom))));
+    forChangedValue(changes, "middelpunt", pipe(prt.VeranderMiddelpuntCmd, dispatch), coordinateIsDifferent);
+    forChangedValue(changes, "extent", pipe(prt.VeranderExtentCmd, dispatch), extentIsDifferent);
+    forChangedValue(changes, "breedte", pipe(breedte => [breedte, this.hoogte], prt.VeranderViewportCmd, dispatch));
+    forChangedValue(changes, "hoogte", pipe(hoogte => [this.breedte, hoogte], prt.VeranderViewportCmd, dispatch));
+    forChangedValue(changes, "mijnLocatieZoom", pipe(option.fromNullable, prt.ZetMijnLocatieZoomCmd, dispatch));
+    forChangedValue(changes, "geselecteerdeFeatures", pipe(prt.SelecteerFeaturesCmd, dispatch));
   }
 
   dispatch(cmd: prt.Command<TypedRecord>) {

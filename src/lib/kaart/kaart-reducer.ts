@@ -763,7 +763,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             return some({
               condition: ol.events.condition.click,
               features: model.geselecteerdeFeatures,
-              multi: true,
+              multi: true, // dit wil zeggen dat in alle lagen gekeken wordt of er een feature op de clicklocatie zit
               style: applySelectFunction
             });
           case "multiple":
@@ -817,6 +817,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function deleteInfoBoodschap(cmnd: prt.VerbergInfoBoodschapCmd): ModelWithResult<Msg> {
       model.infoBoodschappenSubj.next(model.infoBoodschappenSubj.getValue().delete(cmnd.id));
+      return ModelWithResult(model);
+    }
+
+    function selecteerFeatures(cmnd: prt.SelecteerFeaturesCmd): ModelWithResult<Msg> {
+      model.geselecteerdeFeatures.clear();
+      model.geselecteerdeFeatures.extend(cmnd.features.toArray());
       return ModelWithResult(model);
     }
 
@@ -1134,6 +1140,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return toonInfoBoodschap(cmd);
       case "VerbergInfoBoodschap":
         return deleteInfoBoodschap(cmd);
+      case "SelecteerFeatures":
+        return selecteerFeatures(cmd);
       case "DeselecteerFeature":
         return deselecteerFeature(cmd);
       case "SluitInfoBoodschap":
