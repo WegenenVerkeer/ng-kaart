@@ -936,7 +936,14 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       function subscribeToGeselecteerdeFeatures(sub: prt.GeselecteerdeFeaturesSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
           "GeselecteerdeFeatures",
-          model.geselecteerdeFeaturesSubj.subscribe(pm => msgConsumer(sub.wrapper(pm)))
+          modelChanges.geselecteerdeFeatures$.subscribe(pm => msgConsumer(sub.wrapper(pm)))
+        );
+      }
+
+      function subscribeToZichtbareFeatures(sub: prt.ZichtbareFeaturesSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult(
+          "ZichtbareFeatures", //
+          modelChanges.zichtbareFeatures$.subscribe(pm => msgConsumer(sub.wrapper(pm)))
         );
       }
 
@@ -1029,6 +1036,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToAchtergrondTitel(cmnd.subscription);
         case "GeselecteerdeFeatures":
           return subscribeToGeselecteerdeFeatures(cmnd.subscription);
+        case "ZichtbareFeatures":
+          return subscribeToZichtbareFeatures(cmnd.subscription);
         case "LagenInGroep":
           return subscribeToLagenInGroep(cmnd.subscription);
         case "LaagVerwijderd":

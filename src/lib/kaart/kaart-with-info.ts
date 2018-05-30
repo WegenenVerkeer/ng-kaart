@@ -1,8 +1,10 @@
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List, Map, OrderedMap } from "immutable";
 import * as ol from "openlayers";
-import { BehaviorSubject, ReplaySubject, Subject } from "rxjs";
+import { BehaviorSubject, Observable, ReplaySubject, Subject } from "rxjs";
+import { debounceTime, map as rxmap, merge, shareReplay } from "rxjs/operators";
 
+import { observableFromOlEvent } from "../util/ol-observable";
 import { ZoekResultaat, ZoekResultaten } from "../zoeker/zoeker-base";
 import { ZoekerCoordinator } from "../zoeker/zoeker-coordinator";
 
@@ -32,9 +34,10 @@ export class KaartWithInfo {
   readonly scrollZoomOnFocus: boolean = false;
   readonly showBackgroundSelector: boolean = false;
 
-  readonly clickSubj: Subject<ol.Coordinate> = new Subject<ol.Coordinate>();
-  readonly geselecteerdeFeaturesSubj: Subject<GeselecteerdeFeatures> = new Subject<GeselecteerdeFeatures>();
+  // Een serieuze doorn in het oog. Dit is een collectie die automagisch door OL up-to-date gehouden wordt (mbv interactie).
   readonly geselecteerdeFeatures: ol.Collection<ol.Feature> = new ol.Collection<ol.Feature>();
+
+  readonly clickSubj: Subject<ol.Coordinate> = new Subject<ol.Coordinate>();
   readonly achtergrondlaagtitelSubj: Subject<string> = new ReplaySubject<string>(1);
   readonly zoekerSubj: Subject<ZoekResultaten> = new ReplaySubject<ZoekResultaten>(1);
   readonly zoekerKlikSubj: Subject<ZoekResultaat> = new ReplaySubject<ZoekResultaat>(1);
@@ -70,20 +73,7 @@ export class KaartWithInfo {
     map.on("click", (event: ol.MapBrowserEvent) => {
       return this.clickSubj.next(event.coordinate);
     });
-    this.geselecteerdeFeatures.on("add", (event: ol.Collection.Event) =>
-      this.geselecteerdeFeaturesSubj.next({
-        geselecteerd: List(this.geselecteerdeFeatures.getArray()),
-        toegevoegd: some(event.element),
-        verwijderd: none
-      })
-    );
-    this.geselecteerdeFeatures.on("remove", (event: ol.Collection.Event) =>
-      this.geselecteerdeFeaturesSubj.next({
-        geselecteerd: List(this.geselecteerdeFeatures.getArray()),
-        toegevoegd: none,
-        verwijderd: some(event.element)
-      })
-    );
+
     initStyleSelectorsInMap(map);
   }
 }

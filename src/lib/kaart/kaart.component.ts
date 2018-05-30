@@ -26,7 +26,7 @@ import { ModelChanger, ModelChanges, modelChanges, UiElementSelectie } from "./m
 
 // Om enkel met @Input properties te moeten werken. Op deze manier kan een stream van KaartMsg naar de caller gestuurd worden
 export type KaartMsgObservableConsumer = (msg$: Observable<prt.KaartMsg>) => void;
-export const vacuousKaartMsgObservableConsumer: KaartMsgObservableConsumer = (msg$: Observable<prt.KaartMsg>) => ({});
+export const vacuousKaartMsgObservableConsumer: KaartMsgObservableConsumer = () => ({});
 
 @Component({
   selector: "awv-kaart",
@@ -36,9 +36,9 @@ export const vacuousKaartMsgObservableConsumer: KaartMsgObservableConsumer = (ms
 })
 export class KaartComponent extends KaartComponentBase implements OnInit, OnDestroy {
   private readonly modelChanger: ModelChanger = ModelChanger();
-  readonly modelChanges: ModelChanges = modelChanges(this.modelChanger);
+  private innerModelChanges: ModelChanges;
+  private innerAanwezigeElementen$: Observable<Set<string>>;
   readonly kaartModel$: Observable<KaartWithInfo> = Observable.empty();
-  readonly aanwezigeElementen$: Observable<Set<string>>;
 
   @ViewChild("map") mapElement: ElementRef;
 
@@ -87,7 +87,15 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     this.kaartModel$ = this.initialising$.pipe(
       observerOutsideAngular(zone),
       tap(() => this.messageObsConsumer(this.msgSubj)), // Wie de messageObsConsumer @Input gezet heeft, krijgt een observable van messages
-      switchMap(() => this.createMapModelForCommands()),
+      map(() => this.initieelModel()),
+      tap(model => {
+        this.innerModelChanges = modelChanges(model, this.modelChanger);
+        this.innerAanwezigeElementen$ = this.modelChanges.uiElementSelectie$.pipe(
+          scan((st: Set<string>, selectie: UiElementSelectie) => (selectie.aan ? st.add(selectie.naam) : st.delete(selectie.naam)), Set()),
+          startWith(Set())
+        );
+      }),
+      switchMap(model => this.createMapModelForCommands(model)),
       takeUntil(this.destroying$),
       shareReplay(1)
     );
@@ -107,15 +115,9 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       kaartLogger.info(`kaart ${this.naam} opkuisen`);
       cleanup(model);
     });
-
-    this.aanwezigeElementen$ = this.modelChanges.uiElementSelectie$.pipe(
-      scan((st: Set<string>, selectie: UiElementSelectie) => (selectie.aan ? st.add(selectie.naam) : st.delete(selectie.naam)), Set()),
-      startWith(Set())
-    );
   }
 
-  private createMapModelForCommands(): Observable<KaartWithInfo> {
-    const initieelModel = this.initieelModel();
+  private createMapModelForCommands(initieelModel: KaartWithInfo): Observable<KaartWithInfo> {
     kaartLogger.info(`Kaart ${this.naam} aangemaakt`);
 
     const messageConsumer = (msg: prt.KaartMsg) => {
@@ -167,5 +169,13 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   get kaartWithInfo$(): Observable<KaartWithInfo> {
     // TODO geen casting meer in RxJs 6
     return (this.kaartModelObsSubj.pipe(concatAll()) as any) as Observable<KaartWithInfo>;
+  }
+
+  get modelChanges(): ModelChanges {
+    return this.innerModelChanges;
+  }
+
+  get aanwezigeElementen$(): Observable<Set<string>> {
+    return this.innerAanwezigeElementen$;
   }
 }

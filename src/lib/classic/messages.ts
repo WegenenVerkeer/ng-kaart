@@ -19,6 +19,7 @@ export interface KaartClassicMsg {
 export type KaartClassicSubMsg =
   | FeatureGedeselecteerdMsg
   | FeatureSelectieAangepastMsg
+  | ZichtbareFeaturesAangepastMsg
   | TekenGeomAangepastMsg
   | SubscribedMsg
   | ZoomAangepastMsg
@@ -47,6 +48,11 @@ export interface SubscribedMsg {
 export interface FeatureGedeselecteerdMsg {
   readonly type: "FeatureGedeselecteerd";
   readonly featureid: string;
+}
+
+export interface ZichtbareFeaturesAangepastMsg {
+  readonly type: "ZichtbareFeaturesAangepast";
+  readonly features: List<ol.Feature>;
 }
 
 export interface ZoomAangepastMsg {
@@ -92,6 +98,10 @@ export function KaartClassicMsg(payload: KaartClassicSubMsg): KaartClassicMsg {
 
 export function FeatureSelectieAangepastMsg(geselecteerdeFeatures: GeselecteerdeFeatures): FeatureSelectieAangepastMsg {
   return { type: "FeatureSelectieAangepast", geselecteerdeFeatures: geselecteerdeFeatures };
+}
+
+export function ZichtbareFeaturesAangepastMsg(features: List<ol.Feature>): ZichtbareFeaturesAangepastMsg {
+  return { type: "ZichtbareFeaturesAangepast", features: features };
 }
 
 export function TekenGeomAangepastMsg(geom: ol.geom.Geometry): TekenGeomAangepastMsg {

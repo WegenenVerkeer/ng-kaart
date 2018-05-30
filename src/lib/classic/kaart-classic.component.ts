@@ -1,5 +1,4 @@
 import { Component, EventEmitter, Input, NgZone, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from "@angular/core";
-import { array } from "fp-ts/lib/Array";
 import { pipe } from "fp-ts/lib/function";
 import * as option from "fp-ts/lib/Option";
 import { some } from "fp-ts/lib/Option";
@@ -7,10 +6,9 @@ import { List } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { Observable } from "rxjs/Observable";
-import { combineLatest, concat, debounceTime, map, pairwise, share, takeUntil, tap } from "rxjs/operators";
+import { map, share, tap } from "rxjs/operators";
 
 import { forChangedValue, KaartComponentBase } from "../kaart/kaart-component-base";
-import * as ke from "../kaart/kaart-elementen";
 import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "../kaart/kaart-event-dispatcher";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartMsgObservableConsumer } from "../kaart/kaart.component";
@@ -24,13 +22,10 @@ import {
   FeatureSelectieAangepastMsg,
   KaartClassicMsg,
   KaartClassicSubMsg,
-  lagen,
   logOnlyWrapper,
   MiddelpuntAangepastMsg,
   SubscribedMsg,
-  VectorLagenAangepastMsg,
-  view,
-  ViewAangepastMsg,
+  ZichtbareFeaturesAangepastMsg,
   ZoomAangepastMsg
 } from "./messages";
 
@@ -74,61 +69,26 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
         share() // 1 rx subscription naar boven toe is genoeg
       );
 
-      const filterVectorLagen = (lgn: List<ke.ToegevoegdeLaag>) => lgn.filter(ke.isToegevoegdeVectorLaag).toList();
-
       this.bindToLifeCycle(
         this.kaartClassicSubMsg$.lift(
           classicMsgSubscriptionCmdOperator(
             this.dispatcher,
             prt.GeselecteerdeFeaturesSubscription(pipe(FeatureSelectieAangepastMsg, KaartClassicMsg)),
+            prt.ZichtbareFeaturesSubscription(pipe(ZichtbareFeaturesAangepastMsg, KaartClassicMsg)),
             prt.ViewinstellingenSubscription(pipe(zi => zi.zoom, ZoomAangepastMsg, KaartClassicMsg)),
-            prt.ViewinstellingenSubscription(pipe(ViewAangepastMsg, KaartClassicMsg)),
             prt.MiddelpuntSubscription(pipe(MiddelpuntAangepastMsg, KaartClassicMsg)),
-            prt.ExtentSubscription(pipe(ExtentAangepastMsg, KaartClassicMsg)),
-            prt.LagenInGroepSubscription("Voorgrond.Hoog", pipe(filterVectorLagen, VectorLagenAangepastMsg, KaartClassicMsg))
+            prt.ExtentSubscription(pipe(ExtentAangepastMsg, KaartClassicMsg))
           )
         )
       ).subscribe(err => classicLogger.error(err));
-
-      const vectorlagen$ = this.kaartClassicSubMsg$.pipe(ofType<VectorLagenAangepastMsg>("VectorLagenAangepast"), map(lagen));
-      const view$ = this.kaartClassicSubMsg$.pipe(ofType<ViewAangepastMsg>("ViewAangepast"), map(view));
-
-      // Om te weten welke features er zichtbaar zijn op een pagina zou het voldoende moeten zijn om te weten welke lagen er zijn, welke van
-      // die lagen zichtbaar zijn en welke features er op de lagen in de huidige extent staan. Op zich is dat ook zo, maar het probleem is
-      // dat openlayers features ophaalt in de background. Wanneer je naar een bepaalde extent gaat, zal er direct een event uit de view$
-      // komen, maar de features zelf zijn er op dat moment nog niet noodzakelijk. De call naar getFeaturesInExtent zal dan te weinig
-      // resultaten opleveren. Daarom voegen we nog een extra event toe wanneer openlayers klaar is met laden.
-      // We gebruiker de addfeature en removefeature, and clear. Het interesseert ons daarbij niet wat de features zijn. Het is ons enkel te
-      // doen om de change event (de generieke change event op zich blijkt geen events te genereren).
-
-      const subscribeToOlChanges: (_: List<ke.ToegevoegdeVectorLaag>) => ol.EventsKey[] = vlgn =>
-        array.chain(
-          vlgn.toArray(), // Onnodig te luisteren naar onzichtbare lagen, maar in de praktijk zal OL daarvoor toch geen events genereren.
-          vlg => vlg.layer.getSource().on(["addfeature", "removefeature", "clear"], () => featuresChangedSubj.next({})) as ol.EventsKey[]
-        );
-
-      const featuresChangedSubj = new rx.Subject<object>();
-      const eventKeys$: rx.Observable<[ol.EventsKey[], ol.EventsKey[]]> = vectorlagen$.pipe(
-        map(subscribeToOlChanges),
-        takeUntil(this.destroying$), // bindToLifecycle niet bruikbaar omdat dan de concat hierna niet gebeurt
-        concat(rx.Observable.of([] as ol.EventsKey[])), // eindig met een lege lijst zodat we de laatste keys nog unsubscriben
-        pairwise() // we altijd de vorige keys hebben om te kunnen unsubscriber
-      );
-      eventKeys$.subscribe(([prevKeys, curKeys]) => prevKeys.forEach(evtKey => ol.Observable.unByKey(evtKey)));
-
-      const collectFeatures: (_1: prt.Viewinstellingen, _2: List<ke.ToegevoegdeVectorLaag>) => ol.Feature[] = (vw, vlgn) =>
-        array.chain(vlgn.toArray(), vlg => {
-          return ke.isZichtbaar(vw.resolution)(vlg) ? vlg.layer.getSource().getFeaturesInExtent(vw.extent) : [];
-        });
-
-      const featuresChanged$ = featuresChangedSubj.asObservable().pipe(debounceTime(200));
-      const featuresInExtent$ = view$.pipe(combineLatest(vectorlagen$, featuresChanged$, collectFeatures));
 
       this.bindToLifeCycle(this.kaartClassicSubMsg$).subscribe(msg => {
         switch (msg.type) {
           case "FeatureSelectieAangepast":
             // Zorg ervoor dat de geselecteerde features in de @Output terecht komen
             return this.geselecteerdeFeatures.emit(msg.geselecteerdeFeatures.geselecteerd);
+          case "ZichtbareFeaturesAangepast":
+            return this.zichtbareFeatures.emit(msg.features);
           case "FeatureGedeselecteerd":
             // Zorg ervoor dat deselecteer van een feature via infoboodschap terug naar kaart-reducer gaat
             return this.dispatch(prt.DeselecteerFeatureCmd(msg.featureid));
@@ -142,8 +102,6 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
             return; // Op de andere boodschappen reageren we niet
         }
       });
-
-      this.bindToLifeCycle(featuresInExtent$).subscribe(features => this.zichtbareFeatures.emit(List(features)));
     };
   }
 

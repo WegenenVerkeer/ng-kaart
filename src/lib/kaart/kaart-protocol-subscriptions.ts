@@ -16,6 +16,7 @@ export type Subscription<Msg> =
   | MiddelpuntSubscription<Msg>
   | ExtentSubscription<Msg>
   | GeselecteerdeFeaturesSubscription<Msg>
+  | ZichtbareFeaturesSubscription<Msg>
   | AchtergrondTitelSubscription<Msg>
   | LagenInGroepSubscription<Msg>
   | LaagVerwijderdSubscription<Msg>
@@ -60,6 +61,11 @@ export interface ExtentSubscription<Msg> {
 export interface GeselecteerdeFeaturesSubscription<Msg> {
   readonly type: "GeselecteerdeFeatures";
   readonly wrapper: (geselecteerdeFeatures: GeselecteerdeFeatures) => Msg;
+}
+
+export interface ZichtbareFeaturesSubscription<Msg> {
+  readonly type: "ZichtbareFeatures";
+  readonly wrapper: (zicthbareFeatures: List<ol.Feature>) => Msg;
 }
 
 export interface AchtergrondTitelSubscription<Msg> {
@@ -126,6 +132,12 @@ export function GeselecteerdeFeaturesSubscription<Msg>(
   wrapper: (geselecteerdeFeatures: GeselecteerdeFeatures) => Msg
 ): GeselecteerdeFeaturesSubscription<Msg> {
   return { type: "GeselecteerdeFeatures", wrapper: wrapper };
+}
+
+export function ZichtbareFeaturesSubscription<Msg>(
+  msgGen: (zichtbareFeatures: List<ol.Feature>) => Msg
+): ZichtbareFeaturesSubscription<Msg> {
+  return { type: "ZichtbareFeatures", wrapper: msgGen };
 }
 
 export function MiddelpuntSubscription<Msg>(wrapper: (center: ol.Coordinate) => Msg): MiddelpuntSubscription<Msg> {
