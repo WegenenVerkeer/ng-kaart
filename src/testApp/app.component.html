@@ -244,12 +244,12 @@
 
 <h3>Kaart voor het testen van de interacties - met mogelijkheid om bepaalde features aan/uit te zetten of te veranderen</h3>
 <div style="margin-bottom: 40px;">
-  <div>
+  <button style="margin: 0 8px 8px 8px;" (click)="maakZichtbaar('interacties', !isZichtbaar('interacties'))">{{isZichtbaar('interacties')?'Verberg kaart':'Toon kaart'}}</button>
+  <div *ngIf="isZichtbaar('interacties')">
     <div style="padding: 8px;">
-      <button mat-raised-button (click)="toggleInteractieZichtbaar(key)" *ngFor="let key of objectKeys(interacties)">Zet <strong>{{key}}</strong> {{isInteractieZichtbaar(key.toString()) ? "UIT" : "AAN"}}</button>
+      <button (click)="toggleInteractieZichtbaar(key)" *ngFor="let key of objectKeys(interacties)">Zet <strong>{{key}}</strong> {{isInteractieZichtbaar(key.toString()) ? "UIT" : "AAN"}}</button>
     </div>
     <div style="padding: 8px;">
-      <button (click)="maakZichtbaar('interacties', !isZichtbaar('interacties'))">{{isZichtbaar('interacties')?'Verberg kaart':'Toon kaart'}}</button>
       <button (click)="veranderVoorwaarden()">Andere voorwaarden</button>
     </div>
   </div>
