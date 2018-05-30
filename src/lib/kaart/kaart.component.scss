@@ -95,15 +95,37 @@ awv-kaart-info-boodschappen {
   background-color: #555;
 }
 
-.kaart-info-box {
+.kaart-rechts-onderaan {
   display: flex;
-  flex-direction: row;
-  background-color:rgba(255, 255, 255, 0.75);
+  flex-direction: column;
   position: absolute;
-  bottom: 0px;
-  right: 0px;
-  height: 16px;
-  padding-top: 2px;
-  padding-bottom: 2px;
-  box-sizing: border-box;
+  bottom: 0;
+  right: 0;
+
+  .kaart-interacties {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+  }
+
+  .kaart-achtergrond-selector {
+    margin-bottom: 8px;
+  }
+
+  .kaart-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    margin: 0 8px 8px 0;
+  }
+
+  .kaart-footer-info {
+    display: flex;
+    align-items: center;
+    font-size: 10px;
+    color: black;
+    background-color: rgba(white, 0.87);
+    padding: 0;
+    border-radius: 4px 0 0 0;
+  }
 }

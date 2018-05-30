@@ -1,6 +1,4 @@
-<h1>AWV Commons</h1>
-
-<h2>Kaart</h2>
+<h1>ng-kaart: testpagina met aantal config voorbeelden</h1>
 <div class="protractor">
   <h3>Kaart voor protractor</h3>
   <button (click)="maakZichtbaar('orthomap', !isZichtbaar('orthomap'))">{{isZichtbaar('orthomap')?'Verberg':'Toon'}}
@@ -65,7 +63,7 @@
   </button>
   <awv-kaart-classic *ngIf="isZichtbaar('dynamischefeatures')" [breedte]="1200" [hoogte]="600" [zoom]="6"
                      [middelpunt]="installatieCoordinaat"
-                     >
+  >
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
     <awv-kaart-features-laag [features]="installaties" [titel]="'features'" [minZoom]="2"></awv-kaart-features-laag>
     <!--[selecteerbaar]="true"
@@ -184,7 +182,7 @@
     <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
     <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'https://apps-dev.mow.vlaanderen.be/geolatte-nosqlfs'"
                             [database]="'featureserver'" [collection]="'fietspaden'"
-                            [styleFunction]="fietspadStyleMetOffset"  [selectieStyle]="fietspadSelectieStyleMetOffset"
+                            [styleFunction]="fietspadStyleMetOffset" [selectieStyle]="fietspadSelectieStyleMetOffset"
                             [minZoom]="7"></awv-kaart-nosqlfs-laag>
   </awv-kaart-classic>
 </div>
@@ -212,7 +210,7 @@
   <awv-kaart-classic *ngIf="isZichtbaar('metenVoorbeeld')" [naam]="'metenVoorbeeld'">
     <awv-kaart-ortho-laag [titel]="'Ortho'"></awv-kaart-ortho-laag>
     <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
-    <awv-kaart-teken [geometryType]="'Polygon'" [tekenen]="isTekenenActief()"  (getekendeGeom)="geomGetekend($event)"></awv-kaart-teken>
+    <awv-kaart-teken [geometryType]="'Polygon'" [tekenen]="isTekenenActief()" (getekendeGeom)="geomGetekend($event)"></awv-kaart-teken>
     <awv-kaart-schaal></awv-kaart-schaal>
     <awv-kaart-copyright></awv-kaart-copyright>
     <awv-kaart-voorwaarden></awv-kaart-voorwaarden>
@@ -244,16 +242,25 @@
   </awv-kaart-classic>
 </div>
 
-<h3>Kaart met copyright, voorwaarden en schaal</h3>
-<div>
-  <button (click)="maakZichtbaar('voorwaarden', !isZichtbaar('voorwaarden'))">
-    {{isZichtbaar('voorwaarden')?'Verberg':'Toon'}}
-  </button>
-  <awv-kaart-classic *ngIf="isZichtbaar('voorwaarden')" [naam]="'voorwaarden'">
-      <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
-      <awv-kaart-copyright [copyright]="'&copy; Dit is van ons'"></awv-kaart-copyright>
-      <awv-kaart-voorwaarden *ngIf="!!voorwaarden" [titel]="voorwaarden"></awv-kaart-voorwaarden>
-      <awv-kaart-schaal></awv-kaart-schaal>
+<h3>Kaart voor het testen van de interacties - met mogelijkheid om bepaalde features aan/uit te zetten of te veranderen</h3>
+<div style="margin-bottom: 40px;">
+  <div>
+    <div style="padding: 8px;">
+      <button mat-raised-button (click)="toggleInteractieZichtbaar(key)" *ngFor="let key of objectKeys(interacties)">Zet <strong>{{key}}</strong> {{isInteractieZichtbaar(key.toString()) ? "UIT" : "AAN"}}</button>
+    </div>
+    <div style="padding: 8px;">
+      <button (click)="maakZichtbaar('interacties', !isZichtbaar('interacties'))">{{isZichtbaar('interacties')?'Verberg kaart':'Toon kaart'}}</button>
+      <button (click)="veranderVoorwaarden()">Andere voorwaarden</button>
+    </div>
+  </div>
+  <awv-kaart-classic *ngIf="isZichtbaar('interacties')" [naam]="'interacties'" [mijnLocatieZoom]="getMijnLocatieZoom()">
+    <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+    <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'" *ngIf="isInteractieZichtbaar('achtergrond')"></awv-kaart-tilecache-laag>
+    <awv-kaart-blanco-laag [titel]="'Leeg'" *ngIf="isInteractieZichtbaar('achtergrond')"></awv-kaart-blanco-laag>
+    <awv-kaart-knop-achtergrondlaag-kiezer [titels]="['Dienstkaart grijs', 'Dienstkaart kleur', 'Leeg']" *ngIf="isInteractieZichtbaar('achtergrond')"></awv-kaart-knop-achtergrondlaag-kiezer>
+    <awv-kaart-standaard-interacties [focusVoorZoom]="true" *ngIf="isInteractieZichtbaar('mijnlocatie')"></awv-kaart-standaard-interacties>
+    <awv-kaart-copyright *ngIf="isInteractieZichtbaar('copyright')"></awv-kaart-copyright>
+    <awv-kaart-voorwaarden *ngIf="isInteractieZichtbaar('voorwaarden')" [titel]="voorwaarden"></awv-kaart-voorwaarden>
+    <awv-kaart-schaal *ngIf="isInteractieZichtbaar('schaal')"></awv-kaart-schaal>
   </awv-kaart-classic>
-  <button *ngIf="isZichtbaar('voorwaarden')" (click)="veranderVoorwaarden()">Andere voorwaarden</button>
 </div>

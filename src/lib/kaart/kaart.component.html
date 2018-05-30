@@ -3,10 +3,6 @@
     <div class="kaart" #map style="height: 100%; width: 100%;"></div>
   </div>
   <div id="overlay" *ngIf="aanwezigeElementen$ | async as aanwezigeElementen">
-    <awv-kaart-open-street-view></awv-kaart-open-street-view>
-    <awv-kaart-achtergrond-selector *ngIf="aanwezigeElementen.contains('Achtergrondkeuze')"></awv-kaart-achtergrond-selector>
-    <awv-kaart-mijn-locatie></awv-kaart-mijn-locatie>
-    <awv-kaart-zoom></awv-kaart-zoom>
     <awv-google-wdb-locatie-zoeker></awv-google-wdb-locatie-zoeker>
     <awv-crab-zoeker></awv-crab-zoeker>
     <div class="kaart-links">
@@ -16,10 +12,20 @@
       <ng-content select=".kaart-links"></ng-content>
     </div>
     <awv-kaart-teken-laag *ngIf="aanwezigeElementen.contains('Kaarttekenen')"></awv-kaart-teken-laag>
-    <div class="kaart-info-box">
-      <awv-copyright *ngIf="aanwezigeElementen.contains('Copyright')"></awv-copyright>
-      <awv-voorwaarden *ngIf="aanwezigeElementen.contains('Voorwaarden')"></awv-voorwaarden>
-      <awv-schaal *ngIf="aanwezigeElementen.contains('Schaal')"></awv-schaal>
+    <div class="kaart-rechts-onderaan">
+      <div class="kaart-interacties">
+        <awv-kaart-achtergrond-selector class="kaart-achtergrond-selector" *ngIf="aanwezigeElementen.contains('Achtergrondkeuze')"></awv-kaart-achtergrond-selector>
+        <div class="kaart-controls">
+          <awv-kaart-open-street-view></awv-kaart-open-street-view>
+          <awv-kaart-mijn-locatie></awv-kaart-mijn-locatie>
+          <awv-kaart-zoom></awv-kaart-zoom>
+        </div>
+      </div>
+      <div class="kaart-footer-info">
+        <awv-copyright *ngIf="aanwezigeElementen.contains('Copyright')"></awv-copyright>
+        <awv-voorwaarden *ngIf="aanwezigeElementen.contains('Voorwaarden')"></awv-voorwaarden>
+        <awv-schaal *ngIf="aanwezigeElementen.contains('Schaal')"></awv-schaal>
+      </div>
     </div>
   </div>
 </div>

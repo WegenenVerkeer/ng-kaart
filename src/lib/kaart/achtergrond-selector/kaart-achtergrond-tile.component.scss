@@ -1,48 +1,32 @@
 @import "../../css/kaart.component-common.scss";
 
-$map-border-color: #aa8;
-$map-background-color: whitesmoke;
-// We zouden dit moeten van de AWV theme halen
-$map-title-main-color: #dd7921;
-$tile-size: 100px;
-$tile-width: $tile-size;
-$tile-height: $tile-size;
-$title-height: 20px;
-$title-font-size: 12px;
+$tile-size: 76px;
 
-.minimap {
-  border: 1px solid $map-border-color;
-  background-color: $map-background-color;
-  width: $tile-width; // zo groot willen we zijn
-  height: $tile-height;
+.achtergrond-tile {
+  background-color: whitesmoke;
+  width: $tile-size; // zo groot willen we zijn
+  height: $tile-size;
   max-height: inherit; // We willen dat we passen in de parent
   max-width: inherit;
   overflow: hidden;
   cursor: pointer; // Toon de gebruiker dat er geklikt kan worden
-  display: inline-block; // De parent had dit anders gezet
-  box-sizing: border-box;
+  border: 2px solid white;
+  border-radius: 2px;
+  margin-right: 8px;
+  display: flex;
+  align-items: flex-end;
 }
 
 .title {
-  width: $tile-width;
-  max-width: $tile-width;
-  height: $title-height;
   overflow: hidden;
-  text-align: center;
-  color: $map-title-main-color;
-  background-color: $map-background-color;
-  font-style: normal;
-  font-variant-ligatures: normal;
-  font-variant-caps: normal;
-  font-variant-numeric: normal;
-  font-variant-east-asian: normal;
-  font-weight: 500;
-  font-stretch: normal;
-  font-size: $title-font-size;
-  line-height: $title-height;
+  color: white;
+  font-size: 12px;
+  padding: 24px 4px 4px 4px;
+  text-shadow: rgba(0,0,0,0.7) 0px 1px 8px;
+  background-image: linear-gradient(transparent,rgba(0,0,0,0.37));
+  width: 100%;
 }
 
 .current {
-  color: $map-background-color; // inverteer de kleuren van de titelblak
-  background-color: $map-title-main-color;
+  color: white;
 }
