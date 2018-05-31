@@ -16,6 +16,9 @@ import { ClassicVectorLaagComponent } from "./lagen/classic-vector-laag.componen
 import { ClassicWmsLaagComponent } from "./lagen/classic-wms-laag.component";
 import { ClassicWmtsLaagComponent } from "./lagen/classic-wmts-laag.component";
 import { ClassicLagenkiezerComponent } from "./lagenkiezer/classic-lagenkiezer.component";
+import { ClassicLegendeBolletjeItemComponent } from "./legende/classic-legende-bolletje-item.component";
+import { ClassicLegendeLijnItemComponent } from "./legende/classic-legende-lijn-item.component";
+import { ClassicLegendePolygoonItemComponent } from "./legende/classic-legende-polygoon-item.component";
 import { ClassicSchaalComponent } from "./schaal/classic-schaal.component";
 import { ClassicStandaardInteractiesComponent } from "./standaard-interacties/classic-standaard-interacties.component";
 import { ClassicVolledigSchermComponent } from "./volledig-scherm/classic-volledig-scherm.component";
@@ -38,6 +41,9 @@ const components = [
   ClassicWmsLaagComponent,
   ClassicWmtsLaagComponent,
   ClassicBlancoLaagComponent,
+  ClassicLegendeLijnItemComponent,
+  ClassicLegendeBolletjeItemComponent,
+  ClassicLegendePolygoonItemComponent,
   KaartClassicComponent
 ];
 

@@ -283,6 +283,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       laag: ZoekerBoxComponent.createLayer(),
       magGetoondWorden: true,
       laaggroep: "Tools",
+      legende: none,
       wrapper: kaartLogOnlyWrapper
     });
   }

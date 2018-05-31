@@ -7,6 +7,7 @@ import { ZoekerBase, ZoekInput, ZoekResultaat } from "../zoeker/zoeker-base";
 
 import { BareValidationWrapper, KaartMsg, Subscription, ValidationWrapper } from ".";
 import * as ke from "./kaart-elementen";
+import { Legende } from "./kaart-legende";
 import * as prt from "./kaart-protocol";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import * as ss from "./stijl-selector";
@@ -84,6 +85,7 @@ export interface VoegLaagToeCmd<Msg extends KaartMsg> {
   readonly laag: ke.Laag;
   readonly magGetoondWorden: boolean;
   readonly laaggroep: ke.Laaggroep;
+  readonly legende: Option<Legende>;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -338,9 +340,18 @@ export function VoegLaagToeCmd<Msg extends KaartMsg>(
   laag: ke.Laag,
   magGetoondWorden: boolean,
   laagGroep: ke.Laaggroep,
+  legende: Option<Legende>,
   wrapper: BareValidationWrapper<Msg>
 ): VoegLaagToeCmd<Msg> {
-  return { type: "VoegLaagToe", positie: positie, laag: laag, magGetoondWorden: magGetoondWorden, laaggroep: laagGroep, wrapper: wrapper };
+  return {
+    type: "VoegLaagToe",
+    positie: positie,
+    laag: laag,
+    magGetoondWorden: magGetoondWorden,
+    laaggroep: laagGroep,
+    legende: legende,
+    wrapper: wrapper
+  };
 }
 
 export function VerwijderLaagCmd<Msg extends KaartMsg>(titel: string, wrapper: BareValidationWrapper<Msg>): VerwijderLaagCmd<Msg> {
