@@ -1,11 +1,11 @@
 import { array } from "fp-ts/lib/Array";
-import { none, some } from "fp-ts/lib/Option";
+import { none, Option, some } from "fp-ts/lib/Option";
 import { List, Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { combineLatest, debounceTime, distinctUntilChanged, map, merge, shareReplay, switchMap } from "rxjs/operators";
+import { combineLatest, debounceTime, distinctUntilChanged, filter, map, mapTo, merge, shareReplay, switchMap } from "rxjs/operators";
 
-import { observableFromOlEvent, observableFromOlEvents } from "../util/ol-observable";
+import { observableFromOlEvents } from "../util/ol-observable";
 
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
@@ -31,22 +31,24 @@ export interface ModelChanger {
   readonly uiElementOptiesSubj: rx.Subject<UiElementOpties>;
   // viewSubj zit met opzet niet in de ModelChanges, maar wel de afgeleide viewinstellingen omdat het enerzijds handiger is voor de
   // aanroepers om ol.Map te pushen, maar dat we naar de observers toe enkel de viewinstellingen willen ter beschikking stellen.
-  readonly viewSubj: rx.Subject<ol.Map>;
+  readonly viewPortSizeSubj: rx.Subject<undefined>;
   readonly lagenOpGroepSubj: Map<ke.Laaggroep, rx.Subject<List<ke.ToegevoegdeLaag>>>;
   readonly laagVerwijderdSubj: rx.Subject<ke.ToegevoegdeLaag>;
+  readonly mijnLocatieZoomDoelSubj: rx.Subject<Option<number>>;
 }
 
 export const ModelChanger: () => ModelChanger = () => ({
   uiElementSelectieSubj: new rx.Subject(),
   uiElementOptiesSubj: new rx.ReplaySubject(1),
-  viewSubj: new rx.Subject(),
+  viewPortSizeSubj: new rx.Subject(),
   lagenOpGroepSubj: Map<ke.Laaggroep, rx.Subject<List<ke.ToegevoegdeLaag>>>({
     Achtergrond: new rx.BehaviorSubject(List()),
     "Voorgrond.Hoog": new rx.BehaviorSubject(List()),
     "Voorgrond.Laag": new rx.BehaviorSubject(List()),
     Tools: new rx.BehaviorSubject(List())
   }),
-  laagVerwijderdSubj: new rx.Subject()
+  laagVerwijderdSubj: new rx.Subject(),
+  mijnLocatieZoomDoelSubj: new rx.BehaviorSubject(none)
 });
 
 export interface ModelChanges {
@@ -57,6 +59,8 @@ export interface ModelChanges {
   readonly laagVerwijderd$: rx.Observable<ke.ToegevoegdeLaag>;
   readonly geselecteerdeFeatures$: rx.Observable<GeselecteerdeFeatures>;
   readonly zichtbareFeatures$: rx.Observable<List<ol.Feature>>;
+  readonly klikLocatie$: rx.Observable<ol.Coordinate>;
+  readonly mijnLocatieZoomDoel$: rx.Observable<Option<number>>;
 }
 
 const viewinstellingen = (olmap: ol.Map) => ({
@@ -69,14 +73,14 @@ const viewinstellingen = (olmap: ol.Map) => ({
 });
 
 export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges = (model, changer) => {
-  const toegevoegdeGeselecteerdeFeatures$ = observableFromOlEvent<ol.Collection.Event>(model.geselecteerdeFeatures, "add").pipe(
+  const toegevoegdeGeselecteerdeFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.geselecteerdeFeatures, "add").pipe(
     map(evt => ({
       geselecteerd: List(model.geselecteerdeFeatures.getArray()),
       toegevoegd: some(evt.element),
       verwijderd: none
     }))
   );
-  const verwijderdeGeselecteerdeFeatures$ = observableFromOlEvent<ol.Collection.Event>(model.geselecteerdeFeatures, "remove").pipe(
+  const verwijderdeGeselecteerdeFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.geselecteerdeFeatures, "remove").pipe(
     map(evt => ({
       geselecteerd: List(model.geselecteerdeFeatures.getArray()),
       toegevoegd: none,
@@ -90,9 +94,25 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     shareReplay(1)
   );
 
-  const viewinstellingen$ = changer.viewSubj
-    .asObservable()
-    .pipe(debounceTime(100), map(viewinstellingen), distinctUntilChanged(), shareReplay(1));
+  // Met window resize hebben we niet alle bronnen van herschaling, maar toch al een grote
+  const resize$ = rx.Observable.fromEvent(window, "resize").pipe(debounceTime(100));
+
+  const center$ = observableFromOlEvents(model.map.getView(), "change:center").pipe(debounceTime(100));
+  const numlayers$ = observableFromOlEvents(model.map.getLayers(), "change:length").pipe(debounceTime(100));
+  const zoom$ = observableFromOlEvents(model.map.getView(), "change:resolution").pipe(
+    map(() => model.map.getView().getZoom()),
+    filter(Number.isInteger), // OL genereert een heleboel tussenliggende zooms tijden het animeren.
+    distinctUntilChanged()
+  );
+  const viewportSize$ = changer.viewPortSizeSubj.pipe(debounceTime(100));
+
+  const viewinstellingen$ = rx.Observable.merge(viewportSize$, resize$, center$, numlayers$, zoom$).pipe(
+    debounceTime(50), // Deze is om de map hierna niet te veel werk te geven
+    map(() => viewinstellingen(model.map)),
+    distinctUntilChanged(),
+    debounceTime(50), // Deze is om downstream subscribers niet te veel werk te geven
+    shareReplay(1)
+  );
 
   const lagenOpGroep$ = changer.lagenOpGroepSubj.map(s => s!.asObservable()).toMap();
   const filterVectorLagen = (tlgn: List<ke.ToegevoegdeLaag>) =>
@@ -107,12 +127,17 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
   // We gebruiker de addfeature en removefeature, and clear triggers. Het interesseert ons daarbij niet wat de features zijn. Het is ons
   // enkel te doen om te weten dat er veranderingen zijn (de generieke change event op zich blijkt geen events te genereren).
   // Implementatienota: doordat alles via observables gaat (en de swithMap), worden de unsubscribes naar OL doorgespeeld.
-  const featuresChanged$ = vectorlagen$.pipe(
+  const featuresChanged$: rx.Observable<undefined> = vectorlagen$.pipe(
+    debounceTime(100), // vlugge verandering van het aantal vectorlagen willen we niet zien
     switchMap(vlgn =>
       rx.Observable.merge(
-        ...vlgn.map(vlg => observableFromOlEvents(vlg.layer.getSource(), ["addfeature", "removefeature", "clear"])).toArray()
-      ).pipe(debounceTime(200))
-    )
+        ...vlgn.map(vlg => observableFromOlEvents(vlg.layer.getSource(), "addfeature", "removefeature", "clear", "clear")).toArray()
+      )
+    ),
+    // Vlugge veranderingen van de features willen we ook niet zien.
+    // Best om dit groter te houden dan de tijd voorzien om cleanup te doen. Anders overbodige events.
+    debounceTime(100),
+    mapTo(void 0)
   );
 
   const collectFeatures: (_1: prt.Viewinstellingen, _2: List<ke.ToegevoegdeVectorLaag>) => List<ol.Feature> = (vw, vlgn) =>
@@ -124,6 +149,8 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
 
   const zichtbareFeatures$ = viewinstellingen$.pipe(combineLatest(vectorlagen$, featuresChanged$, collectFeatures));
 
+  const klikLocatie$ = observableFromOlEvents(model.map, "click").pipe(map((event: ol.MapBrowserEvent) => event.coordinate));
+
   return {
     uiElementSelectie$: changer.uiElementSelectieSubj.asObservable(),
     uiElementOpties$: changer.uiElementOptiesSubj.asObservable(),
@@ -131,6 +158,8 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     viewinstellingen$: viewinstellingen$,
     lagenOpGroep$: lagenOpGroep$,
     geselecteerdeFeatures$: geselecteerdeFeatures$,
-    zichtbareFeatures$: zichtbareFeatures$
+    zichtbareFeatures$: zichtbareFeatures$,
+    klikLocatie$: klikLocatie$,
+    mijnLocatieZoomDoel$: changer.mijnLocatieZoomDoelSubj.asObservable()
   };
 };

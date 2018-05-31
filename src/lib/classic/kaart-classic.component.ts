@@ -75,7 +75,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
             this.dispatcher,
             prt.GeselecteerdeFeaturesSubscription(pipe(FeatureSelectieAangepastMsg, KaartClassicMsg)),
             prt.ZichtbareFeaturesSubscription(pipe(ZichtbareFeaturesAangepastMsg, KaartClassicMsg)),
-            prt.ViewinstellingenSubscription(pipe(zi => zi.zoom, ZoomAangepastMsg, KaartClassicMsg)),
+            prt.ZoomSubscription(pipe(ZoomAangepastMsg, KaartClassicMsg)),
             prt.MiddelpuntSubscription(pipe(MiddelpuntAangepastMsg, KaartClassicMsg)),
             prt.ExtentSubscription(pipe(ExtentAangepastMsg, KaartClassicMsg))
           )

@@ -7,7 +7,7 @@ import "rxjs/add/observable/empty";
 import "rxjs/add/observable/never";
 import "rxjs/add/observable/of";
 import { Observable } from "rxjs/Observable";
-import { concatAll, filter, last, map, merge, scan, shareReplay, startWith, switchMap, takeUntil, tap } from "rxjs/operators";
+import { delay, filter, last, map, merge, scan, shareReplay, startWith, switchMap, takeUntil, tap } from "rxjs/operators";
 
 import { asap } from "../util/asap";
 import { observerOutsideAngular } from "../util/observer-outside-angular";
@@ -72,8 +72,6 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
   internalMessage$: Observable<KaartInternalSubMsg> = Observable.empty();
 
-  private readonly kaartModelObsSubj = new ReplaySubject<Observable<KaartWithInfo>>(1);
-
   constructor(@Inject(KAART_CFG) readonly config: KaartConfig, zone: NgZone) {
     super(zone);
     this.internalMessage$ = this.msgSubj.pipe(
@@ -96,7 +94,6 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
         );
       }),
       switchMap(model => this.createMapModelForCommands(model)),
-      takeUntil(this.destroying$),
       shareReplay(1)
     );
 
@@ -112,13 +109,13 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
     // Het laatste model is dat net voor de stream van model unsubscribed is, dus bij ngOnDestroy
     this.kaartModel$.pipe(last()).subscribe(model => {
-      kaartLogger.info(`kaart ${this.naam} opkuisen`);
+      kaartLogger.info(`kaart '${this.naam}' opkuisen`);
       cleanup(model);
     });
   }
 
   private createMapModelForCommands(initieelModel: KaartWithInfo): Observable<KaartWithInfo> {
-    kaartLogger.info(`Kaart ${this.naam} aangemaakt`);
+    kaartLogger.info(`Kaart '${this.naam}' aangemaakt`);
 
     const messageConsumer = (msg: prt.KaartMsg) => {
       asap(() => this.msgSubj.next(msg));
@@ -127,7 +124,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     return this.kaartCmd$.pipe(
       merge(this.internalCmdDispatcher.commands$),
       tap(c => kaartLogger.debug("kaart command", c)),
-      takeUntil(this.destroying$),
+      takeUntil(this.destroying$.pipe(delay(100))), // Een klein beetje extra tijd voor de cleanup commands
       observerOutsideAngular(this.zone),
       scan((model: KaartWithInfo, cmd: prt.Command<any>) => {
         const { model: newModel, message } = red.kaartCmdReducer(cmd)(model, this.modelChanger, this.modelChanges, messageConsumer);
@@ -160,15 +157,6 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     });
 
     return new KaartWithInfo(this.config, this.naam, this.mapElement.nativeElement.parentElement, kaart, this.modelChanger);
-  }
-
-  get message$(): Observable<prt.KaartMsg> {
-    return this.msgSubj;
-  }
-
-  get kaartWithInfo$(): Observable<KaartWithInfo> {
-    // TODO geen casting meer in RxJs 6
-    return (this.kaartModelObsSubj.pipe(concatAll()) as any) as Observable<KaartWithInfo>;
   }
 
   get modelChanges(): ModelChanges {

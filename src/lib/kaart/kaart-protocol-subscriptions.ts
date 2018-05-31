@@ -13,6 +13,7 @@ import { InfoBoodschap } from "./kaart-with-info-model";
 
 export type Subscription<Msg> =
   | ViewinstellingenSubscription<Msg>
+  | ZoomSubscription<Msg>
   | MiddelpuntSubscription<Msg>
   | ExtentSubscription<Msg>
   | GeselecteerdeFeaturesSubscription<Msg>
@@ -22,7 +23,6 @@ export type Subscription<Msg> =
   | LaagVerwijderdSubscription<Msg>
   | ZoekerSubscription<Msg>
   | ZoekerKlikSubscription<Msg>
-  | MijnLocatieZoomdoelSubscription<Msg>
   | GeometryChangedSubscription<Msg>
   | TekenenSubscription<Msg>
   | KaartClickSubscription<Msg>
@@ -46,6 +46,11 @@ export interface GeselecteerdeFeatures {
 export interface ViewinstellingenSubscription<Msg> {
   readonly type: "Viewinstellingen";
   readonly wrapper: (instellingen: Viewinstellingen) => Msg;
+}
+
+export interface ZoomSubscription<Msg> {
+  readonly type: "Zoom";
+  readonly wrapper: (zoom: number) => Msg;
 }
 
 export interface MiddelpuntSubscription<Msg> {
@@ -99,11 +104,6 @@ export interface ZoekerKlikSubscription<Msg> {
   readonly wrapper: (resultaat: ZoekResultaat) => Msg;
 }
 
-export interface MijnLocatieZoomdoelSubscription<Msg> {
-  readonly type: "MijnLocatieZoomdoel";
-  readonly wrapper: (doel: Option<number>) => Msg;
-}
-
 export interface GeometryChangedSubscription<Msg> {
   readonly type: "GeometryChanged";
   readonly tekenSettings: ke.TekenSettings;
@@ -138,6 +138,10 @@ export function ZichtbareFeaturesSubscription<Msg>(
   msgGen: (zichtbareFeatures: List<ol.Feature>) => Msg
 ): ZichtbareFeaturesSubscription<Msg> {
   return { type: "ZichtbareFeatures", wrapper: msgGen };
+}
+
+export function ZoomSubscription<Msg>(wrapper: (zoom: number) => Msg): ZoomSubscription<Msg> {
+  return { type: "Zoom", wrapper: wrapper };
 }
 
 export function MiddelpuntSubscription<Msg>(wrapper: (center: ol.Coordinate) => Msg): MiddelpuntSubscription<Msg> {
@@ -177,10 +181,6 @@ export function KaartClickSubscription<Msg>(wrapper: (coordinaat: ol.Coordinate)
 
 export function InfoBoodschappenSubscription<Msg>(wrapper: (boodschappen: Map<string, InfoBoodschap>) => Msg): Subscription<Msg> {
   return { type: "InfoBoodschap", wrapper: wrapper };
-}
-
-export function MijnLocatieZoomdoelSubscription<Msg>(wrapper: (doel: Option<number>) => Msg): MijnLocatieZoomdoelSubscription<Msg> {
-  return { type: "MijnLocatieZoomdoel", wrapper: wrapper };
 }
 
 export function GeometryChangedSubscription<Msg>(
