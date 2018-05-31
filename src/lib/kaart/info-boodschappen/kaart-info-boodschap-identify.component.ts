@@ -211,7 +211,8 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
             .toArray()
             .reduce((result, eigenschap) => {
               const token = `{${eigenschap}}`;
-              return result.includes(token) ? result.replace(token, `${this.waarde(eigenschap)}`) : result;
+              // vervang _alle_ tokens met de waarde uit het record
+              return result.includes(token) ? result.split(token).join(`${this.waarde(eigenschap)}`) : result;
             }, waarde)
         )
     );
