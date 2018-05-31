@@ -350,12 +350,14 @@ export class AppComponent {
   }
 
   onFietspadsegmentGeselecteerd(selectie: FietspadSelectie, geselecteerd: boolean) {
-    console.log("#####", selectie, geselecteerd);
     selectie.geselecteerd = geselecteerd;
     this.geselecteerdeFietspadsegmenten = List(this.fietspadsegmentenSelectie.filter(fss => fss.geselecteerd).map(fss => fss.feature));
   }
 
   onFietspadsegmentViaKaartSelectie(features: List<ol.Feature>) {
     this.fietspadsegmentenSelectie.forEach(fss => (fss.geselecteerd = features.contains(fss.feature)));
+    if (features.size !== this.geselecteerdeFietspadsegmenten.size) {
+      this.geselecteerdeFietspadsegmenten = List(this.fietspadsegmentenSelectie.filter(fss => fss.geselecteerd).map(fss => fss.feature));
+    }
   }
 }
