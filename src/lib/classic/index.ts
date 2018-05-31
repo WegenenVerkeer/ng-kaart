@@ -17,6 +17,7 @@ import { ClassicWmsLaagComponent } from "./lagen/classic-wms-laag.component";
 import { ClassicWmtsLaagComponent } from "./lagen/classic-wmts-laag.component";
 import { ClassicLagenkiezerComponent } from "./lagenkiezer/classic-lagenkiezer.component";
 import { ClassicLegendeBolletjeItemComponent } from "./legende/classic-legende-bolletje-item.component";
+import { ClassicLegendeImageItemComponent } from "./legende/classic-legende-image-item.component";
 import { ClassicLegendeLijnItemComponent } from "./legende/classic-legende-lijn-item.component";
 import { ClassicLegendePolygoonItemComponent } from "./legende/classic-legende-polygoon-item.component";
 import { ClassicSchaalComponent } from "./schaal/classic-schaal.component";
@@ -43,6 +44,7 @@ const components = [
   ClassicBlancoLaagComponent,
   ClassicLegendeLijnItemComponent,
   ClassicLegendeBolletjeItemComponent,
+  ClassicLegendeImageItemComponent,
   ClassicLegendePolygoonItemComponent,
   KaartClassicComponent
 ];
@@ -70,6 +72,11 @@ export * from "./lagen/classic-vector-laag.component";
 export * from "./lagen/classic-wms-laag.component";
 export * from "./lagen/classic-wmts-laag.component";
 export * from "./lagenkiezer/classic-lagenkiezer.component";
+export * from "./legende/classic-legende-item.component";
+export * from "./legende/classic-legende-bolletje-item.component";
+export * from "./legende/classic-legende-image-item.component";
+export * from "./legende/classic-legende-lijn-item.component";
+export * from "./legende/classic-legende-polygoon-item.component";
 export * from "./log";
 export * from "./openlayers-style/classic-openlayers-style.component";
 export * from "./schaal/classic-schaal.component";

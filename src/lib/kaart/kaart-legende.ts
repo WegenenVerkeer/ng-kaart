@@ -18,7 +18,13 @@ export interface PolygoonItem {
   readonly kleur: string;
 }
 
-export type LegendeItem = LijnItem | BolletjeItem | PolygoonItem;
+export interface ImageItem {
+  readonly type: "Image";
+  readonly beschrijving: string;
+  readonly image: string;
+}
+
+export type LegendeItem = LijnItem | BolletjeItem | PolygoonItem | ImageItem;
 
 export interface Legende {
   readonly items: List<LegendeItem>;

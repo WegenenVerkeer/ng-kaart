@@ -258,11 +258,15 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
     function itemToHtml(): string {
       switch (item.type) {
         case "Bolletje":
-          return `<svg class="svg"><circle cx="12" cy="12" r="4" fill="${item.kleur}" class="svg-item"/></svg>`;
+          return `<svg class="legende-svg"><circle cx="12" cy="12" r="4" fill="${item.kleur}" class="legende-svg-item"/></svg>`;
         case "Lijn":
-          return `<svg class="svg"><polygon points="0,8 24,8 24,16 0,16" fill="${item.kleur}" class="svg-item"/></svg>`;
+          return `<svg class="legende-svg"><polygon points="0,8 24,8 24,16 0,16" fill="${item.kleur}" class="legende-svg-item"/></svg>`;
         case "Polygoon":
-          return `<svg class="svg"><polygon points="0,16 5,0 20,4 24,20 10,24" fill="${item.kleur}" class="svg-item"/></svg>`;
+          return `<svg class="legende-svg"><polygon points="0,24 5,0 20,4 24,24 10,20" fill="${
+            item.kleur
+          }" class="legende-svg-item"/></svg>`;
+        case "Image":
+          return `<img class="legende-image" src="${item.image}"/>`;
       }
     }
 
