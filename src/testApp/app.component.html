@@ -162,12 +162,12 @@
   <button (click)="maakZichtbaar('fietspaden', !isZichtbaar('fietspaden'))">
     {{isZichtbaar('fietspaden')?'Verberg':'Toon'}}
   </button>
-  <awv-kaart-classic *ngIf="isZichtbaar('fietspaden')" [naam]="'fietspaden'">
+  <awv-kaart-classic *ngIf="isZichtbaar('fietspaden')" [naam]="'fietspaden'" (zichtbareFeatures)="onZichtbareFeatures($event)">
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
     <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
     <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'https://apps-dev.mow.vlaanderen.be/geolatte-nosqlfs'"
                             [database]="'featureserver'" [collection]="'fietspaden'" [styleFunction]="fietspadStyle" [offsetveld]="'zijderijbaan'"
-                            [minZoom]="7"></awv-kaart-nosqlfs-laag>
+                            [minZoom]="9"></awv-kaart-nosqlfs-laag>
   </awv-kaart-classic>
 </div>
 
@@ -177,7 +177,8 @@
   </button>
   <awv-kaart-classic *ngIf="isZichtbaar('offsets')" [naam]="'offsets'"
                      #selectie (geselecteerdeFeatures)="featuresGeselecteerd($event)"
-                     [selectieModus]="'single'">
+                     [selectieModus]="'single'"
+                     (zichtbareFeatures)="onZichtbareFeatures($event)">
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
     <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
     <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'https://apps-dev.mow.vlaanderen.be/geolatte-nosqlfs'"
@@ -227,7 +228,7 @@
   <button (click)="maakZichtbaar('lagenkiezer', !isZichtbaar('lagenkiezer'))">
     {{isZichtbaar('lagenkiezer')?'Verberg':'Toon'}}
   </button>
-  <awv-kaart-classic *ngIf="isZichtbaar('lagenkiezer')" [naam]="'lagenkiezer'" [mijnLocatieZoom]="8">
+  <awv-kaart-classic *ngIf="isZichtbaar('lagenkiezer')" [naam]="'lagenkiezer'" [mijnLocatieZoom]="8" (zichtbareFeatures)="onZichtbareFeatures($event)">
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
     <awv-kaart-blanco-laag [titel]="'Leeg'"></awv-kaart-blanco-laag>
@@ -253,7 +254,7 @@
       <button (click)="veranderVoorwaarden()">Andere voorwaarden</button>
     </div>
   </div>
-  <awv-kaart-classic *ngIf="isZichtbaar('interacties')" [naam]="'interacties'" [mijnLocatieZoom]="getMijnLocatieZoom()">
+  <awv-kaart-classic *ngIf="isZichtbaar('interacties')" [naam]="'interacties'" [mijnLocatieZoom]="getMijnLocatieZoom()" (zoomChange)="onZoom($event)" (middelpuntChange)="onMiddelpunt($event)" (extentChange)="onExtent($event)">
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'" *ngIf="isInteractieZichtbaar('achtergrond')"></awv-kaart-tilecache-laag>
     <awv-kaart-blanco-laag [titel]="'Leeg'" *ngIf="isInteractieZichtbaar('achtergrond')"></awv-kaart-blanco-laag>

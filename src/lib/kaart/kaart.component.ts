@@ -7,7 +7,7 @@ import "rxjs/add/observable/empty";
 import "rxjs/add/observable/never";
 import "rxjs/add/observable/of";
 import { Observable } from "rxjs/Observable";
-import { concatAll, filter, last, map, merge, scan, shareReplay, startWith, switchMap, takeUntil, tap } from "rxjs/operators";
+import { delay, filter, last, map, merge, scan, shareReplay, startWith, switchMap, takeUntil, tap } from "rxjs/operators";
 
 import { asap } from "../util/asap";
 import { observerOutsideAngular } from "../util/observer-outside-angular";
@@ -20,13 +20,13 @@ import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { KaartInternalMsg, KaartInternalSubMsg } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
 import * as red from "./kaart-reducer";
-import { KaartWithInfo } from "./kaart-with-info";
+import { cleanup, KaartWithInfo } from "./kaart-with-info";
 import { kaartLogger } from "./log";
 import { ModelChanger, ModelChanges, modelChanges, UiElementSelectie } from "./model-changes";
 
 // Om enkel met @Input properties te moeten werken. Op deze manier kan een stream van KaartMsg naar de caller gestuurd worden
 export type KaartMsgObservableConsumer = (msg$: Observable<prt.KaartMsg>) => void;
-export const vacuousKaartMsgObservableConsumer: KaartMsgObservableConsumer = (msg$: Observable<prt.KaartMsg>) => ({});
+export const vacuousKaartMsgObservableConsumer: KaartMsgObservableConsumer = () => ({});
 
 @Component({
   selector: "awv-kaart",
@@ -36,9 +36,9 @@ export const vacuousKaartMsgObservableConsumer: KaartMsgObservableConsumer = (ms
 })
 export class KaartComponent extends KaartComponentBase implements OnInit, OnDestroy {
   private readonly modelChanger: ModelChanger = ModelChanger();
-  readonly modelChanges: ModelChanges = modelChanges(this.modelChanger);
+  private innerModelChanges: ModelChanges;
+  private innerAanwezigeElementen$: Observable<Set<string>>;
   readonly kaartModel$: Observable<KaartWithInfo> = Observable.empty();
-  readonly aanwezigeElementen$: Observable<Set<string>>;
 
   @ViewChild("map") mapElement: ElementRef;
 
@@ -48,6 +48,10 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
    * waarmee events naar de component gestuurd kunnen worden.
    */
   @Input() kaartCmd$: Observable<prt.Command<prt.KaartMsg>> = Observable.empty();
+  /**
+   * Hier wordt een callback verwacht die een Msg observable zal krijgen. Die observable kan dan gebruikt worden
+   * op te luisteren op feedback van commands of uitvoer van subscriptions.
+   */
   @Input() messageObsConsumer: KaartMsgObservableConsumer = vacuousKaartMsgObservableConsumer;
 
   /**
@@ -68,8 +72,6 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
   internalMessage$: Observable<KaartInternalSubMsg> = Observable.empty();
 
-  private readonly kaartModelObsSubj = new ReplaySubject<Observable<KaartWithInfo>>(1);
-
   constructor(@Inject(KAART_CFG) readonly config: KaartConfig, zone: NgZone) {
     super(zone);
     this.internalMessage$ = this.msgSubj.pipe(
@@ -83,8 +85,15 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     this.kaartModel$ = this.initialising$.pipe(
       observerOutsideAngular(zone),
       tap(() => this.messageObsConsumer(this.msgSubj)), // Wie de messageObsConsumer @Input gezet heeft, krijgt een observable van messages
-      switchMap(() => this.createMapModelForCommands()),
-      takeUntil(this.destroying$),
+      map(() => this.initieelModel()),
+      tap(model => {
+        this.innerModelChanges = modelChanges(model, this.modelChanger);
+        this.innerAanwezigeElementen$ = this.modelChanges.uiElementSelectie$.pipe(
+          scan((st: Set<string>, selectie: UiElementSelectie) => (selectie.aan ? st.add(selectie.naam) : st.delete(selectie.naam)), Set()),
+          startWith(Set())
+        );
+      }),
+      switchMap(model => this.createMapModelForCommands(model)),
       shareReplay(1)
     );
 
@@ -100,19 +109,13 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
     // Het laatste model is dat net voor de stream van model unsubscribed is, dus bij ngOnDestroy
     this.kaartModel$.pipe(last()).subscribe(model => {
-      kaartLogger.info(`kaart ${this.naam} opkuisen`);
-      model.map.setTarget((undefined as any) as string); // Hack omdat openlayers typedefs kaduuk zijn
+      kaartLogger.info(`kaart '${this.naam}' opkuisen`);
+      cleanup(model);
     });
-
-    this.aanwezigeElementen$ = this.modelChanges.uiElementSelectie$.pipe(
-      scan((st: Set<string>, selectie: UiElementSelectie) => (selectie.aan ? st.add(selectie.naam) : st.delete(selectie.naam)), Set()),
-      startWith(Set())
-    );
   }
 
-  private createMapModelForCommands(): Observable<KaartWithInfo> {
-    const initieelModel = this.initieelModel();
-    kaartLogger.info(`Kaart ${this.naam} aangemaakt`);
+  private createMapModelForCommands(initieelModel: KaartWithInfo): Observable<KaartWithInfo> {
+    kaartLogger.info(`Kaart '${this.naam}' aangemaakt`);
 
     const messageConsumer = (msg: prt.KaartMsg) => {
       asap(() => this.msgSubj.next(msg));
@@ -121,10 +124,10 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     return this.kaartCmd$.pipe(
       merge(this.internalCmdDispatcher.commands$),
       tap(c => kaartLogger.debug("kaart command", c)),
-      takeUntil(this.destroying$),
+      takeUntil(this.destroying$.pipe(delay(100))), // Een klein beetje extra tijd voor de cleanup commands
       observerOutsideAngular(this.zone),
       scan((model: KaartWithInfo, cmd: prt.Command<any>) => {
-        const { model: newModel, message } = red.kaartCmdReducer(cmd)(model, this.modelChanger, messageConsumer);
+        const { model: newModel, message } = red.kaartCmdReducer(cmd)(model, this.modelChanger, this.modelChanges, messageConsumer);
         kaartLogger.debug("produceert", message);
         forEach(message, messageConsumer); // stuur het resultaat terug naar de eigenaar van de kaartcomponent
         return newModel; // en laat het nieuwe model terugvloeien
@@ -156,12 +159,11 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     return new KaartWithInfo(this.config, this.naam, this.mapElement.nativeElement.parentElement, kaart, this.modelChanger);
   }
 
-  get message$(): Observable<prt.KaartMsg> {
-    return this.msgSubj;
+  get modelChanges(): ModelChanges {
+    return this.innerModelChanges;
   }
 
-  get kaartWithInfo$(): Observable<KaartWithInfo> {
-    // TODO geen casting meer in RxJs 6
-    return (this.kaartModelObsSubj.pipe(concatAll()) as any) as Observable<KaartWithInfo>;
+  get aanwezigeElementen$(): Observable<Set<string>> {
+    return this.innerAanwezigeElementen$;
   }
 }

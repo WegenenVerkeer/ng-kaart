@@ -13,9 +13,9 @@ import { KaartComponent } from "../kaart/kaart.component";
 export const LagenUiSelector = "Lagenkiezer";
 
 export interface LagenUiOpties {
-  toonLegende: boolean;
-  verwijderbareLagen: boolean;
-  verplaatsbareLagen: boolean;
+  readonly toonLegende: boolean;
+  readonly verwijderbareLagen: boolean;
+  readonly verplaatsbareLagen: boolean;
 }
 
 export const DefaultOpties: LagenUiOpties = {

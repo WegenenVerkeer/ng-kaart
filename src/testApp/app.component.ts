@@ -314,4 +314,21 @@ export class AppComponent {
     // opgepikt wordt. Een issue in de volgorde van initialisatie???
     this.verplaatsKaart.dispatch(prt.VerplaatsLaagCmd("dienstkaart-kleur", this.naarPositie, kaartLogOnlyWrapper));
   }
+
+  // De volgende methodes loggen gewoon naar de console. Er is weinig toegevoegde waarde om hier een UI voor te maken.
+  onZoom(zoom: number): void {
+    console.log("------> zoom", zoom);
+  }
+
+  onMiddelpunt(center: ol.Coordinate): void {
+    console.log("------> center", center);
+  }
+
+  onExtent(extent: ol.Extent): void {
+    console.log("------> extent", extent);
+  }
+
+  onZichtbareFeatures(features: List<ol.Feature>): void {
+    console.log("------> features", features);
+  }
 }
