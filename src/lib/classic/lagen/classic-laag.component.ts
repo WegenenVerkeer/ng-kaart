@@ -34,9 +34,11 @@ export abstract class ClassicLaagComponent implements AfterContentInit, OnInit, 
   }
 
   protected voegLaagToe() {
-    const legende = fromNullable(this.legendeItems).map(children => ({
-      items: List.of(...children.map(item => item.maakLegendeItem()))
-    }));
+    const legende = fromNullable(this.legendeItems)
+      .map(children => ({
+        items: List.of(...children.map(item => item.maakLegendeItem()))
+      }))
+      .filter(l => !l.items.isEmpty());
     this.dispatch({
       type: "VoegLaagToe",
       positie: Number.MAX_SAFE_INTEGER,

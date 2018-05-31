@@ -1,4 +1,5 @@
 @import "../css/kaart.component-common.scss";
+@import "./lagenkiezer-common.scss";
 
 .lagen-lijst {
   color: $kaart-primary-text-color;
@@ -77,6 +78,40 @@ $laag-height: 40px;
   margin-top: 8px;
   color: $kaart-warn-color;
 }
+
+.legende {
+  margin-top: 4px;
+  margin-bottom: 8px;
+}
+
+.legende-naam {
+  @extend .laag-naam;
+  font-size: 12px;
+}
+
+.legende-item {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+}
+
+.legende-icoon {
+  width: 24px;
+  height: 24px;
+}
+
+:host ::ng-deep .svg {
+  width: 100%;
+  height: 100%;
+}
+
+:host ::ng-deep .svg-item {
+  stroke: lightgray;
+  stroke-width: 1px;
+}
+
 
 // Volgende css-classes worden momenteel nog niet gebruikt - en dus voorlopig in commentaar gezet
 
