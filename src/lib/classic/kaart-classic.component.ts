@@ -51,8 +51,9 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   @Input() extent: ol.Extent;
   @Input() selectieModus: prt.SelectieModus = "none";
   @Input() naam = "kaart" + KaartClassicComponent.counter++;
+  @Input() geselecteerdeFeatures: List<ol.Feature> = List();
 
-  @Output() geselecteerdeFeatures: EventEmitter<List<ol.Feature>> = new EventEmitter();
+  @Output() geselecteerdeFeaturesChange: EventEmitter<List<ol.Feature>> = new EventEmitter();
   @Output() middelpuntChange: EventEmitter<ol.Coordinate> = new EventEmitter();
   @Output() zoomChange: EventEmitter<number> = new EventEmitter();
   @Output() extentChange: EventEmitter<ol.Extent> = new EventEmitter();
@@ -86,7 +87,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
         switch (msg.type) {
           case "FeatureSelectieAangepast":
             // Zorg ervoor dat de geselecteerde features in de @Output terecht komen
-            return this.geselecteerdeFeatures.emit(msg.geselecteerdeFeatures.geselecteerd);
+            return this.geselecteerdeFeaturesChange.emit(msg.geselecteerdeFeatures.geselecteerd);
           case "ZichtbareFeaturesAangepast":
             return this.zichtbareFeatures.emit(msg.features);
           case "FeatureGedeselecteerd":
@@ -126,12 +127,14 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    forChangedValue(changes, "zoom", zoom => this.dispatch(prt.VeranderZoomCmd(zoom, logOnlyWrapper)));
-    forChangedValue(changes, "middelpunt", center => this.dispatch(prt.VeranderMiddelpuntCmd(center)), coordinateIsDifferent);
-    forChangedValue(changes, "extent", ext => this.dispatch(prt.VeranderExtentCmd(ext)), extentIsDifferent);
-    forChangedValue(changes, "breedte", breedte => this.dispatch(prt.VeranderViewportCmd([breedte, this.hoogte])));
-    forChangedValue(changes, "hoogte", hoogte => this.dispatch(prt.VeranderViewportCmd([this.breedte, hoogte])));
-    forChangedValue(changes, "mijnLocatieZoom", zoom => this.dispatch(prt.ZetMijnLocatieZoomCmd(option.fromNullable(zoom))));
+    const dispatch: (cmd: prt.Command<TypedRecord>) => void = cmd => this.dispatch(cmd);
+    forChangedValue(changes, "zoom", pipe(zoom => prt.VeranderZoomCmd(zoom, logOnlyWrapper), dispatch));
+    forChangedValue(changes, "middelpunt", pipe(prt.VeranderMiddelpuntCmd, dispatch), coordinateIsDifferent);
+    forChangedValue(changes, "extent", pipe(prt.VeranderExtentCmd, dispatch), extentIsDifferent);
+    forChangedValue(changes, "breedte", pipe(breedte => [breedte, this.hoogte], prt.VeranderViewportCmd, dispatch));
+    forChangedValue(changes, "hoogte", pipe(hoogte => [this.breedte, hoogte], prt.VeranderViewportCmd, dispatch));
+    forChangedValue(changes, "mijnLocatieZoom", pipe(option.fromNullable, prt.ZetMijnLocatieZoomCmd, dispatch));
+    forChangedValue(changes, "geselecteerdeFeatures", pipe(prt.SelecteerFeaturesCmd, dispatch));
   }
 
   dispatch(cmd: prt.Command<TypedRecord>) {

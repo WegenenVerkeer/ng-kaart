@@ -56,7 +56,7 @@
 </div>
 
 
-<h3>Ingezoomd + dynamisch features toevoegen + schaal + volledig scherm knop + hoogte &amp; breedte + single selectiemodus</h3>
+<h3>Ingezoomd + dynamisch features toevoegen + schaal + volledig scherm knop + hoogte &amp; breedte</h3>
 <div>
   <button (click)="maakZichtbaar('dynamischefeatures', !isZichtbaar('dynamischefeatures'))">
     {{isZichtbaar('dynamischefeatures')?'Verberg':'Toon'}}
@@ -66,15 +66,9 @@
   >
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
     <awv-kaart-features-laag [features]="installaties" [titel]="'features'" [minZoom]="2"></awv-kaart-features-laag>
-    <!--[selecteerbaar]="true"
-        (featureGeselecteerd)="installatieGeselecteed($event)"></awv-kaart-toon-features>-->
     <awv-kaart-schaal></awv-kaart-schaal>
     <awv-kaart-knop-volledig-scherm></awv-kaart-knop-volledig-scherm>
   </awv-kaart-classic>
-
-  <!-- <pre *ngFor="let event of installatieGeselecteerdEvents">
-    Event gegooid: {{ event | json }}
-  </pre> -->
 </div>
 
 
@@ -176,7 +170,7 @@
   <button (click)="maakZichtbaar('offsets', !isZichtbaar('offsets'))">{{isZichtbaar('offsets')?'Verberg':'Toon'}}
   </button>
   <awv-kaart-classic *ngIf="isZichtbaar('offsets')" [naam]="'offsets'"
-                     #selectie (geselecteerdeFeatures)="featuresGeselecteerd($event)"
+                     #selectie (geselecteerdeFeaturesChange)="featuresGeselecteerd($event)"
                      [selectieModus]="'single'"
                      (zichtbareFeatures)="onZichtbareFeatures($event)">
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
@@ -272,4 +266,37 @@
     <awv-kaart-voorwaarden *ngIf="isInteractieZichtbaar('voorwaarden')" [titel]="voorwaarden"></awv-kaart-voorwaarden>
     <awv-kaart-schaal *ngIf="isInteractieZichtbaar('schaal')"></awv-kaart-schaal>
   </awv-kaart-classic>
+</div>
+
+<h3>Kaart met programmatorische feature selectie van fietspaden</h3>
+<div>
+  <button (click)="maakZichtbaar('featuresApi', !isZichtbaar('featuresApi'))">
+    {{isZichtbaar('featuresApi')?'Verberg':'Toon'}}
+  </button>
+  <awv-kaart-classic *ngIf="isZichtbaar('featuresApi')" [naam]="'featuresApi'"
+                     (zichtbareFeatures)="onFietspadsegmentenZichtbaar($event)"
+                     [geselecteerdeFeatures]="geselecteerdeFietspadsegmenten"
+                     (geselecteerdeFeaturesChange)="onFietspadsegmentViaKaartSelectie($event)"
+                     [selectieModus]="'multiple'">
+    <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+    <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
+    <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'https://apps-dev.mow.vlaanderen.be/geolatte-nosqlfs'"
+                            [database]="'featureserver'" [collection]="'fietspaden'"
+                            [styleFunction]="fietspadStyleMetOffset"  [selectieStyle]="fietspadSelectieStyleMetOffset"
+                            [minZoom]="7"></awv-kaart-nosqlfs-laag>
+    <awv-kaart-schaal></awv-kaart-schaal>
+  </awv-kaart-classic>
+  <div *ngIf="isZichtbaar('featuresApi')">
+    <h4>Zitchbare features</h4>
+    <table>
+      <thead><tr><th>Geselecteerd</th><th>id</th><th>type</th></tr></thead>
+      <tbody>
+        <tr *ngFor="let fss of fietspadsegmentenSelectie">
+          <td><input type="checkbox" [ngModel]="fss.geselecteerd" (ngModelChange)="onFietspadsegmentGeselecteerd(fss, $event)"></td>
+          <td>{{ fss.feature.get('id') }}</td>
+          <td>{{ fss.feature.get('properties')['typefietspad'] }} </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
 </div>

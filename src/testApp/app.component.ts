@@ -16,6 +16,11 @@ import { offsetStyleFunction } from "../lib/stijl/offset-stijl-function";
 import { join } from "../lib/util/validation";
 import { ZoekerGoogleWdbService } from "../lib/zoeker";
 
+export interface FietspadSelectie {
+  feature: ol.Feature;
+  geselecteerd: boolean;
+}
+
 @Component({
   selector: "awv-ng-kaart-test-app",
   templateUrl: "./app.component.html",
@@ -28,8 +33,7 @@ export class AppComponent {
 
   private readonly zichtbaarheid = {
     orthomap: false,
-    lagenkiezer: true,
-    interacties: true
+    featuresApi: true
   };
 
   private readonly fietspadStijlDef: AWV0StyleFunctionDescription = {
@@ -137,6 +141,9 @@ export class AppComponent {
 
   geselecteerdeFeatures: List<ol.Feature> = List();
 
+  fietspadsegmentenSelectie: FietspadSelectie[] = [];
+  geselecteerdeFietspadsegmenten: List<ol.Feature> = List();
+
   private tekenenActief = false;
   private getekendeGeom: Option<ol.geom.Geometry> = none;
 
@@ -203,7 +210,7 @@ export class AppComponent {
     if (style instanceof ol.style.Style) {
       return applySelectionColor(style);
     } else {
-      return style.map(s => applySelectionColor(s));
+      return style ? style.map(s => applySelectionColor(s)) : [];
     }
   }.bind(this);
 
@@ -330,5 +337,25 @@ export class AppComponent {
 
   onZichtbareFeatures(features: List<ol.Feature>): void {
     console.log("------> features", features);
+  }
+
+  onFietspadsegmentenZichtbaar(features: List<ol.Feature>): void {
+    this.fietspadsegmentenSelectie = features
+      .map(feature => ({
+        feature: feature,
+        geselecteerd: false
+      }))
+      .toArray();
+    this.geselecteerdeFietspadsegmenten = List();
+  }
+
+  onFietspadsegmentGeselecteerd(selectie: FietspadSelectie, geselecteerd: boolean) {
+    console.log("#####", selectie, geselecteerd);
+    selectie.geselecteerd = geselecteerd;
+    this.geselecteerdeFietspadsegmenten = List(this.fietspadsegmentenSelectie.filter(fss => fss.geselecteerd).map(fss => fss.feature));
+  }
+
+  onFietspadsegmentViaKaartSelectie(features: List<ol.Feature>) {
+    this.fietspadsegmentenSelectie.forEach(fss => (fss.geselecteerd = features.contains(fss.feature)));
   }
 }
