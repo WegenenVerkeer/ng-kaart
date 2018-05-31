@@ -1,11 +1,9 @@
 import { Component, NgZone, OnInit } from "@angular/core";
 import { Observable } from "rxjs/Observable";
-import { map } from "rxjs/operators";
-
-import { ofType } from "../../util/operators";
+import { distinctUntilChanged, map } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart-child-component-base";
-import { KaartInternalMsg, kaartLogOnlyWrapper, ViewinstellingenGezetMsg, viewinstellingenGezetWrapper } from "../kaart-internal-messages";
+import { kaartLogOnlyWrapper } from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 
@@ -23,24 +21,20 @@ export interface KaartProps {
 export class KaartZoomComponent extends KaartChildComponentBase implements OnInit {
   kaartProps$: Observable<KaartProps> = Observable.empty();
 
-  constructor(parent: KaartComponent, zone: NgZone) {
+  constructor(private readonly parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
-  }
-
-  protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
-    return [prt.ViewinstellingenSubscription(viewinstellingenGezetWrapper)];
   }
 
   ngOnInit() {
     super.ngOnInit();
 
-    this.kaartProps$ = this.internalMessage$.pipe(
-      ofType<ViewinstellingenGezetMsg>("ViewinstellingenGezet"),
-      map(m => ({
-        canZoomIn: m.viewinstellingen.zoom + 1 <= m.viewinstellingen.maxZoom,
-        canZoomOut: m.viewinstellingen.zoom - 1 >= m.viewinstellingen.minZoom,
-        zoom: m.viewinstellingen.zoom
-      }))
+    this.kaartProps$ = this.parent.modelChanges.viewinstellingen$.pipe(
+      map(viewinstellingen => ({
+        canZoomIn: viewinstellingen.zoom + 1 <= viewinstellingen.maxZoom,
+        canZoomOut: viewinstellingen.zoom - 1 >= viewinstellingen.minZoom,
+        zoom: viewinstellingen.zoom
+      })),
+      distinctUntilChanged()
     );
   }
 

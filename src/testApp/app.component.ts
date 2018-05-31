@@ -151,6 +151,15 @@ export class AppComponent {
   voorwaarden = this.alleVoorwaarden[0];
   private voorwaardenIndex = 0;
 
+  objectKeys = Object.keys;
+  interacties = {
+    achtergrond: true,
+    mijnlocatie: true,
+    schaal: true,
+    voorwaarden: true,
+    copyright: true
+  };
+
   // Dit werkt alleen als apigateway bereikbaar is. Zie CORS waarschuwing in README.
   readonly districtSource: ol.source.Vector = new ol.source.Vector({
     format: new ol.format.GeoJSON(),
@@ -290,6 +299,22 @@ export class AppComponent {
     this.voorwaarden = this.alleVoorwaarden[this.voorwaardenIndex];
   }
 
+  isInteractieZichtbaar(interactie: string): boolean {
+    return this.interacties[interactie];
+  }
+
+  toggleInteractieZichtbaar(interactie: string) {
+    this.interacties[interactie] = !this.interacties[interactie];
+  }
+
+  getMijnLocatieZoom(): string {
+    if (this.interacties["mijnlocatie"]) {
+      return "8";
+    } else {
+      return null;
+    }
+  }
+
   verplaatsLagen() {
     // TODO: Dit werkt niet, maar ik laat het voorlopig staan tot de inspiratie komt om het te laten werken.
     // Het probleem is dat het Subject waarnaar gedispatched wordt een ander is dan dat dat door de kaartcomponent
@@ -331,10 +356,6 @@ export class AppComponent {
   }
 
   onFietspadsegmentViaKaartSelectie(features: List<ol.Feature>) {
-    // We mogen enkel de geselecteerde fietspadsegmenten aanpassen als deze methode aangeroepen wordt als reactie op een selectie op de
-    // kaart. Anders krijgen we een oneindige loop doordat Angular een nieuwe lijst (met dezelfde inhoud) naar de component stuurt.
-    // if (this.geselecteerdeFietspadsegmenten.size !== features.size) {
-      this.fietspadsegmentenSelectie.forEach(fss => (fss.geselecteerd = features.contains(fss.feature)));
-    // }
+    this.fietspadsegmentenSelectie.forEach(fss => (fss.geselecteerd = features.contains(fss.feature)));
   }
 }

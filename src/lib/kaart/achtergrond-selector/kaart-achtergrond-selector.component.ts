@@ -29,8 +29,7 @@ const Invisible = "invisible";
         Visible,
         style({
           opacity: "1.0",
-          maxWidth: "100px",
-          marginRight: "12px"
+          maxWidth: "80px"
         })
       ),
       state(

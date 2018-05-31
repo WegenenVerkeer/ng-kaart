@@ -530,7 +530,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
       model.map.setSize(cmnd.size);
       model.map.updateSize();
-      modelChanger.viewSubj.next(model.map); // Omdat extent wschl gewijzigd wordt
+      modelChanger.viewPortSizeSubj.next(); // Omdat extent wschl gewijzigd wordt
       return ModelWithResult(model);
     }
 
@@ -888,7 +888,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function zetMijnLocatieZoom(cmnd: prt.ZetMijnLocatieZoomCmd): ModelWithResult<Msg> {
-      model.mijnLocatieZoomDoelSubj.next(cmnd.doelniveau);
+      modelChanger.mijnLocatieZoomDoelSubj.next(cmnd.doelniveau);
       return ModelWithResult(model);
     }
 
@@ -942,21 +942,41 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       function subscribeToGeselecteerdeFeatures(sub: prt.GeselecteerdeFeaturesSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
           "GeselecteerdeFeatures",
-          model.geselecteerdeFeaturesSubj.subscribe(pm => msgConsumer(sub.wrapper(pm)))
+          modelChanges.geselecteerdeFeatures$.subscribe(pm => msgConsumer(sub.wrapper(pm)))
+        );
+      }
+
+      function subscribeToZichtbareFeatures(sub: prt.ZichtbareFeaturesSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult(
+          "ZichtbareFeatures", //
+          modelChanges.zichtbareFeatures$.subscribe(pm => msgConsumer(sub.wrapper(pm)))
+        );
+      }
+
+      function subscribeToZoom(sub: prt.ZoomSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult(
+          "Zoom",
+          modelChanges.viewinstellingen$
+            .pipe(debounceTime(100), map(i => i.zoom), distinctUntilChanged())
+            .subscribe(pipe(sub.wrapper, msgConsumer))
         );
       }
 
       function subscribeToMiddelpunt(sub: prt.MiddelpuntSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
           "Middelpunt",
-          modelChanges.viewinstellingen$.pipe(debounceTime(100), map(i => i.center)).subscribe(pipe(sub.wrapper, msgConsumer))
+          modelChanges.viewinstellingen$
+            .pipe(debounceTime(100), map(i => i.center), distinctUntilChanged())
+            .subscribe(pipe(sub.wrapper, msgConsumer))
         );
       }
 
       function subscribeToExtent(sub: prt.ExtentSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
           "Extent",
-          modelChanges.viewinstellingen$.pipe(debounceTime(100), map(i => i.extent)).subscribe(pipe(sub.wrapper, msgConsumer))
+          modelChanges.viewinstellingen$
+            .pipe(debounceTime(100), map(i => i.extent), distinctUntilChanged())
+            .subscribe(pipe(sub.wrapper, msgConsumer))
         );
       }
 
@@ -965,7 +985,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
 
       function subscribeToKaartClick(sub: prt.KaartClickSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult("KaartClick", model.clickSubj.subscribe(t => msgConsumer(sub.wrapper(t))));
+        return modelWithSubscriptionResult("KaartClick", modelChanges.klikLocatie$.subscribe(t => msgConsumer(sub.wrapper(t))));
       }
 
       const subscribeToLagenInGroep = (sub: prt.LagenInGroepSubscription<Msg>) => {
@@ -987,13 +1007,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
       function subscribeToZoekerKlik(sub: prt.ZoekerKlikSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult("ZoekerKlik", model.zoekerKlikSubj.subscribe(m => msgConsumer(sub.wrapper(m))));
-      }
-
-      function subscribeToMijnLocatieZoomdoel(sub: prt.MijnLocatieZoomdoelSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult(
-          "MijnLocatieZoomdoel",
-          model.mijnLocatieZoomDoelSubj.subscribe(t => msgConsumer(sub.wrapper(t)))
-        );
       }
 
       function subscribeToGeometryChanged(sub: prt.GeometryChangedSubscription<Msg>): ModelWithResult<Msg> {
@@ -1027,6 +1040,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       switch (cmnd.subscription.type) {
         case "Viewinstellingen":
           return subscribeToViewinstellingen(cmnd.subscription);
+        case "Zoom":
+          return subscribeToZoom(cmnd.subscription);
         case "Middelpunt":
           return subscribeToMiddelpunt(cmnd.subscription);
         case "Extent":
@@ -1035,14 +1050,14 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToAchtergrondTitel(cmnd.subscription);
         case "GeselecteerdeFeatures":
           return subscribeToGeselecteerdeFeatures(cmnd.subscription);
+        case "ZichtbareFeatures":
+          return subscribeToZichtbareFeatures(cmnd.subscription);
         case "LagenInGroep":
           return subscribeToLagenInGroep(cmnd.subscription);
         case "LaagVerwijderd":
           return subscribeToLaagVerwijderd(cmnd.subscription);
         case "KaartClick":
           return subscribeToKaartClick(cmnd.subscription);
-        case "MijnLocatieZoomdoel":
-          return subscribeToMijnLocatieZoomdoel(cmnd.subscription);
         case "Zoeker":
           return subscribeToZoeker(cmnd.subscription);
         case "ZoekerKlik":
