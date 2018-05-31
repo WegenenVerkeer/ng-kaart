@@ -12,24 +12,29 @@ import { InfoBoodschap } from "./kaart-with-info-model";
 //
 
 export type Subscription<Msg> =
-  | ZoominstellingenSubscription<Msg>
+  | ViewinstellingenSubscription<Msg>
+  | ZoomSubscription<Msg>
   | MiddelpuntSubscription<Msg>
+  | ExtentSubscription<Msg>
   | GeselecteerdeFeaturesSubscription<Msg>
+  | ZichtbareFeaturesSubscription<Msg>
   | AchtergrondTitelSubscription<Msg>
   | LagenInGroepSubscription<Msg>
   | LaagVerwijderdSubscription<Msg>
   | ZoekerSubscription<Msg>
   | ZoekerKlikSubscription<Msg>
-  | MijnLocatieZoomdoelSubscription<Msg>
   | GeometryChangedSubscription<Msg>
   | TekenenSubscription<Msg>
   | KaartClickSubscription<Msg>
   | InfoBoodschappenSubscription<Msg>;
 
-export interface Zoominstellingen {
+export interface Viewinstellingen {
   zoom: number;
   minZoom: number;
   maxZoom: number;
+  resolution: number;
+  extent: ol.Extent;
+  center: ol.Coordinate;
 }
 
 export interface GeselecteerdeFeatures {
@@ -38,19 +43,34 @@ export interface GeselecteerdeFeatures {
   verwijderd: Option<ol.Feature>;
 }
 
-export interface ZoominstellingenSubscription<Msg> {
-  readonly type: "Zoominstellingen";
-  readonly wrapper: (instellingen: Zoominstellingen) => Msg;
+export interface ViewinstellingenSubscription<Msg> {
+  readonly type: "Viewinstellingen";
+  readonly wrapper: (instellingen: Viewinstellingen) => Msg;
+}
+
+export interface ZoomSubscription<Msg> {
+  readonly type: "Zoom";
+  readonly wrapper: (zoom: number) => Msg;
 }
 
 export interface MiddelpuntSubscription<Msg> {
   readonly type: "Middelpunt";
-  readonly wrapper: (x: number, y: number) => Msg;
+  readonly wrapper: (center: ol.Coordinate) => Msg;
+}
+
+export interface ExtentSubscription<Msg> {
+  readonly type: "Extent";
+  readonly wrapper: (extent: ol.Extent) => Msg;
 }
 
 export interface GeselecteerdeFeaturesSubscription<Msg> {
   readonly type: "GeselecteerdeFeatures";
   readonly wrapper: (geselecteerdeFeatures: GeselecteerdeFeatures) => Msg;
+}
+
+export interface ZichtbareFeaturesSubscription<Msg> {
+  readonly type: "ZichtbareFeatures";
+  readonly wrapper: (zicthbareFeatures: List<ol.Feature>) => Msg;
 }
 
 export interface AchtergrondTitelSubscription<Msg> {
@@ -84,11 +104,6 @@ export interface ZoekerKlikSubscription<Msg> {
   readonly wrapper: (resultaat: ZoekResultaat) => Msg;
 }
 
-export interface MijnLocatieZoomdoelSubscription<Msg> {
-  readonly type: "MijnLocatieZoomdoel";
-  readonly wrapper: (doel: Option<number>) => Msg;
-}
-
 export interface GeometryChangedSubscription<Msg> {
   readonly type: "GeometryChanged";
   readonly tekenSettings: ke.TekenSettings;
@@ -109,8 +124,8 @@ export interface InfoBoodschappenSubscription<Msg> {
 // Constructors
 //
 
-export function ZoominstellingenSubscription<Msg>(wrapper: (settings: Zoominstellingen) => Msg): ZoominstellingenSubscription<Msg> {
-  return { type: "Zoominstellingen", wrapper: wrapper };
+export function ViewinstellingenSubscription<Msg>(wrapper: (settings: Viewinstellingen) => Msg): ViewinstellingenSubscription<Msg> {
+  return { type: "Viewinstellingen", wrapper: wrapper };
 }
 
 export function GeselecteerdeFeaturesSubscription<Msg>(
@@ -119,8 +134,22 @@ export function GeselecteerdeFeaturesSubscription<Msg>(
   return { type: "GeselecteerdeFeatures", wrapper: wrapper };
 }
 
-export function MiddelpuntSubscription<Msg>(wrapper: (x: number, y: number) => Msg): MiddelpuntSubscription<Msg> {
+export function ZichtbareFeaturesSubscription<Msg>(
+  msgGen: (zichtbareFeatures: List<ol.Feature>) => Msg
+): ZichtbareFeaturesSubscription<Msg> {
+  return { type: "ZichtbareFeatures", wrapper: msgGen };
+}
+
+export function ZoomSubscription<Msg>(wrapper: (zoom: number) => Msg): ZoomSubscription<Msg> {
+  return { type: "Zoom", wrapper: wrapper };
+}
+
+export function MiddelpuntSubscription<Msg>(wrapper: (center: ol.Coordinate) => Msg): MiddelpuntSubscription<Msg> {
   return { type: "Middelpunt", wrapper: wrapper };
+}
+
+export function ExtentSubscription<Msg>(wrapper: (extent: ol.Extent) => Msg): ExtentSubscription<Msg> {
+  return { type: "Extent", wrapper: wrapper };
 }
 
 export function AchtergrondTitelSubscription<Msg>(wrapper: (titel: string) => Msg): AchtergrondTitelSubscription<Msg> {
@@ -152,10 +181,6 @@ export function KaartClickSubscription<Msg>(wrapper: (coordinaat: ol.Coordinate)
 
 export function InfoBoodschappenSubscription<Msg>(wrapper: (boodschappen: Map<string, InfoBoodschap>) => Msg): Subscription<Msg> {
   return { type: "InfoBoodschap", wrapper: wrapper };
-}
-
-export function MijnLocatieZoomdoelSubscription<Msg>(wrapper: (doel: Option<number>) => Msg): MijnLocatieZoomdoelSubscription<Msg> {
-  return { type: "MijnLocatieZoomdoel", wrapper: wrapper };
 }
 
 export function GeometryChangedSubscription<Msg>(

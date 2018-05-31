@@ -4,25 +4,16 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import { List, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
-import { combineLatest, map, mapTo, shareReplay, switchMap } from "rxjs/operators";
+import { combineLatest, map, mapTo, switchMap } from "rxjs/operators";
 
-import { observeOnAngular } from "../../util/observe-on-angular";
-import { emitSome, ofType } from "../../util/operators";
+import { emitSome } from "../../util/operators";
 import { orElse } from "../../util/option";
-
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
 import { VeldInfo } from "../kaart-elementen";
-import {
-  KaartInternalMsg,
-  kaartLogOnlyWrapper,
-  MijnLocatieZoomdoelGezetMsg,
-  MijnLocatieZoomdoelGezetWrapper,
-  ZoominstellingenGezetMsg,
-  zoominstellingenGezetWrapper
-} from "../kaart-internal-messages";
+import { kaartLogOnlyWrapper } from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
-import { Zoominstellingen } from "../kaart-protocol";
+import { Viewinstellingen } from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 import { kaartLogger } from "../log";
 import * as ss from "../stijl-selector";
@@ -35,7 +26,7 @@ const MijnLocatieLaagNaam = "Mijn Locatie";
   styleUrls: ["./kaart-mijn-locatie.component.scss"]
 })
 export class KaartMijnLocatieComponent extends KaartChildComponentBase implements OnInit, AfterViewInit {
-  private zoomInstellingen$: Observable<Zoominstellingen> = Observable.empty();
+  private viewinstellingen$: Observable<Viewinstellingen> = Observable.empty();
   private zoomdoelSetting$: Observable<Option<number>> = Observable.empty();
 
   enabled$: Observable<boolean> = Observable.of(true);
@@ -50,7 +41,7 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
     return some(feature);
   }
 
-  constructor(zone: NgZone, parent: KaartComponent) {
+  constructor(zone: NgZone, private readonly parent: KaartComponent) {
     super(parent, zone);
     this.mijnLocatieStyle = new ol.style.Style({
       image: new ol.style.Icon({
@@ -62,13 +53,6 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
         src: require("material-design-icons/maps/2x_web/ic_my_location_white_18dp.png")
       })
     });
-  }
-
-  protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
-    return [
-      prt.ZoominstellingenSubscription(zoominstellingenGezetWrapper),
-      prt.MijnLocatieZoomdoelSubscription(MijnLocatieZoomdoelGezetWrapper)
-    ];
   }
 
   ngOnInit(): void {
@@ -84,17 +68,8 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
       wrapper: kaartLogOnlyWrapper
     });
 
-    this.zoomInstellingen$ = this.internalMessage$.pipe(
-      ofType<ZoominstellingenGezetMsg>("ZoominstellingenGezet"), //
-      map(m => m.zoominstellingen),
-      observeOnAngular(this.zone), //  --> Breekt de locatieClicks op één of andere manier
-      shareReplay(1)
-    );
-    this.zoomdoelSetting$ = this.internalMessage$.pipe(
-      ofType<MijnLocatieZoomdoelGezetMsg>("MijnLocatieZoomdoelGezet"), //
-      map(m => m.mijnLocatieZoomdoel),
-      shareReplay(1)
-    );
+    this.viewinstellingen$ = this.parent.modelChanges.viewinstellingen$;
+    this.zoomdoelSetting$ = this.parent.modelChanges.mijnLocatieZoomDoel$;
     this.enabled$ = this.zoomdoelSetting$.pipe(map(m => m.isSome()));
   }
 
@@ -105,7 +80,7 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
       // Omdat de button in een ngIf zit, moeten we op zoek naar de button in ngAfterViewInit
       this.locateBtnQry.changes.pipe(
         switchMap(ql =>
-          this.zoomInstellingen$.pipe(
+          this.viewinstellingen$.pipe(
             combineLatest(zoomdoel$, (zi, doel) => [zi.zoom, doel]), // Blijf op de hoogte van huidige en gewenste zoom
             switchMap(params => Observable.fromEvent(ql.first._getHostElement(), "click").pipe(mapTo(params))) // van click naar zoom
           )

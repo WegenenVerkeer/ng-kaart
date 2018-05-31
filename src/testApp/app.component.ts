@@ -29,7 +29,7 @@ export class AppComponent {
   private readonly zichtbaarheid = {
     orthomap: false,
     lagenkiezer: true,
-    voorwaarden: true
+    interacties: true
   };
 
   private readonly fietspadStijlDef: AWV0StyleFunctionDescription = {
@@ -143,6 +143,15 @@ export class AppComponent {
   private alleVoorwaarden = ["Er zijn nieuwe voorwaarden", "Er zijn nog nieuwere voorwaarden", undefined];
   voorwaarden = this.alleVoorwaarden[0];
   private voorwaardenIndex = 0;
+
+  objectKeys = Object.keys;
+  interacties = {
+    achtergrond: true,
+    mijnlocatie: true,
+    schaal: true,
+    voorwaarden: true,
+    copyright: true
+  };
 
   // Dit werkt alleen als apigateway bereikbaar is. Zie CORS waarschuwing in README.
   readonly districtSource: ol.source.Vector = new ol.source.Vector({
@@ -283,10 +292,43 @@ export class AppComponent {
     this.voorwaarden = this.alleVoorwaarden[this.voorwaardenIndex];
   }
 
+  isInteractieZichtbaar(interactie: string): boolean {
+    return this.interacties[interactie];
+  }
+
+  toggleInteractieZichtbaar(interactie: string) {
+    this.interacties[interactie] = !this.interacties[interactie];
+  }
+
+  getMijnLocatieZoom(): string {
+    if (this.interacties["mijnlocatie"]) {
+      return "8";
+    } else {
+      return null;
+    }
+  }
+
   verplaatsLagen() {
     // TODO: Dit werkt niet, maar ik laat het voorlopig staan tot de inspiratie komt om het te laten werken.
     // Het probleem is dat het Subject waarnaar gedispatched wordt een ander is dan dat dat door de kaartcomponent
     // opgepikt wordt. Een issue in de volgorde van initialisatie???
     this.verplaatsKaart.dispatch(prt.VerplaatsLaagCmd("dienstkaart-kleur", this.naarPositie, kaartLogOnlyWrapper));
+  }
+
+  // De volgende methodes loggen gewoon naar de console. Er is weinig toegevoegde waarde om hier een UI voor te maken.
+  onZoom(zoom: number): void {
+    console.log("------> zoom", zoom);
+  }
+
+  onMiddelpunt(center: ol.Coordinate): void {
+    console.log("------> center", center);
+  }
+
+  onExtent(extent: ol.Extent): void {
+    console.log("------> extent", extent);
+  }
+
+  onZichtbareFeatures(features: List<ol.Feature>): void {
+    console.log("------> features", features);
   }
 }

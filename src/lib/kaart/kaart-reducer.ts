@@ -1,27 +1,22 @@
-import * as array from "fp-ts/lib/Array";
 import { Endomorphism, identity, pipe } from "fp-ts/lib/function";
-import { getArrayMonoid } from "fp-ts/lib/Monoid";
 import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
-import { sequence } from "fp-ts/lib/Traversable";
 import * as validation from "fp-ts/lib/Validation";
 import { List } from "immutable";
 import * as ol from "openlayers";
 import { olx } from "openlayers";
 import { Subscription } from "rxjs";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
 
-import { offsetStyleFunction } from "../stijl/offset-stijl-function";
 import { forEach } from "../util/option";
 import { allOf, fromBoolean, fromOption, fromPredicate, success, validationChain as chain } from "../util/validation";
 
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
-import { PositieAanpassing, VoegUiElementToe, ZetMijnLocatieZoomCmd, ZetUiElementOpties } from "./kaart-protocol-commands";
 import { KaartWithInfo } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
 import { kaartLogger } from "./log";
-import { ModelChanger } from "./model-changes";
+import { ModelChanger, ModelChanges } from "./model-changes";
 import { getFeatureStyleSelector, getSelectionStyleSelector, setFeatureStyleSelector, setSelectionStyleSelector } from "./stijl-selector";
 import * as ss from "./stijl-selector";
 import { getDefaultStyleSelector } from "./styles";
@@ -55,8 +50,8 @@ function ModelWithResult<Msg>(model: Model, message: Option<Msg> = none): ModelW
 
 export function kaartCmdReducer<Msg extends prt.KaartMsg>(
   cmd: prt.Command<Msg>
-): (model: Model, modelChanger: ModelChanger, msgConsumer: prt.MessageConsumer<Msg>) => ModelWithResult<Msg> {
-  return (model: Model, modelChanger: ModelChanger, msgConsumer: prt.MessageConsumer<Msg>) => {
+): (model: Model, modelChanger: ModelChanger, modelChanges: ModelChanges, msgConsumer: prt.MessageConsumer<Msg>) => ModelWithResult<Msg> {
+  return (model: Model, modelChanger: ModelChanger, modelChanges: ModelChanges, msgConsumer: prt.MessageConsumer<Msg>) => {
     interface KaartCmdResult<T> {
       model: Model;
       value: Option<T>;
@@ -536,6 +531,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
       model.map.setSize(cmnd.size);
       model.map.updateSize();
+      modelChanger.viewPortSizeSubj.next(); // Omdat extent wschl gewijzigd wordt
       return ModelWithResult(model);
     }
 
@@ -675,17 +671,23 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
       const applySelectFunction = function(feature: ol.Feature, resolution: number): FeatureStyle {
         const applySelectionColor = function(style: ol.style.Style): ol.style.Style {
-          const selectionColor: ol.Color = [0, 153, 255, 1]; // TODO maak configureerbaar
+          const selectionStrokeColor: ol.Color = [0, 153, 255, 1]; // TODO maak configureerbaar
+          const selectionFillColor: ol.Color = [112, 198, 255, 0.7]; // TODO maak configureerbaar
+          const selectionIconColor: ol.Color = [0, 51, 153, 0.7]; // TODO maak configureerbaar
+
           const selectionStyle = style.clone();
           if (selectionStyle.getStroke()) {
-            selectionStyle.getStroke().setColor(selectionColor);
+            selectionStyle.getStroke().setColor(selectionStrokeColor);
+          }
+          if (selectionStyle.getFill()) {
+            selectionStyle.getFill().setColor(selectionFillColor);
           }
           if (selectionStyle.getImage()) {
             // getekende Point objecten ook inkleuren
             if (selectionStyle.getImage() instanceof ol.style.Circle) {
               const circle = selectionStyle.getImage() as ol.style.Circle;
-              circle.getStroke().setColor(selectionColor);
-              circle.getFill().setColor(selectionColor);
+              circle.getStroke().setColor(selectionStrokeColor);
+              circle.getFill().setColor(selectionFillColor);
               // volgende is nodig, anders heeft style aanpassing geen effect
               selectionStyle.setImage(
                 new ol.style.Circle({
@@ -697,8 +699,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               );
             } else if (selectionStyle.getImage() instanceof ol.style.RegularShape) {
               const shape = selectionStyle.getImage() as ol.style.RegularShape;
-              shape.getStroke().setColor(selectionColor);
-              shape.getFill().setColor(selectionColor);
+              shape.getStroke().setColor(selectionStrokeColor);
+              shape.getFill().setColor(selectionFillColor);
               // volgende is nodig, anders heeft style aanpassing geen effect
               selectionStyle.setImage(
                 new ol.style.RegularShape({
@@ -711,6 +713,14 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                   snapToPixel: shape.getSnapToPixel(),
                   stroke: shape.getStroke(),
                   rotation: shape.getRotation()
+                })
+              );
+            } else if (selectionStyle.getImage() instanceof ol.style.Icon) {
+              const icon = selectionStyle.getImage() as ol.style.Icon;
+              selectionStyle.setImage(
+                new ol.style.Icon({
+                  color: selectionIconColor,
+                  src: icon.getSrc()
                 })
               );
             }
@@ -873,7 +883,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function zetMijnLocatieZoom(cmnd: prt.ZetMijnLocatieZoomCmd): ModelWithResult<Msg> {
-      model.mijnLocatieZoomDoelSubj.next(cmnd.doelniveau);
+      modelChanger.mijnLocatieZoomDoelSubj.next(cmnd.doelniveau);
       return ModelWithResult(model);
     }
 
@@ -917,24 +927,51 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, { subscription: subscription, subscriberName: name })));
       }
 
-      function subscribeToZoominstellingen(sub: prt.ZoominstellingenSubscription<Msg>): ModelWithResult<Msg> {
+      function subscribeToViewinstellingen(sub: prt.ViewinstellingenSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
-          "Zoominstellingen",
-          model.zoominstellingenSubj.pipe(debounceTime(100)).subscribe(z => msgConsumer(sub.wrapper(z)))
+          "Viewinstellingen",
+          modelChanges.viewinstellingen$.pipe(debounceTime(100)).subscribe(pipe(sub.wrapper, msgConsumer))
         );
       }
 
       function subscribeToGeselecteerdeFeatures(sub: prt.GeselecteerdeFeaturesSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
           "GeselecteerdeFeatures",
-          model.geselecteerdeFeaturesSubj.subscribe(pm => msgConsumer(sub.wrapper(pm)))
+          modelChanges.geselecteerdeFeatures$.subscribe(pm => msgConsumer(sub.wrapper(pm)))
+        );
+      }
+
+      function subscribeToZichtbareFeatures(sub: prt.ZichtbareFeaturesSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult(
+          "ZichtbareFeatures", //
+          modelChanges.zichtbareFeatures$.subscribe(pm => msgConsumer(sub.wrapper(pm)))
+        );
+      }
+
+      function subscribeToZoom(sub: prt.ZoomSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult(
+          "Zoom",
+          modelChanges.viewinstellingen$
+            .pipe(debounceTime(100), map(i => i.zoom), distinctUntilChanged())
+            .subscribe(pipe(sub.wrapper, msgConsumer))
         );
       }
 
       function subscribeToMiddelpunt(sub: prt.MiddelpuntSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
           "Middelpunt",
-          model.middelpuntSubj.pipe(debounceTime(100)).subscribe(m => msgConsumer(sub.wrapper(m[0], m[1])))
+          modelChanges.viewinstellingen$
+            .pipe(debounceTime(100), map(i => i.center), distinctUntilChanged())
+            .subscribe(pipe(sub.wrapper, msgConsumer))
+        );
+      }
+
+      function subscribeToExtent(sub: prt.ExtentSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult(
+          "Extent",
+          modelChanges.viewinstellingen$
+            .pipe(debounceTime(100), map(i => i.extent), distinctUntilChanged())
+            .subscribe(pipe(sub.wrapper, msgConsumer))
         );
       }
 
@@ -943,7 +980,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
 
       function subscribeToKaartClick(sub: prt.KaartClickSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult("KaartClick", model.clickSubj.subscribe(t => msgConsumer(sub.wrapper(t))));
+        return modelWithSubscriptionResult("KaartClick", modelChanges.klikLocatie$.subscribe(t => msgConsumer(sub.wrapper(t))));
       }
 
       const subscribeToLagenInGroep = (sub: prt.LagenInGroepSubscription<Msg>) => {
@@ -965,13 +1002,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
       function subscribeToZoekerKlik(sub: prt.ZoekerKlikSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult("ZoekerKlik", model.zoekerKlikSubj.subscribe(m => msgConsumer(sub.wrapper(m))));
-      }
-
-      function subscribeToMijnLocatieZoomdoel(sub: prt.MijnLocatieZoomdoelSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult(
-          "MijnLocatieZoomdoel",
-          model.mijnLocatieZoomDoelSubj.subscribe(t => msgConsumer(sub.wrapper(t)))
-        );
       }
 
       function subscribeToGeometryChanged(sub: prt.GeometryChangedSubscription<Msg>): ModelWithResult<Msg> {
@@ -1003,22 +1033,26 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
 
       switch (cmnd.subscription.type) {
-        case "Zoominstellingen":
-          return subscribeToZoominstellingen(cmnd.subscription);
+        case "Viewinstellingen":
+          return subscribeToViewinstellingen(cmnd.subscription);
+        case "Zoom":
+          return subscribeToZoom(cmnd.subscription);
         case "Middelpunt":
           return subscribeToMiddelpunt(cmnd.subscription);
+        case "Extent":
+          return subscribeToExtent(cmnd.subscription);
         case "Achtergrond":
           return subscribeToAchtergrondTitel(cmnd.subscription);
         case "GeselecteerdeFeatures":
           return subscribeToGeselecteerdeFeatures(cmnd.subscription);
+        case "ZichtbareFeatures":
+          return subscribeToZichtbareFeatures(cmnd.subscription);
         case "LagenInGroep":
           return subscribeToLagenInGroep(cmnd.subscription);
         case "LaagVerwijderd":
           return subscribeToLaagVerwijderd(cmnd.subscription);
         case "KaartClick":
           return subscribeToKaartClick(cmnd.subscription);
-        case "MijnLocatieZoomdoel":
-          return subscribeToMijnLocatieZoomdoel(cmnd.subscription);
         case "Zoeker":
           return subscribeToZoeker(cmnd.subscription);
         case "ZoekerKlik":

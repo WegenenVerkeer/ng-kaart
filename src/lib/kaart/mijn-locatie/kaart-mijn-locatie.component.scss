@@ -1,22 +1,12 @@
 @import "../../css/kaart.component-common.scss";
 
-.panel {
-  min-width: 24px;
-}
+.mijn-locatie {
+  width: 32px;
+  margin-top: 8px;
 
-.actions {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: space-around;
-  position: absolute;
-  right: 16px;
-  bottom: 110px;
-}
-
-.actions > .mat-raised-button {
-  min-width: 24px;
-  padding-left: 0;
-  padding-right: 0;
-  line-height: 24px;
+  > * {
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
+  }
 }

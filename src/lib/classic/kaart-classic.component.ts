@@ -1,4 +1,5 @@
 import { Component, EventEmitter, Input, NgZone, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from "@angular/core";
+import { pipe } from "fp-ts/lib/function";
 import * as option from "fp-ts/lib/Option";
 import { some } from "fp-ts/lib/Option";
 import { List } from "immutable";
@@ -16,12 +17,16 @@ import { ofType, TypedRecord } from "../util/operators";
 
 import { classicLogger } from "./log";
 import {
+  ExtentAangepastMsg,
   FeatureGedeselecteerdMsg,
   FeatureSelectieAangepastMsg,
   KaartClassicMsg,
   KaartClassicSubMsg,
   logOnlyWrapper,
-  SubscribedMsg
+  MiddelpuntAangepastMsg,
+  SubscribedMsg,
+  ZichtbareFeaturesAangepastMsg,
+  ZoomAangepastMsg
 } from "./messages";
 
 @Component({
@@ -48,8 +53,11 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   @Input() naam = "kaart" + KaartClassicComponent.counter++;
 
   @Output() geselecteerdeFeatures: EventEmitter<List<ol.Feature>> = new EventEmitter();
+  @Output() middelpuntChange: EventEmitter<ol.Coordinate> = new EventEmitter();
+  @Output() zoomChange: EventEmitter<number> = new EventEmitter();
+  @Output() extentChange: EventEmitter<ol.Extent> = new EventEmitter();
+  @Output() zichtbareFeatures: EventEmitter<List<ol.Feature>> = new EventEmitter();
 
-  // TODO deze klasse en child components verhuizen naar classic directory, maar nog even wachten of we krijgen te veel merge conflicts
   constructor(zone: NgZone) {
     super(zone);
     this.kaartMsgObservableConsumer = (msg$: Observable<prt.KaartMsg>) => {
@@ -61,36 +69,39 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
         share() // 1 rx subscription naar boven toe is genoeg
       );
 
-      // Een beetje overkill voor de ene kaart subscription die we nu hebben, maar het volgende zorgt voor automatisch beheer van de
-      // kaart subscriptions.
       this.bindToLifeCycle(
         this.kaartClassicSubMsg$.lift(
           classicMsgSubscriptionCmdOperator(
             this.dispatcher,
-            prt.GeselecteerdeFeaturesSubscription(geselecteerdeFeatures =>
-              KaartClassicMsg(FeatureSelectieAangepastMsg(geselecteerdeFeatures))
-            )
+            prt.GeselecteerdeFeaturesSubscription(pipe(FeatureSelectieAangepastMsg, KaartClassicMsg)),
+            prt.ZichtbareFeaturesSubscription(pipe(ZichtbareFeaturesAangepastMsg, KaartClassicMsg)),
+            prt.ZoomSubscription(pipe(ZoomAangepastMsg, KaartClassicMsg)),
+            prt.MiddelpuntSubscription(pipe(MiddelpuntAangepastMsg, KaartClassicMsg)),
+            prt.ExtentSubscription(pipe(ExtentAangepastMsg, KaartClassicMsg))
           )
         )
       ).subscribe(err => classicLogger.error(err));
 
-      // Zorg ervoor dat de geselecteerde features in de @Output terecht komen
-      this.bindToLifeCycle(
-        this.kaartClassicSubMsg$.pipe(
-          ofType<FeatureSelectieAangepastMsg>("FeatureSelectieAangepast"), //
-          map(m => m.geselecteerdeFeatures)
-        )
-      ).subscribe(features => this.geselecteerdeFeatures.emit(features.geselecteerd));
-
-      // Zorg ervoor dat deselecteer van een feature via infoboodschap terug naar kaart-reducer gaat
-      this.bindToLifeCycle(
-        this.kaartClassicSubMsg$.pipe(
-          ofType<FeatureGedeselecteerdMsg>("FeatureGedeselecteerd"), //
-          map(m => m.featureid)
-        )
-      ).subscribe(featureid => this.dispatch(prt.DeselecteerFeatureCmd(featureid)));
-
-      // We kunnen hier makkelijk een mini-reducer zetten voor KaartClassicSubMsg mocht dat nodig zijn
+      this.bindToLifeCycle(this.kaartClassicSubMsg$).subscribe(msg => {
+        switch (msg.type) {
+          case "FeatureSelectieAangepast":
+            // Zorg ervoor dat de geselecteerde features in de @Output terecht komen
+            return this.geselecteerdeFeatures.emit(msg.geselecteerdeFeatures.geselecteerd);
+          case "ZichtbareFeaturesAangepast":
+            return this.zichtbareFeatures.emit(msg.features);
+          case "FeatureGedeselecteerd":
+            // Zorg ervoor dat deselecteer van een feature via infoboodschap terug naar kaart-reducer gaat
+            return this.dispatch(prt.DeselecteerFeatureCmd(msg.featureid));
+          case "ZoomAangepast":
+            return this.zoomChange.emit(msg.zoom);
+          case "MiddelpuntAangepast":
+            return this.middelpuntChange.emit(msg.middelpunt);
+          case "ExtentAangepast":
+            return this.extentChange.emit(msg.extent);
+          default:
+            return; // Op de andere boodschappen reageren we niet
+        }
+      });
     };
   }
 
@@ -116,8 +127,8 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
 
   ngOnChanges(changes: SimpleChanges) {
     forChangedValue(changes, "zoom", zoom => this.dispatch(prt.VeranderZoomCmd(zoom, logOnlyWrapper)));
-    forChangedValue(changes, "middelpunt", middelpunt => this.dispatch(prt.VeranderMiddelpuntCmd(middelpunt)), coordinateIsDifferent);
-    forChangedValue(changes, "extent", extent => this.dispatch(prt.VeranderExtentCmd(extent)), extentIsDifferent);
+    forChangedValue(changes, "middelpunt", center => this.dispatch(prt.VeranderMiddelpuntCmd(center)), coordinateIsDifferent);
+    forChangedValue(changes, "extent", ext => this.dispatch(prt.VeranderExtentCmd(ext)), extentIsDifferent);
     forChangedValue(changes, "breedte", breedte => this.dispatch(prt.VeranderViewportCmd([breedte, this.hoogte])));
     forChangedValue(changes, "hoogte", hoogte => this.dispatch(prt.VeranderViewportCmd([this.breedte, hoogte])));
     forChangedValue(changes, "mijnLocatieZoom", zoom => this.dispatch(prt.ZetMijnLocatieZoomCmd(option.fromNullable(zoom))));
