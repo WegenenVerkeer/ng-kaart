@@ -1,11 +1,7 @@
-.selector {
+.achtergrond-selector {
   display: flex;
-  flex-direction: row;
-  position: absolute;
-  bottom: 26px; // 26 omdat er geen shadow van -3px rond zit, 1px voor border
-  right: 48px;
-}
 
-.selector div {
-  display: initial; // de parent is flex, maar we willen terug naar block
+  > * {
+    margin-right: 8px;
+  }
 }

@@ -1,9 +1,11 @@
-<div *ngIf="kaartProps$ | async as props">
-  <div class="kaart-widget actions panel">
-    <button mat-raised-button (click)="zoomIn(props)" [disabled]="!props.canZoomIn">
+<div *ngIf="kaartProps$ | async as props" class="kaart-widget zoom-knoppen">
+  <div class="zoom-knop">
+    <button mat-icon-button (click)="zoomIn(props)" [disabled]="!props.canZoomIn">
       <mat-icon aria-label="zoom in">add</mat-icon>
     </button>
-    <button mat-raised-button (click)="zoomOut(props)" [disabled]="!props.canZoomOut">
+  </div>
+  <div class="zoom-knop">
+    <button mat-icon-button (click)="zoomOut(props)" [disabled]="!props.canZoomOut">
       <mat-icon aria-label="zoom out">remove</mat-icon>
     </button>
   </div>

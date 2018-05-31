@@ -29,7 +29,7 @@ export class AppComponent {
   private readonly zichtbaarheid = {
     orthomap: false,
     lagenkiezer: true,
-    voorwaarden: true
+    interacties: true
   };
 
   private readonly fietspadStijlDef: AWV0StyleFunctionDescription = {
@@ -143,6 +143,15 @@ export class AppComponent {
   private alleVoorwaarden = ["Er zijn nieuwe voorwaarden", "Er zijn nog nieuwere voorwaarden", undefined];
   voorwaarden = this.alleVoorwaarden[0];
   private voorwaardenIndex = 0;
+
+  objectKeys = Object.keys;
+  interacties = {
+    achtergrond: true,
+    mijnlocatie: true,
+    schaal: true,
+    voorwaarden: true,
+    copyright: true
+  };
 
   // Dit werkt alleen als apigateway bereikbaar is. Zie CORS waarschuwing in README.
   readonly districtSource: ol.source.Vector = new ol.source.Vector({
@@ -281,6 +290,22 @@ export class AppComponent {
   veranderVoorwaarden() {
     this.voorwaardenIndex = (this.voorwaardenIndex + 1) % this.alleVoorwaarden.length;
     this.voorwaarden = this.alleVoorwaarden[this.voorwaardenIndex];
+  }
+
+  isInteractieZichtbaar(interactie: string): boolean {
+    return this.interacties[interactie];
+  }
+
+  toggleInteractieZichtbaar(interactie: string) {
+    this.interacties[interactie] = !this.interacties[interactie];
+  }
+
+  getMijnLocatieZoom(): string {
+    if (this.interacties["mijnlocatie"]) {
+      return "8";
+    } else {
+      return null;
+    }
   }
 
   verplaatsLagen() {
