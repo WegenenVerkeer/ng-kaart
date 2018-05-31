@@ -85,8 +85,8 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
     this.lagenLaag$ = this.modelChanges.lagenOpGroep$.get("Voorgrond.Laag");
     this.lagenMetLegende$ = this.lagenHoog$.pipe(
       combineLatest(this.lagenLaag$, (lagenHoog, lagenLaag) => lagenHoog.merge(lagenLaag)),
-      combineLatest(zoom$, (lagen, zoom) => lagen.filter(laag => isZichtbaar(laag, zoom))),
-      map(lagen => lagen.filter(laag => laag.legende.isSome()).toList())
+      combineLatest(zoom$, (lagen, zoom) => lagen.filter(laag => isZichtbaar(laag!, zoom))),
+      map(lagen => lagen.filter(laag => laag!.legende.isSome()).toList())
     );
     const lagenHoogLeeg$ = this.lagenHoog$.pipe(map(l => l.isEmpty()));
     const lagenLaagLeeg$ = this.lagenLaag$.pipe(map(l => l.isEmpty()));
