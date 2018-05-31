@@ -29,8 +29,6 @@ export interface UiElementSelectie {
 export interface ModelChanger {
   readonly uiElementSelectieSubj: rx.Subject<UiElementSelectie>;
   readonly uiElementOptiesSubj: rx.Subject<UiElementOpties>;
-  // viewSubj zit met opzet niet in de ModelChanges, maar wel de afgeleide viewinstellingen omdat het enerzijds handiger is voor de
-  // aanroepers om ol.Map te pushen, maar dat we naar de observers toe enkel de viewinstellingen willen ter beschikking stellen.
   readonly viewPortSizeSubj: rx.Subject<undefined>;
   readonly lagenOpGroepSubj: Map<ke.Laaggroep, rx.Subject<List<ke.ToegevoegdeLaag>>>;
   readonly laagVerwijderdSubj: rx.Subject<ke.ToegevoegdeLaag>;
