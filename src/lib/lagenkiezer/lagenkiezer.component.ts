@@ -80,7 +80,7 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
       return zoom >= laag.bron.minZoom && zoom <= laag.bron.maxZoom;
     }
 
-    const zoom$ = parent.modelChanges.zoomInstellingen$.pipe(map(zi => zi.zoom), distinctUntilChanged());
+    const zoom$ = parent.modelChanges.viewinstellingen$.pipe(map(i => i.zoom), distinctUntilChanged());
     this.lagenHoog$ = this.modelChanges.lagenOpGroep$.get("Voorgrond.Hoog");
     this.lagenLaag$ = this.modelChanges.lagenOpGroep$.get("Voorgrond.Laag");
     this.lagenMetLegende$ = this.lagenHoog$.pipe(
