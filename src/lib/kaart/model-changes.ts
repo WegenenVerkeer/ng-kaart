@@ -29,8 +29,6 @@ export interface UiElementSelectie {
 export interface ModelChanger {
   readonly uiElementSelectieSubj: rx.Subject<UiElementSelectie>;
   readonly uiElementOptiesSubj: rx.Subject<UiElementOpties>;
-  // viewSubj zit met opzet niet in de ModelChanges, maar wel de afgeleide viewinstellingen omdat het enerzijds handiger is voor de
-  // aanroepers om ol.Map te pushen, maar dat we naar de observers toe enkel de viewinstellingen willen ter beschikking stellen.
   readonly viewPortSizeSubj: rx.Subject<undefined>;
   readonly lagenOpGroepSubj: Map<ke.Laaggroep, rx.Subject<List<ke.ToegevoegdeLaag>>>;
   readonly laagVerwijderdSubj: rx.Subject<ke.ToegevoegdeLaag>;
@@ -38,17 +36,17 @@ export interface ModelChanger {
 }
 
 export const ModelChanger: () => ModelChanger = () => ({
-  uiElementSelectieSubj: new rx.Subject(),
-  uiElementOptiesSubj: new rx.ReplaySubject(1),
-  viewPortSizeSubj: new rx.Subject(),
+  uiElementSelectieSubj: new rx.Subject<UiElementSelectie>(),
+  uiElementOptiesSubj: new rx.ReplaySubject<UiElementOpties>(1),
+  viewPortSizeSubj: new rx.Subject<undefined>(),
   lagenOpGroepSubj: Map<ke.Laaggroep, rx.Subject<List<ke.ToegevoegdeLaag>>>({
-    Achtergrond: new rx.BehaviorSubject(List()),
-    "Voorgrond.Hoog": new rx.BehaviorSubject(List()),
-    "Voorgrond.Laag": new rx.BehaviorSubject(List()),
-    Tools: new rx.BehaviorSubject(List())
+    Achtergrond: new rx.BehaviorSubject<List<ke.ToegevoegdeLaag>>(List()),
+    "Voorgrond.Hoog": new rx.BehaviorSubject<List<ke.ToegevoegdeLaag>>(List()),
+    "Voorgrond.Laag": new rx.BehaviorSubject<List<ke.ToegevoegdeLaag>>(List()),
+    Tools: new rx.BehaviorSubject<List<ke.ToegevoegdeLaag>>(List())
   }),
-  laagVerwijderdSubj: new rx.Subject(),
-  mijnLocatieZoomDoelSubj: new rx.BehaviorSubject(none)
+  laagVerwijderdSubj: new rx.Subject<ke.ToegevoegdeLaag>(),
+  mijnLocatieZoomDoelSubj: new rx.BehaviorSubject<Option<number>>(none)
 });
 
 export interface ModelChanges {
@@ -131,7 +129,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     debounceTime(100), // vlugge verandering van het aantal vectorlagen willen we niet zien
     switchMap(vlgn =>
       rx.Observable.merge(
-        ...vlgn.map(vlg => observableFromOlEvents(vlg.layer.getSource(), "addfeature", "removefeature", "clear", "clear")).toArray()
+        ...vlgn.map(vlg => observableFromOlEvents(vlg!.layer.getSource(), "addfeature", "removefeature", "clear", "clear")).toArray()
       )
     ),
     // Vlugge veranderingen van de features willen we ook niet zien.
