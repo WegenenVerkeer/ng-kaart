@@ -14,7 +14,7 @@ import { internalMsgSubscriptionCmdOperator } from "./subscription-helper";
  * Voor classes die view children zijn van kaart.component
  */
 export abstract class KaartChildComponentBase extends KaartComponentBase implements OnInit, OnDestroy {
-  constructor(private readonly kaartComponent: KaartComponent, zone: NgZone) {
+  constructor(protected readonly kaartComponent: KaartComponent, zone: NgZone) {
     super(zone);
   }
 
