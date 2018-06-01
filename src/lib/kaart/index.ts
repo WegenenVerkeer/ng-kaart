@@ -20,6 +20,7 @@ import { KaartInfoBoodschappenComponent } from "./info-boodschappen/kaart-info-b
 import { KAART_CFG, KaartConfig } from "./kaart-config";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { KaartComponent } from "./kaart.component";
+import { KaartMetenComponent } from "./meten/kaart-meten.component";
 import { KaartMijnLocatieComponent } from "./mijn-locatie/kaart-mijn-locatie.component";
 import { KaartOpenStreetViewComponent } from "./open-street-view/kaart-open-street-view.component";
 import { KaartSchaalComponent } from "./schaal/kaart-schaal.component";
@@ -33,9 +34,9 @@ const components: any[] = [
   KaartMijnLocatieComponent,
   KaartTekenLaagComponent,
   KaartTekenComponent,
+  KaartMetenComponent,
   KaartCopyrightComponent,
   KaartOpenLayersStyleComponent,
-  KaartSchaalComponent,
   KaartVoorwaardenComponent,
   KaartCopyrightComponent,
   KaartAchtergrondSelectorComponent,
@@ -117,6 +118,7 @@ export * from "./voorwaarden/kaart-voorwaarden.component";
 export * from "./copyright/kaart-copyright.component";
 export * from "./schaal/kaart-schaal.component";
 export * from "./tekenen/kaart-teken-laag.component";
+export * from "./meten/kaart-meten.component";
 export * from "./zoom/kaart-zoom.component";
 export * from "./mijn-locatie/kaart-mijn-locatie.component";
 export * from "./open-street-view/kaart-open-street-view.component";
