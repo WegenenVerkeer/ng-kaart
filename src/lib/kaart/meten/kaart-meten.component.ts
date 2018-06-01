@@ -127,7 +127,8 @@ export class KaartMetenComponent extends KaartChildComponentBase implements OnIn
       laag: this.createLayer(source),
       magGetoondWorden: true,
       laaggroep: "Tools",
-      wrapper: kaartLogOnlyWrapper
+      wrapper: kaartLogOnlyWrapper,
+      legende: none
     });
 
     this.drawInteraction = this.createDrawInteraction(source);
