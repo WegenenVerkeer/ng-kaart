@@ -1,6 +1,8 @@
 import { CommonModule } from "@angular/common";
 import { NgModule } from "@angular/core";
 
+import { ClassicStreetviewComponent } from "../classic/streetview/classic-streetview.component";
+import { ClassicZoomComponent } from "../classic/zoom/classic-zoom.component";
 import { KaartModule } from "../kaart/index";
 
 import { ClassicAchtergrondSelectorComponent } from "./achtergrond-selector/classic-achtergrond-selector.component";
@@ -46,6 +48,8 @@ const components = [
   ClassicLegendeBolletjeItemComponent,
   ClassicLegendeImageItemComponent,
   ClassicLegendePolygoonItemComponent,
+  ClassicStreetviewComponent,
+  ClassicZoomComponent,
   KaartClassicComponent
 ];
 
@@ -81,5 +85,7 @@ export * from "./log";
 export * from "./openlayers-style/classic-openlayers-style.component";
 export * from "./schaal/classic-schaal.component";
 export * from "./standaard-interacties/classic-standaard-interacties.component";
+export * from "./streetview/classic-streetview.component";
 export * from "./volledig-scherm/classic-volledig-scherm.component";
 export * from "./voorwaarden/classic-voorwaarden.component";
+export * from "./zoom/classic-zoom.component";
