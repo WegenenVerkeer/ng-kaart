@@ -13,6 +13,8 @@ export interface KaartProps {
   zoom: number;
 }
 
+export const ZoomknoppenUiSelector = "Zoomknoppen";
+
 @Component({
   selector: "awv-kaart-zoom",
   templateUrl: "./kaart-zoom.component.html",
