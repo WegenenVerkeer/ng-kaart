@@ -110,6 +110,7 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
       laag: this.createLayer(source, tekenSettings),
       magGetoondWorden: true,
       laaggroep: "Tools",
+      legende: none,
       wrapper: kaartLogOnlyWrapper
     });
 

@@ -1,12 +1,7 @@
 @import "../css/kaart.component-common.scss";
+@import "./lagenkiezer-common.scss";
 
 .laag {
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 8px;
-
   &:hover {
     background-color: rgba(0, 0, 0, 0.04);
     cursor: pointer;
@@ -15,15 +10,6 @@
 
 .laag-zichtbaarheid {
   width: 40px;
-}
-
-.laag-naam {
-  flex-grow: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 14px;
-  margin-left: 4px;
 }
 
 .onzichtbaar .laag-naam {
