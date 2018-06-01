@@ -317,7 +317,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             titel: cmnd.laag.titel,
             laaggroep: groep,
             positieInGroep: groepPositie,
-            magGetoondWorden: cmnd.magGetoondWorden
+            magGetoondWorden: cmnd.magGetoondWorden,
+            legende: cmnd.legende
           };
           const toegevoegdeLaag = ke
             .asVectorLaag(cmnd.laag)

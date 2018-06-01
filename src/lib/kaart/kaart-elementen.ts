@@ -2,6 +2,7 @@ import { fromPredicate, Option } from "fp-ts/lib/Option";
 import { List, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 
+import { Legende } from "./kaart-legende";
 import { StyleSelector } from "./stijl-selector";
 
 export const SingleTileWmsType = "LaagType.SingleTileWms";
@@ -109,6 +110,7 @@ export interface ToegevoegdeLaag {
   readonly laaggroep: Laaggroep;
   readonly positieInGroep: number;
   readonly magGetoondWorden: boolean;
+  readonly legende: Option<Legende>;
 }
 
 export interface ToegevoegdeVectorLaag extends ToegevoegdeLaag {

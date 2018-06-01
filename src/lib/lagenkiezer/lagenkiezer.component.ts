@@ -1,14 +1,17 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from "@angular/core";
+import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import { Observable } from "rxjs/Observable";
-import { combineLatest, filter, map, shareReplay, startWith } from "rxjs/operators";
+import { combineLatest, distinctUntilChanged, filter, map, merge, shareReplay, startWith } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
+import { LegendeItem } from "../kaart/kaart-legende";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
+import { observeOnAngular } from "../util/observe-on-angular";
 
 export const LagenUiSelector = "Lagenkiezer";
 
@@ -64,19 +67,33 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
   private compact = false;
   readonly lagenHoog$: Observable<List<ToegevoegdeLaag>>;
   readonly lagenLaag$: Observable<List<ToegevoegdeLaag>>;
+  readonly lagenMetLegende$: Observable<List<ToegevoegdeLaag>>;
   readonly heeftDivider$: Observable<boolean>;
   readonly geenLagen$: Observable<boolean>;
+  readonly geenLegende$: Observable<boolean>;
   readonly opties$: Observable<LagenUiOpties>;
 
-  constructor(parent: KaartComponent, ngZone: NgZone, private readonly cdr: ChangeDetectorRef) {
+  constructor(parent: KaartComponent, ngZone: NgZone, private readonly cdr: ChangeDetectorRef, private readonly sanitizer: DomSanitizer) {
     super(parent, ngZone);
 
+    function isZichtbaar(laag: ToegevoegdeLaag, zoom: number): boolean {
+      return zoom >= laag.bron.minZoom && zoom <= laag.bron.maxZoom;
+    }
+
+    const zoom$ = parent.modelChanges.viewinstellingen$.pipe(map(i => i.zoom), distinctUntilChanged());
     this.lagenHoog$ = this.modelChanges.lagenOpGroep$.get("Voorgrond.Hoog");
     this.lagenLaag$ = this.modelChanges.lagenOpGroep$.get("Voorgrond.Laag");
+    this.lagenMetLegende$ = this.lagenHoog$.pipe(
+      combineLatest(this.lagenLaag$, (lagenHoog, lagenLaag) => lagenHoog.merge(lagenLaag)),
+      combineLatest(zoom$, (lagen, zoom) => lagen.filter(laag => isZichtbaar(laag!, zoom))),
+      map(lagen => lagen.filter(laag => laag!.legende.isSome()).toList()),
+      shareReplay(1)
+    );
     const lagenHoogLeeg$ = this.lagenHoog$.pipe(map(l => l.isEmpty()));
     const lagenLaagLeeg$ = this.lagenLaag$.pipe(map(l => l.isEmpty()));
     this.heeftDivider$ = lagenHoogLeeg$.pipe(combineLatest(lagenLaagLeeg$, (h, l) => !h && !l), shareReplay(1));
     this.geenLagen$ = lagenHoogLeeg$.pipe(combineLatest(lagenLaagLeeg$, (h, l) => h && l), shareReplay(1));
+    this.geenLegende$ = this.lagenMetLegende$.pipe(map(l => l.isEmpty()), shareReplay(1));
     this.opties$ = this.modelChanges.uiElementOpties$.pipe(
       filter(o => o.naam === LagenUiSelector),
       map(o => o.opties as LagenUiOpties),
@@ -236,5 +253,24 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
     this.onDragEnd(); // wordt niet door de browser aangeroepen blijkbaar
     evt.preventDefault();
     evt.stopPropagation();
+  }
+
+  icoon(item: LegendeItem): SafeHtml {
+    function itemToHtml(): string {
+      switch (item.type) {
+        case "Bolletje":
+          return `<svg class="legende-svg"><circle cx="12" cy="12" r="4" fill="${item.kleur}" class="legende-svg-item"/></svg>`;
+        case "Lijn":
+          return `<svg class="legende-svg"><polygon points="0,8 24,8 24,16 0,16" fill="${item.kleur}" class="legende-svg-item"/></svg>`;
+        case "Polygoon":
+          return `<svg class="legende-svg"><polygon points="0,24 5,0 20,4 24,24 10,20" fill="${
+            item.kleur
+          }" class="legende-svg-item"/></svg>`;
+        case "Image":
+          return `<img class="legende-image" src="${item.image}"/>`;
+      }
+    }
+
+    return this.sanitizer.bypassSecurityTrustHtml(itemToHtml());
   }
 }

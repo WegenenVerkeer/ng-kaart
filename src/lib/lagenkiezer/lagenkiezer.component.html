@@ -16,7 +16,9 @@
         <mat-tab label="Lagen">
           <ng-container *ngTemplateOutlet="lagen"></ng-container>
         </mat-tab>
-        <mat-tab label="legende" *ngIf="opties.toonLegende">Legende niet geïmplementeerd</mat-tab>
+        <mat-tab label="Legende" *ngIf="opties.toonLegende">
+          <ng-container *ngTemplateOutlet="legende"></ng-container>
+        </mat-tab>
       </mat-tab-group>
     </ng-template>
     <ng-template #zonderTabGroep>
@@ -35,6 +37,18 @@
         <div awvLaagmanipulatie [laag]="laag"></div>
       </div>
       <div class="geen-lagen" *ngIf="geenLagen$ | async">Er zijn geen voorgrondlagen</div>
+    </ng-template>
+    <ng-template #legende>
+      <div *ngFor="let laag of (lagenMetLegende$ | async)" class="legende">
+        <div class="laag">
+          <div class="laag-naam">{{laag.titel}}</div>
+        </div>
+        <div *ngFor="let item of laag.legende.toUndefined().items" class="legende-item">
+          <span class="legende-icoon" [innerHtml]="icoon(item)"></span>
+          <span class="legende-naam">{{item.beschrijving}}</span>
+        </div>
+      </div>
+      <div class="geen-lagen" *ngIf="geenLegende$ | async">Er zijn geen zichtbare lagen met een legende</div>
     </ng-template>
   </div>
 </div>
