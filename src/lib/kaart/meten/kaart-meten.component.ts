@@ -1,10 +1,10 @@
 import { Component, EventEmitter, Input, NgZone, OnDestroy, OnInit, Output } from "@angular/core";
 import { none } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
+import * as rx from "rxjs";
 
 import { takeUntil } from "rxjs/operators";
 
-import * as rx from "../../../../node_modules/rxjs";
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { ofType } from "../../util/operators";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
