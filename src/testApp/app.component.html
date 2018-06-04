@@ -247,29 +247,38 @@
   </awv-kaart-classic>
 </div>
 
-<h3>Kaart voor het testen van de interacties - met mogelijkheid om bepaalde features aan/uit te zetten of te veranderen</h3>
-<div style="margin-bottom: 40px;">
+<hr style="margin-top: 24px;border: 1px solid #ccc">
+<h3 style="margin: 8px;">
+  Kaart met mogelijkheid om bepaalde features aan/uit te zetten of te veranderen
   <button style="margin: 0 8px 8px 8px;" (click)="maakZichtbaar('interacties', !isZichtbaar('interacties'))">{{isZichtbaar('interacties')?'Verberg kaart':'Toon kaart'}}</button>
-  <div *ngIf="isZichtbaar('interacties')">
-    <div style="padding: 8px;">
-      <button (click)="toggleInteractieZichtbaar(key)" *ngFor="let key of objectKeys(interacties)">Zet <strong>{{key}}</strong> {{isInteractieZichtbaar(key.toString()) ? "UIT" : "AAN"}}</button>
-    </div>
-    <div style="padding: 8px;">
-      <button (click)="veranderVoorwaarden()">Andere voorwaarden</button>
-    </div>
+</h3>
+<div *ngIf="isZichtbaar('interacties')">
+  <div style="padding: 8px;">
+    <button (click)="toggleInteractieZichtbaar(key)" *ngFor="let key of objectKeys(interacties)">Zet <strong>{{key}}</strong> {{isInteractieZichtbaar(key.toString()) ? "UIT" : "AAN"}}</button>
   </div>
-  <awv-kaart-classic *ngIf="isZichtbaar('interacties')" [naam]="'interacties'" [mijnLocatieZoom]="getMijnLocatieZoom()" (zoomChange)="onZoom($event)" (middelpuntChange)="onMiddelpunt($event)" (extentChange)="onExtent($event)">
+  <div style="padding: 8px;">
+    <button (click)="veranderVoorwaarden()">Andere voorwaarden</button>
+  </div>
+</div>
+<div style="margin: 8px;border: 1px solid rgba(0,0,0,0.87);" *ngIf="isZichtbaar('interacties')">
+  <awv-kaart-classic [naam]="'interacties'" [mijnLocatieZoom]="getMijnLocatieZoom()" (zoomChange)="onZoom($event)" (middelpuntChange)="onMiddelpunt($event)" (extentChange)="onExtent($event)">
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'" *ngIf="isInteractieZichtbaar('achtergrond')"></awv-kaart-tilecache-laag>
     <awv-kaart-blanco-laag [titel]="'Leeg'" *ngIf="isInteractieZichtbaar('achtergrond')"></awv-kaart-blanco-laag>
+    <awv-kaart-lagenkiezer *ngIf="isInteractieZichtbaar('lagenkiezer')" [titels]="['Referentiepunten (WDB)', 'Referentiepunten (WDB) 2', 'features']" [verwijderbareLagen]="false" [verplaatsbareLagen]="true"></awv-kaart-lagenkiezer>
+    <awv-kaart-geoserver-laag [titel]="'Referentiepunten (WDB)'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'"></awv-kaart-geoserver-laag>
+    <awv-kaart-geoserver-laag [titel]="'Referentiepunten (WDB) 2'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'" [minZoom]="6"></awv-kaart-geoserver-laag>
     <awv-kaart-knop-achtergrondlaag-kiezer [titels]="['Dienstkaart grijs', 'Dienstkaart kleur', 'Leeg']" *ngIf="isInteractieZichtbaar('achtergrond')"></awv-kaart-knop-achtergrondlaag-kiezer>
-    <awv-kaart-standaard-interacties [focusVoorZoom]="true" *ngIf="isInteractieZichtbaar('mijnlocatie')"></awv-kaart-standaard-interacties>
+    <awv-kaart-standaard-interacties *ngIf="isInteractieZichtbaar('standaardinteracties')"></awv-kaart-standaard-interacties>
+    <awv-kaart-streetview *ngIf="isInteractieZichtbaar('streetview')"></awv-kaart-streetview>
+    <awv-kaart-zoomknoppen *ngIf="isInteractieZichtbaar('zoomknoppen')"></awv-kaart-zoomknoppen>
     <awv-kaart-copyright *ngIf="isInteractieZichtbaar('copyright')"></awv-kaart-copyright>
     <awv-kaart-voorwaarden *ngIf="isInteractieZichtbaar('voorwaarden')" [titel]="voorwaarden"></awv-kaart-voorwaarden>
     <awv-kaart-schaal *ngIf="isInteractieZichtbaar('schaal')"></awv-kaart-schaal>
   </awv-kaart-classic>
 </div>
 
+<hr style="margin-top: 24px;border: 1px solid #ccc">
 <h3>Kaart met programmatorische feature selectie van fietspaden</h3>
 <div>
   <button (click)="maakZichtbaar('featuresApi', !isZichtbaar('featuresApi'))">
