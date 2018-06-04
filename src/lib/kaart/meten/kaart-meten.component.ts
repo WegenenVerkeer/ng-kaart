@@ -1,4 +1,4 @@
-import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
+import { Component, EventEmitter, Input, NgZone, OnDestroy, OnInit, Output } from "@angular/core";
 import { none } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 
@@ -22,6 +22,10 @@ import { internalMsgSubscriptionCmdOperator } from "../subscription-helper";
   styleUrls: ["./kaart-meten.component.scss"]
 })
 export class KaartMetenComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
+  @Input() toonInfoBoodschap = true;
+
+  @Output() getekendeGeom: EventEmitter<ol.geom.Geometry> = new EventEmitter();
+
   private metenActief = false;
   private stopTekenenSubj: rx.Subject<void> = new rx.Subject<void>();
 
@@ -70,15 +74,18 @@ export class KaartMetenComponent extends KaartChildComponentBase implements OnIn
         observeOnAngular(this.zone)
       )
       .subscribe(msg => {
-        this.dispatch(
-          prt.ToonInfoBoodschapCmd({
-            id: "meten-resultaat",
-            type: "InfoBoodschapAlert",
-            titel: "Meten",
-            message: this.helpText(msg.geometry),
-            verbergMsgGen: () => none // TODO: stop tekenen event moet gestuurd worden
-          })
-        );
+        this.getekendeGeom.next(msg.geometry);
+        if (this.toonInfoBoodschap) {
+          this.dispatch(
+            prt.ToonInfoBoodschapCmd({
+              id: "meten-resultaat",
+              type: "InfoBoodschapAlert",
+              titel: "Meten",
+              message: this.helpText(msg.geometry),
+              verbergMsgGen: () => none // TODO: stop tekenen event moet gestuurd worden
+            })
+          );
+        }
       });
   }
 
