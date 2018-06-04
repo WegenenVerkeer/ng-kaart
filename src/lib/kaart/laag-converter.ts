@@ -101,7 +101,7 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
      * minZoom bepaalt de maxResolution, maxZoom bepaalt de minResolution
      * maxResolution is exclusief dus bepaald door minZoom - 1 ("maximum resolution (exclusive) below which this layer will be visible")
      */
-    return new ol.layer.Vector({
+    const vector = new ol.layer.Vector({
       source: vectorlaag.source,
       visible: true,
       style: vectorlaag.styleSelector.map(toStylish).getOrElse(kaart.config.defaults.style),
@@ -110,6 +110,8 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
         .getOrElse(kaart.config.defaults.resolutions[kaart.config.defaults.resolutions.length - 1]),
       maxResolution: array.index(vectorlaag.minZoom - 1, kaart.config.defaults.resolutions).getOrElse(kaart.config.defaults.resolutions[0])
     });
+    vector.set("selecteerbaar", vectorlaag.selecteerbaar);
+    return vector;
   }
 
   function createBlankLayer() {

@@ -765,7 +765,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               condition: ol.events.condition.click,
               features: model.geselecteerdeFeatures,
               multi: true, // dit wil zeggen dat in alle lagen gekeken wordt of er een feature op de clicklocatie zit
-              style: applySelectFunction
+              style: applySelectFunction,
+              layers: layer => layer.get("selecteerbaar")
             });
           case "multiple":
             return some({
@@ -773,7 +774,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               toggleCondition: ol.events.condition.click,
               features: model.geselecteerdeFeatures,
               multi: true,
-              style: applySelectFunction
+              style: applySelectFunction,
+              layers: layer => layer.get("selecteerbaar")
             });
           case "none":
             return none;
