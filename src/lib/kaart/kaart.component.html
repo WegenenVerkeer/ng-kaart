@@ -16,9 +16,9 @@
       <div class="kaart-interacties">
         <awv-kaart-achtergrond-selector class="kaart-achtergrond-selector" *ngIf="aanwezigeElementen.contains('Achtergrondkeuze')"></awv-kaart-achtergrond-selector>
         <div class="kaart-controls">
-          <awv-kaart-open-street-view></awv-kaart-open-street-view>
+          <awv-kaart-open-street-view *ngIf="aanwezigeElementen.contains('Streetview')"></awv-kaart-open-street-view>
           <awv-kaart-mijn-locatie></awv-kaart-mijn-locatie>
-          <awv-kaart-zoom></awv-kaart-zoom>
+          <awv-kaart-zoom *ngIf="aanwezigeElementen.contains('Zoomknoppen')"></awv-kaart-zoom>
         </div>
       </div>
       <div class="kaart-footer-info">

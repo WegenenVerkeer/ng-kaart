@@ -18,6 +18,7 @@ import { KaartComponent } from "../kaart.component";
 import { kaartLogger } from "../log";
 import * as ss from "../stijl-selector";
 
+export const MijnLocatieUiSelector = "Mijnlocatie";
 const MijnLocatieLaagNaam = "Mijn Locatie";
 
 @Component({

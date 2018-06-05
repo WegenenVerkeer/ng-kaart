@@ -153,7 +153,11 @@ export class AppComponent {
 
   objectKeys = Object.keys;
   interacties = {
+    lagenkiezer: true,
+    standaardinteracties: true,
     achtergrond: true,
+    streetview: true,
+    zoomknoppen: true,
     mijnlocatie: true,
     schaal: true,
     voorwaarden: true,
