@@ -1,4 +1,4 @@
-<div class="kaart-widget" *ngFor="let boodschap of infoBoodschappen$ | async">
+<div class="kaart-widget" *ngFor="let boodschap of infoBoodschappen$ | async"> <!-- Tijdelijk uitgezet, werkt niet bij updaten van een boodschap:  [@fadeIn]="'visible'" -->
     <awv-kaart-info-boodschap [attr.id]="'kaart-info-boodschap-' + boodschap.id" [boodschap]="boodschap">
       <awv-kaart-info-boodschap-identify *ngIf="isIdentify(boodschap)" [feature]="boodschap.feature" [laag]="boodschap.laag"></awv-kaart-info-boodschap-identify>
       <awv-kaart-info-boodschap-alert *ngIf="isAlert(boodschap)" [message]="boodschap.message"></awv-kaart-info-boodschap-alert>
