@@ -265,6 +265,7 @@
     <awv-kaart-standaard-interacties *ngIf="isInteractieZichtbaar('standaardinteracties')"></awv-kaart-standaard-interacties>
     <awv-kaart-streetview *ngIf="isInteractieZichtbaar('streetview')"></awv-kaart-streetview>
     <awv-kaart-zoomknoppen *ngIf="isInteractieZichtbaar('zoomknoppen')"></awv-kaart-zoomknoppen>
+    <awv-meet-knop [toonInfoBoodschap]="true" *ngIf="isInteractieZichtbaar('meten')"></awv-meet-knop>
     <awv-kaart-copyright *ngIf="isInteractieZichtbaar('copyright')"></awv-kaart-copyright>
     <awv-kaart-voorwaarden *ngIf="isInteractieZichtbaar('voorwaarden')" [titel]="voorwaarden"></awv-kaart-voorwaarden>
     <awv-kaart-schaal *ngIf="isInteractieZichtbaar('schaal')"></awv-kaart-schaal>

@@ -60,21 +60,22 @@
   overflow-x: hidden;
   overflow-y: auto;
   pointer-events: initial;
+  margin: 8px 0 0 0;
 }
 
 awv-zoeker {
   order: 100;
-  margin: 8px 8px 0 8px;
+  margin: 0 8px 8px 8px;
 }
 
 awv-lagenkiezer {
   order: 100;
-  margin: 8px 8px 0 8px;
+  margin: 0 8px 8px 8px;
 }
 
 awv-kaart-info-boodschappen {
   order: 200;
-  margin: 8px 8px 0 8px;
+  margin: 0 8px 8px 8px;
 }
 
 .kaart-links::-webkit-scrollbar-track

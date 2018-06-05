@@ -159,6 +159,7 @@ export class AppComponent {
     streetview: true,
     zoomknoppen: true,
     mijnlocatie: true,
+    meten: true,
     schaal: true,
     voorwaarden: true,
     copyright: true
