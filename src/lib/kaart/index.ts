@@ -123,6 +123,7 @@ export * from "./open-street-view/kaart-open-street-view.component";
 export * from "./kaart.component";
 export * from "./kaart-event-dispatcher";
 export * from "./kaart-protocol";
+export * from "./kaart-legende";
 export * from "./kaart-elementen";
 export * from "./stijl-selector";
 export * from "./log";
