@@ -78,7 +78,8 @@
     "openlayers": "4.6.5",
     "proj4": "2.4.4",
     "rxjs": "5.5.10",
-    "zone.js": "0.8.18"
+    "zone.js": "0.8.18",
+    "scroll-into-view-if-needed": "2.2.4"
   },
   "devDependencies": {
     "@angular/cli": "1.6.5",
