@@ -31,7 +31,7 @@ import { matchGeometryType } from "../../util/geometryTypes";
 
 import { compareResultaten, IconDescription, StringZoekInput, ZoekInput, ZoekResultaat, ZoekResultaten } from "../zoeker-base";
 
-const ZoekerLaagNaam = "Zoeker";
+export const ZoekerUiSelector = "Zoeker";
 
 export class Fout {
   constructor(readonly zoeker: string, readonly fout: string) {}
@@ -179,7 +179,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   private static createLayer(): ke.VectorLaag {
     return {
       type: ke.VectorType,
-      titel: ZoekerLaagNaam,
+      titel: ZoekerUiSelector,
       source: new ol.source.Vector(),
       styleSelector: none,
       selectieStyleSelector: none,
@@ -289,7 +289,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   ngOnDestroy(): void {
-    this.dispatch(prt.VerwijderLaagCmd(ZoekerLaagNaam, kaartLogOnlyWrapper));
+    this.dispatch(prt.VerwijderLaagCmd(ZoekerUiSelector, kaartLogOnlyWrapper));
     super.ngOnDestroy();
   }
 
@@ -350,7 +350,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.extent = ol.extent.createEmpty();
     this.legende.clear();
     this.legendeKeys = [];
-    this.dispatch(prt.VervangFeaturesCmd(ZoekerLaagNaam, List(), kaartLogOnlyWrapper));
+    this.dispatch(prt.VervangFeaturesCmd(ZoekerUiSelector, List(), kaartLogOnlyWrapper));
   }
 
   private processZoekerAntwoord(nieuweResultaten: ZoekResultaten): KaartInternalMsg {
@@ -374,7 +374,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       .map(resultaat => resultaat.kaartInfo)
       .reduce((maxExtent, kaartInfo) => kaartInfo.fold(maxExtent, i => ol.extent.extend(maxExtent!, i.extent)), ol.extent.createEmpty());
 
-    this.dispatch(prt.VervangFeaturesCmd(ZoekerLaagNaam, features, kaartLogOnlyWrapper));
+    this.dispatch(prt.VervangFeaturesCmd(ZoekerUiSelector, features, kaartLogOnlyWrapper));
 
     this.zoomNaarVolledigeExtent();
 

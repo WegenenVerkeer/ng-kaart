@@ -6,7 +6,7 @@
     <awv-google-wdb-locatie-zoeker></awv-google-wdb-locatie-zoeker>
     <awv-crab-zoeker></awv-crab-zoeker>
     <div class="kaart-links">
-      <awv-zoeker></awv-zoeker>
+      <awv-zoeker *ngIf="aanwezigeElementen.contains('Zoeker')"></awv-zoeker>
       <awv-lagenkiezer *ngIf="aanwezigeElementen.contains('Lagenkiezer')"></awv-lagenkiezer>
       <awv-kaart-info-boodschappen></awv-kaart-info-boodschappen>
       <ng-content select=".kaart-links"></ng-content>

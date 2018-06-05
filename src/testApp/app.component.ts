@@ -153,6 +153,7 @@ export class AppComponent {
 
   objectKeys = Object.keys;
   interacties = {
+    zoeker: true,
     lagenkiezer: true,
     standaardinteracties: true,
     achtergrond: true,
