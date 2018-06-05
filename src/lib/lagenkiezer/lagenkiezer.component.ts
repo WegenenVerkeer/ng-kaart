@@ -3,7 +3,7 @@ import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import { Observable } from "rxjs/Observable";
-import { combineLatest, distinctUntilChanged, filter, map, merge, shareReplay, startWith } from "rxjs/operators";
+import { combineLatest, distinctUntilChanged, filter, map, shareReplay, startWith } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
@@ -11,7 +11,6 @@ import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import { LegendeItem } from "../kaart/kaart-legende";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
-import { observeOnAngular } from "../util/observe-on-angular";
 
 export const LagenUiSelector = "Lagenkiezer";
 
@@ -84,8 +83,8 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
     this.lagenHoog$ = this.modelChanges.lagenOpGroep$.get("Voorgrond.Hoog");
     this.lagenLaag$ = this.modelChanges.lagenOpGroep$.get("Voorgrond.Laag");
     this.lagenMetLegende$ = this.lagenHoog$.pipe(
-      combineLatest(this.lagenLaag$, (lagenHoog, lagenLaag) => lagenHoog.merge(lagenLaag)),
-      combineLatest(zoom$, (lagen, zoom) => lagen.filter(laag => isZichtbaar(laag!, zoom))),
+      combineLatest(this.lagenLaag$, (lagenHoog, lagenLaag) => lagenHoog.concat(lagenLaag)),
+      combineLatest(zoom$, (lagen, zoom) => lagen.filter(laag => isZichtbaar(laag!, zoom) && laag!.magGetoondWorden)),
       map(lagen => lagen.filter(laag => laag!.legende.isSome()).toList()),
       shareReplay(1)
     );
