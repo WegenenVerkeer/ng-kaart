@@ -1,7 +1,7 @@
 <mat-card>
   <mat-card-title>
     {{ boodschap.titel }}
-    <button mat-button class="mat-titel-button" (click)="sluit()">
+    <button mat-button *ngIf="boodschap.sluitbaar" class="mat-titel-button" (click)="sluit()">
       <mat-icon>close</mat-icon>
     </button>
   </mat-card-title>

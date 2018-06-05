@@ -169,6 +169,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
         id: featureId,
         titel: feature.get("laagnaam"),
         feature: feature,
+        sluitbaar: true,
         verbergMsgGen: () => some(KaartClassicMsg(FeatureGedeselecteerdMsg(featureId)))
       })
     );

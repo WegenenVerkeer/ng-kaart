@@ -98,6 +98,7 @@ export class KaartMetenComponent extends KaartChildComponentBase implements OnIn
               id: "meten-resultaat",
               type: "InfoBoodschapAlert",
               titel: "Meten",
+              sluitbaar: false,
               message: this.helpText(msg.geometry),
               verbergMsgGen: () => none // TODO: stop tekenen event moet gestuurd worden
             })
