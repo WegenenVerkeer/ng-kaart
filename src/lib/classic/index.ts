@@ -22,6 +22,7 @@ import { ClassicLegendeBolletjeItemComponent } from "./legende/classic-legende-b
 import { ClassicLegendeImageItemComponent } from "./legende/classic-legende-image-item.component";
 import { ClassicLegendeLijnItemComponent } from "./legende/classic-legende-lijn-item.component";
 import { ClassicLegendePolygoonItemComponent } from "./legende/classic-legende-polygoon-item.component";
+import { ClassicMetenComponent } from "./meten/classic-meet.component";
 import { ClassicSchaalComponent } from "./schaal/classic-schaal.component";
 import { ClassicStandaardInteractiesComponent } from "./standaard-interacties/classic-standaard-interacties.component";
 import { ClassicVolledigSchermComponent } from "./volledig-scherm/classic-volledig-scherm.component";
@@ -31,6 +32,7 @@ const components = [
   ClassicSchaalComponent,
   ClassicVoorwaardenComponent,
   ClassicCopyrightComponent,
+  ClassicMetenComponent,
   ClassicLagenkiezerComponent,
   ClassicAchtergrondSelectorComponent,
   ClassicVolledigSchermComponent,
@@ -82,6 +84,7 @@ export * from "./legende/classic-legende-image-item.component";
 export * from "./legende/classic-legende-lijn-item.component";
 export * from "./legende/classic-legende-polygoon-item.component";
 export * from "./log";
+export * from "./meten/classic-meet.component";
 export * from "./openlayers-style/classic-openlayers-style.component";
 export * from "./schaal/classic-schaal.component";
 export * from "./standaard-interacties/classic-standaard-interacties.component";

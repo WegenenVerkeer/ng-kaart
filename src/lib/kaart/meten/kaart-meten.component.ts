@@ -2,8 +2,8 @@ import { Component, EventEmitter, Input, NgZone, OnDestroy, OnInit, Output } fro
 import { none } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-
-import { takeUntil } from "rxjs/operators";
+import { Observable } from "rxjs/Observable";
+import { filter, map, startWith, takeUntil } from "rxjs/operators";
 
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { ofType } from "../../util/operators";
@@ -16,16 +16,23 @@ import { KaartComponent } from "../kaart.component";
 import { kaartLogger } from "../log";
 import { internalMsgSubscriptionCmdOperator } from "../subscription-helper";
 
+export const MetenUiSelector = "Meten";
+
+export interface MetenOpties {
+  toonInfoBoodschap: boolean;
+}
+
 @Component({
   selector: "awv-kaart-meten",
   templateUrl: "./kaart-meten.component.html",
   styleUrls: ["./kaart-meten.component.scss"]
 })
 export class KaartMetenComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
-  @Input() toonInfoBoodschap = true;
+  @Input() toonInfoBoodschap$: Observable<boolean>;
 
   @Output() getekendeGeom: EventEmitter<ol.geom.Geometry> = new EventEmitter();
 
+  private toonInfoBoodschap: boolean;
   private metenActief = false;
   private stopTekenenSubj: rx.Subject<void> = new rx.Subject<void>();
 
@@ -35,6 +42,16 @@ export class KaartMetenComponent extends KaartChildComponentBase implements OnIn
 
   public get isMetenActief(): boolean {
     return this.metenActief;
+  }
+
+  ngOnInit(): void {
+    super.ngOnInit();
+    this.toonInfoBoodschap$ = this.modelChanges.uiElementOpties$.pipe(
+      filter(optie => optie.naam === MetenUiSelector),
+      map(o => o.opties.toonInfoBoodschap),
+      startWith(true)
+    );
+    this.toonInfoBoodschap$.subscribe(toon => (this.toonInfoBoodschap = toon));
   }
 
   ngOnDestroy(): void {
