@@ -30,7 +30,8 @@
     "rxjs": "5.5.10",
     "zone.js": "0.8.20",
     "immutable": "3.8.2",
-    "loglevel": "1.6.1"
+    "loglevel": "1.6.1",
+    "scroll-into-view-if-needed": "2.2.4"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/",
