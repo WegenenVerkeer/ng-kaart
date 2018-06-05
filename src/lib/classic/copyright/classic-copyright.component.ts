@@ -1,6 +1,6 @@
 import { Component, Input } from "@angular/core";
 
-import { CopyrightOpties, CopyrightSelector } from "../../kaart/copyright/kaart-copyright.component";
+import { CopyrightOpties, CopyrightUISelector } from "../../kaart/copyright/kaart-copyright.component";
 import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
 import { KaartClassicComponent } from "../kaart-classic.component";
 
@@ -12,7 +12,7 @@ export class ClassicCopyrightComponent extends ClassicUIElementSelectorComponent
   @Input() copyright = "\u00A9 Agentschap Wegen en Verkeer";
 
   constructor(readonly kaart: KaartClassicComponent) {
-    super(CopyrightSelector, kaart);
+    super(CopyrightUISelector, kaart);
   }
 
   protected opties(): CopyrightOpties {

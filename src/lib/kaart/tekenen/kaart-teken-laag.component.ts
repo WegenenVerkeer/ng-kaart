@@ -139,7 +139,7 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
       source: source,
       styleSelector: orElse(tekenSettings.laagStyle, () => asStyleSelector(defaultlaagStyle)),
       selectieStyleSelector: none,
-      selecteerbaar: true,
+      selecteerbaar: false,
       minZoom: 2,
       maxZoom: 15,
       offsetveld: none,

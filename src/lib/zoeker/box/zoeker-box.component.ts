@@ -183,7 +183,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       source: new ol.source.Vector(),
       styleSelector: none,
       selectieStyleSelector: none,
-      selecteerbaar: true,
+      selecteerbaar: false,
       minZoom: 2,
       maxZoom: 15,
       offsetveld: none,

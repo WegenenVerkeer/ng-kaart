@@ -1,6 +1,7 @@
 import { animate, state, style, transition, trigger } from "@angular/animations";
 import { Component, Input, NgZone, OnInit } from "@angular/core";
 import { fromNullable } from "fp-ts/lib/Option";
+import scrollIntoView from "scroll-into-view-if-needed";
 
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { SluitInfoBoodschapCmd } from "../kaart-protocol-commands";
@@ -33,7 +34,13 @@ export class KaartInfoBoodschapComponent extends KaartChildComponentBase impleme
 
   scrollIntoView() {
     setTimeout(
-      () => fromNullable(document.getElementById("kaart-info-boodschap-" + this.boodschap.id)).map(el => el.scrollIntoView()),
+      () =>
+        fromNullable(document.getElementById("kaart-info-boodschap-" + this.boodschap.id)).map(el =>
+          scrollIntoView(el, {
+            behavior: "smooth",
+            scrollMode: "if-needed"
+          })
+        ),
       200
     );
   }
