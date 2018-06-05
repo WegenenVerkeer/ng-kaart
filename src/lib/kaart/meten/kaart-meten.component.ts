@@ -28,11 +28,9 @@ export interface MetenOpties {
   styleUrls: ["./kaart-meten.component.scss"]
 })
 export class KaartMetenComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
-  @Input() toonInfoBoodschap$: Observable<boolean>;
-
   @Output() getekendeGeom: EventEmitter<ol.geom.Geometry> = new EventEmitter();
 
-  private toonInfoBoodschap: boolean;
+  private toonInfoBoodschap = true;
   private metenActief = false;
   private stopTekenenSubj: rx.Subject<void> = new rx.Subject<void>();
 
@@ -46,12 +44,13 @@ export class KaartMetenComponent extends KaartChildComponentBase implements OnIn
 
   ngOnInit(): void {
     super.ngOnInit();
-    this.toonInfoBoodschap$ = this.modelChanges.uiElementOpties$.pipe(
-      filter(optie => optie.naam === MetenUiSelector),
-      map(o => o.opties.toonInfoBoodschap),
-      startWith(true)
-    );
-    this.toonInfoBoodschap$.subscribe(toon => (this.toonInfoBoodschap = toon));
+    this.bindToLifeCycle(
+      this.modelChanges.uiElementOpties$.pipe(
+        filter(optie => optie.naam === MetenUiSelector),
+        map(o => o.opties.toonInfoBoodschap),
+        startWith(true)
+      )
+    ).subscribe(toon => (this.toonInfoBoodschap = toon));
   }
 
   ngOnDestroy(): void {
