@@ -18,5 +18,7 @@ export abstract class ClassicUIElementSelectorComponentBase implements OnInit, O
     this.kaart.dispatch(prt.ZetUiElementOpties(this.uiSelector, this.opties()));
   }
 
-  protected abstract opties(): prt.UiElementOpties;
+  protected opties(): prt.UiElementOpties {
+    return {};
+  }
 }

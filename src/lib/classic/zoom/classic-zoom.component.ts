@@ -13,8 +13,4 @@ export class ClassicZoomComponent extends ClassicUIElementSelectorComponentBase 
   constructor(readonly kaart: KaartClassicComponent) {
     super(ZoomknoppenUiSelector, kaart);
   }
-
-  protected opties(): prt.UiElementOpties {
-    return {};
-  }
 }

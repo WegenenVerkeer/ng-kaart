@@ -1,8 +1,6 @@
 import { CommonModule } from "@angular/common";
 import { NgModule } from "@angular/core";
 
-import { ClassicStreetviewComponent } from "../classic/streetview/classic-streetview.component";
-import { ClassicZoomComponent } from "../classic/zoom/classic-zoom.component";
 import { KaartModule } from "../kaart/index";
 
 import { ClassicAchtergrondSelectorComponent } from "./achtergrond-selector/classic-achtergrond-selector.component";
@@ -25,8 +23,11 @@ import { ClassicLegendePolygoonItemComponent } from "./legende/classic-legende-p
 import { ClassicMetenComponent } from "./meten/classic-meet.component";
 import { ClassicSchaalComponent } from "./schaal/classic-schaal.component";
 import { ClassicStandaardInteractiesComponent } from "./standaard-interacties/classic-standaard-interacties.component";
+import { ClassicStreetviewComponent } from "./streetview/classic-streetview.component";
 import { ClassicVolledigSchermComponent } from "./volledig-scherm/classic-volledig-scherm.component";
 import { ClassicVoorwaardenComponent } from "./voorwaarden/classic-voorwaarden.component";
+import { ClassicZoekerComponent } from "./zoeker/classic-zoeker.component";
+import { ClassicZoomComponent } from "./zoom/classic-zoom.component";
 
 const components = [
   ClassicSchaalComponent,
@@ -52,6 +53,7 @@ const components = [
   ClassicLegendePolygoonItemComponent,
   ClassicStreetviewComponent,
   ClassicZoomComponent,
+  ClassicZoekerComponent,
   KaartClassicComponent
 ];
 
@@ -91,4 +93,5 @@ export * from "./standaard-interacties/classic-standaard-interacties.component";
 export * from "./streetview/classic-streetview.component";
 export * from "./volledig-scherm/classic-volledig-scherm.component";
 export * from "./voorwaarden/classic-voorwaarden.component";
+export * from "./zoeker/classic-zoeker.component";
 export * from "./zoom/classic-zoom.component";
