@@ -32,8 +32,9 @@ export class AppComponent {
   @ViewChild("selectie") private selectieKaart: KaartClassicComponent;
 
   private readonly zichtbaarheid = {
+    interacties: true,
     orthomap: false,
-    featuresApi: true
+    featuresApi: false
   };
 
   private readonly fietspadStijlDef: AWV0StyleFunctionDescription = {
@@ -153,6 +154,7 @@ export class AppComponent {
 
   objectKeys = Object.keys;
   interacties = {
+    fixedHeaderLinksBoven: true,
     zoeker: true,
     lagenkiezer: true,
     standaardinteracties: true,
