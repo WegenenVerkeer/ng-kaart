@@ -347,6 +347,14 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
+    function verwijderGeselecteerdeFeaturesVanLaag(laagnaam: string) {
+      // Als er features van onze laag geselecteerd waren, moeten we die verwijderen uit de door ol gemanagede collection.
+      const teVerwijderenGeselecteerdeFeatures = model.geselecteerdeFeatures
+        .getArray()
+        .filter(feature => feature.get("laagnaam") === laagnaam);
+      teVerwijderenGeselecteerdeFeatures.forEach(feature => model.geselecteerdeFeatures.remove(feature));
+    }
+
     /**
      * Een laag verwijderen. De titel van de laag bepaalt welke er verwijderd wordt.
      */
@@ -356,6 +364,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         valideerToegevoegdeLaagBestaat(cmnd.titel).map(laag => {
           const layer = laag.layer;
           model.map.removeLayer(layer); // Oesje. Side-effect. Gelukkig idempotent.
+          verwijderGeselecteerdeFeaturesVanLaag(cmnd.titel);
           const titel = cmnd.titel;
           const groep = laag.laaggroep;
           const modelMetAangepasteLagen = pasLaagPositiesAan(-1, layerIndexNaarGroepIndex(layer, groep) + 1, maxIndexInGroep(groep), groep);
@@ -646,6 +655,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function maakLaagOnzichtbaarCmd(cmnd: prt.MaakLaagOnzichtbaarCmd<Msg>): ModelWithResult<Msg> {
+      verwijderGeselecteerdeFeaturesVanLaag(cmnd.titel);
       return zetLaagZichtbaarheid(cmnd.titel, false, cmnd.wrapper);
     }
 

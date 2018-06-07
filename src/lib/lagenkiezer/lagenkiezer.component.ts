@@ -101,6 +101,20 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
     );
   }
 
+  ngOnInit() {
+    super.ngOnInit();
+    // Zorg dat de lijst openklapt als er een laag bijkomt of weggaat.
+    this.bindToLifeCycle(
+      this.lagenHoog$.pipe(
+        combineLatest(this.lagenLaag$, (lagenHoog, lagenLaag) => lagenHoog.concat(lagenLaag).map(laag => laag!.titel)),
+        distinctUntilChanged()
+      )
+    ).subscribe(_ => {
+      this.compact = false;
+      this.cdr.detectChanges();
+    });
+  }
+
   get uitgeklapt(): boolean {
     return !this.compact;
   }
