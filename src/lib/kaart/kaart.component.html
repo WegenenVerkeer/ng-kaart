@@ -2,10 +2,19 @@
   <div id="kaart-container">
     <div class="kaart" #map style="height: 100%; width: 100%;"></div>
   </div>
-  <div id="overlay" *ngIf="aanwezigeElementen$ | async as aanwezigeElementen">
+  <div id="overlay" *ngIf="aanwezigeElementen$ | async as aanwezigeElementen"
+       [ngClass]="{ 'kaart-links-zichtbaar': kaartLinksZichtbaar, 'kaart-links-niet-zichtbaar': !kaartLinksZichtbaar,
+                    'kaart-links-scrollbar-zichtbaar': kaartLinksScrollbarZichtbaar, 'kaart-links-scrollbar-niet-zichtbaar': !kaartLinksScrollbarZichtbaar }">
     <awv-google-wdb-locatie-zoeker></awv-google-wdb-locatie-zoeker>
     <awv-crab-zoeker></awv-crab-zoeker>
-    <div class="kaart-links">
+    <button mat-icon-button class="kaart-links-zichtbaar-toggle-knop" (click)="toggleKaartLinks()" *ngIf="kaartLinksToggleZichtbaar">
+      <mat-icon *ngIf="kaartLinksZichtbaar">chevron_left</mat-icon>
+      <mat-icon *ngIf="!kaartLinksZichtbaar">chevron_right</mat-icon>
+    </button>
+    <div #kaartFixedLinksBoven class="kaart-fixed-links-boven">
+      <ng-content select=".kaart-fixed-links-boven"></ng-content>
+    </div>
+    <div #kaartLinks class="kaart-links">
       <awv-zoeker *ngIf="aanwezigeElementen.contains('Zoeker')"></awv-zoeker>
       <awv-lagenkiezer *ngIf="aanwezigeElementen.contains('Lagenkiezer')"></awv-lagenkiezer>
       <awv-kaart-info-boodschappen></awv-kaart-info-boodschappen>

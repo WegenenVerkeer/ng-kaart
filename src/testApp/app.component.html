@@ -253,7 +253,7 @@
     <button (click)="veranderVoorwaarden()">Andere voorwaarden</button>
   </div>
 </div>
-<div style="margin: 8px;border: 1px solid rgba(0,0,0,0.87);" *ngIf="isZichtbaar('interacties')">
+<div style="margin: 24px; border-radius: 2px;border: 1px solid rgba(0,0,0,0.26);box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);" *ngIf="isZichtbaar('interacties')">
   <awv-kaart-classic [naam]="'interacties'" [mijnLocatieZoom]="getMijnLocatieZoom()" (zoomChange)="onZoom($event)" (middelpuntChange)="onMiddelpunt($event)" (extentChange)="onExtent($event)">
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'" *ngIf="isInteractieZichtbaar('achtergrond')"></awv-kaart-tilecache-laag>
@@ -270,6 +270,11 @@
     <awv-kaart-copyright *ngIf="isInteractieZichtbaar('copyright')"></awv-kaart-copyright>
     <awv-kaart-voorwaarden *ngIf="isInteractieZichtbaar('voorwaarden')" [titel]="voorwaarden"></awv-kaart-voorwaarden>
     <awv-kaart-schaal *ngIf="isInteractieZichtbaar('schaal')"></awv-kaart-schaal>
+    <div class="kaart-fixed-links-boven" *ngIf="isInteractieZichtbaar('fixedHeaderLinksBoven')">
+      <div class="custom-kaart-fixed-links-boven">
+        <span class="custom-titel">kaart-fixed-links-boven content voorbeeld</span>
+      </div>
+    </div>
   </awv-kaart-classic>
 </div>
 

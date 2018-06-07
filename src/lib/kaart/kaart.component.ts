@@ -1,4 +1,15 @@
-import { Component, ElementRef, Inject, Input, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
+import {
+  AfterViewChecked,
+  Component,
+  ElementRef,
+  Inject,
+  Input,
+  NgZone,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  ViewEncapsulation
+} from "@angular/core";
 import { Set } from "immutable";
 import * as ol from "openlayers";
 import { ReplaySubject } from "rxjs";
@@ -10,14 +21,15 @@ import { Observable } from "rxjs/Observable";
 import { delay, filter, last, map, merge, scan, shareReplay, startWith, switchMap, takeUntil, tap } from "rxjs/operators";
 
 import { asap } from "../util/asap";
+import { observeOnAngular } from "../util/observe-on-angular";
 import { observerOutsideAngular } from "../util/observer-outside-angular";
-import { emitSome } from "../util/operators";
+import { emitSome, ofType } from "../util/operators";
 import { forEach } from "../util/option";
 
 import { KaartComponentBase } from "./kaart-component-base";
 import { KAART_CFG, KaartConfig } from "./kaart-config";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
-import { KaartInternalMsg, KaartInternalSubMsg } from "./kaart-internal-messages";
+import { InfoBoodschappenMsg, KaartInternalMsg, KaartInternalSubMsg } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
 import * as red from "./kaart-reducer";
 import { cleanup, KaartWithInfo } from "./kaart-with-info";
@@ -34,13 +46,18 @@ export const vacuousKaartMsgObservableConsumer: KaartMsgObservableConsumer = () 
   styleUrls: ["./kaart.component.scss"],
   encapsulation: ViewEncapsulation.Emulated // Omwille hiervan kunnen we geen globale CSS gebruiken, maar met Native werken animaties niet
 })
-export class KaartComponent extends KaartComponentBase implements OnInit, OnDestroy {
+export class KaartComponent extends KaartComponentBase implements OnInit, OnDestroy, AfterViewChecked {
+  kaartLinksZichtbaar: boolean;
+  kaartLinksToggleZichtbaar: boolean;
+  kaartLinksScrollbarZichtbaar: boolean;
   private readonly modelChanger: ModelChanger = ModelChanger();
   private innerModelChanges: ModelChanges;
   private innerAanwezigeElementen$: Observable<Set<string>>;
   readonly kaartModel$: Observable<KaartWithInfo> = Observable.empty();
 
   @ViewChild("map") mapElement: ElementRef;
+  @ViewChild("kaartLinks") kaartLinksElement: ElementRef;
+  @ViewChild("kaartFixedLinksBoven") kaartFixedLinksBovenElement: ElementRef;
 
   /**
    * Dit houdt heel de constructie bij elkaar. Ofwel awv-kaart-classic (in geval van declaratief gebruik) ofwel
@@ -74,6 +91,9 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
   constructor(@Inject(KAART_CFG) readonly config: KaartConfig, zone: NgZone) {
     super(zone);
+    this.kaartLinksZichtbaar = true;
+    this.kaartLinksToggleZichtbaar = false;
+    this.kaartLinksScrollbarZichtbaar = false;
     this.internalMessage$ = this.msgSubj.pipe(
       filter(m => m.type === "KaartInternal"), //
       map(m => (m as KaartInternalMsg).payload),
@@ -111,6 +131,11 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     this.kaartModel$.pipe(last()).subscribe(model => {
       kaartLogger.info(`kaart '${this.naam}' opkuisen`);
       cleanup(model);
+    });
+
+    // Linker paneel zichtbaar maken als de infoboodschappen wijzigen.
+    this.internalMessage$.pipe(ofType<InfoBoodschappenMsg>("InfoBoodschappen"), observeOnAngular(this.zone)).subscribe(msg => {
+      this.kaartLinksZichtbaar = true;
     });
   }
 
@@ -165,5 +190,28 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
   get aanwezigeElementen$(): Observable<Set<string>> {
     return this.innerAanwezigeElementen$;
+  }
+
+  ngAfterViewChecked() {
+    setTimeout(() => {
+      // Toggle pas tonen vanaf 40px hoogte.
+      this.kaartLinksToggleZichtbaar =
+        this.kaartFixedLinksBovenElement.nativeElement.clientHeight + this.kaartLinksElement.nativeElement.clientHeight >= 40;
+
+      // Als de scrollbar zichtbaar is andere styling toepassen (bvb: achtergrond een kleur geven).
+      this.kaartLinksScrollbarZichtbaar =
+        this.kaartLinksElement.nativeElement.scrollHeight > this.kaartLinksElement.nativeElement.clientHeight;
+
+      // Als er een fixed header is bovenaan links moet er genoeg margin gegeven worden aan de kaart-links anders overlapt die.
+      this.kaartLinksElement.nativeElement.style.marginTop = this.kaartFixedLinksBovenElement.nativeElement.clientHeight + "px";
+
+      // Als er een fixed header is bovenaan links moet de max-height van kaart-links daar ook rekening mee houden.
+      this.kaartLinksElement.nativeElement.style.maxHeight =
+        "calc(100% - " + this.kaartFixedLinksBovenElement.nativeElement.clientHeight + "px - 8px)"; // -8px is van padding-top.
+    });
+  }
+
+  toggleKaartLinks() {
+    this.kaartLinksZichtbaar = !this.kaartLinksZichtbaar;
   }
 }

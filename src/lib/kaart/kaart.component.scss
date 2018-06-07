@@ -1,3 +1,5 @@
+$kaart-links-breedte: 480px;
+
 .fullscreen-container {
 
   &:-moz-full-screen {
@@ -46,13 +48,59 @@
   top: 0px;
   left: 0px;
   pointer-events: none;
+  overflow: hidden;
+
+  &.kaart-links-zichtbaar {
+    .kaart-links, .kaart-fixed-links-boven {
+      left: 0;
+    }
+    .kaart-links-zichtbaar-toggle-knop {
+      left: $kaart-links-breedte - 8px;
+    }
+
+    &.kaart-links-scrollbar-zichtbaar {
+      .kaart-links {
+        background: #fafafa;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+      }
+      .kaart-fixed-links-boven {
+        background: #fafafa;
+        box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12);
+      }
+      .kaart-links-zichtbaar-toggle-knop {
+        left: $kaart-links-breedte;
+      }
+    }
+  }
+
+  &.kaart-links-niet-zichtbaar {
+    .kaart-links, .kaart-fixed-links-boven {
+      left: -$kaart-links-breedte;
+    }
+
+    .kaart-links-zichtbaar-toggle-knop {
+      left: 0;
+    }
+  }
+}
+
+.kaart-fixed-links-boven {
+  pointer-events: initial;
+  width: $kaart-links-breedte;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  transition: left 0.3s cubic-bezier(.25, .8, .25, 1);
 }
 
 .kaart-links {
+  z-index: 2;
   position: absolute;
-  max-height: 100%;
+  padding-top: 8px;
+  max-height: calc(100% - 8px); // -8px van padding-top
   height: auto;
-  width: 480px;
+  width: $kaart-links-breedte;
   top: 0;
   left: 0;
   display: flex;
@@ -60,7 +108,32 @@
   overflow-x: hidden;
   overflow-y: auto;
   pointer-events: initial;
-  margin: 8px 0 0 0;
+  transition: left 0.3s cubic-bezier(.25, .8, .25, 1);
+}
+
+.kaart-links-zichtbaar-toggle-knop {
+  z-index: 1;
+  position: absolute;
+  top: 12px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  border: none;
+  border-radius: 0 2px 2px 0;
+  box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.3);
+  background: #fafafa;
+  pointer-events: initial;
+  color: #777;
+
+  &:hover {
+    color: #333;
+  }
+
+  /deep/ .mat-button-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 }
 
 awv-zoeker {

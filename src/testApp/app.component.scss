@@ -15,3 +15,28 @@ body {
 .onder {
   order: 120;
 }
+
+.kaart-links-scrollbar-zichtbaar {
+  .kaart-fixed-links-boven {
+    background: orange !important;
+
+    .custom-kaart-fixed-links-boven {
+      margin: 8px;
+    }
+  }
+}
+
+.custom-kaart-fixed-links-boven {
+  margin: 8px 8px 0 8px;
+
+  .custom-titel {
+    background: white;
+    border-radius: 2px;
+    padding: 0 16px;
+    color: rgba(black, 0.6);
+    height: 40px;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12);
+  }
+}
