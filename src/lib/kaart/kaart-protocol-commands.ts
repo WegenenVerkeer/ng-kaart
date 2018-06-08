@@ -38,6 +38,7 @@ export type Command<Msg extends KaartMsg> =
   | MaakLaagZichtbaarCmd<Msg>
   | MaakLaagOnzichtbaarCmd<Msg>
   | ActiveerSelectieModusCmd<Msg>
+  | ActiveerHoverModusCmd<Msg>
   | ZetStijlVoorLaagCmd<Msg>
   | VoegZoekerToeCmd<Msg>
   | VerwijderZoekerCmd<Msg>
@@ -181,6 +182,13 @@ export type SelectieModus = "single" | "multiple" | "none";
 export interface ActiveerSelectieModusCmd<Msg extends KaartMsg> {
   readonly type: "ActiveerSelectieModus";
   readonly selectieModus: SelectieModus;
+}
+
+export type HoverModus = "on" | "off";
+
+export interface ActiveerHoverModusCmd<Msg extends KaartMsg> {
+  readonly type: "ActiveerHoverModus";
+  readonly hoverModus: HoverModus;
 }
 
 export interface ToonAchtergrondKeuzeCmd<Msg extends KaartMsg> {
@@ -437,6 +445,10 @@ export function VervangFeaturesCmd<Msg extends KaartMsg>(
 
 export function ActiveerSelectieModusCmd<Msg extends KaartMsg>(selectieModus: SelectieModus): ActiveerSelectieModusCmd<Msg> {
   return { type: "ActiveerSelectieModus", selectieModus: selectieModus };
+}
+
+export function ActiveerHoverModusCmd<Msg extends KaartMsg>(hoverModus: HoverModus): ActiveerHoverModusCmd<Msg> {
+  return { type: "ActiveerHoverModus", hoverModus: hoverModus };
 }
 
 export function MeldComponentFoutCmd<Msg extends KaartMsg>(fouten: List<string>): MeldComponentFoutCmd {

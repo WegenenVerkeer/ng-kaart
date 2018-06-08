@@ -82,13 +82,16 @@ interface StijlSelectorOpNaam {
 // elk moment aangepast worden.
 const FEATURE_STIJL_OP_LAAG = "featureStijlOpLaag";
 const SELECTIE_STIJL_OP_LAAG = "selectieStijlOpLaag";
+const HOVER_STIJL_OP_LAAG = "hoverStijlOpLaag";
 
 const featureStijlSelectorOpNaam: (map: ol.Map) => StijlSelectorOpNaam = map => map.get(FEATURE_STIJL_OP_LAAG);
 const selectieStijlSelectorOpNaam: (map: ol.Map) => StijlSelectorOpNaam = map => map.get(SELECTIE_STIJL_OP_LAAG);
+const hoverStijlSelectorOpNaam: (map: ol.Map) => StijlSelectorOpNaam = map => map.get(HOVER_STIJL_OP_LAAG);
 
 export function initStyleSelectorsInMap(map: ol.Map): void {
   map.set(FEATURE_STIJL_OP_LAAG, {});
   map.set(SELECTIE_STIJL_OP_LAAG, {});
+  map.set(HOVER_STIJL_OP_LAAG, {});
 }
 
 export function setFeatureStyleSelector(map: ol.Map, laagnaam: string, stijl: Option<StyleSelector>): void {
@@ -113,6 +116,14 @@ export function deleteSelectionStyleSelector(map: ol.Map, laagnaam: string): voi
 
 export function getSelectionStyleSelector(map: ol.Map, laagnaam: string): Option<StyleSelector> {
   return selectieStijlSelectorOpNaam(map)[laagnaam] || none;
+}
+
+export function setHoverStyleSelector(map: ol.Map, laagnaam: string, stijl: Option<StyleSelector>): void {
+  hoverStijlSelectorOpNaam(map)[laagnaam] = stijl;
+}
+
+export function getHoverStyleSelector(map: ol.Map, laagnaam: string): Option<StyleSelector> {
+  return hoverStijlSelectorOpNaam(map)[laagnaam] || none;
 }
 
 export const offsetStyleSelector: (_1: string, _2: string, _3: number) => (_: StyleSelector) => StyleSelector = (

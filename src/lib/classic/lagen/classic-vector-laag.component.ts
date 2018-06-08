@@ -6,7 +6,7 @@ import * as ol from "openlayers";
 import * as ke from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
 import * as ss from "../../kaart/stijl-selector";
-import { getDefaultSelectionStyleFunction, getDefaultStyleFunction } from "../../kaart/styles";
+import { getDefaultHoverStyleFunction, getDefaultSelectionStyleFunction, getDefaultStyleFunction } from "../../kaart/styles";
 import { forEach, orElse } from "../../util/option";
 import { KaartClassicComponent } from "../kaart-classic.component";
 import { logOnlyWrapper } from "../messages";
@@ -23,8 +23,10 @@ export class ClassicVectorLaagComponent extends ClassicLaagComponent {
   @Input() style?: ol.style.Style = undefined; // heeft voorrang op styleFunction
   @Input() styleFunction?: ol.StyleFunction = getDefaultStyleFunction(); // TODO combineren met style tot type Stylish
   @Input() selectieStyle?: ss.Stylish = getDefaultSelectionStyleFunction();
+  @Input() hoverStyle?: ss.Stylish = getDefaultHoverStyleFunction();
   @Input() zichtbaar = true;
   @Input() selecteerbaar = true;
+  @Input() hover = false;
   @Input() minZoom = 7;
   @Input() maxZoom = 15;
   @Input() offsetveld?: string = undefined;
@@ -40,7 +42,9 @@ export class ClassicVectorLaagComponent extends ClassicLaagComponent {
       source: this.source,
       styleSelector: this.getMaybeStyleSelector(),
       selectieStyleSelector: fromNullable(this.selectieStyle).chain(ss.asStyleSelector),
+      hoverStyleSelector: fromNullable(this.hoverStyle).chain(ss.asStyleSelector),
       selecteerbaar: this.selecteerbaar,
+      hover: this.hover,
       minZoom: this.minZoom,
       maxZoom: this.maxZoom,
       offsetveld: fromNullable(this.offsetveld),

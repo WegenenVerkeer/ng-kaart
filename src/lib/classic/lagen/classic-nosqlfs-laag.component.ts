@@ -27,8 +27,10 @@ export class ClassicNosqlfsLaagComponent extends ClassicLaagComponent {
   @Input() style?: ol.style.Style = undefined; // heeft voorrang op styleFunction
   @Input() styleFunction: ol.StyleFunction = getDefaultStyleFunction(); // TODO combineren met style tot type Stylish
   @Input() selectieStyle: ss.Stylish = getDefaultSelectionStyleFunction();
+  @Input() hoverStyle: ss.Stylish = getDefaultSelectionStyleFunction();
   @Input() zichtbaar = true;
   @Input() selecteerbaar = true;
+  @Input() hover = false;
   @Input() minZoom = 7;
   @Input() maxZoom = 15;
   @Input() view = "default";
@@ -53,7 +55,9 @@ export class ClassicNosqlfsLaagComponent extends ClassicLaagComponent {
       ),
       styleSelector: this.getMaybeStyleSelector(),
       selectieStyleSelector: fromNullable(this.selectieStyle).chain(ss.asStyleSelector),
+      hoverStyleSelector: fromNullable(this.hoverStyle).chain(ss.asStyleSelector),
       selecteerbaar: this.selecteerbaar,
+      hover: this.hover,
       minZoom: this.minZoom,
       maxZoom: this.maxZoom,
       offsetveld: fromNullable(this.offsetveld),

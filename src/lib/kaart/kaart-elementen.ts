@@ -77,7 +77,9 @@ export interface VectorLaag {
   readonly source: ol.source.Vector;
   readonly styleSelector: Option<StyleSelector>;
   readonly selectieStyleSelector: Option<StyleSelector>;
+  readonly hoverStyleSelector: Option<StyleSelector>;
   readonly selecteerbaar: boolean;
+  readonly hover: boolean;
   readonly minZoom: number;
   readonly maxZoom: number;
   readonly velden: OrderedMap<string, VeldInfo>;
@@ -119,6 +121,7 @@ export interface ToegevoegdeVectorLaag extends ToegevoegdeLaag {
   readonly stijlPositie: number; // We gaan er van uit dat alle vectorlagen in dezelfde groep zitten!
   readonly stijlSel: Option<StyleSelector>;
   readonly selectiestijlSel: Option<StyleSelector>;
+  readonly hoverstijlSel: Option<StyleSelector>;
 }
 
 export const isWmsLaag: (laag: Laag) => boolean = laag => laag.type === SingleTileWmsType || laag.type === TiledWmsType;

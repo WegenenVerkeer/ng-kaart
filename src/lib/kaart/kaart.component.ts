@@ -84,6 +84,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   @Input() maxZoom = 15; // TODO naar config
   @Input() naam = "kaart";
   @Input() selectieModus: prt.SelectieModus = "none";
+  @Input() hoverModus: prt.HoverModus = "off";
 
   // Dit dient om messages naar toe te sturen
 
@@ -143,7 +144,10 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     kaartLogger.info(`Kaart '${this.naam}' aangemaakt`);
 
     const messageConsumer = (msg: prt.KaartMsg) => {
-      asap(() => this.msgSubj.next(msg));
+      // asap(() => {//TODO !!!
+      console.log("=== kaart commp === hover");
+      this.msgSubj.next(msg);
+      // });
     };
 
     return this.kaartCmd$.pipe(

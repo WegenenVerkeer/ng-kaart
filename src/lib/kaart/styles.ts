@@ -46,6 +46,14 @@ export function getDefaultSelectionStyleFunction(): ol.StyleFunction {
   };
 }
 
+export function getDefaultHoverStyleFunction(): ol.StyleFunction {
+  const styles = createEditingStyle();
+
+  return function(feature, resolution) {
+    return styles[feature.getGeometry().getType()];
+  };
+}
+
 function createEditingStyle() {
   const white: ol.Color = [255, 255, 255, 1];
   const blue: ol.Color = [0, 153, 255, 1];

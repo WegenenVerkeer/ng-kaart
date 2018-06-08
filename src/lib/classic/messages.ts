@@ -3,7 +3,7 @@ import * as ol from "openlayers";
 
 import * as ke from "../kaart/kaart-elementen";
 import * as prt from "../kaart/kaart-protocol";
-import { GeselecteerdeFeatures } from "../kaart/kaart-with-info-model";
+import { GeselecteerdeFeatures, HoverFeature } from "../kaart/kaart-with-info-model";
 
 import { classicLogger } from "./log";
 
@@ -19,6 +19,7 @@ export interface KaartClassicMsg {
 export type KaartClassicSubMsg =
   | FeatureGedeselecteerdMsg
   | FeatureSelectieAangepastMsg
+  | FeatureHoverAangepastMsg
   | ZichtbareFeaturesAangepastMsg
   | TekenGeomAangepastMsg
   | SubscribedMsg
@@ -32,6 +33,11 @@ export type KaartClassicSubMsg =
 export interface FeatureSelectieAangepastMsg {
   readonly type: "FeatureSelectieAangepast";
   readonly geselecteerdeFeatures: GeselecteerdeFeatures;
+}
+
+export interface FeatureHoverAangepastMsg {
+  readonly type: "FeatureHoverAangepast";
+  readonly feature: HoverFeature;
 }
 
 export interface TekenGeomAangepastMsg {
@@ -98,6 +104,10 @@ export function KaartClassicMsg(payload: KaartClassicSubMsg): KaartClassicMsg {
 
 export function FeatureSelectieAangepastMsg(geselecteerdeFeatures: GeselecteerdeFeatures): FeatureSelectieAangepastMsg {
   return { type: "FeatureSelectieAangepast", geselecteerdeFeatures: geselecteerdeFeatures };
+}
+
+export function FeatureHoverAangepastMsg(hoverFeature: HoverFeature): FeatureHoverAangepastMsg {
+  return { type: "FeatureHoverAangepast", feature: hoverFeature };
 }
 
 export function ZichtbareFeaturesAangepastMsg(features: List<ol.Feature>): ZichtbareFeaturesAangepastMsg {

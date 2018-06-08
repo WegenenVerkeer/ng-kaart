@@ -17,6 +17,7 @@ export type Subscription<Msg> =
   | MiddelpuntSubscription<Msg>
   | ExtentSubscription<Msg>
   | GeselecteerdeFeaturesSubscription<Msg>
+  | HoverFeaturesSubscription<Msg>
   | ZichtbareFeaturesSubscription<Msg>
   | AchtergrondTitelSubscription<Msg>
   | LagenInGroepSubscription<Msg>
@@ -43,6 +44,10 @@ export interface GeselecteerdeFeatures {
   verwijderd: Option<ol.Feature>;
 }
 
+export interface HoverFeature {
+  geselecteerd: Option<ol.Feature>;
+}
+
 export interface ViewinstellingenSubscription<Msg> {
   readonly type: "Viewinstellingen";
   readonly wrapper: (instellingen: Viewinstellingen) => Msg;
@@ -66,6 +71,11 @@ export interface ExtentSubscription<Msg> {
 export interface GeselecteerdeFeaturesSubscription<Msg> {
   readonly type: "GeselecteerdeFeatures";
   readonly wrapper: (geselecteerdeFeatures: GeselecteerdeFeatures) => Msg;
+}
+
+export interface HoverFeaturesSubscription<Msg> {
+  readonly type: "HoverFeatures";
+  readonly wrapper: (hoverFeature: HoverFeature) => Msg;
 }
 
 export interface ZichtbareFeaturesSubscription<Msg> {
@@ -132,6 +142,10 @@ export function GeselecteerdeFeaturesSubscription<Msg>(
   wrapper: (geselecteerdeFeatures: GeselecteerdeFeatures) => Msg
 ): GeselecteerdeFeaturesSubscription<Msg> {
   return { type: "GeselecteerdeFeatures", wrapper: wrapper };
+}
+
+export function HoverFeaturesSubscription<Msg>(wrapper: (hoverFeatures: HoverFeature) => Msg): HoverFeaturesSubscription<Msg> {
+  return { type: "HoverFeatures", wrapper: wrapper };
 }
 
 export function ZichtbareFeaturesSubscription<Msg>(

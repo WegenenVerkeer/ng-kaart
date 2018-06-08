@@ -83,6 +83,31 @@
   </pre> -->
 </div>
 
+<h3>Patrimonium (selectie, hover)</h3>
+<div class="kaart-wrapper" (mousemove)="popup.move($event)">
+  <button (click)="maakZichtbaar('patrimonium', !isZichtbaar('patrimonium'))">
+    {{isZichtbaar('patrimonium')?'Verberg':'Toon'}}
+  </button>
+  <awv-kaart-classic *ngIf="isZichtbaar('patrimonium')" [selectieModus]="'single'" [hoverModus]="'on'" (hoverFeature)="popup.update($event)">
+    <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+    <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
+
+    <awv-kaart-nosqlfs-laag [titel]="'percelen'"
+                            [url]="'http://apigateway:5100/patrimonium'"
+                            [database]="'todo'"
+                            [collection]="'todo'"
+                            [hover]="true"
+                            [minZoom]="0"></awv-kaart-nosqlfs-laag>
+    <!--[styleFunction]="perceelStyle"-->
+
+    <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
+
+    <awv-kaart-knop-achtergrondlaag-kiezer [titels]="['Dienstkaart grijs', 'Dienstkaart kleur']"></awv-kaart-knop-achtergrondlaag-kiezer>
+
+  </awv-kaart-classic>
+  <awv-pat-perceel-popup #popup></awv-pat-perceel-popup>
+</div>
+
 <!--
 <h3>Ingezoomd dmv extent + schaal</h3>
 <div>

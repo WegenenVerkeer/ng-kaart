@@ -16,6 +16,11 @@ body {
   order: 120;
 }
 
+.kaart-wrapper {
+  position: relative;
+}
+
+
 .kaart-links-scrollbar-zichtbaar {
   .kaart-fixed-links-boven {
     background: orange !important;
