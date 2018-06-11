@@ -57,7 +57,8 @@ export type Command<Msg extends KaartMsg> =
   | SluitInfoBoodschapCmd<Msg>
   | VoegUiElementToe
   | VerwijderUiElement
-  | ZetUiElementOpties;
+  | ZetUiElementOpties
+  | RefreshKaartLinksWeergave;
 
 export interface SubscriptionResult {
   readonly subscription: RxSubscription;
@@ -551,5 +552,15 @@ export function SluitInfoBoodschapCmd<Msg extends KaartMsg>(id: string, msgGen: 
     type: "SluitInfoBoodschap",
     id: id,
     msgGen: msgGen
+  };
+}
+
+export interface RefreshKaartLinksWeergave {
+  readonly type: "RefreshKaartLinksWeergave";
+}
+
+export function RefreshKaarLinksWeergave(): RefreshKaartLinksWeergave {
+  return {
+    type: "RefreshKaartLinksWeergave"
   };
 }

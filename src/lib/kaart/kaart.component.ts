@@ -95,7 +95,6 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     this.kaartLinksToggleZichtbaar = false;
     this.kaartLinksScrollbarZichtbaar = false;
     this.internalMessage$ = this.msgSubj.pipe(
-      tap(m => this.checkKaartLinksRendering()),
       filter(m => m.type === "KaartInternal"), //
       map(m => (m as KaartInternalMsg).payload),
       emitSome,
@@ -150,6 +149,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     return this.kaartCmd$.pipe(
       merge(this.internalCmdDispatcher.commands$),
       tap(c => kaartLogger.debug("kaart command", c)),
+      tap(c => this.checkKaartLinksRendering()),
       takeUntil(this.destroying$.pipe(delay(100))), // Een klein beetje extra tijd voor de cleanup commands
       observerOutsideAngular(this.zone),
       scan((model: KaartWithInfo, cmd: prt.Command<any>) => {
