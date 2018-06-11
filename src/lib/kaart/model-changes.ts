@@ -86,11 +86,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     }))
   );
 
-  const geselecteerdeFeatures$ = toegevoegdeGeselecteerdeFeatures$.pipe(
-    merge(verwijderdeGeselecteerdeFeatures$),
-    debounceTime(50),
-    shareReplay(1)
-  );
+  const geselecteerdeFeatures$ = toegevoegdeGeselecteerdeFeatures$.pipe(merge(verwijderdeGeselecteerdeFeatures$), shareReplay(1));
 
   // Met window resize hebben we niet alle bronnen van herschaling, maar toch al een grote
   const resize$ = rx.Observable.fromEvent(window, "resize").pipe(debounceTime(100));
