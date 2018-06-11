@@ -1,5 +1,5 @@
 import {
-  AfterViewChecked,
+  AfterViewInit,
   Component,
   ElementRef,
   Inject,
@@ -46,7 +46,7 @@ export const vacuousKaartMsgObservableConsumer: KaartMsgObservableConsumer = () 
   styleUrls: ["./kaart.component.scss"],
   encapsulation: ViewEncapsulation.Emulated // Omwille hiervan kunnen we geen globale CSS gebruiken, maar met Native werken animaties niet
 })
-export class KaartComponent extends KaartComponentBase implements OnInit, OnDestroy, AfterViewChecked {
+export class KaartComponent extends KaartComponentBase implements OnInit, OnDestroy, AfterViewInit {
   kaartLinksZichtbaar: boolean;
   kaartLinksToggleZichtbaar: boolean;
   kaartLinksScrollbarZichtbaar: boolean;
@@ -95,6 +95,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     this.kaartLinksToggleZichtbaar = false;
     this.kaartLinksScrollbarZichtbaar = false;
     this.internalMessage$ = this.msgSubj.pipe(
+      tap(m => this.checkKaartLinksRendering()),
       filter(m => m.type === "KaartInternal"), //
       map(m => (m as KaartInternalMsg).payload),
       emitSome,
@@ -192,22 +193,28 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     return this.innerAanwezigeElementen$;
   }
 
-  ngAfterViewChecked() {
+  ngAfterViewInit() {
+    this.checkKaartLinksRendering();
+  }
+
+  checkKaartLinksRendering() {
     setTimeout(() => {
       // Toggle pas tonen vanaf 40px hoogte.
       this.kaartLinksToggleZichtbaar =
-        this.kaartFixedLinksBovenElement.nativeElement.clientHeight + this.kaartLinksElement.nativeElement.clientHeight >= 40;
+        this.kaartFixedLinksBovenElement.nativeElement.offsetHeight + this.kaartLinksElement.nativeElement.offsetHeight >= 40;
 
       // Als de scrollbar zichtbaar is andere styling toepassen (bvb: achtergrond een kleur geven).
       this.kaartLinksScrollbarZichtbaar =
-        this.kaartLinksElement.nativeElement.scrollHeight > this.kaartLinksElement.nativeElement.clientHeight;
+        this.kaartLinksElement.nativeElement.scrollHeight > this.kaartLinksElement.nativeElement.offsetHeight;
 
-      // Als er een fixed header is bovenaan links moet er genoeg margin gegeven worden aan de kaart-links anders overlapt die.
-      this.kaartLinksElement.nativeElement.style.marginTop = this.kaartFixedLinksBovenElement.nativeElement.clientHeight + "px";
+      setTimeout(() => {
+        // Als er een fixed header is bovenaan links moet er genoeg margin gegeven worden aan de kaart-links anders overlapt die.
+        this.kaartLinksElement.nativeElement.style.marginTop = this.kaartFixedLinksBovenElement.nativeElement.offsetHeight + "px";
+      }, 200);
 
       // Als er een fixed header is bovenaan links moet de max-height van kaart-links daar ook rekening mee houden.
       this.kaartLinksElement.nativeElement.style.maxHeight =
-        "calc(100% - " + this.kaartFixedLinksBovenElement.nativeElement.clientHeight + "px - 8px)"; // -8px is van padding-top.
+        "calc(100% - " + this.kaartFixedLinksBovenElement.nativeElement.offsetHeight + "px - 8px)"; // -8px is van padding-top.
     });
   }
 
