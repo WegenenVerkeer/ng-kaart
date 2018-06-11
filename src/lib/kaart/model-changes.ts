@@ -87,11 +87,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     }))
   );
 
-  const geselecteerdeFeatures$ = toegevoegdeGeselecteerdeFeatures$.pipe(
-    merge(verwijderdeGeselecteerdeFeatures$),
-    debounceTime(50),
-    shareReplay(1)
-  );
+  const geselecteerdeFeatures$ = toegevoegdeGeselecteerdeFeatures$.pipe(merge(verwijderdeGeselecteerdeFeatures$), shareReplay(1));
 
   const hoverFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.hoverFeatures, "add", "remove").pipe(
     map(evt => ({
