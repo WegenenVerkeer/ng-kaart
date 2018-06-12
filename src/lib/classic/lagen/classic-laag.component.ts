@@ -14,6 +14,7 @@ export abstract class ClassicLaagComponent implements AfterContentInit, OnInit, 
   @Input() groep: Laaggroep | undefined; // Heeft voorrang op std ingesteld via laaggroep
   @Input() minZoom = 2;
   @Input() maxZoom = 16;
+  @Input() stijl?: string;
 
   @ContentChildren(ClassicLegendeItemComponent) legendeItems: QueryList<ClassicLegendeItemComponent>;
 
@@ -46,6 +47,7 @@ export abstract class ClassicLaagComponent implements AfterContentInit, OnInit, 
       laaggroep: this.gekozenLaagGroep(),
       magGetoondWorden: this.zichtbaar,
       legende: legende,
+      stijlInLagenKiezer: fromNullable(this.stijl),
       wrapper: logOnlyWrapper
     });
   }

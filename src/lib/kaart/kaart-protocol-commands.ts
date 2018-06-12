@@ -90,6 +90,7 @@ export interface VoegLaagToeCmd<Msg extends KaartMsg> {
   readonly magGetoondWorden: boolean;
   readonly laaggroep: ke.Laaggroep;
   readonly legende: Option<Legende>;
+  readonly stijlInLagenKiezer: Option<string>;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -365,6 +366,7 @@ export function VoegLaagToeCmd<Msg extends KaartMsg>(
   magGetoondWorden: boolean,
   laagGroep: ke.Laaggroep,
   legende: Option<Legende>,
+  stijlInLagenKiezer: Option<string>,
   wrapper: BareValidationWrapper<Msg>
 ): VoegLaagToeCmd<Msg> {
   return {
@@ -374,6 +376,7 @@ export function VoegLaagToeCmd<Msg extends KaartMsg>(
     magGetoondWorden: magGetoondWorden,
     laaggroep: laagGroep,
     legende: legende,
+    stijlInLagenKiezer: stijlInLagenKiezer,
     wrapper: wrapper
   };
 }

@@ -286,6 +286,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       magGetoondWorden: true,
       laaggroep: "Tools",
       legende: none,
+      stijlInLagenKiezer: none,
       wrapper: kaartLogOnlyWrapper
     });
   }
