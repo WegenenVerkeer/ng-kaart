@@ -12,7 +12,7 @@ import * as prt from "./kaart-protocol";
 import { UiElementOpties } from "./kaart-protocol-commands";
 import { Viewinstellingen } from "./kaart-protocol-subscriptions";
 import { KaartWithInfo } from "./kaart-with-info";
-import { GeselecteerdeFeatures } from "./kaart-with-info-model";
+import { GeselecteerdeFeatures, HoverFeature } from "./kaart-with-info-model";
 
 export interface UiElementSelectie {
   naam: string;
@@ -56,6 +56,7 @@ export interface ModelChanges {
   readonly lagenOpGroep$: Map<ke.Laaggroep, rx.Observable<List<ke.ToegevoegdeLaag>>>;
   readonly laagVerwijderd$: rx.Observable<ke.ToegevoegdeLaag>;
   readonly geselecteerdeFeatures$: rx.Observable<GeselecteerdeFeatures>;
+  readonly hoverFeatures$: rx.Observable<HoverFeature>;
   readonly zichtbareFeatures$: rx.Observable<List<ol.Feature>>;
   readonly klikLocatie$: rx.Observable<ol.Coordinate>;
   readonly mijnLocatieZoomDoel$: rx.Observable<Option<number>>;
@@ -87,6 +88,12 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
   );
 
   const geselecteerdeFeatures$ = toegevoegdeGeselecteerdeFeatures$.pipe(merge(verwijderdeGeselecteerdeFeatures$), shareReplay(1));
+
+  const hoverFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.hoverFeatures, "add", "remove").pipe(
+    map(evt => ({
+      geselecteerd: model.hoverFeatures.getLength() !== 0 ? some(model.hoverFeatures.item(0)) : none
+    }))
+  );
 
   // Met window resize hebben we niet alle bronnen van herschaling, maar toch al een grote
   const resize$ = rx.Observable.fromEvent(window, "resize").pipe(debounceTime(100));
@@ -152,6 +159,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     viewinstellingen$: viewinstellingen$,
     lagenOpGroep$: lagenOpGroep$,
     geselecteerdeFeatures$: geselecteerdeFeatures$,
+    hoverFeatures$: hoverFeatures$,
     zichtbareFeatures$: zichtbareFeatures$,
     klikLocatie$: klikLocatie$,
     mijnLocatieZoomDoel$: changer.mijnLocatieZoomDoelSubj.asObservable()

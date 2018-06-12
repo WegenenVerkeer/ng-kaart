@@ -13,9 +13,10 @@ import { ZoekerModule } from "../lib/zoeker/index";
 import { AppComponent } from "./app.component";
 import { AvKaartInnerComponent } from "./av-kaart-inner.component";
 import { AvKaartComponent } from "./av-kaart.component";
+import { PerceelPopupComponent } from "./perceel-popup/perceel-popup.component";
 
 @NgModule({
-  declarations: [AppComponent, AvKaartComponent, AvKaartInnerComponent],
+  declarations: [AppComponent, AvKaartComponent, AvKaartInnerComponent, PerceelPopupComponent],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,

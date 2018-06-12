@@ -111,6 +111,7 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
       maxResolution: array.index(vectorlaag.minZoom - 1, kaart.config.defaults.resolutions).getOrElse(kaart.config.defaults.resolutions[0])
     });
     vector.set("selecteerbaar", vectorlaag.selecteerbaar);
+    vector.set("hover", vectorlaag.hover);
     return vector;
   }
 

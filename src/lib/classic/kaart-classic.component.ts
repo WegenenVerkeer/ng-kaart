@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, NgZone, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from "@angular/core";
 import { pipe } from "fp-ts/lib/function";
 import * as option from "fp-ts/lib/Option";
-import { some } from "fp-ts/lib/Option";
+import { Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
@@ -19,6 +19,7 @@ import { classicLogger } from "./log";
 import {
   ExtentAangepastMsg,
   FeatureGedeselecteerdMsg,
+  FeatureHoverAangepastMsg,
   FeatureSelectieAangepastMsg,
   KaartClassicMsg,
   KaartClassicSubMsg,
@@ -50,6 +51,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   @Input() mijnLocatieZoom: number | undefined;
   @Input() extent: ol.Extent;
   @Input() selectieModus: prt.SelectieModus = "none";
+  @Input() hoverModus: prt.HoverModus = "off";
   @Input() naam = "kaart" + KaartClassicComponent.counter++;
   @Input() geselecteerdeFeatures: List<ol.Feature> = List();
 
@@ -58,6 +60,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   @Output() zoomChange: EventEmitter<number> = new EventEmitter();
   @Output() extentChange: EventEmitter<ol.Extent> = new EventEmitter();
   @Output() zichtbareFeatures: EventEmitter<List<ol.Feature>> = new EventEmitter();
+  @Output() hoverFeature: EventEmitter<Option<ol.Feature>> = new EventEmitter();
 
   constructor(zone: NgZone) {
     super(zone);
@@ -75,6 +78,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
           classicMsgSubscriptionCmdOperator(
             this.dispatcher,
             prt.GeselecteerdeFeaturesSubscription(pipe(FeatureSelectieAangepastMsg, KaartClassicMsg)),
+            prt.HoverFeaturesSubscription(pipe(FeatureHoverAangepastMsg, KaartClassicMsg)),
             prt.ZichtbareFeaturesSubscription(pipe(ZichtbareFeaturesAangepastMsg, KaartClassicMsg)),
             prt.ZoomSubscription(pipe(ZoomAangepastMsg, KaartClassicMsg)),
             prt.MiddelpuntSubscription(pipe(MiddelpuntAangepastMsg, KaartClassicMsg)),
@@ -88,6 +92,8 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
           case "FeatureSelectieAangepast":
             // Zorg ervoor dat de geselecteerde features in de @Output terecht komen
             return this.geselecteerdeFeaturesChange.emit(msg.geselecteerdeFeatures.geselecteerd);
+          case "FeatureHoverAangepast":
+            return this.hoverFeature.emit(msg.feature.geselecteerd);
           case "ZichtbareFeaturesAangepast":
             return this.zichtbareFeatures.emit(msg.features);
           case "FeatureGedeselecteerd":
@@ -120,6 +126,9 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
     }
     if (this.breedte || this.hoogte) {
       this.dispatch(prt.VeranderViewportCmd([this.breedte, this.hoogte]));
+    }
+    if (this.hoverModus) {
+      this.dispatch(prt.ActiveerHoverModusCmd(this.hoverModus));
     }
     if (this.selectieModus) {
       this.dispatch(prt.ActiveerSelectieModusCmd(this.selectieModus));

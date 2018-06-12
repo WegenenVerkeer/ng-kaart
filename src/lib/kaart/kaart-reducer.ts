@@ -17,7 +17,14 @@ import { KaartWithInfo } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
 import { kaartLogger } from "./log";
 import { ModelChanger, ModelChanges } from "./model-changes";
-import { getFeatureStyleSelector, getSelectionStyleSelector, setFeatureStyleSelector, setSelectionStyleSelector } from "./stijl-selector";
+import {
+  getFeatureStyleSelector,
+  getHoverStyleSelector,
+  getSelectionStyleSelector,
+  setFeatureStyleSelector,
+  setHoverStyleSelector,
+  setSelectionStyleSelector
+} from "./stijl-selector";
 import * as ss from "./stijl-selector";
 import { getDefaultStyleSelector } from "./styles";
 
@@ -171,6 +178,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
       setFeatureStyleSelector(model.map, laag.titel, some(offsetFeatureStyleSelector));
       setSelectionStyleSelector(model.map, laag.titel, laag.selectiestijlSel.map(toOffset));
+      setHoverStyleSelector(model.map, laag.titel, laag.hoverstijlSel.map(toOffset));
     };
 
     const pasVectorLaagStijlAan: (
@@ -326,7 +334,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               ...toegevoegdeLaagCommon,
               stijlPositie: vectorLaagPositie(groepPositie, groep),
               stijlSel: vlg.styleSelector,
-              selectiestijlSel: vlg.selectieStyleSelector
+              selectiestijlSel: vlg.selectieStyleSelector,
+              hoverstijlSel: vlg.hoverStyleSelector
             }))
             .getOrElse(toegevoegdeLaagCommon);
           layer.set("titel", titel);
@@ -670,103 +679,102 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
-    function activeerSelectieModus(cmnd: prt.ActiveerSelectieModusCmd<Msg>): ModelWithResult<Msg> {
-      model.map.getInteractions().forEach(interaction => {
-        if (interaction instanceof ol.interaction.Select) {
-          model.map.removeInteraction(interaction);
+    type FeatureStyle = ol.style.Style | ol.style.Style[];
+
+    const applySelectFunction = function(feature: ol.Feature, resolution: number): FeatureStyle {
+      const applySelectionColor = function(style: ol.style.Style): ol.style.Style {
+        const selectionStrokeColor: ol.Color = [0, 153, 255, 1]; // TODO maak configureerbaar
+        const selectionFillColor: ol.Color = [112, 198, 255, 0.7]; // TODO maak configureerbaar
+        const selectionIconColor: ol.Color = [0, 51, 153, 0.7]; // TODO maak configureerbaar
+
+        const selectionStyle = style.clone();
+        if (selectionStyle.getStroke()) {
+          selectionStyle.getStroke().setColor(selectionStrokeColor);
         }
-      });
-
-      type FeatureStyle = ol.style.Style | ol.style.Style[];
-
-      const applySelectFunction = function(feature: ol.Feature, resolution: number): FeatureStyle {
-        const applySelectionColor = function(style: ol.style.Style): ol.style.Style {
-          const selectionStrokeColor: ol.Color = [0, 153, 255, 1]; // TODO maak configureerbaar
-          const selectionFillColor: ol.Color = [112, 198, 255, 0.7]; // TODO maak configureerbaar
-          const selectionIconColor: ol.Color = [0, 51, 153, 0.7]; // TODO maak configureerbaar
-
-          const selectionStyle = style.clone();
-          if (selectionStyle.getStroke()) {
-            selectionStyle.getStroke().setColor(selectionStrokeColor);
+        if (selectionStyle.getFill()) {
+          selectionStyle.getFill().setColor(selectionFillColor);
+        }
+        if (selectionStyle.getImage()) {
+          // getekende Point objecten ook inkleuren
+          if (selectionStyle.getImage() instanceof ol.style.Circle) {
+            const circle = selectionStyle.getImage() as ol.style.Circle;
+            circle.getStroke().setColor(selectionStrokeColor);
+            circle.getFill().setColor(selectionFillColor);
+            // volgende is nodig, anders heeft style aanpassing geen effect
+            selectionStyle.setImage(
+              new ol.style.Circle({
+                radius: circle.getRadius(),
+                stroke: circle.getStroke(),
+                fill: circle.getFill(),
+                snapToPixel: circle.getSnapToPixel()
+              })
+            );
+          } else if (selectionStyle.getImage() instanceof ol.style.RegularShape) {
+            const shape = selectionStyle.getImage() as ol.style.RegularShape;
+            shape.getStroke().setColor(selectionStrokeColor);
+            shape.getFill().setColor(selectionFillColor);
+            // volgende is nodig, anders heeft style aanpassing geen effect
+            selectionStyle.setImage(
+              new ol.style.RegularShape({
+                fill: shape.getFill(),
+                points: shape.getPoints(),
+                radius: shape.getRadius(),
+                radius1: shape.getRadius(),
+                radius2: shape.getRadius2(),
+                angle: shape.getAngle(),
+                snapToPixel: shape.getSnapToPixel(),
+                stroke: shape.getStroke(),
+                rotation: shape.getRotation()
+              })
+            );
+          } else if (selectionStyle.getImage() instanceof ol.style.Icon) {
+            const icon = selectionStyle.getImage() as ol.style.Icon;
+            selectionStyle.setImage(
+              new ol.style.Icon({
+                color: selectionIconColor,
+                src: icon.getSrc()
+              })
+            );
           }
-          if (selectionStyle.getFill()) {
-            selectionStyle.getFill().setColor(selectionFillColor);
-          }
-          if (selectionStyle.getImage()) {
-            // getekende Point objecten ook inkleuren
-            if (selectionStyle.getImage() instanceof ol.style.Circle) {
-              const circle = selectionStyle.getImage() as ol.style.Circle;
-              circle.getStroke().setColor(selectionStrokeColor);
-              circle.getFill().setColor(selectionFillColor);
-              // volgende is nodig, anders heeft style aanpassing geen effect
-              selectionStyle.setImage(
-                new ol.style.Circle({
-                  radius: circle.getRadius(),
-                  stroke: circle.getStroke(),
-                  fill: circle.getFill(),
-                  snapToPixel: circle.getSnapToPixel()
-                })
-              );
-            } else if (selectionStyle.getImage() instanceof ol.style.RegularShape) {
-              const shape = selectionStyle.getImage() as ol.style.RegularShape;
-              shape.getStroke().setColor(selectionStrokeColor);
-              shape.getFill().setColor(selectionFillColor);
-              // volgende is nodig, anders heeft style aanpassing geen effect
-              selectionStyle.setImage(
-                new ol.style.RegularShape({
-                  fill: shape.getFill(),
-                  points: shape.getPoints(),
-                  radius: shape.getRadius(),
-                  radius1: shape.getRadius(),
-                  radius2: shape.getRadius2(),
-                  angle: shape.getAngle(),
-                  snapToPixel: shape.getSnapToPixel(),
-                  stroke: shape.getStroke(),
-                  rotation: shape.getRotation()
-                })
-              );
-            } else if (selectionStyle.getImage() instanceof ol.style.Icon) {
-              const icon = selectionStyle.getImage() as ol.style.Icon;
-              selectionStyle.setImage(
-                new ol.style.Icon({
-                  color: selectionIconColor,
-                  src: icon.getSrc()
-                })
-              );
-            }
-          }
-          return selectionStyle;
-        };
-
-        const executeStyleSelector: (_: ss.StyleSelector) => FeatureStyle = ss.matchStyleSelector(
-          (s: ss.StaticStyle) => s.style,
-          (s: ss.DynamicStyle) => s.styleFunction(feature, resolution),
-          (s: ss.Styles) => s.styles
-        );
-
-        const noStyle: FeatureStyle = [];
-
-        return fromNullable(feature.get("laagnaam")).foldL(
-          () => {
-            kaartLogger.warn("Geen laagnaam gevonden voor: ", feature);
-            return noStyle;
-          },
-          laagnaam =>
-            getSelectionStyleSelector(model.map, laagnaam).foldL(
-              () => {
-                kaartLogger.warn("Geen selectiestijl gevonden voor:", feature);
-                return getFeatureStyleSelector(model.map, laagnaam).foldL<FeatureStyle>(
-                  () => {
-                    kaartLogger.error("Ook geen stijlselector gevonden voor:", feature);
-                    return noStyle;
-                  },
-                  pipe(executeStyleSelector, applySelectionColor) // we vallen terug op feature stijl met custom kleurtje
-                );
-              },
-              executeStyleSelector // dit is het perfecte geval: evalueer de selectiestijl selector
-            )
-        );
+        }
+        return selectionStyle;
       };
+
+      const executeStyleSelector: (_: ss.StyleSelector) => FeatureStyle = ss.matchStyleSelector(
+        (s: ss.StaticStyle) => s.style,
+        (s: ss.DynamicStyle) => s.styleFunction(feature, resolution),
+        (s: ss.Styles) => s.styles
+      );
+
+      const noStyle: FeatureStyle = [];
+
+      return fromNullable(feature.get("laagnaam")).foldL(
+        () => {
+          kaartLogger.warn("Geen laagnaam gevonden voor: ", feature);
+          return noStyle;
+        },
+        laagnaam =>
+          getSelectionStyleSelector(model.map, laagnaam).foldL(
+            () => {
+              kaartLogger.warn("Geen selectiestijl gevonden voor:", feature);
+              return getFeatureStyleSelector(model.map, laagnaam).foldL<FeatureStyle>(
+                () => {
+                  kaartLogger.error("Ook geen stijlselector gevonden voor:", feature);
+                  return noStyle;
+                },
+                pipe(executeStyleSelector, applySelectionColor) // we vallen terug op feature stijl met custom kleurtje
+              );
+            },
+            executeStyleSelector // dit is het perfecte geval: evalueer de selectiestijl selector
+          )
+      );
+    };
+
+    function activeerSelectieModus(cmnd: prt.ActiveerSelectieModusCmd<Msg>): ModelWithResult<Msg> {
+      // todo check if necessary
+      // model.map.getInteractions().forEach(interaction => {
+      //   model.map.removeInteraction(interaction);
+      // });
 
       function getSelectInteraction(modus: prt.SelectieModus): Option<olx.interaction.SelectOptions> {
         switch (modus) {
@@ -799,6 +807,28 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             condition: ol.events.condition.platformModifierKeyOnly
           })
         );
+      });
+
+      return ModelWithResult(model);
+    }
+
+    function activeerHoverModus(cmnd: prt.ActiveerHoverModusCmd<Msg>): ModelWithResult<Msg> {
+      function getHoverInteraction(modus: prt.HoverModus): Option<olx.interaction.SelectOptions> {
+        switch (modus) {
+          case "on":
+            return some({
+              condition: ol.events.condition.pointerMove,
+              features: model.hoverFeatures,
+              style: applySelectFunction,
+              layers: layer => layer.get("hover")
+            });
+          case "off":
+            return none;
+        }
+      }
+
+      forEach(getHoverInteraction(cmnd.hoverModus), selectInteraction => {
+        model.map.addInteraction(new ol.interaction.Select(selectInteraction));
       });
 
       return ModelWithResult(model);
@@ -968,6 +998,15 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         );
       }
 
+      function subscribeToHoverFeatures(sub: prt.HoverFeaturesSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult(
+          "HoverFeatures",
+          modelChanges.hoverFeatures$.subscribe(pm => {
+            msgConsumer(sub.wrapper(pm));
+          })
+        );
+      }
+
       function subscribeToZichtbareFeatures(sub: prt.ZichtbareFeaturesSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
           "ZichtbareFeatures", //
@@ -1072,6 +1111,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToAchtergrondTitel(cmnd.subscription);
         case "GeselecteerdeFeatures":
           return subscribeToGeselecteerdeFeatures(cmnd.subscription);
+        case "HoverFeatures":
+          return subscribeToHoverFeatures(cmnd.subscription);
         case "ZichtbareFeatures":
           return subscribeToZichtbareFeatures(cmnd.subscription);
         case "LagenInGroep":
@@ -1133,6 +1174,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return verliesFocusOpKaartCmd(cmd);
       case "VervangFeatures":
         return vervangFeaturesCmd(cmd);
+      case "ActiveerHoverModus":
+        return activeerHoverModus(cmd);
       case "ActiveerSelectieModus":
         return activeerSelectieModus(cmd);
       case "ToonAchtergrondKeuze":

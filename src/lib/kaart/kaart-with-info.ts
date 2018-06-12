@@ -34,6 +34,7 @@ export class KaartWithInfo {
 
   // Een serieuze doorn in het oog. Dit is een collectie die automagisch door OL up-to-date gehouden wordt (mbv interactie).
   readonly geselecteerdeFeatures: ol.Collection<ol.Feature> = new ol.Collection<ol.Feature>();
+  readonly hoverFeatures: ol.Collection<ol.Feature> = new ol.Collection<ol.Feature>();
 
   readonly achtergrondlaagtitelSubj: Subject<string> = new ReplaySubject<string>(1);
   readonly zoekerSubj: Subject<ZoekResultaten> = new ReplaySubject<ZoekResultaten>(1);
