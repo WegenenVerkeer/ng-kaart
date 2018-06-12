@@ -42,7 +42,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   readonly kaartMsgObservableConsumer: KaartMsgObservableConsumer;
 
   @Input() zoom: number;
-  @Input() minZoom = 0;
+  @Input() minZoom = 1;
   @Input() maxZoom = 15;
   @Input() middelpunt: ol.Coordinate; // = [130000, 193000]; // "extent" heeft voorrang
   @Input() breedte; // neem standaard de hele breedte in
