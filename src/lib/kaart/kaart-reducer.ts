@@ -1087,7 +1087,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return modelWithSubscriptionResult(
           "HoverFeatures",
           modelChanges.hoverFeatures$.subscribe(pm => {
-            console.log("=== reducer === hover ");
             msgConsumer(sub.wrapper(pm));
           })
         );

@@ -144,10 +144,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     kaartLogger.info(`Kaart '${this.naam}' aangemaakt`);
 
     const messageConsumer = (msg: prt.KaartMsg) => {
-      // asap(() => {//TODO !!!
-      console.log("=== kaart commp === hover");
-      this.msgSubj.next(msg);
-      // });
+      asap(() => this.msgSubj.next(msg));
     };
 
     return this.kaartCmd$.pipe(

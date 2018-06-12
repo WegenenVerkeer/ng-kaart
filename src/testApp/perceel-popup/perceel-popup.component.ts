@@ -21,7 +21,6 @@ export class PerceelPopupComponent implements OnChanges {
   ngOnChanges() {}
 
   update(feature: Option<ol.Feature>) {
-    console.log("===============");
     this.feature = feature;
     this.toggleVisibility(this.feature.isSome());
     if (this.feature.isNone()) {
