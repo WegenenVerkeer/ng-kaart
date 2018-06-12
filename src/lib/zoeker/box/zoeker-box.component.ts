@@ -299,9 +299,8 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.toonResultaat = !this.toonResultaat;
     if (this.toonResultaat) {
       this.zoomNaarVolledigeExtent();
-    } else {
-      this.dispatch(prt.RefreshKaarLinksWeergave());
     }
+    this.dispatch(prt.RefreshKaarLinksWeergave());
   }
 
   toggleHelp() {
