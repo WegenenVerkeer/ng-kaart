@@ -54,6 +54,7 @@ export type Command<Msg extends KaartMsg> =
   | VerbergInfoBoodschapCmd
   | SelecteerFeaturesCmd
   | DeselecteerFeatureCmd
+  | DeselecteerAlleFeaturesCmd
   | SluitInfoBoodschapCmd<Msg>
   | VoegUiElementToe
   | VerwijderUiElement
@@ -323,6 +324,10 @@ export interface DeselecteerFeatureCmd {
   readonly id: string;
 }
 
+export interface DeselecteerAlleFeaturesCmd {
+  readonly type: "DeselecteerAlleFeatures";
+}
+
 export interface SluitInfoBoodschapCmd<Msg extends KaartMsg> {
   readonly type: "SluitInfoBoodschap";
   readonly id: string;
@@ -544,6 +549,12 @@ export function DeselecteerFeatureCmd(id: string): DeselecteerFeatureCmd {
   return {
     type: "DeselecteerFeature",
     id: id
+  };
+}
+
+export function DeselecteerAllesFeaturesCmd(): DeselecteerAlleFeaturesCmd {
+  return {
+    type: "DeselecteerAlleFeatures"
   };
 }
 

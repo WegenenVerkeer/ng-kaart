@@ -845,6 +845,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
+    function deselecteerAlleFeatures(): ModelWithResult<Msg> {
+      model.geselecteerdeFeatures.clear();
+      return ModelWithResult(model);
+    }
+
     function sluitInfoBoodschap(cmnd: prt.SluitInfoBoodschapCmd<Msg>): ModelWithResult<Msg> {
       const maybeMsg = cmnd.msgGen() as Option<Msg>;
       return maybeMsg.foldL(
@@ -1176,6 +1181,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return selecteerFeatures(cmd);
       case "DeselecteerFeature":
         return deselecteerFeature(cmd);
+      case "DeselecteerAlleFeatures":
+        return deselecteerAlleFeatures();
       case "SluitInfoBoodschap":
         return sluitInfoBoodschap(cmd);
       case "VoegUiElementToe":
