@@ -48,7 +48,7 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
   }
 
   get stijlInKiezer() {
-    return this.laag.stijlInKiezer.getOrElse("");
+    return this.laag.stijlInLagenKiezer.getOrElse("");
   }
 
   toggleGekozen() {
