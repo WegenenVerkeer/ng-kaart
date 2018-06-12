@@ -564,7 +564,7 @@ export function DeselecteerFeatureCmd(id: string): DeselecteerFeatureCmd {
   };
 }
 
-export function DeselecteerAllesFeaturesCmd(): DeselecteerAlleFeaturesCmd {
+export function DeselecteerAlleFeaturesCmd(): DeselecteerAlleFeaturesCmd {
   return {
     type: "DeselecteerAlleFeatures"
   };
