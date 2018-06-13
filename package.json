@@ -33,6 +33,7 @@
     "build-es2015": "npm run compile-es2015; npm run rollup-es2015",
     "build-es5": "npm run compile-es5; npm run rollup-es5",
     "build": "npm run build-es2015; npm run build-es5",
+    "build-test-app": "ng build",
     "postbuild": "rsync -a --exclude=*.js --exclude=*.js.map out/tsc/lib-es2015/ dist/; cp src/lib/package.json dist/package.json; cp README.md dist/README.md",
     "devel": "onchange 'src/**/*.ts' -i -- npm run build",
     "lint": "tslint --project tsconfig.json \"src/**/*.ts\" --exclude \"src/**/*.d.ts\" --exclude \"src/main.ts\" --exclude \"src/test.ts\"",
