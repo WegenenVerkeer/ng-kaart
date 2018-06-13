@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, NgZone, OnInit } from "@angular/core";
+import { ChangeDetectionStrategy, Component, Input, NgZone, OnInit, ViewEncapsulation } from "@angular/core";
 import * as rx from "rxjs";
 import { distinctUntilChanged, map } from "rxjs/operators";
 
@@ -17,6 +17,7 @@ import { LagenkiezerComponent } from "./lagenkiezer.component";
   selector: "[awvLaagmanipulatie]",
   templateUrl: "./laagmanipulatie.component.html",
   styleUrls: ["./laagmanipulatie.component.scss"],
+  encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LaagmanipulatieComponent extends KaartChildComponentBase implements OnInit {
@@ -44,6 +45,10 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
 
   get gekozen(): boolean {
     return this.laag.magGetoondWorden;
+  }
+
+  get stijlInKiezer() {
+    return this.laag.stijlInLagenKiezer.getOrElse("");
   }
 
   toggleGekozen() {

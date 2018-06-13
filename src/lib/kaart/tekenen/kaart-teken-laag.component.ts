@@ -111,6 +111,7 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
       magGetoondWorden: true,
       laaggroep: "Tools",
       legende: none,
+      stijlInLagenKiezer: none,
       wrapper: kaartLogOnlyWrapper
     });
 

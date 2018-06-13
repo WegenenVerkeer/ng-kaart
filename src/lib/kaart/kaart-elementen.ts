@@ -113,6 +113,7 @@ export interface ToegevoegdeLaag {
   readonly positieInGroep: number;
   readonly magGetoondWorden: boolean;
   readonly legende: Option<Legende>;
+  readonly stijlInLagenKiezer: Option<string>;
 }
 
 export interface ToegevoegdeVectorLaag extends ToegevoegdeLaag {

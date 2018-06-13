@@ -66,6 +66,7 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
       magGetoondWorden: true,
       laaggroep: "Tools",
       legende: none,
+      stijlInLagenKiezer: none,
       wrapper: kaartLogOnlyWrapper
     });
 
