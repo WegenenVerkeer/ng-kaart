@@ -10,6 +10,7 @@
         "testApp/assets",
         "favicon.ico"
       ],
+      "deployUrl": "/ng-kaart/",
       "index": "index.html",
       "main": "main.ts",
       "test": "test.ts",
