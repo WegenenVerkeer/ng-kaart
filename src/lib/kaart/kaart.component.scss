@@ -129,7 +129,7 @@ $kaart-links-breedte: 480px;
     color: #333;
   }
 
-  /deep/ .mat-button-wrapper {
+  ::ng-deep .mat-button-wrapper {
     display: flex;
     align-items: center;
     justify-content: center;
