@@ -1,11 +1,139 @@
 @import "~material-design-icons/iconfont/material-icons.css";
 @import "~@angular/material/prebuilt-themes/indigo-pink.css";
 
+$menu-breedte: 280px;
+$border-color: rgba(0, 0, 0, 0.12);
+$primary-color: #F7902D; //$awv-primary-3
+
 body {
   font-size: 14px;
   font-family: Roboto, "Helvetica Neue", sans-serif;
+  margin: 0px;
+  padding: 0px;
 }
 
 .zoeker-resultaat-icoon {
-  color: #F7902D;
+  color: $primary-color;
+}
+
+// Test-app styling
+.test-app-menu, .test-app-content {
+  background-color: #fefefe;
+
+  .test-app-titel {
+    display: flex;
+    align-items: center;
+    font-size: 24px;
+    font-weight: 300;
+    margin: 0;
+    padding: 24px 16px;
+    height: 40px;
+    cursor: pointer;
+
+    .material-icons {
+      margin-right: 16px;
+      border-radius: 24px;
+      border: 1px solid $border-color;
+      padding: 8px;
+      color: rgba(0, 0, 0, 0.6);
+      background: #fafafa;
+    }
+
+    &:hover {
+      color: #202124;
+      background: rgba(0, 0, 0, 0.04);
+
+      .material-icons {
+        color: #202124;
+        background-color: white;
+      }
+    }
+  }
+
+  .titel {
+    height: 16px;
+    font-size: 18px;
+    font-weight: 500;
+    padding: 24px 16px;
+    background-color: #fafafa;
+  }
+
+  .sub-titel {
+    font-size: 16px;
+    font-weight: 300;
+    padding: 12px 16px;
+    background-color: #fefefe;
+  }
+
+  .titel, .sub-titel {
+    border-top: 1px solid $border-color;
+    color: rgba(0, 0, 0, 0.6);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+
+    .material-icons {
+      margin-left: 16px;
+      border-radius: 24px;
+      border: 1px solid transparent;
+      padding: 4px;
+      color: rgba(0, 0, 0, 0.6);
+    }
+
+    &:hover {
+      color: #202124;
+      background: rgba(0, 0, 0, 0.04);
+
+      .material-icons {
+        color: #202124;
+        border-color: $border-color;
+      }
+    }
+  }
+}
+
+.test-app-menu {
+  position: fixed;
+  width: $menu-breedte;
+  top: 0;
+  left: 0;
+  border-right: 1px solid $border-color;
+  height: 100%;
+  color: #202124;
+  -webkit-font-smoothing: antialiased;
+  overflow-y: scroll;
+
+  .sub-titel {
+    border-top: none;
+  }
+}
+
+.test-app-content {
+  margin-left: $menu-breedte;
+  border-bottom: 1px solid $border-color;
+
+  .content {
+    border-top: 1px solid $border-color;
+    padding: 24px 16px;
+    background-color: white;
+  }
+
+  .sub-secties > .content {
+    border-top: none;
+    padding: 0;
+  }
+
+  .uitleg {
+    font-size: 14px;
+    padding-bottom: 16px;
+  }
+
+  .opties {
+    padding-bottom: 16px;
+  }
+
+  .kaart {
+    border-radius: 2px;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16), 0 3px 6px rgba(0, 0, 0, 0.23);
+  }
 }

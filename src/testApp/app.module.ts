@@ -14,9 +14,10 @@ import { AppComponent } from "./app.component";
 import { AvKaartInnerComponent } from "./av-kaart-inner.component";
 import { AvKaartComponent } from "./av-kaart.component";
 import { PerceelPopupComponent } from "./perceel-popup/perceel-popup.component";
+import { TestSectieComponent } from "./test-sectie.component";
 
 @NgModule({
-  declarations: [AppComponent, AvKaartComponent, AvKaartInnerComponent, PerceelPopupComponent],
+  declarations: [AppComponent, AvKaartComponent, AvKaartInnerComponent, PerceelPopupComponent, TestSectieComponent],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,

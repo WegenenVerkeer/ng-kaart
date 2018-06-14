@@ -1,7 +1,7 @@
 import "rxjs/add/operator/map";
 import "rxjs/add/operator/mergeMap";
 
-import { Component, ViewChild, ViewEncapsulation } from "@angular/core";
+import { Component, ElementRef, ViewChild, ViewEncapsulation } from "@angular/core";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
@@ -30,12 +30,8 @@ export interface FietspadSelectie {
 export class AppComponent {
   @ViewChild("verplaats") private verplaatsKaart: KaartClassicComponent;
   @ViewChild("selectie") private selectieKaart: KaartClassicComponent;
-
-  private readonly zichtbaarheid = {
-    interacties: true,
-    orthomap: false,
-    featuresApi: false
-  };
+  voorbeeldenZichtbaar = false;
+  applicatiesZichtbaar = false;
 
   private readonly fietspadStijlDef: AWV0StyleFunctionDescription = {
     version: "awv-v0",
@@ -153,7 +149,7 @@ export class AppComponent {
   private voorwaardenIndex = 0;
 
   objectKeys = Object.keys;
-  interacties = {
+  mogelijkeWidgets = {
     fixedHeaderLinksBoven: true,
     zoeker: true,
     lagenkiezer: true,
@@ -228,14 +224,6 @@ export class AppComponent {
     this.addIcon();
   }
 
-  isZichtbaar(part: string): boolean {
-    return this.zichtbaarheid[part];
-  }
-
-  maakZichtbaar(part: string, zichtbaar: boolean) {
-    this.zichtbaarheid[part] = zichtbaar;
-  }
-
   private addIcon() {
     if (this.installaties.length > 20) {
       this.installaties = [];
@@ -308,15 +296,15 @@ export class AppComponent {
   }
 
   isInteractieZichtbaar(interactie: string): boolean {
-    return this.interacties[interactie];
+    return this.mogelijkeWidgets[interactie];
   }
 
   toggleInteractieZichtbaar(interactie: string) {
-    this.interacties[interactie] = !this.interacties[interactie];
+    this.mogelijkeWidgets[interactie] = !this.mogelijkeWidgets[interactie];
   }
 
   getMijnLocatieZoom(): string {
-    if (this.interacties["mijnlocatie"]) {
+    if (this.mogelijkeWidgets["mijnlocatie"]) {
       return "8";
     } else {
       return null;
@@ -367,5 +355,18 @@ export class AppComponent {
     if (features.size !== this.geselecteerdeFietspadsegmenten.size) {
       this.geselecteerdeFietspadsegmenten = List(this.fietspadsegmentenSelectie.filter(fss => fss.geselecteerd).map(fss => fss.feature));
     }
+  }
+
+  scrollTo(idName: string): void {
+    const element = document.getElementById(idName);
+    element.scrollIntoView({ behavior: "smooth" });
+  }
+
+  toggleVoorbeeldenZichtbaar(): void {
+    this.voorbeeldenZichtbaar = !this.voorbeeldenZichtbaar;
+  }
+
+  toggleApplicatiesZichtbaar(): void {
+    this.applicatiesZichtbaar = !this.applicatiesZichtbaar;
   }
 }

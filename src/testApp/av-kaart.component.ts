@@ -2,8 +2,8 @@ import { Component, OnInit, ViewEncapsulation } from "@angular/core";
 
 @Component({
   selector: "awv-av-kaart",
-  templateUrl: "./av-kaart.component.html",
-  encapsulation: ViewEncapsulation.None
+  templateUrl: "./av-kaart.component.html"
+  // encapsulation: ViewEncapsulation.None
 })
 export class AvKaartComponent implements OnInit {
   adressen = [];
