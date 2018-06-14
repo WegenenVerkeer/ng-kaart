@@ -785,6 +785,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               features: model.geselecteerdeFeatures,
               multi: true, // dit wil zeggen dat in alle lagen gekeken wordt of er een feature op de clicklocatie zit
               style: applySelectFunction,
+              hitTolerance: 5,
               layers: layer => layer.get("selecteerbaar")
             });
           case "multiple":
@@ -794,6 +795,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               features: model.geselecteerdeFeatures,
               multi: true,
               style: applySelectFunction,
+              hitTolerance: 5,
               layers: layer => layer.get("selecteerbaar")
             });
           case "none":
