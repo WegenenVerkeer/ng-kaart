@@ -82,7 +82,7 @@ export class DefaultRepresentatieService implements AbstractRepresentatieService
       return new ol.style.Style({
         stroke: new ol.style.Stroke({
           color: kleur,
-          width: 1
+          width: 3
         }),
         fill: new ol.style.Fill({
           color: [kleur[0], kleur[1], kleur[2], kleur[3] / 5.0]
