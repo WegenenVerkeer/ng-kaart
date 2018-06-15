@@ -26,11 +26,11 @@ import { TestSectieComponent } from "./test-sectie.component";
     FormsModule,
     ZoekerModule.forRoot({
       googleWdb: {
-        url: "http://localhost:5100/locatiezoeker",
+        url: "/locatiezoeker",
         apiKey: "AIzaSyApbXMl5DGL60g17JU6MazMxNcUGooey7I"
       },
       locatorServices: {
-        url: "http://localhost:5101/locatorservices"
+        url: "/locatorservices"
       }
     }),
     LagenkiezerModule.withDefaults(),
