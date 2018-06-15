@@ -298,9 +298,6 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
 
   toggleResultaat() {
     this.toonResultaat = !this.toonResultaat;
-    if (this.toonResultaat) {
-      this.zoomNaarVolledigeExtent();
-    }
     this.dispatch(prt.RefreshKaarLinksWeergave());
   }
 
@@ -381,18 +378,10 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
 
     this.dispatch(prt.VervangFeaturesCmd(ZoekerUiSelector, features, kaartLogOnlyWrapper));
 
-    this.zoomNaarVolledigeExtent();
-
     return {
       type: "KaartInternal",
       payload: none
     };
-  }
-
-  private zoomNaarVolledigeExtent() {
-    if (!ol.extent.isEmpty(this.extent)) {
-      this.dispatch(prt.VeranderExtentCmd(this.extent));
-    }
   }
 
   increaseBusy() {
