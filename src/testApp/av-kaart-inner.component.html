@@ -1,4 +1,4 @@
-<div *ngIf="features.length > 0">
+<div *ngIf="features.length > 0" [@enterAnimation]>
   <awv-kaart-classic [hoogte]="hoogte" [breedte]="breedte" [extent]="extent" [maxZoom]="15">
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs 2'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
     <awv-kaart-geoserver-laag [titel]="'Referentiepunten (WDB) 2'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'"></awv-kaart-geoserver-laag>

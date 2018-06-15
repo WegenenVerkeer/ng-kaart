@@ -1,10 +1,23 @@
 import { Component, Input, OnChanges, SimpleChanges, ViewEncapsulation } from "@angular/core";
 
+import { animate, style, transition, trigger } from "@angular/animations";
 import * as ol from "openlayers";
 
 @Component({
   selector: "awv-av-kaart-inner",
   templateUrl: "./av-kaart-inner.component.html",
+  animations: [
+    trigger("enterAnimation", [
+      transition(":enter", [
+        style({ opacity: 0, "max-height": 0 }),
+        animate("1.5s cubic-bezier(.25, .8, .25, 1)", style({ opacity: 1, "max-height": "1000px" }))
+      ]),
+      transition(":leave", [
+        style({ opacity: 1, "max-height": "1000px" }),
+        animate("0.5s cubic-bezier(.25, .8, .25, 1)", style({ opacity: 0, "max-height": 0 }))
+      ])
+    ])
+  ],
   encapsulation: ViewEncapsulation.None
 })
 export class AvKaartInnerComponent implements OnChanges {

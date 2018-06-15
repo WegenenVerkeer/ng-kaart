@@ -1,10 +1,10 @@
-import "rxjs/add/operator/map";
-import "rxjs/add/operator/mergeMap";
-
+import { animate, style, transition, trigger } from "@angular/animations";
 import { Component, ElementRef, ViewChild, ViewEncapsulation } from "@angular/core";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
+import "rxjs/add/operator/map";
+import "rxjs/add/operator/mergeMap";
 
 import { KaartClassicComponent } from "../lib/classic/kaart-classic.component";
 import { classicLogger } from "../lib/classic/log";
@@ -25,6 +25,18 @@ export interface FietspadSelectie {
   selector: "awv-ng-kaart-test-app",
   templateUrl: "./app.component.html",
   styleUrls: ["app.component.scss"],
+  animations: [
+    trigger("enterAnimation", [
+      transition(":enter", [
+        style({ opacity: 0, "max-height": 0 }),
+        animate("1.5s cubic-bezier(.25, .8, .25, 1)", style({ opacity: 1, "max-height": "1000px" }))
+      ]),
+      transition(":leave", [
+        style({ opacity: 1, "max-height": "1000px" }),
+        animate("0.5s cubic-bezier(.25, .8, .25, 1)", style({ opacity: 0, "max-height": 0 }))
+      ])
+    ])
+  ],
   encapsulation: ViewEncapsulation.None
 })
 export class AppComponent {

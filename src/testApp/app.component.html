@@ -13,7 +13,7 @@
     <span class="material-icons" *ngIf="voorbeeldenSectie.sectieZichtbaar">expand_less</span>
     <span class="material-icons" *ngIf="!voorbeeldenSectie.sectieZichtbaar">expand_more</span>
   </div>
-  <div *ngIf="voorbeeldenSectie.sectieZichtbaar">
+  <div *ngIf="voorbeeldenSectie.sectieZichtbaar" [@enterAnimation]>
     <div (click)="scrollTo('orthophotos')" class="sub-titel">Orthophotos</div>
     <div (click)="scrollTo('ingezoomd')" class="sub-titel">Ingezoomd</div>
     <div (click)="scrollTo('dynamische-features')" class="sub-titel">Dynamische features</div>
@@ -30,7 +30,7 @@
     <span class="material-icons" *ngIf="applicatiesSectie.sectieZichtbaar">expand_less</span>
     <span class="material-icons" *ngIf="!applicatiesSectie.sectieZichtbaar">expand_more</span>
   </div>
-  <div *ngIf="applicatiesSectie.sectieZichtbaar">
+  <div *ngIf="applicatiesSectie.sectieZichtbaar" [@enterAnimation]>
     <div (click)="scrollTo('geoloket2')" class="sub-titel">Geoloket2</div>
     <div (click)="scrollTo('av')" class="sub-titel">Adviezen & Vergunningen</div>
     <div (click)="scrollTo('patrimonium')" class="sub-titel">Patrimonium</div>
@@ -44,7 +44,7 @@
 
   <!-- configurator -->
   <awv-test-sectie sectieId="configurator" sectieTitel="Configurator" [sectieZichtbaar]="true" #configuratorSectie>
-    <div *ngIf="configuratorSectie.sectieZichtbaar">
+    <div *ngIf="configuratorSectie.sectieZichtbaar" [@enterAnimation]>
       <div class="uitleg">
         Via de configurator kan je de kaart widgets aan of uitzetten en aanpassen om zo de gewenste kaart configuratie te bekomen.
       </div>
@@ -87,10 +87,10 @@
   <!-- voorbeelden -->
   <awv-test-sectie sectieId="voorbeelden" sectieTitel="Voorbeelden" [bevatSubSecties]="true" #voorbeeldenSectie>
 
-    <div *ngIf="voorbeeldenSectie.sectieZichtbaar">
+    <div *ngIf="voorbeeldenSectie.sectieZichtbaar" [@enterAnimation]>
 
       <awv-test-sectie sectieId="orthophotos" sectieTitel="Orthophotos" [sectieZichtbaar]="false" [subSectie]="true" #orthophotosSectie>
-        <div *ngIf="orthophotosSectie.sectieZichtbaar">
+        <div *ngIf="orthophotosSectie.sectieZichtbaar" [@enterAnimation]>
           <awv-kaart-classic class="qa-kaart" [naam]="'qa-kaart'">
             <awv-kaart-ortho-laag [titel]="'Ortho'" [groep]="'Voorgrond.Laag'"></awv-kaart-ortho-laag>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
@@ -100,7 +100,7 @@
       </awv-test-sectie>
 
       <awv-test-sectie sectieId="districten" sectieTitel="Districten" [sectieZichtbaar]="false" [subSectie]="true" #districtenSectie>
-        <div *ngIf="districtenSectie.sectieZichtbaar">
+        <div *ngIf="districtenSectie.sectieZichtbaar" [@enterAnimation]>
           <awv-kaart-classic [naam]="'districten'">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
             <awv-kaart-vector-laag [titel]="'Districten'"
@@ -114,7 +114,7 @@
       </awv-test-sectie>
 
       <awv-test-sectie sectieId="ingezoomd" sectieTitel="Ingezoomd" [sectieZichtbaar]="false" [subSectie]="true" #ingezoomdSectie>
-        <div *ngIf="ingezoomdSectie.sectieZichtbaar">
+        <div *ngIf="ingezoomdSectie.sectieZichtbaar" [@enterAnimation]>
           <awv-kaart-classic [breedte]="600" [hoogte]="600" [zoom]="6" [middelpunt]="installatieCoordinaat">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
             <awv-kaart-features-laag [features]="installatie" [titel]="'features'" [style]="pinIcon" [minZoom]="2"></awv-kaart-features-laag>
@@ -128,7 +128,7 @@
       </awv-test-sectie>
 
       <awv-test-sectie sectieId="dynamische-features" sectieTitel="Dynamische features" [sectieZichtbaar]="false" [subSectie]="true" #dynamischeFeatures>
-        <div *ngIf="dynamischeFeatures.sectieZichtbaar">
+        <div *ngIf="dynamischeFeatures.sectieZichtbaar" [@enterAnimation]>
           <awv-kaart-classic [breedte]="1200" [hoogte]="600" [zoom]="6" [middelpunt]="installatieCoordinaat">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
             <awv-kaart-features-laag [features]="installaties" [titel]="'features'" [minZoom]="2"></awv-kaart-features-laag>
@@ -139,7 +139,7 @@
       </awv-test-sectie>
 
       <awv-test-sectie sectieId="straatkolken" sectieTitel="Straatkolken" [sectieZichtbaar]="false" [subSectie]="true" #straatkolkenSectie>
-        <div *ngIf="straatkolkenSectie.sectieZichtbaar">
+        <div *ngIf="straatkolkenSectie.sectieZichtbaar" [@enterAnimation]>
           <awv-kaart-classic [naam]="'straatkolken'">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
             <awv-kaart-nosqlfs-laag [titel]="'Straatkolken'" [url]="'http://apigateway/geolatte-nosqlfs'"
@@ -152,7 +152,7 @@
       </awv-test-sectie>
 
       <awv-test-sectie sectieId="fietspaden" sectieTitel="Fietspaden" [sectieZichtbaar]="false" [subSectie]="true" #fietspadenSectie>
-        <div *ngIf="fietspadenSectie.sectieZichtbaar">
+        <div *ngIf="fietspadenSectie.sectieZichtbaar" [@enterAnimation]>
           <awv-kaart-classic [naam]="'fietspaden'" (zichtbareFeatures)="onZichtbareFeatures($event)">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
             <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'https://apps-dev.mow.vlaanderen.be/geolatte-nosqlfs'"
@@ -166,7 +166,7 @@
 
       <awv-test-sectie sectieId="fietspaden-met-offsets" sectieTitel="Fietspaden met offsets"
                        [sectieZichtbaar]="false" [subSectie]="true" #fietspadenMetOffsetsSectie>
-        <div *ngIf="fietspadenMetOffsetsSectie.sectieZichtbaar">
+        <div *ngIf="fietspadenMetOffsetsSectie.sectieZichtbaar" [@enterAnimation]>
           <awv-kaart-classic [naam]="'offsets'"
                              #selectie (geselecteerdeFeaturesChange)="featuresGeselecteerd($event)"
                              [selectieModus]="'single'"
@@ -184,7 +184,7 @@
 
       <awv-test-sectie sectieId="lagenkiezer-met-legende" sectieTitel="Lagenkiezer met legende"
                        [sectieZichtbaar]="false" [subSectie]="true" #lagenkiezerMetLegendeSectie>
-        <div *ngIf="lagenkiezerMetLegendeSectie.sectieZichtbaar">
+        <div *ngIf="lagenkiezerMetLegendeSectie.sectieZichtbaar" [@enterAnimation]>
           <awv-kaart-classic [naam]="'lagenkiezer'" [mijnLocatieZoom]="8" (zichtbareFeatures)="onZichtbareFeatures($event)">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
@@ -214,7 +214,7 @@
       </awv-test-sectie>
 
       <awv-test-sectie sectieId="buiten-kaart" sectieTitel="Toon features buiten de kaart" [sectieZichtbaar]="false" [subSectie]="true" #buitenKaartSectie>
-        <div *ngIf="buitenKaartSectie.sectieZichtbaar">
+        <div *ngIf="buitenKaartSectie.sectieZichtbaar" [@enterAnimation]>
           <awv-kaart-classic [naam]="'featuresApi'"
                              (zichtbareFeatures)="onFietspadsegmentenZichtbaar($event)"
                              [geselecteerdeFeatures]="geselecteerdeFietspadsegmenten"
@@ -257,10 +257,10 @@
   <!-- applicaties -->
   <awv-test-sectie sectieId="applicaties" sectieTitel="Gebruik in applicaties" [bevatSubSecties]="true" #applicatiesSectie>
 
-    <div *ngIf="applicatiesSectie.sectieZichtbaar">
+    <div *ngIf="applicatiesSectie.sectieZichtbaar" [@enterAnimation]>
 
       <awv-test-sectie sectieId="geoloket2" sectieTitel="Geoloket2" [sectieZichtbaar]="false" [subSectie]="true" #geoloket2Sectie>
-        <div *ngIf="geoloket2Sectie.sectieZichtbaar">
+        <div *ngIf="geoloket2Sectie.sectieZichtbaar" [@enterAnimation]>
           <awv-kaart-classic [naam]="'geoloket2'" [mijnLocatieZoom]="8" (zoomChange)="onZoom($event)"
                              (middelpuntChange)="onMiddelpunt($event)"
                              (extentChange)="onExtent($event)">
@@ -291,13 +291,13 @@
       </awv-test-sectie>
 
       <awv-test-sectie sectieId="av" sectieTitel="Adviezen & Vergunningen" [sectieZichtbaar]="false" [subSectie]="true" #avSectie>
-        <div *ngIf="avSectie.sectieZichtbaar">
+        <div *ngIf="avSectie.sectieZichtbaar" [@enterAnimation]>
           <awv-av-kaart></awv-av-kaart>
         </div>
       </awv-test-sectie>
 
       <awv-test-sectie sectieId="patrimonium" sectieTitel="Patrimonium" [sectieZichtbaar]="false" [subSectie]="true" #patrimoniumSectie>
-        <div *ngIf="patrimoniumSectie.sectieZichtbaar">
+        <div *ngIf="patrimoniumSectie.sectieZichtbaar" [@enterAnimation]>
           <awv-kaart-classic [selectieModus]="'single'" [hoverModus]="'on'" (hoverFeature)="popup.update($event)">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
             <awv-kaart-nosqlfs-laag [url]="'http://apigateway:5100/patrimonium'"

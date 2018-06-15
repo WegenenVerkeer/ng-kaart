@@ -4,7 +4,7 @@
     <span class="material-icons" *ngIf="sectieZichtbaar">expand_less</span>
     <span class="material-icons" *ngIf="!sectieZichtbaar">expand_more</span>
   </div>
-  <div class="content" *ngIf="sectieZichtbaar">
+  <div class="content" *ngIf="sectieZichtbaar" [@enterAnimation]>
     <ng-content></ng-content>
   </div>
 </div>
