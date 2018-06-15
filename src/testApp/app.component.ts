@@ -30,8 +30,6 @@ export interface FietspadSelectie {
 export class AppComponent {
   @ViewChild("verplaats") private verplaatsKaart: KaartClassicComponent;
   @ViewChild("selectie") private selectieKaart: KaartClassicComponent;
-  voorbeeldenZichtbaar = false;
-  applicatiesZichtbaar = false;
 
   private readonly fietspadStijlDef: AWV0StyleFunctionDescription = {
     version: "awv-v0",
@@ -360,13 +358,5 @@ export class AppComponent {
   scrollTo(idName: string): void {
     const element = document.getElementById(idName);
     element.scrollIntoView({ behavior: "smooth" });
-  }
-
-  toggleVoorbeeldenZichtbaar(): void {
-    this.voorbeeldenZichtbaar = !this.voorbeeldenZichtbaar;
-  }
-
-  toggleApplicatiesZichtbaar(): void {
-    this.applicatiesZichtbaar = !this.applicatiesZichtbaar;
   }
 }
