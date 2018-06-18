@@ -336,6 +336,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   private processZoekerAntwoord(nieuweResultaten: ZoekResultaten): KaartInternalMsg {
+    console.log("Process " + nieuweResultaten.zoeker);
     this.alleZoekResultaten = this.alleZoekResultaten
       .filter(resultaat => resultaat.zoeker !== nieuweResultaten.zoeker)
       .concat(nieuweResultaten.resultaten);
@@ -369,9 +370,9 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   decreaseBusy() {
+    this.cd.detectChanges();
     if (this.busy > 0) {
       this.busy--;
-      this.cd.detectChanges();
     }
   }
 
