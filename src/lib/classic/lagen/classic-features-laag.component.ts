@@ -1,4 +1,4 @@
-import { Component, DoCheck, EventEmitter, Input, OnDestroy, OnInit, Output, ViewEncapsulation } from "@angular/core";
+import { Component, DoCheck, EventEmitter, Input, Output, ViewEncapsulation } from "@angular/core";
 import { array } from "fp-ts";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
