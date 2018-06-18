@@ -31,7 +31,7 @@ export abstract class ClassicLaagComponent implements AfterContentInit, OnInit, 
   }
 
   ngOnDestroy(): void {
-    this.dispatch(prt.VerwijderLaagCmd(this.titel, logOnlyWrapper));
+    this.verwijderLaag();
   }
 
   protected voegLaagToe() {
@@ -50,6 +50,10 @@ export abstract class ClassicLaagComponent implements AfterContentInit, OnInit, 
       stijlInLagenKiezer: fromNullable(this.stijlInLagenKiezer),
       wrapper: logOnlyWrapper
     });
+  }
+
+  protected verwijderLaag() {
+    this.dispatch(prt.VerwijderLaagCmd(this.titel, logOnlyWrapper));
   }
 
   protected gekozenLaagGroep(): Laaggroep {
