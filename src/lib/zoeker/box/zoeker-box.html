@@ -28,10 +28,12 @@
     <div class="zoek-bezig-indicator" *ngIf="isBusy()">
       <mat-spinner diameter="20"></mat-spinner>
     </div>
-    <button mat-icon-button (click)="toggleResultaat()" *ngIf="!isBusy()">
-      <mat-icon *ngIf="!heeftResultaatOfFout()">search</mat-icon>
-      <mat-icon *ngIf="heeftResultaatOfFout() && toonResultaat">expand_less</mat-icon>
-      <mat-icon *ngIf="heeftResultaatOfFout() && !toonResultaat">expand_more</mat-icon>
+    <button mat-icon-button (click)="zoek()">
+      <mat-icon>search</mat-icon>
+    </button>
+    <button mat-icon-button *ngIf="heeftResultaatOfFout()" (click)="toggleResultaat()">
+      <mat-icon *ngIf="toonResultaat">expand_less</mat-icon>
+      <mat-icon *ngIf="!toonResultaat">expand_more</mat-icon>
     </button>
   </div>
   <awv-perceel-zoeker *ngIf="actieveZoeker === 'Perceel'"></awv-perceel-zoeker>

@@ -45,42 +45,52 @@
   <!-- configurator -->
   <awv-test-sectie sectieId="configurator" sectieTitel="Configurator" [sectieZichtbaar]="true" #configuratorSectie>
     <div *ngIf="configuratorSectie.sectieZichtbaar" [@enterAnimation]>
-      <div class="uitleg">
-        Via de configurator kan je de kaart widgets aan of uitzetten en aanpassen om zo de gewenste kaart configuratie te bekomen.
-      </div>
-      <div class="opties">
-        <button (click)="toggleInteractieZichtbaar(key)" *ngFor="let key of objectKeys(mogelijkeWidgets)">Zet <strong>{{key}}</strong>
-          {{isInteractieZichtbaar(key.toString()) ? "UIT" : "AAN"}}
-        </button>
-        <button (click)="veranderVoorwaarden()">Andere voorwaarden</button>
+      <div class="sub-content">
+        Via de configurator kan je de kaart opties aan of uitzetten en aanpassen om zo de gewenste kaart configuratie te bekomen.
       </div>
       <awv-kaart-classic [naam]="'interacties'" [mijnLocatieZoom]="getMijnLocatieZoom()" (zoomChange)="onZoom($event)"
                          (middelpuntChange)="onMiddelpunt($event)"
                          (extentChange)="onExtent($event)">
         <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
         <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"
-                                  *ngIf="isInteractieZichtbaar('achtergrond')"></awv-kaart-tilecache-laag>
-        <awv-kaart-blanco-laag [titel]="'Leeg'" *ngIf="isInteractieZichtbaar('achtergrond')"></awv-kaart-blanco-laag>
-        <awv-kaart-zoeker *ngIf="isInteractieZichtbaar('zoeker')"></awv-kaart-zoeker>
-        <awv-kaart-lagenkiezer *ngIf="isInteractieZichtbaar('lagenkiezer')" [titels]="['Referentiepunten (WDB)', 'Referentiepunten (WDB) 2', 'features']"
+                                  *ngIf="isOptieActief('achtergrond')"></awv-kaart-tilecache-laag>
+        <awv-kaart-blanco-laag [titel]="'Leeg'" *ngIf="isOptieActief('achtergrond')"></awv-kaart-blanco-laag>
+        <awv-kaart-zoeker *ngIf="isOptieActief('zoeker')"></awv-kaart-zoeker>
+        <awv-kaart-lagenkiezer *ngIf="isOptieActief('lagenkiezer')" [titels]="['Referentiepunten (WDB)', 'Referentiepunten (WDB) 2', 'features']"
                                [verwijderbareLagen]="false" [verplaatsbareLagen]="true"></awv-kaart-lagenkiezer>
         <awv-kaart-geoserver-laag [titel]="'Referentiepunten (WDB)'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'"></awv-kaart-geoserver-laag>
         <awv-kaart-geoserver-laag [titel]="'Referentiepunten (WDB) 2'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'"
                                   [minZoom]="6"></awv-kaart-geoserver-laag>
-        <awv-kaart-knop-achtergrondlaag-kiezer *ngIf="isInteractieZichtbaar('achtergrond')"></awv-kaart-knop-achtergrondlaag-kiezer>
-        <awv-kaart-standaard-interacties *ngIf="isInteractieZichtbaar('standaardinteracties')" [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
-        <awv-kaart-streetview *ngIf="isInteractieZichtbaar('streetview')"></awv-kaart-streetview>
-        <awv-kaart-zoomknoppen *ngIf="isInteractieZichtbaar('zoomknoppen')"></awv-kaart-zoomknoppen>
-        <awv-meet-knop [toonInfoBoodschap]="true" *ngIf="isInteractieZichtbaar('meten')"></awv-meet-knop>
-        <awv-kaart-copyright *ngIf="isInteractieZichtbaar('copyright')"></awv-kaart-copyright>
-        <awv-kaart-voorwaarden *ngIf="isInteractieZichtbaar('voorwaarden')" [titel]="voorwaarden"></awv-kaart-voorwaarden>
-        <awv-kaart-schaal *ngIf="isInteractieZichtbaar('schaal')"></awv-kaart-schaal>
-        <div class="kaart-fixed-links-boven" *ngIf="isInteractieZichtbaar('fixedHeaderLinksBoven')">
+        <awv-kaart-knop-achtergrondlaag-kiezer *ngIf="isOptieActief('achtergrond')"></awv-kaart-knop-achtergrondlaag-kiezer>
+        <awv-kaart-standaard-interacties *ngIf="isOptieActief('standaardinteracties')" [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
+        <awv-kaart-streetview *ngIf="isOptieActief('streetview')"></awv-kaart-streetview>
+        <awv-kaart-zoomknoppen *ngIf="isOptieActief('zoomknoppen')"></awv-kaart-zoomknoppen>
+        <awv-meet-knop [toonInfoBoodschap]="true" *ngIf="isOptieActief('meten')"></awv-meet-knop>
+        <awv-kaart-copyright *ngIf="isOptieActief('copyright')"></awv-kaart-copyright>
+        <awv-kaart-voorwaarden *ngIf="isOptieActief('voorwaarden')" [titel]="voorwaarden"></awv-kaart-voorwaarden>
+        <awv-kaart-schaal *ngIf="isOptieActief('schaal')"></awv-kaart-schaal>
+        <div class="kaart-fixed-links-boven" *ngIf="isOptieActief('fixedHeaderLinksBoven')">
           <div class="custom-kaart-fixed-links-boven">
             <span class="custom-titel">kaart-fixed-links-boven content voorbeeld</span>
           </div>
         </div>
       </awv-kaart-classic>
+      <div class="sub-content onder-kaart opties">
+        <div *ngFor="let key of objectKeys(mogelijkeOpties)"
+             [ngClass]="{ 'niet-actief': !mogelijkeOpties[key].value, 'actief': mogelijkeOpties[key].value,
+                          'optie-divider': mogelijkeOpties[key].divider, 'optie': !mogelijkeOpties[key].divider} ">
+          <div *ngIf="mogelijkeOpties[key].divider" class="divider-label">
+            {{ mogelijkeOpties[key].label }}
+          </div>
+          <label *ngIf="!mogelijkeOpties[key].divider">
+            <input type="checkbox" [checked]="mogelijkeOpties[key].value" (change)="toggleOptieActief(key)">
+            {{ mogelijkeOpties[key].label }}
+          </label>
+        </div>
+        <div class="optie">
+          <button (click)="veranderVoorwaarden()">Andere voorwaarden</button>
+        </div>
+      </div>
     </div>
   </awv-test-sectie>
 
@@ -121,7 +131,7 @@
             <awv-kaart-schaal></awv-kaart-schaal>
             <awv-kaart-knop-volledig-scherm></awv-kaart-knop-volledig-scherm>
           </awv-kaart-classic>
-          <div style="padding: 24px 0 0 0;">
+          <div class="onder-kaart">
             Geselecteerd:<span *ngFor="let feature of geselecteerdeFeatures">ID: {{ feature.get('id') }}</span>
           </div>
         </div>
@@ -228,7 +238,7 @@
                                     [minZoom]="7"></awv-kaart-nosqlfs-laag>
             <awv-kaart-schaal></awv-kaart-schaal>
           </awv-kaart-classic>
-          <div style="padding: 24px 0 0 0;">
+          <div class="onder-kaart">
             <h4>Zichtbare features</h4>
             <table>
               <thead>

@@ -3,6 +3,11 @@ import { Component, Input, OnChanges, SimpleChanges, ViewEncapsulation } from "@
 import { animate, style, transition, trigger } from "@angular/animations";
 import * as ol from "openlayers";
 
+const withId = (feature: ol.Feature) => {
+  feature.setId(Math.random());
+  return feature;
+};
+
 @Component({
   selector: "awv-av-kaart-inner",
   templateUrl: "./av-kaart-inner.component.html",
@@ -54,7 +59,7 @@ export class AvKaartInnerComponent implements OnChanges {
         this.adressen
           .filter(adres => adres.geometrie)
           .map(adres => {
-            const adresFeature = this.wktFormat.readFeature(adres.geometrie);
+            const adresFeature = withId(this.wktFormat.readFeature(adres.geometrie));
             adresFeature.setStyle(this.adresStyle);
             return adresFeature;
           })
@@ -66,7 +71,7 @@ export class AvKaartInnerComponent implements OnChanges {
         this.percelen
           .filter(perceel => perceel.geometrie)
           .map(perceel => {
-            const perceelFeature = this.wktFormat.readFeature(perceel.geometrie);
+            const perceelFeature = withId(this.wktFormat.readFeature(perceel.geometrie));
             perceelFeature.setStyle(this.perceelStyle);
             return perceelFeature;
           })
@@ -78,7 +83,7 @@ export class AvKaartInnerComponent implements OnChanges {
         this.weglocaties
           .filter(weglocatie => weglocatie.geometrie)
           .map(weglocatie => {
-            const weglocatieFeature = this.wktFormat.readFeature(weglocatie.geometrie);
+            const weglocatieFeature = withId(this.wktFormat.readFeature(weglocatie.geometrie));
             weglocatieFeature.setStyle(this.weglocatieStyle);
             return weglocatieFeature;
           })

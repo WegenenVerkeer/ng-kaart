@@ -249,36 +249,6 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
 
   ngOnInit(): void {
     super.ngOnInit();
-    this.bindToLifeCycle(
-      this.zoekVeld.valueChanges.pipe(
-        filter(value => value !== null),
-        map(value => value.trim()),
-        debounce((value: string) => {
-          // Form changes worden debounced tot deze promise geresolved wordt.
-          return new Promise(resolve => {
-            // We houden de resolve functie pointer bij om de debounce te kunnen bypassen (bv. bij form submit).
-            this.byPassDebounce = resolve;
-            if (value.length >= 3 || value.length === 0) {
-              // De gebruiker kan locatie voorstellen krijgen door in het zoekveld minstens 3 tekens in te typen.
-              // We resolven hoe dan ook na een bepaalde timeout, zodat de zoek uitgevoerd wordt.
-              setTimeout(resolve, 800);
-            }
-          });
-        }),
-        distinctUntilChanged()
-      )
-    ).subscribe(value => {
-      this.toonResultaat = true;
-      if (value.length > 0) {
-        this.increaseBusy();
-        this.dispatch({
-          type: "Zoek",
-          input: { type: "string", value: value } as StringZoekInput,
-          zoekers: Set(),
-          wrapper: kaartLogOnlyWrapper
-        });
-      }
-    });
     this.dispatch({
       type: "VoegLaagToe",
       positie: 1,
@@ -313,10 +283,20 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     resultaat.kaartInfo.filter(info => !ol.extent.isEmpty(info.extent)).map(info => this.dispatch(prt.VeranderExtentCmd(info.extent)));
   }
 
+  zoek() {
+    this.increaseBusy();
+    this.dispatch({
+      type: "Zoek",
+      input: { type: "string", value: this.zoekVeld.value } as StringZoekInput,
+      zoekers: Set(),
+      wrapper: kaartLogOnlyWrapper
+    });
+  }
+
   onKey(event: any) {
     // De gebruiker kan locatie voorstellen krijgen door in het zoekveld max. 2 tekens in te typen en op enter te drukken
-    if (event.keyCode === 13 && event.srcElement.value.length >= 2 && this.byPassDebounce) {
-      this.byPassDebounce();
+    if (event.keyCode === 13 && event.srcElement.value.length >= 2) {
+      this.zoek();
     }
   }
 
@@ -356,7 +336,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   private processZoekerAntwoord(nieuweResultaten: ZoekResultaten): KaartInternalMsg {
-    this.decreaseBusy();
+    console.log("Process " + nieuweResultaten.zoeker);
     this.alleZoekResultaten = this.alleZoekResultaten
       .filter(resultaat => resultaat.zoeker !== nieuweResultaten.zoeker)
       .concat(nieuweResultaten.resultaten);
@@ -376,8 +356,8 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       .map(resultaat => resultaat.kaartInfo)
       .reduce((maxExtent, kaartInfo) => kaartInfo.fold(maxExtent, i => ol.extent.extend(maxExtent!, i.extent)), ol.extent.createEmpty());
 
+    this.decreaseBusy();
     this.dispatch(prt.VervangFeaturesCmd(ZoekerUiSelector, features, kaartLogOnlyWrapper));
-
     return {
       type: "KaartInternal",
       payload: none
@@ -390,9 +370,9 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   decreaseBusy() {
+    this.cd.detectChanges();
     if (this.busy > 0) {
       this.busy--;
-      this.cd.detectChanges();
     }
   }
 

@@ -53,7 +53,7 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
     if (this.capurl) {
       // We moeten eerst de capabilities ophalen. We zullen zelf manueel de this.voegLaagToe() oproepen.
       this.voegLaagToeBijStart = false;
-      this.vraagCapabilitiesOp();
+      this.addLaagWithCapabilitiesAsync();
     }
 
     super.ngOnInit();
@@ -118,7 +118,7 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
     }
   }
 
-  private vraagCapabilitiesOp(): void {
+  private addLaagWithCapabilitiesAsync(): void {
     if (this.capurl) {
       this.http
         .get(this.capurl, { responseType: "text" }) //
