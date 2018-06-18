@@ -154,24 +154,32 @@ export class AppComponent {
   private tekenenActief = false;
   private getekendeGeom: Option<ol.geom.Geometry> = none;
 
-  private alleVoorwaarden = ["Er zijn nieuwe voorwaarden", "Er zijn nog nieuwere voorwaarden", undefined];
+  private alleVoorwaarden = ["Voorwaarden disclaimer", "Er zijn nieuwe voorwaarden", "Er zijn nog nieuwere voorwaarden"];
   voorwaarden = this.alleVoorwaarden[0];
   private voorwaardenIndex = 0;
 
   objectKeys = Object.keys;
-  mogelijkeWidgets = {
-    fixedHeaderLinksBoven: true,
-    zoeker: true,
-    lagenkiezer: true,
-    standaardinteracties: true,
-    achtergrond: true,
-    streetview: true,
-    zoomknoppen: true,
-    mijnlocatie: true,
-    meten: true,
-    schaal: true,
-    voorwaarden: true,
-    copyright: true
+  mogelijkeOpties = {
+    // --- Algemeen
+    optieDivider1: { divider: true, value: true, label: "Algemene opties" },
+    standaardinteracties: { value: true, label: "Pannen en zoomen" },
+    // --- Linkerpaneel
+    optieDivider2: { divider: true, value: true, label: "Opties linker paneel" },
+    fixedHeaderLinksBoven: { value: true, label: "Vaste header in linker paneel" },
+    zoeker: { value: true, label: "Zoeker" },
+    lagenkiezer: { value: true, label: "Lagen" },
+    // --- Widgets
+    optieDivider3: { divider: true, value: true, label: "Widgets onderaan rechts" },
+    achtergrond: { value: true, label: "Meerdere achtergrondlagen" },
+    streetview: { value: true, label: "Streetview" },
+    meten: { value: true, label: "Meten" },
+    mijnlocatie: { value: true, label: "Mijn huidige locatie" },
+    zoomknoppen: { value: true, label: "Zoomknoppen" },
+    // --- Kaartinfo
+    optieDivider4: { divider: true, value: true, label: "Kaartinfo onderaan rechts" },
+    schaal: { value: true, label: "Kaartschaal" },
+    voorwaarden: { value: true, label: "Voorwaarden disclaimer" },
+    copyright: { value: true, label: "Copyright boodschap" }
   };
 
   // Dit werkt alleen als apigateway bereikbaar is. Zie CORS waarschuwing in README.
@@ -305,16 +313,16 @@ export class AppComponent {
     this.voorwaarden = this.alleVoorwaarden[this.voorwaardenIndex];
   }
 
-  isInteractieZichtbaar(interactie: string): boolean {
-    return this.mogelijkeWidgets[interactie];
+  isOptieActief(optie: string): boolean {
+    return this.mogelijkeOpties[optie].value;
   }
 
-  toggleInteractieZichtbaar(interactie: string) {
-    this.mogelijkeWidgets[interactie] = !this.mogelijkeWidgets[interactie];
+  toggleOptieActief(optie: string) {
+    this.mogelijkeOpties[optie].value = !this.mogelijkeOpties[optie].value;
   }
 
   getMijnLocatieZoom(): string {
-    if (this.mogelijkeWidgets["mijnlocatie"]) {
+    if (this.mogelijkeOpties["mijnlocatie"].value) {
       return "8";
     } else {
       return null;
