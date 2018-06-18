@@ -1,5 +1,6 @@
 import { animate, style, transition, trigger } from "@angular/animations";
 import { Component, ElementRef, ViewChild, ViewEncapsulation } from "@angular/core";
+import { array } from "fp-ts";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
@@ -261,7 +262,7 @@ export class AppComponent {
       geometry: new ol.geom.Point(locatie)
     });
     feature.setStyle(this.pinIcon);
-    this.installaties.push(feature);
+    this.installaties = array.snoc(this.installaties, feature);
     setTimeout(() => this.addIcon(), 1000);
   }
 
