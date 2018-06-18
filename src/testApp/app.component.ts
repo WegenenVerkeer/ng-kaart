@@ -154,7 +154,7 @@ export class AppComponent {
   private tekenenActief = false;
   private getekendeGeom: Option<ol.geom.Geometry> = none;
 
-  private alleVoorwaarden = ["Er zijn nieuwe voorwaarden", "Er zijn nog nieuwere voorwaarden", undefined];
+  private alleVoorwaarden = ["Voorwaarden disclaimer", "Er zijn nieuwe voorwaarden", "Er zijn nog nieuwere voorwaarden"];
   voorwaarden = this.alleVoorwaarden[0];
   private voorwaardenIndex = 0;
 
@@ -322,7 +322,7 @@ export class AppComponent {
   }
 
   getMijnLocatieZoom(): string {
-    if (this.mogelijkeOpties["mijnlocatie"]) {
+    if (this.mogelijkeOpties["mijnlocatie"].value) {
       return "8";
     } else {
       return null;
