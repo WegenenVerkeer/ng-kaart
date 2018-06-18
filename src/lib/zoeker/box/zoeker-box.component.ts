@@ -241,6 +241,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
 
   constructor(parent: KaartComponent, zone: NgZone, private cd: ChangeDetectorRef) {
     super(parent, zone);
+    console.log("Zoekerbox constructed");
   }
 
   protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
@@ -249,36 +250,6 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
 
   ngOnInit(): void {
     super.ngOnInit();
-    this.bindToLifeCycle(
-      this.zoekVeld.valueChanges.pipe(
-        filter(value => value !== null),
-        map(value => value.trim()),
-        debounce((value: string) => {
-          // Form changes worden debounced tot deze promise geresolved wordt.
-          return new Promise(resolve => {
-            // We houden de resolve functie pointer bij om de debounce te kunnen bypassen (bv. bij form submit).
-            this.byPassDebounce = resolve;
-            if (value.length >= 3 || value.length === 0) {
-              // De gebruiker kan locatie voorstellen krijgen door in het zoekveld minstens 3 tekens in te typen.
-              // We resolven hoe dan ook na een bepaalde timeout, zodat de zoek uitgevoerd wordt.
-              setTimeout(resolve, 800);
-            }
-          });
-        }),
-        distinctUntilChanged()
-      )
-    ).subscribe(value => {
-      this.toonResultaat = true;
-      if (value.length > 0) {
-        this.increaseBusy();
-        this.dispatch({
-          type: "Zoek",
-          input: { type: "string", value: value } as StringZoekInput,
-          zoekers: Set(),
-          wrapper: kaartLogOnlyWrapper
-        });
-      }
-    });
     this.dispatch({
       type: "VoegLaagToe",
       positie: 1,
@@ -315,8 +286,14 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
 
   onKey(event: any) {
     // De gebruiker kan locatie voorstellen krijgen door in het zoekveld max. 2 tekens in te typen en op enter te drukken
-    if (event.keyCode === 13 && event.srcElement.value.length >= 2 && this.byPassDebounce) {
-      this.byPassDebounce();
+    if (event.keyCode === 13 && event.srcElement.value.length >= 2) {
+      this.increaseBusy();
+      this.dispatch({
+        type: "Zoek",
+        input: { type: "string", value: this.zoekVeld.value } as StringZoekInput,
+        zoekers: Set(),
+        wrapper: kaartLogOnlyWrapper
+      });
     }
   }
 
@@ -346,6 +323,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   maakResultaatLeeg() {
+    console.log("resultaten leeg");
     this.zoekVeld.setValue("");
     this.alleFouten = [];
     this.alleZoekResultaten = [];
@@ -357,9 +335,14 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
 
   private processZoekerAntwoord(nieuweResultaten: ZoekResultaten): KaartInternalMsg {
     this.decreaseBusy();
+    console.log("----------------------");
+    console.log("Process " + nieuweResultaten.zoeker);
+    console.log("Gevonden " + nieuweResultaten.resultaten.length);
+    console.log("Aantal " + this.alleZoekResultaten.length);
     this.alleZoekResultaten = this.alleZoekResultaten
       .filter(resultaat => resultaat.zoeker !== nieuweResultaten.zoeker)
       .concat(nieuweResultaten.resultaten);
+    console.log("Aantal " + this.alleZoekResultaten.length);
     this.alleZoekResultaten.sort((a, b) => compareResultaten(a, b, this.zoekVeld.value));
     nieuweResultaten.legende.forEach((safeHtml, name) => this.legende.set(name!, safeHtml!));
     this.legendeKeys = Array.from(this.legende.keys());
@@ -377,7 +360,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       .reduce((maxExtent, kaartInfo) => kaartInfo.fold(maxExtent, i => ol.extent.extend(maxExtent!, i.extent)), ol.extent.createEmpty());
 
     this.dispatch(prt.VervangFeaturesCmd(ZoekerUiSelector, features, kaartLogOnlyWrapper));
-
+    console.log("----------------------");
     return {
       type: "KaartInternal",
       payload: none
