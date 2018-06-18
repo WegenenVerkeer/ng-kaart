@@ -297,26 +297,8 @@
       </awv-test-sectie>
 
       <awv-test-sectie sectieId="patrimonium" sectieTitel="Patrimonium" [sectieZichtbaar]="false" [subSectie]="true" #patrimoniumSectie>
-        <div *ngIf="patrimoniumSectie.sectieZichtbaar" [@enterAnimation] class="kaart-wrapper" (mousemove)="popup.move($event)">
-          <awv-kaart-classic [selectieModus]="'single'" [hoverModus]="'on'" (hoverFeature)="popup.update($event)">
-            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
-            <awv-kaart-nosqlfs-laag [url]="'http://apigateway:5100/patrimonium'"
-                                    [database]="'todo'"
-                                    [collection]="'VERHUURD'"
-                                    [hover]="true"
-                                    [minZoom]="0"
-                                    [titel]="'Verhuurd'"
-                                    [hoverStyle]="patrimoniumHoverStyle()"
-                                    [selectieStyle]="patrimoniumSelectStyle()"
-                                    [stijlInLagenKiezer]="'verhuurd'"></awv-kaart-nosqlfs-laag>
-            <awv-kaart-features-laag [titel]="'Braakliggend'" [features]="installatie" [stijlInLagenKiezer]="'braakliggend'"></awv-kaart-features-laag>
-            <awv-kaart-features-laag [titel]="'Onteigend'" [features]="installatie" [stijlInLagenKiezer]="'onteigend'"></awv-kaart-features-laag>
-            <awv-kaart-features-laag [titel]="'Te Onteigenen'" [features]="installatie" [stijlInLagenKiezer]="'te-onteigenen'"></awv-kaart-features-laag>
-            <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
-            <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
-            <awv-kaart-lagenkiezer></awv-kaart-lagenkiezer>
-          </awv-kaart-classic>
-          <awv-pat-perceel-popup #popup></awv-pat-perceel-popup>
+        <div *ngIf="patrimoniumSectie.sectieZichtbaar" [@enterAnimation]>
+          <awv-pat-kaart></awv-pat-kaart>
         </div>
       </awv-test-sectie>
 

@@ -23,7 +23,8 @@ import {
   getSelectionStyleSelector,
   setFeatureStyleSelector,
   setHoverStyleSelector,
-  setSelectionStyleSelector
+  setSelectionStyleSelector,
+  StyleSelector
 } from "./stijl-selector";
 import * as ss from "./stijl-selector";
 import { getDefaultStyleSelector } from "./styles";
@@ -742,62 +743,37 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     const noStyle: FeatureStyle = [];
 
-    const applySelectFunction = function(feature: ol.Feature, resolution: number): FeatureStyle {
-      const executeStyleSelector: (_: ss.StyleSelector) => FeatureStyle = ss.matchStyleSelector(
-        (s: ss.StaticStyle) => s.style,
-        (s: ss.DynamicStyle) => s.styleFunction(feature, resolution),
-        (s: ss.Styles) => s.styles
-      );
+    type StyleSelectorFn = (map: ol.Map, laagnaam: string) => Option<StyleSelector>;
 
-      return fromNullable(feature.get("laagnaam")).foldL(
-        () => {
-          kaartLogger.warn("Geen laagnaam gevonden voor: ", feature);
-          return noStyle;
-        },
-        laagnaam =>
-          getSelectionStyleSelector(model.map, laagnaam).foldL(
-            () => {
-              kaartLogger.warn("Geen selectiestijl gevonden voor:", feature);
-              return getFeatureStyleSelector(model.map, laagnaam).foldL<FeatureStyle>(
-                () => {
-                  kaartLogger.error("Ook geen stijlselector gevonden voor:", feature);
-                  return noStyle;
-                },
-                pipe(executeStyleSelector, applySelectionColor) // we vallen terug op feature stijl met custom kleurtje
-              );
-            },
-            executeStyleSelector // dit is het perfecte geval: evalueer de selectiestijl selector
-          )
-      );
-    };
+    const createStyleFn = function(styleSelectorFn: StyleSelectorFn): ((feature: ol.Feature, resolution: number) => FeatureStyle) {
+      return function(feature: ol.Feature, resolution: number): FeatureStyle {
+        const executeStyleSelector: (_: ss.StyleSelector) => FeatureStyle = ss.matchStyleSelector(
+          (s: ss.StaticStyle) => s.style,
+          (s: ss.DynamicStyle) => s.styleFunction(feature, resolution),
+          (s: ss.Styles) => s.styles
+        );
 
-    const applyHoverFunction = function(feature: ol.Feature, resolution: number): FeatureStyle {
-      const executeStyleSelector: (_: ss.StyleSelector) => FeatureStyle = ss.matchStyleSelector(
-        (s: ss.StaticStyle) => s.style,
-        (s: ss.DynamicStyle) => s.styleFunction(feature, resolution),
-        (s: ss.Styles) => s.styles
-      );
-
-      return fromNullable(feature.get("laagnaam")).foldL(
-        () => {
-          kaartLogger.warn("Geen laagnaam gevonden voor: ", feature);
-          return noStyle;
-        },
-        laagnaam =>
-          getHoverStyleSelector(model.map, laagnaam).foldL(
-            () => {
-              kaartLogger.warn("Geen hoverstijl gevonden voor:", feature);
-              return getFeatureStyleSelector(model.map, laagnaam).foldL<FeatureStyle>(
-                () => {
-                  kaartLogger.error("Ook geen stijlselector gevonden voor:", feature);
-                  return noStyle;
-                },
-                pipe(executeStyleSelector, applySelectionColor) // we vallen terug op feature stijl met custom kleurtje
-              );
-            },
-            executeStyleSelector // dit is het perfecte geval: evalueer de selectiestijl selector
-          )
-      );
+        return fromNullable(feature.get("laagnaam")).foldL(
+          () => {
+            kaartLogger.warn("Geen laagnaam gevonden voor: ", feature);
+            return noStyle;
+          },
+          laagnaam =>
+            styleSelectorFn(model.map, laagnaam).foldL(
+              () => {
+                kaartLogger.warn("Geen hover/selectiestijl gevonden voor:", feature);
+                return getFeatureStyleSelector(model.map, laagnaam).foldL<FeatureStyle>(
+                  () => {
+                    kaartLogger.error("Ook geen stijlselector gevonden voor:", feature);
+                    return noStyle;
+                  },
+                  pipe(executeStyleSelector, applySelectionColor) // we vallen terug op feature stijl met custom kleurtje
+                );
+              },
+              executeStyleSelector // dit is het perfecte geval: evalueer de selectiestijl selector
+            )
+        );
+      };
     };
 
     function activeerSelectieModus(cmnd: prt.ActiveerSelectieModusCmd<Msg>): ModelWithResult<Msg> {
@@ -813,7 +789,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               condition: ol.events.condition.click,
               features: model.geselecteerdeFeatures,
               multi: true, // dit wil zeggen dat in alle lagen gekeken wordt of er een feature op de clicklocatie zit
-              style: applySelectFunction,
+              style: createStyleFn(getSelectionStyleSelector),
               hitTolerance: 5,
               layers: layer => layer.get("selecteerbaar")
             });
@@ -823,7 +799,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               toggleCondition: ol.events.condition.click,
               features: model.geselecteerdeFeatures,
               multi: true,
-              style: applySelectFunction,
+              style: createStyleFn(getSelectionStyleSelector),
               hitTolerance: 5,
               layers: layer => layer.get("selecteerbaar")
             });
@@ -851,7 +827,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             return some({
               condition: ol.events.condition.pointerMove,
               features: model.hoverFeatures,
-              style: applyHoverFunction,
+              style: createStyleFn(getHoverStyleSelector),
               layers: layer => layer.get("hover")
             });
           case "off":
