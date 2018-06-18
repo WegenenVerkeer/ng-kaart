@@ -371,4 +371,24 @@ export class AppComponent {
     const element = document.getElementById(idName);
     element.scrollIntoView({ behavior: "smooth" });
   }
+
+  patrimoniumHoverStyle(): ol.style.Style {
+    const fill = new ol.style.Fill({
+      color: "rgb(255,0,0)"
+    });
+    return new ol.style.Style({
+      fill: fill,
+      stroke: null
+    });
+  }
+
+  patrimoniumSelectStyle(): ol.style.Style {
+    const fill = new ol.style.Fill({
+      color: "rgb(0,255,0)"
+    });
+    return new ol.style.Style({
+      fill: fill,
+      stroke: null
+    });
+  }
 }

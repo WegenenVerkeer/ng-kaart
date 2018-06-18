@@ -682,72 +682,72 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     type FeatureStyle = ol.style.Style | ol.style.Style[];
 
+    const applySelectionColor = function(style: ol.style.Style): ol.style.Style {
+      const selectionStrokeColor: ol.Color = [0, 153, 255, 1]; // TODO maak configureerbaar
+      const selectionFillColor: ol.Color = [112, 198, 255, 0.7]; // TODO maak configureerbaar
+      const selectionIconColor: ol.Color = [0, 51, 153, 0.7]; // TODO maak configureerbaar
+
+      const selectionStyle = style.clone();
+      if (selectionStyle.getStroke()) {
+        selectionStyle.getStroke().setColor(selectionStrokeColor);
+      }
+      if (selectionStyle.getFill()) {
+        selectionStyle.getFill().setColor(selectionFillColor);
+      }
+      if (selectionStyle.getImage()) {
+        // getekende Point objecten ook inkleuren
+        if (selectionStyle.getImage() instanceof ol.style.Circle) {
+          const circle = selectionStyle.getImage() as ol.style.Circle;
+          circle.getStroke().setColor(selectionStrokeColor);
+          circle.getFill().setColor(selectionFillColor);
+          // volgende is nodig, anders heeft style aanpassing geen effect
+          selectionStyle.setImage(
+            new ol.style.Circle({
+              radius: circle.getRadius(),
+              stroke: circle.getStroke(),
+              fill: circle.getFill(),
+              snapToPixel: circle.getSnapToPixel()
+            })
+          );
+        } else if (selectionStyle.getImage() instanceof ol.style.RegularShape) {
+          const shape = selectionStyle.getImage() as ol.style.RegularShape;
+          shape.getStroke().setColor(selectionStrokeColor);
+          shape.getFill().setColor(selectionFillColor);
+          // volgende is nodig, anders heeft style aanpassing geen effect
+          selectionStyle.setImage(
+            new ol.style.RegularShape({
+              fill: shape.getFill(),
+              points: shape.getPoints(),
+              radius: shape.getRadius(),
+              radius1: shape.getRadius(),
+              radius2: shape.getRadius2(),
+              angle: shape.getAngle(),
+              snapToPixel: shape.getSnapToPixel(),
+              stroke: shape.getStroke(),
+              rotation: shape.getRotation()
+            })
+          );
+        } else if (selectionStyle.getImage() instanceof ol.style.Icon) {
+          const icon = selectionStyle.getImage() as ol.style.Icon;
+          selectionStyle.setImage(
+            new ol.style.Icon({
+              color: selectionIconColor,
+              src: icon.getSrc()
+            })
+          );
+        }
+      }
+      return selectionStyle;
+    };
+
+    const noStyle: FeatureStyle = [];
+
     const applySelectFunction = function(feature: ol.Feature, resolution: number): FeatureStyle {
-      const applySelectionColor = function(style: ol.style.Style): ol.style.Style {
-        const selectionStrokeColor: ol.Color = [0, 153, 255, 1]; // TODO maak configureerbaar
-        const selectionFillColor: ol.Color = [112, 198, 255, 0.7]; // TODO maak configureerbaar
-        const selectionIconColor: ol.Color = [0, 51, 153, 0.7]; // TODO maak configureerbaar
-
-        const selectionStyle = style.clone();
-        if (selectionStyle.getStroke()) {
-          selectionStyle.getStroke().setColor(selectionStrokeColor);
-        }
-        if (selectionStyle.getFill()) {
-          selectionStyle.getFill().setColor(selectionFillColor);
-        }
-        if (selectionStyle.getImage()) {
-          // getekende Point objecten ook inkleuren
-          if (selectionStyle.getImage() instanceof ol.style.Circle) {
-            const circle = selectionStyle.getImage() as ol.style.Circle;
-            circle.getStroke().setColor(selectionStrokeColor);
-            circle.getFill().setColor(selectionFillColor);
-            // volgende is nodig, anders heeft style aanpassing geen effect
-            selectionStyle.setImage(
-              new ol.style.Circle({
-                radius: circle.getRadius(),
-                stroke: circle.getStroke(),
-                fill: circle.getFill(),
-                snapToPixel: circle.getSnapToPixel()
-              })
-            );
-          } else if (selectionStyle.getImage() instanceof ol.style.RegularShape) {
-            const shape = selectionStyle.getImage() as ol.style.RegularShape;
-            shape.getStroke().setColor(selectionStrokeColor);
-            shape.getFill().setColor(selectionFillColor);
-            // volgende is nodig, anders heeft style aanpassing geen effect
-            selectionStyle.setImage(
-              new ol.style.RegularShape({
-                fill: shape.getFill(),
-                points: shape.getPoints(),
-                radius: shape.getRadius(),
-                radius1: shape.getRadius(),
-                radius2: shape.getRadius2(),
-                angle: shape.getAngle(),
-                snapToPixel: shape.getSnapToPixel(),
-                stroke: shape.getStroke(),
-                rotation: shape.getRotation()
-              })
-            );
-          } else if (selectionStyle.getImage() instanceof ol.style.Icon) {
-            const icon = selectionStyle.getImage() as ol.style.Icon;
-            selectionStyle.setImage(
-              new ol.style.Icon({
-                color: selectionIconColor,
-                src: icon.getSrc()
-              })
-            );
-          }
-        }
-        return selectionStyle;
-      };
-
       const executeStyleSelector: (_: ss.StyleSelector) => FeatureStyle = ss.matchStyleSelector(
         (s: ss.StaticStyle) => s.style,
         (s: ss.DynamicStyle) => s.styleFunction(feature, resolution),
         (s: ss.Styles) => s.styles
       );
-
-      const noStyle: FeatureStyle = [];
 
       return fromNullable(feature.get("laagnaam")).foldL(
         () => {
@@ -758,6 +758,35 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           getSelectionStyleSelector(model.map, laagnaam).foldL(
             () => {
               kaartLogger.warn("Geen selectiestijl gevonden voor:", feature);
+              return getFeatureStyleSelector(model.map, laagnaam).foldL<FeatureStyle>(
+                () => {
+                  kaartLogger.error("Ook geen stijlselector gevonden voor:", feature);
+                  return noStyle;
+                },
+                pipe(executeStyleSelector, applySelectionColor) // we vallen terug op feature stijl met custom kleurtje
+              );
+            },
+            executeStyleSelector // dit is het perfecte geval: evalueer de selectiestijl selector
+          )
+      );
+    };
+
+    const applyHoverFunction = function(feature: ol.Feature, resolution: number): FeatureStyle {
+      const executeStyleSelector: (_: ss.StyleSelector) => FeatureStyle = ss.matchStyleSelector(
+        (s: ss.StaticStyle) => s.style,
+        (s: ss.DynamicStyle) => s.styleFunction(feature, resolution),
+        (s: ss.Styles) => s.styles
+      );
+
+      return fromNullable(feature.get("laagnaam")).foldL(
+        () => {
+          kaartLogger.warn("Geen laagnaam gevonden voor: ", feature);
+          return noStyle;
+        },
+        laagnaam =>
+          getHoverStyleSelector(model.map, laagnaam).foldL(
+            () => {
+              kaartLogger.warn("Geen hoverstijl gevonden voor:", feature);
               return getFeatureStyleSelector(model.map, laagnaam).foldL<FeatureStyle>(
                 () => {
                   kaartLogger.error("Ook geen stijlselector gevonden voor:", feature);
@@ -822,7 +851,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             return some({
               condition: ol.events.condition.pointerMove,
               features: model.hoverFeatures,
-              style: applySelectFunction,
+              style: applyHoverFunction,
               layers: layer => layer.get("hover")
             });
           case "off":
