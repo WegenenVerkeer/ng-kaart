@@ -48,32 +48,53 @@
       <div class="sub-content">
         Via de configurator kan je de kaart opties aan of uitzetten en aanpassen om zo de gewenste kaart configuratie te bekomen.
       </div>
-      <awv-kaart-classic [naam]="'interacties'" [mijnLocatieZoom]="getMijnLocatieZoom()" (zoomChange)="onZoom($event)"
+      <awv-kaart-classic [naam]="'interacties'" [mijnLocatieZoom]="getMijnLocatieZoom()" [hoogte]="424"
+                         (zoomChange)="onZoom($event)"
                          (middelpuntChange)="onMiddelpunt($event)"
                          (extentChange)="onExtent($event)">
-        <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
-        <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"
-                                  *ngIf="isOptieActief('achtergrond')"></awv-kaart-tilecache-laag>
-        <awv-kaart-blanco-laag [titel]="'Leeg'" *ngIf="isOptieActief('achtergrond')"></awv-kaart-blanco-laag>
-        <awv-kaart-zoeker *ngIf="isOptieActief('zoeker')"></awv-kaart-zoeker>
-        <awv-kaart-lagenkiezer *ngIf="isOptieActief('lagenkiezer')" [titels]="['Referentiepunten (WDB)', 'Referentiepunten (WDB) 2', 'features']"
-                               [verwijderbareLagen]="false" [verplaatsbareLagen]="true"></awv-kaart-lagenkiezer>
-        <awv-kaart-geoserver-laag [titel]="'Referentiepunten (WDB)'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'"></awv-kaart-geoserver-laag>
-        <awv-kaart-geoserver-laag [titel]="'Referentiepunten (WDB) 2'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'"
-                                  [minZoom]="6"></awv-kaart-geoserver-laag>
-        <awv-kaart-knop-achtergrondlaag-kiezer *ngIf="isOptieActief('achtergrond')"></awv-kaart-knop-achtergrondlaag-kiezer>
+        <!-- algemeen -->
         <awv-kaart-standaard-interacties *ngIf="isOptieActief('standaardinteracties')" [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
-        <awv-kaart-streetview *ngIf="isOptieActief('streetview')"></awv-kaart-streetview>
-        <awv-kaart-zoomknoppen *ngIf="isOptieActief('zoomknoppen')"></awv-kaart-zoomknoppen>
-        <awv-meet-knop [toonInfoBoodschap]="true" *ngIf="isOptieActief('meten')"></awv-meet-knop>
-        <awv-kaart-copyright *ngIf="isOptieActief('copyright')"></awv-kaart-copyright>
-        <awv-kaart-voorwaarden *ngIf="isOptieActief('voorwaarden')" [titel]="voorwaarden"></awv-kaart-voorwaarden>
-        <awv-kaart-schaal *ngIf="isOptieActief('schaal')"></awv-kaart-schaal>
+        <!-- fixed header links boven -->
         <div class="kaart-fixed-links-boven" *ngIf="isOptieActief('fixedHeaderLinksBoven')">
           <div class="custom-kaart-fixed-links-boven">
             <span class="custom-titel">kaart-fixed-links-boven content voorbeeld</span>
           </div>
         </div>
+        <!-- zoeker -->
+        <awv-kaart-zoeker *ngIf="isOptieActief('zoeker')"></awv-kaart-zoeker>
+        <!-- lagen -->
+        <awv-kaart-lagenkiezer *ngIf="isOptieActief('lagenkiezer')" [titels]="['Referentiepunten (WDB)', 'Referentiepunten (WDB) 2', 'features']"
+                               [verwijderbareLagen]="false" [verplaatsbareLagen]="true" [toonLegende]="isOptieActief('legende')"></awv-kaart-lagenkiezer>
+        <awv-kaart-geoserver-laag [titel]="'Referentiepunten'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'">
+          <awv-legende-bolletje-item [beschrijving]="'Referentiepunten'" [kleur]="'orange'"></awv-legende-bolletje-item>
+        </awv-kaart-geoserver-laag>
+        <awv-kaart-geoserver-laag [titel]="'Referentiepunten 2'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'" [minZoom]="6">
+          <awv-legende-lijn-item [beschrijving]="'Referentiepunten 2 (lijn)'" [kleur]="'blue'"></awv-legende-lijn-item>
+          <awv-legende-image-item [beschrijving]="'Referentiepunten 2 (image)'"
+                                  [image]="'data:image/png;base64,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'"></awv-legende-image-item>
+        </awv-kaart-geoserver-laag>
+        <awv-kaart-geoserver-laag [titel]="'Referentiepunten 3'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'" [minZoom]="6">
+          <awv-legende-lijn-item [beschrijving]="'Referentiepunten 3 (lijn)'" [kleur]="'yellow'"></awv-legende-lijn-item>
+          <awv-legende-polygoon-item [beschrijving]="'Referentiepunten 3 (polygoon)'" [kleur]="'green'"></awv-legende-polygoon-item>
+        </awv-kaart-geoserver-laag>
+        <awv-kaart-features-laag [titel]="'Installatie (pin)'" [features]="installatie" [style]="pinIcon" [minZoom]="3"
+                                 [zichtbaar]="false"></awv-kaart-features-laag>
+        <awv-kaart-features-laag [titel]="'Installatie (plane)'" [features]="installatie" [style]="pinIcon2" [minZoom]="3"
+                                 [zichtbaar]="false"></awv-kaart-features-laag>
+        <!-- achtergrondlagen -->
+        <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+        <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"
+                                  *ngIf="isOptieActief('achtergrond')"></awv-kaart-tilecache-laag>
+        <awv-kaart-blanco-laag [titel]="'Leeg'" *ngIf="isOptieActief('achtergrond')"></awv-kaart-blanco-laag>
+        <awv-kaart-knop-achtergrondlaag-kiezer *ngIf="isOptieActief('achtergrond')"></awv-kaart-knop-achtergrondlaag-kiezer>
+        <!-- kaart widgets-->
+        <awv-kaart-streetview *ngIf="isOptieActief('streetview')"></awv-kaart-streetview>
+        <awv-meet-knop [toonInfoBoodschap]="true" *ngIf="isOptieActief('meten')"></awv-meet-knop>
+        <awv-kaart-zoomknoppen *ngIf="isOptieActief('zoomknoppen')"></awv-kaart-zoomknoppen>
+        <!-- kaartinfo -->
+        <awv-kaart-copyright *ngIf="isOptieActief('copyright')"></awv-kaart-copyright>
+        <awv-kaart-voorwaarden *ngIf="isOptieActief('voorwaarden')" [titel]="voorwaarden"></awv-kaart-voorwaarden>
+        <awv-kaart-schaal *ngIf="isOptieActief('schaal')"></awv-kaart-schaal>
       </awv-kaart-classic>
       <div class="sub-content onder-kaart opties">
         <div *ngFor="let key of objectKeys(mogelijkeOpties)"
@@ -195,7 +216,7 @@
       <awv-test-sectie sectieId="lagenkiezer-met-legende" sectieTitel="Lagenkiezer met legende"
                        [sectieZichtbaar]="false" [subSectie]="true" #lagenkiezerMetLegendeSectie>
         <div *ngIf="lagenkiezerMetLegendeSectie.sectieZichtbaar" [@enterAnimation]>
-          <awv-kaart-classic [naam]="'lagenkiezer'" [mijnLocatieZoom]="8" (zichtbareFeatures)="onZichtbareFeatures($event)">
+          <awv-kaart-classic [naam]="'lagenkiezer'" (zichtbareFeatures)="onZichtbareFeatures($event)">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
             <awv-kaart-blanco-laag [titel]="'Leeg'"></awv-kaart-blanco-laag>
@@ -214,6 +235,7 @@
             <awv-kaart-features-laag [titel]="'Pin'" [features]="installatie" [style]="pinIcon" [minZoom]="3" [zichtbaar]="false"></awv-kaart-features-laag>
             <awv-kaart-features-laag [titel]="'Vliegtuig'" [features]="installatie" [style]="pinIcon2" [minZoom]="3"
                                      [zichtbaar]="false"></awv-kaart-features-laag>
+            <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
             <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
             <awv-kaart-knop-achtergrondlaag-kiezer [titels]="['Dienstkaart grijs', 'Dienstkaart kleur', 'Leeg']"></awv-kaart-knop-achtergrondlaag-kiezer>
             <awv-kaart-lagenkiezer [titels]="['Referentiepunten (WDB)', 'Referentiepunten (WDB) 2', 'features']" [toonLegende]="true"

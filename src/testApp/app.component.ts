@@ -169,6 +169,7 @@ export class AppComponent {
     fixedHeaderLinksBoven: { value: true, label: "Vaste header in linker paneel" },
     zoeker: { value: true, label: "Zoeker" },
     lagenkiezer: { value: true, label: "Lagen" },
+    legende: { value: true, label: "Legende (enkel in combinatie met lagen)" },
     // --- Widgets
     optieDivider3: { divider: true, value: true, label: "Widgets onderaan rechts" },
     achtergrond: { value: true, label: "Meerdere achtergrondlagen" },
