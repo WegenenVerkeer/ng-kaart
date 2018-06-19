@@ -9,7 +9,7 @@
       <mat-icon *ngIf="ingeklapt">expand_more</mat-icon>
     </button>
   </div>
-  <div *ngIf="uitgeklapt">
+  <div *ngIf="uitgeklapt" [@enterAnimation]>
     <ng-container *ngIf="opties.toonLegende; then inTabGroep; else zonderTabGroep"></ng-container>
     <ng-template #inTabGroep>
       <mat-tab-group [headerPosition]="'above'">

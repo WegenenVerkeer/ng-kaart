@@ -1,3 +1,4 @@
+import { animate, style, transition, trigger } from "@angular/animations";
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { none, Option, some } from "fp-ts/lib/Option";
@@ -59,6 +60,18 @@ const elementPos = (elt: HTMLElement) => [elt.getBoundingClientRect().top, elt.g
   selector: "awv-lagenkiezer",
   templateUrl: "./lagenkiezer.component.html",
   styleUrls: ["./lagenkiezer.component.scss"],
+  animations: [
+    trigger("enterAnimation", [
+      transition(":enter", [
+        style({ opacity: 0, "max-height": 0 }),
+        animate("0.35s cubic-bezier(.62,.28,.23,.99)", style({ opacity: 1, "max-height": "400px" }))
+      ]),
+      transition(":leave", [
+        style({ opacity: 1, "max-height": "400px" }),
+        animate("0.35s cubic-bezier(.62,.28,.23,.99)", style({ opacity: 0, "max-height": 0 }))
+      ])
+    ])
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush // Omdat angular anders veel te veel change detection uitvoert
 })
 export class LagenkiezerComponent extends KaartChildComponentBase implements OnInit, OnDestroy {

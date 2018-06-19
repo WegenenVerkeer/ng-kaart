@@ -1,3 +1,4 @@
+import { animate, style, transition, trigger } from "@angular/animations";
 import { HttpErrorResponse } from "@angular/common/http";
 import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { FormControl } from "@angular/forms";
@@ -28,7 +29,6 @@ import * as prt from "../../kaart/kaart-protocol";
 import { KaartComponent } from "../../kaart/kaart.component";
 import { kaartLogger } from "../../kaart/log";
 import { matchGeometryType } from "../../util/geometryTypes";
-
 import { compareResultaten, IconDescription, StringZoekInput, ZoekInput, ZoekResultaat, ZoekResultaten } from "../zoeker-base";
 
 export const ZoekerUiSelector = "Zoeker";
@@ -160,7 +160,19 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
 @Component({
   selector: "awv-zoeker",
   templateUrl: "./zoeker-box.html",
-  styleUrls: ["./zoeker-box.scss"]
+  styleUrls: ["./zoeker-box.scss"],
+  animations: [
+    trigger("enterAnimation", [
+      transition(":enter", [
+        style({ opacity: 0, "max-height": 0 }),
+        animate("0.35s cubic-bezier(.62,.28,.23,.99)", style({ opacity: 1, "max-height": "400px" }))
+      ]),
+      transition(":leave", [
+        style({ opacity: 1, "max-height": "400px" }),
+        animate("0.35s cubic-bezier(.62,.28,.23,.99)", style({ opacity: 0, "max-height": 0 }))
+      ])
+    ])
+  ]
 })
 export class ZoekerBoxComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
   zoekVeld = new FormControl();

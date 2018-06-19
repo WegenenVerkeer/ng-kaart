@@ -71,6 +71,12 @@ $kaart-links-breedte: 480px;
         left: $kaart-links-breedte;
       }
     }
+
+    &.kaart-links-scrollbar-niet-zichtbaar {
+      .kaart-links {
+        overflow-y: hidden;
+      }
+    }
   }
 
   &.kaart-links-niet-zichtbaar {
