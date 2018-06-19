@@ -68,7 +68,6 @@ export class ClassicFeaturesLaagComponent extends ClassicVectorLaagComponent imp
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    console.log("****ngOnChanges", changes);
     forChangedValue(changes, "featureEquality", eq => {
       this.featuresSetoid = featureEqualityToFeaturesSetoid(eq);
     });
@@ -77,16 +76,13 @@ export class ClassicFeaturesLaagComponent extends ClassicVectorLaagComponent imp
         changes,
         "features",
         features => this.dispatchVervangFeatures(features),
-        (curFeatures: ol.Feature[], prevFeatures: ol.Feature[]) => {
-          console.log("****cmp", curFeatures, prevFeatures);
-          return prevFeatures !== undefined && !this.featuresSetoid.equals(curFeatures, prevFeatures);
-        }
+        (curFeatures: ol.Feature[], prevFeatures: ol.Feature[]) =>
+          prevFeatures !== undefined && !this.featuresSetoid.equals(curFeatures, prevFeatures)
       );
     }
   }
 
   private dispatchVervangFeatures(features: ol.Feature[]) {
-    console.log("****dispatchVervangFeatures");
     this.dispatch(prt.VervangFeaturesCmd(this.titel, List(features), logOnlyWrapper));
   }
 }
