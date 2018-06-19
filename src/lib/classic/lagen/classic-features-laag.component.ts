@@ -57,7 +57,6 @@ export class ClassicFeaturesLaagComponent extends ClassicVectorLaagComponent imp
   }
 
   voegLaagToe(): void {
-    console.log("****voegLaagToe");
     super.voegLaagToe();
     this.dispatchVervangFeatures(this.features);
   }
