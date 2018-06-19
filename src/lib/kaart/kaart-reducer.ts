@@ -513,7 +513,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         fromPredicate(model.stdInteracties, l => !l.isEmpty(), "De standaard interacties zijn niet aanwezig").map(
           (stdInteracties: List<ol.interaction.Interaction>) => {
             stdInteracties.forEach(i => model.map.removeInteraction(i!));
-            return ModelAndEmptyResult({ ...model, fullScreen: none });
+            return ModelAndEmptyResult({ ...model, stdInteracties: List() });
           }
         )
       );
