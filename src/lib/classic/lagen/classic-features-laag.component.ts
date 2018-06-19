@@ -1,9 +1,10 @@
-import { Component, DoCheck, EventEmitter, Input, Output, ViewEncapsulation } from "@angular/core";
+import { Component, DoCheck, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewEncapsulation } from "@angular/core";
 import { array } from "fp-ts";
-import { none, Option, some } from "fp-ts/lib/Option";
+import { Setoid } from "fp-ts/lib/Setoid";
 import { List } from "immutable";
 import * as ol from "openlayers";
 
+import { forChangedValue } from "../../kaart/kaart-component-base";
 import * as prt from "../../kaart/kaart-protocol";
 import { forEach } from "../../util/option";
 import { KaartClassicComponent } from "../kaart-classic.component";
@@ -33,20 +34,23 @@ const stdFeatureEquality = (feat1: ol.Feature, feat2: ol.Feature) => {
   return id1 !== undefined && id2 !== undefined && id1 === id2;
 };
 
+const featureEqualityToFeaturesSetoid = (eq: (feat1: ol.Feature, feat2: ol.Feature) => boolean) => array.getSetoid({ equals: eq });
+
 @Component({
   selector: "awv-kaart-features-laag",
   template: "",
   encapsulation: ViewEncapsulation.None
 })
-export class ClassicFeaturesLaagComponent extends ClassicVectorLaagComponent implements DoCheck {
-  // Er wordt verwacht dat alle features een unieke ID hebben. Null of undefined ID's zorgen voor veel onnodige updates.
+export class ClassicFeaturesLaagComponent extends ClassicVectorLaagComponent implements OnChanges {
+  private featuresSetoid: Setoid<ol.Feature[]> = featureEqualityToFeaturesSetoid(stdFeatureEquality);
+
+  // Er wordt verwacht dat alle features een unieke ID hebben. Null of undefined ID's zorgen voor onnodige updates. Bovendien moet de hele
+  // feature array aangepast worden. Dwz, je mag de array niet aanpassen en de referentie ongewijzigd laten. Dit is om performantieredenen.
   @Input() features = [] as ol.Feature[];
   @Input() featureEquality: (feat1: ol.Feature, feat2: ol.Feature) => boolean = stdFeatureEquality;
 
   // TODO combineren met 'selecteerbaar' van kaart-vector-laag
   @Output() featureGeselecteerd: EventEmitter<ol.Feature> = new EventEmitter<ol.Feature>();
-
-  private vorigeFeatures: Option<ol.Feature[]> = none;
 
   constructor(kaart: KaartClassicComponent) {
     super(kaart);
@@ -62,21 +66,22 @@ export class ClassicFeaturesLaagComponent extends ClassicVectorLaagComponent imp
     super.verwijderLaag(); // dit verwijdert de laag weer
   }
 
-  ngDoCheck(): void {
-    // deze check ipv ngOnChanges want wijzigingen aan features staan niet in SimpleChanges
-    forEach(this.vorigeFeatures, features => {
-      if (
-        !array
-          .getSetoid({ equals: (feat1: ol.Feature, feat2: ol.Feature) => this.featureEquality(feat1, feat2) })
-          .equals(this.features, features)
-      ) {
-        this.dispatchVervangFeatures(this.features);
-      }
+  ngOnChanges(changes: SimpleChanges) {
+    forChangedValue(changes, "featureEquality", eq => {
+      this.featuresSetoid = featureEqualityToFeaturesSetoid(eq);
     });
+    if (changes.features && !changes.features.firstChange) {
+      forChangedValue(
+        changes,
+        "features",
+        features => this.dispatchVervangFeatures(features),
+        (curFeatures: ol.Feature[], prevFeatures: ol.Feature[]) =>
+          prevFeatures !== undefined && !this.featuresSetoid.equals(curFeatures, prevFeatures)
+      );
+    }
   }
 
   private dispatchVervangFeatures(features: ol.Feature[]) {
-    this.vorigeFeatures = some(array.copy(features));
     this.dispatch(prt.VervangFeaturesCmd(this.titel, List(features), logOnlyWrapper));
   }
 }
