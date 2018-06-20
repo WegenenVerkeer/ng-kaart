@@ -266,14 +266,18 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     super.ngOnDestroy();
   }
 
+  protected refreshUI(): void {
+    this.cd.detectChanges();
+  }
+
   toggleResultaat() {
     this.toonResultaat = !this.toonResultaat;
-    this.dispatch(prt.RefreshKaarLinksWeergave());
+    this.refreshUI();
   }
 
   toggleHelp() {
     this.toonHelp = !this.toonHelp;
-    this.dispatch(prt.RefreshKaarLinksWeergave());
+    this.refreshUI();
   }
 
   zoomNaarResultaat(resultaat: ZoekResultaat) {
@@ -336,7 +340,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   private processZoekerAntwoord(nieuweResultaten: ZoekResultaten): KaartInternalMsg {
-    console.log("Process " + nieuweResultaten.zoeker);
+    kaartLogger.debug("Process " + nieuweResultaten.zoeker);
     this.alleZoekResultaten = this.alleZoekResultaten
       .filter(resultaat => resultaat.zoeker !== nieuweResultaten.zoeker)
       .concat(nieuweResultaten.resultaten);
