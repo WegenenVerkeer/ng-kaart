@@ -12,7 +12,7 @@ import { ZoneLike } from "./zone-like";
  *
  * Zie bijv. https://blog.thoughtram.io/angular/2017/02/21/using-zones-in-angular-for-better-performance.html
  */
-export function observerOutsideAngular<T>(zone: ZoneLike) {
+export function observeOutsideAngular<T>(zone: ZoneLike) {
   return (source: Observable<T>) =>
     new Observable<T>(observer => {
       return source.subscribe({

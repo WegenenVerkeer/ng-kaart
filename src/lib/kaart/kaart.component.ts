@@ -22,7 +22,7 @@ import { delay, filter, last, map, merge, scan, shareReplay, startWith, switchMa
 
 import { asap } from "../util/asap";
 import { observeOnAngular } from "../util/observe-on-angular";
-import { observerOutsideAngular } from "../util/observer-outside-angular";
+import { observeOutsideAngular } from "../util/observer-outside-angular";
 import { emitSome, ofType } from "../util/operators";
 import { forEach } from "../util/option";
 
@@ -104,7 +104,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     );
 
     this.kaartModel$ = this.initialising$.pipe(
-      observerOutsideAngular(zone),
+      observeOutsideAngular(zone),
       tap(() => this.messageObsConsumer(this.msgSubj)), // Wie de messageObsConsumer @Input gezet heeft, krijgt een observable van messages
       map(() => this.initieelModel()),
       tap(model => {
@@ -152,7 +152,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       tap(c => kaartLogger.debug("kaart command", c)),
       tap(c => this.checkKaartLinksRendering()),
       takeUntil(this.destroying$.pipe(delay(100))), // Een klein beetje extra tijd voor de cleanup commands
-      observerOutsideAngular(this.zone),
+      observeOutsideAngular(this.zone),
       scan((model: KaartWithInfo, cmd: prt.Command<any>) => {
         const { model: newModel, message } = red.kaartCmdReducer(cmd)(model, this.modelChanger, this.modelChanges, messageConsumer);
         kaartLogger.debug("produceert", message);

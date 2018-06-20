@@ -127,7 +127,7 @@ export class ZoekerGoogleWdbService implements ZoekerBase {
   }
 
   zoek$(zoekterm: StringZoekInput): Observable<ZoekResultaten> {
-    if (zoekterm.value.trim().length === 0) {
+    if (!zoekterm.value || zoekterm.value.trim().length === 0) {
       return Observable.of(new ZoekResultaten(this.naam(), [], [], this.legende));
     }
     const params: URLSearchParams = new URLSearchParams("", new EncodeAllesQueryEncoder());
