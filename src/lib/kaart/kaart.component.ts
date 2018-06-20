@@ -1,4 +1,5 @@
 import {
+  AfterViewChecked,
   AfterViewInit,
   Component,
   ElementRef,
@@ -46,10 +47,11 @@ export const vacuousKaartMsgObservableConsumer: KaartMsgObservableConsumer = () 
   styleUrls: ["./kaart.component.scss"],
   encapsulation: ViewEncapsulation.Emulated // Omwille hiervan kunnen we geen globale CSS gebruiken, maar met Native werken animaties niet
 })
-export class KaartComponent extends KaartComponentBase implements OnInit, OnDestroy, AfterViewInit {
+export class KaartComponent extends KaartComponentBase implements OnInit, OnDestroy, AfterViewInit, AfterViewChecked {
   kaartLinksZichtbaar: boolean;
   kaartLinksToggleZichtbaar: boolean;
   kaartLinksScrollbarZichtbaar: boolean;
+  kaartLinksRefreshWeergaveBezig: boolean;
   private readonly modelChanger: ModelChanger = ModelChanger();
   private innerModelChanges: ModelChanges;
   private innerAanwezigeElementen$: Observable<Set<string>>;
@@ -150,7 +152,6 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     return this.kaartCmd$.pipe(
       merge(this.internalCmdDispatcher.commands$),
       tap(c => kaartLogger.debug("kaart command", c)),
-      tap(c => this.checkKaartLinksRendering()),
       takeUntil(this.destroying$.pipe(delay(100))), // Een klein beetje extra tijd voor de cleanup commands
       observeOutsideAngular(this.zone),
       scan((model: KaartWithInfo, cmd: prt.Command<any>) => {
@@ -195,28 +196,46 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   }
 
   ngAfterViewInit() {
-    this.checkKaartLinksRendering();
+    this.bepaalKaartLinksMarginTop();
+    this.bepaalKaartLinksToggleZichtbaar();
   }
 
-  checkKaartLinksRendering() {
+  bepaalKaartLinksMarginTop() {
+    // MarginTop correctie als de scrollbar verschijnt/verdwijnt
     setTimeout(() => {
-      // Toggle pas tonen vanaf 40px hoogte.
+      this.kaartLinksElement.nativeElement.style.marginTop = this.kaartFixedLinksBovenElement.nativeElement.clientHeight + "px";
+    }, 10);
+  }
+
+  bepaalKaartLinksToggleZichtbaar() {
+    // Toggle pas tonen vanaf 40px hoogte.
+    setTimeout(() => {
       this.kaartLinksToggleZichtbaar =
         this.kaartFixedLinksBovenElement.nativeElement.clientHeight + this.kaartLinksElement.nativeElement.clientHeight >= 40;
+    }, 10);
+  }
 
-      // Als de scrollbar zichtbaar is andere styling toepassen (bvb: achtergrond een kleur geven).
-      this.kaartLinksScrollbarZichtbaar =
-        this.kaartLinksElement.nativeElement.scrollHeight > this.kaartLinksElement.nativeElement.clientHeight;
+  ngAfterViewChecked() {
+    if (!this.kaartLinksRefreshWeergaveBezig) {
+      this.refreshKaartLinksWeergave();
+    }
+  }
 
-      // Als er een fixed header is bovenaan links moet de max-height van kaart-links daar ook rekening mee houden.
-      this.kaartLinksElement.nativeElement.style.maxHeight =
-        "calc(100% - " + this.kaartFixedLinksBovenElement.nativeElement.clientHeight + "px - 8px)"; // -8px is van padding-top.
-    }, 400);
-
+  refreshKaartLinksWeergave() {
+    // Om te vermijden dat er teveel refreshes gedaan worden en te wachten tot de animaties klaar zijn zit deze code in een timeout
+    this.kaartLinksRefreshWeergaveBezig = true;
     setTimeout(() => {
-      // Als er een fixed header is bovenaan links moet er genoeg margin gegeven worden aan de kaart-links anders overlapt die.
-      this.kaartLinksElement.nativeElement.style.marginTop = this.kaartFixedLinksBovenElement.nativeElement.clientHeight + "px";
-    }, 401);
+      let scrollbarNodig: boolean;
+      scrollbarNodig = this.kaartLinksElement.nativeElement.scrollHeight > this.kaartLinksElement.nativeElement.clientHeight;
+      if (this.kaartLinksScrollbarZichtbaar !== scrollbarNodig) {
+        this.kaartLinksScrollbarZichtbaar = scrollbarNodig;
+        // Als er een fixed header is bovenaan links moet de max-height van kaart-links daar ook rekening mee houden.
+        this.kaartLinksElement.nativeElement.style.maxHeight =
+          "calc(100% - " + this.kaartFixedLinksBovenElement.nativeElement.clientHeight + "px - 8px)"; // -8px is van padding-top.
+        this.bepaalKaartLinksMarginTop();
+      }
+      this.kaartLinksRefreshWeergaveBezig = false;
+    }, 750);
   }
 
   toggleKaartLinks() {

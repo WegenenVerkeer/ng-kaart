@@ -138,7 +138,6 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
 
   toggleCompact() {
     this.compact = !this.compact;
-    this.dispatch(prt.RefreshKaarLinksWeergave());
   }
 
   isDropZone(laag: ToegevoegdeLaag): boolean {
