@@ -21,17 +21,20 @@
       </button>
     </mat-menu>
 
-    <button mat-icon-button [matMenuTriggerFor]="zoekerMenu">
+    <button mat-icon-button [matMenuTriggerFor]="zoekerMenu" matTooltip="Toon andere zoekopties">
       <mat-icon>menu</mat-icon>
     </button>
-    <input placeholder="{{getPlaceholder()}}" [formControl]="zoekVeld" [readOnly]="this.actieveZoeker !== 'Geoloket'" (keyup)="onKey($event)">
+    <input placeholder="{{getPlaceholder()}}" [formControl]="zoekVeld" [readOnly]="this.actieveZoeker !== 'Geoloket'" (keyup)="onKey($event)" #zoekVeldElement>
     <div class="zoek-bezig-indicator" *ngIf="isBusy()">
       <mat-spinner diameter="20"></mat-spinner>
     </div>
-    <button mat-icon-button (click)="zoek()">
+    <button mat-icon-button (click)="kuisZoekOp()" *ngIf="zoekVeld.dirty" [matTooltip]="alleZoekResultaten.length > 0 ? 'Wis invoer en zoekresultaten' : 'Wis invoer'">
+      <mat-icon>close</mat-icon>
+    </button>
+    <button mat-icon-button (click)="zoek()" matTooltip="Zoek of druk op &crarr;">
       <mat-icon>search</mat-icon>
     </button>
-    <button mat-icon-button *ngIf="heeftResultaatOfFout()" (click)="toggleResultaat()">
+    <button mat-icon-button *ngIf="heeftResultaatOfFout()" (click)="toggleResultaat()" [matTooltip]="toonResultaat ? 'Verberg zoekresultaten' : 'Toon zoekresultaten'">
       <mat-icon *ngIf="toonResultaat">expand_less</mat-icon>
       <mat-icon *ngIf="!toonResultaat">expand_more</mat-icon>
     </button>
