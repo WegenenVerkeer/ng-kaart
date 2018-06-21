@@ -233,7 +233,6 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       let scrollbarNodig: boolean;
       scrollbarNodig = this.isKaartLinksScrollbarNodig();
       if (this.kaartLinksScrollbarZichtbaar !== scrollbarNodig) {
-        console.log("refreshKaartLinksWeergave: scrollbar change detected");
         this.kaartLinksScrollbarZichtbaar = scrollbarNodig;
         this.bepaalKaartLinksMarginTopEnMaxHeight();
       }
