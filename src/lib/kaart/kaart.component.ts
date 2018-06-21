@@ -196,14 +196,19 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   }
 
   ngAfterViewInit() {
-    this.bepaalKaartLinksMarginTop();
+    this.kaartLinksRefreshWeergaveBezig = false;
+    this.bepaalKaartLinksMarginTopEnMaxHeight();
     this.bepaalKaartLinksToggleZichtbaar();
+    this.kaartLinksScrollbarZichtbaar = this.isKaartLinksScrollbarNodig();
   }
 
-  bepaalKaartLinksMarginTop() {
-    // MarginTop correctie als de scrollbar verschijnt/verdwijnt
+  bepaalKaartLinksMarginTopEnMaxHeight() {
     setTimeout(() => {
+      // MarginTop correctie als de scrollbar verschijnt/verdwijnt
       this.kaartLinksElement.nativeElement.style.marginTop = this.kaartFixedLinksBovenElement.nativeElement.clientHeight + "px";
+      // Als er een fixed header is bovenaan links moet de max-height van kaart-links daar ook rekening mee houden.
+      this.kaartLinksElement.nativeElement.style.maxHeight =
+        "calc(100% - " + this.kaartFixedLinksBovenElement.nativeElement.clientHeight + "px - 8px)"; // -8px is van padding-top.
     }, 10);
   }
 
@@ -226,16 +231,18 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     this.kaartLinksRefreshWeergaveBezig = true;
     setTimeout(() => {
       let scrollbarNodig: boolean;
-      scrollbarNodig = this.kaartLinksElement.nativeElement.scrollHeight > this.kaartLinksElement.nativeElement.clientHeight;
+      scrollbarNodig = this.isKaartLinksScrollbarNodig();
       if (this.kaartLinksScrollbarZichtbaar !== scrollbarNodig) {
+        console.log("refreshKaartLinksWeergave: scrollbar change detected");
         this.kaartLinksScrollbarZichtbaar = scrollbarNodig;
-        // Als er een fixed header is bovenaan links moet de max-height van kaart-links daar ook rekening mee houden.
-        this.kaartLinksElement.nativeElement.style.maxHeight =
-          "calc(100% - " + this.kaartFixedLinksBovenElement.nativeElement.clientHeight + "px - 8px)"; // -8px is van padding-top.
-        this.bepaalKaartLinksMarginTop();
+        this.bepaalKaartLinksMarginTopEnMaxHeight();
       }
       this.kaartLinksRefreshWeergaveBezig = false;
     }, 750);
+  }
+
+  isKaartLinksScrollbarNodig(): boolean {
+    return this.kaartLinksElement.nativeElement.scrollHeight > this.kaartLinksElement.nativeElement.clientHeight;
   }
 
   toggleKaartLinks() {

@@ -10,7 +10,8 @@ import {
   MatIconModule,
   MatInputModule,
   MatMenuModule,
-  MatProgressSpinnerModule
+  MatProgressSpinnerModule,
+  MatTooltipModule
 } from "@angular/material";
 
 import { ZoekerBoxComponent } from "./box/zoeker-box.component";
@@ -46,7 +47,8 @@ const components: any[] = [
     MatMenuModule,
     MatAutocompleteModule,
     MatButtonModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatTooltipModule
   ],
   declarations: [components],
   exports: [components],

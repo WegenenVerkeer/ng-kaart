@@ -1,6 +1,6 @@
 import { animate, style, transition, trigger } from "@angular/animations";
 import { HttpErrorResponse } from "@angular/common/http";
-import { ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from "@angular/core";
+import { ChangeDetectorRef, Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { none } from "fp-ts/lib/Option";
 import { List, OrderedMap, Set } from "immutable";
@@ -176,6 +176,7 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
 })
 export class ZoekerBoxComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
   zoekVeld = new FormControl();
+  @ViewChild("zoekVeldElement") zoekVeldElement: ElementRef;
   alleZoekResultaten: ZoekResultaat[] = [];
   alleFouten: Fout[] = [];
   legende: Map<string, IconDescription> = new Map<string, IconDescription>();
@@ -300,12 +301,24 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   zoek() {
+    this.toonResultaat = true;
     this.increaseBusy();
     this.dispatch({
       type: "Zoek",
       input: { type: "string", value: this.zoekVeld.value } as StringZoekInput,
       zoekers: Set(),
       wrapper: kaartLogOnlyWrapper
+    });
+  }
+
+  kuisZoekOp() {
+    this.maakResultaatLeeg();
+    this.focusOpZoekVeld();
+  }
+
+  focusOpZoekVeld() {
+    setTimeout(() => {
+      this.zoekVeldElement.nativeElement.focus();
     });
   }
 
@@ -326,8 +339,8 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
 
   kiesZoeker(zoeker: ZoekerType) {
     this.maakResultaatLeeg();
-    this.busy = 0; // Voor alle zekerheid.
     this.actieveZoeker = zoeker;
+    this.focusOpZoekVeld();
   }
 
   getPlaceholder(): string {
@@ -342,7 +355,10 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   maakResultaatLeeg() {
+    this.busy = 0;
+    this.toonResultaat = false;
     this.zoekVeld.setValue("");
+    this.zoekVeld.markAsPristine();
     this.alleFouten = [];
     this.alleZoekResultaten = [];
     this.extent = ol.extent.createEmpty();
