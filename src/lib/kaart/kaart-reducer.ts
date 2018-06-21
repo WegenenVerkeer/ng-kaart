@@ -983,10 +983,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
-    function refreshKaartLinksWeergave(cmnd: prt.RefreshKaartLinksWeergave): ModelWithResult<Msg> {
-      return ModelWithResult(model);
-    }
-
     function handleSubscriptions(cmnd: prt.SubscribeCmd<Msg>): ModelWithResult<Msg> {
       function modelWithSubscriptionResult(name: string, subscription: Subscription): ModelWithResult<Msg> {
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, { subscription: subscription, subscriberName: name })));
@@ -1242,8 +1238,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return verwijderUiElement(cmd);
       case "ZetUiElementOpties":
         return zetUiElementOpties(cmd);
-      case "RefreshKaartLinksWeergave":
-        return refreshKaartLinksWeergave(cmd);
     }
   };
 }

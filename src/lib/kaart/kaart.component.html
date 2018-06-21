@@ -3,7 +3,7 @@
     <div class="kaart" #map style="height: 100%; width: 100%;"></div>
   </div>
   <div id="overlay" *ngIf="aanwezigeElementen$ | async as aanwezigeElementen"
-       [ngClass]="{ 'kaart-links-zichtbaar': kaartLinksZichtbaar, 
+       [ngClass]="{ 'kaart-links-zichtbaar': kaartLinksZichtbaar,
                     'kaart-links-niet-zichtbaar': !kaartLinksZichtbaar,
                     'kaart-links-scrollbar-zichtbaar': kaartLinksScrollbarZichtbaar,
                     'kaart-links-scrollbar-niet-zichtbaar': !kaartLinksScrollbarZichtbaar }">
