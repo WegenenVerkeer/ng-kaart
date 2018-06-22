@@ -230,12 +230,8 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     // Om te vermijden dat er teveel refreshes gedaan worden en te wachten tot de animaties klaar zijn zit deze code in een timeout
     this.kaartLinksRefreshWeergaveBezig = true;
     setTimeout(() => {
-      let scrollbarNodig: boolean;
-      scrollbarNodig = this.isKaartLinksScrollbarNodig();
-      if (this.kaartLinksScrollbarZichtbaar !== scrollbarNodig) {
-        this.kaartLinksScrollbarZichtbaar = scrollbarNodig;
-        this.bepaalKaartLinksMarginTopEnMaxHeight();
-      }
+      this.kaartLinksScrollbarZichtbaar = this.isKaartLinksScrollbarNodig();
+      this.bepaalKaartLinksMarginTopEnMaxHeight();
       this.kaartLinksRefreshWeergaveBezig = false;
     }, 750);
   }

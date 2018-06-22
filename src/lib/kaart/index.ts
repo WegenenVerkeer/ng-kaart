@@ -1,7 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { HttpClientModule } from "@angular/common/http";
 import { ModuleWithProviders, NgModule } from "@angular/core";
-import { MatButtonModule, MatButtonToggleModule, MatCardModule, MatIconModule } from "@angular/material";
+import { MatButtonModule, MatButtonToggleModule, MatCardModule, MatIconModule, MatTooltipModule } from "@angular/material";
 import { ClickOutsideModule } from "ng4-click-outside";
 import * as ol from "openlayers";
 
@@ -88,6 +88,7 @@ export const defaultKaartConfig: KaartConfig = {
     MatIconModule,
     MatButtonToggleModule,
     MatCardModule,
+    MatTooltipModule,
     HttpClientModule,
     ZoekerModule.forRoot({}),
     LagenkiezerModule.withDefaults()

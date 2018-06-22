@@ -21,7 +21,7 @@
       </button>
     </mat-menu>
 
-    <button mat-icon-button [matMenuTriggerFor]="zoekerMenu" matTooltip="Toon andere zoekopties">
+    <button mat-icon-button [matMenuTriggerFor]="zoekerMenu" matTooltip="Toon zoekopties" matTooltipPosition="right">
       <mat-icon>menu</mat-icon>
     </button>
     <input placeholder="{{getPlaceholder()}}" [formControl]="zoekVeld" [readOnly]="this.actieveZoeker !== 'Geoloket'" (keyup)="onKey($event)" #zoekVeldElement>

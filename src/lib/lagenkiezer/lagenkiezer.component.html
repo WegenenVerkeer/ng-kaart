@@ -1,5 +1,5 @@
 <div class="lagen-lijst kaart-widget" *ngIf="(opties$ | async) as opties">
-  <div class="lagen-header" (click)="toggleCompact()">
+  <div class="lagen-header" (click)="toggleCompact()" [matTooltip]="uitgeklapt ? 'Verberg lagen' : 'Toon lagen'">
     <button mat-icon-button>
       <mat-icon>layers</mat-icon>
     </button>
