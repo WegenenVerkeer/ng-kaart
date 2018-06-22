@@ -9,11 +9,11 @@ import { Component, Input, OnInit, ViewEncapsulation } from "@angular/core";
     trigger("enterAnimation", [
       transition(":enter", [
         style({ opacity: 0, "max-height": 0 }),
-        animate("1.5s cubic-bezier(.25, .8, .25, 1)", style({ opacity: 1, "max-height": "1000px" }))
+        animate("0.35s cubic-bezier(.62,.28,.23,.99)", style({ opacity: 1, "max-height": "1000px" }))
       ]),
       transition(":leave", [
         style({ opacity: 1, "max-height": "1000px" }),
-        animate("0.5s cubic-bezier(.25, .8, .25, 1)", style({ opacity: 0, "max-height": 0 }))
+        animate("0.35s cubic-bezier(.62,.28,.23,.99)", style({ opacity: 0, "max-height": 0 }))
       ])
     ])
   ],
