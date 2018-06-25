@@ -196,10 +196,12 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   }
 
   ngAfterViewInit() {
-    this.kaartLinksRefreshWeergaveBezig = false;
+    this.kaartLinksRefreshWeergaveBezig = true;
     this.bepaalKaartLinksMarginTopEnMaxHeight();
     this.bepaalKaartLinksToggleZichtbaar();
     this.kaartLinksScrollbarZichtbaar = this.isKaartLinksScrollbarNodig();
+    this.bepaalKaartLinksInitieelZichtbaar();
+    this.kaartLinksRefreshWeergaveBezig = false;
   }
 
   bepaalKaartLinksMarginTopEnMaxHeight() {
@@ -218,6 +220,12 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       this.kaartLinksToggleZichtbaar =
         this.kaartFixedLinksBovenElement.nativeElement.clientHeight + this.kaartLinksElement.nativeElement.clientHeight >= 40;
     }, 10);
+  }
+
+  bepaalKaartLinksInitieelZichtbaar() {
+    setTimeout(() => {
+      this.kaartLinksZichtbaar = this.mapElement.nativeElement.clientWidth > 620;
+    }, 750);
   }
 
   ngAfterViewChecked() {
