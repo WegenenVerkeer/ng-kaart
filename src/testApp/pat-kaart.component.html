@@ -1,7 +1,7 @@
 <div class="kaart-wrapper" (mousemove)="popup.move($event)">
   <awv-kaart-classic [selectieModus]="'single'" [hoverModus]="'on'" (hoverFeature)="popup.update($event)">
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
-    <awv-kaart-nosqlfs-laag [url]="'http://apigateway:5100/patrimonium'"
+    <awv-kaart-nosqlfs-laag [url]="'/patrimonium'"
                             [database]="'todo'"
                             [collection]="'VERHUURD'"
                             [hover]="true"
