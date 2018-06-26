@@ -3,7 +3,7 @@
     <button mat-icon-button>
       <mat-icon>layers</mat-icon>
     </button>
-    <span class="lagen-titel">Lagen en legende</span>
+    <span class="lagen-titel">Legende en lagen</span>
     <button mat-icon-button>
       <mat-icon *ngIf="uitgeklapt">expand_less</mat-icon>
       <mat-icon *ngIf="ingeklapt">expand_more</mat-icon>
@@ -13,11 +13,11 @@
     <ng-container *ngIf="opties.toonLegende; then inTabGroep; else zonderTabGroep"></ng-container>
     <ng-template #inTabGroep>
       <mat-tab-group [headerPosition]="'above'">
-        <mat-tab label="Lagen">
-          <ng-container *ngTemplateOutlet="lagen"></ng-container>
-        </mat-tab>
         <mat-tab label="Legende" *ngIf="opties.toonLegende">
           <ng-container *ngTemplateOutlet="legende"></ng-container>
+        </mat-tab>
+        <mat-tab label="Lagen">
+          <ng-container *ngTemplateOutlet="lagen"></ng-container>
         </mat-tab>
       </mat-tab-group>
     </ng-template>
