@@ -47,7 +47,7 @@
       <div class="sub-content">
         Via de configurator kan je de kaart opties aan of uitzetten en aanpassen om zo de gewenste kaart configuratie te bekomen.
       </div>
-      <awv-kaart-classic [naam]="'interacties'" [mijnLocatieZoom]="getMijnLocatieZoom()" [hoogte]="424"
+      <awv-kaart-classic [naam]="'interacties'" [mijnLocatieZoom]="getMijnLocatieZoom()" [hoogte]="424" [kaartLinksBreedte]="getKaartLinksBreedte()"
                          (zoomChange)="onZoom($event)"
                          (middelpuntChange)="onMiddelpunt($event)"
                          (extentChange)="onExtent($event)">
@@ -147,7 +147,7 @@
 
       <awv-test-sectie sectieId="ingezoomd" sectieTitel="Ingezoomd" [sectieZichtbaar]="false" [subSectie]="true" #ingezoomdSectie>
         <div *ngIf="ingezoomdSectie.sectieZichtbaar" [@enterAnimation]>
-          <awv-kaart-classic [breedte]="600" [hoogte]="600" [zoom]="6" [middelpunt]="installatieCoordinaat">
+          <awv-kaart-classic [naam]="'ingezoomd'" [breedte]="600" [hoogte]="600" [zoom]="6" [middelpunt]="installatieCoordinaat">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
             <awv-kaart-features-laag [features]="installatie" [titel]="'features'" [style]="pinIcon" [minZoom]="2"></awv-kaart-features-laag>
             <awv-kaart-schaal></awv-kaart-schaal>
@@ -161,7 +161,7 @@
 
       <awv-test-sectie sectieId="dynamische-features" sectieTitel="Dynamische features" [sectieZichtbaar]="false" [subSectie]="true" #dynamischeFeatures>
         <div *ngIf="dynamischeFeatures.sectieZichtbaar" [@enterAnimation]>
-          <awv-kaart-classic [breedte]="1200" [hoogte]="600" [zoom]="6" [middelpunt]="installatieCoordinaat">
+          <awv-kaart-classic [naam]="'dynamische-features'" [breedte]="1200" [hoogte]="600" [zoom]="6" [middelpunt]="installatieCoordinaat">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
             <awv-kaart-features-laag [features]="installaties" [titel]="'features'" [minZoom]="2"></awv-kaart-features-laag>
             <awv-kaart-schaal></awv-kaart-schaal>

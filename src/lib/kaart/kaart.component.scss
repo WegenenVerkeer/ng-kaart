@@ -1,5 +1,4 @@
-$kaart-links-breedte: 480px;
-$kaart-links-breedte-smalle-weergave: 360px;
+$kaart-links-breedte: 480px; //default breedte vanaf 1240px
 $animatie-timing: 0.35s cubic-bezier(.62, .28, .23, .99);
 
 .fullscreen-container {
@@ -57,7 +56,8 @@ $animatie-timing: 0.35s cubic-bezier(.62, .28, .23, .99);
       left: 0;
     }
     .kaart-links-zichtbaar-toggle-knop {
-      left: $kaart-links-breedte - 8px;
+      left: $kaart-links-breedte;
+      margin-left: -8px;
     }
 
     &.kaart-links-scrollbar-zichtbaar {
@@ -70,7 +70,7 @@ $animatie-timing: 0.35s cubic-bezier(.62, .28, .23, .99);
         box-shadow: 0 3px 1px -2px rgba(0, 0, 0, 0.2), 0 2px 2px 0 rgba(0, 0, 0, 0.14), 0 1px 5px 0 rgba(0, 0, 0, 0.12);
       }
       .kaart-links-zichtbaar-toggle-knop {
-        left: $kaart-links-breedte;
+        margin-left: 0;
       }
     }
 
@@ -213,36 +213,6 @@ awv-kaart-info-boodschappen {
 
       &:first-child {
         border-radius: 4px 0 0 0;
-      }
-    }
-  }
-}
-
-@media only screen and (max-width: 960px) {
-  .kaart-fixed-links-boven {
-    width: $kaart-links-breedte-smalle-weergave;
-  }
-
-  .kaart-links {
-    width: $kaart-links-breedte-smalle-weergave;
-  }
-
-  #overlay {
-    &.kaart-links-zichtbaar {
-      .kaart-links-zichtbaar-toggle-knop {
-        left: $kaart-links-breedte-smalle-weergave - 8px;
-      }
-
-      &.kaart-links-scrollbar-zichtbaar {
-        .kaart-links-zichtbaar-toggle-knop {
-          left: $kaart-links-breedte-smalle-weergave;
-        }
-      }
-    }
-
-    &.kaart-links-niet-zichtbaar {
-      .kaart-links, .kaart-fixed-links-boven {
-        left: -$kaart-links-breedte-smalle-weergave;
       }
     }
   }

@@ -9,7 +9,8 @@
                     'kaart-links-scrollbar-niet-zichtbaar': !kaartLinksScrollbarZichtbaar }">
     <awv-google-wdb-locatie-zoeker></awv-google-wdb-locatie-zoeker>
     <awv-crab-zoeker></awv-crab-zoeker>
-    <button mat-icon-button class="kaart-links-zichtbaar-toggle-knop" (click)="toggleKaartLinks()" *ngIf="kaartLinksToggleZichtbaar"
+    <button #kaartLinksZichtbaarToggleKnop mat-icon-button *ngIf="kaartLinksToggleZichtbaar"
+            class="kaart-links-zichtbaar-toggle-knop" (click)="toggleKaartLinks()"
             [matTooltip]="kaartLinksZichtbaar ? 'Verberg paneel' : 'Toon paneel'" matTooltipPosition="right">
       <mat-icon *ngIf="kaartLinksZichtbaar">chevron_left</mat-icon>
       <mat-icon *ngIf="!kaartLinksZichtbaar">chevron_right</mat-icon>

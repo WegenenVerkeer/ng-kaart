@@ -60,6 +60,8 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   @ViewChild("map") mapElement: ElementRef;
   @ViewChild("kaartLinks") kaartLinksElement: ElementRef;
   @ViewChild("kaartFixedLinksBoven") kaartFixedLinksBovenElement: ElementRef;
+  @ViewChild("kaartLinksZichtbaarToggleKnop", { read: ElementRef })
+  kaartLinksZichtbaarToggleKnopElement: ElementRef;
 
   /**
    * Dit houdt heel de constructie bij elkaar. Ofwel awv-kaart-classic (in geval van declaratief gebruik) ofwel
@@ -87,6 +89,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   @Input() naam = "kaart";
   @Input() selectieModus: prt.SelectieModus = "none";
   @Input() hoverModus: prt.HoverModus = "off";
+  @Input() kaartLinksBreedte;
 
   // Dit dient om messages naar toe te sturen
 
@@ -225,7 +228,25 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   bepaalKaartLinksInitieelZichtbaar() {
     setTimeout(() => {
       this.kaartLinksZichtbaar = this.mapElement.nativeElement.clientWidth > 620;
+      this.bepaalKaartLinksBreedte();
     }, 750);
+  }
+
+  bepaalKaartLinksBreedte() {
+    if (!this.kaartLinksBreedte && this.mapElement.nativeElement.clientWidth <= 1240) {
+      this.kaartLinksBreedte = 360;
+    }
+    if (this.kaartLinksBreedte) {
+      setTimeout(() => {
+        this.kaartFixedLinksBovenElement.nativeElement.style.width = this.kaartLinksBreedte.toString() + "px";
+        this.kaartLinksElement.nativeElement.style.width = this.kaartLinksBreedte.toString() + "px";
+        if (this.kaartLinksZichtbaar) {
+          this.kaartLinksZichtbaarToggleKnopElement.nativeElement.style.left = this.kaartLinksBreedte.toString() + "px";
+        } else {
+          this.kaartLinksZichtbaarToggleKnopElement.nativeElement.style.left = "0";
+        }
+      }, 10);
+    }
   }
 
   ngAfterViewChecked() {
@@ -250,5 +271,6 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
   toggleKaartLinks() {
     this.kaartLinksZichtbaar = !this.kaartLinksZichtbaar;
+    this.bepaalKaartLinksBreedte();
   }
 }

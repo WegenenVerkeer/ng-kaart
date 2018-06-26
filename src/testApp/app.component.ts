@@ -170,6 +170,7 @@ export class AppComponent {
     zoeker: { value: true, label: "Zoeker" },
     lagenkiezer: { value: true, label: "Lagen" },
     legende: { value: true, label: "Legende (enkel in combinatie met lagen)" },
+    kaartLinksBreedte: { value: false, label: "Custom breedte van 300px (default: 480px bij > 1240px en 360px bij <= 1240px)" },
     // --- Widgets
     optieDivider3: { divider: true, value: true, label: "Widgets onderaan rechts" },
     achtergrond: { value: true, label: "Meerdere achtergrondlagen" },
@@ -326,6 +327,14 @@ export class AppComponent {
   getMijnLocatieZoom(): string {
     if (this.mogelijkeOpties["mijnlocatie"].value) {
       return "8";
+    } else {
+      return null;
+    }
+  }
+
+  getKaartLinksBreedte(): number {
+    if (this.mogelijkeOpties["kaartLinksBreedte"].value) {
+      return 300;
     } else {
       return null;
     }

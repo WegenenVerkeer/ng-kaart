@@ -48,6 +48,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   @Input() middelpunt: ol.Coordinate; // = [130000, 193000]; // "extent" heeft voorrang
   @Input() breedte; // neem standaard de hele breedte in
   @Input() hoogte = 400;
+  @Input() kaartLinksBreedte; // breedte van linker-paneel (de default is 480px bij kaart breedte > 1240 en 360px voor smallere kaarten)
   @Input() mijnLocatieZoom: number | undefined;
   @Input() extent: ol.Extent;
   @Input() selectieModus: prt.SelectieModus = "none";
