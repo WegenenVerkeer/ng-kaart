@@ -11,7 +11,7 @@
     <div [ngClass]="stijlInKiezer">{{ title }}</div>
   </div>
   <div class="laag-acties">
-    <button mat-icon-button matTooltip="verwijderen uit lagenlijst" [matTooltipPosition]="'right'" (click)="verwijder()" *ngIf="kanVerwijderen$ | async">
+    <button mat-icon-button matTooltip="Verwijder '{{ title }}' uit lagenlijst" [matTooltipPosition]="'right'" (click)="verwijder()" *ngIf="kanVerwijderen$ | async">
       <mat-icon [ngClass]="stijlInKiezer">indeterminate_check_box</mat-icon>
     </button>
   </div>
