@@ -45,6 +45,7 @@ $laag-height: 40px;
 
 .lagen-lijst ::ng-deep .mat-tab-label {
   height: $laag-height;
+  text-transform: uppercase;
 }
 
 // De bedoeling is be de start van de drag het te verplaatsen element wit te kleuren zodat het nog even veel plaats

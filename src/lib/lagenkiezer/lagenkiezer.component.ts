@@ -1,5 +1,5 @@
 import { animate, style, transition, trigger } from "@angular/animations";
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
@@ -16,12 +16,16 @@ import { KaartComponent } from "../kaart/kaart.component";
 export const LagenUiSelector = "Lagenkiezer";
 
 export interface LagenUiOpties {
+  readonly headerTitel: string;
+  readonly initieelDichtgeklapt: boolean;
   readonly toonLegende: boolean;
   readonly verwijderbareLagen: boolean;
   readonly verplaatsbareLagen: boolean;
 }
 
 export const DefaultOpties: LagenUiOpties = {
+  headerTitel: "Legende en lagen",
+  initieelDichtgeklapt: false,
   toonLegende: false,
   verwijderbareLagen: false,
   verplaatsbareLagen: true
@@ -76,7 +80,7 @@ const elementPos = (elt: HTMLElement) => [elt.getBoundingClientRect().top, elt.g
 })
 export class LagenkiezerComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
   private dragState: Option<DragState> = none;
-  private compact = false;
+  private dichtgeklapt = false;
   readonly lagenHoog$: Observable<List<ToegevoegdeLaag>>;
   readonly lagenLaag$: Observable<List<ToegevoegdeLaag>>;
   readonly lagenMetLegende$: Observable<List<ToegevoegdeLaag>>;
@@ -116,28 +120,37 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
 
   ngOnInit() {
     super.ngOnInit();
-    // Zorg dat de lijst openklapt als er een laag bijkomt of weggaat.
-    this.bindToLifeCycle(
-      this.lagenHoog$.pipe(
-        combineLatest(this.lagenLaag$, (lagenHoog, lagenLaag) => lagenHoog.concat(lagenLaag).map(laag => laag!.titel)),
-        distinctUntilChanged()
-      )
-    ).subscribe(_ => {
-      this.compact = false;
-      this.cdr.detectChanges();
-    });
+    // Zorg dat de lijst openklapt als er een laag bijkomt of weggaat tenzij de optie initieelDichtgeklapt op 'true' staat.
+    this.opties$
+      .map(optie => {
+        if (optie.initieelDichtgeklapt) {
+          this.dichtgeklapt = true;
+        } else {
+          this.dichtgeklapt = false;
+          this.bindToLifeCycle(
+            this.lagenHoog$.pipe(
+              combineLatest(this.lagenLaag$, (lagenHoog, lagenLaag) => lagenHoog.concat(lagenLaag).map(laag => laag!.titel)),
+              distinctUntilChanged()
+            )
+          ).subscribe(_ => {
+            this.dichtgeklapt = false;
+            this.cdr.detectChanges();
+          });
+        }
+      })
+      .subscribe();
   }
 
-  get uitgeklapt(): boolean {
-    return !this.compact;
+  get isOpengeklapt(): boolean {
+    return !this.dichtgeklapt;
   }
 
-  get ingeklapt(): boolean {
-    return this.compact;
+  get isDichtgeklapt(): boolean {
+    return this.dichtgeklapt;
   }
 
-  toggleCompact() {
-    this.compact = !this.compact;
+  toggleDichtgeklapt() {
+    this.dichtgeklapt = !this.dichtgeklapt;
   }
 
   isDropZone(laag: ToegevoegdeLaag): boolean {

@@ -301,14 +301,16 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   zoek() {
-    this.toonResultaat = true;
-    this.increaseBusy();
-    this.dispatch({
-      type: "Zoek",
-      input: { type: "string", value: this.zoekVeld.value } as StringZoekInput,
-      zoekers: Set(),
-      wrapper: kaartLogOnlyWrapper
-    });
+    if (this.zoekVeld.value) {
+      this.toonResultaat = true;
+      this.increaseBusy();
+      this.dispatch({
+        type: "Zoek",
+        input: { type: "string", value: this.zoekVeld.value } as StringZoekInput,
+        zoekers: Set(),
+        wrapper: kaartLogOnlyWrapper
+      });
+    }
   }
 
   kuisZoekOp() {

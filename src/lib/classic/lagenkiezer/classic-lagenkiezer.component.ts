@@ -13,6 +13,8 @@ export class ClassicLagenkiezerComponent implements OnInit, OnDestroy, OnChanges
 
   @Input() titels: string[] = []; // TODO nog te implementeren om te beperken tot deze
 
+  @Input() headerTitel = DefaultOpties.headerTitel;
+  @Input() initieelDichtgeklapt = DefaultOpties.initieelDichtgeklapt;
   @Input() toonLegende = DefaultOpties.toonLegende;
   @Input() verwijderbareLagen = DefaultOpties.verwijderbareLagen;
   @Input() verplaatsbareLagen = DefaultOpties.verplaatsbareLagen;
@@ -32,6 +34,8 @@ export class ClassicLagenkiezerComponent implements OnInit, OnDestroy, OnChanges
 
   private opties(): LagenUiOpties {
     return {
+      headerTitel: this.headerTitel,
+      initieelDichtgeklapt: this.initieelDichtgeklapt,
       toonLegende: this.toonLegende,
       verwijderbareLagen: this.verwijderbareLagen,
       verplaatsbareLagen: this.verplaatsbareLagen

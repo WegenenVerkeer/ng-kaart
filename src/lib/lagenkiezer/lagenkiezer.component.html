@@ -1,15 +1,15 @@
 <div class="lagen-lijst kaart-widget" *ngIf="(opties$ | async) as opties">
-  <div class="lagen-header" (click)="toggleCompact()" [matTooltip]="uitgeklapt ? 'Verberg lagen' : 'Toon lagen'">
+  <div class="lagen-header" (click)="toggleDichtgeklapt()" [matTooltip]="isOpengeklapt ? 'Verberg lagen' : 'Toon lagen'">
     <button mat-icon-button>
       <mat-icon>layers</mat-icon>
     </button>
-    <span class="lagen-titel">Legende en lagen</span>
+    <span class="lagen-titel">{{ opties.headerTitel }}</span>
     <button mat-icon-button>
-      <mat-icon *ngIf="uitgeklapt">expand_less</mat-icon>
-      <mat-icon *ngIf="ingeklapt">expand_more</mat-icon>
+      <mat-icon *ngIf="isOpengeklapt">expand_less</mat-icon>
+      <mat-icon *ngIf="isDichtgeklapt">expand_more</mat-icon>
     </button>
   </div>
-  <div *ngIf="uitgeklapt" [@enterAnimation]>
+  <div *ngIf="isOpengeklapt" [@enterAnimation]>
     <ng-container *ngIf="opties.toonLegende; then inTabGroep; else zonderTabGroep"></ng-container>
     <ng-template #inTabGroep>
       <mat-tab-group [headerPosition]="'above'">
