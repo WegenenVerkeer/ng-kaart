@@ -1,10 +1,10 @@
 <div class="laag" [ngClass]="{ 'onzichtbaar': (onzichtbaar$ | async) }">
   <div class="laag-zichtbaarheid">
     <button mat-icon-button (click)="toggleGekozen()" [disabled]="onzichtbaar$ | async">
-      <mat-icon *ngIf="gekozen && (zichtbaar$ | async)" matTooltip="verberg laag" [matTooltipPosition]="'right'" [ngClass]="stijlInKiezer">visibility</mat-icon>
-      <mat-icon *ngIf="!gekozen && (zichtbaar$ | async)" matTooltip="toon laag" [matTooltipPosition]="'right'" [ngClass]="stijlInKiezer">visibility_off</mat-icon>
-      <mat-icon *ngIf="gekozen && (onzichtbaar$ | async)" matTooltip="laag niet zichtbaar wegens zoomniveau" [matTooltipPosition]="'right'" [ngClass]="stijlInKiezer">visibility</mat-icon>
-      <mat-icon *ngIf="!gekozen && (onzichtbaar$ | async)" matTooltip="laag niet zichtbaar wegens zoomniveau" [matTooltipPosition]="'right'" [ngClass]="stijlInKiezer">visibility_off</mat-icon>
+      <mat-icon *ngIf="gekozen && (zichtbaar$ | async)" matTooltip="Verberg laag" [matTooltipPosition]="'right'" [ngClass]="stijlInKiezer">visibility</mat-icon>
+      <mat-icon *ngIf="!gekozen && (zichtbaar$ | async)" matTooltip="Toon laag" [matTooltipPosition]="'right'" [ngClass]="stijlInKiezer">visibility_off</mat-icon>
+      <mat-icon *ngIf="gekozen && (onzichtbaar$ | async)" matTooltip="Laag niet zichtbaar wegens zoomniveau" [matTooltipPosition]="'right'" [ngClass]="stijlInKiezer">visibility</mat-icon>
+      <mat-icon *ngIf="!gekozen && (onzichtbaar$ | async)" matTooltip="Laag niet zichtbaar wegens zoomniveau" [matTooltipPosition]="'right'" [ngClass]="stijlInKiezer">visibility_off</mat-icon>
     </button>
   </div>
   <div class="laag-naam">
