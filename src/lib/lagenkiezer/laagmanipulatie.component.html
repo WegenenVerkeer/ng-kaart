@@ -11,8 +11,14 @@
     <div [ngClass]="stijlInKiezer">{{ title }}</div>
   </div>
   <div class="laag-acties">
-    <button mat-icon-button matTooltip="Verwijder '{{ title }}' uit lagenlijst" [matTooltipPosition]="'right'" (click)="verwijder()" *ngIf="kanVerwijderen$ | async">
-      <mat-icon [ngClass]="stijlInKiezer">indeterminate_check_box</mat-icon>
+    <mat-menu #laagMenu="matMenu" class="laag-menu" [overlapTrigger]="true">
+      <button mat-menu-item (click)="verwijder()" [disabled]="!kanVerwijderen$ | async">
+        <mat-icon>delete</mat-icon>
+        <span>Verwijder laag uit lagenlijst</span>
+      </button>
+    </mat-menu>
+    <button mat-icon-button [matMenuTriggerFor]="laagMenu" matTooltip="Toon laag opties" matTooltipPosition="right">
+      <mat-icon>more_vert</mat-icon>
     </button>
   </div>
 </div>

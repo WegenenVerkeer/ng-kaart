@@ -1,6 +1,6 @@
 import { CommonModule } from "@angular/common";
 import { ModuleWithProviders, NgModule } from "@angular/core";
-import { MatButtonModule, MatIconModule, MatInputModule, MatTooltipModule } from "@angular/material";
+import { MatButtonModule, MatIconModule, MatInputModule, MatMenuModule, MatTooltipModule } from "@angular/material";
 import { MatTabsModule } from "@angular/material/tabs";
 
 import { LaagmanipulatieComponent } from "./laagmanipulatie.component";
@@ -10,7 +10,7 @@ import { LagenkiezerComponent } from "./lagenkiezer.component";
 const components: any[] = [LagenkiezerComponent, LaagmanipulatieComponent];
 
 @NgModule({
-  imports: [CommonModule, MatIconModule, MatInputModule, MatButtonModule, MatTabsModule, MatTooltipModule],
+  imports: [CommonModule, MatIconModule, MatInputModule, MatButtonModule, MatMenuModule, MatTabsModule, MatTooltipModule],
   declarations: [components],
   exports: [components]
 })
