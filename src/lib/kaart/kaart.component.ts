@@ -220,8 +220,12 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
   bepaalKaartLinksToggleZichtbaar() {
     // Toggle pas tonen vanaf 40px hoogte.
     setTimeout(() => {
+      const nuZichtbaar = this.kaartLinksToggleZichtbaar;
       this.kaartLinksToggleZichtbaar =
         this.kaartFixedLinksBovenElement.nativeElement.clientHeight + this.kaartLinksElement.nativeElement.clientHeight >= 40;
+      if (nuZichtbaar !== this.kaartLinksToggleZichtbaar) {
+        this.bepaalKaartLinksBreedte(); // Als de toggle eerder niet zichtbaar was kan de breedte fout staan
+      }
     }, 10);
   }
 
@@ -261,6 +265,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     setTimeout(() => {
       this.kaartLinksScrollbarZichtbaar = this.isKaartLinksScrollbarNodig();
       this.bepaalKaartLinksMarginTopEnMaxHeight();
+      this.bepaalKaartLinksToggleZichtbaar();
       this.kaartLinksRefreshWeergaveBezig = false;
     }, 750);
   }
