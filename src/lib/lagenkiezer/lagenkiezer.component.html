@@ -12,7 +12,7 @@
   <div *ngIf="isOpengeklapt" [@enterAnimation]>
     <ng-container *ngIf="opties.toonLegende; then inTabGroep; else zonderTabGroep"></ng-container>
     <ng-template #inTabGroep>
-      <mat-tab-group [headerPosition]="'above'">
+      <mat-tab-group [headerPosition]="'above'" (selectedTabChange)="tabChanged($event)" [selectedIndex]="geselecteerdeTab">
         <mat-tab label="Legende" *ngIf="opties.toonLegende">
           <ng-container *ngTemplateOutlet="legende"></ng-container>
         </mat-tab>

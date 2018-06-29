@@ -62,7 +62,7 @@ $animatie-timing: 0.35s cubic-bezier(.62, .28, .23, .99);
 
     &.kaart-links-scrollbar-zichtbaar {
       .kaart-links {
-        background: #fafafa;
+        background: rgba(250, 250, 250, 0.87); //lichtjes transparant dat je toch nog de kaart eronder kan zien
         box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
       }
       .kaart-fixed-links-boven {

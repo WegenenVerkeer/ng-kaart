@@ -1,5 +1,6 @@
 import { animate, style, transition, trigger } from "@angular/animations";
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, NgZone, OnDestroy, OnInit } from "@angular/core";
+import { MatTabChangeEvent } from "@angular/material";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
@@ -81,6 +82,7 @@ const elementPos = (elt: HTMLElement) => [elt.getBoundingClientRect().top, elt.g
 export class LagenkiezerComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
   private dragState: Option<DragState> = none;
   private dichtgeklapt = false;
+  public geselecteerdeTab = 0;
   readonly lagenHoog$: Observable<List<ToegevoegdeLaag>>;
   readonly lagenLaag$: Observable<List<ToegevoegdeLaag>>;
   readonly lagenMetLegende$: Observable<List<ToegevoegdeLaag>>;
@@ -151,6 +153,10 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
 
   toggleDichtgeklapt() {
     this.dichtgeklapt = !this.dichtgeklapt;
+  }
+
+  public tabChanged(tabChangeEvent: MatTabChangeEvent): void {
+    this.geselecteerdeTab = tabChangeEvent.index;
   }
 
   isDropZone(laag: ToegevoegdeLaag): boolean {
