@@ -7,6 +7,7 @@ import { distinctUntilChanged, map, skipWhile } from "rxjs/operators";
 
 import { forEach, orElse } from "../../util/option";
 
+import { dimensieBeschrijving } from "../../util/geometries";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
 import { VeldInfo } from "../kaart-elementen";
@@ -205,14 +206,7 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
   }
 
   tooltipText(geometry: ol.geom.Geometry): Option<string> {
-    switch (geometry.getType()) {
-      case "Polygon":
-        return some(this.formatArea(geometry));
-      case "LineString":
-        return some(this.formatLength(geometry));
-      default:
-        return none;
-    }
+    return some(dimensieBeschrijving(geometry, false));
   }
 
   tooltipCoord(geometry: ol.geom.Geometry): Option<ol.Coordinate> {
@@ -224,17 +218,5 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
       default:
         return none;
     }
-  }
-
-  formatArea(geometry: ol.geom.Geometry): string {
-    const area = ol.Sphere.getArea(geometry);
-    return area > 10000
-      ? Math.round(area / 1000000 * 100) / 100 + " " + "km<sup>2</sup>"
-      : Math.round(area * 100) / 100 + " " + "m<sup>2</sup>";
-  }
-
-  formatLength(geometry: ol.geom.Geometry): string {
-    const length = ol.Sphere.getLength(geometry);
-    return length > 100 ? Math.round(length / 1000 * 100) / 100 + " " + "km" : Math.round(length * 100) / 100 + " " + "m";
   }
 }
