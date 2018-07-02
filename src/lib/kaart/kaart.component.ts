@@ -200,11 +200,13 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
   ngAfterViewInit() {
     this.kaartLinksRefreshWeergaveBezig = true;
-    this.bepaalKaartLinksMarginTopEnMaxHeight();
-    this.bepaalKaartLinksToggleZichtbaar();
-    this.kaartLinksScrollbarZichtbaar = this.isKaartLinksScrollbarNodig();
-    this.bepaalKaartLinksInitieelZichtbaar();
-    this.kaartLinksRefreshWeergaveBezig = false;
+    setTimeout(() => {
+      this.bepaalKaartLinksMarginTopEnMaxHeight();
+      this.bepaalKaartLinksToggleZichtbaar();
+      this.kaartLinksScrollbarZichtbaar = this.isKaartLinksScrollbarNodig();
+      this.bepaalKaartLinksInitieelZichtbaar();
+      this.kaartLinksRefreshWeergaveBezig = false;
+    });
   }
 
   bepaalKaartLinksMarginTopEnMaxHeight() {
