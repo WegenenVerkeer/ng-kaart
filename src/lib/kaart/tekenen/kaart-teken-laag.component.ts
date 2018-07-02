@@ -187,7 +187,7 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
           evt => {
             const geometry = evt.target as ol.geom.Geometry;
             this.changedGeometriesSubj.next(geometry);
-            forEach(this.tooltipText(geometry), toolTip => (measureTooltipElement.innerHTML = toolTip));
+            measureTooltipElement.innerHTML = this.tooltipText(geometry);
             forEach(this.tooltipCoord(geometry), coord => measureTooltip.setPosition(coord));
           },
           this
@@ -205,8 +205,8 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
     return draw;
   }
 
-  tooltipText(geometry: ol.geom.Geometry): Option<string> {
-    return some(dimensieBeschrijving(geometry, false));
+  tooltipText(geometry: ol.geom.Geometry): string {
+    return dimensieBeschrijving(geometry, false);
   }
 
   tooltipCoord(geometry: ol.geom.Geometry): Option<ol.Coordinate> {
