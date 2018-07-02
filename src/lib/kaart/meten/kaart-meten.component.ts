@@ -1,10 +1,10 @@
-import { Component, EventEmitter, Input, NgZone, OnDestroy, OnInit, Output } from "@angular/core";
+import { Component, EventEmitter, NgZone, OnDestroy, OnInit, Output } from "@angular/core";
 import { none } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { Observable } from "rxjs/Observable";
 import { filter, map, startWith, takeUntil } from "rxjs/operators";
 
+import { dimensieBeschrijving } from "../../util/geometries";
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { ofType } from "../../util/operators";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
@@ -113,19 +113,7 @@ export class KaartMetenComponent extends KaartChildComponentBase implements OnIn
     this.dispatch(prt.VerbergInfoBoodschapCmd("meten-resultaat"));
   }
 
-  helpText(geom: ol.geom.Geometry): string {
-    const sup2 = "\u00B2";
-
-    function formatArea(geometry: ol.geom.Geometry): string {
-      const area = ol.Sphere.getArea(geometry);
-      return area > 10000 ? Math.round(area / 1000000 * 100) / 100 + " " + "km" + sup2 : Math.round(area * 100) / 100 + " " + "m" + sup2;
-    }
-
-    function formatLength(geometry: ol.geom.Geometry): string {
-      const length = ol.Sphere.getLength(geometry);
-      return length > 100 ? Math.round(length / 1000 * 100) / 100 + " " + "km" : Math.round(length * 100) / 100 + " " + "m";
-    }
-
-    return "De lengte is " + formatLength(geom) + " en de oppervlakte is " + formatArea(geom);
+  helpText(geometry: ol.geom.Geometry): string {
+    return dimensieBeschrijving(geometry);
   }
 }
