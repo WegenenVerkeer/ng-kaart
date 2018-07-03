@@ -28,7 +28,7 @@ import { KaartInternalMsg, kaartLogOnlyWrapper } from "../../kaart/kaart-interna
 import * as prt from "../../kaart/kaart-protocol";
 import { KaartComponent } from "../../kaart/kaart.component";
 import { kaartLogger } from "../../kaart/log";
-import { matchGeometryType } from "../../util/geometryTypes";
+import { matchGeometryType } from "../../util/geometries";
 import { compareResultaten, IconDescription, StringZoekInput, ZoekInput, ZoekResultaat, ZoekResultaten } from "../zoeker-base";
 
 export const ZoekerUiSelector = "Zoeker";

@@ -289,6 +289,10 @@ export class ZoekerGoogleWdbService implements ZoekerBase {
         });
       }, Promise.resolve([]));
 
+      const isWdbBron = function(bron) {
+        return bron.startsWith("WDB") || bron.startsWith("ABBAMelda");
+      };
+
       const zoekResultatenPromise: Promise<ZoekResultaten> = alleResultatenPromise.then(resultatenLijst => {
         resultatenLijst.forEach(resultaat => {
           resultaat.locatie =
@@ -296,7 +300,7 @@ export class ZoekerGoogleWdbService implements ZoekerBase {
         });
         const locaties = resultaten.locaties.concat(resultatenLijst);
         locaties.forEach((locatie, index) => {
-          const zoekerType: ZoekerRepresentatieType = locatie.bron.startsWith("WDB") ? "WDB" : "Google";
+          const zoekerType: ZoekerRepresentatieType = isWdbBron(locatie.bron) ? "WDB" : "Google";
           zoekResultaten.resultaten.push(
             new GoogleWdbZoekResultaat(
               locatie,

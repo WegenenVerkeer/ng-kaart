@@ -36,3 +36,33 @@ export function matchGeometryType<T>(geometry: ol.geom.Geometry, mapper: Geometr
   }
   return none;
 }
+
+export function dimensieBeschrijving(geometry: ol.geom.Geometry, verbose = true): string {
+  const sup2 = "\u00B2";
+
+  function formatArea(area: number): string {
+    return area > 10000 ? Math.round(area / 1000000 * 100) / 100 + " " + "km" + sup2 : Math.round(area * 100) / 100 + " " + "m" + sup2;
+  }
+
+  function formatLength(length: number): string {
+    return length > 1000 ? Math.round(length / 1000 * 100) / 100 + " " + "km" : Math.round(length * 100) / 100 + " " + "m";
+  }
+
+  const area = ol.Sphere.getArea(geometry);
+  const length = ol.Sphere.getLength(geometry);
+
+  if (area === 0.0) {
+    // als slechts 2 meetpunten, dan moeten we de lengte halveren, oppervlakte beschrijving weglaten
+    if (verbose) {
+      return "De lengte is " + formatLength(length / 2);
+    } else {
+      return formatLength(length / 2);
+    }
+  } else {
+    if (verbose) {
+      return "De lengte is " + formatLength(length) + " en de oppervlakte is " + formatArea(area);
+    } else {
+      return formatArea(area);
+    }
+  }
+}
