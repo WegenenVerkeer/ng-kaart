@@ -43,16 +43,18 @@ export function isNotNullObject(object) {
   return object && object instanceof Object;
 }
 
+export function toTrimmedLowerCasedString(s: string): string {
+  return s
+    .toString()
+    .trim()
+    .toLocaleLowerCase();
+}
+
 export function toNonEmptyDistinctLowercaseString(): UnaryFunction<Observable<any>, Observable<string>> {
   return pipe(
     filter(value => value), // filter de lege waardes eruit
     // zorg dat we een lowercase waarde hebben zonder leading of trailing spaties.
-    map(value =>
-      value
-        .toString()
-        .trim()
-        .toLocaleLowerCase()
-    ),
+    map(toTrimmedLowerCasedString),
     distinctUntilChanged()
   );
 }

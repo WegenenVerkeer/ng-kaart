@@ -24,7 +24,7 @@
   </mat-autocomplete>
 
   <div class="crab-buttons">
-    <button mat-button (click)="maakVeldenLeeg(0)">Maak leeg</button>
+    <button mat-button (click)="maakVeldenLeeg(0)" [disabled]="leegMakenDisabled$ | async">Maak leeg</button>
     <button mat-button (click)="toonOpKaart()" [disabled]="!magTonenOpKaart()">Toon op kaart</button>
   </div>
 </div>
