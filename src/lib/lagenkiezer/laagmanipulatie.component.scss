@@ -2,7 +2,7 @@
 @import "./lagenkiezer-common.scss";
 
 .laag {
-  &:hover {
+  &:hover, &.geselecteerd {
     background-color: rgba(0, 0, 0, 0.04);
     cursor: pointer;
   }

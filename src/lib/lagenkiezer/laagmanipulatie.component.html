@@ -1,4 +1,4 @@
-<div class="laag" [ngClass]="{ 'onzichtbaar': (onzichtbaar$ | async) }">
+<div class="laag" [ngClass]="{ 'onzichtbaar': (onzichtbaar$ | async), 'geselecteerd': isLaagMenuOpen }">
   <div class="laag-zichtbaarheid">
     <button mat-icon-button (click)="toggleGekozen()" [disabled]="onzichtbaar$ | async">
       <mat-icon *ngIf="gekozen && (zichtbaar$ | async)" matTooltip="Verberg laag" [matTooltipPosition]="'right'" [ngClass]="stijlInKiezer">visibility</mat-icon>

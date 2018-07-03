@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, Input, NgZone, OnInit, ViewEncapsulation } from "@angular/core";
+import { ChangeDetectionStrategy, Component, Input, NgZone, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
+import { MatMenuTrigger } from "@angular/material";
 import * as rx from "rxjs";
 import { distinctUntilChanged, map } from "rxjs/operators";
 
@@ -27,6 +28,7 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
   readonly kanVerwijderen$: rx.Observable<boolean>;
 
   @Input() laag: ToegevoegdeLaag;
+  @ViewChild(MatMenuTrigger) laagMenuTrigger: MatMenuTrigger;
 
   constructor(private readonly lagenkiezer: LagenkiezerComponent, kaartComponent: KaartComponent, zone: NgZone) {
     super(kaartComponent, zone);
@@ -57,6 +59,10 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
         ? cmd.MaakLaagOnzichtbaarCmd(this.laag.titel, kaartLogOnlyWrapper)
         : cmd.MaakLaagZichtbaarCmd(this.laag.titel, kaartLogOnlyWrapper)
     );
+  }
+
+  get isLaagMenuOpen(): boolean {
+    return this.laagMenuTrigger.menuOpen;
   }
 
   verwijder() {
