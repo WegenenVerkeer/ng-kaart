@@ -28,13 +28,13 @@
     <div class="zoek-bezig-indicator" *ngIf="isBusy()">
       <mat-spinner diameter="20"></mat-spinner>
     </div>
-    <button mat-icon-button (click)="kuisZoekOp()" *ngIf="zoekVeld.dirty" [matTooltip]="alleZoekResultaten.length > 0 ? 'Wis invoer en zoekresultaten' : 'Wis invoer'">
+    <button mat-icon-button (click)="kuisZoekOp()" *ngIf="zoekVeld.dirty" [matTooltip]="alleZoekResultaten.length > 0 ? 'Wis invoer en zoekresultaten' : 'Wis invoer'" matTooltipPosition="right">
       <mat-icon>close</mat-icon>
     </button>
-    <button mat-icon-button (click)="zoek()" matTooltip="Zoek of druk op &crarr;">
+    <button mat-icon-button (click)="zoek()" matTooltip="Zoek of druk op &crarr;" matTooltipPosition="right">
       <mat-icon>search</mat-icon>
     </button>
-    <button mat-icon-button *ngIf="isInklapbaar()" (click)="toggleResultaat()" [matTooltip]="toonResultaat ? 'Verberg zoeken' : 'Toon zoeken'">
+    <button mat-icon-button *ngIf="isInklapbaar()" (click)="toggleResultaat()" [matTooltip]="toonResultaat ? 'Verberg zoeken' : 'Toon zoeken'" matTooltipPosition="right">
       <mat-icon *ngIf="toonResultaat">expand_less</mat-icon>
       <mat-icon *ngIf="!toonResultaat">expand_more</mat-icon>
     </button>
