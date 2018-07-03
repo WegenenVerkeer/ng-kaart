@@ -2,7 +2,7 @@ import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { Set } from "immutable";
 import { Observable } from "rxjs/Observable";
-import { distinctUntilChanged, filter, map } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, startWith } from "rxjs/operators";
 
 import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import { KaartComponent } from "../../kaart/kaart.component";
@@ -10,6 +10,7 @@ import {
   GetraptZoekerComponent,
   isNotNullObject,
   toNonEmptyDistinctLowercaseString,
+  toTrimmedLowerCasedString,
   ZoekerBoxComponent
 } from "../box/zoeker-box.component";
 import { StringZoekInput } from "../zoeker-base";
@@ -40,6 +41,8 @@ export class ZoekerPerceelGetraptComponent extends GetraptZoekerComponent implem
   afdelingen$: Observable<Afdeling[]> = Observable.empty();
   secties$: Observable<Sectie[]> = Observable.empty();
   percelen$: Observable<PerceelNummer[]> = Observable.empty();
+
+  leegMakenDisabled$: Observable<Boolean> = Observable.empty();
 
   constructor(
     private perceelService: ZoekerPerceelService,
@@ -103,6 +106,8 @@ export class ZoekerPerceelGetraptComponent extends GetraptZoekerComponent implem
     this.subscribeToDisableWhenEmpty(this.afdelingen$, this.afdelingControl, NIVEAU_VANAFAFDELING);
     this.subscribeToDisableWhenEmpty(this.secties$, this.sectieControl, NIVEAU_VANAFSECTIE);
     this.subscribeToDisableWhenEmpty(this.percelen$, this.perceelControl, NIVEAU_VANAFPERCEEL);
+
+    this.leegMakenDisabled$ = this.gemeenteControl.valueChanges.pipe(map(c => toTrimmedLowerCasedString(c).length === 0), startWith(true));
 
     // Hier gaan we onze capakey doorsturen naar de zoekers, we willen alleen de perceelzoeker triggeren.
     this.bindToLifeCycle(this.perceelControl.valueChanges.pipe(filter(isNotNullObject), distinctUntilChanged())).subscribe(

@@ -2,13 +2,14 @@ import { Component, NgZone, OnInit } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { Set } from "immutable";
 import { Observable } from "rxjs/Observable";
-import { distinctUntilChanged, filter } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, startWith } from "rxjs/operators";
 
 import { KaartComponent } from "../../kaart/kaart.component";
 import {
   GetraptZoekerComponent,
   isNotNullObject,
   toNonEmptyDistinctLowercaseString,
+  toTrimmedLowerCasedString,
   ZoekerBoxComponent
 } from "../box/zoeker-box.component";
 
@@ -34,6 +35,7 @@ export class ZoekerCrabGetraptComponent extends GetraptZoekerComponent implement
 
   straten$: Observable<CrabStraat[]> = Observable.empty();
   huisnummers$: Observable<CrabHuisnummer[]> = Observable.empty();
+  leegMakenDisabled$: Observable<Boolean> = Observable.empty();
 
   constructor(private crabService: ZoekerCrabService, kaartComponent: KaartComponent, zoekerComponent: ZoekerBoxComponent, zone: NgZone) {
     super(kaartComponent, zoekerComponent, zone);
@@ -52,9 +54,11 @@ export class ZoekerCrabGetraptComponent extends GetraptZoekerComponent implement
       error => this.meldFout(error)
     );
 
+    const cleanedGemeenteNaam$ = this.gemeenteControl.valueChanges.pipe(toNonEmptyDistinctLowercaseString());
+
     // De gemeente control is speciaal, omdat we met gecachte gemeentes werken.
     // Het heeft geen zin om iedere keer dezelfde lijst van gemeenten op te vragen.
-    this.bindToLifeCycle(this.gemeenteControl.valueChanges.pipe(toNonEmptyDistinctLowercaseString())).subscribe((zoekTerm: string) => {
+    this.bindToLifeCycle(cleanedGemeenteNaam$).subscribe((zoekTerm: string) => {
       // We moeten kunnen filteren op (een deel van) de naam van een gemeente of op (een deel van) de niscode
       // of op (een deel van) de postcode.
       this.gefilterdeGemeenten = this.alleGemeenten.filter(
@@ -66,6 +70,8 @@ export class ZoekerCrabGetraptComponent extends GetraptZoekerComponent implement
       // Iedere keer als er iets verandert, moeten we de volgende controls leegmaken.
       this.maakVeldenLeeg(NIVEAU_VANAFGEMEENTE);
     });
+
+    this.leegMakenDisabled$ = this.gemeenteControl.valueChanges.pipe(map(c => toTrimmedLowerCasedString(c).length === 0), startWith(true));
 
     this.straten$ = this.autocomplete(
       this.gemeenteControl,
