@@ -34,13 +34,13 @@
     <button mat-icon-button (click)="zoek()" matTooltip="Zoek of druk op &crarr;">
       <mat-icon>search</mat-icon>
     </button>
-    <button mat-icon-button *ngIf="heeftResultaatOfFout()" (click)="toggleResultaat()" [matTooltip]="toonResultaat ? 'Verberg zoekresultaten' : 'Toon zoekresultaten'">
+    <button mat-icon-button *ngIf="isInklapbaar()" (click)="toggleResultaat()" [matTooltip]="toonResultaat ? 'Verberg zoeken' : 'Toon zoeken'">
       <mat-icon *ngIf="toonResultaat">expand_less</mat-icon>
       <mat-icon *ngIf="!toonResultaat">expand_more</mat-icon>
     </button>
   </div>
-  <awv-perceel-zoeker *ngIf="actieveZoeker === 'Perceel'"></awv-perceel-zoeker>
-  <awv-crab-getrapt-zoeker *ngIf="actieveZoeker === 'Crab'"></awv-crab-getrapt-zoeker>
+  <awv-perceel-zoeker *ngIf="actieveZoeker === 'Perceel'" [hidden]="!toonResultaat"></awv-perceel-zoeker>
+  <awv-crab-getrapt-zoeker *ngIf="actieveZoeker === 'Crab'" [hidden]="!toonResultaat"></awv-crab-getrapt-zoeker>
   <div class="divider" *ngIf="toonHelp && actieveZoeker === 'Geoloket'"></div>
   <div class="zoeker-help" *ngIf="toonHelp && actieveZoeker === 'Geoloket'">
     <div class="zoeker-help-header" (click)="toggleHelp()">
@@ -102,7 +102,7 @@
       </div>
     </div>
   </div>
-  <div *ngIf="toonResultaat && heeftResultaatOfFout()" class="divider"></div>
+  <div *ngIf="toonResultaat && isInklapbaar()" class="divider"></div>
   <div class="zoeker-resultaat-box" *ngIf="toonResultaat" [@enterAnimation]>
     <div *ngFor="let resultaat of alleZoekResultaten" class="zoeker-resultaat" (click)="zoomNaarResultaat(resultaat)">
       <span [ngSwitch]="resultaat.icoon.type">

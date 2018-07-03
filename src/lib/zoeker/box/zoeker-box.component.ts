@@ -339,14 +339,15 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     return this.alleFouten.length > 0;
   }
 
-  heeftResultaatOfFout(): boolean {
-    return this.heeftFout() || this.alleZoekResultaten.length > 0;
+  isInklapbaar(): boolean {
+    return this.heeftFout() || this.alleZoekResultaten.length > 0 || this.actieveZoeker === "Perceel" || this.actieveZoeker === "Crab";
   }
 
   kiesZoeker(zoeker: ZoekerType) {
     this.maakResultaatLeeg();
     this.actieveZoeker = zoeker;
     this.focusOpZoekVeld();
+    this.toonResultaat = true;
   }
 
   getPlaceholder(): string {
@@ -362,7 +363,6 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
 
   maakResultaatLeeg() {
     this.busy = 0;
-    this.toonResultaat = false;
     this.zoekVeld.setValue("");
     this.zoekVeld.markAsPristine();
     this.alleFouten = [];
