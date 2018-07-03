@@ -45,9 +45,11 @@ export function isNotNullObject(object) {
 
 export function toTrimmedLowerCasedString(s: string): string {
   return s
-    .toString()
-    .trim()
-    .toLocaleLowerCase();
+    ? s
+        .toString()
+        .trim()
+        .toLocaleLowerCase()
+    : "";
 }
 
 export function toNonEmptyDistinctLowercaseString(): UnaryFunction<Observable<any>, Observable<string>> {
