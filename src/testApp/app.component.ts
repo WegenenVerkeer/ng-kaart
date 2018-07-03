@@ -166,10 +166,11 @@ export class AppComponent {
     standaardinteracties: { value: true, label: "Pannen en zoomen" },
     // --- Linkerpaneel
     optieDivider2: { divider: true, value: true, label: "Opties linker paneel" },
-    fixedHeaderLinksBoven: { value: true, label: "Vaste header in linker paneel" },
     zoeker: { value: true, label: "Zoeker" },
     lagenkiezer: { value: true, label: "Lagen" },
     legende: { value: true, label: "Legende (enkel in combinatie met lagen)" },
+    kaartLinksFixedHeader: { value: false, label: "Custom vaste header in linker paneel" },
+    kaartLinksExtraElements: { value: false, label: "Custom extra elementen in linker paneel" },
     kaartLinksBreedte: { value: false, label: "Custom breedte van 300px (default: 480px bij > 1240px en 360px bij <= 1240px)" },
     // --- Widgets
     optieDivider3: { divider: true, value: true, label: "Widgets onderaan rechts" },

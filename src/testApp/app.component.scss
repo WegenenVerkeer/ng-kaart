@@ -1,15 +1,15 @@
 @import "./styles.scss";
 
 .boven {
-  order: 1;
+  order: 0;
 }
 
 .midden {
-  order: 100;
+  order: 200;
 }
 
 .onder {
-  order: 120;
+  order: 400;
 }
 
 .kaart-links-scrollbar-zichtbaar {
@@ -24,8 +24,14 @@
 
 .custom-kaart-fixed-links-boven {
   margin: 8px 8px 0 8px;
+}
 
-  .custom-titel {
+.custom-kaart-links-extra {
+  margin: 0 8px 8px 8px;
+}
+
+.custom-kaart-fixed-links-boven, .custom-kaart-links-extra {
+  .custom-element {
     background: white;
     border-radius: 2px;
     padding: 0 16px;
@@ -38,6 +44,12 @@
 
     .material-icons {
       margin-right: 12px;
+    }
+
+    .custom-titel {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
   }
 }

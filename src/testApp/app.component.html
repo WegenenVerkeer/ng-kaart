@@ -53,11 +53,39 @@
                          (extentChange)="onExtent($event)">
         <!-- algemeen -->
         <awv-kaart-standaard-interacties *ngIf="isOptieActief('standaardinteracties')" [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
-        <!-- fixed header links boven -->
-        <div class="kaart-fixed-links-boven" *ngIf="isOptieActief('fixedHeaderLinksBoven')">
+        <!-- custom vaste header in linker paneel -->
+        <div class="kaart-fixed-links-boven" *ngIf="isOptieActief('kaartLinksFixedHeader')">
           <div class="custom-kaart-fixed-links-boven">
-            <div class="custom-titel">
-              <span class="material-icons">lock</span>Vaste header in linker paneel
+            <div class="custom-element">
+              <span class="material-icons">lock</span>
+              <span class="custom-titel">Vaste header in linker paneel</span>
+            </div>
+          </div>
+        </div>
+        <!-- custom extra element in linker paneel -->
+        <div class="kaart-links boven" *ngIf="isOptieActief('kaartLinksExtraElements')">
+          <div class="custom-kaart-links-extra">
+            <div class="custom-element">
+              <span class="material-icons">bookmark</span>
+              <span class="custom-titel">Extra element in linker paneel (boven)</span>
+            </div>
+          </div>
+        </div>
+        <!-- custom extra element in linker paneel -->
+        <div class="kaart-links midden" *ngIf="isOptieActief('kaartLinksExtraElements')">
+          <div class="custom-kaart-links-extra">
+            <div class="custom-element">
+              <span class="material-icons">explore</span>
+              <span class="custom-titel">Extra element in linker paneel (midden)</span>
+            </div>
+          </div>
+        </div>
+        <!-- custom extra element in linker paneel -->
+        <div class="kaart-links onder" *ngIf="isOptieActief('kaartLinksExtraElements')">
+          <div class="custom-kaart-links-extra">
+            <div class="custom-element">
+              <span class="material-icons">favorite</span>
+              <span class="custom-titel">Extra element in linker paneel (onder)</span>
             </div>
           </div>
         </div>
