@@ -1,14 +1,15 @@
-import { AfterContentInit, ContentChildren, Input, OnDestroy, OnInit, QueryList } from "@angular/core";
-import { fromNullable, none, some } from "fp-ts/lib/Option";
+import { AfterContentInit, ContentChildren, Input, NgZone, OnDestroy, OnInit, QueryList } from "@angular/core";
+import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 
+import { KaartComponentBase } from "../../kaart/kaart-component-base";
 import { Laag, Laaggroep } from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
 import { KaartClassicComponent } from "../kaart-classic.component";
 import { ClassicLegendeItemComponent } from "../legende/classic-legende-item.component";
 import { KaartClassicMsg, logOnlyWrapper } from "../messages";
 
-export abstract class ClassicLaagComponent implements AfterContentInit, OnInit, OnDestroy {
+export abstract class ClassicLaagComponent extends KaartComponentBase implements AfterContentInit, OnDestroy {
   @Input() titel = "";
   @Input() zichtbaar = true;
   @Input() groep: Laaggroep | undefined; // Heeft voorrang op std ingesteld via laaggroep
@@ -19,10 +20,11 @@ export abstract class ClassicLaagComponent implements AfterContentInit, OnInit, 
   @ContentChildren(ClassicLegendeItemComponent) legendeItems: QueryList<ClassicLegendeItemComponent>;
 
   protected voegLaagToeBijStart = true;
+  protected laag: Option<Laag> = none;
 
-  constructor(protected readonly kaart: KaartClassicComponent) {}
-
-  ngOnInit() {}
+  constructor(protected readonly kaart: KaartClassicComponent, zone: NgZone) {
+    super(zone);
+  }
 
   ngAfterContentInit(): void {
     if (this.voegLaagToeBijStart) {
@@ -32,6 +34,7 @@ export abstract class ClassicLaagComponent implements AfterContentInit, OnInit, 
 
   ngOnDestroy(): void {
     this.verwijderLaag();
+    super.ngOnDestroy();
   }
 
   protected voegLaagToe() {
@@ -40,10 +43,12 @@ export abstract class ClassicLaagComponent implements AfterContentInit, OnInit, 
         items: List.of(...children.map(item => item.maakLegendeItem()))
       }))
       .filter(l => !l.items.isEmpty());
+    const lg = this.createLayer();
+    this.laag = some(lg);
     this.dispatch({
       type: "VoegLaagToe",
       positie: Number.MAX_SAFE_INTEGER,
-      laag: this.createLayer(),
+      laag: lg,
       laaggroep: this.gekozenLaagGroep(),
       magGetoondWorden: this.zichtbaar,
       legende: legende,

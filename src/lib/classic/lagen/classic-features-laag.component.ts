@@ -1,4 +1,4 @@
-import { Component, DoCheck, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewEncapsulation } from "@angular/core";
+import { Component, DoCheck, EventEmitter, Input, NgZone, OnChanges, Output, SimpleChanges, ViewEncapsulation } from "@angular/core";
 import { array } from "fp-ts";
 import { Setoid } from "fp-ts/lib/Setoid";
 import { List } from "immutable";
@@ -52,8 +52,8 @@ export class ClassicFeaturesLaagComponent extends ClassicVectorLaagComponent imp
   // TODO combineren met 'selecteerbaar' van kaart-vector-laag
   @Output() featureGeselecteerd: EventEmitter<ol.Feature> = new EventEmitter<ol.Feature>();
 
-  constructor(kaart: KaartClassicComponent) {
-    super(kaart);
+  constructor(kaart: KaartClassicComponent, zone: NgZone) {
+    super(kaart, zone);
   }
 
   voegLaagToe(): void {
