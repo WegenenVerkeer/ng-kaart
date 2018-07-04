@@ -1,7 +1,7 @@
 @import "~material-design-icons/iconfont/material-icons.css";
 @import "~@angular/material/prebuilt-themes/indigo-pink.css";
 
-$menu-breedte: 280px;
+$menu-breedte: 320px;
 $primary-text-color: #202124;
 $secondary-text-color: rgba(0, 0, 0, 0.6);
 $border-color: rgba(0, 0, 0, 0.08);
@@ -82,6 +82,10 @@ body {
       border: 1px solid transparent;
       padding: 4px;
       color: $secondary-text-color;
+
+      &.niet-zichtbaar {
+        color: transparent;
+      }
     }
 
     &:hover {
@@ -91,6 +95,10 @@ body {
       .material-icons {
         color: $primary-text-color;
         border-color: $border-color-darker;
+
+        &.niet-zichtbaar {
+          color: $primary-text-color;
+        }
       }
     }
   }
@@ -112,6 +120,11 @@ body {
 
   .test-app-titel {
     padding: 24px 16px;
+  }
+
+  .sub-titel .material-icons {
+    margin-top: -8px;
+    margin-bottom: -8px;
   }
 }
 
