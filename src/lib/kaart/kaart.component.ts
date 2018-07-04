@@ -246,10 +246,12 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       setTimeout(() => {
         this.kaartFixedLinksBovenElement.nativeElement.style.width = this.kaartLinksBreedte.toString() + "px";
         this.kaartLinksElement.nativeElement.style.width = this.kaartLinksBreedte.toString() + "px";
-        if (this.kaartLinksZichtbaar) {
-          this.kaartLinksZichtbaarToggleKnopElement.nativeElement.style.left = this.kaartLinksBreedte.toString() + "px";
-        } else {
-          this.kaartLinksZichtbaarToggleKnopElement.nativeElement.style.left = "0";
+        if (this.kaartLinksToggleZichtbaar) {
+          if (this.kaartLinksZichtbaar) {
+            this.kaartLinksZichtbaarToggleKnopElement.nativeElement.style.left = this.kaartLinksBreedte.toString() + "px";
+          } else {
+            this.kaartLinksZichtbaarToggleKnopElement.nativeElement.style.left = "0";
+          }
         }
       }, 10);
     }
