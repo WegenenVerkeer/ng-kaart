@@ -21,13 +21,15 @@ input {
   align-items: center;
 }
 
-::ng-deep .mat-menu-content {
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-}
+.zoeker-menu {
+  .mat-menu-content {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
 
-::ng-deep .mat-menu-item .mat-icon {
-  margin-right: 4px !important;
+  .mat-menu-item .mat-icon {
+    margin-right: 4px;
+  }
 }
 
 .zoek-bezig-indicator {
