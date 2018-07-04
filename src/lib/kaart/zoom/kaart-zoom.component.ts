@@ -1,17 +1,13 @@
 import { Component, NgZone, OnInit } from "@angular/core";
+import { Predicate } from "fp-ts/lib/function";
+import * as rx from "rxjs";
 import { Observable } from "rxjs/Observable";
-import { distinctUntilChanged, map } from "rxjs/operators";
+import { combineLatest, debounceTime, delay, distinctUntilChanged, map, mapTo, merge } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { kaartLogOnlyWrapper } from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
-
-export interface KaartProps {
-  canZoomIn: boolean;
-  canZoomOut: boolean;
-  zoom: number;
-}
 
 export const ZoomknoppenUiSelector = "Zoomknoppen";
 
@@ -21,34 +17,39 @@ export const ZoomknoppenUiSelector = "Zoomknoppen";
   styleUrls: ["./kaart-zoom.component.scss"]
 })
 export class KaartZoomComponent extends KaartChildComponentBase implements OnInit {
-  kaartProps$: Observable<KaartProps> = Observable.empty();
+  readonly zoomClickedSubj: rx.Subject<number> = new rx.Subject<number>();
+  readonly canZoomIn$: Observable<boolean>;
+  readonly canZoomOut$: Observable<boolean>;
+  readonly zoom$: Observable<number>;
 
   constructor(private readonly parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
-  }
 
-  ngOnInit() {
-    super.ngOnInit();
+    const viewinstellingen$ = this.parent.modelChanges.viewinstellingen$;
 
-    this.kaartProps$ = this.parent.modelChanges.viewinstellingen$.pipe(
-      map(viewinstellingen => ({
-        canZoomIn: viewinstellingen.zoom + 1 <= viewinstellingen.maxZoom,
-        canZoomOut: viewinstellingen.zoom - 1 >= viewinstellingen.minZoom,
-        zoom: viewinstellingen.zoom
-      })),
-      distinctUntilChanged()
+    this.zoom$ = viewinstellingen$.pipe(
+      distinctUntilChanged((vi1, vi2) => vi1.zoom === vi2.zoom && vi1.minZoom === vi2.minZoom && vi1.maxZoom === vi2.maxZoom),
+      map(vi => vi.zoom)
     );
+    this.canZoomIn$ = this.canZoom(viewinstellingen$, vi => vi.zoom + 1 <= vi.maxZoom);
+    this.canZoomOut$ = this.canZoom(viewinstellingen$, vi => vi.zoom - 1 >= vi.minZoom);
+    this.bindToLifeCycle(this.zoomClickedSubj).subscribe(zoom => this.dispatch(prt.VeranderZoomCmd(zoom, kaartLogOnlyWrapper)));
   }
 
-  zoomIn(props: KaartProps) {
-    if (props.canZoomIn) {
-      this.dispatch(prt.VeranderZoomCmd(props.zoom + 1, kaartLogOnlyWrapper));
-    }
+  zoomTo(zoom: number) {
+    this.zoomClickedSubj.next(zoom);
   }
 
-  zoomOut(props: KaartProps) {
-    if (props.canZoomOut) {
-      this.dispatch(prt.VeranderZoomCmd(props.zoom - 1, kaartLogOnlyWrapper));
-    }
+  private canZoom(viewinstellingen$: rx.Observable<prt.Viewinstellingen>, cmp: Predicate<prt.Viewinstellingen>) {
+    return this.zoomClickedSubj.pipe(
+      // onmiddelijk na de klik wordt de button disabled
+      mapTo(false),
+      // om dan enabled te worden wanneer de zoom aangepast is als we nog niet te ver gezoomd hebben tenminste
+      merge(viewinstellingen$.pipe(map(cmp))),
+      // Er is een onwaarschijnlijke raceconditie tussen een onwaarschijnlijke 2de klik en het disablen.
+      // Het zou het kunnen dat de 2de klik komt na het opvangen van het nieuwe zoomniveau. In dat geval zou de knop disabled blijven.
+      // Daarom kijken we na een tijdje nog eens naar de zoom.
+      merge(this.zoomClickedSubj.pipe(delay(750), combineLatest(viewinstellingen$, (_, vi) => cmp(vi))))
+    );
   }
 }
