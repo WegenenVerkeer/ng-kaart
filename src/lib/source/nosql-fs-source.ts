@@ -42,6 +42,7 @@ export class NosqlFsSource extends ol.source.Vector {
         source.clear();
 
         fetch(httpUrl, {
+          cache: "no-store", // geen client side caching van nosql data
           credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
         }).then(response => {
           if (response.status !== 200) {
