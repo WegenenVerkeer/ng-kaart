@@ -47,6 +47,8 @@ export class NosqlFsSource extends ol.source.Vector {
             return;
           }
 
+          source.clear();
+
           let restData = "";
           let teParsenFeatureGroep: string[] = [];
 
