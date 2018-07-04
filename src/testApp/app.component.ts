@@ -241,7 +241,8 @@ export class AppComponent {
     }
   }.bind(this);
 
-  readonly fietspadenRefresh = rx.Observable.timer(10000, 10000);
+  readonly fietspadenRefreshSubj = new rx.Subject<void>();
+  readonly fietspadenRefresh$ = this.fietspadenRefreshSubj.asObservable();
 
   constructor(private googleLocatieZoekerService: ZoekerGoogleWdbService) {
     kaartLogger.setLevel("DEBUG");
@@ -388,6 +389,10 @@ export class AppComponent {
     if (features.size !== this.geselecteerdeFietspadsegmenten.size) {
       this.geselecteerdeFietspadsegmenten = List(this.fietspadsegmentenSelectie.filter(fss => fss.geselecteerd).map(fss => fss.feature));
     }
+  }
+
+  onRefreshFietspadenClicked() {
+    this.fietspadenRefreshSubj.next();
   }
 
   scrollTo(idName: string): void {
