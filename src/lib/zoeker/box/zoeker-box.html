@@ -4,7 +4,7 @@
     <mat-menu #zoekerMenu="matMenu" class="zoeker-menu" [overlapTrigger]="false">
       <button mat-menu-item (click)="kiesZoeker('Geoloket')" [disabled]="actieveZoeker === 'Geoloket'">
         <mat-icon>search</mat-icon>
-        <span>Zoek in geoloket</span>
+        <span>Zoek</span>
       </button>
       <button mat-menu-item (click)="kiesZoeker('Perceel')" [disabled]="actieveZoeker === 'Perceel'">
         <mat-icon>search</mat-icon>
@@ -28,19 +28,19 @@
     <div class="zoek-bezig-indicator" *ngIf="isBusy()">
       <mat-spinner diameter="20"></mat-spinner>
     </div>
-    <button mat-icon-button (click)="kuisZoekOp()" *ngIf="zoekVeld.dirty" [matTooltip]="alleZoekResultaten.length > 0 ? 'Wis invoer en zoekresultaten' : 'Wis invoer'">
+    <button mat-icon-button (click)="kuisZoekOp()" *ngIf="zoekVeld.dirty" [matTooltip]="alleZoekResultaten.length > 0 ? 'Wis invoer en zoekresultaten' : 'Wis invoer'" matTooltipPosition="right">
       <mat-icon>close</mat-icon>
     </button>
-    <button mat-icon-button (click)="zoek()" matTooltip="Zoek of druk op &crarr;">
+    <button mat-icon-button (click)="zoek()" matTooltip="Zoek of druk op &crarr;" matTooltipPosition="right">
       <mat-icon>search</mat-icon>
     </button>
-    <button mat-icon-button *ngIf="heeftResultaatOfFout()" (click)="toggleResultaat()" [matTooltip]="toonResultaat ? 'Verberg zoekresultaten' : 'Toon zoekresultaten'">
+    <button mat-icon-button *ngIf="isInklapbaar()" (click)="toggleResultaat()" [matTooltip]="toonResultaat ? 'Verberg zoeken' : 'Toon zoeken'" matTooltipPosition="right">
       <mat-icon *ngIf="toonResultaat">expand_less</mat-icon>
       <mat-icon *ngIf="!toonResultaat">expand_more</mat-icon>
     </button>
   </div>
-  <awv-perceel-zoeker *ngIf="actieveZoeker === 'Perceel'"></awv-perceel-zoeker>
-  <awv-crab-getrapt-zoeker *ngIf="actieveZoeker === 'Crab'"></awv-crab-getrapt-zoeker>
+  <awv-perceel-zoeker *ngIf="actieveZoeker === 'Perceel'" [hidden]="!toonResultaat"></awv-perceel-zoeker>
+  <awv-crab-getrapt-zoeker *ngIf="actieveZoeker === 'Crab'" [hidden]="!toonResultaat"></awv-crab-getrapt-zoeker>
   <div class="divider" *ngIf="toonHelp && actieveZoeker === 'Geoloket'"></div>
   <div class="zoeker-help" *ngIf="toonHelp && actieveZoeker === 'Geoloket'">
     <div class="zoeker-help-header" (click)="toggleHelp()">
@@ -102,7 +102,7 @@
       </div>
     </div>
   </div>
-  <div *ngIf="toonResultaat && heeftResultaatOfFout()" class="divider"></div>
+  <div *ngIf="toonResultaat && isInklapbaar()" class="divider"></div>
   <div class="zoeker-resultaat-box" *ngIf="toonResultaat" [@enterAnimation]>
     <div *ngFor="let resultaat of alleZoekResultaten" class="zoeker-resultaat" (click)="zoomNaarResultaat(resultaat)">
       <span [ngSwitch]="resultaat.icoon.type">

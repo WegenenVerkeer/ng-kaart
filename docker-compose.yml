@@ -1,0 +1,17 @@
+version: '2'
+
+services:
+
+  apigateway:
+    image: 162510209540.dkr.ecr.eu-west-1.amazonaws.com/rood/apigateway
+    hostname: apigateway
+    container_name: ng-kaart-apigateway
+    extra_hosts:
+     - ng-kaart:${DOCKER_OUTER_HOST}
+    ports:
+     - 80:80
+
+  locatorservices:
+    image: 162510209540.dkr.ecr.eu-west-1.amazonaws.com/rood/locatorservices
+    hostname: locatorservices
+    container_name: ng-kaart-locatorservices

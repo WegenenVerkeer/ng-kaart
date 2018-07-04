@@ -94,7 +94,7 @@
         <!-- lagen -->
         <awv-kaart-lagenkiezer *ngIf="isOptieActief('lagenkiezer')" [titels]="['Referentiepunten (WDB)', 'Referentiepunten (WDB) 2', 'features']"
                                [headerTitel]="'Mijn legende en lagen'" [initieelDichtgeklapt]="true"
-                               [verwijderbareLagen]="false" [verplaatsbareLagen]="true" [toonLegende]="isOptieActief('legende')"></awv-kaart-lagenkiezer>
+                               [verwijderbareLagen]="isOptieActief('lagenVerwijderbaar')" [verplaatsbareLagen]="true" [toonLegende]="isOptieActief('legende')"></awv-kaart-lagenkiezer>
         <awv-kaart-geoserver-laag [titel]="'Referentiepunten'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'">
           <awv-legende-bolletje-item [beschrijving]="'Referentiepunten'" [kleur]="'orange'"></awv-legende-bolletje-item>
         </awv-kaart-geoserver-laag>
@@ -299,10 +299,13 @@
             <awv-kaart-blanco-laag [titel]="'Leeg'"></awv-kaart-blanco-laag>
             <awv-kaart-zoeker></awv-kaart-zoeker>
             <awv-kaart-lagenkiezer [titels]="['Referentiepunten (WDB)', 'Referentiepunten (WDB) 2', 'features']" [verwijderbareLagen]="true"
-                                   [verplaatsbareLagen]="true"></awv-kaart-lagenkiezer>
-            <awv-kaart-geoserver-laag [titel]="'Referentiepunten (WDB)'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'"></awv-kaart-geoserver-laag>
-            <awv-kaart-geoserver-laag [titel]="'Referentiepunten (WDB) 2'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'"
-                                      [minZoom]="6"></awv-kaart-geoserver-laag>
+                                   [verplaatsbareLagen]="true" [toonLegende]="true"></awv-kaart-lagenkiezer>
+            <awv-kaart-geoserver-laag [titel]="'Referentiepunten (WDB) 2'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'" [minZoom]="6">
+              <awv-legende-lijn-item [beschrijving]="'Referentiepunten (WDB) 2'" [kleur]="'blue'"></awv-legende-lijn-item>
+            </awv-kaart-geoserver-laag>
+            <awv-kaart-geoserver-laag [titel]="'Referentiepunten (WDB)'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'">
+              <awv-legende-lijn-item [beschrijving]="'Referentiepunten (WDB)'" [kleur]="'yellow'"></awv-legende-lijn-item>
+            </awv-kaart-geoserver-laag>
             <awv-kaart-knop-achtergrondlaag-kiezer></awv-kaart-knop-achtergrondlaag-kiezer>
             <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
             <awv-kaart-streetview></awv-kaart-streetview>
@@ -311,9 +314,12 @@
             <awv-kaart-copyright></awv-kaart-copyright>
             <awv-kaart-voorwaarden [titel]="voorwaarden"></awv-kaart-voorwaarden>
             <awv-kaart-schaal></awv-kaart-schaal>
-            <div class="kaart-fixed-links-boven">
-              <div class="custom-kaart-fixed-links-boven">
-                <span class="custom-titel">AWV Geoloket</span>
+            <div class="kaart-links">
+              <div class="custom-kaart-links-extra">
+                <div class="custom-element">
+                  <span class="material-icons">style</span>
+                  <span class="custom-titel">AWV Geoloket</span>
+                </div>
               </div>
             </div>
           </awv-kaart-classic>

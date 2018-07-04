@@ -1,4 +1,4 @@
-<div class="laag" [ngClass]="{ 'onzichtbaar': (onzichtbaar$ | async) }">
+<div class="laag" [ngClass]="{ 'onzichtbaar': (onzichtbaar$ | async), 'geselecteerd': isLaagMenuOpen }">
   <div class="laag-zichtbaarheid">
     <button mat-icon-button (click)="toggleGekozen()" [disabled]="onzichtbaar$ | async">
       <mat-icon *ngIf="gekozen && (zichtbaar$ | async)" matTooltip="Verberg laag" [matTooltipPosition]="'right'" [ngClass]="stijlInKiezer">visibility</mat-icon>
@@ -10,7 +10,7 @@
   <div class="laag-naam">
     <div [ngClass]="stijlInKiezer">{{ title }}</div>
   </div>
-  <div class="laag-acties">
+  <div class="laag-acties" *ngIf="minstensEenLaagActie">
     <mat-menu #laagMenu="matMenu" class="laag-menu" [overlapTrigger]="true">
       <button mat-menu-item (click)="verwijder()" [disabled]="!kanVerwijderen$ | async">
         <mat-icon>delete</mat-icon>

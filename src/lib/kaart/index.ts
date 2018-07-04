@@ -1,7 +1,15 @@
 import { CommonModule } from "@angular/common";
 import { HttpClientModule } from "@angular/common/http";
 import { ModuleWithProviders, NgModule } from "@angular/core";
-import { MatButtonModule, MatButtonToggleModule, MatCardModule, MatIconModule, MatTooltipModule } from "@angular/material";
+import {
+  MAT_TOOLTIP_DEFAULT_OPTIONS,
+  MatButtonModule,
+  MatButtonToggleModule,
+  MatCardModule,
+  MatIconModule,
+  MatTooltipDefaultOptions,
+  MatTooltipModule
+} from "@angular/material";
 import { ClickOutsideModule } from "ng4-click-outside";
 import * as ol from "openlayers";
 
@@ -80,6 +88,13 @@ export const defaultKaartConfig: KaartConfig = {
   }
 };
 
+/** Custom options the configure the tooltip's default show/hide delays. */
+export const myCustomTooltipDefaults: MatTooltipDefaultOptions = {
+  showDelay: 750,
+  hideDelay: 0,
+  touchendHideDelay: 0
+};
+
 @NgModule({
   imports: [
     CommonModule,
@@ -95,7 +110,7 @@ export const defaultKaartConfig: KaartConfig = {
   ],
   declarations: [components],
   exports: [components],
-  providers: [ReplaySubjectKaartCmdDispatcher]
+  providers: [ReplaySubjectKaartCmdDispatcher, { provide: MAT_TOOLTIP_DEFAULT_OPTIONS, useValue: myCustomTooltipDefaults }]
 })
 export class KaartModule {
   static defaultConfig = defaultKaartConfig;
