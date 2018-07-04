@@ -1,100 +1,104 @@
 @import "../../css/kaart.component-common";
 
-input {
-  flex-grow: 1;
-  border: none;
-  padding: 0;
-  margin-left: 4px;
-  outline: none;
-  font-size: 16px;
-  height: 24px;
-  overflow: hidden;
-}
+.awv-kaart-zoeker-box {
+  .zoeker-input {
+    padding: 0 8px;
+    max-width: 100%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    align-items: center;
 
-.zoeker-input {
-  padding: 0 8px;
-  max-width: 100%;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  justify-content: flex-end;
-  align-items: center;
-}
-
-::ng-deep .mat-menu-content {
-  padding-top: 0 !important;
-  padding-bottom: 0 !important;
-}
-
-::ng-deep .mat-menu-item .mat-icon {
-  margin-right: 4px !important;
-}
-
-.zoek-bezig-indicator {
-  margin-right: 10px;
-}
-
-.zoeker-resultaat {
-  padding: 8px 16px;
-  animation: fadein 2s;
-  -moz-animation: fadein 2s; /* Firefox */
-  -webkit-animation: fadein 2s; /* Safari and Chrome */
-  -o-animation: fadein 2s; /* Opera */
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  overflow: hidden;
-
-  &:hover {
-    background-color: rgba(0, 0, 0, 0.04);
-    cursor: pointer;
+    input {
+      flex-grow: 1;
+      border: none;
+      padding: 0;
+      margin-left: 4px;
+      outline: none;
+      font-size: 16px;
+      height: 24px;
+      overflow: hidden;
+    }
   }
-}
 
-:host ::ng-deep .zoeker-resultaat .mat-icon {
-  vertical-align: middle;
-  margin-right: 4px;
-}
+  .zoek-bezig-indicator {
+    margin-right: 10px;
+  }
 
-.zoeker-fout {
-  text-overflow: revert;
-  white-space: normal;
-  overflow: visible;
-}
+  .zoeker-resultaat {
+    padding: 8px 16px;
+    animation: fadein 2s;
+    -moz-animation: fadein 2s; /* Firefox */
+    -webkit-animation: fadein 2s; /* Safari and Chrome */
+    -o-animation: fadein 2s; /* Opera */
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
 
-.zoeker-help-header {
-  padding: 0 8px 0 16px;
-  display: flex;
-  align-items: center;
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.04);
+      cursor: pointer;
+    }
 
-  .zoeker-help-titel {
-    font-size: 16px;
+    .mat-icon {
+      vertical-align: middle;
+      margin-right: 4px;
+    }
+  }
+
+  .zoeker-fout {
+    text-overflow: initial;
+    white-space: normal;
+    overflow: visible;
+  }
+
+  .zoeker-help-header {
+    padding: 0 8px 0 16px;
+    display: flex;
+    align-items: center;
+
+    .zoeker-help-titel {
+      font-size: 16px;
+      flex-grow: 1;
+      margin-left: 12px;
+    }
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.04);
+      cursor: pointer;
+    }
+  }
+
+  .zoeker-help-content {
+    padding: 0 8px 8px 16px;
+  }
+
+  .zoeker-subtitel {
+    padding: 8px 8px 8px 16px;
+    font-weight: bold;
+  }
+
+  .divider {
     flex-grow: 1;
-    margin-left: 12px;
+    height: 1px;
+    background-color: lightgrey;
   }
 
-  &:hover {
-    background-color: rgba(0, 0, 0, 0.04);
-    cursor: pointer;
+  .awv-zoeker-highlight {
+    font-weight: bold;
   }
 }
 
-.zoeker-help-content {
-  padding: 0 8px 8px 16px;
-}
+.awv-kaart-zoeker-box-menu {
+  .mat-menu-content {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
 
-.zoeker-subtitel {
-  padding: 8px 8px 8px 16px;
-  font-weight: bold;
-}
-
-.divider {
-  flex-grow: 1;
-  height: 1px;
-  background-color: lightgrey;
-}
-
-:host ::ng-deep .awv-zoeker-highlight {
-  font-weight: bold;
+  .mat-menu-item .mat-icon {
+    margin-right: 4px;
+  }
 }
 
 @keyframes fadein {

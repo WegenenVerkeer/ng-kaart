@@ -20,3 +20,14 @@
 .laag-acties {
   width: 40px;
 }
+
+.laag-menu {
+  .mat-menu-content {
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  .mat-menu-item .mat-icon {
+    margin-right: 4px;
+  }
+}
