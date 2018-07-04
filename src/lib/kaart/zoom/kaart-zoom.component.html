@@ -1,14 +1,14 @@
-<div *ngIf="kaartProps$ | async as props" class="kaart-widget zoom-knoppen">
+<div *ngIf="zoom$ | async as zoom" class="kaart-widget zoom-knoppen">
   <div class="zoom-knop">
-    <button mat-icon-button (click)="zoomIn(props)" [disabled]="!props.canZoomIn"
+    <button mat-icon-button (click)="zoomTo(zoom + 1)" [disabled]="!(canZoomIn$ | async)"
             matTooltip="Zoom in" matTooltipPosition="left">
       <mat-icon aria-label="zoom in">add</mat-icon>
     </button>
   </div>
   <div class="zoom-knop">
-    <button mat-icon-button (click)="zoomOut(props)" [disabled]="!props.canZoomOut"
+    <button mat-icon-button (click)="zoomTo(zoom - 1)" [disabled]="!(canZoomOut$ | async)"
             matTooltip="Zoom uit" matTooltipPosition="left">
-      <mat-icon aria-label="zoom out">remove</mat-icon>
+      <mat-icon aria-label="zoom uit">remove</mat-icon>
     </button>
   </div>
 </div>
