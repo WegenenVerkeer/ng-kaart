@@ -39,9 +39,11 @@ export class NosqlFsSource extends ol.source.Vector {
 
         const source = this;
 
-        fetch(httpUrl).then(response => {
+        fetch(httpUrl, {
+          credentials: "include"
+        }).then(response => {
           if (response.status !== 200) {
-            kaartLogger.error(`Probleem bij ontvangen nosql ${collection} data: status ${response.status}`);
+            kaartLogger.error(`Probleem bij ontvangen nosql ${collection} data: status ${response.status} ${response.statusText}`);
             return;
           }
 
