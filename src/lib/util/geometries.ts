@@ -51,7 +51,7 @@ export function dimensieBeschrijving(geometry: ol.geom.Geometry, verbose = true)
   const area = ol.Sphere.getArea(geometry);
   const length = ol.Sphere.getLength(geometry);
 
-  if (area === 0.0) {
+  if (area === 0.0 || area === 0) {
     // als slechts 2 meetpunten, dan moeten we de lengte halveren, oppervlakte beschrijving weglaten
     if (verbose) {
       return "De lengte is " + formatLength(length / 2);
