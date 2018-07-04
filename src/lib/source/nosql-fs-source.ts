@@ -48,10 +48,9 @@ export class NosqlFsSource extends ol.source.Vector {
           }
 
           let ontvangenData = "";
-
           let teParsenFeatureGroep: string[] = [];
-          const reader = response.body!.getReader();
 
+          const reader = response.body!.getReader();
           reader.read().then(function verwerkChunk({ done, value }) {
             ontvangenData += source.decoder.decode(value || new Uint8Array(0), {
               stream: !done
