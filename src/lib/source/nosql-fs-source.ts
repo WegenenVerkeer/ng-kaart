@@ -40,7 +40,7 @@ export class NosqlFsSource extends ol.source.Vector {
         const source = this;
 
         fetch(httpUrl, {
-          credentials: "include"
+          credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
         }).then(response => {
           if (response.status !== 200) {
             kaartLogger.error(`Probleem bij ontvangen nosql ${collection} data: status ${response.status} ${response.statusText}`);
