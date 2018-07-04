@@ -26,6 +26,7 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
   readonly zichtbaar$: rx.Observable<boolean>;
   readonly onzichtbaar$: rx.Observable<boolean>;
   readonly kanVerwijderen$: rx.Observable<boolean>;
+  minstensEenLaagActie: boolean;
 
   @Input() laag: ToegevoegdeLaag;
   @ViewChild(MatMenuTrigger) laagMenuTrigger: MatMenuTrigger;
@@ -39,6 +40,7 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
     );
     this.onzichtbaar$ = this.zichtbaar$.pipe(map(m => !m));
     this.kanVerwijderen$ = lagenkiezer.opties$.map(o => o.verwijderbareLagen);
+    this.kanVerwijderen$.subscribe(value => (this.minstensEenLaagActie = value));
   }
 
   get title(): string {
@@ -62,7 +64,7 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
   }
 
   get isLaagMenuOpen(): boolean {
-    return this.laagMenuTrigger.menuOpen;
+    return this.laagMenuTrigger && this.laagMenuTrigger.menuOpen;
   }
 
   verwijder() {

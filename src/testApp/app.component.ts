@@ -168,6 +168,7 @@ export class AppComponent {
     optieDivider2: { divider: true, value: true, label: "Opties linker paneel" },
     zoeker: { value: true, label: "Zoeker" },
     lagenkiezer: { value: true, label: "Lagen" },
+    lagenVerwijderbaar: { value: true, label: "Lagen verwijderbaar" },
     legende: { value: true, label: "Legende (enkel in combinatie met lagen)" },
     kaartLinksFixedHeader: { value: false, label: "Custom vaste header in linker paneel" },
     kaartLinksExtraElements: { value: false, label: "Custom extra elementen in linker paneel" },

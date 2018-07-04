@@ -10,7 +10,7 @@
   <div class="laag-naam">
     <div [ngClass]="stijlInKiezer">{{ title }}</div>
   </div>
-  <div class="laag-acties">
+  <div class="laag-acties" *ngIf="minstensEenLaagActie">
     <mat-menu #laagMenu="matMenu" class="laag-menu" [overlapTrigger]="true">
       <button mat-menu-item (click)="verwijder()" [disabled]="!kanVerwijderen$ | async">
         <mat-icon>delete</mat-icon>
