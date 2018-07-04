@@ -39,6 +39,8 @@ export class NosqlFsSource extends ol.source.Vector {
 
         const source = this;
 
+        source.clear();
+
         fetch(httpUrl, {
           credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
         }).then(response => {
