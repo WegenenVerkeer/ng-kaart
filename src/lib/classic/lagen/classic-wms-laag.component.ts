@@ -1,4 +1,4 @@
-import { Component, Input, OnInit, ViewEncapsulation } from "@angular/core";
+import { Component, Input, NgZone, OnInit, ViewEncapsulation } from "@angular/core";
 import { fromNullable } from "fp-ts/lib/Option";
 import { List } from "immutable";
 
@@ -22,8 +22,8 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   @Input() tileSize? = 256;
   @Input() opacity?: number;
 
-  constructor(kaart: KaartClassicComponent) {
-    super(kaart);
+  constructor(kaart: KaartClassicComponent, zone: NgZone) {
+    super(kaart, zone);
   }
 
   ngOnInit() {

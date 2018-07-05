@@ -4,8 +4,8 @@ import { array } from "fp-ts";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
-import "rxjs/add/operator/map";
-import "rxjs/add/operator/mergeMap";
+import * as rx from "rxjs";
+import { tap } from "rxjs/operators";
 
 import { KaartClassicComponent } from "../lib/classic/kaart-classic.component";
 import { classicLogger } from "../lib/classic/log";
@@ -224,9 +224,9 @@ export class AppComponent {
     throw new Error(`slecht formaat ${msg}`);
   });
 
-  fietspadStyleMetOffset = offsetStyleFunction(this.fietspadStyle, "ident8", "zijderijbaan", 1);
+  readonly fietspadStyleMetOffset = offsetStyleFunction(this.fietspadStyle, "ident8", "zijderijbaan", 1);
 
-  fietspadSelectieStyleMetOffset = function(feature: ol.Feature, resolution: number): ol.style.Style | ol.style.Style[] {
+  readonly fietspadSelectieStyleMetOffset = function(feature: ol.Feature, resolution: number): ol.style.Style | ol.style.Style[] {
     const applySelectionColor = function(s: ol.style.Style): ol.style.Style {
       const selectionStyle = s.clone();
       selectionStyle.getStroke().setColor([0, 153, 255, 1]);
@@ -240,6 +240,9 @@ export class AppComponent {
       return style ? style.map(s => applySelectionColor(s)) : [];
     }
   }.bind(this);
+
+  readonly fietspadenRefreshSubj = new rx.Subject<void>();
+  readonly fietspadenRefresh$ = this.fietspadenRefreshSubj.asObservable();
 
   constructor(private googleLocatieZoekerService: ZoekerGoogleWdbService) {
     kaartLogger.setLevel("DEBUG");
@@ -386,6 +389,10 @@ export class AppComponent {
     if (features.size !== this.geselecteerdeFietspadsegmenten.size) {
       this.geselecteerdeFietspadsegmenten = List(this.fietspadsegmentenSelectie.filter(fss => fss.geselecteerd).map(fss => fss.feature));
     }
+  }
+
+  onRefreshFietspadenClicked() {
+    this.fietspadenRefreshSubj.next();
   }
 
   scrollTo(idName: string): void {

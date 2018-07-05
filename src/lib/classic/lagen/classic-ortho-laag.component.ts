@@ -1,4 +1,4 @@
-import { Component, Inject, ViewEncapsulation } from "@angular/core";
+import { Component, Inject, NgZone, ViewEncapsulation } from "@angular/core";
 import { fromNullable } from "fp-ts/lib/Option";
 import { List } from "immutable";
 
@@ -14,8 +14,8 @@ import { ClassicWmsLaagComponent } from "./classic-wms-laag.component";
   encapsulation: ViewEncapsulation.None
 })
 export class ClassicOrthoLaagComponent extends ClassicWmsLaagComponent {
-  constructor(kaart: KaartClassicComponent, @Inject(KAART_CFG) private readonly config: KaartConfig) {
-    super(kaart);
+  constructor(kaart: KaartClassicComponent, @Inject(KAART_CFG) private readonly config: KaartConfig, zone: NgZone) {
+    super(kaart, zone);
   }
 
   createLayer(): WmsLaag {
