@@ -21,8 +21,8 @@ const defaultOpties: VoorwaardenOpties = {
 
 @Component({
   selector: "awv-voorwaarden",
-  templateUrl: "./kaart-voorwaarden.html",
-  styleUrls: ["./kaart-voorwaarden.scss"]
+  templateUrl: "./kaart-voorwaarden.component.html",
+  styleUrls: ["./kaart-voorwaarden.component.scss"]
 })
 export class KaartVoorwaardenComponent extends KaartChildComponentBase {
   voorwaardenOpties$: Observable<VoorwaardenOpties>;

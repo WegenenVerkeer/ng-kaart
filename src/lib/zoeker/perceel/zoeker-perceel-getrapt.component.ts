@@ -25,8 +25,8 @@ const NIVEAU_VANAFPERCEEL = 4;
 
 @Component({
   selector: "awv-perceel-zoeker",
-  templateUrl: "./zoeker-perceel-getrapt.html",
-  styleUrls: ["./zoeker-perceel-getrapt.scss"]
+  templateUrl: "./zoeker-perceel-getrapt.component.html",
+  styleUrls: ["./zoeker-perceel-getrapt.component.scss"]
 })
 export class ZoekerPerceelGetraptComponent extends GetraptZoekerComponent implements OnInit, OnDestroy {
   private alleGemeenten: Gemeente[] = [];
