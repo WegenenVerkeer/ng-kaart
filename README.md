@@ -113,14 +113,14 @@ src
     kaart
       schaal
         kaart-schaal.component.ts
-        kaart-chaal.html
-        kaart-schaal.scss
+        kaart-schaal.component.html
+        kaart-schaal.component.scss
       ...
     classic
       lagenkiezer
         classic-lagenkiezer.component.ts
-        classic-lagenkiezer.html
-        classic-lagenkiezer.scss
+        classic-lagenkiezer.component.html
+        classic-lagenkiezer.component.scss
       ...  
 ```
 N
