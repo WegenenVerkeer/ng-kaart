@@ -19,8 +19,8 @@ const defaultOpties: CopyrightOpties = {
 
 @Component({
   selector: "awv-copyright",
-  templateUrl: "./kaart-copyright.html",
-  styleUrls: ["./kaart-copyright.scss"]
+  templateUrl: "./kaart-copyright.component.html",
+  styleUrls: ["./kaart-copyright.component.scss"]
 })
 export class KaartCopyrightComponent extends KaartChildComponentBase {
   copyright$: Observable<string>;

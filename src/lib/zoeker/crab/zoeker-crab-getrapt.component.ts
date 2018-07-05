@@ -22,8 +22,8 @@ const NIVEAU_VANAFHUISNUMMER = 3;
 
 @Component({
   selector: "awv-crab-getrapt-zoeker",
-  templateUrl: "./zoeker-crab-getrapt.html",
-  styleUrls: ["./zoeker-crab-getrapt.scss"]
+  templateUrl: "./zoeker-crab-getrapt.component.html",
+  styleUrls: ["./zoeker-crab-getrapt.component.scss"]
 })
 export class ZoekerCrabGetraptComponent extends GetraptZoekerComponent implements OnInit {
   private alleGemeenten: CrabGemeente[] = [];

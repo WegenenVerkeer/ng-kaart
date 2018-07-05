@@ -10,8 +10,8 @@ export const SchaalUiSelector = "Schaal";
 
 @Component({
   selector: "awv-schaal",
-  templateUrl: "./kaart-schaal.html",
-  styleUrls: ["./kaart-schaal.scss"]
+  templateUrl: "./kaart-schaal.component.html",
+  styleUrls: ["./kaart-schaal.component.scss"]
 })
 export class KaartSchaalComponent extends KaartChildComponentBase implements AfterViewInit, OnDestroy {
   @ViewChild("schaal") schaalElement: ElementRef;

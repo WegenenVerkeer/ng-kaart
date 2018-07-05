@@ -163,8 +163,8 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
 
 @Component({
   selector: "awv-zoeker",
-  templateUrl: "./zoeker-box.html",
-  styleUrls: ["./zoeker-box.scss"],
+  templateUrl: "./zoeker-box.component.html",
+  styleUrls: ["./zoeker-box.component.scss"],
   animations: [
     trigger("enterAnimation", [
       transition(":enter", [
