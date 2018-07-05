@@ -21,6 +21,8 @@ import {
 } from "rxjs/operators";
 import { pipe } from "rxjs/Rx";
 
+import { ZoekerPerceelGetraptComponent } from "..";
+import { ZoekerCrabGetraptComponent } from "..";
 import { KaartChildComponentBase } from "../../kaart/kaart-child-component-base";
 import * as ke from "../../kaart/kaart-elementen";
 import { VeldInfo } from "../../kaart/kaart-elementen";
@@ -182,6 +184,19 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
 export class ZoekerBoxComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
   zoekVeld = new FormControl();
   @ViewChild("zoekVeldElement") zoekVeldElement: ElementRef;
+
+  zoekerPerceelGetraptComponent: ZoekerPerceelGetraptComponent;
+  @ViewChild("zoekerPerceelGetrapt")
+  set setZoekerPerceelGetraptComponent(zoekerPerceelGetrapt: ZoekerPerceelGetraptComponent) {
+    this.zoekerPerceelGetraptComponent = zoekerPerceelGetrapt;
+  }
+
+  zoekerCrabGetraptComponent: ZoekerCrabGetraptComponent;
+  @ViewChild("zoekerCrabGetrapt")
+  set setZoekerCrabGetraptComponent(zoekerCrabGetrapt: ZoekerCrabGetraptComponent) {
+    this.zoekerCrabGetraptComponent = zoekerCrabGetrapt;
+  }
+
   alleZoekResultaten: ZoekResultaat[] = [];
   alleFouten: Fout[] = [];
   legende: Map<string, IconDescription> = new Map<string, IconDescription>();
@@ -190,6 +205,8 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   toonResultaat = true;
   busy = 0;
   actieveZoeker: ZoekerType = "Geoloket";
+  perceelMaakLeegDisabled: Boolean;
+  crabMaakLeegDisabled: Boolean;
 
   private byPassDebounce: () => void;
   private extent: ol.Extent = ol.extent.createEmpty();
@@ -325,7 +342,9 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
 
   focusOpZoekVeld() {
     setTimeout(() => {
-      this.zoekVeldElement.nativeElement.focus();
+      if (this.actieveZoeker === "Geoloket") {
+        this.zoekVeldElement.nativeElement.focus();
+      }
     });
   }
 
@@ -349,17 +368,6 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.actieveZoeker = zoeker;
     this.focusOpZoekVeld();
     this.toonResultaat = true;
-  }
-
-  getPlaceholder(): string {
-    switch (this.actieveZoeker) {
-      case "Geoloket":
-        return "Zoek";
-      case "Perceel":
-        return "Zoek op Perceel";
-      case "Crab":
-        return "Zoek op CRAB";
-    }
   }
 
   maakResultaatLeeg() {
@@ -417,5 +425,17 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
 
   isBusy(): boolean {
     return this.busy > 0;
+  }
+
+  onCrabMaakLeegDisabledChange(maakLeegDisabled: Boolean): void {
+    setTimeout(() => {
+      this.crabMaakLeegDisabled = maakLeegDisabled;
+    });
+  }
+
+  onPerceelMaakLeegDisabledChange(maakLeegDisabled: Boolean): void {
+    setTimeout(() => {
+      this.perceelMaakLeegDisabled = maakLeegDisabled;
+    });
   }
 }

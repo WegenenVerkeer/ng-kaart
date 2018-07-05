@@ -20,6 +20,16 @@
       height: 24px;
       overflow: hidden;
     }
+
+    .actieve-zoeker-titel {
+      margin-left: 4px;
+      flex-grow: 1;
+      font-size: 16px;
+      color: $kaart-primary-text-color;
+      text-overflow: ellipsis;
+      overflow: hidden;
+      white-space: nowrap;
+    }
   }
 
   .zoek-bezig-indicator {

@@ -1,4 +1,4 @@
-import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
+import { Component, EventEmitter, NgZone, OnDestroy, OnInit, Output } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { Set } from "immutable";
 import { Observable } from "rxjs/Observable";
@@ -24,7 +24,7 @@ const NIVEAU_VANAFSECTIE = 3;
 const NIVEAU_VANAFPERCEEL = 4;
 
 @Component({
-  selector: "awv-perceel-zoeker",
+  selector: "awv-zoeker-perceel-getrapt",
   templateUrl: "./zoeker-perceel-getrapt.component.html",
   styleUrls: ["./zoeker-perceel-getrapt.component.scss"]
 })
@@ -43,6 +43,7 @@ export class ZoekerPerceelGetraptComponent extends GetraptZoekerComponent implem
   percelen$: Observable<PerceelNummer[]> = Observable.empty();
 
   leegMakenDisabled$: Observable<Boolean> = Observable.empty();
+  @Output() leegMakenDisabledChange: EventEmitter<Boolean> = new EventEmitter();
 
   constructor(
     private perceelService: ZoekerPerceelService,
@@ -108,6 +109,9 @@ export class ZoekerPerceelGetraptComponent extends GetraptZoekerComponent implem
     this.subscribeToDisableWhenEmpty(this.percelen$, this.perceelControl, NIVEAU_VANAFPERCEEL);
 
     this.leegMakenDisabled$ = this.gemeenteControl.valueChanges.pipe(map(c => toTrimmedLowerCasedString(c).length === 0), startWith(true));
+    this.bindToLifeCycle(this.leegMakenDisabled$).subscribe(value => {
+      this.leegMakenDisabledChange.emit(value);
+    });
 
     // Hier gaan we onze capakey doorsturen naar de zoekers, we willen alleen de perceelzoeker triggeren.
     this.bindToLifeCycle(this.perceelControl.valueChanges.pipe(filter(isNotNullObject), distinctUntilChanged())).subscribe(

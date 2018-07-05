@@ -30,8 +30,4 @@
     <mat-option *ngFor="let perceel of percelen$ | async" [value]="perceel" [innerHtml]="perceel.perceelsnummer | highlight: perceelControl.value">
     </mat-option>
   </mat-autocomplete>
-
-  <div class="perceel-buttons">
-    <button mat-button (click)="maakVeldenLeeg(0)" [disabled]="leegMakenDisabled$ | async">Maak leeg</button>
-  </div>
 </div>

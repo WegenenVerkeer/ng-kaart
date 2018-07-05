@@ -1,4 +1,4 @@
-import { Component, NgZone, OnInit } from "@angular/core";
+import { Component, EventEmitter, NgZone, OnInit, Output } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { Set } from "immutable";
 import { Observable } from "rxjs/Observable";
@@ -21,7 +21,7 @@ const NIVEAU_VANAFSTRAAT = 2;
 const NIVEAU_VANAFHUISNUMMER = 3;
 
 @Component({
-  selector: "awv-crab-getrapt-zoeker",
+  selector: "awv-zoeker-crab-getrapt",
   templateUrl: "./zoeker-crab-getrapt.component.html",
   styleUrls: ["./zoeker-crab-getrapt.component.scss"]
 })
@@ -36,6 +36,7 @@ export class ZoekerCrabGetraptComponent extends GetraptZoekerComponent implement
   straten$: Observable<CrabStraat[]> = Observable.empty();
   huisnummers$: Observable<CrabHuisnummer[]> = Observable.empty();
   leegMakenDisabled$: Observable<Boolean> = Observable.empty();
+  @Output() leegMakenDisabledChange: EventEmitter<Boolean> = new EventEmitter();
 
   constructor(private crabService: ZoekerCrabService, kaartComponent: KaartComponent, zoekerComponent: ZoekerBoxComponent, zone: NgZone) {
     super(kaartComponent, zoekerComponent, zone);
@@ -72,6 +73,9 @@ export class ZoekerCrabGetraptComponent extends GetraptZoekerComponent implement
     });
 
     this.leegMakenDisabled$ = this.gemeenteControl.valueChanges.pipe(map(c => toTrimmedLowerCasedString(c).length === 0), startWith(true));
+    this.bindToLifeCycle(this.leegMakenDisabled$).subscribe(value => {
+      this.leegMakenDisabledChange.emit(value);
+    });
 
     this.straten$ = this.autocomplete(
       this.gemeenteControl,
