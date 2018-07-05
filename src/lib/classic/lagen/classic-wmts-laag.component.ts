@@ -1,5 +1,5 @@
 import { HttpClient } from "@angular/common/http";
-import { Component, Input, OnInit, ViewEncapsulation } from "@angular/core";
+import { Component, Input, NgZone, OnInit, ViewEncapsulation } from "@angular/core";
 import { fromNullable } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
@@ -35,8 +35,8 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
 
   private wmtsOptions: ol.olx.source.WMTSOptions;
 
-  constructor(kaart: KaartClassicComponent, private http: HttpClient) {
-    super(kaart);
+  constructor(kaart: KaartClassicComponent, private http: HttpClient, zone: NgZone) {
+    super(kaart, zone);
   }
 
   ngOnInit() {
