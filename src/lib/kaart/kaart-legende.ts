@@ -29,3 +29,7 @@ export type LegendeItem = LijnItem | BolletjeItem | PolygoonItem | ImageItem;
 export interface Legende {
   readonly items: List<LegendeItem>;
 }
+
+export function Legende(items: LegendeItem[]) {
+  return { items: List(items) };
+}

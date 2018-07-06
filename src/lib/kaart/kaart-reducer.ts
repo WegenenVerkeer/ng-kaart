@@ -302,14 +302,14 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model, none);
     }
 
+    function vectorLaagPositie(groepPositie: number, groep: ke.Laaggroep): number {
+      return lagenInGroep(model, groep).count(tlg => ke.isVectorLaag(tlg!.bron) && tlg!.positieInGroep < groepPositie);
+    }
+
     /**
      * Een laag toevoegen. Faalt als er al een laag met die titel bestaat.
      */
     function voegLaagToeCmd(cmnd: prt.VoegLaagToeCmd<Msg>): ModelWithResult<Msg> {
-      function vectorLaagPositie(groepPositie: number, groep: ke.Laaggroep): number {
-        return lagenInGroep(model, groep).count(tlg => ke.isVectorLaag(tlg!.bron) && tlg!.positieInGroep < groepPositie);
-      }
-
       return toModelWithValueResult(
         cmnd.wrapper,
         chain(
@@ -380,20 +380,72 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           const groep = laag.laaggroep;
           const modelMetAangepasteLagen = pasLaagPositiesAan(-1, layerIndexNaarGroepIndex(layer, groep) + 1, maxIndexInGroep(groep), groep);
           const updatedModel = {
-            ...model,
-            toegevoegdeLagenOpTitel: model.toegevoegdeLagenOpTitel.delete(titel),
-            titelsOpGroep: model.titelsOpGroep.set(
+            ...modelMetAangepasteLagen,
+            toegevoegdeLagenOpTitel: modelMetAangepasteLagen.toegevoegdeLagenOpTitel.delete(titel),
+            titelsOpGroep: modelMetAangepasteLagen.titelsOpGroep.set(
               groep,
-              model.titelsOpGroep
+              modelMetAangepasteLagen.titelsOpGroep
                 .get(groep)
                 .filter(t => t !== titel)
                 .toList()
             ),
-            groepOpTitel: model.groepOpTitel.delete(titel)
+            groepOpTitel: modelMetAangepasteLagen.groepOpTitel.delete(titel)
           };
           zendLagenInGroep(updatedModel, groep);
           modelChanger.laagVerwijderdSubj.next(laag);
           ss.clearFeatureStyleSelector(model.map, laag.titel);
+          return ModelAndEmptyResult(updatedModel);
+        })
+      );
+    }
+
+    function vervangLaag(cmnd: prt.VervangLaagCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        chain(valideerToegevoegdeLaagBestaat(cmnd.laag.titel), laag => valideerAlsLayer(cmnd.laag).map(layer => [laag, layer])).map(
+          ([laag, layer]: [ke.ToegevoegdeLaag, ol.layer.Base]) => {
+            const toegevoegdeLaagCommon: ke.ToegevoegdeLaag = {
+              bron: cmnd.laag,
+              layer: layer,
+              titel: laag.titel,
+              laaggroep: laag.laaggroep,
+              positieInGroep: laag.positieInGroep,
+              magGetoondWorden: laag.magGetoondWorden,
+              legende: laag.legende,
+              stijlInLagenKiezer: laag.stijlInLagenKiezer
+            };
+            const toegevoegdeLaag = ke
+              .asVectorLaag(cmnd.laag)
+              .map<ke.ToegevoegdeLaag>(vlg => ({
+                ...toegevoegdeLaagCommon,
+                stijlPositie: vectorLaagPositie(laag.positieInGroep, laag.laaggroep),
+                stijlSel: vlg.styleSelector,
+                selectiestijlSel: vlg.selectieStyleSelector,
+                hoverstijlSel: vlg.hoverStyleSelector
+              }))
+              .getOrElse(toegevoegdeLaagCommon);
+            const oldLayer = laag.layer;
+            layer.set("titel", oldLayer.get("titel"));
+            layer.setVisible(oldLayer.getVisible());
+            forEach(ke.asToegevoegdeVectorLaag(toegevoegdeLaag), pasVectorLaagStijlToe);
+            zetLayerIndex(layer, laag.positieInGroep, laag.laaggroep);
+            model.map.addLayer(layer);
+            model.map.removeLayer(oldLayer);
+            const updatedModel = pasLaagInModelAan(model)(toegevoegdeLaag);
+            zendLagenInGroep(updatedModel, toegevoegdeLaag.laaggroep);
+            return ModelAndEmptyResult(updatedModel);
+          }
+        )
+      );
+    }
+
+    function zetLaagLegende(cmnd: prt.ZetLaagLegendeCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        valideerToegevoegdeLaagBestaat(cmnd.titel).map(laag => {
+          const laagMetLegende = { ...laag, legende: some(cmnd.legende) };
+          const updatedModel = pasLaagInModelAan(model)(laagMetLegende);
+          zendLagenInGroep(updatedModel, laagMetLegende.laaggroep);
           return ModelAndEmptyResult(updatedModel);
         })
       );
@@ -1150,6 +1202,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return verwijderLaagCmd(cmd);
       case "VerplaatsLaag":
         return verplaatsLaagCmd(cmd);
+      case "VervangLaagCmd":
+        return vervangLaag(cmd);
+      case "ZetLaagLegende":
+        return zetLaagLegende(cmd);
       case "VraagSchaalAan":
         return vraagSchaalAan(cmd);
       case "VoegSchaalToe":

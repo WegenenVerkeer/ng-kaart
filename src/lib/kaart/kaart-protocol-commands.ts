@@ -19,6 +19,8 @@ export type Command<Msg extends KaartMsg> =
   | VoegLaagToeCmd<Msg>
   | VerwijderLaagCmd<Msg>
   | VerplaatsLaagCmd<Msg>
+  | VervangLaagCmd<Msg>
+  | ZetLaagLegendeCmd<Msg>
   | VoegSchaalToeCmd<Msg>
   | VerwijderSchaalCmd<Msg>
   | VoegVolledigSchermToeCmd<Msg>
@@ -103,6 +105,19 @@ export interface VerplaatsLaagCmd<Msg extends KaartMsg> {
   readonly type: "VerplaatsLaag";
   readonly titel: string;
   readonly naarPositie: number;
+  readonly wrapper: BareValidationWrapper<Msg>;
+}
+
+export interface VervangLaagCmd<Msg extends KaartMsg> {
+  readonly type: "VervangLaagCmd";
+  readonly laag: ke.Laag;
+  readonly wrapper: BareValidationWrapper<Msg>;
+}
+
+export interface ZetLaagLegendeCmd<Msg extends KaartMsg> {
+  readonly type: "ZetLaagLegende";
+  readonly titel: string;
+  readonly legende: Legende;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -578,4 +593,12 @@ export function SluitInfoBoodschapCmd<Msg extends KaartMsg>(id: string, msgGen: 
     id: id,
     msgGen: msgGen
   };
+}
+
+export function ZetLaagLegendeCmd<Msg extends KaartMsg>(
+  titel: string,
+  legende: Legende,
+  wrapper: BareValidationWrapper<Msg>
+): ZetLaagLegendeCmd<Msg> {
+  return { type: "ZetLaagLegende", titel: titel, legende: legende, wrapper: wrapper };
 }

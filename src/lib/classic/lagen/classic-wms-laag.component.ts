@@ -3,6 +3,7 @@ import { fromNullable } from "fp-ts/lib/Option";
 import { List } from "immutable";
 
 import { Laaggroep, TiledWmsType, WmsLaag } from "../../kaart/kaart-elementen";
+import { urlWithParams } from "../../util/url";
 import { KaartClassicComponent } from "../kaart-classic.component";
 
 import { ClassicLaagComponent } from "./classic-laag.component";
@@ -55,18 +56,20 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
 
   backgroundUrl(urls: List<string>, laagNaam: string): string {
     // TODO: rekening houden met echte config.
-    return (
-      urls.get(0) + // mag wat veiliger
-      "?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap" +
-      "&FORMAT=" +
-      encodeURIComponent(this.format) +
-      "&TRANSPARENT=false&LAYERS=" +
-      encodeURIComponent(laagNaam) +
-      "&TILED=true" +
-      "&SRS=EPSG%3A31370" +
-      "&CRS=EPSG%3A31370" +
-      "&WIDTH=256&HEIGHT=256" +
-      "&STYLES=&BBOX=104528%2C188839.75%2C105040%2C189351.75"
-    );
+    return urlWithParams(urls.get(0), {
+      layers: this.laagNaam,
+      styles: "",
+      service: "WMS",
+      request: "GetMap",
+      version: "1.3.0",
+      transparant: false,
+      tiled: true,
+      width: 256,
+      height: 256,
+      format: this.format,
+      srs: "EPSG:31370",
+      crs: "EPSG:31370",
+      bbox: "104528,188839.75,105040,189351.75"
+    });
   }
 }

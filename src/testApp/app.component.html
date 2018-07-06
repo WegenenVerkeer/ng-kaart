@@ -150,8 +150,8 @@
                                  [zichtbaar]="false"></awv-kaart-features-laag>
         <!-- achtergrondlagen -->
         <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
-        <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"
-                                  *ngIf="isOptieActief('achtergrond')"></awv-kaart-tilecache-laag>
+        <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'" *ngIf="isOptieActief('achtergrond')"></awv-kaart-tilecache-laag>
+        <!-- <awv-kaart-wmts-laag [titel]="'Dienstkaart kleur (wmts)'" [laagNaam]="'dienstkaart-kleur'" [capUrl]="'https://apps-dev.mow.vlaanderen.be/geoserver/gwc/service/wmts'" [matrixSet]="'AWV-gridset-Lambert72'" *ngIf="isOptieActief('achtergrond')"></awv-kaart-wmts-laag> -->
         <awv-kaart-blanco-laag [titel]="'Leeg'" *ngIf="isOptieActief('achtergrond')"></awv-kaart-blanco-laag>
         <awv-kaart-knop-achtergrondlaag-kiezer *ngIf="isOptieActief('achtergrond')"></awv-kaart-knop-achtergrondlaag-kiezer>
         <!-- kaart widgets-->
