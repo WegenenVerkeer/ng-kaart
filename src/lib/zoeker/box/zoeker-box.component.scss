@@ -10,24 +10,23 @@
     justify-content: flex-end;
     align-items: center;
 
-    input {
+    input, .actieve-zoeker-titel {
       flex-grow: 1;
-      border: none;
-      padding: 0;
       margin-left: 4px;
-      outline: none;
       font-size: 16px;
-      height: 24px;
       overflow: hidden;
     }
 
+    input {
+      border: none;
+      padding: 0;
+      outline: none;
+      height: 40px;
+    }
+
     .actieve-zoeker-titel {
-      margin-left: 4px;
-      flex-grow: 1;
-      font-size: 16px;
       color: $kaart-primary-text-color;
       text-overflow: ellipsis;
-      overflow: hidden;
       white-space: nowrap;
     }
   }

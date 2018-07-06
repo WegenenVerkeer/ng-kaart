@@ -21,8 +21,6 @@ import {
 } from "rxjs/operators";
 import { pipe } from "rxjs/Rx";
 
-import { ZoekerPerceelGetraptComponent } from "..";
-import { ZoekerCrabGetraptComponent } from "..";
 import { KaartChildComponentBase } from "../../kaart/kaart-child-component-base";
 import * as ke from "../../kaart/kaart-elementen";
 import { VeldInfo } from "../../kaart/kaart-elementen";
@@ -39,7 +37,7 @@ export class Fout {
   constructor(readonly zoeker: string, readonly fout: string) {}
 }
 
-export type ZoekerType = "Geoloket" | "Perceel" | "Crab";
+export type ZoekerType = "Basis" | "Perceel" | "Crab";
 
 export function isNotNullObject(object) {
   return object && object instanceof Object;
@@ -185,15 +183,15 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   zoekVeld = new FormControl();
   @ViewChild("zoekVeldElement") zoekVeldElement: ElementRef;
 
-  zoekerPerceelGetraptComponent: ZoekerPerceelGetraptComponent;
+  zoekerPerceelGetraptComponent: GetraptZoekerComponent;
   @ViewChild("zoekerPerceelGetrapt")
-  set setZoekerPerceelGetraptComponent(zoekerPerceelGetrapt: ZoekerPerceelGetraptComponent) {
+  set setZoekerPerceelGetraptComponent(zoekerPerceelGetrapt: GetraptZoekerComponent) {
     this.zoekerPerceelGetraptComponent = zoekerPerceelGetrapt;
   }
 
-  zoekerCrabGetraptComponent: ZoekerCrabGetraptComponent;
+  zoekerCrabGetraptComponent: GetraptZoekerComponent;
   @ViewChild("zoekerCrabGetrapt")
-  set setZoekerCrabGetraptComponent(zoekerCrabGetrapt: ZoekerCrabGetraptComponent) {
+  set setZoekerCrabGetraptComponent(zoekerCrabGetrapt: GetraptZoekerComponent) {
     this.zoekerCrabGetraptComponent = zoekerCrabGetrapt;
   }
 
@@ -204,7 +202,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   toonHelp = false;
   toonResultaat = true;
   busy = 0;
-  actieveZoeker: ZoekerType = "Geoloket";
+  actieveZoeker: ZoekerType = "Basis";
   perceelMaakLeegDisabled: Boolean;
   crabMaakLeegDisabled: Boolean;
 
@@ -342,7 +340,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
 
   focusOpZoekVeld() {
     setTimeout(() => {
-      if (this.actieveZoeker === "Geoloket") {
+      if (this.actieveZoeker === "Basis") {
         this.zoekVeldElement.nativeElement.focus();
       }
     });

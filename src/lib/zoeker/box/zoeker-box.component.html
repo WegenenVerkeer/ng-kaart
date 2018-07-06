@@ -2,7 +2,7 @@
   <div class="zoeker-input">
 
     <mat-menu #zoekerMenu="matMenu" class="awv-kaart-zoeker-box-menu" [overlapTrigger]="false">
-      <button mat-menu-item (click)="kiesZoeker('Geoloket')" [disabled]="actieveZoeker === 'Geoloket'">
+      <button mat-menu-item (click)="kiesZoeker('Basis')" [disabled]="actieveZoeker === 'Basis'">
         <mat-icon>search</mat-icon>
         <span>Zoek</span>
       </button>
@@ -14,7 +14,7 @@
         <mat-icon>search</mat-icon>
         <span>Zoek op adres via CRAB</span>
       </button>
-      <button mat-menu-item (click)="toggleHelp()" *ngIf="actieveZoeker === 'Geoloket'">
+      <button mat-menu-item (click)="toggleHelp()" *ngIf="actieveZoeker === 'Basis'">
         <mat-icon>help</mat-icon>
         <span *ngIf="!toonHelp">Toon hulp bij zoeken</span>
         <span *ngIf="toonHelp">Verberg hulp bij zoeken</span>
@@ -24,7 +24,7 @@
     <button mat-icon-button [matMenuTriggerFor]="zoekerMenu" matTooltip="Toon zoekopties" matTooltipPosition="right">
       <mat-icon>menu</mat-icon>
     </button>
-    <input placeholder="Zoek" [formControl]="zoekVeld" *ngIf="this.actieveZoeker === 'Geoloket'" (keyup)="onKey($event)" #zoekVeldElement>
+    <input placeholder="Zoek" [formControl]="zoekVeld" *ngIf="this.actieveZoeker === 'Basis'" (keyup)="onKey($event)" #zoekVeldElement>
     <span class="actieve-zoeker-titel" *ngIf="actieveZoeker === 'Perceel'">Zoek op perceel</span>
     <span class="actieve-zoeker-titel" *ngIf="actieveZoeker === 'Crab'">Zoek op adres via CRAB</span>
     <div class="zoek-bezig-indicator" *ngIf="isBusy()">
@@ -41,7 +41,7 @@
             [matTooltip]="alleZoekResultaten.length > 0 ? 'Wis invoer en zoekresultaat' : 'Wis invoer'" matTooltipPosition="right">
       <mat-icon>close</mat-icon>
     </button>
-    <button mat-icon-button (click)="zoek()" *ngIf="this.actieveZoeker === 'Geoloket'" matTooltip="Zoek of druk op &crarr;" matTooltipPosition="right">
+    <button mat-icon-button (click)="zoek()" *ngIf="this.actieveZoeker === 'Basis'" matTooltip="Zoek of druk op &crarr;" matTooltipPosition="right">
       <mat-icon>search</mat-icon>
     </button>
     <button mat-icon-button *ngIf="isInklapbaar()" (click)="toggleResultaat()" [matTooltip]="toonResultaat ? 'Verberg zoeken' : 'Toon zoeken'" matTooltipPosition="right">
@@ -55,8 +55,8 @@
   <awv-zoeker-crab-getrapt *ngIf="actieveZoeker === 'Crab'" [hidden]="!toonResultaat"
                            (leegMakenDisabledChange)="onCrabMaakLeegDisabledChange($event)"
                            #zoekerCrabGetrapt></awv-zoeker-crab-getrapt>
-  <div class="divider" *ngIf="toonHelp && actieveZoeker === 'Geoloket'"></div>
-  <div class="zoeker-help" *ngIf="toonHelp && actieveZoeker === 'Geoloket'" [@enterAnimation]>
+  <div class="divider" *ngIf="toonHelp && actieveZoeker === 'Basis'"></div>
+  <div class="zoeker-help" *ngIf="toonHelp && actieveZoeker === 'Basis'" [@enterAnimation]>
     <div class="zoeker-help-header" (click)="toggleHelp()">
       <mat-icon>help</mat-icon>
       <div class="zoeker-help-titel">
