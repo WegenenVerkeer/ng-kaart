@@ -1,17 +1,18 @@
-<div class="laag" [ngClass]="{ 'onzichtbaar': (onzichtbaar$ | async), 'geselecteerd': isLaagMenuOpen }">
+<div class="awv-kaart-laagmanipulatie laag" [ngClass]="{ 'onzichtbaar': (onzichtbaar$ | async), 'geselecteerd': isLaagMenuOpen }">
   <div class="laag-zichtbaarheid">
-    <button mat-icon-button (click)="toggleGekozen()" [disabled]="onzichtbaar$ | async">
+    <mat-icon class="laag-no-drag" *ngIf="noDrag">block</mat-icon>
+    <button *ngIf="!noDrag" mat-icon-button (click)="toggleGekozen()" [disabled]="onzichtbaar$ | async">
       <mat-icon *ngIf="gekozen && (zichtbaar$ | async)" matTooltip="Verberg laag" [matTooltipPosition]="'right'" [ngClass]="stijlInKiezer">visibility</mat-icon>
       <mat-icon *ngIf="!gekozen && (zichtbaar$ | async)" matTooltip="Toon laag" [matTooltipPosition]="'right'" [ngClass]="stijlInKiezer">visibility_off</mat-icon>
-      <mat-icon *ngIf="gekozen && (onzichtbaar$ | async)" matTooltip="Laag niet zichtbaar wegens zoomniveau" [matTooltipPosition]="'right'" [ngClass]="stijlInKiezer">visibility</mat-icon>
-      <mat-icon *ngIf="!gekozen && (onzichtbaar$ | async)" matTooltip="Laag niet zichtbaar wegens zoomniveau" [matTooltipPosition]="'right'" [ngClass]="stijlInKiezer">visibility_off</mat-icon>
+      <mat-icon *ngIf="gekozen && (onzichtbaar$ | async)" matTooltip="Niet zichtbaar in huidig zoomniveau" [matTooltipPosition]="'right'" [ngClass]="stijlInKiezer">visibility</mat-icon>
+      <mat-icon *ngIf="!gekozen && (onzichtbaar$ | async)" matTooltip="Niet zichtbaar in huidige zoomniveau" [matTooltipPosition]="'right'" [ngClass]="stijlInKiezer">visibility_off</mat-icon>
     </button>
   </div>
   <div class="laag-naam">
     <div [ngClass]="stijlInKiezer">{{ title }}</div>
   </div>
   <div class="laag-acties" *ngIf="minstensEenLaagActie">
-    <mat-menu #laagMenu="matMenu" class="laag-menu" [overlapTrigger]="true">
+    <mat-menu #laagMenu="matMenu" class="awv-kaart-laagmanipulatie laag-menu" [overlapTrigger]="true">
       <button mat-menu-item (click)="verwijder()" [disabled]="!kanVerwijderen$ | async">
         <mat-icon>delete</mat-icon>
         <span>Verwijder laag uit lagenlijst</span>
