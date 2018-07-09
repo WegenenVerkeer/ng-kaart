@@ -14,6 +14,14 @@ const basisOpstellingStyle: ol.style.Style = definitieToStyle(
   throw new Error(`slecht formaat ${join(msg)}`);
 });
 
+const basisOpstellingGeselecteerdStyle: ol.style.Style = definitieToStyle(
+  "json",
+  // tslint:disable-next-line:max-line-length
+  '{"version": "awv-v0", "definition": {"circle": {"stroke": {"color": "#25FFFF", "width": 1.5}, "fill": {"color": "#25FFFF"}, "radius": 3}}}'
+).getOrElseL(msg => {
+  throw new Error(`slecht formaat ${join(msg)}`);
+});
+
 const basisAanzichtStyle: ol.style.Style = definitieToStyle(
   "json",
   // tslint:disable-next-line:max-line-length
@@ -33,25 +41,29 @@ basisOpstellingStyle.setZIndex(0);
 basisAanzichtStyle.setZIndex(1);
 basisVerbindingsLijnStyle.setZIndex(-1);
 
-export function verkeersbordenStyleFunction(): ol.StyleFunction {
+export function verkeersbordenStyleFunction(geselecteerd: boolean): ol.StyleFunction {
   function styleFunc(feature: ol.Feature, resolution: number): ol.style.Style | ol.style.Style[] {
     // [1024.0, 512.0, 256.0, 128.0, 64.0, 32.0, 16.0, 8.0, 4.0, 2.0, 1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125]
 
     if (resolution <= 0.125) {
-      return opstellingMetAanzichten(feature, "platgeslagenvoorstelling");
+      return geselecteerd
+        ? opstellingMetAanzichten(feature, "platgeslagenvoorstellinggeselecteerd", geselecteerd)
+        : opstellingMetAanzichten(feature, "platgeslagenvoorstelling", geselecteerd);
     } else if (resolution <= 0.25) {
-      return opstellingMetAanzichten(feature, "platgeslagenvoorstellingklein");
+      return geselecteerd
+        ? opstellingMetAanzichten(feature, "platgeslagenvoorstellingkleingeselecteerd", geselecteerd)
+        : opstellingMetAanzichten(feature, "platgeslagenvoorstellingklein", geselecteerd);
     } else if (resolution <= 0.5) {
-      return opstellingMetHoek(feature);
+      return opstellingMetHoek(feature, geselecteerd);
     } else {
-      return opstellingAlsPunt(feature);
+      return opstellingAlsPunt(feature, geselecteerd);
     }
   }
 
   return styleFunc;
 }
 
-function opstellingMetAanzichten(feature: ol.Feature, binairImageVeld: string): ol.style.Style[] {
+function opstellingMetAanzichten(feature: ol.Feature, binairImageVeld: string, geselecteerd: boolean): ol.style.Style[] {
   const opstelling = feature.getProperties()["properties"];
 
   const opstellingPoint = feature.getGeometry() as ol.geom.Point;
@@ -80,15 +92,18 @@ function opstellingMetAanzichten(feature: ol.Feature, binairImageVeld: string): 
     aanzichtStyles.push(aanzichtStyle);
 
     const verbindingsLijn = basisVerbindingsLijnStyle.clone();
+    if (geselecteerd) {
+      verbindingsLijn.getStroke().setColor("#25FFFF");
+    }
     verbindingsLijn.setGeometry(new ol.geom.LineString([opstellingPoint.getCoordinates(), ankerGeometry.getCoordinates()]));
     aanzichtStyles.push(verbindingsLijn);
   });
 
-  aanzichtStyles.push(opstellingMetHoek(feature));
+  aanzichtStyles.push(opstellingMetHoek(feature, geselecteerd));
   return aanzichtStyles;
 }
 
-function opstellingMetHoek(feature: ol.Feature): ol.style.Style {
+function opstellingMetHoek(feature: ol.Feature, geselecteerd: boolean): ol.style.Style {
   const opstellingStyle = basisOpstellingStyle.clone();
 
   const opstelling = feature.getProperties()["properties"];
@@ -105,14 +120,21 @@ function opstellingMetHoek(feature: ol.Feature): ol.style.Style {
   // clockwis instead of counterclockwise.
   const rotation: number = opstelling["delta"] ? -1 * opstelling["delta"] : 0;
 
-  const src = encodeAsSrc(opstelling["binaireData"]["kaartvoorstelling"]["mime"], opstelling["binaireData"]["kaartvoorstelling"]["data"]);
+  const src = geselecteerd
+    ? encodeAsSrc(
+        opstelling["binaireData"]["kaartvoorstellinggeselecteerd"]["mime"],
+        opstelling["binaireData"]["kaartvoorstellinggeselecteerd"]["data"]
+      )
+    : encodeAsSrc(opstelling["binaireData"]["kaartvoorstelling"]["mime"], opstelling["binaireData"]["kaartvoorstelling"]["data"]);
   opstellingStyle.setImage(createIcon(src, grootte, rotation, false));
+
+  feature.changed(); // side-effect functie -- spijtig genoeg nodig om OL het sein te geven dat de image hertekend moet worden...
 
   return opstellingStyle;
 }
 
-function opstellingAlsPunt(feature: ol.Feature): ol.style.Style {
-  const opstellingStyle = basisOpstellingStyle.clone();
+function opstellingAlsPunt(feature: ol.Feature, geselecteerd: boolean): ol.style.Style {
+  const opstellingStyle = geselecteerd ? basisOpstellingGeselecteerdStyle.clone() : basisOpstellingStyle.clone();
   const opstellingPoint = feature.getGeometry() as ol.geom.Point;
   opstellingStyle.setGeometry(opstellingPoint);
   return opstellingStyle;
