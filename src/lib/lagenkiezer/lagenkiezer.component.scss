@@ -45,18 +45,6 @@ $laag-height: 40px;
     text-transform: uppercase;
   }
 
-  // De bedoeling is be de start van de drag het te verplaatsen element wit te kleuren zodat het nog even veel plaats
-  // inneemt maar effectief onzichtbaar is.
-  .start-move {
-    background: repeating-linear-gradient(
-        -45deg,
-        rgba(0, 0, 0, 0.04),
-        rgba(0, 0, 0, 0.04) 10px,
-        white 10px,
-        white 20px
-    );
-  }
-
   .legende {
     padding: 8px 16px;
     border-top: 1px solid $awv-secondary-d3;
@@ -89,9 +77,9 @@ $laag-height: 40px;
     max-width: 24px;
     height: 24px;
     margin-right: 8px;
-    background: rgba(0,0,0,.04);
+    background: rgba(0, 0, 0, .04);
     border-radius: 2px;
-    border: 1px solid rgba(0,0,0,.14);
+    border: 1px solid rgba(0, 0, 0, .14);
   }
 
   .legende-svg {
@@ -105,30 +93,7 @@ $laag-height: 40px;
   }
 
   .legende-svg-item {
-    stroke: rgba(0,0,0,.14);
+    stroke: rgba(0, 0, 0, .14);
     stroke-width: 1px;
   }
-
-  // Volgende css-classes worden momenteel nog niet gebruikt - en dus voorlopig in commentaar gezet
-
-  // De bedoeling van de volgende 3 stijlen is dat wanneer er over een element gehovered wordt dat een potentieel
-  // doelwit is dat het bron element geen ruimte meer inneemt en dat de padding op 1 ander element zo gezet wordt dat
-  // dat de ruimte voorstelt waar het bronelement op gedropped kan worden.
-  //.replaced {
-  //  max-height: 0px;
-  //  overflow: hidden;
-  //  background-color: $bg-color;
-  //}
-  //
-  //.gap-on-top {
-  //  max-height: $laag-height + $laag-height;
-  //  box-sizing: content-box;
-  //  border-top: $laag-height solid $bg-color;
-  //}
-  //
-  //.gap-below {
-  //  max-height: $laag-height + $laag-height;
-  //  box-sizing: content-box;
-  //  border-bottom: $laag-height solid $bg-color;
-  //}
 }

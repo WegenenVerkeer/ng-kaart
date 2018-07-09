@@ -1,7 +1,10 @@
-<div class="awv-kaart-laagmanipulatie laag" [ngClass]="{ 'onzichtbaar': (onzichtbaar$ | async), 'geselecteerd': isLaagMenuOpen }">
+<div class="awv-kaart-laagmanipulatie laag"
+     [ngClass]="{ 'onzichtbaar': (onzichtbaar$ | async), 'geselecteerd': isLaagMenuOpen, 'drag-target': (dragTarget && !dragSource), 'drag-source': dragSource}">
   <div class="laag-zichtbaarheid">
-    <mat-icon class="laag-no-drag" *ngIf="noDrag">block</mat-icon>
-    <button *ngIf="!noDrag" mat-icon-button (click)="toggleGekozen()" [disabled]="onzichtbaar$ | async">
+    <mat-icon class="laag-drag-indicator" *ngIf="dragSource">swap_vert</mat-icon>
+    <mat-icon class="laag-drag-indicator" *ngIf="dragTarget && !dragSource">vertical_align_center</mat-icon>
+    <mat-icon class="laag-drag-indicator" *ngIf="dragUntargetable">block</mat-icon>
+    <button *ngIf="!isDragState" mat-icon-button (click)="toggleGekozen()" [disabled]="onzichtbaar$ | async">
       <mat-icon *ngIf="gekozen && (zichtbaar$ | async)" matTooltip="Verberg laag" [matTooltipPosition]="'right'" [ngClass]="stijlInKiezer">visibility</mat-icon>
       <mat-icon *ngIf="!gekozen && (zichtbaar$ | async)" matTooltip="Toon laag" [matTooltipPosition]="'right'" [ngClass]="stijlInKiezer">visibility_off</mat-icon>
       <mat-icon *ngIf="gekozen && (onzichtbaar$ | async)" matTooltip="Niet zichtbaar in huidig zoomniveau" [matTooltipPosition]="'right'" [ngClass]="stijlInKiezer">visibility</mat-icon>
