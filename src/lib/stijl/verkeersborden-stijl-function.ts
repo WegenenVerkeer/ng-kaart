@@ -52,12 +52,9 @@ export function verkeersbordenStyleFunction(): ol.StyleFunction {
 }
 
 function opstellingMetAanzichten(feature: ol.Feature, binairImageVeld: string): ol.style.Style[] {
-  const opstellingStyle = basisOpstellingStyle.clone();
+  const opstelling = feature.getProperties()["properties"];
 
   const opstellingPoint = feature.getGeometry() as ol.geom.Point;
-  opstellingStyle.setGeometry(new ol.geom.Point(opstellingPoint.getCoordinates()));
-
-  const opstelling = feature.getProperties()["properties"];
 
   const aanzichtStyles = [];
 
@@ -87,7 +84,7 @@ function opstellingMetAanzichten(feature: ol.Feature, binairImageVeld: string): 
     aanzichtStyles.push(verbindingsLijn);
   });
 
-  aanzichtStyles.push(opstellingStyle);
+  aanzichtStyles.push(opstellingMetHoek(feature));
   return aanzichtStyles;
 }
 
