@@ -14,7 +14,7 @@ const basisOpstellingStyle: ol.style.Style = definitieToStyle(
   throw new Error(`slecht formaat ${join(msg)}`);
 });
 
-const basisAanstellingStyle: ol.style.Style = definitieToStyle(
+const basisAanzichtStyle: ol.style.Style = definitieToStyle(
   "json",
   // tslint:disable-next-line:max-line-length
   '{"version": "awv-v0", "definition": {"circle": {"stroke": {"color": "LIGHTSALMON", "width": 1.5}, "fill": {"color": "INDIANRED"}, "radius": 3}}}'
@@ -24,13 +24,13 @@ const basisAanstellingStyle: ol.style.Style = definitieToStyle(
 
 const basisVerbindingsLijnStyle: ol.style.Style = definitieToStyle(
   "json",
-  '{"version": "awv-v0", "definition": {"stroke": {"color": "black", "width": 1.5}}}'
+  '{"version": "awv-v0", "definition": {"stroke": {"color": "black", "width": 2}}}'
 ).getOrElseL(msg => {
   throw new Error(`slecht formaat ${join(msg)}`);
 });
 
 basisOpstellingStyle.setZIndex(0);
-basisAanstellingStyle.setZIndex(1);
+basisAanzichtStyle.setZIndex(1);
 basisVerbindingsLijnStyle.setZIndex(-1);
 
 export function verkeersbordenStyleFunction(): ol.StyleFunction {
@@ -59,7 +59,7 @@ function opstellingMetAanzichten(feature: ol.Feature, binairImageVeld: string): 
   const aanzichtStyles = [];
 
   opstelling.aanzichten.forEach(aanzicht => {
-    const aanzichtStyle = basisAanstellingStyle.clone();
+    const aanzichtStyle = basisAanzichtStyle.clone();
 
     const ankerGeometry = format.readGeometry(aanzicht.anker) as ol.geom.Point;
 
@@ -76,7 +76,7 @@ function opstellingMetAanzichten(feature: ol.Feature, binairImageVeld: string): 
 
     const src = encodeAsSrc(aanzicht["binaireData"][binairImageVeld]["mime"], aanzicht["binaireData"][binairImageVeld]["data"]);
 
-    aanzichtStyle.setImage(createIcon(src, grootte, rotation));
+    aanzichtStyle.setImage(createIcon(src, grootte, rotation, true));
     aanzichtStyles.push(aanzichtStyle);
 
     const verbindingsLijn = basisVerbindingsLijnStyle.clone();
@@ -106,7 +106,7 @@ function opstellingMetHoek(feature: ol.Feature): ol.style.Style {
   const rotation: number = opstelling["delta"] ? -1 * opstelling["delta"] : 0;
 
   const src = encodeAsSrc(opstelling["binaireData"]["kaartvoorstelling"]["mime"], opstelling["binaireData"]["kaartvoorstelling"]["data"]);
-  opstellingStyle.setImage(createIcon(src, grootte, rotation));
+  opstellingStyle.setImage(createIcon(src, grootte, rotation, false));
 
   return opstellingStyle;
 }
@@ -118,7 +118,7 @@ function opstellingAlsPunt(feature: ol.Feature): ol.style.Style {
   return opstellingStyle;
 }
 
-function createIcon(base64: string, size: ol.Size, rotation: number): ol.style.Icon {
+function createIcon(base64: string, size: ol.Size, rotation: number, zetAnchor: boolean): ol.style.Icon {
   // Door openlayers bug kan je hier geen image aanmaken via deze code, want dat geeft flikkering bij herhaaldelijk onnodig tekenen
   // indien er meer dan 33 features zijn.
   //
@@ -136,7 +136,8 @@ function createIcon(base64: string, size: ol.Size, rotation: number): ol.style.I
   return new ol.style.Icon({
     img: image,
     imgSize: size,
-    rotation: rotation
+    rotation: rotation,
+    anchor: zetAnchor ? [0.5, 1] : [0.5, 0.5] // indien gezet, zet icon anchor midden onderaan bord, anders default in midden van icon
   });
 }
 
