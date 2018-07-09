@@ -122,7 +122,9 @@ function opstellingAlsPunt(feature: ol.Feature): ol.style.Style {
 }
 
 function createIcon(base64: string, size: ol.Size, rotation: number): ol.style.Icon {
-  // Door openlayers bug kan je hier geen image aanmaken via deze code:
+  // Door openlayers bug kan je hier geen image aanmaken via deze code, want dat geeft flikkering bij herhaaldelijk onnodig tekenen
+  // indien er meer dan 33 features zijn.
+  //
   //  new ol.style.Icon({
   //         src: base64,
   //         size: size,
