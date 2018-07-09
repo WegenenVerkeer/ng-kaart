@@ -1,4 +1,4 @@
-<div class="lagen-lijst kaart-widget" *ngIf="(opties$ | async) as opties">
+<div class="awv-kaart-lagenkiezer lagen-lijst kaart-widget" *ngIf="(opties$ | async) as opties">
   <div class="lagen-header" (click)="toggleDichtgeklapt()" [matTooltip]="isOpengeklapt ? 'Verberg lagen' : 'Toon lagen'" matTooltipPosition="right">
     <button mat-icon-button>
       <mat-icon>layers</mat-icon>
@@ -27,22 +27,20 @@
     <ng-template #lagen>
       <div *ngFor="let laag of (lagenHoog$ | async)" [draggable]="opties.verplaatsbareLagen" (dragstart)="onDragStart($event, laag)" (dragend)="onDragEnd()"
         (drop)="onDrop($event, laag)" (dragover)="onDragOver($event, laag)" (dragenter)="onDragEnter($event, laag)" (dragleave)="onDragLeave($event, laag)"
-        [ngClass]="dragStyleClasses(laag)">
-        <div awvLaagmanipulatie [laag]="laag"></div>
+        [ngClass]="dragStyleClasses(laag)" class="no-drag">
+        <awv-laagmanipulatie [laag]="laag" [noDrag]="dragStyleClasses(laag).includes('no-drag')"></awv-laagmanipulatie>
       </div>
       <div class="divider" *ngIf="heeftDivider$ | async"></div>
       <div *ngFor="let laag of (lagenLaag$ | async)" [draggable]="opties.verplaatsbareLagen" (dragstart)="onDragStart($event, laag)" (dragend)="onDragEnd()"
         (drop)="onDrop($event, laag)" (dragover)="onDragOver($event, laag)" (dragenter)="onDragEnter($event, laag)" (dragleave)="onDragLeave($event, laag)"
         [ngClass]="dragStyleClasses(laag)">
-        <div awvLaagmanipulatie [laag]="laag"></div>
+        <awv-laagmanipulatie [laag]="laag" [noDrag]="dragStyleClasses(laag).includes('no-drag')"></awv-laagmanipulatie>
       </div>
       <div class="geen-lagen" *ngIf="geenLagen$ | async">Er zijn geen voorgrondlagen</div>
     </ng-template>
     <ng-template #legende>
       <div *ngFor="let laag of (lagenMetLegende$ | async)" class="legende">
-        <div class="laag">
-          <div class="laag-naam">{{laag.titel}}</div>
-        </div>
+        <div class="laag-naam">{{laag.titel}}</div>
         <div *ngFor="let item of laag.legende.toUndefined().items" class="legende-item">
           <span class="legende-icoon" [innerHtml]="icoon(item)"></span>
           <span class="legende-naam">{{item.beschrijving}}</span>

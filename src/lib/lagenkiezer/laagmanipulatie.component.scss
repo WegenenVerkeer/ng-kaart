@@ -1,33 +1,41 @@
 @import "../css/kaart.component-common.scss";
-@import "./lagenkiezer-common.scss";
 
-.laag {
-  &:hover, &.geselecteerd {
-    background-color: rgba(0, 0, 0, 0.04);
-    cursor: pointer;
+.awv-kaart-laagmanipulatie {
+  &.laag {
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+
+    &.onzichtbaar .laag-naam {
+      color: $kaart-secondary-text-color;
+      font-style: italic;
+    }
+
+    &:hover, &.geselecteerd {
+      background-color: rgba(0, 0, 0, 0.04);
+      cursor: pointer;
+    }
+
+    .laag-no-drag {
+      margin: 0 8px;
+    }
+
+    .laag-naam {
+      flex-grow: 1;
+      font-size: 14px;
+      margin-left: 4px;
+      padding: 8px 0;
+    }
   }
-}
 
-.laag-zichtbaarheid {
-  width: 40px;
-}
+  &.laag-menu {
+    .mat-menu-content {
+      padding-top: 0;
+      padding-bottom: 0;
+    }
 
-.onzichtbaar .laag-naam {
-  color: $kaart-secondary-text-color;
-  font-style: italic;
-}
-
-.laag-acties {
-  width: 40px;
-}
-
-.laag-menu {
-  .mat-menu-content {
-    padding-top: 0;
-    padding-bottom: 0;
-  }
-
-  .mat-menu-item .mat-icon {
-    margin-right: 4px;
+    .mat-menu-item .mat-icon {
+      margin-right: 4px;
+    }
   }
 }
