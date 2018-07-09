@@ -4,12 +4,13 @@ import { List } from "immutable";
 
 import { KaartComponentBase } from "../../kaart/kaart-component-base";
 import { Laag, Laaggroep } from "../../kaart/kaart-elementen";
+import { Legende } from "../../kaart/kaart-legende";
 import * as prt from "../../kaart/kaart-protocol";
 import { KaartClassicComponent } from "../kaart-classic.component";
 import { ClassicLegendeItemComponent } from "../legende/classic-legende-item.component";
 import { KaartClassicMsg, logOnlyWrapper } from "../messages";
 
-export abstract class ClassicLaagComponent extends KaartComponentBase implements AfterContentInit, OnDestroy {
+export abstract class ClassicLaagComponent extends KaartComponentBase implements AfterContentInit, OnDestroy, OnInit {
   @Input() titel = "";
   @Input() zichtbaar = true;
   @Input() groep: Laaggroep | undefined; // Heeft voorrang op std ingesteld via laaggroep
@@ -19,17 +20,22 @@ export abstract class ClassicLaagComponent extends KaartComponentBase implements
 
   @ContentChildren(ClassicLegendeItemComponent) legendeItems: QueryList<ClassicLegendeItemComponent>;
 
-  protected voegLaagToeBijStart = true;
   protected laag: Option<Laag> = none;
 
   constructor(protected readonly kaart: KaartClassicComponent, zone: NgZone) {
     super(zone);
   }
 
+  ngOnInit() {
+    super.ngOnInit();
+    this.voegLaagToe(); // We gaan de laag later updaten indien nodig
+  }
+
   ngAfterContentInit(): void {
-    if (this.voegLaagToeBijStart) {
-      this.voegLaagToe();
-    }
+    // De legende kan maar toegevoegd worden wanneer de child components beschikbaar zijn.
+    // Zoals het nu is, ondersteunen we enkel een statische legende, enkel diegene die gedefineerd is bij de start van de laag.
+    // We hebben geen use case voor het dynamische geval.
+    this.voegLegendeToe();
   }
 
   ngOnDestroy(): void {
@@ -38,11 +44,6 @@ export abstract class ClassicLaagComponent extends KaartComponentBase implements
   }
 
   protected voegLaagToe() {
-    const legende = fromNullable(this.legendeItems)
-      .map(children => ({
-        items: List.of(...children.map(item => item.maakLegendeItem()))
-      }))
-      .filter(l => !l.items.isEmpty());
     const lg = this.createLayer();
     this.laag = some(lg);
     this.dispatch({
@@ -51,10 +52,17 @@ export abstract class ClassicLaagComponent extends KaartComponentBase implements
       laag: lg,
       laaggroep: this.gekozenLaagGroep(),
       magGetoondWorden: this.zichtbaar,
-      legende: legende,
+      legende: none,
       stijlInLagenKiezer: fromNullable(this.stijlInLagenKiezer),
       wrapper: logOnlyWrapper
     });
+  }
+
+  protected voegLegendeToe() {
+    if (this.legendeItems.length > 0) {
+      const legende = Legende(this.legendeItems.map(item => item.maakLegendeItem()));
+      this.dispatch(prt.ZetLaagLegendeCmd(this.titel, legende, logOnlyWrapper));
+    }
   }
 
   protected verwijderLaag() {

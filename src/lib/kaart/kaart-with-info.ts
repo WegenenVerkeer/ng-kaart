@@ -25,7 +25,6 @@ export class KaartWithInfo {
     ["Tools", List()]
   ]);
   readonly groepOpTitel: Map<string, ke.Laaggroep> = Map();
-  // readonly lagen: List<ke.ToegevoegdeLaag> = List();
   readonly schaal: Option<ol.control.Control> = none;
   readonly fullScreen: Option<ol.control.FullScreen> = none;
   readonly stdInteracties: List<ol.interaction.Interaction> = List(); // TODO beter gewoon interacties

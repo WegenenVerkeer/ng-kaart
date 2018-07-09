@@ -5,7 +5,7 @@ import { KaartClassicComponent } from "../kaart-classic.component";
 
 import { ClassicLaagComponent } from "./classic-laag.component";
 
-const blancoLaag = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
+export const blancoLaag = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
 
 @Component({
   selector: "awv-kaart-blanco-laag",
