@@ -13,9 +13,7 @@ import { observeOnAngular } from "../util/observe-on-angular";
 import { LagenkiezerComponent } from "./lagenkiezer.component";
 
 @Component({
-  // Atribuut selector om geen tussentijdse dom elementen te creëeren. Die gooien roet in het eten van de CSS.
-  // tslint:disable-next-line
-  selector: "[awvLaagmanipulatie]",
+  selector: "awv-laagmanipulatie",
   templateUrl: "./laagmanipulatie.component.html",
   styleUrls: ["./laagmanipulatie.component.scss"],
   encapsulation: ViewEncapsulation.None,
@@ -29,6 +27,7 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
   minstensEenLaagActie: boolean;
 
   @Input() laag: ToegevoegdeLaag;
+  @Input() noDrag: boolean;
   @ViewChild(MatMenuTrigger) laagMenuTrigger: MatMenuTrigger;
 
   constructor(private readonly lagenkiezer: LagenkiezerComponent, kaartComponent: KaartComponent, zone: NgZone) {
