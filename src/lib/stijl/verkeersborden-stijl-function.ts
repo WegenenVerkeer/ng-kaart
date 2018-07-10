@@ -132,15 +132,21 @@ function opstellingAlsPunt(feature: ol.Feature, geselecteerd: boolean): ol.style
   return geselecteerd ? basisOpstellingGeselecteerdStyle : basisOpstellingStyle;
 }
 
-interface ImageDimensie {
-  readonly breedte: number;
-  readonly hoogte: number;
+interface Opstelling {
+  readonly aanzichten: Aanzicht[];
+  readonly delta: number;
+  readonly binaireData: BinaireOpstellingData;
 }
 
-interface ImageData {
-  readonly properties: ImageDimensie;
-  readonly mime: string;
-  readonly data: string;
+interface BinaireOpstellingData {
+  readonly kaartvoorstelling: ImageData;
+  readonly kaartvoorstellinggeselecteerd: ImageData;
+}
+
+interface Aanzicht {
+  readonly anker: string;
+  readonly hoek: number;
+  readonly binaireData: BinaireAanzichtData;
 }
 
 interface BinaireAanzichtData {
@@ -150,21 +156,15 @@ interface BinaireAanzichtData {
   readonly platgeslagenvoorstellingkleingeselecteerd: ImageData;
 }
 
-interface Aanzicht {
-  readonly anker: string;
-  readonly hoek: number;
-  readonly binaireData: BinaireAanzichtData;
+interface ImageData {
+  readonly properties: ImageDimensie;
+  readonly mime: string;
+  readonly data: string;
 }
 
-interface BinaireOpstellingData {
-  readonly kaartvoorstelling: ImageData;
-  readonly kaartvoorstellinggeselecteerd: ImageData;
-}
-
-interface Opstelling {
-  readonly aanzichten: Aanzicht[];
-  readonly delta: number;
-  readonly binaireData: BinaireOpstellingData;
+interface ImageDimensie {
+  readonly breedte: number;
+  readonly hoogte: number;
 }
 
 function imageAanzicht(data: BinaireAanzichtData, geselecteerd: boolean, klein: boolean): ImageData {
