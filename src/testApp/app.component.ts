@@ -14,6 +14,7 @@ import * as prt from "../lib/kaart/kaart-protocol";
 import { definitieToStyle, kaartLogger } from "../lib/public_api";
 import { AWV0StyleFunctionDescription, definitieToStyleFunction } from "../lib/stijl";
 import { offsetStyleFunction } from "../lib/stijl/offset-stijl-function";
+import { verkeersbordenStyleFunction } from "../lib/stijl/verkeersborden-stijl-function";
 import { join } from "../lib/util/validation";
 import { ZoekerGoogleWdbService } from "../lib/zoeker";
 
@@ -88,6 +89,7 @@ export class AppComponent {
 
   locatieQuery: string;
   installatieCoordinaat: ol.Coordinate = [169500, 190500];
+  verkeersbordenCoordinaat: ol.Coordinate = [154131, 208218];
   installaties: ol.Feature[] = [];
   installatie: ol.Feature[] = [
     new ol.Feature({
@@ -223,6 +225,9 @@ export class AppComponent {
   ).getOrElse(msg => {
     throw new Error(`slecht formaat ${msg}`);
   });
+
+  readonly verkeersbordenStyleFunction = verkeersbordenStyleFunction(false);
+  readonly verkeersbordenSelectieStyleFunction = verkeersbordenStyleFunction(true);
 
   readonly fietspadStyleMetOffset = offsetStyleFunction(this.fietspadStyle, "ident8", "zijderijbaan", 1);
 
