@@ -3,10 +3,10 @@ import { browser, protractor, by, element, ElementFinder, ProtractorExpectedCond
 export class KaartPage {
   expectedConditions: ProtractorExpectedConditions = protractor.ExpectedConditions;
 
-  kaartComponent: ElementFinder = element(by.css(".qa-kaart"));
+  configuratorKaart: ElementFinder = element(by.css(".qa-configurator-kaart"));
 
   async gaNaarPagina(): Promise<any> {
-    await browser.get(`/`);
-    return browser.wait(this.expectedConditions.visibilityOf(this.kaartComponent), 2000);
+    await browser.get(`/ng-kaart`);
+    return browser.wait(this.expectedConditions.visibilityOf(this.configuratorKaart), 2000);
   }
 }

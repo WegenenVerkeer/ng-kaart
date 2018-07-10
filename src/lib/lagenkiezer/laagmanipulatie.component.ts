@@ -27,7 +27,9 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
   minstensEenLaagActie: boolean;
 
   @Input() laag: ToegevoegdeLaag;
-  @Input() noDrag: boolean;
+  @Input() dragSource: boolean;
+  @Input() dragTarget: boolean;
+  @Input() dragUntargetable: boolean;
   @ViewChild(MatMenuTrigger) laagMenuTrigger: MatMenuTrigger;
 
   constructor(private readonly lagenkiezer: LagenkiezerComponent, kaartComponent: KaartComponent, zone: NgZone) {
@@ -64,6 +66,10 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
 
   get isLaagMenuOpen(): boolean {
     return this.laagMenuTrigger && this.laagMenuTrigger.menuOpen;
+  }
+
+  get isDragState(): boolean {
+    return this.dragSource || this.dragTarget || this.dragUntargetable;
   }
 
   verwijder() {

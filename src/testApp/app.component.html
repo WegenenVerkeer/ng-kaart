@@ -83,7 +83,11 @@
       <div class="sub-content">
         Via de configurator kan je de kaart opties aan of uitzetten en aanpassen om zo de gewenste kaart configuratie te bekomen.
       </div>
-      <awv-kaart-classic [naam]="'interacties'" [mijnLocatieZoom]="getMijnLocatieZoom()" [hoogte]="424" [kaartLinksBreedte]="getKaartLinksBreedte()"
+      <awv-kaart-classic class="qa-configurator-kaart"
+                         [naam]="'interacties'"
+                         [hoogte]="424"
+                         [mijnLocatieZoom]="getMijnLocatieZoom()"
+                         [kaartLinksBreedte]="getKaartLinksBreedte()"
                          (zoomChange)="onZoom($event)"
                          (middelpuntChange)="onMiddelpunt($event)"
                          (extentChange)="onExtent($event)">

@@ -16,7 +16,16 @@
       cursor: pointer;
     }
 
-    .laag-no-drag {
+    &.drag-target {
+      border-left: 8px solid $kaart-icon-button-hover;
+      padding-left: 0;
+    }
+
+    &.drag-source {
+      background-color: inherit;
+    }
+
+    .laag-drag-indicator {
       margin: 0 8px;
     }
 
