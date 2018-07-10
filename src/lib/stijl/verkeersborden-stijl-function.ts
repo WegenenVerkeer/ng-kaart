@@ -62,13 +62,9 @@ export function verkeersbordenStyleFunction(geselecteerd: boolean): ol.StyleFunc
     // [1024.0, 512.0, 256.0, 128.0, 64.0, 32.0, 16.0, 8.0, 4.0, 2.0, 1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125]
 
     if (resolution <= 0.125) {
-      return geselecteerd
-        ? opstellingMetAanzichten(feature, "platgeslagenvoorstellinggeselecteerd", geselecteerd)
-        : opstellingMetAanzichten(feature, "platgeslagenvoorstelling", geselecteerd);
+      return geselecteerd ? opstellingMetAanzichten(feature, geselecteerd, false) : opstellingMetAanzichten(feature, geselecteerd, false);
     } else if (resolution <= 0.25) {
-      return geselecteerd
-        ? opstellingMetAanzichten(feature, "platgeslagenvoorstellingkleingeselecteerd", geselecteerd)
-        : opstellingMetAanzichten(feature, "platgeslagenvoorstellingklein", geselecteerd);
+      return geselecteerd ? opstellingMetAanzichten(feature, geselecteerd, true) : opstellingMetAanzichten(feature, geselecteerd, true);
     } else if (resolution <= 0.5) {
       return opstellingMetHoek(feature, geselecteerd);
     } else {
@@ -79,8 +75,8 @@ export function verkeersbordenStyleFunction(geselecteerd: boolean): ol.StyleFunc
   return styleFunc;
 }
 
-function opstellingMetAanzichten(feature: ol.Feature, binairImageVeld: string, geselecteerd: boolean): ol.style.Style[] {
-  const opstelling = feature.getProperties()["properties"];
+function opstellingMetAanzichten(feature: ol.Feature, geselecteerd: boolean, klein: boolean): ol.style.Style[] {
+  const opstelling: Opstelling = feature.getProperties()["properties"];
 
   const opstellingPoint = feature.getGeometry() as ol.geom.Point;
 
@@ -93,23 +89,15 @@ function opstellingMetAanzichten(feature: ol.Feature, binairImageVeld: string, g
 
   opstelling.aanzichten.forEach(aanzicht => {
     const aanzichtStyle = basisAanzichtStyle.clone();
-
-    const ankerGeometry = format.readGeometry(aanzicht.anker) as ol.geom.Point;
+    const ankerGeometry = aanzicht.anker ? (format.readGeometry(aanzicht.anker) as ol.geom.Point) : opstellingPoint.clone();
+    const image = imageAanzicht(aanzicht.binaireData, geselecteerd, klein);
+    const rotation: number = transformeerHoek(aanzicht.hoek);
 
     aanzichtStyle.setGeometry(ankerGeometry);
+    aanzichtStyle.setImage(
+      createIcon(encodeAsSrc(image.mime, image.data), [image.properties.breedte, image.properties.hoogte], rotation, true)
+    );
 
-    const grootte: ol.Size = [
-      aanzicht["binaireData"][binairImageVeld]["properties"]["breedte"],
-      aanzicht["binaireData"][binairImageVeld]["properties"]["hoogte"]
-    ];
-
-    // They define their angles differently than normal geometry. 0 degrees is on top, and their angles increase
-    // clockwis instead of counterclockwise.
-    const rotation: number = aanzicht["hoek"] ? -1 * aanzicht["hoek"] : 0;
-
-    const src = encodeAsSrc(aanzicht["binaireData"][binairImageVeld]["mime"], aanzicht["binaireData"][binairImageVeld]["data"]);
-
-    aanzichtStyle.setImage(createIcon(src, grootte, rotation, true));
     aanzichtStyles.push(aanzichtStyle);
 
     const verbindingsLijn = basisVerbindingsLijnStyle.clone();
@@ -125,29 +113,15 @@ function opstellingMetAanzichten(feature: ol.Feature, binairImageVeld: string, g
 }
 
 function opstellingMetHoek(feature: ol.Feature, geselecteerd: boolean): ol.style.Style {
+  const opstelling: Opstelling = feature.getProperties()["properties"];
   const opstellingStyle = basisOpstellingStyle.clone();
+  const image = imageOpstelling(opstelling.binaireData, geselecteerd);
+  const rotation: number = transformeerHoek(opstelling.delta);
 
-  const opstelling = feature.getProperties()["properties"];
-
-  const opstellingPoint = feature.getGeometry() as ol.geom.Point;
-  opstellingStyle.setGeometry(opstellingPoint);
-
-  const grootte: ol.Size = [
-    opstelling["binaireData"]["kaartvoorstelling"]["properties"]["breedte"],
-    opstelling["binaireData"]["kaartvoorstelling"]["properties"]["hoogte"]
-  ];
-
-  // They define their angles differently than normal geometry. 0 degrees is on top, and their angles increase
-  // clockwis instead of counterclockwise.
-  const rotation: number = opstelling["delta"] ? -1 * opstelling["delta"] : 0;
-
-  const src = geselecteerd
-    ? encodeAsSrc(
-        opstelling["binaireData"]["kaartvoorstellinggeselecteerd"]["mime"],
-        opstelling["binaireData"]["kaartvoorstellinggeselecteerd"]["data"]
-      )
-    : encodeAsSrc(opstelling["binaireData"]["kaartvoorstelling"]["mime"], opstelling["binaireData"]["kaartvoorstelling"]["data"]);
-  opstellingStyle.setImage(createIcon(src, grootte, rotation, false));
+  opstellingStyle.setGeometry(feature.getGeometry() as ol.geom.Point);
+  opstellingStyle.setImage(
+    createIcon(encodeAsSrc(image.mime, image.data), [image.properties.breedte, image.properties.hoogte], rotation, false)
+  );
 
   feature.changed(); // side-effect functie -- spijtig genoeg nodig om OL het sein te geven dat de image hertekend moet worden...
 
@@ -156,6 +130,61 @@ function opstellingMetHoek(feature: ol.Feature, geselecteerd: boolean): ol.style
 
 function opstellingAlsPunt(feature: ol.Feature, geselecteerd: boolean): ol.style.Style {
   return geselecteerd ? basisOpstellingGeselecteerdStyle : basisOpstellingStyle;
+}
+
+interface ImageDimensie {
+  readonly breedte: number;
+  readonly hoogte: number;
+}
+
+interface ImageData {
+  readonly properties: ImageDimensie;
+  readonly mime: string;
+  readonly data: string;
+}
+
+interface BinaireAanzichtData {
+  readonly platgeslagenvoorstelling: ImageData;
+  readonly platgeslagenvoorstellinggeselecteerd: ImageData;
+  readonly platgeslagenvoorstellingklein: ImageData;
+  readonly platgeslagenvoorstellingkleingeselecteerd: ImageData;
+}
+
+interface Aanzicht {
+  readonly anker: string;
+  readonly hoek: number;
+  readonly binaireData: BinaireAanzichtData;
+}
+
+interface BinaireOpstellingData {
+  readonly kaartvoorstelling: ImageData;
+  readonly kaartvoorstellinggeselecteerd: ImageData;
+}
+
+interface Opstelling {
+  readonly aanzichten: Aanzicht[];
+  readonly delta: number;
+  readonly binaireData: BinaireOpstellingData;
+}
+
+function imageAanzicht(data: BinaireAanzichtData, geselecteerd: boolean, klein: boolean): ImageData {
+  if (!geselecteerd && !klein) {
+    return data.platgeslagenvoorstelling;
+  } else if (geselecteerd && !klein) {
+    return data.platgeslagenvoorstellinggeselecteerd;
+  } else if (!geselecteerd && klein) {
+    return data.platgeslagenvoorstellingklein;
+  } else {
+    return data.platgeslagenvoorstellingkleingeselecteerd;
+  }
+}
+
+function imageOpstelling(data: BinaireOpstellingData, geselecteerd: boolean): ImageData {
+  if (!geselecteerd) {
+    return data.kaartvoorstelling;
+  } else {
+    return data.kaartvoorstellinggeselecteerd;
+  }
 }
 
 function createIcon(base64: string, size: ol.Size, rotation: number, zetAnchor: boolean): ol.style.Icon {
@@ -183,4 +212,10 @@ function createIcon(base64: string, size: ol.Size, rotation: number, zetAnchor: 
 
 function encodeAsSrc(mimeType: string, base64: string): string {
   return `data:${mimeType};base64,${base64}`;
+}
+
+// They define their angles differently than normal geometry. 0 degrees is on top, and their angles increase
+// clockwis instead of counterclockwise.
+function transformeerHoek(hoek: number): number {
+  return hoek ? -1 * hoek : 0;
 }
