@@ -33,14 +33,6 @@ const basisOpstellingGeselecteerdStyle: ol.style.Style = definitieToStyle(
   throw new Error(`slecht formaat ${join(msg)}`);
 });
 
-const basisAanzichtStyle: ol.style.Style = definitieToStyle(
-  "json",
-  // tslint:disable-next-line:max-line-length
-  '{"version": "awv-v0", "definition": {"circle": {"stroke": {"color": "LIGHTSALMON", "width": 1.5}, "fill": {"color": "INDIANRED"}, "radius": 3}}}'
-).getOrElseL(msg => {
-  throw new Error(`slecht formaat ${join(msg)}`);
-});
-
 const basisVerbindingsLijnStyle: ol.style.Style = definitieToStyle(
   "json",
   '{"version": "awv-v0", "definition": {"stroke": {"color": "black", "width": 2}}}'
@@ -49,7 +41,6 @@ const basisVerbindingsLijnStyle: ol.style.Style = definitieToStyle(
 });
 
 basisOpstellingStyle.setZIndex(0);
-basisAanzichtStyle.setZIndex(1);
 basisVerbindingsLijnStyle.setZIndex(-1);
 
 export function verkeersbordenStyleFunction(geselecteerd: boolean): ol.StyleFunction {
@@ -83,15 +74,15 @@ function opstellingMetAanzichten(feature: ol.Feature, geselecteerd: boolean, kle
   }
 
   opstelling.aanzichten.forEach(aanzicht => {
-    const aanzichtStyle = basisAanzichtStyle.clone();
     const ankerGeometry = aanzicht.anker ? (format.readGeometry(aanzicht.anker) as ol.geom.Point) : opstellingPoint.clone();
     const image = imageAanzicht(aanzicht.binaireData, geselecteerd, klein);
     const rotation: number = transformeerHoek(aanzicht.hoek);
 
-    aanzichtStyle.setGeometry(ankerGeometry);
-    aanzichtStyle.setImage(
-      createIcon(encodeAsSrc(image.mime, image.data), [image.properties.breedte, image.properties.hoogte], rotation, true)
-    );
+    const aanzichtStyle = new ol.style.Style({
+      image: createIcon(encodeAsSrc(image.mime, image.data), [image.properties.breedte, image.properties.hoogte], rotation, true),
+      geometry: ankerGeometry
+    });
+    aanzichtStyle.setZIndex(1);
 
     aanzichtStyles.push(aanzichtStyle);
 
