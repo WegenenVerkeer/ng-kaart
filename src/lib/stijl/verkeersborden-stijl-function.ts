@@ -110,7 +110,9 @@ function opstellingMetHoek(feature: ol.Feature, geselecteerd: boolean): ol.style
     createIcon(encodeAsSrc(image.mime, image.data), [image.properties.breedte, image.properties.hoogte], rotation, false)
   );
 
-  feature.changed(); // side-effect functie -- spijtig genoeg nodig om OL het sein te geven dat de image hertekend moet worden...
+  if (geselecteerd) {
+    feature.changed(); // side-effect functie -- spijtig genoeg nodig om OL het sein te geven dat de image hertekend moet worden...
+  }
 
   return opstellingStyle;
 }
