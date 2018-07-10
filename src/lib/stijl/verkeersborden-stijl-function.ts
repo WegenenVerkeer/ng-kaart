@@ -66,7 +66,7 @@ function opstellingMetAanzichten(feature: ol.Feature, geselecteerd: boolean, kle
 
   const opstellingPoint = feature.getGeometry() as ol.geom.Point;
 
-  const aanzichtStyles = [];
+  const aanzichtStyles: ol.style.Style[] = [];
 
   if (!opstelling.aanzichten) {
     kaartLogger.error("Geen aanzicht informatie gevonden");
