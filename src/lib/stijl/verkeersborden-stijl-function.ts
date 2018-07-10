@@ -5,18 +5,13 @@ import { definitieToStyle } from "../public_api";
 import { join } from "../util/validation";
 
 /**
- * De verkeersborden rendering heeft 4 verschillende voorstellingen afhankelijk van het zoomniveau. Voor elk van deze voorstellingen wordt
- * een andere view gebruikt die reeds aanwezig is in de nosql featureserver. Hoe meer informatie er nodig is om de opstelling weer te geven,
- * hoe meer data er wordt opgehaald.
+ * De verkeersborden rendering heeft 4 verschillende voorstellingen afhankelijk van het zoomniveau.
  *
  * Van ondiep naar diepste zoomniveau:
  *  1. opstellingAlsPunt: elke opstelling weergegeven als punt op de kaart.
- *     'default' view wordt gebruikt, bevat de minste data, enkel locatie informatie en geometrie van de opstelling
  *  2. opstellingMetHoek: elke opstelling met een icoon die de hoek van de aanzichten weergeeft
- *     'opstelling' view wordt gebruikt. Bevat het te gebruiken icoon base64 geencodeerd
  *  3. opstellingMetAanzichten: elke opstelling met al zijn aanzichten. Bevat eveneens de grafische voorstelling van alle aanzichten met
- *      2 groottes.
- *     'aanzicht' view wordt gebruikt. Bevat twee grafische voorstellingen van elk aanzicht + hoek
+ *     2 groottes.
  *
  */
 
