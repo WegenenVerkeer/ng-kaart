@@ -10,8 +10,8 @@ import { join } from "../util/validation";
  * Van ondiep naar diepste zoomniveau:
  *  1. opstellingAlsPunt: elke opstelling weergegeven als punt op de kaart.
  *  2. opstellingMetHoek: elke opstelling met een icoon die de hoek van de aanzichten weergeeft
- *  3. opstellingMetAanzichten: elke opstelling met al zijn aanzichten. Bevat eveneens de grafische voorstelling van alle aanzichten met
- *     2 groottes.
+ *  3. opstellingMetAanzichten: elke opstelling met al zijn aanzichten, kleine voorstelling
+ *  4. opstellingMetAanzichten: elke opstelling met al zijn aanzichten, grote voorstelling
  *
  */
 
@@ -70,7 +70,7 @@ function opstellingMetAanzichten(feature: ol.Feature, geselecteerd: boolean, kle
 
   if (!opstelling.aanzichten) {
     kaartLogger.error("Geen aanzicht informatie gevonden");
-    return;
+    return [opstellingAlsPunt(feature, geselecteerd)]; // val terug op simpele voorstelling
   }
 
   opstelling.aanzichten.forEach(aanzicht => {
@@ -145,13 +145,15 @@ interface BinaireAanzichtData {
 interface ImageData {
   readonly properties: ImageDimensie;
   readonly mime: string;
-  readonly data: string;
+  readonly data: base64;
 }
 
 interface ImageDimensie {
   readonly breedte: number;
   readonly hoogte: number;
 }
+
+type base64 = string;
 
 function imageAanzicht(data: BinaireAanzichtData, geselecteerd: boolean, klein: boolean): ImageData {
   if (!geselecteerd && !klein) {
@@ -173,7 +175,7 @@ function imageOpstelling(data: BinaireOpstellingData, geselecteerd: boolean): Im
   }
 }
 
-function createIcon(base64: string, size: ol.Size, rotation: number, zetAnchor: boolean): ol.style.Icon {
+function createIcon(iconData: base64, size: ol.Size, rotation: number, zetAnchor: boolean): ol.style.Icon {
   // Door openlayers bug kan je hier geen image aanmaken via deze code, want dat geeft flikkering bij herhaaldelijk onnodig tekenen
   // indien er meer dan 33 features zijn.
   //
@@ -186,7 +188,7 @@ function createIcon(base64: string, size: ol.Size, rotation: number, zetAnchor: 
   // Zie https://stackoverflow.com/questions/32012495/openlayers-3-layer-style-issue
   // HtmlImageElement lost dit op
   const image = document.createElement("img") as HTMLImageElement;
-  image.src = base64;
+  image.src = iconData;
 
   return new ol.style.Icon({
     img: image,
@@ -196,8 +198,8 @@ function createIcon(base64: string, size: ol.Size, rotation: number, zetAnchor: 
   });
 }
 
-function encodeAsSrc(mimeType: string, base64: string): string {
-  return `data:${mimeType};base64,${base64}`;
+function encodeAsSrc(mimeType: string, data: base64): string {
+  return `data:${mimeType};base64,${data}`;
 }
 
 // They define their angles differently than normal geometry. 0 degrees is on top, and their angles increase
