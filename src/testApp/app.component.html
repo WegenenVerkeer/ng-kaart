@@ -37,6 +37,10 @@
       Fietspaden
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !fietspadenSectie.sectieZichtbaar }">visibility</span>
     </div>
+    <div (click)="verkeersbordenSectie.toggleSectieZichtbaar();scrollTo('verkeersborden')" class="sub-titel">
+      Verkeersborden
+      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !verkeersbordenSectie.sectieZichtbaar }">visibility</span>
+    </div>
     <div (click)="fietspadenMetOffsetsSectie.toggleSectieZichtbaar();scrollTo('fietspaden-met-offsets')" class="sub-titel">
       Fietspaden met offsets
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !fietspadenMetOffsetsSectie.sectieZichtbaar }">visibility</span>
@@ -273,6 +277,24 @@
         </div>
       </awv-test-sectie>
 
+      <awv-test-sectie sectieId="verkeersborden" sectieTitel="Verkeersboden" [subSectie]="true" #verkeersbordenSectie
+                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && verkeersbordenSectie.sectieZichtbaar">
+        <div *ngIf="verkeersbordenSectie.sectieZichtbaar" [@enterAnimation]>
+          <awv-kaart-classic [naam]="'verkeersborden'" (zichtbareFeatures)="onZichtbareFeatures($event)"
+                             [zoom]="10" [selectieModus]="'single'" [middelpunt]="verkeersbordenCoordinaat">
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+            <awv-kaart-nosqlfs-laag [titel]="'Verkeersborden'" [url]="'https://apps-dev.mow.vlaanderen.be/geolatte-nosqlfs'"
+                                    [database]="'featureserver'" [collection]="'verkeersborden'"
+                                    [styleFunction]="verkeersbordenStyleFunction"
+                                    [selectieStyle]="verkeersbordenSelectieStyleFunction"
+                                    [minZoom]="9"
+                                    [view]="'aanzicht'"></awv-kaart-nosqlfs-laag>
+            <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+            <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
+          </awv-kaart-classic>
+        </div>
+      </awv-test-sectie>
+
       <awv-test-sectie sectieId="fietspaden-met-offsets" sectieTitel="Fietspaden met offsets" [subSectie]="true" #fietspadenMetOffsetsSectie
                        [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && fietspadenMetOffsetsSectie.sectieZichtbaar">
         <div *ngIf="fietspadenMetOffsetsSectie.sectieZichtbaar" [@enterAnimation]>
@@ -290,6 +312,7 @@
           </awv-kaart-classic>
         </div>
       </awv-test-sectie>
+
 
       <awv-test-sectie sectieId="buiten-kaart" sectieTitel="Toon features buiten de kaart" [subSectie]="true" #buitenKaartSectie
                        [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && buitenKaartSectie.sectieZichtbaar">
