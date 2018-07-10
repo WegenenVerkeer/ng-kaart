@@ -1,8 +1,9 @@
 import * as ol from "openlayers";
 
 import { kaartLogger } from "../kaart/log";
-import { definitieToStyle } from "../public_api";
 import { join } from "../util/validation";
+
+import { definitieToStyle } from "./stijl-static";
 
 /**
  * De verkeersborden rendering heeft 4 verschillende voorstellingen afhankelijk van het zoomniveau.
