@@ -80,6 +80,9 @@ $laag-height: 40px;
     background: rgba(0, 0, 0, .04);
     border-radius: 2px;
     border: 1px solid rgba(0, 0, 0, .14);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .legende-svg {
