@@ -75,8 +75,6 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
       startWith(false)
     );
 
-    inError$.subscribe(s => console.log("|||.", s), e => console.log("|||e", e), () => console.log("|||c"));
-
     // busy$ heeft voorrang op inactive$
     this.activityClass$ = busy$.pipe(combineLatest(inError$, (busy, error) => (busy ? "active" : error ? "error" : "inactive")));
 
