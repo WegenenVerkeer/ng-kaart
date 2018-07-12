@@ -1,0 +1,35 @@
+%bar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 4px;
+  width: 100%;
+  overflow: hidden;
+}
+
+.active {
+  @extend %bar;
+  background-color: rgba($color: #000000, $alpha: 0.1);
+}
+
+.error {
+  @extend %bar;
+  background-color: rgba($color: #FF0000, $alpha: 0.2);
+}
+
+.inactive {
+  display: none;
+}
+
+$eyeColor : rgb(32, 32, 32);
+$eyeBorderColor : rgba($color: $eyeColor, $alpha: 0);
+$eyeCenterColor : rgba($color: $eyeColor, $alpha: 1);
+
+.progress {
+  width: 5%;
+  height: 100%;
+  background-image: linear-gradient(to right, $eyeBorderColor 0%, $eyeCenterColor 33%, $eyeCenterColor 67%, $eyeBorderColor 100%);
+  transition-property: all;
+  transition-duration: 0.2s;
+  transition-timing-function: ease-in-out;
+}

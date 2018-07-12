@@ -11,7 +11,6 @@ import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { TekenSettings } from "../kaart-elementen";
 import { GeometryChangedMsg, geometryChangedWrapper } from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
-import { InfoBoodschapAlert } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
 import { kaartLogger } from "../log";
 import { internalMsgSubscriptionCmdOperator } from "../subscription-helper";

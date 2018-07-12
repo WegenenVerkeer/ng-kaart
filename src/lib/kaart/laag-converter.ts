@@ -84,7 +84,7 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
     });
   }
 
-  function createVectorLayer(vectorlaag: ke.VectorLaag) {
+  function createVectorLayerLike(vectorlaag: ke.VectorLaagLike, source: ol.source.Vector) {
     if (array.isOutOfBound(vectorlaag.minZoom - 1, kaart.config.defaults.resolutions)) {
       kaartLogger.error(`Ongeldige minZoom voor ${vectorlaag.titel}:
         ${vectorlaag.minZoom}, moet tussen 1 en ${kaart.config.defaults.resolutions.length} liggen`);
@@ -102,7 +102,7 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
      * maxResolution is exclusief dus bepaald door minZoom - 1 ("maximum resolution (exclusive) below which this layer will be visible")
      */
     const vector = new ol.layer.Vector({
-      source: vectorlaag.source,
+      source: source,
       visible: true,
       style: vectorlaag.styleSelector.map(toStylish).getOrElse(kaart.config.defaults.style),
       minResolution: array
@@ -115,22 +115,33 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
     return vector;
   }
 
+  function createVectorLayer(vectorlaag: ke.VectorLaag) {
+    return createVectorLayerLike(vectorlaag, vectorlaag.source);
+  }
+
+  function createNoSqlFsLayer(noSqlFslaag: ke.NoSqlFsLaag) {
+    return createVectorLayerLike(noSqlFslaag, noSqlFslaag.source);
+  }
+
   function createBlankLayer() {
     return new ol.layer.Tile(); // Hoe eenvoudig kan het zijn?
   }
 
   switch (laag.type) {
     case ke.TiledWmsType:
-      return some(createdTileWms(laag as ke.WmsLaag));
+      return some(createdTileWms(laag));
 
     case ke.WmtsType:
-      return some(createdWmts(laag as ke.WmtsLaag));
+      return some(createdWmts(laag));
 
     case ke.SingleTileWmsType:
-      return some(createSingleTileWmsLayer(laag as ke.WmsLaag));
+      return some(createSingleTileWmsLayer(laag));
 
     case ke.VectorType:
-      return some(createVectorLayer(laag as ke.VectorLaag));
+      return some(createVectorLayer(laag));
+
+    case ke.NoSqlFsType:
+      return some(createNoSqlFsLayer(laag));
 
     case ke.BlancoType:
       return some(createBlankLayer());

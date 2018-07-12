@@ -5,6 +5,7 @@ import * as ol from "openlayers";
 import { ZoekResultaat, ZoekResultaten } from "../zoeker/zoeker-base";
 
 import * as ke from "./kaart-elementen";
+import { DataLoadEvent } from "./kaart-load-events";
 import { InfoBoodschap } from "./kaart-with-info-model";
 
 /////////
@@ -12,22 +13,22 @@ import { InfoBoodschap } from "./kaart-with-info-model";
 //
 
 export type Subscription<Msg> =
-  | ViewinstellingenSubscription<Msg>
-  | ZoomSubscription<Msg>
-  | MiddelpuntSubscription<Msg>
+  | AchtergrondTitelSubscription<Msg>
   | ExtentSubscription<Msg>
+  | GeometryChangedSubscription<Msg>
   | GeselecteerdeFeaturesSubscription<Msg>
   | HoverFeaturesSubscription<Msg>
-  | ZichtbareFeaturesSubscription<Msg>
-  | AchtergrondTitelSubscription<Msg>
-  | LagenInGroepSubscription<Msg>
-  | LaagVerwijderdSubscription<Msg>
-  | ZoekerSubscription<Msg>
-  | ZoekerKlikSubscription<Msg>
-  | GeometryChangedSubscription<Msg>
-  | TekenenSubscription<Msg>
+  | InfoBoodschappenSubscription<Msg>
   | KaartClickSubscription<Msg>
-  | InfoBoodschappenSubscription<Msg>;
+  | LaagVerwijderdSubscription<Msg>
+  | LagenInGroepSubscription<Msg>
+  | MiddelpuntSubscription<Msg>
+  | TekenenSubscription<Msg>
+  | ViewinstellingenSubscription<Msg>
+  | ZichtbareFeaturesSubscription<Msg>
+  | ZoekerKlikSubscription<Msg>
+  | ZoekerSubscription<Msg>
+  | ZoomSubscription<Msg>;
 
 export interface Viewinstellingen {
   zoom: number;

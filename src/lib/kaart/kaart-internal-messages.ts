@@ -1,21 +1,24 @@
+import { pipe } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { Map } from "immutable";
 import * as ol from "openlayers";
 
 import { TekenSettings } from "./kaart-elementen";
+import { DataLoadEvent } from "./kaart-load-events";
 import * as prt from "./kaart-protocol";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import { kaartLogger } from "./log";
 
+// Dit zijn de types die als payload van KaartInternalMsg gebruikt kunnen worden.
 export type KaartInternalSubMsg =
-  | ViewinstellingenGezetMsg
   | AchtergrondtitelGezetMsg
   | GeometryChangedMsg
-  | TekenMsg
+  | InfoBoodschappenMsg
   | KaartClickMsg
-  | SubscribedMsg
   | MijnLocatieZoomdoelGezetMsg
-  | InfoBoodschappenMsg;
+  | SubscribedMsg
+  | TekenMsg
+  | ViewinstellingenGezetMsg;
 
 export interface ViewinstellingenGezetMsg {
   readonly type: "ViewinstellingenGezet";

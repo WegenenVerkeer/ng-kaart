@@ -1,5 +1,5 @@
 import { Map, Set } from "immutable";
-import { Subject } from "rxjs/Rx";
+import { Subject } from "rxjs";
 import { Subscription } from "rxjs/Subscription";
 
 import { ZoekerBase, ZoekInput, ZoekResultaat, ZoekResultaten } from "./zoeker-base";
