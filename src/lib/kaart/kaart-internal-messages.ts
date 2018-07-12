@@ -1,21 +1,25 @@
+import { pipe } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { Map } from "immutable";
 import * as ol from "openlayers";
 
 import { TekenSettings } from "./kaart-elementen";
+import { DataLoadEvent } from "./kaart-load-events";
 import * as prt from "./kaart-protocol";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import { kaartLogger } from "./log";
 
+// Dit zijn de types die als payload van KaartInternalMsg gebruikt kunnen worden.
 export type KaartInternalSubMsg =
-  | ViewinstellingenGezetMsg
   | AchtergrondtitelGezetMsg
   | GeometryChangedMsg
-  | TekenMsg
+  | InfoBoodschappenMsg
   | KaartClickMsg
-  | SubscribedMsg
+  | KaartDataLoadMsg
   | MijnLocatieZoomdoelGezetMsg
-  | InfoBoodschappenMsg;
+  | SubscribedMsg
+  | TekenMsg
+  | ViewinstellingenGezetMsg;
 
 export interface ViewinstellingenGezetMsg {
   readonly type: "ViewinstellingenGezet";
@@ -61,6 +65,11 @@ export interface KaartClickMsg {
 export interface InfoBoodschappenMsg {
   readonly type: "InfoBoodschappen";
   readonly infoBoodschappen: Map<string, InfoBoodschap>;
+}
+
+export interface KaartDataLoadMsg {
+  readonly type: "KaartDataLoad";
+  readonly event: DataLoadEvent;
 }
 
 function KaartInternalMsg(payload: Option<KaartInternalSubMsg>): KaartInternalMsg {
@@ -138,3 +147,10 @@ function MijnLocatieZoomdoelGezetMsg(d: Option<number>): MijnLocatieZoomdoelGeze
 }
 
 export const MijnLocatieZoomdoelGezetWrapper = (d: Option<number>) => KaartInternalMsg(some(MijnLocatieZoomdoelGezetMsg(d)));
+
+const KaartDataLoadMsg: (_: DataLoadEvent) => KaartDataLoadMsg = (evt: DataLoadEvent) => ({
+  type: "KaartDataLoad",
+  event: evt
+});
+
+export const kaartDataLoadedWrapper = pipe(KaartDataLoadMsg, some, KaartInternalMsg);

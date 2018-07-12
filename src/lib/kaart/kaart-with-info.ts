@@ -1,13 +1,14 @@
 import { none, Option } from "fp-ts/lib/Option";
 import { List, Map, OrderedMap } from "immutable";
 import * as ol from "openlayers";
-import { BehaviorSubject, ReplaySubject, Subject } from "rxjs";
+import { BehaviorSubject, Observable, ReplaySubject, Subject } from "rxjs";
 
 import { ZoekResultaat, ZoekResultaten } from "../zoeker/zoeker-base";
 import { ZoekerCoordinator } from "../zoeker/zoeker-coordinator";
 
 import { KaartConfig } from "./kaart-config";
 import * as ke from "./kaart-elementen";
+import { DataLoadEvent } from "./kaart-load-events";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import { ModelChanger } from "./model-changes";
 import { initStyleSelectorsInMap } from "./stijl-selector";
@@ -44,6 +45,7 @@ export class KaartWithInfo {
   readonly tekenSettingsSubj: BehaviorSubject<Option<ke.TekenSettings>> = new BehaviorSubject<Option<ke.TekenSettings>>(none);
   readonly infoBoodschappenSubj = new BehaviorSubject<OrderedMap<string, InfoBoodschap>>(OrderedMap());
   readonly tileLoader: TileLoader = new TileLoader();
+  readonly kaartDataLoadEvent$: Observable<DataLoadEvent> = Observable.empty<DataLoadEvent>();
 
   constructor(
     // TODO om de distinctWithInfo te versnellen zouden we als eerste element een versieteller kunnen toevoegen

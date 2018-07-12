@@ -15,8 +15,8 @@ import * as ol from "openlayers";
 
 import { KaartOpenLayersStyleComponent } from "../classic/openlayers-style/classic-openlayers-style.component";
 import { KaartTekenComponent } from "../classic/tekenen/kaart-teken.component";
-import { LagenkiezerModule } from "../lagenkiezer/index";
-import { ZoekerModule } from "../zoeker/index";
+import { LagenkiezerModule } from "../lagenkiezer";
+import { ZoekerModule } from "../zoeker";
 
 import { KaartAchtergrondSelectorComponent } from "./achtergrond-selector/kaart-achtergrond-selector.component";
 import { KaartAchtergrondTileComponent } from "./achtergrond-selector/kaart-achtergrond-tile.component";
@@ -28,6 +28,7 @@ import { KaartInfoBoodschappenComponent } from "./info-boodschappen/kaart-info-b
 import { KAART_CFG, KaartConfig } from "./kaart-config";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { KaartComponent } from "./kaart.component";
+import { KaartLoadingComponent } from "./loading/kaart-loading.component";
 import { KaartMetenComponent } from "./meten/kaart-meten.component";
 import { KaartMijnLocatieComponent } from "./mijn-locatie/kaart-mijn-locatie.component";
 import { KaartOpenStreetViewComponent } from "./open-street-view/kaart-open-street-view.component";
@@ -37,24 +38,24 @@ import { KaartVoorwaardenComponent } from "./voorwaarden/kaart-voorwaarden.compo
 import { KaartZoomComponent } from "./zoom/kaart-zoom.component";
 
 const components: any[] = [
-  KaartComponent,
-  KaartZoomComponent,
-  KaartMijnLocatieComponent,
-  KaartTekenLaagComponent,
-  KaartTekenComponent,
-  KaartMetenComponent,
-  KaartCopyrightComponent,
-  KaartOpenLayersStyleComponent,
-  KaartVoorwaardenComponent,
-  KaartCopyrightComponent,
   KaartAchtergrondSelectorComponent,
   KaartAchtergrondTileComponent,
-  KaartOpenStreetViewComponent,
-  KaartInfoBoodschappenComponent,
+  KaartComponent,
+  KaartCopyrightComponent,
+  KaartInfoBoodschapAlertComponent,
   KaartInfoBoodschapComponent,
   KaartInfoBoodschapIdentifyComponent,
-  KaartInfoBoodschapAlertComponent,
-  KaartSchaalComponent
+  KaartInfoBoodschappenComponent,
+  KaartLoadingComponent,
+  KaartMetenComponent,
+  KaartMijnLocatieComponent,
+  KaartOpenLayersStyleComponent,
+  KaartOpenStreetViewComponent,
+  KaartSchaalComponent,
+  KaartTekenComponent,
+  KaartTekenLaagComponent,
+  KaartVoorwaardenComponent,
+  KaartZoomComponent
 ];
 
 // Weersta de drang om deze variabele in een andere module te plaatsen, want dat geeft problemen met gebruik in AOT app.

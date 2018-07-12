@@ -19,7 +19,7 @@ import {
   switchMap,
   tap
 } from "rxjs/operators";
-import { pipe } from "rxjs/Rx";
+import { pipe } from "rxjs";
 
 import { KaartChildComponentBase } from "../../kaart/kaart-child-component-base";
 import * as ke from "../../kaart/kaart-elementen";
