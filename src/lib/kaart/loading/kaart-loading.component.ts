@@ -2,11 +2,25 @@ import { Component, NgZone } from "@angular/core";
 import { List } from "immutable";
 import * as rx from "rxjs";
 import { OperatorFunction } from "rxjs/interfaces";
-import { distinctUntilChanged, map, mergeAll, scan, switchMap, tap } from "rxjs/operators";
+import {
+  combineLatest,
+  debounceTime,
+  distinctUntilChanged,
+  map,
+  mergeAll,
+  scan,
+  shareReplay,
+  startWith,
+  switchMap,
+  switchMapTo,
+  take
+} from "rxjs/operators";
 
+import { ofType } from "../../util/operators";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { isNoSqlFsLaag, NoSqlFsLaag, ToegevoegdeLaag } from "../kaart-elementen";
-import { DataLoadEvent } from "../kaart-load-events";
+import { DataLoadEvent, LoadError } from "../kaart-load-events";
+import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 
 @Component({
@@ -34,28 +48,44 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
     const lagenLaag$: rx.Observable<List<ToegevoegdeLaag>> = this.modelChanges.lagenOpGroep$.get("Voorgrond.Laag");
     const dataloadEvent$: rx.Observable<DataLoadEvent> = lagenHoog$.pipe(
       // subscribe/unsubscribe voor elke nieuwe lijst van toegevoegde lagen
-      switchMap(toegevoegdeLagenToLoadEvents)
+      switchMap(toegevoegdeLagenToLoadEvents),
+      shareReplay(1, 1000)
     );
     const numBusy$: rx.Observable<number> = dataloadEvent$.pipe(
       scan((numBusy: number, evt: DataLoadEvent) => {
-        switch (evt) {
+        switch (evt.type) {
           case "LoadStart":
             return numBusy + 1;
           case "LoadComplete":
             return numBusy - 1;
           case "LoadError":
             return numBusy - 1;
-          case "ChunkReceived":
+          case "PartReceived":
             // We doen hier dus niks mee, maar we zouden ook een tick kunnen geven.
             // Echter maar interessant als we het totaal aantal chunks kennen.
             return numBusy;
         }
       }, 0)
     );
-    const busy$: rx.Observable<boolean> = numBusy$.pipe(map(numBusy => numBusy > 0), distinctUntilChanged());
+    const stableError$ = (stability: number) => dataloadEvent$.pipe(ofType<LoadError>("LoadError"), debounceTime(stability));
 
-    this.activityClass$ = busy$.pipe(map(busy => (busy ? "active" : "inactive")));
-    // 110 = 11 * 10 . De modulus moet het eerste geheel veelvoud van het aantal onderverdelingen > 100 zijn.
-    this.progressStyle$ = rx.Observable.timer(0, 200).pipe(map(n => ({ "margin-left": (n * 11) % 110 + "%" })));
+    const busy$: rx.Observable<boolean> = numBusy$.pipe(map(numBusy => numBusy > 0), distinctUntilChanged());
+    const inError$: rx.Observable<boolean> = stableError$(100).pipe(
+      switchMapTo(rx.Observable.timer(0, 1000).pipe(map(t => t === 0), take(2))), // Produceert direct true, dan na een seconde false
+      startWith(false)
+    );
+
+    inError$.subscribe(s => console.log("|||.", s), e => console.log("|||e", e), () => console.log("|||c"));
+
+    // busy$ heeft voorrang op inactive$
+    this.activityClass$ = busy$.pipe(combineLatest(inError$, (busy, error) => (busy ? "active" : error ? "error" : "inactive")));
+
+    // We willen het "oog" verbergen wanneer we in de error toestand zijn
+    this.progressStyle$ = inError$.pipe(
+      // 110 = 11 * 10 . De modulus moet het eerste geheel veelvoud van het aantal onderverdelingen > 100 zijn.
+      combineLatest(rx.Observable.timer(0, 200), (inError, n) => ({ "margin-left": inError ? "-10000px" : (n * 11) % 110 + "%" }))
+    );
+
+    this.bindToLifeCycle(stableError$(500)).subscribe(evt => this.dispatch(prt.MeldComponentFoutCmd(List.of(evt.error))));
   }
 }

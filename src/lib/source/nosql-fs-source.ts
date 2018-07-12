@@ -45,7 +45,7 @@ export class NosqlFsSource extends ol.source.Vector {
 
         source.clear();
 
-        this.loadEventSubj.next(le.LoadStart);
+        this.dispatchLoadEvent(le.LoadStart);
 
         fetch(httpUrl, {
           cache: "no-store", // geen client side caching van nosql data
@@ -54,7 +54,7 @@ export class NosqlFsSource extends ol.source.Vector {
           .then(response => {
             if (!response.ok) {
               kaartLogger.error(`Probleem bij ontvangen nosql ${collection} data: status ${response.status} ${response.statusText}`);
-              source.dispatchLoadError();
+              source.dispatchLoadError(`Http error code ${response.status}: '${response.statusText}'`);
               return;
             }
 
@@ -63,7 +63,7 @@ export class NosqlFsSource extends ol.source.Vector {
 
             if (!response.body) {
               kaartLogger.error(`Probleem bij ontvangen nosql ${collection} data: response.body is leeg`);
-              source.dispatchLoadError();
+              source.dispatchLoadError("Lege respons");
               return;
             }
 
@@ -71,7 +71,7 @@ export class NosqlFsSource extends ol.source.Vector {
             reader
               .read()
               .then(function verwerkChunk({ done, value }) {
-                source.dispathLoadEvent(le.PartReceived);
+                source.dispatchLoadEvent(le.PartReceived);
                 restData += NosqlFsSource.decoder.decode(value || new Uint8Array(0), {
                   stream: !done
                 }); // append nieuwe data (in geval er een half ontvangen lijn is van vorige call)
@@ -96,15 +96,15 @@ export class NosqlFsSource extends ol.source.Vector {
                   return reader
                     .read()
                     .then(verwerkChunk)
-                    .catch(() => this.dispatchLoadError());
+                    .catch(reason => source.dispatchLoadError(reason));
                 } else {
                   source.dispatchLoadComplete();
                   return;
                 }
               })
-              .catch(() => source.dispatchLoadError());
+              .catch(reason => source.dispatchLoadError(reason));
           })
-          .catch(() => source.dispatchLoadError());
+          .catch(reason => source.dispatchLoadError(reason));
       },
       strategy: ol.loadingstrategy.bbox
     });
@@ -129,15 +129,15 @@ export class NosqlFsSource extends ol.source.Vector {
     }
   }
 
-  private dispathLoadEvent(evt: le.DataLoadEvent) {
+  private dispatchLoadEvent(evt: le.DataLoadEvent) {
     this.loadEventSubj.next(evt);
   }
 
   private dispatchLoadComplete() {
-    this.dispathLoadEvent(le.LoadComplete);
+    this.dispatchLoadEvent(le.LoadComplete);
   }
 
-  private dispatchLoadError() {
-    this.dispathLoadEvent(le.LoadError);
+  private dispatchLoadError(error: any) {
+    this.dispatchLoadEvent(le.LoadError(error.toString()));
   }
 }

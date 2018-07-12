@@ -13,55 +13,55 @@ import { InfoBoodschap } from "./kaart-with-info-model";
 import * as ss from "./stijl-selector";
 
 export type Command<Msg extends KaartMsg> =
-  | SubscribeCmd<Msg>
-  | UnsubscribeCmd
   | AbortTileLoadingCmd
-  | VoegLaagToeCmd<Msg>
-  | VerwijderLaagCmd<Msg>
-  | VerplaatsLaagCmd<Msg>
-  | VervangLaagCmd<Msg>
-  | ZetLaagLegendeCmd<Msg>
-  | VoegSchaalToeCmd<Msg>
-  | VerwijderSchaalCmd<Msg>
-  | VoegVolledigSchermToeCmd<Msg>
-  | VerwijderVolledigSchermCmd<Msg>
-  | VoegStandaardInteractiesToeCmd<Msg>
-  | VerwijderStandaardInteractiesCmd<Msg>
-  | VeranderMiddelpuntCmd<Msg>
-  | VeranderZoomCmd<Msg>
-  | VeranderExtentCmd
-  | VeranderViewportCmd
-  | ZetFocusOpKaartCmd
-  | VerliesFocusOpKaartCmd
-  | VervangFeaturesCmd<Msg>
-  | ToonAchtergrondKeuzeCmd<Msg>
-  | VerbergAchtergrondKeuzeCmd<Msg>
-  | KiesAchtergrondCmd<Msg>
-  | MaakLaagZichtbaarCmd<Msg>
-  | MaakLaagOnzichtbaarCmd<Msg>
-  | ActiveerSelectieModusCmd<Msg>
   | ActiveerHoverModusCmd<Msg>
-  | ZetStijlVoorLaagCmd<Msg>
-  | VoegZoekerToeCmd<Msg>
-  | VerwijderZoekerCmd<Msg>
-  | ZoekCmd<Msg>
-  | ZoekGekliktCmd
-  | MeldComponentFoutCmd
-  | ZetMijnLocatieZoomCmd
-  | VoegInteractieToeCmd
-  | VerwijderInteractieCmd
-  | VoegOverlayToeCmd
-  | VraagSchaalAanCmd<Msg>
-  | VerwijderOverlaysCmd
-  | ToonInfoBoodschapCmd
-  | VerbergInfoBoodschapCmd
-  | SelecteerFeaturesCmd
-  | DeselecteerFeatureCmd
+  | ActiveerSelectieModusCmd<Msg>
   | DeselecteerAlleFeaturesCmd
+  | DeselecteerFeatureCmd
+  | KiesAchtergrondCmd<Msg>
+  | MaakLaagOnzichtbaarCmd<Msg>
+  | MaakLaagZichtbaarCmd<Msg>
+  | MeldComponentFoutCmd
+  | SelecteerFeaturesCmd
   | SluitInfoBoodschapCmd<Msg>
-  | VoegUiElementToe
+  | SubscribeCmd<Msg>
+  | ToonAchtergrondKeuzeCmd<Msg>
+  | ToonInfoBoodschapCmd
+  | UnsubscribeCmd
+  | VeranderExtentCmd
+  | VeranderMiddelpuntCmd<Msg>
+  | VeranderViewportCmd
+  | VeranderZoomCmd<Msg>
+  | VerbergAchtergrondKeuzeCmd<Msg>
+  | VerbergInfoBoodschapCmd
+  | VerliesFocusOpKaartCmd
+  | VerplaatsLaagCmd<Msg>
+  | VervangFeaturesCmd<Msg>
+  | VervangLaagCmd<Msg>
+  | VerwijderInteractieCmd
+  | VerwijderLaagCmd<Msg>
+  | VerwijderOverlaysCmd
+  | VerwijderSchaalCmd<Msg>
+  | VerwijderStandaardInteractiesCmd<Msg>
   | VerwijderUiElement
-  | ZetUiElementOpties;
+  | VerwijderVolledigSchermCmd<Msg>
+  | VerwijderZoekerCmd<Msg>
+  | VoegInteractieToeCmd
+  | VoegLaagToeCmd<Msg>
+  | VoegOverlayToeCmd
+  | VoegSchaalToeCmd<Msg>
+  | VoegStandaardInteractiesToeCmd<Msg>
+  | VoegUiElementToe
+  | VoegVolledigSchermToeCmd<Msg>
+  | VoegZoekerToeCmd<Msg>
+  | VraagSchaalAanCmd<Msg>
+  | ZetFocusOpKaartCmd
+  | ZetLaagLegendeCmd<Msg>
+  | ZetMijnLocatieZoomCmd
+  | ZetStijlVoorLaagCmd<Msg>
+  | ZetUiElementOpties
+  | ZoekCmd<Msg>
+  | ZoekGekliktCmd;
 
 export interface SubscriptionResult {
   readonly subscription: RxSubscription;
