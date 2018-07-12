@@ -353,7 +353,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             groepOpTitel: modelMetAangepasteLagen.groepOpTitel.set(titel, groep)
           };
           zendLagenInGroep(updatedModel, cmnd.laaggroep);
-          // forEach(ke.asNoSqlFsLaag(cmnd.laag), noSqlLaag => noSqlLaag.source.loadEvent$);
           return ModelAndEmptyResult(updatedModel);
         })
       );
