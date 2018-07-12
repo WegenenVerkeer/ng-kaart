@@ -15,8 +15,8 @@ import * as ol from "openlayers";
 
 import { KaartOpenLayersStyleComponent } from "../classic/openlayers-style/classic-openlayers-style.component";
 import { KaartTekenComponent } from "../classic/tekenen/kaart-teken.component";
-import { LagenkiezerModule } from "../lagenkiezer";
-import { ZoekerModule } from "../zoeker";
+import { LagenkiezerModule } from "../lagenkiezer/index";
+import { ZoekerModule } from "../zoeker/index";
 
 import { KaartAchtergrondSelectorComponent } from "./achtergrond-selector/kaart-achtergrond-selector.component";
 import { KaartAchtergrondTileComponent } from "./achtergrond-selector/kaart-achtergrond-tile.component";
