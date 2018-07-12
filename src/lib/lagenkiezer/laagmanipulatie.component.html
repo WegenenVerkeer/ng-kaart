@@ -1,5 +1,5 @@
 <div class="awv-kaart-laagmanipulatie laag"
-     [ngClass]="{ 'onzichtbaar': (onzichtbaar$ | async), 'geselecteerd': isLaagMenuOpen, 'drag-target': (dragTarget && !dragSource), 'drag-source': dragSource}">
+     [ngClass]="{ 'onzichtbaar': (onzichtbaar$ | async), 'geselecteerd': isLaagMenuOpen, 'verberg-laag-in-kaart': !gekozen, 'drag-target': (dragTarget && !dragSource), 'drag-source': dragSource}">
   <div class="laag-zichtbaarheid">
     <mat-icon class="laag-drag-indicator" *ngIf="dragSource">swap_vert</mat-icon>
     <mat-icon class="laag-drag-indicator" *ngIf="dragTarget && !dragSource">vertical_align_center</mat-icon>
