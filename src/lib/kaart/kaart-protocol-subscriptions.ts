@@ -20,7 +20,6 @@ export type Subscription<Msg> =
   | HoverFeaturesSubscription<Msg>
   | InfoBoodschappenSubscription<Msg>
   | KaartClickSubscription<Msg>
-  | KaartDataLoadSubscription<Msg>
   | LaagVerwijderdSubscription<Msg>
   | LagenInGroepSubscription<Msg>
   | MiddelpuntSubscription<Msg>
@@ -132,11 +131,6 @@ export interface InfoBoodschappenSubscription<Msg> {
   readonly wrapper: (infoBoodschappen: Map<string, InfoBoodschap>) => Msg;
 }
 
-export interface KaartDataLoadSubscription<Msg> {
-  readonly type: "KaartDataLoad";
-  readonly wrapper: (_: DataLoadEvent) => Msg;
-}
-
 ///////////////
 // Constructors
 //
@@ -213,8 +207,4 @@ export function GeometryChangedSubscription<Msg>(
 
 export function TekenenSubscription<Msg>(wrapper: (settings: Option<ke.TekenSettings>) => Msg): TekenenSubscription<Msg> {
   return { type: "Tekenen", wrapper: wrapper };
-}
-
-export function KaartDataLoadSubscription<Msg>(msgGen: (_: DataLoadEvent) => Msg): KaartDataLoadSubscription<Msg> {
-  return { type: "KaartDataLoad", wrapper: msgGen };
 }

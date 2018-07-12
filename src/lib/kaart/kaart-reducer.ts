@@ -1155,10 +1155,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return modelWithSubscriptionResult("InfoBoodschappen", model.infoBoodschappenSubj.subscribe(t => msgConsumer(sub.wrapper(t))));
       }
 
-      function subscribeToKaartDataLoadEvents(sub: prt.KaartDataLoadSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult("KaartDataLoad", model.kaartDataLoadEvent$.subscribe(pipe(sub.wrapper, msgConsumer)));
-      }
-
       switch (cmnd.subscription.type) {
         case "Viewinstellingen":
           return subscribeToViewinstellingen(cmnd.subscription);
@@ -1192,8 +1188,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToTekenen(cmnd.subscription);
         case "InfoBoodschap":
           return subscribeToInfoBoodschappen(cmnd.subscription);
-        case "KaartDataLoad":
-          return subscribeToKaartDataLoadEvents(cmnd.subscription);
       }
     }
 

@@ -5,21 +5,10 @@ import { FormControl } from "@angular/forms";
 import { none } from "fp-ts/lib/Option";
 import { List, OrderedMap, Set } from "immutable";
 import * as ol from "openlayers";
+import { pipe } from "rxjs";
 import { UnaryFunction } from "rxjs/interfaces";
 import { Observable } from "rxjs/Observable";
-import {
-  catchError,
-  combineLatest,
-  debounce,
-  distinctUntilChanged,
-  filter,
-  map,
-  shareReplay,
-  startWith,
-  switchMap,
-  tap
-} from "rxjs/operators";
-import { pipe } from "rxjs";
+import { catchError, combineLatest, distinctUntilChanged, filter, map, shareReplay, startWith, switchMap, tap } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../../kaart/kaart-child-component-base";
 import * as ke from "../../kaart/kaart-elementen";
@@ -206,7 +195,6 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   perceelMaakLeegDisabled: Boolean;
   crabMaakLeegDisabled: Boolean;
 
-  private byPassDebounce: () => void;
   private extent: ol.Extent = ol.extent.createEmpty();
 
   private static createLayer(): ke.VectorLaag {

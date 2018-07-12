@@ -15,7 +15,6 @@ export type KaartInternalSubMsg =
   | GeometryChangedMsg
   | InfoBoodschappenMsg
   | KaartClickMsg
-  | KaartDataLoadMsg
   | MijnLocatieZoomdoelGezetMsg
   | SubscribedMsg
   | TekenMsg
@@ -65,11 +64,6 @@ export interface KaartClickMsg {
 export interface InfoBoodschappenMsg {
   readonly type: "InfoBoodschappen";
   readonly infoBoodschappen: Map<string, InfoBoodschap>;
-}
-
-export interface KaartDataLoadMsg {
-  readonly type: "KaartDataLoad";
-  readonly event: DataLoadEvent;
 }
 
 function KaartInternalMsg(payload: Option<KaartInternalSubMsg>): KaartInternalMsg {
@@ -147,10 +141,3 @@ function MijnLocatieZoomdoelGezetMsg(d: Option<number>): MijnLocatieZoomdoelGeze
 }
 
 export const MijnLocatieZoomdoelGezetWrapper = (d: Option<number>) => KaartInternalMsg(some(MijnLocatieZoomdoelGezetMsg(d)));
-
-const KaartDataLoadMsg: (_: DataLoadEvent) => KaartDataLoadMsg = (evt: DataLoadEvent) => ({
-  type: "KaartDataLoad",
-  event: evt
-});
-
-export const kaartDataLoadedWrapper = pipe(KaartDataLoadMsg, some, KaartInternalMsg);
