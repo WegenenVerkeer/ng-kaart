@@ -88,7 +88,7 @@
     "@angular/language-service": "5.2.11",
     "@angular/platform-browser-dynamic": "5.2.11",
     "@types/chance": "0.7.35",
-    "@types/googlemaps": "3.30.8",
+    "@types/googlemaps": "3.30.11",
     "@types/hammerjs": "2.0.35",
     "@types/jasmine": "2.5.54",
     "@types/jasmine-jquery": "1.5.32",

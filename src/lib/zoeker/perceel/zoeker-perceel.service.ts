@@ -1,6 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { Inject, Injectable } from "@angular/core";
-import { Option, some } from "fp-ts/lib/Option";
+import { none, Option, some } from "fp-ts/lib/Option";
 import { Map } from "immutable";
 import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
@@ -69,14 +69,23 @@ export class PerceelZoekResultaat implements ZoekResultaat {
   readonly zoeker: string;
   readonly icoon: IconDescription;
   readonly kaartInfo: Option<ZoekKaartResultaat>;
+  readonly preferredPointZoomLevel = none;
 
-  constructor(details: PerceelDetails, index: number, zoeker: string, icoon: IconDescription, style: ol.style.Style) {
+  constructor(
+    details: PerceelDetails,
+    index: number,
+    zoeker: string,
+    icoon: IconDescription,
+    style: ol.style.Style,
+    highlightStyle: ol.style.Style
+  ) {
     this.index = index + 1;
     const geometry = new ol.format.GeoJSON(geoJSONOptions).readGeometry(details.shape);
     this.kaartInfo = some({
       geometry: geometry,
       extent: geometry.getExtent(),
-      style: style
+      style: style,
+      highlightStyle: highlightStyle
     });
     this.omschrijving = details.capakey;
     this.bron = "Perceel";
@@ -144,7 +153,8 @@ export class ZoekerPerceelService implements ZoekerBase {
                 0,
                 this.naam(),
                 this.zoekerRepresentatie.getSvgIcon("Perceel"),
-                this.zoekerRepresentatie.getOlStyle("Perceel")
+                this.zoekerRepresentatie.getOlStyle("Perceel"),
+                this.zoekerRepresentatie.getHighlightOlStyle("Perceel")
               )
             ],
             this.legende
