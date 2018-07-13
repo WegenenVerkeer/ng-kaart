@@ -26,9 +26,9 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
     super(kaart, zone);
   }
 
-  createLayer(): ke.NoSqlFsLaag {
+  createLayer(): ke.VectorLaag {
     return {
-      type: ke.NoSqlFsType,
+      type: ke.VectorType,
       titel: this.titel,
       source: new NosqlFsSource(
         this.database,

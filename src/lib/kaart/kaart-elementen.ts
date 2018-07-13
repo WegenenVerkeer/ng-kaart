@@ -17,15 +17,13 @@ export const VectorType = "LaagType.Vector";
 export type VectorType = typeof VectorType;
 export const BlancoType = "LaagType.Blanco";
 export type BlancoType = typeof BlancoType;
-export const NoSqlFsType = "LaagType.NoSqlFs";
-export type NoSqlFsType = typeof NoSqlFsType;
-export type LaagType = SingleTileWmsType | TiledWmsType | WmtsType | VectorType | NoSqlFsType | BlancoType;
+export type LaagType = SingleTileWmsType | TiledWmsType | WmtsType | VectorType | BlancoType;
 
 export type AchtergrondLaag = WmsLaag | WmtsLaag | BlancoLaag;
 
 export type Laaggroep = "Achtergrond" | "Voorgrond.Hoog" | "Voorgrond.Laag" | "Tools";
 
-export type Laag = WmsLaag | WmtsLaag | VectorLaag | NoSqlFsLaag | BlancoLaag;
+export type Laag = WmsLaag | WmtsLaag | VectorLaag | BlancoLaag;
 
 export interface WmsLaag {
   readonly type: SingleTileWmsType | TiledWmsType;
@@ -77,7 +75,9 @@ export interface VeldInfo {
   constante: string;
 }
 
-export interface VectorLaagLike {
+export interface VectorLaag {
+  readonly type: VectorType;
+  readonly source: ol.source.Vector;
   readonly titel: string;
   readonly styleSelector: Option<StyleSelector>;
   readonly selectieStyleSelector: Option<StyleSelector>;
@@ -88,16 +88,6 @@ export interface VectorLaagLike {
   readonly maxZoom: number;
   readonly velden: OrderedMap<string, VeldInfo>;
   readonly offsetveld: Option<string>;
-}
-
-export interface VectorLaag extends VectorLaagLike {
-  readonly type: VectorType;
-  readonly source: ol.source.Vector;
-}
-
-export interface NoSqlFsLaag extends VectorLaagLike {
-  readonly type: NoSqlFsType;
-  readonly source: NosqlFsSource;
 }
 
 export interface BlancoLaag {
@@ -140,9 +130,8 @@ export interface ToegevoegdeVectorLaag extends ToegevoegdeLaag {
 export const isWmsLaag: (laag: Laag) => boolean = laag => laag.type === SingleTileWmsType || laag.type === TiledWmsType;
 export const isBlancoLaag: (laag: Laag) => boolean = laag => laag.type === BlancoType;
 export const isVectorLaag: (laag: Laag) => boolean = laag => laag.type === VectorType;
-export const isNoSqlFsLaag: (laag: Laag) => boolean = laag => laag.type === NoSqlFsType;
+export const isNoSqlFsLaag: (laag: Laag) => boolean = laag => laag.type === VectorType && laag.source.hasOwnProperty("loadEvent$");
 export const asVectorLaag: (laag: Laag) => Option<VectorLaag> = fromPredicate(isVectorLaag) as (_: Laag) => Option<VectorLaag>;
-export const asNoSqlFsLaag: (laag: Laag) => Option<NoSqlFsLaag> = fromPredicate(isNoSqlFsLaag) as (_: Laag) => Option<NoSqlFsLaag>;
 export const isToegevoegdeVectorLaag: (laag: ToegevoegdeLaag) => boolean = laag => isVectorLaag(laag.bron);
 export const asToegevoegdeVectorLaag: (laag: ToegevoegdeLaag) => Option<ToegevoegdeVectorLaag> = laag =>
   fromPredicate<ToegevoegdeLaag>(lg => isVectorLaag(lg.bron))(laag) as Option<ToegevoegdeVectorLaag>;

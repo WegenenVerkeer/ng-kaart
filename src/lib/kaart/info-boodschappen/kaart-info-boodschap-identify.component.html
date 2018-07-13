@@ -46,19 +46,17 @@
   </div>
 </div>
 
-<div class="booleanwaarden">
-  <div class="booleanwaarde" *ngFor="let veld of booleanEigenschappen()">
-
-    <div *ngIf="waarde(veld)">
-      <span class="groen">JA</span>
+<div class="booleanwaarden" *ngFor="let veld of booleanEigenschappen()">
+  <div class="veldnamen">
+    <div class="veldnaam">
       {{ label(veld) }}
     </div>
-
-    <div *ngIf="!waarde(veld)">
-      <span class="rood">NEE</span>
-      {{ label(veld) }}
+  </div>
+  <div class="veldwaarden">
+    <div class="veldwaarde" >
+      <span class="positief" *ngIf="waarde(veld)">JA</span>
+      <span class="negatief" *ngIf="!waarde(veld)">NEE</span>
     </div>
-
   </div>
 </div>
 

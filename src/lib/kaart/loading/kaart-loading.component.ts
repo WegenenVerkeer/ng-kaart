@@ -16,9 +16,10 @@ import {
   take
 } from "rxjs/operators";
 
+import { NosqlFsSource } from "../../source/nosql-fs-source";
 import { ofType } from "../../util/operators";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
-import { isNoSqlFsLaag, NoSqlFsLaag, ToegevoegdeLaag } from "../kaart-elementen";
+import { isNoSqlFsLaag, ToegevoegdeLaag, VectorLaag } from "../kaart-elementen";
 import { DataLoadEvent, LoadError } from "../kaart-load-events";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
@@ -35,31 +36,32 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
 
-    const keepNoSqlFsLagen: (_: List<ToegevoegdeLaag>) => List<NoSqlFsLaag> = lgn =>
+    const noSqlFsLagenDataLoadEvents: (_: List<ToegevoegdeLaag>) => List<rx.Observable<DataLoadEvent>> = lgn =>
       lgn
         .map(lg => lg!.bron) // ga naar de onderliggende laag
-        .filter(isNoSqlFsLaag) // hou enkel de noSqlFsLagen over
-        .toList() as List<NoSqlFsLaag>;
+        .filter(isNoSqlFsLaag) // hou enkel de VectorLagen met een een noSqlFsSource over
+        .map(lg => ((lg as VectorLaag)!.source as NosqlFsSource).loadEvent$)
+        .toList();
 
-    const lagenHoog$: rx.Observable<List<NoSqlFsLaag>> = this.modelChanges.lagenOpGroep$
+    const lagenHoog$$: rx.Observable<List<rx.Observable<DataLoadEvent>>> = this.modelChanges.lagenOpGroep$
       .get("Voorgrond.Hoog")
-      .pipe(map(keepNoSqlFsLagen), startWith(List()));
-    const lagenLaag$: rx.Observable<List<NoSqlFsLaag>> = this.modelChanges.lagenOpGroep$
+      .pipe(map(noSqlFsLagenDataLoadEvents), startWith(List()));
+    const lagenLaag$$: rx.Observable<List<rx.Observable<DataLoadEvent>>> = this.modelChanges.lagenOpGroep$
       .get("Voorgrond.Laag")
-      .pipe(map(keepNoSqlFsLagen), startWith(List()));
-    const toegevoegdeLagen$: rx.Observable<List<NoSqlFsLaag>> = lagenHoog$.pipe(
-      combineLatest(lagenLaag$, (lgnHg, lgnLg) => lgnHg.concat(lgnLg).toList())
+      .pipe(map(noSqlFsLagenDataLoadEvents), startWith(List()));
+    const toegevoegdeLagen$$: rx.Observable<List<rx.Observable<DataLoadEvent>>> = lagenHoog$$.pipe(
+      combineLatest(lagenLaag$$, (lgnHg, lgnLg) => lgnHg.concat(lgnLg).toList())
     );
-    const dataloadEvent$: rx.Observable<DataLoadEvent> = toegevoegdeLagen$.pipe(
+    const mergedDataloadEvent$: rx.Observable<DataLoadEvent> = toegevoegdeLagen$$.pipe(
       // subscribe/unsubscribe voor elke nieuwe lijst van toegevoegde lagen
       switchMap(
         lgn =>
-          rx.Observable.from(lgn.map(lg => lg!.source.loadEvent$).toArray()) //
+          rx.Observable.from(lgn.toArray()) //
             .pipe(mergeAll() as OperatorFunction<rx.Observable<DataLoadEvent>, DataLoadEvent>) // cast omwille van bug in typedefs
       ),
       shareReplay(1, 1000)
     );
-    const numBusy$: rx.Observable<number> = dataloadEvent$.pipe(
+    const numBusy$: rx.Observable<number> = mergedDataloadEvent$.pipe(
       scan((numBusy: number, evt: DataLoadEvent) => {
         switch (evt.type) {
           case "LoadStart":
@@ -75,7 +77,7 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
         }
       }, 0)
     );
-    const stableError$ = (stability: number) => dataloadEvent$.pipe(ofType<LoadError>("LoadError"), debounceTime(stability));
+    const stableError$ = (stability: number) => mergedDataloadEvent$.pipe(ofType<LoadError>("LoadError"), debounceTime(stability));
 
     const busy$: rx.Observable<boolean> = numBusy$.pipe(map(numBusy => numBusy > 0), distinctUntilChanged());
     const inError$: rx.Observable<boolean> = stableError$(100).pipe(
