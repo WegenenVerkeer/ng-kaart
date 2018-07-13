@@ -1155,6 +1155,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return modelWithSubscriptionResult("InfoBoodschappen", model.infoBoodschappenSubj.subscribe(t => msgConsumer(sub.wrapper(t))));
       }
 
+      function subscribeToComponentFouten(sub: prt.ComponentFoutSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult("Componentfouten", model.componentFoutSubj.subscribe(pipe(sub.wrapper, msgConsumer)));
+      }
+
       switch (cmnd.subscription.type) {
         case "Viewinstellingen":
           return subscribeToViewinstellingen(cmnd.subscription);
@@ -1188,6 +1192,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToTekenen(cmnd.subscription);
         case "InfoBoodschap":
           return subscribeToInfoBoodschappen(cmnd.subscription);
+        case "ComponentFout":
+          return subscribeToComponentFouten(cmnd.subscription);
       }
     }
 
