@@ -3,7 +3,7 @@ import { HttpErrorResponse } from "@angular/common/http";
 import { ChangeDetectorRef, Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { none } from "fp-ts/lib/Option";
-import { List, OrderedMap, Set } from "immutable";
+import { List, Map, OrderedMap, Set } from "immutable";
 import * as ol from "openlayers";
 import { pipe } from "rxjs";
 import { UnaryFunction } from "rxjs/interfaces";
@@ -184,9 +184,10 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.zoekerCrabGetraptComponent = zoekerCrabGetrapt;
   }
 
+  featuresByResultaat = Map<ZoekResultaat, ol.Feature[]>();
   alleZoekResultaten: ZoekResultaat[] = [];
   alleFouten: Fout[] = [];
-  legende: Map<string, IconDescription> = new Map<string, IconDescription>();
+  legende: Map<string, IconDescription> = Map<string, IconDescription>();
   legendeKeys: string[] = [];
   toonHelp = false;
   toonResultaat = true;
@@ -305,7 +306,15 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.toonResultaat = false;
     this.toonHelp = false;
     this.dispatch(prt.ZoekGekliktCmd(resultaat));
-    resultaat.kaartInfo.filter(info => !ol.extent.isEmpty(info.extent)).map(info => this.dispatch(prt.VeranderExtentCmd(info.extent)));
+    resultaat.kaartInfo.filter(info => !ol.extent.isEmpty(info.extent)).map(info => {
+      this.dispatch(prt.VeranderExtentCmd(info.geometry.getExtent()));
+      if (info.geometry.getType() === "Point") {
+        resultaat.preferredPointZoomLevel.map(zoom => this.dispatch(prt.VeranderZoomCmd(zoom, kaartLogOnlyWrapper)));
+      }
+      // highlight
+      const selectedFeature = this.featuresByResultaat.get(resultaat)[0];
+      selectedFeature.setStyle(info.highlightStyle);
+    });
   }
 
   zoek() {
@@ -362,6 +371,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.zoekVeld.markAsPristine();
     this.alleFouten = [];
     this.alleZoekResultaten = [];
+    this.featuresByResultaat = Map<ZoekResultaat, ol.Feature[]>();
     this.extent = ol.extent.createEmpty();
     this.legende.clear();
     this.legendeKeys = [];
@@ -375,22 +385,29 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       .concat(nieuweResultaten.resultaten);
     this.alleZoekResultaten.sort((a, b) => compareResultaten(a, b, this.zoekVeld.value));
     nieuweResultaten.legende.forEach((safeHtml, name) => this.legende.set(name!, safeHtml!));
-    this.legendeKeys = Array.from(this.legende.keys());
+    this.legendeKeys = this.legende.keySeq().toArray();
 
     this.alleFouten = this.alleFouten
       .filter(resultaat => resultaat.zoeker !== nieuweResultaten.zoeker)
       .concat(nieuweResultaten.fouten.map(fout => new Fout(nieuweResultaten.zoeker, fout)));
 
-    const features: List<ol.Feature> = this.alleZoekResultaten.reduce(
-      (list, resultaat) => list.push(...ZoekerBoxComponent.maakNieuwFeature(resultaat)),
-      List<ol.Feature>()
+    this.featuresByResultaat = this.alleZoekResultaten.reduce(
+      (map, resultaat) => map.set(resultaat, ZoekerBoxComponent.maakNieuwFeature(resultaat)),
+      Map<ZoekResultaat, ol.Feature[]>()
     );
+
     this.extent = this.alleZoekResultaten
       .map(resultaat => resultaat.kaartInfo)
       .reduce((maxExtent, kaartInfo) => kaartInfo.fold(maxExtent, i => ol.extent.extend(maxExtent!, i.extent)), ol.extent.createEmpty());
 
     this.decreaseBusy();
-    this.dispatch(prt.VervangFeaturesCmd(ZoekerUiSelector, features, kaartLogOnlyWrapper));
+    this.dispatch(
+      prt.VervangFeaturesCmd(
+        ZoekerUiSelector,
+        this.featuresByResultaat.toList().reduce((list, fs) => list!.push(...fs!), List<ol.Feature>()),
+        kaartLogOnlyWrapper
+      )
+    );
     return {
       type: "KaartInternal",
       payload: none

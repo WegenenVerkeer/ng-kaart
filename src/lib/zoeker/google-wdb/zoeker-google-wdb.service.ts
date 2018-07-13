@@ -29,22 +29,29 @@ export class GoogleWdbZoekResultaat implements ZoekResultaat {
   readonly zoeker: string;
   readonly icoon: IconDescription;
   readonly kaartInfo: Option<ZoekKaartResultaat>;
+  readonly preferredPointZoomLevel: Option<number>;
 
-  constructor(locatie, index: number, zoeker: string, style: ol.style.Style, icoon: IconDescription) {
+  constructor(locatie, index: number, zoeker: string, style: ol.style.Style, highlightStyle: ol.style.Style, icoon: IconDescription) {
     this.partialMatch = locatie.partialMatch;
     this.index = index + 1;
     const geometry = new ol.format.GeoJSON(geoJSONOptions).readGeometry(locatie.locatie);
     this.kaartInfo = some({
       geometry: geometry,
       extent: geometry.getExtent(),
-      style: style
+      style: style,
+      highlightStyle: highlightStyle
     });
     this.omschrijving = locatie.omschrijving;
     this.bron = locatie.bron;
     this.zoeker = zoeker;
     this.icoon = icoon;
+    this.preferredPointZoomLevel = isWdbBron(this.bron) ? some(12) : some(10);
   }
 }
+
+const isWdbBron = function(bron) {
+  return bron.startsWith("WDB") || bron.startsWith("ABBAMelda");
+};
 
 // Deze URL encoder gaat alles encoden. De standaard encoder encode volgende characters NIET:
 // ! $ \' ( ) * + , ; A 9 - . _ ~ ? /     (zie https://tools.ietf.org/html/rfc3986)
@@ -289,10 +296,6 @@ export class ZoekerGoogleWdbService implements ZoekerBase {
         });
       }, Promise.resolve([]));
 
-      const isWdbBron = function(bron) {
-        return bron.startsWith("WDB") || bron.startsWith("ABBAMelda");
-      };
-
       const zoekResultatenPromise: Promise<ZoekResultaten> = alleResultatenPromise.then(resultatenLijst => {
         resultatenLijst.forEach(resultaat => {
           resultaat.locatie =
@@ -307,6 +310,7 @@ export class ZoekerGoogleWdbService implements ZoekerBase {
               index,
               this.naam(),
               this.zoekerRepresentatie.getOlStyle(zoekerType),
+              this.zoekerRepresentatie.getHighlightOlStyle(zoekerType),
               this.zoekerRepresentatie.getSvgIcon(zoekerType)
             )
           );

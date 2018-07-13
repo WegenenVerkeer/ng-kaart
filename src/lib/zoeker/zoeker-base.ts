@@ -18,6 +18,7 @@ export interface ZoekKaartResultaat {
   readonly geometry: ol.geom.Geometry;
   readonly extent: ol.Extent;
   readonly style: ol.style.Style;
+  readonly highlightStyle: ol.style.Style;
 }
 
 export interface ZoekResultaat {
@@ -28,6 +29,7 @@ export interface ZoekResultaat {
   readonly zoeker: string;
   readonly kaartInfo: Option<ZoekKaartResultaat>;
   readonly icoon: IconDescription;
+  readonly preferredPointZoomLevel: Option<number>;
 }
 
 export class ZoekResultaten {

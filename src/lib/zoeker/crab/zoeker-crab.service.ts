@@ -117,6 +117,7 @@ export class CrabZoekResultaat implements ZoekResultaat {
   readonly zoeker: string;
   readonly icoon: IconDescription;
   readonly kaartInfo: Option<ZoekKaartResultaat>;
+  readonly preferredPointZoomLevel = some(10);
 
   constructor(
     x_lambert_72: number,
@@ -127,12 +128,14 @@ export class CrabZoekResultaat implements ZoekResultaat {
     zoeker: string,
     icoon: IconDescription,
     style: ol.style.Style,
+    highlightStyle: ol.style.Style,
     extent?: ol.Extent
   ) {
     this.index = index + 1;
     const geometry = new ol.geom.Point([x_lambert_72, y_lambert_72]);
     this.kaartInfo = some({
       style: style,
+      highlightStyle: highlightStyle,
       geometry: geometry,
       extent: extent ? extent : geometry.getExtent()
     });
@@ -179,7 +182,8 @@ export class ZoekerCrabService implements ZoekerBase {
               startIndex + index,
               this.naam(),
               this.zoekerRepresentatie.getSvgIcon("Crab"),
-              this.zoekerRepresentatie.getOlStyle("Crab")
+              this.zoekerRepresentatie.getOlStyle("Crab"),
+              this.zoekerRepresentatie.getHighlightOlStyle("Crab")
             )
         )
     );
@@ -204,6 +208,7 @@ export class ZoekerCrabService implements ZoekerBase {
       this.naam(),
       this.zoekerRepresentatie.getSvgIcon("Crab"),
       this.zoekerRepresentatie.getOlStyle("Crab"),
+      this.zoekerRepresentatie.getHighlightOlStyle("Crab"),
       extent
     );
   }
@@ -217,7 +222,8 @@ export class ZoekerCrabService implements ZoekerBase {
       0,
       this.naam(),
       this.zoekerRepresentatie.getSvgIcon("Crab"),
-      this.zoekerRepresentatie.getOlStyle("Crab")
+      this.zoekerRepresentatie.getOlStyle("Crab"),
+      this.zoekerRepresentatie.getHighlightOlStyle("Crab")
     );
   }
 
