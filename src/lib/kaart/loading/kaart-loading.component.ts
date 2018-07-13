@@ -13,7 +13,8 @@ import {
   startWith,
   switchMap,
   switchMapTo,
-  take
+  take,
+  tap
 } from "rxjs/operators";
 
 import { ofType } from "../../util/operators";
@@ -35,20 +36,28 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
 
-    const toegevoegdeLagenToLoadEvents: (_: List<ToegevoegdeLaag>) => rx.Observable<DataLoadEvent> = (lgn: List<ToegevoegdeLaag>) =>
-      rx.Observable.from(
-        lgn
-          .map(lg => lg!.bron) // ga naar de onderliggende laag
-          .filter(isNoSqlFsLaag) // hou enkel de noSqlFsLagen over
-          .map(lg => (lg as NoSqlFsLaag).source.loadEvent$) // kijk naar de load evts
-          .toArray()
-      ).pipe(mergeAll() as OperatorFunction<rx.Observable<DataLoadEvent>, DataLoadEvent>);
+    const keepNoSqlFsLagen: (_: List<ToegevoegdeLaag>) => List<NoSqlFsLaag> = lgn =>
+      lgn
+        .map(lg => lg!.bron) // ga naar de onderliggende laag
+        .filter(isNoSqlFsLaag) // hou enkel de noSqlFsLagen over
+        .toList() as List<NoSqlFsLaag>;
 
-    const lagenHoog$: rx.Observable<List<ToegevoegdeLaag>> = this.modelChanges.lagenOpGroep$.get("Voorgrond.Hoog");
-    const lagenLaag$: rx.Observable<List<ToegevoegdeLaag>> = this.modelChanges.lagenOpGroep$.get("Voorgrond.Laag");
-    const dataloadEvent$: rx.Observable<DataLoadEvent> = lagenHoog$.pipe(
+    const lagenHoog$: rx.Observable<List<NoSqlFsLaag>> = this.modelChanges.lagenOpGroep$
+      .get("Voorgrond.Hoog")
+      .pipe(map(keepNoSqlFsLagen), startWith(List()));
+    const lagenLaag$: rx.Observable<List<NoSqlFsLaag>> = this.modelChanges.lagenOpGroep$
+      .get("Voorgrond.Laag")
+      .pipe(map(keepNoSqlFsLagen), startWith(List()));
+    const toegevoegdeLagen$: rx.Observable<List<NoSqlFsLaag>> = lagenHoog$.pipe(
+      combineLatest(lagenLaag$, (lgnHg, lgnLg) => lgnHg.concat(lgnLg).toList())
+    );
+    const dataloadEvent$: rx.Observable<DataLoadEvent> = toegevoegdeLagen$.pipe(
       // subscribe/unsubscribe voor elke nieuwe lijst van toegevoegde lagen
-      switchMap(toegevoegdeLagenToLoadEvents),
+      switchMap(
+        lgn =>
+          rx.Observable.from(lgn.map(lg => lg!.source.loadEvent$).toArray()) //
+            .pipe(mergeAll() as OperatorFunction<rx.Observable<DataLoadEvent>, DataLoadEvent>) // cast omwille van bug in typedefs
+      ),
       shareReplay(1, 1000)
     );
     const numBusy$: rx.Observable<number> = dataloadEvent$.pipe(
@@ -84,6 +93,8 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
       combineLatest(rx.Observable.timer(0, 200), (inError, n) => ({ "margin-left": inError ? "-10000px" : (n * 11) % 110 + "%" }))
     );
 
-    this.bindToLifeCycle(stableError$(500)).subscribe(evt => this.dispatch(prt.MeldComponentFoutCmd(List.of(evt.error))));
+    this.bindToLifeCycle(stableError$(500)).subscribe(evt =>
+      this.dispatch(prt.MeldComponentFoutCmd(List.of("Fout bij laden van features: " + evt.error)))
+    );
   }
 }
