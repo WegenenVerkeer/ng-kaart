@@ -13,8 +13,7 @@ import {
   startWith,
   switchMap,
   switchMapTo,
-  take,
-  tap
+  take
 } from "rxjs/operators";
 
 import { ofType } from "../../util/operators";
