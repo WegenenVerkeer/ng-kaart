@@ -1,4 +1,5 @@
 <awv-kaart-info-boodschap [attr.id]="'kaart-info-boodschap-' + boodschap.id" [boodschap]="boodschap" *ngFor="let boodschap of infoBoodschappen$ | async"> <!-- Tijdelijk uitgezet, werkt niet bij updaten van een boodschap:  [@fadeIn]="'visible'" -->
   <awv-kaart-info-boodschap-identify *ngIf="isIdentify(boodschap)" [feature]="boodschap.feature" [laag]="boodschap.laag"></awv-kaart-info-boodschap-identify>
   <awv-kaart-info-boodschap-alert *ngIf="isAlert(boodschap)" [message]="boodschap.message"></awv-kaart-info-boodschap-alert>
+  <awv-kaart-info-boodschap-kaart-bevragen *ngIf="isKaartBevragen(boodschap)" [weglocatie]="boodschap.weglocatie" [adres]="boodschap.adres" [coordinaat]="boodschap.coordinaat"></awv-kaart-info-boodschap-kaart-bevragen>
 </awv-kaart-info-boodschap>
