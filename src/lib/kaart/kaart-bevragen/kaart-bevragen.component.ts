@@ -6,8 +6,15 @@ import { skipUntil, takeUntil } from "rxjs/operators";
 
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { ofType } from "../../util/operators";
+import { contains } from "../../util/option";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
-import { KaartClickMsg } from "../kaart-internal-messages";
+import {
+  ActieveModusAangepastMsg,
+  actieveModusGezetWrapper,
+  KaartClickMsg,
+  kaartClickWrapper,
+  KaartInternalMsg
+} from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 
@@ -22,6 +29,8 @@ export class KaartBevragenComponent extends KaartChildComponentBase implements O
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
   }
+
+  private actief = false;
 
   private currentClick: ol.Coordinate;
   private adres: Option<string> = none;
@@ -38,9 +47,45 @@ export class KaartBevragenComponent extends KaartChildComponentBase implements O
         skipUntil(Observable.timer(0)) // beperk tot messages nadat subscribe opgeroepen is: oorzaak is shareReplay(1) in internalmessages$
       )
       .subscribe(msg => {
-        this.currentClick = msg.clickCoordinaat;
-        this.updateInformatie();
+        if (this.actief) {
+          this.currentClick = msg.clickCoordinaat;
+          this.updateInformatie();
+        }
       });
+
+    this.internalMessage$
+      .pipe(
+        ofType<ActieveModusAangepastMsg>("ActieveModus"), //
+        observeOnAngular(this.zone),
+        takeUntil(this.destroying$), // autounsubscribe bij destroy component
+        skipUntil(Observable.timer(0)) // beperk tot messages nadat subscribe opgeroepen is: oorzaak is shareReplay(1) in internalmessages$
+      )
+      .subscribe(msg => {
+        if (msg.modus.isNone()) {
+          // als er geen modus gezet is, is dit de default modus, activeer onszelf
+          if (!this.actief) {
+            this.zetActief(true);
+          }
+        } else if (!contains(msg.modus, BevraagKaartUiSelector)) {
+          // aanvraag tot andere modus, disable deze modus
+          if (this.actief) {
+            this.zetActief(false);
+          }
+        }
+      });
+  }
+
+  protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
+    return [prt.ActieveModusSubscription(actieveModusGezetWrapper), prt.KaartClickSubscription(kaartClickWrapper)];
+  }
+
+  zetActief(actief: boolean) {
+    this.actief = actief;
+    if (this.actief) {
+      this.dispatch(prt.ZetActieveModusCmd(some(BevraagKaartUiSelector)));
+    } else {
+      this.dispatch(prt.VerbergInfoBoodschapCmd("Kaart bevragen"));
+    }
   }
 
   updateInformatie() {
@@ -53,7 +98,7 @@ export class KaartBevragenComponent extends KaartChildComponentBase implements O
         coordinaat: some(this.currentClick),
         adres: none,
         weglocatie: none,
-        verbergMsgGen: () => some(prt.VerbergInfoBoodschapCmd("Kaart bevragen"))
+        verbergMsgGen: () => none
       })
     );
   }

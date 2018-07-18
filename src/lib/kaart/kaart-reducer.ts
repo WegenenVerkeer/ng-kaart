@@ -1035,6 +1035,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
+    function zetActieveModus(cmdn: prt.ZetActieveModusCmd): ModelWithResult<Msg> {
+      modelChanger.actieveModusSubj.next(cmdn.modus);
+      return ModelWithResult(model);
+    }
+
     function handleSubscriptions(cmnd: prt.SubscribeCmd<Msg>): ModelWithResult<Msg> {
       function modelWithSubscriptionResult(name: string, subscription: Subscription): ModelWithResult<Msg> {
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, { subscription: subscription, subscriberName: name })));
@@ -1150,6 +1155,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         );
       }
 
+      function subscribeToActieveModus(sub: prt.ActieveModusSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult("ActieveModus", modelChanges.actieveModus$.subscribe(m => msgConsumer(sub.wrapper(m))));
+      }
+
       function subscribeToInfoBoodschappen(sub: prt.InfoBoodschappenSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult("InfoBoodschappen", model.infoBoodschappenSubj.subscribe(t => msgConsumer(sub.wrapper(t))));
       }
@@ -1193,6 +1202,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToInfoBoodschappen(cmnd.subscription);
         case "ComponentFout":
           return subscribeToComponentFouten(cmnd.subscription);
+        case "ActieveModus":
+          return subscribeToActieveModus(cmnd.subscription);
       }
     }
 
@@ -1300,6 +1311,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return verwijderUiElement(cmd);
       case "ZetUiElementOpties":
         return zetUiElementOpties(cmd);
+      case "ZetActieveModus":
+        return zetActieveModus(cmd);
     }
   };
 }

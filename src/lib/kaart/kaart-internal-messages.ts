@@ -18,7 +18,8 @@ export type KaartInternalSubMsg =
   | MijnLocatieZoomdoelGezetMsg
   | SubscribedMsg
   | TekenMsg
-  | ViewinstellingenGezetMsg;
+  | ViewinstellingenGezetMsg
+  | ActieveModusAangepastMsg;
 
 export interface ViewinstellingenGezetMsg {
   readonly type: "ViewinstellingenGezet";
@@ -33,6 +34,11 @@ export interface AchtergrondtitelGezetMsg {
 export interface GeometryChangedMsg {
   type: "GeometryChanged";
   geometry: ol.geom.Geometry;
+}
+
+export interface ActieveModusAangepastMsg {
+  type: "ActieveModus";
+  modus: Option<string>;
 }
 
 export interface TekenMsg {
@@ -140,4 +146,10 @@ function MijnLocatieZoomdoelGezetMsg(d: Option<number>): MijnLocatieZoomdoelGeze
   return { type: "MijnLocatieZoomdoelGezet", mijnLocatieZoomdoel: d };
 }
 
-export const MijnLocatieZoomdoelGezetWrapper = (d: Option<number>) => KaartInternalMsg(some(MijnLocatieZoomdoelGezetMsg(d)));
+export const mijnLocatieZoomdoelGezetWrapper = (d: Option<number>) => KaartInternalMsg(some(MijnLocatieZoomdoelGezetMsg(d)));
+
+function ActieveModusGezet(modus: Option<string>): ActieveModusAangepastMsg {
+  return { type: "ActieveModus", modus: modus };
+}
+
+export const actieveModusGezetWrapper = (modus: Option<string>) => KaartInternalMsg(some(ActieveModusGezet(modus)));

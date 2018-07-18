@@ -33,6 +33,7 @@ export interface ModelChanger {
   readonly lagenOpGroepSubj: Map<ke.Laaggroep, rx.Subject<List<ke.ToegevoegdeLaag>>>;
   readonly laagVerwijderdSubj: rx.Subject<ke.ToegevoegdeLaag>;
   readonly mijnLocatieZoomDoelSubj: rx.Subject<Option<number>>;
+  readonly actieveModusSubj: rx.Subject<Option<string>>;
 }
 
 export const ModelChanger: () => ModelChanger = () => ({
@@ -46,7 +47,8 @@ export const ModelChanger: () => ModelChanger = () => ({
     Tools: new rx.BehaviorSubject<List<ke.ToegevoegdeLaag>>(List())
   }),
   laagVerwijderdSubj: new rx.Subject<ke.ToegevoegdeLaag>(),
-  mijnLocatieZoomDoelSubj: new rx.BehaviorSubject<Option<number>>(none)
+  mijnLocatieZoomDoelSubj: new rx.BehaviorSubject<Option<number>>(none),
+  actieveModusSubj: new rx.BehaviorSubject(none)
 });
 
 export interface ModelChanges {
@@ -60,6 +62,7 @@ export interface ModelChanges {
   readonly zichtbareFeatures$: rx.Observable<List<ol.Feature>>;
   readonly klikLocatie$: rx.Observable<ol.Coordinate>;
   readonly mijnLocatieZoomDoel$: rx.Observable<Option<number>>;
+  readonly actieveModus$: rx.Observable<Option<string>>;
 }
 
 const viewinstellingen = (olmap: ol.Map) => ({
@@ -162,6 +165,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     hoverFeatures$: hoverFeatures$,
     zichtbareFeatures$: zichtbareFeatures$,
     klikLocatie$: klikLocatie$,
-    mijnLocatieZoomDoel$: changer.mijnLocatieZoomDoelSubj.asObservable()
+    mijnLocatieZoomDoel$: changer.mijnLocatieZoomDoelSubj.asObservable(),
+    actieveModus$: changer.actieveModusSubj.asObservable()
   };
 };
