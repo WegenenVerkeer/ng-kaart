@@ -331,6 +331,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   kuisZoekOp() {
+    this.clearBusy();
     this.maakResultaatLeeg();
     this.focusOpZoekVeld();
   }
@@ -359,6 +360,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   kiesZoeker(zoeker: ZoekerType) {
+    this.clearBusy();
     this.maakResultaatLeeg();
     this.actieveZoeker = zoeker;
     this.focusOpZoekVeld();
@@ -366,7 +368,6 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   maakResultaatLeeg() {
-    this.busy = 0;
     this.zoekVeld.setValue("");
     this.zoekVeld.markAsPristine();
     this.alleFouten = [];
@@ -420,10 +421,14 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   decreaseBusy() {
-    this.cd.detectChanges();
     if (this.busy > 0) {
       this.busy--;
     }
+    this.cd.detectChanges();
+  }
+
+  clearBusy() {
+    this.busy = 0;
   }
 
   isBusy(): boolean {
