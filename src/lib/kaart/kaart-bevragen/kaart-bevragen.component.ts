@@ -22,7 +22,7 @@ export const BevraagKaartUiSelector = "Bevraagkaart";
 
 @Component({
   selector: "awv-kaart-bevragen",
-  templateUrl: "./kaart-bevragen.component.html",
+  template: "",
   styleUrls: ["./kaart-bevragen.component.scss"]
 })
 export class KaartBevragenComponent extends KaartChildComponentBase implements OnInit {
@@ -83,8 +83,6 @@ export class KaartBevragenComponent extends KaartChildComponentBase implements O
     this.actief = actief;
     if (this.actief) {
       this.dispatch(prt.ZetActieveModusCmd(some(BevraagKaartUiSelector)));
-    } else {
-      this.dispatch(prt.VerbergInfoBoodschapCmd("Kaart bevragen"));
     }
   }
 

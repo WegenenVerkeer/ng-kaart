@@ -153,7 +153,12 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
 
   const zichtbareFeatures$ = viewinstellingen$.pipe(combineLatest(vectorlagen$, featuresChanged$, collectFeatures));
 
-  const klikLocatie$ = observableFromOlEvents(model.map, "click").pipe(map((event: ol.MapBrowserEvent) => event.coordinate));
+  const klikLocatie$ = observableFromOlEvents(model.map, "click")
+    .filter((event: ol.MapBrowserEvent) => {
+      // filter click events uit die op een feature plaatsvinden
+      return !model.map.hasFeatureAtPixel(event.pixel, { hitTolerance: KaartWithInfo.clickHitTolerance });
+    })
+    .pipe(map((event: ol.MapBrowserEvent) => event.coordinate));
 
   return {
     uiElementSelectie$: changer.uiElementSelectieSubj.asObservable(),

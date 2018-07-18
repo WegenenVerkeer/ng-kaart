@@ -19,7 +19,7 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildComponen
   }
 
   coordinaatInformatie(): string {
-    return this.coordinaat.map(coord => `${coord[0]} ${coord[1]}`).getOrElse("");
+    return this.coordinaat.map(coord => `${Math.round(coord[0])}, ${Math.round(coord[1])}`).getOrElse("");
   }
 
   heeftAdres() {

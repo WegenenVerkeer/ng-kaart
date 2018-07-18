@@ -142,6 +142,7 @@ export * from "./copyright/kaart-copyright.component";
 export * from "./schaal/kaart-schaal.component";
 export * from "./tekenen/kaart-teken-laag.component";
 export * from "./meten/kaart-meten.component";
+export * from "./kaart-bevragen/kaart-bevragen.component";
 export * from "./zoom/kaart-zoom.component";
 export * from "./mijn-locatie/kaart-mijn-locatie.component";
 export * from "./open-street-view/kaart-open-street-view.component";

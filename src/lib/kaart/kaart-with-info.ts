@@ -17,6 +17,8 @@ import { TileLoader } from "./tile-loader";
  * Het model achter de kaartcomponent.
  */
 export class KaartWithInfo {
+  static readonly clickHitTolerance = 5;
+
   readonly toegevoegdeLagenOpTitel: Map<string, ke.ToegevoegdeLaag> = Map();
   readonly titelsOpGroep: Map<ke.Laaggroep, List<string>> = Map([
     ["Voorgrond.Laag", List()],
