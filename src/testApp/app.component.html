@@ -171,6 +171,7 @@
         <awv-kaart-streetview *ngIf="isOptieActief('streetview')"></awv-kaart-streetview>
         <awv-meet-knop [toonInfoBoodschap]="true" *ngIf="isOptieActief('meten')"></awv-meet-knop>
         <awv-kaart-zoomknoppen *ngIf="isOptieActief('zoomknoppen')"></awv-kaart-zoomknoppen>
+        <awv-bevraag-kaart *ngIf="isOptieActief('bevraagkaart')"></awv-bevraag-kaart>
         <!-- kaartinfo -->
         <awv-kaart-copyright *ngIf="isOptieActief('copyright')"></awv-kaart-copyright>
         <awv-kaart-voorwaarden *ngIf="isOptieActief('voorwaarden')" [titel]="voorwaarden"></awv-kaart-voorwaarden>

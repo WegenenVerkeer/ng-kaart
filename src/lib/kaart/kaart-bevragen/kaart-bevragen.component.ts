@@ -11,6 +11,8 @@ import { KaartClickMsg } from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 
+export const BevraagKaartUiSelector = "Bevraagkaart";
+
 @Component({
   selector: "awv-kaart-bevragen",
   templateUrl: "./kaart-bevragen.component.html",

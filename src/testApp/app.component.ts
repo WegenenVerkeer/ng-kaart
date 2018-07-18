@@ -166,6 +166,7 @@ export class AppComponent {
     // --- Algemeen
     optieDivider1: { divider: true, value: true, label: "Algemene opties" },
     standaardinteracties: { value: true, label: "Pannen en zoomen" },
+    bevraagkaart: { value: true, label: "Bevraag kaart" },
     // --- Linkerpaneel
     optieDivider2: { divider: true, value: true, label: "Opties linker paneel" },
     zoeker: { value: true, label: "Zoeker" },
