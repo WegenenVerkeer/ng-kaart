@@ -9,6 +9,6 @@ export function forEach<T>(anOption: Option<T>, f: (t: T) => any): void {
   anOption.map(f);
 }
 
-export function contains(anOption: Option<String>, s: string): boolean {
-  return anOption.contains(setoidString, s);
+export function containsText(anOption: Option<String>, text: string): boolean {
+  return anOption.contains(setoidString, text);
 }

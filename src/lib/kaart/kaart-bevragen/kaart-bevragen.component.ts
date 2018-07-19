@@ -6,7 +6,7 @@ import { skipUntil, takeUntil } from "rxjs/operators";
 
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { ofType } from "../../util/operators";
-import { contains } from "../../util/option";
+import { containsText } from "../../util/option";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import {
   ActieveModusAangepastMsg,
@@ -66,7 +66,7 @@ export class KaartBevragenComponent extends KaartChildComponentBase implements O
           if (!this.actief) {
             this.zetActief(true);
           }
-        } else if (!contains(msg.modus, BevraagKaartUiSelector)) {
+        } else if (!containsText(msg.modus, BevraagKaartUiSelector)) {
           // aanvraag tot andere modus, disable deze modus
           if (this.actief) {
             this.zetActief(false);

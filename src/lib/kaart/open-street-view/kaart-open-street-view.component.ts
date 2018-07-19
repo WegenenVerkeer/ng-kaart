@@ -8,7 +8,7 @@ import { skipUntil, take, takeUntil } from "rxjs/operators";
 import { lambert72ToWgs84 } from "../../coordinaten/coordinaten.service";
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { ofType } from "../../util/operators";
-import { contains } from "../../util/option";
+import { containsText } from "../../util/option";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import {
   ActieveModusAangepastMsg,
@@ -55,7 +55,7 @@ export class KaartOpenStreetViewComponent extends KaartChildComponentBase implem
         skipUntil(Observable.timer(0)) // beperk tot messages nadat subscribe opgeroepen is: oorzaak is shareReplay(1) in internalmessages$
       )
       .subscribe(msg => {
-        if (!contains(msg.modus, StreetviewUiSelector)) {
+        if (!containsText(msg.modus, StreetviewUiSelector)) {
           // aanvraag tot andere actieve klik modus, deactiveer deze modus indien nodig
           if (this.actief) {
             this.stopLuisterenOpClickEvents();

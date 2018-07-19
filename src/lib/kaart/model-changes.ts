@@ -60,7 +60,7 @@ export interface ModelChanges {
   readonly geselecteerdeFeatures$: rx.Observable<GeselecteerdeFeatures>;
   readonly hoverFeatures$: rx.Observable<HoverFeature>;
   readonly zichtbareFeatures$: rx.Observable<List<ol.Feature>>;
-  readonly klikLocatie$: rx.Observable<ol.Coordinate>;
+  readonly kaartKlikLocatie$: rx.Observable<ol.Coordinate>;
   readonly mijnLocatieZoomDoel$: rx.Observable<Option<number>>;
   readonly actieveModus$: rx.Observable<Option<string>>;
 }
@@ -153,7 +153,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
 
   const zichtbareFeatures$ = viewinstellingen$.pipe(combineLatest(vectorlagen$, featuresChanged$, collectFeatures));
 
-  const klikLocatie$ = observableFromOlEvents(model.map, "click")
+  const kaartKlikLocatie$ = observableFromOlEvents(model.map, "click")
     .filter((event: ol.MapBrowserEvent) => {
       // filter click events uit die op een feature plaatsvinden
       return !model.map.hasFeatureAtPixel(event.pixel, { hitTolerance: KaartWithInfo.clickHitTolerance });
@@ -169,7 +169,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     geselecteerdeFeatures$: geselecteerdeFeatures$,
     hoverFeatures$: hoverFeatures$,
     zichtbareFeatures$: zichtbareFeatures$,
-    klikLocatie$: klikLocatie$,
+    kaartKlikLocatie$: kaartKlikLocatie$,
     mijnLocatieZoomDoel$: changer.mijnLocatieZoomDoelSubj.asObservable(),
     actieveModus$: changer.actieveModusSubj.asObservable()
   };

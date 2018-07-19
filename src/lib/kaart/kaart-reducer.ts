@@ -1107,7 +1107,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
 
       function subscribeToKaartClick(sub: prt.KaartClickSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult("KaartClick", modelChanges.klikLocatie$.subscribe(t => msgConsumer(sub.wrapper(t))));
+        return modelWithSubscriptionResult("KaartClick", modelChanges.kaartKlikLocatie$.subscribe(t => msgConsumer(sub.wrapper(t))));
       }
 
       const subscribeToLagenInGroep = (sub: prt.LagenInGroepSubscription<Msg>) => {

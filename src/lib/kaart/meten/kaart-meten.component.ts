@@ -8,7 +8,7 @@ import { filter, map, skipUntil, startWith, takeUntil } from "rxjs/operators";
 import { dimensieBeschrijving } from "../../util/geometries";
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { ofType } from "../../util/operators";
-import { contains } from "../../util/option";
+import { containsText } from "../../util/option";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { TekenSettings } from "../kaart-elementen";
 import {
@@ -67,7 +67,7 @@ export class KaartMetenComponent extends KaartChildComponentBase implements OnIn
         skipUntil(Observable.timer(0)) // beperk tot messages nadat subscribe opgeroepen is: oorzaak is shareReplay(1) in internalmessages$
       )
       .subscribe(msg => {
-        if (!contains(msg.modus, MetenUiSelector)) {
+        if (!containsText(msg.modus, MetenUiSelector)) {
           // aanvraag tot andere actieve klik modus
           if (this.metenActief) {
             this.metenActief = false;
