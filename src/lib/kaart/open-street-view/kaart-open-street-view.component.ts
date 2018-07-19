@@ -7,7 +7,7 @@ import { skipUntil, take, takeUntil } from "rxjs/operators";
 
 import { lambert72ToWgs84 } from "../../coordinaten/coordinaten.service";
 import { observeOnAngular } from "../../util/observe-on-angular";
-import { ofType } from "../../util/operators";
+import { ofType, skipUntilInitialised } from "../../util/operators";
 
 import { actieveModusGezetWrapper, KaartClickMsg, kaartClickWrapper, KaartInternalMsg } from "../kaart-internal-messages";
 import { KaartModusComponent } from "../kaart-modus-component";
@@ -72,7 +72,7 @@ export class KaartOpenStreetViewComponent extends KaartModusComponent {
         ofType<KaartClickMsg>("KaartClick"), //
         observeOnAngular(this.zone),
         takeUntil(this.destroying$), // autounsubscribe bij destroy component
-        skipUntil(Observable.timer(0)), // beperk tot messages nadat subscribe opgeroepen is: oorzaak is shareReplay(1) in internalmessages$
+        skipUntilInitialised(),
         take(1) // 1 click message is genoeg
       )
       .subscribe(msg => {

@@ -4,7 +4,7 @@ import { Observable } from "rxjs/Observable";
 import { skipUntil, takeUntil } from "rxjs/operators";
 
 import { observeOnAngular } from "../util/observe-on-angular";
-import { ofType } from "../util/operators";
+import { ofType, skipUntilInitialised } from "../util/operators";
 import { containsText } from "../util/option";
 
 import { KaartChildComponentBase } from "./kaart-child-component-base";
@@ -33,7 +33,7 @@ export abstract class KaartModusComponent extends KaartChildComponentBase implem
         ofType<ActieveModusAangepastMsg>("ActieveModus"), //
         observeOnAngular(this.zone),
         takeUntil(this.destroying$), // autounsubscribe bij destroy component
-        skipUntil(Observable.timer(0)) // beperk tot messages nadat subscribe opgeroepen is: oorzaak is shareReplay(1) in internalmessages$
+        skipUntilInitialised()
       )
       .subscribe(msg => {
         if (msg.modus.isNone()) {
