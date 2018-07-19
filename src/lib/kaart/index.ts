@@ -6,6 +6,7 @@ import {
   MatButtonModule,
   MatButtonToggleModule,
   MatCardModule,
+  MatExpansionModule,
   MatIconModule,
   MatTooltipDefaultOptions,
   MatTooltipModule
@@ -23,8 +24,10 @@ import { KaartAchtergrondTileComponent } from "./achtergrond-selector/kaart-acht
 import { KaartCopyrightComponent } from "./copyright/kaart-copyright.component";
 import { KaartInfoBoodschapAlertComponent } from "./info-boodschappen/kaart-info-boodschap-alert.component";
 import { KaartInfoBoodschapIdentifyComponent } from "./info-boodschappen/kaart-info-boodschap-identify.component";
+import { KaartInfoBoodschapKaartBevragenComponent } from "./info-boodschappen/kaart-info-boodschap-kaart-bevragen.component";
 import { KaartInfoBoodschapComponent } from "./info-boodschappen/kaart-info-boodschap.component";
 import { KaartInfoBoodschappenComponent } from "./info-boodschappen/kaart-info-boodschappen.component";
+import { KaartBevragenComponent } from "./kaart-bevragen/kaart-bevragen.component";
 import { KAART_CFG, KaartConfig } from "./kaart-config";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { KaartComponent } from "./kaart.component";
@@ -45,7 +48,9 @@ const components: any[] = [
   KaartInfoBoodschapAlertComponent,
   KaartInfoBoodschapComponent,
   KaartInfoBoodschapIdentifyComponent,
+  KaartInfoBoodschapKaartBevragenComponent,
   KaartInfoBoodschappenComponent,
+  KaartBevragenComponent,
   KaartLoadingComponent,
   KaartMetenComponent,
   KaartMijnLocatieComponent,
@@ -105,6 +110,7 @@ export const myCustomTooltipDefaults: MatTooltipDefaultOptions = {
     MatButtonToggleModule,
     MatCardModule,
     MatTooltipModule,
+    MatExpansionModule,
     HttpClientModule,
     ZoekerModule.forRoot({}),
     LagenkiezerModule.withDefaults()
@@ -136,6 +142,7 @@ export * from "./copyright/kaart-copyright.component";
 export * from "./schaal/kaart-schaal.component";
 export * from "./tekenen/kaart-teken-laag.component";
 export * from "./meten/kaart-meten.component";
+export * from "./kaart-bevragen/kaart-bevragen.component";
 export * from "./zoom/kaart-zoom.component";
 export * from "./mijn-locatie/kaart-mijn-locatie.component";
 export * from "./open-street-view/kaart-open-street-view.component";

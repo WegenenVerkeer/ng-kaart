@@ -1,6 +1,6 @@
 import { isSome, Option } from "fp-ts/lib/Option";
 import { Observable } from "rxjs/Observable";
-import { filter, map } from "rxjs/operators";
+import { filter, map, skipUntil } from "rxjs/operators";
 
 /**
  * Transformeert waarden van A naar waarden van B mbv f, maar verhindert propagatie als
@@ -47,3 +47,8 @@ export interface TypedRecord {
 
 export const ofType = <Target extends TypedRecord>(type: string) => (o: Observable<TypedRecord>) =>
   o.pipe(filter(a => a.type === type)) as Observable<Target>;
+
+export function skipUntilInitialised<T>(): (o: Observable<T>) => Observable<T> {
+  // beperk tot messages nadat subscribe opgeroepen is: oorzaak is shareReplay(1) in internalmessages$
+  return obs => obs.pipe(skipUntil(Observable.timer(0)));
+}

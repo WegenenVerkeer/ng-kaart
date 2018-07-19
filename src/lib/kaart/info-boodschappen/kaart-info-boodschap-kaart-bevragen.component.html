@@ -1,0 +1,24 @@
+<mat-accordion class="accordion">
+  <mat-expansion-panel [expanded]="true">
+    <mat-expansion-panel-header>
+      <mat-panel-title>
+        Coordinaten
+      </mat-panel-title>
+    </mat-expansion-panel-header>
+    {{ coordinaatInformatie() }}
+  </mat-expansion-panel>
+  <mat-expansion-panel *ngIf="heeftAdres()">
+    <mat-expansion-panel-header>
+      <mat-panel-title>
+        Adres
+      </mat-panel-title>
+    </mat-expansion-panel-header>
+  </mat-expansion-panel>
+  <mat-expansion-panel *ngIf="heeftWegLocatie()">
+    <mat-expansion-panel-header>
+      <mat-panel-title>
+        R0010001
+      </mat-panel-title>
+    </mat-expansion-panel-header>
+  </mat-expansion-panel>
+</mat-accordion>

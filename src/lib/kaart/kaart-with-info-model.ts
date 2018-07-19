@@ -25,6 +25,13 @@ export interface InfoBoodschapIdentify extends InfoBoodschap {
   readonly laag: VectorLaag;
 }
 
+export interface InfoBoodschapKaartBevragen extends InfoBoodschap {
+  readonly type: "infoBoodschapKaartBevragen";
+  readonly coordinaat: ol.Coordinate;
+  readonly adres: Option<string>;
+  readonly weglocatie: Option<any>;
+}
+
 export interface Groeplagen {
   readonly laaggroep: ke.Laaggroep;
   readonly lagen: List<ke.ToegevoegdeLaag>;

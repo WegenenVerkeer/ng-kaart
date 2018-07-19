@@ -52,4 +52,8 @@ export class KaartInfoBoodschappenComponent extends KaartChildComponentBase impl
   isAlert(boodschap: InfoBoodschap): boolean {
     return boodschap.type === "InfoBoodschapAlert";
   }
+
+  isKaartBevragen(boodschap: InfoBoodschap): boolean {
+    return boodschap.type === "InfoBoodschapKaartBevragen";
+  }
 }

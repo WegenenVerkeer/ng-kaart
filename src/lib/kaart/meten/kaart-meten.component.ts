@@ -7,9 +7,9 @@ import { filter, map, startWith, takeUntil } from "rxjs/operators";
 import { dimensieBeschrijving } from "../../util/geometries";
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { ofType } from "../../util/operators";
-import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { TekenSettings } from "../kaart-elementen";
-import { GeometryChangedMsg, geometryChangedWrapper } from "../kaart-internal-messages";
+import { actieveModusGezetWrapper, GeometryChangedMsg, geometryChangedWrapper, KaartInternalMsg } from "../kaart-internal-messages";
+import { KaartModusComponent } from "../kaart-modus-component";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 import { kaartLogger } from "../log";
@@ -26,19 +26,34 @@ export interface MetenOpties {
   templateUrl: "./kaart-meten.component.html",
   styleUrls: ["./kaart-meten.component.scss"]
 })
-export class KaartMetenComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
+export class KaartMetenComponent extends KaartModusComponent implements OnInit, OnDestroy {
   @Output() getekendeGeom: EventEmitter<ol.geom.Geometry> = new EventEmitter();
 
   private toonInfoBoodschap = true;
-  private metenActief = false;
   private stopTekenenSubj: rx.Subject<void> = new rx.Subject<void>();
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
   }
 
+  modus(): string {
+    return MetenUiSelector;
+  }
+
+  isDefaultModus() {
+    return false;
+  }
+
+  activeer(active: boolean) {
+    if (active) {
+      this.startMetMeten();
+    } else {
+      this.stopMetMeten();
+    }
+  }
+
   public get isMetenActief(): boolean {
-    return this.metenActief;
+    return this.actief;
   }
 
   ngOnInit(): void {
@@ -57,17 +72,23 @@ export class KaartMetenComponent extends KaartChildComponentBase implements OnIn
     super.ngOnDestroy();
   }
 
+  protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
+    return [prt.ActieveModusSubscription(actieveModusGezetWrapper)];
+  }
+
   toggleMeten(): void {
-    if (this.metenActief) {
-      this.metenActief = false;
+    if (this.actief) {
       this.stopMetMeten();
+      this.publiceerDeactivatie();
     } else {
-      this.metenActief = true;
       this.startMetMeten();
+      this.publiceerActivatie();
     }
   }
 
   private startMetMeten(): void {
+    this.actief = true;
+
     this.bindToLifeCycle(
       this.internalMessage$.lift(
         internalMsgSubscriptionCmdOperator(
@@ -106,6 +127,8 @@ export class KaartMetenComponent extends KaartChildComponentBase implements OnIn
   }
 
   private stopMetMeten(): void {
+    this.actief = false;
+
     this.stopTekenenSubj.next(); // zorg dat de unsubscribe gebeurt
     this.stopTekenenSubj = new rx.Subject(); // en maak ons klaar voor de volgende ronde
 

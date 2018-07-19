@@ -5,6 +5,7 @@ import { KaartModule } from "../kaart/index";
 
 import { ClassicAchtergrondSelectorComponent } from "./achtergrond-selector/classic-achtergrond-selector.component";
 import { ClassicCopyrightComponent } from "./copyright/classic-copyright.component";
+import { ClassicKaartBevragenComponent } from "./kaart-bevragen/classic-kaart-bevragen.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { ClassicBlancoLaagComponent } from "./lagen/classic-blanco-laag.component";
 import { ClassicFeaturesLaagComponent } from "./lagen/classic-features-laag.component";
@@ -54,6 +55,7 @@ const components = [
   ClassicStreetviewComponent,
   ClassicZoomComponent,
   ClassicZoekerComponent,
+  ClassicKaartBevragenComponent,
   KaartClassicComponent
 ];
 

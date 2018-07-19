@@ -55,6 +55,7 @@ export type Command<Msg extends KaartMsg> =
   | VoegVolledigSchermToeCmd<Msg>
   | VoegZoekerToeCmd<Msg>
   | VraagSchaalAanCmd<Msg>
+  | ZetActieveModusCmd
   | ZetFocusOpKaartCmd
   | ZetLaagLegendeCmd<Msg>
   | ZetMijnLocatieZoomCmd
@@ -280,6 +281,11 @@ export interface ZoekGekliktCmd {
 export interface ZetMijnLocatieZoomCmd {
   readonly type: "ZetMijnLocatieZoomStatus";
   readonly doelniveau: Option<number>;
+}
+
+export interface ZetActieveModusCmd {
+  readonly type: "ZetActieveModus";
+  readonly modus: Option<string>;
 }
 
 export interface VoegInteractieToeCmd {
@@ -545,6 +551,10 @@ export function UnsubscribeCmd<Msg extends KaartMsg>(subscriptionResult: Subscri
 
 export function ZetMijnLocatieZoomCmd(doelniveau: Option<number>): ZetMijnLocatieZoomCmd {
   return { type: "ZetMijnLocatieZoomStatus", doelniveau: doelniveau };
+}
+
+export function ZetActieveModusCmd(modus: Option<string>): ZetActieveModusCmd {
+  return { type: "ZetActieveModus", modus: modus };
 }
 
 export function ToonInfoBoodschapCmd<Bdschp extends InfoBoodschap>(boodschap: Bdschp): ToonInfoBoodschapCmd {

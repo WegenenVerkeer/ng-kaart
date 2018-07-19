@@ -14,6 +14,7 @@ import { InfoBoodschap } from "./kaart-with-info-model";
 
 export type Subscription<Msg> =
   | AchtergrondTitelSubscription<Msg>
+  | ActieveModusSubscription<Msg>
   | ComponentFoutSubscription<Msg>
   | ExtentSubscription<Msg>
   | GeometryChangedSubscription<Msg>
@@ -116,6 +117,11 @@ export interface ZoekerKlikSubscription<Msg> {
   readonly wrapper: (resultaat: ZoekResultaat) => Msg;
 }
 
+export interface ActieveModusSubscription<Msg> {
+  readonly type: "ActieveModus";
+  readonly wrapper: (modus: Option<string>) => Msg;
+}
+
 export interface GeometryChangedSubscription<Msg> {
   readonly type: "GeometryChanged";
   readonly tekenSettings: ke.TekenSettings;
@@ -213,6 +219,10 @@ export function GeometryChangedSubscription<Msg>(
 
 export function TekenenSubscription<Msg>(wrapper: (settings: Option<ke.TekenSettings>) => Msg): TekenenSubscription<Msg> {
   return { type: "Tekenen", wrapper: wrapper };
+}
+
+export function ActieveModusSubscription<Msg>(wrapper: (modus: Option<string>) => Msg): ActieveModusSubscription<Msg> {
+  return { type: "ActieveModus", wrapper: wrapper };
 }
 
 export function ComponentFoutSubscription<Msg>(wrapper: (fouten: List<string>) => Msg): ComponentFoutSubscription<Msg> {
