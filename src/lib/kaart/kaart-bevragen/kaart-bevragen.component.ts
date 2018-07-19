@@ -38,6 +38,8 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
   activeer(actief: boolean) {
     this.actief = actief;
     if (this.actief) {
+      // activatie van de modus gebeurt nooit expliciet via de gebruiker, dus we moeten expliciet
+      // de activatie publiceren aan de andere componenten
       this.publiceerActivatie();
     }
   }
