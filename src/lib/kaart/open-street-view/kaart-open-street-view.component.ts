@@ -2,8 +2,7 @@ import { Component, NgZone } from "@angular/core";
 
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { Observable } from "rxjs/Observable";
-import { skipUntil, take, takeUntil } from "rxjs/operators";
+import { take, takeUntil } from "rxjs/operators";
 
 import { lambert72ToWgs84 } from "../../coordinaten/coordinaten.service";
 import { observeOnAngular } from "../../util/observe-on-angular";

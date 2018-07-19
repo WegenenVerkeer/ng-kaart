@@ -1,8 +1,7 @@
 import { Component, NgZone, OnInit } from "@angular/core";
 import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
-import { Observable } from "rxjs/Observable";
-import { skipUntil, takeUntil } from "rxjs/operators";
+import { takeUntil } from "rxjs/operators";
 
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { ofType, skipUntilInitialised } from "../../util/operators";
