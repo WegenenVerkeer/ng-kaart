@@ -1,5 +1,5 @@
-import { Component, NgZone, OnInit } from "@angular/core";
-import { none, some } from "fp-ts/lib/Option";
+import { Component, NgZone } from "@angular/core";
+
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { Observable } from "rxjs/Observable";
@@ -8,15 +8,9 @@ import { skipUntil, take, takeUntil } from "rxjs/operators";
 import { lambert72ToWgs84 } from "../../coordinaten/coordinaten.service";
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { ofType } from "../../util/operators";
-import { containsText } from "../../util/option";
-import { KaartChildComponentBase } from "../kaart-child-component-base";
-import {
-  ActieveModusAangepastMsg,
-  actieveModusGezetWrapper,
-  KaartClickMsg,
-  kaartClickWrapper,
-  KaartInternalMsg
-} from "../kaart-internal-messages";
+
+import { actieveModusGezetWrapper, KaartClickMsg, kaartClickWrapper, KaartInternalMsg } from "../kaart-internal-messages";
+import { KaartModusComponent } from "../kaart-modus-component";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 
@@ -27,13 +21,27 @@ export const StreetviewUiSelector = "Streetview";
   templateUrl: "./kaart-open-street-view.component.html",
   styleUrls: ["./kaart-open-street-view.component.scss"]
 })
-export class KaartOpenStreetViewComponent extends KaartChildComponentBase implements OnInit {
+export class KaartOpenStreetViewComponent extends KaartModusComponent {
   private clickSubscription: rx.Subscription = new rx.Subscription();
-
-  private actief = false;
 
   constructor(kaartComponent: KaartComponent, zone: NgZone) {
     super(kaartComponent, zone);
+  }
+
+  modus(): string {
+    return StreetviewUiSelector;
+  }
+
+  isDefaultModus() {
+    return false;
+  }
+
+  activeer(active: boolean) {
+    if (active) {
+      this.startLuisterenOpClickEvents();
+    } else {
+      this.stopLuisterenOpClickEvents();
+    }
   }
 
   public get isActief(): boolean {
@@ -44,33 +52,13 @@ export class KaartOpenStreetViewComponent extends KaartChildComponentBase implem
     return [prt.ActieveModusSubscription(actieveModusGezetWrapper), prt.KaartClickSubscription(kaartClickWrapper)];
   }
 
-  ngOnInit(): void {
-    super.ngOnInit();
-
-    this.internalMessage$
-      .pipe(
-        ofType<ActieveModusAangepastMsg>("ActieveModus"), //
-        observeOnAngular(this.zone),
-        takeUntil(this.destroying$), // autounsubscribe bij destroy component
-        skipUntil(Observable.timer(0)) // beperk tot messages nadat subscribe opgeroepen is: oorzaak is shareReplay(1) in internalmessages$
-      )
-      .subscribe(msg => {
-        if (!containsText(msg.modus, StreetviewUiSelector)) {
-          // aanvraag tot andere actieve klik modus, deactiveer deze modus indien nodig
-          if (this.actief) {
-            this.stopLuisterenOpClickEvents();
-          }
-        }
-      });
-  }
-
   toggleLuisterenOpKaartClicks(): void {
     if (this.actief) {
       this.stopLuisterenOpClickEvents();
-      this.dispatch(prt.ZetActieveModusCmd(none));
+      this.publiceerDeactivatie();
     } else {
       this.startLuisterenOpClickEvents();
-      this.dispatch(prt.ZetActieveModusCmd(some(StreetviewUiSelector)));
+      this.publiceerActivatie();
     }
   }
 
@@ -108,6 +96,6 @@ export class KaartOpenStreetViewComponent extends KaartChildComponentBase implem
 
     // sluit de street view modus af
     this.stopLuisterenOpClickEvents();
-    this.dispatch(prt.ZetActieveModusCmd(none));
+    this.publiceerDeactivatie();
   }
 }
