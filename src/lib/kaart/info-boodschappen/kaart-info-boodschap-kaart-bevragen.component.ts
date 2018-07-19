@@ -20,7 +20,10 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildComponen
   }
 
   coordinaatInformatieLambert72(): string {
-    return this.coordinaat.map(coord => `${coord[0]}, ${coord[1]}`).getOrElse("");
+    return this.coordinaat
+      .map(coord => [coord[0].toFixed(0), coord[1].toFixed(0)])
+      .map(coord => `${coord[0]}, ${coord[1]}`)
+      .getOrElse("");
   }
 
   coordinaatInformatieWgs84(): string {
