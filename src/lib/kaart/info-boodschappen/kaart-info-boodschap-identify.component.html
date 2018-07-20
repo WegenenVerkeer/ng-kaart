@@ -33,9 +33,8 @@
         {{ label(veld) }}</a>
     </div>
   </div>
-
-  <div>
-  <!--<div *ngIf="heeftMaakAbbameldaMelding()">-->
+  
+  <div *ngIf="heeftMaakAbbameldaMelding()">
     <div class="veldlinks" (click)="this.toggleVerstuurAbbameldaMelding()">
         <mat-icon class="link-icon">chat</mat-icon>
       Maak melding in Abbamelda
