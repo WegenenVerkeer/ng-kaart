@@ -34,6 +34,33 @@
     </div>
   </div>
 
+  <div>
+  <!--<div *ngIf="heeftMaakAbbameldaMelding()">-->
+    <div class="veldlinks" (click)="this.toggleVerstuurAbbameldaMelding()">
+        <mat-icon class="link-icon">chat</mat-icon>
+      Maak melding in Abbamelda
+    </div>
+
+    <div class="kaart-naam-panel" *ngIf="toonAbbameldaMeldingForm">
+      <form novalidate class="melding-form" (ngSubmit)="verstuurMelding()">
+
+        <mat-form-field class="melding-input">
+          <input matInput [formControl]="abbameldaMeldingInputControl">
+
+          <mat-error *ngIf="abbameldaMeldingInputControl.hasError('required')">
+            Een boodschap is verplicht
+          </mat-error>
+
+        </mat-form-field>
+
+        <button class="bewaar" mat-button [disabled]="!abbameldaMeldingInputControl.valid">
+          <mat-icon>send</mat-icon>
+        </button>
+
+      </form>
+    </div>
+  </div>
+
   <div class="separator-na-locatie"></div>
 
   <div class="velden" *ngFor="let veld of zichtbareEigenschappen()">

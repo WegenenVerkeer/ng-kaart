@@ -1,6 +1,6 @@
 import { Component, Input, NgZone } from "@angular/core";
+import { FormControl, FormGroup, Validators } from "@angular/forms";
 import { fromNullable, Option } from "fp-ts/lib/Option";
-
 import { List, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 
@@ -10,8 +10,6 @@ import { VectorLaag, VeldInfo } from "../kaart-elementen";
 import { KaartComponent } from "../kaart.component";
 
 import { KaartInfoBoodschapComponent } from "./kaart-info-boodschap.component";
-
-// Nosql feature parsing
 
 const PROPERTIES = "properties";
 const GEOMETRY = "geometry";
@@ -69,6 +67,9 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
     HM,
     VERPL
   );
+
+  toonAbbameldaMeldingForm = false;
+  abbameldaMeldingInputControl = new FormControl("", [Validators.required]);
 
   private properties = () => this.feature.getProperties()[PROPERTIES];
 
@@ -296,5 +297,19 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
     } else {
       return dateString; // date string niet herkend, geef input terug
     }
+  }
+
+  toggleVerstuurAbbameldaMelding() {
+    this.toonAbbameldaMeldingForm = !this.toonAbbameldaMeldingForm;
+    this.abbameldaMeldingInputControl.setValue("");
+  }
+
+  heeftMaakAbbameldaMelding(): boolean {
+    return this.laag.chain(l => fromNullable(l.velden.get("meldingInAbbamelda"))).isSome();
+  }
+
+  verstuurMelding() {
+    alert(`${this.abbameldaMeldingInputControl.value} verstuurd`);
+    this.toggleVerstuurAbbameldaMelding();
   }
 }

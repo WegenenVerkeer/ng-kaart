@@ -1,6 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { HttpClientModule } from "@angular/common/http";
 import { ModuleWithProviders, NgModule } from "@angular/core";
+import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import {
   MAT_TOOLTIP_DEFAULT_OPTIONS,
   MatButtonModule,
@@ -8,6 +9,7 @@ import {
   MatCardModule,
   MatExpansionModule,
   MatIconModule,
+  MatInputModule,
   MatTooltipDefaultOptions,
   MatTooltipModule
 } from "@angular/material";
@@ -109,8 +111,11 @@ export const myCustomTooltipDefaults: MatTooltipDefaultOptions = {
     MatIconModule,
     MatButtonToggleModule,
     MatCardModule,
+    MatInputModule,
     MatTooltipModule,
     MatExpansionModule,
+    FormsModule,
+    ReactiveFormsModule,
     HttpClientModule,
     ZoekerModule.forRoot({}),
     LagenkiezerModule.withDefaults()
