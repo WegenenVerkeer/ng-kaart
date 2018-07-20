@@ -1,9 +1,11 @@
+import { HttpClient } from "@angular/common/http";
 import { Component, Input, NgZone } from "@angular/core";
-import { FormControl, FormGroup, Validators } from "@angular/forms";
+import { FormControl, Validators } from "@angular/forms";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import { List, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 
+import { classicLogger } from "../../classic/log";
 import { orElse } from "../../util/option";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { VectorLaag, VeldInfo } from "../kaart-elementen";
@@ -73,7 +75,12 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
 
   private properties = () => this.feature.getProperties()[PROPERTIES];
 
-  constructor(parent: KaartComponent, zone: NgZone, private kaartInfoBoodschapComponent: KaartInfoBoodschapComponent) {
+  constructor(
+    parent: KaartComponent,
+    zone: NgZone,
+    private kaartInfoBoodschapComponent: KaartInfoBoodschapComponent,
+    private http: HttpClient
+  ) {
     super(parent, zone);
   }
 
@@ -309,7 +316,22 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   }
 
   verstuurMelding() {
-    alert(`${this.abbameldaMeldingInputControl.value} verstuurd`);
-    this.toggleVerstuurAbbameldaMelding();
+    const boodschap = this.abbameldaMeldingInputControl.value;
+
+    this.http
+      .post("/geoloket2/rest/abbamelda/melding", {
+        melding: boodschap,
+        onderdeel: this.waarde("rootPad"),
+        pad: this.waarde("installatieNaampad")
+      })
+      .subscribe(
+        resultaat => {
+          alert(`${boodschap} verstuurd`);
+          this.toggleVerstuurAbbameldaMelding();
+        }, //
+        err => {
+          alert(`Kon Abbamelda melding niet versturen: foutmelding ${err.error}`);
+        }
+      );
   }
 }
