@@ -1,18 +1,18 @@
 import { Component, EventEmitter, Input, NgZone, OnInit, Output } from "@angular/core";
 import * as ol from "openlayers";
+import { geom } from "openlayers";
 import * as rx from "rxjs";
 import { distinctUntilChanged, map, takeUntil } from "rxjs/operators";
-
-import { ofType } from "../../util/operators";
-import { classicMsgSubscriptionCmdOperator, KaartClassicComponent } from "../kaart-classic.component";
-import { classicLogger } from "../log";
-import { KaartClassicMsg, TekenGeomAangepastMsg } from "../messages";
 
 import { KaartComponentBase } from "../../kaart/kaart-component-base";
 import { TekenSettings } from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
 import * as ss from "../../kaart/stijl-selector";
 import { TekenenUiSelector } from "../../kaart/tekenen/kaart-teken-laag.component";
+import { ofType } from "../../util/operators";
+import { classicMsgSubscriptionCmdOperator, KaartClassicComponent } from "../kaart-classic.component";
+import { classicLogger } from "../log";
+import { KaartClassicMsg, TekenGeomAangepastMsg } from "../messages";
 
 @Component({
   selector: "awv-kaart-teken",
@@ -65,7 +65,7 @@ export class KaartTekenComponent extends KaartComponentBase implements OnInit {
             this.kaart.dispatcher,
             prt.GeometryChangedSubscription(
               TekenSettings(this._geometryType, ss.asStyleSelector(this._laagStyle), ss.asStyleSelector(this._drawStyle)),
-              geom => KaartClassicMsg(TekenGeomAangepastMsg(geom))
+              resultaat => KaartClassicMsg(TekenGeomAangepastMsg(resultaat.geometry))
             )
           )
         )

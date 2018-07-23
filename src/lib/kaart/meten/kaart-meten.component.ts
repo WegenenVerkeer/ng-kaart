@@ -1,5 +1,5 @@
 import { Component, EventEmitter, NgZone, OnDestroy, OnInit, Output } from "@angular/core";
-import { none } from "fp-ts/lib/Option";
+import { none, Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { filter, map, startWith, takeUntil } from "rxjs/operators";
@@ -8,7 +8,7 @@ import { dimensieBeschrijving } from "../../util/geometries";
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { ofType } from "../../util/operators";
 import { TekenSettings } from "../kaart-elementen";
-import { actieveModusGezetWrapper, GeometryChangedMsg, geometryChangedWrapper, KaartInternalMsg } from "../kaart-internal-messages";
+import { actieveModusGezetWrapper, GeometryChangedMsg, KaartInternalMsg, tekenResultaatWrapper } from "../kaart-internal-messages";
 import { KaartModusComponent } from "../kaart-modus-component";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
@@ -48,7 +48,7 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
     if (active) {
       this.startMetMeten();
     } else {
-      this.stopMetMeten();
+      this.stopMetenEnVerbergBoodschap();
     }
   }
 
@@ -68,7 +68,7 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
   }
 
   ngOnDestroy(): void {
-    this.stopMetMeten();
+    this.stopMetenEnVerbergBoodschap();
     super.ngOnDestroy();
   }
 
@@ -78,7 +78,7 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
 
   toggleMeten(): void {
     if (this.actief) {
-      this.stopMetMeten();
+      this.stopMetenEnVerbergBoodschap();
       this.publiceerDeactivatie();
     } else {
       this.startMetMeten();
@@ -93,7 +93,7 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
       this.internalMessage$.lift(
         internalMsgSubscriptionCmdOperator(
           this.kaartComponent.internalCmdDispatcher,
-          prt.GeometryChangedSubscription(TekenSettings("Polygon", none, none), geometryChangedWrapper)
+          prt.GeometryChangedSubscription(TekenSettings("Polygon", none, none), tekenResultaatWrapper)
         )
       )
     )
@@ -114,10 +114,10 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
         if (this.toonInfoBoodschap) {
           this.dispatch(
             prt.ToonInfoBoodschapCmd({
-              id: "meten-resultaat",
+              id: "meten-resultaat-" + msg.volgnummer,
               type: "InfoBoodschapAlert",
-              titel: "Meten",
-              sluitbaar: false,
+              titel: "Meten " + msg.volgnummer + ":",
+              sluitbaar: true,
               message: this.helpText(msg.geometry),
               verbergMsgGen: () => none // TODO: stop tekenen event moet gestuurd worden
             })
@@ -126,11 +126,15 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
       });
   }
 
-  private stopMetMeten(): void {
+  private stopMeten(): void {
     this.actief = false;
 
     this.stopTekenenSubj.next(); // zorg dat de unsubscribe gebeurt
     this.stopTekenenSubj = new rx.Subject(); // en maak ons klaar voor de volgende ronde
+  }
+
+  private stopMetenEnVerbergBoodschap(): void {
+    this.stopMeten();
 
     this.dispatch(prt.VerbergInfoBoodschapCmd("meten-resultaat"));
   }

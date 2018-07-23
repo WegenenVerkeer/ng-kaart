@@ -104,6 +104,12 @@ export interface TekenSettings {
   readonly drawStyle: Option<StyleSelector>;
 }
 
+export interface TekenResultaat {
+  readonly geometry: ol.geom.Geometry;
+  readonly volgnummer: number;
+  readonly featureid: number | string;
+}
+
 /**
  * Dit is een wrapper rond Laag die naast de laag zelf ook het gebruik van de laag bij houdt.
  */
@@ -151,5 +157,13 @@ export function TekenSettings(
     geometryType: geometryType,
     laagStyle: laagStyle,
     drawStyle: drawStyle
+  };
+}
+
+export function TekenResultaat(geometry: ol.geom.Geometry, volgnummer: number, featureid: number | string): TekenResultaat {
+  return {
+    volgnummer: volgnummer,
+    featureid: featureid,
+    geometry: geometry
   };
 }

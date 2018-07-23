@@ -1,10 +1,8 @@
-import { pipe } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { Map } from "immutable";
 import * as ol from "openlayers";
 
-import { TekenSettings } from "./kaart-elementen";
-import { DataLoadEvent } from "./kaart-load-events";
+import { TekenResultaat, TekenSettings } from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import { kaartLogger } from "./log";
@@ -34,6 +32,8 @@ export interface AchtergrondtitelGezetMsg {
 export interface GeometryChangedMsg {
   type: "GeometryChanged";
   geometry: ol.geom.Geometry;
+  volgnummer: number;
+  featureid: string | number;
 }
 
 export interface ActieveModusAangepastMsg {
@@ -119,11 +119,12 @@ function AchtergrondtitelGezetMsg(titel: string): AchtergrondtitelGezetMsg {
 
 export const achtergrondtitelGezetWrapper = (titel: string) => KaartInternalMsg(some(AchtergrondtitelGezetMsg(titel)));
 
-function GeometryChangedMsg(geometry: ol.geom.Geometry): GeometryChangedMsg {
-  return { type: "GeometryChanged", geometry: geometry };
+function GeometryChangedMsg(geometry: ol.geom.Geometry, volgnummer: number, featureid: string | number): GeometryChangedMsg {
+  return { type: "GeometryChanged", geometry: geometry, volgnummer: volgnummer, featureid: featureid };
 }
 
-export const geometryChangedWrapper = (geometry: ol.geom.Geometry) => KaartInternalMsg(some(GeometryChangedMsg(geometry)));
+export const tekenResultaatWrapper = (resultaat: TekenResultaat) =>
+  KaartInternalMsg(some(GeometryChangedMsg(resultaat.geometry, resultaat.volgnummer, resultaat.featureid)));
 
 function TekenMsg(settings: Option<TekenSettings>): TekenMsg {
   return {
