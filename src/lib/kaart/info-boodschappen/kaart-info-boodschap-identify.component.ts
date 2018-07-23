@@ -2,7 +2,7 @@ import { animate, style, transition, trigger } from "@angular/animations";
 import { HttpClient } from "@angular/common/http";
 import { Component, Input, NgZone } from "@angular/core";
 import { FormControl, Validators } from "@angular/forms";
-import { fromNullable, Option } from "fp-ts/lib/Option";
+import { fromNullable, Option, some } from "fp-ts/lib/Option";
 import { List, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 
@@ -10,7 +10,9 @@ import { orElse } from "../../util/option";
 import { LocatorServiceResult } from "../../zoeker/crab/zoeker-crab.service";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { VectorLaag, VeldInfo } from "../kaart-elementen";
+import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
+import { kaartLogger } from "../log";
 
 import { KaartInfoBoodschapComponent } from "./kaart-info-boodschap.component";
 
@@ -89,6 +91,8 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
 
   toonAbbameldaMeldingForm = false;
   abbameldaMeldingInputControl = new FormControl("", [Validators.required]);
+  abbameldaSuccesBoodschap = "";
+  abbameldaFoutBoodschap = "";
 
   private properties = () => this.feature.getProperties()[PROPERTIES];
 
@@ -332,6 +336,14 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
     return this.laag.chain(l => fromNullable(l.velden.get("meldingInAbbamelda"))).isSome();
   }
 
+  getAbbameldaSuccesBoodschap(): string {
+    return this.abbameldaSuccesBoodschap;
+  }
+
+  getAbbameldaFoutBoodschap(): string {
+    return this.abbameldaFoutBoodschap;
+  }
+
   verstuurMelding() {
     const boodschap = this.abbameldaMeldingInputControl.value;
 
@@ -343,11 +355,13 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
       })
       .subscribe(
         res => {
-          alert(res.resultaat); // TODO: moet via toast
+          this.abbameldaSuccesBoodschap = res.resultaat;
+          this.abbameldaFoutBoodschap = "";
           this.toggleVerstuurAbbameldaMelding();
         }, //
         err => {
-          alert(`Kon Abbamelda melding niet versturen: ${err.error.resultaat}`); // TODO: moet via toast
+          this.abbameldaSuccesBoodschap = "";
+          this.abbameldaFoutBoodschap = `Kon Abbamelda melding niet versturen: ${err.error.resultaat}`;
         }
       );
   }
