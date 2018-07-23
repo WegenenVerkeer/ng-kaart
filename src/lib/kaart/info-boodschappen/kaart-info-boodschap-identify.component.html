@@ -40,7 +40,7 @@
       Maak melding in Abbamelda
     </div>
 
-    <div class="kaart-naam-panel" *ngIf="toonAbbameldaMeldingForm">
+    <div class="kaart-naam-panel" *ngIf="toonAbbameldaMeldingForm" [@enterAnimation]>
       <form novalidate class="melding-form" (ngSubmit)="verstuurMelding()">
 
         <mat-form-field class="melding-input">

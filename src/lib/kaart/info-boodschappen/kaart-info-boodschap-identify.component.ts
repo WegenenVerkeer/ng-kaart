@@ -1,3 +1,4 @@
+import { animate, style, transition, trigger } from "@angular/animations";
 import { HttpClient } from "@angular/common/http";
 import { Component, Input, NgZone } from "@angular/core";
 import { FormControl, Validators } from "@angular/forms";
@@ -46,7 +47,19 @@ const nestedProperty = (propertyKey: string, object: Object) =>
 @Component({
   selector: "awv-kaart-info-boodschap-identify",
   templateUrl: "./kaart-info-boodschap-identify.component.html",
-  styleUrls: ["./kaart-info-boodschap-identify.component.scss"]
+  styleUrls: ["./kaart-info-boodschap-identify.component.scss"],
+  animations: [
+    trigger("enterAnimation", [
+      transition(":enter", [
+        style({ opacity: 0, "max-height": 0 }),
+        animate("0.35s cubic-bezier(.62,.28,.23,.99)", style({ opacity: 1, "max-height": "400px" }))
+      ]),
+      transition(":leave", [
+        style({ opacity: 1, "max-height": "400px" }),
+        animate("0.35s cubic-bezier(.62,.28,.23,.99)", style({ opacity: 0, "max-height": 0 }))
+      ])
+    ])
+  ]
 })
 export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase {
   @Input() feature: ol.Feature;
