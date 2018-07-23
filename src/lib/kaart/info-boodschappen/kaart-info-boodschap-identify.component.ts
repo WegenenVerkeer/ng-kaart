@@ -5,8 +5,8 @@ import { fromNullable, Option } from "fp-ts/lib/Option";
 import { List, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 
-import { classicLogger } from "../../classic/log";
 import { orElse } from "../../util/option";
+import { LocatorServiceResult } from "../../zoeker/crab/zoeker-crab.service";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { VectorLaag, VeldInfo } from "../kaart-elementen";
 import { KaartComponent } from "../kaart.component";
@@ -31,6 +31,10 @@ const AFSTANDRIJBAAN = "afstandrijbaan";
 const BREEDTE = "breedte";
 const HM = "hm";
 const VERPL = "verpl";
+
+export interface AbbameldaResultaat {
+  readonly resultaat: string;
+}
 
 const geldigeWaarde = value => value !== undefined && value !== null;
 
@@ -319,18 +323,18 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
     const boodschap = this.abbameldaMeldingInputControl.value;
 
     this.http
-      .post("/geoloket2/rest/abbamelda/melding", {
+      .post<AbbameldaResultaat>("/geoloket2/rest/abbamelda/melding", {
         melding: boodschap,
         onderdeel: this.waarde("rootPad"),
         pad: this.waarde("installatieNaampad")
       })
       .subscribe(
-        resultaat => {
-          alert(`${boodschap} verstuurd`);
+        res => {
+          alert(res.resultaat); // TODO: moet via toast
           this.toggleVerstuurAbbameldaMelding();
         }, //
         err => {
-          alert(`Kon Abbamelda melding niet versturen: foutmelding ${err.error}`);
+          alert(`Kon Abbamelda melding niet versturen: ${err.error.resultaat}`); // TODO: moet via toast
         }
       );
   }
