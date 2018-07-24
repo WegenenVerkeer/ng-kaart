@@ -116,6 +116,10 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
         observeOnAngular(this.zone)
       )
       .subscribe(msg => {
+        const infoSluitCallback = () => {
+          return some(verwijderTekenFeatureWrapper(msg.featureid));
+        };
+
         this.getekendeGeom.next(msg.geometry);
         if (this.toonInfoBoodschap) {
           this.dispatch(
@@ -123,10 +127,9 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
               id: "meten-resultaat-" + msg.volgnummer,
               type: "InfoBoodschapAlert",
               titel: "Meten " + msg.volgnummer + ":",
-              sluitbaar: true,
-              sluitvanzelf: true,
+              sluit: "VANZELF",
               message: this.helpText(msg.geometry),
-              verbergMsgGen: () => some(verwijderTekenFeatureWrapper(msg.featureid))
+              verbergMsgGen: infoSluitCallback
             })
           );
         }

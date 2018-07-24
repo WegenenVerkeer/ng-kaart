@@ -10,8 +10,7 @@ export interface InfoBoodschap {
   readonly id: string;
   readonly titel: string;
   readonly type: string;
-  readonly sluitbaar: boolean;
-  readonly sluitvanzelf: boolean;
+  readonly sluit: "NIET" | "VANZELF" | "DOOR_APPLICATIE";
   readonly verbergMsgGen: () => Option<TypedRecord>;
 }
 
