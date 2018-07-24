@@ -1,6 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { HttpClientModule } from "@angular/common/http";
 import { ModuleWithProviders, NgModule } from "@angular/core";
+import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import {
   MAT_TOOLTIP_DEFAULT_OPTIONS,
   MatButtonModule,
@@ -8,12 +9,14 @@ import {
   MatCardModule,
   MatExpansionModule,
   MatIconModule,
+  MatInputModule,
   MatTooltipDefaultOptions,
   MatTooltipModule
 } from "@angular/material";
 import { ClickOutsideModule } from "ng4-click-outside";
 import * as ol from "openlayers";
 
+import { AbbameldaModule } from "../abbamelda/index";
 import { KaartOpenLayersStyleComponent } from "../classic/openlayers-style/classic-openlayers-style.component";
 import { KaartTekenComponent } from "../classic/tekenen/kaart-teken.component";
 import { LagenkiezerModule } from "../lagenkiezer/index";
@@ -109,9 +112,13 @@ export const myCustomTooltipDefaults: MatTooltipDefaultOptions = {
     MatIconModule,
     MatButtonToggleModule,
     MatCardModule,
+    MatInputModule,
     MatTooltipModule,
     MatExpansionModule,
+    FormsModule,
+    ReactiveFormsModule,
     HttpClientModule,
+    AbbameldaModule,
     ZoekerModule.forRoot({}),
     LagenkiezerModule.withDefaults()
   ],
