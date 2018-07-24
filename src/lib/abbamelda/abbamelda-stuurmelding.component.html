@@ -1,0 +1,28 @@
+<div class="abbameldalink" (click)="this.toggleVerstuurAbbameldaMelding()">
+  <mat-icon class="link-icon">chat</mat-icon>
+  Maak melding in Abbamelda
+</div>
+
+<div *ngIf="toonAbbameldaMeldingForm" [@enterAnimation]>
+  <form novalidate class="melding-form" (ngSubmit)="verstuurMelding()">
+
+    <mat-form-field>
+      <input matInput [formControl]="abbameldaMeldingInputControl">
+
+      <mat-error *ngIf="abbameldaMeldingInputControl.hasError('required')">
+        Een boodschap is verplicht
+      </mat-error>
+
+    </mat-form-field>
+
+    <button mat-button [disabled]="!abbameldaMeldingInputControl.valid">
+      <mat-icon>send</mat-icon>
+    </button>
+
+  </form>
+</div>
+
+<div>
+  <div class="abbameldasucces">{{ abbameldaSuccesBoodschap }}</div>
+  <div class="abbameldafout">{{ abbameldaFoutBoodschap }}</div>
+</div>

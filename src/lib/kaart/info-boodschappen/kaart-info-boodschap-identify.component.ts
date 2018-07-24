@@ -1,17 +1,20 @@
+import { animate, style, transition, trigger } from "@angular/animations";
+import { HttpClient } from "@angular/common/http";
 import { Component, Input, NgZone } from "@angular/core";
-import { fromNullable, Option } from "fp-ts/lib/Option";
-
+import { FormControl, Validators } from "@angular/forms";
+import { fromNullable, Option, some } from "fp-ts/lib/Option";
 import { List, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 
 import { orElse } from "../../util/option";
+import { LocatorServiceResult } from "../../zoeker/crab/zoeker-crab.service";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { VectorLaag, VeldInfo } from "../kaart-elementen";
+import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
+import { kaartLogger } from "../log";
 
 import { KaartInfoBoodschapComponent } from "./kaart-info-boodschap.component";
-
-// Nosql feature parsing
 
 const PROPERTIES = "properties";
 const GEOMETRY = "geometry";
@@ -72,7 +75,12 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
 
   private properties = () => this.feature.getProperties()[PROPERTIES];
 
-  constructor(parent: KaartComponent, zone: NgZone, private kaartInfoBoodschapComponent: KaartInfoBoodschapComponent) {
+  constructor(
+    parent: KaartComponent,
+    zone: NgZone,
+    private kaartInfoBoodschapComponent: KaartInfoBoodschapComponent,
+    private http: HttpClient
+  ) {
     super(parent, zone);
   }
 
@@ -296,5 +304,9 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
     } else {
       return dateString; // date string niet herkend, geef input terug
     }
+  }
+
+  heeftMaakAbbameldaMelding(): boolean {
+    return this.laag.chain(l => fromNullable(l.velden.get("meldingInAbbamelda"))).isSome();
   }
 }

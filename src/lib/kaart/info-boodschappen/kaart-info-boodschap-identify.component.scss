@@ -65,14 +65,15 @@
   order: 1;
   flex-basis: 100%;
   max-width: 100%;
-}
-
-.veldlinks a {
   line-height: 20px;
-  text-decoration: none;
   font-size: 14px;
   font-weight: 300;
   color: rgba(247, 144, 45, 0.87);
+  cursor: pointer;
+  a {
+    text-decoration: none;
+    color: rgba(247, 144, 45, 0.87);
+  }
 }
 
 .link-icon {
@@ -138,4 +139,3 @@
 .expand-line {
   padding-bottom: 32px;
 }
-

@@ -24,7 +24,7 @@
     {{ dimensies() }}
   </div>
 
-  <div class="separator-na-locatie"></div>
+  <div class="separator-na-locatie" *ngIf="heeftIdent8()"></div>
 
   <div class="velden" *ngFor="let veld of linkEigenschappen()">
     <div class="veldlinks">
@@ -32,6 +32,14 @@
         <mat-icon class="link-icon">open_in_new</mat-icon>
         {{ label(veld) }}</a>
     </div>
+  </div>
+
+  <div *ngIf="heeftMaakAbbameldaMelding()">
+
+    <awv-abbamelda-stuur-melding
+      [abbamelda_pad]="waarde('installatieNaampad')"
+      [abbamelda_onderdeel]="waarde('rootPad')"></awv-abbamelda-stuur-melding>
+
   </div>
 
   <div class="separator-na-locatie"></div>
