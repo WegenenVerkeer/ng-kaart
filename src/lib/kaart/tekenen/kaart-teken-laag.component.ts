@@ -7,11 +7,13 @@ import { distinctUntilChanged, map, skipWhile } from "rxjs/operators";
 import * as uuid from "uuid";
 
 import { dimensieBeschrijving } from "../../util/geometries";
+import { observeOnAngular } from "../../util/observe-on-angular";
+import { ofType } from "../../util/operators";
 import { forEach, orElse } from "../../util/option";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
 import { VeldInfo } from "../kaart-elementen";
-import { KaartInternalMsg, kaartLogOnlyWrapper, tekenWrapper } from "../kaart-internal-messages";
+import { KaartInternalMsg, kaartLogOnlyWrapper, tekenWrapper, VerwijderTekenFeatureMsg } from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 import { asStyleSelector, toStylish } from "../stijl-selector";
@@ -77,6 +79,19 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
 
   ngOnInit(): void {
     super.ngOnInit();
+
+    this.bindToLifeCycle(
+      this.internalMessage$.pipe(
+        ofType<VerwijderTekenFeatureMsg>("VerwijderTekenFeature"), //
+        observeOnAngular(this.zone)
+      )
+    ).subscribe(msg => {
+      // TODO: extra checks
+      const feature = this.source.getFeatureById(msg.featureid);
+      const tooltip = feature.get("measuretooltip") as ol.Overlay;
+      this.dispatch(prt.VerwijderOverlaysCmd([tooltip]));
+      this.source.removeFeature(feature);
+    });
 
     this.bindToLifeCycle(
       this.kaartModel$.pipe(
@@ -185,6 +200,7 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
         const feature = (event as ol.interaction.Draw.Event).feature;
         const volgnummer = this.volgendeVolgnummer();
         feature.set("volgnummer", volgnummer);
+        feature.set("measuretooltip", measureTooltip);
         feature.setId(uuid.v4());
         feature.getGeometry().on(
           "change",

@@ -11,6 +11,7 @@ export interface InfoBoodschap {
   readonly titel: string;
   readonly type: string;
   readonly sluitbaar: boolean;
+  readonly sluitvanzelf: boolean;
   readonly verbergMsgGen: () => Option<TypedRecord>;
 }
 

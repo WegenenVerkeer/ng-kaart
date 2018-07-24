@@ -16,6 +16,7 @@ export type KaartInternalSubMsg =
   | MijnLocatieZoomdoelGezetMsg
   | SubscribedMsg
   | TekenMsg
+  | VerwijderTekenFeatureMsg
   | ViewinstellingenGezetMsg
   | ActieveModusAangepastMsg;
 
@@ -70,6 +71,11 @@ export interface KaartClickMsg {
 export interface InfoBoodschappenMsg {
   readonly type: "InfoBoodschappen";
   readonly infoBoodschappen: Map<string, InfoBoodschap>;
+}
+
+export interface VerwijderTekenFeatureMsg {
+  readonly type: "VerwijderTekenFeature";
+  readonly featureid: string | number;
 }
 
 function KaartInternalMsg(payload: Option<KaartInternalSubMsg>): KaartInternalMsg {
@@ -154,3 +160,12 @@ function ActieveModusGezet(modus: Option<string>): ActieveModusAangepastMsg {
 }
 
 export const actieveModusGezetWrapper = (modus: Option<string>) => KaartInternalMsg(some(ActieveModusGezet(modus)));
+
+export function VerwijderTekenFeatureMsg(featureid: string | number): VerwijderTekenFeatureMsg {
+  return {
+    type: "VerwijderTekenFeature",
+    featureid: featureid
+  };
+}
+
+export const verwijderTekenFeatureWrapper = (featureid: string | number) => KaartInternalMsg(some(VerwijderTekenFeatureMsg(featureid)));

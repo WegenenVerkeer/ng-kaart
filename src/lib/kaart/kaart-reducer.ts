@@ -941,15 +941,19 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function sluitInfoBoodschap(cmnd: prt.SluitInfoBoodschapCmd<Msg>): ModelWithResult<Msg> {
+      const sluitBox = () => model.infoBoodschappenSubj.next(model.infoBoodschappenSubj.getValue().delete(cmnd.id));
       const maybeMsg = cmnd.msgGen() as Option<Msg>;
       return maybeMsg.foldL(
         () => {
           // geen message uit functie, sluit de info boodschap zelf
-          model.infoBoodschappenSubj.next(model.infoBoodschappenSubj.getValue().delete(cmnd.id));
+          sluitBox();
           return ModelWithResult(model);
         },
         msg => {
           // stuur sluit message door
+          if (cmnd.sluit) {
+            sluitBox();
+          }
           return ModelWithResult(model, some(msg));
         }
       );

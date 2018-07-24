@@ -1,5 +1,5 @@
 import { Component, EventEmitter, NgZone, OnDestroy, OnInit, Output } from "@angular/core";
-import { none, Option } from "fp-ts/lib/Option";
+import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { filter, map, startWith, takeUntil } from "rxjs/operators";
@@ -8,7 +8,13 @@ import { dimensieBeschrijving } from "../../util/geometries";
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { ofType } from "../../util/operators";
 import { TekenSettings } from "../kaart-elementen";
-import { actieveModusGezetWrapper, GeometryChangedMsg, KaartInternalMsg, tekenResultaatWrapper } from "../kaart-internal-messages";
+import {
+  actieveModusGezetWrapper,
+  GeometryChangedMsg,
+  KaartInternalMsg,
+  tekenResultaatWrapper,
+  verwijderTekenFeatureWrapper
+} from "../kaart-internal-messages";
 import { KaartModusComponent } from "../kaart-modus-component";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
@@ -118,8 +124,9 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
               type: "InfoBoodschapAlert",
               titel: "Meten " + msg.volgnummer + ":",
               sluitbaar: true,
+              sluitvanzelf: true,
               message: this.helpText(msg.geometry),
-              verbergMsgGen: () => none // TODO: stop tekenen event moet gestuurd worden
+              verbergMsgGen: () => some(verwijderTekenFeatureWrapper(msg.featureid))
             })
           );
         }
