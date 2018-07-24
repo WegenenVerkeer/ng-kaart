@@ -35,10 +35,6 @@ const BREEDTE = "breedte";
 const HM = "hm";
 const VERPL = "verpl";
 
-export interface AbbameldaResultaat {
-  readonly resultaat: string;
-}
-
 const geldigeWaarde = value => value !== undefined && value !== null;
 
 const nestedProperty = (propertyKey: string, object: Object) =>
@@ -49,19 +45,7 @@ const nestedProperty = (propertyKey: string, object: Object) =>
 @Component({
   selector: "awv-kaart-info-boodschap-identify",
   templateUrl: "./kaart-info-boodschap-identify.component.html",
-  styleUrls: ["./kaart-info-boodschap-identify.component.scss"],
-  animations: [
-    trigger("enterAnimation", [
-      transition(":enter", [
-        style({ opacity: 0, "max-height": 0 }),
-        animate("0.35s cubic-bezier(.62,.28,.23,.99)", style({ opacity: 1, "max-height": "400px" }))
-      ]),
-      transition(":leave", [
-        style({ opacity: 1, "max-height": "400px" }),
-        animate("0.35s cubic-bezier(.62,.28,.23,.99)", style({ opacity: 0, "max-height": 0 }))
-      ])
-    ])
-  ]
+  styleUrls: ["./kaart-info-boodschap-identify.component.scss"]
 })
 export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase {
   @Input() feature: ol.Feature;
@@ -88,11 +72,6 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
     HM,
     VERPL
   );
-
-  toonAbbameldaMeldingForm = false;
-  abbameldaMeldingInputControl = new FormControl("", [Validators.required]);
-  abbameldaSuccesBoodschap = "";
-  abbameldaFoutBoodschap = "";
 
   private properties = () => this.feature.getProperties()[PROPERTIES];
 
@@ -327,42 +306,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
     }
   }
 
-  toggleVerstuurAbbameldaMelding() {
-    this.toonAbbameldaMeldingForm = !this.toonAbbameldaMeldingForm;
-    this.abbameldaMeldingInputControl.setValue("");
-  }
-
   heeftMaakAbbameldaMelding(): boolean {
     return this.laag.chain(l => fromNullable(l.velden.get("meldingInAbbamelda"))).isSome();
-  }
-
-  getAbbameldaSuccesBoodschap(): string {
-    return this.abbameldaSuccesBoodschap;
-  }
-
-  getAbbameldaFoutBoodschap(): string {
-    return this.abbameldaFoutBoodschap;
-  }
-
-  verstuurMelding() {
-    const boodschap = this.abbameldaMeldingInputControl.value;
-
-    this.http
-      .post<AbbameldaResultaat>("/geoloket2/rest/abbamelda/melding", {
-        melding: boodschap,
-        onderdeel: this.waarde("rootPad"),
-        pad: this.waarde("installatieNaampad")
-      })
-      .subscribe(
-        res => {
-          this.abbameldaSuccesBoodschap = res.resultaat;
-          this.abbameldaFoutBoodschap = "";
-          this.toggleVerstuurAbbameldaMelding();
-        }, //
-        err => {
-          this.abbameldaSuccesBoodschap = "";
-          this.abbameldaFoutBoodschap = `Kon Abbamelda melding niet versturen: ${err.error.resultaat}`;
-        }
-      );
   }
 }

@@ -16,6 +16,7 @@ import {
 import { ClickOutsideModule } from "ng4-click-outside";
 import * as ol from "openlayers";
 
+import { AbbameldaModule } from "../abbamelda/index";
 import { KaartOpenLayersStyleComponent } from "../classic/openlayers-style/classic-openlayers-style.component";
 import { KaartTekenComponent } from "../classic/tekenen/kaart-teken.component";
 import { LagenkiezerModule } from "../lagenkiezer/index";
@@ -117,6 +118,7 @@ export const myCustomTooltipDefaults: MatTooltipDefaultOptions = {
     FormsModule,
     ReactiveFormsModule,
     HttpClientModule,
+    AbbameldaModule,
     ZoekerModule.forRoot({}),
     LagenkiezerModule.withDefaults()
   ],
