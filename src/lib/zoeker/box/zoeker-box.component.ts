@@ -35,6 +35,11 @@ export class Fout {
   constructor(readonly zoeker: string, readonly fout: string) {}
 }
 
+export interface HuidigeSelectie {
+  feature: ol.Feature;
+  zoekResultaat: ZoekKaartResultaat;
+}
+
 export type ZoekerType = "Basis" | "Perceel" | "Crab";
 
 export function isNotNullObject(object) {
@@ -194,7 +199,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   featuresByResultaat = Map<ZoekResultaat, ol.Feature[]>();
-  huidigeSelectie: Option<[ZoekKaartResultaat, ol.Feature]> = none;
+  huidigeSelectie: Option<HuidigeSelectie> = none;
   alleZoekResultaten: ZoekResultaat[] = [];
   alleFouten: Fout[] = [];
   legende: Map<string, IconDescription> = Map<string, IconDescription>();
@@ -327,10 +332,12 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   private highlight(nieuweFeature: ol.Feature, zoekKaartResultaat: ZoekKaartResultaat) {
-    forEach(this.huidigeSelectie, selectie => selectie[1].setStyle(selectie[0].style));
+    forEach(this.huidigeSelectie, selectie => selectie.feature.setStyle(selectie.zoekResultaat.style));
     nieuweFeature.setStyle(zoekKaartResultaat.highlightStyle);
-    const nieuweSelectie: [ZoekKaartResultaat, ol.Feature] = [zoekKaartResultaat, nieuweFeature];
-    this.huidigeSelectie = some(nieuweSelectie);
+    this.huidigeSelectie = some({
+      feature: nieuweFeature,
+      zoekResultaat: zoekKaartResultaat
+    });
   }
 
   zoek() {
