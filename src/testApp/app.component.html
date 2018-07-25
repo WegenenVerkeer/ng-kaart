@@ -169,7 +169,7 @@
         <awv-kaart-knop-achtergrondlaag-kiezer *ngIf="isOptieActief('achtergrond')"></awv-kaart-knop-achtergrondlaag-kiezer>
         <!-- kaart widgets-->
         <awv-kaart-streetview *ngIf="isOptieActief('streetview')"></awv-kaart-streetview>
-        <awv-meet-knop [toonInfoBoodschap]="isOptieActief('meten_toon')" [meerdereGeometrieen]="isOptieActief('meten_meerdere')" *ngIf="isOptieActief('meten')"></awv-meet-knop>
+        <awv-meet-knop [toonInfoBoodschap]="isOptieActief('metenToon')" [meerdereGeometrieen]="isOptieActief('metenMeerdere')" *ngIf="isOptieActief('meten')"></awv-meet-knop>
         <awv-kaart-zoomknoppen *ngIf="isOptieActief('zoomknoppen')"></awv-kaart-zoomknoppen>
         <awv-bevraag-kaart *ngIf="isOptieActief('bevraagkaart')"></awv-bevraag-kaart>
         <!-- kaartinfo -->

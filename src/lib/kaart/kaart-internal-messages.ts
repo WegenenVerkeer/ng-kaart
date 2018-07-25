@@ -34,7 +34,7 @@ export interface GeometryChangedMsg {
   type: "GeometryChanged";
   geometry: ol.geom.Geometry;
   volgnummer: number;
-  featureid: string | number;
+  featureId: string | number;
 }
 
 export interface ActieveModusAangepastMsg {
@@ -75,7 +75,7 @@ export interface InfoBoodschappenMsg {
 
 export interface VerwijderTekenFeatureMsg {
   readonly type: "VerwijderTekenFeature";
-  readonly featureid: string | number;
+  readonly featureId: string | number;
 }
 
 function KaartInternalMsg(payload: Option<KaartInternalSubMsg>): KaartInternalMsg {
@@ -125,12 +125,12 @@ function AchtergrondtitelGezetMsg(titel: string): AchtergrondtitelGezetMsg {
 
 export const achtergrondtitelGezetWrapper = (titel: string) => KaartInternalMsg(some(AchtergrondtitelGezetMsg(titel)));
 
-function GeometryChangedMsg(geometry: ol.geom.Geometry, volgnummer: number, featureid: string | number): GeometryChangedMsg {
-  return { type: "GeometryChanged", geometry: geometry, volgnummer: volgnummer, featureid: featureid };
+function GeometryChangedMsg(geometry: ol.geom.Geometry, volgnummer: number, featureId: string | number): GeometryChangedMsg {
+  return { type: "GeometryChanged", geometry: geometry, volgnummer: volgnummer, featureId: featureId };
 }
 
 export const tekenResultaatWrapper = (resultaat: TekenResultaat) =>
-  KaartInternalMsg(some(GeometryChangedMsg(resultaat.geometry, resultaat.volgnummer, resultaat.featureid)));
+  KaartInternalMsg(some(GeometryChangedMsg(resultaat.geometry, resultaat.volgnummer, resultaat.featureId)));
 
 function TekenMsg(settings: Option<TekenSettings>): TekenMsg {
   return {
@@ -161,11 +161,11 @@ function ActieveModusGezet(modus: Option<string>): ActieveModusAangepastMsg {
 
 export const actieveModusGezetWrapper = (modus: Option<string>) => KaartInternalMsg(some(ActieveModusGezet(modus)));
 
-export function VerwijderTekenFeatureMsg(featureid: string | number): VerwijderTekenFeatureMsg {
+export function VerwijderTekenFeatureMsg(featureId: string | number): VerwijderTekenFeatureMsg {
   return {
     type: "VerwijderTekenFeature",
-    featureid: featureid
+    featureId: featureId
   };
 }
 
-export const verwijderTekenFeatureWrapper = (featureid: string | number) => KaartInternalMsg(some(VerwijderTekenFeatureMsg(featureid)));
+export const verwijderTekenFeatureWrapper = (featureId: string | number) => KaartInternalMsg(some(VerwijderTekenFeatureMsg(featureId)));

@@ -87,7 +87,7 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
         observeOnAngular(this.zone)
       )
     ).subscribe(msg => {
-      const feature = this.source.getFeatureById(msg.featureid);
+      const feature = this.source.getFeatureById(msg.featureId);
       if (feature) {
         const tooltip = feature.get("measuretooltip") as ol.Overlay;
         if (tooltip) {

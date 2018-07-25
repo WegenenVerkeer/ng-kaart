@@ -1,5 +1,6 @@
 import { Component, EventEmitter, NgZone, OnDestroy, OnInit, Output } from "@angular/core";
 import { none, some } from "fp-ts/lib/Option";
+import { Set } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, startWith, take, takeUntil } from "rxjs/operators";
@@ -40,7 +41,7 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
   private toonInfoBoodschap = true;
   private meerdereGeometrieen = true;
   private stopTekenenSubj: rx.Subject<void> = new rx.Subject<void>();
-  private openBoodschappen: string[] = [];
+  private openBoodschappen: Set<string> = Set();
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
@@ -142,7 +143,7 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
         map(msg => msg.infoBoodschappen.keySeq().filter(naam => naam!.startsWith("meten-resultaat-")))
       )
     ).subscribe(boodschappen => {
-      this.openBoodschappen = boodschappen.toArray();
+      this.openBoodschappen = boodschappen.toSet();
     });
 
     // Update de informatie van de geometrie.
@@ -152,9 +153,7 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
         observeOnAngular(this.zone)
       )
       .subscribe(msg => {
-        const infoSluitCallback = () => {
-          return some(verwijderTekenFeatureWrapper(msg.featureid));
-        };
+        const infoSluitCallback = () => some(verwijderTekenFeatureWrapper(msg.featureId));
 
         this.getekendeGeom.next(msg.geometry);
         if (this.toonInfoBoodschap) {

@@ -19,31 +19,18 @@ import { KaartClassicMsg, TekenGeomAangepastMsg } from "../messages";
 })
 export class KaartTekenComponent extends KaartComponentBase implements OnInit {
   private stopTekenenSubj: rx.Subject<void> = new rx.Subject<void>();
-  private _geometryType: ol.geom.GeometryType = "LineString";
   private aanHetTekenen = new rx.BehaviorSubject<boolean>(false);
   @Input()
   set tekenen(teken: boolean) {
     this.aanHetTekenen.next(teken);
   }
-  @Input()
-  set geometryType(gtype: ol.geom.GeometryType) {
-    this._geometryType = gtype;
-  }
-  private _laagStyle;
-  @Input()
-  set laagStyle(style: ol.style.Style) {
-    this._laagStyle = style;
-  }
-  private _drawStyle;
-  @Input()
-  set drawStyle(style: ol.style.Style) {
-    this._drawStyle = style;
-  }
-  private _meerdereGeometrieen = false;
-  @Input()
-  set meerdereGeometrieen(meerdereGeometrieen: boolean) {
-    this._meerdereGeometrieen = meerdereGeometrieen;
-  }
+  @Input() private geometryType: ol.geom.GeometryType = "LineString";
+
+  @Input() private laagStyle;
+
+  @Input() private drawStyle: ol.style.Style;
+
+  @Input() private meerdereGeometrieen = false;
 
   @Output() getekendeGeom: EventEmitter<ol.geom.Geometry> = new EventEmitter();
 
@@ -70,10 +57,10 @@ export class KaartTekenComponent extends KaartComponentBase implements OnInit {
             this.kaart.dispatcher,
             prt.GeometryChangedSubscription(
               TekenSettings(
-                this._geometryType,
-                ss.asStyleSelector(this._laagStyle),
-                ss.asStyleSelector(this._drawStyle),
-                this._meerdereGeometrieen
+                this.geometryType,
+                ss.asStyleSelector(this.laagStyle),
+                ss.asStyleSelector(this.drawStyle),
+                this.meerdereGeometrieen
               ),
               resultaat => KaartClassicMsg(TekenGeomAangepastMsg(resultaat.geometry))
             )

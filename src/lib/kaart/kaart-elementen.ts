@@ -108,7 +108,7 @@ export interface TekenSettings {
 export interface TekenResultaat {
   readonly geometry: ol.geom.Geometry;
   readonly volgnummer: number;
-  readonly featureid: number | string;
+  readonly featureId: number | string;
 }
 
 /**
@@ -163,10 +163,10 @@ export function TekenSettings(
   };
 }
 
-export function TekenResultaat(geometry: ol.geom.Geometry, volgnummer: number, featureid: number | string): TekenResultaat {
+export function TekenResultaat(geometry: ol.geom.Geometry, volgnummer: number, featureId: number | string): TekenResultaat {
   return {
     volgnummer: volgnummer,
-    featureid: featureid,
+    featureId: featureId,
     geometry: geometry
   };
 }

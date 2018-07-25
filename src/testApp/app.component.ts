@@ -187,8 +187,8 @@ export class AppComponent {
 
     // --- Meten opties
     optieDivider3a: { divider: true, value: true, label: "Meten opties (teken modus op en afzetten na veranderingen)" },
-    meten_toon: { value: true, label: "Toon info" },
-    meten_meerdere: { value: true, label: "Meerdere geometrieen" },
+    metenToon: { value: true, label: "Toon info" },
+    metenMeerdere: { value: true, label: "Meerdere geometrieen" },
 
     // --- Kaartinfo
     optieDivider4: { divider: true, value: true, label: "Kaartinfo onderaan rechts" },
