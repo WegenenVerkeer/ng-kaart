@@ -3,7 +3,7 @@ import { none, some } from "fp-ts/lib/Option";
 import { Set } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { distinctUntilChanged, filter, map, startWith, take, takeUntil } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, startWith, takeUntil } from "rxjs/operators";
 
 import { dimensieBeschrijving } from "../../util/geometries";
 import { observeOnAngular } from "../../util/observe-on-angular";
@@ -104,6 +104,8 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
   }
 
   private startMetMeten(): void {
+    const boodschapVanMeten = boodschap => boodschap.bron.exists(bron => bron === "meten");
+
     this.actief = true;
 
     this.bindToLifeCycle(
@@ -127,8 +129,8 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
         ofType<InfoBoodschappenMsg>("InfoBoodschappen"), //
         map(msg =>
           msg.infoBoodschappen
-            .keySeq()
-            .filter(naam => naam!.startsWith("meten-resultaat-"))
+            .valueSeq()
+            .filter(boodschapVanMeten)
             .isEmpty()
         ),
         distinctUntilChanged(),
@@ -140,7 +142,7 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
     this.bindToLifeCycle(
       this.internalMessage$.pipe(
         ofType<InfoBoodschappenMsg>("InfoBoodschappen"), //
-        map(msg => msg.infoBoodschappen.keySeq().filter(naam => naam!.startsWith("meten-resultaat-")))
+        map(msg => msg.infoBoodschappen.filter(boodschapVanMeten).keySeq())
       )
     ).subscribe(boodschappen => {
       this.openBoodschappen = boodschappen.toSet();
@@ -163,6 +165,7 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
               type: "InfoBoodschapAlert",
               titel: "Meten " + msg.volgnummer + ":",
               sluit: "VANZELF",
+              bron: some("meten"),
               message: this.helpText(msg.geometry),
               verbergMsgGen: infoSluitCallback
             })
@@ -182,7 +185,7 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
     this.stopMeten();
 
     // Sluit alle meten infoboxen.
-    this.openBoodschappen.forEach(boodschap => this.dispatch(prt.VerbergInfoBoodschapCmd(boodschap)));
+    this.openBoodschappen.forEach(boodschap => this.dispatch(prt.VerbergInfoBoodschapCmd(boodschap!)));
   }
 
   helpText(geometry: ol.geom.Geometry): string {

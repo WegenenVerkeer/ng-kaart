@@ -10,6 +10,7 @@ export interface InfoBoodschap {
   readonly id: string;
   readonly titel: string;
   readonly type: string;
+  readonly bron: Option<string>;
   readonly sluit: "NIET" | "VANZELF" | "DOOR_APPLICATIE";
   readonly verbergMsgGen: () => Option<TypedRecord>;
 }
