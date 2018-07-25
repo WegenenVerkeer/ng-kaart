@@ -10,6 +10,7 @@ import { KaartClassicComponent } from "../kaart-classic.component";
 })
 export class ClassicMetenComponent extends ClassicUIElementSelectorComponentBase {
   @Input() toonInfoBoodschap = true;
+  @Input() meerdereGeometrieen = true;
 
   constructor(readonly kaart: KaartClassicComponent) {
     super(MetenUiSelector, kaart);
@@ -17,7 +18,8 @@ export class ClassicMetenComponent extends ClassicUIElementSelectorComponentBase
 
   protected opties(): MetenOpties {
     return {
-      toonInfoBoodschap: this.toonInfoBoodschap
+      toonInfoBoodschap: this.toonInfoBoodschap,
+      meerdereGeometrieen: this.meerdereGeometrieen
     };
   }
 }

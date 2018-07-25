@@ -80,19 +80,24 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
   ngOnInit(): void {
     super.ngOnInit();
 
+    // Verwijder de feature en tooltip.
     this.bindToLifeCycle(
       this.internalMessage$.pipe(
         ofType<VerwijderTekenFeatureMsg>("VerwijderTekenFeature"), //
         observeOnAngular(this.zone)
       )
     ).subscribe(msg => {
-      // TODO: extra checks
       const feature = this.source.getFeatureById(msg.featureid);
-      const tooltip = feature.get("measuretooltip") as ol.Overlay;
-      this.dispatch(prt.VerwijderOverlaysCmd([tooltip]));
-      this.source.removeFeature(feature);
+      if (feature) {
+        const tooltip = feature.get("measuretooltip") as ol.Overlay;
+        if (tooltip) {
+          this.dispatch(prt.VerwijderOverlaysCmd([tooltip]));
+        }
+        this.source.removeFeature(feature);
+      }
     });
 
+    // Hou de subject bij.
     this.bindToLifeCycle(
       this.kaartModel$.pipe(
         distinctUntilChanged((k1, k2) => k1.geometryChangedSubj === k2.geometryChangedSubj), //
@@ -219,8 +224,10 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
     draw.on(
       "drawend", //
       () => {
-        // TODO: als configuratie zegt dat we maar 1 geometry mogen hebben.
-        // this.dispatch(prt.VerwijderInteractieCmd(this.drawInteraction));
+        if (!tekenSettings.meerdereGeometrieen) {
+          // Als we maar 1 geometrie open mogen hebben, stoppen we direct met tekenen wanneer 1 geometrie afgesloten is.
+          this.dispatch(prt.VerwijderInteractieCmd(this.drawInteraction));
+        }
       },
       this
     );

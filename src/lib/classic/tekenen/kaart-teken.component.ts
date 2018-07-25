@@ -40,6 +40,12 @@ export class KaartTekenComponent extends KaartComponentBase implements OnInit {
   set drawStyle(style: ol.style.Style) {
     this._drawStyle = style;
   }
+  private _meerdereGeometrieen = false;
+  @Input()
+  set meerdereGeometrieen(meerdereGeometrieen: boolean) {
+    this._meerdereGeometrieen = meerdereGeometrieen;
+  }
+
   @Output() getekendeGeom: EventEmitter<ol.geom.Geometry> = new EventEmitter();
 
   constructor(readonly kaart: KaartClassicComponent, zone: NgZone) {
@@ -64,7 +70,12 @@ export class KaartTekenComponent extends KaartComponentBase implements OnInit {
           classicMsgSubscriptionCmdOperator(
             this.kaart.dispatcher,
             prt.GeometryChangedSubscription(
-              TekenSettings(this._geometryType, ss.asStyleSelector(this._laagStyle), ss.asStyleSelector(this._drawStyle)),
+              TekenSettings(
+                this._geometryType,
+                ss.asStyleSelector(this._laagStyle),
+                ss.asStyleSelector(this._drawStyle),
+                this._meerdereGeometrieen
+              ),
               resultaat => KaartClassicMsg(TekenGeomAangepastMsg(resultaat.geometry))
             )
           )

@@ -1,8 +1,8 @@
 import { Component, EventEmitter, NgZone, OnDestroy, OnInit, Output } from "@angular/core";
-import { none, Option, some } from "fp-ts/lib/Option";
+import { none, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { filter, map, startWith, takeUntil } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, startWith, take, takeUntil } from "rxjs/operators";
 
 import { dimensieBeschrijving } from "../../util/geometries";
 import { observeOnAngular } from "../../util/observe-on-angular";
@@ -11,6 +11,7 @@ import { TekenSettings } from "../kaart-elementen";
 import {
   actieveModusGezetWrapper,
   GeometryChangedMsg,
+  InfoBoodschappenMsg,
   KaartInternalMsg,
   tekenResultaatWrapper,
   verwijderTekenFeatureWrapper
@@ -25,6 +26,7 @@ export const MetenUiSelector = "Meten";
 
 export interface MetenOpties {
   toonInfoBoodschap: boolean;
+  meerdereGeometrieen: boolean;
 }
 
 @Component({
@@ -36,7 +38,9 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
   @Output() getekendeGeom: EventEmitter<ol.geom.Geometry> = new EventEmitter();
 
   private toonInfoBoodschap = true;
+  private meerdereGeometrieen = true;
   private stopTekenenSubj: rx.Subject<void> = new rx.Subject<void>();
+  private openBoodschappen: string[] = [];
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
@@ -54,7 +58,7 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
     if (active) {
       this.startMetMeten();
     } else {
-      this.stopMetenEnVerbergBoodschap();
+      this.stopMetenEnVerbergBoodschapen();
     }
   }
 
@@ -67,14 +71,20 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
     this.bindToLifeCycle(
       this.modelChanges.uiElementOpties$.pipe(
         filter(optie => optie.naam === MetenUiSelector),
-        map(o => o.opties.toonInfoBoodschap),
-        startWith(true)
+        map(o => o.opties),
+        startWith({
+          toonInfoBoodschap: true,
+          meerdereGeometrieen: true
+        })
       )
-    ).subscribe(toon => (this.toonInfoBoodschap = toon));
+    ).subscribe(opties => {
+      this.toonInfoBoodschap = opties.toonInfoBoodschap;
+      this.meerdereGeometrieen = opties.meerdereGeometrieen;
+    });
   }
 
   ngOnDestroy(): void {
-    this.stopMetenEnVerbergBoodschap();
+    this.stopMetenEnVerbergBoodschapen();
     super.ngOnDestroy();
   }
 
@@ -84,7 +94,7 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
 
   toggleMeten(): void {
     if (this.actief) {
-      this.stopMetenEnVerbergBoodschap();
+      this.stopMetenEnVerbergBoodschapen();
       this.publiceerDeactivatie();
     } else {
       this.startMetMeten();
@@ -99,7 +109,7 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
       this.internalMessage$.lift(
         internalMsgSubscriptionCmdOperator(
           this.kaartComponent.internalCmdDispatcher,
-          prt.GeometryChangedSubscription(TekenSettings("Polygon", none, none), tekenResultaatWrapper)
+          prt.GeometryChangedSubscription(TekenSettings("Polygon", none, none, this.meerdereGeometrieen), tekenResultaatWrapper)
         )
       )
     )
@@ -110,6 +120,32 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
         () => kaartLogger.debug("De meten source is gestopt")
       );
 
+    // Wanneer alle info-boxen van meten gesloten zijn, kan je stoppen met meten.
+    this.bindToLifeCycle(
+      this.internalMessage$.pipe(
+        ofType<InfoBoodschappenMsg>("InfoBoodschappen"), //
+        map(msg =>
+          msg.infoBoodschappen
+            .keySeq()
+            .filter(naam => naam.startsWith("meten-resultaat-"))
+            .isEmpty()
+        ),
+        distinctUntilChanged(),
+        filter(value => value)
+      )
+    ).subscribe(() => this.stopMeten());
+
+    // Hou de ids van de meten infoboxen bij, we hebben die later nodig om ze allemaal te sluiten.
+    this.bindToLifeCycle(
+      this.internalMessage$.pipe(
+        ofType<InfoBoodschappenMsg>("InfoBoodschappen"), //
+        map(msg => msg.infoBoodschappen.keySeq().filter(naam => naam.startsWith("meten-resultaat-")))
+      )
+    ).subscribe(boodschappen => {
+      this.openBoodschappen = boodschappen.toArray();
+    });
+
+    // Update de informatie van de geometrie.
     this.internalMessage$
       .pipe(
         ofType<GeometryChangedMsg>("GeometryChanged"), //
@@ -143,10 +179,11 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
     this.stopTekenenSubj = new rx.Subject(); // en maak ons klaar voor de volgende ronde
   }
 
-  private stopMetenEnVerbergBoodschap(): void {
+  private stopMetenEnVerbergBoodschapen(): void {
     this.stopMeten();
 
-    this.dispatch(prt.VerbergInfoBoodschapCmd("meten-resultaat"));
+    // Sluit alle meten infoboxen.
+    this.openBoodschappen.forEach(boodschap => this.dispatch(prt.VerbergInfoBoodschapCmd(boodschap)));
   }
 
   helpText(geometry: ol.geom.Geometry): string {

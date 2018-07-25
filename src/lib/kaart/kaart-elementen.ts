@@ -102,6 +102,7 @@ export interface TekenSettings {
   readonly geometryType: ol.geom.GeometryType;
   readonly laagStyle: Option<StyleSelector>;
   readonly drawStyle: Option<StyleSelector>;
+  readonly meerdereGeometrieen: boolean;
 }
 
 export interface TekenResultaat {
@@ -151,12 +152,14 @@ export const isZichtbaar: (_: number) => (_: ToegevoegdeLaag) => boolean = curre
 export function TekenSettings(
   geometryType: ol.geom.GeometryType,
   laagStyle: Option<StyleSelector>,
-  drawStyle: Option<StyleSelector>
+  drawStyle: Option<StyleSelector>,
+  meerdereGeometrieen: boolean
 ): TekenSettings {
   return {
     geometryType: geometryType,
     laagStyle: laagStyle,
-    drawStyle: drawStyle
+    drawStyle: drawStyle,
+    meerdereGeometrieen: meerdereGeometrieen
   };
 }
 
