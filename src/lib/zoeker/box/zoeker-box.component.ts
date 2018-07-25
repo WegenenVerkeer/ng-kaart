@@ -2,7 +2,7 @@ import { animate, style, transition, trigger } from "@angular/animations";
 import { HttpErrorResponse } from "@angular/common/http";
 import { ChangeDetectorRef, Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { none } from "fp-ts/lib/Option";
+import { none, Option, some } from "fp-ts/lib/Option";
 import { List, Map, OrderedMap, Set } from "immutable";
 import * as ol from "openlayers";
 import { pipe } from "rxjs";
@@ -18,12 +18,26 @@ import * as prt from "../../kaart/kaart-protocol";
 import { KaartComponent } from "../../kaart/kaart.component";
 import { kaartLogger } from "../../kaart/log";
 import { matchGeometryType } from "../../util/geometries";
-import { compareResultaten, IconDescription, StringZoekInput, ZoekInput, ZoekResultaat, ZoekResultaten } from "../zoeker-base";
+import { forEach } from "../../util/option";
+import {
+  compareResultaten,
+  IconDescription,
+  StringZoekInput,
+  ZoekInput,
+  ZoekKaartResultaat,
+  ZoekResultaat,
+  ZoekResultaten
+} from "../zoeker-base";
 
 export const ZoekerUiSelector = "Zoeker";
 
 export class Fout {
   constructor(readonly zoeker: string, readonly fout: string) {}
+}
+
+export interface HuidigeSelectie {
+  feature: ol.Feature;
+  zoekResultaat: ZoekKaartResultaat;
 }
 
 export type ZoekerType = "Basis" | "Perceel" | "Crab";
@@ -185,6 +199,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   featuresByResultaat = Map<ZoekResultaat, ol.Feature[]>();
+  huidigeSelectie: Option<HuidigeSelectie> = none;
   alleZoekResultaten: ZoekResultaat[] = [];
   alleFouten: Fout[] = [];
   legende: Map<string, IconDescription> = Map<string, IconDescription>();
@@ -311,9 +326,17 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       if (info.geometry.getType() === "Point") {
         resultaat.preferredPointZoomLevel.map(zoom => this.dispatch(prt.VeranderZoomCmd(zoom, kaartLogOnlyWrapper)));
       }
-      // highlight
       const selectedFeature = this.featuresByResultaat.get(resultaat)[0];
-      selectedFeature.setStyle(info.highlightStyle);
+      this.highlight(selectedFeature, info);
+    });
+  }
+
+  private highlight(nieuweFeature: ol.Feature, zoekKaartResultaat: ZoekKaartResultaat) {
+    forEach(this.huidigeSelectie, selectie => selectie.feature.setStyle(selectie.zoekResultaat.style));
+    nieuweFeature.setStyle(zoekKaartResultaat.highlightStyle);
+    this.huidigeSelectie = some({
+      feature: nieuweFeature,
+      zoekResultaat: zoekKaartResultaat
     });
   }
 
@@ -373,6 +396,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.alleFouten = [];
     this.alleZoekResultaten = [];
     this.featuresByResultaat = Map<ZoekResultaat, ol.Feature[]>();
+    this.huidigeSelectie = none;
     this.extent = ol.extent.createEmpty();
     this.legende.clear();
     this.legendeKeys = [];
