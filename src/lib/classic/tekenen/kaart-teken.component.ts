@@ -1,6 +1,5 @@
 import { Component, EventEmitter, Input, NgZone, OnInit, Output } from "@angular/core";
 import * as ol from "openlayers";
-import { geom } from "openlayers";
 import * as rx from "rxjs";
 import { distinctUntilChanged, map, takeUntil } from "rxjs/operators";
 
