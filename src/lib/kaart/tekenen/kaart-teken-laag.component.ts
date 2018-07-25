@@ -1,23 +1,25 @@
 import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
-import { none, Option, some } from "fp-ts/lib/Option";
+import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import { OrderedMap } from "immutable";
 import * as ol from "openlayers";
 import { Subject } from "rxjs";
 import { distinctUntilChanged, map, skipWhile } from "rxjs/operators";
-
-import { forEach, orElse } from "../../util/option";
+import * as uuid from "uuid";
 
 import { dimensieBeschrijving } from "../../util/geometries";
+import { observeOnAngular } from "../../util/observe-on-angular";
+import { ofType } from "../../util/operators";
+import { forEach, orElse } from "../../util/option";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
 import { VeldInfo } from "../kaart-elementen";
-import { KaartInternalMsg, kaartLogOnlyWrapper, tekenWrapper } from "../kaart-internal-messages";
+import { KaartInternalMsg, kaartLogOnlyWrapper, tekenWrapper, VerwijderTekenFeatureMsg } from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 import { asStyleSelector, toStylish } from "../stijl-selector";
 
 export const TekenenUiSelector = "Kaarttekenen";
-const TekenLaagNaam = "Tekenen van geometrie";
+export const TekenLaagNaam = "Tekenen van geometrie";
 const defaultlaagStyle = new ol.style.Style({
   fill: new ol.style.Fill({
     color: "rgba(255, 255, 255, 0.2)"
@@ -59,8 +61,9 @@ const defaultDrawStyle = new ol.style.Style({
   encapsulation: ViewEncapsulation.None
 })
 export class KaartTekenLaagComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
-  private changedGeometriesSubj: Subject<ol.geom.Geometry>;
+  private changedGeometriesSubj: Subject<ke.TekenResultaat>;
 
+  private source: ol.source.Vector;
   private drawInteraction: ol.interaction.Draw;
   private modifyInteraction: ol.interaction.Modify;
   private snapInteraction: ol.interaction.Snap;
@@ -77,6 +80,24 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
   ngOnInit(): void {
     super.ngOnInit();
 
+    // Verwijder de feature en tooltip.
+    this.bindToLifeCycle(
+      this.internalMessage$.pipe(
+        ofType<VerwijderTekenFeatureMsg>("VerwijderTekenFeature"), //
+        observeOnAngular(this.zone)
+      )
+    ).subscribe(msg => {
+      const feature = this.source.getFeatureById(msg.featureId);
+      if (feature) {
+        const tooltip = feature.get("measuretooltip") as ol.Overlay;
+        if (tooltip) {
+          this.dispatch(prt.VerwijderOverlaysCmd([tooltip]));
+        }
+        this.source.removeFeature(feature);
+      }
+    });
+
+    // Hou de subject bij.
     this.bindToLifeCycle(
       this.kaartModel$.pipe(
         distinctUntilChanged((k1, k2) => k1.geometryChangedSubj === k2.geometryChangedSubj), //
@@ -104,11 +125,11 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
   }
 
   private startMetTekenen(tekenSettings: ke.TekenSettings): void {
-    const source = new ol.source.Vector();
+    this.source = new ol.source.Vector();
     this.dispatch({
       type: "VoegLaagToe",
       positie: 0,
-      laag: this.createLayer(source, tekenSettings),
+      laag: this.createLayer(this.source, tekenSettings),
       magGetoondWorden: true,
       laaggroep: "Tools",
       legende: none,
@@ -116,13 +137,13 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
       wrapper: kaartLogOnlyWrapper
     });
 
-    this.drawInteraction = this.createDrawInteraction(source, tekenSettings);
+    this.drawInteraction = this.createDrawInteraction(this.source, tekenSettings);
     this.dispatch(prt.VoegInteractieToeCmd(this.drawInteraction));
 
-    this.modifyInteraction = new ol.interaction.Modify({ source: source });
+    this.modifyInteraction = new ol.interaction.Modify({ source: this.source });
     this.dispatch(prt.VoegInteractieToeCmd(this.modifyInteraction));
 
-    this.snapInteraction = new ol.interaction.Snap({ source: source });
+    this.snapInteraction = new ol.interaction.Snap({ source: this.source });
     this.dispatch(prt.VoegInteractieToeCmd(this.snapInteraction));
   }
 
@@ -171,8 +192,6 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
   }
 
   private createDrawInteraction(source: ol.source.Vector, tekenSettings: ke.TekenSettings): ol.interaction.Draw {
-    const [measureTooltipElement, measureTooltip] = this.createMeasureTooltip();
-
     const draw = new ol.interaction.Draw({
       source: source,
       type: tekenSettings.geometryType,
@@ -182,12 +201,18 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
     draw.on(
       "drawstart",
       (event: ol.interaction.Draw.Event) => {
-        (event as ol.interaction.Draw.Event).feature.getGeometry().on(
+        const [measureTooltipElement, measureTooltip] = this.createMeasureTooltip();
+        const feature = (event as ol.interaction.Draw.Event).feature;
+        const volgnummer = this.volgendeVolgnummer();
+        feature.set("volgnummer", volgnummer);
+        feature.set("measuretooltip", measureTooltip);
+        feature.setId(uuid.v4());
+        feature.getGeometry().on(
           "change",
           evt => {
             const geometry = evt.target as ol.geom.Geometry;
-            this.changedGeometriesSubj.next(geometry);
-            measureTooltipElement.innerHTML = this.tooltipText(geometry);
+            this.changedGeometriesSubj.next(ke.TekenResultaat(geometry, volgnummer, feature.getId()));
+            measureTooltipElement.innerHTML = this.tooltipText(volgnummer, geometry);
             forEach(this.tooltipCoord(geometry), coord => measureTooltip.setPosition(coord));
           },
           this
@@ -198,15 +223,30 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
 
     draw.on(
       "drawend", //
-      () => this.dispatch(prt.VerwijderInteractieCmd(this.drawInteraction)), //
+      () => {
+        if (!tekenSettings.meerdereGeometrieen) {
+          // Als we maar 1 geometrie open mogen hebben, stoppen we direct met tekenen wanneer 1 geometrie afgesloten is.
+          this.dispatch(prt.VerwijderInteractieCmd(this.drawInteraction));
+        }
+      },
       this
     );
 
     return draw;
   }
 
-  tooltipText(geometry: ol.geom.Geometry): string {
-    return dimensieBeschrijving(geometry, false);
+  private volgendeVolgnummer(): number {
+    const maxVolgNummer = this.source
+      .getFeatures()
+      .map(feature => fromNullable(feature.get("volgnummer")))
+      .filter(optional => optional.isSome())
+      .map(optional => optional.toNullable())
+      .reduce((maxVolgNummer: number, volgNummer: number) => Math.max(maxVolgNummer, volgNummer), 0);
+    return maxVolgNummer + 1;
+  }
+
+  tooltipText(volgnummer: number, geometry: ol.geom.Geometry): string {
+    return volgnummer + ": " + dimensieBeschrijving(geometry, false);
   }
 
   tooltipCoord(geometry: ol.geom.Geometry): Option<ol.Coordinate> {

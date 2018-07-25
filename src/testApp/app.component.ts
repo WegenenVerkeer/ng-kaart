@@ -176,6 +176,7 @@ export class AppComponent {
     kaartLinksFixedHeader: { value: false, label: "Custom vaste header in linker paneel" },
     kaartLinksExtraElements: { value: false, label: "Custom extra elementen in linker paneel" },
     kaartLinksBreedte: { value: false, label: "Custom breedte van 300px (default: 480px bij > 1240px en 360px bij <= 1240px)" },
+
     // --- Widgets
     optieDivider3: { divider: true, value: true, label: "Widgets onderaan rechts" },
     achtergrond: { value: true, label: "Meerdere achtergrondlagen" },
@@ -183,6 +184,12 @@ export class AppComponent {
     meten: { value: true, label: "Meten" },
     mijnlocatie: { value: true, label: "Mijn huidige locatie" },
     zoomknoppen: { value: true, label: "Zoomknoppen" },
+
+    // --- Meten opties
+    optieDivider3a: { divider: true, value: true, label: "Meten opties (teken modus op en afzetten na veranderingen)" },
+    metenToon: { value: true, label: "Toon info" },
+    metenMeerdere: { value: true, label: "Meerdere geometrieen" },
+
     // --- Kaartinfo
     optieDivider4: { divider: true, value: true, label: "Kaartinfo onderaan rechts" },
     schaal: { value: true, label: "Kaartschaal" },

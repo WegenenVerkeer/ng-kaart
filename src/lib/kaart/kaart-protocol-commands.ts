@@ -360,6 +360,7 @@ export interface DeselecteerAlleFeaturesCmd {
 export interface SluitInfoBoodschapCmd<Msg extends KaartMsg> {
   readonly type: "SluitInfoBoodschap";
   readonly id: string;
+  readonly sluit: boolean;
   readonly msgGen: () => Option<prt.TypedRecord>;
 }
 
@@ -597,10 +598,15 @@ export function DeselecteerAlleFeaturesCmd(): DeselecteerAlleFeaturesCmd {
   };
 }
 
-export function SluitInfoBoodschapCmd<Msg extends KaartMsg>(id: string, msgGen: () => Option<prt.TypedRecord>): SluitInfoBoodschapCmd<Msg> {
+export function SluitInfoBoodschapCmd<Msg extends KaartMsg>(
+  id: string,
+  sluit: boolean,
+  msgGen: () => Option<prt.TypedRecord>
+): SluitInfoBoodschapCmd<Msg> {
   return {
     type: "SluitInfoBoodschap",
     id: id,
+    sluit: sluit,
     msgGen: msgGen
   };
 }

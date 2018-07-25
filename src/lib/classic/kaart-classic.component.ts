@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, NgZone, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from "@angular/core";
 import { pipe } from "fp-ts/lib/function";
 import * as option from "fp-ts/lib/Option";
-import { Option, some } from "fp-ts/lib/Option";
+import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
@@ -179,7 +179,8 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
         id: featureId,
         titel: feature.get("laagnaam"),
         feature: feature,
-        sluitbaar: true,
+        bron: none,
+        sluit: "DOOR_APPLICATIE",
         verbergMsgGen: () => some(KaartClassicMsg(FeatureGedeselecteerdMsg(featureId)))
       })
     );

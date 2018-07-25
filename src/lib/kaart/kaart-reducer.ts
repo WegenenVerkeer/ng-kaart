@@ -941,15 +941,19 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function sluitInfoBoodschap(cmnd: prt.SluitInfoBoodschapCmd<Msg>): ModelWithResult<Msg> {
+      const sluitBox = () => model.infoBoodschappenSubj.next(model.infoBoodschappenSubj.getValue().delete(cmnd.id));
       const maybeMsg = cmnd.msgGen() as Option<Msg>;
       return maybeMsg.foldL(
         () => {
           // geen message uit functie, sluit de info boodschap zelf
-          model.infoBoodschappenSubj.next(model.infoBoodschappenSubj.getValue().delete(cmnd.id));
+          sluitBox();
           return ModelWithResult(model);
         },
         msg => {
           // stuur sluit message door
+          if (cmnd.sluit) {
+            sluitBox();
+          }
           return ModelWithResult(model, some(msg));
         }
       );
@@ -1135,7 +1139,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         // Deze is een klein beetje speciaal omdat we de unsubcribe willen opvangen om evt. het tekenen te stoppen
         return modelWithSubscriptionResult(
           "TekenGeometryChanged",
-          rx.Observable.create((observer: rx.Observer<ol.geom.Geometry>) => {
+          rx.Observable.create((observer: rx.Observer<ke.TekenResultaat>) => {
             model.tekenSettingsSubj.next(some(sub.tekenSettings));
             const innerSub = model.geometryChangedSubj.pipe(debounceTime(100)).subscribe(observer);
             return () => {

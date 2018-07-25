@@ -71,8 +71,9 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
         id: "Kaart bevragen",
         type: "InfoBoodschapKaartBevragen",
         titel: "Kaart bevragen",
-        sluitbaar: true,
+        sluit: "DOOR_APPLICATIE",
         coordinaat: some(this.currentClick),
+        bron: none,
         adres: none,
         weglocatie: none,
         verbergMsgGen: () => none

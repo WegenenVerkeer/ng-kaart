@@ -46,6 +46,10 @@ export class KaartInfoBoodschapComponent extends KaartChildComponentBase impleme
   }
 
   sluit(): void {
-    this.dispatch(SluitInfoBoodschapCmd(this.boodschap.id, this.boodschap.verbergMsgGen));
+    this.dispatch(SluitInfoBoodschapCmd(this.boodschap.id, this.boodschap.sluit === "VANZELF", this.boodschap.verbergMsgGen));
+  }
+
+  isSluitbaar(): boolean {
+    return this.boodschap.sluit === "DOOR_APPLICATIE" || this.boodschap.sluit === "VANZELF";
   }
 }

@@ -3,16 +3,15 @@ import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { distinctUntilChanged, map, takeUntil } from "rxjs/operators";
 
-import { ofType } from "../../util/operators";
-import { classicMsgSubscriptionCmdOperator, KaartClassicComponent } from "../kaart-classic.component";
-import { classicLogger } from "../log";
-import { KaartClassicMsg, TekenGeomAangepastMsg } from "../messages";
-
 import { KaartComponentBase } from "../../kaart/kaart-component-base";
 import { TekenSettings } from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
 import * as ss from "../../kaart/stijl-selector";
 import { TekenenUiSelector } from "../../kaart/tekenen/kaart-teken-laag.component";
+import { ofType } from "../../util/operators";
+import { classicMsgSubscriptionCmdOperator, KaartClassicComponent } from "../kaart-classic.component";
+import { classicLogger } from "../log";
+import { KaartClassicMsg, TekenGeomAangepastMsg } from "../messages";
 
 @Component({
   selector: "awv-kaart-teken",
@@ -20,26 +19,19 @@ import { TekenenUiSelector } from "../../kaart/tekenen/kaart-teken-laag.componen
 })
 export class KaartTekenComponent extends KaartComponentBase implements OnInit {
   private stopTekenenSubj: rx.Subject<void> = new rx.Subject<void>();
-  private _geometryType: ol.geom.GeometryType = "LineString";
   private aanHetTekenen = new rx.BehaviorSubject<boolean>(false);
   @Input()
   set tekenen(teken: boolean) {
     this.aanHetTekenen.next(teken);
   }
-  @Input()
-  set geometryType(gtype: ol.geom.GeometryType) {
-    this._geometryType = gtype;
-  }
-  private _laagStyle;
-  @Input()
-  set laagStyle(style: ol.style.Style) {
-    this._laagStyle = style;
-  }
-  private _drawStyle;
-  @Input()
-  set drawStyle(style: ol.style.Style) {
-    this._drawStyle = style;
-  }
+  @Input() private geometryType: ol.geom.GeometryType = "LineString";
+
+  @Input() private laagStyle;
+
+  @Input() private drawStyle: ol.style.Style;
+
+  @Input() private meerdereGeometrieen = false;
+
   @Output() getekendeGeom: EventEmitter<ol.geom.Geometry> = new EventEmitter();
 
   constructor(readonly kaart: KaartClassicComponent, zone: NgZone) {
@@ -64,8 +56,13 @@ export class KaartTekenComponent extends KaartComponentBase implements OnInit {
           classicMsgSubscriptionCmdOperator(
             this.kaart.dispatcher,
             prt.GeometryChangedSubscription(
-              TekenSettings(this._geometryType, ss.asStyleSelector(this._laagStyle), ss.asStyleSelector(this._drawStyle)),
-              geom => KaartClassicMsg(TekenGeomAangepastMsg(geom))
+              TekenSettings(
+                this.geometryType,
+                ss.asStyleSelector(this.laagStyle),
+                ss.asStyleSelector(this.drawStyle),
+                this.meerdereGeometrieen
+              ),
+              resultaat => KaartClassicMsg(TekenGeomAangepastMsg(resultaat.geometry))
             )
           )
         )
