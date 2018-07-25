@@ -1,8 +1,10 @@
 import { Component, Input, NgZone } from "@angular/core";
 import { fromNullable, none, Option } from "fp-ts/lib/Option";
+import { List } from "immutable";
 
 import { lambert72ToWgs84 } from "../../coordinaten/coordinaten.service";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { Adres, WegLocatie } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
 
 @Component({
@@ -12,8 +14,8 @@ import { KaartComponent } from "../kaart.component";
 })
 export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildComponentBase {
   @Input() coordinaat: ol.Coordinate;
-  @Input() adres: Option<string> = none;
-  @Input() weglocatie: Option<string> = none;
+  @Input() adres: Option<Adres> = none;
+  @Input() weglocaties: Option<List<WegLocatie>> = none;
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
@@ -38,7 +40,7 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildComponen
     return this.adres.isSome();
   }
 
-  heeftWegLocatie() {
-    return this.weglocatie.isSome();
+  heeftWegLocaties() {
+    return this.weglocaties.isSome();
   }
 }
