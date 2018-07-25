@@ -127,7 +127,7 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
         map(msg =>
           msg.infoBoodschappen
             .keySeq()
-            .filter(naam => naam.startsWith("meten-resultaat-"))
+            .filter(naam => naam!.startsWith("meten-resultaat-"))
             .isEmpty()
         ),
         distinctUntilChanged(),
@@ -139,7 +139,7 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
     this.bindToLifeCycle(
       this.internalMessage$.pipe(
         ofType<InfoBoodschappenMsg>("InfoBoodschappen"), //
-        map(msg => msg.infoBoodschappen.keySeq().filter(naam => naam.startsWith("meten-resultaat-")))
+        map(msg => msg.infoBoodschappen.keySeq().filter(naam => naam!.startsWith("meten-resultaat-")))
       )
     ).subscribe(boodschappen => {
       this.openBoodschappen = boodschappen.toArray();
