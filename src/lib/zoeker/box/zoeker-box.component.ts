@@ -1,6 +1,6 @@
 import { animate, style, transition, trigger } from "@angular/animations";
 import { HttpErrorResponse } from "@angular/common/http";
-import { ChangeDetectorRef, Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
+import { ChangeDetectorRef, Component, ElementRef, Inject, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List, Map, OrderedMap, Set } from "immutable";
@@ -28,6 +28,7 @@ import {
   ZoekResultaat,
   ZoekResultaten
 } from "../zoeker-base";
+import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "../zoeker-representatie.service";
 
 export const ZoekerUiSelector = "Zoeker";
 
@@ -276,7 +277,12 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     return resultaat.kaartInfo.fold([], kaartInfo => createFeatureAndMiddlePoint(kaartInfo.geometry));
   }
 
-  constructor(parent: KaartComponent, zone: NgZone, private cd: ChangeDetectorRef) {
+  constructor(
+    parent: KaartComponent,
+    zone: NgZone,
+    private cd: ChangeDetectorRef,
+    @Inject(ZOEKER_REPRESENTATIE) private zoekerRepresentatie: AbstractRepresentatieService
+  ) {
     super(parent, zone);
   }
 
@@ -408,7 +414,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.alleZoekResultaten = this.alleZoekResultaten
       .filter(resultaat => resultaat.zoeker !== nieuweResultaten.zoeker)
       .concat(nieuweResultaten.resultaten);
-    this.alleZoekResultaten.sort((a, b) => compareResultaten(a, b, this.zoekVeld.value));
+    this.alleZoekResultaten.sort((a, b) => compareResultaten(a, b, this.zoekVeld.value, this.zoekerRepresentatie));
     nieuweResultaten.legende.forEach((safeHtml, name) => this.legende.set(name!, safeHtml!));
     this.legendeKeys = this.legende.keySeq().toArray();
 
