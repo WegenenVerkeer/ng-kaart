@@ -154,7 +154,6 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
   const zichtbareFeatures$ = viewinstellingen$.pipe(combineLatest(vectorlagen$, featuresChanged$, collectFeatures));
 
   const kaartKlikLocatie$ = observableFromOlEvents(model.map, "click")
-    .share() // meerdere click interactions doen events meerdere keren firen, 1 is genoeg
     .filter((event: ol.MapBrowserEvent) => {
       // filter click events uit die op een feature plaatsvinden
       return !model.map.hasFeatureAtPixel(event.pixel, { hitTolerance: KaartWithInfo.clickHitTolerance });
