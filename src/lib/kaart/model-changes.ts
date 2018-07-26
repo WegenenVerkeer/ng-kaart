@@ -158,6 +158,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
       // filter click events uit die op een feature plaatsvinden
       return !model.map.hasFeatureAtPixel(event.pixel, { hitTolerance: KaartWithInfo.clickHitTolerance });
     })
+    .share() // meerdere click interactions doen events meerdere keren firen, 1 is genoeg
     .pipe(map((event: ol.MapBrowserEvent) => event.coordinate));
 
   return {
