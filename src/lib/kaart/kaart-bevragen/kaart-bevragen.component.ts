@@ -4,11 +4,11 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 import { BehaviorSubject } from "rxjs";
-import { map, switchMap, takeUntil } from "rxjs/operators";
+import { switchMap, takeUntil } from "rxjs/operators";
 
 import { observeOnAngular } from "../../util/observe-on-angular";
-import { ofType, skipUntilInitialised } from "../../util/operators";
-import { actieveModusGezetWrapper, KaartClickMsg, kaartClickWrapper, KaartInternalMsg } from "../kaart-internal-messages";
+import { skipUntilInitialised } from "../../util/operators";
+import { actieveModusGezetWrapper, KaartInternalMsg } from "../kaart-internal-messages";
 import { KaartModusComponent } from "../kaart-modus-component";
 import * as prt from "../kaart-protocol";
 import { Adres, WegLocatie } from "../kaart-with-info-model";
@@ -70,12 +70,10 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
       });
     });
 
-    const clickObs$ = this.internalMessage$.pipe(
-      ofType<KaartClickMsg>("KaartClick"), //
+    const clickObs$ = this.modelChanges.kaartKlikLocatie$.pipe(
       observeOnAngular(this.zone),
       takeUntil(this.destroying$), // autounsubscribe bij destroy component
-      skipUntilInitialised(),
-      map((msg: KaartClickMsg) => msg.clickCoordinaat)
+      skipUntilInitialised()
     );
 
     // nieuwe click coordinaat ontvangen, start nieuwe identify informatie
@@ -131,7 +129,7 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
   }
 
   protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
-    return [prt.ActieveModusSubscription(actieveModusGezetWrapper), prt.KaartClickSubscription(kaartClickWrapper)];
+    return [prt.ActieveModusSubscription(actieveModusGezetWrapper)];
   }
 
   private toonInfoBoodschap(coordinaat: ol.Coordinate, maybeAdres: Option<Adres>, maybeWeglocaties: Option<List<WegLocatie>>) {
