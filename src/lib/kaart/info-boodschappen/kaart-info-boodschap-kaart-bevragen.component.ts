@@ -47,7 +47,7 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildComponen
   getWegLocaties() {
     return this.weglocaties
       .getOrElse(List())
-      .sortBy(locatie => locatie.ident8)
+      .sortBy(locatie => fromNullable(locatie.ident8).getOrElse(""))
       .toList();
   }
 
