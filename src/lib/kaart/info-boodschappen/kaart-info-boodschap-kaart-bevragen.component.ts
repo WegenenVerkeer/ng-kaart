@@ -42,13 +42,16 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildComponen
 
   getWegLocaties() {
     return this.weglocaties
-      .getOrElse(List())
-      .sortBy(locatie =>
-        fromNullable(locatie)
-          .chain(loc => fromNullable(loc.ident8))
-          .getOrElse("")
+      .map(locaties =>
+        locaties
+          .sortBy(locatie =>
+            fromNullable(locatie)
+              .chain(loc => fromNullable(loc.ident8))
+              .getOrElse("")
+          )
+          .toList()
       )
-      .toList();
+      .getOrElse(List());
   }
 
   getAdres(key: string): string {
