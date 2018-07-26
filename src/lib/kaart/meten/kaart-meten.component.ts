@@ -42,6 +42,7 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
   private meerdereGeometrieen = true;
   private stopTekenenSubj: rx.Subject<void> = new rx.Subject<void>();
   private openBoodschappen: Set<string> = Set();
+  private eersteIsGetekend = false;
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
@@ -96,7 +97,6 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
   toggleMeten(): void {
     if (this.actief) {
       this.stopMetenEnVerbergBoodschapen();
-      this.publiceerDeactivatie();
     } else {
       this.startMetMeten();
       this.publiceerActivatie();
@@ -123,21 +123,6 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
         () => kaartLogger.debug("De meten source is gestopt")
       );
 
-    // Wanneer alle info-boxen van meten gesloten zijn, kan je stoppen met meten.
-    this.bindToLifeCycle(
-      this.internalMessage$.pipe(
-        ofType<InfoBoodschappenMsg>("InfoBoodschappen"), //
-        map(msg =>
-          msg.infoBoodschappen
-            .valueSeq()
-            .filter(boodschapVanMeten)
-            .isEmpty()
-        ),
-        distinctUntilChanged(),
-        filter(value => value)
-      )
-    ).subscribe(() => this.stopMeten());
-
     // Hou de ids van de meten infoboxen bij, we hebben die later nodig om ze allemaal te sluiten.
     this.bindToLifeCycle(
       this.internalMessage$.pipe(
@@ -146,6 +131,14 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
       )
     ).subscribe(boodschappen => {
       this.openBoodschappen = boodschappen.toSet();
+      if (this.eersteIsGetekend && this.openBoodschappen.isEmpty()) {
+        // Wanneer alle info-boxen van meten gesloten zijn, kan je stoppen met meten.
+        // Maar dit mag alleen als we al eens 1 info-box van meten gehad hebben.
+        this.stopMeten();
+        this.eersteIsGetekend = false;
+      } else {
+        this.eersteIsGetekend = true;
+      }
     });
 
     // Update de informatie van de geometrie.
@@ -179,6 +172,7 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
 
     this.stopTekenenSubj.next(); // zorg dat de unsubscribe gebeurt
     this.stopTekenenSubj = new rx.Subject(); // en maak ons klaar voor de volgende ronde
+    this.publiceerDeactivatie();
   }
 
   private stopMetenEnVerbergBoodschapen(): void {

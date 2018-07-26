@@ -1,12 +1,13 @@
 import { Inject, Injectable, InjectionToken } from "@angular/core";
 import { MatIconRegistry } from "@angular/material";
 import { DomSanitizer } from "@angular/platform-browser";
+import { Map } from "immutable";
 import * as ol from "openlayers";
 
 import { ZOEKER_CFG, ZoekerConfigData } from "./config/zoeker-config";
 import { ZoekerConfigGoogleWdbConfig } from "./config/zoeker-config-google-wdb.config";
 import { ZoekerConfigLocatorServicesConfig } from "./config/zoeker-config-locator-services.config";
-import { IconDescription } from "./zoeker-base";
+import { IconDescription, ZoekResultaat } from "./zoeker-base";
 
 export const ZOEKER_REPRESENTATIE = new InjectionToken<AbstractRepresentatieService>("ZoekerRepresentatie");
 
@@ -16,6 +17,7 @@ export interface AbstractRepresentatieService {
   getOlStyle(type: ZoekerRepresentatieType): ol.style.Style;
   getHighlightOlStyle(type: ZoekerRepresentatieType): ol.style.Style;
   getSvgIcon(type: ZoekerRepresentatieType): IconDescription;
+  bronNaarNummer(res: ZoekResultaat): number;
 }
 
 const googleSvgNaam = "pin_g_vierkant";
@@ -60,6 +62,7 @@ export class DefaultRepresentatieService implements AbstractRepresentatieService
   private crabHighlightStyle: ol.style.Style;
   private perceelStyle: ol.style.Style;
   private perceelHighlightStyle: ol.style.Style;
+  private bronVolgorde: Map<number, RegExp> = Map([[1, /^wdb/i], [2, /^crab/i]]);
 
   constructor(
     @Inject(ZOEKER_CFG) zoekerConfigData: ZoekerConfigData,
@@ -127,6 +130,10 @@ export class DefaultRepresentatieService implements AbstractRepresentatieService
     this.crabHighlightStyle = maakStyle(this.locatieServicesConfig.kleur, crabHighlightMarker);
     this.perceelStyle = maakStyle(this.locatieServicesConfig.kleur, perceelMarker);
     this.perceelHighlightStyle = maakStyle(this.locatieServicesConfig.kleur, perceelHighlightMarker);
+
+    if (zoekerConfigData.bronVolgorde) {
+      this.bronVolgorde = zoekerConfigData.bronVolgorde;
+    }
   }
 
   getOlStyle(type: ZoekerRepresentatieType): ol.style.Style {
@@ -170,5 +177,13 @@ export class DefaultRepresentatieService implements AbstractRepresentatieService
       case "Perceel":
         return perceelSvgNaam;
     }
+  }
+
+  bronNaarNummer(res: ZoekResultaat): number {
+    const nummer = this.bronVolgorde
+      .filter((regexp, nummer) => regexp!.test(res.bron))
+      .keySeq()
+      .min();
+    return nummer ? nummer : Number.MAX_SAFE_INTEGER;
   }
 }
