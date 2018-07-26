@@ -40,10 +40,6 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildComponen
     return this.adres.isSome();
   }
 
-  heeftWegLocaties() {
-    return this.weglocaties.isSome() && this.weglocaties.getOrElse(List()).size > 0;
-  }
-
   getWegLocaties() {
     return this.weglocaties
       .getOrElse(List())
