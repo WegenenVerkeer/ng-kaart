@@ -35,8 +35,8 @@ export interface InfoBoodschapKaartBevragen extends InfoBoodschap {
 
 export interface WegLocatie {
   readonly ident8: string;
-  readonly hm: string;
-  readonly afstand: string;
+  readonly hm: number;
+  readonly afstand: number;
   readonly wegbeheerder: string;
 }
 

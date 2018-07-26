@@ -1,4 +1,5 @@
 <mat-accordion class="accordion">
+
   <mat-expansion-panel [expanded]="true">
     <mat-expansion-panel-header>
       <mat-panel-title class="naam">
@@ -10,18 +11,30 @@
       <div>WGS 84: {{ coordinaatInformatieWgs84() }}</div>
     </div>
   </mat-expansion-panel>
+
+  <mat-expansion-panel *ngFor="let weglocatie of getWegLocaties()">
+    <mat-expansion-panel-header>
+      <mat-panel-title class="naam">
+          {{ weglocatie.ident8 }} op {{ weglocatie.hm }} {{ signed(weglocatie.afstand) }}
+      </mat-panel-title>
+    </mat-expansion-panel-header>
+    <div class="waarde">
+      <div>Wegbeheerder: {{ weglocatie.wegbeheerder }}</div>
+    </div>
+  </mat-expansion-panel>
+
   <mat-expansion-panel *ngIf="heeftAdres()">
     <mat-expansion-panel-header>
       <mat-panel-title class="naam">
-        {{ adres.getOrElseL('') }}
+        {{ getAdres('straat') }} {{ getAdres('huisnummer') }}, {{ getAdres('gemeente') }}
       </mat-panel-title>
     </mat-expansion-panel-header>
+    <div class="waarde">
+      <div>Straat: {{ getAdres('straat') }}</div>
+      <div>Huisnummer: {{ getAdres('huisnummer') }}</div>
+      <div>Postcode: {{ getAdres('postcode') }}</div>
+      <div>Gemeente: {{ getAdres('gemeente') }}</div>
+    </div>
   </mat-expansion-panel>
-  <mat-expansion-panel *ngIf="heeftWegLocaties()">
-    <mat-expansion-panel-header>
-      <mat-panel-title class="naam">
-        {{ weglocaties.getOrElseL('') }}
-      </mat-panel-title>
-    </mat-expansion-panel-header>
-  </mat-expansion-panel>
+
 </mat-accordion>

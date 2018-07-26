@@ -1,6 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
-import { fromPredicate, none, Option, some } from "fp-ts/lib/Option";
+import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 import { BehaviorSubject } from "rxjs";
@@ -53,14 +53,14 @@ interface AgivAdres {
 }
 
 function toWegLocaties(lsWegLocaties: LsWegLocaties): List<WegLocatie> {
-  return List<WegLocatie>(lsWegLocaties.items.map(locatie => this.toWegLocatie(locatie)));
+  return List<WegLocatie>(lsWegLocaties.items.map(locatie => toWegLocatie(locatie)));
 }
 
 function toWegLocatie(lsWegLocatie: LsWegLocatie): WegLocatie {
   return {
     ident8: lsWegLocatie.ident8,
-    hm: `${lsWegLocatie.hm}`,
-    afstand: `${lsWegLocatie.distance}`,
+    hm: lsWegLocatie.hm,
+    afstand: lsWegLocatie.distance,
     wegbeheerder: lsWegLocatie.district
   };
 }
@@ -77,7 +77,7 @@ function toAdres(agivAdres: AgivAdres): Adres {
 @Component({
   selector: "awv-kaart-bevragen",
   template: "",
-  styleUrls: ["./kaart-bevragen.component.scss"]
+  styleUrls: []
 })
 export class KaartBevragenComponent extends KaartModusComponent implements OnInit, OnDestroy {
   private ontvangenInformatie = new BehaviorSubject<Option<OntvangenInformatie>>(none);
@@ -125,6 +125,7 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
       map((msg: KaartClickMsg) => msg.clickCoordinaat)
     );
 
+    // nieuwe click coordinaat ontvangen, start nieuwe identify informatie
     clickObs$.subscribe((coordinate: ol.Coordinate) => {
       this.ontvangenInformatie.next(
         some({
@@ -135,29 +136,11 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
       );
     });
 
+    // weglocaties bij coordinaat opvragen
     clickObs$
       .pipe(
         // switchMap zal inner observables automatisch unsubscriben, zodat calls voor vorige coordinaat gecancelled worden
-        switchMap((coordinaat: ol.Coordinate) =>
-          this.http
-            .get<LsWegLocaties>("https://apps-dev.mow.vlaanderen.be/wegendatabank/v1/locator/xy2loc", {
-              params: {
-                x: `${coordinaat[0]}`,
-                y: `${coordinaat[1]}`,
-                maxAfstand: "25",
-                showall: "true"
-              }
-            })
-            .catch(error => {
-              // bij fout toch zeker geldige observable doorsturen - anders geen volgende events meer.. bug rxJs?
-              kaartLogger.error(`Fout bij opvragen adres: ${error}`);
-              return Observable.of({
-                total: 0,
-                items: [],
-                error: `Fout bij opvragen adres: ${error}`
-              }) as Observable<LsWegLocaties>;
-            })
-        )
+        switchMap((coordinaat: ol.Coordinate) => this.wegLocatiesViaXYObs$(coordinaat))
       )
       .subscribe((weglocaties: LsWegLocaties) => {
         if (weglocaties.total !== undefined) {
@@ -173,41 +156,63 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
         }
       });
 
+    // dichtsbijzijnde adres bij coordinaat opvragen
     clickObs$
       .pipe(
         // switchMap zal inner observables automatisch unsubscriben, zodat calls voor vorige coordinaat gecancelled worden
-        switchMap((coordinaat: ol.Coordinate) =>
-          this.http
-            .get("https://apps-dev.mow.vlaanderen.be/agivservices/rest/locatie/adres/via/xy", {
-              params: {
-                x: `${coordinaat[0]}`,
-                y: `${coordinaat[1]}`,
-                maxResults: "1"
-              }
-            })
-            .catch(error => {
-              kaartLogger.error(`Fout bij opvragen weglocatie: ${error}`);
-              // bij fout toch zeker geldige observable doorsturen - anders geen volgende events meer.. bug rxJs?
-              return Observable.of([]);
-            })
-        )
+        switchMap((coordinaat: ol.Coordinate) => this.adresViaXYObs$(coordinaat))
       )
-      .subscribe(
-        adres => {
-          if (adres instanceof Array && adres.length > 0) {
-            this.ontvangenInformatie.value.map(bestaandeInformatie => {
-              this.ontvangenInformatie.next(
-                // verrijk de bestaande identify informatie
-                some({
-                  ...bestaandeInformatie,
-                  adres: some(adres[0])
-                })
-              );
-            });
-          }
-        },
-        error => console.log(error)
-      );
+      // TODO: typeer dit
+      .subscribe(adres => {
+        if (adres instanceof Array && adres.length > 0) {
+          this.ontvangenInformatie.value.map(bestaandeInformatie => {
+            this.ontvangenInformatie.next(
+              // verrijk de bestaande identify informatie
+              some({
+                ...bestaandeInformatie,
+                adres: some(adres[0].adres)
+              })
+            );
+          });
+        }
+      });
+  }
+
+  private adresViaXYObs$(coordinaat: ol.Coordinate) {
+    return this.http
+      .get("https://apps-dev.mow.vlaanderen.be/agivservices/rest/locatie/adres/via/xy", {
+        params: {
+          x: `${coordinaat[0]}`,
+          y: `${coordinaat[1]}`,
+          maxResults: "1"
+        }
+      })
+      .catch(error => {
+        kaartLogger.error(`Fout bij opvragen weglocatie: ${error}`);
+        // bij fout toch zeker geldige observable doorsturen - anders geen volgende events meer.. bug rxJs?
+        return Observable.of([]);
+      });
+  }
+
+  private wegLocatiesViaXYObs$(coordinaat: ol.Coordinate): Observable<LsWegLocaties> {
+    return this.http
+      .get<LsWegLocaties>("https://apps-dev.mow.vlaanderen.be/wegendatabank/v1/locator/xy2loc", {
+        params: {
+          x: `${coordinaat[0]}`,
+          y: `${coordinaat[1]}`,
+          maxAfstand: "25",
+          showall: "true"
+        }
+      })
+      .catch(error => {
+        // bij fout toch zeker geldige observable doorsturen - anders geen volgende events meer.. bug rxJs?
+        kaartLogger.error(`Fout bij opvragen adres: ${error}`);
+        return Observable.of({
+          total: 0,
+          items: [],
+          error: `Fout bij opvragen adres: ${error}`
+        }) as Observable<LsWegLocaties>;
+      });
   }
 
   protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {

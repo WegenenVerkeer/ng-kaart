@@ -41,6 +41,25 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildComponen
   }
 
   heeftWegLocaties() {
-    return this.weglocaties.isSome();
+    return this.weglocaties.isSome() && this.weglocaties.getOrElse(List()).size > 0;
+  }
+
+  getWegLocaties() {
+    return this.weglocaties
+      .getOrElse(List())
+      .sortBy(locatie => locatie.ident8)
+      .toList();
+  }
+
+  getAdres(key: string): string {
+    return this.adres.map(adres => adres[key]).getOrElse("");
+  }
+
+  signed(value: number): string {
+    if (value >= 0) {
+      return `+${value}`;
+    } else {
+      return `${value}`;
+    }
   }
 }
