@@ -1,6 +1,6 @@
 <mat-accordion class="accordion">
 
-  <mat-expansion-panel [expanded]="true">
+  <mat-expansion-panel class="mat-elevation-z0" [expanded]="true">
     <mat-expansion-panel-header>
       <mat-panel-title class="naam">
         Coordinaten
@@ -12,7 +12,7 @@
     </div>
   </mat-expansion-panel>
 
-  <mat-expansion-panel *ngFor="let weglocatie of getWegLocaties()">
+  <mat-expansion-panel class="mat-elevation-z0" *ngFor="let weglocatie of getWegLocaties()">
     <mat-expansion-panel-header>
       <mat-panel-title class="naam">
           {{ weglocatie.ident8 }} op {{ weglocatie.hm }} {{ signed(weglocatie.afstand) }}
@@ -23,7 +23,7 @@
     </div>
   </mat-expansion-panel>
 
-  <mat-expansion-panel *ngIf="heeftAdres()">
+  <mat-expansion-panel class="mat-elevation-z0" *ngIf="heeftAdres()">
     <mat-expansion-panel-header>
       <mat-panel-title class="naam">
         {{ getAdres('straat') }} {{ getAdres('huisnummer') }}, {{ getAdres('gemeente') }}
