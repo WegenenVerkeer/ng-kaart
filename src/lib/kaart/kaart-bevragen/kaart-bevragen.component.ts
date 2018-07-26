@@ -14,16 +14,7 @@ import * as prt from "../kaart-protocol";
 import { Adres, WegLocatie } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
 
-import {
-  adresViaXY,
-  LsWegLocaties,
-  OntvangenInformatie,
-  toAdres,
-  toWegLocaties,
-  wegLocatiesViaXY,
-  XY2AdresError,
-  XY2AdresSucces
-} from "./kaart-bevragen.service";
+import * as bvrgnSvc from "./kaart-bevragen.service";
 
 export const BevraagKaartUiSelector = "Bevraagkaart";
 
@@ -33,7 +24,7 @@ export const BevraagKaartUiSelector = "Bevraagkaart";
   styleUrls: []
 })
 export class KaartBevragenComponent extends KaartModusComponent implements OnInit, OnDestroy {
-  private ontvangenInfo$ = new BehaviorSubject<Option<OntvangenInformatie>>(none);
+  private ontvangenInfo$ = new BehaviorSubject<Option<bvrgnSvc.OntvangenInformatie>>(none);
 
   constructor(parent: KaartComponent, zone: NgZone, private http: HttpClient) {
     super(parent, zone);
@@ -64,8 +55,8 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
       msg.map(info => {
         this.toonInfoBoodschap(
           info.currentClick, //
-          info.adres.map(adres => toAdres(adres)), //
-          info.weglocaties.map(weglocaties => toWegLocaties(weglocaties)).getOrElse(List())
+          info.adres.map(adres => bvrgnSvc.toAdres(adres)), //
+          info.weglocaties.map(weglocaties => bvrgnSvc.toWegLocaties(weglocaties)).getOrElse(List())
         );
       });
     });
@@ -91,9 +82,9 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
     clickObs$
       .pipe(
         // switchMap zal inner observables automatisch unsubscriben, zodat calls voor vorige coordinaat gecancelled worden
-        switchMap((coordinaat: ol.Coordinate) => wegLocatiesViaXY(this.http, coordinaat))
+        switchMap((coordinaat: ol.Coordinate) => bvrgnSvc.wegLocatiesViaXY(this.http, coordinaat))
       )
-      .subscribe((weglocaties: LsWegLocaties) => {
+      .subscribe((weglocaties: bvrgnSvc.LsWegLocaties) => {
         if (weglocaties.total !== undefined) {
           this.ontvangenInfo$.value.map(bestaandeInformatie => {
             this.ontvangenInfo$.next(
@@ -111,9 +102,9 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
     clickObs$
       .pipe(
         // switchMap zal inner observables automatisch unsubscriben, zodat calls voor vorige coordinaat gecancelled worden
-        switchMap((coordinaat: ol.Coordinate) => adresViaXY(this.http, coordinaat))
+        switchMap((coordinaat: ol.Coordinate) => bvrgnSvc.adresViaXY(this.http, coordinaat))
       )
-      .subscribe((adres: XY2AdresSucces[] | XY2AdresError) => {
+      .subscribe((adres: bvrgnSvc.XY2AdresSucces[] | bvrgnSvc.XY2AdresError) => {
         if (adres instanceof Array && adres.length > 0) {
           this.ontvangenInfo$.value.map(bestaandeInformatie => {
             this.ontvangenInfo$.next(
