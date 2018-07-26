@@ -45,7 +45,7 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildComponen
       .getOrElse(List())
       .sortBy(locatie =>
         fromNullable(locatie)
-          .map(loc => fromNullable(loc.ident8).getOrElse(""))
+          .chain(loc => fromNullable(loc.ident8))
           .getOrElse("")
       )
       .toList();
