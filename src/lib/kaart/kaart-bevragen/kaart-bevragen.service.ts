@@ -86,7 +86,7 @@ export function toAdres(agivAdres: AgivAdres): Adres {
 
 export function adresViaXYObs$(http: HttpClient, coordinaat: ol.Coordinate): Observable<XY2AdresSucces[] | XY2AdresError> {
   return http
-    .get<XY2AdresSucces[] | XY2AdresError>("https://apps-dev.mow.vlaanderen.be/agivservices/rest/locatie/adres/via/xy", {
+    .get<XY2AdresSucces[] | XY2AdresError>("/agivservices/rest/locatie/adres/via/xy", {
       params: {
         x: `${coordinaat[0]}`,
         y: `${coordinaat[1]}`,
@@ -95,14 +95,14 @@ export function adresViaXYObs$(http: HttpClient, coordinaat: ol.Coordinate): Obs
     })
     .catch(error => {
       kaartLogger.error(`Fout bij opvragen weglocatie: ${error}`);
-      // bij fout toch zeker geldige observable doorsturen - anders geen volgende events meer.. bug rxJs?
+      // bij fout toch zeker geldige observable doorsturen - anders geen volgende events meer bij switchMap.. bug rxJs?
       return Observable.of(XY2AdresError(`Fout bij opvragen weglocatie: ${error}`));
     });
 }
 
 export function wegLocatiesViaXYObs$(http: HttpClient, coordinaat: ol.Coordinate): Observable<LsWegLocaties> {
   return http
-    .get<LsWegLocaties>("https://apps-dev.mow.vlaanderen.be/wegendatabank/v1/locator/xy2loc", {
+    .get<LsWegLocaties>("/wegendatabank/v1/locator/xy2loc", {
       params: {
         x: `${coordinaat[0]}`,
         y: `${coordinaat[1]}`,
@@ -111,7 +111,7 @@ export function wegLocatiesViaXYObs$(http: HttpClient, coordinaat: ol.Coordinate
       }
     })
     .catch(error => {
-      // bij fout toch zeker geldige observable doorsturen - anders geen volgende events meer.. bug rxJs?
+      // bij fout toch zeker geldige observable doorsturen - anders geen volgende events meer bij switchMap.. bug rxJs?
       kaartLogger.error(`Fout bij opvragen adres: ${error}`);
       return Observable.of(LsWegLocaties(0, [], `Fout bij opvragen adres: ${error}`));
     });
