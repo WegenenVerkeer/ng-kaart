@@ -15,12 +15,12 @@ import { Adres, WegLocatie } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
 
 import {
-  adresViaXYObs$,
+  adresViaXY,
   LsWegLocaties,
   OntvangenInformatie,
   toAdres,
   toWegLocaties,
-  wegLocatiesViaXYObs$,
+  wegLocatiesViaXY,
   XY2AdresError,
   XY2AdresSucces
 } from "./kaart-bevragen.service";
@@ -33,7 +33,7 @@ export const BevraagKaartUiSelector = "Bevraagkaart";
   styleUrls: []
 })
 export class KaartBevragenComponent extends KaartModusComponent implements OnInit, OnDestroy {
-  private ontvangenInformatie = new BehaviorSubject<Option<OntvangenInformatie>>(none);
+  private ontvangenInfo$ = new BehaviorSubject<Option<OntvangenInformatie>>(none);
 
   constructor(parent: KaartComponent, zone: NgZone, private http: HttpClient) {
     super(parent, zone);
@@ -60,12 +60,12 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
     super.ngOnInit();
 
     // ververs de infoboodschap telkens we nieuwe info hebben ontvangen
-    this.bindToLifeCycle(this.ontvangenInformatie).subscribe(msg => {
+    this.bindToLifeCycle(this.ontvangenInfo$).subscribe(msg => {
       msg.map(info => {
         this.toonInfoBoodschap(
           info.currentClick, //
           info.adres.map(adres => toAdres(adres)), //
-          info.weglocaties.map(weglocaties => toWegLocaties(weglocaties))
+          info.weglocaties.map(weglocaties => toWegLocaties(weglocaties)).getOrElse(List())
         );
       });
     });
@@ -78,7 +78,7 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
 
     // nieuwe click coordinaat ontvangen, start nieuwe identify informatie
     clickObs$.subscribe((coordinate: ol.Coordinate) => {
-      this.ontvangenInformatie.next(
+      this.ontvangenInfo$.next(
         some({
           currentClick: coordinate,
           weglocaties: none,
@@ -91,12 +91,12 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
     clickObs$
       .pipe(
         // switchMap zal inner observables automatisch unsubscriben, zodat calls voor vorige coordinaat gecancelled worden
-        switchMap((coordinaat: ol.Coordinate) => wegLocatiesViaXYObs$(this.http, coordinaat))
+        switchMap((coordinaat: ol.Coordinate) => wegLocatiesViaXY(this.http, coordinaat))
       )
       .subscribe((weglocaties: LsWegLocaties) => {
         if (weglocaties.total !== undefined) {
-          this.ontvangenInformatie.value.map(bestaandeInformatie => {
-            this.ontvangenInformatie.next(
+          this.ontvangenInfo$.value.map(bestaandeInformatie => {
+            this.ontvangenInfo$.next(
               // verrijk de bestaande identify informatie
               some({
                 ...bestaandeInformatie,
@@ -111,12 +111,12 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
     clickObs$
       .pipe(
         // switchMap zal inner observables automatisch unsubscriben, zodat calls voor vorige coordinaat gecancelled worden
-        switchMap((coordinaat: ol.Coordinate) => adresViaXYObs$(this.http, coordinaat))
+        switchMap((coordinaat: ol.Coordinate) => adresViaXY(this.http, coordinaat))
       )
       .subscribe((adres: XY2AdresSucces[] | XY2AdresError) => {
         if (adres instanceof Array && adres.length > 0) {
-          this.ontvangenInformatie.value.map(bestaandeInformatie => {
-            this.ontvangenInformatie.next(
+          this.ontvangenInfo$.value.map(bestaandeInformatie => {
+            this.ontvangenInfo$.next(
               // verrijk de bestaande identify informatie
               some({
                 ...bestaandeInformatie,
@@ -132,7 +132,7 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
     return [prt.ActieveModusSubscription(actieveModusGezetWrapper)];
   }
 
-  private toonInfoBoodschap(coordinaat: ol.Coordinate, maybeAdres: Option<Adres>, maybeWeglocaties: Option<List<WegLocatie>>) {
+  private toonInfoBoodschap(coordinaat: ol.Coordinate, maybeAdres: Option<Adres>, wegLocaties: List<WegLocatie>) {
     this.dispatch(
       prt.ToonInfoBoodschapCmd({
         id: "Kaart bevragen",
@@ -142,7 +142,7 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
         bron: none,
         coordinaat: coordinaat,
         adres: maybeAdres,
-        weglocaties: maybeWeglocaties,
+        weglocaties: wegLocaties,
         verbergMsgGen: () => none
       })
     );

@@ -84,7 +84,7 @@ export function toAdres(agivAdres: AgivAdres): Adres {
   };
 }
 
-export function adresViaXYObs$(http: HttpClient, coordinaat: ol.Coordinate): Observable<XY2AdresSucces[] | XY2AdresError> {
+export function adresViaXY(http: HttpClient, coordinaat: ol.Coordinate): Observable<XY2AdresSucces[] | XY2AdresError> {
   return http
     .get<XY2AdresSucces[] | XY2AdresError>("/agivservices/rest/locatie/adres/via/xy", {
       params: {
@@ -100,7 +100,7 @@ export function adresViaXYObs$(http: HttpClient, coordinaat: ol.Coordinate): Obs
     });
 }
 
-export function wegLocatiesViaXYObs$(http: HttpClient, coordinaat: ol.Coordinate): Observable<LsWegLocaties> {
+export function wegLocatiesViaXY(http: HttpClient, coordinaat: ol.Coordinate): Observable<LsWegLocaties> {
   return http
     .get<LsWegLocaties>("/wegendatabank/v1/locator/xy2loc", {
       params: {

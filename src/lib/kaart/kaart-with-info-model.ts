@@ -30,7 +30,7 @@ export interface InfoBoodschapKaartBevragen extends InfoBoodschap {
   readonly type: "infoBoodschapKaartBevragen";
   readonly coordinaat: ol.Coordinate;
   readonly adres: Option<Adres>;
-  readonly weglocaties: Option<List<WegLocatie>>;
+  readonly weglocaties: List<WegLocatie>;
 }
 
 export interface WegLocatie {

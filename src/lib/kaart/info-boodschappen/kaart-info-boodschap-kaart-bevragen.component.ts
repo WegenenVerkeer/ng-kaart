@@ -15,7 +15,7 @@ import { KaartComponent } from "../kaart.component";
 export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildComponentBase {
   @Input() coordinaat: ol.Coordinate;
   @Input() adres: Option<Adres> = none;
-  @Input() weglocaties: Option<List<WegLocatie>> = none;
+  @Input() weglocaties: List<WegLocatie> = List();
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
@@ -42,20 +42,16 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildComponen
 
   getWegLocaties() {
     return this.weglocaties
-      .map(locaties =>
-        locaties
-          .sortBy(locatie =>
-            fromNullable(locatie)
-              .chain(loc => fromNullable(loc.ident8))
-              .getOrElse("")
-          )
-          .toList()
+      .sortBy(locatie =>
+        fromNullable(locatie)
+          .chain(loc => fromNullable(loc.ident8))
+          .getOrElse("")
       )
-      .getOrElse(List());
+      .toList();
   }
 
   getAdres(key: string): string {
-    return this.adres.map(adres => adres[key]).getOrElse("");
+    return this.adres.chain(adres => fromNullable(adres[key])).getOrElse("");
   }
 
   signed(value: number): string {
