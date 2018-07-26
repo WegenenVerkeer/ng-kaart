@@ -4,7 +4,6 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 import { BehaviorSubject } from "rxjs";
-import { Observable } from "rxjs/Observable";
 import { map, switchMap, takeUntil } from "rxjs/operators";
 
 import { observeOnAngular } from "../../util/observe-on-angular";
@@ -14,65 +13,19 @@ import { KaartModusComponent } from "../kaart-modus-component";
 import * as prt from "../kaart-protocol";
 import { Adres, WegLocatie } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
-import { kaartLogger } from "../log";
+
+import {
+  adresViaXYObs$,
+  LsWegLocaties,
+  OntvangenInformatie,
+  toAdres,
+  toWegLocaties,
+  wegLocatiesViaXYObs$,
+  XY2AdresError,
+  XY2AdresSucces
+} from "./kaart-bevragen.service";
 
 export const BevraagKaartUiSelector = "Bevraagkaart";
-
-interface OntvangenInformatie {
-  currentClick: ol.Coordinate;
-  adres: Option<AgivAdres>;
-  weglocaties: Option<LsWegLocaties>;
-}
-
-interface LsWegLocatie {
-  ident8: string;
-  hm: number;
-  district: string;
-  districtcode: string;
-  position: number;
-  distance: number;
-  distancetopole: number;
-}
-
-interface LsWegLocaties {
-  total: number;
-  items: LsWegLocatie[];
-  error: string;
-}
-
-interface XY2Address {
-  adres: AgivAdres;
-  afstand: number;
-}
-
-interface AgivAdres {
-  gemeente: string;
-  straat: string;
-  postcode: string;
-  huisnummer: string;
-}
-
-function toWegLocaties(lsWegLocaties: LsWegLocaties): List<WegLocatie> {
-  return List<WegLocatie>(lsWegLocaties.items.map(locatie => toWegLocatie(locatie)));
-}
-
-function toWegLocatie(lsWegLocatie: LsWegLocatie): WegLocatie {
-  return {
-    ident8: lsWegLocatie.ident8,
-    hm: lsWegLocatie.hm,
-    afstand: lsWegLocatie.distance,
-    wegbeheerder: lsWegLocatie.district
-  };
-}
-
-function toAdres(agivAdres: AgivAdres): Adres {
-  return {
-    straat: agivAdres.straat,
-    huisnummer: agivAdres.huisnummer,
-    postcode: agivAdres.postcode,
-    gemeente: agivAdres.gemeente
-  };
-}
 
 @Component({
   selector: "awv-kaart-bevragen",
@@ -140,7 +93,7 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
     clickObs$
       .pipe(
         // switchMap zal inner observables automatisch unsubscriben, zodat calls voor vorige coordinaat gecancelled worden
-        switchMap((coordinaat: ol.Coordinate) => this.wegLocatiesViaXYObs$(coordinaat))
+        switchMap((coordinaat: ol.Coordinate) => wegLocatiesViaXYObs$(this.http, coordinaat))
       )
       .subscribe((weglocaties: LsWegLocaties) => {
         if (weglocaties.total !== undefined) {
@@ -160,10 +113,9 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
     clickObs$
       .pipe(
         // switchMap zal inner observables automatisch unsubscriben, zodat calls voor vorige coordinaat gecancelled worden
-        switchMap((coordinaat: ol.Coordinate) => this.adresViaXYObs$(coordinaat))
+        switchMap((coordinaat: ol.Coordinate) => adresViaXYObs$(this.http, coordinaat))
       )
-      // TODO: typeer dit
-      .subscribe(adres => {
+      .subscribe((adres: XY2AdresSucces[] | XY2AdresError) => {
         if (adres instanceof Array && adres.length > 0) {
           this.ontvangenInformatie.value.map(bestaandeInformatie => {
             this.ontvangenInformatie.next(
@@ -175,43 +127,6 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
             );
           });
         }
-      });
-  }
-
-  private adresViaXYObs$(coordinaat: ol.Coordinate) {
-    return this.http
-      .get("https://apps-dev.mow.vlaanderen.be/agivservices/rest/locatie/adres/via/xy", {
-        params: {
-          x: `${coordinaat[0]}`,
-          y: `${coordinaat[1]}`,
-          maxResults: "1"
-        }
-      })
-      .catch(error => {
-        kaartLogger.error(`Fout bij opvragen weglocatie: ${error}`);
-        // bij fout toch zeker geldige observable doorsturen - anders geen volgende events meer.. bug rxJs?
-        return Observable.of([]);
-      });
-  }
-
-  private wegLocatiesViaXYObs$(coordinaat: ol.Coordinate): Observable<LsWegLocaties> {
-    return this.http
-      .get<LsWegLocaties>("https://apps-dev.mow.vlaanderen.be/wegendatabank/v1/locator/xy2loc", {
-        params: {
-          x: `${coordinaat[0]}`,
-          y: `${coordinaat[1]}`,
-          maxAfstand: "25",
-          showall: "true"
-        }
-      })
-      .catch(error => {
-        // bij fout toch zeker geldige observable doorsturen - anders geen volgende events meer.. bug rxJs?
-        kaartLogger.error(`Fout bij opvragen adres: ${error}`);
-        return Observable.of({
-          total: 0,
-          items: [],
-          error: `Fout bij opvragen adres: ${error}`
-        }) as Observable<LsWegLocaties>;
       });
   }
 
