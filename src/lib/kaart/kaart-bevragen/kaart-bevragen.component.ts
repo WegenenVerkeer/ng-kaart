@@ -24,7 +24,7 @@ export const BevraagKaartUiSelector = "Bevraagkaart";
   styleUrls: []
 })
 export class KaartBevragenComponent extends KaartModusComponent implements OnInit, OnDestroy {
-  private ontvangenInfo$ = new BehaviorSubject<Option<bvrgnSvc.OntvangenInformatie>>(none);
+  private ontvangenInfoSubj = new BehaviorSubject<Option<bvrgnSvc.OntvangenInformatie>>(none);
 
   constructor(parent: KaartComponent, zone: NgZone, private http: HttpClient) {
     super(parent, zone);
@@ -51,7 +51,7 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
     super.ngOnInit();
 
     // ververs de infoboodschap telkens we nieuwe info hebben ontvangen
-    this.bindToLifeCycle(this.ontvangenInfo$).subscribe(msg => {
+    this.bindToLifeCycle(this.ontvangenInfoSubj).subscribe(msg => {
       msg.map(info => {
         this.toonInfoBoodschap(
           info.currentClick, //
@@ -69,7 +69,7 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
 
     // nieuwe click coordinaat ontvangen, start nieuwe identify informatie
     clickObs$.subscribe((coordinate: ol.Coordinate) => {
-      this.ontvangenInfo$.next(
+      this.ontvangenInfoSubj.next(
         some({
           currentClick: coordinate,
           weglocaties: none,
@@ -86,8 +86,8 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
       )
       .subscribe((weglocaties: bvrgnSvc.LsWegLocaties) => {
         if (weglocaties.total !== undefined) {
-          this.ontvangenInfo$.value.map(bestaandeInformatie => {
-            this.ontvangenInfo$.next(
+          this.ontvangenInfoSubj.value.map(bestaandeInformatie => {
+            this.ontvangenInfoSubj.next(
               // verrijk de bestaande identify informatie
               some({
                 ...bestaandeInformatie,
@@ -106,8 +106,8 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
       )
       .subscribe((adres: bvrgnSvc.XY2AdresSucces[] | bvrgnSvc.XY2AdresError) => {
         if (adres instanceof Array && adres.length > 0) {
-          this.ontvangenInfo$.value.map(bestaandeInformatie => {
-            this.ontvangenInfo$.next(
+          this.ontvangenInfoSubj.value.map(bestaandeInformatie => {
+            this.ontvangenInfoSubj.next(
               // verrijk de bestaande identify informatie
               some({
                 ...bestaandeInformatie,
