@@ -1,11 +1,10 @@
 import { Option } from "fp-ts/lib/Option";
-import { List, Map } from "immutable";
+import { List, Map, Set } from "immutable";
 import * as ol from "openlayers";
 
 import { ZoekResultaat, ZoekResultaten } from "../zoeker/zoeker-base";
 
 import * as ke from "./kaart-elementen";
-import { DataLoadEvent } from "./kaart-load-events";
 import { InfoBoodschap } from "./kaart-with-info-model";
 
 /////////
@@ -28,8 +27,8 @@ export type Subscription<Msg> =
   | TekenenSubscription<Msg>
   | ViewinstellingenSubscription<Msg>
   | ZichtbareFeaturesSubscription<Msg>
-  | ZoekerKlikSubscription<Msg>
-  | ZoekerSubscription<Msg>
+  | ZoekResultaatSelectieSubscription<Msg>
+  | ZoekResultatenSubscription<Msg>
   | ZoomSubscription<Msg>;
 
 export interface Viewinstellingen {
@@ -107,13 +106,13 @@ export interface KaartClickSubscription<Msg> {
   readonly wrapper: (coordinaat: ol.Coordinate) => Msg;
 }
 
-export interface ZoekerSubscription<Msg> {
-  readonly type: "Zoeker";
+export interface ZoekResultatenSubscription<Msg> {
+  readonly type: "ZoekResultaten";
   readonly wrapper: (resultaten: ZoekResultaten) => Msg;
 }
 
-export interface ZoekerKlikSubscription<Msg> {
-  readonly type: "ZoekerKlik";
+export interface ZoekResultaatSelectieSubscription<Msg> {
+  readonly type: "ZoekResultaatSelectie";
   readonly wrapper: (resultaat: ZoekResultaat) => Msg;
 }
 
@@ -194,12 +193,12 @@ export function LaagVerwijderdSubscription<Msg>(msgGen: (laag: ke.ToegevoegdeLaa
   return { type: "LaagVerwijderd", wrapper: msgGen };
 }
 
-export function ZoekerSubscription<Msg>(wrapper: (resultaten: ZoekResultaten) => Msg): Subscription<Msg> {
-  return { type: "Zoeker", wrapper: wrapper };
+export function ZoekResultatenSubscription<Msg>(wrapper: (resultaten: ZoekResultaten) => Msg): ZoekResultatenSubscription<Msg> {
+  return { type: "ZoekResultaten", wrapper: wrapper };
 }
 
-export function ZoekerKlikSubscription<Msg>(wrapper: (resultaat: ZoekResultaat) => Msg): Subscription<Msg> {
-  return { type: "ZoekerKlik", wrapper: wrapper };
+export function ZoekResultaatSelectieSubscription<Msg>(wrapper: (resultaat: ZoekResultaat) => Msg): ZoekResultaatSelectieSubscription<Msg> {
+  return { type: "ZoekResultaatSelectie", wrapper: wrapper };
 }
 
 export function KaartClickSubscription<Msg>(wrapper: (coordinaat: ol.Coordinate) => Msg): Subscription<Msg> {

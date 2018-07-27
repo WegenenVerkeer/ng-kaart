@@ -1,11 +1,14 @@
+import { NgZone } from "@angular/core";
 import { array } from "fp-ts/lib/Array";
 import { none, Option, some } from "fp-ts/lib/Option";
-import { List, Map } from "immutable";
+import { List, Map, Set } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { combineLatest, debounceTime, distinctUntilChanged, filter, map, mapTo, merge, shareReplay, switchMap } from "rxjs/operators";
 
+import { observeOutsideAngular } from "../util/observer-outside-angular";
 import { observableFromOlEvents } from "../util/ol-observable";
+import { ZoekerBase } from "../zoeker/zoeker-base";
 
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
@@ -34,6 +37,7 @@ export interface ModelChanger {
   readonly laagVerwijderdSubj: rx.Subject<ke.ToegevoegdeLaag>;
   readonly mijnLocatieZoomDoelSubj: rx.Subject<Option<number>>;
   readonly actieveModusSubj: rx.Subject<Option<string>>;
+  readonly zoekerServicesSubj: rx.Subject<List<ZoekerBase>>;
 }
 
 export const ModelChanger: () => ModelChanger = () => ({
@@ -48,7 +52,8 @@ export const ModelChanger: () => ModelChanger = () => ({
   }),
   laagVerwijderdSubj: new rx.Subject<ke.ToegevoegdeLaag>(),
   mijnLocatieZoomDoelSubj: new rx.BehaviorSubject<Option<number>>(none),
-  actieveModusSubj: new rx.BehaviorSubject(none)
+  actieveModusSubj: new rx.BehaviorSubject(none),
+  zoekerServicesSubj: new rx.BehaviorSubject(List())
 });
 
 export interface ModelChanges {
@@ -63,6 +68,7 @@ export interface ModelChanges {
   readonly kaartKlikLocatie$: rx.Observable<ol.Coordinate>;
   readonly mijnLocatieZoomDoel$: rx.Observable<Option<number>>;
   readonly actieveModus$: rx.Observable<Option<string>>;
+  readonly zoekerServices$: rx.Observable<List<ZoekerBase>>;
 }
 
 const viewinstellingen = (olmap: ol.Map) => ({
@@ -171,6 +177,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     zichtbareFeatures$: zichtbareFeatures$,
     kaartKlikLocatie$: kaartKlikLocatie$,
     mijnLocatieZoomDoel$: changer.mijnLocatieZoomDoelSubj.asObservable(),
-    actieveModus$: changer.actieveModusSubj.asObservable()
+    actieveModus$: changer.actieveModusSubj.asObservable(),
+    zoekerServices$: changer.zoekerServicesSubj.asObservable()
   };
 };

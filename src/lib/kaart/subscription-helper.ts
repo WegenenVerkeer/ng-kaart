@@ -1,6 +1,5 @@
 import * as rx from "rxjs";
 import { Observable } from "rxjs/Observable";
-import { Operator } from "rxjs/Operator";
 import { filter, take } from "rxjs/operators";
 
 import { ofType } from "../util/operators";

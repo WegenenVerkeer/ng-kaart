@@ -10,7 +10,7 @@ export const geoJSONOptions = <ol.olx.format.GeoJSONOptions>{
 };
 
 export interface IconDescription {
-  type: "svg" | "font";
+  readonly type: "svg" | "font";
   readonly name: string;
 }
 
@@ -55,7 +55,7 @@ export class ZoekResultaten {
 }
 
 export interface ZoekInput {
-  readonly type: string;
+  readonly type: string; // We kunnen dit niet inperken omdat we niet alle zoekers kennen
 }
 
 export interface StringZoekInput {

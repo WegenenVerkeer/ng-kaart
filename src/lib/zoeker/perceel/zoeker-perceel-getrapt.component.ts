@@ -4,7 +4,6 @@ import { Set } from "immutable";
 import { Observable } from "rxjs/Observable";
 import { distinctUntilChanged, filter, map, startWith } from "rxjs/operators";
 
-import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import { KaartComponent } from "../../kaart/kaart.component";
 import {
   GetraptZoekerComponent,
@@ -13,7 +12,6 @@ import {
   toTrimmedLowerCasedString,
   ZoekerBoxComponent
 } from "../box/zoeker-box.component";
-import { StringZoekInput } from "../zoeker-base";
 
 import { Afdeling, Gemeente, PerceelNummer, Sectie, ZoekerPerceelService } from "./zoeker-perceel.service";
 
@@ -42,8 +40,8 @@ export class ZoekerPerceelGetraptComponent extends GetraptZoekerComponent implem
   secties$: Observable<Sectie[]> = Observable.empty();
   percelen$: Observable<PerceelNummer[]> = Observable.empty();
 
-  leegMakenDisabled$: Observable<Boolean> = Observable.empty();
-  @Output() leegMakenDisabledChange: EventEmitter<Boolean> = new EventEmitter();
+  leegMakenDisabled$: Observable<boolean> = Observable.empty();
+  @Output() leegMakenDisabledChange: EventEmitter<boolean> = new EventEmitter();
 
   constructor(
     private perceelService: ZoekerPerceelService,
@@ -116,15 +114,17 @@ export class ZoekerPerceelGetraptComponent extends GetraptZoekerComponent implem
     // Hier gaan we onze capakey doorsturen naar de zoekers, we willen alleen de perceelzoeker triggeren.
     this.bindToLifeCycle(this.perceelControl.valueChanges.pipe(filter(isNotNullObject), distinctUntilChanged())).subscribe(
       (perceelDetails: PerceelNummer) => {
-        this.zoek({ type: "string", value: perceelDetails.capakey } as StringZoekInput, Set.of(this.perceelService.naam()));
+        this.zoek({ type: "Perceel", capaKey: perceelDetails.capakey }, Set.of(this.perceelService.naam()));
       }
     );
 
-    this.dispatch({ type: "VoegZoekerToe", zoeker: this.perceelService, wrapper: kaartLogOnlyWrapper });
+    // De zoeker wordt hier pas toegevoegd omdat hij niet globaal beschikbaar moet zijn
+    // this.dispatch({ type: "VoegZoekerToe", zoeker: this.perceelService, wrapper: kaartLogOnlyWrapper });
   }
 
   ngOnDestroy(): void {
-    this.dispatch({ type: "VerwijderZoeker", zoeker: this.perceelService.naam(), wrapper: kaartLogOnlyWrapper });
+    // En dus hier weer weg gedaan. Anders wordt hij opgeroepen bij een opdracht in de algemene zoek box
+    // this.dispatch({ type: "VerwijderZoeker", zoeker: this.perceelService.naam(), wrapper: kaartLogOnlyWrapper });
 
     super.ngOnDestroy();
   }

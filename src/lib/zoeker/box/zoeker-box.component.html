@@ -2,17 +2,21 @@
   <div class="zoeker-input">
 
     <mat-menu #zoekerMenu="matMenu" class="awv-kaart-zoeker-box-menu" [overlapTrigger]="false">
-      <button mat-menu-item (click)="kiesZoeker('Basis')" [disabled]="actieveZoeker === 'Basis'">
+      <button mat-menu-item (click)="kiesZoeker(Basis)" [disabled]="actieveZoeker === Basis">
         <mat-icon>search</mat-icon>
         <span>Zoek</span>
       </button>
-      <button mat-menu-item (click)="kiesZoeker('Perceel')" [disabled]="actieveZoeker === 'Perceel'">
+      <button mat-menu-item *ngIf="availability$(Perceel) | async" (click)="kiesZoeker(Perceel)" [disabled]="actieveZoeker === Perceel">
         <mat-icon>search</mat-icon>
         <span>Zoek op perceel</span>
       </button>
-      <button mat-menu-item (click)="kiesZoeker('Crab')" [disabled]="actieveZoeker === 'Crab'">
+      <button mat-menu-item *ngIf="availability$(Crab) | async" (click)="kiesZoeker(Crab)" [disabled]="actieveZoeker === Crab">
         <mat-icon>search</mat-icon>
         <span>Zoek op adres via CRAB</span>
+      </button>
+      <button mat-menu-item *ngIf="availability$(ExterneWms) | async" (click)="kiesZoeker(ExterneWms)" [disabled]="actieveZoeker === ExterneWms">
+        <mat-icon>search</mat-icon>
+        <span>Zoek een WMS-laag</span>
       </button>
       <button mat-menu-item (click)="toggleHelp()" *ngIf="actieveZoeker === 'Basis'">
         <mat-icon>help</mat-icon>
@@ -25,19 +29,24 @@
       <mat-icon>menu</mat-icon>
     </button>
     <input placeholder="Zoek" [formControl]="zoekVeld" *ngIf="this.actieveZoeker === 'Basis'" (keyup)="onKey($event)" #zoekVeldElement>
-    <span class="actieve-zoeker-titel" *ngIf="actieveZoeker === 'Perceel'">Zoek op perceel</span>
-    <span class="actieve-zoeker-titel" *ngIf="actieveZoeker === 'Crab'">Zoek op adres via CRAB</span>
+    <span class="actieve-zoeker-titel" *ngIf="actieveZoeker === Perceel">Zoek op perceel</span>
+    <span class="actieve-zoeker-titel" *ngIf="actieveZoeker === Crab">Zoek op adres via CRAB</span>
+    <span class="actieve-zoeker-titel" *ngIf="actieveZoeker === ExterneWms">Zoek een WMS-laag</span>
     <div class="zoek-bezig-indicator" *ngIf="isBusy()">
       <mat-spinner diameter="20"></mat-spinner>
     </div>
     <button mat-icon-button (click)="kuisZoekOp()" *ngIf="zoekVeld.dirty" [matTooltip]="alleZoekResultaten.length > 0 ? 'Wis invoer en zoekresultaten' : 'Wis invoer'" matTooltipPosition="right">
       <mat-icon>close</mat-icon>
     </button>
-    <button mat-icon-button *ngIf="actieveZoeker === 'Perceel' && !perceelMaakLeegDisabled" (click)="zoekerPerceelGetraptComponent.maakVeldenLeeg(0)"
+    <button mat-icon-button *ngIf="true && actieveZoeker === Perceel && !perceelMaakLeegDisabled" (click)="zoekerPerceelGetraptComponent.maakVeldenLeeg(0)"
             [matTooltip]="alleZoekResultaten.length > 0 ? 'Wis invoer en zoekresultaat' : 'Wis invoer'" matTooltipPosition="right">
       <mat-icon>close</mat-icon>
     </button>
-    <button mat-icon-button *ngIf="actieveZoeker === 'Crab' && !crabMaakLeegDisabled" (click)="zoekerCrabGetraptComponent.maakVeldenLeeg(0)"
+    <button mat-icon-button *ngIf="actieveZoeker === Crab && !crabMaakLeegDisabled" (click)="maakVeldenLeeg(Crab)"
+            [matTooltip]="alleZoekResultaten.length > 0 ? 'Wis invoer en zoekresultaat' : 'Wis invoer'" matTooltipPosition="right">
+      <mat-icon>close</mat-icon>
+    </button>
+    <button mat-icon-button *ngIf="actieveZoeker === ExterneWms && !zoekerMaakLeegDisabled(ExterneWms)" (click)="maakVeldenLeeg(ExterneWms)"
             [matTooltip]="alleZoekResultaten.length > 0 ? 'Wis invoer en zoekresultaat' : 'Wis invoer'" matTooltipPosition="right">
       <mat-icon>close</mat-icon>
     </button>
@@ -49,14 +58,18 @@
       <mat-icon *ngIf="!toonResultaat">expand_more</mat-icon>
     </button>
   </div>
-  <awv-zoeker-perceel-getrapt *ngIf="actieveZoeker === 'Perceel'" [hidden]="!toonResultaat"
+
+  <awv-zoeker-perceel-getrapt *ngIf="actieveZoeker === Perceel" [hidden]="!toonResultaat"
                               (leegMakenDisabledChange)="onPerceelMaakLeegDisabledChange($event)"
                               #zoekerPerceelGetrapt></awv-zoeker-perceel-getrapt>
-  <awv-zoeker-crab-getrapt *ngIf="actieveZoeker === 'Crab'" [hidden]="!toonResultaat"
+  <awv-zoeker-crab-getrapt *ngIf="actieveZoeker === Crab" [hidden]="!toonResultaat"
                            (leegMakenDisabledChange)="onCrabMaakLeegDisabledChange($event)"
                            #zoekerCrabGetrapt></awv-zoeker-crab-getrapt>
-  <div class="divider" *ngIf="toonHelp && actieveZoeker === 'Basis'"></div>
-  <div class="zoeker-help" *ngIf="toonHelp && actieveZoeker === 'Basis'" [@enterAnimation]>
+  <awv-zoeker-externe-wms-getrapt *ngIf="actieveZoeker === ExterneWms" [hidden]="!toonResultaat"
+                                  (leegMakenDisabledChange)="onMaakLeegDisabledChange(ExterneWms, $event)"
+                                  #zoekerExterneWmsGetrapt></awv-zoeker-externe-wms-getrapt>                           
+  <div class="divider" *ngIf="toonHelp && actieveZoeker === Basis"></div>
+  <div class="zoeker-help" *ngIf="toonHelp && actieveZoeker === Basis" [@enterAnimation]>
     <div class="zoeker-help-header" (click)="toggleHelp()">
       <mat-icon>help</mat-icon>
       <div class="zoeker-help-titel">

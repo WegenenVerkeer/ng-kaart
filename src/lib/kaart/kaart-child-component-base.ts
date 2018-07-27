@@ -1,4 +1,5 @@
 import { NgZone, OnDestroy, OnInit } from "@angular/core";
+import { Set } from "immutable";
 import * as rx from "rxjs";
 
 import { KaartComponentBase } from "./kaart-component-base";
@@ -55,5 +56,9 @@ export abstract class KaartChildComponentBase extends KaartComponentBase impleme
 
   protected get modelChanges(): ModelChanges {
     return this.kaartComponent.modelChanges;
+  }
+
+  protected get aanwezigeElementen$(): rx.Observable<Set<string>> {
+    return this.kaartComponent.aanwezigeElementen$;
   }
 }

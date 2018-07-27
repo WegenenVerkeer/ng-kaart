@@ -1,0 +1,8 @@
+<div class="externe-wms-form">
+  <mat-form-field>
+    <mat-select placeholder="Selecteer een WMS-bron" [formControl]="bronControl" required>
+      <mat-option *ngFor="let bron of bronnen$ | async" [value]="bron">{{ bron }}</mat-option>
+    </mat-select>
+  </mat-form-field>
+  
+</div>

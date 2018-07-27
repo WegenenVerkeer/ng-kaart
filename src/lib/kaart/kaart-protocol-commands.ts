@@ -612,3 +612,7 @@ export function ZetLaagLegendeCmd<Msg extends KaartMsg>(
 ): ZetLaagLegendeCmd<Msg> {
   return { type: "ZetLaagLegende", titel: titel, legende: legende, wrapper: wrapper };
 }
+
+export function VoegZoekerToeCmd<Msg extends KaartMsg>(zoeker: ZoekerBase, wrapper: BareValidationWrapper<Msg>): VoegZoekerToeCmd<Msg> {
+  return { type: "VoegZoekerToe", zoeker: zoeker, wrapper: wrapper };
+}

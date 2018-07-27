@@ -35,8 +35,8 @@ export class ZoekerCrabGetraptComponent extends GetraptZoekerComponent implement
 
   straten$: Observable<CrabStraat[]> = Observable.empty();
   huisnummers$: Observable<CrabHuisnummer[]> = Observable.empty();
-  leegMakenDisabled$: Observable<Boolean> = Observable.empty();
-  @Output() leegMakenDisabledChange: EventEmitter<Boolean> = new EventEmitter();
+  leegMakenDisabled$: Observable<boolean> = Observable.empty();
+  @Output() leegMakenDisabledChange: EventEmitter<boolean> = new EventEmitter();
 
   constructor(private crabService: ZoekerCrabService, kaartComponent: KaartComponent, zoekerComponent: ZoekerBoxComponent, zone: NgZone) {
     super(kaartComponent, zoekerComponent, zone);

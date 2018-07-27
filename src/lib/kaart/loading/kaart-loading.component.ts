@@ -17,6 +17,7 @@ import {
 } from "rxjs/operators";
 
 import { NosqlFsSource } from "../../source/nosql-fs-source";
+import { observeOnAngular } from "../../util/observe-on-angular";
 import { ofType } from "../../util/operators";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { isNoSqlFsLaag, ToegevoegdeLaag, VectorLaag } from "../kaart-elementen";
@@ -79,19 +80,37 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
     );
     const stableError$ = (stability: number) => mergedDataloadEvent$.pipe(ofType<LoadError>("LoadError"), debounceTime(stability));
 
-    const busy$: rx.Observable<boolean> = numBusy$.pipe(map(numBusy => numBusy > 0), distinctUntilChanged());
+    const busy$: rx.Observable<boolean> = numBusy$.pipe(map(numBusy => numBusy > 0), distinctUntilChanged(), shareReplay(1));
     const inError$: rx.Observable<boolean> = stableError$(100).pipe(
       switchMapTo(rx.Observable.timer(0, 1000).pipe(map(t => t === 0), take(2))), // Produceert direct true, dan na een seconde false
       startWith(false)
     );
 
     // busy$ heeft voorrang op inactive$
-    this.activityClass$ = busy$.pipe(combineLatest(inError$, (busy, error) => (busy ? "active" : error ? "error" : "inactive")));
+    this.activityClass$ = busy$.pipe(
+      combineLatest(inError$, (busy, error) => (busy ? "active" : error ? "error" : "inactive")),
+      observeOnAngular(this.zone)
+    );
 
     // We willen het "oog" verbergen wanneer we in de error toestand zijn
     this.progressStyle$ = inError$.pipe(
-      // 110 = 11 * 10 . De modulus moet het eerste geheel veelvoud van het aantal onderverdelingen > 100 zijn.
-      combineLatest(rx.Observable.timer(0, 200), (inError, n) => ({ "margin-left": inError ? "-10000px" : (n * 11) % 110 + "%" }))
+      switchMap(
+        inError =>
+          inError
+            ? rx.Observable.of({ "margin-left": "-10000px" })
+            : busy$.pipe(
+                switchMap(
+                  busy =>
+                    busy
+                      ? rx.Observable.timer(0, 200).pipe(
+                          // 110 = 11 * 10 . De modulus moet het eerste geheel veelvoud van het aantal onderverdelingen > 100 zijn.
+                          map(n => ({ "margin-left": (n * 11) % 110 + "%" }))
+                        )
+                      : rx.Observable.of({})
+                )
+              )
+      ),
+      observeOnAngular(this.zone)
     );
 
     this.bindToLifeCycle(stableError$(500)).subscribe(evt =>

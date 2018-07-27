@@ -3,6 +3,7 @@ import { Inject, Injectable } from "@angular/core";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { Map } from "immutable";
 import * as ol from "openlayers";
+import * as rx from "rxjs";
 import { Observable } from "rxjs/Observable";
 import { map, shareReplay } from "rxjs/operators";
 
@@ -13,6 +14,7 @@ import {
   IconDescription,
   StringZoekInput,
   ZoekerBase,
+  ZoekInput,
   ZoekKaartResultaat,
   ZoekResultaat,
   ZoekResultaten
@@ -59,6 +61,11 @@ export interface PerceelDetails {
   readonly shape: string;
   readonly boundingbox: string;
   readonly center: string;
+}
+
+export interface PerceelZoekInput extends ZoekInput {
+  type: "Perceel";
+  capaKey: string;
 }
 
 export class PerceelZoekResultaat implements ZoekResultaat {
@@ -137,29 +144,34 @@ export class ZoekerPerceelService implements ZoekerBase {
   }
 
   naam(): string {
-    return "Percelen";
+    return "Perceel";
   }
 
-  zoek$(zoekterm: StringZoekInput): Observable<ZoekResultaten> {
-    return this.getPerceelDetails$(zoekterm.value).pipe(
-      map(
-        details =>
-          new ZoekResultaten(
-            this.naam(),
-            [],
-            [
-              new PerceelZoekResultaat(
-                details,
-                0,
+  zoek$(zoekterm: ZoekInput): Observable<ZoekResultaten> {
+    switch (zoekterm.type) {
+      case "Perceel":
+        return this.getPerceelDetails$((zoekterm as PerceelZoekInput).capaKey).pipe(
+          map(
+            details =>
+              new ZoekResultaten(
                 this.naam(),
-                this.zoekerRepresentatie.getSvgIcon("Perceel"),
-                this.zoekerRepresentatie.getOlStyle("Perceel"),
-                this.zoekerRepresentatie.getHighlightOlStyle("Perceel")
+                [],
+                [
+                  new PerceelZoekResultaat(
+                    details,
+                    0,
+                    this.naam(),
+                    this.zoekerRepresentatie.getSvgIcon("Perceel"),
+                    this.zoekerRepresentatie.getOlStyle("Perceel"),
+                    this.zoekerRepresentatie.getHighlightOlStyle("Perceel")
+                  )
+                ],
+                this.legende
               )
-            ],
-            this.legende
           )
-      )
-    );
+        );
+      default:
+        return rx.Observable.empty();
+    }
   }
 }

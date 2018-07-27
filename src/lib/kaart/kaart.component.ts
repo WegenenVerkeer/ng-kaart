@@ -13,18 +13,13 @@ import {
 } from "@angular/core";
 import { Set } from "immutable";
 import * as ol from "openlayers";
-import { ReplaySubject } from "rxjs";
-import "rxjs/add/observable/combineLatest";
-import "rxjs/add/observable/empty";
-import "rxjs/add/observable/never";
-import "rxjs/add/observable/of";
-import { Observable } from "rxjs/Observable";
+import { Observable, ReplaySubject } from "rxjs"; // => alles van rxjs wordt binnen getrokken => grotere bundle, maar minder fragiel.
 import { delay, filter, last, map, merge, scan, shareReplay, startWith, switchMap, takeUntil, tap } from "rxjs/operators";
 
 import { asap } from "../util/asap";
 import { observeOnAngular } from "../util/observe-on-angular";
 import { observeOutsideAngular } from "../util/observer-outside-angular";
-import { emitSome, ofType } from "../util/operators";
+import { flatten, ofType } from "../util/operators";
 import { forEach } from "../util/option";
 
 import { KaartComponentBase } from "./kaart-component-base";
@@ -103,7 +98,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     this.internalMessage$ = this.msgSubj.pipe(
       filter(m => m.type === "KaartInternal"), //
       map(m => (m as KaartInternalMsg).payload),
-      emitSome,
+      flatten,
       tap(m => kaartLogger.debug("een interne message werd ontvangen:", m)),
       shareReplay(1) // Waarom hebben we eigenlijk het vorige commando nog nodig?
     );

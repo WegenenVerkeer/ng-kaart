@@ -1,5 +1,4 @@
 import { array } from "fp-ts/lib/Array";
-import { monoidString } from "fp-ts/lib/Monoid";
 import * as option from "fp-ts/lib/Option";
 import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";

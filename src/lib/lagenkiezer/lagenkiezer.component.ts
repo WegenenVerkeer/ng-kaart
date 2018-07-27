@@ -116,22 +116,25 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
     super.ngOnInit();
     // Zorg dat de lijst openklapt als er een laag bijkomt of weggaat tenzij de optie initieelDichtgeklapt op 'true' staat.
     this.opties$
-      .map(optie => {
-        if (optie.initieelDichtgeklapt) {
-          this.dichtgeklapt = true;
-        } else {
-          this.dichtgeklapt = false;
-          this.bindToLifeCycle(
-            this.lagenHoog$.pipe(
-              combineLatest(this.lagenLaag$, (lagenHoog, lagenLaag) => lagenHoog.concat(lagenLaag).map(laag => laag!.titel)),
-              distinctUntilChanged()
-            )
-          ).subscribe(_ => {
+      .pipe(
+        map(optie => {
+          if (optie.initieelDichtgeklapt) {
+            this.dichtgeklapt = true;
+          } else {
             this.dichtgeklapt = false;
-            this.cdr.detectChanges();
-          });
-        }
-      })
+            // WTF!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            this.bindToLifeCycle(
+              this.lagenHoog$.pipe(
+                combineLatest(this.lagenLaag$, (lagenHoog, lagenLaag) => lagenHoog.concat(lagenLaag).map(laag => laag!.titel)),
+                distinctUntilChanged()
+              )
+            ).subscribe(_ => {
+              this.dichtgeklapt = false;
+              this.cdr.detectChanges();
+            });
+          }
+        })
+      )
       .subscribe();
   }
 

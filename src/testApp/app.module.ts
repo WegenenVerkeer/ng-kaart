@@ -6,9 +6,9 @@ import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { ClickOutsideModule } from "ng4-click-outside";
 
 import { ClassicModule } from "../lib/classic";
-import { KaartModule } from "../lib/kaart/index";
-import { LagenkiezerModule } from "../lib/lagenkiezer/index";
-import { ZoekerModule } from "../lib/zoeker/index";
+import { KaartModule } from "../lib/kaart";
+import { LagenkiezerModule } from "../lib/lagenkiezer";
+import { ZoekerModule } from "../lib/zoeker";
 
 import { AppComponent } from "./app.component";
 import { AvKaartInnerComponent } from "./av-kaart-inner.component";
