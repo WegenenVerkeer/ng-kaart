@@ -13,6 +13,28 @@ mat-expansion-panel {
   color: rgba(0, 0, 0, 0.54);
 }
 
-.waarde {
+.velden {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+}
+
+.veldnamen {
+  order: 1;
+  flex-basis: 40%;
+  max-width: 40%;
+  line-height: 20px;
+  font-size: 14px;
+  font-weight: 300;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.veldwaarden {
+  order: 2;
+  flex-basis: 60%;
+  max-width: 60%;
+  line-height: 20px;
+  font-size: 14px;
+  font-weight: 300;
   color: rgba(0, 0, 0, 0.87);
 }

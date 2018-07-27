@@ -1,15 +1,19 @@
 <mat-accordion class="accordion">
 
-  <mat-expansion-panel class="mat-elevation-z0" [expanded]="true">
+  <mat-expansion-panel class="mat-elevation-z0">
     <mat-expansion-panel-header>
       <mat-panel-title class="naam">
         Coordinaten
       </mat-panel-title>
     </mat-expansion-panel-header>
-    <div class="waarde">
-      <div>Lambert 72: {{ coordinaatInformatieLambert72() }}</div>
-      <div>WGS 84: {{ coordinaatInformatieWgs84() }}</div>
+
+    <div class="velden">
+      <div class="veldnamen">Lambert 72</div><div class="veldwaarden">{{ coordinaatInformatieLambert72() }}</div>
     </div>
+    <div class="velden">
+      <div class="veldnamen">WGS 84</div><div class="veldwaarden">{{ coordinaatInformatieWgs84() }}</div>
+    </div>
+
   </mat-expansion-panel>
 
   <mat-expansion-panel class="mat-elevation-z0" *ngFor="let weglocatie of getWegLocaties()">
@@ -18,9 +22,11 @@
           {{ weglocatie.ident8 }} op {{ weglocatie.hm }} {{ signed(weglocatie.afstand) }}
       </mat-panel-title>
     </mat-expansion-panel-header>
-    <div class="waarde">
-      <div>Wegbeheerder: {{ weglocatie.wegbeheerder }}</div>
+
+    <div class="velden">
+      <div class="veldnamen">Wegbeheerder</div><div class="veldwaarden">{{ weglocatie.wegbeheerder }}</div>
     </div>
+
   </mat-expansion-panel>
 
   <mat-expansion-panel class="mat-elevation-z0" *ngIf="heeftAdres()">
@@ -29,12 +35,20 @@
         {{ getAdres('straat') }} {{ getAdres('huisnummer') }}, {{ getAdres('gemeente') }}
       </mat-panel-title>
     </mat-expansion-panel-header>
-    <div class="waarde">
-      <div>Straat: {{ getAdres('straat') }}</div>
-      <div>Huisnummer: {{ getAdres('huisnummer') }}</div>
-      <div>Postcode: {{ getAdres('postcode') }}</div>
-      <div>Gemeente: {{ getAdres('gemeente') }}</div>
+
+    <div class="velden">
+      <div class="veldnamen">Straat</div><div class="veldwaarden">{{ getAdres('straat') }}</div>
     </div>
+    <div class="velden">
+      <div class="veldnamen">Huisnummer</div><div class="veldwaarden">{{ getAdres('huisnummer') }}</div>
+    </div>
+    <div class="velden">
+      <div class="veldnamen">Postcode</div><div class="veldwaarden">{{ getAdres('postcode') }}</div>
+    </div>
+    <div class="velden">
+      <div class="veldnamen">Gemeente</div><div class="veldwaarden">{{ getAdres('gemeente') }}</div>
+    </div>
+
   </mat-expansion-panel>
 
 </mat-accordion>
