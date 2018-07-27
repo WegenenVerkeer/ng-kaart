@@ -3,7 +3,7 @@ import { Map, Set } from "immutable";
 import * as ol from "openlayers";
 import { pipe } from "rxjs";
 
-import { TekenSettings } from "./kaart-elementen";
+import { TekenResultaat, TekenSettings } from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import { kaartLogger } from "./log";
@@ -18,6 +18,7 @@ export type KaartInternalSubMsg =
   | MijnLocatieZoomdoelGezetMsg
   | SubscribedMsg
   | TekenMsg
+  | VerwijderTekenFeatureMsg
   | ViewinstellingenGezetMsg;
 
 export interface ViewinstellingenGezetMsg {
@@ -33,6 +34,8 @@ export interface AchtergrondtitelGezetMsg {
 export interface GeometryChangedMsg {
   type: "GeometryChanged";
   geometry: ol.geom.Geometry;
+  volgnummer: number;
+  featureId: string | number;
 }
 
 export interface ActieveModusAangepastMsg {
@@ -69,6 +72,11 @@ export interface KaartClickMsg {
 export interface InfoBoodschappenMsg {
   readonly type: "InfoBoodschappen";
   readonly infoBoodschappen: Map<string, InfoBoodschap>;
+}
+
+export interface VerwijderTekenFeatureMsg {
+  readonly type: "VerwijderTekenFeature";
+  readonly featureId: string | number;
 }
 
 function KaartInternalMsg(payload: Option<KaartInternalSubMsg>): KaartInternalMsg {
@@ -118,11 +126,12 @@ function AchtergrondtitelGezetMsg(titel: string): AchtergrondtitelGezetMsg {
 
 export const achtergrondtitelGezetWrapper = (titel: string) => KaartInternalMsg(some(AchtergrondtitelGezetMsg(titel)));
 
-function GeometryChangedMsg(geometry: ol.geom.Geometry): GeometryChangedMsg {
-  return { type: "GeometryChanged", geometry: geometry };
+function GeometryChangedMsg(geometry: ol.geom.Geometry, volgnummer: number, featureId: string | number): GeometryChangedMsg {
+  return { type: "GeometryChanged", geometry: geometry, volgnummer: volgnummer, featureId: featureId };
 }
 
-export const geometryChangedWrapper = (geometry: ol.geom.Geometry) => KaartInternalMsg(some(GeometryChangedMsg(geometry)));
+export const tekenResultaatWrapper = (resultaat: TekenResultaat) =>
+  KaartInternalMsg(some(GeometryChangedMsg(resultaat.geometry, resultaat.volgnummer, resultaat.featureId)));
 
 function TekenMsg(settings: Option<TekenSettings>): TekenMsg {
   return {
@@ -152,3 +161,12 @@ function ActieveModusGezet(modus: Option<string>): ActieveModusAangepastMsg {
 }
 
 export const actieveModusGezetWrapper = (modus: Option<string>) => KaartInternalMsg(some(ActieveModusGezet(modus)));
+
+export function VerwijderTekenFeatureMsg(featureId: string | number): VerwijderTekenFeatureMsg {
+  return {
+    type: "VerwijderTekenFeature",
+    featureId: featureId
+  };
+}
+
+export const verwijderTekenFeatureWrapper = (featureId: string | number) => KaartInternalMsg(some(VerwijderTekenFeatureMsg(featureId)));

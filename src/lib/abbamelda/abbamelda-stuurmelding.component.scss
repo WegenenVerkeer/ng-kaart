@@ -1,0 +1,59 @@
+.abbameldalink {
+  order: 1;
+  flex-basis: 100%;
+  max-width: 100%;
+  line-height: 20px;
+  font-size: 14px;
+  font-weight: 300;
+  color: rgba(247, 144, 45, 0.87);
+  cursor: pointer;
+  a {
+    text-decoration: none;
+    color: rgba(247, 144, 45, 0.87);
+  }
+}
+
+.link-icon {
+  line-height: 32px;
+  font-size: 16px;
+  color: rgba(247, 144, 45, 0.87);
+  width: 16px;
+  vertical-align: text-bottom;
+}
+
+.melding-form {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+
+  mat-form-field {
+    flex-grow: 1;
+    padding-right: 8px;
+  }
+
+  button {
+    padding: 0;
+    min-width: 36px;
+    height: 36px;
+  }
+
+  mat-icon {
+    color: rgba(247, 144, 45, 0.87);
+    line-height: 32px;
+    vertical-align: text-bottom;
+  }
+}
+
+.abbameldafout {
+  line-height: 20px;
+  font-size: 14px;
+  font-weight: 300;
+  color: rgba(255, 0, 0, 0.87);
+}
+
+.abbameldasucces {
+  line-height: 20px;
+  font-size: 14px;
+  font-weight: 300;
+  color: rgba(0, 0, 0, 0.87);
+}

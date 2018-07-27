@@ -1,12 +1,11 @@
-import { NgZone } from "@angular/core";
 import { array } from "fp-ts/lib/Array";
 import { none, Option, some } from "fp-ts/lib/Option";
-import { List, Map, Set } from "immutable";
+import { List, Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { combineLatest, debounceTime, distinctUntilChanged, filter, map, mapTo, merge, shareReplay, switchMap } from "rxjs/operators";
 
-import { observeOutsideAngular } from "../util/observer-outside-angular";
+import { NosqlFsSource } from "../source/nosql-fs-source";
 import { observableFromOlEvents } from "../util/ol-observable";
 import { ZoekerBase } from "../zoeker/zoeker-base";
 
@@ -162,7 +161,11 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
   const kaartKlikLocatie$ = observableFromOlEvents(model.map, "click")
     .filter((event: ol.MapBrowserEvent) => {
       // filter click events uit die op een feature plaatsvinden
-      return !model.map.hasFeatureAtPixel(event.pixel, { hitTolerance: KaartWithInfo.clickHitTolerance });
+      return !model.map.hasFeatureAtPixel(event.pixel, {
+        hitTolerance: KaartWithInfo.clickHitTolerance,
+        // enkel json data features die een identify hebben beschouwen we. Zoekresultaten bvb niet
+        layerFilter: layer => layer.getSource() instanceof NosqlFsSource
+      });
     })
     .pipe(map((event: ol.MapBrowserEvent) => event.coordinate));
 

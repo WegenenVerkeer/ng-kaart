@@ -42,7 +42,7 @@ export class KaartWithInfo {
   readonly zoekResultaatSelectieSubj: Subject<ZoekResultaat> = new ReplaySubject<ZoekResultaat>(1);
   readonly zoekerCoordinator: ZoekerCoordinator = new ZoekerCoordinator(this.zoekResultatenSubj, this.zoekResultaatSelectieSubj);
   readonly componentFoutSubj: Subject<List<string>> = new ReplaySubject<List<string>>(1);
-  readonly geometryChangedSubj: Subject<ol.geom.Geometry> = new Subject<ol.geom.Geometry>();
+  readonly geometryChangedSubj: Subject<ke.TekenResultaat> = new Subject<ke.TekenResultaat>();
   readonly tekenSettingsSubj: BehaviorSubject<Option<ke.TekenSettings>> = new BehaviorSubject<Option<ke.TekenSettings>>(none);
   readonly infoBoodschappenSubj = new BehaviorSubject<OrderedMap<string, InfoBoodschap>>(OrderedMap());
   readonly tileLoader: TileLoader = new TileLoader();

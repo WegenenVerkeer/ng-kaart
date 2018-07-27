@@ -3,6 +3,8 @@ import { Map } from "immutable";
 import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
 
+import { AbstractRepresentatieService } from "./zoeker-representatie.service";
+
 export const geoJSONOptions = <ol.olx.format.GeoJSONOptions>{
   ignoreExtraDims: true,
   defaultDataProjection: undefined,
@@ -69,46 +71,42 @@ export interface ZoekerBase {
 }
 
 // De resultaten worden getoond volgens een bepaalde hiërarchie
-export function compareResultaten(a: ZoekResultaat, b: ZoekResultaat, input: string): number {
+// - Eerst wordt er gesorteerd volgens bron
+export function compareResultaten(
+  a: ZoekResultaat,
+  b: ZoekResultaat,
+  input: string,
+  zoekerRepresentatie: AbstractRepresentatieService
+): number {
+  const bronA = zoekerRepresentatie.bronNaarNummer(a);
+  const bronB = zoekerRepresentatie.bronNaarNummer(b);
+  if (bronA === bronB) {
+    return compareOpInhoud(a, b, input);
+  } else {
+    return bronA - bronB;
+  }
+}
+
+//  - Dan wordt er gekeken naar de resultaten in de tekst (als de 3 tekens matchen met de 3 eerste tekens van het resultaat)
+function compareOpInhoud(a: ZoekResultaat, b: ZoekResultaat, input: string): number {
   const aMatchesInput = matchesInput(a, input);
   const bMatchesInput = matchesInput(b, input);
 
   if (aMatchesInput) {
     if (bMatchesInput) {
       // Zowel a als b matchen met de input, doe op volgend niveau.
-      return compareOpBronEnInhoud(a, b);
+      return a.omschrijving.localeCompare(b.omschrijving);
     } else {
       return -1;
     }
   } else if (bMatchesInput) {
     return 1;
   } else {
-    return compareOpBronEnInhoud(a, b);
+    // Noch a als b matchen met de input, vergelijk heel het resultaat.
+    return a.omschrijving.localeCompare(b.omschrijving);
   }
 }
 
-//  - Eerst wordt er gekeken naar de resultaten in de tekst (als de 3 tekens matchen met de 3 eerste tekens van het resultaat)
 function matchesInput(res: ZoekResultaat, input: string): boolean {
   return res.omschrijving.toLowerCase().startsWith(input.toLowerCase());
-}
-
-//  - Vervolgens wordt daarin eerst het resultaat van WDB getoond, daarna CRAB en daar Google Places
-function compareOpBronEnInhoud(a: ZoekResultaat, b: ZoekResultaat): number {
-  const bronA = bronNaarNummer(a);
-  const bronB = bronNaarNummer(b);
-  if (bronA === bronB) {
-    return a.omschrijving.localeCompare(b.omschrijving);
-  } else {
-    return bronA - bronB;
-  }
-}
-
-function bronNaarNummer(res: ZoekResultaat): number {
-  if (res.bron.toLowerCase().startsWith("wdb")) {
-    return 1;
-  } else if (res.bron.toLowerCase().startsWith("crab")) {
-    return 2;
-  } else {
-    return 3;
-  }
 }

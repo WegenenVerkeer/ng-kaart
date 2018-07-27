@@ -5,6 +5,7 @@ import * as ol from "openlayers";
 import { ZoekResultaat, ZoekResultaten } from "../zoeker/zoeker-base";
 
 import * as ke from "./kaart-elementen";
+import { TekenResultaat } from "./kaart-elementen";
 import { InfoBoodschap } from "./kaart-with-info-model";
 
 /////////
@@ -124,7 +125,7 @@ export interface ActieveModusSubscription<Msg> {
 export interface GeometryChangedSubscription<Msg> {
   readonly type: "GeometryChanged";
   readonly tekenSettings: ke.TekenSettings;
-  readonly wrapper: (evt: ol.geom.Geometry) => Msg;
+  readonly wrapper: (resultaat: TekenResultaat) => Msg;
 }
 
 export interface TekenenSubscription<Msg> {
@@ -211,7 +212,7 @@ export function InfoBoodschappenSubscription<Msg>(wrapper: (boodschappen: Map<st
 
 export function GeometryChangedSubscription<Msg>(
   tekenSettings: ke.TekenSettings,
-  wrapper: (geom: ol.geom.Geometry) => Msg
+  wrapper: (resultaat: TekenResultaat) => Msg
 ): GeometryChangedSubscription<Msg> {
   return { type: "GeometryChanged", tekenSettings: tekenSettings, wrapper: wrapper };
 }

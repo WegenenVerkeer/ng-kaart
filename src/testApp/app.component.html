@@ -46,7 +46,7 @@
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !fietspadenMetOffsetsSectie.sectieZichtbaar }">visibility</span>
     </div>
     <div (click)="buitenKaartSectie.toggleSectieZichtbaar();scrollTo('buiten-kaart')" class="sub-titel">
-      Toon feautures buiten de kaart
+      Toon features buiten de kaart
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !buitenKaartSectie.sectieZichtbaar }">visibility</span>
     </div>
   </div>
@@ -169,7 +169,7 @@
         <awv-kaart-knop-achtergrondlaag-kiezer *ngIf="isOptieActief('achtergrond')"></awv-kaart-knop-achtergrondlaag-kiezer>
         <!-- kaart widgets-->
         <awv-kaart-streetview *ngIf="isOptieActief('streetview')"></awv-kaart-streetview>
-        <awv-meet-knop [toonInfoBoodschap]="true" *ngIf="isOptieActief('meten')"></awv-meet-knop>
+        <awv-meet-knop [toonInfoBoodschap]="isOptieActief('metenToon')" [meerdereGeometrieen]="isOptieActief('metenMeerdere')" *ngIf="isOptieActief('meten')"></awv-meet-knop>
         <awv-kaart-zoomknoppen *ngIf="isOptieActief('zoomknoppen')"></awv-kaart-zoomknoppen>
         <awv-bevraag-kaart *ngIf="isOptieActief('bevraagkaart')"></awv-bevraag-kaart>
         <!-- kaartinfo -->
@@ -314,6 +314,7 @@
                                     [styleFunction]="fietspadStyleMetOffset" [selectieStyle]="fietspadSelectieStyleMetOffset"
                                     [minZoom]="7"></awv-kaart-nosqlfs-laag>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+            <awv-bevraag-kaart></awv-bevraag-kaart>
             <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
           </awv-kaart-classic>
         </div>

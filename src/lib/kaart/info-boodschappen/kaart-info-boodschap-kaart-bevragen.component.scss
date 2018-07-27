@@ -1,5 +1,40 @@
 @import "../../css/kaart.component-common.scss";
 
+mat-expansion-panel {
+  border-bottom: 1px solid $awv-secondary-d3;
+  margin: 0;
+}
+
 .accordion {
   width: 100%;
+}
+
+.naam {
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.velden {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+}
+
+.veldnamen {
+  order: 1;
+  flex-basis: 40%;
+  max-width: 40%;
+  line-height: 20px;
+  font-size: 14px;
+  font-weight: 300;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.veldwaarden {
+  order: 2;
+  flex-basis: 60%;
+  max-width: 60%;
+  line-height: 20px;
+  font-size: 14px;
+  font-weight: 300;
+  color: rgba(0, 0, 0, 0.87);
 }
