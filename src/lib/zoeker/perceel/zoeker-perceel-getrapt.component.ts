@@ -1,4 +1,4 @@
-import { Component, EventEmitter, NgZone, OnDestroy, OnInit, Output } from "@angular/core";
+import { Component, EventEmitter, NgZone, OnInit, Output } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { Set } from "immutable";
 import { Observable } from "rxjs/Observable";
@@ -26,7 +26,7 @@ const NIVEAU_VANAFPERCEEL = 4;
   templateUrl: "./zoeker-perceel-getrapt.component.html",
   styleUrls: ["./zoeker-perceel-getrapt.component.scss"]
 })
-export class ZoekerPerceelGetraptComponent extends GetraptZoekerComponent implements OnInit, OnDestroy {
+export class ZoekerPerceelGetraptComponent extends GetraptZoekerComponent implements OnInit {
   private alleGemeenten: Gemeente[] = [];
 
   gefilterdeGemeenten: Gemeente[] = [];
@@ -117,16 +117,6 @@ export class ZoekerPerceelGetraptComponent extends GetraptZoekerComponent implem
         this.zoek({ type: "Perceel", capaKey: perceelDetails.capakey }, Set.of(this.perceelService.naam()));
       }
     );
-
-    // De zoeker wordt hier pas toegevoegd omdat hij niet globaal beschikbaar moet zijn
-    // this.dispatch({ type: "VoegZoekerToe", zoeker: this.perceelService, wrapper: kaartLogOnlyWrapper });
-  }
-
-  ngOnDestroy(): void {
-    // En dus hier weer weg gedaan. Anders wordt hij opgeroepen bij een opdracht in de algemene zoek box
-    // this.dispatch({ type: "VerwijderZoeker", zoeker: this.perceelService.naam(), wrapper: kaartLogOnlyWrapper });
-
-    super.ngOnDestroy();
   }
 
   toonGemeente(gemeente?: Gemeente): string | undefined {
