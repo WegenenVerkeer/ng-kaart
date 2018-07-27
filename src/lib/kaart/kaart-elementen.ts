@@ -2,8 +2,6 @@ import { fromPredicate, Option } from "fp-ts/lib/Option";
 import { List, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 
-import { NosqlFsSource } from "../source/nosql-fs-source";
-
 import { Legende } from "./kaart-legende";
 import { StyleSelector } from "./stijl-selector";
 

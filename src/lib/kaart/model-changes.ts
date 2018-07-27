@@ -5,7 +5,7 @@ import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { combineLatest, debounceTime, distinctUntilChanged, filter, map, mapTo, merge, shareReplay, switchMap } from "rxjs/operators";
 
-import { NosqlFsSource } from "../source";
+import { NosqlFsSource } from "../source/nosql-fs-source";
 import { observableFromOlEvents } from "../util/ol-observable";
 
 import * as ke from "./kaart-elementen";
