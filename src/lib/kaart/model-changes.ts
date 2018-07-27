@@ -5,6 +5,7 @@ import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { combineLatest, debounceTime, distinctUntilChanged, filter, map, mapTo, merge, shareReplay, switchMap } from "rxjs/operators";
 
+import { NosqlFsSource } from "../source";
 import { observableFromOlEvents } from "../util/ol-observable";
 
 import * as ke from "./kaart-elementen";
@@ -156,7 +157,11 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
   const kaartKlikLocatie$ = observableFromOlEvents(model.map, "click")
     .filter((event: ol.MapBrowserEvent) => {
       // filter click events uit die op een feature plaatsvinden
-      return !model.map.hasFeatureAtPixel(event.pixel, { hitTolerance: KaartWithInfo.clickHitTolerance });
+      return !model.map.hasFeatureAtPixel(event.pixel, {
+        hitTolerance: KaartWithInfo.clickHitTolerance,
+        // enkel json data features die een identify hebben beschouwen we. Zoekresultaten bvb niet
+        layerFilter: layer => layer.getSource() instanceof NosqlFsSource
+      });
     })
     .pipe(map((event: ol.MapBrowserEvent) => event.coordinate));
 
