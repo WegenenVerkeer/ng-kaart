@@ -1,5 +1,5 @@
 import { HttpClient } from "@angular/common/http";
-import { Option } from "fp-ts/lib/Option";
+import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
@@ -11,6 +11,14 @@ export interface OntvangenInformatie {
   currentClick: ol.Coordinate;
   adres: Option<AgivAdres>;
   weglocaties: Option<LsWegLocaties>;
+}
+
+export function OntvangenInformatie(currentClick: ol.Coordinate, adres: Option<AgivAdres>, weglocaties: Option<LsWegLocaties>) {
+  return {
+    currentClick: currentClick,
+    adres: adres,
+    weglocaties: weglocaties
+  };
 }
 
 export interface LsWegLocatie {
@@ -66,7 +74,7 @@ export function toWegLocaties(lsWegLocaties: LsWegLocaties): List<WegLocatie> {
   return List<WegLocatie>(lsWegLocaties.items.map(locatie => toWegLocatie(locatie)));
 }
 
-export function toWegLocatie(lsWegLocatie: LsWegLocatie): WegLocatie {
+function toWegLocatie(lsWegLocatie: LsWegLocatie): WegLocatie {
   return {
     ident8: lsWegLocatie.ident8,
     hm: lsWegLocatie.hm,
@@ -82,6 +90,25 @@ export function toAdres(agivAdres: AgivAdres): Adres {
     postcode: agivAdres.postcode,
     gemeente: agivAdres.gemeente
   };
+}
+
+export function wrapCoordinaatInOntvangenInformatie(coordinaat: ol.Coordinate): OntvangenInformatie {
+  return OntvangenInformatie(coordinaat, none, none);
+}
+
+export function wrapAdresInOntvangenInformatie(coordinaat: ol.Coordinate, adres: XY2AdresSucces[] | XY2AdresError): OntvangenInformatie {
+  if (adres instanceof Array && adres.length > 0) {
+    return OntvangenInformatie(coordinaat, some(adres[0].adres), none);
+  } else {
+    return OntvangenInformatie(coordinaat, none, none);
+  }
+}
+
+export function wrapWegLocatiesInOntvangenInformatie(coordinaat: ol.Coordinate, lsWegLocaties: LsWegLocaties): OntvangenInformatie {
+  return fromNullable(lsWegLocaties.total).foldL(
+    () => OntvangenInformatie(coordinaat, none, none),
+    () => OntvangenInformatie(coordinaat, none, some(lsWegLocaties))
+  );
 }
 
 export function adresViaXY(http: HttpClient, coordinaat: ol.Coordinate): Observable<XY2AdresSucces[] | XY2AdresError> {
