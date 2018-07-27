@@ -92,11 +92,11 @@ export function toAdres(agivAdres: AgivAdres): Adres {
   };
 }
 
-export function wrapCoordinaat(coordinaat: ol.Coordinate): OntvangenInformatie {
+export function fromCoordinate(coordinaat: ol.Coordinate): OntvangenInformatie {
   return OntvangenInformatie(coordinaat, none, none);
 }
 
-export function wrapAdres(coordinaat: ol.Coordinate, adres: XY2AdresSucces[] | XY2AdresError): OntvangenInformatie {
+export function withAdres(coordinaat: ol.Coordinate, adres: XY2AdresSucces[] | XY2AdresError): OntvangenInformatie {
   if (adres instanceof Array && adres.length > 0) {
     return OntvangenInformatie(coordinaat, some(adres[0].adres), none);
   } else {
@@ -104,7 +104,7 @@ export function wrapAdres(coordinaat: ol.Coordinate, adres: XY2AdresSucces[] | X
   }
 }
 
-export function wrapWegLocaties(coordinaat: ol.Coordinate, lsWegLocaties: LsWegLocaties): OntvangenInformatie {
+export function withWegLocaties(coordinaat: ol.Coordinate, lsWegLocaties: LsWegLocaties): OntvangenInformatie {
   return fromNullable(lsWegLocaties.error).foldL(
     () => OntvangenInformatie(coordinaat, none, some(lsWegLocaties)),
     () => OntvangenInformatie(coordinaat, none, none)

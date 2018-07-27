@@ -50,15 +50,15 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
 
     this.modelChanges.kaartKlikLocatie$
       .pipe(
-        observeOnAngular(this.zone),
         takeUntil(this.destroying$), // autounsubscribe bij destroy component
         skipUntilInitialised(),
         switchMap((coordinaat: ol.Coordinate) =>
           Observable.merge(
-            srv.wegLocatiesViaXY$(this.http, coordinaat).map(weglocatie => srv.wrapWegLocaties(coordinaat, weglocatie)),
-            srv.adresViaXY$(this.http, coordinaat).map(adres => srv.wrapAdres(coordinaat, adres))
-          ).scan((nieuw, bestaand) => this.verrijk(nieuw, bestaand), srv.wrapCoordinaat(coordinaat))
-        )
+            srv.wegLocatiesViaXY$(this.http, coordinaat).map(weglocatie => srv.withWegLocaties(coordinaat, weglocatie)),
+            srv.adresViaXY$(this.http, coordinaat).map(adres => srv.withAdres(coordinaat, adres))
+          ).scan((nieuw, bestaand) => this.verrijk(nieuw, bestaand), srv.fromCoordinate(coordinaat))
+        ),
+        observeOnAngular(this.zone)
       )
       .subscribe((msg: srv.OntvangenInformatie) => {
         this.toonInfoBoodschap(
