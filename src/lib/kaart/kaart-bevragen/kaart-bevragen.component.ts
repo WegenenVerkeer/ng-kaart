@@ -55,9 +55,9 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
         skipUntilInitialised(),
         switchMap((coordinaat: ol.Coordinate) =>
           Observable.merge(
-            srv.wegLocatiesViaXY(this.http, coordinaat).map(w => srv.wrapWegLocatiesInOntvangenInformatie(coordinaat, w)),
-            srv.adresViaXY(this.http, coordinaat).map(w => srv.wrapAdresInOntvangenInformatie(coordinaat, w))
-          ).scan((nieuw, bestaand) => this.verrijk(nieuw, bestaand), srv.wrapCoordinaatInOntvangenInformatie(coordinaat))
+            srv.wegLocatiesViaXY(this.http, coordinaat).map(weglocatie => srv.wrapWegLocaties(coordinaat, weglocatie)),
+            srv.adresViaXY(this.http, coordinaat).map(adres => srv.wrapAdres(coordinaat, adres))
+          ).scan((nieuw, bestaand) => this.verrijk(nieuw, bestaand), srv.wrapCoordinaat(coordinaat))
         )
       )
       .subscribe((msg: srv.OntvangenInformatie) => {

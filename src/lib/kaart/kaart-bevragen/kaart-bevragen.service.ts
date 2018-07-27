@@ -92,11 +92,11 @@ export function toAdres(agivAdres: AgivAdres): Adres {
   };
 }
 
-export function wrapCoordinaatInOntvangenInformatie(coordinaat: ol.Coordinate): OntvangenInformatie {
+export function wrapCoordinaat(coordinaat: ol.Coordinate): OntvangenInformatie {
   return OntvangenInformatie(coordinaat, none, none);
 }
 
-export function wrapAdresInOntvangenInformatie(coordinaat: ol.Coordinate, adres: XY2AdresSucces[] | XY2AdresError): OntvangenInformatie {
+export function wrapAdres(coordinaat: ol.Coordinate, adres: XY2AdresSucces[] | XY2AdresError): OntvangenInformatie {
   if (adres instanceof Array && adres.length > 0) {
     return OntvangenInformatie(coordinaat, some(adres[0].adres), none);
   } else {
@@ -104,10 +104,10 @@ export function wrapAdresInOntvangenInformatie(coordinaat: ol.Coordinate, adres:
   }
 }
 
-export function wrapWegLocatiesInOntvangenInformatie(coordinaat: ol.Coordinate, lsWegLocaties: LsWegLocaties): OntvangenInformatie {
-  return fromNullable(lsWegLocaties.total).foldL(
-    () => OntvangenInformatie(coordinaat, none, none),
-    () => OntvangenInformatie(coordinaat, none, some(lsWegLocaties))
+export function wrapWegLocaties(coordinaat: ol.Coordinate, lsWegLocaties: LsWegLocaties): OntvangenInformatie {
+  return fromNullable(lsWegLocaties.error).foldL(
+    () => OntvangenInformatie(coordinaat, none, some(lsWegLocaties)),
+    () => OntvangenInformatie(coordinaat, none, none)
   );
 }
 
@@ -122,7 +122,7 @@ export function adresViaXY(http: HttpClient, coordinaat: ol.Coordinate): Observa
     })
     .catch(error => {
       kaartLogger.error(`Fout bij opvragen weglocatie: ${error}`);
-      // bij fout toch zeker geldige observable doorsturen - anders geen volgende events meer bij switchMap.. bug rxJs?
+      // bij fout toch zeker geldige observable doorsturen, anders geen volgende events
       return Observable.of(XY2AdresError(`Fout bij opvragen weglocatie: ${error}`));
     });
 }
@@ -138,7 +138,7 @@ export function wegLocatiesViaXY(http: HttpClient, coordinaat: ol.Coordinate): O
       }
     })
     .catch(error => {
-      // bij fout toch zeker geldige observable doorsturen - anders geen volgende events meer bij switchMap.. bug rxJs?
+      // bij fout toch zeker geldige observable doorsturen, anders geen volgende events
       kaartLogger.error(`Fout bij opvragen adres: ${error}`);
       return Observable.of(LsWegLocaties(0, [], `Fout bij opvragen adres: ${error}`));
     });
