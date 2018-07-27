@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, NgZone, OnDestroy, OnInit } from "@angular/core";
+import { Component, NgZone } from "@angular/core";
 import { Observable } from "rxjs/Observable";
 import { filter, map, startWith } from "rxjs/operators";
 

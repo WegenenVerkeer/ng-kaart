@@ -1,8 +1,10 @@
 import { Component, Input, NgZone } from "@angular/core";
-import { none, Option } from "fp-ts/lib/Option";
+import { fromNullable, none, Option } from "fp-ts/lib/Option";
+import { List } from "immutable";
 
 import { lambert72ToWgs84 } from "../../coordinaten/coordinaten.service";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { Adres, WegLocatie } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
 
 @Component({
@@ -11,23 +13,23 @@ import { KaartComponent } from "../kaart.component";
   styleUrls: ["./kaart-info-boodschap-kaart-bevragen.component.scss"]
 })
 export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildComponentBase {
-  @Input() coordinaat: Option<ol.Coordinate> = none;
-  @Input() adres: Option<string> = none;
-  @Input() weglocatie: Option<any> = none;
+  @Input() coordinaat: ol.Coordinate;
+  @Input() adres: Option<Adres> = none;
+  @Input() weglocaties: List<WegLocatie> = List();
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
   }
 
   coordinaatInformatieLambert72(): string {
-    return this.coordinaat
+    return fromNullable(this.coordinaat)
       .map(coord => [coord[0].toFixed(0), coord[1].toFixed(0)])
       .map(coord => `${coord[0]}, ${coord[1]}`)
       .getOrElse("");
   }
 
   coordinaatInformatieWgs84(): string {
-    return this.coordinaat
+    return fromNullable(this.coordinaat)
       .map(coord => lambert72ToWgs84(coord))
       .map(coord => [coord[0].toFixed(7), coord[1].toFixed(7)])
       .map(coord => `${coord[0]}, ${coord[1]}`)
@@ -38,7 +40,25 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildComponen
     return this.adres.isSome();
   }
 
-  heeftWegLocatie() {
-    return this.weglocatie.isSome();
+  getWegLocaties() {
+    return this.weglocaties
+      .sortBy(locatie =>
+        fromNullable(locatie)
+          .chain(loc => fromNullable(loc.ident8))
+          .getOrElse("")
+      )
+      .toList();
+  }
+
+  getAdres(key: string): string {
+    return this.adres.chain(adres => fromNullable(adres[key])).getOrElse("");
+  }
+
+  signed(value: number): string {
+    if (value >= 0) {
+      return `+${value}`;
+    } else {
+      return `${value}`;
+    }
   }
 }

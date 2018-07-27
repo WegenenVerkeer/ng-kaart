@@ -29,8 +29,22 @@ export interface InfoBoodschapIdentify extends InfoBoodschap {
 export interface InfoBoodschapKaartBevragen extends InfoBoodschap {
   readonly type: "infoBoodschapKaartBevragen";
   readonly coordinaat: ol.Coordinate;
-  readonly adres: Option<string>;
-  readonly weglocatie: Option<any>;
+  readonly adres: Option<Adres>;
+  readonly weglocaties: List<WegLocatie>;
+}
+
+export interface WegLocatie {
+  readonly ident8: string;
+  readonly hm: number;
+  readonly afstand: number;
+  readonly wegbeheerder: string;
+}
+
+export interface Adres {
+  readonly straat: string;
+  readonly huisnummer: string;
+  readonly postcode: string;
+  readonly gemeente: string;
 }
 
 export interface Groeplagen {

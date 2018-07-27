@@ -1,30 +1,32 @@
-import { Component, NgZone, OnInit } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { none, Option, some } from "fp-ts/lib/Option";
+import { List } from "immutable";
 import * as ol from "openlayers";
-import { takeUntil } from "rxjs/operators";
+import { Observable } from "rxjs";
+import { switchMap, takeUntil } from "rxjs/operators";
 
 import { observeOnAngular } from "../../util/observe-on-angular";
-import { ofType, skipUntilInitialised } from "../../util/operators";
-import { actieveModusGezetWrapper, KaartClickMsg, kaartClickWrapper, KaartInternalMsg } from "../kaart-internal-messages";
+import { skipUntilInitialised } from "../../util/operators";
+import { actieveModusGezetWrapper, KaartInternalMsg } from "../kaart-internal-messages";
 import { KaartModusComponent } from "../kaart-modus-component";
 import * as prt from "../kaart-protocol";
+import { Adres, WegLocatie } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
+
+import * as srv from "./kaart-bevragen.service";
 
 export const BevraagKaartUiSelector = "Bevraagkaart";
 
 @Component({
   selector: "awv-kaart-bevragen",
   template: "",
-  styleUrls: ["./kaart-bevragen.component.scss"]
+  styleUrls: []
 })
-export class KaartBevragenComponent extends KaartModusComponent implements OnInit {
-  constructor(parent: KaartComponent, zone: NgZone) {
+export class KaartBevragenComponent extends KaartModusComponent implements OnInit, OnDestroy {
+  constructor(parent: KaartComponent, zone: NgZone, private http: HttpClient) {
     super(parent, zone);
   }
-
-  private currentClick: ol.Coordinate;
-  private adres: Option<string> = none;
-  private weglocatie: Option<any> = none;
 
   modus(): string {
     return BevraagKaartUiSelector;
@@ -46,36 +48,50 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
   ngOnInit(): void {
     super.ngOnInit();
 
-    this.internalMessage$
+    this.modelChanges.kaartKlikLocatie$
       .pipe(
-        ofType<KaartClickMsg>("KaartClick"), //
         observeOnAngular(this.zone),
         takeUntil(this.destroying$), // autounsubscribe bij destroy component
-        skipUntilInitialised()
+        skipUntilInitialised(),
+        switchMap((coordinaat: ol.Coordinate) =>
+          Observable.merge(
+            srv.wegLocatiesViaXY$(this.http, coordinaat).map(weglocatie => srv.wrapWegLocaties(coordinaat, weglocatie)),
+            srv.adresViaXY$(this.http, coordinaat).map(adres => srv.wrapAdres(coordinaat, adres))
+          ).scan((nieuw, bestaand) => this.verrijk(nieuw, bestaand), srv.wrapCoordinaat(coordinaat))
+        )
       )
-      .subscribe(msg => {
-        if (this.actief) {
-          this.currentClick = msg.clickCoordinaat;
-          this.updateInformatie();
-        }
+      .subscribe((msg: srv.OntvangenInformatie) => {
+        this.toonInfoBoodschap(
+          msg.currentClick, //
+          msg.adres.map(srv.toAdres), //
+          msg.weglocaties.map(srv.toWegLocaties).getOrElse(List())
+        );
       });
   }
 
-  protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
-    return [prt.ActieveModusSubscription(actieveModusGezetWrapper), prt.KaartClickSubscription(kaartClickWrapper)];
+  private verrijk(nieuw: srv.OntvangenInformatie, bestaand: srv.OntvangenInformatie): srv.OntvangenInformatie {
+    return {
+      ...bestaand,
+      ...nieuw.weglocaties.fold({}, weglocaties => ({ weglocaties: some(weglocaties) })),
+      ...nieuw.adres.fold({}, adres => ({ adres: some(adres) }))
+    };
   }
 
-  updateInformatie() {
+  protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
+    return [prt.ActieveModusSubscription(actieveModusGezetWrapper)];
+  }
+
+  private toonInfoBoodschap(coordinaat: ol.Coordinate, maybeAdres: Option<Adres>, wegLocaties: List<WegLocatie>) {
     this.dispatch(
       prt.ToonInfoBoodschapCmd({
         id: "Kaart bevragen",
         type: "InfoBoodschapKaartBevragen",
         titel: "Kaart bevragen",
         sluit: "DOOR_APPLICATIE",
-        coordinaat: some(this.currentClick),
         bron: none,
-        adres: none,
-        weglocatie: none,
+        coordinaat: coordinaat,
+        adres: maybeAdres,
+        weglocaties: wegLocaties,
         verbergMsgGen: () => none
       })
     );
