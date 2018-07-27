@@ -55,16 +55,16 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
         skipUntilInitialised(),
         switchMap((coordinaat: ol.Coordinate) =>
           Observable.merge(
-            srv.wegLocatiesViaXY(this.http, coordinaat).map(weglocatie => srv.wrapWegLocaties(coordinaat, weglocatie)),
-            srv.adresViaXY(this.http, coordinaat).map(adres => srv.wrapAdres(coordinaat, adres))
+            srv.wegLocatiesViaXY$(this.http, coordinaat).map(weglocatie => srv.wrapWegLocaties(coordinaat, weglocatie)),
+            srv.adresViaXY$(this.http, coordinaat).map(adres => srv.wrapAdres(coordinaat, adres))
           ).scan((nieuw, bestaand) => this.verrijk(nieuw, bestaand), srv.wrapCoordinaat(coordinaat))
         )
       )
       .subscribe((msg: srv.OntvangenInformatie) => {
         this.toonInfoBoodschap(
           msg.currentClick, //
-          msg.adres.map(adres => srv.toAdres(adres)), //
-          msg.weglocaties.map(weglocaties => srv.toWegLocaties(weglocaties)).getOrElse(List())
+          msg.adres.map(srv.toAdres), //
+          msg.weglocaties.map(srv.toWegLocaties).getOrElse(List())
         );
       });
   }
