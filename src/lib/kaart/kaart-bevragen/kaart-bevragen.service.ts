@@ -113,7 +113,7 @@ export function withWegLocaties(coordinaat: ol.Coordinate, lsWegLocaties: LsWegL
 
 export function adresViaXY$(http: HttpClient, coordinaat: ol.Coordinate): Observable<XY2AdresSucces[] | XY2AdresError> {
   return http
-    .get<XY2AdresSucces[] | XY2AdresError>("https://apps.mow.vlaanderen.be/agivservices/rest/locatie/adres/via/xy", {
+    .get<XY2AdresSucces[] | XY2AdresError>("/agivservices/rest/locatie/adres/via/xy", {
       params: {
         x: `${coordinaat[0]}`,
         y: `${coordinaat[1]}`,
@@ -129,7 +129,7 @@ export function adresViaXY$(http: HttpClient, coordinaat: ol.Coordinate): Observ
 
 export function wegLocatiesViaXY$(http: HttpClient, coordinaat: ol.Coordinate): Observable<LsWegLocaties> {
   return http
-    .get<LsWegLocaties>("https://apps.mow.vlaanderen.be//wegendatabank/v1/locator/xy2loc", {
+    .get<LsWegLocaties>("/wegendatabank/v1/locator/xy2loc", {
       params: {
         x: `${coordinaat[0]}`,
         y: `${coordinaat[1]}`,
