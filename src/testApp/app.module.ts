@@ -3,6 +3,7 @@ import { FormsModule } from "@angular/forms";
 import { HttpModule } from "@angular/http";
 import { BrowserModule } from "@angular/platform-browser";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
+import { Map } from "immutable";
 import { ClickOutsideModule } from "ng4-click-outside";
 
 import { AbbameldaModule } from "../lib/abbamelda";
@@ -27,12 +28,9 @@ import { TestSectieComponent } from "./test-sectie.component";
     ClassicModule,
     FormsModule,
     ZoekerModule.forRoot({
+      bronVolgorde: Map([[3, /^wdb/i], [2, /^crab/i], [1, /^google/i]]),
       googleWdb: {
-        url: "/locatiezoeker",
         apiKey: "AIzaSyApbXMl5DGL60g17JU6MazMxNcUGooey7I"
-      },
-      locatorServices: {
-        url: "/locatorservices"
       }
     }),
     AbbameldaModule,
