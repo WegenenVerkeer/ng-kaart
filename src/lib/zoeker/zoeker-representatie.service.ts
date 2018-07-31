@@ -132,7 +132,10 @@ export class DefaultRepresentatieService implements AbstractRepresentatieService
     this.perceelHighlightStyle = maakStyle(this.locatieServicesConfig.kleur, perceelHighlightMarker);
 
     if (zoekerConfigData.bronVolgorde) {
-      this.bronVolgorde = zoekerConfigData.bronVolgorde;
+      const bronVolgorde: [number, string][] = JSON.parse(zoekerConfigData.bronVolgorde) as [number, string][];
+      this.bronVolgorde = Map<number, string>(bronVolgorde)
+        .map(regexp => new RegExp(regexp!, "i"))
+        .toMap();
     }
   }
 
