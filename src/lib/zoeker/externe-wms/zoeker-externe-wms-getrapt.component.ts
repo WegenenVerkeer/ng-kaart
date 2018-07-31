@@ -18,11 +18,10 @@ const NIVEAU_ALLES = 0;
 })
 export class ZoekerExterneWmsGetraptComponent extends GetraptZoekerComponent implements OnInit, OnDestroy {
   readonly bronnen$: rx.Observable<Set<string>>;
-  leegMakenDisabled$: rx.Observable<Boolean> = rx.Observable.empty();
 
   bronControl = new FormControl({ value: "", disabled: false });
 
-  @Output() leegMakenDisabledChange: EventEmitter<Boolean> = new EventEmitter();
+  @Output() leegMakenDisabledChange: EventEmitter<Boolean> = new EventEmitter(true);
 
   constructor(kaartComponent: KaartComponent, zoekerComponent: ZoekerBoxComponent, zone: NgZone) {
     super(kaartComponent, zoekerComponent, zone);
@@ -46,7 +45,8 @@ export class ZoekerExterneWmsGetraptComponent extends GetraptZoekerComponent imp
       )
     );
 
-    this.bindToLifeCycle(this.bronControl.valueChanges.pipe(distinctUntilChanged())).subscribe(bron => {
+    this.bindToLifeCycle(this.bronControl.valueChanges.pipe(distinctUntilChanged(), filter(v => v !== null))).subscribe(bron => {
+      this.leegMakenDisabledChange.emit(false);
       this.zoek({ type: "ExterneWms", bron: bron }, Set.of("ExterneWms"));
     });
   }
@@ -61,6 +61,8 @@ export class ZoekerExterneWmsGetraptComponent extends GetraptZoekerComponent imp
   }
 
   maakVeldenLeeg(vanafNiveau: number) {
+    this.bronControl.setValue(null);
+    this.leegMakenDisabledChange.emit(true);
     super.maakVeldenLeeg(vanafNiveau);
   }
 }

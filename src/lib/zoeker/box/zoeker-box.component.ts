@@ -233,15 +233,14 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   toonResultaat = true;
   busy = 0;
   actieveZoeker: ZoekerType = "Basis";
-  perceelMaakLeegDisabled: boolean;
-  crabMaakLeegDisabled: boolean;
-  externeWmsMaakLeegDisabled: boolean;
+  perceelMaakLeegDisabled = true;
+  crabMaakLeegDisabled = true;
+  zoekerMaakLeegDisabled = Set<ZoekerType>();
+  externeWmsMaakLeegDisabled = true;
   readonly zoekerNamen$: Observable<Set<string>>;
   readonly zoekerComponentSubj: Subject<Tuple<ZoekerType, GetraptZoekerComponent>> = new Subject();
   readonly zoekerComponentOpNaam$: Observable<Map<ZoekerType, GetraptZoekerComponent>>;
   readonly maakVeldenLeegSubj: Subject<ZoekerType> = new Subject<ZoekerType>();
-  readonly maakLeegDisabledEvtSubj: Subject<Tuple<ZoekerType, boolean>> = new Subject<Tuple<ZoekerType, boolean>>();
-  readonly maakLeegDisabled$: Observable<Set<ZoekerType>>;
 
   // Member variabelen die eigenlijk constanten of statics zouden kunnen zijn, maar gebruikt in de HTML template
   readonly Basis: ZoekerType = BASIS;
@@ -343,13 +342,6 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
         )
       )
     ).subscribe(zoekerCrabGetraptComponent => zoekerCrabGetraptComponent.maakVeldenLeeg(0));
-    this.maakLeegDisabled$ = this.maakLeegDisabledEvtSubj.pipe(
-      scan(
-        (disabledComps: Set<ZoekerType>, naamEnDisabled: Tuple<ZoekerType, boolean>) =>
-          naamEnDisabled.snd ? disabledComps.add(naamEnDisabled.fst) : disabledComps.remove(naamEnDisabled.fst),
-        Set<ZoekerType>()
-      )
-    );
   }
 
   protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
@@ -539,7 +531,9 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   onMaakLeegDisabledChange(zoekerNaam: ZoekerType, maakLeegDisabled: boolean): void {
-    this.maakLeegDisabledEvtSubj.next(new Tuple<ZoekerType, boolean>(zoekerNaam, maakLeegDisabled));
+    this.zoekerMaakLeegDisabled = maakLeegDisabled
+      ? this.zoekerMaakLeegDisabled.add(zoekerNaam)
+      : this.zoekerMaakLeegDisabled.remove(zoekerNaam);
   }
 
   availability$(zoekerNaam: ZoekerType): Observable<boolean> {
@@ -550,7 +544,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.maakVeldenLeegSubj.next(zoekerNaam);
   }
 
-  zoekerMaakLeegDisabled(zoekerNaam: ZoekerType) {
-    return true;
+  isZoekerMaakLeegEnabled(zoekerNaam: ZoekerType) {
+    return !this.zoekerMaakLeegDisabled.contains(zoekerNaam);
   }
 }
