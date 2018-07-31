@@ -28,7 +28,7 @@ import { TestSectieComponent } from "./test-sectie.component";
     ClassicModule,
     FormsModule,
     ZoekerModule.forRoot({
-      bronVolgorde: Map([[3, /^wdb/i], [2, /^crab/i], [1, /^google/i]]),
+      bronVolgorde: '[[3, "^wdb"], [2, "^crab"], [1, "^google"]]',
       googleWdb: {
         apiKey: "AIzaSyApbXMl5DGL60g17JU6MazMxNcUGooey7I"
       }
