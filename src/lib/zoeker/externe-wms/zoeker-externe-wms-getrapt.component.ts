@@ -42,7 +42,7 @@ export class ZoekerExterneWmsGetraptComponent extends GetraptZoekerComponent imp
         svcs =>
           svcs.isEmpty()
             ? rx.Observable.of(Set()) // Geen service betekent geen bronnen
-            : svcs.get(0).bronnen$ // We weten dat juist 1 element is
+            : svcs.get(0).bronnen$ // We weten dat er juist 1 element is
       )
     );
 

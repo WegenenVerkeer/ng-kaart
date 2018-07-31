@@ -13,7 +13,7 @@ import {
 } from "@angular/core";
 import { Set } from "immutable";
 import * as ol from "openlayers";
-import { Observable, ReplaySubject } from "rxjs"; // => alles van rxjs wordt binnen getrokken => grotere bundle, maar minder fragiel.
+import { Observable, ReplaySubject } from "rxjs";
 import { delay, filter, last, map, merge, scan, shareReplay, startWith, switchMap, takeUntil, tap } from "rxjs/operators";
 
 import { asap } from "../util/asap";

@@ -249,8 +249,6 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   readonly Perceel: ZoekerType = PERCEEL;
   readonly ExterneWms: ZoekerType = EXTERNE_WMS;
 
-  // private extent: ol.Extent = ol.extent.createEmpty();
-
   private static createLayer(): ke.VectorLaag {
     return {
       type: ke.VectorType,
@@ -470,7 +468,6 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.alleFouten = [];
     this.alleZoekResultaten = [];
     this.featuresByResultaat = Map<ZoekResultaat, ol.Feature[]>();
-    // this.extent = ol.extent.createEmpty();
     this.huidigeSelectie = none;
     this.legende.clear();
     this.legendeKeys = [];
@@ -494,10 +491,6 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       (map, resultaat) => map.set(resultaat, ZoekerBoxComponent.maakNieuwFeature(resultaat)),
       Map<ZoekResultaat, ol.Feature[]>()
     );
-
-    // this.extent = this.alleZoekResultaten
-    //   .map(resultaat => resultaat.kaartInfo)
-    //   .reduce((maxExtent, kaartInfo) => kaartInfo.fold(maxExtent, i => ol.extent.extend(maxExtent!, i.extent)), ol.extent.createEmpty());
 
     this.decreaseBusy();
     this.dispatch(

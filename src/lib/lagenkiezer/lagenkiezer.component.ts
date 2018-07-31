@@ -122,7 +122,7 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
             this.dichtgeklapt = true;
           } else {
             this.dichtgeklapt = false;
-            // WTF!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            // TODO hier gebeuren onnoemelijk vieze dingen: zetten van mem+
             this.bindToLifeCycle(
               this.lagenHoog$.pipe(
                 combineLatest(this.lagenLaag$, (lagenHoog, lagenLaag) => lagenHoog.concat(lagenLaag).map(laag => laag!.titel)),

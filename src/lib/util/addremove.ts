@@ -1,7 +1,7 @@
 import { Function1 } from "fp-ts/lib/function";
 
-// Dit is een handige abstractie om te gebruiken in een pijplijn met een scan of fold erin.
-// Sommige elementeb die moeten resulteren in toevoegen worden ingepakt in Add. Diegene die moeten verwijden
+// Dit is een handige abstractie om te gebruiken in een pijplijn met een merge van 2, of meer, takken.
+// Sommige elementen die moeten resulteren in toevoegen worden ingepakt in Add. Diegene die moeten verwijden
 // in Remove.
 
 export interface AddRemove<T> {
