@@ -40,8 +40,8 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
       observeOnAngular(this.zone)
     );
     this.onzichtbaar$ = this.zichtbaar$.pipe(map(m => !m));
-    this.kanVerwijderen$ = lagenkiezer.opties$.map(o => o.verwijderbareLagen);
-    this.kanVerwijderen$.subscribe(value => (this.minstensEenLaagActie = value));
+    this.kanVerwijderen$ = lagenkiezer.opties$.pipe(map(o => o.verwijderbareLagen));
+    this.kanVerwijderen$.subscribe(value => (this.minstensEenLaagActie = value)); // TODO 1-op-1 member variable, beter met async
   }
 
   get title(): string {

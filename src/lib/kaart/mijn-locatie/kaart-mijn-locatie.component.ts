@@ -6,7 +6,7 @@ import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
 import { combineLatest, map, mapTo, switchMap } from "rxjs/operators";
 
-import { emitSome } from "../../util/operators";
+import { flatten } from "../../util/operators";
 import { orElse } from "../../util/option";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
@@ -76,7 +76,7 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
   }
 
   ngAfterViewInit() {
-    const zoomdoel$: Observable<number> = this.zoomdoelSetting$.pipe(emitSome); // Hou enkel de effectieve zoomniveaudoelen over
+    const zoomdoel$: Observable<number> = this.zoomdoelSetting$.pipe(flatten); // Hou enkel de effectieve zoomniveaudoelen over
 
     this.bindToLifeCycle(
       // Omdat de button in een ngIf zit, moeten we op zoek naar de button in ngAfterViewInit

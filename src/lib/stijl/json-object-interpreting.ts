@@ -1,6 +1,5 @@
 import * as array from "fp-ts/lib/Array";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
-import { getArraySemigroup } from "fp-ts/lib/Semigroup";
 import * as traversable from "fp-ts/lib/Traversable";
 import * as validation from "fp-ts/lib/Validation";
 

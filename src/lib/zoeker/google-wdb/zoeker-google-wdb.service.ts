@@ -4,7 +4,6 @@ import { Option, some } from "fp-ts/lib/Option";
 import {} from "googlemaps";
 import { Map } from "immutable";
 import * as ol from "openlayers";
-import "rxjs/add/observable/fromPromise";
 import { Observable } from "rxjs/Observable";
 import { catchError, flatMap, map } from "rxjs/operators";
 

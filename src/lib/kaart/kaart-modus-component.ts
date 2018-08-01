@@ -1,7 +1,6 @@
 import { NgZone, OnInit } from "@angular/core";
 import { none, some } from "fp-ts/lib/Option";
-import { Observable } from "rxjs/Observable";
-import { skipUntil, takeUntil } from "rxjs/operators";
+import { takeUntil } from "rxjs/operators";
 
 import { observeOnAngular } from "../util/observe-on-angular";
 import { ofType, skipUntilInitialised } from "../util/operators";

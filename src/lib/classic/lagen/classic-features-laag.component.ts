@@ -6,7 +6,6 @@ import * as ol from "openlayers";
 
 import { forChangedValue } from "../../kaart/kaart-component-base";
 import * as prt from "../../kaart/kaart-protocol";
-import { forEach } from "../../util/option";
 import { KaartClassicComponent } from "../kaart-classic.component";
 import { logOnlyWrapper } from "../messages";
 

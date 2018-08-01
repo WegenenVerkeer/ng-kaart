@@ -1,6 +1,6 @@
+import { pipe } from "rxjs";
 import { Observable } from "rxjs/Observable";
 import { observeOn, takeUntil } from "rxjs/operators";
-import { pipe } from "rxjs/Rx";
 import { asap } from "rxjs/scheduler/asap";
 
 import { observeOutsideAngular } from "./observer-outside-angular";

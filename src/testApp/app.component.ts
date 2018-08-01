@@ -283,7 +283,7 @@ export class AppComponent {
     });
     feature.setStyle(this.pinIcon);
     this.installaties = array.snoc(this.installaties, feature);
-    setTimeout(() => this.addIcon(), 1000);
+    setTimeout(() => this.addIcon(), 5000); // zorgt voor Angular Check event
   }
 
   polygoonGetekend(feature: ol.Feature) {

@@ -1,3 +1,10 @@
+import "rxjs/add/observable/combineLatest";
+import "rxjs/add/observable/empty";
+import "rxjs/add/observable/fromEvent";
+import "rxjs/add/observable/fromPromise";
+import "rxjs/add/observable/never";
+import "rxjs/add/observable/of";
+
 import { CommonModule } from "@angular/common";
 import { HttpClientModule } from "@angular/common/http";
 import { ModuleWithProviders, NgModule } from "@angular/core";

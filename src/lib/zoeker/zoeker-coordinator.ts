@@ -1,4 +1,4 @@
-import { Map, Set } from "immutable";
+import { List, Map, Set } from "immutable";
 import { Subject } from "rxjs";
 import { Subscription } from "rxjs/Subscription";
 
@@ -8,7 +8,7 @@ export class ZoekerCoordinator {
   private zoekers: Array<ZoekerBase> = Array();
   private zoekerSubscriptions: Map<string, Subscription> = Map();
 
-  constructor(private zoekerSubject: Subject<ZoekResultaten>, private zoekerKlikSubj: Subject<ZoekResultaat>) {}
+  constructor(private zoekerSubject: Subject<ZoekResultaten>, private zoekerResultaatKlikSubj: Subject<ZoekResultaat>) {}
 
   isZoekerGeregistreerd(naam: string): boolean {
     return this.zoekers.some(zoeker => zoeker.naam() === naam);
@@ -35,8 +35,8 @@ export class ZoekerCoordinator {
     this.zoekers = this.zoekers.concat(zoeker);
   }
 
-  zoekGeklikt(resultaat: ZoekResultaat) {
-    this.zoekerKlikSubj.next(resultaat);
+  zoekResultaatGeklikt(resultaat: ZoekResultaat) {
+    this.zoekerResultaatKlikSubj.next(resultaat);
   }
 
   zoek(input: ZoekInput, zoekers: Set<string>) {
@@ -49,10 +49,18 @@ export class ZoekerCoordinator {
         subscriptions.set(
           zoeker.naam(),
           zoeker.zoek$(input).subscribe(zoekResultaat => {
-            this.zoekerSubject.next(zoekResultaat);
+            this.zoekerSubject.next(zoekResultaat); // TODO verwijder dit anti-pattern
           })
         ),
       Map<string, Subscription>()
     );
+  }
+
+  zoekerNamen(): Set<string> {
+    return Set(this.zoekers.map(z => z.naam()));
+  }
+
+  zoekerServices(): List<ZoekerBase> {
+    return List(this.zoekers);
   }
 }

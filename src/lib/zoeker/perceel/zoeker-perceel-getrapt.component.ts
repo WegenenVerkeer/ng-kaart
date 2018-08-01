@@ -1,10 +1,9 @@
-import { Component, EventEmitter, NgZone, OnDestroy, OnInit, Output } from "@angular/core";
+import { Component, EventEmitter, NgZone, OnInit, Output } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { Set } from "immutable";
 import { Observable } from "rxjs/Observable";
 import { distinctUntilChanged, filter, map, startWith } from "rxjs/operators";
 
-import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import { KaartComponent } from "../../kaart/kaart.component";
 import {
   GetraptZoekerComponent,
@@ -13,7 +12,6 @@ import {
   toTrimmedLowerCasedString,
   ZoekerBoxComponent
 } from "../box/zoeker-box.component";
-import { StringZoekInput } from "../zoeker-base";
 
 import { Afdeling, Gemeente, PerceelNummer, Sectie, ZoekerPerceelService } from "./zoeker-perceel.service";
 
@@ -28,7 +26,7 @@ const NIVEAU_VANAFPERCEEL = 4;
   templateUrl: "./zoeker-perceel-getrapt.component.html",
   styleUrls: ["./zoeker-perceel-getrapt.component.scss"]
 })
-export class ZoekerPerceelGetraptComponent extends GetraptZoekerComponent implements OnInit, OnDestroy {
+export class ZoekerPerceelGetraptComponent extends GetraptZoekerComponent implements OnInit {
   private alleGemeenten: Gemeente[] = [];
 
   gefilterdeGemeenten: Gemeente[] = [];
@@ -42,8 +40,8 @@ export class ZoekerPerceelGetraptComponent extends GetraptZoekerComponent implem
   secties$: Observable<Sectie[]> = Observable.empty();
   percelen$: Observable<PerceelNummer[]> = Observable.empty();
 
-  leegMakenDisabled$: Observable<Boolean> = Observable.empty();
-  @Output() leegMakenDisabledChange: EventEmitter<Boolean> = new EventEmitter();
+  leegMakenDisabled$: Observable<boolean> = Observable.empty();
+  @Output() leegMakenDisabledChange: EventEmitter<boolean> = new EventEmitter();
 
   constructor(
     private perceelService: ZoekerPerceelService,
@@ -116,17 +114,9 @@ export class ZoekerPerceelGetraptComponent extends GetraptZoekerComponent implem
     // Hier gaan we onze capakey doorsturen naar de zoekers, we willen alleen de perceelzoeker triggeren.
     this.bindToLifeCycle(this.perceelControl.valueChanges.pipe(filter(isNotNullObject), distinctUntilChanged())).subscribe(
       (perceelDetails: PerceelNummer) => {
-        this.zoek({ type: "string", value: perceelDetails.capakey } as StringZoekInput, Set.of(this.perceelService.naam()));
+        this.zoek({ type: "Perceel", capaKey: perceelDetails.capakey }, Set.of(this.perceelService.naam()));
       }
     );
-
-    this.dispatch({ type: "VoegZoekerToe", zoeker: this.perceelService, wrapper: kaartLogOnlyWrapper });
-  }
-
-  ngOnDestroy(): void {
-    this.dispatch({ type: "VerwijderZoeker", zoeker: this.perceelService.naam(), wrapper: kaartLogOnlyWrapper });
-
-    super.ngOnDestroy();
   }
 
   toonGemeente(gemeente?: Gemeente): string | undefined {

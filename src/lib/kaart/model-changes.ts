@@ -7,6 +7,7 @@ import { combineLatest, debounceTime, distinctUntilChanged, filter, map, mapTo, 
 
 import { NosqlFsSource } from "../source/nosql-fs-source";
 import { observableFromOlEvents } from "../util/ol-observable";
+import { ZoekerBase } from "../zoeker/zoeker-base";
 
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
@@ -35,6 +36,7 @@ export interface ModelChanger {
   readonly laagVerwijderdSubj: rx.Subject<ke.ToegevoegdeLaag>;
   readonly mijnLocatieZoomDoelSubj: rx.Subject<Option<number>>;
   readonly actieveModusSubj: rx.Subject<Option<string>>;
+  readonly zoekerServicesSubj: rx.Subject<List<ZoekerBase>>;
 }
 
 export const ModelChanger: () => ModelChanger = () => ({
@@ -49,7 +51,8 @@ export const ModelChanger: () => ModelChanger = () => ({
   }),
   laagVerwijderdSubj: new rx.Subject<ke.ToegevoegdeLaag>(),
   mijnLocatieZoomDoelSubj: new rx.BehaviorSubject<Option<number>>(none),
-  actieveModusSubj: new rx.BehaviorSubject(none)
+  actieveModusSubj: new rx.BehaviorSubject(none),
+  zoekerServicesSubj: new rx.BehaviorSubject(List())
 });
 
 export interface ModelChanges {
@@ -64,6 +67,7 @@ export interface ModelChanges {
   readonly kaartKlikLocatie$: rx.Observable<ol.Coordinate>;
   readonly mijnLocatieZoomDoel$: rx.Observable<Option<number>>;
   readonly actieveModus$: rx.Observable<Option<string>>;
+  readonly zoekerServices$: rx.Observable<List<ZoekerBase>>;
 }
 
 const viewinstellingen = (olmap: ol.Map) => ({
@@ -176,6 +180,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     zichtbareFeatures$: zichtbareFeatures$,
     kaartKlikLocatie$: kaartKlikLocatie$,
     mijnLocatieZoomDoel$: changer.mijnLocatieZoomDoelSubj.asObservable(),
-    actieveModus$: changer.actieveModusSubj.asObservable()
+    actieveModus$: changer.actieveModusSubj.asObservable(),
+    zoekerServices$: changer.zoekerServicesSubj.asObservable()
   };
 };

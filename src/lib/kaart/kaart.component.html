@@ -8,8 +8,10 @@
                     'kaart-links-scrollbar-zichtbaar': kaartLinksScrollbarZichtbaar,
                     'kaart-links-scrollbar-niet-zichtbaar': !kaartLinksScrollbarZichtbaar }">
     <awv-ladend></awv-ladend>
+    <!-- Deze zoekers zouden even goed via code toegevoegd kunnen worden gezien ze toch geen UI hebben -->
     <awv-google-wdb-locatie-zoeker></awv-google-wdb-locatie-zoeker>
     <awv-crab-zoeker></awv-crab-zoeker>
+    <awv-perceel-zoeker></awv-perceel-zoeker>
     <button #kaartLinksZichtbaarToggleKnop mat-icon-button *ngIf="kaartLinksToggleZichtbaar"
             class="kaart-links-zichtbaar-toggle-knop" (click)="toggleKaartLinks()"
             [matTooltip]="kaartLinksZichtbaar ? 'Verberg paneel' : 'Toon paneel'" matTooltipPosition="right">

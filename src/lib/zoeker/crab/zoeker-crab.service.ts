@@ -161,7 +161,7 @@ export class ZoekerCrabService implements ZoekerBase {
   }
 
   naam(): string {
-    return "CRAB";
+    return "Crab";
   }
 
   private voegCrabResultatenToe(result: ZoekResultaten, crabResultaten: LocatorServiceResults): ZoekResultaten {

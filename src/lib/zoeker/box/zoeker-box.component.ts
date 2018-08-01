@@ -3,12 +3,25 @@ import { HttpErrorResponse } from "@angular/common/http";
 import { ChangeDetectorRef, Component, ElementRef, Inject, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { none, Option, some } from "fp-ts/lib/Option";
+import { Tuple } from "fp-ts/lib/Tuple";
 import { List, Map, OrderedMap, Set } from "immutable";
 import * as ol from "openlayers";
-import { pipe } from "rxjs";
+import { pipe, Subject } from "rxjs";
 import { UnaryFunction } from "rxjs/interfaces";
 import { Observable } from "rxjs/Observable";
-import { catchError, combineLatest, distinctUntilChanged, filter, map, shareReplay, startWith, switchMap, tap } from "rxjs/operators";
+import {
+  catchError,
+  combineLatest,
+  debounceTime,
+  distinctUntilChanged,
+  filter,
+  map,
+  scan,
+  shareReplay,
+  startWith,
+  switchMap,
+  tap
+} from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../../kaart/kaart-child-component-base";
 import * as ke from "../../kaart/kaart-elementen";
@@ -41,7 +54,12 @@ export interface HuidigeSelectie {
   zoekResultaat: ZoekKaartResultaat;
 }
 
-export type ZoekerType = "Basis" | "Perceel" | "Crab";
+export type ZoekerType = typeof BASIS | typeof PERCEEL | typeof CRAB | typeof EXTERNE_WMS;
+
+export const BASIS = "Basis";
+export const PERCEEL = "Perceel";
+export const CRAB = "Crab";
+export const EXTERNE_WMS = "ExterneWms";
 
 export function isNotNullObject(object) {
   return object && object instanceof Object;
@@ -105,7 +123,7 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
     return observable.pipe(tap(noop, () => this.zoekerComponent.decreaseBusy(), () => this.zoekerComponent.decreaseBusy()));
   }
 
-  protected zoek(zoekInput: ZoekInput, zoekers: Set<string>) {
+  protected zoek<I extends ZoekInput>(zoekInput: I, zoekers: Set<string>) {
     this.zoekerComponent.toonResultaat = true;
     this.zoekerComponent.increaseBusy();
     this.dispatch({
@@ -199,6 +217,12 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.zoekerCrabGetraptComponent = zoekerCrabGetrapt;
   }
 
+  zoekerExterneWmsGetraptComponent: Option<GetraptZoekerComponent> = none;
+  @ViewChild("zoekerExterneWmsGetrapt")
+  set setZoekerExterneWmsGetraptComponent(zoekerExterneWmsGetrapt: GetraptZoekerComponent) {
+    this.zoekerComponentSubj.next(new Tuple<ZoekerType, GetraptZoekerComponent>(EXTERNE_WMS, zoekerExterneWmsGetrapt));
+  }
+
   featuresByResultaat = Map<ZoekResultaat, ol.Feature[]>();
   huidigeSelectie: Option<HuidigeSelectie> = none;
   alleZoekResultaten: ZoekResultaat[] = [];
@@ -209,10 +233,20 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   toonResultaat = true;
   busy = 0;
   actieveZoeker: ZoekerType = "Basis";
-  perceelMaakLeegDisabled: Boolean;
-  crabMaakLeegDisabled: Boolean;
+  perceelMaakLeegDisabled = true;
+  crabMaakLeegDisabled = true;
+  zoekerMaakLeegDisabled = Set<ZoekerType>();
+  externeWmsMaakLeegDisabled = true;
+  readonly zoekerNamen$: Observable<Set<string>>;
+  readonly zoekerComponentSubj: Subject<Tuple<ZoekerType, GetraptZoekerComponent>> = new Subject();
+  readonly zoekerComponentOpNaam$: Observable<Map<ZoekerType, GetraptZoekerComponent>>;
+  readonly maakVeldenLeegSubj: Subject<ZoekerType> = new Subject<ZoekerType>();
 
-  private extent: ol.Extent = ol.extent.createEmpty();
+  // Member variabelen die eigenlijk constanten of statics zouden kunnen zijn, maar gebruikt in de HTML template
+  readonly Basis: ZoekerType = BASIS;
+  readonly Crab: ZoekerType = CRAB;
+  readonly Perceel: ZoekerType = PERCEEL;
+  readonly ExterneWms: ZoekerType = EXTERNE_WMS;
 
   private static createLayer(): ke.VectorLaag {
     return {
@@ -284,10 +318,34 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     @Inject(ZOEKER_REPRESENTATIE) private zoekerRepresentatie: AbstractRepresentatieService
   ) {
     super(parent, zone);
+
+    this.zoekerNamen$ = parent.modelChanges.zoekerServices$.pipe(
+      map(svcs => svcs.map(svc => svc!.naam()).toSet()),
+      debounceTime(250),
+      shareReplay(1)
+    );
+    this.zoekerComponentOpNaam$ = this.zoekerComponentSubj.pipe(
+      scan(
+        (zoekerComponentOpNaam: Map<ZoekerType, GetraptZoekerComponent>, nz: Tuple<ZoekerType, GetraptZoekerComponent>) =>
+          zoekerComponentOpNaam.set(nz.fst, nz.snd),
+        Map<ZoekerType, GetraptZoekerComponent>()
+      ),
+      shareReplay(1)
+    );
+    this.bindToLifeCycle(
+      this.zoekerComponentOpNaam$.pipe(
+        switchMap(zcon =>
+          this.maakVeldenLeegSubj.pipe(
+            map((naam: ZoekerType) => zcon.get(naam)), //
+            filter(component => component !== undefined)
+          )
+        )
+      )
+    ).subscribe(zoekerCrabGetraptComponent => zoekerCrabGetraptComponent.maakVeldenLeeg(0));
   }
 
   protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
-    return [prt.ZoekerSubscription(r => this.processZoekerAntwoord(r))];
+    return [prt.ZoekResultatenSubscription(r => this.processZoekerAntwoord(r))];
   }
 
   ngOnInit(): void {
@@ -367,7 +425,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
 
   focusOpZoekVeld() {
     setTimeout(() => {
-      if (this.actieveZoeker === "Basis") {
+      if (this.actieveZoeker === BASIS) {
         this.zoekVeldElement.nativeElement.focus();
       }
     });
@@ -385,7 +443,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   isInklapbaar(): boolean {
-    return this.heeftFout() || this.alleZoekResultaten.length > 0 || this.actieveZoeker === "Perceel" || this.actieveZoeker === "Crab";
+    return this.heeftFout() || this.alleZoekResultaten.length > 0 || this.actieveZoeker === PERCEEL || this.actieveZoeker === CRAB;
   }
 
   kiesZoeker(zoeker: ZoekerType) {
@@ -403,7 +461,6 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.alleZoekResultaten = [];
     this.featuresByResultaat = Map<ZoekResultaat, ol.Feature[]>();
     this.huidigeSelectie = none;
-    this.extent = ol.extent.createEmpty();
     this.legende.clear();
     this.legendeKeys = [];
     this.dispatch(prt.VervangFeaturesCmd(ZoekerUiSelector, List(), kaartLogOnlyWrapper));
@@ -426,10 +483,6 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       (map, resultaat) => map.set(resultaat, ZoekerBoxComponent.maakNieuwFeature(resultaat)),
       Map<ZoekResultaat, ol.Feature[]>()
     );
-
-    this.extent = this.alleZoekResultaten
-      .map(resultaat => resultaat.kaartInfo)
-      .reduce((maxExtent, kaartInfo) => kaartInfo.fold(maxExtent, i => ol.extent.extend(maxExtent!, i.extent)), ol.extent.createEmpty());
 
     this.decreaseBusy();
     this.dispatch(
@@ -465,15 +518,33 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     return this.busy > 0;
   }
 
-  onCrabMaakLeegDisabledChange(maakLeegDisabled: Boolean): void {
+  onCrabMaakLeegDisabledChange(maakLeegDisabled: boolean): void {
     setTimeout(() => {
       this.crabMaakLeegDisabled = maakLeegDisabled;
     });
   }
 
-  onPerceelMaakLeegDisabledChange(maakLeegDisabled: Boolean): void {
+  onPerceelMaakLeegDisabledChange(maakLeegDisabled: boolean): void {
     setTimeout(() => {
       this.perceelMaakLeegDisabled = maakLeegDisabled;
     });
+  }
+
+  onMaakLeegDisabledChange(zoekerNaam: ZoekerType, maakLeegDisabled: boolean): void {
+    this.zoekerMaakLeegDisabled = maakLeegDisabled
+      ? this.zoekerMaakLeegDisabled.add(zoekerNaam)
+      : this.zoekerMaakLeegDisabled.remove(zoekerNaam);
+  }
+
+  availability$(zoekerNaam: ZoekerType): Observable<boolean> {
+    return this.zoekerNamen$.pipe(map(nmn => nmn.contains(zoekerNaam)));
+  }
+
+  maakVeldenLeeg(zoekerNaam: ZoekerType): void {
+    this.maakVeldenLeegSubj.next(zoekerNaam);
+  }
+
+  isZoekerMaakLeegEnabled(zoekerNaam: ZoekerType) {
+    return !this.zoekerMaakLeegDisabled.contains(zoekerNaam);
   }
 }

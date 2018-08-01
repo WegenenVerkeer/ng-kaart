@@ -38,9 +38,9 @@ export class KaartWithInfo {
   readonly hoverFeatures: ol.Collection<ol.Feature> = new ol.Collection<ol.Feature>();
 
   readonly achtergrondlaagtitelSubj: Subject<string> = new ReplaySubject<string>(1);
-  readonly zoekerSubj: Subject<ZoekResultaten> = new ReplaySubject<ZoekResultaten>(1);
-  readonly zoekerKlikSubj: Subject<ZoekResultaat> = new ReplaySubject<ZoekResultaat>(1);
-  readonly zoekerCoordinator: ZoekerCoordinator = new ZoekerCoordinator(this.zoekerSubj, this.zoekerKlikSubj);
+  readonly zoekResultatenSubj: Subject<ZoekResultaten> = new ReplaySubject<ZoekResultaten>(1);
+  readonly zoekResultaatSelectieSubj: Subject<ZoekResultaat> = new ReplaySubject<ZoekResultaat>(1);
+  readonly zoekerCoordinator: ZoekerCoordinator = new ZoekerCoordinator(this.zoekResultatenSubj, this.zoekResultaatSelectieSubj);
   readonly componentFoutSubj: Subject<List<string>> = new ReplaySubject<List<string>>(1);
   readonly geometryChangedSubj: Subject<ke.TekenResultaat> = new Subject<ke.TekenResultaat>();
   readonly tekenSettingsSubj: BehaviorSubject<Option<ke.TekenSettings>> = new BehaviorSubject<Option<ke.TekenSettings>>(none);

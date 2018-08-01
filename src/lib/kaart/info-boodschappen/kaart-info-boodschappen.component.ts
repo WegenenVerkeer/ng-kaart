@@ -2,13 +2,14 @@ import { animate, state, style, transition, trigger } from "@angular/animations"
 import { Component, NgZone, OnInit } from "@angular/core";
 import { List } from "immutable";
 import { Observable } from "rxjs/Observable";
+import { map } from "rxjs/operators";
 
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { ofType } from "../../util/operators";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { InfoBoodschappenMsg, infoBoodschappenMsgGen, KaartInternalMsg } from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
-import { InfoBoodschap, InfoBoodschapAlert } from "../kaart-with-info-model";
+import { InfoBoodschap } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
 
 @Component({
@@ -37,12 +38,11 @@ export class KaartInfoBoodschappenComponent extends KaartChildComponentBase impl
   ngOnInit(): void {
     super.ngOnInit();
 
-    this.infoBoodschappen$ = this.internalMessage$
-      .pipe(
-        ofType<InfoBoodschappenMsg>("InfoBoodschappen"), //
-        observeOnAngular(this.zone)
-      )
-      .map(msg => msg.infoBoodschappen.reverse().toList()); // laatste boodschap bovenaan
+    this.infoBoodschappen$ = this.internalMessage$.pipe(
+      ofType<InfoBoodschappenMsg>("InfoBoodschappen"), //
+      observeOnAngular(this.zone),
+      map(msg => msg.infoBoodschappen.reverse().toList()) // laatste boodschap bovenaan
+    );
   }
 
   isIdentify(boodschap: InfoBoodschap): boolean {
