@@ -3,6 +3,7 @@ import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
+import { catchError } from "rxjs/operators";
 
 import { Adres, WegLocatie } from "../kaart-with-info-model";
 import { kaartLogger } from "../log";
@@ -120,11 +121,13 @@ export function adresViaXY$(http: HttpClient, coordinaat: ol.Coordinate): Observ
         maxResults: "1"
       }
     })
-    .catch(error => {
-      kaartLogger.error(`Fout bij opvragen weglocatie: ${error}`);
-      // bij fout toch zeker geldige observable doorsturen, anders geen volgende events
-      return Observable.of(XY2AdresError(`Fout bij opvragen weglocatie: ${error}`));
-    });
+    .pipe(
+      catchError(error => {
+        kaartLogger.error(`Fout bij opvragen weglocatie: ${error}`);
+        // bij fout toch zeker geldige observable doorsturen, anders geen volgende events
+        return Observable.of(XY2AdresError(`Fout bij opvragen weglocatie: ${error}`));
+      })
+    );
 }
 
 export function wegLocatiesViaXY$(http: HttpClient, coordinaat: ol.Coordinate): Observable<LsWegLocaties> {
@@ -137,9 +140,11 @@ export function wegLocatiesViaXY$(http: HttpClient, coordinaat: ol.Coordinate): 
         showall: "true"
       }
     })
-    .catch(error => {
-      // bij fout toch zeker geldige observable doorsturen, anders geen volgende events
-      kaartLogger.error(`Fout bij opvragen adres: ${error}`);
-      return Observable.of(LsWegLocaties(0, [], `Fout bij opvragen adres: ${error}`));
-    });
+    .pipe(
+      catchError(error => {
+        // bij fout toch zeker geldige observable doorsturen, anders geen volgende events
+        kaartLogger.error(`Fout bij opvragen adres: ${error}`);
+        return Observable.of(LsWegLocaties(0, [], `Fout bij opvragen adres: ${error}`));
+      })
+    );
 }

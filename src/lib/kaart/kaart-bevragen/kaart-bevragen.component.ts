@@ -4,7 +4,7 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 import { Observable } from "rxjs";
-import { switchMap, takeUntil } from "rxjs/operators";
+import { map, scan, switchMap, takeUntil } from "rxjs/operators";
 
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { skipUntilInitialised } from "../../util/operators";
@@ -54,9 +54,9 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
         skipUntilInitialised(),
         switchMap((coordinaat: ol.Coordinate) =>
           Observable.merge(
-            srv.wegLocatiesViaXY$(this.http, coordinaat).map(weglocatie => srv.withWegLocaties(coordinaat, weglocatie)),
-            srv.adresViaXY$(this.http, coordinaat).map(adres => srv.withAdres(coordinaat, adres))
-          ).scan((nieuw, bestaand) => this.verrijk(nieuw, bestaand), srv.fromCoordinate(coordinaat))
+            srv.wegLocatiesViaXY$(this.http, coordinaat).pipe(map(weglocatie => srv.withWegLocaties(coordinaat, weglocatie))),
+            srv.adresViaXY$(this.http, coordinaat).pipe(map(adres => srv.withAdres(coordinaat, adres)))
+          ).pipe(scan((nieuw, bestaand) => this.verrijk(nieuw, bestaand), srv.fromCoordinate(coordinaat)))
         ),
         observeOnAngular(this.zone)
       )
