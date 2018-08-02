@@ -38,7 +38,7 @@
     <button mat-icon-button (click)="kuisZoekOp()" *ngIf="zoekVeld.dirty" [matTooltip]="alleZoekResultaten.length > 0 ? 'Wis invoer en zoekresultaten' : 'Wis invoer'" matTooltipPosition="right">
       <mat-icon>close</mat-icon>
     </button>
-    <button mat-icon-button *ngIf="true && actieveZoeker === Perceel && !perceelMaakLeegDisabled" (click)="zoekerPerceelGetraptComponent.maakVeldenLeeg(0)"
+    <button mat-icon-button *ngIf="true && actieveZoeker === Perceel && !perceelMaakLeegDisabled" (click)="maakVeldenLeeg(Perceel)"
             [matTooltip]="alleZoekResultaten.length > 0 ? 'Wis invoer en zoekresultaat' : 'Wis invoer'" matTooltipPosition="right">
       <mat-icon>close</mat-icon>
     </button>

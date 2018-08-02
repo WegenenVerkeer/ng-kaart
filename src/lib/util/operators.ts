@@ -1,6 +1,9 @@
+import { Function1 } from "fp-ts/lib/function";
 import { isSome, Option } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { filter, map, skipUntil } from "rxjs/operators";
+
+export type Pipeable<A, B> = Function1<rx.Observable<A>, rx.Observable<B>>;
 
 /**
  * Transformeert waarden van A naar waarden van B mbv f, maar verhindert propagatie als
@@ -8,8 +11,8 @@ import { filter, map, skipUntil } from "rxjs/operators";
  *
  * @param f een transformatie van A naar B
  */
-export function collect<A, B>(f: (a: A) => B): rx.Operator<A, B> {
-  return (o: rx.Observable<A>) =>
+export function collect<A, B>(f: (a: A) => B): Pipeable<A, B> {
+  return o =>
     o.pipe(
       map(f), //
       filter(b => b !== undefined && b !== null)
@@ -21,8 +24,8 @@ export function collect<A, B>(f: (a: A) => B): rx.Operator<A, B> {
  *
  * @param f een transformatie van A naar B
  */
-export function collectOption<A, B>(f: (a: A) => Option<B>): rx.Operator<A, B> {
-  return (o: rx.Observable<A>) =>
+export function collectOption<A, B>(f: (a: A) => Option<B>): Pipeable<A, B> {
+  return o =>
     o.pipe(
       map(f), //
       filter(isSome),
@@ -48,7 +51,7 @@ export interface TypedRecord {
 export const ofType = <Target extends TypedRecord>(type: string) => (o: rx.Observable<TypedRecord>) =>
   o.pipe(filter(a => a.type === type)) as rx.Observable<Target>;
 
-export function skipUntilInitialised<T>(): (o: rx.Observable<T>) => rx.Observable<T> {
+export function skipUntilInitialised<A>(): Pipeable<A, A> {
   // beperk tot messages nadat subscribe opgeroepen is: oorzaak is shareReplay(1) in internalmessages$
   return obs => obs.pipe(skipUntil(rx.Observable.timer(0)));
 }

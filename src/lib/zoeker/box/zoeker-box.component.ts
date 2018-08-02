@@ -6,9 +6,7 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import { Tuple } from "fp-ts/lib/Tuple";
 import { List, Map, OrderedMap, Set } from "immutable";
 import * as ol from "openlayers";
-import { pipe, Subject } from "rxjs";
-import { UnaryFunction } from "rxjs/interfaces";
-import { Observable } from "rxjs/Observable";
+import * as rx from "rxjs";
 import {
   catchError,
   combineLatest,
@@ -31,6 +29,7 @@ import * as prt from "../../kaart/kaart-protocol";
 import { KaartComponent } from "../../kaart/kaart.component";
 import { kaartLogger } from "../../kaart/log";
 import { matchGeometryType } from "../../util/geometries";
+import { collect, Pipeable } from "../../util/operators";
 import { forEach } from "../../util/option";
 import {
   compareResultaten,
@@ -74,13 +73,14 @@ export function toTrimmedLowerCasedString(s: string): string {
     : "";
 }
 
-export function toNonEmptyDistinctLowercaseString(): UnaryFunction<Observable<any>, Observable<string>> {
-  return pipe(
-    filter(value => value), // filter de lege waardes eruit
-    // zorg dat we een lowercase waarde hebben zonder leading of trailing spaties.
-    map(toTrimmedLowerCasedString),
-    distinctUntilChanged()
-  );
+export function toNonEmptyDistinctLowercaseString(): Pipeable<any, string> {
+  return o =>
+    o.pipe(
+      filter(value => value), // filter de lege waardes eruit
+      // zorg dat we een lowercase waarde hebben zonder leading of trailing spaties.
+      map(toTrimmedLowerCasedString),
+      distinctUntilChanged()
+    );
 }
 
 export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
@@ -97,7 +97,7 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
     this.dispatch(prt.MeldComponentFoutCmd(List.of("Fout bij ophalen perceel gegevens", fout.message)));
   }
 
-  protected subscribeToDisableWhenEmpty<T>(observable: Observable<T[]>, control: FormControl, maakLeegVanaf: number) {
+  protected subscribeToDisableWhenEmpty<T>(observable: rx.Observable<T[]>, control: FormControl, maakLeegVanaf: number) {
     // Wanneer de array leeg is, disable de control, enable indien niet leeg of er een filter is opgegeven.
     function disableWanneerLeeg(array: T[]) {
       if (array.length > 0 || (control.value && control.value !== "")) {
@@ -116,7 +116,7 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
     );
   }
 
-  protected busy<T>(observable: Observable<T>): Observable<T> {
+  protected busy<T>(observable: rx.Observable<T>): rx.Observable<T> {
     function noop() {}
 
     this.zoekerComponent.increaseBusy();
@@ -139,12 +139,12 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
   // Filter het antwoord daarvan met de (eventuele) waarde van onze HUIDIGE control, dit om autocomplete te doen.
   protected autocomplete<T, A>(
     vorige: FormControl,
-    provider: (A) => Observable<T[]>,
+    provider: (A) => rx.Observable<T[]>,
     huidige: FormControl,
     propertyGetter: (T) => string
-  ): Observable<T[]> {
+  ): rx.Observable<T[]> {
     // Filter een array van waardes met de waarde van een filter (control), de filter kan een string of een object zijn.
-    function filterMetWaarde(): UnaryFunction<Observable<T[]>, Observable<T[]>> {
+    function filterMetWaarde(): Pipeable<T[], T[]> {
       return combineLatest(huidige.valueChanges.pipe(startWith<string | T>(""), distinctUntilChanged()), (waardes, filterWaarde) => {
         if (!filterWaarde) {
           return waardes;
@@ -169,16 +169,16 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
 
   // inputWaarde kan een string of een object zijn. Enkel wanneer het een object is, roepen we de provider op,
   // anders geven we een lege array terug.
-  private safeProvider<A, T>(provider: (A) => Observable<T[]>): UnaryFunction<Observable<A>, Observable<T[]>> {
+  private safeProvider<A, T>(provider: (A) => rx.Observable<T[]>): Pipeable<A, T[]> {
     return switchMap(inputWaarde => {
       return isNotNullObject(inputWaarde)
         ? this.busy(provider(inputWaarde)).pipe(
             catchError((error, obs) => {
               this.meldFout(error);
-              return Observable.of([]);
+              return rx.Observable.of([]);
             })
           )
-        : Observable.of([]);
+        : rx.Observable.of([]);
     });
   }
 }
@@ -205,19 +205,16 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   zoekVeld = new FormControl();
   @ViewChild("zoekVeldElement") zoekVeldElement: ElementRef;
 
-  zoekerPerceelGetraptComponent: GetraptZoekerComponent;
   @ViewChild("zoekerPerceelGetrapt")
   set setZoekerPerceelGetraptComponent(zoekerPerceelGetrapt: GetraptZoekerComponent) {
-    this.zoekerPerceelGetraptComponent = zoekerPerceelGetrapt;
+    this.zoekerComponentSubj.next(new Tuple<ZoekerType, GetraptZoekerComponent>(PERCEEL, zoekerPerceelGetrapt));
   }
 
-  zoekerCrabGetraptComponent: GetraptZoekerComponent;
   @ViewChild("zoekerCrabGetrapt")
   set setZoekerCrabGetraptComponent(zoekerCrabGetrapt: GetraptZoekerComponent) {
-    this.zoekerCrabGetraptComponent = zoekerCrabGetrapt;
+    this.zoekerComponentSubj.next(new Tuple<ZoekerType, GetraptZoekerComponent>(CRAB, zoekerCrabGetrapt));
   }
 
-  zoekerExterneWmsGetraptComponent: Option<GetraptZoekerComponent> = none;
   @ViewChild("zoekerExterneWmsGetrapt")
   set setZoekerExterneWmsGetraptComponent(zoekerExterneWmsGetrapt: GetraptZoekerComponent) {
     this.zoekerComponentSubj.next(new Tuple<ZoekerType, GetraptZoekerComponent>(EXTERNE_WMS, zoekerExterneWmsGetrapt));
@@ -237,10 +234,10 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   crabMaakLeegDisabled = true;
   zoekerMaakLeegDisabled = Set<ZoekerType>();
   externeWmsMaakLeegDisabled = true;
-  readonly zoekerNamen$: Observable<Set<string>>;
-  readonly zoekerComponentSubj: Subject<Tuple<ZoekerType, GetraptZoekerComponent>> = new Subject();
-  readonly zoekerComponentOpNaam$: Observable<Map<ZoekerType, GetraptZoekerComponent>>;
-  readonly maakVeldenLeegSubj: Subject<ZoekerType> = new Subject<ZoekerType>();
+  readonly zoekerNamen$: rx.Observable<Set<string>>;
+  readonly zoekerComponentSubj: rx.Subject<Tuple<ZoekerType, GetraptZoekerComponent>> = new rx.Subject();
+  readonly zoekerComponentOpNaam$: rx.Observable<Map<ZoekerType, GetraptZoekerComponent>>;
+  readonly maakVeldenLeegSubj: rx.Subject<ZoekerType> = new rx.Subject<ZoekerType>();
 
   // Member variabelen die eigenlijk constanten of statics zouden kunnen zijn, maar gebruikt in de HTML template
   readonly Basis: ZoekerType = BASIS;
@@ -333,15 +330,8 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       shareReplay(1)
     );
     this.bindToLifeCycle(
-      this.zoekerComponentOpNaam$.pipe(
-        switchMap(zcon =>
-          this.maakVeldenLeegSubj.pipe(
-            map((naam: ZoekerType) => zcon.get(naam)), //
-            filter(component => component !== undefined)
-          )
-        )
-      )
-    ).subscribe(zoekerCrabGetraptComponent => zoekerCrabGetraptComponent.maakVeldenLeeg(0));
+      this.zoekerComponentOpNaam$.pipe(switchMap(zcon => this.maakVeldenLeegSubj.pipe(collect((naam: ZoekerType) => zcon.get(naam)))))
+    ).subscribe(zoekerGetraptComponent => zoekerGetraptComponent.maakVeldenLeeg(0));
   }
 
   protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
@@ -536,7 +526,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       : this.zoekerMaakLeegDisabled.remove(zoekerNaam);
   }
 
-  availability$(zoekerNaam: ZoekerType): Observable<boolean> {
+  availability$(zoekerNaam: ZoekerType): rx.Observable<boolean> {
     return this.zoekerNamen$.pipe(map(nmn => nmn.contains(zoekerNaam)));
   }
 
