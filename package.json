@@ -80,7 +80,8 @@
     "proj4": "2.4.4",
     "rxjs": "5.5.11",
     "zone.js": "0.8.18",
-    "scroll-into-view-if-needed": "2.2.4"
+    "scroll-into-view-if-needed": "2.2.4",
+    "mobile-detect": "1.4.2"
   },
   "devDependencies": {
     "@angular/cli": "1.7.4",
