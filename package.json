@@ -75,13 +75,13 @@
     "lodash-es": "4.17.4",
     "loglevel": "1.6.1",
     "material-design-icons": "3.0.1",
+    "mobile-detect": "1.4.2",
     "ng4-click-outside": "1.0.1",
     "openlayers": "4.6.5",
     "proj4": "2.4.4",
     "rxjs": "5.5.11",
-    "zone.js": "0.8.18",
     "scroll-into-view-if-needed": "2.2.4",
-    "mobile-detect": "1.4.2"
+    "zone.js": "0.8.18"
   },
   "devDependencies": {
     "@angular/cli": "1.7.4",
