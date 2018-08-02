@@ -1,5 +1,6 @@
-import { none, Option } from "fp-ts/lib/Option";
+import { fromNullable, none, Option } from "fp-ts/lib/Option";
 import { List, Map, OrderedMap } from "immutable";
+import * as MobileDetect from "mobile-detect";
 import * as ol from "openlayers";
 import { BehaviorSubject, ReplaySubject, Subject } from "rxjs";
 
@@ -17,7 +18,8 @@ import { TileLoader } from "./tile-loader";
  * Het model achter de kaartcomponent.
  */
 export class KaartWithInfo {
-  static readonly clickHitTolerance = 5;
+  // Andere click tolerance op mobiel toestel (40px ipv 5px) - alternatief is detect touchscreen van modernizer, maar touch != mobile
+  static readonly clickHitTolerance = fromNullable(new MobileDetect(window.navigator.userAgent).mobile()).foldL(() => 5, () => 40);
 
   readonly toegevoegdeLagenOpTitel: Map<string, ke.ToegevoegdeLaag> = Map();
   readonly titelsOpGroep: Map<ke.Laaggroep, List<string>> = Map([
