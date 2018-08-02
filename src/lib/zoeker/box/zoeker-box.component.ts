@@ -443,7 +443,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   isInklapbaar(): boolean {
-    return this.heeftFout() || this.alleZoekResultaten.length > 0 || this.actieveZoeker === PERCEEL || this.actieveZoeker === CRAB;
+    return this.heeftFout() || this.alleZoekResultaten.length > 0 || [PERCEEL, CRAB, EXTERNE_WMS].indexOf(this.actieveZoeker) >= 0;
   }
 
   kiesZoeker(zoeker: ZoekerType) {
