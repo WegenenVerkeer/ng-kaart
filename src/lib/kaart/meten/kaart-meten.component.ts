@@ -107,6 +107,7 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
     const boodschapVanMeten = boodschap => boodschap.bron.exists(bron => bron === "meten");
 
     this.actief = true;
+    this.eersteIsGetekend = false;
 
     this.bindToLifeCycle(
       this.internalMessage$.lift(
@@ -136,7 +137,7 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
         // Maar dit mag alleen als we al eens 1 info-box van meten gehad hebben.
         this.stopMeten();
         this.eersteIsGetekend = false;
-      } else {
+      } else if (!this.openBoodschappen.isEmpty()) {
         this.eersteIsGetekend = true;
       }
     });
