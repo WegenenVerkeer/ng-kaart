@@ -6,6 +6,7 @@ import { Subscription as RxSubscription } from "rxjs/Subscription";
 import { ZoekerBase, ZoekInput, ZoekResultaat } from "../zoeker/zoeker-base";
 
 import { BareValidationWrapper, KaartMsg, Subscription, ValidationWrapper } from ".";
+import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { Legende } from "./kaart-legende";
 import * as prt from "./kaart-protocol";
@@ -23,7 +24,7 @@ export type Command<Msg extends KaartMsg> =
   | MaakLaagZichtbaarCmd<Msg>
   | MeldComponentFoutCmd
   | SelecteerFeaturesCmd
-  | SluitInfoBoodschapCmd<Msg>
+  | SluitInfoBoodschapCmd
   | SubscribeCmd<Msg>
   | ToonAchtergrondKeuzeCmd<Msg>
   | ToonInfoBoodschapCmd
@@ -47,6 +48,7 @@ export type Command<Msg extends KaartMsg> =
   | VerwijderVolledigSchermCmd<Msg>
   | VerwijderZoekerCmd<Msg>
   | VoegInteractieToeCmd
+  | VoegLaagLocatieInformatieServiceToe
   | VoegLaagToeCmd<Msg>
   | VoegOverlayToeCmd
   | VoegSchaalToeCmd<Msg>
@@ -357,11 +359,18 @@ export interface DeselecteerAlleFeaturesCmd {
   readonly type: "DeselecteerAlleFeatures";
 }
 
-export interface SluitInfoBoodschapCmd<Msg extends KaartMsg> {
+export interface SluitInfoBoodschapCmd {
   readonly type: "SluitInfoBoodschap";
   readonly id: string;
   readonly sluit: boolean;
   readonly msgGen: () => Option<prt.TypedRecord>;
+}
+
+export interface VoegLaagLocatieInformatieServiceToe {
+  readonly type: "VoegLaagLocatieInformatieServiceToe";
+  readonly titel: string;
+  readonly service: LaagLocationInfoService;
+  readonly msgGen: BareValidationWrapper<prt.TypedRecord>;
 }
 
 ////////////////////////
@@ -598,11 +607,7 @@ export function DeselecteerAlleFeaturesCmd(): DeselecteerAlleFeaturesCmd {
   };
 }
 
-export function SluitInfoBoodschapCmd<Msg extends KaartMsg>(
-  id: string,
-  sluit: boolean,
-  msgGen: () => Option<prt.TypedRecord>
-): SluitInfoBoodschapCmd<Msg> {
+export function SluitInfoBoodschapCmd(id: string, sluit: boolean, msgGen: () => Option<prt.TypedRecord>): SluitInfoBoodschapCmd {
   return {
     type: "SluitInfoBoodschap",
     id: id,
@@ -621,4 +626,12 @@ export function ZetLaagLegendeCmd<Msg extends KaartMsg>(
 
 export function VoegZoekerToeCmd<Msg extends KaartMsg>(zoeker: ZoekerBase, wrapper: BareValidationWrapper<Msg>): VoegZoekerToeCmd<Msg> {
   return { type: "VoegZoekerToe", zoeker: zoeker, wrapper: wrapper };
+}
+
+export function VoegLaagLocatieInformatieServiceToe(
+  titel: string,
+  service: LaagLocationInfoService,
+  msgGen: BareValidationWrapper<prt.TypedRecord>
+): VoegLaagLocatieInformatieServiceToe {
+  return { type: "VoegLaagLocatieInformatieServiceToe", titel: titel, service: service, msgGen: msgGen };
 }

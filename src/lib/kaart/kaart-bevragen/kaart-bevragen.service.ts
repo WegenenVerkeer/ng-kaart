@@ -1,6 +1,8 @@
 import { HttpClient } from "@angular/common/http";
+import { array } from "fp-ts";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
-import { List } from "immutable";
+import { setoidNumber } from "fp-ts/lib/Setoid";
+import { List, Map } from "immutable";
 import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
 import { catchError } from "rxjs/operators";
@@ -8,34 +10,43 @@ import { catchError } from "rxjs/operators";
 import { Adres, WegLocatie } from "../kaart-with-info-model";
 import { kaartLogger } from "../log";
 
-export interface OntvangenInformatie {
-  currentClick: ol.Coordinate;
-  adres: Option<AgivAdres>;
-  weglocaties: Option<LsWegLocaties>;
+import { LaagLocationInfo } from "./laaginfo.model";
+
+export interface LocatieInfo {
+  readonly kaartLocatie: ol.Coordinate;
+  readonly adres: Option<AgivAdres>;
+  readonly weglocaties: Option<LsWegLocaties>;
+  readonly lagenLocatieInfo: Map<string, LaagLocationInfo>;
 }
 
-export function OntvangenInformatie(currentClick: ol.Coordinate, adres: Option<AgivAdres>, weglocaties: Option<LsWegLocaties>) {
+export function LocatieInfo(
+  kaartLocatie: ol.Coordinate,
+  adres: Option<AgivAdres>,
+  weglocaties: Option<LsWegLocaties>,
+  lagenLocatieInfo: Map<string, LaagLocationInfo>
+): LocatieInfo {
   return {
-    currentClick: currentClick,
+    kaartLocatie: kaartLocatie,
     adres: adres,
-    weglocaties: weglocaties
+    weglocaties: weglocaties,
+    lagenLocatieInfo: lagenLocatieInfo
   };
 }
 
 export interface LsWegLocatie {
-  ident8: string;
-  hm: number;
-  district: string;
-  districtcode: string;
-  position: number;
-  distance: number;
-  distancetopole: number;
+  readonly ident8: string;
+  readonly hm: number;
+  readonly district: string;
+  readonly districtcode: string;
+  readonly position: number;
+  readonly distance: number;
+  readonly distancetopole: number;
 }
 
 export interface LsWegLocaties {
-  total: number;
-  items: LsWegLocatie[];
-  error: string;
+  readonly total: number;
+  readonly items: LsWegLocatie[];
+  readonly error: string; // TODO naar Validation of Either
 }
 
 export function LsWegLocaties(total: number, items: LsWegLocatie[], error: string): LsWegLocaties {
@@ -46,10 +57,11 @@ export function LsWegLocaties(total: number, items: LsWegLocatie[], error: strin
   };
 }
 
+// TODO Validation of Either gebruiken
 export interface XY2AdresSucces {
-  kind: "XY2AdresSucces";
-  adres: AgivAdres;
-  afstand: number;
+  readonly kind: "XY2AdresSucces";
+  readonly adres: AgivAdres;
+  readonly afstand: number;
 }
 
 export interface XY2AdresError {
@@ -65,10 +77,10 @@ export function XY2AdresError(message: string): XY2AdresError {
 }
 
 export interface AgivAdres {
-  gemeente: string;
-  straat: string;
-  postcode: string;
-  huisnummer: string;
+  readonly gemeente: string;
+  readonly straat: string;
+  readonly postcode: string;
+  readonly huisnummer: string;
 }
 
 export function toWegLocaties(lsWegLocaties: LsWegLocaties): List<WegLocatie> {
@@ -93,23 +105,43 @@ export function toAdres(agivAdres: AgivAdres): Adres {
   };
 }
 
-export function fromCoordinate(coordinaat: ol.Coordinate): OntvangenInformatie {
-  return OntvangenInformatie(coordinaat, none, none);
+export function fromCoordinate(coordinaat: ol.Coordinate): LocatieInfo {
+  return LocatieInfo(coordinaat, none, none, Map());
 }
 
-export function withAdres(coordinaat: ol.Coordinate, adres: XY2AdresSucces[] | XY2AdresError): OntvangenInformatie {
+export function withAdres(coordinaat: ol.Coordinate, adres: XY2AdresSucces[] | XY2AdresError): LocatieInfo {
   if (adres instanceof Array && adres.length > 0) {
-    return OntvangenInformatie(coordinaat, some(adres[0].adres), none);
+    return LocatieInfo(coordinaat, some(adres[0].adres), none, Map());
   } else {
-    return OntvangenInformatie(coordinaat, none, none);
+    return LocatieInfo(coordinaat, none, none, Map());
   }
 }
 
-export function withWegLocaties(coordinaat: ol.Coordinate, lsWegLocaties: LsWegLocaties): OntvangenInformatie {
+export function fromWegLocaties(coordinaat: ol.Coordinate, lsWegLocaties: LsWegLocaties): LocatieInfo {
   return fromNullable(lsWegLocaties.error).foldL(
-    () => OntvangenInformatie(coordinaat, none, some(lsWegLocaties)),
-    () => OntvangenInformatie(coordinaat, none, none)
+    () => LocatieInfo(coordinaat, none, some(lsWegLocaties), Map()),
+    () => LocatieInfo(coordinaat, none, none, Map())
   );
+}
+
+export function merge(i1: LocatieInfo, i2: LocatieInfo): LocatieInfo {
+  // Merge kan enkel als de 2 coordinaten gelijk zijn.
+  return coordinatesEqual(i1.kaartLocatie, i2.kaartLocatie)
+    ? LocatieInfo(
+        i2.kaartLocatie,
+        i2.adres.alt(i1.adres),
+        i2.weglocaties.alt(i1.weglocaties),
+        i1.lagenLocatieInfo.concat(i2.lagenLocatieInfo).toMap()
+      )
+    : i2;
+}
+
+function coordinatesEqual(c1: ol.Coordinate, c2: ol.Coordinate): boolean {
+  return array.getSetoid(setoidNumber).equals(c1, c2);
+}
+
+export function withLaagLocationInfo(i: LocatieInfo, laagTitel: string, lli: LaagLocationInfo): LocatieInfo {
+  return { ...i, lagenLocatieInfo: i.lagenLocatieInfo.set(laagTitel, lli) };
 }
 
 export function adresViaXY$(http: HttpClient, coordinaat: ol.Coordinate): Observable<XY2AdresSucces[] | XY2AdresError> {
@@ -123,7 +155,7 @@ export function adresViaXY$(http: HttpClient, coordinaat: ol.Coordinate): Observ
     })
     .pipe(
       catchError(error => {
-        kaartLogger.error(`Fout bij opvragen weglocatie: ${error}`);
+        kaartLogger.error("Fout bij opvragen weglocatie", error);
         // bij fout toch zeker geldige observable doorsturen, anders geen volgende events
         return Observable.of(XY2AdresError(`Fout bij opvragen weglocatie: ${error}`));
       })
@@ -143,7 +175,7 @@ export function wegLocatiesViaXY$(http: HttpClient, coordinaat: ol.Coordinate): 
     .pipe(
       catchError(error => {
         // bij fout toch zeker geldige observable doorsturen, anders geen volgende events
-        kaartLogger.error(`Fout bij opvragen adres: ${error}`);
+        kaartLogger.error("Fout bij opvragen adres", error);
         return Observable.of(LsWegLocaties(0, [], `Fout bij opvragen adres: ${error}`));
       })
     );

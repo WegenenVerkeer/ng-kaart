@@ -44,10 +44,10 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
         .map(lg => ((lg as VectorLaag)!.source as NosqlFsSource).loadEvent$)
         .toList();
 
-    const lagenHoog$$: rx.Observable<List<rx.Observable<DataLoadEvent>>> = this.modelChanges.lagenOpGroep$
+    const lagenHoog$$: rx.Observable<List<rx.Observable<DataLoadEvent>>> = this.modelChanges.lagenOpGroep
       .get("Voorgrond.Hoog")
       .pipe(map(noSqlFsLagenDataLoadEvents), startWith(List()));
-    const lagenLaag$$: rx.Observable<List<rx.Observable<DataLoadEvent>>> = this.modelChanges.lagenOpGroep$
+    const lagenLaag$$: rx.Observable<List<rx.Observable<DataLoadEvent>>> = this.modelChanges.lagenOpGroep
       .get("Voorgrond.Laag")
       .pipe(map(noSqlFsLagenDataLoadEvents), startWith(List()));
     const toegevoegdeLagen$$: rx.Observable<List<rx.Observable<DataLoadEvent>>> = lagenHoog$$.pipe(

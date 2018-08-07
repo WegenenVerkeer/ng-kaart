@@ -3,12 +3,24 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import { List, Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { combineLatest, debounceTime, distinctUntilChanged, filter, map, mapTo, merge, shareReplay, switchMap } from "rxjs/operators";
+import {
+  combineLatest,
+  debounceTime,
+  distinctUntilChanged,
+  filter,
+  map,
+  mapTo,
+  merge,
+  share,
+  shareReplay,
+  switchMap
+} from "rxjs/operators";
 
 import { NosqlFsSource } from "../source/nosql-fs-source";
 import { observableFromOlEvents } from "../util/ol-observable";
 import { ZoekerBase } from "../zoeker/zoeker-base";
 
+import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { UiElementOpties } from "./kaart-protocol-commands";
@@ -37,8 +49,10 @@ export interface ModelChanger {
   readonly mijnLocatieZoomDoelSubj: rx.Subject<Option<number>>;
   readonly actieveModusSubj: rx.Subject<Option<string>>;
   readonly zoekerServicesSubj: rx.Subject<List<ZoekerBase>>;
+  readonly laagLocationInfoServicesOpTitelSubj: rx.BehaviorSubject<Map<string, LaagLocationInfoService>>;
 }
 
+// Hieronder wordt een paar keer BehaviourSubject gebruikt. Dat is equivalent met, maar beknopter dan, een startWith + shareReplay
 export const ModelChanger: () => ModelChanger = () => ({
   uiElementSelectieSubj: new rx.Subject<UiElementSelectie>(),
   uiElementOptiesSubj: new rx.ReplaySubject<UiElementOpties>(1),
@@ -52,14 +66,15 @@ export const ModelChanger: () => ModelChanger = () => ({
   laagVerwijderdSubj: new rx.Subject<ke.ToegevoegdeLaag>(),
   mijnLocatieZoomDoelSubj: new rx.BehaviorSubject<Option<number>>(none),
   actieveModusSubj: new rx.BehaviorSubject(none),
-  zoekerServicesSubj: new rx.BehaviorSubject(List())
+  zoekerServicesSubj: new rx.BehaviorSubject(List()),
+  laagLocationInfoServicesOpTitelSubj: new rx.BehaviorSubject(Map())
 });
 
 export interface ModelChanges {
   readonly uiElementSelectie$: rx.Observable<UiElementSelectie>;
   readonly uiElementOpties$: rx.Observable<UiElementOpties>;
   readonly viewinstellingen$: rx.Observable<Viewinstellingen>;
-  readonly lagenOpGroep$: Map<ke.Laaggroep, rx.Observable<List<ke.ToegevoegdeLaag>>>;
+  readonly lagenOpGroep: Map<ke.Laaggroep, rx.Observable<List<ke.ToegevoegdeLaag>>>;
   readonly laagVerwijderd$: rx.Observable<ke.ToegevoegdeLaag>;
   readonly geselecteerdeFeatures$: rx.Observable<GeselecteerdeFeatures>;
   readonly hoverFeatures$: rx.Observable<HoverFeature>;
@@ -68,6 +83,7 @@ export interface ModelChanges {
   readonly mijnLocatieZoomDoel$: rx.Observable<Option<number>>;
   readonly actieveModus$: rx.Observable<Option<string>>;
   readonly zoekerServices$: rx.Observable<List<ZoekerBase>>;
+  readonly laagLocationInfoServicesOpTitel$: rx.Observable<Map<string, LaagLocationInfoService>>;
 }
 
 const viewinstellingen = (olmap: ol.Map) => ({
@@ -118,8 +134,6 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
   const viewinstellingen$ = rx.Observable.merge(viewportSize$, resize$, center$, numlayers$, zoom$).pipe(
     debounceTime(50), // Deze is om de map hierna niet te veel werk te geven
     map(() => viewinstellingen(model.map)),
-    distinctUntilChanged(),
-    debounceTime(50), // Deze is om downstream subscribers niet te veel werk te geven
     shareReplay(1)
   );
 
@@ -158,29 +172,32 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
 
   const zichtbareFeatures$ = viewinstellingen$.pipe(combineLatest(vectorlagen$, featuresChanged$, collectFeatures));
 
-  const kaartKlikLocatie$ = observableFromOlEvents(model.map, "click")
-    .filter((event: ol.MapBrowserEvent) => {
+  const kaartKlikLocatie$ = observableFromOlEvents(model.map, "click").pipe(
+    filter((event: ol.MapBrowserEvent) => {
       // filter click events uit die op een feature plaatsvinden
       return !model.map.hasFeatureAtPixel(event.pixel, {
         hitTolerance: KaartWithInfo.clickHitTolerance,
         // enkel json data features die een identify hebben beschouwen we. Zoekresultaten bvb niet
         layerFilter: layer => layer.getSource() instanceof NosqlFsSource
       });
-    })
-    .pipe(map((event: ol.MapBrowserEvent) => event.coordinate));
+    }),
+    map((event: ol.MapBrowserEvent) => event.coordinate),
+    share()
+  );
 
   return {
     uiElementSelectie$: changer.uiElementSelectieSubj.asObservable(),
     uiElementOpties$: changer.uiElementOptiesSubj.asObservable(),
     laagVerwijderd$: changer.laagVerwijderdSubj.asObservable(),
     viewinstellingen$: viewinstellingen$,
-    lagenOpGroep$: lagenOpGroep$,
+    lagenOpGroep: lagenOpGroep$,
     geselecteerdeFeatures$: geselecteerdeFeatures$,
     hoverFeatures$: hoverFeatures$,
     zichtbareFeatures$: zichtbareFeatures$,
     kaartKlikLocatie$: kaartKlikLocatie$,
     mijnLocatieZoomDoel$: changer.mijnLocatieZoomDoelSubj.asObservable(),
     actieveModus$: changer.actieveModusSubj.asObservable(),
-    zoekerServices$: changer.zoekerServicesSubj.asObservable()
+    zoekerServices$: changer.zoekerServicesSubj.asObservable(),
+    laagLocationInfoServicesOpTitel$: changer.laagLocationInfoServicesOpTitelSubj.asObservable()
   };
 };

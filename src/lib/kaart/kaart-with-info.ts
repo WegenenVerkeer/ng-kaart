@@ -1,6 +1,6 @@
 import { fromNullable, none, Option } from "fp-ts/lib/Option";
 import { List, Map, OrderedMap } from "immutable";
-import * as MobileDetect from "mobile-detect";
+import * as MobileDetect from "mobile-detect/mobile-detect";
 import * as ol from "openlayers";
 import { BehaviorSubject, ReplaySubject, Subject } from "rxjs";
 

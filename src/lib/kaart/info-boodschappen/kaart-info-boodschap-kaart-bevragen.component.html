@@ -3,20 +3,19 @@
   <mat-expansion-panel class="mat-elevation-z0">
     <mat-expansion-panel-header>
       <mat-panel-title class="naam">
-        Coordinaten
+        Coördinaten
       </mat-panel-title>
     </mat-expansion-panel-header>
 
     <div class="velden">
-      <div class="veldnamen">Lambert 72</div><div class="veldwaarden">{{ coordinaatInformatieLambert72() }}</div>
+      <div class="veldnamen">Lambert 72</div><div class="veldwaarden">{{ coordinaatInformatieLambert72 }}</div>
     </div>
     <div class="velden">
-      <div class="veldnamen">WGS 84</div><div class="veldwaarden">{{ coordinaatInformatieWgs84() }}</div>
+      <div class="veldnamen">WGS 84</div><div class="veldwaarden">{{ coordinaatInformatieWgs84 }}</div>
     </div>
-
   </mat-expansion-panel>
 
-  <mat-expansion-panel class="mat-elevation-z0" *ngFor="let weglocatie of getWegLocaties()">
+  <mat-expansion-panel class="mat-elevation-z0" *ngFor="let weglocatie of wegLocaties">
     <mat-expansion-panel-header>
       <mat-panel-title class="naam">
           {{ weglocatie.ident8 }} op {{ weglocatie.hm }} {{ signed(weglocatie.afstand) }}
@@ -26,29 +25,38 @@
     <div class="velden">
       <div class="veldnamen">Wegbeheerder</div><div class="veldwaarden">{{ weglocatie.wegbeheerder }}</div>
     </div>
-
   </mat-expansion-panel>
 
-  <mat-expansion-panel class="mat-elevation-z0" *ngIf="heeftAdres()">
+  <mat-expansion-panel class="mat-elevation-z0" *ngFor="let adres of adressen">
     <mat-expansion-panel-header>
       <mat-panel-title class="naam">
-        {{ getAdres('straat') }} {{ getAdres('huisnummer') }}, {{ getAdres('gemeente') }}
+        {{ adres.straat }} {{ adres.huisnummer }}, {{ adres.gemeente }}
       </mat-panel-title>
     </mat-expansion-panel-header>
 
     <div class="velden">
-      <div class="veldnamen">Straat</div><div class="veldwaarden">{{ getAdres('straat') }}</div>
+      <div class="veldnamen">Straat</div><div class="veldwaarden">{{ adres.straat }}</div>
     </div>
     <div class="velden">
-      <div class="veldnamen">Huisnummer</div><div class="veldwaarden">{{ getAdres('huisnummer') }}</div>
+      <div class="veldnamen">Huisnummer</div><div class="veldwaarden">{{ adres.huisnummer }}</div>
     </div>
     <div class="velden">
-      <div class="veldnamen">Postcode</div><div class="veldwaarden">{{ getAdres('postcode') }}</div>
+      <div class="veldnamen">Postcode</div><div class="veldwaarden">{{ adres.postcode }}</div>
     </div>
     <div class="velden">
-      <div class="veldnamen">Gemeente</div><div class="veldwaarden">{{ getAdres('gemeente') }}</div>
+      <div class="veldnamen">Gemeente</div><div class="veldwaarden">{{ adres.gemeente }}</div>
     </div>
-
   </mat-expansion-panel>
+  
+  <mat-expansion-panel class="mat-elevation-z0" *ngFor="let info of textLaagLocationInfo">
+    <mat-expansion-panel-header>
+      <mat-panel-title class="naam">
+        {{ info.titel }}
+      </mat-panel-title>
+    </mat-expansion-panel-header>
 
+    <div class="verbatim">
+      {{ info.text }}
+    </div>
+  </mat-expansion-panel>
 </mat-accordion>

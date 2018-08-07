@@ -1,57 +1,57 @@
-import { Component, Input, NgZone } from "@angular/core";
-import { fromNullable, none, Option } from "fp-ts/lib/Option";
+import { ChangeDetectionStrategy, Component, Input, NgZone } from "@angular/core";
+import { fromNullable } from "fp-ts/lib/Option";
 import { List } from "immutable";
 
-import { lambert72ToWgs84 } from "../../coordinaten/coordinaten.service";
+import { formatCoordinate, lambert72ToWgs84 } from "../../coordinaten/coordinaten.service";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
-import { Adres, WegLocatie } from "../kaart-with-info-model";
+import { Adres, InfoBoodschapKaartBevragen, WegLocatie } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
+
+export interface LaagInfo {
+  titel: string;
+  text: string;
+}
 
 @Component({
   selector: "awv-kaart-info-boodschap-kaart-bevragen",
   templateUrl: "./kaart-info-boodschap-kaart-bevragen.component.html",
-  styleUrls: ["./kaart-info-boodschap-kaart-bevragen.component.scss"]
+  styleUrls: ["./kaart-info-boodschap-kaart-bevragen.component.scss"],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildComponentBase {
-  @Input() coordinaat: ol.Coordinate;
-  @Input() adres: Option<Adres> = none;
-  @Input() weglocaties: List<WegLocatie> = List();
+  textLaagLocationInfo: Array<LaagInfo>;
+  coordinaatInformatieLambert72: string;
+  coordinaatInformatieWgs84: string;
+  wegLocaties: Array<WegLocatie>;
+  adressen: Array<Adres>;
 
-  constructor(parent: KaartComponent, zone: NgZone) {
-    super(parent, zone);
-  }
-
-  coordinaatInformatieLambert72(): string {
-    return fromNullable(this.coordinaat)
-      .map(coord => [coord[0].toFixed(0), coord[1].toFixed(0)])
-      .map(coord => `${coord[0]}, ${coord[1]}`)
+  @Input()
+  set boodschap(boodschap: InfoBoodschapKaartBevragen) {
+    // Deze waarden voor de template worden berekend op het moment dat er een nieuwe input is, niet elke
+    // keer dat Angular denkt dat hij change detection moet laten lopen.
+    this.textLaagLocationInfo = boodschap.laagLocatieInfoOpTitel
+      .filter(info => info!.type === "TextLaagLocationInfo") // Het enige dat we op dit moment ondersteunen
+      .map((value, key) => ({ titel: key!, text: value!.text }))
+      .toArray();
+    this.coordinaatInformatieLambert72 = fromNullable(boodschap.coordinaat)
+      .map(formatCoordinate(0))
       .getOrElse("");
-  }
-
-  coordinaatInformatieWgs84(): string {
-    return fromNullable(this.coordinaat)
-      .map(coord => lambert72ToWgs84(coord))
-      .map(coord => [coord[0].toFixed(7), coord[1].toFixed(7)])
-      .map(coord => `${coord[0]}, ${coord[1]}`)
+    this.coordinaatInformatieWgs84 = fromNullable(boodschap.coordinaat)
+      .map(lambert72ToWgs84)
+      .map(formatCoordinate(7))
       .getOrElse("");
-  }
-
-  heeftAdres() {
-    return this.adres.isSome();
-  }
-
-  getWegLocaties() {
-    return this.weglocaties
+    this.wegLocaties = boodschap.weglocaties
       .sortBy(locatie =>
         fromNullable(locatie)
           .chain(loc => fromNullable(loc.ident8))
           .getOrElse("")
       )
-      .toList();
+      .toArray();
+    this.adressen = boodschap.adres.fold([], adres => [adres]); // Array van 0 of 1 eltn isomorf met Option, maar makkelijker voor Angular
   }
 
-  getAdres(key: string): string {
-    return this.adres.chain(adres => fromNullable(adres[key])).getOrElse("");
+  constructor(kaartComponent: KaartComponent, zone: NgZone) {
+    super(kaartComponent, zone);
   }
 
   signed(value: number): string {

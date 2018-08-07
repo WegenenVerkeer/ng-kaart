@@ -1,36 +1,39 @@
 import { Option } from "fp-ts/lib/Option";
-import { List } from "immutable";
+import { List, Map } from "immutable";
 import * as ol from "openlayers";
 
+import { LaagLocationInfo } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { VectorLaag } from "./kaart-elementen";
 import { TypedRecord } from "./kaart-protocol";
 
-export interface InfoBoodschap {
+export type InfoBoodschap = InfoBoodschapAlert | InfoBoodschapIdentify | InfoBoodschapKaartBevragen;
+
+export interface InfoBoodschapBase {
   readonly id: string;
   readonly titel: string;
-  readonly type: string;
   readonly bron: Option<string>;
   readonly sluit: "NIET" | "VANZELF" | "DOOR_APPLICATIE";
   readonly verbergMsgGen: () => Option<TypedRecord>;
 }
 
-export interface InfoBoodschapAlert extends InfoBoodschap {
+export interface InfoBoodschapAlert extends InfoBoodschapBase {
   readonly type: "InfoBoodschapAlert";
   readonly message: string;
 }
 
-export interface InfoBoodschapIdentify extends InfoBoodschap {
+export interface InfoBoodschapIdentify extends InfoBoodschapBase {
   readonly type: "InfoBoodschapIdentify";
   readonly feature: ol.Feature;
-  readonly laag: VectorLaag;
+  readonly laag: Option<VectorLaag>;
 }
 
-export interface InfoBoodschapKaartBevragen extends InfoBoodschap {
-  readonly type: "infoBoodschapKaartBevragen";
+export interface InfoBoodschapKaartBevragen extends InfoBoodschapBase {
+  readonly type: "InfoBoodschapKaartBevragen";
   readonly coordinaat: ol.Coordinate;
   readonly adres: Option<Adres>;
   readonly weglocaties: List<WegLocatie>;
+  readonly laagLocatieInfoOpTitel: Map<string, LaagLocationInfo>;
 }
 
 export interface WegLocatie {

@@ -38,3 +38,8 @@ mat-expansion-panel {
   font-weight: 300;
   color: rgba(0, 0, 0, 0.87);
 }
+
+.verbatim {
+  word-break: break-all;
+  hyphens: auto;
+}

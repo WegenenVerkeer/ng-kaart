@@ -150,22 +150,23 @@ export class KaartModule {
 }
 
 export * from "../coordinaten/coordinaten.service";
-export * from "./kaart-component-base";
 export * from "./copyright/kaart-copyright.component";
-export * from "./voorwaarden/kaart-voorwaarden.component";
 export * from "./copyright/kaart-copyright.component";
-export * from "./schaal/kaart-schaal.component";
-export * from "./tekenen/kaart-teken-laag.component";
-export * from "./meten/kaart-meten.component";
 export * from "./kaart-bevragen/kaart-bevragen.component";
-export * from "./zoom/kaart-zoom.component";
+export * from "./kaart-bevragen/laaginfo.model";
+export * from "./kaart-component-base";
+export * from "./kaart-elementen";
+export * from "./kaart-event-dispatcher";
+export * from "./kaart-legende";
+export * from "./kaart-protocol";
+export * from "./kaart.component";
+export * from "./log";
+export * from "./meten/kaart-meten.component";
 export * from "./mijn-locatie/kaart-mijn-locatie.component";
 export * from "./open-street-view/kaart-open-street-view.component";
-export * from "./kaart.component";
-export * from "./kaart-event-dispatcher";
-export * from "./kaart-protocol";
-export * from "./kaart-legende";
-export * from "./kaart-elementen";
+export * from "./schaal/kaart-schaal.component";
 export * from "./stijl-selector";
-export * from "./log";
 export * from "./styles";
+export * from "./tekenen/kaart-teken-laag.component";
+export * from "./voorwaarden/kaart-voorwaarden.component";
+export * from "./zoom/kaart-zoom.component";
