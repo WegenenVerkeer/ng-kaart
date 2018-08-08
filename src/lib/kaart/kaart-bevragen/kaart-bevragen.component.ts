@@ -5,14 +5,14 @@ import { List, Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { OperatorFunction } from "rxjs/interfaces";
-import { debounceTime, filter, map, mergeAll, scan, switchMap } from "rxjs/operators";
+import { debounceTime, filter, map, mergeAll, scan, startWith, switchMap, timeoutWith } from "rxjs/operators";
 
 import { observeOnAngular } from "../../util/observe-on-angular";
 import * as ke from "../kaart-elementen";
 import { actieveModusGezetWrapper, KaartInternalMsg } from "../kaart-internal-messages";
 import { KaartModusComponent } from "../kaart-modus-component";
 import * as prt from "../kaart-protocol";
-import { Adres, WegLocatie } from "../kaart-with-info-model";
+import { Adres, Progress, Received, Requested, TimedOut, WegLocatie } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
 
 import * as srv from "./kaart-bevragen.service";
@@ -105,7 +105,7 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
     coordinaat: ol.Coordinate,
     maybeAdres: Option<Adres>,
     wegLocaties: List<WegLocatie>,
-    lagenLocatieInfo: Map<string, LaagLocationInfo>
+    lagenLocatieInfo: Map<string, Progress<LaagLocationInfo>>
   ) {
     this.dispatch(
       prt.ToonInfoBoodschapCmd({
@@ -125,5 +125,11 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
 }
 
 function infoForLaag(location: ol.Coordinate, laag: ke.ToegevoegdeLaag, svc: LaagLocationInfoService): rx.Observable<srv.LocatieInfo> {
-  return svc.infoByLocation$(location).pipe(map(info => srv.withLaagLocationInfo(srv.fromCoordinate(location), laag.titel, info)));
+  return svc
+    .infoByLocation$(location) //
+    .pipe(
+      map(info => srv.withLaagLocationInfo(srv.fromCoordinate(location), laag.titel, Received(info))),
+      startWith(srv.withLaagLocationInfo(srv.fromCoordinate(location), laag.titel, Requested)),
+      timeoutWith(5000, rx.Observable.of(srv.withLaagLocationInfo(srv.fromCoordinate(location), laag.titel, TimedOut)))
+    );
 }

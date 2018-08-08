@@ -1,3 +1,4 @@
+import { Function1, Lazy } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import { List, Map } from "immutable";
 import * as ol from "openlayers";
@@ -7,7 +8,7 @@ import * as ke from "./kaart-elementen";
 import { VectorLaag } from "./kaart-elementen";
 import { TypedRecord } from "./kaart-protocol";
 
-export type InfoBoodschap = InfoBoodschapAlert | InfoBoodschapIdentify | InfoBoodschapKaartBevragen;
+export type InfoBoodschap = InfoBoodschapAlert | InfoBoodschapIdentify | InfoBoodschapKaartBevragenProgress;
 
 export interface InfoBoodschapBase {
   readonly id: string;
@@ -28,12 +29,34 @@ export interface InfoBoodschapIdentify extends InfoBoodschapBase {
   readonly laag: Option<VectorLaag>;
 }
 
-export interface InfoBoodschapKaartBevragen extends InfoBoodschapBase {
+export type Progress<A> = Requested | TimedOut | Received<A>;
+
+export type Requested = "Requested";
+export type TimedOut = "TimedOut";
+export interface Received<A> {
+  readonly value: A;
+}
+
+export const withProgress = <A>(progress: Progress<A>) => <B>(ifRequested: Lazy<B>, ifTimedOut: Lazy<B>, ifReceived: Function1<A, B>) => {
+  if (progress === "Requested") {
+    return ifRequested();
+  } else if (progress === "TimedOut") {
+    return ifTimedOut();
+  } else {
+    return ifReceived(progress.value);
+  }
+};
+
+export const Requested: Requested = "Requested";
+export const TimedOut: TimedOut = "TimedOut";
+export const Received: <A>(_: A) => Received<A> = a => ({ value: a });
+
+export interface InfoBoodschapKaartBevragenProgress extends InfoBoodschapBase {
   readonly type: "InfoBoodschapKaartBevragen";
   readonly coordinaat: ol.Coordinate;
-  readonly adres: Option<Adres>;
-  readonly weglocaties: List<WegLocatie>;
-  readonly laagLocatieInfoOpTitel: Map<string, LaagLocationInfo>;
+  readonly adres: Option<Adres>; // Zou ook Progress<Adres> kunnen zijn
+  readonly weglocaties: List<WegLocatie>; // Zou ook Progress<List<WegLocatie>> kunnen zijn
+  readonly laagLocatieInfoOpTitel: Map<string, Progress<LaagLocationInfo>>;
 }
 
 export interface WegLocatie {

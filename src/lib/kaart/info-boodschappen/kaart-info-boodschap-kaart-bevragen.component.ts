@@ -1,15 +1,16 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone } from "@angular/core";
 import { fromNullable } from "fp-ts/lib/Option";
-import { List } from "immutable";
 
 import { formatCoordinate, lambert72ToWgs84 } from "../../coordinaten/coordinaten.service";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
-import { Adres, InfoBoodschapKaartBevragen, WegLocatie } from "../kaart-with-info-model";
+import { Adres, InfoBoodschapKaartBevragenProgress, WegLocatie, withProgress } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
 
 export interface LaagInfo {
   titel: string;
-  text: string;
+  busy?: boolean;
+  timedout?: boolean;
+  text?: string;
 }
 
 @Component({
@@ -26,12 +27,17 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildComponen
   adressen: Array<Adres>;
 
   @Input()
-  set boodschap(boodschap: InfoBoodschapKaartBevragen) {
+  set boodschap(boodschap: InfoBoodschapKaartBevragenProgress) {
     // Deze waarden voor de template worden berekend op het moment dat er een nieuwe input is, niet elke
     // keer dat Angular denkt dat hij change detection moet laten lopen.
     this.textLaagLocationInfo = boodschap.laagLocatieInfoOpTitel
-      .filter(info => info!.type === "TextLaagLocationInfo") // Het enige dat we op dit moment ondersteunen
-      .map((value, key) => ({ titel: key!, text: value!.text }))
+      .map((value, key) =>
+        withProgress(value!)(
+          () => ({ titel: key!, busy: true }),
+          () => ({ titel: key!, busy: false, timedout: true }),
+          laaglocationinfo => ({ titel: key!, busy: false, text: laaglocationinfo.text })
+        )
+      )
       .toArray();
     this.coordinaatInformatieLambert72 = fromNullable(boodschap.coordinaat)
       .map(formatCoordinate(0))

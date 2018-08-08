@@ -5,6 +5,7 @@
       <mat-panel-title class="naam">
         Coördinaten
       </mat-panel-title>
+      <span class="">X</span>
     </mat-expansion-panel-header>
 
     <div class="velden">
@@ -48,15 +49,35 @@
     </div>
   </mat-expansion-panel>
   
-  <mat-expansion-panel class="mat-elevation-z0" *ngFor="let info of textLaagLocationInfo">
-    <mat-expansion-panel-header>
-      <mat-panel-title class="naam">
-        {{ info.titel }}
-      </mat-panel-title>
-    </mat-expansion-panel-header>
+  <ng-container *ngFor="let info of textLaagLocationInfo"><!--zo niet nodig izjn als hideToggle eenvoudig aangezet kon worden-->
 
-    <div class="verbatim">
-      {{ info.text }}
-    </div>
-  </mat-expansion-panel>
+    <mat-expansion-panel class="mat-elevation-z0" hideToggle *ngIf="info.busy || info.timedout">
+      <mat-expansion-panel-header *ngIf="info.busy">
+        <mat-panel-title class="naam custom_icon">
+          {{ info.titel }}
+          <mat-spinner diameter="20"></mat-spinner>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <span *ngIf="info.busy">De data wordt opgevraagd</span>
+      <mat-expansion-panel-header *ngIf="info.timedout">
+        <mat-panel-title class="naam custom_icon">
+          {{ info.titel }}
+          <mat-icon aria-label="Het antwoord bleef te lang uit">timer_off</mat-icon>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <span *ngIf="info.timedout">Het antwoord van de WMS-server werd niet op tijd ontvangen</span>
+    </mat-expansion-panel>
+
+    <mat-expansion-panel class="mat-elevation-z0" *ngIf="info.text">
+      <mat-expansion-panel-header>
+          <mat-panel-title class="naam">
+            {{ info.titel }}
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+      
+      <div class="verbatim">
+        {{ info.text }}
+      </div>
+    </mat-expansion-panel>
+  </ng-container>
 </mat-accordion>

@@ -18,6 +18,7 @@ import {
   MatExpansionModule,
   MatIconModule,
   MatInputModule,
+  MatProgressSpinnerModule,
   MatTooltipDefaultOptions,
   MatTooltipModule
 } from "@angular/material";
@@ -123,6 +124,7 @@ export const myCustomTooltipDefaults: MatTooltipDefaultOptions = {
     MatInputModule,
     MatTooltipModule,
     MatExpansionModule,
+    MatProgressSpinnerModule,
     FormsModule,
     ReactiveFormsModule,
     HttpClientModule,

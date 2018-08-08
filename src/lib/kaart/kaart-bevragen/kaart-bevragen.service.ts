@@ -7,7 +7,7 @@ import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
 import { catchError } from "rxjs/operators";
 
-import { Adres, WegLocatie } from "../kaart-with-info-model";
+import { Adres, Progress, WegLocatie } from "../kaart-with-info-model";
 import { kaartLogger } from "../log";
 
 import { LaagLocationInfo } from "./laaginfo.model";
@@ -16,14 +16,14 @@ export interface LocatieInfo {
   readonly kaartLocatie: ol.Coordinate;
   readonly adres: Option<AgivAdres>;
   readonly weglocaties: Option<LsWegLocaties>;
-  readonly lagenLocatieInfo: Map<string, LaagLocationInfo>;
+  readonly lagenLocatieInfo: Map<string, Progress<LaagLocationInfo>>;
 }
 
 export function LocatieInfo(
   kaartLocatie: ol.Coordinate,
   adres: Option<AgivAdres>,
   weglocaties: Option<LsWegLocaties>,
-  lagenLocatieInfo: Map<string, LaagLocationInfo>
+  lagenLocatieInfo: Map<string, Progress<LaagLocationInfo>>
 ): LocatieInfo {
   return {
     kaartLocatie: kaartLocatie,
@@ -140,7 +140,7 @@ function coordinatesEqual(c1: ol.Coordinate, c2: ol.Coordinate): boolean {
   return array.getSetoid(setoidNumber).equals(c1, c2);
 }
 
-export function withLaagLocationInfo(i: LocatieInfo, laagTitel: string, lli: LaagLocationInfo): LocatieInfo {
+export function withLaagLocationInfo(i: LocatieInfo, laagTitel: string, lli: Progress<LaagLocationInfo>): LocatieInfo {
   return { ...i, lagenLocatieInfo: i.lagenLocatieInfo.set(laagTitel, lli) };
 }
 
