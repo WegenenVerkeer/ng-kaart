@@ -1,4 +1,5 @@
 import { Component, forwardRef, Input } from "@angular/core";
+import { fromNullable } from "fp-ts/lib/Option";
 
 import { LegendeItem } from "../../kaart/kaart-legende";
 
@@ -12,12 +13,14 @@ import { ClassicLegendeItemComponent } from "./classic-legende-item.component";
 })
 export class ClassicLegendeLijnItemComponent extends ClassicLegendeItemComponent {
   @Input() kleur: string;
+  @Input() achtergrondKleur?: string;
 
   maakLegendeItem(): LegendeItem {
     return {
       type: "Lijn",
       beschrijving: this.beschrijving,
-      kleur: this.kleur
+      kleur: this.kleur,
+      achtergrondKleur: fromNullable(this.achtergrondKleur)
     };
   }
 }

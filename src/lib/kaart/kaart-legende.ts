@@ -1,9 +1,11 @@
+import { Option } from "fp-ts/lib/Option";
 import { List } from "immutable";
 
 export interface LijnItem {
   readonly type: "Lijn";
   readonly beschrijving: string;
   readonly kleur: string;
+  readonly achtergrondKleur: Option<string>;
 }
 
 export interface BolletjeItem {
