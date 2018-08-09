@@ -3,20 +3,20 @@
   <mat-expansion-panel class="mat-elevation-z0">
     <mat-expansion-panel-header>
       <mat-panel-title class="naam">
-        Coordinaten
+        Coördinaten
       </mat-panel-title>
+      <span class="">X</span>
     </mat-expansion-panel-header>
 
     <div class="velden">
-      <div class="veldnamen">Lambert 72</div><div class="veldwaarden">{{ coordinaatInformatieLambert72() }}</div>
+      <div class="veldnamen">Lambert 72</div><div class="veldwaarden">{{ coordinaatInformatieLambert72 }}</div>
     </div>
     <div class="velden">
-      <div class="veldnamen">WGS 84</div><div class="veldwaarden">{{ coordinaatInformatieWgs84() }}</div>
+      <div class="veldnamen">WGS 84</div><div class="veldwaarden">{{ coordinaatInformatieWgs84 }}</div>
     </div>
-
   </mat-expansion-panel>
 
-  <mat-expansion-panel class="mat-elevation-z0" *ngFor="let weglocatie of getWegLocaties()">
+  <mat-expansion-panel class="mat-elevation-z0" *ngFor="let weglocatie of wegLocaties">
     <mat-expansion-panel-header>
       <mat-panel-title class="naam">
           {{ weglocatie.ident8 }} op {{ weglocatie.hm }} {{ signed(weglocatie.afstand) }}
@@ -26,29 +26,58 @@
     <div class="velden">
       <div class="veldnamen">Wegbeheerder</div><div class="veldwaarden">{{ weglocatie.wegbeheerder }}</div>
     </div>
-
   </mat-expansion-panel>
 
-  <mat-expansion-panel class="mat-elevation-z0" *ngIf="heeftAdres()">
+  <mat-expansion-panel class="mat-elevation-z0" *ngFor="let adres of adressen">
     <mat-expansion-panel-header>
       <mat-panel-title class="naam">
-        {{ getAdres('straat') }} {{ getAdres('huisnummer') }}, {{ getAdres('gemeente') }}
+        {{ adres.straat }} {{ adres.huisnummer }}, {{ adres.gemeente }}
       </mat-panel-title>
     </mat-expansion-panel-header>
 
     <div class="velden">
-      <div class="veldnamen">Straat</div><div class="veldwaarden">{{ getAdres('straat') }}</div>
+      <div class="veldnamen">Straat</div><div class="veldwaarden">{{ adres.straat }}</div>
     </div>
     <div class="velden">
-      <div class="veldnamen">Huisnummer</div><div class="veldwaarden">{{ getAdres('huisnummer') }}</div>
+      <div class="veldnamen">Huisnummer</div><div class="veldwaarden">{{ adres.huisnummer }}</div>
     </div>
     <div class="velden">
-      <div class="veldnamen">Postcode</div><div class="veldwaarden">{{ getAdres('postcode') }}</div>
+      <div class="veldnamen">Postcode</div><div class="veldwaarden">{{ adres.postcode }}</div>
     </div>
     <div class="velden">
-      <div class="veldnamen">Gemeente</div><div class="veldwaarden">{{ getAdres('gemeente') }}</div>
+      <div class="veldnamen">Gemeente</div><div class="veldwaarden">{{ adres.gemeente }}</div>
     </div>
-
   </mat-expansion-panel>
+  
+  <ng-container *ngFor="let info of textLaagLocationInfo"><!--zo niet nodig izjn als hideToggle eenvoudig aangezet kon worden-->
 
+    <mat-expansion-panel class="mat-elevation-z0" hideToggle *ngIf="info.busy || info.timedout">
+      <mat-expansion-panel-header *ngIf="info.busy">
+        <mat-panel-title class="naam custom_icon">
+          {{ info.titel }}
+          <mat-spinner diameter="20"></mat-spinner>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <span *ngIf="info.busy">De data wordt opgevraagd</span>
+      <mat-expansion-panel-header *ngIf="info.timedout">
+        <mat-panel-title class="naam custom_icon">
+          {{ info.titel }}
+          <mat-icon aria-label="Het antwoord bleef te lang uit">timer_off</mat-icon>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <span *ngIf="info.timedout">Het antwoord van de WMS-server werd niet op tijd ontvangen</span>
+    </mat-expansion-panel>
+
+    <mat-expansion-panel class="mat-elevation-z0" *ngIf="info.text">
+      <mat-expansion-panel-header>
+          <mat-panel-title class="naam">
+            {{ info.titel }}
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+      
+      <div class="verbatim">
+        {{ info.text }}
+      </div>
+    </mat-expansion-panel>
+  </ng-container>
 </mat-accordion>

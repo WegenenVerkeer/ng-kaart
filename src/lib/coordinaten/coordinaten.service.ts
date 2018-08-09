@@ -9,6 +9,9 @@ export function lambert72ToWgs84(coordinate: [number, number]): [number, number]
   return ol.proj.transform(coordinate, "EPSG:31370", "EPSG:4326");
 }
 
+export const formatCoordinate: (_: number) => (_: [number, number]) => string = decimals => coordinate =>
+  `${coordinate[0].toFixed(decimals)}, ${coordinate[1].toFixed(decimals)}`;
+
 ol.proj.setProj4(proj4);
 proj4.defs(
   "EPSG:31370",

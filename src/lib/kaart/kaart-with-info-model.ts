@@ -1,36 +1,62 @@
+import { Function1, Lazy } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
-import { List } from "immutable";
+import { List, Map } from "immutable";
 import * as ol from "openlayers";
 
+import { LaagLocationInfo } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { VectorLaag } from "./kaart-elementen";
 import { TypedRecord } from "./kaart-protocol";
 
-export interface InfoBoodschap {
+export type InfoBoodschap = InfoBoodschapAlert | InfoBoodschapIdentify | InfoBoodschapKaartBevragenProgress;
+
+export interface InfoBoodschapBase {
   readonly id: string;
   readonly titel: string;
-  readonly type: string;
   readonly bron: Option<string>;
   readonly sluit: "NIET" | "VANZELF" | "DOOR_APPLICATIE";
   readonly verbergMsgGen: () => Option<TypedRecord>;
 }
 
-export interface InfoBoodschapAlert extends InfoBoodschap {
+export interface InfoBoodschapAlert extends InfoBoodschapBase {
   readonly type: "InfoBoodschapAlert";
   readonly message: string;
 }
 
-export interface InfoBoodschapIdentify extends InfoBoodschap {
+export interface InfoBoodschapIdentify extends InfoBoodschapBase {
   readonly type: "InfoBoodschapIdentify";
   readonly feature: ol.Feature;
-  readonly laag: VectorLaag;
+  readonly laag: Option<VectorLaag>;
 }
 
-export interface InfoBoodschapKaartBevragen extends InfoBoodschap {
-  readonly type: "infoBoodschapKaartBevragen";
+export type Progress<A> = Requested | TimedOut | Received<A>;
+
+export type Requested = "Requested";
+export type TimedOut = "TimedOut";
+export interface Received<A> {
+  readonly value: A;
+}
+
+export const withProgress = <A>(progress: Progress<A>) => <B>(ifRequested: Lazy<B>, ifTimedOut: Lazy<B>, ifReceived: Function1<A, B>) => {
+  if (progress === "Requested") {
+    return ifRequested();
+  } else if (progress === "TimedOut") {
+    return ifTimedOut();
+  } else {
+    return ifReceived(progress.value);
+  }
+};
+
+export const Requested: Requested = "Requested";
+export const TimedOut: TimedOut = "TimedOut";
+export const Received: <A>(_: A) => Received<A> = a => ({ value: a });
+
+export interface InfoBoodschapKaartBevragenProgress extends InfoBoodschapBase {
+  readonly type: "InfoBoodschapKaartBevragen";
   readonly coordinaat: ol.Coordinate;
-  readonly adres: Option<Adres>;
-  readonly weglocaties: List<WegLocatie>;
+  readonly adres: Option<Adres>; // Zou ook Progress<Adres> kunnen zijn
+  readonly weglocaties: List<WegLocatie>; // Zou ook Progress<List<WegLocatie>> kunnen zijn
+  readonly laagLocatieInfoOpTitel: Map<string, Progress<LaagLocationInfo>>;
 }
 
 export interface WegLocatie {

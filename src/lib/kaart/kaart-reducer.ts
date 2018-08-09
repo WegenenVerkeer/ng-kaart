@@ -9,10 +9,12 @@ import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
 
 import { forEach } from "../util/option";
+import { updateBehaviorSubject } from "../util/subject-update";
 import { allOf, fromBoolean, fromOption, fromPredicate, success, validationChain as chain } from "../util/validation";
 
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
+import { VoegLaagLocatieInformatieServiceToe } from "./kaart-protocol-commands";
 import { KaartWithInfo } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
 import { kaartLogger } from "./log";
@@ -914,12 +916,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           .filter(laag => laag.bron.type === ke.VectorType)
           .map(laag => laag.bron as ke.VectorLaag)
       };
-      model.infoBoodschappenSubj.next(model.infoBoodschappenSubj.getValue().set(boodschap.id, boodschap));
+      updateBehaviorSubject(model.infoBoodschappenSubj, bsch => bsch.set(boodschap.id, boodschap));
       return ModelWithResult(model);
     }
 
     function deleteInfoBoodschap(cmnd: prt.VerbergInfoBoodschapCmd): ModelWithResult<Msg> {
-      model.infoBoodschappenSubj.next(model.infoBoodschappenSubj.getValue().delete(cmnd.id));
+      updateBehaviorSubject(model.infoBoodschappenSubj, bsch => bsch.delete(cmnd.id));
       return ModelWithResult(model);
     }
 
@@ -940,8 +942,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
-    function sluitInfoBoodschap(cmnd: prt.SluitInfoBoodschapCmd<Msg>): ModelWithResult<Msg> {
-      const sluitBox = () => model.infoBoodschappenSubj.next(model.infoBoodschappenSubj.getValue().delete(cmnd.id));
+    function sluitInfoBoodschap(cmnd: prt.SluitInfoBoodschapCmd): ModelWithResult<Msg> {
+      const sluitBox = () => updateBehaviorSubject(model.infoBoodschappenSubj, bsch => bsch.delete(cmnd.id));
       const maybeMsg = cmnd.msgGen() as Option<Msg>;
       return maybeMsg.foldL(
         () => {
@@ -1041,8 +1043,13 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
-    function zetActieveModus(cmdn: prt.ZetActieveModusCmd): ModelWithResult<Msg> {
-      modelChanger.actieveModusSubj.next(cmdn.modus);
+    function zetActieveModus(cmnd: prt.ZetActieveModusCmd): ModelWithResult<Msg> {
+      modelChanger.actieveModusSubj.next(cmnd.modus);
+      return ModelWithResult(model);
+    }
+
+    function voegLaagLocatieInformatieServiceToe(cmnd: prt.VoegLaagLocatieInformatieServiceToe): ModelWithResult<Msg> {
+      updateBehaviorSubject(modelChanger.laagLocationInfoServicesOpTitelSubj, svcs => svcs.set(cmnd.titel, cmnd.service));
       return ModelWithResult(model);
     }
 
@@ -1322,6 +1329,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return zetUiElementOpties(cmd);
       case "ZetActieveModus":
         return zetActieveModus(cmd);
+      case "VoegLaagLocatieInformatieServiceToe":
+        return voegLaagLocatieInformatieServiceToe(cmd);
     }
   };
 }

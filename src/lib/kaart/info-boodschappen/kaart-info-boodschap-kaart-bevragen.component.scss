@@ -5,6 +5,11 @@ mat-expansion-panel {
   margin: 0;
 }
 
+.custom_icon {
+  justify-content: space-between;
+  align-items: center;
+}
+
 .accordion {
   width: 100%;
 }
@@ -37,4 +42,9 @@ mat-expansion-panel {
   font-size: 14px;
   font-weight: 300;
   color: rgba(0, 0, 0, 0.87);
+}
+
+.verbatim {
+  word-break: break-all;
+  hyphens: auto;
 }

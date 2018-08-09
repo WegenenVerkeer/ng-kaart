@@ -1,5 +1,5 @@
 import { animate, state, style, transition, trigger } from "@angular/animations";
-import { Component, Input, NgZone, OnInit } from "@angular/core";
+import { ChangeDetectionStrategy, Component, Input, NgZone, OnInit } from "@angular/core";
 import { fromNullable } from "fp-ts/lib/Option";
 import scrollIntoView from "scroll-into-view-if-needed";
 
@@ -18,7 +18,8 @@ import { KaartComponent } from "../kaart.component";
       transition(":enter", [style({ opacity: 0 }), animate(200)]),
       transition(":leave", animate(0, style({ opacity: 0 })))
     ])
-  ]
+  ],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class KaartInfoBoodschapComponent extends KaartChildComponentBase implements OnInit {
   @Input() boodschap: InfoBoodschap;
