@@ -1,6 +1,7 @@
 import { Component, Input, NgZone, OnInit } from "@angular/core";
 
 import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { InfoBoodschapAlert } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
 
 @Component({
@@ -9,7 +10,12 @@ import { KaartComponent } from "../kaart.component";
   styleUrls: ["./kaart-info-boodschap-alert.component.scss"]
 })
 export class KaartInfoBoodschapAlertComponent extends KaartChildComponentBase {
-  @Input() message: string;
+  message: string;
+
+  @Input()
+  set boodschap(bsch: InfoBoodschapAlert) {
+    this.message = bsch.message;
+  }
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);

@@ -5,7 +5,7 @@ import scrollIntoView from "scroll-into-view-if-needed";
 
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { SluitInfoBoodschapCmd } from "../kaart-protocol-commands";
-import { InfoBoodschap } from "../kaart-with-info-model";
+import { foldInfoBoodschap, InfoBoodschap } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
 
 @Component({
@@ -22,7 +22,25 @@ import { KaartComponent } from "../kaart.component";
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class KaartInfoBoodschapComponent extends KaartChildComponentBase implements OnInit {
-  @Input() boodschap: InfoBoodschap;
+  private infoBoodschap: InfoBoodschap;
+  titel: string;
+  kind: string;
+  icon: string;
+
+  @Input()
+  set boodschap(bsch: InfoBoodschap) {
+    this.infoBoodschap = bsch;
+    this.titel = bsch.titel;
+    this.kind = bsch.type;
+    this.icon = foldInfoBoodschap(this.boodschap)(
+      alert => alert.iconName.getOrElse("priority_high"), //
+      () => "description",
+      () => "location_on"
+    );
+  }
+  get boodschap(): InfoBoodschap {
+    return this.infoBoodschap;
+  }
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
