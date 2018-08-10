@@ -1,18 +1,14 @@
-import { animate, style, transition, trigger } from "@angular/animations";
 import { HttpClient } from "@angular/common/http";
 import { Component, Input, NgZone } from "@angular/core";
-import { FormControl, Validators } from "@angular/forms";
-import { fromNullable, Option, some } from "fp-ts/lib/Option";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 import { List, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 
 import { orElse } from "../../util/option";
-import { LocatorServiceResult } from "../../zoeker/crab/zoeker-crab.service";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { VectorLaag, VeldInfo } from "../kaart-elementen";
-import * as prt from "../kaart-protocol";
+import { InfoBoodschapIdentify } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
-import { kaartLogger } from "../log";
 
 import { KaartInfoBoodschapComponent } from "./kaart-info-boodschap.component";
 
@@ -48,8 +44,14 @@ const nestedProperty = (propertyKey: string, object: Object) =>
   styleUrls: ["./kaart-info-boodschap-identify.component.scss"]
 })
 export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase {
-  @Input() feature: ol.Feature;
-  @Input() laag: Option<VectorLaag>;
+  feature: ol.Feature;
+  laag: Option<VectorLaag>;
+
+  @Input()
+  set boodschap(bsch: InfoBoodschapIdentify) {
+    this.feature = bsch.feature;
+    this.laag = bsch.laag;
+  }
 
   private _alleVeldenZichtbaar = false;
 

@@ -3,7 +3,7 @@ import { none, some } from "fp-ts/lib/Option";
 import { Set } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { distinctUntilChanged, filter, map, startWith, takeUntil } from "rxjs/operators";
+import { filter, map, startWith, takeUntil } from "rxjs/operators";
 
 import { dimensieBeschrijving } from "../../util/geometries";
 import { observeOnAngular } from "../../util/observe-on-angular";
@@ -161,6 +161,7 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
               sluit: "VANZELF",
               bron: some("meten"),
               message: this.helpText(msg.geometry),
+              iconName: some("straighten"),
               verbergMsgGen: infoSluitCallback
             })
           );

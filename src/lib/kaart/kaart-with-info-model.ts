@@ -21,6 +21,7 @@ export interface InfoBoodschapBase {
 export interface InfoBoodschapAlert extends InfoBoodschapBase {
   readonly type: "InfoBoodschapAlert";
   readonly message: string;
+  readonly iconName: Option<string>;
 }
 
 export interface InfoBoodschapIdentify extends InfoBoodschapBase {
@@ -58,6 +59,21 @@ export interface InfoBoodschapKaartBevragenProgress extends InfoBoodschapBase {
   readonly weglocaties: List<WegLocatie>; // Zou ook Progress<List<WegLocatie>> kunnen zijn
   readonly laagLocatieInfoOpTitel: Map<string, Progress<LaagLocationInfo>>;
 }
+
+export const foldInfoBoodschap = (boodschap: InfoBoodschap) => <A>(
+  ifAlert: Function1<InfoBoodschapAlert, A>,
+  ifIdentify: Function1<InfoBoodschapIdentify, A>,
+  ifKaartBevragen: Function1<InfoBoodschapKaartBevragenProgress, A>
+) => {
+  switch (boodschap.type) {
+    case "InfoBoodschapAlert":
+      return ifAlert(boodschap);
+    case "InfoBoodschapIdentify":
+      return ifIdentify(boodschap);
+    case "InfoBoodschapKaartBevragen":
+      return ifKaartBevragen(boodschap);
+  }
+};
 
 export interface WegLocatie {
   readonly ident8: string;

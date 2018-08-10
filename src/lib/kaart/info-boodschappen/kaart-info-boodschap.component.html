@@ -1,11 +1,15 @@
 <mat-card>
   <mat-card-title>
-    {{ boodschap.titel }}
+    <mat-icon class="titel-icon">{{ icon }}</mat-icon><span class="titel-text">{{ titel }}</span>
     <button mat-button *ngIf="isSluitbaar()" class="mat-titel-button" (click)="sluit()">
       <mat-icon>close</mat-icon>
     </button>
   </mat-card-title>
   <mat-card-content>
-    <ng-content></ng-content>
+    <ng-container [ngSwitch]="kind">
+        <awv-kaart-info-boodschap-identify *ngSwitchCase="'InfoBoodschapIdentify'" [boodschap]="boodschap"></awv-kaart-info-boodschap-identify>
+        <awv-kaart-info-boodschap-alert *ngSwitchCase="'InfoBoodschapAlert'" [boodschap]="boodschap"></awv-kaart-info-boodschap-alert>
+        <awv-kaart-info-boodschap-kaart-bevragen *ngSwitchCase="'InfoBoodschapKaartBevragen'" [boodschap]="boodschap"></awv-kaart-info-boodschap-kaart-bevragen>
+      </ng-container>
   </mat-card-content>
 </mat-card>
