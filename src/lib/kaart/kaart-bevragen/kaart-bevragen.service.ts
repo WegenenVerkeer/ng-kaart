@@ -91,7 +91,7 @@ function toWegLocatie(lsWegLocatie: LsWegLocatie): WegLocatie {
   return {
     ident8: lsWegLocatie.ident8,
     hm: lsWegLocatie.hm,
-    afstand: lsWegLocatie.distance,
+    afstand: lsWegLocatie.distancetopole,
     wegbeheerder: lsWegLocatie.district
   };
 }
