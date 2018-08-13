@@ -93,8 +93,11 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
     const zoom$ = parent.modelChanges.viewinstellingen$.pipe(map(i => i.zoom), distinctUntilChanged());
     this.lagenHoog$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Hoog");
     this.lagenLaag$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Laag");
+    const achtergrondLagen$ = this.modelChanges.lagenOpGroep.get("Achtergrond");
     this.lagenMetLegende$ = this.lagenHoog$.pipe(
-      combineLatest(this.lagenLaag$, (lagenHoog, lagenLaag) => lagenHoog.concat(lagenLaag)),
+      combineLatest(this.lagenLaag$, achtergrondLagen$, (lagenHoog, lagenLaag, achtergrondLagen) =>
+        lagenHoog.concat(lagenLaag, achtergrondLagen)
+      ),
       combineLatest(zoom$, (lagen, zoom) => lagen.filter(laag => isZichtbaar(laag!, zoom) && laag!.magGetoondWorden)),
       map(lagen => lagen.filter(laag => laag!.legende.isSome()).toList()),
       shareReplay(1)
@@ -273,7 +276,14 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
         case "Bolletje":
           return `<svg class="legende-svg"><circle cx="12" cy="12" r="4" fill="${item.kleur}" class="legende-svg-item"/></svg>`;
         case "Lijn":
-          return `<svg class="legende-svg"><polygon points="0,8 24,8 24,16 0,16" fill="${item.kleur}" class="legende-svg-item"/></svg>`;
+          return item.achtergrondKleur.foldL(
+            () => `<svg class="legende-svg"><polygon points="0,8 24,8 24,16 0,16" fill="${item.kleur}" class="legende-svg-item"/></svg>`,
+            achtergrondKleur =>
+              `<svg class="legende-svg">
+                <polygon points="0,8 24,8 24,16 0,16" fill="${achtergrondKleur}"/>
+                <polygon points="0,10 24,10 24,14 0,14" fill="${item.kleur}"/>
+               </svg>`
+          );
         case "Polygoon":
           return `<svg class="legende-svg"><polygon points="0,24 5,0 20,4 24,24 10,20" fill="${
             item.kleur

@@ -1,9 +1,13 @@
+import { Option } from "fp-ts/lib/Option";
 import { List } from "immutable";
+
+export type LegendeItem = LijnItem | BolletjeItem | PolygoonItem | ImageItem;
 
 export interface LijnItem {
   readonly type: "Lijn";
   readonly beschrijving: string;
   readonly kleur: string;
+  readonly achtergrondKleur: Option<string>;
 }
 
 export interface BolletjeItem {
@@ -23,8 +27,6 @@ export interface ImageItem {
   readonly beschrijving: string;
   readonly image: string;
 }
-
-export type LegendeItem = LijnItem | BolletjeItem | PolygoonItem | ImageItem;
 
 export interface Legende {
   readonly items: List<LegendeItem>;

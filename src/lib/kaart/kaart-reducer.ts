@@ -14,7 +14,6 @@ import { allOf, fromBoolean, fromOption, fromPredicate, success, validationChain
 
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
-import { VoegLaagLocatieInformatieServiceToe } from "./kaart-protocol-commands";
 import { KaartWithInfo } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
 import { kaartLogger } from "./log";
@@ -673,6 +672,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
           model.achtergrondlaagtitelSubj.next(teSelecterenLaag.titel);
           modelChanger.uiElementSelectieSubj.next({ naam: "Achtergrondkeuze", aan: true });
+          zendLagenInGroep(modelMetAangepasteLagen, "Achtergrond");
           return ModelAndEmptyResult({
             ...modelMetAangepasteLagen,
             showBackgroundSelector: true
@@ -704,13 +704,14 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             model.toegevoegdeLagenOpTitel.find(laag => laag!.laaggroep === "Achtergrond" && laag!.magGetoondWorden)
           );
           const modelMetNieuweZichtbaarheid = pipe(pasLaagZichtbaarheidAan(true), pasLaagInModelAan(model))(nieuweAchtergrond);
-          return maybeVorigeAchtergrond
+          const modelMetNieuweEnOudeZichtbaarheid = maybeVorigeAchtergrond
             .filter(vorige => vorige.titel !== nieuweAchtergrond.titel) // enkel onzichtbaar maken als verschillend
-            .foldL(
-              () => ModelAndEmptyResult(modelMetNieuweZichtbaarheid),
-              vorigeAchtergrond =>
-                pipe(pasLaagZichtbaarheidAan(false), pasLaagInModelAan(modelMetNieuweZichtbaarheid), ModelAndEmptyResult)(vorigeAchtergrond)
+            .fold(
+              modelMetNieuweZichtbaarheid, //
+              vorigeAchtergrond => pipe(pasLaagZichtbaarheidAan(false), pasLaagInModelAan(modelMetNieuweZichtbaarheid))(vorigeAchtergrond)
             );
+          zendLagenInGroep(modelMetNieuweEnOudeZichtbaarheid, "Achtergrond");
+          return ModelAndEmptyResult(modelMetNieuweEnOudeZichtbaarheid);
         })
       );
     }
