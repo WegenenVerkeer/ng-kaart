@@ -47,4 +47,7 @@ mat-expansion-panel {
 .verbatim {
   word-break: break-all;
   hyphens: auto;
+  pre {
+    white-space: pre-line;
+  }
 }
