@@ -843,12 +843,21 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             return some({
               condition: ol.events.condition.click,
               features: model.geselecteerdeFeatures,
-              multi: true, // dit wil zeggen dat in alle lagen gekeken wordt of er een feature op de clicklocatie zit
+              multi: false,
               style: createStyleFn(getSelectionStyleSelector),
               hitTolerance: KaartWithInfo.clickHitTolerance,
               layers: layer => layer.get("selecteerbaar")
             });
-          case "multiple":
+          case "multipleShift":
+            return some({
+              condition: ol.events.condition.click,
+              features: model.geselecteerdeFeatures,
+              multi: true,
+              style: createStyleFn(getSelectionStyleSelector),
+              hitTolerance: KaartWithInfo.clickHitTolerance,
+              layers: layer => layer.get("selecteerbaar")
+            });
+          case "multipleKlik":
             return some({
               condition: ol.events.condition.click,
               toggleCondition: ol.events.condition.click,
