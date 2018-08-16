@@ -1,0 +1,14 @@
+<awv-kaart-classic id="qa-protractor">
+  <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+  <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'">
+    <awv-legende-lijn-item [beschrijving]="'weg 1'" [kleur]="'blue'" [achtergrondKleur]="'red'"></awv-legende-lijn-item>
+    <awv-legende-lijn-item [beschrijving]="'weg 2'" [kleur]="'green'" [achtergrondKleur]="'yellow'"></awv-legende-lijn-item>
+  </awv-kaart-tilecache-laag>
+  <awv-kaart-wmts-laag [titel]="'GRB'" [laagNaam]="'grb_bsk'" [urls]="['https://tile.informatievlaanderen.be/ws/raadpleegdiensten/wmts']"
+    [extent]="[ 9928, 66928, 272072, 329072 ]" [origin]="[ 9928, 329072 ]" [matrixSet]="'BPL72VL'" [matrixIds]="[ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15' ]"></awv-kaart-wmts-laag>
+  <awv-kaart-ortho-laag [titel]="'Orthofoto\'s'" [laagNaam]="'ortho'"></awv-kaart-ortho-laag>
+  <awv-kaart-blanco-laag [titel]="'Leeg'"></awv-kaart-blanco-laag>
+  <awv-kaart-knop-achtergrondlaag-kiezer></awv-kaart-knop-achtergrondlaag-kiezer>
+  <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+  <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
+</awv-kaart-classic>

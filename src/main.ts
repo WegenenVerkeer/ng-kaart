@@ -1,7 +1,7 @@
-import "./polyfills.ts";
-
 import { enableProdMode } from "@angular/core";
 import { platformBrowserDynamic } from "@angular/platform-browser-dynamic";
+
+import "./polyfills.ts";
 import { AppModule } from "./testApp/app.module";
 import { environment } from "./testApp/environments/environment";
 

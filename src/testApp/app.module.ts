@@ -3,7 +3,7 @@ import { FormsModule } from "@angular/forms";
 import { HttpModule } from "@angular/http";
 import { BrowserModule } from "@angular/platform-browser";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
-import { Map } from "immutable";
+import { RouterModule } from "@angular/router";
 import { ClickOutsideModule } from "ng4-click-outside";
 
 import { AbbameldaModule } from "../lib/abbamelda";
@@ -12,21 +12,33 @@ import { KaartModule } from "../lib/kaart";
 import { LagenkiezerModule } from "../lib/lagenkiezer";
 import { ZoekerModule } from "../lib/zoeker";
 
-import { AppComponent } from "./app.component";
+import { AppComponent, routes } from "./app.component";
 import { AvKaartInnerComponent } from "./av-kaart-inner.component";
 import { AvKaartComponent } from "./av-kaart.component";
+import { FeatureDemoComponent } from "./feature-demo.component";
 import { PatKaartComponent } from "./pat-kaart.component";
 import { PerceelPopupComponent } from "./perceel-popup/perceel-popup.component";
+import { ProtractorComponent } from "./protractor.component";
 import { TestSectieComponent } from "./test-sectie.component";
 
 @NgModule({
-  declarations: [AppComponent, AvKaartComponent, AvKaartInnerComponent, PatKaartComponent, PerceelPopupComponent, TestSectieComponent],
+  declarations: [
+    AppComponent,
+    AvKaartComponent,
+    AvKaartInnerComponent,
+    FeatureDemoComponent,
+    PatKaartComponent,
+    PerceelPopupComponent,
+    ProtractorComponent,
+    TestSectieComponent
+  ],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
     KaartModule.withDefaults(),
     ClassicModule,
     FormsModule,
+    RouterModule.forRoot(routes),
     ZoekerModule.forRoot({
       bronVolgorde: '[[3, "^wdb"], [2, "^crab"], [1, "^google"]]',
       googleWdb: {

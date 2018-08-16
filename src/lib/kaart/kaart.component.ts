@@ -1,22 +1,11 @@
-import {
-  AfterViewChecked,
-  AfterViewInit,
-  Component,
-  ElementRef,
-  Inject,
-  Input,
-  NgZone,
-  OnDestroy,
-  OnInit,
-  ViewChild,
-  ViewEncapsulation
-} from "@angular/core";
+import { Component, ElementRef, Inject, Input, NgZone, ViewChild, ViewEncapsulation } from "@angular/core";
 import { Set } from "immutable";
 import * as ol from "openlayers";
-import { Observable, ReplaySubject } from "rxjs";
-import { delay, filter, last, map, merge, scan, shareReplay, startWith, switchMap, takeUntil, tap } from "rxjs/operators";
+import * as rx from "rxjs";
+import { debounceTime, delay, filter, last, map, merge, scan, shareReplay, startWith, switchMap, takeUntil, tap } from "rxjs/operators";
 
 import { asap } from "../util/asap";
+import { observableFromDomMutations } from "../util/mutation-observable";
 import { observeOnAngular } from "../util/observe-on-angular";
 import { observeOutsideAngular } from "../util/observer-outside-angular";
 import { flatten, ofType } from "../util/operators";
@@ -33,7 +22,7 @@ import { kaartLogger } from "./log";
 import { ModelChanger, ModelChanges, modelChanges, UiElementSelectie } from "./model-changes";
 
 // Om enkel met @Input properties te moeten werken. Op deze manier kan een stream van KaartMsg naar de caller gestuurd worden
-export type KaartMsgObservableConsumer = (msg$: Observable<prt.KaartMsg>) => void;
+export type KaartMsgObservableConsumer = (msg$: rx.Observable<prt.KaartMsg>) => void;
 export const vacuousKaartMsgObservableConsumer: KaartMsgObservableConsumer = () => ({});
 
 @Component({
@@ -42,15 +31,14 @@ export const vacuousKaartMsgObservableConsumer: KaartMsgObservableConsumer = () 
   styleUrls: ["./kaart.component.scss"],
   encapsulation: ViewEncapsulation.Emulated // Omwille hiervan kunnen we geen globale CSS gebruiken, maar met Native werken animaties niet
 })
-export class KaartComponent extends KaartComponentBase implements OnInit, OnDestroy, AfterViewInit, AfterViewChecked {
-  kaartLinksZichtbaar: boolean;
-  kaartLinksToggleZichtbaar: boolean;
-  kaartLinksScrollbarZichtbaar: boolean;
-  kaartLinksRefreshWeergaveBezig: boolean;
+export class KaartComponent extends KaartComponentBase {
+  kaartLinksZichtbaar = true;
+  kaartLinksToggleZichtbaar = false;
+  kaartLinksScrollbarZichtbaar = false;
   private readonly modelChanger: ModelChanger = ModelChanger();
   private innerModelChanges: ModelChanges;
-  private innerAanwezigeElementen$: Observable<Set<string>>;
-  readonly kaartModel$: Observable<KaartWithInfo> = Observable.empty();
+  private innerAanwezigeElementen$: rx.Observable<Set<string>>;
+  readonly kaartModel$: rx.Observable<KaartWithInfo> = rx.Observable.empty();
 
   @ViewChild("map") mapElement: ElementRef;
   @ViewChild("kaartLinks") kaartLinksElement: ElementRef;
@@ -63,7 +51,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
    * een component van de gebruikende applicatie (in geval van programmatorisch gebruik) zet hier een Observable
    * waarmee events naar de component gestuurd kunnen worden.
    */
-  @Input() kaartCmd$: Observable<prt.Command<prt.KaartMsg>> = Observable.empty();
+  @Input() kaartCmd$: rx.Observable<prt.Command<prt.KaartMsg>> = rx.Observable.empty();
   /**
    * Hier wordt een callback verwacht die een Msg observable zal krijgen. Die observable kan dan gebruikt worden
    * op te luisteren op feedback van commands of uitvoer van subscriptions.
@@ -77,7 +65,7 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
    */
   readonly internalCmdDispatcher: ReplaySubjectKaartCmdDispatcher<KaartInternalMsg> = new ReplaySubjectKaartCmdDispatcher();
 
-  private readonly msgSubj = new ReplaySubject<prt.KaartMsg>(1000, 500);
+  private readonly msgSubj = new rx.ReplaySubject<prt.KaartMsg>(1000, 500);
 
   @Input() minZoom = 2; // TODO naar config
   @Input() maxZoom = 15; // TODO naar config
@@ -88,13 +76,10 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
 
   // Dit dient om messages naar toe te sturen
 
-  internalMessage$: Observable<KaartInternalSubMsg> = Observable.empty();
+  internalMessage$: rx.Observable<KaartInternalSubMsg> = rx.Observable.empty();
 
   constructor(@Inject(KAART_CFG) readonly config: KaartConfig, zone: NgZone) {
     super(zone);
-    this.kaartLinksZichtbaar = true;
-    this.kaartLinksToggleZichtbaar = false;
-    this.kaartLinksScrollbarZichtbaar = false;
     this.internalMessage$ = this.msgSubj.pipe(
       filter(m => m.type === "KaartInternal"), //
       map(m => (m as KaartInternalMsg).payload),
@@ -134,13 +119,32 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
       cleanup(model);
     });
 
-    // Linker paneel zichtbaar maken als de infoboodschappen wijzigen.
+    // Linker paneel zichtbaar maken wanneer er minstens 1 infoboodschap is.
     this.internalMessage$.pipe(ofType<InfoBoodschappenMsg>("InfoBoodschappen"), observeOnAngular(this.zone)).subscribe(msg => {
-      this.kaartLinksZichtbaar = true;
+      if (!msg.infoBoodschappen.isEmpty()) {
+        this.kaartLinksZichtbaar = true;
+      }
     });
+
+    // Observeer veranderingen aan de inhoud van het linker paneel op het niveau van het DOM
+    const mutConfig: MutationObserverInit = {
+      subtree: true,
+      childList: true,
+      attributes: true,
+      attributeFilter: ["clientHeight", "clientWidth", "scrollHeight"]
+    };
+    this.bindToLifeCycle(
+      this.viewReady$.pipe(
+        switchMap(() =>
+          observableFromDomMutations(mutConfig, this.kaartLinksElement.nativeElement, this.kaartFixedLinksBovenElement.nativeElement)
+        ),
+        debounceTime(150) // het is voldoende om weten dat er onlangs iets aangepast is
+      )
+    ).subscribe(() => this.pasKaartLinksWeergaveAan());
+    this.viewReady$.pipe(delay(10)).subscribe(() => this.bepaalKaartLinksInitieelZichtbaar()); // waarom is delay nodig?
   }
 
-  private createMapModelForCommands(initieelModel: KaartWithInfo): Observable<KaartWithInfo> {
+  private createMapModelForCommands(initieelModel: KaartWithInfo): rx.Observable<KaartWithInfo> {
     kaartLogger.info(`Kaart '${this.naam}' aangemaakt`);
 
     const messageConsumer = (msg: prt.KaartMsg) => {
@@ -189,48 +193,31 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     return this.innerModelChanges;
   }
 
-  get aanwezigeElementen$(): Observable<Set<string>> {
+  get aanwezigeElementen$(): rx.Observable<Set<string>> {
     return this.innerAanwezigeElementen$;
   }
 
-  ngAfterViewInit() {
-    this.kaartLinksRefreshWeergaveBezig = true;
-    setTimeout(() => {
-      this.bepaalKaartLinksMarginTopEnMaxHeight();
-      this.bepaalKaartLinksToggleZichtbaar();
-      this.kaartLinksScrollbarZichtbaar = this.isKaartLinksScrollbarNodig();
-      this.bepaalKaartLinksInitieelZichtbaar();
-      this.kaartLinksRefreshWeergaveBezig = false;
-    });
-  }
-
   bepaalKaartLinksMarginTopEnMaxHeight() {
-    setTimeout(() => {
-      // MarginTop correctie als de scrollbar verschijnt/verdwijnt
-      this.kaartLinksElement.nativeElement.style.marginTop = this.kaartFixedLinksBovenElement.nativeElement.clientHeight + "px";
-      // Als er een fixed header is bovenaan links moet de max-height van kaart-links daar ook rekening mee houden.
-      this.kaartLinksElement.nativeElement.style.maxHeight =
-        "calc(100% - " + this.kaartFixedLinksBovenElement.nativeElement.clientHeight + "px - 8px)"; // -8px is van padding-top.
-    }, 10);
+    // MarginTop correctie als de scrollbar verschijnt/verdwijnt
+    this.kaartLinksElement.nativeElement.style.marginTop = this.kaartFixedLinksBovenElement.nativeElement.clientHeight + "px";
+    // Als er een fixed header is bovenaan links moet de max-height van kaart-links daar ook rekening mee houden.
+    this.kaartLinksElement.nativeElement.style.maxHeight =
+      "calc(100% - " + this.kaartFixedLinksBovenElement.nativeElement.clientHeight + "px - 8px)"; // -8px is van padding-top.
   }
 
   bepaalKaartLinksToggleZichtbaar() {
     // Toggle pas tonen vanaf 40px hoogte.
-    setTimeout(() => {
-      const nuZichtbaar = this.kaartLinksToggleZichtbaar;
-      this.kaartLinksToggleZichtbaar =
-        this.kaartFixedLinksBovenElement.nativeElement.clientHeight + this.kaartLinksElement.nativeElement.clientHeight >= 40;
-      if (nuZichtbaar !== this.kaartLinksToggleZichtbaar) {
-        this.bepaalKaartLinksBreedte(); // Als de toggle eerder niet zichtbaar was kan de breedte fout staan
-      }
-    }, 10);
+    const nuZichtbaar = this.kaartLinksToggleZichtbaar;
+    this.kaartLinksToggleZichtbaar =
+      this.kaartFixedLinksBovenElement.nativeElement.clientHeight + this.kaartLinksElement.nativeElement.clientHeight >= 40;
+    if (nuZichtbaar !== this.kaartLinksToggleZichtbaar) {
+      this.bepaalKaartLinksBreedte(); // Als de toggle eerder niet zichtbaar was kan de breedte fout staan
+    }
   }
 
   bepaalKaartLinksInitieelZichtbaar() {
-    setTimeout(() => {
-      this.kaartLinksZichtbaar = this.mapElement.nativeElement.clientWidth > 620;
-      this.bepaalKaartLinksBreedte();
-    }, 750);
+    this.kaartLinksZichtbaar = this.mapElement.nativeElement.clientWidth > 620;
+    this.bepaalKaartLinksBreedte();
   }
 
   bepaalKaartLinksBreedte() {
@@ -239,11 +226,12 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     }
     if (this.kaartLinksBreedte) {
       setTimeout(() => {
-        this.kaartFixedLinksBovenElement.nativeElement.style.width = this.kaartLinksBreedte.toString() + "px";
-        this.kaartLinksElement.nativeElement.style.width = this.kaartLinksBreedte.toString() + "px";
+        const kaartLinksWidth = this.kaartLinksBreedte + "px";
+        this.kaartFixedLinksBovenElement.nativeElement.style.width = kaartLinksWidth;
+        this.kaartLinksElement.nativeElement.style.width = kaartLinksWidth;
         if (this.kaartLinksToggleZichtbaar) {
           if (this.kaartLinksZichtbaar) {
-            this.kaartLinksZichtbaarToggleKnopElement.nativeElement.style.left = this.kaartLinksBreedte.toString() + "px";
+            this.kaartLinksZichtbaarToggleKnopElement.nativeElement.style.left = kaartLinksWidth;
           } else {
             this.kaartLinksZichtbaarToggleKnopElement.nativeElement.style.left = "0";
           }
@@ -252,21 +240,10 @@ export class KaartComponent extends KaartComponentBase implements OnInit, OnDest
     }
   }
 
-  ngAfterViewChecked() {
-    if (!this.kaartLinksRefreshWeergaveBezig) {
-      this.refreshKaartLinksWeergave();
-    }
-  }
-
-  refreshKaartLinksWeergave() {
-    // Om te vermijden dat er teveel refreshes gedaan worden en te wachten tot de animaties klaar zijn zit deze code in een timeout
-    this.kaartLinksRefreshWeergaveBezig = true;
-    setTimeout(() => {
-      this.kaartLinksScrollbarZichtbaar = this.isKaartLinksScrollbarNodig();
-      this.bepaalKaartLinksMarginTopEnMaxHeight();
-      this.bepaalKaartLinksToggleZichtbaar();
-      this.kaartLinksRefreshWeergaveBezig = false;
-    }, 750);
+  pasKaartLinksWeergaveAan() {
+    this.kaartLinksScrollbarZichtbaar = this.isKaartLinksScrollbarNodig();
+    this.bepaalKaartLinksMarginTopEnMaxHeight();
+    this.bepaalKaartLinksToggleZichtbaar();
   }
 
   isKaartLinksScrollbarNodig(): boolean {

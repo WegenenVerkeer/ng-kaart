@@ -21,10 +21,12 @@ export class KaartSchaalComponent extends KaartChildComponentBase implements Aft
   }
 
   ngAfterViewInit(): void {
+    super.ngAfterViewInit();
     this.dispatch(prt.VoegSchaalToeCmd(option.fromNullable(this.schaalElement.nativeElement), kaartLogOnlyWrapper));
   }
 
   ngOnDestroy(): void {
     this.dispatch(prt.VerwijderSchaalCmd(kaartLogOnlyWrapper));
+    super.ngOnDestroy();
   }
 }

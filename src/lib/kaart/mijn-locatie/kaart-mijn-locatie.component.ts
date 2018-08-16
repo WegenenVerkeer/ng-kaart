@@ -76,6 +76,7 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
   }
 
   ngAfterViewInit() {
+    super.ngAfterViewInit();
     const zoomdoel$: Observable<number> = this.zoomdoelSetting$.pipe(flatten); // Hou enkel de effectieve zoomniveaudoelen over
 
     this.bindToLifeCycle(
