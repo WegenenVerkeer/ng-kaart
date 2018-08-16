@@ -126,8 +126,8 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
   const numlayers$ = observableFromOlEvents(model.map.getLayers(), "change:length").pipe(debounceTime(100));
   const zoom$ = observableFromOlEvents(model.map.getView(), "change:resolution").pipe(
     map(() => model.map.getView().getZoom()),
-    filter(Number.isInteger), // OL genereert een heleboel tussenliggende zooms tijden het animeren.
     distinctUntilChanged()
+    // geen debounce, OL genereert een wel enkele tussenliggende zooms tijden het pinch/zoomen, maar ze komen ver genoeg uiteen.
   );
   const viewportSize$ = changer.viewPortSizeSubj.pipe(debounceTime(100));
 

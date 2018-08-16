@@ -580,8 +580,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function veranderZoomniveauCmd(cmnd: prt.VeranderZoomCmd<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerAlsGeheel(cmnd.zoom).map(zoom => {
-          model.map.getView().setZoom(cmnd.zoom);
+        success(cmnd.zoom).map(zoom => {
+          model.map.getView().setZoom(zoom);
           return ModelAndEmptyResult(model);
         })
       );
