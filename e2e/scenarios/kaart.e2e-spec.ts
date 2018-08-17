@@ -13,10 +13,7 @@ describe("Als ik de test-app met de configurator-kaart bekijk", function() {
         fndr
           .element(by.css(".title"))
           .getText()
-          .then(text => {
-            console.log(`???${text} === ${title}`);
-            return text === title;
-          })
+          .then(text => text === title)
       )
       .first();
 
