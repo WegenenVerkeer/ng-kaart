@@ -197,7 +197,10 @@ export interface VervangFeaturesCmd<Msg extends KaartMsg> {
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
-export type SelectieModus = "single" | "multiple" | "none";
+// single: altijd maar 1 element geselecteerd
+// multipleKlik: een klik voegt een element toe aan de selectie
+// multipleShift: een shift-klik voegt een element toe aan de selectie
+export type SelectieModus = "single" | "multipleKlik" | "multipleShift" | "none";
 
 export interface ActiveerSelectieModusCmd<Msg extends KaartMsg> {
   readonly type: "ActiveerSelectieModus";
