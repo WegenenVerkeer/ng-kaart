@@ -4,7 +4,7 @@ import { MatTabChangeEvent } from "@angular/material";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
-import { Observable } from "rxjs/Observable";
+import * as rx from "rxjs";
 import { combineLatest, distinctUntilChanged, filter, map, shareReplay, startWith } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
@@ -75,13 +75,13 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
   private dragState: Option<DragState> = none;
   private dichtgeklapt = false;
   public geselecteerdeTab = 0;
-  readonly lagenHoog$: Observable<List<ToegevoegdeLaag>>;
-  readonly lagenLaag$: Observable<List<ToegevoegdeLaag>>;
-  readonly lagenMetLegende$: Observable<List<ToegevoegdeLaag>>;
-  readonly heeftDivider$: Observable<boolean>;
-  readonly geenLagen$: Observable<boolean>;
-  readonly geenLegende$: Observable<boolean>;
-  readonly opties$: Observable<LagenUiOpties>;
+  readonly lagenHoog$: rx.Observable<List<ToegevoegdeLaag>>;
+  readonly lagenLaag$: rx.Observable<List<ToegevoegdeLaag>>;
+  readonly lagenMetLegende$: rx.Observable<List<ToegevoegdeLaag>>;
+  readonly heeftDivider$: rx.Observable<boolean>;
+  readonly geenLagen$: rx.Observable<boolean>;
+  readonly geenLegende$: rx.Observable<boolean>;
+  readonly opties$: rx.Observable<LagenUiOpties>;
 
   constructor(parent: KaartComponent, ngZone: NgZone, private readonly cdr: ChangeDetectorRef, private readonly sanitizer: DomSanitizer) {
     super(parent, ngZone);

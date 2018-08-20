@@ -2,7 +2,6 @@ import { animate, state, style, transition, trigger } from "@angular/animations"
 import { ChangeDetectionStrategy, Component, NgZone, OnInit } from "@angular/core";
 import { List } from "immutable";
 import * as rx from "rxjs";
-import { Observable } from "rxjs/Observable";
 import { debounceTime, map } from "rxjs/operators";
 
 import { observeOnAngular } from "../../util/observe-on-angular";
@@ -27,7 +26,7 @@ import { KaartComponent } from "../kaart.component";
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class KaartInfoBoodschappenComponent extends KaartChildComponentBase implements OnInit {
-  infoBoodschappen$: rx.Observable<List<InfoBoodschap>> = rx.Observable.empty();
+  infoBoodschappen$: rx.Observable<List<InfoBoodschap>> = rx.empty();
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);

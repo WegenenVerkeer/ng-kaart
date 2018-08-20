@@ -4,7 +4,6 @@ import { Option, some } from "fp-ts/lib/Option";
 import { Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { OperatorFunction } from "rxjs/interfaces";
 import { map, mergeAll, mergeMap, reduce, shareReplay } from "rxjs/operators";
 
 import { ZOEKER_CFG, ZoekerConfigData } from "../config/zoeker-config";
@@ -303,11 +302,8 @@ export class ZoekerCrabService implements ZoekerBase {
         this.http.get<SuggestionServiceResults>(this.locatorServicesConfig.url + "/rest/geolocation/suggestion", options(suggestie));
 
       return zoekSuggesties$(zoekterm.value).pipe(
-        map(suggestieResultaten =>
-          rx.Observable.from(suggestieResultaten.SuggestionResult).pipe(mergeMap(suggestie => zoekDetail$(suggestie)))
-        ),
-        // mergall moet gecast worden omdat de standaard definitie fout is: https://github.com/ReactiveX/rxjs/issues/3290
-        mergeAll(5) as OperatorFunction<rx.Observable<LocatorServiceResults>, LocatorServiceResults>,
+        map(suggestieResultaten => rx.from(suggestieResultaten.SuggestionResult).pipe(mergeMap(suggestie => zoekDetail$(suggestie)))),
+        mergeAll(5),
         reduce<LocatorServiceResults, ZoekResultaten>(
           (zoekResultaten, crabResultaten) => this.voegCrabResultatenToe(zoekResultaten, crabResultaten),
           new ZoekResultaten(this.naam(), [], [], this.legende)
@@ -321,7 +317,7 @@ export class ZoekerCrabService implements ZoekerBase {
     } else if (zoekterm.type === "CrabHuisnummer") {
       return this.getHuisnummerPositie$(zoekterm as CrabHuisnummer);
     } else {
-      return rx.Observable.empty();
+      return rx.empty();
     }
   }
 }

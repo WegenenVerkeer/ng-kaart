@@ -175,10 +175,10 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
         ? this.busy(provider(inputWaarde)).pipe(
             catchError((error, obs) => {
               this.meldFout(error);
-              return rx.Observable.of([]);
+              return rx.of([]);
             })
           )
-        : rx.Observable.of([]);
+        : rx.of([]);
     });
   }
 }

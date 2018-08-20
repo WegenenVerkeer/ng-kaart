@@ -1,5 +1,5 @@
 import { Component, NgZone } from "@angular/core";
-import { Observable } from "rxjs/Observable";
+import * as rx from "rxjs";
 import { filter, map, startWith } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart-child-component-base";
@@ -23,7 +23,7 @@ const defaultOpties: CopyrightOpties = {
   styleUrls: ["./kaart-copyright.component.scss"]
 })
 export class KaartCopyrightComponent extends KaartChildComponentBase {
-  copyright$: Observable<string>;
+  copyright$: rx.Observable<string>;
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);

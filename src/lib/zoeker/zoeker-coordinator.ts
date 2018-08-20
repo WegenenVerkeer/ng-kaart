@@ -1,14 +1,13 @@
 import { List, Map, Set } from "immutable";
-import { Subject } from "rxjs";
-import { Subscription } from "rxjs/Subscription";
+import * as rx from "rxjs";
 
 import { ZoekerBase, ZoekInput, ZoekResultaat, ZoekResultaten } from "./zoeker-base";
 
 export class ZoekerCoordinator {
   private zoekers: Array<ZoekerBase> = Array();
-  private zoekerSubscriptions: Map<string, Subscription> = Map();
+  private zoekerSubscriptions: Map<string, rx.Subscription> = Map();
 
-  constructor(private zoekerSubject: Subject<ZoekResultaten>, private zoekerResultaatKlikSubj: Subject<ZoekResultaat>) {}
+  constructor(private zoekerSubject: rx.Subject<ZoekResultaten>, private zoekerResultaatKlikSubj: rx.Subject<ZoekResultaat>) {}
 
   isZoekerGeregistreerd(naam: string): boolean {
     return this.zoekers.some(zoeker => zoeker.naam() === naam);
@@ -27,7 +26,7 @@ export class ZoekerCoordinator {
     this.zoekers = this.zoekers.filter(zoeker => zoeker.naam() !== naam);
   }
 
-  unsubscribeZoeker(subscription: Subscription) {
+  unsubscribeZoeker(subscription: rx.Subscription) {
     subscription.unsubscribe();
   }
 
@@ -52,7 +51,7 @@ export class ZoekerCoordinator {
             this.zoekerSubject.next(zoekResultaat); // TODO verwijder dit anti-pattern
           })
         ),
-      Map<string, Subscription>()
+      Map<string, rx.Subscription>()
     );
   }
 

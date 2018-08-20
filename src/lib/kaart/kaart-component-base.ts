@@ -1,8 +1,6 @@
 import { AfterViewInit, NgZone, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
-import { ReplaySubject } from "rxjs";
-import { Observable } from "rxjs/Observable";
+import * as rx from "rxjs";
 import { takeUntil } from "rxjs/operators";
-import { Subject } from "rxjs/Subject";
 
 import { asap } from "../util/asap";
 
@@ -10,9 +8,9 @@ import { asap } from "../util/asap";
  * Algemene basisklasse die gebruikt kan worden voor zowel child components van de kaartcomponent als voor kaart classic helper components.
  */
 export abstract class KaartComponentBase implements AfterViewInit, OnInit, OnDestroy {
-  private readonly destroyingSubj: Subject<void> = new ReplaySubject<void>(1); // ReplaySubject zodat laatkomers toch nog event krijgen
-  private readonly initialisingSubj: Subject<void> = new ReplaySubject<void>(1);
-  private readonly viewReadySubj: Subject<void> = new ReplaySubject<void>(1);
+  private readonly destroyingSubj: rx.Subject<void> = new rx.ReplaySubject<void>(1); // ReplaySubject => laatkomers krijgen toch nog event
+  private readonly initialisingSubj: rx.Subject<void> = new rx.ReplaySubject<void>(1);
+  private readonly viewReadySubj: rx.Subject<void> = new rx.ReplaySubject<void>(1);
 
   constructor(readonly zone: NgZone) {}
 
@@ -31,19 +29,19 @@ export abstract class KaartComponentBase implements AfterViewInit, OnInit, OnDes
     this.viewReadySubj.complete();
   }
 
-  protected bindToLifeCycle<T>(source: Observable<T>): Observable<T> {
+  protected bindToLifeCycle<T>(source: rx.Observable<T>): rx.Observable<T> {
     return source ? source.pipe(takeUntil(this.destroyingSubj)) : source;
   }
 
-  protected get initialising$(): Observable<void> {
+  protected get initialising$(): rx.Observable<void> {
     return this.initialisingSubj.pipe(takeUntil(this.destroyingSubj));
   }
 
-  protected get destroying$(): Observable<void> {
+  protected get destroying$(): rx.Observable<void> {
     return this.destroyingSubj;
   }
 
-  protected get viewReady$(): Observable<void> {
+  protected get viewReady$(): rx.Observable<void> {
     return this.viewReadySubj;
   }
 

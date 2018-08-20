@@ -53,5 +53,5 @@ export const ofType = <Target extends TypedRecord>(type: string) => (o: rx.Obser
 
 export function skipUntilInitialised<A>(): Pipeable<A, A> {
   // beperk tot messages nadat subscribe opgeroepen is: oorzaak is shareReplay(1) in internalmessages$
-  return obs => obs.pipe(skipUntil(rx.Observable.timer(0)));
+  return obs => obs.pipe(skipUntil(rx.timer(0)));
 }

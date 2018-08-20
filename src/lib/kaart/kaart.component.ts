@@ -38,7 +38,7 @@ export class KaartComponent extends KaartComponentBase {
   private readonly modelChanger: ModelChanger = ModelChanger();
   private innerModelChanges: ModelChanges;
   private innerAanwezigeElementen$: rx.Observable<Set<string>>;
-  readonly kaartModel$: rx.Observable<KaartWithInfo> = rx.Observable.empty();
+  readonly kaartModel$: rx.Observable<KaartWithInfo> = rx.empty();
 
   @ViewChild("map") mapElement: ElementRef;
   @ViewChild("kaartLinks") kaartLinksElement: ElementRef;
@@ -51,7 +51,7 @@ export class KaartComponent extends KaartComponentBase {
    * een component van de gebruikende applicatie (in geval van programmatorisch gebruik) zet hier een Observable
    * waarmee events naar de component gestuurd kunnen worden.
    */
-  @Input() kaartCmd$: rx.Observable<prt.Command<prt.KaartMsg>> = rx.Observable.empty();
+  @Input() kaartCmd$: rx.Observable<prt.Command<prt.KaartMsg>> = rx.empty();
   /**
    * Hier wordt een callback verwacht die een Msg observable zal krijgen. Die observable kan dan gebruikt worden
    * op te luisteren op feedback van commands of uitvoer van subscriptions.
@@ -76,7 +76,7 @@ export class KaartComponent extends KaartComponentBase {
 
   // Dit dient om messages naar toe te sturen
 
-  internalMessage$: rx.Observable<KaartInternalSubMsg> = rx.Observable.empty();
+  internalMessage$: rx.Observable<KaartInternalSubMsg> = rx.empty();
 
   constructor(@Inject(KAART_CFG) readonly config: KaartConfig, zone: NgZone) {
     super(zone);

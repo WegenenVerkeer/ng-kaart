@@ -1,10 +1,10 @@
+/// <reference types="@types/googlemaps" />
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { Inject, Injectable } from "@angular/core";
 import { Option, some } from "fp-ts/lib/Option";
-import {} from "googlemaps";
 import { Map } from "immutable";
 import * as ol from "openlayers";
-import { Observable } from "rxjs/Observable";
+import * as rx from "rxjs";
 import { catchError, flatMap, map } from "rxjs/operators";
 
 import { ZOEKER_CFG, ZoekerConfigData } from "../config/zoeker-config";
@@ -119,9 +119,9 @@ export class ZoekerGoogleWdbService implements ZoekerBase {
     }
   }
 
-  zoek$(zoekterm: StringZoekInput): Observable<ZoekResultaten> {
+  zoek$(zoekterm: StringZoekInput): rx.Observable<ZoekResultaten> {
     if (!zoekterm.value || zoekterm.value.trim().length === 0) {
-      return Observable.of(new ZoekResultaten(this.naam(), [], [], this.legende));
+      return rx.of(new ZoekResultaten(this.naam(), [], [], this.legende));
     }
     const params: HttpParams = new HttpParams().set("query", zoekterm.value).set("legacy", "false");
 
@@ -130,7 +130,7 @@ export class ZoekerGoogleWdbService implements ZoekerBase {
       .pipe(flatMap(resp => this.parseResult(resp)), catchError(err => this.handleError(err)));
   }
 
-  parseResult(response: any): Observable<ZoekResultaten> {
+  parseResult(response: any): rx.Observable<ZoekResultaten> {
     const zoekResultaten = new ZoekResultaten(this.naam(), [], [], this.legende);
 
     // parse result
@@ -142,7 +142,7 @@ export class ZoekerGoogleWdbService implements ZoekerBase {
     // indien geen locaties gevonden, toon melding
     if (resultaten.locaties.length === 0 && resultaten.onvolledigeLocaties.length === 0) {
       zoekResultaten.fouten.push("Geen locaties gevonden");
-      return Observable.of(zoekResultaten);
+      return rx.of(zoekResultaten);
     } else {
       // lijst van promises van resultaten
       const promises = resultaten.onvolledigeLocaties.map(locatie => {
@@ -302,11 +302,11 @@ export class ZoekerGoogleWdbService implements ZoekerBase {
         return zoekResultaten.limiteerAantalResultaten(this.googleWdbLocatieZoekerConfig.maxAantal);
       });
 
-      return Observable.fromPromise(zoekResultatenPromise);
+      return rx.from(zoekResultatenPromise);
     }
   }
 
-  handleError(response: Response | any): Observable<ZoekResultaten> {
+  handleError(response: Response | any): rx.Observable<ZoekResultaten> {
     let error: string;
     switch (response.status) {
       case 404:
@@ -316,7 +316,7 @@ export class ZoekerGoogleWdbService implements ZoekerBase {
         // toon http foutmelding indien geen 200 teruggehad
         error = `Fout bij opvragen locatie: ${response.responseText || response.statusText || response}`;
     }
-    return Observable.of(new ZoekResultaten(this.naam(), [error], [], this.legende));
+    return rx.of(new ZoekResultaten(this.naam(), [error], [], this.legende));
   }
 
   private geocode(omschrijving): Promise<ExtendedGeocoderResult[]> {

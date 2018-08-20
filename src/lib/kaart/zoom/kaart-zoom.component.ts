@@ -1,7 +1,6 @@
 import { Component, NgZone, OnInit } from "@angular/core";
 import { Predicate } from "fp-ts/lib/function";
 import * as rx from "rxjs";
-import { Observable } from "rxjs/Observable";
 import { combineLatest, debounceTime, delay, distinctUntilChanged, map, mapTo, merge } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart-child-component-base";
@@ -18,9 +17,9 @@ export const ZoomknoppenUiSelector = "Zoomknoppen";
 })
 export class KaartZoomComponent extends KaartChildComponentBase implements OnInit {
   readonly zoomClickedSubj: rx.Subject<number> = new rx.Subject<number>();
-  readonly canZoomIn$: Observable<boolean>;
-  readonly canZoomOut$: Observable<boolean>;
-  readonly zoom$: Observable<number>;
+  readonly canZoomIn$: rx.Observable<boolean>;
+  readonly canZoomOut$: rx.Observable<boolean>;
+  readonly zoom$: rx.Observable<number>;
 
   constructor(private readonly parent: KaartComponent, zone: NgZone) {
     super(parent, zone);

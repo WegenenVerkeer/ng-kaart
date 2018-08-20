@@ -40,7 +40,7 @@ export class ZoekerExterneWmsGetraptComponent extends GetraptZoekerComponent imp
       switchMap(
         svcs =>
           svcs.isEmpty()
-            ? rx.Observable.of(Set()) // Geen service betekent geen bronnen
+            ? rx.of(Set()) // Geen service betekent geen bronnen
             : svcs.get(0).bronnen$ // We weten dat er juist 1 element is
       )
     );

@@ -4,7 +4,7 @@ import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import { setoidNumber } from "fp-ts/lib/Setoid";
 import { List, Map } from "immutable";
 import * as ol from "openlayers";
-import { Observable } from "rxjs/Observable";
+import * as rx from "rxjs";
 import { catchError } from "rxjs/operators";
 
 import { Adres, Progress, WegLocatie } from "../kaart-with-info-model";
@@ -144,7 +144,7 @@ export function withLaagLocationInfo(i: LocatieInfo, laagTitel: string, lli: Pro
   return { ...i, lagenLocatieInfo: i.lagenLocatieInfo.set(laagTitel, lli) };
 }
 
-export function adresViaXY$(http: HttpClient, coordinaat: ol.Coordinate): Observable<XY2AdresSucces[] | XY2AdresError> {
+export function adresViaXY$(http: HttpClient, coordinaat: ol.Coordinate): rx.Observable<XY2AdresSucces[] | XY2AdresError> {
   return http
     .get<XY2AdresSucces[] | XY2AdresError>("/agivservices/rest/locatie/adres/via/xy", {
       params: {
@@ -157,12 +157,12 @@ export function adresViaXY$(http: HttpClient, coordinaat: ol.Coordinate): Observ
       catchError(error => {
         kaartLogger.error("Fout bij opvragen weglocatie", error);
         // bij fout toch zeker geldige observable doorsturen, anders geen volgende events
-        return Observable.of(XY2AdresError(`Fout bij opvragen weglocatie: ${error}`));
+        return rx.of(XY2AdresError(`Fout bij opvragen weglocatie: ${error}`));
       })
     );
 }
 
-export function wegLocatiesViaXY$(http: HttpClient, coordinaat: ol.Coordinate): Observable<LsWegLocaties> {
+export function wegLocatiesViaXY$(http: HttpClient, coordinaat: ol.Coordinate): rx.Observable<LsWegLocaties> {
   return http
     .get<LsWegLocaties>("/wegendatabank/v1/locator/xy2loc", {
       params: {
@@ -176,7 +176,7 @@ export function wegLocatiesViaXY$(http: HttpClient, coordinaat: ol.Coordinate): 
       catchError(error => {
         // bij fout toch zeker geldige observable doorsturen, anders geen volgende events
         kaartLogger.error("Fout bij opvragen adres", error);
-        return Observable.of(LsWegLocaties(0, [], `Fout bij opvragen adres: ${error}`));
+        return rx.of(LsWegLocaties(0, [], `Fout bij opvragen adres: ${error}`));
       })
     );
 }

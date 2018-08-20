@@ -3,7 +3,7 @@ import { MatButton } from "@angular/material";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List, OrderedMap } from "immutable";
 import * as ol from "openlayers";
-import { Observable } from "rxjs/Observable";
+import * as rx from "rxjs";
 import { combineLatest, map, mapTo, switchMap } from "rxjs/operators";
 
 import { flatten } from "../../util/operators";
@@ -27,10 +27,10 @@ const MijnLocatieLaagNaam = "Mijn Locatie";
   styleUrls: ["./kaart-mijn-locatie.component.scss"]
 })
 export class KaartMijnLocatieComponent extends KaartChildComponentBase implements OnInit, AfterViewInit {
-  private viewinstellingen$: Observable<Viewinstellingen> = Observable.empty();
-  private zoomdoelSetting$: Observable<Option<number>> = Observable.empty();
+  private viewinstellingen$: rx.Observable<Viewinstellingen> = rx.empty();
+  private zoomdoelSetting$: rx.Observable<Option<number>> = rx.empty();
 
-  enabled$: Observable<boolean> = Observable.of(true);
+  enabled$: rx.Observable<boolean> = rx.of(true);
 
   @ViewChildren("locateBtn") locateBtnQry: QueryList<MatButton>;
 
@@ -77,7 +77,7 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
 
   ngAfterViewInit() {
     super.ngAfterViewInit();
-    const zoomdoel$: Observable<number> = this.zoomdoelSetting$.pipe(flatten); // Hou enkel de effectieve zoomniveaudoelen over
+    const zoomdoel$: rx.Observable<number> = this.zoomdoelSetting$.pipe(flatten); // Hou enkel de effectieve zoomniveaudoelen over
 
     this.bindToLifeCycle(
       // Omdat de button in een ngIf zit, moeten we op zoek naar de button in ngAfterViewInit
@@ -85,7 +85,7 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
         switchMap(ql =>
           this.viewinstellingen$.pipe(
             combineLatest(zoomdoel$, (zi, doel) => [zi.zoom, doel]), // Blijf op de hoogte van huidige en gewenste zoom
-            switchMap(params => Observable.fromEvent(ql.first._getHostElement(), "click").pipe(mapTo(params))) // van click naar zoom
+            switchMap(params => rx.fromEvent(ql.first._getHostElement(), "click").pipe(mapTo(params))) // van click naar zoom
           )
         )
       )

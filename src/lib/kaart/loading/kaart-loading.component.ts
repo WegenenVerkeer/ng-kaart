@@ -1,7 +1,6 @@
 import { Component, NgZone } from "@angular/core";
 import { List } from "immutable";
 import * as rx from "rxjs";
-import { OperatorFunction } from "rxjs/interfaces";
 import {
   combineLatest,
   debounceTime,
@@ -55,11 +54,7 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
     );
     const mergedDataloadEvent$: rx.Observable<DataLoadEvent> = toegevoegdeLagen$$.pipe(
       // subscribe/unsubscribe voor elke nieuwe lijst van toegevoegde lagen
-      switchMap(
-        lgn =>
-          rx.Observable.from(lgn.toArray()) //
-            .pipe(mergeAll() as OperatorFunction<rx.Observable<DataLoadEvent>, DataLoadEvent>) // cast omwille van bug in typedefs
-      ),
+      switchMap(lgn => rx.from(lgn.toArray()).pipe(mergeAll())),
       shareReplay(1, 1000)
     );
     const numBusy$: rx.Observable<number> = mergedDataloadEvent$.pipe(
@@ -82,7 +77,7 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
 
     const busy$: rx.Observable<boolean> = numBusy$.pipe(map(numBusy => numBusy > 0), distinctUntilChanged(), shareReplay(1));
     const inError$: rx.Observable<boolean> = stableError$(100).pipe(
-      switchMapTo(rx.Observable.timer(0, 1000).pipe(map(t => t === 0), take(2))), // Produceert direct true, dan na een seconde false
+      switchMapTo(rx.timer(0, 1000).pipe(map(t => t === 0), take(2))), // Produceert direct true, dan na een seconde false
       startWith(false)
     );
 
@@ -97,16 +92,16 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
       switchMap(
         inError =>
           inError
-            ? rx.Observable.of({ "margin-left": "-10000px" })
+            ? rx.of({ "margin-left": "-10000px" })
             : busy$.pipe(
                 switchMap(
                   busy =>
                     busy
-                      ? rx.Observable.timer(0, 200).pipe(
+                      ? rx.timer(0, 200).pipe(
                           // 110 = 11 * 10 . De modulus moet het eerste geheel veelvoud van het aantal onderverdelingen > 100 zijn.
                           map(n => ({ "margin-left": (n * 11) % 110 + "%" }))
                         )
-                      : rx.Observable.of({})
+                      : rx.of({})
                 )
               )
       ),

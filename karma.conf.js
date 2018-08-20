@@ -1,13 +1,13 @@
 module.exports = function (config) {
   config.set({
     basePath: '',
-    frameworks: ['jasmine-jquery', 'jasmine', '@angular/cli'],
+    frameworks: ['jasmine-jquery', 'jasmine', '@angular-devkit/build-angular'],
     plugins: [
       require('karma-jasmine-jquery'),
       require('karma-jasmine'),
       require('karma-phantomjs-launcher'),
       require('karma-coverage-istanbul-reporter'),
-      require('@angular/cli/plugins/karma'),
+      require('@angular-devkit/build-angular/plugins/karma'),
       require('karma-junit-reporter'),
       require('karma-mocha-reporter')
     ],
@@ -15,14 +15,12 @@ module.exports = function (config) {
       {pattern: './src/test.ts', watched: false}
     ],
     preprocessors: {
-      './src/test.ts': ['@angular/cli']
+      
     },
     mime: {
       'text/x-typescript': ['ts', 'tsx']
     },
-    angularCli: {
-      environment: 'dev'
-    },
+    
     reporters: ['mocha', 'junit', 'coverage-istanbul'],
     port: 9876,
     colors: true,
@@ -31,7 +29,7 @@ module.exports = function (config) {
     browsers: ['PhantomJS'],
     singleRun: false,
     coverageIstanbulReporter: {
-      reports: ['html', 'lcovonly', 'text-summary'],
+      dir: require('path').join(__dirname, 'coverage'), reports: ['html', 'lcovonly', 'text-summary'],
       fixWebpackSourcePaths: true,
       dir: './reports/karma/'
     },

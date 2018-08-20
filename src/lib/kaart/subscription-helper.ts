@@ -1,5 +1,4 @@
 import * as rx from "rxjs";
-import { Observable } from "rxjs/Observable";
 import { filter, take } from "rxjs/operators";
 
 import { ofType } from "../util/operators";
@@ -57,7 +56,7 @@ export function subscriptionCmdOperator<MsgIn extends TypedRecord, MsgOut extend
   }
 
   return {
-    call(subscriber: rx.Subscriber<string[]>, source: Observable<MsgIn>): rx.Subscription {
+    call(subscriber: rx.Subscriber<string[]>, source: rx.Observable<MsgIn>): rx.Subscription {
       // Ik durf this niet te gebruiken, maar een leeg record heeft de gewenste eigenschap dat het aan zichzelf gelijk is en niet aan
       // een ander leeg record
       const self = {};

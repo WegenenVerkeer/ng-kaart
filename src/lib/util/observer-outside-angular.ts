@@ -1,4 +1,4 @@
-import { Observable } from "rxjs/Observable";
+import * as rx from "rxjs";
 
 import { ZoneLike } from "./zone-like";
 
@@ -13,8 +13,8 @@ import { ZoneLike } from "./zone-like";
  * Zie bijv. https://blog.thoughtram.io/angular/2017/02/21/using-zones-in-angular-for-better-performance.html
  */
 export function observeOutsideAngular<T>(zone: ZoneLike) {
-  return (source: Observable<T>) =>
-    new Observable<T>(observer => {
+  return (source: rx.Observable<T>) =>
+    new rx.Observable<T>(observer => {
       return source.subscribe({
         next(x) {
           zone.runOutsideAngular(() => observer.next(x));

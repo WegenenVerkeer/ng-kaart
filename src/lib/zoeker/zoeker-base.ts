@@ -1,7 +1,7 @@
 import { Option } from "fp-ts/lib/Option";
 import { Map } from "immutable";
 import * as ol from "openlayers";
-import { Observable } from "rxjs/Observable";
+import * as rx from "rxjs";
 
 import { AbstractRepresentatieService } from "./zoeker-representatie.service";
 
@@ -67,7 +67,7 @@ export interface StringZoekInput {
 
 export interface ZoekerBase {
   naam(): string;
-  zoek$(input: ZoekInput): Observable<ZoekResultaten>;
+  zoek$(input: ZoekInput): rx.Observable<ZoekResultaten>;
 }
 
 // De resultaten worden getoond volgens een bepaalde hiërarchie

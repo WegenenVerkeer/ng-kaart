@@ -120,7 +120,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
   );
 
   // Met window resize hebben we niet alle bronnen van herschaling, maar toch al een grote
-  const resize$ = rx.Observable.fromEvent(window, "resize").pipe(debounceTime(100));
+  const resize$ = rx.fromEvent(window, "resize").pipe(debounceTime(100));
 
   const center$ = observableFromOlEvents(model.map.getView(), "change:center").pipe(debounceTime(100));
   const numlayers$ = observableFromOlEvents(model.map.getLayers(), "change:length").pipe(debounceTime(100));
@@ -131,7 +131,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
   );
   const viewportSize$ = changer.viewPortSizeSubj.pipe(debounceTime(100));
 
-  const viewinstellingen$ = rx.Observable.merge(viewportSize$, resize$, center$, numlayers$, zoom$).pipe(
+  const viewinstellingen$ = rx.merge(viewportSize$, resize$, center$, numlayers$, zoom$).pipe(
     debounceTime(50), // Deze is om de map hierna niet te veel werk te geven
     map(() => viewinstellingen(model.map)),
     shareReplay(1)
@@ -153,7 +153,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
   const featuresChanged$: rx.Observable<undefined> = vectorlagen$.pipe(
     debounceTime(100), // vlugge verandering van het aantal vectorlagen willen we niet zien
     switchMap(vlgn =>
-      rx.Observable.merge(
+      rx.merge(
         ...vlgn.map(vlg => observableFromOlEvents(vlg!.layer.getSource(), "addfeature", "removefeature", "clear", "clear")).toArray()
       )
     ),

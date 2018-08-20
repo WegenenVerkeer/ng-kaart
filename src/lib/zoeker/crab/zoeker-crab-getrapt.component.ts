@@ -1,7 +1,7 @@
 import { Component, EventEmitter, NgZone, OnInit, Output } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { Set } from "immutable";
-import { Observable } from "rxjs/Observable";
+import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, startWith } from "rxjs/operators";
 
 import { KaartComponent } from "../../kaart/kaart.component";
@@ -33,9 +33,9 @@ export class ZoekerCrabGetraptComponent extends GetraptZoekerComponent implement
   straatControl = new FormControl({ value: "", disabled: true });
   huisnummerControl = new FormControl({ value: "", disabled: true });
 
-  straten$: Observable<CrabStraat[]> = Observable.empty();
-  huisnummers$: Observable<CrabHuisnummer[]> = Observable.empty();
-  leegMakenDisabled$: Observable<boolean> = Observable.empty();
+  straten$: rx.Observable<CrabStraat[]> = rx.empty();
+  huisnummers$: rx.Observable<CrabHuisnummer[]> = rx.empty();
+  leegMakenDisabled$: rx.Observable<boolean> = rx.empty();
   @Output() leegMakenDisabledChange: EventEmitter<boolean> = new EventEmitter();
 
   constructor(private crabService: ZoekerCrabService, kaartComponent: KaartComponent, zoekerComponent: ZoekerBoxComponent, zone: NgZone) {

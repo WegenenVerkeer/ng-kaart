@@ -1,5 +1,5 @@
 import { Component, NgZone } from "@angular/core";
-import { Observable } from "rxjs/Observable";
+import * as rx from "rxjs";
 import { filter, map, startWith } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart-child-component-base";
@@ -25,7 +25,7 @@ const defaultOpties: VoorwaardenOpties = {
   styleUrls: ["./kaart-voorwaarden.component.scss"]
 })
 export class KaartVoorwaardenComponent extends KaartChildComponentBase {
-  voorwaardenOpties$: Observable<VoorwaardenOpties>;
+  voorwaardenOpties$: rx.Observable<VoorwaardenOpties>;
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);

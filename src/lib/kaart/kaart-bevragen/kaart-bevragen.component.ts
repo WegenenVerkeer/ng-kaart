@@ -4,7 +4,6 @@ import { none, Option } from "fp-ts/lib/Option";
 import { List, Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { OperatorFunction } from "rxjs/interfaces";
 import { debounceTime, filter, map, mergeAll, scan, startWith, switchMap, timeoutWith } from "rxjs/operators";
 
 import { observeOnAngular } from "../../util/observe-on-angular";
@@ -76,8 +75,8 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
             switchMap(svcs =>
               geklikteLocatie$.pipe(
                 switchMap(locatie =>
-                  rx.Observable.from(allSvcCalls(lgn, svcs, locatie)).pipe(
-                    mergeAll(5) as OperatorFunction<rx.Observable<srv.LocatieInfo>, srv.LocatieInfo>, // cast owv typedefs bug
+                  rx.from(allSvcCalls(lgn, svcs, locatie)).pipe(
+                    mergeAll(5), //
                     scan(srv.merge)
                   )
                 )
@@ -130,6 +129,6 @@ function infoForLaag(location: ol.Coordinate, laag: ke.ToegevoegdeLaag, svc: Laa
     .pipe(
       map(info => srv.withLaagLocationInfo(srv.fromCoordinate(location), laag.titel, Received(info))),
       startWith(srv.withLaagLocationInfo(srv.fromCoordinate(location), laag.titel, Requested)),
-      timeoutWith(5000, rx.Observable.of(srv.withLaagLocationInfo(srv.fromCoordinate(location), laag.titel, TimedOut)))
+      timeoutWith(5000, rx.of(srv.withLaagLocationInfo(srv.fromCoordinate(location), laag.titel, TimedOut)))
     );
 }
