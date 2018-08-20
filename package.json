@@ -42,6 +42,7 @@
     "test": "ng test --single-run --code-coverage",
     "test-debug": "karma start karma.conf.js --single-run=false --browsers=PhantomJS --debug",
     "e2e": "env LANG=en_US.UTF-8 ng e2e",
+    "e2e-visual": "env LANG=en_US.UTF-8 DISABLE_HEADLESS=true ng e2e",
     "publishToNexus": "node script/patchRegistry.js https://collab.mow.vlaanderen.be/artifacts/repository/npm-internal/",
     "publishToNpmjs": "node script/patchRegistry.js",
     "precommit": "lint-staged"

@@ -1,4 +1,4 @@
-import { NgZone, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
+import { AfterViewInit, NgZone, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
 import { ReplaySubject } from "rxjs";
 import { Observable } from "rxjs/Observable";
 import { takeUntil } from "rxjs/operators";
@@ -9,18 +9,26 @@ import { asap } from "../util/asap";
 /**
  * Algemene basisklasse die gebruikt kan worden voor zowel child components van de kaartcomponent als voor kaart classic helper components.
  */
-export abstract class KaartComponentBase implements OnInit, OnDestroy {
+export abstract class KaartComponentBase implements AfterViewInit, OnInit, OnDestroy {
   private readonly destroyingSubj: Subject<void> = new ReplaySubject<void>(1); // ReplaySubject zodat laatkomers toch nog event krijgen
   private readonly initialisingSubj: Subject<void> = new ReplaySubject<void>(1);
+  private readonly viewReadySubj: Subject<void> = new ReplaySubject<void>(1);
 
   constructor(readonly zone: NgZone) {}
 
   ngOnInit() {
     this.initialisingSubj.next();
+    this.initialisingSubj.complete();
   }
 
   ngOnDestroy() {
     this.destroyingSubj.next();
+    this.destroyingSubj.complete();
+  }
+
+  ngAfterViewInit() {
+    this.viewReadySubj.next();
+    this.viewReadySubj.complete();
   }
 
   protected bindToLifeCycle<T>(source: Observable<T>): Observable<T> {
@@ -33,6 +41,10 @@ export abstract class KaartComponentBase implements OnInit, OnDestroy {
 
   protected get destroying$(): Observable<void> {
     return this.destroyingSubj;
+  }
+
+  protected get viewReady$(): Observable<void> {
+    return this.viewReadySubj;
   }
 
   /**

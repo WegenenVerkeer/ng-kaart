@@ -39,7 +39,7 @@ const config = {
     },
     {
       package: 'protractor-console',
-      logLevels: ['info', 'warning', 'severe']
+      logLevels: ['debug', 'info', 'warning', 'severe']
     }
   ],
   directConnect: true,
