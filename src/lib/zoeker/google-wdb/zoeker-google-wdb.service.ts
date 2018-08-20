@@ -1,5 +1,5 @@
+import { HttpClient, HttpParams } from "@angular/common/http";
 import { Inject, Injectable } from "@angular/core";
-import { Http, QueryEncoder, Response, URLSearchParams } from "@angular/http";
 import { Option, some } from "fp-ts/lib/Option";
 import {} from "googlemaps";
 import { Map } from "immutable";
@@ -52,19 +52,6 @@ const isWdbBron = function(bron) {
   return bron.startsWith("WDB") || bron.startsWith("ABBAMelda");
 };
 
-// Deze URL encoder gaat alles encoden. De standaard encoder encode volgende characters NIET:
-// ! $ \' ( ) * + , ; A 9 - . _ ~ ? /     (zie https://tools.ietf.org/html/rfc3986)
-// Maar de locatiezoeker backend verwacht die wel encoded.
-class EncodeAllesQueryEncoder extends QueryEncoder {
-  encodeKey(k: string): string {
-    return encodeURIComponent(k);
-  }
-
-  encodeValue(v: string): string {
-    return encodeURIComponent(v);
-  }
-}
-
 class GoogleServices {
   geocoder: google.maps.Geocoder;
   autocompleteService: google.maps.places.AutocompleteService;
@@ -102,7 +89,7 @@ export class ZoekerGoogleWdbService implements ZoekerBase {
   private readonly locatieZoekerUrl: string;
 
   constructor(
-    private readonly http: Http,
+    private readonly httpClient: HttpClient,
     @Inject(ZOEKER_CFG) zoekerConfigData: ZoekerConfigData,
     @Inject(ZOEKER_REPRESENTATIE) private zoekerRepresentatie: AbstractRepresentatieService
   ) {
@@ -136,20 +123,18 @@ export class ZoekerGoogleWdbService implements ZoekerBase {
     if (!zoekterm.value || zoekterm.value.trim().length === 0) {
       return Observable.of(new ZoekResultaten(this.naam(), [], [], this.legende));
     }
-    const params: URLSearchParams = new URLSearchParams("", new EncodeAllesQueryEncoder());
-    params.set("query", zoekterm.value);
-    params.set("legacy", "false");
+    const params: HttpParams = new HttpParams().set("query", zoekterm.value).set("legacy", "false");
 
-    return this.http
-      .get(this.locatieZoekerUrl + "/zoek", { search: params })
+    return this.httpClient
+      .get<Object>(this.locatieZoekerUrl + "/zoek", { params: params })
       .pipe(flatMap(resp => this.parseResult(resp)), catchError(err => this.handleError(err)));
   }
 
-  parseResult(response: Response): Observable<ZoekResultaten> {
+  parseResult(response: any): Observable<ZoekResultaten> {
     const zoekResultaten = new ZoekResultaten(this.naam(), [], [], this.legende);
 
     // parse result
-    const resultaten = response.json();
+    const resultaten = response; // vanaf hier doen we onze handen voor onze ogen en hopen dat alles goed gaat
 
     // voeg eventuele foutboodschappen toe
     resultaten.errors.forEach(error => zoekResultaten.fouten.push("Fout: " + error));
@@ -461,17 +446,17 @@ export class ZoekerGoogleWdbService implements ZoekerBase {
         }/gemeente?naam=${gemeenteNaam}&latLng=${resultaat.geometry.location.lat()},${resultaat.geometry.location.lng()}` +
         `&isGemeente=${isGemeente}&isDeelgemeente=${isDeelgemeente}`;
 
-      return this.http
+      return this.httpClient
         .get(url)
         .pipe(
           map(res => {
-            resultaat.locatie = res.json();
+            resultaat.locatie = res;
             return resultaat;
           })
         )
         .toPromise();
     } else {
-      return Observable.of(resultaat).toPromise();
+      return Promise.resolve(resultaat);
     }
   }
 

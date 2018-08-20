@@ -2,7 +2,6 @@ import { CommonModule } from "@angular/common";
 import { HttpClientModule } from "@angular/common/http";
 import { ModuleWithProviders, NgModule } from "@angular/core";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
-import { HttpModule } from "@angular/http";
 import { MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule } from "@angular/material";
 
 import { AbbameldaStuurmeldingComponent } from "./abbamelda-stuurmelding.component";
@@ -12,7 +11,6 @@ const components: any[] = [AbbameldaStuurmeldingComponent];
 @NgModule({
   imports: [
     CommonModule,
-    HttpModule,
     HttpClientModule,
     ReactiveFormsModule,
     FormsModule,

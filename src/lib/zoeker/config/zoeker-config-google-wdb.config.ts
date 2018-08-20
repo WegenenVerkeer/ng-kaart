@@ -6,7 +6,7 @@ export interface GoogleWdbLocatieZoekerConfigData {
 }
 
 export class ZoekerConfigGoogleWdbConfig {
-  readonly url: string = "/locatiezoeker";
+  readonly url: string = "https://apps-dev.mow.vlaanderen.be/locatiezoeker";
   readonly maxAantal: number = 10;
   readonly kleur: [number, number, number, number] = [247, 144, 45, 1.0];
   readonly apiKey: string | undefined = undefined;
