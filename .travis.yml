@@ -1,6 +1,6 @@
 language: node_js
 node_js:
-- lts/boron
+- lts/carbon
 after_success:
 - npm run build # Maak een dist folder
 cache:
