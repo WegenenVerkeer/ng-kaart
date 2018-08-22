@@ -28,5 +28,5 @@ sudo: required
 addons:
   chrome: stable
 script:
-  npm run test
-  npm run e2e
+  - npm run test
+  - npm run e2e
