@@ -11,18 +11,11 @@ module.exports = function (config) {
       require('karma-junit-reporter'),
       require('karma-mocha-reporter')
     ],
-    files: [
-      {pattern: './src/test.ts', watched: false}
-    ],
-    preprocessors: {
-      
-    },
-    mime: {
-      'text/x-typescript': ['ts', 'tsx']
-    },
-    
     reporters: ['mocha', 'junit', 'coverage-istanbul'],
     port: 9876,
+    client: {
+      clearContext: false // leave Jasmine Spec Runner output visible in browser
+    },
     colors: true,
     logLevel: config.LOG_INFO,
     autoWatch: true,
