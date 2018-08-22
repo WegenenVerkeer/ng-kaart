@@ -5,6 +5,7 @@ module.exports = function (config) {
     plugins: [
       require('karma-jasmine-jquery'),
       require('karma-jasmine'),
+      require('karma-chrome-launcher'),
       require('karma-phantomjs-launcher'),
       require('karma-coverage-istanbul-reporter'),
       require('@angular-devkit/build-angular/plugins/karma'),
@@ -19,8 +20,14 @@ module.exports = function (config) {
     colors: true,
     logLevel: config.LOG_INFO,
     autoWatch: true,
-    browsers: ['PhantomJS'],
-    singleRun: false,
+    browsers: ['PhantomJS', 'Chrome', 'ChromeHeadless', 'ChromeHeadlessNoSandbox'],
+    customLaunchers: {
+      ChromeHeadlessNoSandbox: {
+        base: 'ChromeHeadless',
+        flags: ['--no-sandbox']
+      }
+    },
+    // singleRun: false,
     coverageIstanbulReporter: {
       dir: require('path').join(__dirname, 'coverage'), reports: ['html', 'lcovonly', 'text-summary'],
       fixWebpackSourcePaths: true,
