@@ -27,3 +27,7 @@ notifications:
 sudo: required
 addons:
   chrome: stable
+script:
+  npm run test
+script:
+  npm run e2e
