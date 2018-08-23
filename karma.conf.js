@@ -5,7 +5,7 @@ module.exports = function (config) {
     plugins: [
       require('karma-jasmine-jquery'),
       require('karma-jasmine'),
-      require('karma-phantomjs-launcher'),
+      require('karma-chrome-launcher'),
       require('karma-coverage-istanbul-reporter'),
       require('@angular/cli/plugins/karma'),
       require('karma-junit-reporter'),
@@ -28,7 +28,7 @@ module.exports = function (config) {
     colors: true,
     logLevel: config.LOG_INFO,
     autoWatch: true,
-    browsers: ['PhantomJS'],
+    browsers: ['Chrome', 'ChromeHeadless', 'ChromeHeadlessNoSandbox'],
     singleRun: false,
     coverageIstanbulReporter: {
       reports: ['html', 'lcovonly', 'text-summary'],
