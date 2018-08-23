@@ -13,7 +13,7 @@ const config = {
     browserName: 'chrome',
     chromeOptions: {
       args: [
-        'window-size=1250x3000',
+        'window-size=1280x1000',
         'headless', // definieer DISABLE_HEADLESS om gewoon te testen
         'disable-gpu'
       ],
@@ -39,7 +39,7 @@ const config = {
     },
     {
       package: 'protractor-console',
-      logLevels: ['debug', 'info']
+      logLevels: ['debug', 'info', 'warning', 'severe']
     }
   ],
   directConnect: true,

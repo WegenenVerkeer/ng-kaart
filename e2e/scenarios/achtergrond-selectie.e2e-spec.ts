@@ -38,28 +38,21 @@ class AchtergrondSelectie {
   }
 
   async clickFirst(): Promise<void> {
-    return this.allAchtergrondTiles.first().click();
+    await this.allAchtergrondTiles.first().click();
+    await browser.sleep(1000); // uitklapanimatie
   }
 
   async click(titel: string): Promise<void> {
-    console.log(">>>>>>>", await this.allAchtergrondTiles.filter(fndr => fndr.element(by.css(".title")).isDisplayed()).count());
-    console.log(">>>>>>>", await this.allAchtergrondTiles.filter(fndr => fndr.element(by.css(".title")).isDisplayed()).count());
-    console.log(">>>>>>>", await this.allAchtergrondTiles.filter(fndr => fndr.element(by.css(".title")).isDisplayed()).count());
-    console.log(">>>>>>>", await this.allAchtergrondTiles.filter(fndr => fndr.element(by.css(".title")).isDisplayed()).count());
-    console.log(">>>>>>>", await this.allAchtergrondTiles.filter(fndr => fndr.element(by.css(".title")).isDisplayed()).count());
-    console.log(">>>>>>>", await this.allAchtergrondTiles.filter(fndr => fndr.element(by.css(".title")).getText().then(t => t === titel))
-      .count());
-    return this.allAchtergrondTiles.filter(tl => {
-      const eventualTitle = tl.element(by.css(".title")).getText();
-      return eventualTitle.then(title => { console.log(`---›`, title); return title === titel; });
-    }).first().click();
+    await this.allAchtergrondTiles.filter(tl => 
+       tl.element(by.css(".title")).getText().then(title => title === titel)
+    ).first().click();
+    await browser.sleep(600); // inklapanimatie
   }
 }
 
 describe("Als ik naar de achtergrond kijk", () => {
   const page: KaartPage = new KaartPage();
   const achtergrondSelectie = new AchtergrondSelectie();
-  // const allAchtergrondTiles = element.all(by.css("awv-kaart-achtergrond-tile"));
 
   beforeEach(() => {
     jasmine.addMatchers({
@@ -105,7 +98,7 @@ describe("Als ik naar de achtergrond kijk", () => {
 
   describe("wanneer op de enige tile geklikt wordt", () => {
     beforeEach(async () => {
-      await page.gaNaarPagina();
+      await page.gaNaarPagina(); // om zeker te zijn dat een vorige test niet gestopt is in opengeklapte toestand
       await achtergrondSelectie.clickFirst();
     });
 
