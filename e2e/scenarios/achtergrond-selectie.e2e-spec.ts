@@ -1,10 +1,11 @@
 /// <reference path="../util/custom-matchers.d.ts">
-
 import { findFirst } from "fp-ts/lib/Array";
-import { isNone, isSome, Option } from "fp-ts/lib/Option";
+import { Option } from "fp-ts/lib/Option";
 import { browser, by, element, WebElement } from "protractor";
 
 import { KaartPage } from "../pages/kaart.po";
+
+import { initTesting } from "./base-scenario";
 
 class AchtergrondTile {
   constructor(readonly titel: string, readonly zichtbaar: boolean) { }
@@ -51,30 +52,10 @@ class AchtergrondSelectie {
 }
 
 describe("Als ik naar de achtergrond kijk", () => {
+  initTesting();
+
   const page: KaartPage = new KaartPage();
   const achtergrondSelectie = new AchtergrondSelectie();
-
-  beforeEach(() => {
-    jasmine.addMatchers({
-      toBeSome: () => ({
-        compare: actual => {
-          const pass = isSome(actual);
-          return { pass: pass, message: pass ? "Ok" : `Expected '${actual}' to be defined` };
-        }
-      }),
-      toBeNone: () => ({
-        compare: actual => {
-          const pass = isNone(actual);
-          return { pass: pass, message: pass ? "Ok" : `Expected '${actual}' to not be defined` };
-        }
-      })
-    });
-  });
-
-  beforeAll(async () => {
-    browser.waitForAngularEnabled(true);
-    await page.gaNaarPagina();
-  });
 
   it("dan is de achtergrond selector zichtbaar", async () => {
     expect(await achtergrondSelectie.zichtbaar()).toBe(true);

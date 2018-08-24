@@ -3,10 +3,9 @@ import { browser, by, element, ElementFinder, protractor, ProtractorExpectedCond
 export class KaartPage {
   expectedConditions: ProtractorExpectedConditions = protractor.ExpectedConditions;
 
-  configuratorKaart: ElementFinder = element(by.id("qa-protractor"));
-
   async gaNaarPagina(): Promise<void> {
+    const configuratorKaart: ElementFinder = element(by.id("qa-protractor"));
     await browser.get(`/ng-kaart/test`);
-    await this.configuratorKaart;
+    await configuratorKaart;
   }
 }

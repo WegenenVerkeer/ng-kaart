@@ -34,12 +34,12 @@ const config = {
       exclude: [ // protractor kan niet aan WMS server van WDB
         /.*wms1.apps.mow.vlaanderen.be.*/,
         /.*wms2.apps.mow.vlaanderen.be.*/,
-        /.*wms3.apps.mow.vlaanderen.be.*/
+        /.*wms3.apps.mow.vlaanderen.be.*/,
       ]
     },
     {
       package: 'protractor-console',
-      logLevels: ['debug', 'info', 'warning', 'severe']
+      logLevels: ['debug', 'info'] // bij failure zien we 'warning' en 'severe' toch
     }
   ],
   directConnect: true,
