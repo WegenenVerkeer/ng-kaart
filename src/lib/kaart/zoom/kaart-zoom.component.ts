@@ -31,8 +31,8 @@ export class KaartZoomComponent extends KaartChildComponentBase implements OnIni
       distinctUntilChanged((vi1, vi2) => vi1.zoom === vi2.zoom && vi1.minZoom === vi2.minZoom && vi1.maxZoom === vi2.maxZoom),
       map(vi => vi.zoom)
     );
-    this.canZoomIn$ = this.canZoom(viewinstellingen$, vi => vi.zoom + 1 <= vi.maxZoom);
-    this.canZoomOut$ = this.canZoom(viewinstellingen$, vi => vi.zoom - 1 >= vi.minZoom);
+    this.canZoomIn$ = this.canZoom(viewinstellingen$, vi => vi.zoom < vi.maxZoom);
+    this.canZoomOut$ = this.canZoom(viewinstellingen$, vi => vi.zoom > vi.minZoom);
     this.bindToLifeCycle(this.zoomClickedSubj).subscribe(zoom => this.dispatch(prt.VeranderZoomCmd(zoom, kaartLogOnlyWrapper)));
   }
 
