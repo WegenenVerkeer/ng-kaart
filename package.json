@@ -39,7 +39,7 @@
     "lint": "tslint --project tsconfig.json \"src/**/*.ts\" --exclude \"src/**/*.d.ts\" --exclude \"src/main.ts\" --exclude \"src/test.ts\"",
     "lint-fix": "npm run lint -- --fix",
     "pretest": "npm install; npm prune",
-    "test": "ng test --single-run --code-coverage",
+    "test": "ng test --single-run --code-coverage --browsers=ChromeHeadlessNoSandbox",
     "test-debug": "karma start karma.conf.js --single-run=false --browsers=Chrome --debug",
     "e2e": "env LANG=en_US.UTF-8 ng e2e",
     "e2e-visual": "env LANG=en_US.UTF-8 DISABLE_HEADLESS=true ng e2e",
