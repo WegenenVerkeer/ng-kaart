@@ -29,7 +29,13 @@ module.exports = function (config) {
     logLevel: config.LOG_INFO,
     autoWatch: true,
     browsers: ['Chrome', 'ChromeHeadless', 'ChromeHeadlessNoSandbox'],
-    singleRun: false,
+    customLaunchers: {
+      ChromeHeadlessNoSandbox: {
+        base: 'ChromeHeadless',
+        flags: ['--no-sandbox']
+      }
+    },
+    // singleRun: false,
     coverageIstanbulReporter: {
       reports: ['html', 'lcovonly', 'text-summary'],
       fixWebpackSourcePaths: true,

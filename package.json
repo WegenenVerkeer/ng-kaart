@@ -120,7 +120,7 @@
     "protractor-console": "3.0.0",
     "protractor-console-plugin": "0.1.1",
     "protractor-http-mock": "0.9.2",
-    "protractor-jasmine2-screenshot-reporter": "^0.4.0",
+    "protractor-jasmine2-screenshot-reporter": "0.4.0",
     "replace": "0.3.0",
     "request": "2.81.0",
     "request-promise-native": "1.0.4",
