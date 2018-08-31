@@ -99,8 +99,16 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
      * [1024.0, 512.0, 256.0, 128.0, 64.0, 32.0, 16.0, 8.0, 4.0, 2.0, 1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125]
      *
      * minZoom bepaalt de maxResolution, maxZoom bepaalt de minResolution
-     * maxResolution is exclusief dus bepaald door minZoom - 1 ("maximum resolution (exclusive) below which this layer will be visible")
+     * maxResolution is exclusief dus bepaald door minZoom + een fractie bijgeteld
+     * ("maximum resolution (exclusive) below which this layer will be visible")
+     *
+     * Bvb: voor een minZoom van 2 en een maxZoom van 4 willen we alle resoluties in de range 256.0 tem 64.0.
+     *      dwz een maxResolution van 256.0 en minResolution van 64.0.
+     *      Maar omdat maxResolution exclusief is, dienen we een fractie bij te tellen zodat deze inclusief wordt.
+     *      We zetten de range op 256.0001 tot 64.0
+     *
      */
+
     const vector = new ol.layer.Vector({
       source: vectorlaag.source,
       visible: true,
@@ -108,8 +116,12 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
       minResolution: array
         .index(vectorlaag.maxZoom, kaart.config.defaults.resolutions)
         .getOrElse(kaart.config.defaults.resolutions[kaart.config.defaults.resolutions.length - 1]),
-      maxResolution: array.index(vectorlaag.minZoom - 1, kaart.config.defaults.resolutions).getOrElse(kaart.config.defaults.resolutions[0])
+      maxResolution: array
+        .index(vectorlaag.minZoom, kaart.config.defaults.resolutions)
+        .map(maxResolutie => maxResolutie + 0.0001) // max is exclusive, dus tel een fractie bij zodat deze inclusief wordt
+        .getOrElse(kaart.config.defaults.resolutions[0])
     });
+
     vector.set("selecteerbaar", vectorlaag.selecteerbaar);
     vector.set("hover", vectorlaag.hover);
     return vector;
