@@ -46,13 +46,7 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildComponen
       .map(lambert72ToWgs84)
       .map(formatCoordinate(7))
       .getOrElse("");
-    this.wegLocaties = boodschap.weglocaties
-      .sortBy(locatie =>
-        fromNullable(locatie)
-          .chain(loc => fromNullable(loc.ident8))
-          .getOrElse("")
-      )
-      .toArray();
+    this.wegLocaties = boodschap.weglocaties.toArray();
     this.adressen = boodschap.adres.fold([], adres => [adres]); // Array van 0 of 1 eltn isomorf met Option, maar makkelijker voor Angular
   }
 
