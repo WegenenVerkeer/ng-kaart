@@ -7,8 +7,8 @@
     <button *ngIf="!isDragState" mat-icon-button (click)="toggleGekozen()">
       <mat-icon *ngIf="gekozen && (zichtbaar$ | async)" matTooltip="Verberg laag" [matTooltipPosition]="'right'" [ngClass]="stijlInKiezer">visibility</mat-icon>
       <mat-icon *ngIf="!gekozen && (zichtbaar$ | async)" matTooltip="Toon laag" [matTooltipPosition]="'right'" [ngClass]="stijlInKiezer">visibility_off</mat-icon>
-      <mat-icon *ngIf="gekozen && (onzichtbaar$ | async)" matTooltip="Niet zichtbaar in huidig zoomniveau" [matTooltipPosition]="'right'" [ngClass]="stijlInKiezer">visibility</mat-icon>
-      <mat-icon *ngIf="!gekozen && (onzichtbaar$ | async)" matTooltip="Niet zichtbaar in huidige zoomniveau" [matTooltipPosition]="'right'" [ngClass]="stijlInKiezer">visibility_off</mat-icon>
+      <mat-icon *ngIf="gekozen && (onzichtbaar$ | async)" matTooltip="Niet zichtbaar in huidig zoomniveau" [matTooltipPosition]="'right'" class="onzichtbaar">visibility</mat-icon>
+      <mat-icon *ngIf="!gekozen && (onzichtbaar$ | async)" matTooltip="Niet zichtbaar in huidige zoomniveau" [matTooltipPosition]="'right'" class="onzichtbaar">visibility_off</mat-icon>
     </button>
   </div>
   <div class="laag-naam">
