@@ -89,7 +89,6 @@
     "@angular/compiler-cli": "5.2.11",
     "@angular/language-service": "5.2.11",
     "@angular/platform-browser-dynamic": "5.2.11",
-    "@awv/awv-env": "1.0.15",
     "@types/chance": "0.7.35",
     "@types/googlemaps": "3.30.11",
     "@types/hammerjs": "2.0.35",
