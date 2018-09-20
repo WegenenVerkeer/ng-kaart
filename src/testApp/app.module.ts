@@ -4,7 +4,6 @@ import { HttpModule } from "@angular/http";
 import { BrowserModule } from "@angular/platform-browser";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { RouterModule } from "@angular/router";
-import "@awv/awv-env";
 import { ClickOutsideModule } from "ng4-click-outside";
 
 import { AbbameldaModule } from "../lib/abbamelda";
