@@ -149,11 +149,32 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
         if (!filterWaarde) {
           return waardes;
         } else if (typeof filterWaarde === "string") {
-          return waardes.filter(value =>
-            propertyGetter(value)
-              .toLocaleLowerCase()
-              .includes(filterWaarde.toLocaleLowerCase())
-          );
+          const filterWaardeLowerCase = filterWaarde.toLocaleLowerCase();
+          return waardes
+            .filter(value =>
+              propertyGetter(value)
+                .toLocaleLowerCase()
+                .includes(filterWaardeLowerCase)
+            )
+            .sort((a, b) => {
+              const aValueLowerCase = propertyGetter(a).toLocaleLowerCase();
+              const bValueLowerCase = propertyGetter(b).toLocaleLowerCase();
+
+              const aIndex = aValueLowerCase.indexOf(filterWaardeLowerCase);
+              const bIndex = bValueLowerCase.indexOf(filterWaardeLowerCase);
+
+              // aIndex en bIndex zullen nooit -1 zijn. De filter van hierboven vereist dat xValueLowercase.includes(filterWaardeLowerCase)
+              if (aIndex < bIndex) {
+                // de filterwaarde komt korter vooraan voor in a dan in b
+                return -1;
+              } else if (aIndex > bIndex) {
+                // de filterwaarde komt verder achteraan voor in a dan in b
+                return 1;
+              } else {
+                // alfabetisch sorteren van alle andere gevallen
+                return aValueLowerCase.localeCompare(bValueLowerCase);
+              }
+            });
         } else {
           return waardes.filter(value =>
             propertyGetter(value)
