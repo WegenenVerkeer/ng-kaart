@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone } from "@angular/core";
 import { fromNullable } from "fp-ts/lib/Option";
 
-import { formatCoordinate, lambert72ToWgs84 } from "../../coordinaten/coordinaten.service";
+import { formatCoordinate, lambert72ToWgs84, switchVolgorde } from "../../coordinaten/coordinaten.service";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { Adres, InfoBoodschapKaartBevragenProgress, WegLocatie, withProgress } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
@@ -44,13 +44,14 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildComponen
       .getOrElse("");
     this.coordinaatInformatieWgs84 = fromNullable(boodschap.coordinaat)
       .map(lambert72ToWgs84)
+      .map(switchVolgorde) // andere volgorde weergeven voor wgs84
       .map(formatCoordinate(7))
       .getOrElse("");
     this.wegLocaties = boodschap.weglocaties
       .sortBy(locatie =>
         fromNullable(locatie)
-          .chain(loc => fromNullable(loc.ident8))
-          .getOrElse("")
+          .chain(loc => fromNullable(loc.projectieafstand))
+          .getOrElse(0)
       )
       .toArray();
     this.adressen = boodschap.adres.fold([], adres => [adres]); // Array van 0 of 1 eltn isomorf met Option, maar makkelijker voor Angular

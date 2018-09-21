@@ -80,6 +80,7 @@ export interface WegLocatie {
   readonly hm: number;
   readonly afstand: number;
   readonly wegbeheerder: string;
+  readonly projectieafstand: number;
 }
 
 export interface Adres {
