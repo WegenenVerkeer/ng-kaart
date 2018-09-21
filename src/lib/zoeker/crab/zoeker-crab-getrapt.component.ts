@@ -62,12 +62,36 @@ export class ZoekerCrabGetraptComponent extends GetraptZoekerComponent implement
     this.bindToLifeCycle(cleanedGemeenteNaam$).subscribe((zoekTerm: string) => {
       // We moeten kunnen filteren op (een deel van) de naam van een gemeente of op (een deel van) de niscode
       // of op (een deel van) de postcode.
-      this.gefilterdeGemeenten = this.alleGemeenten.filter(
-        (gemeente: CrabGemeente) =>
-          gemeente.naam.toLocaleLowerCase().includes(zoekTerm) ||
-          gemeente.niscode.toString().includes(zoekTerm) ||
-          gemeente.postcodes.includes(zoekTerm)
-      );
+      this.gefilterdeGemeenten = this.alleGemeenten
+        .filter(
+          (gemeente: CrabGemeente) =>
+            gemeente.naam.toLocaleLowerCase().includes(zoekTerm) ||
+            gemeente.niscode.toString().includes(zoekTerm) ||
+            gemeente.postcodes.includes(zoekTerm)
+        )
+        .sort((a, b) => {
+          function eersteVoorkomenZoekString(gemeente: CrabGemeente): Number {
+            // we zoeken de kleinste index van de zoekTerm in de naam en postcode van de gemeente (niet in de nis: die wordt niet getoond)
+            const indexNaam = gemeente.naam.toLocaleLowerCase().indexOf(zoekTerm);
+            const indexPostcode = gemeente.postcodes.indexOf(zoekTerm);
+            const positiveIndexes = [indexNaam, indexPostcode].filter(index => index !== -1).concat(Infinity);
+            return Math.min(...positiveIndexes);
+          }
+
+          const aIndex = eersteVoorkomenZoekString(a);
+          const bIndex = eersteVoorkomenZoekString(b);
+
+          if (aIndex < bIndex) {
+            // de zoekTerm komt korter vooraan voor in de gemeente of postcode van a
+            return -1;
+          } else if (aIndex > bIndex) {
+            // de filterwaarde komt verder achteraan voor in de gemeente of postcode van a
+            return 1;
+          } else {
+            // alfabetisch sorteren van alle andere gevallen
+            return a.naam.localeCompare(b.naam);
+          }
+        });
       // Iedere keer als er iets verandert, moeten we de volgende controls leegmaken.
       this.maakVeldenLeeg(NIVEAU_VANAFGEMEENTE);
     });
