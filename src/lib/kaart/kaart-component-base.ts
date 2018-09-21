@@ -36,7 +36,7 @@ export abstract class KaartComponentBase implements AfterViewInit, OnInit, OnDes
   }
 
   protected get initialising$(): Observable<void> {
-    return this.initialisingSubj.pipe(takeUntil(this.destroyingSubj));
+    return this.initialisingSubj;
   }
 
   protected get destroying$(): Observable<void> {

@@ -100,6 +100,7 @@ export class KaartComponent extends KaartComponentBase {
         );
       }),
       switchMap(model => this.createMapModelForCommands(model)),
+      takeUntil(this.destroying$),
       shareReplay(1)
     );
 

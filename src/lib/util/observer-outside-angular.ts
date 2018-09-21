@@ -16,10 +16,10 @@ export function observeOutsideAngular<T>(zone: ZoneLike) {
   return (source: Observable<T>) =>
     new Observable<T>(observer => {
       return source.subscribe({
-        next(x) {
+        next(x: T) {
           zone.runOutsideAngular(() => observer.next(x));
         },
-        error(err) {
+        error(err: any) {
           observer.error(err);
         },
         complete() {
