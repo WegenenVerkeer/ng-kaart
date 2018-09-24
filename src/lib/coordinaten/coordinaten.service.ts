@@ -1,3 +1,4 @@
+import { fromPredicate, Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import proj4 from "proj4";
 
@@ -15,6 +16,14 @@ export function switchVolgorde(coordinate: [number, number]): [number, number] {
 
 export const formatCoordinate: (_: number) => (_: [number, number]) => string = decimals => coordinate =>
   `${coordinate[0].toFixed(decimals)}, ${coordinate[1].toFixed(decimals)}`;
+
+export const parseCoordinate: (_: string) => Option<[number, number]> = coordTxt => {
+  const coords = coordTxt
+    .split(",")
+    .map(s => Number(s))
+    .filter(n => !isNaN(n));
+  return fromPredicate((cs: number[]) => cs.length === 2)(coords) as Option<[number, number]>;
+};
 
 ol.proj.setProj4(proj4);
 proj4.defs(
