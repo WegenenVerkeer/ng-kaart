@@ -136,9 +136,9 @@
         <mat-icon *ngSwitchCase="'svg'" class="zoeker-resultaat-icoon" [svgIcon]="resultaat.icoon.name"></mat-icon>
         <mat-icon *ngSwitchCase="'font'" class="zoeker-resultaat-icoon">{{resultaat.icoon.name}}</mat-icon>
       </div>
-      <div class="data-box">
-        <div class="omschrijving" [innerHTML]="resultaat.omschrijving | highlight: zoekVeld.value"></div>
-        <div class="extra" [innerHTML]="resultaat.extraOmschrijving.getOrElse('') | highlight: zoekVeld.value"></div>
+      <div class="zoeker-data-box">
+        <div class="zoeker-omschrijving" [innerHTML]="resultaat.omschrijving | highlight: zoekVeld.value"></div>
+        <div class="zoeker-extra" [innerHTML]="resultaat.extraOmschrijving.getOrElse('') | highlight: zoekVeld.value"></div>
       </div>
     </div>
     <div *ngIf="heeftFout()" class="divider"></div>
