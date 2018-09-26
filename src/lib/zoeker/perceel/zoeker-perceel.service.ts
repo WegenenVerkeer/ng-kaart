@@ -76,6 +76,7 @@ export class PerceelZoekResultaat implements ZoekResultaat {
   readonly icoon: IconDescription;
   readonly kaartInfo: Option<ZoekKaartResultaat>;
   readonly preferredPointZoomLevel = none;
+  readonly extraOmschrijving: Option<string>;
 
   constructor(
     details: PerceelDetails,

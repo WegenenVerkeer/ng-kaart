@@ -132,11 +132,14 @@
   <div *ngIf="toonResultaat && isInklapbaar()" class="divider"></div>
   <div class="zoeker-resultaat-box" *ngIf="toonResultaat" [@enterAnimation]>
     <div *ngFor="let resultaat of alleZoekResultaten" class="zoeker-resultaat" (click)="zoomNaarResultaat(resultaat)">
-      <span [ngSwitch]="resultaat.icoon.type">
+      <div [ngSwitch]="resultaat.icoon.type">
         <mat-icon *ngSwitchCase="'svg'" class="zoeker-resultaat-icoon" [svgIcon]="resultaat.icoon.name"></mat-icon>
         <mat-icon *ngSwitchCase="'font'" class="zoeker-resultaat-icoon">{{resultaat.icoon.name}}</mat-icon>
-      </span>
-      <span [innerHTML]="resultaat.omschrijving | highlight: zoekVeld.value"></span>
+      </div>
+      <div class="data-box">
+        <div class="omschrijving" [innerHTML]="resultaat.omschrijving | highlight: zoekVeld.value"></div>
+        <div class="extra" [innerHTML]="resultaat.extraOmschrijving.getOrElse('') | highlight: zoekVeld.value"></div>
+      </div>
     </div>
     <div *ngIf="heeftFout()" class="divider"></div>
     <div *ngFor="let fout of alleFouten" class="zoeker-resultaat zoeker-fout" [@enterAnimation]>

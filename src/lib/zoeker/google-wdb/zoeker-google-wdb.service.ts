@@ -1,6 +1,6 @@
 import { Inject, Injectable } from "@angular/core";
 import { Http, QueryEncoder, Response, URLSearchParams } from "@angular/http";
-import { Option, some } from "fp-ts/lib/Option";
+import { none, Option, some } from "fp-ts/lib/Option";
 import {} from "googlemaps";
 import { Map } from "immutable";
 import * as ol from "openlayers";
@@ -28,6 +28,7 @@ export class GoogleWdbZoekResultaat implements ZoekResultaat {
   readonly icoon: IconDescription;
   readonly kaartInfo: Option<ZoekKaartResultaat>;
   readonly preferredPointZoomLevel: Option<number>;
+  readonly extraOmschrijving: Option<string>;
 
   constructor(locatie, index: number, zoeker: string, style: ol.style.Style, highlightStyle: ol.style.Style, icoon: IconDescription) {
     this.featureIdSuffix = `${index + 1}`;
@@ -38,7 +39,8 @@ export class GoogleWdbZoekResultaat implements ZoekResultaat {
       style: style,
       highlightStyle: highlightStyle
     });
-    this.omschrijving = locatie.omschrijving;
+    this.omschrijving = locatie.name;
+    this.extraOmschrijving = some(locatie.formatted_address);
     this.bron = locatie.bron;
     this.zoeker = zoeker;
     this.icoon = icoon;

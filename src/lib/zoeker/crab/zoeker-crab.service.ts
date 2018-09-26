@@ -117,6 +117,7 @@ export class CrabZoekResultaat implements ZoekResultaat {
   readonly icoon: IconDescription;
   readonly kaartInfo: Option<ZoekKaartResultaat>;
   readonly preferredPointZoomLevel = some(10);
+  readonly extraOmschrijving: Option<string>;
 
   constructor(
     x_lambert_72: number,

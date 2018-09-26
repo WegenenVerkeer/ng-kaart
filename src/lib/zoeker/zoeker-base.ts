@@ -31,6 +31,7 @@ export interface ZoekResultaat {
   readonly kaartInfo: Option<ZoekKaartResultaat>;
   readonly icoon: IconDescription;
   readonly preferredPointZoomLevel: Option<number>;
+  readonly extraOmschrijving: Option<string>;
 }
 
 export class ZoekResultaten {
