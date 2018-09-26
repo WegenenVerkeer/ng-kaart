@@ -110,8 +110,7 @@ export class CrabHuisnummer implements CrabZoekInput {
 }
 
 export class CrabZoekResultaat implements ZoekResultaat {
-  readonly partialMatch = false;
-  readonly index: number;
+  readonly featureIdSuffix: string;
   readonly omschrijving: string;
   readonly bron: string;
   readonly zoeker: string;
@@ -131,7 +130,7 @@ export class CrabZoekResultaat implements ZoekResultaat {
     highlightStyle: ol.style.Style,
     extent?: ol.Extent
   ) {
-    this.index = index + 1;
+    this.featureIdSuffix = `${index + 1}`;
     const geometry = new ol.geom.Point([x_lambert_72, y_lambert_72]);
     this.kaartInfo = some({
       style: style,

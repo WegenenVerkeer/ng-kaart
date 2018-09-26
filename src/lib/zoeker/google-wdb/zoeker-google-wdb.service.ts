@@ -21,8 +21,7 @@ import {
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE, ZoekerRepresentatieType } from "../zoeker-representatie.service";
 
 export class GoogleWdbZoekResultaat implements ZoekResultaat {
-  readonly partialMatch: boolean;
-  readonly index: number;
+  readonly featureIdSuffix: string;
   readonly omschrijving: string;
   readonly bron: string;
   readonly zoeker: string;
@@ -31,8 +30,7 @@ export class GoogleWdbZoekResultaat implements ZoekResultaat {
   readonly preferredPointZoomLevel: Option<number>;
 
   constructor(locatie, index: number, zoeker: string, style: ol.style.Style, highlightStyle: ol.style.Style, icoon: IconDescription) {
-    this.partialMatch = locatie.partialMatch;
-    this.index = index + 1;
+    this.featureIdSuffix = `${index + 1}`;
     const geometry = new ol.format.GeoJSON(geoJSONOptions).readGeometry(locatie.locatie);
     this.kaartInfo = some({
       geometry: geometry,
