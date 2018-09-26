@@ -193,6 +193,10 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
     return this.eigenschappen(key => this.isBasisVeld(key) && this.isLink(key) && !this.teVerbergenProperties.contains(key));
   }
 
+  heeftGeavanceerdeEigenschappen(): boolean {
+    return this.eigenschappen(key => !this.isBasisVeld(key) && !this.teVerbergenProperties.contains(key)).length > 0;
+  }
+
   geavanceerdeEigenschappen(): string[] {
     return this.eigenschappen(
       key => !this.isBasisVeld(key) && !this.isBoolean(key) && !this.isLink(key) && !this.teVerbergenProperties.contains(key)
