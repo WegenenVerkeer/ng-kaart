@@ -45,15 +45,19 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
   }
 
   get title(): string {
-    return this.laag.titel;
+    return `${this.laag.titel} ${this.laag.bron.verwijderd ? " (verwijderd)" : ""}`;
   }
 
   get gekozen(): boolean {
     return this.laag.magGetoondWorden;
   }
 
+  get verwijderd(): boolean {
+    return this.laag.bron.verwijderd;
+  }
+
   get stijlInKiezer() {
-    return this.laag.stijlInLagenKiezer.getOrElse("");
+    return this.laag.bron.verwijderd ? "verwijderd" : this.laag.stijlInLagenKiezer.getOrElse("");
   }
 
   toggleGekozen() {

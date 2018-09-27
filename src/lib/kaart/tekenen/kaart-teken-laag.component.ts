@@ -168,7 +168,8 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
       minZoom: 2,
       maxZoom: 15,
       offsetveld: none,
-      velden: OrderedMap<string, VeldInfo>()
+      velden: OrderedMap<string, VeldInfo>(),
+      verwijderd: false
     };
   }
 

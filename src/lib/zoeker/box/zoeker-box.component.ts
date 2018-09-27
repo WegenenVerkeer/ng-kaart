@@ -279,7 +279,8 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       minZoom: 2,
       maxZoom: 15,
       offsetveld: none,
-      velden: OrderedMap<string, VeldInfo>()
+      velden: OrderedMap<string, VeldInfo>(),
+      verwijderd: false
     };
   }
 

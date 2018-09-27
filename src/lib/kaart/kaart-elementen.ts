@@ -35,6 +35,7 @@ export interface WmsLaag {
   readonly opacity: Option<number>;
   readonly minZoom: number;
   readonly maxZoom: number;
+  readonly verwijderd: boolean;
 }
 
 export interface WmtsCapaConfig {
@@ -64,6 +65,7 @@ export interface WmtsLaag {
   readonly config: WmtsCapaConfig | WmtsManualConfig;
   readonly minZoom: number;
   readonly maxZoom: number;
+  readonly verwijderd: boolean;
 }
 
 export interface VeldInfo {
@@ -86,6 +88,7 @@ export interface VectorLaag {
   readonly maxZoom: number;
   readonly velden: OrderedMap<string, VeldInfo>;
   readonly offsetveld: Option<string>;
+  readonly verwijderd: boolean;
 }
 
 export interface BlancoLaag {
@@ -94,6 +97,7 @@ export interface BlancoLaag {
   readonly backgroundUrl: string;
   readonly minZoom: number;
   readonly maxZoom: number;
+  readonly verwijderd: boolean;
 }
 
 export interface TekenSettings {
