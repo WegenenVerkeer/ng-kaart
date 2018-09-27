@@ -1,18 +1,9 @@
 import { Component, NgZone } from "@angular/core";
+import * as array from "fp-ts/lib/Array";
+import { Predicate } from "fp-ts/lib/function";
 import { List } from "immutable";
 import * as rx from "rxjs";
-import {
-  combineLatest,
-  debounceTime,
-  distinctUntilChanged,
-  map,
-  mergeAll,
-  shareReplay,
-  startWith,
-  switchMap,
-  switchMapTo,
-  take
-} from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, map, mergeAll, shareReplay, startWith, switchMap, switchMapTo, take } from "rxjs/operators";
 
 import { NosqlFsSource } from "../../source/nosql-fs-source";
 import { observeOnAngular } from "../../util/observe-on-angular";
@@ -39,32 +30,37 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
       lgn
         .map(lg => lg!.bron) // ga naar de onderliggende laag
         .filter(isNoSqlFsLaag) // hou enkel de VectorLagen met een een noSqlFsSource over
-        .map(lg => ((lg as VectorLaag)!.source as NosqlFsSource).loadEvent$)
+        // We moeten de dataloadEvents hier doen starten met een LoadComplete event,
+        // want het kan zijn dat er lagen zijn die al gereed zijn en dus nooit een event zouden uitsturen
+        .map(lg => ((lg as VectorLaag)!.source as NosqlFsSource).loadEvent$.pipe(startWith(LoadComplete as DataLoadEvent)))
         .toList();
 
     const lagenHoog$$: rx.Observable<List<rx.Observable<DataLoadEvent>>> = this.modelChanges.lagenOpGroep
       .get("Voorgrond.Hoog")
-      .pipe(map(noSqlFsLagenDataLoadEvents), startWith(List()));
+      .pipe(map(noSqlFsLagenDataLoadEvents), startWith(List<rx.Observable<DataLoadEvent>>()));
     const lagenLaag$$: rx.Observable<List<rx.Observable<DataLoadEvent>>> = this.modelChanges.lagenOpGroep
       .get("Voorgrond.Laag")
-      .pipe(map(noSqlFsLagenDataLoadEvents), startWith(List()));
+      .pipe(map(noSqlFsLagenDataLoadEvents), startWith(List<rx.Observable<DataLoadEvent>>()));
 
-    const toegevoegdeLagen$$: rx.Observable<List<rx.Observable<DataLoadEvent>>> = lagenHoog$$.pipe(
-      combineLatest(lagenLaag$$, (lgnHg, lgnLg) => lgnHg.concat(lgnLg).toList())
+    const toegevoegdeLagenEvts$$: rx.Observable<List<rx.Observable<DataLoadEvent>>> = rx.combineLatest(
+      lagenHoog$$,
+      lagenLaag$$,
+      (lgnHg, lgnLg) => lgnHg.concat(lgnLg).toList()
     );
 
-    const busy$: rx.Observable<boolean> = toegevoegdeLagen$$.pipe(
-      // We moeten de dataloadEvents hier doen starten met een LoadComplete event,
-      // want het kan zijn dat er lagen zijn die al gereed zijn en dus nooit een event gaan uitsturen,
-      // waardoor de combineLatest ook niks gaat uitsturen.
-      switchMap(lagen => rx.Observable.combineLatest(lagen.map(laag => laag!.pipe(startWith(LoadComplete as DataLoadEvent))).toArray())),
-      // Als het laaste event voor een laag LoadStart of PartReceived is, is de laag nog bezig met laden.
-      map(lastStates => lastStates.filter(state => state.type === "LoadStart" || state.type === "PartReceived").length > 0),
-      startWith(false),
+    // Als het laaste event voor een laag LoadStart of PartReceived is, is de laag nog bezig met laden.
+    const isBusyEvent: Predicate<DataLoadEvent> = dlEvt => dlEvt.type === "LoadStart" || dlEvt.type === "PartReceived";
+    // Als tenminste 1 van de events een busy event is, dan wordt er nog op data gewacht
+    const notWaitingForMoreData: Predicate<DataLoadEvent[]> = dlEvts => array.isEmpty(array.filter(dlEvts, isBusyEvent));
+
+    const busy$: rx.Observable<boolean> = toegevoegdeLagenEvts$$.pipe(
+      switchMap(lagenEvts$ => rx.combineLatest(lagenEvts$.toArray())),
+      map(notWaitingForMoreData), // dus true als alle data binnen is
+      startWith(false), // dus std wel wachten op data
       distinctUntilChanged()
     );
 
-    const mergedDataloadEvent$: rx.Observable<DataLoadEvent> = toegevoegdeLagen$$.pipe(
+    const mergedDataloadEvent$: rx.Observable<DataLoadEvent> = toegevoegdeLagenEvts$$.pipe(
       // subscribe/unsubscribe voor elke nieuwe lijst van toegevoegde lagen
       switchMap(lgn => rx.from(lgn.toArray()).pipe(mergeAll())),
       shareReplay(1, 1000)
@@ -77,10 +73,9 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
     );
 
     // busy$ heeft voorrang op inactive$
-    this.activityClass$ = busy$.pipe(
-      combineLatest(inError$, (busy, error) => (busy ? "active" : error ? "error" : "inactive")),
-      observeOnAngular(this.zone)
-    );
+    this.activityClass$ = rx
+      .combineLatest(busy$, inError$, (busy, error) => (busy ? "active" : error ? "error" : "inactive"))
+      .pipe(observeOnAngular(this.zone));
 
     // We willen het "oog" verbergen wanneer we in de error toestand zijn
     this.progressStyle$ = inError$.pipe(
