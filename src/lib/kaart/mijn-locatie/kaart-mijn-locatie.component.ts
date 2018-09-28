@@ -4,7 +4,7 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import { List, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { combineLatest, map, mapTo, switchMap } from "rxjs/operators";
+import { map, mapTo, switchMap } from "rxjs/operators";
 
 import { flatten } from "../../util/operators";
 import { orElse } from "../../util/option";
@@ -83,8 +83,8 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
       // Omdat de button in een ngIf zit, moeten we op zoek naar de button in ngAfterViewInit
       this.locateBtnQry.changes.pipe(
         switchMap(ql =>
-          this.viewinstellingen$.pipe(
-            combineLatest(zoomdoel$, (zi, doel) => [zi.zoom, doel]), // Blijf op de hoogte van huidige en gewenste zoom
+          rx.combineLatest(this.viewinstellingen$, zoomdoel$, (zi, doel) => [zi.zoom, doel]).pipe(
+            // Blijf op de hoogte van huidige en gewenste zoom
             switchMap(params => rx.fromEvent(ql.first._getHostElement(), "click").pipe(mapTo(params))) // van click naar zoom
           )
         )

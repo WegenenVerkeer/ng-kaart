@@ -3,18 +3,7 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import { List, Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import {
-  combineLatest,
-  debounceTime,
-  distinctUntilChanged,
-  filter,
-  map,
-  mapTo,
-  merge,
-  share,
-  shareReplay,
-  switchMap
-} from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, filter, map, mapTo, share, shareReplay, switchMap } from "rxjs/operators";
 
 import { NosqlFsSource } from "../source/nosql-fs-source";
 import { observableFromOlEvents } from "../util/ol-observable";
@@ -111,7 +100,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     }))
   );
 
-  const geselecteerdeFeatures$ = toegevoegdeGeselecteerdeFeatures$.pipe(merge(verwijderdeGeselecteerdeFeatures$), shareReplay(1));
+  const geselecteerdeFeatures$ = rx.merge(toegevoegdeGeselecteerdeFeatures$, verwijderdeGeselecteerdeFeatures$).pipe(shareReplay(1));
 
   const hoverFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.hoverFeatures, "add", "remove").pipe(
     map(evt => ({
@@ -170,7 +159,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
       })
     );
 
-  const zichtbareFeatures$ = viewinstellingen$.pipe(combineLatest(vectorlagen$, featuresChanged$, collectFeatures));
+  const zichtbareFeatures$ = rx.combineLatest(viewinstellingen$, vectorlagen$, featuresChanged$, collectFeatures);
 
   const kaartKlikLocatie$ = observableFromOlEvents(model.map, "click").pipe(
     filter((event: ol.MapBrowserEvent) => {

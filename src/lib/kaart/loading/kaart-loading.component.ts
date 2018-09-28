@@ -1,6 +1,6 @@
 import { Component, NgZone } from "@angular/core";
 import * as array from "fp-ts/lib/Array";
-import { Predicate } from "fp-ts/lib/function";
+import { not, Predicate } from "fp-ts/lib/function";
 import { List } from "immutable";
 import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, map, mergeAll, shareReplay, startWith, switchMap, switchMapTo, take } from "rxjs/operators";
@@ -31,7 +31,7 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
         .map(lg => lg!.bron) // ga naar de onderliggende laag
         .filter(isNoSqlFsLaag) // hou enkel de VectorLagen met een een noSqlFsSource over
         // We moeten de dataloadEvents hier doen starten met een LoadComplete event,
-        // want het kan zijn dat er lagen zijn die al gereed zijn en dus nooit een event zouden uitsturen
+        // want het kan zijn dat er lagen zijn die al gereed zijn en dus nooit nog een event uitsturen
         .map(lg => ((lg as VectorLaag)!.source as NosqlFsSource).loadEvent$.pipe(startWith(LoadComplete as DataLoadEvent)))
         .toList();
 
@@ -48,15 +48,15 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
       (lgnHg, lgnLg) => lgnHg.concat(lgnLg).toList()
     );
 
-    // Als het laaste event voor een laag LoadStart of PartReceived is, is de laag nog bezig met laden.
+    // Als het laatste event voor een laag LoadStart of PartReceived is, is de laag nog bezig met laden.
     const isBusyEvent: Predicate<DataLoadEvent> = dlEvt => dlEvt.type === "LoadStart" || dlEvt.type === "PartReceived";
-    // Als tenminste 1 van de events een busy event is, dan wordt er nog op data gewacht
-    const notWaitingForMoreData: Predicate<DataLoadEvent[]> = dlEvts => array.isEmpty(array.filter(dlEvts, isBusyEvent));
+    // Als tenminste 1 (= niet 0) van de events een busy event is, dan wordt er nog op data gewacht
+    const waitingForMoreData: Predicate<DataLoadEvent[]> = not(dlEvts => array.isEmpty(array.filter(dlEvts, isBusyEvent)));
 
     const busy$: rx.Observable<boolean> = toegevoegdeLagenEvts$$.pipe(
       switchMap(lagenEvts$ => rx.combineLatest(lagenEvts$.toArray())),
-      map(notWaitingForMoreData), // dus true als alle data binnen is
-      startWith(false), // dus std wel wachten op data
+      map(waitingForMoreData), // dus true als nog niet alle data binnen is
+      startWith(false), // dus std alles ok.
       distinctUntilChanged()
     );
 

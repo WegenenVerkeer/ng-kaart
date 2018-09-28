@@ -2,7 +2,7 @@ import { Component, ElementRef, Inject, Input, NgZone, ViewChild, ViewEncapsulat
 import { Set } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { debounceTime, delay, filter, last, map, merge, scan, shareReplay, startWith, switchMap, takeUntil, tap } from "rxjs/operators";
+import { debounceTime, delay, filter, last, map, scan, shareReplay, startWith, switchMap, takeUntil, tap } from "rxjs/operators";
 
 import { asap } from "../util/asap";
 import { observableFromDomMutations } from "../util/mutation-observable";
@@ -152,8 +152,7 @@ export class KaartComponent extends KaartComponentBase {
       asap(() => this.msgSubj.next(msg));
     };
 
-    return this.kaartCmd$.pipe(
-      merge(this.internalCmdDispatcher.commands$),
+    return rx.merge(this.kaartCmd$, this.internalCmdDispatcher.commands$).pipe(
       tap(c => kaartLogger.debug("kaart command", c)),
       takeUntil(this.destroying$.pipe(delay(100))), // Een klein beetje extra tijd voor de cleanup commands
       observeOutsideAngular(this.zone),

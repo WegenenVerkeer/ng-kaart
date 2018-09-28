@@ -1,7 +1,7 @@
 import { Component, NgZone, OnInit } from "@angular/core";
 import { Predicate } from "fp-ts/lib/function";
 import * as rx from "rxjs";
-import { combineLatest, debounceTime, delay, distinctUntilChanged, map, mapTo, merge } from "rxjs/operators";
+import { delay, distinctUntilChanged, map, mapTo } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { kaartLogOnlyWrapper } from "../kaart-internal-messages";
@@ -40,15 +40,14 @@ export class KaartZoomComponent extends KaartChildComponentBase implements OnIni
   }
 
   private canZoom(viewinstellingen$: rx.Observable<prt.Viewinstellingen>, cmp: Predicate<prt.Viewinstellingen>) {
-    return this.zoomClickedSubj.pipe(
-      // onmiddelijk na de klik wordt de button disabled
-      mapTo(false),
+    return rx.merge(
+      this.zoomClickedSubj.pipe(mapTo(false)), // onmiddelijk na de klik wordt de button disabled
       // om dan enabled te worden wanneer de zoom aangepast is als we nog niet te ver gezoomd hebben tenminste
-      merge(viewinstellingen$.pipe(map(cmp))),
+      viewinstellingen$.pipe(map(cmp)),
       // Er is een onwaarschijnlijke raceconditie tussen een onwaarschijnlijke 2de klik en het disablen.
       // Het zou het kunnen dat de 2de klik komt na het opvangen van het nieuwe zoomniveau. In dat geval zou de knop disabled blijven.
       // Daarom kijken we na een tijdje nog eens naar de zoom.
-      merge(this.zoomClickedSubj.pipe(delay(750), combineLatest(viewinstellingen$, (_, vi) => cmp(vi))))
+      rx.combineLatest(viewinstellingen$, this.zoomClickedSubj.pipe(delay(750)), cmp)
     );
   }
 }

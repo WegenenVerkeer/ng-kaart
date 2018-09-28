@@ -7,19 +7,7 @@ import { Tuple } from "fp-ts/lib/Tuple";
 import { List, Map, OrderedMap, Set } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import {
-  catchError,
-  combineLatest,
-  debounceTime,
-  distinctUntilChanged,
-  filter,
-  map,
-  scan,
-  shareReplay,
-  startWith,
-  switchMap,
-  tap
-} from "rxjs/operators";
+import { catchError, debounceTime, distinctUntilChanged, filter, map, scan, shareReplay, startWith, switchMap, tap } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../../kaart/kaart-child-component-base";
 import * as ke from "../../kaart/kaart-elementen";
@@ -145,44 +133,46 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
   ): rx.Observable<T[]> {
     // Filter een array van waardes met de waarde van een filter (control), de filter kan een string of een object zijn.
     function filterMetWaarde(): Pipeable<T[], T[]> {
-      return combineLatest(huidige.valueChanges.pipe(startWith<string | T>(""), distinctUntilChanged()), (waardes, filterWaarde) => {
-        if (!filterWaarde) {
-          return waardes;
-        } else if (typeof filterWaarde === "string") {
-          const filterWaardeLowerCase = filterWaarde.toLocaleLowerCase();
-          return waardes
-            .filter(value =>
+      return (ts$: rx.Observable<T[]>) =>
+        rx.combineLatest(ts$, huidige.valueChanges.pipe(startWith<string | T>(""), distinctUntilChanged()), (waardes, filterWaarde) => {
+          if (!filterWaarde) {
+            return waardes;
+          } else if (typeof filterWaarde === "string") {
+            const filterWaardeLowerCase = filterWaarde.toLocaleLowerCase();
+            return waardes
+              .filter(value =>
+                propertyGetter(value)
+                  .toLocaleLowerCase()
+                  .includes(filterWaardeLowerCase)
+              )
+              .sort((a, b) => {
+                const aValueLowerCase = propertyGetter(a).toLocaleLowerCase();
+                const bValueLowerCase = propertyGetter(b).toLocaleLowerCase();
+
+                const aIndex = aValueLowerCase.indexOf(filterWaardeLowerCase);
+                const bIndex = bValueLowerCase.indexOf(filterWaardeLowerCase);
+
+                // aIndex en bIndex zullen nooit -1 zijn.
+                // De filter van hierboven vereist dat xValueLowercase.includes(filterWaardeLowerCase)
+                if (aIndex < bIndex) {
+                  // de filterwaarde komt korter vooraan voor in a dan in b
+                  return -1;
+                } else if (aIndex > bIndex) {
+                  // de filterwaarde komt verder achteraan voor in a dan in b
+                  return 1;
+                } else {
+                  // alfabetisch sorteren van alle andere gevallen
+                  return aValueLowerCase.localeCompare(bValueLowerCase);
+                }
+              });
+          } else {
+            return waardes.filter(value =>
               propertyGetter(value)
                 .toLocaleLowerCase()
-                .includes(filterWaardeLowerCase)
-            )
-            .sort((a, b) => {
-              const aValueLowerCase = propertyGetter(a).toLocaleLowerCase();
-              const bValueLowerCase = propertyGetter(b).toLocaleLowerCase();
-
-              const aIndex = aValueLowerCase.indexOf(filterWaardeLowerCase);
-              const bIndex = bValueLowerCase.indexOf(filterWaardeLowerCase);
-
-              // aIndex en bIndex zullen nooit -1 zijn. De filter van hierboven vereist dat xValueLowercase.includes(filterWaardeLowerCase)
-              if (aIndex < bIndex) {
-                // de filterwaarde komt korter vooraan voor in a dan in b
-                return -1;
-              } else if (aIndex > bIndex) {
-                // de filterwaarde komt verder achteraan voor in a dan in b
-                return 1;
-              } else {
-                // alfabetisch sorteren van alle andere gevallen
-                return aValueLowerCase.localeCompare(bValueLowerCase);
-              }
-            });
-        } else {
-          return waardes.filter(value =>
-            propertyGetter(value)
-              .toLocaleLowerCase()
-              .includes(propertyGetter(filterWaarde).toLocaleLowerCase())
-          );
-        }
-      });
+                .includes(propertyGetter(filterWaarde).toLocaleLowerCase())
+            );
+          }
+        });
     }
 
     return vorige.valueChanges.pipe(distinctUntilChanged(), this.safeProvider(provider), filterMetWaarde(), shareReplay(1));

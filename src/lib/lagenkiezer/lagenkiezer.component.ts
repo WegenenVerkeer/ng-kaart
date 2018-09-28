@@ -5,7 +5,7 @@ import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as rx from "rxjs";
-import { combineLatest, distinctUntilChanged, filter, map, shareReplay, startWith } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, shareReplay, startWith, switchMap } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
@@ -13,6 +13,7 @@ import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import { LegendeItem } from "../kaart/kaart-legende";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
+import { observeOnAngular } from "../util/observe-on-angular";
 
 export const LagenUiSelector = "Lagenkiezer";
 
@@ -94,18 +95,16 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
     this.lagenHoog$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Hoog");
     this.lagenLaag$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Laag");
     const achtergrondLagen$ = this.modelChanges.lagenOpGroep.get("Achtergrond");
-    this.lagenMetLegende$ = this.lagenHoog$.pipe(
-      combineLatest(this.lagenLaag$, achtergrondLagen$, (lagenHoog, lagenLaag, achtergrondLagen) =>
-        lagenHoog.concat(lagenLaag, achtergrondLagen)
-      ),
-      combineLatest(zoom$, (lagen, zoom) => lagen.filter(laag => isZichtbaar(laag!, zoom) && laag!.magGetoondWorden)),
-      map(lagen => lagen.filter(laag => laag!.legende.isSome()).toList()),
-      shareReplay(1)
-    );
+    this.lagenMetLegende$ = rx
+      .combineLatest(this.lagenHoog$, this.lagenLaag$, achtergrondLagen$, zoom$, (lagenHoog, lagenLaag, achtergrondLagen, zoom) => {
+        const lagen = lagenHoog.concat(lagenLaag, achtergrondLagen);
+        return lagen.filter(laag => isZichtbaar(laag!, zoom) && laag!.magGetoondWorden && laag!.legende.isSome()).toList();
+      })
+      .pipe(shareReplay(1));
     const lagenHoogLeeg$ = this.lagenHoog$.pipe(map(l => l.isEmpty()));
     const lagenLaagLeeg$ = this.lagenLaag$.pipe(map(l => l.isEmpty()));
-    this.heeftDivider$ = lagenHoogLeeg$.pipe(combineLatest(lagenLaagLeeg$, (h, l) => !h && !l), shareReplay(1));
-    this.geenLagen$ = lagenHoogLeeg$.pipe(combineLatest(lagenLaagLeeg$, (h, l) => h && l), shareReplay(1));
+    this.heeftDivider$ = rx.combineLatest(lagenHoogLeeg$, lagenLaagLeeg$, (h, l) => !h && !l).pipe(shareReplay(1));
+    this.geenLagen$ = rx.combineLatest(lagenHoogLeeg$, lagenLaagLeeg$, (h, l) => h && l).pipe(shareReplay(1));
     this.geenLegende$ = this.lagenMetLegende$.pipe(map(l => l.isEmpty()), shareReplay(1));
     this.opties$ = this.modelChanges.uiElementOpties$.pipe(
       filter(o => o.naam === LagenUiSelector),
@@ -117,29 +116,14 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
 
   ngOnInit() {
     super.ngOnInit();
-    // Zorg dat de lijst openklapt als er een laag bijkomt of weggaat tenzij de optie initieelDichtgeklapt op 'true' staat.
-    this.opties$
-      .pipe(
-        map(optie => {
-          if (optie.initieelDichtgeklapt) {
-            this.dichtgeklapt = true;
-          } else {
-            this.dichtgeklapt = false;
-            // TODO hier gebeuren onnoemelijk vieze dingen: zetten van member variabelen in map + susbcribe
-            // Dit mag ofwel enkel in de subscribe of moet volledig via observables gaan.
-            this.bindToLifeCycle(
-              this.lagenHoog$.pipe(
-                combineLatest(this.lagenLaag$, (lagenHoog, lagenLaag) => lagenHoog.concat(lagenLaag).map(laag => laag!.titel)),
-                distinctUntilChanged()
-              )
-            ).subscribe(_ => {
-              this.dichtgeklapt = false;
-              this.cdr.detectChanges();
-            });
-          }
-        })
+    // Zorg dat de lijst open klapt als er een laag bijkomt of weg gaat tenzij de optie initieelDichtgeklapt op 'true' staat.
+    const initieelDichtgeklapt$ = this.opties$.pipe(map(opties => opties.initieelDichtgeklapt), distinctUntilChanged());
+    this.bindToLifeCycle(
+      initieelDichtgeklapt$.pipe(
+        switchMap(initieelDichtgeklapt => (initieelDichtgeklapt ? rx.empty() : rx.merge(this.lagenHoog$, this.lagenLaag$))),
+        observeOnAngular(this.zone)
       )
-      .subscribe();
+    ).subscribe(() => (this.dichtgeklapt = false));
   }
 
   get isOpengeklapt(): boolean {

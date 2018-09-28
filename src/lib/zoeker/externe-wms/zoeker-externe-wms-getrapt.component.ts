@@ -2,7 +2,7 @@ import { Component, EventEmitter, NgZone, OnDestroy, OnInit, Output } from "@ang
 import { FormControl } from "@angular/forms";
 import { List, Set } from "immutable";
 import * as rx from "rxjs";
-import { distinctUntilChanged, filter, map, merge, switchMap } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, switchMap } from "rxjs/operators";
 
 import { KaartComponent } from "../../kaart/kaart.component";
 import { GetraptZoekerComponent, ZoekerBoxComponent } from "../box/zoeker-box.component";
