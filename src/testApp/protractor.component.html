@@ -1,4 +1,4 @@
-<awv-kaart-classic id="qa-protractor">
+<awv-kaart-classic id="qa-protractor" [hoogte]=900>
   <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
   <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'">
     <awv-legende-lijn-item [beschrijving]="'weg 1'" [kleur]="'blue'" [achtergrondKleur]="'red'"></awv-legende-lijn-item>
@@ -8,7 +8,15 @@
     [extent]="[ 9928, 66928, 272072, 329072 ]" [origin]="[ 9928, 329072 ]" [matrixSet]="'BPL72VL'" [matrixIds]="[ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15' ]"></awv-kaart-wmts-laag>
   <awv-kaart-ortho-laag [titel]="'Orthofoto\'s'" [laagNaam]="'ortho'"></awv-kaart-ortho-laag>
   <awv-kaart-blanco-laag [titel]="'Leeg'"></awv-kaart-blanco-laag>
+  <awv-kaart-features-laag [titel]="'Installatie (pin)'" [features]="installatie" [style]="pinIcon" [minZoom]="3" [zichtbaar]="true">
+    <awv-legende-bolletje-item [beschrijving]="'Pin'" [kleur]="'orange'"></awv-legende-bolletje-item>
+  </awv-kaart-features-laag>
+  <awv-kaart-features-laag [titel]="'Installatie (plane)'" [features]="installatie" [style]="pinIcon2" [minZoom]="4" [zichtbaar]="true">
+    <awv-legende-bolletje-item [beschrijving]="'Vliegtuig'" [kleur]="'green'"></awv-legende-bolletje-item>
+  </awv-kaart-features-laag>
   <awv-kaart-knop-achtergrondlaag-kiezer></awv-kaart-knop-achtergrondlaag-kiezer>
   <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+  <awv-kaart-lagenkiezer [headerTitel]="'Mijn legende en lagen'" [initieelDichtgeklapt]="true" [verwijderbareLagen]="true"
+    [verplaatsbareLagen]="true" [toonLegende]="true"></awv-kaart-lagenkiezer>
   <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
 </awv-kaart-classic>
