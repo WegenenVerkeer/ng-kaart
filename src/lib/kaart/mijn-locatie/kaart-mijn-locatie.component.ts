@@ -149,7 +149,8 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
       minZoom: 2,
       maxZoom: 15,
       velden: OrderedMap<string, VeldInfo>(),
-      offsetveld: none
+      offsetveld: none,
+      verwijderd: false
     };
   }
 }
