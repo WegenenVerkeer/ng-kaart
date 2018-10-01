@@ -46,7 +46,8 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
       opacity: fromNullable(this.opacity),
       backgroundUrl: this.backgroundUrl(List(this.urls), this.laagNaam),
       minZoom: this.minZoom,
-      maxZoom: this.maxZoom
+      maxZoom: this.maxZoom,
+      verwijderd: false
     };
   }
 

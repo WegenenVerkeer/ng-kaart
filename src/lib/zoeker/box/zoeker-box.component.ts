@@ -279,7 +279,8 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       minZoom: 2,
       maxZoom: 15,
       offsetveld: none,
-      velden: OrderedMap<string, VeldInfo>()
+      velden: OrderedMap<string, VeldInfo>(),
+      verwijderd: false
     };
   }
 
@@ -313,7 +314,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
         geometry: geometry,
         name: resultaat.omschrijving
       });
-      feature.setId(resultaat.bron + "_" + resultaat.index);
+      feature.setId(resultaat.bron + "_" + resultaat.featureIdSuffix);
       resultaat.kaartInfo.map(kaartInfo => feature.setStyle(kaartInfo.style));
       return feature;
     }

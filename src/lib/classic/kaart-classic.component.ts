@@ -139,8 +139,8 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   ngOnChanges(changes: SimpleChanges) {
     const dispatch: (cmd: prt.Command<TypedRecord>) => void = cmd => this.dispatch(cmd);
     forChangedValue(changes, "zoom", pipe(zoom => prt.VeranderZoomCmd(zoom, logOnlyWrapper), dispatch));
-    forChangedValue(changes, "middelpunt", pipe(prt.VeranderMiddelpuntCmd, dispatch), coordinateIsDifferent);
-    forChangedValue(changes, "extent", pipe(prt.VeranderExtentCmd, dispatch), extentIsDifferent);
+    forChangedValue(changes, "middelpunt", pipe(prt.VeranderMiddelpuntCmd, dispatch));
+    forChangedValue(changes, "extent", pipe(prt.VeranderExtentCmd, dispatch));
     forChangedValue(changes, "breedte", pipe(breedte => [breedte, this.hoogte], prt.VeranderViewportCmd, dispatch));
     forChangedValue(changes, "hoogte", pipe(hoogte => [this.breedte, hoogte], prt.VeranderViewportCmd, dispatch));
     forChangedValue(changes, "mijnLocatieZoom", pipe(option.fromNullable, prt.ZetMijnLocatieZoomCmd, dispatch));
@@ -191,28 +191,6 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
     this.dispatch(prt.VerbergInfoBoodschapCmd(id));
   }
 }
-
-const coordinateIsEqual = (coor1: ol.Coordinate, coor2: ol.Coordinate) => {
-  if (!coor1 && !coor2) {
-    return true;
-  }
-  if (!coor1 || !coor2) {
-    return false;
-  }
-  return coor1[0] === coor2[0] && coor1[1] === coor2[1];
-};
-const coordinateIsDifferent = (coor1: ol.Coordinate, coor2: ol.Coordinate) => !coordinateIsEqual(coor1, coor2);
-
-const extentIsEqual = (ext1: ol.Extent, ext2: ol.Extent) => {
-  if (!ext1 && !ext2) {
-    return true;
-  }
-  if (!ext1 || !ext2) {
-    return false;
-  }
-  return ext1[0] === ext2[0] && ext1[1] === ext2[1] && ext1[2] === ext2[2] && ext1[3] === ext2[3];
-};
-const extentIsDifferent = (ext1: ol.Extent, ext2: ol.Extent) => !extentIsEqual(ext1, ext2);
 
 /**
  * Een specialisatie van de subscriptionCmdOperator die specifiek werkt met KaartClassicMessages.

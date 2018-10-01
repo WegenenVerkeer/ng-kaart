@@ -94,7 +94,8 @@
                          [kaartLinksBreedte]="getKaartLinksBreedte()"
                          (zoomChange)="onZoom($event)"
                          (middelpuntChange)="onMiddelpunt($event)"
-                         (extentChange)="onExtent($event)">
+                         (extentChange)="onExtent($event)"
+                         [middelpunt]="configuratorMiddelpunt">
         <!-- algemeen -->
         <awv-kaart-standaard-interacties *ngIf="isOptieActief('standaardinteracties')" [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
         <!-- custom vaste header in linker paneel -->
@@ -196,6 +197,11 @@
           <button (click)="veranderVoorwaarden()">Andere voorwaarden</button>
         </div>
       </div>
+    </div>
+    <div class="sub-content inputs">
+      <form>
+        Center coordinaat (lambert): <input #center type="text"> <button (click)="onZetCenterManueel(center.value)">Zet</button>
+      </form>
     </div>
   </awv-test-sectie>
 

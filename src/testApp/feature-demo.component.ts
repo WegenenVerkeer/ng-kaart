@@ -11,10 +11,11 @@ import { KaartClassicComponent } from "../lib/classic/kaart-classic.component";
 import { classicLogger } from "../lib/classic/log";
 import { kaartLogOnlyWrapper } from "../lib/kaart/kaart-internal-messages";
 import * as prt from "../lib/kaart/kaart-protocol";
-import { definitieToStyle, kaartLogger } from "../lib/public_api";
+import { definitieToStyle, kaartLogger, parseCoordinate } from "../lib/public_api";
 import { AWV0StyleFunctionDescription, definitieToStyleFunction } from "../lib/stijl";
 import { offsetStyleFunction } from "../lib/stijl/offset-stijl-function";
 import { verkeersbordenStyleFunction } from "../lib/stijl/verkeersborden-stijl-function";
+import { forEach } from "../lib/util/option";
 import { join } from "../lib/util/validation";
 import { ZoekerGoogleWdbService } from "../lib/zoeker";
 
@@ -198,6 +199,8 @@ export class FeatureDemoComponent {
     voorwaarden: { value: true, label: "Voorwaarden disclaimer" },
     copyright: { value: true, label: "Copyright boodschap" }
   };
+
+  configuratorMiddelpunt = [130000, 193000];
 
   // Dit werkt alleen als apigateway bereikbaar is. Zie CORS waarschuwing in README.
   readonly districtSource: ol.source.Vector = new ol.source.Vector({
@@ -413,5 +416,9 @@ export class FeatureDemoComponent {
   scrollTo(idName: string): void {
     const element = document.getElementById(idName);
     element.scrollIntoView({ behavior: "smooth" });
+  }
+
+  onZetCenterManueel(coordTxt: string): void {
+    forEach(parseCoordinate(coordTxt), (coords: [number, number]) => (this.configuratorMiddelpunt = coords));
   }
 }

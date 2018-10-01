@@ -72,11 +72,13 @@
   </div>
 
   <div class="expand-line">
-    <button mat-button class="mat-expand-button" (click)="setAlleVeldenZichtbaar(true)" *ngIf="!alleVeldenZichtbaar()">
+    <button mat-button class="mat-expand-button" (click)="setAlleVeldenZichtbaar(true)"
+            *ngIf="!alleVeldenZichtbaar() && heeftGeavanceerdeEigenschappen()">
       <mat-icon>expand_more</mat-icon>
     </button>
 
-    <button mat-button class="mat-expand-button" (click)="setAlleVeldenZichtbaar(false)" *ngIf="alleVeldenZichtbaar()">
+    <button mat-button class="mat-expand-button" (click)="setAlleVeldenZichtbaar(false)"
+            *ngIf="alleVeldenZichtbaar() && heeftGeavanceerdeEigenschappen()">
       <mat-icon>expand_less</mat-icon>
     </button>
   </div>

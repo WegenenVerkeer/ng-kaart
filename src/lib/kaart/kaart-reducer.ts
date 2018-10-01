@@ -342,7 +342,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             }))
             .getOrElse(toegevoegdeLaagCommon);
           layer.set("titel", titel);
-          layer.setVisible(cmnd.magGetoondWorden); // achtergrondlagen expliciet zichtbaar maken!
+          layer.setVisible(cmnd.magGetoondWorden && !cmnd.laag.verwijderd); // achtergrondlagen expliciet zichtbaar maken!
           // met positie hoeven we nog geen rekening te houden
           forEach(ke.asToegevoegdeVectorLaag(toegevoegdeLaag), pasVectorLaagStijlToe);
           zetLayerIndex(layer, groepPositie, groep);

@@ -10,6 +10,10 @@
       color: #B6B6B6;
     }
 
+    .verwijderd {
+      color: #D32F2F;
+    }
+
     &.onzichtbaar .laag-naam {
       color: $kaart-secondary-text-color;
       font-style: italic;
