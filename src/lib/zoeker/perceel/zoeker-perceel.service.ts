@@ -69,14 +69,14 @@ export interface PerceelZoekInput extends ZoekInput {
 }
 
 export class PerceelZoekResultaat implements ZoekResultaat {
-  readonly partialMatch = false;
-  readonly index: number;
+  readonly featureIdSuffix: string;
   readonly omschrijving: string;
   readonly bron: string;
   readonly zoeker: string;
   readonly icoon: IconDescription;
   readonly kaartInfo: Option<ZoekKaartResultaat>;
   readonly preferredPointZoomLevel = none;
+  readonly extraOmschrijving: Option<string>;
 
   constructor(
     details: PerceelDetails,
@@ -86,7 +86,7 @@ export class PerceelZoekResultaat implements ZoekResultaat {
     style: ol.style.Style,
     highlightStyle: ol.style.Style
   ) {
-    this.index = index + 1;
+    this.featureIdSuffix = `${index + 1}`;
     const geometry = new ol.format.GeoJSON(geoJSONOptions).readGeometry(details.shape);
     this.kaartInfo = some({
       geometry: geometry,

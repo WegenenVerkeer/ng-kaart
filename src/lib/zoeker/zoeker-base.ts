@@ -24,14 +24,14 @@ export interface ZoekKaartResultaat {
 }
 
 export interface ZoekResultaat {
-  readonly partialMatch: boolean;
-  readonly index: number;
+  readonly featureIdSuffix: string;
   readonly omschrijving: string;
   readonly bron: string;
   readonly zoeker: string;
   readonly kaartInfo: Option<ZoekKaartResultaat>;
   readonly icoon: IconDescription;
   readonly preferredPointZoomLevel: Option<number>;
+  readonly extraOmschrijving: Option<string>;
 }
 
 export class ZoekResultaten {

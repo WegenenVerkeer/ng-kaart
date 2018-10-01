@@ -314,7 +314,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
         geometry: geometry,
         name: resultaat.omschrijving
       });
-      feature.setId(resultaat.bron + "_" + resultaat.index);
+      feature.setId(resultaat.bron + "_" + resultaat.featureIdSuffix);
       resultaat.kaartInfo.map(kaartInfo => feature.setStyle(kaartInfo.style));
       return feature;
     }
