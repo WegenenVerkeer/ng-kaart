@@ -16,7 +16,7 @@ export const asPromise = <A>(a: promise.Promise<A>) =>
     a.then(resolve).catch(err => {
       // console.log(">>>>", err instanceof Error, typeof err);
       if (err instanceof Error) {
-        console.log(">>>>", err.message);
+        console.error(">>>>", err.message);
         if (err.message.includes("No element found using locator:")) {
           // we stoppen de error hier. Het Protractor gedrag om te stoppen wanneer een element niet bestaat is niet wenselijk.
           return;
