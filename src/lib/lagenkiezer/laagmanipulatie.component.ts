@@ -45,7 +45,7 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
   }
 
   get title(): string {
-    return `${this.laag.titel} ${this.laag.bron.verwijderd ? " (verwijderd)" : ""}`;
+    return this.laag.titel;
   }
 
   get gekozen(): boolean {
