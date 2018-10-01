@@ -25,3 +25,5 @@ export const asPromise = <A>(a: promise.Promise<A>) =>
       reject(err);
     })
   );
+
+export const asLazyPromise = <A>(a: promise.Promise<A>): LazyPromise<A> => () => asPromise(a);
