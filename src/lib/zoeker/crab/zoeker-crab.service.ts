@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { Inject, Injectable } from "@angular/core";
-import { Option, some } from "fp-ts/lib/Option";
+import { none, Option, some } from "fp-ts/lib/Option";
 import { Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
@@ -117,7 +117,7 @@ export class CrabZoekResultaat implements ZoekResultaat {
   readonly icoon: IconDescription;
   readonly kaartInfo: Option<ZoekKaartResultaat>;
   readonly preferredPointZoomLevel = some(10);
-  readonly extraOmschrijving: Option<string>;
+  readonly extraOmschrijving: Option<string> = none;
 
   constructor(
     x_lambert_72: number,
