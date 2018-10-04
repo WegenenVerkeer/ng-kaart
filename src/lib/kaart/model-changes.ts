@@ -18,7 +18,7 @@ import {
 
 import { NosqlFsSource } from "../source/nosql-fs-source";
 import { observableFromOlEvents } from "../util/ol-observable";
-import { ZoekerBase } from "../zoeker/zoeker-base";
+import { Zoeker } from "../zoeker/zoeker";
 
 import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
@@ -29,8 +29,8 @@ import { KaartWithInfo } from "./kaart-with-info";
 import { GeselecteerdeFeatures, HoverFeature } from "./kaart-with-info-model";
 
 export interface UiElementSelectie {
-  naam: string;
-  aan: boolean;
+  readonly naam: string;
+  readonly aan: boolean;
 }
 
 /**
@@ -48,7 +48,7 @@ export interface ModelChanger {
   readonly laagVerwijderdSubj: rx.Subject<ke.ToegevoegdeLaag>;
   readonly mijnLocatieZoomDoelSubj: rx.Subject<Option<number>>;
   readonly actieveModusSubj: rx.Subject<Option<string>>;
-  readonly zoekerServicesSubj: rx.Subject<List<ZoekerBase>>;
+  readonly zoekerServicesSubj: rx.Subject<Zoeker[]>;
   readonly laagLocationInfoServicesOpTitelSubj: rx.BehaviorSubject<Map<string, LaagLocationInfoService>>;
 }
 
@@ -66,7 +66,7 @@ export const ModelChanger: () => ModelChanger = () => ({
   laagVerwijderdSubj: new rx.Subject<ke.ToegevoegdeLaag>(),
   mijnLocatieZoomDoelSubj: new rx.BehaviorSubject<Option<number>>(none),
   actieveModusSubj: new rx.BehaviorSubject(none),
-  zoekerServicesSubj: new rx.BehaviorSubject(List()),
+  zoekerServicesSubj: new rx.BehaviorSubject([]),
   laagLocationInfoServicesOpTitelSubj: new rx.BehaviorSubject(Map())
 });
 
@@ -82,7 +82,7 @@ export interface ModelChanges {
   readonly kaartKlikLocatie$: rx.Observable<ol.Coordinate>;
   readonly mijnLocatieZoomDoel$: rx.Observable<Option<number>>;
   readonly actieveModus$: rx.Observable<Option<string>>;
-  readonly zoekerServices$: rx.Observable<List<ZoekerBase>>;
+  readonly zoekerServices$: rx.Observable<Zoeker[]>;
   readonly laagLocationInfoServicesOpTitel$: rx.Observable<Map<string, LaagLocationInfoService>>;
 }
 

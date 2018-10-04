@@ -5,11 +5,20 @@ import { Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { OperatorFunction } from "rxjs/interfaces";
-import { map, mergeAll, mergeMap, reduce, shareReplay } from "rxjs/operators";
+import { catchError, map, mergeAll, mergeMap, reduce, shareReplay } from "rxjs/operators";
 
 import { ZOEKER_CFG, ZoekerConfigData } from "../config/zoeker-config";
 import { ZoekerConfigLocatorServicesConfig } from "../config/zoeker-config-locator-services.config";
-import { IconDescription, StringZoekInput, ZoekerBase, ZoekInput, ZoekKaartResultaat, ZoekResultaat, ZoekResultaten } from "../zoeker-base";
+import {
+  IconDescription,
+  StringZoekInput,
+  Zoeker,
+  ZoekerBase,
+  ZoekInput,
+  ZoekKaartResultaat,
+  ZoekResultaat,
+  ZoekResultaten
+} from "../zoeker";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "../zoeker-representatie.service";
 
 export interface LambertLocation {
@@ -112,21 +121,17 @@ export class CrabHuisnummer implements CrabZoekInput {
 export class CrabZoekResultaat implements ZoekResultaat {
   readonly partialMatch = false;
   readonly index: number;
-  readonly omschrijving: string;
-  readonly bron: string;
-  readonly zoeker: string;
-  readonly icoon: IconDescription;
   readonly kaartInfo: Option<ZoekKaartResultaat>;
   readonly preferredPointZoomLevel = some(10);
 
   constructor(
     x_lambert_72: number,
     y_lambert_72: number,
-    omschrijving: string,
-    bron: string,
+    readonly omschrijving: string,
+    readonly bron: string,
     index: number,
-    zoeker: string,
-    icoon: IconDescription,
+    readonly zoeker: string,
+    readonly icoon: IconDescription,
     style: ol.style.Style,
     highlightStyle: ol.style.Style,
     extent?: ol.Extent
@@ -139,34 +144,28 @@ export class CrabZoekResultaat implements ZoekResultaat {
       geometry: geometry,
       extent: extent ? extent : geometry.getExtent()
     });
-    this.omschrijving = omschrijving;
-    this.bron = bron;
-    this.zoeker = zoeker;
-    this.icoon = icoon;
   }
 }
 
-@Injectable()
-export class ZoekerCrabService implements ZoekerBase {
+export class ZoekerCrabService extends ZoekerBase implements Zoeker {
   private readonly locatorServicesConfig: ZoekerConfigLocatorServicesConfig;
   private legende: Map<string, IconDescription>;
 
   constructor(
+    zoekPrio: number,
+    suggestiePrio: number,
     private readonly http: HttpClient,
-    @Inject(ZOEKER_CFG) zoekerConfigData: ZoekerConfigData,
-    @Inject(ZOEKER_REPRESENTATIE) private zoekerRepresentatie: AbstractRepresentatieService
+    zoekerConfigData: ZoekerConfigData,
+    private zoekerRepresentatie: AbstractRepresentatieService
   ) {
+    super("Crab", zoekPrio, suggestiePrio);
     this.locatorServicesConfig = new ZoekerConfigLocatorServicesConfig(zoekerConfigData.locatorServices);
     this.legende = Map.of(this.naam(), this.zoekerRepresentatie.getSvgIcon("Crab"));
   }
 
-  naam(): string {
-    return "Crab";
-  }
-
   private voegCrabResultatenToe(result: ZoekResultaten, crabResultaten: LocatorServiceResults): ZoekResultaten {
     const startIndex = result.resultaten.length;
-    result.resultaten = result.resultaten.concat(
+    const resultaten = result.resultaten.concat(
       crabResultaten.LocationResult
         // Waarschijnlijk gaan we de crab gemeenten niet laten zien,
         //  we hebben daar toch alleen het middelpunt van. Google geeft een beter resultaat.
@@ -187,7 +186,7 @@ export class ZoekerCrabService implements ZoekerBase {
             )
         )
     );
-    return result;
+    return new ZoekResultaten(result.zoeker, result.prioriteit, result.fouten, resultaten, result.legende);
   }
 
   getAlleGemeenten$(): rx.Observable<CrabGemeente[]> {
@@ -231,7 +230,16 @@ export class ZoekerCrabService implements ZoekerBase {
     return this.http
       .get<CrabBBoxData>(this.locatorServicesConfig.url + "/rest/crab/gemeente/" + gemeente.niscode)
       .pipe(
-        map(bbox => new ZoekResultaten(this.naam(), [], [this.bboxNaarZoekResultaat(gemeente.naam, "CrabGemeente", bbox)], this.legende)),
+        map(
+          bbox =>
+            new ZoekResultaten(
+              this.naam(),
+              this.zoekPrioriteit(),
+              [],
+              [this.bboxNaarZoekResultaat(gemeente.naam, "CrabGemeente", bbox)],
+              this.legende
+            )
+        ),
         shareReplay(1)
       );
   }
@@ -250,6 +258,7 @@ export class ZoekerCrabService implements ZoekerBase {
           bbox =>
             new ZoekResultaten(
               this.naam(),
+              this.zoekPrioriteit(),
               [],
               [this.bboxNaarZoekResultaat(`${straat.naam}, ${straat.gemeente.naam}`, "CrabStraat", bbox)],
               this.legende
@@ -273,6 +282,7 @@ export class ZoekerCrabService implements ZoekerBase {
           positie =>
             new ZoekResultaten(
               this.naam(),
+              this.zoekPrioriteit(),
               [],
               [
                 this.positieNaarZoekResultaat(
@@ -310,9 +320,12 @@ export class ZoekerCrabService implements ZoekerBase {
         mergeAll(5) as OperatorFunction<rx.Observable<LocatorServiceResults>, LocatorServiceResults>,
         reduce<LocatorServiceResults, ZoekResultaten>(
           (zoekResultaten, crabResultaten) => this.voegCrabResultatenToe(zoekResultaten, crabResultaten),
-          new ZoekResultaten(this.naam(), [], [], this.legende)
+          new ZoekResultaten(this.naam(), this.zoekPrioriteit(), [], [], this.legende)
         ),
-        map(resultaten => resultaten.limiteerAantalResultaten(this.locatorServicesConfig.maxAantal))
+        map(resultaten => resultaten.limiteerAantalResultaten(this.locatorServicesConfig.maxAantal)),
+        catchError(e =>
+          rx.Observable.of(new ZoekResultaten(this.naam(), this.zoekPrioriteit(), ["Kon locator services niet aanroepen "], []))
+        )
       );
     } else if (zoekterm.type === "CrabGemeente") {
       return this.getGemeenteBBox$(zoekterm as CrabGemeente);
@@ -323,5 +336,9 @@ export class ZoekerCrabService implements ZoekerBase {
     } else {
       return rx.Observable.empty();
     }
+  }
+
+  suggesties$(zoekterm: string): rx.Observable<ZoekResultaten> {
+    return rx.Observable.empty();
   }
 }

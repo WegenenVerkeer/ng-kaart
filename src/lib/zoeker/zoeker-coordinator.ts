@@ -1,14 +1,31 @@
 import { List, Map, Set } from "immutable";
-import { Subject } from "rxjs";
-import { Subscription } from "rxjs/Subscription";
+import * as rx from "rxjs";
+import { OperatorFunction } from "rxjs/interfaces";
+import { mergeAll, switchMap, tap } from "rxjs/operators";
 
-import { ZoekerBase, ZoekInput, ZoekResultaat, ZoekResultaten } from "./zoeker-base";
+import { Zoeker, ZoekInput, ZoekResultaat, ZoekResultaten } from "./zoeker";
 
 export class ZoekerCoordinator {
-  private zoekers: Array<ZoekerBase> = Array();
-  private zoekerSubscriptions: Map<string, Subscription> = Map();
+  private zoekers: Array<Zoeker> = Array();
+  private zoekSubj: rx.Subject<{ input: ZoekInput; zoekers: Array<Zoeker> }> = new rx.Subject();
+  private suggestiesZoekSubj: rx.Subject<{ zoekterm: string; zoekers: Array<Zoeker> }> = new rx.Subject();
+  readonly zoekResultaten$: rx.Observable<ZoekResultaten>;
+  readonly vlugZoekResultaten$: rx.Observable<ZoekResultaten>;
 
-  constructor(private zoekerSubject: Subject<ZoekResultaten>, private zoekerResultaatKlikSubj: Subject<ZoekResultaat>) {}
+  constructor(private zoekerResultaatKlikSubj: rx.Subject<ZoekResultaat>) {
+    this.zoekResultaten$ = this.zoekSubj.pipe(
+      switchMap(vz =>
+        rx.Observable.from(vz.zoekers.map(zoeker => zoeker.zoek$(vz.input))) //
+          .pipe(mergeAll() as OperatorFunction<rx.Observable<ZoekResultaten>, ZoekResultaten>)
+      )
+    );
+    this.vlugZoekResultaten$ = this.suggestiesZoekSubj.pipe(
+      switchMap(vz =>
+        rx.Observable.from(vz.zoekers.map(zoeker => zoeker.suggesties$(vz.zoekterm))) //
+          .pipe(mergeAll() as OperatorFunction<rx.Observable<ZoekResultaten>, ZoekResultaten>)
+      )
+    );
+  }
 
   isZoekerGeregistreerd(naam: string): boolean {
     return this.zoekers.some(zoeker => zoeker.naam() === naam);
@@ -19,19 +36,14 @@ export class ZoekerCoordinator {
   }
 
   verwijderZoeker(naam: string) {
-    this.zoekerSubscriptions
-      .filter((subscription, zoekerNaam) => zoekerNaam === naam)
-      .forEach(subscription => this.unsubscribeZoeker(subscription!));
-
-    this.zoekerSubscriptions = this.zoekerSubscriptions.delete(naam);
     this.zoekers = this.zoekers.filter(zoeker => zoeker.naam() !== naam);
   }
 
-  unsubscribeZoeker(subscription: Subscription) {
+  private unsubscribeZoeker(subscription: rx.Subscription) {
     subscription.unsubscribe();
   }
 
-  voegZoekerToe(zoeker: ZoekerBase) {
+  voegZoekerToe(zoeker: Zoeker) {
     this.zoekers = this.zoekers.concat(zoeker);
   }
 
@@ -39,28 +51,26 @@ export class ZoekerCoordinator {
     this.zoekerResultaatKlikSubj.next(resultaat);
   }
 
-  zoek(input: ZoekInput, zoekers: Set<string>) {
-    // Annuleer bestaande zoekOpdrachten.
-    this.zoekerSubscriptions.forEach(subscription => this.unsubscribeZoeker(subscription!));
-    // Stuur zoek comando naar alle geregistreerde zoekers of enkel naar de gespecifieerde.
-    const gekozenZoekers = zoekers.isEmpty() ? this.zoekers : this.zoekers.filter(zoeker => zoekers.contains(zoeker.naam()));
-    this.zoekerSubscriptions = gekozenZoekers.reduce(
-      (subscriptions, zoeker) =>
-        subscriptions.set(
-          zoeker.naam(),
-          zoeker.zoek$(input).subscribe(zoekResultaat => {
-            this.zoekerSubject.next(zoekResultaat); // TODO verwijder dit anti-pattern
-          })
-        ),
-      Map<string, Subscription>()
-    );
+  zoek(input: ZoekInput, zoekerNamen: Set<string>) {
+    console.log("****Z sending to subject");
+    this.zoekSubj.next({
+      input: input,
+      zoekers: this.zoekersMetNaam(zoekerNamen)
+    });
   }
 
-  zoekerNamen(): Set<string> {
-    return Set(this.zoekers.map(z => z.naam()));
+  zoekSuggesties(zoekterm: string, zoekerNamen: Set<string>) {
+    this.suggestiesZoekSubj.next({
+      zoekterm: zoekterm,
+      zoekers: this.zoekersMetNaam(zoekerNamen)
+    });
   }
 
-  zoekerServices(): List<ZoekerBase> {
+  private zoekersMetNaam(zoekerNamen: Set<string>): Zoeker[] {
+    return zoekerNamen.isEmpty ? this.zoekers : this.zoekers.filter(zoeker => zoekerNamen.contains(zoeker.naam()));
+  }
+
+  zoekerServices(): List<Zoeker> {
     return List(this.zoekers);
   }
 }

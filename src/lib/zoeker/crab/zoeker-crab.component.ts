@@ -1,8 +1,12 @@
-import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+import { Component, Inject, NgZone, OnDestroy, OnInit } from "@angular/core";
 
 import { KaartChildComponentBase } from "../../kaart/kaart-child-component-base";
 import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import { KaartComponent } from "../../kaart/kaart.component";
+import { ZOEKER_CFG, ZoekerConfigData } from "../config/zoeker-config";
+import { Zoeker } from "../zoeker";
+import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "../zoeker-representatie.service";
 
 import { ZoekerCrabService } from "./zoeker-crab.service";
 
@@ -11,8 +15,17 @@ import { ZoekerCrabService } from "./zoeker-crab.service";
   template: "<ng-content></ng-content>"
 })
 export class ZoekerCrabComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
-  constructor(parent: KaartComponent, zone: NgZone, private readonly zoeker: ZoekerCrabService) {
+  private readonly zoeker: Zoeker;
+
+  constructor(
+    parent: KaartComponent,
+    zone: NgZone,
+    http: HttpClient,
+    @Inject(ZOEKER_CFG) zoekerConfigData: ZoekerConfigData,
+    @Inject(ZOEKER_REPRESENTATIE) private zoekerRepresentatie: AbstractRepresentatieService
+  ) {
     super(parent, zone);
+    this.zoeker = new ZoekerCrabService(2, 2, http, zoekerConfigData, zoekerRepresentatie);
   }
 
   ngOnInit(): void {

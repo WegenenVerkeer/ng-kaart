@@ -7,19 +7,21 @@ import * as rx from "rxjs";
 import { Observable } from "rxjs/Observable";
 import { map, shareReplay } from "rxjs/operators";
 
-import { ZOEKER_CFG, ZoekerConfigData } from "../config/zoeker-config";
+import { ZoekerConfigData } from "../config/zoeker-config";
 import { ZoekerConfigLocatorServicesConfig } from "../config/zoeker-config-locator-services.config";
 import {
   geoJSONOptions,
   IconDescription,
-  StringZoekInput,
+  Zoeker,
   ZoekerBase,
   ZoekInput,
   ZoekKaartResultaat,
   ZoekResultaat,
   ZoekResultaten
-} from "../zoeker-base";
+} from "../zoeker";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "../zoeker-representatie.service";
+
+export const PERCEEL_SVC_NAAM = "Perceel";
 
 export interface Gemeente {
   readonly niscode: number;
@@ -72,17 +74,15 @@ export class PerceelZoekResultaat implements ZoekResultaat {
   readonly partialMatch = false;
   readonly index: number;
   readonly omschrijving: string;
-  readonly bron: string;
-  readonly zoeker: string;
-  readonly icoon: IconDescription;
+  readonly bron: string = "Perceel";
   readonly kaartInfo: Option<ZoekKaartResultaat>;
   readonly preferredPointZoomLevel = none;
 
   constructor(
     details: PerceelDetails,
     index: number,
-    zoeker: string,
-    icoon: IconDescription,
+    readonly zoeker: string,
+    readonly icoon: IconDescription,
     style: ol.style.Style,
     highlightStyle: ol.style.Style
   ) {
@@ -95,22 +95,22 @@ export class PerceelZoekResultaat implements ZoekResultaat {
       highlightStyle: highlightStyle
     });
     this.omschrijving = details.capakey;
-    this.bron = "Perceel";
-    this.zoeker = zoeker;
-    this.icoon = icoon;
   }
 }
 
 @Injectable()
-export class ZoekerPerceelService implements ZoekerBase {
+export class ZoekerPerceelService extends ZoekerBase implements Zoeker {
   private readonly locatorServicesConfig: ZoekerConfigLocatorServicesConfig;
   private legende: Map<string, IconDescription>;
 
   constructor(
+    zoekPrio: number,
+    suggestiePrio: number,
     private readonly http: HttpClient,
-    @Inject(ZOEKER_CFG) zoekerConfigData: ZoekerConfigData,
-    @Inject(ZOEKER_REPRESENTATIE) private zoekerRepresentatie: AbstractRepresentatieService
+    zoekerConfigData: ZoekerConfigData,
+    private zoekerRepresentatie: AbstractRepresentatieService
   ) {
+    super("Perceel", zoekPrio, suggestiePrio);
     this.locatorServicesConfig = new ZoekerConfigLocatorServicesConfig(zoekerConfigData.locatorServices);
     this.legende = Map.of(this.naam(), this.zoekerRepresentatie.getSvgIcon("Perceel"));
   }
@@ -143,10 +143,6 @@ export class ZoekerPerceelService implements ZoekerBase {
     return this.http.get<PerceelDetails>(this.locatorServicesConfig.url + "/rest/capakey/perceel/" + capakey).pipe(shareReplay(1));
   }
 
-  naam(): string {
-    return "Perceel";
-  }
-
   zoek$(zoekterm: ZoekInput): Observable<ZoekResultaten> {
     switch (zoekterm.type) {
       case "Perceel":
@@ -155,6 +151,7 @@ export class ZoekerPerceelService implements ZoekerBase {
             details =>
               new ZoekResultaten(
                 this.naam(),
+                this.zoekPrioriteit(),
                 [],
                 [
                   new PerceelZoekResultaat(
@@ -173,5 +170,9 @@ export class ZoekerPerceelService implements ZoekerBase {
       default:
         return rx.Observable.empty();
     }
+  }
+
+  suggesties$(zoekterm: string): rx.Observable<ZoekResultaten> {
+    return rx.Observable.empty();
   }
 }

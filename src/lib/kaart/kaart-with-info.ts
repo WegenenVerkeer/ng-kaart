@@ -1,10 +1,10 @@
-import { fromNullable, none, Option } from "fp-ts/lib/Option";
+import { none, Option } from "fp-ts/lib/Option";
 import { List, Map, OrderedMap } from "immutable";
 import * as MobileDetect from "mobile-detect/mobile-detect";
 import * as ol from "openlayers";
 import { BehaviorSubject, ReplaySubject, Subject } from "rxjs";
 
-import { ZoekResultaat, ZoekResultaten } from "../zoeker/zoeker-base";
+import { ZoekResultaat } from "../zoeker/zoeker";
 import { ZoekerCoordinator } from "../zoeker/zoeker-coordinator";
 
 import { KaartConfig } from "./kaart-config";
@@ -40,9 +40,8 @@ export class KaartWithInfo {
   readonly hoverFeatures: ol.Collection<ol.Feature> = new ol.Collection<ol.Feature>();
 
   readonly achtergrondlaagtitelSubj: Subject<string> = new ReplaySubject<string>(1);
-  readonly zoekResultatenSubj: Subject<ZoekResultaten> = new ReplaySubject<ZoekResultaten>(1);
   readonly zoekResultaatSelectieSubj: Subject<ZoekResultaat> = new ReplaySubject<ZoekResultaat>(1);
-  readonly zoekerCoordinator: ZoekerCoordinator = new ZoekerCoordinator(this.zoekResultatenSubj, this.zoekResultaatSelectieSubj);
+  readonly zoekerCoordinator: ZoekerCoordinator = new ZoekerCoordinator(this.zoekResultaatSelectieSubj);
   readonly componentFoutSubj: Subject<List<string>> = new ReplaySubject<List<string>>(1);
   readonly geometryChangedSubj: Subject<ke.TekenResultaat> = new Subject<ke.TekenResultaat>();
   readonly tekenSettingsSubj: BehaviorSubject<Option<ke.TekenSettings>> = new BehaviorSubject<Option<ke.TekenSettings>>(none);

@@ -3,7 +3,7 @@ import { List, Set } from "immutable";
 import * as ol from "openlayers";
 import { Subscription as RxSubscription } from "rxjs/Subscription";
 
-import { ZoekerBase, ZoekInput, ZoekResultaat } from "../zoeker/zoeker-base";
+import { Zoeker, ZoekInput, ZoekResultaat } from "../zoeker/zoeker";
 
 import { BareValidationWrapper, KaartMsg, Subscription, ValidationWrapper } from ".";
 import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
@@ -64,6 +64,7 @@ export type Command<Msg extends KaartMsg> =
   | ZetStijlVoorLaagCmd<Msg>
   | ZetUiElementOpties
   | ZoekCmd<Msg>
+  | ZoekSuggestiesCmd
   | ZoekGekliktCmd;
 
 export interface SubscriptionResult {
@@ -261,7 +262,7 @@ export interface MeldComponentFoutCmd {
 
 export interface VoegZoekerToeCmd<Msg extends KaartMsg> {
   readonly type: "VoegZoekerToe";
-  readonly zoeker: ZoekerBase;
+  readonly zoeker: Zoeker;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -281,6 +282,12 @@ export interface ZoekCmd<Msg extends KaartMsg> {
 export interface ZoekGekliktCmd {
   readonly type: "ZoekGeklikt";
   readonly resultaat: ZoekResultaat;
+}
+
+export interface ZoekSuggestiesCmd {
+  readonly type: "ZoekSuggesties";
+  readonly zoekterm: string;
+  readonly zoekers: Set<string>;
 }
 
 export interface ZetMijnLocatieZoomCmd {
@@ -627,7 +634,7 @@ export function ZetLaagLegendeCmd<Msg extends KaartMsg>(
   return { type: "ZetLaagLegende", titel: titel, legende: legende, wrapper: wrapper };
 }
 
-export function VoegZoekerToeCmd<Msg extends KaartMsg>(zoeker: ZoekerBase, wrapper: BareValidationWrapper<Msg>): VoegZoekerToeCmd<Msg> {
+export function VoegZoekerToeCmd<Msg extends KaartMsg>(zoeker: Zoeker, wrapper: BareValidationWrapper<Msg>): VoegZoekerToeCmd<Msg> {
   return { type: "VoegZoekerToe", zoeker: zoeker, wrapper: wrapper };
 }
 

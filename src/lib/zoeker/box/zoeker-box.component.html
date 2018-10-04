@@ -58,6 +58,15 @@
       <mat-icon *ngIf="!toonResultaat">expand_more</mat-icon>
     </button>
   </div>
+  <div class="suggesties-box box-shadow" *ngIf="toonPreview">
+    <div *ngFor="let resultaat of alleSuggestiesResultaten" class="suggesties-resultaat" (click)="kiesSuggestiesResultaat(resultaat)">
+      <span [ngSwitch]="resultaat.icoon.type">
+        <mat-icon *ngSwitchCase="'svg'" class="zoeker-resultaat-icoon" [svgIcon]="resultaat.icoon.name"></mat-icon>
+        <mat-icon *ngSwitchCase="'font'" class="zoeker-resultaat-icoon">{{resultaat.icoon.name}}</mat-icon>
+      </span>
+      <span>{{resultaat.omschrijving}}</span>
+    </div>
+  </div>
 
   <awv-zoeker-perceel-getrapt *ngIf="actieveZoeker === Perceel" [hidden]="!toonResultaat"
                               (leegMakenDisabledChange)="onPerceelMaakLeegDisabledChange($event)"
@@ -131,7 +140,7 @@
   </div>
   <div *ngIf="toonResultaat && isInklapbaar()" class="divider"></div>
   <div class="zoeker-resultaat-box" *ngIf="toonResultaat" [@enterAnimation]>
-    <div *ngFor="let resultaat of alleZoekResultaten" class="zoeker-resultaat" (click)="zoomNaarResultaat(resultaat)">
+    <div *ngFor="let resultaat of alleZoekResultaten" class="zoeker-resultaat" (click)="kiesZoekResultaat(resultaat)">
       <span [ngSwitch]="resultaat.icoon.type">
         <mat-icon *ngSwitchCase="'svg'" class="zoeker-resultaat-icoon" [svgIcon]="resultaat.icoon.name"></mat-icon>
         <mat-icon *ngSwitchCase="'font'" class="zoeker-resultaat-icoon">{{resultaat.icoon.name}}</mat-icon>

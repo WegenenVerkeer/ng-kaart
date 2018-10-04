@@ -1,8 +1,12 @@
-import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
+import { Component, Inject, NgZone, OnDestroy, OnInit } from "@angular/core";
+import { Http } from "@angular/http";
 
 import { KaartChildComponentBase } from "../../kaart/kaart-child-component-base";
 import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import { KaartComponent } from "../../kaart/kaart.component";
+import { ZOEKER_CFG, ZoekerConfigData } from "../config/zoeker-config";
+import { Zoeker } from "../zoeker";
+import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "../zoeker-representatie.service";
 
 import { ZoekerGoogleWdbService } from "./zoeker-google-wdb.service";
 
@@ -11,8 +15,17 @@ import { ZoekerGoogleWdbService } from "./zoeker-google-wdb.service";
   template: "<ng-content></ng-content>"
 })
 export class ZoekerGoogleWdbComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
-  constructor(parent: KaartComponent, zone: NgZone, private readonly zoeker: ZoekerGoogleWdbService) {
+  private readonly zoeker: Zoeker;
+
+  constructor(
+    parent: KaartComponent,
+    zone: NgZone,
+    http: Http,
+    @Inject(ZOEKER_CFG) zoekerConfigData: ZoekerConfigData,
+    @Inject(ZOEKER_REPRESENTATIE) private zoekerRepresentatie: AbstractRepresentatieService
+  ) {
     super(parent, zone);
+    this.zoeker = new ZoekerGoogleWdbService(3, 3, http, zoekerConfigData, zoekerRepresentatie);
   }
 
   ngOnInit(): void {

@@ -1,4 +1,4 @@
-import { Endomorphism, identity, pipe } from "fp-ts/lib/function";
+import { Endomorphism, Function1, identity, pipe } from "fp-ts/lib/function";
 import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
 import * as validation from "fp-ts/lib/Validation";
 import { List } from "immutable";
@@ -88,6 +88,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         model: resultValidation.map(v => v.model).getOrElse(model),
         message: resultValidation.fold(fail => some(wrapper(validation.failure(fail))), v => v.value.map(x => wrapper(success(x))))
       };
+    }
+
+    function consumeWrapped<T>(subCmd: { wrapper: Function1<T, Msg> }) {
+      return (t: T) => msgConsumer(subCmd.wrapper(t));
     }
 
     function valideerToegevoegdeLaagBestaat(titel: string): prt.KaartCmdValidation<ke.ToegevoegdeLaag> {
@@ -981,7 +985,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         cmnd.wrapper,
         valideerZoekerIsNietGeregistreerd(cmnd.zoeker.naam()).map(() => {
           model.zoekerCoordinator.voegZoekerToe(cmnd.zoeker);
-          model.changer.zoekerServicesSubj.next(model.zoekerCoordinator.zoekerServices());
+          model.changer.zoekerServicesSubj.next(model.zoekerCoordinator.zoekerServices().toArray());
           return ModelAndEmptyResult(model);
         })
       );
@@ -992,7 +996,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         cmnd.wrapper,
         valideerZoekerIsGeregistreerd(cmnd.zoeker).map(() => {
           model.zoekerCoordinator.verwijderZoeker(cmnd.zoeker);
-          model.changer.zoekerServicesSubj.next(model.zoekerCoordinator.zoekerServices());
+          model.changer.zoekerServicesSubj.next(model.zoekerCoordinator.zoekerServices().toArray());
           return ModelAndEmptyResult(model);
         })
       );
@@ -1006,6 +1010,14 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return ModelAndEmptyResult(model);
         })
       );
+    }
+
+    function zoekSuggesties(cmnd: prt.ZoekSuggestiesCmd): ModelWithResult<Msg> {
+      valideerMinstens1ZoekerGeregistreerd().map(() => {
+        model.zoekerCoordinator.zoekSuggesties(cmnd.zoekterm, cmnd.zoekers);
+        return ModelAndEmptyResult(model);
+      });
+      return ModelWithResult(model);
     }
 
     function zoekGeklikt(cmnd: prt.ZoekGekliktCmd): ModelWithResult<Msg> {
@@ -1147,7 +1159,22 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         modelWithSubscriptionResult("LaagVerwijderd", modelChanger.laagVerwijderdSubj.subscribe(pipe(sub.wrapper, msgConsumer)));
 
       function subscribeToZoekResultaten(sub: prt.ZoekResultatenSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult("ZoekResultaten", model.zoekResultatenSubj.subscribe(m => msgConsumer(sub.wrapper(m))));
+        console.log("**** subscribeToZoekResultaten");
+        return modelWithSubscriptionResult(
+          "ZoekResultaten",
+          model.zoekerCoordinator.zoekResultaten$.subscribe(
+            m => msgConsumer(sub.wrapper(m)),
+            e => console.error("****zr", e),
+            () => console.log("****zr done")
+          )
+        );
+      }
+
+      function subscribeToSuggestiesResultaten(sub: prt.VlugZoekResultatenSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult(
+          "SuggestiesResultaten",
+          model.zoekerCoordinator.vlugZoekResultaten$.subscribe(m => msgConsumer(sub.wrapper(m)))
+        );
       }
 
       function subscribeToZoekResultaatSelectie(sub: prt.ZoekResultaatSelectieSubscription<Msg>): ModelWithResult<Msg> {
@@ -1155,6 +1182,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           "ZoekResultaatSelectie",
           model.zoekResultaatSelectieSubj.subscribe(m => msgConsumer(sub.wrapper(m)))
         );
+      }
+
+      function subscribeToZoekers(sub: prt.ZoekersSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult("Zoekers", modelChanges.zoekerServices$.subscribe(consumeWrapped(sub)));
       }
 
       function subscribeToGeometryChanged(sub: prt.GeometryChangedSubscription<Msg>): ModelWithResult<Msg> {
@@ -1218,8 +1249,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToKaartClick(cmnd.subscription);
         case "ZoekResultaten":
           return subscribeToZoekResultaten(cmnd.subscription);
+        case "SuggestiesResultaten":
+          return subscribeToSuggestiesResultaten(cmnd.subscription);
         case "ZoekResultaatSelectie":
           return subscribeToZoekResultaatSelectie(cmnd.subscription);
+        case "Zoekers":
+          return subscribeToZoekers(cmnd.subscription);
         case "GeometryChanged":
           return subscribeToGeometryChanged(cmnd.subscription);
         case "Tekenen":
@@ -1307,6 +1342,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return verwijderZoeker(cmd);
       case "Zoek":
         return zoek(cmd);
+      case "ZoekSuggesties":
+        return zoekSuggesties(cmd);
       case "ZoekGeklikt":
         return zoekGeklikt(cmd);
       case "ZetMijnLocatieZoomStatus":

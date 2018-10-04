@@ -1,8 +1,9 @@
+import { Function1 } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
-import { List, Map, Set } from "immutable";
+import { List, Map } from "immutable";
 import * as ol from "openlayers";
 
-import { ZoekResultaat, ZoekResultaten } from "../zoeker/zoeker-base";
+import { Zoeker, ZoekResultaat, ZoekResultaten } from "../zoeker/zoeker";
 
 import * as ke from "./kaart-elementen";
 import { TekenResultaat } from "./kaart-elementen";
@@ -27,7 +28,9 @@ export type Subscription<Msg> =
   | MiddelpuntSubscription<Msg>
   | TekenenSubscription<Msg>
   | ViewinstellingenSubscription<Msg>
+  | VlugZoekResultatenSubscription<Msg>
   | ZichtbareFeaturesSubscription<Msg>
+  | ZoekersSubscription<Msg>
   | ZoekResultaatSelectieSubscription<Msg>
   | ZoekResultatenSubscription<Msg>
   | ZoomSubscription<Msg>;
@@ -51,14 +54,16 @@ export interface HoverFeature {
   geselecteerd: Option<ol.Feature>;
 }
 
+export type MsgGen<Input, Msg> = Function1<Input, Msg>;
+
 export interface ViewinstellingenSubscription<Msg> {
   readonly type: "Viewinstellingen";
-  readonly wrapper: (instellingen: Viewinstellingen) => Msg;
+  readonly wrapper: MsgGen<Viewinstellingen, Msg>;
 }
 
 export interface ZoomSubscription<Msg> {
   readonly type: "Zoom";
-  readonly wrapper: (zoom: number) => Msg;
+  readonly wrapper: MsgGen<number, Msg>;
 }
 
 export interface MiddelpuntSubscription<Msg> {
@@ -73,12 +78,12 @@ export interface ExtentSubscription<Msg> {
 
 export interface GeselecteerdeFeaturesSubscription<Msg> {
   readonly type: "GeselecteerdeFeatures";
-  readonly wrapper: (geselecteerdeFeatures: GeselecteerdeFeatures) => Msg;
+  readonly wrapper: MsgGen<GeselecteerdeFeatures, Msg>;
 }
 
 export interface HoverFeaturesSubscription<Msg> {
   readonly type: "HoverFeatures";
-  readonly wrapper: (hoverFeature: HoverFeature) => Msg;
+  readonly wrapper: MsgGen<HoverFeature, Msg>;
 }
 
 export interface ZichtbareFeaturesSubscription<Msg> {
@@ -88,7 +93,7 @@ export interface ZichtbareFeaturesSubscription<Msg> {
 
 export interface AchtergrondTitelSubscription<Msg> {
   readonly type: "Achtergrond";
-  readonly wrapper: (titel: string) => Msg;
+  readonly wrapper: MsgGen<string, Msg>;
 }
 
 export interface LagenInGroepSubscription<Msg> {
@@ -109,12 +114,22 @@ export interface KaartClickSubscription<Msg> {
 
 export interface ZoekResultatenSubscription<Msg> {
   readonly type: "ZoekResultaten";
-  readonly wrapper: (resultaten: ZoekResultaten) => Msg;
+  readonly wrapper: MsgGen<ZoekResultaten, Msg>;
+}
+
+export interface VlugZoekResultatenSubscription<Msg> {
+  readonly type: "SuggestiesResultaten";
+  readonly wrapper: MsgGen<ZoekResultaten, Msg>;
+}
+
+export interface ZoekersSubscription<Msg> {
+  readonly type: "Zoekers";
+  readonly wrapper: MsgGen<Zoeker[], Msg>;
 }
 
 export interface ZoekResultaatSelectieSubscription<Msg> {
   readonly type: "ZoekResultaatSelectie";
-  readonly wrapper: (resultaat: ZoekResultaat) => Msg;
+  readonly wrapper: MsgGen<ZoekResultaat, Msg>;
 }
 
 export interface ActieveModusSubscription<Msg> {
@@ -125,7 +140,7 @@ export interface ActieveModusSubscription<Msg> {
 export interface GeometryChangedSubscription<Msg> {
   readonly type: "GeometryChanged";
   readonly tekenSettings: ke.TekenSettings;
-  readonly wrapper: (resultaat: TekenResultaat) => Msg;
+  readonly wrapper: MsgGen<TekenResultaat, Msg>;
 }
 
 export interface TekenenSubscription<Msg> {
@@ -147,17 +162,17 @@ export interface ComponentFoutSubscription<Msg> {
 // Constructors
 //
 
-export function ViewinstellingenSubscription<Msg>(wrapper: (settings: Viewinstellingen) => Msg): ViewinstellingenSubscription<Msg> {
+export function ViewinstellingenSubscription<Msg>(wrapper: MsgGen<Viewinstellingen, Msg>): ViewinstellingenSubscription<Msg> {
   return { type: "Viewinstellingen", wrapper: wrapper };
 }
 
 export function GeselecteerdeFeaturesSubscription<Msg>(
-  wrapper: (geselecteerdeFeatures: GeselecteerdeFeatures) => Msg
+  wrapper: MsgGen<GeselecteerdeFeatures, Msg>
 ): GeselecteerdeFeaturesSubscription<Msg> {
   return { type: "GeselecteerdeFeatures", wrapper: wrapper };
 }
 
-export function HoverFeaturesSubscription<Msg>(wrapper: (hoverFeatures: HoverFeature) => Msg): HoverFeaturesSubscription<Msg> {
+export function HoverFeaturesSubscription<Msg>(wrapper: MsgGen<HoverFeature, Msg>): HoverFeaturesSubscription<Msg> {
   return { type: "HoverFeatures", wrapper: wrapper };
 }
 
@@ -167,7 +182,7 @@ export function ZichtbareFeaturesSubscription<Msg>(
   return { type: "ZichtbareFeatures", wrapper: msgGen };
 }
 
-export function ZoomSubscription<Msg>(wrapper: (zoom: number) => Msg): ZoomSubscription<Msg> {
+export function ZoomSubscription<Msg>(wrapper: MsgGen<number, Msg>): ZoomSubscription<Msg> {
   return { type: "Zoom", wrapper: wrapper };
 }
 
@@ -179,7 +194,7 @@ export function ExtentSubscription<Msg>(wrapper: (extent: ol.Extent) => Msg): Ex
   return { type: "Extent", wrapper: wrapper };
 }
 
-export function AchtergrondTitelSubscription<Msg>(wrapper: (titel: string) => Msg): AchtergrondTitelSubscription<Msg> {
+export function AchtergrondTitelSubscription<Msg>(wrapper: MsgGen<string, Msg>): AchtergrondTitelSubscription<Msg> {
   return { type: "Achtergrond", wrapper: wrapper };
 }
 
@@ -194,11 +209,19 @@ export function LaagVerwijderdSubscription<Msg>(msgGen: (laag: ke.ToegevoegdeLaa
   return { type: "LaagVerwijderd", wrapper: msgGen };
 }
 
-export function ZoekResultatenSubscription<Msg>(wrapper: (resultaten: ZoekResultaten) => Msg): ZoekResultatenSubscription<Msg> {
+export function ZoekResultatenSubscription<Msg>(wrapper: MsgGen<ZoekResultaten, Msg>): ZoekResultatenSubscription<Msg> {
   return { type: "ZoekResultaten", wrapper: wrapper };
 }
 
-export function ZoekResultaatSelectieSubscription<Msg>(wrapper: (resultaat: ZoekResultaat) => Msg): ZoekResultaatSelectieSubscription<Msg> {
+export function SuggestiesResultatenSubscription<Msg>(wrapper: MsgGen<ZoekResultaten, Msg>): VlugZoekResultatenSubscription<Msg> {
+  return { type: "SuggestiesResultaten", wrapper: wrapper };
+}
+
+export function ZoekersSubscription<Msg>(wrapper: MsgGen<Zoeker[], Msg>): ZoekersSubscription<Msg> {
+  return { type: "Zoekers", wrapper: wrapper };
+}
+
+export function ZoekResultaatSelectieSubscription<Msg>(wrapper: MsgGen<ZoekResultaat, Msg>): ZoekResultaatSelectieSubscription<Msg> {
   return { type: "ZoekResultaatSelectie", wrapper: wrapper };
 }
 
@@ -212,7 +235,7 @@ export function InfoBoodschappenSubscription<Msg>(wrapper: (boodschappen: Map<st
 
 export function GeometryChangedSubscription<Msg>(
   tekenSettings: ke.TekenSettings,
-  wrapper: (resultaat: TekenResultaat) => Msg
+  wrapper: MsgGen<TekenResultaat, Msg>
 ): GeometryChangedSubscription<Msg> {
   return { type: "GeometryChanged", tekenSettings: tekenSettings, wrapper: wrapper };
 }

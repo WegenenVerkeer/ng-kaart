@@ -7,7 +7,7 @@ import * as ol from "openlayers";
 import { ZOEKER_CFG, ZoekerConfigData } from "./config/zoeker-config";
 import { ZoekerConfigGoogleWdbConfig } from "./config/zoeker-config-google-wdb.config";
 import { ZoekerConfigLocatorServicesConfig } from "./config/zoeker-config-locator-services.config";
-import { IconDescription, ZoekResultaat } from "./zoeker-base";
+import { IconDescription, ZoekResultaat } from "./zoeker";
 
 export const ZOEKER_REPRESENTATIE = new InjectionToken<AbstractRepresentatieService>("ZoekerRepresentatie");
 

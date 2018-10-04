@@ -1,3 +1,4 @@
+import { Function1, Predicate } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import { Map } from "immutable";
 import * as ol from "openlayers";
@@ -36,16 +37,18 @@ export interface ZoekResultaat {
 
 export class ZoekResultaten {
   constructor(
-    public zoeker: string,
-    public fouten: string[] = [],
-    public resultaten: ZoekResultaat[] = [],
-    public legende: Map<string, IconDescription> = Map()
+    public readonly zoeker: string,
+    public readonly prioriteit: number,
+    public readonly fouten: string[] = [],
+    public readonly resultaten: ZoekResultaat[] = [],
+    public readonly legende: Map<string, IconDescription> = Map()
   ) {}
 
   limiteerAantalResultaten(maxAantal: number): ZoekResultaten {
     if (this.resultaten.length >= maxAantal) {
       return new ZoekResultaten(
         this.zoeker,
+        this.prioriteit,
         this.fouten.concat([`Er werden meer dan ${maxAantal} resultaten gevonden, ` + `de eerste ${maxAantal} worden hier opgelijst`]),
         this.resultaten.slice(0, maxAantal),
         this.legende
@@ -58,6 +61,7 @@ export class ZoekResultaten {
 
 export interface ZoekInput {
   readonly type: string; // We kunnen dit niet inperken omdat we niet alle zoekers kennen
+  readonly [key: string]: any;
 }
 
 export interface StringZoekInput {
@@ -65,10 +69,38 @@ export interface StringZoekInput {
   readonly value: string;
 }
 
-export interface ZoekerBase {
-  naam(): string;
-  zoek$(input: ZoekInput): Observable<ZoekResultaten>;
+export type Zoektype = "Volledig" | "Vlug";
+
+export interface ZoekOpdracht {
+  readonly zoekpatroon: ZoekInput;
+  readonly zoektype: Zoektype;
 }
+
+export interface Zoeker {
+  naam(): string;
+  zoekPrioriteit(): number;
+  suggestiePrioriteit(): number;
+  zoek$(input: ZoekInput): Observable<ZoekResultaten>;
+  suggesties$(input: string): Observable<ZoekResultaten>;
+}
+
+export abstract class ZoekerBase {
+  constructor(private readonly _naam: string, private readonly _zoekPrioriteit: number, private readonly _suggestiePrioriteit: number) {}
+
+  naam(): string {
+    return this._naam;
+  }
+
+  zoekPrioriteit(): number {
+    return this._zoekPrioriteit;
+  }
+
+  suggestiePrioriteit(): number {
+    return this._suggestiePrioriteit;
+  }
+}
+
+export const zoekerMetNaam: Function1<string, Predicate<Zoeker>> = naam => zoeker => zoeker.naam() === naam;
 
 // De resultaten worden getoond volgens een bepaalde hiërarchie
 // - Eerst wordt er gesorteerd volgens bron

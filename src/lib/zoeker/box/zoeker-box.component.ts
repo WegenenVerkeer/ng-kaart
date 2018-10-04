@@ -2,7 +2,12 @@ import { animate, style, transition, trigger } from "@angular/animations";
 import { HttpErrorResponse } from "@angular/common/http";
 import { ChangeDetectorRef, Component, ElementRef, Inject, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
 import { FormControl } from "@angular/forms";
+import * as array from "fp-ts/lib/Array";
+import { concat } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
+import { Ord } from "fp-ts/lib/Ord";
+import * as ord from "fp-ts/lib/Ord";
+import { setoidString } from "fp-ts/lib/Setoid";
 import { Tuple } from "fp-ts/lib/Tuple";
 import { List, Map, OrderedMap, Set } from "immutable";
 import * as ol from "openlayers";
@@ -31,15 +36,17 @@ import { kaartLogger } from "../../kaart/log";
 import { matchGeometryType } from "../../util/geometries";
 import { collect, Pipeable } from "../../util/operators";
 import { forEach } from "../../util/option";
+import { minLength } from "../../util/string";
 import {
   compareResultaten,
   IconDescription,
   StringZoekInput,
+  Zoeker,
   ZoekInput,
   ZoekKaartResultaat,
   ZoekResultaat,
   ZoekResultaten
-} from "../zoeker-base";
+} from "../zoeker";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "../zoeker-representatie.service";
 
 export const ZoekerUiSelector = "Zoeker";
@@ -125,6 +132,7 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
 
   protected zoek<I extends ZoekInput>(zoekInput: I, zoekers: Set<string>) {
     this.zoekerComponent.toonResultaat = true;
+    this.zoekerComponent.toonPreview = false;
     this.zoekerComponent.increaseBusy();
     this.dispatch({
       type: "Zoek",
@@ -244,21 +252,26 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   featuresByResultaat = Map<ZoekResultaat, ol.Feature[]>();
   huidigeSelectie: Option<HuidigeSelectie> = none;
   alleZoekResultaten: ZoekResultaat[] = [];
+  alleSuggestiesResultaten: ZoekResultaat[] = [];
+  private suggestiesBuffer: ZoekResultaten[] = [];
   alleFouten: Fout[] = [];
   legende: Map<string, IconDescription> = Map<string, IconDescription>();
   legendeKeys: string[] = [];
   toonHelp = false;
   toonResultaat = true;
+  toonPreview = true;
   busy = 0;
   actieveZoeker: ZoekerType = "Basis";
   perceelMaakLeegDisabled = true;
   crabMaakLeegDisabled = true;
   zoekerMaakLeegDisabled = Set<ZoekerType>();
   externeWmsMaakLeegDisabled = true;
-  readonly zoekerNamen$: rx.Observable<Set<string>>;
-  readonly zoekerComponentSubj: rx.Subject<Tuple<ZoekerType, GetraptZoekerComponent>> = new rx.Subject();
-  readonly zoekerComponentOpNaam$: rx.Observable<Map<ZoekerType, GetraptZoekerComponent>>;
-  readonly maakVeldenLeegSubj: rx.Subject<ZoekerType> = new rx.Subject<ZoekerType>();
+  private readonly zoekerComponentSubj: rx.Subject<Tuple<ZoekerType, GetraptZoekerComponent>> = new rx.Subject();
+  private readonly zoekerComponentOpNaam$: rx.Observable<Map<ZoekerType, GetraptZoekerComponent>>;
+  private readonly maakVeldenLeegSubj: rx.Subject<ZoekerType> = new rx.Subject<ZoekerType>();
+  private readonly zoekers$: rx.Observable<Zoeker[]>;
+  private readonly zoekerNamen$: rx.Observable<string[]>;
+  private readonly zoekInputSubj: rx.Subject<string> = new rx.Subject<string>();
 
   // Member variabelen die eigenlijk constanten of statics zouden kunnen zijn, maar gebruikt in de HTML template
   readonly Basis: ZoekerType = BASIS;
@@ -337,11 +350,8 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   ) {
     super(parent, zone);
 
-    this.zoekerNamen$ = parent.modelChanges.zoekerServices$.pipe(
-      map(svcs => svcs.map(svc => svc!.naam()).toSet()),
-      debounceTime(250),
-      shareReplay(1)
-    );
+    this.zoekers$ = parent.modelChanges.zoekerServices$;
+    this.zoekerNamen$ = this.zoekers$.pipe(map(svcs => svcs.map(svc => svc.naam())), debounceTime(250), shareReplay(1));
     this.zoekerComponentOpNaam$ = this.zoekerComponentSubj.pipe(
       scan(
         (zoekerComponentOpNaam: Map<ZoekerType, GetraptZoekerComponent>, nz: Tuple<ZoekerType, GetraptZoekerComponent>) =>
@@ -356,7 +366,10 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
-    return [prt.ZoekResultatenSubscription(r => this.processZoekerAntwoord(r))];
+    return [
+      prt.ZoekResultatenSubscription(r => this.processZoekerAntwoord(r)),
+      prt.SuggestiesResultatenSubscription(r => this.processPreviewAntwoord(r))
+    ];
   }
 
   ngOnInit(): void {
@@ -371,6 +384,28 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       stijlInLagenKiezer: none,
       wrapper: kaartLogOnlyWrapper
     });
+    const minZoektermLength = 2;
+    const zoekterm$ = this.zoekInputSubj.pipe(
+      debounceTime(250), // Niet elk karakter als er vlug getypt wordt
+      map(s => s.trimLeft()), // Spaties links boeien ons niet
+      distinctUntilChanged() // Evt een karakter + delete, of een control character
+    );
+    this.bindToLifeCycle(
+      rx.Observable.combineLatest(
+        this.zoekerNamen$, //
+        zoekterm$.pipe(filter(minLength(minZoektermLength))),
+        (zoekerNamen, zoekterm) => ({
+          type: "ZoekSuggesties" as "ZoekSuggesties",
+          zoekers: Set.of(...zoekerNamen),
+          zoekterm: zoekterm
+        })
+      )
+    ).subscribe(cmd => {
+      this.suggestiesBuffer = [];
+      this.dispatch(cmd);
+    });
+    const previewVisibility$ = zoekterm$.pipe(map(minLength(minZoektermLength))); // enkel obv getypte characters
+    this.bindToLifeCycle(previewVisibility$).subscribe(visible => (this.toonPreview = visible));
   }
 
   ngOnDestroy(): void {
@@ -392,7 +427,18 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.refreshUI();
   }
 
-  zoomNaarResultaat(resultaat: ZoekResultaat) {
+  kiesZoekResultaat(resultaat: ZoekResultaat) {
+    this.zoomNaarResultaat(resultaat);
+  }
+
+  kiesSuggestiesResultaat(resultaat: ZoekResultaat) {
+    this.toonPreview = false;
+    this.zoomNaarResultaat(resultaat);
+    this.zoekVeld.setValue(resultaat.omschrijving);
+    this.focusOpZoekVeld();
+  }
+
+  private zoomNaarResultaat(resultaat: ZoekResultaat) {
     this.toonResultaat = false;
     this.toonHelp = false;
     this.dispatch(prt.ZoekGekliktCmd(resultaat));
@@ -418,6 +464,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   zoek() {
     if (this.zoekVeld.value) {
       this.toonResultaat = true;
+      this.toonPreview = false;
       this.increaseBusy();
       this.dispatch({
         type: "Zoek",
@@ -444,9 +491,22 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
 
   onKey(event: any) {
     // De gebruiker kan locatie voorstellen krijgen door in het zoekveld max. 2 tekens in te typen en op enter te drukken
-    if (event.keyCode === 13 && event.srcElement.value.length >= 2) {
-      this.zoek();
+    switch (event.key) {
+      case "Enter":
+        if (event.srcElement.value.length >= 2) {
+          this.zoek();
+        }
+        break;
+      case "Escape":
+        if (this.toonPreview) {
+          this.toonPreview = false;
+        } else {
+          this.kuisZoekOp();
+        }
     }
+    // Een formbuilder heeft een observable ingebouwd, maar dat gebruiken we dus niet
+    this.zoekInputSubj.next(event.srcElement.value);
+    console.log("****", event.key, event.code, event.srcElement.value);
   }
 
   heeftFout(): boolean {
@@ -463,6 +523,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.actieveZoeker = zoeker;
     this.focusOpZoekVeld();
     this.toonResultaat = true;
+    this.toonPreview = false;
   }
 
   maakResultaatLeeg() {
@@ -470,6 +531,8 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.zoekVeld.markAsPristine();
     this.alleFouten = [];
     this.alleZoekResultaten = [];
+    this.alleSuggestiesResultaten = [];
+    this.suggestiesBuffer = [];
     this.featuresByResultaat = Map<ZoekResultaat, ol.Feature[]>();
     this.huidigeSelectie = none;
     this.legende.clear();
@@ -479,11 +542,10 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
 
   private processZoekerAntwoord(nieuweResultaten: ZoekResultaten): KaartInternalMsg {
     kaartLogger.debug("Process " + nieuweResultaten.zoeker);
-    this.alleZoekResultaten = this.alleZoekResultaten
-      .filter(resultaat => resultaat.zoeker !== nieuweResultaten.zoeker)
-      .concat(nieuweResultaten.resultaten);
+    this.alleZoekResultaten = this.vervangZoekerResultaten(this.alleZoekResultaten, nieuweResultaten);
     this.alleZoekResultaten.sort((a, b) => compareResultaten(a, b, this.zoekVeld.value, this.zoekerRepresentatie));
     nieuweResultaten.legende.forEach((safeHtml, name) => this.legende.set(name!, safeHtml!));
+    this.alleSuggestiesResultaten = [];
     this.legendeKeys = this.legende.keySeq().toArray();
 
     this.alleFouten = this.alleFouten
@@ -507,6 +569,46 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       type: "KaartInternal",
       payload: none
     };
+  }
+
+  private processPreviewAntwoord(nieuweResultaten: ZoekResultaten): KaartInternalMsg {
+    kaartLogger.debug("Process preview " + nieuweResultaten.zoeker);
+    // de resultaten van de zoeker wiens antwoord nu binnen komt, moeten vervangen worden door de nieuwe resultaten
+    // We moeten de resultaten in volgorde van prioriteit tonen
+
+    // Stap 1 is sorteren van de antwoorden van de zoekers op prioriteit
+    const ordering: Ord<ZoekResultaten> = ord.contramap(zr => zr.prioriteit, ord.ordNumber);
+    this.suggestiesBuffer = array.sort<ZoekResultaten>(ordering)(array.snoc(this.suggestiesBuffer, nieuweResultaten));
+
+    // Stap 2 is alle individuele resultaten uit de resultaten halen voor zover de prioriteiten ononderbroken oplopen van 1
+    // Het is perfect mogelijk dat er voor een bepaalde prioriteit geen resultaten zijn (lege array). We verwachten dit
+    // zelfs van de zoekers: als ze geen resultaten hebben, moeten ze een lege array versturen.
+    this.alleSuggestiesResultaten = this.suggestiesBuffer.reduce(
+      ({ resultatenVanZoekers, volgendePrio }, suggestieZoekResultaten) => {
+        if (suggestieZoekResultaten.prioriteit === volgendePrio || suggestieZoekResultaten.prioriteit === volgendePrio + 1) {
+          return {
+            resultatenVanZoekers: array.take(5, concat(resultatenVanZoekers, suggestieZoekResultaten.resultaten)),
+            volgendePrio: volgendePrio + 1
+          };
+        } else {
+          return { resultatenVanZoekers: resultatenVanZoekers, volgendePrio: 0 };
+        }
+      },
+      {
+        resultatenVanZoekers: new Array<ZoekResultaat>(),
+        volgendePrio: 0
+      }
+    ).resultatenVanZoekers;
+
+    this.refreshUI();
+    return {
+      type: "KaartInternal",
+      payload: none
+    };
+  }
+
+  private vervangZoekerResultaten(resultaten: ZoekResultaat[], vervangResultaten: ZoekResultaten) {
+    return resultaten.filter(resultaat => resultaat.zoeker !== vervangResultaten.zoeker).concat(vervangResultaten.resultaten);
   }
 
   increaseBusy() {
@@ -548,7 +650,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   availability$(zoekerNaam: ZoekerType): rx.Observable<boolean> {
-    return this.zoekerNamen$.pipe(map(nmn => nmn.contains(zoekerNaam)));
+    return this.zoekerNamen$.pipe(map(nmn => array.member(setoidString)(nmn, zoekerNaam)));
   }
 
   maakVeldenLeeg(zoekerNaam: ZoekerType): void {
