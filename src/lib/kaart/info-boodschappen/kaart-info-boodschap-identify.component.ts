@@ -15,6 +15,7 @@ import { KaartInfoBoodschapComponent } from "./kaart-info-boodschap.component";
 const PROPERTIES = "properties";
 const GEOMETRY = "geometry";
 const IDENT8 = "ident8";
+const IDENT8EN = "ident8en";
 const LOCATIE_IDENT8 = "locatie.ident8";
 const BEGIN_POSITIE = "locatie.begin.positie";
 const BEGIN_AFSTAND = "locatie.begin.afstand";
@@ -58,6 +59,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   teVerbergenProperties = List.of(
     IDENT8,
     LOCATIE_IDENT8,
+    IDENT8EN,
     GEOMETRY,
     BEGIN_POSITIE,
     BEGIN_AFSTAND,
@@ -142,12 +144,24 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
     return geldigeWaarde(this.waarde(BEGIN_OPSCHRIFT)) && geldigeWaarde(this.waarde(EIND_OPSCHRIFT));
   }
 
+  heeftIdent8en(): boolean {
+    return this.heeft(IDENT8EN) && (this.waarde(IDENT8EN) as string[]).length > 0;
+  }
+
+  ident8en() {
+    return fromNullable((this.waarde(IDENT8EN) as string[]).join(", ")).getOrElse("");
+  }
+
   heeftIdent8(): boolean {
-    return this.heeft(IDENT8) || this.heeft(LOCATIE_IDENT8);
+    return this.heeft(IDENT8) || this.heeft(LOCATIE_IDENT8) || this.heeft(IDENT8EN);
   }
 
   ident8() {
-    return orElse(fromNullable(this.waarde(IDENT8)), () => fromNullable(this.waarde(LOCATIE_IDENT8))).getOrElse("");
+    if (this.heeftIdent8en()) {
+      return this.ident8en();
+    } else {
+      return orElse(fromNullable(this.waarde(IDENT8)), () => fromNullable(this.waarde(LOCATIE_IDENT8))).getOrElse("");
+    }
   }
 
   van(): string {
