@@ -1,6 +1,6 @@
 /// <reference path="../util/custom-matchers.d.ts">
 import { findFirst } from "fp-ts/lib/Array";
-import { none, Option, some } from "fp-ts/lib/Option";
+import { Option } from "fp-ts/lib/Option";
 import { browser, by, element, WebElement } from "protractor";
 
 import { KaartPage } from "../pages/kaart.po";
@@ -62,7 +62,7 @@ describe("Als ik naar de achtergrond kijk", () => {
   });
 
   it("dan wordt de 'dienstkaart grijs' achtergrond tile getoond", async () => {
-    expect(await achtergrondSelectie.zichtbareTileMetTitel("Dienstkaart grijs").then(o => o.isSome())).toBe(true);
+    expect(await achtergrondSelectie.zichtbareTileMetTitel("Dienstkaart grijs")).toBeSome();
   });
 
   it("dan worden er 5 achtergrond tiles aangemaakt", async () => {
@@ -74,7 +74,7 @@ describe("Als ik naar de achtergrond kijk", () => {
   });
 
   it("dan wordt de 'dienstkaart kleur' achtergrond tile niet getoond", async () => {
-    expect(await achtergrondSelectie.zichtbareTileMetTitel("Dienstkaart kleur")).toBe(none);
+    expect(await achtergrondSelectie.zichtbareTileMetTitel("Dienstkaart kleur")).toBeNone();
   });
 
   describe("wanneer op de enige tile geklikt wordt", () => {
@@ -93,7 +93,7 @@ describe("Als ik naar de achtergrond kijk", () => {
       });
 
       it("is 'Dienstkaart kleur' zichtbaar", async () => {
-        expect(await achtergrondSelectie.zichtbareTileMetTitel("Dienstkaart kleur").then(o => o.isSome())).toBe(true);
+        expect(await achtergrondSelectie.zichtbareTileMetTitel("Dienstkaart kleur")).toBeSome();
       });
 
       it("zijn er geen andere tiles meer zichtbaar", async () => {        
