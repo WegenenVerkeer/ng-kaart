@@ -26,8 +26,8 @@ mat-expansion-panel {
 
 .veldnamen {
   order: 1;
-  flex-basis: 40%;
-  max-width: 40%;
+  flex-basis: 30%;
+  max-width: 30%;
   line-height: 20px;
   font-size: 14px;
   font-weight: 300;
@@ -36,12 +36,27 @@ mat-expansion-panel {
 
 .veldwaarden {
   order: 2;
-  flex-basis: 60%;
-  max-width: 60%;
+  flex-basis: 55%;
+  max-width: 55%;
   line-height: 20px;
   font-size: 14px;
   font-weight: 300;
   color: rgba(0, 0, 0, 0.87);
+}
+
+.copy {
+  order: 3;
+  flex-basis: 15%;
+  max-width: 15%;
+  line-height: 20px;
+}
+
+.mat-button {
+  min-width: 1%;
+}
+
+.mat-icon {
+  @include mat-icon-size(12px);
 }
 
 .verbatim {
