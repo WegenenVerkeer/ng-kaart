@@ -1,20 +1,20 @@
-<mat-card class="mat-elevation-z0">
+<mat-card class="coordinaten-panel mat-elevation-z0">
    <mat-card-content>
     <div class="velden">
       <div class="veldnamen">Lambert 72</div>
       <div class="veldwaarden">{{ coordinaatInformatieLambert72 }}</div>
-      <button mat-button class="copy">
-          <mat-icon (click)="copyToClipboard(coordinaatInformatieLambert72)">file_copy</mat-icon>
-        </button>
+      <button mat-icon-button class="copy" matTooltip="Kopieer coördinaten">
+          <mat-icon (click)="copyToClipboard(coordinaatInformatieLambert72)">content_copy</mat-icon>
+      </button>
     </div>
     <div class="velden">
       <div class="veldnamen">WGS 84</div>
       <div class="veldwaarden">{{ coordinaatInformatieWgs84 }}</div>
-      <button mat-button class="copy">
-        <mat-icon (click)="copyToClipboard(coordinaatInformatieWgs84)">file_copy</mat-icon>
+      <button mat-icon-button class="copy" matTooltip="Kopieer coördinaten">
+        <mat-icon (click)="copyToClipboard(coordinaatInformatieWgs84)">content_copy</mat-icon>
       </button>
     </div>
-</mat-card-content>
+  </mat-card-content>
 </mat-card>
 
 <mat-accordion class="accordion">

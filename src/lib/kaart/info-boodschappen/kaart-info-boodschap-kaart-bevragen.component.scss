@@ -10,6 +10,10 @@ mat-expansion-panel {
   align-items: center;
 }
 
+.coordinaten-panel {
+  padding: 0 16px 16px 24px;
+}
+
 .accordion {
   width: 100%;
 }
@@ -22,6 +26,7 @@ mat-expansion-panel {
   display: flex;
   flex-wrap: wrap;
   flex-direction: row;
+  justify-content: space-between;
 }
 
 .veldnamen {
@@ -36,8 +41,8 @@ mat-expansion-panel {
 
 .veldwaarden {
   order: 2;
-  flex-basis: 55%;
-  max-width: 55%;
+  flex-basis: 60%;
+  max-width: 60%;
   line-height: 20px;
   font-size: 14px;
   font-weight: 300;
@@ -46,17 +51,16 @@ mat-expansion-panel {
 
 .copy {
   order: 3;
-  flex-basis: 15%;
-  max-width: 15%;
+  flex-basis: 10%;
+  max-width: 24px;
   line-height: 20px;
-}
-
-.mat-button {
-  min-width: 1%;
+  height: 20px;
+  min-width: 24px;
 }
 
 .mat-icon {
-  @include mat-icon-size(12px);
+  @include mat-icon-size(16px);
+  vertical-align: top;
 }
 
 .verbatim {
