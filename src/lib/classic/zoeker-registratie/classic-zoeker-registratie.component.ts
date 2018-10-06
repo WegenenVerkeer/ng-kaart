@@ -5,7 +5,7 @@ import { fromNullable } from "fp-ts/lib/Option";
 
 import { KaartComponentBase } from "../../kaart/kaart-component-base";
 import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
-import { Zoeker } from "../../zoeker/zoeker";
+import { Zoeker, ZoekerMetPrioriteiten } from "../../zoeker/zoeker";
 import { KaartClassicComponent } from "../kaart-classic.component";
 
 @Component({
@@ -13,10 +13,10 @@ import { KaartClassicComponent } from "../kaart-classic.component";
   template: ""
 })
 export class ClassicZoekerRegistratieComponent extends KaartComponentBase {
-  @Input() zoeker: Zoeker;
-  @Input() zoekers: Zoeker[] = [];
+  @Input() zoeker: ZoekerMetPrioriteiten;
+  @Input() zoekers: ZoekerMetPrioriteiten[] = [];
 
-  private registered: Zoeker[];
+  private registered: ZoekerMetPrioriteiten[];
 
   constructor(kaart: KaartClassicComponent, zone: NgZone) {
     super(zone);
@@ -27,16 +27,16 @@ export class ClassicZoekerRegistratieComponent extends KaartComponentBase {
       this.registered.forEach(zoeker =>
         kaart.dispatch({
           type: "VoegZoekerToe",
-          zoeker: zoeker,
+          zoekerPrioriteit: zoeker,
           wrapper: kaartLogOnlyWrapper
         })
       );
     });
     this.destroying$.subscribe(() =>
-      this.registered.forEach(zoeker =>
+      this.registered.forEach(zmp =>
         kaart.dispatch({
           type: "VerwijderZoeker",
-          zoeker: zoeker.naam(),
+          zoekerNaam: zmp.zoeker.naam(),
           wrapper: kaartLogOnlyWrapper
         })
       )

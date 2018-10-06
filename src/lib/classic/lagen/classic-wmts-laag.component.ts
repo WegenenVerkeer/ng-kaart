@@ -63,7 +63,8 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
         titel: this.titel,
         backgroundUrl: blancoLaag,
         minZoom: this.minZoom,
-        maxZoom: this.maxZoom
+        maxZoom: this.maxZoom,
+        verwijderd: false
       };
     } else {
       const config: ke.WmtsManualConfig = {
@@ -90,7 +91,8 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
       config: config,
       backgroundUrl: this.backgroundUrl(config),
       minZoom: this.minZoom,
-      maxZoom: this.maxZoom
+      maxZoom: this.maxZoom,
+      verwijderd: false
     };
   }
 

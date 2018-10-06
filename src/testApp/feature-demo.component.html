@@ -140,6 +140,7 @@
         </div>
         <!-- zoeker -->
         <awv-kaart-zoeker *ngIf="isOptieActief('zoeker')"></awv-kaart-zoeker>
+        <awv-kaart-zoeker-registratie [zoekers]="stdZoekers"></awv-kaart-zoeker-registratie>
         <!-- lagen -->
         <awv-kaart-lagenkiezer *ngIf="isOptieActief('lagenkiezer')" [titels]="['Referentiepunten (WDB)', 'Referentiepunten (WDB) 2', 'features']"
                                [headerTitel]="'Mijn legende en lagen'" [initieelDichtgeklapt]="true"

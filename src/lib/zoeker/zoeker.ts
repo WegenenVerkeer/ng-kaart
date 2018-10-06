@@ -1,5 +1,7 @@
-import { Function1, Predicate } from "fp-ts/lib/function";
-import { Option } from "fp-ts/lib/Option";
+import * as array from "fp-ts/lib/Array";
+import { Function1, Function2, Function3 } from "fp-ts/lib/function";
+import { fromNullable, Option } from "fp-ts/lib/Option";
+import { insert, remove, StrMap } from "fp-ts/lib/StrMap";
 import { Map } from "immutable";
 import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
@@ -17,48 +19,6 @@ export interface IconDescription {
   readonly name: string;
 }
 
-export interface ZoekKaartResultaat {
-  readonly geometry: ol.geom.Geometry;
-  readonly extent: ol.Extent;
-  readonly style: ol.style.Style;
-  readonly highlightStyle: ol.style.Style;
-}
-
-export interface ZoekResultaat {
-  readonly partialMatch: boolean;
-  readonly index: number;
-  readonly omschrijving: string;
-  readonly bron: string;
-  readonly zoeker: string;
-  readonly kaartInfo: Option<ZoekKaartResultaat>;
-  readonly icoon: IconDescription;
-  readonly preferredPointZoomLevel: Option<number>;
-}
-
-export class ZoekResultaten {
-  constructor(
-    public readonly zoeker: string,
-    public readonly prioriteit: number,
-    public readonly fouten: string[] = [],
-    public readonly resultaten: ZoekResultaat[] = [],
-    public readonly legende: Map<string, IconDescription> = Map()
-  ) {}
-
-  limiteerAantalResultaten(maxAantal: number): ZoekResultaten {
-    if (this.resultaten.length >= maxAantal) {
-      return new ZoekResultaten(
-        this.zoeker,
-        this.prioriteit,
-        this.fouten.concat([`Er werden meer dan ${maxAantal} resultaten gevonden, ` + `de eerste ${maxAantal} worden hier opgelijst`]),
-        this.resultaten.slice(0, maxAantal),
-        this.legende
-      );
-    } else {
-      return this;
-    }
-  }
-}
-
 export interface ZoekInput {
   readonly type: string; // We kunnen dit niet inperken omdat we niet alle zoekers kennen
   readonly [key: string]: any;
@@ -69,38 +29,94 @@ export interface StringZoekInput {
   readonly value: string;
 }
 
-export type Zoektype = "Volledig" | "Vlug";
+export type Zoektype = "Volledig" | "Suggesties";
 
-export interface ZoekOpdracht {
+export interface Zoekopdracht {
   readonly zoekpatroon: ZoekInput;
   readonly zoektype: Zoektype;
+  readonly zoekernamen: string[];
 }
 
 export interface Zoeker {
   naam(): string;
-  zoekPrioriteit(): number;
-  suggestiePrioriteit(): number;
-  zoek$(input: ZoekInput): Observable<ZoekResultaten>;
-  suggesties$(input: string): Observable<ZoekResultaten>;
+  zoekresultaten$(zoekopdracht: Zoekopdracht): Observable<ZoekResultaten>;
 }
 
-export abstract class ZoekerBase {
-  constructor(private readonly _naam: string, private readonly _zoekPrioriteit: number, private readonly _suggestiePrioriteit: number) {}
+export type PrioriteitenOpZoekertype = StrMap<number>;
 
-  naam(): string {
-    return this._naam;
-  }
+// Vreemde manier van werken, maar constructor heeft een type nodig
+export const emptyPrioriteitenOpZoekertype: PrioriteitenOpZoekertype = remove("dummy", new StrMap({ dummy: 0 }));
 
-  zoekPrioriteit(): number {
-    return this._zoekPrioriteit;
-  }
+const maybeInsertPrioriteit: Function3<Option<number>, Zoektype, PrioriteitenOpZoekertype, PrioriteitenOpZoekertype> = (
+  maybePrio,
+  zoektype,
+  prioriteiten
+) => maybePrio.map(prio => insert(zoektype, prio, prioriteiten)).getOrElse(prioriteiten);
 
-  suggestiePrioriteit(): number {
-    return this._suggestiePrioriteit;
+export interface ZoekerMetPrioriteiten {
+  readonly zoeker: Zoeker;
+  readonly prioriteiten: PrioriteitenOpZoekertype;
+}
+
+export interface ZoekKaartResultaat {
+  readonly geometry: ol.geom.Geometry;
+  readonly extent: ol.Extent;
+  readonly style: ol.style.Style;
+  readonly highlightStyle: ol.style.Style;
+}
+
+export interface ZoekResultaat {
+  readonly featureIdSuffix: string;
+  readonly omschrijving: string;
+  readonly bron: string;
+  readonly zoeker: string;
+  readonly kaartInfo: Option<ZoekKaartResultaat>;
+  readonly icoon: IconDescription;
+  readonly preferredPointZoomLevel: Option<number>;
+  readonly extraOmschrijving: Option<string>;
+}
+
+export class ZoekResultaten {
+  constructor(
+    readonly zoeker: string,
+    readonly zoektype: Zoektype,
+    readonly fouten: string[] = [],
+    readonly resultaten: ZoekResultaat[] = [],
+    readonly legende: Map<string, IconDescription> = Map()
+  ) {}
+
+  limiteerAantalResultaten(maxAantal: number): ZoekResultaten {
+    if (this.resultaten.length >= maxAantal) {
+      return new ZoekResultaten(
+        this.zoeker,
+        this.zoektype,
+        this.fouten.concat([`Er werden meer dan ${maxAantal} resultaten gevonden, ` + `de eerste ${maxAantal} worden hier opgelijst`]),
+        this.resultaten.slice(0, maxAantal),
+        this.legende
+      );
+    } else {
+      return this;
+    }
   }
 }
 
-export const zoekerMetNaam: Function1<string, Predicate<Zoeker>> = naam => zoeker => zoeker.naam() === naam;
+export const nietOndersteund: Function2<string, Zoektype, ZoekResultaten> = (naam, zoektype) => new ZoekResultaten(naam, zoektype);
+
+export const zoekerMetPrioriteiten: (_1: Zoeker, _2?: number, _3?: number) => ZoekerMetPrioriteiten = (
+  zoeker,
+  volledigPrioriteit,
+  suggestiesPrioriteit
+) => ({
+  zoeker: zoeker,
+  prioriteiten: maybeInsertPrioriteit(
+    fromNullable(volledigPrioriteit),
+    "Volledig",
+    maybeInsertPrioriteit(fromNullable(suggestiesPrioriteit), "Suggesties", emptyPrioriteitenOpZoekertype)
+  )
+});
+
+export const zoekerMetNaam: Function1<string, Function1<ZoekerMetPrioriteiten[], Option<Zoeker>>> = naam => zmps =>
+  array.findFirst(zmps, zmp => zmp.zoeker.naam() === naam).map(zmp => zmp.zoeker);
 
 // De resultaten worden getoond volgens een bepaalde hiërarchie
 // - Eerst wordt er gesorteerd volgens bron

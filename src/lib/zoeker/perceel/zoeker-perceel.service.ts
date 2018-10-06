@@ -7,15 +7,16 @@ import * as rx from "rxjs";
 import { Observable } from "rxjs/Observable";
 import { map, shareReplay } from "rxjs/operators";
 
-import { ZoekerConfigData } from "../config/zoeker-config";
+import { ZOEKER_CFG, ZoekerConfigData } from "../config/zoeker-config";
 import { ZoekerConfigLocatorServicesConfig } from "../config/zoeker-config-locator-services.config";
 import {
   geoJSONOptions,
   IconDescription,
+  nietOndersteund,
   Zoeker,
-  ZoekerBase,
   ZoekInput,
   ZoekKaartResultaat,
+  Zoekopdracht,
   ZoekResultaat,
   ZoekResultaten
 } from "../zoeker";
@@ -71,12 +72,12 @@ export interface PerceelZoekInput extends ZoekInput {
 }
 
 export class PerceelZoekResultaat implements ZoekResultaat {
-  readonly partialMatch = false;
-  readonly index: number;
+  readonly featureIdSuffix: string;
   readonly omschrijving: string;
   readonly bron: string = "Perceel";
   readonly kaartInfo: Option<ZoekKaartResultaat>;
   readonly preferredPointZoomLevel = none;
+  readonly extraOmschrijving: Option<string> = none;
 
   constructor(
     details: PerceelDetails,
@@ -86,7 +87,7 @@ export class PerceelZoekResultaat implements ZoekResultaat {
     style: ol.style.Style,
     highlightStyle: ol.style.Style
   ) {
-    this.index = index + 1;
+    this.featureIdSuffix = `${index + 1}`;
     const geometry = new ol.format.GeoJSON(geoJSONOptions).readGeometry(details.shape);
     this.kaartInfo = some({
       geometry: geometry,
@@ -99,20 +100,21 @@ export class PerceelZoekResultaat implements ZoekResultaat {
 }
 
 @Injectable()
-export class ZoekerPerceelService extends ZoekerBase implements Zoeker {
+export class ZoekerPerceelService implements Zoeker {
   private readonly locatorServicesConfig: ZoekerConfigLocatorServicesConfig;
   private legende: Map<string, IconDescription>;
 
   constructor(
-    zoekPrio: number,
-    suggestiePrio: number,
     private readonly http: HttpClient,
-    zoekerConfigData: ZoekerConfigData,
-    private zoekerRepresentatie: AbstractRepresentatieService
+    @Inject(ZOEKER_CFG) zoekerConfigData: ZoekerConfigData,
+    @Inject(ZOEKER_REPRESENTATIE) private zoekerRepresentatie: AbstractRepresentatieService
   ) {
-    super("Perceel", zoekPrio, suggestiePrio);
     this.locatorServicesConfig = new ZoekerConfigLocatorServicesConfig(zoekerConfigData.locatorServices);
     this.legende = Map.of(this.naam(), this.zoekerRepresentatie.getSvgIcon("Perceel"));
+  }
+
+  naam(): string {
+    return PERCEEL_SVC_NAAM;
   }
 
   getAlleGemeenten$(): Observable<Gemeente[]> {
@@ -143,6 +145,15 @@ export class ZoekerPerceelService extends ZoekerBase implements Zoeker {
     return this.http.get<PerceelDetails>(this.locatorServicesConfig.url + "/rest/capakey/perceel/" + capakey).pipe(shareReplay(1));
   }
 
+  zoekresultaten$(zoekopdracht: Zoekopdracht): Observable<ZoekResultaten> {
+    switch (zoekopdracht.zoektype) {
+      case "Volledig":
+        return this.zoek$(zoekopdracht.zoekpatroon);
+      default:
+        return Observable.of(nietOndersteund(this.naam(), zoekopdracht.zoektype));
+    }
+  }
+
   zoek$(zoekterm: ZoekInput): Observable<ZoekResultaten> {
     switch (zoekterm.type) {
       case "Perceel":
@@ -151,7 +162,7 @@ export class ZoekerPerceelService extends ZoekerBase implements Zoeker {
             details =>
               new ZoekResultaten(
                 this.naam(),
-                this.zoekPrioriteit(),
+                "Volledig",
                 [],
                 [
                   new PerceelZoekResultaat(
@@ -170,9 +181,5 @@ export class ZoekerPerceelService extends ZoekerBase implements Zoeker {
       default:
         return rx.Observable.empty();
     }
-  }
-
-  suggesties$(zoekterm: string): rx.Observable<ZoekResultaten> {
-    return rx.Observable.empty();
   }
 }

@@ -3,7 +3,7 @@ import { List, Set } from "immutable";
 import * as ol from "openlayers";
 import { Subscription as RxSubscription } from "rxjs/Subscription";
 
-import { Zoeker, ZoekInput, ZoekResultaat } from "../zoeker/zoeker";
+import { ZoekerMetPrioriteiten, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
 
 import { BareValidationWrapper, KaartMsg, Subscription, ValidationWrapper } from ".";
 import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
@@ -64,7 +64,6 @@ export type Command<Msg extends KaartMsg> =
   | ZetStijlVoorLaagCmd<Msg>
   | ZetUiElementOpties
   | ZoekCmd<Msg>
-  | ZoekSuggestiesCmd
   | ZoekGekliktCmd;
 
 export interface SubscriptionResult {
@@ -262,20 +261,19 @@ export interface MeldComponentFoutCmd {
 
 export interface VoegZoekerToeCmd<Msg extends KaartMsg> {
   readonly type: "VoegZoekerToe";
-  readonly zoeker: Zoeker;
+  readonly zoekerPrioriteit: ZoekerMetPrioriteiten;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
 export interface VerwijderZoekerCmd<Msg extends KaartMsg> {
   readonly type: "VerwijderZoeker";
-  readonly zoeker: string;
+  readonly zoekerNaam: string;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
 export interface ZoekCmd<Msg extends KaartMsg> {
   readonly type: "Zoek";
-  readonly input: ZoekInput;
-  readonly zoekers: Set<string>;
+  readonly opdracht: Zoekopdracht;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -634,8 +632,11 @@ export function ZetLaagLegendeCmd<Msg extends KaartMsg>(
   return { type: "ZetLaagLegende", titel: titel, legende: legende, wrapper: wrapper };
 }
 
-export function VoegZoekerToeCmd<Msg extends KaartMsg>(zoeker: Zoeker, wrapper: BareValidationWrapper<Msg>): VoegZoekerToeCmd<Msg> {
-  return { type: "VoegZoekerToe", zoeker: zoeker, wrapper: wrapper };
+export function VoegZoekerToeCmd<Msg extends KaartMsg>(
+  zoeker: ZoekerMetPrioriteiten,
+  wrapper: BareValidationWrapper<Msg>
+): VoegZoekerToeCmd<Msg> {
+  return { type: "VoegZoekerToe", zoekerPrioriteit: zoeker, wrapper: wrapper };
 }
 
 export function VoegLaagLocatieInformatieServiceToe(

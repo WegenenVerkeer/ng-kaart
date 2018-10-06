@@ -1,3 +1,4 @@
+import * as array from "fp-ts/lib/Array";
 import { Endomorphism, Function1, identity, pipe } from "fp-ts/lib/function";
 import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
 import * as validation from "fp-ts/lib/Validation";
@@ -11,6 +12,7 @@ import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
 import { forEach } from "../util/option";
 import { updateBehaviorSubject } from "../util/subject-update";
 import { allOf, fromBoolean, fromOption, fromPredicate, success, validationChain as chain } from "../util/validation";
+import { zoekerMetNaam } from "../zoeker/zoeker";
 
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
@@ -76,7 +78,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function ModelAndEmptyResult(mdl: Model): KaartCmdResult<any> {
       return {
         model: mdl,
-        value: some({})
+        value: some({}) // Veel ontvangers zijn niet geïnteresseerd in een specifiek resultaat, wel dat alles ok is
       };
     }
 
@@ -85,7 +87,9 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       resultValidation: prt.KaartCmdValidation<KaartCmdResult<T>>
     ): ModelWithResult<Msg> {
       return {
+        // Als alles ok is, het nieuwe model nemen, anders het oude
         model: resultValidation.map(v => v.model).getOrElse(model),
+        // Als alles ok is, dan is de message de value van KaartCmdResult, anders de foutboodschappen
         message: resultValidation.fold(fail => some(wrapper(validation.failure(fail))), v => v.value.map(x => wrapper(success(x))))
       };
     }
@@ -127,7 +131,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function valideerZoekerIsNietGeregistreerd(naam: string): prt.KaartCmdValidation<{}> {
       return fromPredicate(
         model,
-        (mdl: Model) => !mdl.zoekerCoordinator.isZoekerGeregistreerd(naam),
+        (mdl: Model) => zoekerMetNaam(naam)(mdl.zoekersMetPrioriteiten).isNone(),
         `Een zoeker met naam ${naam} bestaat al`
       );
     }
@@ -135,7 +139,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function valideerZoekerIsGeregistreerd(naam: string): prt.KaartCmdValidation<{}> {
       return fromPredicate(
         model,
-        (mdl: Model) => mdl.zoekerCoordinator.isZoekerGeregistreerd(naam),
+        (mdl: Model) => zoekerMetNaam(naam)(mdl.zoekersMetPrioriteiten).isSome(),
         `Een zoeker met naam ${naam} bestaat niet`
       );
     }
@@ -143,7 +147,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function valideerMinstens1ZoekerGeregistreerd(): prt.KaartCmdValidation<{}> {
       return fromPredicate(
         model,
-        (mdl: Model) => mdl.zoekerCoordinator.isMinstens1ZoekerGeregistreerd(),
+        (mdl: Model) => mdl.zoekersMetPrioriteiten.length >= 1, //
         `Er moet minstens 1 zoeker geregistreerd zijn`
       );
     }
@@ -346,7 +350,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             }))
             .getOrElse(toegevoegdeLaagCommon);
           layer.set("titel", titel);
-          layer.setVisible(cmnd.magGetoondWorden); // achtergrondlagen expliciet zichtbaar maken!
+          layer.setVisible(cmnd.magGetoondWorden && !cmnd.laag.verwijderd); // achtergrondlagen expliciet zichtbaar maken!
           // met positie hoeven we nog geen rekening te houden
           forEach(ke.asToegevoegdeVectorLaag(toegevoegdeLaag), pasVectorLaagStijlToe);
           zetLayerIndex(layer, groepPositie, groep);
@@ -983,10 +987,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function voegZoekerToe(cmnd: prt.VoegZoekerToeCmd<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerZoekerIsNietGeregistreerd(cmnd.zoeker.naam()).map(() => {
-          model.zoekerCoordinator.voegZoekerToe(cmnd.zoeker);
-          model.changer.zoekerServicesSubj.next(model.zoekerCoordinator.zoekerServices().toArray());
-          return ModelAndEmptyResult(model);
+        valideerZoekerIsNietGeregistreerd(cmnd.zoekerPrioriteit.zoeker.naam()).map(() => {
+          const updatedModel = { ...model, zoekersMetPrioriteiten: array.snoc(model.zoekersMetPrioriteiten, cmnd.zoekerPrioriteit) };
+          model.changer.zoekerServicesSubj.next(updatedModel.zoekersMetPrioriteiten);
+          return ModelAndEmptyResult(updatedModel);
         })
       );
     }
@@ -994,10 +998,13 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function verwijderZoeker(cmnd: prt.VerwijderZoekerCmd<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerZoekerIsGeregistreerd(cmnd.zoeker).map(() => {
-          model.zoekerCoordinator.verwijderZoeker(cmnd.zoeker);
-          model.changer.zoekerServicesSubj.next(model.zoekerCoordinator.zoekerServices().toArray());
-          return ModelAndEmptyResult(model);
+        valideerZoekerIsGeregistreerd(cmnd.zoekerNaam).map(() => {
+          const updatedModel = {
+            ...model,
+            zoekersMetPrioriteiten: array.filter(model.zoekersMetPrioriteiten, zmp => zmp.zoeker.naam() !== cmnd.zoekerNaam)
+          };
+          model.changer.zoekerServicesSubj.next(updatedModel.zoekersMetPrioriteiten);
+          return ModelAndEmptyResult(updatedModel);
         })
       );
     }
@@ -1006,22 +1013,15 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         cmnd.wrapper,
         valideerMinstens1ZoekerGeregistreerd().map(() => {
-          model.zoekerCoordinator.zoek(cmnd.input, cmnd.zoekers);
+          // model.zoekerCoordinator.zoek(cmnd.input, cmnd.zoekers);
+          modelChanger.zoekopdrachtSubj.next(cmnd.opdracht);
           return ModelAndEmptyResult(model);
         })
       );
     }
 
-    function zoekSuggesties(cmnd: prt.ZoekSuggestiesCmd): ModelWithResult<Msg> {
-      valideerMinstens1ZoekerGeregistreerd().map(() => {
-        model.zoekerCoordinator.zoekSuggesties(cmnd.zoekterm, cmnd.zoekers);
-        return ModelAndEmptyResult(model);
-      });
-      return ModelWithResult(model);
-    }
-
     function zoekGeklikt(cmnd: prt.ZoekGekliktCmd): ModelWithResult<Msg> {
-      model.zoekerCoordinator.zoekResultaatGeklikt(cmnd.resultaat);
+      modelChanger.zoekresultaatselectieSubj.next(cmnd.resultaat);
       return ModelWithResult(model);
     }
 
@@ -1162,18 +1162,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         console.log("**** subscribeToZoekResultaten");
         return modelWithSubscriptionResult(
           "ZoekResultaten",
-          model.zoekerCoordinator.zoekResultaten$.subscribe(
-            m => msgConsumer(sub.wrapper(m)),
-            e => console.error("****zr", e),
-            () => console.log("****zr done")
-          )
-        );
-      }
-
-      function subscribeToSuggestiesResultaten(sub: prt.VlugZoekResultatenSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult(
-          "SuggestiesResultaten",
-          model.zoekerCoordinator.vlugZoekResultaten$.subscribe(m => msgConsumer(sub.wrapper(m)))
+          modelChanges.zoekresultaten$.subscribe(consumeWrapped(sub), e => console.error("****zr", e), () => console.log("****zr done"))
         );
       }
 
@@ -1249,8 +1238,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToKaartClick(cmnd.subscription);
         case "ZoekResultaten":
           return subscribeToZoekResultaten(cmnd.subscription);
-        case "SuggestiesResultaten":
-          return subscribeToSuggestiesResultaten(cmnd.subscription);
         case "ZoekResultaatSelectie":
           return subscribeToZoekResultaatSelectie(cmnd.subscription);
         case "Zoekers":
@@ -1342,8 +1329,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return verwijderZoeker(cmd);
       case "Zoek":
         return zoek(cmd);
-      case "ZoekSuggesties":
-        return zoekSuggesties(cmd);
       case "ZoekGeklikt":
         return zoekGeklikt(cmd);
       case "ZetMijnLocatieZoomStatus":

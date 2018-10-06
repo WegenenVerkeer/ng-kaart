@@ -44,6 +44,7 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
+    display: flex;
 
     &:hover {
       background-color: rgba(0, 0, 0, 0.04);
@@ -54,8 +55,21 @@
       vertical-align: middle;
       margin-right: 4px;
     }
-  }
+    
+    .zoeker-data-box {
+      display: flex;
+      flex-direction: column;
+      
+      .zoeker-omschrijving {
+        font-size: 100%;
+      }
 
+      .zoeker-extra {
+        font-size: 80%;
+      }
+    }  
+  }  
+  
   .zoeker-fout {
     text-overflow: initial;
     white-space: normal;

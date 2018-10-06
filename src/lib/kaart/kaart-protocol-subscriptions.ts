@@ -3,7 +3,7 @@ import { Option } from "fp-ts/lib/Option";
 import { List, Map } from "immutable";
 import * as ol from "openlayers";
 
-import { Zoeker, ZoekResultaat, ZoekResultaten } from "../zoeker/zoeker";
+import { ZoekerMetPrioriteiten, ZoekResultaat, ZoekResultaten } from "../zoeker/zoeker";
 
 import * as ke from "./kaart-elementen";
 import { TekenResultaat } from "./kaart-elementen";
@@ -28,7 +28,6 @@ export type Subscription<Msg> =
   | MiddelpuntSubscription<Msg>
   | TekenenSubscription<Msg>
   | ViewinstellingenSubscription<Msg>
-  | VlugZoekResultatenSubscription<Msg>
   | ZichtbareFeaturesSubscription<Msg>
   | ZoekersSubscription<Msg>
   | ZoekResultaatSelectieSubscription<Msg>
@@ -117,14 +116,9 @@ export interface ZoekResultatenSubscription<Msg> {
   readonly wrapper: MsgGen<ZoekResultaten, Msg>;
 }
 
-export interface VlugZoekResultatenSubscription<Msg> {
-  readonly type: "SuggestiesResultaten";
-  readonly wrapper: MsgGen<ZoekResultaten, Msg>;
-}
-
 export interface ZoekersSubscription<Msg> {
   readonly type: "Zoekers";
-  readonly wrapper: MsgGen<Zoeker[], Msg>;
+  readonly wrapper: MsgGen<ZoekerMetPrioriteiten[], Msg>;
 }
 
 export interface ZoekResultaatSelectieSubscription<Msg> {
@@ -213,11 +207,7 @@ export function ZoekResultatenSubscription<Msg>(wrapper: MsgGen<ZoekResultaten, 
   return { type: "ZoekResultaten", wrapper: wrapper };
 }
 
-export function SuggestiesResultatenSubscription<Msg>(wrapper: MsgGen<ZoekResultaten, Msg>): VlugZoekResultatenSubscription<Msg> {
-  return { type: "SuggestiesResultaten", wrapper: wrapper };
-}
-
-export function ZoekersSubscription<Msg>(wrapper: MsgGen<Zoeker[], Msg>): ZoekersSubscription<Msg> {
+export function ZoekersSubscription<Msg>(wrapper: MsgGen<ZoekerMetPrioriteiten[], Msg>): ZoekersSubscription<Msg> {
   return { type: "Zoekers", wrapper: wrapper };
 }
 

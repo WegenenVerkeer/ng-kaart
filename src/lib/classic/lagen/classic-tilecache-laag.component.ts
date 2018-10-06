@@ -30,7 +30,8 @@ export class ClassicTilecacheLaagComponent extends ClassicWmsLaagComponent {
       opacity: fromNullable(this.opacity),
       backgroundUrl: this.backgroundUrl(List(this.config.tilecache.urls), this.laagNaam),
       minZoom: this.minZoom,
-      maxZoom: this.maxZoom
+      maxZoom: this.maxZoom,
+      verwijderd: false
     };
   }
 }

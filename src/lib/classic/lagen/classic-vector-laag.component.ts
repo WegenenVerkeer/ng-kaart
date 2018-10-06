@@ -34,7 +34,8 @@ export class ClassicVectorLaagComponent extends ClassicVectorLaagLikeComponent {
       minZoom: this.minZoom,
       maxZoom: this.maxZoom,
       offsetveld: fromNullable(this.offsetveld),
-      velden: OrderedMap<string, ke.VeldInfo>()
+      velden: OrderedMap<string, ke.VeldInfo>(),
+      verwijderd: false
     };
   }
 }

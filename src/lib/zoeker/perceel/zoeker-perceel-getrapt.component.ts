@@ -1,6 +1,5 @@
 import { Component, EventEmitter, NgZone, OnInit, Output } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import * as array from "fp-ts/lib/Array";
 import { Set } from "immutable";
 import { Observable } from "rxjs/Observable";
 import { distinctUntilChanged, filter, map, startWith, switchMap } from "rxjs/operators";
@@ -55,7 +54,7 @@ export class ZoekerPerceelGetraptComponent extends GetraptZoekerComponent implem
     this.maakVeldenLeeg(NIVEAU_ALLES);
 
     const perceelService$: Observable<ZoekerPerceelService> = this.kaartComponent.modelChanges.zoekerServices$.pipe(
-      collectOption(svs => array.findFirst(svs, zoekerMetNaam(PERCEEL_SVC_NAAM))),
+      collectOption(zoekerMetNaam(PERCEEL_SVC_NAAM)),
       map(zoeker => zoeker as ZoekerPerceelService)
     );
     const alleGemeenten$ = perceelService$.pipe(switchMap(svc => svc.getAlleGemeenten$()));
@@ -137,7 +136,7 @@ export class ZoekerPerceelGetraptComponent extends GetraptZoekerComponent implem
     // Hier gaan we onze capakey doorsturen naar de zoekers, we willen alleen de perceelzoeker triggeren.
     this.bindToLifeCycle(this.perceelControl.valueChanges.pipe(filter(isNotNullObject), distinctUntilChanged())).subscribe(
       (perceelDetails: PerceelNummer) => {
-        this.zoek({ type: "Perceel", capaKey: perceelDetails.capakey }, Set.of(PERCEEL_SVC_NAAM));
+        this.zoek({ type: "Perceel", capaKey: perceelDetails.capakey }, [PERCEEL_SVC_NAAM]);
       }
     );
   }

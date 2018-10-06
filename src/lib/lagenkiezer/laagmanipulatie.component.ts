@@ -52,8 +52,12 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
     return this.laag.magGetoondWorden;
   }
 
+  get verwijderd(): boolean {
+    return this.laag.bron.verwijderd;
+  }
+
   get stijlInKiezer() {
-    return this.laag.stijlInLagenKiezer.getOrElse("");
+    return this.laag.bron.verwijderd ? "verwijderd" : this.laag.stijlInLagenKiezer.getOrElse("");
   }
 
   toggleGekozen() {

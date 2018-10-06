@@ -8,6 +8,7 @@ import { distinctUntilChanged, filter, map, merge, switchMap } from "rxjs/operat
 
 import { KaartComponent } from "../../kaart/kaart.component";
 import { GetraptZoekerComponent, ZoekerBoxComponent } from "../box/zoeker-box.component";
+import { zoekerMetNaam } from "../zoeker";
 
 import { ExterneWmsZoekerService } from "./zoeker-externe-wms.service";
 
@@ -29,7 +30,8 @@ export class ZoekerExterneWmsGetraptComponent extends GetraptZoekerComponent imp
     super(kaartComponent, zoekerComponent, zone);
 
     const services$: rx.Observable<Option<ExterneWmsZoekerService>> = this.modelChanges.zoekerServices$.pipe(
-      map(svcs => array.findFirst(svcs, svc => svc.naam() === "ExterneWms") as Option<ExterneWmsZoekerService>)
+      map(zoekerMetNaam("ExterneWms")),
+      map(maybeZoeker => maybeZoeker as Option<ExterneWmsZoekerService>)
     );
 
     this.bronnen$ = services$.pipe(
@@ -43,7 +45,7 @@ export class ZoekerExterneWmsGetraptComponent extends GetraptZoekerComponent imp
 
     this.bindToLifeCycle(this.bronControl.valueChanges.pipe(distinctUntilChanged(), filter(v => v !== null))).subscribe(bron => {
       this.leegMakenDisabledChange.emit(false);
-      this.zoek({ type: "ExterneWms", bron: bron }, Set.of("ExterneWms"));
+      this.zoek({ type: "ExterneWms", bron: bron }, ["ExterneWms"]);
     });
   }
 

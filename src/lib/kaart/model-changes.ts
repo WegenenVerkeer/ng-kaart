@@ -1,8 +1,11 @@
-import { array } from "fp-ts/lib/Array";
+import * as array from "fp-ts/lib/Array";
+import { Function2 } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
+import { setoidString } from "fp-ts/lib/Setoid";
 import { List, Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
+import { OperatorFunction } from "rxjs/interfaces";
 import {
   combineLatest,
   debounceTime,
@@ -11,6 +14,7 @@ import {
   map,
   mapTo,
   merge,
+  mergeAll,
   share,
   shareReplay,
   switchMap
@@ -18,7 +22,7 @@ import {
 
 import { NosqlFsSource } from "../source/nosql-fs-source";
 import { observableFromOlEvents } from "../util/ol-observable";
-import { Zoeker } from "../zoeker/zoeker";
+import { ZoekerMetPrioriteiten, Zoekopdracht, ZoekResultaat, ZoekResultaten } from "../zoeker/zoeker";
 
 import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
@@ -48,7 +52,9 @@ export interface ModelChanger {
   readonly laagVerwijderdSubj: rx.Subject<ke.ToegevoegdeLaag>;
   readonly mijnLocatieZoomDoelSubj: rx.Subject<Option<number>>;
   readonly actieveModusSubj: rx.Subject<Option<string>>;
-  readonly zoekerServicesSubj: rx.Subject<Zoeker[]>;
+  readonly zoekerServicesSubj: rx.Subject<ZoekerMetPrioriteiten[]>;
+  readonly zoekopdrachtSubj: rx.Subject<Zoekopdracht>;
+  readonly zoekresultaatselectieSubj: rx.Subject<ZoekResultaat>;
   readonly laagLocationInfoServicesOpTitelSubj: rx.BehaviorSubject<Map<string, LaagLocationInfoService>>;
 }
 
@@ -67,6 +73,8 @@ export const ModelChanger: () => ModelChanger = () => ({
   mijnLocatieZoomDoelSubj: new rx.BehaviorSubject<Option<number>>(none),
   actieveModusSubj: new rx.BehaviorSubject(none),
   zoekerServicesSubj: new rx.BehaviorSubject([]),
+  zoekopdrachtSubj: new rx.Subject<Zoekopdracht>(),
+  zoekresultaatselectieSubj: new rx.Subject<ZoekResultaat>(),
   laagLocationInfoServicesOpTitelSubj: new rx.BehaviorSubject(Map())
 });
 
@@ -82,7 +90,9 @@ export interface ModelChanges {
   readonly kaartKlikLocatie$: rx.Observable<ol.Coordinate>;
   readonly mijnLocatieZoomDoel$: rx.Observable<Option<number>>;
   readonly actieveModus$: rx.Observable<Option<string>>;
-  readonly zoekerServices$: rx.Observable<Zoeker[]>;
+  readonly zoekerServices$: rx.Observable<ZoekerMetPrioriteiten[]>;
+  readonly zoekresultaten$: rx.Observable<ZoekResultaten>;
+  readonly zoekresultaatselectie$: rx.Observable<ZoekResultaat>;
   readonly laagLocationInfoServicesOpTitel$: rx.Observable<Map<string, LaagLocationInfoService>>;
 }
 
@@ -114,7 +124,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
   const geselecteerdeFeatures$ = toegevoegdeGeselecteerdeFeatures$.pipe(merge(verwijderdeGeselecteerdeFeatures$), shareReplay(1));
 
   const hoverFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.hoverFeatures, "add", "remove").pipe(
-    map(evt => ({
+    map(() => ({
       geselecteerd: model.hoverFeatures.getLength() !== 0 ? some(model.hoverFeatures.item(0)) : none
     }))
   );
@@ -165,7 +175,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
 
   const collectFeatures: (_1: prt.Viewinstellingen, _2: List<ke.ToegevoegdeVectorLaag>) => List<ol.Feature> = (vw, vlgn) =>
     List(
-      array.chain(vlgn.toArray(), vlg => {
+      array.array.chain(vlgn.toArray(), vlg => {
         return ke.isZichtbaar(vw.resolution)(vlg) ? vlg.layer.getSource().getFeaturesInExtent(vw.extent) : [];
       })
     );
@@ -185,6 +195,20 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     share()
   );
 
+  const gevraagdeZoekers: Function2<Zoekopdracht, ZoekerMetPrioriteiten[], ZoekerMetPrioriteiten[]> = (opdracht, geregistreerd) =>
+    geregistreerd.filter(zmp => array.member(setoidString)(opdracht.zoekernamen, zmp.zoeker.naam()));
+
+  const zoekresulaten$: rx.Observable<ZoekResultaten> = changer.zoekerServicesSubj.pipe(
+    switchMap(zoekerSvcs =>
+      changer.zoekopdrachtSubj.pipe(
+        switchMap(zoekopdracht =>
+          rx.Observable.from(gevraagdeZoekers(zoekopdracht, zoekerSvcs).map(zmp => zmp.zoeker.zoekresultaten$(zoekopdracht))) //
+            .pipe(mergeAll() as OperatorFunction<rx.Observable<ZoekResultaten>, ZoekResultaten>)
+        )
+      )
+    )
+  );
+
   return {
     uiElementSelectie$: changer.uiElementSelectieSubj.asObservable(),
     uiElementOpties$: changer.uiElementOptiesSubj.asObservable(),
@@ -198,6 +222,8 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     mijnLocatieZoomDoel$: changer.mijnLocatieZoomDoelSubj.asObservable(),
     actieveModus$: changer.actieveModusSubj.asObservable(),
     zoekerServices$: changer.zoekerServicesSubj.asObservable(),
+    zoekresultaten$: zoekresulaten$,
+    zoekresultaatselectie$: changer.zoekresultaatselectieSubj.asObservable(),
     laagLocationInfoServicesOpTitel$: changer.laagLocationInfoServicesOpTitelSubj.asObservable()
   };
 };
