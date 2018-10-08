@@ -7,6 +7,7 @@ import * as ol from "openlayers";
 import { olx } from "openlayers";
 import { Subscription } from "rxjs";
 import * as rx from "rxjs";
+import { PartialObserver } from "rxjs/Observer";
 import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
 
 import { forEach } from "../util/option";
@@ -94,8 +95,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       };
     }
 
-    function consumeWrapped<T>(subCmd: { wrapper: Function1<T, Msg> }) {
-      return (t: T) => msgConsumer(subCmd.wrapper(t));
+    function consumeWrapped<T>(subCmd: { wrapper: Function1<T, Msg> }): PartialObserver<T> {
+      return {
+        next: (t: T) => msgConsumer(subCmd.wrapper(t)),
+        error: (err: any) => kaartLogger.error("Onverwachte fout bij kaart subscription"),
+        complete: () => kaartLogger.debug()
+      };
     }
 
     function valideerToegevoegdeLaagBestaat(titel: string): prt.KaartCmdValidation<ke.ToegevoegdeLaag> {
@@ -1083,15 +1088,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       function subscribeToViewinstellingen(sub: prt.ViewinstellingenSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
           "Viewinstellingen",
-          modelChanges.viewinstellingen$.pipe(debounceTime(100)).subscribe(pipe(sub.wrapper, msgConsumer))
+          modelChanges.viewinstellingen$.pipe(debounceTime(100)).subscribe(consumeWrapped(sub))
         );
       }
 
       function subscribeToGeselecteerdeFeatures(sub: prt.GeselecteerdeFeaturesSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult(
-          "GeselecteerdeFeatures",
-          modelChanges.geselecteerdeFeatures$.subscribe(pm => msgConsumer(sub.wrapper(pm)))
-        );
+        return modelWithSubscriptionResult("GeselecteerdeFeatures", modelChanges.geselecteerdeFeatures$.subscribe(consumeWrapped(sub)));
       }
 
       function subscribeToHoverFeatures(sub: prt.HoverFeaturesSubscription<Msg>): ModelWithResult<Msg> {
@@ -1106,43 +1108,37 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       function subscribeToZichtbareFeatures(sub: prt.ZichtbareFeaturesSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
           "ZichtbareFeatures", //
-          modelChanges.zichtbareFeatures$.subscribe(pm => msgConsumer(sub.wrapper(pm)))
+          modelChanges.zichtbareFeatures$.subscribe(consumeWrapped(sub))
         );
       }
 
       function subscribeToZoom(sub: prt.ZoomSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
           "Zoom",
-          modelChanges.viewinstellingen$
-            .pipe(debounceTime(100), map(i => i.zoom), distinctUntilChanged())
-            .subscribe(pipe(sub.wrapper, msgConsumer))
+          modelChanges.viewinstellingen$.pipe(debounceTime(100), map(i => i.zoom), distinctUntilChanged()).subscribe(consumeWrapped(sub))
         );
       }
 
       function subscribeToMiddelpunt(sub: prt.MiddelpuntSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
           "Middelpunt",
-          modelChanges.viewinstellingen$
-            .pipe(debounceTime(100), map(i => i.center), distinctUntilChanged())
-            .subscribe(pipe(sub.wrapper, msgConsumer))
+          modelChanges.viewinstellingen$.pipe(debounceTime(100), map(i => i.center), distinctUntilChanged()).subscribe(consumeWrapped(sub))
         );
       }
 
       function subscribeToExtent(sub: prt.ExtentSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
           "Extent",
-          modelChanges.viewinstellingen$
-            .pipe(debounceTime(100), map(i => i.extent), distinctUntilChanged())
-            .subscribe(pipe(sub.wrapper, msgConsumer))
+          modelChanges.viewinstellingen$.pipe(debounceTime(100), map(i => i.extent), distinctUntilChanged()).subscribe(consumeWrapped(sub))
         );
       }
 
       function subscribeToAchtergrondTitel(sub: prt.AchtergrondTitelSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult("AchtergrondTitel", model.achtergrondlaagtitelSubj.subscribe(t => msgConsumer(sub.wrapper(t))));
+        return modelWithSubscriptionResult("AchtergrondTitel", model.achtergrondlaagtitelSubj.subscribe(consumeWrapped(sub)));
       }
 
       function subscribeToKaartClick(sub: prt.KaartClickSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult("KaartClick", modelChanges.kaartKlikLocatie$.subscribe(t => msgConsumer(sub.wrapper(t))));
+        return modelWithSubscriptionResult("KaartClick", modelChanges.kaartKlikLocatie$.subscribe(consumeWrapped(sub)));
       }
 
       const subscribeToLagenInGroep = (sub: prt.LagenInGroepSubscription<Msg>) => {
@@ -1151,26 +1147,19 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           modelChanger.lagenOpGroepSubj
             .get(sub.groep) // we vertrouwen op de typechecker
             .pipe(debounceTime(50))
-            .subscribe(pipe(sub.wrapper, msgConsumer))
+            .subscribe(consumeWrapped(sub))
         );
       };
 
       const subscribeToLaagVerwijderd = (sub: prt.LaagVerwijderdSubscription<Msg>) =>
-        modelWithSubscriptionResult("LaagVerwijderd", modelChanger.laagVerwijderdSubj.subscribe(pipe(sub.wrapper, msgConsumer)));
+        modelWithSubscriptionResult("LaagVerwijderd", modelChanger.laagVerwijderdSubj.subscribe(consumeWrapped(sub)));
 
       function subscribeToZoekResultaten(sub: prt.ZoekResultatenSubscription<Msg>): ModelWithResult<Msg> {
-        console.log("**** subscribeToZoekResultaten");
-        return modelWithSubscriptionResult(
-          "ZoekResultaten",
-          modelChanges.zoekresultaten$.subscribe(consumeWrapped(sub), e => console.error("****zr", e), () => console.log("****zr done"))
-        );
+        return modelWithSubscriptionResult("ZoekResultaten", modelChanges.zoekresultaten$.subscribe(consumeWrapped(sub)));
       }
 
       function subscribeToZoekResultaatSelectie(sub: prt.ZoekResultaatSelectieSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult(
-          "ZoekResultaatSelectie",
-          model.zoekResultaatSelectieSubj.subscribe(m => msgConsumer(sub.wrapper(m)))
-        );
+        return modelWithSubscriptionResult("ZoekResultaatSelectie", modelChanges.zoekresultaatselectie$.subscribe(consumeWrapped(sub)));
       }
 
       function subscribeToZoekers(sub: prt.ZoekersSubscription<Msg>): ModelWithResult<Msg> {
@@ -1190,27 +1179,24 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                 model.tekenSettingsSubj.next(none);
               }
             };
-          }).subscribe(pm => msgConsumer(sub.wrapper(pm)))
+          }).subscribe(consumeWrapped(sub))
         );
       }
 
       function subscribeToTekenen(sub: prt.TekenenSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult(
-          "Tekenen",
-          model.tekenSettingsSubj.pipe(distinctUntilChanged()).subscribe(pm => msgConsumer(sub.wrapper(pm)))
-        );
+        return modelWithSubscriptionResult("Tekenen", model.tekenSettingsSubj.pipe(distinctUntilChanged()).subscribe(consumeWrapped(sub)));
       }
 
       function subscribeToActieveModus(sub: prt.ActieveModusSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult("ActieveModus", modelChanges.actieveModus$.subscribe(m => msgConsumer(sub.wrapper(m))));
+        return modelWithSubscriptionResult("ActieveModus", modelChanges.actieveModus$.subscribe(consumeWrapped(sub)));
       }
 
       function subscribeToInfoBoodschappen(sub: prt.InfoBoodschappenSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult("InfoBoodschappen", model.infoBoodschappenSubj.subscribe(t => msgConsumer(sub.wrapper(t))));
+        return modelWithSubscriptionResult("InfoBoodschappen", model.infoBoodschappenSubj.subscribe(consumeWrapped(sub)));
       }
 
       function subscribeToComponentFouten(sub: prt.ComponentFoutSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult("Componentfouten", model.componentFoutSubj.subscribe(pipe(sub.wrapper, msgConsumer)));
+        return modelWithSubscriptionResult("Componentfouten", model.componentFoutSubj.subscribe(consumeWrapped(sub)));
       }
 
       switch (cmnd.subscription.type) {

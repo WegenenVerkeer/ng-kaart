@@ -5,7 +5,7 @@ import {} from "googlemaps";
 import { Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { catchError, flatMap, map } from "rxjs/operators";
+import { catchError, map, switchMap } from "rxjs/operators";
 
 import { ZOEKER_CFG, ZoekerConfigData } from "../config/zoeker-config";
 import { ZoekerConfigGoogleWdbConfig } from "../config/zoeker-config-google-wdb.config";
@@ -146,13 +146,13 @@ export class ZoekerGoogleWdbService implements Zoeker {
   zoekresultaten$(opdracht: Zoekopdracht): rx.Observable<ZoekResultaten> {
     switch (opdracht.zoektype) {
       case "Volledig":
-        return this.zoek$(opdracht.zoekpatroon);
+        return this.zoek$(opdracht.zoekpatroon, "Volledig", this.googleWdbLocatieZoekerConfig.maxAantal);
       default:
-        return rx.Observable.of(nietOndersteund(this.naam(), opdracht.zoektype)); // Fout toevoegen of niet?
+        return this.zoek$(opdracht.zoekpatroon, "Suggesties", 5);
     }
   }
 
-  private zoek$(zoekterm: ZoekInput): rx.Observable<ZoekResultaten> {
+  private zoek$(zoekterm: ZoekInput, zoektype: Zoektype, maxResultaten: number): rx.Observable<ZoekResultaten> {
     if (!zoekterm.value || zoekterm.value.trim().length === 0) {
       return rx.Observable.of(new ZoekResultaten(this.naam(), "Volledig", [], [], this.legende));
     }
@@ -162,11 +162,11 @@ export class ZoekerGoogleWdbService implements Zoeker {
 
     return this.http
       .get(this.locatieZoekerUrl + "/zoek", { search: params })
-      .pipe(flatMap(resp => this.parseResult(resp)), catchError(err => this.handleError(err)));
+      .pipe(switchMap(resp => this.parseResult(resp, zoektype, maxResultaten)), catchError(err => this.handleError(err, zoektype)));
   }
 
-  private parseResult(response: Response): rx.Observable<ZoekResultaten> {
-    const zoekResultaten = new ZoekResultaten(this.naam(), "Volledig", [], [], this.legende);
+  private parseResult(response: Response, zoektype: Zoektype, maxResultaten: number): rx.Observable<ZoekResultaten> {
+    const zoekResultaten = new ZoekResultaten(this.naam(), zoektype, [], [], this.legende);
 
     // parse result
     const resultaten = response.json();
@@ -334,14 +334,14 @@ export class ZoekerGoogleWdbService implements Zoeker {
             )
           );
         });
-        return zoekResultaten.limiteerAantalResultaten(this.googleWdbLocatieZoekerConfig.maxAantal);
+        return zoekResultaten.limiteerAantalResultaten(maxResultaten);
       });
 
       return rx.Observable.fromPromise(zoekResultatenPromise);
     }
   }
 
-  handleError(response: Response | any): rx.Observable<ZoekResultaten> {
+  handleError(response: Response | any, zoektype: Zoektype): rx.Observable<ZoekResultaten> {
     let error: string;
     switch (response.status) {
       case 404:
@@ -351,7 +351,7 @@ export class ZoekerGoogleWdbService implements Zoeker {
         // toon http foutmelding indien geen 200 teruggehad
         error = `Fout bij opvragen locatie: ${response.responseText || response.statusText || response}`;
     }
-    return rx.Observable.of(new ZoekResultaten(this.naam(), "Volledig", [error], [], this.legende));
+    return rx.Observable.of(new ZoekResultaten(this.naam(), zoektype, [error], [], this.legende));
   }
 
   private geocode(omschrijving): Promise<ExtendedGeocoderResult[]> {

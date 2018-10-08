@@ -18,7 +18,8 @@ import {
   ZoekKaartResultaat,
   Zoekopdracht,
   ZoekResultaat,
-  ZoekResultaten
+  ZoekResultaten,
+  Zoektype
 } from "../zoeker";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "../zoeker-representatie.service";
 
@@ -300,11 +301,11 @@ export class ZoekerCrabService implements Zoeker {
       case "Volledig":
         return this.zoek$(zoekopdracht.zoekpatroon);
       case "Suggesties":
-        return this.suggesties$(zoekopdracht.zoekpatroon);
+        return this.suggesties$(zoekopdracht.zoekpatroon.value);
     }
   }
 
-  zoek$(zoekterm: ZoekInput): rx.Observable<ZoekResultaten> {
+  private zoek$(zoekterm: ZoekInput): rx.Observable<ZoekResultaten> {
     function options(waarde) {
       return {
         params: new HttpParams().set("query", waarde)
@@ -313,25 +314,7 @@ export class ZoekerCrabService implements Zoeker {
 
     switch (zoekterm.type) {
       case "string":
-        const zoekDetail$ = detail =>
-          this.http.get<LocatorServiceResults>(this.locatorServicesConfig.url + "/rest/geolocation/location", options(detail));
-
-        const zoekSuggesties$ = suggestie =>
-          this.http.get<SuggestionServiceResults>(this.locatorServicesConfig.url + "/rest/geolocation/suggestion", options(suggestie));
-
-        return zoekSuggesties$(zoekterm.value).pipe(
-          map(suggestieResultaten =>
-            rx.Observable.from(suggestieResultaten.SuggestionResult).pipe(mergeMap(suggestie => zoekDetail$(suggestie)))
-          ),
-          // mergall moet gecast worden omdat de standaard definitie fout is: https://github.com/ReactiveX/rxjs/issues/3290
-          mergeAll(5) as OperatorFunction<rx.Observable<LocatorServiceResults>, LocatorServiceResults>,
-          reduce<LocatorServiceResults, ZoekResultaten>(
-            (zoekResultaten, crabResultaten) => this.voegCrabResultatenToe(zoekResultaten, crabResultaten),
-            new ZoekResultaten(this.naam(), "Volledig", [], [], this.legende)
-          ),
-          map(resultaten => resultaten.limiteerAantalResultaten(this.locatorServicesConfig.maxAantal)),
-          catchError(e => rx.Observable.of(new ZoekResultaten(this.naam(), "Volledig", ["Kon locator services niet aanroepen "], [])))
-        );
+        return this.tekstzoekResultaten(zoekterm.value, "Volledig", this.locatorServicesConfig.maxAantal);
       case "CrabGemeente":
         return this.getGemeenteBBox$(zoekterm as CrabGemeente);
       case "CrabStraat":
@@ -343,7 +326,33 @@ export class ZoekerCrabService implements Zoeker {
     }
   }
 
-  suggesties$(zoekterm: ZoekInput): rx.Observable<ZoekResultaten> {
-    return rx.Observable.of(nietOndersteund(this.naam(), "Suggesties"));
+  private suggesties$(zoekterm: string): rx.Observable<ZoekResultaten> {
+    return this.tekstzoekResultaten(zoekterm, "Suggesties", 5);
+  }
+
+  private tekstzoekResultaten(zoekterm: string, zoektype: Zoektype, maxResultaten: number): rx.Observable<ZoekResultaten> {
+    const options = waarde => ({ params: new HttpParams().set("query", waarde) });
+
+    const zoekDetail$ = detail =>
+      this.http.get<LocatorServiceResults>(this.locatorServicesConfig.url + "/rest/geolocation/location", options(detail));
+
+    const zoekSuggesties$ = suggestie =>
+      this.http.get<SuggestionServiceResults>(this.locatorServicesConfig.url + "/rest/geolocation/suggestion", options(suggestie));
+
+    return zoekSuggesties$(zoekterm).pipe(
+      map(
+        suggestieResultaten =>
+          rx.Observable.from(suggestieResultaten.SuggestionResult.slice(0, maxResultaten)) // niet meer details opvragen dan we nodig hebben
+            .pipe(mergeMap(suggestie => zoekDetail$(suggestie))) // mergeMap omdat from individueel emit (kan beter met .of en map op array)
+      ),
+      // mergall moet gecast worden omdat de standaard definitie fout is: https://github.com/ReactiveX/rxjs/issues/3290
+      mergeAll(5) as OperatorFunction<rx.Observable<LocatorServiceResults>, LocatorServiceResults>,
+      reduce<LocatorServiceResults, ZoekResultaten>(
+        (zoekResultaten, crabResultaten) => this.voegCrabResultatenToe(zoekResultaten, crabResultaten),
+        new ZoekResultaten(this.naam(), zoektype, [], [], this.legende)
+      ),
+      map(resultaten => resultaten.limiteerAantalResultaten(maxResultaten)),
+      catchError(e => rx.Observable.of(new ZoekResultaten(this.naam(), zoektype, ["Kon locator services niet aanroepen "], [])))
+    );
   }
 }

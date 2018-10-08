@@ -4,7 +4,7 @@ import { ChangeDetectorRef, Component, ElementRef, Inject, NgZone, OnDestroy, On
 import { FormControl } from "@angular/forms";
 import * as array from "fp-ts/lib/Array";
 import { concat, Function1, Function2, Predicate } from "fp-ts/lib/function";
-import { fromPredicate, none, Option, some } from "fp-ts/lib/Option";
+import { fromNullable, fromPredicate, none, Option, some } from "fp-ts/lib/Option";
 import { Ord } from "fp-ts/lib/Ord";
 import * as ord from "fp-ts/lib/Ord";
 import { setoidString } from "fp-ts/lib/Setoid";
@@ -25,6 +25,7 @@ import {
   shareReplay,
   startWith,
   switchMap,
+  take,
   tap
 } from "rxjs/operators";
 
@@ -149,10 +150,12 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
   }
 
   protected busy<T>(observable: rx.Observable<T>): rx.Observable<T> {
-    function noop() {}
+    function noop(t: T) {
+      console.log("****busyout", t);
+    }
 
     this.zoekerComponent.increaseBusy();
-    return observable.pipe(tap(noop, () => this.zoekerComponent.decreaseBusy(), () => this.zoekerComponent.decreaseBusy()));
+    return observable.pipe(take(1), tap(noop, () => this.zoekerComponent.decreaseBusy(), () => this.zoekerComponent.decreaseBusy()));
   }
 
   protected zoek<I extends ZoekInput>(zoekInput: I, zoekers: Array<string>) {
@@ -222,11 +225,11 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
 
   // inputWaarde kan een string of een object zijn. Enkel wanneer het een object is, roepen we de provider op,
   // anders geven we een lege array terug.
-  private safeProvider<A, T>(provider: (A) => rx.Observable<T[]>): Pipeable<A, T[]> {
+  private safeProvider<A, T>(provider: Function1<A, rx.Observable<T[]>>): Pipeable<A, T[]> {
     return switchMap(inputWaarde => {
       return isNotNullObject(inputWaarde)
         ? this.busy(provider(inputWaarde)).pipe(
-            catchError((error, obs) => {
+            catchError(error => {
               this.meldFout(error);
               return rx.Observable.of([]);
             })
@@ -509,14 +512,17 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.toonResultaat = false;
     this.toonHelp = false;
     this.dispatch(prt.ZoekGekliktCmd(resultaat));
-    resultaat.kaartInfo.filter(info => !ol.extent.isEmpty(info.extent)).map(info => {
-      this.dispatch(prt.VeranderExtentCmd(info.geometry.getExtent()));
-      if (info.geometry.getType() === "Point") {
-        resultaat.preferredPointZoomLevel.map(zoom => this.dispatch(prt.VeranderZoomCmd(zoom, kaartLogOnlyWrapper)));
+    forEach(
+      resultaat.kaartInfo.filter(info => !ol.extent.isEmpty(info.extent)), //
+      info => {
+        this.dispatch(prt.VeranderExtentCmd(info.geometry.getExtent()));
+        if (info.geometry.getType() === "Point") {
+          resultaat.preferredPointZoomLevel.map(zoom => this.dispatch(prt.VeranderZoomCmd(zoom, kaartLogOnlyWrapper)));
+        }
+        const features = fromNullable(this.featuresByResultaat.get(resultaat));
+        forEach(features.chain(fs => array.index(0, fs)), feat => this.highlight(feat, info));
       }
-      const selectedFeature = this.featuresByResultaat.get(resultaat)[0];
-      this.highlight(selectedFeature, info);
-    });
+    );
   }
 
   private highlight(nieuweFeature: ol.Feature, zoekKaartResultaat: ZoekKaartResultaat) {
@@ -598,6 +604,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   private processZoekerAntwoord(nieuweResultaten: ZoekResultaten, prioriteitenOpNaam: ZoekerPrioriteitenOpZoekernaam): void {
+    kaartLogger.debug("Process " + nieuweResultaten.zoeker, nieuweResultaten);
     switch (nieuweResultaten.zoektype) {
       case "Volledig":
         return this.processVolledigZoekerAntwoord(nieuweResultaten, prioriteitenOpNaam);
@@ -607,7 +614,6 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   private processVolledigZoekerAntwoord(nieuweResultaten: ZoekResultaten, prioriteitenOpNaam: ZoekerPrioriteitenOpZoekernaam): void {
-    kaartLogger.debug("Process " + nieuweResultaten.zoeker);
     this.alleZoekResultaten = this.vervangZoekerResultaten(this.alleZoekResultaten, nieuweResultaten);
     this.alleZoekResultaten.sort((a, b) => compareResultaten(a, b, this.zoekVeld.value, this.zoekerRepresentatie));
     nieuweResultaten.legende.forEach((safeHtml, name) => this.legende.set(name!, safeHtml!));
@@ -634,7 +640,6 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   private processPreviewAntwoord(nieuweResultaten: ZoekResultaten, prioriteitenOpNaam: ZoekerPrioriteitenOpZoekernaam): void {
-    kaartLogger.debug("Process preview " + nieuweResultaten.zoeker);
     // de resultaten van de zoeker wiens antwoord nu binnen komt, moeten vervangen worden door de nieuwe resultaten
     // We moeten de resultaten in volgorde van prioriteit tonen
 
@@ -682,12 +687,14 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   increaseBusy() {
+    console.log("****busy++", this.busy);
     this.busy++;
     this.cd.detectChanges();
   }
 
   decreaseBusy() {
     if (this.busy > 0) {
+      console.log("****busy--", this.busy);
       this.busy--;
     }
     this.cd.detectChanges();

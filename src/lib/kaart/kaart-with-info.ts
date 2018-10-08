@@ -40,7 +40,6 @@ export class KaartWithInfo {
   readonly hoverFeatures: ol.Collection<ol.Feature> = new ol.Collection<ol.Feature>();
 
   readonly achtergrondlaagtitelSubj: Subject<string> = new ReplaySubject<string>(1);
-  readonly zoekResultaatSelectieSubj: Subject<ZoekResultaat> = new ReplaySubject<ZoekResultaat>(1);
   readonly componentFoutSubj: Subject<List<string>> = new ReplaySubject<List<string>>(1);
   readonly geometryChangedSubj: Subject<ke.TekenResultaat> = new Subject<ke.TekenResultaat>();
   readonly tekenSettingsSubj: BehaviorSubject<Option<ke.TekenSettings>> = new BehaviorSubject<Option<ke.TekenSettings>>(none);

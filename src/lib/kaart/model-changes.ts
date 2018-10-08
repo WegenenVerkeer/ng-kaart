@@ -17,7 +17,8 @@ import {
   mergeAll,
   share,
   shareReplay,
-  switchMap
+  switchMap,
+  tap
 } from "rxjs/operators";
 
 import { NosqlFsSource } from "../source/nosql-fs-source";
@@ -223,7 +224,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     actieveModus$: changer.actieveModusSubj.asObservable(),
     zoekerServices$: changer.zoekerServicesSubj.asObservable(),
     zoekresultaten$: zoekresulaten$,
-    zoekresultaatselectie$: changer.zoekresultaatselectieSubj.asObservable(),
+    zoekresultaatselectie$: changer.zoekresultaatselectieSubj.asObservable().pipe(tap(() => console.log("****zrs"))),
     laagLocationInfoServicesOpTitel$: changer.laagLocationInfoServicesOpTitelSubj.asObservable()
   };
 };
