@@ -12,7 +12,6 @@ import { ZoekerConfigGoogleWdbConfig } from "../config/zoeker-config-google-wdb.
 import {
   geoJSONOptions,
   IconDescription,
-  nietOndersteund,
   Zoeker,
   ZoekInput,
   ZoekKaartResultaat,

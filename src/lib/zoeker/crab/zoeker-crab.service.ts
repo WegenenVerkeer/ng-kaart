@@ -12,7 +12,6 @@ import { ZoekerConfigLocatorServicesConfig } from "../config/zoeker-config-locat
 import {
   IconDescription,
   nietOndersteund,
-  StringZoekInput,
   Zoeker,
   ZoekInput,
   ZoekKaartResultaat,

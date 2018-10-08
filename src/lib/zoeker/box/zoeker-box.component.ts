@@ -150,9 +150,7 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
   }
 
   protected busy<T>(observable: rx.Observable<T>): rx.Observable<T> {
-    function noop(t: T) {
-      console.log("****busyout", t);
-    }
+    function noop(t: T) {}
 
     this.zoekerComponent.increaseBusy();
     return observable.pipe(take(1), tap(noop, () => this.zoekerComponent.decreaseBusy(), () => this.zoekerComponent.decreaseBusy()));
@@ -457,13 +455,8 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
             wrapper: kaartLogOnlyWrapper
           } as prt.ZoekCmd<KaartInternalMsg>)
       ).pipe(
-        tap(cmd => console.log("****cmd", cmd)),
         switchMap(
-          cmd =>
-            this.volledigeZoekSubj.pipe(
-              tap(() => console.log("****zoek")), //
-              mapTo(cmd)
-            ) // Via switchmap ipv in combineLatest anders wordt bij elke letter gezocht
+          cmd => this.volledigeZoekSubj.pipe(mapTo(cmd)) // Via switchmap ipv in combineLatest anders wordt bij elke letter gezocht
         )
       )
     ).subscribe(cmd => {
@@ -569,7 +562,6 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     }
     // Een formbuilder heeft een observable ingebouwd, maar dat gebruiken we dus niet
     this.zoekInputSubj.next(event.srcElement.value);
-    console.log("****", event.key, event.code, event.srcElement.value);
   }
 
   heeftFout(): boolean {
@@ -687,14 +679,12 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   increaseBusy() {
-    console.log("****busy++", this.busy);
     this.busy++;
     this.cd.detectChanges();
   }
 
   decreaseBusy() {
     if (this.busy > 0) {
-      console.log("****busy--", this.busy);
       this.busy--;
     }
     this.cd.detectChanges();
