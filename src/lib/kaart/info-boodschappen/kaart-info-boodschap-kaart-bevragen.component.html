@@ -1,19 +1,23 @@
+<mat-card class="coordinaten-panel mat-elevation-z0">
+   <mat-card-content>
+    <div class="velden">
+      <div class="veldnamen">Lambert 72</div>
+      <div class="veldwaarden">{{ coordinaatInformatieLambert72 }}</div>
+      <button mat-icon-button class="copy" matTooltip="Kopieer coördinaten">
+          <mat-icon (click)="copyToClipboard(coordinaatInformatieLambert72)">content_copy</mat-icon>
+      </button>
+    </div>
+    <div class="velden">
+      <div class="veldnamen">WGS 84</div>
+      <div class="veldwaarden">{{ coordinaatInformatieWgs84 }}</div>
+      <button mat-icon-button class="copy" matTooltip="Kopieer coördinaten">
+        <mat-icon (click)="copyToClipboard(coordinaatInformatieWgs84)">content_copy</mat-icon>
+      </button>
+    </div>
+  </mat-card-content>
+</mat-card>
+
 <mat-accordion class="accordion">
-
-  <mat-expansion-panel class="mat-elevation-z0">
-    <mat-expansion-panel-header>
-      <mat-panel-title class="naam">
-        Coördinaten
-      </mat-panel-title>
-    </mat-expansion-panel-header>
-
-    <div class="velden">
-      <div class="veldnamen">Lambert 72</div><div class="veldwaarden">{{ coordinaatInformatieLambert72 }}</div>
-    </div>
-    <div class="velden">
-      <div class="veldnamen">WGS 84</div><div class="veldwaarden">{{ coordinaatInformatieWgs84 }}</div>
-    </div>
-  </mat-expansion-panel>
 
   <mat-expansion-panel class="mat-elevation-z0" *ngFor="let weglocatie of wegLocaties">
     <mat-expansion-panel-header>
