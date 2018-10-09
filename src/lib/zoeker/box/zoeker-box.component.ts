@@ -613,7 +613,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       case "Volledig":
         return this.processVolledigZoekerAntwoord(nieuweResultaten, prioriteitenOpNaam);
       case "Suggesties":
-        return this.processPreviewAntwoord(nieuweResultaten, prioriteitenOpNaam);
+        return this.processSuggestiesAntwoord(nieuweResultaten, prioriteitenOpNaam);
     }
   }
 
@@ -645,7 +645,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     );
   }
 
-  private processPreviewAntwoord(nieuweResultaten: ZoekResultaten, prioriteitenOpNaam: ZoekerPrioriteitenOpZoekernaam): void {
+  private processSuggestiesAntwoord(nieuweResultaten: ZoekResultaten, prioriteitenOpNaam: ZoekerPrioriteitenOpZoekernaam): void {
     // de resultaten van de zoeker wiens antwoord nu binnen komt, moeten vervangen worden door de nieuwe resultaten
     // We moeten de resultaten in volgorde van prioriteit tonen
 
