@@ -85,23 +85,25 @@ const zoekresultatenVanType: Function2<Zoektype, ZoekResultaten, Option<ZoekResu
 const heeftPrioriteit: Function1<ZoekerPrioriteitenOpZoekernaam, Predicate<ZoekResultaten>> = prioriteitenOpNaam => resultaten =>
   lookup(resultaten.zoeker, prioriteitenOpNaam).exists(prios => lookup(resultaten.zoektype, prios).isSome());
 
-const prioriteitVoorZoekerNaam: Function2<ZoekerPrioriteitenOpZoekernaam, number, Function1<string, number>> = (
-  prioriteitenOpNaam,
-  stdPrio
-) => zoekernaam =>
+const prioriteitVoorZoekerNaam: Function1<
+  Zoektype,
+  Function2<ZoekerPrioriteitenOpZoekernaam, number, Function1<string, number>>
+> = zoektype => (prioriteitenOpNaam, stdPrio) => zoekernaam =>
   lookup(zoekernaam, prioriteitenOpNaam)
-    .chain(priosOpType => lookup(zoekernaam, priosOpType))
+    .chain(priosOpType => lookup(zoektype, priosOpType))
     .getOrElse(stdPrio);
 
-const prioriteitVoorZoekresulaten: Function2<ZoekerPrioriteitenOpZoekernaam, number, Function1<ZoekResultaten, number>> = (
-  prioriteitenOpNaam,
-  stdPrio
-) => resultaten => prioriteitVoorZoekerNaam(prioriteitenOpNaam, stdPrio)(resultaten.zoeker);
+const prioriteitVoorZoekresultaten: Function1<
+  Zoektype,
+  Function2<ZoekerPrioriteitenOpZoekernaam, number, Function1<ZoekResultaten, number>>
+> = zoektype => (prioriteitenOpNaam, stdPrio) => resultaten =>
+  prioriteitVoorZoekerNaam(zoektype)(prioriteitenOpNaam, stdPrio)(resultaten.zoeker);
 
-const prioriteitVoorZoekresulaat: Function2<ZoekerPrioriteitenOpZoekernaam, number, Function1<ZoekResultaat, number>> = (
-  prioriteitenOpNaam,
-  stdPrio
-) => resultaat => prioriteitVoorZoekerNaam(prioriteitenOpNaam, stdPrio)(resultaat.zoeker);
+const prioriteitVoorZoekresultaat: Function1<
+  Zoektype,
+  Function2<ZoekerPrioriteitenOpZoekernaam, number, Function1<ZoekResultaat, number>>
+> = zoektype => (prioriteitenOpNaam, stdPrio) => resultaat =>
+  prioriteitVoorZoekerNaam(zoektype)(prioriteitenOpNaam, stdPrio)(resultaat.zoeker);
 
 export function isNotNullObject(object) {
   return object && object instanceof Object;
@@ -617,7 +619,9 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
 
   private processVolledigZoekerAntwoord(nieuweResultaten: ZoekResultaten, prioriteitenOpNaam: ZoekerPrioriteitenOpZoekernaam): void {
     this.alleZoekResultaten = this.vervangZoekerResultaten(this.alleZoekResultaten, nieuweResultaten);
-    this.alleZoekResultaten.sort(zoekResultaatOrdering(this.zoekVeld.value, prioriteitVoorZoekresulaat(prioriteitenOpNaam, 99)));
+    this.alleZoekResultaten.sort(
+      zoekResultaatOrdering(this.zoekVeld.value, prioriteitVoorZoekresultaat("Volledig")(prioriteitenOpNaam, 99))
+    );
     nieuweResultaten.legende.forEach((safeHtml, name) => this.legende.set(name!, safeHtml!));
     this.alleSuggestiesResultaten = [];
     this.legendeKeys = this.legende.keySeq().toArray();
@@ -646,7 +650,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     // We moeten de resultaten in volgorde van prioriteit tonen
 
     // Een hulpfunctie die de lokale prioriteitenOpNaam mee neemt.
-    const prioriteit: Function1<ZoekResultaten, number> = prioriteitVoorZoekresulaten(prioriteitenOpNaam, 99);
+    const prioriteit: Function1<ZoekResultaten, number> = prioriteitVoorZoekresultaten("Suggesties")(prioriteitenOpNaam, 99);
 
     // Stap 1 is enkel die resultaten overhouden die van toepassing zijn en een prioriteit hebben
     const weerhoudenResultaten: Option<ZoekResultaten> = zoekresultatenVanType("Suggesties", nieuweResultaten) //
@@ -654,8 +658,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
 
     forEach(weerhoudenResultaten, resultaten => {
       // Stap 2 is sorteren van de antwoorden van de zoekers op prioriteit
-      const prioriteitNieuweResultaten = prioriteitVoorZoekresulaten(prioriteitenOpNaam, 99)(resultaten);
-      const ordering: Ord<ZoekResultaten> = ord.contramap(prioriteitVoorZoekresulaten(prioriteitenOpNaam, 99), ord.ordNumber);
+      const ordering: Ord<ZoekResultaten> = ord.contramap(prioriteit, ord.ordNumber);
       this.suggestiesBuffer = array.sort<ZoekResultaten>(ordering)(array.snoc(this.suggestiesBuffer, nieuweResultaten));
 
       // Stap 3 is alle individuele resultaten uit de resultaten halen voor zover de prioriteiten ononderbroken oplopen van 1
