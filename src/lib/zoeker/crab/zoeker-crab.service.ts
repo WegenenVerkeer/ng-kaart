@@ -305,12 +305,6 @@ export class ZoekerCrabService implements Zoeker {
   }
 
   private zoek$(zoekterm: ZoekInput): rx.Observable<ZoekResultaten> {
-    function options(waarde) {
-      return {
-        params: new HttpParams().set("query", waarde)
-      };
-    }
-
     switch (zoekterm.type) {
       case "string":
         return this.tekstzoekResultaten(zoekterm.value, "Volledig", this.locatorServicesConfig.maxAantal);
