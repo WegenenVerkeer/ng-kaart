@@ -1,6 +1,14 @@
-import { Component } from "@angular/core";
+import { Component, Input, NgZone } from "@angular/core";
+import * as array from "fp-ts/lib/Array";
+import { concat } from "fp-ts/lib/function";
+import { fromNullable } from "fp-ts/lib/Option";
 
+import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import { ZoekerUiSelector } from "../../zoeker/box/zoeker-box.component";
+import { ZoekerCrabService } from "../../zoeker/crab/zoeker-crab.service";
+import { ZoekerGoogleWdbService } from "../../zoeker/google-wdb/zoeker-google-wdb.service";
+import { ZoekerPerceelService } from "../../zoeker/perceel/zoeker-perceel.service";
+import { ZoekerMetPrioriteiten, zoekerMetPrioriteiten } from "../../zoeker/zoeker";
 import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
 import { KaartClassicComponent } from "../kaart-classic.component";
 
@@ -9,7 +17,45 @@ import { KaartClassicComponent } from "../kaart-classic.component";
   template: ""
 })
 export class ClassicZoekerComponent extends ClassicUIElementSelectorComponentBase {
-  constructor(readonly kaart: KaartClassicComponent) {
-    super(ZoekerUiSelector, kaart);
+  @Input() zoeker: ZoekerMetPrioriteiten;
+  @Input() zoekers: ZoekerMetPrioriteiten[] = [];
+
+  private registered: ZoekerMetPrioriteiten[] = [];
+
+  constructor(
+    kaart: KaartClassicComponent,
+    zone: NgZone,
+    crabZoeker: ZoekerCrabService,
+    googleZoeker: ZoekerGoogleWdbService,
+    perceelZoeker: ZoekerPerceelService
+  ) {
+    super(ZoekerUiSelector, kaart, zone);
+
+    this.initialising$.subscribe(() => {
+      // berekend op het moment van initialisatie => geen mismatch init <> destroy mogelijk
+      const inputZoekers = concat(array.catOptions([fromNullable(this.zoeker)]), this.zoekers);
+      const stdZoekers: ZoekerMetPrioriteiten[] = [
+        zoekerMetPrioriteiten(googleZoeker, 1, 1),
+        zoekerMetPrioriteiten(crabZoeker, 2, 2),
+        zoekerMetPrioriteiten(perceelZoeker, 3)
+      ];
+      this.registered = array.isEmpty(inputZoekers) ? stdZoekers : inputZoekers;
+      this.registered.forEach(zoeker =>
+        kaart.dispatch({
+          type: "VoegZoekerToe",
+          zoekerPrioriteit: zoeker,
+          wrapper: kaartLogOnlyWrapper
+        })
+      );
+    });
+    this.destroying$.subscribe(() =>
+      this.registered.forEach(zmp =>
+        kaart.dispatch({
+          type: "VerwijderZoeker",
+          zoekerNaam: zmp.zoeker.naam(),
+          wrapper: kaartLogOnlyWrapper
+        })
+      )
+    );
   }
 }

@@ -27,7 +27,6 @@ import { ClassicStandaardInteractiesComponent } from "./standaard-interacties/cl
 import { ClassicStreetviewComponent } from "./streetview/classic-streetview.component";
 import { ClassicVolledigSchermComponent } from "./volledig-scherm/classic-volledig-scherm.component";
 import { ClassicVoorwaardenComponent } from "./voorwaarden/classic-voorwaarden.component";
-import { ClassicZoekerRegistratieComponent } from "./zoeker-registratie/classic-zoeker-registratie.component";
 import { ClassicZoekerComponent } from "./zoeker/classic-zoeker.component";
 import { ClassicZoomComponent } from "./zoom/classic-zoom.component";
 
@@ -56,7 +55,6 @@ const components = [
   ClassicStreetviewComponent,
   ClassicZoomComponent,
   ClassicZoekerComponent,
-  ClassicZoekerRegistratieComponent,
   ClassicKaartBevragenComponent,
   KaartClassicComponent
 ];
@@ -98,5 +96,4 @@ export * from "./streetview/classic-streetview.component";
 export * from "./volledig-scherm/classic-volledig-scherm.component";
 export * from "./voorwaarden/classic-voorwaarden.component";
 export * from "./zoeker/classic-zoeker.component";
-export * from "./zoeker-registratie/classic-zoeker-registratie.component";
 export * from "./zoom/classic-zoom.component";

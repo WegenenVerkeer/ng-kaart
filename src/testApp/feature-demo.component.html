@@ -140,7 +140,6 @@
         </div>
         <!-- zoeker -->
         <awv-kaart-zoeker *ngIf="isOptieActief('zoeker')"></awv-kaart-zoeker>
-        <awv-kaart-zoeker-registratie [zoekers]="stdZoekers"></awv-kaart-zoeker-registratie>
         <!-- lagen -->
         <awv-kaart-lagenkiezer *ngIf="isOptieActief('lagenkiezer')" [titels]="['Referentiepunten (WDB)', 'Referentiepunten (WDB) 2', 'features']"
                                [headerTitel]="'Mijn legende en lagen'" [initieelDichtgeklapt]="true"
@@ -382,8 +381,7 @@
           <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
           <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
           <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
-          <awv-kaart-zoeker></awv-kaart-zoeker>
-          <awv-kaart-zoeker-registratie [zoekers]="demoZoekers"></awv-kaart-zoeker-registratie>
+          <awv-kaart-zoeker [zoekers]="demoZoekers"></awv-kaart-zoeker>
         </awv-kaart-classic>
       </div>
       </awv-test-sectie>

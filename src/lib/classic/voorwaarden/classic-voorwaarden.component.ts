@@ -1,4 +1,4 @@
-import { Component, Input } from "@angular/core";
+import { Component, Input, NgZone } from "@angular/core";
 
 import { VoorwaardenOpties, VoorwaardenSelector } from "../../kaart/voorwaarden/kaart-voorwaarden.component";
 import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
@@ -12,8 +12,8 @@ export class ClassicVoorwaardenComponent extends ClassicUIElementSelectorCompone
   @Input() href = "https://www.vlaanderen.be/nl/disclaimer";
   @Input() titel = "Voorwaarden";
 
-  constructor(readonly kaart: KaartClassicComponent) {
-    super(VoorwaardenSelector, kaart);
+  constructor(kaart: KaartClassicComponent, zone: NgZone) {
+    super(VoorwaardenSelector, kaart, zone);
   }
 
   protected opties(): VoorwaardenOpties {

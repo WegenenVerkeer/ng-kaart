@@ -1018,7 +1018,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         cmnd.wrapper,
         valideerMinstens1ZoekerGeregistreerd().map(() => {
-          // model.zoekerCoordinator.zoek(cmnd.input, cmnd.zoekers);
           modelChanger.zoekopdrachtSubj.next(cmnd.opdracht);
           return ModelAndEmptyResult(model);
         })

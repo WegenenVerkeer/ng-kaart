@@ -16,9 +16,6 @@ import { offsetStyleFunction } from "../lib/stijl/offset-stijl-function";
 import { verkeersbordenStyleFunction } from "../lib/stijl/verkeersborden-stijl-function";
 import { forEach } from "../lib/util/option";
 import { join } from "../lib/util/validation";
-import { ZoekerCrabService } from "../lib/zoeker/crab/zoeker-crab.service";
-import { ZoekerGoogleWdbService } from "../lib/zoeker/google-wdb/zoeker-google-wdb.service";
-import { ZoekerPerceelService } from "../lib/zoeker/perceel/zoeker-perceel.service";
 import { zoekerMetPrioriteiten, ZoekerMetPrioriteiten } from "../lib/zoeker/zoeker";
 
 import { DummyZoeker } from "./dummy-zoeker";
@@ -264,22 +261,13 @@ export class FeatureDemoComponent {
   readonly fietspadenRefreshSubj = new rx.Subject<void>();
   readonly fietspadenRefresh$ = this.fietspadenRefreshSubj.asObservable();
 
-  readonly stdZoekers: ZoekerMetPrioriteiten[] = [
-    zoekerMetPrioriteiten(this.googleZoeker, 1, 1),
-    zoekerMetPrioriteiten(this.crabZoeker, 2, 2),
-    zoekerMetPrioriteiten(this.perceelZoeker, 3)
-  ];
   readonly demoZoekers: ZoekerMetPrioriteiten[] = [
     zoekerMetPrioriteiten(new DummyZoeker("dummy1"), 1, 1),
     zoekerMetPrioriteiten(new DummyZoeker("dummy2"), 2, 2),
     zoekerMetPrioriteiten(new DummyZoeker("dummy3"), 3, 3)
   ];
 
-  constructor(
-    readonly crabZoeker: ZoekerCrabService,
-    readonly googleZoeker: ZoekerGoogleWdbService,
-    readonly perceelZoeker: ZoekerPerceelService
-  ) {
+  constructor() {
     kaartLogger.setLevel("DEBUG");
     classicLogger.setLevel("DEBUG");
     this.addIcon();
