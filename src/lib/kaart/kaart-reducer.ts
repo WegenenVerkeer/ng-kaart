@@ -98,8 +98,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function consumeWrapped<T>(subCmd: { wrapper: Function1<T, Msg> }): PartialObserver<T> {
       return {
         next: (t: T) => msgConsumer(subCmd.wrapper(t)),
-        error: (err: any) => kaartLogger.error("Onverwachte fout bij kaart subscription"),
-        complete: () => kaartLogger.debug()
+        error: (err: any) => kaartLogger.error("Onverwachte fout bij kaart subscription", err),
+        complete: () => kaartLogger.debug("subscription completed")
       };
     }
 

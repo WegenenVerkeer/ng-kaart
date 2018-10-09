@@ -1,12 +1,11 @@
 import * as array from "fp-ts/lib/Array";
 import { Function1, Function2, Function3 } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
+import { Ordering, sign } from "fp-ts/lib/Ordering";
 import { insert, remove, StrMap } from "fp-ts/lib/StrMap";
 import { Map } from "immutable";
 import * as ol from "openlayers";
 import { Observable } from "rxjs/Observable";
-
-import { AbstractRepresentatieService } from "./zoeker-representatie.service";
 
 export const geoJSONOptions = <ol.olx.format.GeoJSONOptions>{
   ignoreExtraDims: true,
@@ -119,39 +118,42 @@ export const zoekerMetNaam: Function1<string, Function1<ZoekerMetPrioriteiten[],
   array.findFirst(zmps, zmp => zmp.zoeker.naam() === naam).map(zmp => zmp.zoeker);
 
 // De resultaten worden getoond volgens een bepaalde hiërarchie
-// - Eerst wordt er gesorteerd volgens bron
-export function compareResultaten(
-  a: ZoekResultaat,
-  b: ZoekResultaat,
+// - Eerst wordt er gesorteerd volgens zoekernaam.
+//   Het is mogelijk dat hier bron moet komen ipv zoekernaam. Bron is namelijk een fijner niveau. Als dat zo is,
+//   dan moet de bronprioriteit nog geconfigureerd worden. Voor de implementatie van deze functie maakt dat niet, maar wel
+//   voor die van de prioriteitenGetter.
+export function zoekResultaatOrdering(
   input: string,
-  zoekerRepresentatie: AbstractRepresentatieService
-): number {
-  const bronA = zoekerRepresentatie.bronNaarNummer(a);
-  const bronB = zoekerRepresentatie.bronNaarNummer(b);
-  if (bronA === bronB) {
-    return compareOpInhoud(a, b, input);
-  } else {
-    return bronA - bronB;
-  }
+  prioriteitenGetter: Function1<ZoekResultaat, number>
+): Function2<ZoekResultaat, ZoekResultaat, Ordering> {
+  return (a, b) => {
+    const prioA = prioriteitenGetter(a);
+    const prioB = prioriteitenGetter(b);
+    if (prioA === prioB) {
+      return compareOpInhoud(a, b, input);
+    } else {
+      return sign(prioA - prioB);
+    }
+  };
 }
 
 //  - Dan wordt er gekeken naar de resultaten in de tekst (als de 3 tekens matchen met de 3 eerste tekens van het resultaat)
-function compareOpInhoud(a: ZoekResultaat, b: ZoekResultaat, input: string): number {
+function compareOpInhoud(a: ZoekResultaat, b: ZoekResultaat, input: string): Ordering {
   const aMatchesInput = matchesInput(a, input);
   const bMatchesInput = matchesInput(b, input);
 
   if (aMatchesInput) {
     if (bMatchesInput) {
       // Zowel a als b matchen met de input, doe op volgend niveau.
-      return a.omschrijving.localeCompare(b.omschrijving);
+      return sign(a.omschrijving.localeCompare(b.omschrijving));
     } else {
       return -1;
     }
   } else if (bMatchesInput) {
     return 1;
   } else {
-    // Noch a als b matchen met de input, vergelijk heel het resultaat.
-    return a.omschrijving.localeCompare(b.omschrijving);
+    // Noch a noch b matchen met de input, vergelijk heel het resultaat.
+    return sign(a.omschrijving.localeCompare(b.omschrijving));
   }
 }
 
