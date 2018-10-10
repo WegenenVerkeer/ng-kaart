@@ -507,8 +507,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   kiesSuggestiesResultaat(resultaat: ZoekResultaat) {
-    this.toonSuggesties = false;
-    this.zoomNaarResultaat(resultaat);
+    this.zoomNaarSuggestie(resultaat);
     this.zoekVeld.setValue(resultaat.omschrijving);
     this.focusOpZoekVeld();
   }
@@ -537,6 +536,28 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       feature: nieuweFeature,
       zoekResultaat: zoekKaartResultaat
     });
+  }
+
+  private zoomNaarSuggestie(resultaat: ZoekResultaat) {
+    this.toonSuggesties = false;
+    this.toonResultaat = false;
+    this.toonHelp = false;
+    this.dispatch(prt.ZoekGekliktCmd(resultaat));
+    forEach(
+      resultaat.kaartInfo.filter(info => !ol.extent.isEmpty(info.extent)), //
+      info => {
+        this.dispatch(prt.VeranderExtentCmd(info.geometry.getExtent()));
+        if (info.geometry.getType() === "Point") {
+          resultaat.preferredPointZoomLevel.map(zoom => this.dispatch(prt.VeranderZoomCmd(zoom, kaartLogOnlyWrapper)));
+        }
+        const resultaatFeatures = ZoekerBoxComponent.maakNieuwFeature(resultaat);
+        this.featuresByResultaat = Map<ZoekResultaat, ol.Feature[]>().set(resultaat, resultaatFeatures);
+
+        this.dispatch(prt.VervangFeaturesCmd(ZoekerUiSelector, List<ol.Feature>(resultaatFeatures), kaartLogOnlyWrapper));
+
+        resultaatFeatures.slice(0, 1).forEach(feature => this.highlight(feature, info));
+      }
+    );
   }
 
   zoek() {
@@ -635,7 +656,6 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       Map<ZoekResultaat, ol.Feature[]>()
     );
 
-    this.decreaseBusy();
     this.dispatch(
       prt.VervangFeaturesCmd(
         ZoekerUiSelector,
@@ -643,6 +663,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
         kaartLogOnlyWrapper
       )
     );
+    this.decreaseBusy();
   }
 
   private processSuggestiesAntwoord(nieuweResultaten: ZoekResultaten, prioriteitenOpNaam: ZoekerPrioriteitenOpZoekernaam): void {
@@ -659,7 +680,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     forEach(weerhoudenResultaten, resultaten => {
       // Stap 2 is sorteren van de antwoorden van de zoekers op prioriteit
       const ordering: Ord<ZoekResultaten> = ord.contramap(prioriteit, ord.ordNumber);
-      this.suggestiesBuffer = array.sort<ZoekResultaten>(ordering)(array.snoc(this.suggestiesBuffer, nieuweResultaten));
+      this.suggestiesBuffer = array.sort<ZoekResultaten>(ordering)(array.snoc(this.suggestiesBuffer, resultaten));
 
       // Stap 3 is alle individuele resultaten uit de resultaten halen voor zover de prioriteiten ononderbroken oplopen van 1
       // Het is perfect mogelijk dat er voor een bepaalde prioriteit geen resultaten zijn (lege array). We verwachten dit

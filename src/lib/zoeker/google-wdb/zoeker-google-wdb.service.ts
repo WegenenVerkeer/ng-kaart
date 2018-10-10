@@ -47,7 +47,7 @@ export class GoogleWdbZoekResultaat implements ZoekResultaat {
       style: style,
       highlightStyle: highlightStyle
     });
-    this.omschrijving = locatie.name;
+    this.omschrijving = locatie.omschrijving;
     this.extraOmschrijving = some(locatie.formatted_address);
     this.bron = locatie.bron;
     this.preferredPointZoomLevel = isWdbBron(this.bron) ? some(12) : some(10);
