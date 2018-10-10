@@ -1,16 +1,21 @@
-import { OnChanges, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
+import { NgZone, OnChanges, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
 
+import { KaartComponentBase } from "../../kaart/kaart-component-base";
 import * as prt from "../../kaart/kaart-protocol";
 import { KaartClassicComponent } from "../kaart-classic.component";
 
-export abstract class ClassicUIElementSelectorComponentBase implements OnInit, OnDestroy, OnChanges {
-  constructor(readonly uiSelector: string, readonly kaart: KaartClassicComponent) {}
+export abstract class ClassicUIElementSelectorComponentBase extends KaartComponentBase implements OnInit, OnDestroy, OnChanges {
+  constructor(readonly uiSelector: string, readonly kaart: KaartClassicComponent, zone: NgZone) {
+    super(zone);
+  }
 
   ngOnInit(): void {
+    super.ngOnInit();
     this.kaart.dispatch(prt.VoegUiElementToe(this.uiSelector));
   }
 
   ngOnDestroy(): void {
+    super.ngOnDestroy();
     this.kaart.dispatch(prt.VerwijderUiElement(this.uiSelector));
   }
 

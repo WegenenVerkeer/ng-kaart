@@ -20,6 +20,7 @@ export class ClassicLagenkiezerComponent implements OnInit, OnDestroy, OnChanges
   @Input() verplaatsbareLagen = DefaultOpties.verplaatsbareLagen;
 
   ngOnInit() {
+    console.log("***init", this.opties());
     this.kaart.dispatch(VoegUiElementToe(LagenUiSelector));
     this.kaart.dispatch(ZetUiElementOpties(LagenUiSelector, this.opties()));
   }

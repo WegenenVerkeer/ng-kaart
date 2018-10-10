@@ -1,8 +1,8 @@
 import { Set } from "immutable";
 import * as rx from "rxjs";
 
-import { ZoekerBase } from "../zoeker-base";
+import { Zoeker } from "../zoeker";
 
-export interface ExterneWmsZoekerService extends ZoekerBase {
+export interface ExterneWmsZoekerService extends Zoeker {
   bronnen$: rx.Observable<Set<string>>;
 }

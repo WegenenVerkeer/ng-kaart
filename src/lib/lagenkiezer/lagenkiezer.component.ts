@@ -5,7 +5,7 @@ import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as rx from "rxjs";
-import { distinctUntilChanged, filter, map, shareReplay, startWith, switchMap } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, filter, map, shareReplay, startWith, switchMap, take, tap } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
@@ -116,12 +116,20 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
 
   ngOnInit() {
     super.ngOnInit();
+    const initieelDichtgeklapt$ = this.opties$.pipe(
+      map(opties => opties.initieelDichtgeklapt),
+      distinctUntilChanged(),
+      tap(id => console.log("****id", id))
+    );
+    // Zorg dat de lijst initieel open of dicht is zoals ingesteld
+    initieelDichtgeklapt$.pipe(debounceTime(250), take(1)).subscribe(dichtgeklapt => (this.dichtgeklapt = dichtgeklapt));
     // Zorg dat de lijst open klapt als er een laag bijkomt of weg gaat tenzij de optie initieelDichtgeklapt op 'true' staat.
-    const initieelDichtgeklapt$ = this.opties$.pipe(map(opties => opties.initieelDichtgeklapt), distinctUntilChanged());
     this.bindToLifeCycle(
       initieelDichtgeklapt$.pipe(
+        tap(id => console.log("****id2", id)),
         switchMap(initieelDichtgeklapt => (initieelDichtgeklapt ? rx.empty() : rx.merge(this.lagenHoog$, this.lagenLaag$))),
-        observeOnAngular(this.zone)
+        observeOnAngular(this.zone),
+        tap(() => console.log("****--"))
       )
     ).subscribe(() => (this.dichtgeklapt = false));
   }

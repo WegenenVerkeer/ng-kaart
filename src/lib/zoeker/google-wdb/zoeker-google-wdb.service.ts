@@ -5,34 +5,41 @@ import { Option, some } from "fp-ts/lib/Option";
 import { Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { catchError, flatMap, map } from "rxjs/operators";
+import { catchError, map, switchMap } from "rxjs/operators";
 
 import { ZOEKER_CFG, ZoekerConfigData } from "../config/zoeker-config";
 import { ZoekerConfigGoogleWdbConfig } from "../config/zoeker-config-google-wdb.config";
 import {
   geoJSONOptions,
   IconDescription,
-  StringZoekInput,
-  ZoekerBase,
+  Zoeker,
+  ZoekInput,
   ZoekKaartResultaat,
+  Zoekopdracht,
   ZoekResultaat,
-  ZoekResultaten
-} from "../zoeker-base";
+  ZoekResultaten,
+  Zoektype
+} from "../zoeker";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE, ZoekerRepresentatieType } from "../zoeker-representatie.service";
 
 export class GoogleWdbZoekResultaat implements ZoekResultaat {
-  readonly partialMatch: boolean;
-  readonly index: number;
+  readonly featureIdSuffix: string;
   readonly omschrijving: string;
   readonly bron: string;
-  readonly zoeker: string;
-  readonly icoon: IconDescription;
   readonly kaartInfo: Option<ZoekKaartResultaat>;
   readonly preferredPointZoomLevel: Option<number>;
+  readonly extraOmschrijving: Option<string>;
+  readonly zoektype: Zoektype = "Volledig";
 
-  constructor(locatie, index: number, zoeker: string, style: ol.style.Style, highlightStyle: ol.style.Style, icoon: IconDescription) {
-    this.partialMatch = locatie.partialMatch;
-    this.index = index + 1;
+  constructor(
+    locatie,
+    index: number,
+    readonly zoeker: string,
+    style: ol.style.Style,
+    highlightStyle: ol.style.Style,
+    readonly icoon: IconDescription
+  ) {
+    this.featureIdSuffix = `${index + 1}`;
     const geometry = new ol.format.GeoJSON(geoJSONOptions).readGeometry(locatie.locatie);
     this.kaartInfo = some({
       geometry: geometry,
@@ -40,10 +47,9 @@ export class GoogleWdbZoekResultaat implements ZoekResultaat {
       style: style,
       highlightStyle: highlightStyle
     });
-    this.omschrijving = locatie.omschrijving;
+    this.omschrijving = locatie.name;
+    this.extraOmschrijving = some(locatie.formatted_address);
     this.bron = locatie.bron;
-    this.zoeker = zoeker;
-    this.icoon = icoon;
     this.preferredPointZoomLevel = isWdbBron(this.bron) ? some(12) : some(10);
   }
 }
@@ -81,7 +87,7 @@ interface ExtendedPlaceResult extends google.maps.places.PlaceResult, ExtendedRe
 }
 
 @Injectable()
-export class ZoekerGoogleWdbService implements ZoekerBase {
+export class ZoekerGoogleWdbService implements Zoeker {
   private readonly googleWdbLocatieZoekerConfig: ZoekerConfigGoogleWdbConfig;
   private _cache: Promise<GoogleServices> | null = null;
   private legende: Map<string, IconDescription>;
@@ -103,6 +109,10 @@ export class ZoekerGoogleWdbService implements ZoekerBase {
     );
   }
 
+  naam(): string {
+    return "Google/WDB LocatieZoeker";
+  }
+
   private init(): Promise<GoogleServices> {
     if (this._cache) {
       // De data is al gecached.
@@ -119,19 +129,28 @@ export class ZoekerGoogleWdbService implements ZoekerBase {
     }
   }
 
-  zoek$(zoekterm: StringZoekInput): rx.Observable<ZoekResultaten> {
+  zoekresultaten$(opdracht: Zoekopdracht): rx.Observable<ZoekResultaten> {
+    switch (opdracht.zoektype) {
+      case "Volledig":
+        return this.zoek$(opdracht.zoekpatroon, "Volledig", this.googleWdbLocatieZoekerConfig.maxAantal);
+      default:
+        return this.zoek$(opdracht.zoekpatroon, "Suggesties", 5);
+    }
+  }
+
+  private zoek$(zoekterm: ZoekInput, zoektype: Zoektype, maxResultaten: number): rx.Observable<ZoekResultaten> {
     if (!zoekterm.value || zoekterm.value.trim().length === 0) {
-      return rx.of(new ZoekResultaten(this.naam(), [], [], this.legende));
+      return rx.of(new ZoekResultaten(this.naam(), "Volledig", [], [], this.legende));
     }
     const params: HttpParams = new HttpParams().set("query", zoekterm.value).set("legacy", "false");
 
     return this.httpClient
       .get<Object>(this.locatieZoekerUrl + "/zoek", { params: params })
-      .pipe(flatMap(resp => this.parseResult(resp)), catchError(err => this.handleError(err)));
+      .pipe(switchMap(resp => this.parseResult(resp, zoektype, maxResultaten)), catchError(err => this.handleError(err, zoektype)));
   }
 
-  parseResult(response: any): rx.Observable<ZoekResultaten> {
-    const zoekResultaten = new ZoekResultaten(this.naam(), [], [], this.legende);
+  private parseResult(response: any, zoektype: Zoektype, maxResultaten: number): rx.Observable<ZoekResultaten> {
+    const zoekResultaten = new ZoekResultaten(this.naam(), zoektype, [], [], this.legende);
 
     // parse result
     const resultaten = response; // vanaf hier doen we onze handen voor onze ogen en hopen dat alles goed gaat
@@ -299,14 +318,14 @@ export class ZoekerGoogleWdbService implements ZoekerBase {
             )
           );
         });
-        return zoekResultaten.limiteerAantalResultaten(this.googleWdbLocatieZoekerConfig.maxAantal);
+        return zoekResultaten.limiteerAantalResultaten(maxResultaten);
       });
 
       return rx.from(zoekResultatenPromise);
     }
   }
 
-  handleError(response: Response | any): rx.Observable<ZoekResultaten> {
+  handleError(response: Response | any, zoektype: Zoektype): rx.Observable<ZoekResultaten> {
     let error: string;
     switch (response.status) {
       case 404:
@@ -316,7 +335,7 @@ export class ZoekerGoogleWdbService implements ZoekerBase {
         // toon http foutmelding indien geen 200 teruggehad
         error = `Fout bij opvragen locatie: ${response.responseText || response.statusText || response}`;
     }
-    return rx.of(new ZoekResultaten(this.naam(), [error], [], this.legende));
+    return rx.of(new ZoekResultaten(this.naam(), zoektype, [error], [], this.legende));
   }
 
   private geocode(omschrijving): Promise<ExtendedGeocoderResult[]> {
@@ -473,9 +492,5 @@ export class ZoekerGoogleWdbService implements ZoekerBase {
     }&libraries=places&language=nl&callback=__onGoogleLoaded`;
     node.type = "text/javascript";
     document.getElementsByTagName("head")[0].appendChild(node);
-  }
-
-  naam(): string {
-    return "Google/WDB LocatieZoeker";
   }
 }

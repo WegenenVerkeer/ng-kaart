@@ -30,7 +30,8 @@ export class ClassicOrthoLaagComponent extends ClassicWmsLaagComponent {
       opacity: fromNullable(this.opacity),
       backgroundUrl: this.backgroundUrl(List(this.config.orthofotomozaiek.urls), this.config.orthofotomozaiek.naam),
       minZoom: this.minZoom,
-      maxZoom: this.maxZoom
+      maxZoom: this.maxZoom,
+      verwijderd: false
     };
   }
 }

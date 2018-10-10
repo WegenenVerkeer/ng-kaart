@@ -1,4 +1,4 @@
-import { Component, Input } from "@angular/core";
+import { Component, Input, NgZone } from "@angular/core";
 
 import { MetenOpties, MetenUiSelector } from "../../kaart/meten/kaart-meten.component";
 import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
@@ -12,8 +12,8 @@ export class ClassicMetenComponent extends ClassicUIElementSelectorComponentBase
   @Input() toonInfoBoodschap = true;
   @Input() meerdereGeometrieen = true;
 
-  constructor(readonly kaart: KaartClassicComponent) {
-    super(MetenUiSelector, kaart);
+  constructor(kaart: KaartClassicComponent, zone: NgZone) {
+    super(MetenUiSelector, kaart, zone);
   }
 
   protected opties(): MetenOpties {

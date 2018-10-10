@@ -116,7 +116,6 @@
     "karma-mocha-reporter": "2.2.4",
     "karma-phantomjs-launcher": "1.0.4",
     "mkdirp": "^0.5.1",
-    "phantomjs": "2.1.1",
     "prettier": "1.9.2",
     "protractor": "^5.4.0",
     "protractor-console": "3.0.0",

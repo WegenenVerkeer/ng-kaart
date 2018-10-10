@@ -25,7 +25,8 @@ export class ClassicBlancoLaagComponent extends ClassicLaagComponent {
       titel: this.titel,
       backgroundUrl: blancoLaag,
       minZoom: this.minZoom,
-      maxZoom: this.maxZoom
+      maxZoom: this.maxZoom,
+      verwijderd: false
     };
   }
 

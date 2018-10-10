@@ -39,7 +39,6 @@ import { TestSectieComponent } from "./test-sectie.component";
     FormsModule,
     RouterModule.forRoot(routes),
     ZoekerModule.forRoot({
-      bronVolgorde: '[[3, "^wdb"], [2, "^crab"], [1, "^google"]]',
       googleWdb: {
         apiKey: "AIzaSyApbXMl5DGL60g17JU6MazMxNcUGooey7I"
       }

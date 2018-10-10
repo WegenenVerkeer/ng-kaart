@@ -1,11 +1,13 @@
 import { Component, EventEmitter, NgZone, OnDestroy, OnInit, Output } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { List, Set } from "immutable";
+import { Option } from "fp-ts/lib/Option";
+import { Set } from "immutable";
 import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, switchMap } from "rxjs/operators";
 
 import { KaartComponent } from "../../kaart/kaart.component";
 import { GetraptZoekerComponent, ZoekerBoxComponent } from "../box/zoeker-box.component";
+import { zoekerMetNaam } from "../zoeker";
 
 import { ExterneWmsZoekerService } from "./zoeker-externe-wms.service";
 
@@ -26,28 +28,23 @@ export class ZoekerExterneWmsGetraptComponent extends GetraptZoekerComponent imp
   constructor(kaartComponent: KaartComponent, zoekerComponent: ZoekerBoxComponent, zone: NgZone) {
     super(kaartComponent, zoekerComponent, zone);
 
-    const services$: rx.Observable<List<ExterneWmsZoekerService>> = this.modelChanges.zoekerServices$.pipe(
-      map(
-        svcs =>
-          svcs
-            .filter(svc => svc!.naam() === "ExterneWms")
-            .take(1)
-            .toList() as List<ExterneWmsZoekerService>
-      )
+    const services$: rx.Observable<Option<ExterneWmsZoekerService>> = this.modelChanges.zoekerServices$.pipe(
+      map(zoekerMetNaam("ExterneWms")),
+      map(maybeZoeker => maybeZoeker as Option<ExterneWmsZoekerService>)
     );
 
     this.bronnen$ = services$.pipe(
-      switchMap(
-        svcs =>
-          svcs.isEmpty()
-            ? rx.of(Set()) // Geen service betekent geen bronnen
-            : svcs.get(0).bronnen$ // We weten dat er juist 1 element is
+      switchMap(svcs =>
+        svcs.foldL(
+          () => rx.of(Set()), // Geen service betekent geen bronnen
+          svc => svc.bronnen$
+        )
       )
     );
 
     this.bindToLifeCycle(this.bronControl.valueChanges.pipe(distinctUntilChanged(), filter(v => v !== null))).subscribe(bron => {
       this.leegMakenDisabledChange.emit(false);
-      this.zoek({ type: "ExterneWms", bron: bron }, Set.of("ExterneWms"));
+      this.zoek({ type: "ExterneWms", bron: bron }, ["ExterneWms"]);
     });
   }
 

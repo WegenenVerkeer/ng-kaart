@@ -2,12 +2,31 @@ import { animate, style, transition, trigger } from "@angular/animations";
 import { HttpErrorResponse } from "@angular/common/http";
 import { ChangeDetectorRef, Component, ElementRef, Inject, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { none, Option, some } from "fp-ts/lib/Option";
+import * as array from "fp-ts/lib/Array";
+import { concat, Function1, Function2, Predicate } from "fp-ts/lib/function";
+import { fromNullable, fromPredicate, none, Option, some } from "fp-ts/lib/Option";
+import { Ord } from "fp-ts/lib/Ord";
+import * as ord from "fp-ts/lib/Ord";
+import { setoidString } from "fp-ts/lib/Setoid";
+import { insert, lookup, remove, StrMap } from "fp-ts/lib/StrMap";
 import { Tuple } from "fp-ts/lib/Tuple";
 import { List, Map, OrderedMap, Set } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { catchError, debounceTime, distinctUntilChanged, filter, map, scan, shareReplay, startWith, switchMap, tap } from "rxjs/operators";
+import {
+  catchError,
+  debounceTime,
+  distinctUntilChanged,
+  filter,
+  map,
+  mapTo,
+  scan,
+  shareReplay,
+  startWith,
+  switchMap,
+  take,
+  tap
+} from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../../kaart/kaart-child-component-base";
 import * as ke from "../../kaart/kaart-elementen";
@@ -19,15 +38,18 @@ import { kaartLogger } from "../../kaart/log";
 import { matchGeometryType } from "../../util/geometries";
 import { collect, Pipeable } from "../../util/operators";
 import { forEach } from "../../util/option";
+import { minLength } from "../../util/string";
 import {
-  compareResultaten,
+  emptyPrioriteitenOpZoekertype,
   IconDescription,
-  StringZoekInput,
+  ZoekerMetPrioriteiten,
   ZoekInput,
   ZoekKaartResultaat,
   ZoekResultaat,
-  ZoekResultaten
-} from "../zoeker-base";
+  zoekResultaatOrdering,
+  ZoekResultaten,
+  Zoektype
+} from "../zoeker";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "../zoeker-representatie.service";
 
 export const ZoekerUiSelector = "Zoeker";
@@ -47,6 +69,40 @@ export const BASIS = "Basis";
 export const PERCEEL = "Perceel";
 export const CRAB = "Crab";
 export const EXTERNE_WMS = "ExterneWms";
+
+type ZoekerPrioriteitenOpZoekernaam = StrMap<StrMap<number>>;
+
+// Vreemde manier van werken, maar constructor heeft een type nodig
+const emptyZoekerPrioriteitenOpZoekernaam: ZoekerPrioriteitenOpZoekernaam = remove(
+  "dummy",
+  new StrMap({ dummy: emptyPrioriteitenOpZoekertype })
+);
+
+const zoekresultatenVanType: Function2<Zoektype, ZoekResultaten, Option<ZoekResultaten>> = (zoektype, zoekResultaten) =>
+  fromPredicate<ZoekResultaten>(res => res.zoektype === zoektype)(zoekResultaten);
+
+const heeftPrioriteit: Function1<ZoekerPrioriteitenOpZoekernaam, Predicate<ZoekResultaten>> = prioriteitenOpNaam => resultaten =>
+  lookup(resultaten.zoeker, prioriteitenOpNaam).exists(prios => lookup(resultaten.zoektype, prios).isSome());
+
+const prioriteitVoorZoekerNaam: Function1<
+  Zoektype,
+  Function2<ZoekerPrioriteitenOpZoekernaam, number, Function1<string, number>>
+> = zoektype => (prioriteitenOpNaam, stdPrio) => zoekernaam =>
+  lookup(zoekernaam, prioriteitenOpNaam)
+    .chain(priosOpType => lookup(zoektype, priosOpType))
+    .getOrElse(stdPrio);
+
+const prioriteitVoorZoekresultaten: Function1<
+  Zoektype,
+  Function2<ZoekerPrioriteitenOpZoekernaam, number, Function1<ZoekResultaten, number>>
+> = zoektype => (prioriteitenOpNaam, stdPrio) => resultaten =>
+  prioriteitVoorZoekerNaam(zoektype)(prioriteitenOpNaam, stdPrio)(resultaten.zoeker);
+
+const prioriteitVoorZoekresultaat: Function1<
+  Zoektype,
+  Function2<ZoekerPrioriteitenOpZoekernaam, number, Function1<ZoekResultaat, number>>
+> = zoektype => (prioriteitenOpNaam, stdPrio) => resultaat =>
+  prioriteitVoorZoekerNaam(zoektype)(prioriteitenOpNaam, stdPrio)(resultaat.zoeker);
 
 export function isNotNullObject(object) {
   return object && object instanceof Object;
@@ -105,19 +161,19 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
   }
 
   protected busy<T>(observable: rx.Observable<T>): rx.Observable<T> {
-    function noop() {}
+    function noop(t: T) {}
 
     this.zoekerComponent.increaseBusy();
-    return observable.pipe(tap(noop, () => this.zoekerComponent.decreaseBusy(), () => this.zoekerComponent.decreaseBusy()));
+    return observable.pipe(take(1), tap(noop, () => this.zoekerComponent.decreaseBusy(), () => this.zoekerComponent.decreaseBusy()));
   }
 
-  protected zoek<I extends ZoekInput>(zoekInput: I, zoekers: Set<string>) {
+  protected zoek<I extends ZoekInput>(zoekInput: I, zoekers: Array<string>) {
     this.zoekerComponent.toonResultaat = true;
+    this.zoekerComponent.toonSuggesties = false;
     this.zoekerComponent.increaseBusy();
     this.dispatch({
       type: "Zoek",
-      input: zoekInput,
-      zoekers: zoekers,
+      opdracht: { zoekpatroon: zoekInput, zoektype: "Volledig", zoekernamen: zoekers },
       wrapper: kaartLogOnlyWrapper
     });
   }
@@ -180,11 +236,11 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
 
   // inputWaarde kan een string of een object zijn. Enkel wanneer het een object is, roepen we de provider op,
   // anders geven we een lege array terug.
-  private safeProvider<A, T>(provider: (A) => rx.Observable<T[]>): Pipeable<A, T[]> {
+  private safeProvider<A, T>(provider: Function1<A, rx.Observable<T[]>>): Pipeable<A, T[]> {
     return switchMap(inputWaarde => {
       return isNotNullObject(inputWaarde)
         ? this.busy(provider(inputWaarde)).pipe(
-            catchError((error, obs) => {
+            catchError(error => {
               this.meldFout(error);
               return rx.of([]);
             })
@@ -234,21 +290,27 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   featuresByResultaat = Map<ZoekResultaat, ol.Feature[]>();
   huidigeSelectie: Option<HuidigeSelectie> = none;
   alleZoekResultaten: ZoekResultaat[] = [];
+  alleSuggestiesResultaten: ZoekResultaat[] = [];
+  private suggestiesBuffer: ZoekResultaten[] = [];
   alleFouten: Fout[] = [];
   legende: Map<string, IconDescription> = Map<string, IconDescription>();
   legendeKeys: string[] = [];
   toonHelp = false;
   toonResultaat = true;
+  toonSuggesties = true;
   busy = 0;
   actieveZoeker: ZoekerType = "Basis";
   perceelMaakLeegDisabled = true;
   crabMaakLeegDisabled = true;
   zoekerMaakLeegDisabled = Set<ZoekerType>();
   externeWmsMaakLeegDisabled = true;
-  readonly zoekerNamen$: rx.Observable<Set<string>>;
-  readonly zoekerComponentSubj: rx.Subject<Tuple<ZoekerType, GetraptZoekerComponent>> = new rx.Subject();
-  readonly zoekerComponentOpNaam$: rx.Observable<Map<ZoekerType, GetraptZoekerComponent>>;
-  readonly maakVeldenLeegSubj: rx.Subject<ZoekerType> = new rx.Subject<ZoekerType>();
+  private readonly zoekerComponentSubj: rx.Subject<Tuple<ZoekerType, GetraptZoekerComponent>> = new rx.Subject();
+  private readonly zoekerComponentOpNaam$: rx.Observable<Map<ZoekerType, GetraptZoekerComponent>>;
+  private readonly maakVeldenLeegSubj: rx.Subject<ZoekerType> = new rx.Subject<ZoekerType>();
+  private readonly zoekers$: rx.Observable<ZoekerMetPrioriteiten[]>;
+  private readonly zoekerNamen$: rx.Observable<string[]>;
+  private readonly zoekInputSubj: rx.Subject<string> = new rx.Subject<string>();
+  private readonly volledigeZoekSubj: rx.Subject<void> = new rx.Subject<void>();
 
   // Member variabelen die eigenlijk constanten of statics zouden kunnen zijn, maar gebruikt in de HTML template
   readonly Basis: ZoekerType = BASIS;
@@ -269,7 +331,8 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       minZoom: 2,
       maxZoom: 15,
       offsetveld: none,
-      velden: OrderedMap<string, VeldInfo>()
+      velden: OrderedMap<string, VeldInfo>(),
+      verwijderd: false
     };
   }
 
@@ -303,7 +366,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
         geometry: geometry,
         name: resultaat.omschrijving
       });
-      feature.setId(resultaat.bron + "_" + resultaat.index);
+      feature.setId(resultaat.bron + "_" + resultaat.featureIdSuffix);
       resultaat.kaartInfo.map(kaartInfo => feature.setStyle(kaartInfo.style));
       return feature;
     }
@@ -327,11 +390,8 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   ) {
     super(parent, zone);
 
-    this.zoekerNamen$ = parent.modelChanges.zoekerServices$.pipe(
-      map(svcs => svcs.map(svc => svc!.naam()).toSet()),
-      debounceTime(250),
-      shareReplay(1)
-    );
+    this.zoekers$ = parent.modelChanges.zoekerServices$;
+    this.zoekerNamen$ = this.zoekers$.pipe(map(svcs => svcs.map(svc => svc.zoeker.naam())), debounceTime(250), shareReplay(1));
     this.zoekerComponentOpNaam$ = this.zoekerComponentSubj.pipe(
       scan(
         (zoekerComponentOpNaam: Map<ZoekerType, GetraptZoekerComponent>, nz: Tuple<ZoekerType, GetraptZoekerComponent>) =>
@@ -340,13 +400,25 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       ),
       shareReplay(1)
     );
+
+    // Luister naar de "leegmaken" opdracht en voer uit
     this.bindToLifeCycle(
       this.zoekerComponentOpNaam$.pipe(switchMap(zcon => this.maakVeldenLeegSubj.pipe(collect((naam: ZoekerType) => zcon.get(naam)))))
     ).subscribe(zoekerGetraptComponent => zoekerGetraptComponent.maakVeldenLeeg(0));
-  }
 
-  protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
-    return [prt.ZoekResultatenSubscription(r => this.processZoekerAntwoord(r))];
+    // Luister op zoekresultaten en doe er iets mee
+    const prioriteitenOpNaam$: rx.Observable<ZoekerPrioriteitenOpZoekernaam> = this.zoekers$.pipe(
+      map(zmps =>
+        zmps.reduce((priosOpNaam, zmp) => insert(zmp.zoeker.naam(), zmp.prioriteiten, priosOpNaam), emptyZoekerPrioriteitenOpZoekernaam)
+      )
+    );
+    this.bindToLifeCycle(
+      prioriteitenOpNaam$.pipe(
+        switchMap(prioriteitenOpNaam =>
+          parent.modelChanges.zoekresultaten$.pipe(map(zoekresultaten => new Tuple(zoekresultaten, prioriteitenOpNaam)))
+        )
+      )
+    ).subscribe(t => this.processZoekerAntwoord(t.fst, t.snd));
   }
 
   ngOnInit(): void {
@@ -361,6 +433,57 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       stijlInLagenKiezer: none,
       wrapper: kaartLogOnlyWrapper
     });
+    const minZoektermLength = 2;
+    const zoekterm$ = this.zoekInputSubj.pipe(
+      debounceTime(250), // Niet elk karakter als er vlug getypt wordt
+      map(s => s.trimLeft()), // Spaties links boeien ons niet
+      distinctUntilChanged() // Evt een karakter + delete, of een control character
+    );
+    // Zorg ervoor dat suggesties opgevraagd worden zodra er een voldoende lange zoekterm ingegeven wordt
+    this.bindToLifeCycle(
+      rx.combineLatest(
+        this.zoekerNamen$, // In theorie ook zoeken wanneer er nieuwe zoekers geregistreerd worden. In de praktijk gebeurt dat niet
+        zoekterm$.pipe(filter(minLength(minZoektermLength))), // Enkel emitten wanneer zoekterm minimale lengte heeft
+        (zoekerNamen, zoekterm) =>
+          ({
+            type: "Zoek",
+            opdracht: { zoektype: "Suggesties", zoekernamen: zoekerNamen, zoekpatroon: { type: "string", value: zoekterm } },
+            wrapper: kaartLogOnlyWrapper
+          } as prt.ZoekCmd<KaartInternalMsg>)
+      )
+    ).subscribe(cmd => {
+      this.suggestiesBuffer = [];
+      this.dispatch(cmd);
+    });
+
+    // zorg ervoor dat de volledige zoekopdracht uitgevoerd wordt op het moment dat de opdracht gegeven wordt
+    this.bindToLifeCycle(
+      rx
+        .combineLatest(
+          this.zoekerNamen$,
+          zoekterm$,
+          (zoekerNamen, zoekterm) =>
+            ({
+              type: "Zoek",
+              opdracht: { zoektype: "Volledig", zoekernamen: zoekerNamen, zoekpatroon: { type: "string", value: zoekterm } },
+              wrapper: kaartLogOnlyWrapper
+            } as prt.ZoekCmd<KaartInternalMsg>)
+        )
+        .pipe(
+          switchMap(
+            cmd => this.volledigeZoekSubj.pipe(mapTo(cmd)) // Via switchmap ipv in combineLatest anders wordt bij elke letter gezocht
+          )
+        )
+    ).subscribe(cmd => {
+      this.toonResultaat = true;
+      this.toonSuggesties = false;
+      this.increaseBusy();
+      this.dispatch(cmd);
+    });
+
+    // zorg ervoor dat de suggestiebox (on)zichtbaar is naar gelang de lengte van de zoekterm
+    const suggestieBoxZichtbaarheid$ = zoekterm$.pipe(map(minLength(minZoektermLength))); // enkel obv getypte characters
+    this.bindToLifeCycle(suggestieBoxZichtbaarheid$).subscribe(visible => (this.toonSuggesties = visible));
   }
 
   ngOnDestroy(): void {
@@ -382,18 +505,32 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.refreshUI();
   }
 
-  zoomNaarResultaat(resultaat: ZoekResultaat) {
+  kiesZoekResultaat(resultaat: ZoekResultaat) {
+    this.zoomNaarResultaat(resultaat);
+  }
+
+  kiesSuggestiesResultaat(resultaat: ZoekResultaat) {
+    this.toonSuggesties = false;
+    this.zoomNaarResultaat(resultaat);
+    this.zoekVeld.setValue(resultaat.omschrijving);
+    this.focusOpZoekVeld();
+  }
+
+  private zoomNaarResultaat(resultaat: ZoekResultaat) {
     this.toonResultaat = false;
     this.toonHelp = false;
     this.dispatch(prt.ZoekGekliktCmd(resultaat));
-    resultaat.kaartInfo.filter(info => !ol.extent.isEmpty(info.extent)).map(info => {
-      this.dispatch(prt.VeranderExtentCmd(info.geometry.getExtent()));
-      if (info.geometry.getType() === "Point") {
-        resultaat.preferredPointZoomLevel.map(zoom => this.dispatch(prt.VeranderZoomCmd(zoom, kaartLogOnlyWrapper)));
+    forEach(
+      resultaat.kaartInfo.filter(info => !ol.extent.isEmpty(info.extent)), //
+      info => {
+        this.dispatch(prt.VeranderExtentCmd(info.geometry.getExtent()));
+        if (info.geometry.getType() === "Point") {
+          resultaat.preferredPointZoomLevel.map(zoom => this.dispatch(prt.VeranderZoomCmd(zoom, kaartLogOnlyWrapper)));
+        }
+        const features = fromNullable(this.featuresByResultaat.get(resultaat));
+        forEach(features.chain(fs => array.index(0, fs)), feat => this.highlight(feat, info));
       }
-      const selectedFeature = this.featuresByResultaat.get(resultaat)[0];
-      this.highlight(selectedFeature, info);
-    });
+    );
   }
 
   private highlight(nieuweFeature: ol.Feature, zoekKaartResultaat: ZoekKaartResultaat) {
@@ -406,16 +543,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   zoek() {
-    if (this.zoekVeld.value) {
-      this.toonResultaat = true;
-      this.increaseBusy();
-      this.dispatch({
-        type: "Zoek",
-        input: { type: "string", value: this.zoekVeld.value } as StringZoekInput,
-        zoekers: Set(),
-        wrapper: kaartLogOnlyWrapper
-      });
-    }
+    this.volledigeZoekSubj.next();
   }
 
   kuisZoekOp() {
@@ -433,10 +561,22 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   onKey(event: any) {
-    // De gebruiker kan locatie voorstellen krijgen door in het zoekveld max. 2 tekens in te typen en op enter te drukken
-    if (event.keyCode === 13 && event.srcElement.value.length >= 2) {
-      this.zoek();
+    // De gebruiker kan locatie voorstellen krijgen door in het zoekveld min. 2 tekens in te typen en op enter te drukken
+    switch (event.key) {
+      case "Enter":
+        if (event.srcElement.value.length >= 2) {
+          this.zoek();
+        }
+        break;
+      case "Escape":
+        if (this.toonSuggesties) {
+          this.toonSuggesties = false;
+        } else {
+          this.kuisZoekOp();
+        }
     }
+    // Een formbuilder heeft een observable ingebouwd, maar dat gebruiken we dus niet
+    this.zoekInputSubj.next(event.srcElement.value);
   }
 
   heeftFout(): boolean {
@@ -453,6 +593,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.actieveZoeker = zoeker;
     this.focusOpZoekVeld();
     this.toonResultaat = true;
+    this.toonSuggesties = false;
   }
 
   maakResultaatLeeg() {
@@ -460,6 +601,8 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.zoekVeld.markAsPristine();
     this.alleFouten = [];
     this.alleZoekResultaten = [];
+    this.alleSuggestiesResultaten = [];
+    this.suggestiesBuffer = [];
     this.featuresByResultaat = Map<ZoekResultaat, ol.Feature[]>();
     this.huidigeSelectie = none;
     this.legende.clear();
@@ -467,13 +610,23 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.dispatch(prt.VervangFeaturesCmd(ZoekerUiSelector, List(), kaartLogOnlyWrapper));
   }
 
-  private processZoekerAntwoord(nieuweResultaten: ZoekResultaten): KaartInternalMsg {
-    kaartLogger.debug("Process " + nieuweResultaten.zoeker);
-    this.alleZoekResultaten = this.alleZoekResultaten
-      .filter(resultaat => resultaat.zoeker !== nieuweResultaten.zoeker)
-      .concat(nieuweResultaten.resultaten);
-    this.alleZoekResultaten.sort((a, b) => compareResultaten(a, b, this.zoekVeld.value, this.zoekerRepresentatie));
+  private processZoekerAntwoord(nieuweResultaten: ZoekResultaten, prioriteitenOpNaam: ZoekerPrioriteitenOpZoekernaam): void {
+    kaartLogger.debug("Process " + nieuweResultaten.zoeker, nieuweResultaten);
+    switch (nieuweResultaten.zoektype) {
+      case "Volledig":
+        return this.processVolledigZoekerAntwoord(nieuweResultaten, prioriteitenOpNaam);
+      case "Suggesties":
+        return this.processSuggestiesAntwoord(nieuweResultaten, prioriteitenOpNaam);
+    }
+  }
+
+  private processVolledigZoekerAntwoord(nieuweResultaten: ZoekResultaten, prioriteitenOpNaam: ZoekerPrioriteitenOpZoekernaam): void {
+    this.alleZoekResultaten = this.vervangZoekerResultaten(this.alleZoekResultaten, nieuweResultaten);
+    this.alleZoekResultaten.sort(
+      zoekResultaatOrdering(this.zoekVeld.value, prioriteitVoorZoekresultaat("Volledig")(prioriteitenOpNaam, 99))
+    );
     nieuweResultaten.legende.forEach((safeHtml, name) => this.legende.set(name!, safeHtml!));
+    this.alleSuggestiesResultaten = [];
     this.legendeKeys = this.legende.keySeq().toArray();
 
     this.alleFouten = this.alleFouten
@@ -493,10 +646,52 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
         kaartLogOnlyWrapper
       )
     );
-    return {
-      type: "KaartInternal",
-      payload: none
-    };
+  }
+
+  private processSuggestiesAntwoord(nieuweResultaten: ZoekResultaten, prioriteitenOpNaam: ZoekerPrioriteitenOpZoekernaam): void {
+    // de resultaten van de zoeker wiens antwoord nu binnen komt, moeten vervangen worden door de nieuwe resultaten
+    // We moeten de resultaten in volgorde van prioriteit tonen
+
+    // Een hulpfunctie die de lokale prioriteitenOpNaam mee neemt.
+    const prioriteit: Function1<ZoekResultaten, number> = prioriteitVoorZoekresultaten("Suggesties")(prioriteitenOpNaam, 99);
+
+    // Stap 1 is enkel die resultaten overhouden die van toepassing zijn en een prioriteit hebben
+    const weerhoudenResultaten: Option<ZoekResultaten> = zoekresultatenVanType("Suggesties", nieuweResultaten) //
+      .filter(heeftPrioriteit(prioriteitenOpNaam));
+
+    forEach(weerhoudenResultaten, resultaten => {
+      // Stap 2 is sorteren van de antwoorden van de zoekers op prioriteit
+      const ordering: Ord<ZoekResultaten> = ord.contramap(prioriteit, ord.ordNumber);
+      this.suggestiesBuffer = array.sort<ZoekResultaten>(ordering)(array.snoc(this.suggestiesBuffer, nieuweResultaten));
+
+      // Stap 3 is alle individuele resultaten uit de resultaten halen voor zover de prioriteiten ononderbroken oplopen van 1
+      // Het is perfect mogelijk dat er voor een bepaalde prioriteit geen resultaten zijn (lege array). We verwachten dit
+      // zelfs van de zoekers: als ze geen resultaten hebben, moeten ze een lege array versturen.
+      // En passant zorgen we er voor dat er nooit meer dan 5 suggestieresultaten zijn.
+      this.alleSuggestiesResultaten = this.suggestiesBuffer.reduce(
+        ({ resultatenVanZoekers, volgendePrio }, suggestieZoekResultaten) => {
+          const prioVanResultaten = prioriteit(suggestieZoekResultaten);
+          if (prioVanResultaten === volgendePrio || prioVanResultaten === volgendePrio + 1) {
+            return {
+              resultatenVanZoekers: array.take(5, concat(resultatenVanZoekers, suggestieZoekResultaten.resultaten)),
+              volgendePrio: volgendePrio + 1
+            };
+          } else {
+            return { resultatenVanZoekers: resultatenVanZoekers, volgendePrio: 0 };
+          }
+        },
+        {
+          resultatenVanZoekers: new Array<ZoekResultaat>(),
+          volgendePrio: 0
+        }
+      ).resultatenVanZoekers;
+
+      this.refreshUI();
+    });
+  }
+
+  private vervangZoekerResultaten(resultaten: ZoekResultaat[], vervangResultaten: ZoekResultaten) {
+    return resultaten.filter(resultaat => resultaat.zoeker !== vervangResultaten.zoeker).concat(vervangResultaten.resultaten);
   }
 
   increaseBusy() {
@@ -538,7 +733,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   availability$(zoekerNaam: ZoekerType): rx.Observable<boolean> {
-    return this.zoekerNamen$.pipe(map(nmn => nmn.contains(zoekerNaam)));
+    return this.zoekerNamen$.pipe(map(nmn => array.member(setoidString)(nmn, zoekerNaam)));
   }
 
   maakVeldenLeeg(zoekerNaam: ZoekerType): void {
