@@ -2,34 +2,93 @@ import { fromNullable } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 
+/**
+ * Indien OL een fout krijgt bij het ophalen van een tile (bvb 401 bij niet langer ingelogd zijn) dan zal OL niet opnieuw proberen om die
+ * tile op te halen, als de gebruiker er terug naartoe pant. Het gevolg is dat die tile altijd als wit of wazig wordt afgebeeld. Door de
+ * mislukte tiles bij te houden en een expliciete load() ervan te triggeren wanneer we terug een goede of geauthoriseerde netwerk
+ * connectie hebben, zal succesvol opgehaalde tile wel opgeslagen worden in de interne tilecache van OL en bijgevolg correct afgebeeld
+ * worden. Het is aangeraden om bij het definieren van ol.Source de cacheSize op maxAantalTiles tiles te zetten. Bvb:
+ *
+ *  source: new ol.source.TileWMS({
+ *       cacheSize: kaart.tileLoader.maxMislukteTiles,
+ *       ...
+ */
+class MislukteTiles {
+  private mislukteTiles: List<ol.Tile> = List.of<ol.Tile>();
+
+  constructor(private maxAantalTiles: number) {}
+
+  voegtoe(tile: ol.Tile) {
+    this.mislukteTiles = this.mislukteTiles.push(tile);
+    if (this.mislukteTiles.size > this.maxAantalTiles) {
+      this.mislukteTiles = this.mislukteTiles.shift();
+    }
+  }
+
+  verwijder(tile: ol.Tile) {
+    this.mislukteTiles = this.mislukteTiles.filter(t => tile !== t).toList();
+  }
+
+  herlaad() {
+    this.mislukteTiles.forEach(tile => tile.load());
+  }
+}
+
 export class TileLoader {
-  private images: List<HTMLImageElement> = List.of<HTMLImageElement>();
+  // https://openlayers.org/en/latest/apidoc/module-ol_source_TileWMS.html#~Options
+  // cacheSize	number	<optional> 2048 Cache size.
+  // neem over in definitie van de TileWMS
+  readonly maxMislukteTiles = 512;
+
+  private inTeLadenImages: List<HTMLImageElement> = List.of<HTMLImageElement>();
+
+  private mislukteTiles: MislukteTiles = new MislukteTiles(this.maxMislukteTiles);
+
+  private laatsteResultaat = "";
 
   public abort(): void {
-    this.images.map(htmlImage => {
+    this.inTeLadenImages.map(htmlImage => {
       fromNullable(htmlImage).map(img => {
         img.src = "";
       });
     });
-    this.images = this.images.clear();
+    this.inTeLadenImages = this.inTeLadenImages.clear();
+  }
+
+  private checkMislukteTiles(eventType: string, tile: ol.Tile) {
+    // bewaar of verwijder eventueel mislukte tiles
+    if (eventType === "error") {
+      this.mislukteTiles.voegtoe(tile);
+    } else if (eventType === "load") {
+      this.mislukteTiles.verwijder(tile);
+    }
+
+    // indien we terug een succesvolle tile load hebben, herprobeer om de mislukte tiles op te halen
+    if (this.laatsteResultaat === "error" && eventType === "load") {
+      this.mislukteTiles.herlaad();
+    }
+
+    // bewaar het laatste load resultaat
+    this.laatsteResultaat = eventType;
   }
 
   get tileLoadFunction(): (tile: ol.Tile, url: string) => void {
     const that = this;
 
-    const removeImage: (this: HTMLImageElement, ev: Event) => any = function(evt) {
-      that.images = that.images.filter(img => img !== this).toList();
-    };
-
-    const tf: (tile: ol.Tile, url: string) => void = function(tile, url) {
+    return function(tile, url) {
       const imageTile = tile as ol.ImageTile;
       const htmlImage = imageTile.getImage() as HTMLImageElement;
+
+      const onHtmlImageEvent: (this: HTMLImageElement, ev: Event) => any = function(evt) {
+        that.inTeLadenImages = that.inTeLadenImages.filter(img => img !== this).toList();
+        that.checkMislukteTiles(evt.type, tile);
+      };
+
       htmlImage.src = url;
-      htmlImage.addEventListener<"load">("load", removeImage);
-      htmlImage.addEventListener<"error">("error", removeImage);
-      that.images = that.images.push(htmlImage);
+      htmlImage.addEventListener<"load">("load", onHtmlImageEvent);
+      htmlImage.addEventListener<"error">("error", onHtmlImageEvent);
+      that.inTeLadenImages = that.inTeLadenImages.push(htmlImage);
     };
-    return tf;
   }
 
   // als referentie
