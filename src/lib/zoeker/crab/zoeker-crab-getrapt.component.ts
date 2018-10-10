@@ -164,7 +164,7 @@ export class ZoekerCrabGetraptComponent extends GetraptZoekerComponent implement
     } else {
       zoekInput = this.gemeenteControl.value;
     }
-    this.zoek(zoekInput, Set.of(this.crabService.naam()));
+    this.zoek(zoekInput, [this.crabService.naam()]);
   }
 
   magTonenOpKaart(): boolean {

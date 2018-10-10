@@ -1,6 +1,5 @@
 import { animate, style, transition, trigger } from "@angular/animations";
-import { Component, ElementRef, ViewChild, ViewEncapsulation } from "@angular/core";
-import { Routes } from "@angular/router";
+import { Component, ViewChild, ViewEncapsulation } from "@angular/core";
 import { array } from "fp-ts";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
@@ -17,9 +16,9 @@ import { offsetStyleFunction } from "../lib/stijl/offset-stijl-function";
 import { verkeersbordenStyleFunction } from "../lib/stijl/verkeersborden-stijl-function";
 import { forEach } from "../lib/util/option";
 import { join } from "../lib/util/validation";
-import { ZoekerGoogleWdbService } from "../lib/zoeker";
+import { zoekerMetPrioriteiten, ZoekerMetPrioriteiten } from "../lib/zoeker/zoeker";
 
-import { ProtractorComponent } from "./protractor.component";
+import { DummyZoeker } from "./dummy-zoeker";
 
 export interface FietspadSelectie {
   feature: ol.Feature;
@@ -262,7 +261,13 @@ export class FeatureDemoComponent {
   readonly fietspadenRefreshSubj = new rx.Subject<void>();
   readonly fietspadenRefresh$ = this.fietspadenRefreshSubj.asObservable();
 
-  constructor(private googleLocatieZoekerService: ZoekerGoogleWdbService) {
+  readonly demoZoekers: ZoekerMetPrioriteiten[] = [
+    zoekerMetPrioriteiten(new DummyZoeker("dummy1"), 1, 1),
+    zoekerMetPrioriteiten(new DummyZoeker("dummy2"), 2, 2),
+    zoekerMetPrioriteiten(new DummyZoeker("dummy3"), 3, 3)
+  ];
+
+  constructor() {
     kaartLogger.setLevel("DEBUG");
     classicLogger.setLevel("DEBUG");
     this.addIcon();
