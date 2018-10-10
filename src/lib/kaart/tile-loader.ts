@@ -30,7 +30,7 @@ class MislukteTiles {
   }
 
   herlaad() {
-    this.mislukteTiles.forEach(tile => tile.load());
+    this.mislukteTiles.forEach(tile => tile!.load());
   }
 }
 
