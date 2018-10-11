@@ -51,6 +51,7 @@
     "linters": {
       "src/**/*.ts": [
         "tslint --type-check --project tsconfig.json --fix",
+        "awk /apps-(dev|tei).mow.vlaanderen.be/{exit(1)}",
         "git add"
       ]
     }
@@ -100,7 +101,6 @@
     "chance": "1.0.11",
     "codelyzer": "4.0.2",
     "glob": "7.1.1",
-    "husky": "0.14.3",
     "jasmine-core": "2.8.0",
     "jasmine-jquery": "2.1.1",
     "jasmine-reporters": "2.2.1",
