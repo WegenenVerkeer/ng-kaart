@@ -5,7 +5,7 @@ export interface LocatorServicesConfigData {
 }
 
 export class ZoekerConfigLocatorServicesConfig {
-  readonly url: string = "https://apps-dev.mow.vlaanderen.be/locatorservices";
+  readonly url: string = "/locatorservices";
   readonly maxAantal: number = 10;
   readonly kleur: [number, number, number, number] = [247, 144, 45, 1.0];
 

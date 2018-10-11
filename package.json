@@ -51,6 +51,7 @@
     "linters": {
       "src/**/*.ts": [
         "tslint --type-check --project tsconfig.json --fix",
+        "awk /apps-(dev|tei).mow.vlaanderen.be/{exit(1)}",
         "git add"
       ]
     }
@@ -98,6 +99,7 @@
     "@types/openlayers": "4.6.9",
     "chance": "1.0.11",
     "codelyzer": "4.0.2",
+    "find-in-files": "^0.5.0",
     "glob": "7.1.1",
     "husky": "0.14.3",
     "jasmine-core": "2.8.0",
