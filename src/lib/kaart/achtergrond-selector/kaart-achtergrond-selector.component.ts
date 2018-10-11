@@ -1,6 +1,6 @@
 import { animate, state, style, transition, trigger } from "@angular/animations";
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnInit } from "@angular/core";
-import { Observable } from "rxjs/Observable";
+import * as rx from "rxjs";
 import { map, switchMap, takeUntil } from "rxjs/operators";
 
 import { ofType } from "../../util/operators";
@@ -66,7 +66,7 @@ export class KaartAchtergrondSelectorComponent extends KaartChildComponentBase i
   private displayMode: DisplayMode = DisplayMode.SHOWING_STATUS;
   achtergrondTitel = "";
 
-  readonly backgroundTiles$: Observable<Array<ToegevoegdeLaag>> = Observable.empty();
+  readonly backgroundTiles$: rx.Observable<Array<ToegevoegdeLaag>> = rx.empty();
 
   constructor(private readonly cdr: ChangeDetectorRef, kaartComponent: KaartComponent, zone: NgZone) {
     super(kaartComponent, zone);

@@ -2,7 +2,7 @@ import { Component, ElementRef, Inject, Input, NgZone, ViewChild, ViewEncapsulat
 import { Set } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { debounceTime, delay, filter, last, map, merge, scan, shareReplay, startWith, switchMap, takeUntil, tap } from "rxjs/operators";
+import { debounceTime, delay, filter, last, map, scan, shareReplay, startWith, switchMap, takeUntil, tap } from "rxjs/operators";
 
 import { asap } from "../util/asap";
 import { observableFromDomMutations } from "../util/mutation-observable";
@@ -38,7 +38,7 @@ export class KaartComponent extends KaartComponentBase {
   private readonly modelChanger: ModelChanger = ModelChanger();
   private innerModelChanges: ModelChanges;
   private innerAanwezigeElementen$: rx.Observable<Set<string>>;
-  readonly kaartModel$: rx.Observable<KaartWithInfo> = rx.Observable.empty();
+  readonly kaartModel$: rx.Observable<KaartWithInfo> = rx.empty();
 
   @ViewChild("map") mapElement: ElementRef;
   @ViewChild("kaartLinks") kaartLinksElement: ElementRef;
@@ -51,7 +51,7 @@ export class KaartComponent extends KaartComponentBase {
    * een component van de gebruikende applicatie (in geval van programmatorisch gebruik) zet hier een Observable
    * waarmee events naar de component gestuurd kunnen worden.
    */
-  @Input() kaartCmd$: rx.Observable<prt.Command<prt.KaartMsg>> = rx.Observable.empty();
+  @Input() kaartCmd$: rx.Observable<prt.Command<prt.KaartMsg>> = rx.empty();
   /**
    * Hier wordt een callback verwacht die een Msg observable zal krijgen. Die observable kan dan gebruikt worden
    * op te luisteren op feedback van commands of uitvoer van subscriptions.
@@ -76,7 +76,7 @@ export class KaartComponent extends KaartComponentBase {
 
   // Dit dient om messages naar toe te sturen
 
-  internalMessage$: rx.Observable<KaartInternalSubMsg> = rx.Observable.empty();
+  internalMessage$: rx.Observable<KaartInternalSubMsg> = rx.empty();
 
   constructor(@Inject(KAART_CFG) readonly config: KaartConfig, zone: NgZone) {
     super(zone);
@@ -96,7 +96,7 @@ export class KaartComponent extends KaartComponentBase {
         this.innerModelChanges = modelChanges(model, this.modelChanger);
         this.innerAanwezigeElementen$ = this.modelChanges.uiElementSelectie$.pipe(
           scan((st: Set<string>, selectie: UiElementSelectie) => (selectie.aan ? st.add(selectie.naam) : st.delete(selectie.naam)), Set()),
-          startWith(Set())
+          startWith(Set<string>())
         );
       }),
       switchMap(model => this.createMapModelForCommands(model)),
@@ -152,8 +152,7 @@ export class KaartComponent extends KaartComponentBase {
       asap(() => this.msgSubj.next(msg));
     };
 
-    return this.kaartCmd$.pipe(
-      merge(this.internalCmdDispatcher.commands$),
+    return rx.merge(this.kaartCmd$, this.internalCmdDispatcher.commands$).pipe(
       tap(c => kaartLogger.debug("kaart command", c)),
       takeUntil(this.destroying$.pipe(delay(100))), // Een klein beetje extra tijd voor de cleanup commands
       observeOutsideAngular(this.zone),

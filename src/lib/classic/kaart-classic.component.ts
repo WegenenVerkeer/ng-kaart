@@ -5,7 +5,6 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { Observable } from "rxjs/Observable";
 import { map, share, tap } from "rxjs/operators";
 
 import { forChangedValue, KaartComponentBase } from "../kaart/kaart-component-base";
@@ -36,7 +35,7 @@ import {
 })
 export class KaartClassicComponent extends KaartComponentBase implements OnInit, OnDestroy, OnChanges, KaartCmdDispatcher<prt.TypedRecord> {
   private static counter = 1;
-  kaartClassicSubMsg$: Observable<KaartClassicSubMsg> = rx.Observable.empty();
+  kaartClassicSubMsg$: rx.Observable<KaartClassicSubMsg> = rx.empty();
   private hasFocus = false;
 
   readonly dispatcher: ReplaySubjectKaartCmdDispatcher<TypedRecord> = new ReplaySubjectKaartCmdDispatcher();
@@ -65,7 +64,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
 
   constructor(zone: NgZone) {
     super(zone);
-    this.kaartMsgObservableConsumer = (msg$: Observable<prt.KaartMsg>) => {
+    this.kaartMsgObservableConsumer = (msg$: rx.Observable<prt.KaartMsg>) => {
       // We zijn enkel geïnteresseerd in messages van ons eigen type
       this.kaartClassicSubMsg$ = msg$.pipe(
         ofType<KaartClassicMsg>("KaartClassic"),
@@ -151,7 +150,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
     this.dispatcher.dispatch(cmd);
   }
 
-  get kaartCmd$(): Observable<prt.Command<prt.TypedRecord>> {
+  get kaartCmd$(): rx.Observable<prt.Command<prt.TypedRecord>> {
     return this.dispatcher.commands$;
   }
 

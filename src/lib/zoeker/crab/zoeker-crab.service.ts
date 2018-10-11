@@ -4,7 +4,6 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import { Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { OperatorFunction } from "rxjs/interfaces";
 import { catchError, map, mergeAll, mergeMap, reduce, shareReplay } from "rxjs/operators";
 
 import { ZOEKER_CFG, ZoekerConfigData } from "../config/zoeker-config";
@@ -315,7 +314,7 @@ export class ZoekerCrabService implements Zoeker {
       case "CrabHuisnummer":
         return this.getHuisnummerPositie$(zoekterm as CrabHuisnummer);
       default:
-        return rx.Observable.of(nietOndersteund(this.naam(), "Volledig"));
+        return rx.of(nietOndersteund(this.naam(), "Volledig"));
     }
   }
 
@@ -335,17 +334,18 @@ export class ZoekerCrabService implements Zoeker {
     return zoekSuggesties$(zoekterm).pipe(
       map(
         suggestieResultaten =>
-          rx.Observable.from(suggestieResultaten.SuggestionResult.slice(0, maxResultaten)) // niet meer details opvragen dan we nodig hebben
+          rx
+            .from(suggestieResultaten.SuggestionResult.slice(0, maxResultaten)) // niet meer details opvragen dan we nodig hebben
             .pipe(mergeMap(suggestie => zoekDetail$(suggestie))) // mergeMap omdat from individueel emit (kan beter met .of en map op array)
       ),
       // mergall moet gecast worden omdat de standaard definitie fout is: https://github.com/ReactiveX/rxjs/issues/3290
-      mergeAll(5) as OperatorFunction<rx.Observable<LocatorServiceResults>, LocatorServiceResults>,
+      mergeAll(5),
       reduce<LocatorServiceResults, ZoekResultaten>(
         (zoekResultaten, crabResultaten) => this.voegCrabResultatenToe(zoekResultaten, crabResultaten),
         new ZoekResultaten(this.naam(), zoektype, [], [], this.legende)
       ),
       map(resultaten => resultaten.limiteerAantalResultaten(maxResultaten)),
-      catchError(e => rx.Observable.of(new ZoekResultaten(this.naam(), zoektype, ["Kon locator services niet aanroepen "], [])))
+      catchError(e => rx.of(new ZoekResultaten(this.naam(), zoektype, ["Kon locator services niet aanroepen "], [])))
     );
   }
 }

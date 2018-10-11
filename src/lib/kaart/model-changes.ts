@@ -5,20 +5,7 @@ import { setoidString } from "fp-ts/lib/Setoid";
 import { List, Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { OperatorFunction } from "rxjs/interfaces";
-import {
-  combineLatest,
-  debounceTime,
-  distinctUntilChanged,
-  filter,
-  map,
-  mapTo,
-  merge,
-  mergeAll,
-  share,
-  shareReplay,
-  switchMap
-} from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, filter, map, mapTo, mergeAll, share, shareReplay, switchMap } from "rxjs/operators";
 
 import { NosqlFsSource } from "../source/nosql-fs-source";
 import { observableFromOlEvents } from "../util/ol-observable";
@@ -121,7 +108,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     }))
   );
 
-  const geselecteerdeFeatures$ = toegevoegdeGeselecteerdeFeatures$.pipe(merge(verwijderdeGeselecteerdeFeatures$), shareReplay(1));
+  const geselecteerdeFeatures$ = rx.merge(toegevoegdeGeselecteerdeFeatures$, verwijderdeGeselecteerdeFeatures$).pipe(shareReplay(1));
 
   const hoverFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.hoverFeatures, "add", "remove").pipe(
     map(() => ({
@@ -130,7 +117,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
   );
 
   // Met window resize hebben we niet alle bronnen van herschaling, maar toch al een grote
-  const resize$ = rx.Observable.fromEvent(window, "resize").pipe(debounceTime(100));
+  const resize$ = rx.fromEvent(window, "resize").pipe(debounceTime(100));
 
   const center$ = observableFromOlEvents(model.map.getView(), "change:center").pipe(debounceTime(100));
   const numlayers$ = observableFromOlEvents(model.map.getLayers(), "change:length").pipe(debounceTime(100));
@@ -141,7 +128,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
   );
   const viewportSize$ = changer.viewPortSizeSubj.pipe(debounceTime(100));
 
-  const viewinstellingen$ = rx.Observable.merge(viewportSize$, resize$, center$, numlayers$, zoom$).pipe(
+  const viewinstellingen$ = rx.merge(viewportSize$, resize$, center$, numlayers$, zoom$).pipe(
     debounceTime(50), // Deze is om de map hierna niet te veel werk te geven
     map(() => viewinstellingen(model.map)),
     shareReplay(1)
@@ -163,7 +150,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
   const featuresChanged$: rx.Observable<undefined> = vectorlagen$.pipe(
     debounceTime(100), // vlugge verandering van het aantal vectorlagen willen we niet zien
     switchMap(vlgn =>
-      rx.Observable.merge(
+      rx.merge(
         ...vlgn.map(vlg => observableFromOlEvents(vlg!.layer.getSource(), "addfeature", "removefeature", "clear", "clear")).toArray()
       )
     ),
@@ -180,7 +167,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
       })
     );
 
-  const zichtbareFeatures$ = viewinstellingen$.pipe(combineLatest(vectorlagen$, featuresChanged$, collectFeatures));
+  const zichtbareFeatures$ = rx.combineLatest(viewinstellingen$, vectorlagen$, featuresChanged$, collectFeatures);
 
   const kaartKlikLocatie$ = observableFromOlEvents(model.map, "click").pipe(
     filter((event: ol.MapBrowserEvent) => {
@@ -202,8 +189,9 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     switchMap(zoekerSvcs =>
       changer.zoekopdrachtSubj.pipe(
         switchMap(zoekopdracht =>
-          rx.Observable.from(gevraagdeZoekers(zoekopdracht, zoekerSvcs).map(zmp => zmp.zoeker.zoekresultaten$(zoekopdracht))) //
-            .pipe(mergeAll() as OperatorFunction<rx.Observable<ZoekResultaten>, ZoekResultaten>)
+          rx
+            .from(gevraagdeZoekers(zoekopdracht, zoekerSvcs).map(zmp => zmp.zoeker.zoekresultaten$(zoekopdracht))) //
+            .pipe(mergeAll())
         )
       )
     )

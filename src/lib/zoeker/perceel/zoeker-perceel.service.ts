@@ -4,7 +4,6 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import { Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { Observable } from "rxjs/Observable";
 import { map, shareReplay } from "rxjs/operators";
 
 import { kaartLogger } from "../../kaart/log";
@@ -122,7 +121,7 @@ export class ZoekerPerceelService implements Zoeker {
     return PERCEEL_SVC_NAAM;
   }
 
-  getAlleGemeenten$(): Observable<Gemeente[]> {
+  getAlleGemeenten$(): rx.Observable<Gemeente[]> {
     // return Observable.of([
     //   { niscode: 19000, naam: "Aalst" }, //
     //   { niscode: 19010, naam: "Erpe-Mere" },
@@ -131,7 +130,7 @@ export class ZoekerPerceelService implements Zoeker {
     return this.http.get<Gemeente[]>(this.locatorServicesConfig.url + "/rest/capakey/gemeenten").pipe(shareReplay(1));
   }
 
-  getAfdelingen$(niscode: number): Observable<Afdeling[]> {
+  getAfdelingen$(niscode: number): rx.Observable<Afdeling[]> {
     // return Observable.of([
     //   { niscode: 20000, code: "1002/34", naam: "Afdeling 1" }, //
     //   { niscode: 20001, code: "1002/35", naam: "Afdeling 2" },
@@ -142,7 +141,7 @@ export class ZoekerPerceelService implements Zoeker {
       .pipe(map(afdelingen => afdelingen.map(afdeling => ({ ...afdeling, niscode: niscode }))), shareReplay(1));
   }
 
-  getSecties$(niscode: number, afdelingcode: string): Observable<Sectie[]> {
+  getSecties$(niscode: number, afdelingcode: string): rx.Observable<Sectie[]> {
     // return Observable.of([
     //   { niscode: 30000, afdelingcode: "1002/34", code: "1000-1000-10" }, //
     //   { niscode: 30000, afdelingcode: "1002/34", code: "1000-1000-11" },
@@ -153,7 +152,7 @@ export class ZoekerPerceelService implements Zoeker {
       .pipe(map(secties => secties.map(sectie => ({ ...sectie, niscode: niscode, afdelingcode: afdelingcode }))), shareReplay(1));
   }
 
-  getPerceelNummers$(niscode: number, afdelingcode: string, sectiecode: string): Observable<PerceelNummer[]> {
+  getPerceelNummers$(niscode: number, afdelingcode: string, sectiecode: string): rx.Observable<PerceelNummer[]> {
     // return Observable.of([
     //   { capakey: "capap1", perceelsnummer: "1238712" }, //
     //   { capakey: "capap2", perceelsnummer: "1238713" },
@@ -166,7 +165,7 @@ export class ZoekerPerceelService implements Zoeker {
       .pipe(shareReplay(1));
   }
 
-  getPerceelDetails$(capakey: string): Observable<PerceelDetails> {
+  getPerceelDetails$(capakey: string): rx.Observable<PerceelDetails> {
     // return Observable.of({
     //   macht: "macht",
     //   capakey: "capakey",
@@ -184,16 +183,16 @@ export class ZoekerPerceelService implements Zoeker {
     return this.http.get<PerceelDetails>(this.locatorServicesConfig.url + "/rest/capakey/perceel/" + capakey).pipe(shareReplay(1));
   }
 
-  zoekresultaten$(zoekopdracht: Zoekopdracht): Observable<ZoekResultaten> {
+  zoekresultaten$(zoekopdracht: Zoekopdracht): rx.Observable<ZoekResultaten> {
     switch (zoekopdracht.zoektype) {
       case "Volledig":
         return this.zoek$(zoekopdracht.zoekpatroon);
       default:
-        return Observable.of(nietOndersteund(this.naam(), zoekopdracht.zoektype));
+        return rx.of(nietOndersteund(this.naam(), zoekopdracht.zoektype));
     }
   }
 
-  zoek$(zoekterm: ZoekInput): Observable<ZoekResultaten> {
+  zoek$(zoekterm: ZoekInput): rx.Observable<ZoekResultaten> {
     switch (zoekterm.type) {
       case "Perceel":
         return this.getPerceelDetails$((zoekterm as PerceelZoekInput).capaKey).pipe(
@@ -218,7 +217,7 @@ export class ZoekerPerceelService implements Zoeker {
           )
         );
       default:
-        return rx.Observable.empty();
+        return rx.empty();
     }
   }
 }

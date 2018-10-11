@@ -1,7 +1,6 @@
 import { Component, EventEmitter, NgZone, OnInit, Output } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { Set } from "immutable";
-import { Observable } from "rxjs/Observable";
+import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, startWith, switchMap } from "rxjs/operators";
 
 import { KaartComponent } from "../../kaart/kaart.component";
@@ -38,11 +37,11 @@ export class ZoekerPerceelGetraptComponent extends GetraptZoekerComponent implem
   sectieControl = new FormControl({ value: "", disabled: true });
   perceelControl = new FormControl({ value: "", disabled: true });
 
-  afdelingen$: Observable<Afdeling[]> = Observable.empty();
-  secties$: Observable<Sectie[]> = Observable.empty();
-  percelen$: Observable<PerceelNummer[]> = Observable.empty();
+  afdelingen$: rx.Observable<Afdeling[]> = rx.empty();
+  secties$: rx.Observable<Sectie[]> = rx.empty();
+  percelen$: rx.Observable<PerceelNummer[]> = rx.empty();
 
-  leegMakenDisabled$: Observable<boolean> = Observable.empty();
+  leegMakenDisabled$: rx.Observable<boolean> = rx.empty();
   @Output() leegMakenDisabledChange: EventEmitter<boolean> = new EventEmitter();
 
   constructor(kaartComponent: KaartComponent, zoekerComponent: ZoekerBoxComponent, zone: NgZone) {
@@ -53,7 +52,7 @@ export class ZoekerPerceelGetraptComponent extends GetraptZoekerComponent implem
     super.ngOnInit();
     this.maakVeldenLeeg(NIVEAU_ALLES);
 
-    const perceelService$: Observable<ZoekerPerceelService> = this.kaartComponent.modelChanges.zoekerServices$.pipe(
+    const perceelService$: rx.Observable<ZoekerPerceelService> = this.kaartComponent.modelChanges.zoekerServices$.pipe(
       collectOption(zoekerMetNaam(PERCEEL_SVC_NAAM)),
       map(zoeker => zoeker as ZoekerPerceelService)
     );

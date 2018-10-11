@@ -409,7 +409,7 @@ function mergeDeep<T>(base: T, overlay: T) {
   return output;
 }
 
-export type InterpreterOptionalRecord<A> = { readonly [P in keyof A]: Interpreter<Option<A[P]>> };
+export type InterpreterOptionalRecord<A> = { readonly [P in Extract<keyof A, string>]: Interpreter<Option<A[P]>> };
 
 function interpretRecord<A>(record: InterpreterOptionalRecord<A>): Interpreter<A> {
   return (json: Object) => {

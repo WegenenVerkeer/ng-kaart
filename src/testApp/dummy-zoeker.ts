@@ -40,9 +40,9 @@ export class DummyZoeker implements Zoeker {
           preferredPointZoomLevel: some(4 + Math.random() * 5)
         });
         const resultaten = rangeArray(numResults).map(resultaat);
-        return rx.Observable.of(new ZoekResultaten(this.naam(), "Volledig", [], resultaten));
+        return rx.of(new ZoekResultaten(this.naam(), "Volledig", [], resultaten));
       default:
-        return rx.Observable.of(nietOndersteund(this.naam(), "Volledig"));
+        return rx.of(nietOndersteund(this.naam(), "Volledig"));
     }
   }
 
@@ -63,9 +63,9 @@ export class DummyZoeker implements Zoeker {
           zoektype: "Suggesties" as Zoektype
         });
         const resultaten = rangeArray(numResults).map(resultaat);
-        return rx.Observable.of(new ZoekResultaten(this.naam(), "Suggesties", [], resultaten)).pipe(delay(Math.random() * 2000));
+        return rx.of(new ZoekResultaten(this.naam(), "Suggesties", [], resultaten)).pipe(delay(Math.random() * 2000));
       default:
-        return rx.Observable.of(nietOndersteund(this.naam(), "Suggesties"));
+        return rx.of(nietOndersteund(this.naam(), "Suggesties"));
     }
   }
 }

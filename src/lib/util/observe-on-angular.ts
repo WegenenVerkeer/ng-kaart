@@ -1,10 +1,10 @@
-import { Observable } from "rxjs/Observable";
+import * as rx from "rxjs";
 
 import { ZoneLike } from "./zone-like";
 
 export function observeOnAngular<T>(zone: ZoneLike) {
-  return (source: Observable<T>) =>
-    new Observable<T>(observer => {
+  return (source: rx.Observable<T>) =>
+    new rx.Observable<T>(observer => {
       return source.subscribe({
         next(x) {
           zone.run(() => observer.next(x));

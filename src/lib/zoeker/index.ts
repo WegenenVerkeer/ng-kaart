@@ -2,7 +2,6 @@ import { CommonModule } from "@angular/common";
 import { HttpClientModule } from "@angular/common/http";
 import { ModuleWithProviders, NgModule } from "@angular/core";
 import { ReactiveFormsModule } from "@angular/forms";
-import { HttpModule } from "@angular/http";
 import {
   MatAutocompleteModule,
   MatButtonModule,
@@ -37,7 +36,6 @@ const components: any[] = [
 @NgModule({
   imports: [
     CommonModule,
-    HttpModule,
     HttpClientModule,
     ReactiveFormsModule,
     MatIconModule,

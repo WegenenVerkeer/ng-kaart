@@ -5,7 +5,7 @@ import { Ordering, sign } from "fp-ts/lib/Ordering";
 import { insert, remove, StrMap } from "fp-ts/lib/StrMap";
 import { Map } from "immutable";
 import * as ol from "openlayers";
-import { Observable } from "rxjs/Observable";
+import * as rx from "rxjs";
 
 export const geoJSONOptions = <ol.olx.format.GeoJSONOptions>{
   ignoreExtraDims: true,
@@ -38,7 +38,7 @@ export interface Zoekopdracht {
 
 export interface Zoeker {
   naam(): string;
-  zoekresultaten$(zoekopdracht: Zoekopdracht): Observable<ZoekResultaten>;
+  zoekresultaten$(zoekopdracht: Zoekopdracht): rx.Observable<ZoekResultaten>;
 }
 
 export type PrioriteitenOpZoekertype = StrMap<number>;

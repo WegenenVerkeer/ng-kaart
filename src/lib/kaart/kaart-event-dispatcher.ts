@@ -1,5 +1,4 @@
-import { Observable } from "rxjs/Observable";
-import { ReplaySubject } from "rxjs/ReplaySubject";
+import * as rx from "rxjs";
 
 import { asap } from "../util/asap";
 
@@ -10,12 +9,12 @@ export interface KaartCmdDispatcher<Msg extends prt.TypedRecord> {
 }
 
 export interface KaartEventSource {
-  commands$: Observable<prt.Command<any>>;
+  commands$: rx.Observable<prt.Command<any>>;
 }
 
 export class ReplaySubjectKaartCmdDispatcher<Msg extends prt.TypedRecord> implements KaartCmdDispatcher<Msg>, KaartEventSource {
   // Er worden al events gegenereerd voordat de kaartcomponent actief is. Daarom tot 1000 events onthouden 500ms lang.
-  private readonly eventSubj = new ReplaySubject<prt.Command<Msg>>(1000, 500);
+  private readonly eventSubj = new rx.ReplaySubject<prt.Command<Msg>>(1000, 500);
 
   dispatch(cmd: prt.Command<Msg>) {
     // We willen dat events pas uitgevoerd worden nadat de huidige processing gedaan is,
@@ -24,12 +23,12 @@ export class ReplaySubjectKaartCmdDispatcher<Msg extends prt.TypedRecord> implem
     asap(() => this.eventSubj.next(cmd));
   }
 
-  get commands$(): Observable<prt.Command<Msg>> {
+  get commands$(): rx.Observable<prt.Command<Msg>> {
     return this.eventSubj;
   }
 }
 
 // noinspection JSUnusedLocalSymbols
 export const VacuousDispatcher: KaartCmdDispatcher<any> = {
-  dispatch(cmd: prt.Command<any>) {}
+  dispatch() {}
 };

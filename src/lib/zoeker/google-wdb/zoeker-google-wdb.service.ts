@@ -1,7 +1,7 @@
+/// <reference types="@types/googlemaps" />
+import { HttpClient, HttpParams } from "@angular/common/http";
 import { Inject, Injectable } from "@angular/core";
-import { Http, QueryEncoder, Response, URLSearchParams } from "@angular/http";
 import { fromNullable, Option, some } from "fp-ts/lib/Option";
-import {} from "googlemaps";
 import { Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
@@ -58,19 +58,6 @@ const isWdbBron = function(bron) {
   return bron.startsWith("WDB") || bron.startsWith("ABBAMelda");
 };
 
-// Deze URL encoder gaat alles encoden. De standaard encoder encode volgende characters NIET:
-// ! $ \' ( ) * + , ; A 9 - . _ ~ ? /     (zie https://tools.ietf.org/html/rfc3986)
-// Maar de locatiezoeker backend verwacht die wel encoded.
-class EncodeAllesQueryEncoder extends QueryEncoder {
-  encodeKey(k: string): string {
-    return encodeURIComponent(k);
-  }
-
-  encodeValue(v: string): string {
-    return encodeURIComponent(v);
-  }
-}
-
 class GoogleServices {
   geocoder: google.maps.Geocoder;
   autocompleteService: google.maps.places.AutocompleteService;
@@ -108,7 +95,7 @@ export class ZoekerGoogleWdbService implements Zoeker {
   private readonly locatieZoekerUrl: string;
 
   constructor(
-    private readonly http: Http,
+    private readonly httpClient: HttpClient,
     @Inject(ZOEKER_CFG) zoekerConfigData: ZoekerConfigData,
     @Inject(ZOEKER_REPRESENTATIE) private zoekerRepresentatie: AbstractRepresentatieService
   ) {
@@ -153,22 +140,20 @@ export class ZoekerGoogleWdbService implements Zoeker {
 
   private zoek$(zoekterm: ZoekInput, zoektype: Zoektype, maxResultaten: number): rx.Observable<ZoekResultaten> {
     if (!zoekterm.value || zoekterm.value.trim().length === 0) {
-      return rx.Observable.of(new ZoekResultaten(this.naam(), "Volledig", [], [], this.legende));
+      return rx.of(new ZoekResultaten(this.naam(), "Volledig", [], [], this.legende));
     }
-    const params: URLSearchParams = new URLSearchParams("", new EncodeAllesQueryEncoder());
-    params.set("query", zoekterm.value);
-    params.set("legacy", "false");
+    const params: HttpParams = new HttpParams().set("query", zoekterm.value).set("legacy", "false");
 
-    return this.http
-      .get(this.locatieZoekerUrl + "/zoek", { search: params })
+    return this.httpClient
+      .get<Object>(this.locatieZoekerUrl + "/zoek", { params: params })
       .pipe(switchMap(resp => this.parseResult(resp, zoektype, maxResultaten)), catchError(err => this.handleError(err, zoektype)));
   }
 
-  private parseResult(response: Response, zoektype: Zoektype, maxResultaten: number): rx.Observable<ZoekResultaten> {
+  private parseResult(response: any, zoektype: Zoektype, maxResultaten: number): rx.Observable<ZoekResultaten> {
     const zoekResultaten = new ZoekResultaten(this.naam(), zoektype, [], [], this.legende);
 
     // parse result
-    const resultaten = response.json();
+    const resultaten = response; // vanaf hier doen we onze handen voor onze ogen en hopen dat alles goed gaat
 
     // voeg eventuele foutboodschappen toe
     resultaten.errors.forEach(error => zoekResultaten.fouten.push("Fout: " + error));
@@ -176,7 +161,7 @@ export class ZoekerGoogleWdbService implements Zoeker {
     // indien geen locaties gevonden, toon melding
     if (resultaten.locaties.length === 0 && resultaten.onvolledigeLocaties.length === 0) {
       zoekResultaten.fouten.push("Geen locaties gevonden");
-      return rx.Observable.of(zoekResultaten);
+      return rx.of(zoekResultaten);
     } else {
       // lijst van promises van resultaten
       const promises = resultaten.onvolledigeLocaties.map(locatie => {
@@ -336,7 +321,7 @@ export class ZoekerGoogleWdbService implements Zoeker {
         return zoekResultaten.limiteerAantalResultaten(maxResultaten);
       });
 
-      return rx.Observable.fromPromise(zoekResultatenPromise);
+      return rx.from(zoekResultatenPromise);
     }
   }
 
@@ -350,7 +335,7 @@ export class ZoekerGoogleWdbService implements Zoeker {
         // toon http foutmelding indien geen 200 teruggehad
         error = `Fout bij opvragen locatie: ${response.responseText || response.statusText || response}`;
     }
-    return rx.Observable.of(new ZoekResultaten(this.naam(), zoektype, [error], [], this.legende));
+    return rx.of(new ZoekResultaten(this.naam(), zoektype, [error], [], this.legende));
   }
 
   private geocode(omschrijving): Promise<ExtendedGeocoderResult[]> {
@@ -480,17 +465,17 @@ export class ZoekerGoogleWdbService implements Zoeker {
         }/gemeente?naam=${gemeenteNaam}&latLng=${resultaat.geometry.location.lat()},${resultaat.geometry.location.lng()}` +
         `&isGemeente=${isGemeente}&isDeelgemeente=${isDeelgemeente}`;
 
-      return this.http
+      return this.httpClient
         .get(url)
         .pipe(
           map(res => {
-            resultaat.locatie = res.json();
+            resultaat.locatie = res;
             return resultaat;
           })
         )
         .toPromise();
     } else {
-      return rx.Observable.of(resultaat).toPromise();
+      return Promise.resolve(resultaat);
     }
   }
 

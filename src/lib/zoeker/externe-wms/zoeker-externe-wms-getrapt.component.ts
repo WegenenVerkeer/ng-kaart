@@ -1,10 +1,9 @@
 import { Component, EventEmitter, NgZone, OnDestroy, OnInit, Output } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import * as array from "fp-ts/lib/Array";
 import { Option } from "fp-ts/lib/Option";
 import { Set } from "immutable";
 import * as rx from "rxjs";
-import { distinctUntilChanged, filter, map, merge, switchMap } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, switchMap } from "rxjs/operators";
 
 import { KaartComponent } from "../../kaart/kaart.component";
 import { GetraptZoekerComponent, ZoekerBoxComponent } from "../box/zoeker-box.component";
@@ -37,7 +36,7 @@ export class ZoekerExterneWmsGetraptComponent extends GetraptZoekerComponent imp
     this.bronnen$ = services$.pipe(
       switchMap(svcs =>
         svcs.foldL(
-          () => rx.Observable.of(Set()), // Geen service betekent geen bronnen
+          () => rx.of(Set()), // Geen service betekent geen bronnen
           svc => svc.bronnen$
         )
       )

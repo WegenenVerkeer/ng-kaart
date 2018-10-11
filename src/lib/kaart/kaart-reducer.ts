@@ -7,7 +7,6 @@ import * as ol from "openlayers";
 import { olx } from "openlayers";
 import { Subscription } from "rxjs";
 import * as rx from "rxjs";
-import { PartialObserver } from "rxjs/Observer";
 import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
 
 import { forEach } from "../util/option";
@@ -95,7 +94,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       };
     }
 
-    function consumeWrapped<T>(subCmd: { wrapper: Function1<T, Msg> }): PartialObserver<T> {
+    function consumeWrapped<T>(subCmd: { wrapper: Function1<T, Msg> }): rx.Observer<T> {
       return {
         next: (t: T) => msgConsumer(subCmd.wrapper(t)),
         error: (err: any) => kaartLogger.error("Onverwachte fout bij kaart subscription", err),

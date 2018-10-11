@@ -4,8 +4,8 @@ import { MatTabChangeEvent } from "@angular/material";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
-import { Observable } from "rxjs/Observable";
-import { combineLatest, distinctUntilChanged, filter, map, shareReplay, startWith } from "rxjs/operators";
+import * as rx from "rxjs";
+import { debounceTime, distinctUntilChanged, filter, map, shareReplay, startWith, switchMap, take, tap } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
@@ -13,6 +13,7 @@ import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import { LegendeItem } from "../kaart/kaart-legende";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
+import { observeOnAngular } from "../util/observe-on-angular";
 
 export const LagenUiSelector = "Lagenkiezer";
 
@@ -75,13 +76,13 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
   private dragState: Option<DragState> = none;
   private dichtgeklapt = false;
   public geselecteerdeTab = 0;
-  readonly lagenHoog$: Observable<List<ToegevoegdeLaag>>;
-  readonly lagenLaag$: Observable<List<ToegevoegdeLaag>>;
-  readonly lagenMetLegende$: Observable<List<ToegevoegdeLaag>>;
-  readonly heeftDivider$: Observable<boolean>;
-  readonly geenLagen$: Observable<boolean>;
-  readonly geenLegende$: Observable<boolean>;
-  readonly opties$: Observable<LagenUiOpties>;
+  readonly lagenHoog$: rx.Observable<List<ToegevoegdeLaag>>;
+  readonly lagenLaag$: rx.Observable<List<ToegevoegdeLaag>>;
+  readonly lagenMetLegende$: rx.Observable<List<ToegevoegdeLaag>>;
+  readonly heeftDivider$: rx.Observable<boolean>;
+  readonly geenLagen$: rx.Observable<boolean>;
+  readonly geenLegende$: rx.Observable<boolean>;
+  readonly opties$: rx.Observable<LagenUiOpties>;
 
   constructor(parent: KaartComponent, ngZone: NgZone, private readonly cdr: ChangeDetectorRef, private readonly sanitizer: DomSanitizer) {
     super(parent, ngZone);
@@ -94,18 +95,16 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
     this.lagenHoog$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Hoog");
     this.lagenLaag$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Laag");
     const achtergrondLagen$ = this.modelChanges.lagenOpGroep.get("Achtergrond");
-    this.lagenMetLegende$ = this.lagenHoog$.pipe(
-      combineLatest(this.lagenLaag$, achtergrondLagen$, (lagenHoog, lagenLaag, achtergrondLagen) =>
-        lagenHoog.concat(lagenLaag, achtergrondLagen)
-      ),
-      combineLatest(zoom$, (lagen, zoom) => lagen.filter(laag => isZichtbaar(laag!, zoom) && laag!.magGetoondWorden)),
-      map(lagen => lagen.filter(laag => laag!.legende.isSome()).toList()),
-      shareReplay(1)
-    );
+    this.lagenMetLegende$ = rx
+      .combineLatest(this.lagenHoog$, this.lagenLaag$, achtergrondLagen$, zoom$, (lagenHoog, lagenLaag, achtergrondLagen, zoom) => {
+        const lagen = lagenHoog.concat(lagenLaag, achtergrondLagen);
+        return lagen.filter(laag => isZichtbaar(laag!, zoom) && laag!.magGetoondWorden && laag!.legende.isSome()).toList();
+      })
+      .pipe(shareReplay(1));
     const lagenHoogLeeg$ = this.lagenHoog$.pipe(map(l => l.isEmpty()));
     const lagenLaagLeeg$ = this.lagenLaag$.pipe(map(l => l.isEmpty()));
-    this.heeftDivider$ = lagenHoogLeeg$.pipe(combineLatest(lagenLaagLeeg$, (h, l) => !h && !l), shareReplay(1));
-    this.geenLagen$ = lagenHoogLeeg$.pipe(combineLatest(lagenLaagLeeg$, (h, l) => h && l), shareReplay(1));
+    this.heeftDivider$ = rx.combineLatest(lagenHoogLeeg$, lagenLaagLeeg$, (h, l) => !h && !l).pipe(shareReplay(1));
+    this.geenLagen$ = rx.combineLatest(lagenHoogLeeg$, lagenLaagLeeg$, (h, l) => h && l).pipe(shareReplay(1));
     this.geenLegende$ = this.lagenMetLegende$.pipe(map(l => l.isEmpty()), shareReplay(1));
     this.opties$ = this.modelChanges.uiElementOpties$.pipe(
       filter(o => o.naam === LagenUiSelector),
@@ -117,29 +116,22 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
 
   ngOnInit() {
     super.ngOnInit();
-    // Zorg dat de lijst openklapt als er een laag bijkomt of weggaat tenzij de optie initieelDichtgeklapt op 'true' staat.
-    this.opties$
-      .pipe(
-        map(optie => {
-          if (optie.initieelDichtgeklapt) {
-            this.dichtgeklapt = true;
-          } else {
-            this.dichtgeklapt = false;
-            // TODO hier gebeuren onnoemelijk vieze dingen: zetten van member variabelen in map + susbcribe
-            // Dit mag ofwel enkel in de subscribe of moet volledig via observables gaan.
-            this.bindToLifeCycle(
-              this.lagenHoog$.pipe(
-                combineLatest(this.lagenLaag$, (lagenHoog, lagenLaag) => lagenHoog.concat(lagenLaag).map(laag => laag!.titel)),
-                distinctUntilChanged()
-              )
-            ).subscribe(_ => {
-              this.dichtgeklapt = false;
-              this.cdr.detectChanges();
-            });
-          }
-        })
+    const initieelDichtgeklapt$ = this.opties$.pipe(
+      map(opties => opties.initieelDichtgeklapt),
+      distinctUntilChanged(),
+      tap(id => console.log("****id", id))
+    );
+    // Zorg dat de lijst initieel open of dicht is zoals ingesteld
+    initieelDichtgeklapt$.pipe(debounceTime(250), take(1)).subscribe(dichtgeklapt => (this.dichtgeklapt = dichtgeklapt));
+    // Zorg dat de lijst open klapt als er een laag bijkomt of weg gaat tenzij de optie initieelDichtgeklapt op 'true' staat.
+    this.bindToLifeCycle(
+      initieelDichtgeklapt$.pipe(
+        tap(id => console.log("****id2", id)),
+        switchMap(initieelDichtgeklapt => (initieelDichtgeklapt ? rx.empty() : rx.merge(this.lagenHoog$, this.lagenLaag$))),
+        observeOnAngular(this.zone),
+        tap(() => console.log("****--"))
       )
-      .subscribe();
+    ).subscribe(() => (this.dichtgeklapt = false));
   }
 
   get isOpengeklapt(): boolean {

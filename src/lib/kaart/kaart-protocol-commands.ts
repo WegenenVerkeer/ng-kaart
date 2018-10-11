@@ -1,7 +1,7 @@
 import { Option } from "fp-ts/lib/Option";
 import { List, Set } from "immutable";
 import * as ol from "openlayers";
-import { Subscription as RxSubscription } from "rxjs/Subscription";
+import * as rx from "rxjs";
 
 import { ZoekerMetPrioriteiten, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
 
@@ -67,7 +67,7 @@ export type Command<Msg extends KaartMsg> =
   | ZoekGekliktCmd;
 
 export interface SubscriptionResult {
-  readonly subscription: RxSubscription;
+  readonly subscription: rx.Subscription;
   readonly subscriberName: string;
 }
 
