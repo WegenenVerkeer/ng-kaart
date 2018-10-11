@@ -3,7 +3,7 @@ import { HttpErrorResponse } from "@angular/common/http";
 import { ChangeDetectorRef, Component, ElementRef, Inject, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import * as array from "fp-ts/lib/Array";
-import { concat, Function1, Function2, Predicate } from "fp-ts/lib/function";
+import { concat, Function1, Function2, identity, Predicate } from "fp-ts/lib/function";
 import { fromNullable, fromPredicate, none, Option, some } from "fp-ts/lib/Option";
 import { Ord } from "fp-ts/lib/Ord";
 import * as ord from "fp-ts/lib/Ord";
@@ -17,6 +17,7 @@ import {
   catchError,
   combineLatest,
   debounceTime,
+  delay,
   distinctUntilChanged,
   filter,
   map,
@@ -433,8 +434,15 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       wrapper: kaartLogOnlyWrapper
     });
     const minZoektermLength = 2;
+    const suggestieDelay = 250;
+    const startZoek$ = this.volledigeZoekSubj.asObservable();
+    const laatSuggestiesToe$ = rx.Observable.merge(
+      rx.Observable.of(true), // laat initieel toe
+      startZoek$.pipe(mapTo(false)), // laat niet toe direct na een start zoek opdracht (enter)
+      startZoek$.pipe(mapTo(true), delay(suggestieDelay + 100)) // totdat er wat tijd verlopen is. Moet na emit van recentste zoekterm!
+    ).pipe(shareReplay(1)); // zorg ervoor dat subscribers steeds de recentste waarde krijgen
     const zoekterm$ = this.zoekInputSubj.pipe(
-      debounceTime(250), // Niet elk karakter als er vlug getypt wordt
+      debounceTime(suggestieDelay), // Niet elk karakter als er vlug getypt wordt
       map(s => s.trimLeft()), // Spaties links boeien ons niet
       distinctUntilChanged() // Evt een karakter + delete, of een control character
     );
@@ -442,7 +450,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.bindToLifeCycle(
       rx.Observable.combineLatest(
         this.zoekerNamen$, // In theorie ook zoeken wanneer er nieuwe zoekers geregistreerd worden. In de praktijk gebeurt dat niet
-        zoekterm$.pipe(filter(minLength(minZoektermLength))), // Enkel emitten wanneer zoekterm minimale lengte heeft
+        zoekterm$.pipe(filter(minLength(minZoektermLength))), // Enkel emitten wanneer zoekterm minimale lengte heeft,
         (zoekerNamen, zoekterm) =>
           ({
             type: "Zoek",
@@ -450,16 +458,18 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
             wrapper: kaartLogOnlyWrapper
           } as prt.ZoekCmd<KaartInternalMsg>)
       )
-    ).subscribe(cmd => {
-      this.suggestiesBuffer = [];
-      this.dispatch(cmd);
-    });
+    )
+      .pipe(switchMap(cmd => laatSuggestiesToe$.pipe(take(1), filter(identity), mapTo(cmd)))) // emit cmd max 1x: als recentste true is
+      .subscribe(cmd => {
+        this.suggestiesBuffer = [];
+        this.dispatch(cmd);
+      });
 
     // zorg ervoor dat de volledige zoekopdracht uitgevoerd wordt op het moment dat de opdracht gegeven wordt
     this.bindToLifeCycle(
       rx.Observable.combineLatest(
         this.zoekerNamen$,
-        zoekterm$,
+        this.zoekInputSubj, // ipv zoekTerm$, want anders zoeken op woord dat 250ms onveranderd is gebleven -> probleem bij snelle enter
         (zoekerNamen, zoekterm) =>
           ({
             type: "Zoek",
@@ -560,10 +570,6 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     );
   }
 
-  zoek() {
-    this.volledigeZoekSubj.next();
-  }
-
   kuisZoekOp() {
     this.clearBusy();
     this.maakResultaatLeeg();
@@ -583,7 +589,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     switch (event.key) {
       case "Enter":
         if (event.srcElement.value.length >= 2) {
-          this.zoek();
+          this.volledigeZoekSubj.next();
         }
         break;
       case "Escape":
