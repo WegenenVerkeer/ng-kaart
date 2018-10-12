@@ -1,6 +1,6 @@
 {
   "name": "@wegenenverkeer/ng-kaart",
-  "version": "3.0.0-0",
+  "version": "4.0.0-0",
   "description": "AWV Angular 5 kaart component.",
   "keywords": [
     "AWV",
@@ -33,7 +33,7 @@
     "build-es2015": "npm run compile-es2015; npm run rollup-es2015",
     "build-es5": "npm run compile-es5; npm run rollup-es5",
     "build": "npm run build-es2015; npm run build-es5",
-    "build-test-app": "npm run clean; npm install; npm prune; ng build --base-href /ng-kaart/",
+    "build-test-app": "npm run clean; npm install; npm prune; ng build --base-href /ng-kaart --deploy-url /ng-kaart/",
     "postbuild": "rsync -a --exclude=*.js --exclude=*.js.map out/tsc/lib-es2015/ dist/; cp src/lib/package.json dist/package.json; cp README.md dist/README.md",
     "devel": "onchange 'src/**/*.ts' -i -- npm run build",
     "lint": "tslint --project tsconfig.json \"src/**/*.ts\" --exclude \"src/**/*.d.ts\" --exclude \"src/main.ts\" --exclude \"src/test.ts\"",
