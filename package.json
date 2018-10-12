@@ -1,7 +1,7 @@
 {
   "name": "@wegenenverkeer/ng-kaart",
   "version": "4.0.0-0",
-  "description": "AWV Angular 5 kaart component.",
+  "description": "AWV Angular 6 kaart component.",
   "keywords": [
     "AWV",
     "Kaart",
@@ -18,7 +18,7 @@
     "preinstall": "npm config set package-lock false",
     "ng": "ng",
     "prestart": "npm install; npm prune",
-    "start": "ng serve --port 4220 --disable-host-check --host 0.0.0.0 --deploy-url '/ng-kaart'",
+    "start": "ng serve --port 4220 --disable-host-check --host 0.0.0.0 --serve-path '/ng-kaart'",
     "preclean": "npm install rimraf mkdirp",
     "clean": "rimraf out; rimraf dist; mkdirp out",
     "preinline-resources": "rsync -a src/lib/ out/inline-resources",

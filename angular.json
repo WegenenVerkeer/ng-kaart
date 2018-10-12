@@ -23,8 +23,7 @@
             "styles": [
               "src/testApp/styles.scss"
             ],
-            "scripts": [],
-            "deployUrl": "/ng-kaart"
+            "scripts": []
           },
           "configurations": {
             "production": {
