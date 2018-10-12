@@ -1,11 +1,11 @@
 import { animate, style, transition, trigger } from "@angular/animations";
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 import { MatTabChangeEvent } from "@angular/material";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, filter, map, shareReplay, startWith, switchMap, take, tap } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, filter, map, shareReplay, startWith, switchMap, take } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
@@ -34,10 +34,6 @@ export const DefaultOpties: LagenUiOpties = {
 };
 
 type GapDirection = "Up" | "Down" | "Here";
-
-const TOP: GapDirection = "Up";
-const BOTTOM: GapDirection = "Down";
-const HERE: GapDirection = "Here";
 
 interface DragState {
   readonly from: ToegevoegdeLaag;
@@ -116,20 +112,14 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
 
   ngOnInit() {
     super.ngOnInit();
-    const initieelDichtgeklapt$ = this.opties$.pipe(
-      map(opties => opties.initieelDichtgeklapt),
-      distinctUntilChanged(),
-      tap(id => console.log("****id", id))
-    );
+    const initieelDichtgeklapt$ = this.opties$.pipe(map(opties => opties.initieelDichtgeklapt), distinctUntilChanged());
     // Zorg dat de lijst initieel open of dicht is zoals ingesteld
     initieelDichtgeklapt$.pipe(debounceTime(250), take(1)).subscribe(dichtgeklapt => (this.dichtgeklapt = dichtgeklapt));
     // Zorg dat de lijst open klapt als er een laag bijkomt of weg gaat tenzij de optie initieelDichtgeklapt op 'true' staat.
     this.bindToLifeCycle(
       initieelDichtgeklapt$.pipe(
-        tap(id => console.log("****id2", id)),
         switchMap(initieelDichtgeklapt => (initieelDichtgeklapt ? rx.empty() : rx.merge(this.lagenHoog$, this.lagenLaag$))),
-        observeOnAngular(this.zone),
-        tap(() => console.log("****--"))
+        observeOnAngular(this.zone)
       )
     ).subscribe(() => (this.dichtgeklapt = false));
   }
@@ -241,7 +231,7 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
     }
   }
 
-  onDragLeave(evt: DragEvent, laag: ToegevoegdeLaag) {
+  onDragLeave(laag: ToegevoegdeLaag) {
     // De current drop enkel aanpassen als er ondertussen nog geen dragenter was die al een andere laag als drop target
     // aangeduid heeft. Dat kan als we buiten de lijst gaan met de cursor.
     this.dragState.map(ds => {
