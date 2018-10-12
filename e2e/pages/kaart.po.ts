@@ -5,7 +5,7 @@ export class KaartPage {
 
   async gaNaarPagina(): Promise<void> {
     const configuratorKaart: ElementFinder = element(by.id("qa-protractor"));
-    await browser.get(`/ng-kaart/test`);
+    await browser.get(`/test`);
     await configuratorKaart;
   }
 }
