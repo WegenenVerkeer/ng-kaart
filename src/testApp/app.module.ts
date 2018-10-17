@@ -8,6 +8,7 @@ import { ClickOutsideModule } from "ng4-click-outside";
 import { AbbameldaModule } from "../lib/abbamelda";
 import { ClassicModule } from "../lib/classic";
 import { KaartModule } from "../lib/kaart";
+import { StijleditorModule } from "../lib/kaart/stijleditor";
 import { LagenkiezerModule } from "../lib/lagenkiezer";
 import { ZoekerModule } from "../lib/zoeker";
 
@@ -45,6 +46,7 @@ import { TestSectieComponent } from "./test-sectie.component";
     }),
     AbbameldaModule,
     LagenkiezerModule.withDefaults(),
+    StijleditorModule,
     ClickOutsideModule
   ],
   providers: [],

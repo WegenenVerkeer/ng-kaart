@@ -20,6 +20,7 @@
     <div #kaartLinks class="kaart-links">
       <awv-zoeker *ngIf="aanwezigeElementen.contains('Zoeker')"></awv-zoeker>
       <awv-lagenkiezer *ngIf="aanwezigeElementen.contains('Lagenkiezer')"></awv-lagenkiezer>
+      <awv-laagstijleditor></awv-laagstijleditor>
       <awv-kaart-info-boodschappen></awv-kaart-info-boodschappen>
       <ng-content select=".kaart-links"></ng-content>
     </div>

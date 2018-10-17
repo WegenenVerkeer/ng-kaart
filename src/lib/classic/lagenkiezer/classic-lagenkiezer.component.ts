@@ -18,6 +18,7 @@ export class ClassicLagenkiezerComponent implements OnInit, OnDestroy, OnChanges
   @Input() toonLegende = DefaultOpties.toonLegende;
   @Input() verwijderbareLagen = DefaultOpties.verwijderbareLagen;
   @Input() verplaatsbareLagen = DefaultOpties.verplaatsbareLagen;
+  @Input() stijlbareVectorlagen = DefaultOpties.stijlbareVectorlagen;
 
   ngOnInit() {
     console.log("***init", this.opties());
@@ -34,12 +35,14 @@ export class ClassicLagenkiezerComponent implements OnInit, OnDestroy, OnChanges
   }
 
   private opties(): LagenUiOpties {
+    console.log("****do", DefaultOpties);
     return {
       headerTitel: this.headerTitel,
       initieelDichtgeklapt: this.initieelDichtgeklapt,
       toonLegende: this.toonLegende,
       verwijderbareLagen: this.verwijderbareLagen,
-      verplaatsbareLagen: this.verplaatsbareLagen
+      verplaatsbareLagen: this.verplaatsbareLagen,
+      stijlbareVectorlagen: this.stijlbareVectorlagen
     };
   }
 }

@@ -30,6 +30,7 @@ import {
   StyleSelector
 } from "./stijl-selector";
 import * as ss from "./stijl-selector";
+import { GeenLaagstijlaanpassing, LaagstijlAanpassend } from "./stijleditor/state";
 import { getDefaultStyleSelector } from "./styles";
 
 ///////////////////////////////////
@@ -1078,6 +1079,17 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
+    function bewerkVectorlaagstijl(cmnd: prt.BewerkVectorlaagstijlCmd): ModelWithResult<Msg> {
+      // We zouden kunnen controleren of de laag effectief in het model zit, maar dat is spijkers op laag water zoeken.
+      modelChanger.LaagstijlaanpassingStateSubj.next(LaagstijlAanpassend(cmnd.laag));
+      return ModelWithResult(model);
+    }
+
+    function stopVectorlaagstijlBewerking(cmnd: prt.StopVectorlaagstijlBewerkingCmd): ModelWithResult<Msg> {
+      modelChanger.LaagstijlaanpassingStateSubj.next(GeenLaagstijlaanpassing);
+      return ModelWithResult(model);
+    }
+
     function handleSubscriptions(cmnd: prt.SubscribeCmd<Msg>): ModelWithResult<Msg> {
       function modelWithSubscriptionResult(name: string, subscription: Subscription): ModelWithResult<Msg> {
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, { subscription: subscription, subscriberName: name })));
@@ -1347,6 +1359,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return zetActieveModus(cmd);
       case "VoegLaagLocatieInformatieServiceToe":
         return voegLaagLocatieInformatieServiceToe(cmd);
+      case "BewerkVectorlaagstijl":
+        return bewerkVectorlaagstijl(cmd);
+      case "StopVectorlaagstijlBewerking":
+        return stopVectorlaagstijlBewerking(cmd);
     }
   };
 }

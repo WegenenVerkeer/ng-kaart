@@ -375,6 +375,10 @@ export class FeatureDemoComponent {
     this.verplaatsKaart.dispatch(prt.VerplaatsLaagCmd("dienstkaart-kleur", this.naarPositie, kaartLogOnlyWrapper));
   }
 
+  stijlbareVectorlagen(titel: string) {
+    return true;
+  }
+
   // De volgende methodes loggen gewoon naar de console. Er is weinig toegevoegde waarde om hier een UI voor te maken.
   onZoom(zoom: number): void {
     console.log("------> zoom", zoom);
