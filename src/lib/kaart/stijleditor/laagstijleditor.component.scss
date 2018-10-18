@@ -37,7 +37,7 @@
     padding-left: 16px;
     padding-right: 16px;
     padding-top: 8px;
-    padding-bottom: 28px;
+    padding-bottom: 8px;
 
     .awv-kaart-laagstijleditor-body-remark {
       color: $kaart-secondary-text-color;
@@ -68,6 +68,12 @@
         }
       }
     }
+  }
+
+  .awv-kaart-laagstijleditor-action {
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px 16px 16px 16px;
   }
 
   .awv-kaart-laagstijleditor-chooser {

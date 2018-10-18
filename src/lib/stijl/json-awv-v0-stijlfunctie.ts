@@ -1,4 +1,5 @@
 import { array } from "fp-ts/lib/Array";
+import { Function1, Function2 } from "fp-ts/lib/function";
 import * as option from "fp-ts/lib/Option";
 import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
@@ -27,6 +28,9 @@ import {
 // Private types
 //
 
+// Handige alias om de volgende definities wat beknopter te houden
+type olStyle = ol.style.Style;
+
 // Net zoals een RuleConfig, maar het verschil is dat de individuele rules al een OL style hebben ipv een een definitie.
 interface RuleStyleConfig {
   readonly rules: RuleStyle[];
@@ -35,12 +39,13 @@ interface RuleStyleConfig {
 // Net zoals een Rule, maar met een gegenereerde OL style ipv een definitie.
 interface RuleStyle {
   readonly condition: Expression;
-  readonly style: ol.style.Style;
+  readonly style: olStyle;
 }
 
-const RuleStyleConfig = (rules: RuleStyle[]) => ({ rules: rules });
-const RuleStyle = (condition: Expression, style: ol.style.Style) => ({
-  condition: condition,
+const RuleStyleConfig: Function1<RuleStyle[], RuleStyleConfig> = rules => ({ rules: rules });
+const alwaysTrue: Expression = { kind: "Literal", value: true };
+const RuleStyle: Function2<Option<Expression>, olStyle, RuleStyle> = (maybeCondition, style) => ({
+  condition: maybeCondition.getOrElse(alwaysTrue),
   style: style
 });
 
@@ -86,7 +91,7 @@ const jsonAwvV0RuleConfig: Interpreter<RuleStyleConfig> = (json: Object) => {
     "<=>": between
   });
 
-  const rule = oi.map2(RuleStyle, oi.field("condition", expression), oi.field("style", shortcutOrFullStyle));
+  const rule = oi.map2(RuleStyle, oi.optField("condition", expression), oi.field("style", shortcutOrFullStyle));
 
   const ruleConfig = oi.map(RuleStyleConfig, oi.arr(rule));
 

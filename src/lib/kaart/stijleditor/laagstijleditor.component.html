@@ -19,6 +19,9 @@
       </div>
     </div>
   </div>
+  <div class="awv-kaart-laagstijleditor-action">
+    <button mat-raised-button color="primary" [disabled]="nietToepassen$ | async" (click)="onAction('pasLaagstijlToe')">Pas toe</button>
+  </div>
   <div class="awv-kaart-laagstijleditor-chooser kaart-widget" *ngIf="kiezerZichtbaar$ | async">
     <div class="awv-kaart-laagstijleditor-chooser-header">
       <div class="awv-kaart-laagstijleditor-chooser-header-main">Kies een kleur</div>
