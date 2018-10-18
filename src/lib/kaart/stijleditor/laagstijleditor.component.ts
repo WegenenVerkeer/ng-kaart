@@ -89,9 +89,9 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
     this.titel$ = aanpassing$.pipe(map(state => state.laag.titel), shareReplay(1));
 
     // zetten van de nieuwe en bestaande kleuren
-    const selectieKleur$ = this.clickDataFor$("kiesLaagkleur", clr.isKleur);
+    const selectieKleur$ = this.actionDataFor$("kiesLaagkleur", clr.isKleur);
     selectieKleur$.subscribe(kleur => console.log("****kl1", kleur));
-    this.rawClickDataFor$("kiesLaagkleur").subscribe(kleur => console.log("****kl2", kleur));
+    this.rawActionDataFor$("kiesLaagkleur").subscribe(kleur => console.log("****kl2", kleur));
     this.laagkleur$ = aanpassing$.pipe(
       switchMap(state =>
         rx.merge(
@@ -105,7 +105,7 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
 
     // zichtbaarheid van hoofdpaneel
     this.zichtbaar$ = kaart.modelChanges.laagstijlaanpassingState$.pipe(map(isAanpassingBezig));
-    this.bindToLifeCycle(this.clickFor$("sluitLaagstijleditor")).subscribe(() => this.dispatch(StopVectorlaagstijlBewerkingCmd()));
+    this.bindToLifeCycle(this.actionFor$("sluitLaagstijleditor")).subscribe(() => this.dispatch(StopVectorlaagstijlBewerkingCmd()));
 
     // zichtbaarheid voor het zijpaneel met het kleurenpalet
     this.kiezerZichtbaar$ = aanpassing$.pipe(
@@ -113,9 +113,9 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
       switchMap(() =>
         rx.merge(
           rx.of(false), // begin onzichtbaar
-          this.clickFor$("openKleineKleurkiezer").pipe(mapTo(true)), // zichtbaar als op huidig kleur geklikt
-          this.clickFor$("sluitKleurkiezer").pipe(mapTo(false)), // onzichtbaar wanneer gesloten
-          this.clickFor$("kiesLaagkleur").pipe(mapTo(false)) // onzichtbaar wanneer kleur gekozen
+          this.actionFor$("openKleineKleurkiezer").pipe(mapTo(true)), // zichtbaar als op huidig kleur geklikt
+          this.actionFor$("sluitKleurkiezer").pipe(mapTo(false)), // onzichtbaar wanneer gesloten
+          this.actionFor$("kiesLaagkleur").pipe(mapTo(false)) // onzichtbaar wanneer kleur gekozen
         )
       ),
       shareReplay(1)
@@ -127,7 +127,7 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
       switchMap(() =>
         rx.merge(
           rx.of(true), // in het begin zichtbaar
-          this.clickFor$("openGroteKleurkiezer").pipe(mapTo(false)) // sluit wanneer groot palet gevraagd wordt
+          this.actionFor$("openGroteKleurkiezer").pipe(mapTo(false)) // sluit wanneer groot palet gevraagd wordt
         )
       ),
       shareReplay(1)

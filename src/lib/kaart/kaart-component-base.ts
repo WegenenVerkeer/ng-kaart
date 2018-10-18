@@ -1,13 +1,14 @@
 import { AfterViewInit, NgZone, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
+import { Refinement } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import { filter, map, mapTo, takeUntil } from "rxjs/operators";
+import { isNullOrUndefined } from "util";
 
 import { asap } from "../util/asap";
-import { Refinement } from "fp-ts/lib/function";
 
 interface ClickAction {
   name: string;
-  data: any;
+  data?: any;
 }
 
 /**
@@ -36,8 +37,14 @@ export abstract class KaartComponentBase implements AfterViewInit, OnInit, OnDes
     this.viewReadySubj.complete();
   }
 
-  onClick(action: string, data: any) {
-    this.clickActionSubj.next({ name: action, data: data });
+  /**
+   * Event methode bedoeld om aangeroepen te worden vanuit een HTML template. Componenten kunnen luisteren op een afgeleide Observable
+   * om deze acties te volgen. De actienaam wordt gedeeld door alle actieve componenten, dus best iets uniek kiezen.
+   * @param actionName Een string die een actie identificeert.
+   * @param data Optionele, arbitraire data
+   */
+  onAction(actionName: string, data?: any) {
+    this.clickActionSubj.next({ name: actionName, data: data });
   }
 
   protected bindToLifeCycle<T>(source: rx.Observable<T>): rx.Observable<T> {
@@ -56,16 +63,19 @@ export abstract class KaartComponentBase implements AfterViewInit, OnInit, OnDes
     return this.viewReadySubj;
   }
 
-  protected clickFor$(action: string): rx.Observable<void> {
+  protected actionFor$(action: string): rx.Observable<void> {
     return this.clickActionSubj.pipe(filter(a => a.name === action), mapTo(undefined));
   }
 
-  protected rawClickDataFor$(action: string): rx.Observable<any> {
-    return this.clickActionSubj.pipe(filter(a => a.name === action), map(a => a.data));
+  protected rawActionDataFor$(actionName: string): rx.Observable<any> {
+    return this.clickActionSubj.pipe(filter(a => a.name === actionName && a.data !== undefined), map(a => a.data));
   }
 
-  protected clickDataFor$<T>(action: string, refinement: Refinement<any, T>): rx.Observable<T> {
-    return this.clickActionSubj.pipe(filter(a => a.name === action), filter(a => refinement(a.data)), map(a => a.data));
+  protected actionDataFor$<T extends object>(actionName: string, refinement: Refinement<any, T>): rx.Observable<T> {
+    return this.clickActionSubj.pipe(
+      filter(a => a.name === actionName && !isNullOrUndefined(a.data) && refinement(a.data)),
+      map(a => a.data)
+    );
   }
 
   /**
