@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
 import { MatMenuTrigger } from "@angular/material";
 import * as rx from "rxjs";
-import { distinctUntilChanged, map, share, startWith, tap, mapTo, shareReplay } from "rxjs/operators";
+import { distinctUntilChanged, map, mapTo, share, shareReplay, startWith, tap } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { asToegevoegdeVectorLaag, ToegevoegdeLaag, ToegevoegdeVectorLaag } from "../kaart/kaart-elementen";
@@ -27,21 +27,37 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
   readonly kanStijlAanpassen$: rx.Observable<boolean>;
   readonly minstensEenLaagActie$: rx.Observable<boolean>;
 
-  @Input() laag: ToegevoegdeLaag;
-  @Input() dragSource: boolean;
-  @Input() dragTarget: boolean;
-  @Input() dragUntargetable: boolean;
-  @ViewChild(MatMenuTrigger) laagMenuTrigger: MatMenuTrigger;
+  @Input()
+  laag: ToegevoegdeLaag;
+  @Input()
+  dragSource: boolean;
+  @Input()
+  dragTarget: boolean;
+  @Input()
+  dragUntargetable: boolean;
+  @ViewChild(MatMenuTrigger)
+  laagMenuTrigger: MatMenuTrigger;
 
   constructor(lagenkiezer: LagenkiezerComponent, kaartComponent: KaartComponent, zone: NgZone) {
     super(kaartComponent, zone);
-    this.zoom$ = kaartComponent.modelChanges.viewinstellingen$.pipe(map(zi => zi.zoom), distinctUntilChanged(), observeOnAngular(zone));
+    this.zoom$ = kaartComponent.modelChanges.viewinstellingen$.pipe(
+      map(zi => zi.zoom),
+      distinctUntilChanged(),
+      observeOnAngular(zone)
+    );
     this.zichtbaar$ = this.zoom$.pipe(
       map(zoom => zoom >= this.laag.bron.minZoom && zoom <= this.laag.bron.maxZoom),
       observeOnAngular(this.zone)
     );
-    this.onzichtbaar$ = this.zichtbaar$.pipe(map(m => !m), shareReplay(1));
-    this.kanVerwijderen$ = lagenkiezer.opties$.pipe(map(o => o.verwijderbareLagen), tap(v => console.log("****vwl1", v)), shareReplay(1));
+    this.onzichtbaar$ = this.zichtbaar$.pipe(
+      map(m => !m),
+      shareReplay(1)
+    );
+    this.kanVerwijderen$ = lagenkiezer.opties$.pipe(
+      map(o => o.verwijderbareLagen),
+      tap(v => console.log("****vwl1", v)),
+      shareReplay(1)
+    );
     this.kanStijlAanpassen$ = lagenkiezer.opties$.pipe(
       tap(o => console.log("****ksao", o, o.stijlbareVectorlagen(this.laag.titel))),
       map(o =>

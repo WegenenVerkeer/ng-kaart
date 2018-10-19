@@ -9,7 +9,8 @@ import { KaartClassicComponent } from "../kaart-classic.component";
   template: ""
 })
 export class ClassicCopyrightComponent extends ClassicUIElementSelectorComponentBase {
-  @Input() copyright = "\u00A9 Agentschap Wegen en Verkeer";
+  @Input()
+  copyright = "\u00A9 Agentschap Wegen en Verkeer";
 
   constructor(kaart: KaartClassicComponent, zone: NgZone) {
     super(CopyrightUISelector, kaart, zone);

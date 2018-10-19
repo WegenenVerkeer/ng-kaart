@@ -42,7 +42,8 @@ export class ZoekerPerceelGetraptComponent extends GetraptZoekerComponent implem
   percelen$: rx.Observable<PerceelNummer[]> = rx.empty();
 
   leegMakenDisabled$: rx.Observable<boolean> = rx.empty();
-  @Output() leegMakenDisabledChange: EventEmitter<boolean> = new EventEmitter();
+  @Output()
+  leegMakenDisabledChange: EventEmitter<boolean> = new EventEmitter();
 
   constructor(kaartComponent: KaartComponent, zoekerComponent: ZoekerBoxComponent, zone: NgZone) {
     super(kaartComponent, zoekerComponent, zone);
@@ -127,17 +128,23 @@ export class ZoekerPerceelGetraptComponent extends GetraptZoekerComponent implem
     this.subscribeToDisableWhenEmpty(this.secties$, this.sectieControl, NIVEAU_VANAFSECTIE);
     this.subscribeToDisableWhenEmpty(this.percelen$, this.perceelControl, NIVEAU_VANAFPERCEEL);
 
-    this.leegMakenDisabled$ = this.gemeenteControl.valueChanges.pipe(map(c => toTrimmedLowerCasedString(c).length === 0), startWith(true));
+    this.leegMakenDisabled$ = this.gemeenteControl.valueChanges.pipe(
+      map(c => toTrimmedLowerCasedString(c).length === 0),
+      startWith(true)
+    );
     this.bindToLifeCycle(this.leegMakenDisabled$).subscribe(value => {
       this.leegMakenDisabledChange.emit(value);
     });
 
     // Hier gaan we onze capakey doorsturen naar de zoekers, we willen alleen de perceelzoeker triggeren.
-    this.bindToLifeCycle(this.perceelControl.valueChanges.pipe(filter(isNotNullObject), distinctUntilChanged())).subscribe(
-      (perceelDetails: PerceelNummer) => {
-        this.zoek({ type: "Perceel", capaKey: perceelDetails.capakey }, [PERCEEL_SVC_NAAM]);
-      }
-    );
+    this.bindToLifeCycle(
+      this.perceelControl.valueChanges.pipe(
+        filter(isNotNullObject),
+        distinctUntilChanged()
+      )
+    ).subscribe((perceelDetails: PerceelNummer) => {
+      this.zoek({ type: "Perceel", capaKey: perceelDetails.capakey }, [PERCEEL_SVC_NAAM]);
+    });
   }
 
   toonGemeente(gemeente?: Gemeente): string | undefined {

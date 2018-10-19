@@ -36,7 +36,8 @@ export class ZoekerCrabGetraptComponent extends GetraptZoekerComponent implement
   straten$: rx.Observable<CrabStraat[]> = rx.empty();
   huisnummers$: rx.Observable<CrabHuisnummer[]> = rx.empty();
   leegMakenDisabled$: rx.Observable<boolean> = rx.empty();
-  @Output() leegMakenDisabledChange: EventEmitter<boolean> = new EventEmitter();
+  @Output()
+  leegMakenDisabledChange: EventEmitter<boolean> = new EventEmitter();
 
   constructor(private crabService: ZoekerCrabService, kaartComponent: KaartComponent, zoekerComponent: ZoekerBoxComponent, zone: NgZone) {
     super(kaartComponent, zoekerComponent, zone);
@@ -96,7 +97,10 @@ export class ZoekerCrabGetraptComponent extends GetraptZoekerComponent implement
       this.maakVeldenLeeg(NIVEAU_VANAFGEMEENTE);
     });
 
-    this.leegMakenDisabled$ = this.gemeenteControl.valueChanges.pipe(map(c => toTrimmedLowerCasedString(c).length === 0), startWith(true));
+    this.leegMakenDisabled$ = this.gemeenteControl.valueChanges.pipe(
+      map(c => toTrimmedLowerCasedString(c).length === 0),
+      startWith(true)
+    );
     this.bindToLifeCycle(this.leegMakenDisabled$).subscribe(value => {
       this.leegMakenDisabledChange.emit(value);
     });
@@ -119,7 +123,12 @@ export class ZoekerCrabGetraptComponent extends GetraptZoekerComponent implement
     this.subscribeToDisableWhenEmpty(this.huisnummers$, this.huisnummerControl, NIVEAU_VANAFHUISNUMMER);
 
     // Hier gaan we automatisch zoeken op huisnummer.
-    this.bindToLifeCycle(this.huisnummerControl.valueChanges.pipe(filter(isNotNullObject), distinctUntilChanged())).subscribe(v => {
+    this.bindToLifeCycle(
+      this.huisnummerControl.valueChanges.pipe(
+        filter(isNotNullObject),
+        distinctUntilChanged()
+      )
+    ).subscribe(v => {
       this.toonOpKaart();
     });
   }

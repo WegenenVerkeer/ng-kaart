@@ -20,11 +20,16 @@ import { Component, Input, OnInit, ViewEncapsulation } from "@angular/core";
   encapsulation: ViewEncapsulation.None
 })
 export class TestSectieComponent implements OnInit {
-  @Input() sectieId = "";
-  @Input() sectieTitel = "";
-  @Input() subSectie = false;
-  @Input() bevatSubSecties = false;
-  @Input() sectieZichtbaar = false;
+  @Input()
+  sectieId = "";
+  @Input()
+  sectieTitel = "";
+  @Input()
+  subSectie = false;
+  @Input()
+  bevatSubSecties = false;
+  @Input()
+  sectieZichtbaar = false;
 
   ngOnInit(): void {
     // Nog niks.

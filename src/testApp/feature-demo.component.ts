@@ -44,8 +44,10 @@ export interface FietspadSelectie {
   encapsulation: ViewEncapsulation.None
 })
 export class FeatureDemoComponent {
-  @ViewChild("verplaats") private verplaatsKaart: KaartClassicComponent;
-  @ViewChild("selectie") private selectieKaart: KaartClassicComponent;
+  @ViewChild("verplaats")
+  private verplaatsKaart: KaartClassicComponent;
+  @ViewChild("selectie")
+  private selectieKaart: KaartClassicComponent;
 
   private readonly fietspadStijlDef: AWV0StyleFunctionDescription = {
     version: "awv-v0",
@@ -331,7 +333,7 @@ export class FeatureDemoComponent {
   get tekenGeomLength() {
     return this.getekendeGeom
       .filter(g => g.getType() === "LineString" || g.getType() === "Polygon")
-      .map(g => Math.round(ol.Sphere.getLength(g) / 1000 * 100) / 100 + "km")
+      .map(g => Math.round((ol.Sphere.getLength(g) / 1000) * 100) / 100 + "km")
       .getOrElse("(leeg)");
   }
 

@@ -135,12 +135,18 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
       filter(isAanpassingBezig),
       shareReplay(1)
     );
-    this.titel$ = aanpassing$.pipe(map(state => state.laag.titel), shareReplay(1));
+    this.titel$ = aanpassing$.pipe(
+      map(state => state.laag.titel),
+      shareReplay(1)
+    );
 
     // we zouden ook de laag zelf kunnen volgen, maar in de praktijk gaat die toch niet veranderen
     const origineleKleur$ = aanpassing$.pipe(map(state => kleurViaSelector(state.laag.stijlSel)));
     // zetten van de nieuwe en bestaande kleuren
-    const selectieKleur$ = this.actionDataFor$("kiesLaagkleur", clr.isKleur).pipe(map(gevonden), shareReplay(1));
+    const selectieKleur$ = this.actionDataFor$("kiesLaagkleur", clr.isKleur).pipe(
+      map(gevonden),
+      shareReplay(1)
+    );
     this.laagkleur$ = rx
       .merge(
         origineleKleur$, // begin met kleur in huidige stijl
@@ -180,12 +186,10 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
     this.grootPaletZichtbaar$ = this.kleinPaletZichtbaar$.pipe(map(z => !z));
 
     // voeg "gekozen" attribuut toe aan de kleur van het palet zodat we het vinkje kunnen zetten
-    this.paletKleuren$ = rx
-      .combineLatest(this.laagkleur$, this.kleinPaletZichtbaar$, tuple)
-      .pipe(
-        switchMap(([laagkleur, kp]) => (kp ? rx.of(kleurenpaletKlein) : rx.of(kleurenpaletGroot)).pipe(map(markeerKleur(laagkleur)))),
-        shareReplay(1)
-      );
+    this.paletKleuren$ = rx.combineLatest(this.laagkleur$, this.kleinPaletZichtbaar$, tuple).pipe(
+      switchMap(([laagkleur, kp]) => (kp ? rx.of(kleurenpaletKlein) : rx.of(kleurenpaletGroot)).pipe(map(markeerKleur(laagkleur)))),
+      shareReplay(1)
+    );
 
     // Luisteren op de "pas toe" knop.
     const pasToeGeklikt$ = this.actionFor$("pasLaagstijlToe").pipe(share());

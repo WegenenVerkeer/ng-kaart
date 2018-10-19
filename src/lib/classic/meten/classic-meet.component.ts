@@ -9,8 +9,10 @@ import { KaartClassicComponent } from "../kaart-classic.component";
   template: ""
 })
 export class ClassicMetenComponent extends ClassicUIElementSelectorComponentBase {
-  @Input() toonInfoBoodschap = true;
-  @Input() meerdereGeometrieen = true;
+  @Input()
+  toonInfoBoodschap = true;
+  @Input()
+  meerdereGeometrieen = true;
 
   constructor(kaart: KaartClassicComponent, zone: NgZone) {
     super(MetenUiSelector, kaart, zone);

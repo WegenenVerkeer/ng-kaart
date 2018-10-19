@@ -69,7 +69,6 @@
     "no-empty-interface": true,
     "no-eval": true,
     "no-inferrable-types": true,
-//    "no-shadowed-variable": true,
     "no-string-literal": false,
     "no-string-throw": true,
     "no-switch-case-fall-through": true,
@@ -105,7 +104,6 @@
         "variable-declaration": "nospace"
       }
     ],
-    "typeof-compare": true,
     "unified-signatures": true,
     "variable-name": false,
     "whitespace": [

@@ -12,8 +12,10 @@ import { ClassicLegendeItemComponent } from "./classic-legende-item.component";
   providers: [{ provide: ClassicLegendeItemComponent, useExisting: forwardRef(() => ClassicLegendeLijnItemComponent) }]
 })
 export class ClassicLegendeLijnItemComponent extends ClassicLegendeItemComponent {
-  @Input() kleur: string;
-  @Input() achtergrondKleur?: string;
+  @Input()
+  kleur: string;
+  @Input()
+  achtergrondKleur?: string;
 
   maakLegendeItem(): LegendeItem {
     return {

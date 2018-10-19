@@ -24,15 +24,20 @@ export class KaartTekenComponent extends KaartComponentBase implements OnInit {
   set tekenen(teken: boolean) {
     this.aanHetTekenen.next(teken);
   }
-  @Input() private geometryType: ol.geom.GeometryType = "LineString";
+  @Input()
+  private geometryType: ol.geom.GeometryType = "LineString";
 
-  @Input() private laagStyle;
+  @Input()
+  private laagStyle;
 
-  @Input() private drawStyle: ol.style.Style;
+  @Input()
+  private drawStyle: ol.style.Style;
 
-  @Input() private meerdereGeometrieen = false;
+  @Input()
+  private meerdereGeometrieen = false;
 
-  @Output() getekendeGeom: EventEmitter<ol.geom.Geometry> = new EventEmitter();
+  @Output()
+  getekendeGeom: EventEmitter<ol.geom.Geometry> = new EventEmitter();
 
   constructor(readonly kaart: KaartClassicComponent, zone: NgZone) {
     super(zone);

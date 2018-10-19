@@ -225,9 +225,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         const groepPositie = layerIndexNaarGroepIndex(laag!.layer, groep);
         if (groepPositie >= vanaf && groepPositie <= tot && positieAanpassing !== 0) {
           const positie = groepPositie + positieAanpassing;
-          return pipe(pasVectorLaagStijlPositieAan(positieAanpassing), pasLaagPositieAan(positieAanpassing), pasLaagInModelAan(mdl!))(
-            laag! as ke.ToegevoegdeVectorLaag
-          );
+          return pipe(
+            pasVectorLaagStijlPositieAan(positieAanpassing),
+            pasLaagPositieAan(positieAanpassing),
+            pasLaagInModelAan(mdl!)
+          )(laag! as ke.ToegevoegdeVectorLaag);
         } else {
           return mdl!;
         }
@@ -677,7 +679,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
           // Zorg ervoor dat er juist 1 achtergrondlaag zichtbaar is
           const modelMetAangepasteLagen = achtergrondLagen.reduce(
-            (mdl, laag) => pipe(pasLaagZichtbaarheidAan(laag!.titel === teSelecterenLaag.titel), pasLaagInModelAan(mdl!))(laag!),
+            (mdl, laag) =>
+              pipe(
+                pasLaagZichtbaarheidAan(laag!.titel === teSelecterenLaag.titel),
+                pasLaagInModelAan(mdl!)
+              )(laag!),
             model
           );
 
@@ -714,12 +720,19 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           const maybeVorigeAchtergrond = fromNullable(
             model.toegevoegdeLagenOpTitel.find(laag => laag!.laaggroep === "Achtergrond" && laag!.magGetoondWorden)
           );
-          const modelMetNieuweZichtbaarheid = pipe(pasLaagZichtbaarheidAan(true), pasLaagInModelAan(model))(nieuweAchtergrond);
+          const modelMetNieuweZichtbaarheid = pipe(
+            pasLaagZichtbaarheidAan(true),
+            pasLaagInModelAan(model)
+          )(nieuweAchtergrond);
           const modelMetNieuweEnOudeZichtbaarheid = maybeVorigeAchtergrond
             .filter(vorige => vorige.titel !== nieuweAchtergrond.titel) // enkel onzichtbaar maken als verschillend
             .fold(
               modelMetNieuweZichtbaarheid, //
-              vorigeAchtergrond => pipe(pasLaagZichtbaarheidAan(false), pasLaagInModelAan(modelMetNieuweZichtbaarheid))(vorigeAchtergrond)
+              vorigeAchtergrond =>
+                pipe(
+                  pasLaagZichtbaarheidAan(false),
+                  pasLaagInModelAan(modelMetNieuweZichtbaarheid)
+                )(vorigeAchtergrond)
             );
           zendLagenInGroep(modelMetNieuweEnOudeZichtbaarheid, "Achtergrond");
           return ModelAndEmptyResult(modelMetNieuweEnOudeZichtbaarheid);
@@ -740,7 +753,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         wrapper,
         valideerToegevoegdeLaagBestaat(titel).map(laag => {
-          const aangepastModel = pipe(pasLaagZichtbaarheidAan(magGetoondWorden), pasLaagInModelAan(model))(laag);
+          const aangepastModel = pipe(
+            pasLaagZichtbaarheidAan(magGetoondWorden),
+            pasLaagInModelAan(model)
+          )(laag);
           zendLagenInGroep(aangepastModel, laag.laaggroep);
           return ModelAndEmptyResult(aangepastModel);
         })
@@ -833,7 +849,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                     kaartLogger.error("Ook geen stijlselector gevonden voor:", feature);
                     return noStyle;
                   },
-                  pipe(executeStyleSelector, applySelectionColor) // we vallen terug op feature stijl met custom kleurtje
+                  pipe(
+                    executeStyleSelector,
+                    applySelectionColor
+                  ) // we vallen terug op feature stijl met custom kleurtje
                 );
               },
               executeStyleSelector // dit is het perfecte geval: evalueer de selectiestijl selector
@@ -1122,21 +1141,39 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       function subscribeToZoom(sub: prt.ZoomSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
           "Zoom",
-          modelChanges.viewinstellingen$.pipe(debounceTime(100), map(i => i.zoom), distinctUntilChanged()).subscribe(consumeWrapped(sub))
+          modelChanges.viewinstellingen$
+            .pipe(
+              debounceTime(100),
+              map(i => i.zoom),
+              distinctUntilChanged()
+            )
+            .subscribe(consumeWrapped(sub))
         );
       }
 
       function subscribeToMiddelpunt(sub: prt.MiddelpuntSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
           "Middelpunt",
-          modelChanges.viewinstellingen$.pipe(debounceTime(100), map(i => i.center), distinctUntilChanged()).subscribe(consumeWrapped(sub))
+          modelChanges.viewinstellingen$
+            .pipe(
+              debounceTime(100),
+              map(i => i.center),
+              distinctUntilChanged()
+            )
+            .subscribe(consumeWrapped(sub))
         );
       }
 
       function subscribeToExtent(sub: prt.ExtentSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
           "Extent",
-          modelChanges.viewinstellingen$.pipe(debounceTime(100), map(i => i.extent), distinctUntilChanged()).subscribe(consumeWrapped(sub))
+          modelChanges.viewinstellingen$
+            .pipe(
+              debounceTime(100),
+              map(i => i.extent),
+              distinctUntilChanged()
+            )
+            .subscribe(consumeWrapped(sub))
         );
       }
 

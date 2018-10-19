@@ -10,8 +10,10 @@ import { AchtergrondLaag, Laag, ToegevoegdeLaag } from "../kaart-elementen";
   styleUrls: ["./kaart-achtergrond-tile.component.scss"]
 })
 export class KaartAchtergrondTileComponent {
-  @Input() laag: ToegevoegdeLaag;
-  @Input() isCurrent: boolean;
+  @Input()
+  laag: ToegevoegdeLaag;
+  @Input()
+  isCurrent: boolean;
 
   constructor() {}
 

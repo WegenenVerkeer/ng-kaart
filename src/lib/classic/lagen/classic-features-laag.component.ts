@@ -45,11 +45,14 @@ export class ClassicFeaturesLaagComponent extends ClassicVectorLaagComponent imp
 
   // Er wordt verwacht dat alle features een unieke ID hebben. Null of undefined ID's zorgen voor onnodige updates. Bovendien moet de hele
   // feature array aangepast worden. Dwz, je mag de array niet aanpassen en de referentie ongewijzigd laten. Dit is om performantieredenen.
-  @Input() features = [] as ol.Feature[];
-  @Input() featureEquality: (feat1: ol.Feature, feat2: ol.Feature) => boolean = stdFeatureEquality;
+  @Input()
+  features = [] as ol.Feature[];
+  @Input()
+  featureEquality: (feat1: ol.Feature, feat2: ol.Feature) => boolean = stdFeatureEquality;
 
   // TODO combineren met 'selecteerbaar' van kaart-vector-laag
-  @Output() featureGeselecteerd: EventEmitter<ol.Feature> = new EventEmitter<ol.Feature>();
+  @Output()
+  featureGeselecteerd: EventEmitter<ol.Feature> = new EventEmitter<ol.Feature>();
 
   constructor(kaart: KaartClassicComponent, zone: NgZone) {
     super(kaart, zone);

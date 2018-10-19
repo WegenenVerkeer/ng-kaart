@@ -36,7 +36,8 @@ export interface MetenOpties {
   styleUrls: ["./kaart-meten.component.scss"]
 })
 export class KaartMetenComponent extends KaartModusComponent implements OnInit, OnDestroy {
-  @Output() getekendeGeom: EventEmitter<ol.geom.Geometry> = new EventEmitter();
+  @Output()
+  getekendeGeom: EventEmitter<ol.geom.Geometry> = new EventEmitter();
 
   private toonInfoBoodschap = true;
   private meerdereGeometrieen = true;

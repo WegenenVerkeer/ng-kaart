@@ -11,4 +11,8 @@ export const paddedHexBytes: Function1<number, string> = c => {
  * Convert een getal in het bereik [0, 255] naar een hexadecimaal getal. Als het getal groter of kleiner is,
  * dan wordt de dichtstbijzinde grens gebruikt.
  */
-export const hexByte: Function1<number, string> = pipe(curry(Math.min)(255), curry(Math.max)(0), paddedHexBytes);
+export const hexByte: Function1<number, string> = pipe(
+  curry(Math.min)(255),
+  curry(Math.max)(0),
+  paddedHexBytes
+);

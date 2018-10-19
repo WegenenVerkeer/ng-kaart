@@ -27,8 +27,10 @@ interface AbbameldaResultaat {
   ]
 })
 export class AbbameldaStuurmeldingComponent {
-  @Input() abbamelda_onderdeel: string;
-  @Input() abbamelda_pad: string;
+  @Input()
+  abbamelda_onderdeel: string;
+  @Input()
+  abbamelda_pad: string;
 
   abbameldaSuccesBoodschap = "";
   abbameldaFoutBoodschap = "";

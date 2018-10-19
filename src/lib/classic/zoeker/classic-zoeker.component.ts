@@ -17,8 +17,10 @@ import { KaartClassicComponent } from "../kaart-classic.component";
   template: ""
 })
 export class ClassicZoekerComponent extends ClassicUIElementSelectorComponentBase {
-  @Input() zoeker: ZoekerMetPrioriteiten;
-  @Input() zoekers: ZoekerMetPrioriteiten[] = [];
+  @Input()
+  zoeker: ZoekerMetPrioriteiten;
+  @Input()
+  zoekers: ZoekerMetPrioriteiten[] = [];
 
   private registered: ZoekerMetPrioriteiten[] = [];
 

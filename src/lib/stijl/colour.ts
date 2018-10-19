@@ -24,9 +24,13 @@ const prismKleurcode: Prism<string, Kleurcode> = prism<Kleurcode>(s => /^#[a-f\d
 
 const toKleurnaam: Function1<string, Option<Kleurnaam>> = prismKleurnaam.getOption;
 // ietwat overdreven benaming, maar is enkel voor intern gebruik
-const ensureOpacity: Endomorphism<string> = s => s.length < 8 ? s + "ff" : s;
+const ensureOpacity: Endomorphism<string> = s => (s.length < 8 ? s + "ff" : s);
 // kleurcode moet lowercase zijn om prism te kunnen passeren. Opacity wordt op 1 gezet indien niet aanwezig
-const toKleurcode: Function1<string, Option<Kleurcode>> = pipe(toLowerCaseString, ensureOpacity, prismKleurcode.getOption); 
+const toKleurcode: Function1<string, Option<Kleurcode>> = pipe(
+  toLowerCaseString,
+  ensureOpacity,
+  prismKleurcode.getOption
+);
 
 export interface Kleur {
   naam: Kleurnaam;
@@ -41,7 +45,16 @@ const setComponent: Curried3<number, number, Kleurcode, Kleurcode> = pos => valu
 const redGetter: Getter<Kleurcode, number> = new Getter(getComponent(0));
 const greenGetter: Getter<Kleurcode, number> = new Getter(getComponent(1));
 const blueGetter: Getter<Kleurcode, number> = new Getter(getComponent(2));
-const opacityLens: Lens<Kleurcode, number> = new Lens(pipe(getComponent(3), n => n / 255), pipe(n => n * 255, setComponent(3)));
+const opacityLens: Lens<Kleurcode, number> = new Lens(
+  pipe(
+    getComponent(3),
+    n => n / 255
+  ),
+  pipe(
+    n => n * 255,
+    setComponent(3)
+  )
+);
 const kleurcodeLens: Lens<Kleur, Kleurcode> = Lens.fromProp("code");
 
 const hexToRGBA: Function1<Kleurcode, string> = code => {
@@ -56,9 +69,18 @@ const fallback: Kleur = Kleur(isoKleurnaam.wrap("zwart"))(isoKleurcode.wrap("#00
 export const toKleurUnsafe: Function2<string, string, Kleur> = (naam, code) => toKleur(naam, code).getOrElse(fallback);
 export const kleurnaam: Function1<Kleur, Kleurnaam> = kleur => kleur.naam;
 export const kleurcode: Function1<Kleur, Kleurcode> = kleur => kleur.code;
-export const kleurnaamValue: Function1<Kleur, string> = pipe(kleurnaam, isoKleurnaam.unwrap);
-export const kleurcodeValue: Function1<Kleur, string> = pipe(kleurcode, isoKleurcode.unwrap);
-export const kleurRGBAValue: Function1<Kleur, string> = pipe(kleurcode, hexToRGBA);
+export const kleurnaamValue: Function1<Kleur, string> = pipe(
+  kleurnaam,
+  isoKleurnaam.unwrap
+);
+export const kleurcodeValue: Function1<Kleur, string> = pipe(
+  kleurcode,
+  isoKleurcode.unwrap
+);
+export const kleurRGBAValue: Function1<Kleur, string> = pipe(
+  kleurcode,
+  hexToRGBA
+);
 export const setOpacity: Curried2<number, Kleur, Kleur> = kleurcodeLens.compose(opacityLens).set;
 
 // converter vanaf open layers

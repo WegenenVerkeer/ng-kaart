@@ -91,7 +91,10 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
       return zoom >= laag.bron.minZoom && zoom <= laag.bron.maxZoom;
     }
 
-    const zoom$ = parent.modelChanges.viewinstellingen$.pipe(map(i => i.zoom), distinctUntilChanged());
+    const zoom$ = parent.modelChanges.viewinstellingen$.pipe(
+      map(i => i.zoom),
+      distinctUntilChanged()
+    );
     this.lagenHoog$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Hoog");
     this.lagenLaag$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Laag");
     const achtergrondLagen$ = this.modelChanges.lagenOpGroep.get("Achtergrond");
@@ -105,7 +108,10 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
     const lagenLaagLeeg$ = this.lagenLaag$.pipe(map(l => l.isEmpty()));
     this.heeftDivider$ = rx.combineLatest(lagenHoogLeeg$, lagenLaagLeeg$, (h, l) => !h && !l).pipe(shareReplay(1));
     this.geenLagen$ = rx.combineLatest(lagenHoogLeeg$, lagenLaagLeeg$, (h, l) => h && l).pipe(shareReplay(1));
-    this.geenLegende$ = this.lagenMetLegende$.pipe(map(l => l.isEmpty()), shareReplay(1));
+    this.geenLegende$ = this.lagenMetLegende$.pipe(
+      map(l => l.isEmpty()),
+      shareReplay(1)
+    );
     this.opties$ = this.modelChanges.uiElementOpties$.pipe(
       filter(o => o.naam === LagenUiSelector),
       map(o => o.opties as LagenUiOpties),
@@ -120,9 +126,17 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
 
   ngOnInit() {
     super.ngOnInit();
-    const initieelDichtgeklapt$ = this.opties$.pipe(map(opties => opties.initieelDichtgeklapt), distinctUntilChanged());
+    const initieelDichtgeklapt$ = this.opties$.pipe(
+      map(opties => opties.initieelDichtgeklapt),
+      distinctUntilChanged()
+    );
     // Zorg dat de lijst initieel open of dicht is zoals ingesteld
-    initieelDichtgeklapt$.pipe(debounceTime(250), take(1)).subscribe(dichtgeklapt => (this.dichtgeklapt = dichtgeklapt));
+    initieelDichtgeklapt$
+      .pipe(
+        debounceTime(250),
+        take(1)
+      )
+      .subscribe(dichtgeklapt => (this.dichtgeklapt = dichtgeklapt));
     // Zorg dat de lijst open klapt als er een laag bijkomt of weg gaat tenzij de optie initieelDichtgeklapt op 'true' staat.
     this.bindToLifeCycle(
       initieelDichtgeklapt$.pipe(

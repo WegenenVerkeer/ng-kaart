@@ -11,14 +11,21 @@ import { KaartClassicComponent } from "../kaart-classic.component";
 export class ClassicLagenkiezerComponent implements OnInit, OnDestroy, OnChanges {
   constructor(private readonly kaart: KaartClassicComponent) {}
 
-  @Input() titels: string[] = []; // TODO nog te implementeren om te beperken tot deze
+  @Input()
+  titels: string[] = []; // TODO nog te implementeren om te beperken tot deze
 
-  @Input() headerTitel = DefaultOpties.headerTitel;
-  @Input() initieelDichtgeklapt = DefaultOpties.initieelDichtgeklapt;
-  @Input() toonLegende = DefaultOpties.toonLegende;
-  @Input() verwijderbareLagen = DefaultOpties.verwijderbareLagen;
-  @Input() verplaatsbareLagen = DefaultOpties.verplaatsbareLagen;
-  @Input() stijlbareVectorlagen = DefaultOpties.stijlbareVectorlagen;
+  @Input()
+  headerTitel = DefaultOpties.headerTitel;
+  @Input()
+  initieelDichtgeklapt = DefaultOpties.initieelDichtgeklapt;
+  @Input()
+  toonLegende = DefaultOpties.toonLegende;
+  @Input()
+  verwijderbareLagen = DefaultOpties.verwijderbareLagen;
+  @Input()
+  verplaatsbareLagen = DefaultOpties.verplaatsbareLagen;
+  @Input()
+  stijlbareVectorlagen = DefaultOpties.stijlbareVectorlagen;
 
   ngOnInit() {
     console.log("***init", this.opties());

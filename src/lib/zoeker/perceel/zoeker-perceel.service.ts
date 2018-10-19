@@ -136,9 +136,10 @@ export class ZoekerPerceelService implements Zoeker {
     //   { niscode: 20001, code: "1002/35", naam: "Afdeling 2" },
     //   { niscode: 20002, code: "1002/36", naam: "Afdeling 3" }
     // ]);
-    return this.http
-      .get<Afdeling[]>(this.locatorServicesConfig.url + "/rest/capakey/afdelingen/" + niscode)
-      .pipe(map(afdelingen => afdelingen.map(afdeling => ({ ...afdeling, niscode: niscode }))), shareReplay(1));
+    return this.http.get<Afdeling[]>(this.locatorServicesConfig.url + "/rest/capakey/afdelingen/" + niscode).pipe(
+      map(afdelingen => afdelingen.map(afdeling => ({ ...afdeling, niscode: niscode }))),
+      shareReplay(1)
+    );
   }
 
   getSecties$(niscode: number, afdelingcode: string): rx.Observable<Sectie[]> {
@@ -147,9 +148,10 @@ export class ZoekerPerceelService implements Zoeker {
     //   { niscode: 30000, afdelingcode: "1002/34", code: "1000-1000-11" },
     //   { niscode: 30000, afdelingcode: "1002/34", code: "1000-1000-12" }
     // ]);
-    return this.http
-      .get<Sectie[]>(this.locatorServicesConfig.url + "/rest/capakey/secties/" + niscode + "/" + afdelingcode)
-      .pipe(map(secties => secties.map(sectie => ({ ...sectie, niscode: niscode, afdelingcode: afdelingcode }))), shareReplay(1));
+    return this.http.get<Sectie[]>(this.locatorServicesConfig.url + "/rest/capakey/secties/" + niscode + "/" + afdelingcode).pipe(
+      map(secties => secties.map(sectie => ({ ...sectie, niscode: niscode, afdelingcode: afdelingcode }))),
+      shareReplay(1)
+    );
   }
 
   getPerceelNummers$(niscode: number, afdelingcode: string, sectiecode: string): rx.Observable<PerceelNummer[]> {
