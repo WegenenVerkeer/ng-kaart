@@ -1,3 +1,4 @@
+import { Function1 } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 
@@ -24,7 +25,11 @@ export interface Styles {
   readonly styles: Array<ol.style.Style>;
 }
 
-export function matchStyleSelector<A>(f: (_: StaticStyle) => A, g: (_: DynamicStyle) => A, h: (_: Styles) => A): (_: StyleSelector) => A {
+export function matchStyleSelector<A>(
+  f: Function1<StaticStyle, A>,
+  g: Function1<DynamicStyle, A>,
+  h: Function1<Styles, A>
+): Function1<StyleSelector, A> {
   return styleSelector => {
     switch (styleSelector.type) {
       case "StaticStyle":

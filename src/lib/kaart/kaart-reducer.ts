@@ -170,8 +170,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     const valideerAlsLayer: (laag: ke.Laag) => prt.KaartCmdValidation<ol.layer.Base> = (laag: ke.Laag) =>
       fromOption(toOlLayer(model, laag), "De laagbeschrijving kon niet naar een openlayers laag omgezet worden");
 
-    const valideerAlsGeheel = (num: number) => fromPredicate(num, Number.isInteger, `'${num}' is geen geheel getal`);
-
     const pasLaagPositieAan: (aanpassing: number) => (laag: ke.ToegevoegdeLaag) => ke.ToegevoegdeLaag = positieAanpassing => laag => {
       const positie = laag.positieInGroep + positieAanpassing;
       zetLayerIndex(laag.layer, positie, laag.laaggroep);
@@ -922,13 +920,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function zetStijlVoorLaagCmd(cmnd: prt.ZetStijlVoorLaagCmd<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerToegevoegdeVectorLaagBestaat(cmnd.titel).map(
-          pipe(
-            pasVectorLaagStijlAan(some(cmnd.stijl), cmnd.selectieStijl), //
-            pasLaagInModelAan(model),
-            ModelAndEmptyResult
-          )
-        )
+        valideerToegevoegdeVectorLaagBestaat(cmnd.titel).map(laag => {
+          const updatedLaag = pasVectorLaagStijlAan(some(cmnd.stijl), cmnd.selectieStijl)(laag);
+          const updatedModel = pasLaagInModelAan(model)(updatedLaag);
+          zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
+          return ModelAndEmptyResult(updatedModel);
+        })
       );
     }
 

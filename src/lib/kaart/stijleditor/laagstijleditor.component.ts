@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, NgZone, ViewEncapsulation } from "@angular/core";
 import * as array from "fp-ts/lib/Array";
 import { concat, Curried2, Function1, tuple } from "fp-ts/lib/function";
-import { none, Option } from "fp-ts/lib/Option";
+import { fromNullable, none, Option } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
-import { filter, map, mapTo, shareReplay, startWith, switchMap, take, tap } from "rxjs/operators";
+import { filter, map, mapTo, share, shareReplay, startWith, switchMap, take, tap } from "rxjs/operators";
 
 import * as clr from "../../stijl/colour";
 import { jsonAwvV0Style } from "../../stijl/json-awv-v0-stijl";
@@ -16,9 +16,7 @@ import * as ss from "../stijl-selector";
 
 import { isAanpassingBezig, LaagstijlAanpassend } from "./state";
 
-const kleurViaSelector: Function1<Option<ss.StyleSelector>, clr.Kleur> = maybeStyleSelector =>
-  maybeStyleSelector.map(() => clr.groen).getOrElse(clr.rood);
-
+// De hardgecodeerde kleuren
 const kleurenpaletKlein = array.catOptions([
   clr.toKleur("groen", "#46af4a"),
   clr.toKleur("geel", "#ffec16"),
@@ -62,30 +60,56 @@ const kleurenpaletExtra = array.catOptions([
 
 const kleurenpaletGroot = concat(kleurenpaletKlein, kleurenpaletExtra);
 
-const markeerKleur: Curried2<clr.Kleur, clr.Kleur[], clr.Kleur[]> = doelkleur => kleuren =>
-  kleuren.map(kleur => ({ ...kleur, gekozen: kleur.code === doelkleur.code }));
+// Alle kleuren die dezelfde zijn als de doelkleur krijgen een gekozen veldje
+interface KiesbareKleur extends clr.Kleur {
+  gekozen?: boolean; // enkel voor gebruik in HTML
+}
+const markeerKleur: Curried2<clr.Kleur, clr.Kleur[], KiesbareKleur[]> = doelkleur => kleuren =>
+  kleuren.map(kleur => (kleur.code === doelkleur.code ? { ...kleur, gekozen: true } : kleur));
 
+// Voorlopig geven we alle lagen dezelfde, eenvoudige stijl op het kleur na
 const enkelvoudigeKleurStijl: Function1<clr.Kleur, ss.StyleSelector> = kleur =>
   ss.StaticStyle(
     jsonAwvV0Style({
       stroke: {
-        color: clr.kleurRGBAValue(kleur),
+        color: clr.kleurcodeValue(kleur),
         width: 4
       },
       fill: {
-        color: clr.kleurRGBAValue(clr.setOpacity(0.25)(kleur))
+        color: clr.kleurcodeValue(clr.setOpacity(0.25)(kleur))
       },
       circle: {
-        fill: { color: clr.kleurRGBAValue(kleur) },
-        // stroke: { color: clr.kleurRGBAValue(kleur), width: 1.25 },
+        fill: { color: clr.kleurcodeValue(kleur) },
         radius: 5
       }
     }).getOrElseL(errs => {
       throw new Error("Het stijlformaat is niet geldig (meer)");
     })
   );
+
 const stijlCmdVoorLaag: Curried2<ke.ToegevoegdeVectorLaag, clr.Kleur, prt.ZetStijlVoorLaagCmd<KaartInternalMsg>> = laag => kleur =>
   prt.ZetStijlVoorLaagCmd(laag.titel, enkelvoudigeKleurStijl(kleur), none, kaartLogOnlyWrapper);
+
+// Op het niveau van een stijl is er geen eenvoudige kleur. We gaan dit proberen af leiden van de OL Style.
+interface AfgeleideKleur extends clr.Kleur {
+  gevonden: boolean; // enkel voor gebruik in HTML
+}
+const gevonden: Function1<clr.Kleur, AfgeleideKleur> = kleur => ({ ...kleur, gevonden: true });
+const nietGevonden: AfgeleideKleur = { ...clr.toKleurUnsafe("grijs", "#6d6d6d"), gevonden: false }; // mag niet voorkomen in palet
+const kleurViaSelector: Function1<Option<ss.StyleSelector>, AfgeleideKleur> = maybeStyleSelector =>
+  maybeStyleSelector
+    .chain(
+      ss.matchStyleSelector(
+        statStyle =>
+          fromNullable(statStyle.style.getStroke())
+            .chain(stroke => fromNullable(stroke.getColor()))
+            .chain(clr.olToKleur)
+            .map(gevonden),
+        () => none, // kunnen we niet omzetten naar een eenvoudige kleur
+        () => none // kunnen we niet omzetten naar een eenvoudige kleur
+      )
+    )
+    .getOrElse(nietGevonden);
 
 @Component({
   selector: "awv-laagstijleditor",
@@ -102,14 +126,13 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
   readonly kleinPaletZichtbaar$: rx.Observable<boolean>;
   readonly grootPaletZichtbaar$: rx.Observable<boolean>;
   readonly nietToepassen$: rx.Observable<boolean>;
-  readonly paletKleuren$: rx.Observable<clr.Kleur[]>;
+  readonly paletKleuren$: rx.Observable<KiesbareKleur[]>;
 
   constructor(kaart: KaartComponent, zone: NgZone) {
     super(kaart, zone);
 
     const aanpassing$: rx.Observable<LaagstijlAanpassend> = kaart.modelChanges.laagstijlaanpassingState$.pipe(
       filter(isAanpassingBezig),
-      tap(state => console.log("****new state", state)),
       shareReplay(1)
     );
     this.titel$ = aanpassing$.pipe(map(state => state.laag.titel), shareReplay(1));
@@ -117,15 +140,13 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
     // we zouden ook de laag zelf kunnen volgen, maar in de praktijk gaat die toch niet veranderen
     const origineleKleur$ = aanpassing$.pipe(map(state => kleurViaSelector(state.laag.stijlSel)));
     // zetten van de nieuwe en bestaande kleuren
-    const selectieKleur$ = this.actionDataFor$("kiesLaagkleur", clr.isKleur).pipe(shareReplay(1));
-    selectieKleur$.subscribe(kleur => console.log("****kl1", kleur));
-    this.rawActionDataFor$("kiesLaagkleur").subscribe(kleur => console.log("****kl2", kleur));
+    const selectieKleur$ = this.actionDataFor$("kiesLaagkleur", clr.isKleur).pipe(map(gevonden), shareReplay(1));
     this.laagkleur$ = rx
       .merge(
         origineleKleur$, // begin met kleur in huidige stijl
         selectieKleur$ // schakel over naar het net gekozen kleur
       )
-      .pipe(tap(kleur => console.log("****kleur", kleur)), shareReplay(1));
+      .pipe(shareReplay(1));
 
     // zichtbaarheid van hoofdpaneel
     this.zichtbaar$ = kaart.modelChanges.laagstijlaanpassingState$.pipe(map(isAanpassingBezig));
@@ -166,16 +187,31 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
         shareReplay(1)
       );
 
-    // Toepassen knop actief of niet. Uitgedrukt als een negatief statement wegens gebruik voor HTML 'disabled'.
-    this.nietToepassen$ = rx.combineLatest(origineleKleur$, selectieKleur$, clr.setoidKleurOpCode.equals).pipe(startWith(true));
-
-    // Luisteren op de "pas toe" knop. de take(1) is er.
+    // Luisteren op de "pas toe" knop.
+    const pasToeGeklikt$ = this.actionFor$("pasLaagstijlToe").pipe(share());
     const stijlCmd$ = aanpassing$.pipe(
       switchMap(aanpassing => selectieKleur$.pipe(map(stijlCmdVoorLaag(aanpassing.laag)))), // kleur omzetten naar commando
       take(1) // omdat er anders ook een commando gegenereerd wordt de volgende keer dat aanpassing$ een waarde emit
     );
-    this.bindToLifeCycle(this.actionFor$("pasLaagstijlToe"))
+    this.bindToLifeCycle(pasToeGeklikt$)
       .pipe(switchMap(() => stijlCmd$))
       .subscribe(cmd => this.dispatch(cmd));
+
+    // Toepassen knop actief of niet. Uitgedrukt als een negatief statement wegens gebruik voor HTML 'disabled'.
+    // Een alternatief voor gezetteKleur$ zou zijn om de state aan te passen. Dan zou origineleKleur de nieuwe waarde emitten,
+    // er zouden echter neveneffecten zijn zoals sluiten van de lagenkiezer als die ondertussen open gedaan zou zijn.
+    const gezetteKleur$ = rx.merge(
+      origineleKleur$,
+      selectieKleur$.pipe(
+        // herstart wanneer er een nieuwe kleur geselecteerd is
+        switchMap(selectieKleur =>
+          pasToeGeklikt$.pipe(
+            // selectieKleur vanaf er toegepast is
+            switchMap(() => rx.of(selectieKleur))
+          )
+        )
+      )
+    );
+    this.nietToepassen$ = rx.combineLatest(gezetteKleur$, selectieKleur$, clr.setoidKleurOpCode.equals).pipe(startWith(true));
   }
 }

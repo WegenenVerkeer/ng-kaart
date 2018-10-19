@@ -65,6 +65,12 @@
         .awv-kaart-laagstijleditor-body-properties-colour-value {
           padding-left: 16px;
           padding-right: 16px;
+          text-align: center;
+
+          span {
+            color: white;
+            line-height: 1.2em;
+          }
         }
       }
     }

@@ -17,7 +17,7 @@
   </div>
   <div class="laag-acties" *ngIf="minstensEenLaagActie$ | async">
     <mat-menu #laagMenu="matMenu" class="awv-kaart-laagmanipulatie laag-menu" [overlapTrigger]="true">
-      <button mat-menu-item (click)="verwijder()" [disabled]="!kanVerwijderen$ | async">
+      <button mat-menu-item (click)="verwijder()" [disabled]="!(kanVerwijderen$ | async)">
         <mat-icon>delete</mat-icon>
         <span>Verwijder laag uit lagenlijst</span>
       </button>

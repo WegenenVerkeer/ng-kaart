@@ -14,7 +14,9 @@
       <div class="awv-kaart-laagstijleditor-body-properties-value awv-kaart-laagstijleditor-body-properties-colour">
         <div class="awv-kaart-laagstijleditor-body-properties-colour-title">{{titel$ | async}}</div>
         <div class="awv-kaart-laagstijleditor-body-properties-colour-value" *ngIf="laagkleur$ | async as kleur">
-          <div class="circle-16" [style.background]="kleur.code" [matTooltip]="kleur.naam" (click)="onAction('openKleineKleurkiezer')"></div>
+          <div class="circle-16" [style.background]="kleur.code" [matTooltip]="kleur.naam" (click)="onAction('openKleineKleurkiezer')">
+            <span *ngIf="!kleur.gevonden">?</span>
+          </div>
         </div>
       </div>
     </div>
