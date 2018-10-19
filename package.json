@@ -97,6 +97,7 @@
     "@types/hammerjs": "2.0.35",
     "@types/jasmine": "2.5.54",
     "@types/jasmine-jquery": "1.5.32",
+    "@types/jasminewd2": "2.0.5",
     "@types/node": "8.5.1",
     "@types/openlayers": "4.6.9",
     "chance": "1.0.11",
