@@ -55,11 +55,9 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
     );
     this.kanVerwijderen$ = lagenkiezer.opties$.pipe(
       map(o => o.verwijderbareLagen),
-      tap(v => console.log("****vwl1", v)),
       shareReplay(1)
     );
     this.kanStijlAanpassen$ = lagenkiezer.opties$.pipe(
-      tap(o => console.log("****ksao", o, o.stijlbareVectorlagen(this.laag.titel))),
       map(o =>
         asToegevoegdeVectorLaag(this.laag)
           .map(vlg => o.stijlbareVectorlagen(vlg.titel))
@@ -68,9 +66,6 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
       shareReplay(1)
     );
     this.minstensEenLaagActie$ = rx.combineLatest(this.kanVerwijderen$, this.kanStijlAanpassen$, (v, a) => v || a).pipe(shareReplay(1));
-
-    // this.clickFor$("verwijderLaag").subscribe(() => this.dispatch(cmd.VerwijderLaagCmd(this.laag.titel, kaartLogOnlyWrapper)));
-    // this.clickFor$("pasStijlAan").subscribe(() => console.log("****stijl aanpassen"));
   }
 
   get title(): string {

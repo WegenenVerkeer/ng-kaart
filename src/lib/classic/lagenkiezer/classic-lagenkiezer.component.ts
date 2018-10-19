@@ -42,7 +42,6 @@ export class ClassicLagenkiezerComponent implements OnInit, OnDestroy, OnChanges
   }
 
   private opties(): LagenUiOpties {
-    console.log("****do", DefaultOpties);
     return {
       headerTitel: this.headerTitel,
       initieelDichtgeklapt: this.initieelDichtgeklapt,
