@@ -11,7 +11,8 @@ import { ClassicLegendeItemComponent } from "./classic-legende-item.component";
   providers: [{ provide: ClassicLegendeItemComponent, useExisting: forwardRef(() => ClassicLegendeImageItemComponent) }]
 })
 export class ClassicLegendeImageItemComponent extends ClassicLegendeItemComponent {
-  @Input() image: string;
+  @Input()
+  image: string;
 
   maakLegendeItem(): LegendeItem {
     return {

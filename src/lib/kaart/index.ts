@@ -40,6 +40,7 @@ import { KaartMetenComponent } from "./meten/kaart-meten.component";
 import { KaartMijnLocatieComponent } from "./mijn-locatie/kaart-mijn-locatie.component";
 import { KaartOpenStreetViewComponent } from "./open-street-view/kaart-open-street-view.component";
 import { KaartSchaalComponent } from "./schaal/kaart-schaal.component";
+import { StijleditorModule } from "./stijleditor/index";
 import { KaartTekenLaagComponent } from "./tekenen/kaart-teken-laag.component";
 import { KaartVoorwaardenComponent } from "./voorwaarden/kaart-voorwaarden.component";
 import { KaartZoomComponent } from "./zoom/kaart-zoom.component";
@@ -122,7 +123,8 @@ export const myCustomTooltipDefaults: MatTooltipDefaultOptions = {
     HttpClientModule,
     AbbameldaModule,
     ZoekerModule.forRoot({}),
-    LagenkiezerModule.withDefaults()
+    LagenkiezerModule.withDefaults(),
+    StijleditorModule
   ],
   declarations: [components],
   exports: [components],

@@ -1,5 +1,5 @@
 declare module jasmine {
-  interface Matchers {
+  interface Matchers<T> {
     toBeSome<A>(): boolean;
     toBeNone<A>(): boolean;
   }

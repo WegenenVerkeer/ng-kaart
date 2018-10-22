@@ -16,11 +16,16 @@ import { ClassicVectorLaagLikeComponent } from "./classic-vector-laag-like.compo
   encapsulation: ViewEncapsulation.None
 })
 export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent {
-  @Input() url = "/geolatte-nosqlfs";
-  @Input() database: string;
-  @Input() view = "default";
-  @Input() collection: string;
-  @Input() filter: string;
+  @Input()
+  url = "/geolatte-nosqlfs";
+  @Input()
+  database: string;
+  @Input()
+  view = "default";
+  @Input()
+  collection: string;
+  @Input()
+  filter: string;
 
   constructor(kaart: KaartClassicComponent, zone: NgZone) {
     super(kaart, zone);

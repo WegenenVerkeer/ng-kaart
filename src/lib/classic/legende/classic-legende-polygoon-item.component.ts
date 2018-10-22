@@ -11,7 +11,8 @@ import { ClassicLegendeItemComponent } from "./classic-legende-item.component";
   providers: [{ provide: ClassicLegendeItemComponent, useExisting: forwardRef(() => ClassicLegendePolygoonItemComponent) }]
 })
 export class ClassicLegendePolygoonItemComponent extends ClassicLegendeItemComponent {
-  @Input() kleur: string;
+  @Input()
+  kleur: string;
 
   maakLegendeItem(): LegendeItem {
     return {

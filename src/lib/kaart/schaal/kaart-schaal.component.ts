@@ -14,7 +14,8 @@ export const SchaalUiSelector = "Schaal";
   styleUrls: ["./kaart-schaal.component.scss"]
 })
 export class KaartSchaalComponent extends KaartChildComponentBase implements AfterViewInit, OnDestroy {
-  @ViewChild("schaal") schaalElement: ElementRef;
+  @ViewChild("schaal")
+  schaalElement: ElementRef;
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);

@@ -21,22 +21,36 @@ const WmtsParser = new ol.format.WMTSCapabilities();
   encapsulation: ViewEncapsulation.None
 })
 export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements OnInit {
-  @Input() laagNaam: string;
-  @Input() tiled = true;
-  @Input() type: string;
-  @Input() matrixSet: string;
+  @Input()
+  laagNaam: string;
+  @Input()
+  tiled = true;
+  @Input()
+  type: string;
+  @Input()
+  matrixSet: string;
 
-  @Input() capUrl?: string;
+  @Input()
+  capUrl?: string;
 
-  @Input() urls: string[] = [];
-  @Input() versie?: string;
-  @Input() format = "image/png";
-  @Input() opacity?: number;
-  @Input() matrixIds: string[];
-  @Input() style?: string;
-  @Input() origin?: [number, number];
-  @Input() extent?: [number, number, number, number];
-  @Input() projection = "EPSG:31370";
+  @Input()
+  urls: string[] = [];
+  @Input()
+  versie?: string;
+  @Input()
+  format = "image/png";
+  @Input()
+  opacity?: number;
+  @Input()
+  matrixIds: string[];
+  @Input()
+  style?: string;
+  @Input()
+  origin?: [number, number];
+  @Input()
+  extent?: [number, number, number, number];
+  @Input()
+  projection = "EPSG:31370";
 
   constructor(kaart: KaartClassicComponent, private http: HttpClient, zone: NgZone) {
     super(kaart, zone);

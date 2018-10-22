@@ -9,8 +9,10 @@ import { KaartClassicComponent } from "../kaart-classic.component";
   template: ""
 })
 export class ClassicVoorwaardenComponent extends ClassicUIElementSelectorComponentBase {
-  @Input() href = "https://www.vlaanderen.be/nl/disclaimer";
-  @Input() titel = "Voorwaarden";
+  @Input()
+  href = "https://www.vlaanderen.be/nl/disclaimer";
+  @Input()
+  titel = "Voorwaarden";
 
   constructor(kaart: KaartClassicComponent, zone: NgZone) {
     super(VoorwaardenSelector, kaart, zone);

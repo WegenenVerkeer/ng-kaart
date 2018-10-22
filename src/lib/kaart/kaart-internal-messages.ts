@@ -1,7 +1,6 @@
 import { none, Option, some } from "fp-ts/lib/Option";
-import { Map, Set } from "immutable";
+import { Map } from "immutable";
 import * as ol from "openlayers";
-import { pipe } from "rxjs";
 
 import { TekenResultaat, TekenSettings } from "./kaart-elementen";
 import * as prt from "./kaart-protocol";

@@ -15,11 +15,15 @@
   <div class="laag-naam">
     <div [ngClass]="stijlInKiezer">{{ title }}</div>
   </div>
-  <div class="laag-acties" *ngIf="minstensEenLaagActie">
+  <div class="laag-acties" *ngIf="minstensEenLaagActie$ | async">
     <mat-menu #laagMenu="matMenu" class="awv-kaart-laagmanipulatie laag-menu" [overlapTrigger]="true">
-      <button mat-menu-item (click)="verwijder()" [disabled]="!kanVerwijderen$ | async">
+      <button mat-menu-item (click)="verwijder()" [disabled]="!(kanVerwijderen$ | async)">
         <mat-icon>delete</mat-icon>
         <span>Verwijder laag uit lagenlijst</span>
+      </button>
+      <button mat-menu-item (click)="pasStijlAan()" *ngIf="kanStijlAanpassen$ | async">
+        <mat-icon>format_color_fill</mat-icon>
+        <span>Stijl aanpassen</span>
       </button>
     </mat-menu>
     <button mat-icon-button [matMenuTriggerFor]="laagMenu" matTooltip="Toon laag opties" matTooltipPosition="right">

@@ -13,7 +13,8 @@ export const blancoLaag = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAE
   encapsulation: ViewEncapsulation.None
 })
 export class ClassicBlancoLaagComponent extends ClassicLaagComponent {
-  @Input() titel = "Blanco";
+  @Input()
+  titel = "Blanco";
 
   constructor(kaart: KaartClassicComponent, zone: NgZone) {
     super(kaart, zone);

@@ -18,6 +18,7 @@ import { UiElementOpties } from "./kaart-protocol-commands";
 import { Viewinstellingen } from "./kaart-protocol-subscriptions";
 import { KaartWithInfo } from "./kaart-with-info";
 import { GeselecteerdeFeatures, HoverFeature } from "./kaart-with-info-model";
+import { GeenLaagstijlaanpassing, LaagstijlaanpassingState } from "./stijleditor/state";
 
 export interface UiElementSelectie {
   readonly naam: string;
@@ -43,6 +44,7 @@ export interface ModelChanger {
   readonly zoekopdrachtSubj: rx.Subject<Zoekopdracht>;
   readonly zoekresultaatselectieSubj: rx.Subject<ZoekResultaat>;
   readonly laagLocationInfoServicesOpTitelSubj: rx.BehaviorSubject<Map<string, LaagLocationInfoService>>;
+  readonly LaagstijlaanpassingStateSubj: rx.BehaviorSubject<LaagstijlaanpassingState>;
 }
 
 // Hieronder wordt een paar keer BehaviourSubject gebruikt. Dat is equivalent met, maar beknopter dan, een startWith + shareReplay
@@ -62,7 +64,8 @@ export const ModelChanger: () => ModelChanger = () => ({
   zoekerServicesSubj: new rx.BehaviorSubject([]),
   zoekopdrachtSubj: new rx.Subject<Zoekopdracht>(),
   zoekresultaatselectieSubj: new rx.Subject<ZoekResultaat>(),
-  laagLocationInfoServicesOpTitelSubj: new rx.BehaviorSubject(Map())
+  laagLocationInfoServicesOpTitelSubj: new rx.BehaviorSubject(Map()),
+  LaagstijlaanpassingStateSubj: new rx.BehaviorSubject(GeenLaagstijlaanpassing)
 });
 
 export interface ModelChanges {
@@ -81,6 +84,7 @@ export interface ModelChanges {
   readonly zoekresultaten$: rx.Observable<ZoekResultaten>;
   readonly zoekresultaatselectie$: rx.Observable<ZoekResultaat>;
   readonly laagLocationInfoServicesOpTitel$: rx.Observable<Map<string, LaagLocationInfoService>>;
+  readonly laagstijlaanpassingState$: rx.Observable<LaagstijlaanpassingState>;
 }
 
 const viewinstellingen = (olmap: ol.Map) => ({
@@ -212,6 +216,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     zoekerServices$: changer.zoekerServicesSubj.asObservable(),
     zoekresultaten$: zoekresulaten$,
     zoekresultaatselectie$: changer.zoekresultaatselectieSubj.asObservable(),
-    laagLocationInfoServicesOpTitel$: changer.laagLocationInfoServicesOpTitelSubj.asObservable()
+    laagLocationInfoServicesOpTitel$: changer.laagLocationInfoServicesOpTitelSubj.asObservable(),
+    laagstijlaanpassingState$: changer.LaagstijlaanpassingStateSubj.asObservable()
   };
 };

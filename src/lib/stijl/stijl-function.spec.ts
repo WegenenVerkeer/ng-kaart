@@ -42,6 +42,25 @@ describe("de stijl functie", () => {
       expect(result.isSuccess()).toBe(true);
       expect(result.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(new ol.style.Style());
     });
+    it("moet een stijl selecteren adhv een regel zonder conditie", () => {
+      const result = definitieToStyleFunction(
+        "json",
+        JSON.stringify({
+          version: "awv-v0",
+          definition: {
+            rules: [
+              {
+                style: {
+                  definition: {}
+                }
+              }
+            ]
+          }
+        })
+      );
+      expect(result.isSuccess()).toBe(true);
+      expect(result.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(new ol.style.Style());
+    });
 
     it("moet een stijl selecteren adhv een complexe expressie", () => {
       const result = definitieToStyleFunction(

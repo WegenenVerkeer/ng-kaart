@@ -11,7 +11,8 @@ import * as prt from "../../kaart/kaart-protocol";
   encapsulation: ViewEncapsulation.None
 })
 export class ClassicStandaardInteractiesComponent implements OnInit, OnDestroy {
-  @Input() focusVoorZoom = false;
+  @Input()
+  focusVoorZoom = false;
 
   constructor(private readonly kaart: KaartClassicComponent) {}
 

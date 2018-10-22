@@ -41,26 +41,45 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   readonly dispatcher: ReplaySubjectKaartCmdDispatcher<TypedRecord> = new ReplaySubjectKaartCmdDispatcher();
   readonly kaartMsgObservableConsumer: KaartMsgObservableConsumer;
 
-  @Input() zoom: number;
-  @Input() minZoom = 1;
-  @Input() maxZoom = 15;
-  @Input() middelpunt: ol.Coordinate; // = [130000, 193000]; // "extent" heeft voorrang
-  @Input() breedte; // neem standaard de hele breedte in
-  @Input() hoogte = 400;
-  @Input() kaartLinksBreedte; // breedte van linker-paneel (de default is 480px bij kaart breedte > 1240 en 360px voor smallere kaarten)
-  @Input() mijnLocatieZoom: number | undefined;
-  @Input() extent: ol.Extent;
-  @Input() selectieModus: prt.SelectieModus = "none";
-  @Input() hoverModus: prt.HoverModus = "off";
-  @Input() naam = "kaart" + KaartClassicComponent.counter++;
-  @Input() geselecteerdeFeatures: List<ol.Feature> = List();
+  @Input()
+  zoom: number;
+  @Input()
+  minZoom = 1;
+  @Input()
+  maxZoom = 15;
+  @Input()
+  middelpunt: ol.Coordinate; // = [130000, 193000]; // "extent" heeft voorrang
+  @Input()
+  breedte; // neem standaard de hele breedte in
+  @Input()
+  hoogte = 400;
+  @Input()
+  kaartLinksBreedte; // breedte van linker-paneel (de default is 480px bij kaart breedte > 1240 en 360px voor smallere kaarten)
+  @Input()
+  mijnLocatieZoom: number | undefined;
+  @Input()
+  extent: ol.Extent;
+  @Input()
+  selectieModus: prt.SelectieModus = "none";
+  @Input()
+  hoverModus: prt.HoverModus = "off";
+  @Input()
+  naam = "kaart" + KaartClassicComponent.counter++;
+  @Input()
+  geselecteerdeFeatures: List<ol.Feature> = List();
 
-  @Output() geselecteerdeFeaturesChange: EventEmitter<List<ol.Feature>> = new EventEmitter();
-  @Output() middelpuntChange: EventEmitter<ol.Coordinate> = new EventEmitter();
-  @Output() zoomChange: EventEmitter<number> = new EventEmitter();
-  @Output() extentChange: EventEmitter<ol.Extent> = new EventEmitter();
-  @Output() zichtbareFeatures: EventEmitter<List<ol.Feature>> = new EventEmitter();
-  @Output() hoverFeature: EventEmitter<Option<ol.Feature>> = new EventEmitter();
+  @Output()
+  geselecteerdeFeaturesChange: EventEmitter<List<ol.Feature>> = new EventEmitter();
+  @Output()
+  middelpuntChange: EventEmitter<ol.Coordinate> = new EventEmitter();
+  @Output()
+  zoomChange: EventEmitter<number> = new EventEmitter();
+  @Output()
+  extentChange: EventEmitter<ol.Extent> = new EventEmitter();
+  @Output()
+  zichtbareFeatures: EventEmitter<List<ol.Feature>> = new EventEmitter();
+  @Output()
+  hoverFeature: EventEmitter<Option<ol.Feature>> = new EventEmitter();
 
   constructor(zone: NgZone) {
     super(zone);
@@ -77,12 +96,42 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
         this.kaartClassicSubMsg$.lift(
           classicMsgSubscriptionCmdOperator(
             this.dispatcher,
-            prt.GeselecteerdeFeaturesSubscription(pipe(FeatureSelectieAangepastMsg, KaartClassicMsg)),
-            prt.HoverFeaturesSubscription(pipe(FeatureHoverAangepastMsg, KaartClassicMsg)),
-            prt.ZichtbareFeaturesSubscription(pipe(ZichtbareFeaturesAangepastMsg, KaartClassicMsg)),
-            prt.ZoomSubscription(pipe(ZoomAangepastMsg, KaartClassicMsg)),
-            prt.MiddelpuntSubscription(pipe(MiddelpuntAangepastMsg, KaartClassicMsg)),
-            prt.ExtentSubscription(pipe(ExtentAangepastMsg, KaartClassicMsg))
+            prt.GeselecteerdeFeaturesSubscription(
+              pipe(
+                FeatureSelectieAangepastMsg,
+                KaartClassicMsg
+              )
+            ),
+            prt.HoverFeaturesSubscription(
+              pipe(
+                FeatureHoverAangepastMsg,
+                KaartClassicMsg
+              )
+            ),
+            prt.ZichtbareFeaturesSubscription(
+              pipe(
+                ZichtbareFeaturesAangepastMsg,
+                KaartClassicMsg
+              )
+            ),
+            prt.ZoomSubscription(
+              pipe(
+                ZoomAangepastMsg,
+                KaartClassicMsg
+              )
+            ),
+            prt.MiddelpuntSubscription(
+              pipe(
+                MiddelpuntAangepastMsg,
+                KaartClassicMsg
+              )
+            ),
+            prt.ExtentSubscription(
+              pipe(
+                ExtentAangepastMsg,
+                KaartClassicMsg
+              )
+            )
           )
         )
       ).subscribe(err => classicLogger.error(err));
@@ -137,13 +186,65 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
 
   ngOnChanges(changes: SimpleChanges) {
     const dispatch: (cmd: prt.Command<TypedRecord>) => void = cmd => this.dispatch(cmd);
-    forChangedValue(changes, "zoom", pipe(zoom => prt.VeranderZoomCmd(zoom, logOnlyWrapper), dispatch));
-    forChangedValue(changes, "middelpunt", pipe(prt.VeranderMiddelpuntCmd, dispatch));
-    forChangedValue(changes, "extent", pipe(prt.VeranderExtentCmd, dispatch));
-    forChangedValue(changes, "breedte", pipe(breedte => [breedte, this.hoogte], prt.VeranderViewportCmd, dispatch));
-    forChangedValue(changes, "hoogte", pipe(hoogte => [this.breedte, hoogte], prt.VeranderViewportCmd, dispatch));
-    forChangedValue(changes, "mijnLocatieZoom", pipe(option.fromNullable, prt.ZetMijnLocatieZoomCmd, dispatch));
-    forChangedValue(changes, "geselecteerdeFeatures", pipe(prt.SelecteerFeaturesCmd, dispatch));
+    forChangedValue(
+      changes,
+      "zoom",
+      pipe(
+        zoom => prt.VeranderZoomCmd(zoom, logOnlyWrapper),
+        dispatch
+      )
+    );
+    forChangedValue(
+      changes,
+      "middelpunt",
+      pipe(
+        prt.VeranderMiddelpuntCmd,
+        dispatch
+      )
+    );
+    forChangedValue(
+      changes,
+      "extent",
+      pipe(
+        prt.VeranderExtentCmd,
+        dispatch
+      )
+    );
+    forChangedValue(
+      changes,
+      "breedte",
+      pipe(
+        breedte => [breedte, this.hoogte],
+        prt.VeranderViewportCmd,
+        dispatch
+      )
+    );
+    forChangedValue(
+      changes,
+      "hoogte",
+      pipe(
+        hoogte => [this.breedte, hoogte],
+        prt.VeranderViewportCmd,
+        dispatch
+      )
+    );
+    forChangedValue(
+      changes,
+      "mijnLocatieZoom",
+      pipe(
+        option.fromNullable,
+        prt.ZetMijnLocatieZoomCmd,
+        dispatch
+      )
+    );
+    forChangedValue(
+      changes,
+      "geselecteerdeFeatures",
+      pipe(
+        prt.SelecteerFeaturesCmd,
+        dispatch
+      )
+    );
   }
 
   dispatch(cmd: prt.Command<TypedRecord>) {

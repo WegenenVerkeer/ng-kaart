@@ -11,7 +11,8 @@ import { KaartClassicComponent } from "../kaart-classic.component";
   encapsulation: ViewEncapsulation.None
 })
 export class ClassicAchtergrondSelectorComponent extends KaartComponentBase implements OnInit, OnDestroy {
-  @Input() titels: Array<string> = [""]; // FIXME: dit wordt nog/niet meer gebruikt, maar lijkt wel handig
+  @Input()
+  titels: Array<string> = [""]; // FIXME: dit wordt nog/niet meer gebruikt, maar lijkt wel handig
 
   constructor(private readonly kaart: KaartClassicComponent, zone: NgZone) {
     super(zone);

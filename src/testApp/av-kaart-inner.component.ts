@@ -26,11 +26,16 @@ const withId = (feature: ol.Feature) => {
   encapsulation: ViewEncapsulation.None
 })
 export class AvKaartInnerComponent implements OnChanges {
-  @Input() adressen: any[];
-  @Input() percelen: any[];
-  @Input() weglocaties: any[];
-  @Input() breedte: number;
-  @Input() hoogte: number;
+  @Input()
+  adressen: any[];
+  @Input()
+  percelen: any[];
+  @Input()
+  weglocaties: any[];
+  @Input()
+  breedte: number;
+  @Input()
+  hoogte: number;
 
   wktFormat = new ol.format.WKT();
   adresFeatures: ol.Feature[] = [];

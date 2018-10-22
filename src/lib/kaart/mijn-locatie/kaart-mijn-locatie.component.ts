@@ -32,7 +32,8 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
 
   enabled$: rx.Observable<boolean> = rx.of(true);
 
-  @ViewChildren("locateBtn") locateBtnQry: QueryList<MatButton>;
+  @ViewChildren("locateBtn")
+  locateBtnQry: QueryList<MatButton>;
 
   mijnLocatieStyle: ol.style.Style;
   mijnLocatie: Option<ol.Feature> = none;

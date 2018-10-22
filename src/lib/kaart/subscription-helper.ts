@@ -28,7 +28,7 @@ import {
  *
  * @param dispatcher Een dispatcher voor MsgOut messages
  * @param msgGen Een functie die Wrapper voor SubscriptionResults genereert
- * @param subscriptions De subscriptions die naar de dispatcher gestuurde moeten worden
+ * @param subscriptions De subscriptions die naar de dispatcher gestuurd moeten worden
  */
 export function subscriptionCmdOperator<MsgIn extends TypedRecord, MsgOut extends TypedRecord>(
   dispatcher: KaartCmdDispatcher<MsgOut>,

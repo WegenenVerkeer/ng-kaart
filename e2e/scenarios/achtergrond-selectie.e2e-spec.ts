@@ -1,4 +1,3 @@
-/// <reference path="../util/custom-matchers.d.ts">
 import { findFirst } from "fp-ts/lib/Array";
 import { Option } from "fp-ts/lib/Option";
 import { browser, by, element, WebElement } from "protractor";
@@ -8,7 +7,7 @@ import { KaartPage } from "../pages/kaart.po";
 import { initTesting } from "./base-scenario";
 
 class AchtergrondTile {
-  constructor(readonly titel: string, readonly zichtbaar: boolean) { }
+  constructor(readonly titel: string, readonly zichtbaar: boolean) {}
 }
 
 class AchtergrondSelectie {
@@ -44,9 +43,15 @@ class AchtergrondSelectie {
   }
 
   async click(titel: string): Promise<void> {
-    await this.allAchtergrondTiles.filter(tl => 
-       tl.element(by.css(".title")).getText().then(title => title === titel)
-    ).first().click();
+    await this.allAchtergrondTiles
+      .filter(tl =>
+        tl
+          .element(by.css(".title"))
+          .getText()
+          .then(title => title === titel)
+      )
+      .first()
+      .click();
     await browser.sleep(600); // inklapanimatie
   }
 }
@@ -96,7 +101,7 @@ describe("Als ik naar de achtergrond kijk", () => {
         expect(await achtergrondSelectie.zichtbareTileMetTitel("Dienstkaart kleur")).toBeSome();
       });
 
-      it("zijn er geen andere tiles meer zichtbaar", async () => {        
+      it("zijn er geen andere tiles meer zichtbaar", async () => {
         expect((await achtergrondSelectie.zichtBareTiles()).length).toBe(1);
       });
     });

@@ -15,16 +15,26 @@ import { logOnlyWrapper } from "../messages";
 import { ClassicLaagComponent } from "./classic-laag.component";
 
 export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponent {
-  @Input() style?: ol.style.Style = undefined; // heeft voorrang op styleFunction
-  @Input() styleFunction?: ol.StyleFunction = getDefaultStyleFunction(); // TODO combineren met style tot type Stylish
-  @Input() selectieStyle?: ss.Stylish = getDefaultSelectionStyleFunction();
-  @Input() hoverStyle?: ss.Stylish = getDefaultHoverStyleFunction();
-  @Input() zichtbaar = true;
-  @Input() selecteerbaar = true;
-  @Input() hover = false;
-  @Input() minZoom = 7;
-  @Input() maxZoom = 15;
-  @Input() offsetveld?: string = undefined;
+  @Input()
+  style?: ol.style.Style = undefined; // heeft voorrang op styleFunction
+  @Input()
+  styleFunction?: ol.StyleFunction = getDefaultStyleFunction(); // TODO combineren met style tot type Stylish
+  @Input()
+  selectieStyle?: ss.Stylish = getDefaultSelectionStyleFunction();
+  @Input()
+  hoverStyle?: ss.Stylish = getDefaultHoverStyleFunction();
+  @Input()
+  zichtbaar = true;
+  @Input()
+  selecteerbaar = true;
+  @Input()
+  hover = false;
+  @Input()
+  minZoom = 7;
+  @Input()
+  maxZoom = 15;
+  @Input()
+  offsetveld?: string = undefined;
   private refreshTriggerSub: rx.Subscription = new rx.Subscription();
   @Input()
   set refreshTrigger(obs: rx.Observable<void>) {

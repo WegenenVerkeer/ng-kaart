@@ -17,6 +17,7 @@ export type Command<Msg extends KaartMsg> =
   | AbortTileLoadingCmd
   | ActiveerHoverModusCmd<Msg>
   | ActiveerSelectieModusCmd<Msg>
+  | BewerkVectorlaagstijlCmd
   | DeselecteerAlleFeaturesCmd
   | DeselecteerFeatureCmd
   | KiesAchtergrondCmd<Msg>
@@ -25,6 +26,7 @@ export type Command<Msg extends KaartMsg> =
   | MeldComponentFoutCmd
   | SelecteerFeaturesCmd
   | SluitInfoBoodschapCmd
+  | StopVectorlaagstijlBewerkingCmd
   | SubscribeCmd<Msg>
   | ToonAchtergrondKeuzeCmd<Msg>
   | ToonInfoBoodschapCmd
@@ -381,6 +383,16 @@ export interface VoegLaagLocatieInformatieServiceToe {
   readonly msgGen: BareValidationWrapper<prt.TypedRecord>;
 }
 
+// Er kan maar 1 Vectorlaagstijl per keer bewerk worden. Indien meer gewenst, moet een msgGen met daarin handle opgegeven worden.
+export interface BewerkVectorlaagstijlCmd {
+  readonly type: "BewerkVectorlaagstijl";
+  readonly laag: ke.ToegevoegdeVectorLaag;
+}
+
+export interface StopVectorlaagstijlBewerkingCmd {
+  readonly type: "StopVectorlaagstijlBewerking";
+}
+
 ////////////////////////
 // constructor functies
 //
@@ -645,4 +657,12 @@ export function VoegLaagLocatieInformatieServiceToe(
   msgGen: BareValidationWrapper<prt.TypedRecord>
 ): VoegLaagLocatieInformatieServiceToe {
   return { type: "VoegLaagLocatieInformatieServiceToe", titel: titel, service: service, msgGen: msgGen };
+}
+
+export function BewerkVectorlaagstijlCmd(laag: ke.ToegevoegdeVectorLaag): BewerkVectorlaagstijlCmd {
+  return { type: "BewerkVectorlaagstijl", laag: laag };
+}
+
+export function StopVectorlaagstijlBewerkingCmd(): StopVectorlaagstijlBewerkingCmd {
+  return { type: "StopVectorlaagstijlBewerking" };
 }

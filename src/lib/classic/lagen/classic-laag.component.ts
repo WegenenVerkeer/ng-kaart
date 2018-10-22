@@ -11,14 +11,21 @@ import { ClassicLegendeItemComponent } from "../legende/classic-legende-item.com
 import { KaartClassicMsg, logOnlyWrapper } from "../messages";
 
 export abstract class ClassicLaagComponent extends KaartComponentBase implements AfterContentInit, OnDestroy, OnInit {
-  @Input() titel = "";
-  @Input() zichtbaar = true;
-  @Input() groep: Laaggroep | undefined; // Heeft voorrang op std ingesteld via laaggroep
-  @Input() minZoom = 2;
-  @Input() maxZoom = 16;
-  @Input() stijlInLagenKiezer?: string;
+  @Input()
+  titel = "";
+  @Input()
+  zichtbaar = true;
+  @Input()
+  groep: Laaggroep | undefined; // Heeft voorrang op std ingesteld via laaggroep
+  @Input()
+  minZoom = 2;
+  @Input()
+  maxZoom = 16;
+  @Input()
+  stijlInLagenKiezer?: string;
 
-  @ContentChildren(ClassicLegendeItemComponent) legendeItems: QueryList<ClassicLegendeItemComponent>;
+  @ContentChildren(ClassicLegendeItemComponent)
+  legendeItems: QueryList<ClassicLegendeItemComponent>;
 
   protected laag: Option<Laag> = none;
 

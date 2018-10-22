@@ -15,7 +15,8 @@ import { ClassicVectorLaagLikeComponent } from "./classic-vector-laag-like.compo
   encapsulation: ViewEncapsulation.None
 })
 export class ClassicVectorLaagComponent extends ClassicVectorLaagLikeComponent {
-  @Input() source = new ol.source.Vector();
+  @Input()
+  source = new ol.source.Vector();
 
   constructor(kaart: KaartClassicComponent, zone: NgZone) {
     super(kaart, zone);

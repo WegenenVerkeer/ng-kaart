@@ -26,6 +26,7 @@
     "loglevel": "1.6.1",
     "material-design-icons": "^3.0.1",
     "mobile-detect": "1.4.2",
+    "newtype-ts": "0.2.1",
     "ng4-click-outside": "1.0.1",
     "openlayers": "4.6.5",
     "proj4": "2.4.4",

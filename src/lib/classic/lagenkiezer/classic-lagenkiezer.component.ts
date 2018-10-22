@@ -11,13 +11,21 @@ import { KaartClassicComponent } from "../kaart-classic.component";
 export class ClassicLagenkiezerComponent implements OnInit, OnDestroy, OnChanges {
   constructor(private readonly kaart: KaartClassicComponent) {}
 
-  @Input() titels: string[] = []; // TODO nog te implementeren om te beperken tot deze
+  @Input()
+  titels: string[] = []; // TODO nog te implementeren om te beperken tot deze
 
-  @Input() headerTitel = DefaultOpties.headerTitel;
-  @Input() initieelDichtgeklapt = DefaultOpties.initieelDichtgeklapt;
-  @Input() toonLegende = DefaultOpties.toonLegende;
-  @Input() verwijderbareLagen = DefaultOpties.verwijderbareLagen;
-  @Input() verplaatsbareLagen = DefaultOpties.verplaatsbareLagen;
+  @Input()
+  headerTitel = DefaultOpties.headerTitel;
+  @Input()
+  initieelDichtgeklapt = DefaultOpties.initieelDichtgeklapt;
+  @Input()
+  toonLegende = DefaultOpties.toonLegende;
+  @Input()
+  verwijderbareLagen = DefaultOpties.verwijderbareLagen;
+  @Input()
+  verplaatsbareLagen = DefaultOpties.verplaatsbareLagen;
+  @Input()
+  stijlbareVectorlagen = DefaultOpties.stijlbareVectorlagen;
 
   ngOnInit() {
     console.log("***init", this.opties());
@@ -39,7 +47,8 @@ export class ClassicLagenkiezerComponent implements OnInit, OnDestroy, OnChanges
       initieelDichtgeklapt: this.initieelDichtgeklapt,
       toonLegende: this.toonLegende,
       verwijderbareLagen: this.verwijderbareLagen,
-      verplaatsbareLagen: this.verplaatsbareLagen
+      verplaatsbareLagen: this.verplaatsbareLagen,
+      stijlbareVectorlagen: this.stijlbareVectorlagen
     };
   }
 }

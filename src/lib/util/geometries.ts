@@ -41,11 +41,11 @@ export function dimensieBeschrijving(geometry: ol.geom.Geometry, verbose = true)
   const sup2 = "\u00B2";
 
   function formatArea(area: number): string {
-    return area > 10000 ? Math.round(area / 1000000 * 100) / 100 + " " + "km" + sup2 : Math.round(area * 100) / 100 + " " + "m" + sup2;
+    return area > 10000 ? Math.round((area / 1000000) * 100) / 100 + " " + "km" + sup2 : Math.round(area * 100) / 100 + " " + "m" + sup2;
   }
 
   function formatLength(length: number): string {
-    return length > 1000 ? Math.round(length / 1000 * 100) / 100 + " " + "km" : Math.round(length * 100) / 100 + " " + "m";
+    return length > 1000 ? Math.round((length / 1000) * 100) / 100 + " " + "km" : Math.round(length * 100) / 100 + " " + "m";
   }
 
   const area = ol.Sphere.getArea(geometry);

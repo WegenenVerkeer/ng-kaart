@@ -144,9 +144,10 @@ export class ZoekerGoogleWdbService implements Zoeker {
     }
     const params: HttpParams = new HttpParams().set("query", zoekterm.value).set("legacy", "false");
 
-    return this.httpClient
-      .get<Object>(this.locatieZoekerUrl + "/zoek", { params: params })
-      .pipe(switchMap(resp => this.parseResult(resp, zoektype, maxResultaten)), catchError(err => this.handleError(err, zoektype)));
+    return this.httpClient.get<Object>(this.locatieZoekerUrl + "/zoek", { params: params }).pipe(
+      switchMap(resp => this.parseResult(resp, zoektype, maxResultaten)),
+      catchError(err => this.handleError(err, zoektype))
+    );
   }
 
   private parseResult(response: any, zoektype: Zoektype, maxResultaten: number): rx.Observable<ZoekResultaten> {

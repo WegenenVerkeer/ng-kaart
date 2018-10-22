@@ -23,7 +23,8 @@ export class ZoekerExterneWmsGetraptComponent extends GetraptZoekerComponent imp
 
   bronControl = new FormControl({ value: "", disabled: false });
 
-  @Output() leegMakenDisabledChange: EventEmitter<Boolean> = new EventEmitter(true);
+  @Output()
+  leegMakenDisabledChange: EventEmitter<Boolean> = new EventEmitter(true);
 
   constructor(kaartComponent: KaartComponent, zoekerComponent: ZoekerBoxComponent, zone: NgZone) {
     super(kaartComponent, zoekerComponent, zone);
@@ -42,7 +43,12 @@ export class ZoekerExterneWmsGetraptComponent extends GetraptZoekerComponent imp
       )
     );
 
-    this.bindToLifeCycle(this.bronControl.valueChanges.pipe(distinctUntilChanged(), filter(v => v !== null))).subscribe(bron => {
+    this.bindToLifeCycle(
+      this.bronControl.valueChanges.pipe(
+        distinctUntilChanged(),
+        filter(v => v !== null)
+      )
+    ).subscribe(bron => {
       this.leegMakenDisabledChange.emit(false);
       this.zoek({ type: "ExterneWms", bron: bron }, ["ExterneWms"]);
     });

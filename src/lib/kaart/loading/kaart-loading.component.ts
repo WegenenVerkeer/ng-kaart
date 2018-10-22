@@ -35,12 +35,14 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
         .map(lg => ((lg as VectorLaag)!.source as NosqlFsSource).loadEvent$.pipe(startWith(LoadComplete as DataLoadEvent)))
         .toList();
 
-    const lagenHoog$$: rx.Observable<List<rx.Observable<DataLoadEvent>>> = this.modelChanges.lagenOpGroep
-      .get("Voorgrond.Hoog")
-      .pipe(map(noSqlFsLagenDataLoadEvents), startWith(List<rx.Observable<DataLoadEvent>>()));
-    const lagenLaag$$: rx.Observable<List<rx.Observable<DataLoadEvent>>> = this.modelChanges.lagenOpGroep
-      .get("Voorgrond.Laag")
-      .pipe(map(noSqlFsLagenDataLoadEvents), startWith(List<rx.Observable<DataLoadEvent>>()));
+    const lagenHoog$$: rx.Observable<List<rx.Observable<DataLoadEvent>>> = this.modelChanges.lagenOpGroep.get("Voorgrond.Hoog").pipe(
+      map(noSqlFsLagenDataLoadEvents),
+      startWith(List<rx.Observable<DataLoadEvent>>())
+    );
+    const lagenLaag$$: rx.Observable<List<rx.Observable<DataLoadEvent>>> = this.modelChanges.lagenOpGroep.get("Voorgrond.Laag").pipe(
+      map(noSqlFsLagenDataLoadEvents),
+      startWith(List<rx.Observable<DataLoadEvent>>())
+    );
 
     const toegevoegdeLagenEvts$$: rx.Observable<List<rx.Observable<DataLoadEvent>>> = rx.combineLatest(
       lagenHoog$$,
@@ -65,10 +67,19 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
       switchMap(lgn => rx.from(lgn.toArray()).pipe(mergeAll())),
       shareReplay(1, 1000)
     );
-    const stableError$ = (stability: number) => mergedDataloadEvent$.pipe(ofType<LoadError>("LoadError"), debounceTime(stability));
+    const stableError$ = (stability: number) =>
+      mergedDataloadEvent$.pipe(
+        ofType<LoadError>("LoadError"),
+        debounceTime(stability)
+      );
 
     const inError$: rx.Observable<boolean> = stableError$(100).pipe(
-      switchMapTo(rx.timer(0, 1000).pipe(map(t => t === 0), take(2))), // Produceert direct true, dan na een seconde false
+      switchMapTo(
+        rx.timer(0, 1000).pipe(
+          map(t => t === 0),
+          take(2)
+        )
+      ), // Produceert direct true, dan na een seconde false
       startWith(false)
     );
 
@@ -89,7 +100,7 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
                     busy
                       ? rx.timer(0, 200).pipe(
                           // 110 = 11 * 10 . De modulus moet het eerste geheel veelvoud van het aantal onderverdelingen > 100 zijn.
-                          map(n => ({ "margin-left": (n * 11) % 110 + "%" }))
+                          map(n => ({ "margin-left": ((n * 11) % 110) + "%" }))
                         )
                       : rx.of({})
                 )

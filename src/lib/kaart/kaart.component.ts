@@ -40,9 +40,12 @@ export class KaartComponent extends KaartComponentBase {
   private innerAanwezigeElementen$: rx.Observable<Set<string>>;
   readonly kaartModel$: rx.Observable<KaartWithInfo> = rx.empty();
 
-  @ViewChild("map") mapElement: ElementRef;
-  @ViewChild("kaartLinks") kaartLinksElement: ElementRef;
-  @ViewChild("kaartFixedLinksBoven") kaartFixedLinksBovenElement: ElementRef;
+  @ViewChild("map")
+  mapElement: ElementRef;
+  @ViewChild("kaartLinks")
+  kaartLinksElement: ElementRef;
+  @ViewChild("kaartFixedLinksBoven")
+  kaartFixedLinksBovenElement: ElementRef;
   @ViewChild("kaartLinksZichtbaarToggleKnop", { read: ElementRef })
   kaartLinksZichtbaarToggleKnopElement: ElementRef;
 
@@ -51,12 +54,14 @@ export class KaartComponent extends KaartComponentBase {
    * een component van de gebruikende applicatie (in geval van programmatorisch gebruik) zet hier een Observable
    * waarmee events naar de component gestuurd kunnen worden.
    */
-  @Input() kaartCmd$: rx.Observable<prt.Command<prt.KaartMsg>> = rx.empty();
+  @Input()
+  kaartCmd$: rx.Observable<prt.Command<prt.KaartMsg>> = rx.empty();
   /**
    * Hier wordt een callback verwacht die een Msg observable zal krijgen. Die observable kan dan gebruikt worden
    * op te luisteren op feedback van commands of uitvoer van subscriptions.
    */
-  @Input() messageObsConsumer: KaartMsgObservableConsumer = vacuousKaartMsgObservableConsumer;
+  @Input()
+  messageObsConsumer: KaartMsgObservableConsumer = vacuousKaartMsgObservableConsumer;
 
   /**
    * Dit is een beetje ongelukkig, maar ook componenten die door de KaartComponent zelf aangemaakt worden moeten events kunnen sturen
@@ -67,12 +72,18 @@ export class KaartComponent extends KaartComponentBase {
 
   private readonly msgSubj = new rx.ReplaySubject<prt.KaartMsg>(1000, 500);
 
-  @Input() minZoom = 2; // TODO naar config
-  @Input() maxZoom = 15; // TODO naar config
-  @Input() naam = "kaart";
-  @Input() selectieModus: prt.SelectieModus = "none";
-  @Input() hoverModus: prt.HoverModus = "off";
-  @Input() kaartLinksBreedte;
+  @Input()
+  minZoom = 2; // TODO naar config
+  @Input()
+  maxZoom = 15; // TODO naar config
+  @Input()
+  naam = "kaart";
+  @Input()
+  selectieModus: prt.SelectieModus = "none";
+  @Input()
+  hoverModus: prt.HoverModus = "off";
+  @Input()
+  kaartLinksBreedte;
 
   // Dit dient om messages naar toe te sturen
 
@@ -121,11 +132,16 @@ export class KaartComponent extends KaartComponentBase {
     });
 
     // Linker paneel zichtbaar maken wanneer er minstens 1 infoboodschap is.
-    this.internalMessage$.pipe(ofType<InfoBoodschappenMsg>("InfoBoodschappen"), observeOnAngular(this.zone)).subscribe(msg => {
-      if (!msg.infoBoodschappen.isEmpty()) {
-        this.kaartLinksZichtbaar = true;
-      }
-    });
+    this.internalMessage$
+      .pipe(
+        ofType<InfoBoodschappenMsg>("InfoBoodschappen"),
+        observeOnAngular(this.zone)
+      )
+      .subscribe(msg => {
+        if (!msg.infoBoodschappen.isEmpty()) {
+          this.kaartLinksZichtbaar = true;
+        }
+      });
 
     // Observeer veranderingen aan de inhoud van het linker paneel op het niveau van het DOM
     const mutConfig: MutationObserverInit = {

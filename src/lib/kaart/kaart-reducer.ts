@@ -30,6 +30,7 @@ import {
   StyleSelector
 } from "./stijl-selector";
 import * as ss from "./stijl-selector";
+import { GeenLaagstijlaanpassing, LaagstijlAanpassend } from "./stijleditor/state";
 import { getDefaultStyleSelector } from "./styles";
 
 ///////////////////////////////////
@@ -169,8 +170,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     const valideerAlsLayer: (laag: ke.Laag) => prt.KaartCmdValidation<ol.layer.Base> = (laag: ke.Laag) =>
       fromOption(toOlLayer(model, laag), "De laagbeschrijving kon niet naar een openlayers laag omgezet worden");
 
-    const valideerAlsGeheel = (num: number) => fromPredicate(num, Number.isInteger, `'${num}' is geen geheel getal`);
-
     const pasLaagPositieAan: (aanpassing: number) => (laag: ke.ToegevoegdeLaag) => ke.ToegevoegdeLaag = positieAanpassing => laag => {
       const positie = laag.positieInGroep + positieAanpassing;
       zetLayerIndex(laag.layer, positie, laag.laaggroep);
@@ -226,9 +225,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         const groepPositie = layerIndexNaarGroepIndex(laag!.layer, groep);
         if (groepPositie >= vanaf && groepPositie <= tot && positieAanpassing !== 0) {
           const positie = groepPositie + positieAanpassing;
-          return pipe(pasVectorLaagStijlPositieAan(positieAanpassing), pasLaagPositieAan(positieAanpassing), pasLaagInModelAan(mdl!))(
-            laag! as ke.ToegevoegdeVectorLaag
-          );
+          return pipe(
+            pasVectorLaagStijlPositieAan(positieAanpassing),
+            pasLaagPositieAan(positieAanpassing),
+            pasLaagInModelAan(mdl!)
+          )(laag! as ke.ToegevoegdeVectorLaag);
         } else {
           return mdl!;
         }
@@ -678,7 +679,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
           // Zorg ervoor dat er juist 1 achtergrondlaag zichtbaar is
           const modelMetAangepasteLagen = achtergrondLagen.reduce(
-            (mdl, laag) => pipe(pasLaagZichtbaarheidAan(laag!.titel === teSelecterenLaag.titel), pasLaagInModelAan(mdl!))(laag!),
+            (mdl, laag) =>
+              pipe(
+                pasLaagZichtbaarheidAan(laag!.titel === teSelecterenLaag.titel),
+                pasLaagInModelAan(mdl!)
+              )(laag!),
             model
           );
 
@@ -715,12 +720,19 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           const maybeVorigeAchtergrond = fromNullable(
             model.toegevoegdeLagenOpTitel.find(laag => laag!.laaggroep === "Achtergrond" && laag!.magGetoondWorden)
           );
-          const modelMetNieuweZichtbaarheid = pipe(pasLaagZichtbaarheidAan(true), pasLaagInModelAan(model))(nieuweAchtergrond);
+          const modelMetNieuweZichtbaarheid = pipe(
+            pasLaagZichtbaarheidAan(true),
+            pasLaagInModelAan(model)
+          )(nieuweAchtergrond);
           const modelMetNieuweEnOudeZichtbaarheid = maybeVorigeAchtergrond
             .filter(vorige => vorige.titel !== nieuweAchtergrond.titel) // enkel onzichtbaar maken als verschillend
             .fold(
               modelMetNieuweZichtbaarheid, //
-              vorigeAchtergrond => pipe(pasLaagZichtbaarheidAan(false), pasLaagInModelAan(modelMetNieuweZichtbaarheid))(vorigeAchtergrond)
+              vorigeAchtergrond =>
+                pipe(
+                  pasLaagZichtbaarheidAan(false),
+                  pasLaagInModelAan(modelMetNieuweZichtbaarheid)
+                )(vorigeAchtergrond)
             );
           zendLagenInGroep(modelMetNieuweEnOudeZichtbaarheid, "Achtergrond");
           return ModelAndEmptyResult(modelMetNieuweEnOudeZichtbaarheid);
@@ -741,7 +753,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         wrapper,
         valideerToegevoegdeLaagBestaat(titel).map(laag => {
-          const aangepastModel = pipe(pasLaagZichtbaarheidAan(magGetoondWorden), pasLaagInModelAan(model))(laag);
+          const aangepastModel = pipe(
+            pasLaagZichtbaarheidAan(magGetoondWorden),
+            pasLaagInModelAan(model)
+          )(laag);
           zendLagenInGroep(aangepastModel, laag.laaggroep);
           return ModelAndEmptyResult(aangepastModel);
         })
@@ -834,7 +849,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                     kaartLogger.error("Ook geen stijlselector gevonden voor:", feature);
                     return noStyle;
                   },
-                  pipe(executeStyleSelector, applySelectionColor) // we vallen terug op feature stijl met custom kleurtje
+                  pipe(
+                    executeStyleSelector,
+                    applySelectionColor
+                  ) // we vallen terug op feature stijl met custom kleurtje
                 );
               },
               executeStyleSelector // dit is het perfecte geval: evalueer de selectiestijl selector
@@ -921,13 +939,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function zetStijlVoorLaagCmd(cmnd: prt.ZetStijlVoorLaagCmd<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerToegevoegdeVectorLaagBestaat(cmnd.titel).map(
-          pipe(
-            pasVectorLaagStijlAan(some(cmnd.stijl), cmnd.selectieStijl), //
-            pasLaagInModelAan(model),
-            ModelAndEmptyResult
-          )
-        )
+        valideerToegevoegdeVectorLaagBestaat(cmnd.titel).map(laag => {
+          const updatedLaag = pasVectorLaagStijlAan(some(cmnd.stijl), cmnd.selectieStijl)(laag);
+          const updatedModel = pasLaagInModelAan(model)(updatedLaag);
+          zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
+          return ModelAndEmptyResult(updatedModel);
+        })
       );
     }
 
@@ -1078,6 +1095,17 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
+    function bewerkVectorlaagstijl(cmnd: prt.BewerkVectorlaagstijlCmd): ModelWithResult<Msg> {
+      // We zouden kunnen controleren of de laag effectief in het model zit, maar dat is spijkers op laag water zoeken.
+      modelChanger.LaagstijlaanpassingStateSubj.next(LaagstijlAanpassend(cmnd.laag));
+      return ModelWithResult(model);
+    }
+
+    function stopVectorlaagstijlBewerking(cmnd: prt.StopVectorlaagstijlBewerkingCmd): ModelWithResult<Msg> {
+      modelChanger.LaagstijlaanpassingStateSubj.next(GeenLaagstijlaanpassing);
+      return ModelWithResult(model);
+    }
+
     function handleSubscriptions(cmnd: prt.SubscribeCmd<Msg>): ModelWithResult<Msg> {
       function modelWithSubscriptionResult(name: string, subscription: Subscription): ModelWithResult<Msg> {
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, { subscription: subscription, subscriberName: name })));
@@ -1113,21 +1141,39 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       function subscribeToZoom(sub: prt.ZoomSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
           "Zoom",
-          modelChanges.viewinstellingen$.pipe(debounceTime(100), map(i => i.zoom), distinctUntilChanged()).subscribe(consumeWrapped(sub))
+          modelChanges.viewinstellingen$
+            .pipe(
+              debounceTime(100),
+              map(i => i.zoom),
+              distinctUntilChanged()
+            )
+            .subscribe(consumeWrapped(sub))
         );
       }
 
       function subscribeToMiddelpunt(sub: prt.MiddelpuntSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
           "Middelpunt",
-          modelChanges.viewinstellingen$.pipe(debounceTime(100), map(i => i.center), distinctUntilChanged()).subscribe(consumeWrapped(sub))
+          modelChanges.viewinstellingen$
+            .pipe(
+              debounceTime(100),
+              map(i => i.center),
+              distinctUntilChanged()
+            )
+            .subscribe(consumeWrapped(sub))
         );
       }
 
       function subscribeToExtent(sub: prt.ExtentSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
           "Extent",
-          modelChanges.viewinstellingen$.pipe(debounceTime(100), map(i => i.extent), distinctUntilChanged()).subscribe(consumeWrapped(sub))
+          modelChanges.viewinstellingen$
+            .pipe(
+              debounceTime(100),
+              map(i => i.extent),
+              distinctUntilChanged()
+            )
+            .subscribe(consumeWrapped(sub))
         );
       }
 
@@ -1347,6 +1393,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return zetActieveModus(cmd);
       case "VoegLaagLocatieInformatieServiceToe":
         return voegLaagLocatieInformatieServiceToe(cmd);
+      case "BewerkVectorlaagstijl":
+        return bewerkVectorlaagstijl(cmd);
+      case "StopVectorlaagstijlBewerking":
+        return stopVectorlaagstijlBewerking(cmd);
     }
   };
 }

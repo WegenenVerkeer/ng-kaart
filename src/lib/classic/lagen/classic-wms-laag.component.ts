@@ -14,14 +14,23 @@ import { ClassicLaagComponent } from "./classic-laag.component";
   encapsulation: ViewEncapsulation.None
 })
 export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnInit {
-  @Input() laagNaam: string;
-  @Input() urls: string[];
-  @Input() tiled = true;
-  @Input() type: string;
-  @Input() versie?: string;
-  @Input() format = "image/png";
-  @Input() tileSize? = 256;
-  @Input() opacity?: number;
+  @Input()
+  laagNaam: string;
+  @Input()
+  urls: string[];
+  @Input()
+  tiled = true;
+  @Input()
+  type: string;
+  @Input()
+  versie?: string;
+  @Input()
+  format = "image/png";
+  @Input()
+  // tslint:disable-next-line:whitespace
+  tileSize? = 256;
+  @Input()
+  opacity?: number;
 
   constructor(kaart: KaartClassicComponent, zone: NgZone) {
     super(kaart, zone);

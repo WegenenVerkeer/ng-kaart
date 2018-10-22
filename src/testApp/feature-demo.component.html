@@ -143,7 +143,7 @@
         <!-- lagen -->
         <awv-kaart-lagenkiezer *ngIf="isOptieActief('lagenkiezer')" [titels]="['Referentiepunten (WDB)', 'Referentiepunten (WDB) 2', 'features']"
                                [headerTitel]="'Mijn legende en lagen'" [initieelDichtgeklapt]="true"
-                               [verwijderbareLagen]="isOptieActief('lagenVerwijderbaar')" [verplaatsbareLagen]="true"
+                               [verwijderbareLagen]="isOptieActief('lagenVerwijderbaar')" [verplaatsbareLagen]="true" [stijlbareVectorlagen]="stijlbareVectorlagen"
                                [toonLegende]="isOptieActief('legende')"></awv-kaart-lagenkiezer>
         <awv-kaart-geoserver-laag [titel]="'Referentiepunten'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'">
           <awv-legende-bolletje-item [beschrijving]="'Referentiepunten'" [kleur]="'orange'"></awv-legende-bolletje-item>
@@ -162,6 +162,7 @@
                                  [zichtbaar]="false"></awv-kaart-features-laag>
         <awv-kaart-features-laag [titel]="'Installatie (plane)'" [features]="installatie" [style]="pinIcon2" [minZoom]="3"
                                  [zichtbaar]="false"></awv-kaart-features-laag>
+        <awv-kaart-ortho-laag [titel]="'Orthofoto\'s'" [laagNaam]="'ortho'" [groep]="'Voorgrond.Laag'" [zichtbaar]="false"></awv-kaart-ortho-laag>
         <!-- achtergrondlagen -->
         <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
         <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"

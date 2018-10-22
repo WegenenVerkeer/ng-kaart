@@ -44,8 +44,10 @@ export interface FietspadSelectie {
   encapsulation: ViewEncapsulation.None
 })
 export class FeatureDemoComponent {
-  @ViewChild("verplaats") private verplaatsKaart: KaartClassicComponent;
-  @ViewChild("selectie") private selectieKaart: KaartClassicComponent;
+  @ViewChild("verplaats")
+  private verplaatsKaart: KaartClassicComponent;
+  @ViewChild("selectie")
+  private selectieKaart: KaartClassicComponent;
 
   private readonly fietspadStijlDef: AWV0StyleFunctionDescription = {
     version: "awv-v0",
@@ -331,7 +333,7 @@ export class FeatureDemoComponent {
   get tekenGeomLength() {
     return this.getekendeGeom
       .filter(g => g.getType() === "LineString" || g.getType() === "Polygon")
-      .map(g => Math.round(ol.Sphere.getLength(g) / 1000 * 100) / 100 + "km")
+      .map(g => Math.round((ol.Sphere.getLength(g) / 1000) * 100) / 100 + "km")
       .getOrElse("(leeg)");
   }
 
@@ -373,6 +375,10 @@ export class FeatureDemoComponent {
     // Het probleem is dat het Subject waarnaar gedispatched wordt een ander is dan dat dat door de kaartcomponent
     // opgepikt wordt. Een issue in de volgorde van initialisatie???
     this.verplaatsKaart.dispatch(prt.VerplaatsLaagCmd("dienstkaart-kleur", this.naarPositie, kaartLogOnlyWrapper));
+  }
+
+  stijlbareVectorlagen(titel: string) {
+    return true;
   }
 
   // De volgende methodes loggen gewoon naar de console. Er is weinig toegevoegde waarde om hier een UI voor te maken.

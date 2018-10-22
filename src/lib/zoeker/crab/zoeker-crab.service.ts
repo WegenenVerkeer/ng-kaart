@@ -229,45 +229,43 @@ export class ZoekerCrabService implements Zoeker {
   }
 
   private getGemeenteBBox$(gemeente: CrabGemeente): rx.Observable<ZoekResultaten> {
-    return this.http
-      .get<CrabBBoxData>(this.locatorServicesConfig.url + "/rest/crab/gemeente/" + gemeente.niscode)
-      .pipe(
-        map(
-          bbox =>
-            new ZoekResultaten(this.naam(), "Volledig", [], [this.bboxNaarZoekResultaat(gemeente.naam, "CrabGemeente", bbox)], this.legende)
-        ),
-        shareReplay(1)
-      );
+    return this.http.get<CrabBBoxData>(this.locatorServicesConfig.url + "/rest/crab/gemeente/" + gemeente.niscode).pipe(
+      map(
+        bbox =>
+          new ZoekResultaten(this.naam(), "Volledig", [], [this.bboxNaarZoekResultaat(gemeente.naam, "CrabGemeente", bbox)], this.legende)
+      ),
+      shareReplay(1)
+    );
   }
 
   getStraten$(gemeente: CrabGemeente): rx.Observable<CrabStraat[]> {
-    return this.http
-      .get<CrabStraatData[]>(this.locatorServicesConfig.url + "/rest/crab/straten/" + gemeente.niscode)
-      .pipe(map(straten => straten.map(straat => new CrabStraat(gemeente, straat))), shareReplay(1));
+    return this.http.get<CrabStraatData[]>(this.locatorServicesConfig.url + "/rest/crab/straten/" + gemeente.niscode).pipe(
+      map(straten => straten.map(straat => new CrabStraat(gemeente, straat))),
+      shareReplay(1)
+    );
   }
 
   private getStraatBBox$(straat: CrabStraat): rx.Observable<ZoekResultaten> {
-    return this.http
-      .get<CrabBBoxData>(this.locatorServicesConfig.url + "/rest/crab/straat/" + straat.id)
-      .pipe(
-        map(
-          bbox =>
-            new ZoekResultaten(
-              this.naam(),
-              "Volledig",
-              [],
-              [this.bboxNaarZoekResultaat(`${straat.naam}, ${straat.gemeente.naam}`, "CrabStraat", bbox)],
-              this.legende
-            )
-        ),
-        shareReplay(1)
-      );
+    return this.http.get<CrabBBoxData>(this.locatorServicesConfig.url + "/rest/crab/straat/" + straat.id).pipe(
+      map(
+        bbox =>
+          new ZoekResultaten(
+            this.naam(),
+            "Volledig",
+            [],
+            [this.bboxNaarZoekResultaat(`${straat.naam}, ${straat.gemeente.naam}`, "CrabStraat", bbox)],
+            this.legende
+          )
+      ),
+      shareReplay(1)
+    );
   }
 
   getHuisnummers$(straat: CrabStraat): rx.Observable<CrabHuisnummer[]> {
-    return this.http
-      .get<CrabHuisnummerData[]>(this.locatorServicesConfig.url + "/rest/crab/huisnummers/" + straat.id)
-      .pipe(map(huisnummers => huisnummers.map(huisnummer => new CrabHuisnummer(straat, huisnummer))), shareReplay(1));
+    return this.http.get<CrabHuisnummerData[]>(this.locatorServicesConfig.url + "/rest/crab/huisnummers/" + straat.id).pipe(
+      map(huisnummers => huisnummers.map(huisnummer => new CrabHuisnummer(straat, huisnummer))),
+      shareReplay(1)
+    );
   }
 
   private getHuisnummerPositie$(huisnummer: CrabHuisnummer): rx.Observable<ZoekResultaten> {
