@@ -1,7 +1,7 @@
-import { Option, some } from "fp-ts/lib/Option";
+import { Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 
-import { Interpreter, succeed } from "./json-object-interpreting";
+import { Interpreter } from "./json-object-interpreting";
 import * as st from "./json-object-interpreting";
 import * as oi from "./json-object-interpreting";
 import * as olc from "./openlayer-constructors";

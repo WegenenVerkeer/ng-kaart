@@ -28,6 +28,7 @@ export class ClassicVectorLaagComponent extends ClassicVectorLaagLikeComponent {
       titel: this.titel,
       source: this.source,
       styleSelector: this.getMaybeStyleSelector(),
+      styleSelectorBron: this.getMaybeStyleSelectorBron(),
       selectieStyleSelector: fromNullable(this.selectieStyle).chain(ss.asStyleSelector),
       hoverStyleSelector: fromNullable(this.hoverStyle).chain(ss.asStyleSelector),
       selecteerbaar: this.selecteerbaar,

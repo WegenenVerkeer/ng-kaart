@@ -1,14 +1,28 @@
 import { Function1 } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
+import { Iso } from "monocle-ts";
 import * as ol from "openlayers";
 
 import { offsetStyleFunction } from "../stijl/offset-stijl-function";
+import { validateAwv0StaticStyle } from "../stijl/stijl-static";
+import { Awv0StaticStyle } from "../stijl/stijl-static-types";
+import { Validator } from "../util/validation";
 
 // Het type dat OpenLayers gebruikt voor stylen, maar niet expliciet definieert
 export type Stylish = ol.StyleFunction | ol.style.Style | ol.style.Style[];
 
 // Onze type-safe versie van het Openlayers Stylish type (homomorf)
 export type StyleSelector = StaticStyle | DynamicStyle | Styles;
+
+// De Openlayers stijlen zijn goed genoeg (en nodig) om de features op de kaart in de browser te renderen,
+// maar om de stijlen te kunnen bewerken en opslaan, moeten er ook een type zijn dat naar JSON geserialiseerd
+// kan worden en omgekeerd.
+export type Awv0StyleSpec = Awv0StaticStyleSpec; // Hier moeten ook nog de rules bij komen
+
+export interface Awv0StaticStyleSpec {
+  readonly type: "StaticStyle";
+  readonly spec: Awv0StaticStyle;
+}
 
 export interface StaticStyle {
   readonly type: "StaticStyle";
@@ -149,3 +163,15 @@ export const offsetStyleSelector: (_1: string, _2: string, _3: number) => (_: St
       ),
     (s: Styles) => s
   );
+
+export const validateAwv0Style: Validator<Awv0StyleSpec, ol.style.Style> = styleSpec => {
+  switch (styleSpec.type) {
+    case "StaticStyle":
+      return validateAwv0StaticStyle(styleSpec.spec);
+  }
+};
+
+export const Awv0StaticStyleSpecIso: Iso<Awv0StaticStyleSpec, Awv0StaticStyle> = new Iso(
+  spec => spec.spec,
+  spec => ({ type: "StaticStyle", spec: spec } as Awv0StaticStyleSpec)
+);

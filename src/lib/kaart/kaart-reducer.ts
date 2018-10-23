@@ -1,5 +1,5 @@
 import * as array from "fp-ts/lib/Array";
-import { Endomorphism, Function1, identity, pipe } from "fp-ts/lib/function";
+import { Endomorphism, Function1, Function2, identity, pipe } from "fp-ts/lib/function";
 import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
 import * as validation from "fp-ts/lib/Validation";
 import { List } from "immutable";
@@ -9,6 +9,7 @@ import { Subscription } from "rxjs";
 import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
 
+import { validateAwv0StaticStyle } from "../stijl/stijl-static";
 import { forEach } from "../util/option";
 import { updateBehaviorSubject } from "../util/subject-update";
 import { allOf, fromBoolean, fromOption, fromPredicate, success, validationChain as chain } from "../util/validation";
@@ -21,6 +22,7 @@ import { toOlLayer } from "./laag-converter";
 import { kaartLogger } from "./log";
 import { ModelChanger, ModelChanges } from "./model-changes";
 import {
+  Awv0StyleSpec,
   getFeatureStyleSelector,
   getHoverStyleSelector,
   getSelectionStyleSelector,
@@ -157,20 +159,22 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
-    const valideerIsAchtergrondLaag: (titel: string) => prt.KaartCmdValidation<{}> = (titel: string) =>
+    const valideerIsAchtergrondLaag: Function1<string, prt.KaartCmdValidation<{}>> = titel =>
       fromBoolean(model.groepOpTitel.get(titel) === "Achtergrond", "De laag is geen achtergrondlaag");
 
-    const valideerIsVoorgrondlaag: (laag: ke.ToegevoegdeLaag) => prt.KaartCmdValidation<ke.ToegevoegdeLaag> = (laag: ke.ToegevoegdeLaag) =>
+    const valideerIsVoorgrondlaag: Function1<ke.ToegevoegdeLaag, prt.KaartCmdValidation<ke.ToegevoegdeLaag>> = laag =>
       fromPredicate(
         laag,
         (lg: ke.ToegevoegdeLaag) => lg.laaggroep === "Voorgrond.Hoog" || lg.laaggroep === "Voorgrond.Laag",
         "De laag is geen voorgrondlaag"
       );
 
-    const valideerAlsLayer: (laag: ke.Laag) => prt.KaartCmdValidation<ol.layer.Base> = (laag: ke.Laag) =>
+    const valideerAlsLayer: Function1<ke.Laag, prt.KaartCmdValidation<ol.layer.Base>> = laag =>
       fromOption(toOlLayer(model, laag), "De laagbeschrijving kon niet naar een openlayers laag omgezet worden");
 
-    const pasLaagPositieAan: (aanpassing: number) => (laag: ke.ToegevoegdeLaag) => ke.ToegevoegdeLaag = positieAanpassing => laag => {
+    const valideerAlsStijlSpec: Function1<Awv0StyleSpec, prt.KaartCmdValidation<ol.style.Style>> = ss.validateAwv0Style;
+
+    const pasLaagPositieAan: Function1<number, Endomorphism<ke.ToegevoegdeLaag>> = positieAanpassing => laag => {
       const positie = laag.positieInGroep + positieAanpassing;
       zetLayerIndex(laag.layer, positie, laag.laaggroep);
       return { ...laag, positieInGroep: positie };
@@ -180,7 +184,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       // Er moet een stijl zijn voor het tekenen van de features op de kaart
       const featureStyleSelector = laag.stijlSel.getOrElse(getDefaultStyleSelector());
       // Maar er moet geen specifieke stijl zijn voor het selecteren van een feature. Als er geen is, dan wordt er teruggevallen
-      // op gemodificeerde stijl tijdens tekenen van selectie.
+      // op een gemodificeerde stijl tijdens het tekenen van selectie.
       const toOffset: Endomorphism<ss.StyleSelector> = laag.bron.offsetveld.fold(
         identity, // als er geen offsetveld is, dan hoeven we niks te doen
         offsetveld => ss.offsetStyleSelector("ident8", offsetveld, laag.stijlPositie)
@@ -194,10 +198,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       setHoverStyleSelector(model.map, laag.titel, laag.hoverstijlSel.map(toOffset));
     };
 
-    const pasVectorLaagStijlAan: (
-      ss: Option<ss.StyleSelector>,
-      sss: Option<ss.StyleSelector>
-    ) => (lg: ke.ToegevoegdeVectorLaag) => ke.ToegevoegdeVectorLaag = (maybeStijlSel, maybeSelectieStijlSel) => laag => {
+    const pasVectorLaagStijlAan: Function2<Option<ss.StyleSelector>, Option<ss.StyleSelector>, Endomorphism<ke.ToegevoegdeVectorLaag>> = (
+      maybeStijlSel,
+      maybeSelectieStijlSel
+    ) => laag => {
       const updatedLaag = { ...laag, stijlSel: maybeStijlSel, selectiestijlSel: maybeSelectieStijlSel };
       pasVectorLaagStijlToe(updatedLaag); // expliciet als side-effect opgeroepen
       return updatedLaag;
@@ -205,9 +209,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     // Bij de vectorlagen moeten we ook de (mogelijk aanwezige) stylefuncties aanpassen
     // De manier waarop de stijlpositie aangepast wordt is niet correct als er in de groep ook lagen zitten die geen vectorlaag zijn!
-    const pasVectorLaagStijlPositieAan: (
-      aanpassing: number
-    ) => (laag: ke.ToegevoegdeLaag) => ke.ToegevoegdeLaag = positieAanpassing => laag => {
+    const pasVectorLaagStijlPositieAan: Function1<number, Endomorphism<ke.ToegevoegdeLaag>> = positieAanpassing => laag => {
       return ke
         .asToegevoegdeVectorLaag(laag)
         .map<ke.ToegevoegdeLaag>(tvl =>
@@ -344,12 +346,15 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             legende: cmnd.legende,
             stijlInLagenKiezer: cmnd.stijlInLagenKiezer
           };
-          const toegevoegdeLaag = ke
+          const toegevoegdeLaag: ke.ToegevoegdeLaag = ke
             .asVectorLaag(cmnd.laag)
             .map<ke.ToegevoegdeLaag>(vlg => ({
               ...toegevoegdeLaagCommon,
+              bron: vlg,
+              layer: layer as ol.layer.Vector, // veilig omdat laag een VectorLaag is
               stijlPositie: vectorLaagPositie(groepPositie, groep),
               stijlSel: vlg.styleSelector,
+              stijlSelBron: vlg.styleSelectorBron,
               selectiestijlSel: vlg.selectieStyleSelector,
               hoverstijlSel: vlg.hoverStyleSelector
             }))
@@ -948,6 +953,23 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
+    function zetStijlSpecVoorLaagCmd(cmnd: prt.ZetStijlSpecVoorLaagCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        chain(valideerToegevoegdeVectorLaagBestaat(cmnd.titel), laag =>
+          valideerAlsStijlSpec(cmnd.stijlSpec).map(stijl => {
+            const updatedLaag = {
+              ...pasVectorLaagStijlAan(some(ss.StaticStyle(stijl)), laag.selectiestijlSel)(laag),
+              stijlSelBron: some(cmnd.stijlSpec)
+            };
+            const updatedModel = pasLaagInModelAan(model)(updatedLaag);
+            zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
+            return ModelAndEmptyResult(updatedModel);
+          })
+        )
+      );
+    }
+
     function toonInfoBoodschap(cmnd: prt.ToonInfoBoodschapCmd): ModelWithResult<Msg> {
       const boodschap = {
         ...cmnd.boodschap,
@@ -1097,12 +1119,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function bewerkVectorlaagstijl(cmnd: prt.BewerkVectorlaagstijlCmd): ModelWithResult<Msg> {
       // We zouden kunnen controleren of de laag effectief in het model zit, maar dat is spijkers op laag water zoeken.
-      modelChanger.LaagstijlaanpassingStateSubj.next(LaagstijlAanpassend(cmnd.laag));
+      modelChanger.laagstijlaanpassingStateSubj.next(LaagstijlAanpassend(cmnd.laag));
       return ModelWithResult(model);
     }
 
     function stopVectorlaagstijlBewerking(cmnd: prt.StopVectorlaagstijlBewerkingCmd): ModelWithResult<Msg> {
-      modelChanger.LaagstijlaanpassingStateSubj.next(GeenLaagstijlaanpassing);
+      modelChanger.laagstijlaanpassingStateSubj.next(GeenLaagstijlaanpassing);
       return ModelWithResult(model);
     }
 
@@ -1347,6 +1369,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return maakLaagOnzichtbaarCmd(cmd);
       case "ZetStijlVoorLaag":
         return zetStijlVoorLaagCmd(cmd);
+      case "ZetStijlSpecVoorLaag":
+        return zetStijlSpecVoorLaagCmd(cmd);
       case "Subscription":
         return handleSubscriptions(cmd);
       case "Unsubscription":

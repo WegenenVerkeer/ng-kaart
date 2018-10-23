@@ -63,6 +63,7 @@ export type Command<Msg extends KaartMsg> =
   | ZetFocusOpKaartCmd
   | ZetLaagLegendeCmd<Msg>
   | ZetMijnLocatieZoomCmd
+  | ZetStijlSpecVoorLaagCmd<Msg>
   | ZetStijlVoorLaagCmd<Msg>
   | ZetUiElementOpties
   | ZoekCmd<Msg>
@@ -249,6 +250,13 @@ export interface ZetStijlVoorLaagCmd<Msg extends KaartMsg> {
   readonly titel: string;
   readonly stijl: ss.StyleSelector;
   readonly selectieStijl: Option<ss.StyleSelector>;
+  readonly wrapper: BareValidationWrapper<Msg>;
+}
+
+export interface ZetStijlSpecVoorLaagCmd<Msg extends KaartMsg> {
+  readonly type: "ZetStijlSpecVoorLaag";
+  readonly titel: string;
+  readonly stijlSpec: ss.Awv0StyleSpec;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -468,6 +476,14 @@ export function ZetStijlVoorLaagCmd<Msg extends KaartMsg>(
   wrapper: BareValidationWrapper<Msg>
 ): ZetStijlVoorLaagCmd<Msg> {
   return { type: "ZetStijlVoorLaag", stijl: stijl, selectieStijl: selectieStijl, titel: titel, wrapper: wrapper };
+}
+
+export function ZetStijlSpecVoorLaagCmd<Msg extends KaartMsg>(
+  titel: string,
+  stijlSpec: ss.Awv0StyleSpec,
+  wrapper: BareValidationWrapper<Msg>
+): ZetStijlSpecVoorLaagCmd<Msg> {
+  return { type: "ZetStijlSpecVoorLaag", stijlSpec: stijlSpec, titel: titel, wrapper: wrapper };
 }
 
 export function VeranderMiddelpuntCmd<Msg extends KaartMsg>(coordinate: ol.Coordinate): VeranderMiddelpuntCmd<Msg> {

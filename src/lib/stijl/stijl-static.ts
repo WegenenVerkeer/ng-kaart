@@ -1,10 +1,11 @@
 import * as ol from "openlayers";
 
-import { validationChain as chain } from "../util/validation";
+import { failure, validationChain as chain, Validator } from "../util/validation";
 
-import { shortcutOrFullStyle } from "./json-awv-v0-stijl";
+import { jsonAwvV0Style, shortcutOrFullStyle } from "./json-awv-v0-stijl";
 import { Validation } from "./json-object-interpreting";
 import * as oi from "./json-object-interpreting";
+import { Awv0StaticStyle } from "./stijl-static-types";
 
 // Door de beschrijvingsstijl in de kaartcomponent te steken, kunnen ook andere applicaties er gebruik van maken.
 // Nog beter is om (op termijn) dit in een afzonderlijke module te steken.
@@ -40,3 +41,11 @@ function interpretJson(definition: Object): Validation<ol.style.Style> {
     }
   });
 }
+
+// Een alias voor interpretJson die ons custom type neemt ipv gewoon een gedeserialiseerde jSON
+export const validateAwv0StaticStyle: Validator<Awv0StaticStyle, ol.style.Style> = jsonAwvV0Style;
+
+// Dit gaat uiteraard enkel gegarandeerd lukken voor stylen die we zelf gegenereerd hebben.
+export const styleToDefintie: Validator<ol.style.Style, Awv0StaticStyle> = style => {
+  return failure("nog niet geimplementeerd");
+};

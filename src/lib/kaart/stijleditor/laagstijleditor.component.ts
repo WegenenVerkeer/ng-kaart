@@ -1,12 +1,14 @@
 import { ChangeDetectionStrategy, Component, NgZone, ViewEncapsulation } from "@angular/core";
 import * as array from "fp-ts/lib/Array";
-import { concat, Curried2, Function1, tuple } from "fp-ts/lib/function";
-import { fromNullable, none, Option } from "fp-ts/lib/Option";
+import { concat, Curried2, Function1, Refinement, tuple } from "fp-ts/lib/function";
+import { fromNullable, fromRefinement, none, Option } from "fp-ts/lib/Option";
+import { Setter } from "monocle-ts";
 import * as rx from "rxjs";
 import { filter, map, mapTo, share, shareReplay, startWith, switchMap, take, tap } from "rxjs/operators";
 
 import * as clr from "../../stijl/colour";
 import { jsonAwvV0Style } from "../../stijl/json-awv-v0-stijl";
+import { Awv0StaticStyle, Circle, Color, Fill, FullStyle, fullStylePrism } from "../../stijl/stijl-static-types";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-messages";
@@ -68,48 +70,56 @@ const markeerKleur: Curried2<clr.Kleur, clr.Kleur[], KiesbareKleur[]> = doelkleu
   kleuren.map(kleur => (kleur.code === doelkleur.code ? { ...kleur, gekozen: true } : kleur));
 
 // Voorlopig geven we alle lagen dezelfde, eenvoudige stijl op het kleur na
-const enkelvoudigeKleurStijl: Function1<clr.Kleur, ss.StyleSelector> = kleur =>
-  ss.StaticStyle(
-    jsonAwvV0Style({
-      stroke: {
-        color: clr.kleurcodeValue(kleur),
-        width: 4
-      },
+const enkelvoudigeKleurStijl: Function1<clr.Kleur, ss.Awv0StyleSpec> = kleur => ({
+  type: "StaticStyle",
+  spec: {
+    fill: {
+      color: clr.kleurcodeValue(kleur)
+    },
+    stroke: {
+      color: clr.kleurcodeValue(kleur),
+      width: 4
+    },
+    circle: {
+      radius: 5,
       fill: {
-        color: clr.kleurcodeValue(clr.setOpacity(0.25)(kleur))
-      },
-      circle: {
-        fill: { color: clr.kleurcodeValue(kleur) },
-        radius: 5
+        color: clr.kleurcodeValue(clr.setOpacity(0.75)(kleur))
       }
-    }).getOrElseL(errs => {
-      throw new Error("Het stijlformaat is niet geldig (meer)");
-    })
-  );
+    }
+  }
+});
 
-const stijlCmdVoorLaag: Curried2<ke.ToegevoegdeVectorLaag, clr.Kleur, prt.ZetStijlVoorLaagCmd<KaartInternalMsg>> = laag => kleur =>
-  prt.ZetStijlVoorLaagCmd(laag.titel, enkelvoudigeKleurStijl(kleur), none, kaartLogOnlyWrapper);
+const stijlCmdVoorLaag: Curried2<ke.ToegevoegdeVectorLaag, clr.Kleur, prt.ZetStijlSpecVoorLaagCmd<KaartInternalMsg>> = laag => kleur =>
+  prt.ZetStijlSpecVoorLaagCmd(laag.titel, enkelvoudigeKleurStijl(kleur), kaartLogOnlyWrapper);
 
-// Op het niveau van een stijl is er geen eenvoudige kleur. We gaan dit proberen af leiden van de OL Style.
+// Op het niveau van een stijl is er geen eenvoudige kleur. We gaan dit proberen af leiden van het bolletje in de stijl.
 interface AfgeleideKleur extends clr.Kleur {
   gevonden: boolean; // enkel voor gebruik in HTML
 }
 const gevonden: Function1<clr.Kleur, AfgeleideKleur> = kleur => ({ ...kleur, gevonden: true });
-const nietGevonden: AfgeleideKleur = { ...clr.toKleurUnsafe("grijs", "#6d6d6d"), gevonden: false }; // mag niet voorkomen in palet
-const kleurViaSelector: Function1<Option<ss.StyleSelector>, AfgeleideKleur> = maybeStyleSelector =>
-  maybeStyleSelector
-    .chain(
-      ss.matchStyleSelector(
-        statStyle =>
-          fromNullable(statStyle.style.getStroke())
-            .chain(stroke => fromNullable(stroke.getColor()))
-            .chain(clr.olToKleur)
-            .map(gevonden),
-        () => none, // kunnen we niet omzetten naar een eenvoudige kleur
-        () => none // kunnen we niet omzetten naar een eenvoudige kleur
-      )
-    )
+const nietGevonden: AfgeleideKleur = { ...clr.toKleurUnsafe("grijs", "#6d6d6d"), gevonden: false }; // kleurcode mag niet voorkomen in palet
+
+// We gaan er van uit dat de stijl er een is die we zelf gezet hebben. Dat wil zeggen dat we het kleurtje van het bolletje
+// uit de stijlspec  kunnen peuteren.
+// We moeten vrij diep in de hierarchie klauteren om het gepaste attribuut te pakken te krijgen. Vandaar het gebruik van Lenses e.a.
+const kleurViaLaag: Function1<ke.ToegevoegdeVectorLaag, AfgeleideKleur> = laag =>
+  ke.ToegevoegdeVectorLaag.stijlSelBronLens
+    .composeIso(ss.Awv0StaticStyleSpecIso)
+    .composePrism(fullStylePrism)
+    .compose(FullStyle.circleOptional)
+    .compose(Circle.fillOptional)
+    .composeLens(Fill.colorLens)
+    .getOption(laag)
+    .chain(clr.olToKleur)
+    .map(gevonden)
     .getOrElse(nietGevonden);
+
+// De setter wordt interessant op het moment dat we maar een bepaald aspect van de stijl willen aanpassen.
+const zetKleur: Setter<ss.Awv0StyleSpec, clr.Kleur> = ss.Awv0StaticStyleSpecIso.composePrism(fullStylePrism)
+  .composeOptional(Circle.fillOptional)
+  .composeLens(Fill.colorLens)
+  .compose(Color.kleurOptional)
+  .asSetter();
 
 @Component({
   selector: "awv-laagstijleditor",
@@ -141,7 +151,7 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
     );
 
     // we zouden ook de laag zelf kunnen volgen, maar in de praktijk gaat die toch niet veranderen
-    const origineleKleur$ = aanpassing$.pipe(map(state => kleurViaSelector(state.laag.stijlSel)));
+    const origineleKleur$ = aanpassing$.pipe(map(state => kleurViaLaag(state.laag)));
     // zetten van de nieuwe en bestaande kleuren
     const selectieKleur$ = this.actionDataFor$("kiesLaagkleur", clr.isKleur).pipe(
       map(gevonden),

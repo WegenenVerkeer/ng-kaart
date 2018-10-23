@@ -4,7 +4,6 @@ import { fromNullable, Option } from "fp-ts/lib/Option";
 import { List, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 
-import { orElse } from "../../util/option";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { VectorLaag, VeldInfo } from "../kaart-elementen";
 import { InfoBoodschapIdentify } from "../kaart-with-info-model";
@@ -102,10 +101,10 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   }
 
   lengte(): Option<number> {
-    return orElse(
-      orElse(fromNullable(this.waarde(LOCATIE_LENGTE)).map(Math.round), () => fromNullable(this.waarde(LENGTE)).map(Math.round)),
-      () => fromNullable(this.waarde(LOCATIE_GEOMETRY_LENGTE)).map(Math.round)
-    );
+    return fromNullable(this.waarde(LOCATIE_LENGTE))
+      .map(Math.round)
+      .orElse(() => fromNullable(this.waarde(LENGTE)).map(Math.round))
+      .orElse(() => fromNullable(this.waarde(LOCATIE_GEOMETRY_LENGTE)).map(Math.round));
   }
 
   breedte(): Option<string> {
@@ -160,7 +159,9 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
     if (this.heeftIdent8en()) {
       return this.ident8en();
     } else {
-      return orElse(fromNullable(this.waarde(IDENT8)), () => fromNullable(this.waarde(LOCATIE_IDENT8))).getOrElse("");
+      return fromNullable(this.waarde(IDENT8))
+        .orElse(() => fromNullable(this.waarde(LOCATIE_IDENT8)))
+        .getOrElse("");
     }
   }
 

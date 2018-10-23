@@ -44,7 +44,7 @@ export interface ModelChanger {
   readonly zoekopdrachtSubj: rx.Subject<Zoekopdracht>;
   readonly zoekresultaatselectieSubj: rx.Subject<ZoekResultaat>;
   readonly laagLocationInfoServicesOpTitelSubj: rx.BehaviorSubject<Map<string, LaagLocationInfoService>>;
-  readonly LaagstijlaanpassingStateSubj: rx.BehaviorSubject<LaagstijlaanpassingState>;
+  readonly laagstijlaanpassingStateSubj: rx.Subject<LaagstijlaanpassingState>;
 }
 
 // Hieronder wordt een paar keer BehaviourSubject gebruikt. Dat is equivalent met, maar beknopter dan, een startWith + shareReplay
@@ -65,7 +65,7 @@ export const ModelChanger: () => ModelChanger = () => ({
   zoekopdrachtSubj: new rx.Subject<Zoekopdracht>(),
   zoekresultaatselectieSubj: new rx.Subject<ZoekResultaat>(),
   laagLocationInfoServicesOpTitelSubj: new rx.BehaviorSubject(Map()),
-  LaagstijlaanpassingStateSubj: new rx.BehaviorSubject(GeenLaagstijlaanpassing)
+  laagstijlaanpassingStateSubj: new rx.BehaviorSubject(GeenLaagstijlaanpassing)
 });
 
 export interface ModelChanges {
@@ -217,6 +217,6 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     zoekresultaten$: zoekresulaten$,
     zoekresultaatselectie$: changer.zoekresultaatselectieSubj.asObservable(),
     laagLocationInfoServicesOpTitel$: changer.laagLocationInfoServicesOpTitelSubj.asObservable(),
-    laagstijlaanpassingState$: changer.LaagstijlaanpassingStateSubj.asObservable()
+    laagstijlaanpassingState$: changer.laagstijlaanpassingStateSubj.asObservable()
   };
 };
