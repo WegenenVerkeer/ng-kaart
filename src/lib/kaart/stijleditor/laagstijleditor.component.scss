@@ -58,6 +58,7 @@
         align-items: center;
         justify-content: space-between;
         padding: 8px;
+        cursor: pointer;
       }
       .awv-kaart-laagstijleditor-body-properties-colour {
         .awv-kaart-laagstijleditor-body-properties-colour-title {
@@ -117,6 +118,7 @@
         width: $box-size;
         height: $box-size;
         text-align: center;
+        cursor: pointer;
 
         span {
           color: white;
@@ -125,7 +127,7 @@
       }
 
       .awv-kaart-laagstijleditor-chooser-body-more {
-        .circle-26 {
+        .circle-medium {
           background-color: #f1f1f1;
         }
         span {
@@ -135,21 +137,15 @@
       }
     }
   }
-  .circle-16 {
+  .circle-small {
     width: 16px;
     height: 16px;
     border-radius: 50%;
   }
-  .circle-26 {
+  .circle-medium {
     width: 26px;
     height: 26px;
     border-radius: 50%;
     margin: auto;
   }
-  .circle-32 {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-  }
-
 }
