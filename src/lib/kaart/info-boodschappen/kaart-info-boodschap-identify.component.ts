@@ -2,6 +2,7 @@ import { HttpClient } from "@angular/common/http";
 import { Component, Input, NgZone } from "@angular/core";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import { List, OrderedMap } from "immutable";
+import * as Mustache from "mustache";
 import * as ol from "openlayers";
 
 import { orElse } from "../../util/option";
@@ -79,12 +80,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
 
   private properties = () => this.feature.getProperties()[PROPERTIES];
 
-  constructor(
-    parent: KaartComponent,
-    zone: NgZone,
-    private kaartInfoBoodschapComponent: KaartInfoBoodschapComponent,
-    private http: HttpClient
-  ) {
+  constructor(parent: KaartComponent, zone: NgZone, private kaartInfoBoodschapComponent: KaartInfoBoodschapComponent) {
     super(parent, zone);
   }
 
@@ -250,7 +246,13 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
     // indien er een 'constante' object in de definitie is, geef dat terug, anders geeft de waarde in het veld terug
     return this.constante(name).getOrElseL(() => {
       const waarde = nestedProperty(name, this.properties());
-      return this.isDatum(name) && waarde ? this.formateerDatum(waarde.toString()) : waarde;
+      if (this.isDatum(name) && waarde) {
+        return this.formateerDatum(waarde.toString());
+      } else if (this.isJson(name) && waarde) {
+        return this.formateerJson(name, waarde, this.jsonFormatString(name));
+      } else {
+        return waarde;
+      }
     });
   }
 
@@ -315,6 +317,17 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
     return this.isType(veld, "date");
   }
 
+  private isJson(veld: string): boolean {
+    return this.isType(veld, "json");
+  }
+
+  private jsonFormatString(veld: string): string {
+    return this.laag
+      .chain(l => fromNullable(l.velden.get(veld)))
+      .chain(veldInfo => fromNullable(veldInfo.template))
+      .getOrElse("");
+  }
+
   private formateerDatum(dateString: string): string {
     const timestamp = Date.parse(dateString);
 
@@ -324,6 +337,11 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
     } else {
       return dateString; // date string niet herkend, geef input terug
     }
+  }
+
+  private formateerJson(veld: string, json: string, formatString: string): string {
+    const jsonObject = JSON.parse(`{"${veld}": ${json}}`);
+    return Mustache.render(formatString, jsonObject);
   }
 
   heeftMaakAbbameldaMelding(): boolean {
