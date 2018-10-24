@@ -1,7 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { NgModule } from "@angular/core";
 
-import { KaartModule } from "../kaart";
+import { KaartModule } from "../kaart/index";
 
 import { ClassicAchtergrondSelectorComponent } from "./achtergrond-selector/classic-achtergrond-selector.component";
 import { ClassicCopyrightComponent } from "./copyright/classic-copyright.component";

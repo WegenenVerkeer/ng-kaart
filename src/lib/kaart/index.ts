@@ -17,11 +17,11 @@ import {
 import { ClickOutsideModule } from "ng4-click-outside";
 import * as ol from "openlayers";
 
-import { AbbameldaModule } from "../abbamelda";
+import { AbbameldaModule } from "../abbamelda/index";
 import { KaartOpenLayersStyleComponent } from "../classic/openlayers-style/classic-openlayers-style.component";
 import { KaartTekenComponent } from "../classic/tekenen/kaart-teken.component";
-import { LagenkiezerModule } from "../lagenkiezer";
-import { ZoekerModule } from "../zoeker";
+import { LagenkiezerModule } from "../lagenkiezer/index";
+import { ZoekerModule } from "../zoeker/index";
 
 import { KaartAchtergrondSelectorComponent } from "./achtergrond-selector/kaart-achtergrond-selector.component";
 import { KaartAchtergrondTileComponent } from "./achtergrond-selector/kaart-achtergrond-tile.component";
@@ -40,7 +40,7 @@ import { KaartMetenComponent } from "./meten/kaart-meten.component";
 import { KaartMijnLocatieComponent } from "./mijn-locatie/kaart-mijn-locatie.component";
 import { KaartOpenStreetViewComponent } from "./open-street-view/kaart-open-street-view.component";
 import { KaartSchaalComponent } from "./schaal/kaart-schaal.component";
-import { StijleditorModule } from "./stijleditor";
+import { StijleditorModule } from "./stijleditor/index";
 import { KaartTekenLaagComponent } from "./tekenen/kaart-teken-laag.component";
 import { KaartVoorwaardenComponent } from "./voorwaarden/kaart-voorwaarden.component";
 import { KaartZoomComponent } from "./zoom/kaart-zoom.component";
