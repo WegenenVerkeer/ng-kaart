@@ -1,4 +1,6 @@
-import { kleurcode, kleurnaam, setOpacity, toKleur, toKleurUnsafe } from "./colour";
+import { none, some } from "fp-ts/lib/Option";
+
+import { kleurcode, kleurcodeValue, kleurnaam, kleurnaamValue, setOpacity, toKleur, toKleurUnsafe } from "./colour";
 
 describe("Een kleur", () => {
   describe("aanmaken", () => {
@@ -38,16 +40,44 @@ describe("Een kleur", () => {
       describe("op de 'veilige' manier", () => {
         const gefaaldRood = toKleur("rood", "ff0000");
         it("moet none opleveren", () => {
-          expect(gefaaldRood.isNone()).toBe(true);
+          expect(gefaaldRood).toEqual(none);
         });
+      });
+    });
+    describe("op de veilige manier met geldige argument", () => {
+      const blauw = toKleur("blauw", "#0000ffff");
+      it("moet een 'some' opleveren", () => {
+        expect(blauw.isSome()).toEqual(true);
+      });
+      it("moet de componenten omvatten", () => {
+        expect(blauw.map(kleurnaamValue)).toEqual(some("blauw"));
+        expect(blauw.map(kleurcodeValue)).toEqual(some("#0000ffff"));
+      });
+    });
+    describe("op basis van een lege naam", () => {
+      it("moet falen", () => {
+        const slechteNaam = toKleur("", "#ff0000");
+        expect(slechteNaam).toEqual(none);
       });
     });
   });
   const groen = toKleurUnsafe("groen", "#00ff00ff");
   describe("bij het zetten van de opaciteit", () => {
     it("moet een getal tussen 0 en 1 aannemen als een opaciteit", () => {
-      const halfGroen = setOpacity(0.5)(groen);
-      expect(kleurcode(halfGroen) as any).toEqual("#00ff0080");
+      const transparantGroen = setOpacity(0)(groen);
+      const halfDoorzichtigGroen = setOpacity(0.5)(groen);
+      const ondoorzichtigGroen = setOpacity(1)(groen);
+      expect(kleurcode(transparantGroen) as any).toEqual("#00ff0000");
+      expect(kleurcode(halfDoorzichtigGroen) as any).toEqual("#00ff0080");
+      expect(kleurcode(ondoorzichtigGroen) as any).toEqual("#00ff00ff");
+    });
+    it("moet een getal lager dan 0 aannemen als een 0-opaciteit", () => {
+      const groenen = [-2, -1, -0.00001].map(op => kleurcode(setOpacity(op)(groen)));
+      expect(groenen as any[]).toEqual(["#00ff0000", "#00ff0000", "#00ff0000"]);
+    });
+    it("moet een getal hoger dan 1 aannemen als een 1-opaciteit", () => {
+      const groenen = [2, 1, 1.00001].map(op => kleurcode(setOpacity(op)(groen)));
+      expect(groenen as any[]).toEqual(["#00ff00ff", "#00ff00ff", "#00ff00ff"]);
     });
   });
 });

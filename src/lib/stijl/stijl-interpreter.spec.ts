@@ -178,7 +178,7 @@ describe("De stijl interpreter", () => {
 
   describe("Bij het converteren van een ongeldige stijl", () => {
     describe("wanneer het format niet ondersteund is", () => {
-      it("moet een fout mbt tot het ontbrekende veldje geven", () => {
+      it("moet een fout mbt tot het niet-ondersteunde formaat geven", () => {
         const result = definitieToStyle("xml", "<style></style>");
         expect(result.isFailure()).toBe(true);
         expect(result.value).toEqual(["Encoding 'xml' wordt niet ondersteund"]);
