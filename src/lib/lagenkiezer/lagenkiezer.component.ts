@@ -2,7 +2,6 @@ import { animate, style, transition, trigger } from "@angular/animations";
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 import { MatTabChangeEvent } from "@angular/material";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
-import { Predicate } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as rx from "rxjs";
@@ -25,7 +24,7 @@ export interface LagenUiOpties {
   readonly toonLegende: boolean;
   readonly verwijderbareLagen: boolean;
   readonly verplaatsbareLagen: boolean;
-  readonly stijlbareVectorlagen: Predicate<string>;
+  readonly stijlbareVectorlagen: (titel) => boolean;
 }
 
 export const DefaultOpties: LagenUiOpties = {
@@ -34,7 +33,7 @@ export const DefaultOpties: LagenUiOpties = {
   toonLegende: false,
   verwijderbareLagen: false,
   verplaatsbareLagen: true,
-  stijlbareVectorlagen: () => false
+  stijlbareVectorlagen: titel => false
 };
 
 type GapDirection = "Up" | "Down" | "Here";
