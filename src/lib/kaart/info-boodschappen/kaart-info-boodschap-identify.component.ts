@@ -1,4 +1,3 @@
-import { HttpClient } from "@angular/common/http";
 import { Component, Input, NgZone } from "@angular/core";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import { List, OrderedMap } from "immutable";
@@ -54,6 +53,28 @@ const formateerDatum = (dateString: string): string => {
   } else {
     return dateString; // date string niet herkend, geef input terug
   }
+};
+
+const isType = (maybeLaag: Option<VectorLaag>, veld: string, type: string): boolean => {
+  return maybeLaag.chain(l => fromNullable(l.velden.get(veld))).exists(veldInfo => veldInfo.type === type);
+};
+
+const isBoolean = (maybeLaag: Option<VectorLaag>, veld: string): boolean => {
+  return this.isType(maybeLaag, veld, "boolean");
+};
+
+const isDatum = (maybeLaag: Option<VectorLaag>, veld: string): boolean => {
+  return this.isType(maybeLaag, veld, "date");
+};
+
+const isJson = (maybeLaag: Option<VectorLaag>, veld: string): boolean => {
+  return this.isType(maybeLaag, veld, "json");
+};
+
+const isBasisVeld = (maybeLaag: Option<VectorLaag>, veld: string): boolean => {
+  return maybeLaag
+    .chain(l => fromNullable(l.velden.get(veld))) //
+    .exists(veldInfo => veldInfo.isBasisVeld); // indien geen meta informatie functie, toon alle velden
 };
 
 @Component({
@@ -207,34 +228,36 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
 
   zichtbareEigenschappen(): string[] {
     return this.eigenschappen(
-      key => this.isBasisVeld(key) && !this.isLink(key) && !this.isBoolean(key) && !this.teVerbergenProperties.contains(key)
+      key => isBasisVeld(this.laag, key) && !this.isLink(key) && !isBoolean(this.laag, key) && !this.teVerbergenProperties.contains(key)
     );
   }
 
   booleanEigenschappen(): string[] {
-    return this.eigenschappen(key => this.isBasisVeld(key) && this.isBoolean(key) && !this.teVerbergenProperties.contains(key));
+    return this.eigenschappen(key => isBasisVeld(this.laag, key) && isBoolean(this.laag, key) && !this.teVerbergenProperties.contains(key));
   }
 
   linkEigenschappen(): string[] {
-    return this.eigenschappen(key => this.isBasisVeld(key) && this.isLink(key) && !this.teVerbergenProperties.contains(key));
+    return this.eigenschappen(key => isBasisVeld(this.laag, key) && this.isLink(key) && !this.teVerbergenProperties.contains(key));
   }
 
   heeftGeavanceerdeEigenschappen(): boolean {
-    return this.eigenschappen(key => !this.isBasisVeld(key) && !this.teVerbergenProperties.contains(key)).length > 0;
+    return this.eigenschappen(key => !isBasisVeld(this.laag, key) && !this.teVerbergenProperties.contains(key)).length > 0;
   }
 
   geavanceerdeEigenschappen(): string[] {
     return this.eigenschappen(
-      key => !this.isBasisVeld(key) && !this.isBoolean(key) && !this.isLink(key) && !this.teVerbergenProperties.contains(key)
+      key => !isBasisVeld(this.laag, key) && !isBoolean(this.laag, key) && !this.isLink(key) && !this.teVerbergenProperties.contains(key)
     );
   }
 
   geavanceerdeBooleanEigenschappen(): string[] {
-    return this.eigenschappen(key => !this.isBasisVeld(key) && this.isBoolean(key) && !this.teVerbergenProperties.contains(key));
+    return this.eigenschappen(
+      key => !isBasisVeld(this.laag, key) && isBoolean(this.laag, key) && !this.teVerbergenProperties.contains(key)
+    );
   }
 
   geavanceerdeLinkEigenschappen(): string[] {
-    return this.eigenschappen(key => !this.isBasisVeld(key) && this.isLink(key) && !this.teVerbergenProperties.contains(key));
+    return this.eigenschappen(key => !isBasisVeld(this.laag, key) && this.isLink(key) && !this.teVerbergenProperties.contains(key));
   }
 
   constante(veld: string): Option<string> {
@@ -262,9 +285,9 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
     // indien er een 'constante' object in de definitie is, geef dat terug, anders geeft de waarde in het veld terug
     return this.constante(name).getOrElseL(() => {
       const waarde = nestedProperty(name, this.properties());
-      if (this.isDatum(name) && waarde) {
+      if (isDatum(this.laag, name) && waarde) {
         return formateerDatum(waarde.toString());
-      } else if (this.isJson(name) && waarde) {
+      } else if (isJson(this.laag, name) && waarde) {
         return formateerJson(name, waarde, this.template(name));
       } else {
         return waarde;
@@ -313,28 +336,6 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
         .chain(veldInfo => fromNullable(veldInfo.constante)) //
         .exists(constante => constante.startsWith("http"))
     );
-  }
-
-  private isBasisVeld(veld: string): boolean {
-    return this.laag
-      .chain(l => fromNullable(l.velden.get(veld))) //
-      .exists(veldInfo => veldInfo.isBasisVeld); // indien geen meta informatie functie, toon alle velden
-  }
-
-  private isType(veld: string, type: string): boolean {
-    return this.laag.chain(l => fromNullable(l.velden.get(veld))).exists(veldInfo => veldInfo.type === type);
-  }
-
-  private isBoolean(veld: string): boolean {
-    return this.isType(veld, "boolean");
-  }
-
-  private isDatum(veld: string): boolean {
-    return this.isType(veld, "date");
-  }
-
-  private isJson(veld: string): boolean {
-    return this.isType(veld, "json");
   }
 
   private template(veld: string): string {
