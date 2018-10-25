@@ -60,15 +60,15 @@ const isType = (maybeLaag: Option<VectorLaag>, veld: string, type: string): bool
 };
 
 const isBoolean = (maybeLaag: Option<VectorLaag>, veld: string): boolean => {
-  return this.isType(maybeLaag, veld, "boolean");
+  return isType(maybeLaag, veld, "boolean");
 };
 
 const isDatum = (maybeLaag: Option<VectorLaag>, veld: string): boolean => {
-  return this.isType(maybeLaag, veld, "date");
+  return isType(maybeLaag, veld, "date");
 };
 
 const isJson = (maybeLaag: Option<VectorLaag>, veld: string): boolean => {
-  return this.isType(maybeLaag, veld, "json");
+  return isType(maybeLaag, veld, "json");
 };
 
 const isBasisVeld = (maybeLaag: Option<VectorLaag>, veld: string): boolean => {
