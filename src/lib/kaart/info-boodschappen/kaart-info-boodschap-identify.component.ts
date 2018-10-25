@@ -40,6 +40,22 @@ const nestedProperty = (propertyKey: string, object: Object) =>
     ? propertyKey.split(".").reduce((obj, key) => (geldigeWaarde(obj) && geldigeWaarde(obj[key]) ? obj[key] : null), object)
     : null;
 
+const formateerJson = (veld: string, json: string, formatString: string): string => {
+  const jsonObject = JSON.parse(`{"${veld}": ${json}}`);
+  return Mustache.render(formatString, jsonObject);
+};
+
+const formateerDatum = (dateString: string): string => {
+  const timestamp = Date.parse(dateString);
+
+  if (!isNaN(timestamp)) {
+    // geldige datum
+    return new Date(dateString).toLocaleDateString("nl-BE");
+  } else {
+    return dateString; // date string niet herkend, geef input terug
+  }
+};
+
 @Component({
   selector: "awv-kaart-info-boodschap-identify",
   templateUrl: "./kaart-info-boodschap-identify.component.html",
@@ -247,9 +263,9 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
     return this.constante(name).getOrElseL(() => {
       const waarde = nestedProperty(name, this.properties());
       if (this.isDatum(name) && waarde) {
-        return this.formateerDatum(waarde.toString());
+        return formateerDatum(waarde.toString());
       } else if (this.isJson(name) && waarde) {
-        return this.formateerJson(name, waarde, this.jsonFormatString(name));
+        return formateerJson(name, waarde, this.template(name));
       } else {
         return waarde;
       }
@@ -321,27 +337,11 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
     return this.isType(veld, "json");
   }
 
-  private jsonFormatString(veld: string): string {
+  private template(veld: string): string {
     return this.laag
       .chain(l => fromNullable(l.velden.get(veld)))
       .chain(veldInfo => fromNullable(veldInfo.template))
       .getOrElse("");
-  }
-
-  private formateerDatum(dateString: string): string {
-    const timestamp = Date.parse(dateString);
-
-    if (!isNaN(timestamp)) {
-      // geldige datum
-      return new Date(dateString).toLocaleDateString("nl-BE");
-    } else {
-      return dateString; // date string niet herkend, geef input terug
-    }
-  }
-
-  private formateerJson(veld: string, json: string, formatString: string): string {
-    const jsonObject = JSON.parse(`{"${veld}": ${json}}`);
-    return Mustache.render(formatString, jsonObject);
   }
 
   heeftMaakAbbameldaMelding(): boolean {
