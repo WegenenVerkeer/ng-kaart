@@ -76,6 +76,7 @@ export interface VeldInfo {
   type: string;
   isBasisVeld: boolean;
   constante: string;
+  template: string;
 }
 
 export interface VectorLaag {
