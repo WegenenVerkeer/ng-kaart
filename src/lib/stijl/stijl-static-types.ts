@@ -4,17 +4,9 @@ import { Lens, Optional, Prism } from "monocle-ts";
 
 import { Kleur, kleurcodeValue, olToKleur } from "./colour";
 
-// De typedefinities hierna beschrijven de JSON-DSL die we op dit moment ondersteunen.
+// De typedefinities hierna beschrijven de JSON-DSL voor static styles die we op dit moment ondersteunen.
 
-export type Awv0StaticStyle = ShortcutStyle | FullStyle;
-
-export interface LineShortcut {
-  fullLine: { color: string; width: number };
-}
-
-export interface ShortcutStyle {
-  shortcut: LineShortcut;
-}
+export type Awv0StaticStyle = FullStyle;
 
 export type ColorType = string; // Hier moet op termijn meer komen. O.a. Ndl naam
 

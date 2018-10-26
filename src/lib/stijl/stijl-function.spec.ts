@@ -85,13 +85,12 @@ describe("de stijl functie", () => {
                   }
                 },
                 style: {
-                  shortcut: {
-                    fullLine: {
+                  definition: {
+                    stroke: {
                       width: 5,
                       color: "#FFFF00"
                     }
-                  },
-                  definition: {}
+                  }
                 }
               }
             ]

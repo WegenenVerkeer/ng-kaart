@@ -1,14 +1,12 @@
 import { ChangeDetectionStrategy, Component, NgZone, ViewEncapsulation } from "@angular/core";
 import * as array from "fp-ts/lib/Array";
-import { concat, Curried2, Function1, Refinement, tuple } from "fp-ts/lib/function";
-import { fromNullable, fromRefinement, none, Option } from "fp-ts/lib/Option";
+import { concat, Curried2, Function1, tuple } from "fp-ts/lib/function";
 import { Setter } from "monocle-ts";
 import * as rx from "rxjs";
 import { filter, map, mapTo, share, shareReplay, startWith, switchMap, take, tap } from "rxjs/operators";
 
 import * as clr from "../../stijl/colour";
-import { jsonAwvV0Style } from "../../stijl/json-awv-v0-stijl";
-import { Awv0StaticStyle, Circle, Color, Fill, FullStyle, fullStylePrism } from "../../stijl/stijl-static-types";
+import { Circle, Color, Fill, FullStyle, fullStylePrism } from "../../stijl/stijl-static-types";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-messages";
@@ -72,7 +70,7 @@ const markeerKleur: Curried2<clr.Kleur, clr.Kleur[], KiesbareKleur[]> = doelkleu
 // Voorlopig geven we alle lagen dezelfde, eenvoudige stijl op het kleur na
 const enkelvoudigeKleurStijl: Function1<clr.Kleur, ss.Awv0StyleSpec> = kleur => ({
   type: "StaticStyle",
-  spec: {
+  definition: {
     fill: {
       color: clr.kleurcodeValue(kleur)
     },

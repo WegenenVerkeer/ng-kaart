@@ -23,6 +23,7 @@ export type Subscription<Msg> =
   | HoverFeaturesSubscription<Msg>
   | InfoBoodschappenSubscription<Msg>
   | KaartClickSubscription<Msg>
+  | LaagstijlGezetSubscription<Msg>
   | LaagVerwijderdSubscription<Msg>
   | LagenInGroepSubscription<Msg>
   | MiddelpuntSubscription<Msg>
@@ -152,6 +153,11 @@ export interface ComponentFoutSubscription<Msg> {
   readonly wrapper: (fouten: List<string>) => Msg;
 }
 
+export interface LaagstijlGezetSubscription<Msg> {
+  readonly type: "LaagstijlGezet";
+  readonly wrapper: MsgGen<ke.ToegevoegdeVectorLaag, Msg>;
+}
+
 ///////////////
 // Constructors
 //
@@ -243,4 +249,8 @@ export function ComponentFoutSubscription<Msg>(wrapper: (fouten: List<string>) =
     type: "ComponentFout",
     wrapper: wrapper
   };
+}
+
+export function LaagstijlGezetSubscription<Msg>(wrapper: MsgGen<ke.ToegevoegdeVectorLaag, Msg>): LaagstijlGezetSubscription<Msg> {
+  return { type: "LaagstijlGezet", wrapper: wrapper };
 }

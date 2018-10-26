@@ -6,7 +6,7 @@ import * as ol from "openlayers";
 
 import { applyValidationChain, validationChain as chain } from "../util/validation";
 
-import { shortcutOrFullStyle } from "./json-awv-v0-stijl";
+import { jsonAwvV0Definition } from "./json-awv-v0-stijl";
 import * as oi from "./json-object-interpreting";
 import { fail, Interpreter, ok, Validation } from "./json-object-interpreting";
 import {
@@ -91,7 +91,7 @@ const jsonAwvV0RuleConfig: Interpreter<RuleStyleConfig> = (json: Object) => {
     "<=>": between
   });
 
-  const rule = oi.map2(RuleStyle, oi.optField("condition", expression), oi.field("style", shortcutOrFullStyle));
+  const rule = oi.map2(RuleStyle, oi.optField("condition", expression), oi.field("style", jsonAwvV0Definition));
 
   const ruleConfig = oi.map(RuleStyleConfig, oi.arr(rule));
 

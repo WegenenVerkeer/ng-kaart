@@ -9,7 +9,6 @@ import { Subscription } from "rxjs";
 import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
 
-import { validateAwv0StaticStyle } from "../stijl/stijl-static";
 import { forEach } from "../util/option";
 import { updateBehaviorSubject } from "../util/subject-update";
 import { allOf, fromBoolean, fromOption, fromPredicate, success, validationChain as chain } from "../util/validation";
@@ -17,6 +16,7 @@ import { zoekerMetNaam } from "../zoeker/zoeker";
 
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
+import { MsgGen } from "./kaart-protocol-subscriptions";
 import { KaartWithInfo } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
 import { kaartLogger } from "./log";
@@ -97,7 +97,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       };
     }
 
-    function consumeWrapped<T>(subCmd: { wrapper: Function1<T, Msg> }): rx.Observer<T> {
+    // Een observer die wat er uit de observable komt verpakt in een object van type Msg en aan de msgConsumer aanbiedt.
+    function consumeMessage<T>(subCmd: { wrapper: MsgGen<T, Msg> }): rx.Observer<T> {
       return {
         next: (t: T) => msgConsumer(subCmd.wrapper(t)),
         error: (err: any) => kaartLogger.error("Onverwachte fout bij kaart subscription", err),
@@ -302,6 +303,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           .sortBy(laag => -laag!.layer.getZIndex()) // en dus ook geldige titels
           .toList()
       );
+    }
+
+    function zendStijlwijziging(laag: ke.ToegevoegdeVectorLaag): void {
+      modelChanger.laagstijlGezetSubj.next(laag);
     }
 
     function zetLayerIndex(layer: ol.layer.Base, groepIndex: number, groep: ke.Laaggroep): void {
@@ -948,6 +953,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           const updatedLaag = pasVectorLaagStijlAan(some(cmnd.stijl), cmnd.selectieStijl)(laag);
           const updatedModel = pasLaagInModelAan(model)(updatedLaag);
           zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
+          zendStijlwijziging(updatedLaag);
           return ModelAndEmptyResult(updatedModel);
         })
       );
@@ -964,6 +970,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             };
             const updatedModel = pasLaagInModelAan(model)(updatedLaag);
             zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
+            zendStijlwijziging(updatedLaag);
             return ModelAndEmptyResult(updatedModel);
           })
         )
@@ -1136,12 +1143,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       function subscribeToViewinstellingen(sub: prt.ViewinstellingenSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
           "Viewinstellingen",
-          modelChanges.viewinstellingen$.pipe(debounceTime(100)).subscribe(consumeWrapped(sub))
+          modelChanges.viewinstellingen$.pipe(debounceTime(100)).subscribe(consumeMessage(sub))
         );
       }
 
       function subscribeToGeselecteerdeFeatures(sub: prt.GeselecteerdeFeaturesSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult("GeselecteerdeFeatures", modelChanges.geselecteerdeFeatures$.subscribe(consumeWrapped(sub)));
+        return modelWithSubscriptionResult("GeselecteerdeFeatures", modelChanges.geselecteerdeFeatures$.subscribe(consumeMessage(sub)));
       }
 
       function subscribeToHoverFeatures(sub: prt.HoverFeaturesSubscription<Msg>): ModelWithResult<Msg> {
@@ -1156,7 +1163,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       function subscribeToZichtbareFeatures(sub: prt.ZichtbareFeaturesSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
           "ZichtbareFeatures", //
-          modelChanges.zichtbareFeatures$.subscribe(consumeWrapped(sub))
+          modelChanges.zichtbareFeatures$.subscribe(consumeMessage(sub))
         );
       }
 
@@ -1169,7 +1176,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               map(i => i.zoom),
               distinctUntilChanged()
             )
-            .subscribe(consumeWrapped(sub))
+            .subscribe(consumeMessage(sub))
         );
       }
 
@@ -1182,7 +1189,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               map(i => i.center),
               distinctUntilChanged()
             )
-            .subscribe(consumeWrapped(sub))
+            .subscribe(consumeMessage(sub))
         );
       }
 
@@ -1195,16 +1202,16 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               map(i => i.extent),
               distinctUntilChanged()
             )
-            .subscribe(consumeWrapped(sub))
+            .subscribe(consumeMessage(sub))
         );
       }
 
       function subscribeToAchtergrondTitel(sub: prt.AchtergrondTitelSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult("AchtergrondTitel", model.achtergrondlaagtitelSubj.subscribe(consumeWrapped(sub)));
+        return modelWithSubscriptionResult("AchtergrondTitel", model.achtergrondlaagtitelSubj.subscribe(consumeMessage(sub)));
       }
 
       function subscribeToKaartClick(sub: prt.KaartClickSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult("KaartClick", modelChanges.kaartKlikLocatie$.subscribe(consumeWrapped(sub)));
+        return modelWithSubscriptionResult("KaartClick", modelChanges.kaartKlikLocatie$.subscribe(consumeMessage(sub)));
       }
 
       const subscribeToLagenInGroep = (sub: prt.LagenInGroepSubscription<Msg>) => {
@@ -1213,23 +1220,23 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           modelChanger.lagenOpGroepSubj
             .get(sub.groep) // we vertrouwen op de typechecker
             .pipe(debounceTime(50))
-            .subscribe(consumeWrapped(sub))
+            .subscribe(consumeMessage(sub))
         );
       };
 
       const subscribeToLaagVerwijderd = (sub: prt.LaagVerwijderdSubscription<Msg>) =>
-        modelWithSubscriptionResult("LaagVerwijderd", modelChanger.laagVerwijderdSubj.subscribe(consumeWrapped(sub)));
+        modelWithSubscriptionResult("LaagVerwijderd", modelChanger.laagVerwijderdSubj.subscribe(consumeMessage(sub)));
 
       function subscribeToZoekResultaten(sub: prt.ZoekResultatenSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult("ZoekResultaten", modelChanges.zoekresultaten$.subscribe(consumeWrapped(sub)));
+        return modelWithSubscriptionResult("ZoekResultaten", modelChanges.zoekresultaten$.subscribe(consumeMessage(sub)));
       }
 
       function subscribeToZoekResultaatSelectie(sub: prt.ZoekResultaatSelectieSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult("ZoekResultaatSelectie", modelChanges.zoekresultaatselectie$.subscribe(consumeWrapped(sub)));
+        return modelWithSubscriptionResult("ZoekResultaatSelectie", modelChanges.zoekresultaatselectie$.subscribe(consumeMessage(sub)));
       }
 
       function subscribeToZoekers(sub: prt.ZoekersSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult("Zoekers", modelChanges.zoekerServices$.subscribe(consumeWrapped(sub)));
+        return modelWithSubscriptionResult("Zoekers", modelChanges.zoekerServices$.subscribe(consumeMessage(sub)));
       }
 
       function subscribeToGeometryChanged(sub: prt.GeometryChangedSubscription<Msg>): ModelWithResult<Msg> {
@@ -1245,24 +1252,28 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                 model.tekenSettingsSubj.next(none);
               }
             };
-          }).subscribe(consumeWrapped(sub))
+          }).subscribe(consumeMessage(sub))
         );
       }
 
       function subscribeToTekenen(sub: prt.TekenenSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult("Tekenen", model.tekenSettingsSubj.pipe(distinctUntilChanged()).subscribe(consumeWrapped(sub)));
+        return modelWithSubscriptionResult("Tekenen", model.tekenSettingsSubj.pipe(distinctUntilChanged()).subscribe(consumeMessage(sub)));
       }
 
       function subscribeToActieveModus(sub: prt.ActieveModusSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult("ActieveModus", modelChanges.actieveModus$.subscribe(consumeWrapped(sub)));
+        return modelWithSubscriptionResult("ActieveModus", modelChanges.actieveModus$.subscribe(consumeMessage(sub)));
       }
 
       function subscribeToInfoBoodschappen(sub: prt.InfoBoodschappenSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult("InfoBoodschappen", model.infoBoodschappenSubj.subscribe(consumeWrapped(sub)));
+        return modelWithSubscriptionResult("InfoBoodschappen", model.infoBoodschappenSubj.subscribe(consumeMessage(sub)));
       }
 
       function subscribeToComponentFouten(sub: prt.ComponentFoutSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult("Componentfouten", model.componentFoutSubj.subscribe(consumeWrapped(sub)));
+        return modelWithSubscriptionResult("Componentfouten", model.componentFoutSubj.subscribe(consumeMessage(sub)));
+      }
+
+      function subscribeToLaagstijlGezet(sub: prt.LaagstijlGezetSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult("LaagstijlGezet", modelChanges.laagstijlGezet$.subscribe(consumeMessage(sub)));
       }
 
       switch (cmnd.subscription.type) {
@@ -1304,6 +1315,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToComponentFouten(cmnd.subscription);
         case "ActieveModus":
           return subscribeToActieveModus(cmnd.subscription);
+        case "LaagstijlGezet":
+          return subscribeToLaagstijlGezet(cmnd.subscription);
       }
     }
 

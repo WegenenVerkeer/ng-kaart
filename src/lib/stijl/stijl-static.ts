@@ -1,8 +1,9 @@
+import { Function1 } from "fp-ts/lib/function";
 import * as ol from "openlayers";
 
-import { failure, validationChain as chain, Validator } from "../util/validation";
+import { validationChain as chain, Validator } from "../util/validation";
 
-import { jsonAwvV0Style, shortcutOrFullStyle } from "./json-awv-v0-stijl";
+import { jsonAwvV0Definition, jsonAwvV0Style } from "./json-awv-v0-stijl";
 import { Validation } from "./json-object-interpreting";
 import * as oi from "./json-object-interpreting";
 import { Awv0StaticStyle } from "./stijl-static-types";
@@ -12,9 +13,7 @@ import { Awv0StaticStyle } from "./stijl-static-types";
 // Best wachten we tot de interface min of meer stabiel is.
 
 // Vanaf hier zou het iets stabieler moeten zijn
-export type ValidatedOlStyle = Validation<ol.style.Style>;
-
-export function definitieToStyle(encoding: string, definitieText: string): ValidatedOlStyle {
+export function definitieToStyle(encoding: string, definitieText: string): Validation<ol.style.Style> {
   if (encoding === "json") {
     return jsonDefinitieStringToStyle(definitieText);
   } else {
@@ -22,7 +21,7 @@ export function definitieToStyle(encoding: string, definitieText: string): Valid
   }
 }
 
-function jsonDefinitieStringToStyle(definitieText: string): ValidatedOlStyle {
+function jsonDefinitieStringToStyle(definitieText: string): Validation<ol.style.Style> {
   try {
     const object = JSON.parse(definitieText);
     return interpretJson(object);
@@ -31,21 +30,20 @@ function jsonDefinitieStringToStyle(definitieText: string): ValidatedOlStyle {
   }
 }
 
-function interpretJson(definition: Object): Validation<ol.style.Style> {
-  return chain(oi.field("version", oi.str)(definition), version => {
+function interpretJson(json: Object): Validation<ol.style.Style> {
+  return chain(oi.field("version", oi.str)(json), version => {
     switch (version) {
       case "awv-v0":
-        return shortcutOrFullStyle(definition);
+        return jsonAwvV0Definition(json);
       default:
         return oi.fail(`Versie '${version}' wordt niet ondersteund`);
     }
   });
 }
 
-// Een alias voor interpretJson die ons custom type neemt ipv gewoon een gedeserialiseerde jSON
+// Een alias voor interpretJson die ons custom type neemt ipv gewoon een gedeserialiseerde jSON.
+// De kans op succesvolle validate is vrij groot.
 export const validateAwv0StaticStyle: Validator<Awv0StaticStyle, ol.style.Style> = jsonAwvV0Style;
 
-// Dit gaat uiteraard enkel gegarandeerd lukken voor stylen die we zelf gegenereerd hebben.
-export const styleToDefintie: Validator<ol.style.Style, Awv0StaticStyle> = style => {
-  return failure("nog niet geimplementeerd");
-};
+export const serialiseAwv0StaticStyle: Function1<Awv0StaticStyle, string> = style =>
+  JSON.stringify({ version: "awv-v0", definition: style });

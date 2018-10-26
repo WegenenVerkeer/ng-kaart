@@ -4,10 +4,8 @@ import { ok } from "./json-object-interpreting";
 import { definitieToStyle } from "./stijl-static";
 
 describe("De stijl interpreter", () => {
-  beforeEach(() => {});
-
   describe("bij het converteren van een geldige stijldefinite", () => {
-    describe("een simple stijldefinitie", () => {
+    describe("een simpele stijldefinitie", () => {
       it("moet een stroke met kleur en breedte maken", () => {
         const result = definitieToStyle(
           "json",
@@ -126,53 +124,6 @@ describe("De stijl interpreter", () => {
           })
         )
       );
-    });
-  });
-
-  describe("bij het converteren van een shortcut stijl", () => {
-    describe("Met alleen een shortcutstijl", () => {
-      it("moet een lijnstijl expanderen", () => {
-        const result = definitieToStyle(
-          "json",
-          JSON.stringify({
-            version: "awv-v0",
-            shortcut: { fullLine: { color: "yellow", width: 5 } },
-            definition: {}
-          })
-        );
-        expect(result).toEqual(
-          ok(
-            new ol.style.Style({
-              stroke: new ol.style.Stroke({
-                color: "yellow",
-                width: 5
-              })
-            })
-          )
-        );
-      });
-    });
-    describe("Met een override", () => {
-      it("moet de voorgedefinieerde opties overschrijven", () => {
-        const result = definitieToStyle(
-          "json",
-          JSON.stringify({
-            version: "awv-v0",
-            shortcut: { fullLine: { color: "yellow", width: 5 } },
-            definition: { stroke: { color: "red" } }
-          })
-        );
-        expect(result).toEqual(
-          ok(
-            new ol.style.Style({
-              stroke: new ol.style.Stroke({
-                color: "red",
-                width: 5
-              })
-            })
-          )
-        );
-      });
     });
   });
 

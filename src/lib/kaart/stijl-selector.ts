@@ -21,7 +21,7 @@ export type Awv0StyleSpec = Awv0StaticStyleSpec; // Hier moeten ook nog de rules
 
 export interface Awv0StaticStyleSpec {
   readonly type: "StaticStyle";
-  readonly spec: Awv0StaticStyle;
+  readonly definition: Awv0StaticStyle;
 }
 
 export interface StaticStyle {
@@ -167,11 +167,11 @@ export const offsetStyleSelector: (_1: string, _2: string, _3: number) => (_: St
 export const validateAwv0Style: Validator<Awv0StyleSpec, ol.style.Style> = styleSpec => {
   switch (styleSpec.type) {
     case "StaticStyle":
-      return validateAwv0StaticStyle(styleSpec.spec);
+      return validateAwv0StaticStyle(styleSpec.definition);
   }
 };
 
 export const Awv0StaticStyleSpecIso: Iso<Awv0StaticStyleSpec, Awv0StaticStyle> = new Iso(
-  spec => spec.spec,
-  spec => ({ type: "StaticStyle", spec: spec } as Awv0StaticStyleSpec)
+  spec => spec.definition,
+  definition => ({ type: "StaticStyle", definition: definition } as Awv0StaticStyleSpec)
 );

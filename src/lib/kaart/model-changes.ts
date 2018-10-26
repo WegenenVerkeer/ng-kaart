@@ -45,6 +45,7 @@ export interface ModelChanger {
   readonly zoekresultaatselectieSubj: rx.Subject<ZoekResultaat>;
   readonly laagLocationInfoServicesOpTitelSubj: rx.BehaviorSubject<Map<string, LaagLocationInfoService>>;
   readonly laagstijlaanpassingStateSubj: rx.Subject<LaagstijlaanpassingState>;
+  readonly laagstijlGezetSubj: rx.Subject<ke.ToegevoegdeVectorLaag>;
 }
 
 // Hieronder wordt een paar keer BehaviourSubject gebruikt. Dat is equivalent met, maar beknopter dan, een startWith + shareReplay
@@ -65,7 +66,8 @@ export const ModelChanger: () => ModelChanger = () => ({
   zoekopdrachtSubj: new rx.Subject<Zoekopdracht>(),
   zoekresultaatselectieSubj: new rx.Subject<ZoekResultaat>(),
   laagLocationInfoServicesOpTitelSubj: new rx.BehaviorSubject(Map()),
-  laagstijlaanpassingStateSubj: new rx.BehaviorSubject(GeenLaagstijlaanpassing)
+  laagstijlaanpassingStateSubj: new rx.BehaviorSubject(GeenLaagstijlaanpassing),
+  laagstijlGezetSubj: new rx.Subject<ke.ToegevoegdeVectorLaag>()
 });
 
 export interface ModelChanges {
@@ -85,6 +87,7 @@ export interface ModelChanges {
   readonly zoekresultaatselectie$: rx.Observable<ZoekResultaat>;
   readonly laagLocationInfoServicesOpTitel$: rx.Observable<Map<string, LaagLocationInfoService>>;
   readonly laagstijlaanpassingState$: rx.Observable<LaagstijlaanpassingState>;
+  readonly laagstijlGezet$: rx.Observable<ke.ToegevoegdeVectorLaag>;
 }
 
 const viewinstellingen = (olmap: ol.Map) => ({
@@ -217,6 +220,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     zoekresultaten$: zoekresulaten$,
     zoekresultaatselectie$: changer.zoekresultaatselectieSubj.asObservable(),
     laagLocationInfoServicesOpTitel$: changer.laagLocationInfoServicesOpTitelSubj.asObservable(),
-    laagstijlaanpassingState$: changer.laagstijlaanpassingStateSubj.asObservable()
+    laagstijlaanpassingState$: changer.laagstijlaanpassingStateSubj.asObservable(),
+    laagstijlGezet$: changer.laagstijlGezetSubj.asObservable()
   };
 };
