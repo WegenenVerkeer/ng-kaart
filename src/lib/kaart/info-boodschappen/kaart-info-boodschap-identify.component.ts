@@ -1,4 +1,5 @@
 import { Component, Input, NgZone } from "@angular/core";
+import { Curried3, Function1, Function2, Predicate } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import { List, OrderedMap } from "immutable";
 import * as Mustache from "mustache";
@@ -54,27 +55,18 @@ const formateerDatum = (dateString: string): string => {
   }
 };
 
-const isType = (maybeLaag: Option<VectorLaag>, veld: string, type: string): boolean => {
-  return maybeLaag.chain(l => fromNullable(l.velden.get(veld))).exists(veldInfo => veldInfo.type === type);
-};
+const hasVeldSatisfying: Curried3<Option<VectorLaag>, string, Predicate<VeldInfo>, boolean> = maybeLaag => veld => test =>
+  maybeLaag.chain(l => fromNullable(l.velden.get(veld))).exists(test);
 
-const isBoolean = (maybeLaag: Option<VectorLaag>, veld: string): boolean => {
-  return isType(maybeLaag, veld, "boolean");
-};
+const isType: Function1<string, Function2<Option<VectorLaag>, string, boolean>> = type => (maybeLaag, veld) =>
+  hasVeldSatisfying(maybeLaag)(veld)(veldInfo => veldInfo.type === type);
 
-const isDatum = (maybeLaag: Option<VectorLaag>, veld: string): boolean => {
-  return isType(maybeLaag, veld, "date");
-};
+const isBoolean: Function2<Option<VectorLaag>, string, boolean> = isType("boolean");
+const isDatum: Function2<Option<VectorLaag>, string, boolean> = isType("date");
+const isJson: Function2<Option<VectorLaag>, string, boolean> = isType("json");
 
-const isJson = (maybeLaag: Option<VectorLaag>, veld: string): boolean => {
-  return isType(maybeLaag, veld, "json");
-};
-
-const isBasisVeld = (maybeLaag: Option<VectorLaag>, veld: string): boolean => {
-  return maybeLaag
-    .chain(l => fromNullable(l.velden.get(veld))) //
-    .exists(veldInfo => veldInfo.isBasisVeld); // indien geen meta informatie functie, toon alle velden
-};
+const isBasisVeld: Function2<Option<VectorLaag>, string, boolean> = (maybeLaag, veld) =>
+  hasVeldSatisfying(maybeLaag)(veld)(veldInfo => veldInfo.isBasisVeld); // indien geen meta informatie functie, toon alle velden
 
 @Component({
   selector: "awv-kaart-info-boodschap-identify",
