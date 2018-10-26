@@ -966,7 +966,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           valideerAlsStijlSpec(cmnd.stijlSpec).map(stijl => {
             const updatedLaag = {
               ...pasVectorLaagStijlAan(some(ss.StaticStyle(stijl)), laag.selectiestijlSel)(laag),
-              stijlSelBron: some(cmnd.stijlSpec)
+              stijlSelBron: some(cmnd.stijlSpec),
+              legende: some(cmnd.legende)
             };
             const updatedModel = pasLaagInModelAan(model)(updatedLaag);
             zendLagenInGroep(updatedModel, updatedLaag.laaggroep);

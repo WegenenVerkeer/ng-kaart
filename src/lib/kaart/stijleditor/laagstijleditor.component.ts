@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, NgZone, ViewEncapsulation } from "@angular/core";
 import * as array from "fp-ts/lib/Array";
-import { concat, Curried2, Function1, tuple } from "fp-ts/lib/function";
+import { concat, Curried2, Function1, Function2, tuple } from "fp-ts/lib/function";
+import { none } from "fp-ts/lib/Option";
 import { Setter } from "monocle-ts";
 import * as rx from "rxjs";
 import { filter, map, mapTo, share, shareReplay, startWith, switchMap, take, tap } from "rxjs/operators";
@@ -10,6 +11,7 @@ import { Circle, Color, Fill, FullStyle, fullStylePrism } from "../../stijl/stij
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-messages";
+import { Legende } from "../kaart-legende";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 import * as ss from "../stijl-selector";
@@ -72,7 +74,7 @@ const enkelvoudigeKleurStijl: Function1<clr.Kleur, ss.Awv0StyleSpec> = kleur => 
   type: "StaticStyle",
   definition: {
     fill: {
-      color: clr.kleurcodeValue(kleur)
+      color: clr.kleurcodeValue(clr.setOpacity(0.25)(kleur))
     },
     stroke: {
       color: clr.kleurcodeValue(kleur),
@@ -81,14 +83,20 @@ const enkelvoudigeKleurStijl: Function1<clr.Kleur, ss.Awv0StyleSpec> = kleur => 
     circle: {
       radius: 5,
       fill: {
-        color: clr.kleurcodeValue(clr.setOpacity(0.75)(kleur))
+        color: clr.kleurcodeValue(kleur)
       }
     }
   }
 });
+const enkelvoudigeKleurLegende: Function2<string, clr.Kleur, Legende> = (laagTitel, kleur) =>
+  Legende([
+    { type: "Lijn", beschrijving: `lijnen voor ${laagTitel}`, kleur: clr.kleurcodeValue(kleur), achtergrondKleur: none },
+    { type: "Bolletje", beschrijving: `punten voor ${laagTitel}`, kleur: clr.kleurcodeValue(kleur) },
+    { type: "Polygoon", beschrijving: `vlakken voor ${laagTitel}`, kleur: clr.kleurcodeValue(clr.setOpacity(0.25)(kleur)) }
+  ]);
 
 const stijlCmdVoorLaag: Curried2<ke.ToegevoegdeVectorLaag, clr.Kleur, prt.ZetStijlSpecVoorLaagCmd<KaartInternalMsg>> = laag => kleur =>
-  prt.ZetStijlSpecVoorLaagCmd(laag.titel, enkelvoudigeKleurStijl(kleur), kaartLogOnlyWrapper);
+  prt.ZetStijlSpecVoorLaagCmd(laag.titel, enkelvoudigeKleurStijl(kleur), enkelvoudigeKleurLegende(laag.titel, kleur), kaartLogOnlyWrapper);
 
 // Op het niveau van een stijl is er geen eenvoudige kleur. We gaan dit proberen af leiden van het bolletje in de stijl.
 interface AfgeleideKleur extends clr.Kleur {

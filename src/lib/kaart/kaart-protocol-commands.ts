@@ -257,6 +257,7 @@ export interface ZetStijlSpecVoorLaagCmd<Msg extends KaartMsg> {
   readonly type: "ZetStijlSpecVoorLaag";
   readonly titel: string;
   readonly stijlSpec: ss.Awv0StyleSpec;
+  readonly legende: Legende;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -481,9 +482,10 @@ export function ZetStijlVoorLaagCmd<Msg extends KaartMsg>(
 export function ZetStijlSpecVoorLaagCmd<Msg extends KaartMsg>(
   titel: string,
   stijlSpec: ss.Awv0StyleSpec,
+  legende: Legende,
   wrapper: BareValidationWrapper<Msg>
 ): ZetStijlSpecVoorLaagCmd<Msg> {
-  return { type: "ZetStijlSpecVoorLaag", stijlSpec: stijlSpec, titel: titel, wrapper: wrapper };
+  return { type: "ZetStijlSpecVoorLaag", stijlSpec: stijlSpec, legende: legende, titel: titel, wrapper: wrapper };
 }
 
 export function VeranderMiddelpuntCmd<Msg extends KaartMsg>(coordinate: ol.Coordinate): VeranderMiddelpuntCmd<Msg> {
