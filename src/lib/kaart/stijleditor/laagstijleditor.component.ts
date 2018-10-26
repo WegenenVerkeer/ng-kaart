@@ -159,9 +159,12 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
     // we zouden ook de laag zelf kunnen volgen, maar in de praktijk gaat die toch niet veranderen
     const origineleKleur$ = aanpassing$.pipe(map(state => kleurViaLaag(state.laag)));
     // zetten van de nieuwe en bestaande kleuren
-    const selectieKleur$ = this.actionDataFor$("kiesLaagkleur", clr.isKleur).pipe(
-      map(gevonden),
-      shareReplay(1)
+    const selectieKleur$ = rx.merge(
+      aanpassing$.pipe(
+        switchMap(() => this.actionDataFor$("kiesLaagkleur", clr.isKleur).pipe(map(gevonden))),
+        shareReplay(1)
+      ),
+      origineleKleur$ // anders wordt de selectiekleur van een vorige keer getoond
     );
     this.laagkleur$ = rx
       .merge(
@@ -213,25 +216,25 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
       switchMap(aanpassing => selectieKleur$.pipe(map(stijlCmdVoorLaag(aanpassing.laag)))), // kleur omzetten naar commando
       take(1) // omdat er anders ook een commando gegenereerd wordt de volgende keer dat aanpassing$ een waarde emit
     );
-    this.bindToLifeCycle(pasToeGeklikt$)
-      .pipe(switchMap(() => stijlCmd$))
-      .subscribe(cmd => this.dispatch(cmd));
+    this.bindToLifeCycle(pasToeGeklikt$.pipe(switchMap(() => stijlCmd$))).subscribe(cmd => this.dispatch(cmd));
 
     // Toepassen knop actief of niet. Uitgedrukt als een negatief statement wegens gebruik voor HTML 'disabled'.
     // Een alternatief voor gezetteKleur$ zou zijn om de state aan te passen. Dan zou origineleKleur de nieuwe waarde emitten,
     // er zouden echter neveneffecten zijn zoals sluiten van de lagenkiezer als die ondertussen open gedaan zou zijn.
-    const gezetteKleur$ = rx.merge(
-      origineleKleur$,
-      selectieKleur$.pipe(
-        // herstart wanneer er een nieuwe kleur geselecteerd is
-        switchMap(selectieKleur =>
-          pasToeGeklikt$.pipe(
-            // selectieKleur vanaf er toegepast is
-            switchMap(() => rx.of(selectieKleur))
+    const gezetteKleur$ = rx
+      .merge(
+        origineleKleur$,
+        selectieKleur$.pipe(
+          // herstart wanneer er een nieuwe kleur geselecteerd is
+          switchMap(selectieKleur =>
+            pasToeGeklikt$.pipe(
+              // selectieKleur vanaf er toegepast is
+              switchMap(() => rx.of(selectieKleur))
+            )
           )
         )
       )
-    );
+      .pipe(shareReplay(1, 200));
     this.nietToepassen$ = rx.combineLatest(gezetteKleur$, selectieKleur$, clr.setoidKleurOpCode.equals).pipe(startWith(true));
   }
 }
