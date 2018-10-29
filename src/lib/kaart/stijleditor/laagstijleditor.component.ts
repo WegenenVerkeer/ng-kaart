@@ -88,11 +88,7 @@ const enkelvoudigeKleurStijl: Function1<clr.Kleur, ss.Awv0StyleSpec> = kleur => 
   }
 });
 const enkelvoudigeKleurLegende: Function2<string, clr.Kleur, Legende> = (laagTitel, kleur) =>
-  Legende([
-    { type: "Lijn", beschrijving: `lijnen voor ${laagTitel}`, kleur: clr.kleurcodeValue(kleur), achtergrondKleur: none },
-    { type: "Bolletje", beschrijving: `punten voor ${laagTitel}`, kleur: clr.kleurcodeValue(kleur) },
-    { type: "Polygoon", beschrijving: `vlakken voor ${laagTitel}`, kleur: clr.kleurcodeValue(clr.setOpacity(0.25)(kleur)) }
-  ]);
+  Legende([{ type: "Lijn", beschrijving: laagTitel, kleur: clr.kleurcodeValue(kleur), achtergrondKleur: none }]);
 
 const stijlCmdVoorLaag: Curried2<ke.ToegevoegdeVectorLaag, clr.Kleur, prt.ZetStijlSpecVoorLaagCmd<KaartInternalMsg>> = laag => kleur =>
   prt.ZetStijlSpecVoorLaagCmd(laag.titel, enkelvoudigeKleurStijl(kleur), enkelvoudigeKleurLegende(laag.titel, kleur), kaartLogOnlyWrapper);
