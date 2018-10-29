@@ -1,13 +1,12 @@
-import { ChangeDetectionStrategy, Component, NgZone, ViewEncapsulation } from "@angular/core";
+import { ChangeDetectionStrategy, Component, ElementRef, NgZone, QueryList, ViewChildren, ViewEncapsulation } from "@angular/core";
 import * as array from "fp-ts/lib/Array";
 import { concat, Curried2, Function1, Function2, tuple } from "fp-ts/lib/function";
 import { none } from "fp-ts/lib/Option";
-import { Setter } from "monocle-ts";
 import * as rx from "rxjs";
-import { filter, map, mapTo, share, shareReplay, startWith, switchMap, take, tap } from "rxjs/operators";
+import { delay, filter, map, mapTo, share, shareReplay, startWith, switchMap, take } from "rxjs/operators";
 
 import * as clr from "../../stijl/colour";
-import { Circle, Color, Fill, FullStyle, fullStylePrism } from "../../stijl/stijl-static-types";
+import { Circle, Fill, FullStyle, fullStylePrism } from "../../stijl/stijl-static-types";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-messages";
@@ -120,13 +119,6 @@ const kleurViaLaag: Function1<ke.ToegevoegdeVectorLaag, AfgeleideKleur> = laag =
     .map(gevonden)
     .getOrElse(nietGevonden);
 
-// De setter wordt interessant op het moment dat we maar een bepaald aspect van de stijl willen aanpassen.
-const zetKleur: Setter<ss.Awv0StyleSpec, clr.Kleur> = ss.Awv0StaticStyleSpecIso.composePrism(fullStylePrism)
-  .composeOptional(Circle.fillOptional)
-  .composeLens(Fill.colorLens)
-  .compose(Color.kleurOptional)
-  .asSetter();
-
 @Component({
   selector: "awv-laagstijleditor",
   templateUrl: "./laagstijleditor.component.html",
@@ -143,6 +135,10 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
   readonly grootPaletZichtbaar$: rx.Observable<boolean>;
   readonly nietToepassen$: rx.Observable<boolean>;
   readonly paletKleuren$: rx.Observable<KiesbareKleur[]>;
+  readonly chooserStyle$: rx.Observable<object>;
+
+  @ViewChildren("editor")
+  editorElement: QueryList<ElementRef>; // QueryList omdat enkel beschikbaar wanneer ngIf true is
 
   constructor(kaart: KaartComponent, zone: NgZone) {
     super(kaart, zone);
@@ -236,5 +232,34 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
       )
       .pipe(shareReplay(1, 200));
     this.nietToepassen$ = rx.combineLatest(gezetteKleur$, selectieKleur$, clr.setoidKleurOpCode.equals).pipe(startWith(true));
+
+    // Zorg er voor dat de kleurkiezer steeds ergens naast de component staat
+    // Dat doen we door enerzijds de kiezer naar rechts te schuiven tot die zeker naast de eventuele scrollbar staat.
+    // Aan de andere kant schuiven we de kiezer ook omhoog. We zetten die op dezelfde hoogte als de editor component. Wanneer
+    // de kiezer geëxpandeerd wordt evenwel, dan schuiven we hem nog wat meer omhoog om plaats te maken voor de extra kleurtjes.
+    // Afhankelijk van de schermgrootte en waar de editorcomponent staat, zou die anders over de rand van het window kunnen vallen.
+    // Dat kan trouwens nu nog steeds. De gebruiker moet dan eerst de editor voldoende omhoog schuiven. Dit zou mogelijk moeten
+    // zijn in fullscreen mode zoals bij geoloket2 en sowieso veel minder een probleem als er toch nog plaats is onder de
+    // kaartcomponent bij embedded gebruik.
+    this.chooserStyle$ = this.viewReady$.pipe(
+      switchMap(() => this.editorElement.changes),
+      filter(ql => ql.length > 0),
+      map(ql => ql.first.nativeElement),
+      // De allereerste keer wordt de CSS transformatie maar na een tijdje toegepast wat resulteert in een "springende" component,
+      // vandaar dat we even wachten met genereren van de style. Een neveneffect is wel dat de display dan initieel op none moet staan
+      // want anders wordt er toch nog gesprongen.
+      delay(1),
+      switchMap(q =>
+        this.grootPaletZichtbaar$.pipe(
+          switchMap(groot =>
+            rx.of({
+              transform: `translateX(${q.clientWidth + 16}px) translateY(-${q.clientHeight + (groot ? 48 : 0)}px)`,
+              display: "flex"
+            })
+          )
+        )
+      ),
+      shareReplay(1)
+    );
   }
 }

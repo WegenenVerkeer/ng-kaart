@@ -85,9 +85,8 @@
 
   .awv-kaart-laagstijleditor-chooser {
     position: fixed;
-    display: flex;
+    display: none;
     flex-direction: column;
-    transform: translateX(336px) translateY(-104px);
 
     .awv-kaart-laagstijleditor-chooser-header {
       padding: 0px 8px;
