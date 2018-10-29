@@ -1,4 +1,5 @@
 import { Component, Input, NgZone } from "@angular/core";
+import { DomSanitizer } from "@angular/platform-browser";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import { List, OrderedMap } from "immutable";
 import * as Mustache from "mustache";
@@ -117,7 +118,12 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
 
   private properties = () => this.feature.getProperties()[PROPERTIES];
 
-  constructor(parent: KaartComponent, zone: NgZone, private kaartInfoBoodschapComponent: KaartInfoBoodschapComponent) {
+  constructor(
+    parent: KaartComponent,
+    zone: NgZone,
+    private kaartInfoBoodschapComponent: KaartInfoBoodschapComponent,
+    private readonly sanitizer: DomSanitizer
+  ) {
     super(parent, zone);
   }
 
@@ -288,7 +294,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
       if (isDatum(this.laag, name) && waarde) {
         return formateerDatum(waarde.toString());
       } else if (isJson(this.laag, name) && waarde) {
-        return formateerJson(name, waarde, this.template(name));
+        return this.sanitizer.bypassSecurityTrustHtml(formateerJson(name, waarde, this.template(name)));
       } else {
         return waarde;
       }
