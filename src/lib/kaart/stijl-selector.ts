@@ -11,9 +11,6 @@ import { Validator } from "../util/validation";
 // Het type dat OpenLayers gebruikt voor stylen, maar niet expliciet definieert
 export type Stylish = ol.StyleFunction | ol.style.Style | ol.style.Style[];
 
-// Onze type-safe versie van het Openlayers Stylish type (homomorf)
-export type StyleSelector = StaticStyle | DynamicStyle | Styles;
-
 // De Openlayers stijlen zijn goed genoeg (en nodig) om de features op de kaart in de browser te renderen,
 // maar om de stijlen te kunnen bewerken en opslaan, moeten er ook een type zijn dat naar JSON geserialiseerd
 // kan worden en omgekeerd.
@@ -23,6 +20,9 @@ export interface Awv0StaticStyleSpec {
   readonly type: "StaticStyle";
   readonly definition: Awv0StaticStyle;
 }
+
+// Onze type-safe versie van het Openlayers Stylish type (homomorf)
+export type StyleSelector = StaticStyle | DynamicStyle | Styles;
 
 export interface StaticStyle {
   readonly type: "StaticStyle";

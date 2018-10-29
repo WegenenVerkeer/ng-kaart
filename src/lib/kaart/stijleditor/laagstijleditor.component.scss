@@ -85,7 +85,7 @@
 
   .awv-kaart-laagstijleditor-chooser {
     position: fixed;
-    display: none;
+    display: none; // wordt aangepast naar flex via ngStyle
     flex-direction: column;
 
     .awv-kaart-laagstijleditor-chooser-header {
