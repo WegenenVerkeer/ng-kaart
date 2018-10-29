@@ -287,7 +287,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
       if (isDatum(this.laag, name) && waarde) {
         return formateerDatum(waarde.toString());
       } else if (isJson(this.laag, name) && waarde) {
-        return this.sanitizer.bypassSecurityTrustStyle(formateerJson(name, waarde, this.template(name)));
+        return this.sanitizer.bypassSecurityTrustHtml(formateerJson(name, waarde, this.template(name)));
       } else {
         return waarde;
       }
