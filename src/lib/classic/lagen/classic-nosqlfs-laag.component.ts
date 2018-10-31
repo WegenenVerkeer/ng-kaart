@@ -44,6 +44,7 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
         this.titel
       ),
       styleSelector: this.getMaybeStyleSelector(),
+      styleSelectorBron: this.getMaybeStyleSelectorBron(),
       selectieStyleSelector: fromNullable(this.selectieStyle).chain(ss.asStyleSelector),
       hoverStyleSelector: fromNullable(this.hoverStyle).chain(ss.asStyleSelector),
       selecteerbaar: this.selecteerbaar,

@@ -1,9 +1,12 @@
 import { fromPredicate, Option } from "fp-ts/lib/Option";
 import { List, OrderedMap } from "immutable";
+import { Optional } from "monocle-ts";
 import * as ol from "openlayers";
 
+import { OptionalFromOptionProp } from "../util/option";
+
 import { Legende } from "./kaart-legende";
-import { StyleSelector } from "./stijl-selector";
+import { Awv0StyleSpec, StyleSelector } from "./stijl-selector";
 
 export const SingleTileWmsType = "LaagType.SingleTileWms";
 export type SingleTileWmsType = typeof SingleTileWmsType;
@@ -81,6 +84,7 @@ export interface VectorLaag {
   readonly source: ol.source.Vector;
   readonly titel: string;
   readonly styleSelector: Option<StyleSelector>;
+  readonly styleSelectorBron: Option<Awv0StyleSpec>; // De JSON specificatie die aan de basis ligt van de StyleSelector
   readonly selectieStyleSelector: Option<StyleSelector>;
   readonly hoverStyleSelector: Option<StyleSelector>;
   readonly selecteerbaar: boolean;
@@ -125,7 +129,7 @@ export interface ToegevoegdeLaag {
   readonly positieInGroep: number;
   readonly magGetoondWorden: boolean;
   readonly legende: Option<Legende>;
-  readonly stijlInLagenKiezer: Option<string>;
+  readonly stijlInLagenKiezer: Option<string>; // optionele naam van een CSS klasse om lijn in lagenkiezer individueel te stijlen
 }
 
 export interface ToegevoegdeVectorLaag extends ToegevoegdeLaag {
@@ -133,6 +137,7 @@ export interface ToegevoegdeVectorLaag extends ToegevoegdeLaag {
   readonly layer: ol.layer.Vector;
   readonly stijlPositie: number; // We gaan er van uit dat alle vectorlagen in dezelfde groep zitten!
   readonly stijlSel: Option<StyleSelector>;
+  readonly stijlSelBron: Option<Awv0StyleSpec>; // Het JSON document dat aan de basis ligt van de StyleSelector
   readonly selectiestijlSel: Option<StyleSelector>;
   readonly hoverstijlSel: Option<StyleSelector>;
 }
@@ -172,4 +177,16 @@ export function TekenResultaat(geometry: ol.geom.Geometry, volgnummer: number, f
     featureId: featureId,
     geometry: geometry
   };
+}
+
+////////////////////////////
+// Manipulatie en inspectie
+//
+
+export namespace ToegevoegdeVectorLaag {
+  export const stijlSelBronLens: Optional<ToegevoegdeVectorLaag, Awv0StyleSpec> = OptionalFromOptionProp<
+    ToegevoegdeVectorLaag,
+    Awv0StyleSpec,
+    "stijlSelBron"
+  >("stijlSelBron");
 }

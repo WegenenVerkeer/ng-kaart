@@ -1,6 +1,5 @@
-import { Component, Input, NgZone, ViewEncapsulation } from "@angular/core";
+import { Input, NgZone } from "@angular/core";
 import { fromNullable, Option } from "fp-ts/lib/Option";
-import { OrderedMap } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 
@@ -8,13 +7,15 @@ import * as ke from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
 import * as ss from "../../kaart/stijl-selector";
 import { getDefaultHoverStyleFunction, getDefaultSelectionStyleFunction, getDefaultStyleFunction } from "../../kaart/styles";
-import { forEach, orElse } from "../../util/option";
+import { forEach, fromValidation } from "../../util/option";
 import { KaartClassicComponent } from "../kaart-classic.component";
 import { logOnlyWrapper } from "../messages";
 
 import { ClassicLaagComponent } from "./classic-laag.component";
 
 export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponent {
+  @Input()
+  stijlSpec?: ss.Awv0StyleSpec = undefined; // heeft voorrang style
   @Input()
   style?: ol.style.Style = undefined; // heeft voorrang op styleFunction
   @Input()
@@ -52,8 +53,16 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
     return "Voorgrond.Hoog";
   }
 
+  protected getMaybeStyleSelectorBron(): Option<ss.Awv0StyleSpec> {
+    return fromNullable(this.stijlSpec);
+  }
+
   protected getMaybeStyleSelector(): Option<ss.StyleSelector> {
-    return orElse(fromNullable(this.style).map(ss.StaticStyle), () => fromNullable(this.styleFunction).map(ss.DynamicStyle));
+    return fromNullable(this.stijlSpec)
+      .chain(spec => fromValidation(ss.validateAwv0Style(spec)))
+      .orElse(() => fromNullable(this.style))
+      .map(ss.StaticStyle)
+      .orElse(() => fromNullable(this.styleFunction).map(ss.DynamicStyle));
   }
 
   voegLaagToe() {

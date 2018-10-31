@@ -1,6 +1,7 @@
 import { validation } from "fp-ts";
 import { Applicative2C } from "fp-ts/lib/Applicative";
 import { array as Array } from "fp-ts/lib/Array";
+import { Function1 } from "fp-ts/lib/function";
 import { Monad2C } from "fp-ts/lib/Monad";
 import { Option } from "fp-ts/lib/Option";
 import { getArraySemigroup } from "fp-ts/lib/Semigroup";
@@ -8,6 +9,7 @@ import { sequence } from "fp-ts/lib/Traversable";
 import { URI, Validation } from "fp-ts/lib/Validation";
 
 export type ErrValidation<A> = Validation<string[], A>;
+export type Validator<A, B> = Function1<A, ErrValidation<B>>;
 
 export const validationAp: Applicative2C<URI, string[]> = validation.getApplicative(getArraySemigroup<string>());
 

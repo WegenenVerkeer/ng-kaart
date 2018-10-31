@@ -9,7 +9,7 @@ import * as uuid from "uuid";
 import { dimensieBeschrijving } from "../../util/geometries";
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { ofType } from "../../util/operators";
-import { forEach, orElse } from "../../util/option";
+import { forEach } from "../../util/option";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
 import { VeldInfo } from "../kaart-elementen";
@@ -160,7 +160,8 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
       type: ke.VectorType,
       titel: TekenLaagNaam,
       source: source,
-      styleSelector: orElse(tekenSettings.laagStyle, () => asStyleSelector(defaultlaagStyle)),
+      styleSelector: tekenSettings.laagStyle.orElse(() => asStyleSelector(defaultlaagStyle)),
+      styleSelectorBron: none,
       selectieStyleSelector: none,
       hoverStyleSelector: none,
       selecteerbaar: false,

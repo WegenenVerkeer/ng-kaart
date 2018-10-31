@@ -7,7 +7,6 @@ import * as rx from "rxjs";
 import { map, mapTo, switchMap } from "rxjs/operators";
 
 import { flatten } from "../../util/operators";
-import { orElse } from "../../util/option";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
 import { VeldInfo } from "../kaart-elementen";
@@ -132,9 +131,9 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
     const coordinate = ol.proj.fromLonLat(longLat, "EPSG:31370");
     this.dispatch(prt.VeranderMiddelpuntCmd(coordinate));
 
-    this.mijnLocatie = orElse(this.mijnLocatie.chain(feature => KaartMijnLocatieComponent.pasFeatureAan(feature, coordinate)), () =>
-      this.maakNieuwFeature(coordinate)
-    );
+    this.mijnLocatie = this.mijnLocatie
+      .chain(feature => KaartMijnLocatieComponent.pasFeatureAan(feature, coordinate))
+      .orElse(() => this.maakNieuwFeature(coordinate));
   }
 
   createLayer(): ke.VectorLaag {
@@ -143,6 +142,7 @@ export class KaartMijnLocatieComponent extends KaartChildComponentBase implement
       titel: MijnLocatieLaagNaam,
       source: new ol.source.Vector(),
       styleSelector: some(ss.StaticStyle(this.mijnLocatieStyle)),
+      styleSelectorBron: none,
       selectieStyleSelector: none,
       hoverStyleSelector: none,
       selecteerbaar: false,

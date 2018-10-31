@@ -2,10 +2,11 @@ import { animate, style, transition, trigger } from "@angular/animations";
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 import { MatTabChangeEvent } from "@angular/material";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
+import { Predicate } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, filter, map, shareReplay, startWith, switchMap, take } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, filter, map, scan, shareReplay, startWith, switchMap, take } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
@@ -24,7 +25,7 @@ export interface LagenUiOpties {
   readonly toonLegende: boolean;
   readonly verwijderbareLagen: boolean;
   readonly verplaatsbareLagen: boolean;
-  readonly stijlbareVectorlagen: (titel) => boolean;
+  readonly stijlbareVectorlagen: Predicate<string>;
 }
 
 export const DefaultOpties: LagenUiOpties = {
@@ -33,7 +34,7 @@ export const DefaultOpties: LagenUiOpties = {
   toonLegende: false,
   verwijderbareLagen: false,
   verplaatsbareLagen: true,
-  stijlbareVectorlagen: titel => false
+  stijlbareVectorlagen: () => false
 };
 
 type GapDirection = "Up" | "Down" | "Here";
@@ -115,6 +116,7 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
       filter(o => o.naam === LagenUiSelector),
       map(o => o.opties as LagenUiOpties),
       startWith(DefaultOpties),
+      scan((prevOptions, newOptions) => ({ ...prevOptions, ...newOptions }), DefaultOpties),
       shareReplay(1)
     );
     // Klap dicht wanneer laagstijleditor actief wordt

@@ -28,7 +28,6 @@ export class ClassicLagenkiezerComponent implements OnInit, OnDestroy, OnChanges
   stijlbareVectorlagen = DefaultOpties.stijlbareVectorlagen;
 
   ngOnInit() {
-    console.log("***init", this.opties());
     this.kaart.dispatch(VoegUiElementToe(LagenUiSelector));
     this.kaart.dispatch(ZetUiElementOpties(LagenUiSelector, this.opties()));
   }

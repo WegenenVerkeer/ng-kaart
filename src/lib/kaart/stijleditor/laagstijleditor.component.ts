@@ -1,15 +1,16 @@
-import { ChangeDetectionStrategy, Component, NgZone, ViewEncapsulation } from "@angular/core";
+import { ChangeDetectionStrategy, Component, ElementRef, NgZone, QueryList, ViewChildren, ViewEncapsulation } from "@angular/core";
 import * as array from "fp-ts/lib/Array";
-import { concat, Curried2, Function1, tuple } from "fp-ts/lib/function";
-import { fromNullable, none, Option } from "fp-ts/lib/Option";
+import { concat, Curried2, Function1, Function2, tuple } from "fp-ts/lib/function";
+import { none } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
-import { filter, map, mapTo, share, shareReplay, startWith, switchMap, take, tap } from "rxjs/operators";
+import { delay, filter, map, mapTo, share, shareReplay, startWith, switchMap, take } from "rxjs/operators";
 
 import * as clr from "../../stijl/colour";
-import { jsonAwvV0Style } from "../../stijl/json-awv-v0-stijl";
+import { Circle, Fill, FullStyle, fullStylePrism } from "../../stijl/stijl-static-types";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-messages";
+import { Legende } from "../kaart-legende";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 import * as ss from "../stijl-selector";
@@ -68,47 +69,50 @@ const markeerKleur: Curried2<clr.Kleur, clr.Kleur[], KiesbareKleur[]> = doelkleu
   kleuren.map(kleur => (kleur.code === doelkleur.code ? { ...kleur, gekozen: true } : kleur));
 
 // Voorlopig geven we alle lagen dezelfde, eenvoudige stijl op het kleur na
-const enkelvoudigeKleurStijl: Function1<clr.Kleur, ss.StyleSelector> = kleur =>
-  ss.StaticStyle(
-    jsonAwvV0Style({
-      stroke: {
-        color: clr.kleurcodeValue(kleur),
-        width: 4
-      },
+const enkelvoudigeKleurStijl: Function1<clr.Kleur, ss.Awv0StyleSpec> = kleur => ({
+  type: "StaticStyle",
+  definition: {
+    fill: {
+      color: clr.kleurcodeValue(clr.setOpacity(0.25)(kleur))
+    },
+    stroke: {
+      color: clr.kleurcodeValue(kleur),
+      width: 4
+    },
+    circle: {
+      radius: 5,
       fill: {
-        color: clr.kleurcodeValue(clr.setOpacity(0.25)(kleur))
-      },
-      circle: {
-        fill: { color: clr.kleurcodeValue(kleur) },
-        radius: 5
+        color: clr.kleurcodeValue(kleur)
       }
-    }).getOrElseL(errs => {
-      throw new Error("Het stijlformaat is niet geldig (meer)");
-    })
-  );
+    }
+  }
+});
+const enkelvoudigeKleurLegende: Function2<string, clr.Kleur, Legende> = (laagTitel, kleur) =>
+  Legende([{ type: "Lijn", beschrijving: laagTitel, kleur: clr.kleurcodeValue(kleur), achtergrondKleur: none }]);
 
-const stijlCmdVoorLaag: Curried2<ke.ToegevoegdeVectorLaag, clr.Kleur, prt.ZetStijlVoorLaagCmd<KaartInternalMsg>> = laag => kleur =>
-  prt.ZetStijlVoorLaagCmd(laag.titel, enkelvoudigeKleurStijl(kleur), none, kaartLogOnlyWrapper);
+const stijlCmdVoorLaag: Curried2<ke.ToegevoegdeVectorLaag, clr.Kleur, prt.ZetStijlSpecVoorLaagCmd<KaartInternalMsg>> = laag => kleur =>
+  prt.ZetStijlSpecVoorLaagCmd(laag.titel, enkelvoudigeKleurStijl(kleur), enkelvoudigeKleurLegende(laag.titel, kleur), kaartLogOnlyWrapper);
 
-// Op het niveau van een stijl is er geen eenvoudige kleur. We gaan dit proberen af leiden van de OL Style.
+// Op het niveau van een stijl is er geen eenvoudige kleur. We gaan dit proberen af leiden van het bolletje in de stijl.
 interface AfgeleideKleur extends clr.Kleur {
   gevonden: boolean; // enkel voor gebruik in HTML
 }
 const gevonden: Function1<clr.Kleur, AfgeleideKleur> = kleur => ({ ...kleur, gevonden: true });
-const nietGevonden: AfgeleideKleur = { ...clr.toKleurUnsafe("grijs", "#6d6d6d"), gevonden: false }; // mag niet voorkomen in palet
-const kleurViaSelector: Function1<Option<ss.StyleSelector>, AfgeleideKleur> = maybeStyleSelector =>
-  maybeStyleSelector
-    .chain(
-      ss.matchStyleSelector(
-        statStyle =>
-          fromNullable(statStyle.style.getStroke())
-            .chain(stroke => fromNullable(stroke.getColor()))
-            .chain(clr.olToKleur)
-            .map(gevonden),
-        () => none, // kunnen we niet omzetten naar een eenvoudige kleur
-        () => none // kunnen we niet omzetten naar een eenvoudige kleur
-      )
-    )
+const nietGevonden: AfgeleideKleur = { ...clr.toKleurUnsafe("grijs", "#6d6d6d"), gevonden: false }; // kleurcode mag niet voorkomen in palet
+
+// We gaan er van uit dat de stijl er een is die we zelf gezet hebben. Dat wil zeggen dat we het kleurtje van het bolletje
+// uit de stijlspec  kunnen peuteren.
+// We moeten vrij diep in de hierarchie klauteren om het gepaste attribuut te pakken te krijgen. Vandaar het gebruik van Lenses e.a.
+const kleurViaLaag: Function1<ke.ToegevoegdeVectorLaag, AfgeleideKleur> = laag =>
+  ke.ToegevoegdeVectorLaag.stijlSelBronLens
+    .composeIso(ss.Awv0StaticStyleSpecIso)
+    .composePrism(fullStylePrism)
+    .compose(FullStyle.circleOptional)
+    .compose(Circle.fillOptional)
+    .composeLens(Fill.colorLens)
+    .getOption(laag)
+    .chain(clr.olToKleur)
+    .map(gevonden)
     .getOrElse(nietGevonden);
 
 @Component({
@@ -127,6 +131,10 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
   readonly grootPaletZichtbaar$: rx.Observable<boolean>;
   readonly nietToepassen$: rx.Observable<boolean>;
   readonly paletKleuren$: rx.Observable<KiesbareKleur[]>;
+  readonly chooserStyle$: rx.Observable<object>;
+
+  @ViewChildren("editor")
+  editorElement: QueryList<ElementRef>; // QueryList omdat enkel beschikbaar wanneer ngIf true is
 
   constructor(kaart: KaartComponent, zone: NgZone) {
     super(kaart, zone);
@@ -141,11 +149,14 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
     );
 
     // we zouden ook de laag zelf kunnen volgen, maar in de praktijk gaat die toch niet veranderen
-    const origineleKleur$ = aanpassing$.pipe(map(state => kleurViaSelector(state.laag.stijlSel)));
+    const origineleKleur$ = aanpassing$.pipe(map(state => kleurViaLaag(state.laag)));
     // zetten van de nieuwe en bestaande kleuren
-    const selectieKleur$ = this.actionDataFor$("kiesLaagkleur", clr.isKleur).pipe(
-      map(gevonden),
-      shareReplay(1)
+    const selectieKleur$ = rx.merge(
+      aanpassing$.pipe(
+        switchMap(() => this.actionDataFor$("kiesLaagkleur", clr.isKleur).pipe(map(gevonden))),
+        shareReplay(1)
+      ),
+      origineleKleur$ // anders wordt de selectiekleur van een vorige keer getoond
     );
     this.laagkleur$ = rx
       .merge(
@@ -197,25 +208,54 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
       switchMap(aanpassing => selectieKleur$.pipe(map(stijlCmdVoorLaag(aanpassing.laag)))), // kleur omzetten naar commando
       take(1) // omdat er anders ook een commando gegenereerd wordt de volgende keer dat aanpassing$ een waarde emit
     );
-    this.bindToLifeCycle(pasToeGeklikt$)
-      .pipe(switchMap(() => stijlCmd$))
-      .subscribe(cmd => this.dispatch(cmd));
+    this.bindToLifeCycle(pasToeGeklikt$.pipe(switchMap(() => stijlCmd$))).subscribe(cmd => this.dispatch(cmd));
 
     // Toepassen knop actief of niet. Uitgedrukt als een negatief statement wegens gebruik voor HTML 'disabled'.
     // Een alternatief voor gezetteKleur$ zou zijn om de state aan te passen. Dan zou origineleKleur de nieuwe waarde emitten,
     // er zouden echter neveneffecten zijn zoals sluiten van de lagenkiezer als die ondertussen open gedaan zou zijn.
-    const gezetteKleur$ = rx.merge(
-      origineleKleur$,
-      selectieKleur$.pipe(
-        // herstart wanneer er een nieuwe kleur geselecteerd is
-        switchMap(selectieKleur =>
-          pasToeGeklikt$.pipe(
-            // selectieKleur vanaf er toegepast is
-            switchMap(() => rx.of(selectieKleur))
+    const gezetteKleur$ = rx
+      .merge(
+        origineleKleur$,
+        selectieKleur$.pipe(
+          // herstart wanneer er een nieuwe kleur geselecteerd is
+          switchMap(selectieKleur =>
+            pasToeGeklikt$.pipe(
+              // selectieKleur vanaf er toegepast is
+              switchMap(() => rx.of(selectieKleur))
+            )
           )
         )
       )
-    );
+      .pipe(shareReplay(1, 200));
     this.nietToepassen$ = rx.combineLatest(gezetteKleur$, selectieKleur$, clr.setoidKleurOpCode.equals).pipe(startWith(true));
+
+    // Zorg er voor dat de kleurkiezer steeds ergens naast de component staat
+    // Dat doen we door enerzijds de kiezer naar rechts te schuiven tot die zeker naast de eventuele scrollbar staat.
+    // Aan de andere kant schuiven we de kiezer ook omhoog. We zetten die op dezelfde hoogte als de editor component. Wanneer
+    // de kiezer geëxpandeerd wordt evenwel, dan schuiven we hem nog wat meer omhoog om plaats te maken voor de extra kleurtjes.
+    // Afhankelijk van de schermgrootte en waar de editorcomponent staat, zou die anders over de rand van het window kunnen vallen.
+    // Dat kan trouwens nu nog steeds. De gebruiker moet dan eerst de editor voldoende omhoog schuiven. Dit zou mogelijk moeten
+    // zijn in fullscreen mode zoals bij geoloket2 en sowieso veel minder een probleem als er toch nog plaats is onder de
+    // kaartcomponent bij embedded gebruik.
+    this.chooserStyle$ = this.viewReady$.pipe(
+      switchMap(() => this.editorElement.changes),
+      filter(ql => ql.length > 0),
+      map(ql => ql.first.nativeElement),
+      // De allereerste keer wordt de CSS transformatie maar na een tijdje toegepast wat resulteert in een "springende" component,
+      // vandaar dat we even wachten met genereren van de style. Een neveneffect is wel dat de display dan initieel op none moet staan
+      // want anders wordt er toch nog gesprongen.
+      delay(1),
+      switchMap(q =>
+        this.grootPaletZichtbaar$.pipe(
+          switchMap(groot =>
+            rx.of({
+              transform: `translateX(${q.clientWidth + 16}px) translateY(-${q.clientHeight + (groot ? 48 : 0)}px)`,
+              display: "flex"
+            })
+          )
+        )
+      ),
+      shareReplay(1)
+    );
   }
 }

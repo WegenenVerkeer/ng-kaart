@@ -12,6 +12,7 @@ export const paddedHexBytes: Function1<number, string> = c => {
  * dan wordt de dichtstbijzinde grens gebruikt.
  */
 export const hexByte: Function1<number, string> = pipe(
+  Math.round,
   curry(Math.min)(255),
   curry(Math.max)(0),
   paddedHexBytes

@@ -409,6 +409,7 @@ function mergeDeep<T>(base: T, overlay: T) {
   return output;
 }
 
+// Een afgeleid type van A dat alle types van de  velden omzet in Interpreters van Options van dat type
 export type InterpreterOptionalRecord<A> = { readonly [P in Extract<keyof A, string>]: Interpreter<Option<A[P]>> };
 
 function interpretRecord<A>(record: InterpreterOptionalRecord<A>): Interpreter<A> {
