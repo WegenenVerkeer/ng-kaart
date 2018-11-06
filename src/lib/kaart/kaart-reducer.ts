@@ -173,7 +173,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     const valideerAlsLayer: Function1<ke.Laag, prt.KaartCmdValidation<ol.layer.Base>> = laag =>
       fromOption(toOlLayer(model, laag), "De laagbeschrijving kon niet naar een openlayers laag omgezet worden");
 
-    const valideerAlsStijlSpec: Function1<Awv0StyleSpec, prt.KaartCmdValidation<ol.style.Style>> = ss.validateAwv0Style;
+    const valideerAlsStijlSpec: Function1<Awv0StyleSpec, prt.KaartCmdValidation<ss.Stylish>> = ss.validateAwv0StyleSpec;
 
     const pasLaagPositieAan: Function1<number, Endomorphism<ke.ToegevoegdeLaag>> = positieAanpassing => laag => {
       const positie = laag.positieInGroep + positieAanpassing;
@@ -965,7 +965,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         chain(valideerToegevoegdeVectorLaagBestaat(cmnd.titel), laag =>
           valideerAlsStijlSpec(cmnd.stijlSpec).map(stijl => {
             const updatedLaag = {
-              ...pasVectorLaagStijlAan(some(ss.StaticStyle(stijl)), laag.selectiestijlSel)(laag),
+              // FIXME Dit moet ook dynamische stijlen aankunnen!
+              ...pasVectorLaagStijlAan(some(ss.StaticStyle(stijl as ol.style.Style)), laag.selectiestijlSel)(laag),
               stijlSelBron: some(cmnd.stijlSpec),
               legende: some(cmnd.legende)
             };

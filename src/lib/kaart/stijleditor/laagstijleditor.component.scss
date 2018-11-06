@@ -33,6 +33,10 @@
     }
   }
 
+  .awv-kaart-laagstijleditor-tab {
+    text-transform: uppercase;
+  }
+
   .awv-kaart-laagstijleditor-body {
     padding-left: 16px;
     padding-right: 16px;
@@ -42,6 +46,10 @@
     .awv-kaart-laagstijleditor-body-remark {
       color: $kaart-secondary-text-color;
       font-size: 12px;
+    }
+    .awv-kaart-laagstijleditor-body-remark.warning {
+      margin-top: 8px;
+      color: $kaart-warn-color; // waarom wordt dat overschreven door remark?
     }
 
     .awv-kaart-laagstijleditor-body-properties {

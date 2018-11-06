@@ -1,10 +1,11 @@
 import * as ol from "openlayers";
 
-import { validationChain as chain } from "../util/validation";
+import { validationChain as chain, Validator } from "../util/validation";
 
 import { jsonAwvV0RuleCompiler } from "./json-awv-v0-stijlfunctie";
 import { Validation } from "./json-object-interpreting";
 import * as oi from "./json-object-interpreting";
+import { AWV0StyleFunctionDescription } from "./stijl-function-types";
 
 ///////////////////////////////////////////////////
 // De externe input valideren als een StyleFunction
@@ -38,3 +39,5 @@ function compileRuleJson(definitie: Object): Validation<ol.StyleFunction> {
     }
   });
 }
+
+export const validateAwv0RuleDefintion: Validator<AWV0StyleFunctionDescription, ol.StyleFunction> = jsonAwvV0RuleCompiler;

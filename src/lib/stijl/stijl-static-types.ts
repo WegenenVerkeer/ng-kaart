@@ -1,4 +1,4 @@
-import { identity, Refinement } from "fp-ts/lib/function";
+import { Function1, identity, Refinement } from "fp-ts/lib/function";
 import { fromRefinement } from "fp-ts/lib/Option";
 import { Lens, Optional, Prism } from "monocle-ts";
 
@@ -18,7 +18,7 @@ export interface StrokeStyle {
   color?: ColorType;
   lineCap?: string; // Deze en volgende zouden fijner kunnen. Bijv. enums.
   lineJoin?: string;
-  lineDash?: number;
+  lineDash?: number[];
   lineDashOffset?: number;
   miterLimit?: number;
   width?: number;
@@ -42,6 +42,8 @@ export interface TextStyle {
   fill?: FillStyle;
   stroke?: StrokeStyle;
 }
+
+export type ImageStyle = CircleStyle | IconStyle | RegularShapeStyle;
 
 export interface CircleStyle {
   radius: number;
@@ -74,8 +76,8 @@ export interface IconStyle {
 }
 
 export interface RegularShapeStyle {
+  points: number;
   fill?: FillStyle;
-  points?: number;
   radius?: number;
   radius1?: number;
   radius2?: number;
@@ -88,9 +90,33 @@ export interface FullStyle {
   fill?: FillStyle;
   stroke?: StrokeStyle;
   text?: TextStyle;
-  circle?: CircleStyle;
-  icon?: IconStyle;
-  regularShape?: RegularShapeStyle;
+  image?: ImageStyle;
+}
+
+///////////////////////////
+// Acessors & constructors
+//
+
+const isCircle: Refinement<ImageStyle, CircleStyle> = (img): img is CircleStyle => img.hasOwnProperty("radius");
+const isIcon: Refinement<ImageStyle, IconStyle> = (icn): icn is IconStyle => !icn.hasOwnProperty("radius") && !icn.hasOwnProperty("points");
+const isRegularShape: Refinement<ImageStyle, RegularShapeStyle> = (shp): shp is RegularShapeStyle => shp.hasOwnProperty("points");
+
+export function matchImageStyle<A>(
+  image: ImageStyle,
+  fc: Function1<CircleStyle, A>,
+  fi: Function1<IconStyle, A>,
+  frs: Function1<RegularShapeStyle, A>
+): A {
+  return isCircle(image) ? fc(image) : isRegularShape(image) ? frs(image) : fi(image);
+}
+
+export function FullStyle(rec: { fill?: FillStyle; stroke?: StrokeStyle; text?: TextStyle; image?: ImageStyle }): FullStyle {
+  return {
+    fill: rec.fill,
+    stroke: rec.stroke,
+    text: rec.text,
+    image: rec.image
+  };
 }
 
 /////////////////////////////////////////
@@ -99,15 +125,32 @@ export interface FullStyle {
 const isFullStyle: Refinement<Awv0StaticStyle, FullStyle> = (ass): ass is FullStyle => !ass.hasOwnProperty("fullLine");
 export const fullStylePrism: Prism<Awv0StaticStyle, FullStyle> = new Prism(fromRefinement(isFullStyle), identity);
 
-export namespace FullStyle {
-  export const circleOptional: Optional<FullStyle, CircleStyle> = Optional.fromNullableProp("circle");
+// Zie https://github.com/gcanti/monocle-ts/pull/62. Is gemerged. Wanneer gereleased kan dit van monocle-ts zelf komen.
+function PrismFromRefinement<S, A extends S>(refinement: Refinement<S, A>) {
+  return new Prism(fromRefinement(refinement), identity);
 }
+
+export namespace Image {
+  export const circlePrism: Prism<ImageStyle, CircleStyle> = PrismFromRefinement(isCircle);
+  export const iconPrism: Prism<ImageStyle, IconStyle> = PrismFromRefinement(isIcon);
+  export const regularShapePrism: Prism<ImageStyle, RegularShapeStyle> = PrismFromRefinement(isRegularShape);
+}
+
+export namespace FullStyle {
+  export const imageOptional: Optional<FullStyle, ImageStyle> = Optional.fromNullableProp("image");
+  export const circleOptional: Optional<FullStyle, CircleStyle> = imageOptional.composePrism(Image.circlePrism);
+  export const iconOptional: Optional<FullStyle, IconStyle> = imageOptional.composePrism(Image.iconPrism);
+  export const regularShapeOptional: Optional<FullStyle, RegularShapeStyle> = imageOptional.composePrism(Image.regularShapePrism);
+}
+
 export namespace Circle {
   export const fillOptional: Optional<CircleStyle, FillStyle> = Optional.fromNullableProp("fill");
 }
+
 export namespace Fill {
   export const colorLens: Lens<FillStyle, ColorType> = Lens.fromProp("color");
 }
+
 export namespace Color {
   export const kleurOptional: Optional<ColorType, Kleur> = new Optional(clr => olToKleur(clr), kleur => () => kleurcodeValue(kleur));
 }

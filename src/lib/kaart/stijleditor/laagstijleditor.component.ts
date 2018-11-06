@@ -1,12 +1,14 @@
 import { ChangeDetectionStrategy, Component, ElementRef, NgZone, QueryList, ViewChildren, ViewEncapsulation } from "@angular/core";
+import { FormControl } from "@angular/forms";
 import * as array from "fp-ts/lib/Array";
 import { concat, Curried2, Function1, Function2, tuple } from "fp-ts/lib/function";
-import { none } from "fp-ts/lib/Option";
+import { fromNullable, none, Option } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
-import { delay, filter, map, mapTo, share, shareReplay, startWith, switchMap, take } from "rxjs/operators";
+import { delay, filter, map, mapTo, share, shareReplay, startWith, switchMap, take, tap } from "rxjs/operators";
 
 import * as clr from "../../stijl/colour";
 import { Circle, Fill, FullStyle, fullStylePrism } from "../../stijl/stijl-static-types";
+import { negate } from "../../util/thruth";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-messages";
@@ -79,7 +81,7 @@ const enkelvoudigeKleurStijl: Function1<clr.Kleur, ss.Awv0StyleSpec> = kleur => 
       color: clr.kleurcodeValue(kleur),
       width: 4
     },
-    circle: {
+    image: {
       radius: 5,
       fill: {
         color: clr.kleurcodeValue(kleur)
@@ -115,6 +117,25 @@ const kleurViaLaag: Function1<ke.ToegevoegdeVectorLaag, AfgeleideKleur> = laag =
     .map(gevonden)
     .getOrElse(nietGevonden);
 
+interface VeldKleurWaarde {
+  waarde: string;
+  kleur: clr.Kleur;
+}
+
+const stdVeldKleuren: Function1<ke.VeldInfo, VeldKleurWaarde[]> = veldInfo =>
+  array.zip(veldInfo.uniekeWaarden, kleurenpaletExtra).map(([label, kleur]) => ({ waarde: label, kleur: kleur }));
+
+const veldKleurWaardenViaLaagEnVeldInfo: Function2<ke.ToegevoegdeVectorLaag, ke.VeldInfo, VeldKleurWaarde[]> = (laag, veld) =>
+  ke.ToegevoegdeVectorLaag.stijlSelBronLens
+    .composeIso(ss.Awv0DynamicStyleSpecIso)
+    .getOption(laag)
+    .chain(() => none as Option<VeldKleurWaarde[]>)
+    .getOrElseL(() => stdVeldKleuren(veld));
+const veldKleurWaardenViaLaagEnVeldnaam: Function2<ke.ToegevoegdeVectorLaag, string, VeldKleurWaarde[]> = (laag, veldnaam) =>
+  fromNullable(laag.bron.velden.get(veldnaam))
+    .map(veld => veldKleurWaardenViaLaagEnVeldInfo(laag, veld))
+    .getOrElse([]);
+
 @Component({
   selector: "awv-laagstijleditor",
   templateUrl: "./laagstijleditor.component.html",
@@ -132,6 +153,12 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
   readonly nietToepassen$: rx.Observable<boolean>;
   readonly paletKleuren$: rx.Observable<KiesbareKleur[]>;
   readonly chooserStyle$: rx.Observable<object>;
+  readonly klasseVelden$: rx.Observable<ke.VeldInfo[]>;
+  readonly klasseVeldenBeschikbaar$: rx.Observable<boolean>;
+  readonly klasseVeldenNietBeschikbaar$: rx.Observable<boolean>;
+  readonly veldKleurWaarden$: rx.Observable<VeldKleurWaarde[]>;
+
+  readonly veldControl = new FormControl({ value: "", disabled: false });
 
   @ViewChildren("editor")
   editorElement: QueryList<ElementRef>; // QueryList omdat enkel beschikbaar wanneer ngIf true is
@@ -139,14 +166,27 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
   constructor(kaart: KaartComponent, zone: NgZone) {
     super(kaart, zone);
 
+    ///////////////////////
+    // Basistoestand & info
+    //
+
     const aanpassing$: rx.Observable<LaagstijlAanpassend> = kaart.modelChanges.laagstijlaanpassingState$.pipe(
       filter(isAanpassingBezig),
       shareReplay(1)
     );
-    this.titel$ = aanpassing$.pipe(
-      map(state => state.laag.titel),
+    const laag$: rx.Observable<ke.ToegevoegdeVectorLaag> = aanpassing$.pipe(
+      map(state => state.laag),
       shareReplay(1)
     );
+    this.titel$ = laag$.pipe(map(laag => laag.titel));
+
+    // zichtbaarheid van hoofdpaneel
+    this.zichtbaar$ = kaart.modelChanges.laagstijlaanpassingState$.pipe(map(isAanpassingBezig));
+    this.bindToLifeCycle(this.actionFor$("sluitLaagstijleditor")).subscribe(() => this.dispatch(prt.StopVectorlaagstijlBewerkingCmd()));
+
+    /////////////////
+    // Uniforme kleur
+    //
 
     // we zouden ook de laag zelf kunnen volgen, maar in de praktijk gaat die toch niet veranderen
     const origineleKleur$ = aanpassing$.pipe(map(state => kleurViaLaag(state.laag)));
@@ -161,13 +201,28 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
     this.laagkleur$ = rx
       .merge(
         origineleKleur$, // begin met kleur in huidige stijl
-        selectieKleur$ // schakel over naar het net gekozen kleur
+        selectieKleur$ // schakel over naar de net gekozen kleur
       )
       .pipe(shareReplay(1));
 
-    // zichtbaarheid van hoofdpaneel
-    this.zichtbaar$ = kaart.modelChanges.laagstijlaanpassingState$.pipe(map(isAanpassingBezig));
-    this.bindToLifeCycle(this.actionFor$("sluitLaagstijleditor")).subscribe(() => this.dispatch(prt.StopVectorlaagstijlBewerkingCmd()));
+    //////////////
+    // Klassekleur
+    //
+    this.klasseVelden$ = laag$.pipe(
+      tap(laag => console.log("****l", laag)),
+      map(laag => laag.bron.velden.valueSeq().toArray())
+    );
+    this.klasseVeldenNietBeschikbaar$ = this.klasseVelden$.pipe(map(array.isEmpty));
+    this.klasseVeldenBeschikbaar$ = this.klasseVeldenNietBeschikbaar$.pipe(map(negate));
+
+    this.veldKleurWaarden$ = laag$.pipe(
+      switchMap(laag => this.veldControl.valueChanges.pipe(map(value => veldKleurWaardenViaLaagEnVeldnaam(laag, value)))),
+      tap(a => console.log("****ka", a))
+    );
+
+    ///////////////////
+    // De kleurenkiezer
+    //
 
     // zichtbaarheid voor het zijpaneel met het kleurenpalet
     this.kiezerZichtbaar$ = aanpassing$.pipe(
@@ -201,6 +256,10 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
       switchMap(([laagkleur, kp]) => (kp ? rx.of(kleurenpaletKlein) : rx.of(kleurenpaletGroot)).pipe(map(markeerKleur(laagkleur)))),
       shareReplay(1)
     );
+
+    /////////////////////////////////
+    // Luisteren op de activatieknop
+    //
 
     // Luisteren op de "pas toe" knop.
     const pasToeGeklikt$ = this.actionFor$("pasLaagstijlToe").pipe(share());

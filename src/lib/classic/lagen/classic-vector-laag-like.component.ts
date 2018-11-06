@@ -59,7 +59,7 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
 
   protected getMaybeStyleSelector(): Option<ss.StyleSelector> {
     return fromNullable(this.stijlSpec)
-      .chain(spec => fromValidation(ss.validateAwv0Style(spec)))
+      .chain(spec => fromValidation(ss.validateAwv0StyleSpec(spec)))
       .orElse(() => fromNullable(this.style))
       .map(ss.StaticStyle)
       .orElse(() => fromNullable(this.styleFunction).map(ss.DynamicStyle));

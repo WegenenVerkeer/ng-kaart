@@ -72,11 +72,13 @@ export interface WmtsLaag {
 }
 
 export interface VeldInfo {
-  label: string;
+  naam: string; // naam zoals gekend in de feature
+  label: string; // titel om weer te geven in de UI
   type: string;
   isBasisVeld: boolean;
   constante: string;
   template: string;
+  uniekeWaarden: string[];
 }
 
 export interface VectorLaag {

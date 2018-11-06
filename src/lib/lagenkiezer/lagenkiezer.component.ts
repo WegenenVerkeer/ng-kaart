@@ -26,6 +26,7 @@ export interface LagenUiOpties {
   readonly verwijderbareLagen: boolean;
   readonly verplaatsbareLagen: boolean;
   readonly stijlbareVectorlagen: Predicate<string>;
+  readonly kleur?: ol.Color;
 }
 
 export const DefaultOpties: LagenUiOpties = {

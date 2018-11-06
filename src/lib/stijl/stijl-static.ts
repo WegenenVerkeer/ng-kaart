@@ -30,23 +30,14 @@ const textToJson: Validator<string, object> = text => {
 
 // Vanaf hier zou het iets stabieler moeten zijn
 export function definitieToStyle(encoding: string, definitieText: string): Validation<ol.style.Style> {
-  return chain(chain(properlyJsonDeclaredText(encoding, definitieText), textToJson), interpretJson);
+  return chain(chain(properlyJsonDeclaredText(encoding, definitieText), textToJson), interpretJsonAsStyle);
 }
 
 export function definitieToBron(encoding: string, definitieText: string): Validation<Awv0StaticStyle> {
-  return chain(chain(properlyJsonDeclaredText(encoding, definitieText), textToJson), interpretJson2);
+  return chain(chain(properlyJsonDeclaredText(encoding, definitieText), textToJson), interpretJsonAsSpec);
 }
 
-function jsonDefinitieStringToStyle(definitieText: string): Validation<ol.style.Style> {
-  try {
-    const object = JSON.parse(definitieText);
-    return interpretJson(object);
-  } catch (error) {
-    return oi.fail(`De gegeven stijldefinitie was geen geldige JSON: ${error}`);
-  }
-}
-
-function interpretJson(json: Object): Validation<ol.style.Style> {
+function interpretJsonAsStyle(json: Object): Validation<ol.style.Style> {
   return chain(oi.field("version", oi.str)(json), version => {
     switch (version) {
       case "awv-v0":
@@ -57,7 +48,7 @@ function interpretJson(json: Object): Validation<ol.style.Style> {
   });
 }
 
-function interpretJson2(json: Object): Validation<Awv0StaticStyle> {
+function interpretJsonAsSpec(json: Object): Validation<Awv0StaticStyle> {
   return chain(oi.field("version", oi.str)(json), version => {
     switch (version) {
       case "awv-v0":

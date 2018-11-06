@@ -1,4 +1,5 @@
 import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
+import { Predicate } from "fp-ts/lib/function";
 
 import { VerwijderUiElement, VoegUiElementToe, ZetUiElementOpties } from "../../kaart/kaart-protocol-commands";
 import { DefaultOpties, LagenUiOpties, LagenUiSelector } from "../../lagenkiezer/lagenkiezer.component";
@@ -25,7 +26,7 @@ export class ClassicLagenkiezerComponent implements OnInit, OnDestroy, OnChanges
   @Input()
   verplaatsbareLagen = DefaultOpties.verplaatsbareLagen;
   @Input()
-  stijlbareVectorlagen = DefaultOpties.stijlbareVectorlagen;
+  stijlbareVectorlagen: Predicate<string> = DefaultOpties.stijlbareVectorlagen;
 
   ngOnInit() {
     this.kaart.dispatch(VoegUiElementToe(LagenUiSelector));

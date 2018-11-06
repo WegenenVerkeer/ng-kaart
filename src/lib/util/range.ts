@@ -1,5 +1,3 @@
-import { Function3 } from "fp-ts/lib/function";
-
 export const rangeIter: (_1: number, _2?: number, _3?: number) => Iterable<number> = (size, start?, step?) => ({
   *[Symbol.iterator]() {
     let n = 0;
