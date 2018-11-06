@@ -1,140 +1,25 @@
 import { ChangeDetectionStrategy, Component, ElementRef, NgZone, QueryList, ViewChildren, ViewEncapsulation } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import * as array from "fp-ts/lib/Array";
-import { concat, Curried2, Function1, Function2, tuple } from "fp-ts/lib/function";
-import { fromNullable, none, Option } from "fp-ts/lib/Option";
+import { Curried2, tuple } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import { delay, filter, map, mapTo, share, shareReplay, startWith, switchMap, take, tap } from "rxjs/operators";
 
 import * as clr from "../../stijl/colour";
-import { Circle, Fill, FullStyle, fullStylePrism } from "../../stijl/stijl-static-types";
 import { negate } from "../../util/thruth";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-messages";
-import { Legende } from "../kaart-legende";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
-import * as ss from "../stijl-selector";
 
+import { gevonden, KiesbareKleur, kleurViaLaag, markeerKleur, VeldKleurWaarde } from "./model";
+import { kleurenpaletGroot, kleurenpaletKlein } from "./palet";
 import { isAanpassingBezig, LaagstijlAanpassend } from "./state";
-
-// De hardgecodeerde kleuren
-const kleurenpaletKlein = array.catOptions([
-  clr.toKleur("groen", "#46af4a"),
-  clr.toKleur("geel", "#ffec16"),
-  clr.toKleur("rood", "#f44336"),
-  clr.toKleur("indigo", "#3d4db7"),
-  clr.toKleur("bruin", "#7a5547"),
-  clr.toKleur("lichtgroen", "#88d440"),
-  clr.toKleur("amber", "#ffc100"),
-  clr.toKleur("roze", "#eb1460"),
-  clr.toKleur("blauw", "#2196f3"),
-  clr.toKleur("grijs", "#9d9d9d"),
-  clr.toKleur("limoengroen", "#ccdd1e"),
-  clr.toKleur("oranje", "#ff9800"),
-  clr.toKleur("paars", "#9c1ab1"),
-  clr.toKleur("lichtblauw", "#03a9f4"),
-  clr.toKleur("grijsblauw", "#5e7c8b"),
-  clr.toKleur("groenblauw", "#009687"),
-  clr.toKleur("donkeroranje", "#ff5505"),
-  clr.toKleur("donkerpaars", "#6633b9"),
-  clr.toKleur("cyaan", "#00bbd5")
-]);
-
-const kleurenpaletExtra = array.catOptions([
-  clr.toKleur("grijsblauw", "#455a64"),
-  clr.toKleur("grasgroen", "#388e3c"),
-  clr.toKleur("zalm", "#ff6e40"),
-  clr.toKleur("bordeau", "#c2185b"),
-  clr.toKleur("turquoise", "#0097a7"),
-  clr.toKleur("taupe", "#8d6e63"),
-  clr.toKleur("donkergroen", "#1b5e20"),
-  clr.toKleur("donkergeel", "#ffd740"),
-  clr.toKleur("donkerrood", "#d50000"),
-  clr.toKleur("donkerblauw", "#1a237e"),
-  clr.toKleur("zwart", "#212121"),
-  clr.toKleur("zachtgroen", "#81c784"),
-  clr.toKleur("zachtgeel", "#fff59d"),
-  clr.toKleur("zachtrood", "#ef5350"),
-  clr.toKleur("zachtblauw", "#7986cb"),
-  clr.toKleur("zachtgrijs", "#cfd8dc")
-]);
-
-const kleurenpaletGroot = concat(kleurenpaletKlein, kleurenpaletExtra);
-
-// Alle kleuren die dezelfde zijn als de doelkleur krijgen een gekozen veldje
-interface KiesbareKleur extends clr.Kleur {
-  gekozen?: boolean; // enkel voor gebruik in HTML
-}
-const markeerKleur: Curried2<clr.Kleur, clr.Kleur[], KiesbareKleur[]> = doelkleur => kleuren =>
-  kleuren.map(kleur => (kleur.code === doelkleur.code ? { ...kleur, gekozen: true } : kleur));
-
-// Voorlopig geven we alle lagen dezelfde, eenvoudige stijl op het kleur na
-const enkelvoudigeKleurStijl: Function1<clr.Kleur, ss.Awv0StyleSpec> = kleur => ({
-  type: "StaticStyle",
-  definition: {
-    fill: {
-      color: clr.kleurcodeValue(clr.setOpacity(0.25)(kleur))
-    },
-    stroke: {
-      color: clr.kleurcodeValue(kleur),
-      width: 4
-    },
-    image: {
-      radius: 5,
-      fill: {
-        color: clr.kleurcodeValue(kleur)
-      }
-    }
-  }
-});
-const enkelvoudigeKleurLegende: Function2<string, clr.Kleur, Legende> = (laagTitel, kleur) =>
-  Legende([{ type: "Lijn", beschrijving: laagTitel, kleur: clr.kleurcodeValue(kleur), achtergrondKleur: none }]);
+import { enkelvoudigeKleurLegende, enkelvoudigeKleurStijl, veldKleurWaardenViaLaagEnVeldnaam } from "./stijl-manip";
 
 const stijlCmdVoorLaag: Curried2<ke.ToegevoegdeVectorLaag, clr.Kleur, prt.ZetStijlSpecVoorLaagCmd<KaartInternalMsg>> = laag => kleur =>
   prt.ZetStijlSpecVoorLaagCmd(laag.titel, enkelvoudigeKleurStijl(kleur), enkelvoudigeKleurLegende(laag.titel, kleur), kaartLogOnlyWrapper);
-
-// Op het niveau van een stijl is er geen eenvoudige kleur. We gaan dit proberen af leiden van het bolletje in de stijl.
-interface AfgeleideKleur extends clr.Kleur {
-  gevonden: boolean; // enkel voor gebruik in HTML
-}
-const gevonden: Function1<clr.Kleur, AfgeleideKleur> = kleur => ({ ...kleur, gevonden: true });
-const nietGevonden: AfgeleideKleur = { ...clr.toKleurUnsafe("grijs", "#6d6d6d"), gevonden: false }; // kleurcode mag niet voorkomen in palet
-
-// We gaan er van uit dat de stijl er een is die we zelf gezet hebben. Dat wil zeggen dat we het kleurtje van het bolletje
-// uit de stijlspec  kunnen peuteren.
-// We moeten vrij diep in de hierarchie klauteren om het gepaste attribuut te pakken te krijgen. Vandaar het gebruik van Lenses e.a.
-const kleurViaLaag: Function1<ke.ToegevoegdeVectorLaag, AfgeleideKleur> = laag =>
-  ke.ToegevoegdeVectorLaag.stijlSelBronLens
-    .composeIso(ss.Awv0StaticStyleSpecIso)
-    .composePrism(fullStylePrism)
-    .compose(FullStyle.circleOptional)
-    .compose(Circle.fillOptional)
-    .composeLens(Fill.colorLens)
-    .getOption(laag)
-    .chain(clr.olToKleur)
-    .map(gevonden)
-    .getOrElse(nietGevonden);
-
-interface VeldKleurWaarde {
-  waarde: string;
-  kleur: clr.Kleur;
-}
-
-const stdVeldKleuren: Function1<ke.VeldInfo, VeldKleurWaarde[]> = veldInfo =>
-  array.zip(veldInfo.uniekeWaarden, kleurenpaletExtra).map(([label, kleur]) => ({ waarde: label, kleur: kleur }));
-
-const veldKleurWaardenViaLaagEnVeldInfo: Function2<ke.ToegevoegdeVectorLaag, ke.VeldInfo, VeldKleurWaarde[]> = (laag, veld) =>
-  ke.ToegevoegdeVectorLaag.stijlSelBronLens
-    .composeIso(ss.Awv0DynamicStyleSpecIso)
-    .getOption(laag)
-    .chain(() => none as Option<VeldKleurWaarde[]>)
-    .getOrElseL(() => stdVeldKleuren(veld));
-const veldKleurWaardenViaLaagEnVeldnaam: Function2<ke.ToegevoegdeVectorLaag, string, VeldKleurWaarde[]> = (laag, veldnaam) =>
-  fromNullable(laag.bron.velden.get(veldnaam))
-    .map(veld => veldKleurWaardenViaLaagEnVeldInfo(laag, veld))
-    .getOrElse([]);
 
 @Component({
   selector: "awv-laagstijleditor",
