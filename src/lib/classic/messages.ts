@@ -2,6 +2,7 @@ import { List } from "immutable";
 import * as ol from "openlayers";
 
 import * as ke from "../kaart/kaart-elementen";
+import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
 import * as prt from "../kaart/kaart-protocol";
 import { GeselecteerdeFeatures, HoverFeature } from "../kaart/kaart-with-info-model";
 
@@ -28,6 +29,9 @@ export type KaartClassicSubMsg =
   | MiddelpuntAangepastMsg
   | ExtentAangepastMsg
   | VectorLagenAangepastMsg
+  | AchtergrondLagenInGroepAangepastMsg
+  | VoorgrondHoogLagenInGroepAangepastMsg
+  | VoorgrondLaagLagenInGroepAangepastMsg
   | DummyMsg;
 
 export interface FeatureSelectieAangepastMsg {
@@ -86,6 +90,22 @@ export interface VectorLagenAangepastMsg {
   readonly lagen: List<ke.ToegevoegdeVectorLaag>;
 }
 
+export interface AchtergrondLagenInGroepAangepastMsg {
+  readonly type: "AchtergrondLagenInGroepAangepast";
+  readonly lagen: List<ke.ToegevoegdeLaag>;
+}
+
+export interface VoorgrondHoogLagenInGroepAangepastMsg {
+  readonly type: "VoorgrondHoogLagenInGroepAangepast";
+  readonly lagen: List<ke.ToegevoegdeLaag>;
+}
+
+export interface VoorgrondLaagLagenInGroepAangepastMsg {
+  readonly type: "VoorgrondLaagLagenInGroepAangepast";
+  readonly lagen: List<ke.ToegevoegdeLaag>;
+}
+
+
 export interface DummyMsg {
   readonly type: "Dummy";
 }
@@ -116,6 +136,18 @@ export function ZichtbareFeaturesAangepastMsg(features: List<ol.Feature>): Zicht
 
 export function TekenGeomAangepastMsg(geom: ol.geom.Geometry): TekenGeomAangepastMsg {
   return { type: "TekenGeomAangepast", geom: geom };
+}
+
+export function AchtergrondLagenInGroepAangepastMsg(lagen: List<ToegevoegdeLaag>): AchtergrondLagenInGroepAangepastMsg {
+  return { type: "AchtergrondLagenInGroepAangepast", lagen: lagen };
+}
+
+export function VoorgrondLaagLagenInGroepAangepastMsg(lagen: List<ToegevoegdeLaag>): VoorgrondLaagLagenInGroepAangepastMsg {
+  return { type: "VoorgrondLaagLagenInGroepAangepast", lagen: lagen };
+}
+
+export function VoorgrondHoogLagenInGroepAangepastMsg(lagen: List<ToegevoegdeLaag>): VoorgrondHoogLagenInGroepAangepastMsg {
+  return { type: "VoorgrondHoogLagenInGroepAangepast", lagen: lagen };
 }
 
 export function SubscribedMsg(subscription: prt.KaartCmdValidation<prt.SubscriptionResult>, reference: any): SubscribedMsg {

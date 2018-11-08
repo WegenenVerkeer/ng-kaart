@@ -7,6 +7,7 @@ import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { map, share, tap } from "rxjs/operators";
 
+import { ToegevoegdeLaag } from "../kaart";
 import { forChangedValue, KaartComponentBase } from "../kaart/kaart-component-base";
 import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "../kaart/kaart-event-dispatcher";
 import * as prt from "../kaart/kaart-protocol";
@@ -16,6 +17,7 @@ import { ofType, TypedRecord } from "../util/operators";
 
 import { classicLogger } from "./log";
 import {
+  AchtergrondLagenInGroepAangepastMsg,
   ExtentAangepastMsg,
   FeatureGedeselecteerdMsg,
   FeatureHoverAangepastMsg,
@@ -25,6 +27,8 @@ import {
   logOnlyWrapper,
   MiddelpuntAangepastMsg,
   SubscribedMsg,
+  VoorgrondHoogLagenInGroepAangepastMsg,
+  VoorgrondLaagLagenInGroepAangepastMsg,
   ZichtbareFeaturesAangepastMsg,
   ZoomAangepastMsg
 } from "./messages";
@@ -80,6 +84,12 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   zichtbareFeatures: EventEmitter<List<ol.Feature>> = new EventEmitter();
   @Output()
   hoverFeature: EventEmitter<Option<ol.Feature>> = new EventEmitter();
+  @Output()
+  achtergrondLagen: EventEmitter<List<ToegevoegdeLaag>> = new EventEmitter<List<ToegevoegdeLaag>>();
+  @Output()
+  voorgrondHoogLagen: EventEmitter<List<ToegevoegdeLaag>> = new EventEmitter<List<ToegevoegdeLaag>>();
+  @Output()
+  voorgrondLaagLagen: EventEmitter<List<ToegevoegdeLaag>> = new EventEmitter<List<ToegevoegdeLaag>>();
 
   constructor(zone: NgZone) {
     super(zone);
@@ -131,6 +141,27 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
                 ExtentAangepastMsg,
                 KaartClassicMsg
               )
+            ),
+            prt.LagenInGroepSubscription(
+              "Achtergrond",
+              pipe(
+                AchtergrondLagenInGroepAangepastMsg,
+                KaartClassicMsg
+              )
+            ),
+            prt.LagenInGroepSubscription(
+              "Voorgrond.Hoog",
+              pipe(
+                VoorgrondHoogLagenInGroepAangepastMsg,
+                KaartClassicMsg
+              )
+            ),
+            prt.LagenInGroepSubscription(
+              "Voorgrond.Laag",
+              pipe(
+                VoorgrondLaagLagenInGroepAangepastMsg,
+                KaartClassicMsg
+              )
             )
           )
         )
@@ -154,6 +185,12 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
             return this.middelpuntChange.emit(msg.middelpunt);
           case "ExtentAangepast":
             return this.extentChange.emit(msg.extent);
+          case "AchtergrondLagenInGroepAangepast":
+            return this.achtergrondLagen.emit(msg.lagen);
+          case "VoorgrondHoogLagenInGroepAangepast":
+            return this.voorgrondHoogLagen.emit(msg.lagen);
+          case "VoorgrondLaagLagenInGroepAangepast":
+            return this.voorgrondLaagLagen.emit(msg.lagen);
           default:
             return; // Op de andere boodschappen reageren we niet
         }

@@ -10,7 +10,7 @@ import { KaartClassicComponent } from "../lib/classic/kaart-classic.component";
 import { classicLogger } from "../lib/classic/log";
 import { kaartLogOnlyWrapper } from "../lib/kaart/kaart-internal-messages";
 import * as prt from "../lib/kaart/kaart-protocol";
-import { definitieToStyle, kaartLogger, parseCoordinate } from "../lib/public_api";
+import { definitieToStyle, kaartLogger, parseCoordinate, ToegevoegdeLaag } from "../lib/public_api";
 import { AWV0StyleFunctionDescription, definitieToStyleFunction } from "../lib/stijl";
 import { offsetStyleFunction } from "../lib/stijl/offset-stijl-function";
 import { verkeersbordenStyleFunction } from "../lib/stijl/verkeersborden-stijl-function";
@@ -396,6 +396,18 @@ export class FeatureDemoComponent {
 
   onZichtbareFeatures(features: List<ol.Feature>): void {
     console.log("------> features", features);
+  }
+
+  onAchtergrondLagen(lagen: List<ToegevoegdeLaag>): void {
+    console.log("------> achtergrondlagen", lagen);
+  }
+
+  onVoorgrondHoogLagen(lagen: List<ToegevoegdeLaag>): void {
+    console.log("------> voorgrond hoog lagen", lagen);
+  }
+
+  onVoorgrondLaagLagen(lagen: List<ToegevoegdeLaag>): void {
+    console.log("------> voorgrond laag lagen", lagen);
   }
 
   onFietspadsegmentenZichtbaar(features: List<ol.Feature>): void {
