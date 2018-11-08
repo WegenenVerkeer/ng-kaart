@@ -105,7 +105,6 @@ export interface VoorgrondLaagLagenInGroepAangepastMsg {
   readonly lagen: List<ke.ToegevoegdeLaag>;
 }
 
-
 export interface DummyMsg {
   readonly type: "Dummy";
 }
