@@ -40,8 +40,10 @@ const nestedProperty = (propertyKey: string, object: Object) =>
     ? propertyKey.split(".").reduce((obj, key) => (geldigeWaarde(obj) && geldigeWaarde(obj[key]) ? obj[key] : null), object)
     : null;
 
-const formateerJson = (veld: string, veldtype: string, json: string, formatString: string): string => {
-  const jsonObject = veldtype => (veldtype === "json" ? JSON.parse(`{"${veld}": ${json}}`) : JSON.parse(`{"${veld}": "${json}"}`));
+const formateerJson = (veld: string, veldtype: string, json: any, formatString: string): string => {
+  const jsonString = typeof json === "string" || json instanceof String ? json : JSON.stringify(json);
+  const jsonObject = veldtype =>
+    veldtype === "json" ? JSON.parse(`{"${veld}": ${jsonString}}`) : JSON.parse(`{"${veld}": "${jsonString}"}`);
   return Mustache.render(formatString, jsonObject(veldtype));
 };
 
