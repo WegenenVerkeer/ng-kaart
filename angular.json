@@ -3,30 +3,60 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "@wegenenverkeer/ng-kaart": {
+    "testApp": {
       "root": "",
       "sourceRoot": "src",
       "projectType": "application",
+      "prefix": "app",
+      "schematics": {
+        "@schematics/angular:class": {
+          "spec": false
+        },
+        "@schematics/angular:component": {
+          "spec": false
+        },
+        "@schematics/angular:directive": {
+          "spec": false
+        },
+        "@schematics/angular:guard": {
+          "spec": false
+        },
+        "@schematics/angular:module": {
+          "spec": false
+        },
+        "@schematics/angular:pipe": {
+          "spec": false
+        },
+        "@schematics/angular:service": {
+          "spec": false
+        }
+      },
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-angular:browser",
           "options": {
-            "outputPath": "out/testApp",
+            "outputPath": "dist/testApp",
             "index": "src/index.html",
             "main": "src/main.ts",
             "polyfills": "src/polyfills.ts",
-            "tsConfig": "src/tsconfig.json",
+            "tsConfig": "src/tsconfig.app.json",
             "assets": [
-              "src/testApp/assets",
-              "src/favicon.ico"
+              "src/favicon.ico",
+              "src/assets"
             ],
             "styles": [
-              "src/testApp/styles.scss"
+              "src/styles.scss"
             ],
             "scripts": []
           },
           "configurations": {
             "production": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ],
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": false,
@@ -35,31 +65,25 @@
               "aot": true,
               "extractLicenses": true,
               "vendorChunk": false,
-              "buildOptimizer": true,
-              "fileReplacements": [
-                {
-                  "replace": "src/testApp/environments/environment.ts",
-                  "with": "src/testApp/environments/environment.prod.ts"
-                }
-              ]
+              "buildOptimizer": true
             }
           }
         },
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "options": {
-            "browserTarget": "@wegenenverkeer/ng-kaart:build"
+            "browserTarget": "testApp:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "@wegenenverkeer/ng-kaart:build:production"
+              "browserTarget": "testApp:build:production"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "@wegenenverkeer/ng-kaart:build"
+            "browserTarget": "testApp:build"
           }
         },
         "test": {
@@ -67,57 +91,94 @@
           "options": {
             "main": "src/test.ts",
             "polyfills": "src/polyfills.ts",
-            "tsConfig": "src/lib/tsconfig.spec.json",
-            "karmaConfig": "./karma.conf.js",
-            "scripts": [],
+            "tsConfig": "src/tsconfig.spec.json",
+            "karmaConfig": "src/karma.conf.js",
             "styles": [
-              "src/testApp/styles.scss"
+              "src/styles.css"
             ],
+            "scripts": [],
             "assets": [
-              "src/testApp/assets",
-              "src/favicon.ico"
+              "src/favicon.ico",
+              "src/assets"
             ]
           }
         },
         "lint": {
           "builder": "@angular-devkit/build-angular:tslint",
           "options": {
-            "tsConfig": [],
-            "exclude": []
+            "tsConfig": [
+              "src/tsconfig.app.json",
+              "src/tsconfig.spec.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
           }
         }
       }
     },
-    "@wegenenverkeer/ng-kaart-e2e": {
-      "root": "e2e",
-      "sourceRoot": "e2e",
+    "testApp-e2e": {
+      "root": "e2e/",
       "projectType": "application",
       "architect": {
         "e2e": {
           "builder": "@angular-devkit/build-angular:protractor",
           "options": {
-            "protractorConfig": "./protractor.conf.js",
-            "devServerTarget": "@wegenenverkeer/ng-kaart:serve"
+            "protractorConfig": "e2e/protractor.conf.js",
+            "devServerTarget": "testApp:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "testApp:serve:production"
+            }
           }
         },
         "lint": {
           "builder": "@angular-devkit/build-angular:tslint",
           "options": {
-            "tsConfig": [],
-            "exclude": []
+            "tsConfig": "e2e/tsconfig.e2e.json",
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
+        }
+      }
+    },
+    "ng-kaart": {
+      "root": "projects/ng-kaart",
+      "sourceRoot": "projects/ng-kaart/src",
+      "projectType": "library",
+      "prefix": "awv",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-ng-packagr:build",
+          "options": {
+            "tsConfig": "projects/ng-kaart/tsconfig.lib.json",
+            "project": "projects/ng-kaart/ng-package.json"
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "projects/ng-kaart/src/test.ts",
+            "tsConfig": "projects/ng-kaart/tsconfig.spec.json",
+            "karmaConfig": "projects/ng-kaart/karma.conf.js"
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "projects/ng-kaart/tsconfig.lib.json",
+              "projects/ng-kaart/tsconfig.spec.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
           }
         }
       }
     }
   },
-  "defaultProject": "@wegenenverkeer/ng-kaart",
-  "schematics": {
-    "@schematics/angular:component": {
-      "prefix": "awv",
-      "styleext": "sass"
-    },
-    "@schematics/angular:directive": {
-      "prefix": "awv"
-    }
-  }
+  "defaultProject": "ng-kaart"
 }
