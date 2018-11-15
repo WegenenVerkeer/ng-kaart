@@ -189,11 +189,6 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
 
   private startTracking(zoom: number, doelzoom: number) {
     if (navigator.geolocation) {
-      if (zoom <= 8) {
-        // We zitten nu op een te laag zoomniveau, dus gaan we eerst inzoomen.
-        this.dispatch(prt.VeranderZoomCmd(doelzoom, kaartLogOnlyWrapper));
-      }
-
       this.watchId = some(
         navigator.geolocation.watchPosition(
           //
@@ -217,9 +212,13 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     const coordinate = ol.proj.fromLonLat(longLat, "EPSG:31370");
     this.dispatch(prt.VeranderMiddelpuntCmd(coordinate));
 
-    this.mijnLocatie = this.mijnLocatie
-      .chain(feature => pasFeatureAan(feature, coordinate, zoom, position.coords.accuracy))
-      .orElse(() => this.maakNieuwFeature(coordinate, zoom, position.coords.accuracy));
+    this.mijnLocatie = this.mijnLocatie.chain(feature => pasFeatureAan(feature, coordinate, zoom, position.coords.accuracy)).orElse(() => {
+      if (zoom <= 8) {
+        // We zitten nu op een te laag zoomniveau, dus gaan we eerst inzoomen.
+        this.dispatch(prt.VeranderZoomCmd(doelzoom, kaartLogOnlyWrapper));
+      }
+      return this.maakNieuwFeature(coordinate, zoom, position.coords.accuracy);
+    });
   }
 
   createLayer(): ke.VectorLaag {
