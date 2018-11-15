@@ -15,12 +15,10 @@ import {
   join,
   KaartClassicComponent,
   kaartLogger,
-  kaartLogOnlyWrapper,
   offsetStyleFunction,
   parseCoordinate,
   ToegevoegdeLaag,
   verkeersbordenStyleFunction,
-  VerplaatsLaagCmd,
   zoekerMetPrioriteiten,
   ZoekerMetPrioriteiten
 } from "@wegenenverkeer/ng-kaart";
@@ -381,7 +379,7 @@ export class FeatureDemoComponent {
     // TODO: Dit werkt niet, maar ik laat het voorlopig staan tot de inspiratie komt om het te laten werken.
     // Het probleem is dat het Subject waarnaar gedispatched wordt een ander is dan dat dat door de kaartcomponent
     // opgepikt wordt. Een issue in de volgorde van initialisatie???
-    this.verplaatsKaart.dispatch(VerplaatsLaagCmd("dienstkaart-kleur", this.naarPositie, kaartLogOnlyWrapper));
+    // this.verplaatsKaart.dispatch(VerplaatsLaagCmd("dienstkaart-kleur", this.naarPositie, kaartLogOnlyWrapper));
   }
 
   stijlbareVectorlagen(titel: string) {

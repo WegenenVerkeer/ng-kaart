@@ -7,7 +7,23 @@
     "build": "ng build",
     "test": "ng test",
     "lint": "ng lint",
-    "e2e": "ng e2e"
+    "e2e": "ng e2e",
+    "precommit": "lint-staged"
+  },
+  "lint-staged":  {
+    "linters": {
+      "src/**/*.ts": [
+        "tslint --type-check --project src/tsconfig.app.json --fix",
+        "awk /apps-(dev|tei).mow.vlaanderen.be/{exit(1)}",
+        "git add"
+      ],
+      "projects/ng-kaart/**/*.ts": [
+        "tslint --type-check --project projects/ng-kaart/tsconfig.lib.json --fix",
+        "awk /apps-(dev|tei).mow.vlaanderen.be/{exit(1)}",
+        "git add"
+      ]
+    },
+    "ignore": ["**/test.ts"]
   },
   "private": true,
   "dependencies": {

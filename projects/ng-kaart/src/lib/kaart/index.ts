@@ -34,6 +34,7 @@ import { KaartInfoBoodschappenComponent } from "./info-boodschappen/kaart-info-b
 import { KaartBevragenComponent } from "./kaart-bevragen/kaart-bevragen.component";
 import { KAART_CFG, KaartConfig } from "./kaart-config";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
+import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
 import { KaartComponent } from "./kaart.component";
 import { KaartLoadingComponent } from "./loading/kaart-loading.component";
 import { KaartMetenComponent } from "./meten/kaart-meten.component";
@@ -44,7 +45,6 @@ import { StijleditorModule } from "./stijleditor/index";
 import { KaartTekenLaagComponent } from "./tekenen/kaart-teken-laag.component";
 import { KaartVoorwaardenComponent } from "./voorwaarden/kaart-voorwaarden.component";
 import { KaartZoomComponent } from "./zoom/kaart-zoom.component";
-import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
 
 const components: any[] = [
   KaartAchtergrondSelectorComponent,
@@ -154,7 +154,6 @@ export * from "./kaart-bevragen/laaginfo.model";
 export * from "./kaart-component-base";
 export * from "./kaart-elementen";
 export * from "./kaart-event-dispatcher";
-export * from "./kaart-internal-messages";
 export * from "./kaart-legende";
 export * from "./kaart-protocol";
 export * from "./kaart.component";

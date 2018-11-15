@@ -165,7 +165,10 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
     function noop(t: T) {}
 
     this.zoekerComponent.increaseBusy();
-    return observable.pipe(take(1), tap(noop, () => this.zoekerComponent.decreaseBusy(), () => this.zoekerComponent.decreaseBusy()));
+    return observable.pipe(
+      take(1),
+      tap(noop, () => this.zoekerComponent.decreaseBusy(), () => this.zoekerComponent.decreaseBusy())
+    );
   }
 
   protected zoek<I extends ZoekInput>(zoekInput: I, zoekers: Array<string>) {
@@ -191,48 +194,60 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
     // Filter een array van waardes met de waarde van een filter (control), de filter kan een string of een object zijn.
     function filterMetWaarde(): Pipeable<T[], T[]> {
       return (ts$: rx.Observable<T[]>) =>
-        rx.combineLatest(ts$, huidige.valueChanges.pipe(startWith<string | T>(""), distinctUntilChanged()), (waardes, filterWaarde) => {
-          if (!filterWaarde) {
-            return waardes;
-          } else if (typeof filterWaarde === "string") {
-            const filterWaardeLowerCase = filterWaarde.toLocaleLowerCase();
-            return waardes
-              .filter(value =>
+        rx.combineLatest(
+          ts$,
+          huidige.valueChanges.pipe(
+            startWith<string | T>(""),
+            distinctUntilChanged()
+          ),
+          (waardes, filterWaarde) => {
+            if (!filterWaarde) {
+              return waardes;
+            } else if (typeof filterWaarde === "string") {
+              const filterWaardeLowerCase = filterWaarde.toLocaleLowerCase();
+              return waardes
+                .filter(value =>
+                  propertyGetter(value)
+                    .toLocaleLowerCase()
+                    .includes(filterWaardeLowerCase)
+                )
+                .sort((a, b) => {
+                  const aValueLowerCase = propertyGetter(a).toLocaleLowerCase();
+                  const bValueLowerCase = propertyGetter(b).toLocaleLowerCase();
+
+                  const aIndex = aValueLowerCase.indexOf(filterWaardeLowerCase);
+                  const bIndex = bValueLowerCase.indexOf(filterWaardeLowerCase);
+
+                  // aIndex en bIndex zullen nooit -1 zijn.
+                  // De filter van hierboven vereist dat xValueLowercase.includes(filterWaardeLowerCase)
+                  if (aIndex < bIndex) {
+                    // de filterwaarde komt korter vooraan voor in a dan in b
+                    return -1;
+                  } else if (aIndex > bIndex) {
+                    // de filterwaarde komt verder achteraan voor in a dan in b
+                    return 1;
+                  } else {
+                    // alfabetisch sorteren van alle andere gevallen
+                    return aValueLowerCase.localeCompare(bValueLowerCase);
+                  }
+                });
+            } else {
+              return waardes.filter(value =>
                 propertyGetter(value)
                   .toLocaleLowerCase()
-                  .includes(filterWaardeLowerCase)
-              )
-              .sort((a, b) => {
-                const aValueLowerCase = propertyGetter(a).toLocaleLowerCase();
-                const bValueLowerCase = propertyGetter(b).toLocaleLowerCase();
-
-                const aIndex = aValueLowerCase.indexOf(filterWaardeLowerCase);
-                const bIndex = bValueLowerCase.indexOf(filterWaardeLowerCase);
-
-                // aIndex en bIndex zullen nooit -1 zijn.
-                // De filter van hierboven vereist dat xValueLowercase.includes(filterWaardeLowerCase)
-                if (aIndex < bIndex) {
-                  // de filterwaarde komt korter vooraan voor in a dan in b
-                  return -1;
-                } else if (aIndex > bIndex) {
-                  // de filterwaarde komt verder achteraan voor in a dan in b
-                  return 1;
-                } else {
-                  // alfabetisch sorteren van alle andere gevallen
-                  return aValueLowerCase.localeCompare(bValueLowerCase);
-                }
-              });
-          } else {
-            return waardes.filter(value =>
-              propertyGetter(value)
-                .toLocaleLowerCase()
-                .includes(propertyGetter(filterWaarde).toLocaleLowerCase())
-            );
+                  .includes(propertyGetter(filterWaarde).toLocaleLowerCase())
+              );
+            }
           }
-        });
+        );
     }
 
-    return vorige.valueChanges.pipe(distinctUntilChanged(), this.safeProvider(provider), filterMetWaarde(), shareReplay(1));
+    return vorige.valueChanges.pipe(
+      distinctUntilChanged(),
+      this.safeProvider(provider),
+      filterMetWaarde(),
+      shareReplay(1)
+    );
   }
 
   // inputWaarde kan een string of een object zijn. Enkel wanneer het een object is, roepen we de provider op,
@@ -271,7 +286,8 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
 })
 export class ZoekerBoxComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
   zoekVeld = new FormControl();
-  @ViewChild("zoekVeldElement") zoekVeldElement: ElementRef;
+  @ViewChild("zoekVeldElement")
+  zoekVeldElement: ElementRef;
 
   @ViewChild("zoekerPerceelGetrapt")
   set setZoekerPerceelGetraptComponent(zoekerPerceelGetrapt: GetraptZoekerComponent) {
@@ -393,7 +409,11 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     super(parent, zone);
 
     this.zoekers$ = parent.modelChanges.zoekerServices$;
-    this.zoekerNamen$ = this.zoekers$.pipe(map(svcs => svcs.map(svc => svc.zoeker.naam())), debounceTime(250), shareReplay(1));
+    this.zoekerNamen$ = this.zoekers$.pipe(
+      map(svcs => svcs.map(svc => svc.zoeker.naam())),
+      debounceTime(250),
+      shareReplay(1)
+    );
     this.zoekerComponentOpNaam$ = this.zoekerComponentSubj.pipe(
       scan(
         (zoekerComponentOpNaam: Map<ZoekerType, GetraptZoekerComponent>, nz: Tuple<ZoekerType, GetraptZoekerComponent>) =>
@@ -442,7 +462,10 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       .merge(
         rx.of(true), // laat initieel toe
         startZoek$.pipe(mapTo(false)), // laat niet toe direct na een start zoek opdracht (enter)
-        startZoek$.pipe(mapTo(true), delay(suggestieDelay + 100)) // totdat er wat tijd verlopen is. Moet na emit van recentste zoekterm!
+        startZoek$.pipe(
+          mapTo(true),
+          delay(suggestieDelay + 100)
+        ) // totdat er wat tijd verlopen is. Moet na emit van recentste zoekterm!
       )
       .pipe(shareReplay(1)); // zorg ervoor dat subscribers steeds de recentste waarde krijgen
     const zoekterm$ = this.zoekInputSubj.pipe(
@@ -463,7 +486,15 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
           } as prt.ZoekCmd<KaartInternalMsg>)
       )
     )
-      .pipe(switchMap(cmd => laatSuggestiesToe$.pipe(take(1), filter(identity), mapTo(cmd)))) // emit cmd max 1x: als recentste true is
+      .pipe(
+        switchMap(cmd =>
+          laatSuggestiesToe$.pipe(
+            take(1),
+            filter(identity),
+            mapTo(cmd)
+          )
+        )
+      ) // emit cmd max 1x: als recentste true is
       .subscribe(cmd => {
         this.suggestiesBuffer = [];
         this.dispatch(cmd);

@@ -28,5 +28,9 @@
         "dist/ng-kaart/*"
       ]
     }
-  }
+  },
+  "exclude": [
+    "test.ts",
+    "**/*.spec.ts"
+  ]
 }
