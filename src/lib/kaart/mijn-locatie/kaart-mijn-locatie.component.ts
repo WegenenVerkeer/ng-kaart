@@ -159,6 +159,12 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     this.bindToLifeCycle(
       rx.combineLatest(zoom$, zoomdoel$, this.locatieSubj).pipe(map(([zoom, doel, locatie]) => Locatie(Zoom(zoom, doel), locatie)))
     ).subscribe(zoomPositie => this.zetMijnPositie(zoomPositie.positie, zoomPositie.zoom, zoomPositie.doel));
+
+    this.bindToLifeCycle(this.parent.modelChanges.dragInfo$).subscribe(() => {
+      if (this.actief) {
+        this.toggleLocatieTracking();
+      }
+    });
   }
 
   private maakNieuwFeature(coordinate: ol.Coordinate, zoom: number, accuracy: number): Option<ol.Feature> {
