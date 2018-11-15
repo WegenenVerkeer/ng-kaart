@@ -288,8 +288,10 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
       const waarde = nestedProperty(name, this.properties());
       if (isDatum(this.laag, name) && waarde) {
         return formateerDatum(waarde.toString());
+      } else if (this.hasHtml(name) && waarde) {
+        return this.sanitizer.bypassSecurityTrustHtml(formateerJson(name, this.veldtype(name), waarde, this.html(name)));
       } else if (this.hasTemplate(name) && waarde) {
-        return this.sanitizer.bypassSecurityTrustHtml(formateerJson(name, this.veldtype(name), waarde, this.template(name)));
+        return formateerJson(name, this.veldtype(name), waarde, this.template(name));
       } else {
         return waarde;
       }
@@ -346,10 +348,24 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
       .isSome();
   }
 
+  private hasHtml(veld: string): boolean {
+    return this.laag
+      .chain(l => fromNullable(l.velden.get(veld)))
+      .chain(veldInfo => fromNullable(veldInfo.html))
+      .isSome();
+  }
+
   private template(veld: string): string {
     return this.laag
       .chain(l => fromNullable(l.velden.get(veld)))
       .chain(veldInfo => fromNullable(veldInfo.template))
+      .getOrElse("");
+  }
+
+  private html(veld: string): string {
+    return this.laag
+      .chain(l => fromNullable(l.velden.get(veld)))
+      .chain(veldInfo => fromNullable(veldInfo.html))
       .getOrElse("");
   }
 
