@@ -99,7 +99,10 @@
                          (zoomChange)="onZoom($event)"
                          (middelpuntChange)="onMiddelpunt($event)"
                          (extentChange)="onExtent($event)"
-                         [middelpunt]="configuratorMiddelpunt">
+                         [middelpunt]="configuratorMiddelpunt"
+                         (achtergrondLagen)="onAchtergrondLagen($event)"
+                         (voorgrondHoogLagen)="onVoorgrondHoogLagen($event)"
+                         (voorgrondLaagLagen)="onVoorgrondLaagLagen($event)">
         <!-- algemeen -->
         <awv-kaart-standaard-interacties *ngIf="isOptieActief('standaardinteracties')" [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
         <!-- custom vaste header in linker paneel -->

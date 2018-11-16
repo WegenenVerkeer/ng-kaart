@@ -40,9 +40,11 @@ const nestedProperty = (propertyKey: string, object: Object) =>
     ? propertyKey.split(".").reduce((obj, key) => (geldigeWaarde(obj) && geldigeWaarde(obj[key]) ? obj[key] : null), object)
     : null;
 
-const formateerJson = (veld: string, json: string, formatString: string): string => {
-  const jsonObject = JSON.parse(`{"${veld}": ${json}}`);
-  return Mustache.render(formatString, jsonObject);
+const formateerJson = (veld: string, veldtype: string, json: any, formatString: string): string => {
+  const jsonString = typeof json === "string" || json instanceof String ? json : JSON.stringify(json);
+  const jsonObject = veldtype =>
+    veldtype === "json" ? JSON.parse(`{"${veld}": ${jsonString}}`) : JSON.parse(`{"${veld}": "${jsonString}"}`);
+  return Mustache.render(formatString, jsonObject(veldtype));
 };
 
 const formateerDatum = (dateString: string): string => {
@@ -286,8 +288,10 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
       const waarde = nestedProperty(name, this.properties());
       if (isDatum(this.laag, name) && waarde) {
         return formateerDatum(waarde.toString());
-      } else if (isJson(this.laag, name) && waarde) {
-        return this.sanitizer.bypassSecurityTrustHtml(formateerJson(name, waarde, this.template(name)));
+      } else if (this.hasHtml(name) && waarde) {
+        return this.sanitizer.bypassSecurityTrustHtml(formateerJson(name, this.veldtype(name), waarde, this.html(name)));
+      } else if (this.hasTemplate(name) && waarde) {
+        return formateerJson(name, this.veldtype(name), waarde, this.template(name));
       } else {
         return waarde;
       }
@@ -337,10 +341,38 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
     );
   }
 
+  private hasTemplate(veld: string): boolean {
+    return this.laag
+      .chain(l => fromNullable(l.velden.get(veld)))
+      .chain(veldInfo => fromNullable(veldInfo.template))
+      .isSome();
+  }
+
+  private hasHtml(veld: string): boolean {
+    return this.laag
+      .chain(l => fromNullable(l.velden.get(veld)))
+      .chain(veldInfo => fromNullable(veldInfo.html))
+      .isSome();
+  }
+
   private template(veld: string): string {
     return this.laag
       .chain(l => fromNullable(l.velden.get(veld)))
       .chain(veldInfo => fromNullable(veldInfo.template))
+      .getOrElse("");
+  }
+
+  private html(veld: string): string {
+    return this.laag
+      .chain(l => fromNullable(l.velden.get(veld)))
+      .chain(veldInfo => fromNullable(veldInfo.html))
+      .getOrElse("");
+  }
+
+  private veldtype(veld: string): string {
+    return this.laag
+      .chain(l => fromNullable(l.velden.get(veld)))
+      .chain(veldInfo => fromNullable(veldInfo.type))
       .getOrElse("");
   }
 

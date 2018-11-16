@@ -79,6 +79,7 @@ export interface VeldInfo {
   constante: string;
   template: string;
   uniekeWaarden: string[];
+  html: string;
 }
 
 export interface VectorLaag {

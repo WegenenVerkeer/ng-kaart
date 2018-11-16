@@ -1,12 +1,13 @@
 /// <reference types="@types/googlemaps" />
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { Inject, Injectable } from "@angular/core";
-import { fromNullable, Option, some } from "fp-ts/lib/Option";
+import { Option, some } from "fp-ts/lib/Option";
 import { Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { catchError, map, switchMap } from "rxjs/operators";
 
+import { fromNullablePredicate } from "../../util/option";
 import { ZOEKER_CFG, ZoekerConfigData } from "../config/zoeker-config";
 import { ZoekerConfigGoogleWdbConfig } from "../config/zoeker-config-google-wdb.config";
 import {
@@ -48,7 +49,10 @@ export class GoogleWdbZoekResultaat implements ZoekResultaat {
       highlightStyle: highlightStyle
     });
     this.omschrijving = locatie.omschrijving;
-    this.extraOmschrijving = fromNullable(locatie.formatted_address);
+    this.extraOmschrijving = fromNullablePredicate<string>(
+      () => locatie.omschrijving !== locatie.formatted_address,
+      locatie.formatted_address
+    );
     this.bron = locatie.bron;
     this.preferredPointZoomLevel = isWdbBron(this.bron) ? some(12) : some(10);
   }

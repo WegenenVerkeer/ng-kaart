@@ -11,7 +11,7 @@ import { classicLogger } from "../lib/classic/log";
 import * as ke from "../lib/kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../lib/kaart/kaart-internal-messages";
 import * as prt from "../lib/kaart/kaart-protocol";
-import { definitieToStyle, kaartLogger, parseCoordinate } from "../lib/public_api";
+import { definitieToStyle, kaartLogger, parseCoordinate, ToegevoegdeLaag } from "../lib/public_api";
 import { Awv0DynamicStyle, validateAwv0RuleDefintion } from "../lib/stijl";
 import { offsetStyleFunction } from "../lib/stijl/offset-stijl-function";
 import { verkeersbordenStyleFunction } from "../lib/stijl/verkeersborden-stijl-function";
@@ -170,7 +170,8 @@ export class FeatureDemoComponent {
       isBasisVeld: true,
       constante: undefined,
       template: undefined,
-      uniekeWaarden: ["punt", "lijn", "cirkel", "veelvlak"]
+      uniekeWaarden: ["punt", "lijn", "cirkel", "veelvlak"],
+      html: ""
     },
     {
       naam: "merk",
@@ -179,7 +180,8 @@ export class FeatureDemoComponent {
       isBasisVeld: true,
       constante: undefined,
       template: undefined,
-      uniekeWaarden: ["ACME", "Globex"]
+      uniekeWaarden: ["ACME", "Globex"],
+      html: ""
     }
   ];
   zoekresultaten: ol.Collection<ol.Feature> = new ol.Collection();
@@ -468,6 +470,18 @@ export class FeatureDemoComponent {
 
   onZichtbareFeatures(features: List<ol.Feature>): void {
     console.log("------> features", features);
+  }
+
+  onAchtergrondLagen(lagen: List<ToegevoegdeLaag>): void {
+    console.log("------> achtergrondlagen", lagen);
+  }
+
+  onVoorgrondHoogLagen(lagen: List<ToegevoegdeLaag>): void {
+    console.log("------> voorgrond hoog lagen", lagen);
+  }
+
+  onVoorgrondLaagLagen(lagen: List<ToegevoegdeLaag>): void {
+    console.log("------> voorgrond laag lagen", lagen);
   }
 
   onFietspadsegmentenZichtbaar(features: List<ol.Feature>): void {
