@@ -1,15 +1,16 @@
 import { array } from "fp-ts/lib/Array";
-import { Function1, Function2 } from "fp-ts/lib/function";
+import { Function1, Function2, pipe } from "fp-ts/lib/function";
 import * as option from "fp-ts/lib/Option";
 import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 
-import { applyValidationChain, validationChain as chain } from "../util/validation";
+import { composeValidators2, validationChain as chain, Validator } from "../util/validation";
 
-import { jsonAwvV0Definition } from "./json-awv-v0-stijl";
+import { Awv0StaticStyleInterpreters, StaticStyleEncoders } from "./json-awv-v0-stijl";
 import * as oi from "./json-object-interpreting";
 import { fail, Interpreter, ok, Validation } from "./json-object-interpreting";
 import {
+  Awv0DynamicStyle,
   Between,
   Combination,
   Comparison,
@@ -20,6 +21,8 @@ import {
   Literal,
   Negation,
   PropertyExtraction,
+  Rule,
+  RuleConfig,
   TypeType,
   ValueType
 } from "./stijl-function-types";
@@ -53,10 +56,10 @@ const RuleStyle: Function2<Option<Expression>, olStyle, RuleStyle> = (maybeCondi
 // Valideer de regels en controleer de stijlen
 //
 
-const jsonAwvV0RuleConfig: Interpreter<RuleStyleConfig> = (json: Object) => {
+export const jsonAwvV0RuleInterpreter: Interpreter<Awv0DynamicStyle> = (json: Object) => {
   const typeType: Interpreter<TypeType> = (o: string) =>
     o === "boolean" || o === "string" || o === "number" ? ok(o as TypeType) : fail(`Het type moet 'boolean' of 'string' of 'number' zijn`);
-  const literal: Interpreter<Expression> = oi.map(Literal, oi.field("value", oi.firstOf<ValueType>(oi.str, oi.bool, oi.num)));
+  const literal: Interpreter<Expression> = oi.map(Literal, oi.field("value", oi.firstOf<ValueType>(oi.bool, oi.num, oi.str)));
   const environment: Interpreter<Expression> = oi.map2(EnvironmentExtraction, oi.field("type", typeType), oi.field("ref", oi.str));
   const property: Interpreter<Expression> = oi.map2(PropertyExtraction, oi.field("type", typeType), oi.field("ref", oi.str));
   const propertyExists: Interpreter<Expression> = oi.map(Exists("PropertyExists"), oi.field("ref", oi.str));
@@ -91,16 +94,30 @@ const jsonAwvV0RuleConfig: Interpreter<RuleStyleConfig> = (json: Object) => {
     "<=>": between
   });
 
-  const rule = oi.map2(RuleStyle, oi.optField("condition", expression), oi.field("style", jsonAwvV0Definition));
+  const rule: Interpreter<Rule> = oi.map2(
+    Rule,
+    oi.map(maybeCondition => maybeCondition.getOrElse(alwaysTrue), oi.optField("condition", expression)),
+    oi.field("style", oi.field("definition", Awv0StaticStyleInterpreters.jsonAwvV0Definition))
+  );
 
-  const ruleConfig = oi.map(RuleStyleConfig, oi.arr(rule));
+  const ruleConfig: Interpreter<RuleConfig> = oi.map(RuleConfig, oi.arr(rule));
 
   return oi
     .field("rules", ruleConfig)(json)
     .mapFailure(msg => [`syntaxcontrole: ${msg}`]);
 };
 
-export const jsonAwvV0RuleCompiler: Interpreter<ol.StyleFunction> = applyValidationChain(jsonAwvV0RuleConfig, compileRules);
+const jsonAwvV0RuleConfig: Function1<Awv0DynamicStyle, RuleStyleConfig> = style => ({
+  rules: style.rules.map(rule => ({
+    condition: rule.condition,
+    style: StaticStyleEncoders.awvV0Style.encode(rule.style.definition)
+  }))
+});
+
+export const jsonAwvV0RuleCompiler: Validator<Awv0DynamicStyle, ol.StyleFunction> = pipe(
+  jsonAwvV0RuleConfig,
+  compileRules
+);
 
 /////////////////////////////////////////////////////////////////
 // Typechecking en compilatie van de regels tot een StyleFunction
@@ -165,7 +182,7 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
     evaluator.typeName === "boolean" ? ok(evaluator) : fail<TypedEvaluator>(`typecontrole: een conditie moet een 'boolean' opleveren`);
 
   // De expressie op het hoogste niveau moet tot een boolean evalueren
-  const compileCondition: (_: Expression) => ValidatedTypedEvaluator = applyValidationChain(compile, conditionIsBoolean);
+  const compileCondition: (_: Expression) => ValidatedTypedEvaluator = composeValidators2(compile, conditionIsBoolean);
 
   // Het hart van de compiler
   function compile(expression: Expression): ValidatedTypedEvaluator {
@@ -290,7 +307,7 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
       ev1(ctx).chain(r1 => ev2(ctx).chain(r2 => ev3(ctx).map(r3 => f(r1, r2, r3))));
   }
 
-  type RuleExpression = (ctx: Context) => Option<ol.style.Style>;
+  type RuleExpression = Function1<Context, Option<ol.style.Style>>;
 
   // De regels controleren en combineren zodat at run-time ze één voor één geprobeerd worden totdat er een match is
   const validatedCombinedRuleExpression: Validation<RuleExpression> = array.reduce(
@@ -302,17 +319,16 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
         // WTF? Deze lambda moet blijkbaar in een {} block zitten of het faalt wanneer gebruikt in externe applicatie.
         // De conditie moet kosjer zijn
         return compileCondition(rule.condition).map(typedEvaluator => (ctx: Context) =>
-          combinedRule(ctx).foldL(
-            () => typedEvaluator.evaluator(ctx).chain(outcome => ((outcome as boolean) ? some(rule.style) : none)),
-            stl => some(stl) // (orElse ontbreekt) De verse regel wordt niet meer uitgevoerd als er al een resultaat is.
-          )
+          combinedRule(ctx).orElse(() => typedEvaluator.evaluator(ctx).chain(outcome => ((outcome as boolean) ? some(rule.style) : none)))
         );
       });
     }
   );
 
-  return validatedCombinedRuleExpression.map((ruleExpression: RuleExpression) => (feature: ol.Feature, resolution: number) => {
-    // openlayers kan undefined wel aan, maar de typedefinitie declareert dat niet zo. Zucht.
-    return ruleExpression({ feature: feature, resolution: resolution }).getOrElse((undefined as any) as ol.style.Style);
-  });
+  const styleFunctionFromRuleExpression: Function1<RuleExpression, ol.StyleFunction> = ruleExpression => (
+    feature: ol.Feature,
+    resolution: number
+  ) => ruleExpression({ feature: feature, resolution: resolution }).getOrElse((undefined as any) as ol.style.Style);
+
+  return validatedCombinedRuleExpression.map(styleFunctionFromRuleExpression);
 }

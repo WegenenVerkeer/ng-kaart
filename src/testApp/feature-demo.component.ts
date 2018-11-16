@@ -12,7 +12,7 @@ import * as ke from "../lib/kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../lib/kaart/kaart-internal-messages";
 import * as prt from "../lib/kaart/kaart-protocol";
 import { definitieToStyle, kaartLogger, parseCoordinate } from "../lib/public_api";
-import { AWV0StyleFunctionDescription, definitieToStyleFunction } from "../lib/stijl";
+import { Awv0DynamicStyle, validateAwv0RuleDefintion } from "../lib/stijl";
 import { offsetStyleFunction } from "../lib/stijl/offset-stijl-function";
 import { verkeersbordenStyleFunction } from "../lib/stijl/verkeersborden-stijl-function";
 import { forEach } from "../lib/util/option";
@@ -50,42 +50,39 @@ export class FeatureDemoComponent {
   @ViewChild("selectie")
   private selectieKaart: KaartClassicComponent;
 
-  private readonly fietspadStijlDef: AWV0StyleFunctionDescription = {
-    version: "awv-v0",
-    definition: {
-      rules: [
-        {
-          condition: {
-            kind: "==",
-            left: { kind: "Property", type: "string", ref: "typefietspad" },
-            right: { kind: "Literal", value: "Vrijliggend" }
-          },
-          style: {
-            definition: { stroke: { color: "green", width: 4 } }
-          }
+  private readonly fietspadStijlDef: Awv0DynamicStyle = {
+    rules: [
+      {
+        condition: {
+          kind: "==",
+          left: { kind: "Property", type: "string", ref: "typefietspad" },
+          right: { kind: "Literal", value: "Vrijliggend" }
         },
-        {
-          condition: {
-            kind: "==",
-            left: { kind: "Property", type: "string", ref: "typefietspad" },
-            right: { kind: "Literal", value: "Aanliggend Verhoogd" }
-          },
-          style: {
-            definition: { stroke: { color: "#FFFF00", width: 4 } }
-          }
-        },
-        {
-          condition: {
-            kind: "==",
-            left: { kind: "Property", type: "string", ref: "typefietspad" },
-            right: { kind: "Literal", value: "Aanliggend" }
-          },
-          style: {
-            definition: { stroke: { color: "#FF7F00", width: 4 } }
-          }
+        style: {
+          definition: { stroke: { color: "green", width: 4 } }
         }
-      ]
-    }
+      },
+      {
+        condition: {
+          kind: "==",
+          left: { kind: "Property", type: "string", ref: "typefietspad" },
+          right: { kind: "Literal", value: "Aanliggend Verhoogd" }
+        },
+        style: {
+          definition: { stroke: { color: "#FFFF00", width: 4 } }
+        }
+      },
+      {
+        condition: {
+          kind: "==",
+          left: { kind: "Property", type: "string", ref: "typefietspad" },
+          right: { kind: "Literal", value: "Aanliggend" }
+        },
+        style: {
+          definition: { stroke: { color: "#FF7F00", width: 4 } }
+        }
+      }
+    ]
   };
 
   polygoonEvents: string[] = [];
@@ -120,7 +117,7 @@ export class FeatureDemoComponent {
       id: 2,
       properties: {
         vorm: "punt",
-        merk: "GLOBEX"
+        merk: "Globex"
       },
       geometry: new ol.geom.Point([158149, 190676])
     }),
@@ -136,7 +133,7 @@ export class FeatureDemoComponent {
       id: 4,
       properties: {
         vorm: "lijn",
-        merk: "GLOBEX"
+        merk: "Globex"
       },
       geometry: new ol.geom.LineString([[157977, 190729], [158024, 190519], [158024, 190519]])
     }),
@@ -311,11 +308,7 @@ export class FeatureDemoComponent {
     throw new Error(`slecht formaat ${join(msg)}`);
   });
 
-  readonly fietspadStyle: ol.StyleFunction = definitieToStyleFunction(
-    "json",
-    // tslint:disable-next-line:max-line-length
-    JSON.stringify(this.fietspadStijlDef)
-  ).getOrElse(msg => {
+  readonly fietspadStyle: ol.StyleFunction = validateAwv0RuleDefintion(this.fietspadStijlDef).getOrElse(msg => {
     throw new Error(`slecht formaat ${msg}`);
   });
 
@@ -456,7 +449,7 @@ export class FeatureDemoComponent {
     this.verplaatsKaart.dispatch(prt.VerplaatsLaagCmd("dienstkaart-kleur", this.naarPositie, kaartLogOnlyWrapper));
   }
 
-  stijlbareVectorlagen(titel: string) {
+  stijlbareVectorlagen() {
     return true;
   }
 

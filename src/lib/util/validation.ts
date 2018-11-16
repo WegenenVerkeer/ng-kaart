@@ -1,7 +1,7 @@
 import { validation } from "fp-ts";
 import { Applicative2C } from "fp-ts/lib/Applicative";
 import { array as Array } from "fp-ts/lib/Array";
-import { Function1 } from "fp-ts/lib/function";
+import { Function1, Function2 } from "fp-ts/lib/function";
 import { Monad2C } from "fp-ts/lib/Monad";
 import { Option } from "fp-ts/lib/Option";
 import { getArraySemigroup } from "fp-ts/lib/Semigroup";
@@ -32,12 +32,12 @@ export function fromBoolean(thruth: boolean, errMsg: string): Validation<string[
 
 export const validationMonad: Monad2C<URI, string[]> = validation.getMonad(getArraySemigroup<string>());
 
-export const validationChain = validationMonad.chain;
+export const validationChain: <A, B>(fa: ErrValidation<A>, f: Validator<A, B>) => ErrValidation<B> = validationMonad.chain;
 
-export function applyValidationChain<A, B, C>(
-  f: ((_: A) => Validation<string[], B>),
-  g: ((_: B) => Validation<string[], C>)
-): (_: A) => Validation<string[], C> {
+export const validationChain2: <A, B, C>(fa: ErrValidation<A>, f: Validator<A, B>, g: Validator<B, C>) => ErrValidation<C> = (fa, f, g) =>
+  validationChain(validationChain(fa, f), g);
+
+export function composeValidators2<A, B, C>(f: Validator<A, B>, g: Validator<B, C>): Validator<A, C> {
   return (a: A) => validationChain(f(a), g);
 }
 

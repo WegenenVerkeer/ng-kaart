@@ -2,7 +2,7 @@ import { Function1, identity, Refinement } from "fp-ts/lib/function";
 import { fromRefinement } from "fp-ts/lib/Option";
 import { Lens, Optional, Prism } from "monocle-ts";
 
-import { Kleur, kleurcodeValue, olToKleur } from "./colour";
+import { Kleur, kleurcodeValue, stringToKleur } from "./colour";
 
 // De typedefinities hierna beschrijven de JSON-DSL voor static styles die we op dit moment ondersteunen.
 
@@ -90,7 +90,9 @@ export interface FullStyle {
   fill?: FillStyle;
   stroke?: StrokeStyle;
   text?: TextStyle;
-  image?: ImageStyle;
+  circle?: CircleStyle;
+  icon?: IconStyle;
+  regularShape?: RegularShapeStyle;
 }
 
 ///////////////////////////
@@ -111,12 +113,23 @@ export function matchImageStyle<A>(
 }
 
 export function FullStyle(rec: { fill?: FillStyle; stroke?: StrokeStyle; text?: TextStyle; image?: ImageStyle }): FullStyle {
-  return {
+  const base = {
     fill: rec.fill,
     stroke: rec.stroke,
-    text: rec.text,
-    image: rec.image
+    text: rec.text
   };
+  if (rec.image) {
+    if (isCircle(rec.image)) {
+      return { ...base, circle: rec.image };
+    }
+    if (isIcon(rec.image)) {
+      return { ...base, icon: rec.image };
+    }
+    if (isRegularShape(rec.image)) {
+      return { ...base, regularShape: rec.image };
+    }
+  }
+  return base;
 }
 
 /////////////////////////////////////////
@@ -125,22 +138,16 @@ export function FullStyle(rec: { fill?: FillStyle; stroke?: StrokeStyle; text?: 
 const isFullStyle: Refinement<Awv0StaticStyle, FullStyle> = (ass): ass is FullStyle => !ass.hasOwnProperty("fullLine");
 export const fullStylePrism: Prism<Awv0StaticStyle, FullStyle> = new Prism(fromRefinement(isFullStyle), identity);
 
-// Zie https://github.com/gcanti/monocle-ts/pull/62. Is gemerged. Wanneer gereleased kan dit van monocle-ts zelf komen.
-function PrismFromRefinement<S, A extends S>(refinement: Refinement<S, A>) {
-  return new Prism(fromRefinement(refinement), identity);
-}
-
 export namespace Image {
-  export const circlePrism: Prism<ImageStyle, CircleStyle> = PrismFromRefinement(isCircle);
-  export const iconPrism: Prism<ImageStyle, IconStyle> = PrismFromRefinement(isIcon);
-  export const regularShapePrism: Prism<ImageStyle, RegularShapeStyle> = PrismFromRefinement(isRegularShape);
+  export const circlePrism: Prism<ImageStyle, CircleStyle> = Prism.fromRefinement(isCircle);
+  export const iconPrism: Prism<ImageStyle, IconStyle> = Prism.fromRefinement(isIcon);
+  export const regularShapePrism: Prism<ImageStyle, RegularShapeStyle> = Prism.fromRefinement(isRegularShape);
 }
 
 export namespace FullStyle {
-  export const imageOptional: Optional<FullStyle, ImageStyle> = Optional.fromNullableProp("image");
-  export const circleOptional: Optional<FullStyle, CircleStyle> = imageOptional.composePrism(Image.circlePrism);
-  export const iconOptional: Optional<FullStyle, IconStyle> = imageOptional.composePrism(Image.iconPrism);
-  export const regularShapeOptional: Optional<FullStyle, RegularShapeStyle> = imageOptional.composePrism(Image.regularShapePrism);
+  export const circleOptional: Optional<FullStyle, CircleStyle> = Optional.fromNullableProp("circle");
+  export const iconOptional: Optional<FullStyle, IconStyle> = Optional.fromNullableProp("icon");
+  export const regularShapeOptional: Optional<FullStyle, RegularShapeStyle> = Optional.fromNullableProp("regularShape");
 }
 
 export namespace Circle {
@@ -152,5 +159,8 @@ export namespace Fill {
 }
 
 export namespace Color {
-  export const kleurOptional: Optional<ColorType, Kleur> = new Optional(clr => olToKleur(clr), kleur => () => kleurcodeValue(kleur));
+  // Merk op dat deze effectief de opgeslagen string omzet naar een Kleur. Dat faalt wanneer de kleur niet een van de bekende kleuren is,
+  // maar dat is geen probleem voor onze huidige use cases. Evt. kan er een kleurLens gemaakt worden die nooit faalt (door meer te
+  // aanvaarden en/of een fallback te gebruiken).
+  export const kleurOptional: Optional<ColorType, Kleur> = new Optional(stringToKleur, kleur => () => kleurcodeValue(kleur));
 }

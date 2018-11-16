@@ -5,7 +5,7 @@ import * as ol from "openlayers";
 
 import { offsetStyleFunction } from "../stijl/offset-stijl-function";
 import { validateAwv0RuleDefintion } from "../stijl/stijl-function";
-import { AWV0StyleFunctionDescription } from "../stijl/stijl-function-types";
+import { RuleConfig } from "../stijl/stijl-function-types";
 import { validateAwv0StaticStyle } from "../stijl/stijl-static";
 import { Awv0StaticStyle } from "../stijl/stijl-static-types";
 import { Validator } from "../util/validation";
@@ -22,7 +22,7 @@ export interface Awv0StaticStyleSpec {
 
 export interface Awv0DynamicStyleSpec {
   readonly type: "DynamicStyle";
-  readonly definition: AWV0StyleFunctionDescription;
+  readonly definition: RuleConfig;
 }
 
 export function matchStyleSpec<A>(
@@ -197,7 +197,7 @@ export const Awv0StaticStyleSpecIso: Iso<Awv0StaticStyleSpec, Awv0StaticStyle> =
   definition => ({ type: "StaticStyle", definition: definition } as Awv0StaticStyleSpec)
 );
 
-export const Awv0DynamicStyleSpecIso: Iso<Awv0DynamicStyleSpec, AWV0StyleFunctionDescription> = new Iso(
+export const Awv0DynamicStyleSpecIso: Iso<Awv0DynamicStyleSpec, RuleConfig> = new Iso(
   spec => spec.definition,
   definition => ({ type: "DynamicStyle", definition: definition } as Awv0DynamicStyleSpec)
 );

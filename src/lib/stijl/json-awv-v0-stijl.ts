@@ -1,16 +1,19 @@
 import { Function1, identity } from "fp-ts/lib/function";
 import * as ol from "openlayers";
 
+import { ErrValidation, validationChain } from "../util/validation";
+
 import { Interpreter } from "./json-object-interpreting";
 import * as st from "./json-object-interpreting";
 import * as ss from "./stijl-static-types";
+import { ImageStyle } from "./stijl-static-types";
 
 ///////////////////////////////
 // Openlayer types interpreters
 //
 
 export const jsonAwvV0Style: Interpreter<ol.style.Style> = style =>
-  Awv0StaticStyleInterpreters.fullStyle(style).map(StaticStyleEncoders.FullStyle.encode);
+  Awv0StaticStyleInterpreters.jsonAwvV0Definition(style).map(StaticStyleEncoders.awvV0Style.encode);
 
 export const jsonAwvV0Definition: Interpreter<ol.style.Style> = st.field("definition", jsonAwvV0Style);
 
@@ -103,6 +106,17 @@ export namespace Awv0StaticStyleInterpreters {
   });
 
   export const fullStyle: Interpreter<ss.FullStyle> = st.mapRecord(ss.FullStyle, {
+    fill: st.undefField("fill", fillStyle),
+    stroke: st.undefField("stroke", strokeStyle),
+    text: st.undefField("text", textStyle),
+    image: st.atMostOneDefined<ss.ImageStyle>(
+      st.undefField("circle", circleStyle),
+      st.undefField("icon", iconStyle),
+      st.undefField("regularShape", regularShapeStyle)
+    )
+  });
+
+  export const fullStyle2: Interpreter<ss.FullStyle> = st.mapRecord(ss.FullStyle, {
     fill: st.undefField("fill", fillStyle),
     stroke: st.undefField("stroke", strokeStyle),
     text: st.undefField("text", textStyle),
@@ -216,13 +230,17 @@ export namespace StaticStyleEncoders {
     encode: image => ss.matchImageStyle<ol.style.Image>(image, Circle.encode, Icon.encode, RegularShape.encode)
   };
 
-  export const FullStyle: Encoder<ss.FullStyle, ol.style.Style> = {
-    encode: fs =>
-      new ol.style.Style({
+  const FullStyle: Encoder<ss.FullStyle, ol.style.Style> = {
+    encode: fs => {
+      const image: ImageStyle | undefined = fs.circle || fs.icon || fs.regularShape;
+      return new ol.style.Style({
         fill: fs.fill && Fill.encode(fs.fill),
         stroke: fs.stroke && Stroke.encode(fs.stroke),
         text: fs.text && Text.encode(fs.text),
-        image: fs.image && Image.encode(fs.image)
-      })
+        image: image && Image.encode(image)
+      });
+    }
   };
+
+  export const awvV0Style = FullStyle;
 }
