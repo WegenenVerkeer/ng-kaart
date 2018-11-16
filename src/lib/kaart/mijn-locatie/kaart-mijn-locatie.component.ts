@@ -94,18 +94,21 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     return false;
   }
 
-  // geactiveerd van buiten af
-  activeer(active: boolean) {
-    this.actief = active;
-    this.activeerSubj.next(this.actief);
-  }
-
   public get isActief(): boolean {
     return this.actief;
   }
 
   protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
     return [prt.ActieveModusSubscription(actieveModusGezetWrapper)];
+  }
+
+  // geactiveerd van buiten af (bij enabled andere modus)
+  activeer(active: boolean) {
+    this.actief = active;
+    this.activeerSubj.next(this.actief);
+    if (!active) {
+      this.verwijderFeature();
+    }
   }
 
   // activatie geinitieerd door gebruiker
@@ -115,8 +118,16 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     if (this.actief) {
       this.publiceerActivatie();
     } else {
+      this.verwijderFeature();
       this.publiceerDeactivatie();
     }
+  }
+
+  // deactiveer bij pannen. Locatie laten staan
+  deactiveerTracking(): void {
+    this.actief = false;
+    this.activeerSubj.next(this.actief);
+    this.publiceerDeactivatie();
   }
 
   constructor(zone: NgZone, private readonly parent: KaartComponent) {
@@ -164,18 +175,14 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
 
     this.bindToLifeCycle(
       rx.combineLatest(zoom$, zoomdoel$, this.locatieSubj).pipe(
-        debounceTime(100),
+        debounceTime(1000),
         filter(() => this.actief),
         map(([zoom, doel, locatie]) => Resultaat(zoom, doel, locatie))
       )
     ).subscribe(resultaat => this.zetMijnPositie(resultaat.positie, resultaat.zoom, resultaat.doel));
 
     this.bindToLifeCycle(this.parent.modelChanges.dragInfo$.pipe(filter(() => this.actief))).subscribe(() => {
-      this.mijnLocatie.map(locatie => {
-        const feature = locatie.clone();
-        this.toggleLocatieTracking();
-        this.maakLaatstGekendeLocatieFeature(feature);
-      });
+      this.deactiveerTracking();
     });
   }
 
@@ -208,7 +215,6 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
   private stopTracking() {
     this.watchId.map(watchId => navigator.geolocation.clearWatch(watchId));
     this.mijnLocatie = none;
-    this.verwijderFeature();
   }
 
   private startTracking() {
@@ -220,7 +226,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
           fout => this.meldFout(fout),
           {
             enableHighAccuracy: true,
-            timeout: 3000
+            timeout: 1000
           }
         )
       );
