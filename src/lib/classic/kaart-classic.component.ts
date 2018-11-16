@@ -208,7 +208,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
       this.dispatch(prt.VeranderExtentCmd(this.extent));
     }
     if (this.middelpunt) {
-      this.dispatch(prt.VeranderMiddelpuntCmd(this.middelpunt));
+      this.dispatch(prt.VeranderMiddelpuntCmd(this.middelpunt, false));
     }
     if (this.breedte || this.hoogte) {
       this.dispatch(prt.VeranderViewportCmd([this.breedte, this.hoogte]));
@@ -235,7 +235,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
       changes,
       "middelpunt",
       pipe(
-        prt.VeranderMiddelpuntCmd,
+        middelpunt => prt.VeranderMiddelpuntCmd(middelpunt, false),
         dispatch
       )
     );

@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, NgZone, OnInit, QueryList, ViewChildren } from "@angular/core";
 import { MatButton } from "@angular/material";
-import { Function2 } from "fp-ts/lib/function";
+import { Function3 } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List, OrderedMap } from "immutable";
 import * as ol from "openlayers";
@@ -21,22 +21,13 @@ import { kaartLogger } from "../log";
 export const MijnLocatieUiSelector = "Mijnlocatie";
 const MijnLocatieLaagNaam = "Mijn Locatie";
 
-interface Zoom {
+interface Resultaat {
   zoom: number;
   doel: number;
-}
-
-interface Locatie extends Zoom {
   positie: Position;
 }
 
-interface Activatie extends Zoom {
-  actief: boolean;
-}
-
-const Zoom: Function2<number, number, Zoom> = (zoom, doel) => ({ zoom: zoom, doel: doel });
-const Locatie: Function2<Zoom, Position, Locatie> = (zoom, positie) => ({ ...zoom, positie: positie });
-const Activatie: Function2<Zoom, boolean, Activatie> = (zoom, actief) => ({ ...zoom, actief: actief });
+const Resultaat: Function3<number, number, Position, Resultaat> = (zoom, doel, positie) => ({ zoom: zoom, doel: doel, positie: positie });
 
 const pasFeatureAan = (feature: ol.Feature, coordinate: ol.Coordinate, zoom: number, accuracy: number): Option<ol.Feature> => {
   feature.setGeometry(new ol.geom.Point(coordinate));
@@ -58,12 +49,23 @@ const mijnLocatieStijl = (zoom: number, accuracy: number): ol.style.Style => {
       }),
       stroke: new ol.style.Stroke({
         color: [65, 105, 225, 1],
-        width: 1.25
+        width: 2
       }),
       radius: radius
     })
   });
 };
+
+const laatsteLocatieStijl = new ol.style.Style({
+  image: new ol.style.Icon({
+    anchor: [0.5, 0.5],
+    anchorXUnits: "fraction",
+    anchorYUnits: "fraction",
+    scale: 0.5,
+    color: "#00a2c5",
+    src: require("material-design-icons/maps/2x_web/ic_my_location_white_18dp.png")
+  })
+});
 
 @Component({
   selector: "awv-kaart-mijn-locatie",
@@ -150,19 +152,23 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
         switchMap(actief =>
           rx.combineLatest([zoom$, zoomdoel$]).pipe(
             take(1),
-            map(([zoom, doel]) => Activatie(Zoom(zoom, doel), actief))
+            map(() => actief)
           )
         )
       )
-    ).subscribe(zoomActief => (zoomActief.actief ? this.startTracking(zoomActief.zoom, zoomActief.doel) : this.stopTracking()));
+    ).subscribe(actief => (actief ? this.startTracking() : this.stopTracking()));
 
     this.bindToLifeCycle(
-      rx.combineLatest(zoom$, zoomdoel$, this.locatieSubj).pipe(map(([zoom, doel, locatie]) => Locatie(Zoom(zoom, doel), locatie)))
-    ).subscribe(zoomPositie => this.zetMijnPositie(zoomPositie.positie, zoomPositie.zoom, zoomPositie.doel));
+      rx.combineLatest(zoom$, zoomdoel$, this.locatieSubj).pipe(map(([zoom, doel, locatie]) => Resultaat(zoom, doel, locatie)))
+    ).subscribe(resultaat => this.zetMijnPositie(resultaat.positie, resultaat.zoom, resultaat.doel));
 
     this.bindToLifeCycle(this.parent.modelChanges.dragInfo$).subscribe(() => {
       if (this.actief) {
-        this.toggleLocatieTracking();
+        this.mijnLocatie.map(locatie => {
+          const feature = locatie.clone();
+          this.toggleLocatieTracking();
+          this.maakLaatstGekendeLocatieFeature(feature);
+        });
       }
     });
   }
@@ -174,8 +180,13 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     return some(feature);
   }
 
+  private maakLaatstGekendeLocatieFeature(feature: ol.Feature): Option<ol.Feature> {
+    feature.setStyle(laatsteLocatieStijl);
+    this.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, List.of(feature), kaartLogOnlyWrapper));
+    return some(feature);
+  }
+
   private verwijderFeature() {
-    this.mijnLocatie = none;
     this.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, List(), kaartLogOnlyWrapper));
   }
 
@@ -190,10 +201,11 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
 
   private stopTracking() {
     this.watchId.map(watchId => navigator.geolocation.clearWatch(watchId));
+    this.mijnLocatie = none;
     this.verwijderFeature();
   }
 
-  private startTracking(zoom: number, doelzoom: number) {
+  private startTracking() {
     if (navigator.geolocation) {
       this.watchId = some(
         navigator.geolocation.watchPosition(
@@ -216,7 +228,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     const longLat: ol.Coordinate = [position.coords.longitude, position.coords.latitude];
 
     const coordinate = ol.proj.fromLonLat(longLat, "EPSG:31370");
-    this.dispatch(prt.VeranderMiddelpuntCmd(coordinate));
+    this.dispatch(prt.VeranderMiddelpuntCmd(coordinate, true));
 
     this.mijnLocatie = this.mijnLocatie.chain(feature => pasFeatureAan(feature, coordinate, zoom, position.coords.accuracy)).orElse(() => {
       if (zoom <= 8) {

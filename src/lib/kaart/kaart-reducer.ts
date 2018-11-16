@@ -596,7 +596,15 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function veranderMiddelpuntCmd(cmnd: prt.VeranderMiddelpuntCmd<Msg>): ModelWithResult<Msg> {
-      model.map.getView().setCenter(cmnd.coordinate);
+      if (cmnd.animate) {
+        model.map.getView().animate({
+          center: cmnd.coordinate,
+          duration: 1000
+        });
+      } else {
+        model.map.getView().setCenter(cmnd.coordinate);
+      }
+
       return ModelWithResult(model);
     }
 

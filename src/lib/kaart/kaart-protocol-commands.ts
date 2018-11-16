@@ -167,6 +167,7 @@ export interface VerwijderStandaardInteractiesCmd<Msg extends KaartMsg> {
 export interface VeranderMiddelpuntCmd<Msg extends KaartMsg> {
   readonly type: "VeranderMiddelpunt";
   readonly coordinate: ol.Coordinate;
+  readonly animate: boolean;
 }
 
 export interface VeranderZoomCmd<Msg extends KaartMsg> {
@@ -488,8 +489,8 @@ export function ZetStijlSpecVoorLaagCmd<Msg extends KaartMsg>(
   return { type: "ZetStijlSpecVoorLaag", stijlSpec: stijlSpec, legende: legende, titel: titel, wrapper: wrapper };
 }
 
-export function VeranderMiddelpuntCmd<Msg extends KaartMsg>(coordinate: ol.Coordinate): VeranderMiddelpuntCmd<Msg> {
-  return { type: "VeranderMiddelpunt", coordinate: coordinate };
+export function VeranderMiddelpuntCmd<Msg extends KaartMsg>(coordinate: ol.Coordinate, animate: boolean): VeranderMiddelpuntCmd<Msg> {
+  return { type: "VeranderMiddelpunt", coordinate: coordinate, animate: animate };
 }
 
 export function VeranderZoomCmd<Msg extends KaartMsg>(zoom: number, wrapper: BareValidationWrapper<Msg>): VeranderZoomCmd<Msg> {
