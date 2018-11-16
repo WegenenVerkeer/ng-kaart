@@ -37,35 +37,40 @@ const pasFeatureAan = (feature: ol.Feature, coordinate: ol.Coordinate, zoom: num
 
 const zetStijl = (feature: ol.Feature, zoom: number, accuracy: number): void => feature.setStyle(mijnLocatieStijl(zoom, accuracy));
 
-const mijnLocatieStijl = (zoom: number, accuracy: number): ol.style.Style => {
+const mijnLocatieStijl = (zoom: number, accuracy: number): ol.style.Style[] => {
   // TODO: resolutions moet uit kaart komen
   const resolutions = [1024.0, 512.0, 256.0, 128.0, 64.0, 32.0, 16.0, 8.0, 4.0, 2.0, 1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125];
-  const accuracyInPixels = accuracy / resolutions[zoom - 1];
-  const radius = Math.max(accuracyInPixels, 4);
-  return new ol.style.Style({
-    image: new ol.style.Circle({
-      fill: new ol.style.Fill({
-        color: [65, 105, 225, 0.1]
-      }),
-      stroke: new ol.style.Stroke({
-        color: [65, 105, 225, 1],
-        width: 2
-      }),
-      radius: radius
+  const accuracyInPixels = accuracy / resolutions[zoom];
+  const radius = Math.max(accuracyInPixels, 12);
+  return [
+    new ol.style.Style({
+      zIndex: 2,
+      image: new ol.style.Circle({
+        fill: new ol.style.Fill({
+          color: "#4285F4"
+        }),
+        stroke: new ol.style.Stroke({
+          color: "#FFFFFF",
+          width: 2
+        }),
+        radius: 6
+      })
+    }),
+    new ol.style.Style({
+      zIndex: 1,
+      image: new ol.style.Circle({
+        fill: new ol.style.Fill({
+          color: [65, 105, 225, 0.15]
+        }),
+        stroke: new ol.style.Stroke({
+          color: [65, 105, 225, 0.5],
+          width: 1
+        }),
+        radius: radius
+      })
     })
-  });
+  ];
 };
-
-const laatsteLocatieStijl = new ol.style.Style({
-  image: new ol.style.Icon({
-    anchor: [0.5, 0.5],
-    anchorXUnits: "fraction",
-    anchorYUnits: "fraction",
-    scale: 0.5,
-    color: "#00a2c5",
-    src: require("material-design-icons/maps/2x_web/ic_my_location_white_18dp.png")
-  })
-});
 
 @Component({
   selector: "awv-kaart-mijn-locatie",
@@ -174,8 +179,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     ).subscribe(actief => (actief ? this.startTracking() : this.stopTracking()));
 
     this.bindToLifeCycle(
-      rx.combineLatest(zoom$, zoomdoel$, this.locatieSubj).pipe(
-        debounceTime(1000),
+      rx.combineLatest(zoom$, zoomdoel$, this.locatieSubj.pipe(debounceTime(1000))).pipe(
         filter(() => this.actief),
         map(([zoom, doel, locatie]) => Resultaat(zoom, doel, locatie))
       )
@@ -189,12 +193,6 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
   private maakNieuwFeature(coordinate: ol.Coordinate, zoom: number, accuracy: number): Option<ol.Feature> {
     const feature = new ol.Feature(new ol.geom.Point(coordinate));
     feature.setStyle(mijnLocatieStijl(zoom, accuracy));
-    this.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, List.of(feature), kaartLogOnlyWrapper));
-    return some(feature);
-  }
-
-  private maakLaatstGekendeLocatieFeature(feature: ol.Feature): Option<ol.Feature> {
-    feature.setStyle(laatsteLocatieStijl);
     this.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, List.of(feature), kaartLogOnlyWrapper));
     return some(feature);
   }
