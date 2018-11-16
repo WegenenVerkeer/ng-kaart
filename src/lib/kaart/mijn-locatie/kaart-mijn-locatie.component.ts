@@ -6,7 +6,7 @@ import { List, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { Subject } from "rxjs";
-import { distinctUntilChanged, filter, map, switchMap, take } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, filter, map, switchMap, take } from "rxjs/operators";
 
 import { flatten } from "../../util/operators";
 import { VeldInfo } from "../kaart-elementen";
@@ -161,18 +161,17 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     this.bindToLifeCycle(
       rx.combineLatest(zoom$, zoomdoel$, this.locatieSubj).pipe(
         filter(() => this.actief),
+        debounceTime(500),
         map(([zoom, doel, locatie]) => Resultaat(zoom, doel, locatie))
       )
     ).subscribe(resultaat => this.zetMijnPositie(resultaat.positie, resultaat.zoom, resultaat.doel));
 
-    this.bindToLifeCycle(this.parent.modelChanges.dragInfo$).subscribe(() => {
-      if (this.actief) {
-        this.mijnLocatie.map(locatie => {
-          const feature = locatie.clone();
-          this.toggleLocatieTracking();
-          this.maakLaatstGekendeLocatieFeature(feature);
-        });
-      }
+    this.bindToLifeCycle(this.parent.modelChanges.dragInfo$.pipe(filter(() => this.actief))).subscribe(() => {
+      this.mijnLocatie.map(locatie => {
+        const feature = locatie.clone();
+        this.toggleLocatieTracking();
+        this.maakLaatstGekendeLocatieFeature(feature);
+      });
     });
   }
 
@@ -217,7 +216,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
           fout => this.meldFout(fout),
           {
             enableHighAccuracy: true,
-            timeout: 1000,
+            timeout: 3000,
             maximumAge: 0
           }
         )
