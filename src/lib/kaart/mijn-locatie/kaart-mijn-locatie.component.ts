@@ -216,8 +216,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
           fout => this.meldFout(fout),
           {
             enableHighAccuracy: true,
-            timeout: 3000,
-            maximumAge: 0
+            timeout: 3000
           }
         )
       );
