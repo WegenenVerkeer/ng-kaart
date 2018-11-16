@@ -161,7 +161,6 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     this.bindToLifeCycle(
       rx.combineLatest(zoom$, zoomdoel$, this.locatieSubj).pipe(
         filter(() => this.actief),
-        debounceTime(500),
         map(([zoom, doel, locatie]) => Resultaat(zoom, doel, locatie))
       )
     ).subscribe(resultaat => this.zetMijnPositie(resultaat.positie, resultaat.zoom, resultaat.doel));
