@@ -118,12 +118,10 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
 
   // activatie geinitieerd door gebruiker
   toggleLocatieTracking(): void {
-    this.actief = !this.actief;
-    this.activeerSubj.next(this.actief);
+    this.activeer(!this.actief);
     if (this.actief) {
       this.publiceerActivatie();
     } else {
-      this.verwijderFeature();
       this.publiceerDeactivatie();
     }
   }
