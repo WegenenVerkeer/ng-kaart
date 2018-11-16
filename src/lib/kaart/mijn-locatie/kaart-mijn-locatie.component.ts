@@ -140,6 +140,10 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     this.viewinstellingen$ = this.parent.modelChanges.viewinstellingen$;
     this.zoomdoelSetting$ = this.parent.modelChanges.mijnLocatieZoomDoel$;
     this.enabled$ = this.zoomdoelSetting$.pipe(map(m => m.isSome()));
+  }
+
+  ngAfterViewInit() {
+    super.ngAfterViewInit();
 
     const zoomdoel$: rx.Observable<number> = this.zoomdoelSetting$.pipe(flatten); // Hou enkel de effectieve zoomniveaudoelen over
     const zoom$ = this.viewinstellingen$.pipe(
