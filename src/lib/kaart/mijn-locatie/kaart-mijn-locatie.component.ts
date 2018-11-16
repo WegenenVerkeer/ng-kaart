@@ -6,7 +6,7 @@ import { List, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { Subject } from "rxjs";
-import { distinctUntilChanged, map, switchMap, take } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, switchMap, take } from "rxjs/operators";
 
 import { flatten } from "../../util/operators";
 import { VeldInfo } from "../kaart-elementen";
@@ -159,7 +159,10 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     ).subscribe(actief => (actief ? this.startTracking() : this.stopTracking()));
 
     this.bindToLifeCycle(
-      rx.combineLatest(zoom$, zoomdoel$, this.locatieSubj).pipe(map(([zoom, doel, locatie]) => Resultaat(zoom, doel, locatie)))
+      rx.combineLatest(zoom$, zoomdoel$, this.locatieSubj).pipe(
+        filter(() => this.actief),
+        map(([zoom, doel, locatie]) => Resultaat(zoom, doel, locatie))
+      )
     ).subscribe(resultaat => this.zetMijnPositie(resultaat.positie, resultaat.zoom, resultaat.doel));
 
     this.bindToLifeCycle(this.parent.modelChanges.dragInfo$).subscribe(() => {
