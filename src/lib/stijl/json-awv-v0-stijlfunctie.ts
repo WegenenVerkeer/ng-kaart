@@ -6,11 +6,11 @@ import * as ol from "openlayers";
 
 import { composeValidators2, validationChain as chain, Validator } from "../util/validation";
 
-import { Awv0StaticStyleInterpreters, StaticStyleEncoders } from "./json-awv-v0-stijl";
+import { AwvV0StaticStyleInterpreters, StaticStyleEncoders } from "./json-awv-v0-stijl";
 import * as oi from "./json-object-interpreting";
 import { fail, Interpreter, ok, Validation } from "./json-object-interpreting";
 import {
-  Awv0DynamicStyle,
+  AwvV0DynamicStyle,
   Between,
   Combination,
   Comparison,
@@ -56,7 +56,7 @@ const RuleStyle: Function2<Option<Expression>, olStyle, RuleStyle> = (maybeCondi
 // Valideer de regels en controleer de stijlen
 //
 
-export const jsonAwvV0RuleInterpreter: Interpreter<Awv0DynamicStyle> = (json: Object) => {
+export const jsonAwvV0RuleInterpreter: Interpreter<AwvV0DynamicStyle> = (json: Object) => {
   const typeType: Interpreter<TypeType> = (o: string) =>
     o === "boolean" || o === "string" || o === "number" ? ok(o as TypeType) : fail(`Het type moet 'boolean' of 'string' of 'number' zijn`);
   const literal: Interpreter<Expression> = oi.map(Literal, oi.field("value", oi.firstOf<ValueType>(oi.bool, oi.num, oi.str)));
@@ -97,7 +97,7 @@ export const jsonAwvV0RuleInterpreter: Interpreter<Awv0DynamicStyle> = (json: Ob
   const rule: Interpreter<Rule> = oi.map2(
     Rule,
     oi.map(maybeCondition => maybeCondition.getOrElse(alwaysTrue), oi.optField("condition", expression)),
-    oi.field("style", oi.field("definition", Awv0StaticStyleInterpreters.jsonAwvV0Definition))
+    oi.field("style", oi.field("definition", AwvV0StaticStyleInterpreters.jsonAwvV0Definition))
   );
 
   const ruleConfig: Interpreter<RuleConfig> = oi.map(RuleConfig, oi.arr(rule));
@@ -107,14 +107,14 @@ export const jsonAwvV0RuleInterpreter: Interpreter<Awv0DynamicStyle> = (json: Ob
     .mapFailure(msg => [`syntaxcontrole: ${msg}`]);
 };
 
-const jsonAwvV0RuleConfig: Function1<Awv0DynamicStyle, RuleStyleConfig> = style => ({
+const jsonAwvV0RuleConfig: Function1<AwvV0DynamicStyle, RuleStyleConfig> = style => ({
   rules: style.rules.map(rule => ({
     condition: rule.condition,
     style: StaticStyleEncoders.awvV0Style.encode(rule.style.definition)
   }))
 });
 
-export const jsonAwvV0RuleCompiler: Validator<Awv0DynamicStyle, ol.StyleFunction> = pipe(
+export const jsonAwvV0RuleCompiler: Validator<AwvV0DynamicStyle, ol.StyleFunction> = pipe(
   jsonAwvV0RuleConfig,
   compileRules
 );

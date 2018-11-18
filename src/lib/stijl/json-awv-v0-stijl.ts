@@ -13,15 +13,15 @@ import { ImageStyle } from "./stijl-static-types";
 //
 
 export const jsonAwvV0Style: Interpreter<ol.style.Style> = style =>
-  Awv0StaticStyleInterpreters.jsonAwvV0Definition(style).map(StaticStyleEncoders.awvV0Style.encode);
+  AwvV0StaticStyleInterpreters.jsonAwvV0Definition(style).map(StaticStyleEncoders.awvV0Style.encode);
 
 export const jsonAwvV0Definition: Interpreter<ol.style.Style> = st.field("definition", jsonAwvV0Style);
 
-////////////////////////////////////////////////////////////////
-// Interpreters voor gedeserialiseerde JSON naar Awv0StaticStyle
+/////////////////////////////////////////////////////////////////
+// Interpreters voor gedeserialiseerde JSON naar AwvV0StaticStyle
 //
 
-export namespace Awv0StaticStyleInterpreters {
+export namespace AwvV0StaticStyleInterpreters {
   const colorStyle: Interpreter<ss.ColorType> = st.str;
 
   const fillStyle: Interpreter<ss.FillStyle> = st.interpretRecord({
@@ -127,11 +127,11 @@ export namespace Awv0StaticStyleInterpreters {
     )
   });
 
-  export const jsonAwvV0Definition: Interpreter<ss.Awv0StaticStyle> = fullStyle;
+  export const jsonAwvV0Definition: Interpreter<ss.AwvV0StaticStyle> = fullStyle;
 }
 
 /////////////////////////////////////////////////////////////
-// Encoder voor (gevalideerde) Awv0StaticStyle naar OL Style
+// Encoder voor (gevalideerde) AwvV0StaticStyle naar OL Style
 //
 
 export namespace StaticStyleEncoders {

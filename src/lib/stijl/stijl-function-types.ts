@@ -1,7 +1,7 @@
 import { Curried2, Function1, Function2, Function3 } from "fp-ts/lib/function";
 import { Lens, Prism } from "monocle-ts";
 
-import { Awv0StaticStyle } from "./stijl-static-types";
+import { AwvV0StaticStyle } from "./stijl-static-types";
 
 ///////////////////////////////////////////
 // De types die alles in goede banen leiden
@@ -9,7 +9,7 @@ import { Awv0StaticStyle } from "./stijl-static-types";
 
 // De exported types zijn ook bruikbaar voor clients zodat de compiler ze kan assisteren met het schrijven van geldige definities.
 
-export type Awv0DynamicStyle = RuleConfig;
+export type AwvV0DynamicStyle = RuleConfig;
 
 // Een lijst van Rules. De eerste Rule die als waar geëvalueerd wordt, bepaalt de stijl.
 export interface RuleConfig {
@@ -21,7 +21,7 @@ export const rulesLens: Lens<RuleConfig, Rule[]> = Lens.fromProp("rules");
 // Rules worden beschreven adhv expressies die een boolean opleveren en een beschrijving van de stijl.
 export interface Rule {
   readonly condition: Expression;
-  readonly style: { definition: Awv0StaticStyle }; // definition voegt niet veel toe, maar is omwille van backwards compatibility
+  readonly style: { definition: AwvV0StaticStyle }; // definition voegt niet veel toe, maar is omwille van backwards compatibility
 }
 
 export type Expression = Literal | EnvironmentExtraction | PropertyExtraction | FunctionEvaluation;
@@ -85,7 +85,7 @@ export interface Between {
 // Record constructors
 //
 export const RuleConfig: Function1<Rule[], RuleConfig> = rules => ({ rules: rules });
-export const Rule: Function2<Expression, Awv0StaticStyle, Rule> = (expression, style) => ({
+export const Rule: Function2<Expression, AwvV0StaticStyle, Rule> = (expression, style) => ({
   condition: expression,
   style: { definition: style }
 });

@@ -6,7 +6,7 @@ import * as ol from "openlayers";
 import { OptionalFromOptionProp } from "../util/option";
 
 import { Legende } from "./kaart-legende";
-import { Awv0StyleSpec, StyleSelector } from "./stijl-selector";
+import { AwvV0StyleSpec, StyleSelector } from "./stijl-selector";
 
 export const SingleTileWmsType = "LaagType.SingleTileWms";
 export type SingleTileWmsType = typeof SingleTileWmsType;
@@ -72,14 +72,14 @@ export interface WmtsLaag {
 }
 
 export interface VeldInfo {
-  naam: string; // naam zoals gekend in de feature
-  label: string; // titel om weer te geven in de UI
-  type: string;
-  isBasisVeld: boolean;
-  constante: string;
-  template: string;
-  uniekeWaarden: string[];
-  html: string;
+  readonly naam: string; // naam zoals gekend in de feature
+  readonly label: string; // titel om weer te geven in de UI
+  readonly type: string;
+  readonly isBasisVeld: boolean;
+  readonly constante?: string;
+  readonly template?: string;
+  readonly html?: string;
+  readonly uniekeWaarden?: string[];
 }
 
 export interface VectorLaag {
@@ -87,7 +87,7 @@ export interface VectorLaag {
   readonly source: ol.source.Vector;
   readonly titel: string;
   readonly styleSelector: Option<StyleSelector>;
-  readonly styleSelectorBron: Option<Awv0StyleSpec>; // De JSON specificatie die aan de basis ligt van de StyleSelector
+  readonly styleSelectorBron: Option<AwvV0StyleSpec>; // De JSON specificatie die aan de basis ligt van de StyleSelector
   readonly selectieStyleSelector: Option<StyleSelector>;
   readonly hoverStyleSelector: Option<StyleSelector>;
   readonly selecteerbaar: boolean;
@@ -140,7 +140,7 @@ export interface ToegevoegdeVectorLaag extends ToegevoegdeLaag {
   readonly layer: ol.layer.Vector;
   readonly stijlPositie: number; // We gaan er van uit dat alle vectorlagen in dezelfde groep zitten!
   readonly stijlSel: Option<StyleSelector>;
-  readonly stijlSelBron: Option<Awv0StyleSpec>; // Het JSON document dat aan de basis ligt van de StyleSelector
+  readonly stijlSelBron: Option<AwvV0StyleSpec>; // Het JSON document dat aan de basis ligt van de StyleSelector
   readonly selectiestijlSel: Option<StyleSelector>;
   readonly hoverstijlSel: Option<StyleSelector>;
 }
@@ -187,9 +187,9 @@ export function TekenResultaat(geometry: ol.geom.Geometry, volgnummer: number, f
 //
 
 export namespace ToegevoegdeVectorLaag {
-  export const stijlSelBronLens: Optional<ToegevoegdeVectorLaag, Awv0StyleSpec> = OptionalFromOptionProp<
+  export const stijlSelBronLens: Optional<ToegevoegdeVectorLaag, AwvV0StyleSpec> = OptionalFromOptionProp<
     ToegevoegdeVectorLaag,
-    Awv0StyleSpec,
+    AwvV0StyleSpec,
     "stijlSelBron"
   >("stijlSelBron");
 }

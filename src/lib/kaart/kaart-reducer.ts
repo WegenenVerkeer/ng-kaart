@@ -22,7 +22,7 @@ import { toOlLayer } from "./laag-converter";
 import { kaartLogger } from "./log";
 import { ModelChanger, ModelChanges } from "./model-changes";
 import {
-  Awv0StyleSpec,
+  AwvV0StyleSpec,
   getFeatureStyleSelector,
   getHoverStyleSelector,
   getSelectionStyleSelector,
@@ -173,7 +173,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     const valideerAlsLayer: Function1<ke.Laag, prt.KaartCmdValidation<ol.layer.Base>> = laag =>
       fromOption(toOlLayer(model, laag), "De laagbeschrijving kon niet naar een openlayers laag omgezet worden");
 
-    const valideerAlsStijlSpec: Function1<Awv0StyleSpec, prt.KaartCmdValidation<ss.Stylish>> = ss.validateAwv0StyleSpec;
+    const valideerAlsStijlSpec: Function1<AwvV0StyleSpec, prt.KaartCmdValidation<ss.Stylish>> = ss.validateAwvV0StyleSpec;
 
     const pasLaagPositieAan: Function1<number, Endomorphism<ke.ToegevoegdeLaag>> = positieAanpassing => laag => {
       const positie = laag.positieInGroep + positieAanpassing;

@@ -15,7 +15,7 @@ import { AfgeleideKleur, gevonden, nietGevonden, VeldKleurWaarde } from "./model
 import { kleurenpaletGroot } from "./palet";
 
 // Voorlopig geven we alle lagen dezelfde, eenvoudige stijl op het kleur na
-export const enkelvoudigeKleurStijl: Function1<clr.Kleur, ss.Awv0StaticStyleSpec> = kleur => ({
+export const enkelvoudigeKleurStijl: Function1<clr.Kleur, ss.AwvV0StaticStyleSpec> = kleur => ({
   type: "StaticStyle",
   definition: {
     fill: {
@@ -37,7 +37,7 @@ export const enkelvoudigeKleurLegende: Function2<string, clr.Kleur, Legende> = (
   Legende([LijnItem(laagTitel, clr.kleurcodeValue(kleur), none)]);
 
 const standaardKleurenPerVeldwaarde: Function1<ke.VeldInfo, VeldKleurWaarde[]> = veldInfo =>
-  array.zip(veldInfo.uniekeWaarden.sort(), kleurenpaletGroot).map(([label, kleur]) => ({ waarde: label, kleur: kleur }));
+  array.zip(veldInfo.uniekeWaarden!.sort(), kleurenpaletGroot).map(([label, kleur]) => ({ waarde: label, kleur: kleur }));
 
 export const zetVeldKleurWaarde: Function3<VeldKleurWaarde[], string, clr.Kleur, VeldKleurWaarde[]> = (vkwn, waarde, kleur) =>
   vkwn.map(vkw => (vkw.waarde === waarde ? { waarde: waarde, kleur: kleur } : vkw));
@@ -53,7 +53,7 @@ const veldKleurWaardeToRule: Curried2<string, VeldKleurWaarde, sft.Rule> = veldn
   }
 });
 
-export const veldKleurWaardenAsStijlfunctie: Curried2<string, VeldKleurWaarde[], ss.Awv0DynamicStyleSpec> = veldnaam => vkwn => ({
+export const veldKleurWaardenAsStijlfunctie: Curried2<string, VeldKleurWaarde[], ss.AwvV0DynamicStyleSpec> = veldnaam => vkwn => ({
   type: "DynamicStyle",
   definition: {
     rules: array.snoc(vkwn.map(veldKleurWaardeToRule(veldnaam)), {
@@ -72,19 +72,20 @@ export const veldKleurWaardenLegende: Curried2<string, VeldKleurWaarde[], Legend
 // We moeten vrij diep in de hiërarchie klauteren om het gepaste attribuut te pakken te krijgen. Vandaar het gebruik van Lenses e.a.
 
 // Deze Optional peutert de kleur uit een statisch stijl
-const staticStyleKleurOptional: Optional<sst.Awv0StaticStyle, clr.Kleur> = sst.fullStylePrism
+const staticStyleKleurOptional: Optional<sst.AwvV0StaticStyle, clr.Kleur> = sst.fullStylePrism
   .composeOptional(sst.FullStyle.circleOptional)
   .compose(sst.Circle.fillOptional)
   .composeLens(sst.Fill.colorLens)
   .compose(sst.Color.kleurOptional);
 // Deze Optional probeert een statische stijl uit een laag te halen
-const staticStyleOptional: Optional<ke.ToegevoegdeVectorLaag, sst.Awv0StaticStyle> = ke.ToegevoegdeVectorLaag.stijlSelBronLens.composeIso(
-  ss.Awv0StaticStyleSpecIso
+const staticStyleOptional: Optional<ke.ToegevoegdeVectorLaag, sst.AwvV0StaticStyle> = ke.ToegevoegdeVectorLaag.stijlSelBronLens.composeIso(
+  ss.AwvV0StaticStyleSpecIso
 );
 // Deze Optional probeert een dynamisch stijl uit een laag te halen
-const dynamicStyleOptional: Optional<ke.ToegevoegdeVectorLaag, sft.Awv0DynamicStyle> = ke.ToegevoegdeVectorLaag.stijlSelBronLens.composeIso(
-  ss.Awv0DynamicStyleSpecIso
-);
+const dynamicStyleOptional: Optional<
+  ke.ToegevoegdeVectorLaag,
+  sft.AwvV0DynamicStyle
+> = ke.ToegevoegdeVectorLaag.stijlSelBronLens.composeIso(ss.AwvV0DynamicStyleSpecIso);
 const gezetteLaagKleur: Function1<ke.ToegevoegdeVectorLaag, Option<clr.Kleur>> = staticStyleOptional.compose(staticStyleKleurOptional)
   .getOption;
 

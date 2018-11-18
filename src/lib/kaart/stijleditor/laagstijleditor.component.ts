@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, NgZone, QueryList, View
 import { FormControl } from "@angular/forms";
 import { MatTabChangeEvent } from "@angular/material";
 import * as array from "fp-ts/lib/Array";
-import { Curried2, Function2, Lazy, tuple } from "fp-ts/lib/function";
+import { and, Curried2, Function1, Function2, Lazy, not, tuple } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import { delay, filter, map, mapTo, sample, scan, share, shareReplay, startWith, switchMap, tap } from "rxjs/operators";
 
@@ -16,7 +16,7 @@ import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-message
 import { Legende } from "../kaart-legende";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
-import { Awv0StyleSpec } from "../stijl-selector";
+import { AwvV0StyleSpec } from "../stijl-selector";
 
 import { AfgeleideKleur, gevonden, isVeldKleurWaarde, KiesbareKleur, markeerKleur, VeldKleurWaarde } from "./model";
 import { kleurenpaletGroot, kleurenpaletKlein } from "./palet";
@@ -30,18 +30,18 @@ import {
   veldKleurWaardenViaLaagEnVeldnaam
 } from "./stijl-manip";
 
-const uniformeStijlEnLegende: Curried2<ke.ToegevoegdeLaag, clr.Kleur, [Awv0StyleSpec, Legende]> = laag => kleur => [
+const uniformeStijlEnLegende: Curried2<ke.ToegevoegdeLaag, clr.Kleur, [AwvV0StyleSpec, Legende]> = laag => kleur => [
   enkelvoudigeKleurStijl(kleur),
   enkelvoudigeKleurLegende(laag.titel, kleur)
 ];
-const opVeldWaardeStijlEnLegende: Curried2<string, VeldKleurWaarde[], [Awv0StyleSpec, Legende]> = veldnaam => vkwn => [
+const opVeldWaardeStijlEnLegende: Curried2<string, VeldKleurWaarde[], [AwvV0StyleSpec, Legende]> = veldnaam => vkwn => [
   veldKleurWaardenAsStijlfunctie(veldnaam)(vkwn),
   veldKleurWaardenLegende(veldnaam)(vkwn)
 ];
 
 const stijlCmdVoorLaag: Curried2<
   ke.ToegevoegdeVectorLaag,
-  [Awv0StyleSpec, Legende],
+  [AwvV0StyleSpec, Legende],
   prt.ZetStijlSpecVoorLaagCmd<KaartInternalMsg>
 > = laag => ([stijl, legende]) => prt.ZetStijlSpecVoorLaagCmd(laag.titel, stijl, legende, kaartLogOnlyWrapper);
 
@@ -165,7 +165,13 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
     //////////////
     // Klassekleur
     //
-    this.klasseVelden$ = laag$.pipe(map(laag => laag.bron.velden.valueSeq().toArray()));
+    const veldenMetUniekeWaarden: Function1<ke.ToegevoegdeVectorLaag, ke.VeldInfo[]> = laag =>
+      laag.bron.velden
+        .valueSeq()
+        .toArray()
+        .filter(veld => Array.isArray(veld!.uniekeWaarden) && veld!.uniekeWaarden!.length > 0 && veld!.uniekeWaarden!.length <= 35);
+
+    this.klasseVelden$ = laag$.pipe(map(veldenMetUniekeWaarden));
     this.klasseVeldenNietBeschikbaar$ = this.klasseVelden$.pipe(map(array.isEmpty));
     this.klasseVeldenBeschikbaar$ = this.klasseVeldenNietBeschikbaar$.pipe(map(negate));
 

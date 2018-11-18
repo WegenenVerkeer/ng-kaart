@@ -6,7 +6,7 @@ import { Kleur, kleurcodeValue, stringToKleur } from "./colour";
 
 // De typedefinities hierna beschrijven de JSON-DSL voor static styles die we op dit moment ondersteunen.
 
-export type Awv0StaticStyle = FullStyle;
+export type AwvV0StaticStyle = FullStyle;
 
 export type ColorType = string; // Hier moet op termijn meer komen. O.a. Ndl naam
 
@@ -135,8 +135,8 @@ export function FullStyle(rec: { fill?: FillStyle; stroke?: StrokeStyle; text?: 
 /////////////////////////////////////////
 // Manipulatie en inspectie van het model
 //
-const isFullStyle: Refinement<Awv0StaticStyle, FullStyle> = (ass): ass is FullStyle => !ass.hasOwnProperty("fullLine");
-export const fullStylePrism: Prism<Awv0StaticStyle, FullStyle> = new Prism(fromRefinement(isFullStyle), identity);
+const isFullStyle: Refinement<AwvV0StaticStyle, FullStyle> = (ass): ass is FullStyle => !ass.hasOwnProperty("fullLine");
+export const fullStylePrism: Prism<AwvV0StaticStyle, FullStyle> = new Prism(fromRefinement(isFullStyle), identity);
 
 export namespace Image {
   export const circlePrism: Prism<ImageStyle, CircleStyle> = Prism.fromRefinement(isCircle);

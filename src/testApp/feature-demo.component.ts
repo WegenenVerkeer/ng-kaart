@@ -12,7 +12,7 @@ import * as ke from "../lib/kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../lib/kaart/kaart-internal-messages";
 import * as prt from "../lib/kaart/kaart-protocol";
 import { definitieToStyle, kaartLogger, parseCoordinate, ToegevoegdeLaag } from "../lib/public_api";
-import { Awv0DynamicStyle, validateAwv0RuleDefintion } from "../lib/stijl";
+import { AwvV0DynamicStyle, validateAwvV0RuleDefintion } from "../lib/stijl";
 import { offsetStyleFunction } from "../lib/stijl/offset-stijl-function";
 import { verkeersbordenStyleFunction } from "../lib/stijl/verkeersborden-stijl-function";
 import { forEach } from "../lib/util/option";
@@ -50,7 +50,7 @@ export class FeatureDemoComponent {
   @ViewChild("selectie")
   private selectieKaart: KaartClassicComponent;
 
-  private readonly fietspadStijlDef: Awv0DynamicStyle = {
+  private readonly fietspadStijlDef: AwvV0DynamicStyle = {
     rules: [
       {
         condition: {
@@ -310,7 +310,7 @@ export class FeatureDemoComponent {
     throw new Error(`slecht formaat ${join(msg)}`);
   });
 
-  readonly fietspadStyle: ol.StyleFunction = validateAwv0RuleDefintion(this.fietspadStijlDef).getOrElse(msg => {
+  readonly fietspadStyle: ol.StyleFunction = validateAwvV0RuleDefintion(this.fietspadStijlDef).getOrElse(msg => {
     throw new Error(`slecht formaat ${msg}`);
   });
 
