@@ -1,0 +1,18 @@
+<div class="awv-kaart-laagstijleditor-chooser kaart-widget" *ngIf="kiezerZichtbaar$ | async" [ngStyle]="chooserStyle$ | async">
+  <div class="awv-kaart-laagstijleditor-chooser-header">
+    <div class="awv-kaart-laagstijleditor-chooser-header-main">Kies een kleur</div>
+    <button class="awv-kaart-laagstijleditor-chooser-header-openclose" mat-icon-button (click)="onAction('sluitKleurkiezer')" [matTooltip]="'Sluit'"><mat-icon>close</mat-icon></button>
+  </div>
+  <div class="awv-kaart-laagstijleditor-chooser-body" *ngIf="paletKleuren$ | async as paletKleuren">
+    <div class="awv-kaart-laagstijleditor-chooser-body-colorbox" *ngFor="let kleur of paletKleuren" (click)="onAction('kiesLaagkleur', kleur)" [matTooltip]="kleur.naam">
+      <div class="circle-medium" [style.background]="kleur.code">
+        <span *ngIf="kleur.gekozen"><mat-icon>check</mat-icon></span>
+      </div>
+    </div>
+    <div class="awv-kaart-laagstijleditor-chooser-body-colorbox awv-kaart-laagstijleditor-chooser-body-more" (click)="onAction('openGroteKleurkiezer')" *ngIf="kleinPaletZichtbaar$ | async" [matTooltip]="'Toon meer kleuren'">
+        <div class="circle-medium">
+          <span>⋯</span>
+        </div>
+    </div>
+  </div>
+</div>

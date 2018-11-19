@@ -161,9 +161,9 @@
           <awv-legende-lijn-item [beschrijving]="'Referentiepunten 3 (lijn)'" [kleur]="'yellow'"></awv-legende-lijn-item>
           <awv-legende-polygoon-item [beschrijving]="'Referentiepunten 3 (polygoon)'" [kleur]="'green'"></awv-legende-polygoon-item>
         </awv-kaart-geoserver-laag>
-        <awv-kaart-features-laag [titel]="'Installatie (pin)'" [features]="installatie" [style]="pinIcon" [minZoom]="3"
-                                 [zichtbaar]="false"></awv-kaart-features-laag>
-        <awv-kaart-features-laag [titel]="'Installatie (plane)'" [features]="installatie" [style]="pinIcon2" [minZoom]="3"
+        <awv-kaart-features-laag [titel]="'Mechelen allerlei'" [features]="mechelenFeatures" [style]="pinIcon" [minZoom]="4"
+                                 [zichtbaar]="true" [veldInfos]="mechelenVeldInfos"></awv-kaart-features-laag>
+        <awv-kaart-features-laag [titel]="'Vliegtuig'" [features]="installatie" [style]="pinIcon2" [minZoom]="3"
                                  [zichtbaar]="false"></awv-kaart-features-laag>
         <awv-kaart-ortho-laag [titel]="'Orthofoto\'s'" [laagNaam]="'ortho'" [groep]="'Voorgrond.Laag'" [zichtbaar]="false"></awv-kaart-ortho-laag>
         <!-- achtergrondlagen -->

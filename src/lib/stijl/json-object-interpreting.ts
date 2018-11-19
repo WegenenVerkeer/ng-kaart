@@ -1,4 +1,5 @@
 import * as array from "fp-ts/lib/Array";
+import { Refinement } from "fp-ts/lib/function";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import * as traversable from "fp-ts/lib/Traversable";
 import * as validation from "fp-ts/lib/Validation";
@@ -69,6 +70,10 @@ export function optField<T>(name: string, interpreter: Interpreter<T>): Interpre
   return (json: Object) => (json.hasOwnProperty(name) ? interpreter(json[name]).map(some) : ok(none));
 }
 
+export function undefField<T>(name: string, interpreter: Interpreter<T>): Interpreter<T | undefined> {
+  return (json: Object) => (json.hasOwnProperty(name) ? interpreter(json[name]) : ok(undefined));
+}
+
 export function succeed<T>(t: T): Interpreter<T> {
   return () => ok(t);
 }
@@ -128,6 +133,28 @@ export function atMostOneOf<T>(...interpreters: Interpreter<Option<T>>[]): Inter
           return ok(none);
         case 1:
           return ok(array.head(values));
+        default:
+          return fail("Er mag maar 1 waarde aanwezig zijn");
+      }
+    });
+  };
+}
+
+/**
+ * Selecteert de eerste interpreter die een defined resultaat oplevert. Indien geen enkele interpreter een defined resultaat oplevert,
+ * is het resultaat undefined. Geen enkele van de interpreters mag een failure geven.
+ */
+export function atMostOneDefined<T>(...interpreters: Interpreter<T | undefined>[]): Interpreter<T | undefined> {
+  return (json: Object) => {
+    const validations: Validation<Array<T | undefined>> = sequence(interpreters.map(i => i(json)));
+    const isDefined: Refinement<T | undefined, T> = (t): t is T => t !== undefined;
+    const presentValidations: Validation<Array<T>> = validations.map(vals => array.refine(vals, isDefined));
+    return validationChain(presentValidations, values => {
+      switch (values.length) {
+        case 0:
+          return ok(undefined);
+        case 1:
+          return ok(values[0]);
         default:
           return fail("Er mag maar 1 waarde aanwezig zijn");
       }
@@ -412,7 +439,7 @@ function mergeDeep<T>(base: T, overlay: T) {
 // Een afgeleid type van A dat alle types van de  velden omzet in Interpreters van Options van dat type
 export type InterpreterOptionalRecord<A> = { readonly [P in Extract<keyof A, string>]: Interpreter<Option<A[P]>> };
 
-function interpretRecord<A>(record: InterpreterOptionalRecord<A>): Interpreter<A> {
+function interpretOptionalRecord<A>(record: InterpreterOptionalRecord<A>): Interpreter<A> {
   return (json: Object) => {
     const result = {} as Partial<A>; // Omdat we overal undefined willen kunnen zetten
     const validations = new Array<Validation<void>>();
@@ -430,11 +457,55 @@ function interpretRecord<A>(record: InterpreterOptionalRecord<A>): Interpreter<A
   };
 }
 
+export type InterpreterRecord<A> = { readonly [P in Extract<keyof A, string>]: Interpreter<A[P]> };
+
+export function interpretRecord<A>(record: InterpreterRecord<A>): Interpreter<A> {
+  return (json: Object) => {
+    const result = {} as Partial<A>; // Omdat we overal undefined willen kunnen zetten
+    const validations = new Array<Validation<void>>();
+    // tslint:disable-next-line:forin
+    for (const k in record) {
+      // noinspection JSUnfilteredForInLoop
+      const validationOutcome: Validation<A[keyof A]> = record[k](json);
+      // zet alle resultaten waarvoor de validation ok is
+      validationOutcome.map(value => (result[k] = value)); // forEach
+      // combineer alle fails, map de ok's weg (probleem is dat die allemaal een ander type hebben)
+      validations.push(validationOutcome.map(() => {}));
+    }
+    // De gesequencte validation is ok als alle deelvalidations ok zijn
+    return sequence(validations).map(() => result as A); // we hebben het echte resultaat al in de for loop gezet
+  };
+}
+
+export type InterpreterUndefinedRecord<A> = { readonly [P in Extract<keyof A, string>]: Interpreter<A[P] | undefined> };
+
+export function interpretUndefinedRecord<A>(record: InterpreterUndefinedRecord<A>): Interpreter<A> {
+  return (json: Object) => {
+    const result = {} as Partial<A>; // Omdat we overal undefined willen kunnen zetten
+    const validations = new Array<Validation<void>>();
+    // tslint:disable-next-line:forin
+    for (const k in record) {
+      // noinspection JSUnfilteredForInLoop
+      const validationOutcome: Validation<A[keyof A]> = record[k](json);
+      // zet alle resultaten waarvoor de validation ok is
+      validationOutcome.map(value => (result[k] = value)); // forEach
+      // combineer alle fails, map de ok's weg (probleem is dat die allemaal een ander type hebben)
+      validations.push(validationOutcome.map(() => {}));
+    }
+    // De gesequencte validation is ok als alle deelvalidations ok zijn
+    return sequence(validations).map(() => result as A); // we hebben het echte resultaat al in de for loop gezet
+  };
+}
+
 function sequence<T>(validations: Validation<T>[]): Validation<T[]> {
   return traversable.sequence(validationAp, array.array)(validations);
 }
 
-export function mapRecord<A, B>(f: (a: A) => B, record: InterpreterOptionalRecord<A>): Interpreter<B> {
+export function mapOptionRecord<A, B>(f: (a: A) => B, record: InterpreterOptionalRecord<A>): Interpreter<B> {
+  return map(f, interpretOptionalRecord(record));
+}
+
+export function mapRecord<A, B>(f: (a: A) => B, record: InterpreterRecord<A>): Interpreter<B> {
   return map(f, interpretRecord(record));
 }
 

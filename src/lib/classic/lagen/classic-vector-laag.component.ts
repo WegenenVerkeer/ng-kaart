@@ -18,6 +18,9 @@ export class ClassicVectorLaagComponent extends ClassicVectorLaagLikeComponent {
   @Input()
   source = new ol.source.Vector();
 
+  @Input()
+  veldInfos: ke.VeldInfo[] = [];
+
   constructor(kaart: KaartClassicComponent, zone: NgZone) {
     super(kaart, zone);
   }
@@ -36,7 +39,7 @@ export class ClassicVectorLaagComponent extends ClassicVectorLaagLikeComponent {
       minZoom: this.minZoom,
       maxZoom: this.maxZoom,
       offsetveld: fromNullable(this.offsetveld),
-      velden: OrderedMap<string, ke.VeldInfo>(),
+      velden: OrderedMap(this.veldInfos.map(vi => [vi.naam, vi])),
       verwijderd: false
     };
   }

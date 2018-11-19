@@ -8,10 +8,11 @@ import * as rx from "rxjs";
 
 import { KaartClassicComponent } from "../lib/classic/kaart-classic.component";
 import { classicLogger } from "../lib/classic/log";
+import * as ke from "../lib/kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../lib/kaart/kaart-internal-messages";
 import * as prt from "../lib/kaart/kaart-protocol";
 import { definitieToStyle, kaartLogger, parseCoordinate, ToegevoegdeLaag } from "../lib/public_api";
-import { AWV0StyleFunctionDescription, definitieToStyleFunction } from "../lib/stijl";
+import { AwvV0DynamicStyle, validateAwvV0RuleDefintion } from "../lib/stijl";
 import { offsetStyleFunction } from "../lib/stijl/offset-stijl-function";
 import { verkeersbordenStyleFunction } from "../lib/stijl/verkeersborden-stijl-function";
 import { forEach } from "../lib/util/option";
@@ -49,42 +50,39 @@ export class FeatureDemoComponent {
   @ViewChild("selectie")
   private selectieKaart: KaartClassicComponent;
 
-  private readonly fietspadStijlDef: AWV0StyleFunctionDescription = {
-    version: "awv-v0",
-    definition: {
-      rules: [
-        {
-          condition: {
-            kind: "==",
-            left: { kind: "Property", type: "string", ref: "typefietspad" },
-            right: { kind: "Literal", value: "Vrijliggend" }
-          },
-          style: {
-            definition: { stroke: { color: "green", width: 4 } }
-          }
+  private readonly fietspadStijlDef: AwvV0DynamicStyle = {
+    rules: [
+      {
+        condition: {
+          kind: "==",
+          left: { kind: "Property", type: "string", ref: "typefietspad" },
+          right: { kind: "Literal", value: "Vrijliggend" }
         },
-        {
-          condition: {
-            kind: "==",
-            left: { kind: "Property", type: "string", ref: "typefietspad" },
-            right: { kind: "Literal", value: "Aanliggend Verhoogd" }
-          },
-          style: {
-            definition: { stroke: { color: "#FFFF00", width: 4 } }
-          }
-        },
-        {
-          condition: {
-            kind: "==",
-            left: { kind: "Property", type: "string", ref: "typefietspad" },
-            right: { kind: "Literal", value: "Aanliggend" }
-          },
-          style: {
-            definition: { stroke: { color: "#FF7F00", width: 4 } }
-          }
+        style: {
+          definition: { stroke: { color: "green", width: 4 } }
         }
-      ]
-    }
+      },
+      {
+        condition: {
+          kind: "==",
+          left: { kind: "Property", type: "string", ref: "typefietspad" },
+          right: { kind: "Literal", value: "Aanliggend Verhoogd" }
+        },
+        style: {
+          definition: { stroke: { color: "#FFFF00", width: 4 } }
+        }
+      },
+      {
+        condition: {
+          kind: "==",
+          left: { kind: "Property", type: "string", ref: "typefietspad" },
+          right: { kind: "Literal", value: "Aanliggend" }
+        },
+        style: {
+          definition: { stroke: { color: "#FF7F00", width: 4 } }
+        }
+      }
+    ]
   };
 
   polygoonEvents: string[] = [];
@@ -105,6 +103,86 @@ export class FeatureDemoComponent {
       },
       geometry: new ol.geom.Point(this.installatieCoordinaat)
     })
+  ];
+  mechelenFeatures: ol.Feature[] = [
+    new ol.Feature({
+      id: 1,
+      properties: {
+        vorm: "punt",
+        merk: "ACME"
+      },
+      geometry: new ol.geom.Point([157562, 190726])
+    }),
+    new ol.Feature({
+      id: 2,
+      properties: {
+        vorm: "punt",
+        merk: "Globex"
+      },
+      geometry: new ol.geom.Point([158149, 190676])
+    }),
+    new ol.Feature({
+      id: 3,
+      properties: {
+        vorm: "punt",
+        merk: "ACME"
+      },
+      geometry: new ol.geom.Point([157758, 190810])
+    }),
+    new ol.Feature({
+      id: 4,
+      properties: {
+        vorm: "lijn",
+        merk: "Globex"
+      },
+      geometry: new ol.geom.LineString([[157977, 190729], [158024, 190519], [158024, 190519]])
+    }),
+    new ol.Feature({
+      id: 5,
+      properties: {
+        vorm: "lijn",
+        merk: "ACME"
+      },
+      geometry: new ol.geom.LineString([[157367, 191062], [157527, 190997], [157647, 190995]])
+    }),
+    new ol.Feature({
+      id: 6,
+      properties: {
+        vorm: "cirkel",
+        merk: "Globex"
+      },
+      geometry: new ol.geom.Circle([157820, 190922], 100)
+    }),
+    new ol.Feature({
+      id: 7,
+      properties: {
+        vorm: "veelvlak",
+        merk: "ACME"
+      },
+      geometry: new ol.geom.Polygon([[[157636, 190292], [157731, 190371], [157786, 190346], [157910, 190276], [157762, 190108]]])
+    })
+  ];
+  mechelenVeldInfos: ke.VeldInfo[] = [
+    {
+      naam: "vorm",
+      label: "Vorm",
+      type: "string",
+      isBasisVeld: true,
+      constante: undefined,
+      template: undefined,
+      uniekeWaarden: ["punt", "lijn", "cirkel", "veelvlak"],
+      html: ""
+    },
+    {
+      naam: "merk",
+      label: "Merk",
+      type: "string",
+      isBasisVeld: true,
+      constante: undefined,
+      template: undefined,
+      uniekeWaarden: ["ACME", "Globex"],
+      html: ""
+    }
   ];
   zoekresultaten: ol.Collection<ol.Feature> = new ol.Collection();
   vanPositie = 0;
@@ -232,11 +310,7 @@ export class FeatureDemoComponent {
     throw new Error(`slecht formaat ${join(msg)}`);
   });
 
-  readonly fietspadStyle: ol.StyleFunction = definitieToStyleFunction(
-    "json",
-    // tslint:disable-next-line:max-line-length
-    JSON.stringify(this.fietspadStijlDef)
-  ).getOrElse(msg => {
+  readonly fietspadStyle: ol.StyleFunction = validateAwvV0RuleDefintion(this.fietspadStijlDef).getOrElse(msg => {
     throw new Error(`slecht formaat ${msg}`);
   });
 
@@ -377,7 +451,7 @@ export class FeatureDemoComponent {
     this.verplaatsKaart.dispatch(prt.VerplaatsLaagCmd("dienstkaart-kleur", this.naarPositie, kaartLogOnlyWrapper));
   }
 
-  stijlbareVectorlagen(titel: string) {
+  stijlbareVectorlagen() {
     return true;
   }
 

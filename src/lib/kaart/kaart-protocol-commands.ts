@@ -256,7 +256,7 @@ export interface ZetStijlVoorLaagCmd<Msg extends KaartMsg> {
 export interface ZetStijlSpecVoorLaagCmd<Msg extends KaartMsg> {
   readonly type: "ZetStijlSpecVoorLaag";
   readonly titel: string;
-  readonly stijlSpec: ss.Awv0StyleSpec;
+  readonly stijlSpec: ss.AwvV0StyleSpec;
   readonly legende: Legende;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
@@ -481,7 +481,7 @@ export function ZetStijlVoorLaagCmd<Msg extends KaartMsg>(
 
 export function ZetStijlSpecVoorLaagCmd<Msg extends KaartMsg>(
   titel: string,
-  stijlSpec: ss.Awv0StyleSpec,
+  stijlSpec: ss.AwvV0StyleSpec,
   legende: Legende,
   wrapper: BareValidationWrapper<Msg>
 ): ZetStijlSpecVoorLaagCmd<Msg> {

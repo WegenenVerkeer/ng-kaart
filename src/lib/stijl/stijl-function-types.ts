@@ -1,23 +1,27 @@
+import { Curried2, Function1, Function2, Function3 } from "fp-ts/lib/function";
+import { Lens, Prism } from "monocle-ts";
+
+import { AwvV0StaticStyle } from "./stijl-static-types";
+
 ///////////////////////////////////////////
 // De types die alles in goede banen leiden
 //
 
 // De exported types zijn ook bruikbaar voor clients zodat de compiler ze kan assisteren met het schrijven van geldige definities.
 
-export interface AWV0StyleFunctionDescription {
-  readonly version: "awv-v0";
-  readonly definition: RuleConfig;
-}
+export type AwvV0DynamicStyle = RuleConfig;
 
 // Een lijst van Rules. De eerste Rule die als waar geëvalueerd wordt, bepaalt de stijl.
 export interface RuleConfig {
   readonly rules: Rule[];
 }
 
+export const rulesLens: Lens<RuleConfig, Rule[]> = Lens.fromProp("rules");
+
 // Rules worden beschreven adhv expressies die een boolean opleveren en een beschrijving van de stijl.
 export interface Rule {
   readonly condition: Expression;
-  readonly style: object; // dit zou een verwijzing naar het type van de custom stijl kunnen zijn mochten we dat hebben
+  readonly style: { definition: AwvV0StaticStyle }; // definition voegt niet veel toe, maar is omwille van backwards compatibility
 }
 
 export type Expression = Literal | EnvironmentExtraction | PropertyExtraction | FunctionEvaluation;
@@ -45,21 +49,22 @@ export interface EnvironmentExtraction {
 
 export type FunctionEvaluation = Exists | Comparison | Combination | Negation | Between;
 
+export type ExistsOperator = "PropertyExists" | "EnvironmentExists";
 export interface Exists {
-  readonly kind: "PropertyExists" | "EnvironmentExists";
+  readonly kind: ExistsOperator;
   readonly ref: string;
 }
 
 export type ComparisonOperator = "<" | ">" | "<=" | ">=" | "==" | "!=" | "L==";
-
 export interface Comparison {
   readonly kind: ComparisonOperator;
   readonly left: Expression;
   readonly right: Expression;
 }
 
+export type CombinationOperator = "&&" | "||";
 export interface Combination {
-  readonly kind: "&&" | "||";
+  readonly kind: CombinationOperator;
   readonly left: Expression;
   readonly right: Expression;
 }
@@ -79,42 +84,41 @@ export interface Between {
 //////////////////////
 // Record constructors
 //
-
-export const Literal = (value: ValueType) => ({ kind: "Literal", value: value } as Literal);
-export const PropertyExtraction = (typeName: TypeType, ref: string) =>
-  ({
-    kind: "Property",
-    type: typeName,
-    ref: ref
-  } as PropertyExtraction);
-export const EnvironmentExtraction = (typeName: TypeType, ref: string) =>
-  ({
-    kind: "Environment",
-    type: typeName,
-    ref: ref
-  } as EnvironmentExtraction);
-export const Exists = (kind: "PropertyExists" | "EnvironmentExists") => (ref: String) =>
-  ({
-    kind: kind,
-    ref: ref
-  } as Exists);
-export const Comparison = (kind: ComparisonOperator) => (left: Expression, right: Expression) =>
-  ({
-    kind: kind,
-    left: left,
-    right: right
-  } as Comparison);
-export const Combination = (kind: "&&" | "||") => (left: Expression, right: Expression) =>
-  ({
-    kind: kind,
-    left: left,
-    right: right
-  } as Combination);
-export const Negation = (expression: Expression) => ({
+export const RuleConfig: Function1<Rule[], RuleConfig> = rules => ({ rules: rules });
+export const Rule: Function2<Expression, AwvV0StaticStyle, Rule> = (expression, style) => ({
+  condition: expression,
+  style: { definition: style }
+});
+export const Literal: Function1<ValueType, Literal> = value => ({ kind: "Literal", value: value });
+export const PropertyExtraction: Function2<TypeType, string, PropertyExtraction> = (typeName, ref) => ({
+  kind: "Property",
+  type: typeName,
+  ref: ref
+});
+export const EnvironmentExtraction: Function2<TypeType, string, EnvironmentExtraction> = (typeName, ref) => ({
+  kind: "Environment",
+  type: typeName,
+  ref: ref
+});
+export const Exists: Curried2<ExistsOperator, string, Exists> = kind => ref => ({
+  kind: kind,
+  ref: ref
+});
+export const Comparison: Function1<ComparisonOperator, Function2<Expression, Expression, Comparison>> = kind => (left, right) => ({
+  kind: kind,
+  left: left,
+  right: right
+});
+export const Combination: Function1<CombinationOperator, Function2<Expression, Expression, Combination>> = kind => (left, right) => ({
+  kind: kind,
+  left: left,
+  right: right
+});
+export const Negation: Function1<Expression, Negation> = expression => ({
   kind: "!",
   expression: expression
 });
-export const Between = (value: Expression, lower: Expression, upper: Expression) => ({
+export const Between: Function3<Expression, Expression, Expression, Between> = (value, lower, upper) => ({
   kind: "<=>",
   value: value,
   lower: lower,

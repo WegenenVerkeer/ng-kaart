@@ -1,3 +1,4 @@
+import { Function3 } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import { List } from "immutable";
 
@@ -32,6 +33,17 @@ export interface Legende {
   readonly items: List<LegendeItem>;
 }
 
+///////////////
+// Constructors
+//
+
 export function Legende(items: LegendeItem[]) {
   return { items: List(items) };
 }
+
+export const LijnItem: Function3<string, string, Option<string>, LijnItem> = (beschrijving, kleur, achtergrondKleur) => ({
+  type: "Lijn",
+  beschrijving: beschrijving,
+  kleur: kleur,
+  achtergrondKleur: achtergrondKleur
+});

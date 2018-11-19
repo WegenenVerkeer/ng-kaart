@@ -15,7 +15,7 @@ import { ClassicLaagComponent } from "./classic-laag.component";
 
 export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponent {
   @Input()
-  stijlSpec?: ss.Awv0StyleSpec = undefined; // heeft voorrang style
+  stijlSpec?: ss.AwvV0StyleSpec = undefined; // heeft voorrang style
   @Input()
   style?: ol.style.Style = undefined; // heeft voorrang op styleFunction
   @Input()
@@ -53,13 +53,13 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
     return "Voorgrond.Hoog";
   }
 
-  protected getMaybeStyleSelectorBron(): Option<ss.Awv0StyleSpec> {
+  protected getMaybeStyleSelectorBron(): Option<ss.AwvV0StyleSpec> {
     return fromNullable(this.stijlSpec);
   }
 
   protected getMaybeStyleSelector(): Option<ss.StyleSelector> {
     return fromNullable(this.stijlSpec)
-      .chain(spec => fromValidation(ss.validateAwv0Style(spec)))
+      .chain(spec => fromValidation(ss.validateAwvV0StyleSpec(spec)))
       .orElse(() => fromNullable(this.style))
       .map(ss.StaticStyle)
       .orElse(() => fromNullable(this.styleFunction).map(ss.DynamicStyle));
