@@ -7,11 +7,15 @@
     "preclean": "npm install rimraf mkdirp",
     "clean": "rimraf out; rimraf dist; mkdirp out",
     "build": "ng build",
+    "pretest": "npm install && npm prune",
     "test": "ng test ng-kaart --watch=false --code-coverage --browsers=ChromeHeadlessNoSandbox",
     "test-debug": "karma start karma.conf.js --watch=true --browsers=PhantomJS --debug",
+    "build-test-app": "npm run clean && npm install && npm prune && ng build testApp --base-href /ng-kaart --deploy-url /ng-kaart/",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "precommit": "lint-staged"
+    "precommit": "lint-staged",
+    "publishToNexus": "node script/patchRegistry.js https://collab.mow.vlaanderen.be/artifacts/repository/npm-internal/",
+    "publishToNpmjs": "node script/patchRegistry.js"
   },
   "lint-staged": {
     "linters": {
