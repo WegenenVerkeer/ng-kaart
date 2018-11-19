@@ -9,3 +9,6 @@ EXIT_STATUS=0 # standaard gaan we uit van een feilloze werking
 echo "bouw ng-kaart test app"
 cd $BASEDIR || exit
 npm run build-test-app
+mkdir -p out
+rm -Rf out/testApp
+cp -R dist/testApp out/
