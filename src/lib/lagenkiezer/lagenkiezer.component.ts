@@ -3,10 +3,11 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnDestro
 import { MatTabChangeEvent } from "@angular/material";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { Predicate } from "fp-ts/lib/function";
+import { identity } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, filter, map, scan, shareReplay, startWith, switchMap, take } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, filter, map, pairwise, scan, shareReplay, startWith, switchMap, take } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
@@ -16,6 +17,7 @@ import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
 import { isAanpassingBezig } from "../kaart/stijleditor/state";
 import { observeOnAngular } from "../util/observe-on-angular";
+import { Pipeable } from "../util/operators";
 
 export const LagenUiSelector = "Lagenkiezer";
 
@@ -140,9 +142,21 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
       )
       .subscribe(dichtgeklapt => (this.dichtgeklapt = dichtgeklapt));
     // Zorg dat de lijst open klapt als er een laag bijkomt of weg gaat tenzij de optie initieelDichtgeklapt op 'true' staat.
+    const listCountChange: Pipeable<List<any>, boolean> = obs =>
+      obs.pipe(
+        map(l => l.count()),
+        startWith(0),
+        pairwise(),
+        map(([c1, c2]) => c1 !== c2)
+      );
     this.bindToLifeCycle(
       initieelDichtgeklapt$.pipe(
-        switchMap(initieelDichtgeklapt => (initieelDichtgeklapt ? rx.empty() : rx.merge(this.lagenHoog$, this.lagenLaag$))),
+        switchMap(
+          initieelDichtgeklapt =>
+            initieelDichtgeklapt
+              ? rx.empty()
+              : rx.merge(this.lagenHoog$.pipe(listCountChange), this.lagenLaag$.pipe(listCountChange)).pipe(filter(identity))
+        ),
         observeOnAngular(this.zone)
       )
     ).subscribe(() => (this.dichtgeklapt = false));
