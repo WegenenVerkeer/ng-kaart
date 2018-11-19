@@ -155,6 +155,10 @@
           "options": {
             "tsConfig": "projects/ng-kaart/tsconfig.lib.json",
             "project": "projects/ng-kaart/ng-package.json"
+          },
+          "configurations": {
+            "production": {
+            }
           }
         },
         "test": {

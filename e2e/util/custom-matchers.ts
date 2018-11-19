@@ -1,3 +1,4 @@
+/// <reference path="../types/custom-matchers/index.d.ts" />
 import { isNone, isSome } from "fp-ts/lib/Option";
 
 export const addOptionMatchers = () =>
