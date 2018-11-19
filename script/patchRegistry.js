@@ -1,5 +1,5 @@
 var fs = require("fs");
-var package = JSON.parse(fs.readFileSync("dist/package.json", "utf8"));
+var package = JSON.parse(fs.readFileSync("dist/ng-kaart/package.json", "utf8"));
 
 if ( process.argv[2] ) {
   package["publishConfig"]["registry"] = process.argv[2];
@@ -9,4 +9,4 @@ if ( process.argv[2] ) {
   package["publishConfig"]["access"] = "public";
 }
 
-fs.writeFileSync("dist/package.json", JSON.stringify(package), "utf8");
+fs.writeFileSync("dist/ng-kaart/package.json", JSON.stringify(package), "utf8");
