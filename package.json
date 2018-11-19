@@ -7,7 +7,8 @@
     "preclean": "npm install rimraf mkdirp",
     "clean": "rimraf out; rimraf dist; mkdirp out",
     "build": "ng build",
-    "test": "ng test ng-kaart --watch false",
+    "test": "ng test ng-kaart --watch=false --code-coverage --browsers=ChromeHeadlessNoSandbox",
+    "test-debug": "karma start karma.conf.js --watch=true --browsers=PhantomJS --debug",
     "lint": "ng lint",
     "e2e": "ng e2e",
     "precommit": "lint-staged"
