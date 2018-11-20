@@ -1137,6 +1137,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
+    function SluitPanelen(cmnd: prt.SluitPanelenCmd): ModelWithResult<Msg> {
+      updateBehaviorSubject(model.infoBoodschappenSubj, bsch => bsch.clear());
+      modelChanger.laagstijlaanpassingStateSubj.next(GeenLaagstijlaanpassing);
+      return ModelWithResult(model);
+    }
+
     function handleSubscriptions(cmnd: prt.SubscribeCmd<Msg>): ModelWithResult<Msg> {
       function modelWithSubscriptionResult(name: string, subscription: Subscription): ModelWithResult<Msg> {
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, { subscription: subscription, subscriberName: name })));
@@ -1436,6 +1442,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return bewerkVectorlaagstijl(cmd);
       case "StopVectorlaagstijlBewerking":
         return stopVectorlaagstijlBewerking(cmd);
+      case "SluitPanelen":
+        return SluitPanelen(cmd);
     }
   };
 }

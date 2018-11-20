@@ -2,12 +2,13 @@ import { ChangeDetectionStrategy, Component, ElementRef, NgZone, QueryList, View
 import { FormControl } from "@angular/forms";
 import { MatTabChangeEvent } from "@angular/material";
 import * as array from "fp-ts/lib/Array";
-import { and, Curried2, Function1, Function2, Lazy, not, tuple } from "fp-ts/lib/function";
+import { Curried2, Function1, Function2, Lazy, tuple } from "fp-ts/lib/function";
+import { Option } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
-import { delay, filter, map, mapTo, sample, scan, share, shareReplay, startWith, switchMap, tap } from "rxjs/operators";
+import { delay, filter, map, mapTo, sample, scan, share, shareReplay, startWith, switchMap } from "rxjs/operators";
 
 import * as clr from "../../stijl/colour";
-import { forEvery, skipOlder } from "../../util/operators";
+import { collectOption, forEvery, skipOlder } from "../../util/operators";
 import { nonEmptyString } from "../../util/string";
 import { negate } from "../../util/thruth";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
@@ -125,10 +126,12 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
         }
       });
 
+    const findLaagOpTitel: Function2<string, ke.ToegevoegdeLaag[], Option<ke.ToegevoegdeVectorLaag>> = (titel, lgn) =>
+      array.findFirst(lgn.filter(lg => lg.titel === titel), ke.isToegevoegdeVectorLaag);
     const laag$: rx.Observable<ke.ToegevoegdeVectorLaag> = forEvery(aanpassing$)(aanpassing =>
       kaart.modelChanges.lagenOpGroep
         .get(aanpassing.laag.laaggroep)
-        .pipe(map(lgn => lgn.filter(lg => lg!.titel === aanpassing.laag.titel).first() as ke.ToegevoegdeVectorLaag))
+        .pipe(collectOption(lgn => findLaagOpTitel(aanpassing.laag.titel, lgn.toArray())))
     ).pipe(
       shareReplay(1) // De huidige laag moet bewaard blijven voor alle volgende subscribers
     );
