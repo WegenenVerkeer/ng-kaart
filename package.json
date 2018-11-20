@@ -10,7 +10,7 @@
     "pretest": "npm install && npm prune",
     "test": "ng test ng-kaart --watch=false --code-coverage --browsers=ChromeHeadlessNoSandbox",
     "test-debug": "karma start karma.conf.js --watch=true --browsers=PhantomJS --debug",
-    "build-test-app": "npm run clean && npm install && npm prune && ng build testApp --base-href /ng-kaart --deploy-url /ng-kaart/",
+    "build-test-app": "npm run clean && npm install && npm prune && ng build && ng build testApp --base-href /ng-kaart --deploy-url /ng-kaart/",
     "lint": "ng lint",
     "e2e": "ng e2e",
     "precommit": "lint-staged",
