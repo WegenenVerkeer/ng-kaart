@@ -1,6 +1,15 @@
 import { CommonModule } from "@angular/common";
 import { ModuleWithProviders, NgModule } from "@angular/core";
-import { MatButtonModule, MatIconModule, MatInputModule, MatTooltipModule } from "@angular/material";
+import { ReactiveFormsModule } from "@angular/forms";
+import {
+  MatButtonModule,
+  MatFormFieldModule,
+  MatIconModule,
+  MatInputModule,
+  MatOptionModule,
+  MatSelectModule,
+  MatTooltipModule
+} from "@angular/material";
 import { MatTabsModule } from "@angular/material/tabs";
 
 import { LaagstijleditorComponent } from "./laagstijleditor.component";
@@ -8,7 +17,18 @@ import { LaagstijleditorComponent } from "./laagstijleditor.component";
 const components = [LaagstijleditorComponent];
 
 @NgModule({
-  imports: [CommonModule, MatIconModule, MatInputModule, MatButtonModule, MatTabsModule, MatTooltipModule],
+  imports: [
+    CommonModule,
+    MatButtonModule,
+    MatFormFieldModule,
+    MatIconModule,
+    MatInputModule,
+    MatOptionModule,
+    MatSelectModule,
+    MatTabsModule,
+    MatTooltipModule,
+    ReactiveFormsModule
+  ],
   exports: [components],
   declarations: [components],
   providers: []

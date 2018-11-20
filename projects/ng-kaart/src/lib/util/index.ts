@@ -4,5 +4,6 @@ export * from "./observer-outside-angular";
 export * from "./option";
 export * from "./range";
 export * from "./string";
+export * from "./thruth";
 export * from "./validation";
 export * from "./zone-like";

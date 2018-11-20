@@ -22,3 +22,5 @@ export const GeenLaagstijlaanpassing: GeenLaagstijlaanpassing = { type: "geenAan
 
 export const isAanpassingBezig: Refinement<LaagstijlaanpassingState, LaagstijlAanpassend> = (state): state is LaagstijlAanpassend =>
   state.type === "aanpassingBezig";
+export const isAanpassingNietBezig: Refinement<LaagstijlaanpassingState, LaagstijlAanpassend> = (state): state is LaagstijlAanpassend =>
+  state.type === "geenAanpassing";

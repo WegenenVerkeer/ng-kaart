@@ -7,23 +7,52 @@
     </div>
     <button class="awv-kaart-laagstijleditor-header-openclose" mat-icon-button (click)="onAction('sluitLaagstijleditor')" [matTooltip]="'Sluit en verwerp wijzigingen'"><mat-icon>close</mat-icon></button>
   </div>
-  <div class="awv-kaart-laagstijleditor-body">
-    <div class="awv-kaart-laagstijleditor-body-remark">De aanpassingen die je hier maakt, bepalen de weergave van deze laag voor alle gebruikers.</div>
-    <div class="awv-kaart-laagstijleditor-body-properties">
-      <div class="awv-kaart-laagstijleditor-body-properties-name">Kleur</div>
-      <div class="awv-kaart-laagstijleditor-body-properties-value awv-kaart-laagstijleditor-body-properties-colour" (click)="onAction('openKleineKleurkiezer')">
-        <div class="awv-kaart-laagstijleditor-body-properties-colour-title">{{titel$ | async}}</div>
-        <div class="awv-kaart-laagstijleditor-body-properties-colour-value" *ngIf="laagkleur$ | async as kleur">
-          <div class="circle-small" [style.background]="kleur.code" [matTooltip]="kleur.naam">
-            <span *ngIf="!kleur.gevonden">?</span>
+  <mat-tab-group [headerPosition]="'above'" (selectedTabChange)="tabSelected($event)">
+    <mat-tab label="Uniform" class="awv-kaart-laagstijleditor-tab">
+      <div class="awv-kaart-laagstijleditor-body">
+        <div class="awv-kaart-laagstijleditor-body-properties">
+          <div class="awv-kaart-laagstijleditor-body-properties-name">Kleur</div>
+          <div class="awv-kaart-laagstijleditor-body-properties-value awv-kaart-laagstijleditor-body-properties-colour" (click)="onAction('openKleineKleurkiezer')">
+            <div class="awv-kaart-laagstijleditor-body-properties-colour-title">{{titel$ | async}}</div>
+            <div class="awv-kaart-laagstijleditor-body-properties-colour-value" *ngIf="uniformeLaagkleur$ | async as kleur">
+              <div class="circle-small" [style.background]="kleur.code" [matTooltip]="kleur.naam">
+                <span *ngIf="!kleur.gevonden">!</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
+      <ng-container *ngTemplateOutlet="pasToe"></ng-container>
+    </mat-tab>
+    <mat-tab label="Klassen" class="awv-kaart-laagstijleditor-tab">
+      <div class="awv-kaart-laagstijleditor-body">
+        <div class="awv-kaart-laagstijleditor-body-properties">
+          <mat-form-field *ngIf="klasseVeldenBeschikbaar$ | async">
+            <mat-select placeholder="Selecteer een veld" [formControl]="veldControl">
+              <mat-option *ngFor="let veld of klasseVelden$ | async" [value]="veld.naam">{{veld.label}}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          <div class="awv-kaart-laagstijleditor-body-properties-value awv-kaart-laagstijleditor-body-properties-colour" *ngFor="let veldKleurWaarde of veldKleurWaarden$ | async" (click)="onAction('openKleineKleurkiezer', veldKleurWaarde)">
+            <div class="awv-kaart-laagstijleditor-body-properties-colour-title">{{veldKleurWaarde.waarde}}</div>
+            <div class="awv-kaart-laagstijleditor-body-properties-colour-value">
+              <div class="circle-small" [style.background]="veldKleurWaarde.kleur.code" [matTooltip]="veldKleurWaarde.kleur.naam">
+                <span *ngIf="!veldKleurWaarde.kleur.gevonden">!</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div *ngIf="klasseVeldenNietBeschikbaar$ | async" class="awv-kaart-laagstijleditor-body-remark warning">Er zijn geen geschikte velden beschikbaar</div>
+      </div>
+      <ng-container *ngTemplateOutlet="pasToe"></ng-container>
+    </mat-tab>
+  </mat-tab-group>
+  <ng-template #pasToe>
+    <div class="awv-kaart-laagstijleditor-action">
+      <div class="awv-kaart-laagstijleditor-action-remark">De aanpassingen die je hier maakt, bepalen de weergave voor alle gebruikers.</div>
+      <button mat-raised-button color="primary" [disabled]="nietToepassen$ | async" (click)="onAction('pasLaagstijlToe')">Pas toe</button>
     </div>
-  </div>
-  <div class="awv-kaart-laagstijleditor-action">
-    <button mat-raised-button color="primary" [disabled]="nietToepassen$ | async" (click)="onAction('pasLaagstijlToe')">Pas toe</button>
-  </div>
+  </ng-template>
+
   <div class="awv-kaart-laagstijleditor-chooser kaart-widget" *ngIf="kiezerZichtbaar$ | async" [ngStyle]="chooserStyle$ | async">
     <div class="awv-kaart-laagstijleditor-chooser-header">
       <div class="awv-kaart-laagstijleditor-chooser-header-main">Kies een kleur</div>
@@ -37,7 +66,8 @@
       </div>
       <div class="awv-kaart-laagstijleditor-chooser-body-colorbox awv-kaart-laagstijleditor-chooser-body-more" (click)="onAction('openGroteKleurkiezer')" *ngIf="kleinPaletZichtbaar$ | async" [matTooltip]="'Toon meer kleuren'">
           <div class="circle-medium">
-            <span>...</span></div>
+            <span>…</span>
+          </div>
       </div>
     </div>
   </div>

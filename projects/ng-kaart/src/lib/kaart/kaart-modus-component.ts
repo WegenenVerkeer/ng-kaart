@@ -3,7 +3,7 @@ import { none, some } from "fp-ts/lib/Option";
 import { takeUntil } from "rxjs/operators";
 
 import { observeOnAngular } from "../util/observe-on-angular";
-import { ofType, skipUntilInitialised } from "../util/operators";
+import { ofType, skipOlder } from "../util/operators";
 import { containsText } from "../util/option";
 
 import { KaartChildComponentBase } from "./kaart-child-component-base";
@@ -32,7 +32,7 @@ export abstract class KaartModusComponent extends KaartChildComponentBase implem
         ofType<ActieveModusAangepastMsg>("ActieveModus"), //
         observeOnAngular(this.zone),
         takeUntil(this.destroying$), // autounsubscribe bij destroy component
-        skipUntilInitialised()
+        skipOlder()
       )
       .subscribe(msg => {
         if (msg.modus.isNone()) {
