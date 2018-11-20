@@ -57,7 +57,7 @@ export const ofType = <Target extends TypedRecord>(type: string) => (o: rx.Obser
 export const skipOlder: <A>() => Pipeable<A, A> = () => obs => obs.pipe(skipUntil(rx.timer(0)));
 
 /**
- *  Een alias voor switchMap die de intentie uitdrukt. Voor elke emit van de `restarter` observable zal er een observable gecreëerd worden
+ * Een alias voor switchMap die de intentie uitdrukt. Voor elke emit van de `restarter` observable zal er een observable gecreëerd worden
  * op basis van de emit waarde en de opgegeven functie `fObs`.
  */
 export const forEvery: <A>(_: rx.Observable<A>) => <B>(_: Function1<A, rx.Observable<B>>) => rx.Observable<B> = restarter => fObs =>
