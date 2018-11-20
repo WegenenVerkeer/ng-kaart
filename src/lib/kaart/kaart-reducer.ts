@@ -773,9 +773,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
-    type FeatureStyle = ol.style.Style | ol.style.Style[];
-
-    const applySelectionColor = function(style: ol.style.Style): ol.style.Style {
+    const applySelectionColor: Endomorphism<ol.style.Style> = function(style: ol.style.Style): ol.style.Style {
       const selectionStrokeColor: ol.Color = [0, 153, 255, 1]; // TODO maak configureerbaar
       const selectionFillColor: ol.Color = [112, 198, 255, 0.7]; // TODO maak configureerbaar
       const selectionIconColor: ol.Color = [0, 51, 153, 0.7]; // TODO maak configureerbaar
@@ -833,11 +831,14 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return selectionStyle;
     };
 
+    type FeatureStyle = ol.style.Style | ol.style.Style[];
+    type LaagTitel = string;
+
     const noStyle: FeatureStyle = [];
 
-    type StyleSelectorFn = (map: ol.Map, laagnaam: string) => Option<StyleSelector>;
+    type StyleSelectorFn = Function2<ol.Map, LaagTitel, Option<StyleSelector>>;
 
-    const createStyleFn = function(styleSelectorFn: StyleSelectorFn): ((feature: ol.Feature, resolution: number) => FeatureStyle) {
+    const createStyleFn = function(styleSelectorFn: StyleSelectorFn): ol.StyleFunction {
       return function(feature: ol.Feature, resolution: number): FeatureStyle {
         const executeStyleSelector: (_: ss.StyleSelector) => FeatureStyle = ss.matchStyleSelector(
           (s: ss.StaticStyle) => s.style,
@@ -872,11 +873,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     };
 
     function activeerSelectieModus(cmnd: prt.ActiveerSelectieModusCmd<Msg>): ModelWithResult<Msg> {
-      // todo check if necessary
-      // model.map.getInteractions().forEach(interaction => {
-      //   model.map.removeInteraction(interaction);
-      // });
-
       function getSelectInteraction(modus: prt.SelectieModus): Option<olx.interaction.SelectOptions> {
         switch (modus) {
           case "single":
@@ -965,8 +961,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         chain(valideerToegevoegdeVectorLaagBestaat(cmnd.titel), laag =>
           valideerAlsStijlSpec(cmnd.stijlSpec).map(stijl => {
             const updatedLaag = {
-              // FIXME Dit moet ook dynamische stijlen aankunnen!
-              ...pasVectorLaagStijlAan(some(ss.StaticStyle(stijl as ol.style.Style)), laag.selectiestijlSel)(laag),
+              ...pasVectorLaagStijlAan(ss.asStyleSelector(stijl), laag.selectiestijlSel)(laag),
               stijlSelBron: some(cmnd.stijlSpec),
               legende: some(cmnd.legende)
             };

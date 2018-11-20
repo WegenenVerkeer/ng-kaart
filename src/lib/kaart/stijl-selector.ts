@@ -1,4 +1,4 @@
-import { Function1, pipe } from "fp-ts/lib/function";
+import { Function1, identity, pipe } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { Iso } from "monocle-ts";
 import * as ol from "openlayers";
@@ -172,7 +172,7 @@ export const offsetStyleSelector: (_1: string, _2: string, _3: number) => (_: St
   stijlPositie: number
 ) =>
   matchStyleSelector<StyleSelector>(
-    (s: StaticStyle) => s,
+    identity,
     (s: DynamicStyle) =>
       DynamicStyle(
         offsetStyleFunction(
@@ -182,7 +182,7 @@ export const offsetStyleSelector: (_1: string, _2: string, _3: number) => (_: St
           stijlPositie + 1 // 0-based, maar eerste laag moet ook offset hebben
         )
       ),
-    (s: Styles) => s
+    identity
   );
 
 const validateAwvV0StaticStyleSpec: Validator<AwvV0StaticStyleSpec, Stylish> = spec => validateAwvV0StaticStyle(spec.definition);
