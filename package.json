@@ -6,7 +6,7 @@
     "start": "ng serve --port 4220 --disable-host-check --host 0.0.0.0 --serve-path '/ng-kaart'",
     "preclean": "npm install rimraf mkdirp",
     "clean": "rimraf out; rimraf dist; mkdirp out",
-    "build": "ng build",
+    "build": "npm install && npm prune && ng build",
     "pretest": "npm install && npm prune",
     "test": "ng test ng-kaart --watch=false --code-coverage --browsers=ChromeHeadlessNoSandbox",
     "test-debug": "karma start karma.conf.js --watch=true --browsers=PhantomJS --debug",
