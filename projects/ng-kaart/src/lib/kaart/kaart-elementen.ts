@@ -1,3 +1,4 @@
+import { Refinement } from "fp-ts/lib/function";
 import { fromPredicate, Option } from "fp-ts/lib/Option";
 import { List, OrderedMap } from "immutable";
 import { Optional } from "monocle-ts";
@@ -150,7 +151,8 @@ export const isBlancoLaag: (laag: Laag) => boolean = laag => laag.type === Blanc
 export const isVectorLaag: (laag: Laag) => boolean = laag => laag.type === VectorType;
 export const isNoSqlFsLaag: (laag: Laag) => boolean = laag => laag.type === VectorType && laag.source.hasOwnProperty("loadEvent$");
 export const asVectorLaag: (laag: Laag) => Option<VectorLaag> = fromPredicate(isVectorLaag) as (_: Laag) => Option<VectorLaag>;
-export const isToegevoegdeVectorLaag: (laag: ToegevoegdeLaag) => boolean = laag => isVectorLaag(laag.bron);
+export const isToegevoegdeVectorLaag: Refinement<ToegevoegdeLaag, ToegevoegdeVectorLaag> = (laag): laag is ToegevoegdeVectorLaag =>
+  isVectorLaag(laag.bron);
 export const asToegevoegdeVectorLaag: (laag: ToegevoegdeLaag) => Option<ToegevoegdeVectorLaag> = laag =>
   fromPredicate<ToegevoegdeLaag>(lg => isVectorLaag(lg.bron))(laag) as Option<ToegevoegdeVectorLaag>;
 export const isZichtbaar: (_: number) => (_: ToegevoegdeLaag) => boolean = currentRes => laag =>

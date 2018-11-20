@@ -26,6 +26,7 @@ export type Command<Msg extends KaartMsg> =
   | MeldComponentFoutCmd
   | SelecteerFeaturesCmd
   | SluitInfoBoodschapCmd
+  | SluitPanelenCmd
   | StopVectorlaagstijlBewerkingCmd
   | SubscribeCmd<Msg>
   | ToonAchtergrondKeuzeCmd<Msg>
@@ -385,6 +386,10 @@ export interface SluitInfoBoodschapCmd {
   readonly msgGen: () => Option<prt.TypedRecord>;
 }
 
+export interface SluitPanelenCmd {
+  readonly type: "SluitPanelen";
+}
+
 export interface VoegLaagLocatieInformatieServiceToe {
   readonly type: "VoegLaagLocatieInformatieServiceToe";
   readonly titel: string;
@@ -651,6 +656,12 @@ export function SluitInfoBoodschapCmd(id: string, sluit: boolean, msgGen: () => 
     id: id,
     sluit: sluit,
     msgGen: msgGen
+  };
+}
+
+export function SluitPanelenCmd(): SluitPanelenCmd {
+  return {
+    type: "SluitPanelen"
   };
 }
 
