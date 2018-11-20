@@ -29,4 +29,5 @@ addons:
   chrome: stable
 script:
   - npm run test
+  - npm run build
   - npm run e2e
