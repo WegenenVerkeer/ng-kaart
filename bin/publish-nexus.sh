@@ -9,7 +9,7 @@ if [ ! -z $BAMBOO_AGENT_HOME ]; then
   npm run publishToNexus
 
   echo publiceren in Nexus
-  cd $BASEDIR/dist
+  cd $BASEDIR/dist/ng-kaart
   npm publish
 else
   echo "Lokaal kan je niet naar Nexus publishen, enkel Bamboo kan dat"

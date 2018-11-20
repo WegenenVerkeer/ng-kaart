@@ -1,0 +1,159 @@
+<div class="awv-kaart-zoeker-box kaart-widget">
+  <div class="zoeker-input">
+
+    <mat-menu #zoekerMenu="matMenu" class="awv-kaart-zoeker-box-menu" [overlapTrigger]="false">
+      <button mat-menu-item (click)="kiesZoeker(Basis)" [disabled]="actieveZoeker === Basis">
+        <mat-icon>search</mat-icon>
+        <span>Zoek</span>
+      </button>
+      <button mat-menu-item *ngIf="availability$(Perceel) | async" (click)="kiesZoeker(Perceel)" [disabled]="actieveZoeker === Perceel">
+        <mat-icon>search</mat-icon>
+        <span>Zoek op perceel</span>
+      </button>
+      <button mat-menu-item *ngIf="availability$(Crab) | async" (click)="kiesZoeker(Crab)" [disabled]="actieveZoeker === Crab">
+        <mat-icon>search</mat-icon>
+        <span>Zoek op adres via CRAB</span>
+      </button>
+      <button mat-menu-item *ngIf="availability$(ExterneWms) | async" (click)="kiesZoeker(ExterneWms)" [disabled]="actieveZoeker === ExterneWms">
+        <mat-icon>search</mat-icon>
+        <span>Zoek een WMS-laag</span>
+      </button>
+      <button mat-menu-item (click)="toggleHelp()" *ngIf="actieveZoeker === 'Basis'">
+        <mat-icon>help</mat-icon>
+        <span *ngIf="!toonHelp">Toon hulp bij zoeken</span>
+        <span *ngIf="toonHelp">Verberg hulp bij zoeken</span>
+      </button>
+    </mat-menu>
+
+    <button mat-icon-button [matMenuTriggerFor]="zoekerMenu" matTooltip="Toon zoekopties" matTooltipPosition="right">
+      <mat-icon>menu</mat-icon>
+    </button>
+    <input placeholder="Zoek" [formControl]="zoekVeld" *ngIf="this.actieveZoeker === 'Basis'" (keyup)="onKey($event)" #zoekVeldElement>
+    <span class="actieve-zoeker-titel" *ngIf="actieveZoeker === Perceel">Zoek op perceel</span>
+    <span class="actieve-zoeker-titel" *ngIf="actieveZoeker === Crab">Zoek op adres via CRAB</span>
+    <span class="actieve-zoeker-titel" *ngIf="actieveZoeker === ExterneWms">Zoek een WMS-laag</span>
+    <div class="zoek-bezig-indicator" *ngIf="isBusy()">
+      <mat-spinner diameter="20"></mat-spinner>
+    </div>
+    <button mat-icon-button (click)="kuisZoekOp()" *ngIf="zoekVeld.dirty" [matTooltip]="alleZoekResultaten.length > 0 ? 'Wis invoer en zoekresultaten' : 'Wis invoer'" matTooltipPosition="right">
+      <mat-icon>close</mat-icon>
+    </button>
+    <button mat-icon-button *ngIf="true && actieveZoeker === Perceel && !perceelMaakLeegDisabled" (click)="maakVeldenLeeg(Perceel)"
+            [matTooltip]="alleZoekResultaten.length > 0 ? 'Wis invoer en zoekresultaat' : 'Wis invoer'" matTooltipPosition="right">
+      <mat-icon>close</mat-icon>
+    </button>
+    <button mat-icon-button *ngIf="actieveZoeker === Crab && !crabMaakLeegDisabled" (click)="maakVeldenLeeg(Crab)"
+            [matTooltip]="alleZoekResultaten.length > 0 ? 'Wis invoer en zoekresultaat' : 'Wis invoer'" matTooltipPosition="right">
+      <mat-icon>close</mat-icon>
+    </button>
+    <button mat-icon-button *ngIf="actieveZoeker === ExterneWms && isZoekerMaakLeegEnabled(ExterneWms)" (click)="maakVeldenLeeg(ExterneWms)"
+            [matTooltip]="alleZoekResultaten.length > 0 ? 'Wis invoer en zoekresultaat' : 'Wis invoer'" matTooltipPosition="right">
+      <mat-icon>close</mat-icon>
+    </button>
+    <button mat-icon-button (click)="zoek($event)" *ngIf="this.actieveZoeker === 'Basis'" matTooltip="Zoek of druk op &crarr;" matTooltipPosition="right">
+      <mat-icon>search</mat-icon>
+    </button>
+    <button mat-icon-button *ngIf="isInklapbaar()" (click)="toggleResultaat()" [matTooltip]="toonResultaat ? 'Verberg zoeken' : 'Toon zoeken'" matTooltipPosition="right">
+      <mat-icon *ngIf="toonResultaat">expand_less</mat-icon>
+      <mat-icon *ngIf="!toonResultaat">expand_more</mat-icon>
+    </button>
+  </div>
+  <div class="suggesties-box box-shadow" *ngIf="toonSuggesties">
+    <div *ngFor="let resultaat of alleSuggestiesResultaten" class="suggesties-resultaat" (click)="kiesSuggestiesResultaat(resultaat)">
+      <span [ngSwitch]="resultaat.icoon.type">
+        <mat-icon *ngSwitchCase="'svg'" class="zoeker-resultaat-icoon" [svgIcon]="resultaat.icoon.name"></mat-icon>
+        <mat-icon *ngSwitchCase="'font'" class="zoeker-resultaat-icoon">{{resultaat.icoon.name}}</mat-icon>
+      </span>
+      <span>{{resultaat.omschrijving}}</span>
+    </div>
+  </div>
+
+  <awv-zoeker-perceel-getrapt *ngIf="actieveZoeker === Perceel" [hidden]="!toonResultaat"
+                              (leegMakenDisabledChange)="onPerceelMaakLeegDisabledChange($event)"
+                              #zoekerPerceelGetrapt></awv-zoeker-perceel-getrapt>
+  <awv-zoeker-crab-getrapt *ngIf="actieveZoeker === Crab" [hidden]="!toonResultaat"
+                           (leegMakenDisabledChange)="onCrabMaakLeegDisabledChange($event)"
+                           #zoekerCrabGetrapt></awv-zoeker-crab-getrapt>
+  <awv-zoeker-externe-wms-getrapt *ngIf="actieveZoeker === ExterneWms" [hidden]="!toonResultaat"
+                                  (leegMakenDisabledChange)="onMaakLeegDisabledChange(ExterneWms, $event)"
+                                  #zoekerExterneWmsGetrapt></awv-zoeker-externe-wms-getrapt>                           
+  <div class="divider" *ngIf="toonHelp && actieveZoeker === Basis"></div>
+  <div class="zoeker-help" *ngIf="toonHelp && actieveZoeker === Basis" [@enterAnimation]>
+    <div class="zoeker-help-header" (click)="toggleHelp()">
+      <mat-icon>help</mat-icon>
+      <div class="zoeker-help-titel">
+        Hulp bij zoeken
+      </div>
+      <button mat-icon-button>
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    <div class="zoeker-subtitel">Voorbeelden</div>
+    <div class="zoeker-help-content">
+      <div>Kapelstraat 12 Kortrijk
+        <br>&nbsp;&nbsp;
+        <i>zoek het opgegeven adres</i>
+      </div>
+      <div>N0080001 12.0
+        <br>&nbsp;&nbsp;
+        <i>zoek op de weg met ident8 N0080001 het referentiepunt 12.0</i>
+      </div>
+      <div>R1
+        <br>&nbsp;&nbsp;
+        <i>zoek de weg met ident8 R0010001</i>
+      </div>
+      <div>N8 12.0
+        <br>&nbsp;&nbsp;
+        <i>zoek op de weg met ident8 N0080001 het referentiepunt 12.0</i>
+      </div>
+      <div>N8 12.0-8
+        <br>&nbsp;&nbsp;
+        <i>zoek op de weg met ident8 N0080001 het referentiepunt 12.0 met afstand -8</i>
+      </div>
+      <div>E17 5.0
+        <br>&nbsp;&nbsp;
+        <i>zoek op de E17 het referentiepunt 5.0</i>
+      </div>
+      <div>N8 178 Kortrijk
+        <br>&nbsp;&nbsp;
+        <i>zoek op de weg met ident8 N0080001 in Kortrijk huisnummer 178 (gemeente verplicht)</i>
+      </div>
+      <div>em G1586/WV
+        <br>&nbsp;&nbsp;
+        <i>zoek het EM onderdeel met 'G1586/WV' in het Naampad</i>
+      </div>
+      <div>kw 0.010.031.1
+        <br>&nbsp;&nbsp;
+        <i>zoek het kunstwerk met Bryggja id '0.010.031.1'</i>
+      </div>
+    </div>
+    <div *ngIf="legende.size > 0">
+      <div class="zoeker-subtitel">Legende</div>
+      <div *ngFor="let key of legendeKeys" class="zoeker-resultaat">
+        <span [ngSwitch]="legende.get(key).type">
+          <mat-icon *ngSwitchCase="'svg'" class="zoeker-resultaat-icoon" [svgIcon]="legende.get(key).name"></mat-icon>
+          <mat-icon *ngSwitchCase="'font'" class="zoeker-resultaat-icoon">{{legende.get(key).name}}</mat-icon>
+        </span>
+        <span>{{key}}</span>
+      </div>
+    </div>
+  </div>
+  <div *ngIf="toonResultaat && isInklapbaar()" class="divider"></div>
+  <div class="zoeker-resultaat-box" *ngIf="toonResultaat" [@enterAnimation]>
+    <div *ngFor="let resultaat of alleZoekResultaten" class="zoeker-resultaat" (click)="kiesZoekResultaat(resultaat)">
+      <div [ngSwitch]="resultaat.icoon.type">
+        <mat-icon *ngSwitchCase="'svg'" class="zoeker-resultaat-icoon" [svgIcon]="resultaat.icoon.name"></mat-icon>
+        <mat-icon *ngSwitchCase="'font'" class="zoeker-resultaat-icoon">{{resultaat.icoon.name}}</mat-icon>
+      </div>
+      <div class="zoeker-data-box">
+        <div class="zoeker-omschrijving" [innerHTML]="resultaat.omschrijving | highlight: zoekVeld.value"></div>
+        <div class="zoeker-extra" [innerHTML]="resultaat.extraOmschrijving.getOrElse('') | highlight: zoekVeld.value"></div>
+      </div>
+    </div>
+    <div *ngIf="heeftFout()" class="divider"></div>
+    <div *ngFor="let fout of alleFouten" class="zoeker-resultaat zoeker-fout" [@enterAnimation]>
+      <mat-icon>announcement</mat-icon>
+      <span>{{fout.zoeker}}: {{fout.fout}}</span>
+    </div>
+  </div>
+</div>

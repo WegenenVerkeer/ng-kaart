@@ -8,7 +8,7 @@ cache:
   - node_modules
 before_install: 
 before_deploy:
-  - cd dist # Naar dist gaan zodat de publish van daaruit gebeurt
+  - cd dist/ng-kaart # Naar dist gaan zodat de publish van daaruit gebeurt
 deploy:
   provider: npm
   email: geert.subcribe1+npm@gmail.com
@@ -29,4 +29,5 @@ addons:
   chrome: stable
 script:
   - npm run test
+  - npm run build
   - npm run e2e
