@@ -166,16 +166,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     );
 
     // start of stop tracking
-    this.bindToLifeCycle(
-      this.activeerSubj.pipe(
-        switchMap(actief =>
-          rx.combineLatest([zoom$, zoomdoel$]).pipe(
-            take(1),
-            map(() => actief)
-          )
-        )
-      )
-    ).subscribe(actief => (actief ? this.startTracking() : this.stopTracking()));
+    this.bindToLifeCycle(this.activeerSubj).subscribe(actief => (actief ? this.startTracking() : this.stopTracking()));
 
     // pas positie aan bij nieuwe locatie
     this.bindToLifeCycle(
