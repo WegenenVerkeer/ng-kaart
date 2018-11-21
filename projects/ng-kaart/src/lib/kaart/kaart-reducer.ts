@@ -560,15 +560,14 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         cmnd.wrapper,
         fromPredicate(model.stdInteracties, l => l.isEmpty(), "De standaard interacties zijn al ingesteld").map(() => {
-          // We willen standaard geen rotate operaties.
           const stdInteracties: ol.interaction.Interaction[] = ol.interaction
             .defaults()
             .getArray()
             .filter(
               interaction =>
                 !(
-                  interaction instanceof ol.interaction.DragRotate ||
-                  interaction instanceof ol.interaction.PinchRotate ||
+                  (!cmnd.rotatie && interaction instanceof ol.interaction.DragRotate) ||
+                  (!cmnd.rotatie && interaction instanceof ol.interaction.PinchRotate) ||
                   interaction instanceof ol.interaction.MouseWheelZoom
                 ) // we willen zelf de opties op MouseWheelZoom zetten
             );

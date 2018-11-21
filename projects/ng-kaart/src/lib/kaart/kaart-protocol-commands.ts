@@ -36,6 +36,7 @@ export type Command<Msg extends KaartMsg> =
   | VeranderMiddelpuntCmd<Msg>
   | VeranderViewportCmd
   | VeranderZoomCmd<Msg>
+  | VeranderRotatieCmd<Msg>
   | VerbergAchtergrondKeuzeCmd<Msg>
   | VerbergInfoBoodschapCmd
   | VerliesFocusOpKaartCmd
@@ -157,6 +158,7 @@ export interface VerwijderVolledigSchermCmd<Msg extends KaartMsg> {
 export interface VoegStandaardInteractiesToeCmd<Msg extends KaartMsg> {
   readonly type: "VoegStandaardInteractiesToe";
   readonly scrollZoomOnFocus: boolean;
+  readonly rotatie: boolean;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -180,6 +182,12 @@ export interface VeranderZoomCmd<Msg extends KaartMsg> {
 export interface VeranderExtentCmd {
   readonly type: "VeranderExtent";
   readonly extent: ol.Extent;
+}
+
+export interface VeranderRotatieCmd<Msg extends KaartMsg> {
+  readonly type: "VeranderRotatie";
+  readonly rotatie: number;
+  readonly wrapper: BareValidationWrapper<Msg>;
 }
 
 export interface VeranderViewportCmd {
@@ -414,9 +422,10 @@ export interface StopVectorlaagstijlBewerkingCmd {
 
 export function VoegStandaardInteractiesToeCmd<Msg extends KaartMsg>(
   scrollZoomOnFocus: boolean,
+  rotatie: boolean,
   wrapper: BareValidationWrapper<Msg>
 ): VoegStandaardInteractiesToeCmd<Msg> {
-  return { type: "VoegStandaardInteractiesToe", scrollZoomOnFocus: scrollZoomOnFocus, wrapper: wrapper };
+  return { type: "VoegStandaardInteractiesToe", scrollZoomOnFocus: scrollZoomOnFocus, rotatie: rotatie, wrapper: wrapper };
 }
 
 export function VerwijderStandaardInteractiesCmd<Msg extends KaartMsg>(
@@ -500,6 +509,10 @@ export function VeranderMiddelpuntCmd<Msg extends KaartMsg>(coordinate: ol.Coord
 
 export function VeranderZoomCmd<Msg extends KaartMsg>(zoom: number, wrapper: BareValidationWrapper<Msg>): VeranderZoomCmd<Msg> {
   return { type: "VeranderZoom", zoom: zoom, wrapper: wrapper };
+}
+
+export function VeranderRotatieCmd<Msg extends KaartMsg>(rotatie: number, wrapper: BareValidationWrapper<Msg>): VeranderRotatieCmd<Msg> {
+  return { type: "VeranderRotatie", rotatie: rotatie, wrapper: wrapper };
 }
 
 export function VeranderExtentCmd<Msg extends KaartMsg>(extent: ol.Extent): VeranderExtentCmd {

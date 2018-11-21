@@ -42,6 +42,7 @@ export interface Viewinstellingen {
   resolution: number;
   extent: ol.Extent;
   center: ol.Coordinate;
+  rotation: number;
 }
 
 export interface GeselecteerdeFeatures {

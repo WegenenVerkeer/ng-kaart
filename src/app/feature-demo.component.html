@@ -104,7 +104,7 @@
                          (voorgrondHoogLagen)="onVoorgrondHoogLagen($event)"
                          (voorgrondLaagLagen)="onVoorgrondLaagLagen($event)">
         <!-- algemeen -->
-        <awv-kaart-standaard-interacties *ngIf="isOptieActief('standaardinteracties')" [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
+        <awv-kaart-standaard-interacties [focusVoorZoom]="true" [rotatie]="true"></awv-kaart-standaard-interacties>
         <!-- custom vaste header in linker paneel -->
         <div class="kaart-fixed-links-boven" *ngIf="isOptieActief('kaartLinksFixedHeader')">
           <div class="custom-kaart-fixed-links-boven">

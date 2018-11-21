@@ -13,11 +13,13 @@ import * as prt from "../../kaart/kaart-protocol";
 export class ClassicStandaardInteractiesComponent implements OnInit, OnDestroy {
   @Input()
   focusVoorZoom = false;
+  @Input()
+  rotatie = false;
 
   constructor(private readonly kaart: KaartClassicComponent) {}
 
   ngOnInit(): void {
-    this.kaart.dispatch(prt.VoegStandaardInteractiesToeCmd(this.focusVoorZoom, kaartLogOnlyWrapper));
+    this.kaart.dispatch(prt.VoegStandaardInteractiesToeCmd(this.focusVoorZoom, this.rotatie, kaartLogOnlyWrapper));
   }
 
   ngOnDestroy(): void {

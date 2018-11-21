@@ -29,6 +29,7 @@
       <div class="kaart-interacties">
         <awv-kaart-achtergrond-selector class="kaart-achtergrond-selector" *ngIf="aanwezigeElementen.contains('Achtergrondkeuze')"></awv-kaart-achtergrond-selector>
         <div class="kaart-controls">
+          <awv-kaart-rotatie></awv-kaart-rotatie>
           <awv-kaart-open-street-view *ngIf="aanwezigeElementen.contains('Streetview')"></awv-kaart-open-street-view>
           <awv-kaart-meten *ngIf="aanwezigeElementen.contains('Meten')"></awv-kaart-meten>
           <awv-kaart-mijn-locatie></awv-kaart-mijn-locatie>

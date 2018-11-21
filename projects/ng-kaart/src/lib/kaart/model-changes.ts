@@ -104,7 +104,8 @@ const viewinstellingen = (olmap: ol.Map) => ({
   maxZoom: olmap.getView().getMaxZoom(),
   resolution: olmap.getView().getResolution(),
   extent: olmap.getView().calculateExtent(olmap.getSize()),
-  center: olmap.getView().getCenter()
+  center: olmap.getView().getCenter(),
+  rotation: olmap.getView().getRotation()
 });
 
 export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges = (model, changer) => {
@@ -141,9 +142,10 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     distinctUntilChanged()
     // geen debounce, OL genereert een wel enkele tussenliggende zooms tijden het pinch/zoomen, maar ze komen ver genoeg uiteen.
   );
+  const rotation$ = observableFromOlEvents(model.map.getView(), "change:rotation");
   const viewportSize$ = changer.viewPortSizeSubj.pipe(debounceTime(100));
 
-  const viewinstellingen$ = rx.merge(viewportSize$, resize$, center$, numlayers$, zoom$).pipe(
+  const viewinstellingen$ = rx.merge(viewportSize$, resize$, center$, numlayers$, zoom$, rotation$).pipe(
     debounceTime(50), // Deze is om de map hierna niet te veel werk te geven
     map(() => viewinstellingen(model.map)),
     shareReplay(1)
