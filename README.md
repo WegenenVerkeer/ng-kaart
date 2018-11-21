@@ -10,9 +10,7 @@ Deze component is gepubliceerd als `@wegenenverkeer/ng-kaart` op [NPM](https://w
 
 ## Hoe werkt het?
 
-Dit project ambieert de implementatie van Angular Package Format v4.0.
-
-Er is nog geen support voor een dergelijke packaging in Angular-CLI. We baseren ons op [https://github.com/filipesilva/angular-quickstart-lib]()
+We gebruiken de library support van angular cli, zie ook [https://github.com/angular/angular-cli/wiki/stories-create-library]()
 
 ## Beperkingen
 
@@ -42,13 +40,19 @@ opaak zijn en de vectorlagen anders niet zichtbaar zullen zijn.
 
 ### Code testen
 
-Deze component library is voorzien van een test Angular app.
+Deze component library is voorzien van een test Angular app. Omdat de build van de library en de testApp volledig gescheiden zijn, moet je eerst de library builden en watchen voor changes:
+
+    npm run watch
+    
+Dan kan je de testApp runnen:
 
     npm start
 
-Deze is dan te bereiken via http://localhost:4220/
+Deze is dan te bereiken via http://localhost:4220/ng-kaart
 
-In `src\testApp` kan je je module toevoegen en op de pagina plaatsen om zo door te testen.
+Alle veranderingen in de library code zullen door de watch opgemerkt worden en (uiteindelijk) tot een reload van de testApp leiden.
+
+In `src/app/testApp` kan je je module toevoegen en op de pagina plaatsen om zo door te testen.
 
 Dit laat je ook toe om protractors te schrijven.
 
@@ -76,22 +80,10 @@ Ook de NosqlFs laag demo maakt een verbinding met een server die niet op op loca
 
 De code style wordt automatisch afgedwongen via tslint + prettier. Deze is ingesteld dat de code wordt herschreven on commit, tenzij er brekende wijzigingen zijn (zoals foute typering en dergelijke meer).
 
-## Publish (achterhaald)
+## Publish
 
 We gebruiken [travis-ci](https://travis-ci.org/WegenenVerkeer/ng-kaart) als CI tool.
 Travis wordt automatisch gestart bij een push naar github.
-
-Vooraleer je aan een nieuwe feature/bug fix begint te werken, moet de versie in `package.json` opgehoogd worden.
-Dat doe je best door gebruik te maken van de betreffende [npm commandos](https://docs.npmjs.com/cli/version).
-Dus bijv. om een nieuwe feature te starten:
-
-    npm version preminor
-
-En wanneer de feature klaar is, en het is nog steeds maar een feature, doe dan:
-
-    npm version minor -m 'Release van %s: mijn feature naam'
-
-TODO: een postversion hook maken die `src/lib/package.json` in sync houdt.
 
 ## Filestructuur
 
@@ -101,26 +93,30 @@ We hebben twee grote categorieën van componenten:
 1. componenten die de nodig zijn voor de werking van ng-kaart ongeacht af die aangestuurd wordt door de API of de `awv-kaart-classic` tag
 2. componenten die dienen om ng-kaart aan te sturen op de traditionele Angularmanier.
 
-De eerste komen in directories onder `src/lib/kaart/<component>` en de naam begint met `Kaart`. 
+De eerste komen in directories onder `projects/ng-kaart/src/lib/kaart/<component>` en de naam begint met `Kaart`. 
 
-De tweede soort komt in directories onder `src/lib/classic/<component>` en de naam begint met `Classic`.
+De tweede soort komt in directories onder `projects/ng-kaart/src/lib/classic/<component>` en de naam begint met `Classic`.
 
 We hebben dan bijv.:
 
 ```
-src
-  lib
-    kaart
-      schaal
-        kaart-schaal.component.ts
-        kaart-schaal.component.html
-        kaart-schaal.component.scss
-      ...
-    classic
-      lagenkiezer
-        classic-lagenkiezer.component.ts
-        classic-lagenkiezer.component.html
-        classic-lagenkiezer.component.scss
+projects
+  ng-kaart
+    src
+      lib
+        kaart
+          schaal
+            kaart-schaal.component.ts
+            kaart-schaal.component.html
+            kaart-schaal.component.scss
+          ...
+        classic
+          lagenkiezer
+            classic-lagenkiezer.component.ts
+            classic-lagenkiezer.component.html
+            classic-lagenkiezer.component.scss
+          ...
+        ...
       ...  
 ```
 N
@@ -128,7 +124,7 @@ N
 
 ### Reducers e.d.
 
-Voorlopig kunnen die direct onder `src/lib/kaart` blijven.
+Voorlopig kunnen die direct onder `projects/ng-kaart/src/lib/kaart` blijven.
 
 # Resources
 
