@@ -1,10 +1,11 @@
 import * as array from "fp-ts/lib/Array";
 import { Endomorphism, Function1, Function2, identity, pipe } from "fp-ts/lib/function";
 import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
+import { fromPredicate as optFromPredicate } from "fp-ts/lib/Option";
 import * as validation from "fp-ts/lib/Validation";
 import { List } from "immutable";
-import * as ol from "openlayers";
 import { olx } from "openlayers";
+import * as ol from "openlayers";
 import { Subscription } from "rxjs";
 import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
@@ -596,14 +597,15 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function veranderMiddelpuntCmd(cmnd: prt.VeranderMiddelpuntCmd<Msg>): ModelWithResult<Msg> {
-      if (cmnd.animate) {
-        model.map.getView().animate({
-          center: cmnd.coordinate,
-          duration: 1000
-        });
-      } else {
-        model.map.getView().setCenter(cmnd.coordinate);
-      }
+      cmnd.animationDuration.chain(duration => optFromPredicate((n: number) => n > 0)(duration)).foldL(
+        () => model.map.getView().setCenter(cmnd.coordinate),
+        animationDuration => {
+          model.map.getView().animate({
+            center: cmnd.coordinate,
+            duration: animationDuration
+          });
+        }
+      );
 
       return ModelWithResult(model);
     }

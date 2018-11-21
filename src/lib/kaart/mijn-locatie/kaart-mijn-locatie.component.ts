@@ -21,6 +21,8 @@ import { kaartLogger } from "../log";
 export const MijnLocatieUiSelector = "Mijnlocatie";
 const MijnLocatieLaagNaam = "Mijn Locatie";
 
+const TrackingInterval = 1000; // aantal milliseconden tussen tracking updates
+
 interface Resultaat {
   zoom: number;
   doel: number;
@@ -185,7 +187,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
 
     // pas positie aan bij nieuwe locatie
     this.bindToLifeCycle(
-      rx.combineLatest(zoom$, zoomdoel$, this.locatieSubj.pipe(debounceTime(1000))).pipe(
+      rx.combineLatest(zoom$, zoomdoel$, this.locatieSubj.pipe(debounceTime(TrackingInterval))).pipe(
         filter(() => this.actief),
         map(([zoom, doel, locatie]) => Resultaat(zoom, doel, locatie))
       )
@@ -244,7 +246,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     const longLat: ol.Coordinate = [position.coords.longitude, position.coords.latitude];
 
     const coordinate = ol.proj.fromLonLat(longLat, "EPSG:31370");
-    this.dispatch(prt.VeranderMiddelpuntCmd(coordinate, true));
+    this.dispatch(prt.VeranderMiddelpuntCmd(coordinate, some(TrackingInterval)));
 
     this.mijnLocatie = this.mijnLocatie
       .chain(feature => pasLocatieFeatureAan(feature, coordinate, zoom, position.coords.accuracy))
