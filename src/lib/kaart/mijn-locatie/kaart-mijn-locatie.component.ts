@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, NgZone, OnInit, QueryList, ViewChildren } from "@angular/core";
 import { MatButton } from "@angular/material";
-import { Function3 } from "fp-ts/lib/function";
+import { Function1, Function3, Function4 } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List, OrderedMap } from "immutable";
 import * as ol from "openlayers";
@@ -29,47 +29,53 @@ interface Resultaat {
 
 const Resultaat: Function3<number, number, Position, Resultaat> = (zoom, doel, positie) => ({ zoom: zoom, doel: doel, positie: positie });
 
-const pasFeatureAan = (feature: ol.Feature, coordinate: ol.Coordinate, zoom: number, accuracy: number): Option<ol.Feature> => {
+const pasLocatieFeatureAan: Function4<ol.Feature, ol.Coordinate, number, number, Option<ol.Feature>> = (
+  feature,
+  coordinate,
+  zoom,
+  accuracy
+) => {
   feature.setGeometry(new ol.geom.Point(coordinate));
   zetStijl(feature, zoom, accuracy);
   return some(feature);
 };
 
-const zetStijl = (feature: ol.Feature, zoom: number, accuracy: number): void => feature.setStyle(mijnLocatieStijl(zoom, accuracy));
+const zetStijl: Function3<ol.Feature, number, number, void> = (feature, zoom, accuracy) => feature.setStyle(locatieStijlFunctie(accuracy));
 
-const mijnLocatieStijl = (zoom: number, accuracy: number): ol.style.Style[] => {
-  // TODO: resolutions moet uit kaart komen
-  const resolutions = [1024.0, 512.0, 256.0, 128.0, 64.0, 32.0, 16.0, 8.0, 4.0, 2.0, 1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125];
-  const accuracyInPixels = accuracy / resolutions[zoom];
-  const radius = Math.max(accuracyInPixels, 12);
-  return [
-    new ol.style.Style({
-      zIndex: 2,
-      image: new ol.style.Circle({
-        fill: new ol.style.Fill({
-          color: "#4285F4"
-        }),
-        stroke: new ol.style.Stroke({
-          color: "#FFFFFF",
-          width: 2
-        }),
-        radius: 6
+const locatieStijlFunctie: Function1<number, ol.FeatureStyleFunction> = accuracy => {
+  console.log(accuracy);
+  return resolution => {
+    const accuracyInPixels = accuracy / resolution;
+    const radius = Math.max(accuracyInPixels, 12);
+    return [
+      new ol.style.Style({
+        zIndex: 2,
+        image: new ol.style.Circle({
+          fill: new ol.style.Fill({
+            color: "#4285F4"
+          }),
+          stroke: new ol.style.Stroke({
+            color: "#FFFFFF",
+            width: 2
+          }),
+          radius: 6
+        })
+      }),
+      new ol.style.Style({
+        zIndex: 1,
+        image: new ol.style.Circle({
+          fill: new ol.style.Fill({
+            color: [65, 105, 225, 0.15]
+          }),
+          stroke: new ol.style.Stroke({
+            color: [65, 105, 225, 0.5],
+            width: 1
+          }),
+          radius: radius
+        })
       })
-    }),
-    new ol.style.Style({
-      zIndex: 1,
-      image: new ol.style.Circle({
-        fill: new ol.style.Fill({
-          color: [65, 105, 225, 0.15]
-        }),
-        stroke: new ol.style.Stroke({
-          color: [65, 105, 225, 0.5],
-          width: 1
-        }),
-        radius: radius
-      })
-    })
-  ];
+    ];
+  };
 };
 
 @Component({
@@ -165,6 +171,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
       map(vi => vi.zoom)
     );
 
+    // start of stop tracking
     this.bindToLifeCycle(
       this.activeerSubj.pipe(
         switchMap(actief =>
@@ -176,6 +183,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
       )
     ).subscribe(actief => (actief ? this.startTracking() : this.stopTracking()));
 
+    // pas positie aan bij nieuwe locatie
     this.bindToLifeCycle(
       rx.combineLatest(zoom$, zoomdoel$, this.locatieSubj.pipe(debounceTime(1000))).pipe(
         filter(() => this.actief),
@@ -183,6 +191,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
       )
     ).subscribe(resultaat => this.zetMijnPositie(resultaat.positie, resultaat.zoom, resultaat.doel));
 
+    // deactiveer tracking bij pannen kaart
     this.bindToLifeCycle(this.parent.modelChanges.dragInfo$.pipe(filter(() => this.actief))).subscribe(() => {
       this.deactiveerTracking();
     });
@@ -190,7 +199,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
 
   private maakNieuwFeature(coordinate: ol.Coordinate, zoom: number, accuracy: number): Option<ol.Feature> {
     const feature = new ol.Feature(new ol.geom.Point(coordinate));
-    feature.setStyle(mijnLocatieStijl(zoom, accuracy));
+    feature.setStyle(locatieStijlFunctie(accuracy));
     this.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, List.of(feature), kaartLogOnlyWrapper));
     return some(feature);
   }
@@ -237,13 +246,15 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     const coordinate = ol.proj.fromLonLat(longLat, "EPSG:31370");
     this.dispatch(prt.VeranderMiddelpuntCmd(coordinate, true));
 
-    this.mijnLocatie = this.mijnLocatie.chain(feature => pasFeatureAan(feature, coordinate, zoom, position.coords.accuracy)).orElse(() => {
-      if (zoom <= 8) {
-        // We zitten nu op een te laag zoomniveau, dus gaan we eerst inzoomen.
-        this.dispatch(prt.VeranderZoomCmd(doelzoom, kaartLogOnlyWrapper));
-      }
-      return this.maakNieuwFeature(coordinate, zoom, position.coords.accuracy);
-    });
+    this.mijnLocatie = this.mijnLocatie
+      .chain(feature => pasLocatieFeatureAan(feature, coordinate, zoom, position.coords.accuracy))
+      .orElse(() => {
+        if (zoom <= 8) {
+          // We zitten nu op een te laag zoomniveau, dus gaan we eerst inzoomen.
+          this.dispatch(prt.VeranderZoomCmd(doelzoom, kaartLogOnlyWrapper));
+        }
+        return this.maakNieuwFeature(coordinate, zoom, position.coords.accuracy);
+      });
   }
 
   createLayer(): ke.VectorLaag {
