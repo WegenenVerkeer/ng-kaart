@@ -1,0 +1,463 @@
+<div class="test-app-menu">
+  <div (click)="scrollTo('top')" class="test-app-titel">
+    <span class="material-icons">map</span>
+    ng-kaart
+  </div>
+
+  <!-- configurator -->
+  <div (click)="configuratorSectie.toggleSectieZichtbaar();scrollTo('configurator')" class="titel">
+    Configurator
+    <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !configuratorSectie.sectieZichtbaar }">visibility</span>
+  </div>
+
+  <!-- voorbeelden -->
+  <div (click)="voorbeeldenSectie.toggleSectieZichtbaar()" class="titel">
+    Voorbeelden
+    <span class="material-icons" *ngIf="voorbeeldenSectie.sectieZichtbaar">expand_less</span>
+    <span class="material-icons" *ngIf="!voorbeeldenSectie.sectieZichtbaar">expand_more</span>
+  </div>
+  <div *ngIf="voorbeeldenSectie.sectieZichtbaar" [@enterAnimation]>
+    <div (click)="orthophotosSectie.toggleSectieZichtbaar();scrollTo('orthophotos')" class="sub-titel">
+      Orthophotos
+      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !orthophotosSectie.sectieZichtbaar }">visibility</span>
+    </div>
+    <div (click)="ingezoomdSectie.toggleSectieZichtbaar();scrollTo('ingezoomd')" class="sub-titel">
+      Ingezoomd
+      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !ingezoomdSectie.sectieZichtbaar }">visibility</span>
+    </div>
+    <div (click)="dynamischeFeatures.toggleSectieZichtbaar();scrollTo('dynamische-features')" class="sub-titel">
+      Dynamische features
+      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !dynamischeFeatures.sectieZichtbaar }">visibility</span>
+    </div>
+    <div (click)="straatkolkenSectie.toggleSectieZichtbaar();scrollTo('straatkolken')" class="sub-titel">
+      Straatkolken
+      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !straatkolkenSectie.sectieZichtbaar }">visibility</span>
+    </div>
+    <div (click)="fietspadenSectie.toggleSectieZichtbaar();scrollTo('fietspaden')" class="sub-titel">
+      Fietspaden
+      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !fietspadenSectie.sectieZichtbaar }">visibility</span>
+    </div>
+    <div (click)="verkeersbordenSectie.toggleSectieZichtbaar();scrollTo('verkeersborden')" class="sub-titel">
+      Verkeersborden
+      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !verkeersbordenSectie.sectieZichtbaar }">visibility</span>
+    </div>
+    <div (click)="fietspadenMetOffsetsSectie.toggleSectieZichtbaar();scrollTo('fietspaden-met-offsets')" class="sub-titel">
+      Fietspaden met offsets
+      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !fietspadenMetOffsetsSectie.sectieZichtbaar }">visibility</span>
+    </div>
+    <div (click)="buitenKaartSectie.toggleSectieZichtbaar();scrollTo('buiten-kaart')" class="sub-titel">
+      Toon features buiten de kaart
+      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !buitenKaartSectie.sectieZichtbaar }">visibility</span>
+    </div>
+    <div (click)="zoekenSectie.toggleSectieZichtbaar();scrollTo('zoeken')" class="sub-titel">
+      Zoeken
+      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !zoekenSectie.sectieZichtbaar }">visibility</span>
+    </div>
+  </div>
+
+  <!-- applicaties -->
+  <div (click)="applicatiesSectie.toggleSectieZichtbaar()" class="titel">
+    Gebruik in applicaties
+    <span class="material-icons" *ngIf="applicatiesSectie.sectieZichtbaar">expand_less</span>
+    <span class="material-icons" *ngIf="!applicatiesSectie.sectieZichtbaar">expand_more</span>
+  </div>
+  <div *ngIf="applicatiesSectie.sectieZichtbaar" [@enterAnimation]>
+    <div (click)="geoloket2Sectie.toggleSectieZichtbaar();scrollTo('geoloket2')" class="sub-titel">
+      Geoloket2
+      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !geoloket2Sectie.sectieZichtbaar }">visibility</span>
+    </div>
+    <div (click)="avSectie.toggleSectieZichtbaar();scrollTo('av')" class="sub-titel">
+      Adviezen & Vergunningen
+      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !avSectie.sectieZichtbaar }">visibility</span>
+    </div>
+    <div (click)="patrimoniumSectie.toggleSectieZichtbaar();scrollTo('patrimonium')" class="sub-titel">
+      Patrimonium
+      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !patrimoniumSectie.sectieZichtbaar }">visibility</span>
+    </div>
+    <div (click)="vtcLoketSectie.toggleSectieZichtbaar();scrollTo('vtc-loket')" class="sub-titel">
+      VTC-loket
+      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !vtcLoketSectie.sectieZichtbaar }">visibility</span>
+    </div>
+  </div>
+</div>
+<div class="test-app-content">
+  <div id="top" class="test-app-titel">
+    AWV common kaart component (Angular)
+  </div>
+
+  <!-- configurator -->
+  <awv-test-sectie sectieId="configurator" sectieTitel="Configurator" [sectieZichtbaar]="true" #configuratorSectie>
+    <div *ngIf="configuratorSectie.sectieZichtbaar" [@enterAnimation]>
+      <div class="sub-content">
+        Via de configurator kan je de kaart opties aan of uitzetten en aanpassen om zo de gewenste kaart configuratie te bekomen.
+      </div>
+      <awv-kaart-classic class="qa-configurator-kaart"
+                         [naam]="'interacties'"
+                         [hoogte]="424"
+                         [mijnLocatieZoom]="getMijnLocatieZoom()"
+                         [kaartLinksBreedte]="getKaartLinksBreedte()"
+                         (zoomChange)="onZoom($event)"
+                         (middelpuntChange)="onMiddelpunt($event)"
+                         (extentChange)="onExtent($event)"
+                         [middelpunt]="configuratorMiddelpunt"
+                         (achtergrondLagen)="onAchtergrondLagen($event)"
+                         (voorgrondHoogLagen)="onVoorgrondHoogLagen($event)"
+                         (voorgrondLaagLagen)="onVoorgrondLaagLagen($event)">
+        <!-- algemeen -->
+        <awv-kaart-standaard-interacties *ngIf="isOptieActief('standaardinteracties')" [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
+        <!-- custom vaste header in linker paneel -->
+        <div class="kaart-fixed-links-boven" *ngIf="isOptieActief('kaartLinksFixedHeader')">
+          <div class="custom-kaart-fixed-links-boven">
+            <div class="custom-element">
+              <span class="material-icons">lock</span>
+              <span class="custom-titel">Vaste header in linker paneel</span>
+            </div>
+          </div>
+        </div>
+        <!-- custom extra element in linker paneel -->
+        <div class="kaart-links boven" *ngIf="isOptieActief('kaartLinksExtraElements')">
+          <div class="custom-kaart-links-extra">
+            <div class="custom-element">
+              <span class="material-icons">bookmark</span>
+              <span class="custom-titel">Extra element in linker paneel (boven)</span>
+            </div>
+          </div>
+        </div>
+        <!-- custom extra element in linker paneel -->
+        <div class="kaart-links midden" *ngIf="isOptieActief('kaartLinksExtraElements')">
+          <div class="custom-kaart-links-extra">
+            <div class="custom-element">
+              <span class="material-icons">explore</span>
+              <span class="custom-titel">Extra element in linker paneel (midden)</span>
+            </div>
+          </div>
+        </div>
+        <!-- custom extra element in linker paneel -->
+        <div class="kaart-links onder" *ngIf="isOptieActief('kaartLinksExtraElements')">
+          <div class="custom-kaart-links-extra">
+            <div class="custom-element">
+              <span class="material-icons">favorite</span>
+              <span class="custom-titel">Extra element in linker paneel (onder)</span>
+            </div>
+          </div>
+        </div>
+        <!-- zoeker -->
+        <awv-kaart-zoeker *ngIf="isOptieActief('zoeker')"></awv-kaart-zoeker>
+        <!-- lagen -->
+        <awv-kaart-lagenkiezer *ngIf="isOptieActief('lagenkiezer')" [titels]="['Referentiepunten (WDB)', 'Referentiepunten (WDB) 2', 'features']"
+                               [headerTitel]="'Mijn legende en lagen'" [initieelDichtgeklapt]="true"
+                               [verwijderbareLagen]="isOptieActief('lagenVerwijderbaar')" [verplaatsbareLagen]="true" [stijlbareVectorlagen]="stijlbareVectorlagen"
+                               [toonLegende]="isOptieActief('legende')"></awv-kaart-lagenkiezer>
+        <awv-kaart-geoserver-laag [titel]="'Referentiepunten'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'">
+          <awv-legende-bolletje-item [beschrijving]="'Referentiepunten'" [kleur]="'orange'"></awv-legende-bolletje-item>
+        </awv-kaart-geoserver-laag>
+        <awv-kaart-geoserver-laag [titel]="'Referentiepunten 2'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'" [minZoom]="6">
+          <awv-legende-lijn-item [beschrijving]="'Referentiepunten 2 (lijn)'" [kleur]="'blue'"></awv-legende-lijn-item>
+          <awv-legende-lijn-item [beschrijving]="'Referentiepunten 2 (lijn achtergrond)'" [kleur]="'blue'" [achtergrondKleur]="'red'"></awv-legende-lijn-item>
+          <awv-legende-image-item [beschrijving]="'Referentiepunten 2 (image)'"
+                                  [image]="'data:image/png;base64,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'"></awv-legende-image-item>
+        </awv-kaart-geoserver-laag>
+        <awv-kaart-geoserver-laag [titel]="'Referentiepunten 3'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'" [minZoom]="6">
+          <awv-legende-lijn-item [beschrijving]="'Referentiepunten 3 (lijn)'" [kleur]="'yellow'"></awv-legende-lijn-item>
+          <awv-legende-polygoon-item [beschrijving]="'Referentiepunten 3 (polygoon)'" [kleur]="'green'"></awv-legende-polygoon-item>
+        </awv-kaart-geoserver-laag>
+        <awv-kaart-features-laag [titel]="'Mechelen allerlei'" [features]="mechelenFeatures" [style]="pinIcon" [minZoom]="4"
+                                 [zichtbaar]="true" [veldInfos]="mechelenVeldInfos"></awv-kaart-features-laag>
+        <awv-kaart-features-laag [titel]="'Vliegtuig'" [features]="installatie" [style]="pinIcon2" [minZoom]="3"
+                                 [zichtbaar]="false"></awv-kaart-features-laag>
+        <awv-kaart-ortho-laag [titel]="'Orthofoto\'s'" [laagNaam]="'ortho'" [groep]="'Voorgrond.Laag'" [zichtbaar]="false"></awv-kaart-ortho-laag>
+        <!-- achtergrondlagen -->
+        <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+        <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"
+                                  *ngIf="isOptieActief('achtergrond')">
+                                  <awv-legende-lijn-item [beschrijving]="'Referentiepunten 2 (lijn achtergrond)'" [kleur]="'blue'" [achtergrondKleur]="'red'"></awv-legende-lijn-item>
+        </awv-kaart-tilecache-laag>
+        <awv-kaart-wmts-laag [titel]="'GRB'" [laagNaam]="'grb_bsk'" [urls]="['https://tile.informatievlaanderen.be/ws/raadpleegdiensten/wmts']"
+                             [extent]="[ 9928, 66928, 272072, 329072 ]" [origin]="[ 9928, 329072 ]"
+                             [matrixSet]="'BPL72VL'" [matrixIds]="[ '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15' ]"
+                             *ngIf="isOptieActief('achtergrond')"></awv-kaart-wmts-laag>
+        <awv-kaart-ortho-laag [titel]="'Orthofoto\'s'" [laagNaam]="'ortho'" *ngIf="isOptieActief('achtergrond')"></awv-kaart-ortho-laag>
+        <awv-kaart-blanco-laag [titel]="'Leeg'" *ngIf="isOptieActief('achtergrond')"></awv-kaart-blanco-laag>
+        <awv-kaart-knop-achtergrondlaag-kiezer *ngIf="isOptieActief('achtergrond')"></awv-kaart-knop-achtergrondlaag-kiezer>
+        <!-- kaart widgets-->
+        <awv-kaart-streetview *ngIf="isOptieActief('streetview')"></awv-kaart-streetview>
+        <awv-meet-knop [toonInfoBoodschap]="isOptieActief('metenToon')" [meerdereGeometrieen]="isOptieActief('metenMeerdere')" *ngIf="isOptieActief('meten')"></awv-meet-knop>
+        <awv-kaart-zoomknoppen *ngIf="isOptieActief('zoomknoppen')"></awv-kaart-zoomknoppen>
+        <awv-bevraag-kaart *ngIf="isOptieActief('bevraagkaart')"></awv-bevraag-kaart>
+        <!-- kaartinfo -->
+        <awv-kaart-copyright *ngIf="isOptieActief('copyright')"></awv-kaart-copyright>
+        <awv-kaart-voorwaarden *ngIf="isOptieActief('voorwaarden')" [titel]="voorwaarden"></awv-kaart-voorwaarden>
+        <awv-kaart-schaal *ngIf="isOptieActief('schaal')"></awv-kaart-schaal>
+      </awv-kaart-classic>
+      <div class="sub-content onder-kaart opties">
+        <div *ngFor="let key of objectKeys(mogelijkeOpties)"
+             [ngClass]="{ 'niet-actief': !mogelijkeOpties[key].value, 'actief': mogelijkeOpties[key].value,
+                          'optie-divider': mogelijkeOpties[key].divider, 'optie': !mogelijkeOpties[key].divider} ">
+          <div *ngIf="mogelijkeOpties[key].divider" class="divider-label">
+            {{ mogelijkeOpties[key].label }}
+          </div>
+          <label *ngIf="!mogelijkeOpties[key].divider">
+            <input type="checkbox" [checked]="mogelijkeOpties[key].value" (change)="toggleOptieActief(key)">
+            {{ mogelijkeOpties[key].label }}
+          </label>
+        </div>
+        <div class="optie">
+          <button (click)="veranderVoorwaarden()">Andere voorwaarden</button>
+        </div>
+      </div>
+    </div>
+    <div class="sub-content inputs">
+      <form>
+        Center coordinaat (lambert): <input #center type="text"> <button (click)="onZetCenterManueel(center.value)">Zet</button>
+      </form>
+    </div>
+  </awv-test-sectie>
+
+  <!-- voorbeelden -->
+  <awv-test-sectie sectieId="voorbeelden" sectieTitel="Voorbeelden" [bevatSubSecties]="true" #voorbeeldenSectie>
+
+    <div [style.display]="voorbeeldenSectie.sectieZichtbaar ? 'block' : 'none'">
+
+      <awv-test-sectie sectieId="orthophotos" sectieTitel="Orthophotos" [subSectie]="true" #orthophotosSectie
+                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && orthophotosSectie.sectieZichtbaar">
+        <div *ngIf="orthophotosSectie.sectieZichtbaar" [@enterAnimation]>
+          <awv-kaart-classic class="qa-kaart" [naam]="'qa-kaart'">
+            <awv-kaart-ortho-laag [titel]="'Ortho'" [groep]="'Voorgrond.Laag'"></awv-kaart-ortho-laag>
+            <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+            <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
+          </awv-kaart-classic>
+        </div>
+      </awv-test-sectie>
+
+      <awv-test-sectie sectieId="districten" sectieTitel="Districten" [subSectie]="true" #districtenSectie
+                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && districtenSectie.sectieZichtbaar">
+        <div *ngIf="districtenSectie.sectieZichtbaar" [@enterAnimation]>
+          <awv-kaart-classic [naam]="'districten'">
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
+            <awv-kaart-vector-laag [titel]="'Districten'"
+                                   [source]="districtSource"
+                                   [style]="districtStyle"
+                                   [minZoom]="2"></awv-kaart-vector-laag>
+            <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+            <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
+          </awv-kaart-classic>
+        </div>
+      </awv-test-sectie>
+
+      <awv-test-sectie sectieId="ingezoomd" sectieTitel="Ingezoomd" [subSectie]="true" #ingezoomdSectie
+                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && ingezoomdSectie.sectieZichtbaar">
+        <div *ngIf="ingezoomdSectie.sectieZichtbaar" [@enterAnimation]>
+          <awv-kaart-classic [naam]="'ingezoomd'" [breedte]="600" [hoogte]="600" [zoom]="6" [middelpunt]="installatieCoordinaat">
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+            <awv-kaart-features-laag [features]="installatie" [titel]="'features'" [style]="pinIcon" [minZoom]="2"></awv-kaart-features-laag>
+            <awv-kaart-schaal></awv-kaart-schaal>
+            <awv-kaart-knop-volledig-scherm></awv-kaart-knop-volledig-scherm>
+          </awv-kaart-classic>
+          <div class="onder-kaart">
+            Geselecteerd:<span *ngFor="let feature of geselecteerdeFeatures">ID: {{ feature.get('id') }}</span>
+          </div>
+        </div>
+      </awv-test-sectie>
+
+      <awv-test-sectie sectieId="dynamische-features" sectieTitel="Dynamische features" [subSectie]="true" #dynamischeFeatures
+                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && dynamischeFeatures.sectieZichtbaar">
+        <div *ngIf="dynamischeFeatures.sectieZichtbaar" [@enterAnimation]>
+          <awv-kaart-classic [naam]="'dynamische-features'" [breedte]="1200" [hoogte]="600" [zoom]="6" [middelpunt]="installatieCoordinaat">
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+            <awv-kaart-features-laag [features]="installaties" [titel]="'features'" [minZoom]="2"></awv-kaart-features-laag>
+            <awv-kaart-schaal></awv-kaart-schaal>
+            <awv-kaart-knop-volledig-scherm></awv-kaart-knop-volledig-scherm>
+          </awv-kaart-classic>
+        </div>
+      </awv-test-sectie>
+
+      <awv-test-sectie sectieId="straatkolken" sectieTitel="Straatkolken" [subSectie]="true" #straatkolkenSectie
+                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && straatkolkenSectie.sectieZichtbaar">
+        <div *ngIf="straatkolkenSectie.sectieZichtbaar" [@enterAnimation]>
+          <awv-kaart-classic [naam]="'straatkolken'">
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
+            <awv-kaart-nosqlfs-laag [titel]="'Straatkolken'" [url]="'https://apps-dev.mow.vlaanderen.be/geolatte-nosqlfs'"
+                                    [database]="'featureserver'" [collection]="'straatkolken'" [style]="kolkStyle"
+                                    [minZoom]="9"></awv-kaart-nosqlfs-laag>
+            <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+            <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
+          </awv-kaart-classic>
+        </div>
+      </awv-test-sectie>
+
+      <awv-test-sectie sectieId="fietspaden" sectieTitel="Fietspaden" [subSectie]="true" #fietspadenSectie
+                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && fietspadenSectie.sectieZichtbaar">
+        <div *ngIf="fietspadenSectie.sectieZichtbaar" [@enterAnimation]>
+          <awv-kaart-classic [naam]="'fietspaden'" (zichtbareFeatures)="onZichtbareFeatures($event)">
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+            <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'https://apps-dev.mow.vlaanderen.be/geolatte-nosqlfs'"
+                                    [database]="'featureserver'" [collection]="'fietspaden'" [styleFunction]="fietspadStyle" [offsetveld]="'zijderijbaan'"
+                                    [minZoom]="9" [refreshTrigger]="fietspadenRefresh$"></awv-kaart-nosqlfs-laag>
+            <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+            <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
+          </awv-kaart-classic>
+          <button (click)="onRefreshFietspadenClicked()">Ververs</button>
+        </div>
+      </awv-test-sectie>
+
+      <awv-test-sectie sectieId="verkeersborden" sectieTitel="Verkeersboden" [subSectie]="true" #verkeersbordenSectie
+                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && verkeersbordenSectie.sectieZichtbaar">
+        <div *ngIf="verkeersbordenSectie.sectieZichtbaar" [@enterAnimation]>
+          <awv-kaart-classic [naam]="'verkeersborden'" (zichtbareFeatures)="onZichtbareFeatures($event)"
+                             [zoom]="10" [selectieModus]="'single'" [middelpunt]="verkeersbordenCoordinaat" [hoogte]="1200">
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+            <awv-kaart-nosqlfs-laag [titel]="'Verkeersborden'" [url]="'https://apps-dev.mow.vlaanderen.be/geolatte-nosqlfs'"
+                                    [database]="'featureserver'" [collection]="'verkeersborden'"
+                                    [styleFunction]="verkeersbordenStyleFunction"
+                                    [selectieStyle]="verkeersbordenSelectieStyleFunction"
+                                    [minZoom]="9"
+                                    [view]="'aanzicht'"></awv-kaart-nosqlfs-laag>
+            <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+            <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
+          </awv-kaart-classic>
+        </div>
+      </awv-test-sectie>
+
+      <awv-test-sectie sectieId="fietspaden-met-offsets" sectieTitel="Fietspaden met offsets" [subSectie]="true" #fietspadenMetOffsetsSectie
+                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && fietspadenMetOffsetsSectie.sectieZichtbaar">
+        <div *ngIf="fietspadenMetOffsetsSectie.sectieZichtbaar" [@enterAnimation]>
+          <awv-kaart-classic [naam]="'offsets'"
+                             #selectie (geselecteerdeFeaturesChange)="featuresGeselecteerd($event)"
+                             [selectieModus]="'single'"
+                             (zichtbareFeatures)="onZichtbareFeatures($event)">
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+            <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'https://apps-dev.mow.vlaanderen.be/geolatte-nosqlfs'"
+                                    [database]="'featureserver'" [collection]="'fietspaden'"
+                                    [styleFunction]="fietspadStyleMetOffset" [selectieStyle]="fietspadSelectieStyleMetOffset"
+                                    [minZoom]="7"></awv-kaart-nosqlfs-laag>
+            <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+            <awv-bevraag-kaart></awv-bevraag-kaart>
+            <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
+          </awv-kaart-classic>
+        </div>
+      </awv-test-sectie>
+
+
+      <awv-test-sectie sectieId="buiten-kaart" sectieTitel="Toon features buiten de kaart" [subSectie]="true" #buitenKaartSectie
+                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && buitenKaartSectie.sectieZichtbaar">
+        <div *ngIf="buitenKaartSectie.sectieZichtbaar" [@enterAnimation]>
+          <awv-kaart-classic [naam]="'featuresApi'"
+                             (zichtbareFeatures)="onFietspadsegmentenZichtbaar($event)"
+                             [geselecteerdeFeatures]="geselecteerdeFietspadsegmenten"
+                             (geselecteerdeFeaturesChange)="onFietspadsegmentViaKaartSelectie($event)"
+                             [selectieModus]="'multipleKlik'">
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+            <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
+            <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'https://apps-dev.mow.vlaanderen.be/geolatte-nosqlfs'"
+                                    [database]="'featureserver'" [collection]="'fietspaden'"
+                                    [styleFunction]="fietspadStyleMetOffset" [selectieStyle]="fietspadSelectieStyleMetOffset"
+                                    [minZoom]="7"></awv-kaart-nosqlfs-laag>
+            <awv-kaart-schaal></awv-kaart-schaal>
+          </awv-kaart-classic>
+          <div class="onder-kaart">
+            <h4>Zichtbare features</h4>
+            <table>
+              <thead>
+              <tr>
+                <th>Geselecteerd</th>
+                <th>id</th>
+                <th>type</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr *ngFor="let fss of fietspadsegmentenSelectie">
+                <td><input type="checkbox" [ngModel]="fss.geselecteerd" (ngModelChange)="onFietspadsegmentGeselecteerd(fss, $event)"></td>
+                <td>{{ fss.feature.get('id') }}</td>
+                <td>{{ fss.feature.get('properties')['typefietspad'] }}</td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </awv-test-sectie>
+
+
+      <awv-test-sectie sectieId="zoeken" sectieTitel="Zoeken" [subSectie]="true" #zoekenSectie 
+                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && zoekenSectie.sectieZichtbaar">
+        <div *ngIf="zoekenSectie.sectieZichtbaar" [@enterAnimation]>
+        <awv-kaart-classic [naam]="'zoeken'">
+          <awv-kaart-lagenkiezer [verwijderbareLagen]="true" [verplaatsbareLagen]="true" [toonLegende]="true"></awv-kaart-lagenkiezer>
+          <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+          <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+          <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
+          <awv-kaart-zoeker [zoekers]="demoZoekers"></awv-kaart-zoeker>
+        </awv-kaart-classic>
+      </div>
+      </awv-test-sectie>
+    </div>
+
+  </awv-test-sectie>
+
+  <!-- applicaties -->
+  <awv-test-sectie sectieId="applicaties" sectieTitel="Gebruik in applicaties" [bevatSubSecties]="true" #applicatiesSectie>
+
+    <div [style.display]="applicatiesSectie.sectieZichtbaar ? 'block' : 'none'">
+
+      <awv-test-sectie sectieId="geoloket2" sectieTitel="Geoloket2" [subSectie]="true" #geoloket2Sectie
+                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && geoloket2Sectie.sectieZichtbaar">
+        <div *ngIf="geoloket2Sectie.sectieZichtbaar" [@enterAnimation]>
+          <awv-kaart-classic [naam]="'geoloket2'" [mijnLocatieZoom]="10" (zoomChange)="onZoom($event)"
+                             (middelpuntChange)="onMiddelpunt($event)"
+                             (extentChange)="onExtent($event)">
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
+            <awv-kaart-blanco-laag [titel]="'Leeg'"></awv-kaart-blanco-laag>
+            <awv-kaart-zoeker></awv-kaart-zoeker>
+            <awv-kaart-lagenkiezer [titels]="['Referentiepunten (WDB)', 'Referentiepunten (WDB) 2', 'features']" [verwijderbareLagen]="true"
+                                   [verplaatsbareLagen]="true" [toonLegende]="true"></awv-kaart-lagenkiezer>
+            <awv-kaart-geoserver-laag [titel]="'Referentiepunten (WDB) 2'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'" [minZoom]="6">
+              <awv-legende-lijn-item [beschrijving]="'Referentiepunten (WDB) 2'" [kleur]="'blue'"></awv-legende-lijn-item>
+            </awv-kaart-geoserver-laag>
+            <awv-kaart-geoserver-laag [titel]="'Referentiepunten (WDB)'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'">
+              <awv-legende-lijn-item [beschrijving]="'Referentiepunten (WDB)'" [kleur]="'yellow'"></awv-legende-lijn-item>
+            </awv-kaart-geoserver-laag>
+            <awv-kaart-knop-achtergrondlaag-kiezer></awv-kaart-knop-achtergrondlaag-kiezer>
+            <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
+            <awv-kaart-streetview></awv-kaart-streetview>
+            <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+            <awv-meet-knop [toonInfoBoodschap]="true"></awv-meet-knop>
+            <awv-kaart-copyright></awv-kaart-copyright>
+            <awv-kaart-voorwaarden [titel]="voorwaarden"></awv-kaart-voorwaarden>
+            <awv-kaart-schaal></awv-kaart-schaal>
+            <div class="kaart-links">
+              <div class="custom-kaart-links-extra">
+                <div class="custom-element">
+                  <span class="material-icons">style</span>
+                  <span class="custom-titel">AWV Geoloket</span>
+                </div>
+              </div>
+            </div>
+          </awv-kaart-classic>
+        </div>
+      </awv-test-sectie>
+
+      <awv-test-sectie sectieId="av" sectieTitel="Adviezen & Vergunningen" [subSectie]="true" #avSectie
+                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && avSectie.sectieZichtbaar">
+        <div *ngIf="avSectie.sectieZichtbaar" [@enterAnimation]>
+          <awv-av-kaart></awv-av-kaart>
+        </div>
+      </awv-test-sectie>
+
+      <awv-test-sectie sectieId="patrimonium" sectieTitel="Patrimonium" [subSectie]="true" #patrimoniumSectie
+                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && patrimoniumSectie.sectieZichtbaar">
+        <div *ngIf="patrimoniumSectie.sectieZichtbaar" [@enterAnimation]>
+          <awv-pat-kaart></awv-pat-kaart>
+        </div>
+      </awv-test-sectie>
+
+      <awv-test-sectie sectieId="vtc-loket" sectieTitel="VTC-loket" [subSectie]="true" #vtcLoketSectie
+                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && vtcLoketSectie.sectieZichtbaar">
+        <div *ngIf="vtcLoketSectie.sectieZichtbaar">
+          <span>TODO: GRB-laag + minimale widgets</span>
+        </div>
+      </awv-test-sectie>
+
+    </div>
+
+  </awv-test-sectie>
+</div>

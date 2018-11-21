@@ -9,6 +9,7 @@ EXIT_STATUS=0 # standaard gaan we uit van een feilloze werking
 echo "run e2e"
 cd $BASEDIR || exit
 npm run pretest
+npm run build
 npm run e2e || EXIT_STATUS=$?
 
 echo "Exit status na het runnen van de testen is " $EXIT_STATUS

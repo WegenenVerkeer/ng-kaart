@@ -1,0 +1,52 @@
+@import "_awv-colors.scss";
+
+$kaart-primary-text-color: rgba(black, 0.87);
+$kaart-secondary-text-color: rgba(black, 0.60);
+$kaart-tertiary-text-color: rgba(black, 0.38);
+
+$kaart-primary-color: $awv-primary-2;
+$kaart-accent-color: $awv-primary-1;
+$kaart-warn-color: #D32F2F;
+
+$kaart-icon-button: rgba(black, 0.60);
+$kaart-icon-button-disabled: rgba(black, 0.38);
+$kaart-icon-button-active: $kaart-primary-color;
+$kaart-icon-button-hover: rgba(black, 0.87);
+
+.kaart-widget {
+  box-shadow: 0 3px 1px -2px rgba(0, 0, 0, .2), 0 2px 2px 0 rgba(0, 0, 0, .14), 0 1px 5px 0 rgba(0, 0, 0, .12);
+  pointer-events: initial;
+  background-color: white;
+  border-radius: 2px;
+}
+
+.divider {
+  flex-grow: 1;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0px;
+  height: 1px;
+  background-color: $awv-secondary-d3;
+}
+
+:host ::ng-deep .mat-icon-button[disabled] {
+  color: $kaart-icon-button-disabled;
+}
+
+:host ::ng-deep .mat-icon-button {
+  color: $kaart-icon-button;
+}
+
+:host ::ng-deep .mat-icon-button:hover {
+  color: $kaart-icon-button-hover;
+}
+
+@mixin mat-icon-size($size: 24px) {
+  font-size: $size;
+  height: $size;
+  width: $size;
+}
+
+.warning {
+  color: $kaart-warn-color;
+}

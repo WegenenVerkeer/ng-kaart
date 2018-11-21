@@ -7,7 +7,7 @@ echo "$NAAM rollen naar ${VERSION}..."
 cd ${BASEDIR}
 npm version ${VERSION}
 
-cd ${BASEDIR}/src/lib
+cd ${BASEDIR}/projects/ng-kaart
 npm version ${VERSION}
 
 echo "done"

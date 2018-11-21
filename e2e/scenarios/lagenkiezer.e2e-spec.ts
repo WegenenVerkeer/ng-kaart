@@ -37,7 +37,7 @@ function inspecteerLagenKiezer(): LagenKiezer {
     aanwezig,
     openGeklapt,
     dichtGeklapt,
-    lagenKiezer.element(by.tagName("mat-tab-group")).isDisplayed(),
+    legendeLagenVak.isDisplayed(),
     legendeLagenTitel.getText(),
     legendeLagenBody(0).getText(),
     legendeItems.count(),
