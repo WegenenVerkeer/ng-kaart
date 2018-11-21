@@ -208,7 +208,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
       this.dispatch(prt.VeranderExtentCmd(this.extent));
     }
     if (this.middelpunt) {
-      this.dispatch(prt.VeranderMiddelpuntCmd(this.middelpunt));
+      this.dispatch(prt.VeranderMiddelpuntCmd(this.middelpunt, none));
     }
     if (this.breedte || this.hoogte) {
       this.dispatch(prt.VeranderViewportCmd([this.breedte, this.hoogte]));
@@ -223,22 +223,8 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
 
   ngOnChanges(changes: SimpleChanges) {
     const dispatch: (cmd: prt.Command<TypedRecord>) => void = cmd => this.dispatch(cmd);
-    forChangedValue(
-      changes,
-      "zoom",
-      pipe(
-        zoom => prt.VeranderZoomCmd(zoom, logOnlyWrapper),
-        dispatch
-      )
-    );
-    forChangedValue(
-      changes,
-      "middelpunt",
-      pipe(
-        prt.VeranderMiddelpuntCmd,
-        dispatch
-      )
-    );
+    forChangedValue(changes, "zoom", zoom => this.dispatch(prt.VeranderZoomCmd(zoom, logOnlyWrapper)));
+    forChangedValue(changes, "middelpunt", middelpunt => prt.VeranderMiddelpuntCmd(middelpunt, none));
     forChangedValue(
       changes,
       "extent",

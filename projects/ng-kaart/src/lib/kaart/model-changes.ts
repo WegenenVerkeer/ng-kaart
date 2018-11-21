@@ -25,6 +25,11 @@ export interface UiElementSelectie {
   readonly aan: boolean;
 }
 
+export interface DragInfo {
+  readonly pixel: ol.Pixel;
+  readonly coordinate: ol.Coordinate;
+}
+
 /**
  * Dit is een verzameling van subjects waarmee de reducer wijzingen kan laten weten aan de child components.
  * Dit is isomorf aan het zetten van de overeenkomstige attributen op het model en die laten volgen. Het probleem daarbij
@@ -46,6 +51,7 @@ export interface ModelChanger {
   readonly laagLocationInfoServicesOpTitelSubj: rx.BehaviorSubject<Map<string, LaagLocationInfoService>>;
   readonly laagstijlaanpassingStateSubj: rx.Subject<LaagstijlaanpassingState>;
   readonly laagstijlGezetSubj: rx.Subject<ke.ToegevoegdeVectorLaag>;
+  readonly dragInfoSubj: rx.Subject<DragInfo>;
 }
 
 // Hieronder wordt een paar keer BehaviourSubject gebruikt. Dat is equivalent met, maar beknopter dan, een startWith + shareReplay
@@ -67,7 +73,8 @@ export const ModelChanger: () => ModelChanger = () => ({
   zoekresultaatselectieSubj: new rx.Subject<ZoekResultaat>(),
   laagLocationInfoServicesOpTitelSubj: new rx.BehaviorSubject(Map()),
   laagstijlaanpassingStateSubj: new rx.BehaviorSubject(GeenLaagstijlaanpassing),
-  laagstijlGezetSubj: new rx.Subject<ke.ToegevoegdeVectorLaag>()
+  laagstijlGezetSubj: new rx.Subject<ke.ToegevoegdeVectorLaag>(),
+  dragInfoSubj: new rx.Subject<DragInfo>()
 });
 
 export interface ModelChanges {
@@ -88,6 +95,7 @@ export interface ModelChanges {
   readonly laagLocationInfoServicesOpTitel$: rx.Observable<Map<string, LaagLocationInfoService>>;
   readonly laagstijlaanpassingState$: rx.Observable<LaagstijlaanpassingState>;
   readonly laagstijlGezet$: rx.Observable<ke.ToegevoegdeVectorLaag>;
+  readonly dragInfo$: rx.Observable<DragInfo>;
 }
 
 const viewinstellingen = (olmap: ol.Map) => ({
@@ -139,6 +147,14 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     debounceTime(50), // Deze is om de map hierna niet te veel werk te geven
     map(() => viewinstellingen(model.map)),
     shareReplay(1)
+  );
+
+  const dragInfo$ = observableFromOlEvents<ol.MapBrowserEvent>(model.map, "pointerdrag").pipe(
+    debounceTime(100),
+    map(event => ({
+      pixel: event.pixel,
+      coordinate: event.coordinate
+    }))
   );
 
   const lagenOpGroep$ = changer.lagenOpGroepSubj.map(s => s!.asObservable()).toMap();
@@ -221,6 +237,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     zoekresultaatselectie$: changer.zoekresultaatselectieSubj.asObservable(),
     laagLocationInfoServicesOpTitel$: changer.laagLocationInfoServicesOpTitelSubj.asObservable(),
     laagstijlaanpassingState$: changer.laagstijlaanpassingStateSubj.asObservable(),
-    laagstijlGezet$: changer.laagstijlGezetSubj.asObservable()
+    laagstijlGezet$: changer.laagstijlGezetSubj.asObservable(),
+    dragInfo$: dragInfo$
   };
 };

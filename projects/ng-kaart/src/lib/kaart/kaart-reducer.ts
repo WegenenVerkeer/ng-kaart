@@ -3,8 +3,8 @@ import { Endomorphism, Function1, Function2, identity, pipe } from "fp-ts/lib/fu
 import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
 import * as validation from "fp-ts/lib/Validation";
 import { List } from "immutable";
-import * as ol from "openlayers";
 import { olx } from "openlayers";
+import * as ol from "openlayers";
 import { Subscription } from "rxjs";
 import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
@@ -596,7 +596,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function veranderMiddelpuntCmd(cmnd: prt.VeranderMiddelpuntCmd<Msg>): ModelWithResult<Msg> {
-      model.map.getView().setCenter(cmnd.coordinate);
+      model.map.getView().animate({
+        center: cmnd.coordinate,
+        duration: cmnd.animationDuration.getOrElse(0)
+      });
       return ModelWithResult(model);
     }
 
