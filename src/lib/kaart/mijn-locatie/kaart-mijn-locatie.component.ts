@@ -48,7 +48,7 @@ const locatieStijlFunctie: Function1<number, ol.FeatureStyleFunction> = accuracy
   console.log(accuracy);
   return resolution => {
     const accuracyInPixels = accuracy / resolution;
-    const radius = Math.max(accuracyInPixels, 12);
+    const radius = Math.max(accuracyInPixels, 12); // nauwkeurigheid cirkel toch nog tonen zelfs indien ver uitgezoomd
     return [
       new ol.style.Style({
         zIndex: 2,
