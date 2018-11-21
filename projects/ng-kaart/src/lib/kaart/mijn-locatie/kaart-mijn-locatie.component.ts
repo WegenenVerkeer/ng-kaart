@@ -5,11 +5,9 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import { List, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { Subject } from "rxjs";
 import { debounceTime, distinctUntilChanged, filter, map, switchMap, take } from "rxjs/operators";
 
 import { flatten } from "../../util/operators";
-import { VeldInfo } from "../kaart-elementen";
 import * as ke from "../kaart-elementen";
 import { actieveModusGezetWrapper, KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-messages";
 import { KaartModusComponent } from "../kaart-modus-component";
@@ -31,21 +29,15 @@ interface Resultaat {
 
 const Resultaat: Function3<number, number, Position, Resultaat> = (zoom, doel, positie) => ({ zoom: zoom, doel: doel, positie: positie });
 
-const pasLocatieFeatureAan: Function4<ol.Feature, ol.Coordinate, number, number, Option<ol.Feature>> = (
-  feature,
-  coordinate,
-  zoom,
-  accuracy
-) => {
+const pasLocatieFeatureAan: Function4<ol.Feature, ol.Coordinate, number, number, ol.Feature> = (feature, coordinate, zoom, accuracy) => {
   feature.setGeometry(new ol.geom.Point(coordinate));
   zetStijl(feature, zoom, accuracy);
-  return some(feature);
+  return feature;
 };
 
 const zetStijl: Function3<ol.Feature, number, number, void> = (feature, zoom, accuracy) => feature.setStyle(locatieStijlFunctie(accuracy));
 
 const locatieStijlFunctie: Function1<number, ol.FeatureStyleFunction> = accuracy => {
-  console.log(accuracy);
   return resolution => {
     const accuracyInPixels = accuracy / resolution;
     const radius = Math.max(accuracyInPixels, 12); // nauwkeurigheid cirkel toch nog tonen zelfs indien ver uitgezoomd
@@ -54,10 +46,10 @@ const locatieStijlFunctie: Function1<number, ol.FeatureStyleFunction> = accuracy
         zIndex: 2,
         image: new ol.style.Circle({
           fill: new ol.style.Fill({
-            color: "#4285F4"
+            color: "rgba(66, 133, 244, 1.0)"
           }),
           stroke: new ol.style.Stroke({
-            color: "#FFFFFF",
+            color: "rgba(255, 255, 255, 1.0)",
             width: 2
           }),
           radius: 6
@@ -67,10 +59,10 @@ const locatieStijlFunctie: Function1<number, ol.FeatureStyleFunction> = accuracy
         zIndex: 1,
         image: new ol.style.Circle({
           fill: new ol.style.Fill({
-            color: [65, 105, 225, 0.15]
+            color: "rgba(65, 105, 225, 0.15)"
           }),
           stroke: new ol.style.Stroke({
-            color: [65, 105, 225, 0.5],
+            color: "rgba(65, 105, 225, 0.5)",
             width: 1
           }),
           radius: radius
@@ -88,8 +80,8 @@ const locatieStijlFunctie: Function1<number, ol.FeatureStyleFunction> = accuracy
 export class KaartMijnLocatieComponent extends KaartModusComponent implements OnInit, AfterViewInit {
   private viewinstellingen$: rx.Observable<Viewinstellingen> = rx.empty();
   private zoomdoelSetting$: rx.Observable<Option<number>> = rx.empty();
-  private activeerSubj: Subject<boolean> = new Subject<boolean>();
-  private locatieSubj: Subject<Position> = new Subject<Position>();
+  private activeerSubj: rx.Subject<boolean> = new rx.Subject<boolean>();
+  private locatieSubj: rx.Subject<Position> = new rx.Subject<Position>();
 
   enabled$: rx.Observable<boolean> = rx.of(true);
 
@@ -249,7 +241,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     this.dispatch(prt.VeranderMiddelpuntCmd(coordinate, some(TrackingInterval)));
 
     this.mijnLocatie = this.mijnLocatie
-      .chain(feature => pasLocatieFeatureAan(feature, coordinate, zoom, position.coords.accuracy))
+      .map(feature => pasLocatieFeatureAan(feature, coordinate, zoom, position.coords.accuracy))
       .orElse(() => {
         if (zoom <= 8) {
           // We zitten nu op een te laag zoomniveau, dus gaan we eerst inzoomen.
@@ -272,7 +264,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
       hover: false,
       minZoom: 2,
       maxZoom: 15,
-      velden: OrderedMap<string, VeldInfo>(),
+      velden: OrderedMap<string, ke.VeldInfo>(),
       offsetveld: none,
       verwijderd: false
     };

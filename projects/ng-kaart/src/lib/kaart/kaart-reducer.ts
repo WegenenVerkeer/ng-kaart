@@ -1,7 +1,6 @@
 import * as array from "fp-ts/lib/Array";
 import { Endomorphism, Function1, Function2, identity, pipe } from "fp-ts/lib/function";
 import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
-import { fromPredicate as optFromPredicate } from "fp-ts/lib/Option";
 import * as validation from "fp-ts/lib/Validation";
 import { List } from "immutable";
 import { olx } from "openlayers";
@@ -597,16 +596,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function veranderMiddelpuntCmd(cmnd: prt.VeranderMiddelpuntCmd<Msg>): ModelWithResult<Msg> {
-      cmnd.animationDuration.chain(duration => optFromPredicate((n: number) => n > 0)(duration)).foldL(
-        () => model.map.getView().setCenter(cmnd.coordinate),
-        animationDuration => {
-          model.map.getView().animate({
-            center: cmnd.coordinate,
-            duration: animationDuration
-          });
-        }
-      );
-
+      model.map.getView().animate({
+        center: cmnd.coordinate,
+        duration: cmnd.animationDuration.getOrElse(0)
+      });
       return ModelWithResult(model);
     }
 
