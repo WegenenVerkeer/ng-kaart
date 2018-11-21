@@ -1,5 +1,6 @@
 <div *ngIf="enabled$ | async" class="kaart-widget mijn-locatie">
-  <button #locateBtn mat-icon-button matTooltip="Ga naar mijn huidige locatie" matTooltipPosition="left">
-    <mat-icon aria-label="mijn locatie">my_location</mat-icon>
+  <button #locateBtn mat-icon-button (click)="toggleLocatieTracking()"
+          [matTooltip]="isActief ? 'Stop locatie tracking' : 'Start locatie tracking'" matTooltipPosition="left">
+    <mat-icon [class.actief]="isActief" aria-label="Mijn locatie">my_location</mat-icon>
   </button>
 </div>

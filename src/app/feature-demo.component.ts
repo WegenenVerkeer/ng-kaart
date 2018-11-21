@@ -435,7 +435,7 @@ export class FeatureDemoComponent {
 
   getMijnLocatieZoom(): string {
     if (this.mogelijkeOpties["mijnlocatie"].value) {
-      return "8";
+      return "10";
     } else {
       return null;
     }
