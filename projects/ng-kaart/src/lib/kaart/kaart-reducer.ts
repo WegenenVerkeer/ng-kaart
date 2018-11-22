@@ -612,6 +612,19 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
+    function veranderRotatieCmd(cmnd: prt.VeranderRotatieCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        success(cmnd.rotatie).map(rotatie => {
+          model.map.getView().animate({
+            rotation: rotatie,
+            duration: cmnd.animationDuration.getOrElse(0)
+          });
+          return ModelAndEmptyResult(model);
+        })
+      );
+    }
+
     function veranderExtentCmd(cmnd: prt.VeranderExtentCmd): ModelWithResult<Msg> {
       model.map.getView().fit(cmnd.extent);
       return ModelWithResult(model);
@@ -1359,6 +1372,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return veranderMiddelpuntCmd(cmd);
       case "VeranderZoom":
         return veranderZoomniveauCmd(cmd);
+      case "VeranderRotatie":
+        return veranderRotatieCmd(cmd);
       case "VeranderExtent":
         return veranderExtentCmd(cmd);
       case "VeranderViewport":

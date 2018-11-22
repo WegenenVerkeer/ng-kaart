@@ -187,6 +187,7 @@ export interface VeranderExtentCmd {
 export interface VeranderRotatieCmd<Msg extends KaartMsg> {
   readonly type: "VeranderRotatie";
   readonly rotatie: number;
+  readonly animationDuration: Option<number>;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -503,7 +504,10 @@ export function ZetStijlSpecVoorLaagCmd<Msg extends KaartMsg>(
   return { type: "ZetStijlSpecVoorLaag", stijlSpec: stijlSpec, legende: legende, titel: titel, wrapper: wrapper };
 }
 
-export function VeranderMiddelpuntCmd<Msg extends KaartMsg>(coordinate: ol.Coordinate, animationDuration: Option<number>): VeranderMiddelpuntCmd<Msg> {
+export function VeranderMiddelpuntCmd<Msg extends KaartMsg>(
+  coordinate: ol.Coordinate,
+  animationDuration: Option<number>
+): VeranderMiddelpuntCmd<Msg> {
   return { type: "VeranderMiddelpunt", coordinate: coordinate, animationDuration: animationDuration };
 }
 
@@ -511,8 +515,12 @@ export function VeranderZoomCmd<Msg extends KaartMsg>(zoom: number, wrapper: Bar
   return { type: "VeranderZoom", zoom: zoom, wrapper: wrapper };
 }
 
-export function VeranderRotatieCmd<Msg extends KaartMsg>(rotatie: number, wrapper: BareValidationWrapper<Msg>): VeranderRotatieCmd<Msg> {
-  return { type: "VeranderRotatie", rotatie: rotatie, wrapper: wrapper };
+export function VeranderRotatieCmd<Msg extends KaartMsg>(
+  rotatie: number,
+  animationDuration: Option<number>,
+  wrapper: BareValidationWrapper<Msg>
+): VeranderRotatieCmd<Msg> {
+  return { type: "VeranderRotatie", rotatie: rotatie, animationDuration: animationDuration, wrapper: wrapper };
 }
 
 export function VeranderExtentCmd<Msg extends KaartMsg>(extent: ol.Extent): VeranderExtentCmd {
