@@ -188,7 +188,6 @@ export interface VeranderRotatieCmd<Msg extends KaartMsg> {
   readonly type: "VeranderRotatie";
   readonly rotatie: number;
   readonly animationDuration: Option<number>;
-  readonly wrapper: BareValidationWrapper<Msg>;
 }
 
 export interface VeranderViewportCmd {
@@ -517,10 +516,9 @@ export function VeranderZoomCmd<Msg extends KaartMsg>(zoom: number, wrapper: Bar
 
 export function VeranderRotatieCmd<Msg extends KaartMsg>(
   rotatie: number,
-  animationDuration: Option<number>,
-  wrapper: BareValidationWrapper<Msg>
+  animationDuration: Option<number>
 ): VeranderRotatieCmd<Msg> {
-  return { type: "VeranderRotatie", rotatie: rotatie, animationDuration: animationDuration, wrapper: wrapper };
+  return { type: "VeranderRotatie", rotatie: rotatie, animationDuration: animationDuration };
 }
 
 export function VeranderExtentCmd<Msg extends KaartMsg>(extent: ol.Extent): VeranderExtentCmd {

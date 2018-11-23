@@ -613,16 +613,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function veranderRotatieCmd(cmnd: prt.VeranderRotatieCmd<Msg>): ModelWithResult<Msg> {
-      return toModelWithValueResult(
-        cmnd.wrapper,
-        success(cmnd.rotatie).map(rotatie => {
-          model.map.getView().animate({
-            rotation: rotatie,
-            duration: cmnd.animationDuration.getOrElse(0)
-          });
-          return ModelAndEmptyResult(model);
-        })
-      );
+      model.map.getView().animate({
+        rotation: cmnd.rotatie,
+        duration: cmnd.animationDuration.getOrElse(0)
+      });
+      return ModelWithResult(model);
     }
 
     function veranderExtentCmd(cmnd: prt.VeranderExtentCmd): ModelWithResult<Msg> {

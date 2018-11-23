@@ -50,7 +50,7 @@ export class KaartRotatieComponent extends KaartChildComponentBase implements On
   }
 
   roteerNaarNoord() {
-    this.dispatch(prt.VeranderRotatieCmd(0, some(250), kaartLogOnlyWrapper));
+    this.dispatch(prt.VeranderRotatieCmd(0, some(250)));
     this.clickBtnSubj.next(false);
   }
 }
