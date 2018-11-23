@@ -514,10 +514,7 @@ export function VeranderZoomCmd<Msg extends KaartMsg>(zoom: number, wrapper: Bar
   return { type: "VeranderZoom", zoom: zoom, wrapper: wrapper };
 }
 
-export function VeranderRotatieCmd<Msg extends KaartMsg>(
-  rotatie: number,
-  animationDuration: Option<number>
-): VeranderRotatieCmd<Msg> {
+export function VeranderRotatieCmd<Msg extends KaartMsg>(rotatie: number, animationDuration: Option<number>): VeranderRotatieCmd<Msg> {
   return { type: "VeranderRotatie", rotatie: rotatie, animationDuration: animationDuration };
 }
 
