@@ -40,6 +40,7 @@ import { KaartLoadingComponent } from "./loading/kaart-loading.component";
 import { KaartMetenComponent } from "./meten/kaart-meten.component";
 import { KaartMijnLocatieComponent } from "./mijn-locatie/kaart-mijn-locatie.component";
 import { KaartOpenStreetViewComponent } from "./open-street-view/kaart-open-street-view.component";
+import { KaartRotatieComponent } from "./rotatie/kaart-rotatie.component";
 import { KaartSchaalComponent } from "./schaal/kaart-schaal.component";
 import { StijleditorModule } from "./stijleditor/index";
 import { KaartTekenLaagComponent } from "./tekenen/kaart-teken-laag.component";
@@ -66,7 +67,8 @@ const components: any[] = [
   KaartTekenComponent,
   KaartTekenLaagComponent,
   KaartVoorwaardenComponent,
-  KaartZoomComponent
+  KaartZoomComponent,
+  KaartRotatieComponent
 ];
 
 // Weersta de drang om deze variabele in een andere module te plaatsen, want dat geeft problemen met gebruik in AOT app.

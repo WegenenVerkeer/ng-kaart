@@ -1,13 +1,14 @@
 import { Inject, Injectable, InjectionToken } from "@angular/core";
 import { MatIconRegistry } from "@angular/material";
 import { DomSanitizer } from "@angular/platform-browser";
-import { Map } from "immutable";
 import * as ol from "openlayers";
+
+import { encodeAsSvgUrl } from "../util/url";
 
 import { ZOEKER_CFG, ZoekerConfigData } from "./config/zoeker-config";
 import { ZoekerConfigGoogleWdbConfig } from "./config/zoeker-config-google-wdb.config";
 import { ZoekerConfigLocatorServicesConfig } from "./config/zoeker-config-locator-services.config";
-import { IconDescription, ZoekResultaat } from "./zoeker";
+import { IconDescription } from "./zoeker";
 
 export const ZOEKER_REPRESENTATIE = new InjectionToken<AbstractRepresentatieService>("ZoekerRepresentatie");
 
@@ -67,10 +68,6 @@ export class DefaultRepresentatieService implements AbstractRepresentatieService
     private matIconRegistry: MatIconRegistry,
     private readonly sanitizer: DomSanitizer
   ) {
-    function maakDataUrl(pin: string): string {
-      return "data:image/svg+xml;utf8," + encodeURIComponent(pin);
-    }
-
     function vervangKleur(pin: string, kleur: ol.Color): string {
       function vullFillIn(nodes: NodeListOf<SVGGraphicsElement>, fillKleur: string) {
         for (let i = 0; i < nodes.length; i++) {
@@ -115,10 +112,10 @@ export class DefaultRepresentatieService implements AbstractRepresentatieService
     this.locatieServicesConfig = new ZoekerConfigLocatorServicesConfig(zoekerConfigData.locatorServices);
     this.googleLocatieZoekerConfig = new ZoekerConfigGoogleWdbConfig(zoekerConfigData.googleWdb);
 
-    this.matIconRegistry.addSvgIcon(crabSvgNaam, this.sanitizer.bypassSecurityTrustResourceUrl(maakDataUrl(crabMarker)));
-    this.matIconRegistry.addSvgIcon(googleSvgNaam, this.sanitizer.bypassSecurityTrustResourceUrl(maakDataUrl(googleMarker)));
-    this.matIconRegistry.addSvgIcon(wdbSvgNaam, this.sanitizer.bypassSecurityTrustResourceUrl(maakDataUrl(wdbMarker)));
-    this.matIconRegistry.addSvgIcon(perceelSvgNaam, this.sanitizer.bypassSecurityTrustResourceUrl(maakDataUrl(perceelMarker)));
+    this.matIconRegistry.addSvgIcon(crabSvgNaam, this.sanitizer.bypassSecurityTrustResourceUrl(encodeAsSvgUrl(crabMarker)));
+    this.matIconRegistry.addSvgIcon(googleSvgNaam, this.sanitizer.bypassSecurityTrustResourceUrl(encodeAsSvgUrl(googleMarker)));
+    this.matIconRegistry.addSvgIcon(wdbSvgNaam, this.sanitizer.bypassSecurityTrustResourceUrl(encodeAsSvgUrl(wdbMarker)));
+    this.matIconRegistry.addSvgIcon(perceelSvgNaam, this.sanitizer.bypassSecurityTrustResourceUrl(encodeAsSvgUrl(perceelMarker)));
 
     this.googleStyle = maakStyle(this.googleLocatieZoekerConfig.kleur, googleMarker);
     this.googleHighlightStyle = maakStyle(this.googleLocatieZoekerConfig.kleur, googleHighlightMarker);

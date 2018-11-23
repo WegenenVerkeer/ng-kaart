@@ -96,6 +96,7 @@ export interface ModelChanges {
   readonly laagstijlaanpassingState$: rx.Observable<LaagstijlaanpassingState>;
   readonly laagstijlGezet$: rx.Observable<ke.ToegevoegdeVectorLaag>;
   readonly dragInfo$: rx.Observable<DragInfo>;
+  readonly rotatie$: rx.Observable<number>; // een niet gedebouncede variant van "viewinstellingen$.rotatie" voor live rotatie
 }
 
 const viewinstellingen = (olmap: ol.Map) => ({
@@ -104,7 +105,8 @@ const viewinstellingen = (olmap: ol.Map) => ({
   maxZoom: olmap.getView().getMaxZoom(),
   resolution: olmap.getView().getResolution(),
   extent: olmap.getView().calculateExtent(olmap.getSize()),
-  center: olmap.getView().getCenter()
+  center: olmap.getView().getCenter(),
+  rotation: olmap.getView().getRotation()
 });
 
 export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges = (model, changer) => {
@@ -141,9 +143,14 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     distinctUntilChanged()
     // geen debounce, OL genereert een wel enkele tussenliggende zooms tijden het pinch/zoomen, maar ze komen ver genoeg uiteen.
   );
+
+  const rotation$ = observableFromOlEvents<ol.ObjectEvent>(model.map.getView(), "change:rotation").pipe(
+    map(event => event.target.get(event.key) as number)
+  );
+
   const viewportSize$ = changer.viewPortSizeSubj.pipe(debounceTime(100));
 
-  const viewinstellingen$ = rx.merge(viewportSize$, resize$, center$, numlayers$, zoom$).pipe(
+  const viewinstellingen$ = rx.merge(viewportSize$, resize$, center$, numlayers$, zoom$, rotation$).pipe(
     debounceTime(50), // Deze is om de map hierna niet te veel werk te geven
     map(() => viewinstellingen(model.map)),
     shareReplay(1)
@@ -238,6 +245,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     laagLocationInfoServicesOpTitel$: changer.laagLocationInfoServicesOpTitelSubj.asObservable(),
     laagstijlaanpassingState$: changer.laagstijlaanpassingStateSubj.asObservable(),
     laagstijlGezet$: changer.laagstijlGezetSubj.asObservable(),
-    dragInfo$: dragInfo$
+    dragInfo$: dragInfo$,
+    rotatie$: rotation$
   };
 };
