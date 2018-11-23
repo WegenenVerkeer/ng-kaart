@@ -254,6 +254,7 @@ export class FeatureDemoComponent {
     optieDivider1: { divider: true, value: true, label: "Algemene opties" },
     standaardinteracties: { value: true, label: "Pannen en zoomen" },
     bevraagkaart: { value: true, label: "Bevraag kaart" },
+    rotatie: { value: true, label: "Kaart roteren (alt+shift+drag op desktop)" },
     // --- Linkerpaneel
     optieDivider2: { divider: true, value: true, label: "Opties linker paneel" },
     zoeker: { value: true, label: "Zoeker" },
