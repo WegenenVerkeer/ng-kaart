@@ -2,7 +2,8 @@ import { none, some } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { delay } from "rxjs/operators";
 
-import { nietOndersteund, rangeArray, Zoeker, ZoekInput, Zoekopdracht, ZoekResultaten, Zoektype } from "@wegenenverkeer/ng-kaart";
+import { rangeArray } from "../../projects/ng-kaart/src/lib/util/range";
+import { nietOndersteund, Zoeker, ZoekInput, Zoekopdracht, ZoekResultaten, Zoektype } from "../../projects/ng-kaart/src/lib/zoeker";
 
 /**
  * Een Zoeker die vrij random resultaten genereert.

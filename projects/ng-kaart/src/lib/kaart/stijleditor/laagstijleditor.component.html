@@ -1,4 +1,4 @@
-<div class="awv-kaart-laagstijleditor kaart-widget" *ngIf="zichtbaar$ | async" #editor>
+  <div class="awv-kaart-laagstijleditor kaart-widget" *ngIf="zichtbaar$ | async" #editor>
   <div class="awv-kaart-laagstijleditor-header">
     <button class="awv-kaart-laagstijleditor-header-logo" mat-icon-button><mat-icon>format_color_fill</mat-icon></button>
     <div class="awv-kaart-laagstijleditor-header-title">
@@ -12,11 +12,11 @@
       <div class="awv-kaart-laagstijleditor-body">
         <div class="awv-kaart-laagstijleditor-body-properties">
           <div class="awv-kaart-laagstijleditor-body-properties-name">Kleur</div>
-          <div class="awv-kaart-laagstijleditor-body-properties-value awv-kaart-laagstijleditor-body-properties-colour" (click)="onAction('openKleineKleurkiezer')">
-            <div class="awv-kaart-laagstijleditor-body-properties-colour-title">{{titel$ | async}}</div>
-            <div class="awv-kaart-laagstijleditor-body-properties-colour-value" *ngIf="uniformeLaagkleur$ | async as kleur">
-              <div class="circle-small" [style.background]="kleur.code" [matTooltip]="kleur.naam">
-                <span *ngIf="!kleur.gevonden">!</span>
+          <div class="awv-kaart-laagstijleditor-body-properties-value awv-kaart-laagstijleditor-body-properties-colour" *ngFor="let ctx of laagkleuren$ | async" (click)="onAction('wijzigKleur', ctx)">
+            <div class="awv-kaart-laagstijleditor-body-properties-colour-title">{{ctx.label}}</div>
+            <div class="awv-kaart-laagstijleditor-body-properties-colour-value">
+              <div class="circle-small" [style.background]="ctx.kleur.code" [matTooltip]="ctx.kleur.naam">
+                <span *ngIf="!ctx.afgeleid">!</span>
               </div>
             </div>
           </div>
@@ -32,11 +32,11 @@
               <mat-option *ngFor="let veld of klasseVelden$ | async" [value]="veld.naam">{{veld.label}}</mat-option>
             </mat-select>
           </mat-form-field>
-          <div class="awv-kaart-laagstijleditor-body-properties-value awv-kaart-laagstijleditor-body-properties-colour" *ngFor="let veldKleurWaarde of veldKleurWaarden$ | async" (click)="onAction('openKleineKleurkiezer', veldKleurWaarde)">
-            <div class="awv-kaart-laagstijleditor-body-properties-colour-title">{{veldKleurWaarde.waarde}}</div>
+          <div class="awv-kaart-laagstijleditor-body-properties-value awv-kaart-laagstijleditor-body-properties-colour" *ngFor="let ctx of laagkleuren$ | async" (click)="onAction('wijzigKleur', ctx)">
+            <div class="awv-kaart-laagstijleditor-body-properties-colour-title">{{ctx.label}}</div>
             <div class="awv-kaart-laagstijleditor-body-properties-colour-value">
-              <div class="circle-small" [style.background]="veldKleurWaarde.kleur.code" [matTooltip]="veldKleurWaarde.kleur.naam">
-                <span *ngIf="!veldKleurWaarde.kleur.gevonden">!</span>
+              <div class="circle-small" [style.background]="ctx.kleur.code" [matTooltip]="ctx.kleur.naam">
+                <span *ngIf="!ctx.afgeleid">!</span>
               </div>
             </div>
           </div>
@@ -59,9 +59,9 @@
       <button class="awv-kaart-laagstijleditor-chooser-header-openclose" mat-icon-button (click)="onAction('sluitKleurkiezer')" [matTooltip]="'Sluit'"><mat-icon>close</mat-icon></button>
     </div>
     <div class="awv-kaart-laagstijleditor-chooser-body" *ngIf="paletKleuren$ | async as paletKleuren">
-      <div class="awv-kaart-laagstijleditor-chooser-body-colorbox" *ngFor="let kleur of paletKleuren" (click)="onAction('kiesLaagkleur', kleur)" [matTooltip]="kleur.naam">
-        <div class="circle-medium" [style.background]="kleur.code">
-          <span *ngIf="kleur.gekozen"><mat-icon>check</mat-icon></span>
+      <div class="awv-kaart-laagstijleditor-chooser-body-colorbox" *ngFor="let ctx of paletKleuren" (click)="onAction('kiesKleur', ctx)" [matTooltip]="ctx.kleur.naam">
+        <div class="circle-medium" [style.background]="ctx.kleur.code">
+          <span *ngIf="ctx.gekozen"><mat-icon>check</mat-icon></span>
         </div>
       </div>
       <div class="awv-kaart-laagstijleditor-chooser-body-colorbox awv-kaart-laagstijleditor-chooser-body-more" (click)="onAction('openGroteKleurkiezer')" *ngIf="kleinPaletZichtbaar$ | async" [matTooltip]="'Toon meer kleuren'">
