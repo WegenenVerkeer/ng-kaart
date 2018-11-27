@@ -104,7 +104,7 @@
                          (voorgrondHoogLagen)="onVoorgrondHoogLagen($event)"
                          (voorgrondLaagLagen)="onVoorgrondLaagLagen($event)">
         <!-- algemeen -->
-        <awv-kaart-standaard-interacties *ngIf="isOptieActief('standaardinteracties')" [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
+        <awv-kaart-standaard-interacties  *ngIf="isOptieActief('standaardinteracties')" [focusVoorZoom]="true" [rotatie]="isOptieActief('rotatie')"></awv-kaart-standaard-interacties>
         <!-- custom vaste header in linker paneel -->
         <div class="kaart-fixed-links-boven" *ngIf="isOptieActief('kaartLinksFixedHeader')">
           <div class="custom-kaart-fixed-links-boven">
@@ -401,7 +401,7 @@
       <awv-test-sectie sectieId="geoloket2" sectieTitel="Geoloket2" [subSectie]="true" #geoloket2Sectie
                        [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && geoloket2Sectie.sectieZichtbaar">
         <div *ngIf="geoloket2Sectie.sectieZichtbaar" [@enterAnimation]>
-          <awv-kaart-classic [naam]="'geoloket2'" [mijnLocatieZoom]="8" (zoomChange)="onZoom($event)"
+          <awv-kaart-classic [naam]="'geoloket2'" [mijnLocatieZoom]="10" (zoomChange)="onZoom($event)"
                              (middelpuntChange)="onMiddelpunt($event)"
                              (extentChange)="onExtent($event)">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>

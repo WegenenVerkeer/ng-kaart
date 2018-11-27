@@ -3,8 +3,8 @@ import { Endomorphism, Function1, Function2, identity, pipe } from "fp-ts/lib/fu
 import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
 import * as validation from "fp-ts/lib/Validation";
 import { List } from "immutable";
-import * as ol from "openlayers";
 import { olx } from "openlayers";
+import * as ol from "openlayers";
 import { Subscription } from "rxjs";
 import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
@@ -560,15 +560,14 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         cmnd.wrapper,
         fromPredicate(model.stdInteracties, l => l.isEmpty(), "De standaard interacties zijn al ingesteld").map(() => {
-          // We willen standaard geen rotate operaties.
           const stdInteracties: ol.interaction.Interaction[] = ol.interaction
             .defaults()
             .getArray()
             .filter(
               interaction =>
                 !(
-                  interaction instanceof ol.interaction.DragRotate ||
-                  interaction instanceof ol.interaction.PinchRotate ||
+                  (!cmnd.rotatie && interaction instanceof ol.interaction.DragRotate) ||
+                  (!cmnd.rotatie && interaction instanceof ol.interaction.PinchRotate) ||
                   interaction instanceof ol.interaction.MouseWheelZoom
                 ) // we willen zelf de opties op MouseWheelZoom zetten
             );
@@ -596,7 +595,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function veranderMiddelpuntCmd(cmnd: prt.VeranderMiddelpuntCmd<Msg>): ModelWithResult<Msg> {
-      model.map.getView().setCenter(cmnd.coordinate);
+      model.map.getView().animate({
+        center: cmnd.coordinate,
+        duration: cmnd.animationDuration.getOrElse(0)
+      });
       return ModelWithResult(model);
     }
 
@@ -608,6 +610,14 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return ModelAndEmptyResult(model);
         })
       );
+    }
+
+    function veranderRotatieCmd(cmnd: prt.VeranderRotatieCmd<Msg>): ModelWithResult<Msg> {
+      model.map.getView().animate({
+        rotation: cmnd.rotatie,
+        duration: cmnd.animationDuration.getOrElse(0)
+      });
+      return ModelWithResult(model);
     }
 
     function veranderExtentCmd(cmnd: prt.VeranderExtentCmd): ModelWithResult<Msg> {
@@ -1357,6 +1367,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return veranderMiddelpuntCmd(cmd);
       case "VeranderZoom":
         return veranderZoomniveauCmd(cmd);
+      case "VeranderRotatie":
+        return veranderRotatieCmd(cmd);
       case "VeranderExtent":
         return veranderExtentCmd(cmd);
       case "VeranderViewport":
