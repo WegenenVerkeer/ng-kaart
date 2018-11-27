@@ -23,7 +23,7 @@
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
-      
+
       .awv-kaart-laagstijleditor-header-title-main {
         font-size: 16px;
       }
@@ -148,12 +148,16 @@
     width: 16px;
     height: 16px;
     border-radius: 50%;
+    border: 1px solid #404040;
+    box-sizing: border-box;
     margin: auto;
   }
   .circle-medium {
     width: 26px;
     height: 26px;
     border-radius: 50%;
+    border: 1px solid #404040;
+    box-sizing: border-box;
     margin: auto;
   }
 }

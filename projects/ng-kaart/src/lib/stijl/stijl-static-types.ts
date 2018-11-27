@@ -145,6 +145,7 @@ export namespace Image {
 }
 
 export namespace FullStyle {
+  export const strokeOptional: Optional<FullStyle, StrokeStyle> = Optional.fromNullableProp("stroke");
   export const circleOptional: Optional<FullStyle, CircleStyle> = Optional.fromNullableProp("circle");
   export const iconOptional: Optional<FullStyle, IconStyle> = Optional.fromNullableProp("icon");
   export const regularShapeOptional: Optional<FullStyle, RegularShapeStyle> = Optional.fromNullableProp("regularShape");
@@ -156,6 +157,10 @@ export namespace Circle {
 
 export namespace Fill {
   export const colorLens: Lens<FillStyle, ColorType> = Lens.fromProp("color");
+}
+
+export namespace Stroke {
+  export const colorLens: Lens<StrokeStyle, ColorType> = Lens.fromProp("color");
 }
 
 export namespace Color {
