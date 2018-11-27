@@ -8,58 +8,50 @@ import { isObject } from "util";
 import * as clr from "../../stijl/colour";
 import { ReduceFunction, reducerFromLens } from "../../util/function";
 
-// Alle kleuren die dezelfde zijn als de effectief gezette kleur krijgen een gekozen veldje
-export interface KiesbareKleur extends clr.Kleur {
-  gekozen?: boolean; // Is deze kleur de geselecteerde kleur? Enkel voor gebruik in HTML
-}
-export const markeerKleur: Curried2<clr.Kleur, clr.Kleur[], KiesbareKleur[]> = doelkleur => kleuren =>
-  kleuren.map(kleur => (kleur.code === doelkleur.code ? { ...kleur, gekozen: true } : kleur));
+/////////////////
+// Typedefinities
+//
 
-// Op het niveau van een stijl is er geen clr.Kleur. We proberen dit af te leiden van kleurcodes in de stijl.
-// export interface AfgeleideKleur extends clr.Kleur {
-//   gevonden: boolean; // Duidt aan of de kleur herkend is. Enkel voor gebruik in HTML
-// }
-// export const gevonden: Function1<clr.Kleur, AfgeleideKleur> = kleur => ({ ...kleur, gevonden: true });
-// export const nietGevonden: AfgeleideKleur = {
-//   ...clr.rood,
-//   gevonden: false
-// };
-
-export interface VeldKleurWaarde {
+export interface VeldwaardeKleur {
   readonly waarde: string; // De waarde van een feature property
-  readonly kleur: clr.Kleur;
+  readonly kleur: clr.Kleur; // De kleur voor die waarde
 }
 
+// De high-level stijlen die exact uitdrukken wat de gebruiker kiest als instellingen voor de laag in de UI.
+// Om historische reden en ook omdat deze definities nogal variabel zijn naarmate er meer features toegevoegd worden,
+// is dit verschillend van wat er gepersisteerd en op lagere niveaus gebruikt wordt. Daar gebruiken we immers
+// AwvV0StyleSpec (persistentie) en StyleSelector (voor OL).
 export type LaagkleurInstellingen = UniformeKleur | KleurPerVeldwaarde;
 
 // De instellingen nodig om een uniforme stijl en legende te maken
 export interface UniformeKleur {
   readonly type: "uniform";
   readonly kleur: clr.Kleur;
-  readonly afgeleid: boolean;
+  readonly afgeleid: boolean; // wanneer de stijl afgeleid is van een StijlSpec
 }
 
 // De instellingen nodig om een stijl met voor elke waarde van een specifiek veld een stijl en legende te maken
 export interface KleurPerVeldwaarde {
   readonly type: "perVeldwaarde";
   readonly veldnaam: string;
-  readonly waardekleuren: VeldKleurWaarde[];
+  readonly waardekleuren: VeldwaardeKleur[];
   readonly terugvalkleur: clr.Kleur;
   readonly afgeleid: boolean;
 }
 
-export const isVeldKleurWaarde: Refinement<any, VeldKleurWaarde> = (vkw): vkw is VeldKleurWaarde =>
-  isObject(vkw) && vkw.hasOwnProperty("waarde") && vkw.hasOwnProperty("kleur");
+/////////////////
+// Basisoperaties
+//
 
-export namespace VeldKleurWaarde {
-  export const create: Function2<string, clr.Kleur, VeldKleurWaarde> = (waarde, kleur) => ({
+export namespace VeldwaardeKleur {
+  export const create: Function2<string, clr.Kleur, VeldwaardeKleur> = (waarde, kleur) => ({
     waarde: waarde,
     kleur: kleur
   });
-  export const waarde: Lens<VeldKleurWaarde, string> = Lens.fromProp("waarde");
-  export const kleur: Lens<VeldKleurWaarde, clr.Kleur> = Lens.fromProp("kleur");
+  export const waarde: Lens<VeldwaardeKleur, string> = Lens.fromProp("waarde");
+  export const kleur: Lens<VeldwaardeKleur, clr.Kleur> = Lens.fromProp("kleur");
 
-  export const setoid: Setoid<VeldKleurWaarde> = getRecordSetoid({
+  export const setoid: Setoid<VeldwaardeKleur> = getRecordSetoid({
     waarde: setoidString,
     kleur: clr.setoidKleurOpCode
   });
@@ -92,7 +84,7 @@ export namespace UniformeKleur {
 }
 
 export namespace KleurPerVeldwaarde {
-  export const create: Function4<boolean, string, VeldKleurWaarde[], clr.Kleur, KleurPerVeldwaarde> = (
+  export const create: Function4<boolean, string, VeldwaardeKleur[], clr.Kleur, KleurPerVeldwaarde> = (
     afgeleid,
     naam,
     waardekleuren,
@@ -105,9 +97,9 @@ export namespace KleurPerVeldwaarde {
     terugvalkleur: terugvalkleur
   });
 
-  export const createAfgeleid: Function3<string, VeldKleurWaarde[], clr.Kleur, KleurPerVeldwaarde> = (naam, waardekleuren, terugvalkleur) =>
+  export const createAfgeleid: Function3<string, VeldwaardeKleur[], clr.Kleur, KleurPerVeldwaarde> = (naam, waardekleuren, terugvalkleur) =>
     create(true, naam, waardekleuren, terugvalkleur);
-  export const createSynthetisch: Function3<string, VeldKleurWaarde[], clr.Kleur, KleurPerVeldwaarde> = (
+  export const createSynthetisch: Function3<string, VeldwaardeKleur[], clr.Kleur, KleurPerVeldwaarde> = (
     naam,
     waardekleuren,
     terugvalkleur
@@ -116,25 +108,27 @@ export namespace KleurPerVeldwaarde {
   export const setoid: Setoid<KleurPerVeldwaarde> = getRecordSetoid({
     afgeleid: setoidBoolean,
     veldnaam: setoidString,
-    waardekleuren: getArraySetoid(VeldKleurWaarde.setoid),
+    waardekleuren: getArraySetoid(VeldwaardeKleur.setoid),
     terugvalkleur: clr.setoidKleurOpCode
   });
 
-  const waardekleurenLens: Lens<KleurPerVeldwaarde, VeldKleurWaarde[]> = Lens.fromProp("waardekleuren");
+  const waardekleurenLens: Lens<KleurPerVeldwaarde, VeldwaardeKleur[]> = Lens.fromProp("waardekleuren");
   const terugvalKleurLens: Lens<KleurPerVeldwaarde, clr.Kleur> = Lens.fromProp("terugvalkleur");
 
-  const findVeldKleurWaardeByWaarde: Curried2<string, VeldKleurWaarde[], Option<VeldKleurWaarde>> = waarde => vkwn =>
+  const findVeldwaardeKleurByWaarde: Curried2<string, VeldwaardeKleur[], Option<VeldwaardeKleur>> = waarde => vkwn =>
     array.findFirst(vkwn, vkw => vkw.waarde === waarde);
 
-  const arrayAsMapOptional: Function1<string, Optional<VeldKleurWaarde[], VeldKleurWaarde>> = waarde =>
-    new Optional<VeldKleurWaarde[], VeldKleurWaarde>(findVeldKleurWaardeByWaarde(waarde), vkw => vkwn =>
-      findVeldKleurWaardeByWaarde(waarde)(vkwn).isSome() ? vkwn.map(vk => (vk.waarde === vkw.waarde ? vkw : vk)) : array.cons(vkw, vkwn)
+  const arrayAsMapOptional: Function1<string, Optional<VeldwaardeKleur[], VeldwaardeKleur>> = waarde =>
+    new Optional<VeldwaardeKleur[], VeldwaardeKleur>(
+      findVeldwaardeKleurByWaarde(waarde), // getter
+      vkw => vkwn =>
+        findVeldwaardeKleurByWaarde(waarde)(vkwn).isSome() ? vkwn.map(vk => (vk.waarde === vkw.waarde ? vkw : vk)) : array.cons(vkw, vkwn)
     );
 
   export const kleurVoorWaarde: Function1<string, Optional<KleurPerVeldwaarde, clr.Kleur>> = waarde =>
-    waardekleurenLens.composeOptional(arrayAsMapOptional(waarde).composeLens(VeldKleurWaarde.kleur));
+    waardekleurenLens.composeOptional(arrayAsMapOptional(waarde).composeLens(VeldwaardeKleur.kleur));
 
-  export const zetVeldkleurwaarde: ReduceFunction<KleurPerVeldwaarde, VeldKleurWaarde> = (kpv, overlayVkw) =>
+  export const zetVeldwaardeKleur: ReduceFunction<KleurPerVeldwaarde, VeldwaardeKleur> = (kpv, overlayVkw) =>
     waardekleurenLens.composeOptional(arrayAsMapOptional(overlayVkw.waarde)).set(overlayVkw)(kpv);
 
   export const zetTerugvalkleur: ReduceFunction<KleurPerVeldwaarde, clr.Kleur> = reducerFromLens(terugvalKleurLens);
