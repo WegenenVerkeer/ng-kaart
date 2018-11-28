@@ -1,5 +1,6 @@
+import { ToegevoegdeVectorLaag } from "@wegenenverkeer/ng-kaart/lib/kaart";
 import * as array from "fp-ts/lib/Array";
-import { Curried2, Function1, Function2, not, or, Predicate } from "fp-ts/lib/function";
+import { and, Curried2, Function1, Function2, not, or, pipe, Predicate } from "fp-ts/lib/function";
 import { fromNullable, fromPredicate, none, Option, some } from "fp-ts/lib/Option";
 import { setoidString } from "fp-ts/lib/Setoid";
 import { Optional } from "monocle-ts";
@@ -47,10 +48,10 @@ export const uniformeKleurToStijlSpec: Function1<UniformeKleur, ss.AwvV0StaticSt
 export const uniformeKleurToLegende: Curried2<string, UniformeKleur, Legende> = laagTitel => stijl =>
   Legende([LijnItem(laagTitel, clr.kleurcodeValue(stijl.kleur), none)]);
 
-const veldwaardeKleurToRule: Curried2<string, VeldwaardeKleur, sft.Rule> = veldnaam => vkw => ({
+const veldwaardeKleurToRule: Curried2<ke.VeldInfo, VeldwaardeKleur, sft.Rule> = veld => vkw => ({
   condition: {
     kind: "==",
-    left: { kind: "Property", type: "string", ref: veldnaam },
+    left: { kind: "Property", type: "string", ref: veld.naam },
     right: { kind: "Literal", value: vkw.waarde }
   },
   style: {
@@ -66,20 +67,20 @@ const terugvalkleurToRule: Function1<clr.Kleur, sft.Rule> = kleur => ({
 export const kleurPerVeldWaardeToStijlSpec: Function1<KleurPerVeldwaarde, ss.AwvV0DynamicStyleSpec> = kpv => ({
   type: "DynamicStyle",
   definition: {
-    rules: array.snoc(kpv.waardekleuren.map(veldwaardeKleurToRule(kpv.veldnaam)), terugvalkleurToRule(kpv.terugvalkleur))
+    rules: array.snoc(kpv.waardekleuren.map(veldwaardeKleurToRule(kpv.veld)), terugvalkleurToRule(kpv.terugvalkleur))
   }
 });
 
 export const kleurPerVeldwaardeToLegende: Function1<KleurPerVeldwaarde, Legende> = kpv =>
   Legende(
     array.snoc(
-      kpv.waardekleuren.map(vkw => LijnItem(`${kpv.veldnaam}: ${vkw.waarde}`, clr.kleurcodeValue(vkw.kleur), none)),
+      kpv.waardekleuren.map(vkw => LijnItem(`${kpv.veld.naam}: ${vkw.waarde}`, clr.kleurcodeValue(vkw.kleur), none)),
       LijnItem("Andere", clr.kleurcodeValue(kpv.terugvalkleur), none)
     )
   );
 
 // We gaan er van uit dat we de stijlen zelf gezet hebben in de UI. Dat wil zeggen dat we het kleurtje van het bolletje
-// uit de stijlspec  kunnen peuteren. Uiteraard houden we er rekening mee dat de stijl helemaal niet aan onze voorwaarden voldoet,
+// uit de stijlspec kunnen peuteren. Uiteraard houden we er rekening mee dat de stijl helemaal niet aan onze voorwaarden voldoet,
 // maar dan vallen we terug op de standaardinstellingen.
 // We moeten vrij diep in de hiërarchie klauteren om het gepaste attribuut te pakken te krijgen. Vandaar het gebruik van Lenses e.a.
 
@@ -160,9 +161,9 @@ const rulesToVeldnaam: Function1<sft.Rule[], Option<string>> = rules =>
     .filter(arrays.isSingleton) // alle regels moeten dezelfde veldnaam gebruiken
     .chain(array.head);
 
-const rulesToKleurPerVeldwaarde: Curried2<string, sft.Rule[], Option<KleurPerVeldwaarde>> = veldnaam => rules =>
-  rulesToVeldwaardeKleuren(veldnaam)(rules).chain(vkwn =>
-    rulesToTerugvalkleur(rules).map(terugvalkleur => KleurPerVeldwaarde.createAfgeleid(veldnaam, vkwn, terugvalkleur))
+const rulesToKleurPerVeld: Curried2<ke.VeldInfo, sft.Rule[], Option<KleurPerVeldwaarde>> = veld => rules =>
+  rulesToVeldwaardeKleuren(veld.naam)(rules).chain(vkwn =>
+    rulesToTerugvalkleur(rules).map(terugvalkleur => KleurPerVeldwaarde.createAfgeleid(veld, vkwn, terugvalkleur))
   );
 
 const standaardKleurenPerVeldwaarde: Function1<ke.VeldInfo, VeldwaardeKleur[]> = veldInfo =>
@@ -170,10 +171,8 @@ const standaardKleurenPerVeldwaarde: Function1<ke.VeldInfo, VeldwaardeKleur[]> =
 
 const standaardTerugvalKleur = clr.zachtgrijs;
 
-const standaardInstellingVoorVeldwaarde: Curried2<string, ke.VeldInfo, KleurPerVeldwaarde> = veldnaam => veldinfo =>
-  KleurPerVeldwaarde.createSynthetisch(veldnaam, standaardKleurenPerVeldwaarde(veldinfo), standaardTerugvalKleur);
-
-const terugvalKleurAlleen = KleurPerVeldwaarde.create(false, "", [], standaardTerugvalKleur);
+const standaardInstellingVoorVeldwaarde: Function1<ke.VeldInfo, KleurPerVeldwaarde> = veldinfo =>
+  KleurPerVeldwaarde.createSynthetisch(veldinfo, standaardKleurenPerVeldwaarde(veldinfo), standaardTerugvalKleur);
 
 export const uniformeKleurViaLaag: Function1<ke.ToegevoegdeVectorLaag, UniformeKleur> = laag =>
   gezetteLaagKleur(laag)
@@ -189,10 +188,29 @@ export const kleurveldnaamViaLaag: Function1<ke.ToegevoegdeVectorLaag, Option<st
     .getOption(laag)
     .chain(rulesToVeldnaam);
 
-export const kleurPerVeldwaardeViaLaagEnVeldnaam: Curried2<ke.ToegevoegdeVectorLaag, string, KleurPerVeldwaarde> = laag => veldnaam =>
-  dynamicStyleOptional
-    .composeLens(sft.rulesLens)
+export const kleurPerVeldwaardeViaLaagEnVeldnaam: Curried2<
+  ke.ToegevoegdeVectorLaag,
+  string,
+  Option<KleurPerVeldwaarde>
+> = laag => veldnaam =>
+  ke.ToegevoegdeVectorLaag.veldInfoOpNaamOptional(veldnaam)
     .getOption(laag)
-    .chain(rulesToKleurPerVeldwaarde(veldnaam)) // als wij de regels gegenereerd hebben of veel geluk hebben
-    .orElse(() => veldInfoViaLaagEnVeldnaam(laag, veldnaam).map(standaardInstellingVoorVeldwaarde(veldnaam))) // als het veld bestaat
-    .getOrElse(terugvalKleurAlleen); // we geven het op
+    .chain(
+      veld =>
+        dynamicStyleOptional
+          .composeLens(sft.rulesLens)
+          .getOption(laag)
+          .chain(rulesToKleurPerVeld(veld)) // als wij de regels gegenereerd hebben of veel geluk hebben
+          .orElse(() => veldInfoViaLaagEnVeldnaam(laag, veldnaam).map(() => standaardInstellingVoorVeldwaarde(veld))) // als veld bestaat
+    );
+
+export const veldenMetUniekeWaarden: Function1<ke.ToegevoegdeVectorLaag, ke.VeldInfo[]> = laag =>
+  laag.bron.velden
+    .valueSeq()
+    .filter(
+      pipe(
+        v => v.uniekeWaarden,
+        and(arrays.isArray, arrays.hasLengthBetween(1, 35))
+      )
+    )
+    .toArray();

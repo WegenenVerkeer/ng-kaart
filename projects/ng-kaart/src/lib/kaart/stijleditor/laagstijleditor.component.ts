@@ -33,7 +33,8 @@ import {
   kleurveldnaamViaLaag,
   uniformeKleurToLegende,
   uniformeKleurToStijlSpec,
-  uniformeKleurViaLaag
+  uniformeKleurViaLaag,
+  veldenMetUniekeWaarden
 } from "./stijl-manip";
 
 const uniformeStijlEnLegende: Curried2<ke.ToegevoegdeLaag, UniformeKleur, [AwvV0StyleSpec, Legende]> = laag =>
@@ -81,14 +82,12 @@ const uniformeKleurToTargetCtx: Curried2<ke.ToegevoegdeLaag, UniformeKleur, Kleu
 ];
 
 const kleurPerVeldwaardeToTargetCtx: Function1<KleurPerVeldwaarde, KleurWijzigTarget[]> = kpv =>
-  nonEmptyString(kpv.veldnaam) // We beschouwen een lege veldnaam als ongeldig. Beetje hackering
-    ? array.snoc(
-        kpv.waardekleuren.map(
-          wk => ({ kleur: wk.kleur, label: wk.waarde, afgeleid: kpv.afgeleid, veldwaarde: wk.waarde } as KleurWijzigTarget)
-        ),
-        { kleur: kpv.terugvalkleur, label: "Andere", afgeleid: kpv.afgeleid, terugval: {} }
-      )
-    : [];
+  array.snoc(
+    kpv.waardekleuren.map(
+      wk => ({ kleur: wk.kleur, label: wk.waarde, afgeleid: kpv.afgeleid, veldwaarde: wk.waarde } as KleurWijzigTarget)
+    ),
+    { kleur: kpv.terugvalkleur, label: "Andere", afgeleid: kpv.afgeleid, terugval: {} }
+  );
 
 interface ClickContext extends TargetCtx {
   kleur: clr.Kleur;
@@ -218,17 +217,6 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
     //////////////
     // Klassekleur
     //
-    const veldenMetUniekeWaarden: Function1<ke.ToegevoegdeVectorLaag, ke.VeldInfo[]> = laag =>
-      laag.bron.velden
-        .valueSeq()
-        .filter(
-          pipe(
-            v => v.uniekeWaarden,
-            and(isArray, hasLengthBetween(1, 35))
-          )
-        )
-        .toArray();
-
     this.klasseVelden$ = laag$.pipe(map(veldenMetUniekeWaarden));
     this.klasseVeldenNietBeschikbaar$ = this.klasseVelden$.pipe(map(array.isEmpty));
     this.klasseVeldenBeschikbaar$ = this.klasseVeldenNietBeschikbaar$.pipe(map(negate)); // Beter berekingen doen in component dan in UI
@@ -252,7 +240,7 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
 
     // De instelling zoals ze zijn wanneer we naar de laag schakelen en een veld selecteren
     const initieleKleurPerVeldwaarde$: rx.Observable<KleurPerVeldwaarde> = forEveryLaag(laag =>
-      veldnaam$.pipe(map(kleurPerVeldwaardeViaLaagEnVeldnaam(laag)))
+      veldnaam$.pipe(collectOption(kleurPerVeldwaardeViaLaagEnVeldnaam(laag)))
     );
 
     // klik op 1 van de veldwaarden
@@ -301,7 +289,7 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
       ),
       shareReplay(1)
     );
-    const grootPaletZichtbaar$ = this.kleinPaletZichtbaar$.pipe(map(z => !z));
+    const grootPaletZichtbaar$ = this.kleinPaletZichtbaar$.pipe(map(negate));
 
     // Zet het stijlmodel om naar een array van objecten die door de UI geïnterpreteerd kunnen worden
     this.laagkleuren$ = forEveryLaag(laag =>

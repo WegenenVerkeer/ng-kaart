@@ -3,10 +3,10 @@ import { Curried2, Function1, Function2, Function3, Function4, Refinement } from
 import { Option } from "fp-ts/lib/Option";
 import { getArraySetoid, getRecordSetoid, Setoid, setoidBoolean, setoidString } from "fp-ts/lib/Setoid";
 import { Lens, Optional } from "monocle-ts";
-import { isObject } from "util";
 
 import * as clr from "../../stijl/colour";
 import { ReduceFunction, reducerFromLens } from "../../util/function";
+import * as ke from "../kaart-elementen";
 
 /////////////////
 // Typedefinities
@@ -33,7 +33,7 @@ export interface UniformeKleur {
 // De instellingen nodig om een stijl met voor elke waarde van een specifiek veld een stijl en legende te maken
 export interface KleurPerVeldwaarde {
   readonly type: "perVeldwaarde";
-  readonly veldnaam: string;
+  readonly veld: ke.VeldInfo;
   readonly waardekleuren: VeldwaardeKleur[];
   readonly terugvalkleur: clr.Kleur;
   readonly afgeleid: boolean;
@@ -84,30 +84,33 @@ export namespace UniformeKleur {
 }
 
 export namespace KleurPerVeldwaarde {
-  export const create: Function4<boolean, string, VeldwaardeKleur[], clr.Kleur, KleurPerVeldwaarde> = (
+  export const create: Function4<boolean, ke.VeldInfo, VeldwaardeKleur[], clr.Kleur, KleurPerVeldwaarde> = (
     afgeleid,
-    naam,
+    veld,
     waardekleuren,
     terugvalkleur
   ) => ({
     type: "perVeldwaarde",
     afgeleid: afgeleid,
-    veldnaam: naam,
+    veld: veld,
     waardekleuren: waardekleuren,
     terugvalkleur: terugvalkleur
   });
 
-  export const createAfgeleid: Function3<string, VeldwaardeKleur[], clr.Kleur, KleurPerVeldwaarde> = (naam, waardekleuren, terugvalkleur) =>
-    create(true, naam, waardekleuren, terugvalkleur);
-  export const createSynthetisch: Function3<string, VeldwaardeKleur[], clr.Kleur, KleurPerVeldwaarde> = (
-    naam,
+  export const createAfgeleid: Function3<ke.VeldInfo, VeldwaardeKleur[], clr.Kleur, KleurPerVeldwaarde> = (
+    veld,
     waardekleuren,
     terugvalkleur
-  ) => create(false, naam, waardekleuren, terugvalkleur);
+  ) => create(true, veld, waardekleuren, terugvalkleur);
+  export const createSynthetisch: Function3<ke.VeldInfo, VeldwaardeKleur[], clr.Kleur, KleurPerVeldwaarde> = (
+    veld,
+    waardekleuren,
+    terugvalkleur
+  ) => create(false, veld, waardekleuren, terugvalkleur);
 
   export const setoid: Setoid<KleurPerVeldwaarde> = getRecordSetoid({
     afgeleid: setoidBoolean,
-    veldnaam: setoidString,
+    veld: ke.VeldInfo.setoidVeldOpNaam,
     waardekleuren: getArraySetoid(VeldwaardeKleur.setoid),
     terugvalkleur: clr.setoidKleurOpCode
   });
