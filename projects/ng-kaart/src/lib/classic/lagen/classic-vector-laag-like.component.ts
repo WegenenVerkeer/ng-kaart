@@ -15,7 +15,7 @@ import { ClassicLaagComponent } from "./classic-laag.component";
 
 export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponent {
   @Input()
-  stijlSpec?: ss.AwvV0StyleSpec = undefined; // heeft voorrang style
+  stijlSpec?: ss.AwvV0StyleSpec = undefined; // heeft voorrang op style
   @Input()
   style?: ol.style.Style = undefined; // heeft voorrang op styleFunction
   @Input()

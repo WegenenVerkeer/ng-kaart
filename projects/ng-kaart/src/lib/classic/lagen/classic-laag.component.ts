@@ -1,6 +1,5 @@
 import { AfterContentInit, ContentChildren, Input, NgZone, OnDestroy, OnInit, QueryList } from "@angular/core";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
-import { List } from "immutable";
 
 import { KaartComponentBase } from "../../kaart/kaart-component-base";
 import { Laag, Laaggroep } from "../../kaart/kaart-elementen";

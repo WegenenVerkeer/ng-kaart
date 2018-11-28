@@ -32,7 +32,11 @@ const enkelvoudigeKleurStijl: Function1<clr.Kleur, ss.AwvV0StaticStyleSpec> = kl
     circle: {
       radius: 5,
       fill: {
-        color: clr.kleurcodeValue(kleur)
+        color: clr.kleurcodeValue(clr.setOpacity(0.75)(kleur))
+      },
+      stroke: {
+        color: clr.kleurcodeValue(clr.donkergrijs),
+        width: 1
       }
     }
   }
@@ -79,11 +83,10 @@ export const kleurPerVeldwaardeToLegende: Function1<KleurPerVeldwaarde, Legende>
 // maar dan vallen we terug op de standaardinstellingen.
 // We moeten vrij diep in de hiërarchie klauteren om het gepaste attribuut te pakken te krijgen. Vandaar het gebruik van Lenses e.a.
 
-// Deze Optional peutert de kleur uit een statisch stijl
+// Deze Optional peutert de kleur uit een statisch stijl. We moeten een atribuut nemen dat de kleur bevat.
 const staticStyleKleurOptional: Optional<sst.AwvV0StaticStyle, clr.Kleur> = sst.fullStylePrism
-  .composeOptional(sst.FullStyle.circleOptional)
-  .compose(sst.Circle.fillOptional)
-  .composeLens(sst.Fill.colorLens)
+  .composeOptional(sst.FullStyle.strokeOptional)
+  .composeLens(sst.Stroke.colorLens)
   .compose(sst.Color.kleurOptional);
 
 // Deze Optional probeert een statische stijl uit een laag te halen
