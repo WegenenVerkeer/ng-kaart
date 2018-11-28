@@ -784,6 +784,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     const applySelectionColor: Endomorphism<ol.style.Style> = function(style: ol.style.Style): ol.style.Style {
+      // TODO ipv dit gepruts op het niveau van OL zou het veel makkelijker en veiliger zijn om met lenzen op een AwvV0StyleSpec te werken
       const selectionStrokeColor: ol.Color = [0, 153, 255, 1]; // TODO maak configureerbaar
       const selectionFillColor: ol.Color = [112, 198, 255, 0.7]; // TODO maak configureerbaar
       const selectionIconColor: ol.Color = [0, 51, 153, 0.7]; // TODO maak configureerbaar
@@ -799,8 +800,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         // getekende Point objecten ook inkleuren
         if (selectionStyle.getImage() instanceof ol.style.Circle) {
           const circle = selectionStyle.getImage() as ol.style.Circle;
-          circle.getStroke().setColor(selectionStrokeColor);
-          circle.getFill().setColor(selectionFillColor);
+          forEach(fromNullable(circle.getStroke()), stroke => stroke.setColor(selectionStrokeColor));
+          forEach(fromNullable(circle.getFill()), fill => fill.setColor(selectionFillColor));
           // volgende is nodig, anders heeft style aanpassing geen effect
           selectionStyle.setImage(
             new ol.style.Circle({
@@ -812,8 +813,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           );
         } else if (selectionStyle.getImage() instanceof ol.style.RegularShape) {
           const shape = selectionStyle.getImage() as ol.style.RegularShape;
-          shape.getStroke().setColor(selectionStrokeColor);
-          shape.getFill().setColor(selectionFillColor);
+          forEach(fromNullable(shape.getStroke()), stroke => stroke.setColor(selectionStrokeColor));
+          forEach(fromNullable(shape.getFill()), fill => fill.setColor(selectionFillColor));
           // volgende is nodig, anders heeft style aanpassing geen effect
           selectionStyle.setImage(
             new ol.style.RegularShape({

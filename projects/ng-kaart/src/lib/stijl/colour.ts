@@ -129,6 +129,7 @@ export const zwart: Kleur = toKleurUnsafe("zwart", "#000000");
 export const wit: Kleur = toKleurUnsafe("zwart", "#ffffff");
 
 export const onbekendGrijs: Kleur = toKleurUnsafe("onbekend", "#6d6d6d");
+export const donkergrijs: Kleur = toKleurUnsafe("donkergrijs", "#404040");
 const kastanje: Kleur = toKleurUnsafe("kastanje", " #800000"); // wordt veel gebruikt
 
 export const standaardKleuren = [
