@@ -1,7 +1,9 @@
-import { Function1 } from "fp-ts/lib/function";
+import { Function1, Function2, Refinement } from "fp-ts/lib/function";
 import { isSome, Option } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
-import { filter, map, skipUntil, switchMap } from "rxjs/operators";
+import { filter, map, mapTo, scan, skipUntil, switchMap } from "rxjs/operators";
+
+import { ReduceFunction } from "./function";
 
 export type Pipeable<A, B> = Function1<rx.Observable<A>, rx.Observable<B>>;
 
@@ -47,9 +49,13 @@ export const flatten: <A>(o: rx.Observable<Option<A>>) => rx.Observable<A> = <A>
 export interface TypedRecord {
   type: string;
 }
+function isOfType<A extends TypedRecord>(type: string): Refinement<TypedRecord, A> {
+  return (rec): rec is A => rec.type === type;
+}
 
-export const ofType = <Target extends TypedRecord>(type: string) => (o: rx.Observable<TypedRecord>) =>
-  o.pipe(filter(a => a.type === type)) as rx.Observable<Target>;
+export const fromRefinement: <A, B extends A>(_: Refinement<A, B>) => Pipeable<A, B> = refinement => obs => obs.pipe(filter(refinement));
+
+export const ofType: <Target extends TypedRecord>(_: string) => Pipeable<TypedRecord, Target> = type => fromRefinement(isOfType(type));
 
 /**
  * Zorgt er voor dat eventuele replaywaarden overgeslagen worden tot het moment dat deze functie aangeroepen wordt.
@@ -86,3 +92,46 @@ export const subSpy: (_: string) => <A>(_: rx.Observable<A>) => rx.Observable<A>
       }
     });
   });
+
+/**
+ * Een uitbreiding van de bestaande scan functie. In tegenstelling tot de ingeboude functie, neemt deze implementatie
+ * 2 observables (van een potentieel verschillend type) en 2 reductiefuncties en reduceert de begintoestand steeds
+ * door de overeenkomstige reducerfunctie uit te voeren wanneer 1 van de observables een waarde produceert.
+ * @param obsA Een producent van As
+ * @param obsB Een producent van Bs
+ * @param fa Een reducer van C en A
+ * @param fb Een reducer van C en B
+ * @param init De initiele waarde
+ */
+export function scan2<A, B, C>(
+  obsA: rx.Observable<A>,
+  obsB: rx.Observable<B>,
+  fa: ReduceFunction<C, A>,
+  fb: ReduceFunction<C, B>,
+  init: C
+): rx.Observable<C> {
+  type Tagged = TaggedA | TaggedB;
+  interface TaggedA {
+    value: A;
+    label: "A";
+  }
+  interface TaggedB {
+    value: B;
+    label: "B";
+  }
+  const TaggedA: Function1<A, TaggedA> = a => ({ value: a, label: "A" });
+  const TaggedB: Function1<B, TaggedB> = b => ({ value: b, label: "B" });
+  const TagA: Pipeable<A, TaggedA> = a$ => a$.pipe(map(TaggedA));
+  const TagB: Pipeable<B, TaggedB> = b$ => b$.pipe(map(TaggedB));
+
+  const accumulate: Function2<C, Tagged, C> = (c, tagged) => {
+    switch (tagged.label) {
+      case "A":
+        return fa(c, tagged.value);
+      case "B":
+        return fb(c, tagged.value);
+    }
+  };
+
+  return rx.merge(obsA.pipe(TagA), rx.merge(obsB.pipe(TagB))).pipe(scan(accumulate, init));
+}

@@ -165,6 +165,11 @@ export class FeatureDemoComponent {
         merk: "ACME"
       },
       geometry: new ol.geom.Polygon([[[157636, 190292], [157731, 190371], [157786, 190346], [157910, 190276], [157762, 190108]]])
+    }),
+    new ol.Feature({
+      id: 8,
+      properties: {},
+      geometry: new ol.geom.Circle([157821, 190530], 50)
     })
   ];
   mechelenVeldInfos: VeldInfo[] = [

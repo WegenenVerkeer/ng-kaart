@@ -1,4 +1,4 @@
-<div class="awv-kaart-laagstijleditor-chooser kaart-widget" *ngIf="kiezerZichtbaar$ | async" [ngStyle]="chooserStyle$ | async">
+<div class="awv-kaart-laagstijleditor-chooser kaart-widget" *ngIf="kiezerZichtbaar$ | async" [ngStyle]="kiezerStyle$ | async">
   <div class="awv-kaart-laagstijleditor-chooser-header">
     <div class="awv-kaart-laagstijleditor-chooser-header-main">Kies een kleur</div>
     <button class="awv-kaart-laagstijleditor-chooser-header-openclose" mat-icon-button (click)="onAction('sluitKleurkiezer')" [matTooltip]="'Sluit'"><mat-icon>close</mat-icon></button>

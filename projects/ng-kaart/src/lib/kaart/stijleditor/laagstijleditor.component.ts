@@ -2,13 +2,17 @@ import { ChangeDetectionStrategy, Component, ElementRef, NgZone, QueryList, View
 import { FormControl } from "@angular/forms";
 import { MatTabChangeEvent } from "@angular/material";
 import * as array from "fp-ts/lib/Array";
-import { Curried2, Function1, Function2, Lazy, tuple } from "fp-ts/lib/function";
+import { and, Curried2, Function1, Function2, Lazy, pipe, Predicate, Refinement, tuple } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
+import { setoidString } from "fp-ts/lib/Setoid";
 import * as rx from "rxjs";
-import { delay, filter, map, mapTo, sample, scan, share, shareReplay, startWith, switchMap } from "rxjs/operators";
+import { delay, filter, map, mapTo, sample, scan, shareReplay, startWith, switchMap } from "rxjs/operators";
 
 import * as clr from "../../stijl/colour";
-import { collectOption, forEvery, skipOlder } from "../../util/operators";
+import { forEach } from "../../util";
+import { hasLengthBetween, isArray } from "../../util/arrays";
+import { expand2 } from "../../util/function";
+import { collectOption, forEvery, scan2, skipOlder, subSpy } from "../../util/operators";
 import { nonEmptyString } from "../../util/string";
 import { negate } from "../../util/thruth";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
@@ -19,26 +23,26 @@ import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 import { AwvV0StyleSpec } from "../stijl-selector";
 
-import { AfgeleideKleur, gevonden, isVeldKleurWaarde, KiesbareKleur, markeerKleur, VeldKleurWaarde } from "./model";
+import { KleurPerVeldwaarde, UniformeKleur, VeldwaardeKleur } from "./model";
 import { kleurenpaletGroot, kleurenpaletKlein } from "./palet";
 import { isAanpassingBezig, isAanpassingNietBezig, LaagstijlAanpassend } from "./state";
 import {
-  enkelvoudigeKleurLegende,
-  enkelvoudigeKleurStijl,
-  uniformeKleurViaLaag,
-  veldKleurWaardenAsStijlfunctie,
-  veldKleurWaardenLegende,
-  veldKleurWaardenViaLaagEnVeldnaam
+  kleurPerVeldwaardeToLegende,
+  kleurPerVeldWaardeToStijlSpec,
+  kleurPerVeldwaardeViaLaagEnVeldnaam,
+  kleurveldnaamViaLaag,
+  uniformeKleurToLegende,
+  uniformeKleurToStijlSpec,
+  uniformeKleurViaLaag
 } from "./stijl-manip";
 
-const uniformeStijlEnLegende: Curried2<ke.ToegevoegdeLaag, clr.Kleur, [AwvV0StyleSpec, Legende]> = laag => kleur => [
-  enkelvoudigeKleurStijl(kleur),
-  enkelvoudigeKleurLegende(laag.titel, kleur)
-];
-const opVeldWaardeStijlEnLegende: Curried2<string, VeldKleurWaarde[], [AwvV0StyleSpec, Legende]> = veldnaam => vkwn => [
-  veldKleurWaardenAsStijlfunctie(veldnaam)(vkwn),
-  veldKleurWaardenLegende(veldnaam)(vkwn)
-];
+const uniformeStijlEnLegende: Curried2<ke.ToegevoegdeLaag, UniformeKleur, [AwvV0StyleSpec, Legende]> = laag =>
+  expand2(uniformeKleurToStijlSpec, uniformeKleurToLegende(laag.titel));
+
+const opVeldWaardeStijlEnLegende: Function1<KleurPerVeldwaarde, [AwvV0StyleSpec, Legende]> = expand2(
+  kleurPerVeldWaardeToStijlSpec,
+  kleurPerVeldwaardeToLegende
+);
 
 const stijlCmdVoorLaag: Curried2<
   ke.ToegevoegdeVectorLaag,
@@ -50,6 +54,65 @@ const enum StijlMode {
   Uniform,
   OpVeldWaarde
 }
+
+// We willen in de UI zo weinig mogelijk weten over wat er nu juist aangepast moet worden. Het kan de kleur
+// van alle features, die voor een waarde van een featureveld of de terugvalkleur zijn. Om aan de kant van
+// de component toch te weten waarover het gaat (en tegelijkertijd uniform te kunnen werken) laten we de UI
+// het context object dat hij krijgt om te renderen gewoon terug geven wanneer er geklikt wordt.
+// Er zijn 3 fases:
+// 1. tonen van de huidige waarde in een lijst (van 1 element in geval van uniforme kleur)
+// 2. tonen van de kleurkiezer
+// 3. kiezen van een kleur in de kleurkiezer
+// De context wordt telkens doorgegeven
+interface TargetCtx {
+  uniform?: any;
+  veldwaarde?: string;
+  terugval?: any;
+}
+
+interface KleurWijzigTarget extends TargetCtx {
+  kleur: clr.Kleur;
+  label: string;
+  afgeleid: boolean;
+}
+
+const uniformeKleurToTargetCtx: Curried2<ke.ToegevoegdeLaag, UniformeKleur, KleurWijzigTarget[]> = laag => uk => [
+  { kleur: uk.kleur, label: laag.titel, afgeleid: uk.afgeleid, uniform: {} }
+];
+
+const kleurPerVeldwaardeToTargetCtx: Function1<KleurPerVeldwaarde, KleurWijzigTarget[]> = kpv =>
+  nonEmptyString(kpv.veldnaam) // We beschouwen een lege veldnaam als ongeldig. Beetje hackering
+    ? array.snoc(
+        kpv.waardekleuren.map(
+          wk => ({ kleur: wk.kleur, label: wk.waarde, afgeleid: kpv.afgeleid, veldwaarde: wk.waarde } as KleurWijzigTarget)
+        ),
+        { kleur: kpv.terugvalkleur, label: "Andere", afgeleid: kpv.afgeleid, terugval: {} }
+      )
+    : [];
+
+interface ClickContext extends TargetCtx {
+  kleur: clr.Kleur;
+  gekozen: boolean;
+}
+
+// 3 Interfaces voor de clicks die een kleur kiezen in de kleurkiezer
+interface UniformeClick {
+  kleur: clr.Kleur;
+}
+
+interface VeldwaardeClick {
+  kleur: clr.Kleur;
+  veldwaarde: string;
+}
+
+interface TerugvalClick {
+  kleur: clr.Kleur;
+}
+
+const isKleurWijzigClick: Refinement<object, KleurWijzigTarget> = (uc): uc is KleurWijzigTarget => uc.hasOwnProperty("kleur");
+const isUniformeSelectie: Refinement<object, UniformeClick> = (uc): uc is UniformeClick => uc.hasOwnProperty("uniform");
+const isVeldwaardekleurSelectie: Refinement<object, VeldwaardeClick> = (vwk): vwk is VeldwaardeClick => vwk.hasOwnProperty("veldwaarde");
+const isTerugvalkleurSelectie: Refinement<object, TerugvalClick> = (tc): tc is TerugvalClick => tc.hasOwnProperty("terugval");
 
 @Component({
   selector: "awv-laagstijleditor",
@@ -63,20 +126,15 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
 
   readonly zichtbaar$: rx.Observable<boolean>;
   readonly titel$: rx.Observable<string>;
-  readonly uniformeLaagkleur$: rx.Observable<AfgeleideKleur>;
+  readonly laagkleuren$: rx.Observable<KleurWijzigTarget[]>;
   readonly kiezerZichtbaar$: rx.Observable<boolean>;
   readonly kleinPaletZichtbaar$: rx.Observable<boolean>;
-  readonly grootPaletZichtbaar$: rx.Observable<boolean>;
   readonly nietToepassen$: rx.Observable<boolean>;
-  readonly paletKleuren$: rx.Observable<KiesbareKleur[]>;
-  readonly chooserStyle$: rx.Observable<object>;
+  readonly paletKleuren$: rx.Observable<ClickContext[]>;
+  readonly kiezerStyle$: rx.Observable<object>;
   readonly klasseVelden$: rx.Observable<ke.VeldInfo[]>;
   readonly klasseVeldenBeschikbaar$: rx.Observable<boolean>;
   readonly klasseVeldenNietBeschikbaar$: rx.Observable<boolean>;
-  readonly veldKleurWaarden$: rx.Observable<VeldKleurWaarde[]>;
-  readonly stijlMode$: rx.Observable<StijlMode>;
-
-  readonly gekozenVeldKleurWaarde$: rx.Observable<VeldKleurWaarde>;
 
   readonly veldControl = new FormControl({ value: "", disabled: false });
 
@@ -107,17 +165,13 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
 
     const startAtOpen: <A>(_: Lazy<rx.Observable<A>>) => rx.Observable<A> = restartAt(aanpassing$);
 
-    this.stijlMode$ = startAtOpen(() => this.stijlModeSubj.asObservable()).pipe(
+    const stijlMode$: rx.Observable<StijlMode> = startAtOpen(() => this.stijlModeSubj.asObservable()).pipe(
       startWith(StijlMode.Uniform),
       shareReplay(1)
     );
 
-    // Een functie die de bronobservable enkel laat emitten wanneer de huidige mode gelijk is aan de gevraagde mode
-    const forMode: (_: StijlMode) => <A>(_: rx.Observable<A>) => rx.Observable<A> = mode => obs =>
-      forEvery(this.stijlMode$)(actueleMode => (actueleMode === mode ? obs : rx.never()));
-    const whenInUniformMode = forMode(StijlMode.Uniform);
     const selectByMode: <A>(_1: rx.Observable<A>, _2: rx.Observable<A>) => rx.Observable<A> = (uniformObs, OpVeldWaardeObs) =>
-      forEvery(this.stijlMode$)(actueleMode => {
+      forEvery(stijlMode$)(actueleMode => {
         switch (actueleMode) {
           case StijlMode.Uniform:
             return uniformObs;
@@ -136,13 +190,7 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
       shareReplay(1) // De huidige laag moet bewaard blijven voor alle volgende subscribers
     );
     this.titel$ = laag$.pipe(map(laag => laag.titel));
-    const restartWithLaag = forEvery(laag$);
-
-    // Alle geklikte kleuren in de kleurenkiezer
-    const gekozenKleur$ = this.actionDataFor$("kiesLaagkleur", clr.isKleur).pipe(
-      map(gevonden),
-      share() // meerdere listeners, maar stuur geen oude events door
-    );
+    const forEveryLaag = forEvery(laag$);
 
     //////////////////
     // Het paneel zelf
@@ -155,15 +203,17 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
     //
 
     // zet de startkleur elke keer dat we naar de Uniforme mode schakelen
-    const gezetteUniformeKleur$: rx.Observable<AfgeleideKleur> = laag$.pipe(map(uniformeKleurViaLaag));
+    const initieleUniformeKleur$: rx.Observable<UniformeKleur> = laag$.pipe(map(uniformeKleurViaLaag));
     // zetten van de nieuwe en bestaande kleuren
-    const uniformeSelectieKleur$ = whenInUniformMode(gekozenKleur$);
-    this.uniformeLaagkleur$ = rx
-      .merge(
-        gezetteUniformeKleur$, // begin met kleur in huidige stijl
-        uniformeSelectieKleur$ // schakel over naar de net gekozen kleur
+    const uniformeSelectie$: rx.Observable<UniformeClick> = this.actionDataFor$("kiesKleur", isUniformeSelectie);
+    const uniformeSelectieKleur$ = uniformeSelectie$.pipe(map(uc => uc.kleur));
+    const uniformeKleur$ = forEvery(initieleUniformeKleur$)(instelling =>
+      uniformeSelectieKleur$.pipe(
+        scan(UniformeKleur.zetKleur, { ...instelling, afgeleid: true }),
+        startWith(instelling), // scan emit de start state niet
+        shareReplay(1)
       )
-      .pipe(shareReplay(1));
+    );
 
     //////////////
     // Klassekleur
@@ -171,52 +221,53 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
     const veldenMetUniekeWaarden: Function1<ke.ToegevoegdeVectorLaag, ke.VeldInfo[]> = laag =>
       laag.bron.velden
         .valueSeq()
-        .toArray()
-        .filter(veld => Array.isArray(veld!.uniekeWaarden) && veld!.uniekeWaarden!.length > 0 && veld!.uniekeWaarden!.length <= 35);
+        .filter(
+          pipe(
+            v => v.uniekeWaarden,
+            and(isArray, hasLengthBetween(1, 35))
+          )
+        )
+        .toArray();
 
     this.klasseVelden$ = laag$.pipe(map(veldenMetUniekeWaarden));
     this.klasseVeldenNietBeschikbaar$ = this.klasseVelden$.pipe(map(array.isEmpty));
-    this.klasseVeldenBeschikbaar$ = this.klasseVeldenNietBeschikbaar$.pipe(map(negate));
+    this.klasseVeldenBeschikbaar$ = this.klasseVeldenNietBeschikbaar$.pipe(map(negate)); // Beter berekingen doen in component dan in UI
 
-    // klik op 1 van de veldwaarden
-    const veldKleurWaardeSelectie$ = this.actionDataFor$("openKleineKleurkiezer", isVeldKleurWaarde);
-    const geselecteerdeVeldKleurWaarde$ = veldKleurWaardeSelectie$.pipe(shareReplay(1));
-    const selectieVeldKleur$ = geselecteerdeVeldKleurWaarde$.pipe(map(VeldKleurWaarde.kleur.get)).pipe(shareReplay(1));
-    const veldnaam$ = forEvery(aanpassing$)(() =>
+    // We willen dat de veld dropdown opgevuld wordt met de waarde die voorheen gekozen was (als die er is)
+    const isStillAvailable: Function1<string[], Predicate<string>> = bechikbareVeldnamen => veldnaam =>
+      array.member(setoidString)(bechikbareVeldnamen, veldnaam);
+    this.bindToLifeCycle(
+      rx
+        .combineLatest(laag$.pipe(map(kleurveldnaamViaLaag)), this.klasseVelden$, tuple)
+        .pipe(map(([maybeVeldnaam, bechikbareVeldinfos]) => maybeVeldnaam.filter(isStillAvailable(bechikbareVeldinfos.map(vi => vi.naam)))))
+    ).subscribe(maybeVeldnaam => forEach(maybeVeldnaam, veldnaam => this.veldControl.setValue(veldnaam)));
+
+    // We willen ook weten welk veld de gebruiker aangeduid heeft
+    const veldnaam$ = forEveryLaag(() =>
       this.veldControl.valueChanges.pipe(
         startWith(this.veldControl.value), // valueChanges emit niet wanneer we naar de dialoog terugkeren nadat hij gesloten was
-        filter(nonEmptyString),
-        shareReplay(1) // moet onthouden worden voor wanneer laag stijl geupdated wordt
+        shareReplay(1) // ook voor toekomstige subscribers
       )
     );
 
-    const selectieVeldWaarde$ = forEvery(aanpassing$)(() => geselecteerdeVeldKleurWaarde$.pipe(map(VeldKleurWaarde.waarde.get)));
-    this.gekozenVeldKleurWaarde$ = forEvery(veldnaam$)(() =>
-      rx.combineLatest(selectieVeldWaarde$, gekozenKleur$, VeldKleurWaarde.create).pipe(
-        sample(gekozenKleur$), // enkel wanneer er geklikt wordt
+    // De instelling zoals ze zijn wanneer we naar de laag schakelen en een veld selecteren
+    const initieleKleurPerVeldwaarde$: rx.Observable<KleurPerVeldwaarde> = forEveryLaag(laag =>
+      veldnaam$.pipe(map(kleurPerVeldwaardeViaLaagEnVeldnaam(laag)))
+    );
+
+    // klik op 1 van de veldwaarden
+    const veldwaardeSelectie$: rx.Observable<VeldwaardeClick> = this.actionDataFor$("kiesKleur", isVeldwaardekleurSelectie);
+    const terugvalSelectie$: rx.Observable<TerugvalClick> = this.actionDataFor$("kiesKleur", isTerugvalkleurSelectie);
+    const veldwaardeSelectieKleur$ = veldwaardeSelectie$.pipe(map(vw => VeldwaardeKleur.create(vw.veldwaarde, vw.kleur)));
+    const terugvalSelectieKleur$ = terugvalSelectie$.pipe(map(tv => tv.kleur));
+    const kleurPerVeldwaarde$ = forEvery(initieleKleurPerVeldwaarde$)(instelling =>
+      scan2(veldwaardeSelectieKleur$, terugvalSelectieKleur$, KleurPerVeldwaarde.zetVeldwaardeKleur, KleurPerVeldwaarde.zetTerugvalkleur, {
+        ...instelling,
+        afgeleid: true
+      }).pipe(
+        startWith(instelling),
         shareReplay(1)
       )
-    );
-
-    const zetVeldkleurwaarde: Function2<VeldKleurWaarde[], VeldKleurWaarde, VeldKleurWaarde[]> = (vkwn, overlayVkw) =>
-      vkwn.map(vkw => (vkw.waarde === overlayVkw.waarde ? overlayVkw : vkw));
-    this.veldKleurWaarden$ = laag$.pipe(
-      switchMap(laag =>
-        veldnaam$.pipe(
-          map(veldnaam => veldKleurWaardenViaLaagEnVeldnaam(laag, veldnaam)),
-          switchMap(vkwn =>
-            this.gekozenVeldKleurWaarde$.pipe(
-              scan<VeldKleurWaarde, VeldKleurWaarde[]>(zetVeldkleurwaarde, vkwn),
-              startWith(vkwn)
-            )
-          )
-        )
-      ),
-      shareReplay(1, 250) // we willen enkel de 2de subscriber een klein beetje tijd geven om te subscriben
-    );
-    const veldKleurWaardenNietBeschikbaar$ = this.veldKleurWaarden$.pipe(
-      map(array.isEmpty),
-      startWith(true) // voor het geval er (nog) geen property geselecteerd is
     );
 
     ///////////////////
@@ -224,12 +275,12 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
     //
 
     // zichtbaarheid voor het zijpaneel met het kleurenpalet
-    const kiezerToonEvents$ = this.actionFor$("openKleineKleurkiezer"); // zichtbaar wanneer op kleur geklikt
+    const kiezerToonEvents$ = this.actionFor$("wijzigKleur"); // zichtbaar wanneer op kleur geklikt
     const kiezerVerbergEvents$ = rx.merge(
-      this.stijlMode$, // onzichtbaar wanneer tab geselecteerd
+      stijlMode$, // onzichtbaar wanneer tab geselecteerd
       geenAanpassing$, // onzichtbaar wanneer paneel gesloten
       this.actionFor$("sluitKleurkiezer"), // onzichtbaar wanneer gesloten
-      this.actionFor$("kiesLaagkleur") // onzichtbaar wanneer kleur gekozen
+      this.actionFor$("kiesKleur") // onzichtbaar wanneer kleur gekozen
     );
 
     this.kiezerZichtbaar$ = rx
@@ -250,14 +301,29 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
       ),
       shareReplay(1)
     );
-    this.grootPaletZichtbaar$ = this.kleinPaletZichtbaar$.pipe(map(z => !z));
+    const grootPaletZichtbaar$ = this.kleinPaletZichtbaar$.pipe(map(z => !z));
 
-    // voeg "gekozen" attribuut toe aan de kleur van het palet zodat we het vinkje kunnen zetten
-    const laagkleur$ = selectByMode(this.uniformeLaagkleur$, selectieVeldKleur$);
-    this.paletKleuren$ = rx.combineLatest(laagkleur$, this.kleinPaletZichtbaar$, tuple).pipe(
-      switchMap(([laagkleur, kp]) => (kp ? rx.of(kleurenpaletKlein) : rx.of(kleurenpaletGroot)).pipe(map(markeerKleur(laagkleur)))),
-      shareReplay(1)
+    // Zet het stijlmodel om naar een array van objecten die door de UI geïnterpreteerd kunnen worden
+    this.laagkleuren$ = forEveryLaag(laag =>
+      selectByMode<KleurWijzigTarget[]>(
+        uniformeKleur$.pipe(map(uniformeKleurToTargetCtx(laag))),
+        kleurPerVeldwaarde$.pipe(
+          map(kleurPerVeldwaardeToTargetCtx),
+          startWith([]) // Omdat er niets ge-emit wordt totdat er een veld geselecteerd is
+        )
+      )
     );
+    const geklikteKleur$: rx.Observable<KleurWijzigTarget> = this.actionDataFor$("wijzigKleur", isKleurWijzigClick);
+    const markeerKleur: Curried2<KleurWijzigTarget, clr.Kleur, ClickContext> = kwt => paletKleur => ({
+      ...kwt,
+      kleur: paletKleur,
+      gekozen: clr.setoidKleurOpCode.equals(kwt.kleur, paletKleur)
+    });
+    this.paletKleuren$ = rx
+      .combineLatest(geklikteKleur$, this.kleinPaletZichtbaar$, (klikkleur, kp) =>
+        (kp ? kleurenpaletKlein : kleurenpaletGroot).map(markeerKleur(klikkleur))
+      )
+      .pipe(shareReplay(1));
 
     // Zorg er voor dat de kleurkiezer steeds ergens naast de component staat
     // Dat doen we door enerzijds de kiezer naar rechts te schuiven tot die zeker naast de eventuele scrollbar staat.
@@ -267,13 +333,13 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
     // Dat kan trouwens nu nog steeds. De gebruiker moet dan eerst de editor voldoende omhoog schuiven. Dit zou mogelijk moeten
     // zijn in fullscreen mode zoals bij geoloket2 en sowieso veel minder een probleem als er toch nog plaats is onder de
     // kaartcomponent bij embedded gebruik.
-    this.chooserStyle$ = editorElement$.pipe(
+    this.kiezerStyle$ = editorElement$.pipe(
       // De allereerste keer wordt de CSS transformatie maar na een tijdje toegepast wat resulteert in een "springende" component,
       // vandaar dat we even wachten met genereren van de style. Een neveneffect is wel dat de display dan initieel op none moet staan
       // want anders wordt er toch nog gesprongen.
       delay(1),
       switchMap(editorElt =>
-        this.grootPaletZichtbaar$.pipe(
+        grootPaletZichtbaar$.pipe(
           switchMap(groot =>
             rx.of({
               transform: `translateX(${editorElt.clientWidth + 16}px) translateY(-${editorElt.clientHeight + (groot ? 48 : 0)}px)`,
@@ -290,38 +356,31 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
     //
 
     // Luisteren op de "pas toe" knop.
-    const pasToeGeklikt$ = this.actionFor$("pasLaagstijlToe").pipe(share());
-    const uniformeStijlCmd$ = restartWithLaag(laag =>
-      uniformeSelectieKleur$.pipe(
+    const pasToeGeklikt$ = this.actionFor$("pasLaagstijlToe");
+    const uniformeStijlCmd$: rx.Observable<prt.Command<KaartInternalMsg>> = forEveryLaag(laag =>
+      uniformeKleur$.pipe(
         map(uniformeStijlEnLegende(laag)),
         map(stijlCmdVoorLaag(laag))
       )
     );
-    const opVeldWaardeCmd$ = restartWithLaag(laag =>
-      veldnaam$.pipe(
-        switchMap(veldnaam =>
-          this.veldKleurWaarden$.pipe(
-            map(opVeldWaardeStijlEnLegende(veldnaam)),
-            map(stijlCmdVoorLaag(laag))
-          )
-        )
+    const opVeldwaardeCmd$ = forEveryLaag(laag =>
+      kleurPerVeldwaarde$.pipe(
+        map(opVeldWaardeStijlEnLegende),
+        map(stijlCmdVoorLaag(laag))
       )
     );
-    const stijlCmd$ = selectByMode(uniformeStijlCmd$, opVeldWaardeCmd$);
+    const stijlCmd$ = selectByMode(uniformeStijlCmd$, opVeldwaardeCmd$);
 
-    this.bindToLifeCycle(stijlCmd$.pipe(switchMap(cmd => pasToeGeklikt$.pipe(mapTo(cmd))))).subscribe(cmd => this.dispatch(cmd));
+    this.bindToLifeCycle(stijlCmd$.pipe(sample(pasToeGeklikt$))).subscribe(cmd => this.dispatch(cmd));
 
     // Toepassen knop actief of niet. Uitgedrukt als een negatief statement wegens gebruik voor HTML 'disabled'.
-    const uniformeKleurNietAangepast$ = gezetteUniformeKleur$.pipe(
-      switchMap(gezet =>
-        uniformeSelectieKleur$.pipe(
-          map(geselecteerd => clr.setoidKleurOpCode.equals(gezet, geselecteerd) && gezet.gevonden),
-          startWith(gezet.gevonden) // switchMap omdat we deze controle moeten doen vooraleer we een selectiekleur hebben
-        )
-      )
+    const uniformeKleurNietAangepast$ = forEvery(initieleUniformeKleur$)(initieel =>
+      uniformeKleur$.pipe(map(huidig => UniformeKleur.setoid.equals(huidig, initieel) && initieel.afgeleid))
     );
-    const opVeldWaardeNietAangepast$ = veldKleurWaardenNietBeschikbaar$;
-    this.nietToepassen$ = selectByMode(uniformeKleurNietAangepast$, opVeldWaardeNietAangepast$).pipe(startWith(true));
+    const kleurPerVeldwaardeNietAangepast$ = forEvery(initieleKleurPerVeldwaarde$)(initieel =>
+      kleurPerVeldwaarde$.pipe(map(huidig => KleurPerVeldwaarde.setoid.equals(huidig, initieel) && initieel.afgeleid))
+    );
+    this.nietToepassen$ = selectByMode(uniformeKleurNietAangepast$, kleurPerVeldwaardeNietAangepast$);
 
     ///////////////////////
     // Start de observables
