@@ -19,7 +19,7 @@ import { kaartLogger } from "../log";
 export const MijnLocatieUiSelector = "Mijnlocatie";
 const MijnLocatieLaagNaam = "Mijn Locatie";
 
-const TrackingInterval = 1000; // aantal milliseconden tussen tracking updates
+const TrackingInterval = 500; // aantal milliseconden tussen tracking updates
 
 interface Resultaat {
   zoom: number;
