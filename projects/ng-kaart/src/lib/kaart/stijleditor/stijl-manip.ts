@@ -1,6 +1,5 @@
-import { ToegevoegdeVectorLaag } from "@wegenenverkeer/ng-kaart/lib/kaart";
 import * as array from "fp-ts/lib/Array";
-import { and, Curried2, Function1, Function2, not, or, pipe, Predicate } from "fp-ts/lib/function";
+import { Curried2, Function1, Function2, not, or, Predicate } from "fp-ts/lib/function";
 import { fromNullable, fromPredicate, none, Option, some } from "fp-ts/lib/Option";
 import { setoidString } from "fp-ts/lib/Setoid";
 import { Optional } from "monocle-ts";
@@ -10,11 +9,12 @@ import * as clr from "../../stijl/colour";
 import * as sft from "../../stijl/stijl-function-types";
 import * as sst from "../../stijl/stijl-static-types";
 import * as arrays from "../../util/arrays";
+import { Comparator } from "../../util/function";
 import * as ke from "../kaart-elementen";
 import { Legende, LijnItem } from "../kaart-legende";
 import * as ss from "../stijl-selector";
 
-import { KleurPerVeldwaarde, UniformeKleur, VeldwaardeKleur } from "./model";
+import { KleurPerVeldwaarde, UniformeKleur, VeldProps, VeldwaardeKleur } from "./model";
 import { kleurenpaletGroot } from "./palet";
 
 // Deze module bevat alle functies die converteren tussen de StijlSpec en het laagstijleditor model.
@@ -48,10 +48,10 @@ export const uniformeKleurToStijlSpec: Function1<UniformeKleur, ss.AwvV0StaticSt
 export const uniformeKleurToLegende: Curried2<string, UniformeKleur, Legende> = laagTitel => stijl =>
   Legende([LijnItem(laagTitel, clr.kleurcodeValue(stijl.kleur), none)]);
 
-const veldwaardeKleurToRule: Curried2<ke.VeldInfo, VeldwaardeKleur, sft.Rule> = veld => vkw => ({
+const veldwaardeKleurToRule: Curried2<VeldProps, VeldwaardeKleur, sft.Rule> = veld => vkw => ({
   condition: {
     kind: "==",
-    left: { kind: "Property", type: "string", ref: veld.naam },
+    left: { kind: "Property", type: veld.expressietype, ref: veld.naam },
     right: { kind: "Literal", value: vkw.waarde }
   },
   style: {
@@ -116,11 +116,11 @@ const extractVeldnaam: Function1<sft.Expression, Option<string>> = expression =>
 
 const mustBe: Function1<string, Predicate<string>> = a => b => a === b;
 
-const extractVeldwaarde: Function2<string, sft.Expression, Option<string>> = (veldnaam, expression) => {
+const extractVeldwaarde: Function2<string, sft.Expression, Option<sft.ValueType>> = (veldnaam, expression) => {
   return extractVeldnaam(expression)
     .filter(mustBe(veldnaam))
     .chain(() => {
-      if (expression.kind === "==" && expression.right.kind === "Literal" && typeof expression.right.value === "string") {
+      if (expression.kind === "==" && expression.right.kind === "Literal") {
         return some(expression.right.value);
       } else {
         return none;
@@ -161,18 +161,31 @@ const rulesToVeldnaam: Function1<sft.Rule[], Option<string>> = rules =>
     .filter(arrays.isSingleton) // alle regels moeten dezelfde veldnaam gebruiken
     .chain(array.head);
 
-const rulesToKleurPerVeld: Curried2<ke.VeldInfo, sft.Rule[], Option<KleurPerVeldwaarde>> = veld => rules =>
+const rulesToKleurPerVeld: Curried2<VeldProps, sft.Rule[], Option<KleurPerVeldwaarde>> = veld => rules =>
   rulesToVeldwaardeKleuren(veld.naam)(rules).chain(vkwn =>
     rulesToTerugvalkleur(rules).map(terugvalkleur => KleurPerVeldwaarde.createAfgeleid(veld, vkwn, terugvalkleur))
   );
 
-const standaardKleurenPerVeldwaarde: Function1<ke.VeldInfo, VeldwaardeKleur[]> = veldInfo =>
-  array.zip(veldInfo.uniekeWaarden!.sort(), kleurenpaletGroot).map(([label, kleur]) => ({ waarde: label, kleur: kleur }));
+const comparatorForWaardeType: Function1<sft.TypeType, Comparator<sft.ValueType>> = waardetype => {
+  switch (waardetype) {
+    case "boolean":
+      return (a, b) => ((a as boolean) ? 1 : 0) - ((b as boolean) ? 1 : 0);
+    case "number":
+      return (a, b) => (a as number) - (b as number);
+    case "string":
+      return (a, b) => ((a as string) === (b as string) ? 0 : a < b ? -1 : 1);
+  }
+};
+
+const standaardKleurenPerVeldwaarde: Function1<VeldProps, VeldwaardeKleur[]> = veldprops =>
+  array
+    .zip(veldprops.uniekeWaarden.sort(comparatorForWaardeType(veldprops.expressietype)), kleurenpaletGroot)
+    .map(([label, kleur]) => ({ waarde: label, kleur: kleur }));
 
 const standaardTerugvalKleur = clr.zachtgrijs;
 
-const standaardInstellingVoorVeldwaarde: Function1<ke.VeldInfo, KleurPerVeldwaarde> = veldinfo =>
-  KleurPerVeldwaarde.createSynthetisch(veldinfo, standaardKleurenPerVeldwaarde(veldinfo), standaardTerugvalKleur);
+const standaardInstellingVoorVeldwaarde: Function1<VeldProps, KleurPerVeldwaarde> = veldprops =>
+  KleurPerVeldwaarde.createSynthetisch(veldprops, standaardKleurenPerVeldwaarde(veldprops), standaardTerugvalKleur);
 
 export const uniformeKleurViaLaag: Function1<ke.ToegevoegdeVectorLaag, UniformeKleur> = laag =>
   gezetteLaagKleur(laag)
@@ -180,7 +193,7 @@ export const uniformeKleurViaLaag: Function1<ke.ToegevoegdeVectorLaag, UniformeK
     .getOrElse(UniformeKleur.createSynthetisch(clr.rood));
 
 const veldInfoViaLaagEnVeldnaam: Function2<ke.ToegevoegdeVectorLaag, string, Option<ke.VeldInfo>> = (laag, veldnaam) =>
-  fromNullable(laag.bron.velden.get(veldnaam));
+  ke.ToegevoegdeVectorLaag.veldInfoOpNaamOptional(veldnaam).getOption(laag);
 
 export const kleurveldnaamViaLaag: Function1<ke.ToegevoegdeVectorLaag, Option<string>> = laag =>
   dynamicStyleOptional
@@ -193,24 +206,37 @@ export const kleurPerVeldwaardeViaLaagEnVeldnaam: Curried2<
   string,
   Option<KleurPerVeldwaarde>
 > = laag => veldnaam =>
+  veldInfoViaLaagEnVeldnaam(laag, veldnaam).chain(veld =>
+    VeldProps.fromVeldinfo(veld).chain(veldProps =>
+      dynamicStyleOptional
+        .composeLens(sft.rulesLens)
+        .getOption(laag)
+        // als wij de regels gegenereerd hebben of veel geluk hebben
+        .chain(rules => rulesToKleurPerVeld(veldProps)(rules))
+        // als veld bestaat
+        .orElse(() => veldInfoViaLaagEnVeldnaam(laag, veldnaam).map(() => standaardInstellingVoorVeldwaarde(veldProps)))
+    )
+  );
+export const kleurPerVeldwaardeViaLaagEnVeldnaam2: Curried2<
+  ke.ToegevoegdeVectorLaag,
+  string,
+  Option<KleurPerVeldwaarde>
+> = laag => veldnaam =>
   ke.ToegevoegdeVectorLaag.veldInfoOpNaamOptional(veldnaam)
     .getOption(laag)
-    .chain(
-      veld =>
-        dynamicStyleOptional
-          .composeLens(sft.rulesLens)
-          .getOption(laag)
-          .chain(rulesToKleurPerVeld(veld)) // als wij de regels gegenereerd hebben of veel geluk hebben
-          .orElse(() => veldInfoViaLaagEnVeldnaam(laag, veldnaam).map(() => standaardInstellingVoorVeldwaarde(veld))) // als veld bestaat
+    .chain(veld =>
+      dynamicStyleOptional
+        .composeLens(sft.rulesLens)
+        .getOption(laag)
+        // als wij de regels gegenereerd hebben of veel geluk hebben
+        .chain(rules =>
+          VeldProps.fromVeldinfo(veld).chain(veldProps =>
+            rulesToKleurPerVeld(veldProps)(rules)
+              // als veld bestaat
+              .orElse(() => veldInfoViaLaagEnVeldnaam(laag, veldnaam).map(() => standaardInstellingVoorVeldwaarde(veldProps)))
+          )
+        )
     );
 
-export const veldenMetUniekeWaarden: Function1<ke.ToegevoegdeVectorLaag, ke.VeldInfo[]> = laag =>
-  laag.bron.velden
-    .valueSeq()
-    .filter(
-      pipe(
-        v => v.uniekeWaarden,
-        and(arrays.isArray, arrays.hasLengthBetween(1, 35))
-      )
-    )
-    .toArray();
+export const veldenMetUniekeWaarden: Function1<ke.ToegevoegdeVectorLaag, VeldProps[]> = laag =>
+  array.mapOption(ke.ToegevoegdeVectorLaag.veldInfosLens.get(laag), VeldProps.fromVeldinfo);

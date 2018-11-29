@@ -21,3 +21,11 @@ export const reducerFromSetter: <S, A>(_: Setter<S, A>) => ReduceFunction<S, A> 
  * Maakt een ReducerFunction van een Monocle Lens. Legt meer requirements op dan nodig (Setter is genoeg), maar we hebben vaker Lenses.
  */
 export const reducerFromLens: <S, A>(_: Lens<S, A>) => ReduceFunction<S, A> = lens => reducerFromSetter(lens.asSetter());
+
+/**
+ * Een functie die een orderelatie oplegt aan zijn 2 argumenten.
+ * < 0 = eerste kleiner dan tweede.
+ * 0 = gelijk.
+ * > 1 = eerste groter dan tweede.
+ */
+export type Comparator<A> = Function2<A, A, number>;

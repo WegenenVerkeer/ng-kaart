@@ -2,7 +2,7 @@ import { Function1, Refinement } from "fp-ts/lib/function";
 import { fromPredicate, Option } from "fp-ts/lib/Option";
 import { contramap, Setoid, setoidString } from "fp-ts/lib/Setoid";
 import { List, OrderedMap } from "immutable";
-import { Lens, Optional } from "monocle-ts";
+import { Iso, Lens, Optional } from "monocle-ts";
 import * as ol from "openlayers";
 
 import { mapToOptionalByKey } from "../util/lenses";
@@ -73,10 +73,12 @@ export interface WmtsLaag {
   readonly verwijderd: boolean;
 }
 
+export type VeldType = "string" | "integer" | "double" | "geometry" | "date" | "boolean" | "json";
+
 export interface VeldInfo {
   readonly naam: string; // naam zoals gekend in de feature
   readonly label: string; // titel om weer te geven in de UI
-  readonly type: string;
+  readonly type: VeldType;
   readonly isBasisVeld: boolean;
   readonly constante?: string;
   readonly template?: string;
@@ -192,6 +194,16 @@ export function TekenResultaat(geometry: ol.geom.Geometry, volgnummer: number, f
 export namespace ToegevoegdeVectorLaag {
   export const stijlSelBronLens: Optional<ToegevoegdeVectorLaag, AwvV0StyleSpec> = Optional.fromOptionProp<ToegevoegdeVectorLaag>()(
     "stijlSelBron"
+  );
+
+  export const veldInfosLens: Lens<ToegevoegdeVectorLaag, VeldInfo[]> = Lens.fromPath<ToegevoegdeVectorLaag, "bron", "velden">([
+    "bron",
+    "velden"
+  ]).composeIso(
+    new Iso(
+      map => map.valueSeq().toArray(), //
+      infos => OrderedMap(infos.map(info => [info.naam, info]))
+    )
   );
 
   export const veldInfoOpNaamOptional: Function1<string, Optional<ToegevoegdeVectorLaag, VeldInfo>> = veldnaam =>

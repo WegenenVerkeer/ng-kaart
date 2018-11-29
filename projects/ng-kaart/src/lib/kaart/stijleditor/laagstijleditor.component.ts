@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, NgZone, QueryList, View
 import { FormControl } from "@angular/forms";
 import { MatTabChangeEvent } from "@angular/material";
 import * as array from "fp-ts/lib/Array";
-import { and, Curried2, Function1, Function2, Lazy, pipe, Predicate, Refinement, tuple } from "fp-ts/lib/function";
+import { Curried2, Function1, Function2, Lazy, Predicate, Refinement, tuple } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import { setoidString } from "fp-ts/lib/Setoid";
 import * as rx from "rxjs";
@@ -10,10 +10,8 @@ import { delay, filter, map, mapTo, sample, scan, shareReplay, startWith, switch
 
 import * as clr from "../../stijl/colour";
 import { forEach } from "../../util";
-import { hasLengthBetween, isArray } from "../../util/arrays";
 import { expand2 } from "../../util/function";
-import { collectOption, forEvery, scan2, skipOlder, subSpy } from "../../util/operators";
-import { nonEmptyString } from "../../util/string";
+import { collectOption, forEvery, scan2, skipOlder } from "../../util/operators";
 import { negate } from "../../util/thruth";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
@@ -23,7 +21,7 @@ import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 import { AwvV0StyleSpec } from "../stijl-selector";
 
-import { KleurPerVeldwaarde, UniformeKleur, VeldwaardeKleur } from "./model";
+import { KleurPerVeldwaarde, UniformeKleur, VeldProps, VeldwaardeKleur } from "./model";
 import { kleurenpaletGroot, kleurenpaletKlein } from "./palet";
 import { isAanpassingBezig, isAanpassingNietBezig, LaagstijlAanpassend } from "./state";
 import {
@@ -131,7 +129,7 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
   readonly nietToepassen$: rx.Observable<boolean>;
   readonly paletKleuren$: rx.Observable<ClickContext[]>;
   readonly kiezerStyle$: rx.Observable<object>;
-  readonly klasseVelden$: rx.Observable<ke.VeldInfo[]>;
+  readonly klasseVelden$: rx.Observable<VeldProps[]>;
   readonly klasseVeldenBeschikbaar$: rx.Observable<boolean>;
   readonly klasseVeldenNietBeschikbaar$: rx.Observable<boolean>;
 

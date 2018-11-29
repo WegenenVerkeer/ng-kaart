@@ -42,9 +42,8 @@ const nestedProperty = (propertyKey: string, object: Object) =>
 
 const formateerJson = (veld: string, veldtype: string, json: any, formatString: string): string => {
   const jsonString = typeof json === "string" || json instanceof String ? json : JSON.stringify(json);
-  const jsonObject = veldtype =>
-    veldtype === "json" ? JSON.parse(`{"${veld}": ${jsonString}}`) : JSON.parse(`{"${veld}": "${jsonString}"}`);
-  return Mustache.render(formatString, jsonObject(veldtype));
+  const jsonObject = veldtype === "json" ? JSON.parse(`{"${veld}": ${jsonString}}`) : JSON.parse(`{"${veld}": "${jsonString}"}`);
+  return Mustache.render(formatString, jsonObject);
 };
 
 const formateerDatum = (dateString: string): string => {
@@ -372,7 +371,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   private veldtype(veld: string): string {
     return this.laag
       .chain(l => fromNullable(l.velden.get(veld)))
-      .chain(veldInfo => fromNullable(veldInfo.type))
+      .map(veldInfo => veldInfo.type.toString())
       .getOrElse("");
   }
 
