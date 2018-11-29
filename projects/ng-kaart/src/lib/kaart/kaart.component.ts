@@ -187,6 +187,8 @@ export class KaartComponent extends KaartComponentBase {
     dienstkaartProjectie.setExtent([18000.0, 152999.75, 280144.0, 415143.75]); // zet de extent op die van de dienstkaart
 
     const kaart = new ol.Map({
+      loadTilesWhileAnimating: true,
+      loadTilesWhileInteracting: true,
       controls: [],
       interactions: [],
       layers: [],
