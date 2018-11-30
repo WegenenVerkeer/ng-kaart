@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, NgZone, QueryList, View
 import { FormControl } from "@angular/forms";
 import { MatTabChangeEvent } from "@angular/material";
 import * as array from "fp-ts/lib/Array";
-import { and, Curried2, Function1, Function2, Lazy, pipe, Predicate, Refinement, tuple } from "fp-ts/lib/function";
+import { Curried2, Function1, Function2, Lazy, Predicate, Refinement, tuple } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import { setoidString } from "fp-ts/lib/Setoid";
 import * as rx from "rxjs";
@@ -10,10 +10,8 @@ import { delay, filter, map, mapTo, sample, scan, shareReplay, startWith, switch
 
 import * as clr from "../../stijl/colour";
 import { forEach } from "../../util";
-import { hasLengthBetween, isArray } from "../../util/arrays";
 import { expand2 } from "../../util/function";
-import { collectOption, forEvery, scan2, skipOlder, subSpy } from "../../util/operators";
-import { nonEmptyString } from "../../util/string";
+import { collectOption, forEvery, scan2, skipOlder } from "../../util/operators";
 import { negate } from "../../util/thruth";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
@@ -23,21 +21,22 @@ import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 import { AwvV0StyleSpec } from "../stijl-selector";
 
-import { KleurPerVeldwaarde, UniformeKleur, VeldwaardeKleur } from "./model";
+import { EnkeleKleur, KleurPerVeldwaarde, LaagkleurInstellingen, VeldProps, VeldwaardeKleur } from "./model";
 import { kleurenpaletGroot, kleurenpaletKlein } from "./palet";
 import { isAanpassingBezig, isAanpassingNietBezig, LaagstijlAanpassend } from "./state";
 import {
+  enkeleKleurToLegende,
+  enkeleKleurToStijlSpec,
+  enkeleKleurViaLaag,
   kleurPerVeldwaardeToLegende,
   kleurPerVeldWaardeToStijlSpec,
   kleurPerVeldwaardeViaLaagEnVeldnaam,
   kleurveldnaamViaLaag,
-  uniformeKleurToLegende,
-  uniformeKleurToStijlSpec,
-  uniformeKleurViaLaag
+  veldenMetUniekeWaarden
 } from "./stijl-manip";
 
-const uniformeStijlEnLegende: Curried2<ke.ToegevoegdeLaag, UniformeKleur, [AwvV0StyleSpec, Legende]> = laag =>
-  expand2(uniformeKleurToStijlSpec, uniformeKleurToLegende(laag.titel));
+const enkeleKleurStijlEnLegende: Curried2<ke.ToegevoegdeLaag, EnkeleKleur, [AwvV0StyleSpec, Legende]> = laag =>
+  expand2(enkeleKleurToStijlSpec, enkeleKleurToLegende(laag.titel));
 
 const opVeldWaardeStijlEnLegende: Function1<KleurPerVeldwaarde, [AwvV0StyleSpec, Legende]> = expand2(
   kleurPerVeldWaardeToStijlSpec,
@@ -51,7 +50,7 @@ const stijlCmdVoorLaag: Curried2<
 > = laag => ([stijl, legende]) => prt.ZetStijlSpecVoorLaagCmd(laag.titel, stijl, legende, kaartLogOnlyWrapper);
 
 const enum StijlMode {
-  Uniform,
+  EnkeleKleur,
   OpVeldWaarde
 }
 
@@ -60,12 +59,16 @@ const enum StijlMode {
 // de component toch te weten waarover het gaat (en tegelijkertijd uniform te kunnen werken) laten we de UI
 // het context object dat hij krijgt om te renderen gewoon terug geven wanneer er geklikt wordt.
 // Er zijn 3 fases:
-// 1. tonen van de huidige waarde in een lijst (van 1 element in geval van uniforme kleur)
+// 1. tonen van de huidige waarde in een lijst (van 1 element in geval van enkele kleur)
 // 2. tonen van de kleurkiezer
 // 3. kiezen van een kleur in de kleurkiezer
 // De context wordt telkens doorgegeven
+// Vergelijk dit met de de meer traditionele aanpak waar er gewoon met kliks zonder meer gewerkt wordt. We moeten
+// dan onthouden op welke waarde er geklikt werd om dan op het moment dat de klik verwerkt wordt, de gekozen kleur
+// te koppelen aan de correcte waarde. We moeten dan een Observable laatstSelecteerd oid hebben.
+// Nu is dat veel eenvoudiger. Op het moment dat een klik terug komt, hebben we meteen de volledige context mee.
 interface TargetCtx {
-  uniform?: any;
+  enkeleKleur?: any;
   veldwaarde?: string;
   terugval?: any;
 }
@@ -76,19 +79,17 @@ interface KleurWijzigTarget extends TargetCtx {
   afgeleid: boolean;
 }
 
-const uniformeKleurToTargetCtx: Curried2<ke.ToegevoegdeLaag, UniformeKleur, KleurWijzigTarget[]> = laag => uk => [
-  { kleur: uk.kleur, label: laag.titel, afgeleid: uk.afgeleid, uniform: {} }
+const enkeleKleurToTargetCtx: Curried2<ke.ToegevoegdeLaag, EnkeleKleur, KleurWijzigTarget[]> = laag => uk => [
+  { kleur: uk.kleur, label: laag.titel, afgeleid: uk.afgeleid, enkeleKleur: {} }
 ];
 
 const kleurPerVeldwaardeToTargetCtx: Function1<KleurPerVeldwaarde, KleurWijzigTarget[]> = kpv =>
-  nonEmptyString(kpv.veldnaam) // We beschouwen een lege veldnaam als ongeldig. Beetje hackering
-    ? array.snoc(
-        kpv.waardekleuren.map(
-          wk => ({ kleur: wk.kleur, label: wk.waarde, afgeleid: kpv.afgeleid, veldwaarde: wk.waarde } as KleurWijzigTarget)
-        ),
-        { kleur: kpv.terugvalkleur, label: "Andere", afgeleid: kpv.afgeleid, terugval: {} }
-      )
-    : [];
+  array.snoc(
+    kpv.waardekleuren.map(
+      wk => ({ kleur: wk.kleur, label: wk.waarde, afgeleid: kpv.afgeleid, veldwaarde: wk.waarde } as KleurWijzigTarget)
+    ),
+    { kleur: kpv.terugvalkleur, label: "Andere", afgeleid: kpv.afgeleid, terugval: {} }
+  );
 
 interface ClickContext extends TargetCtx {
   kleur: clr.Kleur;
@@ -96,7 +97,7 @@ interface ClickContext extends TargetCtx {
 }
 
 // 3 Interfaces voor de clicks die een kleur kiezen in de kleurkiezer
-interface UniformeClick {
+interface EnkeleKleurClick {
   kleur: clr.Kleur;
 }
 
@@ -110,7 +111,7 @@ interface TerugvalClick {
 }
 
 const isKleurWijzigClick: Refinement<object, KleurWijzigTarget> = (uc): uc is KleurWijzigTarget => uc.hasOwnProperty("kleur");
-const isUniformeSelectie: Refinement<object, UniformeClick> = (uc): uc is UniformeClick => uc.hasOwnProperty("uniform");
+const isEnkeleSelectie: Refinement<object, EnkeleKleurClick> = (uc): uc is EnkeleKleurClick => uc.hasOwnProperty("enkel");
 const isVeldwaardekleurSelectie: Refinement<object, VeldwaardeClick> = (vwk): vwk is VeldwaardeClick => vwk.hasOwnProperty("veldwaarde");
 const isTerugvalkleurSelectie: Refinement<object, TerugvalClick> = (tc): tc is TerugvalClick => tc.hasOwnProperty("terugval");
 
@@ -132,7 +133,7 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
   readonly nietToepassen$: rx.Observable<boolean>;
   readonly paletKleuren$: rx.Observable<ClickContext[]>;
   readonly kiezerStyle$: rx.Observable<object>;
-  readonly klasseVelden$: rx.Observable<ke.VeldInfo[]>;
+  readonly klasseVelden$: rx.Observable<VeldProps[]>;
   readonly klasseVeldenBeschikbaar$: rx.Observable<boolean>;
   readonly klasseVeldenNietBeschikbaar$: rx.Observable<boolean>;
 
@@ -166,15 +167,15 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
     const startAtOpen: <A>(_: Lazy<rx.Observable<A>>) => rx.Observable<A> = restartAt(aanpassing$);
 
     const stijlMode$: rx.Observable<StijlMode> = startAtOpen(() => this.stijlModeSubj.asObservable()).pipe(
-      startWith(StijlMode.Uniform),
+      startWith(StijlMode.EnkeleKleur),
       shareReplay(1)
     );
 
-    const selectByMode: <A>(_1: rx.Observable<A>, _2: rx.Observable<A>) => rx.Observable<A> = (uniformObs, OpVeldWaardeObs) =>
+    const selectByMode: <A>(_1: rx.Observable<A>, _2: rx.Observable<A>) => rx.Observable<A> = (enkeleKleurObs, OpVeldWaardeObs) =>
       forEvery(stijlMode$)(actueleMode => {
         switch (actueleMode) {
-          case StijlMode.Uniform:
-            return uniformObs;
+          case StijlMode.EnkeleKleur:
+            return enkeleKleurObs;
           case StijlMode.OpVeldWaarde:
             return OpVeldWaardeObs;
         }
@@ -199,17 +200,17 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
     this.bindToLifeCycle(this.actionFor$("sluitLaagstijleditor")).subscribe(() => this.dispatch(prt.StopVectorlaagstijlBewerkingCmd()));
 
     /////////////////
-    // Uniforme kleur
+    // Enkele kleur
     //
 
-    // zet de startkleur elke keer dat we naar de Uniforme mode schakelen
-    const initieleUniformeKleur$: rx.Observable<UniformeKleur> = laag$.pipe(map(uniformeKleurViaLaag));
+    // zet de startkleur elke keer dat we naar de EnkeleKleur mode schakelen
+    const initieleEnkeleKleur$: rx.Observable<EnkeleKleur> = laag$.pipe(map(enkeleKleurViaLaag));
     // zetten van de nieuwe en bestaande kleuren
-    const uniformeSelectie$: rx.Observable<UniformeClick> = this.actionDataFor$("kiesKleur", isUniformeSelectie);
-    const uniformeSelectieKleur$ = uniformeSelectie$.pipe(map(uc => uc.kleur));
-    const uniformeKleur$ = forEvery(initieleUniformeKleur$)(instelling =>
-      uniformeSelectieKleur$.pipe(
-        scan(UniformeKleur.zetKleur, { ...instelling, afgeleid: true }),
+    const enkeleKleurSelectie$: rx.Observable<EnkeleKleurClick> = this.actionDataFor$("kiesKleur", isEnkeleSelectie);
+    const enkeleKleurSelectieKleur$ = enkeleKleurSelectie$.pipe(map(uc => uc.kleur));
+    const enkeleKleur$ = forEvery(initieleEnkeleKleur$)(instelling =>
+      enkeleKleurSelectieKleur$.pipe(
+        scan(EnkeleKleur.zetKleur, EnkeleKleur.makeAfgeleid(instelling)),
         startWith(instelling), // scan emit de start state niet
         shareReplay(1)
       )
@@ -218,17 +219,6 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
     //////////////
     // Klassekleur
     //
-    const veldenMetUniekeWaarden: Function1<ke.ToegevoegdeVectorLaag, ke.VeldInfo[]> = laag =>
-      laag.bron.velden
-        .valueSeq()
-        .filter(
-          pipe(
-            v => v.uniekeWaarden,
-            and(isArray, hasLengthBetween(1, 35))
-          )
-        )
-        .toArray();
-
     this.klasseVelden$ = laag$.pipe(map(veldenMetUniekeWaarden));
     this.klasseVeldenNietBeschikbaar$ = this.klasseVelden$.pipe(map(array.isEmpty));
     this.klasseVeldenBeschikbaar$ = this.klasseVeldenNietBeschikbaar$.pipe(map(negate)); // Beter berekingen doen in component dan in UI
@@ -252,7 +242,7 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
 
     // De instelling zoals ze zijn wanneer we naar de laag schakelen en een veld selecteren
     const initieleKleurPerVeldwaarde$: rx.Observable<KleurPerVeldwaarde> = forEveryLaag(laag =>
-      veldnaam$.pipe(map(kleurPerVeldwaardeViaLaagEnVeldnaam(laag)))
+      veldnaam$.pipe(collectOption(kleurPerVeldwaardeViaLaagEnVeldnaam(laag)))
     );
 
     // klik op 1 van de veldwaarden
@@ -261,10 +251,13 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
     const veldwaardeSelectieKleur$ = veldwaardeSelectie$.pipe(map(vw => VeldwaardeKleur.create(vw.veldwaarde, vw.kleur)));
     const terugvalSelectieKleur$ = terugvalSelectie$.pipe(map(tv => tv.kleur));
     const kleurPerVeldwaarde$ = forEvery(initieleKleurPerVeldwaarde$)(instelling =>
-      scan2(veldwaardeSelectieKleur$, terugvalSelectieKleur$, KleurPerVeldwaarde.zetVeldwaardeKleur, KleurPerVeldwaarde.zetTerugvalkleur, {
-        ...instelling,
-        afgeleid: true
-      }).pipe(
+      scan2(
+        veldwaardeSelectieKleur$,
+        terugvalSelectieKleur$,
+        KleurPerVeldwaarde.zetVeldwaardeKleur,
+        KleurPerVeldwaarde.zetTerugvalkleur,
+        KleurPerVeldwaarde.makeAfgeleid(instelling)
+      ).pipe(
         startWith(instelling),
         shareReplay(1)
       )
@@ -301,12 +294,12 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
       ),
       shareReplay(1)
     );
-    const grootPaletZichtbaar$ = this.kleinPaletZichtbaar$.pipe(map(z => !z));
+    const grootPaletZichtbaar$ = this.kleinPaletZichtbaar$.pipe(map(negate));
 
     // Zet het stijlmodel om naar een array van objecten die door de UI geïnterpreteerd kunnen worden
     this.laagkleuren$ = forEveryLaag(laag =>
       selectByMode<KleurWijzigTarget[]>(
-        uniformeKleur$.pipe(map(uniformeKleurToTargetCtx(laag))),
+        enkeleKleur$.pipe(map(enkeleKleurToTargetCtx(laag))),
         kleurPerVeldwaarde$.pipe(
           map(kleurPerVeldwaardeToTargetCtx),
           startWith([]) // Omdat er niets ge-emit wordt totdat er een veld geselecteerd is
@@ -357,9 +350,9 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
 
     // Luisteren op de "pas toe" knop.
     const pasToeGeklikt$ = this.actionFor$("pasLaagstijlToe");
-    const uniformeStijlCmd$: rx.Observable<prt.Command<KaartInternalMsg>> = forEveryLaag(laag =>
-      uniformeKleur$.pipe(
-        map(uniformeStijlEnLegende(laag)),
+    const enkeleKleurStijlCmd$: rx.Observable<prt.Command<KaartInternalMsg>> = forEveryLaag(laag =>
+      enkeleKleur$.pipe(
+        map(enkeleKleurStijlEnLegende(laag)),
         map(stijlCmdVoorLaag(laag))
       )
     );
@@ -369,18 +362,18 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
         map(stijlCmdVoorLaag(laag))
       )
     );
-    const stijlCmd$ = selectByMode(uniformeStijlCmd$, opVeldwaardeCmd$);
+    const stijlCmd$ = selectByMode(enkeleKleurStijlCmd$, opVeldwaardeCmd$);
 
     this.bindToLifeCycle(stijlCmd$.pipe(sample(pasToeGeklikt$))).subscribe(cmd => this.dispatch(cmd));
 
     // Toepassen knop actief of niet. Uitgedrukt als een negatief statement wegens gebruik voor HTML 'disabled'.
-    const uniformeKleurNietAangepast$ = forEvery(initieleUniformeKleur$)(initieel =>
-      uniformeKleur$.pipe(map(huidig => UniformeKleur.setoid.equals(huidig, initieel) && initieel.afgeleid))
+    const enkeleKleurNietAangepast$ = forEvery(initieleEnkeleKleur$)(initieel =>
+      enkeleKleur$.pipe(map(huidig => EnkeleKleur.setoid.equals(huidig, initieel) && initieel.afgeleid))
     );
     const kleurPerVeldwaardeNietAangepast$ = forEvery(initieleKleurPerVeldwaarde$)(initieel =>
       kleurPerVeldwaarde$.pipe(map(huidig => KleurPerVeldwaarde.setoid.equals(huidig, initieel) && initieel.afgeleid))
     );
-    this.nietToepassen$ = selectByMode(uniformeKleurNietAangepast$, kleurPerVeldwaardeNietAangepast$);
+    this.nietToepassen$ = selectByMode(enkeleKleurNietAangepast$, kleurPerVeldwaardeNietAangepast$);
 
     ///////////////////////
     // Start de observables
@@ -397,7 +390,7 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
     // Zet de StijlMode
     switch (evt.index) {
       case 0:
-        this.stijlModeSubj.next(StijlMode.Uniform);
+        this.stijlModeSubj.next(StijlMode.EnkeleKleur);
         break;
       case 1:
         this.stijlModeSubj.next(StijlMode.OpVeldWaarde);

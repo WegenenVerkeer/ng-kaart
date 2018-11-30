@@ -114,7 +114,9 @@ export class FeatureDemoComponent {
       id: 1,
       properties: {
         vorm: "punt",
-        merk: "ACME"
+        merk: "ACME",
+        gesloten: false,
+        legnte: 0
       },
       geometry: new ol.geom.Point([157562, 190726])
     }),
@@ -122,7 +124,9 @@ export class FeatureDemoComponent {
       id: 2,
       properties: {
         vorm: "punt",
-        merk: "Globex"
+        merk: "Globex",
+        gesloten: false,
+        lengte: 0
       },
       geometry: new ol.geom.Point([158149, 190676])
     }),
@@ -130,7 +134,9 @@ export class FeatureDemoComponent {
       id: 3,
       properties: {
         vorm: "punt",
-        merk: "ACME"
+        merk: "ACME",
+        gesloten: false
+        // geen lengte om terugvalkleur te testen
       },
       geometry: new ol.geom.Point([157758, 190810])
     }),
@@ -138,7 +144,9 @@ export class FeatureDemoComponent {
       id: 4,
       properties: {
         vorm: "lijn",
-        merk: "Globex"
+        merk: "Globex",
+        gesloten: false,
+        lengte: 10.0
       },
       geometry: new ol.geom.LineString([[157977, 190729], [158024, 190519], [158024, 190519]])
     }),
@@ -146,7 +154,9 @@ export class FeatureDemoComponent {
       id: 5,
       properties: {
         vorm: "lijn",
-        merk: "ACME"
+        merk: "ACME",
+        gesloten: false,
+        lengte: 20
       },
       geometry: new ol.geom.LineString([[157367, 191062], [157527, 190997], [157647, 190995]])
     }),
@@ -154,7 +164,9 @@ export class FeatureDemoComponent {
       id: 6,
       properties: {
         vorm: "cirkel",
-        merk: "Globex"
+        merk: "Globex",
+        gesloten: true,
+        lengte: 20
       },
       geometry: new ol.geom.Circle([157820, 190922], 100)
     }),
@@ -162,13 +174,15 @@ export class FeatureDemoComponent {
       id: 7,
       properties: {
         vorm: "veelvlak",
-        merk: "ACME"
+        merk: "ACME",
+        gesloten: true,
+        lengte: 30
       },
       geometry: new ol.geom.Polygon([[[157636, 190292], [157731, 190371], [157786, 190346], [157910, 190276], [157762, 190108]]])
     }),
     new ol.Feature({
       id: 8,
-      properties: {},
+      properties: {}, // altijd fallback
       geometry: new ol.geom.Circle([157821, 190530], 50)
     })
   ];
@@ -191,6 +205,26 @@ export class FeatureDemoComponent {
       constante: undefined,
       template: undefined,
       uniekeWaarden: ["ACME", "Globex"],
+      html: ""
+    },
+    {
+      naam: "lengte",
+      label: "Lengte",
+      type: "double",
+      isBasisVeld: true,
+      constante: undefined,
+      template: undefined,
+      uniekeWaarden: ["10", "20", "30", "1"],
+      html: ""
+    },
+    {
+      naam: "gesloten",
+      label: "Gesloten",
+      type: "boolean",
+      isBasisVeld: true,
+      constante: undefined,
+      template: undefined,
+      uniekeWaarden: ["true", "false"],
       html: ""
     }
   ];
