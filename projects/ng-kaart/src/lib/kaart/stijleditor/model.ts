@@ -1,5 +1,5 @@
 import * as array from "fp-ts/lib/Array";
-import { Curried2, Function1, Function2, Function3, Function4, Function5, Predicate, Refinement } from "fp-ts/lib/function";
+import { Curried2, Endomorphism, Function1, Function2, Function3, Function4, Function5, Predicate, Refinement } from "fp-ts/lib/function";
 import { fromPredicate, none, Option, some } from "fp-ts/lib/Option";
 import { getArraySetoid, getRecordSetoid, Setoid, setoidBoolean, setoidString } from "fp-ts/lib/Setoid";
 import { Lens, Optional } from "monocle-ts";
@@ -33,11 +33,12 @@ export interface VeldProps {
 // Om historische reden en ook omdat deze definities nogal variabel zijn naarmate er meer features toegevoegd worden,
 // is dit verschillend van wat er gepersisteerd en op lagere niveaus gebruikt wordt. Daar gebruiken we immers
 // AwvV0StyleSpec (persistentie) en StyleSelector (voor OL).
-export type LaagkleurInstellingen = UniformeKleur | KleurPerVeldwaarde;
+// We zouden dit type ook HighLevelLaagStijl genoemd kunnen hebben, maar we hebben al stijlen genoeg.
+export type LaagkleurInstellingen = EnkeleKleur | KleurPerVeldwaarde;
 
-// De instellingen nodig om een uniforme stijl en legende te maken
-export interface UniformeKleur {
-  readonly type: "uniform";
+// De instellingen nodig om een stijl met 1 kleur en legende te maken
+export interface EnkeleKleur {
+  readonly type: "enkel";
   readonly kleur: clr.Kleur;
   readonly afgeleid: boolean; // wanneer de stijl afgeleid is van een StijlSpec
 }
@@ -127,29 +128,31 @@ export namespace VeldProps {
 }
 
 export namespace LaagkleurInstellingen {
-  export const isUniformeKleur: Refinement<LaagkleurInstellingen, UniformeKleur> = (inst): inst is UniformeKleur => inst.type === "uniform";
+  export const isEnkeleKleur: Refinement<LaagkleurInstellingen, EnkeleKleur> = (inst): inst is EnkeleKleur => inst.type === "enkel";
   export const isKleurPerVeldwaarde: Refinement<LaagkleurInstellingen, KleurPerVeldwaarde> = (inst): inst is KleurPerVeldwaarde =>
     inst.type === "perVeldwaarde";
 }
 
-export namespace UniformeKleur {
-  export const create: Function2<boolean, clr.Kleur, UniformeKleur> = (afgeleid, kleur) => ({
-    type: "uniform",
+export namespace EnkeleKleur {
+  export const create: Function2<boolean, clr.Kleur, EnkeleKleur> = (afgeleid, kleur) => ({
+    type: "enkel",
     kleur: kleur,
     afgeleid: afgeleid
   });
 
-  export const createAfgeleid: Function1<clr.Kleur, UniformeKleur> = kleur => create(true, kleur);
-  export const createSynthetisch: Function1<clr.Kleur, UniformeKleur> = kleur => create(false, kleur);
+  export const createAfgeleid: Function1<clr.Kleur, EnkeleKleur> = kleur => create(true, kleur);
+  export const createSynthetisch: Function1<clr.Kleur, EnkeleKleur> = kleur => create(false, kleur);
 
-  export const setoid: Setoid<UniformeKleur> = getRecordSetoid({
+  export const setoid: Setoid<EnkeleKleur> = getRecordSetoid({
     kleur: clr.setoidKleurOpCode,
     afgeleid: setoidBoolean
   });
 
-  const kleurLens: Lens<UniformeKleur, clr.Kleur> = Lens.fromProp("kleur");
+  const kleurLens: Lens<EnkeleKleur, clr.Kleur> = Lens.fromProp("kleur");
 
-  export const zetKleur: ReduceFunction<UniformeKleur, clr.Kleur> = reducerFromLens(kleurLens);
+  export const zetKleur: ReduceFunction<EnkeleKleur, clr.Kleur> = reducerFromLens(kleurLens);
+
+  export const makeAfgeleid: Endomorphism<EnkeleKleur> = Lens.fromProp<EnkeleKleur, "afgeleid">("afgeleid").set(true);
 }
 
 export namespace KleurPerVeldwaarde {
@@ -203,4 +206,6 @@ export namespace KleurPerVeldwaarde {
     waardekleurenLens.composeOptional(arrayAsMapOptional(overlayVkw.waarde)).set(overlayVkw)(kpv);
 
   export const zetTerugvalkleur: ReduceFunction<KleurPerVeldwaarde, clr.Kleur> = reducerFromLens(terugvalKleurLens);
+
+  export const makeAfgeleid: Endomorphism<KleurPerVeldwaarde> = Lens.fromProp<KleurPerVeldwaarde, "afgeleid">("afgeleid").set(true);
 }

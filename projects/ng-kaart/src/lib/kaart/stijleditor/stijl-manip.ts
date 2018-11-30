@@ -14,7 +14,7 @@ import * as ke from "../kaart-elementen";
 import { Legende, LijnItem } from "../kaart-legende";
 import * as ss from "../stijl-selector";
 
-import { KleurPerVeldwaarde, UniformeKleur, VeldProps, VeldwaardeKleur } from "./model";
+import { EnkeleKleur, KleurPerVeldwaarde, VeldProps, VeldwaardeKleur } from "./model";
 import { kleurenpaletGroot } from "./palet";
 
 // Deze module bevat alle functies die converteren tussen de StijlSpec en het laagstijleditor model.
@@ -44,8 +44,8 @@ const enkelvoudigeKleurStijl: Function1<clr.Kleur, ss.AwvV0StaticStyleSpec> = kl
 });
 
 // Zet de stijl van het laageditormodel om in een stijl die we kunnen persisteren en converteren naar OL styles.
-export const uniformeKleurToStijlSpec: Function1<UniformeKleur, ss.AwvV0StaticStyleSpec> = stijl => enkelvoudigeKleurStijl(stijl.kleur);
-export const uniformeKleurToLegende: Curried2<string, UniformeKleur, Legende> = laagTitel => stijl =>
+export const enkeleKleurToStijlSpec: Function1<EnkeleKleur, ss.AwvV0StaticStyleSpec> = stijl => enkelvoudigeKleurStijl(stijl.kleur);
+export const enkeleKleurToLegende: Curried2<string, EnkeleKleur, Legende> = laagTitel => stijl =>
   Legende([LijnItem(laagTitel, clr.kleurcodeValue(stijl.kleur), none)]);
 
 const veldwaardeKleurToRule: Curried2<VeldProps, VeldwaardeKleur, sft.Rule> = veld => vkw => ({
@@ -187,10 +187,10 @@ const standaardTerugvalKleur = clr.zachtgrijs;
 const standaardInstellingVoorVeldwaarde: Function1<VeldProps, KleurPerVeldwaarde> = veldprops =>
   KleurPerVeldwaarde.createSynthetisch(veldprops, standaardKleurenPerVeldwaarde(veldprops), standaardTerugvalKleur);
 
-export const uniformeKleurViaLaag: Function1<ke.ToegevoegdeVectorLaag, UniformeKleur> = laag =>
+export const enkeleKleurViaLaag: Function1<ke.ToegevoegdeVectorLaag, EnkeleKleur> = laag =>
   gezetteLaagKleur(laag)
-    .map(UniformeKleur.createAfgeleid)
-    .getOrElse(UniformeKleur.createSynthetisch(clr.rood));
+    .map(EnkeleKleur.createAfgeleid)
+    .getOrElse(EnkeleKleur.createSynthetisch(clr.rood));
 
 const veldInfoViaLaagEnVeldnaam: Function2<ke.ToegevoegdeVectorLaag, string, Option<ke.VeldInfo>> = (laag, veldnaam) =>
   ke.ToegevoegdeVectorLaag.veldInfoOpNaamOptional(veldnaam).getOption(laag);
