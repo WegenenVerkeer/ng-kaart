@@ -21,7 +21,7 @@ import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 import { AwvV0StyleSpec } from "../stijl-selector";
 
-import { EnkeleKleur, KleurPerVeldwaarde, LaagkleurInstellingen, VeldProps, VeldwaardeKleur } from "./model";
+import { EnkeleKleur, KleurPerVeldwaarde, VeldProps, VeldwaardeKleur } from "./model";
 import { kleurenpaletGroot, kleurenpaletKlein } from "./palet";
 import { isAanpassingBezig, isAanpassingNietBezig, LaagstijlAanpassend } from "./state";
 import {
@@ -111,7 +111,7 @@ interface TerugvalClick {
 }
 
 const isKleurWijzigClick: Refinement<object, KleurWijzigTarget> = (uc): uc is KleurWijzigTarget => uc.hasOwnProperty("kleur");
-const isEnkeleSelectie: Refinement<object, EnkeleKleurClick> = (uc): uc is EnkeleKleurClick => uc.hasOwnProperty("enkel");
+const isEnkeleSelectie: Refinement<object, EnkeleKleurClick> = (uc): uc is EnkeleKleurClick => uc.hasOwnProperty("enkeleKleur");
 const isVeldwaardekleurSelectie: Refinement<object, VeldwaardeClick> = (vwk): vwk is VeldwaardeClick => vwk.hasOwnProperty("veldwaarde");
 const isTerugvalkleurSelectie: Refinement<object, TerugvalClick> = (tc): tc is TerugvalClick => tc.hasOwnProperty("terugval");
 
