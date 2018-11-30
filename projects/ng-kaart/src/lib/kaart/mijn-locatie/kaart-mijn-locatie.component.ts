@@ -32,6 +32,7 @@ const Resultaat: Function3<number, number, Position, Resultaat> = (zoom, doel, p
 const pasLocatieFeatureAan: Function4<ol.Feature, ol.Coordinate, number, number, ol.Feature> = (feature, coordinate, zoom, accuracy) => {
   feature.setGeometry(new ol.geom.Point(coordinate));
   zetStijl(feature, zoom, accuracy);
+  feature.changed(); // force redraw meteen
   return feature;
 };
 
