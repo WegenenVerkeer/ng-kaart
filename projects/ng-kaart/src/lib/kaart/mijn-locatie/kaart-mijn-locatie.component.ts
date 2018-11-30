@@ -19,7 +19,7 @@ import { kaartLogger } from "../log";
 export const MijnLocatieUiSelector = "Mijnlocatie";
 const MijnLocatieLaagNaam = "Mijn Locatie";
 
-const TrackingInterval = 1000; // aantal milliseconden tussen tracking updates
+const TrackingInterval = 500; // aantal milliseconden tussen tracking updates
 
 interface Resultaat {
   zoom: number;
@@ -227,9 +227,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
 
   private zetMijnPositie(position: Position, zoom: number, doelzoom: number) {
     const longLat: ol.Coordinate = [position.coords.longitude, position.coords.latitude];
-
     const coordinate = ol.proj.fromLonLat(longLat, "EPSG:31370");
-    this.dispatch(prt.VeranderMiddelpuntCmd(coordinate, some(TrackingInterval)));
 
     this.mijnLocatie = this.mijnLocatie
       .map(feature => pasLocatieFeatureAan(feature, coordinate, zoom, position.coords.accuracy))
@@ -240,6 +238,8 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
         }
         return this.maakNieuwFeature(coordinate, zoom, position.coords.accuracy);
       });
+
+    this.dispatch(prt.VeranderMiddelpuntCmd(coordinate, some(TrackingInterval)));
   }
 
   createLayer(): ke.VectorLaag {
