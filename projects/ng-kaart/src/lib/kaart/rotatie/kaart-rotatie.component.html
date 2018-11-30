@@ -1,4 +1,4 @@
-<div *ngIf="zichtbaar$ | async" class="kaart-widget rotatie">
+<div [hidden]="!(zichtbaar$ | async)" class="kaart-widget rotatie">
   <button mat-icon-button (click)="roteerNaarNoord()">
     <mat-icon [ngStyle]="{'transform': 'rotate(' + (rotatie$ | async) + 'rad)'}" aria-label="Rotatie" svgIcon="compass"></mat-icon>
   </button>

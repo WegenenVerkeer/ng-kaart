@@ -45,7 +45,7 @@ export class KaartRotatieComponent extends KaartChildComponentBase implements On
     this.zichtbaar$ = rx.merge(
       rx.of(false), // kompas initieel niet zichtbaar
       this.rotatie$.pipe(map(() => true)), // tot de kaart gedraaid wordt
-      this.bindToLifeCycle(this.clickBtnSubj).pipe(delay(2000)) // en terug onzichtbaar 2 seconden na gebruiker klik op knop
+      this.bindToLifeCycle(this.clickBtnSubj).pipe(delay(1000)) // en terug onzichtbaar 1 seconde na gebruiker klik op knop
     );
   }
 
