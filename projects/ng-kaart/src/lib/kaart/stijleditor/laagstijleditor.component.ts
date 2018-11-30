@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, ElementRef, NgZone, QueryList, View
 import { FormControl } from "@angular/forms";
 import { MatTabChangeEvent } from "@angular/material";
 import * as array from "fp-ts/lib/Array";
-import { Curried2, Function1, Function2, Lazy, Predicate, Refinement, tuple } from "fp-ts/lib/function";
+import { Curried2, Function1, Function2, Predicate, Refinement, tuple } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import { setoidString } from "fp-ts/lib/Setoid";
 import * as rx from "rxjs";
@@ -11,7 +11,7 @@ import { delay, filter, map, mapTo, sample, scan, shareReplay, startWith, switch
 import * as clr from "../../stijl/colour";
 import { forEach } from "../../util";
 import { expand2 } from "../../util/function";
-import { collectOption, forEvery, scan2, skipOlder } from "../../util/operators";
+import { collectOption, forEvery, scan2 } from "../../util/operators";
 import { negate } from "../../util/thruth";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
@@ -123,7 +123,7 @@ const isTerugvalkleurSelectie: Refinement<object, TerugvalClick> = (tc): tc is T
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LaagstijleditorComponent extends KaartChildComponentBase {
-  private readonly stijlModeSubj: rx.Subject<StijlMode> = new rx.Subject();
+  private readonly stijlModeSubj: rx.Subject<StijlMode> = new rx.BehaviorSubject(StijlMode.EnkeleKleur);
 
   readonly zichtbaar$: rx.Observable<boolean>;
   readonly titel$: rx.Observable<string>;
@@ -161,15 +161,7 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
     );
     const geenAanpassing$ = kaart.modelChanges.laagstijlaanpassingState$.pipe(filter(isAanpassingNietBezig));
 
-    const restartAt: (_: rx.Observable<any>) => <A>(_: Lazy<rx.Observable<A>>) => rx.Observable<A> = restarter => lObs =>
-      restarter.pipe(switchMap(() => lObs().pipe(skipOlder())));
-
-    const startAtOpen: <A>(_: Lazy<rx.Observable<A>>) => rx.Observable<A> = restartAt(aanpassing$);
-
-    const stijlMode$: rx.Observable<StijlMode> = startAtOpen(() => this.stijlModeSubj.asObservable()).pipe(
-      startWith(StijlMode.EnkeleKleur),
-      shareReplay(1)
-    );
+    const stijlMode$ = this.stijlModeSubj.asObservable();
 
     const selectByMode: <A>(_1: rx.Observable<A>, _2: rx.Observable<A>) => rx.Observable<A> = (enkeleKleurObs, OpVeldWaardeObs) =>
       forEvery(stijlMode$)(actueleMode => {
@@ -197,7 +189,13 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
     // Het paneel zelf
     //
     this.zichtbaar$ = kaart.modelChanges.laagstijlaanpassingState$.pipe(map(isAanpassingBezig));
-    this.bindToLifeCycle(this.actionFor$("sluitLaagstijleditor")).subscribe(() => this.dispatch(prt.StopVectorlaagstijlBewerkingCmd()));
+    this.bindToLifeCycle(this.actionFor$("sluitLaagstijleditor")).subscribe(() => {
+      this.dispatch(prt.StopVectorlaagstijlBewerkingCmd());
+      // Wanneer het paneel opengeklapt wordt, dan is std de eerste tab geselecteerd, maar er komt geen event voor.
+      // Daarom zetten we nu al de mode van de eerste tab zodat de observables op het goede pad zijn de volgende keer
+      // dat het paneel geopend wordt.
+      this.stijlModeSubj.next(StijlMode.EnkeleKleur);
+    });
 
     /////////////////
     // Enkele kleur
@@ -372,7 +370,7 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
     );
     const kleurPerVeldwaardeNietAangepast$ = forEvery(initieleKleurPerVeldwaarde$)(initieel =>
       kleurPerVeldwaarde$.pipe(map(huidig => KleurPerVeldwaarde.setoid.equals(huidig, initieel) && initieel.afgeleid))
-    );
+    ).pipe(startWith(true));
     this.nietToepassen$ = selectByMode(enkeleKleurNietAangepast$, kleurPerVeldwaardeNietAangepast$);
 
     ///////////////////////
