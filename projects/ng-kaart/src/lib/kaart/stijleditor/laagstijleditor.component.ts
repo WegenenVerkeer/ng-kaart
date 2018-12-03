@@ -228,7 +228,7 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
       rx
         .combineLatest(laag$.pipe(map(kleurveldnaamViaLaag)), this.klasseVelden$, tuple)
         .pipe(map(([maybeVeldnaam, bechikbareVeldinfos]) => maybeVeldnaam.filter(isStillAvailable(bechikbareVeldinfos.map(vi => vi.naam)))))
-    ).subscribe(maybeVeldnaam => forEach(maybeVeldnaam, veldnaam => this.veldControl.setValue(veldnaam)));
+    ).subscribe(maybeVeldnaam => this.veldControl.setValue(maybeVeldnaam.toUndefined()));
 
     // We willen ook weten welk veld de gebruiker aangeduid heeft
     const veldnaam$ = forEveryLaag(() =>

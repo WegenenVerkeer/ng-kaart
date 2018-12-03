@@ -40,7 +40,7 @@ export type LaagkleurInstellingen = EnkeleKleur | KleurPerVeldwaarde;
 export interface EnkeleKleur {
   readonly type: "enkel";
   readonly kleur: clr.Kleur;
-  readonly afgeleid: boolean; // wanneer de stijl afgeleid is van een StijlSpec
+  readonly afgeleid: boolean; // Wanneer de stijl afgeleid is van een StijlSpec. Maw dat de stijl al toegepast is.
 }
 
 // De instellingen nodig om een stijl met voor elke waarde van een specifiek veld een stijl en legende te maken
