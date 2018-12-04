@@ -69,7 +69,7 @@ export class DefaultRepresentatieService implements AbstractRepresentatieService
     private readonly sanitizer: DomSanitizer
   ) {
     function vervangKleur(pin: string, kleur: ol.Color): string {
-      function vullFillIn(nodes: NodeListOf<SVGGraphicsElement>, fillKleur: string) {
+      function vullFillIn(nodes: HTMLCollectionOf<SVGGraphicsElement>, fillKleur: string) {
         for (let i = 0; i < nodes.length; i++) {
           const node = nodes.item(i);
           if (!node.hasAttribute("fill")) {
