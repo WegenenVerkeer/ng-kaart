@@ -40,7 +40,7 @@ const zetStijl: Function3<ol.Feature, number, number, void> = (feature, zoom, ac
 
 const locatieStijlFunctie: Function1<number, ol.FeatureStyleFunction> = accuracy => {
   return resolution => {
-    const accuracyInPixels = accuracy / resolution;
+    const accuracyInPixels = Math.min(accuracy, 500) / resolution; // max 500m cirkel, soms accuracy 86000 in chrome bvb...
     const radius = Math.max(accuracyInPixels, 12); // nauwkeurigheid cirkel toch nog tonen zelfs indien ver uitgezoomd
     return [
       new ol.style.Style({
