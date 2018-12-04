@@ -241,7 +241,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
       });
 
     // kleine delay om OL tijd te geven eerst de icon te verplaatsen
-    setTimeout(() => this.dispatch(prt.VeranderMiddelpuntCmd(coordinate, some(TrackingInterval))), 200);
+    setTimeout(() => this.dispatch(prt.VeranderMiddelpuntCmd(coordinate, some(TrackingInterval))), 50);
   }
 
   createLayer(): ke.VectorLaag {
