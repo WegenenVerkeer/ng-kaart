@@ -1,0 +1,6 @@
+{
+  "baseUrl": "http://localhost:4220/ng-kaart/",
+  "viewportHeight": 1000,
+  "viewportWidth": 1200,
+  "integrationFolder": "cypress/integration"
+}

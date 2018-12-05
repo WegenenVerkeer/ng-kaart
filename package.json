@@ -13,7 +13,9 @@
     "test-debug": "karma start karma.conf.js --watch=true --browsers=PhantomJS --debug",
     "build-test-app": "npm run clean && npm install && npm prune && ng build && ng build testApp --base-href /ng-kaart --deploy-url /ng-kaart/",
     "lint": "ng lint",
-    "e2e": "ng e2e",
+    "cypress": "cypress run",
+    "pree2e": "ng serve testApp --port 4221",
+    "e2e": "CYPRESS_baseurl=http://localhost:4221/ cypress run",
     "precommit": "lint-staged",
     "publishToNexus": "node script/patchRegistry.js https://collab.mow.vlaanderen.be/artifacts/repository/npm-internal/",
     "publishToNpmjs": "node script/patchRegistry.js"
