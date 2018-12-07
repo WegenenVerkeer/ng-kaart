@@ -15,7 +15,9 @@ const config = {
       args: [
         'window-size=1280x1000',
         'headless', // definieer DISABLE_HEADLESS om gewoon te testen
-        'disable-gpu'
+        'disable-gpu',
+        'no-sandbox',
+        'disable-dev-shm-usage'
       ],
       prefs: {
         download: {
