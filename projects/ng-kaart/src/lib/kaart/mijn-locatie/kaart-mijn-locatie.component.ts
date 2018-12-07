@@ -5,7 +5,7 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import { List, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, filter, map, switchMap, take } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, filter, map } from "rxjs/operators";
 
 import { flatten } from "../../util/operators";
 import * as ke from "../kaart-elementen";
@@ -40,7 +40,7 @@ const zetStijl: Function3<ol.Feature, number, number, void> = (feature, zoom, ac
 
 const locatieStijlFunctie: Function1<number, ol.FeatureStyleFunction> = accuracy => {
   return resolution => {
-    const accuracyInPixels = accuracy / resolution;
+    const accuracyInPixels = Math.min(accuracy, 500) / resolution; // max 500m cirkel, soms accuracy 86000 in chrome bvb...
     const radius = Math.max(accuracyInPixels, 12); // nauwkeurigheid cirkel toch nog tonen zelfs indien ver uitgezoomd
     return [
       new ol.style.Style({
@@ -217,7 +217,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
           fout => this.meldFout(fout),
           {
             enableHighAccuracy: true,
-            timeout: 1000
+            timeout: 20000 // genoeg tijd geven aan gebruiker om locatie toestemming te geven
           }
         )
       );
@@ -240,7 +240,8 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
         return this.maakNieuwFeature(coordinate, zoom, position.coords.accuracy);
       });
 
-    this.dispatch(prt.VeranderMiddelpuntCmd(coordinate, some(TrackingInterval)));
+    // kleine delay om OL tijd te geven eerst de icon te verplaatsen
+    setTimeout(() => this.dispatch(prt.VeranderMiddelpuntCmd(coordinate, some(TrackingInterval))), 50);
   }
 
   createLayer(): ke.VectorLaag {
