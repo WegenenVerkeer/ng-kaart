@@ -13,6 +13,7 @@
     "test-debug": "karma start karma.conf.js --watch=true --browsers=PhantomJS --debug",
     "build-test-app": "npm run clean && npm install && npm prune && ng build && ng build testApp --base-href /ng-kaart --deploy-url /ng-kaart/",
     "lint": "ng lint",
+    "lint-fix": "ng lint --fix",
     "e2e" : "ng e2e",
     "cypress": "cypress open",
     "start:e2e": "ng serve testApp --port 4221",

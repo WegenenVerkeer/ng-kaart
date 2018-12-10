@@ -2,9 +2,10 @@ import { ChangeDetectorRef, Component, ElementRef, Inject, Input, NgZone, ViewCh
 import { Set } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { debounceTime, delay, filter, last, map, scan, shareReplay, startWith, switchMap, takeUntil, tap, take } from "rxjs/operators";
+import { debounceTime, delay, filter, last, map, scan, shareReplay, startWith, switchMap, take, takeUntil, tap } from "rxjs/operators";
 
 import { asap } from "../util/asap";
+import { exponentialTimer } from "../util/exponential-timer";
 import { observableFromDomMutations } from "../util/mutation-observable";
 import { observeOnAngular } from "../util/observe-on-angular";
 import { observeOutsideAngular } from "../util/observer-outside-angular";
@@ -20,7 +21,6 @@ import * as red from "./kaart-reducer";
 import { cleanup, KaartWithInfo } from "./kaart-with-info";
 import { kaartLogger } from "./log";
 import { ModelChanger, ModelChanges, modelChanges, UiElementSelectie } from "./model-changes";
-import { exponentialTimer } from '../util/exponential-timer';
 
 // Om enkel met @Input properties te moeten werken. Op deze manier kan een stream van KaartMsg naar de caller gestuurd worden
 export type KaartMsgObservableConsumer = (msg$: rx.Observable<prt.KaartMsg>) => void;
