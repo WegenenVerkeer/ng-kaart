@@ -7,7 +7,6 @@ import { delay, distinctUntilChanged, map, tap } from "rxjs/operators";
 
 import { encodeAsSvgUrl } from "../../util/url";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
-import { kaartLogOnlyWrapper } from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 

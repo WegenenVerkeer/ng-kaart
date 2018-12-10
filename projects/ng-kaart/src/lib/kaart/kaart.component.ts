@@ -1,8 +1,8 @@
-import { Component, ElementRef, Inject, Input, NgZone, ViewChild, ViewEncapsulation } from "@angular/core";
+import { ChangeDetectorRef, Component, ElementRef, Inject, Input, NgZone, ViewChild, ViewEncapsulation } from "@angular/core";
 import { Set } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { debounceTime, delay, filter, last, map, scan, shareReplay, startWith, switchMap, takeUntil, tap } from "rxjs/operators";
+import { debounceTime, delay, filter, last, map, scan, shareReplay, startWith, switchMap, takeUntil, tap, take } from "rxjs/operators";
 
 import { asap } from "../util/asap";
 import { observableFromDomMutations } from "../util/mutation-observable";
@@ -20,6 +20,7 @@ import * as red from "./kaart-reducer";
 import { cleanup, KaartWithInfo } from "./kaart-with-info";
 import { kaartLogger } from "./log";
 import { ModelChanger, ModelChanges, modelChanges, UiElementSelectie } from "./model-changes";
+import { exponentialTimer } from '../util/exponential-timer';
 
 // Om enkel met @Input properties te moeten werken. Op deze manier kan een stream van KaartMsg naar de caller gestuurd worden
 export type KaartMsgObservableConsumer = (msg$: rx.Observable<prt.KaartMsg>) => void;
@@ -89,7 +90,7 @@ export class KaartComponent extends KaartComponentBase {
 
   internalMessage$: rx.Observable<KaartInternalSubMsg> = rx.empty();
 
-  constructor(@Inject(KAART_CFG) readonly config: KaartConfig, zone: NgZone) {
+  constructor(@Inject(KAART_CFG) readonly config: KaartConfig, zone: NgZone, private readonly changeDector: ChangeDetectorRef) {
     super(zone);
     this.internalMessage$ = this.msgSubj.pipe(
       filter(m => m.type === "KaartInternal"), //
@@ -159,6 +160,15 @@ export class KaartComponent extends KaartComponentBase {
       )
     ).subscribe(() => this.pasKaartLinksWeergaveAan());
     this.viewReady$.pipe(delay(10)).subscribe(() => this.bepaalKaartLinksInitieelZichtbaar()); // waarom is delay nodig?
+
+    // Angular heeft niet altijd door dat een van variabelen die we gebruiken voor het bepalen van de zichtbaarheid van
+    // de scrollbar en inklapknop aangepast zijn.
+    this.viewReady$
+      .pipe(
+        switchMap(() => exponentialTimer(10, 100)), // voor uit elke 200 ms
+        take(7) // tot ongeveer 6s na het opstarten
+      )
+      .subscribe(() => this.changeDector.detectChanges());
   }
 
   private createMapModelForCommands(initieelModel: KaartWithInfo): rx.Observable<KaartWithInfo> {

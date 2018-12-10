@@ -403,7 +403,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   constructor(
     parent: KaartComponent,
     zone: NgZone,
-    private cd: ChangeDetectorRef,
+    private readonly cd: ChangeDetectorRef,
     @Inject(ZOEKER_REPRESENTATIE) private zoekerRepresentatie: AbstractRepresentatieService
   ) {
     super(parent, zone);
