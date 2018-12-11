@@ -90,21 +90,19 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
 
     // We willen het "oog" verbergen wanneer we in de error toestand zijn
     this.progressStyle$ = inError$.pipe(
-      switchMap(
-        inError =>
-          inError
-            ? rx.of({ "margin-left": "-10000px" })
-            : busy$.pipe(
-                switchMap(
-                  busy =>
-                    busy
-                      ? rx.timer(0, 200).pipe(
-                          // 110 = 11 * 10 . De modulus moet het eerste geheel veelvoud van het aantal onderverdelingen > 100 zijn.
-                          map(n => ({ "margin-left": ((n * 11) % 110) + "%" }))
-                        )
-                      : rx.of({})
-                )
+      switchMap(inError =>
+        inError
+          ? rx.of({ "margin-left": "-10000px" })
+          : busy$.pipe(
+              switchMap(busy =>
+                busy
+                  ? rx.timer(0, 200).pipe(
+                      // 110 = 11 * 10 . De modulus moet het eerste geheel veelvoud van het aantal onderverdelingen > 100 zijn.
+                      map(n => ({ "margin-left": ((n * 11) % 110) + "%" }))
+                    )
+                  : rx.of({})
               )
+            )
       ),
       observeOnAngular(this.zone)
     );

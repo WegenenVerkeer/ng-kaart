@@ -151,11 +151,10 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
       );
     this.bindToLifeCycle(
       initieelDichtgeklapt$.pipe(
-        switchMap(
-          initieelDichtgeklapt =>
-            initieelDichtgeklapt
-              ? rx.empty()
-              : rx.merge(this.lagenHoog$.pipe(listCountChange), this.lagenLaag$.pipe(listCountChange)).pipe(filter(identity))
+        switchMap(initieelDichtgeklapt =>
+          initieelDichtgeklapt
+            ? rx.empty()
+            : rx.merge(this.lagenHoog$.pipe(listCountChange), this.lagenLaag$.pipe(listCountChange)).pipe(filter(identity))
         ),
         observeOnAngular(this.zone)
       )

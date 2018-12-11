@@ -123,12 +123,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function valideerVectorLayerBestaat(titel: string): prt.KaartCmdValidation<ol.layer.Vector> {
-      return chain(
-        valideerToegevoegdeLaagBestaat(titel),
-        laag =>
-          laag.layer["setStyle"]
-            ? validation.success(laag.layer as ol.layer.Vector)
-            : validation.failure([`De laag met titel ${titel} is geen vectorlaag`])
+      return chain(valideerToegevoegdeLaagBestaat(titel), laag =>
+        laag.layer["setStyle"]
+          ? validation.success(laag.layer as ol.layer.Vector)
+          : validation.failure([`De laag met titel ${titel} is geen vectorlaag`])
       );
     }
 

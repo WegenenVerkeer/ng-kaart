@@ -49,8 +49,8 @@ export class KaartTekenComponent extends KaartComponentBase implements OnInit {
   ngOnInit() {
     super.ngOnInit();
     // TODO: dit kan allicht eleganter met een switchMap
-    this.bindToLifeCycle(this.aanHetTekenen.pipe(distinctUntilChanged())).subscribe(
-      tekenen => (tekenen ? this.startTekenen() : this.stopTekenen())
+    this.bindToLifeCycle(this.aanHetTekenen.pipe(distinctUntilChanged())).subscribe(tekenen =>
+      tekenen ? this.startTekenen() : this.stopTekenen()
     );
   }
 

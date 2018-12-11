@@ -353,10 +353,12 @@ export class ZoekerGoogleWdbService implements Zoeker {
           (results, status) => {
             if (status === google.maps.GeocoderStatus.OK) {
               resolve(
-                results.map(result => <ExtendedGeocoderResult>result).map(result => {
-                  result.omschrijving = omschrijving;
-                  return result;
-                })
+                results
+                  .map(result => <ExtendedGeocoderResult>result)
+                  .map(result => {
+                    result.omschrijving = omschrijving;
+                    return result;
+                  })
               );
             } else {
               reject(status);

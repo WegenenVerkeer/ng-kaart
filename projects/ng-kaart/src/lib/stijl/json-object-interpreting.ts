@@ -110,12 +110,10 @@ export function arrSize<T>(size: number, interpreter: Interpreter<T>): Interpret
 
 export function enu<T extends string>(...values: T[]): Interpreter<T> {
   return (json: Object) =>
-    validationChain(
-      str(json),
-      jsonString =>
-        (values as string[]).indexOf(jsonString) < 0 //
-          ? fail(`'${jsonString}' is niet één van '${values}'`)
-          : ok(jsonString as T)
+    validationChain(str(json), jsonString =>
+      (values as string[]).indexOf(jsonString) < 0 //
+        ? fail(`'${jsonString}' is niet één van '${values}'`)
+        : ok(jsonString as T)
     );
 }
 
