@@ -165,8 +165,8 @@ export class KaartComponent extends KaartComponentBase {
     // de scrollbar en inklapknop aangepast zijn.
     this.viewReady$
       .pipe(
-        switchMap(() => exponentialTimer(10, 100)), // voor uit elke 200 ms
-        take(7) // tot ongeveer 6s na het opstarten
+        switchMap(() => exponentialTimer(10, 100)), // zorg voor een paar redraws
+        take(6) // tot ongeveer 3s na het opstarten. Langer geeft problemen voor de Protractor testen.
       )
       .subscribe(() => this.changeDector.detectChanges());
   }
