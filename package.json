@@ -26,12 +26,12 @@
   "lint-staged": {
     "linters": {
       "src/**/*.ts": [
-        "tslint --type-check --project src/tsconfig.app.json --fix",
+        "tslint --project src/tsconfig.app.json --fix",
         "awk /apps-(dev|tei).mow.vlaanderen.be/{exit(1)}",
         "git add"
       ],
       "projects/ng-kaart/**/*.ts": [
-        "tslint --type-check --project projects/ng-kaart/tsconfig.lib.json --fix",
+        "tslint --project projects/ng-kaart/tsconfig.lib.json --fix",
         "awk /apps-(dev|tei).mow.vlaanderen.be/{exit(1)}",
         "git add"
       ]
@@ -54,7 +54,6 @@
     "@angular/platform-browser-dynamic": "7.1.2",
     "@angular/router": "7.1.2",
     "@types/loglevel": "1.5.3",
-    "copy-webpack-plugin": "4.6.0",
     "core-js": "2.6.0",
     "fp-ts": "1.12.0",
     "hammerjs": "2.0.8",
@@ -89,6 +88,7 @@
     "@types/node": "~8.9.4",
     "@types/openlayers": "4.6.9",
     "codelyzer": "~4.5.0",
+    "copy-webpack-plugin": "4.6.0",
     "cypress": "^3.1.3",
     "glob": "7.1.3",
     "husky": "^1.2.0",
