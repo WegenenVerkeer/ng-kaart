@@ -141,24 +141,6 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
         take(1)
       )
       .subscribe(dichtgeklapt => (this.dichtgeklapt = dichtgeklapt));
-    // Zorg dat de lijst open klapt als er een laag bijkomt of weg gaat tenzij de optie initieelDichtgeklapt op 'true' staat.
-    const listCountChange: Pipeable<List<any>, boolean> = obs =>
-      obs.pipe(
-        map(l => l.count()),
-        startWith(0),
-        pairwise(),
-        map(([c1, c2]) => c1 !== c2)
-      );
-    this.bindToLifeCycle(
-      initieelDichtgeklapt$.pipe(
-        switchMap(initieelDichtgeklapt =>
-          initieelDichtgeklapt
-            ? rx.empty()
-            : rx.merge(this.lagenHoog$.pipe(listCountChange), this.lagenLaag$.pipe(listCountChange)).pipe(filter(identity))
-        ),
-        observeOnAngular(this.zone)
-      )
-    ).subscribe(() => (this.dichtgeklapt = false));
   }
 
   get isOpengeklapt(): boolean {
