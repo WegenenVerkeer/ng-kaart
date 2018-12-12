@@ -1,5 +1,6 @@
 const fs = require("fs-extra");
 const concat = require("concat");
+const targetDir =  "dist/elements";
 
 (async function build() {
   const files = [
@@ -9,10 +10,10 @@ const concat = require("concat");
     "./dist/webcomponent/main.js"
   ];
 
-  await fs.ensureDir("elements");
-  await concat(files, "elements/webcomponent.js");
+  await fs.ensureDir(targetDir);
+  await concat(files, targetDir + "/webcomponent.js");
   await fs.copyFile(
     "./dist/webcomponent/styles.css",
-    "elements/styles.css"
+    targetDir + "/styles.css"
   );
 })();

@@ -2,7 +2,22 @@
   kaart-element works! {{size}}
 </p>
 <awv-kaart-classic class="qa-kaart" [naam]="'orthophotos'">
+  <awv-kaart-lagenkiezer [verwijderbareLagen]="true" [verplaatsbareLagen]="true" [toonLegende]="true"></awv-kaart-lagenkiezer>
   <awv-kaart-ortho-laag [titel]="'Ortho'" [groep]="'Voorgrond.Laag'"></awv-kaart-ortho-laag>
   <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
   <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
+  <awv-kaart-streetview></awv-kaart-streetview>
+  <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+  <awv-meet-knop [toonInfoBoodschap]="true"></awv-meet-knop>
+  <awv-kaart-copyright></awv-kaart-copyright>
+  <awv-kaart-voorwaarden [titel]="'dead or alive'"></awv-kaart-voorwaarden>
+  <awv-kaart-schaal></awv-kaart-schaal>
+  <div class="kaart-links">
+    <div class="custom-kaart-links-extra">
+      <div class="custom-element">
+        <span class="material-icons">style</span>
+        <span class="custom-titel">AWV Geoloket</span>
+      </div>
+    </div>
+  </div>
 </awv-kaart-classic>
