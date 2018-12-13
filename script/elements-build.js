@@ -1,7 +1,6 @@
 const fs = require("fs-extra");
 const concat = require("concat");
-const srcDir = "dist/webcomponents";
-const targetDir = "dist/elements";
+const targetDir = "projects/webcomponentdemo";
 
 (async function build() {
   // De gegenereerde javascript files samenvoegen om tot een eenvoudiger distributie te komen

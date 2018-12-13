@@ -11,27 +11,6 @@
       rel="stylesheet"
     />
     <link href="styles.css" rel="stylesheet" />
-    <style>
-      .custom-titel {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-    </style>
-    <script>
-      window.onload = () => {
-        const kaartElement = document.getElementById("k1");
-        const levels = 11;
-        let zoomIndex = 1;
-        const setZoom = () => {
-          const zoom = 1 + Math.min(zoomIndex, levels * 2 - zoomIndex);
-          kaartElement.setAttribute("zoom", "" + zoom);
-          zoomIndex = (zoomIndex + 1) % (levels * 2 + 1);
-          setTimeout(setZoom, 2000);
-        };
-        setZoom();
-      };
-    </script>
   </head>
   <body>
     <awv-kaart-element id="k1" zoom="1">...</awv-kaart-element>
