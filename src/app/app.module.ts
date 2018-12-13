@@ -5,10 +5,7 @@ import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { RouterModule } from "@angular/router";
 import { ClickOutsideModule } from "ng4-click-outside";
 
-import { ClassicModule } from "../../projects/ng-kaart/src/lib/classic";
-import { KaartModule } from "../../projects/ng-kaart/src/lib/kaart";
-import { LagenkiezerModule } from "../../projects/ng-kaart/src/lib/lagenkiezer";
-import { ZoekerModule } from "../../projects/ng-kaart/src/lib/zoeker";
+import { ClassicModule, KaartModule, LagenkiezerModule, ZoekerModule } from "@wegenenverkeer/ng-kaart";
 
 import { AppComponent, routes } from "./app.component";
 import { AvKaartInnerComponent } from "./av-kaart-inner.component";

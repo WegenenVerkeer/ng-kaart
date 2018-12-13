@@ -47,7 +47,11 @@
             "styles": [
               "src/styles.scss"
             ],
-            "scripts": []
+            "scripts": [
+              {
+                "input": "node_modules/document-register-element/build/document-register-element.js"
+              }
+            ]
           },
           "configurations": {
             "production": {
@@ -157,8 +161,7 @@
             "project": "projects/ng-kaart/ng-package.json"
           },
           "configurations": {
-            "production": {
-            }
+            "production": {}
           }
         },
         "test": {
@@ -175,6 +178,105 @@
             "tsConfig": [
               "projects/ng-kaart/tsconfig.lib.json",
               "projects/ng-kaart/tsconfig.spec.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
+        }
+      }
+    },
+    "webcomponent": {
+      "root": "projects/webcomponent/",
+      "sourceRoot": "projects/webcomponent/src",
+      "projectType": "application",
+      "prefix": "awv",
+      "schematics": {},
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:browser",
+          "options": {
+            "outputPath": "dist/webcomponent",
+            "index": "projects/webcomponent/src/index.html",
+            "main": "projects/webcomponent/src/main.ts",
+            "polyfills": "projects/webcomponent/src/polyfills.ts",
+            "tsConfig": "projects/webcomponent/tsconfig.app.json",
+            "assets": [
+              "projects/webcomponent/src/favicon.ico",
+              "projects/webcomponent/src/assets"
+            ],
+            "styles": [
+              "projects/webcomponent/src/styles.css"
+            ],
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "fileReplacements": [
+                {
+                  "replace": "projects/webcomponent/src/environments/environment.ts",
+                  "with": "projects/webcomponent/src/environments/environment.prod.ts"
+                }
+              ],
+              "optimization": true,
+              "outputHashing": "all",
+              "sourceMap": false,
+              "extractCss": true,
+              "namedChunks": false,
+              "aot": true,
+              "extractLicenses": true,
+              "vendorChunk": false,
+              "buildOptimizer": true,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "3mb",
+                  "maximumError": "5mb"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "browserTarget": "webcomponent:build"
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "webcomponent:build:production"
+            }
+          }
+        },
+        "extract-i18n": {
+          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "options": {
+            "browserTarget": "webcomponent:build"
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "projects/webcomponent/src/test.ts",
+            "polyfills": "projects/webcomponent/src/polyfills.ts",
+            "tsConfig": "projects/webcomponent/tsconfig.spec.json",
+            "karmaConfig": "projects/webcomponent/karma.conf.js",
+            "styles": [
+              "projects/webcomponent/src/styles.css"
+            ],
+            "scripts": [],
+            "assets": [
+              "projects/webcomponent/src/favicon.ico",
+              "projects/webcomponent/src/assets"
+            ]
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "projects/webcomponent/tsconfig.app.json",
+              "projects/webcomponent/tsconfig.spec.json"
             ],
             "exclude": [
               "**/node_modules/**"
