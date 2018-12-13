@@ -1,7 +1,7 @@
 <p>
-  kaart-element works! {{size}}
+  kaart-element werkt! De zoom is nu {{zoom}}.
 </p>
-<awv-kaart-classic class="qa-kaart" [naam]="'orthophotos'">
+<awv-kaart-classic class="qa-kaart" [naam]="'orthophotos'" [zoom]="zoom">
   <awv-kaart-lagenkiezer [verwijderbareLagen]="true" [verplaatsbareLagen]="true" [toonLegende]="true"></awv-kaart-lagenkiezer>
   <awv-kaart-ortho-laag [titel]="'Ortho'" [groep]="'Voorgrond.Laag'"></awv-kaart-ortho-laag>
   <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>

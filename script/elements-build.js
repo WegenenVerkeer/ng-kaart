@@ -1,8 +1,10 @@
 const fs = require("fs-extra");
 const concat = require("concat");
-const targetDir =  "dist/elements";
+const srcDir = "dist/webcomponents";
+const targetDir = "dist/elements";
 
 (async function build() {
+  // De gegenereerde javascript files samenvoegen om tot een eenvoudiger distributie te komen
   const files = [
     "./dist/webcomponent/runtime.js",
     "./dist/webcomponent/polyfills.js",
@@ -12,6 +14,8 @@ const targetDir =  "dist/elements";
 
   await fs.ensureDir(targetDir);
   await concat(files, targetDir + "/webcomponent.js");
+
+  // Ook de style file copieren
   await fs.copyFile(
     "./dist/webcomponent/styles.css",
     targetDir + "/styles.css"

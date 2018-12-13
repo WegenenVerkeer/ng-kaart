@@ -1,4 +1,4 @@
-import { Component, Input, OnInit } from "@angular/core";
+import { Component, Input, OnInit, ViewEncapsulation } from "@angular/core";
 
 @Component({
   selector: "awv-kaart-element",
@@ -6,7 +6,7 @@ import { Component, Input, OnInit } from "@angular/core";
   styleUrls: ["./kaart-element.component.css"]
 })
 export class KaartElementComponent implements OnInit {
-  @Input() size = 0;
+  @Input() zoom = 2;
   constructor() {}
 
   ngOnInit() {}

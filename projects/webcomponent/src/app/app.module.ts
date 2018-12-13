@@ -10,11 +10,10 @@ import { KaartModule } from "../../../ng-kaart/src/lib/kaart";
 import { LagenkiezerModule } from "../../../ng-kaart/src/lib/lagenkiezer";
 import { ZoekerModule } from "../../../ng-kaart/src/lib/zoeker";
 
-import { AppComponent } from "./app.component";
 import { KaartElementComponent } from "./kaart-element/kaart-element.component";
 
 @NgModule({
-  declarations: [AppComponent, KaartElementComponent],
+  declarations: [KaartElementComponent],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
@@ -30,7 +29,7 @@ import { KaartElementComponent } from "./kaart-element/kaart-element.component";
     ClickOutsideModule
   ],
   providers: [],
-  entryComponents: [AppComponent, KaartElementComponent]
+  entryComponents: [KaartElementComponent]
 })
 export class AppModule {
   public constructor(private readonly injector: Injector) {

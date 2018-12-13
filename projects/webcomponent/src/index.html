@@ -6,21 +6,34 @@
     <base href="/" />
 
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <link
       href="https://fonts.googleapis.com/icon?family=Material+Icons"
       rel="stylesheet"
     />
-    <link href="indigo-pink.css" rel="stylesheet">
+    <link href="styles.css" rel="stylesheet" />
+    <style>
+      .custom-titel {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    </style>
     <script>
-      let count = 1;
-      setTimeout(() => {
+      window.onload = () => {
         const kaartElement = document.getElementById("k1");
-        kaartElement.setAttribute("size", "" + count);
-      }, 1000);
+        const levels = 11;
+        let zoomIndex = 1;
+        const setZoom = () => {
+          const zoom = 1 + Math.min(zoomIndex, levels * 2 - zoomIndex);
+          kaartElement.setAttribute("zoom", "" + zoom);
+          zoomIndex = (zoomIndex + 1) % (levels * 2 + 1);
+          setTimeout(setZoom, 2000);
+        };
+        setZoom();
+      };
     </script>
   </head>
   <body>
-    <awv-kaart-element id="k1" size="1024">...</awv-kaart-element>
+    <awv-kaart-element id="k1" zoom="1">...</awv-kaart-element>
   </body>
 </html>
