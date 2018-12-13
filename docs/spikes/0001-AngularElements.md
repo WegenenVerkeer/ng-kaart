@@ -44,3 +44,5 @@ Er is echter wel een work-around die voor de meeste afnemers aanvaardbaar zou mo
 1. een `@Input` van een geneste tag van `awv-classic-kaart`, bijv. `awv-kaart-lagenkiezer`
 1. een dynamisch toegevoegde tag gecontroleerd door een `ngIf`. Bijv. `awv-kaart-vector-laag`
 1. Een combinatie van voorgaande
+
+In concreto voor werf bijvoorbeeld, betekent dit dat we best een module maken op hetzelfde niveau as `werf-ui` en daar een eigen `package.json` en `angular.json` definiëren.
