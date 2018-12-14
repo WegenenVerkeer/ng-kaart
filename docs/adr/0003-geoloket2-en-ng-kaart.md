@@ -8,11 +8,11 @@ Draft
 
 ## Context
 
-Er zijn bijkomende redenen in de beslissing om te stoppen met Geoloket en over te gaan naar Geoloket 2. We wensen namelijk dat alle toepassingen binnen AWV die gegevens op een kaart willen weergeven, en er zijn er zo nogal wat:
+Er zijn bijkomende redenen in de beslissing om te stoppen met Geoloket en over te gaan naar Geoloket 2. We wensen namelijk dat alle toepassingen binnen AWV die gegevens op een kaart willen weergeven (en er zijn er zo nogal wat):
 
 1. dat allemaal met een gelijkaardige look en feel doen
-2. dat met een minimum aan ontwikkelingsinspanning ku*nnen doen
-3. daarbij gebruik kunnen maken van features die in eerste instantie voor andere toepassingen ontwikkeld zijn maar ook in de betreffende applicatie een toegevoegde waarde kunnen bieden
+1. dat met een minimum aan ontwikkelingsinspanning kunnen doen
+1. daarbij gebruik kunnen maken van features die in eerste instantie voor andere toepassingen ontwikkeld zijn maar ook in de betreffende applicatie een toegevoegde waarde kunnen bieden
 
 Er bestaat al een kern van een Javascript module onder de vorm van een Angular bibliotheek die kaartgegevens kan visualiseren.
 
@@ -52,6 +52,6 @@ In Geoloket 2 maken we gebruik van ng-kaart en voegen daar specifieke functional
 
 Geoloket 2 en ng-kaart worden als afzonderlijke softwareartefacten elk met hun eigen ontwikkelingscyclus behandeld.
 
-Er is een significante extra kost verbonden aan de ontwikkeling voor Geoloket 2 gezien functionaliteit typische generieker geïmplementeerd zal worden in ng-kaart. Er is ook altijd een volledige build van ng-kaart nodig eer een ontwikkeling in ng-kaart in Geoloket 2 gebruikt kan worden.
+Er is een significante extra kost verbonden aan de ontwikkeling voor Geoloket 2 gezien functionaliteit doorgaans generieker geïmplementeerd zal worden in ng-kaart. Er is ook altijd een volledige build van ng-kaart nodig eer een ontwikkeling in ng-kaart in Geoloket 2 gebruikt of zelfs maar getest kan worden.
 
 ng-kaart heeft een afzonderlijke demoapplicatie nodig om enerzijds de ontwikkeling en debugging van functionaliteit te ondersteunen en anderzijds om als voorbeeld te dienen in het gebruik voor de afnemers in andere teams.
