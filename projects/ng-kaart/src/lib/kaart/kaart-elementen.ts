@@ -73,7 +73,7 @@ export interface WmtsLaag {
   readonly verwijderd: boolean;
 }
 
-export type VeldType = "string" | "integer" | "double" | "geometry" | "date" | "boolean" | "json";
+export type VeldType = "string" | "integer" | "double" | "geometry" | "date" | "datetime" | "boolean" | "json";
 
 export interface VeldInfo {
   readonly naam: string; // naam zoals gekend in de feature

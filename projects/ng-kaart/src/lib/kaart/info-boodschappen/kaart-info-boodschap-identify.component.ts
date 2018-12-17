@@ -47,14 +47,26 @@ const formateerJson = (veld: string, veldtype: string, json: any, formatString: 
 };
 
 const formateerDatum = (dateString: string): string => {
-  const timestamp = Date.parse(dateString);
-
-  if (!isNaN(timestamp)) {
-    // geldige datum
+  if (isValidDate(dateString)) {
     return new Date(dateString).toLocaleDateString("nl-BE");
   } else {
     return dateString; // date string niet herkend, geef input terug
   }
+};
+
+const formateerDateTime = (dateString: string): string => {
+  if (isValidDate(dateString)) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("nl-BE") + " " + date.toLocaleTimeString("nl-BE");
+  } else {
+    return dateString; // date string niet herkend, geef input terug
+  }
+};
+
+const isValidDate = (dateString: string): boolean => {
+  const timestamp = Date.parse(dateString);
+
+  return !isNaN(timestamp);
 };
 
 const hasVeldSatisfying: Curried3<Option<VectorLaag>, string, Predicate<VeldInfo>, boolean> = maybeLaag => veld => test =>
@@ -65,6 +77,7 @@ const isType: Function1<string, Function2<Option<VectorLaag>, string, boolean>> 
 
 const isBoolean: Function2<Option<VectorLaag>, string, boolean> = isType("boolean");
 const isDatum: Function2<Option<VectorLaag>, string, boolean> = isType("date");
+const isDateTime: Function2<Option<VectorLaag>, string, boolean> = isType("datetime");
 const isJson: Function2<Option<VectorLaag>, string, boolean> = isType("json");
 
 const isBasisVeld: Function2<Option<VectorLaag>, string, boolean> = (maybeLaag, veld) =>
@@ -287,6 +300,8 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
       const waarde = nestedProperty(name, this.properties());
       if (isDatum(this.laag, name) && waarde) {
         return formateerDatum(waarde.toString());
+      } else if (isDateTime(this.laag, name) && waarde) {
+        return formateerDateTime(waarde.toString());
       } else if (this.hasHtml(name) && waarde) {
         return this.sanitizer.bypassSecurityTrustHtml(formateerJson(name, this.veldtype(name), waarde, this.html(name)));
       } else if (this.hasTemplate(name) && waarde) {
