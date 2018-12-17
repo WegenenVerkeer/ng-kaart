@@ -53,6 +53,10 @@
       Zoeken
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !zoekenSectie.sectieZichtbaar }">visibility</span>
     </div>
+    <div (click)="tekenenSectie.toggleSectieZichtbaar();scrollTo('tekenen')" class="sub-titel">
+      Gebied intekenen
+      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !tekenenSectie.sectieZichtbaar }">visibility</span>
+    </div>
   </div>
 
   <!-- applicaties -->
@@ -182,6 +186,7 @@
         <!-- kaart widgets-->
         <awv-kaart-streetview *ngIf="isOptieActief('streetview')"></awv-kaart-streetview>
         <awv-meet-knop [toonInfoBoodschap]="isOptieActief('metenToon')" [meerdereGeometrieen]="isOptieActief('metenMeerdere')" *ngIf="isOptieActief('meten')"></awv-meet-knop>
+        <awv-kaart-teken></awv-kaart-teken>
         <awv-kaart-zoomknoppen *ngIf="isOptieActief('zoomknoppen')"></awv-kaart-zoomknoppen>
         <awv-bevraag-kaart *ngIf="isOptieActief('bevraagkaart')"></awv-bevraag-kaart>
         <!-- kaartinfo -->
@@ -389,6 +394,27 @@
         </awv-kaart-classic>
       </div>
       </awv-test-sectie>
+
+      <awv-test-sectie sectieId="tekenen" sectieTitel="Gebied intekenen" [subSectie]="true" #tekenenSectie
+                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && tekenenSectie.sectieZichtbaar">
+        <div>
+          <mat-button-toggle-group [(ngModel)]="geometryType" [disabled]="tekenenActief">
+            <mat-button-toggle value="Polygon">Polygon</mat-button-toggle>
+            <mat-button-toggle value="LineString">LineString</mat-button-toggle>
+          </mat-button-toggle-group>
+          <mat-slide-toggle (change)="toggleTekenen()" style="margin-left: 8px;">Tekenen</mat-slide-toggle>
+        </div>
+
+        <div *ngIf="tekenenSectie.sectieZichtbaar" [@enterAnimation]>
+          <awv-kaart-classic [naam]="'tekenen'" [breedte]="1200" [hoogte]="600" [zoom]="6" [middelpunt]="installatieCoordinaat">
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+            <awv-kaart-schaal></awv-kaart-schaal>
+            <awv-kaart-teken [geometryType]="geometryType" [tekenen]="tekenenActief" (getekendeGeom)="geomGetekend($event)"></awv-kaart-teken>
+            <awv-kaart-knop-volledig-scherm></awv-kaart-knop-volledig-scherm>
+          </awv-kaart-classic>
+        </div>
+      </awv-test-sectie>
+
     </div>
 
   </awv-test-sectie>

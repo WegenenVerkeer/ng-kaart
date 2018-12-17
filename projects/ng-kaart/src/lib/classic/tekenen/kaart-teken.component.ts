@@ -1,7 +1,8 @@
 import { Component, EventEmitter, Input, NgZone, OnInit, Output } from "@angular/core";
+import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { distinctUntilChanged, map, takeUntil } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, takeUntil } from "rxjs/operators";
 
 import { KaartComponentBase } from "../../kaart/kaart-component-base";
 import { TekenSettings } from "../../kaart/kaart-elementen";
@@ -19,11 +20,13 @@ import { KaartClassicMsg, TekenGeomAangepastMsg } from "../messages";
 })
 export class KaartTekenComponent extends KaartComponentBase implements OnInit {
   private stopTekenenSubj: rx.Subject<void> = new rx.Subject<void>();
-  private aanHetTekenen = new rx.BehaviorSubject<boolean>(false);
+  private aanHetTekenen = new rx.BehaviorSubject<boolean | ol.geom.Geometry>(false);
+
   @Input()
-  set tekenen(teken: boolean) {
+  set tekenen(teken: boolean | ol.geom.Geometry) {
     this.aanHetTekenen.next(teken);
   }
+
   @Input()
   private geometryType: ol.geom.GeometryType = "LineString";
 
@@ -48,13 +51,29 @@ export class KaartTekenComponent extends KaartComponentBase implements OnInit {
 
   ngOnInit() {
     super.ngOnInit();
-    // TODO: dit kan allicht eleganter met een switchMap
-    this.bindToLifeCycle(this.aanHetTekenen.pipe(distinctUntilChanged())).subscribe(tekenen =>
-      tekenen ? this.startTekenen() : this.stopTekenen()
-    );
+    this.bindToLifeCycle(
+      this.aanHetTekenen.pipe(
+        distinctUntilChanged(),
+        filter(t => t !== null)
+      )
+    ).subscribe(tekenen => {
+      switch (tekenen) {
+        case true:
+          this.startTekenen(none);
+          break;
+        case false:
+          this.stopTekenen();
+          break;
+        default:
+          if (this.aanHetTekenen.getValue() === true) {
+            this.stopTekenen();
+          }
+          this.startTekenen(some(tekenen as ol.geom.Geometry));
+      }
+    });
   }
 
-  private startTekenen() {
+  private startTekenen(geometry: Option<ol.geom.Geometry>) {
     this.bindToLifeCycle(
       this.kaart.kaartClassicSubMsg$
         .lift(
@@ -63,6 +82,7 @@ export class KaartTekenComponent extends KaartComponentBase implements OnInit {
             prt.GeometryChangedSubscription(
               TekenSettings(
                 this.geometryType,
+                geometry,
                 ss.asStyleSelector(this.laagStyle),
                 ss.asStyleSelector(this.drawStyle),
                 this.meerdereGeometrieen
@@ -74,19 +94,25 @@ export class KaartTekenComponent extends KaartComponentBase implements OnInit {
         .pipe(
           takeUntil(this.stopTekenenSubj) // Unsubscribe bij stoppen met tekenen
         )
-    ).subscribe(err => classicLogger.error(err));
+    ).subscribe(
+      next => {
+        return;
+      },
+      err => classicLogger.error(err)
+    );
 
     // Zorg ervoor dat de getekende geom in de @Output terecht komen
     this.bindToLifeCycle(
       this.kaart.kaartClassicSubMsg$.pipe(
         ofType<TekenGeomAangepastMsg>("TekenGeomAangepast"), //
-        map(m => m.geom)
+        map(m => m.geom),
+        takeUntil(this.stopTekenenSubj)
       )
-    ).subscribe(geom => this.getekendeGeom.emit(geom));
+    ).subscribe(geom => this.getekendeGeom.emit(geom), err => classicLogger.error(err));
   }
 
   private stopTekenen() {
     this.stopTekenenSubj.next(); // zorg dat de unsubscribe gebeurt
-    this.stopTekenenSubj = new rx.Subject(); // en maak ons klaar voor de volgende ronde
+    this.stopTekenenSubj = new rx.Subject();
   }
 }

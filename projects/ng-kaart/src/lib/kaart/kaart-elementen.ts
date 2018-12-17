@@ -114,6 +114,7 @@ export interface BlancoLaag {
 
 export interface TekenSettings {
   readonly geometryType: ol.geom.GeometryType;
+  readonly geometry: Option<ol.geom.Geometry>;
   readonly laagStyle: Option<StyleSelector>;
   readonly drawStyle: Option<StyleSelector>;
   readonly meerdereGeometrieen: boolean;
@@ -167,12 +168,14 @@ export const isZichtbaar: (_: number) => (_: ToegevoegdeLaag) => boolean = curre
 
 export function TekenSettings(
   geometryType: ol.geom.GeometryType,
+  geometry: Option<ol.geom.Geometry>,
   laagStyle: Option<StyleSelector>,
   drawStyle: Option<StyleSelector>,
   meerdereGeometrieen: boolean
 ): TekenSettings {
   return {
     geometryType: geometryType,
+    geometry: geometry,
     laagStyle: laagStyle,
     drawStyle: drawStyle,
     meerdereGeometrieen: meerdereGeometrieen
