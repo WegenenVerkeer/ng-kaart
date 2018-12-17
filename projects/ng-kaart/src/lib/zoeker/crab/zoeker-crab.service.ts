@@ -297,27 +297,32 @@ export class ZoekerCrabService implements Zoeker {
       case "Volledig":
         return this.zoek$(zoekopdracht.zoekpatroon);
       case "Suggesties":
-        return this.suggesties$(zoekopdracht.zoekpatroon.value);
+        return this.suggesties$(zoekopdracht.zoekpatroon);
     }
   }
 
-  private zoek$(zoekterm: ZoekInput): rx.Observable<ZoekResultaten> {
-    switch (zoekterm.type) {
+  private zoek$(zoekinput: ZoekInput): rx.Observable<ZoekResultaten> {
+    switch (zoekinput.type) {
       case "string":
-        return this.tekstzoekResultaten(zoekterm.value, "Volledig", this.locatorServicesConfig.maxAantal);
+        return this.tekstzoekResultaten(zoekinput.value, "Volledig", this.locatorServicesConfig.maxAantal);
       case "CrabGemeente":
-        return this.getGemeenteBBox$(zoekterm as CrabGemeente);
+        return this.getGemeenteBBox$(zoekinput as CrabGemeente);
       case "CrabStraat":
-        return this.getStraatBBox$(zoekterm as CrabStraat);
+        return this.getStraatBBox$(zoekinput as CrabStraat);
       case "CrabHuisnummer":
-        return this.getHuisnummerPositie$(zoekterm as CrabHuisnummer);
+        return this.getHuisnummerPositie$(zoekinput as CrabHuisnummer);
       default:
         return rx.of(nietOndersteund(this.naam(), "Volledig"));
     }
   }
 
-  private suggesties$(zoekterm: string): rx.Observable<ZoekResultaten> {
-    return this.tekstzoekResultaten(zoekterm, "Suggesties", 5);
+  private suggesties$(zoekinput: ZoekInput): rx.Observable<ZoekResultaten> {
+    switch (zoekinput.type) {
+      case "string":
+        return this.tekstzoekResultaten(zoekinput.value, "Suggesties", 5);
+      default:
+        rx.of(nietOndersteund(this.naam(), "Suggesties"));
+    }
   }
 
   private tekstzoekResultaten(zoekterm: string, zoektype: Zoektype, maxResultaten: number): rx.Observable<ZoekResultaten> {

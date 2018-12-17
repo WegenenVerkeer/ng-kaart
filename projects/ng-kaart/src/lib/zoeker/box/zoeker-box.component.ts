@@ -30,8 +30,8 @@ import {
 } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../../kaart/kaart-child-component-base";
-import * as ke from "../../kaart/kaart-elementen";
 import { VeldInfo } from "../../kaart/kaart-elementen";
+import * as ke from "../../kaart/kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import * as prt from "../../kaart/kaart-protocol";
 import { KaartComponent } from "../../kaart/kaart.component";
@@ -43,6 +43,8 @@ import { minLength } from "../../util/string";
 import {
   emptyPrioriteitenOpZoekertype,
   IconDescription,
+  StringZoekInput,
+  UrlZoekInput,
   ZoekerMetPrioriteiten,
   ZoekInput,
   ZoekKaartResultaat,
@@ -473,6 +475,13 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       map(s => s.trimLeft()), // Spaties links boeien ons niet
       distinctUntilChanged() // Evt een karakter + delete, of een control character
     );
+    const zoektermToZoekpatroon: Function1<string, ZoekInput> = zoekterm => {
+      if (zoekterm.startsWith("http")) {
+        return UrlZoekInput(zoekterm);
+      } else {
+        return StringZoekInput(zoekterm);
+      }
+    };
     // Zorg ervoor dat suggesties opgevraagd worden zodra er een voldoende lange zoekterm ingegeven wordt
     this.bindToLifeCycle(
       rx.combineLatest(
@@ -481,7 +490,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
         (zoekerNamen, zoekterm) =>
           ({
             type: "Zoek",
-            opdracht: { zoektype: "Suggesties", zoekernamen: zoekerNamen, zoekpatroon: { type: "string", value: zoekterm } },
+            opdracht: { zoektype: "Suggesties", zoekernamen: zoekerNamen, zoekpatroon: zoektermToZoekpatroon(zoekterm) },
             wrapper: kaartLogOnlyWrapper
           } as prt.ZoekCmd<KaartInternalMsg>)
       )
@@ -490,11 +499,11 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
         switchMap(cmd =>
           laatSuggestiesToe$.pipe(
             take(1),
-            filter(identity),
+            filter(identity), // emit cmd max 1x: wanneer toegelaten
             mapTo(cmd)
           )
         )
-      ) // emit cmd max 1x: als recentste true is
+      )
       .subscribe(cmd => {
         this.suggestiesBuffer = [];
         this.dispatch(cmd);
@@ -509,7 +518,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
           (zoekerNamen, zoekterm) =>
             ({
               type: "Zoek",
-              opdracht: { zoektype: "Volledig", zoekernamen: zoekerNamen, zoekpatroon: { type: "string", value: zoekterm } },
+              opdracht: { zoektype: "Volledig", zoekernamen: zoekerNamen, zoekpatroon: zoektermToZoekpatroon(zoekterm) },
               wrapper: kaartLogOnlyWrapper
             } as prt.ZoekCmd<KaartInternalMsg>)
         )
