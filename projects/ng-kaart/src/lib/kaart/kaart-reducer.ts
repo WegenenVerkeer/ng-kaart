@@ -329,57 +329,64 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
      * Een laag toevoegen. Faalt als er al een laag met die titel bestaat.
      */
     function voegLaagToeCmd(cmnd: prt.VoegLaagToeCmd<Msg>): ModelWithResult<Msg> {
-      return toModelWithValueResult(
-        cmnd.wrapper,
-        chain(
-          valideerLaagTitelBestaatNiet(cmnd.laag.titel), //
-          () => valideerAlsLayer(cmnd.laag)
-        ).map(layer => {
-          const titel = cmnd.laag.titel;
-          const groep = cmnd.laaggroep;
-          const groepPositie = limitPosition(cmnd.positie, groep);
-          const modelMetAangepasteLagen = pasLaagPositiesAan(1, groepPositie, maxIndexInGroep(groep), groep);
-          const toegevoegdeLaagCommon: ke.ToegevoegdeLaag = {
-            bron: cmnd.laag,
-            layer: layer,
-            titel: cmnd.laag.titel,
-            laaggroep: groep,
-            positieInGroep: groepPositie,
-            magGetoondWorden: cmnd.magGetoondWorden,
-            legende: cmnd.legende,
-            stijlInLagenKiezer: cmnd.stijlInLagenKiezer
-          };
-          const toegevoegdeLaag: ke.ToegevoegdeLaag = ke
-            .asVectorLaag(cmnd.laag)
-            .map<ke.ToegevoegdeLaag>(vlg => ({
-              ...toegevoegdeLaagCommon,
-              bron: vlg,
-              layer: layer as ol.layer.Vector, // veilig omdat laag een VectorLaag is
-              stijlPositie: vectorLaagPositie(groepPositie, groep),
-              stijlSel: vlg.styleSelector,
-              stijlSelBron: vlg.styleSelectorBron,
-              selectiestijlSel: vlg.selectieStyleSelector,
-              hoverstijlSel: vlg.hoverStyleSelector
-            }))
-            .getOrElse(toegevoegdeLaagCommon);
-          layer.set("titel", titel);
-          layer.setVisible(cmnd.magGetoondWorden && !cmnd.laag.verwijderd); // achtergrondlagen expliciet zichtbaar maken!
-          // met positie hoeven we nog geen rekening te houden
-          forEach(ke.asToegevoegdeVectorLaag(toegevoegdeLaag), pasVectorLaagStijlToe);
-          zetLayerIndex(layer, groepPositie, groep);
-          model.map.addLayer(layer);
-          const updatedModel = {
-            ...modelMetAangepasteLagen,
-            toegevoegdeLagenOpTitel: modelMetAangepasteLagen.toegevoegdeLagenOpTitel.set(titel, toegevoegdeLaag),
-            titelsOpGroep: modelMetAangepasteLagen.titelsOpGroep.set(groep, model.titelsOpGroep.get(groep).push(titel)),
-            groepOpTitel: modelMetAangepasteLagen.groepOpTitel.set(titel, groep)
-          };
-          zendLagenInGroep(updatedModel, cmnd.laaggroep);
-          return ModelAndEmptyResult(updatedModel);
-        })
+      return fromNullable(model.toegevoegdeLagenOpTitel.get(cmnd.laag.titel)).foldL(
+        () => {
+          return toModelWithValueResult(
+            cmnd.wrapper,
+            valideerAlsLayer(cmnd.laag).map(layer => {
+              const titel = cmnd.laag.titel;
+              const groep = cmnd.laaggroep;
+              const groepPositie = limitPosition(cmnd.positie, groep);
+              const modelMetAangepasteLagen = pasLaagPositiesAan(1, groepPositie, maxIndexInGroep(groep), groep);
+              const toegevoegdeLaagCommon: ke.ToegevoegdeLaag = {
+                bron: cmnd.laag,
+                layer: layer,
+                titel: cmnd.laag.titel,
+                laaggroep: groep,
+                positieInGroep: groepPositie,
+                magGetoondWorden: cmnd.magGetoondWorden,
+                legende: cmnd.legende,
+                stijlInLagenKiezer: cmnd.stijlInLagenKiezer
+              };
+              const toegevoegdeLaag: ke.ToegevoegdeLaag = ke
+                .asVectorLaag(cmnd.laag)
+                .map<ke.ToegevoegdeLaag>(vlg => ({
+                  ...toegevoegdeLaagCommon,
+                  bron: vlg,
+                  layer: layer as ol.layer.Vector, // veilig omdat laag een VectorLaag is
+                  stijlPositie: vectorLaagPositie(groepPositie, groep),
+                  stijlSel: vlg.styleSelector,
+                  stijlSelBron: vlg.styleSelectorBron,
+                  selectiestijlSel: vlg.selectieStyleSelector,
+                  hoverstijlSel: vlg.hoverStyleSelector
+                }))
+                .getOrElse(toegevoegdeLaagCommon);
+              layer.set("titel", titel);
+              layer.setVisible(cmnd.magGetoondWorden && !cmnd.laag.verwijderd); // achtergrondlagen expliciet zichtbaar maken!
+              // met positie hoeven we nog geen rekening te houden
+              forEach(ke.asToegevoegdeVectorLaag(toegevoegdeLaag), pasVectorLaagStijlToe);
+              zetLayerIndex(layer, groepPositie, groep);
+              model.map.addLayer(layer);
+              const updatedModel = {
+                ...modelMetAangepasteLagen,
+                toegevoegdeLagenOpTitel: modelMetAangepasteLagen.toegevoegdeLagenOpTitel.set(titel, toegevoegdeLaag),
+                titelsOpGroep: modelMetAangepasteLagen.titelsOpGroep.set(groep, model.titelsOpGroep.get(groep).push(titel)),
+                groepOpTitel: modelMetAangepasteLagen.groepOpTitel.set(titel, groep)
+              };
+              zendLagenInGroep(updatedModel, cmnd.laaggroep);
+              return ModelAndEmptyResult(updatedModel);
+            })
+          );
+        },
+        bestaandeLaag => {
+          if (bestaandeLaag.magGetoondWorden) {
+            return ModelWithResult(model);
+          } else {
+            return maakLaagZichtbaarCmd(prt.MaakLaagZichtbaarCmd(bestaandeLaag.titel, cmnd.wrapper));
+          }
+        }
       );
     }
-
     function verwijderGeselecteerdeFeaturesVanLaag(laagnaam: string) {
       // Als er features van onze laag geselecteerd waren, moeten we die verwijderen uit de door ol gemanagede collection.
       const teVerwijderenGeselecteerdeFeatures = model.geselecteerdeFeatures
