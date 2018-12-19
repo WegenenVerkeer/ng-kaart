@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, NgZone, OnInit, Output } from "@angular
 import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
+import { identity } from "rxjs";
 import { distinctUntilChanged, filter, map, takeUntil } from "rxjs/operators";
 
 import { KaartComponentBase } from "../../kaart/kaart-component-base";
@@ -9,7 +10,7 @@ import { TekenSettings } from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
 import * as ss from "../../kaart/stijl-selector";
 import { TekenenUiSelector } from "../../kaart/tekenen/kaart-teken-laag.component";
-import { ofType } from "../../util/operators";
+import { collect, ofType } from "../../util/operators";
 import { classicMsgSubscriptionCmdOperator, KaartClassicComponent } from "../kaart-classic.component";
 import { classicLogger } from "../log";
 import { KaartClassicMsg, TekenGeomAangepastMsg } from "../messages";
@@ -54,7 +55,7 @@ export class KaartTekenComponent extends KaartComponentBase implements OnInit {
     this.bindToLifeCycle(
       this.aanHetTekenen.pipe(
         distinctUntilChanged(),
-        filter(t => t !== null)
+        collect(identity)
       )
     ).subscribe(tekenen => {
       switch (tekenen) {
@@ -94,12 +95,7 @@ export class KaartTekenComponent extends KaartComponentBase implements OnInit {
         .pipe(
           takeUntil(this.stopTekenenSubj) // Unsubscribe bij stoppen met tekenen
         )
-    ).subscribe(
-      next => {
-        return;
-      },
-      err => classicLogger.error(err)
-    );
+    ).subscribe(next => classicLogger.error(next), err => classicLogger.error(err));
 
     // Zorg ervoor dat de getekende geom in de @Output terecht komen
     this.bindToLifeCycle(
