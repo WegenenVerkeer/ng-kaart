@@ -321,7 +321,7 @@ export class ZoekerCrabService implements Zoeker {
       case "string":
         return this.tekstzoekResultaten(zoekinput.value, "Suggesties", 5);
       default:
-        rx.of(nietOndersteund(this.naam(), "Suggesties"));
+        return rx.of(nietOndersteund(this.naam(), "Suggesties"));
     }
   }
 
