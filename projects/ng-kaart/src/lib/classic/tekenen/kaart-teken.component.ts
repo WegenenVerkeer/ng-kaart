@@ -6,7 +6,7 @@ import { identity, merge } from "rxjs";
 import { distinctUntilChanged, map, switchMap, takeUntil } from "rxjs/operators";
 
 import { KaartComponentBase } from "../../kaart/kaart-component-base";
-import { TekenSettings } from "../../kaart/kaart-elementen";
+import { StartTekenen, StopTekenen, TekenenCommand, TekenSettings } from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
 import * as ss from "../../kaart/stijl-selector";
 import { TekenenUiSelector } from "../../kaart/tekenen/kaart-teken-laag.component";
@@ -20,11 +20,30 @@ import { KaartClassicMsg, TekenGeomAangepastMsg } from "../messages";
 })
 export class KaartTekenComponent extends KaartComponentBase implements OnInit {
   private stopTekenenSubj: rx.Subject<void> = new rx.Subject<void>();
-  private aanHetTekenen = new rx.BehaviorSubject<boolean>(false);
+  private tekenenCommandSubj = new rx.Subject<TekenenCommand>();
 
   @Input()
   set tekenen(teken: boolean) {
-    this.aanHetTekenen.next(teken);
+    if (teken) {
+      this.tekenenCommandSubj.next(
+        StartTekenen(
+          TekenSettings(
+            this.geometryType,
+            this.geometry,
+            ss.asStyleSelector(this.laagStyle),
+            ss.asStyleSelector(this.drawStyle),
+            this.meerdereGeometrieen
+          )
+        )
+      );
+    } else {
+      this.tekenenCommandSubj.next(StopTekenen());
+    }
+  }
+
+  @Input()
+  set tekenenCommand(command: TekenenCommand) {
+    this.tekenenCommandSubj.next(command);
   }
 
   @Input()
@@ -55,41 +74,35 @@ export class KaartTekenComponent extends KaartComponentBase implements OnInit {
   ngOnInit() {
     super.ngOnInit();
     this.bindToLifeCycle(
-      this.aanHetTekenen.pipe(
+      this.tekenenCommandSubj.pipe(
         distinctUntilChanged(),
         collect(identity),
-        switchMap((tekenen: boolean) => {
-          if (tekenen) {
-            return merge(
-              this.kaart.kaartClassicSubMsg$
-                .lift(
-                  classicMsgSubscriptionCmdOperator(
-                    this.kaart.dispatcher,
-                    prt.GeometryChangedSubscription(
-                      TekenSettings(
-                        this.geometryType,
-                        this.geometry,
-                        ss.asStyleSelector(this.laagStyle),
-                        ss.asStyleSelector(this.drawStyle),
-                        this.meerdereGeometrieen
-                      ),
-                      resultaat => KaartClassicMsg(TekenGeomAangepastMsg(resultaat.geometry))
+        switchMap((command: TekenenCommand) => {
+          switch (command.type) {
+            case "start":
+              return merge(
+                this.kaart.kaartClassicSubMsg$
+                  .lift(
+                    classicMsgSubscriptionCmdOperator(
+                      this.kaart.dispatcher,
+                      prt.GeometryChangedSubscription(command.settings, resultaat =>
+                        KaartClassicMsg(TekenGeomAangepastMsg(resultaat.geometry))
+                      )
                     )
                   )
+                  .pipe(
+                    takeUntil(this.stopTekenenSubj) // Unsubscribe bij stoppen met tekenen
+                  ),
+                this.kaart.kaartClassicSubMsg$.pipe(
+                  ofType<TekenGeomAangepastMsg>("TekenGeomAangepast"), //
+                  map(m => this.getekendeGeom.emit(m.geom)),
+                  takeUntil(this.stopTekenenSubj)
                 )
-                .pipe(
-                  takeUntil(this.stopTekenenSubj) // Unsubscribe bij stoppen met tekenen
-                ),
-              this.kaart.kaartClassicSubMsg$.pipe(
-                ofType<TekenGeomAangepastMsg>("TekenGeomAangepast"), //
-                map(m => this.getekendeGeom.emit(m.geom)),
-                takeUntil(this.stopTekenenSubj)
-              )
-            );
-          } else {
-            this.stopTekenenSubj.next(); // zorg dat de unsubscribe gebeurt
-            this.stopTekenenSubj = new rx.Subject();
-            return rx.empty();
+              );
+            case "stop":
+              this.stopTekenenSubj.next(); // zorg dat de unsubscribe gebeurt
+              this.stopTekenenSubj = new rx.Subject();
+              return rx.empty();
           }
         })
       )

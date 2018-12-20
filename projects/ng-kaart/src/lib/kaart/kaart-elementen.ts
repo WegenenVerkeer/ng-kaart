@@ -120,6 +120,17 @@ export interface TekenSettings {
   readonly meerdereGeometrieen: boolean;
 }
 
+export interface StartTekenen {
+  type: "start";
+  settings: TekenSettings;
+}
+
+export interface StopTekenen {
+  type: "stop";
+}
+
+export type TekenenCommand = StartTekenen | StopTekenen;
+
 export interface TekenResultaat {
   readonly geometry: ol.geom.Geometry;
   readonly volgnummer: number;
@@ -179,6 +190,19 @@ export function TekenSettings(
     laagStyle: laagStyle,
     drawStyle: drawStyle,
     meerdereGeometrieen: meerdereGeometrieen
+  };
+}
+
+export function StartTekenen(settings: TekenSettings): StartTekenen {
+  return {
+    type: "start",
+    settings: settings
+  };
+}
+
+export function StopTekenen(): StopTekenen {
+  return {
+    type: "stop"
   };
 }
 
