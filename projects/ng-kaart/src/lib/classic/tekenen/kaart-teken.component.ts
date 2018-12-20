@@ -1,16 +1,17 @@
 import { Component, EventEmitter, Input, NgZone, OnInit, Output } from "@angular/core";
+import { none, Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { distinctUntilChanged, map, takeUntil } from "rxjs/operators";
+import { identity, merge } from "rxjs";
+import { distinctUntilChanged, map, switchMap, takeUntil } from "rxjs/operators";
 
 import { KaartComponentBase } from "../../kaart/kaart-component-base";
-import { TekenSettings } from "../../kaart/kaart-elementen";
+import { StartTekenen, StopTekenen, TekenenCommand, TekenSettings } from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
 import * as ss from "../../kaart/stijl-selector";
 import { TekenenUiSelector } from "../../kaart/tekenen/kaart-teken-laag.component";
-import { ofType } from "../../util/operators";
+import { collect, ofType } from "../../util/operators";
 import { classicMsgSubscriptionCmdOperator, KaartClassicComponent } from "../kaart-classic.component";
-import { classicLogger } from "../log";
 import { KaartClassicMsg, TekenGeomAangepastMsg } from "../messages";
 
 @Component({
@@ -19,11 +20,32 @@ import { KaartClassicMsg, TekenGeomAangepastMsg } from "../messages";
 })
 export class KaartTekenComponent extends KaartComponentBase implements OnInit {
   private stopTekenenSubj: rx.Subject<void> = new rx.Subject<void>();
-  private aanHetTekenen = new rx.BehaviorSubject<boolean>(false);
+  private tekenenCommandSubj = new rx.Subject<TekenenCommand>();
+
   @Input()
   set tekenen(teken: boolean) {
-    this.aanHetTekenen.next(teken);
+    if (teken) {
+      this.tekenenCommandSubj.next(
+        StartTekenen(
+          TekenSettings(
+            this.geometryType,
+            this.geometry,
+            ss.asStyleSelector(this.laagStyle),
+            ss.asStyleSelector(this.drawStyle),
+            this.meerdereGeometrieen
+          )
+        )
+      );
+    } else {
+      this.tekenenCommandSubj.next(StopTekenen());
+    }
   }
+
+  @Input()
+  set tekenenCommand(command: TekenenCommand) {
+    this.tekenenCommandSubj.next(command);
+  }
+
   @Input()
   private geometryType: ol.geom.GeometryType = "LineString";
 
@@ -35,6 +57,9 @@ export class KaartTekenComponent extends KaartComponentBase implements OnInit {
 
   @Input()
   private meerdereGeometrieen = false;
+
+  @Input()
+  private geometry: Option<ol.geom.Geometry> = none;
 
   @Output()
   getekendeGeom: EventEmitter<ol.geom.Geometry> = new EventEmitter();
@@ -48,45 +73,39 @@ export class KaartTekenComponent extends KaartComponentBase implements OnInit {
 
   ngOnInit() {
     super.ngOnInit();
-    // TODO: dit kan allicht eleganter met een switchMap
-    this.bindToLifeCycle(this.aanHetTekenen.pipe(distinctUntilChanged())).subscribe(tekenen =>
-      tekenen ? this.startTekenen() : this.stopTekenen()
-    );
-  }
-
-  private startTekenen() {
     this.bindToLifeCycle(
-      this.kaart.kaartClassicSubMsg$
-        .lift(
-          classicMsgSubscriptionCmdOperator(
-            this.kaart.dispatcher,
-            prt.GeometryChangedSubscription(
-              TekenSettings(
-                this.geometryType,
-                ss.asStyleSelector(this.laagStyle),
-                ss.asStyleSelector(this.drawStyle),
-                this.meerdereGeometrieen
-              ),
-              resultaat => KaartClassicMsg(TekenGeomAangepastMsg(resultaat.geometry))
-            )
-          )
-        )
-        .pipe(
-          takeUntil(this.stopTekenenSubj) // Unsubscribe bij stoppen met tekenen
-        )
-    ).subscribe(err => classicLogger.error(err));
-
-    // Zorg ervoor dat de getekende geom in de @Output terecht komen
-    this.bindToLifeCycle(
-      this.kaart.kaartClassicSubMsg$.pipe(
-        ofType<TekenGeomAangepastMsg>("TekenGeomAangepast"), //
-        map(m => m.geom)
+      this.tekenenCommandSubj.pipe(
+        distinctUntilChanged(),
+        collect(identity),
+        switchMap((command: TekenenCommand) => {
+          switch (command.type) {
+            case "start":
+              return merge(
+                this.kaart.kaartClassicSubMsg$
+                  .lift(
+                    classicMsgSubscriptionCmdOperator(
+                      this.kaart.dispatcher,
+                      prt.GeometryChangedSubscription(command.settings, resultaat =>
+                        KaartClassicMsg(TekenGeomAangepastMsg(resultaat.geometry))
+                      )
+                    )
+                  )
+                  .pipe(
+                    takeUntil(this.stopTekenenSubj) // Unsubscribe bij stoppen met tekenen
+                  ),
+                this.kaart.kaartClassicSubMsg$.pipe(
+                  ofType<TekenGeomAangepastMsg>("TekenGeomAangepast"), //
+                  map(m => this.getekendeGeom.emit(m.geom)),
+                  takeUntil(this.stopTekenenSubj)
+                )
+              );
+            case "stop":
+              this.stopTekenenSubj.next(); // zorg dat de unsubscribe gebeurt
+              this.stopTekenenSubj = new rx.Subject();
+              return rx.empty();
+          }
+        })
       )
-    ).subscribe(geom => this.getekendeGeom.emit(geom));
-  }
-
-  private stopTekenen() {
-    this.stopTekenenSubj.next(); // zorg dat de unsubscribe gebeurt
-    this.stopTekenenSubj = new rx.Subject(); // en maak ons klaar voor de volgende ronde
+    ).subscribe();
   }
 }

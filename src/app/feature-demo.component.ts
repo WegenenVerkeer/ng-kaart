@@ -388,11 +388,7 @@ export class FeatureDemoComponent {
     zoekerMetPrioriteiten(new DummyZoeker("dummy3"), 3, 3)
   ];
 
-  constructor() {
-    kaartLogger.setLevel("DEBUG");
-    classicLogger.setLevel("DEBUG");
-    this.addIcon();
-  }
+  private geometryType = "Polygon";
 
   private addIcon() {
     if (this.installaties.length > 20) {
@@ -449,11 +445,12 @@ export class FeatureDemoComponent {
     this.getekendeGeom = none;
   }
 
-  get tekenGeomLength() {
-    return this.getekendeGeom
-      .filter(g => g.getType() === "LineString" || g.getType() === "Polygon")
-      .map(g => Math.round((ol.Sphere.getLength(g) / 1000) * 100) / 100 + "km")
-      .getOrElse("(leeg)");
+  toggleTekenen() {
+    if (this.isTekenenActief()) {
+      this.stopTekenen();
+    } else {
+      this.startTekenen();
+    }
   }
 
   geomGetekend(geom: ol.geom.Geometry) {

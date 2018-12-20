@@ -114,7 +114,7 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
       this.internalMessage$.lift(
         internalMsgSubscriptionCmdOperator(
           this.kaartComponent.internalCmdDispatcher,
-          prt.GeometryChangedSubscription(TekenSettings("Polygon", none, none, this.meerdereGeometrieen), tekenResultaatWrapper)
+          prt.GeometryChangedSubscription(TekenSettings("Polygon", none, none, none, this.meerdereGeometrieen), tekenResultaatWrapper)
         )
       )
     )
