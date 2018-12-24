@@ -472,14 +472,15 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       .pipe(shareReplay(1)); // zorg ervoor dat subscribers steeds de recentste waarde krijgen
     const zoekterm$ = this.zoekInputSubj.pipe(
       debounceTime(suggestieDelay), // Niet elk karakter als er vlug getypt wordt
-      map(s => s.trimLeft()), // Spaties links boeien ons niet
+      map(s => s.trimLeft()), // Spaties links boeien ons niet, rechts wel want kunnen woordprefix afsluiten
       distinctUntilChanged() // Evt een karakter + delete, of een control character
     );
     const zoektermToZoekpatroon: Function1<string, ZoekInput> = zoekterm => {
-      if (zoekterm.startsWith("http")) {
-        return UrlZoekInput(zoekterm);
+      const fixedTerm = zoekterm.trimLeft(); // trim hier dupliceren, want deze functie ook gebruikt op this.zoekInputSubj
+      if (fixedTerm.startsWith("http")) {
+        return UrlZoekInput(fixedTerm);
       } else {
-        return StringZoekInput(zoekterm);
+        return StringZoekInput(fixedTerm);
       }
     };
     // Zorg ervoor dat suggesties opgevraagd worden zodra er een voldoende lange zoekterm ingegeven wordt
