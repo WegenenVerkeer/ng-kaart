@@ -1,11 +1,24 @@
-import { ChangeDetectorRef, Component, ElementRef, Inject, Input, NgZone, ViewChild, ViewEncapsulation } from "@angular/core";
+import { Component, ElementRef, Inject, Input, NgZone, ViewChild, ViewEncapsulation } from "@angular/core";
 import { Set } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { debounceTime, delay, filter, last, map, scan, shareReplay, startWith, switchMap, take, takeUntil, tap } from "rxjs/operators";
+import {
+  debounceTime,
+  delay,
+  distinctUntilChanged,
+  filter,
+  last,
+  map,
+  scan,
+  shareReplay,
+  startWith,
+  switchMap,
+  take,
+  takeUntil,
+  tap
+} from "rxjs/operators";
 
 import { asap } from "../util/asap";
-import { exponentialTimer } from "../util/exponential-timer";
 import { observableFromDomMutations } from "../util/mutation-observable";
 import { observeOnAngular } from "../util/observe-on-angular";
 import { observeOutsideAngular } from "../util/observer-outside-angular";
@@ -90,7 +103,7 @@ export class KaartComponent extends KaartComponentBase {
 
   internalMessage$: rx.Observable<KaartInternalSubMsg> = rx.empty();
 
-  constructor(@Inject(KAART_CFG) readonly config: KaartConfig, zone: NgZone, private readonly changeDector: ChangeDetectorRef) {
+  constructor(@Inject(KAART_CFG) readonly config: KaartConfig, zone: NgZone) {
     super(zone);
     this.internalMessage$ = this.msgSubj.pipe(
       filter(m => m.type === "KaartInternal"), //
@@ -165,10 +178,13 @@ export class KaartComponent extends KaartComponentBase {
     // de scrollbar en inklapknop aangepast zijn.
     this.viewReady$
       .pipe(
-        switchMap(() => exponentialTimer(10, 100)), // zorg voor een paar redraws
-        take(6) // tot ongeveer 3s na het opstarten. Langer geeft problemen voor de Protractor testen.
+        switchMap(() => rx.timer(100, 100)),
+        map(() => this.kaartLinksElement.nativeElement.scrollHeight > this.kaartLinksElement.nativeElement.clientHeight),
+        distinctUntilChanged(),
+        debounceTime(400), // Blijkbaar is direct na de verandering nog wat te vroeg
+        take(2)
       )
-      .subscribe(() => this.changeDector.detectChanges());
+      .subscribe(() => this.pasKaartLinksWeergaveAan);
   }
 
   private createMapModelForCommands(initieelModel: KaartWithInfo): rx.Observable<KaartWithInfo> {
