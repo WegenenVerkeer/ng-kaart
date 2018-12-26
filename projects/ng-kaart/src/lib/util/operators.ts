@@ -1,7 +1,7 @@
 import { Function1, Function2, Refinement } from "fp-ts/lib/function";
 import { isSome, Option } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
-import { filter, map, mapTo, scan, skipUntil, switchMap } from "rxjs/operators";
+import { filter, map, scan, skipUntil, switchMap } from "rxjs/operators";
 
 import { ReduceFunction } from "./function";
 

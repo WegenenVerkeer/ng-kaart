@@ -28,6 +28,11 @@ export interface StringZoekInput {
   readonly value: string;
 }
 
+export interface UrlZoekInput {
+  readonly type: "url";
+  readonly value: string;
+}
+
 export type Zoektype = "Volledig" | "Suggesties";
 
 export interface Zoekopdracht {
@@ -160,3 +165,6 @@ function compareOpInhoud(a: ZoekResultaat, b: ZoekResultaat, input: string): Ord
 function matchesInput(res: ZoekResultaat, input: string): boolean {
   return res.omschrijving.toLowerCase().startsWith(input.toLowerCase());
 }
+
+export const StringZoekInput: Function1<string, StringZoekInput> = value => ({ type: "string", value: value });
+export const UrlZoekInput: Function1<string, UrlZoekInput> = value => ({ type: "url", value: value });
