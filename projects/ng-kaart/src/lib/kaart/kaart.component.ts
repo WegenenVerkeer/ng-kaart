@@ -19,6 +19,7 @@ import {
 } from "rxjs/operators";
 
 import { asap } from "../util/asap";
+import { exponentialTimer } from "../util/exponential-timer";
 import { observableFromDomMutations } from "../util/mutation-observable";
 import { observeOnAngular } from "../util/observe-on-angular";
 import { observeOutsideAngular } from "../util/observer-outside-angular";
@@ -181,10 +182,10 @@ export class KaartComponent extends KaartComponentBase {
         switchMap(() => rx.timer(100, 100)),
         map(() => this.kaartLinksElement.nativeElement.scrollHeight > this.kaartLinksElement.nativeElement.clientHeight),
         distinctUntilChanged(),
-        debounceTime(400), // Blijkbaar is direct na de verandering nog wat te vroeg
+        debounceTime(200), // Blijkbaar is direct na de verandering nog wat te vroeg
         take(2)
       )
-      .subscribe(() => this.pasKaartLinksWeergaveAan);
+      .subscribe(() => this.pasKaartLinksWeergaveAan());
   }
 
   private createMapModelForCommands(initieelModel: KaartWithInfo): rx.Observable<KaartWithInfo> {
