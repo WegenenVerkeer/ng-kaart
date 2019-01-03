@@ -393,7 +393,7 @@ export class FeatureDemoComponent {
   readonly verkeersbordenStyleFunction = verkeersbordenStyleFunction(false);
   readonly verkeersbordenSelectieStyleFunction = verkeersbordenStyleFunction(true);
 
-  readonly fietspadStyleMetOffset = offsetStyleFunction(this.fietspadStyle, "ident8", "zijderijbaan", 1, false);
+  readonly fietspadStyleMetOffset = offsetStyleFunction(this.fietspadStyle, "ident8", "zijderijbaan", 3, false);
 
   readonly fietspadSelectieStyleMetOffset = function(feature: ol.Feature, resolution: number): ol.style.Style | ol.style.Style[] {
     const applySelectionColor = function(s: ol.style.Style): ol.style.Style {
@@ -401,7 +401,7 @@ export class FeatureDemoComponent {
       selectionStyle.getStroke().setColor([0, 153, 255, 1]);
       return selectionStyle;
     };
-    const offsetFunc = offsetStyleFunction(this!.fietspadStyle, "ident8", "zijderijbaan", 1, false);
+    const offsetFunc = offsetStyleFunction(this!.fietspadStyle, "ident8", "zijderijbaan", 3, false);
     const style = offsetFunc(feature, resolution);
     if (style instanceof ol.style.Style) {
       return applySelectionColor(style);
@@ -414,7 +414,7 @@ export class FeatureDemoComponent {
     this.afgeleideSnelheidsRegimesStyle,
     null,
     "zijderijbaan",
-    1,
+    4,
     true
   );
 
@@ -427,7 +427,7 @@ export class FeatureDemoComponent {
       selectionStyle.getStroke().setColor([0, 153, 255, 1]);
       return selectionStyle;
     };
-    const offsetFunc = offsetStyleFunction(this!.afgeleideSnelheidsRegimesStyle, null, "zijderijbaan", 1, true);
+    const offsetFunc = offsetStyleFunction(this!.afgeleideSnelheidsRegimesStyle, null, "zijderijbaan", 4, true);
     const style = offsetFunc(feature, resolution);
     if (style instanceof ol.style.Style) {
       return applySelectionColor(style);
