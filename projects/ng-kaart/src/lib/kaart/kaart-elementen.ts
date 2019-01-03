@@ -101,6 +101,7 @@ export interface VectorLaag {
   readonly velden: OrderedMap<string, VeldInfo>;
   readonly offsetveld: Option<string>;
   readonly verwijderd: boolean;
+  readonly rijrichtingIsDigitalisatieZin: boolean;
 }
 
 export interface BlancoLaag {

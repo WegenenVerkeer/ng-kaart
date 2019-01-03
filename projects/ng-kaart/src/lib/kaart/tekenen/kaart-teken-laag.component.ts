@@ -184,7 +184,8 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
       maxZoom: 15,
       offsetveld: none,
       velden: OrderedMap<string, VeldInfo>(),
-      verwijderd: false
+      verwijderd: false,
+      rijrichtingIsDigitalisatieZin: false
     };
   }
 

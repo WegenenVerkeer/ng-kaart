@@ -90,6 +90,31 @@ export class FeatureDemoComponent {
     ]
   };
 
+  private readonly afgeleideSnelheidsRegimesStijlDef: AwvV0DynamicStyle = {
+    rules: [
+      {
+        condition: {
+          kind: "<=",
+          left: { kind: "Property", type: "number", ref: "snelheid" },
+          right: { kind: "Literal", value: 30 }
+        },
+        style: {
+          definition: { stroke: { color: "blue", width: 4 } }
+        }
+      },
+      {
+        condition: {
+          kind: ">=",
+          left: { kind: "Property", type: "number", ref: "snelheid" },
+          right: { kind: "Literal", value: 50 }
+        },
+        style: {
+          definition: { stroke: { color: "black", width: 4 } }
+        }
+      }
+    ]
+  };
+
   polygoonEvents: string[] = [];
   installatieGeselecteerdEvents: string[] = [];
   geoJsonFormatter = new ol.format.GeoJSON();
@@ -359,10 +384,16 @@ export class FeatureDemoComponent {
     throw new Error(`slecht formaat ${msg}`);
   });
 
+  readonly afgeleideSnelheidsRegimesStyle: ol.StyleFunction = validateAwvV0RuleDefintion(this.afgeleideSnelheidsRegimesStijlDef).getOrElse(
+    msg => {
+      throw new Error(`slecht formaat ${msg}`);
+    }
+  );
+
   readonly verkeersbordenStyleFunction = verkeersbordenStyleFunction(false);
   readonly verkeersbordenSelectieStyleFunction = verkeersbordenStyleFunction(true);
 
-  readonly fietspadStyleMetOffset = offsetStyleFunction(this.fietspadStyle, "ident8", "zijderijbaan", 1);
+  readonly fietspadStyleMetOffset = offsetStyleFunction(this.fietspadStyle, "ident8", "zijderijbaan", 1, true);
 
   readonly fietspadSelectieStyleMetOffset = function(feature: ol.Feature, resolution: number): ol.style.Style | ol.style.Style[] {
     const applySelectionColor = function(s: ol.style.Style): ol.style.Style {
@@ -370,7 +401,33 @@ export class FeatureDemoComponent {
       selectionStyle.getStroke().setColor([0, 153, 255, 1]);
       return selectionStyle;
     };
-    const offsetFunc = offsetStyleFunction(this!.fietspadStyle, "ident8", "zijderijbaan", 1);
+    const offsetFunc = offsetStyleFunction(this!.fietspadStyle, "ident8", "zijderijbaan", 1, true);
+    const style = offsetFunc(feature, resolution);
+    if (style instanceof ol.style.Style) {
+      return applySelectionColor(style);
+    } else {
+      return style ? style.map(s => applySelectionColor(s)) : [];
+    }
+  }.bind(this);
+
+  readonly afgeleideSnelheidsregimesStyleMetOffset = offsetStyleFunction(
+    this.afgeleideSnelheidsRegimesStyle,
+    null,
+    "zijderijbaan",
+    1,
+    true
+  );
+
+  readonly afgeleideSnelheidsregimesSelectieStyleMetOffset = function(
+    feature: ol.Feature,
+    resolution: number
+  ): ol.style.Style | ol.style.Style[] {
+    const applySelectionColor = function(s: ol.style.Style): ol.style.Style {
+      const selectionStyle = s.clone();
+      selectionStyle.getStroke().setColor([0, 153, 255, 1]);
+      return selectionStyle;
+    };
+    const offsetFunc = offsetStyleFunction(this!.afgeleideSnelheidsRegimesStyle, null, "zijderijbaan", 1, false);
     const style = offsetFunc(feature, resolution);
     if (style instanceof ol.style.Style) {
       return applySelectionColor(style);

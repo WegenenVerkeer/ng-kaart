@@ -40,7 +40,8 @@ export class ClassicVectorLaagComponent extends ClassicVectorLaagLikeComponent {
       maxZoom: this.maxZoom,
       offsetveld: fromNullable(this.offsetveld),
       velden: OrderedMap(this.veldInfos.map(vi => [vi.naam, vi])),
-      verwijderd: false
+      verwijderd: false,
+      rijrichtingIsDigitalisatieZin: false
     };
   }
 }
