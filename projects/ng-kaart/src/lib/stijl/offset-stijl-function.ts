@@ -4,6 +4,11 @@ import * as ol from "openlayers";
 
 import { kaartLogger } from "../kaart/log";
 
+type Direction = "up" | "down";
+
+const Up = "up" as Direction;
+const Down = "down" as Direction;
+
 /**
  * Gegeven een StyleFunction zonder offset rendering, geef er 1 terug waarbij de features op een offset gerendered worden.
  *
@@ -31,9 +36,9 @@ export function offsetStyleFunction(
       return style;
     }
 
-    const direction = rijrichtingIsDigitalisatieZin
-      ? "up"
-      : getValue(feature, ident8Veld).foldL(() => "up", ident8 => getDirection(ident8));
+    const direction: Direction = rijrichtingIsDigitalisatieZin
+      ? Up
+      : getValue(feature, ident8Veld).foldL(() => Up, ident8 => getDirection(ident8));
 
     function setGeometryOnStyle(s: ol.style.Style) {
       const offsetGeometryFunc = offsetGeometryFunction(
@@ -70,7 +75,7 @@ function getValue(feature: ol.Feature, field: string): Option<string> {
  * Geeft een StyleGeometryFunction terug dat ge-embed kan worden in een ol.style.Style om de geometry van het feature te transformeren
  *
  * @param ol.Feature feature Het feature met de aan te passen geometry
- * @param string direction Richting van het lijnsegment ('up' of 'down')
+ * @param Direction direction Richting van het lijnsegment ('up' of 'down')
  * @param string zijderijbaan De waarde van het zijderijbaan attribuut
  * @param number offsetPixels Aantal pixels dat het feature weg van het wegsegment getekend moet worden
  * @param number resolution De resolutie die getekend moet worden
@@ -78,7 +83,7 @@ function getValue(feature: ol.Feature, field: string): Option<string> {
  */
 function offsetGeometryFunction(
   feature: ol.Feature,
-  direction: string,
+  direction: Direction,
   zijderijbaan: string,
   offsetPixels: number,
   resolution: number
@@ -212,10 +217,10 @@ function closeTo(value1: number, value2: number) {
   return value1 < value2 + 0.00001 && value1 > value2 - 0.00001;
 }
 
-function getDirection(ident8: string) {
-  return ident8 && ident8.endsWith("2") ? "down" : "up";
+function getDirection(ident8: string): Direction {
+  return ident8 && ident8.endsWith("2") ? Down : Up;
 }
 
-function getZijdeSpiegeling(zijderijweg: string, direction: string): ZijdeSpiegeling {
+function getZijdeSpiegeling(zijderijweg: string, direction: Direction): ZijdeSpiegeling {
   return (zijderijweg === "l" || zijderijweg === "L") === (direction === "up") ? 1 : -1;
 }

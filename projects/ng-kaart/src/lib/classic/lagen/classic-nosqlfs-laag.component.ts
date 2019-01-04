@@ -55,6 +55,7 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
       velden: OrderedMap<string, ke.VeldInfo>(),
       verwijderd: false,
       rijrichtingIsDigitalisatieZin: false
+      // TODO: dit veld (en offsetveld en ident8) zijn eigenlijk stijl concerns en zouden beter naar daar verhuisd moet worden
     };
   }
 }

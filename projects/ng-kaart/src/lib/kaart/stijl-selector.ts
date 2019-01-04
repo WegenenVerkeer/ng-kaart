@@ -1,4 +1,4 @@
-import { Function1, identity, pipe } from "fp-ts/lib/function";
+import { Function1, Function4, identity, pipe } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { Iso } from "monocle-ts";
 import * as ol from "openlayers";
@@ -166,7 +166,7 @@ export function getHoverStyleSelector(map: ol.Map, laagnaam: string): Option<Sty
   return hoverStijlSelectorOpNaam(map)[laagnaam] || none;
 }
 
-export const offsetStyleSelector: (_1: string, _2: string, _3: number, _4: boolean) => (_: StyleSelector) => StyleSelector = (
+export const offsetStyleSelector: Function4<string, string, number, boolean, Function1<StyleSelector, StyleSelector>> = (
   ident8veld: string,
   offsetveld: string,
   stijlPositie: number,

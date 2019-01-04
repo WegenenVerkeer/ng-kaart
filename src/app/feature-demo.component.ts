@@ -8,12 +8,10 @@ import * as rx from "rxjs";
 
 import {
   AwvV0DynamicStyle,
-  classicLogger,
   definitieToStyle,
   forEach,
   join,
   KaartClassicComponent,
-  kaartLogger,
   offsetStyleFunction,
   parseCoordinate,
   ToegevoegdeLaag,
