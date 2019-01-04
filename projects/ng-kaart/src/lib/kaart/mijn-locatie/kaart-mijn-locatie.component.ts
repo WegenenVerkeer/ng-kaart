@@ -259,7 +259,8 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
       maxZoom: 15,
       velden: OrderedMap<string, ke.VeldInfo>(),
       offsetveld: none,
-      verwijderd: false
+      verwijderd: false,
+      rijrichtingIsDigitalisatieZin: false
     };
   }
 }

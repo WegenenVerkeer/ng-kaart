@@ -41,9 +41,9 @@
       Verkeersborden
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !verkeersbordenSectie.sectieZichtbaar }">visibility</span>
     </div>
-    <div (click)="fietspadenMetOffsetsSectie.toggleSectieZichtbaar();scrollTo('fietspaden-met-offsets')" class="sub-titel">
-      Fietspaden met offsets
-      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !fietspadenMetOffsetsSectie.sectieZichtbaar }">visibility</span>
+    <div (click)="lagenMetOffsetsSectie.toggleSectieZichtbaar();scrollTo('lagen-met-offsets')" class="sub-titel">
+      Lagen met offsets
+      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !lagenMetOffsetsSectie.sectieZichtbaar }">visibility</span>
     </div>
     <div (click)="buitenKaartSectie.toggleSectieZichtbaar();scrollTo('buiten-kaart')" class="sub-titel">
       Toon features buiten de kaart
@@ -323,9 +323,9 @@
         </div>
       </awv-test-sectie>
 
-      <awv-test-sectie sectieId="fietspaden-met-offsets" sectieTitel="Fietspaden met offsets" [subSectie]="true" #fietspadenMetOffsetsSectie
-                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && fietspadenMetOffsetsSectie.sectieZichtbaar">
-        <div *ngIf="fietspadenMetOffsetsSectie.sectieZichtbaar" [@enterAnimation]>
+      <awv-test-sectie sectieId="lagen-met-offsets" sectieTitel="Lagen met offsets" [subSectie]="true" #lagenMetOffsetsSectie
+                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && lagenMetOffsetsSectie.sectieZichtbaar">
+        <div *ngIf="lagenMetOffsetsSectie.sectieZichtbaar" [@enterAnimation]>
           <awv-kaart-classic [naam]="'offsets'"
                              #selectie (geselecteerdeFeaturesChange)="featuresGeselecteerd($event)"
                              [selectieModus]="'single'"
@@ -334,6 +334,10 @@
             <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'https://apps-dev.mow.vlaanderen.be/geolatte-nosqlfs'"
                                     [database]="'featureserver'" [collection]="'fietspaden'"
                                     [styleFunction]="fietspadStyleMetOffset" [selectieStyle]="fietspadSelectieStyleMetOffset"
+                                    [minZoom]="7"></awv-kaart-nosqlfs-laag>
+            <awv-kaart-nosqlfs-laag [titel]="'Afgeleide snelheidsregimes'" [url]="'https://apps-dev.mow.vlaanderen.be/geolatte-nosqlfs'"
+                                    [database]="'featureserver'" [collection]="'afgeleide_snelheidsregimes_wegsegment_bord'"
+                                    [styleFunction]="afgeleideSnelheidsregimesStyleMetOffset" [selectieStyle]="afgeleideSnelheidsregimesSelectieStyleMetOffset"
                                     [minZoom]="7"></awv-kaart-nosqlfs-laag>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
             <awv-bevraag-kaart></awv-bevraag-kaart>

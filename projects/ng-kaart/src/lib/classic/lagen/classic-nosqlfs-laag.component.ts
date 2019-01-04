@@ -53,7 +53,9 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
       maxZoom: this.maxZoom,
       offsetveld: fromNullable(this.offsetveld),
       velden: OrderedMap<string, ke.VeldInfo>(),
-      verwijderd: false
+      verwijderd: false,
+      rijrichtingIsDigitalisatieZin: false
+      // TODO: dit veld (en offsetveld en ident8) zijn eigenlijk stijl concerns en zouden beter naar daar verhuisd moet worden
     };
   }
 }

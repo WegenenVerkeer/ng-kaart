@@ -186,7 +186,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       // op een gemodificeerde stijl tijdens het tekenen van selectie.
       const toOffset: Endomorphism<ss.StyleSelector> = laag.bron.offsetveld.fold(
         identity, // als er geen offsetveld is, dan hoeven we niks te doen
-        offsetveld => ss.offsetStyleSelector("ident8", offsetveld, laag.stijlPositie)
+        offsetveld => ss.offsetStyleSelector("ident8", offsetveld, laag.stijlPositie, laag.bron.rijrichtingIsDigitalisatieZin)
       );
       const offsetFeatureStyleSelector = toOffset(featureStyleSelector);
 
