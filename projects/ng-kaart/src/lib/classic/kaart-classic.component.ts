@@ -1,4 +1,16 @@
-import { Component, EventEmitter, Input, NgZone, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from "@angular/core";
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  Input,
+  NgZone,
+  OnChanges,
+  OnDestroy,
+  OnInit,
+  Output,
+  SimpleChanges,
+  ViewChild
+} from "@angular/core";
 import { pipe } from "fp-ts/lib/function";
 import * as option from "fp-ts/lib/Option";
 import { none, Option, some } from "fp-ts/lib/Option";
@@ -54,9 +66,9 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   @Input()
   middelpunt: ol.Coordinate; // = [130000, 193000]; // "extent" heeft voorrang
   @Input()
-  breedte; // neem standaard de hele breedte in
+  breedte: number | undefined; // neem standaard de hele breedte in
   @Input()
-  hoogte = 400;
+  hoogte: number | undefined;
   @Input()
   kaartLinksBreedte; // breedte van linker-paneel (de default is 480px bij kaart breedte > 1240 en 360px voor smallere kaarten)
   @Input()
@@ -90,6 +102,9 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   voorgrondHoogLagen: EventEmitter<List<ToegevoegdeLaag>> = new EventEmitter<List<ToegevoegdeLaag>>();
   @Output()
   voorgrondLaagLagen: EventEmitter<List<ToegevoegdeLaag>> = new EventEmitter<List<ToegevoegdeLaag>>();
+
+  @ViewChild("kaart", { read: ElementRef })
+  mapElement: ElementRef;
 
   constructor(zone: NgZone) {
     super(zone);
@@ -196,6 +211,8 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
         }
       });
     };
+
+    this.viewReady$.subscribe(() => this.zetKaartGrootte());
   }
 
   ngOnInit() {
@@ -235,24 +252,6 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
     );
     forChangedValue(
       changes,
-      "breedte",
-      pipe(
-        breedte => [breedte, this.hoogte],
-        prt.VeranderViewportCmd,
-        dispatch
-      )
-    );
-    forChangedValue(
-      changes,
-      "hoogte",
-      pipe(
-        hoogte => [this.breedte, hoogte],
-        prt.VeranderViewportCmd,
-        dispatch
-      )
-    );
-    forChangedValue(
-      changes,
       "mijnLocatieZoom",
       pipe(
         option.fromNullable,
@@ -268,6 +267,8 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
         dispatch
       )
     );
+    forChangedValue(changes, "breedte", () => this.zetKaartGrootte());
+    forChangedValue(changes, "hoogte", () => this.zetKaartGrootte());
   }
 
   dispatch(cmd: prt.Command<TypedRecord>) {
@@ -276,6 +277,15 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
 
   get kaartCmd$(): rx.Observable<prt.Command<prt.TypedRecord>> {
     return this.dispatcher.commands$;
+  }
+
+  private zetKaartGrootte() {
+    if (this.breedte) {
+      this.mapElement.nativeElement.style.width = `${this.breedte}px`;
+    }
+    if (this.hoogte) {
+      this.mapElement.nativeElement.style.height = `${this.hoogte}px`;
+    }
   }
 
   focus(): void {

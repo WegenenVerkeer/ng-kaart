@@ -631,15 +631,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function veranderViewportCmd(cmnd: prt.VeranderViewportCmd): ModelWithResult<Msg> {
-      // eerst de container aanpassen of de kaart is uitgerekt
-      if (cmnd.size[0]) {
-        model.container.style.width = `${cmnd.size[0]}px`;
-        model.container.parentElement.style.width = `${cmnd.size[0]}px`;
-      }
-      if (cmnd.size[1]) {
-        model.container.style.height = `${cmnd.size[1]}px`;
-        model.container.parentElement.style.height = `${cmnd.size[1]}px`;
-      }
+      // Openlayers moet weten dat de grootte van de container aangepast is of de kaart is uitgerekt
       model.map.setSize(cmnd.size);
       model.map.updateSize();
       modelChanger.viewPortSizeSubj.next(); // Omdat extent wschl gewijzigd wordt

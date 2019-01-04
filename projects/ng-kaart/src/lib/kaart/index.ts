@@ -34,7 +34,6 @@ import { KaartInfoBoodschappenComponent } from "./info-boodschappen/kaart-info-b
 import { KaartBevragenComponent } from "./kaart-bevragen/kaart-bevragen.component";
 import { KAART_CFG, KaartConfig } from "./kaart-config";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
-import { kaartLogOnlyWrapper } from "./kaart-internal-messages";
 import { KaartComponent } from "./kaart.component";
 import { KaartLoadingComponent } from "./loading/kaart-loading.component";
 import { KaartMetenComponent } from "./meten/kaart-meten.component";
