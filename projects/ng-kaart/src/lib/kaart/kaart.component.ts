@@ -55,7 +55,7 @@ export class KaartComponent extends KaartComponentBase {
   private innerModelChanges: ModelChanges;
   private innerAanwezigeElementen$: rx.Observable<Set<string>>;
   readonly kaartModel$: rx.Observable<KaartWithInfo> = rx.empty();
-  private readonly resizeCommands$: rx.Observable<prt.VeranderViewportCmd>;
+  private readonly resizeCommand$: rx.Observable<prt.VeranderViewportCmd>;
 
   @ViewChild("map")
   mapElement: ElementRef;
@@ -193,7 +193,7 @@ export class KaartComponent extends KaartComponentBase {
     // Het kan gebeuren dat de container waar wij ons in bevinden een andere grootte krijgt. In dat geval moeten we dat laten weten aan OL.
     // We hebben geen subject waar we commands kunnen naar toe sturen (en dat willen we ook niet), dus gebruiken we een observable die we
     // mergen met de externe en interne componentcommandos.
-    this.resizeCommands$ = this.viewReady$.pipe(
+    this.resizeCommand$ = this.viewReady$.pipe(
       observeOutsideAngular(this.zone),
       switchMap(() => resizeObservable(this.mapElement.nativeElement)),
       debounceTime(200), // resize events komen heel vlug
@@ -210,7 +210,7 @@ export class KaartComponent extends KaartComponentBase {
       asap(() => this.msgSubj.next(msg));
     };
 
-    return rx.merge(this.kaartCmd$, this.internalCmdDispatcher.commands$, this.resizeCommands$).pipe(
+    return rx.merge(this.kaartCmd$, this.internalCmdDispatcher.commands$, this.resizeCommand$).pipe(
       tap(c => kaartLogger.debug("kaart command", c)),
       takeUntil(this.destroying$.pipe(delay(100))), // Een klein beetje extra tijd voor de cleanup commands
       observeOutsideAngular(this.zone),
