@@ -181,6 +181,7 @@ export class KaartComponent extends KaartComponentBase {
     // de scrollbar en inklapknop aangepast zijn.
     this.viewReady$
       .pipe(
+        observeOutsideAngular(this.zone),
         switchMap(() => rx.timer(100, 100)),
         map(() => this.kaartLinksElement.nativeElement.scrollHeight > this.kaartLinksElement.nativeElement.clientHeight),
         distinctUntilChanged(),
@@ -193,6 +194,7 @@ export class KaartComponent extends KaartComponentBase {
     // We hebben geen subject waar we commands kunnen naar toe sturen (en dat willen we ook niet), dus gebruiken we een observable die we
     // mergen met de externe en interne componentcommandos.
     this.resizeCommands$ = this.viewReady$.pipe(
+      observeOutsideAngular(this.zone),
       switchMap(() => resizeObservable(this.mapElement.nativeElement)),
       debounceTime(200), // resize events komen heel vlug
       filter(isNonEmpty),
