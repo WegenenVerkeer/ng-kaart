@@ -5,7 +5,7 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import { List, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, filter, map } from "rxjs/operators";
+import { distinct, distinctUntilChanged, filter, map } from "rxjs/operators";
 
 import { flatten } from "../../util/operators";
 import * as ke from "../kaart-elementen";
@@ -21,13 +21,19 @@ const MijnLocatieLaagNaam = "Mijn Locatie";
 
 const TrackingInterval = 500; // aantal milliseconden tussen tracking updates
 
+interface Positie {
+  x: number;
+  y: number;
+  accuracy: number;
+}
+
 interface Resultaat {
   zoom: number;
   doel: number;
-  positie: Position;
+  positie: Positie;
 }
 
-const Resultaat: Function3<number, number, Position, Resultaat> = (zoom, doel, positie) => ({ zoom: zoom, doel: doel, positie: positie });
+const Resultaat: Function3<number, number, Positie, Resultaat> = (zoom, doel, positie) => ({ zoom: zoom, doel: doel, positie: positie });
 
 const pasLocatieFeatureAan: Function4<ol.Feature, ol.Coordinate, number, number, ol.Feature> = (feature, coordinate, zoom, accuracy) => {
   feature.setGeometry(new ol.geom.Point(coordinate));
@@ -73,6 +79,9 @@ const locatieStijlFunctie: Function1<number, ol.FeatureStyleFunction> = accuracy
   };
 };
 
+let deltaMean = 500; // the geolocation sampling period mean in ms
+let previousM = 0;
+
 @Component({
   selector: "awv-kaart-mijn-locatie",
   templateUrl: "./kaart-mijn-locatie.component.html",
@@ -82,7 +91,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
   private viewinstellingen$: rx.Observable<Viewinstellingen> = rx.empty();
   private zoomdoelSetting$: rx.Observable<Option<number>> = rx.empty();
   private activeerSubj: rx.Subject<boolean> = new rx.Subject<boolean>();
-  private locatieSubj: rx.Subject<Position> = new rx.Subject<Position>();
+  private locatieSubj: rx.Subject<Positie> = new rx.Subject<Positie>();
 
   enabled$: rx.Observable<boolean> = rx.of(true);
 
@@ -91,6 +100,11 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
 
   private mijnLocatie: Option<ol.Feature> = none;
   private watchId: Option<number> = none;
+
+  // LineString to store the different geolocation positions. This LineString
+  // is time aware.
+  // The Z dimension is actually used to store the rotation (heading).
+  private positions = new ol.geom.LineString([], "XYZM");
 
   modus(): string {
     return MijnLocatieUiSelector;
@@ -152,6 +166,28 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
       wrapper: kaartLogOnlyWrapper
     });
 
+    this.dispatch({
+      type: "ZetLaagPostCompose",
+      titel: MijnLocatieLaagNaam,
+      postCompose: () => {
+        // use sampling period to get a smooth transition
+        let m = Date.now() - deltaMean * 1.5;
+        m = Math.max(m, previousM);
+        previousM = m;
+        // interpolate position along positions LineString
+        const coordinate = this.positions.getCoordinateAtM(m, true);
+        if (coordinate) {
+          this.locatieSubj.next({
+            x: coordinate[0],
+            y: coordinate[1],
+            // @ts-ignore
+            accuracy: coordinate[2] // ts-ignore want ol.Coordinate heeft meer 2 dimensies
+          });
+        }
+      },
+      wrapper: kaartLogOnlyWrapper
+    });
+
     this.viewinstellingen$ = this.parent.modelChanges.viewinstellingen$;
     this.zoomdoelSetting$ = this.parent.modelChanges.mijnLocatieZoomDoel$;
     this.enabled$ = this.zoomdoelSetting$.pipe(map(m => m.isSome()));
@@ -171,7 +207,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
 
     // pas positie aan bij nieuwe locatie
     this.bindToLifeCycle(
-      rx.combineLatest(zoom$, zoomdoel$, this.locatieSubj.pipe(debounceTime(TrackingInterval))).pipe(
+      rx.combineLatest(zoom$, zoomdoel$, this.locatieSubj).pipe(
         filter(() => this.actief),
         map(([zoom, doel, locatie]) => Resultaat(zoom, doel, locatie))
       )
@@ -183,7 +219,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     });
   }
 
-  private maakNieuwFeature(coordinate: ol.Coordinate, zoom: number, accuracy: number): Option<ol.Feature> {
+  private maakNieuwFeature(coordinate: ol.Coordinate, accuracy: number): Option<ol.Feature> {
     const feature = new ol.Feature(new ol.geom.Point(coordinate));
     feature.setStyle(locatieStijlFunctie(accuracy));
     this.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, List.of(feature), kaartLogOnlyWrapper));
@@ -213,7 +249,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
       this.watchId = some(
         navigator.geolocation.watchPosition(
           //
-          positie => this.locatieSubj.next(positie),
+          positie => this.addPosition(positie, Date.now()),
           fout => this.meldFout(fout),
           {
             enableHighAccuracy: true,
@@ -226,18 +262,38 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     }
   }
 
-  private zetMijnPositie(position: Position, zoom: number, doelzoom: number) {
-    const longLat: ol.Coordinate = [position.coords.longitude, position.coords.latitude];
+  private addPosition(position: Position, m) {
+    console.log("X X X X X Positie ontvangen");
+    const x = position.coords.longitude;
+    const y = position.coords.latitude;
+    const accuracy = position.coords.accuracy;
+
+    // @ts-ignore
+    this.positions.appendCoordinate([x, y, accuracy, m]); // ts-ignore, ol.Coordinate heeft slechts 2 dimensies in TS def...
+
+    // only keep the 20 last coordinates
+    this.positions.setCoordinates(this.positions.getCoordinates().slice(-20));
+
+    const coords = this.positions.getCoordinates();
+    const len = coords.length;
+    if (len >= 2) {
+      // @ts-ignore
+      deltaMean = (coords[len - 1][3] - coords[0][3]) / (len - 1);
+    }
+  }
+
+  private zetMijnPositie(positie: Positie, zoom: number, doelzoom: number) {
+    const longLat: ol.Coordinate = [positie.x, positie.y];
     const coordinate = ol.proj.fromLonLat(longLat, "EPSG:31370");
 
     this.mijnLocatie = this.mijnLocatie
-      .map(feature => pasLocatieFeatureAan(feature, coordinate, zoom, position.coords.accuracy))
+      .map(feature => pasLocatieFeatureAan(feature, coordinate, zoom, positie.accuracy))
       .orElse(() => {
         if (zoom <= 8) {
           // We zitten nu op een te laag zoomniveau, dus gaan we eerst inzoomen.
           this.dispatch(prt.VeranderZoomCmd(doelzoom, kaartLogOnlyWrapper));
         }
-        return this.maakNieuwFeature(coordinate, zoom, position.coords.accuracy);
+        return this.maakNieuwFeature(coordinate, positie.accuracy);
       });
 
     // kleine delay om OL tijd te geven eerst de icon te verplaatsen

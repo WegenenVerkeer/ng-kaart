@@ -4,7 +4,7 @@ import * as MobileDetect from "mobile-detect/mobile-detect";
 import * as ol from "openlayers";
 import { BehaviorSubject, ReplaySubject, Subject } from "rxjs";
 
-import { ZoekerMetPrioriteiten, ZoekResultaat } from "../zoeker/zoeker";
+import { ZoekerMetPrioriteiten } from "../zoeker/zoeker";
 
 import { KaartConfig } from "./kaart-config";
 import * as ke from "./kaart-elementen";

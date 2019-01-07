@@ -64,6 +64,7 @@ export type Command<Msg extends KaartMsg> =
   | ZetActieveModusCmd
   | ZetFocusOpKaartCmd
   | ZetLaagLegendeCmd<Msg>
+  | ZetLaagPostCompose<Msg>
   | ZetMijnLocatieZoomCmd
   | ZetStijlSpecVoorLaagCmd<Msg>
   | ZetStijlVoorLaagCmd<Msg>
@@ -126,6 +127,13 @@ export interface ZetLaagLegendeCmd<Msg extends KaartMsg> {
   readonly type: "ZetLaagLegende";
   readonly titel: string;
   readonly legende: Legende;
+  readonly wrapper: BareValidationWrapper<Msg>;
+}
+
+export interface ZetLaagPostCompose<Msg extends KaartMsg> {
+  readonly type: "ZetLaagPostCompose";
+  readonly titel: string;
+  readonly postCompose: () => void;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 

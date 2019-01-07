@@ -428,6 +428,18 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
+    function zetLaagPostCompose(cmnd: prt.ZetLaagPostCompose<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        valideerToegevoegdeLaagBestaat(cmnd.titel).map(laag => {
+          const layer = laag.layer;
+          layer.on("postcompose", cmnd.postCompose);
+          model.map.render();
+          return ModelAndEmptyResult(model);
+        })
+      );
+    }
+
     function vervangLaag(cmnd: prt.VervangLaagCmd<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
@@ -1353,6 +1365,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return verplaatsLaagCmd(cmd);
       case "VervangLaagCmd":
         return vervangLaag(cmd);
+      case "ZetLaagPostCompose":
+        return zetLaagPostCompose(cmd);
       case "ZetLaagLegende":
         return zetLaagLegende(cmd);
       case "VraagSchaalAan":
