@@ -36,21 +36,12 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
     return true;
   }
 
-  activeer(actief: boolean) {
-    this.actief = actief;
-    if (this.actief) {
-      // activatie van de modus gebeurt nooit expliciet via de gebruiker, dus we moeten expliciet
-      // de activatie publiceren aan de andere componenten
-      this.publiceerActivatie();
-    }
-  }
-
   ngOnInit(): void {
     super.ngOnInit();
 
     const stableReferentielagen$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Laag").pipe(debounceTime(250));
     const stableInfoServices$ = this.modelChanges.laagLocationInfoServicesOpTitel$.pipe(debounceTime(250));
-    const geklikteLocatie$ = this.modelChanges.kaartKlikLocatie$.pipe(filter(() => this.actief));
+    const geklikteLocatie$ = this.modelChanges.kaartKlikLocatie$.pipe(filter(() => this.isActief()));
 
     const allSvcCalls: (
       _1: List<ke.ToegevoegdeLaag>,
@@ -93,10 +84,6 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
         msg.lagenLocatieInfo
       );
     });
-  }
-
-  protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
-    return [prt.ActieveModusSubscription(actieveModusGezetWrapper)];
   }
 
   private toonInfoBoodschap(

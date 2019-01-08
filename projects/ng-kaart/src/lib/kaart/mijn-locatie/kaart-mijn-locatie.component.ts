@@ -9,7 +9,7 @@ import { debounceTime, distinctUntilChanged, filter, map } from "rxjs/operators"
 
 import { flatten } from "../../util/operators";
 import * as ke from "../kaart-elementen";
-import { actieveModusGezetWrapper, KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-messages";
+import { kaartLogOnlyWrapper } from "../kaart-internal-messages";
 import { KaartModusComponent } from "../kaart-modus-component";
 import * as prt from "../kaart-protocol";
 import { Viewinstellingen } from "../kaart-protocol";
@@ -96,42 +96,20 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     return MijnLocatieUiSelector;
   }
 
-  isDefaultModus() {
-    return false;
-  }
-
-  public get isActief(): boolean {
-    return this.actief;
-  }
-
-  protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
-    return [prt.ActieveModusSubscription(actieveModusGezetWrapper)];
-  }
-
   // geactiveerd van buiten af (bij enabled andere modus)
-  activeer(active: boolean) {
-    this.actief = active;
-    this.activeerSubj.next(this.actief);
-    if (!active) {
-      this.verwijderFeature();
-    }
+  activeer() {
+    this.activeerSubj.next(true);
   }
 
-  // activatie geinitieerd door gebruiker
-  toggleLocatieTracking(): void {
-    this.activeer(!this.actief);
-    if (this.actief) {
-      this.publiceerActivatie();
-    } else {
-      this.publiceerDeactivatie();
-    }
+  deactiveer() {
+    this.activeerSubj.next(false);
+    this.verwijderFeature();
   }
 
   // deactiveer bij pannen. Locatie laten staan
   deactiveerTracking(): void {
-    this.actief = false;
-    this.activeerSubj.next(this.actief);
-    this.publiceerDeactivatie();
+    this.activeerSubj.next(false);
+    this.zetModeAf();
   }
 
   constructor(zone: NgZone, private readonly parent: KaartComponent) {
@@ -172,13 +150,13 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     // pas positie aan bij nieuwe locatie
     this.bindToLifeCycle(
       rx.combineLatest(zoom$, zoomdoel$, this.locatieSubj.pipe(debounceTime(TrackingInterval))).pipe(
-        filter(() => this.actief),
+        filter(() => this.isActief()),
         map(([zoom, doel, locatie]) => Resultaat(zoom, doel, locatie))
       )
     ).subscribe(resultaat => this.zetMijnPositie(resultaat.positie, resultaat.zoom, resultaat.doel));
 
     // deactiveer tracking bij pannen kaart
-    this.bindToLifeCycle(this.parent.modelChanges.dragInfo$.pipe(filter(() => this.actief))).subscribe(() => {
+    this.bindToLifeCycle(this.parent.modelChanges.dragInfo$.pipe(filter(() => this.isActief()))).subscribe(() => {
       this.deactiveerTracking();
     });
   }

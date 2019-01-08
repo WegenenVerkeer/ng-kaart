@@ -1,59 +1,90 @@
-import { NgZone, OnInit } from "@angular/core";
+import { NgZone } from "@angular/core";
 import { none, some } from "fp-ts/lib/Option";
-import { takeUntil } from "rxjs/operators";
+import { switchMap } from "rxjs/operators";
 
 import { observeOnAngular } from "../util/observe-on-angular";
-import { ofType, skipOlder } from "../util/operators";
 import { containsText } from "../util/option";
 
 import { KaartChildComponentBase } from "./kaart-child-component-base";
-import { ActieveModusAangepastMsg } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
 import { KaartComponent } from "./kaart.component";
 
-export abstract class KaartModusComponent extends KaartChildComponentBase implements OnInit {
-  protected actief = false;
+export abstract class KaartModusComponent extends KaartChildComponentBase {
+  private actief = false;
 
   constructor(protected readonly kaartComponent: KaartComponent, zone: NgZone) {
     super(kaartComponent, zone);
+
+    this.bindToLifeCycle(
+      this.initialising$.pipe(
+        switchMap(() => this.modelChanges.actieveModus$),
+        observeOnAngular(zone)
+      )
+    ).subscribe(maybeModus => {
+      if ((maybeModus.isNone() && this.isDefaultModus()) || containsText(maybeModus, this.modus())) {
+        if (!this.actief) {
+          this.maakActief();
+        }
+      } else {
+        // aanvraag tot andere modus, disable deze modus
+        if (this.actief) {
+          this.maakInactief();
+        }
+      }
+    });
   }
 
   abstract modus(): string;
 
-  abstract isDefaultModus(): boolean;
-
-  abstract activeer(active: boolean);
-
-  ngOnInit() {
-    super.ngOnInit();
-
-    this.internalMessage$
-      .pipe(
-        ofType<ActieveModusAangepastMsg>("ActieveModus"), //
-        observeOnAngular(this.zone),
-        takeUntil(this.destroying$), // autounsubscribe bij destroy component
-        skipOlder()
-      )
-      .subscribe(msg => {
-        if (msg.modus.isNone()) {
-          // als er geen modus gezet is, is dit de default modus, activeer onszelf
-          if (!this.actief && this.isDefaultModus()) {
-            this.activeer(true);
-          }
-        } else if (!containsText(msg.modus, this.modus())) {
-          // aanvraag tot andere modus, disable deze modus
-          if (this.actief) {
-            this.activeer(false);
-          }
-        }
-      });
+  protected isDefaultModus(): boolean {
+    return false;
   }
 
-  publiceerActivatie() {
+  protected activeer() {}
+
+  protected deactiveer() {}
+
+  isActief() {
+    return this.actief;
+  }
+
+  toggle() {
+    if (this.actief) {
+      this.zetModeAf();
+    } else {
+      this.zetModeAan();
+    }
+  }
+
+  zetModeAf() {
+    if (this.actief) {
+      this.maakInactief();
+      this.publiceerDeactivatie();
+    }
+  }
+
+  zetModeAan() {
+    if (!this.actief) {
+      this.publiceerActivatie();
+      this.maakActief();
+    }
+  }
+
+  private maakActief() {
+    this.actief = true;
+    this.activeer();
+  }
+
+  private maakInactief() {
+    this.actief = false;
+    this.deactiveer();
+  }
+
+  private publiceerActivatie() {
     this.dispatch(prt.ZetActieveModusCmd(some(this.modus())));
   }
 
-  publiceerDeactivatie() {
+  private publiceerDeactivatie() {
     this.dispatch(prt.ZetActieveModusCmd(none));
   }
 }
