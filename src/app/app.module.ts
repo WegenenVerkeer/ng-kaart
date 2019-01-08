@@ -4,8 +4,9 @@ import { MatButtonToggleModule, MatSlideToggleModule } from "@angular/material";
 import { BrowserModule } from "@angular/platform-browser";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { RouterModule } from "@angular/router";
-import { ClassicModule, KaartModule, LagenkiezerModule, ZoekerModule } from "@wegenenverkeer/ng-kaart";
 import { ClickOutsideModule } from "ng4-click-outside";
+
+import { ClassicModule, KaartModule, LagenkiezerModule, ZoekerModule } from "../../projects/ng-kaart/src/public_api";
 
 import { AppComponent, routes } from "./app.component";
 import { AvKaartInnerComponent } from "./av-kaart-inner.component";

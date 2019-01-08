@@ -18,13 +18,14 @@ import {
   tap
 } from "rxjs/operators";
 
+import { isNonEmpty } from "../util/arrays";
 import { asap } from "../util/asap";
-import { exponentialTimer } from "../util/exponential-timer";
 import { observableFromDomMutations } from "../util/mutation-observable";
 import { observeOnAngular } from "../util/observe-on-angular";
 import { observeOutsideAngular } from "../util/observer-outside-angular";
 import { flatten, ofType } from "../util/operators";
 import { forEach } from "../util/option";
+import { resizeObservable } from "../util/resize-observable";
 
 import { KaartComponentBase } from "./kaart-component-base";
 import { KAART_CFG, KaartConfig } from "./kaart-config";
@@ -54,6 +55,7 @@ export class KaartComponent extends KaartComponentBase {
   private innerModelChanges: ModelChanges;
   private innerAanwezigeElementen$: rx.Observable<Set<string>>;
   readonly kaartModel$: rx.Observable<KaartWithInfo> = rx.empty();
+  private readonly resizeCommand$: rx.Observable<prt.VeranderViewportCmd>;
 
   @ViewChild("map")
   mapElement: ElementRef;
@@ -140,7 +142,7 @@ export class KaartComponent extends KaartComponentBase {
       () => kaartLogger.info("kaart & cmd terminated")
     );
 
-    // Het laatste model is dat net voor de stream van model unsubscribed is, dus bij ngOnDestroy
+    // Het laatste model is dit dat net voor de stream van model unsubscribed is, dus bij ngOnDestroy
     this.kaartModel$.pipe(last()).subscribe(model => {
       kaartLogger.info(`kaart '${this.naam}' opkuisen`);
       cleanup(model);
@@ -179,6 +181,7 @@ export class KaartComponent extends KaartComponentBase {
     // de scrollbar en inklapknop aangepast zijn.
     this.viewReady$
       .pipe(
+        observeOutsideAngular(this.zone),
         switchMap(() => rx.timer(100, 100)),
         map(() => this.kaartLinksElement.nativeElement.scrollHeight > this.kaartLinksElement.nativeElement.clientHeight),
         distinctUntilChanged(),
@@ -186,6 +189,18 @@ export class KaartComponent extends KaartComponentBase {
         take(2)
       )
       .subscribe(() => this.pasKaartLinksWeergaveAan());
+
+    // Het kan gebeuren dat de container waar wij ons in bevinden een andere grootte krijgt. In dat geval moeten we dat laten weten aan OL.
+    // We hebben geen subject waar we commands kunnen naar toe sturen (en dat willen we ook niet), dus gebruiken we een observable die we
+    // mergen met de externe en interne componentcommandos.
+    this.resizeCommand$ = this.viewReady$.pipe(
+      observeOutsideAngular(this.zone),
+      switchMap(() => resizeObservable(this.mapElement.nativeElement)),
+      debounceTime(200), // resize events komen heel vlug
+      filter(isNonEmpty),
+      map(entries => [entries[0].contentRect.width, entries[0].contentRect.height] as ol.Size),
+      map(prt.VeranderViewportCmd)
+    );
   }
 
   private createMapModelForCommands(initieelModel: KaartWithInfo): rx.Observable<KaartWithInfo> {
@@ -195,7 +210,7 @@ export class KaartComponent extends KaartComponentBase {
       asap(() => this.msgSubj.next(msg));
     };
 
-    return rx.merge(this.kaartCmd$, this.internalCmdDispatcher.commands$).pipe(
+    return rx.merge(this.kaartCmd$, this.internalCmdDispatcher.commands$, this.resizeCommand$).pipe(
       tap(c => kaartLogger.debug("kaart command", c)),
       takeUntil(this.destroying$.pipe(delay(100))), // Een klein beetje extra tijd voor de cleanup commands
       observeOutsideAngular(this.zone),

@@ -226,7 +226,7 @@
       <awv-test-sectie sectieId="orthophotos" sectieTitel="Orthophotos" [subSectie]="true" #orthophotosSectie
                        [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && orthophotosSectie.sectieZichtbaar">
         <div *ngIf="orthophotosSectie.sectieZichtbaar" [@enterAnimation]>
-          <awv-kaart-classic class="qa-kaart" [naam]="'qa-kaart'">
+          <awv-kaart-classic class="qa-kaart" [naam]="'qa-kaart'" [hoogte]="400">
             <awv-kaart-ortho-laag [titel]="'Ortho'" [groep]="'Voorgrond.Laag'"></awv-kaart-ortho-laag>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
             <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
@@ -237,7 +237,7 @@
       <awv-test-sectie sectieId="districten" sectieTitel="Districten" [subSectie]="true" #districtenSectie
                        [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && districtenSectie.sectieZichtbaar">
         <div *ngIf="districtenSectie.sectieZichtbaar" [@enterAnimation]>
-          <awv-kaart-classic [naam]="'districten'">
+          <awv-kaart-classic [naam]="'districten'" [hoogte]="400">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
             <awv-kaart-vector-laag [titel]="'Districten'"
                                    [source]="districtSource"
@@ -279,7 +279,7 @@
       <awv-test-sectie sectieId="straatkolken" sectieTitel="Straatkolken" [subSectie]="true" #straatkolkenSectie
                        [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && straatkolkenSectie.sectieZichtbaar">
         <div *ngIf="straatkolkenSectie.sectieZichtbaar" [@enterAnimation]>
-          <awv-kaart-classic [naam]="'straatkolken'">
+          <awv-kaart-classic [naam]="'straatkolken'" [hoogte]="400">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
             <awv-kaart-nosqlfs-laag [titel]="'Straatkolken'" [url]="'https://apps-dev.mow.vlaanderen.be/geolatte-nosqlfs'"
                                     [database]="'featureserver'" [collection]="'straatkolken'" [style]="kolkStyle"
@@ -293,7 +293,7 @@
       <awv-test-sectie sectieId="fietspaden" sectieTitel="Fietspaden" [subSectie]="true" #fietspadenSectie
                        [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && fietspadenSectie.sectieZichtbaar">
         <div *ngIf="fietspadenSectie.sectieZichtbaar" [@enterAnimation]>
-          <awv-kaart-classic [naam]="'fietspaden'" (zichtbareFeatures)="onZichtbareFeatures($event)">
+          <awv-kaart-classic [naam]="'fietspaden'" (zichtbareFeatures)="onZichtbareFeatures($event)" [hoogte]="400">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
             <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'https://apps-dev.mow.vlaanderen.be/geolatte-nosqlfs'"
                                     [database]="'featureserver'" [collection]="'fietspaden'" [styleFunction]="fietspadStyle" [offsetveld]="'zijderijbaan'"
@@ -329,6 +329,7 @@
           <awv-kaart-classic [naam]="'offsets'"
                              #selectie (geselecteerdeFeaturesChange)="featuresGeselecteerd($event)"
                              [selectieModus]="'single'"
+                             [hoogte]="400"
                              (zichtbareFeatures)="onZichtbareFeatures($event)">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
             <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'https://apps-dev.mow.vlaanderen.be/geolatte-nosqlfs'"
@@ -350,19 +351,25 @@
       <awv-test-sectie sectieId="buiten-kaart" sectieTitel="Toon features buiten de kaart" [subSectie]="true" #buitenKaartSectie
                        [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && buitenKaartSectie.sectieZichtbaar">
         <div *ngIf="buitenKaartSectie.sectieZichtbaar" [@enterAnimation]>
-          <awv-kaart-classic [naam]="'featuresApi'"
-                             (zichtbareFeatures)="onFietspadsegmentenZichtbaar($event)"
-                             [geselecteerdeFeatures]="geselecteerdeFietspadsegmenten"
-                             (geselecteerdeFeaturesChange)="onFietspadsegmentViaKaartSelectie($event)"
-                             [selectieModus]="'multipleKlik'">
-            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
-            <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
-            <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'https://apps-dev.mow.vlaanderen.be/geolatte-nosqlfs'"
-                                    [database]="'featureserver'" [collection]="'fietspaden'"
-                                    [styleFunction]="fietspadStyleMetOffset" [selectieStyle]="fietspadSelectieStyleMetOffset"
-                                    [minZoom]="7"></awv-kaart-nosqlfs-laag>
-            <awv-kaart-schaal></awv-kaart-schaal>
-          </awv-kaart-classic>
+          <div style="height: 500px;">
+            <awv-kaart-classic [naam]="'featuresApi'"
+            (zichtbareFeatures)="onFietspadsegmentenZichtbaar($event)"
+            [geselecteerdeFeatures]="geselecteerdeFietspadsegmenten"
+            (geselecteerdeFeaturesChange)="onFietspadsegmentViaKaartSelectie($event)"
+            [selectieModus]="'multipleKlik'">
+              <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+              <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
+              <awv-kaart-nosqlfs-laag
+                [titel]="'Fietspaden'"
+                [url]="'https://apps-dev.mow.vlaanderen.be/geolatte-nosqlfs'"
+                [database]="'featureserver'" [collection]="'fietspaden'"
+                [styleFunction]="fietspadStyleMetOffset" [selectieStyle]="fietspadSelectieStyleMetOffset"
+                [minZoom]="7">
+              </awv-kaart-nosqlfs-laag>
+              <awv-kaart-schaal></awv-kaart-schaal>
+              <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+            </awv-kaart-classic>
+        </div>
           <div class="onder-kaart">
             <h4>Zichtbare features</h4>
             <table>
@@ -386,10 +393,10 @@
       </awv-test-sectie>
 
 
-      <awv-test-sectie sectieId="zoeken" sectieTitel="Zoeken" [subSectie]="true" #zoekenSectie 
+      <awv-test-sectie sectieId="zoeken" sectieTitel="Zoeken" [subSectie]="true" #zoekenSectie
                        [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && zoekenSectie.sectieZichtbaar">
         <div *ngIf="zoekenSectie.sectieZichtbaar" [@enterAnimation]>
-        <awv-kaart-classic [naam]="'zoeken'">
+        <awv-kaart-classic [naam]="'zoeken'" [hoogte]="400">
           <awv-kaart-lagenkiezer [verwijderbareLagen]="true" [verplaatsbareLagen]="true" [toonLegende]="true"></awv-kaart-lagenkiezer>
           <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
           <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
@@ -430,7 +437,7 @@
 
       <awv-test-sectie sectieId="geoloket2" sectieTitel="Geoloket2" [subSectie]="true" #geoloket2Sectie
                        [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && geoloket2Sectie.sectieZichtbaar">
-        <div *ngIf="geoloket2Sectie.sectieZichtbaar" [@enterAnimation]>
+        <div *ngIf="geoloket2Sectie.sectieZichtbaar" [@enterAnimation] style="height: 600px">
           <awv-kaart-classic [naam]="'geoloket2'" [mijnLocatieZoom]="10" (zoomChange)="onZoom($event)"
                              (middelpuntChange)="onMiddelpunt($event)"
                              (extentChange)="onExtent($event)">

@@ -20,7 +20,7 @@ import {
   verkeersbordenStyleFunction,
   zoekerMetPrioriteiten,
   ZoekerMetPrioriteiten
-} from "@wegenenverkeer/ng-kaart";
+} from "../../projects/ng-kaart/src/public_api";
 
 import { DummyZoeker } from "./dummy-zoeker";
 
