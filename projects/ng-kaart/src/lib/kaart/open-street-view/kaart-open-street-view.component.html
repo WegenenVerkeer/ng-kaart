@@ -1,6 +1,6 @@
 <div class="kaart-widget open-street-view">
-  <button mat-icon-button (click)="toggleLuisterenOpKaartClicks()"
-          [matTooltip]="isActief ? 'Stop streetview modus' : 'Start streetview modus'" matTooltipPosition="left">
-    <mat-icon [class.actief]="isActief" aria-label="open google street view">streetview</mat-icon>
+  <button mat-icon-button (click)="toggle()"
+          [matTooltip]="isActief() ? 'Stop streetview modus' : 'Start streetview modus'" matTooltipPosition="left">
+    <mat-icon [class.actief]="isActief()" aria-label="open google street view">streetview</mat-icon>
   </button>
 </div>

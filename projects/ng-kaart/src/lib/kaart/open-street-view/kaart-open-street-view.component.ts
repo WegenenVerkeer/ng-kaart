@@ -2,15 +2,10 @@ import { Component, NgZone } from "@angular/core";
 
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { take, takeUntil } from "rxjs/operators";
 
 import { lambert72ToWgs84 } from "../../coordinaten/coordinaten.service";
-import { observeOnAngular } from "../../util/observe-on-angular";
-import { ofType, skipOlder } from "../../util/operators";
 
-import { actieveModusGezetWrapper, KaartClickMsg, kaartClickWrapper, KaartInternalMsg } from "../kaart-internal-messages";
 import { KaartModusComponent } from "../kaart-modus-component";
-import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 
 export const StreetviewUiSelector = "Streetview";
@@ -31,56 +26,24 @@ export class KaartOpenStreetViewComponent extends KaartModusComponent {
     return StreetviewUiSelector;
   }
 
-  isDefaultModus() {
-    return false;
+  activeer() {
+    this.startLuisterenOpClickEvents();
   }
 
-  activeer(active: boolean) {
-    if (active) {
-      this.startLuisterenOpClickEvents();
-    } else {
-      this.stopLuisterenOpClickEvents();
-    }
-  }
-
-  public get isActief(): boolean {
-    return this.actief;
-  }
-
-  protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
-    return [prt.ActieveModusSubscription(actieveModusGezetWrapper), prt.KaartClickSubscription(kaartClickWrapper)];
-  }
-
-  toggleLuisterenOpKaartClicks(): void {
-    if (this.actief) {
-      this.stopLuisterenOpClickEvents();
-      this.publiceerDeactivatie();
-    } else {
-      this.startLuisterenOpClickEvents();
-      this.publiceerActivatie();
-    }
+  deactiveer() {
+    this.stopLuisterenOpClickEvents();
   }
 
   private startLuisterenOpClickEvents(): void {
-    this.actief = true;
     document.body.style.cursor = "crosshair";
 
     this.clickSubscription.unsubscribe();
-    this.clickSubscription = this.internalMessage$
-      .pipe(
-        ofType<KaartClickMsg>("KaartClick"), //
-        observeOnAngular(this.zone),
-        takeUntil(this.destroying$), // autounsubscribe bij destroy component
-        skipOlder(),
-        take(1) // 1 click message is genoeg
-      )
-      .subscribe(msg => {
-        this.openGoogleStreetView(msg.clickCoordinaat);
-      });
+    this.clickSubscription = this.bindToLifeCycle(this.modelChanges.kaartKlikLocatie$).subscribe(locatie =>
+      this.openGoogleStreetView(locatie)
+    );
   }
 
   private stopLuisterenOpClickEvents(): void {
-    this.actief = false;
     document.body.style.cursor = "default";
 
     this.clickSubscription.unsubscribe();
@@ -94,7 +57,6 @@ export class KaartOpenStreetViewComponent extends KaartModusComponent {
     window.open(strtvUrl);
 
     // sluit de street view modus af
-    this.stopLuisterenOpClickEvents();
-    this.publiceerDeactivatie();
+    this.zetModeAf();
   }
 }

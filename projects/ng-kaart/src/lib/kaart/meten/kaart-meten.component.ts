@@ -53,20 +53,12 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
     return MetenUiSelector;
   }
 
-  isDefaultModus() {
-    return false;
+  activeer() {
+    this.startMetMeten();
   }
 
-  activeer(active: boolean) {
-    if (active) {
-      this.startMetMeten();
-    } else {
-      this.stopMetenEnVerbergBoodschapen();
-    }
-  }
-
-  public get isMetenActief(): boolean {
-    return this.actief;
+  deactiveer() {
+    this.stopMetenEnVerbergBoodschapen();
   }
 
   ngOnInit(): void {
@@ -91,23 +83,9 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
     super.ngOnDestroy();
   }
 
-  protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
-    return [prt.ActieveModusSubscription(actieveModusGezetWrapper)];
-  }
-
-  toggleMeten(): void {
-    if (this.actief) {
-      this.stopMetenEnVerbergBoodschapen();
-    } else {
-      this.startMetMeten();
-      this.publiceerActivatie();
-    }
-  }
-
   private startMetMeten(): void {
     const boodschapVanMeten = boodschap => boodschap.bron.exists(bron => bron === "meten");
 
-    this.actief = true;
     this.eersteIsGetekend = false;
 
     this.bindToLifeCycle(
@@ -138,6 +116,7 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
         // Maar dit mag alleen als we al eens 1 info-box van meten gehad hebben.
         this.stopMeten();
         this.eersteIsGetekend = false;
+        this.zetModeAf();
       } else if (!this.openBoodschappen.isEmpty()) {
         this.eersteIsGetekend = true;
       }
@@ -171,11 +150,8 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
   }
 
   private stopMeten(): void {
-    this.actief = false;
-
     this.stopTekenenSubj.next(); // zorg dat de unsubscribe gebeurt
     this.stopTekenenSubj = new rx.Subject(); // en maak ons klaar voor de volgende ronde
-    this.publiceerDeactivatie();
   }
 
   private stopMetenEnVerbergBoodschapen(): void {
