@@ -24,6 +24,7 @@ export type Command<Msg extends KaartMsg> =
   | MaakLaagOnzichtbaarCmd<Msg>
   | MaakLaagZichtbaarCmd<Msg>
   | MeldComponentFoutCmd
+  | RenderKaart<Msg>
   | SelecteerFeaturesCmd
   | SluitInfoBoodschapCmd
   | SluitPanelenCmd
@@ -134,6 +135,11 @@ export interface ZetLaagPostCompose<Msg extends KaartMsg> {
   readonly type: "ZetLaagPostCompose";
   readonly titel: string;
   readonly postCompose: () => void;
+  readonly wrapper: BareValidationWrapper<Msg>;
+}
+
+export interface RenderKaart<Msg extends KaartMsg> {
+  readonly type: "RenderKaart";
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 

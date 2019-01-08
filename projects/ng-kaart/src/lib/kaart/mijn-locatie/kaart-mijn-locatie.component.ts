@@ -5,7 +5,7 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import { List, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { distinct, distinctUntilChanged, filter, map } from "rxjs/operators";
+import { distinct, distinctUntilChanged, filter, map, startWith } from "rxjs/operators";
 
 import { flatten } from "../../util/operators";
 import * as ke from "../kaart-elementen";
@@ -20,6 +20,11 @@ export const MijnLocatieUiSelector = "Mijnlocatie";
 const MijnLocatieLaagNaam = "Mijn Locatie";
 
 const TrackingInterval = 500; // aantal milliseconden tussen tracking updates
+
+// LineString to store the different geolocation positions. This LineString
+// is time aware.
+// The Z dimension is actually used to store the rotation (heading).
+const positions = new ol.geom.LineString([], "XYZM");
 
 interface Positie {
   x: number;
@@ -79,7 +84,7 @@ const locatieStijlFunctie: Function1<number, ol.FeatureStyleFunction> = accuracy
   };
 };
 
-let deltaMean = 500; // the geolocation sampling period mean in ms
+const deltaMean = 5000; // the geolocation sampling period mean in ms
 let previousM = 0;
 
 @Component({
@@ -100,11 +105,6 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
 
   private mijnLocatie: Option<ol.Feature> = none;
   private watchId: Option<number> = none;
-
-  // LineString to store the different geolocation positions. This LineString
-  // is time aware.
-  // The Z dimension is actually used to store the rotation (heading).
-  private positions = new ol.geom.LineString([], "XYZM");
 
   modus(): string {
     return MijnLocatieUiSelector;
@@ -170,18 +170,27 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
       type: "ZetLaagPostCompose",
       titel: MijnLocatieLaagNaam,
       postCompose: () => {
+        console.log("X X X X X Postcompose");
+
         // use sampling period to get a smooth transition
         let m = Date.now() - deltaMean * 1.5;
         m = Math.max(m, previousM);
         previousM = m;
         // interpolate position along positions LineString
-        const coordinate = this.positions.getCoordinateAtM(m, true);
+        const coordinate = positions.getCoordinateAtM(m, true);
+        console.log(m);
+        console.log(positions.getCoordinates());
         if (coordinate) {
+          console.log(coordinate[0] + " " + coordinate[1]);
           this.locatieSubj.next({
             x: coordinate[0],
             y: coordinate[1],
             // @ts-ignore
             accuracy: coordinate[2] // ts-ignore want ol.Coordinate heeft meer 2 dimensies
+          });
+          this.dispatch({
+            type: "RenderKaart",
+            wrapper: kaartLogOnlyWrapper
           });
         }
       },
@@ -196,10 +205,14 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
   ngAfterViewInit() {
     super.ngAfterViewInit();
 
-    const zoomdoel$: rx.Observable<number> = this.zoomdoelSetting$.pipe(flatten); // Hou enkel de effectieve zoomniveaudoelen over
+    const zoomdoel$: rx.Observable<number> = this.zoomdoelSetting$.pipe(
+      flatten,
+      startWith(0)
+    ); // Hou enkel de effectieve zoomniveaudoelen over
     const zoom$ = this.viewinstellingen$.pipe(
       distinctUntilChanged((vi1, vi2) => vi1.zoom === vi2.zoom && vi1.minZoom === vi2.minZoom && vi1.maxZoom === vi2.maxZoom),
-      map(vi => vi.zoom)
+      map(vi => vi.zoom),
+      startWith(0)
     );
 
     // start of stop tracking
@@ -209,7 +222,11 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     this.bindToLifeCycle(
       rx.combineLatest(zoom$, zoomdoel$, this.locatieSubj).pipe(
         filter(() => this.actief),
-        map(([zoom, doel, locatie]) => Resultaat(zoom, doel, locatie))
+        map(([zoom, doel, locatie]) => Resultaat(zoom, doel, locatie)),
+        distinctUntilChanged(
+          (res1, res2) =>
+            res1.doel === res2.doel && res1.zoom === res1.zoom && res1.positie.x === res2.positie.x && res1.positie.y === res1.positie.y
+        )
       )
     ).subscribe(resultaat => this.zetMijnPositie(resultaat.positie, resultaat.zoom, resultaat.doel));
 
@@ -269,20 +286,31 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     const accuracy = position.coords.accuracy;
 
     // @ts-ignore
-    this.positions.appendCoordinate([x, y, accuracy, m]); // ts-ignore, ol.Coordinate heeft slechts 2 dimensies in TS def...
+    positions.appendCoordinate([x, y, accuracy, m]); // ts-ignore, ol.Coordinate heeft slechts 2 dimensies in TS def...
 
     // only keep the 20 last coordinates
-    this.positions.setCoordinates(this.positions.getCoordinates().slice(-20));
+    positions.setCoordinates(positions.getCoordinates().slice(-20));
 
-    const coords = this.positions.getCoordinates();
+    const coords = positions.getCoordinates();
     const len = coords.length;
-    if (len >= 2) {
-      // @ts-ignore
-      deltaMean = (coords[len - 1][3] - coords[0][3]) / (len - 1);
-    }
+    // if (len >= 2) {
+    //   // @ts-ignore
+    //   deltaMean = (coords[len - 1][3] - coords[0][3]) / (len - 1);
+    // }
+
+    console.log(" X X X " + positions.getCoordinates().length + " posities");
+
+    this.dispatch({
+      type: "RenderKaart",
+      wrapper: kaartLogOnlyWrapper
+    });
   }
 
   private zetMijnPositie(positie: Positie, zoom: number, doelzoom: number) {
+    console.log(zoom);
+    console.log(doelzoom);
+    console.log(positie);
+
     const longLat: ol.Coordinate = [positie.x, positie.y];
     const coordinate = ol.proj.fromLonLat(longLat, "EPSG:31370");
 

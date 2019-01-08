@@ -440,6 +440,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
+    function renderKaart(cmnd: prt.RenderKaart<Msg>): ModelWithResult<Msg> {
+      model.map.render();
+      return ModelWithResult(model);
+    }
+
     function vervangLaag(cmnd: prt.VervangLaagCmd<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
@@ -1369,6 +1374,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return zetLaagPostCompose(cmd);
       case "ZetLaagLegende":
         return zetLaagLegende(cmd);
+      case "RenderKaart":
+        return renderKaart(cmd);
       case "VraagSchaalAan":
         return vraagSchaalAan(cmd);
       case "VoegSchaalToe":
