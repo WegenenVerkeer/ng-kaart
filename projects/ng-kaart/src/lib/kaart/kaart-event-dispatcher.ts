@@ -1,10 +1,11 @@
 import * as rx from "rxjs";
 
 import { asap } from "../util/asap";
+import { TypedRecord } from "../util/typed-record";
 
 import * as prt from "./kaart-protocol";
 
-export interface KaartCmdDispatcher<Msg extends prt.TypedRecord> {
+export interface KaartCmdDispatcher<Msg extends TypedRecord> {
   dispatch(cmd: prt.Command<Msg>): void;
 }
 
@@ -12,7 +13,7 @@ export interface KaartEventSource {
   commands$: rx.Observable<prt.Command<any>>;
 }
 
-export class ReplaySubjectKaartCmdDispatcher<Msg extends prt.TypedRecord> implements KaartCmdDispatcher<Msg>, KaartEventSource {
+export class ReplaySubjectKaartCmdDispatcher<Msg extends TypedRecord> implements KaartCmdDispatcher<Msg>, KaartEventSource {
   // Er worden al events gegenereerd voordat de kaartcomponent actief is. Daarom tot 1000 events onthouden 500ms lang.
   private readonly eventSubj = new rx.ReplaySubject<prt.Command<Msg>>(1000, 500);
 

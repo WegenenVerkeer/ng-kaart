@@ -2,18 +2,11 @@ import * as rx from "rxjs";
 import { filter, take } from "rxjs/operators";
 
 import { ofType } from "../util/operators";
+import { TypedRecord } from "../util/typed-record";
 
 import { KaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { KaartInternalMsg, KaartInternalSubMsg, SubscribedMsg, subscribedWrapper } from "./kaart-internal-messages";
-import {
-  KaartCmdValidation,
-  SubscribeCmd,
-  Subscription,
-  SubscriptionResult,
-  TypedRecord,
-  UnsubscribeCmd,
-  ValidationWrapper
-} from "./kaart-protocol";
+import { KaartCmdValidation, SubscribeCmd, Subscription, SubscriptionResult, UnsubscribeCmd, ValidationWrapper } from "./kaart-protocol";
 
 /**
  * Een Rx Operator die een observable van messages transformeert in een observable van de foutboodschappen die de kaart subscriptions

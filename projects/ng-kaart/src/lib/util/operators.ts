@@ -4,6 +4,7 @@ import * as rx from "rxjs";
 import { filter, map, scan, skipUntil, switchMap } from "rxjs/operators";
 
 import { ReduceFunction } from "./function";
+import { TypedRecord } from "./typed-record";
 
 export type Pipeable<A, B> = Function1<rx.Observable<A>, rx.Observable<B>>;
 
@@ -46,9 +47,6 @@ export const flatten: <A>(o: rx.Observable<Option<A>>) => rx.Observable<A> = <A>
     map(v => v.value) // omwille van filter hierboven nooit undefined. Properder met switchMap en foldl, maar minder efficiënt.
   );
 
-export interface TypedRecord {
-  type: string;
-}
 function isOfType<A extends TypedRecord>(type: string): Refinement<TypedRecord, A> {
   return (rec): rec is A => rec.type === type;
 }

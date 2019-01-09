@@ -1,11 +1,9 @@
 import { Validation } from "fp-ts/lib/Validation";
 
+import { TypedRecord } from "../util/typed-record";
+
 export * from "./kaart-protocol-commands";
 export * from "./kaart-protocol-subscriptions";
-
-export interface TypedRecord {
-  type: string;
-}
 
 export type KaartMsg = TypedRecord;
 
