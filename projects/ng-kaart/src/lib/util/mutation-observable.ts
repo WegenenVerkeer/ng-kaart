@@ -1,3 +1,4 @@
+import * as ol from "openlayers";
 import * as rx from "rxjs";
 
 import { kaartLogger } from "../kaart/log";

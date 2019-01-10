@@ -1,8 +1,6 @@
 import { Function1, identity } from "fp-ts/lib/function";
 import * as ol from "openlayers";
 
-import { ErrValidation, validationChain } from "../util/validation";
-
 import { Interpreter } from "./json-object-interpreting";
 import * as st from "./json-object-interpreting";
 import * as ss from "./stijl-static-types";

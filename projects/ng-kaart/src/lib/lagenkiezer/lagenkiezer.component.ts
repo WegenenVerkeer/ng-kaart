@@ -3,11 +3,11 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnDestro
 import { MatTabChangeEvent } from "@angular/material";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import { Predicate } from "fp-ts/lib/function";
-import { identity } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
+import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, filter, map, pairwise, scan, shareReplay, startWith, switchMap, take } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, filter, map, scan, shareReplay, startWith, take } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
@@ -16,8 +16,6 @@ import { LegendeItem } from "../kaart/kaart-legende";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
 import { isAanpassingBezig } from "../kaart/stijleditor/state";
-import { observeOnAngular } from "../util/observe-on-angular";
-import { Pipeable } from "../util/operators";
 
 export const LagenUiSelector = "Lagenkiezer";
 

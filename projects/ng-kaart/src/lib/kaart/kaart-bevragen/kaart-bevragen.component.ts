@@ -8,7 +8,6 @@ import { debounceTime, filter, map, mergeAll, scan, startWith, switchMap, timeou
 
 import { observeOnAngular } from "../../util/observe-on-angular";
 import * as ke from "../kaart-elementen";
-import { actieveModusGezetWrapper, KaartInternalMsg } from "../kaart-internal-messages";
 import { KaartModusComponent } from "../kaart-modus-component";
 import * as prt from "../kaart-protocol";
 import { Adres, Progress, Received, Requested, TimedOut, WegLocatie } from "../kaart-with-info-model";

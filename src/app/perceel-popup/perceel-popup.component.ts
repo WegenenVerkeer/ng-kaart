@@ -1,5 +1,6 @@
-import { Component, Input, OnChanges, OnInit } from "@angular/core";
+import { Component, OnChanges } from "@angular/core";
 import { Option } from "fp-ts/lib/Option";
+import * as ol from "openlayers";
 
 @Component({
   selector: "awv-pat-perceel-popup",
