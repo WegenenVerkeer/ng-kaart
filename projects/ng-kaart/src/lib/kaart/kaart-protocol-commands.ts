@@ -3,6 +3,7 @@ import { List, Set } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 
+import { TypedRecord } from "../util/typed-record";
 import { ZoekerMetPrioriteiten, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
 
 import { BareValidationWrapper, KaartMsg, Subscription, ValidationWrapper } from ".";
@@ -392,7 +393,7 @@ export interface SluitInfoBoodschapCmd {
   readonly type: "SluitInfoBoodschap";
   readonly id: string;
   readonly sluit: boolean;
-  readonly msgGen: () => Option<prt.TypedRecord>;
+  readonly msgGen: () => Option<TypedRecord>;
 }
 
 export interface SluitPanelenCmd {
@@ -403,7 +404,7 @@ export interface VoegLaagLocatieInformatieServiceToe {
   readonly type: "VoegLaagLocatieInformatieServiceToe";
   readonly titel: string;
   readonly service: LaagLocationInfoService;
-  readonly msgGen: BareValidationWrapper<prt.TypedRecord>;
+  readonly msgGen: BareValidationWrapper<TypedRecord>;
 }
 
 // Er kan maar 1 Vectorlaagstijl per keer bewerk worden. Indien meer gewenst, moet een msgGen met daarin handle opgegeven worden.
@@ -667,7 +668,7 @@ export function DeselecteerAlleFeaturesCmd(): DeselecteerAlleFeaturesCmd {
   };
 }
 
-export function SluitInfoBoodschapCmd(id: string, sluit: boolean, msgGen: () => Option<prt.TypedRecord>): SluitInfoBoodschapCmd {
+export function SluitInfoBoodschapCmd(id: string, sluit: boolean, msgGen: () => Option<TypedRecord>): SluitInfoBoodschapCmd {
   return {
     type: "SluitInfoBoodschap",
     id: id,
@@ -700,7 +701,7 @@ export function VoegZoekerToeCmd<Msg extends KaartMsg>(
 export function VoegLaagLocatieInformatieServiceToe(
   titel: string,
   service: LaagLocationInfoService,
-  msgGen: BareValidationWrapper<prt.TypedRecord>
+  msgGen: BareValidationWrapper<TypedRecord>
 ): VoegLaagLocatieInformatieServiceToe {
   return { type: "VoegLaagLocatieInformatieServiceToe", titel: titel, service: service, msgGen: msgGen };
 }

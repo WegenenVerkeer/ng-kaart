@@ -25,7 +25,8 @@ import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "../kaart/ka
 import * as prt from "../kaart/kaart-protocol";
 import { KaartMsgObservableConsumer } from "../kaart/kaart.component";
 import { subscriptionCmdOperator } from "../kaart/subscription-helper";
-import { ofType, TypedRecord } from "../util/operators";
+import { ofType } from "../util/operators";
+import { TypedRecord } from "../util/typed-record";
 
 import { classicLogger } from "./log";
 import {
@@ -49,7 +50,7 @@ import {
   selector: "awv-kaart-classic",
   templateUrl: "./kaart-classic.component.html"
 })
-export class KaartClassicComponent extends KaartComponentBase implements OnInit, OnDestroy, OnChanges, KaartCmdDispatcher<prt.TypedRecord> {
+export class KaartClassicComponent extends KaartComponentBase implements OnInit, OnDestroy, OnChanges, KaartCmdDispatcher<TypedRecord> {
   private static counter = 1;
   kaartClassicSubMsg$: rx.Observable<KaartClassicSubMsg> = rx.empty();
   private hasFocus = false;
@@ -275,7 +276,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
     this.dispatcher.dispatch(cmd);
   }
 
-  get kaartCmd$(): rx.Observable<prt.Command<prt.TypedRecord>> {
+  get kaartCmd$(): rx.Observable<prt.Command<TypedRecord>> {
     return this.dispatcher.commands$;
   }
 

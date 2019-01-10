@@ -3,10 +3,11 @@ import { Option } from "fp-ts/lib/Option";
 import { List, Map } from "immutable";
 import * as ol from "openlayers";
 
+import { TypedRecord } from "../util/typed-record";
+
 import { LaagLocationInfo } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { VectorLaag } from "./kaart-elementen";
-import { TypedRecord } from "./kaart-protocol";
 
 export type InfoBoodschap = InfoBoodschapAlert | InfoBoodschapIdentify | InfoBoodschapKaartBevragenProgress;
 
