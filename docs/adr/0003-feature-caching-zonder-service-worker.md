@@ -1,4 +1,4 @@
-# 2. Feature caching zonder service worker
+# 3. Feature caching zonder service worker
 
 Date: 17/01/2019
 
@@ -20,9 +20,9 @@ die altijd dezelfde URL parameters hebben werd volgend systeem bedacht:
 2. De NosqlfsLoader component van ng-kaart gaat deze call opsplitsen in X aantal nieuwe calls gebaseerd op een vaste grid (bvb 1km x 1km gebieden)
 3. De service worker kijkt voor de X aantal calls of er op die vaste grid boundaries al een tile bestaat. Indien ja, stuur terug, indien nee vraag online op
 
-Deze oplossing gaat echter de gevolgen van de beperkingen van de service worker doortrekken tot in de logica van feature loaders van ng-kaart. 
-Daarom werd beslist om voor het ophalen van de features geen gebruik te maken van een service worker maar om die wel of niet in een indexeddb bewaren mee te integreren
-binnen de Nosqlfs van ng-kaart. 
+Deze oplossing gaat echter de gevolgen van de beperkingen van de service worker doortrekken tot in de logica van feature loaders van ng-kaart. Bovendien is het aantal effectieve
+calls per request dan veel hoger (met performantie gevolgen). Daarom werd beslist om voor het ophalen van de features geen gebruik te maken van een service worker 
+maar om die wel of niet in een indexeddb bewaren mee te integreren binnen de Nosqlfs van ng-kaart. 
 
 Stappen:
 
