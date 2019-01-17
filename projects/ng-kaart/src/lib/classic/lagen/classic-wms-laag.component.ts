@@ -1,4 +1,4 @@
-import { Component, Input, NgZone, OnInit, ViewEncapsulation } from "@angular/core";
+import { AfterViewInit, Component, Input, NgZone, OnInit, ViewEncapsulation } from "@angular/core";
 import { fromNullable } from "fp-ts/lib/Option";
 import { List } from "immutable";
 
@@ -13,7 +13,7 @@ import { ClassicLaagComponent } from "./classic-laag.component";
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnInit {
+export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnInit, AfterViewInit {
   @Input()
   laagNaam: string;
   @Input()
@@ -31,6 +31,8 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   tileSize? = 256;
   @Input()
   opacity?: number;
+  @Input()
+  cacheForOffline = false;
 
   constructor(kaart: KaartClassicComponent, zone: NgZone) {
     super(kaart, zone);
@@ -81,5 +83,20 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
       crs: "EPSG:31370",
       bbox: "104528,188839.75,105040,189351.75"
     });
+  }
+
+  ngAfterViewInit() {
+    super.ngAfterViewInit();
+
+    if (this.cacheForOffline) {
+      // TODO: wat met domeinen die verschillen?
+      navigator.serviceWorker.controller.postMessage({
+        action: "REGISTER_ROUTE",
+        payload: {
+          requestPattern: `${this.urls[0]}.*`,
+          cacheName: this.laagNaam
+        }
+      });
+    }
   }
 }

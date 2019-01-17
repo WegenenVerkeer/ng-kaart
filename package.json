@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve testApp --port 4220 --disable-host-check --host 0.0.0.0 --base-href '/ng-kaart'",
+    "start": "ng serve testApp --port 4220 --disable-host-check --host 0.0.0.0 --serve-path '/ng-kaart' --base-href '/ng-kaart'",
     "watch": "ng build --watch",
     "preclean": "npm install rimraf mkdirp",
     "clean": "rimraf out; rimraf dist; mkdirp out",
@@ -55,6 +55,7 @@
     "@angular/platform-browser": "7.1.2",
     "@angular/platform-browser-dynamic": "7.1.2",
     "@angular/router": "7.1.2",
+    "@angular/service-worker": "7.1.2",
     "@types/loglevel": "1.5.3",
     "core-js": "2.6.0",
     "document-register-element": "^1.7.2",
