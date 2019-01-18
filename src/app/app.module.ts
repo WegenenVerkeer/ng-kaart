@@ -44,10 +44,10 @@ import { TestSectieComponent } from "./test-sectie.component";
       }
     }),
     LagenkiezerModule.withDefaults(),
-    ClickOutsideModule,
-    ServiceWorkerModule.register("ng-kaart-service-worker.js", {
+    ServiceWorkerModule.register("ng-kaart/ng-kaart-service-worker.js", {
       enabled: true
-    })
+    }),
+    ClickOutsideModule
   ],
   providers: [],
   entryComponents: [],

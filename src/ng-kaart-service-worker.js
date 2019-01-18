@@ -7,8 +7,24 @@ if (workbox) {
   console.log(`Boo! Workbox didn't load 😬`);
 }
 
+workbox.setConfig({
+  debug: true
+});
+
 // initialise modules: see https://developers.google.com/web/tools/workbox/modules/workbox-sw#avoid_async_imports
-const { strategies, routing } = workbox;
+const { strategies, routing, core } = workbox;
+
+core.setLogLevel(core.LOG_LEVELS.debug);
+
+self.addEventListener('install', function(event) {
+  log('install event received');
+  event.waitUntil(self.skipWaiting()); // Activate worker immediately
+});
+
+self.addEventListener('activate', function(event) {
+  log('activate event received');
+  event.waitUntil(self.clients.claim()); // Become available to all pages
+});
 
 self.addEventListener('message', event => {
   const { data: { action, payload } } = event;
@@ -17,7 +33,7 @@ self.addEventListener('message', event => {
       const { requestPattern, cacheName } = payload;
       info(`Routing ${requestPattern} to cache ${cacheName}`);
       routing.registerRoute(
-        requestPattern,
+        new RegExp(requestPattern),
         strategies.cacheFirst({
           cacheName: cacheName
         })

@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve testApp --port 4220 --disable-host-check --host 0.0.0.0 --serve-path '/ng-kaart' --base-href '/ng-kaart'",
+    "start": "ng serve testApp --port 4220 --public-host https://apigateway/ --deploy-url https://apigateway/ng-kaart/ --base-href /ng-kaart --disable-host-check --host 0.0.0.0 --serve-path '/ng-kaart'",
     "watch": "ng build --watch",
     "preclean": "npm install rimraf mkdirp",
     "clean": "rimraf out; rimraf dist; mkdirp out",
