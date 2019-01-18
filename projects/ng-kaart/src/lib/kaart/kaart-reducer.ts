@@ -10,11 +10,13 @@ import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
 
 import { forEach } from "../util/option";
+import * as serviceworker from "../util/serviceworker";
 import { updateBehaviorSubject } from "../util/subject-update";
 import { allOf, fromBoolean, fromOption, fromPredicate, success, validationChain as chain } from "../util/validation";
 import { zoekerMetNaam } from "../zoeker/zoeker";
 
 import * as ke from "./kaart-elementen";
+import { asTiledWmsLaag, isTiledWmsLaag } from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { MsgGen } from "./kaart-protocol-subscriptions";
 import { KaartWithInfo } from "./kaart-with-info";
@@ -1140,10 +1142,22 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
-    function SluitPanelen(cmnd: prt.SluitPanelenCmd): ModelWithResult<Msg> {
+    function sluitPanelen(cmnd: prt.SluitPanelenCmd): ModelWithResult<Msg> {
       updateBehaviorSubject(model.infoBoodschappenSubj, bsch => bsch.clear());
       modelChanger.laagstijlaanpassingStateSubj.next(GeenLaagstijlaanpassing);
       return ModelWithResult(model);
+    }
+
+    function activeerCacheVoorLaag(cmnd: prt.ActiveerCacheVoorLaag<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        valideerToegevoegdeLaagBestaat(cmnd.titel).map(laag => {
+          asTiledWmsLaag(laag.bron).map(tiledWms =>
+            tiledWms.urls.map(url => serviceworker.registreerRoute(tiledWms.naam, `${url}.*${tiledWms.naam}.*`))
+          );
+          return ModelAndEmptyResult(model);
+        })
+      );
     }
 
     function handleSubscriptions(cmnd: prt.SubscribeCmd<Msg>): ModelWithResult<Msg> {
@@ -1448,7 +1462,9 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       case "StopVectorlaagstijlBewerking":
         return stopVectorlaagstijlBewerking(cmd);
       case "SluitPanelen":
-        return SluitPanelen(cmd);
+        return sluitPanelen(cmd);
+      case "ActiveerCacheVoorLaag":
+        return activeerCacheVoorLaag(cmd);
     }
   };
 }

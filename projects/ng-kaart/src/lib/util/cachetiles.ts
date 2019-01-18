@@ -34,6 +34,7 @@ const fetchUrls = (urls: string[]) => {
   });
 };
 
+// TODO: vervang deze functie met een performanter alternatief
 export const cacheTiles = (source: ol.source.Source, startZoom: number, stopZoom: number, wkt: string) => {
   const geometry: ol.geom.Geometry = new ol.format.WKT()
     .readFeature(wkt, {

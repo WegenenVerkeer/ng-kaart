@@ -3,10 +3,11 @@ import { fromNullable } from "fp-ts/lib/Option";
 import { List } from "immutable";
 
 import { Laaggroep, TiledWmsType, WmsLaag } from "../../kaart/kaart-elementen";
+import * as prt from "../../kaart/kaart-protocol-commands";
 import { cacheTiles } from "../../util/cachetiles";
-import * as serviceworker from "../../util/serviceworker";
 import { urlWithParams } from "../../util/url";
 import { KaartClassicComponent } from "../kaart-classic.component";
+import { logOnlyWrapper } from "../messages";
 
 import { ClassicLaagComponent } from "./classic-laag.component";
 
@@ -91,7 +92,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
     super.ngAfterViewInit();
 
     if (this.offline) {
-      serviceworker.registreerRoute(this.laagNaam, `${this.urls[0]}.*${this.laagNaam}.*`);
+      this.dispatch(prt.ActiveerCacheVoorLaag(this.titel, logOnlyWrapper));
     }
   }
 
