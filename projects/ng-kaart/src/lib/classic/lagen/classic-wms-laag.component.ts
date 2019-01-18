@@ -3,6 +3,8 @@ import { fromNullable } from "fp-ts/lib/Option";
 import { List } from "immutable";
 
 import { Laaggroep, TiledWmsType, WmsLaag } from "../../kaart/kaart-elementen";
+import { cacheTiles } from "../../util/cachetiles";
+import * as serviceworker from "../../util/serviceworker";
 import { urlWithParams } from "../../util/url";
 import { KaartClassicComponent } from "../kaart-classic.component";
 
@@ -32,7 +34,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   @Input()
   opacity?: number;
   @Input()
-  cacheForOffline = false;
+  offline = false;
 
   constructor(kaart: KaartClassicComponent, zone: NgZone) {
     super(kaart, zone);
@@ -88,15 +90,13 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   ngAfterViewInit() {
     super.ngAfterViewInit();
 
-    if (this.cacheForOffline) {
-      // TODO: wat met domeinen die verschillen?
-      navigator.serviceWorker.controller.postMessage({
-        action: "REGISTER_ROUTE",
-        payload: {
-          requestPattern: `${this.urls[0]}.*`,
-          cacheName: this.laagNaam
-        }
-      });
+    if (this.offline) {
+      serviceworker.registreerRoute(this.laagNaam, `${this.urls[0]}.*${this.laagNaam}.*`);
     }
+  }
+
+  preCache(startZoom: number, eindZoom: number, wkt: string) {
+    // TODO: start precaching - get Source
+    cacheTiles(null, startZoom, eindZoom, wkt);
   }
 }
