@@ -1169,15 +1169,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         cmnd.wrapper,
         chain(valideerToegevoegdeLaagBestaat(cmnd.titel), valideerTiledWmsBestaat).map(tiledWms => {
-          cacheTiles(
-            tiledWms.getSource() as ol.source.UrlTile,
-            model.config.srs,
-            model.config.defaults.extent,
-            model.config.defaults.resolutions,
-            cmnd.startZoom,
-            cmnd.eindZoom,
-            cmnd.wkt
-          );
+          cacheTiles(tiledWms.getSource() as ol.source.UrlTile, cmnd.startZoom, cmnd.eindZoom, cmnd.wkt);
           return ModelAndEmptyResult(model);
         })
       );

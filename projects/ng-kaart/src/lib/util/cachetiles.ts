@@ -31,24 +31,7 @@ const fetchUrls = (urls: string[]) => {
 };
 
 // TODO: vervang deze functie met een performanter alternatief
-export const cacheTiles = (
-  source: ol.source.UrlTile,
-  srs: string,
-  extentKaart: [number, number, number, number],
-  resolutions: number[],
-  startZoom: number,
-  stopZoom: number,
-  wkt: string
-) => {
-  const geometry: ol.geom.Geometry = new ol.format.WKT()
-    .readFeature(wkt, {
-      dataProjection: srs,
-      featureProjection: srs
-    })
-    .getGeometry();
-
-  const extent: ol.Extent = geometry.getExtent();
-
+export const cacheTiles = (source: ol.source.UrlTile, startZoom: number, stopZoom: number, wkt: string) => {
   if (isNaN(startZoom)) {
     throw new Error("Start zoom is geen getal");
   }
@@ -57,23 +40,19 @@ export const cacheTiles = (
     throw new Error("Stop zoom is geen getal");
   }
 
-  const tileGrid = new ol.tilegrid.TileGrid({
-    extent: extentKaart,
-    resolutions: resolutions
-  });
-
-  // source.getProjection() lijkt niet te werken?
-  const projection: ol.proj.Projection = ol.proj.get(srs);
-  projection.setExtent(extentKaart); // zet de extent op die van de dienstkaart
+  const geometry: ol.geom.Geometry = new ol.format.WKT()
+    .readFeature(wkt, {
+      dataProjection: source.getProjection(),
+      featureProjection: source.getProjection()
+    })
+    .getGeometry();
 
   let queue = [];
 
-  const tileUrlFunction = source.getTileUrlFunction();
-
   for (let z = startZoom; z < stopZoom + 1; z++) {
     // Tilecoord: [z, x, y]
-    const minTileCoord = tileGrid.getTileCoordForCoordAndZ([extent[0], extent[1]], z);
-    const maxTileCoord = tileGrid.getTileCoordForCoordAndZ([extent[2], extent[3]], z);
+    const minTileCoord = source.getTileGrid().getTileCoordForCoordAndZ([geometry.getExtent()[0], geometry.getExtent()[1]], z);
+    const maxTileCoord = source.getTileGrid().getTileCoordForCoordAndZ([geometry.getExtent()[2], geometry.getExtent()[3]], z);
 
     const tileRangeMinX = minTileCoord[1];
     const tileRangeMinY = minTileCoord[2];
@@ -85,7 +64,7 @@ export const cacheTiles = (
     for (let x = tileRangeMinX; x <= tileRangeMaxX; x++) {
       for (let y = tileRangeMinY; y <= tileRangeMaxY; y++) {
         const tileCoord: [number, number, number] = [z, x, y];
-        const tileUrl = tileUrlFunction(tileCoord, ol.has.DEVICE_PIXEL_RATIO, projection);
+        const tileUrl = source.getTileUrlFunction()(tileCoord, ol.has.DEVICE_PIXEL_RATIO, source.getProjection());
         const queryParams = url.parse(tileUrl).search;
         const bbox = decodeURLParams(queryParams)["bbox"];
         if (bbox) {
