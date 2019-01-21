@@ -9,7 +9,7 @@ import { Subscription } from "rxjs";
 import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
 
-import { cacheTiles } from "../util/cachetiles";
+import { refreshTiles } from "../util/cachetiles";
 import { forEach } from "../util/option";
 import * as serviceworker from "../util/serviceworker";
 import { updateBehaviorSubject } from "../util/subject-update";
@@ -1158,7 +1158,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         cmnd.wrapper,
         valideerToegevoegdeLaagBestaat(cmnd.titel).map(laag => {
           asTiledWmsLaag(laag.bron).map(tiledWms =>
-            tiledWms.urls.map(url => serviceworker.registreerRoute(tiledWms.naam, `${url}.*${tiledWms.naam}.*`))
+            tiledWms.urls.map(url => serviceworker.registreerRoute(cmnd.titel, `${url}.*${tiledWms.naam}.*`))
           );
           return ModelAndEmptyResult(model);
         })
@@ -1169,7 +1169,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         cmnd.wrapper,
         chain(valideerToegevoegdeLaagBestaat(cmnd.titel), valideerTiledWmsBestaat).map(tiledWms => {
-          cacheTiles(tiledWms.getSource() as ol.source.UrlTile, cmnd.startZoom, cmnd.eindZoom, cmnd.wkt);
+          refreshTiles(cmnd.titel, tiledWms.getSource() as ol.source.UrlTile, cmnd.startZoom, cmnd.eindZoom, cmnd.wkt);
           return ModelAndEmptyResult(model);
         })
       );

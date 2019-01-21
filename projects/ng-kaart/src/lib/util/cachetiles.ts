@@ -20,18 +20,22 @@ const decodeURLParams = search => {
 };
 
 const fetchUrls = (urls: string[]) => {
-  const interval = 20; //  = 20 ms
+  const interval = 60; //  = 60 ms
   let timeout = interval;
   urls.forEach(url => {
     setTimeout(function() {
-      fetch(new Request(url, { credentials: "include" }), { keepalive: true, mode: "cors" }).then(response => ({ response, cache: true }));
+      fetch(new Request(url, { credentials: "include" }), { keepalive: true, mode: "cors" })
+        .then(response => ({ response, cache: true }))
+        .catch(err => console.log(err));
     }, timeout);
     timeout += interval;
   });
 };
 
+const deleteTiles = (laagnaam: string): Promise<Boolean> => caches.delete(laagnaam);
+
 // TODO: vervang deze functie met een performanter alternatief
-export const cacheTiles = (source: ol.source.UrlTile, startZoom: number, stopZoom: number, wkt: string) => {
+export const refreshTiles = (laagnaam: string, source: ol.source.UrlTile, startZoom: number, stopZoom: number, wkt: string) => {
   if (isNaN(startZoom)) {
     throw new Error("Start zoom is geen getal");
   }
@@ -95,9 +99,9 @@ export const cacheTiles = (source: ol.source.UrlTile, startZoom: number, stopZoo
       }
     }
 
-    console.log("Aantal tiles voor zoomniveau " + z + ": " + queueByZ.length);
+    console.log(`Aantal tiles ${laagnaam} voor zoomniveau ${z}: ${queueByZ.length}`);
     queue = queue.concat(queueByZ);
   }
 
-  fetchUrls(queue);
+  deleteTiles(laagnaam).then(deleted => fetchUrls(queue));
 };
