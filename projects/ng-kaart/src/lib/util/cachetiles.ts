@@ -35,7 +35,7 @@ const fetchUrls = (urls: string[]) => {
 };
 
 // TODO: vervang deze functie met een performanter alternatief
-export const cacheTiles = (source: ol.source.Source, startZoom: number, stopZoom: number, wkt: string) => {
+export const cacheTiles = (source: ol.source.UrlTile, startZoom: number, stopZoom: number, wkt: string) => {
   const geometry: ol.geom.Geometry = new ol.format.WKT()
     .readFeature(wkt, {
       dataProjection: lambert72,
@@ -64,7 +64,7 @@ export const cacheTiles = (source: ol.source.Source, startZoom: number, stopZoom
 
   let queue = [];
 
-  const tileUrlFunction = (source as ol.source.UrlTile).getTileUrlFunction();
+  const tileUrlFunction = source.getTileUrlFunction();
 
   for (let z = startZoom; z < stopZoom + 1; z++) {
     // Tilecoord: [z, x, y]

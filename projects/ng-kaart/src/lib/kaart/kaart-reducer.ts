@@ -9,6 +9,7 @@ import { Subscription } from "rxjs";
 import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
 
+import { cacheTiles } from "../util/cachetiles";
 import { forEach } from "../util/option";
 import * as serviceworker from "../util/serviceworker";
 import { updateBehaviorSubject } from "../util/subject-update";
@@ -130,6 +131,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           ? validation.success(laag.layer as ol.layer.Vector)
           : validation.failure([`De laag met titel ${titel} is geen vectorlaag`])
       );
+    }
+
+    function valideerTiledWmsBestaat(laag: ke.ToegevoegdeLaag): prt.KaartCmdValidation<ol.layer.Tile> {
+      return fromPredicate(laag.layer as ol.layer.Tile, () => isTiledWmsLaag(laag.bron), `Laag ${laag.bron.titel} is geen tiled WMS laag`);
     }
 
     function valideerLaagTitelBestaatNiet(titel: string): prt.KaartCmdValidation<{}> {
@@ -1160,6 +1165,16 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
+    function vulCacheVoorLaag(cmnd: prt.VulCacheVoorLaag<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        chain(valideerToegevoegdeLaagBestaat(cmnd.titel), valideerTiledWmsBestaat).map(tiledWms => {
+          cacheTiles(tiledWms.getSource() as ol.source.UrlTile, cmnd.startZoom, cmnd.eindZoom, cmnd.wkt);
+          return ModelAndEmptyResult(model);
+        })
+      );
+    }
+
     function handleSubscriptions(cmnd: prt.SubscribeCmd<Msg>): ModelWithResult<Msg> {
       function modelWithSubscriptionResult(name: string, subscription: Subscription): ModelWithResult<Msg> {
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, { subscription: subscription, subscriberName: name })));
@@ -1465,6 +1480,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return sluitPanelen(cmd);
       case "ActiveerCacheVoorLaag":
         return activeerCacheVoorLaag(cmd);
+      case "VulCacheVoorLaag":
+        return vulCacheVoorLaag(cmd);
     }
   };
 }
