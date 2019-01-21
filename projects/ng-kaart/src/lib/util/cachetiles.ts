@@ -1,10 +1,6 @@
 import * as ol from "openlayers";
 import * as url from "url";
 
-const resolutions = [1024.0, 512.0, 256.0, 128.0, 64.0, 32.0, 16.0, 8.0, 4.0, 2.0, 1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125];
-const lambert72 = "EPSG:31370";
-const extentDienstkaart: [number, number, number, number] = [18000.0, 152999.75, 280144.0, 415143.75];
-
 const decodeURLParams = search => {
   const hashes = search.slice(search.indexOf("?") + 1).split("&");
   return hashes.reduce((params, hash) => {
@@ -35,11 +31,19 @@ const fetchUrls = (urls: string[]) => {
 };
 
 // TODO: vervang deze functie met een performanter alternatief
-export const cacheTiles = (source: ol.source.UrlTile, startZoom: number, stopZoom: number, wkt: string) => {
+export const cacheTiles = (
+  source: ol.source.UrlTile,
+  srs: string,
+  extentKaart: [number, number, number, number],
+  resolutions: number[],
+  startZoom: number,
+  stopZoom: number,
+  wkt: string
+) => {
   const geometry: ol.geom.Geometry = new ol.format.WKT()
     .readFeature(wkt, {
-      dataProjection: lambert72,
-      featureProjection: lambert72
+      dataProjection: srs,
+      featureProjection: srs
     })
     .getGeometry();
 
@@ -54,13 +58,13 @@ export const cacheTiles = (source: ol.source.UrlTile, startZoom: number, stopZoo
   }
 
   const tileGrid = new ol.tilegrid.TileGrid({
-    extent: extentDienstkaart,
+    extent: extentKaart,
     resolutions: resolutions
   });
 
   // source.getProjection() lijkt niet te werken?
-  const projection: ol.proj.Projection = ol.proj.get(lambert72);
-  projection.setExtent(extentDienstkaart); // zet de extent op die van de dienstkaart
+  const projection: ol.proj.Projection = ol.proj.get(srs);
+  projection.setExtent(extentKaart); // zet de extent op die van de dienstkaart
 
   let queue = [];
 

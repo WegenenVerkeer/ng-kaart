@@ -4,7 +4,6 @@ import { List } from "immutable";
 
 import { Laaggroep, TiledWmsType, WmsLaag } from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol-commands";
-import { cacheTiles } from "../../util/cachetiles";
 import { urlWithParams } from "../../util/url";
 import { KaartClassicComponent } from "../kaart-classic.component";
 import { logOnlyWrapper } from "../messages";
@@ -97,7 +96,6 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   }
 
   preCache(startZoom: number, eindZoom: number, wkt: string) {
-    // TODO: start precaching - get Source
-    cacheTiles(null, startZoom, eindZoom, wkt);
+    this.dispatch(prt.VulCacheVoorLaag(this.titel, startZoom, eindZoom, wkt, logOnlyWrapper));
   }
 }
