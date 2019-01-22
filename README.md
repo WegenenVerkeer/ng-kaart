@@ -47,8 +47,10 @@ Deze component library is voorzien van een test Angular app. Omdat de build van 
 Dan kan je de testApp runnen:
 
     npm start
+    
+Start vervolgens de docker stack voor o.a. locatiezoeker, nosqlfs data en de dienstkaart geoserver.
 
-Deze is dan te bereiken via http://localhost:4220/ng-kaart
+De demo pagina is vervolgens te bereiken via http://apigateway/ng-kaart
 
 Alle veranderingen in de library code zullen door de watch opgemerkt worden en (uiteindelijk) tot een reload van de testApp leiden.
 
@@ -58,23 +60,33 @@ Dit laat je ook toe om protractors te schrijven.
 
 Tot slot vormt de source code van deze pagina de gebruiksaanwijzing van de componenten.
 
-### CORS requests
+### Offline caching
 
-#### Locatiezoeker
+#### Service worker security
 
-* Zet chrome open zonder web security om dit te testen.
+Er zijn enkel security issues die het lokaal ontwikkelen van de service worker (ter implementatie van de offline caching van kaarten) bemoeilijken. Daarom dient via de docker stack gewerkt te worden. 
+Om lokaal de applicatie te draaien dient de docker stack gestart te worden via docker-compose up -d
 
-    macos:
+De security issues:
 
-        open -a Google\ Chrome --args --disable-web-security --user-data-dir
+1. Service workers worden enkel ingeladen indien de applicatie opgeroepen wordt via localhost óf indien via een **https:** url
+2. De service worker onderschept URL's relatief tot zijn eigen domein, doch de dienstkaart wordt geserved door een apart docker VM, dus we moeten met het lokaal apigateway domain werken
+3. De https://apigateway/ng-kaart werkt wel niet met live reload want socksjs wordt niet gevonden indien er een proxy voor zit
+4. Het https certificaat is geen geldig certificaat, dus Chrome dient opgestart te worden met extra parameters, anders wordt de service worker niet ingeladen
 
-    *nix:
+Start vervolgens Chrome op starten met volgende parameters:
+
+MacOS:
+
+        open -a Google\ Chrome --args --disable-web-security --user-data-dir --ignore-certificate-errors --unsafely-treat-insecure-origin-as-secure 
+
+Linux:
 
         chromium-browser --disable-web-security --user-data-dir
 
-#### NosqlFs laag
+Ga vervolgens naar de applicatie via https://apigateway/ng-kaart en voeg een uitzondering voor een niet geldig certificaat.
 
-Ook de NosqlFs laag demo maakt een verbinding met een server die niet op op localhost:4420 draait. CORS requestvalidatie afzetten is hier eveneens de oplossing.
+Opgepast: doe geen shift-reload in Chrome om de applicatie te refreshen. Deze actier zorgt er immers voor dat de service worker volledig genegeerd wordt (cfr https://developers.google.com/web/fundamentals/primers/service-workers/lifecycle#shift-reload)
 
 ### Code style
 
