@@ -48,7 +48,9 @@ Dan kan je de testApp runnen:
 
     npm start
     
-Start vervolgens de docker stack voor o.a. locatiezoeker, nosqlfs data en de dienstkaart geoserver.
+Start vervolgens de docker stack voor o.a. locatiezoeker, nosqlfs data en de dienstkaart geoserver:
+
+    docker-compose up -d
 
 De demo pagina is vervolgens te bereiken via http://apigateway/ng-kaart
 
