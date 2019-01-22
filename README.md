@@ -47,12 +47,8 @@ Deze component library is voorzien van een test Angular app. Omdat de build van 
 Dan kan je de testApp runnen:
 
     npm start
-    
-Start vervolgens de docker stack voor o.a. locatiezoeker, nosqlfs data en de dienstkaart geoserver:
 
-    docker-compose up -d
-
-De demo pagina is vervolgens te bereiken via http://apigateway/ng-kaart
+Deze is dan te bereiken via http://localhost:4220/ng-kaart
 
 Alle veranderingen in de library code zullen door de watch opgemerkt worden en (uiteindelijk) tot een reload van de testApp leiden.
 
@@ -62,19 +58,49 @@ Dit laat je ook toe om protractors te schrijven.
 
 Tot slot vormt de source code van deze pagina de gebruiksaanwijzing van de componenten.
 
+### CORS requests
+
+#### Locatiezoeker
+
+* Zet chrome open zonder web security om dit te testen.
+
+    macos:
+
+        open -a Google\ Chrome --args --disable-web-security --user-data-dir
+
+    *nix:
+
+        chromium-browser --disable-web-security --user-data-dir
+
+#### NosqlFs laag
+
+Ook de NosqlFs laag demo maakt een verbinding met een server die niet op op localhost:4420 draait. CORS requestvalidatie afzetten is hier eveneens de oplossing.
+
+
 ### Offline caching
 
 #### Service worker security
 
-Er zijn enkel security issues die het lokaal ontwikkelen van de service worker (ter implementatie van de offline caching van kaarten) bemoeilijken. Daarom dient via de docker stack gewerkt te worden. 
-Om lokaal de applicatie te draaien dient de docker stack gestart te worden via docker-compose up -d
+Er zijn enkele security issues die het lokaal ontwikkelen van de service worker (ter implementatie van de offline caching van kaarten) bemoeilijken. 
+Daarom dient via een docker stack gewerkt te worden. Deze heeft echter het nadeel dat live reload niet werkt vanachter een proxy (socksjs wordt niet gevonden). Een manuele refresh is dus nodig 
+om de code te verversen. 
 
 De security issues:
 
 1. Service workers worden enkel ingeladen indien de applicatie opgeroepen wordt via localhost óf indien via een **https:** url
 2. De service worker onderschept URL's relatief tot zijn eigen domein, doch de dienstkaart wordt geserved door een apart docker VM, dus we moeten met het lokaal apigateway domain werken
-3. De https://apigateway/ng-kaart werkt wel niet met live reload want socksjs wordt niet gevonden indien er een proxy voor zit
-4. Het https certificaat is geen geldig certificaat, dus Chrome dient opgestart te worden met extra parameters, anders wordt de service worker niet ingeladen:
+
+Om lokaal de applicatie te draaien dient de docker stack gestart te worden via 
+
+    docker-compose up -d
+
+Start vervolgens de applicatie op via 
+
+    npm run start-apigateway
+
+De demo pagina is vervolgens te bereiken via **https://apigateway/ng-kaart**
+
+Het https certificaat is geen geldig certificaat, dus Chrome dient opgestart te worden met extra parameters, anders wordt de service worker niet ingeladen:
 
 MacOS:
 
@@ -82,7 +108,7 @@ MacOS:
 
 Linux:
 
-        chromium-browser --disable-web-security --user-data-dir
+        chromium-browser --disable-web-security --user-data-dir --ignore-certificate-errors --unsafely-treat-insecure-origin-as-secure 
 
 Ga vervolgens naar de applicatie via https://apigateway/ng-kaart en voeg een uitzondering voor een niet geldig certificaat.
 
