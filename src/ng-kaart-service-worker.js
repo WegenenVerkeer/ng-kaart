@@ -38,15 +38,12 @@ self.addEventListener('message', event => {
         })
       );
       break;
-    case 'DELETE_REQUEST':
-      info('DELETE_REQUEST received');
-      break;
     case 'DELETE_CACHE':
       info('DELETE_CACHE received');
       caches.delete(payload);
       break;
     default:
-      logComm('message received', event.data);
+      logComm('Unrecognised message received', event.data);
   }
 });
 
@@ -59,16 +56,10 @@ const makelog = (f, prefix = '', css = []) => (...args) =>
     ...args
   ]);
 
-forceCache = (url) => {
-
-};
-
-const [ log, error, warn, info, logCacheHit, logCacheStore, logComm ] = [
+const [ log, error, warn, info, logComm ] = [
   makelog(console.log),
   makelog(console.error, 'ERR', [ 'background:red', 'color:white' ]),
   makelog(console.warn, 'WARN', [ 'color:orange' ]),
   makelog(console.info, 'INFO', [ 'color:lightblue' ]),
-  makelog(console.log, 'CACHEHIT', [ 'background:black', 'color:lightgreen' ]),
-  makelog(console.log, 'STORE', [ 'background:black', 'color:pink' ]),
   makelog(console.log, 'RX/TX', [ 'background:black', 'color:magenta' ])
 ];
