@@ -95,17 +95,27 @@ Om het *@Input offline* attribuut van de kaart lagen te kunnen gebruiken dient d
 Kopieer ng-kaart-service-worker.js naar de root van je applicatie. Registreer deze zoals gedaan werd in App.Module.ts
 
 ```
-ServiceWorkerModule.register("<context>/ng-kaart-service-worker.js", {
+  ServiceWorkerModule.register("<context>/ng-kaart-service-worker.js", {
       enabled: true
     }),
+```
+
+En voeg deze toe als een asset in angular.json
+
+```
+  "assets": [
+              "src/favicon.ico",
+              "src/ng-kaart-service-worker.js",
+              "src/assets"
+            ],
 ```
 
 Om het debuggen te vergemakkelijken neem je volgend uit commentaar in ng-kaart-service-worker.js:
 
 ```
- workbox.setConfig({
-   debug: true
- });
+  workbox.setConfig({
+    debug: true
+  });
 ```
 
 ### Code style
