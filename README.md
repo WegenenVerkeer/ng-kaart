@@ -88,6 +88,26 @@ Ga vervolgens naar de applicatie via https://apigateway/ng-kaart en voeg een uit
 
 Opgepast: doe geen shift-reload in Chrome om de applicatie te refreshen. Deze actier zorgt er immers voor dat de service worker volledig genegeerd wordt (cfr https://developers.google.com/web/fundamentals/primers/service-workers/lifecycle#shift-reload)
 
+#### Offline kaarten ondersteunen
+
+Om het *@Input offline* attribuut van de kaart lagen te kunnen gebruiken dient de service worker geinstalleerd te worden. 
+
+Kopieer ng-kaart-service-worker.js naar de root van je applicatie. Registreer deze zoals gedaan werd in App.Module.ts
+
+```
+ServiceWorkerModule.register("ng-kaart/ng-kaart-service-worker.js", {
+      enabled: true
+    }),
+```
+
+Om het debuggen te vergemakkelijken neem je volgend uit commentaar in ng-kaart-service-worker.js:
+
+```
+ workbox.setConfig({
+   debug: true
+ });
+```
+
 ### Code style
 
 De code style wordt automatisch afgedwongen via tslint + prettier. Deze is ingesteld dat de code wordt herschreven on commit, tenzij er brekende wijzigingen zijn (zoals foute typering en dergelijke meer).

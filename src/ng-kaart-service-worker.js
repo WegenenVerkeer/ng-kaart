@@ -7,9 +7,9 @@ if (workbox) {
   console.log(`Boo! Workbox didn't load 😬`);
 }
 
-workbox.setConfig({
-  debug: true
-});
+// workbox.setConfig({
+//   debug: true
+// });
 
 // initialise modules: see https://developers.google.com/web/tools/workbox/modules/workbox-sw#avoid_async_imports
 const { strategies, routing, core } = workbox;
