@@ -74,9 +74,7 @@ De security issues:
 1. Service workers worden enkel ingeladen indien de applicatie opgeroepen wordt via localhost óf indien via een **https:** url
 2. De service worker onderschept URL's relatief tot zijn eigen domein, doch de dienstkaart wordt geserved door een apart docker VM, dus we moeten met het lokaal apigateway domain werken
 3. De https://apigateway/ng-kaart werkt wel niet met live reload want socksjs wordt niet gevonden indien er een proxy voor zit
-4. Het https certificaat is geen geldig certificaat, dus Chrome dient opgestart te worden met extra parameters, anders wordt de service worker niet ingeladen
-
-Start vervolgens Chrome op starten met volgende parameters:
+4. Het https certificaat is geen geldig certificaat, dus Chrome dient opgestart te worden met extra parameters, anders wordt de service worker niet ingeladen:
 
 MacOS:
 
@@ -88,7 +86,7 @@ Linux:
 
 Ga vervolgens naar de applicatie via https://apigateway/ng-kaart en voeg een uitzondering voor een niet geldig certificaat.
 
-Opgepast: doe geen shift-reload in Chrome om de applicatie te refreshen. Deze actier zorgt er immers voor dat de service worker volledig genegeerd wordt (cfr https://developers.google.com/web/fundamentals/primers/service-workers/lifecycle#shift-reload)
+Opgepast: doe geen shift-reload in Chrome om de applicatie te refreshen. Deze actie zorgt er immers voor dat de service worker volledig genegeerd wordt (cfr https://developers.google.com/web/fundamentals/primers/service-workers/lifecycle#shift-reload)
 
 #### Offline kaarten ondersteunen
 
@@ -97,7 +95,7 @@ Om het *@Input offline* attribuut van de kaart lagen te kunnen gebruiken dient d
 Kopieer ng-kaart-service-worker.js naar de root van je applicatie. Registreer deze zoals gedaan werd in App.Module.ts
 
 ```
-ServiceWorkerModule.register("ng-kaart/ng-kaart-service-worker.js", {
+ServiceWorkerModule.register("<context>/ng-kaart-service-worker.js", {
       enabled: true
     }),
 ```
