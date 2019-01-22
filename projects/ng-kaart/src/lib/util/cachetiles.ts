@@ -36,7 +36,7 @@ const fetchUrls = (urls: string[]) => {
 
 const deleteTiles = (laagnaam: string): Promise<Boolean> => caches.delete(laagnaam);
 
-// TODO: vervang deze functie met een performanter alternatief
+// TODO: dit is tijdelijke code -- functie wordt vervangen door performanter alternatief in latere story
 export const refreshTiles = (laagnaam: string, source: ol.source.UrlTile, startZoom: number, stopZoom: number, wkt: string) => {
   if (isNaN(startZoom)) {
     throw new Error("Start zoom is geen getal");
