@@ -1,5 +1,4 @@
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/3.6.1/workbox-sw.js');
-// TODO: probeer via require('workbox-sw') en dan includen in package? zodat geen cdn nodig
 
 if (workbox) {
   console.log(`Yay! Workbox is loaded 🎉`);
