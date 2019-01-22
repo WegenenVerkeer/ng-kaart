@@ -1,6 +1,8 @@
 import * as ol from "openlayers";
 import * as url from "url";
 
+import { kaartLogger } from "../kaart/log";
+
 const decodeURLParams = search => {
   const hashes = search.slice(search.indexOf("?") + 1).split("&");
   return hashes.reduce((params, hash) => {
@@ -26,7 +28,7 @@ const fetchUrls = (urls: string[]) => {
     setTimeout(function() {
       fetch(new Request(url, { credentials: "include" }), { keepalive: true, mode: "cors" })
         .then(response => ({ response, cache: true }))
-        .catch(err => console.log(err));
+        .catch(err => kaartLogger.error(err));
     }, timeout);
     timeout += interval;
   });
@@ -99,9 +101,9 @@ export const refreshTiles = (laagnaam: string, source: ol.source.UrlTile, startZ
       }
     }
 
-    console.log(`Aantal tiles ${laagnaam} voor zoomniveau ${z}: ${queueByZ.length}`);
+    kaartLogger.info(`Aantal tiles ${laagnaam} voor zoomniveau ${z}: ${queueByZ.length}`);
     queue = queue.concat(queueByZ);
   }
 
-  deleteTiles(laagnaam).then(deleted => fetchUrls(queue));
+  deleteTiles(laagnaam).then(() => fetchUrls(queue));
 };
