@@ -36,10 +36,6 @@ self.addEventListener('message', event => {
         })
       );
       break;
-    case 'DELETE_CACHE':
-      info('DELETE_CACHE received');
-      caches.delete(payload);
-      break;
     default:
       logComm('Unrecognised message received', event.data);
   }
