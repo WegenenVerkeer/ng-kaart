@@ -5,7 +5,7 @@ const sendMessage = (message: any) => {
     .chain(sw => fromNullable(sw.controller))
     .map(swc => swc.postMessage(message))
     .orElse(() => {
-      throw new Error("Geen navigator.serviceWorker.controller object gevonden. Werd ng-kaart-service-worker.js correct geinitialiseerd?");
+      throw new Error("Geen navigator.serviceWorker.controller object gevonden. Werd ng-kaart-service-worker.js correct geïnitialiseerd?");
     });
 };
 
