@@ -8,13 +8,13 @@ import * as rx from "rxjs";
 
 import {
   AwvV0DynamicStyle,
-  ClassicWmsLaagComponent,
   definitieToStyle,
   forEach,
   join,
   KaartClassicComponent,
   offsetStyleFunction,
   parseCoordinate,
+  Precache,
   ToegevoegdeLaag,
   validateAwvV0RuleDefintion,
   VeldInfo,
@@ -54,8 +54,6 @@ export class FeatureDemoComponent {
   private verplaatsKaart: KaartClassicComponent;
   @ViewChild("selectie")
   private selectieKaart: KaartClassicComponent;
-  @ViewChild("offlineLaag")
-  private offlineLaag: ClassicWmsLaagComponent;
 
   private readonly fietspadStijlDef: AwvV0DynamicStyle = {
     rules: [
@@ -355,6 +353,8 @@ export class FeatureDemoComponent {
 
   wkt = wkts.districten.gent;
 
+  precacheInput: Precache = null;
+
   // Dit werkt alleen als apigateway bereikbaar is. Zie CORS waarschuwing in README.
   readonly districtSource: ol.source.Vector = new ol.source.Vector({
     format: new ol.format.GeoJSON(),
@@ -451,6 +451,14 @@ export class FeatureDemoComponent {
 
   private geometryType = "Polygon";
 
+  startPrecache() {
+    this.precacheInput = {
+      startZoom: 7,
+      eindZoom: 7,
+      wkt: this.wkt
+    };
+  }
+
   private addIcon() {
     if (this.installaties.length > 20) {
       this.installaties = [];
@@ -516,10 +524,6 @@ export class FeatureDemoComponent {
 
   geomGetekend(geom: ol.geom.Geometry) {
     this.getekendeGeom = some(geom);
-  }
-
-  preCacheLaag(startZoom: number, eindZoom: number) {
-    this.offlineLaag.preCache(startZoom, eindZoom, this.wkt);
   }
 
   veranderVoorwaarden() {

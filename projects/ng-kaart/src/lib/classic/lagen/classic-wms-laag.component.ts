@@ -2,13 +2,19 @@ import { AfterViewInit, Component, Input, NgZone, OnInit, ViewEncapsulation } fr
 import { fromNullable } from "fp-ts/lib/Option";
 import { List } from "immutable";
 
-import { Laaggroep, TiledWmsType, WmsLaag } from "../../kaart/kaart-elementen";
+import * as ke from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol-commands";
 import { urlWithParams } from "../../util/url";
 import { KaartClassicComponent } from "../kaart-classic.component";
 import { logOnlyWrapper } from "../messages";
 
 import { ClassicLaagComponent } from "./classic-laag.component";
+
+export interface Precache {
+  startZoom: number;
+  eindZoom: number;
+  wkt: string;
+}
 
 @Component({
   selector: "awv-kaart-wms-laag",
@@ -36,6 +42,13 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   @Input()
   offline = false;
 
+  @Input()
+  set precache(input: Precache) {
+    if (input) {
+      this.dispatch(prt.VulCacheVoorLaag(this.titel, input.startZoom, input.eindZoom, input.wkt, logOnlyWrapper));
+    }
+  }
+
   constructor(kaart: KaartClassicComponent, zone: NgZone) {
     super(kaart, zone);
   }
@@ -47,9 +60,9 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
     super.ngOnInit();
   }
 
-  createLayer(): WmsLaag {
+  createLayer(): ke.WmsLaag {
     return {
-      type: TiledWmsType,
+      type: ke.TiledWmsType,
       titel: this.titel,
       naam: this.laagNaam,
       urls: List(this.urls),
@@ -64,7 +77,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
     };
   }
 
-  laaggroep(): Laaggroep {
+  laaggroep(): ke.Laaggroep {
     return "Achtergrond";
   }
 
@@ -93,9 +106,5 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
     if (this.offline) {
       this.dispatch(prt.ActiveerCacheVoorLaag(this.titel, logOnlyWrapper));
     }
-  }
-
-  preCache(startZoom: number, eindZoom: number, wkt: string) {
-    this.dispatch(prt.VulCacheVoorLaag(this.titel, startZoom, eindZoom, wkt, logOnlyWrapper));
   }
 }
