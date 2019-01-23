@@ -1,9 +1,9 @@
 importScripts('https://storage.googleapis.com/workbox-cdn/releases/3.6.1/workbox-sw.js');
 
 if (workbox) {
-  console.log(`Yay! Workbox is loaded 🎉`);
+  console.log(`Workbox ingeladen`);
 } else {
-  console.log(`Boo! Workbox didn't load 😬`);
+  console.log(`Workbox werd niet ingeladen`);
 }
 
 // workbox.setConfig({
@@ -13,14 +13,12 @@ if (workbox) {
 // initialise modules: see https://developers.google.com/web/tools/workbox/modules/workbox-sw#avoid_async_imports
 const { strategies, routing, core } = workbox;
 
-core.setLogLevel(core.LOG_LEVELS.debug);
-
-self.addEventListener('install', function(event) {
+self.addEventListener('install', event =>  {
   log('install event received');
   event.waitUntil(self.skipWaiting()); // Activate worker immediately
 });
 
-self.addEventListener('activate', function(event) {
+self.addEventListener('activate', event =>  {
   log('activate event received');
   event.waitUntil(self.clients.claim()); // Become available to all pages
 });

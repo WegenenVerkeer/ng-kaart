@@ -3,32 +3,12 @@ import * as url from "url";
 
 import { kaartLogger } from "../kaart/log";
 
-const decodeURLParams = search => {
-  const hashes = search.slice(search.indexOf("?") + 1).split("&");
-  return hashes.reduce((params, hash) => {
-    const split = hash.indexOf("=");
-
-    if (split < 0) {
-      return Object.assign(params, {
-        [hash]: null
-      });
-    }
-
-    const key = hash.slice(0, split).toLowerCase();
-    const val = hash.slice(split + 1);
-
-    return Object.assign(params, { [key]: decodeURIComponent(val) });
-  }, {});
-};
-
 const fetchUrls = (urls: string[]) => {
   const interval = 60; //  = 60 ms
   let timeout = interval;
   urls.forEach(url => {
     setTimeout(function() {
-      fetch(new Request(url, { credentials: "include" }), { keepalive: true, mode: "cors" })
-        .then(response => ({ response, cache: true }))
-        .catch(err => kaartLogger.error(err));
+      fetch(new Request(url, { credentials: "include" }), { keepalive: true, mode: "cors" }).catch(err => kaartLogger.error(err));
     }, timeout);
     timeout += interval;
   });
@@ -71,16 +51,16 @@ export const refreshTiles = (laagnaam: string, source: ol.source.UrlTile, startZ
       for (let y = tileRangeMinY; y <= tileRangeMaxY; y++) {
         const tileCoord: [number, number, number] = [z, x, y];
         const tileUrl = source.getTileUrlFunction()(tileCoord, ol.has.DEVICE_PIXEL_RATIO, source.getProjection());
-        const queryParams = url.parse(tileUrl).search;
-        const bbox = decodeURLParams(queryParams)["bbox"];
+        const params = url.parse(tileUrl, true);
+        const bbox = params.query["BBOX"] as string;
         if (bbox) {
           // left,bottom,right,top
           const coordinatesBbox = bbox.split(",");
 
-          const left = coordinatesBbox[0];
-          const bottom = coordinatesBbox[1];
-          const right = coordinatesBbox[2];
-          const top = coordinatesBbox[3];
+          const left = Number(coordinatesBbox[0]);
+          const bottom = Number(coordinatesBbox[1]);
+          const right = Number(coordinatesBbox[2]);
+          const top = Number(coordinatesBbox[3]);
 
           const ltCoord: [number, number] = [left, top];
           const lbCoord: [number, number] = [left, bottom];
@@ -96,7 +76,7 @@ export const refreshTiles = (laagnaam: string, source: ol.source.UrlTile, startZ
             queueByZ.push(tileUrl);
           }
         } else {
-          alert(`Geen bbox parameter in URL ${queryParams}`);
+          kaartLogger.error(`Geen bbox parameter in URL ${tileUrl}`);
         }
       }
     }

@@ -17,7 +17,6 @@ import { allOf, fromBoolean, fromOption, fromPredicate, success, validationChain
 import { zoekerMetNaam } from "../zoeker/zoeker";
 
 import * as ke from "./kaart-elementen";
-import { asTiledWmsLaag, isTiledWmsLaag } from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { MsgGen } from "./kaart-protocol-subscriptions";
 import { KaartWithInfo } from "./kaart-with-info";
@@ -133,8 +132,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
-    function valideerTiledWmsBestaat(laag: ke.ToegevoegdeLaag): prt.KaartCmdValidation<ol.layer.Tile> {
-      return fromPredicate(laag.layer as ol.layer.Tile, () => isTiledWmsLaag(laag.bron), `Laag ${laag.bron.titel} is geen tiled WMS laag`);
+    function valideerTiledWmsBestaat(titel: string): prt.KaartCmdValidation<ol.layer.Tile> {
+      return chain(valideerToegevoegdeLaagBestaat(titel), laag =>
+        fromPredicate(laag.layer as ol.layer.Tile, () => ke.isTiledWmsLaag(laag.bron), `Laag ${laag.bron.titel} is geen tiled WMS laag`)
+      );
     }
 
     function valideerLaagTitelBestaatNiet(titel: string): prt.KaartCmdValidation<{}> {
@@ -1157,7 +1158,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         cmnd.wrapper,
         valideerToegevoegdeLaagBestaat(cmnd.titel).map(laag => {
-          asTiledWmsLaag(laag.bron).map(tiledWms =>
+          ke.asTiledWmsLaag(laag.bron).map(tiledWms =>
             tiledWms.urls.map(url => serviceworker.registreerRoute(cmnd.titel, `${url}.*${tiledWms.naam}.*`))
           );
           return ModelAndEmptyResult(model);
@@ -1168,7 +1169,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function vulCacheVoorLaag(cmnd: prt.VulCacheVoorLaag<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        chain(valideerToegevoegdeLaagBestaat(cmnd.titel), valideerTiledWmsBestaat).map(tiledWms => {
+        valideerTiledWmsBestaat(cmnd.titel).map(tiledWms => {
           refreshTiles(cmnd.titel, tiledWms.getSource() as ol.source.UrlTile, cmnd.startZoom, cmnd.eindZoom, cmnd.wkt);
           return ModelAndEmptyResult(model);
         })
