@@ -76,6 +76,74 @@ Tot slot vormt de source code van deze pagina de gebruiksaanwijzing van de compo
 
 Ook de NosqlFs laag demo maakt een verbinding met een server die niet op op localhost:4420 draait. CORS requestvalidatie afzetten is hier eveneens de oplossing.
 
+
+### Offline caching
+
+#### Service worker security
+
+Er zijn enkele security issues die het lokaal ontwikkelen van de service worker (ter implementatie van de offline caching van kaarten) bemoeilijken. 
+Daarom dient via een docker stack gewerkt te worden. Deze heeft echter het nadeel dat live reload niet werkt vanachter een proxy (socksjs wordt niet gevonden). Een manuele refresh is dus nodig 
+om de code te verversen. 
+
+De security issues:
+
+1. Service workers worden enkel ingeladen indien de applicatie opgeroepen wordt via localhost óf indien via een **https:** url
+2. De service worker onderschept URL's relatief tot zijn eigen domein, doch de dienstkaart wordt geserved door een apart docker VM, dus we moeten met het lokaal apigateway domain werken
+
+Om lokaal de applicatie te draaien dient de docker stack gestart te worden via 
+
+    docker-compose up -d
+
+Start vervolgens de applicatie op via 
+
+    npm run start-apigateway
+
+De demo pagina is vervolgens te bereiken via **https://apigateway/ng-kaart**
+
+Het https certificaat is geen geldig certificaat, dus Chrome dient opgestart te worden met extra parameters, anders wordt de service worker niet ingeladen:
+
+MacOS:
+
+        open -a Google\ Chrome --args --disable-web-security --user-data-dir --ignore-certificate-errors --unsafely-treat-insecure-origin-as-secure 
+
+Linux:
+
+        chromium-browser --disable-web-security --user-data-dir --ignore-certificate-errors --unsafely-treat-insecure-origin-as-secure 
+
+Ga vervolgens naar de applicatie via https://apigateway/ng-kaart en voeg een uitzondering voor een niet geldig certificaat.
+
+Opgepast: doe geen shift-reload in Chrome om de applicatie te refreshen. Deze actie zorgt er immers voor dat de service worker volledig genegeerd wordt (cfr https://developers.google.com/web/fundamentals/primers/service-workers/lifecycle#shift-reload)
+
+#### Offline kaarten ondersteunen
+
+Om het *@Input offline* attribuut van de kaart lagen te kunnen gebruiken dient de service worker geinstalleerd te worden. 
+
+Kopieer ng-kaart-service-worker.js naar de root van je applicatie. Registreer deze zoals gedaan werd in App.Module.ts
+
+```
+  ServiceWorkerModule.register("<context>/ng-kaart-service-worker.js", {
+      enabled: true
+    }),
+```
+
+En voeg deze toe als een asset in angular.json
+
+```
+  "assets": [
+              "src/favicon.ico",
+              "src/ng-kaart-service-worker.js",
+              "src/assets"
+            ],
+```
+
+Om het debuggen te vergemakkelijken neem je volgend uit commentaar in ng-kaart-service-worker.js:
+
+```
+  workbox.setConfig({
+    debug: true
+  });
+```
+
 ### Code style
 
 De code style wordt automatisch afgedwongen via tslint + prettier. Deze is ingesteld dat de code wordt herschreven on commit, tenzij er brekende wijzigingen zijn (zoals foute typering en dergelijke meer).

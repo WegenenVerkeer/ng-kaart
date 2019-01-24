@@ -9,7 +9,9 @@ import { Subscription } from "rxjs";
 import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
 
+import { refreshTiles } from "../util/cachetiles";
 import { forEach } from "../util/option";
+import * as serviceworker from "../util/serviceworker";
 import { updateBehaviorSubject } from "../util/subject-update";
 import { allOf, fromBoolean, fromOption, fromPredicate, success, validationChain as chain } from "../util/validation";
 import { zoekerMetNaam } from "../zoeker/zoeker";
@@ -127,6 +129,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         laag.layer["setStyle"]
           ? validation.success(laag.layer as ol.layer.Vector)
           : validation.failure([`De laag met titel ${titel} is geen vectorlaag`])
+      );
+    }
+
+    function valideerTiledWmsBestaat(titel: string): prt.KaartCmdValidation<ol.layer.Tile> {
+      return chain(valideerToegevoegdeLaagBestaat(titel), laag =>
+        fromPredicate(laag.layer as ol.layer.Tile, () => ke.isTiledWmsLaag(laag.bron), `Laag ${laag.bron.titel} is geen tiled WMS laag`)
       );
     }
 
@@ -1140,10 +1148,32 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
-    function SluitPanelen(cmnd: prt.SluitPanelenCmd): ModelWithResult<Msg> {
+    function sluitPanelen(cmnd: prt.SluitPanelenCmd): ModelWithResult<Msg> {
       updateBehaviorSubject(model.infoBoodschappenSubj, bsch => bsch.clear());
       modelChanger.laagstijlaanpassingStateSubj.next(GeenLaagstijlaanpassing);
       return ModelWithResult(model);
+    }
+
+    function activeerCacheVoorLaag(cmnd: prt.ActiveerCacheVoorLaag<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        valideerToegevoegdeLaagBestaat(cmnd.titel).map(laag => {
+          ke.asTiledWmsLaag(laag.bron).map(tiledWms =>
+            tiledWms.urls.map(url => serviceworker.registreerRoute(cmnd.titel, `${url}.*${tiledWms.naam}.*`))
+          );
+          return ModelAndEmptyResult(model);
+        })
+      );
+    }
+
+    function vulCacheVoorLaag(cmnd: prt.VulCacheVoorLaag<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        valideerTiledWmsBestaat(cmnd.titel).map(tiledWms => {
+          refreshTiles(cmnd.titel, tiledWms.getSource() as ol.source.UrlTile, cmnd.startZoom, cmnd.eindZoom, cmnd.wkt);
+          return ModelAndEmptyResult(model);
+        })
+      );
     }
 
     function handleSubscriptions(cmnd: prt.SubscribeCmd<Msg>): ModelWithResult<Msg> {
@@ -1448,7 +1478,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       case "StopVectorlaagstijlBewerking":
         return stopVectorlaagstijlBewerking(cmd);
       case "SluitPanelen":
-        return SluitPanelen(cmd);
+        return sluitPanelen(cmd);
+      case "ActiveerCacheVoorLaag":
+        return activeerCacheVoorLaag(cmd);
+      case "VulCacheVoorLaag":
+        return vulCacheVoorLaag(cmd);
     }
   };
 }

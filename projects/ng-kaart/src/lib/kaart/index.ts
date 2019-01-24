@@ -73,18 +73,10 @@ const components: any[] = [
 // Weersta de drang om deze variabele in een andere module te plaatsen, want dat geeft problemen met gebruik in AOT app.
 export const defaultKaartConfig: KaartConfig = {
   geoserver: {
-    urls: [
-      "https://wms1.apps.mow.vlaanderen.be/geoserver/wms",
-      "https://wms2.apps.mow.vlaanderen.be/geoserver/wms",
-      "https://wms3.apps.mow.vlaanderen.be/geoserver/wms"
-    ]
+    urls: ["/geoserver/wms"]
   },
   tilecache: {
-    urls: [
-      "https://wms1.apps.mow.vlaanderen.be/geowebcache/service/wms",
-      "https://wms2.apps.mow.vlaanderen.be/geowebcache/service/wms",
-      "https://wms3.apps.mow.vlaanderen.be/geowebcache/service/wms"
-    ]
+    urls: ["/geowebcache/service/wms"]
   },
   orthofotomozaiek: {
     naam: "Ortho",

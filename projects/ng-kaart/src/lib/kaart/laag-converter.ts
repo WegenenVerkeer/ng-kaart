@@ -16,7 +16,7 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
       extent: kaart.config.defaults.extent,
       opacity: l.opacity.toUndefined(),
       source: new ol.source.TileWMS({
-        projection: undefined,
+        projection: kaart.config.srs,
         cacheSize: kaart.tileLoader.maxMislukteTiles,
         urls: l.urls.toArray(),
         tileGrid: ol.tilegrid.createXYZ({

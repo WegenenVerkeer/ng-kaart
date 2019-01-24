@@ -6,10 +6,12 @@ services:
     image: 162510209540.dkr.ecr.eu-west-1.amazonaws.com/rood/apigateway
     hostname: apigateway
     container_name: ng-kaart-apigateway
+    dns_search: .
     extra_hosts:
      - ng-kaart:${DOCKER_OUTER_HOST}
     ports:
-     - 80:80
+      - 80:80
+      - 443:443
 
   locatorservices:
     image: 162510209540.dkr.ecr.eu-west-1.amazonaws.com/rood/locatorservices
@@ -39,3 +41,11 @@ services:
     container_name: ng-kaart-locatieservices
     links:
      - db-locatieservices:db
+
+  geoserver-db:
+    image: 162510209540.dkr.ecr.eu-west-1.amazonaws.com/rood/geoserver-postgres
+
+  geoserver:
+    image: 162510209540.dkr.ecr.eu-west-1.amazonaws.com/rood/geoserver
+    links:
+      - geoserver-db:db

@@ -1,19 +1,27 @@
-import { Component, Input, NgZone, OnInit, ViewEncapsulation } from "@angular/core";
+import { AfterViewInit, Component, Input, NgZone, OnInit, ViewEncapsulation } from "@angular/core";
 import { fromNullable } from "fp-ts/lib/Option";
 import { List } from "immutable";
 
-import { Laaggroep, TiledWmsType, WmsLaag } from "../../kaart/kaart-elementen";
+import * as ke from "../../kaart/kaart-elementen";
+import * as prt from "../../kaart/kaart-protocol-commands";
 import { urlWithParams } from "../../util/url";
 import { KaartClassicComponent } from "../kaart-classic.component";
+import { logOnlyWrapper } from "../messages";
 
 import { ClassicLaagComponent } from "./classic-laag.component";
+
+export interface Precache {
+  startZoom: number;
+  eindZoom: number;
+  wkt: string;
+}
 
 @Component({
   selector: "awv-kaart-wms-laag",
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnInit {
+export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnInit, AfterViewInit {
   @Input()
   laagNaam: string;
   @Input()
@@ -31,6 +39,15 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   tileSize? = 256;
   @Input()
   opacity?: number;
+  @Input()
+  offline = false;
+
+  @Input()
+  set precache(input: Precache) {
+    if (input) {
+      this.dispatch(prt.VulCacheVoorLaag(this.titel, input.startZoom, input.eindZoom, input.wkt, logOnlyWrapper));
+    }
+  }
 
   constructor(kaart: KaartClassicComponent, zone: NgZone) {
     super(kaart, zone);
@@ -43,9 +60,9 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
     super.ngOnInit();
   }
 
-  createLayer(): WmsLaag {
+  createLayer(): ke.WmsLaag {
     return {
-      type: TiledWmsType,
+      type: ke.TiledWmsType,
       titel: this.titel,
       naam: this.laagNaam,
       urls: List(this.urls),
@@ -60,7 +77,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
     };
   }
 
-  laaggroep(): Laaggroep {
+  laaggroep(): ke.Laaggroep {
     return "Achtergrond";
   }
 
@@ -81,5 +98,13 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
       crs: "EPSG:31370",
       bbox: "104528,188839.75,105040,189351.75"
     });
+  }
+
+  ngAfterViewInit() {
+    super.ngAfterViewInit();
+
+    if (this.offline) {
+      this.dispatch(prt.ActiveerCacheVoorLaag(this.titel, logOnlyWrapper));
+    }
   }
 }

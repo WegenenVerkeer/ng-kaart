@@ -10,4 +10,9 @@ if (environment.production) {
 
 platformBrowserDynamic()
   .bootstrapModule(AppModule)
+  // .then(() => {
+  //   if ("serviceWorker" in navigator) {
+  //     navigator.serviceWorker.register("ng-kaart/ng-kaart-service-worker.js");
+  //   }
+  // })
   .catch(err => console.error(err));
