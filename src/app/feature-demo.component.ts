@@ -454,7 +454,7 @@ export class FeatureDemoComponent {
   startPrecache() {
     this.precacheInput = {
       startZoom: 7,
-      eindZoom: 7,
+      eindZoom: 9,
       wkt: this.wkt
     };
   }
