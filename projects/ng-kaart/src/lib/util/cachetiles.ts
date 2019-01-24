@@ -4,7 +4,7 @@ import * as url from "url";
 import { kaartLogger } from "../kaart/log";
 
 const fetchUrls = (urls: string[]) => {
-  const interval = 60; //  = 60 ms
+  const interval = 80; //  = 80 ms
   let timeout = interval;
   urls.forEach(url => {
     setTimeout(function() {
