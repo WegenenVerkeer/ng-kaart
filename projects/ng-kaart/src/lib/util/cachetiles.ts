@@ -4,14 +4,10 @@ import * as url from "url";
 import { kaartLogger } from "../kaart/log";
 
 const fetchUrls = (urls: string[]) => {
-  const interval = 80; //  = 80 ms
-  let timeout = interval;
-  urls.forEach(url => {
-    setTimeout(function() {
-      fetch(new Request(url, { credentials: "include" }), { keepalive: true, mode: "cors" }).catch(err => kaartLogger.error(err));
-    }, timeout);
-    timeout += interval;
-  });
+  const fetches = urls.map(url => () =>
+    fetch(new Request(url, { credentials: "include" }), { keepalive: true, mode: "cors" }).catch(err => kaartLogger.error(err))
+  );
+  fetches.reduce((vorige, huidige) => vorige.then(huidige), Promise.resolve());
 };
 
 const deleteTiles = (laagnaam: string): Promise<Boolean> => caches.delete(laagnaam);
