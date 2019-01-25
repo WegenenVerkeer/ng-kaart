@@ -30,8 +30,8 @@ import {
 } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../../kaart/kaart-child-component-base";
-import { VeldInfo } from "../../kaart/kaart-elementen";
 import * as ke from "../../kaart/kaart-elementen";
+import { VeldInfo } from "../../kaart/kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import * as prt from "../../kaart/kaart-protocol";
 import { KaartComponent } from "../../kaart/kaart.component";
@@ -45,12 +45,12 @@ import {
   IconDescription,
   StringZoekInput,
   UrlZoekInput,
+  ZoekAntwoord,
   ZoekerMetPrioriteiten,
   ZoekInput,
   ZoekKaartResultaat,
   ZoekResultaat,
   zoekResultaatOrdering,
-  ZoekResultaten,
   Zoektype
 } from "../zoeker";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "../zoeker-representatie.service";
@@ -81,10 +81,10 @@ const emptyZoekerPrioriteitenOpZoekernaam: ZoekerPrioriteitenOpZoekernaam = remo
   new StrMap({ dummy: emptyPrioriteitenOpZoekertype })
 );
 
-const zoekresultatenVanType: Function2<Zoektype, ZoekResultaten, Option<ZoekResultaten>> = (zoektype, zoekResultaten) =>
-  fromPredicate<ZoekResultaten>(res => res.zoektype === zoektype)(zoekResultaten);
+const zoekresultatenVanType: Function2<Zoektype, ZoekAntwoord, Option<ZoekAntwoord>> = (zoektype, zoekResultaten) =>
+  fromPredicate<ZoekAntwoord>(res => res.zoektype === zoektype)(zoekResultaten);
 
-const heeftPrioriteit: Function1<ZoekerPrioriteitenOpZoekernaam, Predicate<ZoekResultaten>> = prioriteitenOpNaam => resultaten =>
+const heeftPrioriteit: Function1<ZoekerPrioriteitenOpZoekernaam, Predicate<ZoekAntwoord>> = prioriteitenOpNaam => resultaten =>
   lookup(resultaten.zoeker, prioriteitenOpNaam).exists(prios => lookup(resultaten.zoektype, prios).isSome());
 
 const prioriteitVoorZoekerNaam: Function1<
@@ -95,11 +95,11 @@ const prioriteitVoorZoekerNaam: Function1<
     .chain(priosOpType => lookup(zoektype, priosOpType))
     .getOrElse(stdPrio);
 
-const prioriteitVoorZoekresultaten: Function1<
+const prioriteitVoorZoekAntwoord: Function1<
   Zoektype,
-  Function2<ZoekerPrioriteitenOpZoekernaam, number, Function1<ZoekResultaten, number>>
-> = zoektype => (prioriteitenOpNaam, stdPrio) => resultaten =>
-  prioriteitVoorZoekerNaam(zoektype)(prioriteitenOpNaam, stdPrio)(resultaten.zoeker);
+  Function2<ZoekerPrioriteitenOpZoekernaam, number, Function1<ZoekAntwoord, number>>
+> = zoektype => (prioriteitenOpNaam, stdPrio) => antwoord =>
+  prioriteitVoorZoekerNaam(zoektype)(prioriteitenOpNaam, stdPrio)(antwoord.zoeker);
 
 const prioriteitVoorZoekresultaat: Function1<
   Zoektype,
@@ -310,7 +310,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   huidigeSelectie: Option<HuidigeSelectie> = none;
   alleZoekResultaten: ZoekResultaat[] = [];
   alleSuggestiesResultaten: ZoekResultaat[] = [];
-  private suggestiesBuffer: ZoekResultaten[] = [];
+  private suggestiesBuffer: ZoekAntwoord[] = [];
   alleFouten: Fout[] = [];
   legende: Map<string, IconDescription> = Map<string, IconDescription>();
   legendeKeys: string[] = [];
@@ -686,7 +686,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.dispatch(prt.VervangFeaturesCmd(ZoekerUiSelector, List(), kaartLogOnlyWrapper));
   }
 
-  private processZoekerAntwoord(nieuweResultaten: ZoekResultaten, prioriteitenOpNaam: ZoekerPrioriteitenOpZoekernaam): void {
+  private processZoekerAntwoord(nieuweResultaten: ZoekAntwoord, prioriteitenOpNaam: ZoekerPrioriteitenOpZoekernaam): void {
     kaartLogger.debug("Process " + nieuweResultaten.zoeker, nieuweResultaten);
     switch (nieuweResultaten.zoektype) {
       case "Volledig":
@@ -696,7 +696,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     }
   }
 
-  private processVolledigZoekerAntwoord(nieuweResultaten: ZoekResultaten, prioriteitenOpNaam: ZoekerPrioriteitenOpZoekernaam): void {
+  private processVolledigZoekerAntwoord(nieuweResultaten: ZoekAntwoord, prioriteitenOpNaam: ZoekerPrioriteitenOpZoekernaam): void {
     this.alleZoekResultaten = this.vervangZoekerResultaten(this.alleZoekResultaten, nieuweResultaten);
     this.alleZoekResultaten.sort(
       zoekResultaatOrdering(this.zoekVeld.value, prioriteitVoorZoekresultaat("Volledig")(prioriteitenOpNaam, 99))
@@ -724,21 +724,21 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.decreaseBusy();
   }
 
-  private processSuggestiesAntwoord(nieuweResultaten: ZoekResultaten, prioriteitenOpNaam: ZoekerPrioriteitenOpZoekernaam): void {
+  private processSuggestiesAntwoord(nieuweResultaten: ZoekAntwoord, prioriteitenOpNaam: ZoekerPrioriteitenOpZoekernaam): void {
     // de resultaten van de zoeker wiens antwoord nu binnen komt, moeten vervangen worden door de nieuwe resultaten
     // We moeten de resultaten in volgorde van prioriteit tonen
 
     // Een hulpfunctie die de lokale prioriteitenOpNaam mee neemt.
-    const prioriteit: Function1<ZoekResultaten, number> = prioriteitVoorZoekresultaten("Suggesties")(prioriteitenOpNaam, 99);
+    const prioriteit: Function1<ZoekAntwoord, number> = prioriteitVoorZoekAntwoord("Suggesties")(prioriteitenOpNaam, 99);
 
     // Stap 1 is enkel die resultaten overhouden die van toepassing zijn en een prioriteit hebben
-    const weerhoudenResultaten: Option<ZoekResultaten> = zoekresultatenVanType("Suggesties", nieuweResultaten) //
+    const weerhoudenResultaten: Option<ZoekAntwoord> = zoekresultatenVanType("Suggesties", nieuweResultaten) //
       .filter(heeftPrioriteit(prioriteitenOpNaam));
 
     forEach(weerhoudenResultaten, resultaten => {
       // Stap 2 is sorteren van de antwoorden van de zoekers op prioriteit
-      const ordering: Ord<ZoekResultaten> = ord.contramap(prioriteit, ord.ordNumber);
-      this.suggestiesBuffer = array.sort<ZoekResultaten>(ordering)(array.snoc(this.suggestiesBuffer, resultaten));
+      const ordering: Ord<ZoekAntwoord> = ord.contramap(prioriteit, ord.ordNumber);
+      this.suggestiesBuffer = array.sort<ZoekAntwoord>(ordering)(array.snoc(this.suggestiesBuffer, resultaten));
 
       // Stap 3 is alle individuele resultaten uit de resultaten halen voor zover de prioriteiten ononderbroken oplopen van 1
       // Het is perfect mogelijk dat er voor een bepaalde prioriteit geen resultaten zijn (lege array). We verwachten dit
@@ -766,7 +766,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     });
   }
 
-  private vervangZoekerResultaten(resultaten: ZoekResultaat[], vervangResultaten: ZoekResultaten) {
+  private vervangZoekerResultaten(resultaten: ZoekResultaat[], vervangResultaten: ZoekAntwoord) {
     return resultaten.filter(resultaat => resultaat.zoeker !== vervangResultaten.zoeker).concat(vervangResultaten.resultaten);
   }
 

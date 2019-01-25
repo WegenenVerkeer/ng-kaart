@@ -3,7 +3,7 @@ import * as rx from "rxjs";
 import { delay } from "rxjs/operators";
 
 import { rangeArray } from "../../projects/ng-kaart/src/lib/util/range";
-import { nietOndersteund, Zoeker, ZoekInput, Zoekopdracht, ZoekResultaten, Zoektype } from "../../projects/ng-kaart/src/lib/zoeker";
+import { nietOndersteund, ZoekAntwoord, Zoeker, ZoekInput, Zoekopdracht, Zoektype } from "../../projects/ng-kaart/src/lib/zoeker";
 
 /**
  * Een Zoeker die vrij random resultaten genereert.
@@ -15,7 +15,7 @@ export class DummyZoeker implements Zoeker {
     return this._naam;
   }
 
-  zoekresultaten$(zoekopdracht: Zoekopdracht): rx.Observable<ZoekResultaten> {
+  zoekresultaten$(zoekopdracht: Zoekopdracht): rx.Observable<ZoekAntwoord> {
     switch (zoekopdracht.zoektype) {
       case "Volledig":
         return this.zoek$(zoekopdracht.zoekpatroon);
@@ -24,7 +24,7 @@ export class DummyZoeker implements Zoeker {
     }
   }
 
-  zoek$(input: ZoekInput): rx.Observable<ZoekResultaten> {
+  zoek$(input: ZoekInput): rx.Observable<ZoekAntwoord> {
     switch (input.type) {
       case "string":
         const numResults = Math.floor(Math.pow(Math.random(), 1.2) * 5);
@@ -40,13 +40,13 @@ export class DummyZoeker implements Zoeker {
           preferredPointZoomLevel: some(4 + Math.random() * 5)
         });
         const resultaten = rangeArray(numResults).map(resultaat);
-        return rx.of(new ZoekResultaten(this.naam(), "Volledig", [], resultaten));
+        return rx.of(new ZoekAntwoord(this.naam(), "Volledig", [], resultaten));
       default:
         return rx.of(nietOndersteund(this.naam(), "Volledig"));
     }
   }
 
-  suggesties$(input: ZoekInput): rx.Observable<ZoekResultaten> {
+  suggesties$(input: ZoekInput): rx.Observable<ZoekAntwoord> {
     switch (input.type) {
       case "string":
         const numResults = Math.floor(Math.pow(Math.random(), 1.3) * 4);
@@ -63,7 +63,7 @@ export class DummyZoeker implements Zoeker {
           zoektype: "Suggesties" as Zoektype
         });
         const resultaten = rangeArray(numResults).map(resultaat);
-        return rx.of(new ZoekResultaten(this.naam(), "Suggesties", [], resultaten)).pipe(delay(Math.random() * 2000));
+        return rx.of(new ZoekAntwoord(this.naam(), "Suggesties", [], resultaten)).pipe(delay(Math.random() * 2000));
       default:
         return rx.of(nietOndersteund(this.naam(), "Suggesties"));
     }

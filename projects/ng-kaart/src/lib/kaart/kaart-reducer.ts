@@ -1269,7 +1269,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         modelWithSubscriptionResult("LaagVerwijderd", modelChanger.laagVerwijderdSubj.subscribe(consumeMessage(sub)));
 
       function subscribeToZoekResultaten(sub: prt.ZoekResultatenSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult("ZoekResultaten", modelChanges.zoekresultaten$.subscribe(consumeMessage(sub)));
+        return modelWithSubscriptionResult("ZoekAntwoord", modelChanges.zoekresultaten$.subscribe(consumeMessage(sub)));
       }
 
       function subscribeToZoekResultaatSelectie(sub: prt.ZoekResultaatSelectieSubscription<Msg>): ModelWithResult<Msg> {
@@ -1340,7 +1340,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToLaagVerwijderd(cmnd.subscription);
         case "KaartClick":
           return subscribeToKaartClick(cmnd.subscription);
-        case "ZoekResultaten":
+        case "ZoekAntwoord":
           return subscribeToZoekResultaten(cmnd.subscription);
         case "ZoekResultaatSelectie":
           return subscribeToZoekResultaatSelectie(cmnd.subscription);

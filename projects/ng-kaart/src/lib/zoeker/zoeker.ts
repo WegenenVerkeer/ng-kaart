@@ -43,7 +43,7 @@ export interface Zoekopdracht {
 
 export interface Zoeker {
   naam(): string;
-  zoekresultaten$(zoekopdracht: Zoekopdracht): rx.Observable<ZoekResultaten>;
+  zoekresultaten$(zoekopdracht: Zoekopdracht): rx.Observable<ZoekAntwoord>;
 }
 
 export type PrioriteitenOpZoekertype = StrMap<number>;
@@ -80,7 +80,7 @@ export interface ZoekResultaat {
   readonly extraOmschrijving: Option<string>;
 }
 
-export class ZoekResultaten {
+export class ZoekAntwoord {
   constructor(
     readonly zoeker: string,
     readonly zoektype: Zoektype,
@@ -89,9 +89,9 @@ export class ZoekResultaten {
     readonly legende: Map<string, IconDescription> = Map()
   ) {}
 
-  limiteerAantalResultaten(maxAantal: number): ZoekResultaten {
+  limiteerAantalResultaten(maxAantal: number): ZoekAntwoord {
     if (this.resultaten.length >= maxAantal) {
-      return new ZoekResultaten(
+      return new ZoekAntwoord(
         this.zoeker,
         this.zoektype,
         this.fouten.concat([`Er werden meer dan ${maxAantal} resultaten gevonden, ` + `de eerste ${maxAantal} worden hier opgelijst`]),
@@ -104,7 +104,7 @@ export class ZoekResultaten {
   }
 }
 
-export const nietOndersteund: Function2<string, Zoektype, ZoekResultaten> = (naam, zoektype) => new ZoekResultaten(naam, zoektype);
+export const nietOndersteund: Function2<string, Zoektype, ZoekAntwoord> = (naam, zoektype) => new ZoekAntwoord(naam, zoektype);
 
 export const zoekerMetPrioriteiten: (_1: Zoeker, _2?: number, _3?: number) => ZoekerMetPrioriteiten = (
   zoeker,
