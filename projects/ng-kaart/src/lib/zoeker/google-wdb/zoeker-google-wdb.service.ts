@@ -14,12 +14,12 @@ import {
   geoJSONOptions,
   IconDescription,
   nietOndersteund,
+  ZoekAntwoord,
   Zoeker,
   ZoekInput,
   ZoekKaartResultaat,
   Zoekopdracht,
   ZoekResultaat,
-  ZoekResultaten,
   Zoektype
 } from "../zoeker";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE, ZoekerRepresentatieType } from "../zoeker-representatie.service";
@@ -134,7 +134,7 @@ export class ZoekerGoogleWdbService implements Zoeker {
     }
   }
 
-  zoekresultaten$(opdracht: Zoekopdracht): rx.Observable<ZoekResultaten> {
+  zoekresultaten$(opdracht: Zoekopdracht): rx.Observable<ZoekAntwoord> {
     switch (opdracht.zoektype) {
       case "Volledig":
         return this.zoek$(opdracht.zoekpatroon, "Volledig", this.googleWdbLocatieZoekerConfig.maxAantal);
@@ -143,11 +143,11 @@ export class ZoekerGoogleWdbService implements Zoeker {
     }
   }
 
-  private zoek$(zoekterm: ZoekInput, zoektype: Zoektype, maxResultaten: number): rx.Observable<ZoekResultaten> {
+  private zoek$(zoekterm: ZoekInput, zoektype: Zoektype, maxResultaten: number): rx.Observable<ZoekAntwoord> {
     switch (zoekterm.type) {
       case "string":
         if (!zoekterm.value || zoekterm.value.trim().length === 0) {
-          return rx.of(new ZoekResultaten(this.naam(), "Volledig", [], [], this.legende));
+          return rx.of(new ZoekAntwoord(this.naam(), "Volledig", [], [], this.legende));
         }
         const params: HttpParams = new HttpParams().set("query", zoekterm.value).set("legacy", "false");
 
@@ -160,8 +160,8 @@ export class ZoekerGoogleWdbService implements Zoeker {
     }
   }
 
-  private parseResult(response: any, zoektype: Zoektype, maxResultaten: number): rx.Observable<ZoekResultaten> {
-    const zoekResultaten = new ZoekResultaten(this.naam(), zoektype, [], [], this.legende);
+  private parseResult(response: any, zoektype: Zoektype, maxResultaten: number): rx.Observable<ZoekAntwoord> {
+    const zoekResultaten = new ZoekAntwoord(this.naam(), zoektype, [], [], this.legende);
 
     // parse result
     const resultaten = response; // vanaf hier doen we onze handen voor onze ogen en hopen dat alles goed gaat
@@ -310,7 +310,7 @@ export class ZoekerGoogleWdbService implements Zoeker {
         });
       }, Promise.resolve([]));
 
-      const zoekResultatenPromise: Promise<ZoekResultaten> = alleResultatenPromise.then(resultatenLijst => {
+      const zoekResultatenPromise: Promise<ZoekAntwoord> = alleResultatenPromise.then(resultatenLijst => {
         resultatenLijst.forEach(resultaat => {
           resultaat.locatie =
             resultaat.locatie || this.wgs84ToLambert72GeoJson(resultaat.geometry.location.lng(), resultaat.geometry.location.lat());
@@ -336,7 +336,7 @@ export class ZoekerGoogleWdbService implements Zoeker {
     }
   }
 
-  handleError(response: Response | any, zoektype: Zoektype): rx.Observable<ZoekResultaten> {
+  handleError(response: Response | any, zoektype: Zoektype): rx.Observable<ZoekAntwoord> {
     let error: string;
     switch (response.status) {
       case 404:
@@ -346,7 +346,7 @@ export class ZoekerGoogleWdbService implements Zoeker {
         // toon http foutmelding indien geen 200 teruggehad
         error = `Fout bij opvragen locatie: ${response.responseText || response.statusText || response}`;
     }
-    return rx.of(new ZoekResultaten(this.naam(), zoektype, [error], [], this.legende));
+    return rx.of(new ZoekAntwoord(this.naam(), zoektype, [error], [], this.legende));
   }
 
   private geocode(omschrijving): Promise<ExtendedGeocoderResult[]> {

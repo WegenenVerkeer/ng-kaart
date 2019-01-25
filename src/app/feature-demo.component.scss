@@ -53,3 +53,16 @@
     }
   }
 }
+
+.cachewkt  {
+  padding: 8px 8px 8px 0;
+  width: 50%;
+  &__textarea {
+    width: 50%;
+    height: 200px;
+  }
+  &__textarea_smaller {
+    width: 15%;
+    height: 210px;
+  }
+}

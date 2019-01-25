@@ -42,6 +42,7 @@
             "tsConfig": "src/tsconfig.app.json",
             "assets": [
               "src/favicon.ico",
+              "src/ng-kaart-service-worker.js",
               "src/assets"
             ],
             "styles": [
@@ -103,7 +104,8 @@
             "scripts": [],
             "assets": [
               "src/favicon.ico",
-              "src/assets"
+              "src/assets",
+              "src/ng-kaart-service-worker.js"
             ]
           }
         },

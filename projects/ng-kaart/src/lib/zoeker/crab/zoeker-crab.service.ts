@@ -11,12 +11,12 @@ import { ZoekerConfigLocatorServicesConfig } from "../config/zoeker-config-locat
 import {
   IconDescription,
   nietOndersteund,
+  ZoekAntwoord,
   Zoeker,
   ZoekInput,
   ZoekKaartResultaat,
   Zoekopdracht,
   ZoekResultaat,
-  ZoekResultaten,
   Zoektype
 } from "../zoeker";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "../zoeker-representatie.service";
@@ -165,7 +165,7 @@ export class ZoekerCrabService implements Zoeker {
     return "Crab";
   }
 
-  private voegCrabResultatenToe(result: ZoekResultaten, crabResultaten: LocatorServiceResults): ZoekResultaten {
+  private voegCrabResultatenToe(result: ZoekAntwoord, crabResultaten: LocatorServiceResults): ZoekAntwoord {
     const startIndex = result.resultaten.length;
     const resultaten = result.resultaten.concat(
       crabResultaten.LocationResult
@@ -188,7 +188,7 @@ export class ZoekerCrabService implements Zoeker {
             )
         )
     );
-    return new ZoekResultaten(result.zoeker, result.zoektype, result.fouten, resultaten, result.legende);
+    return new ZoekAntwoord(result.zoeker, result.zoektype, result.fouten, resultaten, result.legende);
   }
 
   getAlleGemeenten$(): rx.Observable<CrabGemeente[]> {
@@ -228,11 +228,11 @@ export class ZoekerCrabService implements Zoeker {
     );
   }
 
-  private getGemeenteBBox$(gemeente: CrabGemeente): rx.Observable<ZoekResultaten> {
+  private getGemeenteBBox$(gemeente: CrabGemeente): rx.Observable<ZoekAntwoord> {
     return this.http.get<CrabBBoxData>(this.locatorServicesConfig.url + "/rest/crab/gemeente/" + gemeente.niscode).pipe(
       map(
         bbox =>
-          new ZoekResultaten(this.naam(), "Volledig", [], [this.bboxNaarZoekResultaat(gemeente.naam, "CrabGemeente", bbox)], this.legende)
+          new ZoekAntwoord(this.naam(), "Volledig", [], [this.bboxNaarZoekResultaat(gemeente.naam, "CrabGemeente", bbox)], this.legende)
       ),
       shareReplay(1)
     );
@@ -245,11 +245,11 @@ export class ZoekerCrabService implements Zoeker {
     );
   }
 
-  private getStraatBBox$(straat: CrabStraat): rx.Observable<ZoekResultaten> {
+  private getStraatBBox$(straat: CrabStraat): rx.Observable<ZoekAntwoord> {
     return this.http.get<CrabBBoxData>(this.locatorServicesConfig.url + "/rest/crab/straat/" + straat.id).pipe(
       map(
         bbox =>
-          new ZoekResultaten(
+          new ZoekAntwoord(
             this.naam(),
             "Volledig",
             [],
@@ -268,13 +268,13 @@ export class ZoekerCrabService implements Zoeker {
     );
   }
 
-  private getHuisnummerPositie$(huisnummer: CrabHuisnummer): rx.Observable<ZoekResultaten> {
+  private getHuisnummerPositie$(huisnummer: CrabHuisnummer): rx.Observable<ZoekAntwoord> {
     return this.http
       .get<CrabPositieData>(this.locatorServicesConfig.url + "/rest/crab/huisnummer/" + huisnummer.straat.id + "/" + huisnummer.huisnummer)
       .pipe(
         map(
           positie =>
-            new ZoekResultaten(
+            new ZoekAntwoord(
               this.naam(),
               "Volledig",
               [],
@@ -292,7 +292,7 @@ export class ZoekerCrabService implements Zoeker {
       );
   }
 
-  zoekresultaten$(zoekopdracht: Zoekopdracht): rx.Observable<ZoekResultaten> {
+  zoekresultaten$(zoekopdracht: Zoekopdracht): rx.Observable<ZoekAntwoord> {
     switch (zoekopdracht.zoektype) {
       case "Volledig":
         return this.zoek$(zoekopdracht.zoekpatroon);
@@ -301,7 +301,7 @@ export class ZoekerCrabService implements Zoeker {
     }
   }
 
-  private zoek$(zoekinput: ZoekInput): rx.Observable<ZoekResultaten> {
+  private zoek$(zoekinput: ZoekInput): rx.Observable<ZoekAntwoord> {
     switch (zoekinput.type) {
       case "string":
         return this.tekstzoekResultaten(zoekinput.value, "Volledig", this.locatorServicesConfig.maxAantal);
@@ -316,7 +316,7 @@ export class ZoekerCrabService implements Zoeker {
     }
   }
 
-  private suggesties$(zoekinput: ZoekInput): rx.Observable<ZoekResultaten> {
+  private suggesties$(zoekinput: ZoekInput): rx.Observable<ZoekAntwoord> {
     switch (zoekinput.type) {
       case "string":
         return this.tekstzoekResultaten(zoekinput.value, "Suggesties", 5);
@@ -325,7 +325,7 @@ export class ZoekerCrabService implements Zoeker {
     }
   }
 
-  private tekstzoekResultaten(zoekterm: string, zoektype: Zoektype, maxResultaten: number): rx.Observable<ZoekResultaten> {
+  private tekstzoekResultaten(zoekterm: string, zoektype: Zoektype, maxResultaten: number): rx.Observable<ZoekAntwoord> {
     const options = waarde => ({ params: new HttpParams().set("query", waarde) });
 
     const zoekDetail$ = detail =>
@@ -343,12 +343,12 @@ export class ZoekerCrabService implements Zoeker {
       ),
       // mergall moet gecast worden omdat de standaard definitie fout is: https://github.com/ReactiveX/rxjs/issues/3290
       mergeAll(5),
-      reduce<LocatorServiceResults, ZoekResultaten>(
+      reduce<LocatorServiceResults, ZoekAntwoord>(
         (zoekResultaten, crabResultaten) => this.voegCrabResultatenToe(zoekResultaten, crabResultaten),
-        new ZoekResultaten(this.naam(), zoektype, [], [], this.legende)
+        new ZoekAntwoord(this.naam(), zoektype, [], [], this.legende)
       ),
       map(resultaten => resultaten.limiteerAantalResultaten(maxResultaten)),
-      catchError(e => rx.of(new ZoekResultaten(this.naam(), zoektype, ["Kon locator services niet aanroepen "], [])))
+      catchError(e => rx.of(new ZoekAntwoord(this.naam(), zoektype, ["Kon locator services niet aanroepen "], [])))
     );
   }
 }

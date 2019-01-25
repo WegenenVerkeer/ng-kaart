@@ -9,7 +9,7 @@ import { debounceTime, distinctUntilChanged, filter, map, mapTo, mergeAll, share
 
 import { NosqlFsSource } from "../source/nosql-fs-source";
 import { observableFromOlEvents } from "../util/ol-observable";
-import { ZoekerMetPrioriteiten, Zoekopdracht, ZoekResultaat, ZoekResultaten } from "../zoeker/zoeker";
+import { ZoekAntwoord, ZoekerMetPrioriteiten, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
 
 import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
@@ -90,7 +90,7 @@ export interface ModelChanges {
   readonly mijnLocatieZoomDoel$: rx.Observable<Option<number>>;
   readonly actieveModus$: rx.Observable<Option<string>>;
   readonly zoekerServices$: rx.Observable<ZoekerMetPrioriteiten[]>;
-  readonly zoekresultaten$: rx.Observable<ZoekResultaten>;
+  readonly zoekresultaten$: rx.Observable<ZoekAntwoord>;
   readonly zoekresultaatselectie$: rx.Observable<ZoekResultaat>;
   readonly laagLocationInfoServicesOpTitel$: rx.Observable<Map<string, LaagLocationInfoService>>;
   readonly laagstijlaanpassingState$: rx.Observable<LaagstijlaanpassingState>;
@@ -215,7 +215,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
   const gevraagdeZoekers: Function2<Zoekopdracht, ZoekerMetPrioriteiten[], ZoekerMetPrioriteiten[]> = (opdracht, geregistreerd) =>
     geregistreerd.filter(zmp => array.member(setoidString)(opdracht.zoekernamen, zmp.zoeker.naam()));
 
-  const zoekresulaten$: rx.Observable<ZoekResultaten> = changer.zoekerServicesSubj.pipe(
+  const zoekresulaten$: rx.Observable<ZoekAntwoord> = changer.zoekerServicesSubj.pipe(
     switchMap(zoekerSvcs =>
       changer.zoekopdrachtSubj.pipe(
         switchMap(zoekopdracht =>

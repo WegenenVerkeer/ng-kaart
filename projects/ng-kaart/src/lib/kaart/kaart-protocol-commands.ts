@@ -16,6 +16,7 @@ import * as ss from "./stijl-selector";
 
 export type Command<Msg extends KaartMsg> =
   | AbortTileLoadingCmd
+  | ActiveerCacheVoorLaag<Msg>
   | ActiveerHoverModusCmd<Msg>
   | ActiveerSelectieModusCmd<Msg>
   | BewerkVectorlaagstijlCmd
@@ -25,6 +26,7 @@ export type Command<Msg extends KaartMsg> =
   | MaakLaagOnzichtbaarCmd<Msg>
   | MaakLaagZichtbaarCmd<Msg>
   | MeldComponentFoutCmd
+  | VulCacheVoorLaag<Msg>
   | SelecteerFeaturesCmd
   | SluitInfoBoodschapCmd
   | SluitPanelenCmd
@@ -127,6 +129,21 @@ export interface ZetLaagLegendeCmd<Msg extends KaartMsg> {
   readonly type: "ZetLaagLegende";
   readonly titel: string;
   readonly legende: Legende;
+  readonly wrapper: BareValidationWrapper<Msg>;
+}
+
+export interface ActiveerCacheVoorLaag<Msg extends KaartMsg> {
+  readonly type: "ActiveerCacheVoorLaag";
+  readonly titel: string;
+  readonly wrapper: BareValidationWrapper<Msg>;
+}
+
+export interface VulCacheVoorLaag<Msg extends KaartMsg> {
+  readonly type: "VulCacheVoorLaag";
+  readonly titel: string;
+  readonly startZoom: number;
+  readonly eindZoom: number;
+  readonly wkt: string;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -454,6 +471,23 @@ export function VoegLaagToeCmd<Msg extends KaartMsg>(
     stijlInLagenKiezer: stijlInLagenKiezer,
     wrapper: wrapper
   };
+}
+
+export function ActiveerCacheVoorLaag<Msg extends KaartMsg>(
+  titel: string,
+  wrapper: BareValidationWrapper<Msg>
+): ActiveerCacheVoorLaag<Msg> {
+  return { type: "ActiveerCacheVoorLaag", titel: titel, wrapper: wrapper };
+}
+
+export function VulCacheVoorLaag<Msg extends KaartMsg>(
+  titel: string,
+  startZoom: number,
+  eindZoom: number,
+  wkt: string,
+  wrapper: BareValidationWrapper<Msg>
+): VulCacheVoorLaag<Msg> {
+  return { type: "VulCacheVoorLaag", titel: titel, startZoom: startZoom, eindZoom: eindZoom, wkt: wkt, wrapper: wrapper };
 }
 
 export function VerwijderLaagCmd<Msg extends KaartMsg>(titel: string, wrapper: BareValidationWrapper<Msg>): VerwijderLaagCmd<Msg> {

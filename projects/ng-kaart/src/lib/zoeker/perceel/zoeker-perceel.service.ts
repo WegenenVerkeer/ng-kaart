@@ -13,12 +13,12 @@ import {
   geoJSONOptions,
   IconDescription,
   nietOndersteund,
+  ZoekAntwoord,
   Zoeker,
   ZoekInput,
   ZoekKaartResultaat,
   Zoekopdracht,
-  ZoekResultaat,
-  ZoekResultaten
+  ZoekResultaat
 } from "../zoeker";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "../zoeker-representatie.service";
 
@@ -185,7 +185,7 @@ export class ZoekerPerceelService implements Zoeker {
     return this.http.get<PerceelDetails>(this.locatorServicesConfig.url + "/rest/capakey/perceel/" + capakey).pipe(shareReplay(1));
   }
 
-  zoekresultaten$(zoekopdracht: Zoekopdracht): rx.Observable<ZoekResultaten> {
+  zoekresultaten$(zoekopdracht: Zoekopdracht): rx.Observable<ZoekAntwoord> {
     switch (zoekopdracht.zoektype) {
       case "Volledig":
         return this.zoek$(zoekopdracht.zoekpatroon);
@@ -194,13 +194,13 @@ export class ZoekerPerceelService implements Zoeker {
     }
   }
 
-  zoek$(zoekterm: ZoekInput): rx.Observable<ZoekResultaten> {
+  zoek$(zoekterm: ZoekInput): rx.Observable<ZoekAntwoord> {
     switch (zoekterm.type) {
       case "Perceel":
         return this.getPerceelDetails$((zoekterm as PerceelZoekInput).capaKey).pipe(
           map(
             details =>
-              new ZoekResultaten(
+              new ZoekAntwoord(
                 this.naam(),
                 "Volledig",
                 [],

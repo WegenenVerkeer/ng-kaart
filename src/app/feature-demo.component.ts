@@ -14,6 +14,7 @@ import {
   KaartClassicComponent,
   offsetStyleFunction,
   parseCoordinate,
+  Precache,
   ToegevoegdeLaag,
   validateAwvV0RuleDefintion,
   VeldInfo,
@@ -23,6 +24,7 @@ import {
 } from "../../projects/ng-kaart/src/public_api";
 
 import { DummyZoeker } from "./dummy-zoeker";
+import { wkts } from "./wkts";
 
 export interface FietspadSelectie {
   feature: ol.Feature;
@@ -349,6 +351,10 @@ export class FeatureDemoComponent {
 
   configuratorMiddelpunt = [130000, 193000];
 
+  wkt = wkts.districten.gent;
+
+  precacheInput: Precache = null;
+
   // Dit werkt alleen als apigateway bereikbaar is. Zie CORS waarschuwing in README.
   readonly districtSource: ol.source.Vector = new ol.source.Vector({
     format: new ol.format.GeoJSON(),
@@ -444,6 +450,14 @@ export class FeatureDemoComponent {
   ];
 
   private geometryType = "Polygon";
+
+  startPrecache() {
+    this.precacheInput = {
+      startZoom: 7,
+      eindZoom: 9,
+      wkt: this.wkt
+    };
+  }
 
   private addIcon() {
     if (this.installaties.length > 20) {

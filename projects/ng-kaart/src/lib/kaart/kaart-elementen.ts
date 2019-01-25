@@ -163,10 +163,12 @@ export interface ToegevoegdeVectorLaag extends ToegevoegdeLaag {
 }
 
 export const isWmsLaag: (laag: Laag) => boolean = laag => laag.type === SingleTileWmsType || laag.type === TiledWmsType;
+export const isTiledWmsLaag: (laag: Laag) => boolean = laag => laag.type === TiledWmsType;
 export const isBlancoLaag: (laag: Laag) => boolean = laag => laag.type === BlancoType;
 export const isVectorLaag: (laag: Laag) => boolean = laag => laag.type === VectorType;
 export const isNoSqlFsLaag: (laag: Laag) => boolean = laag => laag.type === VectorType && laag.source.hasOwnProperty("loadEvent$");
 export const asVectorLaag: (laag: Laag) => Option<VectorLaag> = fromPredicate(isVectorLaag) as (_: Laag) => Option<VectorLaag>;
+export const asTiledWmsLaag: (laag: Laag) => Option<WmsLaag> = fromPredicate(isTiledWmsLaag) as (_: Laag) => Option<WmsLaag>;
 export const isToegevoegdeVectorLaag: Refinement<ToegevoegdeLaag, ToegevoegdeVectorLaag> = (laag): laag is ToegevoegdeVectorLaag =>
   isVectorLaag(laag.bron);
 export const asToegevoegdeVectorLaag: (laag: ToegevoegdeLaag) => Option<ToegevoegdeVectorLaag> = laag =>
