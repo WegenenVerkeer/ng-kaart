@@ -1,5 +1,5 @@
 /// <reference types="@types/googlemaps" />
-import { HttpClient, HttpParams } from "@angular/common/http";
+import { HttpClient, HttpHeaders, HttpParams } from "@angular/common/http";
 import { Inject, Injectable } from "@angular/core";
 import { Option, some } from "fp-ts/lib/Option";
 import { Map } from "immutable";
@@ -149,9 +149,15 @@ export class ZoekerGoogleWdbService implements Zoeker {
         if (!zoekterm.value || zoekterm.value.trim().length === 0) {
           return rx.of(new ZoekAntwoord(this.naam(), "Volledig", [], [], this.legende));
         }
-        const params: HttpParams = new HttpParams().set("query", zoekterm.value).set("legacy", "false");
+        const body = new URLSearchParams();
+        body.set("query", zoekterm.value);
+        body.set("legacy", "false");
 
-        return this.httpClient.get<Object>(this.locatieZoekerUrl + "/zoek", { params: params }).pipe(
+        const options = {
+          headers: new HttpHeaders().set("Content-Type", "application/x-www-form-urlencoded")
+        };
+
+        return this.httpClient.post<Object>(this.locatieZoekerUrl + "/zoek", body.toString(), options).pipe(
           switchMap(resp => this.parseResult(resp, zoektype, maxResultaten)),
           catchError(err => this.handleError(err, zoektype))
         );
