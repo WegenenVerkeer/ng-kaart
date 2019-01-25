@@ -161,17 +161,9 @@ export class KaartComponent extends KaartComponentBase {
       });
 
     // Observeer veranderingen aan de inhoud van het linker paneel op het niveau van het DOM
-    const mutConfig: MutationObserverInit = {
-      subtree: true,
-      childList: true,
-      attributes: true,
-      attributeFilter: ["clientHeight", "clientWidth", "scrollHeight"]
-    };
     this.bindToLifeCycle(
       this.viewReady$.pipe(
-        switchMap(() =>
-          observableFromDomMutations(mutConfig, this.kaartLinksElement.nativeElement, this.kaartFixedLinksBovenElement.nativeElement)
-        ),
+        switchMap(() => resizeObservable(this.kaartLinksElement.nativeElement, this.kaartFixedLinksBovenElement.nativeElement)),
         debounceTime(150) // het is voldoende om weten dat er onlangs iets aangepast is
       )
     ).subscribe(() => this.pasKaartLinksWeergaveAan());
