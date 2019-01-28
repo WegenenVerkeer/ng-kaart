@@ -644,9 +644,48 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
         } else {
           this.kuisZoekOp();
         }
+        break;
+      case "ArrowDown":
+        this.setFocusEersteSuggestieOfResultaat();
+        break;
+      case "ArrowUp":
+        this.setFocusLaatsteSuggestieOfResultaat();
+        break;
     }
     // Een formbuilder heeft een observable ingebouwd, maar dat gebruiken we dus niet
     this.zoekInputSubj.next(event.srcElement.value);
+  }
+
+  focusNext(e, isLast: boolean): void {
+    if (isLast) {
+      this.focusOpZoekVeld();
+    } else {
+      e.srcElement.nextElementSibling.focus();
+    }
+  }
+
+  focusPrev(e, isFirst: boolean): void {
+    if (isFirst) {
+      this.focusOpZoekVeld();
+    } else {
+      e.srcElement.previousSibling.focus();
+    }
+  }
+
+  setFocusEersteSuggestieOfResultaat(): void {
+    if (document.getElementById("suggestie0")) {
+      document.getElementById("suggestie0").focus();
+    } else if (document.getElementById("resultaat0")) {
+      document.getElementById("resultaat0").focus();
+    }
+  }
+
+  setFocusLaatsteSuggestieOfResultaat(): void {
+    if (document.getElementById(`suggestie${this.alleSuggestiesResultaten.length - 1}`)) {
+      document.getElementById(`suggestie${this.alleSuggestiesResultaten.length - 1}`).focus();
+    } else if (document.getElementById(`resultaat${this.alleZoekResultaten.length - 1}`)) {
+      document.getElementById(`resultaat${this.alleZoekResultaten.length - 1}`).focus();
+    }
   }
 
   zoek(event: any) {
@@ -688,6 +727,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
 
   private processZoekerAntwoord(nieuweResultaten: ZoekAntwoord, prioriteitenOpNaam: ZoekerPrioriteitenOpZoekernaam): void {
     kaartLogger.debug("Process " + nieuweResultaten.zoeker, nieuweResultaten);
+    this.focusOpZoekVeld();
     switch (nieuweResultaten.zoektype) {
       case "Volledig":
         return this.processVolledigZoekerAntwoord(nieuweResultaten, prioriteitenOpNaam);

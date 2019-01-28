@@ -28,7 +28,7 @@
     <button mat-icon-button [matMenuTriggerFor]="zoekerMenu" matTooltip="Toon zoekopties" matTooltipPosition="right">
       <mat-icon>menu</mat-icon>
     </button>
-    <input placeholder="Zoek" [formControl]="zoekVeld" *ngIf="this.actieveZoeker === 'Basis'" (keyup)="onKey($event)" #zoekVeldElement>
+    <input placeholder="Zoek" [formControl]="zoekVeld" *ngIf="this.actieveZoeker === 'Basis'" (keydown)="onKey($event)" #zoekVeldElement>
     <span class="actieve-zoeker-titel" *ngIf="actieveZoeker === Perceel">Zoek op perceel</span>
     <span class="actieve-zoeker-titel" *ngIf="actieveZoeker === Crab">Zoek op adres via CRAB</span>
     <span class="actieve-zoeker-titel" *ngIf="actieveZoeker === ExterneWms">Zoek een WMS-laag</span>
@@ -59,13 +59,13 @@
     </button>
   </div>
   <div class="suggesties-box box-shadow" *ngIf="toonSuggesties">
-    <div *ngFor="let resultaat of alleSuggestiesResultaten" class="suggesties-resultaat" (click)="kiesSuggestiesResultaat(resultaat)">
+    <button (keydown.arrowdown)="focusNext($event, last)" (keydown.arrowup)="focusPrev($event, first)" *ngFor="let resultaat of alleSuggestiesResultaten; let i = index; let last = last; let first = first" id="suggestie{{i}}" class="suggesties-resultaat" (click)="kiesSuggestiesResultaat(resultaat)">
       <span [ngSwitch]="resultaat.icoon.type">
         <mat-icon *ngSwitchCase="'svg'" class="zoeker-resultaat-icoon" [svgIcon]="resultaat.icoon.name"></mat-icon>
         <mat-icon *ngSwitchCase="'font'" class="zoeker-resultaat-icoon">{{resultaat.icoon.name}}</mat-icon>
       </span>
       <span>{{resultaat.omschrijving}}</span>
-    </div>
+    </button>
   </div>
 
   <awv-zoeker-perceel-getrapt *ngIf="actieveZoeker === Perceel" [hidden]="!toonResultaat"
@@ -140,16 +140,17 @@
   </div>
   <div *ngIf="toonResultaat && isInklapbaar()" class="divider"></div>
   <div class="zoeker-resultaat-box" *ngIf="toonResultaat" [@enterAnimation]>
-    <div *ngFor="let resultaat of alleZoekResultaten" class="zoeker-resultaat" (click)="kiesZoekResultaat(resultaat)">
-      <div [ngSwitch]="resultaat.icoon.type">
+    <button *ngFor="let resultaat of alleZoekResultaten; let i = index; let last = last; let first = first" id="resultaat{{i}}" class="zoeker-resultaat"
+            (keydown.arrowdown)="focusNext($event, last)" (keydown.arrowup)="focusPrev($event, first)" (click)="kiesZoekResultaat(resultaat)">
+      <span [ngSwitch]="resultaat.icoon.type">
         <mat-icon *ngSwitchCase="'svg'" class="zoeker-resultaat-icoon" [svgIcon]="resultaat.icoon.name"></mat-icon>
         <mat-icon *ngSwitchCase="'font'" class="zoeker-resultaat-icoon">{{resultaat.icoon.name}}</mat-icon>
-      </div>
-      <div class="zoeker-data-box">
+      </span>
+      <span class="zoeker-data-box">
         <div class="zoeker-omschrijving" [innerHTML]="resultaat.omschrijving | highlight: zoekVeld.value"></div>
         <div class="zoeker-extra" [innerHTML]="resultaat.extraOmschrijving.getOrElse('') | highlight: zoekVeld.value"></div>
-      </div>
-    </div>
+      </span>
+    </button>
     <div *ngIf="heeftFout()" class="divider"></div>
     <div *ngFor="let fout of alleFouten" class="zoeker-resultaat zoeker-fout" [@enterAnimation]>
       <mat-icon>announcement</mat-icon>
