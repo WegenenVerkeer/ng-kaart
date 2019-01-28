@@ -18,3 +18,13 @@ export const registreerRoute = (cacheName: any, requestPattern: string) => {
     }
   });
 };
+
+export const setOffline = (cacheName: any, requestPattern: string) => {
+  sendMessage({
+    action: "OFFLINE",
+    payload: {
+      requestPattern: requestPattern,
+      cacheName: cacheName
+    }
+  });
+};

@@ -36,6 +36,16 @@ self.addEventListener('message', event => {
         })
       );
       break;
+    case 'OFFLINE':
+      const { requestPattern2, cacheName2 } = payload;
+      info(`Routing ${requestPattern2} to cache ${cacheName2}`);
+      routing.registerRoute(
+        new RegExp(requestPattern2),
+        strategies.cacheOnly({
+          cacheName: cacheName2
+        })
+      );
+      break;
     default:
       logComm('Unrecognised message received', event.data);
   }

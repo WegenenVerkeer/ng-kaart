@@ -439,6 +439,10 @@
               <button (click)="startPrecache()">Start vullen cache dienstkaart (district Gent)</button>
             </div>
 
+          <div>
+            <button (click)="offline(true)">Activeer cache only</button>
+          </div>
+
             <div>
               <textarea class="cachewkt__textarea" [value]="wkt" (input)="wkt = $event.target.value"></textarea>
             </div>

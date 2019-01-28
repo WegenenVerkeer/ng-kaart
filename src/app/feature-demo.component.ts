@@ -2,6 +2,7 @@ import { animate, style, transition, trigger } from "@angular/animations";
 import { Component, ViewChild, ViewEncapsulation } from "@angular/core";
 import { array } from "fp-ts";
 import { none, Option, some } from "fp-ts/lib/Option";
+import { fromNullable } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
@@ -30,6 +31,25 @@ export interface FietspadSelectie {
   feature: ol.Feature;
   geselecteerd: boolean;
 }
+
+const sendMessage = (message: any) => {
+  fromNullable(navigator.serviceWorker)
+    .chain(sw => fromNullable(sw.controller))
+    .map(swc => swc.postMessage(message))
+    .orElse(() => {
+      throw new Error("Geen navigator.serviceWorker.controller object gevonden. Werd ng-kaart-service-worker.js correct geïnitialiseerd?");
+    });
+};
+
+export const setOffline = (cacheName: any, requestPattern: string) => {
+  sendMessage({
+    action: "OFFLINE",
+    payload: {
+      requestPattern: requestPattern,
+      cacheName: cacheName
+    }
+  });
+};
 
 @Component({
   selector: "awv-feature-demo",
@@ -628,5 +648,11 @@ export class FeatureDemoComponent {
 
   onZetCenterManueel(coordTxt: string): void {
     forEach(parseCoordinate(coordTxt), (coords: [number, number]) => (this.configuratorMiddelpunt = coords));
+  }
+
+  offline(offline: boolean): void {
+    if (offline) {
+      setOffline("Dienstkaart grijs", "/geowebcache/service/wms.*grijs.*");
+    }
   }
 }
