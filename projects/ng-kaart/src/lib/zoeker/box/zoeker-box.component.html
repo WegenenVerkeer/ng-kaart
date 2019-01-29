@@ -59,7 +59,10 @@
     </button>
   </div>
   <div class="suggesties-box box-shadow" *ngIf="toonSuggesties">
-    <button (keydown.arrowdown)="focusNext($event, last)" (keydown.arrowup)="focusPrev($event, first)" *ngFor="let resultaat of alleSuggestiesResultaten; let i = index; let last = last; let first = first" id="suggestie{{i}}" class="suggesties-resultaat" (click)="kiesSuggestiesResultaat(resultaat)">
+    <button *ngFor="let resultaat of alleSuggestiesResultaten; let index=index; let isFirst=first; let isLast=last"
+            id="{{suggestieId(index, isFirst, isLast)}}" class="suggesties-resultaat"
+            (keydown.arrowdown)="focusNext($event, isLast)" (keydown.arrowup)="focusPrev($event, isFirst)"
+            (click)="kiesSuggestiesResultaat(resultaat)">
       <span [ngSwitch]="resultaat.icoon.type">
         <mat-icon *ngSwitchCase="'svg'" class="zoeker-resultaat-icoon" [svgIcon]="resultaat.icoon.name"></mat-icon>
         <mat-icon *ngSwitchCase="'font'" class="zoeker-resultaat-icoon">{{resultaat.icoon.name}}</mat-icon>
@@ -140,8 +143,10 @@
   </div>
   <div *ngIf="toonResultaat && isInklapbaar()" class="divider"></div>
   <div class="zoeker-resultaat-box" *ngIf="toonResultaat" [@enterAnimation]>
-    <button *ngFor="let resultaat of alleZoekResultaten; let i = index; let last = last; let first = first" id="resultaat{{i}}" class="zoeker-resultaat"
-            (keydown.arrowdown)="focusNext($event, last)" (keydown.arrowup)="focusPrev($event, first)" (click)="kiesZoekResultaat(resultaat)">
+    <button *ngFor="let resultaat of alleZoekResultaten; let index=index; let isFirst=first; let isLast=last"
+            id="{{resultaatId(index, isFirst, isLast)}}" class="zoeker-resultaat"
+            (keydown.arrowdown)="focusNext($event, isLast)" (keydown.arrowup)="focusPrev($event, isFirst)"
+            (click)="kiesZoekResultaat(resultaat)">
       <span [ngSwitch]="resultaat.icoon.type">
         <mat-icon *ngSwitchCase="'svg'" class="zoeker-resultaat-icoon" [svgIcon]="resultaat.icoon.name"></mat-icon>
         <mat-icon *ngSwitchCase="'font'" class="zoeker-resultaat-icoon">{{resultaat.icoon.name}}</mat-icon>

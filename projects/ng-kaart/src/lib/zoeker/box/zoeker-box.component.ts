@@ -646,9 +646,11 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
         }
         break;
       case "ArrowDown":
+        event.preventDefault(); // stop arrow key from scrolling window
         this.setFocusEersteSuggestieOfResultaat();
         break;
       case "ArrowUp":
+        event.preventDefault(); // stop arrow key from scrolling window
         this.setFocusLaatsteSuggestieOfResultaat();
         break;
     }
@@ -657,6 +659,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   focusNext(e, isLast: boolean): void {
+    event.preventDefault(); // stop arrow key from scrolling window
     if (isLast) {
       this.focusOpZoekVeld();
     } else {
@@ -665,6 +668,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   focusPrev(e, isFirst: boolean): void {
+    event.preventDefault(); // stop arrow key from scrolling window
     if (isFirst) {
       this.focusOpZoekVeld();
     } else {
@@ -672,19 +676,39 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     }
   }
 
+  suggestieId(index: number, isFirst: boolean, isLast: boolean): string {
+    if (isFirst) {
+      return "eersteSuggestie";
+    } else if (isLast) {
+      return "laatsteSuggestie";
+    } else {
+      return `suggestie-${index}`;
+    }
+  }
+
+  resultaatId(index: number, isFirst: boolean, isLast: boolean): string {
+    if (isFirst) {
+      return "eersteResultaat";
+    } else if (isLast) {
+      return "laatsteResultaat";
+    } else {
+      return `resultaat-${index}`;
+    }
+  }
+
   setFocusEersteSuggestieOfResultaat(): void {
-    if (document.getElementById("resultaat0")) {
-      document.getElementById("resultaat0").focus();
-    } else if (document.getElementById("suggestie0")) {
-      document.getElementById("suggestie0").focus();
+    if (document.getElementById("eersteResultaat")) {
+      document.getElementById("eersteResultaat").focus();
+    } else if (document.getElementById("eersteSuggestie")) {
+      document.getElementById("eersteSuggestie").focus();
     }
   }
 
   setFocusLaatsteSuggestieOfResultaat(): void {
-    if (document.getElementById(`resultaat${this.alleZoekResultaten.length - 1}`)) {
-      document.getElementById(`resultaat${this.alleZoekResultaten.length - 1}`).focus();
-    } else if (document.getElementById(`suggestie${this.alleSuggestiesResultaten.length - 1}`)) {
-      document.getElementById(`suggestie${this.alleSuggestiesResultaten.length - 1}`).focus();
+    if (document.getElementById("laatsteResultaat")) {
+      document.getElementById("laatsteResultaat").focus();
+    } else if (document.getElementById("laatsteSuggestie")) {
+      document.getElementById("laatsteSuggestie").focus();
     }
   }
 
