@@ -46,6 +46,13 @@
     overflow: hidden;
     display: flex;
 
+    /* niet stylen als een button */
+    border: none;
+    background: none;
+    font-size: 14px;
+    width: 100%;
+    text-align: left;
+
     &:hover {
       background-color: rgba(0, 0, 0, 0.04);
       cursor: pointer;
@@ -82,6 +89,14 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
+
+    /* niet stylen als een button */
+    border: none;
+    background: none;
+    display: block;
+    font-size: 14px;
+    width: 100%;
+    text-align: left;
 
     &:hover {
       background-color: rgba(0, 0, 0, 0.04);

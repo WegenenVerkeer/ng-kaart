@@ -644,9 +644,72 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
         } else {
           this.kuisZoekOp();
         }
+        break;
+      case "ArrowDown":
+        event.preventDefault(); // stop arrow key from scrolling window
+        this.setFocusEersteSuggestieOfResultaat();
+        break;
+      case "ArrowUp":
+        event.preventDefault(); // stop arrow key from scrolling window
+        this.setFocusLaatsteSuggestieOfResultaat();
+        break;
     }
     // Een formbuilder heeft een observable ingebouwd, maar dat gebruiken we dus niet
     this.zoekInputSubj.next(event.srcElement.value);
+  }
+
+  focusNext(e, isLast: boolean): void {
+    event.preventDefault(); // stop arrow key from scrolling window
+    if (isLast) {
+      this.focusOpZoekVeld();
+    } else {
+      e.srcElement.nextElementSibling.focus();
+    }
+  }
+
+  focusPrev(e, isFirst: boolean): void {
+    event.preventDefault(); // stop arrow key from scrolling window
+    if (isFirst) {
+      this.focusOpZoekVeld();
+    } else {
+      e.srcElement.previousSibling.focus();
+    }
+  }
+
+  suggestieId(index: number, isFirst: boolean, isLast: boolean): string {
+    if (isFirst) {
+      return "eersteSuggestie";
+    } else if (isLast) {
+      return "laatsteSuggestie";
+    } else {
+      return `suggestie-${index}`;
+    }
+  }
+
+  resultaatId(index: number, isFirst: boolean, isLast: boolean): string {
+    if (isFirst) {
+      return "eersteResultaat";
+    } else if (isLast) {
+      return "laatsteResultaat";
+    } else {
+      return `resultaat-${index}`;
+    }
+  }
+
+  setFocusEersteSuggestieOfResultaat(): void {
+    if (document.getElementById("eersteSuggestie")) {
+      document.getElementById("eersteSuggestie").focus();
+    } else if (document.getElementById("eersteResultaat")) {
+      document.getElementById("eersteResultaat").focus();
+    }
+  }
+
+  setFocusLaatsteSuggestieOfResultaat(): void {
+    if (document.getElementById("laatsteSuggestie")) {
+      document.getElementById("laatsteSuggestie").focus();
+    } else if (document.getElementById("laatsteResultaat")) {
+      document.getElementById("laatsteResultaat").focus();
+    }
   }
 
   zoek(event: any) {
@@ -688,6 +751,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
 
   private processZoekerAntwoord(nieuweResultaten: ZoekAntwoord, prioriteitenOpNaam: ZoekerPrioriteitenOpZoekernaam): void {
     kaartLogger.debug("Process " + nieuweResultaten.zoeker, nieuweResultaten);
+    this.focusOpZoekVeld();
     switch (nieuweResultaten.zoektype) {
       case "Volledig":
         return this.processVolledigZoekerAntwoord(nieuweResultaten, prioriteitenOpNaam);
