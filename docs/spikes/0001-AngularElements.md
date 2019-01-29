@@ -2,7 +2,7 @@
 
 ## Doel van de spike
 
-Nagaan of Angular Elements kan helpen bij het terbeschikking stellen van ng-kaart aan partijen die niet met (een compatible versie van) Angular werken.
+Nagaan of Angular Elements kan helpen bij het ter beschikking stellen van ng-kaart aan partijen die niet met (een compatible versie van) Angular werken.
 
 ## Context
 
@@ -35,7 +35,7 @@ Ga naar `dist\webcomponent` en start daar `npx static-server`. Browse vervolgens
 
 Het is wel degelijk bijna triviaal om een web component te maken.
 
-Helaas zijn er wel een aantal beperkingen die ng-kaart parten spelen. In pincipe moe de ViewEncapsulation op `Native` of `ShadowDom` staan en dat is nu niet zo voor alle tags. Hier zouden we nog wel rond kunnen werken of dit aanpassen. Belangrijker echter, is dat de tag `awv-kaart-classic` intensief gebruik maakt van geneste tags om de kaart te configureren. En geneste tags worden (nog) niet ondersteund door Angular 7.1. Mochten we elke `awv-kaart-*` tag als een web component aanbieden, dan zouden die elk hun afzonderlijke instantie van Angular draaien. En die kunnen niet met elkaar communiceren (of toch geen gemeenschappelijke componenthierarchie opbouwen).
+Helaas zijn er wel een aantal beperkingen die ng-kaart parten spelen. In pincipe moet de ViewEncapsulation op `Native` of `ShadowDom` staan en dat is nu niet zo voor alle tags. Hier zouden we nog wel rond kunnen werken of dit aanpassen. Belangrijker echter, is dat de tag `awv-kaart-classic` intensief gebruik maakt van geneste tags om de kaart te configureren. En geneste tags worden (nog) niet ondersteund door Angular 7.1. Mochten we elke `awv-kaart-*` tag als een web component aanbieden, dan zouden die elk hun afzonderlijke instantie van Angular draaien. En die kunnen niet met elkaar communiceren (of toch geen gemeenschappelijke componenthierarchie opbouwen).
 
 Er wordt gezegd dat de nieuwe Ivy backend voor Angular hier een uitkomst zou voor kunnen zijn, maar wanneer die gereleased wordt en of deze beperking dan effectief opgeheven zal zijn, is koffiedik kijken.
 
