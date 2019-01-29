@@ -697,18 +697,18 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   setFocusEersteSuggestieOfResultaat(): void {
-    if (document.getElementById("eersteResultaat")) {
-      document.getElementById("eersteResultaat").focus();
-    } else if (document.getElementById("eersteSuggestie")) {
+    if (document.getElementById("eersteSuggestie")) {
       document.getElementById("eersteSuggestie").focus();
+    } else if (document.getElementById("eersteResultaat")) {
+      document.getElementById("eersteResultaat").focus();
     }
   }
 
   setFocusLaatsteSuggestieOfResultaat(): void {
-    if (document.getElementById("laatsteResultaat")) {
-      document.getElementById("laatsteResultaat").focus();
-    } else if (document.getElementById("laatsteSuggestie")) {
+    if (document.getElementById("laatsteSuggestie")) {
       document.getElementById("laatsteSuggestie").focus();
+    } else if (document.getElementById("laatsteResultaat")) {
+      document.getElementById("laatsteResultaat").focus();
     }
   }
 
