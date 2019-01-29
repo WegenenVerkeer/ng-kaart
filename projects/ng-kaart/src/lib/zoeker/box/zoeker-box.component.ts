@@ -648,11 +648,11 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       case "ArrowDown":
         event.preventDefault(); // stop arrow key from scrolling window
         this.setFocusEersteSuggestieOfResultaat();
-        break;
+        return; // exit, geen emit op zoekinputSubj om nieuwe zoekopdracht te starten
       case "ArrowUp":
         event.preventDefault(); // stop arrow key from scrolling window
         this.setFocusLaatsteSuggestieOfResultaat();
-        break;
+        return; // exit, geen emit op zoekinputSubj om nieuwe zoekopdracht te starten
     }
     // Een formbuilder heeft een observable ingebouwd, maar dat gebruiken we dus niet
     this.zoekInputSubj.next(event.srcElement.value);
