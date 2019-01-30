@@ -9,7 +9,7 @@ import { catchError, map, switchMap } from "rxjs/operators";
 
 import { fromNullablePredicate } from "../../util/option";
 import { ZOEKER_CFG, ZoekerConfigData } from "../config/zoeker-config";
-import { ZoekerConfigGoogleWdbConfig } from "../config/zoeker-config-google-wdb.config";
+import { GoogleWdbLocatieZoekerConfigData, ZoekerConfigGoogleWdbConfig } from "../config/zoeker-config-google-wdb.config";
 import {
   geoJSONOptions,
   IconDescription,
@@ -93,7 +93,7 @@ interface ExtendedPlaceResult extends google.maps.places.PlaceResult, ExtendedRe
 
 @Injectable()
 export class ZoekerGoogleWdbService implements Zoeker {
-  private readonly googleWdbLocatieZoekerConfig: ZoekerConfigGoogleWdbConfig;
+  private googleWdbLocatieZoekerConfig: ZoekerConfigGoogleWdbConfig;
   private _cache: Promise<GoogleServices> | null = null;
   private legende: Map<string, IconDescription>;
 
@@ -116,6 +116,10 @@ export class ZoekerGoogleWdbService implements Zoeker {
 
   naam(): string {
     return "Google/WDB LocatieZoeker";
+  }
+
+  setGoogleWdbLocatieZoekerConfigData(googleWdbLocatieZoekerConfigData: GoogleWdbLocatieZoekerConfigData) {
+    this.googleWdbLocatieZoekerConfig = new ZoekerConfigGoogleWdbConfig(googleWdbLocatieZoekerConfigData);
   }
 
   private init(): Promise<GoogleServices> {
