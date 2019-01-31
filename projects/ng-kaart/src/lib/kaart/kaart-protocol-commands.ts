@@ -16,7 +16,7 @@ import * as ss from "./stijl-selector";
 export type Command<Msg extends KaartMsg> =
   | AbortTileLoadingCmd
   | ActiveerCacheVoorLaag<Msg>
-  | ActiveerHighlightModus<Msg>
+  | ActiveerHighlightModusCmd<Msg>
   | ActiveerHoverModusCmd<Msg>
   | ActiveerSelectieModusCmd<Msg>
   | BewerkVectorlaagstijlCmd
@@ -255,7 +255,7 @@ export interface ActiveerHoverModusCmd<Msg extends KaartMsg> {
 
 export type HighlightModus = "on" | "off";
 
-export interface ActiveerHighlightModus<Msg extends KaartMsg> {
+export interface ActiveerHighlightModusCmd<Msg extends KaartMsg> {
   readonly type: "ActiveerHighlightModus";
   readonly highlightModus: HighlightModus;
 }
@@ -602,6 +602,10 @@ export function VervangFeaturesCmd<Msg extends KaartMsg>(
 
 export function ActiveerSelectieModusCmd<Msg extends KaartMsg>(selectieModus: SelectieModus): ActiveerSelectieModusCmd<Msg> {
   return { type: "ActiveerSelectieModus", selectieModus: selectieModus };
+}
+
+export function ActiveerHighlightModusCmd<Msg extends KaartMsg>(highlightModus: HighlightModus): ActiveerHighlightModusCmd<Msg> {
+  return { type: "ActiveerHighlightModus", highlightModus: highlightModus };
 }
 
 export function ActiveerHoverModusCmd<Msg extends KaartMsg>(hoverModus: HoverModus): ActiveerHoverModusCmd<Msg> {
