@@ -10,23 +10,23 @@ import { BareValidationWrapper, KaartMsg, Subscription, ValidationWrapper } from
 import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { Legende } from "./kaart-legende";
-import * as prt from "./kaart-protocol";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import * as ss from "./stijl-selector";
 
 export type Command<Msg extends KaartMsg> =
   | AbortTileLoadingCmd
   | ActiveerCacheVoorLaag<Msg>
+  | ActiveerHighlightModus<Msg>
   | ActiveerHoverModusCmd<Msg>
   | ActiveerSelectieModusCmd<Msg>
   | BewerkVectorlaagstijlCmd
   | DeselecteerAlleFeaturesCmd
   | DeselecteerFeatureCmd
+  | HighlightFeaturesCmd<Msg>
   | KiesAchtergrondCmd<Msg>
   | MaakLaagOnzichtbaarCmd<Msg>
   | MaakLaagZichtbaarCmd<Msg>
   | MeldComponentFoutCmd
-  | VulCacheVoorLaag<Msg>
   | SelecteerFeaturesCmd
   | SluitInfoBoodschapCmd
   | SluitPanelenCmd
@@ -64,6 +64,7 @@ export type Command<Msg extends KaartMsg> =
   | VoegVolledigSchermToeCmd<Msg>
   | VoegZoekerToeCmd<Msg>
   | VraagSchaalAanCmd<Msg>
+  | VulCacheVoorLaag<Msg>
   | ZetActieveModusCmd
   | ZetFocusOpKaartCmd
   | ZetLaagLegendeCmd<Msg>
@@ -221,6 +222,13 @@ export interface VerliesFocusOpKaartCmd {
   readonly type: "VerliesFocusOpKaart";
 }
 
+export interface HighlightFeaturesCmd<Msg extends KaartMsg> {
+  readonly type: "HighlightFeatures";
+  readonly titel: string;
+  readonly selector: (feature: ol.Feature) => boolean;
+  readonly wrapper: BareValidationWrapper<Msg>;
+}
+
 export interface VervangFeaturesCmd<Msg extends KaartMsg> {
   readonly type: "VervangFeatures";
   readonly titel: string;
@@ -243,6 +251,13 @@ export type HoverModus = "on" | "off";
 export interface ActiveerHoverModusCmd<Msg extends KaartMsg> {
   readonly type: "ActiveerHoverModus";
   readonly hoverModus: HoverModus;
+}
+
+export type HighlightModus = "on" | "off";
+
+export interface ActiveerHighlightModus<Msg extends KaartMsg> {
+  readonly type: "ActiveerHighlightModus";
+  readonly highlightModus: HighlightModus;
 }
 
 export interface ToonAchtergrondKeuzeCmd<Msg extends KaartMsg> {
@@ -567,6 +582,14 @@ export function VeranderViewportCmd<Msg extends KaartMsg>(size: ol.Size): Verand
 
 export function AbortTileLoadingCmd(): AbortTileLoadingCmd {
   return { type: "AbortTileLoading" };
+}
+
+export function HighlightFeaturesCmd<Msg extends KaartMsg>(
+  titel: string,
+  selector: (feature: ol.Feature) => boolean,
+  wrapper: BareValidationWrapper<Msg>
+): HighlightFeaturesCmd<Msg> {
+  return { type: "HighlightFeatures", titel: titel, selector: selector, wrapper: wrapper };
 }
 
 export function VervangFeaturesCmd<Msg extends KaartMsg>(

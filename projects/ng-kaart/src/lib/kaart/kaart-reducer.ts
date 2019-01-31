@@ -664,6 +664,22 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
     }
 
+    function highlightFeaturesCmd(cmnd: prt.HighlightFeaturesCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        valideerVectorLayerBestaat(cmnd.titel).map(layer => {
+          model.highlightedFeatures.clear();
+          model.highlightedFeatures.extend(
+            layer
+              .getSource()
+              .getFeatures()
+              .filter(cmnd.selector)
+          );
+          return ModelAndEmptyResult(model);
+        })
+      );
+    }
+
     function vervangFeaturesCmd(cmnd: prt.VervangFeaturesCmd<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
@@ -870,10 +886,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           laagnaam =>
             styleSelectorFn(model.map, laagnaam).foldL(
               () => {
-                kaartLogger.warn("Geen hover/selectiestijl gevonden voor:", feature);
+                kaartLogger.debug("Geen hover/selectiestijl gevonden voor:", feature);
                 return getFeatureStyleSelector(model.map, laagnaam).foldL<FeatureStyle>(
                   () => {
-                    kaartLogger.error("Ook geen stijlselector gevonden voor:", feature);
+                    kaartLogger.error("Geen stijlselector gevonden voor:", feature);
                     return noStyle;
                   },
                   pipe(
@@ -952,6 +968,27 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
 
       forEach(getHoverInteraction(cmnd.hoverModus), selectInteraction => {
+        model.map.addInteraction(new ol.interaction.Select(selectInteraction));
+      });
+
+      return ModelWithResult(model);
+    }
+
+    function activeerHighlightModus(cmnd: prt.ActiveerHighlightModus<Msg>): ModelWithResult<Msg> {
+      function getHighlightFeaturesInteraction(modus: prt.HoverModus): Option<olx.interaction.SelectOptions> {
+        switch (modus) {
+          case "on":
+            return some({
+              condition: ol.events.condition.never,
+              features: model.highlightedFeatures,
+              style: createStyleFn(getHoverStyleSelector)
+            });
+          case "off":
+            return none;
+        }
+      }
+
+      forEach(getHighlightFeaturesInteraction(cmnd.highlightModus), selectInteraction => {
         model.map.addInteraction(new ol.interaction.Select(selectInteraction));
       });
 
@@ -1407,6 +1444,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return verliesFocusOpKaartCmd(cmd);
       case "VervangFeatures":
         return vervangFeaturesCmd(cmd);
+      case "ActiveerHighlightModus":
+        return activeerHighlightModus(cmd);
       case "ActiveerHoverModus":
         return activeerHoverModus(cmd);
       case "ActiveerSelectieModus":
@@ -1483,6 +1522,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return activeerCacheVoorLaag(cmd);
       case "VulCacheVoorLaag":
         return vulCacheVoorLaag(cmd);
+      case "HighlightFeatures":
+        return highlightFeaturesCmd(cmd);
     }
   };
 }
