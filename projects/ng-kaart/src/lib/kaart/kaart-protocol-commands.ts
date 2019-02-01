@@ -10,7 +10,6 @@ import { BareValidationWrapper, KaartMsg, Subscription, ValidationWrapper } from
 import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { Legende } from "./kaart-legende";
-import * as prt from "./kaart-protocol";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import * as ss from "./stijl-selector";
 
@@ -19,6 +18,8 @@ export type Command<Msg extends KaartMsg> =
   | ActiveerCacheVoorLaag<Msg>
   | ActiveerHoverModusCmd<Msg>
   | ActiveerSelectieModusCmd<Msg>
+  | DeactiveerSelectieModusCmd<Msg>
+  | ReactiveerSelectieModusCmd<Msg>
   | BewerkVectorlaagstijlCmd
   | DeselecteerAlleFeaturesCmd
   | DeselecteerFeatureCmd
@@ -236,6 +237,14 @@ export type SelectieModus = "single" | "multipleKlik" | "multipleShift" | "none"
 export interface ActiveerSelectieModusCmd<Msg extends KaartMsg> {
   readonly type: "ActiveerSelectieModus";
   readonly selectieModus: SelectieModus;
+}
+
+export interface DeactiveerSelectieModusCmd<Msg extends KaartMsg> {
+  readonly type: "DeactiveerSelectieModus";
+}
+
+export interface ReactiveerSelectieModusCmd<Msg extends KaartMsg> {
+  readonly type: "ReactiveerSelectieModus";
 }
 
 export type HoverModus = "on" | "off";
@@ -579,6 +588,14 @@ export function VervangFeaturesCmd<Msg extends KaartMsg>(
 
 export function ActiveerSelectieModusCmd<Msg extends KaartMsg>(selectieModus: SelectieModus): ActiveerSelectieModusCmd<Msg> {
   return { type: "ActiveerSelectieModus", selectieModus: selectieModus };
+}
+
+export function DeactiveerSelectieModusCmd<Msg extends KaartMsg>(): DeactiveerSelectieModusCmd<Msg> {
+  return { type: "DeactiveerSelectieModus" };
+}
+
+export function ReactiveerSelectieModusCmd<Msg extends KaartMsg>(): ReactiveerSelectieModusCmd<Msg> {
+  return { type: "ReactiveerSelectieModus" };
 }
 
 export function ActiveerHoverModusCmd<Msg extends KaartMsg>(hoverModus: HoverModus): ActiveerHoverModusCmd<Msg> {
