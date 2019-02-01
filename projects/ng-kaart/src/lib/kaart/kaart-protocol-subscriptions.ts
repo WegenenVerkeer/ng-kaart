@@ -52,7 +52,8 @@ export interface GeselecteerdeFeatures {
 }
 
 export interface HoverFeature {
-  geselecteerd: Option<ol.Feature>;
+  hover: Option<ol.Feature>;
+  unhover: Option<ol.Feature>;
 }
 
 export type MsgGen<Input, Msg> = Function1<Input, Msg>;

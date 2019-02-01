@@ -189,7 +189,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
             // Zorg ervoor dat de geselecteerde features in de @Output terecht komen
             return this.geselecteerdeFeaturesChange.emit(msg.geselecteerdeFeatures.geselecteerd);
           case "FeatureHoverAangepast":
-            return this.hoverFeature.emit(msg.feature.geselecteerd);
+            return this.hoverFeature.emit(msg.feature.hover);
           case "ZichtbareFeaturesAangepast":
             return this.zichtbareFeatures.emit(msg.features);
           case "FeatureGedeselecteerd":

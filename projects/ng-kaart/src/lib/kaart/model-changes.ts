@@ -128,9 +128,17 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
   const geselecteerdeFeatures$ = rx.merge(toegevoegdeGeselecteerdeFeatures$, verwijderdeGeselecteerdeFeatures$).pipe(shareReplay(1));
 
   const hoverFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.hoverFeatures, "add", "remove").pipe(
-    map(() => ({
-      geselecteerd: model.hoverFeatures.getLength() !== 0 ? some(model.hoverFeatures.item(0)) : none
-    }))
+    map(event =>
+      event.type === "add"
+        ? {
+            hover: some(event.element),
+            unhover: none
+          }
+        : {
+            hover: none,
+            unhover: some(event.element)
+          }
+    )
   );
 
   // Met window resize hebben we niet alle bronnen van herschaling, maar toch al een grote

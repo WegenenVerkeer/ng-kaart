@@ -975,7 +975,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function activeerHighlightModus(cmnd: prt.ActiveerHighlightModusCmd<Msg>): ModelWithResult<Msg> {
-      function getHighlightFeaturesInteraction(modus: prt.HoverModus): Option<olx.interaction.SelectOptions> {
+      function getHighlightFeaturesInteraction(modus: prt.HighlightModus): Option<olx.interaction.SelectOptions> {
         switch (modus) {
           case "on":
             return some({

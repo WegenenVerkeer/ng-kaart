@@ -103,5 +103,6 @@ export interface GeselecteerdeFeatures {
 }
 
 export interface HoverFeature {
-  readonly geselecteerd: Option<ol.Feature>;
+  readonly hover: Option<ol.Feature>;
+  readonly unhover: Option<ol.Feature>;
 }
