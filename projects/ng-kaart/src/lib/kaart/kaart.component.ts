@@ -20,7 +20,6 @@ import {
 
 import { isNonEmpty } from "../util/arrays";
 import { asap } from "../util/asap";
-import { observableFromDomMutations } from "../util/mutation-observable";
 import { observeOnAngular } from "../util/observe-on-angular";
 import { observeOutsideAngular } from "../util/observer-outside-angular";
 import { flatten, ofType } from "../util/operators";
@@ -160,12 +159,13 @@ export class KaartComponent extends KaartComponentBase {
         }
       });
 
-    // Observeer veranderingen aan de inhoud van het linker paneel op het niveau van het DOM
+    // Observeer veranderingen aan de grootte van het linker paneel mbv browser events
     this.bindToLifeCycle(
       this.viewReady$.pipe(
         observeOutsideAngular(this.zone),
         switchMap(() => resizeObservable(this.kaartLinksElement.nativeElement, this.kaartFixedLinksBovenElement.nativeElement)),
-        debounceTime(150) // het is voldoende om weten dat er onlangs iets aangepast is
+        debounceTime(150), // het is voldoende om weten dat er onlangs iets aangepast is
+        observeOnAngular(this.zone)
       )
     ).subscribe(() => this.pasKaartLinksWeergaveAan());
     this.viewReady$.pipe(delay(10)).subscribe(() => this.bepaalKaartLinksInitieelZichtbaar()); // waarom is delay nodig?
