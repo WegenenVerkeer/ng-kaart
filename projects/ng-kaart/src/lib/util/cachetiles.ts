@@ -10,10 +10,18 @@ const fetchUrls = (urls: string[]) => {
   fetches.reduce((vorige, huidige) => vorige.then(huidige), Promise.resolve());
 };
 
-const deleteTiles = (laagnaam: string): Promise<Boolean> => caches.delete(laagnaam);
+const deleteTiles = (laagnaam: string, deleteCache: boolean): Promise<Boolean> =>
+  deleteCache ? caches.delete(laagnaam) : Promise.resolve(true);
 
 // TODO: dit is tijdelijke code -- functie wordt vervangen door performanter alternatief in latere story
-export const refreshTiles = (laagnaam: string, source: ol.source.UrlTile, startZoom: number, stopZoom: number, wkt: string) => {
+export const refreshTiles = (
+  laagnaam: string,
+  source: ol.source.UrlTile,
+  startZoom: number,
+  stopZoom: number,
+  wkt: string,
+  deleteCache: boolean
+) => {
   if (isNaN(startZoom)) {
     throw new Error("Start zoom is geen getal");
   }
@@ -81,5 +89,5 @@ export const refreshTiles = (laagnaam: string, source: ol.source.UrlTile, startZ
     queue = queue.concat(queueByZ);
   }
 
-  deleteTiles(laagnaam).then(() => fetchUrls(queue));
+  deleteTiles(laagnaam, deleteCache).then(() => fetchUrls(queue));
 };

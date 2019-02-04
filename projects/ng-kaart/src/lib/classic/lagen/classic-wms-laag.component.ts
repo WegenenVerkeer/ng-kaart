@@ -14,6 +14,7 @@ export interface Precache {
   startZoom: number;
   eindZoom: number;
   wkt: string;
+  deleteCache: boolean;
 }
 
 @Component({
@@ -45,7 +46,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   @Input()
   set precache(input: Precache) {
     if (input) {
-      this.dispatch(prt.VulCacheVoorLaag(this.titel, input.startZoom, input.eindZoom, input.wkt, logOnlyWrapper));
+      this.dispatch(prt.VulCacheVoorLaag(this.titel, input.startZoom, input.eindZoom, input.wkt, input.deleteCache, logOnlyWrapper));
     }
   }
 

@@ -1219,7 +1219,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         cmnd.wrapper,
         valideerTiledWmsBestaat(cmnd.titel).map(tiledWms => {
-          refreshTiles(cmnd.titel, tiledWms.getSource() as ol.source.UrlTile, cmnd.startZoom, cmnd.eindZoom, cmnd.wkt);
+          refreshTiles(cmnd.titel, tiledWms.getSource() as ol.source.UrlTile, cmnd.startZoom, cmnd.eindZoom, cmnd.wkt, cmnd.deleteCache);
           return ModelAndEmptyResult(model);
         })
       );
