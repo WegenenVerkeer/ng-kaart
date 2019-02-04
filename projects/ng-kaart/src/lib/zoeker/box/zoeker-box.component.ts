@@ -648,11 +648,11 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       case "ArrowDown":
         event.preventDefault(); // stop arrow key from scrolling window
         this.setFocusEersteSuggestieOfResultaat();
-        return; // exit, geen emit op zoekinputSubj om nieuwe zoekopdracht te starten
+        break;
       case "ArrowUp":
         event.preventDefault(); // stop arrow key from scrolling window
         this.setFocusLaatsteSuggestieOfResultaat();
-        return; // exit, geen emit op zoekinputSubj om nieuwe zoekopdracht te starten
+        break;
     }
   }
 
