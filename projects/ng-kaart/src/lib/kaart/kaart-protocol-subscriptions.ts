@@ -53,7 +53,7 @@ export interface GeselecteerdeFeatures {
 }
 
 export interface HoverFeature {
-  hover: Either<ol.Feature, ol.Feature>;
+  hover: Either<ol.Feature, ol.Feature>; // left = unhover, right = hover
 }
 
 export type MsgGen<Input, Msg> = Function1<Input, Msg>;
