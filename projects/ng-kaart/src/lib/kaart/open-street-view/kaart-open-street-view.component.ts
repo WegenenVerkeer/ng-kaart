@@ -1,11 +1,10 @@
 import { Component, NgZone } from "@angular/core";
-
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 
 import { lambert72ToWgs84 } from "../../coordinaten/coordinaten.service";
-
 import { KaartModusComponent } from "../kaart-modus-component";
+import * as prt from "../kaart-protocol-commands";
 import { KaartComponent } from "../kaart.component";
 
 export const StreetviewUiSelector = "Streetview";
@@ -38,8 +37,9 @@ export class KaartOpenStreetViewComponent extends KaartModusComponent {
     document.body.style.cursor = "crosshair";
 
     this.clickSubscription.unsubscribe();
+    this.dispatch(prt.DeactiveerSelectieModusCmd());
     this.clickSubscription = this.bindToLifeCycle(this.modelChanges.kaartKlikLocatie$).subscribe(locatie =>
-      this.openGoogleStreetView(locatie)
+      this.openGoogleStreetView(locatie.coordinate)
     );
   }
 
@@ -47,6 +47,7 @@ export class KaartOpenStreetViewComponent extends KaartModusComponent {
     document.body.style.cursor = "default";
 
     this.clickSubscription.unsubscribe();
+    this.dispatch(prt.ReactiveerSelectieModusCmd());
   }
 
   private openGoogleStreetView(coordinaat: ol.Coordinate): void {
