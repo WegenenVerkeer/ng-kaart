@@ -13,7 +13,7 @@ import {
 } from "@angular/core";
 import { pipe } from "fp-ts/lib/function";
 import * as option from "fp-ts/lib/Option";
-import { none, Option, some } from "fp-ts/lib/Option";
+import { fromEither, none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
@@ -189,7 +189,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
             // Zorg ervoor dat de geselecteerde features in de @Output terecht komen
             return this.geselecteerdeFeaturesChange.emit(msg.geselecteerdeFeatures.geselecteerd);
           case "FeatureHoverAangepast":
-            return this.hoverFeature.emit(msg.feature.geselecteerd);
+            return this.hoverFeature.emit(fromEither(msg.feature.hover));
           case "ZichtbareFeaturesAangepast":
             return this.zichtbareFeatures.emit(msg.features);
           case "FeatureGedeselecteerd":
