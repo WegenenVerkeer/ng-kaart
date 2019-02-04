@@ -1,4 +1,5 @@
 import * as array from "fp-ts/lib/Array";
+import { left, right } from "fp-ts/lib/Either";
 import { Function2 } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { setoidString } from "fp-ts/lib/Setoid";
@@ -136,12 +137,10 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     map(event =>
       event.type === "add"
         ? {
-            hover: some(event.element),
-            unhover: none
+            hover: right<ol.Feature, ol.Feature>(event.element)
           }
         : {
-            hover: none,
-            unhover: some(event.element)
+            hover: left<ol.Feature, ol.Feature>(event.element)
           }
     )
   );
