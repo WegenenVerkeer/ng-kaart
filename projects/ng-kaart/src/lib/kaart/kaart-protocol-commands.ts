@@ -19,6 +19,8 @@ export type Command<Msg extends KaartMsg> =
   | ActiveerHighlightModusCmd<Msg>
   | ActiveerHoverModusCmd<Msg>
   | ActiveerSelectieModusCmd<Msg>
+  | DeactiveerSelectieModusCmd<Msg>
+  | ReactiveerSelectieModusCmd<Msg>
   | BewerkVectorlaagstijlCmd
   | DeselecteerAlleFeaturesCmd
   | DeselecteerFeatureCmd
@@ -244,6 +246,14 @@ export type SelectieModus = "single" | "multipleKlik" | "multipleShift" | "none"
 export interface ActiveerSelectieModusCmd<Msg extends KaartMsg> {
   readonly type: "ActiveerSelectieModus";
   readonly selectieModus: SelectieModus;
+}
+
+export interface DeactiveerSelectieModusCmd<Msg extends KaartMsg> {
+  readonly type: "DeactiveerSelectieModus";
+}
+
+export interface ReactiveerSelectieModusCmd<Msg extends KaartMsg> {
+  readonly type: "ReactiveerSelectieModus";
 }
 
 export type HoverModus = "on" | "off";
@@ -602,6 +612,14 @@ export function VervangFeaturesCmd<Msg extends KaartMsg>(
 
 export function ActiveerSelectieModusCmd<Msg extends KaartMsg>(selectieModus: SelectieModus): ActiveerSelectieModusCmd<Msg> {
   return { type: "ActiveerSelectieModus", selectieModus: selectieModus };
+}
+
+export function DeactiveerSelectieModusCmd<Msg extends KaartMsg>(): DeactiveerSelectieModusCmd<Msg> {
+  return { type: "DeactiveerSelectieModus" };
+}
+
+export function ReactiveerSelectieModusCmd<Msg extends KaartMsg>(): ReactiveerSelectieModusCmd<Msg> {
+  return { type: "ReactiveerSelectieModus" };
 }
 
 export function ActiveerHighlightModusCmd<Msg extends KaartMsg>(highlightModus: HighlightModus): ActiveerHighlightModusCmd<Msg> {

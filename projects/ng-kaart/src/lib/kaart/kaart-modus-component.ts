@@ -71,12 +71,12 @@ export abstract class KaartModusComponent extends KaartChildComponentBase {
   }
 
   private maakActief() {
-    this.actief = true;
+    this.actief = true; // wees voorzichtig met het aanpassen van de volgorde hier
     this.activeer();
   }
 
   private maakInactief() {
-    this.actief = false;
+    this.actief = false; // wees voorzichtig met het aanpassen van de volgorde hier
     this.deactiveer();
   }
 

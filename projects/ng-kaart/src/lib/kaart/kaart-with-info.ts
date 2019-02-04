@@ -30,7 +30,8 @@ export class KaartWithInfo {
   readonly groepOpTitel: Map<string, ke.Laaggroep> = Map();
   readonly schaal: Option<ol.control.Control> = none;
   readonly fullScreen: Option<ol.control.FullScreen> = none;
-  readonly stdInteracties: List<ol.interaction.Interaction> = List(); // TODO beter gewoon interacties
+  readonly stdInteracties: List<ol.interaction.Interaction> = List();
+  readonly selectInteracties: ol.interaction.Interaction[] = [];
   readonly scrollZoomOnFocus: boolean = false;
   readonly showBackgroundSelector: boolean = false;
   readonly zoekersMetPrioriteiten: Array<ZoekerMetPrioriteiten> = Array();

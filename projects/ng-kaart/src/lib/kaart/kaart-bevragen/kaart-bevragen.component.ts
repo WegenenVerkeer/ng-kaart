@@ -40,7 +40,7 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
 
     const stableReferentielagen$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Laag").pipe(debounceTime(250));
     const stableInfoServices$ = this.modelChanges.laagLocationInfoServicesOpTitel$.pipe(debounceTime(250));
-    const geklikteLocatie$ = this.modelChanges.kaartKlikLocatie$.pipe(filter(() => this.isActief()));
+    const geklikteLocatie$ = this.modelChanges.kaartKlikLocatie$.pipe(filter(l => this.isActief() && !l.coversFeature));
 
     const allSvcCalls: (
       _1: List<ke.ToegevoegdeLaag>,
@@ -64,7 +64,7 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
             switchMap(svcs =>
               geklikteLocatie$.pipe(
                 switchMap(locatie =>
-                  rx.from(allSvcCalls(lgn, svcs, locatie)).pipe(
+                  rx.from(allSvcCalls(lgn, svcs, locatie.coordinate)).pipe(
                     mergeAll(5), //
                     scan(srv.merge)
                   )

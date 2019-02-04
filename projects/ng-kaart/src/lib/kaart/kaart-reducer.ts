@@ -940,15 +940,27 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         }
       }
 
+      model.selectInteracties.splice(10); // alle interacties verwijderen
       forEach(getSelectInteraction(cmnd.selectieModus), selectInteraction => {
-        model.map.addInteraction(new ol.interaction.Select(selectInteraction));
-        model.map.addInteraction(
-          new ol.interaction.DragBox({
-            condition: ol.events.condition.platformModifierKeyOnly
-          })
-        );
-      });
+        const selectionInteraction = new ol.interaction.Select(selectInteraction);
+        const dragboxInteraction = new ol.interaction.DragBox({
+          condition: ol.events.condition.platformModifierKeyOnly
+        });
 
+        model.selectInteracties.push(selectionInteraction, dragboxInteraction);
+      });
+      model.selectInteracties.forEach(i => model.map.addInteraction(i));
+
+      return ModelWithResult(model);
+    }
+
+    function deactiveerSelectieModus(cmnd: prt.DeactiveerSelectieModusCmd<Msg>): ModelWithResult<Msg> {
+      model.selectInteracties.forEach(i => model.map.removeInteraction(i));
+      return ModelWithResult(model);
+    }
+
+    function reactiveerSelectieModus(cmnd: prt.ReactiveerSelectieModusCmd<Msg>): ModelWithResult<Msg> {
+      model.selectInteracties.forEach(i => model.map.addInteraction(i));
       return ModelWithResult(model);
     }
 
@@ -1289,7 +1301,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
 
       function subscribeToKaartClick(sub: prt.KaartClickSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult("KaartClick", modelChanges.kaartKlikLocatie$.subscribe(consumeMessage(sub)));
+        return modelWithSubscriptionResult(
+          "KaartClick",
+          modelChanges.kaartKlikLocatie$.pipe(map(l => l.coordinate)).subscribe(consumeMessage(sub))
+        );
       }
 
       const subscribeToLagenInGroep = (sub: prt.LagenInGroepSubscription<Msg>) => {
@@ -1450,6 +1465,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return activeerHoverModus(cmd);
       case "ActiveerSelectieModus":
         return activeerSelectieModus(cmd);
+      case "DeactiveerSelectieModus":
+        return deactiveerSelectieModus(cmd);
+      case "ReactiveerSelectieModus":
+        return reactiveerSelectieModus(cmd);
       case "ToonAchtergrondKeuze":
         return toonAchtergrondkeuzeCmd(cmd);
       case "VerbergAchtergrondKeuze":

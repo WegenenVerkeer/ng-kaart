@@ -30,6 +30,11 @@ export interface DragInfo {
   readonly coordinate: ol.Coordinate;
 }
 
+export interface KlikInfo {
+  readonly coordinate: ol.Coordinate;
+  readonly coversFeature: boolean;
+}
+
 /**
  * Dit is een verzameling van subjects waarmee de reducer wijzingen kan laten weten aan de child components.
  * Dit is isomorf aan het zetten van de overeenkomstige attributen op het model en die laten volgen. Het probleem daarbij
@@ -86,7 +91,7 @@ export interface ModelChanges {
   readonly geselecteerdeFeatures$: rx.Observable<GeselecteerdeFeatures>;
   readonly hoverFeatures$: rx.Observable<HoverFeature>;
   readonly zichtbareFeatures$: rx.Observable<List<ol.Feature>>;
-  readonly kaartKlikLocatie$: rx.Observable<ol.Coordinate>;
+  readonly kaartKlikLocatie$: rx.Observable<KlikInfo>;
   readonly mijnLocatieZoomDoel$: rx.Observable<Option<number>>;
   readonly actieveModus$: rx.Observable<Option<string>>;
   readonly zoekerServices$: rx.Observable<ZoekerMetPrioriteiten[]>;
@@ -208,15 +213,14 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
   const zichtbareFeatures$ = rx.combineLatest(viewinstellingen$, vectorlagen$, featuresChanged$, collectFeatures);
 
   const kaartKlikLocatie$ = observableFromOlEvents(model.map, "click").pipe(
-    filter((event: ol.MapBrowserEvent) => {
-      // filter click events uit die op een feature plaatsvinden
-      return !model.map.hasFeatureAtPixel(event.pixel, {
+    map((event: ol.MapBrowserEvent) => ({
+      coordinate: event.coordinate,
+      coversFeature: model.map.hasFeatureAtPixel(event.pixel, {
         hitTolerance: KaartWithInfo.clickHitTolerance,
         // enkel json data features die een identify hebben beschouwen we. Zoekresultaten bvb niet
         layerFilter: layer => layer.getSource() instanceof NosqlFsSource
-      });
-    }),
-    map((event: ol.MapBrowserEvent) => event.coordinate),
+      })
+    })),
     share()
   );
 
