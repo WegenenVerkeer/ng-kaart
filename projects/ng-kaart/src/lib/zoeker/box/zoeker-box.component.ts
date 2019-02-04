@@ -632,7 +632,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     });
   }
 
-  onKey(event: any) {
+  keydown(event: any) {
     // De gebruiker kan locatie voorstellen krijgen door in het zoekveld min. 2 tekens in te typen en op enter te drukken
     switch (event.key) {
       case "Enter":
@@ -654,6 +654,9 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
         this.setFocusLaatsteSuggestieOfResultaat();
         return; // exit, geen emit op zoekinputSubj om nieuwe zoekopdracht te starten
     }
+  }
+
+  keyup(event: any) {
     // Een formbuilder heeft een observable ingebouwd, maar dat gebruiken we dus niet
     this.zoekInputSubj.next(event.srcElement.value);
   }

@@ -28,7 +28,7 @@
     <button mat-icon-button [matMenuTriggerFor]="zoekerMenu" matTooltip="Toon zoekopties" matTooltipPosition="right">
       <mat-icon>menu</mat-icon>
     </button>
-    <input placeholder="Zoek" [formControl]="zoekVeld" *ngIf="this.actieveZoeker === 'Basis'" (keyup)="onKey($event)" #zoekVeldElement>
+    <input placeholder="Zoek" [formControl]="zoekVeld" *ngIf="this.actieveZoeker === 'Basis'" (keydown)="keydown($event)" (keyup)="keyup($event)" #zoekVeldElement>
     <span class="actieve-zoeker-titel" *ngIf="actieveZoeker === Perceel">Zoek op perceel</span>
     <span class="actieve-zoeker-titel" *ngIf="actieveZoeker === Crab">Zoek op adres via CRAB</span>
     <span class="actieve-zoeker-titel" *ngIf="actieveZoeker === ExterneWms">Zoek een WMS-laag</span>
