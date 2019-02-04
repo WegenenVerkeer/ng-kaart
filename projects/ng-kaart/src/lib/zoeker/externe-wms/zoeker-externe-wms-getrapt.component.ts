@@ -37,7 +37,7 @@ export class ZoekerExterneWmsGetraptComponent extends GetraptZoekerComponent imp
     this.bronnen$ = services$.pipe(
       switchMap(svcs =>
         svcs.foldL(
-          () => rx.of(Set()), // Geen service betekent geen bronnen
+          () => rx.of(Set<string>()), // Geen service betekent geen bronnen
           svc => svc.bronnen$
         )
       )
