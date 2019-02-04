@@ -1,4 +1,5 @@
 import * as array from "fp-ts/lib/Array";
+import { left, right } from "fp-ts/lib/Either";
 import { Function2 } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { setoidString } from "fp-ts/lib/Setoid";
@@ -133,9 +134,15 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
   const geselecteerdeFeatures$ = rx.merge(toegevoegdeGeselecteerdeFeatures$, verwijderdeGeselecteerdeFeatures$).pipe(shareReplay(1));
 
   const hoverFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.hoverFeatures, "add", "remove").pipe(
-    map(() => ({
-      geselecteerd: model.hoverFeatures.getLength() !== 0 ? some(model.hoverFeatures.item(0)) : none
-    }))
+    map(event =>
+      event.type === "add"
+        ? {
+            hover: right<ol.Feature, ol.Feature>(event.element)
+          }
+        : {
+            hover: left<ol.Feature, ol.Feature>(event.element)
+          }
+    )
   );
 
   // Met window resize hebben we niet alle bronnen van herschaling, maar toch al een grote

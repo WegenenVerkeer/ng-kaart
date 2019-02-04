@@ -1,3 +1,4 @@
+import { Either } from "fp-ts/lib/Either";
 import { Function1 } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import { List, Map } from "immutable";
@@ -52,7 +53,7 @@ export interface GeselecteerdeFeatures {
 }
 
 export interface HoverFeature {
-  geselecteerd: Option<ol.Feature>;
+  hover: Either<ol.Feature, ol.Feature>; // left = unhover, right = hover
 }
 
 export type MsgGen<Input, Msg> = Function1<Input, Msg>;
