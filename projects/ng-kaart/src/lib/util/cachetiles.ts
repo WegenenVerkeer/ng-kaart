@@ -16,8 +16,8 @@ const fetchUrls = (urls: string[], setProgress: Function1<number, void>) => {
   fetches.reduce((vorige, huidige) => vorige.then(huidige), Promise.resolve());
 };
 
-const deleteTiles = (laagnaam: string, deleteCache: boolean): Promise<Boolean> =>
-  deleteCache ? caches.delete(laagnaam) : Promise.resolve(true);
+const deleteTiles = (laagnaam: string, startMetLegeCache: boolean): Promise<Boolean> =>
+  startMetLegeCache ? caches.delete(laagnaam) : Promise.resolve(true);
 
 // TODO: dit is tijdelijke code -- functie wordt vervangen door performanter alternatief in latere story
 export const refreshTiles = (
@@ -26,7 +26,7 @@ export const refreshTiles = (
   startZoom: number,
   stopZoom: number,
   wkt: string,
-  deleteCache: boolean,
+  startMetLegeCache: boolean,
   setProgress: Function1<number, void> // callback om progress aan te geven
 ) => {
   if (isNaN(startZoom)) {
@@ -96,5 +96,5 @@ export const refreshTiles = (
     queue = queue.concat(queueByZ);
   }
 
-  deleteTiles(laagnaam, deleteCache).then(() => fetchUrls(queue, setProgress));
+  deleteTiles(laagnaam, startMetLegeCache).then(() => fetchUrls(queue, setProgress));
 };

@@ -460,7 +460,7 @@ export class FeatureDemoComponent {
       startZoom: 7,
       eindZoom: 9,
       wkt: this.wkt,
-      deleteCache: true
+      startMetLegeCache: true
     };
   }
 
