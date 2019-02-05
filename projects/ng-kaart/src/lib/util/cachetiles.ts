@@ -1,19 +1,34 @@
+import { Function1 } from "fp-ts/lib/function";
 import * as ol from "openlayers";
 import * as url from "url";
 
 import { kaartLogger } from "../kaart/log";
 
-const fetchUrls = (urls: string[]) => {
-  const fetches = urls.map(url => () =>
-    fetch(new Request(url, { credentials: "include" }), { keepalive: true, mode: "cors" }).catch(err => kaartLogger.error(err))
-  );
+const fetchUrls = (urls: string[], setProgress: Function1<number, void>) => {
+  let fetched = 0;
+  const fetches = urls.map(url => () => {
+    fetched++;
+    if (setProgress) {
+      setProgress(Math.round((fetched / urls.length) * 100));
+    }
+    return fetch(new Request(url, { credentials: "include" }), { keepalive: true, mode: "cors" }).catch(err => kaartLogger.error(err));
+  });
   fetches.reduce((vorige, huidige) => vorige.then(huidige), Promise.resolve());
 };
 
-const deleteTiles = (laagnaam: string): Promise<Boolean> => caches.delete(laagnaam);
+const deleteTiles = (laagnaam: string, startMetLegeCache: boolean): Promise<Boolean> =>
+  startMetLegeCache ? caches.delete(laagnaam) : Promise.resolve(true);
 
 // TODO: dit is tijdelijke code -- functie wordt vervangen door performanter alternatief in latere story
-export const refreshTiles = (laagnaam: string, source: ol.source.UrlTile, startZoom: number, stopZoom: number, wkt: string) => {
+export const refreshTiles = (
+  laagnaam: string,
+  source: ol.source.UrlTile,
+  startZoom: number,
+  stopZoom: number,
+  wkt: string,
+  startMetLegeCache: boolean,
+  setProgress: Function1<number, void> // callback om progress aan te geven
+) => {
   if (isNaN(startZoom)) {
     throw new Error("Start zoom is geen getal");
   }
@@ -81,5 +96,5 @@ export const refreshTiles = (laagnaam: string, source: ol.source.UrlTile, startZ
     queue = queue.concat(queueByZ);
   }
 
-  deleteTiles(laagnaam).then(() => fetchUrls(queue));
+  deleteTiles(laagnaam, startMetLegeCache).then(() => fetchUrls(queue, setProgress));
 };

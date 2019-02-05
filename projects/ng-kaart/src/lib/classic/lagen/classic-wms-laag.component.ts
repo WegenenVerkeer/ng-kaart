@@ -1,12 +1,16 @@
-import { AfterViewInit, Component, Input, NgZone, OnInit, ViewEncapsulation } from "@angular/core";
+import { AfterViewInit, Component, EventEmitter, Input, NgZone, OnInit, Output, ViewEncapsulation } from "@angular/core";
+import { pipe } from "fp-ts/lib/function";
 import { fromNullable } from "fp-ts/lib/Option";
 import { List } from "immutable";
+import { merge } from "rxjs";
+import { distinctUntilChanged, map } from "rxjs/operators";
 
 import * as ke from "../../kaart/kaart-elementen";
-import * as prt from "../../kaart/kaart-protocol-commands";
+import * as prt from "../../kaart/kaart-protocol";
+import { ofType } from "../../util";
 import { urlWithParams } from "../../util/url";
-import { KaartClassicComponent } from "../kaart-classic.component";
-import { logOnlyWrapper } from "../messages";
+import { classicMsgSubscriptionCmdOperator, KaartClassicComponent } from "../kaart-classic.component";
+import { KaartClassicMsg, logOnlyWrapper, PrecacheProgressMsg } from "../messages";
 
 import { ClassicLaagComponent } from "./classic-laag.component";
 
@@ -14,6 +18,7 @@ export interface Precache {
   startZoom: number;
   eindZoom: number;
   wkt: string;
+  startMetLegeCache: boolean;
 }
 
 @Component({
@@ -45,9 +50,12 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   @Input()
   set precache(input: Precache) {
     if (input) {
-      this.dispatch(prt.VulCacheVoorLaag(this.titel, input.startZoom, input.eindZoom, input.wkt, logOnlyWrapper));
+      this.dispatch(prt.VulCacheVoorLaag(this.titel, input.startZoom, input.eindZoom, input.wkt, input.startMetLegeCache, logOnlyWrapper));
     }
   }
+
+  @Output()
+  precacheProgress: EventEmitter<number> = new EventEmitter<number>();
 
   constructor(kaart: KaartClassicComponent, zone: NgZone) {
     super(kaart, zone);
@@ -105,6 +113,28 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
 
     if (this.offline) {
       this.dispatch(prt.ActiveerCacheVoorLaag(this.titel, logOnlyWrapper));
+
+      this.bindToLifeCycle(
+        merge(
+          this.kaart.kaartClassicSubMsg$.lift(
+            classicMsgSubscriptionCmdOperator(
+              this.kaart.dispatcher,
+              prt.PrecacheProgressSubscription(
+                pipe(
+                  PrecacheProgressMsg,
+                  KaartClassicMsg
+                )
+              )
+            )
+          ),
+          this.kaart.kaartClassicSubMsg$.pipe(
+            ofType<PrecacheProgressMsg>("PrecacheProgress"),
+            map(m => (m.progress[this.titel] ? m.progress[this.titel] : 0)),
+            distinctUntilChanged(),
+            map(progress => this.precacheProgress.emit(progress))
+          )
+        )
+      ).subscribe();
     }
   }
 }

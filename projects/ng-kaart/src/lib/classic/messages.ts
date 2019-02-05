@@ -5,6 +5,7 @@ import * as ke from "../kaart/kaart-elementen";
 import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
 import * as prt from "../kaart/kaart-protocol";
 import { GeselecteerdeFeatures, HoverFeature } from "../kaart/kaart-with-info-model";
+import { PrecacheLaagProgress } from "../kaart/model-changes";
 
 import { classicLogger } from "./log";
 
@@ -30,6 +31,7 @@ export type KaartClassicSubMsg =
   | ExtentAangepastMsg
   | VectorLagenAangepastMsg
   | AchtergrondLagenInGroepAangepastMsg
+  | PrecacheProgressMsg
   | VoorgrondHoogLagenInGroepAangepastMsg
   | VoorgrondLaagLagenInGroepAangepastMsg
   | DummyMsg;
@@ -47,6 +49,11 @@ export interface FeatureHoverAangepastMsg {
 export interface TekenGeomAangepastMsg {
   readonly type: "TekenGeomAangepast";
   readonly geom: ol.geom.Geometry;
+}
+
+export interface PrecacheProgressMsg {
+  readonly type: "PrecacheProgress";
+  readonly progress: PrecacheLaagProgress;
 }
 
 export interface SubscribedMsg {
@@ -135,6 +142,10 @@ export function ZichtbareFeaturesAangepastMsg(features: List<ol.Feature>): Zicht
 
 export function TekenGeomAangepastMsg(geom: ol.geom.Geometry): TekenGeomAangepastMsg {
   return { type: "TekenGeomAangepast", geom: geom };
+}
+
+export function PrecacheProgressMsg(progress: PrecacheLaagProgress): PrecacheProgressMsg {
+  return { type: "PrecacheProgress", progress: progress };
 }
 
 export function AchtergrondLagenInGroepAangepastMsg(lagen: List<ToegevoegdeLaag>): AchtergrondLagenInGroepAangepastMsg {

@@ -437,6 +437,7 @@
 
             <div>
               <button (click)="startPrecache()">Start vullen cache dienstkaart (district Gent)</button>
+              Vooruitgang: {{ precacheProgress }}% gecached
             </div>
 
             <div>
@@ -450,7 +451,8 @@
                                       [laagNaam]="'dienstkaart-grijs'"
                                       [urls]="['/geowebcache/service/wms']"
                                       [offline]="'true'"
-                                      [precache]="precacheInput"></awv-kaart-tilecache-laag>
+                                      [precache]="precacheInput"
+                                      (precacheProgress)="onPrecacheProgress($event)"></awv-kaart-tilecache-laag>
 
             <awv-kaart-nosqlfs-laag [titel]="'Verkeersborden'" [url]="'https://apps-dev.mow.vlaanderen.be/geolatte-nosqlfs'"
                                     [database]="'featureserver'" [collection]="'verkeersborden'"

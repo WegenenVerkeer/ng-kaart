@@ -147,6 +147,7 @@ export interface VulCacheVoorLaag<Msg extends KaartMsg> {
   readonly startZoom: number;
   readonly eindZoom: number;
   readonly wkt: string;
+  readonly startMetLegeCache: boolean;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -510,9 +511,18 @@ export function VulCacheVoorLaag<Msg extends KaartMsg>(
   startZoom: number,
   eindZoom: number,
   wkt: string,
+  startMetLegeCache: boolean,
   wrapper: BareValidationWrapper<Msg>
 ): VulCacheVoorLaag<Msg> {
-  return { type: "VulCacheVoorLaag", titel: titel, startZoom: startZoom, eindZoom: eindZoom, wkt: wkt, wrapper: wrapper };
+  return {
+    type: "VulCacheVoorLaag",
+    titel: titel,
+    startZoom: startZoom,
+    eindZoom: eindZoom,
+    wkt: wkt,
+    startMetLegeCache: startMetLegeCache,
+    wrapper: wrapper
+  };
 }
 
 export function VerwijderLaagCmd<Msg extends KaartMsg>(titel: string, wrapper: BareValidationWrapper<Msg>): VerwijderLaagCmd<Msg> {

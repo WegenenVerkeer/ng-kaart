@@ -1219,7 +1219,18 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         cmnd.wrapper,
         valideerTiledWmsBestaat(cmnd.titel).map(tiledWms => {
-          refreshTiles(cmnd.titel, tiledWms.getSource() as ol.source.UrlTile, cmnd.startZoom, cmnd.eindZoom, cmnd.wkt);
+          refreshTiles(
+            cmnd.titel,
+            tiledWms.getSource() as ol.source.UrlTile,
+            cmnd.startZoom,
+            cmnd.eindZoom,
+            cmnd.wkt,
+            cmnd.startMetLegeCache,
+            (progress: number) =>
+              updateBehaviorSubject(modelChanger.precacheProgressSubj, precacheLaagProgress => {
+                return { ...precacheLaagProgress, [cmnd.titel]: progress };
+              })
+          );
           return ModelAndEmptyResult(model);
         })
       );
@@ -1369,6 +1380,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return modelWithSubscriptionResult("LaagstijlGezet", modelChanges.laagstijlGezet$.subscribe(consumeMessage(sub)));
       }
 
+      function subcribeToPrecacheProgress(sub: prt.PrecacheProgressSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult("PrecacheProgress", modelChanges.precacheProgress$.subscribe(consumeMessage(sub)));
+      }
+
       switch (cmnd.subscription.type) {
         case "Viewinstellingen":
           return subscribeToViewinstellingen(cmnd.subscription);
@@ -1410,6 +1425,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToActieveModus(cmnd.subscription);
         case "LaagstijlGezet":
           return subscribeToLaagstijlGezet(cmnd.subscription);
+        case "PrecacheProgress":
+          return subcribeToPrecacheProgress(cmnd.subscription);
       }
     }
 
