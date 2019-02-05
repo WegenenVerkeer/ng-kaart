@@ -437,15 +437,12 @@
 
             <div>
               <button (click)="startPrecache()">Start vullen cache dienstkaart (district Gent)</button>
+              Vooruitgang: {{ precacheProgress }}% gecached
             </div>
 
             <div>
               <textarea class="cachewkt__textarea" [value]="wkt" (input)="wkt = $event.target.value"></textarea>
             </div>
-
-          <div>
-            Progress: {{ precacheProgress }}% gecached
-          </div>
 
             <awv-kaart-classic [naam]="'verkeersborden'" (zichtbareFeatures)="onZichtbareFeatures($event)"
                              [zoom]="10" [selectieModus]="'single'" [middelpunt]="verkeersbordenCoordinaat" [hoogte]="1200">

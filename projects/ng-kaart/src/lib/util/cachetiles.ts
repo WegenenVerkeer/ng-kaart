@@ -8,7 +8,9 @@ const fetchUrls = (urls: string[], setProgress: Function1<number, void>) => {
   let fetched = 0;
   const fetches = urls.map(url => () => {
     fetched++;
-    setProgress(Math.round((fetched / urls.length) * 100));
+    if (setProgress) {
+      setProgress(Math.round((fetched / urls.length) * 100));
+    }
     return fetch(new Request(url, { credentials: "include" }), { keepalive: true, mode: "cors" }).catch(err => kaartLogger.error(err));
   });
   fetches.reduce((vorige, huidige) => vorige.then(huidige), Promise.resolve());
@@ -25,7 +27,7 @@ export const refreshTiles = (
   stopZoom: number,
   wkt: string,
   deleteCache: boolean,
-  setProgress: Function1<number, void>
+  setProgress: Function1<number, void> // callback om progress aan te geven
 ) => {
   if (isNaN(startZoom)) {
     throw new Error("Start zoom is geen getal");
