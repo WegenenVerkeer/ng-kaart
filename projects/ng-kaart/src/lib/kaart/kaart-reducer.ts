@@ -1227,8 +1227,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             cmnd.wkt,
             cmnd.deleteCache,
             (progress: number) =>
-              updateBehaviorSubject(modelChanger.precacheProgressSubj, obj => {
-                return { ...obj, [cmnd.titel]: progress };
+              updateBehaviorSubject(modelChanger.precacheProgressSubj, precacheLaagProgress => {
+                return { ...precacheLaagProgress, [cmnd.titel]: progress };
               })
           );
           return ModelAndEmptyResult(model);
