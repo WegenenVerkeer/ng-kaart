@@ -1,4 +1,5 @@
 import { AfterViewInit, Component, EventEmitter, Input, NgZone, OnInit, Output, ViewEncapsulation } from "@angular/core";
+import { pipe } from "fp-ts/lib/function";
 import { fromNullable } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import { merge } from "rxjs";
@@ -118,7 +119,12 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
           this.kaart.kaartClassicSubMsg$.lift(
             classicMsgSubscriptionCmdOperator(
               this.kaart.dispatcher,
-              prt.PrecacheProgressSubscription(resultaat => KaartClassicMsg(PrecacheProgressMsg(resultaat)))
+              prt.PrecacheProgressSubscription(
+                pipe(
+                  PrecacheProgressMsg,
+                  KaartClassicMsg
+                )
+              )
             )
           ),
           this.kaart.kaartClassicSubMsg$.pipe(
