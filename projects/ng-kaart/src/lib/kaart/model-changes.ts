@@ -6,7 +6,7 @@ import { setoidString } from "fp-ts/lib/Setoid";
 import { List, Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, filter, map, mapTo, mergeAll, share, shareReplay, switchMap } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, map, mapTo, mergeAll, share, shareReplay, switchMap } from "rxjs/operators";
 
 import { NosqlFsSource } from "../source/nosql-fs-source";
 import { observableFromOlEvents } from "../util/ol-observable";
@@ -58,6 +58,7 @@ export interface ModelChanger {
   readonly laagstijlaanpassingStateSubj: rx.Subject<LaagstijlaanpassingState>;
   readonly laagstijlGezetSubj: rx.Subject<ke.ToegevoegdeVectorLaag>;
   readonly dragInfoSubj: rx.Subject<DragInfo>;
+  readonly precacheProgressSubj: rx.BehaviorSubject<Map<string, number>>;
 }
 
 // Hieronder wordt een paar keer BehaviourSubject gebruikt. Dat is equivalent met, maar beknopter dan, een startWith + shareReplay
@@ -80,7 +81,8 @@ export const ModelChanger: () => ModelChanger = () => ({
   laagLocationInfoServicesOpTitelSubj: new rx.BehaviorSubject(Map()),
   laagstijlaanpassingStateSubj: new rx.BehaviorSubject(GeenLaagstijlaanpassing),
   laagstijlGezetSubj: new rx.Subject<ke.ToegevoegdeVectorLaag>(),
-  dragInfoSubj: new rx.Subject<DragInfo>()
+  dragInfoSubj: new rx.Subject<DragInfo>(),
+  precacheProgressSubj: new rx.BehaviorSubject(Map())
 });
 
 export interface ModelChanges {
@@ -103,6 +105,7 @@ export interface ModelChanges {
   readonly laagstijlGezet$: rx.Observable<ke.ToegevoegdeVectorLaag>;
   readonly dragInfo$: rx.Observable<DragInfo>;
   readonly rotatie$: rx.Observable<number>; // een niet gedebouncede variant van "viewinstellingen$.rotatie" voor live rotatie
+  readonly precacheProgress$: rx.Observable<Map<string, number>>;
 }
 
 const viewinstellingen = (olmap: ol.Map) => ({
@@ -257,6 +260,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     laagstijlaanpassingState$: changer.laagstijlaanpassingStateSubj.asObservable(),
     laagstijlGezet$: changer.laagstijlGezetSubj.asObservable(),
     dragInfo$: dragInfo$,
-    rotatie$: rotation$
+    rotatie$: rotation$,
+    precacheProgress$: changer.precacheProgressSubj.asObservable()
   };
 };

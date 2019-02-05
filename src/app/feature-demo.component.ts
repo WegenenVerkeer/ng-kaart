@@ -1,5 +1,5 @@
 import { animate, style, transition, trigger } from "@angular/animations";
-import { Component, ViewChild, ViewEncapsulation } from "@angular/core";
+import { ChangeDetectorRef, Component, ViewChild, ViewEncapsulation } from "@angular/core";
 import { array } from "fp-ts";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
@@ -54,6 +54,8 @@ export class FeatureDemoComponent {
   private verplaatsKaart: KaartClassicComponent;
   @ViewChild("selectie")
   private selectieKaart: KaartClassicComponent;
+
+  constructor(private changeDetectorRef: ChangeDetectorRef) {}
 
   private readonly fietspadStijlDef: AwvV0DynamicStyle = {
     rules: [
@@ -305,6 +307,8 @@ export class FeatureDemoComponent {
   fietspadsegmentenSelectie: FietspadSelectie[] = [];
   geselecteerdeFietspadsegmenten: List<ol.Feature> = List();
 
+  precacheProgress = 0;
+
   private tekenenActief = false;
   private getekendeGeom: Option<ol.geom.Geometry> = none;
 
@@ -455,7 +459,8 @@ export class FeatureDemoComponent {
     this.precacheInput = {
       startZoom: 7,
       eindZoom: 9,
-      wkt: this.wkt
+      wkt: this.wkt,
+      deleteCache: true
     };
   }
 
@@ -619,6 +624,11 @@ export class FeatureDemoComponent {
 
   onRefreshFietspadenClicked() {
     this.fietspadenRefreshSubj.next();
+  }
+
+  onPrecacheProgress(progress: number) {
+    this.precacheProgress = progress;
+    this.changeDetectorRef.detectChanges();
   }
 
   scrollTo(idName: string): void {

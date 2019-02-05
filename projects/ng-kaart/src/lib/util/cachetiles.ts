@@ -1,12 +1,16 @@
+import { Function1 } from "fp-ts/lib/function";
 import * as ol from "openlayers";
 import * as url from "url";
 
 import { kaartLogger } from "../kaart/log";
 
-const fetchUrls = (urls: string[]) => {
-  const fetches = urls.map(url => () =>
-    fetch(new Request(url, { credentials: "include" }), { keepalive: true, mode: "cors" }).catch(err => kaartLogger.error(err))
-  );
+const fetchUrls = (urls: string[], setProgress: Function1<number, void>) => {
+  let fetched = 0;
+  const fetches = urls.map(url => () => {
+    fetched++;
+    setProgress(Math.round((fetched / urls.length) * 100));
+    return fetch(new Request(url, { credentials: "include" }), { keepalive: true, mode: "cors" }).catch(err => kaartLogger.error(err));
+  });
   fetches.reduce((vorige, huidige) => vorige.then(huidige), Promise.resolve());
 };
 
@@ -20,7 +24,8 @@ export const refreshTiles = (
   startZoom: number,
   stopZoom: number,
   wkt: string,
-  deleteCache: boolean
+  deleteCache: boolean,
+  setProgress: Function1<number, void>
 ) => {
   if (isNaN(startZoom)) {
     throw new Error("Start zoom is geen getal");
@@ -89,5 +94,5 @@ export const refreshTiles = (
     queue = queue.concat(queueByZ);
   }
 
-  deleteTiles(laagnaam, deleteCache).then(() => fetchUrls(queue));
+  deleteTiles(laagnaam, deleteCache).then(() => fetchUrls(queue, setProgress));
 };

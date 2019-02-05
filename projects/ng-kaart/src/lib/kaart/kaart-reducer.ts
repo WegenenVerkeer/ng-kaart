@@ -7,7 +7,7 @@ import { olx } from "openlayers";
 import * as ol from "openlayers";
 import { Subscription } from "rxjs";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, map, tap } from "rxjs/operators";
 
 import { refreshTiles } from "../util/cachetiles";
 import { forEach } from "../util/option";
@@ -22,7 +22,7 @@ import { MsgGen } from "./kaart-protocol-subscriptions";
 import { KaartWithInfo } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
 import { kaartLogger } from "./log";
-import { ModelChanger, ModelChanges } from "./model-changes";
+import { DragInfo, ModelChanger, ModelChanges } from "./model-changes";
 import {
   AwvV0StyleSpec,
   getFeatureStyleSelector,
@@ -1219,7 +1219,15 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         cmnd.wrapper,
         valideerTiledWmsBestaat(cmnd.titel).map(tiledWms => {
-          refreshTiles(cmnd.titel, tiledWms.getSource() as ol.source.UrlTile, cmnd.startZoom, cmnd.eindZoom, cmnd.wkt, cmnd.deleteCache);
+          refreshTiles(
+            cmnd.titel,
+            tiledWms.getSource() as ol.source.UrlTile,
+            cmnd.startZoom,
+            cmnd.eindZoom,
+            cmnd.wkt,
+            cmnd.deleteCache,
+            (progress: number) => updateBehaviorSubject(modelChanger.precacheProgressSubj, svcs => svcs.set(cmnd.titel, progress))
+          );
           return ModelAndEmptyResult(model);
         })
       );
@@ -1369,6 +1377,13 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return modelWithSubscriptionResult("LaagstijlGezet", modelChanges.laagstijlGezet$.subscribe(consumeMessage(sub)));
       }
 
+      function subcribeToPrecacheProgress(sub: prt.PrecacheProgressSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult(
+          "PrecacheProgress",
+          modelChanges.precacheProgress$.pipe(distinctUntilChanged()).subscribe(consumeMessage(sub))
+        );
+      }
+
       switch (cmnd.subscription.type) {
         case "Viewinstellingen":
           return subscribeToViewinstellingen(cmnd.subscription);
@@ -1410,6 +1425,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToActieveModus(cmnd.subscription);
         case "LaagstijlGezet":
           return subscribeToLaagstijlGezet(cmnd.subscription);
+        case "PrecacheProgress":
+          return subcribeToPrecacheProgress(cmnd.subscription);
       }
     }
 

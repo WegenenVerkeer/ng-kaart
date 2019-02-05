@@ -1,12 +1,15 @@
-import { AfterViewInit, Component, Input, NgZone, OnInit, ViewEncapsulation } from "@angular/core";
+import { AfterViewInit, Component, EventEmitter, Input, NgZone, OnInit, Output, ViewEncapsulation } from "@angular/core";
 import { fromNullable } from "fp-ts/lib/Option";
 import { List } from "immutable";
+import { merge } from "rxjs";
+import { map } from "rxjs/operators";
 
 import * as ke from "../../kaart/kaart-elementen";
-import * as prt from "../../kaart/kaart-protocol-commands";
+import * as prt from "../../kaart/kaart-protocol";
+import { ofType } from "../../util";
 import { urlWithParams } from "../../util/url";
-import { KaartClassicComponent } from "../kaart-classic.component";
-import { logOnlyWrapper } from "../messages";
+import { classicMsgSubscriptionCmdOperator, KaartClassicComponent } from "../kaart-classic.component";
+import { KaartClassicMsg, logOnlyWrapper, PrecacheProgressMsg } from "../messages";
 
 import { ClassicLaagComponent } from "./classic-laag.component";
 
@@ -49,6 +52,9 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
       this.dispatch(prt.VulCacheVoorLaag(this.titel, input.startZoom, input.eindZoom, input.wkt, input.deleteCache, logOnlyWrapper));
     }
   }
+
+  @Output()
+  precacheProgress: EventEmitter<number> = new EventEmitter<number>();
 
   constructor(kaart: KaartClassicComponent, zone: NgZone) {
     super(kaart, zone);
@@ -106,6 +112,23 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
 
     if (this.offline) {
       this.dispatch(prt.ActiveerCacheVoorLaag(this.titel, logOnlyWrapper));
+
+      this.bindToLifeCycle(
+        merge(
+          this.kaart.kaartClassicSubMsg$.lift(
+            classicMsgSubscriptionCmdOperator(
+              this.kaart.dispatcher,
+              prt.PrecacheProgressSubscription(resultaat => KaartClassicMsg(PrecacheProgressMsg(resultaat)))
+            )
+          ),
+          this.kaart.kaartClassicSubMsg$.pipe(
+            ofType<PrecacheProgressMsg>("PrecacheProgress"), //
+            map(m => {
+              this.precacheProgress.emit(m.progress.get(this.titel, 0));
+            })
+          )
+        )
+      ).subscribe();
     }
   }
 }

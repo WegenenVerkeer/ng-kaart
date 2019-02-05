@@ -28,6 +28,7 @@ export type Subscription<Msg> =
   | LaagVerwijderdSubscription<Msg>
   | LagenInGroepSubscription<Msg>
   | MiddelpuntSubscription<Msg>
+  | PrecacheProgressSubscription<Msg>
   | TekenenSubscription<Msg>
   | ViewinstellingenSubscription<Msg>
   | ZichtbareFeaturesSubscription<Msg>
@@ -160,6 +161,11 @@ export interface LaagstijlGezetSubscription<Msg> {
   readonly wrapper: MsgGen<ke.ToegevoegdeVectorLaag, Msg>;
 }
 
+export interface PrecacheProgressSubscription<Msg> {
+  readonly type: "PrecacheProgress";
+  readonly wrapper: (progress: Map<string, number>) => Msg;
+}
+
 ///////////////
 // Constructors
 //
@@ -255,4 +261,8 @@ export function ComponentFoutSubscription<Msg>(wrapper: (fouten: List<string>) =
 
 export function LaagstijlGezetSubscription<Msg>(wrapper: MsgGen<ke.ToegevoegdeVectorLaag, Msg>): LaagstijlGezetSubscription<Msg> {
   return { type: "LaagstijlGezet", wrapper: wrapper };
+}
+
+export function PrecacheProgressSubscription<Msg>(wrapper: (progress: Map<string, number>) => Msg): PrecacheProgressSubscription<Msg> {
+  return { type: "PrecacheProgress", wrapper };
 }

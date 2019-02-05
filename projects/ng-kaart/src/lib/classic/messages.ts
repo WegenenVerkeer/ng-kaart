@@ -1,4 +1,4 @@
-import { List } from "immutable";
+import { List, Map } from "immutable";
 import * as ol from "openlayers";
 
 import * as ke from "../kaart/kaart-elementen";
@@ -30,6 +30,7 @@ export type KaartClassicSubMsg =
   | ExtentAangepastMsg
   | VectorLagenAangepastMsg
   | AchtergrondLagenInGroepAangepastMsg
+  | PrecacheProgressMsg
   | VoorgrondHoogLagenInGroepAangepastMsg
   | VoorgrondLaagLagenInGroepAangepastMsg
   | DummyMsg;
@@ -47,6 +48,11 @@ export interface FeatureHoverAangepastMsg {
 export interface TekenGeomAangepastMsg {
   readonly type: "TekenGeomAangepast";
   readonly geom: ol.geom.Geometry;
+}
+
+export interface PrecacheProgressMsg {
+  readonly type: "PrecacheProgress";
+  readonly progress: Map<string, number>;
 }
 
 export interface SubscribedMsg {
@@ -135,6 +141,10 @@ export function ZichtbareFeaturesAangepastMsg(features: List<ol.Feature>): Zicht
 
 export function TekenGeomAangepastMsg(geom: ol.geom.Geometry): TekenGeomAangepastMsg {
   return { type: "TekenGeomAangepast", geom: geom };
+}
+
+export function PrecacheProgressMsg(progress: Map<string, number>): PrecacheProgressMsg {
+  return { type: "PrecacheProgress", progress: progress };
 }
 
 export function AchtergrondLagenInGroepAangepastMsg(lagen: List<ToegevoegdeLaag>): AchtergrondLagenInGroepAangepastMsg {
