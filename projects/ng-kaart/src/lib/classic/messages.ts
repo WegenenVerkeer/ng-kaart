@@ -1,10 +1,11 @@
-import { List, Map } from "immutable";
+import { List } from "immutable";
 import * as ol from "openlayers";
 
 import * as ke from "../kaart/kaart-elementen";
 import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
 import * as prt from "../kaart/kaart-protocol";
 import { GeselecteerdeFeatures, HoverFeature } from "../kaart/kaart-with-info-model";
+import { PrecacheLaagProgress } from "../kaart/model-changes";
 
 import { classicLogger } from "./log";
 
@@ -52,7 +53,7 @@ export interface TekenGeomAangepastMsg {
 
 export interface PrecacheProgressMsg {
   readonly type: "PrecacheProgress";
-  readonly progress: Map<string, number>;
+  readonly progress: PrecacheLaagProgress;
 }
 
 export interface SubscribedMsg {
@@ -143,7 +144,7 @@ export function TekenGeomAangepastMsg(geom: ol.geom.Geometry): TekenGeomAangepas
   return { type: "TekenGeomAangepast", geom: geom };
 }
 
-export function PrecacheProgressMsg(progress: Map<string, number>): PrecacheProgressMsg {
+export function PrecacheProgressMsg(progress: PrecacheLaagProgress): PrecacheProgressMsg {
   return { type: "PrecacheProgress", progress: progress };
 }
 

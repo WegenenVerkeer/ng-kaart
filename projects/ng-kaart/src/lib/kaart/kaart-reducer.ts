@@ -7,7 +7,7 @@ import { olx } from "openlayers";
 import * as ol from "openlayers";
 import { Subscription } from "rxjs";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, map, tap } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
 
 import { refreshTiles } from "../util/cachetiles";
 import { forEach } from "../util/option";
@@ -22,7 +22,7 @@ import { MsgGen } from "./kaart-protocol-subscriptions";
 import { KaartWithInfo } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
 import { kaartLogger } from "./log";
-import { DragInfo, ModelChanger, ModelChanges } from "./model-changes";
+import { ModelChanger, ModelChanges } from "./model-changes";
 import {
   AwvV0StyleSpec,
   getFeatureStyleSelector,
@@ -1226,7 +1226,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             cmnd.eindZoom,
             cmnd.wkt,
             cmnd.deleteCache,
-            (progress: number) => updateBehaviorSubject(modelChanger.precacheProgressSubj, svcs => svcs.set(cmnd.titel, progress))
+            (progress: number) =>
+              updateBehaviorSubject(modelChanger.precacheProgressSubj, obj => {
+                return { ...obj, [cmnd.titel]: progress };
+              })
           );
           return ModelAndEmptyResult(model);
         })
@@ -1378,10 +1381,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
 
       function subcribeToPrecacheProgress(sub: prt.PrecacheProgressSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult(
-          "PrecacheProgress",
-          modelChanges.precacheProgress$.pipe(distinctUntilChanged()).subscribe(consumeMessage(sub))
-        );
+        return modelWithSubscriptionResult("PrecacheProgress", modelChanges.precacheProgress$.subscribe(consumeMessage(sub)));
       }
 
       switch (cmnd.subscription.type) {

@@ -9,6 +9,7 @@ import { ZoekAntwoord, ZoekerMetPrioriteiten, ZoekResultaat } from "../zoeker/zo
 import * as ke from "./kaart-elementen";
 import { TekenResultaat } from "./kaart-elementen";
 import { InfoBoodschap } from "./kaart-with-info-model";
+import { PrecacheLaagProgress } from "./model-changes";
 
 /////////
 // Types
@@ -163,7 +164,7 @@ export interface LaagstijlGezetSubscription<Msg> {
 
 export interface PrecacheProgressSubscription<Msg> {
   readonly type: "PrecacheProgress";
-  readonly wrapper: (progress: Map<string, number>) => Msg;
+  readonly wrapper: (progress: PrecacheLaagProgress) => Msg;
 }
 
 ///////////////
@@ -263,6 +264,6 @@ export function LaagstijlGezetSubscription<Msg>(wrapper: MsgGen<ke.ToegevoegdeVe
   return { type: "LaagstijlGezet", wrapper: wrapper };
 }
 
-export function PrecacheProgressSubscription<Msg>(wrapper: (progress: Map<string, number>) => Msg): PrecacheProgressSubscription<Msg> {
+export function PrecacheProgressSubscription<Msg>(wrapper: (progress: PrecacheLaagProgress) => Msg): PrecacheProgressSubscription<Msg> {
   return { type: "PrecacheProgress", wrapper };
 }

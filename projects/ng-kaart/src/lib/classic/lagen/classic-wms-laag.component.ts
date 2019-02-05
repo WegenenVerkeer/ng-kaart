@@ -2,7 +2,7 @@ import { AfterViewInit, Component, EventEmitter, Input, NgZone, OnInit, Output, 
 import { fromNullable } from "fp-ts/lib/Option";
 import { List } from "immutable";
 import { merge } from "rxjs";
-import { map } from "rxjs/operators";
+import { distinctUntilChanged, map } from "rxjs/operators";
 
 import * as ke from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
@@ -122,10 +122,10 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
             )
           ),
           this.kaart.kaartClassicSubMsg$.pipe(
-            ofType<PrecacheProgressMsg>("PrecacheProgress"), //
-            map(m => {
-              this.precacheProgress.emit(m.progress.get(this.titel, 0));
-            })
+            ofType<PrecacheProgressMsg>("PrecacheProgress"),
+            map(m => (m.progress[this.titel] ? m.progress[this.titel] : 0)),
+            distinctUntilChanged(),
+            map(progress => this.precacheProgress.emit(progress))
           )
         )
       ).subscribe();

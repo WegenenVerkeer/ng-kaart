@@ -36,6 +36,10 @@ export interface KlikInfo {
   readonly coversFeature: boolean;
 }
 
+export interface PrecacheLaagProgress {
+  readonly [laagnaam: string]: number; // laagnaam -> progress percentage
+}
+
 /**
  * Dit is een verzameling van subjects waarmee de reducer wijzingen kan laten weten aan de child components.
  * Dit is isomorf aan het zetten van de overeenkomstige attributen op het model en die laten volgen. Het probleem daarbij
@@ -58,7 +62,7 @@ export interface ModelChanger {
   readonly laagstijlaanpassingStateSubj: rx.Subject<LaagstijlaanpassingState>;
   readonly laagstijlGezetSubj: rx.Subject<ke.ToegevoegdeVectorLaag>;
   readonly dragInfoSubj: rx.Subject<DragInfo>;
-  readonly precacheProgressSubj: rx.BehaviorSubject<Map<string, number>>;
+  readonly precacheProgressSubj: rx.BehaviorSubject<PrecacheLaagProgress>;
 }
 
 // Hieronder wordt een paar keer BehaviourSubject gebruikt. Dat is equivalent met, maar beknopter dan, een startWith + shareReplay
@@ -82,7 +86,7 @@ export const ModelChanger: () => ModelChanger = () => ({
   laagstijlaanpassingStateSubj: new rx.BehaviorSubject(GeenLaagstijlaanpassing),
   laagstijlGezetSubj: new rx.Subject<ke.ToegevoegdeVectorLaag>(),
   dragInfoSubj: new rx.Subject<DragInfo>(),
-  precacheProgressSubj: new rx.BehaviorSubject(Map())
+  precacheProgressSubj: new rx.BehaviorSubject({})
 });
 
 export interface ModelChanges {
@@ -105,7 +109,7 @@ export interface ModelChanges {
   readonly laagstijlGezet$: rx.Observable<ke.ToegevoegdeVectorLaag>;
   readonly dragInfo$: rx.Observable<DragInfo>;
   readonly rotatie$: rx.Observable<number>; // een niet gedebouncede variant van "viewinstellingen$.rotatie" voor live rotatie
-  readonly precacheProgress$: rx.Observable<Map<string, number>>;
+  readonly precacheProgress$: rx.Observable<PrecacheLaagProgress>;
 }
 
 const viewinstellingen = (olmap: ol.Map) => ({
