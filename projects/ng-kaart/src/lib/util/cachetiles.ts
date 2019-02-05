@@ -1,6 +1,5 @@
 import { Function1 } from "fp-ts/lib/function";
 import * as ol from "openlayers";
-import * as url from "url";
 
 import { kaartLogger } from "../kaart/log";
 
@@ -37,19 +36,13 @@ export const refreshTiles = (
     throw new Error("Stop zoom is geen getal");
   }
 
-  const geometry: ol.geom.Geometry = new ol.format.WKT()
-    .readFeature(wkt, {
-      dataProjection: source.getProjection(),
-      featureProjection: source.getProjection()
-    })
-    .getGeometry();
+  const sourceProjection = source.getProjection();
+  const tileUrlFunction = source.getTileUrlFunction();
+  const tileGrid = source.getTileGrid();
 
-  let queue = [];
-
-  for (let z = startZoom; z < stopZoom + 1; z++) {
-    // Tilecoord: [z, x, y]
-    const minTileCoord = source.getTileGrid().getTileCoordForCoordAndZ([geometry.getExtent()[0], geometry.getExtent()[1]], z);
-    const maxTileCoord = source.getTileGrid().getTileCoordForCoordAndZ([geometry.getExtent()[2], geometry.getExtent()[3]], z);
+  const calculateTileRange = function(extent, zoom) {
+    const minTileCoord = tileGrid.getTileCoordForCoordAndZ([extent[0], extent[1]], zoom);
+    const maxTileCoord = tileGrid.getTileCoordForCoordAndZ([extent[2], extent[3]], zoom);
 
     const tileRangeMinX = minTileCoord[1];
     const tileRangeMinY = minTileCoord[2];
@@ -57,37 +50,87 @@ export const refreshTiles = (
     const tileRangeMaxX = maxTileCoord[1];
     const tileRangeMaxY = maxTileCoord[2];
 
+    return { tileRangeMinX, tileRangeMinY, tileRangeMaxX, tileRangeMaxY };
+  };
+
+  const geometry: ol.geom.Geometry = new ol.format.WKT()
+    .readFeature(wkt, {
+      dataProjection: sourceProjection,
+      featureProjection: sourceProjection
+    })
+    .getGeometry();
+
+  const geometryExtent = geometry.getExtent();
+
+  let queue = [];
+  const ignoreExtents = [];
+  for (let z = startZoom; z < stopZoom + 1; z++) {
+    // Tilecoord: [z, x, y]
+
+    const ignoreTileCoords = {};
+    ignoreExtents.forEach(extent => {
+      const { tileRangeMinX, tileRangeMinY, tileRangeMaxX, tileRangeMaxY } = calculateTileRange(extent, z);
+      for (let x = tileRangeMinX; x <= tileRangeMaxX; x++) {
+        for (let y = tileRangeMinY; y <= tileRangeMaxY; y++) {
+          if (ignoreTileCoords[x] === undefined) {
+            ignoreTileCoords[x] = {};
+          }
+          ignoreTileCoords[x][y] = true;
+        }
+      }
+    });
+
     const queueByZ = [];
+    const { tileRangeMinX, tileRangeMinY, tileRangeMaxX, tileRangeMaxY } = calculateTileRange(geometryExtent, z);
     for (let x = tileRangeMinX; x <= tileRangeMaxX; x++) {
       for (let y = tileRangeMinY; y <= tileRangeMaxY; y++) {
-        const tileCoord: [number, number, number] = [z, x, y];
-        const tileUrl = source.getTileUrlFunction()(tileCoord, ol.has.DEVICE_PIXEL_RATIO, source.getProjection());
-        const params = url.parse(tileUrl, true);
-        const bbox = params.query["BBOX"] as string;
-        if (bbox) {
+        if (ignoreTileCoords[x] && ignoreTileCoords[x][y]) {
+          // deze tile valt buiten de geometrie
+        } else {
+          const tileCoord: [number, number, number] = [z, x, y];
           // left,bottom,right,top
-          const coordinatesBbox = bbox.split(",");
+          const coordinatesBbox = tileGrid.getTileCoordExtent(tileCoord);
 
-          const left = Number(coordinatesBbox[0]);
-          const bottom = Number(coordinatesBbox[1]);
-          const right = Number(coordinatesBbox[2]);
-          const top = Number(coordinatesBbox[3]);
+          const left = coordinatesBbox[0];
+          const bottom = coordinatesBbox[1];
+          const right = coordinatesBbox[2];
+          const top = coordinatesBbox[3];
 
           const ltCoord: [number, number] = [left, top];
           const lbCoord: [number, number] = [left, bottom];
           const rtCoord: [number, number] = [right, top];
           const rbCoord: [number, number] = [right, bottom];
+          const middenCoord: [number, number] = [left + (right - left) / 2, bottom + (top - bottom) / 2];
+          const middenBottom: [number, number] = [left + (right - left) / 2, bottom];
+          const middenTop: [number, number] = [left + (right - left) / 2, top];
+          const middenLeft: [number, number] = [left, bottom + (top - bottom) / 2];
+          const middenRight: [number, number] = [right, bottom + (top - bottom) / 2];
 
-          if (
+          // snelle check of de geometrie overlapt met een aantal punten van de extent
+          // geeft false negative als de geometrie overlapt met de tile, maar met geen van de getestte punten
+          let intersects =
+            geometry.intersectsCoordinate(middenCoord) ||
             geometry.intersectsCoordinate(ltCoord) ||
             geometry.intersectsCoordinate(lbCoord) ||
             geometry.intersectsCoordinate(rtCoord) ||
-            geometry.intersectsCoordinate(rbCoord)
-          ) {
-            queueByZ.push(tileUrl);
+            geometry.intersectsCoordinate(rbCoord) ||
+            geometry.intersectsCoordinate(middenBottom) ||
+            geometry.intersectsCoordinate(middenTop) ||
+            geometry.intersectsCoordinate(middenLeft) ||
+            geometry.intersectsCoordinate(middenRight);
+
+          // t.e.m. zoomniveau 12 gaan we voor zekerheid
+          if (!intersects && z <= 12) {
+            // correcter, maar (+-30x) trager
+            intersects = geometry["intersectsExtent"](coordinatesBbox);
           }
-        } else {
-          kaartLogger.error(`Geen bbox parameter in URL ${tileUrl}`);
+
+          if (intersects) {
+            const tileUrl = tileUrlFunction(tileCoord, ol.has.DEVICE_PIXEL_RATIO, source.getProjection());
+            queueByZ.push(tileUrl);
+          } else {
+            ignoreExtents.push(coordinatesBbox);
+          }
         }
       }
     }

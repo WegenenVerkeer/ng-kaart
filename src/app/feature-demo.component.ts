@@ -457,8 +457,8 @@ export class FeatureDemoComponent {
 
   startPrecache() {
     this.precacheInput = {
-      startZoom: 7,
-      eindZoom: 9,
+      startZoom: 1,
+      eindZoom: 12,
       wkt: this.wkt,
       startMetLegeCache: true
     };
