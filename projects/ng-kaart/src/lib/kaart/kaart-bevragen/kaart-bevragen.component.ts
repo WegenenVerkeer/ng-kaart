@@ -105,6 +105,7 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
         verbergMsgGen: () => none
       })
     );
+    this.dispatch(prt.PublishLocatiesCmd(wegLocaties));
   }
 }
 
