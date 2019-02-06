@@ -18,3 +18,7 @@ export function fromValidation<L, A>(validation: Validation<L, A>): Option<A> {
 export function fromNullablePredicate<A>(predicate: Predicate<A>, a: A): Option<A> {
   return fromPredicate(predicate)(a).chain(fromNullable);
 }
+
+export function toArray<A>(maybeA: Option<A>): A[] {
+  return maybeA.fold([], a => [a]);
+}
