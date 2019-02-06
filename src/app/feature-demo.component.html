@@ -436,16 +436,16 @@
         <div *ngIf="offlineSectie.sectieZichtbaar" [@enterAnimation]>
             <div>
               <div class="with-padding">
-                <button (click)="startPrecache(startZoom.value, eindZoom.value, startMetLegeCache.checked)">Start vullen cache dienstkaart (district Gent)</button>
+                Begin zoom <input #startZoom value="1" type="text">
+              </div>
+              <div class="with-padding">
+                Eind zoom <input #eindZoom value="12" type="text">
               </div>
               <div class="with-padding">
                 <input #startMetLegeCache type="checkbox" [checked]="true"> Start met lege cache
               </div>
               <div class="with-padding">
-                Begin zoom <input #startZoom value="1" type="text">
-              </div>
-              <div class="with-padding">
-                Eind zoom <input #eindZoom value="12" type="text">
+                <button (click)="startPrecache(startZoom.value, eindZoom.value, startMetLegeCache.checked)">Start vullen cache dienstkaart (district Gent)</button>
               </div>
               <div class="with-padding">
                 Vooruitgang: {{ precacheProgress }}% gecached
