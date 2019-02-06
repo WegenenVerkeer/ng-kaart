@@ -308,6 +308,8 @@ export class FeatureDemoComponent {
   geselecteerdeFietspadsegmenten: List<ol.Feature> = List();
 
   precacheProgress = 0;
+  wkt = wkts.districten.gent;
+  precacheInput: Precache = null;
 
   private tekenenActief = false;
   private getekendeGeom: Option<ol.geom.Geometry> = none;
@@ -354,10 +356,6 @@ export class FeatureDemoComponent {
   };
 
   configuratorMiddelpunt = [130000, 193000];
-
-  wkt = wkts.districten.gent;
-
-  precacheInput: Precache = null;
 
   // Dit werkt alleen als apigateway bereikbaar is. Zie CORS waarschuwing in README.
   readonly districtSource: ol.source.Vector = new ol.source.Vector({
@@ -455,12 +453,12 @@ export class FeatureDemoComponent {
 
   private geometryType = "Polygon";
 
-  startPrecache() {
+  startPrecache(start: string, eind: string, startMetLegeCache: boolean) {
     this.precacheInput = {
-      startZoom: 1,
-      eindZoom: 12,
+      startZoom: Number(start),
+      eindZoom: Number(eind),
       wkt: this.wkt,
-      startMetLegeCache: true
+      startMetLegeCache: startMetLegeCache
     };
   }
 

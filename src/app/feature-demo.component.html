@@ -434,13 +434,24 @@
       <awv-test-sectie sectieId="offline" sectieTitel="Offline caching" [subSectie]="true" #offlineSectie
                        [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && offlineSectie.sectieZichtbaar">
         <div *ngIf="offlineSectie.sectieZichtbaar" [@enterAnimation]>
-
             <div>
-              <button (click)="startPrecache()">Start vullen cache dienstkaart (district Gent)</button>
-              Vooruitgang: {{ precacheProgress }}% gecached
+              <div class="with-padding">
+                <button (click)="startPrecache(startZoom.value, eindZoom.value, startMetLegeCache.checked)">Start vullen cache dienstkaart (district Gent)</button>
+              </div>
+              <div class="with-padding">
+                <input #startMetLegeCache type="checkbox" [checked]="true"> Start met lege cache
+              </div>
+              <div class="with-padding">
+                Begin zoom <input #startZoom value="1" type="text">
+              </div>
+              <div class="with-padding">
+                Eind zoom <input #eindZoom value="12" type="text">
+              </div>
+              <div class="with-padding">
+                Vooruitgang: {{ precacheProgress }}% gecached
+              </div>
             </div>
-
-            <div>
+            <div class="with-padding">
               <textarea class="cachewkt__textarea" [value]="wkt" (input)="wkt = $event.target.value"></textarea>
             </div>
 

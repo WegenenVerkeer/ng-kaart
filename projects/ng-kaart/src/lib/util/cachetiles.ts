@@ -16,7 +16,7 @@ const fetchUrls = (urls: string[], setProgress: Function1<number, void>) => {
 };
 
 const deleteTiles = (laagnaam: string, startMetLegeCache: boolean): Promise<Boolean> =>
-  startMetLegeCache ? caches.delete(laagnaam) : Promise.resolve(true);
+  startMetLegeCache ? caches.delete(laagnaam) : Promise.resolve(false);
 
 // TODO: dit is tijdelijke code -- functie wordt vervangen door performanter alternatief in latere story
 export const refreshTiles = (
@@ -139,5 +139,10 @@ export const refreshTiles = (
     queue = queue.concat(queueByZ);
   }
 
-  deleteTiles(laagnaam, startMetLegeCache).then(() => fetchUrls(queue, setProgress));
+  deleteTiles(laagnaam, startMetLegeCache).then(cacheLeeggemaakt => {
+    cacheLeeggemaakt
+      ? kaartLogger.info(`Cache ${laagnaam} leeggemaakt`)
+      : kaartLogger.info(`Cache ${laagnaam} niet leeggemaakt, wordt verder gevuld`);
+    return fetchUrls(queue, setProgress);
+  });
 };
