@@ -3,17 +3,9 @@ import * as ol from "openlayers";
 
 import { kaartLogger } from "../kaart/log";
 
-const AANTAL_PARALLELE_REQUESTS = 6;
+import { splitInChunks } from "./arrays";
 
-const splitInChunks = (list: any[], aantalChunks: number): [[]] => {
-  const size = Math.ceil(list.length / aantalChunks);
-  return list.reduce((acc, current, index, self) => {
-    if (!(index % size)) {
-      return [...acc, self.slice(index, index + size)];
-    }
-    return acc;
-  }, []);
-};
+const AANTAL_PARALLELE_REQUESTS = 6;
 
 const fetchUrlsGrouped = (urls: string[], setProgress: Function1<number, void>) => {
   let fetched = 0;
