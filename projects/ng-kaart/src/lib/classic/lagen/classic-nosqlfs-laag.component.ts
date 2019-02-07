@@ -74,7 +74,7 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
   precacheLayer(extent: ol.Extent, startMetLegeCache: boolean) {
     if (this.source) {
       this.verwijderFeatures(startMetLegeCache).then(() =>
-        this.source.fetchFeatures(extent, feature => featureStore.writeFeature(this.collection, feature))
+        this.source.fetchFeatures$(extent).subscribe(feature => featureStore.writeFeature(this.collection, feature))
       );
     }
   }

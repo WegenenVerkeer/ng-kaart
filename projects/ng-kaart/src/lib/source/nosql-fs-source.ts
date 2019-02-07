@@ -2,6 +2,7 @@ import { Function1 } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
+import { Observable, Subject } from "rxjs";
 
 import * as le from "../kaart/kaart-load-events";
 import { kaartLogger } from "../kaart/log";
@@ -21,7 +22,6 @@ const FETCH_TIMEOUT = 5000; // max time to wait for data from featureserver befo
 
 
   Indexering: 4 indexen op minx, miny, maxx, maxy en intersect nemen?
-  Met observable werken? Dan kan je gedeeltelijke data sturen
 
  */
 
@@ -44,8 +44,8 @@ export class NosqlFsSource extends ol.source.Vector {
     super({
       loader: function(extent) {
         const source = this;
-        source
-          .fetchFeatures(extent, geojson => {
+        source.fetchFeatures$(extent).subscribe(
+          geojson => {
             source.addFeature(
               new ol.Feature({
                 id: geojson.id,
@@ -54,24 +54,25 @@ export class NosqlFsSource extends ol.source.Vector {
                 laagnaam: source.laagnaam
               })
             );
-          })
-          .catch(reason => {
+          },
+          error => {
             if (source.gebruikCache) {
-              kaartLogger.debug("Request niet gelukt, we gaan naar cache " + reason);
+              kaartLogger.debug("Request niet gelukt, we gaan naar cache " + error);
               geojsonStore
                 .getFeaturesByExtent(source.laagnaam, extent)
                 .then(source.addFeatures)
-                .catch(() => source.dispatchLoadError(reason));
+                .catch(() => source.dispatchLoadError(error));
             } else {
-              source.dispatchLoadError(reason);
+              source.dispatchLoadError(error);
             }
-          });
+          }
+        );
       },
       strategy: ol.loadingstrategy.bbox
     });
   }
 
-  fetchFeatures(extent: number[], featureHandler: Function1<GeoJsonLike, void>): Promise<void> {
+  fetchFeatures$(extent: number[]): Observable<GeoJsonLike> {
     const params = {
       bbox: extent.join(","),
       ...this.view.fold({}, v => ({ "with-view": v })),
@@ -84,13 +85,15 @@ export class NosqlFsSource extends ol.source.Vector {
       })
       .join("&")}`;
 
+    const geoJsonSubj = new Subject<GeoJsonLike>();
+
     const source = this;
 
     source.clear();
 
     this.dispatchLoadEvent(le.LoadStart);
 
-    return fetchWithTimeout(
+    fetchWithTimeout(
       httpUrl,
       {
         cache: "no-store", // geen client side caching van nosql data
@@ -101,13 +104,15 @@ export class NosqlFsSource extends ol.source.Vector {
       if (!response.ok) {
         kaartLogger.error(`Probleem bij ontvangen nosql ${source.collection} data: status ${response.status} ${response.statusText}`);
         source.dispatchLoadError(`Http error code ${response.status}: '${response.statusText}'`);
-        return Promise.reject(`Http error code ${response.status}: '${response.statusText}'`);
+        geoJsonSubj.error(`Http error code ${response.status}: '${response.statusText}'`);
+        return;
       }
 
       if (!response.body) {
         kaartLogger.error(`Probleem bij ontvangen nosql ${source.collection} data: response.body is leeg`);
         source.dispatchLoadError("Lege respons");
-        return Promise.reject(`Http error code ${response.status}: '${response.statusText}'`);
+        geoJsonSubj.error(`Http error code ${response.status}: '${response.statusText}'`);
+        return;
       }
 
       let restData = "";
@@ -134,7 +139,7 @@ export class NosqlFsSource extends ol.source.Vector {
           // verwerk in batches van 100
           teParsenFeatureGroep = teParsenFeatureGroep.concat(ontvangenLijnen);
           if (teParsenFeatureGroep.length > 100 || done) {
-            source.parseStringsToFeatures(teParsenFeatureGroep).map(featureHandler);
+            source.parseStringsToFeatures(teParsenFeatureGroep).map(geojson => geoJsonSubj.next(geojson));
             teParsenFeatureGroep = [];
           }
 
@@ -142,11 +147,16 @@ export class NosqlFsSource extends ol.source.Vector {
             return reader.read().then(verwerkChunk);
           } else {
             source.dispatchLoadComplete();
-            return Promise.resolve();
           }
         })
-        .catch(reason => source.dispatchLoadError(reason));
+        .catch(reason => {
+          source.dispatchLoadError(reason);
+          geoJsonSubj.error(reason);
+          return;
+        });
     });
+
+    return geoJsonSubj.asObservable();
   }
 
   private parseStringsToFeatures(volledigeLijnen: string[]): GeoJsonLike[] {
