@@ -5,10 +5,11 @@ import { kaartLogger } from "../kaart/log";
 
 import { splitInChunks } from "./arrays";
 
-const AANTAL_PARALLELE_REQUESTS = 6;
+const AANTAL_PARALLELE_REQUESTS = 4;
 
 /**
- * Haalt alle urls op met 6 parallele requests door de url array in 6 chunks te verdelen en deze parallel af te lopen.
+ * Haalt alle urls op met AANTAL_PARALLELE_REQUESTS parallele requests door de url array in 6 chunks te verdelen en
+ * deze parallel af te lopen.
  * Elke chunk gaat sequentieel 1 voor 1 elke URL ophalen.
  */
 const fetchUrlsGrouped = (urls: string[], setProgress: Function1<number, void>) => {
