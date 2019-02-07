@@ -6,11 +6,11 @@ import * as rx from "rxjs";
 import { TypedRecord } from "../util/typed-record";
 import { ZoekerMetPrioriteiten, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
 
-import { BareValidationWrapper, KaartMsg, Subscription, ValidationWrapper } from ".";
+import { BareValidationWrapper, KaartLocaties, KaartMsg, Subscription, ValidationWrapper, WegLocatie } from ".";
 import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { Legende } from "./kaart-legende";
-import { InfoBoodschap, WegLocatie } from "./kaart-with-info-model";
+import { InfoBoodschap } from "./kaart-with-info-model";
 import * as ss from "./stijl-selector";
 
 export type Command<Msg extends KaartMsg> =
@@ -36,7 +36,7 @@ export type Command<Msg extends KaartMsg> =
   | SubscribeCmd<Msg>
   | ToonAchtergrondKeuzeCmd<Msg>
   | ToonInfoBoodschapCmd
-  | PublishLocatiesCmd
+  | PublishKaartLocatiesCmd
   | UnsubscribeCmd
   | VeranderExtentCmd
   | VeranderMiddelpuntCmd<Msg>
@@ -389,9 +389,9 @@ export interface ToonInfoBoodschapCmd {
   readonly boodschap: InfoBoodschap;
 }
 
-export interface PublishLocatiesCmd {
-  readonly type: "PublishLocaties";
-  readonly locaties: List<WegLocatie>;
+export interface PublishKaartLocatiesCmd {
+  readonly type: "PublishKaartLocaties";
+  readonly locaties: KaartLocaties;
 }
 
 export interface VerbergInfoBoodschapCmd {
@@ -730,9 +730,9 @@ export function ToonInfoBoodschapCmd<Bdschp extends InfoBoodschap>(boodschap: Bd
   };
 }
 
-export function PublishLocatiesCmd(locaties: List<WegLocatie>): PublishLocatiesCmd {
+export function PublishKaartLocatiesCmd(locaties: KaartLocaties): PublishKaartLocatiesCmd {
   return {
-    type: "PublishLocaties",
+    type: "PublishKaartLocaties",
     locaties: locaties
   };
 }

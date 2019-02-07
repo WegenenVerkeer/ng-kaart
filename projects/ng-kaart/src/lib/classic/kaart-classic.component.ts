@@ -20,10 +20,10 @@ import * as rx from "rxjs";
 import { map, share, tap } from "rxjs/operators";
 
 import { ToegevoegdeLaag } from "../kaart";
+import { KaartLocaties } from "../kaart/kaart-bevragen/laaginfo.model";
 import { forChangedValue, KaartComponentBase } from "../kaart/kaart-component-base";
 import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "../kaart/kaart-event-dispatcher";
 import * as prt from "../kaart/kaart-protocol";
-import { WegLocatie } from "../kaart/kaart-with-info-model";
 import { KaartMsgObservableConsumer } from "../kaart/kaart.component";
 import { subscriptionCmdOperator } from "../kaart/subscription-helper";
 import { ofType } from "../util/operators";
@@ -40,7 +40,7 @@ import {
   KaartClassicSubMsg,
   logOnlyWrapper,
   MiddelpuntAangepastMsg,
-  PublishedLocatiesMsg,
+  PublishedKaartLocatiesMsg,
   SubscribedMsg,
   VoorgrondHoogLagenInGroepAangepastMsg,
   VoorgrondLaagLagenInGroepAangepastMsg,
@@ -106,7 +106,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   @Output()
   voorgrondLaagLagen: EventEmitter<List<ToegevoegdeLaag>> = new EventEmitter();
   @Output()
-  weglocaties: EventEmitter<List<WegLocatie>> = new EventEmitter();
+  kaartLocaties: EventEmitter<KaartLocaties> = new EventEmitter();
 
   @ViewChild("kaart", { read: ElementRef })
   mapElement: ElementRef;
@@ -185,9 +185,9 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
                 KaartClassicMsg
               )
             ),
-            prt.PublishedLocatiesSubscription(
+            prt.PublishedKaartLocatiesSubscription(
               pipe(
-                PublishedLocatiesMsg,
+                PublishedKaartLocatiesMsg,
                 KaartClassicMsg
               )
             )
@@ -219,8 +219,8 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
             return this.voorgrondHoogLagen.emit(msg.lagen);
           case "VoorgrondLaagLagenInGroepAangepast":
             return this.voorgrondLaagLagen.emit(msg.lagen);
-          case "PublishedLocaties":
-            return this.weglocaties.emit(msg.locaties);
+          case "PublishedKaartLocaties":
+            return this.kaartLocaties.emit(msg.locaties);
           default:
             return; // Op de andere boodschappen reageren we niet
         }

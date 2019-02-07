@@ -2,11 +2,12 @@ import { Function1 } from "fp-ts/lib/function";
 import { List } from "immutable";
 import * as ol from "openlayers";
 
+import { KaartLocaties, WegLocatie } from "../kaart";
 import * as ke from "../kaart/kaart-elementen";
 import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
 import * as prt from "../kaart/kaart-protocol";
+import { GeselecteerdeFeatures, HoverFeature } from "../kaart/kaart-with-info-model";
 import { PrecacheLaagProgress } from "../kaart/model-changes";
-import { GeselecteerdeFeatures, HoverFeature, WegLocatie } from "../kaart/kaart-with-info-model";
 
 import { classicLogger } from "./log";
 
@@ -35,7 +36,7 @@ export type KaartClassicSubMsg =
   | PrecacheProgressMsg
   | VoorgrondHoogLagenInGroepAangepastMsg
   | VoorgrondLaagLagenInGroepAangepastMsg
-  | PublishedLocatiesMsg
+  | PublishedKaartLocatiesMsg
   | DummyMsg;
 
 export interface FeatureSelectieAangepastMsg {
@@ -89,9 +90,9 @@ export interface MiddelpuntAangepastMsg {
   readonly middelpunt: ol.Coordinate;
 }
 
-export interface PublishedLocatiesMsg {
-  readonly type: "PublishedLocaties";
-  readonly locaties: List<WegLocatie>;
+export interface PublishedKaartLocatiesMsg {
+  readonly type: "PublishedKaartLocaties";
+  readonly locaties: KaartLocaties;
 }
 
 export interface ExtentAangepastMsg {
@@ -180,8 +181,8 @@ export const MiddelpuntAangepastMsg: (_: ol.Coordinate) => MiddelpuntAangepastMs
   middelpunt: middelpunt
 });
 
-export const PublishedLocatiesMsg: Function1<List<WegLocatie>, PublishedLocatiesMsg> = locaties => ({
-  type: "PublishedLocaties",
+export const PublishedKaartLocatiesMsg: Function1<KaartLocaties, PublishedKaartLocatiesMsg> = locaties => ({
+  type: "PublishedKaartLocaties",
   locaties: locaties
 });
 

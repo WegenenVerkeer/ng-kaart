@@ -598,6 +598,10 @@ export class FeatureDemoComponent {
     console.log("------> voorgrond laag lagen", lagen);
   }
 
+  onKaartLocaties(locaties: any): void {
+    console.log("------> kaartLocaties", locaties);
+  }
+
   onFietspadsegmentenZichtbaar(features: List<ol.Feature>): void {
     this.fietspadsegmentenSelectie = features
       .map(feature => ({

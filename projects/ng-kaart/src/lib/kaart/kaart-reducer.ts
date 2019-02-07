@@ -1050,8 +1050,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
-    function publishLocaties(cmnd: prt.PublishLocatiesCmd): ModelWithResult<Msg> {
-      model.publishedLocatiesSubj.next(cmnd.locaties);
+    function publishKaartLocaties(cmnd: prt.PublishKaartLocatiesCmd): ModelWithResult<Msg> {
+      model.publishedKaartLocatiesSubj.next(cmnd.locaties);
       return ModelWithResult(model);
     }
 
@@ -1369,6 +1369,13 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return modelWithSubscriptionResult("Tekenen", model.tekenSettingsSubj.pipe(distinctUntilChanged()).subscribe(consumeMessage(sub)));
       }
 
+      function subscribeToPublishedKaartLocaties(sub: prt.PublishedKaartLocatiesSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult(
+          "PublishedKaartLocaties",
+          model.publishedKaartLocatiesSubj.pipe(distinctUntilChanged()).subscribe(consumeMessage(sub))
+        );
+      }
+
       function subscribeToActieveModus(sub: prt.ActieveModusSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult("ActieveModus", modelChanges.actieveModus$.subscribe(consumeMessage(sub)));
       }
@@ -1422,6 +1429,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToGeometryChanged(cmnd.subscription);
         case "Tekenen":
           return subscribeToTekenen(cmnd.subscription);
+        case "PublishedKaartLocaties":
+          return subscribeToPublishedKaartLocaties(cmnd.subscription);
         case "InfoBoodschap":
           return subscribeToInfoBoodschappen(cmnd.subscription);
         case "ComponentFout":
@@ -1551,6 +1560,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return zetUiElementOpties(cmd);
       case "ZetActieveModus":
         return zetActieveModus(cmd);
+      case "PublishKaartLocaties":
+        return publishKaartLocaties(cmd);
       case "VoegLaagLocatieInformatieServiceToe":
         return voegLaagLocatieInformatieServiceToe(cmd);
       case "BewerkVectorlaagstijl":
