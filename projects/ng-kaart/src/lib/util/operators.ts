@@ -75,7 +75,7 @@ export const forEvery: <A>(_: rx.Observable<A>) => <B>(_: Function1<A, rx.Observ
 export const subSpy: (_: string) => <A>(_: rx.Observable<A>) => rx.Observable<A> = lbl => source =>
   new rx.Observable(observer => {
     console.log("subscribing to " + lbl);
-    return source.subscribe({
+    const subscription = source.subscribe({
       next(x) {
         console.log("emitting from " + lbl, x);
         observer.next(x);
@@ -89,6 +89,8 @@ export const subSpy: (_: string) => <A>(_: rx.Observable<A>) => rx.Observable<A>
         observer.complete();
       }
     });
+    subscription.add(() => console.log("unsubscribing from " + lbl));
+    return subscription;
   });
 
 /**

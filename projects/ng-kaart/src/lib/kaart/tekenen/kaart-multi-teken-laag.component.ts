@@ -6,7 +6,7 @@ import { List, OrderedMap } from "immutable";
 import { Lens } from "monocle-ts";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { map, scan, switchMap, take } from "rxjs/operators";
+import { filter, map, mapTo, scan, startWith, switchMap, switchMapTo, take } from "rxjs/operators";
 
 import * as clr from "../../stijl/colour";
 import { disc, solidLine } from "../../stijl/common-shapes";
@@ -225,7 +225,7 @@ function drawStateTransformer(
       dispatchCmd(VerwijderLaagCmd(PuntLaagNaam, kaartLogOnlyWrapper));
       dispatchCmd(VerwijderLaagCmd(SegmentLaagNaam, kaartLogOnlyWrapper));
       state.drawInteractions.forEach(inter => state.map.removeInteraction(inter));
-      return constant(initialState(state.map)); // de state resetten
+      return identity; // Hierna gooien we onze state toch weg -> mag corrupt zijn
     }
 
     case "AddPoint": {
@@ -346,20 +346,28 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
     // breng de externe DrawOps (start & stop) samen met de interne DrawOps
     const drawEffects$ = rx.merge(this.modelChanges.tekenenOps$, this.internalDrawOpsSubj);
 
+    // Een event dat helpt om alle state te resetten
+    const drawingStarts$ = drawEffects$.pipe(filter(ops => ops.type === "StartDrawing"));
+
     // Maak een subject waar de drawReducer kan in schrijven
     const waypointObsSubj: rx.Subject<WaypointOps> = new rx.Subject();
 
     // vorm een state + een event om tot een nieuwe state en wat side-effects op de OL map
     const drawReducer$ = olMap$.pipe(
       switchMap(olMap =>
-        subSpy("***drawEffects")(drawEffects$).pipe(
-          scan(
-            drawOpsReducer(
-              ops => asap(() => this.internalDrawOpsSubj.next(ops)),
-              ops => asap(() => waypointObsSubj.next(ops)),
-              cmd => this.dispatch(cmd)
-            ),
-            initialState(olMap)
+        drawingStarts$.pipe(
+          switchMap(startCmd =>
+            subSpy("***drawEffects")(drawEffects$).pipe(
+              startWith(startCmd), // We mogen ons startcommando niet verliezen omdat daar configuratie in zit
+              scan(
+                drawOpsReducer(
+                  ops => asap(() => this.internalDrawOpsSubj.next(ops)),
+                  ops => asap(() => waypointObsSubj.next(ops)),
+                  cmd => this.dispatch(cmd)
+                ),
+                initialState(olMap)
+              )
+            )
           )
         )
       )
@@ -367,8 +375,8 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
 
     // Laat de segmenten berekenen
     const routeSegmentOps$: rx.Observable<RouteSegmentOps> = subSpy("***waypointOps")(waypointObsSubj).pipe(makeRoute);
-    const routeSegmentReducer$ = subSpy("***routeSegmentOps")(routeSegmentOps$).pipe(
-      scan(routeSegementReducer(cmd => this.dispatch(cmd)), {})
+    const routeSegmentReducer$ = drawingStarts$.pipe(
+      switchMapTo(subSpy("***routeSegmentOps")(routeSegmentOps$).pipe(scan(routeSegementReducer(cmd => this.dispatch(cmd)), {})))
     );
 
     // Zorg er voor dat de operaties verwerkt worden vanaf het moment dat de component geïnitialiseerd is.
