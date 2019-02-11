@@ -36,6 +36,7 @@ import {
 import * as ss from "./stijl-selector";
 import { GeenLaagstijlaanpassing, LaagstijlAanpassend } from "./stijleditor/state";
 import { getDefaultStyleSelector } from "./styles";
+import { DrawOps } from "./tekenen/tekenen-model";
 
 ///////////////////////////////////
 // Hulpfuncties
@@ -607,7 +608,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
-    function veranderMiddelpuntCmd(cmnd: prt.VeranderMiddelpuntCmd<Msg>): ModelWithResult<Msg> {
+    function veranderMiddelpuntCmd(cmnd: prt.VeranderMiddelpuntCmd): ModelWithResult<Msg> {
       model.map.getView().animate({
         center: cmnd.coordinate,
         duration: cmnd.animationDuration.getOrElse(0)
@@ -1050,11 +1051,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
-    function publishLocaties(cmnd: prt.PublishLocatiesCmd): ModelWithResult<Msg> {
-      model.publishedLocatiesSubj.next(cmnd.locaties);
-      return ModelWithResult(model);
-    }
-
     function deleteInfoBoodschap(cmnd: prt.VerbergInfoBoodschapCmd): ModelWithResult<Msg> {
       updateBehaviorSubject(model.infoBoodschappenSubj, bsch => bsch.delete(cmnd.id));
       return ModelWithResult(model);
@@ -1228,6 +1224,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return ModelAndEmptyResult(model);
         })
       );
+    }
+
+    function drawOpsCmd(cmnd: prt.DrawOpsCmd): ModelWithResult<Msg> {
+      modelChanger.tekenenOpsSubj.next(cmnd.ops);
+      return ModelWithResult(model);
     }
 
     function handleSubscriptions(cmnd: prt.SubscribeCmd<Msg>): ModelWithResult<Msg> {
@@ -1548,6 +1549,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return vulCacheVoorLaag(cmd);
       case "HighlightFeatures":
         return highlightFeaturesCmd(cmd);
+      case "DrawOps":
+        return drawOpsCmd(cmd);
     }
   };
 }

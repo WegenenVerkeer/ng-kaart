@@ -37,11 +37,13 @@ import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { KaartComponent } from "./kaart.component";
 import { KaartLoadingComponent } from "./loading/kaart-loading.component";
 import { KaartMetenComponent } from "./meten/kaart-meten.component";
+import { KaartMultiMetenComponent } from "./meten/kaart-multi-meten.component";
 import { KaartMijnLocatieComponent } from "./mijn-locatie/kaart-mijn-locatie.component";
 import { KaartOpenStreetViewComponent } from "./open-street-view/kaart-open-street-view.component";
 import { KaartRotatieComponent } from "./rotatie/kaart-rotatie.component";
 import { KaartSchaalComponent } from "./schaal/kaart-schaal.component";
 import { StijleditorModule } from "./stijleditor/index";
+import { KaartMultiTekenLaagComponent } from "./tekenen/kaart-multi-teken-laag.component";
 import { KaartTekenLaagComponent } from "./tekenen/kaart-teken-laag.component";
 import { KaartVoorwaardenComponent } from "./voorwaarden/kaart-voorwaarden.component";
 import { KaartZoomComponent } from "./zoom/kaart-zoom.component";
@@ -59,11 +61,13 @@ const components: any[] = [
   KaartBevragenComponent,
   KaartLoadingComponent,
   KaartMetenComponent,
+  KaartMultiMetenComponent,
   KaartMijnLocatieComponent,
   KaartOpenLayersStyleComponent,
   KaartOpenStreetViewComponent,
   KaartSchaalComponent,
   KaartTekenComponent,
+  KaartMultiTekenLaagComponent,
   KaartTekenLaagComponent,
   KaartVoorwaardenComponent,
   KaartZoomComponent,
@@ -157,6 +161,7 @@ export * from "./open-street-view/kaart-open-street-view.component";
 export * from "./schaal/kaart-schaal.component";
 export * from "./stijl-selector";
 export * from "./styles";
+export * from "./tekenen/kaart-multi-teken-laag.component";
 export * from "./tekenen/kaart-teken-laag.component";
 export * from "./voorwaarden/kaart-voorwaarden.component";
 export * from "./zoom/kaart-zoom.component";

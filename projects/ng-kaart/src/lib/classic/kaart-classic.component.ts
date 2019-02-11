@@ -23,7 +23,6 @@ import { ToegevoegdeLaag } from "../kaart";
 import { forChangedValue, KaartComponentBase } from "../kaart/kaart-component-base";
 import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "../kaart/kaart-event-dispatcher";
 import * as prt from "../kaart/kaart-protocol";
-import { WegLocatie } from "../kaart/kaart-with-info-model";
 import { KaartMsgObservableConsumer } from "../kaart/kaart.component";
 import { subscriptionCmdOperator } from "../kaart/subscription-helper";
 import { ofType } from "../util/operators";
@@ -40,7 +39,6 @@ import {
   KaartClassicSubMsg,
   logOnlyWrapper,
   MiddelpuntAangepastMsg,
-  PublishedLocatiesMsg,
   SubscribedMsg,
   VoorgrondHoogLagenInGroepAangepastMsg,
   VoorgrondLaagLagenInGroepAangepastMsg,
@@ -105,8 +103,6 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   voorgrondHoogLagen: EventEmitter<List<ToegevoegdeLaag>> = new EventEmitter();
   @Output()
   voorgrondLaagLagen: EventEmitter<List<ToegevoegdeLaag>> = new EventEmitter();
-  @Output()
-  weglocaties: EventEmitter<List<WegLocatie>> = new EventEmitter();
 
   @ViewChild("kaart", { read: ElementRef })
   mapElement: ElementRef;
@@ -184,12 +180,6 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
                 VoorgrondLaagLagenInGroepAangepastMsg,
                 KaartClassicMsg
               )
-            ),
-            prt.PublishedLocatiesSubscription(
-              pipe(
-                PublishedLocatiesMsg,
-                KaartClassicMsg
-              )
             )
           )
         )
@@ -219,8 +209,6 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
             return this.voorgrondHoogLagen.emit(msg.lagen);
           case "VoorgrondLaagLagenInGroepAangepast":
             return this.voorgrondLaagLagen.emit(msg.lagen);
-          case "PublishedLocaties":
-            return this.weglocaties.emit(msg.locaties);
           default:
             return; // Op de andere boodschappen reageren we niet
         }

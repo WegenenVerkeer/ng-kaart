@@ -127,6 +127,7 @@ export const zachtblauw: Kleur = toKleurUnsafe("zachtblauw", "#7986cb");
 export const zachtgrijs: Kleur = toKleurUnsafe("zachtgrijs", "#cfd8dc");
 export const zwart: Kleur = toKleurUnsafe("zwart", "#000000");
 export const wit: Kleur = toKleurUnsafe("zwart", "#ffffff");
+export const transparant: Kleur = toKleurUnsafe("transparant", "#00000000");
 
 export const onbekendGrijs: Kleur = toKleurUnsafe("onbekend", "#6d6d6d");
 export const donkergrijs: Kleur = toKleurUnsafe("donkergrijs", "#404040");

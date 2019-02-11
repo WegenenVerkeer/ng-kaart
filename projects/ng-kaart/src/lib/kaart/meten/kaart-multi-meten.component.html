@@ -1,0 +1,7 @@
+<div class="kaart-widget meten">
+  <awv-kaart-multi-teken-laag></awv-kaart-multi-teken-laag>
+  <button mat-icon-button (click)="toggle()"
+          [matTooltip]="isActief() ? 'Stop met multimeten' : 'Start met multimeten'" matTooltipPosition="left">
+    <mat-icon [class.actief]="isActief()" aria-label="Multimeten van lengte en oppervlakte">straighten</mat-icon>
+  </button>
+</div>

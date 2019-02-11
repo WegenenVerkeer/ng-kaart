@@ -20,6 +20,7 @@ import { Viewinstellingen } from "./kaart-protocol-subscriptions";
 import { KaartWithInfo } from "./kaart-with-info";
 import { GeselecteerdeFeatures, HoverFeature } from "./kaart-with-info-model";
 import { GeenLaagstijlaanpassing, LaagstijlaanpassingState } from "./stijleditor/state";
+import { DrawOps } from "./tekenen/tekenen-model";
 
 export interface UiElementSelectie {
   readonly naam: string;
@@ -58,6 +59,7 @@ export interface ModelChanger {
   readonly laagstijlaanpassingStateSubj: rx.Subject<LaagstijlaanpassingState>;
   readonly laagstijlGezetSubj: rx.Subject<ke.ToegevoegdeVectorLaag>;
   readonly dragInfoSubj: rx.Subject<DragInfo>;
+  readonly tekenenOpsSubj: rx.Subject<DrawOps>;
 }
 
 // Hieronder wordt een paar keer BehaviourSubject gebruikt. Dat is equivalent met, maar beknopter dan, een startWith + shareReplay
@@ -80,7 +82,8 @@ export const ModelChanger: () => ModelChanger = () => ({
   laagLocationInfoServicesOpTitelSubj: new rx.BehaviorSubject(Map()),
   laagstijlaanpassingStateSubj: new rx.BehaviorSubject(GeenLaagstijlaanpassing),
   laagstijlGezetSubj: new rx.Subject<ke.ToegevoegdeVectorLaag>(),
-  dragInfoSubj: new rx.Subject<DragInfo>()
+  dragInfoSubj: new rx.Subject<DragInfo>(),
+  tekenenOpsSubj: new rx.Subject<DrawOps>()
 });
 
 export interface ModelChanges {
@@ -103,6 +106,7 @@ export interface ModelChanges {
   readonly laagstijlGezet$: rx.Observable<ke.ToegevoegdeVectorLaag>;
   readonly dragInfo$: rx.Observable<DragInfo>;
   readonly rotatie$: rx.Observable<number>; // een niet gedebouncede variant van "viewinstellingen$.rotatie" voor live rotatie
+  readonly tekenenOps$: rx.Observable<DrawOps>;
 }
 
 const viewinstellingen = (olmap: ol.Map) => ({
@@ -257,6 +261,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     laagstijlaanpassingState$: changer.laagstijlaanpassingStateSubj.asObservable(),
     laagstijlGezet$: changer.laagstijlGezetSubj.asObservable(),
     dragInfo$: dragInfo$,
-    rotatie$: rotation$
+    rotatie$: rotation$,
+    tekenenOps$: changer.tekenenOpsSubj.asObservable()
   };
 };

@@ -8,7 +8,7 @@ import { ZoekAntwoord, ZoekerMetPrioriteiten, ZoekResultaat } from "../zoeker/zo
 
 import * as ke from "./kaart-elementen";
 import { TekenResultaat } from "./kaart-elementen";
-import { InfoBoodschap, WegLocatie } from "./kaart-with-info-model";
+import { InfoBoodschap } from "./kaart-with-info-model";
 
 /////////
 // Types
@@ -24,7 +24,6 @@ export type Subscription<Msg> =
   | HoverFeaturesSubscription<Msg>
   | InfoBoodschappenSubscription<Msg>
   | KaartClickSubscription<Msg>
-  | PublishedLocatiesSubscription<Msg>
   | LaagstijlGezetSubscription<Msg>
   | LaagVerwijderdSubscription<Msg>
   | LagenInGroepSubscription<Msg>
@@ -160,10 +159,6 @@ export interface LaagstijlGezetSubscription<Msg> {
   readonly type: "LaagstijlGezet";
   readonly wrapper: MsgGen<ke.ToegevoegdeVectorLaag, Msg>;
 }
-export interface PublishedLocatiesSubscription<Msg> {
-  readonly type: "PublishedLocaties";
-  readonly wrapper: MsgGen<List<WegLocatie>, Msg>;
-}
 
 ///////////////
 // Constructors
@@ -199,10 +194,6 @@ export function MiddelpuntSubscription<Msg>(wrapper: (center: ol.Coordinate) => 
 
 export function ExtentSubscription<Msg>(wrapper: (extent: ol.Extent) => Msg): ExtentSubscription<Msg> {
   return { type: "Extent", wrapper: wrapper };
-}
-
-export function PublishedLocatiesSubscription<Msg>(wrapper: (wegLocaties: List<WegLocatie>) => Msg): PublishedLocatiesSubscription<Msg> {
-  return { type: "PublishedLocaties", wrapper: wrapper };
 }
 
 export function AchtergrondTitelSubscription<Msg>(wrapper: MsgGen<string, Msg>): AchtergrondTitelSubscription<Msg> {

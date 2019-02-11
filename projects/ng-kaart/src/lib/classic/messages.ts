@@ -33,7 +33,6 @@ export type KaartClassicSubMsg =
   | AchtergrondLagenInGroepAangepastMsg
   | VoorgrondHoogLagenInGroepAangepastMsg
   | VoorgrondLaagLagenInGroepAangepastMsg
-  | PublishedLocatiesMsg
   | DummyMsg;
 
 export interface FeatureSelectieAangepastMsg {
@@ -80,11 +79,6 @@ export interface ViewAangepastMsg {
 export interface MiddelpuntAangepastMsg {
   readonly type: "MiddelpuntAangepast";
   readonly middelpunt: ol.Coordinate;
-}
-
-export interface PublishedLocatiesMsg {
-  readonly type: "PublishedLocaties";
-  readonly locaties: List<WegLocatie>;
 }
 
 export interface ExtentAangepastMsg {
@@ -167,11 +161,6 @@ export const ViewAangepastMsg: (_: prt.Viewinstellingen) => ViewAangepastMsg = v
 export const MiddelpuntAangepastMsg: (_: ol.Coordinate) => MiddelpuntAangepastMsg = middelpunt => ({
   type: "MiddelpuntAangepast",
   middelpunt: middelpunt
-});
-
-export const PublishedLocatiesMsg: Function1<List<WegLocatie>, PublishedLocatiesMsg> = locaties => ({
-  type: "PublishedLocaties",
-  locaties: locaties
 });
 
 export const ExtentAangepastMsg: (_: ol.Extent) => ExtentAangepastMsg = ext => ({ type: "ExtentAangepast", extent: ext });

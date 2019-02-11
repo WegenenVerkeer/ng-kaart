@@ -10,8 +10,9 @@ import { BareValidationWrapper, KaartMsg, Subscription, ValidationWrapper } from
 import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { Legende } from "./kaart-legende";
-import { InfoBoodschap, WegLocatie } from "./kaart-with-info-model";
+import { InfoBoodschap } from "./kaart-with-info-model";
 import * as ss from "./stijl-selector";
+import { DrawOps } from "./tekenen/tekenen-model";
 
 export type Command<Msg extends KaartMsg> =
   | AbortTileLoadingCmd
@@ -24,6 +25,7 @@ export type Command<Msg extends KaartMsg> =
   | BewerkVectorlaagstijlCmd
   | DeselecteerAlleFeaturesCmd
   | DeselecteerFeatureCmd
+  | DrawOpsCmd
   | HighlightFeaturesCmd<Msg>
   | KiesAchtergrondCmd<Msg>
   | MaakLaagOnzichtbaarCmd<Msg>
@@ -36,10 +38,9 @@ export type Command<Msg extends KaartMsg> =
   | SubscribeCmd<Msg>
   | ToonAchtergrondKeuzeCmd<Msg>
   | ToonInfoBoodschapCmd
-  | PublishLocatiesCmd
   | UnsubscribeCmd
   | VeranderExtentCmd
-  | VeranderMiddelpuntCmd<Msg>
+  | VeranderMiddelpuntCmd
   | VeranderViewportCmd
   | VeranderZoomCmd<Msg>
   | VeranderRotatieCmd
@@ -189,7 +190,7 @@ export interface VerwijderStandaardInteractiesCmd<Msg extends KaartMsg> {
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
-export interface VeranderMiddelpuntCmd<Msg extends KaartMsg> {
+export interface VeranderMiddelpuntCmd {
   readonly type: "VeranderMiddelpunt";
   readonly coordinate: ol.Coordinate;
   readonly animationDuration: Option<number>;
@@ -388,11 +389,6 @@ export interface ToonInfoBoodschapCmd {
   readonly boodschap: InfoBoodschap;
 }
 
-export interface PublishLocatiesCmd {
-  readonly type: "PublishLocaties";
-  readonly locaties: List<WegLocatie>;
-}
-
 export interface VerbergInfoBoodschapCmd {
   readonly type: "VerbergInfoBoodschap";
   readonly id: string;
@@ -463,6 +459,11 @@ export interface BewerkVectorlaagstijlCmd {
 
 export interface StopVectorlaagstijlBewerkingCmd {
   readonly type: "StopVectorlaagstijlBewerking";
+}
+
+export interface DrawOpsCmd {
+  readonly type: "DrawOps";
+  readonly ops: DrawOps;
 }
 
 ////////////////////////
@@ -572,7 +573,7 @@ export function ZetStijlSpecVoorLaagCmd<Msg extends KaartMsg>(
 export function VeranderMiddelpuntCmd<Msg extends KaartMsg>(
   coordinate: ol.Coordinate,
   animationDuration: Option<number>
-): VeranderMiddelpuntCmd<Msg> {
+): VeranderMiddelpuntCmd {
   return { type: "VeranderMiddelpunt", coordinate: coordinate, animationDuration: animationDuration };
 }
 
@@ -720,13 +721,6 @@ export function ToonInfoBoodschapCmd<Bdschp extends InfoBoodschap>(boodschap: Bd
   };
 }
 
-export function PublishLocatiesCmd(locaties: List<WegLocatie>): PublishLocatiesCmd {
-  return {
-    type: "PublishLocaties",
-    locaties: locaties
-  };
-}
-
 export function VerbergInfoBoodschapCmd(id: string): VerbergInfoBoodschapCmd {
   return { type: "VerbergInfoBoodschap", id: id };
 }
@@ -804,4 +798,8 @@ export function BewerkVectorlaagstijlCmd(laag: ke.ToegevoegdeVectorLaag): Bewerk
 
 export function StopVectorlaagstijlBewerkingCmd(): StopVectorlaagstijlBewerkingCmd {
   return { type: "StopVectorlaagstijlBewerking" };
+}
+
+export function DrawOpsCmd(ops: DrawOps): DrawOpsCmd {
+  return { type: "DrawOps", ops: ops };
 }

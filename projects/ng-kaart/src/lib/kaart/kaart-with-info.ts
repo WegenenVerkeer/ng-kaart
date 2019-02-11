@@ -4,11 +4,11 @@ import * as MobileDetect from "mobile-detect/mobile-detect";
 import * as ol from "openlayers";
 import { BehaviorSubject, ReplaySubject, Subject } from "rxjs";
 
-import { ZoekerMetPrioriteiten, ZoekResultaat } from "../zoeker/zoeker";
+import { ZoekerMetPrioriteiten } from "../zoeker/zoeker";
 
 import { KaartConfig } from "./kaart-config";
 import * as ke from "./kaart-elementen";
-import { InfoBoodschap, WegLocatie } from "./kaart-with-info-model";
+import { InfoBoodschap } from "./kaart-with-info-model";
 import { ModelChanger } from "./model-changes";
 import { initStyleSelectorsInMap } from "./stijl-selector";
 import { TileLoader } from "./tile-loader";
@@ -46,7 +46,6 @@ export class KaartWithInfo {
   readonly geometryChangedSubj: Subject<ke.TekenResultaat> = new Subject<ke.TekenResultaat>();
   readonly tekenSettingsSubj: BehaviorSubject<Option<ke.TekenSettings>> = new BehaviorSubject<Option<ke.TekenSettings>>(none);
   readonly infoBoodschappenSubj = new BehaviorSubject<OrderedMap<string, InfoBoodschap>>(OrderedMap());
-  readonly publishedLocatiesSubj: Subject<List<WegLocatie>> = new Subject();
   readonly tileLoader: TileLoader = new TileLoader();
 
   constructor(
