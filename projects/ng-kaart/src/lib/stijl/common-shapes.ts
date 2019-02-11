@@ -31,3 +31,28 @@ export namespace disc {
     });
   }
 }
+
+export namespace solidLine {
+  export function styleSpec(lineColour: Kleur, lineWidth: number): ss.AwvV0StyleSpec {
+    return {
+      type: "StaticStyle",
+      definition: {
+        stroke: { color: kleurcodeValue(lineColour), width: lineWidth }
+      }
+    };
+  }
+
+  export function styleSelector(lineColour: Kleur, lineWidth: number): ss.StyleSelector {
+    return fromValidation(ss.validateAwvV0StyleSpec(styleSpec(lineColour, lineWidth)))
+      .map(ss.StaticStyle)
+      .getOrElseL(() => {
+        throw new Error("Slechte stijldefinitie. Dit zou niet mogen kunnen gebeuren.");
+      });
+  }
+
+  export function stylish(lineColour: Kleur, lineWidth: number): ss.Stylish {
+    return fromValidation(ss.validateAwvV0StyleSpec(styleSpec(lineColour, lineWidth))).getOrElseL(() => {
+      throw new Error("Slechte stijldefinitie. Dit zou niet mogen kunnen gebeuren.");
+    });
+  }
+}

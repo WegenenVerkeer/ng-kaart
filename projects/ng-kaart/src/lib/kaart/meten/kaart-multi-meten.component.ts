@@ -42,8 +42,7 @@ export class KaartMultiMetenComponent extends KaartModusComponent implements OnI
     this.bindToLifeCycle(
       this.modelChanges.uiElementOpties$.pipe(
         filter(optie => optie.naam === MultiMetenUiSelector),
-        map(o => o.opties as MultiMetenOpties),
-        tap(o => console.log("****opties", o))
+        map(o => o.opties as MultiMetenOpties)
       )
     ).subscribe(opties => (this.metenOpties = opties));
   }
@@ -62,12 +61,10 @@ export class KaartMultiMetenComponent extends KaartModusComponent implements OnI
 
   ngOnInit(): void {
     super.ngOnInit();
-    console.log("****mminit");
   }
 
   ngOnDestroy(): void {
     this.stopMetenEnVerbergBoodschapen();
-    console.log("****mmdestroy");
     super.ngOnDestroy();
   }
 

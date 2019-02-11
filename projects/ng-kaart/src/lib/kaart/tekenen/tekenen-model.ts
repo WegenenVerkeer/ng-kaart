@@ -2,6 +2,7 @@ import { constant, Function1, Function2, Lazy } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
+import { map, mergeMap } from "rxjs/operators";
 
 import * as clr from "../../stijl/colour";
 import { Pipeable } from "../../util";
@@ -93,15 +94,37 @@ export const RemoveWaypoint: Function1<Waypoint, RemoveWaypoint> = waypoint => (
 // RouteSegmentOps: operaties op het niveau van segementen van routes
 //
 
-export type RouteSegmentOps = AddRouteSegement | RemoveRouteSegment;
+export type RouteSegmentOps = AddRouteSegment | RemoveRouteSegment;
 
-export interface AddRouteSegement {
+export interface AddRouteSegment {
+  type: "AddRouteSegment";
   id: number;
   geom: ol.geom.Geometry;
 }
 
 export interface RemoveRouteSegment {
+  type: "RemoveRouteSegment";
   id: number;
 }
 
-export const makeRoute: Pipeable<WaypointOps, RouteSegmentOps> = o => rx.empty();
+let i = 0;
+
+export const makeRoute: Pipeable<WaypointOps, RouteSegmentOps> = o =>
+  o.pipe(
+    mergeMap(ops => {
+      switch (ops.type) {
+        case "AddWaypoint":
+          return ops.previous
+            .map(first =>
+              rx.of({
+                type: "AddRouteSegment",
+                id: i++,
+                geom: new ol.geom.LineString([first.location, ops.waypoint.location])
+              } as AddRouteSegment)
+            )
+            .getOrElse(rx.empty());
+        case "RemoveWaypoint":
+          return rx.empty();
+      }
+    })
+  );

@@ -13,11 +13,9 @@ import { KaartClassicComponent } from "../kaart-classic.component";
 export class ClassicMultiMetenComponent extends ClassicUIElementSelectorComponentBase {
   constructor(kaart: KaartClassicComponent, zone: NgZone) {
     super(MultiMetenUiSelector, kaart, zone);
-    console.log("***multimetenknop starten");
   }
 
   protected opties(): MultiMetenOpties {
-    console.log("***opties opvragen");
     return {
       markColour: clr.zwart // TODO lees van een Input
     };
