@@ -1393,7 +1393,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
 
       function subcribeToPrecacheProgress(sub: prt.PrecacheProgressSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult("PrecacheProgress", modelChanges.precacheProgress$.subscribe(consumeMessage(sub)));
+        return modelWithSubscriptionResult(
+          "PrecacheProgress",
+          modelChanges.precacheProgress$.pipe(distinctUntilChanged()).subscribe(consumeMessage(sub))
+        );
       }
 
       switch (cmnd.subscription.type) {

@@ -3,16 +3,30 @@ import * as ol from "openlayers";
 
 import { kaartLogger } from "../kaart/log";
 
-const fetchUrls = (urls: string[], setProgress: Function1<number, void>) => {
+import { splitInChunks } from "./arrays";
+
+const AANTAL_PARALLELE_REQUESTS = 4;
+
+/**
+ * Haalt alle urls op met AANTAL_PARALLELE_REQUESTS parallele requests door de url array in 6 chunks te verdelen en
+ * deze parallel af te lopen.
+ * Elke chunk gaat sequentieel 1 voor 1 elke URL ophalen.
+ */
+const fetchUrlsGrouped = (urls: string[], setProgress: Function1<number, void>) => {
   let fetched = 0;
-  const fetches = urls.map(url => () => {
-    fetched++;
-    if (setProgress) {
-      setProgress(Math.round((fetched / urls.length) * 100));
-    }
-    return fetch(new Request(url, { credentials: "include" }), { keepalive: true, mode: "cors" }).catch(err => kaartLogger.error(err));
-  });
-  fetches.reduce((vorige, huidige) => vorige.then(huidige), Promise.resolve());
+
+  const fetchUrls = (chunk: string[], setProgress: Function1<number, void>) => {
+    const fetches = chunk.map(url => () => {
+      fetched++;
+      if (setProgress) {
+        setProgress(Math.round((fetched / urls.length) * 100));
+      }
+      return fetch(new Request(url, { credentials: "include" }), { keepalive: true, mode: "cors" }).catch(err => kaartLogger.error(err));
+    });
+    fetches.reduce((vorige, huidige) => vorige.then(huidige), Promise.resolve());
+  };
+
+  splitInChunks(urls, AANTAL_PARALLELE_REQUESTS).map(chunk => fetchUrls(chunk, setProgress));
 };
 
 const deleteTiles = (laagnaam: string, startMetLegeCache: boolean): Promise<Boolean> =>
@@ -143,6 +157,6 @@ export const refreshTiles = (
     cacheLeeggemaakt
       ? kaartLogger.info(`Cache ${laagnaam} leeggemaakt`)
       : kaartLogger.info(`Cache ${laagnaam} niet leeggemaakt, wordt verder gevuld`);
-    return fetchUrls(queue, setProgress);
+    return fetchUrlsGrouped(queue, setProgress);
   });
 };
