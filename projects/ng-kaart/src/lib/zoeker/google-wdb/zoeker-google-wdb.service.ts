@@ -110,6 +110,7 @@ export class ZoekerGoogleWdbService implements Zoeker {
   private googleWdbLocatieZoekerConfig: ZoekerConfigGoogleWdbConfig;
   private _cache: Promise<GoogleServices> | null = null;
   private legende: Map<string, IconDescription>;
+  private lastRequestNumber = 0;
 
   private readonly locatieZoekerUrl: string;
 
@@ -175,8 +176,18 @@ export class ZoekerGoogleWdbService implements Zoeker {
           headers: new HttpHeaders().set("Content-Type", "application/x-www-form-urlencoded")
         };
 
+        this.lastRequestNumber++;
+        const requestNumber = this.lastRequestNumber;
+        const checkActiveRequest = () => {
+          const active = this.lastRequestNumber === requestNumber;
+          if (!active) {
+            console.log(`Nieuwe request ontvangen, deze niet meer uitvoeren (${this.lastRequestNumber} != ${requestNumber})`);
+          }
+          return active;
+        };
+
         return this.httpClient.post<Object>(this.locatieZoekerUrl + "/zoek", body.toString(), options).pipe(
-          switchMap(resp => this.parseResult(<LocatieZoekerSearchResults>resp, zoektype, maxResultaten)),
+          switchMap(resp => this.parseResult(<LocatieZoekerSearchResults>resp, zoektype, maxResultaten, checkActiveRequest)),
           catchError(err => this.handleError(err, zoektype))
         );
       default:
@@ -184,7 +195,10 @@ export class ZoekerGoogleWdbService implements Zoeker {
     }
   }
 
-  private vervolledigResultaat(onvolledigeLocatie: OnvolledigeLocatie): Observable<Array<ExtendedGeocoderResult | ExtendedPlaceResult>> {
+  private vervolledigResultaat(
+    onvolledigeLocatie: OnvolledigeLocatie,
+    checkActiveRequest: () => boolean
+  ): Observable<Array<ExtendedGeocoderResult | ExtendedPlaceResult>> {
     const omschrijving = onvolledigeLocatie.omschrijving;
 
     if (onvolledigeLocatie.alleenGeocoden === true) {
@@ -197,7 +211,7 @@ export class ZoekerGoogleWdbService implements Zoeker {
           return fromArray(predictions).pipe(
             take(10), // max 10 predictions
             mergeMap(prediction => {
-              return this.geocodePlace(prediction.place_id, prediction.description);
+              return this.geocodePlace(prediction.place_id, prediction.description, checkActiveRequest);
             }, 2), // geocode 2 predictions concurrently
             reduce((acc, val) => acc.concat(val), []) // verzamel geocoded predictions in 1 'next'
           );
@@ -247,7 +261,12 @@ export class ZoekerGoogleWdbService implements Zoeker {
     }
   }
 
-  private parseResult(resultaten: LocatieZoekerSearchResults, zoektype: Zoektype, maxResultaten: number): rx.Observable<ZoekAntwoord> {
+  private parseResult(
+    resultaten: LocatieZoekerSearchResults,
+    zoektype: Zoektype,
+    maxResultaten: number,
+    checkActiveRequest: () => boolean
+  ): rx.Observable<ZoekAntwoord> {
     const zoekResultaten = new ZoekAntwoord(this.naam(), zoektype, [], [], this.legende);
 
     // voeg eventuele foutboodschappen toe
@@ -259,7 +278,7 @@ export class ZoekerGoogleWdbService implements Zoeker {
       return rx.of(zoekResultaten);
     } else {
       return fromArray(resultaten.onvolledigeLocaties).pipe(
-        concatMap(r => this.vervolledigResultaat(r)),
+        concatMap(r => this.vervolledigResultaat(r, checkActiveRequest)),
         reduce((acc, val) => acc.concat(val), []), // verzamel alle vervolledigde resultaten in 1 'next'
         map(resultaten => {
           return resultaten.map(resultaat => {
@@ -440,7 +459,10 @@ export class ZoekerGoogleWdbService implements Zoeker {
     );
   }
 
-  private geocodePlace(placeId, omschrijving): Observable<ExtendedGeocoderResult[]> {
+  private geocodePlace(placeId, omschrijving, checkActiveRequest): Observable<ExtendedGeocoderResult[]> {
+    if (!checkActiveRequest()) {
+      return rx.of([]);
+    }
     if (placeId) {
       return rx.from(this.init()).pipe(
         mergeMap(gapi => {
@@ -472,10 +494,10 @@ export class ZoekerGoogleWdbService implements Zoeker {
             );
           });
         }),
-        retryWhen<ExtendedGeocoderResult[]>(overQueryLimitRetryStrategy())
+        retryWhen<ExtendedGeocoderResult[]>(overQueryLimitRetryStrategy({ checkActiveRequest: checkActiveRequest }))
       );
     } else {
-      return rx.EMPTY;
+      return rx.of([]);
     }
   }
 
@@ -533,13 +555,23 @@ export class ZoekerGoogleWdbService implements Zoeker {
 export const overQueryLimitRetryStrategy = ({
   maxRetryAttempts = 5,
   scalingDuration = 1000,
-  errorMessagesForRetry = ["OVER_QUERY_LIMIT"]
-}: { maxRetryAttempts?: number; scalingDuration?: number; errorMessagesForRetry?: string[] } = {}) => (attempts: Observable<any>) => {
+  errorMessagesForRetry = ["OVER_QUERY_LIMIT"],
+  checkActiveRequest = () => true
+}: {
+  maxRetryAttempts?: number;
+  scalingDuration?: number;
+  errorMessagesForRetry?: string[];
+  checkActiveRequest?: () => boolean;
+} = {}) => (attempts: Observable<any>) => {
   return attempts.pipe(
     mergeMap((error, i) => {
       const retryAttempt = i + 1;
       // if maximum number of retries have been met
       // or response is not an error message we wish to retry, throw error
+      if (!checkActiveRequest()) {
+        console.log(`Inactieve request, stop met retry na ${retryAttempt} pogingen`);
+        return throwError(error);
+      }
       if (retryAttempt > maxRetryAttempts || !errorMessagesForRetry.find(e => e === error)) {
         console.log(`Error na ${retryAttempt} pogingen: ${error}`);
         return throwError(error);
