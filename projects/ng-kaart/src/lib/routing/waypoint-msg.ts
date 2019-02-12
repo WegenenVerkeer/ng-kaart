@@ -31,4 +31,10 @@ export interface WaypointRemoved {
   readonly waypoint: Waypoint;
 }
 
+export function waypointRemoved(waypoint: Waypoint): WaypointRemoved {
+  return <WaypointRemoved>{
+    waypoint: waypoint
+  };
+}
+
 export type WaypointOperation = WaypointAdded | WaypointRemoved;
