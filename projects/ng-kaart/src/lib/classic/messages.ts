@@ -1,10 +1,11 @@
+import { Function1 } from "fp-ts/lib/function";
 import { List } from "immutable";
 import * as ol from "openlayers";
 
 import * as ke from "../kaart/kaart-elementen";
 import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
 import * as prt from "../kaart/kaart-protocol";
-import { GeselecteerdeFeatures, HoverFeature } from "../kaart/kaart-with-info-model";
+import { GeselecteerdeFeatures, HoverFeature, WegLocatie } from "../kaart/kaart-with-info-model";
 
 import { classicLogger } from "./log";
 

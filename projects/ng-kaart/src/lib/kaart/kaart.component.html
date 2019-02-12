@@ -25,6 +25,7 @@
       <ng-content select=".kaart-links"></ng-content>
     </div>
     <awv-kaart-teken-laag *ngIf="aanwezigeElementen.contains('Kaarttekenen')"></awv-kaart-teken-laag>
+    <awv-kaart-multi-teken-laag *ngIf="aanwezigeElementen.contains('MultiKaarttekenen')"></awv-kaart-multi-teken-laag>
     <div class="kaart-rechts-onderaan">
       <div class="kaart-interacties">
         <awv-kaart-achtergrond-selector class="kaart-achtergrond-selector" *ngIf="aanwezigeElementen.contains('Achtergrondkeuze')"></awv-kaart-achtergrond-selector>
@@ -32,6 +33,7 @@
           <awv-kaart-rotatie></awv-kaart-rotatie>
           <awv-kaart-open-street-view *ngIf="aanwezigeElementen.contains('Streetview')"></awv-kaart-open-street-view>
           <awv-kaart-meten *ngIf="aanwezigeElementen.contains('Meten')"></awv-kaart-meten>
+          <awv-kaart-multi-meten *ngIf="aanwezigeElementen.contains('MultiMeten')"></awv-kaart-multi-meten>
           <awv-kaart-mijn-locatie></awv-kaart-mijn-locatie>
           <awv-kaart-zoom *ngIf="aanwezigeElementen.contains('Zoomknoppen')"></awv-kaart-zoom>
           <awv-kaart-bevragen *ngIf="aanwezigeElementen.contains('Bevraagkaart')"></awv-kaart-bevragen>

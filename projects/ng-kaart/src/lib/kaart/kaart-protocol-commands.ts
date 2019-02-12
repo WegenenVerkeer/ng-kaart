@@ -12,18 +12,21 @@ import * as ke from "./kaart-elementen";
 import { Legende } from "./kaart-legende";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import * as ss from "./stijl-selector";
+import { DrawOps } from "./tekenen/tekenen-model";
 
 export type Command<Msg extends KaartMsg> =
   | AbortTileLoadingCmd
   | ActiveerCacheVoorLaag<Msg>
-  | ActiveerHighlightModusCmd<Msg>
-  | ActiveerHoverModusCmd<Msg>
-  | ActiveerSelectieModusCmd<Msg>
-  | DeactiveerSelectieModusCmd<Msg>
-  | ReactiveerSelectieModusCmd<Msg>
+  | ActiveerHighlightModusCmd
+  | ActiveerHoverModusCmd
+  | ActiveerSelectieModusCmd
+  | DeactiveerSelectieModusCmd
+  | ReactiveerSelectieModusCmd
   | BewerkVectorlaagstijlCmd
   | DeselecteerAlleFeaturesCmd
   | DeselecteerFeatureCmd
+  | DrawOpsCmd
+  | ZetGetekendeGeometryCmd
   | HighlightFeaturesCmd<Msg>
   | KiesAchtergrondCmd<Msg>
   | MaakLaagOnzichtbaarCmd<Msg>
@@ -38,10 +41,10 @@ export type Command<Msg extends KaartMsg> =
   | ToonInfoBoodschapCmd
   | UnsubscribeCmd
   | VeranderExtentCmd
-  | VeranderMiddelpuntCmd<Msg>
+  | VeranderMiddelpuntCmd
   | VeranderViewportCmd
   | VeranderZoomCmd<Msg>
-  | VeranderRotatieCmd<Msg>
+  | VeranderRotatieCmd
   | VerbergAchtergrondKeuzeCmd<Msg>
   | VerbergInfoBoodschapCmd
   | VerliesFocusOpKaartCmd
@@ -188,7 +191,7 @@ export interface VerwijderStandaardInteractiesCmd<Msg extends KaartMsg> {
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
-export interface VeranderMiddelpuntCmd<Msg extends KaartMsg> {
+export interface VeranderMiddelpuntCmd {
   readonly type: "VeranderMiddelpunt";
   readonly coordinate: ol.Coordinate;
   readonly animationDuration: Option<number>;
@@ -205,7 +208,7 @@ export interface VeranderExtentCmd {
   readonly extent: ol.Extent;
 }
 
-export interface VeranderRotatieCmd<Msg extends KaartMsg> {
+export interface VeranderRotatieCmd {
   readonly type: "VeranderRotatie";
   readonly rotatie: number;
   readonly animationDuration: Option<number>;
@@ -243,29 +246,29 @@ export interface VervangFeaturesCmd<Msg extends KaartMsg> {
 // multipleShift: een shift-klik voegt een element toe aan de selectie
 export type SelectieModus = "single" | "multipleKlik" | "multipleShift" | "none";
 
-export interface ActiveerSelectieModusCmd<Msg extends KaartMsg> {
+export interface ActiveerSelectieModusCmd {
   readonly type: "ActiveerSelectieModus";
   readonly selectieModus: SelectieModus;
 }
 
-export interface DeactiveerSelectieModusCmd<Msg extends KaartMsg> {
+export interface DeactiveerSelectieModusCmd {
   readonly type: "DeactiveerSelectieModus";
 }
 
-export interface ReactiveerSelectieModusCmd<Msg extends KaartMsg> {
+export interface ReactiveerSelectieModusCmd {
   readonly type: "ReactiveerSelectieModus";
 }
 
 export type HoverModus = "on" | "off";
 
-export interface ActiveerHoverModusCmd<Msg extends KaartMsg> {
+export interface ActiveerHoverModusCmd {
   readonly type: "ActiveerHoverModus";
   readonly hoverModus: HoverModus;
 }
 
 export type HighlightModus = "on" | "off";
 
-export interface ActiveerHighlightModusCmd<Msg extends KaartMsg> {
+export interface ActiveerHighlightModusCmd {
   readonly type: "ActiveerHighlightModus";
   readonly highlightModus: HighlightModus;
 }
@@ -392,6 +395,11 @@ export interface VerbergInfoBoodschapCmd {
   readonly id: string;
 }
 
+export interface ZetGetekendeGeometryCmd {
+  readonly type: "ZetGetekendeGeometry";
+  readonly geometry: ol.geom.Geometry;
+}
+
 export interface UiElementOpties {
   [k: string]: any;
 }
@@ -457,6 +465,11 @@ export interface BewerkVectorlaagstijlCmd {
 
 export interface StopVectorlaagstijlBewerkingCmd {
   readonly type: "StopVectorlaagstijlBewerking";
+}
+
+export interface DrawOpsCmd {
+  readonly type: "DrawOps";
+  readonly ops: DrawOps;
 }
 
 ////////////////////////
@@ -566,7 +579,7 @@ export function ZetStijlSpecVoorLaagCmd<Msg extends KaartMsg>(
 export function VeranderMiddelpuntCmd<Msg extends KaartMsg>(
   coordinate: ol.Coordinate,
   animationDuration: Option<number>
-): VeranderMiddelpuntCmd<Msg> {
+): VeranderMiddelpuntCmd {
   return { type: "VeranderMiddelpunt", coordinate: coordinate, animationDuration: animationDuration };
 }
 
@@ -574,19 +587,19 @@ export function VeranderZoomCmd<Msg extends KaartMsg>(zoom: number, wrapper: Bar
   return { type: "VeranderZoom", zoom: zoom, wrapper: wrapper };
 }
 
-export function VeranderRotatieCmd<Msg extends KaartMsg>(rotatie: number, animationDuration: Option<number>): VeranderRotatieCmd<Msg> {
+export function VeranderRotatieCmd(rotatie: number, animationDuration: Option<number>): VeranderRotatieCmd {
   return { type: "VeranderRotatie", rotatie: rotatie, animationDuration: animationDuration };
 }
 
-export function VeranderExtentCmd<Msg extends KaartMsg>(extent: ol.Extent): VeranderExtentCmd {
+export function VeranderExtentCmd(extent: ol.Extent): VeranderExtentCmd {
   return { type: "VeranderExtent", extent: extent };
 }
 
-export function ZoekGekliktCmd<Msg extends KaartMsg>(resultaat: ZoekResultaat): ZoekGekliktCmd {
+export function ZoekGekliktCmd(resultaat: ZoekResultaat): ZoekGekliktCmd {
   return { type: "ZoekGeklikt", resultaat: resultaat };
 }
 
-export function VeranderViewportCmd<Msg extends KaartMsg>(size: ol.Size): VeranderViewportCmd {
+export function VeranderViewportCmd(size: ol.Size): VeranderViewportCmd {
   return { type: "VeranderViewport", size: size };
 }
 
@@ -610,27 +623,27 @@ export function VervangFeaturesCmd<Msg extends KaartMsg>(
   return { type: "VervangFeatures", titel: titel, features: features, wrapper: wrapper };
 }
 
-export function ActiveerSelectieModusCmd<Msg extends KaartMsg>(selectieModus: SelectieModus): ActiveerSelectieModusCmd<Msg> {
+export function ActiveerSelectieModusCmd(selectieModus: SelectieModus): ActiveerSelectieModusCmd {
   return { type: "ActiveerSelectieModus", selectieModus: selectieModus };
 }
 
-export function DeactiveerSelectieModusCmd<Msg extends KaartMsg>(): DeactiveerSelectieModusCmd<Msg> {
+export function DeactiveerSelectieModusCmd(): DeactiveerSelectieModusCmd {
   return { type: "DeactiveerSelectieModus" };
 }
 
-export function ReactiveerSelectieModusCmd<Msg extends KaartMsg>(): ReactiveerSelectieModusCmd<Msg> {
+export function ReactiveerSelectieModusCmd(): ReactiveerSelectieModusCmd {
   return { type: "ReactiveerSelectieModus" };
 }
 
-export function ActiveerHighlightModusCmd<Msg extends KaartMsg>(highlightModus: HighlightModus): ActiveerHighlightModusCmd<Msg> {
+export function ActiveerHighlightModusCmd(highlightModus: HighlightModus): ActiveerHighlightModusCmd {
   return { type: "ActiveerHighlightModus", highlightModus: highlightModus };
 }
 
-export function ActiveerHoverModusCmd<Msg extends KaartMsg>(hoverModus: HoverModus): ActiveerHoverModusCmd<Msg> {
+export function ActiveerHoverModusCmd(hoverModus: HoverModus): ActiveerHoverModusCmd {
   return { type: "ActiveerHoverModus", hoverModus: hoverModus };
 }
 
-export function MeldComponentFoutCmd<Msg extends KaartMsg>(fouten: List<string>): MeldComponentFoutCmd {
+export function MeldComponentFoutCmd(fouten: List<string>): MeldComponentFoutCmd {
   return { type: "MeldComponentFout", fouten: fouten };
 }
 
@@ -660,28 +673,28 @@ export function VerbergAchtergrondKeuzeCmd<Msg extends KaartMsg>(wrapper: BareVa
   return { type: "VerbergAchtergrondKeuze", wrapper: wrapper };
 }
 
-export function VoegInteractieToeCmd<Msg extends KaartMsg>(interactie: ol.interaction.Pointer): VoegInteractieToeCmd {
+export function VoegInteractieToeCmd(interactie: ol.interaction.Pointer): VoegInteractieToeCmd {
   return {
     type: "VoegInteractieToe",
     interactie: interactie
   };
 }
 
-export function VerwijderInteractieCmd<Msg extends KaartMsg>(interactie: ol.interaction.Pointer): VerwijderInteractieCmd {
+export function VerwijderInteractieCmd(interactie: ol.interaction.Pointer): VerwijderInteractieCmd {
   return {
     type: "VerwijderInteractie",
     interactie: interactie
   };
 }
 
-export function VoegOverlayToeCmd<Msg extends KaartMsg>(overlay: ol.Overlay): VoegOverlayToeCmd {
+export function VoegOverlayToeCmd(overlay: ol.Overlay): VoegOverlayToeCmd {
   return {
     type: "VoegOverlayToe",
     overlay: overlay
   };
 }
 
-export function VerwijderOverlaysCmd<Msg extends KaartMsg>(overlays: Array<ol.Overlay>): VerwijderOverlaysCmd {
+export function VerwijderOverlaysCmd(overlays: Array<ol.Overlay>): VerwijderOverlaysCmd {
   return {
     type: "VerwijderOverlays",
     overlays: overlays
@@ -695,7 +708,7 @@ export function SubscribeCmd<Msg extends KaartMsg>(
   return { type: "Subscription", subscription: subscription, wrapper: wrapper };
 }
 
-export function UnsubscribeCmd<Msg extends KaartMsg>(subscriptionResult: SubscriptionResult): UnsubscribeCmd {
+export function UnsubscribeCmd(subscriptionResult: SubscriptionResult): UnsubscribeCmd {
   return { type: "Unsubscription", subscriptionResult: subscriptionResult };
 }
 
@@ -791,4 +804,12 @@ export function BewerkVectorlaagstijlCmd(laag: ke.ToegevoegdeVectorLaag): Bewerk
 
 export function StopVectorlaagstijlBewerkingCmd(): StopVectorlaagstijlBewerkingCmd {
   return { type: "StopVectorlaagstijlBewerking" };
+}
+
+export function DrawOpsCmd(ops: DrawOps): DrawOpsCmd {
+  return { type: "DrawOps", ops: ops };
+}
+
+export function ZetGetekendeGeometryCmd(geometry: ol.geom.Geometry): ZetGetekendeGeometryCmd {
+  return { type: "ZetGetekendeGeometry", geometry: geometry };
 }

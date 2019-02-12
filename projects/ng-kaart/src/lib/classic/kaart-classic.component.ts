@@ -98,11 +98,11 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   @Output()
   hoverFeature: EventEmitter<Option<ol.Feature>> = new EventEmitter();
   @Output()
-  achtergrondLagen: EventEmitter<List<ToegevoegdeLaag>> = new EventEmitter<List<ToegevoegdeLaag>>();
+  achtergrondLagen: EventEmitter<List<ToegevoegdeLaag>> = new EventEmitter();
   @Output()
-  voorgrondHoogLagen: EventEmitter<List<ToegevoegdeLaag>> = new EventEmitter<List<ToegevoegdeLaag>>();
+  voorgrondHoogLagen: EventEmitter<List<ToegevoegdeLaag>> = new EventEmitter();
   @Output()
-  voorgrondLaagLagen: EventEmitter<List<ToegevoegdeLaag>> = new EventEmitter<List<ToegevoegdeLaag>>();
+  voorgrondLaagLagen: EventEmitter<List<ToegevoegdeLaag>> = new EventEmitter();
 
   @ViewChild("kaart", { read: ElementRef })
   mapElement: ElementRef;
@@ -118,6 +118,8 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
         share() // 1 rx subscription naar boven toe is genoeg
       );
 
+      // Deze blok lift de boodschappen van de kaart component naar boodschappen voor de classic componenten
+      // Alle messages die door 1 van de classic componenten de geconsumeerd worden, moet hier vertaald worden.
       this.bindToLifeCycle(
         this.kaartClassicSubMsg$.lift(
           classicMsgSubscriptionCmdOperator(

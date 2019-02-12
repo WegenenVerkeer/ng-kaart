@@ -9,14 +9,7 @@ import { dimensieBeschrijving } from "../../util/geometries";
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { ofType } from "../../util/operators";
 import { TekenSettings } from "../kaart-elementen";
-import {
-  actieveModusGezetWrapper,
-  GeometryChangedMsg,
-  InfoBoodschappenMsg,
-  KaartInternalMsg,
-  tekenResultaatWrapper,
-  verwijderTekenFeatureWrapper
-} from "../kaart-internal-messages";
+import { GeometryChangedMsg, InfoBoodschappenMsg, tekenResultaatWrapper, verwijderTekenFeatureWrapper } from "../kaart-internal-messages";
 import { KaartModusComponent } from "../kaart-modus-component";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
