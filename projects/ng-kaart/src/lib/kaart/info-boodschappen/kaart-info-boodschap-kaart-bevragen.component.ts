@@ -1,9 +1,10 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone } from "@angular/core";
 import { fromNullable } from "fp-ts/lib/Option";
 
+import { Adres, WegLocatie } from "..";
 import { formatCoordinate, lambert72ToWgs84, switchVolgorde } from "../../coordinaten/coordinaten.service";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
-import { Adres, InfoBoodschapKaartBevragenProgress, WegLocatie, withProgress } from "../kaart-with-info-model";
+import { InfoBoodschapKaartBevragenProgress, withProgress } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
 
 export interface LaagInfo {

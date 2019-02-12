@@ -7,10 +7,10 @@ import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { catchError } from "rxjs/operators";
 
-import { Adres, Progress, WegLocatie } from "../kaart-with-info-model";
+import { Progress } from "../kaart-with-info-model";
 import { kaartLogger } from "../log";
 
-import { LaagLocationInfo } from "./laaginfo.model";
+import { Adres, LaagLocationInfo, WegLocatie } from "./laaginfo.model";
 
 export interface LocatieInfo {
   readonly kaartLocatie: ol.Coordinate;

@@ -105,6 +105,7 @@
                          [mijnLocatieZoom]="getMijnLocatieZoom()"
                          [kaartLinksBreedte]="getKaartLinksBreedte()"
                          (zoomChange)="onZoom($event)"
+                         (kaartLocaties)="onKaartLocaties($event)"
                          (middelpuntChange)="onMiddelpunt($event)"
                          (extentChange)="onExtent($event)"
                          [middelpunt]="configuratorMiddelpunt"

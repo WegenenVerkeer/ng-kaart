@@ -6,6 +6,7 @@ import * as ol from "openlayers";
 
 import { ZoekAntwoord, ZoekerMetPrioriteiten, ZoekResultaat } from "../zoeker/zoeker";
 
+import { KaartLocaties, WegLocatie } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { TekenResultaat } from "./kaart-elementen";
 import { InfoBoodschap } from "./kaart-with-info-model";
@@ -25,6 +26,7 @@ export type Subscription<Msg> =
   | HoverFeaturesSubscription<Msg>
   | InfoBoodschappenSubscription<Msg>
   | KaartClickSubscription<Msg>
+  | PublishedKaartLocatiesSubscription<Msg>
   | LaagstijlGezetSubscription<Msg>
   | LaagVerwijderdSubscription<Msg>
   | LagenInGroepSubscription<Msg>
@@ -161,6 +163,10 @@ export interface LaagstijlGezetSubscription<Msg> {
   readonly type: "LaagstijlGezet";
   readonly wrapper: MsgGen<ke.ToegevoegdeVectorLaag, Msg>;
 }
+export interface PublishedKaartLocatiesSubscription<Msg> {
+  readonly type: "PublishedKaartLocaties";
+  readonly wrapper: MsgGen<KaartLocaties, Msg>;
+}
 
 export interface PrecacheProgressSubscription<Msg> {
   readonly type: "PrecacheProgress";
@@ -201,6 +207,12 @@ export function MiddelpuntSubscription<Msg>(wrapper: (center: ol.Coordinate) => 
 
 export function ExtentSubscription<Msg>(wrapper: (extent: ol.Extent) => Msg): ExtentSubscription<Msg> {
   return { type: "Extent", wrapper: wrapper };
+}
+
+export function PublishedKaartLocatiesSubscription<Msg>(
+  wrapper: (locaties: KaartLocaties) => Msg
+): PublishedKaartLocatiesSubscription<Msg> {
+  return { type: "PublishedKaartLocaties", wrapper: wrapper };
 }
 
 export function AchtergrondTitelSubscription<Msg>(wrapper: MsgGen<string, Msg>): AchtergrondTitelSubscription<Msg> {
