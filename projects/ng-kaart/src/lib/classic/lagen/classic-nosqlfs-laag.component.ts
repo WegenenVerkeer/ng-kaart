@@ -2,6 +2,7 @@ import { Component, Input, NgZone, ViewEncapsulation } from "@angular/core";
 import { option } from "fp-ts";
 import { fromNullable } from "fp-ts/lib/Option";
 import { OrderedMap } from "immutable";
+import { bufferTime } from "rxjs/operators";
 
 import { kaartLogger } from "../../kaart";
 import * as ke from "../../kaart/kaart-elementen";
@@ -43,7 +44,8 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
         .then(() =>
           this.source
             .fetchFeaturesByWkt$(input.wkt)
-            .subscribe(feature => featureStore.writeFeature(this.titel, feature).catch(error => kaartLogger.error(error)))
+            .pipe(bufferTime(1000))
+            .subscribe(features => featureStore.writeFeatures(this.titel, features).catch(error => kaartLogger.error(error)))
         )
         .catch(error => kaartLogger.error(error));
     }
