@@ -75,6 +75,6 @@ export const getFeatures = (storename: string, filter: Function1<GeoJsonLike, bo
     .then(features => features.filter(filter));
 
 export const getFeaturesByExtent = (storename: string, extent: ol.Extent): Promise<GeoJsonLike[]> => {
-  // zoek via indexes ipv getFeatures(storename, feature => feature.getGeometry()["intersectsExtent"](extent));
+  // TODO: CK-15: zoek via indexes ipv getFeatures(storename, feature => feature.getGeometry()["intersectsExtent"](extent));
   return getFeatures(storename, () => true);
 };

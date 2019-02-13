@@ -1,4 +1,3 @@
-import { Function1 } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
@@ -100,61 +99,65 @@ export class NosqlFsSource extends ol.source.Vector {
         credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
       },
       FETCH_TIMEOUT
-    ).then(response => {
-      if (!response.ok) {
-        kaartLogger.error(`Probleem bij ontvangen nosql ${source.collection} data: status ${response.status} ${response.statusText}`);
-        source.dispatchLoadError(`Http error code ${response.status}: '${response.statusText}'`);
-        geoJsonSubj.error(`Http error code ${response.status}: '${response.statusText}'`);
-        return;
-      }
-
-      if (!response.body) {
-        kaartLogger.error(`Probleem bij ontvangen nosql ${source.collection} data: response.body is leeg`);
-        source.dispatchLoadError("Lege respons");
-        geoJsonSubj.error(`Http error code ${response.status}: '${response.statusText}'`);
-        return;
-      }
-
-      let restData = "";
-      let teParsenFeatureGroep: string[] = [];
-
-      const reader = response.body.getReader();
-      reader
-        .read()
-        .then(function verwerkChunk({ done, value }): Promise<void> {
-          source.dispatchLoadEvent(le.PartReceived);
-          restData += NosqlFsSource.decoder.decode(value || new Uint8Array(0), {
-            stream: !done
-          }); // append nieuwe data (in geval er een half ontvangen lijn is van vorige call)
-
-          let ontvangenLijnen = restData.split(NosqlFsSource.featureDelimiter);
-
-          if (!done) {
-            // laatste lijn is vermoedelijk niet compleet. Hou bij voor volgende keer
-            restData = ontvangenLijnen[ontvangenLijnen.length - 1];
-            // verwijder gedeeltelijke lijn
-            ontvangenLijnen = ontvangenLijnen.slice(0, -1);
-          }
-
-          // verwerk in batches van 100
-          teParsenFeatureGroep = teParsenFeatureGroep.concat(ontvangenLijnen);
-          if (teParsenFeatureGroep.length > 100 || done) {
-            source.parseStringsToFeatures(teParsenFeatureGroep).map(geojson => geoJsonSubj.next(geojson));
-            teParsenFeatureGroep = [];
-          }
-
-          if (!done) {
-            return reader.read().then(verwerkChunk);
-          } else {
-            source.dispatchLoadComplete();
-          }
-        })
-        .catch(reason => {
-          source.dispatchLoadError(reason);
-          geoJsonSubj.error(reason);
+    )
+      .then(response => {
+        if (!response.ok) {
+          kaartLogger.error(`Probleem bij ontvangen nosql ${source.collection} data: status ${response.status} ${response.statusText}`);
+          source.dispatchLoadError(`Http error code ${response.status}: '${response.statusText}'`);
+          geoJsonSubj.error(`Http error code ${response.status}: '${response.statusText}'`);
           return;
-        });
-    });
+        }
+
+        if (!response.body) {
+          kaartLogger.error(`Probleem bij ontvangen nosql ${source.collection} data: response.body is leeg`);
+          source.dispatchLoadError("Lege respons");
+          geoJsonSubj.error(`Http error code ${response.status}: '${response.statusText}'`);
+          return;
+        }
+
+        let restData = "";
+        let teParsenFeatureGroep: string[] = [];
+
+        const reader = response.body.getReader();
+        reader
+          .read()
+          .then(function verwerkChunk({ done, value }) {
+            source.dispatchLoadEvent(le.PartReceived);
+            restData += NosqlFsSource.decoder.decode(value || new Uint8Array(0), {
+              stream: !done
+            }); // append nieuwe data (in geval er een half ontvangen lijn is van vorige call)
+
+            let ontvangenLijnen = restData.split(NosqlFsSource.featureDelimiter);
+
+            if (!done) {
+              // laatste lijn is vermoedelijk niet compleet. Hou bij voor volgende keer
+              restData = ontvangenLijnen[ontvangenLijnen.length - 1];
+              // verwijder gedeeltelijke lijn
+              ontvangenLijnen = ontvangenLijnen.slice(0, -1);
+            }
+
+            // verwerk in batches van 100
+            teParsenFeatureGroep = teParsenFeatureGroep.concat(ontvangenLijnen);
+            if (teParsenFeatureGroep.length > 100 || done) {
+              source.parseStringsToFeatures(teParsenFeatureGroep).map(geojson => geoJsonSubj.next(geojson));
+              teParsenFeatureGroep = [];
+            }
+
+            if (!done) {
+              reader.read().then(verwerkChunk);
+            } else {
+              source.dispatchLoadComplete();
+            }
+          })
+          .catch(reason => {
+            source.dispatchLoadError(reason);
+            geoJsonSubj.error(reason);
+          });
+      })
+      .catch(reason => {
+        source.dispatchLoadError(reason);
+        geoJsonSubj.error(reason);
+      });
 
     return geoJsonSubj.asObservable();
   }
