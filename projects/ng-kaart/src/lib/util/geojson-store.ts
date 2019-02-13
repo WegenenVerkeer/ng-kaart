@@ -107,3 +107,12 @@ export const getFeaturesByExtent = (storename: string, extent: ol.Extent): Promi
     .then(([minXs, minYs, maxXs, maxYs]) => intersect2(maxYs, intersect2(maxXs, intersect2(minXs, minYs))))
     .then(keys => getFeatures(storename, feature => keys.includes(feature.id)));
 };
+
+export const getFeaturesByExtentTableScan = (storename: string, extent: ol.Extent): Promise<GeoJsonLike[]> => {
+  const [minx, miny, maxx, maxy] = extent;
+  return getFeatures(
+    storename,
+    feature =>
+      feature.metadata.minx >= minx && feature.metadata.maxx <= maxx && feature.metadata.miny >= miny && feature.metadata.maxy <= maxy
+  );
+};
