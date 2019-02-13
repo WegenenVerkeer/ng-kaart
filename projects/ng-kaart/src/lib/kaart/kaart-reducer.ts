@@ -641,7 +641,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function veranderViewportCmd(cmnd: prt.VeranderViewportCmd): ModelWithResult<Msg> {
       // Openlayers moet weten dat de grootte van de container aangepast is of de kaart is uitgerekt
-      model.map.setSize(cmnd.size);
+      model.map.setSize([cmnd.size[0]!, cmnd.size[1]!]); // OL kan wel degelijk undefined aan, maar de declaratie beweert anders
       model.map.updateSize();
       modelChanger.viewPortSizeSubj.next(); // Omdat extent wschl gewijzigd wordt
       return ModelWithResult(model);
@@ -1231,6 +1231,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
+    function zetGetekendeGeometry(cmnd: prt.ZetGetekendeGeometryCmd): ModelWithResult<Msg> {
+      modelChanger.getekendeGeometrySubj.next(cmnd.geometry);
+      return ModelWithResult(model);
+    }
+
     function handleSubscriptions(cmnd: prt.SubscribeCmd<Msg>): ModelWithResult<Msg> {
       function modelWithSubscriptionResult(name: string, subscription: Subscription): ModelWithResult<Msg> {
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, { subscription: subscription, subscriberName: name })));
@@ -1551,6 +1556,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return highlightFeaturesCmd(cmd);
       case "DrawOps":
         return drawOpsCmd(cmd);
+      case "ZetGetekendeGeometry":
+        return zetGetekendeGeometry(cmd);
     }
   };
 }

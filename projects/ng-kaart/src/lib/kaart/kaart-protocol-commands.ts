@@ -26,6 +26,7 @@ export type Command<Msg extends KaartMsg> =
   | DeselecteerAlleFeaturesCmd
   | DeselecteerFeatureCmd
   | DrawOpsCmd
+  | ZetGetekendeGeometryCmd
   | HighlightFeaturesCmd<Msg>
   | KiesAchtergrondCmd<Msg>
   | MaakLaagOnzichtbaarCmd<Msg>
@@ -215,7 +216,7 @@ export interface VeranderRotatieCmd {
 
 export interface VeranderViewportCmd {
   readonly type: "VeranderViewport";
-  readonly size: ol.Size;
+  readonly size: [number | undefined, number | undefined];
 }
 
 export interface ZetFocusOpKaartCmd {
@@ -392,6 +393,11 @@ export interface ToonInfoBoodschapCmd {
 export interface VerbergInfoBoodschapCmd {
   readonly type: "VerbergInfoBoodschap";
   readonly id: string;
+}
+
+export interface ZetGetekendeGeometryCmd {
+  readonly type: "ZetGetekendeGeometry";
+  readonly geometry: ol.geom.Geometry;
 }
 
 export interface UiElementOpties {
@@ -593,7 +599,7 @@ export function ZoekGekliktCmd(resultaat: ZoekResultaat): ZoekGekliktCmd {
   return { type: "ZoekGeklikt", resultaat: resultaat };
 }
 
-export function VeranderViewportCmd(size: ol.Size): VeranderViewportCmd {
+export function VeranderViewportCmd(size: [number | undefined, number | undefined]): VeranderViewportCmd {
   return { type: "VeranderViewport", size: size };
 }
 
@@ -802,4 +808,8 @@ export function StopVectorlaagstijlBewerkingCmd(): StopVectorlaagstijlBewerkingC
 
 export function DrawOpsCmd(ops: DrawOps): DrawOpsCmd {
   return { type: "DrawOps", ops: ops };
+}
+
+export function ZetGetekendeGeometryCmd(geometry: ol.geom.Geometry): ZetGetekendeGeometryCmd {
+  return { type: "ZetGetekendeGeometry", geometry: geometry };
 }

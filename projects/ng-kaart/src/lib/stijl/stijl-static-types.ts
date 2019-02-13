@@ -160,7 +160,7 @@ export namespace Fill {
 }
 
 export namespace Stroke {
-  export const colorLens: Lens<StrokeStyle, ColorType> = Lens.fromProp("color");
+  export const colorOptional: Optional<StrokeStyle, ColorType> = Optional.fromNullableProp("color");
 }
 
 export namespace Color {

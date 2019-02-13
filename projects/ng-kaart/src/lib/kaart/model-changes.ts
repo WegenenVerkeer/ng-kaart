@@ -60,6 +60,7 @@ export interface ModelChanger {
   readonly laagstijlGezetSubj: rx.Subject<ke.ToegevoegdeVectorLaag>;
   readonly dragInfoSubj: rx.Subject<DragInfo>;
   readonly tekenenOpsSubj: rx.Subject<DrawOps>;
+  readonly getekendeGeometrySubj: rx.Subject<ol.geom.Geometry>;
 }
 
 // Hieronder wordt een paar keer BehaviourSubject gebruikt. Dat is equivalent met, maar beknopter dan, een startWith + shareReplay
@@ -83,7 +84,8 @@ export const ModelChanger: () => ModelChanger = () => ({
   laagstijlaanpassingStateSubj: new rx.BehaviorSubject(GeenLaagstijlaanpassing),
   laagstijlGezetSubj: new rx.Subject<ke.ToegevoegdeVectorLaag>(),
   dragInfoSubj: new rx.Subject<DragInfo>(),
-  tekenenOpsSubj: new rx.Subject<DrawOps>()
+  tekenenOpsSubj: new rx.Subject<DrawOps>(),
+  getekendeGeometrySubj: new rx.Subject<ol.geom.Geometry>()
 });
 
 export interface ModelChanges {
@@ -107,6 +109,7 @@ export interface ModelChanges {
   readonly dragInfo$: rx.Observable<DragInfo>;
   readonly rotatie$: rx.Observable<number>; // een niet gedebouncede variant van "viewinstellingen$.rotatie" voor live rotatie
   readonly tekenenOps$: rx.Observable<DrawOps>;
+  readonly getekendeGeometry$: rx.Observable<ol.geom.Geometry>;
 }
 
 const viewinstellingen = (olmap: ol.Map) => ({
@@ -262,6 +265,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     laagstijlGezet$: changer.laagstijlGezetSubj.asObservable(),
     dragInfo$: dragInfo$,
     rotatie$: rotation$,
-    tekenenOps$: changer.tekenenOpsSubj.asObservable()
+    tekenenOps$: changer.tekenenOpsSubj.asObservable(),
+    getekendeGeometry$: changer.getekendeGeometrySubj.asObservable()
   };
 };

@@ -1,6 +1,5 @@
 import { Component, EventEmitter, NgZone, OnInit, Output } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { Set } from "immutable";
 import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, startWith } from "rxjs/operators";
 
@@ -133,8 +132,8 @@ export class ZoekerCrabGetraptComponent extends GetraptZoekerComponent implement
     });
   }
 
-  toonGemeenteInLijst(gemeente?: CrabGemeente): string | undefined {
-    return gemeente ? `${gemeente.naam} <span class="crab-postcodes">(${gemeente.postcodes})</span>` : undefined;
+  toonGemeenteInLijst(gemeente?: CrabGemeente): string {
+    return gemeente ? `${gemeente.naam} <span class="crab-postcodes">(${gemeente.postcodes})</span>` : "";
   }
 
   toonGemeente(gemeente?: CrabGemeente): string | undefined {

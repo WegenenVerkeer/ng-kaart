@@ -3,6 +3,8 @@ import * as url from "url";
 
 import { kaartLogger } from "../kaart/log";
 
+// FIXME: types toevoegen
+
 const fetchUrls = (urls: string[]) => {
   const fetches = urls.map(url => () =>
     fetch(new Request(url, { credentials: "include" }), { keepalive: true, mode: "cors" }).catch(err => kaartLogger.error(err))
@@ -29,7 +31,7 @@ export const refreshTiles = (laagnaam: string, source: ol.source.UrlTile, startZ
     })
     .getGeometry();
 
-  let queue = [];
+  let queue: string[] = [];
 
   for (let z = startZoom; z < stopZoom + 1; z++) {
     // Tilecoord: [z, x, y]
@@ -42,7 +44,7 @@ export const refreshTiles = (laagnaam: string, source: ol.source.UrlTile, startZ
     const tileRangeMaxX = maxTileCoord[1];
     const tileRangeMaxY = maxTileCoord[2];
 
-    const queueByZ = [];
+    const queueByZ: string[] = [];
     for (let x = tileRangeMinX; x <= tileRangeMaxX; x++) {
       for (let y = tileRangeMinY; y <= tileRangeMaxY; y++) {
         const tileCoord: [number, number, number] = [z, x, y];
