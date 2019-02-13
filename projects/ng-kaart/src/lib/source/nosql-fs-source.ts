@@ -26,21 +26,28 @@ const decoder = new TextDecoder();
 
  */
 
-const parseStringsToFeatures: Function1<string[], GeoJsonLike[]> = volledigeLijnen => {
+const geoJsonLike: Function1<string, GeoJsonLike> = lijn => {
+  try {
+    const geojson = JSON.parse(lijn) as GeoJsonLike;
+    geojson.metadata = {
+      minx: geojson.geometry.bbox[0],
+      miny: geojson.geometry.bbox[1],
+      maxx: geojson.geometry.bbox[2],
+      maxy: geojson.geometry.bbox[3],
+      toegevoegd: new Date()
+    };
+    return geojson;
+  } catch (error) {
+    kaartLogger.error(`Kon JSON data niet parsen: ${error}`);
+    throw new Error(`Kon JSON data niet parsen: ${error}`);
+  }
+};
+
+const geoJsons: Function1<string[], GeoJsonLike[]> = volledigeLijnen => {
   try {
     const features = volledigeLijnen //
       .filter(lijn => lijn.trim().length > 0) //
-      .map(lijn => JSON.parse(lijn) as GeoJsonLike)
-      .map(geojson => {
-        geojson.metadata = {
-          minx: geojson.geometry.bbox[0],
-          miny: geojson.geometry.bbox[1],
-          maxx: geojson.geometry.bbox[2],
-          maxy: geojson.geometry.bbox[3],
-          toegevoegd: new Date()
-        };
-        return geojson;
-      });
+      .map(geoJsonLike);
     return features!;
   } catch (error) {
     kaartLogger.error(`Kon JSON data niet parsen: ${error}`);
@@ -91,7 +98,7 @@ const observableFromResponse$: Function3<string, string, Response, Observable<Ge
         // verwerk in batches van 100
         teParsenFeatureGroep = teParsenFeatureGroep.concat(ontvangenLijnen);
         if (teParsenFeatureGroep.length > 100 || done) {
-          parseStringsToFeatures(teParsenFeatureGroep).map(geojson => subscriber.next(geojson));
+          geoJsons(teParsenFeatureGroep).map(geojson => subscriber.next(geojson));
           teParsenFeatureGroep = [];
         }
 
