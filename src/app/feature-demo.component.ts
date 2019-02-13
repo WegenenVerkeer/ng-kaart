@@ -468,7 +468,7 @@ export class FeatureDemoComponent {
 
   startPrecacheFeatures(startMetLegeCache: boolean) {
     this.precacheFeaturesInput = {
-      wkt: `SRID=31370;${this.precacheWMSWkt}`,
+      wkt: `SRID=31370;${this.precacheFeaturesWkt}`,
       startMetLegeCache: startMetLegeCache
     };
   }
