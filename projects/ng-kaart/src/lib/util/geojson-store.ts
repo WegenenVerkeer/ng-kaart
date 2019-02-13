@@ -22,6 +22,24 @@ export interface GeoJsonLike {
   };
 }
 
+/**
+ * Indexering: 4 indexen op minx, miny, maxx, maxy en intersect nemen?
+ */
+const openStore = (storename: string): Promise<idb.DB> => {
+  return idb.openDb(indexedb_db_naam, 1, upgradeDB => {
+    // Note: we don't use 'break' in this switch statement,
+    // the fall-through behaviour is what we want.
+    switch (upgradeDB.oldVersion) {
+      case 0:
+        const store = upgradeDB.createObjectStore(storename, { keyPath: "id" });
+        store.createIndex("minx", "metadata.minx", { unique: false });
+        store.createIndex("miny", "metadata.miny", { unique: false });
+        store.createIndex("maxx", "metadata.maxx", { unique: false });
+        store.createIndex("maxy", "metadata.maxy", { unique: false });
+    }
+  });
+};
+
 export const clear = (storename: string): Promise<void> =>
   openStore(storename).then(db =>
     db
@@ -86,21 +104,6 @@ export const getFeaturesByExtentTableScan = (storename: string, extent: ol.Exten
     feature =>
       feature.metadata.minx >= minx && feature.metadata.maxx <= maxx && feature.metadata.miny >= miny && feature.metadata.maxy <= maxy
   );
-};
-
-const openStore = (storename: string): Promise<idb.DB> => {
-  return idb.openDb(indexedb_db_naam, 1, upgradeDB => {
-    // Note: we don't use 'break' in this switch statement,
-    // the fall-through behaviour is what we want.
-    switch (upgradeDB.oldVersion) {
-      case 0:
-        const store = upgradeDB.createObjectStore(storename, { keyPath: "id" });
-        store.createIndex("minx", "metadata.minx", { unique: false });
-        store.createIndex("miny", "metadata.miny", { unique: false });
-        store.createIndex("maxx", "metadata.maxx", { unique: false });
-        store.createIndex("maxy", "metadata.maxy", { unique: false });
-    }
-  });
 };
 
 const getLower = (storename: string, idx: string, bound: number) =>

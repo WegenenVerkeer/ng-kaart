@@ -16,6 +16,16 @@ const FETCH_TIMEOUT = 5000; // max time to wait for data from featureserver befo
 const format = new ol.format.GeoJSON();
 const decoder = new TextDecoder();
 
+/**
+ * Stappen:
+
+ 1. Er komt een extent binnen van de kaart om de features op te vragen
+ 2. NosqlfsLoader gaat de features voor die extent opvragen aan featureserver
+ 3. Bij ontvangen van de features worden deze bewaard in een indexeddb (1 per laag), gemanaged door ng-kaart
+ 4. Indien NosqlfsLoader binnen 5 seconden geen antwoord heeft gekregen, worden de features uit de indexeddb gehaald
+
+ */
+
 const parseStringsToFeatures: Function1<string[], GeoJsonLike[]> = volledigeLijnen => {
   try {
     const features = volledigeLijnen //
@@ -98,19 +108,6 @@ const handleResponse: Function3<string, string, Response, Observable<GeoJsonLike
 
   return subject.asObservable();
 };
-
-/**
- * Stappen:
-
- 1. Er komt een extent binnen van de kaart om de features op te vragen
- 2. NosqlfsLoader gaat de features voor die extent opvragen aan featureserver
- 3. Bij ontvangen van de features worden deze bewaard in een indexeddb (1 per laag), gemanaged door ng-kaart
- 4. Indien NosqlfsLoader binnen 5 seconden geen antwoord heeft gekregen, worden de features uit de indexeddb gehaald
-
-
-  Indexering: 4 indexen op minx, miny, maxx, maxy en intersect nemen?
-
- */
 
 export class NosqlFsSource extends ol.source.Vector {
   private static readonly featureDelimiter = "\n";
