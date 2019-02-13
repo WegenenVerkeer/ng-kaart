@@ -486,11 +486,11 @@
               <input #startMetLegeCache type="checkbox" [checked]="true"> Start met lege cache
             </div>
             <div class="with-padding">
-              <button (click)="startPrecacheFeatures(startMetLegeCache.checked)">Start vullen cache features (district Gent)</button>
+              <button (click)="startPrecacheFeatures(startMetLegeCache.checked)">Start vullen cache features (gemeente Brasschaat)</button>
             </div>
           </div>
           <div class="with-padding">
-            <textarea class="cachewkt__textarea" [value]="precacheFeaturesWkt" (input)="precacheFeaturesWkt = $event.target.value"></textarea>
+            <textarea class="cachefeatures__textarea" [value]="precacheFeaturesWkt" (input)="precacheFeaturesWkt = $event.target.value"></textarea>
           </div>
 
           <awv-kaart-classic [naam]="'verkeersborden'" (zichtbareFeatures)="onZichtbareFeatures($event)"

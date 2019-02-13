@@ -312,7 +312,7 @@ export class FeatureDemoComponent {
   precacheWMSWkt = wkts.districten.gent;
   precacheWMSInput: PrecacheWMS = null;
 
-  precacheFeaturesWkt = wkts.districten.gent;
+  precacheFeaturesWkt = wkts.gemeenten.brasschaat;
   precacheFeaturesInput: PrecacheFeatures = null;
 
   private tekenenActief = false;

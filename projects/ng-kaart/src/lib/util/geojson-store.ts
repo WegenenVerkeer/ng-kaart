@@ -13,10 +13,13 @@ export interface GeoJsonLike {
     type: string;
   };
   // index values from bbox
-  minx: number;
-  miny: number;
-  maxx: number;
-  maxy: number;
+  metadata: {
+    minx: number;
+    miny: number;
+    maxx: number;
+    maxy: number;
+    toegevoegd: Date;
+  };
 }
 
 export const openStore = (storename: string): Promise<idb.DB> => {
@@ -26,10 +29,10 @@ export const openStore = (storename: string): Promise<idb.DB> => {
     switch (upgradeDB.oldVersion) {
       case 0:
         const store = upgradeDB.createObjectStore(storename, { keyPath: "id" });
-        store.createIndex("minx", "minx", { unique: false });
-        store.createIndex("miny", "miny", { unique: false });
-        store.createIndex("maxx", "maxx", { unique: false });
-        store.createIndex("maxy", "maxy", { unique: false });
+        store.createIndex("minx", "metadata.minx", { unique: false });
+        store.createIndex("miny", "metadata.miny", { unique: false });
+        store.createIndex("maxx", "metadata.maxx", { unique: false });
+        store.createIndex("maxy", "metadata.maxy", { unique: false });
     }
   });
 };

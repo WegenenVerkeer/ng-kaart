@@ -199,7 +199,17 @@ export class NosqlFsSource extends ol.source.Vector {
     try {
       const features = volledigeLijnen //
         .filter(lijn => lijn.trim().length > 0) //
-        .map(lijn => JSON.parse(lijn));
+        .map(lijn => JSON.parse(lijn) as GeoJsonLike)
+        .map(geojson => {
+          geojson.metadata = {
+            minx: geojson.geometry.bbox[0],
+            miny: geojson.geometry.bbox[1],
+            maxx: geojson.geometry.bbox[2],
+            maxy: geojson.geometry.bbox[3],
+            toegevoegd: new Date()
+          };
+          return geojson;
+        });
       return features!;
     } catch (error) {
       kaartLogger.error(`Kon JSON data niet parsen: ${error}`);

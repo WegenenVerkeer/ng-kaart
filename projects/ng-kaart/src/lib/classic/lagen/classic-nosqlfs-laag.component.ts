@@ -39,11 +39,13 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
   @Input()
   set precache(input: PrecacheFeatures) {
     if (input && this.source) {
-      this.verwijderFeatures(input.startMetLegeCache).then(() =>
-        this.source
-          .fetchFeaturesByWkt$(input.wkt)
-          .subscribe(feature => featureStore.writeFeature(this.collection, feature).catch(e => kaartLogger.error(e)))
-      );
+      this.verwijderFeatures(input.startMetLegeCache)
+        .then(() =>
+          this.source
+            .fetchFeaturesByWkt$(input.wkt)
+            .subscribe(feature => featureStore.writeFeature(this.collection, feature).catch(e => kaartLogger.error(e)))
+        )
+        .catch(e => kaartLogger.error(e));
     }
   }
 
