@@ -25,7 +25,8 @@ export const openStore = (storename: string): Promise<idb.DB> => {
     // the fall-through behaviour is what we want.
     switch (upgradeDB.oldVersion) {
       case 0:
-        const store = upgradeDB.createObjectStore(storename, { keyPath: "id" });
+        const store = upgradeDB.createObjectStore(storename);
+        store.createIndex("id", "id", { unique: true });
         store.createIndex("minx", "minx", { unique: false });
         store.createIndex("miny", "miny", { unique: false });
         store.createIndex("maxx", "maxx", { unique: false });
@@ -45,14 +46,14 @@ export const clear = (storename: string): Promise<void> =>
 export const writeFeature = (storename: string, feature: GeoJsonLike): Promise<void> =>
   openStore(storename).then(db => {
     const tx = db.transaction(storename, "readwrite");
-    tx.objectStore<GeoJsonLike, any>(storename).put(feature, feature.id);
+    tx.objectStore<GeoJsonLike, any>(storename).put(feature);
     return tx.complete;
   });
 
 export const writeFeatures = (storename: string, features: GeoJsonLike[]): Promise<void> =>
   openStore(storename).then(db => {
     const tx = db.transaction(storename, "readwrite");
-    features.map(feature => tx.objectStore<GeoJsonLike, any>(storename).put(feature, feature.id));
+    features.map(feature => tx.objectStore<GeoJsonLike, any>(storename).put(feature));
     return tx.complete;
   });
 

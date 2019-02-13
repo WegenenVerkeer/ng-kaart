@@ -1,4 +1,5 @@
-import { Option } from "fp-ts/lib/Option";
+import { Curried3, Function1 } from "fp-ts/lib/function";
+import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { Observable, Subject } from "rxjs";
@@ -10,6 +11,8 @@ import * as geojsonStore from "../util/geojson-store";
 import { GeoJsonLike } from "../util/geojson-store";
 
 const FETCH_TIMEOUT = 5000; // max time to wait for data from featureserver before checking cache
+
+const decoder = new TextDecoder();
 
 /**
  * Stappen:
@@ -27,7 +30,6 @@ const FETCH_TIMEOUT = 5000; // max time to wait for data from featureserver befo
 export class NosqlFsSource extends ol.source.Vector {
   private static readonly featureDelimiter = "\n";
   private static format = new ol.format.GeoJSON();
-  private static decoder = new TextDecoder();
   private readonly loadEventSubj = new rx.Subject<le.DataLoadEvent>();
   readonly loadEvent$: rx.Observable<le.DataLoadEvent> = this.loadEventSubj;
 
@@ -71,95 +73,126 @@ export class NosqlFsSource extends ol.source.Vector {
     });
   }
 
-  fetchFeatures$(extent: number[]): Observable<GeoJsonLike> {
+  private composeUrl(extent: Option<number[]>) {
     const params = {
-      bbox: extent.join(","),
+      ...extent.fold({}, v => ({ bbox: v.join(",") })),
       ...this.view.fold({}, v => ({ "with-view": v })),
       ...this.filter.fold({}, f => ({ query: encodeURIComponent(f) }))
     };
 
-    const httpUrl = `${this.url}/api/databases/${this.database}/${this.collection}/query?${Object.keys(params)
+    return `${this.url}/api/databases/${this.database}/${this.collection}/query?${Object.keys(params)
       .map(function(key) {
         return key + "=" + params[key];
       })
       .join("&")}`;
+  }
 
+  fetchFeatures$(extent: number[]): Observable<GeoJsonLike> {
     const geoJsonSubj = new Subject<GeoJsonLike>();
-
     const source = this;
 
     source.clear();
-
     this.dispatchLoadEvent(le.LoadStart);
 
     fetchWithTimeout(
-      httpUrl,
+      this.composeUrl(some(extent)),
       {
+        method: "GET",
         cache: "no-store", // geen client side caching van nosql data
         credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
       },
       FETCH_TIMEOUT
     )
-      .then(response => {
-        if (!response.ok) {
-          kaartLogger.error(`Probleem bij ontvangen nosql ${source.collection} data: status ${response.status} ${response.statusText}`);
-          source.dispatchLoadError(`Http error code ${response.status}: '${response.statusText}'`);
-          geoJsonSubj.error(`Http error code ${response.status}: '${response.statusText}'`);
-          return;
-        }
-
-        if (!response.body) {
-          kaartLogger.error(`Probleem bij ontvangen nosql ${source.collection} data: response.body is leeg`);
-          source.dispatchLoadError("Lege respons");
-          geoJsonSubj.error(`Http error code ${response.status}: '${response.statusText}'`);
-          return;
-        }
-
-        let restData = "";
-        let teParsenFeatureGroep: string[] = [];
-
-        const reader = response.body.getReader();
-        reader
-          .read()
-          .then(function verwerkChunk({ done, value }) {
-            source.dispatchLoadEvent(le.PartReceived);
-            restData += NosqlFsSource.decoder.decode(value || new Uint8Array(0), {
-              stream: !done
-            }); // append nieuwe data (in geval er een half ontvangen lijn is van vorige call)
-
-            let ontvangenLijnen = restData.split(NosqlFsSource.featureDelimiter);
-
-            if (!done) {
-              // laatste lijn is vermoedelijk niet compleet. Hou bij voor volgende keer
-              restData = ontvangenLijnen[ontvangenLijnen.length - 1];
-              // verwijder gedeeltelijke lijn
-              ontvangenLijnen = ontvangenLijnen.slice(0, -1);
-            }
-
-            // verwerk in batches van 100
-            teParsenFeatureGroep = teParsenFeatureGroep.concat(ontvangenLijnen);
-            if (teParsenFeatureGroep.length > 100 || done) {
-              source.parseStringsToFeatures(teParsenFeatureGroep).map(geojson => geoJsonSubj.next(geojson));
-              teParsenFeatureGroep = [];
-            }
-
-            if (!done) {
-              reader.read().then(verwerkChunk);
-            } else {
-              source.dispatchLoadComplete();
-            }
-          })
-          .catch(reason => {
-            source.dispatchLoadError(reason);
-            geoJsonSubj.error(reason);
-          });
-      })
+      .then(response => this.handleResponse(response, geoJsonSubj))
       .catch(reason => {
         source.dispatchLoadError(reason);
         geoJsonSubj.error(reason);
       });
 
     return geoJsonSubj.asObservable();
+  }
+
+  fetchFeaturesByWkt$(wkt: string): Observable<GeoJsonLike> {
+    const geoJsonSubj = new Subject<GeoJsonLike>();
+    const source = this;
+
+    source.clear();
+    this.dispatchLoadEvent(le.LoadStart);
+
+    fetchWithTimeout(
+      this.composeUrl(none),
+      {
+        method: "POST",
+        cache: "no-store", // geen client side caching van nosql data
+        credentials: "include", // essentieel om ACM Authenticatie cookies mee te sturen
+        body: wkt
+      },
+      FETCH_TIMEOUT
+    )
+      .then(response => this.handleResponse(response, geoJsonSubj))
+      .catch(reason => {
+        source.dispatchLoadError(reason);
+        geoJsonSubj.error(reason);
+      });
+
+    return geoJsonSubj.asObservable();
+  }
+
+  private handleResponse(response: Response, subject: Subject<GeoJsonLike>) {
+    const source = this;
+
+    if (!response.ok) {
+      kaartLogger.error(`Probleem bij ontvangen nosql ${source.collection} data: status ${response.status} ${response.statusText}`);
+      source.dispatchLoadError(`Http error code ${response.status}: '${response.statusText}'`);
+      subject.error(`Http error code ${response.status}: '${response.statusText}'`);
+      return;
+    }
+
+    if (!response.body) {
+      kaartLogger.error(`Probleem bij ontvangen nosql ${source.collection} data: response.body is leeg`);
+      source.dispatchLoadError("Lege respons");
+      subject.error(`Http error code ${response.status}: '${response.statusText}'`);
+      return;
+    }
+
+    let restData = "";
+    let teParsenFeatureGroep: string[] = [];
+
+    const reader = response.body.getReader();
+    reader
+      .read()
+      .then(function verwerkChunk({ done, value }) {
+        source.dispatchLoadEvent(le.PartReceived);
+        restData += decoder.decode(value || new Uint8Array(0), {
+          stream: !done
+        }); // append nieuwe data (in geval er een half ontvangen lijn is van vorige call)
+
+        let ontvangenLijnen = restData.split(NosqlFsSource.featureDelimiter);
+
+        if (!done) {
+          // laatste lijn is vermoedelijk niet compleet. Hou bij voor volgende keer
+          restData = ontvangenLijnen[ontvangenLijnen.length - 1];
+          // verwijder gedeeltelijke lijn
+          ontvangenLijnen = ontvangenLijnen.slice(0, -1);
+        }
+
+        // verwerk in batches van 100
+        teParsenFeatureGroep = teParsenFeatureGroep.concat(ontvangenLijnen);
+        if (teParsenFeatureGroep.length > 100 || done) {
+          source.parseStringsToFeatures(teParsenFeatureGroep).map(geojson => subject.next(geojson));
+          teParsenFeatureGroep = [];
+        }
+
+        if (!done) {
+          reader.read().then(verwerkChunk);
+        } else {
+          source.dispatchLoadComplete();
+        }
+      })
+      .catch(reason => {
+        source.dispatchLoadError(reason);
+        subject.error(reason);
+      });
   }
 
   private parseStringsToFeatures(volledigeLijnen: string[]): GeoJsonLike[] {

@@ -3,6 +3,7 @@ import { option } from "fp-ts";
 import { fromNullable } from "fp-ts/lib/Option";
 import { OrderedMap } from "immutable";
 
+import { kaartLogger } from "../../kaart";
 import * as ke from "../../kaart/kaart-elementen";
 import * as ss from "../../kaart/stijl-selector";
 import { NosqlFsSource } from "../../source/nosql-fs-source";
@@ -10,6 +11,11 @@ import * as featureStore from "../../util/geojson-store";
 import { KaartClassicComponent } from "../kaart-classic.component";
 
 import { ClassicVectorLaagLikeComponent } from "./classic-vector-laag-like.component";
+
+export interface PrecacheFeatures {
+  wkt: string;
+  startMetLegeCache: boolean;
+}
 
 @Component({
   selector: "awv-kaart-nosqlfs-laag",
@@ -29,6 +35,17 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
   filter: string;
   @Input()
   gebruikCache = false;
+
+  @Input()
+  set precache(input: PrecacheFeatures) {
+    if (input && this.source) {
+      this.verwijderFeatures(input.startMetLegeCache).then(() =>
+        this.source
+          .fetchFeaturesByWkt$(input.wkt)
+          .subscribe(feature => featureStore.writeFeature(this.collection, feature).catch(e => kaartLogger.error(e)))
+      );
+    }
+  }
 
   constructor(kaart: KaartClassicComponent, zone: NgZone) {
     super(kaart, zone);
@@ -69,13 +86,5 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
 
   private verwijderFeatures(startMetLegeCache: boolean) {
     return startMetLegeCache ? featureStore.clear(this.collection) : Promise.resolve();
-  }
-
-  precacheLayer(extent: ol.Extent, startMetLegeCache: boolean) {
-    if (this.source) {
-      this.verwijderFeatures(startMetLegeCache).then(() =>
-        this.source.fetchFeatures$(extent).subscribe(feature => featureStore.writeFeature(this.collection, feature))
-      );
-    }
   }
 }

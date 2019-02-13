@@ -14,7 +14,8 @@ import {
   KaartClassicComponent,
   offsetStyleFunction,
   parseCoordinate,
-  Precache,
+  PrecacheFeatures,
+  PrecacheWMS,
   ToegevoegdeLaag,
   validateAwvV0RuleDefintion,
   VeldInfo,
@@ -308,8 +309,11 @@ export class FeatureDemoComponent {
   geselecteerdeFietspadsegmenten: List<ol.Feature> = List();
 
   precacheProgress = 0;
-  wkt = wkts.districten.gent;
-  precacheInput: Precache = null;
+  precacheWMSWkt = wkts.districten.gent;
+  precacheWMSInput: PrecacheWMS = null;
+
+  precacheFeaturesWkt = wkts.districten.gent;
+  precacheFeaturesInput: PrecacheFeatures = null;
 
   private tekenenActief = false;
   private getekendeGeom: Option<ol.geom.Geometry> = none;
@@ -453,11 +457,18 @@ export class FeatureDemoComponent {
 
   private geometryType = "Polygon";
 
-  startPrecache(start: string, eind: string, startMetLegeCache: boolean) {
-    this.precacheInput = {
+  startPrecacheWMS(start: string, eind: string, startMetLegeCache: boolean) {
+    this.precacheWMSInput = {
       startZoom: Number(start),
       eindZoom: Number(eind),
-      wkt: this.wkt,
+      wkt: this.precacheWMSWkt,
+      startMetLegeCache: startMetLegeCache
+    };
+  }
+
+  startPrecacheFeatures(startMetLegeCache: boolean) {
+    this.precacheFeaturesInput = {
+      wkt: `SRID=31370;${this.precacheWMSWkt}`,
       startMetLegeCache: startMetLegeCache
     };
   }

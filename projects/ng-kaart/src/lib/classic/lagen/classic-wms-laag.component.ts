@@ -14,7 +14,7 @@ import { KaartClassicMsg, logOnlyWrapper, PrecacheProgressMsg } from "../message
 
 import { ClassicLaagComponent } from "./classic-laag.component";
 
-export interface Precache {
+export interface PrecacheWMS {
   startZoom: number;
   eindZoom: number;
   wkt: string;
@@ -48,7 +48,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   offline = false;
 
   @Input()
-  set precache(input: Precache) {
+  set precache(input: PrecacheWMS) {
     if (input) {
       this.dispatch(prt.VulCacheVoorLaag(this.titel, input.startZoom, input.eindZoom, input.wkt, input.startMetLegeCache, logOnlyWrapper));
     }
