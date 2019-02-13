@@ -43,9 +43,9 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
         .then(() =>
           this.source
             .fetchFeaturesByWkt$(input.wkt)
-            .subscribe(feature => featureStore.writeFeature(this.collection, feature).catch(e => kaartLogger.error(e)))
+            .subscribe(feature => featureStore.writeFeature(this.titel, feature).catch(error => kaartLogger.error(error)))
         )
-        .catch(e => kaartLogger.error(e));
+        .catch(error => kaartLogger.error(error));
     }
   }
 
@@ -87,6 +87,6 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
   }
 
   private verwijderFeatures(startMetLegeCache: boolean) {
-    return startMetLegeCache ? featureStore.clear(this.collection) : Promise.resolve();
+    return startMetLegeCache ? featureStore.clear(this.titel) : Promise.resolve();
   }
 }

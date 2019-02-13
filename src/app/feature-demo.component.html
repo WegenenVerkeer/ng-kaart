@@ -493,8 +493,8 @@
             <textarea class="cachefeatures__textarea" [value]="precacheFeaturesWkt" (input)="precacheFeaturesWkt = $event.target.value"></textarea>
           </div>
 
-          <awv-kaart-classic [naam]="'verkeersborden'" (zichtbareFeatures)="onZichtbareFeatures($event)"
-                             [zoom]="10" [selectieModus]="'single'" [middelpunt]="verkeersbordenCoordinaat" [hoogte]="1200">
+          <awv-kaart-classic #offlineFeatureKaart [naam]="'verkeersborden'" (zichtbareFeatures)="onZichtbareFeatures($event)"
+                             [zoom]="9" [selectieModus]="'single'" [middelpunt]="[161206, 226075]" [hoogte]="1200">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
             <awv-kaart-nosqlfs-laag [titel]="'Verkeersborden'" [url]="'/geolatte-nosqlfs'"
                                     [database]="'featureserver'" [collection]="'verkeersborden'"

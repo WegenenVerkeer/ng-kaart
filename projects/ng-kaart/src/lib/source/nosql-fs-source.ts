@@ -1,4 +1,4 @@
-import { Function1, Function4 } from "fp-ts/lib/function";
+import { Function1, Function2, Function4 } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
@@ -12,6 +12,7 @@ import { GeoJsonLike } from "../util/geojson-store";
 
 const FETCH_TIMEOUT = 5000; // max time to wait for data from featureserver before checking cache
 
+const format = new ol.format.GeoJSON();
 const decoder = new TextDecoder();
 
 const parseStringsToFeatures: Function1<string[], GeoJsonLike[]> = volledigeLijnen => {
@@ -35,6 +36,14 @@ const parseStringsToFeatures: Function1<string[], GeoJsonLike[]> = volledigeLijn
     throw new Error(`Kon JSON data niet parsen: ${error}`);
   }
 };
+
+const olFeature: Function2<string, GeoJsonLike, ol.Feature> = (laagnaam, geojson) =>
+  new ol.Feature({
+    id: geojson.id,
+    properties: geojson.properties,
+    geometry: format.readGeometry(geojson.geometry),
+    laagnaam: laagnaam
+  });
 
 const handleResponse: Function4<string, string, Response, Subject<GeoJsonLike>, void> = (
   collection,
@@ -105,7 +114,6 @@ const handleResponse: Function4<string, string, Response, Subject<GeoJsonLike>, 
 
 export class NosqlFsSource extends ol.source.Vector {
   private static readonly featureDelimiter = "\n";
-  private static format = new ol.format.GeoJSON();
   private readonly loadEventSubj = new rx.Subject<le.DataLoadEvent>();
   readonly loadEvent$: rx.Observable<le.DataLoadEvent> = this.loadEventSubj;
 
@@ -126,22 +134,21 @@ export class NosqlFsSource extends ol.source.Vector {
         source.fetchFeatures$(extent).subscribe(
           geojson => {
             source.dispatchLoadEvent(le.PartReceived);
-            source.addFeature(
-              new ol.Feature({
-                id: geojson.id,
-                properties: geojson.properties,
-                geometry: NosqlFsSource.format.readGeometry(geojson.geometry),
-                laagnaam: source.laagnaam
-              })
-            );
+            source.addFeature(olFeature(source.titel, geojson));
           },
           error => {
             if (source.gebruikCache) {
               kaartLogger.debug("Request niet gelukt, we gaan naar cache " + error);
               geojsonStore
                 .getFeaturesByExtent(source.laagnaam, extent)
-                .then(source.addFeatures)
-                .catch(() => {
+                .then(geojsons =>
+                  geojsons.map(geojson => {
+                    source.dispatchLoadEvent(le.PartReceived);
+                    source.addFeature(olFeature(source.titel, geojson));
+                  })
+                )
+                .then(() => source.dispatchLoadComplete())
+                .catch(error => {
                   kaartLogger.error(error);
                   source.dispatchLoadError(error);
                 });
@@ -185,7 +192,7 @@ export class NosqlFsSource extends ol.source.Vector {
       },
       FETCH_TIMEOUT
     )
-      .then(response => handleResponse(this.collection, NosqlFsSource.featureDelimiter, response, geoJsonSubj))
+      .then(response => handleResponse(this.laagnaam, NosqlFsSource.featureDelimiter, response, geoJsonSubj))
       .catch(reason => {
         geoJsonSubj.error(reason);
       });
@@ -206,7 +213,7 @@ export class NosqlFsSource extends ol.source.Vector {
       },
       FETCH_TIMEOUT
     )
-      .then(response => handleResponse(this.collection, NosqlFsSource.featureDelimiter, response, geoJsonSubj))
+      .then(response => handleResponse(this.laagnaam, NosqlFsSource.featureDelimiter, response, geoJsonSubj))
       .catch(reason => {
         geoJsonSubj.error(reason);
       });
