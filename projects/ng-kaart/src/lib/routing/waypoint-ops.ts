@@ -1,11 +1,11 @@
 import { Http } from "@angular/http";
 import * as array from "fp-ts/lib/Array";
-import { None, Option } from "fp-ts/lib/Option";
+import { none, None, Option, some } from "fp-ts/lib/Option";
 import * as strmap from "fp-ts/lib/StrMap";
 import * as rx from "rxjs";
-import { concat, Observable, Subject } from "rxjs";
 import { map, mergeMap, scan } from "rxjs/operators";
 
+import * as arrays from "../util/arrays";
 import { Pipeable } from "../util/operators";
 import { toArray } from "../util/option";
 
@@ -17,7 +17,7 @@ import {
   VerfijndeRoute,
   VerfijndeRoutingService
 } from "./routing-service";
-import { Waypoint, WaypointAdded, WaypointOperation, WaypointRemoved } from "./waypoint-msg";
+import { Waypoint, WaypointAdded, waypointAdded, WaypointOperation, WaypointRemoved } from "./waypoint-msg";
 
 export interface RouteAdded {
   readonly type: "RouteAdded";
@@ -45,10 +45,7 @@ function routeRemoved(protoRoute: ProtoRoute): RouteRemoved {
 
 export type RouteOperation = RouteAdded | RouteRemoved;
 
-export interface RouteState {
-  readonly routesBegin: strmap.StrMap<ProtoRoute>;
-  readonly routesEnd: strmap.StrMap<ProtoRoute>;
-}
+export type RouteState = Array<Waypoint>;
 
 export interface RouteChanges {
   readonly routesAdded: Array<ProtoRoute>;
@@ -68,49 +65,54 @@ function createRoute(begin: Waypoint, end: Waypoint): ProtoRoute {
   };
 }
 
-export function routeStateTransition(previousState: RouteState, routeChanges: RouteChanges): RouteStateTransition {
-  const routesBeginRemoved = routeChanges.routesRemoved.reduce((rbegin, r) => strmap.remove(r.begin.id, rbegin), previousState.routesBegin);
-  const routesBegin = routeChanges.routesAdded.reduce((rbegin, r) => strmap.insert(r.begin.id, r, rbegin), routesBeginRemoved);
+export function removeWaypoint(routeState: RouteState, waypointRemoved: WaypointRemoved): RouteStateTransition {
+  const id = waypointRemoved.waypoint.id;
 
-  const routesEndRemoved = routeChanges.routesRemoved.reduce((rend, r) => strmap.remove(r.end.id, rend), previousState.routesEnd);
-  const routesEnd = routeChanges.routesAdded.reduce((rend, r) => strmap.insert(r.end.id, r, rend), routesEndRemoved);
+  const maybePreviousWaypoint = arrays.previousElement(routeState)(wp => wp.id === id);
+  const maybeNextWaypoint = arrays.nextElement(routeState)(wp => wp.id === id);
+
+  const maybeBeginRoute = maybePreviousWaypoint.map(begin => createRoute(begin, waypointRemoved.waypoint));
+  const maybeEndRoute = maybeNextWaypoint.map(end => createRoute(waypointRemoved.waypoint, end));
+
+  const routesRemoved = toArray(maybeEndRoute).concat(toArray(maybeBeginRoute));
+  const routeAdded = maybePreviousWaypoint.chain(pwp => maybeNextWaypoint.map(nwp => createRoute(pwp, nwp)));
 
   return <RouteStateTransition>{
-    routeChanges: routeChanges,
-    routeState: <RouteState>{
-      routesBegin: routesBegin,
-      routesEnd: routesEnd
-    }
+    routeChanges: <RouteChanges>{
+      routesAdded: toArray(routeAdded),
+      routesRemoved: routesRemoved
+    },
+    routeState: arrays
+      .deleteFirst(routeState)(wp => wp.id === waypointRemoved.waypoint.id)
+      .getOrElse(routeState)
   };
 }
 
-export function removeWaypoint(routeState: RouteState, waypointRemoved: WaypointRemoved): RouteChanges {
-  const id = waypointRemoved.waypoint.id;
-  const maybeEndRoute = strmap.lookup(id, routeState.routesEnd);
-  const maybeStartRoute = strmap.lookup(id, routeState.routesBegin);
-
-  const routesRemoved = toArray(maybeEndRoute).concat(toArray(maybeStartRoute));
-  const routeAdded = maybeEndRoute.chain(endRoute => maybeStartRoute.map(startRoute => createRoute(endRoute.begin, startRoute.end)));
-
-  return <RouteChanges>{
-    routesAdded: toArray(routeAdded),
-    routesRemoved: routesRemoved
-  };
-}
-
-export function addWaypoint(routeState: RouteState, waypointAdded: WaypointAdded): RouteChanges {
+export function addWaypoint(routeState: RouteState, waypointAdded: WaypointAdded): RouteStateTransition {
   return waypointAdded.previous.fold(
-    <RouteChanges>{
-      routesAdded: [],
-      routesRemoved: []
+    <RouteStateTransition>{
+      routeChanges: <RouteChanges>{
+        routesAdded: [],
+        routesRemoved: []
+      },
+      routeState: [waypointAdded.waypoint]
     },
     previous => {
-      const maybeStartRoute = strmap.lookup(previous.id, routeState.routesBegin);
-      const routeAdded = createRoute(previous, waypointAdded.waypoint);
+      const maybeOldNextWaypoint = arrays.nextElement(routeState)(wp => wp.id === previous.id);
+      const maybeRouteToRemove = maybeOldNextWaypoint.map(end => createRoute(previous, end));
 
-      return <RouteChanges>{
-        routesAdded: [routeAdded],
-        routesRemoved: toArray(maybeStartRoute)
+      const routeAdded = createRoute(previous, waypointAdded.waypoint);
+      const routesAdded = toArray(maybeOldNextWaypoint.map(end => createRoute(waypointAdded.waypoint, end)));
+      routesAdded.push(routeAdded);
+
+      return <RouteStateTransition>{
+        routeChanges: <RouteChanges>{
+          routesAdded: routesAdded,
+          routesRemoved: toArray(maybeRouteToRemove)
+        },
+        routeState: arrays
+          .insertAfter(routeState)(wp => wp.id === previous.id)(waypointAdded.waypoint)
+          .getOrElse(routeState)
       };
     }
   );
@@ -119,12 +121,10 @@ export function addWaypoint(routeState: RouteState, waypointAdded: WaypointAdded
 function nextRouteStateChanges(previous: RouteStateTransition, waypointOperation: WaypointOperation): RouteStateTransition {
   switch (waypointOperation.type) {
     case "WaypointRemoved": {
-      const routeChanges = removeWaypoint(previous.routeState, <WaypointRemoved>waypointOperation);
-      return routeStateTransition(previous.routeState, routeChanges);
+      return removeWaypoint(previous.routeState, <WaypointRemoved>waypointOperation);
     }
     case "WaypointAdded": {
-      const routeChanges = addWaypoint(previous.routeState, <WaypointAdded>waypointOperation);
-      return routeStateTransition(previous.routeState, routeChanges);
+      return addWaypoint(previous.routeState, <WaypointAdded>waypointOperation);
     }
   }
 }
@@ -137,8 +137,8 @@ export function routesViaRoutering(http: Http): Pipeable<WaypointOperation, Rout
   return waypointOperationToRouteOperation(new CompositeRoutingService([this.simpleRoutingService, new VerfijndeRoutingService(http)]));
 }
 
-const waypointOperationToRouteOperation = (routingService: RoutingService) => (waypointOperations: Observable<WaypointOperation>) => {
-  const routeStateChangesObs = waypointOperations.pipe(scan(nextRouteStateChanges));
+const waypointOperationToRouteOperation = (routingService: RoutingService) => (waypointOperations: rx.Observable<WaypointOperation>) => {
+  const routeStateChangesObs: rx.Observable<RouteStateTransition> = waypointOperations.pipe(scan(nextRouteStateChanges));
 
   const deleteOperations = routeStateChangesObs.pipe(
     mergeMap(changes => rx.concat(changes.routeChanges.routesRemoved)),
