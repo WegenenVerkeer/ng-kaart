@@ -141,12 +141,13 @@ export class NosqlFsSource extends ol.source.Vector {
               kaartLogger.debug("Request niet gelukt, we gaan naar cache " + error);
               geojsonStore
                 .getFeaturesByExtent(source.laagnaam, extent)
-                .then(geojsons =>
-                  geojsons.map(geojson => {
+                .then(geojsons => {
+                  kaartLogger.debug(`${geojsons.length} features opgehaald uit cache`);
+                  return geojsons.map(geojson => {
                     source.dispatchLoadEvent(le.PartReceived);
                     source.addFeature(olFeature(source.titel, geojson));
-                  })
-                )
+                  });
+                })
                 .then(() => source.dispatchLoadComplete())
                 .catch(error => {
                   kaartLogger.error(error);

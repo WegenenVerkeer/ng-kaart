@@ -77,8 +77,6 @@ export const getFeatures = (storename: string, filter: Function1<GeoJsonLike, bo
     )
     .then(features => features.filter(filter));
 
-const intersect = <T>(a: T[], b: T[]) => [...new Set(a)].filter(x => new Set(b).has(x));
-
 const getLower = (storename: string, idx: string, bound: number) =>
   openStore(storename).then(db =>
     db
@@ -97,6 +95,8 @@ const getUpper = (storename: string, idx: string, bound: number) =>
       .getAllKeys(IDBKeyRange.upperBound(bound))
   );
 
+const intersect2 = <T>(a: T[], b: T[]) => a.filter(value => -1 !== b.indexOf(value));
+
 export const getFeaturesByExtent = (storename: string, extent: ol.Extent): Promise<GeoJsonLike[]> => {
   const minXs = getLower(storename, "minx", extent[0]);
   const minYs = getLower(storename, "miny", extent[1]);
@@ -104,6 +104,6 @@ export const getFeaturesByExtent = (storename: string, extent: ol.Extent): Promi
   const maxYs = getUpper(storename, "maxy", extent[3]);
 
   return Promise.all([minXs, minYs, maxXs, maxYs])
-    .then(([minXs, minYs, maxXs, maxYs]) => intersect(minYs, intersect(maxYs, intersect(minXs, maxXs))))
+    .then(([minXs, minYs, maxXs, maxYs]) => intersect2(maxYs, intersect2(maxXs, intersect2(minXs, minYs))))
     .then(keys => getFeatures(storename, feature => keys.includes(feature.id)));
 };
