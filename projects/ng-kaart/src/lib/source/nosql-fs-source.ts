@@ -192,11 +192,10 @@ export class NosqlFsSource extends ol.source.Vector {
         credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
       },
       FETCH_TIMEOUT
-    )
-      .then(response => handleResponse(this.laagnaam, NosqlFsSource.featureDelimiter, response, geoJsonSubj))
-      .catch(reason => {
-        geoJsonSubj.error(reason);
-      });
+    ).subscribe(
+      response => handleResponse(this.laagnaam, NosqlFsSource.featureDelimiter, response, geoJsonSubj),
+      error => geoJsonSubj.error(error)
+    );
 
     return geoJsonSubj.asObservable();
   }
@@ -213,11 +212,10 @@ export class NosqlFsSource extends ol.source.Vector {
         body: wkt
       },
       FETCH_TIMEOUT
-    )
-      .then(response => handleResponse(this.laagnaam, NosqlFsSource.featureDelimiter, response, geoJsonSubj))
-      .catch(reason => {
-        geoJsonSubj.error(reason);
-      });
+    ).subscribe(
+      response => handleResponse(this.laagnaam, NosqlFsSource.featureDelimiter, response, geoJsonSubj),
+      error => geoJsonSubj.error(error)
+    );
 
     return geoJsonSubj.asObservable();
   }
