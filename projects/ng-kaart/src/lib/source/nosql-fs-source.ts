@@ -56,57 +56,55 @@ const olFeature: Function2<string, GeoJsonLike, ol.Feature> = (laagnaam, geojson
     laagnaam: laagnaam
   });
 
-const handleResponse: Function3<string, string, Response, Observable<GeoJsonLike>> = (collection, featureDelimiter, response) => {
-  const subject = new Subject<GeoJsonLike>();
+const observableFromResponse$: Function3<string, string, Response, Observable<GeoJsonLike>> = (collection, featureDelimiter, response) => {
+  return rx.Observable.create((subscriber: rx.Subscriber<GeoJsonLike>) => {
+    if (!response.ok) {
+      subscriber.error(`Probleem bij ontvangen nosql ${collection} data: status ${response.status} ${response.statusText}`);
+      return;
+    }
 
-  if (!response.ok) {
-    subject.error(`Probleem bij ontvangen nosql ${collection} data: status ${response.status} ${response.statusText}`);
-    return;
-  }
+    if (!response.body) {
+      subscriber.error(`Probleem bij ontvangen nosql ${collection} data: response.body is leeg`);
+      return;
+    }
 
-  if (!response.body) {
-    subject.error(`Probleem bij ontvangen nosql ${collection} data: response.body is leeg`);
-    return;
-  }
+    let restData = "";
+    let teParsenFeatureGroep: string[] = [];
 
-  let restData = "";
-  let teParsenFeatureGroep: string[] = [];
+    const reader = response.body.getReader();
+    reader
+      .read()
+      .then(function verwerkChunk({ done, value }) {
+        restData += decoder.decode(value || new Uint8Array(0), {
+          stream: !done
+        }); // append nieuwe data (in geval er een half ontvangen lijn is van vorige call)
 
-  const reader = response.body.getReader();
-  reader
-    .read()
-    .then(function verwerkChunk({ done, value }) {
-      restData += decoder.decode(value || new Uint8Array(0), {
-        stream: !done
-      }); // append nieuwe data (in geval er een half ontvangen lijn is van vorige call)
+        let ontvangenLijnen = restData.split(featureDelimiter);
 
-      let ontvangenLijnen = restData.split(featureDelimiter);
+        if (!done) {
+          // laatste lijn is vermoedelijk niet compleet. Hou bij voor volgende keer
+          restData = ontvangenLijnen[ontvangenLijnen.length - 1];
+          // verwijder gedeeltelijke lijn
+          ontvangenLijnen = ontvangenLijnen.slice(0, -1);
+        }
 
-      if (!done) {
-        // laatste lijn is vermoedelijk niet compleet. Hou bij voor volgende keer
-        restData = ontvangenLijnen[ontvangenLijnen.length - 1];
-        // verwijder gedeeltelijke lijn
-        ontvangenLijnen = ontvangenLijnen.slice(0, -1);
-      }
+        // verwerk in batches van 100
+        teParsenFeatureGroep = teParsenFeatureGroep.concat(ontvangenLijnen);
+        if (teParsenFeatureGroep.length > 100 || done) {
+          parseStringsToFeatures(teParsenFeatureGroep).map(geojson => subscriber.next(geojson));
+          teParsenFeatureGroep = [];
+        }
 
-      // verwerk in batches van 100
-      teParsenFeatureGroep = teParsenFeatureGroep.concat(ontvangenLijnen);
-      if (teParsenFeatureGroep.length > 100 || done) {
-        parseStringsToFeatures(teParsenFeatureGroep).map(geojson => subject.next(geojson));
-        teParsenFeatureGroep = [];
-      }
-
-      if (!done) {
-        reader.read().then(verwerkChunk);
-      } else {
-        subject.complete();
-      }
-    })
-    .catch(reason => {
-      subject.error(reason);
-    });
-
-  return subject.asObservable();
+        if (!done) {
+          reader.read().then(verwerkChunk);
+        } else {
+          subscriber.complete();
+        }
+      })
+      .catch(reason => {
+        subscriber.error(reason);
+      });
+  });
 };
 
 export class NosqlFsSource extends ol.source.Vector {
@@ -187,7 +185,7 @@ export class NosqlFsSource extends ol.source.Vector {
         credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
       },
       FETCH_TIMEOUT
-    ).pipe(switchMap(response => handleResponse(this.laagnaam, NosqlFsSource.featureDelimiter, response)));
+    ).pipe(switchMap(response => observableFromResponse$(this.laagnaam, NosqlFsSource.featureDelimiter, response)));
   }
 
   fetchFeaturesByWkt$(wkt: string): Observable<GeoJsonLike> {
@@ -200,7 +198,7 @@ export class NosqlFsSource extends ol.source.Vector {
         body: wkt
       },
       FETCH_TIMEOUT
-    ).pipe(switchMap(response => handleResponse(this.laagnaam, NosqlFsSource.featureDelimiter, response)));
+    ).pipe(switchMap(response => observableFromResponse$(this.laagnaam, NosqlFsSource.featureDelimiter, response)));
   }
 
   private dispatchLoadEvent(evt: le.DataLoadEvent) {
