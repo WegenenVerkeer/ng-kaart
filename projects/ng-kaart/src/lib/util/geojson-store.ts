@@ -77,7 +77,33 @@ export const getFeatures = (storename: string, filter: Function1<GeoJsonLike, bo
     )
     .then(features => features.filter(filter));
 
+const intersect = <T>(a: T[], b: T[]) => [...new Set(a)].filter(x => new Set(b).has(x));
+
+const getLower = (storename: string, idx: string, bound: number) =>
+  openStore(storename).then(db =>
+    db
+      .transaction(storename)
+      .objectStore<GeoJsonLike, any>(storename)
+      .index(idx)
+      .getAllKeys(IDBKeyRange.lowerBound(bound))
+  );
+
+const getUpper = (storename: string, idx: string, bound: number) =>
+  openStore(storename).then(db =>
+    db
+      .transaction(storename)
+      .objectStore<GeoJsonLike, any>(storename)
+      .index(idx)
+      .getAllKeys(IDBKeyRange.upperBound(bound))
+  );
+
 export const getFeaturesByExtent = (storename: string, extent: ol.Extent): Promise<GeoJsonLike[]> => {
-  // TODO: CK-15: zoek via indexes ipv getFeatures(storename, feature => feature.getGeometry()["intersectsExtent"](extent));
-  return getFeatures(storename, () => true);
+  const minXs = getLower(storename, "minx", extent[0]);
+  const minYs = getLower(storename, "miny", extent[1]);
+  const maxXs = getUpper(storename, "maxx", extent[2]);
+  const maxYs = getUpper(storename, "maxy", extent[3]);
+
+  return Promise.all([minXs, minYs, maxXs, maxYs])
+    .then(([minXs, minYs, maxXs, maxYs]) => intersect(minYs, intersect(maxYs, intersect(minXs, maxXs))))
+    .then(keys => getFeatures(storename, feature => keys.includes(feature.id)));
 };
