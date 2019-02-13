@@ -25,8 +25,7 @@ export const openStore = (storename: string): Promise<idb.DB> => {
     // the fall-through behaviour is what we want.
     switch (upgradeDB.oldVersion) {
       case 0:
-        const store = upgradeDB.createObjectStore(storename);
-        store.createIndex("id", "id", { unique: true });
+        const store = upgradeDB.createObjectStore(storename, { keyPath: "id" });
         store.createIndex("minx", "minx", { unique: false });
         store.createIndex("miny", "miny", { unique: false });
         store.createIndex("maxx", "maxx", { unique: false });
