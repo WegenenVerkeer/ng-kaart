@@ -1,8 +1,9 @@
-import { Function1, Function2, Function4 } from "fp-ts/lib/function";
+import { Function1, Function2, Function3 } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { Observable, Subject } from "rxjs";
+import { switchMap } from "rxjs/operators";
 
 import * as le from "../kaart/kaart-load-events";
 import { kaartLogger } from "../kaart/log";
@@ -45,12 +46,9 @@ const olFeature: Function2<string, GeoJsonLike, ol.Feature> = (laagnaam, geojson
     laagnaam: laagnaam
   });
 
-const handleResponse: Function4<string, string, Response, Subject<GeoJsonLike>, void> = (
-  collection,
-  featureDelimiter,
-  response,
-  subject
-) => {
+const handleResponse: Function3<string, string, Response, Observable<GeoJsonLike>> = (collection, featureDelimiter, response) => {
+  const subject = new Subject<GeoJsonLike>();
+
   if (!response.ok) {
     subject.error(`Probleem bij ontvangen nosql ${collection} data: status ${response.status} ${response.statusText}`);
     return;
@@ -97,6 +95,8 @@ const handleResponse: Function4<string, string, Response, Subject<GeoJsonLike>, 
     .catch(reason => {
       subject.error(reason);
     });
+
+  return subject.asObservable();
 };
 
 /**
@@ -182,9 +182,7 @@ export class NosqlFsSource extends ol.source.Vector {
   }
 
   fetchFeatures$(extent: number[]): Observable<GeoJsonLike> {
-    const geoJsonSubj = new Subject<GeoJsonLike>();
-
-    fetchWithTimeout(
+    return fetchWithTimeout(
       this.composeUrl(extent),
       {
         method: "GET",
@@ -192,18 +190,11 @@ export class NosqlFsSource extends ol.source.Vector {
         credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
       },
       FETCH_TIMEOUT
-    ).subscribe(
-      response => handleResponse(this.laagnaam, NosqlFsSource.featureDelimiter, response, geoJsonSubj),
-      error => geoJsonSubj.error(error)
-    );
-
-    return geoJsonSubj.asObservable();
+    ).pipe(switchMap(response => handleResponse(this.laagnaam, NosqlFsSource.featureDelimiter, response)));
   }
 
   fetchFeaturesByWkt$(wkt: string): Observable<GeoJsonLike> {
-    const geoJsonSubj = new Subject<GeoJsonLike>();
-
-    fetchWithTimeout(
+    return fetchWithTimeout(
       this.composeUrl(),
       {
         method: "POST",
@@ -212,12 +203,7 @@ export class NosqlFsSource extends ol.source.Vector {
         body: wkt
       },
       FETCH_TIMEOUT
-    ).subscribe(
-      response => handleResponse(this.laagnaam, NosqlFsSource.featureDelimiter, response, geoJsonSubj),
-      error => geoJsonSubj.error(error)
-    );
-
-    return geoJsonSubj.asObservable();
+    ).pipe(switchMap(response => handleResponse(this.laagnaam, NosqlFsSource.featureDelimiter, response)));
   }
 
   private dispatchLoadEvent(evt: le.DataLoadEvent) {
