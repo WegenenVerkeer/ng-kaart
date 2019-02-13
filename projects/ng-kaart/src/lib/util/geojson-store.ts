@@ -82,26 +82,6 @@ export const getFeaturesByIds = (storename: string, keys: any[]): Promise<GeoJso
     .then(db => db.transaction(storename).objectStore<GeoJsonLike, any>(storename))
     .then(os => Promise.all(keys.map(key => os.get(key))));
 
-const getLower = (storename: string, idx: string, bound: number) =>
-  openStore(storename).then(db =>
-    db
-      .transaction(storename)
-      .objectStore<GeoJsonLike, any>(storename)
-      .index(idx)
-      .getAllKeys(IDBKeyRange.lowerBound(bound))
-  );
-
-const getUpper = (storename: string, idx: string, bound: number) =>
-  openStore(storename).then(db =>
-    db
-      .transaction(storename)
-      .objectStore<GeoJsonLike, any>(storename)
-      .index(idx)
-      .getAllKeys(IDBKeyRange.upperBound(bound))
-  );
-
-const intersect = <T>(a: T[], b: T[]) => a.filter(value => -1 !== b.indexOf(value));
-
 export const getFeaturesByExtent = (storename: string, extent: ol.Extent): Promise<GeoJsonLike[]> => {
   return Promise.all([
     getLower(storename, "minx", extent[0]),
@@ -122,3 +102,23 @@ export const getFeaturesByExtentTableScan = (storename: string, extent: ol.Exten
       feature.metadata.minx >= minx && feature.metadata.maxx <= maxx && feature.metadata.miny >= miny && feature.metadata.maxy <= maxy
   );
 };
+
+const getLower = (storename: string, idx: string, bound: number) =>
+  openStore(storename).then(db =>
+    db
+      .transaction(storename)
+      .objectStore<GeoJsonLike, any>(storename)
+      .index(idx)
+      .getAllKeys(IDBKeyRange.lowerBound(bound))
+  );
+
+const getUpper = (storename: string, idx: string, bound: number) =>
+  openStore(storename).then(db =>
+    db
+      .transaction(storename)
+      .objectStore<GeoJsonLike, any>(storename)
+      .index(idx)
+      .getAllKeys(IDBKeyRange.upperBound(bound))
+  );
+
+const intersect = <T>(a: T[], b: T[]) => a.filter(value => -1 !== b.indexOf(value));
