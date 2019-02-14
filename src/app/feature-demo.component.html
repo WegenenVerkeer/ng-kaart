@@ -190,7 +190,7 @@
         <!-- kaart widgets-->
         <awv-kaart-streetview *ngIf="isOptieActief('streetview')"></awv-kaart-streetview>
         <awv-meet-knop [toonInfoBoodschap]="isOptieActief('metenToon')" [meerdereGeometrieen]="isOptieActief('metenMeerdere')" *ngIf="isOptieActief('meten')"></awv-meet-knop>
-        <awv-multi-meet-knop *ngIf="isOptieActief('meten')"></awv-multi-meet-knop>
+        <awv-multi-meet-knop *ngIf="isOptieActief('meten')" [metRouting]="false"></awv-multi-meet-knop>
         <awv-kaart-teken></awv-kaart-teken>
         <awv-kaart-zoomknoppen *ngIf="isOptieActief('zoomknoppen')"></awv-kaart-zoomknoppen>
         <awv-bevraag-kaart *ngIf="isOptieActief('bevraagkaart')"></awv-bevraag-kaart>

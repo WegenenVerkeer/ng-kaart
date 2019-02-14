@@ -24,7 +24,8 @@ import { StartDrawing, StopDrawing } from "../tekenen/tekenen-model";
 export const MultiMetenUiSelector = "MultiMeten";
 
 export interface MultiMetenOpties {
-  markColour: clr.Kleur;
+  readonly markColour: clr.Kleur;
+  readonly useRouting: boolean;
 }
 
 @Component({
@@ -34,7 +35,8 @@ export interface MultiMetenOpties {
 })
 export class KaartMultiMetenComponent extends KaartModusComponent implements OnInit, OnDestroy {
   private metenOpties: MultiMetenOpties = {
-    markColour: clr.grasgroen
+    markColour: clr.zwart, // Wschl beter ineens een stijl, dan kan het helemaal gecustomiseerd worden
+    useRouting: false
   };
 
   constructor(parent: KaartComponent, zone: NgZone) {
@@ -69,7 +71,7 @@ export class KaartMultiMetenComponent extends KaartModusComponent implements OnI
   }
 
   private startMetMeten(): void {
-    this.dispatch(DrawOpsCmd(StartDrawing(this.metenOpties.markColour)));
+    this.dispatch(DrawOpsCmd(StartDrawing(this.metenOpties.markColour, this.metenOpties.useRouting)));
   }
 
   private stopMeten(): void {

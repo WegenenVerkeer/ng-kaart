@@ -8,7 +8,7 @@ import { List, OrderedMap } from "immutable";
 import { Lens } from "monocle-ts";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { filter, map, scan, startWith, switchMap, switchMapTo, take } from "rxjs/operators";
+import { filter, map, scan, startWith, switchMap, take } from "rxjs/operators";
 
 import * as clr from "../../stijl/colour";
 import { disc, solidLine } from "../../stijl/common-shapes";
@@ -26,7 +26,7 @@ import { KaartComponent } from "../kaart.component";
 import * as ss from "../stijl-selector";
 
 import { RouteEvent } from "./route.msg";
-import { AddPoint, DeletePoint, DraggingPoint, DrawOps, makeRoute, MovePoint, RouteSegmentOps } from "./tekenen-model";
+import { AddPoint, DeletePoint, DraggingPoint, DrawOps, isStartDrawing, MovePoint, StartDrawing } from "./tekenen-model";
 import { directeRoutes, routesViaRoutering } from "./waypoint-ops";
 import { AddWaypoint, RemoveWaypoint, Waypoint, WaypointOperation } from "./waypoint.msg";
 
@@ -37,6 +37,7 @@ const SegmentLaagNaam = "MultiTekenSegmentLaag"; // De naam van de laag waar de 
 
 interface DrawState {
   readonly map: ol.Map; // Misschien moeten we de interacties via dispatchCmd op de OL map zetten, dan hebbenn we ze hier niet nodig
+  readonly featureColour: clr.Kleur;
   readonly drawInteractions: ol.interaction.Interaction[];
   readonly pointFeatures: ol.Feature[];
   readonly firstPointFeature: Option<ol.Feature>;
@@ -55,6 +56,7 @@ interface WaypointProperties {
 // in pointFeature worden achter onze rug aangepast.
 const initialState: Function1<ol.Map, DrawState> = olMap => ({
   map: olMap,
+  featureColour: clr.zwartig,
   drawInteractions: [],
   pointFeatures: [],
   firstPointFeature: none,
@@ -77,6 +79,7 @@ const incrementNextId: Endomorphism<DrawState> = nextIdLens.modify(n => n + 1);
 const dragFeatureLens: DrawLens<Option<ol.Feature>> = Lens.fromProp("dragFeature");
 const firstPointFeatureLens: DrawLens<Option<ol.Feature>> = Lens.fromProp("firstPointFeature");
 const listenersLens: DrawLens<ol.GlobalObject[]> = Lens.fromProp("listeners");
+const featureColourLens: DrawLens<clr.Kleur> = Lens.fromProp("featureColour");
 
 type PointFeaturePropertyLens<A> = Lens<WaypointProperties, A>;
 const nextLens: PointFeaturePropertyLens<Option<ol.Feature>> = Lens.fromProp("next");
@@ -88,9 +91,9 @@ const replacePrevious: Function1<Option<ol.Feature>, Endomorphism<WaypointProper
 type Combine<S> = Function1<Endomorphism<S>[], Endomorphism<S>>;
 const applySequential: Combine<DrawState> = fas => s => fas.reduce((s, fa) => fa(s), s);
 
-const createMarkerStyle: Function1<clr.Kleur, ss.Stylish> = kleur => disc.stylish(kleur, clr.wit, 3, 5);
+const createMarkerStyle: Function1<clr.Kleur, ss.Stylish> = colour => disc.stylish(colour, clr.wit, 3, 5);
 
-const createLineStyle: Lazy<ss.Stylish> = () => solidLine.stylish(clr.zwart, 2);
+const createLineStyle: Function1<clr.Kleur, ss.Stylish> = colour => solidLine.stylish(colour, 2);
 
 const createLayer: Function2<string, ol.source.Vector, ke.VectorLaag> = (titel, source) => {
   source.set("laagTitel", titel);
@@ -222,7 +225,7 @@ function drawStateTransformer(
     case "StartDrawing": {
       const drawSource = new ol.source.Vector();
       const modifySource = new ol.source.Vector();
-      const puntStijl = disc.stylish(ops.pointColour, clr.transparant, 1, 5);
+      const puntStijl = disc.stylish(ops.featureColour, clr.transparant, 1, 5);
       const drawInteraction = new ol.interaction.Draw({
         type: "Point",
         freehandCondition: ol.events.condition.never,
@@ -264,7 +267,11 @@ function drawStateTransformer(
       });
       drawInteractions.forEach(inter => state.map.addInteraction(inter));
       const moveKey = state.map.on("pointermove", handlePointermove(featurePicker(state.map), modifySource)) as ol.GlobalObject;
-      return applySequential([drawInteractionsLens.set(drawInteractions), listenersLens.set([moveKey])]);
+      return applySequential([
+        drawInteractionsLens.set(drawInteractions),
+        listenersLens.set([moveKey]),
+        featureColourLens.set(ops.featureColour)
+      ]);
     }
 
     case "StopDrawing": {
@@ -280,7 +287,7 @@ function drawStateTransformer(
       const lastFeature = array.last(currentFeatures);
       const feature = new ol.Feature(new ol.geom.Point(ops.coordinate));
       feature.setId(state.nextId);
-      feature.setStyle(createMarkerStyle(clr.zwartig));
+      feature.setStyle(createMarkerStyle(state.featureColour));
       feature.setProperties(WaypointProperties(lastFeature, none));
       forEach(lastFeature, updatePointProperties(replaceNext(some(feature))));
       feature.on("change", handleFeatureDrag);
@@ -381,15 +388,15 @@ const removeFeature: Function2<RouteSegmentState, string, RouteSegmentState> = (
   return cloned;
 };
 
-const routeSegementReducer: Function1<
-  Consumer<prt.Command<KaartInternalMsg>>,
-  ReduceFunction<RouteSegmentState, RouteEvent>
-> = dispatchCmd => (state, ops) => {
+const routeSegmentReducer: Function2<clr.Kleur, Consumer<prt.Command<KaartInternalMsg>>, ReduceFunction<RouteSegmentState, RouteEvent>> = (
+  lineColour,
+  dispatchCmd
+) => (state, ops) => {
   function handleOps(): RouteSegmentState {
     switch (ops.type) {
       case "RouteAdded":
         const line = new ol.Feature(ops.geometry);
-        line.setStyle(createLineStyle());
+        line.setStyle(createLineStyle(lineColour));
         return addFeature(state, ops.id, line);
       case "RouteRemoved":
         return removeFeature(state, ops.id);
@@ -426,7 +433,7 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
     const drawEffects$ = rx.merge(this.modelChanges.tekenenOps$, this.internalDrawOpsSubj);
 
     // Een event dat helpt om alle state te resetten
-    const drawingStarts$ = drawEffects$.pipe(filter(ops => ops.type === "StartDrawing"));
+    const drawingStarts$: rx.Observable<StartDrawing> = drawEffects$.pipe(filter(isStartDrawing));
 
     // Maak een subject waar de drawReducer kan in schrijven
     const waypointObsSubj: rx.Subject<WaypointOperation> = new rx.Subject();
@@ -453,14 +460,14 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
     );
 
     // Laat de segmenten berekenen
-    // const routeSegmentOps$: rx.Observable<RouteSegmentOps> = subSpy("***waypointOps")(waypointObsSubj).pipe(makeRoute);
-    // const routeSegmentReducer$ = drawingStarts$.pipe(
-    //   switchMapTo(subSpy("***routeSegmentOps")(routeSegmentOps$).pipe(scan(routeSegementReducer(cmd => this.dispatch(cmd)), {})))
-    // );
-
-    const routeSegmentOps$: rx.Observable<RouteEvent> = subSpy("***waypointOps")(waypointObsSubj).pipe(routesViaRoutering(http));
+    const routeSegmentOps$: Function1<boolean, rx.Observable<RouteEvent>> = useRouting =>
+      subSpy("***waypointOps")(waypointObsSubj).pipe(useRouting ? routesViaRoutering(http) : directeRoutes());
     const routeSegmentReducer$ = drawingStarts$.pipe(
-      switchMapTo(subSpy("***routeSegmentOps")(routeSegmentOps$).pipe(scan(routeSegementReducer(cmd => this.dispatch(cmd)), {})))
+      switchMap(start =>
+        subSpy("***routeSegmentOps")(routeSegmentOps$(start.useRouting)).pipe(
+          scan(routeSegmentReducer(start.featureColour, cmd => this.dispatch(cmd)), {})
+        )
+      )
     );
 
     // Zorg er voor dat de operaties verwerkt worden vanaf het moment dat de component geïnitialiseerd is.

@@ -1,4 +1,4 @@
-import { constant, Function1, Lazy } from "fp-ts/lib/function";
+import { constant, Function1, Function2, Lazy, Refinement } from "fp-ts/lib/function";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { mergeMap } from "rxjs/operators";
@@ -18,8 +18,9 @@ export type PointId = number;
 
 export interface StartDrawing {
   readonly type: "StartDrawing";
-  // readonly startGeometrie: Option<ol.geom.Geometry>;
-  readonly pointColour: clr.Kleur;
+  // readonly startGeometrie: Option<ol.geom.Geometry>; --> voor Eliza of Davie
+  readonly featureColour: clr.Kleur;
+  readonly useRouting: boolean;
 }
 
 export interface StopDrawing {
@@ -45,7 +46,13 @@ export interface DeletePoint {
   readonly feature: ol.Feature;
 }
 
-export const StartDrawing: Function1<clr.Kleur, StartDrawing> = puntKleur => ({ type: "StartDrawing", pointColour: puntKleur });
+export const StartDrawing: Function2<clr.Kleur, boolean, StartDrawing> = (featureColour, useRouting) => ({
+  type: "StartDrawing",
+  featureColour: featureColour,
+  useRouting: useRouting
+});
+
+export const isStartDrawing: Refinement<DrawOps, StartDrawing> = (ops): ops is StartDrawing => ops.type === "StartDrawing";
 
 const stopDrawing: StopDrawing = { type: "StopDrawing" };
 export const StopDrawing: Lazy<StopDrawing> = constant(stopDrawing);
@@ -59,8 +66,8 @@ export const MovePoint: Lazy<MovePoint> = constant(movePoint);
 
 export const DeletePoint: Function1<ol.Feature, DeletePoint> = feature => ({ type: "DeletePoint", feature: feature });
 
-/////////////////////////////////////////////////////////////////////
-// RouteSegmentOps: operaties op het niveau van segementen van routes
+////////////////////////////////////////////////////////////////////
+// RouteSegmentOps: operaties op het niveau van segmenten van routes
 //
 
 export type RouteSegmentOps = AddRouteSegment | RemoveRouteSegment;

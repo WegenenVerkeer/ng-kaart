@@ -1,4 +1,4 @@
-import { Component, NgZone } from "@angular/core";
+import { Component, Input, NgZone } from "@angular/core";
 
 import * as clr from "../../stijl/colour";
 
@@ -11,13 +11,20 @@ import { KaartClassicComponent } from "../kaart-classic.component";
   template: ""
 })
 export class ClassicMultiMetenComponent extends ClassicUIElementSelectorComponentBase {
+  @Input() // Dit moet dus effectief een code zijn in het formaat #rrggbb(tt?). De string 'white' bijv. is niet ok.
+  tekenKleurCode = clr.kleurcodeValue(clr.zwartig);
+
+  @Input()
+  metRouting = false;
+
   constructor(kaart: KaartClassicComponent, zone: NgZone) {
     super(MultiMetenUiSelector, kaart, zone);
   }
 
   protected opties(): MultiMetenOpties {
     return {
-      markColour: clr.zwart // TODO lees van een Input
+      markColour: clr.toKleur("naam", this.tekenKleurCode).getOrElse(clr.zwartig),
+      useRouting: this.metRouting
     };
   }
 }
