@@ -18,32 +18,20 @@ describe("Route Changes bij sequentieel toevoegen:", () => {
     });
   });
 
-  describe("Wanneer er 2 dezelfde waypoints toegevoegd worden", () => {
-    it("moeten er geen nieuwe routes zijn", () => {
-      const waypoint0 = Waypoint(0, [0, 0]);
-      const transition1 = addWaypoint([], AddWaypoint(none, waypoint0));
-      const overschrevenWaypoint = Waypoint(0, [1, 1]);
-      const transition2 = addWaypoint(transition1.routeState, AddWaypoint(none, overschrevenWaypoint));
-
-      expect(transition2.routeChanges.routesRemoved.length).toBe(0);
-      expect(transition2.routeChanges.routesAdded.length).toBe(0);
-
-      expect(transition2.routeState.length).toBe(1);
-      expect(transition2.routeState[0]).toBe(overschrevenWaypoint);
-    });
-  });
-
   describe("Wanneer er 2 verschillende waypoints toegevoegd worden, die niet naar elkaar verwijzen", () => {
-    it("moeten er geen nieuwe routes zijn", () => {
+    it("moeten er geen een  routes zijn", () => {
       const waypoint0 = Waypoint(0, [0, 0]);
       const transition1 = addWaypoint([], AddWaypoint(none, waypoint0));
       const waypoint1 = Waypoint(1, [1, 1]);
       const transition2 = addWaypoint(transition1.routeState, AddWaypoint(none, waypoint1));
 
       expect(transition2.routeChanges.routesRemoved.length).toBe(0);
-      expect(transition2.routeChanges.routesAdded.length).toBe(0);
+      expect(transition2.routeChanges.routesAdded.length).toBe(1);
+      const routeAdded = transition2.routeChanges.routesAdded[0];
+      expect(routeAdded.begin).toBe(waypoint1);
+      expect(routeAdded.end).toBe(waypoint0);
 
-      expect(transition2.routeState.length).toBe(1);
+      expect(transition2.routeState.length).toBe(2);
       expect(transition2.routeState[0]).toBe(waypoint1);
     });
   });
