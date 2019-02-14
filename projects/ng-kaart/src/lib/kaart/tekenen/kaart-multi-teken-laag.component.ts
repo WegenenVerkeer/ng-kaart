@@ -1,3 +1,4 @@
+import { HttpClient } from "@angular/common/http";
 import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 import * as array from "fp-ts/lib/Array";
 import { Endomorphism, Function1, Function2, Function3, identity, Lazy, pipe, Predicate, Refinement } from "fp-ts/lib/function";
@@ -28,7 +29,6 @@ import { RouteEvent } from "./route.msg";
 import { AddPoint, DeletePoint, DraggingPoint, DrawOps, makeRoute, MovePoint, RouteSegmentOps } from "./tekenen-model";
 import { directeRoutes, routesViaRoutering } from "./waypoint-ops";
 import { AddWaypoint, RemoveWaypoint, Waypoint, WaypointOperation } from "./waypoint.msg";
-import { HttpClient } from '@angular/common/http';
 
 export const MultiTekenenUiSelector = "MultiKaarttekenen";
 

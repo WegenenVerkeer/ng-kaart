@@ -1,4 +1,4 @@
-import { Waypoint } from "@wegenenverkeer/ng-kaart/lib/kaart/tekenen/tekenen-model";
+import { Waypoint } from "./waypoint.msg";
 
 export interface ProtoRoute {
   id: string;
