@@ -140,16 +140,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
-    function valideerCacheableLaagBestaat(titel: string): prt.KaartCmdValidation<ol.layer.Tile | ol.layer.Vector> {
-      return chain(valideerToegevoegdeLaagBestaat(titel), laag =>
-        fromPredicate(
-          ke.isTiledWmsLaag(laag.bron) ? (laag.layer as ol.layer.Tile) : (laag.layer as ol.layer.Tile),
-          () => ke.isTiledWmsLaag(laag.bron) || ke.isVectorLaag(laag.bron),
-          `Laag ${laag.bron.titel} is geen tiled WMS laag`
-        )
-      );
-    }
-
     function valideerLaagTitelBestaatNiet(titel: string): prt.KaartCmdValidation<{}> {
       return fromPredicate(model, (mdl: Model) => !mdl.toegevoegdeLagenOpTitel.has(titel), `Een laag met titel ${titel} bestaat al`);
     }
