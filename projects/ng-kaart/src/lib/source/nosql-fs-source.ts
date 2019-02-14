@@ -137,6 +137,9 @@ export class NosqlFsSource extends ol.source.Vector {
           geojson => {
             source.dispatchLoadEvent(le.PartReceived);
             source.addFeature(olFeature(source.titel, geojson));
+            if (source.gebruikCache) {
+              geojsonStore.writeFeature(source.laagnaam, geojson);
+            }
           },
           error => {
             if (source.gebruikCache) {
