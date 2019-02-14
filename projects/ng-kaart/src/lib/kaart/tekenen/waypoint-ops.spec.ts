@@ -1,18 +1,14 @@
 import * as array from "fp-ts/lib/Array";
-import { None, none, Option, some } from "fp-ts/lib/Option";
-import * as strmap from "fp-ts/lib/StrMap";
-import * as ol from "openlayers";
+import { none, some } from "fp-ts/lib/Option";
 
-import * as arrays from "../util/arrays";
-
-import { waypoint, waypointAdded, waypointRemoved, WaypointRemoved } from "./waypoint-msg";
-import { addWaypoint, removeWaypoint, RouteState } from "./waypoint-ops";
+import { addWaypoint, removeWaypoint } from "./waypoint-ops";
+import { AddWaypoint, RemoveWaypoint, Waypoint } from "./waypoint.msg";
 
 describe("Route Changes bij sequentieel toevoegen:", () => {
   describe("Wanneer een eerste waypoint toegevoegd wordt", () => {
     it("moeten er geen nieuwe routes zijn", () => {
-      const waypoint0 = waypoint(0, [0, 0]);
-      const transition1 = addWaypoint([], waypointAdded(none, waypoint0));
+      const waypoint0 = Waypoint(0, [0, 0]);
+      const transition1 = addWaypoint([], AddWaypoint(none, waypoint0));
 
       expect(transition1.routeChanges.routesRemoved.length).toBe(0);
       expect(transition1.routeChanges.routesAdded.length).toBe(0);
@@ -24,10 +20,10 @@ describe("Route Changes bij sequentieel toevoegen:", () => {
 
   describe("Wanneer er 2 dezelfde waypoints toegevoegd worden", () => {
     it("moeten er geen nieuwe routes zijn", () => {
-      const waypoint0 = waypoint(0, [0, 0]);
-      const transition1 = addWaypoint([], waypointAdded(none, waypoint0));
-      const overschrevenWaypoint = waypoint(0, [1, 1]);
-      const transition2 = addWaypoint(transition1.routeState, waypointAdded(none, overschrevenWaypoint));
+      const waypoint0 = Waypoint(0, [0, 0]);
+      const transition1 = addWaypoint([], AddWaypoint(none, waypoint0));
+      const overschrevenWaypoint = Waypoint(0, [1, 1]);
+      const transition2 = addWaypoint(transition1.routeState, AddWaypoint(none, overschrevenWaypoint));
 
       expect(transition2.routeChanges.routesRemoved.length).toBe(0);
       expect(transition2.routeChanges.routesAdded.length).toBe(0);
@@ -39,10 +35,10 @@ describe("Route Changes bij sequentieel toevoegen:", () => {
 
   describe("Wanneer er 2 verschillende waypoints toegevoegd worden, die niet naar elkaar verwijzen", () => {
     it("moeten er geen nieuwe routes zijn", () => {
-      const waypoint0 = waypoint(0, [0, 0]);
-      const transition1 = addWaypoint([], waypointAdded(none, waypoint0));
-      const waypoint1 = waypoint(1, [1, 1]);
-      const transition2 = addWaypoint(transition1.routeState, waypointAdded(none, waypoint1));
+      const waypoint0 = Waypoint(0, [0, 0]);
+      const transition1 = addWaypoint([], AddWaypoint(none, waypoint0));
+      const waypoint1 = Waypoint(1, [1, 1]);
+      const transition2 = addWaypoint(transition1.routeState, AddWaypoint(none, waypoint1));
 
       expect(transition2.routeChanges.routesRemoved.length).toBe(0);
       expect(transition2.routeChanges.routesAdded.length).toBe(0);
@@ -54,10 +50,10 @@ describe("Route Changes bij sequentieel toevoegen:", () => {
 
   describe("Wanneer er 2 verschillende waypoints toegevoegd worden", () => {
     it("moeten er een nieuwe route zijn", () => {
-      const waypoint0 = waypoint(0, [0, 0]);
-      const transition1 = addWaypoint([], waypointAdded(none, waypoint0));
-      const waypoint1 = waypoint(1, [1, 1]);
-      const transition2 = addWaypoint(transition1.routeState, waypointAdded(some(waypoint0), waypoint1));
+      const waypoint0 = Waypoint(0, [0, 0]);
+      const transition1 = addWaypoint([], AddWaypoint(none, waypoint0));
+      const waypoint1 = Waypoint(1, [1, 1]);
+      const transition2 = addWaypoint(transition1.routeState, AddWaypoint(some(waypoint0), waypoint1));
 
       expect(transition2.routeChanges.routesRemoved.length).toBe(0);
       expect(transition2.routeChanges.routesAdded.length).toBe(1);
@@ -73,12 +69,12 @@ describe("Route Changes bij sequentieel toevoegen:", () => {
 
   describe("Wanneer er 3 verschillende waypoints toegevoegd worden", () => {
     it("moeten er een 2 nieuwe routes zijn", () => {
-      const waypoint0 = waypoint(0, [0, 0]);
-      const transition1 = addWaypoint([], waypointAdded(none, waypoint0));
-      const waypoint1 = waypoint(1, [1, 1]);
-      const transition2 = addWaypoint(transition1.routeState, waypointAdded(some(waypoint0), waypoint1));
-      const waypoint2 = waypoint(2, [2, 2]);
-      const transition3 = addWaypoint(transition2.routeState, waypointAdded(some(waypoint1), waypoint2));
+      const waypoint0 = Waypoint(0, [0, 0]);
+      const transition1 = addWaypoint([], AddWaypoint(none, waypoint0));
+      const waypoint1 = Waypoint(1, [1, 1]);
+      const transition2 = addWaypoint(transition1.routeState, AddWaypoint(some(waypoint0), waypoint1));
+      const waypoint2 = Waypoint(2, [2, 2]);
+      const transition3 = addWaypoint(transition2.routeState, AddWaypoint(some(waypoint1), waypoint2));
 
       expect(transition3.routeChanges.routesRemoved.length).toBe(0);
       expect(transition3.routeChanges.routesAdded.length).toBe(1);
@@ -97,9 +93,9 @@ describe("Route Changes bij sequentieel toevoegen:", () => {
 describe("Route Changes bij verwijderen:", () => {
   describe("Wanneer het enige waypoint verwijderd wordt", () => {
     it("moeten op een lege beginsituatie komen", () => {
-      const waypoint0 = waypoint(0, [0, 0]);
-      const transition1 = addWaypoint([], waypointAdded(none, waypoint0));
-      const transition2 = removeWaypoint(transition1.routeState, waypointRemoved(waypoint0));
+      const waypoint0 = Waypoint(0, [0, 0]);
+      const transition1 = addWaypoint([], AddWaypoint(none, waypoint0));
+      const transition2 = removeWaypoint(transition1.routeState, RemoveWaypoint(waypoint0));
 
       expect(transition2.routeChanges.routesAdded.length).toBe(0);
       expect(transition2.routeChanges.routesRemoved.length).toBe(0);
@@ -109,11 +105,11 @@ describe("Route Changes bij verwijderen:", () => {
   });
   describe("Wanneer het begin waypoint verwijderd wordt", () => {
     it("moet de route verdwijnen", () => {
-      const waypoint0 = waypoint(0, [0, 0]);
-      const transition1 = addWaypoint([], waypointAdded(none, waypoint0));
-      const waypoint1 = waypoint(1, [1, 1]);
-      const transition2 = addWaypoint(transition1.routeState, waypointAdded(some(waypoint0), waypoint1));
-      const transition3 = removeWaypoint(transition2.routeState, waypointRemoved(waypoint0));
+      const waypoint0 = Waypoint(0, [0, 0]);
+      const transition1 = addWaypoint([], AddWaypoint(none, waypoint0));
+      const waypoint1 = Waypoint(1, [1, 1]);
+      const transition2 = addWaypoint(transition1.routeState, AddWaypoint(some(waypoint0), waypoint1));
+      const transition3 = removeWaypoint(transition2.routeState, RemoveWaypoint(waypoint0));
 
       expect(transition3.routeChanges.routesAdded.length).toBe(0);
       expect(transition3.routeChanges.routesRemoved.length).toBe(1);
@@ -126,11 +122,11 @@ describe("Route Changes bij verwijderen:", () => {
   });
   describe("Wanneer het einde waypoint verwijderd wordt", () => {
     it("moet de route verdwijnen", () => {
-      const waypoint0 = waypoint(0, [0, 0]);
-      const transition1 = addWaypoint([], waypointAdded(none, waypoint0));
-      const waypoint1 = waypoint(1, [1, 1]);
-      const transition2 = addWaypoint(transition1.routeState, waypointAdded(some(waypoint0), waypoint1));
-      const transition3 = removeWaypoint(transition2.routeState, waypointRemoved(waypoint1));
+      const waypoint0 = Waypoint(0, [0, 0]);
+      const transition1 = addWaypoint([], AddWaypoint(none, waypoint0));
+      const waypoint1 = Waypoint(1, [1, 1]);
+      const transition2 = addWaypoint(transition1.routeState, AddWaypoint(some(waypoint0), waypoint1));
+      const transition3 = removeWaypoint(transition2.routeState, RemoveWaypoint(waypoint1));
 
       expect(transition3.routeChanges.routesAdded.length).toBe(0);
       expect(transition3.routeChanges.routesRemoved.length).toBe(1);
@@ -143,13 +139,13 @@ describe("Route Changes bij verwijderen:", () => {
   });
   describe("Wanneer een midden waypoint verwijderd wordt", () => {
     it("moet er 2 routes verdwijnen en 1 in de plaats komen", () => {
-      const waypoint0 = waypoint(0, [0, 0]);
-      const transition1 = addWaypoint([], waypointAdded(none, waypoint0));
-      const waypoint1 = waypoint(1, [1, 1]);
-      const transition2 = addWaypoint(transition1.routeState, waypointAdded(some(waypoint0), waypoint1));
-      const waypoint2 = waypoint(2, [2, 2]);
-      const transition3 = addWaypoint(transition2.routeState, waypointAdded(some(waypoint1), waypoint2));
-      const transition4 = removeWaypoint(transition3.routeState, waypointRemoved(waypoint1));
+      const waypoint0 = Waypoint(0, [0, 0]);
+      const transition1 = addWaypoint([], AddWaypoint(none, waypoint0));
+      const waypoint1 = Waypoint(1, [1, 1]);
+      const transition2 = addWaypoint(transition1.routeState, AddWaypoint(some(waypoint0), waypoint1));
+      const waypoint2 = Waypoint(2, [2, 2]);
+      const transition3 = addWaypoint(transition2.routeState, AddWaypoint(some(waypoint1), waypoint2));
+      const transition4 = removeWaypoint(transition3.routeState, RemoveWaypoint(waypoint1));
 
       expect(transition4.routeChanges.routesAdded.length).toBe(1);
       const routeAdded = transition4.routeChanges.routesAdded[0];
@@ -170,13 +166,13 @@ describe("Route Changes bij verwijderen:", () => {
 
 describe("Route Changes bij toevoegen in het midden:", () => {
   describe("Wanneer er een waypoint in het midden toegevoegd wordt", () => {
-    it("moeten er een 2 nieuwe routes zijn, en 1 oute moet verdwijnen", () => {
-      const waypoint0 = waypoint(0, [0, 0]);
-      const transition1 = addWaypoint([], waypointAdded(none, waypoint0));
-      const waypoint1 = waypoint(1, [1, 1]);
-      const transition2 = addWaypoint(transition1.routeState, waypointAdded(some(waypoint0), waypoint1));
-      const waypoint2 = waypoint(2, [2, 2]);
-      const transition3 = addWaypoint(transition2.routeState, waypointAdded(some(waypoint0), waypoint2));
+    it("moeten er een 2 nieuwe routes zijn, en 1 route moet verdwijnen", () => {
+      const waypoint0 = Waypoint(0, [0, 0]);
+      const transition1 = addWaypoint([], AddWaypoint(none, waypoint0));
+      const waypoint1 = Waypoint(1, [1, 1]);
+      const transition2 = addWaypoint(transition1.routeState, AddWaypoint(some(waypoint0), waypoint1));
+      const waypoint2 = Waypoint(2, [2, 2]);
+      const transition3 = addWaypoint(transition2.routeState, AddWaypoint(some(waypoint0), waypoint2));
 
       expect(transition3.routeChanges.routesRemoved.length).toBe(1);
       const routeRemoved = transition3.routeChanges.routesRemoved[0];
@@ -195,9 +191,3 @@ describe("Route Changes bij toevoegen in het midden:", () => {
     });
   });
 });
-
-function log(msg: Object) {
-  console.log("+++++++++++++++++++++++++++++");
-  console.log(msg);
-  console.log("+++++++++++++++++++++++++++++");
-}

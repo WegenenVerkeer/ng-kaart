@@ -1,11 +1,12 @@
-import { constant, Function1, Function2, Lazy } from "fp-ts/lib/function";
-import { Option } from "fp-ts/lib/Option";
+import { constant, Function1, Lazy } from "fp-ts/lib/function";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { map, mergeMap } from "rxjs/operators";
+import { mergeMap } from "rxjs/operators";
 
 import * as clr from "../../stijl/colour";
 import { Pipeable } from "../../util";
+
+import { WaypointOperation } from "./waypoint.msg";
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // DrawOps: Operaties op het niveau van (ver)plaatsen en verwijderen van punten op de OL map
@@ -58,38 +59,6 @@ export const MovePoint: Lazy<MovePoint> = constant(movePoint);
 
 export const DeletePoint: Function1<ol.Feature, DeletePoint> = feature => ({ type: "DeletePoint", feature: feature });
 
-////////////////////////////////////////////////////////
-// WaypointsOps: operaties op het niveau van routepunten
-//
-
-export type WaypointOps = AddWaypoint | RemoveWaypoint; // TOOD hier moet Filip's type komen
-
-export interface Waypoint {
-  readonly id: number;
-  readonly location: ol.Coordinate;
-}
-
-export interface AddWaypoint {
-  readonly type: "AddWaypoint";
-  readonly previous: Option<Waypoint>;
-  readonly waypoint: Waypoint;
-}
-
-export interface RemoveWaypoint {
-  readonly type: "RemoveWaypoint";
-  readonly waypoint: Waypoint;
-}
-
-export const Waypoint: Function2<number, ol.Coordinate, Waypoint> = (id, location) => ({ id: id, location: location });
-
-export const AddWaypoint: Function2<Option<Waypoint>, Waypoint, AddWaypoint> = (previous, waypoint) => ({
-  type: "AddWaypoint",
-  previous: previous,
-  waypoint: waypoint
-});
-
-export const RemoveWaypoint: Function1<Waypoint, RemoveWaypoint> = waypoint => ({ type: "RemoveWaypoint", waypoint: waypoint });
-
 /////////////////////////////////////////////////////////////////////
 // RouteSegmentOps: operaties op het niveau van segementen van routes
 //
@@ -109,7 +78,7 @@ export interface RemoveRouteSegment {
 
 let i = 0;
 
-export const makeRoute: Pipeable<WaypointOps, RouteSegmentOps> = o =>
+export const makeRoute: Pipeable<WaypointOperation, RouteSegmentOps> = o =>
   o.pipe(
     mergeMap(ops => {
       switch (ops.type) {

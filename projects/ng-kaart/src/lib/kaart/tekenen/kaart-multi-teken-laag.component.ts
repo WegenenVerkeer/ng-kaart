@@ -24,19 +24,11 @@ import { Command, VerwijderLaagCmd } from "../kaart-protocol-commands";
 import { KaartComponent } from "../kaart.component";
 import * as ss from "../stijl-selector";
 
-import {
-  AddPoint,
-  AddWaypoint,
-  DeletePoint,
-  DraggingPoint,
-  DrawOps,
-  makeRoute,
-  MovePoint,
-  RemoveWaypoint,
-  RouteSegmentOps,
-  Waypoint,
-  WaypointOps
-} from "./tekenen-model";
+import { RouteEvent } from "./route.msg";
+import { AddPoint, DeletePoint, DraggingPoint, DrawOps, makeRoute, MovePoint, RouteSegmentOps } from "./tekenen-model";
+import { directeRoutes, routesViaRoutering } from "./waypoint-ops";
+import { AddWaypoint, RemoveWaypoint, Waypoint, WaypointOperation } from "./waypoint.msg";
+import { HttpClient } from '@angular/common/http';
 
 export const MultiTekenenUiSelector = "MultiKaarttekenen";
 
@@ -161,7 +153,7 @@ const updatePointProperties: Function1<Endomorphism<WaypointProperties>, Consume
 
 function drawStateTransformer(
   dispatchDrawOps: Consumer<DrawOps>,
-  dispatchWaypointOps: Consumer<WaypointOps>,
+  dispatchWaypointOps: Consumer<WaypointOperation>,
   dispatchCmd: Consumer<Command<KaartInternalMsg>>,
   state: DrawState,
   ops: DrawOps
@@ -333,7 +325,7 @@ function drawStateTransformer(
       const maybePrevious = findPreviousFeature(ops.feature);
       const maybeNext = findNextFeature(ops.feature);
       // Het eerste punt mag niet verwijderd worden. Een klik op het eerste punt zal daarentegen een punt toevoegen zodat de polygon quasi
-      // gesloten is. Het eerste punt is, uiteraard, het enige punt dat geen vorig punt heeft.
+      // gesloten is. Het eerste punt is, uiteraard, het enige punt dat geen vorig punt heeft. Dat gebruiken we dus als identificator.
       return maybePrevious
         .map(previous => {
           updatePointProperties(replaceNext(maybeNext))(previous);
@@ -341,6 +333,13 @@ function drawStateTransformer(
           const newFeatures = array.filter(state.pointFeatures, f => f.getId() !== ops.feature.getId());
           (state.drawInteractions[2] as ol.interaction.Select).getFeatures().clear(); // Hack. Beter: select interactie afzonderlijk opslaan
           dispatchCmd(prt.VervangFeaturesCmd(PuntLaagNaam, List(newFeatures), kaartLogOnlyWrapper));
+          forEach(
+            toWaypoint(ops.feature),
+            pipe(
+              RemoveWaypoint,
+              dispatchWaypointOps
+            )
+          );
           sendFullGeometry(newFeatures);
           return applySequential([
             pointFeaturesLens.set(newFeatures),
@@ -358,25 +357,25 @@ function drawStateTransformer(
 
 const drawOpsReducer: Function3<
   Consumer<DrawOps>,
-  Consumer<WaypointOps>,
+  Consumer<WaypointOperation>,
   Consumer<Command<KaartInternalMsg>>,
   ReduceFunction<DrawState, DrawOps>
 > = (dispatchDrawOps, dispatchWaypointOps, dispatchCmd) => (state, ops) =>
   drawStateTransformer(dispatchDrawOps, dispatchWaypointOps, dispatchCmd, state, ops)(state);
 
 interface RouteSegmentState {
-  readonly [id: number]: ol.Feature;
+  readonly [id: string]: ol.Feature;
 }
 
 const featuresIn: Function1<RouteSegmentState, List<ol.Feature>> = state => List(Object.values(state));
 
-const addFeature: Function3<RouteSegmentState, number, ol.Feature, RouteSegmentState> = (state, id, feature) => {
+const addFeature: Function3<RouteSegmentState, string, ol.Feature, RouteSegmentState> = (state, id, feature) => {
   const cloned = { ...state };
   cloned[id] = feature;
   return cloned;
 };
 
-const removeFeature: Function2<RouteSegmentState, number, RouteSegmentState> = (state, id) => {
+const removeFeature: Function2<RouteSegmentState, string, RouteSegmentState> = (state, id) => {
   const cloned = { ...state };
   delete cloned[id];
   return cloned;
@@ -384,15 +383,15 @@ const removeFeature: Function2<RouteSegmentState, number, RouteSegmentState> = (
 
 const routeSegementReducer: Function1<
   Consumer<prt.Command<KaartInternalMsg>>,
-  ReduceFunction<RouteSegmentState, RouteSegmentOps>
+  ReduceFunction<RouteSegmentState, RouteEvent>
 > = dispatchCmd => (state, ops) => {
   function handleOps(): RouteSegmentState {
     switch (ops.type) {
-      case "AddRouteSegment":
-        const line = new ol.Feature(ops.geom);
+      case "RouteAdded":
+        const line = new ol.Feature(ops.geometry);
         line.setStyle(createLineStyle());
         return addFeature(state, ops.id, line);
-      case "RemoveRouteSegment":
+      case "RouteRemoved":
         return removeFeature(state, ops.id);
     }
   }
@@ -413,7 +412,7 @@ const routeSegementReducer: Function1<
 export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
   private readonly internalDrawOpsSubj: rx.Subject<DrawOps> = new rx.Subject();
 
-  constructor(parent: KaartComponent, zone: NgZone) {
+  constructor(parent: KaartComponent, zone: NgZone, http: HttpClient) {
     super(parent, zone);
 
     // Trek de OL map binnen, zodat we niet voor alles een boodschap naar de globale kaart reducer moeten dispatchen.
@@ -430,7 +429,7 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
     const drawingStarts$ = drawEffects$.pipe(filter(ops => ops.type === "StartDrawing"));
 
     // Maak een subject waar de drawReducer kan in schrijven
-    const waypointObsSubj: rx.Subject<WaypointOps> = new rx.Subject();
+    const waypointObsSubj: rx.Subject<WaypointOperation> = new rx.Subject();
 
     // vorm een state + een event om tot een nieuwe state en wat side-effects op de OL map
     const drawReducer$ = olMap$.pipe(
@@ -454,7 +453,12 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
     );
 
     // Laat de segmenten berekenen
-    const routeSegmentOps$: rx.Observable<RouteSegmentOps> = subSpy("***waypointOps")(waypointObsSubj).pipe(makeRoute);
+    // const routeSegmentOps$: rx.Observable<RouteSegmentOps> = subSpy("***waypointOps")(waypointObsSubj).pipe(makeRoute);
+    // const routeSegmentReducer$ = drawingStarts$.pipe(
+    //   switchMapTo(subSpy("***routeSegmentOps")(routeSegmentOps$).pipe(scan(routeSegementReducer(cmd => this.dispatch(cmd)), {})))
+    // );
+
+    const routeSegmentOps$: rx.Observable<RouteEvent> = subSpy("***waypointOps")(waypointObsSubj).pipe(routesViaRoutering(http));
     const routeSegmentReducer$ = drawingStarts$.pipe(
       switchMapTo(subSpy("***routeSegmentOps")(routeSegmentOps$).pipe(scan(routeSegementReducer(cmd => this.dispatch(cmd)), {})))
     );
