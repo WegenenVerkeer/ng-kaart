@@ -3,13 +3,15 @@ import { Endomorphism, Function1, Function2, identity, pipe } from "fp-ts/lib/fu
 import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
 import * as validation from "fp-ts/lib/Validation";
 import { List } from "immutable";
-import { olx } from "openlayers";
 import * as ol from "openlayers";
+import { olx } from "openlayers";
 import { Subscription } from "rxjs";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
+import { bufferTime, debounceTime, distinctUntilChanged, map } from "rxjs/operators";
 
+import { NosqlFsSource } from "../source";
 import { refreshTiles } from "../util/cachetiles";
+import * as featureStore from "../util/geojson-store";
 import { forEach } from "../util/option";
 import * as serviceworker from "../util/serviceworker";
 import { updateBehaviorSubject } from "../util/subject-update";
@@ -135,6 +137,16 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function valideerTiledWmsBestaat(titel: string): prt.KaartCmdValidation<ol.layer.Tile> {
       return chain(valideerToegevoegdeLaagBestaat(titel), laag =>
         fromPredicate(laag.layer as ol.layer.Tile, () => ke.isTiledWmsLaag(laag.bron), `Laag ${laag.bron.titel} is geen tiled WMS laag`)
+      );
+    }
+
+    function valideerCacheableLaagBestaat(titel: string): prt.KaartCmdValidation<ol.layer.Tile | ol.layer.Vector> {
+      return chain(valideerToegevoegdeLaagBestaat(titel), laag =>
+        fromPredicate(
+          ke.isTiledWmsLaag(laag.bron) ? (laag.layer as ol.layer.Tile) : (laag.layer as ol.layer.Tile),
+          () => ke.isTiledWmsLaag(laag.bron) || ke.isVectorLaag(laag.bron),
+          `Laag ${laag.bron.titel} is geen tiled WMS laag`
+        )
       );
     }
 
@@ -1215,7 +1227,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
-    function vulCacheVoorLaag(cmnd: prt.VulCacheVoorLaag<Msg>): ModelWithResult<Msg> {
+    function vulCacheVoorWMSLaag(cmnd: prt.VulCacheVoorWMSLaag<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
         valideerTiledWmsBestaat(cmnd.titel).map(tiledWms => {
@@ -1231,6 +1243,23 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                 return { ...precacheLaagProgress, [cmnd.titel]: progress };
               })
           );
+          return ModelAndEmptyResult(model);
+        })
+      );
+    }
+
+    function vulCacheVoorNosqlLaag(cmnd: prt.VulCacheVoorNosqlLaag<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        valideerVectorLayerBestaat(cmnd.titel).map(vectorLaag => {
+          (cmnd.startMetLegeCache ? featureStore.clear(cmnd.titel) : Promise.resolve())
+            .then(() =>
+              (vectorLaag.getSource() as NosqlFsSource)
+                .fetchFeaturesByWkt$(cmnd.wkt)
+                .pipe(bufferTime(1000))
+                .subscribe(features => featureStore.writeFeatures(cmnd.titel, features).catch(error => kaartLogger.error(error)))
+            )
+            .catch(error => kaartLogger.error(error));
           return ModelAndEmptyResult(model);
         })
       );
@@ -1559,8 +1588,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return sluitPanelen(cmd);
       case "ActiveerCacheVoorLaag":
         return activeerCacheVoorLaag(cmd);
-      case "VulCacheVoorLaag":
-        return vulCacheVoorLaag(cmd);
+      case "VulCacheVoorWMSLaag":
+        return vulCacheVoorWMSLaag(cmd);
+      case "VulCacheVoorNosqlLaag":
+        return vulCacheVoorNosqlLaag(cmd);
       case "HighlightFeatures":
         return highlightFeaturesCmd(cmd);
     }

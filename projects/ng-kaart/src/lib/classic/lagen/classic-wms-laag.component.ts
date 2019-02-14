@@ -50,7 +50,9 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   @Input()
   set precache(input: PrecacheWMS) {
     if (input) {
-      this.dispatch(prt.VulCacheVoorLaag(this.titel, input.startZoom, input.eindZoom, input.wkt, input.startMetLegeCache, logOnlyWrapper));
+      this.dispatch(
+        prt.VulCacheVoorWMSLaag(this.titel, input.startZoom, input.eindZoom, input.wkt, input.startMetLegeCache, logOnlyWrapper)
+      );
     }
   }
 

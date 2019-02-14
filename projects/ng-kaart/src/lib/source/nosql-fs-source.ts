@@ -2,7 +2,7 @@ import { Function1, Function2, Function3 } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { Observable, Subject } from "rxjs";
+import { Observable } from "rxjs";
 import { switchMap } from "rxjs/operators";
 
 import * as le from "../kaart/kaart-load-events";

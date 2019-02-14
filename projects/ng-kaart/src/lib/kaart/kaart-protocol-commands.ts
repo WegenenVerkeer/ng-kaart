@@ -66,7 +66,8 @@ export type Command<Msg extends KaartMsg> =
   | VoegVolledigSchermToeCmd<Msg>
   | VoegZoekerToeCmd<Msg>
   | VraagSchaalAanCmd<Msg>
-  | VulCacheVoorLaag<Msg>
+  | VulCacheVoorNosqlLaag<Msg>
+  | VulCacheVoorWMSLaag<Msg>
   | ZetActieveModusCmd
   | ZetFocusOpKaartCmd
   | ZetLaagLegendeCmd<Msg>
@@ -141,11 +142,19 @@ export interface ActiveerCacheVoorLaag<Msg extends KaartMsg> {
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
-export interface VulCacheVoorLaag<Msg extends KaartMsg> {
-  readonly type: "VulCacheVoorLaag";
+export interface VulCacheVoorWMSLaag<Msg extends KaartMsg> {
+  readonly type: "VulCacheVoorWMSLaag";
   readonly titel: string;
   readonly startZoom: number;
   readonly eindZoom: number;
+  readonly wkt: string;
+  readonly startMetLegeCache: boolean;
+  readonly wrapper: BareValidationWrapper<Msg>;
+}
+
+export interface VulCacheVoorNosqlLaag<Msg extends KaartMsg> {
+  readonly type: "VulCacheVoorNosqlLaag";
+  readonly titel: string;
   readonly wkt: string;
   readonly startMetLegeCache: boolean;
   readonly wrapper: BareValidationWrapper<Msg>;
@@ -506,19 +515,34 @@ export function ActiveerCacheVoorLaag<Msg extends KaartMsg>(
   return { type: "ActiveerCacheVoorLaag", titel: titel, wrapper: wrapper };
 }
 
-export function VulCacheVoorLaag<Msg extends KaartMsg>(
+export function VulCacheVoorWMSLaag<Msg extends KaartMsg>(
   titel: string,
   startZoom: number,
   eindZoom: number,
   wkt: string,
   startMetLegeCache: boolean,
   wrapper: BareValidationWrapper<Msg>
-): VulCacheVoorLaag<Msg> {
+): VulCacheVoorWMSLaag<Msg> {
   return {
-    type: "VulCacheVoorLaag",
+    type: "VulCacheVoorWMSLaag",
     titel: titel,
     startZoom: startZoom,
     eindZoom: eindZoom,
+    wkt: wkt,
+    startMetLegeCache: startMetLegeCache,
+    wrapper: wrapper
+  };
+}
+
+export function VulCacheVoorNosqlLaag<Msg extends KaartMsg>(
+  titel: string,
+  wkt: string,
+  startMetLegeCache: boolean,
+  wrapper: BareValidationWrapper<Msg>
+): VulCacheVoorNosqlLaag<Msg> {
+  return {
+    type: "VulCacheVoorNosqlLaag",
+    titel: titel,
     wkt: wkt,
     startMetLegeCache: startMetLegeCache,
     wrapper: wrapper
