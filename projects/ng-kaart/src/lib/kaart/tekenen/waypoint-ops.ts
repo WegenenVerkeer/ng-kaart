@@ -1,4 +1,5 @@
 import { HttpClient } from "@angular/common/http";
+import * as array from "fp-ts/lib/Array";
 import { concat, Function1 } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import { map, mergeMap, scan } from "rxjs/operators";
@@ -66,10 +67,10 @@ export function addWaypoint(routeState: RouteState, addWaypoint: AddWaypoint): R
   return addWaypoint.previous.fold(
     {
       routeChanges: {
-        routesAdded: [],
+        routesAdded: toArray(array.head(routeState).map(e => createRoute(addWaypoint.waypoint, e))),
         routesRemoved: []
       },
-      routeState: [addWaypoint.waypoint]
+      routeState: [addWaypoint.waypoint].concat(routeState)
     },
     previous => {
       const maybeOldNextWaypoint = arrays.nextElement(routeState)(wp => wp.id === previous.id);
