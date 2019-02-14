@@ -8,7 +8,7 @@ import { List, OrderedMap } from "immutable";
 import { Lens } from "monocle-ts";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { filter, map, scan, startWith, switchMap, take } from "rxjs/operators";
+import { debounceTime, filter, map, scan, startWith, switchMap, take, tap } from "rxjs/operators";
 
 import * as clr from "../../stijl/colour";
 import { disc, solidLine } from "../../stijl/common-shapes";
@@ -388,10 +388,7 @@ const removeFeature: Function2<RouteSegmentState, string, RouteSegmentState> = (
   return cloned;
 };
 
-const routeSegmentReducer: Function2<clr.Kleur, Consumer<prt.Command<KaartInternalMsg>>, ReduceFunction<RouteSegmentState, RouteEvent>> = (
-  lineColour,
-  dispatchCmd
-) => (state, ops) => {
+const routeSegmentReducer: Function1<clr.Kleur, ReduceFunction<RouteSegmentState, RouteEvent>> = lineColour => (state, ops) => {
   function handleOps(): RouteSegmentState {
     switch (ops.type) {
       case "RouteAdded":
@@ -406,7 +403,6 @@ const routeSegmentReducer: Function2<clr.Kleur, Consumer<prt.Command<KaartIntern
   // In dit geval is er een 1-op-1 mapping tussen de state en de commands die we moeten sturen.
   // De state is nl gewoon de set van features die getekend moeten worden.
   const newState = handleOps();
-  dispatchCmd(prt.VervangFeaturesCmd(SegmentLaagNaam, featuresIn(newState), kaartLogOnlyWrapper));
   return newState;
 };
 
@@ -465,7 +461,9 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
     const routeSegmentReducer$ = drawingStarts$.pipe(
       switchMap(start =>
         subSpy("***routeSegmentOps")(routeSegmentOps$(start.useRouting)).pipe(
-          scan(routeSegmentReducer(start.featureColour, cmd => this.dispatch(cmd)), {})
+          scan(routeSegmentReducer(start.featureColour), {}),
+          debounceTime(100),
+          tap(routeState => this.dispatch(prt.VervangFeaturesCmd(SegmentLaagNaam, featuresIn(routeState), kaartLogOnlyWrapper)))
         )
       )
     );
