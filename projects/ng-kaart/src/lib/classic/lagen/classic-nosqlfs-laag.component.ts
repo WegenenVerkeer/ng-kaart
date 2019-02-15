@@ -13,8 +13,8 @@ import { logOnlyWrapper } from "../messages";
 import { ClassicVectorLaagLikeComponent } from "./classic-vector-laag-like.component";
 
 export interface PrecacheFeatures {
-  wkt: string;
-  startMetLegeCache: boolean;
+  readonly wkt: string;
+  readonly startMetLegeCache: boolean;
 }
 
 @Component({

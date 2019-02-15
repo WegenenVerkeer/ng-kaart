@@ -15,10 +15,10 @@ import { KaartClassicMsg, logOnlyWrapper, PrecacheProgressMsg } from "../message
 import { ClassicLaagComponent } from "./classic-laag.component";
 
 export interface PrecacheWMS {
-  startZoom: number;
-  eindZoom: number;
-  wkt: string;
-  startMetLegeCache: boolean;
+  readonly startZoom: number;
+  readonly eindZoom: number;
+  readonly wkt: string;
+  readonly startMetLegeCache: boolean;
 }
 
 @Component({
