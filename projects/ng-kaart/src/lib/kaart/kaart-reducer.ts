@@ -1255,6 +1255,16 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
+    function zetOffline(cmnd: prt.ZetOffline<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        valideerVectorLayerBestaat(cmnd.titel).map(vectorLaag => {
+          (vectorLaag.getSource() as NosqlFsSource).setOffline(cmnd.offline);
+          return ModelAndEmptyResult(model);
+        })
+      );
+    }
+
     function handleSubscriptions(cmnd: prt.SubscribeCmd<Msg>): ModelWithResult<Msg> {
       function modelWithSubscriptionResult(name: string, subscription: Subscription): ModelWithResult<Msg> {
         return toModelWithValueResult(cmnd.wrapper, success(ModelAndValue(model, { subscription: subscription, subscriberName: name })));
@@ -1584,6 +1594,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return vulCacheVoorNosqlLaag(cmd);
       case "HighlightFeatures":
         return highlightFeaturesCmd(cmd);
+      case "ZetOffline":
+        return zetOffline(cmd);
     }
   };
 }

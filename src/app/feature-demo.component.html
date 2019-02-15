@@ -466,7 +466,7 @@
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'"
                                       [laagNaam]="'dienstkaart-grijs'"
                                       [urls]="['/geowebcache/service/wms']"
-                                      [offline]="'true'"
+                                      [cacheActief]="'true'"
                                       [precache]="precacheWMSInput"
                                       (precacheProgress)="onPrecacheProgress($event)"></awv-kaart-tilecache-laag>
 
@@ -486,7 +486,10 @@
               <input #startMetLegeCache type="checkbox" [checked]="true"> Start met lege cache
             </div>
             <div class="with-padding">
-              <button (click)="startPrecacheFeatures(startMetLegeCache.checked)">Start vullen cache features (gemeente Brasschaat)</button>
+              <button (change)="startPrecacheFeatures(startMetLegeCache.checked)">Start vullen cache features (gemeente Brasschaat)</button>
+            </div>
+            <div class="with-padding">
+              <input (change)="setOffline($event.target.checked)" type="checkbox" [checked]="false"> Offline modus
             </div>
           </div>
           <div class="with-padding">
@@ -504,6 +507,7 @@
                                     [view]="'aanzicht'"
                                     [gebruikCache]="true"
                                     [precache]="precacheFeaturesInput"
+                                    [offline]="isOffline"
             ></awv-kaart-nosqlfs-laag>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
             <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>

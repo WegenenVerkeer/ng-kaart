@@ -43,6 +43,11 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
     }
   }
 
+  @Input()
+  set offline(offline: boolean) {
+    this.dispatch(prt.ZetOffline(this.titel, offline, logOnlyWrapper));
+  }
+
   constructor(kaart: KaartClassicComponent, zone: NgZone) {
     super(kaart, zone);
   }

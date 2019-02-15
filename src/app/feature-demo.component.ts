@@ -315,6 +315,8 @@ export class FeatureDemoComponent {
   precacheFeaturesWkt = wkts.gemeenten.brasschaat;
   precacheFeaturesInput: PrecacheFeatures = null;
 
+  isOffline = false;
+
   private tekenenActief = false;
   private getekendeGeom: Option<ol.geom.Geometry> = none;
 
@@ -513,6 +515,10 @@ export class FeatureDemoComponent {
     // voeg de nieuwe toe
     this.geselecteerdeFeatures = event;
     this.geselecteerdeFeatures.forEach(feature => this.selectieKaart.toonIdentifyInformatie(feature));
+  }
+
+  setOffline(offline: boolean) {
+    this.isOffline = offline;
   }
 
   isTekenenActief() {

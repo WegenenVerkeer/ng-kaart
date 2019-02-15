@@ -45,7 +45,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   @Input()
   opacity?: number;
   @Input()
-  offline = false;
+  cacheActief = false;
 
   @Input()
   set precache(input: PrecacheWMS) {
@@ -113,7 +113,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   ngAfterViewInit() {
     super.ngAfterViewInit();
 
-    if (this.offline) {
+    if (this.cacheActief) {
       this.dispatch(prt.ActiveerCacheVoorLaag(this.titel, logOnlyWrapper));
 
       this.bindToLifeCycle(

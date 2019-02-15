@@ -118,6 +118,7 @@ export class NosqlFsSource extends ol.source.Vector {
   private static readonly featureDelimiter = "\n";
   private readonly loadEventSubj = new rx.Subject<le.DataLoadEvent>();
   readonly loadEvent$: rx.Observable<le.DataLoadEvent> = this.loadEventSubj;
+  private offline = false;
 
   constructor(
     private readonly database: string,
@@ -132,44 +133,58 @@ export class NosqlFsSource extends ol.source.Vector {
       loader: function(extent) {
         const source = this;
         source.clear();
-        source.dispatchLoadEvent(le.LoadStart);
-        source.fetchFeatures$(extent).subscribe(
-          geojson => {
-            source.dispatchLoadEvent(le.PartReceived);
-            source.addFeature(olFeature(source.titel, geojson));
-            if (source.gebruikCache) {
-              geojsonStore.writeFeature(source.laagnaam, geojson);
-            }
-          },
-          error => {
-            if (source.gebruikCache) {
-              kaartLogger.debug("Request niet gelukt, we gaan naar cache " + error);
-              geojsonStore
-                .getFeaturesByExtent(source.laagnaam, extent)
-                .then(geojsons => {
-                  kaartLogger.debug(`${geojsons.length} features opgehaald uit cache`);
-                  return geojsons.map(geojson => {
-                    source.dispatchLoadEvent(le.PartReceived);
-                    source.addFeature(olFeature(source.titel, geojson));
-                  });
-                })
-                .then(() => source.dispatchLoadComplete())
-                .catch(error => {
-                  kaartLogger.error(error);
-                  source.dispatchLoadError(error);
-                });
-            } else {
-              kaartLogger.error(error);
-              source.dispatchLoadError(error);
-            }
-          },
-          () => {
-            source.dispatchLoadComplete();
-          }
-        );
+        if (source.offline) {
+          source.featuresFromCache(source, extent);
+        } else {
+          source.featuresFromServer(source, extent);
+        }
       },
       strategy: ol.loadingstrategy.bbox
     });
+  }
+
+  private featuresFromServer(source, extent) {
+    source.dispatchLoadEvent(le.LoadStart);
+    source.fetchFeatures$(extent).subscribe(
+      geojson => {
+        source.dispatchLoadEvent(le.PartReceived);
+        source.addFeature(olFeature(source.titel, geojson));
+        if (source.gebruikCache) {
+          geojsonStore.writeFeature(source.laagnaam, geojson);
+        }
+      },
+      error => {
+        if (source.gebruikCache) {
+          // fallback to cache
+          kaartLogger.debug("Request niet gelukt, we gaan naar cache " + error);
+          source.featuresFromCache(source, extent);
+        } else {
+          kaartLogger.error(error);
+          source.dispatchLoadError(error);
+        }
+      },
+      () => {
+        source.dispatchLoadComplete();
+      }
+    );
+  }
+
+  private featuresFromCache(source, extent) {
+    source.dispatchLoadEvent(le.LoadStart);
+    geojsonStore
+      .getFeaturesByExtent(source.laagnaam, extent)
+      .then(geojsons => {
+        kaartLogger.debug(`${geojsons.length} features opgehaald uit cache`);
+        return geojsons.map(geojson => {
+          source.dispatchLoadEvent(le.PartReceived);
+          source.addFeature(olFeature(source.titel, geojson));
+        });
+      })
+      .then(() => source.dispatchLoadComplete())
+      .catch(error => {
+        kaartLogger.error(error);
+        source.dispatchLoadError(error);
+      });
   }
 
   private composeUrl(extent?: number[]) {
@@ -209,6 +224,10 @@ export class NosqlFsSource extends ol.source.Vector {
       },
       FETCH_TIMEOUT
     ).pipe(switchMap(response => observableFromResponse$(this.laagnaam, NosqlFsSource.featureDelimiter, response)));
+  }
+
+  setOffline(offline: boolean) {
+    this.offline = offline;
   }
 
   private dispatchLoadEvent(evt: le.DataLoadEvent) {

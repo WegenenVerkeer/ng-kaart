@@ -70,6 +70,7 @@ export type Command<Msg extends KaartMsg> =
   | VulCacheVoorWMSLaag<Msg>
   | ZetActieveModusCmd
   | ZetFocusOpKaartCmd
+  | ZetOffline<Msg>
   | ZetLaagLegendeCmd<Msg>
   | ZetMijnLocatieZoomCmd
   | ZetStijlSpecVoorLaagCmd<Msg>
@@ -372,6 +373,13 @@ export interface ZetActieveModusCmd {
   readonly modus: Option<string>;
 }
 
+export interface ZetOffline<Msg extends KaartMsg> {
+  readonly type: "ZetOffline";
+  readonly titel: string;
+  readonly offline: boolean;
+  readonly wrapper: BareValidationWrapper<Msg>;
+}
+
 export interface VoegInteractieToeCmd {
   readonly type: "VoegInteractieToe";
   readonly interactie: ol.interaction.Pointer;
@@ -545,6 +553,15 @@ export function VulCacheVoorNosqlLaag<Msg extends KaartMsg>(
     titel: titel,
     wkt: wkt,
     startMetLegeCache: startMetLegeCache,
+    wrapper: wrapper
+  };
+}
+
+export function ZetOffline<Msg extends KaartMsg>(titel: string, offline: boolean, wrapper: BareValidationWrapper<Msg>): ZetOffline<Msg> {
+  return {
+    type: "ZetOffline",
+    titel: titel,
+    offline: offline,
     wrapper: wrapper
   };
 }
