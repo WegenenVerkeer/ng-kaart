@@ -2,7 +2,7 @@ import { HttpClient } from "@angular/common/http";
 import * as ol from "openlayers";
 import { Observable } from "rxjs";
 import * as rx from "rxjs";
-import { map } from "rxjs/operators";
+import { catchError, map } from "rxjs/operators";
 
 import { Interpreter } from "../../stijl/json-object-interpreting";
 import * as st from "../../stijl/json-object-interpreting";
@@ -64,9 +64,13 @@ export class VerfijndeRoutingService implements RoutingService {
       map(vldtn =>
         vldtn.getOrElseL(errs => {
           kaartLogger.error(`Onverwacht antwoordformaat van routeservice: ${errs}. We gaan verder zonder dit antwoord.`);
-          return [];
+          return []; // TODO dit is niet goed -> we moeten de delete heroepen (of wachten met uitsturen)
         })
       ),
+      catchError(err => {
+        kaartLogger.error(`Routing heeft gefaald: ${err.message}`, err);
+        return rx.of<WegEdge[]>([]); // TODO dit is niet goed -> we moeten de delete heroepen (of wachten met uitsturen)
+      }),
       map(wegEdges => ({
         id: protoRoute.id,
         begin: protoRoute.begin,
