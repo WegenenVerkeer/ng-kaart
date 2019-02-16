@@ -6,10 +6,12 @@ import * as ol from "openlayers";
 // WaypointsOps: operaties op het niveau van routepunten
 //
 
+export type WaypointId = number;
+
 export type WaypointOperation = AddWaypoint | RemoveWaypoint;
 
 export interface Waypoint {
-  readonly id: number;
+  readonly id: WaypointId;
   readonly location: ol.Coordinate;
 }
 
@@ -24,7 +26,7 @@ export interface RemoveWaypoint {
   readonly waypoint: Waypoint;
 }
 
-export const Waypoint: Function2<number, ol.Coordinate, Waypoint> = (id, location) => ({ id: id, location: location });
+export const Waypoint: Function2<WaypointId, ol.Coordinate, Waypoint> = (id, location) => ({ id: id, location: location });
 
 export const AddWaypoint: Function2<Option<Waypoint>, Waypoint, AddWaypoint> = (previous, waypoint) => ({
   type: "AddWaypoint",

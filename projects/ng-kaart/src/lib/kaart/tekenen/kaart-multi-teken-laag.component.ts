@@ -1,21 +1,29 @@
 import { HttpClient } from "@angular/common/http";
 import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 import * as array from "fp-ts/lib/Array";
-import { Endomorphism, Function1, Function2, Function3, identity, Lazy, pipe, Predicate, Refinement } from "fp-ts/lib/function";
+import { Endomorphism, Function1, Function2, Function3, identity, pipe, Predicate, Refinement } from "fp-ts/lib/function";
 import { fromNullable, fromPredicate, none, Option, option, some } from "fp-ts/lib/Option";
 import { setoidString } from "fp-ts/lib/Setoid";
 import { List, OrderedMap } from "immutable";
-import { Lens } from "monocle-ts";
+import { Lens, Optional } from "monocle-ts";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { debounceTime, filter, map, scan, startWith, switchMap, take, tap } from "rxjs/operators";
+import { debounceTime, filter, map, scan, share, startWith, switchMap, take, tap, withLatestFrom } from "rxjs/operators";
 
 import * as clr from "../../stijl/colour";
 import { disc, solidLine } from "../../stijl/common-shapes";
 import { isEmpty } from "../../util/arrays";
 import { asap } from "../../util/asap";
-import { Consumer, PartialFunction1, ReduceFunction } from "../../util/function";
-import { subSpy } from "../../util/operators";
+import { Consumer, PartialFunction1, PartialFunction2, ReduceFunction } from "../../util/function";
+import {
+  numberMapOptional,
+  NumberMapped,
+  removeFromNumberMap,
+  removeFromStringMap,
+  stringMapOptional,
+  StringMapped
+} from "../../util/lenses";
+import { collectOption, subSpy } from "../../util/operators";
 import { forEach } from "../../util/option";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
@@ -25,10 +33,10 @@ import { Command, VerwijderLaagCmd } from "../kaart-protocol-commands";
 import { KaartComponent } from "../kaart.component";
 import * as ss from "../stijl-selector";
 
-import { RouteEvent } from "./route.msg";
+import { RouteEvent, RouteEventId } from "./route.msg";
 import { AddPoint, DeletePoint, DraggingPoint, DrawOps, isStartDrawing, MovePoint, StartDrawing } from "./tekenen-model";
 import { directeRoutes, routesViaRoutering } from "./waypoint-ops";
-import { AddWaypoint, RemoveWaypoint, Waypoint, WaypointOperation } from "./waypoint.msg";
+import { AddWaypoint, RemoveWaypoint, Waypoint, WaypointId, WaypointOperation } from "./waypoint.msg";
 
 export const MultiTekenenUiSelector = "MultiKaarttekenen";
 
@@ -88,8 +96,7 @@ const replaceNext: Function1<Option<ol.Feature>, Endomorphism<WaypointProperties
 const replacePrevious: Function1<Option<ol.Feature>, Endomorphism<WaypointProperties>> = previousLens.set;
 
 // Een (endo)functie die alle (endo)functies na elkaar uitvoert. Lijkt heel sterk op pipe.
-type Combine<S> = Function1<Endomorphism<S>[], Endomorphism<S>>;
-const applySequential: Combine<DrawState> = fas => s => fas.reduce((s, fa) => fa(s), s);
+const applySequential: <S>(es: Endomorphism<S>[]) => Endomorphism<S> = fas => s => fas.reduce((s, fa) => fa(s), s);
 
 const createMarkerStyle: Function1<clr.Kleur, ss.Stylish> = colour => disc.stylish(colour, clr.wit, 3, 5);
 
@@ -370,40 +377,56 @@ const drawOpsReducer: Function3<
 > = (dispatchDrawOps, dispatchWaypointOps, dispatchCmd) => (state, ops) =>
   drawStateTransformer(dispatchDrawOps, dispatchWaypointOps, dispatchCmd, state, ops)(state);
 
+type FeaturesByWaypointId = NumberMapped<ol.Feature>;
+type FeaturesByRouteId = StringMapped<ol.Feature>;
+
 interface RouteSegmentState {
-  readonly [id: string]: ol.Feature;
+  readonly featuresByStartWaypointId: FeaturesByWaypointId; // Een waypoint is de start van hoogstens 1 route segment
+  readonly featuresByRouteId: FeaturesByRouteId; // Elke route id heeft exact 1 feature/geometry
 }
 
-const featuresIn: Function1<RouteSegmentState, List<ol.Feature>> = state => List(Object.values(state));
+const featuresIn: Function1<RouteSegmentState, List<ol.Feature>> = state => List(Object.values(state.featuresByRouteId));
 
-const addFeature: Function3<RouteSegmentState, string, ol.Feature, RouteSegmentState> = (state, id, feature) => {
-  const cloned = { ...state };
-  cloned[id] = feature;
-  return cloned;
-};
+const featuresByStartWaypointIdLens: Lens<RouteSegmentState, FeaturesByWaypointId> = Lens.fromProp("featuresByStartWaypointId");
+const startWaypointIdOptional: Function1<WaypointId, Optional<RouteSegmentState, ol.Feature>> = waypointId =>
+  featuresByStartWaypointIdLens.composeOptional(numberMapOptional(waypointId));
+const featuresByRouteIdLens: Lens<RouteSegmentState, FeaturesByRouteId> = Lens.fromProp("featuresByRouteId");
+const routeIdOptional: Function1<RouteEventId, Optional<RouteSegmentState, ol.Feature>> = routeId =>
+  featuresByRouteIdLens.composeOptional(stringMapOptional(routeId));
 
-const removeFeature: Function2<RouteSegmentState, string, RouteSegmentState> = (state, id) => {
-  const cloned = { ...state };
-  delete cloned[id];
-  return cloned;
-};
+const addFeature: Function3<RouteEventId, WaypointId, ol.Feature, Endomorphism<RouteSegmentState>> = (routeId, waypointId, feature) =>
+  applySequential([startWaypointIdOptional(waypointId).set(feature), routeIdOptional(routeId).set(feature)]);
+
+const removeFeature: Function2<RouteEventId, WaypointId, Endomorphism<RouteSegmentState>> = (routeId, waypointId) =>
+  applySequential([
+    featuresByStartWaypointIdLens.modify(removeFromNumberMap(waypointId)),
+    featuresByRouteIdLens.modify(removeFromStringMap(routeId))
+  ]);
 
 const routeSegmentReducer: Function1<clr.Kleur, ReduceFunction<RouteSegmentState, RouteEvent>> = lineColour => (state, ops) => {
-  function handleOps(): RouteSegmentState {
+  function handleOps(): Endomorphism<RouteSegmentState> {
     switch (ops.type) {
       case "RouteAdded":
         const line = new ol.Feature(ops.geometry);
         line.setStyle(createLineStyle(lineColour));
-        return addFeature(state, ops.id, line);
+        return addFeature(ops.id, ops.startWaypointId, line);
       case "RouteRemoved":
-        return removeFeature(state, ops.id);
+        return removeFeature(ops.id, ops.startWaypointId);
     }
   }
+  return handleOps()(state);
+};
 
-  // In dit geval is er een 1-op-1 mapping tussen de state en de commands die we moeten sturen.
-  // De state is nl gewoon de set van features die getekend moeten worden.
-  const newState = handleOps();
-  return newState;
+const concatGeometries: Function1<ol.geom.Geometry[], ol.geom.Geometry> = null;
+
+const stichGeometries: PartialFunction2<WaypointId[], FeaturesByWaypointId, ol.geom.Geometry> = (ids, featuresById) => {
+  return array
+    .traverse(option)(ids, id =>
+      numberMapOptional<ol.Feature>(id)
+        .getOption(featuresById)
+        .map(f => f.getGeometry())
+    )
+    .map(concatGeometries);
 };
 
 @Component({
@@ -435,7 +458,7 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
     const waypointObsSubj: rx.Subject<WaypointOperation> = new rx.Subject();
 
     // vorm een state + een event om tot een nieuwe state en wat side-effects op de OL map
-    const drawReducer$ = olMap$.pipe(
+    const drawOpsProcessor$ = olMap$.pipe(
       switchMap(olMap =>
         drawingStarts$.pipe(
           switchMap(startCmd =>
@@ -443,7 +466,7 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
               startWith(startCmd), // We mogen ons startcommando niet verliezen omdat daar configuratie in zit
               scan(
                 drawOpsReducer(
-                  ops => asap(() => this.internalDrawOpsSubj.next(ops)),
+                  ops => asap(() => this.internalDrawOpsSubj.next(ops)), // TODO ipv deze 3 functies, steek actie in resultaat
                   ops => asap(() => waypointObsSubj.next(ops)),
                   cmd => this.dispatch(cmd)
                 ),
@@ -452,23 +475,36 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
             )
           )
         )
-      )
+      ),
+      share()
     );
 
     // Laat de segmenten berekenen
     const routeSegmentOps$: Function1<boolean, rx.Observable<RouteEvent>> = useRouting =>
       subSpy("***waypointOps")(waypointObsSubj).pipe(useRouting ? routesViaRoutering(http) : directeRoutes());
-    const routeSegmentReducer$ = drawingStarts$.pipe(
+    const initialRouteSegmentState: RouteSegmentState = { featuresByStartWaypointId: {}, featuresByRouteId: {} };
+    const routeEventProcessor$ = drawingStarts$.pipe(
       switchMap(start =>
         subSpy("***routeSegmentOps")(routeSegmentOps$(start.useRouting)).pipe(
-          scan(routeSegmentReducer(start.featureColour), {}),
-          debounceTime(100),
+          scan(routeSegmentReducer(start.featureColour), initialRouteSegmentState),
+          debounceTime(start.useRouting ? 75 : 0)
+        )
+      ),
+      share()
+    );
+
+    const combinedGeometry$: rx.Observable<ol.geom.Geometry> = routeEventProcessor$.pipe(
+      withLatestFrom(drawOpsProcessor$.pipe(map(state => array.catOptions(state.pointFeatures.map(extractId))))),
+      collectOption(([routeSegmentState, pointFeatures]) => stichGeometries(pointFeatures, routeSegmentState.featuresByStartWaypointId))
+    );
+
+    this.runInViewReady(
+      rx.merge(
+        combinedGeometry$.pipe(tap(geom => this.dispatch(prt.ZetGetekendeGeometryCmd(geom)))),
+        routeEventProcessor$.pipe(
           tap(routeState => this.dispatch(prt.VervangFeaturesCmd(SegmentLaagNaam, featuresIn(routeState), kaartLogOnlyWrapper)))
         )
       )
     );
-
-    // Zorg er voor dat de operaties verwerkt worden vanaf het moment dat de component geïnitialiseerd is.
-    this.viewReady$.pipe(switchMap(() => rx.merge(drawReducer$, routeSegmentReducer$))).subscribe();
   }
 }

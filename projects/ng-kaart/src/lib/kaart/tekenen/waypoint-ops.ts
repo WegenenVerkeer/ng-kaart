@@ -119,10 +119,10 @@ const waypointOpsToRouteOperation: Function1<RoutingService, Pipeable<WaypointOp
   return routeStateChangesObs.pipe(
     mergeMap(changes =>
       rx.concat(
-        rx.from(changes.routeChanges.routesRemoved).pipe(map(removal => RouteRemoved(removal.id))),
+        rx.from(changes.routeChanges.routesRemoved).pipe(map(removal => RouteRemoved(removal.id, removal.begin.id))),
         rx.from(changes.routeChanges.routesAdded).pipe(
           mergeMap(protoRoute => routingService.resolve(protoRoute)),
-          map(addition => RouteAdded(addition.id, addition.geometry))
+          map(addition => RouteAdded(addition.id, addition.begin.id, addition.geometry))
         )
       )
     )

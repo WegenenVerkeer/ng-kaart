@@ -41,12 +41,13 @@ export class KaartMultiMetenComponent extends KaartModusComponent implements OnI
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
-    this.bindToLifeCycle(
+
+    this.runInViewReady(
       this.modelChanges.uiElementOpties$.pipe(
         filter(optie => optie.naam === MultiMetenUiSelector),
-        map(o => o.opties as MultiMetenOpties)
+        tap(o => (this.metenOpties = o.opties as MultiMetenOpties))
       )
-    ).subscribe(opties => (this.metenOpties = opties));
+    );
   }
 
   modus(): string {

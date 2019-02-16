@@ -24,7 +24,7 @@ export abstract class ClassicUIElementSelectorComponentBase extends KaartCompone
     this.kaart.dispatch(prt.ZetUiElementOpties(this.uiSelector, this.opties()));
   }
 
-  protected opties(): prt.UiElementOpties {
+  protected opties(): any {
     return {};
   }
 }

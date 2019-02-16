@@ -40,3 +40,8 @@ export type Consumer<A> = (a: A) => void;
  * Een functie die none terug geeft waar die niet gedefineerd is in het domein A.
  */
 export type PartialFunction1<A, B> = Function1<A, Option<B>>;
+
+/**
+ * Een functie die none terug geeft waar die niet gedefineerd is in het domein AxB.
+ */
+export type PartialFunction2<A, B, C> = Function2<A, B, Option<C>>;

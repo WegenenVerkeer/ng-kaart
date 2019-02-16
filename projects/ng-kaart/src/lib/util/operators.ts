@@ -37,11 +37,9 @@ export function collectOption<A, B>(f: (a: A) => Option<B>): Pipeable<A, B> {
 }
 
 /**
- * Transformeert waarden van optionele A's naar waarden van B mbv f indien de A's gedefinieerd zijn.
- *
- * @param f een transformatie van A naar B
+ * Filtert de gedfinieerd Option<A>'s en converteert ze naar A's.
  */
-export const flatten: <A>(o: rx.Observable<Option<A>>) => rx.Observable<A> = <A>(o: rx.Observable<Option<A>>) =>
+export const catOptions: <A>(o: rx.Observable<Option<A>>) => rx.Observable<A> = <A>(o: rx.Observable<Option<A>>) =>
   o.pipe(
     filter(isSome), // emit niet als none
     map(v => v.value) // omwille van filter hierboven nooit undefined. Properder met switchMap en foldl, maar minder efficiënt.

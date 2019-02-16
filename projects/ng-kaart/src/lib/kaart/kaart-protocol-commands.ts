@@ -401,7 +401,8 @@ export interface ZetGetekendeGeometryCmd {
 }
 
 export interface UiElementOpties {
-  [k: string]: any;
+  readonly naam: string;
+  readonly opties: any;
 }
 
 // TODO toevoegen van een selector wanneer er meerdere elementen van hetzelfde type beschikbaar zijn
@@ -418,7 +419,7 @@ export interface VerwijderUiElement {
 export interface ZetUiElementOpties {
   readonly type: "ZetUiElementOpties";
   readonly naam: string;
-  readonly opties: UiElementOpties;
+  readonly opties: any;
 }
 
 // De features zullen "geselecteerd" worden, ook al zouden ze geen onderdeel uitmaken van één van de lagen. Het is dus de
@@ -739,7 +740,7 @@ export function VerwijderUiElement(naam: string): VerwijderUiElement {
   return { type: "VerwijderUiElement", naam: naam };
 }
 
-export function ZetUiElementOpties(naam: string, opties: UiElementOpties): ZetUiElementOpties {
+export function ZetUiElementOpties(naam: string, opties: any): ZetUiElementOpties {
   return { type: "ZetUiElementOpties", naam: naam, opties: opties };
 }
 
