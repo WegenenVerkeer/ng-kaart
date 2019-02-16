@@ -2,7 +2,7 @@ import { HttpClient } from "@angular/common/http";
 import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 import * as array from "fp-ts/lib/Array";
 import { Endomorphism, Function1, Function2, Function3, identity, pipe, Predicate, Refinement } from "fp-ts/lib/function";
-import { fromNullable, fromPredicate, none, Option, option, some } from "fp-ts/lib/Option";
+import { fromNullable, fromPredicate, none, Option, some } from "fp-ts/lib/Option";
 import { setoidString } from "fp-ts/lib/Setoid";
 import { List, OrderedMap } from "immutable";
 import { Lens, Optional } from "monocle-ts";
@@ -14,7 +14,7 @@ import * as clr from "../../stijl/colour";
 import { disc, solidLine } from "../../stijl/common-shapes";
 import { isEmpty } from "../../util/arrays";
 import { asap } from "../../util/asap";
-import { Consumer, PartialFunction1, PartialFunction2, ReduceFunction } from "../../util/function";
+import { Consumer, PartialFunction1, ReduceFunction } from "../../util/function";
 import {
   numberMapOptional,
   NumberMapped,
@@ -23,7 +23,7 @@ import {
   stringMapOptional,
   StringMapped
 } from "../../util/lenses";
-import { collectOption, subSpy } from "../../util/operators";
+import { subSpy } from "../../util/operators";
 import { forEach } from "../../util/option";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
@@ -31,6 +31,7 @@ import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-message
 import * as prt from "../kaart-protocol";
 import { Command, VerwijderLaagCmd } from "../kaart-protocol-commands";
 import { KaartComponent } from "../kaart.component";
+import { kaartLogger } from "../log";
 import * as ss from "../stijl-selector";
 
 import { RouteEvent, RouteEventId } from "./route.msg";
@@ -214,20 +215,6 @@ function drawStateTransformer(
     }
   };
 
-  const sendFullGeometry: Consumer<ol.Feature[]> = features => {
-    console.log("****ids", features.map(feature => feature.getId()));
-    const maybeLine = array
-      .traverse(option)(features, extractCoordinate)
-      .map(coordinates => {
-        console.log("***coords", coordinates);
-        return new ol.geom.LineString(coordinates);
-      });
-    forEach(maybeLine, line => {
-      console.log("***lengte", ol.Sphere.getLength(line));
-      dispatchCmd(prt.ZetGetekendeGeometryCmd(line));
-    });
-  };
-
   switch (ops.type) {
     case "StartDrawing": {
       const drawSource = new ol.source.Vector();
@@ -301,7 +288,6 @@ function drawStateTransformer(
       const newFeatures = array.snoc(currentFeatures, feature);
       dispatchWaypointOps(AddWaypoint(lastFeature.chain(toWaypoint), Waypoint(state.nextId, ops.coordinate)));
       dispatchCmd(prt.VervangFeaturesCmd(PuntLaagNaam, List(newFeatures), kaartLogOnlyWrapper));
-      sendFullGeometry(newFeatures);
       return applySequential([
         pointFeaturesLens.set(newFeatures),
         firstPointFeatureLens.modify(fp => fp.orElse(() => some(feature))), // als er geen eerste punt was, dan is het huidige het eerste
@@ -327,7 +313,6 @@ function drawStateTransformer(
             const previous = findPreviousWaypoint(draggedFeature);
             dispatchWaypointOps(RemoveWaypoint(current));
             dispatchWaypointOps(AddWaypoint(previous, current));
-            sendFullGeometry(pointFeaturesLens.get(state));
             return dragFeatureLens.set(none);
           })
         )
@@ -354,7 +339,6 @@ function drawStateTransformer(
               dispatchWaypointOps
             )
           );
-          sendFullGeometry(newFeatures);
           return applySequential([
             pointFeaturesLens.set(newFeatures),
             firstPointFeatureLens.modify(fp => (isEmpty(newFeatures) ? none : fp))
@@ -417,16 +401,31 @@ const routeSegmentReducer: Function1<clr.Kleur, ReduceFunction<RouteSegmentState
   return handleOps()(state);
 };
 
-const concatGeometries: Function1<ol.geom.Geometry[], ol.geom.Geometry> = null;
+const extractCoordinates: Function1<ol.geom.Geometry, ol.Coordinate[][]> = geom => {
+  switch (geom.getType()) {
+    case "LineString":
+      return [(geom as ol.geom.LineString).getCoordinates()];
+    case "MultiLineString":
+      return (geom as ol.geom.MultiLineString).getCoordinates();
+    default:
+      kaartLogger.warn(`Nietondersteunde geometry ${geom.getType()} bij het extraheren van coordinaten`);
+      return [];
+  }
+};
 
-const stichGeometries: PartialFunction2<WaypointId[], FeaturesByWaypointId, ol.geom.Geometry> = (ids, featuresById) => {
-  return array
-    .traverse(option)(ids, id =>
-      numberMapOptional<ol.Feature>(id)
-        .getOption(featuresById)
-        .map(f => f.getGeometry())
+const concatGeometries: Function1<ol.geom.Geometry[], ol.geom.Geometry> = geoms =>
+  new ol.geom.MultiLineString(array.flatten(geoms.map(extractCoordinates)));
+
+const stichGeometries: Function2<WaypointId[], FeaturesByWaypointId, ol.geom.Geometry> = (ids, featuresById) => {
+  return concatGeometries(
+    array.catOptions(
+      ids.map(id =>
+        numberMapOptional<ol.Feature>(id)
+          .getOption(featuresById)
+          .map(f => f.getGeometry())
+      )
     )
-    .map(concatGeometries);
+  );
 };
 
 @Component({
@@ -495,7 +494,7 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
 
     const combinedGeometry$: rx.Observable<ol.geom.Geometry> = routeEventProcessor$.pipe(
       withLatestFrom(drawOpsProcessor$.pipe(map(state => array.catOptions(state.pointFeatures.map(extractId))))),
-      collectOption(([routeSegmentState, pointFeatures]) => stichGeometries(pointFeatures, routeSegmentState.featuresByStartWaypointId))
+      map(([routeSegmentState, pointFeatures]) => stichGeometries(pointFeatures, routeSegmentState.featuresByStartWaypointId))
     );
 
     this.runInViewReady(

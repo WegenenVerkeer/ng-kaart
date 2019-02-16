@@ -43,9 +43,12 @@ export class KaartMultiMetenComponent extends KaartModusComponent implements OnI
     super(parent, zone);
 
     this.runInViewReady(
-      this.modelChanges.uiElementOpties$.pipe(
-        filter(optie => optie.naam === MultiMetenUiSelector),
-        tap(o => (this.metenOpties = o.opties as MultiMetenOpties))
+      rx.merge(
+        this.modelChanges.uiElementOpties$.pipe(
+          filter(optie => optie.naam === MultiMetenUiSelector),
+          tap(o => (this.metenOpties = o.opties as MultiMetenOpties))
+        ),
+        this.modelChanges.getekendeGeometry$.pipe(tap(geom => console.log("****lengte:", ol.Sphere.getLength(geom))))
       )
     );
   }
