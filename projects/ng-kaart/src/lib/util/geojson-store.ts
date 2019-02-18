@@ -6,23 +6,27 @@ import { filter, map, mergeAll, mergeMap } from "rxjs/operators";
 
 const indexedb_db_naam = "nosql-features";
 
+export interface Geometry {
+  readonly bbox: ol.Extent;
+  readonly coordinates: number[];
+  readonly crs: any;
+  readonly type: string;
+}
+
+export interface Metadata {
+  readonly minx: number;
+  readonly miny: number;
+  readonly maxx: number;
+  readonly maxy: number;
+  readonly toegevoegd: Date;
+}
+
 export interface GeoJsonLike {
-  id: any;
-  properties: any;
-  geometry: {
-    bbox: [number, number, number, number];
-    coordinates: number[];
-    crs: any;
-    type: string;
-  };
+  readonly id: any;
+  readonly properties: any;
+  readonly geometry: Geometry;
   // index values from bbox
-  metadata: {
-    minx: number;
-    miny: number;
-    maxx: number;
-    maxy: number;
-    toegevoegd: Date;
-  };
+  readonly metadata: Metadata;
 }
 
 /**
