@@ -7,7 +7,7 @@ import * as ol from "openlayers";
 import { olx } from "openlayers";
 import { Subscription } from "rxjs";
 import * as rx from "rxjs";
-import { bufferTime, debounceTime, distinctUntilChanged, map } from "rxjs/operators";
+import { bufferCount, debounceTime, distinctUntilChanged, map, switchMap } from "rxjs/operators";
 
 import { NosqlFsSource } from "../source";
 import { refreshTiles } from "../util/cachetiles";
@@ -1247,14 +1247,16 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         cmnd.wrapper,
         valideerVectorLayerBestaat(cmnd.titel).map(vectorLaag => {
-          (cmnd.startMetLegeCache ? featureStore.clear(cmnd.titel) : Promise.resolve())
-            .then(() =>
-              (vectorLaag.getSource() as NosqlFsSource)
-                .fetchFeaturesByWkt$(cmnd.wkt)
-                .pipe(bufferTime(1000))
-                .subscribe(features => featureStore.writeFeatures(cmnd.titel, features).catch(error => kaartLogger.error(error)))
+          (cmnd.startMetLegeCache ? featureStore.clear(cmnd.titel) : rx.of(false))
+            .pipe(
+              switchMap(() =>
+                (vectorLaag.getSource() as NosqlFsSource).fetchFeaturesByWkt$(cmnd.wkt).pipe(
+                  bufferCount(1000),
+                  switchMap(features => featureStore.writeFeatures(cmnd.titel, features))
+                )
+              )
             )
-            .catch(error => kaartLogger.error(error));
+            .subscribe(aantal => kaartLogger.debug(`${aantal} features in cache bewaard`), error => kaartLogger.error(error));
           return ModelAndEmptyResult(model);
         })
       );

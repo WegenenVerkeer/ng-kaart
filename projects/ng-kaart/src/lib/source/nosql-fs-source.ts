@@ -2,7 +2,7 @@ import { Function1, Function2, Function3, Function4 } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { switchMap } from "rxjs/operators";
+import { bufferCount, switchMap } from "rxjs/operators";
 
 import * as le from "../kaart/kaart-load-events";
 import { kaartLogger } from "../kaart/log";
@@ -11,6 +11,7 @@ import * as geojsonStore from "../util/geojson-store";
 import { GeoJsonLike } from "../util/geojson-store";
 
 const FETCH_TIMEOUT = 5000; // max time to wait for data from featureserver before checking cache
+const BATCH_SIZE = 100; // aantal features per keer toevoegen aan laag
 
 const format = new ol.format.GeoJSON();
 const decoder = new TextDecoder();
@@ -160,46 +161,50 @@ export class NosqlFsSource extends ol.source.Vector {
 
   private featuresFromServer(source, extent) {
     source.dispatchLoadEvent(le.LoadStart);
-    source.fetchFeatures$(extent).subscribe(
-      geojson => {
-        source.dispatchLoadEvent(le.PartReceived);
-        source.addFeature(toOlFeature(source.titel, geojson));
-        if (source.gebruikCache) {
-          geojsonStore.writeFeature(source.laagnaam, geojson);
+    source
+      .fetchFeatures$(extent)
+      .pipe(bufferCount(BATCH_SIZE))
+      .subscribe(
+        geojsons => {
+          source.dispatchLoadEvent(le.PartReceived);
+          source.addFeatures(geojsons.map(geojson => toOlFeature(source.titel, geojson)));
+          if (source.gebruikCache) {
+            geojsonStore.writeFeatures(source.laagnaam, geojsons);
+          }
+        },
+        error => {
+          if (source.gebruikCache) {
+            // fallback to cache
+            kaartLogger.debug("Request niet gelukt, we gaan naar cache " + error);
+            source.featuresFromCache(source, extent);
+          } else {
+            kaartLogger.error(error);
+            source.dispatchLoadError(error);
+          }
+        },
+        () => {
+          source.dispatchLoadComplete();
         }
-      },
-      error => {
-        if (source.gebruikCache) {
-          // fallback to cache
-          kaartLogger.debug("Request niet gelukt, we gaan naar cache " + error);
-          source.featuresFromCache(source, extent);
-        } else {
-          kaartLogger.error(error);
-          source.dispatchLoadError(error);
-        }
-      },
-      () => {
-        source.dispatchLoadComplete();
-      }
-    );
+      );
   }
 
   private featuresFromCache(source, extent) {
     source.dispatchLoadEvent(le.LoadStart);
     geojsonStore
       .getFeaturesByExtent(source.laagnaam, extent)
-      .then(geojsons => {
-        kaartLogger.debug(`${geojsons.length} features opgehaald uit cache`);
-        return geojsons.map(geojson => {
+      .pipe(bufferCount(BATCH_SIZE))
+      .subscribe(
+        geojsons => {
+          kaartLogger.debug(`${geojsons.length} features opgehaald uit cache`);
           source.dispatchLoadEvent(le.PartReceived);
-          source.addFeature(toOlFeature(source.titel, geojson));
-        });
-      })
-      .then(() => source.dispatchLoadComplete())
-      .catch(error => {
-        kaartLogger.error(error);
-        source.dispatchLoadError(error);
-      });
+          source.addFeatures(geojsons.map(geojson => toOlFeature(source.titel, geojson)));
+        },
+        error => {
+          kaartLogger.error(error);
+          source.dispatchLoadError(error);
+        },
+        () => source.dispatchLoadComplete()
+      );
   }
 
   private composeUrl(extent?: number[]) {
