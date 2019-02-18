@@ -1,18 +1,29 @@
 import { HttpClient } from "@angular/common/http";
 import * as array from "fp-ts/lib/Array";
 import { concat, Function1 } from "fp-ts/lib/function";
+import { none, Option, some } from "fp-ts/lib/Option";
+import * as strmap from "fp-ts/lib/StrMap";
 import * as rx from "rxjs";
-import { map, mergeMap, scan, concatMap } from "rxjs/operators";
+import { map, mergeMap, scan } from "rxjs/operators";
 
 import * as arrays from "../../util/arrays";
 import { Pipeable, subSpy } from "../../util/operators";
 import { toArray } from "../../util/option";
 
-import { ProtoRoute, RouteAdded, RouteEvent, RouteRemoved } from "./route.msg";
+import { createRoute, ProtoRoute, routeAdded, RouteEvent, routeRemoved } from "./route.msg";
 import { CompositeRoutingService, RoutingService, SimpleRoutingService, VerfijndeRoutingService } from "./routing-service";
 import { AddWaypoint, RemoveWaypoint, Waypoint, WaypointOperation } from "./waypoint.msg";
 
-export type RouteState = Array<Waypoint>;
+export type Versions = strmap.StrMap<number>;
+
+function updateVersions(versions: Versions, protoRoutes: Array<ProtoRoute>): Versions {
+  return protoRoutes.reduce((acc, pr) => strmap.insert(pr.id, pr.version, acc), versions);
+}
+
+export interface RouteState {
+  waypoints: Array<Waypoint>;
+  versions: Versions;
+}
 
 export interface RouteChanges {
   readonly routesAdded: Array<ProtoRoute>;
@@ -25,69 +36,80 @@ interface RouteStateTransition {
 }
 
 const initialRouteStateTransition: RouteStateTransition = {
-  routeState: [],
+  routeState: {
+    waypoints: [],
+    versions: new strmap.StrMap<number>({})
+  },
   routeChanges: {
     routesAdded: [],
     routesRemoved: []
   }
 };
 
-function createRoute(begin: Waypoint, end: Waypoint): ProtoRoute {
-  return {
-    id: `${begin.id}_${end.id}`,
-    begin: begin,
-    end: end
-  };
-}
-
 export function removeWaypoint(routeState: RouteState, RemoveWaypoint: RemoveWaypoint): RouteStateTransition {
   const id = RemoveWaypoint.waypoint.id;
 
-  const maybePreviousWaypoint = arrays.previousElement(routeState)(wp => wp.id === id);
-  const maybeNextWaypoint = arrays.nextElement(routeState)(wp => wp.id === id);
+  const maybePreviousWaypoint = arrays.previousElement(routeState.waypoints)(wp => wp.id === id);
+  const maybeNextWaypoint = arrays.nextElement(routeState.waypoints)(wp => wp.id === id);
 
-  const maybeBeginRoute = maybePreviousWaypoint.map(begin => createRoute(begin, RemoveWaypoint.waypoint));
-  const maybeEndRoute = maybeNextWaypoint.map(end => createRoute(RemoveWaypoint.waypoint, end));
+  const maybeBeginRoute = maybePreviousWaypoint.map(begin => createRoute(begin, RemoveWaypoint.waypoint, routeState.versions));
+  const maybeEndRoute = maybeNextWaypoint.map(end => createRoute(RemoveWaypoint.waypoint, end, routeState.versions));
 
   const routesRemoved = concat(toArray(maybeEndRoute), toArray(maybeBeginRoute));
-  const routeAdded = maybePreviousWaypoint.chain(pwp => maybeNextWaypoint.map(nwp => createRoute(pwp, nwp)));
+  const routeAdded = maybePreviousWaypoint.chain(pwp => maybeNextWaypoint.map(nwp => createRoute(pwp, nwp, routeState.versions)));
+  const routesAdded = toArray(routeAdded);
 
   return {
     routeChanges: {
-      routesAdded: toArray(routeAdded),
+      routesAdded: routesAdded,
       routesRemoved: routesRemoved
     },
-    routeState: arrays
-      .deleteFirst(routeState)(wp => wp.id === RemoveWaypoint.waypoint.id)
-      .getOrElse(routeState)
+    routeState: {
+      waypoints: arrays
+        .deleteFirst(routeState.waypoints)(wp => wp.id === RemoveWaypoint.waypoint.id)
+        .getOrElse(routeState.waypoints),
+      versions: updateVersions(routeState.versions, concat(routesRemoved, routesAdded))
+    }
   };
 }
 
 export function addWaypoint(routeState: RouteState, addWaypoint: AddWaypoint): RouteStateTransition {
-  return addWaypoint.previous.fold(
-    {
-      routeChanges: {
-        routesAdded: toArray(array.head(routeState).map(e => createRoute(addWaypoint.waypoint, e))),
-        routesRemoved: []
-      },
-      routeState: [addWaypoint.waypoint].concat(routeState)
+  return addWaypoint.previous.foldL(
+    () => {
+      const routesAdded = toArray(array.head(routeState.waypoints).map(e => createRoute(addWaypoint.waypoint, e, routeState.versions)));
+
+      return {
+        routeChanges: {
+          routesAdded: routesAdded,
+          routesRemoved: []
+        },
+        routeState: {
+          waypoints: [addWaypoint.waypoint].concat(routeState.waypoints),
+          versions: updateVersions(routeState.versions, routesAdded)
+        }
+      };
     },
     previous => {
-      const maybeOldNextWaypoint = arrays.nextElement(routeState)(wp => wp.id === previous.id);
-      const maybeRouteToRemove = maybeOldNextWaypoint.map(end => createRoute(previous, end));
+      const maybeOldNextWaypoint = arrays.nextElement(routeState.waypoints)(wp => wp.id === previous.id);
+      const maybeRouteToRemove = maybeOldNextWaypoint.map(end => createRoute(previous, end, routeState.versions));
 
-      const routeAdded = createRoute(previous, addWaypoint.waypoint);
-      const routesAdded = toArray(maybeOldNextWaypoint.map(end => createRoute(addWaypoint.waypoint, end)));
+      const routeAdded = createRoute(previous, addWaypoint.waypoint, routeState.versions);
+      const routesAdded = toArray(maybeOldNextWaypoint.map(end => createRoute(addWaypoint.waypoint, end, routeState.versions)));
       routesAdded.push(routeAdded);
+
+      const routesRemoved = toArray(maybeRouteToRemove);
 
       return {
         routeChanges: {
           routesAdded: routesAdded,
           routesRemoved: toArray(maybeRouteToRemove)
         },
-        routeState: arrays
-          .insertAfter(routeState)(wp => wp.id === previous.id)(addWaypoint.waypoint)
-          .getOrElse(routeState)
+        routeState: {
+          waypoints: arrays
+            .insertAfter(routeState.waypoints)(wp => wp.id === previous.id)(addWaypoint.waypoint)
+            .getOrElse(routeState.waypoints),
+          versions: updateVersions(routeState.versions, concat(routesRemoved, routesAdded))
+        }
       };
     }
   );
@@ -116,15 +138,52 @@ const waypointOpsToRouteOperation: Function1<RoutingService, Pipeable<WaypointOp
     waypointOpss.pipe(scan(nextRouteStateChanges, initialRouteStateTransition))
   );
 
-  return routeStateChangesObs.pipe(
-    concatMap(changes =>
+  const routeEventObs = routeStateChangesObs.pipe(
+    mergeMap(changes =>
       rx.concat(
-        rx.from(changes.routeChanges.routesRemoved).pipe(map(removal => RouteRemoved(removal.id, removal.begin.id))),
+        rx.from(changes.routeChanges.routesRemoved).pipe(map(routeRemoved)),
         rx.from(changes.routeChanges.routesAdded).pipe(
           mergeMap(protoRoute => routingService.resolve(protoRoute)),
-          map(addition => RouteAdded(addition.id, addition.begin.id, addition.geometry))
+          map(routeAdded)
         )
       )
     )
   );
+
+  const filteredRouteEventObs = subSpy("****filteredRouteEvent")(routeEventObs.pipe(scan(filterRouteEvent, initialFilteredRouteEvent)));
+
+  return filteredRouteEventObs.pipe(mergeMap(filteredRouteEvent => filteredRouteEvent.routeEvent.fold(rx.empty(), re => rx.of(re))));
 };
+
+interface FilteredRouteEvent {
+  versions: Versions;
+  routeEvent: Option<RouteEvent>;
+}
+
+const initialFilteredRouteEvent: FilteredRouteEvent = {
+  versions: new strmap.StrMap<number>({}),
+  routeEvent: none
+};
+
+function filterRouteEvent(filteredRouteEvent: FilteredRouteEvent, routeEvent: RouteEvent): FilteredRouteEvent {
+  return strmap.lookup(routeEvent.id, filteredRouteEvent.versions).fold(
+    {
+      versions: strmap.insert(routeEvent.id, routeEvent.version, filteredRouteEvent.versions),
+      routeEvent: some(routeEvent)
+    },
+    previousVersion => {
+      if (previousVersion > routeEvent.version) {
+        console.log("++++++++", "rejected", routeEvent);
+        return {
+          versions: filteredRouteEvent.versions,
+          routeEvent: none
+        };
+      } else {
+        return {
+          versions: strmap.insert(routeEvent.id, routeEvent.version, filteredRouteEvent.versions),
+          routeEvent: some(routeEvent)
+        };
+      }
+    }
+  );
+}

@@ -73,6 +73,7 @@ export class VerfijndeRoutingService implements RoutingService {
       }),
       map(wegEdges => ({
         id: protoRoute.id,
+        version: protoRoute.version,
         begin: protoRoute.begin,
         end: protoRoute.end,
         geometry: new ol.geom.GeometryCollection(wegEdges.map(edge => edge.geometry))
@@ -85,6 +86,7 @@ export class SimpleRoutingService implements RoutingService {
   public resolve(protoRoute: ProtoRoute): Observable<GeometryRoute> {
     return rx.of({
       id: protoRoute.id,
+      version: protoRoute.version,
       begin: protoRoute.begin,
       end: protoRoute.end,
       geometry: new ol.geom.LineString([protoRoute.begin.location, protoRoute.end.location])
@@ -102,6 +104,6 @@ export class CompositeRoutingService implements RoutingService {
   constructor(private routingServices: RoutingService[]) {}
 
   public resolve(protoRoute: ProtoRoute): Observable<GeometryRoute> {
-    return rx.concat(...this.routingServices.map(rs => rs.resolve(protoRoute)));
+    return rx.merge(...this.routingServices.map(rs => rs.resolve(protoRoute)));
   }
 }
