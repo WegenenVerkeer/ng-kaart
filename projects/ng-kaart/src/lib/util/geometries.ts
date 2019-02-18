@@ -1,4 +1,4 @@
-import { fromNullable, none, Option } from "fp-ts/lib/Option";
+import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 
 export interface GeometryMapper<T> {
@@ -16,25 +16,29 @@ export interface GeometryMapper<T> {
 export function matchGeometryType<T>(geometry: ol.geom.Geometry, mapper: GeometryMapper<T>): Option<T> {
   switch (geometry.getType()) {
     case "Point":
-      return mapper.point ? fromNullable(mapper.point(geometry as ol.geom.Point)) : none;
+      return mapper.point ? some(mapper.point(geometry as ol.geom.Point)) : none;
     case "LineString":
-      return mapper.lineString ? fromNullable(mapper.lineString(geometry as ol.geom.LineString)) : none;
+      return mapper.lineString ? some(mapper.lineString(geometry as ol.geom.LineString)) : none;
     case "LinearRing":
-      return mapper.linearRing ? fromNullable(mapper.linearRing(geometry as ol.geom.LinearRing)) : none;
+      return mapper.linearRing ? some(mapper.linearRing(geometry as ol.geom.LinearRing)) : none;
     case "Polygon":
-      return mapper.polygon ? fromNullable(mapper.polygon(geometry as ol.geom.Polygon)) : none;
+      return mapper.polygon ? some(mapper.polygon(geometry as ol.geom.Polygon)) : none;
     case "MultiPoint":
-      return mapper.multiPoint ? fromNullable(mapper.multiPoint(geometry as ol.geom.MultiPoint)) : none;
+      return mapper.multiPoint ? some(mapper.multiPoint(geometry as ol.geom.MultiPoint)) : none;
     case "MultiLineString":
-      return mapper.multiLineString ? fromNullable(mapper.multiLineString(geometry as ol.geom.MultiLineString)) : none;
+      return mapper.multiLineString ? some(mapper.multiLineString(geometry as ol.geom.MultiLineString)) : none;
     case "MultiPolygon":
-      return mapper.multiPolygon ? fromNullable(mapper.multiPolygon(geometry as ol.geom.MultiPolygon)) : none;
+      return mapper.multiPolygon ? some(mapper.multiPolygon(geometry as ol.geom.MultiPolygon)) : none;
     case "GeometryCollection":
-      return mapper.geometryCollection ? fromNullable(mapper.geometryCollection(geometry as ol.geom.GeometryCollection)) : none;
+      return mapper.geometryCollection ? some(mapper.geometryCollection(geometry as ol.geom.GeometryCollection)) : none;
     case "Circle":
-      return mapper.circle ? fromNullable(mapper.circle(geometry as ol.geom.Circle)) : none;
+      return mapper.circle ? some(mapper.circle(geometry as ol.geom.Circle)) : none;
   }
   return none;
+}
+
+export function distance(coord1: ol.Coordinate, coord2: ol.Coordinate): number {
+  return ol.Sphere.getLength(new ol.geom.LineString([coord1, coord2]));
 }
 
 export function dimensieBeschrijving(geometry: ol.geom.Geometry, verbose = true): string {

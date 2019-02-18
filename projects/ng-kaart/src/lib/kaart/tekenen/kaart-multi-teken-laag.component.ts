@@ -12,6 +12,7 @@ import { debounceTime, filter, map, scan, share, startWith, switchMap, take, tap
 
 import * as clr from "../../stijl/colour";
 import { disc, solidLine } from "../../stijl/common-shapes";
+import { matchGeometryType } from "../../util";
 import { isEmpty } from "../../util/arrays";
 import { asap } from "../../util/asap";
 import { Consumer, PartialFunction1, ReduceFunction } from "../../util/function";
@@ -401,22 +402,19 @@ const routeSegmentReducer: Function1<clr.Kleur, ReduceFunction<RouteSegmentState
   return handleOps()(state);
 };
 
-const extractCoordinates: Function1<ol.geom.Geometry, ol.Coordinate[][]> = geom => {
-  switch (geom.getType()) {
-    case "LineString":
-      return [(geom as ol.geom.LineString).getCoordinates()];
-    case "MultiLineString":
-      return (geom as ol.geom.MultiLineString).getCoordinates();
-    default:
-      kaartLogger.warn(`Nietondersteunde geometry ${geom.getType()} bij het extraheren van coordinaten`);
-      return [];
-  }
-};
+const extractCoordinates: Function1<ol.geom.Geometry, ol.Coordinate[]> = geom =>
+  matchGeometryType(geom, {
+    lineString: line => line.getCoordinates(),
+    multiLineString: multiline => array.flatten(multiline.getCoordinates()) // opeenvolgende gelijke coördinaten kunnen verwijderd worden
+  }).getOrElseL(() => {
+    kaartLogger.warn(`Nietondersteunde geometry ${geom.getType()} bij het extraheren van coordinaten`);
+    return [];
+  });
 
-const concatGeometries: Function1<ol.geom.Geometry[], ol.geom.Geometry> = geoms =>
-  new ol.geom.MultiLineString(array.flatten(geoms.map(extractCoordinates)));
+const concatGeometries: Function1<ol.geom.Geometry[], ol.geom.LineString> = geoms =>
+  new ol.geom.LineString(array.flatten(geoms.map(extractCoordinates)));
 
-const stichGeometries: Function2<WaypointId[], FeaturesByWaypointId, ol.geom.Geometry> = (ids, featuresById) => {
+const stichGeometries: Function2<WaypointId[], FeaturesByWaypointId, ol.geom.LineString> = (ids, featuresById) => {
   return concatGeometries(
     array.catOptions(
       ids.map(id =>
