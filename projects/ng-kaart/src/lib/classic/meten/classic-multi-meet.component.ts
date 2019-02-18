@@ -24,7 +24,8 @@ export class ClassicMultiMetenComponent extends ClassicUIElementSelectorComponen
   protected opties(): MultiMetenOpties {
     return {
       markColour: clr.toKleur("naam", this.tekenKleurCode).getOrElse(clr.zwartig),
-      useRouting: this.metRouting
+      useRouting: this.metRouting,
+      toonInfoBoodschap: true
     };
   }
 }
