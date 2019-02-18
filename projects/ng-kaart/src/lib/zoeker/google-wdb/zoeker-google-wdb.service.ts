@@ -1,12 +1,15 @@
 /// <reference types="@types/googlemaps" />
-import { HttpClient, HttpHeaders, HttpParams } from "@angular/common/http";
+import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Inject, Injectable } from "@angular/core";
 import { Option, some } from "fp-ts/lib/Option";
 import { Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { catchError, map, switchMap } from "rxjs/operators";
+import { combineLatest, Observable, Observer, timer } from "rxjs";
+import { catchError, concatMap, map, mergeMap, publishLast, reduce, refCount, retryWhen, switchMap, take, toArray } from "rxjs/operators";
+import LatLng = google.maps.LatLng;
 
+import { kaartLogger } from "../../kaart/log";
 import { fromNullablePredicate } from "../../util/option";
 import { ZOEKER_CFG, ZoekerConfigData } from "../config/zoeker-config";
 import { GoogleWdbLocatieZoekerConfigData, ZoekerConfigGoogleWdbConfig } from "../config/zoeker-config-google-wdb.config";
@@ -80,24 +83,47 @@ class GoogleServices {
   }
 }
 
-interface ExtendedResult {
+interface ExtendedGeocoderResult extends google.maps.GeocoderResult, LocatieZoekerLocatie {}
+
+interface ExtendedPlaceResult extends google.maps.places.PlaceResult, LocatieZoekerLocatie {}
+
+interface LocatieZoekerLocatie {
+  locatie: any;
   omschrijving: string;
-  bron: string;
+  bron: String; // Google | WDB | ABBAMelda
+  readonly partialMatch: boolean;
 }
 
-interface ExtendedGeocoderResult extends google.maps.GeocoderResult, ExtendedResult {}
+interface OnvolledigeLocatie {
+  readonly omschrijving: string;
+  readonly alleenGeocoden: boolean;
+}
 
-interface ExtendedPlaceResult extends google.maps.places.PlaceResult, ExtendedResult {
-  locatie: any;
+interface LocatieZoekerSearchResults {
+  readonly errors: string[];
+  readonly locaties: LocatieZoekerLocatie[];
+  readonly onvolledigeLocaties: OnvolledigeLocatie[];
+}
+
+interface SpecificErrorRetryStrategyOpts {
+  readonly maxRetryAttempts: number;
+  readonly retryDelay: number;
+  readonly errorMessagesForRetry: string[];
 }
 
 @Injectable()
 export class ZoekerGoogleWdbService implements Zoeker {
   private googleWdbLocatieZoekerConfig: ZoekerConfigGoogleWdbConfig;
-  private _cache: Promise<GoogleServices> | null = null;
+  private googleServicesObs: Observable<GoogleServices>;
   private legende: Map<string, IconDescription>;
 
   private readonly locatieZoekerUrl: string;
+
+  private googleServicesRetryStrategy = this.specificErrorRetryStrategy({
+    maxRetryAttempts: 4,
+    retryDelay: 1000,
+    errorMessagesForRetry: ["OVER_QUERY_LIMIT"]
+  });
 
   constructor(
     private readonly httpClient: HttpClient,
@@ -112,6 +138,17 @@ export class ZoekerGoogleWdbService implements Zoeker {
       "WDB Locatiezoeker",
       this.zoekerRepresentatie.getSvgIcon("WDB")
     );
+    this.googleServicesObs = Observable.create((observer: Observer<GoogleServices>) => {
+      // Eerste keer, laad de google api en wacht op __onGoogleLoaded event
+      window["__onGoogleLoaded"] = ev => {
+        observer.next(new GoogleServices());
+        observer.complete();
+      };
+      this.loadScript();
+    }).pipe(
+      publishLast(),
+      refCount()
+    );
   }
 
   naam(): string {
@@ -121,23 +158,6 @@ export class ZoekerGoogleWdbService implements Zoeker {
   setGoogleWdbLocatieZoekerConfigData(googleWdbLocatieZoekerConfigData: GoogleWdbLocatieZoekerConfigData) {
     this.googleWdbLocatieZoekerConfig = new ZoekerConfigGoogleWdbConfig(googleWdbLocatieZoekerConfigData);
   }
-
-  private init(): Promise<GoogleServices> {
-    if (this._cache) {
-      // De data is al gecached.
-      return this._cache;
-    } else {
-      // Eerste keer, vraag de data op aan de backend.
-      this._cache = new Promise<GoogleServices>((resolve, reject) => {
-        window["__onGoogleLoaded"] = ev => {
-          resolve(new GoogleServices());
-        };
-        this.loadScript();
-      });
-      return this._cache;
-    }
-  }
-
   zoekresultaten$(opdracht: Zoekopdracht): rx.Observable<ZoekAntwoord> {
     switch (opdracht.zoektype) {
       case "Volledig":
@@ -161,7 +181,7 @@ export class ZoekerGoogleWdbService implements Zoeker {
           headers: new HttpHeaders().set("Content-Type", "application/x-www-form-urlencoded")
         };
 
-        return this.httpClient.post<Object>(this.locatieZoekerUrl + "/zoek", body.toString(), options).pipe(
+        return this.httpClient.post<LocatieZoekerSearchResults>(this.locatieZoekerUrl + "/zoek", body.toString(), options).pipe(
           switchMap(resp => this.parseResult(resp, zoektype, maxResultaten)),
           catchError(err => this.handleError(err, zoektype))
         );
@@ -170,11 +190,71 @@ export class ZoekerGoogleWdbService implements Zoeker {
     }
   }
 
-  private parseResult(response: any, zoektype: Zoektype, maxResultaten: number): rx.Observable<ZoekAntwoord> {
-    const zoekResultaten = new ZoekAntwoord(this.naam(), zoektype, [], [], this.legende);
+  private vervolledigResultaat(onvolledigeLocatie: OnvolledigeLocatie): Observable<Array<ExtendedGeocoderResult | ExtendedPlaceResult>> {
+    const omschrijving = onvolledigeLocatie.omschrijving;
 
-    // parse result
-    const resultaten = response; // vanaf hier doen we onze handen voor onze ogen en hopen dat alles goed gaat
+    if (onvolledigeLocatie.alleenGeocoden === true) {
+      return this.geocode(omschrijving);
+    } else {
+      const placesSearchObs: Observable<ExtendedPlaceResult[]> = this.getPlacesTextSearch(omschrijving);
+
+      const predictionsObs: Observable<ExtendedGeocoderResult[]> = this.getAutocompleteQueryPredictions(omschrijving).pipe(
+        concatMap(predictions => {
+          return rx.of(...predictions).pipe(
+            take(10), // max 10 predictions
+            mergeMap(prediction => {
+              return this.geocodePlace(prediction.place_id, prediction.description);
+            }, 2), // geocode 2 predictions concurrently
+            reduce((acc, val) => acc.concat(val), []) // verzamel geocoded predictions in 1 'next'
+          );
+        })
+      );
+
+      const placesAndPredictionsObs = combineLatest(placesSearchObs, predictionsObs).pipe(
+        switchMap(([places, predictions]) => {
+          const alleResultaten: Array<ExtendedGeocoderResult | ExtendedPlaceResult> = [];
+          const besteResultaten: Array<ExtendedGeocoderResult | ExtendedPlaceResult> = [];
+          const establishments: Array<ExtendedGeocoderResult | ExtendedPlaceResult> = [];
+
+          const ongeveerZelfdeLocatie: (bestaande: LatLng, nieuw: LatLng) => boolean = (bestaande, nieuw) => {
+            return Math.abs(bestaande.lng() - nieuw.lng()) < 0.001 && Math.abs(bestaande.lat() - nieuw.lat()) < 0.001;
+          };
+
+          const voegToe = nieuw => {
+            const zitErAlIn =
+              alleResultaten.find(bestaande => ongeveerZelfdeLocatie(bestaande.geometry.location, nieuw.geometry.location)) !== undefined;
+            if (!zitErAlIn) {
+              alleResultaten.push(nieuw);
+              if (nieuw.types.indexOf("establishment") > -1) {
+                establishments.push(nieuw);
+              } else {
+                besteResultaten.push(nieuw);
+              }
+            }
+          };
+
+          places.forEach(voegToe);
+          predictions.forEach(voegToe);
+
+          const besteResultatenMetGeometrieObs = rx.of(...besteResultaten).pipe(
+            concatMap(r => {
+              return this.loadGemeenteGeometrie(r);
+            }),
+            toArray() // verzamel alle beste resultaten met geometrie in 1 'next'
+          );
+
+          return rx.concat(besteResultatenMetGeometrieObs, rx.of(establishments)).pipe(
+            reduce((acc, val) => acc.concat(val), []) // verzamel beste resultaten en establishments in 1 'next'
+          );
+        })
+      );
+
+      return <Observable<Array<ExtendedGeocoderResult | ExtendedPlaceResult>>>placesAndPredictionsObs;
+    }
+  }
+
+  private parseResult(resultaten: LocatieZoekerSearchResults, zoektype: Zoektype, maxResultaten: number): rx.Observable<ZoekAntwoord> {
+    const zoekResultaten = new ZoekAntwoord(this.naam(), zoektype, [], [], this.legende);
 
     // voeg eventuele foutboodschappen toe
     resultaten.errors.forEach(error => zoekResultaten.fouten.push("Fout: " + error));
@@ -184,165 +264,34 @@ export class ZoekerGoogleWdbService implements Zoeker {
       zoekResultaten.fouten.push("Geen locaties gevonden");
       return rx.of(zoekResultaten);
     } else {
-      // lijst van promises van resultaten
-      const promises = resultaten.onvolledigeLocaties.map(locatie => {
-        // alleen geocoden
-        if (locatie.alleenGeocoden === true) {
-          // Promise[List[Geocoded]]
-          return this.geocode(locatie.omschrijving).then(geocodeResults => {
-            geocodeResults.forEach(geocoded => {
-              geocoded.bron = "WDB/Google Geocode";
-              geocoded.omschrijving = geocoded.formatted_address;
-            });
-            return geocodeResults;
+      return rx.of(...resultaten.onvolledigeLocaties).pipe(
+        concatMap(r => this.vervolledigResultaat(r)),
+        reduce((acc, val) => acc.concat(val), []), // verzamel alle vervolledigde resultaten in 1 'next'
+        map(resultaten => {
+          return resultaten.map(resultaat => {
+            resultaat.locatie =
+              resultaat.locatie || this.wgs84ToLambert72GeoJson(resultaat.geometry.location.lng(), resultaat.geometry.location.lat());
+            return <LocatieZoekerLocatie>resultaat;
           });
-        } else {
-          // Promise[List[Prediction]]
-          const predictionsPromise: Promise<google.maps.places.QueryAutocompletePrediction[]> = this.getAutocompleteQueryPredictions(
-            locatie.omschrijving
-          ).catch(err => {
-            // als predictionPromise faalt
-            if (err === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
-              zoekResultaten.fouten.push("Geen resultaten gevonden via Google Autocomplete");
-            } else {
-              zoekResultaten.fouten.push(`Zoekopdracht via Google Autocomplete API is mislukt voor: ${locatie.omschrijving}: ${err}`);
-            }
-            return [];
+        }),
+        map(vervolledigdeLocaties => {
+          const locaties = resultaten.locaties.concat(vervolledigdeLocaties);
+          locaties.forEach((locatie, index) => {
+            const zoekerType: ZoekerRepresentatieType = isWdbBron(locatie.bron) ? "WDB" : "Google";
+            zoekResultaten.resultaten.push(
+              new GoogleWdbZoekResultaat(
+                locatie,
+                index,
+                this.naam(),
+                this.zoekerRepresentatie.getOlStyle(zoekerType),
+                this.zoekerRepresentatie.getHighlightOlStyle(zoekerType),
+                this.zoekerRepresentatie.getSvgIcon(zoekerType)
+              )
+            );
           });
-
-          // Promise[List[PlaceDetails]]
-          const placeDetailsPromises: Promise<ExtendedPlaceResult[] | undefined> = predictionsPromise.then(predictions => {
-            // List[Promise[PlaceDetails]]
-            const geocodedPredictionPromises = predictions.map(prediction => {
-              // return geocode(prediction.description)
-              return this.getPlaceDetails(prediction.place_id).catch(err => {
-                // als geocode mislukt
-                zoekResultaten.fouten.push(`Google Place details ophalen is mislukt voor: ${prediction.description}: ${err}`);
-                return undefined;
-              });
-            }, this);
-
-            // sequencing list of promises into promise of list: Promise[List[GeocodedPrediction]]
-            return geocodedPredictionPromises.reduce((acc, geocodeResultsPredictionPromise) => {
-              // acc: Promise[List[]]
-              // predictionPromise: Promise[GeocodedPrediction]
-              return acc.then(vorigeResultaten => {
-                return geocodeResultsPredictionPromise.then(geocodeResultsPrediction => {
-                  if (geocodeResultsPrediction === undefined) {
-                    // geocode was mislukt
-                    return vorigeResultaten;
-                  } else {
-                    geocodeResultsPrediction.forEach(geocodedPrediction => {
-                      if (geocodedPrediction.types.indexOf("political") > -1) {
-                        geocodedPrediction.omschrijving = geocodedPrediction.formatted_address;
-                      }
-                      // geocodedPrediction.bron = 'Google Autocomplete/Geocode'
-                    });
-                    return vorigeResultaten!.concat(geocodeResultsPrediction);
-                  }
-                });
-              });
-            }, Promise.resolve([]));
-          });
-
-          // Promise[List[GeocodedPlaces]]
-          const placesSearchPromise: Promise<ExtendedPlaceResult[]> = this.getPlacesTextSearch(locatie.omschrijving).catch(err => {
-            // als placesSearchPromise faalt
-            if (err === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
-              zoekResultaten.fouten.push("Geen resultaten gevonden op Google Places.");
-            } else {
-              zoekResultaten.fouten.push("Zoekopdracht via Google Places is mislukt: " + err);
-            }
-            return [];
-          });
-
-          // Promise[ List[GeocodedPrediction] + List[GeocodedPlaces] ]
-          return placeDetailsPromises.then(predictions => {
-            return placesSearchPromise.then(places => {
-              const alleResultaten: Array<ExtendedPlaceResult> = [];
-              const besteResultaten: Array<ExtendedPlaceResult> = [];
-              const establishments: Array<ExtendedPlaceResult> = [];
-              const voegToe = nieuw => {
-                const zitErAlIn =
-                  alleResultaten.find(bestaande => {
-                    return (
-                      Math.abs(bestaande.geometry.location.lng() - nieuw.geometry.location.lng()) < 0.0001 &&
-                      Math.abs(bestaande.geometry.location.lat() - nieuw.geometry.location.lat()) < 0.0001
-                    );
-                  }) !== undefined;
-                if (!zitErAlIn) {
-                  alleResultaten.push(nieuw);
-                  if (nieuw.types.indexOf("establishment") > -1) {
-                    establishments.push(nieuw);
-                  } else {
-                    besteResultaten.push(nieuw);
-                  }
-                }
-              };
-
-              places.forEach(voegToe);
-              predictions!.forEach(voegToe);
-
-              // zoek gemeente geometrie op voor besteresultaten (niet voor establishments)
-
-              // List[Promise[besteResultaten]]
-              const besteResultatenMetGeometriePromises = besteResultaten.map(resultaat => {
-                return this.loadGemeenteGeometrie(resultaat).catch(err => {
-                  zoekResultaten.fouten.push(`Geometrie ophalen is mislukt voor: ${resultaat.name}: ${err}`);
-                  return resultaat;
-                });
-              }, this);
-
-              // Promise[List[besteResultaten]]
-              const alleResultatenPromise2 = besteResultatenMetGeometriePromises.reduce((acc, resultaatPromise) => {
-                return acc.then(vorigeResultaten => {
-                  return resultaatPromise.then(resultaat => {
-                    return vorigeResultaten.concat(resultaat);
-                  });
-                });
-              }, Promise.resolve(new Array<ExtendedPlaceResult>()));
-
-              // Promise[besteResultaten + establishments]
-              return alleResultatenPromise2.then(besteResultatenMetGeometrie => {
-                return besteResultatenMetGeometrie.concat(establishments);
-              });
-            });
-          });
-        }
-      });
-
-      // promise van lijst van resultaten
-      const alleResultatenPromise = promises.reduce((acc, resultaatPromise) => {
-        return acc.then(vorigeResultaten => {
-          return resultaatPromise.then(resultaat => {
-            return vorigeResultaten.concat(resultaat);
-          });
-        });
-      }, Promise.resolve([]));
-
-      const zoekResultatenPromise: Promise<ZoekAntwoord> = alleResultatenPromise.then(resultatenLijst => {
-        resultatenLijst.forEach(resultaat => {
-          resultaat.locatie =
-            resultaat.locatie || this.wgs84ToLambert72GeoJson(resultaat.geometry.location.lng(), resultaat.geometry.location.lat());
-        });
-        const locaties = resultaten.locaties.concat(resultatenLijst);
-        locaties.forEach((locatie, index) => {
-          const zoekerType: ZoekerRepresentatieType = isWdbBron(locatie.bron) ? "WDB" : "Google";
-          zoekResultaten.resultaten.push(
-            new GoogleWdbZoekResultaat(
-              locatie,
-              index,
-              this.naam(),
-              this.zoekerRepresentatie.getOlStyle(zoekerType),
-              this.zoekerRepresentatie.getHighlightOlStyle(zoekerType),
-              this.zoekerRepresentatie.getSvgIcon(zoekerType)
-            )
-          );
-        });
-        return zoekResultaten.limiteerAantalResultaten(maxResultaten);
-      });
-
-      return rx.from(zoekResultatenPromise);
+          return zoekResultaten.limiteerAantalResultaten(maxResultaten);
+        })
+      );
     }
   }
 
@@ -359,146 +308,222 @@ export class ZoekerGoogleWdbService implements Zoeker {
     return rx.of(new ZoekAntwoord(this.naam(), zoektype, [error], [], this.legende));
   }
 
-  private geocode(omschrijving): Promise<ExtendedGeocoderResult[]> {
-    return this.init().then(gapi => {
-      return new Promise<ExtendedGeocoderResult[]>((resolve, reject) => {
-        gapi.geocoder.geocode(
-          {
-            address: omschrijving
-          },
-          (results, status) => {
-            if (status === google.maps.GeocoderStatus.OK) {
-              resolve(
-                results
-                  .map(result => <ExtendedGeocoderResult>result)
-                  .map(result => {
-                    result.omschrijving = omschrijving;
-                    return result;
-                  })
-              );
-            } else {
-              reject(status);
-            }
-          }
-        );
-      });
-    });
-  }
-
-  private getAutocompleteQueryPredictions(omschrijving): Promise<google.maps.places.QueryAutocompletePrediction[]> {
-    return this.init().then(gapi => {
-      return new Promise<google.maps.places.QueryAutocompletePrediction[]>((resolve, reject) => {
-        gapi.autocompleteService.getQueryPredictions(
-          {
-            input: omschrijving + ", Belgie",
-            bounds: gapi.boundsVlaanderen
-          },
-          (predictions, status) => {
-            if (status === google.maps.places.PlacesServiceStatus.OK) {
-              resolve(predictions.filter(prediction => prediction.description.indexOf("in de buurt van") === -1));
-            } else {
-              reject(status);
-            }
-          }
-        );
-      });
-    });
-  }
-
-  private getPlacesTextSearch(omschrijving): Promise<ExtendedPlaceResult[]> {
-    return this.init().then(gapi => {
-      return new Promise<ExtendedPlaceResult[]>((resolve, reject) => {
-        gapi.placesService.textSearch(
-          {
-            query: omschrijving + ", Belgie",
-            bounds: gapi.boundsVlaanderen,
-            type: "address"
-          },
-          (results, status) => {
-            if (status === google.maps.places.PlacesServiceStatus.OK) {
-              resolve(
-                results
-                  .map(result => <ExtendedPlaceResult>result)
-                  .map(result => {
-                    if (result.formatted_address.indexOf(result.name) > -1) {
+  private geocode(omschrijving: string): Observable<ExtendedGeocoderResult[]> {
+    return this.googleServicesObs.pipe(
+      mergeMap(googleServices => {
+        return Observable.create((observer: Observer<ExtendedGeocoderResult[]>) => {
+          googleServices.geocoder.geocode(
+            {
+              address: omschrijving
+            },
+            (results: google.maps.GeocoderResult[], status: google.maps.GeocoderStatus) => {
+              if (status === google.maps.GeocoderStatus.OK) {
+                observer.next(
+                  results
+                    .map(result => <ExtendedGeocoderResult>result)
+                    .map(result => {
                       result.omschrijving = result.formatted_address;
-                    } else {
-                      result.omschrijving = `${result.name}, ${result.formatted_address}`;
-                    }
-                    result.bron = "Google Places";
-                    return result;
-                  })
-                  .filter(result => gapi.boundsVlaanderen.contains(result.geometry.location))
-              );
-            } else {
-              reject(status);
+                      result.bron = "WDB/Google Geocode";
+                      return result;
+                    })
+                );
+                observer.complete();
+              } else {
+                if (status === google.maps.GeocoderStatus.ZERO_RESULTS) {
+                  observer.complete();
+                } else {
+                  observer.error(status);
+                }
+              }
             }
-          }
-        );
-      });
-    });
+          );
+        });
+      }),
+      retryWhen<ExtendedGeocoderResult[]>(this.googleServicesRetryStrategy)
+    );
   }
 
-  private getPlaceDetails(placeId): Promise<ExtendedPlaceResult[]> {
-    return this.init().then(gapi => {
-      return new Promise<ExtendedPlaceResult[]>(function(resolve, reject) {
-        gapi.placesService.getDetails(
-          {
-            placeId: placeId
-          },
-          (result, status) => {
-            const place = <ExtendedPlaceResult>result;
-            if (status === google.maps.places.PlacesServiceStatus.OK) {
-              if (place.formatted_address.indexOf(place.name) > -1) {
-                place.omschrijving = place.formatted_address;
+  private getAutocompleteQueryPredictions(omschrijving: string): Observable<google.maps.places.QueryAutocompletePrediction[]> {
+    return this.googleServicesObs.pipe(
+      mergeMap(googleServices => {
+        return Observable.create((observer: Observer<google.maps.places.QueryAutocompletePrediction[]>) => {
+          googleServices.autocompleteService.getQueryPredictions(
+            {
+              input: omschrijving + ", Belgie",
+              bounds: googleServices.boundsVlaanderen
+            },
+            (predictions, status) => {
+              if (status === google.maps.places.PlacesServiceStatus.OK) {
+                observer.next(predictions.filter(prediction => prediction.description.indexOf("in de buurt van") === -1));
+                observer.complete();
               } else {
-                place.omschrijving = `${place.name}, ${place.formatted_address}`;
+                if (status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
+                  observer.next([]);
+                  observer.complete();
+                } else {
+                  observer.error(status);
+                }
               }
-              place.bron = "Google Autocomplete";
-              if (gapi.boundsVlaanderen.contains(place.geometry.location)) {
-                resolve([place]);
-              } else {
-                resolve([]);
-              }
-            } else {
-              reject(status);
             }
-          }
-        );
-      });
-    });
+          );
+        });
+      }),
+      retryWhen<google.maps.places.QueryAutocompletePrediction[]>(this.googleServicesRetryStrategy)
+    );
   }
 
-  private loadGemeenteGeometrie(resultaat: ExtendedPlaceResult): Promise<ExtendedPlaceResult> {
+  private getPlacesTextSearch(omschrijving: string): Observable<ExtendedPlaceResult[]> {
+    return this.googleServicesObs.pipe(
+      mergeMap(googleServices => {
+        return Observable.create((observer: Observer<ExtendedPlaceResult[]>) => {
+          googleServices.placesService.textSearch(
+            {
+              query: omschrijving + ", Belgie",
+              bounds: googleServices.boundsVlaanderen,
+              type: "address"
+            },
+            (results, status) => {
+              if (status === google.maps.places.PlacesServiceStatus.OK) {
+                observer.next(
+                  results
+                    .map(result => <ExtendedPlaceResult>result)
+                    .map(result => {
+                      if (result.formatted_address.indexOf(result.name) > -1) {
+                        result.omschrijving = result.formatted_address;
+                      } else {
+                        result.omschrijving = `${result.name}, ${result.formatted_address}`;
+                      }
+                      result.bron = "Google Places";
+                      return result;
+                    })
+                    .filter(result => googleServices.boundsVlaanderen.contains(result.geometry.location))
+                );
+                observer.complete();
+              } else {
+                if (status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
+                  observer.next([]);
+                  observer.complete();
+                } else {
+                  observer.error(status);
+                }
+              }
+            }
+          );
+        });
+      }),
+      retryWhen<ExtendedPlaceResult[]>(this.googleServicesRetryStrategy)
+    );
+  }
+
+  private getPlaceDetails(placeId): Observable<ExtendedPlaceResult[]> {
+    return this.googleServicesObs.pipe(
+      mergeMap(googleServices => {
+        return Observable.create((observer: Observer<ExtendedPlaceResult[]>) => {
+          googleServices.placesService.getDetails(
+            {
+              placeId: placeId
+            },
+            (result, status) => {
+              const place = <ExtendedPlaceResult>result;
+              if (status === google.maps.places.PlacesServiceStatus.OK) {
+                if (place.formatted_address.indexOf(place.name) > -1) {
+                  place.omschrijving = place.formatted_address;
+                } else {
+                  place.omschrijving = `${place.name}, ${place.formatted_address}`;
+                }
+                place.bron = "Google Autocomplete";
+                if (googleServices.boundsVlaanderen.contains(place.geometry.location)) {
+                  observer.next([place]);
+                } else {
+                  observer.next([]);
+                }
+                observer.complete();
+              } else {
+                observer.error(status);
+              }
+            }
+          );
+        });
+      }),
+      retryWhen<ExtendedPlaceResult[]>(this.googleServicesRetryStrategy)
+    );
+  }
+
+  private geocodePlace(placeId: string, omschrijving: string): Observable<ExtendedGeocoderResult[]> {
+    if (placeId) {
+      return this.googleServicesObs.pipe(
+        mergeMap(googleServices => {
+          return Observable.create((observer: Observer<ExtendedGeocoderResult[]>) => {
+            googleServices.geocoder.geocode(
+              {
+                placeId: placeId
+              },
+              (results, status) => {
+                if (status === google.maps.GeocoderStatus.OK) {
+                  observer.next(
+                    results
+                      .map(result => <ExtendedGeocoderResult>result)
+                      .map(result => {
+                        if (result.types.indexOf("political") > -1) {
+                          result.omschrijving = result.formatted_address;
+                        } else {
+                          result.omschrijving = omschrijving;
+                        }
+                        result.bron = "Google Autocomplete/Geocode";
+                        return result;
+                      })
+                  );
+                  observer.complete();
+                } else {
+                  if (status === google.maps.GeocoderStatus.ZERO_RESULTS) {
+                    observer.complete();
+                  } else {
+                    observer.error(status);
+                  }
+                }
+              }
+            );
+          });
+        }),
+        retryWhen<ExtendedGeocoderResult[]>(this.googleServicesRetryStrategy)
+      );
+    } else {
+      return rx.EMPTY;
+    }
+  }
+
+  private loadGemeenteGeometrie(
+    resultaat: ExtendedGeocoderResult | ExtendedPlaceResult
+  ): Observable<ExtendedGeocoderResult | ExtendedPlaceResult> {
     const isGemeente = resultaat.types.indexOf("locality") > -1;
     const isDeelgemeente = resultaat.types.indexOf("sublocality") > -1;
 
     if (isGemeente || isDeelgemeente) {
-      let gemeenteNaam =
-        resultaat.address_components == null
-          ? null
-          : resultaat.address_components
-              .filter(address_component => address_component.types.indexOf("locality") > -1)
-              .map(address_component => address_component.short_name)[0];
-      gemeenteNaam = gemeenteNaam || resultaat.name;
+      let gemeenteNaam;
+      if (resultaat.address_components != null) {
+        const shortNames = resultaat.address_components
+          .filter(address_component => address_component.types.indexOf("locality") > -1)
+          .map(address_component => address_component.short_name);
+        gemeenteNaam = shortNames[0];
+      }
+      gemeenteNaam = gemeenteNaam || resultaat["name"];
 
-      const url =
-        `${
-          this.locatieZoekerUrl
-        }/gemeente?naam=${gemeenteNaam}&latLng=${resultaat.geometry.location.lat()},${resultaat.geometry.location.lng()}` +
-        `&isGemeente=${isGemeente}&isDeelgemeente=${isDeelgemeente}`;
-
-      return this.httpClient
-        .get(url)
-        .pipe(
+      if (gemeenteNaam) {
+        const url =
+          `${this.locatieZoekerUrl}/gemeente?naam=${gemeenteNaam}` +
+          `&latLng=${resultaat.geometry.location.lat()},${resultaat.geometry.location.lng()}` +
+          `&isGemeente=${isGemeente}&isDeelgemeente=${isDeelgemeente}`;
+        return this.httpClient.get(url).pipe(
           map(res => {
             resultaat.locatie = res;
             return resultaat;
           })
-        )
-        .toPromise();
+        );
+      } else {
+        return rx.of(resultaat);
+      }
     } else {
-      return Promise.resolve(resultaat);
+      return rx.of(resultaat);
     }
   }
 
@@ -515,5 +540,23 @@ export class ZoekerGoogleWdbService implements Zoeker {
     }&libraries=places&language=nl&callback=__onGoogleLoaded`;
     node.type = "text/javascript";
     document.getElementsByTagName("head")[0].appendChild(node);
+  }
+
+  private specificErrorRetryStrategy(opts: SpecificErrorRetryStrategyOpts): (attempts: Observable<any>) => Observable<number> {
+    return (attempts: Observable<any>) => {
+      return attempts.pipe(
+        mergeMap((error, i) => {
+          const retryAttempt = i + 1;
+          // if maximum number of retries have been met
+          // or response is not an error message we wish to retry, throw error
+          if (retryAttempt > opts.maxRetryAttempts || !opts.errorMessagesForRetry.find(e => e === error)) {
+            kaartLogger.warn(`Retry: error na ${retryAttempt} pogingen: ${error}`);
+            return rx.throwError(error);
+          }
+          kaartLogger.info(`Retry: poging ${retryAttempt}: probeer opnieuw in ${opts.retryDelay}ms`);
+          return timer(opts.retryDelay);
+        })
+      );
+    };
   }
 }
