@@ -20,6 +20,7 @@ import * as rx from "rxjs";
 import { map, share, tap } from "rxjs/operators";
 
 import { ToegevoegdeLaag } from "../kaart";
+import { KaartLocaties } from "../kaart/kaart-bevragen/laaginfo.model";
 import { forChangedValue, KaartComponentBase } from "../kaart/kaart-component-base";
 import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "../kaart/kaart-event-dispatcher";
 import * as prt from "../kaart/kaart-protocol";
@@ -39,6 +40,7 @@ import {
   KaartClassicSubMsg,
   logOnlyWrapper,
   MiddelpuntAangepastMsg,
+  PublishedKaartLocatiesMsg,
   SubscribedMsg,
   VoorgrondHoogLagenInGroepAangepastMsg,
   VoorgrondLaagLagenInGroepAangepastMsg,
@@ -98,11 +100,13 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   @Output()
   hoverFeature: EventEmitter<Option<ol.Feature>> = new EventEmitter();
   @Output()
-  achtergrondLagen: EventEmitter<List<ToegevoegdeLaag>> = new EventEmitter<List<ToegevoegdeLaag>>();
+  achtergrondLagen: EventEmitter<List<ToegevoegdeLaag>> = new EventEmitter();
   @Output()
-  voorgrondHoogLagen: EventEmitter<List<ToegevoegdeLaag>> = new EventEmitter<List<ToegevoegdeLaag>>();
+  voorgrondHoogLagen: EventEmitter<List<ToegevoegdeLaag>> = new EventEmitter();
   @Output()
-  voorgrondLaagLagen: EventEmitter<List<ToegevoegdeLaag>> = new EventEmitter<List<ToegevoegdeLaag>>();
+  voorgrondLaagLagen: EventEmitter<List<ToegevoegdeLaag>> = new EventEmitter();
+  @Output()
+  kaartLocaties: EventEmitter<KaartLocaties> = new EventEmitter();
 
   @ViewChild("kaart", { read: ElementRef })
   mapElement: ElementRef;
@@ -118,6 +122,8 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
         share() // 1 rx subscription naar boven toe is genoeg
       );
 
+      // Deze blok lift de boodschappen van de kaart component naar boodschappen voor de classic componenten
+      // Alle messages die door 1 van de classic componenten de geconsumeerd worden, moet hier vertaald worden.
       this.bindToLifeCycle(
         this.kaartClassicSubMsg$.lift(
           classicMsgSubscriptionCmdOperator(
@@ -178,6 +184,12 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
                 VoorgrondLaagLagenInGroepAangepastMsg,
                 KaartClassicMsg
               )
+            ),
+            prt.PublishedKaartLocatiesSubscription(
+              pipe(
+                PublishedKaartLocatiesMsg,
+                KaartClassicMsg
+              )
             )
           )
         )
@@ -207,6 +219,8 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
             return this.voorgrondHoogLagen.emit(msg.lagen);
           case "VoorgrondLaagLagenInGroepAangepast":
             return this.voorgrondLaagLagen.emit(msg.lagen);
+          case "PublishedKaartLocaties":
+            return this.kaartLocaties.emit(msg.locaties);
           default:
             return; // Op de andere boodschappen reageren we niet
         }

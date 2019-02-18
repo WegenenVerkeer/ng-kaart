@@ -6,7 +6,7 @@ import * as ol from "openlayers";
 
 import { TypedRecord } from "../util/typed-record";
 
-import { LaagLocationInfo } from "./kaart-bevragen/laaginfo.model";
+import { Adres, LaagLocationInfo, WegLocatie } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { VectorLaag } from "./kaart-elementen";
 
@@ -76,21 +76,6 @@ export const foldInfoBoodschap = (boodschap: InfoBoodschap) => <A>(
       return ifKaartBevragen(boodschap);
   }
 };
-
-export interface WegLocatie {
-  readonly ident8: string;
-  readonly hm: number;
-  readonly afstand: number;
-  readonly wegbeheerder: string;
-  readonly projectieafstand: number;
-}
-
-export interface Adres {
-  readonly straat: string;
-  readonly huisnummer: string;
-  readonly postcode: string;
-  readonly gemeente: string;
-}
 
 export interface Groeplagen {
   readonly laaggroep: ke.Laaggroep;

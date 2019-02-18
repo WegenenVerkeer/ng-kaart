@@ -1,6 +1,8 @@
+import { Function1 } from "fp-ts/lib/function";
 import { List } from "immutable";
 import * as ol from "openlayers";
 
+import { KaartLocaties, WegLocatie } from "../kaart";
 import * as ke from "../kaart/kaart-elementen";
 import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
 import * as prt from "../kaart/kaart-protocol";
@@ -34,6 +36,7 @@ export type KaartClassicSubMsg =
   | PrecacheProgressMsg
   | VoorgrondHoogLagenInGroepAangepastMsg
   | VoorgrondLaagLagenInGroepAangepastMsg
+  | PublishedKaartLocatiesMsg
   | DummyMsg;
 
 export interface FeatureSelectieAangepastMsg {
@@ -85,6 +88,11 @@ export interface ViewAangepastMsg {
 export interface MiddelpuntAangepastMsg {
   readonly type: "MiddelpuntAangepast";
   readonly middelpunt: ol.Coordinate;
+}
+
+export interface PublishedKaartLocatiesMsg {
+  readonly type: "PublishedKaartLocaties";
+  readonly locaties: KaartLocaties;
 }
 
 export interface ExtentAangepastMsg {
@@ -171,6 +179,11 @@ export const ViewAangepastMsg: (_: prt.Viewinstellingen) => ViewAangepastMsg = v
 export const MiddelpuntAangepastMsg: (_: ol.Coordinate) => MiddelpuntAangepastMsg = middelpunt => ({
   type: "MiddelpuntAangepast",
   middelpunt: middelpunt
+});
+
+export const PublishedKaartLocatiesMsg: Function1<KaartLocaties, PublishedKaartLocatiesMsg> = locaties => ({
+  type: "PublishedKaartLocaties",
+  locaties: locaties
 });
 
 export const ExtentAangepastMsg: (_: ol.Extent) => ExtentAangepastMsg = ext => ({ type: "ExtentAangepast", extent: ext });

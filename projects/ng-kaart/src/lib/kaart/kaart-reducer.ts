@@ -627,7 +627,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
-    function veranderRotatieCmd(cmnd: prt.VeranderRotatieCmd<Msg>): ModelWithResult<Msg> {
+    function veranderRotatieCmd(cmnd: prt.VeranderRotatieCmd): ModelWithResult<Msg> {
       model.map.getView().animate({
         rotation: cmnd.rotatie,
         duration: cmnd.animationDuration.getOrElse(0)
@@ -906,7 +906,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       };
     };
 
-    function activeerSelectieModus(cmnd: prt.ActiveerSelectieModusCmd<Msg>): ModelWithResult<Msg> {
+    function activeerSelectieModus(cmnd: prt.ActiveerSelectieModusCmd): ModelWithResult<Msg> {
       function getSelectInteraction(modus: prt.SelectieModus): Option<olx.interaction.SelectOptions> {
         switch (modus) {
           case "single":
@@ -956,17 +956,17 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
-    function deactiveerSelectieModus(cmnd: prt.DeactiveerSelectieModusCmd<Msg>): ModelWithResult<Msg> {
+    function deactiveerSelectieModus(cmnd: prt.DeactiveerSelectieModusCmd): ModelWithResult<Msg> {
       model.selectInteracties.forEach(i => model.map.removeInteraction(i));
       return ModelWithResult(model);
     }
 
-    function reactiveerSelectieModus(cmnd: prt.ReactiveerSelectieModusCmd<Msg>): ModelWithResult<Msg> {
+    function reactiveerSelectieModus(cmnd: prt.ReactiveerSelectieModusCmd): ModelWithResult<Msg> {
       model.selectInteracties.forEach(i => model.map.addInteraction(i));
       return ModelWithResult(model);
     }
 
-    function activeerHoverModus(cmnd: prt.ActiveerHoverModusCmd<Msg>): ModelWithResult<Msg> {
+    function activeerHoverModus(cmnd: prt.ActiveerHoverModusCmd): ModelWithResult<Msg> {
       function getHoverInteraction(modus: prt.HoverModus): Option<olx.interaction.SelectOptions> {
         switch (modus) {
           case "on":
@@ -988,7 +988,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
-    function activeerHighlightModus(cmnd: prt.ActiveerHighlightModusCmd<Msg>): ModelWithResult<Msg> {
+    function activeerHighlightModus(cmnd: prt.ActiveerHighlightModusCmd): ModelWithResult<Msg> {
       function getHighlightFeaturesInteraction(modus: prt.HighlightModus): Option<olx.interaction.SelectOptions> {
         switch (modus) {
           case "on":
@@ -1049,6 +1049,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           .map(laag => laag.bron as ke.VectorLaag)
       };
       updateBehaviorSubject(model.infoBoodschappenSubj, bsch => bsch.set(boodschap.id, boodschap));
+      return ModelWithResult(model);
+    }
+
+    function publishKaartLocaties(cmnd: prt.PublishKaartLocatiesCmd): ModelWithResult<Msg> {
+      model.publishedKaartLocatiesSubj.next(cmnd.locaties);
       return ModelWithResult(model);
     }
 
@@ -1393,6 +1398,13 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return modelWithSubscriptionResult("Tekenen", model.tekenSettingsSubj.pipe(distinctUntilChanged()).subscribe(consumeMessage(sub)));
       }
 
+      function subscribeToPublishedKaartLocaties(sub: prt.PublishedKaartLocatiesSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult(
+          "PublishedKaartLocaties",
+          model.publishedKaartLocatiesSubj.pipe(distinctUntilChanged()).subscribe(consumeMessage(sub))
+        );
+      }
+
       function subscribeToActieveModus(sub: prt.ActieveModusSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult("ActieveModus", modelChanges.actieveModus$.subscribe(consumeMessage(sub)));
       }
@@ -1449,6 +1461,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToGeometryChanged(cmnd.subscription);
         case "Tekenen":
           return subscribeToTekenen(cmnd.subscription);
+        case "PublishedKaartLocaties":
+          return subscribeToPublishedKaartLocaties(cmnd.subscription);
         case "InfoBoodschap":
           return subscribeToInfoBoodschappen(cmnd.subscription);
         case "ComponentFout":
@@ -1578,6 +1592,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return zetUiElementOpties(cmd);
       case "ZetActieveModus":
         return zetActieveModus(cmd);
+      case "PublishKaartLocaties":
+        return publishKaartLocaties(cmd);
       case "VoegLaagLocatieInformatieServiceToe":
         return voegLaagLocatieInformatieServiceToe(cmd);
       case "BewerkVectorlaagstijl":
