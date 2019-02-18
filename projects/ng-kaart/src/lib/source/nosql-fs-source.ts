@@ -1,4 +1,4 @@
-import { Function1, Function2, Function3 } from "fp-ts/lib/function";
+import { Function1, Function2, Function3, Function4 } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
@@ -14,6 +14,7 @@ const FETCH_TIMEOUT = 5000; // max time to wait for data from featureserver befo
 
 const format = new ol.format.GeoJSON();
 const decoder = new TextDecoder();
+const featureDelimiter = "\n";
 
 /**
  * Stappen:
@@ -56,7 +57,7 @@ const geoJsons: Function1<string[], GeoJsonLike[]> = volledigeLijnen => {
   }
 };
 
-const olFeature: Function2<string, GeoJsonLike, ol.Feature> = (laagnaam, geojson) =>
+const toOlFeature: Function2<string, GeoJsonLike, ol.Feature> = (laagnaam, geojson) =>
   new ol.Feature({
     id: geojson.id,
     properties: geojson.properties,
@@ -64,7 +65,46 @@ const olFeature: Function2<string, GeoJsonLike, ol.Feature> = (laagnaam, geojson
     laagnaam: laagnaam
   });
 
-const observableFromResponse$: Function3<string, string, Response, rx.Observable<GeoJsonLike>> = (
+interface ResponseResult {
+  value: Uint8Array;
+  done: boolean;
+}
+
+const verwerkChunk: Function4<ResponseResult, string, () => rx.Observable<ResponseResult>, rx.Subscriber<GeoJsonLike>, void> = (
+  responseResult,
+  restData,
+  getNextResponseObs$,
+  subscriber
+) => {
+  restData += decoder.decode(responseResult.value || new Uint8Array(0), {
+    stream: !responseResult.done
+  }); // append nieuwe data (in geval er een half ontvangen lijn is van vorige call)
+
+  let ontvangenLijnen = restData.split(featureDelimiter);
+
+  if (!responseResult.done) {
+    // laatste lijn is vermoedelijk niet compleet. Hou bij voor volgende keer
+    restData = ontvangenLijnen[ontvangenLijnen.length - 1];
+    // verwijder gedeeltelijke lijn
+    ontvangenLijnen = ontvangenLijnen.slice(0, -1);
+  }
+
+  geoJsons(ontvangenLijnen).map(geojson => subscriber.next(geojson));
+
+  if (!responseResult.done) {
+    getNextResponseObs$().subscribe(
+      response => verwerkChunk(response, restData, getNextResponseObs$, subscriber),
+      error => subscriber.error(error)
+    );
+  } else {
+    subscriber.complete();
+  }
+};
+
+const getReaderResponseObs$: Function1<ReadableStreamReader, rx.Observable<ResponseResult>> = reader =>
+  rx.from<ResponseResult>(reader.read());
+
+const getReceivedFeaturesObs$: Function3<string, string, Response, rx.Observable<GeoJsonLike>> = (
   collection,
   featureDelimiter,
   response
@@ -80,47 +120,15 @@ const observableFromResponse$: Function3<string, string, Response, rx.Observable
       return;
     }
 
-    let restData = "";
-    let teParsenFeatureGroep: string[] = [];
-
     const reader = response.body.getReader();
-    reader
-      .read()
-      .then(function verwerkChunk({ done, value }) {
-        restData += decoder.decode(value || new Uint8Array(0), {
-          stream: !done
-        }); // append nieuwe data (in geval er een half ontvangen lijn is van vorige call)
-
-        let ontvangenLijnen = restData.split(featureDelimiter);
-
-        if (!done) {
-          // laatste lijn is vermoedelijk niet compleet. Hou bij voor volgende keer
-          restData = ontvangenLijnen[ontvangenLijnen.length - 1];
-          // verwijder gedeeltelijke lijn
-          ontvangenLijnen = ontvangenLijnen.slice(0, -1);
-        }
-
-        // verwerk in batches van 100
-        teParsenFeatureGroep = teParsenFeatureGroep.concat(ontvangenLijnen);
-        if (teParsenFeatureGroep.length > 100 || done) {
-          geoJsons(teParsenFeatureGroep).map(geojson => subscriber.next(geojson));
-          teParsenFeatureGroep = [];
-        }
-
-        if (!done) {
-          reader.read().then(verwerkChunk);
-        } else {
-          subscriber.complete();
-        }
-      })
-      .catch(reason => {
-        subscriber.error(reason);
-      });
+    getReaderResponseObs$(reader).subscribe(
+      response => verwerkChunk(response, "", () => getReaderResponseObs$(reader), subscriber), //
+      error => subscriber.error(error)
+    );
   });
 };
 
 export class NosqlFsSource extends ol.source.Vector {
-  private static readonly featureDelimiter = "\n";
   private readonly loadEventSubj = new rx.Subject<le.DataLoadEvent>();
   readonly loadEvent$: rx.Observable<le.DataLoadEvent> = this.loadEventSubj;
   private offline = false;
@@ -153,7 +161,7 @@ export class NosqlFsSource extends ol.source.Vector {
     source.fetchFeatures$(extent).subscribe(
       geojson => {
         source.dispatchLoadEvent(le.PartReceived);
-        source.addFeature(olFeature(source.titel, geojson));
+        source.addFeature(toOlFeature(source.titel, geojson));
         if (source.gebruikCache) {
           geojsonStore.writeFeature(source.laagnaam, geojson);
         }
@@ -182,7 +190,7 @@ export class NosqlFsSource extends ol.source.Vector {
         kaartLogger.debug(`${geojsons.length} features opgehaald uit cache`);
         return geojsons.map(geojson => {
           source.dispatchLoadEvent(le.PartReceived);
-          source.addFeature(olFeature(source.titel, geojson));
+          source.addFeature(toOlFeature(source.titel, geojson));
         });
       })
       .then(() => source.dispatchLoadComplete())
@@ -215,7 +223,7 @@ export class NosqlFsSource extends ol.source.Vector {
         credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
       },
       FETCH_TIMEOUT
-    ).pipe(switchMap(response => observableFromResponse$(this.laagnaam, NosqlFsSource.featureDelimiter, response)));
+    ).pipe(switchMap(response => getReceivedFeaturesObs$(this.laagnaam, featureDelimiter, response)));
   }
 
   fetchFeaturesByWkt$(wkt: string): rx.Observable<GeoJsonLike> {
@@ -228,7 +236,7 @@ export class NosqlFsSource extends ol.source.Vector {
         body: wkt
       },
       FETCH_TIMEOUT
-    ).pipe(switchMap(response => observableFromResponse$(this.laagnaam, NosqlFsSource.featureDelimiter, response)));
+    ).pipe(switchMap(response => getReceivedFeaturesObs$(this.laagnaam, featureDelimiter, response)));
   }
 
   setOffline(offline: boolean) {
