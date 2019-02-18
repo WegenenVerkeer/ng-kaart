@@ -70,11 +70,11 @@ interface ResponseResult {
   done: boolean;
 }
 
-const verwerkChunk: Function4<ResponseResult, string, () => rx.Observable<ResponseResult>, rx.Subscriber<GeoJsonLike>, void> = (
+const verwerkChunk: Function4<ResponseResult, string, rx.Subscriber<GeoJsonLike>, () => rx.Observable<ResponseResult>, void> = (
   responseResult,
   restData,
-  getNextResponseObs$,
-  subscriber
+  subscriber,
+  getNextResponseObs$
 ) => {
   const nieuweData =
     restData +
@@ -93,7 +93,7 @@ const verwerkChunk: Function4<ResponseResult, string, () => rx.Observable<Respon
 
     // andere data ophalen
     getNextResponseObs$().subscribe(
-      response => verwerkChunk(response, newRestData, getNextResponseObs$, subscriber),
+      response => verwerkChunk(response, newRestData, subscriber, getNextResponseObs$),
       error => subscriber.error(error)
     );
   } else {
@@ -124,7 +124,7 @@ const getReceivedFeaturesObs$: Function3<string, string, Response, rx.Observable
 
     const reader = response.body.getReader();
     getReaderResponseObs$(reader).subscribe(
-      response => verwerkChunk(response, "", () => getReaderResponseObs$(reader), subscriber), //
+      response => verwerkChunk(response, "", subscriber, () => getReaderResponseObs$(reader)), //
       error => subscriber.error(error)
     );
   });
