@@ -32,14 +32,16 @@ const featureDelimiter = "\n";
 const geoJsonLike: Function1<string, GeoJsonLike> = lijn => {
   try {
     const geojson = JSON.parse(lijn) as GeoJsonLike;
-    geojson.metadata = {
-      minx: geojson.geometry.bbox[0],
-      miny: geojson.geometry.bbox[1],
-      maxx: geojson.geometry.bbox[2],
-      maxy: geojson.geometry.bbox[3],
-      toegevoegd: new Date()
+    return {
+      ...geojson,
+      metadata: {
+        minx: geojson.geometry.bbox[0],
+        miny: geojson.geometry.bbox[1],
+        maxx: geojson.geometry.bbox[2],
+        maxy: geojson.geometry.bbox[3],
+        toegevoegd: new Date()
+      }
     };
-    return geojson;
   } catch (error) {
     kaartLogger.error(`Kon JSON data niet parsen: ${error}`);
     throw new Error(`Kon JSON data niet parsen: ${error}`);
