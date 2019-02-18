@@ -2,7 +2,6 @@ import { Function1, Function2, Function3 } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { Observable } from "rxjs";
 import { switchMap } from "rxjs/operators";
 
 import * as le from "../kaart/kaart-load-events";
@@ -21,8 +20,10 @@ const decoder = new TextDecoder();
 
  1. Er komt een extent binnen van de kaart om de features op te vragen
  2. NosqlfsLoader gaat de features voor die extent opvragen aan featureserver
- 3. Bij ontvangen van de features worden deze bewaard in een indexeddb (1 per laag), gemanaged door ng-kaart
- 4. Indien NosqlfsLoader binnen 5 seconden geen antwoord heeft gekregen, worden de features uit de indexeddb gehaald
+ 3. Bij ontvangen van de features worden deze bewaard in een indexeddb (1 per laag), gemanaged door ng-kaart. Moeten bestaande niet eerst
+    verwijderd worden?
+ 4. Indien NosqlfsLoader binnen 5 seconden geen antwoord heeft gekregen, worden eventueel bestaande features binnen de extent uit
+    de indexeddb gehaald
 
  */
 
@@ -63,7 +64,11 @@ const olFeature: Function2<string, GeoJsonLike, ol.Feature> = (laagnaam, geojson
     laagnaam: laagnaam
   });
 
-const observableFromResponse$: Function3<string, string, Response, Observable<GeoJsonLike>> = (collection, featureDelimiter, response) => {
+const observableFromResponse$: Function3<string, string, Response, rx.Observable<GeoJsonLike>> = (
+  collection,
+  featureDelimiter,
+  response
+) => {
   return rx.Observable.create((subscriber: rx.Subscriber<GeoJsonLike>) => {
     if (!response.ok) {
       subscriber.error(`Probleem bij ontvangen nosql ${collection} data: status ${response.status} ${response.statusText}`);
@@ -201,7 +206,7 @@ export class NosqlFsSource extends ol.source.Vector {
       .join("&")}`;
   }
 
-  fetchFeatures$(extent: number[]): Observable<GeoJsonLike> {
+  fetchFeatures$(extent: number[]): rx.Observable<GeoJsonLike> {
     return fetchWithTimeout(
       this.composeUrl(extent),
       {
@@ -213,7 +218,7 @@ export class NosqlFsSource extends ol.source.Vector {
     ).pipe(switchMap(response => observableFromResponse$(this.laagnaam, NosqlFsSource.featureDelimiter, response)));
   }
 
-  fetchFeaturesByWkt$(wkt: string): Observable<GeoJsonLike> {
+  fetchFeaturesByWkt$(wkt: string): rx.Observable<GeoJsonLike> {
     return fetchWithTimeout(
       this.composeUrl(),
       {
