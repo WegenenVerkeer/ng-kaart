@@ -76,27 +76,29 @@ const verwerkChunk: Function4<ResponseResult, string, () => rx.Observable<Respon
   getNextResponseObs$,
   subscriber
 ) => {
-  restData += decoder.decode(responseResult.value || new Uint8Array(0), {
-    stream: !responseResult.done
-  }); // append nieuwe data (in geval er een half ontvangen lijn is van vorige call)
+  const nieuweData =
+    restData +
+    decoder.decode(responseResult.value || new Uint8Array(0), {
+      stream: !responseResult.done
+    }); // append nieuwe data (in geval er een half ontvangen lijn is van vorige call)
 
-  let ontvangenLijnen = restData.split(featureDelimiter);
+  const ontvangenLijnen = nieuweData.split(featureDelimiter);
 
   if (!responseResult.done) {
     // laatste lijn is vermoedelijk niet compleet. Hou bij voor volgende keer
-    restData = ontvangenLijnen[ontvangenLijnen.length - 1];
-    // verwijder gedeeltelijke lijn
-    ontvangenLijnen = ontvangenLijnen.slice(0, -1);
-  }
+    const newRestData = ontvangenLijnen[ontvangenLijnen.length - 1];
 
-  geoJsons(ontvangenLijnen).map(geojson => subscriber.next(geojson));
+    // parse alle lijnen behalve de laatste (vermoedelijk gedeeltelijke lijn)
+    geoJsons(ontvangenLijnen.slice(0, -1)).map(geojson => subscriber.next(geojson));
 
-  if (!responseResult.done) {
+    // andere data ophalen
     getNextResponseObs$().subscribe(
-      response => verwerkChunk(response, restData, getNextResponseObs$, subscriber),
+      response => verwerkChunk(response, newRestData, getNextResponseObs$, subscriber),
       error => subscriber.error(error)
     );
   } else {
+    // alle data werd ontvangen, stuur laatste features door
+    geoJsons(ontvangenLijnen).map(geojson => subscriber.next(geojson));
     subscriber.complete();
   }
 };
