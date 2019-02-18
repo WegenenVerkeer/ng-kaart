@@ -93,7 +93,7 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
   ) {
     this.dispatch(
       prt.ToonInfoBoodschapCmd({
-        id: "Kaart bevragen",
+        id: "kaart_bevragen",
         type: "InfoBoodschapKaartBevragen",
         titel: "Kaart bevragen",
         sluit: "DOOR_APPLICATIE",
