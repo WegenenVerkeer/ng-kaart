@@ -2,7 +2,7 @@ import { HttpClient } from "@angular/common/http";
 import * as array from "fp-ts/lib/Array";
 import { concat, Function1 } from "fp-ts/lib/function";
 import * as rx from "rxjs";
-import { map, mergeMap, scan } from "rxjs/operators";
+import { map, mergeMap, scan, concatMap } from "rxjs/operators";
 
 import * as arrays from "../../util/arrays";
 import { Pipeable, subSpy } from "../../util/operators";
@@ -117,7 +117,7 @@ const waypointOpsToRouteOperation: Function1<RoutingService, Pipeable<WaypointOp
   );
 
   return routeStateChangesObs.pipe(
-    mergeMap(changes =>
+    concatMap(changes =>
       rx.concat(
         rx.from(changes.routeChanges.routesRemoved).pipe(map(removal => RouteRemoved(removal.id, removal.begin.id))),
         rx.from(changes.routeChanges.routesAdded).pipe(
