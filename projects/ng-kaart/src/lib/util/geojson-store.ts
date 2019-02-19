@@ -55,6 +55,14 @@ const get = (db: DB, storename: string, key: any): Observable<GeoJsonLike> =>
       .get(key)
   );
 
+const deleteFeature = (db: DB, storename: string, key: any): Observable<void> =>
+  from(
+    db
+      .transaction(storename)
+      .objectStore<GeoJsonLike, any>(storename)
+      .delete(key)
+  );
+
 const getAll = (db: DB, storename: string): Observable<GeoJsonLike> =>
   from(
     db
@@ -83,6 +91,26 @@ const getAllKeys = (db: DB, storename: string, idx: string, keyRange: IDBKeyRang
       .objectStore<GeoJsonLike, any>(storename)
       .index(idx)
       .getAllKeys(keyRange)
+  );
+
+export const deleteFeatures = (storename: string, extent: ol.Extent): Observable<number> =>
+  forkJoin(
+    getLower(storename, "minx", extent[0]),
+    getLower(storename, "miny", extent[1]),
+    getUpper(storename, "maxx", extent[2]),
+    getUpper(storename, "maxy", extent[3])
+  ).pipe(
+    map(([minXs, minYs, maxXs, maxYs]) => intersect(maxYs, intersect(maxXs, intersect(minXs, minYs)))),
+    mergeMap(keys => deleteFeaturesByKeys(storename, keys))
+  );
+
+const deleteFeaturesByKeys = (storename: string, keys: any[]): Observable<number> =>
+  openStore(storename).pipe(
+    mergeMap(db => {
+      const tx = db.transaction(storename, "readwrite");
+      keys.map(key => tx.objectStore<GeoJsonLike, any>(storename).delete(key));
+      return from(tx.complete).pipe(map(() => keys.length));
+    })
   );
 
 export const writeFeatures = (storename: string, features: GeoJsonLike[]): Observable<number> =>

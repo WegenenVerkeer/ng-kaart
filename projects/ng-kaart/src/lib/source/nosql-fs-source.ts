@@ -3,7 +3,7 @@ import { Function1, Function2 } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { bufferCount, filter, last, map, mergeMap, scan, share } from "rxjs/operators";
+import { bufferCount, filter, last, map, mergeMap, reduce, scan, share, tap } from "rxjs/operators";
 
 import * as le from "../kaart/kaart-load-events";
 import { kaartLogger } from "../kaart/log";
@@ -128,6 +128,8 @@ export class NosqlFsSource extends ol.source.Vector {
 
   private featuresFromServer(source, extent) {
     source.dispatchLoadEvent(le.LoadStart);
+
+    // voeg de features toe aan de kaart
     source
       .fetchFeatures$(extent)
       .pipe(bufferCount(BATCH_SIZE))
@@ -135,9 +137,6 @@ export class NosqlFsSource extends ol.source.Vector {
         geojsons => {
           source.dispatchLoadEvent(le.PartReceived);
           source.addFeatures(geojsons.map(geojson => toOlFeature(source.titel, geojson)));
-          if (source.gebruikCache) {
-            geojsonStore.writeFeatures(source.laagnaam, geojsons);
-          }
         },
         error => {
           if (source.gebruikCache) {
@@ -153,6 +152,22 @@ export class NosqlFsSource extends ol.source.Vector {
           source.dispatchLoadComplete();
         }
       );
+
+    // vervang de oude features in cache door de nieuwe ontvangen features
+    source
+      .fetchFeatures$(extent)
+      .pipe(reduce((acc, val) => acc.concat(val), []))
+      .subscribe(geojsons => {
+        if (source.gebruikCache) {
+          geojsonStore
+            .deleteFeatures(source.laagnaam, extent)
+            .pipe(
+              tap(aantal => kaartLogger.debug(`${aantal} features verwijderd uit cache`)),
+              mergeMap(() => geojsonStore.writeFeatures(source.laagnaam, geojsons))
+            )
+            .subscribe(aantal => kaartLogger.debug(`${aantal} features weggeschreven in cache`));
+        }
+      });
   }
 
   private featuresFromCache(source, extent) {
