@@ -35,8 +35,6 @@ export interface GeoJsonLike {
 const openStore = (storename: string): Observable<idb.DB> => {
   return from(
     idb.openDb(indexedb_db_naam, 1, upgradeDB => {
-      // Note: we don't use 'break' in this switch statement,
-      // the fall-through behaviour is what we want.
       switch (upgradeDB.oldVersion) {
         case 0:
           const store = upgradeDB.createObjectStore(storename, { keyPath: "id" });

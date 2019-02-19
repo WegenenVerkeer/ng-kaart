@@ -64,7 +64,6 @@ const toGeoJson: Pipeable<string, GeoJsonLike> = obs =>
   obs.pipe(
     map(lijn => {
       try {
-        // TODO: safer parsing
         const geojson = JSON.parse(lijn) as GeoJsonLike;
         return {
           ...geojson,
