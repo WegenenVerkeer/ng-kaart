@@ -8,14 +8,33 @@ const decoder = new TextDecoder();
 
 const byteToText: Pipeable<Uint8Array, string> = obs => obs.pipe(map(arr => decoder.decode(arr)));
 
+const responseToReader: Pipeable<Response, ReadableStreamReader> = obs =>
+  obs.pipe(
+    map(response => {
+      if (!response.ok) {
+        throw Error(`Probleem bij ontvangen nosql data: status ${response.status} ${response.statusText}`);
+      }
+      if (!response.body) {
+        throw Error(`Probleem bij ontvangen nosql data: response.body is leeg`);
+      }
+      if (response.status !== 200) {
+        throw Error(`Probleem bij ontvangen nosql data: response status code ${response.status}`);
+      }
+
+      return response.body.getReader();
+    })
+  );
+
 export const fetchObs$: Function2<string, RequestInit, rx.Observable<string>> = (url, options) =>
-  rx.from(fetch(url, options).then(resp => resp.body.getReader())).pipe(
+  rx.from(fetch(url, options)).pipe(
+    responseToReader,
     switchMap(readerToObservable),
     byteToText
   );
 
 export const fetchWithTimeoutObs$: Function3<string, RequestInit, number, rx.Observable<string>> = (url, options, timeout) =>
-  rx.from(fetchWithTimeout(url, options, timeout).then(resp => resp.body.getReader())).pipe(
+  rx.from(fetchWithTimeout(url, options, timeout)).pipe(
+    responseToReader,
     switchMap(readerToObservable),
     byteToText
   );
