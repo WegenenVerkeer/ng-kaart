@@ -26,7 +26,7 @@ export interface GeometryRoute {
   version: number;
   begin: Waypoint;
   end: Waypoint;
-  geometry: ol.geom.Geometry;
+  geometry: ol.geom.MultiLineString;
 }
 
 export type RouteEventId = string;
@@ -38,7 +38,7 @@ export interface RouteAdded {
   readonly id: RouteEventId;
   readonly version: number;
   readonly startWaypointId: WaypointId; // we moeten weten waar in de volgorde van deelroutes dit thuis hoort om de lengte te kunnen meten
-  readonly geometry: ol.geom.Geometry;
+  readonly geometry: ol.geom.MultiLineString;
 }
 
 export function routeAdded(geometryRoute: GeometryRoute): RouteAdded {

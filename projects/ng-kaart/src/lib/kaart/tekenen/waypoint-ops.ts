@@ -172,18 +172,15 @@ function filterRouteEvent(filteredRouteEvent: FilteredRouteEvent, routeEvent: Ro
       routeEvent: some(routeEvent)
     },
     previousVersion => {
-      if (previousVersion > routeEvent.version) {
-        console.log("++++++++", "rejected", routeEvent);
-        return {
-          versions: filteredRouteEvent.versions,
-          routeEvent: none
-        };
-      } else {
-        return {
-          versions: strmap.insert(routeEvent.id, routeEvent.version, filteredRouteEvent.versions),
-          routeEvent: some(routeEvent)
-        };
-      }
+      return previousVersion > routeEvent.version
+        ? {
+            versions: filteredRouteEvent.versions,
+            routeEvent: none
+          }
+        : {
+            versions: strmap.insert(routeEvent.id, routeEvent.version, filteredRouteEvent.versions),
+            routeEvent: some(routeEvent)
+          };
     }
   );
 }

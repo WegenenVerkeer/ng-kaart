@@ -1,4 +1,5 @@
 import { HttpClient } from "@angular/common/http";
+import * as array from "fp-ts/lib/Array";
 import * as ol from "openlayers";
 import { Observable } from "rxjs";
 import * as rx from "rxjs";
@@ -6,6 +7,7 @@ import { catchError, map } from "rxjs/operators";
 
 import { Interpreter } from "../../stijl/json-object-interpreting";
 import * as st from "../../stijl/json-object-interpreting";
+import { matchGeometryType } from "../../util";
 import { kaartLogger } from "../log";
 
 import { GeometryRoute, ProtoRoute } from "./route.msg";
@@ -18,7 +20,7 @@ interface WegNode {
 interface WegEdge {
   fromNode: WegNode;
   toNode: WegNode;
-  geometry: ol.geom.Geometry;
+  multiline: ol.geom.MultiLineString;
 }
 
 const toWegNode: Interpreter<WegNode> = st.interpretRecord({
@@ -28,9 +30,18 @@ const toWegNode: Interpreter<WegNode> = st.interpretRecord({
 
 const geoJSONformat = new ol.format.GeoJSON();
 
-const toGeometry: Interpreter<ol.geom.Geometry> = json => {
+const toMultiLine: Interpreter<ol.geom.MultiLineString> = json => {
   try {
-    return st.ok(geoJSONformat.readGeometry(json, { dataProjection: "EPSG:31370", featureProjection: "EPSG:31370" }));
+    const geom = geoJSONformat.readGeometry(json, { dataProjection: "EPSG:31370", featureProjection: "EPSG:31370" });
+    return matchGeometryType(geom, {
+      lineString: line => new ol.geom.MultiLineString([line.getCoordinates()]),
+      multiLineString: multiline => multiline
+    }).foldL(
+      () => {
+        throw new Error(`Nietondersteunde geometry ${geom.getType()} bij het extraheren van coordinaten`);
+      },
+      ml => st.ok(ml)
+    );
   } catch (e) {
     return st.fail("Kon GeoJson niet parsen: " + e);
   }
@@ -39,7 +50,7 @@ const toGeometry: Interpreter<ol.geom.Geometry> = json => {
 const toWegEdge: Interpreter<WegEdge> = st.interpretRecord({
   fromNode: st.field("fromNode", toWegNode),
   toNode: st.field("toNode", toWegNode),
-  geometry: st.field("geometry", toGeometry)
+  multiline: st.field("geometry", toMultiLine)
 });
 
 const toWegEdges: Interpreter<Array<WegEdge>> = st.arr(toWegEdge);
@@ -76,7 +87,7 @@ export class VerfijndeRoutingService implements RoutingService {
         version: protoRoute.version,
         begin: protoRoute.begin,
         end: protoRoute.end,
-        geometry: new ol.geom.GeometryCollection(wegEdges.map(edge => edge.geometry))
+        geometry: new ol.geom.MultiLineString(array.flatten(wegEdges.map(edge => edge.multiline.getCoordinates())))
       }))
     );
   }
@@ -89,7 +100,7 @@ export class SimpleRoutingService implements RoutingService {
       version: protoRoute.version,
       begin: protoRoute.begin,
       end: protoRoute.end,
-      geometry: new ol.geom.LineString([protoRoute.begin.location, protoRoute.end.location])
+      geometry: new ol.geom.MultiLineString([[protoRoute.begin.location, protoRoute.end.location]])
     });
   }
 }
