@@ -256,7 +256,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   ngOnChanges(changes: SimpleChanges) {
     const dispatch: (cmd: prt.Command<TypedRecord>) => void = cmd => this.dispatch(cmd);
     forChangedValue(changes, "zoom", zoom => this.dispatch(prt.VeranderZoomCmd(zoom, logOnlyWrapper)));
-    forChangedValue(changes, "middelpunt", middelpunt => prt.VeranderMiddelpuntCmd(middelpunt, none));
+    forChangedValue(changes, "middelpunt", middelpunt => this.dispatch(prt.VeranderMiddelpuntCmd(middelpunt, none)));
     forChangedValue(
       changes,
       "extent",
