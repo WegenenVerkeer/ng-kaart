@@ -129,44 +129,40 @@ export class NosqlFsSource extends ol.source.Vector {
   private featuresFromServer(source, extent) {
     source.dispatchLoadEvent(le.LoadStart);
 
+    const fetchFeaturesObs$ = source.fetchFeatures$(extent);
+
     // voeg de features toe aan de kaart
-    source
-      .fetchFeatures$(extent)
-      .pipe(bufferCount(BATCH_SIZE))
-      .subscribe(
-        geojsons => {
-          source.dispatchLoadEvent(le.PartReceived);
-          source.addFeatures(geojsons.map(geojson => toOlFeature(source.titel, geojson)));
-        },
-        error => {
-          if (source.gebruikCache) {
-            // fallback to cache
-            kaartLogger.debug("Request niet gelukt, we gaan naar cache " + error);
-            source.featuresFromCache(source, extent);
-          } else {
-            kaartLogger.error(error);
-            source.dispatchLoadError(error);
-          }
-        },
-        () => {
-          source.dispatchLoadComplete();
+    fetchFeaturesObs$.pipe(bufferCount(BATCH_SIZE)).subscribe(
+      geojsons => {
+        source.dispatchLoadEvent(le.PartReceived);
+        source.addFeatures(geojsons.map(geojson => toOlFeature(source.titel, geojson)));
+      },
+      error => {
+        if (source.gebruikCache) {
+          // fallback to cache
+          kaartLogger.debug("Request niet gelukt, we gaan naar cache " + error);
+          source.featuresFromCache(source, extent);
+        } else {
+          kaartLogger.error(error);
+          source.dispatchLoadError(error);
         }
-      );
+      },
+      () => {
+        source.dispatchLoadComplete();
+      }
+    );
 
     // vervang de oude features in cache door de nieuwe ontvangen features
     if (source.gebruikCache) {
-      source
-        .fetchFeatures$(extent)
-        .pipe(reduce((acc, val) => acc.concat(val), []))
-        .subscribe(geojsons => {
-          geojsonStore
-            .deleteFeatures(source.laagnaam, extent)
-            .pipe(
-              tap(aantal => kaartLogger.debug(`${aantal} features verwijderd uit cache`)),
-              mergeMap(() => geojsonStore.writeFeatures(source.laagnaam, geojsons))
-            )
-            .subscribe(aantal => kaartLogger.debug(`${aantal} features weggeschreven in cache`));
-        });
+      fetchFeaturesObs$.pipe(reduce((acc, val) => acc.concat(val), [])).subscribe(geojsons => {
+        geojsonStore
+          .deleteFeatures(source.laagnaam, extent)
+          .pipe(
+            tap(aantal => kaartLogger.debug(`${aantal} features verwijderd uit cache`)),
+            mergeMap(() => geojsonStore.writeFeatures(source.laagnaam, geojsons))
+          )
+          .subscribe(aantal => kaartLogger.debug(`${aantal} features weggeschreven in cache`));
+      });
     }
   }
 
