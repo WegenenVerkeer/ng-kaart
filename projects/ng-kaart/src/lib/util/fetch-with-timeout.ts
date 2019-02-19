@@ -4,9 +4,7 @@ import { map, switchMap } from "rxjs/operators";
 
 import { Pipeable } from "./operators";
 
-const decoder = new TextDecoder();
-
-const byteToText: Pipeable<Uint8Array, string> = obs => obs.pipe(map(arr => decoder.decode(arr)));
+const byteToText: Pipeable<Uint8Array, string> = obs => obs.pipe(map(arr => new TextDecoder().decode(arr)));
 
 const responseToReader: Pipeable<Response, ReadableStreamReader> = obs =>
   obs.pipe(
