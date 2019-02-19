@@ -76,19 +76,27 @@ const toGeoJson: Pipeable<string, GeoJsonLike> = obs =>
           }
         };
       } catch (error) {
-        kaartLogger.error(`Kon JSON data niet parsen: ${error}`);
-        throw new Error(`Kon JSON data niet parsen: ${error}`);
+        const msg = `Kan JSON data niet parsen: ${error}`;
+        kaartLogger.error(msg);
+        throw new Error(msg);
       }
     })
   );
 
-const toOlFeature: Function2<string, GeoJsonLike, ol.Feature> = (laagnaam, geojson) =>
-  new ol.Feature({
-    id: geojson.id,
-    properties: geojson.properties,
-    geometry: format.readGeometry(geojson.geometry),
-    laagnaam: laagnaam
-  });
+const toOlFeature: Function2<string, GeoJsonLike, ol.Feature> = (laagnaam, geojson) => {
+  try {
+    return new ol.Feature({
+      id: geojson.id,
+      properties: geojson.properties,
+      geometry: format.readGeometry(geojson.geometry),
+      laagnaam: laagnaam
+    });
+  } catch (error) {
+    const msg = `Kan geometry niet parsen: ${error}`;
+    kaartLogger.error(msg);
+    throw new Error(msg);
+  }
+};
 
 export class NosqlFsSource extends ol.source.Vector {
   private readonly loadEventSubj = new rx.Subject<le.DataLoadEvent>();
