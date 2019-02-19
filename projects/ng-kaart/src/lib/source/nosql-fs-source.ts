@@ -140,7 +140,7 @@ export class NosqlFsSource extends ol.source.Vector {
       error => {
         if (source.gebruikCache) {
           // fallback to cache
-          kaartLogger.debug("Request niet gelukt, we gaan naar cache " + error);
+          kaartLogger.info("Request niet gelukt, we gaan naar cache " + error);
           source.featuresFromCache(source, extent);
         } else {
           kaartLogger.error(error);
@@ -158,10 +158,10 @@ export class NosqlFsSource extends ol.source.Vector {
         geojsonStore
           .deleteFeatures(source.laagnaam, extent)
           .pipe(
-            tap(aantal => kaartLogger.debug(`${aantal} features verwijderd uit cache`)),
+            tap(aantal => kaartLogger.info(`${aantal} features verwijderd uit cache`)),
             mergeMap(() => geojsonStore.writeFeatures(source.laagnaam, geojsons))
           )
-          .subscribe(aantal => kaartLogger.debug(`${aantal} features weggeschreven in cache`));
+          .subscribe(aantal => kaartLogger.info(`${aantal} features weggeschreven in cache`));
       });
     }
   }
