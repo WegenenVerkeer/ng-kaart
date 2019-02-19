@@ -50,7 +50,7 @@ const split: Function1<string, Pipeable<string, string>> = delimiter => obs => {
     share()
   );
   return rx.merge(
-    splitterState$.pipe(mergeMap<SplitterState, string>(s => rx.from(s.output))),
+    splitterState$.pipe(mergeMap(s => rx.from(s.output))),
     splitterState$.pipe(
       // we mogen de laatste output niet verliezen
       last(),
