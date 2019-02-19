@@ -154,11 +154,11 @@ export class NosqlFsSource extends ol.source.Vector {
       );
 
     // vervang de oude features in cache door de nieuwe ontvangen features
-    source
-      .fetchFeatures$(extent)
-      .pipe(reduce((acc, val) => acc.concat(val), []))
-      .subscribe(geojsons => {
-        if (source.gebruikCache) {
+    if (source.gebruikCache) {
+      source
+        .fetchFeatures$(extent)
+        .pipe(reduce((acc, val) => acc.concat(val), []))
+        .subscribe(geojsons => {
           geojsonStore
             .deleteFeatures(source.laagnaam, extent)
             .pipe(
@@ -166,8 +166,8 @@ export class NosqlFsSource extends ol.source.Vector {
               mergeMap(() => geojsonStore.writeFeatures(source.laagnaam, geojsons))
             )
             .subscribe(aantal => kaartLogger.debug(`${aantal} features weggeschreven in cache`));
-        }
-      });
+        });
+    }
   }
 
   private featuresFromCache(source, extent) {
