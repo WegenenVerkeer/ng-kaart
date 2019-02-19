@@ -1,13 +1,14 @@
 import { HttpClient } from "@angular/common/http";
 import * as array from "fp-ts/lib/Array";
 import { concat, Function1 } from "fp-ts/lib/function";
-import { none, Option, some } from "fp-ts/lib/Option";
+import { none, None, Option, some } from "fp-ts/lib/Option";
 import * as strmap from "fp-ts/lib/StrMap";
+import { Tuple } from "fp-ts/lib/Tuple";
 import * as rx from "rxjs";
 import { map, mergeMap, scan } from "rxjs/operators";
 
 import * as arrays from "../../util/arrays";
-import { Pipeable, subSpy } from "../../util/operators";
+import { catOptions, Pipeable, scanState, subSpy } from "../../util/operators";
 import { toArray } from "../../util/option";
 
 import { createRoute, ProtoRoute, routeAdded, RouteEvent, routeRemoved } from "./route.msg";
@@ -21,8 +22,8 @@ function updateVersions(versions: Versions, protoRoutes: Array<ProtoRoute>): Ver
 }
 
 export interface RouteState {
-  waypoints: Array<Waypoint>;
-  versions: Versions;
+  readonly waypoints: Array<Waypoint>;
+  readonly versions: Versions;
 }
 
 export interface RouteChanges {
@@ -30,23 +31,11 @@ export interface RouteChanges {
   readonly routesRemoved: Array<ProtoRoute>;
 }
 
-interface RouteStateTransition {
-  readonly routeState: RouteState;
-  readonly routeChanges: RouteChanges;
+export function emptyRouteState(): RouteState {
+  return <RouteState>{ waypoints: [], versions: new strmap.StrMap<number>({}) };
 }
 
-const initialRouteStateTransition: RouteStateTransition = {
-  routeState: {
-    waypoints: [],
-    versions: new strmap.StrMap<number>({})
-  },
-  routeChanges: {
-    routesAdded: [],
-    routesRemoved: []
-  }
-};
-
-export function removeWaypoint(routeState: RouteState, RemoveWaypoint: RemoveWaypoint): RouteStateTransition {
+export function removeWaypoint(routeState: RouteState, RemoveWaypoint: RemoveWaypoint): Tuple<RouteState, RouteChanges> {
   const id = RemoveWaypoint.waypoint.id;
 
   const maybePreviousWaypoint = arrays.previousElement(routeState.waypoints)(wp => wp.id === id);
@@ -59,35 +48,35 @@ export function removeWaypoint(routeState: RouteState, RemoveWaypoint: RemoveWay
   const routeAdded = maybePreviousWaypoint.chain(pwp => maybeNextWaypoint.map(nwp => createRoute(pwp, nwp, routeState.versions)));
   const routesAdded = toArray(routeAdded);
 
-  return {
-    routeChanges: {
-      routesAdded: routesAdded,
-      routesRemoved: routesRemoved
-    },
-    routeState: {
+  return new Tuple(
+    {
       waypoints: arrays
         .deleteFirst(routeState.waypoints)(wp => wp.id === RemoveWaypoint.waypoint.id)
         .getOrElse(routeState.waypoints),
       versions: updateVersions(routeState.versions, concat(routesRemoved, routesAdded))
+    },
+    {
+      routesAdded: routesAdded,
+      routesRemoved: routesRemoved
     }
-  };
+  );
 }
 
-export function addWaypoint(routeState: RouteState, addWaypoint: AddWaypoint): RouteStateTransition {
+export function addWaypoint(routeState: RouteState, addWaypoint: AddWaypoint): Tuple<RouteState, RouteChanges> {
   return addWaypoint.previous.foldL(
     () => {
       const routesAdded = toArray(array.head(routeState.waypoints).map(e => createRoute(addWaypoint.waypoint, e, routeState.versions)));
 
-      return {
-        routeChanges: {
-          routesAdded: routesAdded,
-          routesRemoved: []
-        },
-        routeState: {
+      return new Tuple(
+        {
           waypoints: [addWaypoint.waypoint].concat(routeState.waypoints),
           versions: updateVersions(routeState.versions, routesAdded)
+        },
+        {
+          routesAdded: routesAdded,
+          routesRemoved: []
         }
-      };
+      );
     },
     previous => {
       const maybeOldNextWaypoint = arrays.nextElement(routeState.waypoints)(wp => wp.id === previous.id);
@@ -99,29 +88,29 @@ export function addWaypoint(routeState: RouteState, addWaypoint: AddWaypoint): R
 
       const routesRemoved = toArray(maybeRouteToRemove);
 
-      return {
-        routeChanges: {
-          routesAdded: routesAdded,
-          routesRemoved: toArray(maybeRouteToRemove)
-        },
-        routeState: {
+      return new Tuple(
+        {
           waypoints: arrays
             .insertAfter(routeState.waypoints)(wp => wp.id === previous.id)(addWaypoint.waypoint)
             .getOrElse(routeState.waypoints),
           versions: updateVersions(routeState.versions, concat(routesRemoved, routesAdded))
+        },
+        {
+          routesAdded: routesAdded,
+          routesRemoved: toArray(maybeRouteToRemove)
         }
-      };
+      );
     }
   );
 }
 
-function nextRouteStateChanges(previous: RouteStateTransition, waypointOps: WaypointOperation): RouteStateTransition {
+function nextRouteStateChanges(previousRouteState: RouteState, waypointOps: WaypointOperation): Tuple<RouteState, RouteChanges> {
   switch (waypointOps.type) {
     case "RemoveWaypoint":
-      return removeWaypoint(previous.routeState, waypointOps);
+      return removeWaypoint(previousRouteState, waypointOps);
 
     case "AddWaypoint":
-      return addWaypoint(previous.routeState, waypointOps);
+      return addWaypoint(previousRouteState, waypointOps);
   }
 }
 
@@ -134,15 +123,15 @@ export function routesViaRoutering(http: HttpClient): Pipeable<WaypointOperation
 }
 
 const waypointOpsToRouteOperation: Function1<RoutingService, Pipeable<WaypointOperation, RouteEvent>> = routingService => waypointOpss => {
-  const routeStateChangesObs: rx.Observable<RouteStateTransition> = subSpy("****routeStateChanges")(
-    waypointOpss.pipe(scan(nextRouteStateChanges, initialRouteStateTransition))
+  const routeChangesObs: rx.Observable<RouteChanges> = subSpy("****routeStateChanges")(
+    scanState(waypointOpss, nextRouteStateChanges, emptyRouteState())
   );
 
-  const routeEventObs = routeStateChangesObs.pipe(
-    mergeMap(changes =>
+  const routeEventObs = routeChangesObs.pipe(
+    mergeMap(routeChanges =>
       rx.concat(
-        rx.from(changes.routeChanges.routesRemoved).pipe(map(routeRemoved)),
-        rx.from(changes.routeChanges.routesAdded).pipe(
+        rx.from(routeChanges.routesRemoved).pipe(map(routeRemoved)),
+        rx.from(routeChanges.routesAdded).pipe(
           mergeMap(protoRoute => routingService.resolve(protoRoute)),
           map(routeAdded)
         )
@@ -150,37 +139,15 @@ const waypointOpsToRouteOperation: Function1<RoutingService, Pipeable<WaypointOp
     )
   );
 
-  const filteredRouteEventObs = subSpy("****filteredRouteEvent")(routeEventObs.pipe(scan(filterRouteEvent, initialFilteredRouteEvent)));
-
-  return filteredRouteEventObs.pipe(mergeMap(filteredRouteEvent => filteredRouteEvent.routeEvent.fold(rx.empty(), re => rx.of(re))));
+  return catOptions(subSpy("****filteredRouteEvent")(scanState(routeEventObs, filterRouteEvent, new strmap.StrMap<number>({}))));
 };
 
-interface FilteredRouteEvent {
-  versions: Versions;
-  routeEvent: Option<RouteEvent>;
-}
-
-const initialFilteredRouteEvent: FilteredRouteEvent = {
-  versions: new strmap.StrMap<number>({}),
-  routeEvent: none
-};
-
-function filterRouteEvent(filteredRouteEvent: FilteredRouteEvent, routeEvent: RouteEvent): FilteredRouteEvent {
-  return strmap.lookup(routeEvent.id, filteredRouteEvent.versions).fold(
-    {
-      versions: strmap.insert(routeEvent.id, routeEvent.version, filteredRouteEvent.versions),
-      routeEvent: some(routeEvent)
-    },
-    previousVersion => {
+function filterRouteEvent(versions: Versions, routeEvent: RouteEvent): Tuple<Versions, Option<RouteEvent>> {
+  return strmap
+    .lookup(routeEvent.id, versions)
+    .fold(new Tuple(strmap.insert(routeEvent.id, routeEvent.version, versions), some(routeEvent)), previousVersion => {
       return previousVersion > routeEvent.version
-        ? {
-            versions: filteredRouteEvent.versions,
-            routeEvent: none
-          }
-        : {
-            versions: strmap.insert(routeEvent.id, routeEvent.version, filteredRouteEvent.versions),
-            routeEvent: some(routeEvent)
-          };
-    }
-  );
+        ? new Tuple(versions, none)
+        : new Tuple(strmap.insert(routeEvent.id, routeEvent.version, versions), some(routeEvent));
+    });
 }

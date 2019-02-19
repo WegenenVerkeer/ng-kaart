@@ -1,5 +1,6 @@
 import { Function1, Function2, Refinement } from "fp-ts/lib/function";
 import { isSome, Option } from "fp-ts/lib/Option";
+import { Tuple } from "fp-ts/lib/Tuple";
 import * as rx from "rxjs";
 import { filter, map, scan, skipUntil, switchMap } from "rxjs/operators";
 
@@ -132,4 +133,15 @@ export function scan2<A, B, C>(
   };
 
   return rx.merge(obsA.pipe(TagA), rx.merge(obsB.pipe(TagB))).pipe(scan(accumulate, init));
+}
+
+export function scanState<A, S, B>(obsA: rx.Observable<A>, runState: Function2<S, A, Tuple<S, B>>, seed?: S, rseed?: B): rx.Observable<B> {
+  const initial: Tuple<S, B> = new Tuple(seed, rseed);
+
+  const accumulate: Function2<Tuple<S, B>, A, Tuple<S, B>> = (ps, a) => runState(ps.fst, a);
+
+  return obsA.pipe(
+    scan(accumulate, initial),
+    map(ps => ps.snd)
+  );
 }
