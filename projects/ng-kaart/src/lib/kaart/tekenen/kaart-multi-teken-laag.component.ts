@@ -58,6 +58,7 @@ interface DrawState {
   readonly map: ol.Map; // Misschien moeten we de interacties via dispatchCmd op de OL map zetten, dan hebbenn we ze hier niet nodig
   readonly featureColour: clr.Kleur;
   readonly drawInteractions: ol.interaction.Interaction[];
+  readonly selectInteraction: Option<ol.interaction.Select>;
   readonly pointFeatures: ol.Feature[];
   readonly nextId: number;
   readonly dragFeature: Option<ol.Feature>;
@@ -76,6 +77,7 @@ const initialState: Function1<ol.Map, DrawState> = olMap => ({
   map: olMap,
   featureColour: clr.zwartig,
   drawInteractions: [],
+  selectInteraction: none,
   pointFeatures: [],
   nextId: 0,
   dragFeature: none,
@@ -90,6 +92,7 @@ const PointProperties: Function2<Option<ol.Feature>, Option<ol.Feature>, PointPr
 
 type DrawLens<A> = Lens<DrawState, A>;
 const drawInteractionsLens: DrawLens<ol.interaction.Interaction[]> = Lens.fromProp("drawInteractions");
+const selectInteractionLens: DrawLens<Option<ol.interaction.Select>> = Lens.fromProp("selectInteraction");
 const pointFeaturesLens: DrawLens<ol.Feature[]> = Lens.fromProp("pointFeatures");
 const nextIdLens: DrawLens<number> = Lens.fromProp("nextId");
 const incrementNextId: Endomorphism<DrawState> = nextIdLens.modify(n => n + 1);
@@ -244,7 +247,7 @@ function drawStateTransformer(
         filter: selectFilter,
         multi: false
       });
-      const drawInteractions = [drawInteraction, modifyInteraction, selectInteraction];
+      const drawInteractions = [drawInteraction, modifyInteraction];
       drawInteraction.on("drawend", handleAdd);
       modifyInteraction.on("modifyend", handleFeatureMove);
       selectInteraction.on("select", handleSelect);
@@ -269,9 +272,11 @@ function drawStateTransformer(
         wrapper: kaartLogOnlyWrapper
       });
       drawInteractions.forEach(inter => state.map.addInteraction(inter));
+      state.map.addInteraction(selectInteraction);
       const moveKey = state.map.on("pointermove", handlePointermove(featurePicker(state.map), modifySource)) as ol.GlobalObject;
       return applySequential([
         drawInteractionsLens.set(drawInteractions),
+        selectInteractionLens.set(some(selectInteraction)),
         listenersLens.set([moveKey]),
         featureColourLens.set(ops.featureColour)
       ]);
@@ -281,12 +286,14 @@ function drawStateTransformer(
       dispatchCmd(VerwijderLaagCmd(PuntLaagNaam, kaartLogOnlyWrapper));
       dispatchCmd(VerwijderLaagCmd(SegmentLaagNaam, kaartLogOnlyWrapper));
       state.drawInteractions.forEach(inter => state.map.removeInteraction(inter));
+      forEach(state.selectInteraction, inter => state.map.removeInteraction(inter));
       state.listeners.forEach(key => ol.Observable.unByKey(key));
       return identity; // Hierna gooien we onze state toch weg -> mag corrupt zijn
     }
 
     case "StopDrawing": {
       state.drawInteractions.forEach(inter => state.map.removeInteraction(inter));
+      forEach(state.selectInteraction, inter => state.map.removeInteraction(inter));
       state.listeners.forEach(key => ol.Observable.unByKey(key));
       return applySequential([drawInteractionsLens.set([]), listenersLens.set([])]);
     }
@@ -365,7 +372,7 @@ function drawStateTransformer(
           updatePointProperties(replaceNext(maybeNext))(previous);
           forEach(maybeNext, updatePointProperties(replacePrevious(maybePrevious)));
           const newFeatures = array.filter(state.pointFeatures, f => f.getId() !== ops.feature.getId());
-          (state.drawInteractions[2] as ol.interaction.Select).getFeatures().clear(); // Hack. Beter: select interactie afzonderlijk opslaan
+          forEach(state.selectInteraction, interaction => interaction.getFeatures().clear());
           dispatchCmd(prt.VervangFeaturesCmd(PuntLaagNaam, List(newFeatures), kaartLogOnlyWrapper));
           forEach(
             toWaypoint(ops.feature),
@@ -495,7 +502,7 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
               startWith(startCmd), // We mogen ons startcommando niet verliezen omdat daar configuratie in zit
               scan(
                 drawOpsReducer(
-                  ops => asap(() => this.internalDrawOpsSubj.next(ops)), // TODO ipv deze 3 functies, steek actie in resultaat
+                  ops => asap(() => this.internalDrawOpsSubj.next(ops)), // achteraf gezien beter om scanState functie te gebruiken
                   ops => asap(() => waypointObsSubj.next(ops)),
                   cmd => this.dispatch(cmd)
                 ),
