@@ -135,7 +135,7 @@ export function scan2<A, B, C>(
   return rx.merge(obsA.pipe(TagA), rx.merge(obsB.pipe(TagB))).pipe(scan(accumulate, init));
 }
 
-export function scanState<A, S, B>(obsA: rx.Observable<A>, runState: Function2<S, A, Tuple<S, B>>, seed?: S, rseed?: B): rx.Observable<B> {
+export function scanState<A, S, B>(obsA: rx.Observable<A>, runState: Function2<S, A, Tuple<S, B>>, seed: S, rseed: B): rx.Observable<B> {
   const initial: Tuple<S, B> = new Tuple(seed, rseed);
 
   const accumulate: Function2<Tuple<S, B>, A, Tuple<S, B>> = (ps, a) => runState(ps.fst, a);

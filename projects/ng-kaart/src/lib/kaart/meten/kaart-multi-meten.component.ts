@@ -41,9 +41,9 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
     toonInfoBoodschap: true
   };
 
-  protected optionsVisible = false;
-  protected inStateStraight = true;
-  protected inStateViaRoad = false;
+  optionsVisible = false;
+  inStateStraight = true;
+  inStateViaRoad = false;
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);

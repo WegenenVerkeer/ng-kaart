@@ -34,10 +34,10 @@ const formatLength: Function1<number, string> = length => {
   styleUrls: ["./kaart-info-boodschap-meten.component.scss"]
 })
 export class KaartInfoBoodschapMetenComponent extends KaartChildComponentBase {
-  protected length?: string;
-  protected area?: string;
-  protected lengthCopyInfo?: string;
-  protected areaCopyInfo?: string;
+  length?: string;
+  area?: string;
+  lengthCopyInfo?: string;
+  areaCopyInfo?: string;
 
   @Input()
   set boodschap(bsch: InfoBoodschapMeten) {
@@ -51,12 +51,14 @@ export class KaartInfoBoodschapMetenComponent extends KaartChildComponentBase {
     super(parent, zone);
   }
 
-  copyToClipboard(toCopy: string) {
-    const elem = document.createElement("textarea");
-    elem.value = toCopy;
-    document.body.appendChild(elem);
-    elem.select();
-    document.execCommand("copy");
-    document.body.removeChild(elem);
+  copyToClipboard(toCopy?: string) {
+    if (toCopy) {
+      const elem = document.createElement("textarea");
+      elem.value = toCopy;
+      document.body.appendChild(elem);
+      elem.select();
+      document.execCommand("copy");
+      document.body.removeChild(elem);
+    }
   }
 }

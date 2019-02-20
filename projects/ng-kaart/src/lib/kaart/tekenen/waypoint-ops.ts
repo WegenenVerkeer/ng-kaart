@@ -31,9 +31,9 @@ export interface RouteChanges {
   readonly routesRemoved: Array<ProtoRoute>;
 }
 
-export function emptyRouteState(): RouteState {
-  return <RouteState>{ waypoints: [], versions: new strmap.StrMap<number>({}) };
-}
+export const emptyRouteState: RouteState = { waypoints: [], versions: new strmap.StrMap<number>({}) };
+
+export const emptyRouteChanges: RouteChanges = { routesAdded: [], routesRemoved: [] };
 
 export function removeWaypoint(routeState: RouteState, RemoveWaypoint: RemoveWaypoint): Tuple<RouteState, RouteChanges> {
   const id = RemoveWaypoint.waypoint.id;
@@ -123,7 +123,7 @@ export function routesViaRoutering(http: HttpClient): Pipeable<WaypointOperation
 }
 
 const waypointOpsToRouteOperation: Function1<RoutingService, Pipeable<WaypointOperation, RouteEvent>> = routingService => waypointOpss => {
-  const routeChangesObs: rx.Observable<RouteChanges> = scanState(waypointOpss, nextRouteStateChanges, emptyRouteState());
+  const routeChangesObs: rx.Observable<RouteChanges> = scanState(waypointOpss, nextRouteStateChanges, emptyRouteState, emptyRouteChanges);
 
   const routeEventObs = routeChangesObs.pipe(
     mergeMap(routeChanges =>
@@ -137,7 +137,7 @@ const waypointOpsToRouteOperation: Function1<RoutingService, Pipeable<WaypointOp
     )
   );
 
-  return catOptions(scanState(routeEventObs, filterRouteEvent, new strmap.StrMap<number>({})));
+  return catOptions(scanState(routeEventObs, filterRouteEvent, new strmap.StrMap<number>({}), none));
 };
 
 function filterRouteEvent(versions: Versions, routeEvent: RouteEvent): Tuple<Versions, Option<RouteEvent>> {
