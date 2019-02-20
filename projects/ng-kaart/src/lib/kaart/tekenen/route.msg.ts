@@ -1,4 +1,3 @@
-import { Option } from "fp-ts/lib/Option";
 import * as strmap from "fp-ts/lib/StrMap";
 
 import { Versions } from "./waypoint-ops";

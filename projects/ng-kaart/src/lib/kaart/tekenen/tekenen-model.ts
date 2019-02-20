@@ -12,7 +12,7 @@ import { WaypointOperation } from "./waypoint.msg";
 // DrawOps: Operaties op het niveau van (ver)plaatsen en verwijderen van punten op de OL map
 //
 
-export type DrawOps = StartDrawing | StopDrawing | AddPoint | DraggingPoint | MovePoint | DeletePoint;
+export type DrawOps = StartDrawing | StopDrawing | RedrawRoute | AddPoint | DraggingPoint | MovePoint | DeletePoint;
 
 export type PointId = number;
 
@@ -25,6 +25,11 @@ export interface StartDrawing {
 
 export interface StopDrawing {
   readonly type: "StopDrawing";
+}
+
+export interface RedrawRoute {
+  readonly type: "RedrawRoute";
+  readonly useRouting: boolean;
 }
 
 export interface AddPoint {
@@ -56,6 +61,10 @@ export const isStartDrawing: Refinement<DrawOps, StartDrawing> = (ops): ops is S
 
 const stopDrawing: StopDrawing = { type: "StopDrawing" };
 export const StopDrawing: Lazy<StopDrawing> = constant(stopDrawing);
+
+export const RedrawRoute: Function1<boolean, RedrawRoute> = useRouting => ({ type: "RedrawRoute", useRouting: useRouting });
+
+export const isRedrawRoute: Refinement<DrawOps, RedrawRoute> = (ops): ops is RedrawRoute => ops.type === "RedrawRoute";
 
 export const AddPoint: Function1<ol.Coordinate, AddPoint> = coord => ({ type: "AddPoint", coordinate: coord });
 

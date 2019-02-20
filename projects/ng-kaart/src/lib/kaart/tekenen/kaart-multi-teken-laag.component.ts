@@ -2,11 +2,12 @@ import { HttpClient } from "@angular/common/http";
 import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 import * as array from "fp-ts/lib/Array";
 import { Endomorphism, Function1, Function2, Function3, identity, pipe, Predicate, Refinement } from "fp-ts/lib/function";
-import { fromNullable, fromPredicate, none, Option, some } from "fp-ts/lib/Option";
+import { fromNullable, fromPredicate, none, option, Option, some } from "fp-ts/lib/Option";
 import { setoidString } from "fp-ts/lib/Setoid";
 import { List, OrderedMap } from "immutable";
 import { Lens, Optional } from "monocle-ts";
 import * as ol from "openlayers";
+import { start } from "repl";
 import * as rx from "rxjs";
 import { debounceTime, filter, map, scan, share, startWith, switchMap, take, tap, withLatestFrom } from "rxjs/operators";
 
@@ -36,7 +37,17 @@ import { kaartLogger } from "../log";
 import * as ss from "../stijl-selector";
 
 import { RouteEvent, RouteEventId } from "./route.msg";
-import { AddPoint, DeletePoint, DraggingPoint, DrawOps, isStartDrawing, MovePoint, StartDrawing } from "./tekenen-model";
+import {
+  AddPoint,
+  DeletePoint,
+  DraggingPoint,
+  DrawOps,
+  isRedrawRoute,
+  isStartDrawing,
+  MovePoint,
+  RedrawRoute,
+  StartDrawing
+} from "./tekenen-model";
 import { directeRoutes, routesViaRoutering } from "./waypoint-ops";
 import { AddWaypoint, RemoveWaypoint, Waypoint, WaypointId, WaypointOperation } from "./waypoint.msg";
 
@@ -50,13 +61,12 @@ interface DrawState {
   readonly featureColour: clr.Kleur;
   readonly drawInteractions: ol.interaction.Interaction[];
   readonly pointFeatures: ol.Feature[];
-  readonly firstPointFeature: Option<ol.Feature>;
   readonly nextId: number;
   readonly dragFeature: Option<ol.Feature>;
   readonly listeners: ol.GlobalObject[];
 }
 
-interface WaypointProperties {
+interface PointProperties {
   readonly type: "Waypoint";
   readonly previous: Option<ol.Feature>; // Het vorige punt in de dubbelgelinkte lijst van punten
   readonly next: Option<ol.Feature>; // Het volgende punt in de dubbelgelinkte lijst van punten
@@ -69,13 +79,12 @@ const initialState: Function1<ol.Map, DrawState> = olMap => ({
   featureColour: clr.zwartig,
   drawInteractions: [],
   pointFeatures: [],
-  firstPointFeature: none,
   nextId: 0,
   dragFeature: none,
   listeners: []
 });
 
-const WaypointProperties: Function2<Option<ol.Feature>, Option<ol.Feature>, WaypointProperties> = (previous, next) => ({
+const PointProperties: Function2<Option<ol.Feature>, Option<ol.Feature>, PointProperties> = (previous, next) => ({
   type: "Waypoint",
   next: next,
   previous: previous
@@ -87,15 +96,14 @@ const pointFeaturesLens: DrawLens<ol.Feature[]> = Lens.fromProp("pointFeatures")
 const nextIdLens: DrawLens<number> = Lens.fromProp("nextId");
 const incrementNextId: Endomorphism<DrawState> = nextIdLens.modify(n => n + 1);
 const dragFeatureLens: DrawLens<Option<ol.Feature>> = Lens.fromProp("dragFeature");
-const firstPointFeatureLens: DrawLens<Option<ol.Feature>> = Lens.fromProp("firstPointFeature");
 const listenersLens: DrawLens<ol.GlobalObject[]> = Lens.fromProp("listeners");
 const featureColourLens: DrawLens<clr.Kleur> = Lens.fromProp("featureColour");
 
-type PointFeaturePropertyLens<A> = Lens<WaypointProperties, A>;
+type PointFeaturePropertyLens<A> = Lens<PointProperties, A>;
 const nextLens: PointFeaturePropertyLens<Option<ol.Feature>> = Lens.fromProp("next");
 const previousLens: PointFeaturePropertyLens<Option<ol.Feature>> = Lens.fromProp("previous");
-const replaceNext: Function1<Option<ol.Feature>, Endomorphism<WaypointProperties>> = nextLens.set;
-const replacePrevious: Function1<Option<ol.Feature>, Endomorphism<WaypointProperties>> = previousLens.set;
+const replaceNext: Function1<Option<ol.Feature>, Endomorphism<PointProperties>> = nextLens.set;
+const replacePrevious: Function1<Option<ol.Feature>, Endomorphism<PointProperties>> = previousLens.set;
 
 // Een (endo)functie die alle (endo)functies na elkaar uitvoert. Lijkt heel sterk op pipe.
 const applySequential: <S>(es: Endomorphism<S>[]) => Endomorphism<S> = fas => s => fas.reduce((s, fa) => fa(s), s);
@@ -138,7 +146,7 @@ const featurePicker: Function1<ol.Map, FeaturePicker> = map => pixel => {
 
 const isPoint: Refinement<ol.geom.Geometry, ol.geom.Point> = (geom): geom is ol.geom.Point => geom instanceof ol.geom.Point;
 const isNumber: Refinement<any, number> = (value): value is number => typeof value === "number";
-const isWaypointProperties: Refinement<any, WaypointProperties> = (value): value is WaypointProperties =>
+const isWaypointProperties: Refinement<any, PointProperties> = (value): value is PointProperties =>
   typeof value === "object" && fromNullable(value.type).exists(type => type === "Waypoint");
 
 const extractCoordinate: PartialFunction1<ol.Feature, ol.Coordinate> = feature =>
@@ -146,22 +154,22 @@ const extractCoordinate: PartialFunction1<ol.Feature, ol.Coordinate> = feature =
 
 const extractId: PartialFunction1<ol.Feature, number> = feature => fromNullable(feature.getId()).chain(fromPredicate(isNumber));
 
-const extractWaypointProperties: PartialFunction1<ol.Feature, WaypointProperties> = feature =>
+const extractPointProperties: PartialFunction1<ol.Feature, PointProperties> = feature =>
   fromPredicate(isWaypointProperties)(feature.getProperties());
 
 const toWaypoint: PartialFunction1<ol.Feature, Waypoint> = feature =>
   extractId(feature).chain(id => extractCoordinate(feature).map(coordinate => Waypoint(id, coordinate)));
 
-const findPreviousFeature: PartialFunction1<ol.Feature, ol.Feature> = feature => extractWaypointProperties(feature).chain(previousLens.get);
+const findPreviousFeature: PartialFunction1<ol.Feature, ol.Feature> = feature => extractPointProperties(feature).chain(previousLens.get);
 
-const findNextFeature: PartialFunction1<ol.Feature, ol.Feature> = feature => extractWaypointProperties(feature).chain(nextLens.get);
+const findNextFeature: PartialFunction1<ol.Feature, ol.Feature> = feature => extractPointProperties(feature).chain(nextLens.get);
 
 const findPreviousWaypoint: PartialFunction1<ol.Feature, Waypoint> = feature => findPreviousFeature(feature).chain(toWaypoint);
 
 const selectFilter: ol.SelectFilterFunction = feature => isWaypointProperties(feature.getProperties());
 
-const updatePointProperties: Function1<Endomorphism<WaypointProperties>, Consumer<ol.Feature>> = f => feature =>
-  forEach(extractWaypointProperties(feature), props => feature.setProperties(f(props)));
+const updatePointProperties: Function1<Endomorphism<PointProperties>, Consumer<ol.Feature>> = f => feature =>
+  forEach(extractPointProperties(feature), props => feature.setProperties(f(props)));
 
 function drawStateTransformer(
   dispatchDrawOps: Consumer<DrawOps>,
@@ -277,23 +285,33 @@ function drawStateTransformer(
       return identity; // Hierna gooien we onze state toch weg -> mag corrupt zijn
     }
 
+    case "RedrawRoute": {
+      // De bedoeling is om alle waypoints te behouden, maar de route opnieuw te laten tekenen.
+      // Wat we doen is een klein beetje tricky. We sturen alle waypoints opnieuw naar de observer
+      // die de route tekent. We rekenen erop dat die observer gereset is vooraleer hij die waypoints
+      // binnen krijgt. Dat is zo omdat de dispatch asynchroon gebeurt.
+      state.pointFeatures.forEach(feature => {
+        const maybePointProperties = extractPointProperties(feature);
+        const maybePreviousPoint: Option<Waypoint> = maybePointProperties.chain(p => p.previous).chain(toWaypoint);
+        const maybeCurrentWaypoint = toWaypoint(feature);
+        forEach(maybeCurrentWaypoint, currentWaypoint => dispatchWaypointOps(AddWaypoint(maybePreviousPoint, currentWaypoint)));
+      });
+      return identity; // geen state changes
+    }
+
     case "AddPoint": {
       const currentFeatures = pointFeaturesLens.get(state);
       const lastFeature = array.last(currentFeatures);
       const feature = new ol.Feature(new ol.geom.Point(ops.coordinate));
       feature.setId(state.nextId);
       feature.setStyle(createMarkerStyle(state.featureColour));
-      feature.setProperties(WaypointProperties(lastFeature, none));
+      feature.setProperties(PointProperties(lastFeature, none));
       forEach(lastFeature, updatePointProperties(replaceNext(some(feature))));
       feature.on("change", handleFeatureDrag);
       const newFeatures = array.snoc(currentFeatures, feature);
       dispatchWaypointOps(AddWaypoint(lastFeature.chain(toWaypoint), Waypoint(state.nextId, ops.coordinate)));
       dispatchCmd(prt.VervangFeaturesCmd(PuntLaagNaam, List(newFeatures), kaartLogOnlyWrapper));
-      return applySequential([
-        pointFeaturesLens.set(newFeatures),
-        firstPointFeatureLens.modify(fp => fp.orElse(() => some(feature))), // als er geen eerste punt was, dan is het huidige het eerste
-        incrementNextId
-      ]);
+      return applySequential([pointFeaturesLens.set(newFeatures), incrementNextId]);
     }
 
     case "DraggingPoint": {
@@ -340,10 +358,7 @@ function drawStateTransformer(
               dispatchWaypointOps
             )
           );
-          return applySequential([
-            pointFeaturesLens.set(newFeatures),
-            firstPointFeatureLens.modify(fp => (isEmpty(newFeatures) ? none : fp))
-          ]);
+          return applySequential([pointFeaturesLens.set(newFeatures)]);
         })
         .getOrElseL(() => {
           // Maak een Add command obv de coordinaten van de geklikte feature.
@@ -450,6 +465,7 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
 
     // Een event dat helpt om alle state te resetten
     const drawingStarts$: rx.Observable<StartDrawing> = drawEffects$.pipe(filter(isStartDrawing));
+    const redrawStarts$: rx.Observable<RedrawRoute> = drawEffects$.pipe(filter(isRedrawRoute));
 
     // Maak een subject waar de drawReducer kan in schrijven
     const waypointObsSubj: rx.Subject<WaypointOperation> = new rx.Subject();
@@ -479,8 +495,20 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
     // Laat de segmenten berekenen
     const routeSegmentOps$: Function1<boolean, rx.Observable<RouteEvent>> = useRouting =>
       subSpy("***waypointOps")(waypointObsSubj).pipe(useRouting ? routesViaRoutering(http) : directeRoutes());
+
     const initialRouteSegmentState: RouteSegmentState = { featuresByStartWaypointId: {}, featuresByRouteId: {} };
-    const routeEventProcessor$ = drawingStarts$.pipe(
+
+    interface DrawOptions {
+      readonly useRouting: boolean;
+      readonly featureColour: clr.Kleur;
+    }
+
+    const routingStart$: rx.Observable<DrawOptions> = rx.merge(drawingStarts$, redrawStarts$).pipe(
+      withLatestFrom(drawingStarts$),
+      map(([{ useRouting }, start]) => ({ useRouting: useRouting, featureColour: start.featureColour }))
+    );
+
+    const routeEventProcessor$ = routingStart$.pipe(
       switchMap(start =>
         subSpy("***routeSegmentOps")(routeSegmentOps$(start.useRouting)).pipe(
           scan(routeSegmentReducer(start.featureColour), initialRouteSegmentState),

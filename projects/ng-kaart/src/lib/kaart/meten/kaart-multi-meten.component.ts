@@ -13,7 +13,7 @@ import { KaartModusComponent } from "../kaart-modus-component";
 import * as prt from "../kaart-protocol";
 import { DrawOpsCmd } from "../kaart-protocol-commands";
 import { KaartComponent } from "../kaart.component";
-import { StartDrawing, StopDrawing } from "../tekenen/tekenen-model";
+import { RedrawRoute, StartDrawing, StopDrawing } from "../tekenen/tekenen-model";
 
 export const MultiMetenUiSelector = "MultiMeten";
 
@@ -70,6 +70,10 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
     useRouting: false,
     toonInfoBoodschap: true
   };
+
+  protected optionsVisible = false;
+  protected inStateStraight = true;
+  protected inStateViaRoad = false;
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
@@ -150,14 +154,32 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
 
   activeer() {
     this.startMetMeten();
+    this.toonOpties();
   }
 
   deactiveer() {
     this.stopMetenEnVerbergBoodschapen();
+    this.verbergOpties();
+  }
+
+  rechteLijn() {
+    if (!this.inStateStraight) {
+      this.inStateStraight = true;
+      this.inStateViaRoad = false;
+      this.dispatch(DrawOpsCmd(RedrawRoute(false)));
+    }
+  }
+
+  viaWeg() {
+    if (!this.inStateViaRoad) {
+      this.inStateStraight = false;
+      this.inStateViaRoad = true;
+      this.dispatch(DrawOpsCmd(RedrawRoute(true)));
+    }
   }
 
   private startMetMeten(): void {
-    this.dispatch(DrawOpsCmd(StartDrawing(this.metenOpties.markColour, this.metenOpties.useRouting)));
+    this.dispatch(DrawOpsCmd(StartDrawing(this.metenOpties.markColour, this.inStateViaRoad)));
   }
 
   private stopMeten(): void {
@@ -171,5 +193,13 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
 
   private verbergBoodschappen(): void {
     this.dispatch(prt.VerbergInfoBoodschapCmd(InfoBoodschapId));
+  }
+
+  private toonOpties() {
+    this.optionsVisible = true;
+  }
+
+  private verbergOpties() {
+    this.optionsVisible = false;
   }
 }
