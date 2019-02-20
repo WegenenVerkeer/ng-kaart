@@ -1,0 +1,50 @@
+@import "../../css/kaart.component-common.scss";
+
+.card-content {
+  padding: 0 16px 16px 24px;
+}
+
+.naam {
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.velden {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.veldnamen {
+  order: 1;
+  flex-basis: 40%;
+  max-width: 40%;
+  line-height: 20px;
+  font-size: 14px;
+  font-weight: 300;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.veldwaarden {
+  order: 2;
+  flex-basis: 50%;
+  max-width: 50%;
+  line-height: 20px;
+  font-size: 14px;
+  font-weight: 300;
+  color: rgba(0, 0, 0, 0.87);
+}
+
+.copy {
+  order: 3;
+  flex-basis: 10%;
+  max-width: 24px;
+  line-height: 20px;
+  height: 20px;
+  min-width: 24px;
+}
+
+.mat-icon {
+  @include mat-icon-size(16px);
+  vertical-align: top;
+}

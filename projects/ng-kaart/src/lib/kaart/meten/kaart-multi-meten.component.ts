@@ -1,5 +1,5 @@
 import { Component, NgZone } from "@angular/core";
-import { Function1, identity } from "fp-ts/lib/function";
+import { identity } from "fp-ts/lib/function";
 import { fromPredicate, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
@@ -8,7 +8,7 @@ import { distinctUntilChanged, filter, map, startWith, switchMapTo, tap } from "
 import * as clr from "../../stijl/colour";
 import { distance, matchGeometryType } from "../../util/geometries";
 import { ofType } from "../../util/operators";
-import { tekenInfoboodschapGeslotenMsgWrapper, VerwijderTekenFeatureMsg, verwijderTekenFeatureWrapper } from "../kaart-internal-messages";
+import { tekenInfoboodschapGeslotenMsgWrapper, VerwijderTekenFeatureMsg } from "../kaart-internal-messages";
 import { KaartModusComponent } from "../kaart-modus-component";
 import * as prt from "../kaart-protocol";
 import { DrawOpsCmd } from "../kaart-protocol-commands";
@@ -27,36 +27,6 @@ interface Measure {
   readonly length: Option<number>;
   readonly area: Option<number>;
 }
-
-const formatNumber: Function1<number, string> = n =>
-  n.toLocaleString(["nl-BE"], { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: true });
-
-const format: Function1<Measure, string> = measure => {
-  const formatArea: Function1<number, string> = area => {
-    if (area > 1000000) {
-      return `${formatNumber(area / 1000000)} km²`;
-    } else if (area > 10000) {
-      return `${formatNumber(area / 10000)} ha`;
-    } else if (area > 100) {
-      return `${formatNumber(area / 100)} a`;
-    } else {
-      return `${formatNumber(area)} m²`;
-    }
-  };
-
-  const formatLength: Function1<number, string> = length => {
-    if (length > 1000) {
-      return `${formatNumber(length / 1000)} km`;
-    } else {
-      return `${formatNumber(length)} m`;
-    }
-  };
-
-  return (
-    measure.length.map(l => `Totale afstand ${formatLength(l)}`).getOrElse("") +
-    measure.area.map(a => `<br>Totale oppervlakte ${formatArea(a)}`).getOrElse("")
-  );
-};
 
 const InfoBoodschapId = "multi-meten-resultaat";
 @Component({
@@ -126,12 +96,12 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
             this.dispatch(
               prt.ToonInfoBoodschapCmd({
                 id: InfoBoodschapId,
-                type: "InfoBoodschapAlert",
+                type: "InfoBoodschapMeten",
                 titel: "Meten",
                 sluit: "VANZELF",
                 bron: some("multi-meten"),
-                message: format(measures),
-                iconName: some("straighten"),
+                length: measures.length,
+                area: measures.area,
                 verbergMsgGen: () => some(tekenInfoboodschapGeslotenMsgWrapper())
               })
             )
