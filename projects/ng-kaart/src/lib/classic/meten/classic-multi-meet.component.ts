@@ -14,8 +14,14 @@ export class ClassicMultiMetenComponent extends ClassicUIElementSelectorComponen
   @Input() // Dit moet dus effectief een code zijn in het formaat #rrggbb(tt?). De string 'white' bijv. is niet ok.
   tekenKleurCode = clr.kleurcodeValue(clr.zwartig);
 
-  @Input()
+  @Input() // Mag de infobox met de lengte en evt oppervlakte getoond worden?
+  toonInfoBoodschap = true;
+
+  @Input() // moet std routing via de weg gebeuren?
   metRouting = false;
+
+  @Input() // moet de gebruiker kunnen kiezen tussen  rechte lijnen en via de weg?
+  verbindingSelecteerbaar = false;
 
   constructor(kaart: KaartClassicComponent, zone: NgZone) {
     super(MultiMetenUiSelector, kaart, zone);
@@ -25,7 +31,8 @@ export class ClassicMultiMetenComponent extends ClassicUIElementSelectorComponen
     return {
       markColour: clr.toKleur("naam", this.tekenKleurCode).getOrElse(clr.zwartig),
       useRouting: this.metRouting,
-      toonInfoBoodschap: true
+      showInfoMessage: this.toonInfoBoodschap,
+      connectionSelectable: this.verbindingSelecteerbaar
     };
   }
 }

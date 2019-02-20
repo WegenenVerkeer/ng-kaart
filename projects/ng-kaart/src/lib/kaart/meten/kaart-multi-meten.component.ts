@@ -20,7 +20,8 @@ export const MultiMetenUiSelector = "MultiMeten";
 export interface MultiMetenOpties {
   readonly markColour: clr.Kleur;
   readonly useRouting: boolean;
-  readonly toonInfoBoodschap: boolean;
+  readonly showInfoMessage: boolean;
+  readonly connectionSelectable: boolean;
 }
 
 interface Measure {
@@ -38,7 +39,8 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
   private metenOpties: MultiMetenOpties = {
     markColour: clr.zwart, // Wschl beter ineens een stijl, dan kan het helemaal gecustomiseerd worden
     useRouting: false,
-    toonInfoBoodschap: true
+    showInfoMessage: true,
+    connectionSelectable: false
   };
 
   optionsVisible = false;
@@ -51,7 +53,7 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
     const options$ = this.modusOpties$<MultiMetenOpties>();
     const toonInfoBoodschap$ = options$.pipe(
       startWith(this.metenOpties), // de defaults
-      map(o => o.toonInfoBoodschap),
+      map(o => o.showInfoMessage),
       distinctUntilChanged()
     );
     const measure$: rx.Observable<Measure> = this.modelChanges.getekendeGeometry$.pipe(
@@ -90,7 +92,13 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
 
     this.runInViewReady(
       rx.merge(
-        options$.pipe(tap(opties => (this.metenOpties = opties))), //
+        options$.pipe(
+          tap(opties => {
+            this.metenOpties = opties;
+            this.inStateStraight = !opties.useRouting;
+            this.inStateViaRoad = opties.useRouting;
+          })
+        ),
         boodschap$.pipe(
           tap(measures =>
             this.dispatch(
@@ -124,7 +132,9 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
 
   activeer() {
     this.startMetMeten();
-    this.toonOpties();
+    if (this.metenOpties.connectionSelectable) {
+      this.toonOpties();
+    }
   }
 
   deactiveer() {
@@ -149,7 +159,7 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
   }
 
   private startMetMeten(): void {
-    this.dispatch(DrawOpsCmd(StartDrawing(this.metenOpties.markColour, this.inStateViaRoad)));
+    this.dispatch(DrawOpsCmd(StartDrawing(this.metenOpties.markColour, this.metenOpties.useRouting)));
   }
 
   private stopMeten(): void {
