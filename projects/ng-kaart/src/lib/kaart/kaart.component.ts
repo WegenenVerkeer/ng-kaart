@@ -282,7 +282,7 @@ export class KaartComponent extends KaartComponentBase {
         const kaartLinksWidth = this.kaartLinksBreedte + "px";
         this.kaartFixedLinksBovenElement.nativeElement.style.width = kaartLinksWidth;
         this.kaartLinksElement.nativeElement.style.width = kaartLinksWidth;
-        if (this.kaartLinksToggleZichtbaar) {
+        if (this.kaartLinksToggleZichtbaar && this.kaartLinksZichtbaarToggleKnopElement) {
           if (this.kaartLinksZichtbaar) {
             this.kaartLinksZichtbaarToggleKnopElement.nativeElement.style.left = kaartLinksWidth;
           } else {
