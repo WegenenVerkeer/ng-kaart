@@ -1,14 +1,14 @@
 import { HttpClient } from "@angular/common/http";
 import * as array from "fp-ts/lib/Array";
 import { concat, Function1 } from "fp-ts/lib/function";
-import { none, None, Option, some } from "fp-ts/lib/Option";
+import { none, Option, some } from "fp-ts/lib/Option";
 import * as strmap from "fp-ts/lib/StrMap";
 import { Tuple } from "fp-ts/lib/Tuple";
 import * as rx from "rxjs";
-import { map, mergeMap, scan } from "rxjs/operators";
+import { map, mergeMap } from "rxjs/operators";
 
 import * as arrays from "../../util/arrays";
-import { catOptions, Pipeable, scanState, subSpy } from "../../util/operators";
+import { catOptions, Pipeable, scanState } from "../../util/operators";
 import { toArray } from "../../util/option";
 
 import { createRoute, ProtoRoute, routeAdded, RouteEvent, routeRemoved } from "./route.msg";
@@ -123,9 +123,7 @@ export function routesViaRoutering(http: HttpClient): Pipeable<WaypointOperation
 }
 
 const waypointOpsToRouteOperation: Function1<RoutingService, Pipeable<WaypointOperation, RouteEvent>> = routingService => waypointOpss => {
-  const routeChangesObs: rx.Observable<RouteChanges> = subSpy("****routeStateChanges")(
-    scanState(waypointOpss, nextRouteStateChanges, emptyRouteState())
-  );
+  const routeChangesObs: rx.Observable<RouteChanges> = scanState(waypointOpss, nextRouteStateChanges, emptyRouteState());
 
   const routeEventObs = routeChangesObs.pipe(
     mergeMap(routeChanges =>
@@ -139,7 +137,7 @@ const waypointOpsToRouteOperation: Function1<RoutingService, Pipeable<WaypointOp
     )
   );
 
-  return catOptions(subSpy("****filteredRouteEvent")(scanState(routeEventObs, filterRouteEvent, new strmap.StrMap<number>({}))));
+  return catOptions(scanState(routeEventObs, filterRouteEvent, new strmap.StrMap<number>({})));
 };
 
 function filterRouteEvent(versions: Versions, routeEvent: RouteEvent): Tuple<Versions, Option<RouteEvent>> {

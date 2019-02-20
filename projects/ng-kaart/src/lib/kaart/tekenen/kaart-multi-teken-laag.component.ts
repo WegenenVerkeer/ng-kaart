@@ -23,7 +23,6 @@ import {
   stringMapOptional,
   StringMapped
 } from "../../util/lenses";
-import { subSpy } from "../../util/operators";
 import { forEach } from "../../util/option";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
@@ -215,7 +214,6 @@ function drawStateTransformer(
           () => source.addFeature(selectedFeature),
           movedFeature => {
             if (movedFeature !== selectedFeature) {
-              console.log("****replacing feature");
               source.clear();
               source.addFeature(selectedFeature);
             }
@@ -343,7 +341,6 @@ function drawStateTransformer(
     }
 
     case "MovePoint": {
-      console.log("***moved", ops);
       return dragFeatureLens
         .get(state)
         .chain(draggedFeature =>
@@ -359,7 +356,6 @@ function drawStateTransformer(
     }
 
     case "DeletePoint": {
-      console.log("***te verwijderen", ops.feature, ops.feature.getId());
       const maybePrevious = findPreviousFeature(ops.feature);
       const maybeNext = findNextFeature(ops.feature);
       // Het eerste punt mag niet verwijderd worden. Een klik op het eerste punt zal daarentegen een punt toevoegen zodat de polygon quasi
@@ -495,7 +491,7 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
       switchMap(olMap =>
         drawingStarts$.pipe(
           switchMap(startCmd =>
-            subSpy("***drawEffects")(drawEffects$).pipe(
+            drawEffects$.pipe(
               startWith(startCmd), // We mogen ons startcommando niet verliezen omdat daar configuratie in zit
               scan(
                 drawOpsReducer(
@@ -528,7 +524,7 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
 
     // Laat de segmenten berekenen
     const routeSegmentOps$: Function1<boolean, rx.Observable<RouteEvent>> = useRouting =>
-      subSpy("***waypointOps")(waypointObsSubj).pipe(useRouting ? routesViaRoutering(http) : directeRoutes());
+      waypointObsSubj.pipe(useRouting ? routesViaRoutering(http) : directeRoutes());
 
     const initialRouteSegmentState: RouteSegmentState = { featuresByStartWaypointId: {}, featuresByRouteId: {} };
 
@@ -544,7 +540,7 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
 
     const routeEventProcessor$ = routingStart$.pipe(
       switchMap(start =>
-        subSpy("***routeSegmentOps")(routeSegmentOps$(start.useRouting)).pipe(
+        routeSegmentOps$(start.useRouting).pipe(
           scan(routeSegmentReducer(start.featureColour), initialRouteSegmentState),
           debounceTime(start.useRouting ? 75 : 0)
         )
