@@ -12,7 +12,7 @@ import { WaypointOperation } from "./waypoint.msg";
 // DrawOps: Operaties op het niveau van (ver)plaatsen en verwijderen van punten op de OL map
 //
 
-export type DrawOps = StartDrawing | StopDrawing | RedrawRoute | AddPoint | DraggingPoint | MovePoint | DeletePoint;
+export type DrawOps = StartDrawing | EndDrawing | StopDrawing | RedrawRoute | AddPoint | DraggingPoint | MovePoint | DeletePoint;
 
 export type PointId = number;
 
@@ -23,6 +23,12 @@ export interface StartDrawing {
   readonly useRouting: boolean;
 }
 
+// Hiermee beëindigen we de tekenmode
+export interface EndDrawing {
+  readonly type: "EndDrawing";
+}
+
+// Hiermee bijven we in tekenmode, maar kunnen we geen nieuwe punten meer toevoegen
 export interface StopDrawing {
   readonly type: "StopDrawing";
 }
@@ -58,6 +64,9 @@ export const StartDrawing: Function2<clr.Kleur, boolean, StartDrawing> = (featur
 });
 
 export const isStartDrawing: Refinement<DrawOps, StartDrawing> = (ops): ops is StartDrawing => ops.type === "StartDrawing";
+
+const endDrawing: EndDrawing = { type: "EndDrawing" };
+export const EndDrawing: Lazy<EndDrawing> = constant(endDrawing);
 
 const stopDrawing: StopDrawing = { type: "StopDrawing" };
 export const StopDrawing: Lazy<StopDrawing> = constant(stopDrawing);

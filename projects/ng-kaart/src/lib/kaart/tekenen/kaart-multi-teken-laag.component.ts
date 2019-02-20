@@ -2,19 +2,17 @@ import { HttpClient } from "@angular/common/http";
 import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 import * as array from "fp-ts/lib/Array";
 import { Endomorphism, Function1, Function2, Function3, identity, pipe, Predicate, Refinement } from "fp-ts/lib/function";
-import { fromNullable, fromPredicate, none, option, Option, some } from "fp-ts/lib/Option";
+import { fromNullable, fromPredicate, none, Option, some } from "fp-ts/lib/Option";
 import { setoidString } from "fp-ts/lib/Setoid";
 import { List, OrderedMap } from "immutable";
 import { Lens, Optional } from "monocle-ts";
 import * as ol from "openlayers";
-import { start } from "repl";
 import * as rx from "rxjs";
-import { debounceTime, filter, map, scan, share, startWith, switchMap, take, tap, withLatestFrom } from "rxjs/operators";
+import { bufferTime, debounceTime, filter, map, mapTo, scan, share, startWith, switchMap, take, tap, withLatestFrom } from "rxjs/operators";
 
 import * as clr from "../../stijl/colour";
 import { disc, solidLine } from "../../stijl/common-shapes";
 import { matchGeometryType } from "../../util";
-import { isEmpty } from "../../util/arrays";
 import { asap } from "../../util/asap";
 import { Consumer, PartialFunction1, ReduceFunction } from "../../util/function";
 import {
@@ -46,7 +44,8 @@ import {
   isStartDrawing,
   MovePoint,
   RedrawRoute,
-  StartDrawing
+  StartDrawing,
+  StopDrawing
 } from "./tekenen-model";
 import { directeRoutes, routesViaRoutering } from "./waypoint-ops";
 import { AddWaypoint, RemoveWaypoint, Waypoint, WaypointId, WaypointOperation } from "./waypoint.msg";
@@ -179,7 +178,9 @@ function drawStateTransformer(
   ops: DrawOps
 ): Endomorphism<DrawState> {
   const handleAdd: Consumer<ol.events.Event> = event => {
-    forEach(extractCoordinate((event as ol.interaction.Draw.Event).feature), coordinate => dispatchDrawOps(AddPoint(coordinate)));
+    const drawEvent = event as ol.interaction.Draw.Event;
+    const maybeCurrentCoordinate = extractCoordinate(drawEvent.feature);
+    forEach(maybeCurrentCoordinate, coordinate => dispatchDrawOps(AddPoint(coordinate)));
   };
 
   // Jammer genoeg hebben we in het move event hieronder geen informatie over welke feature er precies van plaats veranderd is.
@@ -232,7 +233,8 @@ function drawStateTransformer(
       const drawInteraction = new ol.interaction.Draw({
         type: "Point",
         freehandCondition: ol.events.condition.never,
-        style: puntStijl
+        style: puntStijl,
+        snapTolerance: 5
       });
       const modifyInteraction = new ol.interaction.Modify({
         source: modifySource,
@@ -277,12 +279,18 @@ function drawStateTransformer(
       ]);
     }
 
-    case "StopDrawing": {
+    case "EndDrawing": {
       dispatchCmd(VerwijderLaagCmd(PuntLaagNaam, kaartLogOnlyWrapper));
       dispatchCmd(VerwijderLaagCmd(SegmentLaagNaam, kaartLogOnlyWrapper));
       state.drawInteractions.forEach(inter => state.map.removeInteraction(inter));
       state.listeners.forEach(key => ol.Observable.unByKey(key));
       return identity; // Hierna gooien we onze state toch weg -> mag corrupt zijn
+    }
+
+    case "StopDrawing": {
+      state.drawInteractions.forEach(inter => state.map.removeInteraction(inter));
+      state.listeners.forEach(key => ol.Observable.unByKey(key));
+      return applySequential([drawInteractionsLens.set([]), listenersLens.set([])]);
     }
 
     case "RedrawRoute": {
@@ -302,16 +310,28 @@ function drawStateTransformer(
     case "AddPoint": {
       const currentFeatures = pointFeaturesLens.get(state);
       const lastFeature = array.last(currentFeatures);
-      const feature = new ol.Feature(new ol.geom.Point(ops.coordinate));
-      feature.setId(state.nextId);
-      feature.setStyle(createMarkerStyle(state.featureColour));
-      feature.setProperties(PointProperties(lastFeature, none));
-      forEach(lastFeature, updatePointProperties(replaceNext(some(feature))));
-      feature.on("change", handleFeatureDrag);
-      const newFeatures = array.snoc(currentFeatures, feature);
-      dispatchWaypointOps(AddWaypoint(lastFeature.chain(toWaypoint), Waypoint(state.nextId, ops.coordinate)));
-      dispatchCmd(prt.VervangFeaturesCmd(PuntLaagNaam, List(newFeatures), kaartLogOnlyWrapper));
-      return applySequential([pointFeaturesLens.set(newFeatures), incrementNextId]);
+      const coordinate = ops.coordinate;
+      const feature = new ol.Feature(new ol.geom.Point(coordinate));
+
+      const maybePreviousCoordinate = lastFeature.chain(extractCoordinate);
+      const sameLocationAsPrevious = maybePreviousCoordinate.exists(p => p[0] === coordinate[0] && p[1] === coordinate[1]);
+      // Openlayers (in elk geval zoals wij het gebruiken) heeft de verschillende eigenschap dat het een drawend genereert bij
+      // een klik als de muispointer nog niet bewogen is. We voegen dan maw. Nog een extra punt toe opdezelfde locatie. En
+      // tegelijkertijd wissen we het punt dat er net voor gezet was. Dat is niet wat we willen. Dat extra punt moet nl. niet
+      // toegevoegd worden
+      if (!sameLocationAsPrevious) {
+        feature.setId(state.nextId);
+        feature.setStyle(createMarkerStyle(state.featureColour));
+        feature.setProperties(PointProperties(lastFeature, none));
+        forEach(lastFeature, updatePointProperties(replaceNext(some(feature))));
+        feature.on("change", handleFeatureDrag);
+        const newFeatures = array.snoc(currentFeatures, feature);
+        dispatchWaypointOps(AddWaypoint(lastFeature.chain(toWaypoint), Waypoint(state.nextId, coordinate)));
+        dispatchCmd(prt.VervangFeaturesCmd(PuntLaagNaam, List(newFeatures), kaartLogOnlyWrapper));
+        return applySequential([pointFeaturesLens.set(newFeatures), incrementNextId]);
+      } else {
+        return identity;
+      }
     }
 
     case "DraggingPoint": {
@@ -471,7 +491,7 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
     const waypointObsSubj: rx.Subject<WaypointOperation> = new rx.Subject();
 
     // vorm een state + een event om tot een nieuwe state en wat side-effects op de OL map
-    const drawOpsProcessor$ = olMap$.pipe(
+    const drawOpsProcessor$: rx.Observable<DrawState> = olMap$.pipe(
       switchMap(olMap =>
         drawingStarts$.pipe(
           switchMap(startCmd =>
@@ -490,6 +510,20 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
         )
       ),
       share()
+    );
+
+    // We willen vlugge opeenvolgingen van add en remove interpreteren als een trigger om te stoppen met tekenen, maar toch
+    // in de tekenmode blijven.
+    const doubleClick$: rx.Observable<unknown> = waypointObsSubj.pipe(
+      bufferTime(500),
+      filter(
+        buffer =>
+          buffer.length === 2 &&
+          buffer[0].type === "AddWaypoint" &&
+          buffer[1].type === "RemoveWaypoint" &&
+          buffer[0].waypoint.id === buffer[1].waypoint.id
+      ),
+      mapTo(0 as unknown)
     );
 
     // Laat de segmenten berekenen
@@ -520,7 +554,7 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
 
     const combinedGeometry$: rx.Observable<ol.geom.Geometry> = routeEventProcessor$.pipe(
       withLatestFrom(drawOpsProcessor$.pipe(map(state => array.catOptions(state.pointFeatures.map(extractId))))),
-      map(([routeSegmentState, pointFeatures]) => stichGeometries(pointFeatures, routeSegmentState.featuresByStartWaypointId))
+      map(([routeSegmentState, pointFeatureIds]) => stichGeometries(pointFeatureIds, routeSegmentState.featuresByStartWaypointId))
     );
 
     this.runInViewReady(
@@ -528,7 +562,8 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
         combinedGeometry$.pipe(tap(geom => this.dispatch(prt.ZetGetekendeGeometryCmd(geom)))),
         routeEventProcessor$.pipe(
           tap(routeState => this.dispatch(prt.VervangFeaturesCmd(SegmentLaagNaam, featuresIn(routeState), kaartLogOnlyWrapper)))
-        )
+        ),
+        doubleClick$.pipe(tap(() => this.dispatch(prt.DrawOpsCmd(StopDrawing()))))
       )
     );
   }

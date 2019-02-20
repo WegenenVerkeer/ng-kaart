@@ -13,7 +13,7 @@ import { KaartModusComponent } from "../kaart-modus-component";
 import * as prt from "../kaart-protocol";
 import { DrawOpsCmd } from "../kaart-protocol-commands";
 import { KaartComponent } from "../kaart.component";
-import { RedrawRoute, StartDrawing, StopDrawing } from "../tekenen/tekenen-model";
+import { EndDrawing, RedrawRoute, StartDrawing } from "../tekenen/tekenen-model";
 
 export const MultiMetenUiSelector = "MultiMeten";
 
@@ -153,7 +153,7 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
   }
 
   private stopMeten(): void {
-    this.dispatch(DrawOpsCmd(StopDrawing()));
+    this.dispatch(DrawOpsCmd(EndDrawing()));
   }
 
   private stopMetenEnVerbergBoodschapen(): void {
