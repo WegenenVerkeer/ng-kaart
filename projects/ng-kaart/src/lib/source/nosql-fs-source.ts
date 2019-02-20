@@ -135,7 +135,7 @@ export class NosqlFsSource extends ol.source.Vector {
     fetchFeaturesObs$.pipe(bufferCount(BATCH_SIZE)).subscribe(
       geojsons => {
         source.dispatchLoadEvent(le.PartReceived);
-        source.addFeatures(geojsons.map(geojson => toOlFeature(source.titel, geojson)));
+        source.addFeatures(geojsons.map(geojson => toOlFeature(source.laagnaam, geojson)));
       },
       error => {
         if (source.gebruikCache) {
@@ -175,7 +175,7 @@ export class NosqlFsSource extends ol.source.Vector {
         geojsons => {
           kaartLogger.debug(`${geojsons.length} features opgehaald uit cache`);
           source.dispatchLoadEvent(le.PartReceived);
-          source.addFeatures(geojsons.map(geojson => toOlFeature(source.titel, geojson)));
+          source.addFeatures(geojsons.map(geojson => toOlFeature(source.laagnaam, geojson)));
         },
         error => {
           kaartLogger.error(error);
