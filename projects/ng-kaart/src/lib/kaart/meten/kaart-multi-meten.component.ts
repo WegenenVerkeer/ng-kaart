@@ -1,9 +1,8 @@
 import { Component, NgZone } from "@angular/core";
-import { identity } from "fp-ts/lib/function";
 import { fromPredicate, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { distinctUntilChanged, filter, map, startWith, switchMapTo, tap } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, share, startWith, switchMap, tap } from "rxjs/operators";
 
 import * as clr from "../../stijl/colour";
 import { distance, geometryLength, matchGeometryType, toLineString } from "../../util/geometries";
@@ -84,8 +83,8 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
     );
 
     const boodschap$ = toonInfoBoodschap$.pipe(
-      filter(identity), // enkel indien true
-      switchMapTo(measure$)
+      switchMap(toon => (toon ? measure$ : rx.empty())),
+      share()
     );
 
     const legeBoodschap$ = boodschap$.pipe(

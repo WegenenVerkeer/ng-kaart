@@ -1,11 +1,12 @@
 <div class="kaart-widget meten">
   <awv-kaart-multi-teken-laag></awv-kaart-multi-teken-laag>
   <div class="kaart-widget multi-meten-mode-selector-tip" [class.hide]="!optionsVisible"></div>
-  <div class="kaart-widget multi-meten-mode-selector" [class.show]="optionsVisible" [class.hide]="!optionsVisible">
-    <button mat-button [class.active]="inStateStraight" (click)="rechteLijn()">In rechte lijn</button><br />
-    <button mat-button [class.active]="inStateViaRoad" (click)="viaWeg()">Via de weg</button>
-  </div>
+  <div class="kaart-widget multi-meten-mode-selector" [class.show]="optionsVisible" [class.hide]="!optionsVisible"></div>
   <div class="multi-meten-mode-selector-tip" [class.hide]="!optionsVisible"></div>
+  <div class="multi-meten-mode-selector" [class.show]="optionsVisible" [class.hide]="!optionsVisible">
+      <button mat-button [class.active]="inStateStraight" (click)="rechteLijn()">In rechte lijn</button><br />
+      <button mat-button [class.active]="inStateViaRoad" (click)="viaWeg()">Via de weg</button>
+  </div>
   <button mat-icon-button (click)="toggle()"
           [matTooltip]="isActief() ? 'Stop met meten' : 'Start met meten'" matTooltipPosition="left">
     <mat-icon [class.actief]="isActief()" aria-label="Meten van lengte en oppervlakte">straighten</mat-icon>

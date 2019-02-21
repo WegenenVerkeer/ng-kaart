@@ -191,7 +191,7 @@
         <awv-kaart-streetview *ngIf="isOptieActief('streetview')"></awv-kaart-streetview>
         <!--de awv-meet-knop blijft voorlopig beschikbaar maar is deprecated -->
         <!-- <awv-meet-knop [toonInfoBoodschap]="isOptieActief('metenToon')" [meerdereGeometrieen]="isOptieActief('metenMeerdere')" *ngIf="isOptieActief('meten')"></awv-meet-knop> -->
-        <awv-multi-meet-knop [toonInfoBoodschap]="isOptieActief('metenToon')" *ngIf="isOptieActief('meten')" [verbindingSelecteerbaar]="true" [metRouting]="false"></awv-multi-meet-knop>
+        <awv-multi-meet-knop [toonInfoBoodschap]="isOptieActief('metenToon')" *ngIf="isOptieActief('meten')" [verbindingSelecteerbaar]="isOptieActief('verbindingSelecteerbaar')" [metRouting]="isOptieActief('metRouting')"></awv-multi-meet-knop>
         <awv-kaart-teken></awv-kaart-teken>
         <awv-kaart-zoomknoppen *ngIf="isOptieActief('zoomknoppen')"></awv-kaart-zoomknoppen>
         <awv-bevraag-kaart *ngIf="isOptieActief('bevraagkaart')"></awv-bevraag-kaart>
