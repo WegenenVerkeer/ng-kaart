@@ -452,8 +452,8 @@ const extractCoordinates: Function1<ol.geom.Geometry, ol.Coordinate[]> = geom =>
 const concatGeometries: Function1<ol.geom.Geometry[], ol.geom.LineString> = geoms =>
   new ol.geom.LineString(array.flatten(geoms.map(extractCoordinates)));
 
-const stichGeometries: Function2<WaypointId[], FeaturesByWaypointId, ol.geom.LineString> = (ids, featuresById) => {
-  return concatGeometries(
+const stichGeometries: Function2<WaypointId[], FeaturesByWaypointId, ol.geom.Geometry> = (ids, featuresById) => {
+  return new ol.geom.GeometryCollection(
     array.catOptions(
       ids.map(id =>
         numberMapOptional<ol.Feature>(id)
@@ -463,6 +463,17 @@ const stichGeometries: Function2<WaypointId[], FeaturesByWaypointId, ol.geom.Lin
     )
   );
 };
+// const stichGeometries: Function2<WaypointId[], FeaturesByWaypointId, ol.geom.LineString> = (ids, featuresById) => {
+//   return concatGeometries(
+//     array.catOptions(
+//       ids.map(id =>
+//         numberMapOptional<ol.Feature>(id)
+//           .getOption(featuresById)
+//           .map(f => f.getGeometry())
+//       )
+//     )
+//   );
+// };
 
 @Component({
   selector: "awv-kaart-multi-teken-laag",

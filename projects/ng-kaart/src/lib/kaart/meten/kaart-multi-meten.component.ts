@@ -6,7 +6,7 @@ import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, startWith, switchMapTo, tap } from "rxjs/operators";
 
 import * as clr from "../../stijl/colour";
-import { distance, matchGeometryType } from "../../util/geometries";
+import { distance, geometryLength, matchGeometryType, toLineString } from "../../util/geometries";
 import { ofType } from "../../util/operators";
 import { tekenInfoboodschapGeslotenMsgWrapper, VerwijderTekenFeatureMsg } from "../kaart-internal-messages";
 import { KaartModusComponent } from "../kaart-modus-component";
@@ -58,20 +58,25 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
     );
     const measure$: rx.Observable<Measure> = this.modelChanges.getekendeGeometry$.pipe(
       map(geom => {
-        const length = fromPredicate<number>(length => length > 0)(ol.Sphere.getLength(geom));
+        const length = some(geometryLength(geom));
         const area = matchGeometryType(geom, {
-          lineString: line => {
-            const coords = line.getCoordinates();
-            // Er moeten minstens 3 punten zijn om een niet-0 oppervlakte te hebben
-            if (coords.length >= 3) {
-              const begin = line.getFirstCoordinate();
-              const end = line.getLastCoordinate();
-              // Wanneer de punten dicht genoeg bij elkaar liggen, sluiten we de geometrie
-              if (distance(begin, end) < 250) {
-                return ol.Sphere.getArea(new ol.geom.Polygon([coords]));
-              }
+          geometryCollection: collection => {
+            if (collection.getGeometries().length >= 2) {
+              return toLineString(collection)
+                .map(line => {
+                  const begin = line.getFirstCoordinate();
+                  const end = line.getLastCoordinate();
+                  // Wanneer de punten dicht genoeg bij elkaar liggen, sluiten we de geometrie
+                  if (distance(begin, end) < 250) {
+                    return ol.Sphere.getArea(new ol.geom.Polygon([line.getCoordinates()]));
+                  } else {
+                    return 0;
+                  }
+                })
+                .getOrElse(0);
+            } else {
+              return 0;
             }
-            return 0;
           }
         }).chain(fromPredicate<number>(area => area > 0)); // flatten had ook gekund, maar dit is analoog aan lengte
         return { length: length, area: area };
