@@ -42,8 +42,12 @@
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !verkeersbordenSectie.sectieZichtbaar }">visibility</span>
     </div>
     <div (click)="offlineSectie.toggleSectieZichtbaar();scrollTo('offline')" class="sub-titel">
-      Offline caching
+      Offline dienstkaart
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !offlineSectie.sectieZichtbaar }">visibility</span>
+    </div>
+    <div (click)="offlineFeaturesSectie.toggleSectieZichtbaar();scrollTo('offlineFeaturesSectie')" class="sub-titel">
+      Offline features
+      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !offlineFeaturesSectie.sectieZichtbaar }">visibility</span>
     </div>
     <div (click)="lagenMetOffsetsSectie.toggleSectieZichtbaar();scrollTo('lagen-met-offsets')" class="sub-titel">
       Lagen met offsets
@@ -105,6 +109,7 @@
                          [mijnLocatieZoom]="getMijnLocatieZoom()"
                          [kaartLinksBreedte]="getKaartLinksBreedte()"
                          (zoomChange)="onZoom($event)"
+                         (kaartLocaties)="onKaartLocaties($event)"
                          (middelpuntChange)="onMiddelpunt($event)"
                          (extentChange)="onExtent($event)"
                          [middelpunt]="configuratorMiddelpunt"
@@ -287,7 +292,7 @@
         <div *ngIf="straatkolkenSectie.sectieZichtbaar" [@enterAnimation]>
           <awv-kaart-classic [naam]="'straatkolken'" [hoogte]="400">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
-            <awv-kaart-nosqlfs-laag [titel]="'Straatkolken'" [url]="'https://apps-dev.mow.vlaanderen.be/geolatte-nosqlfs'"
+            <awv-kaart-nosqlfs-laag [titel]="'Straatkolken'" [url]="'/geolatte-nosqlfs'"
                                     [database]="'featureserver'" [collection]="'straatkolken'" [style]="kolkStyle"
                                     [minZoom]="9"></awv-kaart-nosqlfs-laag>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
@@ -301,7 +306,7 @@
         <div *ngIf="fietspadenSectie.sectieZichtbaar" [@enterAnimation]>
           <awv-kaart-classic [naam]="'fietspaden'" (zichtbareFeatures)="onZichtbareFeatures($event)" [hoogte]="400">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
-            <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'https://apps-dev.mow.vlaanderen.be/geolatte-nosqlfs'"
+            <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'/geolatte-nosqlfs'"
                                     [database]="'featureserver'" [collection]="'fietspaden'" [styleFunction]="fietspadStyle" [offsetveld]="'zijderijbaan'"
                                     [minZoom]="9" [refreshTrigger]="fietspadenRefresh$"></awv-kaart-nosqlfs-laag>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
@@ -317,12 +322,13 @@
           <awv-kaart-classic [naam]="'verkeersborden'" (zichtbareFeatures)="onZichtbareFeatures($event)"
                              [zoom]="10" [selectieModus]="'single'" [middelpunt]="verkeersbordenCoordinaat" [hoogte]="1200">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
-            <awv-kaart-nosqlfs-laag [titel]="'Verkeersborden'" [url]="'https://apps-dev.mow.vlaanderen.be/geolatte-nosqlfs'"
+            <awv-kaart-nosqlfs-laag [titel]="'Verkeersborden'" [url]="'/geolatte-nosqlfs'"
                                     [database]="'featureserver'" [collection]="'verkeersborden'"
                                     [styleFunction]="verkeersbordenStyleFunction"
                                     [selectieStyle]="verkeersbordenSelectieStyleFunction"
                                     [minZoom]="9"
-                                    [view]="'aanzicht'"></awv-kaart-nosqlfs-laag>
+                                    [view]="'aanzicht'"
+                                    [gebruikCache]="true"></awv-kaart-nosqlfs-laag>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
             <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
           </awv-kaart-classic>
@@ -338,11 +344,11 @@
                              [hoogte]="400"
                              (zichtbareFeatures)="onZichtbareFeatures($event)">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
-            <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'https://apps-dev.mow.vlaanderen.be/geolatte-nosqlfs'"
+            <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'/geolatte-nosqlfs'"
                                     [database]="'featureserver'" [collection]="'fietspaden'"
                                     [styleFunction]="fietspadStyleMetOffset" [selectieStyle]="fietspadSelectieStyleMetOffset"
                                     [minZoom]="7"></awv-kaart-nosqlfs-laag>
-            <awv-kaart-nosqlfs-laag [titel]="'Afgeleide snelheidsregimes'" [url]="'https://apps-dev.mow.vlaanderen.be/geolatte-nosqlfs'"
+            <awv-kaart-nosqlfs-laag [titel]="'Afgeleide snelheidsregimes'" [url]="'/geolatte-nosqlfs'"
                                     [database]="'featureserver'" [collection]="'afgeleide_snelheidsregimes_wegsegment_bord'"
                                     [styleFunction]="afgeleideSnelheidsregimesStyleMetOffset" [selectieStyle]="afgeleideSnelheidsregimesSelectieStyleMetOffset"
                                     [minZoom]="7"></awv-kaart-nosqlfs-laag>
@@ -367,7 +373,7 @@
               <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
               <awv-kaart-nosqlfs-laag
                 [titel]="'Fietspaden'"
-                [url]="'https://apps-dev.mow.vlaanderen.be/geolatte-nosqlfs'"
+                [url]="'/geolatte-nosqlfs'"
                 [database]="'featureserver'" [collection]="'fietspaden'"
                 [styleFunction]="fietspadStyleMetOffset" [selectieStyle]="fietspadSelectieStyleMetOffset"
                 [minZoom]="7">
@@ -433,16 +439,28 @@
       </awv-test-sectie>
 
 
-      <awv-test-sectie sectieId="offline" sectieTitel="Offline caching" [subSectie]="true" #offlineSectie
+      <awv-test-sectie sectieId="offline" sectieTitel="Offline dienstkaart" [subSectie]="true" #offlineSectie
                        [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && offlineSectie.sectieZichtbaar">
         <div *ngIf="offlineSectie.sectieZichtbaar" [@enterAnimation]>
-
             <div>
-              <button (click)="startPrecache()">Start vullen cache dienstkaart (district Gent)</button>
+              <div class="with-padding">
+                Begin zoom <input #startZoom value="1" type="text">
+              </div>
+              <div class="with-padding">
+                Eind zoom <input #eindZoom value="12" type="text">
+              </div>
+              <div class="with-padding">
+                <input #startMetLegeCache type="checkbox" [checked]="true"> Start met lege cache
+              </div>
+              <div class="with-padding">
+                <button (click)="startPrecacheWMS(startZoom.value, eindZoom.value, startMetLegeCache.checked)">Start vullen cache dienstkaart (district Gent)</button>
+              </div>
+              <div class="with-padding">
+                Vooruitgang: {{ precacheProgress }}% gecached
+              </div>
             </div>
-
-            <div>
-              <textarea class="cachewkt__textarea" [value]="wkt" (input)="wkt = $event.target.value"></textarea>
+            <div class="with-padding">
+              <textarea class="cachewkt__textarea" [value]="precacheWMSWkt" (input)="precacheWMSWkt = $event.target.value"></textarea>
             </div>
 
             <awv-kaart-classic [naam]="'verkeersborden'" (zichtbareFeatures)="onZichtbareFeatures($event)"
@@ -451,15 +469,52 @@
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'"
                                       [laagNaam]="'dienstkaart-grijs'"
                                       [urls]="['/geowebcache/service/wms']"
-                                      [offline]="'true'"
-                                      [precache]="precacheInput"></awv-kaart-tilecache-laag>
+                                      [cacheActief]="'true'"
+                                      [precache]="precacheWMSInput"
+                                      (precacheProgress)="onPrecacheProgress($event)"></awv-kaart-tilecache-laag>
 
-            <awv-kaart-nosqlfs-laag [titel]="'Verkeersborden'" [url]="'https://apps-dev.mow.vlaanderen.be/geolatte-nosqlfs'"
+            <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+            <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
+          </awv-kaart-classic>
+        </div>
+      </awv-test-sectie>
+
+
+      <awv-test-sectie sectieId="offlineFeaturesSectie" sectieTitel="Offline features" [subSectie]="true" #offlineFeaturesSectie
+                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && offlineFeaturesSectie.sectieZichtbaar">
+        <div *ngIf="offlineFeaturesSectie.sectieZichtbaar" [@enterAnimation]>
+
+          <div>
+            <div class="with-padding">
+              <input #startMetLegeCache type="checkbox" [checked]="true"> Start met lege cache
+            </div>
+            <div class="with-padding">
+              <button (click)="startPrecacheFeatures(startMetLegeCache.checked)">Start vullen cache features (gemeente Brasschaat)</button>
+            </div>
+            <div class="with-padding">
+              <input (change)="setOffline($event.target.checked)" type="checkbox" [checked]="false"> Offline modus
+            </div>
+          </div>
+          <div class="with-padding">
+            <textarea class="cachefeatures__textarea" [value]="precacheFeaturesWkt" (input)="precacheFeaturesWkt = $event.target.value"></textarea>
+          </div>
+
+          <awv-kaart-classic #offlineFeatureKaart [naam]="'verkeersborden'" (zichtbareFeatures)="onZichtbareFeatures($event)"
+                             [zoom]="9" [selectieModus]="'single'" [middelpunt]="[161206, 226075]" [hoogte]="1200">
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+            <awv-kaart-blanco-laag [titel]="'Leeg'"></awv-kaart-blanco-laag>
+
+            <awv-kaart-nosqlfs-laag [titel]="'Verkeersborden'" [url]="'/geolatte-nosqlfs'"
                                     [database]="'featureserver'" [collection]="'verkeersborden'"
                                     [styleFunction]="verkeersbordenStyleFunction"
                                     [selectieStyle]="verkeersbordenSelectieStyleFunction"
                                     [minZoom]="9"
-                                    [view]="'aanzicht'"></awv-kaart-nosqlfs-laag>
+                                    [view]="'aanzicht'"
+                                    [gebruikCache]="true"
+                                    [precache]="precacheFeaturesInput"
+                                    [offline]="isOffline"
+            ></awv-kaart-nosqlfs-laag>
+            <awv-kaart-knop-achtergrondlaag-kiezer></awv-kaart-knop-achtergrondlaag-kiezer>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
             <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
           </awv-kaart-classic>

@@ -459,7 +459,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       wrapper: kaartLogOnlyWrapper
     });
     const minZoektermLength = 2;
-    const suggestieDelay = 250;
+    const suggestieDelay = 300;
     const startZoek$ = this.volledigeZoekSubj.asObservable();
     const laatSuggestiesToe$ = rx
       .merge(

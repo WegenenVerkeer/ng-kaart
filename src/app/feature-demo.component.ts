@@ -1,5 +1,5 @@
 import { animate, style, transition, trigger } from "@angular/animations";
-import { Component, ViewChild, ViewEncapsulation } from "@angular/core";
+import { ChangeDetectorRef, Component, ViewChild, ViewEncapsulation } from "@angular/core";
 import { array } from "fp-ts";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
@@ -14,7 +14,8 @@ import {
   KaartClassicComponent,
   offsetStyleFunction,
   parseCoordinate,
-  Precache,
+  PrecacheFeatures,
+  PrecacheWMS,
   ToegevoegdeLaag,
   validateAwvV0RuleDefintion,
   VeldInfo,
@@ -54,6 +55,8 @@ export class FeatureDemoComponent {
   private verplaatsKaart: KaartClassicComponent;
   @ViewChild("selectie")
   private selectieKaart: KaartClassicComponent;
+
+  constructor(private changeDetectorRef: ChangeDetectorRef) {}
 
   private readonly fietspadStijlDef: AwvV0DynamicStyle = {
     rules: [
@@ -305,6 +308,15 @@ export class FeatureDemoComponent {
   fietspadsegmentenSelectie: FietspadSelectie[] = [];
   geselecteerdeFietspadsegmenten: List<ol.Feature> = List();
 
+  precacheProgress = 0;
+  precacheWMSWkt = wkts.districten.gent;
+  precacheWMSInput: PrecacheWMS = null;
+
+  precacheFeaturesWkt = wkts.gemeenten.brasschaat;
+  precacheFeaturesInput: PrecacheFeatures = null;
+
+  isOffline = false;
+
   private tekenenActief = false;
   private getekendeGeom: Option<ol.geom.Geometry> = none;
 
@@ -351,10 +363,6 @@ export class FeatureDemoComponent {
   };
 
   configuratorMiddelpunt = [130000, 193000];
-
-  wkt = wkts.districten.gent;
-
-  precacheInput: Precache = null;
 
   // Dit werkt alleen als apigateway bereikbaar is. Zie CORS waarschuwing in README.
   readonly districtSource: ol.source.Vector = new ol.source.Vector({
@@ -452,11 +460,19 @@ export class FeatureDemoComponent {
 
   private geometryType = "Polygon";
 
-  startPrecache() {
-    this.precacheInput = {
-      startZoom: 7,
-      eindZoom: 9,
-      wkt: this.wkt
+  startPrecacheWMS(start: string, eind: string, startMetLegeCache: boolean) {
+    this.precacheWMSInput = {
+      startZoom: Number(start),
+      eindZoom: Number(eind),
+      wkt: this.precacheWMSWkt,
+      startMetLegeCache: startMetLegeCache
+    };
+  }
+
+  startPrecacheFeatures(startMetLegeCache: boolean) {
+    this.precacheFeaturesInput = {
+      wkt: `SRID=31370;${this.precacheFeaturesWkt}`,
+      startMetLegeCache: startMetLegeCache
     };
   }
 
@@ -500,6 +516,10 @@ export class FeatureDemoComponent {
     // voeg de nieuwe toe
     this.geselecteerdeFeatures = event;
     this.geselecteerdeFeatures.forEach(feature => this.selectieKaart.toonIdentifyInformatie(feature));
+  }
+
+  setOffline(offline: boolean) {
+    this.isOffline = offline;
   }
 
   isTekenenActief() {
@@ -596,6 +616,10 @@ export class FeatureDemoComponent {
     console.log("------> voorgrond laag lagen", lagen);
   }
 
+  onKaartLocaties(locaties: any): void {
+    console.log("------> kaartLocaties", locaties);
+  }
+
   onFietspadsegmentenZichtbaar(features: List<ol.Feature>): void {
     this.fietspadsegmentenSelectie = features
       .map(feature => ({
@@ -620,6 +644,11 @@ export class FeatureDemoComponent {
 
   onRefreshFietspadenClicked() {
     this.fietspadenRefreshSubj.next();
+  }
+
+  onPrecacheProgress(progress: number) {
+    this.precacheProgress = progress;
+    this.changeDetectorRef.detectChanges();
   }
 
   scrollTo(idName: string): void {

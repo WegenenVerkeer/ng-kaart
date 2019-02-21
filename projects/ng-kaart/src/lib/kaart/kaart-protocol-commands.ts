@@ -6,7 +6,7 @@ import * as rx from "rxjs";
 import { TypedRecord } from "../util/typed-record";
 import { ZoekerMetPrioriteiten, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
 
-import { BareValidationWrapper, KaartMsg, Subscription, ValidationWrapper } from ".";
+import { BareValidationWrapper, KaartLocaties, KaartMsg, Subscription, ValidationWrapper, WegLocatie } from ".";
 import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { Legende } from "./kaart-legende";
@@ -39,6 +39,7 @@ export type Command<Msg extends KaartMsg> =
   | SubscribeCmd<Msg>
   | ToonAchtergrondKeuzeCmd<Msg>
   | ToonInfoBoodschapCmd
+  | PublishKaartLocatiesCmd
   | UnsubscribeCmd
   | VeranderExtentCmd
   | VeranderMiddelpuntCmd
@@ -69,9 +70,11 @@ export type Command<Msg extends KaartMsg> =
   | VoegVolledigSchermToeCmd<Msg>
   | VoegZoekerToeCmd<Msg>
   | VraagSchaalAanCmd<Msg>
-  | VulCacheVoorLaag<Msg>
+  | VulCacheVoorNosqlLaag<Msg>
+  | VulCacheVoorWMSLaag<Msg>
   | ZetActieveModusCmd
   | ZetFocusOpKaartCmd
+  | ZetOffline<Msg>
   | ZetLaagLegendeCmd<Msg>
   | ZetMijnLocatieZoomCmd
   | ZetStijlSpecVoorLaagCmd<Msg>
@@ -144,12 +147,21 @@ export interface ActiveerCacheVoorLaag<Msg extends KaartMsg> {
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
-export interface VulCacheVoorLaag<Msg extends KaartMsg> {
-  readonly type: "VulCacheVoorLaag";
+export interface VulCacheVoorWMSLaag<Msg extends KaartMsg> {
+  readonly type: "VulCacheVoorWMSLaag";
   readonly titel: string;
   readonly startZoom: number;
   readonly eindZoom: number;
   readonly wkt: string;
+  readonly startMetLegeCache: boolean;
+  readonly wrapper: BareValidationWrapper<Msg>;
+}
+
+export interface VulCacheVoorNosqlLaag<Msg extends KaartMsg> {
+  readonly type: "VulCacheVoorNosqlLaag";
+  readonly titel: string;
+  readonly wkt: string;
+  readonly startMetLegeCache: boolean;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -365,6 +377,13 @@ export interface ZetActieveModusCmd {
   readonly modus: Option<string>;
 }
 
+export interface ZetOffline<Msg extends KaartMsg> {
+  readonly type: "ZetOffline";
+  readonly titel: string;
+  readonly offline: boolean;
+  readonly wrapper: BareValidationWrapper<Msg>;
+}
+
 export interface VoegInteractieToeCmd {
   readonly type: "VoegInteractieToe";
   readonly interactie: ol.interaction.Pointer;
@@ -388,6 +407,11 @@ export interface VerwijderOverlaysCmd {
 export interface ToonInfoBoodschapCmd {
   readonly type: "ToonInfoBoodschap";
   readonly boodschap: InfoBoodschap;
+}
+
+export interface PublishKaartLocatiesCmd {
+  readonly type: "PublishKaartLocaties";
+  readonly locaties: KaartLocaties;
 }
 
 export interface VerbergInfoBoodschapCmd {
@@ -519,14 +543,47 @@ export function ActiveerCacheVoorLaag<Msg extends KaartMsg>(
   return { type: "ActiveerCacheVoorLaag", titel: titel, wrapper: wrapper };
 }
 
-export function VulCacheVoorLaag<Msg extends KaartMsg>(
+export function VulCacheVoorWMSLaag<Msg extends KaartMsg>(
   titel: string,
   startZoom: number,
   eindZoom: number,
   wkt: string,
+  startMetLegeCache: boolean,
   wrapper: BareValidationWrapper<Msg>
-): VulCacheVoorLaag<Msg> {
-  return { type: "VulCacheVoorLaag", titel: titel, startZoom: startZoom, eindZoom: eindZoom, wkt: wkt, wrapper: wrapper };
+): VulCacheVoorWMSLaag<Msg> {
+  return {
+    type: "VulCacheVoorWMSLaag",
+    titel: titel,
+    startZoom: startZoom,
+    eindZoom: eindZoom,
+    wkt: wkt,
+    startMetLegeCache: startMetLegeCache,
+    wrapper: wrapper
+  };
+}
+
+export function VulCacheVoorNosqlLaag<Msg extends KaartMsg>(
+  titel: string,
+  wkt: string,
+  startMetLegeCache: boolean,
+  wrapper: BareValidationWrapper<Msg>
+): VulCacheVoorNosqlLaag<Msg> {
+  return {
+    type: "VulCacheVoorNosqlLaag",
+    titel: titel,
+    wkt: wkt,
+    startMetLegeCache: startMetLegeCache,
+    wrapper: wrapper
+  };
+}
+
+export function ZetOffline<Msg extends KaartMsg>(titel: string, offline: boolean, wrapper: BareValidationWrapper<Msg>): ZetOffline<Msg> {
+  return {
+    type: "ZetOffline",
+    titel: titel,
+    offline: offline,
+    wrapper: wrapper
+  };
 }
 
 export function VerwijderLaagCmd<Msg extends KaartMsg>(titel: string, wrapper: BareValidationWrapper<Msg>): VerwijderLaagCmd<Msg> {
@@ -725,6 +782,13 @@ export function ToonInfoBoodschapCmd<Bdschp extends InfoBoodschap>(boodschap: Bd
   return {
     type: "ToonInfoBoodschap",
     boodschap: boodschap
+  };
+}
+
+export function PublishKaartLocatiesCmd(locaties: KaartLocaties): PublishKaartLocatiesCmd {
+  return {
+    type: "PublishKaartLocaties",
+    locaties: locaties
   };
 }
 

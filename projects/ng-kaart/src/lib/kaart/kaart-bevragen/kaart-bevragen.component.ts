@@ -10,11 +10,11 @@ import { observeOnAngular } from "../../util/observe-on-angular";
 import * as ke from "../kaart-elementen";
 import { KaartModusComponent } from "../kaart-modus-component";
 import * as prt from "../kaart-protocol";
-import { Adres, Progress, Received, Requested, TimedOut, WegLocatie } from "../kaart-with-info-model";
+import { Progress, Received, Requested, TimedOut } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
 
 import * as srv from "./kaart-bevragen.service";
-import { LaagLocationInfo, LaagLocationInfoService } from "./laaginfo.model";
+import { Adres, LaagLocationInfo, LaagLocationInfoService, WegLocatie } from "./laaginfo.model";
 
 export const BevraagKaartUiSelector = "Bevraagkaart";
 
@@ -93,7 +93,7 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
   ) {
     this.dispatch(
       prt.ToonInfoBoodschapCmd({
-        id: "Kaart bevragen",
+        id: "kaart_bevragen",
         type: "InfoBoodschapKaartBevragen",
         titel: "Kaart bevragen",
         sluit: "DOOR_APPLICATIE",
@@ -103,6 +103,14 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
         weglocaties: wegLocaties,
         laagLocatieInfoOpTitel: lagenLocatieInfo,
         verbergMsgGen: () => none
+      })
+    );
+    this.dispatch(
+      prt.PublishKaartLocatiesCmd({
+        coordinaat: coordinaat,
+        maybeAdres: maybeAdres,
+        wegLocaties: wegLocaties,
+        lagenLocatieInfo: lagenLocatieInfo
       })
     );
   }

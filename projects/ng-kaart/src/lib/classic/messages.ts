@@ -2,10 +2,12 @@ import { Function1 } from "fp-ts/lib/function";
 import { List } from "immutable";
 import * as ol from "openlayers";
 
+import { KaartLocaties } from "../kaart/kaart-bevragen/laaginfo.model";
 import * as ke from "../kaart/kaart-elementen";
 import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
 import * as prt from "../kaart/kaart-protocol";
-import { GeselecteerdeFeatures, HoverFeature, WegLocatie } from "../kaart/kaart-with-info-model";
+import { GeselecteerdeFeatures, HoverFeature } from "../kaart/kaart-with-info-model";
+import { PrecacheLaagProgress } from "../kaart/model-changes";
 
 import { classicLogger } from "./log";
 
@@ -31,8 +33,10 @@ export type KaartClassicSubMsg =
   | ExtentAangepastMsg
   | VectorLagenAangepastMsg
   | AchtergrondLagenInGroepAangepastMsg
+  | PrecacheProgressMsg
   | VoorgrondHoogLagenInGroepAangepastMsg
   | VoorgrondLaagLagenInGroepAangepastMsg
+  | PublishedKaartLocatiesMsg
   | DummyMsg;
 
 export interface FeatureSelectieAangepastMsg {
@@ -48,6 +52,11 @@ export interface FeatureHoverAangepastMsg {
 export interface TekenGeomAangepastMsg {
   readonly type: "TekenGeomAangepast";
   readonly geom: ol.geom.Geometry;
+}
+
+export interface PrecacheProgressMsg {
+  readonly type: "PrecacheProgress";
+  readonly progress: PrecacheLaagProgress;
 }
 
 export interface SubscribedMsg {
@@ -79,6 +88,11 @@ export interface ViewAangepastMsg {
 export interface MiddelpuntAangepastMsg {
   readonly type: "MiddelpuntAangepast";
   readonly middelpunt: ol.Coordinate;
+}
+
+export interface PublishedKaartLocatiesMsg {
+  readonly type: "PublishedKaartLocaties";
+  readonly locaties: KaartLocaties;
 }
 
 export interface ExtentAangepastMsg {
@@ -138,6 +152,10 @@ export function TekenGeomAangepastMsg(geom: ol.geom.Geometry): TekenGeomAangepas
   return { type: "TekenGeomAangepast", geom: geom };
 }
 
+export function PrecacheProgressMsg(progress: PrecacheLaagProgress): PrecacheProgressMsg {
+  return { type: "PrecacheProgress", progress: progress };
+}
+
 export function AchtergrondLagenInGroepAangepastMsg(lagen: List<ToegevoegdeLaag>): AchtergrondLagenInGroepAangepastMsg {
   return { type: "AchtergrondLagenInGroepAangepast", lagen: lagen };
 }
@@ -161,6 +179,11 @@ export const ViewAangepastMsg: (_: prt.Viewinstellingen) => ViewAangepastMsg = v
 export const MiddelpuntAangepastMsg: (_: ol.Coordinate) => MiddelpuntAangepastMsg = middelpunt => ({
   type: "MiddelpuntAangepast",
   middelpunt: middelpunt
+});
+
+export const PublishedKaartLocatiesMsg: Function1<KaartLocaties, PublishedKaartLocatiesMsg> = locaties => ({
+  type: "PublishedKaartLocaties",
+  locaties: locaties
 });
 
 export const ExtentAangepastMsg: (_: ol.Extent) => ExtentAangepastMsg = ext => ({ type: "ExtentAangepast", extent: ext });

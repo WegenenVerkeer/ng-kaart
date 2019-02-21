@@ -24,3 +24,13 @@ export const insertAfter: <A>(as: Array<A>) => (p: Predicate<A>) => (a: A) => Op
 
 export const deleteFirst: <A>(as: Array<A>) => (p: Predicate<A>) => Option<Array<A>> = as => predicate =>
   array.findIndex(as, predicate).chain(i => array.deleteAt(i, as));
+
+export const splitInChunks = <A>(array: Array<A>, aantalChunks: number): Array<Array<A>> => {
+  const size = Math.ceil(array.length / aantalChunks);
+  return array.reduce((acc, current, index, self) => {
+    if (!(index % size)) {
+      return [...acc, self.slice(index, index + size)];
+    }
+    return acc;
+  }, []);
+};

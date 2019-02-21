@@ -6,7 +6,7 @@ import { setoidString } from "fp-ts/lib/Setoid";
 import { List, Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, filter, map, mapTo, mergeAll, share, shareReplay, switchMap } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, map, mapTo, mergeAll, share, shareReplay, switchMap } from "rxjs/operators";
 
 import { NosqlFsSource } from "../source/nosql-fs-source";
 import { observableFromOlEvents } from "../util/ol-observable";
@@ -37,6 +37,10 @@ export interface KlikInfo {
   readonly coversFeature: boolean;
 }
 
+export interface PrecacheLaagProgress {
+  readonly [laagnaam: string]: number; // laagnaam -> progress percentage
+}
+
 /**
  * Dit is een verzameling van subjects waarmee de reducer wijzingen kan laten weten aan de child components.
  * Dit is isomorf aan het zetten van de overeenkomstige attributen op het model en die laten volgen. Het probleem daarbij
@@ -61,6 +65,7 @@ export interface ModelChanger {
   readonly dragInfoSubj: rx.Subject<DragInfo>;
   readonly tekenenOpsSubj: rx.Subject<DrawOps>;
   readonly getekendeGeometrySubj: rx.Subject<ol.geom.Geometry>;
+  readonly precacheProgressSubj: rx.BehaviorSubject<PrecacheLaagProgress>;
 }
 
 // Hieronder wordt een paar keer BehaviourSubject gebruikt. Dat is equivalent met, maar beknopter dan, een startWith + shareReplay
@@ -85,7 +90,8 @@ export const ModelChanger: () => ModelChanger = () => ({
   laagstijlGezetSubj: new rx.Subject<ke.ToegevoegdeVectorLaag>(),
   dragInfoSubj: new rx.Subject<DragInfo>(),
   tekenenOpsSubj: new rx.Subject<DrawOps>(),
-  getekendeGeometrySubj: new rx.Subject<ol.geom.Geometry>()
+  getekendeGeometrySubj: new rx.Subject<ol.geom.Geometry>(),
+  precacheProgressSubj: new rx.BehaviorSubject({})
 });
 
 export interface ModelChanges {
@@ -110,6 +116,7 @@ export interface ModelChanges {
   readonly rotatie$: rx.Observable<number>; // een niet gedebouncede variant van "viewinstellingen$.rotatie" voor live rotatie
   readonly tekenenOps$: rx.Observable<DrawOps>;
   readonly getekendeGeometry$: rx.Observable<ol.geom.Geometry>;
+  readonly precacheProgress$: rx.Observable<PrecacheLaagProgress>;
 }
 
 const viewinstellingen = (olmap: ol.Map) => ({
@@ -266,6 +273,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     dragInfo$: dragInfo$,
     rotatie$: rotation$,
     tekenenOps$: changer.tekenenOpsSubj.asObservable(),
-    getekendeGeometry$: changer.getekendeGeometrySubj.asObservable()
+    getekendeGeometry$: changer.getekendeGeometrySubj.asObservable(),
+    precacheProgress$: changer.precacheProgressSubj.asObservable()
   };
 };

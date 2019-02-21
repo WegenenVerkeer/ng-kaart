@@ -20,6 +20,7 @@ import * as rx from "rxjs";
 import { map, share, tap } from "rxjs/operators";
 
 import { ToegevoegdeLaag } from "../kaart";
+import { KaartLocaties } from "../kaart/kaart-bevragen/laaginfo.model";
 import { forChangedValue, KaartComponentBase } from "../kaart/kaart-component-base";
 import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "../kaart/kaart-event-dispatcher";
 import * as prt from "../kaart/kaart-protocol";
@@ -39,6 +40,7 @@ import {
   KaartClassicSubMsg,
   logOnlyWrapper,
   MiddelpuntAangepastMsg,
+  PublishedKaartLocatiesMsg,
   SubscribedMsg,
   VoorgrondHoogLagenInGroepAangepastMsg,
   VoorgrondLaagLagenInGroepAangepastMsg,
@@ -103,6 +105,8 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   voorgrondHoogLagen: EventEmitter<List<ToegevoegdeLaag>> = new EventEmitter();
   @Output()
   voorgrondLaagLagen: EventEmitter<List<ToegevoegdeLaag>> = new EventEmitter();
+  @Output()
+  kaartLocaties: EventEmitter<KaartLocaties> = new EventEmitter();
 
   @ViewChild("kaart", { read: ElementRef })
   mapElement: ElementRef;
@@ -180,6 +184,12 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
                 VoorgrondLaagLagenInGroepAangepastMsg,
                 KaartClassicMsg
               )
+            ),
+            prt.PublishedKaartLocatiesSubscription(
+              pipe(
+                PublishedKaartLocatiesMsg,
+                KaartClassicMsg
+              )
             )
           )
         )
@@ -209,6 +219,8 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
             return this.voorgrondHoogLagen.emit(msg.lagen);
           case "VoorgrondLaagLagenInGroepAangepast":
             return this.voorgrondLaagLagen.emit(msg.lagen);
+          case "PublishedKaartLocaties":
+            return this.kaartLocaties.emit(msg.locaties);
           default:
             return; // Op de andere boodschappen reageren we niet
         }
@@ -244,7 +256,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   ngOnChanges(changes: SimpleChanges) {
     const dispatch: (cmd: prt.Command<TypedRecord>) => void = cmd => this.dispatch(cmd);
     forChangedValue(changes, "zoom", zoom => this.dispatch(prt.VeranderZoomCmd(zoom, logOnlyWrapper)));
-    forChangedValue(changes, "middelpunt", middelpunt => prt.VeranderMiddelpuntCmd(middelpunt, none));
+    forChangedValue(changes, "middelpunt", middelpunt => this.dispatch(prt.VeranderMiddelpuntCmd(middelpunt, none)));
     forChangedValue(
       changes,
       "extent",

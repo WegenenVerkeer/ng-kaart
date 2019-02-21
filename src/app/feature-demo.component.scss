@@ -66,3 +66,16 @@
     height: 210px;
   }
 }
+
+.cachefeatures {
+  padding: 8px 8px 8px 0;
+  width: 50%;
+  &__textarea {
+    width: 50%;
+    height: 100px;
+  }
+}
+
+.with-padding {
+  padding: 4px 0 4px 0;
+}

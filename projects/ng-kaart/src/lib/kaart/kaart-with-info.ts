@@ -6,6 +6,7 @@ import { BehaviorSubject, ReplaySubject, Subject } from "rxjs";
 
 import { ZoekerMetPrioriteiten } from "../zoeker/zoeker";
 
+import { KaartLocaties, WegLocatie } from "./kaart-bevragen/laaginfo.model";
 import { KaartConfig } from "./kaart-config";
 import * as ke from "./kaart-elementen";
 import { InfoBoodschap } from "./kaart-with-info-model";
@@ -46,6 +47,7 @@ export class KaartWithInfo {
   readonly geometryChangedSubj: Subject<ke.TekenResultaat> = new Subject<ke.TekenResultaat>();
   readonly tekenSettingsSubj: BehaviorSubject<Option<ke.TekenSettings>> = new BehaviorSubject<Option<ke.TekenSettings>>(none);
   readonly infoBoodschappenSubj = new BehaviorSubject<OrderedMap<string, InfoBoodschap>>(OrderedMap());
+  readonly publishedKaartLocatiesSubj: Subject<KaartLocaties> = new Subject();
   readonly tileLoader: TileLoader = new TileLoader();
 
   constructor(
