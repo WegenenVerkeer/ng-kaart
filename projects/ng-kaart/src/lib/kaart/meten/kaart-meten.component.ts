@@ -23,6 +23,11 @@ export interface MetenOpties {
   meerdereGeometrieen: boolean;
 }
 
+/**
+ * Deze component is hier enkel nog voor de Elisa use case van het tekenen van geometrieën.
+ *
+ * @deprecated gebruik de KaartMultiMetenComponent
+ */
 @Component({
   selector: "awv-kaart-meten",
   templateUrl: "./kaart-meten.component.html",
