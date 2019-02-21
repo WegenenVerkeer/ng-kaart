@@ -440,18 +440,6 @@ const routeSegmentReducer: Function1<clr.Kleur, ReduceFunction<RouteSegmentState
   return handleOps()(state);
 };
 
-const extractCoordinates: Function1<ol.geom.Geometry, ol.Coordinate[]> = geom =>
-  matchGeometryType(geom, {
-    lineString: line => line.getCoordinates(),
-    multiLineString: multiline => array.flatten(multiline.getCoordinates()) // opeenvolgende gelijke coördinaten kunnen verwijderd worden
-  }).getOrElseL(() => {
-    kaartLogger.warn(`Nietondersteunde geometry ${geom.getType()} bij het extraheren van coordinaten`);
-    return [];
-  });
-
-const concatGeometries: Function1<ol.geom.Geometry[], ol.geom.LineString> = geoms =>
-  new ol.geom.LineString(array.flatten(geoms.map(extractCoordinates)));
-
 const stichGeometries: Function2<WaypointId[], FeaturesByWaypointId, ol.geom.Geometry> = (ids, featuresById) => {
   return new ol.geom.GeometryCollection(
     array.catOptions(
@@ -463,17 +451,6 @@ const stichGeometries: Function2<WaypointId[], FeaturesByWaypointId, ol.geom.Geo
     )
   );
 };
-// const stichGeometries: Function2<WaypointId[], FeaturesByWaypointId, ol.geom.LineString> = (ids, featuresById) => {
-//   return concatGeometries(
-//     array.catOptions(
-//       ids.map(id =>
-//         numberMapOptional<ol.Feature>(id)
-//           .getOption(featuresById)
-//           .map(f => f.getGeometry())
-//       )
-//     )
-//   );
-// };
 
 @Component({
   selector: "awv-kaart-multi-teken-laag",
