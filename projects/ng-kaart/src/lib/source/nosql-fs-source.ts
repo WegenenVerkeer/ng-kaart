@@ -76,7 +76,7 @@ const toGeoJson: Pipeable<string, GeoJsonLike> = obs =>
           }
         };
       } catch (error) {
-        const msg = `Kan JSON data niet parsen: ${error}`;
+        const msg = `Kan JSON data niet parsen: ${error} JSON: ${lijn}`;
         kaartLogger.error(msg);
         throw new Error(msg);
       }
