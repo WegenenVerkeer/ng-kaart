@@ -210,6 +210,7 @@ export class NosqlFsSource extends ol.source.Vector {
       FETCH_TIMEOUT
     ).pipe(
       split(featureDelimiter),
+      filter(lijn => lijn.trim().length > 0),
       toGeoJson
     );
   }
@@ -226,6 +227,7 @@ export class NosqlFsSource extends ol.source.Vector {
       FETCH_TIMEOUT
     ).pipe(
       split(featureDelimiter),
+      filter(lijn => lijn.trim().length > 0),
       toGeoJson
     );
   }
