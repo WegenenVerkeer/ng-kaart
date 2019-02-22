@@ -158,6 +158,7 @@ export * from "./kaart-protocol";
 export * from "./kaart.component";
 export * from "./log";
 export * from "./meten/kaart-meten.component";
+export * from "./meten/kaart-multi-meten.component";
 export * from "./mijn-locatie/kaart-mijn-locatie.component";
 export * from "./open-street-view/kaart-open-street-view.component";
 export * from "./schaal/kaart-schaal.component";
