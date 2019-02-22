@@ -4,10 +4,10 @@ import { Versions } from "./waypoint-ops";
 import { Waypoint, WaypointId } from "./waypoint.msg";
 
 export interface ProtoRoute {
-  id: string;
-  version: number;
-  begin: Waypoint;
-  end: Waypoint;
+  readonly id: string;
+  readonly version: number;
+  readonly begin: Waypoint;
+  readonly end: Waypoint;
 }
 
 export function createRoute(begin: Waypoint, end: Waypoint, versions: Versions): ProtoRoute {
@@ -21,11 +21,11 @@ export function createRoute(begin: Waypoint, end: Waypoint, versions: Versions):
 }
 
 export interface GeometryRoute {
-  id: string;
-  version: number;
-  begin: Waypoint;
-  end: Waypoint;
-  geometry: ol.geom.Geometry;
+  readonly id: string;
+  readonly version: number;
+  readonly begin: Waypoint;
+  readonly end: Waypoint;
+  readonly geometry: ol.geom.Geometry;
 }
 
 export type RouteEventId = string;
