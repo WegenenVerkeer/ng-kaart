@@ -867,7 +867,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           selectionStyle.setImage(
             new ol.style.Icon({
               color: selectionIconColor,
-              src: icon.getSrc()
+              src: icon.getSrc(),
+              size: icon.getSize()
             })
           );
         }
