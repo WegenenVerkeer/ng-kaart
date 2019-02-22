@@ -518,9 +518,9 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           // Deselect en selecteer alle features om terug een correcte offset rendering te krijgen
           // Indien OL geupgrade kunnen we dit eleganter doen door de stijl van de features op de overlay laag aan te passen, zie:
           // https://openlayers.org/en/latest/apidoc/module-ol_interaction_Select-Select.html#getOverlay
-          const selected = [...model.geselecteerdeFeatures.getArray()];
+          const geselecteerd = [...model.geselecteerdeFeatures.getArray()];
           model.geselecteerdeFeatures.clear();
-          model.geselecteerdeFeatures.extend(selected);
+          model.geselecteerdeFeatures.extend(geselecteerd);
 
           zendLagenInGroep(updatedModel, groep);
           return ModelAndEmptyResult(updatedModel);

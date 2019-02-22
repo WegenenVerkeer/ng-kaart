@@ -80,7 +80,7 @@ export const defaultKaartConfig: KaartConfig = {
   },
   orthofotomozaiek: {
     naam: "Ortho",
-    urls: ["http://geoservices.informatievlaanderen.be/raadpleegdiensten/omwrgbmrvl/wms"]
+    urls: ["https://geoservices.informatievlaanderen.be/raadpleegdiensten/omwrgbmrvl/wms"]
   },
   srs: "EPSG:31370",
   defaults: {
