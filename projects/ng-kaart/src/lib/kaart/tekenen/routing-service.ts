@@ -1,5 +1,4 @@
 import { HttpClient } from "@angular/common/http";
-import * as array from "fp-ts/lib/Array";
 import * as ol from "openlayers";
 import { Observable } from "rxjs";
 import * as rx from "rxjs";
@@ -20,7 +19,7 @@ interface WegNode {
 interface WegEdge {
   fromNode: WegNode;
   toNode: WegNode;
-  multiline: ol.geom.MultiLineString;
+  geometry: ol.geom.Geometry;
 }
 
 const toWegNode: Interpreter<WegNode> = st.interpretRecord({
@@ -30,18 +29,9 @@ const toWegNode: Interpreter<WegNode> = st.interpretRecord({
 
 const geoJSONformat = new ol.format.GeoJSON();
 
-const toMultiLine: Interpreter<ol.geom.MultiLineString> = json => {
+const toGeometry: Interpreter<ol.geom.Geometry> = json => {
   try {
-    const geom = geoJSONformat.readGeometry(json, { dataProjection: "EPSG:31370", featureProjection: "EPSG:31370" });
-    return matchGeometryType(geom, {
-      lineString: line => new ol.geom.MultiLineString([line.getCoordinates()]),
-      multiLineString: multiline => multiline
-    }).foldL(
-      () => {
-        throw new Error(`Nietondersteunde geometry ${geom.getType()} bij het extraheren van coordinaten`);
-      },
-      ml => st.ok(ml)
-    );
+    return st.ok(geoJSONformat.readGeometry(json, { dataProjection: "EPSG:31370", featureProjection: "EPSG:31370" }));
   } catch (e) {
     return st.fail("Kon GeoJson niet parsen: " + e);
   }
@@ -50,7 +40,7 @@ const toMultiLine: Interpreter<ol.geom.MultiLineString> = json => {
 const toWegEdge: Interpreter<WegEdge> = st.interpretRecord({
   fromNode: st.field("fromNode", toWegNode),
   toNode: st.field("toNode", toWegNode),
-  multiline: st.field("geometry", toMultiLine)
+  geometry: st.field("geometry", toGeometry)
 });
 
 const toWegEdges: Interpreter<Array<WegEdge>> = st.arr(toWegEdge);
@@ -87,7 +77,7 @@ export class VerfijndeRoutingService implements RoutingService {
         version: protoRoute.version,
         begin: protoRoute.begin,
         end: protoRoute.end,
-        geometry: new ol.geom.MultiLineString(array.flatten(wegEdges.map(edge => edge.multiline.getCoordinates())))
+        geometry: new ol.geom.GeometryCollection(wegEdges.map(edge => edge.geometry))
       }))
     );
   }
@@ -100,7 +90,7 @@ export class SimpleRoutingService implements RoutingService {
       version: protoRoute.version,
       begin: protoRoute.begin,
       end: protoRoute.end,
-      geometry: new ol.geom.MultiLineString([[protoRoute.begin.location, protoRoute.end.location]])
+      geometry: new ol.geom.LineString([protoRoute.begin.location, protoRoute.end.location])
     });
   }
 }
