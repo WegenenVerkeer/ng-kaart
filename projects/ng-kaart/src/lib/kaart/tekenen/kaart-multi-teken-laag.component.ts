@@ -459,9 +459,6 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
   constructor(parent: KaartComponent, zone: NgZone, private readonly http: HttpClient) {
     super(parent, zone);
 
-    console.warn("****http1", http);
-    console.warn("****http2", this.http);
-
     // Trek de OL map binnen, zodat we niet voor alles een boodschap naar de globale kaart reducer moeten dispatchen.
     // We moeten er dan wel voor zorgen dat we alle resources mooi opkuisen.
     const olMap$ = this.kaartModel$.pipe(
