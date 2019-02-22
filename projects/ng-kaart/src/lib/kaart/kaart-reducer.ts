@@ -508,12 +508,21 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             vanPositie < naarPositie
               ? pasLaagPositiesAan(-1, vanPositie + 1, naarPositie, groep)
               : pasLaagPositiesAan(1, naarPositie, vanPositie - 1, groep);
+
           // En ook de te verplaatsen laag moet een andere positie krijgen uiteraard
           const updatedModel = pipe(
             pasVectorLaagStijlPositieAan(naarPositie - vanPositie),
             pasLaagPositieAan(naarPositie - vanPositie),
             pasLaagInModelAan(modelMetAangepasteLagen)
           )(laag);
+
+          // Deselect en selecteer alle features om terug een correcte offset rendering te krijgen
+          // Indien OL geupgrade kunnen we dit eleganter doen door de stijl van de features op de overlay laag aan te passen, zie:
+          // https://openlayers.org/en/latest/apidoc/module-ol_interaction_Select-Select.html#getOverlay
+          const geselecteerd = [...model.geselecteerdeFeatures.getArray()];
+          model.geselecteerdeFeatures.clear();
+          model.geselecteerdeFeatures.extend(geselecteerd);
+
           zendLagenInGroep(updatedModel, groep);
           return ModelAndEmptyResult(updatedModel);
         })
@@ -873,7 +882,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     type StyleSelectorFn = Function2<ol.Map, LaagTitel, Option<StyleSelector>>;
 
-    const createStyleFn = function(styleSelectorFn: StyleSelectorFn): ol.StyleFunction {
+    const createSelectionStyleFn = function(styleSelectorFn: StyleSelectorFn): ol.StyleFunction {
       return function(feature: ol.Feature, resolution: number): FeatureStyle {
         const executeStyleSelector: (_: ss.StyleSelector) => FeatureStyle = ss.matchStyleSelector(
           (s: ss.StaticStyle) => s.style,
@@ -915,7 +924,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               condition: ol.events.condition.click,
               features: model.geselecteerdeFeatures,
               multi: false,
-              style: createStyleFn(getSelectionStyleSelector),
+              style: createSelectionStyleFn(getSelectionStyleSelector),
               hitTolerance: KaartWithInfo.clickHitTolerance,
               layers: layer => layer.get("selecteerbaar")
             });
@@ -924,7 +933,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               condition: ol.events.condition.click,
               features: model.geselecteerdeFeatures,
               multi: true,
-              style: createStyleFn(getSelectionStyleSelector),
+              style: createSelectionStyleFn(getSelectionStyleSelector),
               hitTolerance: KaartWithInfo.clickHitTolerance,
               layers: layer => layer.get("selecteerbaar")
             });
@@ -934,7 +943,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               toggleCondition: ol.events.condition.click,
               features: model.geselecteerdeFeatures,
               multi: true,
-              style: createStyleFn(getSelectionStyleSelector),
+              style: createSelectionStyleFn(getSelectionStyleSelector),
               hitTolerance: KaartWithInfo.clickHitTolerance,
               layers: layer => layer.get("selecteerbaar")
             });
@@ -974,7 +983,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             return some({
               condition: ol.events.condition.pointerMove,
               features: model.hoverFeatures,
-              style: createStyleFn(getHoverStyleSelector),
+              style: createSelectionStyleFn(getHoverStyleSelector),
               layers: layer => layer.get("hover")
             });
           case "off":
@@ -996,7 +1005,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             return some({
               condition: ol.events.condition.never,
               features: model.highlightedFeatures,
-              style: createStyleFn(getHoverStyleSelector)
+              style: createSelectionStyleFn(getHoverStyleSelector)
             });
           case "off":
             return none;

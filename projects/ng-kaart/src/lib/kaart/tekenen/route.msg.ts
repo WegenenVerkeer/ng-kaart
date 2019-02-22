@@ -11,11 +11,11 @@ export interface ProtoRoute {
 }
 
 export interface GeometryRoute {
-  id: string;
-  version: number;
-  begin: Waypoint;
-  end: Waypoint;
-  geometry: ol.geom.Geometry;
+  readonly id: string;
+  readonly version: number;
+  readonly begin: Waypoint;
+  readonly end: Waypoint;
+  readonly geometry: ol.geom.Geometry;
 }
 
 export type RouteEvent = RouteAdded | RouteRemoved;
