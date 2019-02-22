@@ -51,9 +51,10 @@ export interface RoutingService {
 
 export class VerfijndeRoutingService implements RoutingService {
   geoJSONformat = new ol.format.GeoJSON();
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   public resolve(protoRoute: ProtoRoute): Observable<GeometryRoute> {
+    console.log("****http in service", this.http);
     const url =
       `/routing/rest/routing` +
       `/from/${ol.coordinate.format(protoRoute.begin.location, "{x}/{y}", 0)}/projected` +
