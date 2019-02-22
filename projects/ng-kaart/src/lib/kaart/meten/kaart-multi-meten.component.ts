@@ -23,6 +23,13 @@ export interface MultiMetenOpties {
   readonly connectionSelectable: boolean;
 }
 
+const defaultOptions: MultiMetenOpties = {
+  markColour: clr.zwart, // Wschl beter ineens een stijl, dan kan het helemaal gecustomiseerd worden
+  useRouting: false,
+  showInfoMessage: true,
+  connectionSelectable: false
+};
+
 interface Measure {
   readonly length: Option<number>;
   readonly area: Option<number>;
@@ -35,12 +42,7 @@ const InfoBoodschapId = "multi-meten-resultaat";
   styleUrls: ["./kaart-multi-meten.component.scss"]
 })
 export class KaartMultiMetenComponent extends KaartModusComponent {
-  private metenOpties: MultiMetenOpties = {
-    markColour: clr.zwart, // Wschl beter ineens een stijl, dan kan het helemaal gecustomiseerd worden
-    useRouting: false,
-    showInfoMessage: true,
-    connectionSelectable: false
-  };
+  private metenOpties: MultiMetenOpties = defaultOptions;
 
   optionsVisible = false;
   inStateStraight = true;
@@ -49,9 +51,8 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
 
-    const options$ = this.modusOpties$<MultiMetenOpties>();
+    const options$ = this.modusOpties$<MultiMetenOpties>(defaultOptions);
     const toonInfoBoodschap$ = options$.pipe(
-      startWith(this.metenOpties), // de defaults
       map(o => o.showInfoMessage),
       distinctUntilChanged()
     );
