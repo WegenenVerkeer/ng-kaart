@@ -1,4 +1,4 @@
-import { Function1, Function2 } from "fp-ts/lib/function";
+import { Endomorphism, Function1, Function2 } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import { Lens, Setter } from "monocle-ts";
 
@@ -45,3 +45,8 @@ export type PartialFunction1<A, B> = Function1<A, Option<B>>;
  * Een functie die none terug geeft waar die niet gedefineerd is in het domein AxB.
  */
 export type PartialFunction2<A, B, C> = Function2<A, B, Option<C>>;
+
+/**
+ * Een (endo)functie die alle (endo)functies na elkaar uitvoert. Lijkt heel sterk op pipe.
+ */
+export const applySequential: <S>(_: Endomorphism<S>[]) => Endomorphism<S> = fs => init => fs.reduce((s, f) => f(s), init);

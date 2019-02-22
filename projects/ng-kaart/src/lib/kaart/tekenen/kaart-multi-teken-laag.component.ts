@@ -12,9 +12,8 @@ import { bufferTime, debounceTime, filter, map, mapTo, scan, share, startWith, s
 
 import * as clr from "../../stijl/colour";
 import { disc, solidLine } from "../../stijl/common-shapes";
-import { matchGeometryType } from "../../util";
 import { asap } from "../../util/asap";
-import { Consumer, PartialFunction1, ReduceFunction } from "../../util/function";
+import { applySequential, Consumer, PartialFunction1, ReduceFunction } from "../../util/function";
 import {
   numberMapOptional,
   NumberMapped,
@@ -30,7 +29,6 @@ import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-message
 import * as prt from "../kaart-protocol";
 import { Command, VerwijderLaagCmd } from "../kaart-protocol-commands";
 import { KaartComponent } from "../kaart.component";
-import { kaartLogger } from "../log";
 import * as ss from "../stijl-selector";
 
 import { RouteEvent, RouteEventId } from "./route.msg";
@@ -105,9 +103,6 @@ const nextLens: PointFeaturePropertyLens<Option<ol.Feature>> = Lens.fromProp("ne
 const previousLens: PointFeaturePropertyLens<Option<ol.Feature>> = Lens.fromProp("previous");
 const replaceNext: Function1<Option<ol.Feature>, Endomorphism<PointProperties>> = nextLens.set;
 const replacePrevious: Function1<Option<ol.Feature>, Endomorphism<PointProperties>> = previousLens.set;
-
-// Een (endo)functie die alle (endo)functies na elkaar uitvoert. Lijkt heel sterk op pipe.
-const applySequential: <S>(es: Endomorphism<S>[]) => Endomorphism<S> = fas => s => fas.reduce((s, fa) => fa(s), s);
 
 const createMarkerStyle: Function1<clr.Kleur, ss.Stylish> = colour => disc.stylish(colour, clr.wit, 3, 5);
 
