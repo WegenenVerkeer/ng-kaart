@@ -33,7 +33,7 @@ const toGeometry: Interpreter<ol.geom.Geometry> = json => {
   try {
     return st.ok(geoJSONformat.readGeometry(json, { dataProjection: "EPSG:31370", featureProjection: "EPSG:31370" }));
   } catch (e) {
-    return st.fail("Kon GeoJson niet parsen: " + e);
+    return st.fail("Kon GeoJson niet parsen: " + e + ". JSON:" + JSON.stringify(json));
   }
 };
 
