@@ -466,7 +466,7 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
       take(1)
     );
 
-    // breng de externe DrawOps (start & stop) samen met de interne DrawOps
+    // Breng de externe DrawOps (start & stop) samen met de interne DrawOps
     const drawEffects$ = rx.merge(this.modelChanges.tekenenOps$, this.internalDrawOpsSubj);
 
     // Een event dat helpt om alle state te resetten
@@ -476,7 +476,9 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
     // Maak een subject waar de drawReducer kan in schrijven
     const waypointObsSubj: rx.Subject<WaypointOperation> = new rx.Subject();
 
-    // vorm een state + een event om tot een nieuwe state en wat side-effects op de OL map
+    // Vorm een state + een event om tot een nieuwe state en wat side-effects op de OL map
+    // Dit is het hart van het zetten en bewerken van de punten.
+    // Welke lijnen er getekened moeten worden zal afhangen van het antwoord op de WaypointOps die we genereren
     const drawOpsProcessor$: rx.Observable<DrawState> = olMap$.pipe(
       switchMap(olMap =>
         drawingStarts$.pipe(
@@ -512,7 +514,7 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
       mapTo(0 as unknown)
     );
 
-    // Laat de segmenten berekenen
+    // Kies de correcte routering
     const routeSegmentOps$: Function1<boolean, rx.Observable<RouteEvent>> = useRouting =>
       waypointObsSubj.pipe(useRouting ? routesViaRoutering(http) : directeRoutes());
 
@@ -523,11 +525,13 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
       readonly featureColour: clr.Kleur;
     }
 
+    // Dit (her)start de routing service wanneer een nieuwe serie punten gestart wordt of het type van routing herzet wordt
     const routingStart$: rx.Observable<DrawOptions> = rx.merge(drawingStarts$, redrawStarts$).pipe(
       withLatestFrom(drawingStarts$),
       map(([{ useRouting }, start]) => ({ useRouting: useRouting, featureColour: start.featureColour }))
     );
 
+    // Verbind de geproduceerde WaypointOps met de routing service
     const routeEventProcessor$ = routingStart$.pipe(
       switchMap(start =>
         routeSegmentOps$(start.useRouting).pipe(
@@ -538,11 +542,13 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
       share()
     );
 
+    // Vorm de deelroutes om tot 1 geometrie
     const combinedGeometry$: rx.Observable<ol.geom.Geometry> = routeEventProcessor$.pipe(
       withLatestFrom(drawOpsProcessor$.pipe(map(state => array.catOptions(state.pointFeatures.map(extractId))))),
       map(([routeSegmentState, pointFeatureIds]) => stichGeometries(pointFeatureIds, routeSegmentState.featuresByStartWaypointId))
     );
 
+    // Steek alles in gang. Tot nu toe was het enkel compositie
     this.runInViewReady(
       rx.merge(
         combinedGeometry$.pipe(tap(geom => this.dispatch(prt.ZetGetekendeGeometryCmd(geom)))),
