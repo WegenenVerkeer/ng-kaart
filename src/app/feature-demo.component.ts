@@ -353,7 +353,7 @@ export class FeatureDemoComponent {
     optieDivider3a: { divider: true, value: true, label: "Meten opties (teken modus op en afzetten na veranderingen)" },
     metenToon: { value: true, label: "Toon infopaneel" },
     metRouting: { value: false, label: "Verbinding via weg staat standaard aan" },
-    verbindingSelecteerbaar: { value: true, label: "Laat kiezen tussen verbindingstype toe" },
+    keuzemogelijkheidTonen: { value: true, label: "Laat keuze tussen 'rechte lijn'/'via de weg' toe" },
 
     // --- Kaartinfo
     optieDivider4: { divider: true, value: true, label: "Kaartinfo onderaan rechts" },

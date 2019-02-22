@@ -21,7 +21,7 @@ export class ClassicMultiMetenComponent extends ClassicUIElementSelectorComponen
   metRouting = false;
 
   @Input() // moet de gebruiker kunnen kiezen tussen  rechte lijnen en via de weg?
-  verbindingSelecteerbaar = false;
+  keuzemogelijkheidTonen = false;
 
   constructor(kaart: KaartClassicComponent, zone: NgZone) {
     super(MultiMetenUiSelector, kaart, zone);
@@ -32,7 +32,7 @@ export class ClassicMultiMetenComponent extends ClassicUIElementSelectorComponen
       markColour: clr.toKleur("naam", this.tekenKleurCode).getOrElse(clr.zwartig),
       useRouting: this.metRouting,
       showInfoMessage: this.toonInfoBoodschap,
-      connectionSelectable: this.verbindingSelecteerbaar
+      connectionSelectable: this.keuzemogelijkheidTonen
     };
   }
 }
