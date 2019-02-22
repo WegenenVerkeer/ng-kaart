@@ -12,13 +12,18 @@ import { WaypointOperation } from "./waypoint.msg";
 // DrawOps: Operaties op het niveau van (ver)plaatsen en verwijderen van punten op de OL map
 //
 
+// StartDrawing, StopDrawing en RedrawRoute komen van buiten de tekenen component
+// AddPoint, DraggingPoint, MovePoint en DeletePoint worden gegeneerd binnen de component adhv een OL event
+// EndDrawing wordt gegeneerd obv dicht bij elkaar liggen (in de tijd) van AddPoint en DeletePoint
+
 export type DrawOps = StartDrawing | EndDrawing | StopDrawing | RedrawRoute | AddPoint | DraggingPoint | MovePoint | DeletePoint;
 
 export type PointId = number;
 
 export interface StartDrawing {
   readonly type: "StartDrawing";
-  // readonly startGeometrie: Option<ol.geom.Geometry>; --> voor Eliza of Davie
+  // voor Elisa of Davie. Wanneer we dit hier in mergen, kunnen we oude tekenen en meten componenten laten vallen
+  // readonly startGeometrie: Option<ol.geom.Geometry>;
   readonly featureColour: clr.Kleur;
   readonly useRouting: boolean;
 }
@@ -83,42 +88,3 @@ const movePoint: MovePoint = { type: "MovePoint" };
 export const MovePoint: Lazy<MovePoint> = constant(movePoint);
 
 export const DeletePoint: Function1<ol.Feature, DeletePoint> = feature => ({ type: "DeletePoint", feature: feature });
-
-////////////////////////////////////////////////////////////////////
-// RouteSegmentOps: operaties op het niveau van segmenten van routes
-//
-
-export type RouteSegmentOps = AddRouteSegment | RemoveRouteSegment;
-
-export interface AddRouteSegment {
-  type: "AddRouteSegment";
-  id: number;
-  geom: ol.geom.Geometry;
-}
-
-export interface RemoveRouteSegment {
-  type: "RemoveRouteSegment";
-  id: number;
-}
-
-let i = 0;
-
-export const makeRoute: Pipeable<WaypointOperation, RouteSegmentOps> = o =>
-  o.pipe(
-    mergeMap(ops => {
-      switch (ops.type) {
-        case "AddWaypoint":
-          return ops.previous
-            .map(first =>
-              rx.of({
-                type: "AddRouteSegment",
-                id: i++,
-                geom: new ol.geom.LineString([first.location, ops.waypoint.location])
-              } as AddRouteSegment)
-            )
-            .getOrElse(rx.empty());
-        case "RemoveWaypoint":
-          return rx.empty();
-      }
-    })
-  );
