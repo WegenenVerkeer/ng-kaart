@@ -555,7 +555,7 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
         routeEventProcessor$.pipe(
           tap(routeState => this.dispatch(prt.VervangFeaturesCmd(SegmentLaagNaam, featuresIn(routeState), kaartLogOnlyWrapper)))
         ),
-        doubleClick$.pipe(tap(() => this.dispatch(prt.DrawOpsCmd(StopDrawing()))))
+        doubleClick$.pipe(tap(() => this.internalDrawOpsSubj.next(StopDrawing())))
       )
     );
   }
