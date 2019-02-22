@@ -1,6 +1,7 @@
 import { Component, Input, NgZone } from "@angular/core";
 import { Function1 } from "fp-ts/lib/function";
 
+import { copyToClipboard } from "../../util/clipboard";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { InfoBoodschapMeten } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
@@ -53,12 +54,7 @@ export class KaartInfoBoodschapMetenComponent extends KaartChildComponentBase {
 
   copyToClipboard(toCopy?: string) {
     if (toCopy) {
-      const elem = document.createElement("textarea");
-      elem.value = toCopy;
-      document.body.appendChild(elem);
-      elem.select();
-      document.execCommand("copy");
-      document.body.removeChild(elem);
+      copyToClipboard(toCopy);
     }
   }
 }
