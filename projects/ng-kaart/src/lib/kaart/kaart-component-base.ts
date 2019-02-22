@@ -1,7 +1,7 @@
 import { AfterViewInit, NgZone, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
 import { Refinement } from "fp-ts/lib/function";
 import * as rx from "rxjs";
-import { filter, map, mapTo, takeUntil } from "rxjs/operators";
+import { filter, map, mapTo, switchMap, takeUntil } from "rxjs/operators";
 import { isNullOrUndefined } from "util";
 
 import { asap } from "../util/asap";
@@ -94,6 +94,15 @@ export abstract class KaartComponentBase implements AfterViewInit, OnInit, OnDes
 
   protected runOutsideAngular<T>(f: () => T): T {
     return this.zone.runOutsideAngular(f);
+  }
+
+  /**
+   * Voer de observable uit vanaf de component klaar is tot die stopt.
+   * Om iets nuttig te doen, moeten de observables side-effects gebruiken. Als dat op de gepaste plaats
+   * gebeurt, i.e. als allerlaatste operatie in een tap, is dit nog overzichtelijk.
+   */
+  protected runInViewReady(os: rx.Observable<any>) {
+    this.bindToLifeCycle(this.viewReady$.pipe(switchMap(() => os))).subscribe();
   }
 }
 

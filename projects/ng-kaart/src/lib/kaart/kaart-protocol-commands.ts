@@ -12,6 +12,7 @@ import * as ke from "./kaart-elementen";
 import { Legende } from "./kaart-legende";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import * as ss from "./stijl-selector";
+import { DrawOps } from "./tekenen/tekenen-model";
 
 export type Command<Msg extends KaartMsg> =
   | AbortTileLoadingCmd
@@ -24,6 +25,8 @@ export type Command<Msg extends KaartMsg> =
   | BewerkVectorlaagstijlCmd
   | DeselecteerAlleFeaturesCmd
   | DeselecteerFeatureCmd
+  | DrawOpsCmd
+  | ZetGetekendeGeometryCmd
   | HighlightFeaturesCmd<Msg>
   | KiesAchtergrondCmd<Msg>
   | MaakLaagOnzichtbaarCmd<Msg>
@@ -39,7 +42,7 @@ export type Command<Msg extends KaartMsg> =
   | PublishKaartLocatiesCmd
   | UnsubscribeCmd
   | VeranderExtentCmd
-  | VeranderMiddelpuntCmd<Msg>
+  | VeranderMiddelpuntCmd
   | VeranderViewportCmd
   | VeranderZoomCmd<Msg>
   | VeranderRotatieCmd
@@ -200,7 +203,7 @@ export interface VerwijderStandaardInteractiesCmd<Msg extends KaartMsg> {
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
-export interface VeranderMiddelpuntCmd<Msg extends KaartMsg> {
+export interface VeranderMiddelpuntCmd {
   readonly type: "VeranderMiddelpunt";
   readonly coordinate: ol.Coordinate;
   readonly animationDuration: Option<number>;
@@ -225,7 +228,7 @@ export interface VeranderRotatieCmd {
 
 export interface VeranderViewportCmd {
   readonly type: "VeranderViewport";
-  readonly size: ol.Size;
+  readonly size: [number | undefined, number | undefined];
 }
 
 export interface ZetFocusOpKaartCmd {
@@ -416,8 +419,14 @@ export interface VerbergInfoBoodschapCmd {
   readonly id: string;
 }
 
+export interface ZetGetekendeGeometryCmd {
+  readonly type: "ZetGetekendeGeometry";
+  readonly geometry: ol.geom.Geometry;
+}
+
 export interface UiElementOpties {
-  [k: string]: any;
+  readonly naam: string;
+  readonly opties: any;
 }
 
 // TODO toevoegen van een selector wanneer er meerdere elementen van hetzelfde type beschikbaar zijn
@@ -434,7 +443,7 @@ export interface VerwijderUiElement {
 export interface ZetUiElementOpties {
   readonly type: "ZetUiElementOpties";
   readonly naam: string;
-  readonly opties: UiElementOpties;
+  readonly opties: any;
 }
 
 // De features zullen "geselecteerd" worden, ook al zouden ze geen onderdeel uitmaken van één van de lagen. Het is dus de
@@ -481,6 +490,11 @@ export interface BewerkVectorlaagstijlCmd {
 
 export interface StopVectorlaagstijlBewerkingCmd {
   readonly type: "StopVectorlaagstijlBewerking";
+}
+
+export interface DrawOpsCmd {
+  readonly type: "DrawOps";
+  readonly ops: DrawOps;
 }
 
 ////////////////////////
@@ -623,7 +637,7 @@ export function ZetStijlSpecVoorLaagCmd<Msg extends KaartMsg>(
 export function VeranderMiddelpuntCmd<Msg extends KaartMsg>(
   coordinate: ol.Coordinate,
   animationDuration: Option<number>
-): VeranderMiddelpuntCmd<Msg> {
+): VeranderMiddelpuntCmd {
   return { type: "VeranderMiddelpunt", coordinate: coordinate, animationDuration: animationDuration };
 }
 
@@ -643,7 +657,7 @@ export function ZoekGekliktCmd(resultaat: ZoekResultaat): ZoekGekliktCmd {
   return { type: "ZoekGeklikt", resultaat: resultaat };
 }
 
-export function VeranderViewportCmd(size: ol.Size): VeranderViewportCmd {
+export function VeranderViewportCmd(size: [number | undefined, number | undefined]): VeranderViewportCmd {
   return { type: "VeranderViewport", size: size };
 }
 
@@ -790,7 +804,7 @@ export function VerwijderUiElement(naam: string): VerwijderUiElement {
   return { type: "VerwijderUiElement", naam: naam };
 }
 
-export function ZetUiElementOpties(naam: string, opties: UiElementOpties): ZetUiElementOpties {
+export function ZetUiElementOpties(naam: string, opties: any): ZetUiElementOpties {
   return { type: "ZetUiElementOpties", naam: naam, opties: opties };
 }
 
@@ -855,4 +869,12 @@ export function BewerkVectorlaagstijlCmd(laag: ke.ToegevoegdeVectorLaag): Bewerk
 
 export function StopVectorlaagstijlBewerkingCmd(): StopVectorlaagstijlBewerkingCmd {
   return { type: "StopVectorlaagstijlBewerking" };
+}
+
+export function DrawOpsCmd(ops: DrawOps): DrawOpsCmd {
+  return { type: "DrawOps", ops: ops };
+}
+
+export function ZetGetekendeGeometryCmd(geometry: ol.geom.Geometry): ZetGetekendeGeometryCmd {
+  return { type: "ZetGetekendeGeometry", geometry: geometry };
 }

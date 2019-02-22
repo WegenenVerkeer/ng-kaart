@@ -243,7 +243,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
       this.dispatch(prt.VeranderMiddelpuntCmd(this.middelpunt, none));
     }
     if (this.breedte || this.hoogte) {
-      this.dispatch(prt.VeranderViewportCmd([this.breedte, this.hoogte]));
+      this.dispatch(prt.VeranderViewportCmd([this.breedte!, this.hoogte!]));
     }
     if (this.hoverModus) {
       this.dispatch(prt.ActiveerHoverModusCmd(this.hoverModus));

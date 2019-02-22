@@ -76,8 +76,8 @@ export const refreshTiles = (
 
   const geometryExtent = geometry.getExtent();
 
-  let queue = [];
-  const ignoreExtents = [];
+  let queue: string[] = [];
+  const ignoreExtents: ol.Extent[] = [];
   for (let z = startZoom; z < stopZoom + 1; z++) {
     // Tilecoord: [z, x, y]
 
@@ -94,7 +94,7 @@ export const refreshTiles = (
       }
     });
 
-    const queueByZ = [];
+    const queueByZ: string[] = [];
     const { tileRangeMinX, tileRangeMinY, tileRangeMaxX, tileRangeMaxY } = calculateTileRange(geometryExtent, z);
     for (let x = tileRangeMinX; x <= tileRangeMaxX; x++) {
       for (let y = tileRangeMinY; y <= tileRangeMaxY; y++) {

@@ -3,6 +3,7 @@ import { fromNullable } from "fp-ts/lib/Option";
 
 import { Adres, WegLocatie } from "..";
 import { formatCoordinate, lambert72ToWgs84, switchVolgorde } from "../../coordinaten/coordinaten.service";
+import { copyToClipboard } from "../../util/clipboard";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { InfoBoodschapKaartBevragenProgress, withProgress } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
@@ -71,11 +72,6 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildComponen
   }
 
   copyToClipboard(toCopy: string) {
-    const elem = document.createElement("textarea");
-    elem.value = toCopy;
-    document.body.appendChild(elem);
-    elem.select();
-    document.execCommand("copy");
-    document.body.removeChild(elem);
+    copyToClipboard(toCopy);
   }
 }

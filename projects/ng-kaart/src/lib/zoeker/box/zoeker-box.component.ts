@@ -661,21 +661,21 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.zoekInputSubj.next(event.srcElement.value);
   }
 
-  focusNext(e, isLast: boolean): void {
+  focusNext(event, isLast: boolean): void {
     event.preventDefault(); // stop arrow key from scrolling window
     if (isLast) {
       this.focusOpZoekVeld();
     } else {
-      e.srcElement.nextElementSibling.focus();
+      event.srcElement.nextElementSibling.focus();
     }
   }
 
-  focusPrev(e, isFirst: boolean): void {
+  focusPrev(event, isFirst: boolean): void {
     event.preventDefault(); // stop arrow key from scrolling window
     if (isFirst) {
       this.focusOpZoekVeld();
     } else {
-      e.srcElement.previousSibling.focus();
+      event.srcElement.previousSibling.focus();
     }
   }
 
@@ -700,18 +700,22 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   setFocusEersteSuggestieOfResultaat(): void {
-    if (document.getElementById("eersteSuggestie")) {
-      document.getElementById("eersteSuggestie").focus();
-    } else if (document.getElementById("eersteResultaat")) {
-      document.getElementById("eersteResultaat").focus();
+    const eersteSuggestie = document.getElementById("eersteSuggestie")!;
+    const eersteResultaat = document.getElementById("eersteResultaat")!;
+    if (eersteSuggestie) {
+      eersteSuggestie.focus();
+    } else if (eersteResultaat) {
+      eersteResultaat.focus();
     }
   }
 
   setFocusLaatsteSuggestieOfResultaat(): void {
-    if (document.getElementById("laatsteSuggestie")) {
-      document.getElementById("laatsteSuggestie").focus();
-    } else if (document.getElementById("laatsteResultaat")) {
-      document.getElementById("laatsteResultaat").focus();
+    const laatsteSuggestie = document.getElementById("laatsteSuggestie")!;
+    const laatsteResultaat = document.getElementById("laatsteResultaat")!;
+    if (laatsteSuggestie) {
+      laatsteSuggestie.focus();
+    } else if (laatsteResultaat) {
+      laatsteResultaat.focus();
     }
   }
 

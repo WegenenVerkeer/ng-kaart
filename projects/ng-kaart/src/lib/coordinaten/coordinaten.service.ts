@@ -1,4 +1,5 @@
 import { fromPredicate, Option } from "fp-ts/lib/Option";
+import { getArraySetoid, Setoid, setoidNumber } from "fp-ts/lib/Setoid";
 import * as ol from "openlayers";
 import proj4 from "proj4";
 
@@ -31,3 +32,7 @@ proj4.defs(
   "+proj=lcc +lat_1=51.16666723333333 +lat_2=49.8333339 +lat_0=90 +lon_0=4.367486666666666 +x_0=150000.013 +y_0=5400088.438 " +
     "+ellps=intl +towgs84=-125.8,79.9,-100.5 +units=m +no_defs"
 );
+
+export namespace Coordinate {
+  export const setoid: Setoid<ol.Coordinate> = getArraySetoid(setoidNumber);
+}

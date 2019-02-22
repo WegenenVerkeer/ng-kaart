@@ -2,7 +2,7 @@ import { Function1 } from "fp-ts/lib/function";
 import { List } from "immutable";
 import * as ol from "openlayers";
 
-import { KaartLocaties, WegLocatie } from "../kaart";
+import { KaartLocaties } from "../kaart/kaart-bevragen/laaginfo.model";
 import * as ke from "../kaart/kaart-elementen";
 import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
 import * as prt from "../kaart/kaart-protocol";

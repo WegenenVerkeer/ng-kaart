@@ -20,6 +20,7 @@ import { Viewinstellingen } from "./kaart-protocol-subscriptions";
 import { KaartWithInfo } from "./kaart-with-info";
 import { GeselecteerdeFeatures, HoverFeature } from "./kaart-with-info-model";
 import { GeenLaagstijlaanpassing, LaagstijlaanpassingState } from "./stijleditor/state";
+import { DrawOps } from "./tekenen/tekenen-model";
 
 export interface UiElementSelectie {
   readonly naam: string;
@@ -62,6 +63,8 @@ export interface ModelChanger {
   readonly laagstijlaanpassingStateSubj: rx.Subject<LaagstijlaanpassingState>;
   readonly laagstijlGezetSubj: rx.Subject<ke.ToegevoegdeVectorLaag>;
   readonly dragInfoSubj: rx.Subject<DragInfo>;
+  readonly tekenenOpsSubj: rx.Subject<DrawOps>;
+  readonly getekendeGeometrySubj: rx.Subject<ol.geom.Geometry>;
   readonly precacheProgressSubj: rx.BehaviorSubject<PrecacheLaagProgress>;
 }
 
@@ -86,6 +89,8 @@ export const ModelChanger: () => ModelChanger = () => ({
   laagstijlaanpassingStateSubj: new rx.BehaviorSubject(GeenLaagstijlaanpassing),
   laagstijlGezetSubj: new rx.Subject<ke.ToegevoegdeVectorLaag>(),
   dragInfoSubj: new rx.Subject<DragInfo>(),
+  tekenenOpsSubj: new rx.Subject<DrawOps>(),
+  getekendeGeometrySubj: new rx.Subject<ol.geom.Geometry>(),
   precacheProgressSubj: new rx.BehaviorSubject({})
 });
 
@@ -109,6 +114,8 @@ export interface ModelChanges {
   readonly laagstijlGezet$: rx.Observable<ke.ToegevoegdeVectorLaag>;
   readonly dragInfo$: rx.Observable<DragInfo>;
   readonly rotatie$: rx.Observable<number>; // een niet gedebouncede variant van "viewinstellingen$.rotatie" voor live rotatie
+  readonly tekenenOps$: rx.Observable<DrawOps>;
+  readonly getekendeGeometry$: rx.Observable<ol.geom.Geometry>;
   readonly precacheProgress$: rx.Observable<PrecacheLaagProgress>;
 }
 
@@ -265,6 +272,8 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     laagstijlGezet$: changer.laagstijlGezetSubj.asObservable(),
     dragInfo$: dragInfo$,
     rotatie$: rotation$,
+    tekenenOps$: changer.tekenenOpsSubj.asObservable(),
+    getekendeGeometry$: changer.getekendeGeometrySubj.asObservable(),
     precacheProgress$: changer.precacheProgressSubj.asObservable()
   };
 };

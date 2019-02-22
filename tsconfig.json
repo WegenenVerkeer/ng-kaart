@@ -12,7 +12,8 @@
     "experimentalDecorators": true,
     "target": "es6",
     "types": [
-      "node"
+      "node",
+      "mocha"
     ],
     "typeRoots": [
       "node_modules/@types"

@@ -10,7 +10,7 @@ import { Adres, LaagLocationInfo, WegLocatie } from "./kaart-bevragen/laaginfo.m
 import * as ke from "./kaart-elementen";
 import { VectorLaag } from "./kaart-elementen";
 
-export type InfoBoodschap = InfoBoodschapAlert | InfoBoodschapIdentify | InfoBoodschapKaartBevragenProgress;
+export type InfoBoodschap = InfoBoodschapAlert | InfoBoodschapMeten | InfoBoodschapIdentify | InfoBoodschapKaartBevragenProgress;
 
 export interface InfoBoodschapBase {
   readonly id: string;
@@ -24,6 +24,12 @@ export interface InfoBoodschapAlert extends InfoBoodschapBase {
   readonly type: "InfoBoodschapAlert";
   readonly message: string;
   readonly iconName: Option<string>;
+}
+
+export interface InfoBoodschapMeten extends InfoBoodschapBase {
+  readonly type: "InfoBoodschapMeten";
+  readonly length: Option<number>;
+  readonly area: Option<number>;
 }
 
 export interface InfoBoodschapIdentify extends InfoBoodschapBase {
@@ -65,7 +71,8 @@ export interface InfoBoodschapKaartBevragenProgress extends InfoBoodschapBase {
 export const foldInfoBoodschap = (boodschap: InfoBoodschap) => <A>(
   ifAlert: Function1<InfoBoodschapAlert, A>,
   ifIdentify: Function1<InfoBoodschapIdentify, A>,
-  ifKaartBevragen: Function1<InfoBoodschapKaartBevragenProgress, A>
+  ifKaartBevragen: Function1<InfoBoodschapKaartBevragenProgress, A>,
+  ifMeten: Function1<InfoBoodschapMeten, A>
 ) => {
   switch (boodschap.type) {
     case "InfoBoodschapAlert":
@@ -74,6 +81,8 @@ export const foldInfoBoodschap = (boodschap: InfoBoodschap) => <A>(
       return ifIdentify(boodschap);
     case "InfoBoodschapKaartBevragen":
       return ifKaartBevragen(boodschap);
+    case "InfoBoodschapMeten":
+      return ifMeten(boodschap);
   }
 };
 

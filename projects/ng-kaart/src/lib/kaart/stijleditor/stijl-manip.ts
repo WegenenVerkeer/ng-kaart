@@ -87,7 +87,7 @@ export const kleurPerVeldwaardeToLegende: Function1<KleurPerVeldwaarde, Legende>
 // Deze Optional peutert de kleur uit een statisch stijl. We moeten een atribuut nemen dat de kleur bevat.
 const staticStyleKleurOptional: Optional<sst.AwvV0StaticStyle, clr.Kleur> = sst.fullStylePrism
   .composeOptional(sst.FullStyle.strokeOptional)
-  .composeLens(sst.Stroke.colorLens)
+  .compose(sst.Stroke.colorOptional)
   .compose(sst.Color.kleurOptional);
 
 // Deze Optional probeert een statische stijl uit een laag te halen

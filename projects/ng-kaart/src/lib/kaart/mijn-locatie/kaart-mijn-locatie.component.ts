@@ -7,7 +7,7 @@ import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, filter, map } from "rxjs/operators";
 
-import { flatten } from "../../util/operators";
+import { catOptions } from "../../util/operators";
 import * as ke from "../kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart-internal-messages";
 import { KaartModusComponent } from "../kaart-modus-component";
@@ -138,7 +138,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
   ngAfterViewInit() {
     super.ngAfterViewInit();
 
-    const zoomdoel$: rx.Observable<number> = this.zoomdoelSetting$.pipe(flatten); // Hou enkel de effectieve zoomniveaudoelen over
+    const zoomdoel$: rx.Observable<number> = this.zoomdoelSetting$.pipe(catOptions); // Hou enkel de effectieve zoomniveaudoelen over
     const zoom$ = this.viewinstellingen$.pipe(
       distinctUntilChanged((vi1, vi2) => vi1.zoom === vi2.zoom && vi1.minZoom === vi2.minZoom && vi1.maxZoom === vi2.maxZoom),
       map(vi => vi.zoom)
