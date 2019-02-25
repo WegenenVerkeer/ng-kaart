@@ -1,12 +1,13 @@
 import { HttpClient } from "@angular/common/http";
 import * as array from "fp-ts/lib/Array";
-import { concat, Function1 } from "fp-ts/lib/function";
-import { none, Option, some } from "fp-ts/lib/Option";
+import { concat, Curried2, Function1, Function2 } from "fp-ts/lib/function";
+import { fromPredicate, none, Option, some } from "fp-ts/lib/Option";
 import * as strmap from "fp-ts/lib/StrMap";
 import { Tuple } from "fp-ts/lib/Tuple";
 import * as rx from "rxjs";
 import { map, mergeMap } from "rxjs/operators";
 
+import { Coordinate } from "../../coordinaten";
 import * as arrays from "../../util/arrays";
 import { catOptions, Pipeable, scanState } from "../../util/operators";
 import { toArray } from "../../util/option";
@@ -122,6 +123,9 @@ export function routesViaRoutering(http: HttpClient): Pipeable<WaypointOperation
   return waypointOpsToRouteOperation(new CompositeRoutingService([new SimpleRoutingService(), new VerfijndeRoutingService(http)]));
 }
 
+const ifDifferentLocation: Function2<ol.Coordinate, Waypoint, Option<Waypoint>> = (l, w) =>
+  Coordinate.equalTo(w.location)(l) ? none : some(Waypoint(w.id, l));
+
 const waypointOpsToRouteOperation: Function1<RoutingService, Pipeable<WaypointOperation, RouteEvent>> = routingService => waypointOpss => {
   const routeChangesObs: rx.Observable<RouteChanges> = scanState(waypointOpss, nextRouteStateChanges, emptyRouteState, emptyRouteChanges);
 
@@ -131,7 +135,13 @@ const waypointOpsToRouteOperation: Function1<RoutingService, Pipeable<WaypointOp
         rx.from(routeChanges.routesRemoved).pipe(map(routeRemoved)),
         rx.from(routeChanges.routesAdded).pipe(
           mergeMap(protoRoute => routingService.resolve(protoRoute)),
-          map(routeAdded)
+          map(geomRoute => {
+            const newBegin = geomRoute.geometry.getClosestPoint(geomRoute.begin.location);
+            const newEnd = geomRoute.geometry.getClosestPoint(geomRoute.end.location);
+            const beginSnap = ifDifferentLocation(newBegin, geomRoute.begin);
+            const endSnap = ifDifferentLocation(newEnd, geomRoute.end);
+            return routeAdded(geomRoute, beginSnap, endSnap);
+          })
         )
       )
     )

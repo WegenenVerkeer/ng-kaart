@@ -3,7 +3,7 @@ import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angula
 import * as array from "fp-ts/lib/Array";
 import { Endomorphism, Function1, Function2, Function3, identity, pipe, Predicate, Refinement } from "fp-ts/lib/function";
 import { fromNullable, fromPredicate, none, Option, some } from "fp-ts/lib/Option";
-import { setoidString } from "fp-ts/lib/Setoid";
+import { setoidNumber, setoidString } from "fp-ts/lib/Setoid";
 import { List, OrderedMap } from "immutable";
 import { Lens, Optional } from "monocle-ts";
 import * as ol from "openlayers";
@@ -41,6 +41,7 @@ import {
   isStartDrawing,
   MovePoint,
   RedrawRoute,
+  SnapWaypoint,
   StartDrawing,
   StopDrawing
 } from "./tekenen-model";
@@ -315,7 +316,8 @@ function drawStateTransformer(
 
       const maybePreviousCoordinate = lastFeature.chain(extractCoordinate);
       const sameLocationAsPrevious = maybePreviousCoordinate.exists(p => p[0] === coordinate[0] && p[1] === coordinate[1]);
-      // Openlayers (in elk geval zoals wij het gebruiken) heeft de verschillende eigenschap dat het een drawend genereert bij
+
+      // Openlayers (in elk geval zoals wij het gebruiken) heeft de vervelende eigenschap dat het een drawend genereert bij
       // een klik als de muispointer nog niet bewogen is. We voegen dan maw. Nog een extra punt toe opdezelfde locatie. En
       // tegelijkertijd wissen we het punt dat er net voor gezet was. Dat is niet wat we willen. Dat extra punt moet nl. niet
       // toegevoegd worden
@@ -384,6 +386,15 @@ function drawStateTransformer(
           return identity;
         });
     }
+
+    case "SnapWaypoint": {
+      state.pointFeatures.forEach(feature => {
+        if (extractId(feature).contains(setoidNumber, ops.waypoint.id)) {
+          feature.setGeometry(new ol.geom.Point(ops.waypoint.location));
+        }
+      });
+      return identity; // we erken enkel vi aside-effects nl updaten van bestaande ol.Feature
+    }
   }
 }
 
@@ -421,13 +432,31 @@ const removeFeature: Function2<RouteEventId, WaypointId, Endomorphism<RouteSegme
     featuresByRouteIdLens.modify(removeFromStringMap(routeId))
   ]);
 
-const routeSegmentReducer: Function1<clr.Kleur, ReduceFunction<RouteSegmentState, RouteEvent>> = lineColour => (state, ops) => {
+const routeSegmentReducer: Function2<clr.Kleur, Consumer<DrawOps>, ReduceFunction<RouteSegmentState, RouteEvent>> = (
+  lineColour,
+  dispatchDrawOps
+) => (state, ops) => {
   function handleOps(): Endomorphism<RouteSegmentState> {
     switch (ops.type) {
       case "RouteAdded":
+        // maken we een feature met de te tekenen geometrie
         const line = new ol.Feature(ops.geometry);
         line.setStyle(createLineStyle(lineColour));
+
+        // dan kijken we of de eindpunten veranderd zijn en als dat zo is, dan maken we daar een DrawOps voor
+        [ops.beginSnap, ops.endSnap].forEach(snap =>
+          forEach(
+            snap,
+            pipe(
+              SnapWaypoint,
+              dispatchDrawOps
+            )
+          )
+        );
+
+        // en tenslotte voegen we de feature toe aan de state
         return addFeature(ops.id, ops.startWaypointId, line);
+
       case "RouteRemoved":
         return removeFeature(ops.id, ops.startWaypointId);
     }
@@ -532,10 +561,10 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
     );
 
     // Verbind de geproduceerde WaypointOps met de routing service
-    const routeEventProcessor$ = routingStart$.pipe(
+    const routeEventProcessor$: rx.Observable<RouteSegmentState> = routingStart$.pipe(
       switchMap(start =>
         routeSegmentOps$(start.useRouting).pipe(
-          scan(routeSegmentReducer(start.featureColour), initialRouteSegmentState),
+          scan(routeSegmentReducer(start.featureColour, ops => asap(() => this.internalDrawOpsSubj.next(ops))), initialRouteSegmentState),
           debounceTime(start.useRouting ? 75 : 0)
         )
       ),
