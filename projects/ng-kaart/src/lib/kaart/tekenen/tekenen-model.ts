@@ -1,12 +1,9 @@
 import { constant, Function1, Function2, Lazy, Refinement } from "fp-ts/lib/function";
 import * as ol from "openlayers";
-import * as rx from "rxjs";
-import { mergeMap } from "rxjs/operators";
 
 import * as clr from "../../stijl/colour";
-import { Pipeable } from "../../util";
 
-import { WaypointOperation } from "./waypoint.msg";
+import { Waypoint } from "./waypoint.msg";
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // DrawOps: Operaties op het niveau van (ver)plaatsen en verwijderen van punten op de OL map
@@ -15,8 +12,18 @@ import { WaypointOperation } from "./waypoint.msg";
 // StartDrawing, StopDrawing en RedrawRoute komen van buiten de tekenen component
 // AddPoint, DraggingPoint, MovePoint en DeletePoint worden gegeneerd binnen de component adhv een OL event
 // EndDrawing wordt gegeneerd obv dicht bij elkaar liggen (in de tijd) van AddPoint en DeletePoint
+// SnapWaypoint wordt gegeneerd obv de response van de routing service
 
-export type DrawOps = StartDrawing | EndDrawing | StopDrawing | RedrawRoute | AddPoint | DraggingPoint | MovePoint | DeletePoint;
+export type DrawOps =
+  | StartDrawing
+  | EndDrawing
+  | StopDrawing
+  | RedrawRoute
+  | AddPoint
+  | DraggingPoint
+  | MovePoint
+  | DeletePoint
+  | SnapWaypoint;
 
 export type PointId = number;
 
@@ -62,6 +69,11 @@ export interface DeletePoint {
   readonly feature: ol.Feature;
 }
 
+export interface SnapWaypoint {
+  readonly type: "SnapWaypoint";
+  readonly waypoint: Waypoint;
+}
+
 export const StartDrawing: Function2<clr.Kleur, boolean, StartDrawing> = (featureColour, useRouting) => ({
   type: "StartDrawing",
   featureColour: featureColour,
@@ -88,3 +100,5 @@ const movePoint: MovePoint = { type: "MovePoint" };
 export const MovePoint: Lazy<MovePoint> = constant(movePoint);
 
 export const DeletePoint: Function1<ol.Feature, DeletePoint> = feature => ({ type: "DeletePoint", feature: feature });
+
+export const SnapWaypoint: Function1<Waypoint, SnapWaypoint> = waypoint => ({ type: "SnapWaypoint", waypoint: waypoint });
