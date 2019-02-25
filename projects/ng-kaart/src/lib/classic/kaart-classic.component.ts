@@ -54,7 +54,7 @@ import {
 })
 export class KaartClassicComponent extends KaartComponentBase implements OnInit, OnDestroy, OnChanges, KaartCmdDispatcher<TypedRecord> {
   private static counter = 1;
-  kaartClassicSubMsg$: rx.Observable<KaartClassicSubMsg> = rx.empty();
+  kaartClassicSubMsg$: rx.Observable<KaartClassicSubMsg> = rx.EMPTY;
   private hasFocus = false;
 
   readonly dispatcher: ReplaySubjectKaartCmdDispatcher<TypedRecord> = new ReplaySubjectKaartCmdDispatcher();
