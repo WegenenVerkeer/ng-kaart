@@ -91,7 +91,7 @@ interface ExtendedPlaceResult extends google.maps.places.PlaceResult, LocatieZoe
 interface LocatieZoekerLocatie {
   locatie: any;
   omschrijving: string;
-  bron: String; // Google | WDB | ABBAMelda
+  bron: String; // Google | WDB | ABBAMelda | Perceel
   readonly partialMatch: boolean;
 }
 
@@ -278,7 +278,7 @@ export class ZoekerGoogleWdbService implements Zoeker {
         map(vervolledigdeLocaties => {
           const locaties = resultaten.locaties.concat(vervolledigdeLocaties);
           locaties.forEach((locatie, index) => {
-            const zoekerType: ZoekerRepresentatieType = isWdbBron(locatie.bron) ? "WDB" : "Google";
+            const zoekerType: ZoekerRepresentatieType = locatie.bron === "Perceel" ? "Perceel" : isWdbBron(locatie.bron) ? "WDB" : "Google";
             zoekResultaten.resultaten.push(
               new GoogleWdbZoekResultaat(
                 locatie,
