@@ -26,7 +26,7 @@ import { KaartComponent } from "../kaart.component";
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class KaartInfoBoodschappenComponent extends KaartChildComponentBase implements OnInit {
-  infoBoodschappen$: rx.Observable<List<InfoBoodschap>> = rx.empty();
+  infoBoodschappen$: rx.Observable<List<InfoBoodschap>> = rx.EMPTY;
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);

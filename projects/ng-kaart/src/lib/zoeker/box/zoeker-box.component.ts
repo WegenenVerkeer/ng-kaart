@@ -720,7 +720,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   zoek(event: any) {
-    if (event.srcElement.value.length >= 2) {
+    if (this.zoekVeld.value.length >= 2) {
       this.volledigeZoekSubj.next();
     }
   }

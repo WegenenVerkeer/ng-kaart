@@ -51,7 +51,7 @@ export interface RoutingService {
 
 export class VerfijndeRoutingService implements RoutingService {
   geoJSONformat = new ol.format.GeoJSON();
-  constructor(private http: HttpClient) {}
+  constructor(private readonly http: HttpClient) {}
 
   public resolve(protoRoute: ProtoRoute): Observable<GeometryRoute> {
     const url =
@@ -97,7 +97,7 @@ export class SimpleRoutingService implements RoutingService {
 
 export class NoopRoutingService implements RoutingService {
   public resolve(_: ProtoRoute): Observable<GeometryRoute> {
-    return rx.empty();
+    return rx.EMPTY;
   }
 }
 

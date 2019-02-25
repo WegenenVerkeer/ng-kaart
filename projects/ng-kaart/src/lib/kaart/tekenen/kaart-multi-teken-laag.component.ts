@@ -485,7 +485,7 @@ const stichGeometries: Function2<WaypointId[], FeaturesByWaypointId, ol.geom.Geo
 export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
   private readonly internalDrawOpsSubj: rx.Subject<DrawOps> = new rx.Subject();
 
-  constructor(parent: KaartComponent, zone: NgZone, http: HttpClient) {
+  constructor(parent: KaartComponent, zone: NgZone, private readonly http: HttpClient) {
     super(parent, zone);
 
     // Trek de OL map binnen, zodat we niet voor alles een boodschap naar de globale kaart reducer moeten dispatchen.
@@ -545,7 +545,7 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
 
     // Kies de correcte routering
     const routeSegmentOps$: Function1<boolean, rx.Observable<RouteEvent>> = useRouting =>
-      waypointObsSubj.pipe(useRouting ? routesViaRoutering(http) : directeRoutes());
+      waypointObsSubj.pipe(useRouting ? routesViaRoutering(this.http) : directeRoutes());
 
     const initialRouteSegmentState: RouteSegmentState = { featuresByStartWaypointId: {}, featuresByRouteId: {} };
 

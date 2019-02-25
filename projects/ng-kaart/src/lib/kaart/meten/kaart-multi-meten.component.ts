@@ -84,7 +84,7 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
     );
 
     const boodschap$ = toonInfoBoodschap$.pipe(
-      switchMap(toon => (toon ? measure$ : rx.empty())),
+      switchMap(toon => (toon ? measure$ : rx.EMPTY)),
       share()
     );
 
