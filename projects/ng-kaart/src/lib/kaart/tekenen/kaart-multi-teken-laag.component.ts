@@ -393,7 +393,7 @@ function drawStateTransformer(
           feature.setGeometry(new ol.geom.Point(ops.waypoint.location));
         }
       });
-      return identity; // we erken enkel vi aside-effects nl updaten van bestaande ol.Feature
+      return identity; // we werken enkel via side effects nl updaten van bestaande ol.Feature
     }
   }
 }

@@ -1,7 +1,7 @@
 import { HttpClient } from "@angular/common/http";
 import * as array from "fp-ts/lib/Array";
-import { concat, Curried2, Function1, Function2 } from "fp-ts/lib/function";
-import { fromPredicate, none, Option, some } from "fp-ts/lib/Option";
+import { concat, Function1, Function2 } from "fp-ts/lib/function";
+import { none, Option, some } from "fp-ts/lib/Option";
 import * as strmap from "fp-ts/lib/StrMap";
 import { Tuple } from "fp-ts/lib/Tuple";
 import * as rx from "rxjs";
