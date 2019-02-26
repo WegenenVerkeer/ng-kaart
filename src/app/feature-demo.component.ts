@@ -56,7 +56,9 @@ export class FeatureDemoComponent {
   @ViewChild("selectie")
   private selectieKaart: KaartClassicComponent;
 
-  constructor(private changeDetectorRef: ChangeDetectorRef) {}
+  constructor(private changeDetectorRef: ChangeDetectorRef) {
+    this.addIcon();
+  }
 
   private readonly fietspadStijlDef: AwvV0DynamicStyle = {
     rules: [
@@ -477,7 +479,7 @@ export class FeatureDemoComponent {
   }
 
   private addIcon() {
-    if (this.installaties.length > 20) {
+    if (this.installaties.length > 50) {
       this.installaties = [];
     }
     const locatie: [number, number] = [
@@ -496,7 +498,7 @@ export class FeatureDemoComponent {
     });
     feature.setStyle(this.pinIcon);
     this.installaties = array.snoc(this.installaties, feature);
-    setTimeout(() => this.addIcon(), 5000); // zorgt voor Angular Check event
+    setTimeout(() => this.addIcon(), 1000); // zorgt voor Angular Check event omdat setTimeout onderschept is door zone.js
   }
 
   polygoonGetekend(feature: ol.Feature) {
