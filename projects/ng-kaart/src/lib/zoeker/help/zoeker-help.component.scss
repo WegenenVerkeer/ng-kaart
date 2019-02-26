@@ -1,0 +1,41 @@
+.zoeker-help-container {
+  padding-right: 8px;
+  padding-bottom: 8px;
+}
+
+.zoeker-help-breadcrumbs {
+  margin-left: 8px;
+  margin-bottom: 8px;
+  //height: 24px;
+}
+
+.zoeker-help-breadcrumb {
+  display: inline-flex;
+  vertical-align: middle;
+  align-items: center;
+  height: 24px;
+  a {
+    &:hover {
+      cursor: pointer;
+    }
+  }
+}
+
+.zoeker-help-titel {
+  display: inline-flex;
+  vertical-align: middle;
+  align-items: center;
+  font-size: 16px;
+  margin-left: 12px;
+}
+
+a.zoeker-help-titel:hover {
+  cursor: pointer;
+}
+
+.zoeker-help-text {
+  font-size: 14px;
+  margin-top: 4px;
+  margin-left: 36px;
+  margin-bottom: 4px;
+}

@@ -1,0 +1,36 @@
+<div class="zoeker-help-container">
+  <div class="zoeker-help-breadcrumbs">
+    <span *ngFor="let pad of pad$ | async; let index=index; let isLast=last" class="zoeker-help-breadcrumb ">
+      <span *ngIf="isLast;then breadcrumb_last else breadcrumb"></span>
+
+      <ng-template #breadcrumb>
+         <a (click)="selecteer(pad, index)">{{pad}}</a> <mat-icon>keyboard_arrow_right</mat-icon>
+      </ng-template>
+      <ng-template #breadcrumb_last>
+        <span>{{pad}}</span>
+      </ng-template>
+
+    </span>
+  </div>
+  <div>
+    <div *ngFor="let entry of selectie$ | async; let isFirst=first; let isLast=last">
+      <div *ngIf="entry.isLeaf;then item_leaf else item"></div>
+
+      <ng-template #item_leaf>
+        <div *ngIf="!(isLast && isFirst)" class="zoeker-help-titel">
+          <mat-icon>keyboard_arrow_right</mat-icon>
+          {{entry.titel}}</div>
+        <div *ngIf="entry.text.isSome()" class="zoeker-help-text" [innerHtml]="entry.text.toNullable()">
+        </div>
+      </ng-template>
+      <ng-template #item>
+        <a (click)="selecteer(entry.titel)" class="zoeker-help-titel">
+          <mat-icon>keyboard_arrow_right</mat-icon>
+          {{entry.titel}}</a>
+      </ng-template>
+
+    </div>
+  </div>
+</div>
+
+
