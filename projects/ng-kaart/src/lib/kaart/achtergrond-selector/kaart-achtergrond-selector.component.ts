@@ -66,7 +66,7 @@ export class KaartAchtergrondSelectorComponent extends KaartChildComponentBase i
   private displayMode: DisplayMode = DisplayMode.SHOWING_STATUS;
   achtergrondTitel = "";
 
-  readonly backgroundTiles$: rx.Observable<Array<ToegevoegdeLaag>> = rx.empty();
+  readonly backgroundTiles$: rx.Observable<Array<ToegevoegdeLaag>> = rx.EMPTY;
 
   constructor(private readonly cdr: ChangeDetectorRef, kaartComponent: KaartComponent, zone: NgZone) {
     super(kaartComponent, zone);

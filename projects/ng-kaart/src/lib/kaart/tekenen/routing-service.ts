@@ -97,7 +97,7 @@ export class SimpleRoutingService implements RoutingService {
 
 export class NoopRoutingService implements RoutingService {
   public resolve(_: ProtoRoute): Observable<GeometryRoute> {
-    return rx.empty();
+    return rx.EMPTY;
   }
 }
 

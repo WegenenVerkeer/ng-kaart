@@ -67,7 +67,7 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
                   const begin = line.getFirstCoordinate();
                   const end = line.getLastCoordinate();
                   // Wanneer de punten dicht genoeg bij elkaar liggen, sluiten we de geometrie
-                  if (distance(begin, end) < 250) {
+                  if (distance(begin, end) < 150) {
                     return ol.Sphere.getArea(new ol.geom.Polygon([line.getCoordinates()]));
                   } else {
                     return 0;
@@ -84,7 +84,7 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
     );
 
     const boodschap$ = toonInfoBoodschap$.pipe(
-      switchMap(toon => (toon ? measure$ : rx.empty())),
+      switchMap(toon => (toon ? measure$ : rx.EMPTY)),
       share()
     );
 

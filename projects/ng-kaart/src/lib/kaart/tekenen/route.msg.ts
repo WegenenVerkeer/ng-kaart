@@ -1,8 +1,10 @@
+import { Option } from "fp-ts/lib/Option";
 import * as strmap from "fp-ts/lib/StrMap";
 
 import { Versions } from "./waypoint-ops";
 import { Waypoint, WaypointId } from "./waypoint.msg";
 
+// Het type dat encodeert tussen welke 2 punten een verbindig gemaakt moet worden
 export interface ProtoRoute {
   readonly id: string;
   readonly version: number;
@@ -10,6 +12,7 @@ export interface ProtoRoute {
   readonly end: Waypoint;
 }
 
+// Het type dat de berekende geometrie tussen 2 punten beschrijft
 export interface GeometryRoute {
   readonly id: string;
   readonly version: number;
@@ -28,6 +31,8 @@ export interface RouteAdded {
   readonly version: number;
   readonly startWaypointId: WaypointId; // we moeten weten waar in de volgorde van deelroutes dit thuis hoort om de lengte te kunnen meten
   readonly geometry: ol.geom.Geometry;
+  readonly beginSnap: Option<Waypoint>;
+  readonly endSnap: Option<Waypoint>;
 }
 
 export interface RouteRemoved {
@@ -47,13 +52,15 @@ export function createRoute(begin: Waypoint, end: Waypoint, versions: Versions):
   };
 }
 
-export function routeAdded(geometryRoute: GeometryRoute): RouteAdded {
+export function routeAdded(geometryRoute: GeometryRoute, beginSnap: Option<Waypoint>, endSnap: Option<Waypoint>): RouteAdded {
   return {
     type: "RouteAdded",
     id: geometryRoute.id,
     version: geometryRoute.version,
     startWaypointId: geometryRoute.begin.id,
-    geometry: geometryRoute.geometry
+    geometry: geometryRoute.geometry,
+    beginSnap: beginSnap,
+    endSnap: endSnap
   };
 }
 

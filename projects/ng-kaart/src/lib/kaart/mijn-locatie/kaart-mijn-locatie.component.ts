@@ -79,8 +79,8 @@ const locatieStijlFunctie: Function1<number, ol.FeatureStyleFunction> = accuracy
   styleUrls: ["./kaart-mijn-locatie.component.scss"]
 })
 export class KaartMijnLocatieComponent extends KaartModusComponent implements OnInit, AfterViewInit {
-  private viewinstellingen$: rx.Observable<Viewinstellingen> = rx.empty();
-  private zoomdoelSetting$: rx.Observable<Option<number>> = rx.empty();
+  private viewinstellingen$: rx.Observable<Viewinstellingen> = rx.EMPTY;
+  private zoomdoelSetting$: rx.Observable<Option<number>> = rx.EMPTY;
   private activeerSubj: rx.Subject<boolean> = new rx.Subject<boolean>();
   private locatieSubj: rx.Subject<Position> = new rx.Subject<Position>();
 

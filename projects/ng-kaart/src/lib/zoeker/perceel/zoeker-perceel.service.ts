@@ -219,7 +219,7 @@ export class ZoekerPerceelService implements Zoeker {
           )
         );
       default:
-        return rx.empty();
+        return rx.EMPTY;
     }
   }
 }
