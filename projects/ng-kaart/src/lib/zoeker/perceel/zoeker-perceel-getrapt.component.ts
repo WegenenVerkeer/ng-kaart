@@ -37,11 +37,11 @@ export class ZoekerPerceelGetraptComponent extends GetraptZoekerComponent implem
   sectieControl = new FormControl({ value: "", disabled: true });
   perceelControl = new FormControl({ value: "", disabled: true });
 
-  afdelingen$: rx.Observable<Afdeling[]> = rx.empty();
-  secties$: rx.Observable<Sectie[]> = rx.empty();
-  percelen$: rx.Observable<PerceelNummer[]> = rx.empty();
+  afdelingen$: rx.Observable<Afdeling[]> = rx.EMPTY;
+  secties$: rx.Observable<Sectie[]> = rx.EMPTY;
+  percelen$: rx.Observable<PerceelNummer[]> = rx.EMPTY;
 
-  leegMakenDisabled$: rx.Observable<boolean> = rx.empty();
+  leegMakenDisabled$: rx.Observable<boolean> = rx.EMPTY;
   @Output()
   leegMakenDisabledChange: EventEmitter<boolean> = new EventEmitter();
 

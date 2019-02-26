@@ -110,7 +110,6 @@ function offsetGeometryFunction(
 
         return offsetMultiLinestring;
       } else {
-        kaartLogger.warn(`De offset renderer wordt niet ondersteund voor geometries van type ${geometry.getType()}`);
         return geometry;
       }
     } catch (e) {

@@ -102,7 +102,7 @@ export class KaartTekenComponent extends KaartComponentBase implements OnInit {
             case "stop":
               this.stopTekenenSubj.next(); // zorg dat de unsubscribe gebeurt
               this.stopTekenenSubj = new rx.Subject();
-              return rx.empty();
+              return rx.EMPTY;
           }
         })
       )

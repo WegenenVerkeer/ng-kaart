@@ -53,7 +53,7 @@ export class KaartOpenStreetViewComponent extends KaartModusComponent {
   private openGoogleStreetView(coordinaat: ol.Coordinate): void {
     // const wsg84xy = ol.proj.transform(coordinaat, ol.proj.get("EPSG:31370"), ol.proj.get("EPSG:4326"));
     const wsg84xy = lambert72ToWgs84(coordinaat);
-    const strtvUrl = `http://maps.google.com/?cbll= ${wsg84xy[1]},${wsg84xy[0]} &cbp=12,0,0,0,0&layer=c&source=embed&z=14&output=svembed`;
+    const strtvUrl = `https://maps.google.com/?cbll= ${wsg84xy[1]},${wsg84xy[0]} &cbp=12,0,0,0,0&layer=c&source=embed&z=14&output=svembed`;
 
     window.open(strtvUrl);
 

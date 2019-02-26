@@ -22,7 +22,7 @@ import { isNonEmpty } from "../util/arrays";
 import { asap } from "../util/asap";
 import { observeOnAngular } from "../util/observe-on-angular";
 import { observeOutsideAngular } from "../util/observer-outside-angular";
-import { flatten, ofType } from "../util/operators";
+import { catOptions, ofType } from "../util/operators";
 import { forEach } from "../util/option";
 import { resizeObservable } from "../util/resize-observable";
 
@@ -53,7 +53,7 @@ export class KaartComponent extends KaartComponentBase {
   private readonly modelChanger: ModelChanger = ModelChanger();
   private innerModelChanges: ModelChanges;
   private innerAanwezigeElementen$: rx.Observable<Set<string>>;
-  readonly kaartModel$: rx.Observable<KaartWithInfo> = rx.empty();
+  readonly kaartModel$: rx.Observable<KaartWithInfo> = rx.EMPTY;
   private readonly resizeCommand$: rx.Observable<prt.VeranderViewportCmd>;
 
   @ViewChild("map")
@@ -71,7 +71,7 @@ export class KaartComponent extends KaartComponentBase {
    * waarmee events naar de component gestuurd kunnen worden.
    */
   @Input()
-  kaartCmd$: rx.Observable<prt.Command<prt.KaartMsg>> = rx.empty();
+  kaartCmd$: rx.Observable<prt.Command<prt.KaartMsg>> = rx.EMPTY;
   /**
    * Hier wordt een callback verwacht die een Msg observable zal krijgen. Die observable kan dan gebruikt worden
    * op te luisteren op feedback van commands of uitvoer van subscriptions.
@@ -103,14 +103,14 @@ export class KaartComponent extends KaartComponentBase {
 
   // Dit dient om messages naar toe te sturen
 
-  internalMessage$: rx.Observable<KaartInternalSubMsg> = rx.empty();
+  internalMessage$: rx.Observable<KaartInternalSubMsg> = rx.EMPTY;
 
   constructor(@Inject(KAART_CFG) readonly config: KaartConfig, zone: NgZone) {
     super(zone);
     this.internalMessage$ = this.msgSubj.pipe(
       filter(m => m.type === "KaartInternal"), //
       map(m => (m as KaartInternalMsg).payload),
-      flatten,
+      catOptions,
       tap(m => kaartLogger.debug("een interne message werd ontvangen:", m)),
       shareReplay(1) // Waarom hebben we eigenlijk het vorige commando nog nodig?
     );
@@ -282,7 +282,7 @@ export class KaartComponent extends KaartComponentBase {
         const kaartLinksWidth = this.kaartLinksBreedte + "px";
         this.kaartFixedLinksBovenElement.nativeElement.style.width = kaartLinksWidth;
         this.kaartLinksElement.nativeElement.style.width = kaartLinksWidth;
-        if (this.kaartLinksToggleZichtbaar) {
+        if (this.kaartLinksToggleZichtbaar && this.kaartLinksZichtbaarToggleKnopElement) {
           if (this.kaartLinksZichtbaar) {
             this.kaartLinksZichtbaarToggleKnopElement.nativeElement.style.left = kaartLinksWidth;
           } else {

@@ -12,6 +12,7 @@ export abstract class ClassicUIElementSelectorComponentBase extends KaartCompone
   ngOnInit(): void {
     super.ngOnInit();
     this.kaart.dispatch(prt.VoegUiElementToe(this.uiSelector));
+    this.kaart.dispatch(prt.ZetUiElementOpties(this.uiSelector, this.opties()));
   }
 
   ngOnDestroy(): void {
@@ -23,7 +24,7 @@ export abstract class ClassicUIElementSelectorComponentBase extends KaartCompone
     this.kaart.dispatch(prt.ZetUiElementOpties(this.uiSelector, this.opties()));
   }
 
-  protected opties(): prt.UiElementOpties {
+  protected opties(): any {
     return {};
   }
 }

@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, Input, NgZone, OnInit } from "@angu
 import { fromNullable } from "fp-ts/lib/Option";
 import scrollIntoView from "scroll-into-view-if-needed";
 
+import { forEach } from "../../util";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { SluitInfoBoodschapCmd } from "../kaart-protocol-commands";
 import { foldInfoBoodschap, InfoBoodschap } from "../kaart-with-info-model";
@@ -35,7 +36,8 @@ export class KaartInfoBoodschapComponent extends KaartChildComponentBase impleme
     this.icon = foldInfoBoodschap(this.boodschap)(
       alert => alert.iconName.getOrElse("priority_high"), //
       () => "description",
-      () => "location_on"
+      () => "location_on",
+      () => "straighten"
     );
   }
   get boodschap(): InfoBoodschap {
@@ -54,7 +56,7 @@ export class KaartInfoBoodschapComponent extends KaartChildComponentBase impleme
   scrollIntoView() {
     setTimeout(
       () =>
-        fromNullable(document.getElementById("kaart-info-boodschap-" + this.boodschap.id)).map(el =>
+        forEach(fromNullable(document.getElementById("kaart-info-boodschap-" + this.boodschap.id)), el =>
           scrollIntoView(el, {
             behavior: "smooth",
             scrollMode: "if-needed"

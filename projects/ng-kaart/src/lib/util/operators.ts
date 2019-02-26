@@ -1,5 +1,6 @@
 import { Function1, Function2, Refinement } from "fp-ts/lib/function";
 import { isSome, Option } from "fp-ts/lib/Option";
+import { Tuple } from "fp-ts/lib/Tuple";
 import * as rx from "rxjs";
 import { filter, map, scan, skipUntil, switchMap } from "rxjs/operators";
 
@@ -37,11 +38,9 @@ export function collectOption<A, B>(f: (a: A) => Option<B>): Pipeable<A, B> {
 }
 
 /**
- * Transformeert waarden van optionele A's naar waarden van B mbv f indien de A's gedefinieerd zijn.
- *
- * @param f een transformatie van A naar B
+ * Filtert de gedfinieerd Option<A>'s en converteert ze naar A's.
  */
-export const flatten: <A>(o: rx.Observable<Option<A>>) => rx.Observable<A> = <A>(o: rx.Observable<Option<A>>) =>
+export const catOptions: <A>(o: rx.Observable<Option<A>>) => rx.Observable<A> = <A>(o: rx.Observable<Option<A>>) =>
   o.pipe(
     filter(isSome), // emit niet als none
     map(v => v.value) // omwille van filter hierboven nooit undefined. Properder met switchMap en foldl, maar minder efficiënt.
@@ -75,7 +74,7 @@ export const forEvery: <A>(_: rx.Observable<A>) => <B>(_: Function1<A, rx.Observ
 export const subSpy: (_: string) => <A>(_: rx.Observable<A>) => rx.Observable<A> = lbl => source =>
   new rx.Observable(observer => {
     console.log("subscribing to " + lbl);
-    return source.subscribe({
+    const subscription = source.subscribe({
       next(x) {
         console.log("emitting from " + lbl, x);
         observer.next(x);
@@ -89,6 +88,8 @@ export const subSpy: (_: string) => <A>(_: rx.Observable<A>) => rx.Observable<A>
         observer.complete();
       }
     });
+    subscription.add(() => console.log("unsubscribing from " + lbl));
+    return subscription;
   });
 
 /**
@@ -132,4 +133,15 @@ export function scan2<A, B, C>(
   };
 
   return rx.merge(obsA.pipe(TagA), rx.merge(obsB.pipe(TagB))).pipe(scan(accumulate, init));
+}
+
+export function scanState<A, S, B>(obsA: rx.Observable<A>, runState: Function2<S, A, Tuple<S, B>>, seed: S, rseed: B): rx.Observable<B> {
+  const initial: Tuple<S, B> = new Tuple(seed, rseed);
+
+  const accumulate: Function2<Tuple<S, B>, A, Tuple<S, B>> = (ps, a) => runState(ps.fst, a);
+
+  return obsA.pipe(
+    scan(accumulate, initial),
+    map(ps => ps.snd)
+  );
 }

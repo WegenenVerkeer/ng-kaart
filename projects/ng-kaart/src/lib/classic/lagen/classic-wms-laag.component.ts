@@ -14,11 +14,11 @@ import { KaartClassicMsg, logOnlyWrapper, PrecacheProgressMsg } from "../message
 
 import { ClassicLaagComponent } from "./classic-laag.component";
 
-export interface Precache {
-  startZoom: number;
-  eindZoom: number;
-  wkt: string;
-  startMetLegeCache: boolean;
+export interface PrecacheWMS {
+  readonly startZoom: number;
+  readonly eindZoom: number;
+  readonly wkt: string;
+  readonly startMetLegeCache: boolean;
 }
 
 @Component({
@@ -45,12 +45,14 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   @Input()
   opacity?: number;
   @Input()
-  offline = false;
+  cacheActief = false;
 
   @Input()
-  set precache(input: Precache) {
+  set precache(input: PrecacheWMS) {
     if (input) {
-      this.dispatch(prt.VulCacheVoorLaag(this.titel, input.startZoom, input.eindZoom, input.wkt, input.startMetLegeCache, logOnlyWrapper));
+      this.dispatch(
+        prt.VulCacheVoorWMSLaag(this.titel, input.startZoom, input.eindZoom, input.wkt, input.startMetLegeCache, logOnlyWrapper)
+      );
     }
   }
 
@@ -111,7 +113,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   ngAfterViewInit() {
     super.ngAfterViewInit();
 
-    if (this.offline) {
+    if (this.cacheActief) {
       this.dispatch(prt.ActiveerCacheVoorLaag(this.titel, logOnlyWrapper));
 
       this.bindToLifeCycle(

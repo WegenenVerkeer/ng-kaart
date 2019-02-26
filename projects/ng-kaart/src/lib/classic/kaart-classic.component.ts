@@ -54,7 +54,7 @@ import {
 })
 export class KaartClassicComponent extends KaartComponentBase implements OnInit, OnDestroy, OnChanges, KaartCmdDispatcher<TypedRecord> {
   private static counter = 1;
-  kaartClassicSubMsg$: rx.Observable<KaartClassicSubMsg> = rx.empty();
+  kaartClassicSubMsg$: rx.Observable<KaartClassicSubMsg> = rx.EMPTY;
   private hasFocus = false;
 
   readonly dispatcher: ReplaySubjectKaartCmdDispatcher<TypedRecord> = new ReplaySubjectKaartCmdDispatcher();
@@ -243,7 +243,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
       this.dispatch(prt.VeranderMiddelpuntCmd(this.middelpunt, none));
     }
     if (this.breedte || this.hoogte) {
-      this.dispatch(prt.VeranderViewportCmd([this.breedte, this.hoogte]));
+      this.dispatch(prt.VeranderViewportCmd([this.breedte!, this.hoogte!]));
     }
     if (this.hoverModus) {
       this.dispatch(prt.ActiveerHoverModusCmd(this.hoverModus));
@@ -256,7 +256,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   ngOnChanges(changes: SimpleChanges) {
     const dispatch: (cmd: prt.Command<TypedRecord>) => void = cmd => this.dispatch(cmd);
     forChangedValue(changes, "zoom", zoom => this.dispatch(prt.VeranderZoomCmd(zoom, logOnlyWrapper)));
-    forChangedValue(changes, "middelpunt", middelpunt => prt.VeranderMiddelpuntCmd(middelpunt, none));
+    forChangedValue(changes, "middelpunt", middelpunt => this.dispatch(prt.VeranderMiddelpuntCmd(middelpunt, none)));
     forChangedValue(
       changes,
       "extent",

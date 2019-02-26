@@ -71,7 +71,7 @@ export class DefaultRepresentatieService implements AbstractRepresentatieService
     function vervangKleur(pin: string, kleur: ol.Color): string {
       function vullFillIn(nodes: HTMLCollectionOf<SVGGraphicsElement>, fillKleur: string) {
         for (let i = 0; i < nodes.length; i++) {
-          const node = nodes.item(i);
+          const node: SVGGraphicsElement = nodes.item(i)!;
           if (!node.hasAttribute("fill")) {
             node.setAttribute("fill", fillKleur);
           }
@@ -90,7 +90,7 @@ export class DefaultRepresentatieService implements AbstractRepresentatieService
       vullFillIn(xmlDoc.getElementsByTagName("path"), kleurString);
       vullFillIn(xmlDoc.getElementsByTagName("text"), kleurString);
 
-      return "data:image/svg+xml;utf8," + encodeURIComponent(new XMLSerializer().serializeToString(xmlDoc.documentElement));
+      return "data:image/svg+xml;utf8," + encodeURIComponent(new XMLSerializer().serializeToString(xmlDoc.documentElement!));
     }
 
     function maakStyle(kleur: [number, number, number, number], marker: string): ol.style.Style {

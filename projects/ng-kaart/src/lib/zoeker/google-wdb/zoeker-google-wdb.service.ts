@@ -1,7 +1,7 @@
 /// <reference types="@types/googlemaps" />
 import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Inject, Injectable } from "@angular/core";
-import { Option, some } from "fp-ts/lib/Option";
+import { fromNullable, Option, some } from "fp-ts/lib/Option";
 import { Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
@@ -56,9 +56,8 @@ export class GoogleWdbZoekResultaat implements ZoekResultaat {
       highlightStyle: highlightStyle
     });
     this.omschrijving = locatie.omschrijving;
-    this.extraOmschrijving = fromNullablePredicate<string>(
-      () => locatie.omschrijving !== locatie.formatted_address,
-      locatie.formatted_address
+    this.extraOmschrijving = fromNullable(locatie.extraOmschrijving).orElse(() =>
+      fromNullablePredicate<string>(() => locatie.omschrijving !== locatie.formatted_address, locatie.formatted_address)
     );
     this.bron = locatie.bron;
     this.preferredPointZoomLevel = isWdbBron(this.bron) ? some(12) : some(10);
@@ -86,6 +85,8 @@ class GoogleServices {
   }
 }
 
+type ExtendedResult = ExtendedGeocoderResult | ExtendedPlaceResult;
+
 interface ExtendedGeocoderResult extends google.maps.GeocoderResult, LocatieZoekerLocatie {}
 
 interface ExtendedPlaceResult extends google.maps.places.PlaceResult, LocatieZoekerLocatie {}
@@ -93,7 +94,7 @@ interface ExtendedPlaceResult extends google.maps.places.PlaceResult, LocatieZoe
 interface LocatieZoekerLocatie {
   locatie: any;
   omschrijving: string;
-  bron: String; // Google | WDB | ABBAMelda
+  bron: String; // Google | WDB | ABBAMelda | Perceel
   readonly partialMatch: boolean;
 }
 
@@ -203,7 +204,7 @@ export class ZoekerGoogleWdbService implements Zoeker {
     }
   }
 
-  private vervolledigResultaat(onvolledigeLocatie: OnvolledigeLocatie): Observable<Array<ExtendedGeocoderResult | ExtendedPlaceResult>> {
+  private vervolledigResultaat(onvolledigeLocatie: OnvolledigeLocatie): Observable<Array<ExtendedResult>> {
     const omschrijving = onvolledigeLocatie.omschrijving;
 
     if (onvolledigeLocatie.alleenGeocoden === true) {
@@ -225,9 +226,9 @@ export class ZoekerGoogleWdbService implements Zoeker {
 
       const placesAndPredictionsObs = combineLatest(placesSearchObs, predictionsObs).pipe(
         switchMap(([places, predictions]) => {
-          const alleResultaten: Array<ExtendedGeocoderResult | ExtendedPlaceResult> = [];
-          const besteResultaten: Array<ExtendedGeocoderResult | ExtendedPlaceResult> = [];
-          const establishments: Array<ExtendedGeocoderResult | ExtendedPlaceResult> = [];
+          const alleResultaten: Array<ExtendedResult> = [];
+          const besteResultaten: Array<ExtendedResult> = [];
+          const establishments: Array<ExtendedResult> = [];
 
           const ongeveerZelfdeLocatie: (bestaande: LatLng, nieuw: LatLng) => boolean = (bestaande, nieuw) => {
             return Math.abs(bestaande.lng() - nieuw.lng()) < 0.001 && Math.abs(bestaande.lat() - nieuw.lat()) < 0.001;
@@ -257,12 +258,12 @@ export class ZoekerGoogleWdbService implements Zoeker {
           );
 
           return rx.concat(besteResultatenMetGeometrieObs, rx.of(establishments)).pipe(
-            reduce((acc, val) => acc.concat(val), []) // verzamel beste resultaten en establishments in 1 'next'
+            reduce((acc, val) => acc.concat(val), [] as ExtendedResult[]) // verzamel beste resultaten en establishments in 1 'next'
           );
         })
       );
 
-      return <Observable<Array<ExtendedGeocoderResult | ExtendedPlaceResult>>>placesAndPredictionsObs;
+      return <Observable<Array<ExtendedResult>>>placesAndPredictionsObs;
     }
   }
 
@@ -279,18 +280,18 @@ export class ZoekerGoogleWdbService implements Zoeker {
     } else {
       return rx.of(...resultaten.onvolledigeLocaties).pipe(
         concatMap(r => this.vervolledigResultaat(r)),
-        reduce((acc, val) => acc.concat(val), []), // verzamel alle vervolledigde resultaten in 1 'next'
+        reduce((acc, val) => acc.concat(val), [] as ExtendedResult[]), // verzamel alle vervolledigde resultaten in 1 'next'
         map(resultaten => {
           return resultaten.map(resultaat => {
             resultaat.locatie =
               resultaat.locatie || this.wgs84ToLambert72GeoJson(resultaat.geometry.location.lng(), resultaat.geometry.location.lat());
-            return <LocatieZoekerLocatie>resultaat;
+            return resultaat;
           });
         }),
         map(vervolledigdeLocaties => {
           const locaties = resultaten.locaties.concat(vervolledigdeLocaties);
           locaties.forEach((locatie, index) => {
-            const zoekerType: ZoekerRepresentatieType = isWdbBron(locatie.bron) ? "WDB" : "Google";
+            const zoekerType: ZoekerRepresentatieType = locatie.bron === "Perceel" ? "Perceel" : isWdbBron(locatie.bron) ? "WDB" : "Google";
             zoekResultaten.resultaten.push(
               new GoogleWdbZoekResultaat(
                 locatie,
@@ -505,9 +506,7 @@ export class ZoekerGoogleWdbService implements Zoeker {
     }
   }
 
-  private loadGemeenteGeometrie(
-    resultaat: ExtendedGeocoderResult | ExtendedPlaceResult
-  ): Observable<ExtendedGeocoderResult | ExtendedPlaceResult> {
+  private loadGemeenteGeometrie(resultaat: ExtendedResult): Observable<ExtendedResult> {
     const isGemeente = resultaat.types.indexOf("locality") > -1;
     const isDeelgemeente = resultaat.types.indexOf("sublocality") > -1;
 

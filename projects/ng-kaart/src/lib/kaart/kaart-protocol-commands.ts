@@ -12,6 +12,7 @@ import * as ke from "./kaart-elementen";
 import { Legende } from "./kaart-legende";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import * as ss from "./stijl-selector";
+import { DrawOps } from "./tekenen/tekenen-model";
 
 export type Command<Msg extends KaartMsg> =
   | AbortTileLoadingCmd
@@ -24,6 +25,8 @@ export type Command<Msg extends KaartMsg> =
   | BewerkVectorlaagstijlCmd
   | DeselecteerAlleFeaturesCmd
   | DeselecteerFeatureCmd
+  | DrawOpsCmd
+  | ZetGetekendeGeometryCmd
   | HighlightFeaturesCmd<Msg>
   | KiesAchtergrondCmd<Msg>
   | MaakLaagOnzichtbaarCmd<Msg>
@@ -39,7 +42,7 @@ export type Command<Msg extends KaartMsg> =
   | PublishKaartLocatiesCmd
   | UnsubscribeCmd
   | VeranderExtentCmd
-  | VeranderMiddelpuntCmd<Msg>
+  | VeranderMiddelpuntCmd
   | VeranderViewportCmd
   | VeranderZoomCmd<Msg>
   | VeranderRotatieCmd
@@ -67,9 +70,11 @@ export type Command<Msg extends KaartMsg> =
   | VoegVolledigSchermToeCmd<Msg>
   | VoegZoekerToeCmd<Msg>
   | VraagSchaalAanCmd<Msg>
-  | VulCacheVoorLaag<Msg>
+  | VulCacheVoorNosqlLaag<Msg>
+  | VulCacheVoorWMSLaag<Msg>
   | ZetActieveModusCmd
   | ZetFocusOpKaartCmd
+  | ZetOffline<Msg>
   | ZetLaagLegendeCmd<Msg>
   | ZetMijnLocatieZoomCmd
   | ZetStijlSpecVoorLaagCmd<Msg>
@@ -142,11 +147,19 @@ export interface ActiveerCacheVoorLaag<Msg extends KaartMsg> {
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
-export interface VulCacheVoorLaag<Msg extends KaartMsg> {
-  readonly type: "VulCacheVoorLaag";
+export interface VulCacheVoorWMSLaag<Msg extends KaartMsg> {
+  readonly type: "VulCacheVoorWMSLaag";
   readonly titel: string;
   readonly startZoom: number;
   readonly eindZoom: number;
+  readonly wkt: string;
+  readonly startMetLegeCache: boolean;
+  readonly wrapper: BareValidationWrapper<Msg>;
+}
+
+export interface VulCacheVoorNosqlLaag<Msg extends KaartMsg> {
+  readonly type: "VulCacheVoorNosqlLaag";
+  readonly titel: string;
   readonly wkt: string;
   readonly startMetLegeCache: boolean;
   readonly wrapper: BareValidationWrapper<Msg>;
@@ -190,7 +203,7 @@ export interface VerwijderStandaardInteractiesCmd<Msg extends KaartMsg> {
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
-export interface VeranderMiddelpuntCmd<Msg extends KaartMsg> {
+export interface VeranderMiddelpuntCmd {
   readonly type: "VeranderMiddelpunt";
   readonly coordinate: ol.Coordinate;
   readonly animationDuration: Option<number>;
@@ -215,7 +228,7 @@ export interface VeranderRotatieCmd {
 
 export interface VeranderViewportCmd {
   readonly type: "VeranderViewport";
-  readonly size: ol.Size;
+  readonly size: [number | undefined, number | undefined];
 }
 
 export interface ZetFocusOpKaartCmd {
@@ -364,6 +377,13 @@ export interface ZetActieveModusCmd {
   readonly modus: Option<string>;
 }
 
+export interface ZetOffline<Msg extends KaartMsg> {
+  readonly type: "ZetOffline";
+  readonly titel: string;
+  readonly offline: boolean;
+  readonly wrapper: BareValidationWrapper<Msg>;
+}
+
 export interface VoegInteractieToeCmd {
   readonly type: "VoegInteractieToe";
   readonly interactie: ol.interaction.Pointer;
@@ -399,8 +419,14 @@ export interface VerbergInfoBoodschapCmd {
   readonly id: string;
 }
 
+export interface ZetGetekendeGeometryCmd {
+  readonly type: "ZetGetekendeGeometry";
+  readonly geometry: ol.geom.Geometry;
+}
+
 export interface UiElementOpties {
-  [k: string]: any;
+  readonly naam: string;
+  readonly opties: any;
 }
 
 // TODO toevoegen van een selector wanneer er meerdere elementen van hetzelfde type beschikbaar zijn
@@ -417,7 +443,7 @@ export interface VerwijderUiElement {
 export interface ZetUiElementOpties {
   readonly type: "ZetUiElementOpties";
   readonly naam: string;
-  readonly opties: UiElementOpties;
+  readonly opties: any;
 }
 
 // De features zullen "geselecteerd" worden, ook al zouden ze geen onderdeel uitmaken van één van de lagen. Het is dus de
@@ -466,6 +492,11 @@ export interface StopVectorlaagstijlBewerkingCmd {
   readonly type: "StopVectorlaagstijlBewerking";
 }
 
+export interface DrawOpsCmd {
+  readonly type: "DrawOps";
+  readonly ops: DrawOps;
+}
+
 ////////////////////////
 // constructor functies
 //
@@ -512,21 +543,45 @@ export function ActiveerCacheVoorLaag<Msg extends KaartMsg>(
   return { type: "ActiveerCacheVoorLaag", titel: titel, wrapper: wrapper };
 }
 
-export function VulCacheVoorLaag<Msg extends KaartMsg>(
+export function VulCacheVoorWMSLaag<Msg extends KaartMsg>(
   titel: string,
   startZoom: number,
   eindZoom: number,
   wkt: string,
   startMetLegeCache: boolean,
   wrapper: BareValidationWrapper<Msg>
-): VulCacheVoorLaag<Msg> {
+): VulCacheVoorWMSLaag<Msg> {
   return {
-    type: "VulCacheVoorLaag",
+    type: "VulCacheVoorWMSLaag",
     titel: titel,
     startZoom: startZoom,
     eindZoom: eindZoom,
     wkt: wkt,
     startMetLegeCache: startMetLegeCache,
+    wrapper: wrapper
+  };
+}
+
+export function VulCacheVoorNosqlLaag<Msg extends KaartMsg>(
+  titel: string,
+  wkt: string,
+  startMetLegeCache: boolean,
+  wrapper: BareValidationWrapper<Msg>
+): VulCacheVoorNosqlLaag<Msg> {
+  return {
+    type: "VulCacheVoorNosqlLaag",
+    titel: titel,
+    wkt: wkt,
+    startMetLegeCache: startMetLegeCache,
+    wrapper: wrapper
+  };
+}
+
+export function ZetOffline<Msg extends KaartMsg>(titel: string, offline: boolean, wrapper: BareValidationWrapper<Msg>): ZetOffline<Msg> {
+  return {
+    type: "ZetOffline",
+    titel: titel,
+    offline: offline,
     wrapper: wrapper
   };
 }
@@ -582,7 +637,7 @@ export function ZetStijlSpecVoorLaagCmd<Msg extends KaartMsg>(
 export function VeranderMiddelpuntCmd<Msg extends KaartMsg>(
   coordinate: ol.Coordinate,
   animationDuration: Option<number>
-): VeranderMiddelpuntCmd<Msg> {
+): VeranderMiddelpuntCmd {
   return { type: "VeranderMiddelpunt", coordinate: coordinate, animationDuration: animationDuration };
 }
 
@@ -602,7 +657,7 @@ export function ZoekGekliktCmd(resultaat: ZoekResultaat): ZoekGekliktCmd {
   return { type: "ZoekGeklikt", resultaat: resultaat };
 }
 
-export function VeranderViewportCmd(size: ol.Size): VeranderViewportCmd {
+export function VeranderViewportCmd(size: [number | undefined, number | undefined]): VeranderViewportCmd {
   return { type: "VeranderViewport", size: size };
 }
 
@@ -749,7 +804,7 @@ export function VerwijderUiElement(naam: string): VerwijderUiElement {
   return { type: "VerwijderUiElement", naam: naam };
 }
 
-export function ZetUiElementOpties(naam: string, opties: UiElementOpties): ZetUiElementOpties {
+export function ZetUiElementOpties(naam: string, opties: any): ZetUiElementOpties {
   return { type: "ZetUiElementOpties", naam: naam, opties: opties };
 }
 
@@ -814,4 +869,12 @@ export function BewerkVectorlaagstijlCmd(laag: ke.ToegevoegdeVectorLaag): Bewerk
 
 export function StopVectorlaagstijlBewerkingCmd(): StopVectorlaagstijlBewerkingCmd {
   return { type: "StopVectorlaagstijlBewerking" };
+}
+
+export function DrawOpsCmd(ops: DrawOps): DrawOpsCmd {
+  return { type: "DrawOps", ops: ops };
+}
+
+export function ZetGetekendeGeometryCmd(geometry: ol.geom.Geometry): ZetGetekendeGeometryCmd {
+  return { type: "ZetGetekendeGeometry", geometry: geometry };
 }

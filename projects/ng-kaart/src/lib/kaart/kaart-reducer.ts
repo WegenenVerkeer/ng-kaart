@@ -3,13 +3,15 @@ import { Endomorphism, Function1, Function2, identity, pipe } from "fp-ts/lib/fu
 import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
 import * as validation from "fp-ts/lib/Validation";
 import { List } from "immutable";
-import { olx } from "openlayers";
 import * as ol from "openlayers";
+import { olx } from "openlayers";
 import { Subscription } from "rxjs";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, map } from "rxjs/operators";
+import { bufferCount, debounceTime, distinctUntilChanged, map, switchMap } from "rxjs/operators";
 
+import { NosqlFsSource } from "../source";
 import { refreshTiles } from "../util/cachetiles";
+import * as featureStore from "../util/geojson-store";
 import { forEach } from "../util/option";
 import * as serviceworker from "../util/serviceworker";
 import { updateBehaviorSubject } from "../util/subject-update";
@@ -36,6 +38,7 @@ import {
 import * as ss from "./stijl-selector";
 import { GeenLaagstijlaanpassing, LaagstijlAanpassend } from "./stijleditor/state";
 import { getDefaultStyleSelector } from "./styles";
+import { DrawOps } from "./tekenen/tekenen-model";
 
 ///////////////////////////////////
 // Hulpfuncties
@@ -505,12 +508,21 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             vanPositie < naarPositie
               ? pasLaagPositiesAan(-1, vanPositie + 1, naarPositie, groep)
               : pasLaagPositiesAan(1, naarPositie, vanPositie - 1, groep);
+
           // En ook de te verplaatsen laag moet een andere positie krijgen uiteraard
           const updatedModel = pipe(
             pasVectorLaagStijlPositieAan(naarPositie - vanPositie),
             pasLaagPositieAan(naarPositie - vanPositie),
             pasLaagInModelAan(modelMetAangepasteLagen)
           )(laag);
+
+          // Deselect en selecteer alle features om terug een correcte offset rendering te krijgen
+          // Indien OL geupgrade kunnen we dit eleganter doen door de stijl van de features op de overlay laag aan te passen, zie:
+          // https://openlayers.org/en/latest/apidoc/module-ol_interaction_Select-Select.html#getOverlay
+          const geselecteerd = [...model.geselecteerdeFeatures.getArray()];
+          model.geselecteerdeFeatures.clear();
+          model.geselecteerdeFeatures.extend(geselecteerd);
+
           zendLagenInGroep(updatedModel, groep);
           return ModelAndEmptyResult(updatedModel);
         })
@@ -607,7 +619,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
-    function veranderMiddelpuntCmd(cmnd: prt.VeranderMiddelpuntCmd<Msg>): ModelWithResult<Msg> {
+    function veranderMiddelpuntCmd(cmnd: prt.VeranderMiddelpuntCmd): ModelWithResult<Msg> {
       model.map.getView().animate({
         center: cmnd.coordinate,
         duration: cmnd.animationDuration.getOrElse(0)
@@ -640,7 +652,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function veranderViewportCmd(cmnd: prt.VeranderViewportCmd): ModelWithResult<Msg> {
       // Openlayers moet weten dat de grootte van de container aangepast is of de kaart is uitgerekt
-      model.map.setSize(cmnd.size);
+      model.map.setSize([cmnd.size[0]!, cmnd.size[1]!]); // OL kan wel degelijk undefined aan, maar de declaratie beweert anders
       model.map.updateSize();
       modelChanger.viewPortSizeSubj.next(); // Omdat extent wschl gewijzigd wordt
       return ModelWithResult(model);
@@ -855,7 +867,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           selectionStyle.setImage(
             new ol.style.Icon({
               color: selectionIconColor,
-              src: icon.getSrc()
+              src: icon.getSrc(),
+              size: icon.getSize()
             })
           );
         }
@@ -870,7 +883,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     type StyleSelectorFn = Function2<ol.Map, LaagTitel, Option<StyleSelector>>;
 
-    const createStyleFn = function(styleSelectorFn: StyleSelectorFn): ol.StyleFunction {
+    const createSelectionStyleFn = function(styleSelectorFn: StyleSelectorFn): ol.StyleFunction {
       return function(feature: ol.Feature, resolution: number): FeatureStyle {
         const executeStyleSelector: (_: ss.StyleSelector) => FeatureStyle = ss.matchStyleSelector(
           (s: ss.StaticStyle) => s.style,
@@ -912,7 +925,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               condition: ol.events.condition.click,
               features: model.geselecteerdeFeatures,
               multi: false,
-              style: createStyleFn(getSelectionStyleSelector),
+              style: createSelectionStyleFn(getSelectionStyleSelector),
               hitTolerance: KaartWithInfo.clickHitTolerance,
               layers: layer => layer.get("selecteerbaar")
             });
@@ -921,7 +934,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               condition: ol.events.condition.click,
               features: model.geselecteerdeFeatures,
               multi: true,
-              style: createStyleFn(getSelectionStyleSelector),
+              style: createSelectionStyleFn(getSelectionStyleSelector),
               hitTolerance: KaartWithInfo.clickHitTolerance,
               layers: layer => layer.get("selecteerbaar")
             });
@@ -931,7 +944,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               toggleCondition: ol.events.condition.click,
               features: model.geselecteerdeFeatures,
               multi: true,
-              style: createStyleFn(getSelectionStyleSelector),
+              style: createSelectionStyleFn(getSelectionStyleSelector),
               hitTolerance: KaartWithInfo.clickHitTolerance,
               layers: layer => layer.get("selecteerbaar")
             });
@@ -971,7 +984,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             return some({
               condition: ol.events.condition.pointerMove,
               features: model.hoverFeatures,
-              style: createStyleFn(getHoverStyleSelector),
+              style: createSelectionStyleFn(getHoverStyleSelector),
               layers: layer => layer.get("hover")
             });
           case "off":
@@ -993,7 +1006,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             return some({
               condition: ol.events.condition.never,
               features: model.highlightedFeatures,
-              style: createStyleFn(getHoverStyleSelector)
+              style: createSelectionStyleFn(getHoverStyleSelector)
             });
           case "off":
             return none;
@@ -1220,7 +1233,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
-    function vulCacheVoorLaag(cmnd: prt.VulCacheVoorLaag<Msg>): ModelWithResult<Msg> {
+    function vulCacheVoorWMSLaag(cmnd: prt.VulCacheVoorWMSLaag<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
         valideerTiledWmsBestaat(cmnd.titel).map(tiledWms => {
@@ -1239,6 +1252,45 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return ModelAndEmptyResult(model);
         })
       );
+    }
+
+    function vulCacheVoorNosqlLaag(cmnd: prt.VulCacheVoorNosqlLaag<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        valideerVectorLayerBestaat(cmnd.titel).map(vectorLaag => {
+          (cmnd.startMetLegeCache ? featureStore.clear(cmnd.titel) : rx.of(false))
+            .pipe(
+              switchMap(() =>
+                (vectorLaag.getSource() as NosqlFsSource).fetchFeaturesByWkt$(cmnd.wkt).pipe(
+                  bufferCount(1000),
+                  switchMap(features => featureStore.writeFeatures(cmnd.titel, features))
+                )
+              )
+            )
+            .subscribe(aantal => kaartLogger.debug(`${aantal} features in cache bewaard`), error => kaartLogger.error(error));
+          return ModelAndEmptyResult(model);
+        })
+      );
+    }
+
+    function zetOffline(cmnd: prt.ZetOffline<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        valideerVectorLayerBestaat(cmnd.titel).map(vectorLaag => {
+          (vectorLaag.getSource() as NosqlFsSource).setOffline(cmnd.offline);
+          return ModelAndEmptyResult(model);
+        })
+      );
+    }
+
+    function drawOpsCmd(cmnd: prt.DrawOpsCmd): ModelWithResult<Msg> {
+      modelChanger.tekenenOpsSubj.next(cmnd.ops);
+      return ModelWithResult(model);
+    }
+
+    function zetGetekendeGeometry(cmnd: prt.ZetGetekendeGeometryCmd): ModelWithResult<Msg> {
+      modelChanger.getekendeGeometrySubj.next(cmnd.geometry);
+      return ModelWithResult(model);
     }
 
     function handleSubscriptions(cmnd: prt.SubscribeCmd<Msg>): ModelWithResult<Msg> {
@@ -1575,10 +1627,18 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return sluitPanelen(cmd);
       case "ActiveerCacheVoorLaag":
         return activeerCacheVoorLaag(cmd);
-      case "VulCacheVoorLaag":
-        return vulCacheVoorLaag(cmd);
+      case "VulCacheVoorWMSLaag":
+        return vulCacheVoorWMSLaag(cmd);
+      case "VulCacheVoorNosqlLaag":
+        return vulCacheVoorNosqlLaag(cmd);
       case "HighlightFeatures":
         return highlightFeaturesCmd(cmd);
+      case "DrawOps":
+        return drawOpsCmd(cmd);
+      case "ZetGetekendeGeometry":
+        return zetGetekendeGeometry(cmd);
+      case "ZetOffline":
+        return zetOffline(cmd);
     }
   };
 }

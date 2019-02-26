@@ -1,0 +1,16 @@
+<div class="card-content">
+  <div class="velden" *ngIf="length">
+    <div class="veldnamen">Lengte</div>
+    <div class="veldwaarden">{{ length }}</div>
+    <button mat-icon-button class="copy" matTooltip="Kopieer lengte">
+        <mat-icon (click)="copyToClipboard(lengthCopyInfo)">content_copy</mat-icon>
+    </button>
+  </div>
+  <div class="velden" *ngIf="area">
+    <div class="veldnamen">Oppervlakte</div>
+    <div class="veldwaarden">{{ area }}</div>
+    <button mat-icon-button class="copy" matTooltip="Kopieer oppervlakte">
+        <mat-icon (click)="copyToClipboard(areaCopyInfo)">content_copy</mat-icon>
+    </button>
+  </div>
+</div>

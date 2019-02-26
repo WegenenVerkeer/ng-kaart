@@ -29,6 +29,7 @@ import { KaartCopyrightComponent } from "./copyright/kaart-copyright.component";
 import { KaartInfoBoodschapAlertComponent } from "./info-boodschappen/kaart-info-boodschap-alert.component";
 import { KaartInfoBoodschapIdentifyComponent } from "./info-boodschappen/kaart-info-boodschap-identify.component";
 import { KaartInfoBoodschapKaartBevragenComponent } from "./info-boodschappen/kaart-info-boodschap-kaart-bevragen.component";
+import { KaartInfoBoodschapMetenComponent } from "./info-boodschappen/kaart-info-boodschap-meten.component";
 import { KaartInfoBoodschapComponent } from "./info-boodschappen/kaart-info-boodschap.component";
 import { KaartInfoBoodschappenComponent } from "./info-boodschappen/kaart-info-boodschappen.component";
 import { KaartBevragenComponent } from "./kaart-bevragen/kaart-bevragen.component";
@@ -37,11 +38,13 @@ import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { KaartComponent } from "./kaart.component";
 import { KaartLoadingComponent } from "./loading/kaart-loading.component";
 import { KaartMetenComponent } from "./meten/kaart-meten.component";
+import { KaartMultiMetenComponent } from "./meten/kaart-multi-meten.component";
 import { KaartMijnLocatieComponent } from "./mijn-locatie/kaart-mijn-locatie.component";
 import { KaartOpenStreetViewComponent } from "./open-street-view/kaart-open-street-view.component";
 import { KaartRotatieComponent } from "./rotatie/kaart-rotatie.component";
 import { KaartSchaalComponent } from "./schaal/kaart-schaal.component";
 import { StijleditorModule } from "./stijleditor/index";
+import { KaartMultiTekenLaagComponent } from "./tekenen/kaart-multi-teken-laag.component";
 import { KaartTekenLaagComponent } from "./tekenen/kaart-teken-laag.component";
 import { KaartVoorwaardenComponent } from "./voorwaarden/kaart-voorwaarden.component";
 import { KaartZoomComponent } from "./zoom/kaart-zoom.component";
@@ -49,25 +52,28 @@ import { KaartZoomComponent } from "./zoom/kaart-zoom.component";
 const components: any[] = [
   KaartAchtergrondSelectorComponent,
   KaartAchtergrondTileComponent,
+  KaartBevragenComponent,
   KaartComponent,
   KaartCopyrightComponent,
   KaartInfoBoodschapAlertComponent,
   KaartInfoBoodschapComponent,
   KaartInfoBoodschapIdentifyComponent,
   KaartInfoBoodschapKaartBevragenComponent,
+  KaartInfoBoodschapMetenComponent,
   KaartInfoBoodschappenComponent,
-  KaartBevragenComponent,
   KaartLoadingComponent,
   KaartMetenComponent,
   KaartMijnLocatieComponent,
+  KaartMultiMetenComponent,
+  KaartMultiTekenLaagComponent,
   KaartOpenLayersStyleComponent,
   KaartOpenStreetViewComponent,
+  KaartRotatieComponent,
   KaartSchaalComponent,
   KaartTekenComponent,
   KaartTekenLaagComponent,
   KaartVoorwaardenComponent,
-  KaartZoomComponent,
-  KaartRotatieComponent
+  KaartZoomComponent
 ];
 
 // Weersta de drang om deze variabele in een andere module te plaatsen, want dat geeft problemen met gebruik in AOT app.
@@ -80,7 +86,7 @@ export const defaultKaartConfig: KaartConfig = {
   },
   orthofotomozaiek: {
     naam: "Ortho",
-    urls: ["http://geoservices.informatievlaanderen.be/raadpleegdiensten/omwrgbmrvl/wms"]
+    urls: ["https://geoservices.informatievlaanderen.be/raadpleegdiensten/omwrgbmrvl/wms"]
   },
   srs: "EPSG:31370",
   defaults: {
@@ -152,11 +158,13 @@ export * from "./kaart-protocol";
 export * from "./kaart.component";
 export * from "./log";
 export * from "./meten/kaart-meten.component";
+export * from "./meten/kaart-multi-meten.component";
 export * from "./mijn-locatie/kaart-mijn-locatie.component";
 export * from "./open-street-view/kaart-open-street-view.component";
 export * from "./schaal/kaart-schaal.component";
 export * from "./stijl-selector";
 export * from "./styles";
+export * from "./tekenen/kaart-multi-teken-laag.component";
 export * from "./tekenen/kaart-teken-laag.component";
 export * from "./voorwaarden/kaart-voorwaarden.component";
 export * from "./zoom/kaart-zoom.component";

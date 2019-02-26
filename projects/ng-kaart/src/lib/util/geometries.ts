@@ -1,4 +1,8 @@
-import { fromNullable, none, Option } from "fp-ts/lib/Option";
+import * as array from "fp-ts/lib/Array";
+import { fieldNumber } from "fp-ts/lib/Field";
+import { sum } from "fp-ts/lib/Foldable2v";
+import { constant, Function1, identity } from "fp-ts/lib/function";
+import { none, option, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 
 export interface GeometryMapper<T> {
@@ -11,30 +15,66 @@ export interface GeometryMapper<T> {
   readonly multiPolygon?: (_: ol.geom.MultiPolygon) => T;
   readonly geometryCollection?: (_: ol.geom.GeometryCollection) => T;
   readonly circle?: (_: ol.geom.Circle) => T;
+  readonly geometry?: (_: ol.geom.Geometry) => T;
 }
 
 export function matchGeometryType<T>(geometry: ol.geom.Geometry, mapper: GeometryMapper<T>): Option<T> {
+  const tryFallback = () => (mapper.geometry ? some(mapper.geometry(geometry)) : none);
+  const applyIfDefined: <G extends ol.geom.Geometry>(f?: Function1<G, T>) => Option<T> = f => (f ? some(f(geometry as any)) : none);
+
   switch (geometry.getType()) {
     case "Point":
-      return mapper.point ? fromNullable(mapper.point(geometry as ol.geom.Point)) : none;
+      return applyIfDefined<ol.geom.Point>(mapper.point).orElse(tryFallback);
     case "LineString":
-      return mapper.lineString ? fromNullable(mapper.lineString(geometry as ol.geom.LineString)) : none;
+      return applyIfDefined<ol.geom.LineString>(mapper.lineString).orElse(tryFallback);
     case "LinearRing":
-      return mapper.linearRing ? fromNullable(mapper.linearRing(geometry as ol.geom.LinearRing)) : none;
+      return applyIfDefined<ol.geom.LinearRing>(mapper.linearRing).orElse(tryFallback);
     case "Polygon":
-      return mapper.polygon ? fromNullable(mapper.polygon(geometry as ol.geom.Polygon)) : none;
+      return applyIfDefined<ol.geom.Polygon>(mapper.polygon).orElse(tryFallback);
     case "MultiPoint":
-      return mapper.multiPoint ? fromNullable(mapper.multiPoint(geometry as ol.geom.MultiPoint)) : none;
+      return applyIfDefined<ol.geom.MultiPoint>(mapper.multiPoint).orElse(tryFallback);
     case "MultiLineString":
-      return mapper.multiLineString ? fromNullable(mapper.multiLineString(geometry as ol.geom.MultiLineString)) : none;
+      return applyIfDefined<ol.geom.MultiLineString>(mapper.multiLineString).orElse(tryFallback);
     case "MultiPolygon":
-      return mapper.multiPolygon ? fromNullable(mapper.multiPolygon(geometry as ol.geom.MultiPolygon)) : none;
+      return applyIfDefined<ol.geom.MultiPolygon>(mapper.multiPolygon).orElse(tryFallback);
     case "GeometryCollection":
-      return mapper.geometryCollection ? fromNullable(mapper.geometryCollection(geometry as ol.geom.GeometryCollection)) : none;
+      return applyIfDefined<ol.geom.GeometryCollection>(mapper.geometryCollection).orElse(tryFallback);
     case "Circle":
-      return mapper.circle ? fromNullable(mapper.circle(geometry as ol.geom.Circle)) : none;
+      return applyIfDefined<ol.geom.Circle>(mapper.circle).orElse(tryFallback);
   }
   return none;
+}
+
+export function toLineString(geometry: ol.geom.Geometry): Option<ol.geom.LineString> {
+  return matchGeometryType(geometry, {
+    lineString: line => some(line),
+    multiLineString: line => some(new ol.geom.LineString(array.flatten(line.getCoordinates()))),
+    polygon: poly => some(new ol.geom.LineString(array.flatten(poly.getCoordinates()))),
+    geometryCollection: collection =>
+      array.array
+        .traverse(option)(collection.getGeometries(), toLineString)
+        .map(lines => new ol.geom.LineString(array.flatten(lines.map(line => line.getCoordinates()))))
+  }).chain(identity);
+}
+
+const numberArraySum: Function1<number[], number> = sum(fieldNumber, array.array);
+
+export function geometryLength(geometry: ol.geom.Geometry): number {
+  return matchGeometryType(geometry, {
+    point: constant(0),
+    multiPoint: constant(0),
+    lineString: line => line.getLength(),
+    multiLineString: lines => numberArraySum(lines.getLineStrings().map(geometryLength)),
+    polygon: poly => numberArraySum(poly.getLinearRings().map(geometryLength)),
+    geometryCollection: collection => numberArraySum(collection.getGeometries().map(geometryLength)),
+    circle: circle => circle.getRadius() * 2 * Math.PI,
+    linearRing: ring => new ol.geom.LineString(ring.getCoordinates()).getLength(),
+    multiPolygon: polys => numberArraySum(polys.getPolygons().map(geometryLength))
+  }).getOrElse(0);
+}
+
+export function distance(coord1: ol.Coordinate, coord2: ol.Coordinate): number {
+  return ol.Sphere.getLength(new ol.geom.LineString([coord1, coord2]));
 }
 
 export function dimensieBeschrijving(geometry: ol.geom.Geometry, verbose = true): string {

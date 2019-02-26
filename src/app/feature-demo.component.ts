@@ -14,7 +14,8 @@ import {
   KaartClassicComponent,
   offsetStyleFunction,
   parseCoordinate,
-  Precache,
+  PrecacheFeatures,
+  PrecacheWMS,
   ToegevoegdeLaag,
   validateAwvV0RuleDefintion,
   VeldInfo,
@@ -308,8 +309,13 @@ export class FeatureDemoComponent {
   geselecteerdeFietspadsegmenten: List<ol.Feature> = List();
 
   precacheProgress = 0;
-  wkt = wkts.districten.gent;
-  precacheInput: Precache = null;
+  precacheWMSWkt = wkts.districten.gent;
+  precacheWMSInput: PrecacheWMS = null;
+
+  precacheFeaturesWkt = wkts.gemeenten.brasschaat;
+  precacheFeaturesInput: PrecacheFeatures = null;
+
+  isOffline = false;
 
   private tekenenActief = false;
   private getekendeGeom: Option<ol.geom.Geometry> = none;
@@ -345,8 +351,9 @@ export class FeatureDemoComponent {
 
     // --- Meten opties
     optieDivider3a: { divider: true, value: true, label: "Meten opties (teken modus op en afzetten na veranderingen)" },
-    metenToon: { value: true, label: "Toon info" },
-    metenMeerdere: { value: true, label: "Meerdere geometrieen" },
+    metenToon: { value: true, label: "Toon infopaneel" },
+    metRouting: { value: false, label: "Verbinding via weg staat standaard aan" },
+    keuzemogelijkheidTonen: { value: true, label: "Laat keuze tussen 'rechte lijn'/'via de weg' toe" },
 
     // --- Kaartinfo
     optieDivider4: { divider: true, value: true, label: "Kaartinfo onderaan rechts" },
@@ -453,11 +460,18 @@ export class FeatureDemoComponent {
 
   private geometryType = "Polygon";
 
-  startPrecache(start: string, eind: string, startMetLegeCache: boolean) {
-    this.precacheInput = {
+  startPrecacheWMS(start: string, eind: string, startMetLegeCache: boolean) {
+    this.precacheWMSInput = {
       startZoom: Number(start),
       eindZoom: Number(eind),
-      wkt: this.wkt,
+      wkt: this.precacheWMSWkt,
+      startMetLegeCache: startMetLegeCache
+    };
+  }
+
+  startPrecacheFeatures(startMetLegeCache: boolean) {
+    this.precacheFeaturesInput = {
+      wkt: `SRID=31370;${this.precacheFeaturesWkt}`,
       startMetLegeCache: startMetLegeCache
     };
   }
@@ -502,6 +516,10 @@ export class FeatureDemoComponent {
     // voeg de nieuwe toe
     this.geselecteerdeFeatures = event;
     this.geselecteerdeFeatures.forEach(feature => this.selectieKaart.toonIdentifyInformatie(feature));
+  }
+
+  setOffline(offline: boolean) {
+    this.isOffline = offline;
   }
 
   isTekenenActief() {

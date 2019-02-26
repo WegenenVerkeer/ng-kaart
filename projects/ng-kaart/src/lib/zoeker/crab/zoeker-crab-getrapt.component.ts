@@ -1,6 +1,5 @@
 import { Component, EventEmitter, NgZone, OnInit, Output } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { Set } from "immutable";
 import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, startWith } from "rxjs/operators";
 
@@ -33,9 +32,9 @@ export class ZoekerCrabGetraptComponent extends GetraptZoekerComponent implement
   straatControl = new FormControl({ value: "", disabled: true });
   huisnummerControl = new FormControl({ value: "", disabled: true });
 
-  straten$: rx.Observable<CrabStraat[]> = rx.empty();
-  huisnummers$: rx.Observable<CrabHuisnummer[]> = rx.empty();
-  leegMakenDisabled$: rx.Observable<boolean> = rx.empty();
+  straten$: rx.Observable<CrabStraat[]> = rx.EMPTY;
+  huisnummers$: rx.Observable<CrabHuisnummer[]> = rx.EMPTY;
+  leegMakenDisabled$: rx.Observable<boolean> = rx.EMPTY;
   @Output()
   leegMakenDisabledChange: EventEmitter<boolean> = new EventEmitter();
 
@@ -133,8 +132,8 @@ export class ZoekerCrabGetraptComponent extends GetraptZoekerComponent implement
     });
   }
 
-  toonGemeenteInLijst(gemeente?: CrabGemeente): string | undefined {
-    return gemeente ? `${gemeente.naam} <span class="crab-postcodes">(${gemeente.postcodes})</span>` : undefined;
+  toonGemeenteInLijst(gemeente?: CrabGemeente): string {
+    return gemeente ? `${gemeente.naam} <span class="crab-postcodes">(${gemeente.postcodes})</span>` : "";
   }
 
   toonGemeente(gemeente?: CrabGemeente): string | undefined {
