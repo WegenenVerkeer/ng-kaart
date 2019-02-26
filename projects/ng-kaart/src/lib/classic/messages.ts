@@ -72,7 +72,7 @@ export interface FeatureGedeselecteerdMsg {
 
 export interface ZichtbareFeaturesAangepastMsg {
   readonly type: "ZichtbareFeaturesAangepast";
-  readonly features: List<ol.Feature>;
+  readonly features: Array<ol.Feature>;
 }
 
 export interface ZoomAangepastMsg {
@@ -107,17 +107,17 @@ export interface VectorLagenAangepastMsg {
 
 export interface AchtergrondLagenInGroepAangepastMsg {
   readonly type: "AchtergrondLagenInGroepAangepast";
-  readonly lagen: List<ke.ToegevoegdeLaag>;
+  readonly lagen: Array<ke.ToegevoegdeLaag>;
 }
 
 export interface VoorgrondHoogLagenInGroepAangepastMsg {
   readonly type: "VoorgrondHoogLagenInGroepAangepast";
-  readonly lagen: List<ke.ToegevoegdeLaag>;
+  readonly lagen: Array<ke.ToegevoegdeLaag>;
 }
 
 export interface VoorgrondLaagLagenInGroepAangepastMsg {
   readonly type: "VoorgrondLaagLagenInGroepAangepast";
-  readonly lagen: List<ke.ToegevoegdeLaag>;
+  readonly lagen: Array<ke.ToegevoegdeLaag>;
 }
 
 export interface DummyMsg {
@@ -144,7 +144,7 @@ export function FeatureHoverAangepastMsg(hoverFeature: HoverFeature): FeatureHov
   return { type: "FeatureHoverAangepast", feature: hoverFeature };
 }
 
-export function ZichtbareFeaturesAangepastMsg(features: List<ol.Feature>): ZichtbareFeaturesAangepastMsg {
+export function ZichtbareFeaturesAangepastMsg(features: Array<ol.Feature>): ZichtbareFeaturesAangepastMsg {
   return { type: "ZichtbareFeaturesAangepast", features: features };
 }
 
@@ -156,15 +156,15 @@ export function PrecacheProgressMsg(progress: PrecacheLaagProgress): PrecachePro
   return { type: "PrecacheProgress", progress: progress };
 }
 
-export function AchtergrondLagenInGroepAangepastMsg(lagen: List<ToegevoegdeLaag>): AchtergrondLagenInGroepAangepastMsg {
+export function AchtergrondLagenInGroepAangepastMsg(lagen: Array<ToegevoegdeLaag>): AchtergrondLagenInGroepAangepastMsg {
   return { type: "AchtergrondLagenInGroepAangepast", lagen: lagen };
 }
 
-export function VoorgrondLaagLagenInGroepAangepastMsg(lagen: List<ToegevoegdeLaag>): VoorgrondLaagLagenInGroepAangepastMsg {
+export function VoorgrondLaagLagenInGroepAangepastMsg(lagen: Array<ToegevoegdeLaag>): VoorgrondLaagLagenInGroepAangepastMsg {
   return { type: "VoorgrondLaagLagenInGroepAangepast", lagen: lagen };
 }
 
-export function VoorgrondHoogLagenInGroepAangepastMsg(lagen: List<ToegevoegdeLaag>): VoorgrondHoogLagenInGroepAangepastMsg {
+export function VoorgrondHoogLagenInGroepAangepastMsg(lagen: Array<ToegevoegdeLaag>): VoorgrondHoogLagenInGroepAangepastMsg {
   return { type: "VoorgrondHoogLagenInGroepAangepast", lagen: lagen };
 }
 

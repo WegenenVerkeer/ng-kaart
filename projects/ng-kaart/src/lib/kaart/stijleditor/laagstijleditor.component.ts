@@ -176,9 +176,7 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
     const findLaagOpTitel: Function2<string, ke.ToegevoegdeLaag[], Option<ke.ToegevoegdeVectorLaag>> = (titel, lgn) =>
       array.findFirst(lgn.filter(lg => lg.titel === titel), ke.isToegevoegdeVectorLaag);
     const laag$: rx.Observable<ke.ToegevoegdeVectorLaag> = forEvery(aanpassing$)(aanpassing =>
-      kaart.modelChanges.lagenOpGroep
-        .get(aanpassing.laag.laaggroep)
-        .pipe(collectOption(lgn => findLaagOpTitel(aanpassing.laag.titel, lgn.toArray())))
+      kaart.modelChanges.lagenOpGroep.get(aanpassing.laag.laaggroep).pipe(collectOption(lgn => findLaagOpTitel(aanpassing.laag.titel, lgn)))
     ).pipe(
       shareReplay(1) // De huidige laag moet bewaard blijven voor alle volgende subscribers
     );

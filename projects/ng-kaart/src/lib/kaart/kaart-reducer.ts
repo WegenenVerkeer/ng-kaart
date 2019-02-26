@@ -299,18 +299,15 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
     }
 
-    function lagenInGroep(mdl: Model, groep: ke.Laaggroep): List<ke.ToegevoegdeLaag> {
+    function lagenInGroep(mdl: Model, groep: ke.Laaggroep): Array<ke.ToegevoegdeLaag> {
       return mdl.titelsOpGroep
         .get(groep) // we vertrekken van geldige groepen
-        .map(titel => mdl.toegevoegdeLagenOpTitel.get(titel!)) // dus hebben we geldige titels
-        .toList();
+        .map(titel => mdl.toegevoegdeLagenOpTitel.get(titel!)); // dus hebben we geldige titels
     }
 
     function zendLagenInGroep(mdl: Model, groep: ke.Laaggroep): void {
       modelChanger.lagenOpGroepSubj.get(groep).next(
-        lagenInGroep(mdl, groep)
-          .sortBy(laag => -laag!.layer.getZIndex()) // en dus ook geldige titels
-          .toList()
+        lagenInGroep(mdl, groep).sort(laag => -laag!.layer.getZIndex()) // en dus ook geldige titels
       );
     }
 
@@ -324,7 +321,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function limitPosition(position: number, groep: ke.Laaggroep) {
       // laat 1 positie voorbij het einde toe om laag kunnen toe te voegen
-      return Math.max(0, Math.min(position, model.titelsOpGroep.get(groep).size));
+      return Math.max(0, Math.min(position, model.titelsOpGroep.get(groep).length));
     }
 
     function abortTileLoadingCmd(cmnd: prt.AbortTileLoadingCmd) {
@@ -333,7 +330,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function vectorLaagPositie(groepPositie: number, groep: ke.Laaggroep): number {
-      return lagenInGroep(model, groep).count(tlg => ke.isVectorLaag(tlg!.bron) && tlg!.positieInGroep < groepPositie);
+      return lagenInGroep(model, groep).filter(tlg => ke.isVectorLaag(tlg!.bron) && tlg!.positieInGroep < groepPositie).length;
     }
 
     /**
@@ -381,7 +378,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               const updatedModel = {
                 ...modelMetAangepasteLagen,
                 toegevoegdeLagenOpTitel: modelMetAangepasteLagen.toegevoegdeLagenOpTitel.set(titel, toegevoegdeLaag),
-                titelsOpGroep: modelMetAangepasteLagen.titelsOpGroep.set(groep, model.titelsOpGroep.get(groep).push(titel)),
+                titelsOpGroep: modelMetAangepasteLagen.titelsOpGroep.set(groep, model.titelsOpGroep.get(groep).concat([titel])),
                 groepOpTitel: modelMetAangepasteLagen.groepOpTitel.set(titel, groep)
               };
               zendLagenInGroep(updatedModel, cmnd.laaggroep);
@@ -424,10 +421,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             toegevoegdeLagenOpTitel: modelMetAangepasteLagen.toegevoegdeLagenOpTitel.delete(titel),
             titelsOpGroep: modelMetAangepasteLagen.titelsOpGroep.set(
               groep,
-              modelMetAangepasteLagen.titelsOpGroep
-                .get(groep)
-                .filter(t => t !== titel)
-                .toList()
+              modelMetAangepasteLagen.titelsOpGroep.get(groep).filter(t => t !== titel)
             ),
             groepOpTitel: modelMetAangepasteLagen.groepOpTitel.delete(titel)
           };
@@ -721,14 +715,13 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         cmnd.wrapper,
         allOf([
           fromBoolean(!model.showBackgroundSelector, "De achtergrondkeuze is al actief"),
-          fromBoolean(!achtergrondTitels.isEmpty(), "Er moet minstens 1 achtergrondlaag zijn")
+          fromBoolean(!array.isEmpty(achtergrondTitels), "Er moet minstens 1 achtergrondlaag zijn")
         ]).map(() => {
-          const achtergrondLagen: List<ke.ToegevoegdeLaag> = model.titelsOpGroep
+          const achtergrondLagen: Array<ke.ToegevoegdeLaag> = model.titelsOpGroep
             .get("Achtergrond")
-            .map(titel => model.toegevoegdeLagenOpTitel.get(titel!)) // de titels bestaan bij constructie
-            .toList();
+            .map(titel => model.toegevoegdeLagenOpTitel.get(titel!)); // de titels bestaan bij constructie
           const geselecteerdeLaag = fromNullable(achtergrondLagen.find(laag => laag!.magGetoondWorden));
-          const teSelecterenLaag = geselecteerdeLaag.getOrElseL(() => achtergrondLagen.first()); // er is er minstens 1 wegens validatie
+          const teSelecterenLaag = geselecteerdeLaag.getOrElseL(() => achtergrondLagen[0]); // er is er minstens 1 wegens validatie
 
           // Zorg ervoor dat er juist 1 achtergrondlaag zichtbaar is
           const modelMetAangepasteLagen = achtergrondLagen.reduce(

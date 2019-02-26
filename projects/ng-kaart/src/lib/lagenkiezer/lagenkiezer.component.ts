@@ -2,6 +2,7 @@ import { animate, style, transition, trigger } from "@angular/animations";
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 import { MatTabChangeEvent } from "@angular/material";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
+import * as array from "fp-ts/lib/Array";
 import { Predicate } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { List } from "immutable";
@@ -77,9 +78,9 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
   private dragState: Option<DragState> = none;
   private dichtgeklapt = false;
   public geselecteerdeTab = 0;
-  readonly lagenHoog$: rx.Observable<List<ToegevoegdeLaag>>;
-  readonly lagenLaag$: rx.Observable<List<ToegevoegdeLaag>>;
-  readonly lagenMetLegende$: rx.Observable<List<ToegevoegdeLaag>>;
+  readonly lagenHoog$: rx.Observable<Array<ToegevoegdeLaag>>;
+  readonly lagenLaag$: rx.Observable<Array<ToegevoegdeLaag>>;
+  readonly lagenMetLegende$: rx.Observable<Array<ToegevoegdeLaag>>;
   readonly heeftDivider$: rx.Observable<boolean>;
   readonly geenLagen$: rx.Observable<boolean>;
   readonly geenLegende$: rx.Observable<boolean>;
@@ -102,15 +103,15 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
     this.lagenMetLegende$ = rx
       .combineLatest(this.lagenHoog$, this.lagenLaag$, achtergrondLagen$, zoom$, (lagenHoog, lagenLaag, achtergrondLagen, zoom) => {
         const lagen = lagenHoog.concat(lagenLaag, achtergrondLagen);
-        return lagen.filter(laag => isZichtbaar(laag!, zoom) && laag!.magGetoondWorden && laag!.legende.isSome()).toList();
+        return lagen.filter(laag => isZichtbaar(laag!, zoom) && laag!.magGetoondWorden && laag!.legende.isSome());
       })
       .pipe(shareReplay(1));
-    const lagenHoogLeeg$ = this.lagenHoog$.pipe(map(l => l.isEmpty()));
-    const lagenLaagLeeg$ = this.lagenLaag$.pipe(map(l => l.isEmpty()));
+    const lagenHoogLeeg$ = this.lagenHoog$.pipe(map(array.isEmpty));
+    const lagenLaagLeeg$ = this.lagenLaag$.pipe(map(array.isEmpty));
     this.heeftDivider$ = rx.combineLatest(lagenHoogLeeg$, lagenLaagLeeg$, (h, l) => !h && !l).pipe(shareReplay(1));
     this.geenLagen$ = rx.combineLatest(lagenHoogLeeg$, lagenLaagLeeg$, (h, l) => h && l).pipe(shareReplay(1));
     this.geenLegende$ = this.lagenMetLegende$.pipe(
-      map(l => l.isEmpty()),
+      map(array.isEmpty),
       shareReplay(1)
     );
     this.opties$ = this.modelChanges.uiElementOpties$.pipe(

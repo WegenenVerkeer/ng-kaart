@@ -92,7 +92,7 @@ export interface Groeplagen {
 }
 
 export interface GeselecteerdeFeatures {
-  readonly geselecteerd: List<ol.Feature>;
+  readonly geselecteerd: Array<ol.Feature>;
   readonly toegevoegd: Option<ol.Feature>;
   readonly verwijderd: Option<ol.Feature>;
 }

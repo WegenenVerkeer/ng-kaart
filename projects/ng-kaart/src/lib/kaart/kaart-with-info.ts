@@ -22,11 +22,11 @@ export class KaartWithInfo {
   static readonly clickHitTolerance = new MobileDetect(window.navigator.userAgent).mobile() ? 40 : 5;
 
   readonly toegevoegdeLagenOpTitel: Map<string, ke.ToegevoegdeLaag> = Map();
-  readonly titelsOpGroep: Map<ke.Laaggroep, List<string>> = Map([
-    ["Voorgrond.Laag", List()],
-    ["Voorgrond.Hoog", List()],
-    ["Achtergrond", List()],
-    ["Tools", List()]
+  readonly titelsOpGroep: Map<ke.Laaggroep, Array<string>> = Map([
+    ["Voorgrond.Laag", []],
+    ["Voorgrond.Hoog", []],
+    ["Achtergrond", []],
+    ["Tools", []]
   ]);
   readonly groepOpTitel: Map<string, ke.Laaggroep> = Map();
   readonly schaal: Option<ol.control.Control> = none;

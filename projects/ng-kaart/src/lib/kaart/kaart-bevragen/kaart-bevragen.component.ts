@@ -43,19 +43,17 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
     const geklikteLocatie$ = this.modelChanges.kaartKlikLocatie$.pipe(filter(l => this.isActief() && !l.coversFeature));
 
     const allSvcCalls: (
-      _1: List<ke.ToegevoegdeLaag>,
+      _1: Array<ke.ToegevoegdeLaag>,
       _2: Map<string, LaagLocationInfoService>,
       _3: ol.Coordinate
     ) => Array<rx.Observable<srv.LocatieInfo>> = (lgn, svcs, locatie) =>
       lgn
         .filter(lg => lg!.layer.getVisible() && svcs.has(lg!.titel)) // zichtbare lagen met een info service
         .map(lg => infoForLaag(locatie, lg!, svcs.get(lg!.titel)))
-        .toList()
-        .push(
+        .concat([
           srv.wegLocatiesViaXY$(this.http, locatie).pipe(map(weglocatie => srv.fromWegLocaties(locatie, weglocatie))),
           srv.adresViaXY$(this.http, locatie).pipe(map(adres => srv.withAdres(locatie, adres)))
-        )
-        .toArray();
+        ]);
 
     this.bindToLifeCycle(
       stableReferentielagen$.pipe(

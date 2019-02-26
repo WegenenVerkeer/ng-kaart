@@ -72,7 +72,7 @@ export class KaartAchtergrondSelectorComponent extends KaartChildComponentBase i
     super(kaartComponent, zone);
 
     this.backgroundTiles$ = this.initialising$.pipe(
-      switchMap(() => this.modelChanges.lagenOpGroep.get("Achtergrond").pipe(map(lgn => lgn.toArray())))
+      switchMap(() => this.modelChanges.lagenOpGroep.get("Achtergrond").pipe(map(lgn => lgn)))
     );
 
     this.initialising$
