@@ -20,6 +20,7 @@ import * as rx from "rxjs";
 import { map, share, tap } from "rxjs/operators";
 
 import { ToegevoegdeLaag } from "../kaart";
+import { KaartInfoBoodschapUiSelector } from "../kaart/info-boodschappen/kaart-info-boodschappen.component";
 import { KaartLocaties } from "../kaart/kaart-bevragen/laaginfo.model";
 import { forChangedValue, KaartComponentBase } from "../kaart/kaart-component-base";
 import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "../kaart/kaart-event-dispatcher";
@@ -86,6 +87,8 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   naam = "kaart" + KaartClassicComponent.counter++;
   @Input()
   geselecteerdeFeatures: List<ol.Feature> = List();
+  @Input()
+  onderdrukKaartBevragenBoodschappen = false;
 
   @Output()
   geselecteerdeFeaturesChange: EventEmitter<List<ol.Feature>> = new EventEmitter();
@@ -284,6 +287,9 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
     );
     forChangedValue(changes, "breedte", () => this.zetKaartGrootte());
     forChangedValue(changes, "hoogte", () => this.zetKaartGrootte());
+    forChangedValue(changes, "onderdrukKaartBevragenBoodschappen", onderdruk =>
+      this.dispatch(prt.ZetUiElementOpties(KaartInfoBoodschapUiSelector, { kaartBevragenOnderdrukt: onderdruk }))
+    );
   }
 
   dispatch(cmd: prt.Command<TypedRecord>) {

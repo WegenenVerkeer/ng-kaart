@@ -119,7 +119,8 @@
                          [middelpunt]="configuratorMiddelpunt"
                          (achtergrondLagen)="onAchtergrondLagen($event)"
                          (voorgrondHoogLagen)="onVoorgrondHoogLagen($event)"
-                         (voorgrondLaagLagen)="onVoorgrondLaagLagen($event)">
+                         (voorgrondLaagLagen)="onVoorgrondLaagLagen($event)"
+                         [onderdrukKaartBevragenBoodschappen]="isOptieActief('onderdrukKaartBevragenBoodschappen')">
         <!-- algemeen -->
         <awv-kaart-standaard-interacties  *ngIf="isOptieActief('standaardinteracties')" [focusVoorZoom]="true" [rotatie]="isOptieActief('rotatie')"></awv-kaart-standaard-interacties>
         <!-- custom vaste header in linker paneel -->
