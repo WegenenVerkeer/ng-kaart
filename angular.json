@@ -43,6 +43,7 @@
             "assets": [
               "src/favicon.ico",
               "src/ng-kaart-service-worker.js",
+              "src/workbox/index.js",
               "src/assets"
             ],
             "styles": [
@@ -104,8 +105,9 @@
             "scripts": [],
             "assets": [
               "src/favicon.ico",
-              "src/assets",
-              "src/ng-kaart-service-worker.js"
+              "src/ng-kaart-service-worker.js",
+              "src/workbox/index.js",
+              "src/assets"
             ]
           }
         },

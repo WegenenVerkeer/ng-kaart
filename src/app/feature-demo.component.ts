@@ -9,6 +9,7 @@ import * as rx from "rxjs";
 import {
   AwvV0DynamicStyle,
   definitieToStyle,
+  definitieToStyleFunction,
   forEach,
   join,
   KaartClassicComponent,
@@ -56,7 +57,9 @@ export class FeatureDemoComponent {
   @ViewChild("selectie")
   private selectieKaart: KaartClassicComponent;
 
-  constructor(private changeDetectorRef: ChangeDetectorRef) {}
+  constructor(private changeDetectorRef: ChangeDetectorRef) {
+    this.addIcon();
+  }
 
   private readonly fietspadStijlDef: AwvV0DynamicStyle = {
     rules: [
@@ -403,6 +406,72 @@ export class FeatureDemoComponent {
     }
   );
 
+  // resolutions: [1024.0, 512.0, 256.0, 128.0, 64.0, 32.0, 16.0, 8.0, 4.0, 2.0, 1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125],
+  // minZoom 9 = resolutions[9] => 2.0
+  readonly elisaVerkeersbordenStyle = definitieToStyleFunction(
+    "json",
+    JSON.stringify({
+      version: "awv-v0",
+      definition: {
+        rules: [
+          {
+            condition: {
+              kind: "<=",
+              left: { kind: "Environment", type: "number", ref: "resolution" },
+              right: { kind: "Literal", value: 2.0 }
+            },
+            style: {
+              definition: {
+                circle: {
+                  radius: 5,
+                  fill: {
+                    color: "rgb(144, 202, 249)"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    })
+  ).getOrElseL(msg => {
+    throw new Error(`slecht formaat ${join(msg)}`);
+  });
+
+  readonly elisaVerkeersbordenSelectedStyle = definitieToStyleFunction(
+    "json",
+    JSON.stringify({
+      version: "awv-v0",
+      definition: {
+        rules: [
+          {
+            condition: {
+              kind: "<=",
+              left: { kind: "Environment", type: "number", ref: "resolution" },
+              right: { kind: "Literal", value: 2.0 }
+            },
+            style: {
+              definition: {
+                circle: {
+                  radius: 5,
+                  fill: {
+                    color: "rgb(255, 0, 0)"
+                  },
+                  stroke: {
+                    color: "rgba(255, 0, 0, 0.15)",
+                    width: 100
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    })
+  ).getOrElseL(msg => {
+    throw new Error(`slecht formaat ${join(msg)}`);
+  });
+
   readonly verkeersbordenStyleFunction = verkeersbordenStyleFunction(false);
   readonly verkeersbordenSelectieStyleFunction = verkeersbordenStyleFunction(true);
 
@@ -477,7 +546,7 @@ export class FeatureDemoComponent {
   }
 
   private addIcon() {
-    if (this.installaties.length > 20) {
+    if (this.installaties.length > 50) {
       this.installaties = [];
     }
     const locatie: [number, number] = [
@@ -496,7 +565,7 @@ export class FeatureDemoComponent {
     });
     feature.setStyle(this.pinIcon);
     this.installaties = array.snoc(this.installaties, feature);
-    setTimeout(() => this.addIcon(), 5000); // zorgt voor Angular Check event
+    setTimeout(() => this.addIcon(), 1000); // zorgt voor Angular Check event omdat setTimeout onderschept is door zone.js
   }
 
   polygoonGetekend(feature: ol.Feature) {

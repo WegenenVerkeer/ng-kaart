@@ -90,6 +90,10 @@
       VTC-loket
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !vtcLoketSectie.sectieZichtbaar }">visibility</span>
     </div>
+    <div (click)="elisaSectie.toggleSectieZichtbaar();scrollTo('elisa')" class="sub-titel">
+      Elisa
+      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !elisaSectie.sectieZichtbaar }">visibility</span>
+    </div>
   </div>
 </div>
 <div class="test-app-content">
@@ -587,6 +591,27 @@
                        [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && vtcLoketSectie.sectieZichtbaar">
         <div *ngIf="vtcLoketSectie.sectieZichtbaar">
           <span>TODO: GRB-laag + minimale widgets</span>
+        </div>
+      </awv-test-sectie>
+
+      <awv-test-sectie sectieId="elisa" sectieTitel="Elisa" [subSectie]="true" #elisaSectie
+                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && elisaSectie.sectieZichtbaar">
+        <div *ngIf="elisaSectie.sectieZichtbaar" [@enterAnimation] style="height: 600px">
+          <awv-kaart-classic [naam]="'elisa'"
+                             [zoom]="9" [selectieModus]="'single'" [middelpunt]="[161206, 226075]">
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+            <awv-kaart-nosqlfs-laag
+              [minZoom]="9"
+              titel="verkeersborden"
+              database="featureserver"
+              collection="verkeersborden"
+              selecteerbaar="true"
+              [styleFunction]="elisaVerkeersbordenStyle"
+              [selectieStyle]="elisaVerkeersbordenSelectedStyle"
+            ></awv-kaart-nosqlfs-laag>
+            <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
+            <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+          </awv-kaart-classic>
         </div>
       </awv-test-sectie>
 

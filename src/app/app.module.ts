@@ -4,7 +4,6 @@ import { MatButtonToggleModule, MatSlideToggleModule } from "@angular/material";
 import { BrowserModule } from "@angular/platform-browser";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { RouterModule } from "@angular/router";
-import { ServiceWorkerModule } from "@angular/service-worker";
 import { ClickOutsideModule } from "ng4-click-outside";
 
 import { ClassicModule, KaartModule, LagenkiezerModule, ZoekerModule } from "../../projects/ng-kaart/src/public_api";
@@ -44,9 +43,10 @@ import { TestSectieComponent } from "./test-sectie.component";
       }
     }),
     LagenkiezerModule.withDefaults(),
-    ServiceWorkerModule.register("ng-kaart/ng-kaart-service-worker.js", {
-      enabled: true
-    }),
+    // Deze lijkt niet te werken. Zie main.ts voor registratie
+    // ServiceWorkerModule.register("ng-kaart/ng-kaart-service-worker.js", {
+    //   enabled: true
+    // }),
     ClickOutsideModule
   ],
   providers: [],
