@@ -2,7 +2,7 @@ import { Component, NgZone } from "@angular/core";
 import { fromPredicate, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { distinctUntilChanged, filter, map, share, startWith, switchMap, tap } from "rxjs/operators";
+import { combineLatest, debounceTime, distinctUntilChanged, filter, map, share, switchMap, tap } from "rxjs/operators";
 
 import * as clr from "../../stijl/colour";
 import { distance, geometryLength, matchGeometryType, toLineString } from "../../util/geometries";
@@ -56,8 +56,15 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
       map(o => o.showInfoMessage),
       distinctUntilChanged()
     );
+    const scale$ = this.modelChanges.viewinstellingen$.pipe(
+      debounceTime(500),
+      map(vi => vi.resolution * 64), // arbitrair, komt ongeveer overeen met 1 cm op mijn scherm
+      distinctUntilChanged()
+    );
+
     const measure$: rx.Observable<Measure> = this.modelChanges.getekendeGeometry$.pipe(
-      map(geom => {
+      combineLatest(scale$),
+      map(([geom, scale]) => {
         const length = some(geometryLength(geom));
         const area = matchGeometryType(geom, {
           geometryCollection: collection => {
@@ -66,8 +73,9 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
                 .map(line => {
                   const begin = line.getFirstCoordinate();
                   const end = line.getLastCoordinate();
-                  // Wanneer de punten dicht genoeg bij elkaar liggen, sluiten we de geometrie
-                  if (distance(begin, end) < 150) {
+                  // Wanneer de punten dicht genoeg bij elkaar liggen, sluiten we de geometrie en berekenen we een oppervlakte.
+                  // Dicht genoeg hangt af van de schaal van de kaart.
+                  if (distance(begin, end) < scale) {
                     return ol.Sphere.getArea(new ol.geom.Polygon([line.getCoordinates()]));
                   } else {
                     return 0;
