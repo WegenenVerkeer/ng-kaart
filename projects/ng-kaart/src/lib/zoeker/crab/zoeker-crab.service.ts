@@ -13,7 +13,7 @@ import {
   nietOndersteund,
   ZoekAntwoord,
   Zoeker,
-  ZoekerHelpVisitor,
+  ZoekerHelpBoom,
   ZoekInput,
   ZoekKaartResultaat,
   Zoekopdracht,
@@ -168,7 +168,7 @@ export class ZoekerCrabService implements Zoeker {
     return "Crab";
   }
 
-  help(helpBoom: ZoekerHelpVisitor) {
+  help(helpBoom: ZoekerHelpBoom) {
     helpBoom.voegItemToe(help.getrapt, "een locatie", "een adres", "Getrapt zoeken naar een adres");
   }
 

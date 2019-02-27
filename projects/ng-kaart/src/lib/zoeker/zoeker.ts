@@ -33,7 +33,7 @@ export interface UrlZoekInput {
   readonly value: string;
 }
 
-export interface ZoekerHelpVisitor {
+export interface ZoekerHelpBoom {
   voegItemToe(text: string, ...titles: string[]);
 }
 
@@ -47,7 +47,7 @@ export interface Zoekopdracht {
 
 export interface Zoeker {
   naam(): string;
-  help(helpBoom: ZoekerHelpVisitor);
+  help(helpBoom: ZoekerHelpBoom);
   zoekresultaten$(zoekopdracht: Zoekopdracht): rx.Observable<ZoekAntwoord>;
 }
 

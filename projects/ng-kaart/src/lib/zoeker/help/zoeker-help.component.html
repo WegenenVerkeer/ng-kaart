@@ -19,14 +19,16 @@
       <ng-template #item_leaf>
         <div *ngIf="!(isLast && isFirst)" class="zoeker-help-titel">
           <mat-icon>keyboard_arrow_right</mat-icon>
-          {{entry.titel}}</div>
-        <div *ngIf="entry.text.isSome()" class="zoeker-help-text" [innerHtml]="entry.text.toNullable()">
+          {{entry.titel}}
+        </div>
+        <div *ngIf="entry.text" class="zoeker-help-text" [innerHtml]="entry.text">
         </div>
       </ng-template>
       <ng-template #item>
         <a (click)="selecteer(entry.titel)" class="zoeker-help-titel">
           <mat-icon>keyboard_arrow_right</mat-icon>
-          {{entry.titel}}</a>
+          {{entry.titel}}
+        </a>
       </ng-template>
 
     </div>

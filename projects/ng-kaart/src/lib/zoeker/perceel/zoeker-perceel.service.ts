@@ -15,7 +15,7 @@ import {
   nietOndersteund,
   ZoekAntwoord,
   Zoeker,
-  ZoekerHelpVisitor,
+  ZoekerHelpBoom,
   ZoekInput,
   ZoekKaartResultaat,
   Zoekopdracht,
@@ -124,7 +124,7 @@ export class ZoekerPerceelService implements Zoeker {
     return PERCEEL_SVC_NAAM;
   }
 
-  help(helpBoom: ZoekerHelpVisitor) {
+  help(helpBoom: ZoekerHelpBoom) {
     helpBoom.voegItemToe(help.capakey, "een locatie", "een perceel", "Capakey");
     helpBoom.voegItemToe(help.getrapt, "een locatie", "een perceel", "Getrapt zoeken naar een perceel");
   }

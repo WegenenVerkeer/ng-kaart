@@ -7,7 +7,7 @@ import {
   nietOndersteund,
   ZoekAntwoord,
   Zoeker,
-  ZoekerHelpVisitor,
+  ZoekerHelpBoom,
   ZoekInput,
   Zoekopdracht,
   Zoektype
@@ -32,7 +32,7 @@ export class DummyZoeker implements Zoeker {
     }
   }
 
-  help(helpBoom: ZoekerHelpVisitor) {
+  help(helpBoom: ZoekerHelpBoom) {
     // Doe niks, geen help nodig.
   }
 

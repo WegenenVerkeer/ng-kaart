@@ -7,7 +7,7 @@ import { map } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../../kaart/kaart-child-component-base";
 import { KaartComponent } from "../../kaart/kaart.component";
-import { ZoekerHelpVisitor, ZoekerMetPrioriteiten } from "../zoeker";
+import { ZoekerHelpBoom, ZoekerMetPrioriteiten } from "../zoeker";
 
 interface ZoekHelpNode {
   readonly titel: string;
@@ -17,11 +17,11 @@ interface ZoekHelpNode {
 
 interface HelpContent {
   readonly titel: string;
-  readonly text: Option<SafeHtml>;
+  readonly text?: SafeHtml;
   readonly isLeaf: boolean;
 }
 
-class ZoekerHelpVisitorImpl implements ZoekerHelpVisitor {
+class ZoekerHelpBoomImpl implements ZoekerHelpBoom {
   private root: ZoekHelpNode = {
     titel: "Ik zoek",
     children: new Map(),
@@ -39,7 +39,7 @@ class ZoekerHelpVisitorImpl implements ZoekerHelpVisitor {
           text: index === titles.length - 1 ? some(text) : none
         });
       }
-      parent = parent.children.get(title) as ZoekHelpNode;
+      parent = parent.children.get(title);
     });
   }
 
@@ -49,14 +49,14 @@ class ZoekerHelpVisitorImpl implements ZoekerHelpVisitor {
 }
 
 const bouwZoekBoom = (zoekers: ZoekerMetPrioriteiten[]) => {
-  const visitor = new ZoekerHelpVisitorImpl();
+  const visitor = new ZoekerHelpBoomImpl();
   // We laten iedere zoeker de helpBoom verder opbouwen.
   zoekers.forEach(zoeker => zoeker.zoeker.help(visitor));
   return visitor.boom();
 };
 
 const zoekHelpNodeToHelpContent = (domSanitizer: DomSanitizer, node: ZoekHelpNode) => {
-  return { titel: node.titel, text: node.text.map(domSanitizer.bypassSecurityTrustHtml), isLeaf: node.children.size === 0 };
+  return { titel: node.titel, text: node.text.map(domSanitizer.bypassSecurityTrustHtml).toNullable(), isLeaf: node.children.size === 0 };
 };
 
 const selecteerUitBoom = (domSanitizer: DomSanitizer, node: ZoekHelpNode, subPath: string[]) => {
