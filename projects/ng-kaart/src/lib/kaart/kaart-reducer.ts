@@ -1067,7 +1067,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function selecteerFeatures(cmnd: prt.SelecteerFeaturesCmd): ModelWithResult<Msg> {
       model.geselecteerdeFeatures.clear();
-      model.geselecteerdeFeatures.extend(cmnd.features.toArray());
+      model.geselecteerdeFeatures.extend(cmnd.features);
       return ModelWithResult(model);
     }
 

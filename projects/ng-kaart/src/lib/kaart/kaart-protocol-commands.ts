@@ -452,7 +452,7 @@ export interface ZetUiElementOpties {
 // met een lege verzameling features.
 export interface SelecteerFeaturesCmd {
   readonly type: "SelecteerFeatures";
-  readonly features: List<ol.Feature>;
+  readonly features: Array<ol.Feature>;
 }
 
 export interface DeselecteerFeatureCmd {
@@ -808,7 +808,7 @@ export function ZetUiElementOpties(naam: string, opties: any): ZetUiElementOptie
   return { type: "ZetUiElementOpties", naam: naam, opties: opties };
 }
 
-export function SelecteerFeaturesCmd(features: List<ol.Feature>): SelecteerFeaturesCmd {
+export function SelecteerFeaturesCmd(features: Array<ol.Feature>): SelecteerFeaturesCmd {
   return { type: "SelecteerFeatures", features: features };
 }
 
