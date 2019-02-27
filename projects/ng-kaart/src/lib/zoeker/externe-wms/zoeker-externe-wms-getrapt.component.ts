@@ -1,7 +1,6 @@
 import { Component, EventEmitter, NgZone, OnDestroy, OnInit, Output } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import { Option } from "fp-ts/lib/Option";
-import { Set } from "immutable";
 import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, switchMap } from "rxjs/operators";
 
@@ -38,7 +37,7 @@ export class ZoekerExterneWmsGetraptComponent extends GetraptZoekerComponent imp
       switchMap(
         svcs =>
           svcs.foldL(
-            () => rx.of(Set()), // Geen service betekent geen bronnen
+            () => rx.of(new Set()), // Geen service betekent geen bronnen
             svc => svc.bronnen$
           ) as rx.Observable<Set<string>>
       )
