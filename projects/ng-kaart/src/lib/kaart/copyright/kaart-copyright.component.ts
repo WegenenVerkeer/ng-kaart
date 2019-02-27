@@ -8,7 +8,7 @@ import { KaartComponent } from "../kaart.component";
 export const CopyrightUISelector = "Copyright";
 
 export interface CopyrightOpties {
-  copyright: string;
+  readonly copyright: string;
 }
 
 export const CopyrightOpties = (copyright: string) => ({ copyright: copyright });

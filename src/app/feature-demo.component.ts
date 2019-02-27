@@ -343,6 +343,7 @@ export class FeatureDemoComponent {
     kaartLinksFixedHeader: { value: false, label: "Custom vaste header in linker paneel" },
     kaartLinksExtraElements: { value: false, label: "Custom extra elementen in linker paneel" },
     kaartLinksBreedte: { value: false, label: "Custom breedte van 300px (default: 480px bij > 1240px en 360px bij <= 1240px)" },
+    onderdrukKaartBevragenBoodschappen: { value: false, label: "Onderdruk kaart bevragen boodschappenpaneel" },
 
     // --- Widgets
     optieDivider3: { divider: true, value: true, label: "Widgets onderaan rechts" },
