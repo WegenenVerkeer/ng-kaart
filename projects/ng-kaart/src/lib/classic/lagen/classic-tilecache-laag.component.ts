@@ -1,6 +1,5 @@
 import { Component, Inject, NgZone, ViewEncapsulation } from "@angular/core";
 import { fromNullable } from "fp-ts/lib/Option";
-import { List } from "immutable";
 
 import { KAART_CFG, KaartConfig } from "../../kaart/kaart-config";
 import * as ke from "../../kaart/kaart-elementen";
@@ -28,7 +27,7 @@ export class ClassicTilecacheLaagComponent extends ClassicWmsLaagComponent {
       tileSize: fromNullable(this.tileSize),
       format: fromNullable(this.format),
       opacity: fromNullable(this.opacity),
-      backgroundUrl: this.backgroundUrl(List(this.config.tilecache.urls), this.laagNaam),
+      backgroundUrl: this.backgroundUrl(this.config.tilecache.urls, this.laagNaam),
       minZoom: this.minZoom,
       maxZoom: this.maxZoom,
       verwijderd: false
