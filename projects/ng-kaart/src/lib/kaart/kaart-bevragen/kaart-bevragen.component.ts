@@ -77,7 +77,7 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
       this.toonInfoBoodschap(
         msg.kaartLocatie,
         msg.adres.map(srv.toAdres),
-        msg.weglocaties.map(srv.toWegLocaties).getOrElse(List()),
+        msg.weglocaties.map(srv.toWegLocaties).getOrElse([]),
         msg.lagenLocatieInfo
       );
     });
@@ -86,7 +86,7 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
   private toonInfoBoodschap(
     coordinaat: ol.Coordinate,
     maybeAdres: Option<Adres>,
-    wegLocaties: List<WegLocatie>,
+    wegLocaties: Array<WegLocatie>,
     lagenLocatieInfo: Map<string, Progress<LaagLocationInfo>>
   ) {
     this.dispatch(

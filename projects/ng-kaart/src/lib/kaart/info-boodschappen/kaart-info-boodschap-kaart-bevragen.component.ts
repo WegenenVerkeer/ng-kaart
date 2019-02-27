@@ -49,13 +49,11 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildComponen
       .map(switchVolgorde) // andere volgorde weergeven voor wgs84
       .map(formatCoordinate(7))
       .getOrElse("");
-    this.wegLocaties = boodschap.weglocaties
-      .sortBy(locatie =>
-        fromNullable(locatie)
-          .chain(loc => fromNullable(loc.projectieafstand))
-          .getOrElse(0)
-      )
-      .toArray();
+    this.wegLocaties = boodschap.weglocaties.sort(locatie =>
+      fromNullable(locatie)
+        .chain(loc => fromNullable(loc.projectieafstand))
+        .getOrElse(0)
+    );
     this.adressen = boodschap.adres.fold([], adres => [adres]); // Array van 0 of 1 eltn isomorf met Option, maar makkelijker voor Angular
   }
 

@@ -64,7 +64,7 @@ export interface InfoBoodschapKaartBevragenProgress extends InfoBoodschapBase {
   readonly type: "InfoBoodschapKaartBevragen";
   readonly coordinaat: ol.Coordinate;
   readonly adres: Option<Adres>; // Zou ook Progress<Adres> kunnen zijn
-  readonly weglocaties: List<WegLocatie>; // Zou ook Progress<List<WegLocatie>> kunnen zijn
+  readonly weglocaties: Array<WegLocatie>; // Zou ook Progress<Array<WegLocatie>> kunnen zijn
   readonly laagLocatieInfoOpTitel: Map<string, Progress<LaagLocationInfo>>;
 }
 

@@ -83,8 +83,8 @@ export interface AgivAdres {
   readonly huisnummer: string;
 }
 
-export function toWegLocaties(lsWegLocaties: LsWegLocaties): List<WegLocatie> {
-  return List<WegLocatie>(lsWegLocaties.items.map(toWegLocatie));
+export function toWegLocaties(lsWegLocaties: LsWegLocaties): Array<WegLocatie> {
+  return lsWegLocaties.items.map(toWegLocatie);
 }
 
 function toWegLocatie(lsWegLocatie: LsWegLocatie): WegLocatie {

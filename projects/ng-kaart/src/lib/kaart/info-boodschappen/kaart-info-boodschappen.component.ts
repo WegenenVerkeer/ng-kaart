@@ -1,6 +1,5 @@
 import { animate, state, style, transition, trigger } from "@angular/animations";
 import { ChangeDetectionStrategy, Component, NgZone } from "@angular/core";
-import { List } from "immutable";
 import * as rx from "rxjs";
 import { debounceTime, filter, map, startWith, withLatestFrom } from "rxjs/operators";
 
@@ -36,7 +35,7 @@ const defaultOpties: KaartInfoBoodschapOpties = {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class KaartInfoBoodschappenComponent extends KaartChildComponentBase {
-  infoBoodschappen$: rx.Observable<List<InfoBoodschap>> = rx.EMPTY;
+  infoBoodschappen$: rx.Observable<Array<InfoBoodschap>> = rx.EMPTY;
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
@@ -51,7 +50,12 @@ export class KaartInfoBoodschappenComponent extends KaartChildComponentBase {
     const infoBoodschappen$ = this.internalMessage$.pipe(
       ofType<InfoBoodschappenMsg>("InfoBoodschappen"), //
       observeOnAngular(this.zone),
-      map(msg => msg.infoBoodschappen.reverse().toList()), // laatste boodschap bovenaan
+      map(msg =>
+        msg.infoBoodschappen
+          .reverse()
+          .toList()
+          .toArray()
+      ), // laatste boodschap bovenaan
       debounceTime(250) // omdat we requests in parallel afvuren, komen er vaak updates dicht tegen elkaar
     );
 
