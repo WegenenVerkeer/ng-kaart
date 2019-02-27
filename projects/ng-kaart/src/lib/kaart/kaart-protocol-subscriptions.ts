@@ -1,7 +1,7 @@
 import { Either } from "fp-ts/lib/Either";
 import { Function1 } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
-import { List, Map } from "immutable";
+import { Map } from "immutable";
 import * as ol from "openlayers";
 
 import { ZoekAntwoord, ZoekerMetPrioriteiten, ZoekResultaat } from "../zoeker/zoeker";
@@ -156,7 +156,7 @@ export interface InfoBoodschappenSubscription<Msg> {
 
 export interface ComponentFoutSubscription<Msg> {
   readonly type: "ComponentFout";
-  readonly wrapper: (fouten: List<string>) => Msg;
+  readonly wrapper: (fouten: Array<string>) => Msg;
 }
 
 export interface LaagstijlGezetSubscription<Msg> {
@@ -265,7 +265,7 @@ export function ActieveModusSubscription<Msg>(wrapper: (modus: Option<string>) =
   return { type: "ActieveModus", wrapper: wrapper };
 }
 
-export function ComponentFoutSubscription<Msg>(wrapper: (fouten: List<string>) => Msg): ComponentFoutSubscription<Msg> {
+export function ComponentFoutSubscription<Msg>(wrapper: (fouten: Array<string>) => Msg): ComponentFoutSubscription<Msg> {
   return {
     type: "ComponentFout",
     wrapper: wrapper

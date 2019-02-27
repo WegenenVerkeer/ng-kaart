@@ -175,9 +175,10 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
   private meldFout(fout: PositionError | string) {
     kaartLogger.error("error", fout);
     this.dispatch(
-      prt.MeldComponentFoutCmd(
-        List.of("Zoomen naar huidige locatie niet mogelijk", "De toepassing heeft geen toestemming om locatie te gebruiken")
-      )
+      prt.MeldComponentFoutCmd([
+        "Zoomen naar huidige locatie niet mogelijk",
+        "De toepassing heeft geen toestemming om locatie te gebruiken"
+      ])
     );
   }
 

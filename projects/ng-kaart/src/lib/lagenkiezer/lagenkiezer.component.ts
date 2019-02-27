@@ -5,7 +5,6 @@ import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import * as array from "fp-ts/lib/Array";
 import { Predicate } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
-import { List } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, filter, map, scan, shareReplay, startWith, take } from "rxjs/operators";

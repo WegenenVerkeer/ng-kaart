@@ -1,7 +1,7 @@
 import { HttpClient } from "@angular/common/http";
 import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { none, Option } from "fp-ts/lib/Option";
-import { List, Map } from "immutable";
+import { Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { debounceTime, filter, map, mergeAll, scan, startWith, switchMap, timeoutWith } from "rxjs/operators";

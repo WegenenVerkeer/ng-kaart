@@ -335,7 +335,7 @@ export interface AbortTileLoadingCmd {
 
 export interface MeldComponentFoutCmd {
   readonly type: "MeldComponentFout";
-  readonly fouten: List<string>;
+  readonly fouten: Array<string>;
 }
 
 export interface VoegZoekerToeCmd<Msg extends KaartMsg> {
@@ -701,7 +701,7 @@ export function ActiveerHoverModusCmd(hoverModus: HoverModus): ActiveerHoverModu
   return { type: "ActiveerHoverModus", hoverModus: hoverModus };
 }
 
-export function MeldComponentFoutCmd(fouten: List<string>): MeldComponentFoutCmd {
+export function MeldComponentFoutCmd(fouten: Array<string>): MeldComponentFoutCmd {
   return { type: "MeldComponentFout", fouten: fouten };
 }
 

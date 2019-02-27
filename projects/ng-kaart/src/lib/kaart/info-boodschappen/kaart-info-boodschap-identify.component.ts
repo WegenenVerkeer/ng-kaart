@@ -2,7 +2,7 @@ import { Component, Input, NgZone } from "@angular/core";
 import { DomSanitizer } from "@angular/platform-browser";
 import { Curried3, Function1, Function2, Predicate } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
-import { List, OrderedMap } from "immutable";
+import { OrderedMap } from "immutable";
 import * as Mustache from "mustache";
 import * as ol from "openlayers";
 
@@ -100,7 +100,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
 
   private _alleVeldenZichtbaar = false;
 
-  teVerbergenProperties = List.of(
+  teVerbergenProperties = [
     IDENT8,
     LOCATIE_IDENT8,
     IDENT8EN,
@@ -119,7 +119,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
     BREEDTE,
     HM,
     VERPL
-  );
+  ];
 
   private properties = () => this.feature.getProperties()[PROPERTIES];
 
@@ -241,36 +241,36 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
 
   zichtbareEigenschappen(): string[] {
     return this.eigenschappen(
-      key => isBasisVeld(this.laag, key) && !this.isLink(key) && !isBoolean(this.laag, key) && !this.teVerbergenProperties.contains(key)
+      key => isBasisVeld(this.laag, key) && !this.isLink(key) && !isBoolean(this.laag, key) && !this.teVerbergenProperties.includes(key)
     );
   }
 
   booleanEigenschappen(): string[] {
-    return this.eigenschappen(key => isBasisVeld(this.laag, key) && isBoolean(this.laag, key) && !this.teVerbergenProperties.contains(key));
+    return this.eigenschappen(key => isBasisVeld(this.laag, key) && isBoolean(this.laag, key) && !this.teVerbergenProperties.includes(key));
   }
 
   linkEigenschappen(): string[] {
-    return this.eigenschappen(key => isBasisVeld(this.laag, key) && this.isLink(key) && !this.teVerbergenProperties.contains(key));
+    return this.eigenschappen(key => isBasisVeld(this.laag, key) && this.isLink(key) && !this.teVerbergenProperties.includes(key));
   }
 
   heeftGeavanceerdeEigenschappen(): boolean {
-    return this.eigenschappen(key => !isBasisVeld(this.laag, key) && !this.teVerbergenProperties.contains(key)).length > 0;
+    return this.eigenschappen(key => !isBasisVeld(this.laag, key) && !this.teVerbergenProperties.includes(key)).length > 0;
   }
 
   geavanceerdeEigenschappen(): string[] {
     return this.eigenschappen(
-      key => !isBasisVeld(this.laag, key) && !isBoolean(this.laag, key) && !this.isLink(key) && !this.teVerbergenProperties.contains(key)
+      key => !isBasisVeld(this.laag, key) && !isBoolean(this.laag, key) && !this.isLink(key) && !this.teVerbergenProperties.includes(key)
     );
   }
 
   geavanceerdeBooleanEigenschappen(): string[] {
     return this.eigenschappen(
-      key => !isBasisVeld(this.laag, key) && isBoolean(this.laag, key) && !this.teVerbergenProperties.contains(key)
+      key => !isBasisVeld(this.laag, key) && isBoolean(this.laag, key) && !this.teVerbergenProperties.includes(key)
     );
   }
 
   geavanceerdeLinkEigenschappen(): string[] {
-    return this.eigenschappen(key => !isBasisVeld(this.laag, key) && this.isLink(key) && !this.teVerbergenProperties.contains(key));
+    return this.eigenschappen(key => !isBasisVeld(this.laag, key) && this.isLink(key) && !this.teVerbergenProperties.includes(key));
   }
 
   constante(veld: string): Option<string> {

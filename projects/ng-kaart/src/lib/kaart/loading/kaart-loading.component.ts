@@ -107,7 +107,7 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
     );
 
     this.bindToLifeCycle(stableError$(500)).subscribe(evt =>
-      this.dispatch(prt.MeldComponentFoutCmd(List.of("Fout bij laden van features: " + evt.error)))
+      this.dispatch(prt.MeldComponentFoutCmd(["Fout bij laden van features: " + evt.error]))
     );
   }
 }

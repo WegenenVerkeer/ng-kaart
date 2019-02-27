@@ -43,7 +43,7 @@ export class KaartWithInfo {
   readonly highlightedFeatures: ol.Collection<ol.Feature> = new ol.Collection<ol.Feature>();
 
   readonly achtergrondlaagtitelSubj: Subject<string> = new ReplaySubject<string>(1);
-  readonly componentFoutSubj: Subject<List<string>> = new ReplaySubject<List<string>>(1);
+  readonly componentFoutSubj: Subject<Array<string>> = new ReplaySubject<Array<string>>(1);
   readonly geometryChangedSubj: Subject<ke.TekenResultaat> = new Subject<ke.TekenResultaat>();
   readonly tekenSettingsSubj: BehaviorSubject<Option<ke.TekenSettings>> = new BehaviorSubject<Option<ke.TekenSettings>>(none);
   readonly infoBoodschappenSubj = new BehaviorSubject<OrderedMap<string, InfoBoodschap>>(OrderedMap());
