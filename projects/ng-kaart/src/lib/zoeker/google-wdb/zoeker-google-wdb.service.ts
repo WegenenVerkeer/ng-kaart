@@ -19,6 +19,7 @@ import {
   nietOndersteund,
   ZoekAntwoord,
   Zoeker,
+  ZoekerHelpBoom,
   ZoekInput,
   ZoekKaartResultaat,
   Zoekopdracht,
@@ -26,6 +27,8 @@ import {
   Zoektype
 } from "../zoeker";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE, ZoekerRepresentatieType } from "../zoeker-representatie.service";
+
+import * as help from "./zoeker-google-wdb-help";
 
 export class GoogleWdbZoekResultaat implements ZoekResultaat {
   readonly featureIdSuffix: string;
@@ -166,6 +169,19 @@ export class ZoekerGoogleWdbService implements Zoeker {
       default:
         return this.zoek$(opdracht.zoekpatroon, "Suggesties", 5);
     }
+  }
+
+  help(helpBoom: ZoekerHelpBoom) {
+    helpBoom.voegItemToe(help.vrijAdres, "een locatie", "een adres", "Vrij adres");
+    helpBoom.voegItemToe(help.identPlusRefpunt, "een locatie", "een weglocatie (ident8)", "Ident2 of ident8, referentiepunt en afstand");
+    helpBoom.voegItemToe(help.identPlusHuisnummer, "een locatie", "een weglocatie (ident8)", "Ident2 of ident8, huisnummer en gemeente");
+    helpBoom.voegItemToe(help.eNummer, "een locatie", "een weglocatie (ident8)", "Europese wegnummer, referentiepunt en afstand");
+
+    // Extra leeg level hier omdat poi in zijn eigen submenu moet komen, anders komt de content daarvan mee onde "een locatie".
+    helpBoom.voegItemToe(help.poi, "een locatie", "een point of interest", "");
+
+    helpBoom.voegItemToe(help.emInstallatie, "een wegaanhorigheid", "em-installatie");
+    helpBoom.voegItemToe(help.kunstwerk, "een wegaanhorigheid", "kunstwerk (brug of tunnel)");
   }
 
   private zoek$(zoekterm: ZoekInput, zoektype: Zoektype, maxResultaten: number): rx.Observable<ZoekAntwoord> {

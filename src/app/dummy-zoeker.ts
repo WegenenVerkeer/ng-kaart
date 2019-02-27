@@ -3,7 +3,15 @@ import * as rx from "rxjs";
 import { delay } from "rxjs/operators";
 
 import { rangeArray } from "../../projects/ng-kaart/src/lib/util/range";
-import { nietOndersteund, ZoekAntwoord, Zoeker, ZoekInput, Zoekopdracht, Zoektype } from "../../projects/ng-kaart/src/lib/zoeker";
+import {
+  nietOndersteund,
+  ZoekAntwoord,
+  Zoeker,
+  ZoekerHelpBoom,
+  ZoekInput,
+  Zoekopdracht,
+  Zoektype
+} from "../../projects/ng-kaart/src/lib/zoeker";
 
 /**
  * Een Zoeker die vrij random resultaten genereert.
@@ -22,6 +30,10 @@ export class DummyZoeker implements Zoeker {
       case "Suggesties":
         return this.suggesties$(zoekopdracht.zoekpatroon);
     }
+  }
+
+  help(helpBoom: ZoekerHelpBoom) {
+    // Doe niks, geen help nodig.
   }
 
   zoek$(input: ZoekInput): rx.Observable<ZoekAntwoord> {

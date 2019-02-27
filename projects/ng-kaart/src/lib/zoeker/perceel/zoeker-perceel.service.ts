@@ -15,12 +15,15 @@ import {
   nietOndersteund,
   ZoekAntwoord,
   Zoeker,
+  ZoekerHelpBoom,
   ZoekInput,
   ZoekKaartResultaat,
   Zoekopdracht,
   ZoekResultaat
 } from "../zoeker";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "../zoeker-representatie.service";
+
+import * as help from "./zoeker-perceel-help";
 
 export const PERCEEL_SVC_NAAM = "Perceel";
 
@@ -119,6 +122,11 @@ export class ZoekerPerceelService implements Zoeker {
 
   naam(): string {
     return PERCEEL_SVC_NAAM;
+  }
+
+  help(helpBoom: ZoekerHelpBoom) {
+    helpBoom.voegItemToe(help.capakey, "een locatie", "een perceel", "Capakey");
+    helpBoom.voegItemToe(help.getrapt, "een locatie", "een perceel", "Getrapt zoeken naar een perceel");
   }
 
   getAlleGemeenten$(): rx.Observable<Gemeente[]> {

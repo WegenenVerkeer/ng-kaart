@@ -13,6 +13,7 @@ import {
   nietOndersteund,
   ZoekAntwoord,
   Zoeker,
+  ZoekerHelpBoom,
   ZoekInput,
   ZoekKaartResultaat,
   Zoekopdracht,
@@ -20,6 +21,8 @@ import {
   Zoektype
 } from "../zoeker";
 import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "../zoeker-representatie.service";
+
+import * as help from "./zoeker-crab-help";
 
 export interface LambertLocation {
   readonly X_Lambert72: number;
@@ -163,6 +166,10 @@ export class ZoekerCrabService implements Zoeker {
 
   naam(): string {
     return "Crab";
+  }
+
+  help(helpBoom: ZoekerHelpBoom) {
+    helpBoom.voegItemToe(help.getrapt, "een locatie", "een adres", "Getrapt zoeken naar een adres");
   }
 
   private voegCrabResultatenToe(result: ZoekAntwoord, crabResultaten: LocatorServiceResults): ZoekAntwoord {

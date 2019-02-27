@@ -20,6 +20,7 @@ import { ZoekerCrabGetraptComponent } from "./crab/zoeker-crab-getrapt.component
 import { ZoekerCrabService } from "./crab/zoeker-crab.service";
 import { ZoekerExterneWmsGetraptComponent } from "./externe-wms/zoeker-externe-wms-getrapt.component";
 import { ZoekerGoogleWdbService } from "./google-wdb/zoeker-google-wdb.service";
+import { ZoekerHelpComponent } from "./help/zoeker-help.component";
 import { ZoekerPerceelGetraptComponent } from "./perceel/zoeker-perceel-getrapt.component";
 import { ZoekerPerceelService } from "./perceel/zoeker-perceel.service";
 import { ZoekerHighlightPipe } from "./zoeker-highlight.pipe";
@@ -29,6 +30,7 @@ const components: any[] = [
   ZoekerBoxComponent,
   ZoekerCrabGetraptComponent,
   ZoekerExterneWmsGetraptComponent,
+  ZoekerHelpComponent,
   ZoekerHighlightPipe,
   ZoekerPerceelGetraptComponent
 ];

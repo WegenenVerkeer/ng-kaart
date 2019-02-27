@@ -33,6 +33,10 @@ export interface UrlZoekInput {
   readonly value: string;
 }
 
+export interface ZoekerHelpBoom {
+  voegItemToe(text: string, ...titles: string[]);
+}
+
 export type Zoektype = "Volledig" | "Suggesties";
 
 export interface Zoekopdracht {
@@ -43,6 +47,7 @@ export interface Zoekopdracht {
 
 export interface Zoeker {
   naam(): string;
+  help(helpBoom: ZoekerHelpBoom);
   zoekresultaten$(zoekopdracht: Zoekopdracht): rx.Observable<ZoekAntwoord>;
 }
 
