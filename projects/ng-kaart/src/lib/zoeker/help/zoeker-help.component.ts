@@ -38,7 +38,7 @@ class ZoekerHelpBoomImpl implements ZoekerHelpBoom {
           text: index === titles.length - 1 ? some(text) : none
         });
       }
-      parent = parent.children.get(title);
+      parent = parent.children.get(title)!;
     });
   }
 
