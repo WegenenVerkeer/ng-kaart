@@ -1,5 +1,4 @@
 import { Component, ElementRef, Inject, Input, NgZone, ViewChild, ViewEncapsulation } from "@angular/core";
-import { Set } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import {
@@ -25,6 +24,7 @@ import { observeOutsideAngular } from "../util/observer-outside-angular";
 import { catOptions, ofType } from "../util/operators";
 import { forEach } from "../util/option";
 import { resizeObservable } from "../util/resize-observable";
+import * as sets from "../util/sets";
 
 import { KaartComponentBase } from "./kaart-component-base";
 import { KAART_CFG, KaartConfig } from "./kaart-config";
@@ -122,8 +122,11 @@ export class KaartComponent extends KaartComponentBase {
       tap(model => {
         this.innerModelChanges = modelChanges(model, this.modelChanger);
         this.innerAanwezigeElementen$ = this.modelChanges.uiElementSelectie$.pipe(
-          scan((st: Set<string>, selectie: UiElementSelectie) => (selectie.aan ? st.add(selectie.naam) : st.delete(selectie.naam)), Set()),
-          startWith(Set<string>())
+          scan(
+            (st: Set<string>, selectie: UiElementSelectie) => (selectie.aan ? st.add(selectie.naam) : sets.remove(st)(selectie.naam)),
+            new Set<string>([])
+          ),
+          startWith(new Set<string>())
         );
       }),
       switchMap(model => this.createMapModelForCommands(model)),
