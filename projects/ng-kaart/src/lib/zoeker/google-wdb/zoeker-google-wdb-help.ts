@@ -7,18 +7,18 @@ export const identPlusRefpunt = `Voer de ident2 of ident8 in in het zoekveld om 
 <p>
 Voorbeelden:
 <ul>
-  <li>R1
-    <ul style="list-style: none;">
+  <li><pre>R1</pre>
+    <ul>
       <li>zoek de weg met ident8 R0010001</li>
     </ul>
   </li>
-  <li>A0141911 12.0
-    <ul style="list-style: none;">
+  <li><pre>A0141911 12.0</pre>
+    <ul>
       <li>zoek op de A0141911 het referentiepunt 12.0</li>
     </ul>
   </li>
-  <li>N8 12.0-8
-    <ul style="list-style: none;">
+  <li><pre>N8 12.0-8</pre>
+    <ul>
       <li>zoek op de N8 het punt op afstand -8 van refpunt 12.0​​​​​​​</li>
     </ul>
   </li>
@@ -29,8 +29,8 @@ export const identPlusHuisnummer = `Om te zoeken op een huisnummer naast een ide
 <p>
 Voorbeeld:
 <ul>
-  <li>N8 178 Kortrijk
-    <ul style="list-style: none;">
+  <li><pre>N8 178 Kortrijk</pre>
+    <ul>
       <li>zoek op de N0080001 in Kortrijk huisnummer 178</li>
     </ul>
   </li>
@@ -41,8 +41,8 @@ export const eNummer = `Voer de Europese wegnummer in in het zoekveld om de voll
 <p>
 Voorbeeld:
 <ul>
-  <li>E17 5.0+18
-    <ul style="list-style: none;">
+  <li><pre>E17 5.0+18</pre>
+    <ul>
       <li>zoek op de E17 het punt met afstand +18m t.o.v. referentiepunt 5.0</li>
     </ul>
   </li>
@@ -57,8 +57,8 @@ De resultaten komen uit de applicatie EMInfra.
 <p>
 Voorbeeld:
 <ul>
-  <li>em G1586/WV
-    <ul style="list-style: none;">
+  <li><pre>em G1586/WV</pre>
+    <ul>
       <li>zoek het EM onderdeel met 'G1586/WV' in het naampad</li>
     </ul>
   </li>
@@ -71,8 +71,8 @@ De resultaten komen uit de applicatie Bryggja.
 <p>
 Voorbeeld:
 <ul>
-  <li>kw 0.010.031.1
-    <ul style="list-style: none;">
+  <li><pre>kw 0.010.031.1</pre>
+    <ul>
       <li>zoek het kunstwerk met Bryggja id '0.010.031.1'</li>
     </ul>
   </li>

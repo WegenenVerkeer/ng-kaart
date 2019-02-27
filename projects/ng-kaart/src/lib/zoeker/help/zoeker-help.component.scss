@@ -38,4 +38,12 @@ a.zoeker-help-titel:hover {
   margin-top: 4px;
   margin-left: 36px;
   margin-bottom: 4px;
+  pre {
+    word-break: break-all;
+    overflow-x: auto;
+    white-space: pre-wrap;
+  }
+  ul ul {
+    list-style: none;
+  }
 }
