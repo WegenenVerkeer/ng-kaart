@@ -1,10 +1,16 @@
-# Developer Guide 
+# Developer Guide & Tutorial
 
 Developer guide en API docs. 
 
 ## Configuratie van de kaart
 
 De configuratie van beschikbare widgets:
+
+> Dit document schrijven als een tutorial om de ng-kaart te integreren.  
+
+> Duidelijk alle configuratieparameters beschrijven en eventueel sensible defaults introduceren. 
+
+> Eventueel [compodoc](https://github.com/compodoc/compodoc) gebruiken gebruiken om het klassendiagramma te genereren?
 
 
 ### Algemene opties 
