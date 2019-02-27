@@ -2,7 +2,6 @@ import { animate, style, transition, trigger } from "@angular/animations";
 import { ChangeDetectorRef, Component, ViewChild, ViewEncapsulation } from "@angular/core";
 import { array } from "fp-ts";
 import { none, Option, some } from "fp-ts/lib/Option";
-import { List } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 
@@ -306,10 +305,10 @@ export class FeatureDemoComponent {
     })
   });
 
-  geselecteerdeFeatures: List<ol.Feature> = List();
+  geselecteerdeFeatures: Array<ol.Feature> = [];
 
   fietspadsegmentenSelectie: FietspadSelectie[] = [];
-  geselecteerdeFietspadsegmenten: List<ol.Feature> = List();
+  geselecteerdeFietspadsegmenten: Array<ol.Feature> = [];
 
   precacheProgress = 0;
   precacheWMSWkt = wkts.districten.gent;
@@ -577,10 +576,10 @@ export class FeatureDemoComponent {
     this.installatieGeselecteerdEvents.push(this.geoJsonFormatter.writeFeature(feature));
   }
 
-  featuresGeselecteerd(event: List<ol.Feature>) {
+  featuresGeselecteerd(event: Array<ol.Feature>) {
     // verwijder de bestaande info boodschappen voor features die niet meer geselecteerd zijn
     const nietLangerGeselecteerd = this.geselecteerdeFeatures //
-      .filter(feature => !event.map(f => f.getId()).contains(feature.get("id")));
+      .filter(feature => !event.map(f => f.getId()).includes(feature.get("id")));
     nietLangerGeselecteerd.forEach(feature => this.selectieKaart.verbergIdentifyInformatie(feature.get("id").toString()));
 
     // voeg de nieuwe toe
@@ -670,19 +669,19 @@ export class FeatureDemoComponent {
     console.log("------> extent", extent);
   }
 
-  onZichtbareFeatures(features: List<ol.Feature>): void {
+  onZichtbareFeatures(features: Array<ol.Feature>): void {
     console.log("------> features", features);
   }
 
-  onAchtergrondLagen(lagen: List<ToegevoegdeLaag>): void {
+  onAchtergrondLagen(lagen: Array<ToegevoegdeLaag>): void {
     console.log("------> achtergrondlagen", lagen);
   }
 
-  onVoorgrondHoogLagen(lagen: List<ToegevoegdeLaag>): void {
+  onVoorgrondHoogLagen(lagen: Array<ToegevoegdeLaag>): void {
     console.log("------> voorgrond hoog lagen", lagen);
   }
 
-  onVoorgrondLaagLagen(lagen: List<ToegevoegdeLaag>): void {
+  onVoorgrondLaagLagen(lagen: Array<ToegevoegdeLaag>): void {
     console.log("------> voorgrond laag lagen", lagen);
   }
 
@@ -690,25 +689,23 @@ export class FeatureDemoComponent {
     console.log("------> kaartLocaties", locaties);
   }
 
-  onFietspadsegmentenZichtbaar(features: List<ol.Feature>): void {
-    this.fietspadsegmentenSelectie = features
-      .map(feature => ({
-        feature: feature,
-        geselecteerd: false
-      }))
-      .toArray();
-    this.geselecteerdeFietspadsegmenten = List();
+  onFietspadsegmentenZichtbaar(features: Array<ol.Feature>): void {
+    this.fietspadsegmentenSelectie = features.map(feature => ({
+      feature: feature,
+      geselecteerd: false
+    }));
+    this.geselecteerdeFietspadsegmenten = [];
   }
 
   onFietspadsegmentGeselecteerd(selectie: FietspadSelectie, geselecteerd: boolean) {
     selectie.geselecteerd = geselecteerd;
-    this.geselecteerdeFietspadsegmenten = List(this.fietspadsegmentenSelectie.filter(fss => fss.geselecteerd).map(fss => fss.feature));
+    this.geselecteerdeFietspadsegmenten = this.fietspadsegmentenSelectie.filter(fss => fss.geselecteerd).map(fss => fss.feature);
   }
 
-  onFietspadsegmentViaKaartSelectie(features: List<ol.Feature>) {
-    this.fietspadsegmentenSelectie.forEach(fss => (fss.geselecteerd = features.contains(fss.feature)));
-    if (features.size !== this.geselecteerdeFietspadsegmenten.size) {
-      this.geselecteerdeFietspadsegmenten = List(this.fietspadsegmentenSelectie.filter(fss => fss.geselecteerd).map(fss => fss.feature));
+  onFietspadsegmentViaKaartSelectie(features: Array<ol.Feature>) {
+    this.fietspadsegmentenSelectie.forEach(fss => (fss.geselecteerd = features.includes(fss.feature)));
+    if (features.length !== this.geselecteerdeFietspadsegmenten.length) {
+      this.geselecteerdeFietspadsegmenten = this.fietspadsegmentenSelectie.filter(fss => fss.geselecteerd).map(fss => fss.feature);
     }
   }
 
