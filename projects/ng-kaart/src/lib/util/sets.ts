@@ -3,3 +3,8 @@ export const isOfSize: (_: number) => <A>(_: Set<A>) => boolean = size => set =>
 export const isEmpty: <A>(_: Set<A>) => boolean = isOfSize(0);
 
 export const isNonEmpty: <A>(_: Set<A>) => boolean = set => set.size > 0;
+
+export const remove: <A>(as: Set<A>) => (a: A) => Set<A> = as => a => {
+  as.delete(a);
+  return as;
+};

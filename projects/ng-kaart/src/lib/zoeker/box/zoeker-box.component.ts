@@ -10,7 +10,7 @@ import * as ord from "fp-ts/lib/Ord";
 import { setoidString } from "fp-ts/lib/Setoid";
 import { insert, lookup, remove, StrMap } from "fp-ts/lib/StrMap";
 import { Tuple } from "fp-ts/lib/Tuple";
-import { Map, OrderedMap, Set } from "immutable";
+import { Map, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import {
@@ -30,8 +30,8 @@ import {
 } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../../kaart/kaart-child-component-base";
-import * as ke from "../../kaart/kaart-elementen";
 import { VeldInfo } from "../../kaart/kaart-elementen";
+import * as ke from "../../kaart/kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import * as prt from "../../kaart/kaart-protocol";
 import { KaartComponent } from "../../kaart/kaart.component";
@@ -39,6 +39,7 @@ import { kaartLogger } from "../../kaart/log";
 import { matchGeometryType } from "../../util/geometries";
 import { collect, Pipeable } from "../../util/operators";
 import { forEach } from "../../util/option";
+import * as sets from "../../util/sets";
 import { minLength } from "../../util/string";
 import {
   emptyPrioriteitenOpZoekertype,
@@ -321,7 +322,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   actieveZoeker: ZoekerType = "Basis";
   perceelMaakLeegDisabled = true;
   crabMaakLeegDisabled = true;
-  zoekerMaakLeegDisabled = Set<ZoekerType>();
+  zoekerMaakLeegDisabled = new Set<ZoekerType>();
   externeWmsMaakLeegDisabled = true;
   private readonly zoekerComponentSubj: rx.Subject<Tuple<ZoekerType, GetraptZoekerComponent>> = new rx.Subject();
   private readonly zoekerComponentOpNaam$: rx.Observable<Map<ZoekerType, GetraptZoekerComponent>>;
@@ -872,7 +873,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   onMaakLeegDisabledChange(zoekerNaam: ZoekerType, maakLeegDisabled: boolean): void {
     this.zoekerMaakLeegDisabled = maakLeegDisabled
       ? this.zoekerMaakLeegDisabled.add(zoekerNaam)
-      : this.zoekerMaakLeegDisabled.remove(zoekerNaam);
+      : sets.remove(this.zoekerMaakLeegDisabled)(zoekerNaam);
   }
 
   availability$(zoekerNaam: ZoekerType): rx.Observable<boolean> {
@@ -884,6 +885,6 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   isZoekerMaakLeegEnabled(zoekerNaam: ZoekerType) {
-    return !this.zoekerMaakLeegDisabled.contains(zoekerNaam);
+    return !this.zoekerMaakLeegDisabled.has(zoekerNaam);
   }
 }
