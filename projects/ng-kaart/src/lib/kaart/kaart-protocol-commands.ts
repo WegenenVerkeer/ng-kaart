@@ -1,5 +1,4 @@
 import { Option } from "fp-ts/lib/Option";
-import { List, Set } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 
@@ -249,7 +248,7 @@ export interface HighlightFeaturesCmd<Msg extends KaartMsg> {
 export interface VervangFeaturesCmd<Msg extends KaartMsg> {
   readonly type: "VervangFeatures";
   readonly titel: string;
-  readonly features: List<ol.Feature>;
+  readonly features: Array<ol.Feature>;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -675,7 +674,7 @@ export function HighlightFeaturesCmd<Msg extends KaartMsg>(
 
 export function VervangFeaturesCmd<Msg extends KaartMsg>(
   titel: string,
-  features: List<ol.Feature>,
+  features: Array<ol.Feature>,
   wrapper: BareValidationWrapper<Msg>
 ): VervangFeaturesCmd<Msg> {
   return { type: "VervangFeatures", titel: titel, features: features, wrapper: wrapper };

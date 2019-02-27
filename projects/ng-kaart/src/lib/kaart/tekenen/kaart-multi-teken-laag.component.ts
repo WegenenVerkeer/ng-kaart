@@ -4,7 +4,7 @@ import * as array from "fp-ts/lib/Array";
 import { Endomorphism, Function1, Function2, Function3, identity, pipe, Predicate, Refinement } from "fp-ts/lib/function";
 import { fromNullable, fromPredicate, none, Option, some } from "fp-ts/lib/Option";
 import { setoidNumber, setoidString } from "fp-ts/lib/Setoid";
-import { List, OrderedMap } from "immutable";
+import { OrderedMap } from "immutable";
 import { Lens, Optional } from "monocle-ts";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
@@ -329,7 +329,7 @@ function drawStateTransformer(
         feature.on("change", handleFeatureDrag);
         const newFeatures = array.snoc(currentFeatures, feature);
         dispatchWaypointOps(AddWaypoint(lastFeature.chain(toWaypoint), Waypoint(state.nextId, coordinate)));
-        dispatchCmd(prt.VervangFeaturesCmd(PuntLaagNaam, List(newFeatures), kaartLogOnlyWrapper));
+        dispatchCmd(prt.VervangFeaturesCmd(PuntLaagNaam, newFeatures, kaartLogOnlyWrapper));
         return applySequential([pointFeaturesLens.set(newFeatures), incrementNextId]);
       } else {
         return identity;
@@ -370,7 +370,7 @@ function drawStateTransformer(
           forEach(maybeNext, updatePointProperties(replacePrevious(maybePrevious)));
           const newFeatures = array.filter(state.pointFeatures, f => f.getId() !== ops.feature.getId());
           forEach(state.selectInteraction, interaction => interaction.getFeatures().clear());
-          dispatchCmd(prt.VervangFeaturesCmd(PuntLaagNaam, List(newFeatures), kaartLogOnlyWrapper));
+          dispatchCmd(prt.VervangFeaturesCmd(PuntLaagNaam, newFeatures, kaartLogOnlyWrapper));
           forEach(
             toWaypoint(ops.feature),
             pipe(
@@ -414,7 +414,7 @@ interface RouteSegmentState {
   readonly featuresByRouteId: FeaturesByRouteId; // Elke route id heeft exact 1 feature/geometry
 }
 
-const featuresIn: Function1<RouteSegmentState, List<ol.Feature>> = state => List(Object.values(state.featuresByRouteId));
+const featuresIn: Function1<RouteSegmentState, Array<ol.Feature>> = state => Object.values(state.featuresByRouteId);
 
 const featuresByStartWaypointIdLens: Lens<RouteSegmentState, FeaturesByWaypointId> = Lens.fromProp("featuresByStartWaypointId");
 const startWaypointIdOptional: Function1<WaypointId, Optional<RouteSegmentState, ol.Feature>> = waypointId =>

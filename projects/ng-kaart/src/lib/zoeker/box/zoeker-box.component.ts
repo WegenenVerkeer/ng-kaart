@@ -10,7 +10,7 @@ import * as ord from "fp-ts/lib/Ord";
 import { setoidString } from "fp-ts/lib/Setoid";
 import { insert, lookup, remove, StrMap } from "fp-ts/lib/StrMap";
 import { Tuple } from "fp-ts/lib/Tuple";
-import { List, Map, OrderedMap, Set } from "immutable";
+import { Map, OrderedMap, Set } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import {
@@ -611,7 +611,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
         const resultaatFeatures = ZoekerBoxComponent.maakNieuwFeature(resultaat);
         this.featuresByResultaat = Map<ZoekResultaat, ol.Feature[]>().set(resultaat, resultaatFeatures);
 
-        this.dispatch(prt.VervangFeaturesCmd(ZoekerUiSelector, List<ol.Feature>(resultaatFeatures), kaartLogOnlyWrapper));
+        this.dispatch(prt.VervangFeaturesCmd(ZoekerUiSelector, resultaatFeatures, kaartLogOnlyWrapper));
 
         resultaatFeatures.slice(0, 1).forEach(feature => this.highlight(feature, info));
       }
@@ -753,7 +753,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.huidigeSelectie = none;
     this.legende.clear();
     this.legendeKeys = [];
-    this.dispatch(prt.VervangFeaturesCmd(ZoekerUiSelector, List(), kaartLogOnlyWrapper));
+    this.dispatch(prt.VervangFeaturesCmd(ZoekerUiSelector, <ol.Feature[]>[], kaartLogOnlyWrapper));
   }
 
   private processZoekerAntwoord(nieuweResultaten: ZoekAntwoord, prioriteitenOpNaam: ZoekerPrioriteitenOpZoekernaam): void {
@@ -786,11 +786,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     );
 
     this.dispatch(
-      prt.VervangFeaturesCmd(
-        ZoekerUiSelector,
-        this.featuresByResultaat.toList().reduce((list, fs) => list!.push(...fs!), List<ol.Feature>()),
-        kaartLogOnlyWrapper
-      )
+      prt.VervangFeaturesCmd(ZoekerUiSelector, array.flatten(this.featuresByResultaat.toList().toArray()), kaartLogOnlyWrapper)
     );
     this.decreaseBusy();
   }

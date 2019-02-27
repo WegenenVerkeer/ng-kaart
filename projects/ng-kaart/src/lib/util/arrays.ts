@@ -2,6 +2,7 @@ import * as array from "fp-ts/lib/Array";
 import { Refinement } from "fp-ts/lib/function";
 import { Predicate } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
+import * as option from "fp-ts/lib/Option";
 
 export const isArray: Refinement<any, any[]> = Array.isArray;
 export const isOfLength: (_: number) => <A>(_: A[]) => boolean = length => array => array.length === length;
@@ -29,3 +30,5 @@ export const splitInChunks = <A>(as: Array<A>, aantalChunks: number): Array<Arra
   const chunkSize = Math.ceil(as.length / aantalChunks);
   return array.chunksOf(as, chunkSize);
 };
+
+export const fromNullable: <A>(aOrAs: A | A[]) => A[] = aOrAs => option.fromNullable(aOrAs).fold([], toArray);
