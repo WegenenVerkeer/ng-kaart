@@ -23,7 +23,7 @@ export class ClassicOrthoLaagComponent extends ClassicWmsLaagComponent {
       type: TiledWmsType,
       titel: this.titel,
       naam: this.config.orthofotomozaiek.naam,
-      urls: List(this.config.orthofotomozaiek.urls),
+      urls: this.config.orthofotomozaiek.urls,
       versie: fromNullable(this.versie),
       tileSize: fromNullable(this.tileSize),
       format: fromNullable(this.format),

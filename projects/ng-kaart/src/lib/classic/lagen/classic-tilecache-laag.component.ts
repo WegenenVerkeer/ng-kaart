@@ -23,7 +23,7 @@ export class ClassicTilecacheLaagComponent extends ClassicWmsLaagComponent {
       type: ke.TiledWmsType,
       titel: this.titel,
       naam: this.laagNaam,
-      urls: List(this.config.tilecache.urls),
+      urls: this.config.tilecache.urls,
       versie: fromNullable(this.versie),
       tileSize: fromNullable(this.tileSize),
       format: fromNullable(this.format),

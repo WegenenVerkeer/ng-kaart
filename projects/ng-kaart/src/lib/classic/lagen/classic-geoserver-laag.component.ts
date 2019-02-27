@@ -23,7 +23,7 @@ export class ClassicGeoserverLaagComponent extends ClassicWmsLaagComponent {
       type: ke.TiledWmsType,
       titel: this.titel,
       naam: this.laagNaam,
-      urls: List(this.config.geoserver.urls),
+      urls: this.config.geoserver.urls,
       versie: fromNullable(this.versie),
       tileSize: fromNullable(this.tileSize),
       format: fromNullable(this.format),

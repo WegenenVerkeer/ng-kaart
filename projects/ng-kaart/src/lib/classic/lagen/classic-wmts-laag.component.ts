@@ -83,7 +83,7 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
     } else {
       const config: ke.WmtsManualConfig = {
         type: "Manual",
-        urls: List(this.urls),
+        urls: this.urls,
         matrixIds: this.matrixIds,
         style: fromNullable(this.style),
         origin: fromNullable(this.origin),

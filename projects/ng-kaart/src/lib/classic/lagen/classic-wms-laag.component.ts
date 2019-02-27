@@ -75,7 +75,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
       type: ke.TiledWmsType,
       titel: this.titel,
       naam: this.laagNaam,
-      urls: List(this.urls),
+      urls: this.urls,
       versie: fromNullable(this.versie),
       tileSize: fromNullable(this.tileSize),
       format: fromNullable(this.format),
