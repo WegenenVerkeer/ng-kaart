@@ -58,7 +58,7 @@ export class KaartInfoBoodschappenComponent extends KaartChildComponentBase {
     const filteredInfoboodschappen = infoBoodschappen$.pipe(
       withLatestFrom(kaartBevragenOnderdrukt$),
       map(([boodschappen, onderdrukt]) =>
-        boodschappen.filterNot(boodschap => boodschap.type === "InfoBoodschapKaartBevragen" && onderdrukt).toList()
+        boodschappen.filterNot(boodschap => boodschap!.type === "InfoBoodschapKaartBevragen" && onderdrukt).toList()
       )
     );
 
