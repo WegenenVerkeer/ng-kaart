@@ -1,5 +1,5 @@
 import { none, Option } from "fp-ts/lib/Option";
-import { List, Map, OrderedMap } from "immutable";
+import { Map, OrderedMap } from "immutable";
 import * as MobileDetect from "mobile-detect/mobile-detect";
 import * as ol from "openlayers";
 import { BehaviorSubject, ReplaySubject, Subject } from "rxjs";
@@ -31,7 +31,7 @@ export class KaartWithInfo {
   readonly groepOpTitel: Map<string, ke.Laaggroep> = Map();
   readonly schaal: Option<ol.control.Control> = none;
   readonly fullScreen: Option<ol.control.FullScreen> = none;
-  readonly stdInteracties: List<ol.interaction.Interaction> = List();
+  readonly stdInteracties: Array<ol.interaction.Interaction> = [];
   readonly selectInteracties: ol.interaction.Interaction[] = [];
   readonly scrollZoomOnFocus: boolean = false;
   readonly showBackgroundSelector: boolean = false;

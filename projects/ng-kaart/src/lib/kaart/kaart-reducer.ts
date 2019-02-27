@@ -578,7 +578,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function voegStandaardInteractiesToeCmd(cmnd: prt.VoegStandaardInteractiesToeCmd<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        fromPredicate(model.stdInteracties, l => l.isEmpty(), "De standaard interacties zijn al ingesteld").map(() => {
+        fromPredicate(model.stdInteracties, l => array.isEmpty(l), "De standaard interacties zijn al ingesteld").map(() => {
           const stdInteracties: ol.interaction.Interaction[] = ol.interaction
             .defaults()
             .getArray()
@@ -590,11 +590,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                   interaction instanceof ol.interaction.MouseWheelZoom
                 ) // we willen zelf de opties op MouseWheelZoom zetten
             );
-          const interacties: List<ol.interaction.Interaction> = List<ol.interaction.Interaction>(stdInteracties).push(
+          stdInteracties.push(
             new ol.interaction.MouseWheelZoom({ constrainResolution: true }) // Geen fractionele resoluties!
           );
-          interacties.forEach(i => model.map.addInteraction(i!)); // side effects :-(
-          const newModel: Model = { ...model, stdInteracties: interacties, scrollZoomOnFocus: cmnd.scrollZoomOnFocus };
+          stdInteracties.forEach(i => model.map.addInteraction(i!)); // side effects :-(
+          const newModel: Model = { ...model, stdInteracties: stdInteracties, scrollZoomOnFocus: cmnd.scrollZoomOnFocus };
           activateMouseWheelZoomIfAllowed(!cmnd.scrollZoomOnFocus, newModel);
           return ModelAndEmptyResult(newModel);
         })
@@ -604,10 +604,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function verwijderStandaardInteractiesCmd(cmnd: prt.VerwijderStandaardInteractiesCmd<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        fromPredicate(model.stdInteracties, l => !l.isEmpty(), "De standaard interacties zijn niet aanwezig").map(
-          (stdInteracties: List<ol.interaction.Interaction>) => {
+        fromPredicate(model.stdInteracties, l => !array.isEmpty(l), "De standaard interacties zijn niet aanwezig").map(
+          (stdInteracties: Array<ol.interaction.Interaction>) => {
             stdInteracties.forEach(i => model.map.removeInteraction(i!));
-            return ModelAndEmptyResult({ ...model, stdInteracties: List() });
+            return ModelAndEmptyResult({ ...model, stdInteracties: [] });
           }
         )
       );
