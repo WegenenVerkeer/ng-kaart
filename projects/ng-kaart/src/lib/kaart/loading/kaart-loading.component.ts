@@ -1,7 +1,6 @@
 import { Component, NgZone } from "@angular/core";
 import * as array from "fp-ts/lib/Array";
 import { not, Predicate } from "fp-ts/lib/function";
-import { List } from "immutable";
 import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, map, mergeAll, shareReplay, startWith, switchMap, switchMapTo, take } from "rxjs/operators";
 

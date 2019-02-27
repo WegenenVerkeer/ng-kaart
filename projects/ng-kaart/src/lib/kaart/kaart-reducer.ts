@@ -2,7 +2,6 @@ import * as array from "fp-ts/lib/Array";
 import { Endomorphism, Function1, Function2, identity, pipe } from "fp-ts/lib/function";
 import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
 import * as validation from "fp-ts/lib/Validation";
-import { List } from "immutable";
 import * as ol from "openlayers";
 import { olx } from "openlayers";
 import { Subscription } from "rxjs";

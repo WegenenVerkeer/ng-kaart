@@ -2,7 +2,7 @@ import { HttpClient } from "@angular/common/http";
 import { array } from "fp-ts";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import { setoidNumber } from "fp-ts/lib/Setoid";
-import { List, Map } from "immutable";
+import { Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { catchError } from "rxjs/operators";
