@@ -1,5 +1,4 @@
 import { Function1 } from "fp-ts/lib/function";
-import { List } from "immutable";
 import * as ol from "openlayers";
 
 import { KaartLocaties } from "../kaart/kaart-bevragen/laaginfo.model";
@@ -102,7 +101,7 @@ export interface ExtentAangepastMsg {
 
 export interface VectorLagenAangepastMsg {
   readonly type: "VectorLagenAangepast";
-  readonly lagen: List<ke.ToegevoegdeVectorLaag>;
+  readonly lagen: Array<ke.ToegevoegdeVectorLaag>;
 }
 
 export interface AchtergrondLagenInGroepAangepastMsg {
@@ -188,7 +187,7 @@ export const PublishedKaartLocatiesMsg: Function1<KaartLocaties, PublishedKaartL
 
 export const ExtentAangepastMsg: (_: ol.Extent) => ExtentAangepastMsg = ext => ({ type: "ExtentAangepast", extent: ext });
 
-export const VectorLagenAangepastMsg: (_: List<ke.ToegevoegdeVectorLaag>) => VectorLagenAangepastMsg = lgn => ({
+export const VectorLagenAangepastMsg: (_: Array<ke.ToegevoegdeVectorLaag>) => VectorLagenAangepastMsg = lgn => ({
   type: "VectorLagenAangepast",
   lagen: lgn
 });
@@ -196,7 +195,7 @@ export const VectorLagenAangepastMsg: (_: List<ke.ToegevoegdeVectorLaag>) => Vec
 /////////////
 // extractors
 
-export const lagen: (_: VectorLagenAangepastMsg) => List<ke.ToegevoegdeVectorLaag> = msg => msg.lagen;
+export const lagen: (_: VectorLagenAangepastMsg) => Array<ke.ToegevoegdeVectorLaag> = msg => msg.lagen;
 export const extent: (_: ExtentAangepastMsg) => ol.Extent = msg => msg.extent;
 export const view: (_: ViewAangepastMsg) => prt.Viewinstellingen = msg => msg.view;
 
