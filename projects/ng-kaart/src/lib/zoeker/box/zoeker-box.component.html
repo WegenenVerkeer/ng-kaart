@@ -18,7 +18,7 @@
         <mat-icon>search</mat-icon>
         <span>Zoek een WMS-laag</span>
       </button>
-      <button mat-menu-item (click)="toggleHelp()" *ngIf="actieveZoeker === 'Basis'">
+      <button mat-menu-item (click)="toggleHelp()">
         <mat-icon>help</mat-icon>
         <span *ngIf="!toonHelp">Toon hulp bij zoeken</span>
         <span *ngIf="toonHelp">Verberg hulp bij zoeken</span>
@@ -80,29 +80,6 @@
   <awv-zoeker-externe-wms-getrapt *ngIf="actieveZoeker === ExterneWms" [hidden]="!toonResultaat"
                                   (leegMakenDisabledChange)="onMaakLeegDisabledChange(ExterneWms, $event)"
                                   #zoekerExterneWmsGetrapt></awv-zoeker-externe-wms-getrapt>                           
-  <div class="divider" *ngIf="toonHelp && actieveZoeker === Basis"></div>
-  <div class="zoeker-help" *ngIf="toonHelp && actieveZoeker === Basis" [@enterAnimation]>
-    <div class="zoeker-help-header" (click)="toggleHelp()">
-      <mat-icon>help</mat-icon>
-      <div class="zoeker-help-titel">
-        Hulp bij zoeken
-      </div>
-      <button mat-icon-button>
-        <mat-icon>close</mat-icon>
-      </button>
-    </div>
-    <awv-zoeker-help></awv-zoeker-help>
-    <div *ngIf="legende.size > 0">
-      <div class="zoeker-subtitel">Legende</div>
-      <div *ngFor="let key of legendeKeys" class="zoeker-resultaat">
-        <span [ngSwitch]="legende.get(key).type">
-          <mat-icon *ngSwitchCase="'svg'" class="zoeker-resultaat-icoon" [svgIcon]="legende.get(key).name"></mat-icon>
-          <mat-icon *ngSwitchCase="'font'" class="zoeker-resultaat-icoon">{{legende.get(key).name}}</mat-icon>
-        </span>
-        <span>{{key}}</span>
-      </div>
-    </div>
-  </div>
   <div *ngIf="toonResultaat && isInklapbaar()" class="divider"></div>
   <div class="zoeker-resultaat-box" *ngIf="toonResultaat" [@enterAnimation]>
     <button *ngFor="let resultaat of alleZoekResultaten; let index=index; let isFirst=first; let isLast=last"
@@ -122,6 +99,29 @@
     <div *ngFor="let fout of alleFouten" class="zoeker-resultaat zoeker-fout" [@enterAnimation]>
       <mat-icon>announcement</mat-icon>
       <span>{{fout.zoeker}}: {{fout.fout}}</span>
+    </div>
+  </div>
+  <div class="divider" *ngIf="toonHelp && actieveZoeker === Basis"></div>
+  <div class="zoeker-help" *ngIf="toonHelp" [@enterAnimation]>
+    <div class="zoeker-help-header" (click)="toggleHelp()">
+      <mat-icon>help</mat-icon>
+      <div class="zoeker-help-titel">
+        Hulp bij zoeken
+      </div>
+      <button mat-icon-button>
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    <awv-zoeker-help></awv-zoeker-help>
+    <div *ngIf="legende.size > 0">
+      <div class="zoeker-subtitel">Legende</div>
+      <div *ngFor="let key of legendeKeys" class="zoeker-resultaat">
+        <span [ngSwitch]="legende.get(key).type">
+          <mat-icon *ngSwitchCase="'svg'" class="zoeker-resultaat-icoon" [svgIcon]="legende.get(key).name"></mat-icon>
+          <mat-icon *ngSwitchCase="'font'" class="zoeker-resultaat-icoon">{{legende.get(key).name}}</mat-icon>
+        </span>
+        <span>{{key}}</span>
+      </div>
     </div>
   </div>
 </div>
