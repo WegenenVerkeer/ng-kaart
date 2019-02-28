@@ -220,7 +220,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
 
   private afstand(afstandVeld: string): string {
     return fromNullable(this.waarde(afstandVeld))
-      .map(this.signed)
+      .map(v => this.signed(v))
       .getOrElse("");
   }
 
@@ -294,7 +294,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
     );
   }
 
-  waarde(name: string): Object {
+  waarde(name: string): any {
     // indien er een 'constante' object in de definitie is, geef dat terug, anders geeft de waarde in het veld terug
     return this.constante(name).getOrElseL(() => {
       const waarde = nestedProperty(name, this.properties());
