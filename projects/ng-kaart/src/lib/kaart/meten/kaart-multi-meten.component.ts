@@ -57,7 +57,7 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
       distinctUntilChanged()
     );
     const scale$ = this.modelChanges.viewinstellingen$.pipe(
-      debounceTime(500),
+      debounceTime(250),
       map(vi => vi.resolution * 64), // arbitrair, komt ongeveer overeen met 1 cm op mijn scherm
       distinctUntilChanged()
     );
