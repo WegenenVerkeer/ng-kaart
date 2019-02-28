@@ -1,10 +1,11 @@
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { mergeMap, tap } from "rxjs/operators";
+import { map, mergeAll, mergeMap, tap } from "rxjs/operators";
 
 import { kaartLogger } from "../kaart/log";
 
 import { splitInChunks } from "./arrays";
+import * as metaDataDb from "./indexeddb-tilecache-metadata";
 
 const AANTAL_PARALLELE_REQUESTS = 4;
 
@@ -158,6 +159,7 @@ export const refreshTiles = (
         ? kaartLogger.info(`Cache ${laagnaam} leeggemaakt`)
         : kaartLogger.info(`Cache ${laagnaam} niet leeggemaakt, wordt verder gevuld`)
     ),
+    mergeMap(() => metaDataDb.write(laagnaam, new Date())),
     mergeMap(() => fetchUrlsGrouped(queue))
   );
 };

@@ -35,11 +35,13 @@ export const getAllKeys = <T>(db: DB, storename: string, idx: string, keyRange: 
       .getAllKeys(keyRange)
   );
 
-export const write = <T>(db: DB, storename: string, feature: T): Observable<number> => {
-  const tx = db.transaction(storename, "readwrite");
-  tx.objectStore<T, any>(storename).put(feature);
-  return from(tx.complete).pipe(map(() => 1));
-};
+export const write = <T>(db: DB, storename: string, feature: T): Observable<IDBValidKey> =>
+  from(
+    db
+      .transaction(storename, "readwrite")
+      .objectStore<T, any>(storename)
+      .put(feature)
+  );
 
 export const writeMany = <T>(db: DB, storename: string, features: T[]): Observable<number> => {
   const tx = db.transaction(storename, "readwrite");

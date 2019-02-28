@@ -1,36 +1,43 @@
 import * as idb from "idb";
 import { from, Observable } from "rxjs";
-import { mergeMap } from "rxjs/operators";
+import { map, mergeMap } from "rxjs/operators";
 
-import { get, write } from "./indexeddb";
+import * as indexeddb from "./indexeddb";
 
 const indexedb_db_naam = "tilecache-metadata";
 
-export interface CacheInformation {
-  readonly layer: string;
-  readonly refreshed: Date;
+interface CacheUpdateInformatie {
+  readonly laagnaam: string;
+  readonly datum: string;
 }
 
 const openStore = (): Observable<idb.DB> => {
   return from(
-    idb.openDb(indexedb_db_naam, 1, upgradeDB => {
-      switch (upgradeDB.oldVersion) {
-        case 0:
-          const store = upgradeDB.createObjectStore(indexedb_db_naam, { keyPath: "layer" });
-      }
-    })
+    idb
+      .openDb(indexedb_db_naam, 1, upgradeDB => {
+        switch (upgradeDB.oldVersion) {
+          case 0:
+            upgradeDB.createObjectStore(indexedb_db_naam, { keyPath: "laagnaam" });
+        }
+      })
+      .catch(fout => {
+        console.log("Kon database niet openen " + fout);
+        return null;
+      })
   );
 };
 
-export const writeInfo = (layer: string, datum: Date): Observable<number> =>
+export const write = (laagnaam: string, datum: Date): Observable<IDBValidKey> =>
   openStore().pipe(
     mergeMap(db =>
-      write<CacheInformation>(db, indexedb_db_naam, {
-        layer: layer,
-        refreshed: datum
+      indexeddb.write<CacheUpdateInformatie>(db, indexedb_db_naam, {
+        laagnaam: laagnaam,
+        datum: datum.toISOString()
       })
     )
   );
 
-export const readInfo = (layer: string): Observable<CacheInformation> =>
-  openStore().pipe(mergeMap(db => get<CacheInformation>(db, indexedb_db_naam, layer)));
+export const read = (laagnaam: string): Observable<Date> =>
+  openStore().pipe(
+    mergeMap(db => indexeddb.get<CacheUpdateInformatie>(db, indexedb_db_naam, laagnaam).pipe(map(record => new Date(record.datum))))
+  );
