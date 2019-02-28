@@ -38,12 +38,28 @@ a.zoeker-help-titel:hover {
   margin-top: 4px;
   margin-left: 36px;
   margin-bottom: 4px;
-  pre {
+  i {
+    display: block;
     word-break: break-all;
     overflow-x: auto;
     white-space: pre-wrap;
+    margin-top: 0;
+    margin-bottom: 0;
   }
-  ul ul {
-    list-style: none;
+
+  ul {
+    padding-left: 20px;
+  }
+  
+  li {
+    margin-top: 4px;
+  }
+
+  p.voorbeelden {
+    margin-bottom: 0;
+  }
+
+  p.voorbeelden + ul {
+    margin-top: 0;
   }
 }
