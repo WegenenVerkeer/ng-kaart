@@ -1,5 +1,7 @@
 import { animate, state, style, transition, trigger } from "@angular/animations";
 import { ChangeDetectionStrategy, Component, NgZone } from "@angular/core";
+import * as array from "fp-ts/lib/Array";
+import { not } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import { debounceTime, filter, map, startWith, withLatestFrom } from "rxjs/operators";
 
@@ -58,7 +60,7 @@ export class KaartInfoBoodschappenComponent extends KaartChildComponentBase {
     const filteredInfoboodschappen = infoBoodschappen$.pipe(
       withLatestFrom(kaartBevragenOnderdrukt$),
       map(([boodschappen, onderdrukt]) =>
-        boodschappen.filterNot(boodschap => boodschap!.type === "InfoBoodschapKaartBevragen" && onderdrukt).toList()
+        array.filter(boodschappen, not(boodschap => boodschap!.type === "InfoBoodschapKaartBevragen" && onderdrukt))
       )
     );
 

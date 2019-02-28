@@ -11,11 +11,6 @@ export const remove: <K, V>(_: Map<K, V>) => (_: K) => Map<K, V> = kvs => key =>
   return kvs;
 };
 
-export const clear: <K, V>(_: Map<K, V>) => Map<K, V> = kvs => {
-  kvs.clear();
-  return kvs;
-};
-
 export const find: <K, V>(_: Map<K, V>) => (_: Predicate<V>) => V | undefined = kvs => pred => {
   kvs.forEach(v => {
     if (pred(v)) {

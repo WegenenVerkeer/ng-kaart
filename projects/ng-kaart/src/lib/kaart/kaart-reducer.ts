@@ -589,10 +589,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                   (!cmnd.rotatie && interaction instanceof ol.interaction.PinchRotate) ||
                   interaction instanceof ol.interaction.MouseWheelZoom
                 ) // we willen zelf de opties op MouseWheelZoom zetten
+            )
+            .concat(
+              [new ol.interaction.MouseWheelZoom({ constrainResolution: true })] // Geen fractionele resoluties!
             );
-          stdInteracties.push(
-            new ol.interaction.MouseWheelZoom({ constrainResolution: true }) // Geen fractionele resoluties!
-          );
           stdInteracties.forEach(i => model.map.addInteraction(i!)); // side effects :-(
           const newModel: Model = { ...model, stdInteracties: stdInteracties, scrollZoomOnFocus: cmnd.scrollZoomOnFocus };
           activateMouseWheelZoomIfAllowed(!cmnd.scrollZoomOnFocus, newModel);
@@ -1209,7 +1209,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function sluitPanelen(cmnd: prt.SluitPanelenCmd): ModelWithResult<Msg> {
-      updateBehaviorSubject(model.infoBoodschappenSubj, bsch => maps.clear(bsch));
+      updateBehaviorSubject(model.infoBoodschappenSubj, _ => new Map());
       modelChanger.laagstijlaanpassingStateSubj.next(GeenLaagstijlaanpassing);
       return ModelWithResult(model);
     }
