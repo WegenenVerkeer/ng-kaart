@@ -59,6 +59,11 @@ export interface PrecacheProgressMsg {
   readonly progress: PrecacheLaagProgress;
 }
 
+export interface LaatsteCacheRefreshMsg {
+  readonly type: "LaatsteCacheRefresh";
+  readonly laatsteCacheRefresh: "LaatsteCacheRefresh";
+}
+
 export interface SubscribedMsg {
   type: "Subscribed";
   subscription: prt.KaartCmdValidation<prt.SubscriptionResult>;

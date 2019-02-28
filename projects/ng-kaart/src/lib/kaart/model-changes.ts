@@ -41,6 +41,10 @@ export interface PrecacheLaagProgress {
   readonly [laagnaam: string]: number; // laagnaam -> progress percentage
 }
 
+export interface LaatsteCacheRefresh {
+  readonly [laagnaam: string]: Date; // laagnaam -> laatste cache refresh
+}
+
 /**
  * Dit is een verzameling van subjects waarmee de reducer wijzingen kan laten weten aan de child components.
  * Dit is isomorf aan het zetten van de overeenkomstige attributen op het model en die laten volgen. Het probleem daarbij

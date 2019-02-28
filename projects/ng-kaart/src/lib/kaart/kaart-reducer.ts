@@ -11,7 +11,7 @@ import { bufferCount, debounceTime, distinctUntilChanged, map, switchMap } from 
 
 import { NosqlFsSource } from "../source";
 import { refreshTiles } from "../util/cachetiles";
-import * as featureStore from "../util/geojson-store";
+import * as featureStore from "../util/indexeddb-geojson-store";
 import { forEach } from "../util/option";
 import * as serviceworker from "../util/serviceworker";
 import { updateBehaviorSubject } from "../util/subject-update";
@@ -1243,11 +1243,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             cmnd.startZoom,
             cmnd.eindZoom,
             cmnd.wkt,
-            cmnd.startMetLegeCache,
-            (progress: number) =>
-              updateBehaviorSubject(modelChanger.precacheProgressSubj, precacheLaagProgress => {
-                return { ...precacheLaagProgress, [cmnd.titel]: progress };
-              })
+            cmnd.startMetLegeCache
+          ).subscribe(progress =>
+            updateBehaviorSubject(modelChanger.precacheProgressSubj, precacheLaagProgress => {
+              return { ...precacheLaagProgress, [cmnd.titel]: progress };
+            })
           );
           return ModelAndEmptyResult(model);
         })

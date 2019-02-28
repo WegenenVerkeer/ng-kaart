@@ -10,8 +10,7 @@ import { kaartLogger } from "../kaart/log";
 import { Pipeable } from "../util";
 import { fetchWithTimeoutObs$ } from "../util/fetch-with-timeout";
 import { ReduceFunction } from "../util/function";
-import * as geojsonStore from "../util/geojson-store";
-import { GeoJsonLike } from "../util/geojson-store";
+import * as geojsonStore from "../util/indexeddb-geojson-store";
 
 /**
  * Stappen:
@@ -60,11 +59,11 @@ const split: Function1<string, Pipeable<string, string>> = delimiter => obs => {
   );
 };
 
-const toGeoJson: Pipeable<string, GeoJsonLike> = obs =>
+const toGeoJson: Pipeable<string, geojsonStore.GeoJsonLike> = obs =>
   obs.pipe(
     map(lijn => {
       try {
-        const geojson = JSON.parse(lijn) as GeoJsonLike;
+        const geojson = JSON.parse(lijn) as geojsonStore.GeoJsonLike;
         return {
           ...geojson,
           metadata: {
@@ -83,7 +82,7 @@ const toGeoJson: Pipeable<string, GeoJsonLike> = obs =>
     })
   );
 
-const toOlFeature: Function2<string, GeoJsonLike, ol.Feature> = (laagnaam, geojson) => {
+const toOlFeature: Function2<string, geojsonStore.GeoJsonLike, ol.Feature> = (laagnaam, geojson) => {
   try {
     return new ol.Feature({
       id: geojson.id,
@@ -199,7 +198,7 @@ export class NosqlFsSource extends ol.source.Vector {
       .join("&")}`;
   }
 
-  fetchFeatures$(extent: number[]): rx.Observable<GeoJsonLike> {
+  fetchFeatures$(extent: number[]): rx.Observable<geojsonStore.GeoJsonLike> {
     return fetchWithTimeoutObs$(
       this.composeUrl(extent),
       {
@@ -215,7 +214,7 @@ export class NosqlFsSource extends ol.source.Vector {
     );
   }
 
-  fetchFeaturesByWkt$(wkt: string): rx.Observable<GeoJsonLike> {
+  fetchFeaturesByWkt$(wkt: string): rx.Observable<geojsonStore.GeoJsonLike> {
     return fetchWithTimeoutObs$(
       this.composeUrl(),
       {
