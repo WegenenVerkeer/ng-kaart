@@ -101,7 +101,7 @@
       <span>{{fout.zoeker}}: {{fout.fout}}</span>
     </div>
   </div>
-  <div class="divider" *ngIf="toonHelp && actieveZoeker === Basis"></div>
+  <div class="divider" *ngIf="toonHelp"></div>
   <div class="zoeker-help" *ngIf="toonHelp" [@enterAnimation]>
     <div class="zoeker-help-header" (click)="toggleHelp()">
       <mat-icon>help</mat-icon>
