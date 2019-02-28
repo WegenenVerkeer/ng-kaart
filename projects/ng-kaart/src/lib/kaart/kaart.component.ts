@@ -19,6 +19,7 @@ import {
 
 import { isNonEmpty } from "../util/arrays";
 import { asap } from "../util/asap";
+import * as maps from "../util/maps";
 import { observeOnAngular } from "../util/observe-on-angular";
 import { observeOutsideAngular } from "../util/observer-outside-angular";
 import { catOptions, ofType } from "../util/operators";
@@ -157,7 +158,7 @@ export class KaartComponent extends KaartComponentBase {
         observeOnAngular(this.zone)
       )
       .subscribe(msg => {
-        if (!msg.infoBoodschappen.isEmpty()) {
+        if (maps.isNonEmpty(msg.infoBoodschappen)) {
           this.kaartLinksZichtbaar = true;
         }
       });

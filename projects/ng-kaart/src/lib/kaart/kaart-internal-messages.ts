@@ -1,5 +1,4 @@
 import { none, Option, some } from "fp-ts/lib/Option";
-import { Map } from "immutable";
 import * as ol from "openlayers";
 
 import { TekenResultaat, TekenSettings } from "./kaart-elementen";

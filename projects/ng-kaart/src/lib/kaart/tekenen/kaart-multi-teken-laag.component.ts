@@ -4,7 +4,6 @@ import * as array from "fp-ts/lib/Array";
 import { Endomorphism, Function1, Function2, Function3, identity, pipe, Predicate, Refinement } from "fp-ts/lib/function";
 import { fromNullable, fromPredicate, none, Option, some } from "fp-ts/lib/Option";
 import { setoidNumber, setoidString } from "fp-ts/lib/Setoid";
-import { OrderedMap } from "immutable";
 import { Lens, Optional } from "monocle-ts";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
@@ -124,7 +123,7 @@ const createLayer: Function2<string, ol.source.Vector, ke.VectorLaag> = (titel, 
     minZoom: 2,
     maxZoom: 15,
     offsetveld: none, // veel ruis
-    velden: OrderedMap<string, ke.VeldInfo>(),
+    velden: new Map<string, ke.VeldInfo>(),
     verwijderd: false,
     rijrichtingIsDigitalisatieZin: false
   };

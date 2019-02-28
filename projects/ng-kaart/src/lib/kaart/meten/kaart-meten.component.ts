@@ -5,6 +5,7 @@ import * as rx from "rxjs";
 import { filter, map, startWith, takeUntil } from "rxjs/operators";
 
 import { dimensieBeschrijving } from "../../util/geometries";
+import * as maps from "../../util/maps";
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { ofType } from "../../util/operators";
 import * as sets from "../../util/sets";
@@ -105,10 +106,16 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
     this.bindToLifeCycle(
       this.internalMessage$.pipe(
         ofType<InfoBoodschappenMsg>("InfoBoodschappen"), //
-        map(msg => msg.infoBoodschappen.filter(boodschapVanMeten).keySeq())
+        map(msg =>
+          Array.from(
+            maps
+              .filter(msg.infoBoodschappen)(boodschapVanMeten)
+              .keys()
+          )
+        )
       )
     ).subscribe(boodschappen => {
-      this.openBoodschappen = new Set(boodschappen.toArray());
+      this.openBoodschappen = new Set(boodschappen);
       if (this.eersteIsGetekend && sets.isEmpty(this.openBoodschappen)) {
         // Wanneer alle info-boxen van meten gesloten zijn, kan je stoppen met meten.
         // Maar dit mag alleen als we al eens 1 info-box van meten gehad hebben.

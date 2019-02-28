@@ -281,10 +281,8 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
         // vervang elke instantie van {id} in de waarde van 'constante' door de effectieve id :
         .map(waarde =>
           this.laag
-            .map(l => l.velden)
-            .getOrElse(OrderedMap<string, VeldInfo>())
-            .keySeq()
-            .toArray()
+            .map(l => Array.from(l.velden.keys()))
+            .getOrElse([])
             .reduce((result, eigenschap) => {
               const token = `{${eigenschap}}`;
               // vervang _alle_ tokens met de waarde uit het record
@@ -334,13 +332,11 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
 
   private eigenschappen(filter: (string) => boolean): string[] {
     return this.laag
-      .map(l => l.velden)
-      .getOrElse(OrderedMap<string, VeldInfo>())
-      .filter((veldInfo, veldNaam) => filter(veldNaam))
-      .filter((veldInfo, veldNaam) => geldigeWaarde(nestedProperty(veldNaam!, this.properties())) || this.constante(veldNaam!).isSome())
-      .filter((veldInfo, veldNaam) => nestedProperty(veldNaam!, this.properties()) !== "")
-      .keySeq()
-      .toArray();
+      .map(l => Array.from(l.velden.keys()))
+      .getOrElse([])
+      .filter(veldNaam => filter(veldNaam))
+      .filter(veldNaam => geldigeWaarde(nestedProperty(veldNaam!, this.properties())) || this.constante(veldNaam!).isSome())
+      .filter(veldNaam => nestedProperty(veldNaam!, this.properties()) !== "");
   }
 
   private isLink(veld: string): boolean {

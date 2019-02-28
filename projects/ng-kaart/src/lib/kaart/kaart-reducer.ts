@@ -11,6 +11,7 @@ import { bufferCount, debounceTime, distinctUntilChanged, map, switchMap } from 
 import { NosqlFsSource } from "../source";
 import { refreshTiles } from "../util/cachetiles";
 import * as featureStore from "../util/geojson-store";
+import * as maps from "../util/maps";
 import { forEach } from "../util/option";
 import * as serviceworker from "../util/serviceworker";
 import { updateBehaviorSubject } from "../util/subject-update";
@@ -112,7 +113,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function valideerToegevoegdeLaagBestaat(titel: string): prt.KaartCmdValidation<ke.ToegevoegdeLaag> {
       return fromPredicate(
-        model.toegevoegdeLagenOpTitel.get(titel),
+        model.toegevoegdeLagenOpTitel.get(titel)!,
         (l: ke.ToegevoegdeLaag) => l !== undefined,
         `Een laag met titel ${titel} bestaat niet`
       );
@@ -120,7 +121,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function valideerToegevoegdeVectorLaagBestaat(titel: string): prt.KaartCmdValidation<ke.ToegevoegdeVectorLaag> {
       return fromPredicate(
-        model.toegevoegdeLagenOpTitel.get(titel) as ke.ToegevoegdeVectorLaag,
+        model.toegevoegdeLagenOpTitel.get(titel)! as ke.ToegevoegdeVectorLaag,
         (l: ke.ToegevoegdeVectorLaag) => l !== undefined && ke.isToegevoegdeVectorLaag(l),
         `Een laag met titel ${titel} bestaat niet`
       );
@@ -300,8 +301,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function lagenInGroep(mdl: Model, groep: ke.Laaggroep): Array<ke.ToegevoegdeLaag> {
       return mdl.titelsOpGroep
-        .get(groep) // we vertrekken van geldige groepen
-        .map(titel => mdl.toegevoegdeLagenOpTitel.get(titel!)); // dus hebben we geldige titels
+        .get(groep)! // we vertrekken van geldige groepen
+        .map(titel => mdl.toegevoegdeLagenOpTitel.get(titel!)!); // dus hebben we geldige titels
     }
 
     function zendLagenInGroep(mdl: Model, groep: ke.Laaggroep): void {
@@ -320,7 +321,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function limitPosition(position: number, groep: ke.Laaggroep) {
       // laat 1 positie voorbij het einde toe om laag kunnen toe te voegen
-      return Math.max(0, Math.min(position, model.titelsOpGroep.get(groep).length));
+      return Math.max(0, Math.min(position, model.titelsOpGroep.get(groep)!.length));
     }
 
     function abortTileLoadingCmd(cmnd: prt.AbortTileLoadingCmd) {
@@ -377,7 +378,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               const updatedModel = {
                 ...modelMetAangepasteLagen,
                 toegevoegdeLagenOpTitel: modelMetAangepasteLagen.toegevoegdeLagenOpTitel.set(titel, toegevoegdeLaag),
-                titelsOpGroep: modelMetAangepasteLagen.titelsOpGroep.set(groep, model.titelsOpGroep.get(groep).concat([titel])),
+                titelsOpGroep: modelMetAangepasteLagen.titelsOpGroep.set(groep, model.titelsOpGroep.get(groep)!.concat([titel])),
                 groepOpTitel: modelMetAangepasteLagen.groepOpTitel.set(titel, groep)
               };
               zendLagenInGroep(updatedModel, cmnd.laaggroep);
@@ -417,12 +418,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           const modelMetAangepasteLagen = pasLaagPositiesAan(-1, layerIndexNaarGroepIndex(layer, groep) + 1, maxIndexInGroep(groep), groep);
           const updatedModel = {
             ...modelMetAangepasteLagen,
-            toegevoegdeLagenOpTitel: modelMetAangepasteLagen.toegevoegdeLagenOpTitel.delete(titel),
+            toegevoegdeLagenOpTitel: maps.remove(modelMetAangepasteLagen.toegevoegdeLagenOpTitel)(titel),
             titelsOpGroep: modelMetAangepasteLagen.titelsOpGroep.set(
               groep,
-              modelMetAangepasteLagen.titelsOpGroep.get(groep).filter(t => t !== titel)
+              modelMetAangepasteLagen.titelsOpGroep.get(groep)!.filter(t => t !== titel)
             ),
-            groepOpTitel: modelMetAangepasteLagen.groepOpTitel.delete(titel)
+            groepOpTitel: maps.remove(modelMetAangepasteLagen.groepOpTitel)(titel)
           };
           zendLagenInGroep(updatedModel, groep);
           modelChanger.laagVerwijderdSubj.next(laag);
@@ -492,7 +493,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           valideerIsVoorgrondlaag // enkel zinvol om voorgrondlagen te verplaatsen
         ).map(laag => {
           const titel = cmnd.titel;
-          const groep = model.groepOpTitel.get(titel);
+          const groep = model.groepOpTitel.get(titel)!;
           const vanPositie = layerIndexNaarGroepIndex(laag.layer, groep);
           const naarPositie = limitPosition(cmnd.naarPositie, groep); // uitgedrukt in z-index waarden
           // Afhankelijk of we van onder naar boven of van boven naar onder verschuiven, moeten de tussenliggende lagen
@@ -709,7 +710,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     });
 
     function toonAchtergrondkeuzeCmd(cmnd: prt.ToonAchtergrondKeuzeCmd<Msg>): ModelWithResult<Msg> {
-      const achtergrondTitels = model.titelsOpGroep.get("Achtergrond");
+      const achtergrondTitels = model.titelsOpGroep.get("Achtergrond")!;
       return toModelWithValueResult(
         cmnd.wrapper,
         allOf([
@@ -717,8 +718,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           fromBoolean(!array.isEmpty(achtergrondTitels), "Er moet minstens 1 achtergrondlaag zijn")
         ]).map(() => {
           const achtergrondLagen: Array<ke.ToegevoegdeLaag> = model.titelsOpGroep
-            .get("Achtergrond")
-            .map(titel => model.toegevoegdeLagenOpTitel.get(titel!)); // de titels bestaan bij constructie
+            .get("Achtergrond")!
+            .map(titel => model.toegevoegdeLagenOpTitel.get(titel!)!); // de titels bestaan bij constructie
           const geselecteerdeLaag = fromNullable(achtergrondLagen.find(laag => laag!.magGetoondWorden));
           const teSelecterenLaag = geselecteerdeLaag.getOrElseL(() => achtergrondLagen[0]); // er is er minstens 1 wegens validatie
 
@@ -763,7 +764,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         ).map((nieuweAchtergrond: ke.ToegevoegdeLaag) => {
           model.achtergrondlaagtitelSubj.next(cmnd.titel);
           const maybeVorigeAchtergrond = fromNullable(
-            model.toegevoegdeLagenOpTitel.find(laag => laag!.laaggroep === "Achtergrond" && laag!.magGetoondWorden)
+            maps.find(model.toegevoegdeLagenOpTitel)(laag => laag!.laaggroep === "Achtergrond" && laag!.magGetoondWorden)
           );
           const modelMetNieuweZichtbaarheid = pipe(
             pasLaagZichtbaarheidAan(true),
@@ -1061,7 +1062,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function deleteInfoBoodschap(cmnd: prt.VerbergInfoBoodschapCmd): ModelWithResult<Msg> {
-      updateBehaviorSubject(model.infoBoodschappenSubj, bsch => bsch.delete(cmnd.id));
+      updateBehaviorSubject(model.infoBoodschappenSubj, bsch => maps.remove(bsch)(cmnd.id));
       return ModelWithResult(model);
     }
 
@@ -1083,7 +1084,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function sluitInfoBoodschap(cmnd: prt.SluitInfoBoodschapCmd): ModelWithResult<Msg> {
-      const sluitBox = () => updateBehaviorSubject(model.infoBoodschappenSubj, bsch => bsch.delete(cmnd.id));
+      const sluitBox = () => updateBehaviorSubject(model.infoBoodschappenSubj, bsch => maps.remove(bsch)(cmnd.id));
       const maybeMsg = cmnd.msgGen() as Option<Msg>;
       return maybeMsg.foldL(
         () => {
@@ -1208,7 +1209,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function sluitPanelen(cmnd: prt.SluitPanelenCmd): ModelWithResult<Msg> {
-      updateBehaviorSubject(model.infoBoodschappenSubj, bsch => bsch.clear());
+      updateBehaviorSubject(model.infoBoodschappenSubj, bsch => maps.clear(bsch));
       modelChanger.laagstijlaanpassingStateSubj.next(GeenLaagstijlaanpassing);
       return ModelWithResult(model);
     }

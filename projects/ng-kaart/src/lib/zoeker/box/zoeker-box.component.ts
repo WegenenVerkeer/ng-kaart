@@ -10,7 +10,6 @@ import * as ord from "fp-ts/lib/Ord";
 import { setoidString } from "fp-ts/lib/Setoid";
 import { insert, lookup, remove, StrMap } from "fp-ts/lib/StrMap";
 import { Tuple } from "fp-ts/lib/Tuple";
-import { Map, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import {
@@ -307,13 +306,13 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.zoekerComponentSubj.next(new Tuple<ZoekerType, GetraptZoekerComponent>(EXTERNE_WMS, zoekerExterneWmsGetrapt));
   }
 
-  featuresByResultaat = Map<ZoekResultaat, ol.Feature[]>();
+  featuresByResultaat = new Map<ZoekResultaat, ol.Feature[]>();
   huidigeSelectie: Option<HuidigeSelectie> = none;
   alleZoekResultaten: ZoekResultaat[] = [];
   alleSuggestiesResultaten: ZoekResultaat[] = [];
   private suggestiesBuffer: ZoekAntwoord[] = [];
   alleFouten: Fout[] = [];
-  legende: Map<string, IconDescription> = Map<string, IconDescription>();
+  legende: Map<string, IconDescription> = new Map<string, IconDescription>();
   legendeKeys: string[] = [];
   toonHelp = false;
   toonResultaat = true;
@@ -352,7 +351,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       minZoom: 2,
       maxZoom: 15,
       offsetveld: none,
-      velden: OrderedMap<string, VeldInfo>(),
+      velden: new Map<string, VeldInfo>(),
       verwijderd: false,
       rijrichtingIsDigitalisatieZin: false
     };
@@ -422,14 +421,14 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       scan(
         (zoekerComponentOpNaam: Map<ZoekerType, GetraptZoekerComponent>, nz: Tuple<ZoekerType, GetraptZoekerComponent>) =>
           zoekerComponentOpNaam.set(nz.fst, nz.snd),
-        Map<ZoekerType, GetraptZoekerComponent>()
+        new Map<ZoekerType, GetraptZoekerComponent>()
       ),
       shareReplay(1)
     );
 
     // Luister naar de "leegmaken" opdracht en voer uit
     this.bindToLifeCycle(
-      this.zoekerComponentOpNaam$.pipe(switchMap(zcon => this.maakVeldenLeegSubj.pipe(collect((naam: ZoekerType) => zcon.get(naam)))))
+      this.zoekerComponentOpNaam$.pipe(switchMap(zcon => this.maakVeldenLeegSubj.pipe(collect((naam: ZoekerType) => zcon.get(naam)!))))
     ).subscribe(zoekerGetraptComponent => zoekerGetraptComponent.maakVeldenLeeg(0));
 
     // Luister op zoekresultaten en doe er iets mee
@@ -610,7 +609,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
           resultaat.preferredPointZoomLevel.map(zoom => this.dispatch(prt.VeranderZoomCmd(zoom, kaartLogOnlyWrapper)));
         }
         const resultaatFeatures = ZoekerBoxComponent.maakNieuwFeature(resultaat);
-        this.featuresByResultaat = Map<ZoekResultaat, ol.Feature[]>().set(resultaat, resultaatFeatures);
+        this.featuresByResultaat = new Map<ZoekResultaat, ol.Feature[]>().set(resultaat, resultaatFeatures);
 
         this.dispatch(prt.VervangFeaturesCmd(ZoekerUiSelector, resultaatFeatures, kaartLogOnlyWrapper));
 
@@ -750,7 +749,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.alleZoekResultaten = [];
     this.alleSuggestiesResultaten = [];
     this.suggestiesBuffer = [];
-    this.featuresByResultaat = Map<ZoekResultaat, ol.Feature[]>();
+    this.featuresByResultaat = new Map<ZoekResultaat, ol.Feature[]>();
     this.huidigeSelectie = none;
     this.legende.clear();
     this.legendeKeys = [];
@@ -775,7 +774,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     );
     nieuweResultaten.legende.forEach((safeHtml, name) => this.legende.set(name!, safeHtml!));
     this.alleSuggestiesResultaten = [];
-    this.legendeKeys = this.legende.keySeq().toArray();
+    this.legendeKeys = Array.from(this.legende.keys());
 
     this.alleFouten = this.alleFouten
       .filter(resultaat => resultaat.zoeker !== nieuweResultaten.zoeker)
@@ -783,11 +782,11 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
 
     this.featuresByResultaat = this.alleZoekResultaten.reduce(
       (map, resultaat) => map.set(resultaat, ZoekerBoxComponent.maakNieuwFeature(resultaat)),
-      Map<ZoekResultaat, ol.Feature[]>()
+      new Map<ZoekResultaat, ol.Feature[]>()
     );
 
     this.dispatch(
-      prt.VervangFeaturesCmd(ZoekerUiSelector, array.flatten(this.featuresByResultaat.toList().toArray()), kaartLogOnlyWrapper)
+      prt.VervangFeaturesCmd(ZoekerUiSelector, array.flatten(Array.from(this.featuresByResultaat.values())), kaartLogOnlyWrapper)
     );
     this.decreaseBusy();
   }

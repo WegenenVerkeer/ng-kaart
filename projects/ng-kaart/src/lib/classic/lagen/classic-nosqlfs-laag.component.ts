@@ -1,7 +1,6 @@
 import { Component, Input, NgZone, ViewEncapsulation } from "@angular/core";
 import { option } from "fp-ts";
 import { fromNullable } from "fp-ts/lib/Option";
-import { OrderedMap } from "immutable";
 
 import * as ke from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
@@ -74,7 +73,7 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
       minZoom: this.minZoom,
       maxZoom: this.maxZoom,
       offsetveld: fromNullable(this.offsetveld),
-      velden: OrderedMap<string, ke.VeldInfo>(),
+      velden: new Map<string, ke.VeldInfo>(),
       verwijderd: false,
       rijrichtingIsDigitalisatieZin: false
       // TODO: dit veld (en offsetveld en ident8) zijn eigenlijk stijl concerns en zouden beter naar daar verhuisd moet worden

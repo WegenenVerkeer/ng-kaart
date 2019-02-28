@@ -2,7 +2,6 @@ import { AfterViewInit, Component, NgZone, OnInit, QueryList, ViewChildren } fro
 import { MatButton } from "@angular/material";
 import { Function1, Function3, Function4 } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
-import { OrderedMap } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, filter, map } from "rxjs/operators";
@@ -236,7 +235,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
       hover: false,
       minZoom: 2,
       maxZoom: 15,
-      velden: OrderedMap<string, ke.VeldInfo>(),
+      velden: new Map<string, ke.VeldInfo>(),
       offsetveld: none,
       verwijderd: false,
       rijrichtingIsDigitalisatieZin: false

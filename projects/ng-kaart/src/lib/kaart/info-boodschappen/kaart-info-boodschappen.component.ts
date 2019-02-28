@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, NgZone } from "@angular/core";
 import * as rx from "rxjs";
 import { debounceTime, filter, map, startWith, withLatestFrom } from "rxjs/operators";
 
+import * as maps from "../../util/maps";
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { ofType } from "../../util/operators";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
@@ -50,12 +51,7 @@ export class KaartInfoBoodschappenComponent extends KaartChildComponentBase {
     const infoBoodschappen$ = this.internalMessage$.pipe(
       ofType<InfoBoodschappenMsg>("InfoBoodschappen"), //
       observeOnAngular(this.zone),
-      map(msg =>
-        msg.infoBoodschappen
-          .reverse()
-          .toList()
-          .toArray()
-      ), // laatste boodschap bovenaan
+      map(msg => Array.from(maps.reverse(msg.infoBoodschappen).values())), // laatste boodschap bovenaan
       debounceTime(250) // omdat we requests in parallel afvuren, komen er vaak updates dicht tegen elkaar
     );
 
