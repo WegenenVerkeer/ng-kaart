@@ -1,5 +1,6 @@
 import * as ol from "openlayers";
 import * as rx from "rxjs";
+import { mergeMap, tap } from "rxjs/operators";
 
 import { kaartLogger } from "../kaart/log";
 
@@ -12,25 +13,25 @@ const AANTAL_PARALLELE_REQUESTS = 4;
  * deze parallel af te lopen.
  * Elke chunk gaat sequentieel 1 voor 1 elke URL ophalen.
  */
-const fetchUrlsGrouped = (urls: string[], progressObs: rx.Subscriber<number>) => {
-  let fetched = 0;
+const fetchUrlsGrouped = (urls: string[]): rx.Observable<number> => {
+  return new rx.Observable<number>(observable => {
+    let fetched = 0;
 
-  const fetchUrls = (chunk: string[]) => {
-    const fetches = chunk.map(url => () => {
-      fetched++;
-      if (progressObs) {
-        progressObs.next(Math.round((fetched / urls.length) * 100));
-      }
-      return fetch(new Request(url, { credentials: "include" }), { keepalive: true, mode: "cors" }).catch(err => kaartLogger.error(err));
-    });
-    fetches.reduce((vorige, huidige) => vorige.then(huidige), Promise.resolve());
-  };
+    const fetchUrls = (chunk: string[]) => {
+      const fetches = chunk.map(url => () => {
+        fetched++;
+        observable.next(Math.round((fetched / urls.length) * 100));
+        return fetch(new Request(url, { credentials: "include" }), { keepalive: true, mode: "cors" }).catch(err => kaartLogger.error(err));
+      });
+      fetches.reduce((vorige, huidige) => vorige.then(huidige), Promise.resolve());
+    };
 
-  splitInChunks(urls, AANTAL_PARALLELE_REQUESTS).map(chunk => fetchUrls(chunk));
+    splitInChunks(urls, AANTAL_PARALLELE_REQUESTS).map(chunk => fetchUrls(chunk));
+  });
 };
 
-const deleteTiles = (laagnaam: string, startMetLegeCache: boolean) =>
-  startMetLegeCache ? caches.delete(laagnaam) : Promise.resolve(false);
+const deleteTiles = (laagnaam: string, startMetLegeCache: boolean): rx.Observable<boolean> =>
+  startMetLegeCache ? rx.from(caches.delete(laagnaam)) : rx.of(false);
 
 export const refreshTiles = (
   laagnaam: string,
@@ -151,13 +152,12 @@ export const refreshTiles = (
     queue = queue.concat(queueByZ);
   }
 
-  return new rx.Observable<number>(observable => {
-    deleteTiles(laagnaam, startMetLegeCache).then(cacheLeeggemaakt => {
+  return deleteTiles(laagnaam, startMetLegeCache).pipe(
+    tap(cacheLeeggemaakt =>
       cacheLeeggemaakt
         ? kaartLogger.info(`Cache ${laagnaam} leeggemaakt`)
-        : kaartLogger.info(`Cache ${laagnaam} niet leeggemaakt, wordt verder gevuld`);
-
-      fetchUrlsGrouped(queue, observable);
-    });
-  });
+        : kaartLogger.info(`Cache ${laagnaam} niet leeggemaakt, wordt verder gevuld`)
+    ),
+    mergeMap(() => fetchUrlsGrouped(queue))
+  );
 };
