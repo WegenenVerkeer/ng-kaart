@@ -1,16 +1,17 @@
 import { Function3, Predicate } from "fp-ts/lib/function";
+import { none, Option, some } from "fp-ts/lib/Option";
 
 export const isOfSize: (_: number) => <K, V>(_: Map<K, V>) => boolean = size => map => map.size === size;
 
 export const isNonEmpty: <K, V>(_: Map<K, V>) => boolean = map => map.size > 0;
 
-export const find: <K, V>(_: Map<K, V>) => (_: Predicate<V>) => V | undefined = kvs => pred => {
+export const find: <K, V>(_: Map<K, V>) => (_: Predicate<V>) => Option<V> = kvs => pred => {
   kvs.forEach(v => {
     if (pred(v)) {
-      return v;
+      return some(v);
     }
   });
-  return undefined;
+  return none;
 };
 
 export const filter: <K, V>(_: Map<K, V>) => (_: Predicate<V>) => Map<K, V> = kvs => pred => {

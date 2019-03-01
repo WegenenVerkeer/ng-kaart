@@ -768,8 +768,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           () => valideerToegevoegdeLaagBestaat(cmnd.titel)
         ).map((nieuweAchtergrond: ke.ToegevoegdeLaag) => {
           model.achtergrondlaagtitelSubj.next(cmnd.titel);
-          const maybeVorigeAchtergrond = fromNullable(
-            maps.find(model.toegevoegdeLagenOpTitel)(laag => laag!.laaggroep === "Achtergrond" && laag!.magGetoondWorden)
+          const maybeVorigeAchtergrond = maps.find(model.toegevoegdeLagenOpTitel)(
+            laag => laag!.laaggroep === "Achtergrond" && laag!.magGetoondWorden
           );
           const modelMetNieuweZichtbaarheid = pipe(
             pasLaagZichtbaarheidAan(true),

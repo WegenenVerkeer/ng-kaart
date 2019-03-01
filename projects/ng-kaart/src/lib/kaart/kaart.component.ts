@@ -124,7 +124,7 @@ export class KaartComponent extends KaartComponentBase {
         this.innerModelChanges = modelChanges(model, this.modelChanger);
         this.innerAanwezigeElementen$ = this.modelChanges.uiElementSelectie$.pipe(
           scan(
-            (st: Set<string>, selectie: UiElementSelectie) => (selectie.aan ? st.add(selectie.naam) : sets.remove(st)(selectie.naam)),
+            (st: Set<string>, selectie: UiElementSelectie) => (selectie.aan ? st.add(selectie.naam) : sets.removeSimple(st)(selectie.naam)),
             new Set<string>([])
           ),
           startWith(new Set<string>())

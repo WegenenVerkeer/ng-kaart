@@ -872,7 +872,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   onMaakLeegDisabledChange(zoekerNaam: ZoekerType, maakLeegDisabled: boolean): void {
     this.zoekerMaakLeegDisabled = maakLeegDisabled
       ? this.zoekerMaakLeegDisabled.add(zoekerNaam)
-      : sets.remove(this.zoekerMaakLeegDisabled)(zoekerNaam);
+      : sets.removeSimple(this.zoekerMaakLeegDisabled)(zoekerNaam);
   }
 
   availability$(zoekerNaam: ZoekerType): rx.Observable<boolean> {
