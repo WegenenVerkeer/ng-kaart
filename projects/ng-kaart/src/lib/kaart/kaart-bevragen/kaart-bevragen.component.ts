@@ -1,6 +1,5 @@
 import { HttpClient } from "@angular/common/http";
 import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
-import { identity } from "fp-ts/lib/function";
 import * as option from "fp-ts/lib/Option";
 import { none } from "fp-ts/lib/Option";
 import { List, Map } from "immutable";
@@ -8,6 +7,7 @@ import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { debounceTime, filter, map, mergeAll, scan, startWith, switchMap, timeoutWith } from "rxjs/operators";
 
+import * as arrays from "../../util/arrays";
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { Progress, Received, Requested, TimedOut } from "../../util/progress";
 import * as progress from "../../util/progress";
@@ -103,7 +103,8 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
         bron: none,
         coordinaat: coordinaat,
         adres: progress.toOption(maybeAdres).chain(option.fromEither),
-        weglocaties: progress.toOption(wegLocaties).fold([], wls => wls.fold(() => [], identity)),
+        // We moeten een Progress<Either<A, B[]>> omzetten naar een B[]
+        weglocaties: arrays.fromOption(progress.toOption(wegLocaties).map(arrays.fromEither)),
         laagLocatieInfoOpTitel: lagenLocatieInfo,
         verbergMsgGen: () => none
       })

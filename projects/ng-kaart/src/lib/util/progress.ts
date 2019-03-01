@@ -9,6 +9,8 @@ export interface Received<A> {
   readonly value: A;
 }
 
+export type ProgressStatus = "Requested" | "TimedOut" | "Received";
+
 export const withProgress = <A, B>(ifRequested: Lazy<B>, ifTimedOut: Lazy<B>, ifReceived: Function1<A, B>) => (progress: Progress<A>) => {
   if (progress === "Requested") {
     return ifRequested();
@@ -34,4 +36,10 @@ export const toOption: <A>(_: Progress<A>) => Option<A> = withProgress(
   () => none, //
   () => none,
   a => some(a)
+);
+
+export const toProgressStatus: <A>(_: Progress<A>) => ProgressStatus = withProgress(
+  () => "Requested" as ProgressStatus,
+  () => "TimedOut" as ProgressStatus,
+  () => "Received" as ProgressStatus
 );

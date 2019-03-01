@@ -1,5 +1,7 @@
+import { option } from "fp-ts";
 import * as array from "fp-ts/lib/Array";
-import { identity, Refinement } from "fp-ts/lib/function";
+import { Either } from "fp-ts/lib/Either";
+import { identity, pipe, Refinement } from "fp-ts/lib/function";
 import { Predicate } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 
@@ -33,3 +35,7 @@ export const splitInChunks = <A>(as: Array<A>, aantalChunks: number): Array<Arra
 };
 
 export const fromOption: <A>(maybeArray: Option<A[]>) => A[] = mas => mas.fold(pure(), identity);
+export const fromEither: <L, A>(eitherArray: Either<L, A[]>) => A[] = pipe(
+  option.fromEither,
+  fromOption
+);
