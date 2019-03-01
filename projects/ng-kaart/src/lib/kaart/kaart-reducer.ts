@@ -306,7 +306,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function zendLagenInGroep(mdl: Model, groep: ke.Laaggroep): void {
-      modelChanger.lagenOpGroepSubj.get(groep).next(
+      modelChanger.lagenOpGroepSubj.get(groep)!.next(
         lagenInGroep(mdl, groep).sort(laag => -laag!.layer.getZIndex()) // en dus ook geldige titels
       );
     }
@@ -1372,7 +1372,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return modelWithSubscriptionResult(
           "LagenInGroep",
           modelChanger.lagenOpGroepSubj
-            .get(sub.groep) // we vertrouwen op de typechecker
+            .get(sub.groep)! // we vertrouwen op de typechecker
             .pipe(debounceTime(50))
             .subscribe(consumeMessage(sub))
         );

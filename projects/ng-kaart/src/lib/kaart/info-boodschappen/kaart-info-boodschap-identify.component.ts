@@ -2,7 +2,6 @@ import { Component, Input, NgZone } from "@angular/core";
 import { DomSanitizer } from "@angular/platform-browser";
 import { Curried3, Function1, Function2, Predicate } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
-import { OrderedMap } from "immutable";
 import * as Mustache from "mustache";
 import * as ol from "openlayers";
 

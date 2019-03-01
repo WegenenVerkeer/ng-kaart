@@ -1,7 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { none, Option } from "fp-ts/lib/Option";
-import { Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { debounceTime, filter, map, mergeAll, scan, startWith, switchMap, timeoutWith } from "rxjs/operators";
@@ -38,7 +37,7 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
   ngOnInit(): void {
     super.ngOnInit();
 
-    const stableReferentielagen$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Laag").pipe(debounceTime(250));
+    const stableReferentielagen$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Laag")!.pipe(debounceTime(250));
     const stableInfoServices$ = this.modelChanges.laagLocationInfoServicesOpTitel$.pipe(debounceTime(250));
     const geklikteLocatie$ = this.modelChanges.kaartKlikLocatie$.pipe(filter(l => this.isActief() && !l.coversFeature));
 
@@ -49,7 +48,7 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
     ) => Array<rx.Observable<srv.LocatieInfo>> = (lgn, svcs, locatie) =>
       lgn
         .filter(lg => lg!.layer.getVisible() && svcs.has(lg!.titel)) // zichtbare lagen met een info service
-        .map(lg => infoForLaag(locatie, lg!, svcs.get(lg!.titel)))
+        .map(lg => infoForLaag(locatie, lg!, svcs.get(lg!.titel)!))
         .concat([
           srv.wegLocatiesViaXY$(this.http, locatie).pipe(map(weglocatie => srv.fromWegLocaties(locatie, weglocatie))),
           srv.adresViaXY$(this.http, locatie).pipe(map(adres => srv.withAdres(locatie, adres)))

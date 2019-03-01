@@ -1,9 +1,9 @@
 import * as array from "fp-ts/lib/Array";
 import { left, right } from "fp-ts/lib/Either";
 import { Function2 } from "fp-ts/lib/function";
+import { map as filterable } from "fp-ts/lib/Map";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { setoidString } from "fp-ts/lib/Setoid";
-import { Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, map, mapTo, mergeAll, share, shareReplay, switchMap } from "rxjs/operators";
@@ -73,19 +73,19 @@ export const ModelChanger: () => ModelChanger = () => ({
   uiElementSelectieSubj: new rx.Subject<UiElementSelectie>(),
   uiElementOptiesSubj: new rx.ReplaySubject<UiElementOpties>(1),
   viewPortSizeSubj: new rx.Subject<undefined>(),
-  lagenOpGroepSubj: Map<ke.Laaggroep, rx.Subject<Array<ke.ToegevoegdeLaag>>>({
-    Achtergrond: new rx.BehaviorSubject<Array<ke.ToegevoegdeLaag>>([]),
-    "Voorgrond.Hoog": new rx.BehaviorSubject<Array<ke.ToegevoegdeLaag>>([]),
-    "Voorgrond.Laag": new rx.BehaviorSubject<Array<ke.ToegevoegdeLaag>>([]),
-    Tools: new rx.BehaviorSubject<Array<ke.ToegevoegdeLaag>>([])
-  }),
+  lagenOpGroepSubj: new Map<ke.Laaggroep, rx.Subject<Array<ke.ToegevoegdeLaag>>>([
+    ["Achtergrond", new rx.BehaviorSubject<Array<ke.ToegevoegdeLaag>>([])],
+    ["Voorgrond.Hoog", new rx.BehaviorSubject<Array<ke.ToegevoegdeLaag>>([])],
+    ["Voorgrond.Laag", new rx.BehaviorSubject<Array<ke.ToegevoegdeLaag>>([])],
+    ["Tools", new rx.BehaviorSubject<Array<ke.ToegevoegdeLaag>>([])]
+  ]),
   laagVerwijderdSubj: new rx.Subject<ke.ToegevoegdeLaag>(),
   mijnLocatieZoomDoelSubj: new rx.BehaviorSubject<Option<number>>(none),
   actieveModusSubj: new rx.BehaviorSubject(none),
   zoekerServicesSubj: new rx.BehaviorSubject([]),
   zoekopdrachtSubj: new rx.Subject<Zoekopdracht>(),
   zoekresultaatselectieSubj: new rx.Subject<ZoekResultaat>(),
-  laagLocationInfoServicesOpTitelSubj: new rx.BehaviorSubject(Map()),
+  laagLocationInfoServicesOpTitelSubj: new rx.BehaviorSubject(new Map()),
   laagstijlaanpassingStateSubj: new rx.BehaviorSubject(GeenLaagstijlaanpassing),
   laagstijlGezetSubj: new rx.Subject<ke.ToegevoegdeVectorLaag>(),
   dragInfoSubj: new rx.Subject<DragInfo>(),
@@ -190,9 +190,9 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     }))
   );
 
-  const lagenOpGroep$ = changer.lagenOpGroepSubj.map(s => s!.asObservable()).toMap();
+  const lagenOpGroep$ = filterable.map(changer.lagenOpGroepSubj, s => s!.asObservable());
   const filterVectorLagen = (tlgn: ke.ToegevoegdeLaag[]) => tlgn.filter(ke.isToegevoegdeVectorLaag);
-  const vectorlagen$ = lagenOpGroep$.get("Voorgrond.Hoog").pipe(map(filterVectorLagen));
+  const vectorlagen$ = lagenOpGroep$.get("Voorgrond.Hoog")!.pipe(map(filterVectorLagen));
 
   // Om te weten welke features er zichtbaar zijn op een pagina zou het voldoende moeten zijn om te weten welke lagen er zijn, welke van
   // die lagen zichtbaar zijn en welke features er op de lagen in de huidige extent staan. Op zich is dat ook zo, maar het probleem is

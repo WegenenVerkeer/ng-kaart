@@ -2,11 +2,11 @@ import { HttpClient } from "@angular/common/http";
 import { array } from "fp-ts";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import { setoidNumber } from "fp-ts/lib/Setoid";
-import { Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { catchError } from "rxjs/operators";
 
+import * as maps from "../../util/maps";
 import { Progress } from "../kaart-with-info-model";
 import { kaartLogger } from "../log";
 
@@ -107,21 +107,21 @@ export function toAdres(agivAdres: AgivAdres): Adres {
 }
 
 export function fromCoordinate(coordinaat: ol.Coordinate): LocatieInfo {
-  return LocatieInfo(coordinaat, none, none, Map());
+  return LocatieInfo(coordinaat, none, none, new Map());
 }
 
 export function withAdres(coordinaat: ol.Coordinate, adres: XY2AdresSucces[] | XY2AdresError): LocatieInfo {
   if (adres instanceof Array && adres.length > 0) {
-    return LocatieInfo(coordinaat, some(adres[0].adres), none, Map());
+    return LocatieInfo(coordinaat, some(adres[0].adres), none, new Map());
   } else {
-    return LocatieInfo(coordinaat, none, none, Map());
+    return LocatieInfo(coordinaat, none, none, new Map());
   }
 }
 
 export function fromWegLocaties(coordinaat: ol.Coordinate, lsWegLocaties: LsWegLocaties): LocatieInfo {
   return fromNullable(lsWegLocaties.error).foldL(
-    () => LocatieInfo(coordinaat, none, some(lsWegLocaties), Map()),
-    () => LocatieInfo(coordinaat, none, none, Map())
+    () => LocatieInfo(coordinaat, none, some(lsWegLocaties), new Map()),
+    () => LocatieInfo(coordinaat, none, none, new Map())
   );
 }
 
@@ -132,7 +132,7 @@ export function merge(i1: LocatieInfo, i2: LocatieInfo): LocatieInfo {
         i2.kaartLocatie,
         i2.adres.alt(i1.adres),
         i2.weglocaties.alt(i1.weglocaties),
-        i1.lagenLocatieInfo.concat(i2.lagenLocatieInfo).toMap()
+        maps.concat(i1.lagenLocatieInfo)(i2.lagenLocatieInfo)
       )
     : i2;
 }

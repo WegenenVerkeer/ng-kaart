@@ -96,9 +96,9 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
       map(i => i.zoom),
       distinctUntilChanged()
     );
-    this.lagenHoog$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Hoog");
-    this.lagenLaag$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Laag");
-    const achtergrondLagen$ = this.modelChanges.lagenOpGroep.get("Achtergrond");
+    this.lagenHoog$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Hoog")!;
+    this.lagenLaag$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Laag")!;
+    const achtergrondLagen$ = this.modelChanges.lagenOpGroep.get("Achtergrond")!;
     this.lagenMetLegende$ = rx
       .combineLatest(this.lagenHoog$, this.lagenLaag$, achtergrondLagen$, zoom$, (lagenHoog, lagenLaag, achtergrondLagen, zoom) => {
         const lagen = lagenHoog.concat(lagenLaag, achtergrondLagen);

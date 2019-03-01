@@ -1,5 +1,4 @@
 import { Option } from "fp-ts/lib/Option";
-import { Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 
