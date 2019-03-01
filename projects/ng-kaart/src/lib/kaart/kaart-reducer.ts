@@ -1,9 +1,11 @@
 import * as array from "fp-ts/lib/Array";
 import { Endomorphism, Function1, Function2, identity, pipe } from "fp-ts/lib/function";
+import * as fptsmap from "fp-ts/lib/Map";
 import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
+import { fromEquals, setoidString, strictEqual } from "fp-ts/lib/Setoid";
 import * as validation from "fp-ts/lib/Validation";
-import * as ol from "openlayers";
 import { olx } from "openlayers";
+import * as ol from "openlayers";
 import { Subscription } from "rxjs";
 import * as rx from "rxjs";
 import { bufferCount, debounceTime, distinctUntilChanged, map, switchMap } from "rxjs/operators";
@@ -418,12 +420,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           const modelMetAangepasteLagen = pasLaagPositiesAan(-1, layerIndexNaarGroepIndex(layer, groep) + 1, maxIndexInGroep(groep), groep);
           const updatedModel = {
             ...modelMetAangepasteLagen,
-            toegevoegdeLagenOpTitel: maps.remove(modelMetAangepasteLagen.toegevoegdeLagenOpTitel)(titel),
+            toegevoegdeLagenOpTitel: fptsmap.remove(setoidString)(titel, modelMetAangepasteLagen.toegevoegdeLagenOpTitel),
             titelsOpGroep: modelMetAangepasteLagen.titelsOpGroep.set(
               groep,
               modelMetAangepasteLagen.titelsOpGroep.get(groep)!.filter(t => t !== titel)
             ),
-            groepOpTitel: maps.remove(modelMetAangepasteLagen.groepOpTitel)(titel)
+            groepOpTitel: fptsmap.remove(setoidString)(titel, modelMetAangepasteLagen.groepOpTitel)
           };
           zendLagenInGroep(updatedModel, groep);
           modelChanger.laagVerwijderdSubj.next(laag);
@@ -1062,7 +1064,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function deleteInfoBoodschap(cmnd: prt.VerbergInfoBoodschapCmd): ModelWithResult<Msg> {
-      updateBehaviorSubject(model.infoBoodschappenSubj, bsch => maps.remove(bsch)(cmnd.id));
+      updateBehaviorSubject(model.infoBoodschappenSubj, bsch => fptsmap.remove(setoidString)(cmnd.id, bsch));
       return ModelWithResult(model);
     }
 
@@ -1084,7 +1086,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function sluitInfoBoodschap(cmnd: prt.SluitInfoBoodschapCmd): ModelWithResult<Msg> {
-      const sluitBox = () => updateBehaviorSubject(model.infoBoodschappenSubj, bsch => maps.remove(bsch)(cmnd.id));
+      const sluitBox = () => updateBehaviorSubject(model.infoBoodschappenSubj, bsch => fptsmap.remove(setoidString)(cmnd.id, bsch));
       const maybeMsg = cmnd.msgGen() as Option<Msg>;
       return maybeMsg.foldL(
         () => {
