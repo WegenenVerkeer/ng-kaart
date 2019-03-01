@@ -1,18 +1,20 @@
 import { HttpClient } from "@angular/common/http";
-import { array } from "fp-ts";
-import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
-import { setoidNumber } from "fp-ts/lib/Setoid";
+import { and } from "fp-ts/lib/function";
+import { fromNullable, fromPredicate, none, Option, some } from "fp-ts/lib/Option";
 import { List, Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { catchError } from "rxjs/operators";
 
+import * as arrays from "../../../lib/util/arrays";
+import { Coordinate } from "../../coordinaten";
 import { Progress } from "../kaart-with-info-model";
 import { kaartLogger } from "../log";
 
 import { Adres, LaagLocationInfo, WegLocatie } from "./laaginfo.model";
 
 export interface LocatieInfo {
+  readonly timestamp: number;
   readonly kaartLocatie: ol.Coordinate;
   readonly adres: Option<AgivAdres>;
   readonly weglocaties: Option<LsWegLocaties>;
@@ -20,12 +22,14 @@ export interface LocatieInfo {
 }
 
 export function LocatieInfo(
+  timestamp: number,
   kaartLocatie: ol.Coordinate,
   adres: Option<AgivAdres>,
   weglocaties: Option<LsWegLocaties>,
   lagenLocatieInfo: Map<string, Progress<LaagLocationInfo>>
 ): LocatieInfo {
   return {
+    timestamp: timestamp,
     kaartLocatie: kaartLocatie,
     adres: adres,
     weglocaties: weglocaties,
@@ -106,39 +110,35 @@ export function toAdres(agivAdres: AgivAdres): Adres {
   };
 }
 
-export function fromCoordinate(coordinaat: ol.Coordinate): LocatieInfo {
-  return LocatieInfo(coordinaat, none, none, Map());
+export function fromTimestampAndCoordinate(timestamp: number, coordinaat: ol.Coordinate): LocatieInfo {
+  return LocatieInfo(timestamp, coordinaat, none, none, Map());
 }
 
-export function withAdres(coordinaat: ol.Coordinate, adres: XY2AdresSucces[] | XY2AdresError): LocatieInfo {
-  if (adres instanceof Array && adres.length > 0) {
-    return LocatieInfo(coordinaat, some(adres[0].adres), none, Map());
-  } else {
-    return LocatieInfo(coordinaat, none, none, Map());
-  }
-}
-
-export function fromWegLocaties(coordinaat: ol.Coordinate, lsWegLocaties: LsWegLocaties): LocatieInfo {
-  return fromNullable(lsWegLocaties.error).foldL(
-    () => LocatieInfo(coordinaat, none, some(lsWegLocaties), Map()),
-    () => LocatieInfo(coordinaat, none, none, Map())
+export function withAdres(timestamp: number, coordinaat: ol.Coordinate, response: XY2AdresSucces[] | XY2AdresError): LocatieInfo {
+  return LocatieInfo(
+    timestamp,
+    coordinaat,
+    fromPredicate(and(arrays.isArray, arrays.isNonEmpty))(response).map(a => a[0].adres),
+    none,
+    Map()
   );
 }
 
+export function fromWegLocaties(timestamp: number, coordinaat: ol.Coordinate, lsWegLocaties: LsWegLocaties): LocatieInfo {
+  return LocatieInfo(timestamp, coordinaat, none, fromNullable(lsWegLocaties.error).foldL(() => some(lsWegLocaties), () => none), Map());
+}
+
 export function merge(i1: LocatieInfo, i2: LocatieInfo): LocatieInfo {
-  // Merge kan enkel als de 2 coordinaten gelijk zijn.
-  return coordinatesEqual(i1.kaartLocatie, i2.kaartLocatie)
+  // Merge kan enkel als de 2 coordinaten en timestamps gelijk zijn.
+  return Coordinate.equal(i1.kaartLocatie, i2.kaartLocatie) && i1.timestamp === i2.timestamp
     ? LocatieInfo(
+        i2.timestamp,
         i2.kaartLocatie,
         i2.adres.alt(i1.adres),
         i2.weglocaties.alt(i1.weglocaties),
         i1.lagenLocatieInfo.concat(i2.lagenLocatieInfo).toMap()
       )
     : i2;
-}
-
-function coordinatesEqual(c1: ol.Coordinate, c2: ol.Coordinate): boolean {
-  return array.getSetoid(setoidNumber).equals(c1, c2);
 }
 
 export function withLaagLocationInfo(i: LocatieInfo, laagTitel: string, lli: Progress<LaagLocationInfo>): LocatieInfo {

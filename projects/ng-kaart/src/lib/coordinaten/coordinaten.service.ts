@@ -1,4 +1,4 @@
-import { Function1, Predicate } from "fp-ts/lib/function";
+import { Function1, Function2, Predicate } from "fp-ts/lib/function";
 import { fromPredicate, Option } from "fp-ts/lib/Option";
 import { getArraySetoid, Setoid, setoidNumber } from "fp-ts/lib/Setoid";
 import * as ol from "openlayers";
@@ -37,4 +37,5 @@ proj4.defs(
 export namespace Coordinate {
   export const setoid: Setoid<ol.Coordinate> = getArraySetoid(setoidNumber);
   export const equalTo: Function1<ol.Coordinate, Predicate<ol.Coordinate>> = coord1 => coord2 => setoid.equals(coord1, coord2);
+  export const equal: Function2<ol.Coordinate, ol.Coordinate, boolean> = (coord1, coord2) => setoid.equals(coord1, coord2);
 }

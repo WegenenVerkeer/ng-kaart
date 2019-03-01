@@ -46,16 +46,18 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
       _1: List<ke.ToegevoegdeLaag>,
       _2: Map<string, LaagLocationInfoService>,
       _3: ol.Coordinate
-    ) => Array<rx.Observable<srv.LocatieInfo>> = (lgn, svcs, locatie) =>
-      lgn
+    ) => Array<rx.Observable<srv.LocatieInfo>> = (lgn, svcs, locatie) => {
+      const timestamp = Date.now();
+      return lgn
         .filter(lg => lg!.layer.getVisible() && svcs.has(lg!.titel)) // zichtbare lagen met een info service
-        .map(lg => infoForLaag(locatie, lg!, svcs.get(lg!.titel)))
+        .map(lg => infoForLaag(timestamp, locatie, lg!, svcs.get(lg!.titel)))
         .toList()
         .push(
-          srv.wegLocatiesViaXY$(this.http, locatie).pipe(map(weglocatie => srv.fromWegLocaties(locatie, weglocatie))),
-          srv.adresViaXY$(this.http, locatie).pipe(map(adres => srv.withAdres(locatie, adres)))
+          srv.wegLocatiesViaXY$(this.http, locatie).pipe(map(weglocatie => srv.fromWegLocaties(timestamp, locatie, weglocatie))),
+          srv.adresViaXY$(this.http, locatie).pipe(map(adres => srv.withAdres(timestamp, locatie, adres)))
         )
         .toArray();
+    };
 
     this.bindToLifeCycle(
       stableReferentielagen$.pipe(
@@ -76,12 +78,10 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
         observeOnAngular(this.zone)
       )
     ).subscribe((msg: srv.LocatieInfo) => {
-      this.toonInfoBoodschap(
-        msg.kaartLocatie,
-        msg.adres.map(srv.toAdres),
-        msg.weglocaties.map(srv.toWegLocaties).getOrElse(List()),
-        msg.lagenLocatieInfo
-      );
+      const adres = msg.adres.map(srv.toAdres);
+      const wegLocaties = msg.weglocaties.map(srv.toWegLocaties).getOrElse(List());
+      this.toonInfoBoodschap(msg.kaartLocatie, adres, wegLocaties, msg.lagenLocatieInfo);
+      this.publiceerInfoBoodschap(msg.timestamp, msg.kaartLocatie, adres, wegLocaties, msg.lagenLocatieInfo);
     });
   }
 
@@ -105,8 +105,18 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
         verbergMsgGen: () => none
       })
     );
+  }
+
+  private publiceerInfoBoodschap(
+    timestamp: number,
+    coordinaat: ol.Coordinate,
+    maybeAdres: Option<Adres>,
+    wegLocaties: List<WegLocatie>,
+    lagenLocatieInfo: Map<string, Progress<LaagLocationInfo>>
+  ) {
     this.dispatch(
       prt.PublishKaartLocatiesCmd({
+        timestamp: timestamp,
         coordinaat: coordinaat,
         maybeAdres: maybeAdres,
         wegLocaties: wegLocaties,
@@ -116,12 +126,17 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
   }
 }
 
-function infoForLaag(location: ol.Coordinate, laag: ke.ToegevoegdeLaag, svc: LaagLocationInfoService): rx.Observable<srv.LocatieInfo> {
+function infoForLaag(
+  timestamp: number,
+  location: ol.Coordinate,
+  laag: ke.ToegevoegdeLaag,
+  svc: LaagLocationInfoService
+): rx.Observable<srv.LocatieInfo> {
   return svc
     .infoByLocation$(location) //
     .pipe(
-      map(info => srv.withLaagLocationInfo(srv.fromCoordinate(location), laag.titel, Received(info))),
-      startWith(srv.withLaagLocationInfo(srv.fromCoordinate(location), laag.titel, Requested)),
-      timeoutWith(5000, rx.of(srv.withLaagLocationInfo(srv.fromCoordinate(location), laag.titel, TimedOut)))
+      map(info => srv.withLaagLocationInfo(srv.fromTimestampAndCoordinate(timestamp, location), laag.titel, Received(info))),
+      startWith(srv.withLaagLocationInfo(srv.fromTimestampAndCoordinate(timestamp, location), laag.titel, Requested)),
+      timeoutWith(5000, rx.of(srv.withLaagLocationInfo(srv.fromTimestampAndCoordinate(timestamp, location), laag.titel, TimedOut)))
     );
 }

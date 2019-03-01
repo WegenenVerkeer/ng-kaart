@@ -19,10 +19,11 @@ export interface LaagLocationInfoService {
 export const TextLaagLocationInfo: (_: string) => TextLaagLocationInfo = text => ({ type: "TextLaagLocationInfo", text: text });
 
 export interface KaartLocaties {
-  coordinaat: ol.Coordinate;
-  maybeAdres: Option<Adres>;
-  wegLocaties: List<WegLocatie>;
-  lagenLocatieInfo: Map<string, Progress<LaagLocationInfo>>;
+  readonly timestamp: number;
+  readonly coordinaat: ol.Coordinate;
+  readonly maybeAdres: Option<Adres>;
+  readonly wegLocaties: List<WegLocatie>;
+  readonly lagenLocatieInfo: Map<string, Progress<LaagLocationInfo>>;
 }
 
 export interface WegLocatie {
