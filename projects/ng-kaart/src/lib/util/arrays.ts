@@ -1,5 +1,5 @@
 import * as array from "fp-ts/lib/Array";
-import { Refinement } from "fp-ts/lib/function";
+import { identity, Refinement } from "fp-ts/lib/function";
 import { Predicate } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 
@@ -11,6 +11,8 @@ export const isEmpty: <A>(_: A[]) => boolean = isOfLength(0);
 export const isSingleton: <A>(_: A[]) => boolean = isOfLength(1);
 export const isNonEmpty: <A>(_: A[]) => boolean = array => array.length > 0;
 export const toArray: <A>(aOrAs: A | A[]) => A[] = aOrAs => (Array.isArray(aOrAs) ? aOrAs : [aOrAs]);
+
+export const pure: <A>() => A[] = () => [];
 
 const findOffsetElement: <A>(as: Array<A>) => (p: Predicate<A>) => (offset: number) => Option<A> = as => predicate => offset =>
   array.findIndex(as, predicate).chain(i => array.index(i + offset, as));
@@ -29,3 +31,5 @@ export const splitInChunks = <A>(as: Array<A>, aantalChunks: number): Array<Arra
   const chunkSize = Math.ceil(as.length / aantalChunks);
   return array.chunksOf(as, chunkSize);
 };
+
+export const fromOption: <A>(maybeArray: Option<A[]>) => A[] = mas => mas.fold(pure(), identity);

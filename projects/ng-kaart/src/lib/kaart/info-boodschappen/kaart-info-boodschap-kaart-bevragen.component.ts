@@ -1,5 +1,7 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone } from "@angular/core";
+import * as array from "fp-ts/lib/Array";
 import { fromNullable } from "fp-ts/lib/Option";
+import { contramap, Ord, ordNumber } from "fp-ts/lib/Ord";
 
 import { Adres, WegLocatie } from "..";
 import { formatCoordinate, lambert72ToWgs84, switchVolgorde } from "../../coordinaten/coordinaten.service";
@@ -16,6 +18,8 @@ export interface LaagInfo {
   timedout?: boolean;
   text?: string;
 }
+
+const projectafstandOrd: Ord<WegLocatie> = contramap(wl => wl.projectieafstand, ordNumber);
 
 @Component({
   selector: "awv-kaart-info-boodschap-kaart-bevragen",
@@ -51,13 +55,7 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildComponen
       .map(switchVolgorde) // andere volgorde weergeven voor wgs84
       .map(formatCoordinate(7))
       .getOrElse("");
-    this.wegLocaties = boodschap.weglocaties
-      .sortBy(locatie =>
-        fromNullable(locatie)
-          .chain(loc => fromNullable(loc.projectieafstand))
-          .getOrElse(0)
-      )
-      .toArray();
+    this.wegLocaties = array.sort(projectafstandOrd)(boodschap.weglocaties);
     this.adressen = boodschap.adres.fold([], adres => [adres]); // Array van 0 of 1 eltn isomorf met Option, maar makkelijker voor Angular
   }
 
