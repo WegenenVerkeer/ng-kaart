@@ -3,6 +3,7 @@ export * from "./observable-run";
 export * from "./observer-outside-angular";
 export * from "./operators";
 export * from "./option";
+export * from "./progress";
 export * from "./range";
 export * from "./string";
 export * from "./typed-record";

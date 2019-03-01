@@ -4,8 +4,10 @@ import { fromNullable } from "fp-ts/lib/Option";
 import { Adres, WegLocatie } from "..";
 import { formatCoordinate, lambert72ToWgs84, switchVolgorde } from "../../coordinaten/coordinaten.service";
 import { copyToClipboard } from "../../util/clipboard";
+import { withProgress } from "../../util/progress";
+import { TextLaagLocationInfo } from "../kaart-bevragen/laaginfo.model";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
-import { InfoBoodschapKaartBevragenProgress, withProgress } from "../kaart-with-info-model";
+import { InfoBoodschapKaartBevragenProgress } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
 
 export interface LaagInfo {
@@ -34,11 +36,11 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildComponen
     // keer dat Angular denkt dat hij change detection moet laten lopen.
     this.textLaagLocationInfo = boodschap.laagLocatieInfoOpTitel
       .map((value, key) =>
-        withProgress(value!)(
+        withProgress<TextLaagLocationInfo, LaagInfo>(
           () => ({ titel: key!, busy: true }),
           () => ({ titel: key!, busy: false, timedout: true }),
           laaglocationinfo => ({ titel: key!, busy: false, text: laaglocationinfo.text })
-        )
+        )(value!)
       )
       .toArray();
     this.coordinaatInformatieLambert72 = fromNullable(boodschap.coordinaat)

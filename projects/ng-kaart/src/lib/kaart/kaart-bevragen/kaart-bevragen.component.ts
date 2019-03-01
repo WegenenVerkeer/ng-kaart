@@ -1,5 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
+import * as option from "fp-ts/lib/Option";
 import { none, Option } from "fp-ts/lib/Option";
 import { List, Map } from "immutable";
 import * as ol from "openlayers";
@@ -7,10 +8,11 @@ import * as rx from "rxjs";
 import { debounceTime, filter, map, mergeAll, scan, startWith, switchMap, timeoutWith } from "rxjs/operators";
 
 import { observeOnAngular } from "../../util/observe-on-angular";
+import { Progress, Received, Requested, TimedOut } from "../../util/progress";
+import * as progress from "../../util/progress";
 import * as ke from "../kaart-elementen";
 import { KaartModusComponent } from "../kaart-modus-component";
 import * as prt from "../kaart-protocol";
-import { Progress, Received, Requested, TimedOut } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
 
 import * as srv from "./kaart-bevragen.service";
@@ -78,7 +80,7 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
         observeOnAngular(this.zone)
       )
     ).subscribe((msg: srv.LocatieInfo) => {
-      const adres = msg.adres.map(srv.toAdres);
+      const adres = msg.adres;
       const wegLocaties = msg.weglocaties.map(srv.toWegLocaties).getOrElse(List());
       this.toonInfoBoodschap(msg.kaartLocatie, adres, wegLocaties, msg.lagenLocatieInfo);
       this.publiceerInfoBoodschap(msg.timestamp, msg.kaartLocatie, adres, wegLocaties, msg.lagenLocatieInfo);
@@ -87,7 +89,7 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
 
   private toonInfoBoodschap(
     coordinaat: ol.Coordinate,
-    maybeAdres: Option<Adres>,
+    maybeAdres: Progress<srv.AdresResult>,
     wegLocaties: List<WegLocatie>,
     lagenLocatieInfo: Map<string, Progress<LaagLocationInfo>>
   ) {
@@ -99,7 +101,7 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
         sluit: "DOOR_APPLICATIE",
         bron: none,
         coordinaat: coordinaat,
-        adres: maybeAdres,
+        adres: progress.toOption(maybeAdres).chain(option.fromEither),
         weglocaties: wegLocaties,
         laagLocatieInfoOpTitel: lagenLocatieInfo,
         verbergMsgGen: () => none
@@ -110,7 +112,7 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
   private publiceerInfoBoodschap(
     timestamp: number,
     coordinaat: ol.Coordinate,
-    maybeAdres: Option<Adres>,
+    maybeAdres: Progress<srv.AdresResult>,
     wegLocaties: List<WegLocatie>,
     lagenLocatieInfo: Map<string, Progress<LaagLocationInfo>>
   ) {

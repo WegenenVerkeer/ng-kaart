@@ -1,9 +1,10 @@
-import { Option } from "fp-ts/lib/Option";
 import { List, Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 
-import { Progress } from "../kaart-with-info-model";
+import { Progress } from "../../util";
+
+import { AdresResult } from "./kaart-bevragen.service";
 
 export type LaagLocationInfo = TextLaagLocationInfo;
 
@@ -21,7 +22,7 @@ export const TextLaagLocationInfo: (_: string) => TextLaagLocationInfo = text =>
 export interface KaartLocaties {
   readonly timestamp: number;
   readonly coordinaat: ol.Coordinate;
-  readonly maybeAdres: Option<Adres>;
+  readonly maybeAdres: Progress<AdresResult>;
   readonly wegLocaties: List<WegLocatie>;
   readonly lagenLocatieInfo: Map<string, Progress<LaagLocationInfo>>;
 }

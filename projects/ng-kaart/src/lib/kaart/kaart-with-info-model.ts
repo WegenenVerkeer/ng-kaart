@@ -1,9 +1,10 @@
 import { Either } from "fp-ts/lib/Either";
-import { Function1, Lazy } from "fp-ts/lib/function";
+import { Function1 } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import { List, Map } from "immutable";
 import * as ol from "openlayers";
 
+import { Progress } from "../util/progress";
 import { TypedRecord } from "../util/typed-record";
 
 import { Adres, LaagLocationInfo, WegLocatie } from "./kaart-bevragen/laaginfo.model";
@@ -37,28 +38,6 @@ export interface InfoBoodschapIdentify extends InfoBoodschapBase {
   readonly feature: ol.Feature;
   readonly laag: Option<VectorLaag>;
 }
-
-export type Progress<A> = Requested | TimedOut | Received<A>;
-
-export type Requested = "Requested";
-export type TimedOut = "TimedOut";
-export interface Received<A> {
-  readonly value: A;
-}
-
-export const withProgress = <A>(progress: Progress<A>) => <B>(ifRequested: Lazy<B>, ifTimedOut: Lazy<B>, ifReceived: Function1<A, B>) => {
-  if (progress === "Requested") {
-    return ifRequested();
-  } else if (progress === "TimedOut") {
-    return ifTimedOut();
-  } else {
-    return ifReceived(progress.value);
-  }
-};
-
-export const Requested: Requested = "Requested";
-export const TimedOut: TimedOut = "TimedOut";
-export const Received: <A>(_: A) => Received<A> = a => ({ value: a });
 
 export interface InfoBoodschapKaartBevragenProgress extends InfoBoodschapBase {
   readonly type: "InfoBoodschapKaartBevragen";
