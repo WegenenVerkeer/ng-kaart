@@ -7,11 +7,12 @@ import * as ol from "openlayers";
 import { olx } from "openlayers";
 import { Subscription } from "rxjs";
 import * as rx from "rxjs";
-import { bufferCount, debounceTime, distinctUntilChanged, map, switchMap } from "rxjs/operators";
+import { bufferCount, debounceTime, distinctUntilChanged, map, mergeMap, switchMap } from "rxjs/operators";
 
 import { NosqlFsSource } from "../source";
 import { refreshTiles } from "../util/cachetiles";
 import * as featureStore from "../util/indexeddb-geojson-store";
+import * as metaDataDb from "../util/indexeddb-tilecache-metadata";
 import { forEach } from "../util/option";
 import * as serviceworker from "../util/serviceworker";
 import { updateBehaviorSubject } from "../util/subject-update";
@@ -1244,11 +1245,18 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             cmnd.eindZoom,
             cmnd.wkt,
             cmnd.startMetLegeCache
-          ).subscribe(progress =>
+          ).subscribe(progress => {
+            if (progress.percentage === 100) {
+              metaDataDb.write(cmnd.titel, progress.started).subscribe(() =>
+                updateBehaviorSubject(modelChanger.laatsteCacheRefreshSubj, laatsteCacheRefresh => {
+                  return { ...laatsteCacheRefresh, [cmnd.titel]: progress.started };
+                })
+              );
+            }
             updateBehaviorSubject(modelChanger.precacheProgressSubj, precacheLaagProgress => {
-              return { ...precacheLaagProgress, [cmnd.titel]: progress };
-            })
-          );
+              return { ...precacheLaagProgress, [cmnd.titel]: progress.percentage };
+            });
+          });
           return ModelAndEmptyResult(model);
         })
       );
@@ -1444,10 +1452,17 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return modelWithSubscriptionResult("LaagstijlGezet", modelChanges.laagstijlGezet$.subscribe(consumeMessage(sub)));
       }
 
-      function subcribeToPrecacheProgress(sub: prt.PrecacheProgressSubscription<Msg>): ModelWithResult<Msg> {
+      function subscribeToPrecacheProgress(sub: prt.PrecacheProgressSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
           "PrecacheProgress",
           modelChanges.precacheProgress$.pipe(distinctUntilChanged()).subscribe(consumeMessage(sub))
+        );
+      }
+
+      function subscribeToLaatsteCacheRefresh(sub: prt.LaatsteCacheRefreshSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult(
+          "LaatsteCacheRefresh",
+          modelChanges.laatsteCacheRefresh$.pipe(distinctUntilChanged()).subscribe(consumeMessage(sub))
         );
       }
 
@@ -1495,7 +1510,9 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         case "LaagstijlGezet":
           return subscribeToLaagstijlGezet(cmnd.subscription);
         case "PrecacheProgress":
-          return subcribeToPrecacheProgress(cmnd.subscription);
+          return subscribeToPrecacheProgress(cmnd.subscription);
+        case "LaatsteCacheRefresh":
+          return subscribeToLaatsteCacheRefresh(cmnd.subscription);
       }
     }
 

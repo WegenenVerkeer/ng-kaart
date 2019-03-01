@@ -312,6 +312,7 @@ export class FeatureDemoComponent {
   geselecteerdeFietspadsegmenten: List<ol.Feature> = List();
 
   precacheProgress = 0;
+  laatsteCacheRefresh = "";
   precacheWMSWkt = wkts.districten.gent;
   precacheWMSInput: PrecacheWMS = null;
 
@@ -718,6 +719,11 @@ export class FeatureDemoComponent {
 
   onPrecacheProgress(progress: number) {
     this.precacheProgress = progress;
+    this.changeDetectorRef.detectChanges();
+  }
+
+  onLaatsteCacheRefresh(datum: Option<Date>) {
+    this.laatsteCacheRefresh = datum.foldL(() => "nooit", datum => datum.toLocaleString());
     this.changeDetectorRef.detectChanges();
   }
 

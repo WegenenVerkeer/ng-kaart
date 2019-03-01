@@ -130,6 +130,12 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
                   PrecacheProgressMsg,
                   KaartClassicMsg
                 )
+              ),
+              prt.LaatsteCacheRefreshSubscription(
+                pipe(
+                  LaatsteCacheRefreshMsg,
+                  KaartClassicMsg
+                )
               )
             )
           ),
@@ -141,9 +147,9 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
           ),
           this.kaart.kaartClassicSubMsg$.pipe(
             ofType<LaatsteCacheRefreshMsg>("LaatsteCacheRefresh"),
-            map(m => (m.laatsteCacheRefresh[this.titel] ? m.laatsteCacheRefresh[this.titel] : none)),
+            map(m => (m.laatsteCacheRefresh[this.titel] ? some(m.laatsteCacheRefresh[this.titel]) : none)),
             distinctUntilChanged(),
-            map(laatsteCacheRefresh => this.laatsteCacheRefresh.emit(some(laatsteCacheRefresh))),
+            map(laatsteCacheRefresh => this.laatsteCacheRefresh.emit(laatsteCacheRefresh)),
             startWith(none)
           )
         )

@@ -1,11 +1,15 @@
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { map, mergeAll, mergeMap, tap } from "rxjs/operators";
+import { mergeMap, tap } from "rxjs/operators";
 
 import { kaartLogger } from "../kaart/log";
 
 import { splitInChunks } from "./arrays";
-import * as metaDataDb from "./indexeddb-tilecache-metadata";
+
+export interface Progress {
+  readonly started: Date;
+  readonly percentage: number;
+}
 
 const AANTAL_PARALLELE_REQUESTS = 4;
 
@@ -14,14 +18,21 @@ const AANTAL_PARALLELE_REQUESTS = 4;
  * deze parallel af te lopen.
  * Elke chunk gaat sequentieel 1 voor 1 elke URL ophalen.
  */
-const fetchUrlsGrouped = (urls: string[]): rx.Observable<number> => {
-  return new rx.Observable<number>(observable => {
+const fetchUrlsGrouped = (urls: string[]): rx.Observable<Progress> => {
+  return new rx.Observable<Progress>(observable => {
     let fetched = 0;
+    const progress = {
+      started: new Date(),
+      percentage: 0
+    };
 
     const fetchUrls = (chunk: string[]) => {
       const fetches = chunk.map(url => () => {
         fetched++;
-        observable.next(Math.round((fetched / urls.length) * 100));
+        observable.next({
+          ...progress,
+          percentage: Math.round((fetched / urls.length) * 100)
+        });
         return fetch(new Request(url, { credentials: "include" }), { keepalive: true, mode: "cors" }).catch(err => kaartLogger.error(err));
       });
       fetches.reduce((vorige, huidige) => vorige.then(huidige), Promise.resolve());
@@ -41,7 +52,7 @@ export const refreshTiles = (
   stopZoom: number,
   wkt: string,
   startMetLegeCache: boolean
-): rx.Observable<number> => {
+): rx.Observable<Progress> => {
   if (isNaN(startZoom)) {
     throw new Error("Start zoom is geen getal");
   }
@@ -159,7 +170,6 @@ export const refreshTiles = (
         ? kaartLogger.info(`Cache ${laagnaam} leeggemaakt`)
         : kaartLogger.info(`Cache ${laagnaam} niet leeggemaakt, wordt verder gevuld`)
     ),
-    mergeMap(() => metaDataDb.write(laagnaam, new Date())),
     mergeMap(() => fetchUrlsGrouped(queue))
   );
 };

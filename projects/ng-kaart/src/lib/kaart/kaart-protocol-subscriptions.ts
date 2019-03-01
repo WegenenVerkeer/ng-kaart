@@ -10,7 +10,7 @@ import { KaartLocaties, WegLocatie } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { TekenResultaat } from "./kaart-elementen";
 import { InfoBoodschap } from "./kaart-with-info-model";
-import { PrecacheLaagProgress } from "./model-changes";
+import { LaatsteCacheRefresh, PrecacheLaagProgress } from "./model-changes";
 
 /////////
 // Types
@@ -29,6 +29,7 @@ export type Subscription<Msg> =
   | PublishedKaartLocatiesSubscription<Msg>
   | LaagstijlGezetSubscription<Msg>
   | LaagVerwijderdSubscription<Msg>
+  | LaatsteCacheRefreshSubscription<Msg>
   | LagenInGroepSubscription<Msg>
   | MiddelpuntSubscription<Msg>
   | PrecacheProgressSubscription<Msg>
@@ -173,6 +174,11 @@ export interface PrecacheProgressSubscription<Msg> {
   readonly wrapper: (progress: PrecacheLaagProgress) => Msg;
 }
 
+export interface LaatsteCacheRefreshSubscription<Msg> {
+  readonly type: "LaatsteCacheRefresh";
+  readonly wrapper: (progress: LaatsteCacheRefresh) => Msg;
+}
+
 ///////////////
 // Constructors
 //
@@ -278,4 +284,10 @@ export function LaagstijlGezetSubscription<Msg>(wrapper: MsgGen<ke.ToegevoegdeVe
 
 export function PrecacheProgressSubscription<Msg>(wrapper: (progress: PrecacheLaagProgress) => Msg): PrecacheProgressSubscription<Msg> {
   return { type: "PrecacheProgress", wrapper };
+}
+
+export function LaatsteCacheRefreshSubscription<Msg>(
+  wrapper: (progress: LaatsteCacheRefresh) => Msg
+): LaatsteCacheRefreshSubscription<Msg> {
+  return { type: "LaatsteCacheRefresh", wrapper };
 }
