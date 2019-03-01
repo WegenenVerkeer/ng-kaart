@@ -1,6 +1,5 @@
 import * as array from "fp-ts/lib/Array";
-import { Refinement } from "fp-ts/lib/function";
-import { Predicate } from "fp-ts/lib/function";
+import { identity, Predicate, Refinement } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import * as option from "fp-ts/lib/Option";
 
@@ -32,3 +31,5 @@ export const splitInChunks = <A>(as: Array<A>, aantalChunks: number): Array<Arra
 };
 
 export const fromNullable: <A>(aOrAs: A | A[]) => A[] = aOrAs => option.fromNullable(aOrAs).fold([], toArray);
+
+export const fromOption: <A>(maybeArray: Option<A[]>) => A[] = mas => mas.fold([], identity);

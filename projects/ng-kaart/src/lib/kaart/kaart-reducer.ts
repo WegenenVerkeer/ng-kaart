@@ -3,7 +3,7 @@ import { Endomorphism, Function1, Function2, identity, pipe } from "fp-ts/lib/fu
 import * as fptsmap from "fp-ts/lib/Map";
 import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
 import * as ord from "fp-ts/lib/Ord";
-import { fromEquals, setoidString, strictEqual } from "fp-ts/lib/Setoid";
+import { setoidString } from "fp-ts/lib/Setoid";
 import * as validation from "fp-ts/lib/Validation";
 import { olx } from "openlayers";
 import * as ol from "openlayers";
