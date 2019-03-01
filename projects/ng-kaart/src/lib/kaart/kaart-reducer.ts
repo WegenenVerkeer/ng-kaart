@@ -2,6 +2,7 @@ import * as array from "fp-ts/lib/Array";
 import { Endomorphism, Function1, Function2, identity, pipe } from "fp-ts/lib/function";
 import * as fptsmap from "fp-ts/lib/Map";
 import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
+import * as ord from "fp-ts/lib/Ord";
 import { fromEquals, setoidString, strictEqual } from "fp-ts/lib/Setoid";
 import * as validation from "fp-ts/lib/Validation";
 import { olx } from "openlayers";
@@ -307,9 +308,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         .map(titel => mdl.toegevoegdeLagenOpTitel.get(titel!)!); // dus hebben we geldige titels
     }
 
+    const ordToegevoegdeLaag: ord.Ord<ke.ToegevoegdeLaag> = ord.contramap(laag => -laag!.layer.getZIndex(), ord.ordNumber);
+
     function zendLagenInGroep(mdl: Model, groep: ke.Laaggroep): void {
       modelChanger.lagenOpGroepSubj.get(groep)!.next(
-        lagenInGroep(mdl, groep).sort(laag => -laag!.layer.getZIndex()) // en dus ook geldige titels
+        array.sort(ordToegevoegdeLaag)(lagenInGroep(mdl, groep)) // en dus ook geldige titels
       );
     }
 
