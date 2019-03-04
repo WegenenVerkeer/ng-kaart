@@ -1,7 +1,7 @@
 import * as array from "fp-ts/lib/Array";
 import { Endomorphism, Function1, Function2, identity, pipe } from "fp-ts/lib/function";
 import * as fptsmap from "fp-ts/lib/Map";
-import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
+import { fromNullable, isNone, none, option, Option, some } from "fp-ts/lib/Option";
 import * as ord from "fp-ts/lib/Ord";
 import { setoidString } from "fp-ts/lib/Setoid";
 import * as validation from "fp-ts/lib/Validation";
@@ -12,6 +12,7 @@ import * as rx from "rxjs";
 import { bufferCount, debounceTime, distinctUntilChanged, map, switchMap } from "rxjs/operators";
 
 import { NosqlFsSource } from "../source";
+import * as arrays from "../util/arrays";
 import { refreshTiles } from "../util/cachetiles";
 import * as featureStore from "../util/geojson-store";
 import * as maps from "../util/maps";
@@ -41,7 +42,6 @@ import {
 import * as ss from "./stijl-selector";
 import { GeenLaagstijlaanpassing, LaagstijlAanpassend } from "./stijleditor/state";
 import { getDefaultStyleSelector } from "./styles";
-import { DrawOps } from "./tekenen/tekenen-model";
 
 ///////////////////////////////////
 // Hulpfuncties
@@ -300,9 +300,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function lagenInGroep(mdl: Model, groep: ke.Laaggroep): Array<ke.ToegevoegdeLaag> {
-      return mdl.titelsOpGroep
-        .get(groep)! // we vertrekken van geldige groepen
-        .map(titel => mdl.toegevoegdeLagenOpTitel.get(titel!)!); // dus hebben we geldige titels
+      const maybeTitels: Option<string[]> = fptsmap.lookup(setoidString)(groep, mdl.titelsOpGroep);
+      const maybeLagen: Option<ke.ToegevoegdeLaag[]> = maybeTitels.chain(titels =>
+        array.array.traverse(option)(titels, titel => fptsmap.lookup(setoidString)(titel, mdl.toegevoegdeLagenOpTitel))
+      );
+      return arrays.fromOption(maybeLagen);
     }
 
     const ordToegevoegdeLaag: ord.Ord<ke.ToegevoegdeLaag> = ord.contramap(laag => -laag!.layer.getZIndex(), ord.ordNumber);
