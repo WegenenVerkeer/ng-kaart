@@ -106,13 +106,7 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
     this.bindToLifeCycle(
       this.internalMessage$.pipe(
         ofType<InfoBoodschappenMsg>("InfoBoodschappen"), //
-        map(msg =>
-          Array.from(
-            maps
-              .filter(msg.infoBoodschappen)(boodschapVanMeten)
-              .keys()
-          )
-        )
+        map(msg => Array.from(maps.filter(msg.infoBoodschappen, boodschapVanMeten).keys()))
       )
     ).subscribe(boodschappen => {
       this.openBoodschappen = new Set(boodschappen);

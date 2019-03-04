@@ -5,24 +5,24 @@ export const isOfSize: (_: number) => <K, V>(_: Map<K, V>) => boolean = size => 
 
 export const isNonEmpty: <K, V>(_: Map<K, V>) => boolean = map => map.size > 0;
 
-export const find: <K, V>(_: Map<K, V>) => (_: Predicate<V>) => Option<V> = kvs => pred => {
-  kvs.forEach(v => {
-    if (pred(v)) {
-      return some(v);
+export function findFirst<K, V>(kvs: Map<K, V>, predicate: Predicate<V>): Option<V> {
+  for (const entry of kvs.entries()) {
+    if (predicate(entry[1])) {
+      return some(entry[1]);
     }
-  });
+  }
   return none;
-};
+}
 
-export const filter: <K, V>(_: Map<K, V>) => (_: Predicate<V>) => Map<K, V> = kvs => pred => {
-  const newMap = new Map();
-  kvs.forEach((v, k) => {
-    if (pred(v)) {
-      newMap.set(k, v);
+export function filter<K, V>(kvs: Map<K, V>, predicate: Predicate<V>): Map<K, V> {
+  const newMap = new Map<K, V>();
+  for (const entry of kvs.entries()) {
+    if (predicate(entry[1])) {
+      newMap.set(entry[0], entry[1]);
     }
-  });
+  }
   return newMap;
-};
+}
 
 export const reverse: <K, V>(_: Map<K, V>) => Map<K, V> = kvs => {
   return new Map(Array.from(kvs.entries()).reverse());
