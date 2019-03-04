@@ -8,7 +8,7 @@ import { bufferCount, filter, last, map, mergeMap, reduce, scan, share, tap } fr
 import * as le from "../kaart/kaart-load-events";
 import { kaartLogger } from "../kaart/log";
 import { Pipeable } from "../util";
-import { fetchWithTimeoutObs$ } from "../util/fetch-with-timeout";
+import { fetchObs$, fetchWithTimeoutObs$ } from "../util/fetch-with-timeout";
 import { ReduceFunction } from "../util/function";
 import * as geojsonStore from "../util/geojson-store";
 import { GeoJsonLike } from "../util/geojson-store";
@@ -25,7 +25,7 @@ import { GeoJsonLike } from "../util/geojson-store";
 
  */
 
-const FETCH_TIMEOUT = 5000; // max time to wait for data from featureserver before checking cache
+const FETCH_TIMEOUT = 5000; // max time to wait for data from featureserver before checking cache, enkel indien gebruikCache = true
 const BATCH_SIZE = 100; // aantal features per keer toevoegen aan laag
 
 const format = new ol.format.GeoJSON();
@@ -200,19 +200,31 @@ export class NosqlFsSource extends ol.source.Vector {
   }
 
   fetchFeatures$(extent: number[]): rx.Observable<GeoJsonLike> {
-    return fetchWithTimeoutObs$(
-      this.composeUrl(extent),
-      {
+    if (this.gebruikCache) {
+      return fetchWithTimeoutObs$(
+        this.composeUrl(extent),
+        {
+          method: "GET",
+          cache: "no-store", // geen client side caching van nosql data
+          credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
+        },
+        FETCH_TIMEOUT
+      ).pipe(
+        split(featureDelimiter),
+        filter(lijn => lijn.trim().length > 0),
+        toGeoJson
+      );
+    } else {
+      return fetchObs$(this.composeUrl(extent), {
         method: "GET",
         cache: "no-store", // geen client side caching van nosql data
         credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
-      },
-      FETCH_TIMEOUT
-    ).pipe(
-      split(featureDelimiter),
-      filter(lijn => lijn.trim().length > 0),
-      toGeoJson
-    );
+      }).pipe(
+        split(featureDelimiter),
+        filter(lijn => lijn.trim().length > 0),
+        toGeoJson
+      );
+    }
   }
 
   fetchFeaturesByWkt$(wkt: string): rx.Observable<GeoJsonLike> {
