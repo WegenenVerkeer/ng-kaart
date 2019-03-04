@@ -115,10 +115,10 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
       visible: true,
       style: vectorlaag.styleSelector.map(toStylish).getOrElse(kaart.config.defaults.style),
       minResolution: array
-        .index(vectorlaag.maxZoom, kaart.config.defaults.resolutions)
+        .lookup(vectorlaag.maxZoom, kaart.config.defaults.resolutions)
         .getOrElse(kaart.config.defaults.resolutions[kaart.config.defaults.resolutions.length - 1]),
       maxResolution: array
-        .index(vectorlaag.minZoom, kaart.config.defaults.resolutions)
+        .lookup(vectorlaag.minZoom, kaart.config.defaults.resolutions)
         .map(maxResolutie => maxResolutie + 0.0001) // max is exclusive, dus tel een fractie bij zodat deze inclusief wordt
         .getOrElse(kaart.config.defaults.resolutions[0])
     });

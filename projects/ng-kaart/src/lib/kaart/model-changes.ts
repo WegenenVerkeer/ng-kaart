@@ -233,7 +233,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
   );
 
   const gevraagdeZoekers: Function2<Zoekopdracht, ZoekerMetPrioriteiten[], ZoekerMetPrioriteiten[]> = (opdracht, geregistreerd) =>
-    geregistreerd.filter(zmp => array.member(setoidString)(opdracht.zoekernamen, zmp.zoeker.naam()));
+    geregistreerd.filter(zmp => array.elem(setoidString)(zmp.zoeker.naam(), opdracht.zoekernamen));
 
   const zoekresulaten$: rx.Observable<ZoekAntwoord> = changer.zoekerServicesSubj.pipe(
     switchMap(zoekerSvcs =>

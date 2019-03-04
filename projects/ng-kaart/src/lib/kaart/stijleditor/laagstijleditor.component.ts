@@ -223,7 +223,7 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
 
     // We willen dat de veld dropdown opgevuld wordt met de waarde die voorheen gekozen was (als die er is)
     const isStillAvailable: Function1<string[], Predicate<string>> = bechikbareVeldnamen => veldnaam =>
-      array.member(setoidString)(bechikbareVeldnamen, veldnaam);
+      array.elem(setoidString)(veldnaam, bechikbareVeldnamen);
     this.bindToLifeCycle(
       rx
         .combineLatest(laag$.pipe(map(kleurveldnaamViaLaag)), this.klasseVelden$, tuple)

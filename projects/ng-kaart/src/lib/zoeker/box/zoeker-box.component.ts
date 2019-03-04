@@ -582,7 +582,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
           resultaat.preferredPointZoomLevel.map(zoom => this.dispatch(prt.VeranderZoomCmd(zoom, kaartLogOnlyWrapper)));
         }
         const features = fromNullable(this.featuresByResultaat.get(resultaat));
-        forEach(features.chain(fs => array.index(0, fs)), feat => this.highlight(feat, info));
+        forEach(features.chain(fs => array.lookup(0, fs)), feat => this.highlight(feat, info));
       }
     );
   }
@@ -876,7 +876,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   availability$(zoekerNaam: ZoekerType): rx.Observable<boolean> {
-    return this.zoekerNamen$.pipe(map(nmn => array.member(setoidString)(nmn, zoekerNaam)));
+    return this.zoekerNamen$.pipe(map(nmn => array.elem(setoidString)(zoekerNaam, nmn)));
   }
 
   maakVeldenLeeg(zoekerNaam: ZoekerType): void {

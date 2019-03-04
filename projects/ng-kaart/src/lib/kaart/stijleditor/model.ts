@@ -1,7 +1,7 @@
 import * as array from "fp-ts/lib/Array";
 import { Curried2, Endomorphism, Function1, Function2, Function3, Function4, Function5, Predicate, Refinement } from "fp-ts/lib/function";
 import { fromPredicate, none, Option, some } from "fp-ts/lib/Option";
-import { getArraySetoid, getRecordSetoid, Setoid, setoidBoolean, setoidString } from "fp-ts/lib/Setoid";
+import { getArraySetoid, getStructSetoid, Setoid, setoidBoolean, setoidString } from "fp-ts/lib/Setoid";
 import { Lens, Optional } from "monocle-ts";
 
 import * as clr from "../../stijl/colour";
@@ -64,7 +64,7 @@ export namespace VeldwaardeKleur {
   export const waarde: Lens<VeldwaardeKleur, sft.ValueType> = Lens.fromProp("waarde");
   export const kleur: Lens<VeldwaardeKleur, clr.Kleur> = Lens.fromProp("kleur");
 
-  export const setoid: Setoid<VeldwaardeKleur> = getRecordSetoid({
+  export const setoid: Setoid<VeldwaardeKleur> = getStructSetoid({
     waarde: setoidString,
     kleur: clr.setoidKleurOpCode
   });
@@ -119,7 +119,7 @@ export namespace VeldProps {
         convertType(veld.type) //
           .map(exprtype => create(veld.naam, veld.label, veld.type, exprtype, veld.uniekeWaarden!.map(convertData(exprtype))))
       );
-  export const setoidWithoutUniekeWaarden: Setoid<VeldProps> = getRecordSetoid({
+  export const setoidWithoutUniekeWaarden: Setoid<VeldProps> = getStructSetoid({
     expressietype: setoidString,
     weergavetype: setoidString,
     naam: setoidString
@@ -143,7 +143,7 @@ export namespace EnkeleKleur {
   export const createAfgeleid: Function1<clr.Kleur, EnkeleKleur> = kleur => create(true, kleur);
   export const createSynthetisch: Function1<clr.Kleur, EnkeleKleur> = kleur => create(false, kleur);
 
-  export const setoid: Setoid<EnkeleKleur> = getRecordSetoid({
+  export const setoid: Setoid<EnkeleKleur> = getStructSetoid({
     kleur: clr.setoidKleurOpCode,
     afgeleid: setoidBoolean
   });
@@ -180,7 +180,7 @@ export namespace KleurPerVeldwaarde {
     terugvalkleur
   ) => create(false, veld, waardekleuren, terugvalkleur);
 
-  export const setoid: Setoid<KleurPerVeldwaarde> = getRecordSetoid({
+  export const setoid: Setoid<KleurPerVeldwaarde> = getStructSetoid({
     afgeleid: setoidBoolean,
     waardekleuren: getArraySetoid(VeldwaardeKleur.setoid),
     terugvalkleur: clr.setoidKleurOpCode

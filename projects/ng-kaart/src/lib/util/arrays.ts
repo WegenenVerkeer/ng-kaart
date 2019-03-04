@@ -13,7 +13,7 @@ export const isNonEmpty: <A>(_: A[]) => boolean = array => array.length > 0;
 export const toArray: <A>(aOrAs: A | A[]) => A[] = aOrAs => (Array.isArray(aOrAs) ? aOrAs : [aOrAs]);
 
 const findOffsetElement: <A>(as: Array<A>) => (p: Predicate<A>) => (offset: number) => Option<A> = as => predicate => offset =>
-  array.findIndex(as, predicate).chain(i => array.index(i + offset, as));
+  array.findIndex(as, predicate).chain(i => array.lookup(i + offset, as));
 
 export const previousElement: <A>(as: Array<A>) => (p: Predicate<A>) => Option<A> = as => predicate => findOffsetElement(as)(predicate)(-1);
 
