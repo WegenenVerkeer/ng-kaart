@@ -30,6 +30,6 @@ export const splitInChunks = <A>(as: Array<A>, aantalChunks: number): Array<Arra
   return array.chunksOf(as, chunkSize);
 };
 
-export const fromNullable: <A>(aOrAs: A | A[]) => A[] = aOrAs => option.fromNullable(aOrAs).fold([], toArray);
+export const fromNullable: <A>(aOrAs: null | undefined | A | A[]) => A[] = aOrAs => option.fromNullable(aOrAs).fold([], toArray);
 
 export const fromOption: <A>(maybeArray: Option<A[]>) => A[] = mas => mas.fold([], identity);
