@@ -72,7 +72,10 @@ const flattenKaartLocaties: Function1<KaartLocaties, KaartLocatiesPlat> = locati
   adresStatus: progress.toProgressStatus(locaties.maybeAdres),
   wegLocaties: arrays.fromOption(progress.toOption(locaties.wegLocaties).map(arrays.fromEither)),
   wegLocatiesStatus: progress.toProgressStatus(locaties.wegLocaties),
-  combinedLaagLocatieStatus: "Requested"
+  combinedLaagLocatieStatus: progress.combineStatus(
+    progress.toProgressStatus(locaties.maybeAdres),
+    progress.toProgressStatus(locaties.wegLocaties)
+  )
 });
 
 @Component({

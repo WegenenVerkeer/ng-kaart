@@ -43,3 +43,14 @@ export const toProgressStatus: <A>(_: Progress<A>) => ProgressStatus = withProgr
   () => "TimedOut" as ProgressStatus,
   () => "Received" as ProgressStatus
 );
+
+export const combineStatus: <A>(ps1: ProgressStatus, ps2: ProgressStatus) => ProgressStatus = (ps1, ps2) => {
+  switch (ps1) {
+    case "Requested":
+      return "Requested";
+    case "TimedOut":
+      return ps2 === "Requested" ? "Requested" : "TimedOut"; // vrij arbitrair, maar moet wel symmetrisch zijn
+    case "Received":
+      return ps2;
+  }
+};
