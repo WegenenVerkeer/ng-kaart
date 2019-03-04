@@ -15,17 +15,12 @@ interface CacheUpdateInformatie {
 
 const openStore = (): Observable<idb.DB> => {
   return from(
-    idb
-      .openDb(indexedb_db_naam, 1, upgradeDB => {
-        switch (upgradeDB.oldVersion) {
-          case 0:
-            upgradeDB.createObjectStore(indexedb_db_naam, { keyPath: "laagnaam" });
-        }
-      })
-      .catch(fout => {
-        console.log("Kon database niet openen " + fout);
-        return null;
-      })
+    idb.openDb(indexedb_db_naam, 1, upgradeDB => {
+      switch (upgradeDB.oldVersion) {
+        case 0:
+          upgradeDB.createObjectStore(indexedb_db_naam, { keyPath: "laagnaam" });
+      }
+    })
   );
 };
 
