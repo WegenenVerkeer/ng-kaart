@@ -1,5 +1,5 @@
 import * as array from "fp-ts/lib/Array";
-import { Endomorphism, Function1, Function2, identity, pipe } from "fp-ts/lib/function";
+import { Endomorphism, Function1, Function2, identity, not, pipe } from "fp-ts/lib/function";
 import * as fptsmap from "fp-ts/lib/Map";
 import { fromNullable, isNone, none, option, Option, some } from "fp-ts/lib/Option";
 import * as ord from "fp-ts/lib/Ord";
@@ -583,7 +583,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function voegStandaardInteractiesToeCmd(cmnd: prt.VoegStandaardInteractiesToeCmd<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        fromPredicate(model.stdInteracties, l => array.isEmpty(l), "De standaard interacties zijn al ingesteld").map(() => {
+        fromPredicate(model.stdInteracties, array.isEmpty, "De standaard interacties zijn al ingesteld").map(() => {
           const stdInteracties: ol.interaction.Interaction[] = ol.interaction
             .defaults()
             .getArray()
@@ -609,7 +609,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function verwijderStandaardInteractiesCmd(cmnd: prt.VerwijderStandaardInteractiesCmd<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        fromPredicate(model.stdInteracties, l => !array.isEmpty(l), "De standaard interacties zijn niet aanwezig").map(
+        fromPredicate(model.stdInteracties, not(array.isEmpty), "De standaard interacties zijn niet aanwezig").map(
           (stdInteracties: Array<ol.interaction.Interaction>) => {
             stdInteracties.forEach(i => model.map.removeInteraction(i!));
             return ModelAndEmptyResult({ ...model, stdInteracties: [] });
@@ -1215,7 +1215,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function sluitPanelen(cmnd: prt.SluitPanelenCmd): ModelWithResult<Msg> {
-      updateBehaviorSubject(model.infoBoodschappenSubj, _ => new Map());
+      updateBehaviorSubject(model.infoBoodschappenSubj, () => new Map());
       modelChanger.laagstijlaanpassingStateSubj.next(GeenLaagstijlaanpassing);
       return ModelWithResult(model);
     }
