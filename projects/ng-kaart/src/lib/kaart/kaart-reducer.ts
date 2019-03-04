@@ -115,18 +115,15 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function valideerToegevoegdeLaagBestaat(titel: string): prt.KaartCmdValidation<ke.ToegevoegdeLaag> {
-      return fromPredicate(
-        model.toegevoegdeLagenOpTitel.get(titel)!,
-        (l: ke.ToegevoegdeLaag) => l !== undefined,
-        `Een laag met titel ${titel} bestaat niet`
-      );
+      return fromOption(fptsmap.lookup(setoidString)(titel, model.toegevoegdeLagenOpTitel), `Een laag met titel ${titel} bestaat niet`);
     }
 
     function valideerToegevoegdeVectorLaagBestaat(titel: string): prt.KaartCmdValidation<ke.ToegevoegdeVectorLaag> {
-      return fromPredicate(
-        model.toegevoegdeLagenOpTitel.get(titel)! as ke.ToegevoegdeVectorLaag,
-        (l: ke.ToegevoegdeVectorLaag) => l !== undefined && ke.isToegevoegdeVectorLaag(l),
-        `Een laag met titel ${titel} bestaat niet`
+      return fromOption(
+        fptsmap
+          .lookup(setoidString)(titel, model.toegevoegdeLagenOpTitel)
+          .filter(ke.isToegevoegdeVectorLaag),
+        `Een vectorlaag met titel ${titel} bestaat niet`
       );
     }
 
