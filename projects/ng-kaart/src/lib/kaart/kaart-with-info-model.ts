@@ -1,7 +1,6 @@
 import { Either } from "fp-ts/lib/Either";
 import { Function1, Lazy } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
-import { List, Map } from "immutable";
 import * as ol from "openlayers";
 
 import { TypedRecord } from "../util/typed-record";
@@ -64,7 +63,7 @@ export interface InfoBoodschapKaartBevragenProgress extends InfoBoodschapBase {
   readonly type: "InfoBoodschapKaartBevragen";
   readonly coordinaat: ol.Coordinate;
   readonly adres: Option<Adres>; // Zou ook Progress<Adres> kunnen zijn
-  readonly weglocaties: List<WegLocatie>; // Zou ook Progress<List<WegLocatie>> kunnen zijn
+  readonly weglocaties: Array<WegLocatie>; // Zou ook Progress<Array<WegLocatie>> kunnen zijn
   readonly laagLocatieInfoOpTitel: Map<string, Progress<LaagLocationInfo>>;
 }
 
@@ -88,11 +87,11 @@ export const foldInfoBoodschap = (boodschap: InfoBoodschap) => <A>(
 
 export interface Groeplagen {
   readonly laaggroep: ke.Laaggroep;
-  readonly lagen: List<ke.ToegevoegdeLaag>;
+  readonly lagen: Array<ke.ToegevoegdeLaag>;
 }
 
 export interface GeselecteerdeFeatures {
-  readonly geselecteerd: List<ol.Feature>;
+  readonly geselecteerd: Array<ol.Feature>;
   readonly toegevoegd: Option<ol.Feature>;
   readonly verwijderd: Option<ol.Feature>;
 }

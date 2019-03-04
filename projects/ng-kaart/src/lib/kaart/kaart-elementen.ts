@@ -1,7 +1,6 @@
 import { Function1, Refinement } from "fp-ts/lib/function";
 import { fromPredicate, Option } from "fp-ts/lib/Option";
 import { contramap, Setoid, setoidString } from "fp-ts/lib/Setoid";
-import { List, OrderedMap } from "immutable";
 import { Iso, Lens, Optional } from "monocle-ts";
 import * as ol from "openlayers";
 
@@ -33,7 +32,7 @@ export interface WmsLaag {
   readonly titel: string;
   readonly naam: string;
   readonly backgroundUrl: string;
-  readonly urls: List<string>;
+  readonly urls: Array<string>;
   readonly versie: Option<string>;
   readonly tileSize: Option<number>;
   readonly format: Option<string>;
@@ -51,7 +50,7 @@ export interface WmtsCapaConfig {
 
 export interface WmtsManualConfig {
   readonly type: "Manual";
-  readonly urls: List<string>;
+  readonly urls: Array<string>;
   readonly style: Option<string>;
   readonly matrixIds: string[];
   readonly origin: Option<ol.Coordinate>;
@@ -98,7 +97,7 @@ export interface VectorLaag {
   readonly hover: boolean;
   readonly minZoom: number;
   readonly maxZoom: number;
-  readonly velden: OrderedMap<string, VeldInfo>;
+  readonly velden: Map<string, VeldInfo>;
   readonly offsetveld: Option<string>;
   readonly verwijderd: boolean;
   readonly rijrichtingIsDigitalisatieZin: boolean;
@@ -231,8 +230,8 @@ export namespace ToegevoegdeVectorLaag {
     "velden"
   ]).composeIso(
     new Iso(
-      map => map.valueSeq().toArray(), //
-      infos => OrderedMap(infos.map(info => [info.naam, info]))
+      map => Array.from(map.values()), //
+      infos => infos.reduce((m, info) => m.set(info.naam, info), new Map<string, VeldInfo>())
     )
   );
 

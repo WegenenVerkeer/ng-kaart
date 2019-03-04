@@ -116,9 +116,9 @@
     <div *ngIf="legende.size > 0">
       <div class="zoeker-subtitel">Legende</div>
       <div *ngFor="let key of legendeKeys" class="zoeker-resultaat">
-        <span [ngSwitch]="legende.get(key).type">
-          <mat-icon *ngSwitchCase="'svg'" class="zoeker-resultaat-icoon" [svgIcon]="legende.get(key).name"></mat-icon>
-          <mat-icon *ngSwitchCase="'font'" class="zoeker-resultaat-icoon">{{legende.get(key).name}}</mat-icon>
+        <span [ngSwitch]="legende.get(key)!.type">
+          <mat-icon *ngSwitchCase="'svg'" class="zoeker-resultaat-icoon" [svgIcon]="legende.get(key)!.name"></mat-icon>
+          <mat-icon *ngSwitchCase="'font'" class="zoeker-resultaat-icoon">{{legende.get(key)!.name}}</mat-icon>
         </span>
         <span>{{key}}</span>
       </div>

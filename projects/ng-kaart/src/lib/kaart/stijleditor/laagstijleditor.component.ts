@@ -177,8 +177,8 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
       array.findFirst(lgn.filter(lg => lg.titel === titel), ke.isToegevoegdeVectorLaag);
     const laag$: rx.Observable<ke.ToegevoegdeVectorLaag> = forEvery(aanpassing$)(aanpassing =>
       kaart.modelChanges.lagenOpGroep
-        .get(aanpassing.laag.laaggroep)
-        .pipe(collectOption(lgn => findLaagOpTitel(aanpassing.laag.titel, lgn.toArray())))
+        .get(aanpassing.laag.laaggroep)!
+        .pipe(collectOption(lgn => findLaagOpTitel(aanpassing.laag.titel, lgn)))
     ).pipe(
       shareReplay(1) // De huidige laag moet bewaard blijven voor alle volgende subscribers
     );
@@ -223,7 +223,7 @@ export class LaagstijleditorComponent extends KaartChildComponentBase {
 
     // We willen dat de veld dropdown opgevuld wordt met de waarde die voorheen gekozen was (als die er is)
     const isStillAvailable: Function1<string[], Predicate<string>> = bechikbareVeldnamen => veldnaam =>
-      array.member(setoidString)(bechikbareVeldnamen, veldnaam);
+      array.elem(setoidString)(veldnaam, bechikbareVeldnamen);
     this.bindToLifeCycle(
       rx
         .combineLatest(laag$.pipe(map(kleurveldnaamViaLaag)), this.klasseVelden$, tuple)

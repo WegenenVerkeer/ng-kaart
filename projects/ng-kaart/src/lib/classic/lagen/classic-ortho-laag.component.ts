@@ -1,6 +1,5 @@
 import { Component, Inject, NgZone, ViewEncapsulation } from "@angular/core";
 import { fromNullable } from "fp-ts/lib/Option";
-import { List } from "immutable";
 
 import { KAART_CFG, KaartConfig } from "../../kaart/kaart-config";
 import { TiledWmsType, WmsLaag } from "../../kaart/kaart-elementen";
@@ -23,12 +22,12 @@ export class ClassicOrthoLaagComponent extends ClassicWmsLaagComponent {
       type: TiledWmsType,
       titel: this.titel,
       naam: this.config.orthofotomozaiek.naam,
-      urls: List(this.config.orthofotomozaiek.urls),
+      urls: this.config.orthofotomozaiek.urls,
       versie: fromNullable(this.versie),
       tileSize: fromNullable(this.tileSize),
       format: fromNullable(this.format),
       opacity: fromNullable(this.opacity),
-      backgroundUrl: this.backgroundUrl(List(this.config.orthofotomozaiek.urls), this.config.orthofotomozaiek.naam),
+      backgroundUrl: this.backgroundUrl(this.config.orthofotomozaiek.urls, this.config.orthofotomozaiek.naam),
       minZoom: this.minZoom,
       maxZoom: this.maxZoom,
       verwijderd: false

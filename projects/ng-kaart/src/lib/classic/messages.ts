@@ -1,5 +1,4 @@
 import { Function1 } from "fp-ts/lib/function";
-import { List } from "immutable";
 import * as ol from "openlayers";
 
 import { KaartLocaties } from "../kaart/kaart-bevragen/laaginfo.model";
@@ -78,7 +77,7 @@ export interface FeatureGedeselecteerdMsg {
 
 export interface ZichtbareFeaturesAangepastMsg {
   readonly type: "ZichtbareFeaturesAangepast";
-  readonly features: List<ol.Feature>;
+  readonly features: Array<ol.Feature>;
 }
 
 export interface ZoomAangepastMsg {
@@ -108,22 +107,22 @@ export interface ExtentAangepastMsg {
 
 export interface VectorLagenAangepastMsg {
   readonly type: "VectorLagenAangepast";
-  readonly lagen: List<ke.ToegevoegdeVectorLaag>;
+  readonly lagen: Array<ke.ToegevoegdeVectorLaag>;
 }
 
 export interface AchtergrondLagenInGroepAangepastMsg {
   readonly type: "AchtergrondLagenInGroepAangepast";
-  readonly lagen: List<ke.ToegevoegdeLaag>;
+  readonly lagen: Array<ke.ToegevoegdeLaag>;
 }
 
 export interface VoorgrondHoogLagenInGroepAangepastMsg {
   readonly type: "VoorgrondHoogLagenInGroepAangepast";
-  readonly lagen: List<ke.ToegevoegdeLaag>;
+  readonly lagen: Array<ke.ToegevoegdeLaag>;
 }
 
 export interface VoorgrondLaagLagenInGroepAangepastMsg {
   readonly type: "VoorgrondLaagLagenInGroepAangepast";
-  readonly lagen: List<ke.ToegevoegdeLaag>;
+  readonly lagen: Array<ke.ToegevoegdeLaag>;
 }
 
 export interface DummyMsg {
@@ -150,7 +149,7 @@ export function FeatureHoverAangepastMsg(hoverFeature: HoverFeature): FeatureHov
   return { type: "FeatureHoverAangepast", feature: hoverFeature };
 }
 
-export function ZichtbareFeaturesAangepastMsg(features: List<ol.Feature>): ZichtbareFeaturesAangepastMsg {
+export function ZichtbareFeaturesAangepastMsg(features: Array<ol.Feature>): ZichtbareFeaturesAangepastMsg {
   return { type: "ZichtbareFeaturesAangepast", features: features };
 }
 
@@ -166,15 +165,15 @@ export function LaatsteCacheRefreshMsg(laatsteCacheRefresh: LaatsteCacheRefresh)
   return { type: "LaatsteCacheRefresh", laatsteCacheRefresh: laatsteCacheRefresh };
 }
 
-export function AchtergrondLagenInGroepAangepastMsg(lagen: List<ToegevoegdeLaag>): AchtergrondLagenInGroepAangepastMsg {
+export function AchtergrondLagenInGroepAangepastMsg(lagen: Array<ToegevoegdeLaag>): AchtergrondLagenInGroepAangepastMsg {
   return { type: "AchtergrondLagenInGroepAangepast", lagen: lagen };
 }
 
-export function VoorgrondLaagLagenInGroepAangepastMsg(lagen: List<ToegevoegdeLaag>): VoorgrondLaagLagenInGroepAangepastMsg {
+export function VoorgrondLaagLagenInGroepAangepastMsg(lagen: Array<ToegevoegdeLaag>): VoorgrondLaagLagenInGroepAangepastMsg {
   return { type: "VoorgrondLaagLagenInGroepAangepast", lagen: lagen };
 }
 
-export function VoorgrondHoogLagenInGroepAangepastMsg(lagen: List<ToegevoegdeLaag>): VoorgrondHoogLagenInGroepAangepastMsg {
+export function VoorgrondHoogLagenInGroepAangepastMsg(lagen: Array<ToegevoegdeLaag>): VoorgrondHoogLagenInGroepAangepastMsg {
   return { type: "VoorgrondHoogLagenInGroepAangepast", lagen: lagen };
 }
 
@@ -198,7 +197,7 @@ export const PublishedKaartLocatiesMsg: Function1<KaartLocaties, PublishedKaartL
 
 export const ExtentAangepastMsg: (_: ol.Extent) => ExtentAangepastMsg = ext => ({ type: "ExtentAangepast", extent: ext });
 
-export const VectorLagenAangepastMsg: (_: List<ke.ToegevoegdeVectorLaag>) => VectorLagenAangepastMsg = lgn => ({
+export const VectorLagenAangepastMsg: (_: Array<ke.ToegevoegdeVectorLaag>) => VectorLagenAangepastMsg = lgn => ({
   type: "VectorLagenAangepast",
   lagen: lgn
 });
@@ -206,7 +205,7 @@ export const VectorLagenAangepastMsg: (_: List<ke.ToegevoegdeVectorLaag>) => Vec
 /////////////
 // extractors
 
-export const lagen: (_: VectorLagenAangepastMsg) => List<ke.ToegevoegdeVectorLaag> = msg => msg.lagen;
+export const lagen: (_: VectorLagenAangepastMsg) => Array<ke.ToegevoegdeVectorLaag> = msg => msg.lagen;
 export const extent: (_: ExtentAangepastMsg) => ol.Extent = msg => msg.extent;
 export const view: (_: ViewAangepastMsg) => prt.Viewinstellingen = msg => msg.view;
 

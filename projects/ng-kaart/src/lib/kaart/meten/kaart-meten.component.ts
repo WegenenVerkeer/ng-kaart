@@ -1,13 +1,14 @@
 import { Component, EventEmitter, NgZone, OnDestroy, OnInit, Output } from "@angular/core";
 import { none, some } from "fp-ts/lib/Option";
-import { Set } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { filter, map, startWith, takeUntil } from "rxjs/operators";
 
 import { dimensieBeschrijving } from "../../util/geometries";
+import * as maps from "../../util/maps";
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { ofType } from "../../util/operators";
+import * as sets from "../../util/sets";
 import { TekenSettings } from "../kaart-elementen";
 import { GeometryChangedMsg, InfoBoodschappenMsg, tekenResultaatWrapper, verwijderTekenFeatureWrapper } from "../kaart-internal-messages";
 import { KaartModusComponent } from "../kaart-modus-component";
@@ -40,7 +41,7 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
   private toonInfoBoodschap = true;
   private meerdereGeometrieen = true;
   private stopTekenenSubj: rx.Subject<void> = new rx.Subject<void>();
-  private openBoodschappen: Set<string> = Set();
+  private openBoodschappen: Set<string> = new Set();
   private eersteIsGetekend = false;
 
   constructor(parent: KaartComponent, zone: NgZone) {
@@ -105,17 +106,17 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
     this.bindToLifeCycle(
       this.internalMessage$.pipe(
         ofType<InfoBoodschappenMsg>("InfoBoodschappen"), //
-        map(msg => msg.infoBoodschappen.filter(boodschapVanMeten).keySeq())
+        map(msg => Array.from(maps.filter(msg.infoBoodschappen, boodschapVanMeten).keys()))
       )
     ).subscribe(boodschappen => {
-      this.openBoodschappen = boodschappen.toSet();
-      if (this.eersteIsGetekend && this.openBoodschappen.isEmpty()) {
+      this.openBoodschappen = new Set(boodschappen);
+      if (this.eersteIsGetekend && sets.isEmpty(this.openBoodschappen)) {
         // Wanneer alle info-boxen van meten gesloten zijn, kan je stoppen met meten.
         // Maar dit mag alleen als we al eens 1 info-box van meten gehad hebben.
         this.stopMeten();
         this.eersteIsGetekend = false;
         this.zetModeAf();
-      } else if (!this.openBoodschappen.isEmpty()) {
+      } else if (sets.isNonEmpty(this.openBoodschappen)) {
         this.eersteIsGetekend = true;
       }
     });

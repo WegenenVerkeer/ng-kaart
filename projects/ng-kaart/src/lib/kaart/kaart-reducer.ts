@@ -1,10 +1,12 @@
 import * as array from "fp-ts/lib/Array";
 import { Endomorphism, Function1, Function2, identity, pipe } from "fp-ts/lib/function";
+import * as fptsmap from "fp-ts/lib/Map";
 import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
+import * as ord from "fp-ts/lib/Ord";
+import { setoidString } from "fp-ts/lib/Setoid";
 import * as validation from "fp-ts/lib/Validation";
-import { List } from "immutable";
-import * as ol from "openlayers";
 import { olx } from "openlayers";
+import * as ol from "openlayers";
 import { Subscription } from "rxjs";
 import * as rx from "rxjs";
 import { bufferCount, debounceTime, distinctUntilChanged, map, mergeMap, switchMap } from "rxjs/operators";
@@ -13,6 +15,7 @@ import { NosqlFsSource } from "../source";
 import { refreshTiles } from "../util/cachetiles";
 import * as featureStore from "../util/indexeddb-geojson-store";
 import * as metaDataDb from "../util/indexeddb-tilecache-metadata";
+import * as maps from "../util/maps";
 import { forEach } from "../util/option";
 import * as serviceworker from "../util/serviceworker";
 import { updateBehaviorSubject } from "../util/subject-update";
@@ -114,7 +117,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function valideerToegevoegdeLaagBestaat(titel: string): prt.KaartCmdValidation<ke.ToegevoegdeLaag> {
       return fromPredicate(
-        model.toegevoegdeLagenOpTitel.get(titel),
+        model.toegevoegdeLagenOpTitel.get(titel)!,
         (l: ke.ToegevoegdeLaag) => l !== undefined,
         `Een laag met titel ${titel} bestaat niet`
       );
@@ -122,7 +125,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function valideerToegevoegdeVectorLaagBestaat(titel: string): prt.KaartCmdValidation<ke.ToegevoegdeVectorLaag> {
       return fromPredicate(
-        model.toegevoegdeLagenOpTitel.get(titel) as ke.ToegevoegdeVectorLaag,
+        model.toegevoegdeLagenOpTitel.get(titel)! as ke.ToegevoegdeVectorLaag,
         (l: ke.ToegevoegdeVectorLaag) => l !== undefined && ke.isToegevoegdeVectorLaag(l),
         `Een laag met titel ${titel} bestaat niet`
       );
@@ -300,18 +303,17 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
     }
 
-    function lagenInGroep(mdl: Model, groep: ke.Laaggroep): List<ke.ToegevoegdeLaag> {
+    function lagenInGroep(mdl: Model, groep: ke.Laaggroep): Array<ke.ToegevoegdeLaag> {
       return mdl.titelsOpGroep
-        .get(groep) // we vertrekken van geldige groepen
-        .map(titel => mdl.toegevoegdeLagenOpTitel.get(titel!)) // dus hebben we geldige titels
-        .toList();
+        .get(groep)! // we vertrekken van geldige groepen
+        .map(titel => mdl.toegevoegdeLagenOpTitel.get(titel!)!); // dus hebben we geldige titels
     }
 
+    const ordToegevoegdeLaag: ord.Ord<ke.ToegevoegdeLaag> = ord.contramap(laag => -laag!.layer.getZIndex(), ord.ordNumber);
+
     function zendLagenInGroep(mdl: Model, groep: ke.Laaggroep): void {
-      modelChanger.lagenOpGroepSubj.get(groep).next(
-        lagenInGroep(mdl, groep)
-          .sortBy(laag => -laag!.layer.getZIndex()) // en dus ook geldige titels
-          .toList()
+      modelChanger.lagenOpGroepSubj.get(groep)!.next(
+        array.sort(ordToegevoegdeLaag)(lagenInGroep(mdl, groep)) // en dus ook geldige titels
       );
     }
 
@@ -325,7 +327,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function limitPosition(position: number, groep: ke.Laaggroep) {
       // laat 1 positie voorbij het einde toe om laag kunnen toe te voegen
-      return Math.max(0, Math.min(position, model.titelsOpGroep.get(groep).size));
+      return Math.max(0, Math.min(position, model.titelsOpGroep.get(groep)!.length));
     }
 
     function abortTileLoadingCmd(cmnd: prt.AbortTileLoadingCmd) {
@@ -334,7 +336,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function vectorLaagPositie(groepPositie: number, groep: ke.Laaggroep): number {
-      return lagenInGroep(model, groep).count(tlg => ke.isVectorLaag(tlg!.bron) && tlg!.positieInGroep < groepPositie);
+      return lagenInGroep(model, groep).filter(tlg => ke.isVectorLaag(tlg!.bron) && tlg!.positieInGroep < groepPositie).length;
     }
 
     /**
@@ -382,7 +384,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               const updatedModel = {
                 ...modelMetAangepasteLagen,
                 toegevoegdeLagenOpTitel: modelMetAangepasteLagen.toegevoegdeLagenOpTitel.set(titel, toegevoegdeLaag),
-                titelsOpGroep: modelMetAangepasteLagen.titelsOpGroep.set(groep, model.titelsOpGroep.get(groep).push(titel)),
+                titelsOpGroep: modelMetAangepasteLagen.titelsOpGroep.set(groep, model.titelsOpGroep.get(groep)!.concat([titel])),
                 groepOpTitel: modelMetAangepasteLagen.groepOpTitel.set(titel, groep)
               };
               zendLagenInGroep(updatedModel, cmnd.laaggroep);
@@ -422,15 +424,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           const modelMetAangepasteLagen = pasLaagPositiesAan(-1, layerIndexNaarGroepIndex(layer, groep) + 1, maxIndexInGroep(groep), groep);
           const updatedModel = {
             ...modelMetAangepasteLagen,
-            toegevoegdeLagenOpTitel: modelMetAangepasteLagen.toegevoegdeLagenOpTitel.delete(titel),
+            toegevoegdeLagenOpTitel: fptsmap.remove(setoidString)(titel, modelMetAangepasteLagen.toegevoegdeLagenOpTitel),
             titelsOpGroep: modelMetAangepasteLagen.titelsOpGroep.set(
               groep,
-              modelMetAangepasteLagen.titelsOpGroep
-                .get(groep)
-                .filter(t => t !== titel)
-                .toList()
+              modelMetAangepasteLagen.titelsOpGroep.get(groep)!.filter(t => t !== titel)
             ),
-            groepOpTitel: modelMetAangepasteLagen.groepOpTitel.delete(titel)
+            groepOpTitel: fptsmap.remove(setoidString)(titel, modelMetAangepasteLagen.groepOpTitel)
           };
           zendLagenInGroep(updatedModel, groep);
           modelChanger.laagVerwijderdSubj.next(laag);
@@ -500,7 +499,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           valideerIsVoorgrondlaag // enkel zinvol om voorgrondlagen te verplaatsen
         ).map(laag => {
           const titel = cmnd.titel;
-          const groep = model.groepOpTitel.get(titel);
+          const groep = model.groepOpTitel.get(titel)!;
           const vanPositie = layerIndexNaarGroepIndex(laag.layer, groep);
           const naarPositie = limitPosition(cmnd.naarPositie, groep); // uitgedrukt in z-index waarden
           // Afhankelijk of we van onder naar boven of van boven naar onder verschuiven, moeten de tussenliggende lagen
@@ -585,7 +584,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function voegStandaardInteractiesToeCmd(cmnd: prt.VoegStandaardInteractiesToeCmd<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        fromPredicate(model.stdInteracties, l => l.isEmpty(), "De standaard interacties zijn al ingesteld").map(() => {
+        fromPredicate(model.stdInteracties, l => array.isEmpty(l), "De standaard interacties zijn al ingesteld").map(() => {
           const stdInteracties: ol.interaction.Interaction[] = ol.interaction
             .defaults()
             .getArray()
@@ -596,12 +595,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                   (!cmnd.rotatie && interaction instanceof ol.interaction.PinchRotate) ||
                   interaction instanceof ol.interaction.MouseWheelZoom
                 ) // we willen zelf de opties op MouseWheelZoom zetten
+            )
+            .concat(
+              [new ol.interaction.MouseWheelZoom({ constrainResolution: true })] // Geen fractionele resoluties!
             );
-          const interacties: List<ol.interaction.Interaction> = List<ol.interaction.Interaction>(stdInteracties).push(
-            new ol.interaction.MouseWheelZoom({ constrainResolution: true }) // Geen fractionele resoluties!
-          );
-          interacties.forEach(i => model.map.addInteraction(i!)); // side effects :-(
-          const newModel: Model = { ...model, stdInteracties: interacties, scrollZoomOnFocus: cmnd.scrollZoomOnFocus };
+          stdInteracties.forEach(i => model.map.addInteraction(i!)); // side effects :-(
+          const newModel: Model = { ...model, stdInteracties: stdInteracties, scrollZoomOnFocus: cmnd.scrollZoomOnFocus };
           activateMouseWheelZoomIfAllowed(!cmnd.scrollZoomOnFocus, newModel);
           return ModelAndEmptyResult(newModel);
         })
@@ -611,10 +610,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function verwijderStandaardInteractiesCmd(cmnd: prt.VerwijderStandaardInteractiesCmd<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        fromPredicate(model.stdInteracties, l => !l.isEmpty(), "De standaard interacties zijn niet aanwezig").map(
-          (stdInteracties: List<ol.interaction.Interaction>) => {
+        fromPredicate(model.stdInteracties, l => !array.isEmpty(l), "De standaard interacties zijn niet aanwezig").map(
+          (stdInteracties: Array<ol.interaction.Interaction>) => {
             stdInteracties.forEach(i => model.map.removeInteraction(i!));
-            return ModelAndEmptyResult({ ...model, stdInteracties: List() });
+            return ModelAndEmptyResult({ ...model, stdInteracties: [] });
           }
         )
       );
@@ -698,7 +697,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         cmnd.wrapper,
         valideerVectorLayerBestaat(cmnd.titel).map(layer => {
           layer.getSource().clear(false);
-          layer.getSource().addFeatures(cmnd.features.toArray());
+          layer.getSource().addFeatures(cmnd.features);
           return ModelAndEmptyResult(model);
         })
       );
@@ -717,19 +716,18 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     });
 
     function toonAchtergrondkeuzeCmd(cmnd: prt.ToonAchtergrondKeuzeCmd<Msg>): ModelWithResult<Msg> {
-      const achtergrondTitels = model.titelsOpGroep.get("Achtergrond");
+      const achtergrondTitels = model.titelsOpGroep.get("Achtergrond")!;
       return toModelWithValueResult(
         cmnd.wrapper,
         allOf([
           fromBoolean(!model.showBackgroundSelector, "De achtergrondkeuze is al actief"),
-          fromBoolean(!achtergrondTitels.isEmpty(), "Er moet minstens 1 achtergrondlaag zijn")
+          fromBoolean(!array.isEmpty(achtergrondTitels), "Er moet minstens 1 achtergrondlaag zijn")
         ]).map(() => {
-          const achtergrondLagen: List<ke.ToegevoegdeLaag> = model.titelsOpGroep
-            .get("Achtergrond")
-            .map(titel => model.toegevoegdeLagenOpTitel.get(titel!)) // de titels bestaan bij constructie
-            .toList();
+          const achtergrondLagen: Array<ke.ToegevoegdeLaag> = model.titelsOpGroep
+            .get("Achtergrond")!
+            .map(titel => model.toegevoegdeLagenOpTitel.get(titel!)!); // de titels bestaan bij constructie
           const geselecteerdeLaag = fromNullable(achtergrondLagen.find(laag => laag!.magGetoondWorden));
-          const teSelecterenLaag = geselecteerdeLaag.getOrElseL(() => achtergrondLagen.first()); // er is er minstens 1 wegens validatie
+          const teSelecterenLaag = geselecteerdeLaag.getOrElseL(() => achtergrondLagen[0]); // er is er minstens 1 wegens validatie
 
           // Zorg ervoor dat er juist 1 achtergrondlaag zichtbaar is
           const modelMetAangepasteLagen = achtergrondLagen.reduce(
@@ -771,8 +769,9 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           () => valideerToegevoegdeLaagBestaat(cmnd.titel)
         ).map((nieuweAchtergrond: ke.ToegevoegdeLaag) => {
           model.achtergrondlaagtitelSubj.next(cmnd.titel);
-          const maybeVorigeAchtergrond = fromNullable(
-            model.toegevoegdeLagenOpTitel.find(laag => laag!.laaggroep === "Achtergrond" && laag!.magGetoondWorden)
+          const maybeVorigeAchtergrond = maps.findFirst(
+            model.toegevoegdeLagenOpTitel,
+            laag => laag!.laaggroep === "Achtergrond" && laag!.magGetoondWorden
           );
           const modelMetNieuweZichtbaarheid = pipe(
             pasLaagZichtbaarheidAan(true),
@@ -1070,13 +1069,13 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function deleteInfoBoodschap(cmnd: prt.VerbergInfoBoodschapCmd): ModelWithResult<Msg> {
-      updateBehaviorSubject(model.infoBoodschappenSubj, bsch => bsch.delete(cmnd.id));
+      updateBehaviorSubject(model.infoBoodschappenSubj, bsch => fptsmap.remove(setoidString)(cmnd.id, bsch));
       return ModelWithResult(model);
     }
 
     function selecteerFeatures(cmnd: prt.SelecteerFeaturesCmd): ModelWithResult<Msg> {
       model.geselecteerdeFeatures.clear();
-      model.geselecteerdeFeatures.extend(cmnd.features.toArray());
+      model.geselecteerdeFeatures.extend(cmnd.features);
       return ModelWithResult(model);
     }
 
@@ -1092,7 +1091,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function sluitInfoBoodschap(cmnd: prt.SluitInfoBoodschapCmd): ModelWithResult<Msg> {
-      const sluitBox = () => updateBehaviorSubject(model.infoBoodschappenSubj, bsch => bsch.delete(cmnd.id));
+      const sluitBox = () => updateBehaviorSubject(model.infoBoodschappenSubj, bsch => fptsmap.remove(setoidString)(cmnd.id, bsch));
       const maybeMsg = cmnd.msgGen() as Option<Msg>;
       return maybeMsg.foldL(
         () => {
@@ -1217,7 +1216,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function sluitPanelen(cmnd: prt.SluitPanelenCmd): ModelWithResult<Msg> {
-      updateBehaviorSubject(model.infoBoodschappenSubj, bsch => bsch.clear());
+      updateBehaviorSubject(model.infoBoodschappenSubj, _ => new Map());
       modelChanger.laagstijlaanpassingStateSubj.next(GeenLaagstijlaanpassing);
       return ModelWithResult(model);
     }
@@ -1387,7 +1386,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return modelWithSubscriptionResult(
           "LagenInGroep",
           modelChanger.lagenOpGroepSubj
-            .get(sub.groep) // we vertrouwen op de typechecker
+            .get(sub.groep)! // we vertrouwen op de typechecker
             .pipe(debounceTime(50))
             .subscribe(consumeMessage(sub))
         );

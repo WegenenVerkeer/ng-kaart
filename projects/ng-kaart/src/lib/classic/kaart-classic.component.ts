@@ -14,7 +14,6 @@ import {
 import { pipe } from "fp-ts/lib/function";
 import * as option from "fp-ts/lib/Option";
 import { fromEither, none, Option, some } from "fp-ts/lib/Option";
-import { List } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { map, share, tap } from "rxjs/operators";
@@ -86,12 +85,12 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   @Input()
   naam = "kaart" + KaartClassicComponent.counter++;
   @Input()
-  geselecteerdeFeatures: List<ol.Feature> = List();
+  geselecteerdeFeatures: Array<ol.Feature> = [];
   @Input()
   onderdrukKaartBevragenBoodschappen = false;
 
   @Output()
-  geselecteerdeFeaturesChange: EventEmitter<List<ol.Feature>> = new EventEmitter();
+  geselecteerdeFeaturesChange: EventEmitter<Array<ol.Feature>> = new EventEmitter();
   @Output()
   middelpuntChange: EventEmitter<ol.Coordinate> = new EventEmitter();
   @Output()
@@ -99,15 +98,15 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   @Output()
   extentChange: EventEmitter<ol.Extent> = new EventEmitter();
   @Output()
-  zichtbareFeatures: EventEmitter<List<ol.Feature>> = new EventEmitter();
+  zichtbareFeatures: EventEmitter<Array<ol.Feature>> = new EventEmitter();
   @Output()
   hoverFeature: EventEmitter<Option<ol.Feature>> = new EventEmitter();
   @Output()
-  achtergrondLagen: EventEmitter<List<ToegevoegdeLaag>> = new EventEmitter();
+  achtergrondLagen: EventEmitter<Array<ToegevoegdeLaag>> = new EventEmitter();
   @Output()
-  voorgrondHoogLagen: EventEmitter<List<ToegevoegdeLaag>> = new EventEmitter();
+  voorgrondHoogLagen: EventEmitter<Array<ToegevoegdeLaag>> = new EventEmitter();
   @Output()
-  voorgrondLaagLagen: EventEmitter<List<ToegevoegdeLaag>> = new EventEmitter();
+  voorgrondLaagLagen: EventEmitter<Array<ToegevoegdeLaag>> = new EventEmitter();
   @Output()
   kaartLocaties: EventEmitter<KaartLocaties> = new EventEmitter();
 

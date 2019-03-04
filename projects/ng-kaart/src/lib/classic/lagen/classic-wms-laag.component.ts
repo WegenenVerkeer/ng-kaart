@@ -1,7 +1,6 @@
 import { AfterViewInit, Component, EventEmitter, Input, NgZone, OnInit, Output, ViewEncapsulation } from "@angular/core";
 import { pipe } from "fp-ts/lib/function";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
-import { List } from "immutable";
 import { merge } from "rxjs";
 import { distinctUntilChanged, map, startWith } from "rxjs/operators";
 
@@ -79,12 +78,12 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
       type: ke.TiledWmsType,
       titel: this.titel,
       naam: this.laagNaam,
-      urls: List(this.urls),
+      urls: this.urls,
       versie: fromNullable(this.versie),
       tileSize: fromNullable(this.tileSize),
       format: fromNullable(this.format),
       opacity: fromNullable(this.opacity),
-      backgroundUrl: this.backgroundUrl(List(this.urls), this.laagNaam),
+      backgroundUrl: this.backgroundUrl(this.urls, this.laagNaam),
       minZoom: this.minZoom,
       maxZoom: this.maxZoom,
       verwijderd: false
@@ -95,9 +94,9 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
     return "Achtergrond";
   }
 
-  backgroundUrl(urls: List<string>, laagNaam: string): string {
+  backgroundUrl(urls: Array<string>, laagNaam: string): string {
     // TODO: rekening houden met echte config.
-    return urlWithParams(urls.get(0), {
+    return urlWithParams(urls[0], {
       layers: this.laagNaam,
       styles: "",
       service: "WMS",
