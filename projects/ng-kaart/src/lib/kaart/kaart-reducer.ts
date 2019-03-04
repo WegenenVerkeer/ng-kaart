@@ -1214,7 +1214,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function sluitPanelen(cmnd: prt.SluitPanelenCmd): ModelWithResult<Msg> {
-      updateBehaviorSubject(model.infoBoodschappenSubj, _ => new Map());
+      updateBehaviorSubject(model.infoBoodschappenSubj, () => new Map());
       modelChanger.laagstijlaanpassingStateSubj.next(GeenLaagstijlaanpassing);
       return ModelWithResult(model);
     }
