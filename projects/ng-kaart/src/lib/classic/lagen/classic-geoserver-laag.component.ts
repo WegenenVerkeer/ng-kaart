@@ -1,6 +1,5 @@
 import { Component, Inject, NgZone, ViewEncapsulation } from "@angular/core";
 import { fromNullable } from "fp-ts/lib/Option";
-import { List } from "immutable";
 
 import { KAART_CFG, KaartConfig } from "../../kaart/kaart-config";
 import * as ke from "../../kaart/kaart-elementen";
@@ -23,12 +22,12 @@ export class ClassicGeoserverLaagComponent extends ClassicWmsLaagComponent {
       type: ke.TiledWmsType,
       titel: this.titel,
       naam: this.laagNaam,
-      urls: List(this.config.geoserver.urls),
+      urls: this.config.geoserver.urls,
       versie: fromNullable(this.versie),
       tileSize: fromNullable(this.tileSize),
       format: fromNullable(this.format),
       opacity: fromNullable(this.opacity),
-      backgroundUrl: this.backgroundUrl(List(this.config.geoserver.urls), this.laagNaam),
+      backgroundUrl: this.backgroundUrl(this.config.geoserver.urls, this.laagNaam),
       minZoom: this.minZoom,
       maxZoom: this.maxZoom,
       verwijderd: false

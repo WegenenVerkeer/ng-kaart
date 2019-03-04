@@ -1,5 +1,4 @@
 import { fromNullable } from "fp-ts/lib/Option";
-import { List } from "immutable";
 import * as ol from "openlayers";
 
 /**
@@ -14,19 +13,19 @@ import * as ol from "openlayers";
  *       ...
  */
 class MislukteTiles {
-  private mislukteTiles: List<ol.Tile> = List.of<ol.Tile>();
+  private mislukteTiles: Array<ol.Tile> = [];
 
   constructor(private maxAantalTiles: number) {}
 
   voegtoe(tile: ol.Tile) {
-    this.mislukteTiles = this.mislukteTiles.push(tile);
-    if (this.mislukteTiles.size > this.maxAantalTiles) {
-      this.mislukteTiles = this.mislukteTiles.shift();
+    this.mislukteTiles.push(tile);
+    if (this.mislukteTiles.length > this.maxAantalTiles) {
+      this.mislukteTiles.shift();
     }
   }
 
   verwijder(tile: ol.Tile) {
-    this.mislukteTiles = this.mislukteTiles.filter(t => tile !== t).toList();
+    this.mislukteTiles = this.mislukteTiles.filter(t => tile !== t);
   }
 
   herlaad() {
@@ -40,7 +39,7 @@ export class TileLoader {
   // neem over in definitie van de TileWMS
   readonly maxMislukteTiles = 512;
 
-  private inTeLadenImages: List<HTMLImageElement> = List.of<HTMLImageElement>();
+  private inTeLadenImages: Array<HTMLImageElement> = [];
 
   private mislukteTiles: MislukteTiles = new MislukteTiles(this.maxMislukteTiles);
 
@@ -52,7 +51,7 @@ export class TileLoader {
         img.src = "";
       });
     });
-    this.inTeLadenImages = this.inTeLadenImages.clear();
+    this.inTeLadenImages = [];
   }
 
   private checkMislukteTiles(eventType: string, tile: ol.Tile) {
@@ -80,14 +79,14 @@ export class TileLoader {
       const htmlImage = imageTile.getImage() as HTMLImageElement;
 
       const onHtmlImageEvent: (this: HTMLImageElement, ev: Event) => any = function(evt) {
-        that.inTeLadenImages = that.inTeLadenImages.filter(img => img !== this).toList();
+        that.inTeLadenImages = that.inTeLadenImages.filter(img => img !== this);
         that.checkMislukteTiles(evt.type, tile);
       };
 
       htmlImage.src = url;
       htmlImage.addEventListener<"load">("load", onHtmlImageEvent);
       htmlImage.addEventListener<"error">("error", onHtmlImageEvent);
-      that.inTeLadenImages = that.inTeLadenImages.push(htmlImage);
+      that.inTeLadenImages.push(htmlImage);
     };
   }
 

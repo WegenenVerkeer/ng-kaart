@@ -3,7 +3,6 @@ import { Function1, Function2, Function3 } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import { Ordering, sign } from "fp-ts/lib/Ordering";
 import { insert, remove, StrMap } from "fp-ts/lib/StrMap";
-import { Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 
@@ -91,7 +90,7 @@ export class ZoekAntwoord {
     readonly zoektype: Zoektype,
     readonly fouten: string[] = [],
     readonly resultaten: ZoekResultaat[] = [],
-    readonly legende: Map<string, IconDescription> = Map()
+    readonly legende: Map<string, IconDescription> = new Map()
   ) {}
 
   limiteerAantalResultaten(maxAantal: number): ZoekAntwoord {

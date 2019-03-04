@@ -1,11 +1,11 @@
 import { Component, DoCheck, EventEmitter, Input, NgZone, OnChanges, Output, SimpleChanges, ViewEncapsulation } from "@angular/core";
 import { array } from "fp-ts";
 import { Setoid } from "fp-ts/lib/Setoid";
-import { List } from "immutable";
 import * as ol from "openlayers";
 
 import { forChangedValue } from "../../kaart/kaart-component-base";
 import * as prt from "../../kaart/kaart-protocol";
+import * as arrays from "../../util/arrays";
 import { KaartClassicComponent } from "../kaart-classic.component";
 import { logOnlyWrapper } from "../messages";
 
@@ -84,6 +84,6 @@ export class ClassicFeaturesLaagComponent extends ClassicVectorLaagComponent imp
   }
 
   private dispatchVervangFeatures(features: ol.Feature[]) {
-    this.dispatch(prt.VervangFeaturesCmd(this.titel, List(features), logOnlyWrapper));
+    this.dispatch(prt.VervangFeaturesCmd(this.titel, arrays.fromNullable(features), logOnlyWrapper));
   }
 }

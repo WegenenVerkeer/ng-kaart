@@ -146,7 +146,7 @@ export function atMostOneDefined<T>(...interpreters: Interpreter<T | undefined>[
   return (json: Object) => {
     const validations: Validation<Array<T | undefined>> = sequence(interpreters.map(i => i(json)));
     const isDefined: Refinement<T | undefined, T> = (t): t is T => t !== undefined;
-    const presentValidations: Validation<Array<T>> = validations.map(vals => array.refine(vals, isDefined));
+    const presentValidations: Validation<Array<T>> = validations.map(vals => array.filter(vals, isDefined));
     return validationChain(presentValidations, values => {
       switch (values.length) {
         case 0:

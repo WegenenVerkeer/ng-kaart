@@ -1,5 +1,5 @@
 import { Function1, identity, Refinement } from "fp-ts/lib/function";
-import { fromRefinement } from "fp-ts/lib/Option";
+import { fromPredicate } from "fp-ts/lib/Option";
 import { Lens, Optional, Prism } from "monocle-ts";
 
 import { Kleur, kleurcodeValue, stringToKleur } from "./colour";
@@ -136,7 +136,7 @@ export function FullStyle(rec: { fill?: FillStyle; stroke?: StrokeStyle; text?: 
 // Manipulatie en inspectie van het model
 //
 const isFullStyle: Refinement<AwvV0StaticStyle, FullStyle> = (ass): ass is FullStyle => !ass.hasOwnProperty("fullLine");
-export const fullStylePrism: Prism<AwvV0StaticStyle, FullStyle> = new Prism(fromRefinement(isFullStyle), identity);
+export const fullStylePrism: Prism<AwvV0StaticStyle, FullStyle> = new Prism(fromPredicate(isFullStyle), identity);
 
 export namespace Image {
   export const circlePrism: Prism<ImageStyle, CircleStyle> = Prism.fromRefinement(isCircle);

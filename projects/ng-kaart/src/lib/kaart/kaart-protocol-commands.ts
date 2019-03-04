@@ -1,5 +1,4 @@
 import { Option } from "fp-ts/lib/Option";
-import { List, Set } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 
@@ -249,7 +248,7 @@ export interface HighlightFeaturesCmd<Msg extends KaartMsg> {
 export interface VervangFeaturesCmd<Msg extends KaartMsg> {
   readonly type: "VervangFeatures";
   readonly titel: string;
-  readonly features: List<ol.Feature>;
+  readonly features: Array<ol.Feature>;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -335,7 +334,7 @@ export interface AbortTileLoadingCmd {
 
 export interface MeldComponentFoutCmd {
   readonly type: "MeldComponentFout";
-  readonly fouten: List<string>;
+  readonly fouten: Array<string>;
 }
 
 export interface VoegZoekerToeCmd<Msg extends KaartMsg> {
@@ -452,7 +451,7 @@ export interface ZetUiElementOpties {
 // met een lege verzameling features.
 export interface SelecteerFeaturesCmd {
   readonly type: "SelecteerFeatures";
-  readonly features: List<ol.Feature>;
+  readonly features: Array<ol.Feature>;
 }
 
 export interface DeselecteerFeatureCmd {
@@ -675,7 +674,7 @@ export function HighlightFeaturesCmd<Msg extends KaartMsg>(
 
 export function VervangFeaturesCmd<Msg extends KaartMsg>(
   titel: string,
-  features: List<ol.Feature>,
+  features: Array<ol.Feature>,
   wrapper: BareValidationWrapper<Msg>
 ): VervangFeaturesCmd<Msg> {
   return { type: "VervangFeatures", titel: titel, features: features, wrapper: wrapper };
@@ -701,7 +700,7 @@ export function ActiveerHoverModusCmd(hoverModus: HoverModus): ActiveerHoverModu
   return { type: "ActiveerHoverModus", hoverModus: hoverModus };
 }
 
-export function MeldComponentFoutCmd(fouten: List<string>): MeldComponentFoutCmd {
+export function MeldComponentFoutCmd(fouten: Array<string>): MeldComponentFoutCmd {
   return { type: "MeldComponentFout", fouten: fouten };
 }
 
@@ -808,7 +807,7 @@ export function ZetUiElementOpties(naam: string, opties: any): ZetUiElementOptie
   return { type: "ZetUiElementOpties", naam: naam, opties: opties };
 }
 
-export function SelecteerFeaturesCmd(features: List<ol.Feature>): SelecteerFeaturesCmd {
+export function SelecteerFeaturesCmd(features: Array<ol.Feature>): SelecteerFeaturesCmd {
   return { type: "SelecteerFeatures", features: features };
 }
 

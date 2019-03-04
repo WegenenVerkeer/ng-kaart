@@ -18,31 +18,31 @@
       <ng-content select=".kaart-fixed-links-boven"></ng-content>
     </div>
     <div #kaartLinks class="kaart-links">
-      <awv-zoeker *ngIf="aanwezigeElementen.contains('Zoeker')"></awv-zoeker>
-      <awv-lagenkiezer *ngIf="aanwezigeElementen.contains('Lagenkiezer')"></awv-lagenkiezer>
+      <awv-zoeker *ngIf="aanwezigeElementen.has('Zoeker')"></awv-zoeker>
+      <awv-lagenkiezer *ngIf="aanwezigeElementen.has('Lagenkiezer')"></awv-lagenkiezer>
       <awv-laagstijleditor></awv-laagstijleditor>
       <awv-kaart-info-boodschappen></awv-kaart-info-boodschappen>
       <ng-content select=".kaart-links"></ng-content>
     </div>
-    <awv-kaart-teken-laag *ngIf="aanwezigeElementen.contains('Kaarttekenen')"></awv-kaart-teken-laag>
-    <awv-kaart-multi-teken-laag *ngIf="aanwezigeElementen.contains('MultiKaarttekenen')"></awv-kaart-multi-teken-laag>
+    <awv-kaart-teken-laag *ngIf="aanwezigeElementen.has('Kaarttekenen')"></awv-kaart-teken-laag>
+    <awv-kaart-multi-teken-laag *ngIf="aanwezigeElementen.has('MultiKaarttekenen')"></awv-kaart-multi-teken-laag>
     <div class="kaart-rechts-onderaan">
       <div class="kaart-interacties">
-        <awv-kaart-achtergrond-selector class="kaart-achtergrond-selector" *ngIf="aanwezigeElementen.contains('Achtergrondkeuze')"></awv-kaart-achtergrond-selector>
+        <awv-kaart-achtergrond-selector class="kaart-achtergrond-selector" *ngIf="aanwezigeElementen.has('Achtergrondkeuze')"></awv-kaart-achtergrond-selector>
         <div class="kaart-controls">
           <awv-kaart-rotatie></awv-kaart-rotatie>
-          <awv-kaart-open-street-view *ngIf="aanwezigeElementen.contains('Streetview')"></awv-kaart-open-street-view>
-          <awv-kaart-meten *ngIf="aanwezigeElementen.contains('Meten')"></awv-kaart-meten>
-          <awv-kaart-multi-meten *ngIf="aanwezigeElementen.contains('MultiMeten')"></awv-kaart-multi-meten>
+          <awv-kaart-open-street-view *ngIf="aanwezigeElementen.has('Streetview')"></awv-kaart-open-street-view>
+          <awv-kaart-meten *ngIf="aanwezigeElementen.has('Meten')"></awv-kaart-meten>
+          <awv-kaart-multi-meten *ngIf="aanwezigeElementen.has('MultiMeten')"></awv-kaart-multi-meten>
           <awv-kaart-mijn-locatie></awv-kaart-mijn-locatie>
-          <awv-kaart-zoom *ngIf="aanwezigeElementen.contains('Zoomknoppen')"></awv-kaart-zoom>
-          <awv-kaart-bevragen *ngIf="aanwezigeElementen.contains('Bevraagkaart')"></awv-kaart-bevragen>
+          <awv-kaart-zoom *ngIf="aanwezigeElementen.has('Zoomknoppen')"></awv-kaart-zoom>
+          <awv-kaart-bevragen *ngIf="aanwezigeElementen.has('Bevraagkaart')"></awv-kaart-bevragen>
         </div>
       </div>
       <div class="kaart-footer-info">
-        <awv-copyright *ngIf="aanwezigeElementen.contains('Copyright')"></awv-copyright>
-        <awv-voorwaarden *ngIf="aanwezigeElementen.contains('Voorwaarden')"></awv-voorwaarden>
-        <awv-schaal *ngIf="aanwezigeElementen.contains('Schaal')"></awv-schaal>
+        <awv-copyright *ngIf="aanwezigeElementen.has('Copyright')"></awv-copyright>
+        <awv-voorwaarden *ngIf="aanwezigeElementen.has('Voorwaarden')"></awv-voorwaarden>
+        <awv-schaal *ngIf="aanwezigeElementen.has('Schaal')"></awv-schaal>
       </div>
     </div>
   </div>

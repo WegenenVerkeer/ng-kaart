@@ -1,5 +1,4 @@
 import { fromNullable, Option } from "fp-ts/lib/Option";
-import { Map } from "immutable";
 import { Lens, Optional } from "monocle-ts";
 
 /**

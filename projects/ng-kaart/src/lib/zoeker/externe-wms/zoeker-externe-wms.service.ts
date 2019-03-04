@@ -1,4 +1,3 @@
-import { Set } from "immutable";
 import * as rx from "rxjs";
 
 import { Zoeker } from "../zoeker";

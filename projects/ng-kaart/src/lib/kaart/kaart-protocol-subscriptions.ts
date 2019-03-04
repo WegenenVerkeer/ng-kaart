@@ -1,7 +1,6 @@
 import { Either } from "fp-ts/lib/Either";
 import { Function1 } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
-import { List, Map } from "immutable";
 import * as ol from "openlayers";
 
 import { ZoekAntwoord, ZoekerMetPrioriteiten, ZoekResultaat } from "../zoeker/zoeker";
@@ -51,7 +50,7 @@ export interface Viewinstellingen {
 }
 
 export interface GeselecteerdeFeatures {
-  geselecteerd: List<ol.Feature>;
+  geselecteerd: Array<ol.Feature>;
   toegevoegd: Option<ol.Feature>;
   verwijderd: Option<ol.Feature>;
 }
@@ -94,7 +93,7 @@ export interface HoverFeaturesSubscription<Msg> {
 
 export interface ZichtbareFeaturesSubscription<Msg> {
   readonly type: "ZichtbareFeatures";
-  readonly wrapper: (zicthbareFeatures: List<ol.Feature>) => Msg;
+  readonly wrapper: (zicthbareFeatures: Array<ol.Feature>) => Msg;
 }
 
 export interface AchtergrondTitelSubscription<Msg> {
@@ -105,7 +104,7 @@ export interface AchtergrondTitelSubscription<Msg> {
 export interface LagenInGroepSubscription<Msg> {
   readonly type: "LagenInGroep";
   readonly groep: ke.Laaggroep;
-  readonly wrapper: (lagen: List<ke.ToegevoegdeLaag>) => Msg;
+  readonly wrapper: (lagen: Array<ke.ToegevoegdeLaag>) => Msg;
 }
 
 export interface LaagVerwijderdSubscription<Msg> {
@@ -156,7 +155,7 @@ export interface InfoBoodschappenSubscription<Msg> {
 
 export interface ComponentFoutSubscription<Msg> {
   readonly type: "ComponentFout";
-  readonly wrapper: (fouten: List<string>) => Msg;
+  readonly wrapper: (fouten: Array<string>) => Msg;
 }
 
 export interface LaagstijlGezetSubscription<Msg> {
@@ -192,7 +191,7 @@ export function HoverFeaturesSubscription<Msg>(wrapper: MsgGen<HoverFeature, Msg
 }
 
 export function ZichtbareFeaturesSubscription<Msg>(
-  msgGen: (zichtbareFeatures: List<ol.Feature>) => Msg
+  msgGen: (zichtbareFeatures: Array<ol.Feature>) => Msg
 ): ZichtbareFeaturesSubscription<Msg> {
   return { type: "ZichtbareFeatures", wrapper: msgGen };
 }
@@ -221,7 +220,7 @@ export function AchtergrondTitelSubscription<Msg>(wrapper: MsgGen<string, Msg>):
 
 export function LagenInGroepSubscription<Msg>(
   groep: ke.Laaggroep,
-  msgGen: (lagen: List<ke.ToegevoegdeLaag>) => Msg
+  msgGen: (lagen: Array<ke.ToegevoegdeLaag>) => Msg
 ): LagenInGroepSubscription<Msg> {
   return { type: "LagenInGroep", groep: groep, wrapper: msgGen };
 }
@@ -265,7 +264,7 @@ export function ActieveModusSubscription<Msg>(wrapper: (modus: Option<string>) =
   return { type: "ActieveModus", wrapper: wrapper };
 }
 
-export function ComponentFoutSubscription<Msg>(wrapper: (fouten: List<string>) => Msg): ComponentFoutSubscription<Msg> {
+export function ComponentFoutSubscription<Msg>(wrapper: (fouten: Array<string>) => Msg): ComponentFoutSubscription<Msg> {
   return {
     type: "ComponentFout",
     wrapper: wrapper

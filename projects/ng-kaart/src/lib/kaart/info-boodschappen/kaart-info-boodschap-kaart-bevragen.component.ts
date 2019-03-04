@@ -1,11 +1,16 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone } from "@angular/core";
+import * as array from "fp-ts/lib/Array";
+import { Function3 } from "fp-ts/lib/function";
 import { fromNullable } from "fp-ts/lib/Option";
+import * as ord from "fp-ts/lib/Ord";
 
 import { Adres, WegLocatie } from "..";
 import { formatCoordinate, lambert72ToWgs84, switchVolgorde } from "../../coordinaten/coordinaten.service";
 import { copyToClipboard } from "../../util/clipboard";
+import * as maps from "../../util/maps";
+import { LaagLocationInfo } from "../kaart-bevragen/laaginfo.model";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
-import { InfoBoodschapKaartBevragenProgress, withProgress } from "../kaart-with-info-model";
+import { InfoBoodschapKaartBevragenProgress, Progress, withProgress } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
 
 export interface LaagInfo {
@@ -32,15 +37,15 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildComponen
   set boodschap(boodschap: InfoBoodschapKaartBevragenProgress) {
     // Deze waarden voor de template worden berekend op het moment dat er een nieuwe input is, niet elke
     // keer dat Angular denkt dat hij change detection moet laten lopen.
-    this.textLaagLocationInfo = boodschap.laagLocatieInfoOpTitel
-      .map((value, key) =>
+    const foldF: Function3<string, Progress<LaagLocationInfo>, Array<LaagInfo>, Array<LaagInfo>> = (key, value, acc) =>
+      acc.concat([
         withProgress(value!)(
           () => ({ titel: key!, busy: true }),
           () => ({ titel: key!, busy: false, timedout: true }),
           laaglocationinfo => ({ titel: key!, busy: false, text: laaglocationinfo.text })
         )
-      )
-      .toArray();
+      ]);
+    this.textLaagLocationInfo = maps.fold(boodschap.laagLocatieInfoOpTitel)(foldF)([]);
     this.coordinaatInformatieLambert72 = fromNullable(boodschap.coordinaat)
       .map(formatCoordinate(0))
       .getOrElse("");
@@ -49,13 +54,15 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildComponen
       .map(switchVolgorde) // andere volgorde weergeven voor wgs84
       .map(formatCoordinate(7))
       .getOrElse("");
-    this.wegLocaties = boodschap.weglocaties
-      .sortBy(locatie =>
+
+    const ordWeglocatie: ord.Ord<WegLocatie> = ord.contramap(
+      locatie =>
         fromNullable(locatie)
           .chain(loc => fromNullable(loc.projectieafstand))
-          .getOrElse(0)
-      )
-      .toArray();
+          .getOrElse(0),
+      ord.ordNumber
+    );
+    this.wegLocaties = array.sort(ordWeglocatie)(boodschap.weglocaties);
     this.adressen = boodschap.adres.fold([], adres => [adres]); // Array van 0 of 1 eltn isomorf met Option, maar makkelijker voor Angular
   }
 
