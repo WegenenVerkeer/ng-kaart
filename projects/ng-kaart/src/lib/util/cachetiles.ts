@@ -1,9 +1,16 @@
-import { Function1 } from "fp-ts/lib/function";
+import { Function1, Function2, Function6 } from "fp-ts/lib/function";
 import * as ol from "openlayers";
+import * as rx from "rxjs";
+import { mergeMap, tap } from "rxjs/operators";
 
 import { kaartLogger } from "../kaart/log";
 
 import { splitInChunks } from "./arrays";
+
+export interface Progress {
+  readonly started: Date;
+  readonly percentage: number;
+}
 
 const AANTAL_PARALLELE_REQUESTS = 4;
 
@@ -12,35 +19,40 @@ const AANTAL_PARALLELE_REQUESTS = 4;
  * deze parallel af te lopen.
  * Elke chunk gaat sequentieel 1 voor 1 elke URL ophalen.
  */
-const fetchUrlsGrouped = (urls: string[], setProgress: Function1<number, void>) => {
-  let fetched = 0;
+const fetchUrlsGrouped: Function1<string[], rx.Observable<Progress>> = urls => {
+  return new rx.Observable<Progress>(subscriber => {
+    let fetched = 0;
+    const progress = {
+      started: new Date(),
+      percentage: 0
+    };
 
-  const fetchUrls = (chunk: string[], setProgress: Function1<number, void>) => {
-    const fetches = chunk.map(url => () => {
-      fetched++;
-      if (setProgress) {
-        setProgress(Math.round((fetched / urls.length) * 100));
-      }
-      return fetch(new Request(url, { credentials: "include" }), { keepalive: true, mode: "cors" }).catch(err => kaartLogger.error(err));
-    });
-    fetches.reduce((vorige, huidige) => vorige.then(huidige), Promise.resolve());
-  };
+    const fetchUrls = (chunk: string[]) => {
+      const fetches = chunk.map(url => () => {
+        fetched++;
+        subscriber.next({
+          ...progress,
+          percentage: Math.round((fetched / urls.length) * 100)
+        });
+        return fetch(new Request(url, { credentials: "include" }), { keepalive: true, mode: "cors" }).catch(err => kaartLogger.error(err));
+      });
+      fetches.reduce((vorige, huidige) => vorige.then(huidige), Promise.resolve());
+    };
 
-  splitInChunks(urls, AANTAL_PARALLELE_REQUESTS).map(chunk => fetchUrls(chunk, setProgress));
+    splitInChunks(urls, AANTAL_PARALLELE_REQUESTS).forEach(chunk => fetchUrls(chunk));
+  });
 };
 
-const deleteTiles = (laagnaam: string, startMetLegeCache: boolean): Promise<Boolean> =>
-  startMetLegeCache ? caches.delete(laagnaam) : Promise.resolve(false);
+const deleteTiles: Function2<string, boolean, rx.Observable<boolean>> = (laagnaam, startMetLegeCache) =>
+  startMetLegeCache ? rx.from(caches.delete(laagnaam)) : rx.of(false);
 
-// TODO: dit is tijdelijke code -- functie wordt vervangen door performanter alternatief in latere story
-export const refreshTiles = (
-  laagnaam: string,
-  source: ol.source.UrlTile,
-  startZoom: number,
-  stopZoom: number,
-  wkt: string,
-  startMetLegeCache: boolean,
-  setProgress: Function1<number, void> // callback om progress aan te geven
+export const refreshTiles: Function6<string, ol.source.UrlTile, number, number, string, boolean, rx.Observable<Progress>> = (
+  laagnaam,
+  source,
+  startZoom,
+  stopZoom,
+  wkt,
+  startMetLegeCache
 ) => {
   if (isNaN(startZoom)) {
     throw new Error("Start zoom is geen getal");
@@ -153,10 +165,12 @@ export const refreshTiles = (
     queue = queue.concat(queueByZ);
   }
 
-  deleteTiles(laagnaam, startMetLegeCache).then(cacheLeeggemaakt => {
-    cacheLeeggemaakt
-      ? kaartLogger.info(`Cache ${laagnaam} leeggemaakt`)
-      : kaartLogger.info(`Cache ${laagnaam} niet leeggemaakt, wordt verder gevuld`);
-    return fetchUrlsGrouped(queue, setProgress);
-  });
+  return deleteTiles(laagnaam, startMetLegeCache).pipe(
+    tap(cacheLeeggemaakt =>
+      cacheLeeggemaakt
+        ? kaartLogger.info(`Cache ${laagnaam} leeggemaakt`)
+        : kaartLogger.info(`Cache ${laagnaam} niet leeggemaakt, wordt verder gevuld`)
+    ),
+    mergeMap(() => fetchUrlsGrouped(queue))
+  );
 };
