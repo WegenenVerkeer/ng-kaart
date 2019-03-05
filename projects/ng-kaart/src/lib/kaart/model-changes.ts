@@ -11,6 +11,7 @@ import { debounceTime, distinctUntilChanged, map, mapTo, mergeAll, share, shareR
 import { NosqlFsSource } from "../source/nosql-fs-source";
 import * as tilecacheMetadataDb from "../util/indexeddb-tilecache-metadata";
 import { observableFromOlEvents } from "../util/ol-observable";
+import { updateBehaviorSubject } from "../util/subject-update";
 import { ZoekAntwoord, ZoekerMetPrioriteiten, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
 
 import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
@@ -255,7 +256,13 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     )
   );
 
-  tilecacheMetadataDb.readAll().subscribe(metadata => changer.laatsteCacheRefreshSubj.next(metadata));
+  tilecacheMetadataDb.readAll().subscribe(metadataRecords =>
+    metadataRecords.forEach(metadata => {
+      updateBehaviorSubject(changer.laatsteCacheRefreshSubj, laatsteCacheRefresh => {
+        return { ...laatsteCacheRefresh, [metadata.laagnaam]: new Date(metadata.datum) };
+      });
+    })
+  );
 
   return {
     uiElementSelectie$: changer.uiElementSelectieSubj.asObservable(),

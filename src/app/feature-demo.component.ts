@@ -719,8 +719,8 @@ export class FeatureDemoComponent {
     this.changeDetectorRef.detectChanges();
   }
 
-  onLaatsteCacheRefresh(datum: Option<Date>) {
-    this.laatsteCacheRefresh = datum.foldL(() => "nooit", datum => datum.toLocaleString());
+  onLaatsteCacheRefresh(datum: Date) {
+    this.laatsteCacheRefresh = datum.toLocaleString();
     this.changeDetectorRef.detectChanges();
   }
 
