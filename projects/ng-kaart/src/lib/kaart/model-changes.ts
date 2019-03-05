@@ -9,6 +9,7 @@ import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, map, mapTo, mergeAll, share, shareReplay, switchMap } from "rxjs/operators";
 
 import { NosqlFsSource } from "../source/nosql-fs-source";
+import * as tilecacheMetadataDb from "../util/indexeddb-tilecache-metadata";
 import { observableFromOlEvents } from "../util/ol-observable";
 import { ZoekAntwoord, ZoekerMetPrioriteiten, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
 
@@ -41,6 +42,10 @@ export interface PrecacheLaagProgress {
   readonly [laagnaam: string]: number; // laagnaam -> progress percentage
 }
 
+export interface LaatsteCacheRefresh {
+  readonly [laagnaam: string]: Date; // laagnaam -> laatste cache refresh
+}
+
 /**
  * Dit is een verzameling van subjects waarmee de reducer wijzingen kan laten weten aan de child components.
  * Dit is isomorf aan het zetten van de overeenkomstige attributen op het model en die laten volgen. Het probleem daarbij
@@ -66,6 +71,7 @@ export interface ModelChanger {
   readonly tekenenOpsSubj: rx.Subject<DrawOps>;
   readonly getekendeGeometrySubj: rx.Subject<ol.geom.Geometry>;
   readonly precacheProgressSubj: rx.BehaviorSubject<PrecacheLaagProgress>;
+  readonly laatsteCacheRefreshSubj: rx.BehaviorSubject<LaatsteCacheRefresh>;
 }
 
 // Hieronder wordt een paar keer BehaviourSubject gebruikt. Dat is equivalent met, maar beknopter dan, een startWith + shareReplay
@@ -91,7 +97,8 @@ export const ModelChanger: () => ModelChanger = () => ({
   dragInfoSubj: new rx.Subject<DragInfo>(),
   tekenenOpsSubj: new rx.Subject<DrawOps>(),
   getekendeGeometrySubj: new rx.Subject<ol.geom.Geometry>(),
-  precacheProgressSubj: new rx.BehaviorSubject({})
+  precacheProgressSubj: new rx.BehaviorSubject({}),
+  laatsteCacheRefreshSubj: new rx.BehaviorSubject({})
 });
 
 export interface ModelChanges {
@@ -117,6 +124,7 @@ export interface ModelChanges {
   readonly tekenenOps$: rx.Observable<DrawOps>;
   readonly getekendeGeometry$: rx.Observable<ol.geom.Geometry>;
   readonly precacheProgress$: rx.Observable<PrecacheLaagProgress>;
+  readonly laatsteCacheRefresh$: rx.Observable<LaatsteCacheRefresh>;
 }
 
 const viewinstellingen = (olmap: ol.Map) => ({
@@ -247,6 +255,8 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     )
   );
 
+  tilecacheMetadataDb.readAll().subscribe(metadata => changer.laatsteCacheRefreshSubj.next(metadata));
+
   return {
     uiElementSelectie$: changer.uiElementSelectieSubj.asObservable(),
     uiElementOpties$: changer.uiElementOptiesSubj.asObservable(),
@@ -269,6 +279,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     rotatie$: rotation$,
     tekenenOps$: changer.tekenenOpsSubj.asObservable(),
     getekendeGeometry$: changer.getekendeGeometrySubj.asObservable(),
-    precacheProgress$: changer.precacheProgressSubj.asObservable()
+    precacheProgress$: changer.precacheProgressSubj.asObservable(),
+    laatsteCacheRefresh$: changer.laatsteCacheRefreshSubj.asObservable()
   };
 };

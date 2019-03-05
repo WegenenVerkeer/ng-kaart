@@ -463,6 +463,9 @@
               <div class="with-padding">
                 Vooruitgang: {{ precacheProgress }}% gecached
               </div>
+              <div class="with-padding">
+                Laatste cache refresh: {{ laatsteCacheRefresh }}
+              </div>
             </div>
             <div class="with-padding">
               <textarea class="cachewkt__textarea" [value]="precacheWMSWkt" (input)="precacheWMSWkt = $event.target.value"></textarea>
@@ -476,7 +479,8 @@
                                       [urls]="['/geowebcache/service/wms']"
                                       [cacheActief]="'true'"
                                       [precache]="precacheWMSInput"
-                                      (precacheProgress)="onPrecacheProgress($event)"></awv-kaart-tilecache-laag>
+                                      (precacheProgress)="onPrecacheProgress($event)"
+                                      (laatsteCacheRefresh)="onLaatsteCacheRefresh($event)"></awv-kaart-tilecache-laag>
 
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
             <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>

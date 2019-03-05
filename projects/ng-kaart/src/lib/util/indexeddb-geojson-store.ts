@@ -1,10 +1,11 @@
 import { Function1 } from "fp-ts/lib/function";
 import * as idb from "idb";
-import { DB } from "idb";
 import { forkJoin, from, Observable } from "rxjs";
 import { filter, map, mergeAll, mergeMap } from "rxjs/operators";
 
-const indexedb_db_naam = "nosql-features";
+import { get, getAll, getAllKeys, writeMany } from "./indexeddb";
+
+const dbNaam = "nosql-features";
 
 export interface Geometry {
   readonly bbox: ol.Extent;
@@ -34,7 +35,7 @@ export interface GeoJsonLike {
  */
 const openStore = (storename: string): Observable<idb.DB> => {
   return from(
-    idb.openDb(indexedb_db_naam, 1, upgradeDB => {
+    idb.openDb(dbNaam, 1, upgradeDB => {
       switch (upgradeDB.oldVersion) {
         case 0:
           const store = upgradeDB.createObjectStore(storename, { keyPath: "id" });
@@ -47,51 +48,18 @@ const openStore = (storename: string): Observable<idb.DB> => {
   );
 };
 
-const get = (db: DB, storename: string, key: any): Observable<GeoJsonLike> =>
-  from(
-    db
-      .transaction(storename)
-      .objectStore<GeoJsonLike, any>(storename)
-      .get(key)
-  );
-
-const deleteFeature = (db: DB, storename: string, key: any): Observable<void> =>
-  from(
-    db
-      .transaction(storename)
-      .objectStore<GeoJsonLike, any>(storename)
-      .delete(key)
-  );
-
-const getAll = (db: DB, storename: string): Observable<GeoJsonLike> =>
-  from(
-    db
-      .transaction(storename)
-      .objectStore<GeoJsonLike, any>(storename)
-      .getAll()
-  ).pipe(mergeAll());
-
-export const clear: (storename: string) => Observable<boolean> = (storename: string) =>
-  openStore(storename).pipe(
+export const clear: <T>(storename: string) => Observable<void> = <T>(storename: string) => {
+  return openStore(storename).pipe(
     mergeMap(db =>
       from(
         db
           .transaction(storename, "readwrite")
-          .objectStore<GeoJsonLike, any>(storename)
+          .objectStore<T, any>(storename)
           .clear()
       )
-    ),
-    map(() => true)
+    )
   );
-
-const getAllKeys = (db: DB, storename: string, idx: string, keyRange: IDBKeyRange): Observable<any[]> =>
-  from(
-    db
-      .transaction(storename)
-      .objectStore<GeoJsonLike, any>(storename)
-      .index(idx)
-      .getAllKeys(keyRange)
-  );
+};
 
 export const deleteFeatures = (storename: string, extent: ol.Extent): Observable<number> =>
   forkJoin(
@@ -114,22 +82,16 @@ const deleteFeaturesByKeys = (storename: string, keys: any[]): Observable<number
   );
 
 export const writeFeatures = (storename: string, features: GeoJsonLike[]): Observable<number> =>
-  openStore(storename).pipe(
-    mergeMap(db => {
-      const tx = db.transaction(storename, "readwrite");
-      features.map(feature => tx.objectStore<GeoJsonLike, any>(storename).put(feature));
-      return from(tx.complete).pipe(map(() => features.length));
-    })
-  );
+  openStore(storename).pipe(mergeMap(db => writeMany<GeoJsonLike>(db, storename, features)));
 
 export const getFeature = (storename: string, id: any): Observable<GeoJsonLike> =>
-  openStore(storename).pipe(mergeMap(db => get(db, storename, id)));
+  openStore(storename).pipe(mergeMap(db => get<GeoJsonLike>(db, storename, id)));
 
 export const getFeatures = (storename: string, filterFunc: Function1<GeoJsonLike, boolean>): Observable<GeoJsonLike> =>
-  openStore(storename).pipe(mergeMap(db => getAll(db, storename).pipe(filter(filterFunc))));
+  openStore(storename).pipe(mergeMap(db => getAll<GeoJsonLike>(db, storename).pipe(filter(filterFunc))));
 
 export const getFeaturesByIds = (storename: string, keys: any[]): Observable<GeoJsonLike> =>
-  openStore(storename).pipe(mergeMap(db => from(keys.map(key => get(db, storename, key))).pipe(mergeAll())));
+  openStore(storename).pipe(mergeMap(db => from(keys.map(key => get<GeoJsonLike>(db, storename, key))).pipe(mergeAll())));
 
 export const getFeaturesByExtent = (storename: string, extent: ol.Extent): Observable<GeoJsonLike> =>
   forkJoin(
@@ -152,9 +114,9 @@ export const getFeaturesByExtentTableScan = (storename: string, extent: ol.Exten
 };
 
 const getLower = (storename: string, idx: string, bound: number): Observable<any[]> =>
-  openStore(storename).pipe(mergeMap(db => getAllKeys(db, storename, idx, IDBKeyRange.lowerBound(bound))));
+  openStore(storename).pipe(mergeMap(db => getAllKeys<GeoJsonLike>(db, storename, idx, IDBKeyRange.lowerBound(bound))));
 
 const getUpper = (storename: string, idx: string, bound: number): Observable<any[]> =>
-  openStore(storename).pipe(mergeMap(db => getAllKeys(db, storename, idx, IDBKeyRange.upperBound(bound))));
+  openStore(storename).pipe(mergeMap(db => getAllKeys<GeoJsonLike>(db, storename, idx, IDBKeyRange.upperBound(bound))));
 
 const intersect = <T>(a: T[], b: T[]) => a.filter(value => -1 !== b.indexOf(value));
