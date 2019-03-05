@@ -51,7 +51,7 @@ import {
 } from "./messages";
 
 // Dit is een type dat de interne KartLocaties plat klopt voor extern gebruik.
-export interface KaartLocatiesPlat {
+export interface ClassicKlikInfoEnStatus {
   readonly timestamp: number;
   readonly coordinaat: ol.Coordinate;
   readonly adres?: Adres;
@@ -61,7 +61,7 @@ export interface KaartLocatiesPlat {
   readonly combinedLaagLocatieStatus: progress.ProgressStatus;
 }
 
-const flattenKaartLocaties: Function1<KaartLocaties, KaartLocatiesPlat> = locaties => ({
+const flattenKaartLocaties: Function1<KaartLocaties, ClassicKlikInfoEnStatus> = locaties => ({
   timestamp: locaties.timestamp,
   coordinaat: locaties.coordinaat,
   adres: progress
@@ -137,7 +137,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   @Output()
   voorgrondLaagLagen: EventEmitter<Array<ToegevoegdeLaag>> = new EventEmitter();
   @Output()
-  kaartLocaties: EventEmitter<KaartLocatiesPlat> = new EventEmitter();
+  kaartLocaties: EventEmitter<ClassicKlikInfoEnStatus> = new EventEmitter();
 
   @ViewChild("kaart", { read: ElementRef })
   mapElement: ElementRef;
