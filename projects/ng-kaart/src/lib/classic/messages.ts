@@ -6,7 +6,7 @@ import * as ke from "../kaart/kaart-elementen";
 import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
 import * as prt from "../kaart/kaart-protocol";
 import { GeselecteerdeFeatures, HoverFeature } from "../kaart/kaart-with-info-model";
-import { PrecacheLaagProgress } from "../kaart/model-changes";
+import { LaatsteCacheRefresh, PrecacheLaagProgress } from "../kaart/model-changes";
 
 import { classicLogger } from "./log";
 
@@ -33,6 +33,7 @@ export type KaartClassicSubMsg =
   | VectorLagenAangepastMsg
   | AchtergrondLagenInGroepAangepastMsg
   | PrecacheProgressMsg
+  | LaatsteCacheRefreshMsg
   | VoorgrondHoogLagenInGroepAangepastMsg
   | VoorgrondLaagLagenInGroepAangepastMsg
   | PublishedKaartLocatiesMsg
@@ -56,6 +57,11 @@ export interface TekenGeomAangepastMsg {
 export interface PrecacheProgressMsg {
   readonly type: "PrecacheProgress";
   readonly progress: PrecacheLaagProgress;
+}
+
+export interface LaatsteCacheRefreshMsg {
+  readonly type: "LaatsteCacheRefresh";
+  readonly laatsteCacheRefresh: LaatsteCacheRefresh;
 }
 
 export interface SubscribedMsg {
@@ -153,6 +159,10 @@ export function TekenGeomAangepastMsg(geom: ol.geom.Geometry): TekenGeomAangepas
 
 export function PrecacheProgressMsg(progress: PrecacheLaagProgress): PrecacheProgressMsg {
   return { type: "PrecacheProgress", progress: progress };
+}
+
+export function LaatsteCacheRefreshMsg(laatsteCacheRefresh: LaatsteCacheRefresh): LaatsteCacheRefreshMsg {
+  return { type: "LaatsteCacheRefresh", laatsteCacheRefresh: laatsteCacheRefresh };
 }
 
 export function AchtergrondLagenInGroepAangepastMsg(lagen: Array<ToegevoegdeLaag>): AchtergrondLagenInGroepAangepastMsg {

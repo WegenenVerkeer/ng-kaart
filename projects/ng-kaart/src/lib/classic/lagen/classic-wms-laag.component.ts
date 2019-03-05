@@ -1,15 +1,16 @@
 import { AfterViewInit, Component, EventEmitter, Input, NgZone, OnInit, Output, ViewEncapsulation } from "@angular/core";
 import { pipe } from "fp-ts/lib/function";
-import { fromNullable } from "fp-ts/lib/Option";
+import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import { merge } from "rxjs";
-import { distinctUntilChanged, map } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, startWith, tap } from "rxjs/operators";
 
 import * as ke from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
+import { LaatsteCacheRefresh } from "../../kaart/model-changes";
 import { ofType } from "../../util";
 import { urlWithParams } from "../../util/url";
 import { classicMsgSubscriptionCmdOperator, KaartClassicComponent } from "../kaart-classic.component";
-import { KaartClassicMsg, logOnlyWrapper, PrecacheProgressMsg } from "../messages";
+import { KaartClassicMsg, LaatsteCacheRefreshMsg, logOnlyWrapper, PrecacheProgressMsg } from "../messages";
 
 import { ClassicLaagComponent } from "./classic-laag.component";
 
@@ -57,6 +58,9 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
 
   @Output()
   precacheProgress: EventEmitter<number> = new EventEmitter<number>();
+
+  @Output()
+  laatsteCacheRefresh: EventEmitter<Date> = new EventEmitter<Date>();
 
   constructor(kaart: KaartClassicComponent, zone: NgZone) {
     super(kaart, zone);
@@ -125,6 +129,12 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
                   PrecacheProgressMsg,
                   KaartClassicMsg
                 )
+              ),
+              prt.LaatsteCacheRefreshSubscription(
+                pipe(
+                  LaatsteCacheRefreshMsg,
+                  KaartClassicMsg
+                )
               )
             )
           ),
@@ -133,6 +143,13 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
             map(m => (m.progress[this.titel] ? m.progress[this.titel] : 0)),
             distinctUntilChanged(),
             map(progress => this.precacheProgress.emit(progress))
+          ),
+          this.kaart.kaartClassicSubMsg$.pipe(
+            ofType<LaatsteCacheRefreshMsg>("LaatsteCacheRefresh"),
+            filter(m => fromNullable(m.laatsteCacheRefresh[this.titel]).isSome()),
+            map(m => m.laatsteCacheRefresh[this.titel]),
+            distinctUntilChanged(),
+            tap(laatsteCacheRefresh => this.laatsteCacheRefresh.emit(laatsteCacheRefresh))
           )
         )
       ).subscribe();
