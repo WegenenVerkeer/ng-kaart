@@ -11,7 +11,7 @@ import {
   SimpleChanges,
   ViewChild
 } from "@angular/core";
-import { pipe } from "fp-ts/lib/function";
+import { Function1, pipe } from "fp-ts/lib/function";
 import * as option from "fp-ts/lib/Option";
 import { fromEither, none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
@@ -20,13 +20,15 @@ import { map, share, tap } from "rxjs/operators";
 
 import { ToegevoegdeLaag } from "../kaart";
 import { KaartInfoBoodschapUiSelector } from "../kaart/info-boodschappen/kaart-info-boodschappen.component";
-import { KaartLocaties } from "../kaart/kaart-bevragen/laaginfo.model";
+import { Adres, KaartLocaties, WegLocaties } from "../kaart/kaart-bevragen/laaginfo.model";
 import { forChangedValue, KaartComponentBase } from "../kaart/kaart-component-base";
 import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "../kaart/kaart-event-dispatcher";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartMsgObservableConsumer } from "../kaart/kaart.component";
 import { subscriptionCmdOperator } from "../kaart/subscription-helper";
+import * as arrays from "../util/arrays";
 import { ofType } from "../util/operators";
+import * as progress from "../util/progress";
 import { TypedRecord } from "../util/typed-record";
 
 import { classicLogger } from "./log";
@@ -47,6 +49,33 @@ import {
   ZichtbareFeaturesAangepastMsg,
   ZoomAangepastMsg
 } from "./messages";
+
+// Dit is een type dat de interne KartLocaties plat klopt voor extern gebruik.
+export interface ClassicKlikInfoEnStatus {
+  readonly timestamp: number;
+  readonly coordinaat: ol.Coordinate;
+  readonly adres?: Adres;
+  readonly adresStatus: progress.ProgressStatus;
+  readonly wegLocaties: WegLocaties;
+  readonly wegLocatiesStatus: progress.ProgressStatus;
+  readonly combinedLaagLocatieStatus: progress.ProgressStatus;
+}
+
+const flattenKaartLocaties: Function1<KaartLocaties, ClassicKlikInfoEnStatus> = locaties => ({
+  timestamp: locaties.timestamp,
+  coordinaat: locaties.coordinaat,
+  adres: progress
+    .toOption(locaties.maybeAdres)
+    .chain(option.fromEither)
+    .toUndefined(),
+  adresStatus: progress.toProgressStatus(locaties.maybeAdres),
+  wegLocaties: arrays.fromOption(progress.toOption(locaties.wegLocaties).map(arrays.fromEither)),
+  wegLocatiesStatus: progress.toProgressStatus(locaties.wegLocaties),
+  combinedLaagLocatieStatus: progress.combineStatus(
+    progress.toProgressStatus(locaties.maybeAdres),
+    progress.toProgressStatus(locaties.wegLocaties)
+  )
+});
 
 @Component({
   selector: "awv-kaart-classic",
@@ -108,7 +137,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   @Output()
   voorgrondLaagLagen: EventEmitter<Array<ToegevoegdeLaag>> = new EventEmitter();
   @Output()
-  kaartLocaties: EventEmitter<KaartLocaties> = new EventEmitter();
+  kaartLocaties: EventEmitter<ClassicKlikInfoEnStatus> = new EventEmitter();
 
   @ViewChild("kaart", { read: ElementRef })
   mapElement: ElementRef;
@@ -222,7 +251,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
           case "VoorgrondLaagLagenInGroepAangepast":
             return this.voorgrondLaagLagen.emit(msg.lagen);
           case "PublishedKaartLocaties":
-            return this.kaartLocaties.emit(msg.locaties);
+            return this.kaartLocaties.emit(flattenKaartLocaties(msg.locaties));
           default:
             return; // Op de andere boodschappen reageren we niet
         }
