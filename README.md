@@ -187,7 +187,7 @@ projects
         ...
       ...  
 ```
-N
+
 `kaart-schaal.component.ts` bevat `KaartSchaalComponent` en `classic-lagenkiezer.component` bevat `ClassicLagenkiezerComponent`.
 
 ### Reducers e.d.
