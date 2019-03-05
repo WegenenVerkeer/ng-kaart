@@ -87,8 +87,8 @@ export const writeFeatures = (storename: string, features: GeoJsonLike[]): Obser
 export const getFeature = (storename: string, id: any): Observable<GeoJsonLike> =>
   openStore(storename).pipe(mergeMap(db => get<GeoJsonLike>(db, storename, id)));
 
-export const getFeatures = (storename: string, filterFunc: Function1<GeoJsonLike, boolean>): Observable<GeoJsonLike> =>
-  openStore(storename).pipe(mergeMap(db => getAll<GeoJsonLike>(db, storename).pipe(filter(filterFunc))));
+export const getFeatures = (storename: string, filterFunc: Function1<GeoJsonLike, boolean>): Observable<GeoJsonLike[]> =>
+  openStore(storename).pipe(mergeMap(db => getAll<GeoJsonLike>(db, storename).pipe(map(features => features.filter(filterFunc)))));
 
 export const getFeaturesByIds = (storename: string, keys: any[]): Observable<GeoJsonLike> =>
   openStore(storename).pipe(mergeMap(db => from(keys.map(key => get<GeoJsonLike>(db, storename, key))).pipe(mergeAll())));
@@ -104,7 +104,7 @@ export const getFeaturesByExtent = (storename: string, extent: ol.Extent): Obser
     mergeMap(keys => getFeaturesByIds(storename, keys))
   );
 
-export const getFeaturesByExtentTableScan = (storename: string, extent: ol.Extent): Observable<GeoJsonLike> => {
+export const getFeaturesByExtentTableScan = (storename: string, extent: ol.Extent): Observable<GeoJsonLike[]> => {
   const [minx, miny, maxx, maxy] = extent;
   return getFeatures(
     storename,
