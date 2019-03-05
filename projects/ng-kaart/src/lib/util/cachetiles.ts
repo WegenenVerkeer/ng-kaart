@@ -1,3 +1,4 @@
+import { Function1, Function2, Function6 } from "fp-ts/lib/function";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { mergeMap, tap } from "rxjs/operators";
@@ -18,8 +19,8 @@ const AANTAL_PARALLELE_REQUESTS = 4;
  * deze parallel af te lopen.
  * Elke chunk gaat sequentieel 1 voor 1 elke URL ophalen.
  */
-const fetchUrlsGrouped = (urls: string[]): rx.Observable<Progress> => {
-  return new rx.Observable<Progress>(observable => {
+const fetchUrlsGrouped: Function1<string[], rx.Observable<Progress>> = urls => {
+  return new rx.Observable<Progress>(subscriber => {
     let fetched = 0;
     const progress = {
       started: new Date(),
@@ -29,7 +30,7 @@ const fetchUrlsGrouped = (urls: string[]): rx.Observable<Progress> => {
     const fetchUrls = (chunk: string[]) => {
       const fetches = chunk.map(url => () => {
         fetched++;
-        observable.next({
+        subscriber.next({
           ...progress,
           percentage: Math.round((fetched / urls.length) * 100)
         });
@@ -38,21 +39,21 @@ const fetchUrlsGrouped = (urls: string[]): rx.Observable<Progress> => {
       fetches.reduce((vorige, huidige) => vorige.then(huidige), Promise.resolve());
     };
 
-    splitInChunks(urls, AANTAL_PARALLELE_REQUESTS).map(chunk => fetchUrls(chunk));
+    splitInChunks(urls, AANTAL_PARALLELE_REQUESTS).forEach(chunk => fetchUrls(chunk));
   });
 };
 
-const deleteTiles = (laagnaam: string, startMetLegeCache: boolean): rx.Observable<boolean> =>
+const deleteTiles: Function2<string, boolean, rx.Observable<boolean>> = (laagnaam, startMetLegeCache) =>
   startMetLegeCache ? rx.from(caches.delete(laagnaam)) : rx.of(false);
 
-export const refreshTiles = (
-  laagnaam: string,
-  source: ol.source.UrlTile,
-  startZoom: number,
-  stopZoom: number,
-  wkt: string,
-  startMetLegeCache: boolean
-): rx.Observable<Progress> => {
+export const refreshTiles: Function6<string, ol.source.UrlTile, number, number, string, boolean, rx.Observable<Progress>> = (
+  laagnaam,
+  source,
+  startZoom,
+  stopZoom,
+  wkt,
+  startMetLegeCache
+) => {
   if (isNaN(startZoom)) {
     throw new Error("Start zoom is geen getal");
   }

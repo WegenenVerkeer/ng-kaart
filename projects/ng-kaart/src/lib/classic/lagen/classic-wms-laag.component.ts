@@ -2,7 +2,7 @@ import { AfterViewInit, Component, EventEmitter, Input, NgZone, OnInit, Output, 
 import { pipe } from "fp-ts/lib/function";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import { merge } from "rxjs";
-import { distinctUntilChanged, map, startWith } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, startWith, tap } from "rxjs/operators";
 
 import * as ke from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
@@ -60,7 +60,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   precacheProgress: EventEmitter<number> = new EventEmitter<number>();
 
   @Output()
-  laatsteCacheRefresh: EventEmitter<Option<Date>> = new EventEmitter<Option<Date>>();
+  laatsteCacheRefresh: EventEmitter<Date> = new EventEmitter<Date>();
 
   constructor(kaart: KaartClassicComponent, zone: NgZone) {
     super(kaart, zone);
@@ -146,10 +146,10 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
           ),
           this.kaart.kaartClassicSubMsg$.pipe(
             ofType<LaatsteCacheRefreshMsg>("LaatsteCacheRefresh"),
-            map(m => (m.laatsteCacheRefresh[this.titel] ? some(m.laatsteCacheRefresh[this.titel]) : none)),
+            filter(m => fromNullable(m.laatsteCacheRefresh[this.titel]).isSome()),
+            map(m => m.laatsteCacheRefresh[this.titel]),
             distinctUntilChanged(),
-            map(laatsteCacheRefresh => this.laatsteCacheRefresh.emit(laatsteCacheRefresh)),
-            startWith(none)
+            tap(laatsteCacheRefresh => this.laatsteCacheRefresh.emit(laatsteCacheRefresh))
           )
         )
       ).subscribe();

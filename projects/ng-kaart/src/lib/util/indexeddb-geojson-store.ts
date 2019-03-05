@@ -5,7 +5,7 @@ import { filter, map, mergeAll, mergeMap } from "rxjs/operators";
 
 import { get, getAll, getAllKeys, writeMany } from "./indexeddb";
 
-const indexedb_db_naam = "nosql-features";
+const dbNaam = "nosql-features";
 
 export interface Geometry {
   readonly bbox: ol.Extent;
@@ -35,7 +35,7 @@ export interface GeoJsonLike {
  */
 const openStore = (storename: string): Observable<idb.DB> => {
   return from(
-    idb.openDb(indexedb_db_naam, 1, upgradeDB => {
+    idb.openDb(dbNaam, 1, upgradeDB => {
       switch (upgradeDB.oldVersion) {
         case 0:
           const store = upgradeDB.createObjectStore(storename, { keyPath: "id" });
@@ -48,7 +48,7 @@ const openStore = (storename: string): Observable<idb.DB> => {
   );
 };
 
-export const clear: <T>(storename: string) => Observable<boolean> = <T>(storename: string) => {
+export const clear: <T>(storename: string) => Observable<void> = <T>(storename: string) => {
   return openStore(storename).pipe(
     mergeMap(db =>
       from(
@@ -57,8 +57,7 @@ export const clear: <T>(storename: string) => Observable<boolean> = <T>(storenam
           .objectStore<T, any>(storename)
           .clear()
       )
-    ),
-    map(() => true)
+    )
   );
 };
 

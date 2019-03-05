@@ -1,48 +1,46 @@
 import * as idb from "idb";
-import { from, Observable } from "rxjs";
+import * as rx from "rxjs";
 import { map, mergeMap } from "rxjs/operators";
 
 import { LaatsteCacheRefresh } from "../kaart/model-changes";
 
 import * as indexeddb from "./indexeddb";
 
-const indexedb_db_naam = "tilecache-metadata";
+const dbNaam = "tilecache-metadata";
 
 interface CacheUpdateInformatie {
   readonly laagnaam: string;
   readonly datum: string;
 }
 
-const openStore = (): Observable<idb.DB> => {
-  return from(
-    idb.openDb(indexedb_db_naam, 1, upgradeDB => {
+const openStore = (): rx.Observable<idb.DB> => {
+  return rx.from(
+    idb.openDb(dbNaam, 1, upgradeDB => {
       switch (upgradeDB.oldVersion) {
         case 0:
-          upgradeDB.createObjectStore(indexedb_db_naam, { keyPath: "laagnaam" });
+          upgradeDB.createObjectStore(dbNaam, { keyPath: "laagnaam" });
       }
     })
   );
 };
 
-export const write = (laagnaam: string, datum: Date): Observable<IDBValidKey> =>
+export const write = (laagnaam: string, datum: Date): rx.Observable<IDBValidKey> =>
   openStore().pipe(
     mergeMap(db =>
-      indexeddb.write<CacheUpdateInformatie>(db, indexedb_db_naam, {
+      indexeddb.write<CacheUpdateInformatie>(db, dbNaam, {
         laagnaam: laagnaam,
         datum: datum.toISOString()
       })
     )
   );
 
-export const read = (laagnaam: string): Observable<Date> =>
-  openStore().pipe(
-    mergeMap(db => indexeddb.get<CacheUpdateInformatie>(db, indexedb_db_naam, laagnaam).pipe(map(record => new Date(record.datum))))
-  );
+export const read = (laagnaam: string): rx.Observable<Date> =>
+  openStore().pipe(mergeMap(db => indexeddb.get<CacheUpdateInformatie>(db, dbNaam, laagnaam).pipe(map(record => new Date(record.datum)))));
 
-export const readAll = (): Observable<LaatsteCacheRefresh> =>
+export const readAll = (): rx.Observable<LaatsteCacheRefresh> =>
   openStore().pipe(
     mergeMap(db =>
-      indexeddb.getAll<CacheUpdateInformatie>(db, indexedb_db_naam).pipe(
+      indexeddb.getAll<CacheUpdateInformatie>(db, dbNaam).pipe(
         map(record => {
           return { [record.laagnaam]: new Date(record.datum) };
         })

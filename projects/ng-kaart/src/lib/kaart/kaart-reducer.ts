@@ -1264,7 +1264,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         cmnd.wrapper,
         valideerVectorLayerBestaat(cmnd.titel).map(vectorLaag => {
-          (cmnd.startMetLegeCache ? featureStore.clear(cmnd.titel) : rx.of(false))
+          (cmnd.startMetLegeCache ? featureStore.clear(cmnd.titel) : rx.of(undefined))
             .pipe(
               switchMap(() =>
                 (vectorLaag.getSource() as NosqlFsSource).fetchFeaturesByWkt$(cmnd.wkt).pipe(
