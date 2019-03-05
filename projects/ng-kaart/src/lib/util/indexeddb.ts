@@ -18,13 +18,13 @@ export const deleteFeature = <T>(db: DB, storename: string, key: any): Observabl
       .delete(key)
   );
 
-export const getAll = <T>(db: DB, storename: string): Observable<T> =>
+export const getAll = <T>(db: DB, storename: string): Observable<T[]> =>
   from(
     db
       .transaction(storename)
       .objectStore<T, any>(storename)
       .getAll()
-  ).pipe(mergeAll());
+  );
 
 export const getAllKeys = <T>(db: DB, storename: string, idx: string, keyRange: IDBKeyRange): Observable<any[]> =>
   from(
