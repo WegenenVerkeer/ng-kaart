@@ -1,9 +1,9 @@
 import * as array from "fp-ts/lib/Array";
 import { left, right } from "fp-ts/lib/Either";
 import { Function2 } from "fp-ts/lib/function";
+import { map as filterable } from "fp-ts/lib/Map";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { setoidString } from "fp-ts/lib/Setoid";
-import { List, Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, map, mapTo, mergeAll, share, shareReplay, switchMap } from "rxjs/operators";
@@ -52,7 +52,7 @@ export interface ModelChanger {
   readonly uiElementSelectieSubj: rx.Subject<UiElementSelectie>;
   readonly uiElementOptiesSubj: rx.Subject<UiElementOpties>;
   readonly viewPortSizeSubj: rx.Subject<undefined>;
-  readonly lagenOpGroepSubj: Map<ke.Laaggroep, rx.Subject<List<ke.ToegevoegdeLaag>>>;
+  readonly lagenOpGroepSubj: Map<ke.Laaggroep, rx.Subject<ke.ToegevoegdeLaag[]>>;
   readonly laagVerwijderdSubj: rx.Subject<ke.ToegevoegdeLaag>;
   readonly mijnLocatieZoomDoelSubj: rx.Subject<Option<number>>;
   readonly actieveModusSubj: rx.Subject<Option<string>>;
@@ -73,19 +73,19 @@ export const ModelChanger: () => ModelChanger = () => ({
   uiElementSelectieSubj: new rx.Subject<UiElementSelectie>(),
   uiElementOptiesSubj: new rx.ReplaySubject<UiElementOpties>(1),
   viewPortSizeSubj: new rx.Subject<undefined>(),
-  lagenOpGroepSubj: Map<ke.Laaggroep, rx.Subject<List<ke.ToegevoegdeLaag>>>({
-    Achtergrond: new rx.BehaviorSubject<List<ke.ToegevoegdeLaag>>(List()),
-    "Voorgrond.Hoog": new rx.BehaviorSubject<List<ke.ToegevoegdeLaag>>(List()),
-    "Voorgrond.Laag": new rx.BehaviorSubject<List<ke.ToegevoegdeLaag>>(List()),
-    Tools: new rx.BehaviorSubject<List<ke.ToegevoegdeLaag>>(List())
-  }),
+  lagenOpGroepSubj: new Map<ke.Laaggroep, rx.Subject<Array<ke.ToegevoegdeLaag>>>([
+    ["Achtergrond", new rx.BehaviorSubject<Array<ke.ToegevoegdeLaag>>([])],
+    ["Voorgrond.Hoog", new rx.BehaviorSubject<Array<ke.ToegevoegdeLaag>>([])],
+    ["Voorgrond.Laag", new rx.BehaviorSubject<Array<ke.ToegevoegdeLaag>>([])],
+    ["Tools", new rx.BehaviorSubject<Array<ke.ToegevoegdeLaag>>([])]
+  ]),
   laagVerwijderdSubj: new rx.Subject<ke.ToegevoegdeLaag>(),
   mijnLocatieZoomDoelSubj: new rx.BehaviorSubject<Option<number>>(none),
   actieveModusSubj: new rx.BehaviorSubject(none),
   zoekerServicesSubj: new rx.BehaviorSubject([]),
   zoekopdrachtSubj: new rx.Subject<Zoekopdracht>(),
   zoekresultaatselectieSubj: new rx.Subject<ZoekResultaat>(),
-  laagLocationInfoServicesOpTitelSubj: new rx.BehaviorSubject(Map()),
+  laagLocationInfoServicesOpTitelSubj: new rx.BehaviorSubject(new Map()),
   laagstijlaanpassingStateSubj: new rx.BehaviorSubject(GeenLaagstijlaanpassing),
   laagstijlGezetSubj: new rx.Subject<ke.ToegevoegdeVectorLaag>(),
   dragInfoSubj: new rx.Subject<DragInfo>(),
@@ -98,11 +98,11 @@ export interface ModelChanges {
   readonly uiElementSelectie$: rx.Observable<UiElementSelectie>;
   readonly uiElementOpties$: rx.Observable<UiElementOpties>;
   readonly viewinstellingen$: rx.Observable<Viewinstellingen>;
-  readonly lagenOpGroep: Map<ke.Laaggroep, rx.Observable<List<ke.ToegevoegdeLaag>>>;
+  readonly lagenOpGroep: Map<ke.Laaggroep, rx.Observable<Array<ke.ToegevoegdeLaag>>>;
   readonly laagVerwijderd$: rx.Observable<ke.ToegevoegdeLaag>;
   readonly geselecteerdeFeatures$: rx.Observable<GeselecteerdeFeatures>;
   readonly hoverFeatures$: rx.Observable<HoverFeature>;
-  readonly zichtbareFeatures$: rx.Observable<List<ol.Feature>>;
+  readonly zichtbareFeatures$: rx.Observable<Array<ol.Feature>>;
   readonly kaartKlikLocatie$: rx.Observable<KlikInfo>;
   readonly mijnLocatieZoomDoel$: rx.Observable<Option<number>>;
   readonly actieveModus$: rx.Observable<Option<string>>;
@@ -132,14 +132,14 @@ const viewinstellingen = (olmap: ol.Map) => ({
 export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges = (model, changer) => {
   const toegevoegdeGeselecteerdeFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.geselecteerdeFeatures, "add").pipe(
     map(evt => ({
-      geselecteerd: List(model.geselecteerdeFeatures.getArray()),
+      geselecteerd: model.geselecteerdeFeatures.getArray(),
       toegevoegd: some(evt.element),
       verwijderd: none
     }))
   );
   const verwijderdeGeselecteerdeFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.geselecteerdeFeatures, "remove").pipe(
     map(evt => ({
-      geselecteerd: List(model.geselecteerdeFeatures.getArray()),
+      geselecteerd: model.geselecteerdeFeatures.getArray(),
       toegevoegd: none,
       verwijderd: some(evt.element)
     }))
@@ -190,10 +190,9 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     }))
   );
 
-  const lagenOpGroep$ = changer.lagenOpGroepSubj.map(s => s!.asObservable()).toMap();
-  const filterVectorLagen = (tlgn: List<ke.ToegevoegdeLaag>) =>
-    tlgn.filter(ke.isToegevoegdeVectorLaag).toList() as List<ke.ToegevoegdeVectorLaag>;
-  const vectorlagen$ = lagenOpGroep$.get("Voorgrond.Hoog").pipe(map(filterVectorLagen));
+  const lagenOpGroep$ = filterable.map(changer.lagenOpGroepSubj, s => s!.asObservable());
+  const filterVectorLagen = (tlgn: ke.ToegevoegdeLaag[]) => tlgn.filter(ke.isToegevoegdeVectorLaag);
+  const vectorlagen$ = lagenOpGroep$.get("Voorgrond.Hoog")!.pipe(map(filterVectorLagen));
 
   // Om te weten welke features er zichtbaar zijn op een pagina zou het voldoende moeten zijn om te weten welke lagen er zijn, welke van
   // die lagen zichtbaar zijn en welke features er op de lagen in de huidige extent staan. Op zich is dat ook zo, maar het probleem is
@@ -206,9 +205,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
   const featuresChanged$: rx.Observable<undefined> = vectorlagen$.pipe(
     debounceTime(100), // vlugge verandering van het aantal vectorlagen willen we niet zien
     switchMap(vlgn =>
-      rx.merge(
-        ...vlgn.map(vlg => observableFromOlEvents(vlg!.layer.getSource(), "addfeature", "removefeature", "clear", "clear")).toArray()
-      )
+      rx.merge(...vlgn.map(vlg => observableFromOlEvents(vlg!.layer.getSource(), "addfeature", "removefeature", "clear", "clear")))
     ),
     // Vlugge veranderingen van de features willen we ook niet zien.
     // Best om dit groter te houden dan de tijd voorzien om cleanup te doen. Anders overbodige events.
@@ -216,12 +213,10 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     mapTo(void 0)
   );
 
-  const collectFeatures: (_1: prt.Viewinstellingen, _2: List<ke.ToegevoegdeVectorLaag>) => List<ol.Feature> = (vw, vlgn) =>
-    List(
-      array.array.chain(vlgn.toArray(), vlg => {
-        return ke.isZichtbaar(vw.resolution)(vlg) ? vlg.layer.getSource().getFeaturesInExtent(vw.extent) : [];
-      })
-    );
+  const collectFeatures: (_1: prt.Viewinstellingen, _2: Array<ke.ToegevoegdeVectorLaag>) => Array<ol.Feature> = (vw, vlgn) =>
+    array.array.chain(vlgn, vlg => {
+      return ke.isZichtbaar(vw.resolution)(vlg) ? vlg.layer.getSource().getFeaturesInExtent(vw.extent) : [];
+    });
 
   const zichtbareFeatures$ = rx.combineLatest(viewinstellingen$, vectorlagen$, featuresChanged$, collectFeatures);
 
@@ -238,7 +233,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
   );
 
   const gevraagdeZoekers: Function2<Zoekopdracht, ZoekerMetPrioriteiten[], ZoekerMetPrioriteiten[]> = (opdracht, geregistreerd) =>
-    geregistreerd.filter(zmp => array.member(setoidString)(opdracht.zoekernamen, zmp.zoeker.naam()));
+    geregistreerd.filter(zmp => array.elem(setoidString)(zmp.zoeker.naam(), opdracht.zoekernamen));
 
   const zoekresulaten$: rx.Observable<ZoekAntwoord> = changer.zoekerServicesSubj.pipe(
     switchMap(zoekerSvcs =>

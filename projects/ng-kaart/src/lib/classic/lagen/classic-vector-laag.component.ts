@@ -1,6 +1,5 @@
 import { Component, Input, NgZone, ViewEncapsulation } from "@angular/core";
 import { fromNullable } from "fp-ts/lib/Option";
-import { OrderedMap } from "immutable";
 import * as ol from "openlayers";
 
 import * as ke from "../../kaart/kaart-elementen";
@@ -39,7 +38,7 @@ export class ClassicVectorLaagComponent extends ClassicVectorLaagLikeComponent {
       minZoom: this.minZoom,
       maxZoom: this.maxZoom,
       offsetveld: fromNullable(this.offsetveld),
-      velden: OrderedMap(this.veldInfos.map(vi => [vi.naam, vi])),
+      velden: this.veldInfos.reduce((m, vi) => m.set(vi.naam, vi), new Map<string, ke.VeldInfo>()),
       verwijderd: false,
       rijrichtingIsDigitalisatieZin: false
     };

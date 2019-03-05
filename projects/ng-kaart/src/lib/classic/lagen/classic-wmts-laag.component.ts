@@ -1,7 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { Component, Input, NgZone, OnInit, ViewEncapsulation } from "@angular/core";
 import { fromNullable, some } from "fp-ts/lib/Option";
-import { List } from "immutable";
 import * as ol from "openlayers";
 
 import * as ke from "../../kaart/kaart-elementen";
@@ -83,7 +82,7 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
     } else {
       const config: ke.WmtsManualConfig = {
         type: "Manual",
-        urls: List(this.urls),
+        urls: this.urls,
         matrixIds: this.matrixIds,
         style: fromNullable(this.style),
         origin: fromNullable(this.origin),

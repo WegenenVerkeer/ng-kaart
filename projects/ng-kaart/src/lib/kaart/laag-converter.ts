@@ -18,7 +18,7 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
       source: new ol.source.TileWMS({
         projection: kaart.config.srs,
         cacheSize: kaart.tileLoader.maxMislukteTiles,
-        urls: l.urls.toArray(),
+        urls: l.urls,
         tileGrid: ol.tilegrid.createXYZ({
           extent: kaart.config.defaults.extent,
           tileSize: l.tileSize.getOrElse(256)
@@ -47,7 +47,7 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
       extent = config.extent.getOrElse(kaart.config.defaults.extent);
       source = new ol.source.WMTS({
         projection: kaart.config.srs,
-        urls: config.urls.toArray(),
+        urls: config.urls,
         tileGrid: new ol.tilegrid.WMTS({
           origin: config.origin.getOrElseL(() => ol.extent.getTopLeft(extent)),
           resolutions: kaart.config.defaults.resolutions,
@@ -73,7 +73,7 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
     return new ol.layer.Image({
       opacity: l.opacity.toUndefined(),
       source: new ol.source.ImageWMS({
-        url: l.urls.first(),
+        url: l.urls[0],
         params: {
           LAYERS: l.naam,
           SRS: kaart.config.srs,
@@ -115,10 +115,10 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
       visible: true,
       style: vectorlaag.styleSelector.map(toStylish).getOrElse(kaart.config.defaults.style),
       minResolution: array
-        .index(vectorlaag.maxZoom, kaart.config.defaults.resolutions)
+        .lookup(vectorlaag.maxZoom, kaart.config.defaults.resolutions)
         .getOrElse(kaart.config.defaults.resolutions[kaart.config.defaults.resolutions.length - 1]),
       maxResolution: array
-        .index(vectorlaag.minZoom, kaart.config.defaults.resolutions)
+        .lookup(vectorlaag.minZoom, kaart.config.defaults.resolutions)
         .map(maxResolutie => maxResolutie + 0.0001) // max is exclusive, dus tel een fractie bij zodat deze inclusief wordt
         .getOrElse(kaart.config.defaults.resolutions[0])
     });

@@ -2,7 +2,6 @@ import { AfterViewInit, Component, NgZone, OnInit, QueryList, ViewChildren } fro
 import { MatButton } from "@angular/material";
 import { Function1, Function3, Function4 } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
-import { List, OrderedMap } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, filter, map } from "rxjs/operators";
@@ -164,20 +163,21 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
   private maakNieuwFeature(coordinate: ol.Coordinate, zoom: number, accuracy: number): Option<ol.Feature> {
     const feature = new ol.Feature(new ol.geom.Point(coordinate));
     feature.setStyle(locatieStijlFunctie(accuracy));
-    this.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, List.of(feature), kaartLogOnlyWrapper));
+    this.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, [feature], kaartLogOnlyWrapper));
     return some(feature);
   }
 
   private verwijderFeature() {
-    this.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, List(), kaartLogOnlyWrapper));
+    this.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, <Array<ol.Feature>>[], kaartLogOnlyWrapper));
   }
 
   private meldFout(fout: PositionError | string) {
     kaartLogger.error("error", fout);
     this.dispatch(
-      prt.MeldComponentFoutCmd(
-        List.of("Zoomen naar huidige locatie niet mogelijk", "De toepassing heeft geen toestemming om locatie te gebruiken")
-      )
+      prt.MeldComponentFoutCmd([
+        "Zoomen naar huidige locatie niet mogelijk",
+        "De toepassing heeft geen toestemming om locatie te gebruiken"
+      ])
     );
   }
 
@@ -235,7 +235,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
       hover: false,
       minZoom: 2,
       maxZoom: 15,
-      velden: OrderedMap<string, ke.VeldInfo>(),
+      velden: new Map<string, ke.VeldInfo>(),
       offsetveld: none,
       verwijderd: false,
       rijrichtingIsDigitalisatieZin: false

@@ -1,7 +1,6 @@
 import { Either } from "fp-ts/lib/Either";
 import { Function1 } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
-import { List, Map } from "immutable";
 import * as ol from "openlayers";
 
 import { Progress } from "../util/progress";
@@ -67,11 +66,11 @@ export const foldInfoBoodschap = (boodschap: InfoBoodschap) => <A>(
 
 export interface Groeplagen {
   readonly laaggroep: ke.Laaggroep;
-  readonly lagen: List<ke.ToegevoegdeLaag>;
+  readonly lagen: Array<ke.ToegevoegdeLaag>;
 }
 
 export interface GeselecteerdeFeatures {
-  readonly geselecteerd: List<ol.Feature>;
+  readonly geselecteerd: Array<ol.Feature>;
   readonly toegevoegd: Option<ol.Feature>;
   readonly verwijderd: Option<ol.Feature>;
 }

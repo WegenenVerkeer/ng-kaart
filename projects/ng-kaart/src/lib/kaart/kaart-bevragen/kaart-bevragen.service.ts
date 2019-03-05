@@ -2,13 +2,13 @@ import { HttpClient } from "@angular/common/http";
 import { either } from "fp-ts";
 import { left, right } from "fp-ts/lib/Either";
 import { fromNullable } from "fp-ts/lib/Option";
-import { Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { catchError, map } from "rxjs/operators";
 
 import { Coordinate } from "../../coordinaten";
 import * as arrays from "../../util/arrays";
+import * as maps from "../../util/maps";
 import { proceed, Progress, Received, Requested } from "../../util/progress";
 import { kaartLogger } from "../log";
 
@@ -89,7 +89,7 @@ export interface AgivAdres {
   readonly huisnummer: string;
 }
 
-export function toWegLocaties(lsWegLocaties: LsWegLocaties): WegLocatie[] {
+export function toWegLocaties(lsWegLocaties: LsWegLocaties): Array<WegLocatie> {
   return lsWegLocaties.items.map(toWegLocatie);
 }
 
@@ -132,15 +132,15 @@ export function LsWegLocatiesResultToEither(response: LsWegLocaties): WegLocatie
 }
 
 export function fromTimestampAndCoordinate(timestamp: number, coordinaat: ol.Coordinate): LocatieInfo {
-  return LocatieInfo(timestamp, coordinaat, Requested, Requested, Map());
+  return LocatieInfo(timestamp, coordinaat, Requested, Requested, new Map());
 }
 
 export function withAdres(timestamp: number, coordinaat: ol.Coordinate, adres: AdresResult): LocatieInfo {
-  return LocatieInfo(timestamp, coordinaat, Received(adres), Requested, Map());
+  return LocatieInfo(timestamp, coordinaat, Received(adres), Requested, new Map());
 }
 
 export function fromWegLocaties(timestamp: number, coordinaat: ol.Coordinate, wegLocaties: WegLocatiesResult): LocatieInfo {
-  return LocatieInfo(timestamp, coordinaat, Requested, Received(wegLocaties), Map());
+  return LocatieInfo(timestamp, coordinaat, Requested, Received(wegLocaties), new Map());
 }
 
 export function merge(i1: LocatieInfo, i2: LocatieInfo): LocatieInfo {
@@ -151,7 +151,7 @@ export function merge(i1: LocatieInfo, i2: LocatieInfo): LocatieInfo {
         i2.kaartLocatie,
         proceed(i2.adres, i1.adres),
         proceed(i2.weglocaties, i1.weglocaties),
-        i1.lagenLocatieInfo.concat(i2.lagenLocatieInfo).toMap()
+        maps.concat(i1.lagenLocatieInfo)(i2.lagenLocatieInfo)
       )
     : i2;
 }

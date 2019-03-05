@@ -1,8 +1,7 @@
 import { HttpClient } from "@angular/common/http";
 import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import * as option from "fp-ts/lib/Option";
-import { none } from "fp-ts/lib/Option";
-import { List, Map } from "immutable";
+import { none, Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { debounceTime, filter, map, mergeAll, scan, startWith, switchMap, timeoutWith } from "rxjs/operators";
@@ -41,25 +40,23 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
   ngOnInit(): void {
     super.ngOnInit();
 
-    const stableReferentielagen$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Laag").pipe(debounceTime(250));
+    const stableReferentielagen$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Laag")!.pipe(debounceTime(250));
     const stableInfoServices$ = this.modelChanges.laagLocationInfoServicesOpTitel$.pipe(debounceTime(250));
     const geklikteLocatie$ = this.modelChanges.kaartKlikLocatie$.pipe(filter(l => this.isActief() && !l.coversFeature));
 
     const allSvcCalls: (
-      _1: List<ke.ToegevoegdeLaag>,
+      _1: Array<ke.ToegevoegdeLaag>,
       _2: Map<string, LaagLocationInfoService>,
       _3: ol.Coordinate
     ) => Array<rx.Observable<srv.LocatieInfo>> = (lgn, svcs, locatie) => {
       const timestamp = Date.now();
       return lgn
         .filter(lg => lg!.layer.getVisible() && svcs.has(lg!.titel)) // zichtbare lagen met een info service
-        .map(lg => infoForLaag(timestamp, locatie, lg!, svcs.get(lg!.titel)))
-        .toList()
-        .push(
+        .map(lg => infoForLaag(timestamp, locatie, lg!, svcs.get(lg!.titel)!))
+        .concat([
           srv.wegLocatiesViaXY$(this.http, locatie).pipe(map(weglocatie => srv.fromWegLocaties(timestamp, locatie, weglocatie))),
           srv.adresViaXY$(this.http, locatie).pipe(map(adres => srv.withAdres(timestamp, locatie, adres)))
-        )
-        .toArray();
+        ]);
     };
 
     this.bindToLifeCycle(

@@ -2,7 +2,6 @@
 import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Inject, Injectable } from "@angular/core";
 import { fromNullable, Option, some } from "fp-ts/lib/Option";
-import { Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { combineLatest, Observable, Observer, timer } from "rxjs";
@@ -136,12 +135,10 @@ export class ZoekerGoogleWdbService implements Zoeker {
   ) {
     this.googleWdbLocatieZoekerConfig = new ZoekerConfigGoogleWdbConfig(zoekerConfigData.googleWdb);
     this.locatieZoekerUrl = this.googleWdbLocatieZoekerConfig.url;
-    this.legende = Map.of(
-      "Google Locatiezoeker",
-      this.zoekerRepresentatie.getSvgIcon("Google"),
-      "WDB Locatiezoeker",
-      this.zoekerRepresentatie.getSvgIcon("WDB")
-    );
+    this.legende = new Map([
+      ["Google Locatiezoeker", this.zoekerRepresentatie.getSvgIcon("Google")],
+      ["WDB Locatiezoeker", this.zoekerRepresentatie.getSvgIcon("WDB")]
+    ]);
     this.googleServicesObs = Observable.create((observer: Observer<GoogleServices>) => {
       // Eerste keer, laad de google api en wacht op __onGoogleLoaded event
       window["__onGoogleLoaded"] = ev => {

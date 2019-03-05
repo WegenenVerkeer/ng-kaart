@@ -1,7 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { Inject, Injectable } from "@angular/core";
 import { none, Option, some } from "fp-ts/lib/Option";
-import { Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { map, shareReplay } from "rxjs/operators";
@@ -117,7 +116,7 @@ export class ZoekerPerceelService implements Zoeker {
     @Inject(ZOEKER_REPRESENTATIE) private zoekerRepresentatie: AbstractRepresentatieService
   ) {
     this.locatorServicesConfig = new ZoekerConfigLocatorServicesConfig(zoekerConfigData.locatorServices);
-    this.legende = Map.of(this.naam(), this.zoekerRepresentatie.getSvgIcon("Perceel"));
+    this.legende = new Map([[this.naam(), this.zoekerRepresentatie.getSvgIcon("Perceel")]]);
   }
 
   naam(): string {

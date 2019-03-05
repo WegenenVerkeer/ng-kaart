@@ -1,8 +1,7 @@
 import { option } from "fp-ts";
 import * as array from "fp-ts/lib/Array";
 import { Either } from "fp-ts/lib/Either";
-import { identity, pipe, Refinement } from "fp-ts/lib/function";
-import { Predicate } from "fp-ts/lib/function";
+import { identity, pipe, Predicate, Refinement } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 
 export const isArray: Refinement<any, any[]> = Array.isArray;
@@ -17,7 +16,7 @@ export const toArray: <A>(aOrAs: A | A[]) => A[] = aOrAs => (Array.isArray(aOrAs
 export const pure: <A>() => A[] = () => [];
 
 const findOffsetElement: <A>(as: Array<A>) => (p: Predicate<A>) => (offset: number) => Option<A> = as => predicate => offset =>
-  array.findIndex(as, predicate).chain(i => array.index(i + offset, as));
+  array.findIndex(as, predicate).chain(i => array.lookup(i + offset, as));
 
 export const previousElement: <A>(as: Array<A>) => (p: Predicate<A>) => Option<A> = as => predicate => findOffsetElement(as)(predicate)(-1);
 
@@ -39,3 +38,4 @@ export const fromEither: <L, A>(eitherArray: Either<L, A[]>) => A[] = pipe(
   option.fromEither,
   fromOption
 );
+export const fromNullable: <A>(aOrAs: null | undefined | A | A[]) => A[] = aOrAs => option.fromNullable(aOrAs).fold([], toArray);

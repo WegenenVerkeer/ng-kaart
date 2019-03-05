@@ -1,13 +1,16 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone } from "@angular/core";
 import * as array from "fp-ts/lib/Array";
+import { Function3 } from "fp-ts/lib/function";
 import { fromNullable } from "fp-ts/lib/Option";
-import { contramap, Ord, ordNumber } from "fp-ts/lib/Ord";
+import { Ord, ordNumber } from "fp-ts/lib/Ord";
+import * as ord from "fp-ts/lib/Ord";
 
 import { Adres, WegLocatie } from "..";
 import { formatCoordinate, lambert72ToWgs84, switchVolgorde } from "../../coordinaten/coordinaten.service";
 import { copyToClipboard } from "../../util/clipboard";
-import { withProgress } from "../../util/progress";
-import { TextLaagLocationInfo } from "../kaart-bevragen/laaginfo.model";
+import * as maps from "../../util/maps";
+import { Progress, withProgress } from "../../util/progress";
+import { LaagLocationInfo, TextLaagLocationInfo } from "../kaart-bevragen/laaginfo.model";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { InfoBoodschapKaartBevragenProgress } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
@@ -19,7 +22,7 @@ export interface LaagInfo {
   text?: string;
 }
 
-const projectafstandOrd: Ord<WegLocatie> = contramap(wl => wl.projectieafstand, ordNumber);
+const projectafstandOrd: Ord<WegLocatie> = ord.contramap(wl => wl.projectieafstand, ordNumber);
 
 @Component({
   selector: "awv-kaart-info-boodschap-kaart-bevragen",
@@ -38,15 +41,16 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildComponen
   set boodschap(boodschap: InfoBoodschapKaartBevragenProgress) {
     // Deze waarden voor de template worden berekend op het moment dat er een nieuwe input is, niet elke
     // keer dat Angular denkt dat hij change detection moet laten lopen.
-    this.textLaagLocationInfo = boodschap.laagLocatieInfoOpTitel
-      .map((value, key) =>
+    const foldF: Function3<string, Progress<LaagLocationInfo>, Array<LaagInfo>, Array<LaagInfo>> = (key, value, acc) =>
+      array.cons(
         withProgress<TextLaagLocationInfo, LaagInfo>(
-          () => ({ titel: key!, busy: true }),
-          () => ({ titel: key!, busy: false, timedout: true }),
-          laaglocationinfo => ({ titel: key!, busy: false, text: laaglocationinfo.text })
-        )(value!)
-      )
-      .toArray();
+          () => ({ titel: key, busy: true }),
+          () => ({ titel: key, busy: false, timedout: true }),
+          laaglocationinfo => ({ titel: key, busy: false, text: laaglocationinfo.text })
+        )(value),
+        acc
+      );
+    this.textLaagLocationInfo = maps.fold(boodschap.laagLocatieInfoOpTitel)(foldF)([]);
     this.coordinaatInformatieLambert72 = fromNullable(boodschap.coordinaat)
       .map(formatCoordinate(0))
       .getOrElse("");
@@ -56,6 +60,7 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildComponen
       .map(formatCoordinate(7))
       .getOrElse("");
     this.wegLocaties = array.sort(projectafstandOrd)(boodschap.weglocaties);
+
     this.adressen = boodschap.adres.fold([], adres => [adres]); // Array van 0 of 1 eltn isomorf met Option, maar makkelijker voor Angular
   }
 

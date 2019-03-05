@@ -1,5 +1,4 @@
 import { Either } from "fp-ts/lib/Either";
-import { Map } from "immutable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 
