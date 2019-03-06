@@ -81,6 +81,8 @@ De eerste categorie van componenten horen bij `KaartComponent` en de tag `awv-ka
 `KaartClassicComponent` en de tag `awv-kaart-classic`. Het is een verbeterpunt om die twee soorten in afzonderlijke
 (Angular) projecten uit elkaar te trekken. Op dit moment moet je kijken naar de directory waaronder een component zit.
 
+De eerste categorie noemen we de "interne componenten" en de tweede de "classic componenten".
+
 ## Principes
 
 ### Openlayers
@@ -207,7 +209,16 @@ Tenslotte zijn er nog een aantal RxJs `Subscription`s die gebruikt worden als br
 mee op te bouwen. Dit betreft oudere code. In nieuwere code wordt hiervoor de combo `ModelChanger`/`ModelChanges`
 gebruikt.
 
-### Messages, msgConsumers
+Oorspronkelijk was het zo dat componenten een stream van het model kregen. Met behulp van `map` en
+`distinctUntilChanged` konden we dan reageren om aanpassingen in het model. Deze aanpak was functioneel gezond, maar
+niet erg efficiënt. Naarmate het model uitegebreider werd en er meer bewerkingen op gebeurden, was de fractie van
+wijzigingen die een component aanbelangden kleiner en kleiner. Terwijl er toch altijd een vork in stream voor nodig was.
+Daarom zijn we al vrij vroeg overgestapt naar Observables van specifieke eigenschappen. Dat heeft wel als nadeel dat de
+reducer elke wijziging aan het model moet melden aan het gepaste Subject (de generator van een Observable).
+
+### Boodschappen
+
+#### Opdrachtboodschappen
 
 Wanneer een component een actie waarneemt die een effect heeft buiten de component zelf, dan stuurt die een boodschap
 naar de reducer. Een typisch voorbeeld is de zoomcomponent. Wanneer een gebruiker bijvoorbeeld op de `+` drukt, dan
@@ -250,16 +261,169 @@ aanleiding geven tot één of meer events. Je kan wel zeggen dat sommige booscha
 eerdere gebeurtenissen, maar op het typeniveau zijn deze niet van elkaar te onderscheiden. Het is dus best om `Msg`,
 `Cmd` en `Evt` als synoniemen te zien. Opnieuw een geval van voortschrijdend inzicht.
 
-#### Subscriptions
+#### Feedbackboodschappen
 
 Naast synchrone antwoorden op boodschappen (bijvoorbeeld: "Is mijn commando geslaagd?") ondersteunt CK ook asynchrone
 gebeurtenissen (bijvoorbeeld "Op welke kaartlocatie heeft de gebruiker geklikt?"). Daarvoor is er het concept van
 subscriptions.
 
+Een component stuurt een boodschap dat het een subscription wil op een of ander event. Een subscription boodschap
+bestaat er twee delen. Enerzijds is er het `SubscribeCmd`.
+
+```typescript
+export interface SubscribeCmd<Msg extends KaartMsg> {
+  readonly type: "Subscription";
+  readonly subscription: Subscription<Msg>;
+  readonly wrapper: ValidationWrapper<SubscriptionResult, Msg>;
+}
+```
+
+Het `SubscribeCmd` is voor alle subscriptions hetzelfde en geeft op welke specifieke subscription er aangemaakt moet
+worden en hoe het resultaat terug moet komen. Het resultaat bevat een `SubscriptionResult` (in een `Validation` voor het
+geval de subscription niet mogelijk zou zijn). Dit is een object dat gebruikt kan worden om zich van de subscription uit
+te schrijven met behulp van het `UnsubscribeCmd` (verplicht ten laatste wanneer de component beïndigd wordt).
+
+Het `subscription` veld is afhankelijk van wat de aanroeper wil volgen. Met de `MiddelpuntSubscription`
+bijvoorbeeld, zal de component er van verwittigd worden dat de kaart verschoven is.
+
+```typescript
+export interface MiddelpuntSubscription<Msg> {
+  readonly type: "Middelpunt";
+  readonly wrapper: MsgGen<ol.Coordinate, Msg>;
+}
+```
+
+Een subscription boodschap heeft altijd een `wrapper` veld. In dit geval zal de wrapper geen `ValidationWrapper` zijn
+omdat er geen asynchrone excepties kunnen gebeuren (fouten kunnen desgevallend in een regulier veld of specifieke
+boodschap gestoken worden).
+
+Gezien subscriber de wrapper functie aanlevert, kan die er voor zorgen dat die functie een antwoord genereert dat hij
+kan herkennen als voor hem bestemd. Er kunnen, en dat is ook zo in de praktijk, veel verschillende geïnteresseerden zijn
+voor dezelfde subscription.
+
+Omdat subscription ook vrijgegeven moet worden is er een Observable operator `subscriptionCmdOperator` die een array van
+`Subscription`s kan registreren en deregistreren.
+
+#### De eventbus
+
+Het is al verschillende keren aangehaald hiervoor: antwoorden op opdrachtboodschappen en gebeurtenissen in subscriptions
+komen uiteindelijk bij een component terecht. Dat gebeurt niet op dezeffde manier als opdrachtboodschappen bij de
+reducer terechtkomen. Er is immers maar één reducer en er zijn veel componenten.
+
+De reducer stuurt alles terug via hetzelfde kanaal. We kunnen dat kanaal dus zien als een eventbus. Wie geïnteresseerd
+is in specifieke informatie filtert de objecten op de eventbus op basis van hun `type` veld.
+
+Het `type` veld is dus dé manier voor ontvangers om antwoorden van elkaar te onderscheiden. De wrapper functies zullen
+dus objecten met een voor hen herkenbare wwarde voor `type` aanmaken.
+
+#### Protocol messages
+
+Er is eigenlijk maar 1 vereiste voor opdrachtboodschappen en dat is dat ze een `type` veld hebben. We maken daarbij gebruik van structural typing: de boodschappen hoeven dus niet van een gemeenschappelijke interface of klasse af te leiden.
+
+```typescript
+export interface TypedRecord {
+  type: string;
+}
+```
+
 #### InternalMessages & KaartClassicMessages
+
+Zowel boodschappen als subscriptions hebben als gevolg dat er informatie terug vloeit naar de componenten. Het zijn
+echter niet alleen de componenten in de CK bibliotheek die boodschappen kunnen sturen en informatie terugkrijgen. Ook
+externe gebruikers (Geoloket2 bijvoorbeeld) kunnen dat. En ze doen dat via exact hetzelfde mechanisme. Ze gebruiken
+potentieel dezelfde boodschappen en dezelfde subscriptions. We willen echter niet dat de externe gebruikers de interne
+boodschappen te zien krijgen. Zowel om redenen van performantie als encapsulatie.
+
+Om de interne boodschappen tegen te houden, filteren we die weg. A priori zou dit niet zomaar gaan omdat de componenten
+in hun wrappers om het even welke `type` waarden kunnen genereren. Daarom zorgen we ervoor dat wrappers van interne
+componenten boodschappen met als `type` waarde `"KaartInternal"` aanmaken. Het typescript type dat hiermee overeenkomt
+is `KaartInternalMsg`.
+
+```typescript
+export interface KaartInternalMsg {
+  readonly type: "KaartInternal";
+  readonly payload: Option<KaartInternalSubMsg>;
+}
+```
+Code in `KaartComponent` filtert eerst op `"KaartInternal"` en biedt de interne componenten dan een Observable van
+`KaartInternalSubMsg` aan. Die kunnen dan filteren op het `type` veld van `KaartInternalSubMsg` om hun eigen
+boodschappen er uit te pikken.
+
+Iets analoog gebeurt voor de classic componenten. Die hun wrappers maken `KaartClassicMsg`s.
+
+```typescript
+export interface KaartClassicMsg {
+  readonly type: "KaartClassic";
+  readonly payload: KaartClassicSubMsg;
+}
+```
+
+`KaartClassicComponent` beperkt de stream van algemene boodschappen tot die van het type `"KaartClassic"` en houdt er de
+`KaartClassicSubMsg` payload van over. Net zoals `KaartInternalSubMsg` is `KaartClassicSubMsg` een union type.
 
 ### ModelChanger en ModelChanges
 
+Het systeem met `SubscribeCmd` en terugvloeiende componentspecifieke boodschappen werkt conceptueel heel goed. Alleen is
+het zo dat er nogal wat boilerplate code voor nodig is terwijl het doorgaans niet nodig is dat verschillende componenten
+dezelfde informatie in hun eigen gewrapte object krijgen.
+
+Daarom is er ook een modernere manier van werken voor de interne componenten. De KaartComponent, die alle interne
+componenten bevat, biedt ook een `modelChanges` object aan. Dit object bevat een uitgebreide verzameling observables die
+elke een waarde opleveren wanneer een specifiek gedeelte van het model aangepast wordt. 
+
+Het is taak van de reducer om telkens wanneer die een aanpassing maakt aan het conceptuele model dat te melden via de
+gepaste Subject in de `modelChanger`. De `modelChanger` is het duale van de `modelChanges`. De ene is de schrijfzijde en
+de andere de leeszijde. Dit verlegt een stuk extra werk naar de reducer maar minder dan uitgespaard wordt in de interne
+componenten.
+
+Er wordt gesproken van het *conceptuele* model. Wat hiermee bedoeld wordt, is dat sommige eigenschappen die via
+`modelChanges` verspreid worden niet noodzakelijk ook expliciet opgenomen hoeven te zijn in `KaartWithInfo`. Als de
+reducer geen nood heeft aan de actuele toestand, dan hoeft die ook niet bijgehouden te worden. En zelfs wanneer dat wel
+zo is, dan kan nog steeds een `BehaviorSubject` in `modelChanges` gebruikt worden.
+
 ### Rol van `KaartComponent`
 
+De `KaartComponent` is de centrale component van CK. Het is deze die de `kaartCmdReducer` functie aanroept. Het is ook
+de DOM container voor het Openlayers `map` object. Verder zijn alle componenten, op de Classic componenten na, child
+components van `KaartComponent`.
+
+Applicaties die op laag niveau gebruik maken van CK zien alleen `KaartComponent`. Ze injecteren twee belangrijke velden:
+1. `kaartCmd$`: de observable waarmee ze opdrachtboodschappen naar de KaartComponent zenden
+2. `messageObsConsumer`: een functie die een Observable van `KaartMsg` krijgt. `KaartComponent` zet hiermee de
+   Observable die feedbackboodschappen ontvangt.
+
+#### De `KaartCmdDispatcher`
+
+Boodschappen worden niet direct op een Subject gezet. Er wordt gebruik gemaakt van een intermediaire abstractie de
+`KaartCmdDispatcher`.
+
+```typescript
+export interface KaartCmdDispatcher<Msg extends TypedRecord> {
+  dispatch(cmd: prt.Command<Msg>): void;
+}
+```
+
+De reden is tweeërlei.
+1. Doordat we gebruik maken van `dispatch` zijn clients niet gebonden aan een Subject. We hebben dus extra vrijheid voor
+   refactoren of testen.
+2. We mogen niet zomaar `next` uitvoeren op een Subject. Als we dat wel doen, dan zou die boodschap verwerkt worden
+   vooraleer de huidige functie gedan is, met corruptie van de state tot gevolg. Daarom moeten we een andere scheduler
+   gebruiken. Die wordt afgedwongen door het gebruik van `dispatch`.
+
+
 ### Rol van `KaartClassicComponent`
+
+Er is een groot gamma aan boodschappen die door `KaartComponent` verwerkt kunnen worden en de communicatie gebeurt door
+middel van Observables. Dat wordt door veel projecten als een te hoge drempel gezien. Daarom zijn er ook wrappers voor
+veel van de boodschappen. Niet noodzakelijk voor allemaal, want sommige worden enkel door Geoloket2 gebruikt.
+
+`KaartClassicComponent` is dus een component met een template die `awv-kaart-component`, de tag voor `KaartComponent`,
+bevat. Het injecteert dus zijn eigen observable van opdrachtboodschappen en een callbackfunctie die het een Observable
+van feedbackboodschappen oplevert.
+
+Geen van de child components van `KaartClassicComponent` heeft eigen templates. Het enige wat ze doen is:
+1. Al dan niet op basis van `@Input`s boodschappen versturen naar `KaartComponent`
+2. Luisteren op Subscriptions en de resultaten, eventueel getransformeerd, via `@Output`s aanbieden.
+
+Het versturen van boodschappen gaat, uiteraard, via de de `ReplaySubjectKaartCmdDispatcher` die als dispatcher op
+`KaartComponent` gezet is.
