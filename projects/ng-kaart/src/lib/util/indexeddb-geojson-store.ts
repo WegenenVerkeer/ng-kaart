@@ -1,7 +1,8 @@
 import { Function1 } from "fp-ts/lib/function";
 import * as idb from "idb";
+import * as ol from "openlayers";
 import { forkJoin, from, Observable } from "rxjs";
-import { filter, map, mergeAll, mergeMap } from "rxjs/operators";
+import { map, mergeAll, mergeMap } from "rxjs/operators";
 
 import { get, getAll, getAllKeys, writeMany } from "./indexeddb";
 
