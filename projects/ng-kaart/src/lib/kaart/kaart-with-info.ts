@@ -5,7 +5,7 @@ import { BehaviorSubject, ReplaySubject, Subject } from "rxjs";
 
 import { ZoekerMetPrioriteiten } from "../zoeker/zoeker";
 
-import { KaartLocaties, WegLocatie } from "./kaart-bevragen/laaginfo.model";
+import { KaartLocaties } from "./kaart-bevragen/laaginfo.model";
 import { KaartConfig } from "./kaart-config";
 import * as ke from "./kaart-elementen";
 import { InfoBoodschap } from "./kaart-with-info-model";
