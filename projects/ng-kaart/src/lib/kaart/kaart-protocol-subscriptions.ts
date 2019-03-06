@@ -74,12 +74,12 @@ export interface ZoomSubscription<Msg> {
 
 export interface MiddelpuntSubscription<Msg> {
   readonly type: "Middelpunt";
-  readonly wrapper: (center: ol.Coordinate) => Msg;
+  readonly wrapper: MsgGen<ol.Coordinate, Msg>;
 }
 
 export interface ExtentSubscription<Msg> {
   readonly type: "Extent";
-  readonly wrapper: (extent: ol.Extent) => Msg;
+  readonly wrapper: MsgGen<ol.Extent, Msg>;
 }
 
 export interface GeselecteerdeFeaturesSubscription<Msg> {

@@ -96,10 +96,6 @@ export class KaartComponent extends KaartComponentBase {
   @Input()
   naam = "kaart";
   @Input()
-  selectieModus: prt.SelectieModus = "none";
-  @Input()
-  hoverModus: prt.HoverModus = "off";
-  @Input()
   kaartLinksBreedte;
 
   // Dit dient om messages naar toe te sturen
