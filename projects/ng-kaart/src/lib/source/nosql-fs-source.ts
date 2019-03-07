@@ -63,7 +63,7 @@ const split: Function1<string, Pipeable<string, string>> = delimiter => obs => {
   );
 };
 
-const toGeoJson: Pipeable<string, geojsonStore.GeoJsonLike> = obs =>
+const mapToGeoJson: Pipeable<string, geojsonStore.GeoJsonLike> = obs =>
   obs.pipe(
     map(lijn => {
       try {
@@ -75,7 +75,7 @@ const toGeoJson: Pipeable<string, geojsonStore.GeoJsonLike> = obs =>
             miny: geojson.geometry.bbox[1],
             maxx: geojson.geometry.bbox[2],
             maxy: geojson.geometry.bbox[3],
-            toegevoegd: new Date()
+            toegevoegd: new Date().toISOString()
           }
         };
       } catch (error) {
@@ -116,6 +116,7 @@ export class NosqlFsSource extends ol.source.Vector {
     private readonly gebruikCache: boolean
   ) {
     super({
+      // TODO featuresFromCache en featuresFromServer gebruiken this niet en zouden dus static of extern moeten zijn
       loader: function(extent) {
         const source = this;
         source.clear();
@@ -215,7 +216,7 @@ export class NosqlFsSource extends ol.source.Vector {
       ).pipe(
         split(featureDelimiter),
         filter(lijn => lijn.trim().length > 0),
-        toGeoJson
+        mapToGeoJson
       );
     } else {
       return fetchObs$(this.composeUrl(extent), {
@@ -225,7 +226,7 @@ export class NosqlFsSource extends ol.source.Vector {
       }).pipe(
         split(featureDelimiter),
         filter(lijn => lijn.trim().length > 0),
-        toGeoJson
+        mapToGeoJson
       );
     }
   }
@@ -243,7 +244,7 @@ export class NosqlFsSource extends ol.source.Vector {
     ).pipe(
       split(featureDelimiter),
       filter(lijn => lijn.trim().length > 0),
-      toGeoJson
+      mapToGeoJson
     );
   }
 

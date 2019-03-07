@@ -20,7 +20,7 @@ export interface Metadata {
   readonly miny: number;
   readonly maxx: number;
   readonly maxy: number;
-  readonly toegevoegd: Date;
+  readonly toegevoegd: string; // De ISO string voorstelling van de datum van toevoeging
 }
 
 export interface GeoJsonLike {
@@ -65,10 +65,10 @@ export const clear: (storename: string) => rx.Observable<void> = <T>(storename: 
 export const deleteFeatures = (storename: string, extent: ol.Extent): rx.Observable<number> =>
   rx
     .forkJoin(
-      getLower(storename, "minx", extent[0]),
-      getLower(storename, "miny", extent[1]),
-      getUpper(storename, "maxx", extent[2]),
-      getUpper(storename, "maxy", extent[3])
+      getLowerKeys(storename, "minx", extent[0]),
+      getLowerKeys(storename, "miny", extent[1]),
+      getUpperKeys(storename, "maxx", extent[2]),
+      getUpperKeys(storename, "maxy", extent[3])
     )
     .pipe(
       map(([minXs, minYs, maxXs, maxYs]) => intersect(maxYs, intersect(maxXs, intersect(minXs, minYs)))),
@@ -99,12 +99,14 @@ export const getFeaturesByIds = (storename: string, keys: any[]): rx.Observable<
 export const getFeaturesByExtent = (storename: string, extent: ol.Extent): rx.Observable<GeoJsonLike> =>
   rx
     .forkJoin(
-      getLower(storename, "minx", extent[0]),
-      getLower(storename, "miny", extent[1]),
-      getUpper(storename, "maxx", extent[2]),
-      getUpper(storename, "maxy", extent[3])
+      getLowerKeys(storename, "minx", extent[0]),
+      getLowerKeys(storename, "miny", extent[1]),
+      getUpperKeys(storename, "maxx", extent[2]),
+      getUpperKeys(storename, "maxy", extent[3])
     )
     .pipe(
+      // 3 intersects omdat we op 4 verschillende indexes queryen. En dat doen we omdat de features zelf een bounding box hebben en dus
+      // verschillende minX, maxX en minY, maxY kunnen hebben.
       map(([minXs, minYs, maxXs, maxYs]) => intersect(maxYs, intersect(maxXs, intersect(minXs, minYs)))),
       switchMap(keys => getFeaturesByIds(storename, keys))
     );
@@ -118,10 +120,11 @@ export const getFeaturesByExtentTableScan = (storename: string, extent: ol.Exten
   );
 };
 
-const getLower = (storename: string, idx: string, bound: number): rx.Observable<any[]> =>
+const getLowerKeys = (storename: string, idx: string, bound: number): rx.Observable<any[]> =>
   openStore(storename).pipe(switchMap(db => unsafeGetAllKeys(db, storename, idx, IDBKeyRange.lowerBound(bound))));
 
-const getUpper = (storename: string, idx: string, bound: number): rx.Observable<any[]> =>
+const getUpperKeys = (storename: string, idx: string, bound: number): rx.Observable<any[]> =>
   openStore(storename).pipe(switchMap(db => unsafeGetAllKeys(db, storename, idx, IDBKeyRange.upperBound(bound))));
 
+// Dit werkt omdat we in de praktijk enkel string en number gebruiken als ids
 const intersect = <T>(a: T[], b: T[]) => a.filter(value => -1 !== b.indexOf(value));
