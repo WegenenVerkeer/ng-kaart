@@ -3,7 +3,7 @@ import { Function1, Function2 } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { bufferCount, filter, last, map, mergeMap, reduce, scan, share, tap } from "rxjs/operators";
+import { bufferCount, filter, last, map, mergeMap, reduce, scan, share, switchMap, tap } from "rxjs/operators";
 
 import * as le from "../kaart/kaart-load-events";
 import { kaartLogger } from "../kaart/log";
@@ -37,10 +37,14 @@ interface SplitterState {
 }
 
 const splitter: Function1<string, ReduceFunction<SplitterState, string>> = delimiter => (state, line) => {
-  const allData = state.seen + line;
+  const allData = state.seen + line; // neem de gegevens mee die de vorige keer niet verwerkt zijn
   const parts = allData.split(delimiter);
-  // foldr doet niks meer dan het laatste element van de array nemen en houdt er ok rekening mee dat de array leeg kan zijn
-  return array.foldr(parts, { seen: "", output: [] }, (init, last) => ({ seen: last, output: init }));
+  // foldr doet niks meer dan het laatste element van de array nemen ermee rekenening houdende dat de array leeg kan zijn
+  return array.foldr(
+    parts,
+    { seen: "", output: [] }, // als er niks was, dan ook geen output (enkel als allData en delimiter leeg zijn)
+    (init, last) => ({ seen: last, output: init }) // steek alle volledig stukken en output en onthoudt de overschot in seen
+  );
 };
 
 const split: Function1<string, Pipeable<string, string>> = delimiter => obs => {
@@ -158,7 +162,7 @@ export class NosqlFsSource extends ol.source.Vector {
           .deleteFeatures(source.laagnaam, extent)
           .pipe(
             tap(aantal => kaartLogger.info(`${aantal} features verwijderd uit cache`)),
-            mergeMap(() => geojsonStore.writeFeatures(source.laagnaam, geojsons))
+            switchMap(() => geojsonStore.writeFeatures(source.laagnaam, geojsons))
           )
           .subscribe(aantal => kaartLogger.info(`${aantal} features weggeschreven in cache`));
       });

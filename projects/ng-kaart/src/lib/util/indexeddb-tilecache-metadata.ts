@@ -1,8 +1,6 @@
 import * as idb from "idb";
 import * as rx from "rxjs";
-import { map, mergeMap } from "rxjs/operators";
-
-import { LaatsteCacheRefresh } from "../kaart/model-changes";
+import { map, switchMap } from "rxjs/operators";
 
 import * as indexeddb from "./indexeddb";
 
@@ -26,8 +24,8 @@ const openStore = (): rx.Observable<idb.DB> => {
 
 export const write = (laagnaam: string, datum: Date): rx.Observable<IDBValidKey> =>
   openStore().pipe(
-    mergeMap(db =>
-      indexeddb.write<CacheUpdateInformatie>(db, databaseNaam, {
+    switchMap(db =>
+      indexeddb.put(db, databaseNaam, {
         laagnaam: laagnaam,
         datum: datum.toISOString()
       })
@@ -36,8 +34,8 @@ export const write = (laagnaam: string, datum: Date): rx.Observable<IDBValidKey>
 
 export const read = (laagnaam: string): rx.Observable<Date> =>
   openStore().pipe(
-    mergeMap(db => indexeddb.get<CacheUpdateInformatie>(db, databaseNaam, laagnaam).pipe(map(record => new Date(record.datum))))
+    switchMap(db => indexeddb.unsafeGet<CacheUpdateInformatie>(db, databaseNaam, laagnaam).pipe(map(record => new Date(record.datum))))
   );
 
 export const readAll = (): rx.Observable<CacheUpdateInformatie[]> =>
-  openStore().pipe(mergeMap(db => indexeddb.getAll<CacheUpdateInformatie>(db, databaseNaam)));
+  openStore().pipe(switchMap(db => indexeddb.unsafeGetAll<CacheUpdateInformatie>(db, databaseNaam)));
