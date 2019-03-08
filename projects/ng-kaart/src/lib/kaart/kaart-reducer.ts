@@ -52,8 +52,8 @@ import { getDefaultStyleSelector } from "./styles";
 export type Model = KaartWithInfo;
 
 export interface ModelWithResult<Msg> {
-  model: KaartWithInfo;
-  message: Option<Msg>;
+  readonly model: KaartWithInfo;
+  readonly message: Option<Msg>;
 }
 
 const AchtergrondIndex = 0;
