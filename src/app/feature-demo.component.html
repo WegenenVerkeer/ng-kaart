@@ -507,6 +507,10 @@
           <div class="with-padding">
             <textarea class="cachefeatures__textarea" [value]="precacheFeaturesWkt" (input)="precacheFeaturesWkt = $event.target.value"></textarea>
           </div>
+          <div class="div with-padding">
+            <button (click)=onAlleFeatures()>Vraag alle features op</button> <br />
+            <input #featureId value="0"><button (click)=onFeatureById(featureId.value)>Vraag features met id op</button>
+          </div>
 
           <awv-kaart-classic #offlineFeatureKaart [naam]="'verkeersborden'" (zichtbareFeatures)="onZichtbareFeatures($event)"
                              [zoom]="9" [selectieModus]="'single'" [middelpunt]="[161206, 226075]" [hoogte]="1200">
@@ -522,6 +526,7 @@
                                     [gebruikCache]="true"
                                     [precache]="precacheFeaturesInput"
                                     [offline]="isOffline"
+                                    [cachedFeaturesProviderConsumer]="cachedFeaturesProviderConsumer"
             ></awv-kaart-nosqlfs-laag>
             <awv-kaart-knop-achtergrondlaag-kiezer></awv-kaart-knop-achtergrondlaag-kiezer>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>

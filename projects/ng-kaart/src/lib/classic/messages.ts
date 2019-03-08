@@ -1,6 +1,7 @@
-import { Function1 } from "fp-ts/lib/function";
+import { Function1, pipe } from "fp-ts/lib/function";
 import * as ol from "openlayers";
 
+import { CachedFeatureLookup } from "../kaart/cache/lookup";
 import { KaartLocaties } from "../kaart/kaart-bevragen/laaginfo.model";
 import * as ke from "../kaart/kaart-elementen";
 import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
@@ -37,6 +38,7 @@ export type KaartClassicSubMsg =
   | VoorgrondHoogLagenInGroepAangepastMsg
   | VoorgrondLaagLagenInGroepAangepastMsg
   | PublishedKaartLocatiesMsg
+  | CachedFeaturesLookupReadyMsg
   | DummyMsg;
 
 export interface FeatureSelectieAangepastMsg {
@@ -125,6 +127,11 @@ export interface VoorgrondLaagLagenInGroepAangepastMsg {
   readonly lagen: Array<ke.ToegevoegdeLaag>;
 }
 
+export interface CachedFeaturesLookupReadyMsg {
+  readonly type: "CachedFeaturesLookupReady";
+  readonly cacheLookupValidation: prt.KaartCmdValidation<CachedFeatureLookup>;
+}
+
 export interface DummyMsg {
   readonly type: "Dummy";
 }
@@ -202,6 +209,14 @@ export const VectorLagenAangepastMsg: (_: Array<ke.ToegevoegdeVectorLaag>) => Ve
   lagen: lgn
 });
 
+export const CachedFeaturesLookupReadyMsg: Function1<
+  prt.KaartCmdValidation<CachedFeatureLookup>,
+  CachedFeaturesLookupReadyMsg
+> = cacheLookupValidation => ({
+  type: "CachedFeaturesLookupReady",
+  cacheLookupValidation: cacheLookupValidation
+});
+
 /////////////
 // extractors
 
@@ -219,3 +234,8 @@ export const logOnlyWrapper: prt.ValidationWrapper<any, KaartClassicMsg> = (v: p
   }
   return KaartClassicMsg({ type: "Dummy" });
 };
+
+export const cachedFeaturesLookupReadyMsg: prt.ValidationWrapper<CachedFeatureLookup, KaartClassicMsg> = pipe(
+  CachedFeaturesLookupReadyMsg,
+  KaartClassicMsg
+);

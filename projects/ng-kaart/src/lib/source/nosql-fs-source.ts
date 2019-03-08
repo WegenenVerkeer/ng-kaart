@@ -1,5 +1,5 @@
 import { array } from "fp-ts";
-import { Function1, Function2 } from "fp-ts/lib/function";
+import { Function1, Refinement } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
@@ -8,8 +8,10 @@ import { bufferCount, filter, last, map, mergeMap, reduce, scan, share, switchMa
 import * as le from "../kaart/kaart-load-events";
 import { kaartLogger } from "../kaart/log";
 import { Pipeable } from "../util";
+import { toOlFeature } from "../util/feature";
 import { fetchObs$, fetchWithTimeoutObs$ } from "../util/fetch-with-timeout";
 import { ReduceFunction } from "../util/function";
+import { GeoJsonLike } from "../util/geojson-types";
 import * as geojsonStore from "../util/indexeddb-geojson-store";
 
 /**
@@ -26,8 +28,6 @@ import * as geojsonStore from "../util/indexeddb-geojson-store";
 
 const FETCH_TIMEOUT = 5000; // max time to wait for data from featureserver before checking cache, enkel indien gebruikCache = true
 const BATCH_SIZE = 100; // aantal features per keer toevoegen aan laag
-
-const format = new ol.format.GeoJSON();
 
 const featureDelimiter = "\n";
 
@@ -63,11 +63,11 @@ const split: Function1<string, Pipeable<string, string>> = delimiter => obs => {
   );
 };
 
-const mapToGeoJson: Pipeable<string, geojsonStore.GeoJsonLike> = obs =>
+const mapToGeoJson: Pipeable<string, GeoJsonLike> = obs =>
   obs.pipe(
     map(lijn => {
       try {
-        const geojson = JSON.parse(lijn) as geojsonStore.GeoJsonLike;
+        const geojson = JSON.parse(lijn) as GeoJsonLike;
         return {
           ...geojson,
           metadata: {
@@ -86,20 +86,9 @@ const mapToGeoJson: Pipeable<string, geojsonStore.GeoJsonLike> = obs =>
     })
   );
 
-const toOlFeature: Function2<string, geojsonStore.GeoJsonLike, ol.Feature> = (laagnaam, geojson) => {
-  try {
-    return new ol.Feature({
-      id: geojson.id,
-      properties: geojson.properties,
-      geometry: format.readGeometry(geojson.geometry),
-      laagnaam: laagnaam
-    });
-  } catch (error) {
-    const msg = `Kan geometry niet parsen: ${error}`;
-    kaartLogger.error(msg);
-    throw new Error(msg);
-  }
-};
+// Instanceof blijkt niet betrwoubaar te zijn
+export const isNoSqlFsSource: Refinement<ol.source.Vector, NosqlFsSource> = (vector): vector is NosqlFsSource =>
+  vector.hasOwnProperty("loadEvent$");
 
 export class NosqlFsSource extends ol.source.Vector {
   private readonly loadEventSubj = new rx.Subject<le.DataLoadEvent>();
@@ -139,7 +128,7 @@ export class NosqlFsSource extends ol.source.Vector {
     fetchFeaturesObs$.pipe(bufferCount(BATCH_SIZE)).subscribe(
       geojsons => {
         source.dispatchLoadEvent(le.PartReceived);
-        source.addFeatures(geojsons.map(geojson => toOlFeature(source.laagnaam, geojson)));
+        source.addFeatures(geojsons.map(toOlFeature(source.laagnaam)));
       },
       error => {
         if (source.gebruikCache) {
@@ -179,7 +168,7 @@ export class NosqlFsSource extends ol.source.Vector {
         geojsons => {
           kaartLogger.debug(`${geojsons.length} features opgehaald uit cache`);
           source.dispatchLoadEvent(le.PartReceived);
-          source.addFeatures(geojsons.map(geojson => toOlFeature(source.laagnaam, geojson)));
+          source.addFeatures(geojsons.map(toOlFeature(source.laagnaam)));
         },
         error => {
           kaartLogger.error(error);
@@ -203,7 +192,11 @@ export class NosqlFsSource extends ol.source.Vector {
       .join("&")}`;
   }
 
-  fetchFeatures$(extent: number[]): rx.Observable<geojsonStore.GeoJsonLike> {
+  cacheStoreName(): string {
+    return this.laagnaam;
+  }
+
+  fetchFeatures$(extent: number[]): rx.Observable<GeoJsonLike> {
     if (this.gebruikCache) {
       return fetchWithTimeoutObs$(
         this.composeUrl(extent),
@@ -231,7 +224,7 @@ export class NosqlFsSource extends ol.source.Vector {
     }
   }
 
-  fetchFeaturesByWkt$(wkt: string): rx.Observable<geojsonStore.GeoJsonLike> {
+  fetchFeaturesByWkt$(wkt: string): rx.Observable<GeoJsonLike> {
     return fetchWithTimeoutObs$(
       this.composeUrl(),
       {

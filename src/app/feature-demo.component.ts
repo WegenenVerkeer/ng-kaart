@@ -3,7 +3,9 @@ import { ChangeDetectorRef, Component, ViewChild, ViewEncapsulation } from "@ang
 import { array } from "fp-ts";
 import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
+import { CachedFeatureLookup } from "projects/ng-kaart/src/lib/kaart/cache/lookup";
 import * as rx from "rxjs";
+import { bufferCount, reduce } from "rxjs/operators";
 
 import {
   AwvV0DynamicStyle,
@@ -528,7 +530,9 @@ export class FeatureDemoComponent {
     zoekerMetPrioriteiten(new DummyZoeker("dummy3"), 3, 3)
   ];
 
-  private geometryType = "Polygon";
+  private cachedFeaturesProvider: Option<CachedFeatureLookup> = none;
+
+  readonly cachedFeaturesProviderConsumer = cfpc => (this.cachedFeaturesProvider = some(cfpc));
 
   startPrecacheWMS(start: string, eind: string, startMetLegeCache: boolean) {
     this.precacheWMSInput = {
@@ -731,5 +735,31 @@ export class FeatureDemoComponent {
 
   onZetCenterManueel(coordTxt: string): void {
     forEach(parseCoordinate(coordTxt), (coords: [number, number]) => (this.configuratorMiddelpunt = coords));
+  }
+
+  onAlleFeatures(): void {
+    interface Counter {
+      count: number;
+      last?: ol.Feature;
+    }
+    console.log("Alle features opvragen");
+    forEach(this.cachedFeaturesProvider, provider =>
+      provider
+        .all$()
+        .pipe(reduce<ol.Feature, Counter>((acc, feature) => ({ count: acc.count + 1, last: feature }), { count: 0, last: undefined }))
+        .subscribe(({ count, last }) => {
+          console.log(`Aantal cached features gezien: ${count}`);
+          console.log(`Laatste cached feature`, last);
+        })
+    );
+  }
+
+  onFeatureById(id: string): void {
+    console.log("Features by id opvragen", id);
+    forEach(this.cachedFeaturesProvider, provider =>
+      provider.byIds$([id]).subscribe(feature => {
+        console.log(`Cached feature`, feature);
+      })
+    );
   }
 }
