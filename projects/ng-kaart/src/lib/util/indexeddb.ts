@@ -1,19 +1,19 @@
 import { DB } from "idb";
 import { from, Observable } from "rxjs";
-import { mapTo } from "rxjs/operators";
+import { filter, mapTo } from "rxjs/operators";
 
 // Wrappers rond idb functies die Promises omzetten naar observables
 
 export type StoreKey = any;
 
-// We gaan er van uit dat de store effectief objecten van type T bevat voor de waarde van de key
+// Als de key er niet is, dan zal de Observable niet emitten (maar wel afsluiten).
 export const unsafeGet = <T>(db: DB, storename: string, key: StoreKey): Observable<T> =>
   from(
     db
       .transaction(storename)
       .objectStore(storename)
       .get(key)
-  );
+  ).pipe(filter(t => t !== undefined));
 
 export const deleteFeature = <T>(db: DB, storename: string, key: StoreKey): Observable<void> =>
   from(
