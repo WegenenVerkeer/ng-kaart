@@ -13,9 +13,11 @@ export interface Metadata {
   readonly toegevoegd: string; // De ISO string voorstelling van de datum van toevoeging
 }
 
+export type GeoJsonKeyType = string | number;
+
 // Een record zoals we dat krijgen over HTTP. Bevat enkel de essentiele GeoJson velden.
 export interface GeoJsonCore {
-  readonly id: string | number;
+  readonly id: GeoJsonKeyType;
   readonly properties: any;
   readonly geometry: Geometry;
 }

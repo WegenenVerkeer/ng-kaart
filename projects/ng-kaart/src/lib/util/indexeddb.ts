@@ -1,6 +1,6 @@
 import { DB } from "idb";
 import { from, Observable } from "rxjs";
-import { map, mapTo } from "rxjs/operators";
+import { mapTo } from "rxjs/operators";
 
 // Wrappers rond idb functies die Promises omzetten naar observables
 
@@ -32,7 +32,7 @@ export const unsafeGetAll = <T>(db: DB, storename: string): Observable<T[]> =>
       .getAll()
   );
 
-export const unsafeGetAllKeys = (db: DB, storename: string, idx: string, keyRange: IDBKeyRange): Observable<StoreKey[]> =>
+export const unsafeGetAllKeys = <T>(db: DB, storename: string, idx: string, keyRange: IDBKeyRange): Observable<T[]> =>
   from(
     db
       .transaction(storename)
