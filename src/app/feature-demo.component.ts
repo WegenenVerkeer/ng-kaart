@@ -785,8 +785,11 @@ export class FeatureDemoComponent {
   onFeatureById(id: string): void {
     console.log("Features by id opvragen", id);
     forEach(this.cachedFeaturesProvider, provider =>
-      provider.byIds$([id]).subscribe(feature => {
-        console.log(`Cached feature`, feature);
+      provider.byIds$([id]).subscribe({
+        next: feature => {
+          console.log(`Cached feature`, feature);
+        },
+        complete: () => console.log("Opvragen klaar")
       })
     );
   }

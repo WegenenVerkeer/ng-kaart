@@ -97,4 +97,5 @@ const getKeysInRange = (storeName: string, idx: string, lower: GeoJsonKeyType, u
   openStore(storeName).pipe(switchMap(db => unsafeGetAllKeys<GeoJsonKeyType>(db, storeName, idx, IDBKeyRange.bound(lower, upper))));
 
 // Dit werkt omdat we in de praktijk enkel string en number gebruiken als ids
+// TODO n^2 algoritme kan sneller
 const intersect = <T extends GeoJsonKeyType>(a: T[], b: T[]) => a.filter(value => -1 !== b.indexOf(value));
