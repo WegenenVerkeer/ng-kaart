@@ -508,8 +508,10 @@
             <textarea class="cachefeatures__textarea" [value]="precacheFeaturesWkt" (input)="precacheFeaturesWkt = $event.target.value"></textarea>
           </div>
           <div class="div with-padding">
-            <button (click)=onAlleFeatures()>Vraag alle features op</button> <br />
-            <input #featureId value="0"><button (click)=onFeatureById(featureId.value)>Vraag features met id op</button>
+            <button (click)="onAlleFeatures()">Vraag alle features op</button> <br />
+            MinX: <input #extentMinX value="0" size="5">, MinY: <input #extentMinY value="0" size="5">, MaxX: <input #extentMaxX value="0" size="5">, MaxX: <input #extentMaxY value="0" size="5">
+            <button (click)="onAlleFeaturesInExtent(extentMinX.value, extentMinY.value, extentMaxX.value, extentMaxY.value)">Vraag alle features in extent op</button> <br />
+            <input #featureId value="0" size="4"><button (click)="onFeatureById(featureId.value)">Vraag features met id op</button>
           </div>
 
           <awv-kaart-classic #offlineFeatureKaart [naam]="'verkeersborden'" (zichtbareFeatures)="onZichtbareFeatures($event)"

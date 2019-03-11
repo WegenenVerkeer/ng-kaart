@@ -144,7 +144,7 @@ function featuresFromServer(source: NosqlFsSource, laagnaam: string, gebruikCach
     });
   }
 }
-// Instanceof blijkt niet betrwoubaar te zijn
+// Instanceof blijkt niet betrouwbaar te zijn
 export const isNoSqlFsSource: Refinement<ol.source.Vector, NosqlFsSource> = (vector): vector is NosqlFsSource =>
   vector.hasOwnProperty("loadEvent$");
 

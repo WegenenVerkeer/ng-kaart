@@ -747,11 +747,39 @@ export class FeatureDemoComponent {
       provider
         .all$()
         .pipe(reduce<ol.Feature, Counter>((acc, feature) => ({ count: acc.count + 1, last: feature }), { count: 0, last: undefined }))
-        .subscribe(({ count, last }) => {
-          console.log(`Aantal cached features gezien: ${count}`);
-          console.log(`Laatste cached feature`, last);
+        .subscribe({
+          next: ({ count, last }) => {
+            console.log(`Aantal cached features gezien: ${count}`);
+            console.log(`Laatste cached feature`, last);
+          },
+          complete: () => console.log("Opvragen klaar")
         })
     );
+  }
+
+  onAlleFeaturesInExtent(minX: string, minY: string, maxX: string, maxY: string): void {
+    interface Counter {
+      count: number;
+      last?: ol.Feature;
+    }
+    try {
+      const extent: ol.Extent = [minX, minY, maxX, maxY].map(txt => Number.parseFloat(txt)) as ol.Extent;
+      console.log(`Alle features in extent ${extent} opvragen`);
+      forEach(this.cachedFeaturesProvider, provider =>
+        provider
+          .inExtent$(extent)
+          .pipe(reduce<ol.Feature, Counter>((acc, feature) => ({ count: acc.count + 1, last: feature }), { count: 0, last: undefined }))
+          .subscribe({
+            next: ({ count, last }) => {
+              console.log(`Aantal cached features gezien: ${count}`);
+              console.log(`Laatste cached feature`, last);
+            },
+            complete: () => console.log("Opvragen klaar")
+          })
+      );
+    } catch (e) {
+      console.warn("Waren dat wel nummers?", e);
+    }
   }
 
   onFeatureById(id: string): void {
