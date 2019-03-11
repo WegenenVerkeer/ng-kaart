@@ -86,6 +86,64 @@ const mapToGeoJson: Pipeable<string, GeoJsonLike> = obs =>
     })
   );
 
+function featuresFromCache(source: NosqlFsSource, laagnaam: string, extent: ol.Extent): void {
+  source.dispatchLoadEvent(le.LoadStart);
+  geojsonStore
+    .getFeaturesByExtent(laagnaam, extent)
+    .pipe(bufferCount(BATCH_SIZE))
+    .subscribe(
+      geojsons => {
+        kaartLogger.debug(`${geojsons.length} features opgehaald uit cache`);
+        source.dispatchLoadEvent(le.PartReceived);
+        source.addFeatures(geojsons.map(toOlFeature(laagnaam)));
+      },
+      error => {
+        kaartLogger.error(error);
+        source.dispatchLoadError(error);
+      },
+      () => source.dispatchLoadComplete()
+    );
+}
+
+function featuresFromServer(source: NosqlFsSource, laagnaam: string, gebruikCache: boolean, extent: ol.Extent): void {
+  source.dispatchLoadEvent(le.LoadStart);
+
+  const fetchFeaturesObs$ = source.fetchFeatures$(extent);
+
+  // voeg de features toe aan de kaart
+  fetchFeaturesObs$.pipe(bufferCount(BATCH_SIZE)).subscribe(
+    geojsons => {
+      source.dispatchLoadEvent(le.PartReceived);
+      source.addFeatures(geojsons.map(toOlFeature(laagnaam)));
+    },
+    error => {
+      if (gebruikCache) {
+        // fallback to cache
+        kaartLogger.info("Request niet gelukt, we gaan naar cache " + error);
+        featuresFromCache(source, laagnaam, extent);
+      } else {
+        kaartLogger.error(error);
+        source.dispatchLoadError(error);
+      }
+    },
+    () => {
+      source.dispatchLoadComplete();
+    }
+  );
+
+  // vervang de oude features in cache door de nieuwe ontvangen features
+  if (gebruikCache) {
+    fetchFeaturesObs$.pipe(reduce(array.snoc, [])).subscribe(geojsons => {
+      geojsonStore
+        .deleteFeatures(laagnaam, extent)
+        .pipe(
+          tap(aantal => kaartLogger.info(`${aantal} features verwijderd uit cache`)),
+          switchMap(() => geojsonStore.writeFeatures(laagnaam, geojsons))
+        )
+        .subscribe(aantal => kaartLogger.info(`${aantal} features weggeschreven in cache`));
+    });
+  }
+}
 // Instanceof blijkt niet betrwoubaar te zijn
 export const isNoSqlFsSource: Refinement<ol.source.Vector, NosqlFsSource> = (vector): vector is NosqlFsSource =>
   vector.hasOwnProperty("loadEvent$");
@@ -110,72 +168,13 @@ export class NosqlFsSource extends ol.source.Vector {
         const source = this;
         source.clear();
         if (source.offline) {
-          source.featuresFromCache(source, extent);
+          featuresFromCache(source, laagnaam, extent);
         } else {
-          source.featuresFromServer(source, extent);
+          featuresFromServer(source, laagnaam, gebruikCache, extent);
         }
       },
       strategy: ol.loadingstrategy.bbox
     });
-  }
-
-  private featuresFromServer(source, extent) {
-    source.dispatchLoadEvent(le.LoadStart);
-
-    const fetchFeaturesObs$ = source.fetchFeatures$(extent);
-
-    // voeg de features toe aan de kaart
-    fetchFeaturesObs$.pipe(bufferCount(BATCH_SIZE)).subscribe(
-      geojsons => {
-        source.dispatchLoadEvent(le.PartReceived);
-        source.addFeatures(geojsons.map(toOlFeature(source.laagnaam)));
-      },
-      error => {
-        if (source.gebruikCache) {
-          // fallback to cache
-          kaartLogger.info("Request niet gelukt, we gaan naar cache " + error);
-          source.featuresFromCache(source, extent);
-        } else {
-          kaartLogger.error(error);
-          source.dispatchLoadError(error);
-        }
-      },
-      () => {
-        source.dispatchLoadComplete();
-      }
-    );
-
-    // vervang de oude features in cache door de nieuwe ontvangen features
-    if (source.gebruikCache) {
-      fetchFeaturesObs$.pipe(reduce((acc, val) => acc.concat(val), [])).subscribe(geojsons => {
-        geojsonStore
-          .deleteFeatures(source.laagnaam, extent)
-          .pipe(
-            tap(aantal => kaartLogger.info(`${aantal} features verwijderd uit cache`)),
-            switchMap(() => geojsonStore.writeFeatures(source.laagnaam, geojsons))
-          )
-          .subscribe(aantal => kaartLogger.info(`${aantal} features weggeschreven in cache`));
-      });
-    }
-  }
-
-  private featuresFromCache(source, extent) {
-    source.dispatchLoadEvent(le.LoadStart);
-    geojsonStore
-      .getFeaturesByExtent(source.laagnaam, extent)
-      .pipe(bufferCount(BATCH_SIZE))
-      .subscribe(
-        geojsons => {
-          kaartLogger.debug(`${geojsons.length} features opgehaald uit cache`);
-          source.dispatchLoadEvent(le.PartReceived);
-          source.addFeatures(geojsons.map(toOlFeature(source.laagnaam)));
-        },
-        error => {
-          kaartLogger.error(error);
-          source.dispatchLoadError(error);
-        },
-        () => source.dispatchLoadComplete()
-      );
   }
 
   private composeUrl(extent?: number[]) {
@@ -245,15 +244,15 @@ export class NosqlFsSource extends ol.source.Vector {
     this.offline = offline;
   }
 
-  private dispatchLoadEvent(evt: le.DataLoadEvent) {
+  dispatchLoadEvent(evt: le.DataLoadEvent) {
     this.loadEventSubj.next(evt);
   }
 
-  private dispatchLoadComplete() {
+  dispatchLoadComplete() {
     this.dispatchLoadEvent(le.LoadComplete);
   }
 
-  private dispatchLoadError(error: any) {
+  dispatchLoadError(error: any) {
     this.dispatchLoadEvent(le.LoadError(error.toString()));
   }
 }
