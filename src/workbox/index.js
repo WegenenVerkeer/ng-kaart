@@ -8,14 +8,13 @@ self.addEventListener('message', event => {
   const { data: { action, payload } } = event;
   switch (action) {
     case 'REGISTER_ROUTE':
-      const { requestPattern, cacheName } = payload;
+      const {requestPattern, cacheName} = payload;
       info(`Routing ${requestPattern} to cache ${cacheName}`);
-      routing.registerRoute(
-        new RegExp(requestPattern),
-        strategies.cacheFirst({
-          cacheName: cacheName
-        })
-      );
+      const handler = strategies.cacheFirst({
+          cacheName: cacheName,
+          plugins: ngKaartRoutePlugins ? ngKaartRoutePlugins : []
+      });
+      routing.registerRoute(new RegExp(requestPattern), handler);
       break;
     default:
       logComm('Unrecognised message received', event.data);
