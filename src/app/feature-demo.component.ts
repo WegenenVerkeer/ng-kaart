@@ -532,7 +532,7 @@ export class FeatureDemoComponent {
 
   private cachedFeaturesProvider: Option<CachedFeatureLookup> = none;
 
-  readonly cachedFeaturesProviderConsumer = cfpc => (this.cachedFeaturesProvider = some(cfpc));
+  readonly cachedFeaturesProviderConsumer = (cfpc: CachedFeatureLookup) => (this.cachedFeaturesProvider = some(cfpc));
 
   startPrecacheWMS(start: string, eind: string, startMetLegeCache: boolean) {
     this.precacheWMSInput = {
