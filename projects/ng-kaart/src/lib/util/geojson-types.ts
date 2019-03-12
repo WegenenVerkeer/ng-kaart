@@ -1,3 +1,5 @@
+import * as ol from "openlayers";
+
 export interface Geometry {
   readonly bbox: ol.Extent;
   readonly coordinates: number[];
