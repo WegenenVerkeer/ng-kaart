@@ -5,7 +5,7 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import { CachedFeatureLookup } from "projects/ng-kaart/src/lib/kaart/cache/lookup";
 import * as rx from "rxjs";
-import { bufferCount, reduce } from "rxjs/operators";
+import { reduce } from "rxjs/operators";
 
 import {
   AwvV0DynamicStyle,
@@ -791,6 +791,20 @@ export class FeatureDemoComponent {
         },
         complete: () => console.log("Opvragen klaar")
       })
+    );
+  }
+
+  onFeaturesByIdent8(ident8: string): void {
+    console.log("Features by ident8 opvragen", ident8);
+    forEach(this.cachedFeaturesProvider, provider =>
+      provider
+        .filtered$(f => f.getProperties() && f.getProperties().properties && f.getProperties().properties.ident8 === ident8)
+        .subscribe({
+          next: feature => {
+            console.log(`Cached feature`, feature);
+          },
+          complete: () => console.log("Opvragen klaar")
+        })
     );
   }
 }
