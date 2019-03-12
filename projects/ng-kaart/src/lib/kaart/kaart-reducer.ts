@@ -9,9 +9,9 @@ import { olx } from "openlayers";
 import * as ol from "openlayers";
 import { Subscription } from "rxjs";
 import * as rx from "rxjs";
-import { bufferCount, debounceTime, distinctUntilChanged, map, mergeMap, switchMap } from "rxjs/operators";
+import { bufferCount, debounceTime, distinctUntilChanged, map, switchMap, throttleTime } from "rxjs/operators";
 
-import { NosqlFsSource } from "../source";
+import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
 import * as arrays from "../util/arrays";
 import { refreshTiles } from "../util/cachetiles";
 import * as featureStore from "../util/indexeddb-geojson-store";
@@ -23,6 +23,7 @@ import { updateBehaviorSubject } from "../util/subject-update";
 import { allOf, fromBoolean, fromOption, fromPredicate, success, validationChain as chain } from "../util/validation";
 import { zoekerMetNaam } from "../zoeker/zoeker";
 
+import { CachedFeatureLookup } from "./cache/lookup";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { MsgGen } from "./kaart-protocol-subscriptions";
@@ -134,6 +135,13 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           ? validation.success(laag.layer as ol.layer.Vector)
           : validation.failure([`De laag met titel ${titel} is geen vectorlaag`])
       );
+    }
+
+    function valideerNoSqlFsSourceBestaat(titel: string): prt.KaartCmdValidation<NosqlFsSource> {
+      return chain(valideerVectorLayerBestaat(titel), layer => {
+        const source = layer.getSource();
+        return fromPredicate(source, isNoSqlFsSource, `De laag met titel ${titel} is geen NoSqlFslaag`);
+      });
     }
 
     function valideerTiledWmsBestaat(titel: string): prt.KaartCmdValidation<ol.layer.Tile> {
@@ -1243,18 +1251,21 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             cmnd.eindZoom,
             cmnd.wkt,
             cmnd.startMetLegeCache
-          ).subscribe(progress => {
-            if (progress.percentage === 100) {
-              metaDataDb.write(cmnd.titel, progress.started).subscribe(() =>
-                updateBehaviorSubject(modelChanger.laatsteCacheRefreshSubj, laatsteCacheRefresh => {
-                  return { ...laatsteCacheRefresh, [cmnd.titel]: progress.started };
-                })
-              );
-            }
-            updateBehaviorSubject(modelChanger.precacheProgressSubj, precacheLaagProgress => {
-              return { ...precacheLaagProgress, [cmnd.titel]: progress.percentage };
+          )
+            // We willen niet meer dan 1/sec progress sturen, maar de laatste willen we zeker
+            .pipe(throttleTime(1000, undefined, { leading: true, trailing: true }))
+            .subscribe(progress => {
+              if (progress.percentage === 100) {
+                metaDataDb.write(cmnd.titel, progress.started).subscribe(() =>
+                  updateBehaviorSubject(modelChanger.laatsteCacheRefreshSubj, laatsteCacheRefresh => {
+                    return { ...laatsteCacheRefresh, [cmnd.titel]: progress.started };
+                  })
+                );
+              }
+              updateBehaviorSubject(modelChanger.precacheProgressSubj, precacheLaagProgress => {
+                return { ...precacheLaagProgress, [cmnd.titel]: progress.percentage };
+              });
             });
-          });
           return ModelAndEmptyResult(model);
         })
       );
@@ -1263,11 +1274,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function vulCacheVoorNosqlLaag(cmnd: prt.VulCacheVoorNosqlLaag<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerVectorLayerBestaat(cmnd.titel).map(vectorLaag => {
+        valideerNoSqlFsSourceBestaat(cmnd.titel).map(noSqlSource => {
           (cmnd.startMetLegeCache ? featureStore.clear(cmnd.titel) : rx.of(undefined))
             .pipe(
               switchMap(() =>
-                (vectorLaag.getSource() as NosqlFsSource).fetchFeaturesByWkt$(cmnd.wkt).pipe(
+                noSqlSource.fetchFeaturesByWkt$(cmnd.wkt).pipe(
                   bufferCount(1000),
                   switchMap(features => featureStore.writeFeatures(cmnd.titel, features))
                 )
@@ -1282,10 +1293,19 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function zetOffline(cmnd: prt.ZetOffline<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerVectorLayerBestaat(cmnd.titel).map(vectorLaag => {
-          (vectorLaag.getSource() as NosqlFsSource).setOffline(cmnd.offline);
+        valideerNoSqlFsSourceBestaat(cmnd.titel).map(noSqlFsSource => {
+          noSqlFsSource.setOffline(cmnd.offline);
           return ModelAndEmptyResult(model);
         })
+      );
+    }
+
+    function vraagCachedFeaturesLookup(cmd: prt.VraagCachedFeaturesLookupCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmd.msgGen,
+        valideerNoSqlFsSourceBestaat(cmd.titel).map(noSqlFsSource =>
+          ModelAndValue(model, CachedFeatureLookup.fromObjectStore(noSqlFsSource.cacheStoreName(), cmd.titel))
+        )
       );
     }
 
@@ -1650,6 +1670,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return highlightFeaturesCmd(cmd);
       case "DrawOps":
         return drawOpsCmd(cmd);
+      case "VraagCachedFeaturesLookup":
+        return vraagCachedFeaturesLookup(cmd);
       case "ZetGetekendeGeometry":
         return zetGetekendeGeometry(cmd);
       case "ZetOffline":
