@@ -509,13 +509,13 @@
           </div>
           <div class="div with-padding">
             <button (click)="onAlleFeatures()">Vraag alle features op</button> <br />
-            MinX: <input #extentMinX value="161000" size="5">, MinY: <input #extentMinY value="222000" size="5">, MaxX: <input #extentMaxX value="161200" size="5">, MaxY: <input #extentMaxY value="224000" size="5">
+            MinX: <input #extentMinX value="161000" size="4">, MinY: <input #extentMinY value="226000" size="4">, MaxX: <input #extentMaxX value="162000" size="4">, MaxY: <input #extentMaxY value="227000" size="4">
             <button (click)="onAlleFeaturesInExtent(extentMinX.value, extentMinY.value, extentMaxX.value, extentMaxY.value)">Vraag alle features in extent op</button> <br />
             <input #featureId value="592302" size="4"><button (click)="onFeatureById(featureId.value)">Vraag features met id op</button><br />
             <input #featureIdent8 value="N1170001" size="7"><button (click)="onFeaturesByIdent8(featureIdent8.value)">Vraag features met ident8 op</button>
           </div>
 
-          <awv-kaart-classic #offlineFeatureKaart [naam]="'verkeersborden'" (zichtbareFeatures)="onZichtbareFeatures($event)"
+          <awv-kaart-classic #offlineFeatureKaart [naam]="'verkeersborden'" (zichtbareFeatures)="onZichtbareFeatures($event)" [geselecteerdeFeatures]="offlineGeselecteerdeFeatures"
                              [zoom]="9" [selectieModus]="'single'" [middelpunt]="[161206, 226075]" [hoogte]="1200">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
             <awv-kaart-blanco-laag [titel]="'Leeg'"></awv-kaart-blanco-laag>

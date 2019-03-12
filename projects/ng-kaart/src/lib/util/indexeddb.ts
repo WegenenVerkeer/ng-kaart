@@ -6,7 +6,7 @@ import { filter, mapTo } from "rxjs/operators";
 
 export type StoreKey = any;
 
-const toException: (reason: any) => Error = reason => new Error("Kon niet lezen van IndexedDB: " + reason);
+const toReadException: (reason: any) => Error = reason => new Error("Kon niet lezen van IndexedDB: " + reason);
 
 // Als de key er niet is, dan zal de Observable niet emitten (maar wel afsluiten).
 export const unsafeGet = <T>(db: DB, storeName: string, key: StoreKey): rx.Observable<T> =>
@@ -41,9 +41,29 @@ export const unsafeGetAll = <T>(db: DB, storeName: string): rx.Observable<T> =>
             return;
           }
           subscriber.next(cursor.value);
-          cursor.continue().then(cursorIterate, reason => subscriber.error(toException(reason)));
+          cursor.continue().then(cursorIterate, reason => subscriber.error(toReadException(reason)));
         },
-        reason => subscriber.error(toException(reason))
+        reason => subscriber.error(toReadException(reason))
+      )
+  );
+
+export const unsafeGetAllByIndex = <T>(db: DB, storeName: string, idx: string, idxRange: IDBKeyRange): rx.Observable<T> =>
+  rx.Observable.create((subscriber: rx.Subscriber<T>) =>
+    db
+      .transaction(storeName)
+      .objectStore(storeName)
+      .index(idx)
+      .openCursor(idxRange)
+      .then(
+        function cursorIterate(cursor: Cursor<any, any>) {
+          if (!cursor) {
+            subscriber.complete();
+            return;
+          }
+          subscriber.next(cursor.value);
+          cursor.continue().then(cursorIterate, reason => subscriber.error(toReadException(reason)));
+        },
+        reason => subscriber.error(toReadException(reason))
       )
   );
 
@@ -61,9 +81,9 @@ export const unsafeGetAllKeys = <T>(db: DB, storeName: string, idx: string, keyR
             return;
           }
           subscriber.next(cursor.primaryKey);
-          cursor.continue().then(cursorIterate, reason => subscriber.error(toException(reason)));
+          cursor.continue().then(cursorIterate, reason => subscriber.error(toReadException(reason)));
         },
-        reason => subscriber.error(toException(reason))
+        reason => subscriber.error(toReadException(reason))
       )
   );
 

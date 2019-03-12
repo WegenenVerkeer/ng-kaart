@@ -6,7 +6,7 @@ import * as rx from "rxjs";
 import { filter, map, mapTo, mergeAll, mergeMap, reduce, switchMap } from "rxjs/operators";
 
 import { GeoJsonKeyType, GeoJsonLike } from "./geojson-types";
-import { unsafeGet, unsafeGetAll, unsafeGetAllKeys, writeMany } from "./indexeddb";
+import { unsafeGet, unsafeGetAll, unsafeGetAllByIndex, unsafeGetAllKeys, writeMany } from "./indexeddb";
 
 const dbNaam = "nosql-features";
 
@@ -21,8 +21,6 @@ const openStore = (storeName: string): rx.Observable<idb.DB> => {
           const store = upgradeDB.createObjectStore(storeName, { keyPath: "id" });
           store.createIndex("minx", "metadata.minx", { unique: false });
           store.createIndex("miny", "metadata.miny", { unique: false });
-          store.createIndex("maxx", "metadata.maxx", { unique: false });
-          store.createIndex("maxy", "metadata.maxy", { unique: false });
       }
     })
   );
@@ -42,7 +40,10 @@ export const clear: (storeName: string) => rx.Observable<void> = (storeName: str
 };
 
 export const deleteFeatures = (storeName: string, extent: ol.Extent): rx.Observable<number> =>
-  getKeysForFeaturesInExtent(storeName, extent).pipe(mergeMap(keys => deleteFeaturesByKeys(storeName, keys)));
+  getKeysForFeaturesInExtent(storeName, extent).pipe(
+    reduce(array.snoc, []),
+    mergeMap(keys => deleteFeaturesByKeys(storeName, keys))
+  );
 
 const deleteFeaturesByKeys = (storeName: string, keys: GeoJsonKeyType[]): rx.Observable<number> =>
   openStore(storeName).pipe(
@@ -68,43 +69,27 @@ export const getFeatures = (storeName: string, filterFunc: Predicate<GeoJsonLike
 export const getFeaturesByIds = (storeName: string, keys: GeoJsonKeyType[]): rx.Observable<GeoJsonLike> =>
   openStore(storeName).pipe(switchMap(db => rx.from(keys.map(key => unsafeGet<GeoJsonLike>(db, storeName, key))).pipe(mergeAll())));
 
-export const getFeaturesByExtent = (storeName: string, extent: ol.Extent): rx.Observable<GeoJsonLike> =>
-  getKeysForFeaturesInExtent(storeName, extent).pipe(mergeMap(keys => getFeaturesByIds(storeName, keys)));
-
-export const getFeaturesByExtentTableScan = (storeName: string, extent: ol.Extent): rx.Observable<GeoJsonLike> => {
+export const getFeaturesByExtent = (storeName: string, extent: ol.Extent): rx.Observable<GeoJsonLike> => {
   const [minx, miny, maxx, maxy] = extent;
-  return getFeatures(
-    storeName,
-    feature =>
-      feature.metadata.minx >= minx && feature.metadata.maxx <= maxx && feature.metadata.miny >= miny && feature.metadata.maxy <= maxy
-  );
-};
-
-const getKeysForFeaturesInExtent = (storeName: string, extent: ol.Extent): rx.Observable<GeoJsonKeyType[]> =>
-  rx
-    .forkJoin(
-      getKeysInRange(storeName, "minx", extent[0], extent[2]),
-      getKeysInRange(storeName, "miny", extent[1], extent[3]),
-      getKeysInRange(storeName, "maxx", extent[0], extent[2]),
-      getKeysInRange(storeName, "maxy", extent[1], extent[3])
+  const values$ =
+    maxx - minx < maxy - miny
+      ? getValuesInIndexedInRange(storeName, "minx", minx, maxx)
+      : getValuesInIndexedInRange(storeName, "miny", miny, maxy);
+  return values$.pipe(
+    filter(
+      feature =>
+        feature.metadata.minx >= minx && feature.metadata.maxx <= maxx && feature.metadata.miny >= miny && feature.metadata.maxy <= maxy
     )
-    .pipe(
-      // 3 intersects omdat we op 4 verschillende indexes queryen. En dat doen we omdat de features zelf een bounding box hebben en dus
-      // verschillende minX, maxX en minY, maxY kunnen hebben.
-      map(([minXs, minYs, maxXs, maxYs]) => intersect(maxYs, intersect(maxXs, intersect(minXs, minYs))))
-    );
-
-const getKeysInRange = (storeName: string, idx: string, lower: GeoJsonKeyType, upper: GeoJsonKeyType): rx.Observable<GeoJsonKeyType[]> =>
-  openStore(storeName).pipe(
-    switchMap(db => unsafeGetAllKeys<GeoJsonKeyType>(db, storeName, idx, IDBKeyRange.bound(lower, upper))),
-    reduce(array.snoc, [])
   );
-
-// Dit werkt omdat we in de praktijk enkel string en number gebruiken als ids
-// TODO n^2 algoritme kan sneller
-const intersect = <T extends GeoJsonKeyType>(a: T[], b: T[]) => a.filter(value => -1 !== b.indexOf(value));
-
-const intersect2 = <T extends GeoJsonKeyType>(as: T[], bs: T[]) => {
-  const bSet = new Set<T>(bs);
-  return as.filter(value => bSet.has(value));
 };
+
+const getKeysForFeaturesInExtent = (storeName: string, extent: ol.Extent): rx.Observable<GeoJsonKeyType> =>
+  getFeaturesByExtent(storeName, extent).pipe(map(f => f.id));
+
+const getValuesInIndexedInRange = (
+  storeName: string,
+  idx: string,
+  lower: GeoJsonKeyType,
+  upper: GeoJsonKeyType
+): rx.Observable<GeoJsonLike> =>
+  openStore(storeName).pipe(switchMap(db => unsafeGetAllByIndex<GeoJsonLike>(db, storeName, idx, IDBKeyRange.bound(lower, upper))));
