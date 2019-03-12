@@ -20,10 +20,10 @@ export function observeOutsideAngular<T>(zone: ZoneLike) {
           zone.runOutsideAngular(() => observer.next(x));
         },
         error(err: any) {
-          observer.error(err);
+          zone.runOutsideAngular(() => observer.error(err));
         },
         complete() {
-          observer.complete();
+          zone.runOutsideAngular(() => observer.complete());
         }
       });
     });

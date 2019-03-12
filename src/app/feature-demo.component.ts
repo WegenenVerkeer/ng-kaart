@@ -1,5 +1,5 @@
 import { animate, style, transition, trigger } from "@angular/animations";
-import { ChangeDetectorRef, Component, ViewChild, ViewEncapsulation } from "@angular/core";
+import { ChangeDetectorRef, Component, NgZone, ViewChild, ViewEncapsulation } from "@angular/core";
 import { array } from "fp-ts";
 import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
@@ -58,7 +58,7 @@ export class FeatureDemoComponent {
   @ViewChild("selectie")
   private selectieKaart: KaartClassicComponent;
 
-  constructor(private changeDetectorRef: ChangeDetectorRef) {
+  constructor(private changeDetectorRef: ChangeDetectorRef, private readonly zone: NgZone) {
     this.addIcon();
   }
 

@@ -1,7 +1,7 @@
 import { Function1, Function2, Lazy, Predicate } from "fp-ts/lib/function";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { concatMap, filter, map } from "rxjs/operators";
+import { filter, map } from "rxjs/operators";
 
 import { toOlFeature } from "../../util/feature";
 import * as geojsonStore from "../../util/indexeddb-geojson-store";
@@ -16,7 +16,7 @@ export interface CachedFeatureLookup {
 
 export namespace CachedFeatureLookup {
   export const fromObjectStore: Function2<string, string, CachedFeatureLookup> = (storeName, laagnaam) => {
-    const all$ = () => geojsonStore.getAllFeatures(storeName).pipe(concatMap(features => features.map(toOlFeature(laagnaam))));
+    const all$ = () => geojsonStore.getAllFeatures(storeName).pipe(map(toOlFeature(laagnaam)));
     const inExtent$ = (extent: ol.Extent) => geojsonStore.getFeaturesByExtent(storeName, extent).pipe(map(toOlFeature(laagnaam)));
     return {
       all$: all$,

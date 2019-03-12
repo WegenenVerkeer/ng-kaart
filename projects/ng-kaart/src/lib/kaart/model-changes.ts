@@ -256,13 +256,11 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     )
   );
 
-  tilecacheMetadataDb.readAll().subscribe(metadataRecords =>
-    metadataRecords.forEach(metadata => {
-      updateBehaviorSubject(changer.laatsteCacheRefreshSubj, laatsteCacheRefresh => {
-        return { ...laatsteCacheRefresh, [metadata.laagnaam]: new Date(metadata.datum) };
-      });
-    })
-  );
+  tilecacheMetadataDb.readAll().subscribe(metadata => {
+    updateBehaviorSubject(changer.laatsteCacheRefreshSubj, laatsteCacheRefresh => {
+      return { ...laatsteCacheRefresh, [metadata.laagnaam]: new Date(metadata.datum) };
+    });
+  });
 
   return {
     uiElementSelectie$: changer.uiElementSelectieSubj.asObservable(),
