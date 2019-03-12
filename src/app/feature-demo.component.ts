@@ -787,10 +787,6 @@ export class FeatureDemoComponent {
         },
         complete: () => console.log("Opvragen klaar")
       });
-    interface Counter {
-      count: number;
-      last?: ol.Feature;
-    }
     sharedFeature$
       .pipe(
         scan(array.snoc, []),

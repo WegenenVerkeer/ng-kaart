@@ -35,3 +35,35 @@ Stappen:
 
 Iets meer fetch strategy ontwikkelingen binnen ng-kaart, maar efficienter ophalen en beheren van features. 
 Mogelijkheden ook om extra metadata bij features op te slaan (bvb time saved in indexeddb).
+
+### Implementatienotas
+
+IndexedDB is essentieel een key-value store. Bij basale key-value stores vergen complexe queries op de inhoud van values
+table scans. Bij IndexedDB kunnen echter wel indices aangemaakt worden om opzoekingen te versnellen.
+
+Voor de gekozen oplossing hebben we vaak queries & deletes op een view extent nodig. Een extent is 2-dimensionaal maar
+een index is 1-dimensionaal. Bovendien heeft een feature, in het algemeen, zelf een bounding box, wat maakt dat een
+feature gedeeltelijk in een view extent kan vallen.
+
+Performant opvragen van features die geheel of gedeeltelijk met een extent overlappen is dus niet zo triviaal. Een
+eenvoudig verstaanbaar algoritme is als volgt:
+1. We maken indices aan voor de minX, maxX, minY, maxY waarden van de bounding box van de features
+2. We halen de keys op van alle features waarvoor de minX binnen de [minX, maxX] van de extent ligt
+3. We halen de keys op van alle features waarvoor de maxX binnen de [minX, maxX] van de extent ligt
+4. We halen de keys op van alle features waarvoor de minY binnen de [minY, maxY] van de extent ligt
+5. We halen de keys op van alle features waarvoor de maxY binnen de [minY, maxY] van de extent ligt
+6. We maken de doorsnede van alle keys en daarmee halen we alle waarden op
+
+Hoewel deze aanpak correct is, kunnen we toch beter doen. Eens we een index gebruiken kunnen we de waarden die bij de
+index horen inspecteren en die features weerhouden die met de extent overlappen. Op die manier hoeven we maar een keer
+door de features te lopen. Het meeste voordeel kunnen we behalen als we die index nemen die het minste features zal
+opleveren. We weten helaas niet op voorhand welke dat zal zijn. Maar als we die dimensie nemen waarvoor de extent het
+smalste is, dan hebben we de grootste kans de best index te kiezen. Er is evenwel ook een nadeel aan deze aanpak in
+vergelijking met die met 4 doorsnedes. In plaats enkel over keys te itereren, moeten we de waarden ook binnen trekken en
+dat heeft (de)serialisatie overhead.
+
+Metingen op voorbeelddata tonen echter aan dat er zowel voor kleine (11 features: van 2.1 naar 0.0 s) als grote extents
+(3675: van 44 naar 7 s) significante snelheidswinst behaald wordt.
+
+Een ander belangrijk voordeel van een enkele index is dat de features onmiddellijk tijdens het itereren geëmit kunnen
+worden. Gebruikers kunnen zo dus direct feedback van hun selectie krijgen.
