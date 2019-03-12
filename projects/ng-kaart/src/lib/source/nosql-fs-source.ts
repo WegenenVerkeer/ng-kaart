@@ -163,14 +163,12 @@ export class NosqlFsSource extends ol.source.Vector {
     private readonly gebruikCache: boolean
   ) {
     super({
-      // TODO featuresFromCache en featuresFromServer gebruiken this niet en zouden dus static of extern moeten zijn
-      loader: function(extent) {
-        const source = this;
-        source.clear();
-        if (source.offline) {
-          featuresFromCache(source, laagnaam, extent);
+      loader: function(extent: ol.Extent) {
+        this.clear();
+        if (this.offline) {
+          featuresFromCache(this, laagnaam, extent);
         } else {
-          featuresFromServer(source, laagnaam, gebruikCache, extent);
+          featuresFromServer(this, laagnaam, gebruikCache, extent);
         }
       },
       strategy: ol.loadingstrategy.bbox
