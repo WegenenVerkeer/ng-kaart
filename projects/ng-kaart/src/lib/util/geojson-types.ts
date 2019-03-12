@@ -12,12 +12,12 @@ export interface Metadata {
   readonly miny: number;
   readonly maxx: number;
   readonly maxy: number;
-  readonly toegevoegd: string; // De ISO string voorstelling van de datum van toevoeging
+  readonly toegevoegd: string; // De ISO-stringvoorstelling van de datum van toevoeging
 }
 
 export type GeoJsonKeyType = string | number;
 
-// Een record zoals we dat krijgen over HTTP. Bevat enkel de essentiele GeoJson velden.
+// Een record zoals we dat krijgen over HTTP. Bevat enkel de essentiële GeoJson velden.
 export interface GeoJsonCore {
   readonly id: GeoJsonKeyType;
   readonly properties: any;
@@ -25,7 +25,7 @@ export interface GeoJsonCore {
 }
 
 // Een record zoals we dat opslaan in de IndexedDB. De eigenlijke velden uitegebreid met metadata waar we
-// indexes kunnen met opbouwen
+// indices kunnen met opbouwen
 export interface GeoJsonLike extends GeoJsonCore {
   // index values from bbox
   readonly metadata: Metadata;
