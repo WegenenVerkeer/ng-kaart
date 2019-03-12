@@ -1,12 +1,11 @@
-import { array } from "fp-ts";
 import { Predicate } from "fp-ts/lib/function";
 import * as idb from "idb";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { filter, map, mapTo, mergeAll, mergeMap, reduce, switchMap } from "rxjs/operators";
+import { filter, mergeAll, switchMap } from "rxjs/operators";
 
 import { GeoJsonKeyType, GeoJsonLike } from "./geojson-types";
-import { unsafeGet, unsafeGetAll, unsafeGetAllByIndex, unsafeGetAllKeys, writeMany } from "./indexeddb";
+import { deleteByIndexWithPredicate, unsafeGet, unsafeGetAll, unsafeGetAllByIndex, writeMany } from "./indexeddb";
 
 const dbNaam = "nosql-features";
 
@@ -39,20 +38,22 @@ export const clear: (storeName: string) => rx.Observable<void> = (storeName: str
   );
 };
 
-export const deleteFeatures = (storeName: string, extent: ol.Extent): rx.Observable<number> =>
-  getKeysForFeaturesInExtent(storeName, extent).pipe(
-    reduce(array.snoc, []),
-    mergeMap(keys => deleteFeaturesByKeys(storeName, keys))
+export const deleteFeatures = (storeName: string, extent: ol.Extent): rx.Observable<number> => {
+  const [minx, miny, maxx, maxy] = extent;
+  const [index, keyRange] = maxx - minx < maxy - miny ? ["minx", IDBKeyRange.bound(minx, maxx)] : ["miny", IDBKeyRange.bound(miny, maxy)];
+  return openStore(storeName).pipe(
+    switchMap(db =>
+      deleteByIndexWithPredicate<GeoJsonLike>(
+        db,
+        storeName,
+        index,
+        keyRange,
+        feature =>
+          feature.metadata.minx >= minx && feature.metadata.maxx <= maxx && feature.metadata.miny >= miny && feature.metadata.maxy <= maxy
+      )
+    )
   );
-
-const deleteFeaturesByKeys = (storeName: string, keys: GeoJsonKeyType[]): rx.Observable<number> =>
-  openStore(storeName).pipe(
-    switchMap(db => {
-      const tx = db.transaction(storeName, "readwrite");
-      keys.forEach(key => tx.objectStore(storeName).delete(key));
-      return rx.from(tx.complete).pipe(mapTo(keys.length));
-    })
-  );
+};
 
 export const writeFeatures = (storeName: string, features: GeoJsonLike[]): rx.Observable<number> =>
   openStore(storeName).pipe(switchMap(db => writeMany(db, storeName, features)));
@@ -82,9 +83,6 @@ export const getFeaturesByExtent = (storeName: string, extent: ol.Extent): rx.Ob
     )
   );
 };
-
-const getKeysForFeaturesInExtent = (storeName: string, extent: ol.Extent): rx.Observable<GeoJsonKeyType> =>
-  getFeaturesByExtent(storeName, extent).pipe(map(f => f.id));
 
 const getValuesInIndexedInRange = (
   storeName: string,

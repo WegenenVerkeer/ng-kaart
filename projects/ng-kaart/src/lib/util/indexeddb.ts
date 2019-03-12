@@ -1,3 +1,4 @@
+import { Predicate } from "fp-ts/lib/function";
 import { Cursor, DB } from "idb";
 import * as rx from "rxjs";
 import { filter, mapTo } from "rxjs/operators";
@@ -86,6 +87,41 @@ export const unsafeGetAllKeys = <T>(db: DB, storeName: string, idx: string, keyR
         reason => subscriber.error(toReadException(reason))
       )
   );
+
+export const deleteByIndexWithPredicate = <T>(
+  db: DB,
+  storeName: string,
+  idx: string,
+  idxRange: IDBKeyRange,
+  predicate: Predicate<T>
+): rx.Observable<number> =>
+  rx.Observable.create((subscriber: rx.Subscriber<number>) => {
+    const tx = db.transaction(storeName, "readwrite");
+    let count = 0;
+    tx.objectStore(storeName)
+      .index(idx)
+      .openCursor(idxRange)
+      .then(
+        function cursorIterate(cursor: Cursor<any, any>) {
+          if (!cursor) {
+            tx.complete.then(
+              () => {
+                subscriber.next(count);
+                subscriber.complete();
+              },
+              reason => subscriber.error(toReadException(reason))
+            );
+            return;
+          }
+          if (predicate(cursor.value)) {
+            cursor.delete();
+            ++count;
+          }
+          cursor.continue().then(cursorIterate, reason => subscriber.error(toReadException(reason)));
+        },
+        reason => subscriber.error(toReadException(reason))
+      );
+  });
 
 export const put = <T>(db: DB, storeName: string, feature: T): rx.Observable<IDBValidKey> =>
   rx.from(
