@@ -37,5 +37,5 @@ export const read = (laagnaam: string): rx.Observable<Date> =>
     switchMap(db => indexeddb.unsafeGet<CacheUpdateInformatie>(db, databaseNaam, laagnaam).pipe(map(record => new Date(record.datum))))
   );
 
-export const readAll = (): rx.Observable<CacheUpdateInformatie[]> =>
+export const readAll = (): rx.Observable<CacheUpdateInformatie> =>
   openStore().pipe(switchMap(db => indexeddb.unsafeGetAll<CacheUpdateInformatie>(db, databaseNaam)));
