@@ -1,4 +1,4 @@
-// workbox plugin file. Include this file to enrich your service worker
+// workbox plugin file. Include this file to enrich your service worker.
 // see: https://collab.mow.vlaanderen.be/gitlab/Groen/elisa-ng/blob/develop/modules/elisa-ng-ui/WORKBOX.md
 
 // initialise modules: see https://developers.google.com/web/tools/workbox/modules/workbox-sw#avoid_async_imports
