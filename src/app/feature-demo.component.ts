@@ -57,6 +57,8 @@ export class FeatureDemoComponent {
   private verplaatsKaart: KaartClassicComponent;
   @ViewChild("selectie")
   private selectieKaart: KaartClassicComponent;
+  @ViewChild("kaartInfoKaart")
+  private kaartInfoKaart: KaartClassicComponent;
 
   constructor(private changeDetectorRef: ChangeDetectorRef, private readonly zone: NgZone) {
     this.addIcon();
@@ -583,15 +585,16 @@ export class FeatureDemoComponent {
     this.installatieGeselecteerdEvents.push(this.geoJsonFormatter.writeFeature(feature));
   }
 
-  featuresGeselecteerd(event: Array<ol.Feature>) {
+  featuresGeselecteerd(event: ol.Feature[], selectieKaart: KaartClassicComponent) {
+    console.log("****kc", selectieKaart);
     // verwijder de bestaande info boodschappen voor features die niet meer geselecteerd zijn
     const nietLangerGeselecteerd = this.geselecteerdeFeatures //
       .filter(feature => !event.map(f => f.getId()).includes(feature.get("id")));
-    nietLangerGeselecteerd.forEach(feature => this.selectieKaart.verbergIdentifyInformatie(feature.get("id").toString()));
+    nietLangerGeselecteerd.forEach(feature => selectieKaart.verbergIdentifyInformatie(feature.get("id").toString()));
 
     // voeg de nieuwe toe
     this.geselecteerdeFeatures = event;
-    this.geselecteerdeFeatures.forEach(feature => this.selectieKaart.toonIdentifyInformatie(feature));
+    this.geselecteerdeFeatures.forEach(feature => selectieKaart.toonIdentifyInformatie(feature));
   }
 
   setOffline(offline: boolean) {
@@ -770,6 +773,61 @@ export class FeatureDemoComponent {
         provider.filtered$(f => f.getProperties() && f.getProperties().properties && f.getProperties().properties.ident8 === ident8)
       )
     );
+  }
+
+  fietspadenVeldinfos(): VeldInfo[] {
+    return [
+      { isBasisVeld: false, label: "ID", naam: "id", type: "string" },
+      { isBasisVeld: false, label: "type", naam: "type", type: "string" },
+      { isBasisVeld: true, label: "Ident8", naam: "ident8", type: "string" },
+      { isBasisVeld: true, label: "Van refpunt", naam: "locatie.begin.opschrift", type: "string" },
+      { isBasisVeld: true, label: "Van afst", naam: "locatie.begin.afstand", type: "string" },
+      { isBasisVeld: true, label: "locatie.begin.positie", naam: "locatie.begin.positie", type: "string" },
+      { isBasisVeld: true, label: "Tot refpunt", naam: "locatie.eind.opschrift", type: "string" },
+      { isBasisVeld: true, label: "Tot afst", naam: "locatie.eind.afstand", type: "string" },
+      { isBasisVeld: true, label: "locatie.eind.positie", naam: "locatie.eind.positie", type: "string" },
+      { isBasisVeld: true, label: "Lengte", naam: "locatie.lengte", type: "integer" },
+      { isBasisVeld: false, label: "Werkelijke lengte", naam: "werkelijkelengte", type: "string" },
+      { isBasisVeld: false, label: "Bron Id", naam: "bronid", type: "string" },
+      { isBasisVeld: false, label: "Opnamedatum", naam: "opnamedatum", type: "date" },
+      { isBasisVeld: false, label: "Wijzigingsdatum", naam: "wijzigingsdatum", type: "date" },
+      { isBasisVeld: false, label: "geometry", naam: "geometry", type: "geometry" },
+      { isBasisVeld: false, label: "offsetZijde", naam: "offsetZijde", type: "string" },
+      { isBasisVeld: true, label: "zijderijweg", naam: "zijderijweg", type: "string" },
+      { isBasisVeld: true, label: "Zijde", naam: "zijderijbaan", type: "string" },
+      { isBasisVeld: true, label: "Type", naam: "typefietspad", type: "string" },
+      { isBasisVeld: false, label: "Verhoogd", naam: "verhoogd", type: "boolean" },
+      { isBasisVeld: true, label: "Afst rijbaan", naam: "afstandrijbaan", type: "string" },
+      { isBasisVeld: true, label: "Breedte", naam: "breedte", type: "string" },
+      { isBasisVeld: true, label: "Hoofdverharding", naam: "wegverharding_1", type: "string" },
+      { isBasisVeld: false, label: "Subverharding", naam: "wegverharding_2", type: "string" },
+      { isBasisVeld: false, label: "Kleur", naam: "kleur", type: "string" },
+      { isBasisVeld: true, label: "Dubbelrichting", naam: "dubbelerichting", type: "boolean" },
+      { isBasisVeld: false, label: "Gemarkeerd", naam: "gemarkeerd", type: "boolean" },
+      { isBasisVeld: false, label: "Tussenstrook", naam: "tussenstrook", type: "string" },
+      { isBasisVeld: false, label: "Opmerking", naam: "opmerking", type: "string" },
+      { isBasisVeld: false, label: "Begindatum", naam: "begindatum", type: "date" },
+      { isBasisVeld: false, label: "Creatiedatum", naam: "creatiedatum", type: "date" },
+      { isBasisVeld: false, label: "Gebied", naam: "gebied", type: "string" },
+      { isBasisVeld: false, label: "Bebouwde kom", naam: "bebouwdekom", type: "string" },
+      { isBasisVeld: false, label: "Wegcategorie", naam: "wegcategorie", type: "string" },
+      { isBasisVeld: false, label: "Gebruiker", naam: "gebruiker", type: "string" }
+    ];
+  }
+
+  verkeersbordenVeldinfos(): VeldInfo[] {
+    return [
+      { isBasisVeld: false, label: "ID", naam: "id", type: "string" },
+      { isBasisVeld: true, label: "Ident8", naam: "ident8", type: "string" },
+      { isBasisVeld: true, label: "Refpunt", naam: "opschrift", type: "string" },
+      { isBasisVeld: true, label: "Afstand", naam: "afstand", type: "string" },
+      { isBasisVeld: true, label: "Zijde van de rijweg", naam: "zijdeVanDeRijweg", type: "string" },
+      { isBasisVeld: true, label: "Langs gewestweg", naam: "langsGewestweg", type: "boolean" },
+      { isBasisVeld: false, label: "Gebied", naam: "gebied", type: "string" },
+      { isBasisVeld: false, label: "UUID", naam: "uuid", type: "string" },
+      { isBasisVeld: true, label: "Status", naam: "status", type: "string" },
+      { isBasisVeld: false, label: "Wijzigingsdatum", naam: "wijzigingsdatum", type: "date" }
+    ];
   }
 
   private verwerkSelectie(feature$: rx.Observable<ol.Feature>): void {

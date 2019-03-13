@@ -51,8 +51,8 @@
       <div class="veldnamen">Gemeente</div><div class="veldwaarden">{{ adres.gemeente }}</div>
     </div>
   </mat-expansion-panel>
-  
-  <ng-container *ngFor="let info of textLaagLocationInfo"><!--zo niet nodig izjn als hideToggle eenvoudig aangezet kon worden-->
+
+  <ng-container *ngFor="let info of textLaagLocationInfo"><!--zou niet nodig izjn als hideToggle eenvoudig aangezet kon worden-->
 
     <mat-expansion-panel class="mat-elevation-z0" hideToggle *ngIf="info.busy || info.timedout">
       <mat-expansion-panel-header *ngIf="info.busy">
@@ -77,7 +77,7 @@
             {{ info.titel }}
           </mat-panel-title>
         </mat-expansion-panel-header>
-      
+
       <div class="verbatim">
         <pre>{{ info.text }}</pre>
       </div>

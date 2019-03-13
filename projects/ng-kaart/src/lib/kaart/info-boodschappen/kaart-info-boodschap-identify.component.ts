@@ -1,12 +1,14 @@
 import { Component, Input, NgZone } from "@angular/core";
 import { DomSanitizer } from "@angular/platform-browser";
-import { Curried3, Function1, Function2, Predicate } from "fp-ts/lib/function";
+import { constTrue, Curried2, Curried3, Function1, Function2, Predicate } from "fp-ts/lib/function";
+import * as map from "fp-ts/lib/Map";
 import { fromNullable, Option } from "fp-ts/lib/Option";
+import { setoidString } from "fp-ts/lib/Setoid";
 import * as Mustache from "mustache";
 import * as ol from "openlayers";
 
 import { KaartChildComponentBase } from "../kaart-child-component-base";
-import { VectorLaag, VeldInfo } from "../kaart-elementen";
+import { VeldInfo } from "../kaart-elementen";
 import { InfoBoodschapIdentify } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
 
@@ -31,6 +33,8 @@ const AFSTANDRIJBAAN = "afstandrijbaan";
 const BREEDTE = "breedte";
 const HM = "hm";
 const VERPL = "verpl";
+
+type VeldinfoMap = Map<string, VeldInfo>;
 
 const geldigeWaarde = value => value !== undefined && value !== null;
 
@@ -68,19 +72,25 @@ const isValidDate = (dateString: string): boolean => {
   return !isNaN(timestamp);
 };
 
-const hasVeldSatisfying: Curried3<Option<VectorLaag>, string, Predicate<VeldInfo>, boolean> = maybeLaag => veld => test =>
-  maybeLaag.chain(l => fromNullable(l.velden.get(veld))).exists(test);
+const veldnamen: Function1<VeldinfoMap, string[]> = veldbeschrijvingen => [...veldbeschrijvingen.keys()];
 
-const isType: Function1<string, Function2<Option<VectorLaag>, string, boolean>> = type => (maybeLaag, veld) =>
-  hasVeldSatisfying(maybeLaag)(veld)(veldInfo => veldInfo.type === type);
+const veldbeschrijving: Function2<string, VeldinfoMap, Option<VeldInfo>> = (veld, veldbeschrijvingen) =>
+  map.lookup(setoidString)(veld, veldbeschrijvingen);
 
-const isBoolean: Function2<Option<VectorLaag>, string, boolean> = isType("boolean");
-const isDatum: Function2<Option<VectorLaag>, string, boolean> = isType("date");
-const isDateTime: Function2<Option<VectorLaag>, string, boolean> = isType("datetime");
-const isJson: Function2<Option<VectorLaag>, string, boolean> = isType("json");
+const hasVeldSatisfying: Function1<Predicate<VeldInfo>, Function2<VeldinfoMap, string, boolean>> = test => (veldbeschrijvingen, veld) =>
+  veldbeschrijving(veld, veldbeschrijvingen).exists(test);
 
-const isBasisVeld: Function2<Option<VectorLaag>, string, boolean> = (maybeLaag, veld) =>
-  hasVeldSatisfying(maybeLaag)(veld)(veldInfo => veldInfo.isBasisVeld); // indien geen meta informatie functie, toon alle velden
+const hasVeld: Function2<VeldinfoMap, string, boolean> = hasVeldSatisfying(constTrue);
+
+const isType: Function1<string, Function2<VeldinfoMap, string, boolean>> = type => hasVeldSatisfying(veldInfo => veldInfo.type === type);
+
+const isBoolean: Function2<VeldinfoMap, string, boolean> = isType("boolean");
+const isDatum: Function2<VeldinfoMap, string, boolean> = isType("date");
+const isDateTime: Function2<VeldinfoMap, string, boolean> = isType("datetime");
+const isJson: Function2<VeldinfoMap, string, boolean> = isType("json");
+
+// indien geen meta informatie functie, toon alle velden
+const isBasisVeld: Function2<VeldinfoMap, string, boolean> = hasVeldSatisfying(veldInfo => veldInfo.isBasisVeld);
 
 @Component({
   selector: "awv-kaart-info-boodschap-identify",
@@ -88,13 +98,15 @@ const isBasisVeld: Function2<Option<VectorLaag>, string, boolean> = (maybeLaag, 
   styleUrls: ["./kaart-info-boodschap-identify.component.scss"]
 })
 export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase {
-  feature: ol.Feature;
-  laag: Option<VectorLaag>;
+  private feature: ol.Feature;
+  private laagg: VeldinfoMap;
+
+  private veldbeschrijvingen: VeldinfoMap = new Map();
 
   @Input()
   set boodschap(bsch: InfoBoodschapIdentify) {
     this.feature = bsch.feature;
-    this.laag = bsch.laag;
+    this.veldbeschrijvingen = bsch.laag.map(vectorlaag => vectorlaag.velden).getOrElse(new Map());
   }
 
   private _alleVeldenZichtbaar = false;
@@ -232,72 +244,83 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   }
 
   label(veld: string): string {
-    return this.laag
-      .chain(l => fromNullable(l.velden.get(veld)))
+    return veldbeschrijving(veld, this.veldbeschrijvingen)
       .map(veldInfo => veldInfo.label)
       .getOrElse(veld);
   }
 
   zichtbareEigenschappen(): string[] {
     return this.eigenschappen(
-      key => isBasisVeld(this.laag, key) && !this.isLink(key) && !isBoolean(this.laag, key) && !this.teVerbergenProperties.includes(key)
+      key =>
+        isBasisVeld(this.veldbeschrijvingen, key) &&
+        !this.isLink(key) &&
+        !isBoolean(this.veldbeschrijvingen, key) &&
+        !this.teVerbergenProperties.includes(key)
     );
   }
 
   booleanEigenschappen(): string[] {
-    return this.eigenschappen(key => isBasisVeld(this.laag, key) && isBoolean(this.laag, key) && !this.teVerbergenProperties.includes(key));
+    return this.eigenschappen(
+      key =>
+        isBasisVeld(this.veldbeschrijvingen, key) && isBoolean(this.veldbeschrijvingen, key) && !this.teVerbergenProperties.includes(key)
+    );
   }
 
   linkEigenschappen(): string[] {
-    return this.eigenschappen(key => isBasisVeld(this.laag, key) && this.isLink(key) && !this.teVerbergenProperties.includes(key));
+    return this.eigenschappen(
+      key => isBasisVeld(this.veldbeschrijvingen, key) && this.isLink(key) && !this.teVerbergenProperties.includes(key)
+    );
   }
 
   heeftGeavanceerdeEigenschappen(): boolean {
-    return this.eigenschappen(key => !isBasisVeld(this.laag, key) && !this.teVerbergenProperties.includes(key)).length > 0;
+    return this.eigenschappen(key => !isBasisVeld(this.veldbeschrijvingen, key) && !this.teVerbergenProperties.includes(key)).length > 0;
   }
 
   geavanceerdeEigenschappen(): string[] {
     return this.eigenschappen(
-      key => !isBasisVeld(this.laag, key) && !isBoolean(this.laag, key) && !this.isLink(key) && !this.teVerbergenProperties.includes(key)
+      key =>
+        !isBasisVeld(this.veldbeschrijvingen, key) &&
+        !isBoolean(this.veldbeschrijvingen, key) &&
+        !this.isLink(key) &&
+        !this.teVerbergenProperties.includes(key)
     );
   }
 
   geavanceerdeBooleanEigenschappen(): string[] {
     return this.eigenschappen(
-      key => !isBasisVeld(this.laag, key) && isBoolean(this.laag, key) && !this.teVerbergenProperties.includes(key)
+      key =>
+        !isBasisVeld(this.veldbeschrijvingen, key) && isBoolean(this.veldbeschrijvingen, key) && !this.teVerbergenProperties.includes(key)
     );
   }
 
   geavanceerdeLinkEigenschappen(): string[] {
-    return this.eigenschappen(key => !isBasisVeld(this.laag, key) && this.isLink(key) && !this.teVerbergenProperties.includes(key));
+    return this.eigenschappen(
+      key => !isBasisVeld(this.veldbeschrijvingen, key) && this.isLink(key) && !this.teVerbergenProperties.includes(key)
+    );
   }
 
   constante(veld: string): Option<string> {
     return (
-      this.laag
-        .chain(l => fromNullable(l.velden.get(veld)))
+      veldbeschrijving(veld, this.veldbeschrijvingen)
         .chain(veldInfo => fromNullable(veldInfo.constante))
         // vervang elke instantie van {id} in de waarde van 'constante' door de effectieve id :
         .map(waarde =>
-          this.laag
-            .map(l => Array.from(l.velden.keys()))
-            .getOrElse([])
-            .reduce((result, eigenschap) => {
-              const token = `{${eigenschap}}`;
-              // vervang _alle_ tokens met de waarde uit het record
-              return result.includes(token) ? result.split(token).join(`${this.waarde(eigenschap)}`) : result;
-            }, waarde)
+          veldnamen(this.veldbeschrijvingen).reduce((result, eigenschap) => {
+            const token = `{${eigenschap}}`;
+            // vervang _alle_ tokens met de waarde uit het record
+            return result.includes(token) ? result.split(token).join(`${this.waarde(eigenschap)}`) : result;
+          }, waarde)
         )
     );
   }
 
   waarde(name: string): Object {
-    // indien er een 'constante' object in de definitie is, geef dat terug, anders geeft de waarde in het veld terug
+    // indien er een 'constante' object in de definitie is, geef dat terug, anders geef de waarde in het veld terug
     return this.constante(name).getOrElseL(() => {
       const waarde = nestedProperty(name, this.properties());
-      if (isDatum(this.laag, name) && waarde) {
+      if (isDatum(this.veldbeschrijvingen, name) && waarde) {
         return formateerDatum(waarde.toString());
-      } else if (isDateTime(this.laag, name) && waarde) {
+      } else if (isDateTime(this.veldbeschrijvingen, name) && waarde) {
         return formateerDateTime(waarde.toString());
       } else if (this.hasHtml(name) && waarde) {
         return this.sanitizer.bypassSecurityTrustHtml(formateerJson(name, this.veldtype(name), waarde, this.html(name)));
@@ -330,9 +353,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   }
 
   private eigenschappen(filter: (string) => boolean): string[] {
-    return this.laag
-      .map(l => Array.from(l.velden.keys()))
-      .getOrElse([])
+    return veldnamen(this.veldbeschrijvingen)
       .filter(veldNaam => filter(veldNaam))
       .filter(veldNaam => geldigeWaarde(nestedProperty(veldNaam!, this.properties())) || this.constante(veldNaam!).isSome())
       .filter(veldNaam => nestedProperty(veldNaam!, this.properties()) !== "");
@@ -343,49 +364,43 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
       fromNullable(this.waarde(veld)) // indien waarde van veld begint met http
         .filter(waarde => typeof waarde === "string")
         .exists(waarde => `${waarde}`.startsWith("http")) ||
-      this.laag // indien 'constante' veld start met http
-        .chain(l => fromNullable(l.velden.get(veld))) //
+      veldbeschrijving(veld, this.veldbeschrijvingen) // indien 'constante' veld start met http
         .chain(veldInfo => fromNullable(veldInfo.constante)) //
         .exists(constante => constante.startsWith("http"))
     );
   }
 
   private hasTemplate(veld: string): boolean {
-    return this.laag
-      .chain(l => fromNullable(l.velden.get(veld)))
+    return veldbeschrijving(veld, this.veldbeschrijvingen)
       .chain(veldInfo => fromNullable(veldInfo.template))
       .isSome();
   }
 
   private hasHtml(veld: string): boolean {
-    return this.laag
-      .chain(l => fromNullable(l.velden.get(veld)))
+    return veldbeschrijving(veld, this.veldbeschrijvingen)
       .chain(veldInfo => fromNullable(veldInfo.html))
       .isSome();
   }
 
   private template(veld: string): string {
-    return this.laag
-      .chain(l => fromNullable(l.velden.get(veld)))
+    return veldbeschrijving(veld, this.veldbeschrijvingen)
       .chain(veldInfo => fromNullable(veldInfo.template))
       .getOrElse("");
   }
 
   private html(veld: string): string {
-    return this.laag
-      .chain(l => fromNullable(l.velden.get(veld)))
+    return veldbeschrijving(veld, this.veldbeschrijvingen)
       .chain(veldInfo => fromNullable(veldInfo.html))
       .getOrElse("");
   }
 
   private veldtype(veld: string): string {
-    return this.laag
-      .chain(l => fromNullable(l.velden.get(veld)))
+    return veldbeschrijving(veld, this.veldbeschrijvingen)
       .map(veldInfo => veldInfo.type.toString())
       .getOrElse("");
   }
 
   heeftMaakAbbameldaMelding(): boolean {
-    return this.laag.chain(l => fromNullable(l.velden.get("meldingInAbbamelda"))).isSome();
+    return hasVeld(this.veldbeschrijvingen, "meldingInAbbamelda");
   }
 }
