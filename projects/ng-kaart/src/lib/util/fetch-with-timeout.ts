@@ -1,6 +1,6 @@
 import { Function1, Function2, Function3 } from "fp-ts/lib/function";
 import * as rx from "rxjs";
-import { map, switchMap } from "rxjs/operators";
+import { delay, map, switchMap, timeoutWith } from "rxjs/operators";
 
 import { Pipeable } from "./operators";
 
@@ -34,10 +34,11 @@ export const fetchObs$: Function2<string, RequestInit, rx.Observable<string>> = 
   );
 
 export const fetchWithTimeoutObs$: Function3<string, RequestInit, number, rx.Observable<string>> = (url, options, timeout) =>
-  rx.from(fetchWithTimeout(url, options, timeout)).pipe(
+  rx.from(fetch(url, options)).pipe(
     responseToReader,
     switchMap(readerToObservable),
-    byteToText
+    byteToText,
+    timeoutWith(timeout, rx.throwError(new Error(`Geen antwoord binnen ${timeout} ms`)))
   );
 
 const readerToObservable: Function1<ReadableStreamReader, rx.Observable<Uint8Array>> = reader =>
@@ -56,9 +57,3 @@ const readerToObservable: Function1<ReadableStreamReader, rx.Observable<Uint8Arr
         .catch(err => observable.error(err));
     push();
   });
-
-const timeoutPromise: Function1<number, Promise<Response>> = timeout =>
-  new Promise((_, reject) => setTimeout(() => reject(new Error(`Geen request binnen ${timeout} ms`)), timeout));
-
-const fetchWithTimeout: Function3<string, RequestInit, number, Promise<Response>> = (url, options, timeout) =>
-  Promise.race([fetch(url, options), timeoutPromise(timeout)]);
