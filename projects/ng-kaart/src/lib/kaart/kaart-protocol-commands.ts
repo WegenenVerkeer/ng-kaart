@@ -2,10 +2,12 @@ import { Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 
+import { Consumer } from "../util/function";
 import { TypedRecord } from "../util/typed-record";
 import { ZoekerMetPrioriteiten, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
 
-import { BareValidationWrapper, KaartLocaties, KaartMsg, Subscription, ValidationWrapper, WegLocatie } from ".";
+import { BareValidationWrapper, KaartLocaties, KaartMsg, Subscription, ValidationWrapper } from ".";
+import { CachedFeatureLookup } from "./cache/lookup";
 import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { Legende } from "./kaart-legende";
@@ -68,6 +70,7 @@ export type Command<Msg extends KaartMsg> =
   | VoegUiElementToe
   | VoegVolledigSchermToeCmd<Msg>
   | VoegZoekerToeCmd<Msg>
+  | VraagCachedFeaturesLookupCmd<Msg>
   | VraagSchaalAanCmd<Msg>
   | VulCacheVoorNosqlLaag<Msg>
   | VulCacheVoorWMSLaag<Msg>
@@ -496,6 +499,12 @@ export interface DrawOpsCmd {
   readonly ops: DrawOps;
 }
 
+export interface VraagCachedFeaturesLookupCmd<Msg extends TypedRecord> {
+  readonly type: "VraagCachedFeaturesLookup";
+  readonly titel: string;
+  readonly msgGen: ValidationWrapper<CachedFeatureLookup, Msg>;
+}
+
 ////////////////////////
 // constructor functies
 //
@@ -876,4 +885,11 @@ export function DrawOpsCmd(ops: DrawOps): DrawOpsCmd {
 
 export function ZetGetekendeGeometryCmd(geometry: ol.geom.Geometry): ZetGetekendeGeometryCmd {
   return { type: "ZetGetekendeGeometry", geometry: geometry };
+}
+
+export function VraagCachedFeaturesLookupCmd<Msg extends TypedRecord>(
+  titel: string,
+  msgGen: ValidationWrapper<CachedFeatureLookup, Msg>
+): VraagCachedFeaturesLookupCmd<Msg> {
+  return { type: "VraagCachedFeaturesLookup", titel: titel, msgGen: msgGen };
 }

@@ -4,6 +4,7 @@ import { contramap, Setoid, setoidString } from "fp-ts/lib/Setoid";
 import { Iso, Lens, Optional } from "monocle-ts";
 import * as ol from "openlayers";
 
+import { isNoSqlFsSource } from "../source/nosql-fs-source";
 import { mapToOptionalByKey } from "../util/lenses";
 
 import { Legende } from "./kaart-legende";
@@ -165,7 +166,7 @@ export const isWmsLaag: (laag: Laag) => boolean = laag => laag.type === SingleTi
 export const isTiledWmsLaag: (laag: Laag) => boolean = laag => laag.type === TiledWmsType;
 export const isBlancoLaag: (laag: Laag) => boolean = laag => laag.type === BlancoType;
 export const isVectorLaag: (laag: Laag) => boolean = laag => laag.type === VectorType;
-export const isNoSqlFsLaag: (laag: Laag) => boolean = laag => laag.type === VectorType && laag.source.hasOwnProperty("loadEvent$");
+export const isNoSqlFsLaag: (laag: Laag) => boolean = laag => laag.type === VectorType && isNoSqlFsSource(laag.source);
 export const asVectorLaag: (laag: Laag) => Option<VectorLaag> = fromPredicate(isVectorLaag) as (_: Laag) => Option<VectorLaag>;
 export const asTiledWmsLaag: (laag: Laag) => Option<WmsLaag> = fromPredicate(isTiledWmsLaag) as (_: Laag) => Option<WmsLaag>;
 export const isToegevoegdeVectorLaag: Refinement<ToegevoegdeLaag, ToegevoegdeVectorLaag> = (laag): laag is ToegevoegdeVectorLaag =>

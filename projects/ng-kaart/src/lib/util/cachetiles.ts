@@ -32,7 +32,7 @@ const fetchUrlsGrouped: Function1<string[], rx.Observable<Progress>> = urls => {
         fetched++;
         subscriber.next({
           ...progress,
-          percentage: Math.round((fetched / urls.length) * 100)
+          percentage: Math.floor((fetched / urls.length) * 100)
         });
         return fetch(new Request(url, { credentials: "include" }), { keepalive: true, mode: "cors" }).catch(err => kaartLogger.error(err));
       });
