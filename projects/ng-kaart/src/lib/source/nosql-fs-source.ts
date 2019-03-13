@@ -195,11 +195,15 @@ export class NosqlFsSource extends ol.source.Vector {
 
   fetchFeatures$(extent: number[]): rx.Observable<GeoJsonLike> {
     if (this.gebruikCache) {
-      return fetchObs$(this.composeUrl(extent), {
-        method: "GET",
-        cache: "no-store", // geen client side caching van nosql data
-        credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
-      }).pipe(
+      return fetchWithTimeoutObs$(
+        this.composeUrl(extent),
+        {
+          method: "GET",
+          cache: "no-store", // geen client side caching van nosql data
+          credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
+        },
+        FETCH_TIMEOUT
+      ).pipe(
         split(featureDelimiter),
         filter(lijn => lijn.trim().length > 0),
         mapToGeoJson
