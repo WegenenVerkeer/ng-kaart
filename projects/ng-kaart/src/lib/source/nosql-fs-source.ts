@@ -195,15 +195,11 @@ export class NosqlFsSource extends ol.source.Vector {
 
   fetchFeatures$(extent: number[]): rx.Observable<GeoJsonLike> {
     if (this.gebruikCache) {
-      return fetchWithTimeoutObs$(
-        this.composeUrl(extent),
-        {
-          method: "GET",
-          cache: "no-store", // geen client side caching van nosql data
-          credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
-        },
-        FETCH_TIMEOUT
-      ).pipe(
+      return fetchObs$(this.composeUrl(extent), {
+        method: "GET",
+        cache: "no-store", // geen client side caching van nosql data
+        credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
+      }).pipe(
         split(featureDelimiter),
         filter(lijn => lijn.trim().length > 0),
         mapToGeoJson
@@ -222,16 +218,12 @@ export class NosqlFsSource extends ol.source.Vector {
   }
 
   fetchFeaturesByWkt$(wkt: string): rx.Observable<GeoJsonLike> {
-    return fetchWithTimeoutObs$(
-      this.composeUrl(),
-      {
-        method: "POST",
-        cache: "no-store", // geen client side caching van nosql data
-        credentials: "include", // essentieel om ACM Authenticatie cookies mee te sturen
-        body: wkt
-      },
-      FETCH_TIMEOUT
-    ).pipe(
+    return fetchObs$(this.composeUrl(), {
+      method: "POST",
+      cache: "no-store", // geen client side caching van nosql data
+      credentials: "include", // essentieel om ACM Authenticatie cookies mee te sturen
+      body: wkt
+    }).pipe(
       split(featureDelimiter),
       filter(lijn => lijn.trim().length > 0),
       mapToGeoJson
