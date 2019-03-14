@@ -1066,7 +1066,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           .filter(laag => laag.bron.type === ke.VectorType)
           .map(laag => laag.bron as ke.VectorLaag)
       };
-      updateBehaviorSubject(model.infoBoodschappenSubj, bsch => bsch.set(boodschap.id, boodschap));
+      updateBehaviorSubject(model.infoBoodschappenSubj, bsch => fptsmap.insert(setoidString)(boodschap.id, boodschap, bsch));
       return ModelWithResult(model);
     }
 

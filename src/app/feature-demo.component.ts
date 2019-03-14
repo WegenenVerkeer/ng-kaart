@@ -4,6 +4,7 @@ import { array } from "fp-ts";
 import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import { CachedFeatureLookup } from "projects/ng-kaart/src/lib/kaart/cache/lookup";
+import { Feature } from "projects/ng-kaart/src/lib/util/feature";
 import * as rx from "rxjs";
 import { reduce, scan, share, throttleTime } from "rxjs/operators";
 
@@ -309,10 +310,10 @@ export class FeatureDemoComponent {
     })
   });
 
-  geselecteerdeFeatures: Array<ol.Feature> = [];
+  geselecteerdeFeatures: ol.Feature[] = [];
 
   fietspadsegmentenSelectie: FietspadSelectie[] = [];
-  geselecteerdeFietspadsegmenten: Array<ol.Feature> = [];
+  geselecteerdeFietspadsegmenten: ol.Feature[] = [];
 
   precacheProgress = 0;
   laatsteCacheRefresh = "";
@@ -586,14 +587,15 @@ export class FeatureDemoComponent {
   }
 
   featuresGeselecteerd(event: ol.Feature[], selectieKaart: KaartClassicComponent) {
-    console.log("****kc", selectieKaart);
     // verwijder de bestaande info boodschappen voor features die niet meer geselecteerd zijn
-    const nietLangerGeselecteerd = this.geselecteerdeFeatures //
-      .filter(feature => !event.map(f => f.getId()).includes(feature.get("id")));
-    nietLangerGeselecteerd.forEach(feature => selectieKaart.verbergIdentifyInformatie(feature.get("id").toString()));
+    const nietLangerGeselecteerdeFeatures: ol.Feature[] = array.difference(Feature.setoidFeaturePropertyId)(
+      this.geselecteerdeFeatures,
+      event
+    );
+    array.mapOption(nietLangerGeselecteerdeFeatures, Feature.propertyId).forEach(id => selectieKaart.verbergIdentifyInformatie(id));
 
     // voeg de nieuwe toe
-    this.geselecteerdeFeatures = event;
+    this.geselecteerdeFeatures = array.copy(event);
     this.geselecteerdeFeatures.forEach(feature => selectieKaart.toonIdentifyInformatie(feature));
   }
 
