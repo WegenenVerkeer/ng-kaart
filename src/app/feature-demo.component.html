@@ -547,7 +547,7 @@
                        [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && kaartInfoSectie.sectieZichtbaar">
         <div *ngIf="kaartInfoSectie.sectieZichtbaar" [@enterAnimation]>
           <awv-kaart-classic #kaartInfoKaart [naam]="'kaartInfo'" (geselecteerdeFeaturesChange)="featuresGeselecteerd($event, kaartInfoKaart)"
-                             [zoom]="4" [selectieModus]="'single'" [middelpunt]="[161206, 226075]" [hoogte]="600">
+                             [zoom]="9" [selectieModus]="'single'" [middelpunt]="[161206, 226075]" [hoogte]="600">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
             <awv-kaart-blanco-laag [titel]="'Leeg'"></awv-kaart-blanco-laag>
 

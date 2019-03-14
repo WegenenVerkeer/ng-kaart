@@ -13,12 +13,14 @@ const format = new ol.format.GeoJSON();
 
 export const toOlFeature: Curried2<string, GeoJsonCore, ol.Feature> = laagnaam => geojson => {
   try {
-    return new ol.Feature({
+    const feature = new ol.Feature({
       id: geojson.id,
       properties: geojson.properties,
       geometry: format.readGeometry(geojson.geometry),
       laagnaam: laagnaam
     });
+    feature.setId(geojson.id);
+    return feature;
   } catch (error) {
     const msg = `Kan geometry niet parsen: ${error}`;
     kaartLogger.error(msg);

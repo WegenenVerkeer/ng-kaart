@@ -8,7 +8,7 @@ import { bufferCount, filter, last, map, mergeMap, reduce, scan, share, switchMa
 import * as le from "../kaart/kaart-load-events";
 import { kaartLogger } from "../kaart/log";
 import { Pipeable } from "../util";
-import { toOlFeature } from "../util/feature";
+import { Feature, toOlFeature } from "../util/feature";
 import { fetchObs$, fetchWithTimeoutObs$ } from "../util/fetch-with-timeout";
 import { ReduceFunction } from "../util/function";
 import { GeoJsonLike } from "../util/geojson-types";
@@ -164,12 +164,15 @@ export class NosqlFsSource extends ol.source.Vector {
   ) {
     super({
       loader: function(extent: ol.Extent) {
-        this.clear();
+        const oldFeatures: ol.Feature[] = this.getFeatures();
         if (this.offline) {
           featuresFromCache(this, laagnaam, extent);
         } else {
           featuresFromServer(this, laagnaam, gebruikCache, extent);
         }
+        const newFeatures: ol.Feature[] = this.getFeatures();
+        const notFetchedFeatures = array.difference(Feature.setoidFeaturePropertyId)(oldFeatures, newFeatures);
+        notFetchedFeatures.forEach(feature => this.removeFeature(feature));
       },
       strategy: ol.loadingstrategy.bbox
     });
