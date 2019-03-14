@@ -35,6 +35,9 @@ const HM = "hm";
 const VERPL = "verpl";
 
 type VeldinfoMap = Map<string, VeldInfo>;
+interface Properties {
+  [key: string]: any;
+}
 
 const geldigeWaarde = value => value !== undefined && value !== null;
 
@@ -98,14 +101,15 @@ const isBasisVeld: Function2<VeldinfoMap, string, boolean> = hasVeldSatisfying(v
   styleUrls: ["./kaart-info-boodschap-identify.component.scss"]
 })
 export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase {
-  private feature: ol.Feature;
-  private laagg: VeldinfoMap;
-
+  // private feature: ol.Feature;
+  private properties: Properties;
   private veldbeschrijvingen: VeldinfoMap = new Map();
 
   @Input()
   set boodschap(bsch: InfoBoodschapIdentify) {
-    this.feature = bsch.feature;
+    this.properties = fromNullable(bsch.feature.getProperties())
+      .chain(props => fromNullable(props[PROPERTIES]))
+      .getOrElse({});
     this.veldbeschrijvingen = bsch.laag.map(vectorlaag => vectorlaag.velden).getOrElse(new Map());
   }
 
@@ -131,8 +135,6 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
     HM,
     VERPL
   ];
-
-  private properties = () => this.feature.getProperties()[PROPERTIES];
 
   constructor(
     parent: KaartComponent,
@@ -317,7 +319,7 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   waarde(name: string): Object {
     // indien er een 'constante' object in de definitie is, geef dat terug, anders geef de waarde in het veld terug
     return this.constante(name).getOrElseL(() => {
-      const waarde = nestedProperty(name, this.properties());
+      const waarde = nestedProperty(name, this.properties);
       if (isDatum(this.veldbeschrijvingen, name) && waarde) {
         return formateerDatum(waarde.toString());
       } else if (isDateTime(this.veldbeschrijvingen, name) && waarde) {
@@ -355,8 +357,8 @@ export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase
   private eigenschappen(filter: (string) => boolean): string[] {
     return veldnamen(this.veldbeschrijvingen)
       .filter(veldNaam => filter(veldNaam))
-      .filter(veldNaam => geldigeWaarde(nestedProperty(veldNaam!, this.properties())) || this.constante(veldNaam!).isSome())
-      .filter(veldNaam => nestedProperty(veldNaam!, this.properties()) !== "");
+      .filter(veldNaam => geldigeWaarde(nestedProperty(veldNaam!, this.properties)) || this.constante(veldNaam!).isSome())
+      .filter(veldNaam => nestedProperty(veldNaam!, this.properties) !== "");
   }
 
   private isLink(veld: string): boolean {
