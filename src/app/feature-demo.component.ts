@@ -1,10 +1,12 @@
 import { animate, style, transition, trigger } from "@angular/animations";
 import { ChangeDetectorRef, Component, NgZone, ViewChild, ViewEncapsulation } from "@angular/core";
 import { array } from "fp-ts";
+import { Function1 } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import { CachedFeatureLookup } from "projects/ng-kaart/src/lib/kaart/cache/lookup";
 import { Feature } from "projects/ng-kaart/src/lib/util/feature";
+import { encodeParams } from "projects/ng-kaart/src/lib/util/url";
 import * as rx from "rxjs";
 import { reduce, scan, share, throttleTime } from "rxjs/operators";
 
@@ -538,6 +540,27 @@ export class FeatureDemoComponent {
   offlineGeselecteerdeFeatures: ol.Feature[] = [];
 
   readonly cachedFeaturesProviderConsumer = (cfpc: CachedFeatureLookup) => (this.cachedFeaturesProvider = some(cfpc));
+
+  readonly percelenQueryUrl: Function1<ol.Coordinate, string> = location => {
+    const params = {
+      service: "WMS",
+      request: "GetFeatureInfo",
+      version: "1.1.0",
+      srs: "EPSG:31370",
+      info_format: "text/plain",
+      layers: "Percelen_Vlaamse_overheid_2014_bron_Cadmap",
+      query_layers: "Percelen_Vlaamse_overheid_2014_bron_Cadmap",
+      height: 2,
+      width: 2,
+      x: 0,
+      y: 0,
+      bbox: `${location[0] - 1},${location[1] - 1},${location[0] + 1},${location[1] + 1}`
+    };
+    const corsProxy = "http://localhost:9090/"; // TODO iets dat altijd bereikbaar is
+    const targetServer = "http://bzgis.vlaanderen.be/ArcGIS/services/DBZ/Vastgoed_Percelen_Vlaamse_overheid/MapServer/WMSServer";
+    return `${corsProxy}${targetServer}?${encodeParams(params)}`;
+    // tslint:disable-next-line:semicolon
+  };
 
   startPrecacheWMS(start: string, eind: string, startMetLegeCache: boolean) {
     this.precacheWMSInput = {

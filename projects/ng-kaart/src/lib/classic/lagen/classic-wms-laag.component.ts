@@ -1,18 +1,32 @@
+import { HttpClient } from "@angular/common/http";
 import { AfterViewInit, Component, EventEmitter, Input, NgZone, OnInit, Output, ViewEncapsulation } from "@angular/core";
-import { pipe } from "fp-ts/lib/function";
-import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
+import { Function1, Function2, pipe } from "fp-ts/lib/function";
+import { fromNullable } from "fp-ts/lib/Option";
+import * as ol from "openlayers";
 import { merge } from "rxjs";
-import { distinctUntilChanged, filter, map, startWith, tap } from "rxjs/operators";
+import * as rx from "rxjs";
+import { distinctUntilChanged, filter, map, tap } from "rxjs/operators";
 
+import { LaagLocationInfo, TextLaagLocationInfo } from "../../kaart";
 import * as ke from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
-import { LaatsteCacheRefresh } from "../../kaart/model-changes";
+import { VoegLaagLocatieInformatieServiceToe } from "../../kaart/kaart-protocol";
 import { ofType } from "../../util";
 import { urlWithParams } from "../../util/url";
 import { classicMsgSubscriptionCmdOperator, KaartClassicComponent } from "../kaart-classic.component";
 import { KaartClassicMsg, LaatsteCacheRefreshMsg, logOnlyWrapper, PrecacheProgressMsg } from "../messages";
 
 import { ClassicLaagComponent } from "./classic-laag.component";
+
+const noQueryUrl = () => undefined;
+
+const wmsFeatureInfo: Function2<HttpClient, Function1<ol.Coordinate, string>, Function1<ol.Coordinate, rx.Observable<LaagLocationInfo>>> = (
+  httpClient,
+  queryUrlFn
+) => location => {
+  const url = queryUrlFn(location);
+  return url ? httpClient.get(url, { responseType: "text" }).pipe(map(TextLaagLocationInfo)) : rx.empty();
+};
 
 export interface PrecacheWMS {
   readonly startZoom: number;
@@ -34,8 +48,6 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   @Input()
   tiled = true;
   @Input()
-  type: string;
-  @Input()
   versie?: string;
   @Input()
   format = "image/png";
@@ -46,6 +58,11 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   opacity?: number;
   @Input()
   cacheActief = false;
+  @Input()
+  textLookup = false;
+  // Een functie die coördinaten omzet naar een WMS lookup URL. undefined wil zeggen dat er geen request gemaakt wordt.
+  @Input()
+  queryUrlFn: Function1<ol.Coordinate, string> = noQueryUrl;
 
   @Input()
   set precache(input: PrecacheWMS) {
@@ -62,7 +79,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   @Output()
   laatsteCacheRefresh: EventEmitter<Date> = new EventEmitter<Date>();
 
-  constructor(kaart: KaartClassicComponent, zone: NgZone) {
+  constructor(kaart: KaartClassicComponent, zone: NgZone, private readonly http: HttpClient) {
     super(kaart, zone);
   }
 
@@ -71,6 +88,21 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
       throw new Error("groep moet 'Voorgrond.Laag', 'Voorgrond.Hoog' of 'Achtergrond' zijn");
     }
     super.ngOnInit();
+  }
+
+  protected voegLaagToe() {
+    super.voegLaagToe();
+    if (this.textLookup && this.queryUrlFn) {
+      this.dispatch(
+        VoegLaagLocatieInformatieServiceToe(
+          this.titel,
+          {
+            infoByLocation$: wmsFeatureInfo(this.http, this.queryUrlFn)
+          },
+          logOnlyWrapper
+        )
+      );
+    }
   }
 
   createLayer(): ke.WmsLaag {
@@ -97,7 +129,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   backgroundUrl(urls: Array<string>, laagNaam: string): string {
     // TODO: rekening houden met echte config.
     return urlWithParams(urls[0], {
-      layers: this.laagNaam,
+      layers: laagNaam,
       styles: "",
       service: "WMS",
       request: "GetMap",
@@ -142,7 +174,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
             ofType<PrecacheProgressMsg>("PrecacheProgress"),
             map(m => (m.progress[this.titel] ? m.progress[this.titel] : 0)),
             distinctUntilChanged(),
-            map(progress => this.precacheProgress.emit(progress))
+            tap(progress => this.precacheProgress.emit(progress))
           ),
           this.kaart.kaartClassicSubMsg$.pipe(
             ofType<LaatsteCacheRefreshMsg>("LaatsteCacheRefresh"),
