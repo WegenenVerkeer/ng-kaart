@@ -1,7 +1,7 @@
 import { HttpClient } from "@angular/common/http";
 import { AfterViewInit, Component, EventEmitter, Input, NgZone, OnInit, Output, ViewEncapsulation } from "@angular/core";
-import { Function1, Function2, Function3, Function4, pipe } from "fp-ts/lib/function";
-import { fromNullable } from "fp-ts/lib/Option";
+import { Function1, Function2, Function4, pipe } from "fp-ts/lib/function";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import { merge } from "rxjs";
 import * as rx from "rxjs";
@@ -12,6 +12,7 @@ import * as ke from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
 import { VoegLaagLocatieInformatieServiceToe } from "../../kaart/kaart-protocol";
 import { ofType } from "../../util";
+import { fromNullableFunc } from "../../util/function";
 import { urlWithParams } from "../../util/url";
 import { classicMsgSubscriptionCmdOperator, KaartClassicComponent } from "../kaart-classic.component";
 import { KaartClassicMsg, LaatsteCacheRefreshMsg, logOnlyWrapper, PrecacheProgressMsg } from "../messages";
@@ -20,23 +21,23 @@ import { ClassicLaagComponent } from "./classic-laag.component";
 
 const noQueryUrl = () => undefined;
 
-const wmsFeatureInfo: Function2<HttpClient, Function1<ol.Coordinate, string>, Function1<ol.Coordinate, rx.Observable<string>>> = (
+const wmsFeatureInfo: Function2<HttpClient, Function1<ol.Coordinate, Option<string>>, Function1<ol.Coordinate, rx.Observable<string>>> = (
   httpClient,
   queryUrlFn
 ) => location => {
-  const url = queryUrlFn(location);
-  return url ? httpClient.get(url, { responseType: "text" }) : rx.empty();
+  const maybeUrl = queryUrlFn(location);
+  return maybeUrl.fold(rx.empty(), url => httpClient.get(url, { responseType: "text" }));
 };
 
 const textWmsFeatureInfo: Function2<
   HttpClient,
-  Function1<ol.Coordinate, string>,
+  Function1<ol.Coordinate, Option<string>>,
   Function1<ol.Coordinate, rx.Observable<LaagLocationInfo>>
 > = (httpClient, queryUrlFn) => location => wmsFeatureInfo(httpClient, queryUrlFn)(location).pipe(map(TextLaagLocationInfo));
 
 const veldWmsFeatureInfo: Function4<
   HttpClient,
-  Function1<ol.Coordinate, string>,
+  Function1<ol.Coordinate, Option<string>>,
   Function1<string, Veldwaarde[]>,
   ke.VeldInfo[],
   Function1<ol.Coordinate, rx.Observable<LaagLocationInfo>>
@@ -75,16 +76,16 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   cacheActief = false;
   // metadata van de velden zoals die geparsed worden door textParser
   @Input()
-  veldinfos: ke.VeldInfo[] = undefined;
+  veldinfos?: ke.VeldInfo[] = undefined;
   // Een functie die de output van een WMS featureInfo request omzet naar een lijst van key-value paren.
   // De keys moeten een subset zijn van de titels van de veldinfos
   @Input()
-  textParser: Function1<string, Veldwaarde[]> = undefined;
+  textParser?: Function1<string, Veldwaarde[]> = undefined;
   // Een functie die coördinaten omzet naar een WMS lookup URL.
   // `undefined` als waarde van de Input wil zeggen dat de output als een ruwe string weergegeven wordt
   // `undefined` als resultaat van de functie wil zeggen dat er geen request gemaakt wordt voor de gegeven locatie.
   @Input()
-  queryUrlFn: Function1<ol.Coordinate, string> = noQueryUrl;
+  queryUrlFn?: Function1<ol.Coordinate, string | undefined> = noQueryUrl;
 
   @Input()
   set precache(input: PrecacheWMS) {
@@ -119,7 +120,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
         this.dispatch(
           VoegLaagLocatieInformatieServiceToe(
             this.titel,
-            { infoByLocation$: textWmsFeatureInfo(this.http, this.queryUrlFn) },
+            { infoByLocation$: textWmsFeatureInfo(this.http, fromNullableFunc(this.queryUrlFn)) },
             logOnlyWrapper
           )
         );
@@ -127,7 +128,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
         this.dispatch(
           VoegLaagLocatieInformatieServiceToe(
             this.titel,
-            { infoByLocation$: veldWmsFeatureInfo(this.http, this.queryUrlFn, this.textParser, this.veldinfos) },
+            { infoByLocation$: veldWmsFeatureInfo(this.http, fromNullableFunc(this.queryUrlFn), this.textParser, this.veldinfos) },
             logOnlyWrapper
           )
         );
