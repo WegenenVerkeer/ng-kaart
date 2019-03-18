@@ -1,9 +1,9 @@
 import { array } from "fp-ts";
-import { Function1, Refinement } from "fp-ts/lib/function";
+import { concat, Function1, Refinement } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { bufferCount, filter, last, map, mergeMap, reduce, scan, share, switchMap, tap } from "rxjs/operators";
+import { bufferCount, catchError, filter, last, map, mapTo, mergeMap, reduce, scan, share, switchMap, tap } from "rxjs/operators";
 
 import * as le from "../kaart/kaart-load-events";
 import { kaartLogger } from "../kaart/log";
@@ -86,63 +86,42 @@ const mapToGeoJson: Pipeable<string, GeoJsonLike> = obs =>
     })
   );
 
-function featuresFromCache(source: NosqlFsSource, laagnaam: string, extent: ol.Extent): void {
-  source.dispatchLoadEvent(le.LoadStart);
-  geojsonStore
-    .getFeaturesByExtent(laagnaam, extent)
-    .pipe(bufferCount(BATCH_SIZE))
-    .subscribe(
-      geojsons => {
-        kaartLogger.debug(`${geojsons.length} features opgehaald uit cache`);
-        source.dispatchLoadEvent(le.PartReceived);
-        source.addFeatures(geojsons.map(toOlFeature(laagnaam)));
-      },
-      error => {
-        kaartLogger.error(error);
-        source.dispatchLoadError(error);
-      },
-      () => source.dispatchLoadComplete()
-    );
+function featuresFromCache(laagnaam: string, extent: ol.Extent): rx.Observable<GeoJsonLike[]> {
+  return geojsonStore.getFeaturesByExtent(laagnaam, extent).pipe(
+    bufferCount(BATCH_SIZE),
+    tap(geojsons => kaartLogger.debug(`${geojsons.length} features opgehaald uit cache`))
+  );
 }
 
-function featuresFromServer(source: NosqlFsSource, laagnaam: string, gebruikCache: boolean, extent: ol.Extent): void {
-  source.dispatchLoadEvent(le.LoadStart);
-
-  const fetchFeaturesObs$ = source.fetchFeatures$(extent);
-
-  // voeg de features toe aan de kaart
-  fetchFeaturesObs$.pipe(bufferCount(BATCH_SIZE)).subscribe(
-    geojsons => {
-      source.dispatchLoadEvent(le.PartReceived);
-      source.addFeatures(geojsons.map(toOlFeature(laagnaam)));
-    },
-    error => {
-      if (gebruikCache) {
-        // fallback to cache
-        kaartLogger.info("Request niet gelukt, we gaan naar cache " + error);
-        featuresFromCache(source, laagnaam, extent);
-      } else {
-        kaartLogger.error(error);
-        source.dispatchLoadError(error);
-      }
-    },
-    () => {
-      source.dispatchLoadComplete();
-    }
+function featuresFromServer(
+  source: NosqlFsSource,
+  laagnaam: string,
+  gebruikCache: boolean,
+  extent: ol.Extent
+): rx.Observable<GeoJsonLike[]> {
+  const batchedFeatures$ = source.fetchFeatures$(extent).pipe(
+    bufferCount(BATCH_SIZE),
+    catchError(error => (gebruikCache ? featuresFromCache(laagnaam, extent) : rx.throwError(error)))
   );
-
-  // vervang de oude features in cache door de nieuwe ontvangen features
-  if (gebruikCache) {
-    fetchFeaturesObs$.pipe(reduce(array.snoc, [])).subscribe(geojsons => {
-      geojsonStore
-        .deleteFeatures(laagnaam, extent)
-        .pipe(
-          tap(aantal => kaartLogger.info(`${aantal} features verwijderd uit cache`)),
-          switchMap(() => geojsonStore.writeFeatures(laagnaam, geojsons))
+  const cacheWriter$ = gebruikCache
+    ? batchedFeatures$.pipe(
+        reduce(concat, []), // alles in  1 grote array steken
+        switchMap(allFeatures =>
+          // dan de oude gecachte features in de extent verwijderen
+          geojsonStore.deleteFeatures(laagnaam, extent).pipe(
+            tap(aantal => kaartLogger.info(`${aantal} features verwijderd uit cache`)),
+            switchMap(() =>
+              // en tenslotte de net ontvangen features in de cache steken
+              geojsonStore.writeFeatures(laagnaam, allFeatures).pipe(
+                tap(aantal => kaartLogger.info(`${aantal} features weggeschreven in cache`)),
+                mapTo([])
+              )
+            )
+          )
         )
-        .subscribe(aantal => kaartLogger.info(`${aantal} features weggeschreven in cache`));
-    });
-  }
+      )
+    : rx.empty();
+  return rx.merge(batchedFeatures$, cacheWriter$);
 }
 // Instanceof blijkt niet betrouwbaar te zijn
 export const isNoSqlFsSource: Refinement<ol.source.Vector, NosqlFsSource> = (vector): vector is NosqlFsSource =>
@@ -164,15 +143,44 @@ export class NosqlFsSource extends ol.source.Vector {
   ) {
     super({
       loader: function(extent: ol.Extent) {
+        const source: NosqlFsSource = this;
         const oldFeatures: ol.Feature[] = this.getFeatures();
-        if (this.offline) {
-          featuresFromCache(this, laagnaam, extent);
-        } else {
-          featuresFromServer(this, laagnaam, gebruikCache, extent);
-        }
-        const newFeatures: ol.Feature[] = this.getFeatures();
-        const notFetchedFeatures = array.difference(Feature.setoidFeaturePropertyId)(oldFeatures, newFeatures);
-        notFetchedFeatures.forEach(feature => this.removeFeature(feature));
+        const featuresLoader$: rx.Observable<ol.Feature[]> = (this.offline
+          ? featuresFromCache(laagnaam, extent)
+          : featuresFromServer(source, laagnaam, gebruikCache, extent)
+        ).pipe(
+          map(geojsons => geojsons.map(toOlFeature(laagnaam))),
+          share()
+        );
+        const allFeatures$ = featuresLoader$.pipe(reduce(concat, []));
+        featuresLoader$.subscribe({
+          next: features => {
+            source.dispatchLoadEvent(le.PartReceived);
+            source.addFeatures(features);
+          },
+          error: error => {
+            kaartLogger.error(error);
+            source.dispatchLoadError(error);
+          }
+        });
+        allFeatures$.subscribe(
+          newFeatures => {
+            source.dispatchLoadComplete();
+            const notFetchedFeatures = array.difference(Feature.setoidFeaturePropertyId)(oldFeatures, newFeatures);
+            console.log("***Huidig aantal features", newFeatures.length);
+            console.log("***Vorig aantal features", oldFeatures.length);
+            console.log("***Te verwijderen", notFetchedFeatures.length);
+            notFetchedFeatures.forEach(feature => {
+              try {
+                this.removeFeature(feature);
+              } catch (e) {
+                console.error("****", e);
+              }
+            });
+            console.log("***Na forEach", notFetchedFeatures);
+          },
+          () => {} // we hebben de errors al afgehandeld
+        );
       },
       strategy: ol.loadingstrategy.bbox
     });
