@@ -1,14 +1,24 @@
 import { Either } from "fp-ts/lib/Either";
+import { Function2 } from "fp-ts/lib/function";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 
 import { Progress } from "../../util";
+import { VeldInfo } from "../kaart-elementen";
 
-export type LaagLocationInfo = TextLaagLocationInfo;
+export type LaagLocationInfo = TextLaagLocationInfo | VeldinfoLaagLocationInfo;
 
 export interface TextLaagLocationInfo {
   readonly type: "TextLaagLocationInfo";
   readonly text: string;
+}
+
+export type Veldwaarde = [string, any];
+
+export interface VeldinfoLaagLocationInfo {
+  readonly type: "VeldinfoLaagLocationInfo";
+  readonly waarden: Veldwaarde[];
+  readonly veldinfos: VeldInfo[];
 }
 
 export interface LaagLocationInfoService {
@@ -16,6 +26,12 @@ export interface LaagLocationInfoService {
 }
 
 export const TextLaagLocationInfo: (_: string) => TextLaagLocationInfo = text => ({ type: "TextLaagLocationInfo", text: text });
+
+export const VeldinfoLaagLocationInfo: Function2<Veldwaarde[], VeldInfo[], VeldinfoLaagLocationInfo> = (waarden, veldinfos) => ({
+  type: "VeldinfoLaagLocationInfo",
+  waarden: waarden,
+  veldinfos: veldinfos
+});
 
 export interface WegLocatie {
   readonly ident8: string;

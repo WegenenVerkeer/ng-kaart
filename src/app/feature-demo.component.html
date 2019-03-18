@@ -357,7 +357,7 @@
                                     [database]="'featureserver'" [collection]="'fietspaden'"
                                     [styleFunction]="fietspadStyleMetOffset" [selectieStyle]="fietspadSelectieStyleMetOffset"
                                     [minZoom]="7"
-                                    [veldinfos]="fietspadenVeldinfos()"></awv-kaart-nosqlfs-laag>
+                                    [veldinfos]="fietspadenVeldinfos"></awv-kaart-nosqlfs-laag>
             <awv-kaart-nosqlfs-laag [titel]="'Afgeleide snelheidsregimes'" [url]="'/geolatte-nosqlfs'"
                                     [database]="'featureserver'" [collection]="'afgeleide_snelheidsregimes_wegsegment_bord'"
                                     [styleFunction]="afgeleideSnelheidsregimesStyleMetOffset" [selectieStyle]="afgeleideSnelheidsregimesSelectieStyleMetOffset"
@@ -558,7 +558,7 @@
                                     [minZoom]="9"
                                     [view]="'aanzicht'"
                                     [gebruikCache]="true"
-                                    [veldinfos]="verkeersbordenVeldinfos()"
+                                    [veldinfos]="verkeersbordenVeldinfos"
             ></awv-kaart-nosqlfs-laag>
             <awv-kaart-wms-laag
                [titel]="'Percelen Vlaamse overheid'"
@@ -566,8 +566,9 @@
                [urls]="['http://bzgis.vlaanderen.be/ArcGIS/services/DBZ/Vastgoed_Percelen_Vlaamse_overheid/MapServer/WMSServer']"
                [laagNaam]="'Percelen_Vlaamse_overheid_2014_bron_Cadmap'"
                [groep]="'Voorgrond.Laag'"
-               [textLookup]="true"
-               [queryUrlFn]="percelenQueryUrl"></awv-kaart-wms-laag>
+               [queryUrlFn]="percelenQueryUrl"
+               [veldinfos]="percelenVeldinfos"
+               [textParser]="percelenWmsParser"></awv-kaart-wms-laag>
             <awv-kaart-knop-achtergrondlaag-kiezer></awv-kaart-knop-achtergrondlaag-kiezer>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
             <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
@@ -575,7 +576,6 @@
           </awv-kaart-classic>
         </div>
       </awv-test-sectie>
-
 
     </div>
 

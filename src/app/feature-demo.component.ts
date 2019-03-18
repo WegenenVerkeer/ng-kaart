@@ -24,6 +24,7 @@ import {
   ToegevoegdeLaag,
   validateAwvV0RuleDefintion,
   VeldInfo,
+  Veldwaarde,
   verkeersbordenStyleFunction,
   zoekerMetPrioriteiten,
   ZoekerMetPrioriteiten
@@ -539,6 +540,92 @@ export class FeatureDemoComponent {
 
   offlineGeselecteerdeFeatures: ol.Feature[] = [];
 
+  readonly fietspadenVeldinfos: VeldInfo[] = [
+    { isBasisVeld: false, label: "ID", naam: "id", type: "string" },
+    { isBasisVeld: false, label: "type", naam: "type", type: "string" },
+    { isBasisVeld: true, label: "Ident8", naam: "ident8", type: "string" },
+    { isBasisVeld: true, label: "Van refpunt", naam: "locatie.begin.opschrift", type: "string" },
+    { isBasisVeld: true, label: "Van afst", naam: "locatie.begin.afstand", type: "string" },
+    { isBasisVeld: true, label: "locatie.begin.positie", naam: "locatie.begin.positie", type: "string" },
+    { isBasisVeld: true, label: "Tot refpunt", naam: "locatie.eind.opschrift", type: "string" },
+    { isBasisVeld: true, label: "Tot afst", naam: "locatie.eind.afstand", type: "string" },
+    { isBasisVeld: true, label: "locatie.eind.positie", naam: "locatie.eind.positie", type: "string" },
+    { isBasisVeld: true, label: "Lengte", naam: "locatie.lengte", type: "integer" },
+    { isBasisVeld: false, label: "Werkelijke lengte", naam: "werkelijkelengte", type: "string" },
+    { isBasisVeld: false, label: "Bron Id", naam: "bronid", type: "string" },
+    { isBasisVeld: false, label: "Opnamedatum", naam: "opnamedatum", type: "date" },
+    { isBasisVeld: false, label: "Wijzigingsdatum", naam: "wijzigingsdatum", type: "date" },
+    { isBasisVeld: false, label: "geometry", naam: "geometry", type: "geometry" },
+    { isBasisVeld: false, label: "offsetZijde", naam: "offsetZijde", type: "string" },
+    { isBasisVeld: true, label: "zijderijweg", naam: "zijderijweg", type: "string" },
+    { isBasisVeld: true, label: "Zijde", naam: "zijderijbaan", type: "string" },
+    { isBasisVeld: true, label: "Type", naam: "typefietspad", type: "string" },
+    { isBasisVeld: false, label: "Verhoogd", naam: "verhoogd", type: "boolean" },
+    { isBasisVeld: true, label: "Afst rijbaan", naam: "afstandrijbaan", type: "string" },
+    { isBasisVeld: true, label: "Breedte", naam: "breedte", type: "string" },
+    { isBasisVeld: true, label: "Hoofdverharding", naam: "wegverharding_1", type: "string" },
+    { isBasisVeld: false, label: "Subverharding", naam: "wegverharding_2", type: "string" },
+    { isBasisVeld: false, label: "Kleur", naam: "kleur", type: "string" },
+    { isBasisVeld: true, label: "Dubbelrichting", naam: "dubbelerichting", type: "boolean" },
+    { isBasisVeld: false, label: "Gemarkeerd", naam: "gemarkeerd", type: "boolean" },
+    { isBasisVeld: false, label: "Tussenstrook", naam: "tussenstrook", type: "string" },
+    { isBasisVeld: false, label: "Opmerking", naam: "opmerking", type: "string" },
+    { isBasisVeld: false, label: "Begindatum", naam: "begindatum", type: "date" },
+    { isBasisVeld: false, label: "Creatiedatum", naam: "creatiedatum", type: "date" },
+    { isBasisVeld: false, label: "Gebied", naam: "gebied", type: "string" },
+    { isBasisVeld: false, label: "Bebouwde kom", naam: "bebouwdekom", type: "string" },
+    { isBasisVeld: false, label: "Wegcategorie", naam: "wegcategorie", type: "string" },
+    { isBasisVeld: false, label: "Gebruiker", naam: "gebruiker", type: "string" }
+  ];
+
+  readonly verkeersbordenVeldinfos: VeldInfo[] = [
+    { isBasisVeld: false, label: "ID", naam: "id", type: "string" },
+    { isBasisVeld: true, label: "Ident8", naam: "ident8", type: "string" },
+    { isBasisVeld: true, label: "Refpunt", naam: "opschrift", type: "string" },
+    { isBasisVeld: true, label: "Afstand", naam: "afstand", type: "string" },
+    { isBasisVeld: true, label: "Zijde van de rijweg", naam: "zijdeVanDeRijweg", type: "string" },
+    { isBasisVeld: true, label: "Langs gewestweg", naam: "langsGewestweg", type: "boolean" },
+    { isBasisVeld: false, label: "Gebied", naam: "gebied", type: "string" },
+    { isBasisVeld: false, label: "UUID", naam: "uuid", type: "string" },
+    { isBasisVeld: true, label: "Status", naam: "status", type: "string" },
+    { isBasisVeld: false, label: "Wijzigingsdatum", naam: "wijzigingsdatum", type: "date" }
+  ];
+
+  readonly percelenVeldinfos: VeldInfo[] = [
+    { isBasisVeld: true, label: "Id", naam: "OBJECTID", type: "integer" },
+    { isBasisVeld: true, label: "Capakey", naam: "CAPAKEY", type: "string" },
+    { isBasisVeld: true, label: "Perceel", naam: "PERCID", type: "string" },
+    { isBasisVeld: true, label: "Jaar", naam: "JAAR", type: "integer" },
+    { isBasisVeld: true, label: "NIS code", naam: "NIS_CODE", type: "string" },
+    { isBasisVeld: true, label: "Gewest", naam: "LIGGING_GEWEST", type: "string" },
+    { isBasisVeld: true, label: "Gemeente", naam: "LIGGING_GEMEENTE", type: "string" },
+    { isBasisVeld: true, label: "Beheerder", naam: "BEHEERDER_NAAM_KORT", type: "string" },
+    { isBasisVeld: false, label: "Beheerder (lang)", naam: "BEHEERDER_NAAM_LANG", type: "string" },
+    { isBasisVeld: true, label: "Eigenaar", naam: "EIGENAAR_NAAM_KORT", type: "string" },
+    { isBasisVeld: false, label: "Eigenaar (lang)", naam: "EIGENAAR_NAAM_LANG", type: "string" },
+    { isBasisVeld: true, label: "Eigenaar KBO nr", naam: "EIGENAAR_KBONR", type: "string" },
+    { isBasisVeld: true, label: "Perceel categorie", naam: "PERCEEL_CATEGORIE", type: "string" },
+    { isBasisVeld: true, label: "Kadaster oppervlakte (m²)", naam: "KADASTER_OPPERVLAKTE_M2", type: "double" },
+    { isBasisVeld: true, label: "Cadmap oppervlakte (m²)", naam: "CADMAP_OPPERVLAKTE_M2", type: "double" },
+    { isBasisVeld: true, label: "Grb oppervlakte (m²)", naam: "GRB_OPPERVLAKTE_M2", type: "double" },
+    { isBasisVeld: true, label: "Opgemeten oppervlakte (m²)", naam: "OPGEMETEN_OPPERVLAKTE_M2", type: "double" },
+    { isBasisVeld: true, label: "Rbh code", naam: "RBH_CODE", type: "string" },
+    { isBasisVeld: false, label: "Rbh code (lang)", naam: "RBH_CODE_DESCR", type: "string" },
+    { isBasisVeld: true, label: "Percentage eigenaar", naam: "PERCENTAGE_EIGENAAR", type: "string" },
+    { isBasisVeld: true, label: "Kadastrale aard ", naam: "KADASTRALE_AARD_CODE", type: "string" },
+    { isBasisVeld: false, label: "Kadastrale aard (lang)", naam: "KADASTRALE_AARD_DESCR", type: "string" },
+    { isBasisVeld: true, label: "Kadastraal recht", naam: "KADASTRAAL_RECHT_CODE", type: "string" },
+    { isBasisVeld: false, label: "Kadastraal recht (lang)", naam: "KADASTRAAL_RECHT_DESCR", type: "string" },
+    { isBasisVeld: true, label: "Data beheerder vsgd", naam: "DATA_BEHEERDER_VSGD", type: "string" },
+    { isBasisVeld: true, label: "Bebouwde oppervlakte", naam: "BEBOUWDE_OPPERVLAKTE", type: "double" },
+    { isBasisVeld: true, label: "Bron geometrie", naam: "BRON_GEOMETRIE", type: "string" },
+    { isBasisVeld: true, label: "Bestemming symb", naam: "BESTEMMING_SYMB", type: "string" },
+    { isBasisVeld: true, label: "Percentage bebouwd", naam: "PERCENTAGE_BEBOUWD", type: "double" },
+    { isBasisVeld: true, label: "Bebouwd", naam: "BEBOUWD", type: "boolean" },
+    { isBasisVeld: false, label: "Shape length", naam: "SHAPE_Length", type: "double" },
+    { isBasisVeld: false, label: "Shape area", naam: "SHAPE_Area", type: "double" }
+  ];
+
   readonly cachedFeaturesProviderConsumer = (cfpc: CachedFeatureLookup) => (this.cachedFeaturesProvider = some(cfpc));
 
   readonly percelenQueryUrl: Function1<ol.Coordinate, string> = location => {
@@ -559,6 +646,25 @@ export class FeatureDemoComponent {
     const corsProxy = "http://localhost:9090/"; // TODO iets dat altijd bereikbaar is
     const targetServer = "http://bzgis.vlaanderen.be/ArcGIS/services/DBZ/Vastgoed_Percelen_Vlaamse_overheid/MapServer/WMSServer";
     return `${corsProxy}${targetServer}?${encodeParams(params)}`;
+    // tslint:disable-next-line:semicolon
+  };
+
+  readonly percelenWmsParser: Function1<string, Veldwaarde[]> = resp => {
+    // vb:
+    // tslint:disable-next-line:max-line-length
+    // @Percelen_Vlaamse_overheid_2014_bron_Cadmap OBJECTID;SHAPE;CAPAKEY;PERCID;JAAR;NIS_CODE;LIGGING_GEWEST;LIGGING_GEMEENTE;BEHEERDER_NAAM_KORT;BEHEERDER_NAAM_LANG;EIGENAAR_NAAM_KORT;EIGENAAR_NAAM_LANG;EIGENAAR_KBONR;PERCEEL_CATEGORIE;KADASTER_OPPERVLAKTE_M2;CADMAP_OPPERVLAKTE_M2;GRB_OPPERVLAKTE_M2;OPGEMETEN_OPPERVLAKTE_M2;RBH_CODE;RBH_CODE_DESCR;PERCENTAGE_EIGENAAR;KADASTRALE_AARD_CODE;KADASTRALE_AARD_DESC;KADASTRAAL_RECHT_DESC;DATA_BEHEERDER_VSGD;BEBOUWD;BEBOUWDE_OPPERVLAKTE;PERCENTAGE_BEBOUWD;BRON_GEOMETRIE;BESTEMMING_SYMB;SHAPE_Length;SHAPE_Area; 74708;Polygon;11008H0257/00T000;11008_H_0257_T_000_00;2014;11008;Vlaams Gewest;BRASSCHAAT;VMM;Vlaamse Milieumaatschappij;VMM;Vlaamse Milieumaatschappij;0887.290.276;LANDBOUWGROND;24381;25557.89;25522.27;Null;06;landschappelijk waardevolle agrarische gebieden;100;KANAAL;kanaal;volle eigendom;Departement Informatie Vlaanderen;Nee;Null;Null;CADMAP;Landbouw;1714.918603;25557.887197;
+
+    const numHeaders = 32; // Ik vind geen manier om dat af te leiden in het algemeen
+
+    // Eerst verwijderen we de naam van de WMS
+    const withoutWMSName = resp.replace(/@\w+\s/, "");
+    // Ik ga er van uit dat de headers geen ; bevatten
+    const fragments = withoutWMSName.split(";");
+    const headerNames = array.take(numHeaders, fragments);
+    const header = headerNames.join(";");
+    const valueLine = withoutWMSName.substring(header.length + 1, withoutWMSName.length);
+    const values = valueLine.split(/;(?! )/); // sommige waarden bevatten ;, maar dan staat er hopelijk een spatie achter
+    return array.zip(headerNames, values);
     // tslint:disable-next-line:semicolon
   };
 
@@ -798,61 +904,6 @@ export class FeatureDemoComponent {
         provider.filtered$(f => f.getProperties() && f.getProperties().properties && f.getProperties().properties.ident8 === ident8)
       )
     );
-  }
-
-  fietspadenVeldinfos(): VeldInfo[] {
-    return [
-      { isBasisVeld: false, label: "ID", naam: "id", type: "string" },
-      { isBasisVeld: false, label: "type", naam: "type", type: "string" },
-      { isBasisVeld: true, label: "Ident8", naam: "ident8", type: "string" },
-      { isBasisVeld: true, label: "Van refpunt", naam: "locatie.begin.opschrift", type: "string" },
-      { isBasisVeld: true, label: "Van afst", naam: "locatie.begin.afstand", type: "string" },
-      { isBasisVeld: true, label: "locatie.begin.positie", naam: "locatie.begin.positie", type: "string" },
-      { isBasisVeld: true, label: "Tot refpunt", naam: "locatie.eind.opschrift", type: "string" },
-      { isBasisVeld: true, label: "Tot afst", naam: "locatie.eind.afstand", type: "string" },
-      { isBasisVeld: true, label: "locatie.eind.positie", naam: "locatie.eind.positie", type: "string" },
-      { isBasisVeld: true, label: "Lengte", naam: "locatie.lengte", type: "integer" },
-      { isBasisVeld: false, label: "Werkelijke lengte", naam: "werkelijkelengte", type: "string" },
-      { isBasisVeld: false, label: "Bron Id", naam: "bronid", type: "string" },
-      { isBasisVeld: false, label: "Opnamedatum", naam: "opnamedatum", type: "date" },
-      { isBasisVeld: false, label: "Wijzigingsdatum", naam: "wijzigingsdatum", type: "date" },
-      { isBasisVeld: false, label: "geometry", naam: "geometry", type: "geometry" },
-      { isBasisVeld: false, label: "offsetZijde", naam: "offsetZijde", type: "string" },
-      { isBasisVeld: true, label: "zijderijweg", naam: "zijderijweg", type: "string" },
-      { isBasisVeld: true, label: "Zijde", naam: "zijderijbaan", type: "string" },
-      { isBasisVeld: true, label: "Type", naam: "typefietspad", type: "string" },
-      { isBasisVeld: false, label: "Verhoogd", naam: "verhoogd", type: "boolean" },
-      { isBasisVeld: true, label: "Afst rijbaan", naam: "afstandrijbaan", type: "string" },
-      { isBasisVeld: true, label: "Breedte", naam: "breedte", type: "string" },
-      { isBasisVeld: true, label: "Hoofdverharding", naam: "wegverharding_1", type: "string" },
-      { isBasisVeld: false, label: "Subverharding", naam: "wegverharding_2", type: "string" },
-      { isBasisVeld: false, label: "Kleur", naam: "kleur", type: "string" },
-      { isBasisVeld: true, label: "Dubbelrichting", naam: "dubbelerichting", type: "boolean" },
-      { isBasisVeld: false, label: "Gemarkeerd", naam: "gemarkeerd", type: "boolean" },
-      { isBasisVeld: false, label: "Tussenstrook", naam: "tussenstrook", type: "string" },
-      { isBasisVeld: false, label: "Opmerking", naam: "opmerking", type: "string" },
-      { isBasisVeld: false, label: "Begindatum", naam: "begindatum", type: "date" },
-      { isBasisVeld: false, label: "Creatiedatum", naam: "creatiedatum", type: "date" },
-      { isBasisVeld: false, label: "Gebied", naam: "gebied", type: "string" },
-      { isBasisVeld: false, label: "Bebouwde kom", naam: "bebouwdekom", type: "string" },
-      { isBasisVeld: false, label: "Wegcategorie", naam: "wegcategorie", type: "string" },
-      { isBasisVeld: false, label: "Gebruiker", naam: "gebruiker", type: "string" }
-    ];
-  }
-
-  verkeersbordenVeldinfos(): VeldInfo[] {
-    return [
-      { isBasisVeld: false, label: "ID", naam: "id", type: "string" },
-      { isBasisVeld: true, label: "Ident8", naam: "ident8", type: "string" },
-      { isBasisVeld: true, label: "Refpunt", naam: "opschrift", type: "string" },
-      { isBasisVeld: true, label: "Afstand", naam: "afstand", type: "string" },
-      { isBasisVeld: true, label: "Zijde van de rijweg", naam: "zijdeVanDeRijweg", type: "string" },
-      { isBasisVeld: true, label: "Langs gewestweg", naam: "langsGewestweg", type: "boolean" },
-      { isBasisVeld: false, label: "Gebied", naam: "gebied", type: "string" },
-      { isBasisVeld: false, label: "UUID", naam: "uuid", type: "string" },
-      { isBasisVeld: true, label: "Status", naam: "status", type: "string" },
-      { isBasisVeld: false, label: "Wijzigingsdatum", naam: "wijzigingsdatum", type: "date" }
-    ];
   }
 
   private verwerkSelectie(feature$: rx.Observable<ol.Feature>): void {

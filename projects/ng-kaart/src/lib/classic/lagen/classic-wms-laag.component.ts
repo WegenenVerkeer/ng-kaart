@@ -1,13 +1,13 @@
 import { HttpClient } from "@angular/common/http";
 import { AfterViewInit, Component, EventEmitter, Input, NgZone, OnInit, Output, ViewEncapsulation } from "@angular/core";
-import { Function1, Function2, pipe } from "fp-ts/lib/function";
+import { Function1, Function2, Function3, Function4, pipe } from "fp-ts/lib/function";
 import { fromNullable } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import { merge } from "rxjs";
 import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, tap } from "rxjs/operators";
 
-import { LaagLocationInfo, TextLaagLocationInfo } from "../../kaart";
+import { LaagLocationInfo, TextLaagLocationInfo, VeldinfoLaagLocationInfo, Veldwaarde } from "../../kaart";
 import * as ke from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
 import { VoegLaagLocatieInformatieServiceToe } from "../../kaart/kaart-protocol";
@@ -20,13 +20,28 @@ import { ClassicLaagComponent } from "./classic-laag.component";
 
 const noQueryUrl = () => undefined;
 
-const wmsFeatureInfo: Function2<HttpClient, Function1<ol.Coordinate, string>, Function1<ol.Coordinate, rx.Observable<LaagLocationInfo>>> = (
+const wmsFeatureInfo: Function2<HttpClient, Function1<ol.Coordinate, string>, Function1<ol.Coordinate, rx.Observable<string>>> = (
   httpClient,
   queryUrlFn
 ) => location => {
   const url = queryUrlFn(location);
-  return url ? httpClient.get(url, { responseType: "text" }).pipe(map(TextLaagLocationInfo)) : rx.empty();
+  return url ? httpClient.get(url, { responseType: "text" }) : rx.empty();
 };
+
+const textWmsFeatureInfo: Function2<
+  HttpClient,
+  Function1<ol.Coordinate, string>,
+  Function1<ol.Coordinate, rx.Observable<LaagLocationInfo>>
+> = (httpClient, queryUrlFn) => location => wmsFeatureInfo(httpClient, queryUrlFn)(location).pipe(map(TextLaagLocationInfo));
+
+const veldWmsFeatureInfo: Function4<
+  HttpClient,
+  Function1<ol.Coordinate, string>,
+  Function1<string, Veldwaarde[]>,
+  ke.VeldInfo[],
+  Function1<ol.Coordinate, rx.Observable<LaagLocationInfo>>
+> = (httpClient, queryUrlFn, parser, veldinfos) => location =>
+  wmsFeatureInfo(httpClient, queryUrlFn)(location).pipe(map(text => VeldinfoLaagLocationInfo(parser(text), veldinfos)));
 
 export interface PrecacheWMS {
   readonly startZoom: number;
@@ -58,9 +73,16 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   opacity?: number;
   @Input()
   cacheActief = false;
+  // metadata van de velden zoals die geparsed worden door textParser
   @Input()
-  textLookup = false;
-  // Een functie die coördinaten omzet naar een WMS lookup URL. undefined wil zeggen dat er geen request gemaakt wordt.
+  veldinfos: ke.VeldInfo[] = undefined;
+  // Een functie die de output van een WMS featureInfo request omzet naar een lijst van key-value paren.
+  // De keys moeten een subset zijn van de titels van de veldinfos
+  @Input()
+  textParser: Function1<string, Veldwaarde[]> = undefined;
+  // Een functie die coördinaten omzet naar een WMS lookup URL.
+  // `undefined` als waarde van de Input wil zeggen dat de output als een ruwe string weergegeven wordt
+  // `undefined` als resultaat van de functie wil zeggen dat er geen request gemaakt wordt voor de gegeven locatie.
   @Input()
   queryUrlFn: Function1<ol.Coordinate, string> = noQueryUrl;
 
@@ -92,16 +114,24 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
 
   protected voegLaagToe() {
     super.voegLaagToe();
-    if (this.textLookup && this.queryUrlFn) {
-      this.dispatch(
-        VoegLaagLocatieInformatieServiceToe(
-          this.titel,
-          {
-            infoByLocation$: wmsFeatureInfo(this.http, this.queryUrlFn)
-          },
-          logOnlyWrapper
-        )
-      );
+    if (this.queryUrlFn) {
+      if (!this.veldinfos) {
+        this.dispatch(
+          VoegLaagLocatieInformatieServiceToe(
+            this.titel,
+            { infoByLocation$: textWmsFeatureInfo(this.http, this.queryUrlFn) },
+            logOnlyWrapper
+          )
+        );
+      } else if (this.textParser && this.veldinfos) {
+        this.dispatch(
+          VoegLaagLocatieInformatieServiceToe(
+            this.titel,
+            { infoByLocation$: veldWmsFeatureInfo(this.http, this.queryUrlFn, this.textParser, this.veldinfos) },
+            logOnlyWrapper
+          )
+        );
+      }
     }
   }
 
