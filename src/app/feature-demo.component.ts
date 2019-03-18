@@ -650,6 +650,7 @@ export class FeatureDemoComponent {
   };
 
   readonly percelenWmsParser: Function1<string, Veldwaarde[]> = resp => {
+    // Dit is maar een vb van een parser
     // vb:
     // tslint:disable-next-line:max-line-length
     // @Percelen_Vlaamse_overheid_2014_bron_Cadmap OBJECTID;SHAPE;CAPAKEY;PERCID;JAAR;NIS_CODE;LIGGING_GEWEST;LIGGING_GEMEENTE;BEHEERDER_NAAM_KORT;BEHEERDER_NAAM_LANG;EIGENAAR_NAAM_KORT;EIGENAAR_NAAM_LANG;EIGENAAR_KBONR;PERCEEL_CATEGORIE;KADASTER_OPPERVLAKTE_M2;CADMAP_OPPERVLAKTE_M2;GRB_OPPERVLAKTE_M2;OPGEMETEN_OPPERVLAKTE_M2;RBH_CODE;RBH_CODE_DESCR;PERCENTAGE_EIGENAAR;KADASTRALE_AARD_CODE;KADASTRALE_AARD_DESC;KADASTRAAL_RECHT_DESC;DATA_BEHEERDER_VSGD;BEBOUWD;BEBOUWDE_OPPERVLAKTE;PERCENTAGE_BEBOUWD;BRON_GEOMETRIE;BESTEMMING_SYMB;SHAPE_Length;SHAPE_Area; 74708;Polygon;11008H0257/00T000;11008_H_0257_T_000_00;2014;11008;Vlaams Gewest;BRASSCHAAT;VMM;Vlaamse Milieumaatschappij;VMM;Vlaamse Milieumaatschappij;0887.290.276;LANDBOUWGROND;24381;25557.89;25522.27;Null;06;landschappelijk waardevolle agrarische gebieden;100;KANAAL;kanaal;volle eigendom;Departement Informatie Vlaanderen;Nee;Null;Null;CADMAP;Landbouw;1714.918603;25557.887197;
@@ -664,6 +665,7 @@ export class FeatureDemoComponent {
     const header = headerNames.join(";");
     const valueLine = withoutWMSName.substring(header.length + 1, withoutWMSName.length);
     const values = valueLine.split(/;(?! )/); // sommige waarden bevatten ;, maar dan staat er hopelijk een spatie achter
+    // Een "echte" parser moet ook de datatypes juist zetten
     return array.zip(headerNames, values);
     // tslint:disable-next-line:semicolon
   };
