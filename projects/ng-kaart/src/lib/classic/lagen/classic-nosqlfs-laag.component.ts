@@ -42,6 +42,11 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
   filter: string;
   @Input()
   gebruikCache = false;
+  @Input()
+  veldinfos: ke.VeldInfo[] = [];
+  @Input()
+  maxFeaturesInMemCache = 2500;
+
   private _cachedFeaturesProviderConsumer: Consumer<CachedFeatureLookup> = () => {};
 
   @Input()
@@ -94,6 +99,7 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
         option.fromNullable(this.view),
         option.fromNullable(this.filter),
         this.titel,
+        this.maxFeaturesInMemCache,
         this.gebruikCache
       ),
       styleSelector: this.getMaybeStyleSelector(),
@@ -105,7 +111,7 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
       minZoom: this.minZoom,
       maxZoom: this.maxZoom,
       offsetveld: fromNullable(this.offsetveld),
-      velden: new Map<string, ke.VeldInfo>(),
+      velden: new Map<string, ke.VeldInfo>(this.veldinfos.map(vi => [vi.naam, vi] as [string, ke.VeldInfo])),
       verwijderd: false,
       rijrichtingIsDigitalisatieZin: false
       // TODO: dit veld (en offsetveld en ident8) zijn eigenlijk stijl concerns en zouden beter naar daar verhuisd moet worden

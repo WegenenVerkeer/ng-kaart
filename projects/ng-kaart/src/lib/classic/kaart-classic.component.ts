@@ -27,6 +27,7 @@ import * as prt from "../kaart/kaart-protocol";
 import { KaartMsgObservableConsumer } from "../kaart/kaart.component";
 import { subscriptionCmdOperator } from "../kaart/subscription-helper";
 import * as arrays from "../util/arrays";
+import { Feature } from "../util/feature";
 import { ofType } from "../util/operators";
 import * as progress from "../util/progress";
 import { TypedRecord } from "../util/typed-record";
@@ -354,7 +355,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   }
 
   toonIdentifyInformatie(feature: ol.Feature): void {
-    const featureId = feature.get("id").toString();
+    const featureId = Feature.propertyId(feature).getOrElse("");
     this.dispatch(
       prt.ToonInfoBoodschapCmd({
         type: "InfoBoodschapIdentify",

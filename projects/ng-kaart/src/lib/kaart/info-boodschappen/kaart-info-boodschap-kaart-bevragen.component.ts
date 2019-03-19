@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone } from "@angular/core";
 import * as array from "fp-ts/lib/Array";
-import { Function3 } from "fp-ts/lib/function";
+import { Function1, Function2, Function3 } from "fp-ts/lib/function";
 import { fromNullable } from "fp-ts/lib/Option";
 import { Ord, ordNumber } from "fp-ts/lib/Ord";
 import * as ord from "fp-ts/lib/Ord";
@@ -10,19 +10,46 @@ import { formatCoordinate, lambert72ToWgs84, switchVolgorde } from "../../coordi
 import { copyToClipboard } from "../../util/clipboard";
 import * as maps from "../../util/maps";
 import { Progress, withProgress } from "../../util/progress";
-import { LaagLocationInfo, TextLaagLocationInfo } from "../kaart-bevragen/laaginfo.model";
+import { LaagLocationInfo, TextLaagLocationInfo, VeldinfoLaagLocationInfo, Veldwaarde } from "../kaart-bevragen/laaginfo.model";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { InfoBoodschapKaartBevragenProgress } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
 
+import { Properties, VeldinfoMap } from "./kaart-info-boodschap-veldinfo.component";
+
+// Een type om te gebruiken in de template. Makkelijkst met enkel native types.
 export interface LaagInfo {
   titel: string;
   busy?: boolean;
   timedout?: boolean;
   text?: string;
+  properties?: Properties;
+  veldinfos?: VeldinfoMap;
 }
 
 const projectafstandOrd: Ord<WegLocatie> = ord.contramap(wl => wl.projectieafstand, ordNumber);
+
+const textLaagLocationInfoToLaagInfo: Function2<string, TextLaagLocationInfo, LaagInfo> = (titel, tlli) => ({
+  titel: titel,
+  busy: false,
+  text: tlli.text
+});
+
+const veldwaardenToProperties: Function1<Veldwaarde[], Properties> = veldwaarden =>
+  veldwaarden.reduce((obj, waarde) => {
+    obj[waarde[0]] = waarde[1];
+    return obj;
+  }, {});
+
+const veldinfoLaagLocationInfoToLaagInfo: Function2<string, VeldinfoLaagLocationInfo, LaagInfo> = (titel, vlli) => ({
+  titel: titel,
+  busy: false,
+  properties: veldwaardenToProperties(vlli.waarden),
+  veldinfos: maps.toMapByKey(vlli.veldinfos, vi => vi.naam)
+});
+
+const laagLocationInfoToLaagInfo: Function2<string, LaagLocationInfo, LaagInfo> = (titel, lli) =>
+  lli.type === "TextLaagLocationInfo" ? textLaagLocationInfoToLaagInfo(titel, lli) : veldinfoLaagLocationInfoToLaagInfo(titel, lli);
 
 @Component({
   selector: "awv-kaart-info-boodschap-kaart-bevragen",
@@ -31,26 +58,26 @@ const projectafstandOrd: Ord<WegLocatie> = ord.contramap(wl => wl.projectieafsta
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildComponentBase {
-  textLaagLocationInfo: Array<LaagInfo>;
+  laagInfos: LaagInfo[];
   coordinaatInformatieLambert72: string;
   coordinaatInformatieWgs84: string;
-  wegLocaties: Array<WegLocatie>;
-  adressen: Array<Adres>;
+  wegLocaties: WegLocatie[];
+  adressen: Adres[];
 
   @Input()
   set boodschap(boodschap: InfoBoodschapKaartBevragenProgress) {
     // Deze waarden voor de template worden berekend op het moment dat er een nieuwe input is, niet elke
     // keer dat Angular denkt dat hij change detection moet laten lopen.
-    const foldF: Function3<string, Progress<LaagLocationInfo>, Array<LaagInfo>, Array<LaagInfo>> = (key, value, acc) =>
-      array.cons(
-        withProgress<TextLaagLocationInfo, LaagInfo>(
+    const foldF: Function3<string, Progress<LaagLocationInfo>, LaagInfo[], LaagInfo[]> = (key, value, acc) =>
+      array.snoc(
+        acc,
+        withProgress<LaagLocationInfo, LaagInfo>(
           () => ({ titel: key, busy: true }),
           () => ({ titel: key, busy: false, timedout: true }),
-          laaglocationinfo => ({ titel: key, busy: false, text: laaglocationinfo.text })
-        )(value),
-        acc
+          laaglocationinfo => laagLocationInfoToLaagInfo(key, laaglocationinfo)
+        )(value)
       );
-    this.textLaagLocationInfo = maps.fold(boodschap.laagLocatieInfoOpTitel)(foldF)([]);
+    this.laagInfos = maps.fold(boodschap.laagLocatieInfoOpTitel)(foldF)([]);
     this.coordinaatInformatieLambert72 = fromNullable(boodschap.coordinaat)
       .map(formatCoordinate(0))
       .getOrElse("");

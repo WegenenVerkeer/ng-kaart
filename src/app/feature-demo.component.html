@@ -65,6 +65,10 @@
       Gebied intekenen
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !tekenenSectie.sectieZichtbaar }">visibility</span>
     </div>
+    <div (click)="kaartInfoSectie.toggleSectieZichtbaar();scrollTo('kaartInfo')" class="sub-titel">
+      Kaart bevragen
+      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !kaartInfoSectie.sectieZichtbaar }">visibility</span>
+    </div>
   </div>
 
   <!-- applicaties -->
@@ -344,7 +348,7 @@
                        [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && lagenMetOffsetsSectie.sectieZichtbaar">
         <div *ngIf="lagenMetOffsetsSectie.sectieZichtbaar" [@enterAnimation]>
           <awv-kaart-classic [naam]="'offsets'"
-                             #selectie (geselecteerdeFeaturesChange)="featuresGeselecteerd($event)"
+                             #selectieKaart (geselecteerdeFeaturesChange)="featuresGeselecteerd($event, selectieKaart)"
                              [selectieModus]="'single'"
                              [hoogte]="400"
                              (zichtbareFeatures)="onZichtbareFeatures($event)">
@@ -352,11 +356,12 @@
             <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'/geolatte-nosqlfs'"
                                     [database]="'featureserver'" [collection]="'fietspaden'"
                                     [styleFunction]="fietspadStyleMetOffset" [selectieStyle]="fietspadSelectieStyleMetOffset"
-                                    [minZoom]="7"></awv-kaart-nosqlfs-laag>
+                                    [minZoom]="7"
+                                    [veldinfos]="fietspadenVeldinfos"></awv-kaart-nosqlfs-laag>
             <awv-kaart-nosqlfs-laag [titel]="'Afgeleide snelheidsregimes'" [url]="'/geolatte-nosqlfs'"
                                     [database]="'featureserver'" [collection]="'afgeleide_snelheidsregimes_wegsegment_bord'"
                                     [styleFunction]="afgeleideSnelheidsregimesStyleMetOffset" [selectieStyle]="afgeleideSnelheidsregimesSelectieStyleMetOffset"
-                                    [minZoom]="7"></awv-kaart-nosqlfs-laag>
+                                    [minZoom]="8"></awv-kaart-nosqlfs-laag>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
             <awv-bevraag-kaart></awv-bevraag-kaart>
             <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
@@ -530,10 +535,45 @@
                                     [precache]="precacheFeaturesInput"
                                     [offline]="isOffline"
                                     [cachedFeaturesProviderConsumer]="cachedFeaturesProviderConsumer"
+                                    [maxFeaturesInMemCache]="5000"
             ></awv-kaart-nosqlfs-laag>
             <awv-kaart-knop-achtergrondlaag-kiezer></awv-kaart-knop-achtergrondlaag-kiezer>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
             <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
+          </awv-kaart-classic>
+        </div>
+      </awv-test-sectie>
+
+      <awv-test-sectie #kaartInfoSectie sectieId="kaartInfo" sectieTitel="Kaart bevragen" [subSectie]="true" #kaartInfoSectie
+                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && kaartInfoSectie.sectieZichtbaar">
+        <div *ngIf="kaartInfoSectie.sectieZichtbaar" [@enterAnimation]>
+          <awv-kaart-classic #kaartInfoKaart [naam]="'kaartInfo'" (geselecteerdeFeaturesChange)="featuresGeselecteerd($event, kaartInfoKaart)"
+                             [zoom]="9" [selectieModus]="'single'" [middelpunt]="[160026, 222847]" [hoogte]="600">
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+            <awv-kaart-blanco-laag [titel]="'Leeg'"></awv-kaart-blanco-laag>
+
+            <awv-kaart-nosqlfs-laag [titel]="'Verkeersborden'" [url]="'/geolatte-nosqlfs'"
+                                    [database]="'featureserver'" [collection]="'verkeersborden'"
+                                    [styleFunction]="verkeersbordenStyleFunction"
+                                    [selectieStyle]="verkeersbordenSelectieStyleFunction"
+                                    [minZoom]="9"
+                                    [view]="'aanzicht'"
+                                    [gebruikCache]="true"
+                                    [veldinfos]="verkeersbordenVeldinfos"
+            ></awv-kaart-nosqlfs-laag>
+            <awv-kaart-wms-laag
+               [titel]="'Percelen Vlaamse overheid'"
+               [minZoom]="4"
+               [urls]="['http://bzgis.vlaanderen.be/ArcGIS/services/DBZ/Vastgoed_Percelen_Vlaamse_overheid/MapServer/WMSServer']"
+               [laagNaam]="'Percelen_Vlaamse_overheid_2014_bron_Cadmap'"
+               [groep]="'Voorgrond.Laag'"
+               [queryUrlFn]="percelenQueryUrl"
+               [veldinfos]="percelenVeldinfos"
+               [textParser]="percelenWmsParser"></awv-kaart-wms-laag>
+            <awv-kaart-knop-achtergrondlaag-kiezer></awv-kaart-knop-achtergrondlaag-kiezer>
+            <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+            <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
+            <awv-bevraag-kaart></awv-bevraag-kaart>
           </awv-kaart-classic>
         </div>
       </awv-test-sectie>
