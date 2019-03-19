@@ -111,7 +111,7 @@ function featuresFromServer(
   gebruikCache: boolean,
   extent: ol.Extent
 ): rx.Observable<GeoJsonLike[]> {
-  const batchedFeatures$ = source.fetchFeatures$(extent).pipe(
+  const batchedFeatures$ = source.fetchFeatures$(extent, gebruikCache).pipe(
     bufferCount(BATCH_SIZE),
     catchError(error => (gebruikCache ? featuresFromCache(laagnaam, extent) : rx.throwError(error)))
   );
@@ -152,7 +152,7 @@ export class NosqlFsSource extends ol.source.Vector {
     private readonly view: Option<string>,
     private readonly filter: Option<string>,
     private readonly laagnaam: string,
-    private readonly gebruikCache: boolean
+    gebruikCache: boolean
   ) {
     super({
       loader: function(extent: ol.Extent) {
@@ -223,8 +223,8 @@ export class NosqlFsSource extends ol.source.Vector {
     return this.laagnaam;
   }
 
-  fetchFeatures$(extent: number[]): rx.Observable<GeoJsonLike> {
-    if (this.gebruikCache) {
+  fetchFeatures$(extent: number[], gebruikCache: boolean): rx.Observable<GeoJsonLike> {
+    if (gebruikCache) {
       return fetchWithTimeoutObs$(
         this.composeUrl(extent),
         {
@@ -252,16 +252,12 @@ export class NosqlFsSource extends ol.source.Vector {
   }
 
   fetchFeaturesByWkt$(wkt: string): rx.Observable<GeoJsonLike> {
-    return fetchWithTimeoutObs$(
-      this.composeUrl(),
-      {
-        method: "POST",
-        cache: "no-store", // geen client side caching van nosql data
-        credentials: "include", // essentieel om ACM Authenticatie cookies mee te sturen
-        body: wkt
-      },
-      FETCH_TIMEOUT
-    ).pipe(
+    return fetchObs$(this.composeUrl(), {
+      method: "POST",
+      cache: "no-store", // geen client side caching van nosql data
+      credentials: "include", // essentieel om ACM Authenticatie cookies mee te sturen
+      body: wkt
+    }).pipe(
       split(featureDelimiter),
       filter(lijn => lijn.trim().length > 0),
       mapToGeoJson
