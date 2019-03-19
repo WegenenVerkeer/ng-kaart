@@ -77,11 +77,11 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   // metadata van de velden zoals die geparsed worden door textParser
   @Input()
   veldinfos?: ke.VeldInfo[] = undefined;
-  // Een functie die de output van een WMS featureInfo request omzet naar een lijst van key-value paren.
+  // Een functie die de output van een WMS featureInfo of een WFS GetFeature request omzet naar een lijst van key-value paren.
   // De keys moeten een subset zijn van de titels van de veldinfos
   @Input()
   textParser?: Function1<string, Veldwaarde[]> = undefined;
-  // Een functie die coördinaten omzet naar een WMS lookup URL.
+  // Een functie die coördinaten omzet naar een WMS GetFeatureInfo of WFS GetFeature URL
   // `undefined` als waarde van de Input wil zeggen dat de output als een ruwe string weergegeven wordt
   // `undefined` als resultaat van de functie wil zeggen dat er geen request gemaakt wordt voor de gegeven locatie.
   @Input()
