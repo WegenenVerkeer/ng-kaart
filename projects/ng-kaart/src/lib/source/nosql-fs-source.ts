@@ -1,14 +1,15 @@
 import { array } from "fp-ts";
-import { Function1, Refinement } from "fp-ts/lib/function";
+import { BinaryOperation, concat, Function1, Function2, Refinement } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
+import * as set from "fp-ts/lib/Set";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { bufferCount, filter, last, map, mergeMap, reduce, scan, share, switchMap, tap } from "rxjs/operators";
+import { bufferCount, catchError, filter, last, map, mapTo, mergeMap, reduce, scan, share, switchMap, tap } from "rxjs/operators";
 
 import * as le from "../kaart/kaart-load-events";
 import { kaartLogger } from "../kaart/log";
 import { Pipeable } from "../util";
-import { toOlFeature } from "../util/feature";
+import { Feature, toOlFeature } from "../util/feature";
 import { fetchObs$, fetchWithTimeoutObs$ } from "../util/fetch-with-timeout";
 import { ReduceFunction } from "../util/function";
 import { GeoJsonLike } from "../util/geojson-types";
@@ -86,63 +87,53 @@ const mapToGeoJson: Pipeable<string, GeoJsonLike> = obs =>
     })
   );
 
-function featuresFromCache(source: NosqlFsSource, laagnaam: string, extent: ol.Extent): void {
-  source.dispatchLoadEvent(le.LoadStart);
-  geojsonStore
-    .getFeaturesByExtent(laagnaam, extent)
-    .pipe(bufferCount(BATCH_SIZE))
-    .subscribe(
-      geojsons => {
-        kaartLogger.debug(`${geojsons.length} features opgehaald uit cache`);
-        source.dispatchLoadEvent(le.PartReceived);
-        source.addFeatures(geojsons.map(toOlFeature(laagnaam)));
-      },
-      error => {
-        kaartLogger.error(error);
-        source.dispatchLoadError(error);
-      },
-      () => source.dispatchLoadComplete()
-    );
+type FeatureSet = Set<ol.Feature>;
+
+const featureSetUnion: Function2<FeatureSet, FeatureSet, FeatureSet> = set.union(Feature.setoidFeaturePropertyId);
+
+const arrayToFeatureSet: Function1<ol.Feature[], FeatureSet> = set.fromArray(Feature.setoidFeaturePropertyId);
+
+const featureSetDifference: BinaryOperation<FeatureSet, FeatureSet> = set.difference2v(Feature.setoidFeaturePropertyId);
+
+const newFeatures: Function2<FeatureSet, ol.Feature[], FeatureSet> = (features, extraFeatures) =>
+  featureSetDifference(arrayToFeatureSet(extraFeatures), features);
+
+function featuresFromCache(laagnaam: string, extent: ol.Extent): rx.Observable<GeoJsonLike[]> {
+  return geojsonStore.getFeaturesByExtent(laagnaam, extent).pipe(
+    bufferCount(BATCH_SIZE),
+    tap(geojsons => kaartLogger.debug(`${geojsons.length} features opgehaald uit cache`))
+  );
 }
 
-function featuresFromServer(source: NosqlFsSource, laagnaam: string, gebruikCache: boolean, extent: ol.Extent): void {
-  source.dispatchLoadEvent(le.LoadStart);
-
-  const fetchFeaturesObs$ = source.fetchFeatures$(extent, gebruikCache);
-
-  // voeg de features toe aan de kaart
-  fetchFeaturesObs$.pipe(bufferCount(BATCH_SIZE)).subscribe(
-    geojsons => {
-      source.dispatchLoadEvent(le.PartReceived);
-      source.addFeatures(geojsons.map(toOlFeature(laagnaam)));
-    },
-    error => {
-      if (gebruikCache) {
-        // fallback to cache
-        kaartLogger.info("Request niet gelukt, we gaan naar cache " + error);
-        featuresFromCache(source, laagnaam, extent);
-      } else {
-        kaartLogger.error(error);
-        source.dispatchLoadError(error);
-      }
-    },
-    () => {
-      source.dispatchLoadComplete();
-    }
+function featuresFromServer(
+  source: NosqlFsSource,
+  laagnaam: string,
+  gebruikCache: boolean,
+  extent: ol.Extent
+): rx.Observable<GeoJsonLike[]> {
+  const batchedFeatures$ = source.fetchFeatures$(extent, gebruikCache).pipe(
+    bufferCount(BATCH_SIZE),
+    catchError(error => (gebruikCache ? featuresFromCache(laagnaam, extent) : rx.throwError(error)))
   );
-
-  // vervang de oude features in cache door de nieuwe ontvangen features
-  if (gebruikCache) {
-    fetchFeaturesObs$.pipe(reduce(array.snoc, [])).subscribe(geojsons => {
-      geojsonStore
-        .deleteFeatures(laagnaam, extent)
-        .pipe(
-          tap(aantal => kaartLogger.info(`${aantal} features verwijderd uit cache`)),
-          switchMap(() => geojsonStore.writeFeatures(laagnaam, geojsons))
+  const cacheWriter$ = gebruikCache
+    ? batchedFeatures$.pipe(
+        reduce(concat, []), // alles in  1 grote array steken
+        switchMap(allFeatures =>
+          // dan de oude gecachte features in de extent verwijderen
+          geojsonStore.deleteFeatures(laagnaam, extent).pipe(
+            tap(aantal => kaartLogger.info(`${aantal} features verwijderd uit cache`)),
+            switchMap(() =>
+              // en tenslotte de net ontvangen features in de cache steken
+              geojsonStore.writeFeatures(laagnaam, allFeatures).pipe(
+                tap(aantal => kaartLogger.info(`${aantal} features weggeschreven in cache`)),
+                mapTo([])
+              )
+            )
+          )
         )
-        .subscribe(aantal => kaartLogger.info(`${aantal} features weggeschreven in cache`));
-    });
-  }
+      )
+    : rx.empty();
+  return rx.merge(batchedFeatures$, cacheWriter$);
 }
 // Instanceof blijkt niet betrouwbaar te zijn
 export const isNoSqlFsSource: Refinement<ol.source.Vector, NosqlFsSource> = (vector): vector is NosqlFsSource =>
@@ -152,6 +143,13 @@ export class NosqlFsSource extends ol.source.Vector {
   private readonly loadEventSubj = new rx.Subject<le.DataLoadEvent>();
   readonly loadEvent$: rx.Observable<le.DataLoadEvent> = this.loadEventSubj;
   private offline = false;
+  // De `memCachedFeatures` laat toe om te weten welke features al op de kaart staan. Zo vermijden we features
+  // metdezelfde id meer dan eens toe te voegen (want dat heeft problemen in OL). In principe kunnen we ook aan OL
+  // vragen welke features er op de laag staan, maar dan krijgen we een array terug waar we iets moeilijker kunnen in
+  // zoeken. Heel veel extra geheugen hebben we niet nodig gezien we enkel een referentie naar bestaande features
+  // opvragen. Een optimalisatie zou kunnen zijn om enkel de id's ipv de hele feature op te slaan. Wbt geheugen maakt
+  // dat niet veel uit, maar we kunnen dan de `setoid` overslaan gezien de id een `string` is.
+  private memCachedFeatures: FeatureSet = set.empty;
 
   constructor(
     private readonly database: string,
@@ -160,16 +158,55 @@ export class NosqlFsSource extends ol.source.Vector {
     private readonly view: Option<string>,
     private readonly filter: Option<string>,
     private readonly laagnaam: string,
+    memCacheSize: number,
     gebruikCache: boolean
   ) {
     super({
       loader: function(extent: ol.Extent) {
-        this.clear();
-        if (this.offline) {
-          featuresFromCache(this, laagnaam, extent);
-        } else {
-          featuresFromServer(this, laagnaam, gebruikCache, extent);
-        }
+        const source: NosqlFsSource = this;
+        const oldFeatures: ol.Feature[] = this.getFeatures();
+        kaartLogger.debug("Aantal features op layer", oldFeatures.length);
+        const featuresLoader$: rx.Observable<ol.Feature[]> = (this.offline
+          ? featuresFromCache(laagnaam, extent)
+          : featuresFromServer(source, laagnaam, gebruikCache, extent)
+        ).pipe(
+          map(geojsons => geojsons.map(toOlFeature(laagnaam))),
+          share()
+        );
+        const newFeatures$ = featuresLoader$.pipe(map(features => newFeatures(source.memCachedFeatures, features)));
+        const allNewFeatures$ = newFeatures$.pipe(reduce(featureSetUnion, set.empty));
+        newFeatures$.subscribe({
+          next: newFeatures => {
+            source.dispatchLoadEvent(le.PartReceived);
+            source.addFeatures([...newFeatures.values()]);
+          },
+          error: error => {
+            kaartLogger.error(error);
+            source.dispatchLoadError(error);
+          }
+        });
+        allNewFeatures$.subscribe(
+          newFeatures => {
+            source.dispatchLoadComplete();
+            source.memCachedFeatures = featureSetUnion(source.memCachedFeatures, newFeatures);
+            kaartLogger.debug("Aantal features in memcache", source.memCachedFeatures.size);
+            if (source.memCachedFeatures.size > memCacheSize) {
+              const featuresOutsideExtent = set.filter(source.memCachedFeatures, Feature.notInExtent(extent));
+
+              kaartLogger.debug("Te verwijderen", featuresOutsideExtent.size);
+              featuresOutsideExtent.forEach(feature => {
+                try {
+                  this.removeFeature(feature);
+                } catch (e) {
+                  kaartLogger.error("Probleem tijdens verwijderen van feature", e);
+                }
+              });
+              source.memCachedFeatures = featureSetDifference(source.memCachedFeatures, featuresOutsideExtent);
+              kaartLogger.debug("Aantal features in memcache na clear", source.memCachedFeatures.size);
+            }
+          },
+          () => {} // we hebben de errors al afgehandeld
+        );
       },
       strategy: ol.loadingstrategy.bbox
     });

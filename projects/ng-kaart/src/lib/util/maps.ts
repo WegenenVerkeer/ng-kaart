@@ -1,4 +1,4 @@
-import { Function3, Predicate } from "fp-ts/lib/function";
+import { Function1, Function3, Predicate } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 
 export const isOfSize: (_: number) => <K, V>(_: Map<K, V>) => boolean = size => map => map.size === size;
@@ -34,5 +34,6 @@ export const concat: <K, V>(_: Map<K, V>) => (_: Map<K, V>) => Map<K, V> = m1 =>
 export const fold: <K, V>(_: Map<K, V>) => <B>(_: Function3<K, V, B, B>) => (_: B) => B = mp => foldF => init =>
   Array.from(mp.entries()).reduce((acc, kv) => foldF(kv[0], kv[1], acc), init);
 
-// TODO: functie om array om te zetten in map
-// toMap: Function2<Iterable<A>, Function1<A, B>, Map<B, A>>
+export function toMapByKey<K, V>(array: ReadonlyArray<V>, extractor: Function1<V, K>): Map<K, V> {
+  return new Map<K, V>(array.map(v => [extractor(v), v] as [K, V]));
+}

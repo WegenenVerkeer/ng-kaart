@@ -1,18 +1,48 @@
+import { HttpClient } from "@angular/common/http";
 import { AfterViewInit, Component, EventEmitter, Input, NgZone, OnInit, Output, ViewEncapsulation } from "@angular/core";
-import { pipe } from "fp-ts/lib/function";
-import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
+import { Function1, Function2, Function4, pipe } from "fp-ts/lib/function";
+import { fromNullable, Option } from "fp-ts/lib/Option";
+import * as ol from "openlayers";
 import { merge } from "rxjs";
-import { distinctUntilChanged, filter, map, startWith, tap } from "rxjs/operators";
+import * as rx from "rxjs";
+import { distinctUntilChanged, filter, map, tap } from "rxjs/operators";
 
+import { LaagLocationInfo, TextLaagLocationInfo, VeldinfoLaagLocationInfo, Veldwaarde } from "../../kaart";
 import * as ke from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
-import { LaatsteCacheRefresh } from "../../kaart/model-changes";
+import { VoegLaagLocatieInformatieServiceToe } from "../../kaart/kaart-protocol";
 import { ofType } from "../../util";
+import { fromNullableFunc } from "../../util/function";
 import { urlWithParams } from "../../util/url";
 import { classicMsgSubscriptionCmdOperator, KaartClassicComponent } from "../kaart-classic.component";
 import { KaartClassicMsg, LaatsteCacheRefreshMsg, logOnlyWrapper, PrecacheProgressMsg } from "../messages";
 
 import { ClassicLaagComponent } from "./classic-laag.component";
+
+const noQueryUrl = () => undefined;
+
+const wmsFeatureInfo: Function2<HttpClient, Function1<ol.Coordinate, Option<string>>, Function1<ol.Coordinate, rx.Observable<string>>> = (
+  httpClient,
+  queryUrlFn
+) => location => {
+  const maybeUrl = queryUrlFn(location);
+  return maybeUrl.fold(rx.empty(), url => httpClient.get(url, { responseType: "text" }));
+};
+
+const textWmsFeatureInfo: Function2<
+  HttpClient,
+  Function1<ol.Coordinate, Option<string>>,
+  Function1<ol.Coordinate, rx.Observable<LaagLocationInfo>>
+> = (httpClient, queryUrlFn) => location => wmsFeatureInfo(httpClient, queryUrlFn)(location).pipe(map(TextLaagLocationInfo));
+
+const veldWmsFeatureInfo: Function4<
+  HttpClient,
+  Function1<ol.Coordinate, Option<string>>,
+  Function1<string, Veldwaarde[]>,
+  ke.VeldInfo[],
+  Function1<ol.Coordinate, rx.Observable<LaagLocationInfo>>
+> = (httpClient, queryUrlFn, parser, veldinfos) => location =>
+  wmsFeatureInfo(httpClient, queryUrlFn)(location).pipe(map(text => VeldinfoLaagLocationInfo(parser(text), veldinfos)));
 
 export interface PrecacheWMS {
   readonly startZoom: number;
@@ -34,8 +64,6 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   @Input()
   tiled = true;
   @Input()
-  type: string;
-  @Input()
   versie?: string;
   @Input()
   format = "image/png";
@@ -46,6 +74,18 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   opacity?: number;
   @Input()
   cacheActief = false;
+  // metadata van de velden zoals die geparsed worden door textParser
+  @Input()
+  veldinfos?: ke.VeldInfo[] = undefined;
+  // Een functie die de output van een WMS featureInfo of een WFS GetFeature request omzet naar een lijst van key-value paren.
+  // De keys moeten een subset zijn van de titels van de veldinfos
+  @Input()
+  textParser?: Function1<string, Veldwaarde[]> = undefined;
+  // Een functie die coördinaten omzet naar een WMS GetFeatureInfo of WFS GetFeature URL
+  // `undefined` als waarde van de Input wil zeggen dat de output als een ruwe string weergegeven wordt
+  // `undefined` als resultaat van de functie wil zeggen dat er geen request gemaakt wordt voor de gegeven locatie.
+  @Input()
+  queryUrlFn?: Function1<ol.Coordinate, string | undefined> = noQueryUrl;
 
   @Input()
   set precache(input: PrecacheWMS) {
@@ -62,7 +102,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   @Output()
   laatsteCacheRefresh: EventEmitter<Date> = new EventEmitter<Date>();
 
-  constructor(kaart: KaartClassicComponent, zone: NgZone) {
+  constructor(kaart: KaartClassicComponent, zone: NgZone, private readonly http: HttpClient) {
     super(kaart, zone);
   }
 
@@ -71,6 +111,29 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
       throw new Error("groep moet 'Voorgrond.Laag', 'Voorgrond.Hoog' of 'Achtergrond' zijn");
     }
     super.ngOnInit();
+  }
+
+  protected voegLaagToe() {
+    super.voegLaagToe();
+    if (this.queryUrlFn) {
+      if (!this.veldinfos) {
+        this.dispatch(
+          VoegLaagLocatieInformatieServiceToe(
+            this.titel,
+            { infoByLocation$: textWmsFeatureInfo(this.http, fromNullableFunc(this.queryUrlFn)) },
+            logOnlyWrapper
+          )
+        );
+      } else if (this.textParser && this.veldinfos) {
+        this.dispatch(
+          VoegLaagLocatieInformatieServiceToe(
+            this.titel,
+            { infoByLocation$: veldWmsFeatureInfo(this.http, fromNullableFunc(this.queryUrlFn), this.textParser, this.veldinfos) },
+            logOnlyWrapper
+          )
+        );
+      }
+    }
   }
 
   createLayer(): ke.WmsLaag {
@@ -97,7 +160,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   backgroundUrl(urls: Array<string>, laagNaam: string): string {
     // TODO: rekening houden met echte config.
     return urlWithParams(urls[0], {
-      layers: this.laagNaam,
+      layers: laagNaam,
       styles: "",
       service: "WMS",
       request: "GetMap",
@@ -142,7 +205,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
             ofType<PrecacheProgressMsg>("PrecacheProgress"),
             map(m => (m.progress[this.titel] ? m.progress[this.titel] : 0)),
             distinctUntilChanged(),
-            map(progress => this.precacheProgress.emit(progress))
+            tap(progress => this.precacheProgress.emit(progress))
           ),
           this.kaart.kaartClassicSubMsg$.pipe(
             ofType<LaatsteCacheRefreshMsg>("LaatsteCacheRefresh"),
