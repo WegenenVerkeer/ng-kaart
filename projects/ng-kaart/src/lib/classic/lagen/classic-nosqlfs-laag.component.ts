@@ -44,6 +44,8 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
   gebruikCache = false;
   @Input()
   veldinfos: ke.VeldInfo[] = [];
+  @Input()
+  maxFeaturesInMemCache = 2500;
 
   private _cachedFeaturesProviderConsumer: Consumer<CachedFeatureLookup> = () => {};
 
@@ -97,6 +99,7 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
         option.fromNullable(this.view),
         option.fromNullable(this.filter),
         this.titel,
+        this.maxFeaturesInMemCache,
         this.gebruikCache
       ),
       styleSelector: this.getMaybeStyleSelector(),

@@ -158,6 +158,7 @@ export class NosqlFsSource extends ol.source.Vector {
     private readonly view: Option<string>,
     private readonly filter: Option<string>,
     private readonly laagnaam: string,
+    memCacheSize: number,
     gebruikCache: boolean
   ) {
     super({
@@ -188,8 +189,8 @@ export class NosqlFsSource extends ol.source.Vector {
           newFeatures => {
             source.dispatchLoadComplete();
             source.memCachedFeatures = featureSetUnion(source.memCachedFeatures, newFeatures);
-            kaartLogger.debug("Antal features in cache", source.memCachedFeatures.size);
-            if (source.memCachedFeatures.size > 2500) {
+            kaartLogger.debug("Aantal features in memcache", source.memCachedFeatures.size);
+            if (source.memCachedFeatures.size > memCacheSize) {
               const featuresOutsideExtent = set.filter(source.memCachedFeatures, Feature.notInExtent(extent));
 
               kaartLogger.debug("Te verwijderen", featuresOutsideExtent.size);
@@ -201,7 +202,7 @@ export class NosqlFsSource extends ol.source.Vector {
                 }
               });
               source.memCachedFeatures = featureSetDifference(source.memCachedFeatures, featuresOutsideExtent);
-              kaartLogger.debug("Aantal features in cache na clear", source.memCachedFeatures.size);
+              kaartLogger.debug("Aantal features in memcache na clear", source.memCachedFeatures.size);
             }
           },
           () => {} // we hebben de errors al afgehandeld
