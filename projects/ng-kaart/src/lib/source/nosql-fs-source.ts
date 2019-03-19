@@ -143,6 +143,12 @@ export class NosqlFsSource extends ol.source.Vector {
   private readonly loadEventSubj = new rx.Subject<le.DataLoadEvent>();
   readonly loadEvent$: rx.Observable<le.DataLoadEvent> = this.loadEventSubj;
   private offline = false;
+  // De `memCachedFeatures` laat toe om te weten welke features al op de kaart staan. Zo vermijden we features
+  // metdezelfde id meer dan eens toe te voegen (want dat heeft problemen in OL). In principe kunnen we ook aan OL
+  // vragen welke features er op de laag staan, maar dan krijgen we een array terug waar we iets moeilijker kunnen in
+  // zoeken. Heel veel extra geheugen hebben we niet nodig gezien we enkel een referentie naar bestaande features
+  // opvragen. Een optimalisatie zou kunnen zijn om enkel de id's ipv de hele feature op te slaan. Wbt geheugen maakt
+  // dat niet veel uit, maar we kunnen dan de `setoid` overslaan gezien de id een `string` is.
   private memCachedFeatures: FeatureSet = set.empty;
 
   constructor(
