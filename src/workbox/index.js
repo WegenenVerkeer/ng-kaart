@@ -12,7 +12,7 @@ self.addEventListener('message', event => {
       info(`Routing ${requestPattern} to cache ${cacheName}`);
       const handler = strategies.cacheFirst({
           cacheName: cacheName,
-          plugins: ngKaartRoutePlugins ? ngKaartRoutePlugins : []
+          plugins: typeof ngKaartRoutePlugins !== 'undefined' ? ngKaartRoutePlugins : []
       });
       routing.registerRoute(new RegExp(requestPattern), handler);
       break;
