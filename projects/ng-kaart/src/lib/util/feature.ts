@@ -1,5 +1,5 @@
 import { option, setoid } from "fp-ts";
-import { Curried2 } from "fp-ts/lib/function";
+import { Curried2, Function1, Refinement } from "fp-ts/lib/function";
 import { Setoid, setoidString } from "fp-ts/lib/Setoid";
 import * as ol from "openlayers";
 
@@ -32,4 +32,10 @@ export namespace Feature {
   export const propertyId: PartialFunction1<ol.Feature, string> = f => option.fromNullable(f.get("id")).map(id => id.toString());
 
   export const setoidFeaturePropertyId: Setoid<ol.Feature> = setoid.contramap(propertyId, option.getSetoid(setoidString));
+
+  export const notInExtent: Function1<ol.Extent, Refinement<ol.Feature, ol.Feature>> = extent => (feature): feature is ol.Feature => {
+    const [featureMinX, featureMinY, featureMaxX, featureMaxY]: ol.Extent = feature.getGeometry().getExtent();
+    const [extentMinX, extentMinY, extentMaxX, extentMaxY]: ol.Extent = extent;
+    return extentMinX > featureMaxX || extentMaxX < featureMinX || extentMinY > featureMaxY || extentMaxY < featureMinY;
+  };
 }

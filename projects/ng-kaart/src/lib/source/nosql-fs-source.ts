@@ -1,6 +1,7 @@
 import { array } from "fp-ts";
-import { concat, Function1, Refinement } from "fp-ts/lib/function";
+import { BinaryOperation, concat, Function1, Function2, Refinement } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
+import * as set from "fp-ts/lib/Set";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { bufferCount, catchError, filter, last, map, mapTo, mergeMap, reduce, scan, share, switchMap, tap } from "rxjs/operators";
@@ -86,6 +87,17 @@ const mapToGeoJson: Pipeable<string, GeoJsonLike> = obs =>
     })
   );
 
+type FeatureSet = Set<ol.Feature>;
+
+const featureSetUnion: Function2<FeatureSet, FeatureSet, FeatureSet> = set.union(Feature.setoidFeaturePropertyId);
+
+const arrayToFeatureSet: Function1<ol.Feature[], FeatureSet> = set.fromArray(Feature.setoidFeaturePropertyId);
+
+const featureSetDifference: BinaryOperation<FeatureSet, FeatureSet> = set.difference2v(Feature.setoidFeaturePropertyId);
+
+const newFeatures: Function2<FeatureSet, ol.Feature[], FeatureSet> = (features, extraFeatures) =>
+  featureSetDifference(arrayToFeatureSet(extraFeatures), features);
+
 function featuresFromCache(laagnaam: string, extent: ol.Extent): rx.Observable<GeoJsonLike[]> {
   return geojsonStore.getFeaturesByExtent(laagnaam, extent).pipe(
     bufferCount(BATCH_SIZE),
@@ -131,6 +143,7 @@ export class NosqlFsSource extends ol.source.Vector {
   private readonly loadEventSubj = new rx.Subject<le.DataLoadEvent>();
   readonly loadEvent$: rx.Observable<le.DataLoadEvent> = this.loadEventSubj;
   private offline = false;
+  private memCachedFeatures: FeatureSet = set.empty;
 
   constructor(
     private readonly database: string,
@@ -145,6 +158,7 @@ export class NosqlFsSource extends ol.source.Vector {
       loader: function(extent: ol.Extent) {
         const source: NosqlFsSource = this;
         const oldFeatures: ol.Feature[] = this.getFeatures();
+        kaartLogger.debug("***Aantal features op layer", oldFeatures.length);
         const featuresLoader$: rx.Observable<ol.Feature[]> = (this.offline
           ? featuresFromCache(laagnaam, extent)
           : featuresFromServer(source, laagnaam, gebruikCache, extent)
@@ -152,32 +166,37 @@ export class NosqlFsSource extends ol.source.Vector {
           map(geojsons => geojsons.map(toOlFeature(laagnaam))),
           share()
         );
-        const allFeatures$ = featuresLoader$.pipe(reduce(concat, []));
-        featuresLoader$.subscribe({
-          next: features => {
+        const newFeatures$ = featuresLoader$.pipe(map(features => newFeatures(source.memCachedFeatures, features)));
+        const allNewFeatures$ = newFeatures$.pipe(reduce(featureSetUnion, set.empty));
+        newFeatures$.subscribe({
+          next: newFeatures => {
             source.dispatchLoadEvent(le.PartReceived);
-            source.addFeatures(features);
+            source.addFeatures([...newFeatures.values()]);
           },
           error: error => {
             kaartLogger.error(error);
             source.dispatchLoadError(error);
           }
         });
-        allFeatures$.subscribe(
+        allNewFeatures$.subscribe(
           newFeatures => {
             source.dispatchLoadComplete();
-            const notFetchedFeatures = array.difference(Feature.setoidFeaturePropertyId)(oldFeatures, newFeatures);
-            console.log("***Huidig aantal features", newFeatures.length);
-            console.log("***Vorig aantal features", oldFeatures.length);
-            console.log("***Te verwijderen", notFetchedFeatures.length);
-            notFetchedFeatures.forEach(feature => {
-              try {
-                this.removeFeature(feature);
-              } catch (e) {
-                console.error("****", e);
-              }
-            });
-            console.log("***Na forEach", notFetchedFeatures);
+            source.memCachedFeatures = featureSetUnion(source.memCachedFeatures, newFeatures);
+            kaartLogger.debug("***Antal features in cache", source.memCachedFeatures.size);
+            if (source.memCachedFeatures.size > 2500) {
+              const featuresOutsideExtent = set.filter(source.memCachedFeatures, Feature.notInExtent(extent));
+
+              kaartLogger.debug("***Te verwijderen", featuresOutsideExtent.size);
+              featuresOutsideExtent.forEach(feature => {
+                try {
+                  this.removeFeature(feature);
+                } catch (e) {
+                  kaartLogger.error("****", e);
+                }
+              });
+              source.memCachedFeatures = featureSetDifference(source.memCachedFeatures, featuresOutsideExtent);
+              kaartLogger.debug("***Aantal features in cache na clear", source.memCachedFeatures.size);
+            }
           },
           () => {} // we hebben de errors al afgehandeld
         );
