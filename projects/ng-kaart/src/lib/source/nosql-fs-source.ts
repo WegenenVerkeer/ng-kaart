@@ -158,7 +158,7 @@ export class NosqlFsSource extends ol.source.Vector {
       loader: function(extent: ol.Extent) {
         const source: NosqlFsSource = this;
         const oldFeatures: ol.Feature[] = this.getFeatures();
-        kaartLogger.debug("***Aantal features op layer", oldFeatures.length);
+        kaartLogger.debug("Aantal features op layer", oldFeatures.length);
         const featuresLoader$: rx.Observable<ol.Feature[]> = (this.offline
           ? featuresFromCache(laagnaam, extent)
           : featuresFromServer(source, laagnaam, gebruikCache, extent)
@@ -182,20 +182,20 @@ export class NosqlFsSource extends ol.source.Vector {
           newFeatures => {
             source.dispatchLoadComplete();
             source.memCachedFeatures = featureSetUnion(source.memCachedFeatures, newFeatures);
-            kaartLogger.debug("***Antal features in cache", source.memCachedFeatures.size);
+            kaartLogger.debug("Antal features in cache", source.memCachedFeatures.size);
             if (source.memCachedFeatures.size > 2500) {
               const featuresOutsideExtent = set.filter(source.memCachedFeatures, Feature.notInExtent(extent));
 
-              kaartLogger.debug("***Te verwijderen", featuresOutsideExtent.size);
+              kaartLogger.debug("Te verwijderen", featuresOutsideExtent.size);
               featuresOutsideExtent.forEach(feature => {
                 try {
                   this.removeFeature(feature);
                 } catch (e) {
-                  kaartLogger.error("****", e);
+                  kaartLogger.error("Probleem tijdens verwijderen van feature", e);
                 }
               });
               source.memCachedFeatures = featureSetDifference(source.memCachedFeatures, featuresOutsideExtent);
-              kaartLogger.debug("***Aantal features in cache na clear", source.memCachedFeatures.size);
+              kaartLogger.debug("Aantal features in cache na clear", source.memCachedFeatures.size);
             }
           },
           () => {} // we hebben de errors al afgehandeld
