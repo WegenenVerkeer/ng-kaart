@@ -4,6 +4,7 @@ import { concat } from "fp-ts/lib/function";
 import { fromNullable } from "fp-ts/lib/Option";
 
 import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
+import { toArray } from "../../util/option";
 import { ZoekerUiSelector } from "../../zoeker/box/zoeker-box.component";
 import { ZoekerCrabService } from "../../zoeker/crab/zoeker-crab.service";
 import { ZoekerGoogleWdbService } from "../../zoeker/google-wdb/zoeker-google-wdb.service";
@@ -35,7 +36,7 @@ export class ClassicZoekerComponent extends ClassicUIElementSelectorComponentBas
 
     this.initialising$.subscribe(() => {
       // berekend op het moment van initialisatie => geen mismatch init <> destroy mogelijk
-      const inputZoekers = concat(array.catOptions([fromNullable(this.zoeker)]), this.zoekers);
+      const inputZoekers = concat(toArray(fromNullable(this.zoeker)), this.zoekers);
       const stdZoekers: ZoekerMetPrioriteiten[] = [
         zoekerMetPrioriteiten(googleZoeker, 1, 1),
         zoekerMetPrioriteiten(crabZoeker, 2, 2),

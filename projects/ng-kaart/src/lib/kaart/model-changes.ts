@@ -249,7 +249,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
   const gevraagdeZoekers: Function2<Zoekopdracht, ZoekerMetPrioriteiten[], ZoekerMetPrioriteiten[]> = (opdracht, geregistreerd) =>
     geregistreerd.filter(zmp => array.elem(setoidString)(zmp.zoeker.naam(), opdracht.zoekernamen));
 
-  const zoekresulaten$: rx.Observable<ZoekAntwoord> = changer.zoekerServicesSubj.pipe(
+  const zoekresultaten$: rx.Observable<ZoekAntwoord> = changer.zoekerServicesSubj.pipe(
     switchMap(zoekerSvcs =>
       changer.zoekopdrachtSubj.pipe(
         switchMap(zoekopdracht =>
@@ -280,7 +280,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     mijnLocatieZoomDoel$: changer.mijnLocatieZoomDoelSubj.asObservable(),
     actieveModus$: changer.actieveModusSubj.asObservable(),
     zoekerServices$: changer.zoekerServicesSubj.asObservable(),
-    zoekresultaten$: zoekresulaten$,
+    zoekresultaten$: zoekresultaten$,
     zoekresultaatselectie$: changer.zoekresultaatselectieSubj.asObservable(),
     laagLocationInfoServicesOpTitel$: changer.laagLocationInfoServicesOpTitelSubj.asObservable(),
     laagstijlaanpassingState$: changer.laagstijlaanpassingStateSubj.asObservable(),

@@ -2,7 +2,6 @@ import { Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 
-import { Consumer } from "../util/function";
 import { TypedRecord } from "../util/typed-record";
 import { ZoekerMetPrioriteiten, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
 

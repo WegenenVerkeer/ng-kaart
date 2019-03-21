@@ -57,16 +57,17 @@ export interface FietspadSelectie {
   encapsulation: ViewEncapsulation.None
 })
 export class FeatureDemoComponent {
+  constructor(private changeDetectorRef: ChangeDetectorRef, private readonly zone: NgZone) {
+    this.addIcon();
+  }
+
+  private static readonly zoekerKleurCodes = ["#626c7a", "#6b7d43", "#f8df98", "#e38d83", "#6e312f"];
   @ViewChild("verplaats")
   private verplaatsKaart: KaartClassicComponent;
   @ViewChild("selectie")
   private selectieKaart: KaartClassicComponent;
   @ViewChild("kaartInfoKaart")
   private kaartInfoKaart: KaartClassicComponent;
-
-  constructor(private changeDetectorRef: ChangeDetectorRef, private readonly zone: NgZone) {
-    this.addIcon();
-  }
 
   private readonly fietspadStijlDef: AwvV0DynamicStyle = {
     rules: [
@@ -531,9 +532,8 @@ export class FeatureDemoComponent {
   readonly fietspadenRefresh$ = this.fietspadenRefreshSubj.asObservable();
 
   readonly demoZoekers: ZoekerMetPrioriteiten[] = [
-    zoekerMetPrioriteiten(new DummyZoeker("dummy1"), 1, 1),
-    zoekerMetPrioriteiten(new DummyZoeker("dummy2"), 2, 2),
-    zoekerMetPrioriteiten(new DummyZoeker("dummy3"), 3, 3)
+    zoekerMetPrioriteiten(new DummyZoeker("dummy0", FeatureDemoComponent.zoekerKleurCodes[0]), 1, 1, true, true),
+    zoekerMetPrioriteiten(new DummyZoeker("dummy1", FeatureDemoComponent.zoekerKleurCodes[1]), 2, 2, true, true)
   ];
 
   private cachedFeaturesProvider: Option<CachedFeatureLookup> = none;
@@ -933,5 +933,22 @@ export class FeatureDemoComponent {
       .subscribe(features => {
         this.offlineGeselecteerdeFeatures = features;
       });
+  }
+
+  voegZoekerToe(toonIcoon: boolean, toonOppervlak: boolean) {
+    const index = this.demoZoekers.length;
+    this.demoZoekers.push(
+      zoekerMetPrioriteiten(
+        new DummyZoeker(`Dummy${index}`, FeatureDemoComponent.zoekerKleurCodes[index % FeatureDemoComponent.zoekerKleurCodes.length]),
+        index,
+        index,
+        toonIcoon,
+        toonOppervlak
+      )
+    );
+  }
+
+  verwijderZoeker() {
+    this.demoZoekers.pop();
   }
 }

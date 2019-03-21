@@ -61,9 +61,12 @@ const maybeInsertPrioriteit: Function3<Option<number>, Zoektype, PrioriteitenOpZ
   prioriteiten
 ) => maybePrio.map(prio => insert(zoektype, prio, prioriteiten)).getOrElse(prioriteiten);
 
+// TODO naam aanpassen: ZoekerMetWeergaveOpties
 export interface ZoekerMetPrioriteiten {
   readonly zoeker: Zoeker;
   readonly prioriteiten: PrioriteitenOpZoekertype;
+  readonly toonIcoon: boolean;
+  readonly toonOppervlak: boolean;
 }
 
 export interface ZoekKaartResultaat {
@@ -110,17 +113,21 @@ export class ZoekAntwoord {
 
 export const nietOndersteund: Function2<string, Zoektype, ZoekAntwoord> = (naam, zoektype) => new ZoekAntwoord(naam, zoektype);
 
-export const zoekerMetPrioriteiten: (_1: Zoeker, _2?: number, _3?: number) => ZoekerMetPrioriteiten = (
-  zoeker,
-  volledigPrioriteit,
-  suggestiesPrioriteit
-) => ({
+export const zoekerMetPrioriteiten: (
+  zoeker: Zoeker,
+  volledigPrioriteit?: number,
+  suggestiesPrioriteit?: number,
+  toonIcoon?: boolean,
+  toonOppervlak?: boolean
+) => ZoekerMetPrioriteiten = (zoeker, volledigPrioriteit, suggestiesPrioriteit, toonIcoon, toonOppervlak) => ({
   zoeker: zoeker,
   prioriteiten: maybeInsertPrioriteit(
     fromNullable(volledigPrioriteit),
     "Volledig",
     maybeInsertPrioriteit(fromNullable(suggestiesPrioriteit), "Suggesties", emptyPrioriteitenOpZoekertype)
-  )
+  ),
+  toonIcoon: fromNullable(toonIcoon).getOrElse(true),
+  toonOppervlak: fromNullable(toonOppervlak).getOrElse(true)
 });
 
 export const zoekerMetNaam: Function1<string, Function1<ZoekerMetPrioriteiten[], Option<Zoeker>>> = naam => zmps =>
