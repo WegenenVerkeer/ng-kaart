@@ -69,13 +69,16 @@ const mapToGeoJson: Pipeable<string, GeoJsonLike> = obs =>
     map(lijn => {
       try {
         const geojson = JSON.parse(lijn) as GeoJsonLike;
+        // Tijdelijk work-around voor fake featureserver die geen bbox genereert.
+        // Meer permanent moeten we er rekening mee houden dat bbox niet verplicht is.
+        const bbox = fromNullable(geojson.geometry.bbox).getOrElse([0, 0, 0, 0]);
         return {
           ...geojson,
           metadata: {
-            minx: geojson.geometry.bbox[0],
-            miny: geojson.geometry.bbox[1],
-            maxx: geojson.geometry.bbox[2],
-            maxy: geojson.geometry.bbox[3],
+            minx: bbox[0],
+            miny: bbox[1],
+            maxx: bbox[2],
+            maxy: bbox[3],
             toegevoegd: new Date().toISOString()
           }
         };
