@@ -1,10 +1,12 @@
 import { HttpClient } from "@angular/common/http";
-import { Component, Inject, NgZone, ViewEncapsulation } from "@angular/core";
+import { Component, Inject, Input, NgZone, ViewEncapsulation } from "@angular/core";
 import { fromNullable } from "fp-ts/lib/Option";
 
 import { KAART_CFG, KaartConfig } from "../../kaart/kaart-config";
 import { TiledWmsType, WmsLaag } from "../../kaart/kaart-elementen";
 import { KaartClassicComponent } from "../kaart-classic.component";
+
+import * as arrays from "../../util/arrays";
 
 import { ClassicWmsLaagComponent } from "./classic-wms-laag.component";
 
@@ -19,16 +21,18 @@ export class ClassicOrthoLaagComponent extends ClassicWmsLaagComponent {
   }
 
   createLayer(): WmsLaag {
+    const urls = arrays.isArray(this.urls) && arrays.isNonEmpty(this.urls) ? this.urls : this.config.orthofotomozaiek.urls;
+    const laagnaam = this.laagNaam || this.config.orthofotomozaiek.naam;
     return {
       type: TiledWmsType,
       titel: this.titel,
-      naam: this.config.orthofotomozaiek.naam,
-      urls: this.config.orthofotomozaiek.urls,
+      naam: laagnaam,
+      urls: urls,
       versie: fromNullable(this.versie),
       tileSize: fromNullable(this.tileSize),
       format: fromNullable(this.format),
       opacity: fromNullable(this.opacity),
-      backgroundUrl: this.backgroundUrl(this.config.orthofotomozaiek.urls, this.config.orthofotomozaiek.naam),
+      backgroundUrl: this.backgroundUrl(urls, laagnaam),
       minZoom: this.minZoom,
       maxZoom: this.maxZoom,
       verwijderd: false

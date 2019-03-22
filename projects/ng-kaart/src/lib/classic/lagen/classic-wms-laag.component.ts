@@ -52,7 +52,7 @@ export interface PrecacheWMS {
 })
 export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnInit, AfterViewInit {
   @Input()
-  laagNaam: string;
+  laagNaam?: string;
   @Input()
   urls: string[];
   @Input()
