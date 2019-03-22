@@ -4,7 +4,7 @@ import { fromNullable, Option } from "fp-ts/lib/Option";
 import * as set from "fp-ts/lib/Set";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { bufferCount, catchError, filter, last, map, mapTo, mergeMap, reduce, scan, share, switchMap, tap } from "rxjs/operators";
+import { bufferCount, catchError, filter, map, mapTo, mergeMap, reduce, scan, share, switchMap, takeLast, tap } from "rxjs/operators";
 
 import * as le from "../kaart/kaart-load-events";
 import { kaartLogger } from "../kaart/log";
@@ -57,7 +57,7 @@ const split: Function1<string, Pipeable<string, string>> = delimiter => obs => {
     splitterState$.pipe(mergeMap(s => rx.from(s.output))),
     splitterState$.pipe(
       // we mogen de laatste output niet verliezen
-      last(),
+      takeLast(1), // takeLast kan er mee overweg dat er evt geen data is
       filter(s => s.seen.length > 0),
       map(s => s.seen)
     )
