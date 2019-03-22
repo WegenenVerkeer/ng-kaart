@@ -28,36 +28,42 @@ import { ClassicStandaardInteractiesComponent } from "./standaard-interacties/cl
 import { ClassicStreetviewComponent } from "./streetview/classic-streetview.component";
 import { ClassicVolledigSchermComponent } from "./volledig-scherm/classic-volledig-scherm.component";
 import { ClassicVoorwaardenComponent } from "./voorwaarden/classic-voorwaarden.component";
+import { ClassicCrabZoekerComponent } from "./zoeker/classic-crab-zoeker.component";
+import { ClassicGoogleZoekerComponent } from "./zoeker/classic-google-zoeker.component";
+import { ClassicPerceelZoekerComponent } from "./zoeker/classic-perceel-zoeker.component";
 import { ClassicZoekerComponent } from "./zoeker/classic-zoeker.component";
 import { ClassicZoomComponent } from "./zoom/classic-zoom.component";
 
 const components = [
-  ClassicSchaalComponent,
-  ClassicVoorwaardenComponent,
-  ClassicCopyrightComponent,
-  ClassicMetenComponent,
-  ClassicMultiMetenComponent,
-  ClassicLagenkiezerComponent,
   ClassicAchtergrondSelectorComponent,
-  ClassicVolledigSchermComponent,
-  ClassicOrthoLaagComponent,
-  ClassicStandaardInteractiesComponent,
-  ClassicFeaturesLaagComponent,
-  ClassicVectorLaagComponent,
-  ClassicNosqlfsLaagComponent,
-  ClassicTilecacheLaagComponent,
-  ClassicGeoserverLaagComponent,
-  ClassicWmsLaagComponent,
-  ClassicWmtsLaagComponent,
   ClassicBlancoLaagComponent,
-  ClassicLegendeLijnItemComponent,
+  ClassicCopyrightComponent,
+  ClassicCrabZoekerComponent,
+  ClassicFeaturesLaagComponent,
+  ClassicGeoserverLaagComponent,
+  ClassicGoogleZoekerComponent,
+  ClassicKaartBevragenComponent,
+  ClassicLagenkiezerComponent,
   ClassicLegendeBolletjeItemComponent,
   ClassicLegendeImageItemComponent,
+  ClassicLegendeLijnItemComponent,
   ClassicLegendePolygoonItemComponent,
+  ClassicMetenComponent,
+  ClassicMultiMetenComponent,
+  ClassicNosqlfsLaagComponent,
+  ClassicOrthoLaagComponent,
+  ClassicPerceelZoekerComponent,
+  ClassicSchaalComponent,
+  ClassicStandaardInteractiesComponent,
   ClassicStreetviewComponent,
-  ClassicZoomComponent,
+  ClassicTilecacheLaagComponent,
+  ClassicVectorLaagComponent,
+  ClassicVolledigSchermComponent,
+  ClassicVoorwaardenComponent,
+  ClassicWmsLaagComponent,
+  ClassicWmtsLaagComponent,
   ClassicZoekerComponent,
-  ClassicKaartBevragenComponent,
+  ClassicZoomComponent,
   KaartClassicComponent
 ];
 
