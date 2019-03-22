@@ -6,6 +6,8 @@ import { KAART_CFG, KaartConfig } from "../../kaart/kaart-config";
 import * as ke from "../../kaart/kaart-elementen";
 import { KaartClassicComponent } from "../kaart-classic.component";
 
+import * as arrays from "../../util/arrays";
+
 import { ClassicWmsLaagComponent } from "./classic-wms-laag.component";
 
 @Component({
@@ -19,16 +21,17 @@ export class ClassicTilecacheLaagComponent extends ClassicWmsLaagComponent {
   }
 
   createLayer(): ke.WmsLaag {
+    const urls = arrays.isArray(this.urls) && arrays.isNonEmpty(this.urls) ? this.urls : this.config.tilecache.urls;
     return {
       type: ke.TiledWmsType,
       titel: this.titel,
       naam: this.laagNaam,
-      urls: this.config.tilecache.urls,
+      urls: urls,
       versie: fromNullable(this.versie),
       tileSize: fromNullable(this.tileSize),
       format: fromNullable(this.format),
       opacity: fromNullable(this.opacity),
-      backgroundUrl: this.backgroundUrl(this.config.tilecache.urls, this.laagNaam),
+      backgroundUrl: this.backgroundUrl(urls, this.laagNaam),
       minZoom: this.minZoom,
       maxZoom: this.maxZoom,
       verwijderd: false
