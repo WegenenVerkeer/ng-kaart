@@ -1,7 +1,7 @@
 import { HttpClient } from "@angular/common/http";
 import { AfterViewInit, Component, EventEmitter, Input, NgZone, OnInit, Output, ViewEncapsulation } from "@angular/core";
 import { Function1, Function2, Function4, pipe } from "fp-ts/lib/function";
-import { fromNullable, Option } from "fp-ts/lib/Option";
+import { fromNullable } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import { merge } from "rxjs";
 import * as rx from "rxjs";
@@ -12,7 +12,6 @@ import * as ke from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
 import { VoegLaagLocatieInformatieServiceToe } from "../../kaart/kaart-protocol";
 import { ofType } from "../../util";
-import { fromNullableFunc } from "../../util/function";
 import { urlWithParams } from "../../util/url";
 import { classicMsgSubscriptionCmdOperator, KaartClassicComponent } from "../kaart-classic.component";
 import { KaartClassicMsg, LaatsteCacheRefreshMsg, logOnlyWrapper, PrecacheProgressMsg } from "../messages";
@@ -53,7 +52,7 @@ export interface PrecacheWMS {
 })
 export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnInit, AfterViewInit {
   @Input()
-  laagNaam: string;
+  laagNaam?: string;
   @Input()
   urls: string[];
   @Input()
