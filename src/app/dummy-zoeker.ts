@@ -1,4 +1,6 @@
+import { Function1 } from "fp-ts/lib/function";
 import { none, some } from "fp-ts/lib/Option";
+import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { delay } from "rxjs/operators";
 
@@ -7,17 +9,60 @@ import {
   nietOndersteund,
   ZoekAntwoord,
   Zoeker,
-  ZoekerHelpBoom,
   ZoekInput,
+  ZoekKaartResultaat,
   Zoekopdracht,
   Zoektype
 } from "../../projects/ng-kaart/src/lib/zoeker";
+
+const randomResultaat: Function1<string, ZoekKaartResultaat> = color => {
+  const center = [100000 + Math.random() * 80000, 175000 + Math.random() * 30000] as [number, number];
+  const radius = 2000 + Math.random() * 20000;
+  return {
+    geometry: new ol.geom.Circle(center, radius),
+    extent: [center[0] - radius, center[1] - radius, center[0] + radius, center[1] + radius],
+    style: new ol.style.Style({
+      image: new ol.style.Icon({
+        anchor: [0.5, 0.5],
+        anchorXUnits: "fraction",
+        anchorYUnits: "fraction",
+        scale: 1,
+        opacity: 0.75,
+        src: require("material-design-icons/toggle/svg/production/ic_star_border_24px.svg")
+      }),
+      stroke: new ol.style.Stroke({
+        color: color,
+        width: 2
+      }),
+      fill: new ol.style.Fill({
+        color: color + "40" // hack: veronderstelt hex kleur code
+      })
+    }),
+    highlightStyle: new ol.style.Style({
+      image: new ol.style.Icon({
+        anchor: [0.5, 0.5],
+        anchorXUnits: "fraction",
+        anchorYUnits: "fraction",
+        scale: 1,
+        opacity: 0.75,
+        src: require("material-design-icons/toggle/svg/production/ic_star_24px.svg")
+      }),
+      stroke: new ol.style.Stroke({
+        color: "yellow",
+        width: 2
+      }),
+      fill: new ol.style.Fill({
+        color: color + "40" // hack: veronderstelt hex kleur code
+      })
+    })
+  };
+};
 
 /**
  * Een Zoeker die vrij random resultaten genereert.
  */
 export class DummyZoeker implements Zoeker {
-  constructor(private readonly _naam = "dummy") {}
+  constructor(private readonly _naam = "dummy", private readonly colorCode: string) {}
 
   naam() {
     return this._naam;
@@ -32,7 +77,7 @@ export class DummyZoeker implements Zoeker {
     }
   }
 
-  help(helpBoom: ZoekerHelpBoom) {
+  help() {
     // Doe niks, geen help nodig.
   }
 
@@ -40,14 +85,14 @@ export class DummyZoeker implements Zoeker {
     switch (input.type) {
       case "string":
         const numResults = Math.floor(Math.pow(Math.random(), 1.2) * 5);
-        const resultaat = index => ({
+        const resultaat = (index: number) => ({
           partialMatch: Math.random() < 0.25,
-          featureIdSuffix: index,
+          featureIdSuffix: index.toString(),
           omschrijving: `resultaat_${input.value}`,
           extraOmschrijving: some(`${this.naam()}_${index}`),
-          bron: "bron",
+          bron: this.naam(),
           zoeker: this.naam(),
-          kaartInfo: none,
+          kaartInfo: some(randomResultaat(this.colorCode)),
           icoon: { type: "font" as "font", name: "Du" },
           preferredPointZoomLevel: some(4 + Math.random() * 5)
         });
@@ -69,7 +114,7 @@ export class DummyZoeker implements Zoeker {
           extraOmschrijving: none,
           bron: "bron",
           zoeker: this.naam(),
-          kaartInfo: none,
+          kaartInfo: some(randomResultaat(this.colorCode)),
           icoon: { type: "font" as "font", name: "Du" },
           preferredPointZoomLevel: some(4 + Math.random() * 5),
           zoektype: "Suggesties" as Zoektype
