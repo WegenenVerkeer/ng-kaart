@@ -19,25 +19,20 @@ import { KaartClassicMsg, LaatsteCacheRefreshMsg, logOnlyWrapper, PrecacheProgre
 
 import { ClassicLaagComponent } from "./classic-laag.component";
 
-const noQueryUrl = () => undefined;
-
-const wmsFeatureInfo: Function2<HttpClient, Function1<ol.Coordinate, Option<string>>, Function1<ol.Coordinate, rx.Observable<string>>> = (
+const wmsFeatureInfo: Function2<HttpClient, Function1<ol.Coordinate, string>, Function1<ol.Coordinate, rx.Observable<string>>> = (
   httpClient,
   queryUrlFn
-) => location => {
-  const maybeUrl = queryUrlFn(location);
-  return maybeUrl.fold(rx.empty(), url => httpClient.get(url, { responseType: "text" }));
-};
+) => location => httpClient.get(queryUrlFn(location), { responseType: "text" });
 
 const textWmsFeatureInfo: Function2<
   HttpClient,
-  Function1<ol.Coordinate, Option<string>>,
+  Function1<ol.Coordinate, string>,
   Function1<ol.Coordinate, rx.Observable<LaagLocationInfo>>
 > = (httpClient, queryUrlFn) => location => wmsFeatureInfo(httpClient, queryUrlFn)(location).pipe(map(TextLaagLocationInfo));
 
 const veldWmsFeatureInfo: Function4<
   HttpClient,
-  Function1<ol.Coordinate, Option<string>>,
+  Function1<ol.Coordinate, string>,
   Function1<string, Veldwaarde[]>,
   ke.VeldInfo[],
   Function1<ol.Coordinate, rx.Observable<LaagLocationInfo>>
@@ -75,6 +70,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   @Input()
   cacheActief = false;
   // metadata van de velden zoals die geparsed worden door textParser
+  // alsl er geen veldinfos opgegeven zijn, wordt hoogstens een textresultaat getoond bij kaart bevragen
   @Input()
   veldinfos?: ke.VeldInfo[] = undefined;
   // Een functie die de output van een WMS featureInfo of een WFS GetFeature request omzet naar een lijst van key-value paren.
@@ -82,10 +78,9 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   @Input()
   textParser?: Function1<string, Veldwaarde[]> = undefined;
   // Een functie die coördinaten omzet naar een WMS GetFeatureInfo of WFS GetFeature URL
-  // `undefined` als waarde van de Input wil zeggen dat de output als een ruwe string weergegeven wordt
-  // `undefined` als resultaat van de functie wil zeggen dat er geen request gemaakt wordt voor de gegeven locatie.
+  // `undefined` als waarde van de Input wil zeggen dat er geen query uitgevoerd wordt
   @Input()
-  queryUrlFn?: Function1<ol.Coordinate, string | undefined> = noQueryUrl;
+  queryUrlFn?: Function1<ol.Coordinate, string> = undefined;
 
   @Input()
   set precache(input: PrecacheWMS) {
@@ -120,7 +115,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
         this.dispatch(
           VoegLaagLocatieInformatieServiceToe(
             this.titel,
-            { infoByLocation$: textWmsFeatureInfo(this.http, fromNullableFunc(this.queryUrlFn)) },
+            { infoByLocation$: textWmsFeatureInfo(this.http, this.queryUrlFn) },
             logOnlyWrapper
           )
         );
@@ -128,7 +123,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
         this.dispatch(
           VoegLaagLocatieInformatieServiceToe(
             this.titel,
-            { infoByLocation$: veldWmsFeatureInfo(this.http, fromNullableFunc(this.queryUrlFn), this.textParser, this.veldinfos) },
+            { infoByLocation$: veldWmsFeatureInfo(this.http, this.queryUrlFn, this.textParser, this.veldinfos) },
             logOnlyWrapper
           )
         );

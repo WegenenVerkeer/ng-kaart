@@ -1,5 +1,5 @@
 import { Either } from "fp-ts/lib/Either";
-import { Function2 } from "fp-ts/lib/function";
+import { Function1, Function2 } from "fp-ts/lib/function";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 
@@ -25,7 +25,7 @@ export interface LaagLocationInfoService {
   infoByLocation$(location: ol.Coordinate): rx.Observable<LaagLocationInfo>;
 }
 
-export const TextLaagLocationInfo: (_: string) => TextLaagLocationInfo = text => ({ type: "TextLaagLocationInfo", text: text });
+export const TextLaagLocationInfo: Function1<string, TextLaagLocationInfo> = text => ({ type: "TextLaagLocationInfo", text: text });
 
 export const VeldinfoLaagLocationInfo: Function2<Veldwaarde[], VeldInfo[], VeldinfoLaagLocationInfo> = (waarden, veldinfos) => ({
   type: "VeldinfoLaagLocationInfo",
