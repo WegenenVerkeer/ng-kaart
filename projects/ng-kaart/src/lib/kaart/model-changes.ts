@@ -12,7 +12,7 @@ import { NosqlFsSource } from "../source/nosql-fs-source";
 import * as tilecacheMetadataDb from "../util/indexeddb-tilecache-metadata";
 import { observableFromOlEvents } from "../util/ol-observable";
 import { updateBehaviorSubject } from "../util/subject-update";
-import { ZoekAntwoord, ZoekerMetPrioriteiten, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
+import { ZoekAntwoord, ZoekerMetWeergaveopties, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
 
 import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
@@ -62,7 +62,7 @@ export interface ModelChanger {
   readonly laagVerwijderdSubj: rx.Subject<ke.ToegevoegdeLaag>;
   readonly mijnLocatieZoomDoelSubj: rx.Subject<Option<number>>;
   readonly actieveModusSubj: rx.Subject<Option<string>>;
-  readonly zoekerServicesSubj: rx.Subject<ZoekerMetPrioriteiten[]>;
+  readonly zoekerServicesSubj: rx.Subject<ZoekerMetWeergaveopties[]>;
   readonly zoekopdrachtSubj: rx.Subject<Zoekopdracht>;
   readonly zoekresultaatselectieSubj: rx.Subject<ZoekResultaat>;
   readonly laagLocationInfoServicesOpTitelSubj: rx.BehaviorSubject<Map<string, LaagLocationInfoService>>;
@@ -114,7 +114,7 @@ export interface ModelChanges {
   readonly kaartKlikLocatie$: rx.Observable<KlikInfo>;
   readonly mijnLocatieZoomDoel$: rx.Observable<Option<number>>;
   readonly actieveModus$: rx.Observable<Option<string>>;
-  readonly zoekerServices$: rx.Observable<ZoekerMetPrioriteiten[]>;
+  readonly zoekerServices$: rx.Observable<ZoekerMetWeergaveopties[]>;
   readonly zoekresultaten$: rx.Observable<ZoekAntwoord>;
   readonly zoekresultaatselectie$: rx.Observable<ZoekResultaat>;
   readonly laagLocationInfoServicesOpTitel$: rx.Observable<Map<string, LaagLocationInfoService>>;
@@ -246,10 +246,10 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     share()
   );
 
-  const gevraagdeZoekers: Function2<Zoekopdracht, ZoekerMetPrioriteiten[], ZoekerMetPrioriteiten[]> = (opdracht, geregistreerd) =>
+  const gevraagdeZoekers: Function2<Zoekopdracht, ZoekerMetWeergaveopties[], ZoekerMetWeergaveopties[]> = (opdracht, geregistreerd) =>
     geregistreerd.filter(zmp => array.elem(setoidString)(zmp.zoeker.naam(), opdracht.zoekernamen));
 
-  const zoekresulaten$: rx.Observable<ZoekAntwoord> = changer.zoekerServicesSubj.pipe(
+  const zoekresultaten$: rx.Observable<ZoekAntwoord> = changer.zoekerServicesSubj.pipe(
     switchMap(zoekerSvcs =>
       changer.zoekopdrachtSubj.pipe(
         switchMap(zoekopdracht =>
@@ -280,7 +280,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     mijnLocatieZoomDoel$: changer.mijnLocatieZoomDoelSubj.asObservable(),
     actieveModus$: changer.actieveModusSubj.asObservable(),
     zoekerServices$: changer.zoekerServicesSubj.asObservable(),
-    zoekresultaten$: zoekresulaten$,
+    zoekresultaten$: zoekresultaten$,
     zoekresultaatselectie$: changer.zoekresultaatselectieSubj.asObservable(),
     laagLocationInfoServicesOpTitel$: changer.laagLocationInfoServicesOpTitelSubj.asObservable(),
     laagstijlaanpassingState$: changer.laagstijlaanpassingStateSubj.asObservable(),

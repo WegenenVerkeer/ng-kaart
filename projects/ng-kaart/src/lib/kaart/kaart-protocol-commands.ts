@@ -2,9 +2,8 @@ import { Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 
-import { Consumer } from "../util/function";
 import { TypedRecord } from "../util/typed-record";
-import { ZoekerMetPrioriteiten, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
+import { ZoekerMetWeergaveopties, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
 
 import { BareValidationWrapper, KaartLocaties, KaartMsg, Subscription, ValidationWrapper } from ".";
 import { CachedFeatureLookup } from "./cache/lookup";
@@ -342,7 +341,7 @@ export interface MeldComponentFoutCmd {
 
 export interface VoegZoekerToeCmd<Msg extends KaartMsg> {
   readonly type: "VoegZoekerToe";
-  readonly zoekerPrioriteit: ZoekerMetPrioriteiten;
+  readonly zoekerPrioriteit: ZoekerMetWeergaveopties;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -857,7 +856,7 @@ export function ZetLaagLegendeCmd<Msg extends KaartMsg>(
 }
 
 export function VoegZoekerToeCmd<Msg extends KaartMsg>(
-  zoeker: ZoekerMetPrioriteiten,
+  zoeker: ZoekerMetWeergaveopties,
   wrapper: BareValidationWrapper<Msg>
 ): VoegZoekerToeCmd<Msg> {
   return { type: "VoegZoekerToe", zoekerPrioriteit: zoeker, wrapper: wrapper };

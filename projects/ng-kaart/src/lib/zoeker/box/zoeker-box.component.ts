@@ -4,11 +4,12 @@ import { ChangeDetectorRef, Component, ElementRef, Inject, NgZone, OnDestroy, On
 import { FormControl } from "@angular/forms";
 import * as array from "fp-ts/lib/Array";
 import { concat, Function1, Function2, identity, Predicate } from "fp-ts/lib/function";
+import * as fpMap from "fp-ts/lib/Map";
 import { fromNullable, fromPredicate, none, Option, some } from "fp-ts/lib/Option";
-import { Ord } from "fp-ts/lib/Ord";
 import * as ord from "fp-ts/lib/Ord";
+import { Ord } from "fp-ts/lib/Ord";
 import { setoidString } from "fp-ts/lib/Setoid";
-import { insert, lookup, remove, StrMap } from "fp-ts/lib/StrMap";
+import { lookup } from "fp-ts/lib/StrMap";
 import { Tuple } from "fp-ts/lib/Tuple";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
@@ -29,31 +30,31 @@ import {
 } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../../kaart/kaart-child-component-base";
-import { VeldInfo } from "../../kaart/kaart-elementen";
 import * as ke from "../../kaart/kaart-elementen";
+import { VeldInfo } from "../../kaart/kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import * as prt from "../../kaart/kaart-protocol";
 import { KaartComponent } from "../../kaart/kaart.component";
 import { kaartLogger } from "../../kaart/log";
 import { matchGeometryType } from "../../util/geometries";
+import * as maps from "../../util/maps";
 import { collect, Pipeable } from "../../util/operators";
 import { forEach } from "../../util/option";
 import * as sets from "../../util/sets";
 import { minLength } from "../../util/string";
 import {
-  emptyPrioriteitenOpZoekertype,
   IconDescription,
   StringZoekInput,
   UrlZoekInput,
+  Weergaveopties,
   ZoekAntwoord,
-  ZoekerMetPrioriteiten,
+  ZoekerMetWeergaveopties,
   ZoekInput,
   ZoekKaartResultaat,
   ZoekResultaat,
   zoekResultaatOrdering,
   Zoektype
 } from "../zoeker";
-import { AbstractRepresentatieService, ZOEKER_REPRESENTATIE } from "../zoeker-representatie.service";
 
 export const ZoekerUiSelector = "Zoeker";
 
@@ -73,41 +74,36 @@ export const PERCEEL = "Perceel";
 export const CRAB = "Crab";
 export const EXTERNE_WMS = "ExterneWms";
 
-type ZoekerPrioriteitenOpZoekernaam = StrMap<StrMap<number>>;
-
-// Vreemde manier van werken, maar constructor heeft een type nodig
-const emptyZoekerPrioriteitenOpZoekernaam: ZoekerPrioriteitenOpZoekernaam = remove(
-  "dummy",
-  new StrMap({ dummy: emptyPrioriteitenOpZoekertype })
-);
+type WeergaveoptiesOpZoekernaam = Map<string, Weergaveopties>;
 
 const zoekresultatenVanType: Function2<Zoektype, ZoekAntwoord, Option<ZoekAntwoord>> = (zoektype, zoekResultaten) =>
   fromPredicate<ZoekAntwoord>(res => res.zoektype === zoektype)(zoekResultaten);
 
-const heeftPrioriteit: Function1<ZoekerPrioriteitenOpZoekernaam, Predicate<ZoekAntwoord>> = prioriteitenOpNaam => resultaten =>
-  lookup(resultaten.zoeker, prioriteitenOpNaam).exists(prios => lookup(resultaten.zoektype, prios).isSome());
+const heeftPrioriteit: Function1<WeergaveoptiesOpZoekernaam, Predicate<ZoekAntwoord>> = optiesOpNaam => resultaten =>
+  fpMap
+    .lookup(setoidString)(resultaten.zoeker, optiesOpNaam)
+    .exists(opties => lookup(resultaten.zoektype, opties.prioriteiten).isSome());
 
 const prioriteitVoorZoekerNaam: Function1<
   Zoektype,
-  Function2<ZoekerPrioriteitenOpZoekernaam, number, Function1<string, number>>
-> = zoektype => (prioriteitenOpNaam, stdPrio) => zoekernaam =>
-  lookup(zoekernaam, prioriteitenOpNaam)
-    .chain(priosOpType => lookup(zoektype, priosOpType))
+  Function2<WeergaveoptiesOpZoekernaam, number, Function1<string, number>>
+> = zoektype => (optiesOpNaam, stdPrio) => zoekernaam =>
+  fpMap
+    .lookup(setoidString)(zoekernaam, optiesOpNaam)
+    .chain(opties => lookup(zoektype, opties.prioriteiten))
     .getOrElse(stdPrio);
 
 const prioriteitVoorZoekAntwoord: Function1<
   Zoektype,
-  Function2<ZoekerPrioriteitenOpZoekernaam, number, Function1<ZoekAntwoord, number>>
-> = zoektype => (prioriteitenOpNaam, stdPrio) => antwoord =>
-  prioriteitVoorZoekerNaam(zoektype)(prioriteitenOpNaam, stdPrio)(antwoord.zoeker);
+  Function2<WeergaveoptiesOpZoekernaam, number, Function1<ZoekAntwoord, number>>
+> = zoektype => (optiesOpNaam, stdPrio) => antwoord => prioriteitVoorZoekerNaam(zoektype)(optiesOpNaam, stdPrio)(antwoord.zoeker);
 
 const prioriteitVoorZoekresultaat: Function1<
   Zoektype,
-  Function2<ZoekerPrioriteitenOpZoekernaam, number, Function1<ZoekResultaat, number>>
-> = zoektype => (prioriteitenOpNaam, stdPrio) => resultaat =>
-  prioriteitVoorZoekerNaam(zoektype)(prioriteitenOpNaam, stdPrio)(resultaat.zoeker);
+  Function2<WeergaveoptiesOpZoekernaam, number, Function1<ZoekResultaat, number>>
+> = zoektype => (optiesOpNaam, stdPrio) => resultaat => prioriteitVoorZoekerNaam(zoektype)(optiesOpNaam, stdPrio)(resultaat.zoeker);
 
-export function isNotNullObject(object) {
+export function isNotNullObject(object: any) {
   return object && object instanceof Object;
 }
 
@@ -306,10 +302,13 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.zoekerComponentSubj.next(new Tuple<ZoekerType, GetraptZoekerComponent>(EXTERNE_WMS, zoekerExterneWmsGetrapt));
   }
 
+  // Gevaarlijk: de key ZoekResultaat is een record en er wordt op objectreferentie vergeleken. We moeten er dus steeds
+  // voor zorgen dat we dezelfde objecten gebruiken om op te zoeken en op te slaan.
   featuresByResultaat = new Map<ZoekResultaat, ol.Feature[]>();
   huidigeSelectie: Option<HuidigeSelectie> = none;
   alleZoekResultaten: ZoekResultaat[] = [];
   alleSuggestiesResultaten: ZoekResultaat[] = [];
+  private weergaveoptiesOpZoekernaam: WeergaveoptiesOpZoekernaam = new Map();
   private suggestiesBuffer: ZoekAntwoord[] = [];
   alleFouten: Fout[] = [];
   legende: Map<string, IconDescription> = new Map<string, IconDescription>();
@@ -326,7 +325,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   private readonly zoekerComponentSubj: rx.Subject<Tuple<ZoekerType, GetraptZoekerComponent>> = new rx.Subject();
   private readonly zoekerComponentOpNaam$: rx.Observable<Map<ZoekerType, GetraptZoekerComponent>>;
   private readonly maakVeldenLeegSubj: rx.Subject<ZoekerType> = new rx.Subject<ZoekerType>();
-  private readonly zoekers$: rx.Observable<ZoekerMetPrioriteiten[]>;
+  private readonly zoekers$: rx.Observable<ZoekerMetWeergaveopties[]>;
   private readonly zoekerNamen$: rx.Observable<string[]>;
   private readonly zoekInputSubj: rx.Subject<string> = new rx.Subject<string>();
   private readonly volledigeZoekSubj: rx.Subject<void> = new rx.Subject<void>();
@@ -357,7 +356,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     };
   }
 
-  private static maakNieuwFeature(resultaat: ZoekResultaat): ol.Feature[] {
+  private static maakNieuwFeature(resultaat: ZoekResultaat, weergaveOpties: Option<Weergaveopties>): ol.Feature[] {
     function multiLineStringMiddlePoint(geometry: ol.geom.MultiLineString): ol.geom.Point {
       // voeg een puntelement toe ergens op de linestring om een icoon met nummer te tonen
       const lineStrings = geometry.getLineStrings();
@@ -371,17 +370,30 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       return new ol.geom.Point([(extent[0] + extent[2]) / 2, (extent[1] + extent[3]) / 2]);
     }
 
-    function createMiddlePointFeature(middlePoint: ol.geom.Point): ol.Feature {
-      const middlePointFeature = new ol.Feature({
+    function circleMiddlePoint(circle: ol.geom.Circle): ol.geom.Point {
+      return new ol.geom.Point(circle.getCenter());
+    }
+
+    function pointToMiddlePointFeature(middlePoint: ol.geom.Point): ol.Feature {
+      const feature = new ol.Feature({
         data: resultaat,
         geometry: middlePoint,
         name: resultaat.omschrijving
       });
-      resultaat.kaartInfo.map(kaartInfo => middlePointFeature.setStyle(kaartInfo.style));
-      return middlePointFeature;
+      resultaat.kaartInfo.map(kaartInfo => feature.setStyle(kaartInfo.style));
+      return feature;
     }
 
-    function createFeature(geometry: ol.geom.Geometry): ol.Feature {
+    function createMiddlePointFeature(geometry: ol.geom.Geometry): Option<ol.Feature> {
+      return matchGeometryType(geometry, {
+        multiLineString: multiLineStringMiddlePoint,
+        polygon: polygonMiddlePoint,
+        multiPolygon: polygonMiddlePoint,
+        circle: circleMiddlePoint
+      }).map(pointToMiddlePointFeature);
+    }
+
+    function createOutlineFeature(geometry: ol.geom.Geometry): ol.Feature {
       const feature = new ol.Feature({
         data: resultaat,
         geometry: geometry,
@@ -392,23 +404,17 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       return feature;
     }
 
-    function createFeatureAndMiddlePoint(geometry: ol.geom.Geometry): ol.Feature[] {
-      return matchGeometryType(geometry, {
-        multiLineString: multiLineStringMiddlePoint,
-        polygon: polygonMiddlePoint,
-        multiPolygon: polygonMiddlePoint
-      }).foldL(() => [createFeature(geometry)], middlePoint => [createFeature(geometry), createMiddlePointFeature(middlePoint)]);
+    function createOutlineAndMiddlePointFeatures(geometry: ol.geom.Geometry): ol.Feature[] {
+      const middlepointFeature = weergaveOpties.exists(o => o.toonIcoon) ? createMiddlePointFeature(geometry) : none;
+      const outlineFeature = weergaveOpties.exists(o => o.toonOppervlak) ? some(createOutlineFeature(geometry)) : none;
+
+      return array.catOptions([middlepointFeature, outlineFeature]);
     }
 
-    return resultaat.kaartInfo.fold([], kaartInfo => createFeatureAndMiddlePoint(kaartInfo.geometry));
+    return resultaat.kaartInfo.fold([], kaartInfo => createOutlineAndMiddlePointFeatures(kaartInfo.geometry));
   }
 
-  constructor(
-    parent: KaartComponent,
-    zone: NgZone,
-    private readonly cd: ChangeDetectorRef,
-    @Inject(ZOEKER_REPRESENTATIE) private zoekerRepresentatie: AbstractRepresentatieService
-  ) {
+  constructor(parent: KaartComponent, zone: NgZone, private readonly cd: ChangeDetectorRef) {
     super(parent, zone);
 
     this.zoekers$ = parent.modelChanges.zoekerServices$;
@@ -431,16 +437,15 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       this.zoekerComponentOpNaam$.pipe(switchMap(zcon => this.maakVeldenLeegSubj.pipe(collect((naam: ZoekerType) => zcon.get(naam)!))))
     ).subscribe(zoekerGetraptComponent => zoekerGetraptComponent.maakVeldenLeeg(0));
 
-    // Luister op zoekresultaten en doe er iets mee
-    const prioriteitenOpNaam$: rx.Observable<ZoekerPrioriteitenOpZoekernaam> = this.zoekers$.pipe(
-      map(zmps =>
-        zmps.reduce((priosOpNaam, zmp) => insert(zmp.zoeker.naam(), zmp.prioriteiten, priosOpNaam), emptyZoekerPrioriteitenOpZoekernaam)
-      )
+    const weergaveoptiesOpZoekernaam$: rx.Observable<WeergaveoptiesOpZoekernaam> = this.zoekers$.pipe(
+      map(zmps => maps.toMapByKey(zmps, zmp => zmp.zoeker.naam()))
     );
+    // Luister op zoekresultaten en doe er iets mee
     this.bindToLifeCycle(
-      prioriteitenOpNaam$.pipe(
-        switchMap(prioriteitenOpNaam =>
-          parent.modelChanges.zoekresultaten$.pipe(map(zoekresultaten => new Tuple(zoekresultaten, prioriteitenOpNaam)))
+      weergaveoptiesOpZoekernaam$.pipe(
+        tap(weergaveoptiesOpZoekernaam => (this.weergaveoptiesOpZoekernaam = weergaveoptiesOpZoekernaam)),
+        switchMap(weergaveoptiesOpZoekernaam =>
+          parent.modelChanges.zoekresultaten$.pipe(map(zoekresultaten => new Tuple(zoekresultaten, weergaveoptiesOpZoekernaam)))
         )
       )
     ).subscribe(t => this.processZoekerAntwoord(t.fst, t.snd));
@@ -608,7 +613,10 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
         if (info.geometry.getType() === "Point") {
           resultaat.preferredPointZoomLevel.map(zoom => this.dispatch(prt.VeranderZoomCmd(zoom, kaartLogOnlyWrapper)));
         }
-        const resultaatFeatures = ZoekerBoxComponent.maakNieuwFeature(resultaat);
+        const resultaatFeatures = ZoekerBoxComponent.maakNieuwFeature(
+          resultaat,
+          fpMap.lookup(setoidString)(resultaat.zoeker, this.weergaveoptiesOpZoekernaam)
+        );
         this.featuresByResultaat = new Map<ZoekResultaat, ol.Feature[]>().set(resultaat, resultaatFeatures);
 
         this.dispatch(prt.VervangFeaturesCmd(ZoekerUiSelector, resultaatFeatures, kaartLogOnlyWrapper));
@@ -756,22 +764,20 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.dispatch(prt.VervangFeaturesCmd(ZoekerUiSelector, <ol.Feature[]>[], kaartLogOnlyWrapper));
   }
 
-  private processZoekerAntwoord(nieuweResultaten: ZoekAntwoord, prioriteitenOpNaam: ZoekerPrioriteitenOpZoekernaam): void {
+  private processZoekerAntwoord(nieuweResultaten: ZoekAntwoord, optiesOpNaam: WeergaveoptiesOpZoekernaam): void {
     kaartLogger.debug("Process " + nieuweResultaten.zoeker, nieuweResultaten);
     this.focusOpZoekVeld();
     switch (nieuweResultaten.zoektype) {
       case "Volledig":
-        return this.processVolledigZoekerAntwoord(nieuweResultaten, prioriteitenOpNaam);
+        return this.processVolledigZoekerAntwoord(nieuweResultaten, optiesOpNaam);
       case "Suggesties":
-        return this.processSuggestiesAntwoord(nieuweResultaten, prioriteitenOpNaam);
+        return this.processSuggestiesAntwoord(nieuweResultaten, optiesOpNaam);
     }
   }
 
-  private processVolledigZoekerAntwoord(nieuweResultaten: ZoekAntwoord, prioriteitenOpNaam: ZoekerPrioriteitenOpZoekernaam): void {
+  private processVolledigZoekerAntwoord(nieuweResultaten: ZoekAntwoord, optiesOpNaam: WeergaveoptiesOpZoekernaam): void {
     this.alleZoekResultaten = this.vervangZoekerResultaten(this.alleZoekResultaten, nieuweResultaten);
-    this.alleZoekResultaten.sort(
-      zoekResultaatOrdering(this.zoekVeld.value, prioriteitVoorZoekresultaat("Volledig")(prioriteitenOpNaam, 99))
-    );
+    this.alleZoekResultaten.sort(zoekResultaatOrdering(this.zoekVeld.value, prioriteitVoorZoekresultaat("Volledig")(optiesOpNaam, 99)));
     nieuweResultaten.legende.forEach((safeHtml, name) => this.legende.set(name!, safeHtml!));
     this.alleSuggestiesResultaten = [];
     this.legendeKeys = Array.from(this.legende.keys());
@@ -781,7 +787,8 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       .concat(nieuweResultaten.fouten.map(fout => new Fout(nieuweResultaten.zoeker, fout)));
 
     this.featuresByResultaat = this.alleZoekResultaten.reduce(
-      (map, resultaat) => map.set(resultaat, ZoekerBoxComponent.maakNieuwFeature(resultaat)),
+      (map, resultaat) =>
+        map.set(resultaat, ZoekerBoxComponent.maakNieuwFeature(resultaat, fpMap.lookup(setoidString)(resultaat.zoeker, optiesOpNaam))),
       new Map<ZoekResultaat, ol.Feature[]>()
     );
 
@@ -791,16 +798,16 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.decreaseBusy();
   }
 
-  private processSuggestiesAntwoord(nieuweResultaten: ZoekAntwoord, prioriteitenOpNaam: ZoekerPrioriteitenOpZoekernaam): void {
+  private processSuggestiesAntwoord(nieuweResultaten: ZoekAntwoord, optiesOpNaam: WeergaveoptiesOpZoekernaam): void {
     // de resultaten van de zoeker wiens antwoord nu binnen komt, moeten vervangen worden door de nieuwe resultaten
     // We moeten de resultaten in volgorde van prioriteit tonen
 
-    // Een hulpfunctie die de lokale prioriteitenOpNaam mee neemt.
-    const prioriteit: Function1<ZoekAntwoord, number> = prioriteitVoorZoekAntwoord("Suggesties")(prioriteitenOpNaam, 99);
+    // Een hulpfunctie die de lokale optiesOpNaam mee neemt.
+    const prioriteit: Function1<ZoekAntwoord, number> = prioriteitVoorZoekAntwoord("Suggesties")(optiesOpNaam, 99);
 
     // Stap 1 is enkel die resultaten overhouden die van toepassing zijn en een prioriteit hebben
     const weerhoudenResultaten: Option<ZoekAntwoord> = zoekresultatenVanType("Suggesties", nieuweResultaten) //
-      .filter(heeftPrioriteit(prioriteitenOpNaam));
+      .filter(heeftPrioriteit(optiesOpNaam));
 
     forEach(weerhoudenResultaten, resultaten => {
       // Stap 2 is sorteren van de antwoorden van de zoekers op prioriteit
