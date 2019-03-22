@@ -27,7 +27,7 @@ import {
   Veldwaarde,
   verkeersbordenStyleFunction,
   zoekerMetPrioriteiten,
-  ZoekerMetPrioriteiten
+  ZoekerMetWeergaveopties
 } from "../../projects/ng-kaart/src/public_api";
 
 import { DummyZoeker } from "./dummy-zoeker";
@@ -531,7 +531,7 @@ export class FeatureDemoComponent {
   readonly fietspadenRefreshSubj = new rx.Subject<void>();
   readonly fietspadenRefresh$ = this.fietspadenRefreshSubj.asObservable();
 
-  readonly demoZoekers: ZoekerMetPrioriteiten[] = [
+  readonly demoZoekers: ZoekerMetWeergaveopties[] = [
     zoekerMetPrioriteiten(new DummyZoeker("dummy0", FeatureDemoComponent.zoekerKleurCodes[0]), 1, 1, true, true),
     zoekerMetPrioriteiten(new DummyZoeker("dummy1", FeatureDemoComponent.zoekerKleurCodes[1]), 2, 2, true, true)
   ];
@@ -878,10 +878,6 @@ export class FeatureDemoComponent {
   }
 
   onAlleFeatures(): void {
-    interface Counter {
-      count: number;
-      last?: ol.Feature;
-    }
     console.log("Alle features opvragen");
     forEach(this.cachedFeaturesProvider, provider => this.verwerkSelectie(provider.all$()));
   }

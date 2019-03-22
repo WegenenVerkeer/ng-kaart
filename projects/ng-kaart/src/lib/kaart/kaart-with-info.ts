@@ -3,7 +3,7 @@ import * as MobileDetect from "mobile-detect/mobile-detect";
 import * as ol from "openlayers";
 import { BehaviorSubject, ReplaySubject, Subject } from "rxjs";
 
-import { ZoekerMetPrioriteiten } from "../zoeker/zoeker";
+import { ZoekerMetWeergaveopties } from "../zoeker/zoeker";
 
 import { KaartLocaties } from "./kaart-bevragen/laaginfo.model";
 import { KaartConfig } from "./kaart-config";
@@ -34,7 +34,7 @@ export class KaartWithInfo {
   readonly selectInteracties: ol.interaction.Interaction[] = [];
   readonly scrollZoomOnFocus: boolean = false;
   readonly showBackgroundSelector: boolean = false;
-  readonly zoekersMetPrioriteiten: Array<ZoekerMetPrioriteiten> = Array();
+  readonly zoekersMetPrioriteiten: Array<ZoekerMetWeergaveopties> = Array();
 
   // Een serieuze doorn in het oog. Dit is een collectie die automagisch door OL up-to-date gehouden wordt (mbv interactie).
   readonly geselecteerdeFeatures: ol.Collection<ol.Feature> = new ol.Collection<ol.Feature>();

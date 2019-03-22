@@ -6,7 +6,7 @@ import { map } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../../kaart/kaart-child-component-base";
 import { KaartComponent } from "../../kaart/kaart.component";
-import { ZoekerHelpBoom, ZoekerMetPrioriteiten } from "../zoeker";
+import { ZoekerHelpBoom, ZoekerMetWeergaveopties } from "../zoeker";
 
 interface ZoekHelpNode {
   readonly titel: string;
@@ -47,7 +47,7 @@ class ZoekerHelpBoomImpl implements ZoekerHelpBoom {
   }
 }
 
-const bouwZoekBoom = (zoekers: ZoekerMetPrioriteiten[]) => {
+const bouwZoekBoom = (zoekers: ZoekerMetWeergaveopties[]) => {
   const visitor = new ZoekerHelpBoomImpl();
   // We laten iedere zoeker de helpBoom verder opbouwen.
   zoekers.forEach(zoeker => zoeker.zoeker.help(visitor));

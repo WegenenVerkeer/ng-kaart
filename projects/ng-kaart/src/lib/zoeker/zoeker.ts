@@ -61,12 +61,14 @@ const maybeInsertPrioriteit: Function3<Option<number>, Zoektype, PrioriteitenOpZ
   prioriteiten
 ) => maybePrio.map(prio => insert(zoektype, prio, prioriteiten)).getOrElse(prioriteiten);
 
-// TODO naam aanpassen: ZoekerMetWeergaveOpties
-export interface ZoekerMetPrioriteiten {
-  readonly zoeker: Zoeker;
+export interface Weergaveopties {
   readonly prioriteiten: PrioriteitenOpZoekertype;
   readonly toonIcoon: boolean;
   readonly toonOppervlak: boolean;
+}
+
+export interface ZoekerMetWeergaveopties extends Weergaveopties {
+  readonly zoeker: Zoeker;
 }
 
 export interface ZoekKaartResultaat {
@@ -119,7 +121,7 @@ export const zoekerMetPrioriteiten: (
   suggestiesPrioriteit?: number,
   toonIcoon?: boolean,
   toonOppervlak?: boolean
-) => ZoekerMetPrioriteiten = (zoeker, volledigPrioriteit, suggestiesPrioriteit, toonIcoon, toonOppervlak) => ({
+) => ZoekerMetWeergaveopties = (zoeker, volledigPrioriteit, suggestiesPrioriteit, toonIcoon, toonOppervlak) => ({
   zoeker: zoeker,
   prioriteiten: maybeInsertPrioriteit(
     fromNullable(volledigPrioriteit),
@@ -130,7 +132,7 @@ export const zoekerMetPrioriteiten: (
   toonOppervlak: fromNullable(toonOppervlak).getOrElse(true)
 });
 
-export const zoekerMetNaam: Function1<string, Function1<ZoekerMetPrioriteiten[], Option<Zoeker>>> = naam => zmps =>
+export const zoekerMetNaam: Function1<string, Function1<ZoekerMetWeergaveopties[], Option<Zoeker>>> = naam => zmps =>
   array.findFirst(zmps, zmp => zmp.zoeker.naam() === naam).map(zmp => zmp.zoeker);
 
 // De resultaten worden getoond volgens een bepaalde hiërarchie

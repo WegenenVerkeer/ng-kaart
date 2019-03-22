@@ -9,7 +9,7 @@ import { ZoekerUiSelector } from "../../zoeker/box/zoeker-box.component";
 import { ZoekerCrabService } from "../../zoeker/crab/zoeker-crab.service";
 import { ZoekerGoogleWdbService } from "../../zoeker/google-wdb/zoeker-google-wdb.service";
 import { ZoekerPerceelService } from "../../zoeker/perceel/zoeker-perceel.service";
-import { ZoekerMetPrioriteiten, zoekerMetPrioriteiten } from "../../zoeker/zoeker";
+import { zoekerMetPrioriteiten, ZoekerMetWeergaveopties } from "../../zoeker/zoeker";
 import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
 import { KaartClassicComponent } from "../kaart-classic.component";
 
@@ -19,11 +19,11 @@ import { KaartClassicComponent } from "../kaart-classic.component";
 })
 export class ClassicZoekerComponent extends ClassicUIElementSelectorComponentBase {
   @Input()
-  zoeker: ZoekerMetPrioriteiten;
+  zoeker: ZoekerMetWeergaveopties;
   @Input()
-  zoekers: ZoekerMetPrioriteiten[] = [];
+  zoekers: ZoekerMetWeergaveopties[] = [];
 
-  private registered: ZoekerMetPrioriteiten[] = [];
+  private registered: ZoekerMetWeergaveopties[] = [];
 
   constructor(
     kaart: KaartClassicComponent,
@@ -37,7 +37,7 @@ export class ClassicZoekerComponent extends ClassicUIElementSelectorComponentBas
     this.initialising$.subscribe(() => {
       // berekend op het moment van initialisatie => geen mismatch init <> destroy mogelijk
       const inputZoekers = concat(toArray(fromNullable(this.zoeker)), this.zoekers);
-      const stdZoekers: ZoekerMetPrioriteiten[] = [
+      const stdZoekers: ZoekerMetWeergaveopties[] = [
         zoekerMetPrioriteiten(googleZoeker, 1, 1),
         zoekerMetPrioriteiten(crabZoeker, 2, 2),
         zoekerMetPrioriteiten(perceelZoeker, 3)

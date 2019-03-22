@@ -3,7 +3,7 @@ import { Function1 } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 
-import { ZoekAntwoord, ZoekerMetPrioriteiten, ZoekResultaat } from "../zoeker/zoeker";
+import { ZoekAntwoord, ZoekerMetWeergaveopties, ZoekResultaat } from "../zoeker/zoeker";
 
 import { KaartLocaties, WegLocatie } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
@@ -125,7 +125,7 @@ export interface ZoekResultatenSubscription<Msg> {
 
 export interface ZoekersSubscription<Msg> {
   readonly type: "Zoekers";
-  readonly wrapper: MsgGen<ZoekerMetPrioriteiten[], Msg>;
+  readonly wrapper: MsgGen<ZoekerMetWeergaveopties[], Msg>;
 }
 
 export interface ZoekResultaatSelectieSubscription<Msg> {
@@ -239,7 +239,7 @@ export function ZoekResultatenSubscription<Msg>(wrapper: MsgGen<ZoekAntwoord, Ms
   return { type: "ZoekAntwoord", wrapper: wrapper };
 }
 
-export function ZoekersSubscription<Msg>(wrapper: MsgGen<ZoekerMetPrioriteiten[], Msg>): ZoekersSubscription<Msg> {
+export function ZoekersSubscription<Msg>(wrapper: MsgGen<ZoekerMetWeergaveopties[], Msg>): ZoekersSubscription<Msg> {
   return { type: "Zoekers", wrapper: wrapper };
 }
 
