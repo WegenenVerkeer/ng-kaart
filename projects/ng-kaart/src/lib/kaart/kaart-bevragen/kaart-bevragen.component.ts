@@ -1,10 +1,11 @@
 import { HttpClient } from "@angular/common/http";
 import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
+import { left, right } from "fp-ts/lib/Either";
 import * as option from "fp-ts/lib/Option";
-import { none, Option } from "fp-ts/lib/Option";
+import { none } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { debounceTime, filter, map, mergeAll, scan, startWith, switchMap, timeoutWith } from "rxjs/operators";
+import { catchError, debounceTime, filter, map, mergeAll, scan, startWith, switchMap, timeoutWith } from "rxjs/operators";
 
 import * as arrays from "../../util/arrays";
 import { observeOnAngular } from "../../util/observe-on-angular";
@@ -14,9 +15,10 @@ import * as ke from "../kaart-elementen";
 import { KaartModusComponent } from "../kaart-modus-component";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
+import { kaartLogger } from "../log";
 
 import * as srv from "./kaart-bevragen.service";
-import { AdresResult, LaagLocationInfo, LaagLocationInfoService, WegLocatiesResult } from "./laaginfo.model";
+import { AdresResult, LaagLocationInfo, LaagLocationInfoResult, LaagLocationInfoService, WegLocatiesResult } from "./laaginfo.model";
 
 export const BevraagKaartUiSelector = "Bevraagkaart";
 
@@ -89,7 +91,7 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
     coordinaat: ol.Coordinate,
     maybeAdres: Progress<AdresResult>,
     wegLocaties: Progress<WegLocatiesResult>,
-    lagenLocatieInfo: Map<string, Progress<LaagLocationInfo>>
+    lagenLocatieInfo: Map<string, Progress<LaagLocationInfoResult>>
   ) {
     this.dispatch(
       prt.ToonInfoBoodschapCmd({
@@ -113,7 +115,7 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
     coordinaat: ol.Coordinate,
     maybeAdres: Progress<AdresResult>,
     wegLocaties: Progress<WegLocatiesResult>,
-    lagenLocatieInfo: Map<string, Progress<LaagLocationInfo>>
+    lagenLocatieInfo: Map<string, Progress<LaagLocationInfoResult>>
   ) {
     this.dispatch(
       prt.PublishKaartLocatiesCmd({
@@ -136,8 +138,25 @@ function infoForLaag(
   return svc
     .infoByLocation$(location) //
     .pipe(
-      map(info => srv.withLaagLocationInfo(srv.fromTimestampAndCoordinate(timestamp, location), laag.titel, Received(info))),
+      map(info =>
+        srv.withLaagLocationInfo(
+          srv.fromTimestampAndCoordinate(timestamp, location),
+          laag.titel,
+          Received(right<string, LaagLocationInfo>(info))
+        )
+      ),
       startWith(srv.withLaagLocationInfo(srv.fromTimestampAndCoordinate(timestamp, location), laag.titel, Requested)),
-      timeoutWith(5000, rx.of(srv.withLaagLocationInfo(srv.fromTimestampAndCoordinate(timestamp, location), laag.titel, TimedOut)))
+      timeoutWith(5000, rx.of(srv.withLaagLocationInfo(srv.fromTimestampAndCoordinate(timestamp, location), laag.titel, TimedOut))),
+      catchError(error => {
+        // bij fout toch zeker geldige observable doorsturen, anders geen volgende events
+        kaartLogger.error("Fout bij opvragen laaginfo", error);
+        return rx.of(
+          srv.withLaagLocationInfo(
+            srv.fromTimestampAndCoordinate(timestamp, location),
+            laag.titel,
+            Received(left<string, LaagLocationInfo>("Kon gegevens niet ophalen"))
+          )
+        );
+      })
     );
 }

@@ -25,6 +25,10 @@ export const Requested: Requested = "Requested";
 export const TimedOut: TimedOut = "TimedOut";
 export const Received: <A>(_: A) => Received<A> = a => ({ value: a });
 
+export function map<A, B>(pr: Progress<A>, f: Function1<A, B>): Progress<B> {
+  return withProgress<A, Progress<B>>(() => Requested, () => TimedOut, a => Received(f(a)))(pr);
+}
+
 export const proceed: <A>(pr1: Progress<A>, pr2: Progress<A>) => Progress<A> = (pr1, pr2) =>
   withProgress(
     () => pr2, // indien requested, vervang door opvolger

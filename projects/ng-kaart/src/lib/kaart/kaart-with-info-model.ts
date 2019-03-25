@@ -6,7 +6,7 @@ import * as ol from "openlayers";
 import { Progress } from "../util/progress";
 import { TypedRecord } from "../util/typed-record";
 
-import { Adres, LaagLocationInfo, WegLocaties } from "./kaart-bevragen/laaginfo.model";
+import { Adres, LaagLocationInfoResult, WegLocaties } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { VectorLaag } from "./kaart-elementen";
 
@@ -43,7 +43,7 @@ export interface InfoBoodschapKaartBevragenProgress extends InfoBoodschapBase {
   readonly coordinaat: ol.Coordinate;
   readonly adres: Option<Adres>; // Zou ook Progress<Adres> kunnen zijn
   readonly weglocaties: WegLocaties; // Zou ook Progress<<WegLocaties> kunnen zijn
-  readonly laagLocatieInfoOpTitel: Map<string, Progress<LaagLocationInfo>>;
+  readonly laagLocatieInfoOpTitel: Map<string, Progress<LaagLocationInfoResult>>;
 }
 
 export const foldInfoBoodschap = (boodschap: InfoBoodschap) => <A>(

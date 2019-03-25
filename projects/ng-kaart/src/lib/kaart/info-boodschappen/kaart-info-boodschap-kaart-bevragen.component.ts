@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone } from "@angular/core";
 import * as array from "fp-ts/lib/Array";
-import { Function1, Function2, Function3 } from "fp-ts/lib/function";
+import { Curried2, Function1, Function2, Function3 } from "fp-ts/lib/function";
 import { fromNullable } from "fp-ts/lib/Option";
 import { Ord, ordNumber } from "fp-ts/lib/Ord";
 import * as ord from "fp-ts/lib/Ord";
@@ -10,7 +10,7 @@ import { formatCoordinate, lambert72ToWgs84, switchVolgorde } from "../../coordi
 import { copyToClipboard } from "../../util/clipboard";
 import * as maps from "../../util/maps";
 import { Progress, withProgress } from "../../util/progress";
-import { LaagLocationInfo, TextLaagLocationInfo, VeldinfoLaagLocationInfo, Veldwaarde } from "../kaart-bevragen/laaginfo.model";
+import { LaagLocationInfoResult, TextLaagLocationInfo, VeldinfoLaagLocationInfo, Veldwaarde } from "../kaart-bevragen/laaginfo.model";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { InfoBoodschapKaartBevragenProgress } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
@@ -48,8 +48,19 @@ const veldinfoLaagLocationInfoToLaagInfo: Function2<string, VeldinfoLaagLocation
   veldinfos: maps.toMapByKey(vlli.veldinfos, vi => vi.naam)
 });
 
-const laagLocationInfoToLaagInfo: Function2<string, LaagLocationInfo, LaagInfo> = (titel, lli) =>
-  lli.type === "TextLaagLocationInfo" ? textLaagLocationInfoToLaagInfo(titel, lli) : veldinfoLaagLocationInfoToLaagInfo(titel, lli);
+const errorToLaagInfo: Curried2<string, string, LaagInfo> = titel => error => ({
+  titel: titel,
+  busy: false,
+  timedout: false,
+  text: error
+});
+
+const laagLocationInfoResultToLaagInfo: Function2<string, LaagLocationInfoResult, LaagInfo> = (titel, llie) =>
+  llie.fold(
+    errorToLaagInfo(titel), //
+    lli =>
+      lli.type === "TextLaagLocationInfo" ? textLaagLocationInfoToLaagInfo(titel, lli) : veldinfoLaagLocationInfoToLaagInfo(titel, lli)
+  );
 
 @Component({
   selector: "awv-kaart-info-boodschap-kaart-bevragen",
@@ -68,13 +79,13 @@ export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildComponen
   set boodschap(boodschap: InfoBoodschapKaartBevragenProgress) {
     // Deze waarden voor de template worden berekend op het moment dat er een nieuwe input is, niet elke
     // keer dat Angular denkt dat hij change detection moet laten lopen.
-    const foldF: Function3<string, Progress<LaagLocationInfo>, LaagInfo[], LaagInfo[]> = (key, value, acc) =>
+    const foldF: Function3<string, Progress<LaagLocationInfoResult>, LaagInfo[], LaagInfo[]> = (key, value, acc) =>
       array.snoc(
         acc,
-        withProgress<LaagLocationInfo, LaagInfo>(
+        withProgress<LaagLocationInfoResult, LaagInfo>(
           () => ({ titel: key, busy: true }),
           () => ({ titel: key, busy: false, timedout: true }),
-          laaglocationinfo => laagLocationInfoToLaagInfo(key, laaglocationinfo)
+          laaglocationinfo => laagLocationInfoResultToLaagInfo(key, laaglocationinfo)
         )(value)
       );
     this.laagInfos = maps.fold(boodschap.laagLocatieInfoOpTitel)(foldF)([]);

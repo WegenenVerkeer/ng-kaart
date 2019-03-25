@@ -12,14 +12,14 @@ import * as maps from "../../util/maps";
 import { proceed, Progress, Received, Requested } from "../../util/progress";
 import { kaartLogger } from "../log";
 
-import { Adres, AdresResult, LaagLocationInfo, WegLocatie, WegLocaties, WegLocatiesResult } from "./laaginfo.model";
+import { Adres, AdresResult, LaagLocationInfoResult, WegLocatie, WegLocaties, WegLocatiesResult } from "./laaginfo.model";
 
 export interface LocatieInfo {
   readonly timestamp: number;
   readonly kaartLocatie: ol.Coordinate;
   readonly adres: Progress<AdresResult>;
   readonly weglocaties: Progress<WegLocatiesResult>;
-  readonly lagenLocatieInfo: Map<string, Progress<LaagLocationInfo>>;
+  readonly lagenLocatieInfo: Map<string, Progress<LaagLocationInfoResult>>;
 }
 
 export function LocatieInfo(
@@ -27,7 +27,7 @@ export function LocatieInfo(
   kaartLocatie: ol.Coordinate,
   adres: Progress<AdresResult>,
   weglocaties: Progress<WegLocatiesResult>,
-  lagenLocatieInfo: Map<string, Progress<LaagLocationInfo>>
+  lagenLocatieInfo: Map<string, Progress<LaagLocationInfoResult>>
 ): LocatieInfo {
   return {
     timestamp: timestamp,
@@ -156,8 +156,8 @@ export function merge(i1: LocatieInfo, i2: LocatieInfo): LocatieInfo {
     : i2;
 }
 
-export function withLaagLocationInfo(i: LocatieInfo, laagTitel: string, lli: Progress<LaagLocationInfo>): LocatieInfo {
-  return { ...i, lagenLocatieInfo: i.lagenLocatieInfo.set(laagTitel, lli) };
+export function withLaagLocationInfo(i: LocatieInfo, laagTitel: string, lli: Progress<LaagLocationInfoResult>): LocatieInfo {
+  return { ...i, lagenLocatieInfo: maps.set(i.lagenLocatieInfo, laagTitel, lli) };
 }
 
 export function adresViaXY$(http: HttpClient, coordinaat: ol.Coordinate): rx.Observable<AdresResult> {

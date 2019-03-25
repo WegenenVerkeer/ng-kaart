@@ -52,11 +52,12 @@ export interface Adres {
 
 export type AdresResult = Either<string, Adres>;
 export type WegLocatiesResult = Either<string, WegLocaties>;
+export type LaagLocationInfoResult = Either<string, LaagLocationInfo>;
 
 export interface KaartLocaties {
   readonly timestamp: number;
   readonly coordinaat: ol.Coordinate;
   readonly maybeAdres: Progress<AdresResult>;
   readonly wegLocaties: Progress<WegLocatiesResult>;
-  readonly lagenLocatieInfo: Map<string, Progress<LaagLocationInfo>>;
+  readonly lagenLocatieInfo: Map<string, Progress<LaagLocationInfoResult>>;
 }

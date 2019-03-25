@@ -34,6 +34,16 @@ export function filterKey<K, V>(kvs: Map<K, V>, predicate: Predicate<K>): Map<K,
   return newMap;
 }
 
+export function set<V>(kvs: Map<string, V>, key: string, value: V): Map<string, V> {
+  const newMap = new Map<string, V>(kvs.entries());
+  newMap.set(key, value);
+  return newMap;
+}
+
+export function mapValues<K, A, B>(kvs: Map<K, A>, f: Function1<A, B>): Map<K, B> {
+  return new Map<K, B>(Array.from(kvs.entries()).map(e => [e[0], f(e[1])] as [K, B]));
+}
+
 export const reverse: <K, V>(_: Map<K, V>) => Map<K, V> = kvs => {
   return new Map(Array.from(kvs.entries()).reverse());
 };
