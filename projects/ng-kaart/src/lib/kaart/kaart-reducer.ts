@@ -11,6 +11,7 @@ import { Subscription } from "rxjs";
 import * as rx from "rxjs";
 import { bufferCount, debounceTime, distinctUntilChanged, map, switchMap, throttleTime } from "rxjs/operators";
 
+import * as filter from "../filter/filter-model";
 import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
 import * as arrays from "../util/arrays";
 import { refreshTiles } from "../util/cachetiles";
@@ -1294,7 +1295,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         cmnd.wrapper,
         valideerNoSqlFsSourceBestaat(cmnd.titel).map(noSqlFsSource => {
-          noSqlFsSource.setFilter(cmnd.filter);
+          cmnd.filter.foldL(() => noSqlFsSource.setFilter(none), f => noSqlFsSource.setFilter(some(filter.cql(f))));
           return ModelAndEmptyResult(model);
         })
       );
