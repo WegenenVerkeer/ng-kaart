@@ -1,7 +1,8 @@
-import { Component, Input, NgZone } from "@angular/core";
+import { Component, ElementRef, Injector, Input, NgZone } from "@angular/core";
 
 import { VoorwaardenOpties, VoorwaardenSelector } from "../../kaart/voorwaarden/kaart-voorwaarden.component";
 import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
+import { KaartClassicLocatorService } from "../kaart-classic-locator.service";
 import { KaartClassicComponent } from "../kaart-classic.component";
 
 @Component({
@@ -14,8 +15,8 @@ export class ClassicVoorwaardenComponent extends ClassicUIElementSelectorCompone
   @Input()
   titel = "Voorwaarden";
 
-  constructor(kaart: KaartClassicComponent, zone: NgZone) {
-    super(VoorwaardenSelector, kaart, zone);
+  constructor(injector: Injector) {
+    super(VoorwaardenSelector, injector);
   }
 
   protected opties(): VoorwaardenOpties {

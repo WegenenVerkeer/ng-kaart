@@ -1,15 +1,14 @@
-import { AfterContentInit, ContentChildren, Input, NgZone, OnDestroy, OnInit, QueryList } from "@angular/core";
+import { AfterContentInit, ContentChildren, Injector, Input, OnDestroy, OnInit, QueryList } from "@angular/core";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 
-import { KaartComponentBase } from "../../kaart/kaart-component-base";
 import { Laag, Laaggroep } from "../../kaart/kaart-elementen";
 import { Legende } from "../../kaart/kaart-legende";
 import * as prt from "../../kaart/kaart-protocol";
-import { KaartClassicComponent } from "../kaart-classic.component";
+import { ClassicBaseComponent } from "../classic-base.component";
 import { ClassicLegendeItemComponent } from "../legende/classic-legende-item.component";
 import { KaartClassicMsg, logOnlyWrapper } from "../messages";
 
-export abstract class ClassicLaagComponent extends KaartComponentBase implements AfterContentInit, OnDestroy, OnInit {
+export abstract class ClassicLaagComponent extends ClassicBaseComponent implements AfterContentInit, OnDestroy, OnInit {
   @Input()
   titel = "";
   @Input()
@@ -28,8 +27,8 @@ export abstract class ClassicLaagComponent extends KaartComponentBase implements
 
   protected laag: Option<Laag> = none;
 
-  constructor(protected readonly kaart: KaartClassicComponent, zone: NgZone) {
-    super(zone);
+  constructor(injector: Injector) {
+    super(injector);
   }
 
   ngOnInit() {
@@ -65,6 +64,7 @@ export abstract class ClassicLaagComponent extends KaartComponentBase implements
   }
 
   protected voegLegendeToe() {
+    console.log("******", this.titel, this.legendeItems);
     if (this.legendeItems.length > 0) {
       const legende = Legende(this.legendeItems.map(item => item.maakLegendeItem()));
       this.dispatch(prt.ZetLaagLegendeCmd(this.titel, legende, logOnlyWrapper));

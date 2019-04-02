@@ -1,10 +1,9 @@
-import { Component, Input, NgZone } from "@angular/core";
+import { Component, Injector, Input } from "@angular/core";
 
 import * as clr from "../../stijl/colour";
 
 import { MultiMetenOpties, MultiMetenUiSelector } from "../../kaart/meten/kaart-multi-meten.component";
 import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
-import { KaartClassicComponent } from "../kaart-classic.component";
 
 @Component({
   selector: "awv-multi-meet-knop",
@@ -23,8 +22,8 @@ export class ClassicMultiMetenComponent extends ClassicUIElementSelectorComponen
   @Input() // moet de gebruiker kunnen kiezen tussen  rechte lijnen en via de weg?
   keuzemogelijkheidTonen = false;
 
-  constructor(kaart: KaartClassicComponent, zone: NgZone) {
-    super(MultiMetenUiSelector, kaart, zone);
+  constructor(injector: Injector) {
+    super(MultiMetenUiSelector, injector);
   }
 
   protected opties(): MultiMetenOpties {

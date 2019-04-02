@@ -1,13 +1,21 @@
-import { Component, Input, OnInit, ViewEncapsulation } from "@angular/core";
+import { AfterViewInit, Component, ElementRef, Input, ViewChild, ViewContainerRef, ViewEncapsulation } from "@angular/core";
+import { KaartClassicLocatorService } from "projects/ng-kaart/src/lib/classic/kaart-classic-locator.service";
+import { KaartClassicComponent } from "projects/ng-kaart/src/public_api";
 
 @Component({
   selector: "awv-kaart-element",
   templateUrl: "./kaart-element.component.html",
-  styleUrls: ["./kaart-element.component.css"]
+  styleUrls: ["./kaart-element.component.css"],
+  encapsulation: ViewEncapsulation.None
 })
-export class KaartElementComponent implements OnInit {
-  @Input() zoom = 2;
-  constructor() {}
+export class KaartElementComponent implements AfterViewInit {
+  @ViewChild("kaart") kaart: KaartClassicComponent;
 
-  ngOnInit() {}
+  @Input() zoom = 2;
+
+  constructor(private el: ElementRef<Element>, private kaartLocatorService: KaartClassicLocatorService<KaartClassicComponent>) {}
+
+  ngAfterViewInit() {
+    this.kaartLocatorService.registerKaart(this.kaart, this.el);
+  }
 }

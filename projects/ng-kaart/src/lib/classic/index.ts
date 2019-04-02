@@ -34,6 +34,39 @@ import { ClassicPerceelZoekerComponent } from "./zoeker/classic-perceel-zoeker.c
 import { ClassicZoekerComponent } from "./zoeker/classic-zoeker.component";
 import { ClassicZoomComponent } from "./zoom/classic-zoom.component";
 
+export const componentMap = {
+  "awv-kaart-blanco-laag": ClassicBlancoLaagComponent,
+  "awv-kaart-copyright": ClassicCopyrightComponent,
+  "awv-kaart-crab-zoeker": ClassicCrabZoekerComponent,
+  "awv-kaart-features-laag": ClassicFeaturesLaagComponent,
+  "awv-kaart-geoserver-laag": ClassicGeoserverLaagComponent,
+  "awv-kaart-google-zoeker": ClassicGoogleZoekerComponent,
+  "awv-bevraag-kaart": ClassicKaartBevragenComponent,
+  "awv-kaart-lagenkiezer": ClassicLagenkiezerComponent,
+  "awv-legende-bolletje-item": ClassicLegendeBolletjeItemComponent,
+  "awv-legende-image-item": ClassicLegendeImageItemComponent,
+  "awv-legende-lijn-item": ClassicLegendeLijnItemComponent,
+  "awv-legende-polygoon-item": ClassicLegendePolygoonItemComponent,
+  "awv-meet-knop": ClassicMetenComponent,
+  "awv-multi-meet-knop": ClassicMultiMetenComponent,
+  "awv-kaart-nosqlfs-laag": ClassicNosqlfsLaagComponent,
+  "awv-kaart-ortho-laag": ClassicOrthoLaagComponent,
+  "awv-kaart-perceel-zoeker": ClassicPerceelZoekerComponent,
+  "awv-kaart-schaal": ClassicSchaalComponent,
+  "awv-kaart-standaard-interacties": ClassicStandaardInteractiesComponent,
+  "awv-kaart-streetview": ClassicStreetviewComponent,
+  "awv-kaart-tilecache-laag": ClassicTilecacheLaagComponent,
+  "awv-kaart-vector-laag": ClassicVectorLaagComponent,
+  "awv-kaart-knop-volledig-scherm": ClassicVolledigSchermComponent,
+  "awv-kaart-wms-laag": ClassicWmsLaagComponent,
+  "awv-kaart-wmts-laag": ClassicWmtsLaagComponent,
+  "awv-kaart-zoeker": ClassicZoekerComponent,
+  "awv-kaart-zoomknoppen": ClassicZoomComponent,
+  "awv-kaart-knop-achtergrondlaag-kiezer": ClassicAchtergrondSelectorComponent,
+  "awv-kaart-voorwaarden": ClassicVoorwaardenComponent,
+  "awv-kaart-classic-dummy": KaartClassicComponent
+};
+
 const components = [
   ClassicAchtergrondSelectorComponent,
   ClassicBlancoLaagComponent,
@@ -71,7 +104,7 @@ const components = [
   imports: [CommonModule, KaartModule],
   declarations: [components],
   exports: [components],
-  providers: [KaartClassicComponent]
+  entryComponents: [components]
 })
 export class ClassicModule {}
 

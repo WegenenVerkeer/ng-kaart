@@ -1,8 +1,7 @@
-import { Component, Input, NgZone, ViewEncapsulation } from "@angular/core";
+import { Component, Injector, Input, ViewEncapsulation } from "@angular/core";
 import { option } from "fp-ts";
 import { identity } from "fp-ts/lib/function";
 import { fromNullable } from "fp-ts/lib/Option";
-import * as rx from "rxjs";
 import { switchMap } from "rxjs/operators";
 
 import { kaartLogger } from "../../kaart";
@@ -14,7 +13,6 @@ import { NosqlFsSource } from "../../source/nosql-fs-source";
 import { ofType } from "../../util";
 import { asap } from "../../util/asap";
 import { Consumer } from "../../util/function";
-import { KaartClassicComponent } from "../kaart-classic.component";
 import { cachedFeaturesLookupReadyMsg, CachedFeaturesLookupReadyMsg, logOnlyWrapper } from "../messages";
 
 import { ClassicVectorLaagLikeComponent } from "./classic-vector-laag-like.component";
@@ -71,8 +69,8 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
     }
   }
 
-  constructor(kaart: KaartClassicComponent, zone: NgZone) {
-    super(kaart, zone);
+  constructor(injector: Injector) {
+    super(injector);
 
     this.bindToLifeCycle(
       this.viewReady$.pipe(

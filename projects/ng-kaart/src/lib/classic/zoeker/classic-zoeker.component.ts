@@ -1,4 +1,4 @@
-import { Component, Input, NgZone } from "@angular/core";
+import { Component, Injector, Input } from "@angular/core";
 import * as array from "fp-ts/lib/Array";
 import { concat } from "fp-ts/lib/function";
 import { fromNullable } from "fp-ts/lib/Option";
@@ -11,7 +11,6 @@ import { ZoekerGoogleWdbService } from "../../zoeker/google-wdb/zoeker-google-wd
 import { ZoekerPerceelService } from "../../zoeker/perceel/zoeker-perceel.service";
 import { Zoeker, zoekerMetPrioriteiten, ZoekerMetWeergaveopties } from "../../zoeker/zoeker";
 import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
-import { KaartClassicComponent } from "../kaart-classic.component";
 
 @Component({
   selector: "awv-kaart-zoeker",
@@ -27,13 +26,12 @@ export class ClassicZoekerComponent extends ClassicUIElementSelectorComponentBas
   private isInitialised = false;
 
   constructor(
-    kaart: KaartClassicComponent,
-    zone: NgZone,
+    injector: Injector,
     crabZoeker: ZoekerCrabService,
     googleZoeker: ZoekerGoogleWdbService,
     perceelZoeker: ZoekerPerceelService
   ) {
-    super(ZoekerUiSelector, kaart, zone);
+    super(ZoekerUiSelector, injector);
 
     this.initialising$.subscribe(() => {
       // Een beetje een ingewikkelde constructie, maar we willen dat we zowel met deze tag alleen kunnen werken (backwards compatibility)

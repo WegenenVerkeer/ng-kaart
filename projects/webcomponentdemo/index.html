@@ -1,40 +1,47 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Ng-kaart Webcomponent demo</title>
-    <base href="/" />
 
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link
-      href="https://fonts.googleapis.com/icon?family=Material+Icons"
-      rel="stylesheet"
-    />
-    <link href="styles.css" rel="stylesheet" />
-    <style>
-      .custom-titel {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-      }
-    </style>
-    <script>
-      window.onload = () => {
-        const kaartElement = document.getElementById("k1");
-        const levels = 11;
-        let zoomIndex = 1;
-        const setZoom = () => {
-          const zoom = 1 + Math.min(zoomIndex, levels * 2 - zoomIndex);
-          kaartElement.setAttribute("zoom", "" + zoom);
-          zoomIndex = (zoomIndex + 1) % (levels * 2 + 1);
-          setTimeout(setZoom, 2000);
-        };
-        setZoom();
-      };
-    </script>
-    <script type="text/javascript" src="webcomponent.js"></script>
-  </head>
-  <body>
-    <awv-kaart-element id="k1" zoom="1"></awv-kaart-element>
-  </body>
+<head>
+  <meta charset="utf-8" />
+  <title>Ng-kaart Webcomponent demo</title>
+  <base href="/webcomponentdemo/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  <link href="styles.css" rel="stylesheet" />
+  <style>
+    html,
+    body {
+      height: 100%;
+    }
+    awv-kaart-element {
+      height: 100%;
+    }
+  </style>
+  <script type="text/javascript" src="webcomponent.js"></script>
+</head>
+
+<body>
+  <awv-kaart-element id="k1" zoom="2">
+    <awv-kaart-lagenkiezer verwijderbare-lagen="true" verplaatsbare-lagen="true" toon-legende="true"></awv-kaart-lagenkiezer>
+    <awv-kaart-ortho-laag titel="Ortho" groep="Achtergrond"></awv-kaart-ortho-laag>
+    <awv-kaart-tilecache-laag titel="Dienstkaart grijs" laag-naam="dienstkaart-grijs"></awv-kaart-tilecache-laag>
+    <awv-kaart-standaard-interacties focus-voor-zoom="true"></awv-kaart-standaard-interacties>
+    <awv-meet-knop toon-info-boodschap="true"></awv-meet-knop>
+
+    <awv-kaart-geoserver-laag titel="Referentiepunten 3" laagNaam="referentiepunten" versie="1.1.1" minZoom="6">
+      <awv-legende-lijn-item beschrijving="Referentiepunten 3 (lijn)" kleur="yellow"></awv-legende-lijn-item>
+      <awv-legende-polygoon-item beschrijving="Referentiepunten 3 (polygoon)" kleur="green"></awv-legende-polygoon-item>
+    </awv-kaart-geoserver-laag>
+
+
+    <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+    <awv-kaart-streetview></awv-kaart-streetview>
+    <awv-kaart-schaal></awv-kaart-schaal>
+    <awv-kaart-voorwaarden titel="dead or alive" href="http://slashdot.org"></awv-kaart-voorwaarden>
+    <awv-kaart-copyright copyright="BlaBlaBla"></awv-kaart-copyright>
+    <awv-kaart-knop-achtergrondlaag-kiezer></awv-kaart-knop-achtergrondlaag-kiezer>
+  </awv-kaart-element>
+</body>
+
 </html>

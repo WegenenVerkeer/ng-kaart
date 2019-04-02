@@ -1,10 +1,9 @@
 import { HttpClient } from "@angular/common/http";
-import { Component, Inject, Input, NgZone, ViewEncapsulation } from "@angular/core";
+import { Component, Inject, Injector, ViewEncapsulation } from "@angular/core";
 import { fromNullable } from "fp-ts/lib/Option";
 
 import { KAART_CFG, KaartConfig } from "../../kaart/kaart-config";
 import { TiledWmsType, WmsLaag } from "../../kaart/kaart-elementen";
-import { KaartClassicComponent } from "../kaart-classic.component";
 
 import * as arrays from "../../util/arrays";
 
@@ -16,8 +15,8 @@ import { ClassicWmsLaagComponent } from "./classic-wms-laag.component";
   encapsulation: ViewEncapsulation.None
 })
 export class ClassicOrthoLaagComponent extends ClassicWmsLaagComponent {
-  constructor(kaart: KaartClassicComponent, @Inject(KAART_CFG) private readonly config: KaartConfig, zone: NgZone, http: HttpClient) {
-    super(kaart, zone, http);
+  constructor(injector: Injector, @Inject(KAART_CFG) private readonly config: KaartConfig, http: HttpClient) {
+    super(injector, http);
   }
 
   createLayer(): WmsLaag {

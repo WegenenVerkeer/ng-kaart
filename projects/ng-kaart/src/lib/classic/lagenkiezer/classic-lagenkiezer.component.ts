@@ -1,16 +1,18 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
+import { Component, Injector, Input, OnChanges, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
 import { Predicate } from "fp-ts/lib/function";
 
 import { VerwijderUiElement, VoegUiElementToe, ZetUiElementOpties } from "../../kaart/kaart-protocol-commands";
 import { DefaultOpties, LagenUiOpties, LagenUiSelector } from "../../lagenkiezer/lagenkiezer.component";
-import { KaartClassicComponent } from "../kaart-classic.component";
+import { ClassicBaseComponent } from "../classic-base.component";
 
 @Component({
   selector: "awv-kaart-lagenkiezer",
   template: ""
 })
-export class ClassicLagenkiezerComponent implements OnInit, OnDestroy, OnChanges {
-  constructor(private readonly kaart: KaartClassicComponent) {}
+export class ClassicLagenkiezerComponent extends ClassicBaseComponent implements OnInit, OnDestroy, OnChanges {
+  constructor(injector: Injector) {
+    super(injector);
+  }
 
   @Input()
   titels: string[] = []; // TODO nog te implementeren om te beperken tot deze
@@ -29,11 +31,13 @@ export class ClassicLagenkiezerComponent implements OnInit, OnDestroy, OnChanges
   stijlbareVectorlagen: Predicate<string> = DefaultOpties.stijlbareVectorlagen;
 
   ngOnInit() {
+    super.ngOnInit();
     this.kaart.dispatch(VoegUiElementToe(LagenUiSelector));
     this.kaart.dispatch(ZetUiElementOpties(LagenUiSelector, this.opties()));
   }
 
   ngOnDestroy() {
+    super.ngOnDestroy();
     this.kaart.dispatch(VerwijderUiElement(LagenUiSelector));
   }
 

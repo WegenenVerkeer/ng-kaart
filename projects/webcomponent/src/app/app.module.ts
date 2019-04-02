@@ -5,7 +5,7 @@ import { BrowserModule } from "@angular/platform-browser";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { ClickOutsideModule } from "ng4-click-outside";
 
-import { ClassicModule } from "../../../ng-kaart/src/lib/classic";
+import { ClassicModule, componentMap, KaartClassicComponent } from "../../../ng-kaart/src/lib/classic";
 import { KaartModule } from "../../../ng-kaart/src/lib/kaart";
 import { LagenkiezerModule } from "../../../ng-kaart/src/lib/lagenkiezer";
 import { ZoekerModule } from "../../../ng-kaart/src/lib/zoeker";
@@ -28,13 +28,13 @@ import { KaartElementComponent } from "./kaart-element/kaart-element.component";
     LagenkiezerModule.withDefaults(),
     ClickOutsideModule
   ],
-  providers: [],
   entryComponents: [KaartElementComponent]
 })
 export class AppModule {
-  public constructor(private readonly injector: Injector) {
-    const el = createCustomElement(KaartElementComponent, { injector });
-    customElements.define("awv-kaart-element", el);
+  public constructor(injector: Injector) {
+    // Pas op!!! De volgorde is heel belangrijk hier. De kaart moet eerst zijn.
+    customElements.define("awv-kaart-element", createCustomElement(KaartElementComponent, { injector }));
+    Object.keys(componentMap).forEach(tag => customElements.define(tag, createCustomElement(componentMap[tag], { injector })));
   }
 
   ngDoBootstrap() {}

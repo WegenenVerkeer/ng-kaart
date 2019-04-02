@@ -1,5 +1,5 @@
 import { HttpClient } from "@angular/common/http";
-import { AfterViewInit, Component, EventEmitter, Input, NgZone, OnInit, Output, ViewEncapsulation } from "@angular/core";
+import { AfterViewInit, Component, EventEmitter, Injector, Input, OnInit, Output, ViewEncapsulation } from "@angular/core";
 import { Function1, Function2, Function4, pipe } from "fp-ts/lib/function";
 import { fromNullable } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
@@ -13,7 +13,7 @@ import * as prt from "../../kaart/kaart-protocol";
 import { VoegLaagLocatieInformatieServiceToe } from "../../kaart/kaart-protocol";
 import { ofType } from "../../util";
 import { urlWithParams } from "../../util/url";
-import { classicMsgSubscriptionCmdOperator, KaartClassicComponent } from "../kaart-classic.component";
+import { classicMsgSubscriptionCmdOperator } from "../kaart-classic.component";
 import { KaartClassicMsg, LaatsteCacheRefreshMsg, logOnlyWrapper, PrecacheProgressMsg } from "../messages";
 
 import { ClassicLaagComponent } from "./classic-laag.component";
@@ -96,8 +96,8 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   @Output()
   laatsteCacheRefresh: EventEmitter<Date> = new EventEmitter<Date>();
 
-  constructor(kaart: KaartClassicComponent, zone: NgZone, private readonly http: HttpClient) {
-    super(kaart, zone);
+  constructor(injector: Injector, private readonly http: HttpClient) {
+    super(injector);
   }
 
   ngOnInit() {

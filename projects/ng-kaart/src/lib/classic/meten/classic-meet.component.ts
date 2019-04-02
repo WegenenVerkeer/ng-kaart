@@ -1,8 +1,7 @@
-import { Component, Input, NgZone } from "@angular/core";
+import { Component, Injector, Input } from "@angular/core";
 
 import { MetenOpties, MetenUiSelector } from "../../kaart/meten/kaart-meten.component";
 import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
-import { KaartClassicComponent } from "../kaart-classic.component";
 
 @Component({
   selector: "awv-meet-knop",
@@ -14,8 +13,8 @@ export class ClassicMetenComponent extends ClassicUIElementSelectorComponentBase
   @Input()
   meerdereGeometrieen = true;
 
-  constructor(kaart: KaartClassicComponent, zone: NgZone) {
-    super(MetenUiSelector, kaart, zone);
+  constructor(injector: Injector) {
+    super(MetenUiSelector, injector);
   }
 
   protected opties(): MetenOpties {

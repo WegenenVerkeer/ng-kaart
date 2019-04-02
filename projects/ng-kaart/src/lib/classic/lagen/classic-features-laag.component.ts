@@ -1,4 +1,4 @@
-import { Component, DoCheck, EventEmitter, Input, NgZone, OnChanges, Output, SimpleChanges, ViewEncapsulation } from "@angular/core";
+import { Component, EventEmitter, Injector, Input, OnChanges, Output, SimpleChanges, ViewEncapsulation } from "@angular/core";
 import { array } from "fp-ts";
 import { Setoid } from "fp-ts/lib/Setoid";
 import * as ol from "openlayers";
@@ -6,7 +6,6 @@ import * as ol from "openlayers";
 import { forChangedValue } from "../../kaart/kaart-component-base";
 import * as prt from "../../kaart/kaart-protocol";
 import * as arrays from "../../util/arrays";
-import { KaartClassicComponent } from "../kaart-classic.component";
 import { logOnlyWrapper } from "../messages";
 
 import { ClassicVectorLaagComponent } from "./classic-vector-laag.component";
@@ -54,8 +53,8 @@ export class ClassicFeaturesLaagComponent extends ClassicVectorLaagComponent imp
   @Output()
   featureGeselecteerd: EventEmitter<ol.Feature> = new EventEmitter<ol.Feature>();
 
-  constructor(kaart: KaartClassicComponent, zone: NgZone) {
-    super(kaart, zone);
+  constructor(injector: Injector) {
+    super(injector);
   }
 
   voegLaagToe(): void {

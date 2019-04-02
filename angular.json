@@ -210,7 +210,7 @@
               "projects/webcomponent/src/assets"
             ],
             "styles": [
-              "projects/webcomponent/src/styles.css"
+              "projects/webcomponent/src/styles.scss"
             ],
             "scripts": []
           },

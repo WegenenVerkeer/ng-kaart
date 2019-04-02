@@ -1,4 +1,4 @@
-import { Input, NgZone } from "@angular/core";
+import { Injector, Input } from "@angular/core";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
@@ -8,7 +8,6 @@ import * as prt from "../../kaart/kaart-protocol";
 import * as ss from "../../kaart/stijl-selector";
 import { getDefaultHoverStyleFunction, getDefaultSelectionStyleFunction, getDefaultStyleFunction } from "../../kaart/styles";
 import { forEach, fromValidation } from "../../util/option";
-import { KaartClassicComponent } from "../kaart-classic.component";
 import { logOnlyWrapper } from "../messages";
 
 import { ClassicLaagComponent } from "./classic-laag.component";
@@ -45,8 +44,8 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
     );
   }
 
-  constructor(kaart: KaartClassicComponent, zone: NgZone) {
-    super(kaart, zone);
+  constructor(injector: Injector) {
+    super(injector);
   }
 
   laaggroep(): ke.Laaggroep {

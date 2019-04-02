@@ -1,10 +1,9 @@
-import { Component, Input, NgZone, ViewEncapsulation } from "@angular/core";
+import { Component, Injector, Input, ViewEncapsulation } from "@angular/core";
 import { fromNullable } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 
 import * as ke from "../../kaart/kaart-elementen";
 import * as ss from "../../kaart/stijl-selector";
-import { KaartClassicComponent } from "../kaart-classic.component";
 
 import { ClassicVectorLaagLikeComponent } from "./classic-vector-laag-like.component";
 
@@ -20,8 +19,8 @@ export class ClassicVectorLaagComponent extends ClassicVectorLaagLikeComponent {
   @Input()
   veldInfos: ke.VeldInfo[] = [];
 
-  constructor(kaart: KaartClassicComponent, zone: NgZone) {
-    super(kaart, zone);
+  constructor(injector: Injector) {
+    super(injector);
   }
 
   createLayer(): ke.VectorLaag {

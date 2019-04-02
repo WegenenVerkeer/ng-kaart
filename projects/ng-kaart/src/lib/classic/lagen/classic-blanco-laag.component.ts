@@ -1,7 +1,6 @@
-import { Component, Input, NgZone, ViewEncapsulation } from "@angular/core";
+import { Component, Injector, Input, ViewEncapsulation } from "@angular/core";
 
 import { BlancoLaag, BlancoType, Laaggroep } from "../../kaart/kaart-elementen";
-import { KaartClassicComponent } from "../kaart-classic.component";
 
 import { ClassicLaagComponent } from "./classic-laag.component";
 
@@ -16,8 +15,8 @@ export class ClassicBlancoLaagComponent extends ClassicLaagComponent {
   @Input()
   titel = "Blanco";
 
-  constructor(kaart: KaartClassicComponent, zone: NgZone) {
-    super(kaart, zone);
+  constructor(injector: Injector) {
+    super(injector);
   }
 
   createLayer(): BlancoLaag {

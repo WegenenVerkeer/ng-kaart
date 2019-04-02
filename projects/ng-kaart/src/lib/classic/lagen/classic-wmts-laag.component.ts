@@ -1,11 +1,10 @@
 import { HttpClient } from "@angular/common/http";
-import { Component, Input, NgZone, OnInit, ViewEncapsulation } from "@angular/core";
+import { Component, Injector, Input, OnInit, ViewEncapsulation } from "@angular/core";
 import { fromNullable, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 
 import * as ke from "../../kaart/kaart-elementen";
 import { urlWithParams } from "../../util/url";
-import { KaartClassicComponent } from "../kaart-classic.component";
 import { classicLogger } from "../log";
 import { logOnlyWrapper } from "../messages";
 
@@ -51,8 +50,8 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
   @Input()
   projection = "EPSG:31370";
 
-  constructor(kaart: KaartClassicComponent, private http: HttpClient, zone: NgZone) {
-    super(kaart, zone);
+  constructor(injector: Injector, private http: HttpClient) {
+    super(injector);
   }
 
   ngOnInit() {
