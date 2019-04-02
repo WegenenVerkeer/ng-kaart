@@ -1290,6 +1290,16 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
+    function zetFilter(cmnd: prt.ZetFilter<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        valideerNoSqlFsSourceBestaat(cmnd.titel).map(noSqlFsSource => {
+          noSqlFsSource.setFilter(cmnd.filter);
+          return ModelAndEmptyResult(model);
+        })
+      );
+    }
+
     function zetOffline(cmnd: prt.ZetOffline<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
@@ -1676,6 +1686,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return zetGetekendeGeometry(cmd);
       case "ZetOffline":
         return zetOffline(cmd);
+      case "ZetFilter":
+        return zetFilter(cmd);
     }
   };
 }

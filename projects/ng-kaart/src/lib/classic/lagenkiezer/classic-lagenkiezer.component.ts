@@ -26,6 +26,8 @@ export class ClassicLagenkiezerComponent implements OnInit, OnDestroy, OnChanges
   @Input()
   verplaatsbareLagen = DefaultOpties.verplaatsbareLagen;
   @Input()
+  filterbareLagen = DefaultOpties.filterbareLagen;
+  @Input()
   stijlbareVectorlagen: Predicate<string> = DefaultOpties.stijlbareVectorlagen;
 
   ngOnInit() {
@@ -48,7 +50,8 @@ export class ClassicLagenkiezerComponent implements OnInit, OnDestroy, OnChanges
       toonLegende: this.toonLegende,
       verwijderbareLagen: this.verwijderbareLagen,
       verplaatsbareLagen: this.verplaatsbareLagen,
-      stijlbareVectorlagen: this.stijlbareVectorlagen
+      stijlbareVectorlagen: this.stijlbareVectorlagen,
+      filterbareLagen: this.filterbareLagen
     };
   }
 }

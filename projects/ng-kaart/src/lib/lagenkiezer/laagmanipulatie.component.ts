@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
 import { MatMenuTrigger } from "@angular/material";
+import { some } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
-import { distinctUntilChanged, map, mapTo, share, shareReplay, startWith, tap } from "rxjs/operators";
+import { distinctUntilChanged, map, shareReplay } from "rxjs/operators";
 
+import { IsExactFilter, Property } from "../filter/filter-model";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { asToegevoegdeVectorLaag, ToegevoegdeLaag, ToegevoegdeVectorLaag } from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
@@ -24,6 +26,7 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
   readonly zichtbaar$: rx.Observable<boolean>;
   readonly onzichtbaar$: rx.Observable<boolean>;
   readonly kanVerwijderen$: rx.Observable<boolean>;
+  readonly kanFilteren$: rx.Observable<boolean>;
   readonly kanStijlAanpassen$: rx.Observable<boolean>;
   readonly minstensEenLaagActie$: rx.Observable<boolean>;
 
@@ -55,6 +58,14 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
     );
     this.kanVerwijderen$ = lagenkiezer.opties$.pipe(
       map(o => o.verwijderbareLagen),
+      shareReplay(1)
+    );
+    this.kanFilteren$ = lagenkiezer.opties$.pipe(
+      map(o =>
+        asToegevoegdeVectorLaag(this.laag)
+          .map(vlg => o.filterbareLagen)
+          .getOrElse(false)
+      ),
       shareReplay(1)
     );
     this.kanStijlAanpassen$ = lagenkiezer.opties$.pipe(
@@ -106,5 +117,9 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
 
   pasStijlAan() {
     this.dispatch(cmd.BewerkVectorlaagstijlCmd(this.laag as ToegevoegdeVectorLaag));
+  }
+
+  pasFilterAan() {
+    this.dispatch(cmd.ZetFilter(this.laag.titel, some(IsExactFilter(Property("string", "ident8"), "R0010001")), kaartLogOnlyWrapper));
   }
 }

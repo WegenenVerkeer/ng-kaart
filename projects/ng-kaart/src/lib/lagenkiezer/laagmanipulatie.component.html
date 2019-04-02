@@ -21,6 +21,10 @@
         <mat-icon>delete</mat-icon>
         <span>Verwijder laag uit lagenlijst</span>
       </button>
+      <button mat-menu-item (click)="pasFilterAan()" *ngIf="kanFilteren$ | async">
+        <mat-icon>filter_list</mat-icon>
+        <span>Filter instellen</span>
+      </button>
       <button mat-menu-item (click)="pasStijlAan()" *ngIf="kanStijlAanpassen$ | async">
         <mat-icon>format_color_fill</mat-icon>
         <span>Stijl aanpassen</span>

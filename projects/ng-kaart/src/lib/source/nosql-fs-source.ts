@@ -159,7 +159,7 @@ export class NosqlFsSource extends ol.source.Vector {
     private readonly collection: string,
     private readonly url = "/geolatte-nosqlfs",
     private readonly view: Option<string>,
-    private readonly filter: Option<string>,
+    private filter: Option<string>,
     private readonly laagnaam: string,
     memCacheSize: number,
     gebruikCache: boolean
@@ -276,6 +276,10 @@ export class NosqlFsSource extends ol.source.Vector {
 
   setOffline(offline: boolean) {
     this.offline = offline;
+  }
+
+  setFilter(filter: Option<string>) {
+    this.filter = filter;
   }
 
   dispatchLoadEvent(evt: le.DataLoadEvent) {

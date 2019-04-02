@@ -2,7 +2,6 @@ import { Component, Input, NgZone, ViewEncapsulation } from "@angular/core";
 import { option } from "fp-ts";
 import { identity } from "fp-ts/lib/function";
 import { fromNullable } from "fp-ts/lib/Option";
-import * as rx from "rxjs";
 import { switchMap } from "rxjs/operators";
 
 import { kaartLogger } from "../../kaart";
