@@ -5,7 +5,7 @@ import { KaartClassicComponent } from "projects/ng-kaart/src/public_api";
 @Component({
   selector: "awv-kaart-element",
   templateUrl: "./kaart-element.component.html",
-  styleUrls: ["./kaart-element.component.css"],
+  styleUrls: ["./kaart-element.component.scss"],
   encapsulation: ViewEncapsulation.None
 })
 export class KaartElementComponent implements AfterViewInit {
@@ -16,6 +16,6 @@ export class KaartElementComponent implements AfterViewInit {
   constructor(private el: ElementRef<Element>, private kaartLocatorService: KaartClassicLocatorService<KaartClassicComponent>) {}
 
   ngAfterViewInit() {
-    this.kaartLocatorService.registerKaart(this.kaart, this.el);
+    this.kaartLocatorService.registerComponent(this.kaart, this.el);
   }
 }

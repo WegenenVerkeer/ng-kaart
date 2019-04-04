@@ -1,10 +1,11 @@
-import { AfterContentInit, ContentChildren, Injector, Input, OnDestroy, OnInit, QueryList } from "@angular/core";
+import { AfterContentInit, ContentChildren, ElementRef, Injector, Input, OnDestroy, OnInit } from "@angular/core";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 
 import { Laag, Laaggroep } from "../../kaart/kaart-elementen";
 import { Legende } from "../../kaart/kaart-legende";
 import * as prt from "../../kaart/kaart-protocol";
 import { ClassicBaseComponent } from "../classic-base.component";
+import { KaartClassicLocatorService } from "../kaart-classic-locator.service";
 import { ClassicLegendeItemComponent } from "../legende/classic-legende-item.component";
 import { KaartClassicMsg, logOnlyWrapper } from "../messages";
 
@@ -22,13 +23,15 @@ export abstract class ClassicLaagComponent extends ClassicBaseComponent implemen
   @Input()
   stijlInLagenKiezer?: string;
 
-  @ContentChildren(ClassicLegendeItemComponent)
-  legendeItems: QueryList<ClassicLegendeItemComponent>;
+  legendeItems: ClassicLegendeItemComponent[] = [];
 
   protected laag: Option<Laag> = none;
 
   constructor(injector: Injector) {
     super(injector);
+    const locatorService = injector.get(KaartClassicLocatorService) as KaartClassicLocatorService<ClassicLaagComponent>;
+    const el: ElementRef<Element> = injector.get(ElementRef);
+    locatorService.registerComponent(this, el);
   }
 
   ngOnInit() {
@@ -37,15 +40,17 @@ export abstract class ClassicLaagComponent extends ClassicBaseComponent implemen
   }
 
   ngAfterContentInit(): void {
-    // De legende kan maar toegevoegd worden wanneer de child components beschikbaar zijn.
-    // Zoals het nu is, ondersteunen we enkel een statische legende, enkel diegene die gedefineerd is bij de start van de laag.
-    // We hebben geen use case voor het dynamische geval.
     this.voegLegendeToe();
   }
 
   ngOnDestroy(): void {
     this.verwijderLaag();
     super.ngOnDestroy();
+  }
+
+  addLegendeItem(item: ClassicLegendeItemComponent) {
+    this.legendeItems.push(item);
+    this.voegLegendeToe();
   }
 
   protected voegLaagToe() {
@@ -64,7 +69,6 @@ export abstract class ClassicLaagComponent extends ClassicBaseComponent implemen
   }
 
   protected voegLegendeToe() {
-    console.log("******", this.titel, this.legendeItems);
     if (this.legendeItems.length > 0) {
       const legende = Legende(this.legendeItems.map(item => item.maakLegendeItem()));
       this.dispatch(prt.ZetLaagLegendeCmd(this.titel, legende, logOnlyWrapper));

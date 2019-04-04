@@ -1,9 +1,10 @@
-import { Input, NgZone } from "@angular/core";
+import { ElementRef, Injector, Input, NgZone } from "@angular/core";
 import * as rx from "rxjs";
-import { switchMap, tap } from "rxjs/operators";
+import { tap } from "rxjs/operators";
 
 import { KaartComponentBase } from "../../kaart";
 import { Zoeker, zoekerMetPrioriteiten } from "../../zoeker/zoeker";
+import { KaartClassicLocatorService } from "../kaart-classic-locator.service";
 
 import { ClassicZoekerComponent } from "./classic-zoeker.component";
 
@@ -25,8 +26,12 @@ export abstract class ClassicSingleZoekerComponentBase extends KaartComponentBas
   @Input()
   volledigeZoekPrioriteit: number = ClassicSingleZoekerComponentBase.nextVolledigePrioriteit++;
 
-  constructor(zone: NgZone, zoekerComponent: ClassicZoekerComponent, zoeker: Zoeker) {
-    super(zone);
+  constructor(injector: Injector, zoeker: Zoeker) {
+    super(injector.get(NgZone));
+
+    const locatorService = injector.get(KaartClassicLocatorService) as KaartClassicLocatorService<ClassicZoekerComponent>;
+    const el: ElementRef<Element> = injector.get(ElementRef);
+    const zoekerComponent = locatorService.getComponent(injector, ClassicZoekerComponent, el);
 
     rx.merge(
       this.initialising$.pipe(

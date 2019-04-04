@@ -1,7 +1,8 @@
-import { Component, Injector, Input } from "@angular/core";
+import { Component, ElementRef, Injector, Input } from "@angular/core";
 import * as array from "fp-ts/lib/Array";
 import { concat } from "fp-ts/lib/function";
 import { fromNullable } from "fp-ts/lib/Option";
+import { delay } from "rxjs/operators";
 
 import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import { forEach, toArray } from "../../util/option";
@@ -11,10 +12,11 @@ import { ZoekerGoogleWdbService } from "../../zoeker/google-wdb/zoeker-google-wd
 import { ZoekerPerceelService } from "../../zoeker/perceel/zoeker-perceel.service";
 import { Zoeker, zoekerMetPrioriteiten, ZoekerMetWeergaveopties } from "../../zoeker/zoeker";
 import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
+import { KaartClassicLocatorService } from "../kaart-classic-locator.service";
 
 @Component({
   selector: "awv-kaart-zoeker",
-  template: ""
+  template: "<ng-content></ng-content>"
 })
 export class ClassicZoekerComponent extends ClassicUIElementSelectorComponentBase {
   @Input()
@@ -33,7 +35,13 @@ export class ClassicZoekerComponent extends ClassicUIElementSelectorComponentBas
   ) {
     super(ZoekerUiSelector, injector);
 
-    this.initialising$.subscribe(() => {
+    const locatorService = injector.get(KaartClassicLocatorService) as KaartClassicLocatorService<ClassicZoekerComponent>;
+    const el: ElementRef<Element> = injector.get(ElementRef);
+    locatorService.registerComponent(this, el);
+
+    // We hebben hier een kleine delay nodig om de subtags de kans te geven om zich te registreren. Wanneer we webcomponents hebben,
+    // weten we niet in welke volgorde ze geinstancieerd zullen worden.
+    this.initialising$.pipe(delay(100)).subscribe(() => {
       // Een beetje een ingewikkelde constructie, maar we willen dat we zowel met deze tag alleen kunnen werken (backwards compatibility)
       // als met deze tag + child tags
       const inputZoekers = concat(toArray(fromNullable(this.zoeker)), this.zoekers);

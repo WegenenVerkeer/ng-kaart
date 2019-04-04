@@ -1,4 +1,4 @@
-import { Component, NgZone } from "@angular/core";
+import { Component, Injector } from "@angular/core";
 
 import { ZoekerPerceelService } from "../../zoeker/perceel/zoeker-perceel.service";
 
@@ -10,7 +10,7 @@ import { ClassicZoekerComponent } from "./classic-zoeker.component";
   template: ""
 })
 export class ClassicPerceelZoekerComponent extends ClassicSingleZoekerComponentBase {
-  constructor(zone: NgZone, zoekerComponent: ClassicZoekerComponent, perceelZoeker: ZoekerPerceelService) {
-    super(zone, zoekerComponent, perceelZoeker);
+  constructor(injector: Injector, perceelZoeker: ZoekerPerceelService) {
+    super(injector, perceelZoeker);
   }
 }

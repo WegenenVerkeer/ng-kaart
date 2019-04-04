@@ -10,8 +10,8 @@ export class ClassicBaseComponent extends KaartComponentBase {
 
   constructor(injector: Injector) {
     super(injector.get(NgZone));
-    const kaartService = injector.get(KaartClassicLocatorService) as KaartClassicLocatorService<KaartClassicComponent>;
+    const locatorService = injector.get(KaartClassicLocatorService) as KaartClassicLocatorService<KaartClassicComponent>;
     const el: ElementRef<Element> = injector.get(ElementRef);
-    this.kaart = kaartService.getComponent(injector, KaartClassicComponent, el, "awv-kaart-element");
+    this.kaart = locatorService.getComponent(injector, KaartClassicComponent, el);
   }
 }

@@ -1,4 +1,4 @@
-import { Component, NgZone } from "@angular/core";
+import { Component, Injector } from "@angular/core";
 
 import { ZoekerCrabService } from "../../zoeker/crab/zoeker-crab.service";
 
@@ -10,7 +10,7 @@ import { ClassicZoekerComponent } from "./classic-zoeker.component";
   template: ""
 })
 export class ClassicCrabZoekerComponent extends ClassicSingleZoekerComponentBase {
-  constructor(zone: NgZone, zoekerComponent: ClassicZoekerComponent, crabZoeker: ZoekerCrabService) {
-    super(zone, zoekerComponent, crabZoeker);
+  constructor(injector: Injector, crabZoeker: ZoekerCrabService) {
+    super(injector, crabZoeker);
   }
 }
