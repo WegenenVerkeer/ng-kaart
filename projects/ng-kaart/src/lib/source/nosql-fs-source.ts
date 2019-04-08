@@ -153,6 +153,8 @@ export class NosqlFsSource extends ol.source.Vector {
   // opvragen. Een optimalisatie zou kunnen zijn om enkel de id's ipv de hele feature op te slaan. Wbt geheugen maakt
   // dat niet veel uit, maar we kunnen dan de `setoid` overslaan gezien de id een `string` is.
   private memCachedFeatures: FeatureSet = set.empty;
+  private busyCount = 0;
+  private lastReadExtent: ol.Extent;
 
   constructor(
     private readonly database: string,
@@ -167,8 +169,8 @@ export class NosqlFsSource extends ol.source.Vector {
     super({
       loader: function(extent: ol.Extent) {
         const source: NosqlFsSource = this;
-        const oldFeatures: ol.Feature[] = this.getFeatures();
-        kaartLogger.debug("Aantal features op layer", oldFeatures.length);
+        source.busyCount += 1;
+        source.lastReadExtent = extent;
         const featuresLoader$: rx.Observable<ol.Feature[]> = (this.offline
           ? featuresFromCache(laagnaam, extent)
           : featuresFromServer(source, laagnaam, gebruikCache, extent)
@@ -186,25 +188,32 @@ export class NosqlFsSource extends ol.source.Vector {
           error: error => {
             kaartLogger.error(error);
             source.dispatchLoadError(error);
+            source.busyCount -= 1;
           }
         });
         allNewFeatures$.subscribe(
           newFeatures => {
+            source.busyCount -= 1;
             source.dispatchLoadComplete();
+            // We mogen memCachedFeatures enkel in de "critische sectie" aanpassen.
             source.memCachedFeatures = featureSetUnion(source.memCachedFeatures, newFeatures);
             kaartLogger.debug("Aantal features in memcache", source.memCachedFeatures.size);
-            if (source.memCachedFeatures.size > memCacheSize) {
-              const featuresOutsideExtent = set.filter(source.memCachedFeatures, Feature.notInExtent(extent));
+            // De busyCount zorgt er voor dat we de features op de kaart niet aanpassen terwijl er nog nieuwe aan het
+            // binnen komen zijn. Wat we helaas nog niet opvangen is de mogelijkheid dat we de verkeerde extent aan het
+            // behouden zijn. Het kan immers gebeuren dat een fetch van een extent waar we eerder waren later binnen
+            // komt. De volgorde van de resultaten is immers niet gegarandeerd. Wanneer dat gebeurt, verwijderen we de
+            // features op het zichtbare gedeelte van de kaart. Daarom zetten we lastReadExtent bij de start van de
+            // loader en gebruiken we die extent om features van te behouden.
+            if (source.memCachedFeatures.size > memCacheSize && source.busyCount === 0) {
+              const featuresOutsideExtent = set.filter(arrayToFeatureSet(source.getFeatures()), Feature.notInExtent(source.lastReadExtent));
 
               kaartLogger.debug("Te verwijderen", featuresOutsideExtent.size);
-              featuresOutsideExtent.forEach(feature => {
-                try {
-                  this.removeFeature(feature);
-                } catch (e) {
-                  kaartLogger.error("Probleem tijdens verwijderen van feature", e);
-                }
-              });
-              source.memCachedFeatures = featureSetDifference(source.memCachedFeatures, featuresOutsideExtent);
+              try {
+                featuresOutsideExtent.forEach(feature => this.removeFeature(feature));
+              } catch (e) {
+                kaartLogger.error("Probleem tijdens verwijderen van features", e);
+              }
+              source.memCachedFeatures = arrayToFeatureSet(source.getFeatures());
               kaartLogger.debug("Aantal features in memcache na clear", source.memCachedFeatures.size);
             }
           },
