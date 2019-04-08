@@ -24,7 +24,10 @@
     "precommit": "lint-staged",
     "publishToNexus": "node script/patchRegistry.js https://collab.mow.vlaanderen.be/artifacts/repository/npm-internal/",
     "publishToNpmjs": "node script/patchRegistry.js",
-    "build:elements": "ng build --prod --output-hashing none webcomponent && node script/elements-build.js"
+    "build:elements": "ng build --prod --output-hashing none webcomponent && node script/elements-build.js",
+    "compodoc": "compodoc",
+    "generate-docs":"compodoc projects/ng-kaart/src/lib/classic -p projects/ng-kaart/tsconfig.lib.json",
+    "serve-docs":"compodoc -s projects/ng-kaart/tsconfig.lib.json"
   },
   "lint-staged": {
     "linters": {
@@ -85,6 +88,7 @@
     "@angular/cli": "7.1.2",
     "@angular/compiler-cli": "^7.1.2",
     "@angular/language-service": "^7.1.2",
+    "@compodoc/compodoc": "^1.1.9",
     "@types/googlemaps": "3.30.16",
     "@types/hammerjs": "2.0.36",
     "@types/jasmine": "~2.8.8",

@@ -13,6 +13,14 @@ import { ClassicLaagComponent } from "./classic-laag.component";
 
 const WmtsParser = new ol.format.WMTSCapabilities();
 
+function stringToArray<T>(param: string | T): T {
+  if (typeof param === "string") {
+    return JSON.parse(param);
+  } else {
+    return param;
+  }
+}
+
 @Component({
   selector: "awv-kaart-wmts-laag",
   template: "<ng-content></ng-content>",
@@ -32,26 +40,43 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
   capUrl?: string;
 
   @Input()
-  urls: string[] = [];
-  @Input()
   versie?: string;
   @Input()
   format = "image/png";
   @Input()
   opacity?: number;
   @Input()
-  matrixIds: string[];
-  @Input()
   style?: string;
-  @Input()
-  origin?: [number, number];
-  @Input()
-  extent?: [number, number, number, number];
   @Input()
   projection = "EPSG:31370";
 
+  _urls: string[] = [];
+  _matrixIds: string[];
+  _origin?: [number, number];
+  _extent?: [number, number, number, number];
+
   constructor(injector: Injector, private http: HttpClient) {
     super(injector);
+  }
+
+  @Input()
+  set urls(param: string[] | string) {
+    this._urls = stringToArray(param);
+  }
+
+  @Input()
+  set matrixIds(param: string[] | string) {
+    this._matrixIds = stringToArray(param);
+  }
+
+  @Input()
+  set origin(param: [number, number] | string) {
+    this._origin = stringToArray(param);
+  }
+
+  @Input()
+  set extent(param: [number, number, number, number] | string) {
+    this._extent = stringToArray(param);
   }
 
   ngOnInit() {
@@ -61,7 +86,7 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
     if (!this.matrixSet) {
       throw new Error("matrixSet moet opgegeven zijn");
     }
-    if (!(this.capUrl || (this.urls && this.urls.length > 0 && this.matrixIds && this.matrixIds.length > 0))) {
+    if (!(this.capUrl || (this._urls && this._urls.length > 0 && this._matrixIds && this._matrixIds.length > 0))) {
       throw new Error("capurl of urls en matrixIds moet opgegeven zijn");
     }
     super.ngOnInit();
@@ -81,11 +106,11 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
     } else {
       const config: ke.WmtsManualConfig = {
         type: "Manual",
-        urls: this.urls,
-        matrixIds: this.matrixIds,
+        urls: this._urls,
+        matrixIds: this._matrixIds,
         style: fromNullable(this.style),
-        origin: fromNullable(this.origin),
-        extent: fromNullable(this.extent)
+        origin: fromNullable(this._origin),
+        extent: fromNullable(this._extent)
       };
       return this.createLayerFromConfig(config);
     }
@@ -114,7 +139,7 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
 
   backgroundUrl(config: ke.WmtsCapaConfig | ke.WmtsManualConfig): string {
     if (config.type === "Manual") {
-      return urlWithParams(this.urls[0], {
+      return urlWithParams(this._urls[0], {
         layer: this.laagNaam,
         style: config.style.getOrElse(""),
         tilematrixset: this.matrixSet,
