@@ -1,39 +1,19 @@
 import { HttpClient } from "@angular/common/http";
 import { Component, Injector, Input, OnInit, ViewEncapsulation } from "@angular/core";
-import { fromNullable, some } from "fp-ts/lib/Option";
+import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 
 import * as ke from "../../kaart/kaart-elementen";
-import * as json from "../../stijl/json-object-interpreting";
-import { Consumer } from "../../util/function";
+import * as arrays from "../../util/arrays";
 import { urlWithParams } from "../../util/url";
 import { classicLogger } from "../log";
 import { logOnlyWrapper } from "../messages";
+import { getBooleanParam, getOptionalCoordinateParam, getOptionalExtentParam, getStringArrayParam } from "../webcomponent-support/params";
 
 import { blancoLaag } from "./classic-blanco-laag.component";
 import { ClassicLaagComponent } from "./classic-laag.component";
 
 const WmtsParser = new ol.format.WMTSCapabilities();
-
-function stringToArray<T>(param: string | T): T {
-  if (typeof param === "string") {
-    return JSON.parse(param);
-  } else {
-    return param;
-  }
-}
-
-function applySuccess<T>(validation: json.Validation<T>, effect: Consumer<T>): void {
-  validation.bimap(() => 1, effect);
-}
-
-function setExtentParam(param: string | ol.Extent, effect: Consumer<ol.Extent>): void {
-  if (typeof param === "string") {
-    applySuccess(json.arrSize(4, json.num)(param), effect);
-  } else {
-    effect(param);
-  }
-}
 
 @Component({
   selector: "awv-kaart-wmts-laag",
@@ -43,8 +23,6 @@ function setExtentParam(param: string | ol.Extent, effect: Consumer<ol.Extent>):
 export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements OnInit {
   @Input()
   laagNaam: string;
-  @Input()
-  tiled = true;
   @Input()
   type: string;
   @Input()
@@ -64,10 +42,11 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
   @Input()
   projection = "EPSG:31370";
 
-  _urls: string[] = [];
-  _matrixIds: string[];
-  _origin?: [number, number];
-  _extent?: [number, number, number, number];
+  private _tiled = true;
+  private _urls: string[] = [];
+  private _matrixIds: string[] = [];
+  private _origin: Option<ol.Coordinate> = none;
+  private _extent: Option<ol.Extent> = none;
 
   constructor(injector: Injector, private http: HttpClient) {
     super(injector);
@@ -75,22 +54,27 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
 
   @Input()
   set urls(param: string[] | string) {
-    this._urls = stringToArray(param);
+    this._urls = getStringArrayParam(param, this._urls);
   }
 
   @Input()
   set matrixIds(param: string[] | string) {
-    this._matrixIds = stringToArray(param);
+    this._matrixIds = getStringArrayParam(param, this._matrixIds);
   }
 
   @Input()
-  set origin(param: [number, number] | string) {
-    this._origin = stringToArray(param);
+  set origin(param: ol.Coordinate | string) {
+    this._origin = getOptionalCoordinateParam(param);
   }
 
   @Input()
   set extent(param: ol.Extent | string) {
-    setExtentParam(param, extent => (this._extent = extent));
+    this._extent = getOptionalExtentParam(param);
+  }
+
+  @Input()
+  set tiled(param: boolean | string) {
+    this._tiled = getBooleanParam(param, this._tiled);
   }
 
   ngOnInit() {
@@ -100,7 +84,7 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
     if (!this.matrixSet) {
       throw new Error("matrixSet moet opgegeven zijn");
     }
-    if (!(this.capUrl || (this._urls && this._urls.length > 0 && this._matrixIds && this._matrixIds.length > 0))) {
+    if (!(this.capUrl || (arrays.isNonEmpty(this._urls) && arrays.isNonEmpty(this._matrixIds)))) {
       throw new Error("capurl of urls en matrixIds moet opgegeven zijn");
     }
     super.ngOnInit();
@@ -123,8 +107,8 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
         urls: this._urls,
         matrixIds: this._matrixIds,
         style: fromNullable(this.style),
-        origin: fromNullable(this._origin),
-        extent: fromNullable(this._extent)
+        origin: this._origin,
+        extent: this._extent
       };
       return this.createLayerFromConfig(config);
     }
