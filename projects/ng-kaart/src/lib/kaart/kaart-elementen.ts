@@ -1,3 +1,4 @@
+import * as array from "fp-ts/lib/Array";
 import { Function1, Refinement } from "fp-ts/lib/function";
 import { fromPredicate, Option } from "fp-ts/lib/Option";
 import { contramap, Setoid, setoidString } from "fp-ts/lib/Setoid";
@@ -9,6 +10,7 @@ import { mapToOptionalByKey } from "../util/lenses";
 
 import { Legende } from "./kaart-legende";
 import { AwvV0StyleSpec, StyleSelector } from "./stijl-selector";
+import { VeldProps } from "./stijleditor/model";
 
 export const SingleTileWmsType = "LaagType.SingleTileWms";
 export type SingleTileWmsType = typeof SingleTileWmsType;
@@ -175,6 +177,9 @@ export const asToegevoegdeVectorLaag: (laag: ToegevoegdeLaag) => Option<Toegevoe
   fromPredicate<ToegevoegdeLaag>(lg => isVectorLaag(lg.bron))(laag) as Option<ToegevoegdeVectorLaag>;
 export const isZichtbaar: (_: number) => (_: ToegevoegdeLaag) => boolean = currentRes => laag =>
   laag.layer.getMinResolution() <= currentRes && laag.layer.getMaxResolution() > currentRes && laag.layer.getVisible();
+
+export const veldenMetUniekeWaarden: Function1<ToegevoegdeVectorLaag, VeldProps[]> = laag =>
+  array.mapOption(ToegevoegdeVectorLaag.veldInfosLens.get(laag), VeldProps.fromVeldinfo);
 
 ///////////////
 // Constructors

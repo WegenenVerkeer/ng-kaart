@@ -2,7 +2,7 @@ import { CommonModule } from "@angular/common";
 import { HttpClientModule } from "@angular/common/http";
 import { ModuleWithProviders, NgModule } from "@angular/core";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
-import { MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule } from "@angular/material";
+import { MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSelectModule } from "@angular/material";
 
 import { FilterComponent } from "./filter.component";
 
@@ -18,7 +18,8 @@ const components: any[] = [FilterComponent];
     MatButtonModule,
     MatIconModule,
     MatInputModule,
-    MatFormFieldModule
+    MatFormFieldModule,
+    MatSelectModule
   ],
   declarations: [components],
   exports: [components],

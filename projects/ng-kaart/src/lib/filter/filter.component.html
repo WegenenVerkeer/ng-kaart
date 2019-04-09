@@ -2,12 +2,33 @@
 <div class="mat-dialog-container filter-dialog" *ngIf="zichtbaar$ | async" >
 
   <header class="filter-header">
-    <div class="filter-titel">Filter instellen</div>
+    <div class="filter-titel">{{ titel$ | async }} filter instellen</div>
     <mat-icon class="filter-sluit-button" (click)="close()">close</mat-icon>
   </header>
 
   <main class="filter-content" >
-    Ident8 is R0040001
+
+    <div class="filter-definitie">
+
+      <mat-form-field class="filter-velden-combo">
+        <mat-select placeholder="Veld" [formControl]="veldControl">
+          <mat-option *ngFor="let veld of velden$ | async" [value]="veld.naam">{{veld.label}}</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field class="filter-operator-combo">
+        <mat-select placeholder="Operator" [formControl]="operatorControl">
+          <mat-option [value]="'='">is</mat-option>
+          <mat-option [value]="'!='">is niet</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field class="filter-waarde-editbox">
+        <input matInput placeholder="waarde" [formControl]="waardeControl">
+      </mat-form-field>
+
+    </div>
+
   </main>
 
   <footer class="filter-footer">
@@ -16,7 +37,7 @@
       Annuleer
     </button>
 
-    <button mat-button color="primary" class="filter-pas-toe-button" (click)="pasToe()">
+    <button mat-button color="primary" class="filter-pas-toe-button" (click)="onAction('pasFilterToe')">
       Pas toe
     </button>
 
