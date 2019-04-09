@@ -1,4 +1,5 @@
 import { HttpClient } from "@angular/common/http";
+import { Function1 } from "fp-ts/lib/function";
 import * as ol from "openlayers";
 import { Observable } from "rxjs";
 import * as rx from "rxjs";
@@ -6,7 +7,6 @@ import { catchError, map } from "rxjs/operators";
 
 import { Interpreter } from "../../stijl/json-object-interpreting";
 import * as st from "../../stijl/json-object-interpreting";
-import { matchGeometryType } from "../../util";
 import { kaartLogger } from "../log";
 
 import { GeometryRoute, ProtoRoute } from "./route.msg";
@@ -49,6 +49,11 @@ export interface RoutingService {
   resolve(protoRoute: ProtoRoute): Observable<GeometryRoute>;
 }
 
+const protoRouteToFallbackGeometryRoute: Function1<ProtoRoute, GeometryRoute> = protoRoute => ({
+  ...protoRoute,
+  geometry: new ol.geom.LineString([protoRoute.begin.location, protoRoute.end.location])
+});
+
 export class VerfijndeRoutingService implements RoutingService {
   geoJSONformat = new ol.format.GeoJSON();
   constructor(private readonly http: HttpClient) {}
@@ -65,20 +70,20 @@ export class VerfijndeRoutingService implements RoutingService {
       map(vldtn =>
         vldtn.getOrElseL(errs => {
           kaartLogger.error(`Onverwacht antwoordformaat van routeservice: ${errs}. We gaan verder zonder dit antwoord.`);
-          return []; // TODO dit is niet goed -> we moeten de delete heroepen (of wachten met uitsturen)
+          throw errs;
         })
       ),
-      catchError(err => {
-        kaartLogger.error(`Routing heeft gefaald: ${err.message}`, err);
-        return rx.of<WegEdge[]>([]); // TODO dit is niet goed -> we moeten de delete heroepen (of wachten met uitsturen)
-      }),
       map(wegEdges => ({
         id: protoRoute.id,
         version: protoRoute.version,
         begin: protoRoute.begin,
         end: protoRoute.end,
         geometry: new ol.geom.GeometryCollection(wegEdges.map(edge => edge.geometry))
-      }))
+      })),
+      catchError(err => {
+        kaartLogger.error(`Routing heeft gefaald: ${err.message}`, err);
+        return rx.of(protoRouteToFallbackGeometryRoute(protoRoute));
+      })
     );
   }
 }

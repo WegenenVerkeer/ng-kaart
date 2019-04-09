@@ -224,7 +224,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     ),
     // Vlugge veranderingen van de features willen we ook niet zien.
     // Best om dit groter te houden dan de tijd voorzien om cleanup te doen. Anders overbodige events.
-    debounceTime(100),
+    debounceTime(150),
     mapTo(void 0)
   );
 
