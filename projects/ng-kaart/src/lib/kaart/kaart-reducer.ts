@@ -1539,7 +1539,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
-    try {
+    function unsafeHandleCommand(): ModelWithResult<Msg> {
       switch (cmd.type) {
         case "VoegLaagToe":
           return voegLaagToeCmd(cmd);
@@ -1678,6 +1678,13 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         case "ZetOffline":
           return zetOffline(cmd);
       }
+    }
+
+    try {
+      // Wij doen ons best om veilig te zijn adhv Validation, Option e.d., maar we gebruiken ook openlayers en dat heeft
+      // de neiging om af en toe hard te crashen. Vandaar de nood om onze kernfunctionaliteit nog in een try-catch te
+      // steken.
+      return unsafeHandleCommand();
     } catch (e) {
       kaartLogger.error("Er is een fout opgetreden bij het verwerken van commando", cmd, e);
       return ModelWithResult(model);
