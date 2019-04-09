@@ -113,7 +113,6 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
 
     const verwijder$ = this.internalMessage$.pipe(ofType<VerwijderTekenFeatureMsg>("TekenInfoboodschapGesloten"));
 
-    // Dit is gewoon een alias: we krijgen maar een event op het moment dat er een segment getekend is
     const modeSwitchMogelijk$ = this.metingGestartSubj.pipe(
       switchMap(() =>
         this.modelChanges.getekendeGeometry$.pipe(
