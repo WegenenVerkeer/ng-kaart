@@ -1,4 +1,5 @@
 import { ElementRef, Injectable, Injector } from "@angular/core";
+import { none, Option, some } from "fp-ts/lib/Option";
 
 import { classicLogger } from "./log";
 
@@ -18,8 +19,8 @@ export class KaartClassicLocatorService<T = any> {
 
   public getComponent(injector: Injector, component: any, el: ElementRef<Element>): T {
     const parentEl = this.findContainerElement(el.nativeElement, component);
-    if (parentEl && this.registry.has(parentEl)) {
-      const foundComponent = this.registry.get(parentEl);
+    if (parentEl.map(el => this.registry.has(el)).getOrElse(false)) {
+      const foundComponent = this.registry.get(parentEl.toNullable()!)!;
       classicLogger.debug(`Component ${foundComponent.constructor.name} gevonden voor tag ${el.nativeElement.tagName}`);
       return foundComponent;
     } else {
@@ -30,13 +31,13 @@ export class KaartClassicLocatorService<T = any> {
     }
   }
 
-  private findContainerElement(el: Element, component: any): Element {
+  private findContainerElement(el: Element, component: any): Option<Element> {
     if (this.registry.has(el) && this.registry.get(el) instanceof component) {
-      return el;
+      return some(el);
     } else if (el.parentElement) {
       return this.findContainerElement(el.parentElement, component);
     } else {
-      return null;
+      return none;
     }
   }
 }
