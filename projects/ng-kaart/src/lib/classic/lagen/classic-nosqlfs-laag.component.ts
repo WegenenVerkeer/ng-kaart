@@ -2,7 +2,6 @@ import { Component, Input, NgZone, ViewEncapsulation } from "@angular/core";
 import { option } from "fp-ts";
 import { identity } from "fp-ts/lib/function";
 import { fromNullable } from "fp-ts/lib/Option";
-import * as rx from "rxjs";
 import { switchMap } from "rxjs/operators";
 
 import { kaartLogger } from "../../kaart";
@@ -44,6 +43,12 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
   gebruikCache = false;
   @Input()
   veldinfos: ke.VeldInfo[] = [];
+  /* Gebruik deze instelling alleen wanneer je weet dat het echt nodig is! Grotere waarden zorgen voor meer
+     geheugengebruik maar features worden potentieel sneller getoond bij uitzoomen en verschuiven van de kaart. Het
+     ideale is om bij de start van de applicatie te detecteren of je op een krachtig toestel aan het lopen bent of niet.
+     Voor een telefoon bijvoorbeeld zouden dit bijvoorbeeld op 1000 gezet kunenn worden. De beste waarde kan best per
+     applicatie bepaald worden obv performantietests. Sommige applicaties gebruiken features met meer en omvangrijkere
+     properties dan andere. */
   @Input()
   maxFeaturesInMemCache = 2500;
 
