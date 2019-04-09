@@ -36,7 +36,7 @@ const featureEqualityToFeaturesSetoid = (eq: (feat1: ol.Feature, feat2: ol.Featu
 
 @Component({
   selector: "awv-kaart-features-laag",
-  template: "",
+  template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
 export class ClassicFeaturesLaagComponent extends ClassicVectorLaagComponent implements OnChanges {

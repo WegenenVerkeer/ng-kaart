@@ -1,5 +1,7 @@
 import { ElementRef, Injectable, Injector } from "@angular/core";
 
+import { classicLogger } from "./log";
+
 @Injectable({
   providedIn: "root"
 })
@@ -9,6 +11,7 @@ export class KaartClassicLocatorService<T = any> {
 
   public registerComponent(component: T, el: ElementRef<Element>) {
     if (el) {
+      classicLogger.debug(`Registeer component ${el.nativeElement.tagName} onder tag ${component.constructor.name}`);
       this.registry.set(el.nativeElement, component);
     }
   }
@@ -16,8 +19,13 @@ export class KaartClassicLocatorService<T = any> {
   public getComponent(injector: Injector, component: any, el: ElementRef<Element>): T {
     const parentEl = this.findContainerElement(el.nativeElement, component);
     if (parentEl && this.registry.has(parentEl)) {
-      return this.registry.get(parentEl);
+      const foundComponent = this.registry.get(parentEl);
+      classicLogger.debug(`Component ${foundComponent.constructor.name} gevonden voor tag ${el.nativeElement.tagName}`);
+      return foundComponent;
     } else {
+      classicLogger.debug(
+        `Geen component van type ${component.name} gevonden voor tag ${el.nativeElement.tagName}, we proberen de standaard injector`
+      );
       return injector.get(component);
     }
   }
