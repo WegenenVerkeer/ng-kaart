@@ -1,7 +1,7 @@
 import { array } from "fp-ts";
-import { BinaryOperation, concat, Function1, Function2, Refinement } from "fp-ts/lib/function";
+import { concat, Function1, Refinement } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
-import * as set from "fp-ts/lib/Set";
+import { setoidNumber } from "fp-ts/lib/Setoid";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { bufferCount, catchError, filter, map, mapTo, mergeMap, reduce, scan, share, switchMap, takeLast, tap } from "rxjs/operators";
@@ -90,17 +90,6 @@ const mapToGeoJson: Pipeable<string, GeoJsonLike> = obs =>
     })
   );
 
-type FeatureSet = Set<ol.Feature>;
-
-const featureSetUnion: Function2<FeatureSet, FeatureSet, FeatureSet> = set.union(Feature.setoidFeaturePropertyId);
-
-const arrayToFeatureSet: Function1<ol.Feature[], FeatureSet> = set.fromArray(Feature.setoidFeaturePropertyId);
-
-const featureSetDifference: BinaryOperation<FeatureSet, FeatureSet> = set.difference2v(Feature.setoidFeaturePropertyId);
-
-const newFeatures: Function2<FeatureSet, ol.Feature[], FeatureSet> = (features, extraFeatures) =>
-  featureSetDifference(arrayToFeatureSet(extraFeatures), features);
-
 function featuresFromCache(laagnaam: string, extent: ol.Extent): rx.Observable<GeoJsonLike[]> {
   return geojsonStore.getFeaturesByExtent(laagnaam, extent).pipe(
     bufferCount(BATCH_SIZE),
@@ -146,15 +135,8 @@ export class NosqlFsSource extends ol.source.Vector {
   private readonly loadEventSubj = new rx.Subject<le.DataLoadEvent>();
   readonly loadEvent$: rx.Observable<le.DataLoadEvent> = this.loadEventSubj;
   private offline = false;
-  // De `memCachedFeatures` laat toe om te weten welke features al op de kaart staan. Zo vermijden we features
-  // metdezelfde id meer dan eens toe te voegen (want dat heeft problemen in OL). In principe kunnen we ook aan OL
-  // vragen welke features er op de laag staan, maar dan krijgen we een array terug waar we iets moeilijker kunnen in
-  // zoeken. Heel veel extra geheugen hebben we niet nodig gezien we enkel een referentie naar bestaande features
-  // opvragen. Een optimalisatie zou kunnen zijn om enkel de id's ipv de hele feature op te slaan. Wbt geheugen maakt
-  // dat niet veel uit, maar we kunnen dan de `setoid` overslaan gezien de id een `string` is.
-  private memCachedFeatures: FeatureSet = set.empty;
   private busyCount = 0;
-  private lastReadExtent: ol.Extent;
+  private outstandingRequests: ol.Extent[] = [];
 
   constructor(
     private readonly database: string,
@@ -170,7 +152,7 @@ export class NosqlFsSource extends ol.source.Vector {
       loader: function(extent: ol.Extent) {
         const source: NosqlFsSource = this;
         source.busyCount += 1;
-        source.lastReadExtent = extent;
+        source.outstandingRequests = array.snoc(source.outstandingRequests, extent);
         const featuresLoader$: rx.Observable<ol.Feature[]> = (this.offline
           ? featuresFromCache(laagnaam, extent)
           : featuresFromServer(source, laagnaam, gebruikCache, extent)
@@ -178,47 +160,54 @@ export class NosqlFsSource extends ol.source.Vector {
           map(geojsons => geojsons.map(toOlFeature(laagnaam))),
           share()
         );
-        const newFeatures$ = featuresLoader$.pipe(map(features => newFeatures(source.memCachedFeatures, features)));
-        const allNewFeatures$ = newFeatures$.pipe(reduce(featureSetUnion, set.empty));
+        const newFeatures$ = featuresLoader$.pipe(map(features => features));
         newFeatures$.subscribe({
           next: newFeatures => {
             source.dispatchLoadEvent(le.PartReceived);
-            source.addFeatures([...newFeatures.values()]);
+            // Als we ondertussen op een ander stuk van de kaart aan het kijken zijn, dan hoeven we de features van een
+            // oude request niet meer toe te voegen
+            if (array.last(source.outstandingRequests).contains(array.getSetoid(setoidNumber), extent)) {
+              source.addFeatures([...newFeatures.values()]);
+            }
           },
           error: error => {
             kaartLogger.error(error);
             source.dispatchLoadError(error);
             source.busyCount -= 1;
-          }
-        });
-        allNewFeatures$.subscribe(
-          newFeatures => {
+          },
+          complete: () => {
             source.busyCount -= 1;
             source.dispatchLoadComplete();
             // We mogen memCachedFeatures enkel in de "critische sectie" aanpassen.
-            source.memCachedFeatures = featureSetUnion(source.memCachedFeatures, newFeatures);
-            kaartLogger.debug("Aantal features in memcache", source.memCachedFeatures.size);
+            const allFeatures = source.getFeatures();
+            kaartLogger.debug("Aantal features in memcache", allFeatures.length);
             // De busyCount zorgt er voor dat we de features op de kaart niet aanpassen terwijl er nog nieuwe aan het
-            // binnen komen zijn. Wat we helaas nog niet opvangen is de mogelijkheid dat we de verkeerde extent aan het
+            // binnen komen zijn. Wat we daarmee niet opvangen is de mogelijkheid dat we de verkeerde extent aan het
             // behouden zijn. Het kan immers gebeuren dat een fetch van een extent waar we eerder waren later binnen
             // komt. De volgorde van de resultaten is immers niet gegarandeerd. Wanneer dat gebeurt, verwijderen we de
-            // features op het zichtbare gedeelte van de kaart. Daarom zetten we lastReadExtent bij de start van de
-            // loader en gebruiken we die extent om features van te behouden.
-            if (source.memCachedFeatures.size > memCacheSize && source.busyCount === 0) {
-              const featuresOutsideExtent = set.filter(arrayToFeatureSet(source.getFeatures()), Feature.notInExtent(source.lastReadExtent));
+            // features op het zichtbare gedeelte van de kaart. Daarvoor gebruiken we de recentste extent zoals gezet
+            // bij de start van de loader (dat gebeurt wel in de goede volgorde) en gebruiken we die extent om features
+            // van te behouden.
+            if (allFeatures.length > memCacheSize && source.busyCount === 0) {
+              const featuresOutsideExtent = array
+                .last(source.outstandingRequests)
+                .fold([], lastExtent => array.filter(allFeatures, Feature.notInExtent(lastExtent)));
 
-              kaartLogger.debug("Te verwijderen", featuresOutsideExtent.size);
+              kaartLogger.debug("Te verwijderen", featuresOutsideExtent.length);
               try {
                 featuresOutsideExtent.forEach(feature => this.removeFeature(feature));
               } catch (e) {
                 kaartLogger.error("Probleem tijdens verwijderen van features", e);
               }
-              source.memCachedFeatures = arrayToFeatureSet(source.getFeatures());
-              kaartLogger.debug("Aantal features in memcache na clear", source.memCachedFeatures.size);
+              kaartLogger.debug("Aantal features in memcache na clear", source.getFeatures().length);
+              // Af en toe kuisen we de outstanding requests op. Tussentijds is lastig omdat het mogelijk is dat
+              // dezelfde extent meer dan eens in de array zit.
+              if (source.busyCount === 0) {
+                source.outstandingRequests = [];
+              }
             }
-          },
-          () => {} // we hebben de errors al afgehandeld
-        );
+          }
+        });
       },
       strategy: ol.loadingstrategy.bbox
     });
