@@ -11,6 +11,7 @@ import { Subscription } from "rxjs";
 import * as rx from "rxjs";
 import { bufferCount, debounceTime, distinctUntilChanged, map, switchMap, throttleTime } from "rxjs/operators";
 
+import { FilterAanpassend, GeenFilterAanpassingBezig } from "../filter/filter-aanpassing-state";
 import * as filter from "../filter/filter-model";
 import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
 import * as arrays from "../util/arrays";
@@ -27,6 +28,7 @@ import { zoekerMetNaam } from "../zoeker/zoeker";
 import { CachedFeatureLookup } from "./cache/lookup";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
+import { StopVectorFilterBewerkingCmd } from "./kaart-protocol";
 import { MsgGen } from "./kaart-protocol-subscriptions";
 import { KaartWithInfo } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
@@ -1223,6 +1225,17 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
+    function bewerkVectorFilter(cmnd: prt.BewerkVectorFilterCmd): ModelWithResult<Msg> {
+      // We zouden kunnen controleren of de laag effectief in het model zit, maar dat is spijkers op laag water zoeken.
+      modelChanger.laagFilterAanpassingStateSubj.next(FilterAanpassend(cmnd.laag));
+      return ModelWithResult(model);
+    }
+
+    function stopVectorFilterBewerking(cmnd: prt.StopVectorFilterBewerkingCmd): ModelWithResult<Msg> {
+      modelChanger.laagFilterAanpassingStateSubj.next(GeenFilterAanpassingBezig);
+      return ModelWithResult(model);
+    }
+
     function sluitPanelen(cmnd: prt.SluitPanelenCmd): ModelWithResult<Msg> {
       updateBehaviorSubject(model.infoBoodschappenSubj, () => new Map());
       modelChanger.laagstijlaanpassingStateSubj.next(GeenLaagstijlaanpassing);
@@ -1669,6 +1682,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return bewerkVectorlaagstijl(cmd);
       case "StopVectorlaagstijlBewerking":
         return stopVectorlaagstijlBewerking(cmd);
+      case "BewerkVectorFilter":
+        return bewerkVectorFilter(cmd);
+      case "StopVectorFilterBewerking":
+        return stopVectorFilterBewerking(cmd);
       case "SluitPanelen":
         return sluitPanelen(cmd);
       case "ActiveerCacheVoorLaag":

@@ -6,6 +6,7 @@ import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { ClickOutsideModule } from "ng4-click-outside";
 
 import { ClassicModule } from "../../../ng-kaart/src/lib/classic";
+import { FilterComponent, FilterModule } from "../../../ng-kaart/src/lib/filter";
 import { KaartModule } from "../../../ng-kaart/src/lib/kaart";
 import { LagenkiezerModule } from "../../../ng-kaart/src/lib/lagenkiezer";
 import { ZoekerModule } from "../../../ng-kaart/src/lib/zoeker";
@@ -26,7 +27,8 @@ import { KaartElementComponent } from "./kaart-element/kaart-element.component";
       }
     }),
     LagenkiezerModule.withDefaults(),
-    ClickOutsideModule
+    ClickOutsideModule,
+    FilterModule
   ],
   providers: [],
   entryComponents: [KaartElementComponent]

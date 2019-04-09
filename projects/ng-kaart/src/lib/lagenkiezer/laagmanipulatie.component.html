@@ -15,6 +15,13 @@
   <div class="laag-naam">
     <div [ngClass]="stijlInKiezer">{{ title }}</div>
   </div>
+  <div *ngIf="heeftFilter()" class="filter-icoon">
+    <button mat-icon-button class="filter-inhoud" (click)="toggleFilter()">
+      <mat-icon *ngIf="filterActief">filter_list</mat-icon>
+      <mat-icon *ngIf="!filterActief">not_interested</mat-icon>
+      999
+    </button>
+  </div>
   <div class="laag-acties" *ngIf="minstensEenLaagActie$ | async">
     <mat-menu #laagMenu="matMenu" class="awv-kaart-laagmanipulatie laag-menu" [overlapTrigger]="true">
       <button mat-menu-item (click)="verwijder()" [disabled]="!(kanVerwijderen$ | async)">

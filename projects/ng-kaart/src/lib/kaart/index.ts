@@ -20,6 +20,7 @@ import * as ol from "openlayers";
 import { AbbameldaModule } from "../abbamelda/index";
 import { KaartOpenLayersStyleComponent } from "../classic/openlayers-style/classic-openlayers-style.component";
 import { KaartTekenComponent } from "../classic/tekenen/kaart-teken.component";
+import { FilterModule } from "../filter/index";
 import { LagenkiezerModule } from "../lagenkiezer/index";
 import { ZoekerModule } from "../zoeker/index";
 
@@ -126,7 +127,8 @@ export const myCustomTooltipDefaults: MatTooltipDefaultOptions = {
     AbbameldaModule,
     ZoekerModule.forRoot({}),
     LagenkiezerModule.withDefaults(),
-    StijleditorModule
+    StijleditorModule,
+    FilterModule
   ],
   declarations: [components],
   exports: [components],

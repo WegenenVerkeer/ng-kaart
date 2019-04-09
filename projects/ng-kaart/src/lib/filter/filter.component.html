@@ -1,0 +1,25 @@
+
+<div class="mat-dialog-container filter-dialog" *ngIf="zichtbaar$ | async" >
+
+  <header class="filter-header">
+    <div class="filter-titel">Filter instellen</div>
+    <mat-icon class="filter-sluit-button" (click)="close()">close</mat-icon>
+  </header>
+
+  <main class="filter-content" >
+    Ident8 is R0040001
+  </main>
+
+  <footer class="filter-footer">
+
+    <button mat-button class="filter-sluit-button" (click)="close()">
+      Annuleer
+    </button>
+
+    <button mat-button color="primary" class="filter-pas-toe-button" (click)="pasToe()">
+      Pas toe
+    </button>
+
+  </footer>
+
+</div>

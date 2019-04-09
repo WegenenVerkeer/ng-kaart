@@ -179,6 +179,15 @@ awv-kaart-info-boodschappen {
   background-color: #555;
 }
 
+.kaart-centraal {
+  z-index: 3; // boven lagenkiezer
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+}
+
 .kaart-rechts-onderaan {
   display: flex;
   flex-direction: column;

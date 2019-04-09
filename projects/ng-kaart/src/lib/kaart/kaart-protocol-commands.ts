@@ -23,6 +23,7 @@ export type Command<Msg extends KaartMsg> =
   | ActiveerSelectieModusCmd
   | DeactiveerSelectieModusCmd
   | ReactiveerSelectieModusCmd
+  | BewerkVectorFilterCmd
   | BewerkVectorlaagstijlCmd
   | DeselecteerAlleFeaturesCmd
   | DeselecteerFeatureCmd
@@ -36,6 +37,7 @@ export type Command<Msg extends KaartMsg> =
   | SelecteerFeaturesCmd
   | SluitInfoBoodschapCmd
   | SluitPanelenCmd
+  | StopVectorFilterBewerkingCmd
   | StopVectorlaagstijlBewerkingCmd
   | SubscribeCmd<Msg>
   | ToonAchtergrondKeuzeCmd<Msg>
@@ -498,8 +500,17 @@ export interface BewerkVectorlaagstijlCmd {
   readonly laag: ke.ToegevoegdeVectorLaag;
 }
 
+export interface BewerkVectorFilterCmd {
+  readonly type: "BewerkVectorFilter";
+  readonly laag: ke.ToegevoegdeVectorLaag;
+}
+
 export interface StopVectorlaagstijlBewerkingCmd {
   readonly type: "StopVectorlaagstijlBewerking";
+}
+
+export interface StopVectorFilterBewerkingCmd {
+  readonly type: "StopVectorFilterBewerking";
 }
 
 export interface DrawOpsCmd {
@@ -896,8 +907,16 @@ export function BewerkVectorlaagstijlCmd(laag: ke.ToegevoegdeVectorLaag): Bewerk
   return { type: "BewerkVectorlaagstijl", laag: laag };
 }
 
+export function BewerkVectorFilterCmd(laag: ke.ToegevoegdeVectorLaag): BewerkVectorFilterCmd {
+  return { type: "BewerkVectorFilter", laag: laag };
+}
+
 export function StopVectorlaagstijlBewerkingCmd(): StopVectorlaagstijlBewerkingCmd {
   return { type: "StopVectorlaagstijlBewerking" };
+}
+
+export function StopVectorFilterBewerkingCmd(): StopVectorFilterBewerkingCmd {
+  return { type: "StopVectorFilterBewerking" };
 }
 
 export function DrawOpsCmd(ops: DrawOps): DrawOpsCmd {

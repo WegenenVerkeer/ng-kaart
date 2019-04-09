@@ -1,9 +1,10 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
-import { MatMenuTrigger } from "@angular/material";
+import { MatDialog, MatMenuTrigger } from "@angular/material";
 import { some } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { distinctUntilChanged, map, shareReplay } from "rxjs/operators";
 
+import { FilterComponent } from "../filter";
 import { IsExactFilter, Property } from "../filter/filter-model";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { asToegevoegdeVectorLaag, ToegevoegdeLaag, ToegevoegdeVectorLaag } from "../kaart/kaart-elementen";
@@ -41,7 +42,9 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
   @ViewChild(MatMenuTrigger)
   laagMenuTrigger: MatMenuTrigger;
 
-  constructor(lagenkiezer: LagenkiezerComponent, kaartComponent: KaartComponent, zone: NgZone) {
+  filterActief = true;
+
+  constructor(lagenkiezer: LagenkiezerComponent, kaartComponent: KaartComponent, zone: NgZone, private readonly dialog: MatDialog) {
     super(kaartComponent, zone);
     this.zoom$ = kaartComponent.modelChanges.viewinstellingen$.pipe(
       map(zi => zi.zoom),
@@ -120,6 +123,16 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
   }
 
   pasFilterAan() {
-    this.dispatch(cmd.ZetFilter(this.laag.titel, some(IsExactFilter(Property("string", "ident8"), "R0010001")), kaartLogOnlyWrapper));
+    this.dispatch(cmd.BewerkVectorFilterCmd(this.laag as ToegevoegdeVectorLaag));
+  }
+
+  heeftFilter() {
+    // TODO
+    return true;
+  }
+
+  toggleFilter() {
+    // TODO: dit moet met messages, want moet doorstromen naar reducer. Zit in volgende story
+    this.filterActief = !this.filterActief;
   }
 }
