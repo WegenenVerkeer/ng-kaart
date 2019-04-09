@@ -11,6 +11,7 @@ export const hasLengthBetween: (_1: number, _2: number) => <A>(_: A[]) => boolea
 export const isEmpty: <A>(_: A[]) => boolean = isOfLength(0);
 export const isSingleton: <A>(_: A[]) => boolean = isOfLength(1);
 export const isNonEmpty: <A>(_: A[]) => boolean = array => array.length > 0;
+export const hasAtLeastLength: (_: number) => <A>(_: A[]) => boolean = n => array => array.length >= n;
 export const toArray: <A>(aOrAs: A | A[]) => A[] = aOrAs => (Array.isArray(aOrAs) ? aOrAs : [aOrAs]);
 
 export const pure: <A>() => A[] = () => [];
