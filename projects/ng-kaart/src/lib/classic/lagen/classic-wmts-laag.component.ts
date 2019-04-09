@@ -4,6 +4,8 @@ import { fromNullable, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 
 import * as ke from "../../kaart/kaart-elementen";
+import * as json from "../../stijl/json-object-interpreting";
+import { Consumer } from "../../util/function";
 import { urlWithParams } from "../../util/url";
 import { classicLogger } from "../log";
 import { logOnlyWrapper } from "../messages";
@@ -18,6 +20,18 @@ function stringToArray<T>(param: string | T): T {
     return JSON.parse(param);
   } else {
     return param;
+  }
+}
+
+function applySuccess<T>(validation: json.Validation<T>, effect: Consumer<T>): void {
+  validation.bimap(() => 1, effect);
+}
+
+function setExtentParam(param: string | ol.Extent, effect: Consumer<ol.Extent>): void {
+  if (typeof param === "string") {
+    applySuccess(json.arrSize(4, json.num)(param), effect);
+  } else {
+    effect(param);
   }
 }
 
@@ -75,8 +89,8 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
   }
 
   @Input()
-  set extent(param: [number, number, number, number] | string) {
-    this._extent = stringToArray(param);
+  set extent(param: ol.Extent | string) {
+    setExtentParam(param, extent => (this._extent = extent));
   }
 
   ngOnInit() {
