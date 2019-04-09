@@ -43,10 +43,12 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
   gebruikCache = false;
   @Input()
   veldinfos: ke.VeldInfo[] = [];
-  /* Gebruik deze instelling alleen wanneer je weet dat het echt nodig is! Grotere waarden zorgen voor meer
+  /* Deze waarde bepaalt hoeveel features er in geheugen bijgehouden worden (tussen verschillende fetches van de NosqlFS
+     source) om te verhinderen dat ze opnieuw getekend moeten worden bij het verschuiven of uitzoomen van de kaart.
+     Gebruik deze instelling alleen wanneer je weet dat het echt nodig is! Grotere waarden zorgen voor meer
      geheugengebruik maar features worden potentieel sneller getoond bij uitzoomen en verschuiven van de kaart. Het
-     ideale is om bij de start van de applicatie te detecteren of je op een krachtig toestel aan het lopen bent of niet.
-     Voor een telefoon bijvoorbeeld zouden dit bijvoorbeeld op 1000 gezet kunenn worden. De beste waarde kan best per
+     ideale is om bij de start van de applicatie te detecteren of die op een krachtig toestel aan het lopen is of niet.
+     Voor een telefoon bijvoorbeeld zou dit bijvoorbeeld op 1000 gezet kunenn worden. De beste waarde kan best per
      applicatie bepaald worden obv performantietests. Sommige applicaties gebruiken features met meer en omvangrijkere
      properties dan andere. */
   @Input()
