@@ -21,7 +21,8 @@
     "lib": [
       "es2017",
       "dom"
-    ]
+    ],
+    "strictNullChecks": false
   },
   "exclude": [
     "test.ts",
