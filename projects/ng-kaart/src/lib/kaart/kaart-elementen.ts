@@ -177,6 +177,8 @@ export const asToegevoegdeVectorLaag: (laag: ToegevoegdeLaag) => Option<Toegevoe
   fromPredicate<ToegevoegdeLaag>(lg => isVectorLaag(lg.bron))(laag) as Option<ToegevoegdeVectorLaag>;
 export const isZichtbaar: (_: number) => (_: ToegevoegdeLaag) => boolean = currentRes => laag =>
   laag.layer.getMinResolution() <= currentRes && laag.layer.getMaxResolution() > currentRes && laag.layer.getVisible();
+export const asToegevoegdeNosqlVectorLaag: (laag: ToegevoegdeLaag) => Option<ToegevoegdeVectorLaag> = laag =>
+  fromPredicate<ToegevoegdeLaag>(lg => isNoSqlFsLaag(lg.bron))(laag) as Option<ToegevoegdeVectorLaag>;
 
 export const veldenMetUniekeWaarden: Function1<ToegevoegdeVectorLaag, VeldProps[]> = laag =>
   array.mapOption(ToegevoegdeVectorLaag.veldInfosLens.get(laag), VeldProps.fromVeldinfo);

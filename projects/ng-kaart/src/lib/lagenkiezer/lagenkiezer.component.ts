@@ -36,7 +36,7 @@ export const DefaultOpties: LagenUiOpties = {
   toonLegende: false,
   verwijderbareLagen: false,
   verplaatsbareLagen: true,
-  filterbareLagen: true,
+  filterbareLagen: false,
   stijlbareVectorlagen: () => false
 };
 

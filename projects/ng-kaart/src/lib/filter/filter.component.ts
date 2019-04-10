@@ -9,11 +9,11 @@ import { filter, map, sample, shareReplay, startWith, switchMap, tap } from "rxj
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import * as ke from "../kaart/kaart-elementen";
-import { veldenMetUniekeWaarden } from "../kaart/kaart-elementen";
+import { VeldInfo } from "../kaart/kaart-elementen";
+import { ToegevoegdeVectorLaag } from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
-import { VeldProps } from "../kaart/stijleditor/model";
 import { collectOption, forEvery } from "../util";
 
 import { FilterAanpassingBezig, isAanpassingBezig } from "./filter-aanpassing-state";
@@ -27,7 +27,7 @@ import { IsExactFilter, Property } from "./filter-model";
 export class FilterComponent extends KaartChildComponentBase {
   readonly zichtbaar$: rx.Observable<boolean>;
   readonly titel$: rx.Observable<string>;
-  readonly velden$: rx.Observable<VeldProps[]>;
+  readonly velden$: rx.Observable<VeldInfo[]>;
   readonly veldControl = new FormControl({ value: "", disabled: false });
   readonly operatorControl = new FormControl({ value: "=", disabled: false });
   readonly waardeControl = new FormControl({ value: "", disabled: false });
@@ -50,10 +50,11 @@ export class FilterComponent extends KaartChildComponentBase {
         .get(aanpassing.laag.laaggroep)!
         .pipe(collectOption(lgn => findLaagOpTitel(aanpassing.laag.titel, lgn)))
     ).pipe(
+      tap(laag => console.log(laag)),
       shareReplay(1) // De huidige laag moet bewaard blijven voor alle volgende subscribers
     );
 
-    this.velden$ = laag$.pipe(map(veldenMetUniekeWaarden));
+    this.velden$ = laag$.pipe(map(laag => ToegevoegdeVectorLaag.veldInfosLens.get(laag)));
 
     this.titel$ = laag$.pipe(map(laag => laag.titel));
 

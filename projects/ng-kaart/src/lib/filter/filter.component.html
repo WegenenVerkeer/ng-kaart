@@ -1,12 +1,12 @@
 
 <div class="mat-dialog-container filter-dialog" *ngIf="zichtbaar$ | async" >
 
-  <header class="filter-header">
+  <div class="filter-header">
     <div class="filter-titel">{{ titel$ | async }} filter instellen</div>
     <mat-icon class="filter-sluit-button" (click)="close()">close</mat-icon>
-  </header>
+  </div>
 
-  <main class="filter-content" >
+  <div class="filter-content" >
 
     <div class="filter-definitie">
 
@@ -29,9 +29,9 @@
 
     </div>
 
-  </main>
+  </div>
 
-  <footer class="filter-footer">
+  <div class="filter-footer">
 
     <button mat-button class="filter-sluit-button" (click)="close()">
       Annuleer
@@ -41,6 +41,6 @@
       Pas toe
     </button>
 
-  </footer>
+  </div>
 
 </div>

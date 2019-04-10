@@ -1,13 +1,10 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
 import { MatDialog, MatMenuTrigger } from "@angular/material";
-import { some } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { distinctUntilChanged, map, shareReplay } from "rxjs/operators";
 
-import { FilterComponent } from "../filter";
-import { IsExactFilter, Property } from "../filter/filter-model";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
-import { asToegevoegdeVectorLaag, ToegevoegdeLaag, ToegevoegdeVectorLaag } from "../kaart/kaart-elementen";
+import { asToegevoegdeNosqlVectorLaag, asToegevoegdeVectorLaag, ToegevoegdeLaag, ToegevoegdeVectorLaag } from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as cmd from "../kaart/kaart-protocol-commands";
 import { KaartComponent } from "../kaart/kaart.component";
@@ -65,7 +62,7 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
     );
     this.kanFilteren$ = lagenkiezer.opties$.pipe(
       map(o =>
-        asToegevoegdeVectorLaag(this.laag)
+        asToegevoegdeNosqlVectorLaag(this.laag)
           .map(vlg => o.filterbareLagen)
           .getOrElse(false)
       ),
