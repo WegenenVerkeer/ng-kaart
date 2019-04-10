@@ -1,9 +1,16 @@
-import { Function1, Function2 } from "fp-ts/lib/function";
+import { Function1, Function2, Function3 } from "fp-ts/lib/function";
 
-export interface IsExact {
+export interface Is {
   readonly operator: "=";
   readonly beschrijving: "is exact";
 }
+
+export interface IsNiet {
+  readonly operator: "!=";
+  readonly beschrijving: "is niet";
+}
+
+export type Operator = Is | IsNiet;
 
 export type TypeType = "boolean" | "string" | "number";
 
@@ -20,13 +27,13 @@ export interface Property {
   readonly ref: string;
 }
 
-export interface Comparison {
-  readonly kind: IsExact;
+export interface SimpleFilter {
+  readonly kind: Is | IsNiet;
   readonly left: Property;
   readonly right: Literal;
 }
 
-export type Filter = Comparison;
+export type Filter = SimpleFilter;
 
 const value: Function2<Property, Literal, string> = (property, literal) => {
   switch (property.type) {
@@ -39,9 +46,14 @@ const value: Function2<Property, Literal, string> = (property, literal) => {
   }
 };
 
-const IsExact: IsExact = {
+const Is: Is = {
   operator: "=",
   beschrijving: "is exact"
+};
+
+const IsNiet: IsNiet = {
+  operator: "!=",
+  beschrijving: "is niet"
 };
 
 export const cql: Function1<Filter, string> = comparison =>
@@ -53,8 +65,20 @@ export const Property: Function2<TypeType, string, Property> = (typetype, name) 
   ref: name
 });
 
-export const IsExactFilter: Function2<Property, ValueType, Comparison> = (property, value) => ({
-  kind: IsExact,
+export const Operator: Function1<string, Operator> = symbool => {
+  switch (symbool) {
+    case Is.operator:
+      return Is;
+    case IsNiet.operator:
+      return IsNiet;
+    default:
+      // fallback equality
+      return Is;
+  }
+};
+
+export const SimpleFilter: Function3<Property, ValueType, Operator, SimpleFilter> = (property, value, operator) => ({
+  kind: operator,
   left: property,
   right: {
     kind: "Literal",

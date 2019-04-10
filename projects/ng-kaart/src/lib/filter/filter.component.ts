@@ -17,7 +17,7 @@ import { KaartComponent } from "../kaart/kaart.component";
 import { collectOption, forEvery } from "../util";
 
 import { FilterAanpassingBezig, isAanpassingBezig } from "./filter-aanpassing-state";
-import { IsExactFilter, Property } from "./filter-model";
+import { Operator, Property, SimpleFilter } from "./filter-model";
 
 @Component({
   selector: "awv-filter",
@@ -79,7 +79,10 @@ export class FilterComponent extends KaartChildComponentBase {
             gekozenOperator$.pipe(
               switchMap(operator =>
                 gekozenWaarde$.pipe(
-                  map(waarde => prt.ZetFilter(laag.titel, some(IsExactFilter(Property("string", veld), waarde)), kaartLogOnlyWrapper))
+                  map(waarde =>
+                    // TODO: veld type uit veld property!
+                    prt.ZetFilter(laag.titel, some(SimpleFilter(Property("string", veld), waarde, Operator(operator))), kaartLogOnlyWrapper)
+                  )
                 )
               )
             )
