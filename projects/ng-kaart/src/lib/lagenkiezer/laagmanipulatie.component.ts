@@ -1,16 +1,14 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
 import { MatDialog, MatMenuTrigger } from "@angular/material";
-import { fromNullable, none } from "fp-ts/lib/Option";
+import { none } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
-import { BehaviorSubject } from "rxjs";
-import { distinctUntilChanged, map, shareReplay, startWith } from "rxjs/operators";
+import { distinctUntilChanged, map, shareReplay } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { asToegevoegdeNosqlVectorLaag, asToegevoegdeVectorLaag, ToegevoegdeLaag, ToegevoegdeVectorLaag } from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as cmd from "../kaart/kaart-protocol-commands";
 import { KaartComponent } from "../kaart/kaart.component";
-import { nonEmptyString } from "../util";
 import { observeOnAngular } from "../util/observe-on-angular";
 
 import { LagenkiezerComponent } from "./lagenkiezer.component";
@@ -37,8 +35,8 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
   readonly filterActief$: rx.Observable<boolean> = this.filterActiefSubj.asObservable();
 
   // TODO: moet 1 maal opgehaald worden uit featureserver
-  readonly filterTotaalSubj: rx.BehaviorSubject<number> = new rx.BehaviorSubject<number>(999);
-  readonly filterTotaal$: rx.Observable<number> = this.filterTotaalSubj.asObservable();
+  readonly filterTotaalSubj: rx.BehaviorSubject<string> = new rx.BehaviorSubject<string>("???");
+  readonly filterTotaal$: rx.Observable<string> = this.filterTotaalSubj.asObservable();
 
   @Input()
   laag: ToegevoegdeLaag;
@@ -143,7 +141,7 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
     this.dispatch(cmd.ZetFilter(this.laag.titel, none, kaartLogOnlyWrapper));
   }
 
-  toggleFilter() {
+  toggleFilterActief() {
     // TODO: dit moet met messages, want moet doorstromen naar reducer. Zit in volgende story
     this.filterActiefSubj.next(!this.filterActiefSubj.value);
   }
