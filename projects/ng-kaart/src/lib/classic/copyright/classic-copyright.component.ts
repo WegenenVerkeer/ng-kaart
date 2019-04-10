@@ -2,14 +2,25 @@ import { Component, Injector, Input } from "@angular/core";
 
 import { CopyrightOpties, CopyrightUISelector } from "../../kaart/copyright/kaart-copyright.component";
 import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
+import * as val from "../webcomponent-support/params";
 
+/**
+ * De copyright tag zorgt voor een copyright boodschap rechts onderaan de kaart. De tekst van de boodschap is configureerbaar.
+ */
 @Component({
   selector: "awv-kaart-copyright",
   template: ""
 })
 export class ClassicCopyrightComponent extends ClassicUIElementSelectorComponentBase {
+  private _copyright = "\u00A9 Agentschap Wegen en Verkeer";
+
+  /**
+   * De tekst die getoond wordt. Gebruik zelf het copyrightsymbool © indien je dit wenst te tonen.
+   */
   @Input()
-  copyright = "\u00A9 Agentschap Wegen en Verkeer";
+  set copyright(param: string) {
+    this._copyright = val.str(param, this._copyright);
+  }
 
   constructor(injector: Injector) {
     super(CopyrightUISelector, injector);
@@ -17,7 +28,7 @@ export class ClassicCopyrightComponent extends ClassicUIElementSelectorComponent
 
   protected opties(): CopyrightOpties {
     return {
-      copyright: this.copyright
+      copyright: this._copyright
     };
   }
 }

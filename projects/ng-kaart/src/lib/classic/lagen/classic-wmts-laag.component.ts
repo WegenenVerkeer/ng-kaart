@@ -1,6 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { Component, Injector, Input, OnInit, ViewEncapsulation } from "@angular/core";
-import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
+import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 
 import * as ke from "../../kaart/kaart-elementen";
