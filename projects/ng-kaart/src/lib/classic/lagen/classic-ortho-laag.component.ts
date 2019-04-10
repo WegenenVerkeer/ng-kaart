@@ -24,7 +24,7 @@ export class ClassicOrthoLaagComponent extends ClassicWmsLaagComponent {
     const laagnaam = this.laagNaam || this.config.orthofotomozaiek.naam;
     return {
       type: TiledWmsType,
-      titel: this.titel,
+      titel: this._titel,
       naam: laagnaam,
       urls: urls,
       versie: fromNullable(this.versie),

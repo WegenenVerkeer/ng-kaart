@@ -13,8 +13,8 @@ import { NosqlFsSource } from "../../source/nosql-fs-source";
 import { ofType } from "../../util";
 import { asap } from "../../util/asap";
 import { Consumer } from "../../util/function";
-import * as val from "../classic-validators";
 import { cachedFeaturesLookupReadyMsg, CachedFeaturesLookupReadyMsg, logOnlyWrapper } from "../messages";
+import * as val from "../webcomponent-support/params";
 
 import { ClassicVectorLaagLikeComponent } from "./classic-vector-laag-like.component";
 
@@ -41,7 +41,16 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
   filter: string;
   @Input()
   veldinfos: ke.VeldInfo[] = [];
-  /* Deze waarde bepaalt hoeveel features er in geheugen bijgehouden worden (tussen verschillende fetches van de NosqlFS
+
+  _gebruikCache = false;
+  _maxFeaturesInMemCache = 2500;
+
+  @Input()
+  set gebruikCache(param: string | boolean) {
+    this._gebruikCache = val.bool(param, this._gebruikCache);
+  }
+
+  /** Deze waarde bepaalt hoeveel features er in geheugen bijgehouden worden (tussen verschillende fetches van de NosqlFS
      source) om te verhinderen dat ze opnieuw getekend moeten worden bij het verschuiven of uitzoomen van de kaart.
      Gebruik deze instelling alleen wanneer je weet dat het echt nodig is! Grotere waarden zorgen voor meer
      geheugengebruik maar features worden potentieel sneller getoond bij uitzoomen en verschuiven van de kaart. Het
@@ -49,18 +58,9 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
      Voor een telefoon bijvoorbeeld zou dit bijvoorbeeld op 1000 gezet kunenn worden. De beste waarde kan best per
      applicatie bepaald worden obv performantietests. Sommige applicaties gebruiken features met meer en omvangrijkere
      properties dan andere. */
-
-  _gebruikCache = false;
-  _maxFeaturesInMemCache = 2500;
-
-  @Input()
-  set gebruikCache(param: string | boolean) {
-    val.bool(param, val => (this._gebruikCache = val));
-  }
-
   @Input()
   set maxFeaturesInMemCache(param: string | number) {
-    val.num(param, val => (this._maxFeaturesInMemCache = val));
+    this._maxFeaturesInMemCache = val.num(param, this._maxFeaturesInMemCache);
   }
 
   private _cachedFeaturesProviderConsumer: Consumer<CachedFeatureLookup> = () => {};
@@ -68,13 +68,13 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
   @Input()
   set precache(input: PrecacheFeatures) {
     if (input) {
-      this.dispatch(prt.VulCacheVoorNosqlLaag(this.titel, input.wkt, input.startMetLegeCache, logOnlyWrapper));
+      this.dispatch(prt.VulCacheVoorNosqlLaag(this._titel, input.wkt, input.startMetLegeCache, logOnlyWrapper));
     }
   }
 
   @Input()
   set offline(offline: boolean) {
-    this.dispatch(prt.ZetOffline(this.titel, offline, logOnlyWrapper));
+    this.dispatch(prt.ZetOffline(this._titel, offline, logOnlyWrapper));
   }
 
   @Input()
@@ -83,7 +83,7 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
       this._cachedFeaturesProviderConsumer = input;
       // Dit moet op de volgende execution gescheduled worden omdat de laag niet geregistreerd is op het moment dat de
       // eerste @Input gezet wordt.
-      asap(() => this.dispatch(prt.VraagCachedFeaturesLookupCmd(this.titel, cachedFeaturesLookupReadyMsg)));
+      asap(() => this.dispatch(prt.VraagCachedFeaturesLookupCmd(this._titel, cachedFeaturesLookupReadyMsg)));
     }
   }
 
@@ -107,14 +107,14 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
   createLayer(): ke.VectorLaag {
     return {
       type: ke.VectorType,
-      titel: this.titel,
+      titel: this._titel,
       source: new NosqlFsSource(
         this.database,
         this.collection,
         this.url,
         option.fromNullable(this.view),
         option.fromNullable(this.filter),
-        this.titel,
+        this._titel,
         this._maxFeaturesInMemCache,
         this._gebruikCache
       ),

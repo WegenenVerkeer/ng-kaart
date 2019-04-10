@@ -23,7 +23,7 @@ export class ClassicGeoserverLaagComponent extends ClassicWmsLaagComponent {
     const urls = arrays.isArray(this._urls) && arrays.isNonEmpty(this._urls) ? this._urls : this.config.geoserver.urls;
     return {
       type: ke.TiledWmsType,
-      titel: this.titel,
+      titel: this._titel,
       naam: this.laagNaam,
       urls: urls,
       versie: fromNullable(this.versie),

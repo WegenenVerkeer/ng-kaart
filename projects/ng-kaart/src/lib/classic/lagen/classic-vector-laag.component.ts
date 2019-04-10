@@ -26,7 +26,7 @@ export class ClassicVectorLaagComponent extends ClassicVectorLaagLikeComponent {
   createLayer(): ke.VectorLaag {
     return {
       type: ke.VectorType,
-      titel: this.titel,
+      titel: this._titel,
       source: this.source,
       styleSelector: this.getMaybeStyleSelector(),
       styleSelectorBron: this.getMaybeStyleSelectorBron(),
