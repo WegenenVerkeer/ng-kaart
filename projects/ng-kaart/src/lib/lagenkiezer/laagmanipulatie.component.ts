@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
 import { MatDialog, MatMenuTrigger } from "@angular/material";
-import { fromNullable } from "fp-ts/lib/Option";
+import { fromNullable, none } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { BehaviorSubject } from "rxjs";
 import { distinctUntilChanged, map, shareReplay, startWith } from "rxjs/operators";
@@ -137,6 +137,10 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
 
   pasFilterAan() {
     this.dispatch(cmd.BewerkVectorFilterCmd(this.laag as ToegevoegdeVectorLaag));
+  }
+
+  verwijderFilter() {
+    this.dispatch(cmd.ZetFilter(this.laag.titel, none, kaartLogOnlyWrapper));
   }
 
   toggleFilter() {
