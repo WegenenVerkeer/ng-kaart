@@ -102,13 +102,10 @@ export class FilterComponent extends KaartChildComponentBase {
     );
 
     const pasToeGeklikt$ = this.actionFor$("pasFilterToe");
-    this.bindToLifeCycle(
-      zetFilterCmd$.pipe(
-        sample(pasToeGeklikt$),
-        tap(cmd => console.log("We activeren filter " + cmd.titel)),
-        tap(cmd => console.log(cmd.filter))
-      )
-    ).subscribe(command => this.dispatch(command));
+    this.bindToLifeCycle(zetFilterCmd$.pipe(sample(pasToeGeklikt$))).subscribe(command => {
+      this.dispatch(command);
+      this.dispatch(prt.StopVectorFilterBewerkingCmd());
+    });
   }
 
   close() {
