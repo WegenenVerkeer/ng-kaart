@@ -1,6 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { Component, Injector, Input, OnInit, ViewEncapsulation } from "@angular/core";
-import { fromNullable, some } from "fp-ts/lib/Option";
+import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 
 import * as ke from "../../kaart/kaart-elementen";
@@ -8,6 +8,7 @@ import { urlWithParams } from "../../util/url";
 import * as val from "../classic-validators";
 import { classicLogger } from "../log";
 import { logOnlyWrapper } from "../messages";
+import { getBooleanParam, getOptionalCoordinateParam, getOptionalExtentParam, getStringArrayParam } from "../webcomponent-support/params";
 
 import { blancoLaag } from "./classic-blanco-laag.component";
 import { ClassicLaagComponent } from "./classic-laag.component";
@@ -81,7 +82,7 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
     if (!this.matrixSet) {
       throw new Error("matrixSet moet opgegeven zijn");
     }
-    if (!(this.capUrl || (this._urls && this._urls.length > 0 && this._matrixIds && this._matrixIds.length > 0))) {
+    if (!(this.capUrl || (arrays.isNonEmpty(this._urls) && arrays.isNonEmpty(this._matrixIds)))) {
       throw new Error("capurl of urls en matrixIds moet opgegeven zijn");
     }
     super.ngOnInit();
@@ -104,8 +105,8 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
         urls: this._urls,
         matrixIds: this._matrixIds,
         style: fromNullable(this.style),
-        origin: fromNullable(this._origin),
-        extent: fromNullable(this._extent)
+        origin: this._origin,
+        extent: this._extent
       };
       return this.createLayerFromConfig(config);
     }
