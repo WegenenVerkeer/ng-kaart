@@ -1,5 +1,7 @@
 import { Function1, Function2, Function3 } from "fp-ts/lib/function";
 
+// Simple filter defs
+
 export interface Is {
   readonly operator: "=";
   readonly beschrijving: "is exact";
@@ -35,17 +37,6 @@ export interface SimpleFilter {
 
 export type Filter = SimpleFilter;
 
-const value: Function2<Property, Literal, string> = (property, literal) => {
-  switch (property.type) {
-    case "string":
-      return `'${literal.value}'`;
-    case "number":
-      return `${literal.value}`;
-    case "boolean":
-      return literal.value ? "true" : "false";
-  }
-};
-
 const Is: Is = {
   operator: "=",
   beschrijving: "is exact"
@@ -55,9 +46,6 @@ const IsNiet: IsNiet = {
   operator: "!=",
   beschrijving: "is niet"
 };
-
-export const cql: Function1<Filter, string> = comparison =>
-  `${comparison.left.ref} ${comparison.kind.operator} ${value(comparison.left, comparison.right)}`;
 
 export const Property: Function2<TypeType, string, Property> = (typetype, name) => ({
   kind: "Property",
@@ -85,3 +73,18 @@ export const SimpleFilter: Function3<Property, ValueType, Operator, SimpleFilter
     value: value
   }
 });
+
+// Make some CQL
+
+const value: Function2<Property, Literal, string> = (property, literal) => {
+  switch (property.type) {
+    case "string":
+      return `'${literal.value}'`;
+    case "number":
+      return `${literal.value}`;
+    case "boolean":
+      return literal.value ? "true" : "false";
+  }
+};
+
+export const cql: Function1<Filter, string> = filter => `${filter.left.ref} ${filter.kind.operator} ${value(filter.left, filter.right)}`;
