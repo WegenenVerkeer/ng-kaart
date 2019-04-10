@@ -10,9 +10,6 @@ import { ClassicBaseComponent } from "../classic-base.component";
   encapsulation: ViewEncapsulation.None
 })
 export class ClassicAchtergrondSelectorComponent extends ClassicBaseComponent implements OnInit, OnDestroy {
-  @Input()
-  titels: Array<string> = [""]; // FIXME: dit wordt nog/niet meer gebruikt, maar lijkt wel handig
-
   constructor(injector: Injector) {
     super(injector);
   }

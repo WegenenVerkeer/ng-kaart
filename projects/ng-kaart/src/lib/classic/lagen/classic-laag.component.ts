@@ -4,6 +4,8 @@ import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import { Laag, Laaggroep } from "../../kaart/kaart-elementen";
 import { Legende } from "../../kaart/kaart-legende";
 import * as prt from "../../kaart/kaart-protocol";
+import * as val from "../classic-validators";
+
 import { ClassicBaseComponent } from "../classic-base.component";
 import { KaartClassicLocatorService } from "../kaart-classic-locator.service";
 import { ClassicLegendeItemComponent } from "../legende/classic-legende-item.component";
@@ -13,19 +15,36 @@ export abstract class ClassicLaagComponent extends ClassicBaseComponent implemen
   @Input()
   titel = "";
   @Input()
-  zichtbaar = true;
-  @Input()
-  groep: Laaggroep | undefined; // Heeft voorrang op std ingesteld via laaggroep
-  @Input()
-  minZoom = 2;
-  @Input()
-  maxZoom = 16;
-  @Input()
   stijlInLagenKiezer?: string;
 
   legendeItems: ClassicLegendeItemComponent[] = [];
 
   protected laag: Option<Laag> = none;
+
+  _zichtbaar = true;
+  _groep: Laaggroep | undefined;
+  _minZoom = 2;
+  _maxZoom = 16;
+
+  @Input()
+  set zichtbaar(param: string | boolean) {
+    val.bool(param, val => (this._zichtbaar = val));
+  }
+
+  @Input()
+  set groep(param: string | Laaggroep | undefined) {
+    val.enu<Laaggroep>(param, val => (this._groep = val), "Achtergrond", "Voorgrond.Hoog", "Voorgrond.Laag", "Tools");
+  }
+
+  @Input()
+  set minZoom(param: string | number) {
+    val.num(param, val => (this._minZoom = val));
+  }
+
+  @Input()
+  set maxZoom(param: string | number) {
+    val.num(param, val => (this._maxZoom = val));
+  }
 
   constructor(injector: Injector) {
     super(injector);
@@ -61,7 +80,7 @@ export abstract class ClassicLaagComponent extends ClassicBaseComponent implemen
       positie: Number.MAX_SAFE_INTEGER,
       laag: lg,
       laaggroep: this.gekozenLaagGroep(),
-      magGetoondWorden: this.zichtbaar,
+      magGetoondWorden: this._zichtbaar,
       legende: none,
       stijlInLagenKiezer: fromNullable(this.stijlInLagenKiezer),
       wrapper: logOnlyWrapper
@@ -80,7 +99,7 @@ export abstract class ClassicLaagComponent extends ClassicBaseComponent implemen
   }
 
   protected gekozenLaagGroep(): Laaggroep {
-    return fromNullable(this.groep).getOrElse(this.laaggroep());
+    return fromNullable(this._groep).getOrElse(this.laaggroep());
   }
 
   protected dispatch(evt: prt.Command<KaartClassicMsg>) {

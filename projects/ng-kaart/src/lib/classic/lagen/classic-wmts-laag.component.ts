@@ -4,9 +4,8 @@ import { fromNullable, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 
 import * as ke from "../../kaart/kaart-elementen";
-import * as json from "../../stijl/json-object-interpreting";
-import { Consumer } from "../../util/function";
 import { urlWithParams } from "../../util/url";
+import * as val from "../classic-validators";
 import { classicLogger } from "../log";
 import { logOnlyWrapper } from "../messages";
 
@@ -14,26 +13,6 @@ import { blancoLaag } from "./classic-blanco-laag.component";
 import { ClassicLaagComponent } from "./classic-laag.component";
 
 const WmtsParser = new ol.format.WMTSCapabilities();
-
-function stringToArray<T>(param: string | T): T {
-  if (typeof param === "string") {
-    return JSON.parse(param);
-  } else {
-    return param;
-  }
-}
-
-function applySuccess<T>(validation: json.Validation<T>, effect: Consumer<T>): void {
-  validation.bimap(() => 1, effect);
-}
-
-function setExtentParam(param: string | ol.Extent, effect: Consumer<ol.Extent>): void {
-  if (typeof param === "string") {
-    applySuccess(json.arrSize(4, json.num)(param), effect);
-  } else {
-    effect(param);
-  }
-}
 
 @Component({
   selector: "awv-kaart-wmts-laag",
@@ -43,8 +22,6 @@ function setExtentParam(param: string | ol.Extent, effect: Consumer<ol.Extent>):
 export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements OnInit {
   @Input()
   laagNaam: string;
-  @Input()
-  tiled = true;
   @Input()
   type: string;
   @Input()
@@ -58,16 +35,15 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
   @Input()
   format = "image/png";
   @Input()
-  opacity?: number;
-  @Input()
   style?: string;
   @Input()
   projection = "EPSG:31370";
 
-  _urls: string[] = [];
-  _matrixIds: string[];
-  _origin?: [number, number];
-  _extent?: [number, number, number, number];
+  private _urls: string[] = [];
+  private _matrixIds: string[];
+  private _origin?: ol.Coordinate;
+  private _extent?: ol.Extent;
+  private _opacity?: number;
 
   constructor(injector: Injector, private http: HttpClient) {
     super(injector);
@@ -75,22 +51,27 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
 
   @Input()
   set urls(param: string[] | string) {
-    this._urls = stringToArray(param);
+    val.stringArray(param, array => (this._urls = array));
   }
 
   @Input()
   set matrixIds(param: string[] | string) {
-    this._matrixIds = stringToArray(param);
+    val.stringArray(param, array => (this._matrixIds = array));
   }
 
   @Input()
   set origin(param: [number, number] | string) {
-    this._origin = stringToArray(param);
+    val.coord(param, coord => (this._origin = coord));
   }
 
   @Input()
   set extent(param: ol.Extent | string) {
-    setExtentParam(param, extent => (this._extent = extent));
+    val.extent(param, extent => (this._extent = extent));
+  }
+
+  @Input()
+  set opacity(param: number | string) {
+    val.num(param, num => (this._opacity = num));
   }
 
   ngOnInit() {
@@ -113,8 +94,8 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
         type: ke.BlancoType,
         titel: this.titel,
         backgroundUrl: blancoLaag,
-        minZoom: this.minZoom,
-        maxZoom: this.maxZoom,
+        minZoom: this._minZoom,
+        maxZoom: this._maxZoom,
         verwijderd: false
       };
     } else {
@@ -137,12 +118,12 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
       naam: this.laagNaam,
       versie: fromNullable(this.versie),
       format: fromNullable(this.format),
-      opacity: fromNullable(this.opacity),
+      opacity: fromNullable(this._opacity),
       matrixSet: this.matrixSet,
       config: config,
       backgroundUrl: this.backgroundUrl(config),
-      minZoom: this.minZoom,
-      maxZoom: this.maxZoom,
+      minZoom: this._minZoom,
+      maxZoom: this._maxZoom,
       verwijderd: false
     };
   }

@@ -13,6 +13,7 @@ import { NosqlFsSource } from "../../source/nosql-fs-source";
 import { ofType } from "../../util";
 import { asap } from "../../util/asap";
 import { Consumer } from "../../util/function";
+import * as val from "../classic-validators";
 import { cachedFeaturesLookupReadyMsg, CachedFeaturesLookupReadyMsg, logOnlyWrapper } from "../messages";
 
 import { ClassicVectorLaagLikeComponent } from "./classic-vector-laag-like.component";
@@ -39,11 +40,20 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
   @Input()
   filter: string;
   @Input()
-  gebruikCache = false;
-  @Input()
   veldinfos: ke.VeldInfo[] = [];
+
+  _gebruikCache = false;
+  _maxFeaturesInMemCache = 2500;
+
   @Input()
-  maxFeaturesInMemCache = 2500;
+  set gebruikCache(param: string | boolean) {
+    val.bool(param, val => (this._gebruikCache = val));
+  }
+
+  @Input()
+  set maxFeaturesInMemCache(param: string | number) {
+    val.num(param, val => (this._maxFeaturesInMemCache = val));
+  }
 
   private _cachedFeaturesProviderConsumer: Consumer<CachedFeatureLookup> = () => {};
 
@@ -97,8 +107,8 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
         option.fromNullable(this.view),
         option.fromNullable(this.filter),
         this.titel,
-        this.maxFeaturesInMemCache,
-        this.gebruikCache
+        this._maxFeaturesInMemCache,
+        this._gebruikCache
       ),
       styleSelector: this.getMaybeStyleSelector(),
       styleSelectorBron: this.getMaybeStyleSelectorBron(),
@@ -106,8 +116,8 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
       hoverStyleSelector: fromNullable(this.hoverStyle).chain(ss.asStyleSelector),
       selecteerbaar: this.selecteerbaar,
       hover: this.hover,
-      minZoom: this.minZoom,
-      maxZoom: this.maxZoom,
+      minZoom: this._minZoom,
+      maxZoom: this._maxZoom,
       offsetveld: fromNullable(this.offsetveld),
       velden: new Map<string, ke.VeldInfo>(this.veldinfos.map(vi => [vi.naam, vi] as [string, ke.VeldInfo])),
       verwijderd: false,

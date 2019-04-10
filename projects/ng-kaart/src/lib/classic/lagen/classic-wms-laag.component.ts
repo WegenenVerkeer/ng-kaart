@@ -13,6 +13,7 @@ import * as prt from "../../kaart/kaart-protocol";
 import { VoegLaagLocatieInformatieServiceToe } from "../../kaart/kaart-protocol";
 import { ofType } from "../../util";
 import { urlWithParams } from "../../util/url";
+import * as val from "../classic-validators";
 import { classicMsgSubscriptionCmdOperator } from "../kaart-classic.component";
 import { KaartClassicMsg, LaatsteCacheRefreshMsg, logOnlyWrapper, PrecacheProgressMsg } from "../messages";
 
@@ -54,20 +55,9 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   @Input()
   laagNaam: string;
   @Input()
-  urls: string[];
-  @Input()
-  tiled = true;
-  @Input()
   versie?: string;
   @Input()
   format = "image/png";
-  @Input()
-  // tslint:disable-next-line:whitespace
-  tileSize? = 256;
-  @Input()
-  opacity?: number;
-  @Input()
-  cacheActief = false;
   // metadata van de velden zoals die geparsed worden door textParser
   // alsl er geen veldinfos opgegeven zijn, wordt hoogstens een textresultaat getoond bij kaart bevragen
   @Input()
@@ -96,6 +86,36 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   @Output()
   laatsteCacheRefresh: EventEmitter<Date> = new EventEmitter<Date>();
 
+  _urls: string[];
+  _tiled: boolean;
+  _tileSize = 256;
+  _opacity?: number;
+  _cacheActief = false;
+
+  @Input()
+  set urls(param: string | string[]) {
+    val.stringArray(param, val => (this._urls = val));
+  }
+
+  @Input()
+  set tiled(param: string | boolean) {
+    val.bool(param, val => (this._tiled = val));
+  }
+
+  @Input()
+  set tileSize(param: string | number) {
+    val.num(param, val => (this._tileSize = val));
+  }
+
+  @Input()
+  set opacity(param: string | number) {
+    val.num(param, val => (this._opacity = val));
+  }
+
+  @Input()
+  set cacheActief(param: string | boolean) {
+    val.bool(param, val => (this._cacheActief = val));
+  }
   constructor(injector: Injector, private readonly http: HttpClient) {
     super(injector);
   }
@@ -135,14 +155,14 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
       type: ke.TiledWmsType,
       titel: this.titel,
       naam: this.laagNaam,
-      urls: this.urls,
+      urls: this._urls,
       versie: fromNullable(this.versie),
-      tileSize: fromNullable(this.tileSize),
+      tileSize: fromNullable(this._tileSize),
       format: fromNullable(this.format),
-      opacity: fromNullable(this.opacity),
-      backgroundUrl: this.backgroundUrl(this.urls, this.laagNaam),
-      minZoom: this.minZoom,
-      maxZoom: this.maxZoom,
+      opacity: fromNullable(this._opacity),
+      backgroundUrl: this.backgroundUrl(this._urls, this.laagNaam),
+      minZoom: this._minZoom,
+      maxZoom: this._maxZoom,
       verwijderd: false
     };
   }
@@ -160,7 +180,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
       request: "GetMap",
       version: "1.3.0",
       transparant: false,
-      tiled: true,
+      tiled: this._tiled,
       width: 256,
       height: 256,
       format: this.format,
@@ -173,7 +193,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   ngAfterViewInit() {
     super.ngAfterViewInit();
 
-    if (this.cacheActief) {
+    if (this._cacheActief) {
       this.dispatch(prt.ActiveerCacheVoorLaag(this.titel, logOnlyWrapper));
 
       this.bindToLifeCycle(

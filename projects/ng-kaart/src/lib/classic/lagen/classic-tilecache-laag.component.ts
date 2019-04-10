@@ -20,19 +20,19 @@ export class ClassicTilecacheLaagComponent extends ClassicWmsLaagComponent {
   }
 
   createLayer(): ke.WmsLaag {
-    const urls = arrays.isArray(this.urls) && arrays.isNonEmpty(this.urls) ? this.urls : this.config.tilecache.urls;
+    const urls = arrays.isArray(this._urls) && arrays.isNonEmpty(this._urls) ? this._urls : this.config.tilecache.urls;
     return {
       type: ke.TiledWmsType,
       titel: this.titel,
       naam: this.laagNaam,
       urls: urls,
       versie: fromNullable(this.versie),
-      tileSize: fromNullable(this.tileSize),
+      tileSize: fromNullable(this._tileSize),
       format: fromNullable(this.format),
-      opacity: fromNullable(this.opacity),
+      opacity: fromNullable(this._opacity),
       backgroundUrl: this.backgroundUrl(urls, this.laagNaam),
-      minZoom: this.minZoom,
-      maxZoom: this.maxZoom,
+      minZoom: this._minZoom,
+      maxZoom: this._maxZoom,
       verwijderd: false
     };
   }
