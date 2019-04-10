@@ -83,6 +83,6 @@ export class ClassicFeaturesLaagComponent extends ClassicVectorLaagComponent imp
   }
 
   private dispatchVervangFeatures(features: ol.Feature[]) {
-    this.dispatch(prt.VervangFeaturesCmd(this.titel, arrays.fromNullable(features), logOnlyWrapper));
+    this.dispatch(prt.VervangFeaturesCmd(this._titel, arrays.fromNullable(features), logOnlyWrapper));
   }
 }

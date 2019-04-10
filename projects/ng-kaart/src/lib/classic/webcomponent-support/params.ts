@@ -28,6 +28,19 @@ const getParameter: <A>(_: json.Interpreter<A>) => ParamGetter<A> = interpreter 
   }
 };
 
+export function enu<T extends string>(param: string | T, fallback: T, ...values: T[]) {
+  if (typeof param === "string") {
+    return json
+      .enu(...values)(param)
+      .getOrElseL(() => {
+        kaartLogger.warn(`Een parameter met waarde '${param}' kon niet correct geïnterpreteerd worden.`);
+        return fallback;
+      });
+  } else {
+    return param;
+  }
+}
+
 const getOptionalParameter: <A>(_: json.Interpreter<A>) => OptionalParamGetter<A> = interpreter => param => {
   if (typeof param === "string") {
     return validationChain(parseJSON(param), json.optional(interpreter)).getOrElseL(
@@ -38,18 +51,27 @@ const getOptionalParameter: <A>(_: json.Interpreter<A>) => OptionalParamGetter<A
   }
 };
 
-export const getStringParam: ParamGetter<string> = identity;
+export const str: ParamGetter<string> = identity;
 
-export const getNumberParam: ParamGetter<number> = getParameter(json.num);
+export const optStr: OptionalParamGetter<string> = param => {
+  if (param) {
+    return some(param);
+  } else {
+    return none;
+  }
+};
 
-export const getBooleanParam: ParamGetter<boolean> = getParameter(json.bool);
+export const num: ParamGetter<number> = getParameter(json.num);
+export const optNum: OptionalParamGetter<number> = getOptionalParameter(json.num);
 
-const coord: json.Interpreter<ol.Coordinate> = json.arrSize(2, json.num) as json.Interpreter<ol.Coordinate>;
-export const getCoordinateParam: ParamGetter<ol.Coordinate> = getParameter(coord);
-export const getOptionalCoordinateParam: OptionalParamGetter<ol.Coordinate> = getOptionalParameter(coord);
+export const bool: ParamGetter<boolean> = getParameter(json.bool);
 
-const ext = json.arrSize(4, json.num) as json.Interpreter<ol.Extent>;
-export const getExtentParam: ParamGetter<ol.Extent> = getParameter(ext);
-export const getOptionalExtentParam: OptionalParamGetter<ol.Extent> = getOptionalParameter(ext);
+const coordInter: json.Interpreter<ol.Coordinate> = json.arrSize(2, json.num) as json.Interpreter<ol.Coordinate>;
+export const coord: ParamGetter<ol.Coordinate> = getParameter(coordInter);
+export const optCoord: OptionalParamGetter<ol.Coordinate> = getOptionalParameter(coordInter);
 
-export const getStringArrayParam: ParamGetter<string[]> = getParameter(json.arr(json.str));
+const extentInter = json.arrSize(4, json.num) as json.Interpreter<ol.Extent>;
+export const extent: ParamGetter<ol.Extent> = getParameter(extentInter);
+export const optExtent: OptionalParamGetter<ol.Extent> = getOptionalParameter(extentInter);
+
+export const stringArray: ParamGetter<string[]> = getParameter(json.arr(json.str));

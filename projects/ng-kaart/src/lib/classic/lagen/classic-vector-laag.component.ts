@@ -26,7 +26,7 @@ export class ClassicVectorLaagComponent extends ClassicVectorLaagLikeComponent {
   createLayer(): ke.VectorLaag {
     return {
       type: ke.VectorType,
-      titel: this.titel,
+      titel: this._titel,
       source: this.source,
       styleSelector: this.getMaybeStyleSelector(),
       styleSelectorBron: this.getMaybeStyleSelectorBron(),
@@ -34,8 +34,8 @@ export class ClassicVectorLaagComponent extends ClassicVectorLaagLikeComponent {
       hoverStyleSelector: fromNullable(this.hoverStyle).chain(ss.asStyleSelector),
       selecteerbaar: this.selecteerbaar,
       hover: this.hover,
-      minZoom: this.minZoom,
-      maxZoom: this.maxZoom,
+      minZoom: this._minZoom,
+      maxZoom: this._maxZoom,
       offsetveld: fromNullable(this.offsetveld),
       velden: this.veldInfos.reduce((m, vi) => m.set(vi.naam, vi), new Map<string, ke.VeldInfo>()),
       verwijderd: false,

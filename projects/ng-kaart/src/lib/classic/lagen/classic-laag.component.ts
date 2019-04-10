@@ -4,28 +4,54 @@ import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import { Laag, Laaggroep } from "../../kaart/kaart-elementen";
 import { Legende } from "../../kaart/kaart-legende";
 import * as prt from "../../kaart/kaart-protocol";
+import * as val from "../webcomponent-support/params";
+
 import { ClassicBaseComponent } from "../classic-base.component";
 import { KaartClassicLocatorService } from "../kaart-classic-locator.service";
 import { ClassicLegendeItemComponent } from "../legende/classic-legende-item.component";
 import { KaartClassicMsg, logOnlyWrapper } from "../messages";
 
 export abstract class ClassicLaagComponent extends ClassicBaseComponent implements AfterContentInit, OnDestroy, OnInit {
-  @Input()
-  titel = "";
-  @Input()
-  zichtbaar = true;
-  @Input()
-  groep: Laaggroep | undefined; // Heeft voorrang op std ingesteld via laaggroep
-  @Input()
-  minZoom = 2;
-  @Input()
-  maxZoom = 16;
-  @Input()
-  stijlInLagenKiezer?: string;
-
   legendeItems: ClassicLegendeItemComponent[] = [];
 
   protected laag: Option<Laag> = none;
+
+  _titel = "";
+  _stijlInLagenKiezer: Option<string> = none;
+  _zichtbaar = true;
+  _groep: Laaggroep | undefined;
+  _minZoom = 2;
+  _maxZoom = 16;
+
+  @Input()
+  set titel(param: string) {
+    this._titel = val.str(param, this._titel);
+  }
+
+  @Input()
+  set stijlInLagenKiezer(param: string) {
+    this._stijlInLagenKiezer = val.optStr(param);
+  }
+
+  @Input()
+  set zichtbaar(param: string | boolean) {
+    this._zichtbaar = val.bool(param, this._zichtbaar);
+  }
+
+  @Input()
+  set groep(param: string | Laaggroep | undefined) {
+    this._groep = val.enu<Laaggroep>(param, this._groep, "Achtergrond", "Voorgrond.Hoog", "Voorgrond.Laag", "Tools");
+  }
+
+  @Input()
+  set minZoom(param: string | number) {
+    this._minZoom = val.num(param, this._minZoom);
+  }
+
+  @Input()
+  set maxZoom(param: string | number) {
+    this._maxZoom = val.num(param, this._maxZoom);
+  }
 
   constructor(injector: Injector) {
     super(injector);
@@ -61,9 +87,9 @@ export abstract class ClassicLaagComponent extends ClassicBaseComponent implemen
       positie: Number.MAX_SAFE_INTEGER,
       laag: lg,
       laaggroep: this.gekozenLaagGroep(),
-      magGetoondWorden: this.zichtbaar,
+      magGetoondWorden: this._zichtbaar,
       legende: none,
-      stijlInLagenKiezer: fromNullable(this.stijlInLagenKiezer),
+      stijlInLagenKiezer: this._stijlInLagenKiezer,
       wrapper: logOnlyWrapper
     });
   }
@@ -71,16 +97,16 @@ export abstract class ClassicLaagComponent extends ClassicBaseComponent implemen
   protected voegLegendeToe() {
     if (this.legendeItems.length > 0) {
       const legende = Legende(this.legendeItems.map(item => item.maakLegendeItem()));
-      this.dispatch(prt.ZetLaagLegendeCmd(this.titel, legende, logOnlyWrapper));
+      this.dispatch(prt.ZetLaagLegendeCmd(this._titel, legende, logOnlyWrapper));
     }
   }
 
   protected verwijderLaag() {
-    this.dispatch(prt.VerwijderLaagCmd(this.titel, logOnlyWrapper));
+    this.dispatch(prt.VerwijderLaagCmd(this._titel, logOnlyWrapper));
   }
 
   protected gekozenLaagGroep(): Laaggroep {
-    return fromNullable(this.groep).getOrElse(this.laaggroep());
+    return fromNullable(this._groep).getOrElse(this.laaggroep());
   }
 
   protected dispatch(evt: prt.Command<KaartClassicMsg>) {

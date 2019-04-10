@@ -30,10 +30,6 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
   @Input()
   hover = false;
   @Input()
-  minZoom = 7;
-  @Input()
-  maxZoom = 15;
-  @Input()
   offsetveld?: string = undefined;
   private refreshTriggerSub: rx.Subscription = new rx.Subscription();
   @Input()
@@ -43,6 +39,9 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
       forEach(this.laag.chain(ke.asVectorLaag), laag => laag.source.clear())
     );
   }
+
+  _minZoom = 7;
+  _maxZoom = 15;
 
   constructor(injector: Injector) {
     super(injector);
@@ -69,7 +68,7 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
 
     forEach(this.getMaybeStyleSelector(), styleselector => {
       this.dispatch(
-        prt.ZetStijlVoorLaagCmd(this.titel, styleselector, fromNullable(this.selectieStyle).chain(ss.asStyleSelector), logOnlyWrapper)
+        prt.ZetStijlVoorLaagCmd(this._titel, styleselector, fromNullable(this.selectieStyle).chain(ss.asStyleSelector), logOnlyWrapper)
       );
     });
   }

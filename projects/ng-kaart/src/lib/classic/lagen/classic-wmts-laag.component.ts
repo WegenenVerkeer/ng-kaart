@@ -8,7 +8,7 @@ import * as arrays from "../../util/arrays";
 import { urlWithParams } from "../../util/url";
 import { classicLogger } from "../log";
 import { logOnlyWrapper } from "../messages";
-import { getBooleanParam, getOptionalCoordinateParam, getOptionalExtentParam, getStringArrayParam } from "../webcomponent-support/params";
+import * as val from "../webcomponent-support/params";
 
 import { blancoLaag } from "./classic-blanco-laag.component";
 import { ClassicLaagComponent } from "./classic-laag.component";
@@ -21,32 +21,19 @@ const WmtsParser = new ol.format.WMTSCapabilities();
   encapsulation: ViewEncapsulation.None
 })
 export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements OnInit {
-  @Input()
-  laagNaam: string;
-  @Input()
-  type: string;
-  @Input()
-  matrixSet: string;
-
-  @Input()
-  capUrl?: string;
-
-  @Input()
-  versie?: string;
-  @Input()
-  format = "image/png";
-  @Input()
-  opacity?: number;
-  @Input()
-  style?: string;
-  @Input()
-  projection = "EPSG:31370";
-
-  private _tiled = true;
+  private _laagNaam: string;
+  private _type: string;
+  private _matrixSet: string;
+  private _capUrl: Option<string> = none;
+  private _versie: Option<string> = none;
+  private _format = "image/png";
+  private _style: Option<string> = none;
+  private _projection = "EPSG:31370";
   private _urls: string[] = [];
-  private _matrixIds: string[] = [];
+  private _matrixIds: string[];
   private _origin: Option<ol.Coordinate> = none;
   private _extent: Option<ol.Extent> = none;
+  private _opacity: Option<number> = none;
 
   constructor(injector: Injector, private http: HttpClient) {
     super(injector);
@@ -54,51 +41,91 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
 
   @Input()
   set urls(param: string[] | string) {
-    this._urls = getStringArrayParam(param, this._urls);
+    this._urls = val.stringArray(param, this._urls);
   }
 
   @Input()
   set matrixIds(param: string[] | string) {
-    this._matrixIds = getStringArrayParam(param, this._matrixIds);
+    this._matrixIds = val.stringArray(param, this._matrixIds);
   }
 
   @Input()
-  set origin(param: ol.Coordinate | string) {
-    this._origin = getOptionalCoordinateParam(param);
+  set origin(param: [number, number] | string) {
+    this._origin = val.optCoord(param);
   }
 
   @Input()
   set extent(param: ol.Extent | string) {
-    this._extent = getOptionalExtentParam(param);
+    this._extent = val.optExtent(param);
   }
 
   @Input()
-  set tiled(param: boolean | string) {
-    this._tiled = getBooleanParam(param, this._tiled);
+  set opacity(param: number | string) {
+    this._opacity = val.optNum(param);
+  }
+
+  @Input()
+  set laagNaam(param: string) {
+    this._laagNaam = val.str(param, this._laagNaam);
+  }
+
+  @Input()
+  set type(param: string) {
+    this._type = val.str(param, this._type);
+  }
+
+  @Input()
+  set matrixSet(param: string) {
+    this._matrixSet = val.str(param, this._matrixSet);
+  }
+
+  @Input()
+  set capUrl(param: string) {
+    this._capUrl = val.optStr(param);
+  }
+
+  @Input()
+  set versie(param: string) {
+    this._versie = val.optStr(param);
+  }
+
+  @Input()
+  set format(param: string) {
+    this._format = val.str(param, this._format);
+  }
+
+  @Input()
+  set style(param: string) {
+    this._style = val.optStr(param);
+  }
+
+  @Input()
+  set projection(param: string) {
+    this._projection = val.str(param, this._projection);
   }
 
   ngOnInit() {
     if (["Voorgrond.Laag", "Voorgrond.Hoog", "Achtergrond"].indexOf(this.gekozenLaagGroep()) < 0) {
       throw new Error("groep moet 'Voorgrond.Laag', 'Voorgrond.Hoog' of 'Achtergrond' zijn");
     }
-    if (!this.matrixSet) {
+    if (!this._matrixSet) {
       throw new Error("matrixSet moet opgegeven zijn");
     }
-    if (!(this.capUrl || (arrays.isNonEmpty(this._urls) && arrays.isNonEmpty(this._matrixIds)))) {
+    if (!(this._capUrl || (arrays.isNonEmpty(this._urls) && arrays.isNonEmpty(this._matrixIds)))) {
       throw new Error("capurl of urls en matrixIds moet opgegeven zijn");
     }
     super.ngOnInit();
   }
 
   createLayer(): ke.Laag {
-    if (this.capUrl) {
-      this.vervangLaagWithCapabilitiesAsync(this.capUrl!);
+    if (this._capUrl.isSome()) {
+      this.vervangLaagWithCapabilitiesAsync(this._capUrl.toNullable());
       return {
         type: ke.BlancoType,
-        titel: this.titel,
+        titel: this._titel,
         backgroundUrl: blancoLaag,
-        minZoom: this.minZoom,
-        maxZoom: this.maxZoom,
+        minZoom: this._minZoom,
+        maxZoom: this._maxZoom,
         verwijderd: false
       };
     } else {
@@ -106,7 +133,7 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
         type: "Manual",
         urls: this._urls,
         matrixIds: this._matrixIds,
-        style: fromNullable(this.style),
+        style: this._style,
         origin: this._origin,
         extent: this._extent
       };
@@ -117,16 +144,16 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
   private createLayerFromConfig(config: ke.WmtsCapaConfig | ke.WmtsManualConfig): ke.WmtsLaag {
     return {
       type: ke.WmtsType,
-      titel: this.titel,
-      naam: this.laagNaam,
-      versie: fromNullable(this.versie),
-      format: fromNullable(this.format),
-      opacity: fromNullable(this.opacity),
-      matrixSet: this.matrixSet,
+      titel: this._titel,
+      naam: this._laagNaam,
+      versie: this._versie,
+      format: some(this._format),
+      opacity: this._opacity,
+      matrixSet: this._matrixSet,
       config: config,
       backgroundUrl: this.backgroundUrl(config),
-      minZoom: this.minZoom,
-      maxZoom: this.maxZoom,
+      minZoom: this._minZoom,
+      maxZoom: this._maxZoom,
       verwijderd: false
     };
   }
@@ -138,30 +165,30 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
   backgroundUrl(config: ke.WmtsCapaConfig | ke.WmtsManualConfig): string {
     if (config.type === "Manual") {
       return urlWithParams(this._urls[0], {
-        layer: this.laagNaam,
+        layer: this._laagNaam,
         style: config.style.getOrElse(""),
-        tilematrixset: this.matrixSet,
+        tilematrixset: this._matrixSet,
         Service: "WMTS",
         Request: "GetTile",
         Version: "1.0.0",
         WIDTH: 256,
         HEIGHT: 256,
-        Format: this.format,
+        Format: this._format,
         TileMatrix: 9,
         TileCol: 185,
         TileRow: 273
       });
     } else {
       // TODO: bepalen op basis van de echte parameters. Rekening houden met config.
-      return urlWithParams(this.capUrl!, {
-        layer: this.laagNaam,
-        style: fromNullable(this.style).getOrElse(""),
-        tilematrixset: this.matrixSet,
+      return urlWithParams(this._capUrl.toNullable(), {
+        layer: this._laagNaam,
+        style: this._style.getOrElse(""),
+        tilematrixset: this._matrixSet,
         Service: "WMTS",
         Request: "GetTile",
         Version: "1.0.0",
         Format: "image/png",
-        TileMatrix: this.matrixSet + ":9",
+        TileMatrix: this._matrixSet + ":9",
         TileCol: 169,
         TileRow: 108
       });
@@ -173,16 +200,16 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
       .get(capUrl + "?request=getCapabilities", { responseType: "text" }) //
       .subscribe(
         cap => this.vervangLaagWithCapabilities(capUrl, cap), //
-        err => classicLogger.error("Kon capabilities niet ophalen", err, this.titel, capUrl)
+        err => classicLogger.error("Kon capabilities niet ophalen", err, this._titel, capUrl)
       );
   }
 
   private vervangLaagWithCapabilities(capUrl: string, capabilitiesText: string) {
     const capabilities = WmtsParser.read(capabilitiesText);
     const wmtsOptions = ol.source.WMTS.optionsFromCapabilities(capabilities, {
-      layer: this.laagNaam,
-      matrixSet: this.matrixSet,
-      projection: this.projection
+      layer: this._laagNaam,
+      matrixSet: this._matrixSet,
+      projection: this._projection
     });
     const config: ke.WmtsCapaConfig = {
       type: "Capa",
