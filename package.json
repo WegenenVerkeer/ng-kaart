@@ -26,8 +26,8 @@
     "publishToNpmjs": "node script/patchRegistry.js",
     "build:elements": "ng build --prod --output-hashing none webcomponent && node script/elements-build.js",
     "compodoc": "compodoc",
-    "generate-docs":"compodoc projects/ng-kaart/src/lib/classic -p projects/ng-kaart/tsconfig.lib.json",
-    "serve-docs":"compodoc -s projects/ng-kaart/tsconfig.lib.json"
+    "generate-docs": "compodoc projects/ng-kaart/src/lib/classic -p projects/ng-kaart/tsconfig.lib.json",
+    "serve-docs": "compodoc -s projects/ng-kaart/tsconfig.lib.json"
   },
   "lint-staged": {
     "linters": {
