@@ -48,9 +48,11 @@ export function enu<T extends string>(param: string | T, fallback: T, ...values:
 
 export function optEnu<T extends string>(param: string | Option<T>, ...values: T[]) {
   if (typeof param === "string") {
-    return validationChain(parseJSON(param), json.optional(json.enu(...values))).getOrElseL(
-      () => none // Dit kan niet omdat json.optional zelf al none returned
-    );
+    return json
+      .optional(json.enu(...values))(param)
+      .getOrElseL(
+        () => none // Dit kan niet omdat json.optional zelf al none returned
+      );
   } else {
     return param;
   }

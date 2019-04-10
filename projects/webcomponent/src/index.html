@@ -35,8 +35,32 @@
     </awv-kaart-wmts-laag>
     
     <awv-kaart-nosqlfs-laag titel="Straatkolken" url="/geolatte-nosqlfs" database="featureserver" collection="straatkolken" minZoom="9"
-    stijl-spec='{  "type": "DynamicStyle", "definition" : {    "rules" : [ {      "condition" : {        "_type" : "StijlBetweenConditie",        "kind" : "<=>",        "lower" : {          "_type" : "StijlNumberLiteral",          "kind" : "Literal",          "value" : 0        },        "upper" : {          "_type" : "StijlNumberLiteral",          "kind" : "Literal",          "value" : 8        },        "value" : {          "_type" : "StijlEnvironment",          "kind" : "Environment",          "ref" : "resolution",          "type" : "number"        }      },      "style" : {        "definition" : {          "circle" : {            "radius" : 4,            "fill" : {              "color" : "#0000FF"            },            "stroke" : {              "color" : "#0000FF",              "width" : 2            }          },          "fill" : {            "color" : "#0000FF"          },          "stroke" : {            "color" : "#0000FF",            "width" : 2          }        }      }    } ]  },  "version" : "awv-v0"}'
-    ></awv-kaart-nosqlfs-laag>
+      stijl-spec='
+      {
+        "type": "DynamicStyle",
+        "definition": {
+          "rules": [
+            {
+              "condition": {
+                "_type": "StijlBetweenConditie",
+                "kind": "<=>",
+                "lower": { "_type": "StijlNumberLiteral", "kind": "Literal", "value": 0 },
+                "upper": { "_type": "StijlNumberLiteral", "kind": "Literal", "value": 8 },
+                "value": { "_type": "StijlEnvironment", "kind": "Environment", "ref": "resolution", "type": "number" }
+              },
+              "style": {
+                "definition": {
+                  "circle": { "radius": 4, "fill": { "color": "#0000FF" }, "stroke": { "color": "#0000FF", "width": 2 } },
+                  "fill": { "color": "#0000FF" },
+                  "stroke": { "color": "#0000FF", "width": 2 }
+                }
+              }
+            }
+          ]
+        },
+        "version": "awv-v0"
+      }'>
+    </awv-kaart-nosqlfs-laag>
 
     <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
     <awv-kaart-streetview></awv-kaart-streetview>
