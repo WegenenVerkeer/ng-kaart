@@ -17,7 +17,7 @@
 }
 
 .filter-dialog {
-  min-width: 600px;
+  min-width: 400px;
   display: flex;
   flex-direction: column;
 }
@@ -53,7 +53,7 @@
 
     .filter-operator-combo {
       padding: 8px;
-      min-width: 120px;
+      width: 80px;
     }
 
     .filter-waarde-editbox {

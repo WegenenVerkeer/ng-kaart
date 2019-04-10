@@ -149,3 +149,7 @@ export function scanState<A, S, B>(obsA: rx.Observable<A>, runState: Function2<S
 export function isNotNullObject(object: any) {
   return object && object instanceof Object;
 }
+
+export function isNotNull(object: any) {
+  return object !== null;
+}

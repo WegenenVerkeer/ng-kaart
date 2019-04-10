@@ -11,19 +11,24 @@
     <div class="filter-definitie">
 
       <mat-form-field class="filter-velden-combo">
-        <mat-select placeholder="Veld" [formControl]="veldControl">
-          <mat-option *ngFor="let veld of velden$ | async" [value]="veld.naam">{{veld.label}}</mat-option>
-        </mat-select>
+        <input type="text" placeholder="Eigenschap" matInput [formControl]="veldControl" [matAutocomplete]="velden">
+        <mat-autocomplete #velden="matAutocomplete" autoActiveFirstOption [displayWith]="displayVeld">
+          <mat-option *ngFor="let veld of filteredVelden$ | async" [value]="veld">{{veld.label}}</mat-option>
+        </mat-autocomplete>
+        <mat-error *ngIf="veldControl.invalid">{{ errorVeld() }}</mat-error>
       </mat-form-field>
 
       <mat-form-field class="filter-operator-combo">
-        <mat-select placeholder="Operator" [formControl]="operatorControl">
-          <mat-option *ngFor="let operator of beschikbareOperatoren" [value]="operator.symbool">{{ operator.beschrijving }}</mat-option>
-        </mat-select>
+        <input type="text" placeholder="Operator" matInput [formControl]="operatorControl" [matAutocomplete]="operatoren">
+        <mat-autocomplete #operatoren="matAutocomplete" autoActiveFirstOption [displayWith]="displayOperator">
+          <mat-option *ngFor="let operator of filteredOperatoren$ | async" [value]="operator">{{ operator.beschrijving }}</mat-option>
+        </mat-autocomplete>
+        <mat-error *ngIf="operatorControl.invalid">{{ errorOperator() }}</mat-error>
       </mat-form-field>
 
       <mat-form-field class="filter-waarde-editbox">
-        <input matInput placeholder="waarde" [formControl]="waardeControl">
+        <input matInput placeholder="Waarde" [formControl]="waardeControl">
+        <mat-error *ngIf="waardeControl.invalid">{{ errorWaarde() }}</mat-error>
       </mat-form-field>
 
     </div>
@@ -36,7 +41,8 @@
       Annuleer
     </button>
 
-    <button mat-button color="primary" class="filter-pas-toe-button" (click)="onAction('pasFilterToe')">
+    <button mat-button color="primary" class="filter-pas-toe-button" (click)="onAction('pasFilterToe')"
+    [disabled]="!(geldigFilterCmd$ | async)">
       Pas toe
     </button>
 
