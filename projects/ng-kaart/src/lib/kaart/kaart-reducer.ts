@@ -12,7 +12,7 @@ import * as rx from "rxjs";
 import { bufferCount, debounceTime, distinctUntilChanged, map, switchMap, throttleTime } from "rxjs/operators";
 
 import { FilterAanpassend, GeenFilterAanpassingBezig } from "../filter/filter-aanpassing-state";
-import * as filter from "../filter/filter-model";
+import { cql } from "../filter/filter-model";
 import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
 import * as arrays from "../util/arrays";
 import { refreshTiles } from "../util/cachetiles";
@@ -28,7 +28,6 @@ import { zoekerMetNaam } from "../zoeker/zoeker";
 import { CachedFeatureLookup } from "./cache/lookup";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
-import { StopVectorFilterBewerkingCmd } from "./kaart-protocol";
 import { MsgGen } from "./kaart-protocol-subscriptions";
 import { KaartWithInfo } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
@@ -1308,7 +1307,9 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         cmnd.wrapper,
         valideerNoSqlFsSourceBestaat(cmnd.titel).map(noSqlFsSource => {
-          cmnd.filter.foldL(() => noSqlFsSource.setFilter(none), f => noSqlFsSource.setFilter(some(filter.cql(f))));
+          cmnd.filter.foldL(() => noSqlFsSource.setFilter(none), filter => noSqlFsSource.setFilter(some(cql(filter))));
+          noSqlFsSource.clear();
+          noSqlFsSource.refresh();
           return ModelAndEmptyResult(model);
         })
       );

@@ -63,7 +63,7 @@ export class FilterComponent extends KaartChildComponentBase {
     const forControlValue: Function1<FormControl, Observable<string>> = formcontrol =>
       forEveryLaag(() =>
         formcontrol.valueChanges.pipe(
-          startWith(fromNullable(formcontrol.value)),
+          startWith(formcontrol.value),
           shareReplay(1) // ook voor toekomstige subscribers
         )
       );

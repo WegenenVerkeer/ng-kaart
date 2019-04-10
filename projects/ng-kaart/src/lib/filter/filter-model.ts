@@ -90,4 +90,5 @@ const value: Function2<Property, Literal, string> = (property, literal) => {
   }
 };
 
-export const cql: Function1<Filter, string> = filter => `${filter.left.ref} ${filter.kind.operator} ${value(filter.left, filter.right)}`;
+export const cql: Function1<Filter, string> = filter =>
+  `properties.${filter.left.ref} ${filter.kind.operator} ${value(filter.left, filter.right)}`;
