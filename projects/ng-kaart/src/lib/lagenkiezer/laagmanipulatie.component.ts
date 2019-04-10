@@ -36,6 +36,10 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
   readonly filterActiefSubj: rx.BehaviorSubject<boolean> = new rx.BehaviorSubject<boolean>(true);
   readonly filterActief$: rx.Observable<boolean> = this.filterActiefSubj.asObservable();
 
+  // TODO: moet 1 maal opgehaald worden uit featureserver
+  readonly filterTotaalSubj: rx.BehaviorSubject<number> = new rx.BehaviorSubject<number>(999);
+  readonly filterTotaal$: rx.Observable<number> = this.filterTotaalSubj.asObservable();
+
   @Input()
   laag: ToegevoegdeLaag;
   @Input()
