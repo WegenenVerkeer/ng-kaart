@@ -1,10 +1,12 @@
 import { Component, NgZone } from "@angular/core";
+import { Predicate } from "fp-ts/lib/function";
 import { fromPredicate, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { combineLatest, debounceTime, distinctUntilChanged, filter, map, share, switchMap, tap } from "rxjs/operators";
+import { combineLatest, debounceTime, distinctUntilChanged, filter, map, share, startWith, switchMap, tap } from "rxjs/operators";
 
 import * as clr from "../../stijl/colour";
+import * as arrays from "../../util/arrays";
 import { distance, geometryLength, matchGeometryType, toLineString } from "../../util/geometries";
 import { ofType } from "../../util/operators";
 import { tekenInfoboodschapGeslotenMsgWrapper, VerwijderTekenFeatureMsg } from "../kaart-internal-messages";
@@ -36,6 +38,12 @@ interface Measure {
 }
 
 const InfoBoodschapId = "multi-meten-resultaat";
+
+const hasAtleastTwoPoints: Predicate<ol.geom.Geometry> = geom =>
+  toLineString(geom)
+    .map(line => line.getCoordinates())
+    .exists(arrays.hasAtLeastLength(2));
+
 @Component({
   selector: "awv-kaart-multi-meten",
   templateUrl: "./kaart-multi-meten.component.html",
@@ -43,10 +51,12 @@ const InfoBoodschapId = "multi-meten-resultaat";
 })
 export class KaartMultiMetenComponent extends KaartModusComponent {
   private metenOpties: MultiMetenOpties = defaultOptions;
+  private metingGestartSubj: rx.Subject<void> = new rx.Subject();
 
   optionsVisible = false;
   inStateStraight = true;
   inStateViaRoad = false;
+  viaRoadAvailable = false;
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
@@ -75,7 +85,7 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
                   const end = line.getLastCoordinate();
                   // Wanneer de punten dicht genoeg bij elkaar liggen, sluiten we de geometrie en berekenen we een oppervlakte.
                   // Dicht genoeg hangt af van de schaal van de kaart.
-                  if (distance(begin, end) < scale) {
+                  if (distance(begin, end) < scale && arrays.isNonEmpty(line.getCoordinates())) {
                     return ol.Sphere.getArea(new ol.geom.Polygon([line.getCoordinates()]));
                   } else {
                     return 0;
@@ -102,6 +112,15 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
     );
 
     const verwijder$ = this.internalMessage$.pipe(ofType<VerwijderTekenFeatureMsg>("TekenInfoboodschapGesloten"));
+
+    const modeSwitchMogelijk$ = this.metingGestartSubj.pipe(
+      switchMap(() =>
+        this.modelChanges.getekendeGeometry$.pipe(
+          map(hasAtleastTwoPoints),
+          startWith(false)
+        )
+      )
+    );
 
     this.runInViewReady(
       rx.merge(
@@ -133,7 +152,9 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
           tap(() => {
             this.zetModeAf();
           })
-        )
+        ),
+        modeSwitchMogelijk$.pipe(tap(m => (this.viaRoadAvailable = m))),
+        this.metingGestartSubj.pipe(tap(() => this.rechteLijn()))
       )
     );
     this.destroying$.subscribe(() => this.stopMetenEnVerbergBoodschapen());
@@ -173,6 +194,7 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
 
   private startMetMeten(): void {
     this.dispatch(DrawOpsCmd(StartDrawing(this.metenOpties.markColour, this.metenOpties.useRouting)));
+    this.metingGestartSubj.next();
   }
 
   private stopMeten(): void {

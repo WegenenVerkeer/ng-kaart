@@ -187,7 +187,6 @@
                                  [zichtbaar]="true" [veldInfos]="mechelenVeldInfos"></awv-kaart-features-laag>
         <awv-kaart-features-laag [titel]="'Vliegtuig'" [features]="installatie" [style]="pinIcon2" [minZoom]="3"
                                  [zichtbaar]="false"></awv-kaart-features-laag>
-        <awv-kaart-ortho-laag [titel]="'Orthofoto\'s'" [laagNaam]="'ortho'" [groep]="'Voorgrond.Laag'" [zichtbaar]="false"></awv-kaart-ortho-laag>
         <!-- achtergrondlagen -->
         <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
         <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"
@@ -328,7 +327,7 @@
       <awv-test-sectie sectieId="verkeersborden" sectieTitel="Verkeersboden" [subSectie]="true" #verkeersbordenSectie
                        [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && verkeersbordenSectie.sectieZichtbaar">
         <div *ngIf="verkeersbordenSectie.sectieZichtbaar" [@enterAnimation]>
-          <awv-kaart-classic [naam]="'verkeersborden'" (zichtbareFeatures)="onZichtbareFeatures($event)"
+          <awv-kaart-classic [naam]="'verkeersborden'"
                              [zoom]="10" [selectieModus]="'single'" [middelpunt]="verkeersbordenCoordinaat" [hoogte]="1200">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
             <awv-kaart-nosqlfs-laag [titel]="'Verkeersborden'" [url]="'/geolatte-nosqlfs'"
@@ -337,7 +336,8 @@
                                     [selectieStyle]="verkeersbordenSelectieStyleFunction"
                                     [minZoom]="9"
                                     [view]="'aanzicht'"
-                                    [gebruikCache]="true"></awv-kaart-nosqlfs-laag>
+                                    [maxFeaturesInMemCache]="10000"
+                                    [gebruikCache]="false"></awv-kaart-nosqlfs-laag>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
             <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
           </awv-kaart-classic>
