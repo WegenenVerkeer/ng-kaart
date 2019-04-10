@@ -237,3 +237,6 @@ export const kleurPerVeldwaardeViaLaagEnVeldnaam2: Curried2<
           )
         )
     );
+
+export const veldenMetUniekeWaarden: Function1<ke.ToegevoegdeVectorLaag, VeldProps[]> = laag =>
+  array.mapOption(ke.ToegevoegdeVectorLaag.veldInfosLens.get(laag), VeldProps.fromVeldinfo);

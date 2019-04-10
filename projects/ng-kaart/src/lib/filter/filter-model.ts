@@ -38,12 +38,12 @@ export interface SimpleFilter {
 
 export type Filter = SimpleFilter;
 
-const Is: Is = {
+export const Is: Is = {
   symbool: "=",
   beschrijving: "is"
 };
 
-const IsNiet: IsNiet = {
+export const IsNiet: IsNiet = {
   symbool: "!=",
   beschrijving: "is niet"
 };

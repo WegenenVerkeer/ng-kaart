@@ -2,7 +2,7 @@ import { Component, NgZone } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import * as array from "fp-ts/lib/Array";
 import { Function1, Function2 } from "fp-ts/lib/function";
-import { fromNullable, Option, some } from "fp-ts/lib/Option";
+import { Option, some } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { Observable } from "rxjs";
 import { filter, map, sample, shareReplay, startWith, switchMap, tap } from "rxjs/operators";
@@ -17,7 +17,7 @@ import { KaartComponent } from "../kaart/kaart.component";
 import { collectOption, forEvery, isNotNullObject } from "../util";
 
 import { FilterAanpassingBezig, isAanpassingBezig } from "./filter-aanpassing-state";
-import { beschikbareOperatoren, Operator, Property, SimpleFilter } from "./filter-model";
+import { beschikbareOperatoren, Is, Operator, Property, SimpleFilter } from "./filter-model";
 
 @Component({
   selector: "awv-filter",
@@ -29,7 +29,7 @@ export class FilterComponent extends KaartChildComponentBase {
   readonly titel$: rx.Observable<string>;
   readonly velden$: rx.Observable<VeldInfo[]>;
   readonly veldControl = new FormControl({ value: "", disabled: false });
-  readonly operatorControl = new FormControl({ value: "=", disabled: false });
+  readonly operatorControl = new FormControl({ value: Is.symbool, disabled: false });
   readonly waardeControl = new FormControl({ value: "", disabled: false });
 
   readonly beschikbareOperatoren = beschikbareOperatoren;
