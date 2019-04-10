@@ -29,25 +29,48 @@ export interface PrecacheFeatures {
   encapsulation: ViewEncapsulation.None
 })
 export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent {
-  @Input()
-  url = "/geolatte-nosqlfs";
-  @Input()
-  database: string;
-  @Input()
-  view = "default";
-  @Input()
-  collection: string;
-  @Input()
-  filter: string;
-  @Input()
-  veldinfos: ke.VeldInfo[] = [];
-
+  _url = "/geolatte-nosqlfs";
+  _database: string;
+  _view = "default";
+  _collection: string;
+  _filter: string;
   _gebruikCache = false;
   _maxFeaturesInMemCache = 2500;
+  _veldinfos: ke.VeldInfo[] = [];
+
+  @Input()
+  set url(param: string) {
+    this._url = val.str(param, this._url);
+  }
+
+  @Input()
+  set database(param: string) {
+    this._database = val.str(param, this._database);
+  }
+
+  @Input()
+  set view(param: string) {
+    this._view = val.str(param, this._view);
+  }
+
+  @Input()
+  set collection(param: string) {
+    this._collection = val.str(param, this._collection);
+  }
+
+  @Input()
+  set filter(param: string) {
+    this._filter = val.str(param, this._filter);
+  }
 
   @Input()
   set gebruikCache(param: string | boolean) {
     this._gebruikCache = val.bool(param, this._gebruikCache);
+  }
+
+  @Input()
+  set veldinfos(param: string | ke.VeldInfo[]) {
+    this._veldinfos = val.veldInfoArray(param, this._veldinfos);
   }
 
   /** Deze waarde bepaalt hoeveel features er in geheugen bijgehouden worden (tussen verschillende fetches van de NosqlFS
@@ -109,11 +132,11 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
       type: ke.VectorType,
       titel: this._titel,
       source: new NosqlFsSource(
-        this.database,
-        this.collection,
-        this.url,
-        option.fromNullable(this.view),
-        option.fromNullable(this.filter),
+        this._database,
+        this._collection,
+        this._url,
+        option.fromNullable(this._view),
+        option.fromNullable(this._filter),
         this._titel,
         this._maxFeaturesInMemCache,
         this._gebruikCache
@@ -122,12 +145,12 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
       styleSelectorBron: this.getMaybeStyleSelectorBron(),
       selectieStyleSelector: fromNullable(this.selectieStyle).chain(ss.asStyleSelector),
       hoverStyleSelector: fromNullable(this.hoverStyle).chain(ss.asStyleSelector),
-      selecteerbaar: this.selecteerbaar,
-      hover: this.hover,
+      selecteerbaar: this._selecteerbaar,
+      hover: this._hover,
       minZoom: this._minZoom,
       maxZoom: this._maxZoom,
-      offsetveld: fromNullable(this.offsetveld),
-      velden: new Map<string, ke.VeldInfo>(this.veldinfos.map(vi => [vi.naam, vi] as [string, ke.VeldInfo])),
+      offsetveld: this._offsetveld,
+      velden: new Map<string, ke.VeldInfo>(this._veldinfos.map(vi => [vi.naam, vi] as [string, ke.VeldInfo])),
       verwijderd: false,
       rijrichtingIsDigitalisatieZin: false
       // TODO: dit veld (en offsetveld en ident8) zijn eigenlijk stijl concerns en zouden beter naar daar verhuisd moet worden

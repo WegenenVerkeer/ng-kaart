@@ -21,7 +21,7 @@ export class ClassicOrthoLaagComponent extends ClassicWmsLaagComponent {
 
   createLayer(): WmsLaag {
     const urls = arrays.isArray(this._urls) && arrays.isNonEmpty(this._urls) ? this._urls : this.config.orthofotomozaiek.urls;
-    const laagnaam = this.laagNaam || this.config.orthofotomozaiek.naam;
+    const laagnaam = this._laagNaam || this.config.orthofotomozaiek.naam;
     return {
       type: TiledWmsType,
       titel: this._titel,
@@ -30,7 +30,7 @@ export class ClassicOrthoLaagComponent extends ClassicWmsLaagComponent {
       versie: fromNullable(this.versie),
       tileSize: fromNullable(this._tileSize),
       format: fromNullable(this.format),
-      opacity: fromNullable(this._opacity),
+      opacity: this._opacity,
       backgroundUrl: this.backgroundUrl(urls, laagnaam),
       minZoom: this._minZoom,
       maxZoom: this._maxZoom,

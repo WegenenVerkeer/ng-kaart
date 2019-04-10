@@ -4,6 +4,7 @@ import * as ol from "openlayers";
 
 import * as ke from "../../kaart/kaart-elementen";
 import * as ss from "../../kaart/stijl-selector";
+import * as val from "../webcomponent-support/params";
 
 import { ClassicVectorLaagLikeComponent } from "./classic-vector-laag-like.component";
 
@@ -16,8 +17,12 @@ export class ClassicVectorLaagComponent extends ClassicVectorLaagLikeComponent {
   @Input()
   source = new ol.source.Vector();
 
+  _veldInfos: ke.VeldInfo[] = [];
+
   @Input()
-  veldInfos: ke.VeldInfo[] = [];
+  set veldInfos(param: string | ke.VeldInfo[]) {
+    this._veldInfos = val.veldInfoArray(param, this._veldInfos);
+  }
 
   constructor(injector: Injector) {
     super(injector);
@@ -32,12 +37,12 @@ export class ClassicVectorLaagComponent extends ClassicVectorLaagLikeComponent {
       styleSelectorBron: this.getMaybeStyleSelectorBron(),
       selectieStyleSelector: fromNullable(this.selectieStyle).chain(ss.asStyleSelector),
       hoverStyleSelector: fromNullable(this.hoverStyle).chain(ss.asStyleSelector),
-      selecteerbaar: this.selecteerbaar,
-      hover: this.hover,
+      selecteerbaar: this._selecteerbaar,
+      hover: this._hover,
       minZoom: this._minZoom,
       maxZoom: this._maxZoom,
-      offsetveld: fromNullable(this.offsetveld),
-      velden: this.veldInfos.reduce((m, vi) => m.set(vi.naam, vi), new Map<string, ke.VeldInfo>()),
+      offsetveld: this._offsetveld,
+      velden: this._veldInfos.reduce((m, vi) => m.set(vi.naam, vi), new Map<string, ke.VeldInfo>()),
       verwijderd: false,
       rijrichtingIsDigitalisatieZin: false
     };

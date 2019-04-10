@@ -1,5 +1,5 @@
 import { Injector, Input } from "@angular/core";
-import { fromNullable, Option } from "fp-ts/lib/Option";
+import { fromNullable, none, Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 
@@ -9,12 +9,11 @@ import * as ss from "../../kaart/stijl-selector";
 import { getDefaultHoverStyleFunction, getDefaultSelectionStyleFunction, getDefaultStyleFunction } from "../../kaart/styles";
 import { forEach, fromValidation } from "../../util/option";
 import { logOnlyWrapper } from "../messages";
+import * as val from "../webcomponent-support/params";
 
 import { ClassicLaagComponent } from "./classic-laag.component";
 
 export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponent {
-  @Input()
-  stijlSpec?: ss.AwvV0StyleSpec = undefined; // heeft voorrang op style
   @Input()
   style?: ol.style.Style = undefined; // heeft voorrang op styleFunction
   @Input()
@@ -23,14 +22,6 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
   selectieStyle?: ss.Stylish = getDefaultSelectionStyleFunction();
   @Input()
   hoverStyle?: ss.Stylish = getDefaultHoverStyleFunction();
-  @Input()
-  zichtbaar = true;
-  @Input()
-  selecteerbaar = true;
-  @Input()
-  hover = false;
-  @Input()
-  offsetveld?: string = undefined;
   private refreshTriggerSub: rx.Subscription = new rx.Subscription();
   @Input()
   set refreshTrigger(obs: rx.Observable<void>) {
@@ -40,8 +31,38 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
     );
   }
 
+  _stijlSpec: Option<ss.AwvV0StyleSpec> = none; // heeft voorrang op style
+  _zichtbaar = true;
+  _selecteerbaar = true;
+  _hover = false;
+  _offsetveld: Option<string> = none;
   _minZoom = 7;
   _maxZoom = 15;
+
+  @Input()
+  set stijlSpec(param: string | ss.AwvV0StyleSpec) {
+    this._stijlSpec = val.optStyleSpec(param);
+  }
+
+  @Input()
+  set zichtbaar(param: string | boolean) {
+    this._zichtbaar = val.bool(param, this._zichtbaar);
+  }
+
+  @Input()
+  set selecteerbaar(param: string | boolean) {
+    this._selecteerbaar = val.bool(param, this._selecteerbaar);
+  }
+
+  @Input()
+  set hover(param: string | boolean) {
+    this._hover = val.bool(param, this._hover);
+  }
+
+  @Input()
+  set offsetveld(param: string) {
+    this._offsetveld = val.optStr(param);
+  }
 
   constructor(injector: Injector) {
     super(injector);
@@ -52,11 +73,11 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
   }
 
   protected getMaybeStyleSelectorBron(): Option<ss.AwvV0StyleSpec> {
-    return fromNullable(this.stijlSpec);
+    return this._stijlSpec;
   }
 
   protected getMaybeStyleSelector(): Option<ss.StyleSelector> {
-    return fromNullable(this.stijlSpec)
+    return this._stijlSpec
       .chain(spec => fromValidation(ss.validateAwvV0StyleSpec(spec)))
       .orElse(() => fromNullable(this.style))
       .map(ss.StaticStyle)
