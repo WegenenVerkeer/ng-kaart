@@ -38,7 +38,7 @@ import { KaartComponent } from "../../kaart/kaart.component";
 import { kaartLogger } from "../../kaart/log";
 import { matchGeometryType } from "../../util/geometries";
 import * as maps from "../../util/maps";
-import { collect, Pipeable } from "../../util/operators";
+import { collect, isNotNullObject, Pipeable } from "../../util/operators";
 import { forEach } from "../../util/option";
 import * as sets from "../../util/sets";
 import { minLength } from "../../util/string";
@@ -102,10 +102,6 @@ const prioriteitVoorZoekresultaat: Function1<
   Zoektype,
   Function2<WeergaveoptiesOpZoekernaam, number, Function1<ZoekResultaat, number>>
 > = zoektype => (optiesOpNaam, stdPrio) => resultaat => prioriteitVoorZoekerNaam(zoektype)(optiesOpNaam, stdPrio)(resultaat.zoeker);
-
-export function isNotNullObject(object: any) {
-  return object && object instanceof Object;
-}
 
 export function toTrimmedLowerCasedString(s: string): string {
   return s

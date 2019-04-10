@@ -14,7 +14,7 @@ import { ToegevoegdeVectorLaag } from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
-import { collectOption, forEvery } from "../util";
+import { collectOption, forEvery, isNotNullObject } from "../util";
 
 import { FilterAanpassingBezig, isAanpassingBezig } from "./filter-aanpassing-state";
 import { Operator, Property, SimpleFilter } from "./filter-model";
@@ -68,20 +68,30 @@ export class FilterComponent extends KaartChildComponentBase {
         )
       );
 
-    const gekozenVeld$: Observable<string> = forControlValue(this.veldControl);
     const gekozenOperator$: Observable<string> = forControlValue(this.operatorControl);
     const gekozenWaarde$: Observable<string> = forControlValue(this.waardeControl);
+    const gekozenVeld$: Observable<VeldInfo> = laag$.pipe(
+      switchMap(laag =>
+        forControlValue(this.veldControl).pipe(
+          map(veldNaam => ToegevoegdeVectorLaag.veldInfosLens.get(laag).find(veldInfo => veldInfo.naam === veldNaam)),
+          filter(isNotNullObject)
+        )
+      )
+    );
 
     const zetFilterCmd$ = laag$.pipe(
       switchMap(laag =>
         gekozenVeld$.pipe(
-          switchMap(veld =>
+          switchMap(veldInfo =>
             gekozenOperator$.pipe(
               switchMap(operator =>
                 gekozenWaarde$.pipe(
                   map(waarde =>
-                    // TODO: veld type uit veld property!
-                    prt.ZetFilter(laag.titel, some(SimpleFilter(Property("string", veld), waarde, Operator(operator))), kaartLogOnlyWrapper)
+                    prt.ZetFilter(
+                      laag.titel,
+                      some(SimpleFilter(Property(veldInfo.type, veldInfo.naam), waarde, Operator(operator))),
+                      kaartLogOnlyWrapper
+                    )
                   )
                 )
               )

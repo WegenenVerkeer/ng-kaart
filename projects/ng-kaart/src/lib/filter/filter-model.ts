@@ -14,7 +14,8 @@ export interface IsNiet {
 
 export type Operator = Is | IsNiet;
 
-export type TypeType = "boolean" | "string" | "number";
+// TODO: laten we voorlopig overeen komen met alle veldtypes uit VeldInfo
+export type TypeType = "string" | "integer" | "double" | "geometry" | "date" | "datetime" | "boolean" | "json";
 
 export type ValueType = boolean | string | number;
 
@@ -80,10 +81,12 @@ const value: Function2<Property, Literal, string> = (property, literal) => {
   switch (property.type) {
     case "string":
       return `'${literal.value}'`;
-    case "number":
+    case "integer":
       return `${literal.value}`;
     case "boolean":
       return literal.value ? "true" : "false";
+    default:
+      return `'${literal.value}'`; // beschouw al de rest als string. Zie TODO bij TypeType
   }
 };
 

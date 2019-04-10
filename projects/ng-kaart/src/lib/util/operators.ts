@@ -145,3 +145,7 @@ export function scanState<A, S, B>(obsA: rx.Observable<A>, runState: Function2<S
     map(ps => ps.snd)
   );
 }
+
+export function isNotNullObject(object: any) {
+  return object && object instanceof Object;
+}
