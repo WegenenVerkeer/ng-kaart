@@ -102,34 +102,34 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   }
 
   @Input()
-  set urls(param: string | string[]) {
+  set urls(param: string[]) {
     this._urls = val.stringArray(param, this._urls);
   }
 
   @Input()
-  set tiled(param: string | boolean) {
+  set tiled(param: boolean) {
     this._tiled = val.bool(param, this._tiled);
   }
 
   @Input()
-  set tileSize(param: string | number) {
+  set tileSize(param: number) {
     this._tileSize = val.num(param, this._tileSize);
   }
 
   @Input()
-  set opacity(param: string | number) {
+  set opacity(param: number) {
     this._opacity = val.optNum(param);
   }
 
   @Input()
-  set cacheActief(param: string | boolean) {
+  set cacheActief(param: boolean) {
     this._cacheActief = val.bool(param, this._cacheActief);
   }
 
   // metadata van de velden zoals die geparsed worden door textParser
   // als er geen veldinfos opgegeven zijn, wordt hoogstens een textresultaat getoond bij kaart bevragen
   @Input()
-  set veldinfos(param: string | ke.VeldInfo[]) {
+  set veldinfos(param: ke.VeldInfo[]) {
     this._veldinfos = val.optVeldInfoArray(param);
   }
 

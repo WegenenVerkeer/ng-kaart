@@ -4,7 +4,13 @@ import { Predicate } from "fp-ts/lib/function";
 import { VerwijderUiElement, VoegUiElementToe, ZetUiElementOpties } from "../../kaart/kaart-protocol-commands";
 import { DefaultOpties, LagenUiOpties, LagenUiSelector } from "../../lagenkiezer/lagenkiezer.component";
 import { ClassicBaseComponent } from "../classic-base.component";
+import * as val from "../webcomponent-support/params";
 
+/**
+ * De lagenkiezer wordt getoond in het linkerpaneel en toont welke lagen er aanwezig zijn. Voor featurelagen wordt ook
+ * een legende getoond. Verder kunnen lagen af en aangezet of verwijderd worden en van volgorde veranderd.
+ *
+ */
 @Component({
   selector: "awv-kaart-lagenkiezer",
   template: ""
@@ -14,8 +20,14 @@ export class ClassicLagenkiezerComponent extends ClassicBaseComponent implements
     super(injector);
   }
 
-  @Input()
-  titels: string[] = []; // TODO nog te implementeren om te beperken tot deze
+  private _headerTitle = DefaultOpties.headerTitel;
+
+  public get headerTitle(): string {
+    return this._headerTitle;
+  }
+  public set headerTitle(value: string) {
+    this._headerTitle = val.str(value, this._headerTitle);
+  }
 
   @Input()
   headerTitel = DefaultOpties.headerTitel;

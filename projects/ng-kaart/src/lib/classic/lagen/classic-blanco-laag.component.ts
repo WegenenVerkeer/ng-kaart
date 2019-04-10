@@ -5,7 +5,9 @@ import { BlancoLaag, BlancoType, Laaggroep } from "../../kaart/kaart-elementen";
 import { ClassicLaagComponent } from "./classic-laag.component";
 
 export const blancoLaag = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
-
+/**
+ * Zorgt voor een blancoachtergrondlaag. Uiteraard pas interessant als er ook andere achtergrondlagen zijn.
+ */
 @Component({
   selector: "awv-kaart-blanco-laag",
   template: "<ng-content></ng-content>",

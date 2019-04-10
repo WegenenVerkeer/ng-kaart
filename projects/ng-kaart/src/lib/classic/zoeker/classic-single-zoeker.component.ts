@@ -25,7 +25,7 @@ export abstract class ClassicSingleZoekerComponentBase extends KaartComponentBas
    * Bepaalt of het icoontje dat in de stijl van de zoeker zit getoond wordt.
    */
   @Input()
-  set toonIcoon(param: boolean | string) {
+  set toonIcoon(param: boolean) {
     this._toonIcoon = val.bool(param, this._toonIcoon);
   }
 
@@ -33,7 +33,7 @@ export abstract class ClassicSingleZoekerComponentBase extends KaartComponentBas
    * Bepaalt of de geometrie van een zoekresultaat (als dat er één heeft) getoond wordt.
    */
   @Input()
-  public set toonGeometrie(param: string | boolean) {
+  public set toonGeometrie(param: boolean) {
     this._toonGeometrie = val.bool(param, this._toonGeometrie);
   }
 
@@ -42,7 +42,7 @@ export abstract class ClassicSingleZoekerComponentBase extends KaartComponentBas
    * zoekers. Een negatief getal betekent dat er geen suggesties opgevraagd worden.
    */
   @Input()
-  public set suggestiesPrioriteit(param: number | string) {
+  public set suggestiesPrioriteit(param: number) {
     this._suggestiesPrioriteit = val.num(param, this._suggestiesPrioriteit);
   }
   /**
@@ -52,7 +52,7 @@ export abstract class ClassicSingleZoekerComponentBase extends KaartComponentBas
    * zoeker een prioriteit ingesteld is, dan moet dat voor alle zoekers zo zijn.
    */
   @Input()
-  public set volledigeZoekPrioriteit(param: number | string) {
+  public set volledigeZoekPrioriteit(param: number) {
     this._volledigeZoekPrioriteit = val.num(param, this._volledigeZoekPrioriteit);
   }
 

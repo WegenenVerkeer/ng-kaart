@@ -117,67 +117,67 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
 
   /** Zoom niveau */
   @Input()
-  set zoom(param: number | string) {
+  set zoom(param: number) {
     this._zoom = val.optNum(param);
   }
 
   /** Minimum zoom niveau */
   @Input()
-  set minZoom(param: number | string) {
+  set minZoom(param: number) {
     this._minZoom = val.num(param, this._minZoom);
   }
 
   /** Maximum zoom niveau */
   @Input()
-  set maxZoom(param: number | string) {
+  set maxZoom(param: number) {
     this._maxZoom = val.num(param, this._maxZoom);
   }
 
   /** Het middelpunt van de kaart. "extent" heeft voorrang */
   @Input()
-  set middelpunt(param: ol.Coordinate | string) {
+  set middelpunt(param: ol.Coordinate) {
     this._middelpunt = val.optCoord(param);
   }
 
   /** Breedte van de kaart, neem standaard de hele breedte in */
   @Input()
-  set breedte(param: number | string) {
+  set breedte(param: number) {
     this._breedte = val.optNum(param);
   }
 
   /** Hoogte van de kaart, neem standaard de hele hoogte in */
   @Input()
-  set hoogte(param: number | string) {
+  set hoogte(param: number) {
     this._hoogte = val.optNum(param);
   }
 
   /** Breedte van linker-paneel (de default is 480px bij kaart breedte > 1240 en 360px voor smallere kaarten) */
   @Input()
-  set kaartLinksBreedte(param: number | string) {
+  set kaartLinksBreedte(param: number) {
     this._kaartLinksBreedte = val.num(param, this._kaartLinksBreedte);
   }
 
   /** Zoom niveau om te gebruiken bij "Mijn Locatie" */
   @Input()
-  set mijnLocatieZoom(param: number | string) {
+  set mijnLocatieZoom(param: number) {
     this._mijnLocatieZoom = val.optNum(param);
   }
 
   /** De extent van de kaart, heeft voorang op "middelpunt" */
   @Input()
-  set extent(param: ol.Extent | string) {
+  set extent(param: ol.Extent) {
     this._extent = val.optExtent(param);
   }
 
   /** De selectiemodus: "single" | "multipleKlik" | "multipleShift" | "none" */
   @Input()
-  set selectieModus(param: prt.SelectieModus | string) {
+  set selectieModus(param: prt.SelectieModus) {
     this._selectieModus = val.enu(param, this._selectieModus, "single", "multipleKlik", "multipleShift", "none");
   }
 
   /** Info bij hover: "on" | "off" */
   @Input()
-  set hoverModus(param: prt.HoverModus | string) {
+  set hoverModus(param: prt.HoverModus) {
     this._hoverModus = val.enu(param, this._hoverModus, "on", "off");
   }
 
@@ -189,7 +189,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
 
   /** Onderdrukken we kaart info boodschappen? */
   @Input()
-  set onderdrukKaartBevragenBoodschappen(param: boolean | string) {}
+  set onderdrukKaartBevragenBoodschappen(param: boolean) {}
 
   /** De geselecteerde features */
   @Output()

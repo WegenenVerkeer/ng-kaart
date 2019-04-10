@@ -11,8 +11,8 @@ import { validationChain } from "../../util/validation";
 import { AwvV0StaticStyleInterpreters } from "../../stijl/json-awv-v0-stijl";
 import { jsonAwvV0RuleInterpreter } from "../../stijl/json-awv-v0-stijlfunctie";
 
-export type ParamGetter<A> = Function2<string | A, A, A>;
-export type OptionalParamGetter<A> = Function1<string | A, Option<A>>;
+export type ParamGetter<A> = Function2<A, A, A>;
+export type OptionalParamGetter<A> = Function1<A, Option<A>>;
 
 const parseJSON: (param: string) => json.Validation<Object> = param => {
   try {

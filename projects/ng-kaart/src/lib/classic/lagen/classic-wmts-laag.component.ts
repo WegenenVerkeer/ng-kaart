@@ -40,27 +40,27 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
   }
 
   @Input()
-  set urls(param: string[] | string) {
+  set urls(param: string[]) {
     this._urls = val.stringArray(param, this._urls);
   }
 
   @Input()
-  set matrixIds(param: string[] | string) {
+  set matrixIds(param: string[]) {
     this._matrixIds = val.stringArray(param, this._matrixIds);
   }
 
   @Input()
-  set origin(param: [number, number] | string) {
+  set origin(param: [number, number]) {
     this._origin = val.optCoord(param);
   }
 
   @Input()
-  set extent(param: ol.Extent | string) {
+  set extent(param: ol.Extent) {
     this._extent = val.optExtent(param);
   }
 
   @Input()
-  set opacity(param: number | string) {
+  set opacity(param: number) {
     this._opacity = val.optNum(param);
   }
 

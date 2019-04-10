@@ -40,22 +40,22 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
   _maxZoom = 15;
 
   @Input()
-  set stijlSpec(param: string | ss.AwvV0StyleSpec) {
+  set stijlSpec(param: ss.AwvV0StyleSpec) {
     this._stijlSpec = val.optStyleSpec(param);
   }
 
   @Input()
-  set zichtbaar(param: string | boolean) {
+  set zichtbaar(param: boolean) {
     this._zichtbaar = val.bool(param, this._zichtbaar);
   }
 
   @Input()
-  set selecteerbaar(param: string | boolean) {
+  set selecteerbaar(param: boolean) {
     this._selecteerbaar = val.bool(param, this._selecteerbaar);
   }
 
   @Input()
-  set hover(param: string | boolean) {
+  set hover(param: boolean) {
     this._hover = val.bool(param, this._hover);
   }
 

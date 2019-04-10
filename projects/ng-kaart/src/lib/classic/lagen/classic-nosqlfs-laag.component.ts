@@ -64,12 +64,12 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
   }
 
   @Input()
-  set gebruikCache(param: string | boolean) {
+  set gebruikCache(param: boolean) {
     this._gebruikCache = val.bool(param, this._gebruikCache);
   }
 
   @Input()
-  set veldinfos(param: string | ke.VeldInfo[]) {
+  set veldinfos(param: ke.VeldInfo[]) {
     this._veldinfos = val.veldInfoArray(param, this._veldinfos);
   }
 
@@ -82,7 +82,7 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
      applicatie bepaald worden obv performantietests. Sommige applicaties gebruiken features met meer en omvangrijkere
      properties dan andere. */
   @Input()
-  set maxFeaturesInMemCache(param: string | number) {
+  set maxFeaturesInMemCache(param: number) {
     this._maxFeaturesInMemCache = val.num(param, this._maxFeaturesInMemCache);
   }
 

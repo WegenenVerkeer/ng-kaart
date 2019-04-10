@@ -34,22 +34,22 @@ export abstract class ClassicLaagComponent extends ClassicBaseComponent implemen
   }
 
   @Input()
-  set zichtbaar(param: string | boolean) {
+  set zichtbaar(param: boolean) {
     this._zichtbaar = val.bool(param, this._zichtbaar);
   }
 
   @Input()
-  set groep(param: string | Laaggroep) {
+  set groep(param: Laaggroep) {
     this._groep = val.optEnu<Laaggroep>(param, "Achtergrond", "Voorgrond.Hoog", "Voorgrond.Laag", "Tools");
   }
 
   @Input()
-  set minZoom(param: string | number) {
+  set minZoom(param: number) {
     this._minZoom = val.num(param, this._minZoom);
   }
 
   @Input()
-  set maxZoom(param: string | number) {
+  set maxZoom(param: number) {
     this._maxZoom = val.num(param, this._maxZoom);
   }
 
