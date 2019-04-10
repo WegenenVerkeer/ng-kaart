@@ -4,13 +4,22 @@ import * as ol from "openlayers";
 
 import { kaartLogger } from "../../kaart/log";
 import * as json from "../../stijl/json-object-interpreting";
+import { validationChain } from "../../util/validation";
 
 export type ParamGetter<A> = Function2<string | A, A, A>;
 export type OptionalParamGetter<A> = Function1<string | A, Option<A>>;
 
+const parseJSON: (param: string) => json.Validation<Object> = param => {
+  try {
+    return json.ok(JSON.parse(param));
+  } catch (e) {
+    return json.fail(`'${param}' is geen JSON`);
+  }
+};
+
 const getParameter: <A>(_: json.Interpreter<A>) => ParamGetter<A> = interpreter => (param, fallback) => {
   if (typeof param === "string") {
-    return interpreter(param).getOrElseL(() => {
+    return validationChain(parseJSON(param), interpreter).getOrElseL(() => {
       kaartLogger.warn(`Een parameter met waarde '${param}' kon niet correct geïnterpreteerd worden.`);
       return fallback;
     });
@@ -21,11 +30,9 @@ const getParameter: <A>(_: json.Interpreter<A>) => ParamGetter<A> = interpreter 
 
 const getOptionalParameter: <A>(_: json.Interpreter<A>) => OptionalParamGetter<A> = interpreter => param => {
   if (typeof param === "string") {
-    return json
-      .optional(interpreter)(param)
-      .getOrElseL(
-        () => none // Dit kan niet omdat json.optional zelf al none returned
-      );
+    return validationChain(parseJSON(param), json.optional(interpreter)).getOrElseL(
+      () => none // Dit kan niet omdat json.optional zelf al none returned
+    );
   } else {
     return some(param);
   }

@@ -12,7 +12,7 @@ export class KaartClassicLocatorService<T = any> {
 
   public registerComponent(component: T, el: ElementRef<Element>) {
     if (el) {
-      classicLogger.debug(`Registeer component ${el.nativeElement.tagName} onder tag ${component.constructor.name}`);
+      classicLogger.debug(`Registreer component ${el.nativeElement.tagName} onder tag ${component.constructor.name}`);
       this.registry.set(el.nativeElement, component);
     }
   }
