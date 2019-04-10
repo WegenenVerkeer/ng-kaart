@@ -11,7 +11,7 @@ import { LaagLocationInfo, TextLaagLocationInfo, VeldinfoLaagLocationInfo, Veldw
 import * as ke from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
 import { VoegLaagLocatieInformatieServiceToe } from "../../kaart/kaart-protocol";
-import { ofType } from "../../util";
+import { forEach, ofType } from "../../util";
 import { urlWithParams } from "../../util/url";
 import { classicMsgSubscriptionCmdOperator } from "../kaart-classic.component";
 import { KaartClassicMsg, LaatsteCacheRefreshMsg, logOnlyWrapper, PrecacheProgressMsg } from "../messages";
@@ -127,7 +127,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   }
 
   // metadata van de velden zoals die geparsed worden door textParser
-  // alsl er geen veldinfos opgegeven zijn, wordt hoogstens een textresultaat getoond bij kaart bevragen
+  // als er geen veldinfos opgegeven zijn, wordt hoogstens een textresultaat getoond bij kaart bevragen
   @Input()
   set veldinfos(param: string | ke.VeldInfo[]) {
     this._veldinfos = val.optVeldInfoArray(param);
@@ -146,26 +146,23 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
 
   protected voegLaagToe() {
     super.voegLaagToe();
-    if (this.queryUrlFn) {
-      this._veldinfos.foldL(
-        () =>
-          this.dispatch(
-            VoegLaagLocatieInformatieServiceToe(
-              this._titel,
-              { infoByLocation$: textWmsFeatureInfo(this.http, this.queryUrlFn) },
-              logOnlyWrapper
-            )
-          ),
-        veldInfo =>
-          this.dispatch(
-            VoegLaagLocatieInformatieServiceToe(
-              this._titel,
-              { infoByLocation$: veldWmsFeatureInfo(this.http, this.queryUrlFn, this.textParser, this._veldinfos.toUndefined()) },
-              logOnlyWrapper
+    forEach(fromNullable(this.queryUrlFn), queryUrlFn =>
+      this.dispatch(
+        this._veldinfos
+          .chain(veldinfos =>
+            fromNullable(this.textParser).map(textParser =>
+              VoegLaagLocatieInformatieServiceToe(
+                this._titel,
+                { infoByLocation$: veldWmsFeatureInfo(this.http, queryUrlFn, textParser, veldinfos) },
+                logOnlyWrapper
+              )
             )
           )
-      );
-    }
+          .getOrElseL(() =>
+            VoegLaagLocatieInformatieServiceToe(this._titel, { infoByLocation$: textWmsFeatureInfo(this.http, queryUrlFn) }, logOnlyWrapper)
+          )
+      )
+    );
   }
 
   createLayer(): ke.WmsLaag {
