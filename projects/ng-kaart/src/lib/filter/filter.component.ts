@@ -40,7 +40,7 @@ export class FilterComponent extends KaartChildComponentBase {
 
   readonly veldControl = new FormControl("", [Validators.required, autoCompleteSelectieVerplichtValidator]);
   readonly operatorControl = new FormControl(Is, [Validators.required, autoCompleteSelectieVerplichtValidator]);
-  readonly waardeControl = new FormControl({ value: "", disabled: false }, [Validators.required]);
+  readonly waardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
 
   readonly geldigFilterCmd$: rx.Observable<prt.ZetFilter<KaartInternalMsg>>;
 
@@ -109,6 +109,7 @@ export class FilterComponent extends KaartChildComponentBase {
         gekozenVeld$.pipe(
           switchMap(veldInfo =>
             gekozenOperator$.pipe(
+              tap(() => this.waardeControl.enable()),
               switchMap(operator =>
                 gekozenWaarde$.pipe(
                   map(waarde =>
@@ -154,6 +155,6 @@ export class FilterComponent extends KaartChildComponentBase {
   }
 
   errorWaarde() {
-    return this.operatorControl.hasError("required") ? "Gelieve een waarde in te geven" : "";
+    return this.waardeControl.hasError("required") ? "Gelieve een waarde in te geven" : "";
   }
 }
