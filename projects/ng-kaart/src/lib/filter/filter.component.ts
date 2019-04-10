@@ -74,7 +74,8 @@ export class FilterComponent extends KaartChildComponentBase {
         this.veldControl.valueChanges.pipe(
           startWith<VeldInfo | string>(""), // nog niets ingetypt
           map(waarde => (typeof waarde === "string" ? waarde : waarde.label)),
-          map(getypt => velden.filter(veld => veld.label.toLowerCase().startsWith(getypt.toLowerCase())))
+          map(getypt => velden.filter(veld => veld.label.toLowerCase().startsWith(getypt.toLowerCase()))),
+          map(velden => velden.sort((a, b) => a.label.localeCompare(b.label)))
         )
       )
     );
