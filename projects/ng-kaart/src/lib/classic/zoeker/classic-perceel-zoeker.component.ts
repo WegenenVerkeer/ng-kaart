@@ -4,6 +4,12 @@ import { ZoekerPerceelService } from "../../zoeker/perceel/zoeker-perceel.servic
 
 import { ClassicSingleZoekerComponentBase } from "./classic-single-zoeker.component";
 
+/**
+ * Voegt een zoeker voor gestructureerd zoeken van kadastrale perceelsinformatie. De gebruiker wordt gestuurd mbv een
+ * getrapte dialoog (gemeenten/afdelingen/secties/perceelnummers).
+ *
+ * Moet gebruikt worden als een child tag van <code>&lt;awv-kaart-zoeker&gt;</code>.
+ */
 @Component({
   selector: "awv-kaart-perceel-zoeker",
   template: ""

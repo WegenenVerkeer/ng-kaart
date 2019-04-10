@@ -9,6 +9,9 @@ import * as val from "../webcomponent-support/params";
 
 import { ClassicZoekerComponent } from "./classic-zoeker.component";
 
+/**
+ * Basisklasse voor de specifieke zoeker child tags.
+ */
 export abstract class ClassicSingleZoekerComponentBase extends KaartComponentBase {
   private static nextVolledigePrioriteit = 0;
   private static nextSuggestiesPrioriteit = 0;

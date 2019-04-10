@@ -14,6 +14,24 @@ import { Zoeker, zoekerMetPrioriteiten, ZoekerMetWeergaveopties } from "../../zo
 import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
 import { KaartClassicLocatorService } from "../kaart-classic-locator.service";
 
+/**
+ * De zoekercomponent zorgt ervoor dat er in het linkerpaneel een zoekblokje verschijnt. Er kunnen één of meerdere
+ * zoeker backends toegevoegd worden. Bijvoorbeeld om te zoeken in CRAB (addressen) of via Google (vrije tekst).
+ *
+ * De backends kunnen ingesteld worden via attributen van <code>&lt;awv-kaart-zoeker&gt;</code> ofwel via child tags.
+ * Het is ook mogelijk om custom backends te voorzien. In webcomponent mode kunnen evenwel enkel de voorgedefinieerde
+ * backends gebruikt worden en die moeten ingesteld worden via child tags.
+ *
+ * Het resultaat van een zoeker is een locatie. Wanneer een gebruiker een zoekresultaat of suggestie aanklikt, wordt de
+ * kaart ingezoomd op die locatie.
+ *
+ * Zoekers die met vrije tekst werken kunnen zoeksuggesties opleveren. Deze verschijnen in een uitvallijst onder het
+ * zoekinvoerveld.
+ *
+ * Bij de individuele zoekers kan ingesteld worden of ze al dan niet een icoontje op de locatie van het zoekresultaat op
+ * de kaart tonen. Ook is het instelbaar of ze al dan niet de geometrie van het resultaat tonen (bijvoorbeeld het
+ * grondgebied van een een gemeente).
+ */
 @Component({
   selector: "awv-kaart-zoeker",
   template: "<ng-content></ng-content>"
