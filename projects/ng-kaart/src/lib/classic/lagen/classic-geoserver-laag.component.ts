@@ -24,13 +24,13 @@ export class ClassicGeoserverLaagComponent extends ClassicWmsLaagComponent {
     return {
       type: ke.TiledWmsType,
       titel: this._titel,
-      naam: this.laagNaam,
+      naam: this._laagNaam,
       urls: urls,
-      versie: fromNullable(this.versie),
+      versie: this._versie,
       tileSize: fromNullable(this._tileSize),
-      format: fromNullable(this.format),
-      opacity: fromNullable(this._opacity),
-      backgroundUrl: this.backgroundUrl(urls, this.laagNaam),
+      format: fromNullable(this._format),
+      opacity: this._opacity,
+      backgroundUrl: this.backgroundUrl(urls, this._laagNaam),
       minZoom: this._minZoom,
       maxZoom: this._maxZoom,
       verwijderd: false

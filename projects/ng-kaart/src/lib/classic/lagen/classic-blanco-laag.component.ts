@@ -12,8 +12,7 @@ export const blancoLaag = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAE
   encapsulation: ViewEncapsulation.None
 })
 export class ClassicBlancoLaagComponent extends ClassicLaagComponent {
-  @Input()
-  titel = "Blanco";
+  _titel = "Blanco";
 
   constructor(injector: Injector) {
     super(injector);
@@ -22,7 +21,7 @@ export class ClassicBlancoLaagComponent extends ClassicLaagComponent {
   createLayer(): BlancoLaag {
     return {
       type: BlancoType,
-      titel: this.titel,
+      titel: this._titel,
       backgroundUrl: blancoLaag,
       minZoom: this._minZoom,
       maxZoom: this._maxZoom,

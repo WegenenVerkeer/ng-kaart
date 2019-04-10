@@ -19,7 +19,7 @@ export abstract class ClassicLaagComponent extends ClassicBaseComponent implemen
   _titel = "";
   _stijlInLagenKiezer: Option<string> = none;
   _zichtbaar = true;
-  _groep: Laaggroep | undefined;
+  _groep: Option<Laaggroep> = none;
   _minZoom = 2;
   _maxZoom = 16;
 
@@ -39,8 +39,8 @@ export abstract class ClassicLaagComponent extends ClassicBaseComponent implemen
   }
 
   @Input()
-  set groep(param: string | Laaggroep | undefined) {
-    this._groep = val.enu<Laaggroep>(param, this._groep, "Achtergrond", "Voorgrond.Hoog", "Voorgrond.Laag", "Tools");
+  set groep(param: string | Laaggroep) {
+    this._groep = val.optEnu<Laaggroep>(param, "Achtergrond", "Voorgrond.Hoog", "Voorgrond.Laag", "Tools");
   }
 
   @Input()
@@ -106,7 +106,7 @@ export abstract class ClassicLaagComponent extends ClassicBaseComponent implemen
   }
 
   protected gekozenLaagGroep(): Laaggroep {
-    return fromNullable(this._groep).getOrElse(this.laaggroep());
+    return this._groep.getOrElse(this.laaggroep());
   }
 
   protected dispatch(evt: prt.Command<KaartClassicMsg>) {
