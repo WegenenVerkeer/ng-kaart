@@ -1,13 +1,16 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
 import { MatDialog, MatMenuTrigger } from "@angular/material";
+import { fromNullable } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
-import { distinctUntilChanged, map, shareReplay } from "rxjs/operators";
+import { BehaviorSubject } from "rxjs";
+import { distinctUntilChanged, map, shareReplay, startWith } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { asToegevoegdeNosqlVectorLaag, asToegevoegdeVectorLaag, ToegevoegdeLaag, ToegevoegdeVectorLaag } from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as cmd from "../kaart/kaart-protocol-commands";
 import { KaartComponent } from "../kaart/kaart.component";
+import { nonEmptyString } from "../util";
 import { observeOnAngular } from "../util/observe-on-angular";
 
 import { LagenkiezerComponent } from "./lagenkiezer.component";
@@ -27,6 +30,11 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
   readonly kanFilteren$: rx.Observable<boolean>;
   readonly kanStijlAanpassen$: rx.Observable<boolean>;
   readonly minstensEenLaagActie$: rx.Observable<boolean>;
+  readonly heeftFilter$: rx.Observable<boolean>;
+
+  // TODO: subject moet luisteren op messages. Zit in volgende story
+  readonly filterActiefSubj: rx.BehaviorSubject<boolean> = new rx.BehaviorSubject<boolean>(true);
+  readonly filterActief$: rx.Observable<boolean> = this.filterActiefSubj.asObservable();
 
   @Input()
   laag: ToegevoegdeLaag;
@@ -60,6 +68,14 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
       map(o => o.verwijderbareLagen),
       shareReplay(1)
     );
+    this.kanStijlAanpassen$ = lagenkiezer.opties$.pipe(
+      map(o =>
+        asToegevoegdeVectorLaag(this.laag)
+          .map(vlg => o.stijlbareVectorlagen(vlg.titel))
+          .getOrElse(false)
+      ),
+      shareReplay(1)
+    );
     this.kanFilteren$ = lagenkiezer.opties$.pipe(
       map(o =>
         asToegevoegdeNosqlVectorLaag(this.laag)
@@ -68,10 +84,11 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
       ),
       shareReplay(1)
     );
-    this.kanStijlAanpassen$ = lagenkiezer.opties$.pipe(
+    // TODO: deze moet ook luisteren op filter gezet. Is nu altijd true ongeacht of er filter is
+    this.heeftFilter$ = lagenkiezer.opties$.pipe(
       map(o =>
-        asToegevoegdeVectorLaag(this.laag)
-          .map(vlg => o.stijlbareVectorlagen(vlg.titel))
+        asToegevoegdeNosqlVectorLaag(this.laag)
+          .map(vlg => o.filterbareLagen)
           .getOrElse(false)
       ),
       shareReplay(1)
@@ -123,13 +140,8 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
     this.dispatch(cmd.BewerkVectorFilterCmd(this.laag as ToegevoegdeVectorLaag));
   }
 
-  heeftFilter() {
-    // TODO
-    return true;
-  }
-
   toggleFilter() {
     // TODO: dit moet met messages, want moet doorstromen naar reducer. Zit in volgende story
-    this.filterActief = !this.filterActief;
+    this.filterActiefSubj.next(!this.filterActiefSubj.value);
   }
 }

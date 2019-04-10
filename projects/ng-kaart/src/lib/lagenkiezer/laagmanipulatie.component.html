@@ -15,10 +15,10 @@
   <div class="laag-naam">
     <div [ngClass]="stijlInKiezer">{{ title }}</div>
   </div>
-  <div *ngIf="heeftFilter()" class="filter-icoon">
+  <div *ngIf="heeftFilter$ | async" class="filter-icoon">
     <button mat-icon-button class="filter-inhoud" (click)="toggleFilter()">
-      <mat-icon *ngIf="filterActief">filter_list</mat-icon>
-      <mat-icon *ngIf="!filterActief">not_interested</mat-icon>
+      <mat-icon *ngIf="filterActief$ | async">filter_list</mat-icon>
+      <mat-icon *ngIf="!(filterActief$ | async)">not_interested</mat-icon>
       999
     </button>
   </div>
