@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, Input, NgZone, OnInit, ViewChild, V
 import { MatDialog, MatMenuTrigger } from "@angular/material";
 import { none } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
-import { distinctUntilChanged, map, shareReplay } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, shareReplay } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { asToegevoegdeNosqlVectorLaag, asToegevoegdeVectorLaag, ToegevoegdeLaag, ToegevoegdeVectorLaag } from "../kaart/kaart-elementen";
@@ -87,7 +87,8 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
       shareReplay(1)
     );
     this.heeftFilter$ = kaartComponent.modelChanges.laagFilterGezet$.pipe(
-      map(filterGezet => this.laag.titel === filterGezet.laag.titel && filterGezet.filter.isSome()),
+      filter(filterGezet => this.laag.titel === filterGezet.laag.titel),
+      map(filterGezet => filterGezet.filter.isSome()),
       shareReplay(1)
     );
     this.minstensEenLaagActie$ = rx.combineLatest(this.kanVerwijderen$, this.kanStijlAanpassen$, (v, a) => v || a).pipe(shareReplay(1));
