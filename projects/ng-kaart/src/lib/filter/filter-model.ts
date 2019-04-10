@@ -3,12 +3,12 @@ import { Function1, Function2, Function3 } from "fp-ts/lib/function";
 // Simple filter defs
 
 export interface Is {
-  readonly operator: "=";
-  readonly beschrijving: "is exact";
+  readonly symbool: "=";
+  readonly beschrijving: "is";
 }
 
 export interface IsNiet {
-  readonly operator: "!=";
+  readonly symbool: "!=";
   readonly beschrijving: "is niet";
 }
 
@@ -39,12 +39,12 @@ export interface SimpleFilter {
 export type Filter = SimpleFilter;
 
 const Is: Is = {
-  operator: "=",
-  beschrijving: "is exact"
+  symbool: "=",
+  beschrijving: "is"
 };
 
 const IsNiet: IsNiet = {
-  operator: "!=",
+  symbool: "!=",
   beschrijving: "is niet"
 };
 
@@ -56,9 +56,9 @@ export const Property: Function2<TypeType, string, Property> = (typetype, name) 
 
 export const Operator: Function1<string, Operator> = symbool => {
   switch (symbool) {
-    case Is.operator:
+    case Is.symbool:
       return Is;
-    case IsNiet.operator:
+    case IsNiet.symbool:
       return IsNiet;
     default:
       // fallback equality
@@ -74,6 +74,8 @@ export const SimpleFilter: Function3<Property, ValueType, Operator, SimpleFilter
     value: value
   }
 });
+
+export const beschikbareOperatoren: Operator[] = [Is, IsNiet];
 
 // Make some CQL
 
@@ -91,4 +93,4 @@ const value: Function2<Property, Literal, string> = (property, literal) => {
 };
 
 export const cql: Function1<Filter, string> = filter =>
-  `properties.${filter.left.ref} ${filter.kind.operator} ${value(filter.left, filter.right)}`;
+  `properties.${filter.left.ref} ${filter.kind.symbool} ${value(filter.left, filter.right)}`;

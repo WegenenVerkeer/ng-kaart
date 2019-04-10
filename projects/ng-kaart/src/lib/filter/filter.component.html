@@ -18,8 +18,7 @@
 
       <mat-form-field class="filter-operator-combo">
         <mat-select placeholder="Operator" [formControl]="operatorControl">
-          <mat-option [value]="'='">is</mat-option>
-          <mat-option [value]="'!='">is niet</mat-option>
+          <mat-option *ngFor="let operator of beschikbareOperatoren" [value]="operator.symbool">{{ operator.beschrijving }}</mat-option>
         </mat-select>
       </mat-form-field>
 

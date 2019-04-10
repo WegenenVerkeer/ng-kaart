@@ -17,7 +17,7 @@ import { KaartComponent } from "../kaart/kaart.component";
 import { collectOption, forEvery, isNotNullObject } from "../util";
 
 import { FilterAanpassingBezig, isAanpassingBezig } from "./filter-aanpassing-state";
-import { Operator, Property, SimpleFilter } from "./filter-model";
+import { beschikbareOperatoren, Operator, Property, SimpleFilter } from "./filter-model";
 
 @Component({
   selector: "awv-filter",
@@ -31,6 +31,8 @@ export class FilterComponent extends KaartChildComponentBase {
   readonly veldControl = new FormControl({ value: "", disabled: false });
   readonly operatorControl = new FormControl({ value: "=", disabled: false });
   readonly waardeControl = new FormControl({ value: "", disabled: false });
+
+  readonly beschikbareOperatoren = beschikbareOperatoren;
 
   constructor(kaart: KaartComponent, zone: NgZone) {
     super(kaart, zone);
