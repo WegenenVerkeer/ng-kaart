@@ -50,6 +50,7 @@ import {
   ZichtbareFeaturesAangepastMsg,
   ZoomAangepastMsg
 } from "./messages";
+import * as val from "./webcomponent-support/params";
 
 // Dit is een type dat de interne KartLocaties plat klopt voor extern gebruik.
 export interface ClassicKlikInfoEnStatus {
@@ -78,6 +79,8 @@ const flattenKaartLocaties: Function1<KaartLocaties, ClassicKlikInfoEnStatus> = 
   )
 });
 
+const nop = () => {};
+
 @Component({
   selector: "awv-kaart-classic",
   templateUrl: "./kaart-classic.component.html"
@@ -95,61 +98,98 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   /** @ignore */
   readonly kaartMsgObservableConsumer: KaartMsgObservableConsumer;
 
-  /** Zoom niveau */
-  @Input()
-  zoom: number;
-
-  /** Minimum zoom niveau */
-  @Input()
-  minZoom = 1;
-
-  /** Maximum zoom niveau */
-  @Input()
-  maxZoom = 15;
-
-  /** Het middelpunt van de kaart. "extent" heeft voorrang */
-  @Input()
-  middelpunt: ol.Coordinate;
-
-  /** Breedte van de kaart, neem standaard de hele breedte in */
-  @Input()
-  breedte: number | undefined;
-
-  /** Hoogte van de kaart, neem standaard de hele hoogte in */
-  @Input()
-  hoogte: number | undefined;
-
-  /** Breedte van linker-paneel (de default is 480px bij kaart breedte > 1240 en 360px voor smallere kaarten) */
-  @Input()
-  kaartLinksBreedte;
-
-  /** Zoom niveau om te gebruiken bij "Mijn Locatie" */
-  @Input()
-  mijnLocatieZoom: number | undefined;
-
-  /** De extent van de kaart, heeft voorang op "middelpunt" */
-  @Input()
-  extent: ol.Extent;
-
-  /** De selectiemodus: "single" | "multipleKlik" | "multipleShift" | "none" */
-  @Input()
-  selectieModus: prt.SelectieModus = "none";
-
-  /** Info bij hover: "on" | "off" */
-  @Input()
-  hoverModus: prt.HoverModus = "off";
-
-  /** Naam van de kaart */
-  @Input()
-  naam = "kaart" + KaartClassicComponent.counter++;
-
+  _zoom: Option<number> = none;
+  _minZoom = 1;
+  _maxZoom = 15;
+  _middelpunt: Option<ol.Coordinate> = none;
+  _breedte: Option<number> = none;
+  _hoogte: Option<number> = none;
+  _kaartLinksBreedte: number;
+  _mijnLocatieZoom: Option<number> = none;
+  _extent: Option<ol.Extent> = none;
+  _selectieModus: prt.SelectieModus = "none";
+  _hoverModus: prt.HoverModus = "off";
+  _naam = "kaart" + KaartClassicComponent.counter++;
   /** Geselecteerde features */
   @Input()
   geselecteerdeFeatures: Array<ol.Feature> = [];
+  _onderdrukKaartBevragenBoodschappen = false;
+
+  /** Zoom niveau */
+  @Input()
+  set zoom(param: number | string) {
+    this._zoom = val.optNum(param);
+  }
+
+  /** Minimum zoom niveau */
+  @Input()
+  set minZoom(param: number | string) {
+    this._minZoom = val.num(param, this._minZoom);
+  }
+
+  /** Maximum zoom niveau */
+  @Input()
+  set maxZoom(param: number | string) {
+    this._maxZoom = val.num(param, this._maxZoom);
+  }
+
+  /** Het middelpunt van de kaart. "extent" heeft voorrang */
+  @Input()
+  set middelpunt(param: ol.Coordinate | string) {
+    this._middelpunt = val.optCoord(param);
+  }
+
+  /** Breedte van de kaart, neem standaard de hele breedte in */
+  @Input()
+  set breedte(param: number | string) {
+    this._breedte = val.optNum(param);
+  }
+
+  /** Hoogte van de kaart, neem standaard de hele hoogte in */
+  @Input()
+  set hoogte(param: number | string) {
+    this._hoogte = val.optNum(param);
+  }
+
+  /** Breedte van linker-paneel (de default is 480px bij kaart breedte > 1240 en 360px voor smallere kaarten) */
+  @Input()
+  set kaartLinksBreedte(param: number | string) {
+    this._kaartLinksBreedte = val.num(param, this._kaartLinksBreedte);
+  }
+
+  /** Zoom niveau om te gebruiken bij "Mijn Locatie" */
+  @Input()
+  set mijnLocatieZoom(param: number | string) {
+    this._mijnLocatieZoom = val.optNum(param);
+  }
+
+  /** De extent van de kaart, heeft voorang op "middelpunt" */
+  @Input()
+  set extent(param: ol.Extent | string) {
+    this._extent = val.optExtent(param);
+  }
+
+  /** De selectiemodus: "single" | "multipleKlik" | "multipleShift" | "none" */
+  @Input()
+  set selectieModus(param: prt.SelectieModus | string) {
+    this._selectieModus = val.enu(param, this._selectieModus, "single", "multipleKlik", "multipleShift", "none");
+  }
+
+  /** Info bij hover: "on" | "off" */
+  @Input()
+  set hoverModus(param: prt.HoverModus | string) {
+    this._hoverModus = val.enu(param, this._hoverModus, "on", "off");
+  }
+
+  /** Naam van de kaart */
+  @Input()
+  set naam(param: string) {
+    this._naam = val.str(param, this._naam);
+  }
 
   /** Onderdrukken we kaart info boodschappen? */
   @Input()
-  onderdrukKaartBevragenBoodschappen = false;
+  set onderdrukKaartBevragenBoodschappen(param: boolean | string) {}
 
   /** De geselecteerde features */
   @Output()
@@ -301,24 +341,14 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   ngOnInit() {
     super.ngOnInit();
     // De volgorde van de dispatching hier is van belang voor wat de overhand heeft
-    if (this.zoom) {
-      this.dispatch(prt.VeranderZoomCmd(this.zoom, logOnlyWrapper));
+    this._zoom.foldL(nop, zoom => this.dispatch(prt.VeranderZoomCmd(zoom, logOnlyWrapper)));
+    this._extent.foldL(nop, extent => this.dispatch(prt.VeranderExtentCmd(extent)));
+    this._middelpunt.foldL(nop, middelpunt => this.dispatch(prt.VeranderMiddelpuntCmd(middelpunt, none)));
+    if (this._breedte.isSome() || this._hoogte.isSome()) {
+      this.dispatch(prt.VeranderViewportCmd([this._breedte.toUndefined(), this._hoogte.toUndefined()]));
     }
-    if (this.extent) {
-      this.dispatch(prt.VeranderExtentCmd(this.extent));
-    }
-    if (this.middelpunt) {
-      this.dispatch(prt.VeranderMiddelpuntCmd(this.middelpunt, none));
-    }
-    if (this.breedte || this.hoogte) {
-      this.dispatch(prt.VeranderViewportCmd([this.breedte!, this.hoogte!]));
-    }
-    if (this.hoverModus) {
-      this.dispatch(prt.ActiveerHoverModusCmd(this.hoverModus));
-    }
-    if (this.selectieModus) {
-      this.dispatch(prt.ActiveerSelectieModusCmd(this.selectieModus));
-    }
+    this.dispatch(prt.ActiveerHoverModusCmd(this._hoverModus));
+    this.dispatch(prt.ActiveerSelectieModusCmd(this._selectieModus));
   }
 
   /** @ignore */
@@ -370,12 +400,8 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
 
   /** @ignore */
   private zetKaartGrootte() {
-    if (this.breedte) {
-      this.mapElement.nativeElement.style.width = `${this.breedte}px`;
-    }
-    if (this.hoogte) {
-      this.mapElement.nativeElement.style.height = `${this.hoogte}px`;
-    }
+    this._breedte.foldL(nop, breedte => (this.mapElement.nativeElement.style.width = `${breedte}px`));
+    this._hoogte.foldL(nop, hoogte => (this.mapElement.nativeElement.style.height = `${hoogte}px`));
   }
 
   /** @ignore */
