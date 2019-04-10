@@ -3,7 +3,6 @@ import { Component, Injector } from "@angular/core";
 import { ZoekerPerceelService } from "../../zoeker/perceel/zoeker-perceel.service";
 
 import { ClassicSingleZoekerComponentBase } from "./classic-single-zoeker.component";
-import { ClassicZoekerComponent } from "./classic-zoeker.component";
 
 @Component({
   selector: "awv-kaart-perceel-zoeker",

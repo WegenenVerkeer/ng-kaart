@@ -19,8 +19,20 @@ import { KaartClassicLocatorService } from "../kaart-classic-locator.service";
   template: "<ng-content></ng-content>"
 })
 export class ClassicZoekerComponent extends ClassicUIElementSelectorComponentBase {
+  /**
+   * Stel één enkele zoeker in.
+   *
+   * Niet bruikbaar in webcomponent mode.
+   */
   @Input()
   zoeker: ZoekerMetWeergaveopties;
+
+  /**
+   * Stel een aantal zoekers in. Als ook <code>zoeker</code> gezet is, wordt deze ook meegenomen.
+   *
+   * Niet bruikbaar in webcomponent mode. Gebruik daarvoor de specifieke child tags (e.g.
+   * <code>awv-kaart-crab-zoeker</code>).
+   */
   @Input()
   zoekers: ZoekerMetWeergaveopties[] = [];
 
@@ -40,15 +52,15 @@ export class ClassicZoekerComponent extends ClassicUIElementSelectorComponentBas
     locatorService.registerComponent(this, el);
 
     // We hebben hier een kleine delay nodig om de subtags de kans te geven om zich te registreren. Wanneer we webcomponents hebben,
-    // weten we niet in welke volgorde ze geinstancieerd zullen worden.
+    // weten we niet in welke volgorde ze geïnstantieerd zullen worden.
     this.initialising$.pipe(delay(100)).subscribe(() => {
       // Een beetje een ingewikkelde constructie, maar we willen dat we zowel met deze tag alleen kunnen werken (backwards compatibility)
       // als met deze tag + child tags
       const inputZoekers = concat(toArray(fromNullable(this.zoeker)), this.zoekers);
       const stdZoekers: ZoekerMetWeergaveopties[] = [
-        zoekerMetPrioriteiten(googleZoeker, 1, 1),
-        zoekerMetPrioriteiten(crabZoeker, 2, 2),
-        zoekerMetPrioriteiten(perceelZoeker, 3)
+        zoekerMetPrioriteiten(googleZoeker, 1, 1, true, true),
+        zoekerMetPrioriteiten(crabZoeker, 2, 2, true, true),
+        zoekerMetPrioriteiten(perceelZoeker, 3, -1, true, true)
       ];
       this.registered = array.isEmpty(inputZoekers) ? stdZoekers : inputZoekers;
       this.registered.forEach(zoeker => this.registerZoeker(zoeker));

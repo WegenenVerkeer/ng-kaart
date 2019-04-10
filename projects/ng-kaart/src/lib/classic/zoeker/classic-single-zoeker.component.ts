@@ -5,6 +5,7 @@ import { tap } from "rxjs/operators";
 import { KaartComponentBase } from "../../kaart";
 import { Zoeker, zoekerMetPrioriteiten } from "../../zoeker/zoeker";
 import { KaartClassicLocatorService } from "../kaart-classic-locator.service";
+import * as val from "../webcomponent-support/params";
 
 import { ClassicZoekerComponent } from "./classic-zoeker.component";
 
@@ -12,19 +13,45 @@ export abstract class ClassicSingleZoekerComponentBase extends KaartComponentBas
   private static nextVolledigePrioriteit = 0;
   private static nextSuggestiesPrioriteit = 0;
 
-  // Moet het icoontje dat in de stijl van de zoeker zit getoond worden?
+  private _toonIcoon = true;
+  private _toonGeometrie = true;
+  private _suggestiesPrioriteit = ClassicSingleZoekerComponentBase.nextSuggestiesPrioriteit++;
+  private _volledigeZoekPrioriteit = ClassicSingleZoekerComponentBase.nextVolledigePrioriteit++;
+
+  /**
+   * Bepaalt of het icoontje dat in de stijl van de zoeker zit getoond wordt.
+   */
   @Input()
-  toonIcoon = true;
-  // Moet de geometrie van het zoekresultaat (als dat er is) getoond worden?
+  set toonIcoon(param: boolean | string) {
+    this._toonIcoon = val.bool(param, this._toonIcoon);
+  }
+
+  /**
+   * Bepaalt of de geometrie van een zoekresultaat (als dat er één heeft) getoond wordt.
+   */
   @Input()
-  toonGeometrie = true;
-  // Wat is de prioriteit/volgorde van deze zoeker in de suggestieresultaten? Let op: moet oplopen van 0 zonder gaten voor alle zoekers.
-  // undefined betekent dat er geen suggesties opgevraagd worden.
+  public set toonGeometrie(param: string | boolean) {
+    this._toonGeometrie = val.bool(param, this._toonGeometrie);
+  }
+
+  /**
+   * De prioriteit/volgorde van deze zoeker in de suggestieresultaten? Let op: moet oplopen van 0 zonder gaten voor alle
+   * zoekers. Een negatief getal betekent dat er geen suggesties opgevraagd worden.
+   */
   @Input()
-  suggestiesPrioriteit?: number = ClassicSingleZoekerComponentBase.nextSuggestiesPrioriteit++;
-  // Wat is de prioriteit/volgorde van deze zoeker in de zoekresultaten?  Let op: moet oplopen van 0 zonder gaten voor alle zoekers.
+  public set suggestiesPrioriteit(param: number | string) {
+    this._suggestiesPrioriteit = val.num(param, this._suggestiesPrioriteit);
+  }
+  /**
+   * De prioriteit/volgorde van deze zoeker in de zoekresultaten. Let op: moet oplopen van 0 zonder gaten voor alle
+   * zoekers. Een negatief getal betekent dat er geen zoekresultaten opgevraagd worden. Als de prioriteiten niet
+   * expliciet gezet worden, dan wordt de volgorde zoals ze voorkomen in de HTML/template gebruikt. Als er er voor één
+   * zoeker een prioriteit ingesteld is, dan moet dat voor alle zoekers zo zijn.
+   */
   @Input()
-  volledigeZoekPrioriteit: number = ClassicSingleZoekerComponentBase.nextVolledigePrioriteit++;
+  public set volledigeZoekPrioriteit(param: number | string) {
+    this._volledigeZoekPrioriteit = val.num(param, this._volledigeZoekPrioriteit);
+  }
 
   constructor(injector: Injector, zoeker: Zoeker) {
     super(injector.get(NgZone));
@@ -33,15 +60,17 @@ export abstract class ClassicSingleZoekerComponentBase extends KaartComponentBas
     const el: ElementRef<Element> = injector.get(ElementRef);
     const zoekerComponent = locatorService.getComponent(injector, ClassicZoekerComponent, el);
 
-    rx.merge(
-      this.initialising$.pipe(
-        tap(() =>
-          zoekerComponent.addZoeker(
-            zoekerMetPrioriteiten(zoeker, this.volledigeZoekPrioriteit, this.suggestiesPrioriteit, this.toonIcoon, this.toonGeometrie)
+    this.bindToLifeCycle(
+      rx.merge(
+        this.initialising$.pipe(
+          tap(() =>
+            zoekerComponent.addZoeker(
+              zoekerMetPrioriteiten(zoeker, this._volledigeZoekPrioriteit, this._suggestiesPrioriteit, this._toonIcoon, this._toonGeometrie)
+            )
           )
-        )
-      ),
-      this.destroying$.pipe(tap(() => zoekerComponent.removeZoeker(zoeker)))
+        ),
+        this.destroying$.pipe(tap(() => zoekerComponent.removeZoeker(zoeker)))
+      )
     ).subscribe();
   }
 }

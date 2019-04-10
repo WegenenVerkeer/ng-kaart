@@ -11,6 +11,5 @@ import { ClassicSingleZoekerComponentBase } from "./classic-single-zoeker.compon
 export class ClassicGoogleZoekerComponent extends ClassicSingleZoekerComponentBase {
   constructor(injector: Injector, googleZoeker: ZoekerGoogleWdbService) {
     super(injector, googleZoeker);
-    console.log("******", googleZoeker.naam);
   }
 }
