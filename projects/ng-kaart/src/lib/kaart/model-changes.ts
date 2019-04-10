@@ -9,6 +9,7 @@ import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, map, mapTo, mergeAll, share, shareReplay, switchMap } from "rxjs/operators";
 
 import { FilterAanpassingState, GeenFilterAanpassingBezig } from "../filter/filter-aanpassing-state";
+import { Filter } from "../filter/filter-model";
 import { NosqlFsSource } from "../source/nosql-fs-source";
 import * as tilecacheMetadataDb from "../util/indexeddb-tilecache-metadata";
 import { observableFromOlEvents } from "../util/ol-observable";
@@ -48,6 +49,11 @@ export interface LaatsteCacheRefresh {
   readonly [laagnaam: string]: Date; // laagnaam -> laatste cache refresh
 }
 
+export interface FilterGezet {
+  laag: ke.ToegevoegdeVectorLaag;
+  filter: Option<Filter>;
+}
+
 /**
  * Dit is een verzameling van subjects waarmee de reducer wijzingen kan laten weten aan de child components.
  * Dit is isomorf aan het zetten van de overeenkomstige attributen op het model en die laten volgen. Het probleem daarbij
@@ -70,7 +76,7 @@ export interface ModelChanger {
   readonly laagstijlaanpassingStateSubj: rx.Subject<LaagstijlaanpassingState>;
   readonly laagstijlGezetSubj: rx.Subject<ke.ToegevoegdeVectorLaag>;
   readonly laagFilterAanpassingStateSubj: rx.Subject<FilterAanpassingState>;
-  readonly laagFilterGezetSubj: rx.Subject<ke.ToegevoegdeVectorLaag>;
+  readonly laagFilterGezetSubj: rx.Subject<FilterGezet>;
   readonly dragInfoSubj: rx.Subject<DragInfo>;
   readonly tekenenOpsSubj: rx.Subject<DrawOps>;
   readonly getekendeGeometrySubj: rx.Subject<ol.geom.Geometry>;
@@ -99,7 +105,7 @@ export const ModelChanger: () => ModelChanger = () => ({
   laagstijlaanpassingStateSubj: new rx.BehaviorSubject(GeenLaagstijlaanpassing),
   laagstijlGezetSubj: new rx.Subject<ke.ToegevoegdeVectorLaag>(),
   laagFilterAanpassingStateSubj: new rx.BehaviorSubject(GeenFilterAanpassingBezig),
-  laagFilterGezetSubj: new rx.Subject<ke.ToegevoegdeVectorLaag>(),
+  laagFilterGezetSubj: new rx.Subject<FilterGezet>(),
   dragInfoSubj: new rx.Subject<DragInfo>(),
   tekenenOpsSubj: new rx.Subject<DrawOps>(),
   getekendeGeometrySubj: new rx.Subject<ol.geom.Geometry>(),
@@ -126,7 +132,7 @@ export interface ModelChanges {
   readonly laagstijlaanpassingState$: rx.Observable<LaagstijlaanpassingState>;
   readonly laagstijlGezet$: rx.Observable<ke.ToegevoegdeVectorLaag>;
   readonly laagFilterAanpassingState$: rx.Observable<FilterAanpassingState>;
-  readonly laagFilterGezet$: rx.Observable<ke.ToegevoegdeVectorLaag>;
+  readonly laagFilterGezet$: rx.Observable<FilterGezet>;
   readonly dragInfo$: rx.Observable<DragInfo>;
   readonly rotatie$: rx.Observable<number>; // een niet gedebouncede variant van "viewinstellingen$.rotatie" voor live rotatie
   readonly tekenenOps$: rx.Observable<DrawOps>;

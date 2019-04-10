@@ -88,13 +88,8 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
       ),
       shareReplay(1)
     );
-    // TODO: deze moet ook luisteren op filter gezet. Is nu altijd true ongeacht of er filter is
-    this.heeftFilter$ = lagenkiezer.opties$.pipe(
-      map(o =>
-        asToegevoegdeNosqlVectorLaag(this.laag)
-          .map(vlg => o.filterbareLagen)
-          .getOrElse(false)
-      ),
+    this.heeftFilter$ = kaartComponent.modelChanges.laagFilterGezet$.pipe(
+      map(filterGezet => this.laag.titel === filterGezet.laag.titel && filterGezet.filter.isSome()),
       shareReplay(1)
     );
     this.minstensEenLaagActie$ = rx.combineLatest(this.kanVerwijderen$, this.kanStijlAanpassen$, (v, a) => v || a).pipe(shareReplay(1));

@@ -1306,10 +1306,16 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function zetFilter(cmnd: prt.ZetFilter<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        valideerNoSqlFsSourceBestaat(cmnd.titel).map(noSqlFsSource => {
+        chain(valideerToegevoegdeVectorLaagBestaat(cmnd.titel), laag =>
+          valideerNoSqlFsSourceBestaat(cmnd.titel).map(noSqlFsSource => [laag, noSqlFsSource])
+        ).map(([laag, noSqlFsSource]: [ke.ToegevoegdeVectorLaag, NosqlFsSource]) => {
           cmnd.filter.foldL(() => noSqlFsSource.setFilter(none), filter => noSqlFsSource.setFilter(some(cql(filter))));
           noSqlFsSource.clear();
           noSqlFsSource.refresh();
+          modelChanger.laagFilterGezetSubj.next({
+            laag: laag,
+            filter: cmnd.filter
+          });
           return ModelAndEmptyResult(model);
         })
       );
