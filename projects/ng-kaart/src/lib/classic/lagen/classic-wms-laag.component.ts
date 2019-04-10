@@ -152,7 +152,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
           this.dispatch(
             VoegLaagLocatieInformatieServiceToe(
               this._titel,
-              { infoByLocation$: textWmsFeatureInfo(this.http, this.queryUrlFn) },
+              { infoByLocation$: textWmsFeatureInfo(this.http, this.queryUrlFn!) },
               logOnlyWrapper
             )
           ),
@@ -160,7 +160,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
           this.dispatch(
             VoegLaagLocatieInformatieServiceToe(
               this._titel,
-              { infoByLocation$: veldWmsFeatureInfo(this.http, this.queryUrlFn, this.textParser, this._veldinfos.toUndefined()) },
+              { infoByLocation$: veldWmsFeatureInfo(this.http, this.queryUrlFn!, this.textParser!, veldInfo) },
               logOnlyWrapper
             )
           )

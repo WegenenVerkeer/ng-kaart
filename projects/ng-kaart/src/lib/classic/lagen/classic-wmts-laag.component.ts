@@ -111,34 +111,37 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
     if (!this._matrixSet) {
       throw new Error("matrixSet moet opgegeven zijn");
     }
-    if (!(this._capUrl || (arrays.isNonEmpty(this._urls) && arrays.isNonEmpty(this._matrixIds)))) {
+    if (!(this._capUrl.isSome() || (arrays.isNonEmpty(this._urls) && arrays.isNonEmpty(this._matrixIds)))) {
       throw new Error("capurl of urls en matrixIds moet opgegeven zijn");
     }
     super.ngOnInit();
   }
 
   createLayer(): ke.Laag {
-    if (this._capUrl.isSome()) {
-      this.vervangLaagWithCapabilitiesAsync(this._capUrl.toNullable());
-      return {
-        type: ke.BlancoType,
-        titel: this._titel,
-        backgroundUrl: blancoLaag,
-        minZoom: this._minZoom,
-        maxZoom: this._maxZoom,
-        verwijderd: false
-      };
-    } else {
-      const config: ke.WmtsManualConfig = {
-        type: "Manual",
-        urls: this._urls,
-        matrixIds: this._matrixIds,
-        style: this._style,
-        origin: this._origin,
-        extent: this._extent
-      };
-      return this.createLayerFromConfig(config);
-    }
+    return this._capUrl.foldL(
+      () => {
+        const config: ke.WmtsManualConfig = {
+          type: "Manual",
+          urls: this._urls,
+          matrixIds: this._matrixIds,
+          style: this._style,
+          origin: this._origin,
+          extent: this._extent
+        };
+        return this.createLayerFromConfig(config) as ke.Laag;
+      },
+      capUrl => {
+        this.vervangLaagWithCapabilitiesAsync(capUrl);
+        return {
+          type: ke.BlancoType,
+          titel: this._titel,
+          backgroundUrl: blancoLaag,
+          minZoom: this._minZoom,
+          maxZoom: this._maxZoom,
+          verwijderd: false
+        } as ke.Laag;
+      }
+    );
   }
 
   private createLayerFromConfig(config: ke.WmtsCapaConfig | ke.WmtsManualConfig): ke.WmtsLaag {
@@ -180,7 +183,7 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
       });
     } else {
       // TODO: bepalen op basis van de echte parameters. Rekening houden met config.
-      return urlWithParams(this._capUrl.toNullable(), {
+      return urlWithParams(this._capUrl.toNullable()!, {
         layer: this._laagNaam,
         style: this._style.getOrElse(""),
         tilematrixset: this._matrixSet,
