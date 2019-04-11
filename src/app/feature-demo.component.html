@@ -166,7 +166,7 @@
         <!-- zoeker -->
         <awv-kaart-zoeker *ngIf="isOptieActief('zoeker')"></awv-kaart-zoeker>
         <!-- lagen -->
-        <awv-kaart-lagenkiezer *ngIf="isOptieActief('lagenkiezer')" [titels]="['Referentiepunten (WDB)', 'Referentiepunten (WDB) 2', 'features']"
+        <awv-kaart-lagenkiezer *ngIf="isOptieActief('lagenkiezer')"
                                [headerTitel]="'Mijn legende en lagen'" [initieelDichtgeklapt]="true"
                                [verwijderbareLagen]="isOptieActief('lagenVerwijderbaar')" [verplaatsbareLagen]="true" [stijlbareVectorlagen]="stijlbareVectorlagen"
                                [toonLegende]="isOptieActief('legende')"></awv-kaart-lagenkiezer>
@@ -614,8 +614,7 @@
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
             <awv-kaart-blanco-laag [titel]="'Leeg'"></awv-kaart-blanco-laag>
             <awv-kaart-zoeker></awv-kaart-zoeker>
-            <awv-kaart-lagenkiezer [titels]="['Referentiepunten (WDB)', 'Referentiepunten (WDB) 2', 'features']" [verwijderbareLagen]="true"
-                                   [verplaatsbareLagen]="true" [toonLegende]="true"></awv-kaart-lagenkiezer>
+            <awv-kaart-lagenkiezer [verwijderbareLagen]="true" [verplaatsbareLagen]="true" [toonLegende]="true"></awv-kaart-lagenkiezer>
             <awv-kaart-geoserver-laag [titel]="'Referentiepunten (WDB) 2'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'" [minZoom]="6">
               <awv-legende-lijn-item [beschrijving]="'Referentiepunten (WDB) 2'" [kleur]="'blue'"></awv-legende-lijn-item>
             </awv-kaart-geoserver-laag>
