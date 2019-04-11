@@ -20,27 +20,39 @@ export class ClassicLagenkiezerComponent extends ClassicBaseComponent implements
     super(injector);
   }
 
-  private _headerTitle = DefaultOpties.headerTitel;
-
-  public get headerTitle(): string {
-    return this._headerTitle;
-  }
-  public set headerTitle(value: string) {
-    this._headerTitle = val.str(value, this._headerTitle);
-  }
-
-  @Input()
-  headerTitel = DefaultOpties.headerTitel;
-  @Input()
-  initieelDichtgeklapt = DefaultOpties.initieelDichtgeklapt;
-  @Input()
-  toonLegende = DefaultOpties.toonLegende;
-  @Input()
-  verwijderbareLagen = DefaultOpties.verwijderbareLagen;
-  @Input()
-  verplaatsbareLagen = DefaultOpties.verplaatsbareLagen;
   @Input()
   stijlbareVectorlagen: Predicate<string> = DefaultOpties.stijlbareVectorlagen;
+
+  _headerTitel = DefaultOpties.headerTitel;
+  _initieelDichtgeklapt = DefaultOpties.initieelDichtgeklapt;
+  _toonLegende = DefaultOpties.toonLegende;
+  _verwijderbareLagen = DefaultOpties.verwijderbareLagen;
+  _verplaatsbareLagen = DefaultOpties.verplaatsbareLagen;
+
+  @Input()
+  public set headerTitel(value: string) {
+    this._headerTitel = val.str(value, this._headerTitel);
+  }
+
+  @Input()
+  public set initieelDichtgeklapt(param: boolean) {
+    this._initieelDichtgeklapt = val.bool(param, this._initieelDichtgeklapt);
+  }
+
+  @Input()
+  public set toonLegende(param: boolean) {
+    this._toonLegende = val.bool(param, this._toonLegende);
+  }
+
+  @Input()
+  public set verwijderbareLagen(param: boolean) {
+    this._verwijderbareLagen = val.bool(param, this._verwijderbareLagen);
+  }
+
+  @Input()
+  public set verplaatsbareLagen(param: boolean) {
+    this._verplaatsbareLagen = val.bool(param, this._verplaatsbareLagen);
+  }
 
   ngOnInit() {
     super.ngOnInit();
@@ -59,11 +71,11 @@ export class ClassicLagenkiezerComponent extends ClassicBaseComponent implements
 
   private opties(): LagenUiOpties {
     return {
-      headerTitel: this.headerTitel,
-      initieelDichtgeklapt: this.initieelDichtgeklapt,
-      toonLegende: this.toonLegende,
-      verwijderbareLagen: this.verwijderbareLagen,
-      verplaatsbareLagen: this.verplaatsbareLagen,
+      headerTitel: this._headerTitel,
+      initieelDichtgeklapt: this._initieelDichtgeklapt,
+      toonLegende: this._toonLegende,
+      verwijderbareLagen: this._verwijderbareLagen,
+      verplaatsbareLagen: this._verplaatsbareLagen,
       stijlbareVectorlagen: this.stijlbareVectorlagen
     };
   }

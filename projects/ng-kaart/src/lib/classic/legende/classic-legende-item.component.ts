@@ -4,9 +4,15 @@ import { LegendeItem } from "../../kaart/kaart-legende";
 import { KaartClassicLocatorService } from "../kaart-classic-locator.service";
 import { ClassicLaagComponent } from "../lagen/classic-laag.component";
 
+import * as val from "../webcomponent-support/params";
+
 export abstract class ClassicLegendeItemComponent implements AfterContentInit {
+  _beschrijving: string;
+
   @Input()
-  beschrijving: string;
+  set beschrijving(param: string) {
+    this._beschrijving = val.str(param, this._beschrijving);
+  }
 
   constructor(private injector: Injector) {}
 

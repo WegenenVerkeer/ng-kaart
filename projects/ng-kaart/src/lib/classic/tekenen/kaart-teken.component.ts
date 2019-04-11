@@ -14,6 +14,8 @@ import { ClassicBaseComponent } from "../classic-base.component";
 import { classicMsgSubscriptionCmdOperator } from "../kaart-classic.component";
 import { KaartClassicMsg, TekenGeomAangepastMsg } from "../messages";
 
+import * as val from "../webcomponent-support/params";
+
 @Component({
   selector: "awv-kaart-teken",
   template: "<ng-content></ng-content>"
@@ -23,7 +25,8 @@ export class KaartTekenComponent extends ClassicBaseComponent implements OnInit 
   private tekenenCommandSubj = new rx.Subject<TekenenCommand>();
 
   @Input()
-  set tekenen(teken: boolean) {
+  set tekenen(param: boolean) {
+    const teken = val.bool(param, false);
     if (teken) {
       this.tekenenCommandSubj.next(
         StartTekenen(
