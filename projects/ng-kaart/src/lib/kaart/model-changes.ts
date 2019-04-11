@@ -140,7 +140,6 @@ const viewinstellingen = (olmap: ol.Map) => ({
 
 export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges = (model, changer) => {
   const toegevoegdeGeselecteerdeFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.geselecteerdeFeatures, "add").pipe(
-    debounceTime(100),
     map(evt => ({
       geselecteerd: model.geselecteerdeFeatures.getArray(),
       toegevoegd: some(evt.element),
@@ -148,7 +147,6 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     }))
   );
   const verwijderdeGeselecteerdeFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.geselecteerdeFeatures, "remove").pipe(
-    debounceTime(100),
     map(evt => ({
       geselecteerd: model.geselecteerdeFeatures.getArray(),
       toegevoegd: none,
@@ -156,10 +154,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     }))
   );
 
-  const geselecteerdeFeatures$ = rx.merge(toegevoegdeGeselecteerdeFeatures$, verwijderdeGeselecteerdeFeatures$).pipe(
-    debounceTime(100),
-    shareReplay(1)
-  );
+  const geselecteerdeFeatures$ = rx.merge(toegevoegdeGeselecteerdeFeatures$, verwijderdeGeselecteerdeFeatures$).pipe(shareReplay(1));
 
   const hoverFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.hoverFeatures, "add", "remove").pipe(
     map(event =>
