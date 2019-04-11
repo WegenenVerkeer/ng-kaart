@@ -17,6 +17,7 @@ import * as val from "../webcomponent-support/params";
   encapsulation: ViewEncapsulation.None
 })
 export class ClassicStandaardInteractiesComponent extends ClassicBaseComponent implements OnDestroy, OnChanges {
+  private standaardInteractieToegevoegd = false;
   _focusVoorZoom = false;
   _rotatie = false;
 
@@ -47,12 +48,14 @@ export class ClassicStandaardInteractiesComponent extends ClassicBaseComponent i
   ngOnDestroy(): void {
     super.ngOnDestroy();
     this.kaart.dispatch(prt.VerwijderStandaardInteractiesCmd(kaartLogOnlyWrapper));
+    this.standaardInteractieToegevoegd = false;
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if ((changes.focusVoorZoom && !changes.focusVoorZoom.isFirstChange()) || (changes.rotatie && !changes.rotatie.isFirstChange())) {
+    if ((changes.focusVoorZoom || changes.rotatie) && this.standaardInteractieToegevoegd) {
       this.kaart.dispatch(prt.VerwijderStandaardInteractiesCmd(kaartLogOnlyWrapper));
     }
     this.kaart.dispatch(prt.VoegStandaardInteractiesToeCmd(this._focusVoorZoom, this._rotatie, kaartLogOnlyWrapper));
+    this.standaardInteractieToegevoegd = true;
   }
 }

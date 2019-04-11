@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Injector, Input, OnChanges, Output, SimpleChanges, ViewEncapsulation } from "@angular/core";
 import { array } from "fp-ts";
+import { identity } from "fp-ts/lib/function";
 import { Setoid } from "fp-ts/lib/Setoid";
 import * as ol from "openlayers";
 
@@ -24,6 +25,8 @@ const id = (feat: ol.Feature) => {
   }
 };
 
+type FeatureEqualityFn = (feat1: ol.Feature, feat2: ol.Feature) => boolean;
+
 // Hier gaan we er van uit dat de feature zelf immutable is. Features moeten ook unieke IDs hebben.
 // De ids kunnen expliciet gezet zijn met ol.feature#setId of in de properties array staan.
 const stdFeatureEquality = (feat1: ol.Feature, feat2: ol.Feature) => {
@@ -32,7 +35,7 @@ const stdFeatureEquality = (feat1: ol.Feature, feat2: ol.Feature) => {
   return id1 !== undefined && id2 !== undefined && id1 === id2;
 };
 
-const featureEqualityToFeaturesSetoid = (eq: (feat1: ol.Feature, feat2: ol.Feature) => boolean) => array.getSetoid({ equals: eq });
+const featureEqualityToFeaturesSetoid = (eq: FeatureEqualityFn) => array.getSetoid({ equals: eq });
 
 @Component({
   selector: "awv-kaart-features-laag",
@@ -47,7 +50,7 @@ export class ClassicFeaturesLaagComponent extends ClassicVectorLaagComponent imp
   @Input()
   features = [] as ol.Feature[];
   @Input()
-  featureEquality: (feat1: ol.Feature, feat2: ol.Feature) => boolean = stdFeatureEquality;
+  featureEquality: FeatureEqualityFn = stdFeatureEquality;
 
   // TODO combineren met 'selecteerbaar' van kaart-vector-laag
   @Output()
@@ -68,14 +71,15 @@ export class ClassicFeaturesLaagComponent extends ClassicVectorLaagComponent imp
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    forChangedValue(changes, "featureEquality", eq => {
+    forChangedValue<FeatureEqualityFn, FeatureEqualityFn>(changes, "featureEquality", eq => {
       this.featuresSetoid = featureEqualityToFeaturesSetoid(eq);
     });
     if (changes.features && !changes.features.firstChange) {
-      forChangedValue(
+      forChangedValue<ol.Feature[], ol.Feature[]>(
         changes,
         "features",
         features => this.dispatchVervangFeatures(features),
+        identity,
         (curFeatures: ol.Feature[], prevFeatures: ol.Feature[]) =>
           prevFeatures !== undefined && !this.featuresSetoid.equals(curFeatures, prevFeatures)
       );
