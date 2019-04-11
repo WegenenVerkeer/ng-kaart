@@ -542,7 +542,6 @@ export class FeatureDemoComponent {
 
   readonly fietspadenVeldinfos: VeldInfo[] = [
     { isBasisVeld: false, label: "ID", naam: "id", type: "string" },
-    { isBasisVeld: false, label: "Type", naam: "type", type: "string" },
     { isBasisVeld: true, label: "Ident8", naam: "ident8", type: "string" },
     { isBasisVeld: true, label: "Van refpunt", naam: "locatie.begin.opschrift", type: "string" },
     { isBasisVeld: true, label: "Van afst", naam: "locatie.begin.afstand", type: "string" },
