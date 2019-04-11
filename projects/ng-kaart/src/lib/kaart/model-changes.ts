@@ -153,7 +153,9 @@ const viewinstellingen = (olmap: ol.Map) => ({
 
 export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges = (model, changer) => {
   const toegevoegdeGeselecteerdeFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.geselecteerdeFeatures, "add").pipe(
-    debounceTime(100),
+    // we zouden de events kunnen bufferen met bufferTime. We moeten dan evenwel `toegevoegd` en `verwijderd` een array
+    // maken ipv een option. Zolang we echter maar een paar features tegelijkertijd selecteren maakt het niet zo veel
+    // uit. debounceTime is evenwel uit den boze: dan gaan er toegevoegde features verloren.
     map(evt => ({
       geselecteerd: model.geselecteerdeFeatures.getArray(),
       toegevoegd: some(evt.element),
@@ -161,7 +163,6 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     }))
   );
   const verwijderdeGeselecteerdeFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.geselecteerdeFeatures, "remove").pipe(
-    debounceTime(100),
     map(evt => ({
       geselecteerd: model.geselecteerdeFeatures.getArray(),
       toegevoegd: none,
@@ -169,10 +170,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     }))
   );
 
-  const geselecteerdeFeatures$ = rx.merge(toegevoegdeGeselecteerdeFeatures$, verwijderdeGeselecteerdeFeatures$).pipe(
-    debounceTime(100),
-    shareReplay(1)
-  );
+  const geselecteerdeFeatures$ = rx.merge(toegevoegdeGeselecteerdeFeatures$, verwijderdeGeselecteerdeFeatures$).pipe(shareReplay(1));
 
   const hoverFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.hoverFeatures, "add", "remove").pipe(
     map(event =>
