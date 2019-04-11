@@ -7,8 +7,11 @@ import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-elem
 
 import * as val from "../webcomponent-support/params";
 
+/**
+ * De component zorgt voor een knop aan de rechterkant waarmee een meet-tool geactiveerd kan worden.
+ */
 @Component({
-  selector: "awv-multi-meet-knop",
+  selector: "awv-kaart-multi-meet-knop",
   template: ""
 })
 export class ClassicMultiMetenComponent extends ClassicUIElementSelectorComponentBase {
