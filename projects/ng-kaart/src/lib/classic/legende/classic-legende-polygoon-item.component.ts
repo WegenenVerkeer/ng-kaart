@@ -1,6 +1,7 @@
 import { Component, Injector, Input } from "@angular/core";
 
 import { LegendeItem } from "../../kaart/kaart-legende";
+import * as val from "../webcomponent-support/params";
 
 import { ClassicLegendeItemComponent } from "./classic-legende-item.component";
 
@@ -9,8 +10,12 @@ import { ClassicLegendeItemComponent } from "./classic-legende-item.component";
   template: "<ng-content></ng-content>"
 })
 export class ClassicLegendePolygoonItemComponent extends ClassicLegendeItemComponent {
+  _kleur: string;
+
   @Input()
-  kleur: string;
+  set kleur(param: string) {
+    this._kleur = val.str(param, this._kleur);
+  }
 
   constructor(injector: Injector) {
     super(injector);
@@ -19,8 +24,8 @@ export class ClassicLegendePolygoonItemComponent extends ClassicLegendeItemCompo
   maakLegendeItem(): LegendeItem {
     return {
       type: "Polygoon",
-      beschrijving: this.beschrijving,
-      kleur: this.kleur
+      beschrijving: this._beschrijving,
+      kleur: this._kleur
     };
   }
 }

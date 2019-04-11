@@ -1,6 +1,7 @@
 import { Component, Injector, Input } from "@angular/core";
 
 import { LegendeItem } from "../../kaart/kaart-legende";
+import * as val from "../webcomponent-support/params";
 
 import { ClassicLegendeItemComponent } from "./classic-legende-item.component";
 
@@ -9,8 +10,12 @@ import { ClassicLegendeItemComponent } from "./classic-legende-item.component";
   template: "<ng-content></ng-content>"
 })
 export class ClassicLegendeImageItemComponent extends ClassicLegendeItemComponent {
+  _image: string;
+
   @Input()
-  image: string;
+  set image(param: string) {
+    this._image = val.str(param, this._image);
+  }
 
   constructor(injector: Injector) {
     super(injector);
@@ -19,8 +24,8 @@ export class ClassicLegendeImageItemComponent extends ClassicLegendeItemComponen
   maakLegendeItem(): LegendeItem {
     return {
       type: "Image",
-      beschrijving: this.beschrijving,
-      image: this.image
+      beschrijving: this._beschrijving,
+      image: this._image
     };
   }
 }

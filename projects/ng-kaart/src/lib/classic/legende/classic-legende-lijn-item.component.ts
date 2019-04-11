@@ -1,7 +1,8 @@
 import { Component, Injector, Input } from "@angular/core";
-import { fromNullable } from "fp-ts/lib/Option";
+import { fromNullable, none, Option } from "fp-ts/lib/Option";
 
 import { LegendeItem } from "../../kaart/kaart-legende";
+import * as val from "../webcomponent-support/params";
 
 import { ClassicLegendeItemComponent } from "./classic-legende-item.component";
 
@@ -10,10 +11,18 @@ import { ClassicLegendeItemComponent } from "./classic-legende-item.component";
   template: "<ng-content></ng-content>"
 })
 export class ClassicLegendeLijnItemComponent extends ClassicLegendeItemComponent {
+  _achtergrondKleur: Option<string> = none;
+  _kleur: string;
+
   @Input()
-  kleur: string;
+  set kleur(param: string) {
+    this._kleur = val.str(param, this._kleur);
+  }
+
   @Input()
-  achtergrondKleur?: string;
+  set achtergrondKleur(param: string) {
+    this._achtergrondKleur = val.optStr(param);
+  }
 
   constructor(injector: Injector) {
     super(injector);
@@ -22,9 +31,9 @@ export class ClassicLegendeLijnItemComponent extends ClassicLegendeItemComponent
   maakLegendeItem(): LegendeItem {
     return {
       type: "Lijn",
-      beschrijving: this.beschrijving,
-      kleur: this.kleur,
-      achtergrondKleur: fromNullable(this.achtergrondKleur)
+      beschrijving: this._beschrijving,
+      kleur: this._kleur,
+      achtergrondKleur: this._achtergrondKleur
     };
   }
 }
