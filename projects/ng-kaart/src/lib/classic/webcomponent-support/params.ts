@@ -11,6 +11,15 @@ import { validationChain } from "../../util/validation";
 import { AwvV0StaticStyleInterpreters } from "../../stijl/json-awv-v0-stijl";
 import { jsonAwvV0RuleInterpreter } from "../../stijl/json-awv-v0-stijlfunctie";
 
+/**
+ * Deze hulpfuncties zijn nodig omdat de web components waarden van attributen altijd als een string doorsturen. We
+ * moeten daar dus altijd converteren van een string naar het type dat we eigenlijk gezien de typeannotatie verwachten.
+ * Tegelijkertijd moeten we ook overweg kunnen met waarden die wel als Javascript objecten en primitives binnen komen.
+ *
+ * De strategie die we gebruiken is om eerst te zien of we een string hebben en als dat zo is die te beschouwen als een
+ * JSON-representatie en die dan te parsen naar het type dat we verwachten.
+ */
+
 export type ParamGetter<A> = Function2<A, A, A>;
 export type OptionalParamGetter<A> = Function1<A, Option<A>>;
 

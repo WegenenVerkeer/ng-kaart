@@ -6,9 +6,15 @@ import { ClassicLaagComponent } from "../lagen/classic-laag.component";
 
 import * as val from "../webcomponent-support/params";
 
+/**
+ * Basisklaasse voor de legende items.
+ */
 export abstract class ClassicLegendeItemComponent implements AfterContentInit {
   _beschrijving: string;
 
+  /**
+   * De tekst die bij het item hoort: de omschrijving van een type van elementen op de laag.
+   */
   @Input()
   set beschrijving(param: string) {
     this._beschrijving = val.str(param, this._beschrijving);
