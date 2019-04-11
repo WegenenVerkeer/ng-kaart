@@ -2,6 +2,7 @@ import {
   Component,
   ElementRef,
   EventEmitter,
+  Inject,
   Input,
   NgZone,
   OnChanges,
@@ -33,6 +34,7 @@ import { forEach } from "../util/option";
 import * as progress from "../util/progress";
 import { TypedRecord } from "../util/typed-record";
 
+import { KaartClassicLocatorService } from "./kaart-classic-locator.service";
 import { classicLogger } from "./log";
 import {
   AchtergrondLagenInGroepAangepastMsg,
@@ -222,7 +224,11 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   mapElement: ElementRef;
 
   /** @ignore */
-  constructor(zone: NgZone) {
+  constructor(
+    zone: NgZone,
+    private el: ElementRef<Element>,
+    private kaartLocatorService: KaartClassicLocatorService<KaartClassicComponent>
+  ) {
     super(zone);
     this.kaartMsgObservableConsumer = (msg$: rx.Observable<prt.KaartMsg>) => {
       // We zijn enkel geïnteresseerd in messages van ons eigen type
@@ -353,6 +359,8 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
     }
     this.dispatch(prt.ActiveerHoverModusCmd(this._hoverModus));
     this.dispatch(prt.ActiveerSelectieModusCmd(this._selectieModus));
+
+    this.kaartLocatorService.registerComponent(this, this.el);
   }
 
   /** @ignore */

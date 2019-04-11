@@ -10,10 +10,8 @@ import { KaartModule } from "../../../ng-kaart/src/lib/kaart";
 import { LagenkiezerModule } from "../../../ng-kaart/src/lib/lagenkiezer";
 import { ZoekerModule } from "../../../ng-kaart/src/lib/zoeker";
 
-import { KaartElementComponent } from "./kaart-element/kaart-element.component";
-
 @NgModule({
-  declarations: [KaartElementComponent],
+  declarations: [],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
@@ -28,12 +26,12 @@ import { KaartElementComponent } from "./kaart-element/kaart-element.component";
     LagenkiezerModule.withDefaults(),
     ClickOutsideModule
   ],
-  entryComponents: [KaartElementComponent]
+  entryComponents: []
 })
 export class AppModule {
   public constructor(injector: Injector) {
     // Pas op!!! De volgorde is heel belangrijk hier. De kaart moet eerst zijn.
-    customElements.define("awv-kaart-element", createCustomElement(KaartElementComponent, { injector }));
+    customElements.define("awv-kaart-classic", createCustomElement(KaartClassicComponent, { injector }));
     Object.keys(componentMap).forEach(tag => customElements.define(tag, createCustomElement(componentMap[tag], { injector })));
   }
 

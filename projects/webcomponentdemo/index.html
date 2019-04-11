@@ -22,11 +22,11 @@
 </head>
 
 <body class="mat-body">
-  <awv-kaart-element id="k1" zoom="2">
+  <awv-kaart-classic id="k1" zoom="2">
     <awv-kaart-lagenkiezer verwijderbare-lagen="true" verplaatsbare-lagen="true" toon-legende="true"></awv-kaart-lagenkiezer>
     <awv-kaart-tilecache-laag titel="Dienstkaart grijs" laag-naam="dienstkaart-grijs"></awv-kaart-tilecache-laag>
     <awv-kaart-ortho-laag titel="Ortho" groep="Achtergrond"></awv-kaart-ortho-laag>
-    <awv-kaart-standaard-interacties focus-voor-zoom="true"></awv-kaart-standaard-interacties>
+    <awv-kaart-standaard-interacties focus-voor-zoom="false"></awv-kaart-standaard-interacties>
     <awv-meet-knop toon-info-boodschap="true"></awv-meet-knop>
 
     <awv-kaart-geoserver-laag titel="Referentiepunten 3" laag-naam="referentiepunten" versie="1.1.1" min-zoom="6">
@@ -39,6 +39,35 @@
       matrix-set="BPL72VL" matrix-ids='[ "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15" ]'>
     </awv-kaart-wmts-laag>
 
+    <awv-kaart-nosqlfs-laag titel="Straatkolken" url="/geolatte-nosqlfs" database="featureserver" collection="straatkolken" minZoom="9"
+      stijl-spec='
+      {
+        "type": "DynamicStyle",
+        "definition": {
+          "rules": [
+            {
+              "condition": {
+                "_type": "StijlBetweenConditie",
+                "kind": "<=>",
+                "lower": { "_type": "StijlNumberLiteral", "kind": "Literal", "value": 0 },
+                "upper": { "_type": "StijlNumberLiteral", "kind": "Literal", "value": 8 },
+                "value": { "_type": "StijlEnvironment", "kind": "Environment", "ref": "resolution", "type": "number" }
+              },
+              "style": {
+                "definition": {
+                  "circle": { "radius": 4, "fill": { "color": "#0000FF" }, "stroke": { "color": "#0000FF", "width": 2 } },
+                  "fill": { "color": "#0000FF" },
+                  "stroke": { "color": "#0000FF", "width": 2 }
+                }
+              }
+            }
+          ]
+        },
+        "version": "awv-v0"
+      }'>
+      <awv-legende-bolletje-item beschrijving="Kolk" kleur="#0000FF"></awv-legende-bolletje-item>
+    </awv-kaart-nosqlfs-laag>
+
     <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
     <awv-kaart-streetview></awv-kaart-streetview>
     <awv-kaart-schaal></awv-kaart-schaal>
@@ -50,7 +79,7 @@
     </awv-kaart-zoeker>
 
     <awv-kaart-knop-achtergrondlaag-kiezer></awv-kaart-knop-achtergrondlaag-kiezer>
-  </awv-kaart-element>
+  </awv-kaart-classic>
 </body>
 
 </html>
