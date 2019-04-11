@@ -140,6 +140,9 @@ const viewinstellingen = (olmap: ol.Map) => ({
 
 export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges = (model, changer) => {
   const toegevoegdeGeselecteerdeFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.geselecteerdeFeatures, "add").pipe(
+    // we zouden de events kunnen bufferen met bufferTime. We moeten dan evenwel `toegevoegd` en `verwijderd` een array
+    // maken ipv een option. Zolang we echter maar een paar features tegelijkertijd selecteren maakt het niet zo veel
+    // uit. debounceTime is evenwel uit den boze: dan gaan er toegevoegde features verloren.
     map(evt => ({
       geselecteerd: model.geselecteerdeFeatures.getArray(),
       toegevoegd: some(evt.element),
