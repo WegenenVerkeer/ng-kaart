@@ -25,11 +25,10 @@
     <awv-kaart-ortho-laag titel="Ortho" groep="Achtergrond"></awv-kaart-ortho-laag>
     <awv-kaart-tilecache-laag titel="Dienstkaart grijs" laag-naam="dienstkaart-grijs"></awv-kaart-tilecache-laag>
     <awv-kaart-standaard-interacties focus-voor-zoom="true"></awv-kaart-standaard-interacties>
-    <awv-meet-knop toon-info-boodschap="true"></awv-meet-knop>
+    <awv-multi-meet-knop toon-info-boodschap="true"></awv-multi-meet-knop>
 
-    <awv-kaart-geoserver-laag titel="Referentiepunten 3" laag-naam="referentiepunten" versie="1.1.1" min-zoom="6">
-      <awv-legende-lijn-item beschrijving="Referentiepunten 3 (lijn)" kleur="yellow"></awv-legende-lijn-item>
-      <awv-legende-polygoon-item beschrijving="Referentiepunten 3 (polygoon)" kleur="green"></awv-legende-polygoon-item>
+    <awv-kaart-geoserver-laag titel="Referentiepunten" laag-naam="referentiepunten" versie="1.1.1" min-zoom="6">
+      <awv-legende-bolletje-item beschrijving="Referentiepunt met opschrift" kleur="black"></awv-legende-bolletje-item>
     </awv-kaart-geoserver-laag>
 
     <awv-kaart-wmts-laag titel="GRB" laag-naam="grb_bsk" urls='["https://tile.informatievlaanderen.be/ws/raadpleegdiensten/wmts"]'
@@ -63,6 +62,7 @@
         },
         "version": "awv-v0"
       }'>
+      <awv-legende-bolletje-item beschrijving="Kolk" kleur="#0000FF"></awv-legende-bolletje-item>
     </awv-kaart-nosqlfs-laag>
 
     <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
