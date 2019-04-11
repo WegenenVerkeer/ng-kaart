@@ -117,3 +117,7 @@ const dynamicSpecInter: json.Interpreter<ss.AwvV0StyleSpec> = json.interpretUnde
 
 const fullSpecInter = json.byTypeDiscriminator("type", { StaticStyle: staticSpecInter, DynamicStyle: dynamicSpecInter });
 export const optStyleSpec: OptionalParamGetter<ss.AwvV0StyleSpec> = getOptionalParameter(fullSpecInter);
+
+export function zonderFallback<A>(paramGetter: ParamGetter<A>): Function1<A, A> {
+  return (param: A) => paramGetter(param, param);
+}

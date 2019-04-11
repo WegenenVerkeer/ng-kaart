@@ -29,6 +29,7 @@ import { subscriptionCmdOperator } from "../kaart/subscription-helper";
 import * as arrays from "../util/arrays";
 import { Feature } from "../util/feature";
 import { ofType } from "../util/operators";
+import { forEach } from "../util/option";
 import * as progress from "../util/progress";
 import { TypedRecord } from "../util/typed-record";
 
@@ -110,10 +111,11 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   _selectieModus: prt.SelectieModus = "none";
   _hoverModus: prt.HoverModus = "off";
   _naam = "kaart" + KaartClassicComponent.counter++;
+  _onderdrukKaartBevragenBoodschappen = false;
+
   /** Geselecteerde features */
   @Input()
   geselecteerdeFeatures: Array<ol.Feature> = [];
-  _onderdrukKaartBevragenBoodschappen = false;
 
   /** Zoom niveau */
   @Input()
@@ -189,7 +191,9 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
 
   /** Onderdrukken we kaart info boodschappen? */
   @Input()
-  set onderdrukKaartBevragenBoodschappen(param: boolean) {}
+  set onderdrukKaartBevragenBoodschappen(param: boolean) {
+    this._onderdrukKaartBevragenBoodschappen = val.bool(param, this._onderdrukKaartBevragenBoodschappen);
+  }
 
   /** De geselecteerde features */
   @Output()
@@ -354,24 +358,45 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   /** @ignore */
   ngOnChanges(changes: SimpleChanges) {
     const dispatch: (cmd: prt.Command<TypedRecord>) => void = cmd => this.dispatch(cmd);
-    forChangedValue(changes, "zoom", zoom => this.dispatch(prt.VeranderZoomCmd(zoom, logOnlyWrapper)));
-    forChangedValue(changes, "middelpunt", middelpunt => this.dispatch(prt.VeranderMiddelpuntCmd(middelpunt, none)));
+    forChangedValue(
+      changes,
+      "zoom",
+      // TODO: Eigenlijk moeten we iets doen als de input leeggemaakt wordt, maar wat?
+      zoomOpt => forEach(zoomOpt, zoom => this.dispatch(prt.VeranderZoomCmd(zoom, logOnlyWrapper))),
+      val.optNum
+    );
+    forChangedValue(
+      changes,
+      "middelpunt",
+      middelpuntOpt => forEach(middelpuntOpt, middelpunt => this.dispatch(prt.VeranderMiddelpuntCmd(middelpunt, none))),
+      val.optCoord
+    );
     forChangedValue(
       changes,
       "extent",
-      pipe(
-        prt.VeranderExtentCmd,
-        dispatch
-      )
+      extentOpt =>
+        forEach(
+          extentOpt,
+          pipe(
+            prt.VeranderExtentCmd,
+            dispatch
+          )
+        ),
+      val.optExtent
     );
     forChangedValue(
       changes,
       "mijnLocatieZoom",
-      pipe(
-        option.fromNullable,
-        prt.ZetMijnLocatieZoomCmd,
-        dispatch
-      )
+      zoomOpt =>
+        forEach(
+          zoomOpt,
+          pipe(
+            option.fromNullable,
+            prt.ZetMijnLocatieZoomCmd,
+            dispatch
+          )
+        ),
+      val.optNum
     );
     forChangedValue(
       changes,
@@ -383,8 +408,11 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
     );
     forChangedValue(changes, "breedte", () => this.zetKaartGrootte());
     forChangedValue(changes, "hoogte", () => this.zetKaartGrootte());
-    forChangedValue(changes, "onderdrukKaartBevragenBoodschappen", onderdruk =>
-      this.dispatch(prt.ZetUiElementOpties(KaartInfoBoodschapUiSelector, { kaartBevragenOnderdrukt: onderdruk }))
+    forChangedValue(
+      changes,
+      "onderdrukKaartBevragenBoodschappen",
+      onderdruk => this.dispatch(prt.ZetUiElementOpties(KaartInfoBoodschapUiSelector, { kaartBevragenOnderdrukt: onderdruk })),
+      val.zonderFallback<boolean>(val.bool)
     );
   }
 
