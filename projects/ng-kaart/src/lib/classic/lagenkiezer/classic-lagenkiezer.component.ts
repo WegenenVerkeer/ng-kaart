@@ -20,38 +20,88 @@ export class ClassicLagenkiezerComponent extends ClassicBaseComponent implements
     super(injector);
   }
 
-  @Input()
-  stijlbareVectorlagen: Predicate<string> = DefaultOpties.stijlbareVectorlagen;
+  private _headerTitel: string = DefaultOpties.headerTitel;
+  private _initieelDichtgeklapt: boolean = DefaultOpties.initieelDichtgeklapt;
+  private _toonLegende: boolean = DefaultOpties.toonLegende;
+  private _verwijderbareLagen: boolean = DefaultOpties.verwijderbareLagen;
+  private _verplaatsbareLagen: boolean = DefaultOpties.verplaatsbareLagen;
+  private _stijlbareVectorlagen: Predicate<string> = DefaultOpties.stijlbareVectorlagen;
 
-  _headerTitel = DefaultOpties.headerTitel;
-  _initieelDichtgeklapt = DefaultOpties.initieelDichtgeklapt;
-  _toonLegende = DefaultOpties.toonLegende;
-  _verwijderbareLagen = DefaultOpties.verwijderbareLagen;
-  _verplaatsbareLagen = DefaultOpties.verplaatsbareLagen;
-
-  @Input()
-  public set headerTitel(value: string) {
-    this._headerTitel = val.str(value, this._headerTitel);
+  public get headerTitel(): string {
+    return this._headerTitel;
   }
 
+  /**
+   * De titel van de hoofding van de lagenkiezer. Std "Mijn legende en lagen".
+   */
+  @Input()
+  public set headerTitel(param: string) {
+    this._headerTitel = val.str(param, this._headerTitel);
+  }
+
+  public get initieelDichtgeklapt(): boolean {
+    return this._initieelDichtgeklapt;
+  }
+
+  /**
+   * Geeft aan of de lagenkiezer dichtgeklapt is wanneer die de eerste maal getoond wordt.
+   */
   @Input()
   public set initieelDichtgeklapt(param: boolean) {
     this._initieelDichtgeklapt = val.bool(param, this._initieelDichtgeklapt);
   }
 
+  public get toonLegende(): boolean {
+    return this._toonLegende;
+  }
+
+  /**
+   * Stelt in of er een tab met een legende aanwezig moet zijn. Dit vak toont standaard enkel featurelagen. Mits gebruik
+   * van legende child tags, bijv. <code>&lt;awv-legende-lijn-item&gt;</code>, kunnen ook andere lagen van een legende
+   * voorzien worden.
+   */
   @Input()
   public set toonLegende(param: boolean) {
     this._toonLegende = val.bool(param, this._toonLegende);
   }
 
+  public get verwijderbareLagen(): boolean {
+    return this._verwijderbareLagen;
+  }
+
+  /**
+   * Indien gezet kunnen gebruikers lagen verwijderen uit de kaart.
+   */
   @Input()
   public set verwijderbareLagen(param: boolean) {
     this._verwijderbareLagen = val.bool(param, this._verwijderbareLagen);
   }
 
+  public get verplaatsbareLagen(): boolean {
+    return this._verplaatsbareLagen;
+  }
+
+  /**
+   * Indien gezet kunnen gebruiker lagen verplaatsen van volgorde. Er zijn 2 groepen van lagen: featurelagen (groep
+   * <code>"Voorgroond.hoog"</code>) en tilelagen (groep <code>"Voorgroond.laag"</code>)  Er kan enkel binnen een groep
+   * verplaatst worden.
+   */
   @Input()
   public set verplaatsbareLagen(param: boolean) {
     this._verplaatsbareLagen = val.bool(param, this._verplaatsbareLagen);
+  }
+
+  public get stijlbareVectorlagen(): Predicate<string> {
+    return this._stijlbareVectorlagen;
+  }
+
+  /**
+   * Hiermee kan een functie gezet worden die obv de titel van een laag beslist of de stijleditor aangeboden mag worden.
+   * Niet bruikbaar in webcomponent mode.
+   */
+  @Input()
+  public set stijlbareVectorlagen(param: Predicate<string>) {
+    this._stijlbareVectorlagen = param;
   }
 
   ngOnInit() {
@@ -71,11 +121,11 @@ export class ClassicLagenkiezerComponent extends ClassicBaseComponent implements
 
   private opties(): LagenUiOpties {
     return {
-      headerTitel: this._headerTitel,
-      initieelDichtgeklapt: this._initieelDichtgeklapt,
-      toonLegende: this._toonLegende,
-      verwijderbareLagen: this._verwijderbareLagen,
-      verplaatsbareLagen: this._verplaatsbareLagen,
+      headerTitel: this.headerTitel,
+      initieelDichtgeklapt: this.initieelDichtgeklapt,
+      toonLegende: this.toonLegende,
+      verwijderbareLagen: this.verwijderbareLagen,
+      verplaatsbareLagen: this.verplaatsbareLagen,
       stijlbareVectorlagen: this.stijlbareVectorlagen
     };
   }

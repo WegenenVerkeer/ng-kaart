@@ -45,7 +45,7 @@ export const componentMap = {
   "awv-bevraag-kaart": ClassicKaartBevragenComponent,
   "awv-kaart-lagenkiezer": ClassicLagenkiezerComponent,
   "awv-meet-knop": ClassicMetenComponent,
-  "awv-multi-meet-knop": ClassicMultiMetenComponent,
+  "awv-kaart-multi-meet-knop": ClassicMultiMetenComponent,
   "awv-kaart-nosqlfs-laag": ClassicNosqlfsLaagComponent,
   "awv-kaart-ortho-laag": ClassicOrthoLaagComponent,
   "awv-kaart-perceel-zoeker": ClassicPerceelZoekerComponent,

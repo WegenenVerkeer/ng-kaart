@@ -9,11 +9,15 @@ import { ClassicBaseComponent } from "../classic-base.component";
  * van de lagen die gedefinieerd zijn in de <code>&lt;awv-kaart-classic-tag&gt;</code>. De achtergrondselector gebruikt
  * standaard alle lagen van het type <code>&lt;awv-kaart-tilecache-laag&gt;</code>,
  * <code>&lt;awv-kaart-wmts-laag&gt;</code>, <code>&lt;awv-kaart-ortho-laag&gt;</code> en
- * <code>&lt;awv-kaart-blanco-laag&gt;</code>. Deze twee laatste zijn trouwens specifiek bedoeld voor de achtergrondlagenkiezer.
+ * <code>&lt;awv-kaart-blanco-laag&gt;</code>. Deze twee laatste zijn trouwens specifiek bedoeld voor de
+ * achtergrondlagenkiezer.
  *
- * Door de tag <code>groep</code> te zetten op ofwel <code>'Voorgrond.Laag'</code> of <code>'Achtergrond'</code>,
- * wordt een laag respectievelijk niet of wel bij de selecteerbare achtergronden opgenomen. Het is doorgaans geen goed
- * idee om een volledig dekkende laag in de voorgrond te gebruiken als de achtergrondselectie aanwezig is.
+ * De volgorde van de lagen in de template/HTML bepaalt de volgorde in de lagenkiezer en welke eerst getoond wordt. (Nog
+ * open probleem in webcomponent versie)
+ *
+ * Door de tag <code>groep</code> te zetten op ofwel <code>'Voorgrond.Laag'</code> of <code>'Achtergrond'</code>, wordt
+ * een laag respectievelijk niet of wel bij de selecteerbare achtergronden opgenomen. Het is doorgaans geen goed idee om
+ * een volledig dekkende laag in de voorgrond te gebruiken als de achtergrondselectie aanwezig is.
  */
 @Component({
   selector: "awv-kaart-knop-achtergrondlaag-kiezer",

@@ -4,6 +4,11 @@ import { MetenOpties, MetenUiSelector } from "../../kaart/meten/kaart-meten.comp
 import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
 import * as val from "../webcomponent-support/params";
 
+/**
+ * De component zorgt voor een knop aan de rechterkant waarmee een meet-tool geactiveerd kan worden. <em>Dit is een oude
+ * versie enkel aanwezig voor backwards compatibility, gebruik bij voorkeur
+ * <code>&lt;awv-kaart-multi-meet-knop&gt;</code>.</em>
+ */
 @Component({
   selector: "awv-meet-knop",
   template: ""
