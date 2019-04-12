@@ -1,0 +1,14 @@
+{
+  "name": "@wegenenverkeer/ng-kaart-webcomponent",
+  "author": "Team Blauw/Rood",
+  "version": "5.0.0-0",
+  "main": "./ng-kaart-webcomponent.js",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:WegenenVerkeer/ng-kaart.git"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  }
+}

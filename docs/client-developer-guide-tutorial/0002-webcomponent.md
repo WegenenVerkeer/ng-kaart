@@ -2,7 +2,7 @@
 
 We gebruiken een automatisch framework om onze Angular components te exposen voor gebruik als een webcomponent.
 
-Dit heeft als voordeel dat de meeste input/output automatisch wordt omgevormd en dat de standaard gegenereerde documentatie eenvoudig gebruikt kan worden om te developen met de webcomponent/
+Dit heeft als voordeel dat de meeste input/output automatisch wordt omgevormd en dat de standaard gegenereerde documentatie eenvoudig gebruikt kan worden om te developen met de webcomponent
 
 Er zijn enkele regels om te volgen.
 
@@ -65,3 +65,11 @@ Een voorbeeld: in de `ClassicWmtsLaagComponent` is er een input met de naam `url
 :warning: **JSON verwacht dubbele quotes (") rond property-namen en -waardes. In plaats van quotes te nesten, kan je heel de attribuut waarde met enkele quotes (') omringen, zoals in bovenstaand voorbeeld.**
 
 ## Outputs
+
+Outputs worden omgevormd naar [Custom Events](https://developer.mozilla.org/en-US/docs/Web/Guide/Events/Creating_and_triggering_events#Creating_custom_events), met de event data in het event detail veld.
+
+```js
+const kaartElement = document.getElementById("k1");
+kaartElement.addEventListener("extentChange", function(event) { console.log("***** extent", event.detail);});
+kaartElement.addEventListener("zoomChange", function(event) { console.log("***** zoom ", event.detail);});
+```

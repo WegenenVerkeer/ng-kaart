@@ -17,6 +17,13 @@
       height: 100%;
     }
   </style>
+  <script>
+    window.onload = () => {
+      const kaartElement = document.getElementById("k1");
+      kaartElement.addEventListener("extentChange", function(event) { console.log("***** extent", event.detail);});
+      kaartElement.addEventListener("zoomChange", function(event) { console.log("***** zoom ", event.detail);});
+    };
+  </script>
 </head>
 
 <body>

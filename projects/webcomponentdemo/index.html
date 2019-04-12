@@ -12,14 +12,24 @@
   <style>
     html,
     body {
-      height: 500px;
+      margin: 0px;
+      font-size: 14px;
+      font-family: Roboto, "Helvetica Neue", sans-serif;
+      height: 100%;
     }
     awv-kaart-element {
       height: 100%;
     }
   </style>
   <script type="text/javascript" src="webcomponent.js"></script>
-</head>
+  <script>
+      window.onload = () => {
+        const kaartElement = document.getElementById("k1");
+        kaartElement.addEventListener("extentChange", function(event) { console.log("***** extent", event.detail);});
+        kaartElement.addEventListener("zoomChange", function(event) { console.log("***** zoom ", event.detail);});
+      };
+    </script>
+  </head>
 
 <body class="mat-body">
   <awv-kaart-classic id="k1" zoom="2">
