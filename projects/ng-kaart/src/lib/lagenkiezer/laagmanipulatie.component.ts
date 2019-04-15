@@ -97,7 +97,7 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
     this.filterTotaal$ = rx.merge(
       kaartComponent.modelChanges.laagFilterGezet$.pipe(
         filter(filterGezet => this.laag.titel === filterGezet.laag.titel),
-        map(() => ". . .")
+        map(() => ". . .") // vorig totaal wissen, terwijl nieuw opgehaald wordt
       ),
       kaartComponent.modelChanges.laagFilterGezet$.pipe(
         filter(filterGezet => this.laag.titel === filterGezet.laag.titel),
