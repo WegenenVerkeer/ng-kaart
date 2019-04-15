@@ -30,3 +30,8 @@ export interface GeoJsonLike extends GeoJsonCore {
   // index values from bbox
   readonly metadata: Metadata;
 }
+
+export interface FeatureCollection {
+  total: number;
+  features: GeoJsonLike[];
+}

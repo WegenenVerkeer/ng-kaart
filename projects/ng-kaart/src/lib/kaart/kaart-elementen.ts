@@ -5,7 +5,7 @@ import { contramap, Setoid, setoidString } from "fp-ts/lib/Setoid";
 import { Iso, Lens, Optional } from "monocle-ts";
 import * as ol from "openlayers";
 
-import { isNoSqlFsSource } from "../source/nosql-fs-source";
+import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
 import { mapToOptionalByKey } from "../util/lenses";
 
 import { Legende } from "./kaart-legende";
@@ -179,6 +179,9 @@ export const isZichtbaar: (_: number) => (_: ToegevoegdeLaag) => boolean = curre
   laag.layer.getMinResolution() <= currentRes && laag.layer.getMaxResolution() > currentRes && laag.layer.getVisible();
 export const asToegevoegdeNosqlVectorLaag: (laag: ToegevoegdeLaag) => Option<ToegevoegdeVectorLaag> = laag =>
   fromPredicate<ToegevoegdeLaag>(lg => isNoSqlFsLaag(lg.bron))(laag) as Option<ToegevoegdeVectorLaag>;
+export const asNosqlSource: (source: ol.source.Vector) => Option<NosqlFsSource> = fromPredicate(isNoSqlFsSource) as (
+  _: ol.source.Vector
+) => Option<NosqlFsSource>;
 
 ///////////////
 // Constructors
