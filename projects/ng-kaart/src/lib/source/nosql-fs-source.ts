@@ -12,7 +12,7 @@ import { Pipeable } from "../util";
 import { Feature, toOlFeature } from "../util/feature";
 import { fetchObs$, fetchWithTimeoutObs$ } from "../util/fetch-with-timeout";
 import { ReduceFunction } from "../util/function";
-import { GeoJsonLike } from "../util/geojson-types";
+import { FeatureCollection, GeoJsonLike } from "../util/geojson-types";
 import * as geojsonStore from "../util/indexeddb-geojson-store";
 
 /**
@@ -90,6 +90,19 @@ const mapToGeoJson: Pipeable<string, GeoJsonLike> = obs =>
     })
   );
 
+const mapToFeatureCollection: Pipeable<string, FeatureCollection> = obs =>
+  obs.pipe(
+    map(lijn => {
+      try {
+        return JSON.parse(lijn) as FeatureCollection;
+      } catch (error) {
+        const msg = `Kan JSON data niet parsen: ${error} JSON: ${lijn}`;
+        kaartLogger.error(msg);
+        throw new Error(msg);
+      }
+    })
+  );
+
 function featuresFromCache(laagnaam: string, extent: ol.Extent): rx.Observable<GeoJsonLike[]> {
   return geojsonStore.getFeaturesByExtent(laagnaam, extent).pipe(
     bufferCount(BATCH_SIZE),
@@ -153,7 +166,7 @@ export class NosqlFsSource extends ol.source.Vector {
         const source: NosqlFsSource = this;
         source.busyCount += 1;
         source.outstandingRequests = array.snoc(source.outstandingRequests, extent);
-        const featuresLoader$: rx.Observable<ol.Feature[]> = (this.offline
+        const featuresLoader$: rx.Observable<ol.Feature[]> = (source.offline
           ? featuresFromCache(laagnaam, extent)
           : featuresFromServer(source, laagnaam, gebruikCache, extent)
         ).pipe(
@@ -213,7 +226,7 @@ export class NosqlFsSource extends ol.source.Vector {
     });
   }
 
-  private composeUrl(extent?: number[]) {
+  private composeQueryUrl(extent?: number[]) {
     const params = {
       ...fromNullable(extent).fold({}, v => ({ bbox: v.join(",") })),
       ...this.view.fold({}, v => ({ "with-view": encodeURIComponent(v) })),
@@ -227,6 +240,20 @@ export class NosqlFsSource extends ol.source.Vector {
       .join("&")}`;
   }
 
+  private composeFeatureCollectionUrl(limit: number) {
+    const params = {
+      ...{ limit: limit },
+      ...this.view.fold({}, v => ({ "with-view": encodeURIComponent(v) })),
+      ...this.filter.fold({}, f => ({ query: encodeURIComponent(f) }))
+    };
+
+    return `${this.url}/api/databases/${this.database}/${this.collection}/featurecollection?${Object.keys(params)
+      .map(function(key) {
+        return key + "=" + params[key];
+      })
+      .join("&")}`;
+  }
+
   cacheStoreName(): string {
     return this.laagnaam;
   }
@@ -234,7 +261,7 @@ export class NosqlFsSource extends ol.source.Vector {
   fetchFeatures$(extent: number[], gebruikCache: boolean): rx.Observable<GeoJsonLike> {
     if (gebruikCache) {
       return fetchWithTimeoutObs$(
-        this.composeUrl(extent),
+        this.composeQueryUrl(extent),
         {
           method: "GET",
           cache: "no-store", // geen client side caching van nosql data
@@ -247,7 +274,7 @@ export class NosqlFsSource extends ol.source.Vector {
         mapToGeoJson
       );
     } else {
-      return fetchObs$(this.composeUrl(extent), {
+      return fetchObs$(this.composeQueryUrl(extent), {
         method: "GET",
         cache: "no-store", // geen client side caching van nosql data
         credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
@@ -260,7 +287,7 @@ export class NosqlFsSource extends ol.source.Vector {
   }
 
   fetchFeaturesByWkt$(wkt: string): rx.Observable<GeoJsonLike> {
-    return fetchObs$(this.composeUrl(), {
+    return fetchObs$(this.composeQueryUrl(), {
       method: "POST",
       cache: "no-store", // geen client side caching van nosql data
       credentials: "include", // essentieel om ACM Authenticatie cookies mee te sturen
@@ -269,6 +296,18 @@ export class NosqlFsSource extends ol.source.Vector {
       split(featureDelimiter),
       filter(lijn => lijn.trim().length > 0),
       mapToGeoJson
+    );
+  }
+
+  fetchTotal$(): rx.Observable<number> {
+    return fetchObs$(this.composeFeatureCollectionUrl(1), {
+      method: "GET",
+      cache: "no-store", // geen client side caching van nosql data
+      credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
+    }).pipe(
+      split(featureDelimiter),
+      mapToFeatureCollection,
+      map(featureCollection => featureCollection.total)
     );
   }
 

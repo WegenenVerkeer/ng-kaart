@@ -1,11 +1,17 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
-import { MatDialog, MatMenuTrigger } from "@angular/material";
+import { MatMenuTrigger } from "@angular/material";
 import { none } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
-import { distinctUntilChanged, filter, map, shareReplay } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, share, shareReplay, startWith, switchMap, tap } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
-import { asToegevoegdeNosqlVectorLaag, asToegevoegdeVectorLaag, ToegevoegdeLaag, ToegevoegdeVectorLaag } from "../kaart/kaart-elementen";
+import {
+  asNosqlSource,
+  asToegevoegdeNosqlVectorLaag,
+  asToegevoegdeVectorLaag,
+  ToegevoegdeLaag,
+  ToegevoegdeVectorLaag
+} from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as cmd from "../kaart/kaart-protocol-commands";
 import { KaartComponent } from "../kaart/kaart.component";
@@ -29,14 +35,11 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
   readonly kanStijlAanpassen$: rx.Observable<boolean>;
   readonly minstensEenLaagActie$: rx.Observable<boolean>;
   readonly heeftFilter$: rx.Observable<boolean>;
+  readonly filterTotaal$: rx.Observable<string>;
 
   // TODO: subject moet luisteren op messages. Zit in volgende story
   readonly filterActiefSubj: rx.BehaviorSubject<boolean> = new rx.BehaviorSubject<boolean>(true);
   readonly filterActief$: rx.Observable<boolean> = this.filterActiefSubj.asObservable();
-
-  // TODO: moet 1 maal opgehaald worden uit featureserver
-  readonly filterTotaalSubj: rx.BehaviorSubject<string> = new rx.BehaviorSubject<string>("???");
-  readonly filterTotaal$: rx.Observable<string> = this.filterTotaalSubj.asObservable();
 
   @Input()
   laag: ToegevoegdeLaag;
@@ -51,7 +54,7 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
 
   filterActief = true;
 
-  constructor(lagenkiezer: LagenkiezerComponent, kaartComponent: KaartComponent, zone: NgZone, private readonly dialog: MatDialog) {
+  constructor(lagenkiezer: LagenkiezerComponent, kaartComponent: KaartComponent, zone: NgZone) {
     super(kaartComponent, zone);
     this.zoom$ = kaartComponent.modelChanges.viewinstellingen$.pipe(
       map(zi => zi.zoom),
@@ -90,6 +93,22 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
       filter(filterGezet => this.laag.titel === filterGezet.laag.titel),
       map(filterGezet => filterGezet.filter.isSome()),
       shareReplay(1)
+    );
+    this.filterTotaal$ = rx.merge(
+      kaartComponent.modelChanges.laagFilterGezet$.pipe(
+        filter(filterGezet => this.laag.titel === filterGezet.laag.titel),
+        map(() => ". . .") // vorig totaal wissen, terwijl nieuw opgehaald wordt
+      ),
+      kaartComponent.modelChanges.laagFilterGezet$.pipe(
+        filter(filterGezet => this.laag.titel === filterGezet.laag.titel),
+        filter(filterGezet => filterGezet.filter.isSome()),
+        switchMap(filterGezet =>
+          asNosqlSource(filterGezet.laag.layer.getSource()).foldL(
+            () => rx.of(""),
+            source => source.fetchTotal$().pipe(map(num => `${num}`))
+          )
+        )
+      )
     );
     this.minstensEenLaagActie$ = rx.combineLatest(this.kanVerwijderen$, this.kanStijlAanpassen$, (v, a) => v || a).pipe(shareReplay(1));
   }
