@@ -315,8 +315,8 @@ export class NosqlFsSource extends ol.source.Vector {
     this.offline = offline;
   }
 
-  setFilter(filter: Option<string>) {
-    this.filter = filter;
+  setFilter(cqlFilter: Option<string>) {
+    this.filter = cqlFilter;
   }
 
   dispatchLoadEvent(evt: le.DataLoadEvent) {

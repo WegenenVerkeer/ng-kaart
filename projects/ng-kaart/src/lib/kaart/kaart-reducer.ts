@@ -13,6 +13,7 @@ import { bufferCount, debounceTime, distinctUntilChanged, map, switchMap, thrott
 
 import { FilterAanpassend, GeenFilterAanpassingBezig } from "../filter/filter-aanpassing-state";
 import { cql } from "../filter/filter-model";
+import { FilterCql } from "../filter/filter-new-model";
 import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
 import * as arrays from "../util/arrays";
 import { refreshTiles } from "../util/cachetiles";
@@ -1309,7 +1310,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         chain(valideerToegevoegdeVectorLaagBestaat(cmnd.titel), laag =>
           valideerNoSqlFsSourceBestaat(cmnd.titel).map(noSqlFsSource => [laag, noSqlFsSource])
         ).map(([laag, noSqlFsSource]: [ke.ToegevoegdeVectorLaag, NosqlFsSource]) => {
-          cmnd.filter.foldL(() => noSqlFsSource.setFilter(none), filter => noSqlFsSource.setFilter(some(cql(filter))));
+          noSqlFsSource.setFilter(FilterCql.cql(cmnd.filter));
           noSqlFsSource.clear();
           noSqlFsSource.refresh();
           modelChanger.laagFilterGezetSubj.next({

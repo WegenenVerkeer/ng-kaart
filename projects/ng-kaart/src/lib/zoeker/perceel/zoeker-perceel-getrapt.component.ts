@@ -4,7 +4,8 @@ import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, startWith, switchMap } from "rxjs/operators";
 
 import { KaartComponent } from "../../kaart/kaart.component";
-import { collectOption, isNotNullObject } from "../../util/operators";
+import { isNotNullObject } from "../../util/function";
+import { collectOption } from "../../util/operators";
 import {
   GetraptZoekerComponent,
   toNonEmptyDistinctLowercaseString,

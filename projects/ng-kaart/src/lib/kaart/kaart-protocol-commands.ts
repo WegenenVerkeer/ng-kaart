@@ -2,7 +2,7 @@ import { Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 
-import { Filter } from "../filter/filter-model";
+import { Filter } from "../filter/filter-new-model";
 import { TypedRecord } from "../util/typed-record";
 import { ZoekerMetWeergaveopties, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
 
@@ -392,7 +392,7 @@ export interface ZetOffline<Msg extends KaartMsg> {
 export interface ZetFilter<Msg extends KaartMsg> {
   readonly type: "ZetFilter";
   readonly titel: string;
-  readonly filter: Option<Filter>;
+  readonly filter: Filter;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -632,11 +632,7 @@ export function VraagSchaalAanCmd<Msg extends KaartMsg>(wrapper: BareValidationW
   };
 }
 
-export function ZetFilter<Msg extends KaartMsg>(
-  titel: string,
-  filter: Option<Filter>,
-  wrapper: BareValidationWrapper<Msg>
-): ZetFilter<Msg> {
+export function ZetFilter<Msg extends KaartMsg>(titel: string, filter: Filter, wrapper: BareValidationWrapper<Msg>): ZetFilter<Msg> {
   return {
     type: "ZetFilter",
     titel: titel,

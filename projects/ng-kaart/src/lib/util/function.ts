@@ -57,3 +57,11 @@ export const applySequential: <S>(_: Endomorphism<S>[]) => Endomorphism<S> = fs 
 export function fromNullableFunc<A, B>(f: Function1<A, B | undefined>): Function1<A, Option<B>> {
   return (a: A) => fromNullable(f(a));
 }
+
+export function isNotNullObject(object: any) {
+  return object && object instanceof Object;
+}
+
+export function isNotNull(object: any) {
+  return object !== null;
+}

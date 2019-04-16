@@ -36,9 +36,10 @@ import { KaartInternalMsg, kaartLogOnlyWrapper } from "../../kaart/kaart-interna
 import * as prt from "../../kaart/kaart-protocol";
 import { KaartComponent } from "../../kaart/kaart.component";
 import { kaartLogger } from "../../kaart/log";
+import { isNotNullObject } from "../../util/function";
 import { matchGeometryType } from "../../util/geometries";
 import * as maps from "../../util/maps";
-import { collect, isNotNullObject, Pipeable } from "../../util/operators";
+import { collect, Pipeable } from "../../util/operators";
 import { forEach } from "../../util/option";
 import * as sets from "../../util/sets";
 import { minLength } from "../../util/string";

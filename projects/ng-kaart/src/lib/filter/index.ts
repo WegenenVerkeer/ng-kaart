@@ -4,7 +4,7 @@ import { ModuleWithProviders, NgModule } from "@angular/core";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatAutocompleteModule, MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule } from "@angular/material";
 
-import { FilterComponent } from "./filter.component";
+import { FilterComponent } from "./filter-new.component";
 
 const components: any[] = [FilterComponent];
 
@@ -34,4 +34,4 @@ export class FilterModule {
   }
 }
 
-export * from "./filter.component";
+export * from "./filter-new.component";

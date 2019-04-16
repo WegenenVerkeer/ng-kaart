@@ -21,7 +21,7 @@
       <mat-form-field class="filter-operator-combo">
         <input type="text" placeholder="Operator" matInput [formControl]="operatorControl" [matAutocomplete]="operatoren">
         <mat-autocomplete #operatoren="matAutocomplete" autoActiveFirstOption [displayWith]="displayOperator">
-          <mat-option *ngFor="let operator of filteredOperatoren$ | async" [value]="operator">{{ operator.beschrijving }}</mat-option>
+          <mat-option *ngFor="let operator of filteredOperatoren$ | async" [value]="operator">{{ operator.description }}</mat-option>
         </mat-autocomplete>
         <mat-error *ngIf="operatorControl.invalid">{{ errorOperator() }}</mat-error>
       </mat-form-field>

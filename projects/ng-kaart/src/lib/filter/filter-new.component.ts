@@ -1,4 +1,3 @@
-/*
 import { Component, NgZone } from "@angular/core";
 import { FormControl, ValidationErrors, Validators } from "@angular/forms";
 import * as array from "fp-ts/lib/Array";
@@ -9,16 +8,18 @@ import { Observable } from "rxjs";
 import { filter, map, sample, shareReplay, startWith, switchMap, tap } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
-import * as ke from "../kaart/kaart-elementen";
 import { VeldInfo } from "../kaart/kaart-elementen";
 import { ToegevoegdeVectorLaag } from "../kaart/kaart-elementen";
+import * as ke from "../kaart/kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
-import { collectOption, forEvery, isNotNull, isNotNullObject } from "../util";
+import { isNotNull, isNotNullObject } from "../util/function";
+import { collectOption } from "../util/operators";
+import { forEvery } from "../util/operators";
 
 import { FilterAanpassingBezig, isAanpassingBezig } from "./filter-aanpassing-state";
-import { beschikbareOperatoren, Is, Operator, Property, SimpleFilter } from "./filter-model";
+import { Equality, ExpressionFilter, FilterBuilder, Literal, Property } from "./filter-new-model";
 
 const autoCompleteSelectieVerplichtValidator: Function1<FormControl, ValidationErrors | null> = control => {
   if (typeof control.value === "string") {
@@ -28,19 +29,19 @@ const autoCompleteSelectieVerplichtValidator: Function1<FormControl, ValidationE
 };
 
 @Component({
-  selector: "awv-filter-old",
+  selector: "awv-filter",
   templateUrl: "./filter.component.html",
   styleUrls: ["./filter.component.scss"]
 })
-export class FilterOldComponent extends KaartChildComponentBase {
+export class FilterComponent extends KaartChildComponentBase {
   readonly zichtbaar$: rx.Observable<boolean>;
   readonly titel$: rx.Observable<string>;
 
   readonly filteredVelden$: rx.Observable<VeldInfo[]>;
-  readonly filteredOperatoren$: rx.Observable<Operator[]>;
+  readonly filteredOperatoren$: rx.Observable<FilterBuilder.FilterBuildElement[]>;
 
   readonly veldControl = new FormControl("", [Validators.required, autoCompleteSelectieVerplichtValidator]);
-  readonly operatorControl = new FormControl(Is, [Validators.required, autoCompleteSelectieVerplichtValidator]);
+  readonly operatorControl = new FormControl(Equality, [Validators.required, autoCompleteSelectieVerplichtValidator]);
   readonly waardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
 
   readonly geldigFilterCmd$: rx.Observable<prt.ZetFilter<KaartInternalMsg>>;
@@ -76,17 +77,17 @@ export class FilterOldComponent extends KaartChildComponentBase {
           startWith<VeldInfo | string>(""), // nog niets ingetypt
           map(waarde => (typeof waarde === "string" ? waarde : waarde.label)),
           map(getypt => velden.filter(veld => veld.label.toLowerCase().startsWith(getypt.toLowerCase()))),
-          map(velden => velden.sort((a, b) => a.label.localeCompare(b.label)))
+          map(velden => velden.sort((a, b) => a.label.localeCompare(b.label))) // opletten: mutable! Gebruik van fp-ts
         )
       )
     );
 
     this.filteredOperatoren$ = this.operatorControl.valueChanges.pipe(
-      startWith<Operator | string>(""), // nog niets ingetypt
-      map(waarde => (typeof waarde === "string" ? waarde : waarde.beschrijving)),
+      startWith<FilterBuilder.FilterBuildElement | string>(""), // nog niets ingetypt -> Moet beter kunnen!
+      map(waarde => (typeof waarde === "string" ? waarde : waarde.description)),
       map(getypt =>
-        beschikbareOperatoren.filter(
-          operator => operator.beschrijving.toLowerCase().startsWith(getypt) || operator.symbool.startsWith(getypt)
+        FilterBuilder.comparisonBuilders.filter(
+          operator => operator.description.toLowerCase().startsWith(getypt) || operator.description.startsWith(getypt)
         )
       )
     );
@@ -101,7 +102,9 @@ export class FilterOldComponent extends KaartChildComponentBase {
         )
       );
 
-    const gekozenOperator$: Observable<Operator> = forControlValue(this.operatorControl).pipe(filter(isNotNullObject));
+    const gekozenOperator$: Observable<FilterBuilder.FilterBuildElement> = forControlValue(this.operatorControl).pipe(
+      filter(isNotNullObject)
+    );
     const gekozenVeld$: Observable<VeldInfo> = forControlValue(this.veldControl).pipe(filter(isNotNullObject));
     const gekozenWaarde$: Observable<string> = forControlValue(this.waardeControl).pipe(filter(isNotNull));
 
@@ -116,7 +119,7 @@ export class FilterOldComponent extends KaartChildComponentBase {
                   map(waarde =>
                     prt.ZetFilter(
                       laag.titel,
-                      some(SimpleFilter(Property(veldInfo.type, veldInfo.naam), waarde, operator)),
+                      ExpressionFilter("filter", operator.build(Property(veldInfo.type, veldInfo.naam), Literal("string", waarde))),
                       kaartLogOnlyWrapper
                     )
                   )
@@ -147,8 +150,8 @@ export class FilterOldComponent extends KaartChildComponentBase {
     return this.veldControl.hasError("required") ? "Gelieve een eigenschap te kiezen" : "";
   }
 
-  displayOperator(operator?: Operator): string | undefined {
-    return operator ? operator.beschrijving : undefined;
+  displayOperator(operator?: FilterBuilder.FilterBuildElement): string | undefined {
+    return operator ? operator.description : undefined;
   }
 
   errorOperator() {
@@ -159,4 +162,3 @@ export class FilterOldComponent extends KaartChildComponentBase {
     return this.waardeControl.hasError("required") ? "Gelieve een waarde in te geven" : "";
   }
 }
-*/

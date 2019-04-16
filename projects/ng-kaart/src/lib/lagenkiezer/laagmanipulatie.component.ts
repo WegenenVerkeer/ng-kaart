@@ -2,8 +2,9 @@ import { ChangeDetectionStrategy, Component, Input, NgZone, OnInit, ViewChild, V
 import { MatMenuTrigger } from "@angular/material";
 import { none } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
-import { distinctUntilChanged, filter, map, share, shareReplay, startWith, switchMap, tap } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, shareReplay, switchMap } from "rxjs/operators";
 
+import * as fltr from "../filter/filter-new-model";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import {
   asNosqlSource,
@@ -91,17 +92,18 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
     );
     this.heeftFilter$ = kaartComponent.modelChanges.laagFilterGezet$.pipe(
       filter(filterGezet => this.laag.titel === filterGezet.laag.titel),
-      map(filterGezet => filterGezet.filter.isSome()),
+      map(filterGezet => fltr.isDefined(filterGezet.filter)),
       shareReplay(1)
     );
     this.filterTotaal$ = rx.merge(
       kaartComponent.modelChanges.laagFilterGezet$.pipe(
         filter(filterGezet => this.laag.titel === filterGezet.laag.titel),
+        // TODO werk met startWith ipv merge
         map(() => ". . .") // vorig totaal wissen, terwijl nieuw opgehaald wordt
       ),
       kaartComponent.modelChanges.laagFilterGezet$.pipe(
         filter(filterGezet => this.laag.titel === filterGezet.laag.titel),
-        filter(filterGezet => filterGezet.filter.isSome()),
+        filter(filterGezet => fltr.isDefined(filterGezet.filter)),
         switchMap(filterGezet =>
           asNosqlSource(filterGezet.laag.layer.getSource()).foldL(
             () => rx.of(""),
@@ -158,7 +160,7 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
   }
 
   verwijderFilter() {
-    this.dispatch(cmd.ZetFilter(this.laag.titel, none, kaartLogOnlyWrapper));
+    this.dispatch(cmd.ZetFilter(this.laag.titel, fltr.pure(), kaartLogOnlyWrapper));
   }
 
   toggleFilterActief() {

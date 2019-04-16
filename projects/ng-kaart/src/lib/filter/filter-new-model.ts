@@ -1,4 +1,5 @@
-import { Curried2, Function1, Function2, Function3, Lazy } from "fp-ts/lib/function";
+import { constant, Function1, Function2, Lazy, not, pipe, Predicate } from "fp-ts/lib/function";
+import { none, Option, some } from "fp-ts/lib/Option";
 
 // Simple filter defs
 
@@ -76,6 +77,13 @@ function Comparison<C extends Comparison, K extends C["kind"]>(kind: K): Functio
 }
 
 export const PureFilter: PureFilter = { kind: "PureFilter" };
+export const pure: Lazy<Filter> = constant(PureFilter);
+
+export const ExpressionFilter: Function2<string, Expression, ExpressionFilter> = (name, expression) => ({
+  kind: "ExpressionFilter",
+  name: name,
+  expression: expression
+});
 
 export const Equality: Function2<Property, Literal, Equality> = Comparison("Equality");
 
@@ -85,6 +93,12 @@ export const Property: Function2<TypeType, string, Property> = (typetype, name) 
   kind: "Property",
   type: typetype,
   ref: name
+});
+
+export const Literal: Function2<TypeType, ValueType, Literal> = (typetype, value) => ({
+  kind: "Literal",
+  type: typetype,
+  value: value
 });
 
 const switchFilter: <A>(
@@ -153,72 +167,88 @@ const switchLiteral: <A>(
   }
 };
 
+export const isEmpty: Predicate<Filter> = switchFilter({
+  expression: constant(true),
+  pure: constant(false)
+});
+
+export const isDefined: Predicate<Filter> = not(isEmpty);
+
 // Hulp bij het opbouwen van een filter
 
-export type FilterBuildElement = PropertyValueBuilder; // later ook voor PropertyRangeOperator, enz
+export namespace FilterBuilder {
+  export type FilterBuildElement = ComparisonBuilder; // later ook voor PropertyRangeOperator, enz
 
-interface PropertyValueBuilder {
-  readonly symbol: string;
-  readonly build: Function2<Property, Literal, PropertyValueOperator>;
+  interface ComparisonBuilder {
+    readonly description: string;
+    readonly build: Function2<Property, Literal, Comparison>;
+  }
+
+  export const comparisonBuilders: ComparisonBuilder[] = [
+    { description: "is", build: Equality },
+    { description: "is niet", build: Inequality }
+  ];
 }
 
-export const propertyValueOperators: PropertyValueBuilder[] = [{ symbol: "=", build: Equality }, { symbol: "!=", build: Inequality }];
-
 // Maak CQL -> naar andere file
+export namespace FilterCql {
+  type Generator<A> = Function1<A, string>;
 
-type CqlGenerator<A> = Function1<A, string>;
+  const propertyCql: Generator<Property> = property => `properties.${property.ref}`;
 
-const propertyCql: CqlGenerator<Property> = property => `properties.${property.ref}`;
+  const literalCql: Generator<Literal> = switchLiteral({
+    bool: literal => (literal ? "true" : "false"),
+    str: literal => `'${literal}'`,
+    int: literal => `${literal}`,
+    dbl: literal => `${literal}`,
+    date: literal => `'${literal}'`, // beschouw al de rest als string. Zie TODO bij TypeType
+    datetime: literal => `'${literal}'`, // beschouw al de rest als string. Zie TODO bij TypeType
+    geom: literal => `'${literal}'`, // beschouw al de rest als string. Zie TODO bij TypeType
+    json: literal => `'${literal}'` // beschouw al de rest als string. Zie TODO bij TypeType
+  });
 
-const literalCql: CqlGenerator<Literal> = switchLiteral({
-  bool: literal => (literal ? "true" : "false"),
-  str: literal => `'${literal}'`,
-  int: literal => `${literal}`,
-  dbl: literal => `${literal}`,
-  date: literal => `'${literal}'`, // beschouw al de rest als string. Zie TODO bij TypeType
-  datetime: literal => `'${literal}'`, // beschouw al de rest als string. Zie TODO bij TypeType
-  geom: literal => `'${literal}'`, // beschouw al de rest als string. Zie TODO bij TypeType
-  json: literal => `'${literal}'` // beschouw al de rest als string. Zie TODO bij TypeType
-});
+  const expressionCql: Generator<Expression> = switchExpression({
+    and: expr => expressionCql(expr.left) + " AND " + expressionCql(expr.right),
+    or: expr => expressionCql(expr.left) + " OR " + expressionCql(expr.right),
+    equality: expr => propertyCql(expr.property) + " = " + literalCql(expr.value),
+    inequality: expr => propertyCql(expr.property) + " <> " + literalCql(expr.value)
+  });
 
-const expressionCql: CqlGenerator<Expression> = switchExpression({
-  and: expr => expressionCql(expr.left) + " AND " + expressionCql(expr.right),
-  or: expr => expressionCql(expr.left) + " OR " + expressionCql(expr.right),
-  equality: expr => propertyCql(expr.property) + " = " + literalCql(expr.value),
-  inequality: expr => propertyCql(expr.property) + " <> " + literalCql(expr.value)
-});
-
-const filterCql: CqlGenerator<Filter> = switchFilter({
-  pure: () => "",
-  expression: expressionCql
-});
-
-export const cql: Function1<Filter, string> = filterCql;
+  export const cql: Function1<Filter, Option<string>> = switchFilter({
+    pure: constant(none),
+    expression: pipe(
+      expressionCql,
+      some
+    )
+  });
+}
 
 // Maak een tekstvoorstelling -> naar andere file
 
-export type FilterTextGenerator<A> = Function1<A, string>;
+export namespace FilterText {
+  export type Generator<A> = Function1<A, string>;
 
-const propertyText: FilterTextGenerator<Property> = property => property.ref;
-const literalText: FilterTextGenerator<Literal> = switchLiteral({
-  bool: b => (b ? "waar" : "vals"),
-  date: d => d.toString(),
-  datetime: d => d.toString(),
-  dbl: d => d.toString(), // Afronden of sprintf?
-  geom: d => "<geometrie>",
-  int: i => i.toString(),
-  json: j => "<json>",
-  str: s => `'${s}'`
-});
+  const propertyText: Generator<Property> = property => property.ref;
+  const literalText: Generator<Literal> = switchLiteral({
+    bool: b => (b ? "waar" : "vals"),
+    date: d => d.toString(),
+    datetime: d => d.toString(),
+    dbl: d => d.toString(), // Afronden of sprintf?
+    geom: d => "<geometrie>",
+    int: i => i.toString(),
+    json: j => "<json>",
+    str: s => `'${s}'`
+  });
 
-const expressionText: FilterTextGenerator<Expression> = switchExpression({
-  and: expr => `${expressionText(expr.left)} en ${expressionText(expr.right)}`,
-  or: expr => `${expressionText(expr.left)} or ${expressionText(expr.right)}`,
-  equality: expr => `${propertyText(expr.property)} or ${literalText(expr.value)}`,
-  inequality: expr => `${propertyText(expr.property)} or ${literalText(expr.value)}`
-});
+  const expressionText: Generator<Expression> = switchExpression({
+    and: expr => `${expressionText(expr.left)} en ${expressionText(expr.right)}`,
+    or: expr => `${expressionText(expr.left)} of ${expressionText(expr.right)}`,
+    equality: expr => `${propertyText(expr.property)} = ${literalText(expr.value)}`,
+    inequality: expr => `${propertyText(expr.property)} <> ${literalText(expr.value)}`
+  });
 
-export const filterText: FilterTextGenerator<Filter> = switchFilter({
-  pure: () => "alle waarden",
-  expression: expressionText
-});
+  export const filterText: Generator<Filter> = switchFilter({
+    pure: () => "alle waarden",
+    expression: expressionText
+  });
+}
