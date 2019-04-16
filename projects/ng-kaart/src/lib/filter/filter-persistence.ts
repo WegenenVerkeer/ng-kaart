@@ -5,7 +5,7 @@ import { properlyJsonDeclaredText, textToJson } from "../stijl/text-json";
 import { validationChain as chain, validationChain2, Validator } from "../util/validation";
 
 import { AwvV0FilterInterpreters } from "./filter-awv0-interpreter";
-import { Filter } from "./filter-new-model";
+import { Filter } from "./filter-model";
 
 const Version0 = "awv-v0";
 

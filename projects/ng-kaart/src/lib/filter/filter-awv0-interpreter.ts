@@ -19,7 +19,7 @@ import {
   PureFilter,
   TypeType,
   ValueType
-} from "./filter-new-model";
+} from "./filter-model";
 
 export namespace AwvV0FilterInterpreters {
   const byKind: <A>(interpretersByKind: { [k: string]: oi.Interpreter<A> }) => oi.Interpreter<A> = interpretersByKind =>

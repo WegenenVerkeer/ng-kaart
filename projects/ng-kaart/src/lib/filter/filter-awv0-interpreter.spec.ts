@@ -1,5 +1,5 @@
 import { AwvV0FilterInterpreters } from "./filter-awv0-interpreter";
-import { Filter, PureFilter } from "./filter-new-model";
+import { Filter, PureFilter } from "./filter-model";
 
 describe("De stijl interpreter", () => {
   describe("bij het interpreteren van geldige structuren", () => {
