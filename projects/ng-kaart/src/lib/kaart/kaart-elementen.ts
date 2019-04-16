@@ -5,6 +5,7 @@ import { contramap, Setoid, setoidString } from "fp-ts/lib/Setoid";
 import { Iso, Lens, Optional } from "monocle-ts";
 import * as ol from "openlayers";
 
+import { Filter } from "../filter/filter-model";
 import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
 import { mapToOptionalByKey } from "../util/lenses";
 
@@ -140,6 +141,11 @@ export interface TekenResultaat {
   readonly featureId: number | string;
 }
 
+export interface LaagFilter {
+  readonly spec: Filter;
+  readonly actief: boolean;
+}
+
 /**
  * Dit is een wrapper rond Laag die naast de laag zelf ook het gebruik van de laag bij houdt.
  */
@@ -152,6 +158,7 @@ export interface ToegevoegdeLaag {
   readonly magGetoondWorden: boolean;
   readonly legende: Option<Legende>;
   readonly stijlInLagenKiezer: Option<string>; // optionele naam van een CSS klasse om lijn in lagenkiezer individueel te stijlen
+  readonly filter: LaagFilter;
 }
 
 export interface ToegevoegdeVectorLaag extends ToegevoegdeLaag {
@@ -221,6 +228,12 @@ export function TekenResultaat(geometry: ol.geom.Geometry, volgnummer: number, f
     volgnummer: volgnummer,
     featureId: featureId,
     geometry: geometry
+  };
+}
+export function LaagFilter(spec: Filter, actief: boolean): LaagFilter {
+  return {
+    spec: spec,
+    actief: actief
   };
 }
 

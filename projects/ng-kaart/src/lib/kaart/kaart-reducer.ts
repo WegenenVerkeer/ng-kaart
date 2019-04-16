@@ -12,7 +12,7 @@ import * as rx from "rxjs";
 import { bufferCount, debounceTime, distinctUntilChanged, map, switchMap, throttleTime } from "rxjs/operators";
 
 import { FilterAanpassend, GeenFilterAanpassingBezig } from "../filter/filter-aanpassing-state";
-import { FilterCql } from "../filter/filter-model";
+import { Filter, FilterCql, pure } from "../filter/filter-model";
 import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
 import * as arrays from "../util/arrays";
 import { refreshTiles } from "../util/cachetiles";
@@ -26,6 +26,7 @@ import { allOf, fromBoolean, fromOption, fromPredicate, success, validationChain
 import { zoekerMetNaam } from "../zoeker/zoeker";
 
 import { CachedFeatureLookup } from "./cache/lookup";
+import { LaagFilter } from "./kaart-elementen";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { MsgGen } from "./kaart-protocol-subscriptions";
@@ -369,7 +370,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                 positieInGroep: groepPositie,
                 magGetoondWorden: cmnd.magGetoondWorden,
                 legende: cmnd.legende,
-                stijlInLagenKiezer: cmnd.stijlInLagenKiezer
+                stijlInLagenKiezer: cmnd.stijlInLagenKiezer,
+                filter: LaagFilter(pure(), true)
               };
               const toegevoegdeLaag: ke.ToegevoegdeLaag = ke
                 .asVectorLaag(cmnd.laag)
@@ -461,7 +463,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               positieInGroep: laag.positieInGroep,
               magGetoondWorden: laag.magGetoondWorden,
               legende: laag.legende,
-              stijlInLagenKiezer: laag.stijlInLagenKiezer
+              stijlInLagenKiezer: laag.stijlInLagenKiezer,
+              filter: LaagFilter(pure(), true)
             };
             const toegevoegdeLaag = ke
               .asVectorLaag(cmnd.laag)
@@ -716,6 +719,17 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     const pasLaagZichtbaarheidAan: (toon: boolean) => (laag: ke.ToegevoegdeLaag) => ke.ToegevoegdeLaag = magGetoondWorden => laag => {
       laag.layer.setVisible(magGetoondWorden);
       return laag.magGetoondWorden === magGetoondWorden ? laag : { ...laag, magGetoondWorden: magGetoondWorden };
+    };
+
+    // Lensaardig met side-effect
+    const pasLaagFilterAan: (spec: Filter, actief: boolean) => (laag: ke.ToegevoegdeLaag) => ke.ToegevoegdeLaag = (
+      spec,
+      actief
+    ) => laag => {
+      return {
+        ...laag,
+        filter: LaagFilter(spec, actief)
+      };
     };
 
     // Uiteraard is het *nooit* de bedoeling om de titel van een laag aan te passen.
@@ -1316,7 +1330,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             laag: laag,
             filter: cmnd.filter
           });
-          return ModelAndEmptyResult(model);
+          const aangepastModel = pipe(
+            pasLaagFilterAan(cmnd.filter, laag.filter.actief),
+            pasLaagInModelAan(model)
+          )(laag);
+          return ModelAndEmptyResult(aangepastModel);
         })
       );
     }
