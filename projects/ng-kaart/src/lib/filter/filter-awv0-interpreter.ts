@@ -59,8 +59,8 @@ export namespace AwvV0FilterInterpreters {
     `Het type van de property komt niet overeen met dat van de waarde`
   );
 
-  const equality: oi.Interpreter<Equality> = oi.map(pvo => ({ kind: "Equality", ...pvo }), propertyValueOperator);
-  const inequality: oi.Interpreter<Inequality> = oi.map(pvo => ({ kind: "Inequality", ...pvo }), propertyValueOperator);
+  const equality: oi.Interpreter<Equality> = oi.map(pvo => ({ kind: "Equality" as "Equality", ...pvo }), propertyValueOperator);
+  const inequality: oi.Interpreter<Inequality> = oi.map(pvo => ({ kind: "Inequality" as "Inequality", ...pvo }), propertyValueOperator);
 
   const comparison: oi.Interpreter<Comparison> = byKind<Comparison>({
     Equality: equality,
@@ -88,7 +88,7 @@ export namespace AwvV0FilterInterpreters {
   const expression: oi.Interpreter<Expression> = oi.firstOf<Expression>(conjunction, disjunction, comparison);
 
   const expressionFilter: oi.Interpreter<ExpressionFilter> = oi.interpretRecord({
-    kind: oi.pure("ExpressionFilter"),
+    kind: oi.pure("ExpressionFilter" as "ExpressionFilter"),
     name: oi.field("name", oi.str),
     expression: oi.field("expression", expression)
   });
