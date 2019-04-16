@@ -9,7 +9,7 @@ import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, map, mapTo, mergeAll, share, shareReplay, switchMap } from "rxjs/operators";
 
 import { FilterAanpassingState, GeenFilterAanpassingBezig } from "../filter/filter-aanpassing-state";
-import { Filter } from "../filter/filter-new-model";
+import { Filter } from "../filter/filter-model";
 import { NosqlFsSource } from "../source/nosql-fs-source";
 import * as tilecacheMetadataDb from "../util/indexeddb-tilecache-metadata";
 import { observableFromOlEvents } from "../util/ol-observable";

@@ -4,7 +4,7 @@ import { none } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, shareReplay, switchMap } from "rxjs/operators";
 
-import * as fltr from "../filter/filter-new-model";
+import * as fltr from "../filter/filter-model";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import {
   asNosqlSource,
