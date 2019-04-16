@@ -17,16 +17,21 @@ export interface ExpressionFilter {
 
 export type Expression = Conjunction | Disjunction | Comparison;
 
+// Dit zou niet nodig zijn mochten we arbitraire combinaties van "And" en "Or" toelaten, maar dat mag niet in de UI.
+// Het is dan best dit hier ook niet toe te laten, want anders kan de UI niet met alle geldige filters overweg en moeten
+// we weer veronderstellingen maken of extra tests invoeren.
+export type BaseExpression = Conjunction | Comparison;
+
 export interface Conjunction {
   readonly kind: "And";
-  readonly left: Comparison;
+  readonly left: BaseExpression;
   readonly right: Comparison;
 }
 
 export interface Disjunction {
   readonly kind: "Or";
-  readonly left: Conjunction;
-  readonly right: Conjunction;
+  readonly left: BaseExpression;
+  readonly right: BaseExpression;
 }
 
 export type Comparison = Equality | Inequality;
