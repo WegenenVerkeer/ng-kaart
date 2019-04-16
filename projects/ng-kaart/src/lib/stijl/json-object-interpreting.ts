@@ -519,8 +519,8 @@ export function value<T extends string | number | boolean>(value: T): Interprete
   return (json: Object) => (json === value ? success(value) : fail<T>(`De waarde '${value}' was verwacht`));
 }
 
-export function suchThat<T, U extends T>(interpreter: Interpreter<T>, refinement: Refinement<T, U>): Interpreter<U> {
-  return chain(interpreter, a => (refinement(a) ? succeed(a) : () => fail<U>("De waarde voldeed niet aan de voorwaarde")));
+export function suchThat<T, U extends T>(interpreter: Interpreter<T>, refinement: Refinement<T, U>, failureMsg: string): Interpreter<U> {
+  return chain(interpreter, a => (refinement(a) ? succeed(a) : () => fail<U>(failureMsg)));
 }
 
 export function toString(json: Object): string {

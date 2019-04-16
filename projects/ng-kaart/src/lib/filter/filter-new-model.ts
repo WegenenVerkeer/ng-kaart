@@ -1,4 +1,4 @@
-import { constant, Function1, Function2, Lazy, not, pipe, Predicate } from "fp-ts/lib/function";
+import { constant, Function1, Function2, Lazy, not, pipe, Predicate, Refinement } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 
 // Simple filter defs
@@ -39,6 +39,10 @@ export type Comparison = Equality | Inequality;
 export interface PropertyValueOperator {
   readonly property: Property;
   readonly value: Literal;
+}
+
+export function propertyAndValueCompatible<A extends PropertyValueOperator>(pvo: PropertyValueOperator): pvo is A {
+  return pvo.property.type === pvo.value.type; // TODO double -> integer bijvoorbeeld is ook toegelaten
 }
 
 export interface Equality extends PropertyValueOperator {

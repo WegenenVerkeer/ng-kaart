@@ -14,6 +14,8 @@ import {
   Inequality,
   Literal,
   Property,
+  propertyAndValueCompatible,
+  PropertyValueOperator,
   PureFilter,
   TypeType,
   ValueType
@@ -48,17 +50,17 @@ export namespace AwvV0FilterInterpreters {
     value: oi.field("value", oi.firstOf<ValueType>(oi.bool, oi.num, oi.str))
   });
 
-  const equality: oi.Interpreter<Equality> = oi.interpretRecord({
-    kind: oi.pure("Equality"), // Dit is OK als we er vanuit gaan dat we deze functie vanuit een byKind oproepen
-    property: oi.field("property", property),
-    value: oi.field("literal", literal)
-  });
+  const propertyValueOperator: oi.Interpreter<PropertyValueOperator> = oi.suchThat(
+    oi.interpretRecord<PropertyValueOperator>({
+      property: oi.field("property", property),
+      value: oi.field("literal", literal)
+    }),
+    propertyAndValueCompatible,
+    `Het type van de property komt niet overeen met dat van de waarde`
+  );
 
-  const inequality: oi.Interpreter<Inequality> = oi.interpretRecord({
-    kind: oi.pure("Inequality"),
-    property: oi.field("property", property),
-    value: oi.field("literal", literal)
-  });
+  const equality: oi.Interpreter<Equality> = oi.map(pvo => ({ kind: "Equality", ...pvo }), propertyValueOperator);
+  const inequality: oi.Interpreter<Inequality> = oi.map(pvo => ({ kind: "Inequality", ...pvo }), propertyValueOperator);
 
   const comparison: oi.Interpreter<Comparison> = byKind<Comparison>({
     Equality: equality,
