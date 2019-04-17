@@ -171,8 +171,8 @@ const switchLiteral: <A>(
 };
 
 export const isEmpty: Predicate<Filter> = switchFilter({
-  expression: constant(true),
-  pure: constant(false)
+  expression: constant(false),
+  pure: constant(true)
 });
 
 export const isDefined: Predicate<Filter> = not(isEmpty);
