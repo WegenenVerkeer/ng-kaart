@@ -1,29 +1,32 @@
-import { Component, EventEmitter, Input, NgZone, OnInit, Output } from "@angular/core";
+import { Component, EventEmitter, Injector, Input, OnInit, Output } from "@angular/core";
 import { none, Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { identity, merge } from "rxjs";
 import { distinctUntilChanged, map, switchMap, takeUntil } from "rxjs/operators";
 
-import { KaartComponentBase } from "../../kaart/kaart-component-base";
 import { StartTekenen, StopTekenen, TekenenCommand, TekenSettings } from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
 import * as ss from "../../kaart/stijl-selector";
 import { TekenenUiSelector } from "../../kaart/tekenen/kaart-teken-laag.component";
 import { collect, ofType } from "../../util/operators";
-import { classicMsgSubscriptionCmdOperator, KaartClassicComponent } from "../kaart-classic.component";
+import { ClassicBaseComponent } from "../classic-base.component";
+import { classicMsgSubscriptionCmdOperator } from "../kaart-classic.component";
 import { KaartClassicMsg, TekenGeomAangepastMsg } from "../messages";
+
+import * as val from "../webcomponent-support/params";
 
 @Component({
   selector: "awv-kaart-teken",
   template: "<ng-content></ng-content>"
 })
-export class KaartTekenComponent extends KaartComponentBase implements OnInit {
+export class KaartTekenComponent extends ClassicBaseComponent implements OnInit {
   private stopTekenenSubj: rx.Subject<void> = new rx.Subject<void>();
   private tekenenCommandSubj = new rx.Subject<TekenenCommand>();
 
   @Input()
-  set tekenen(teken: boolean) {
+  set tekenen(param: boolean) {
+    const teken = val.bool(param, false);
     if (teken) {
       this.tekenenCommandSubj.next(
         StartTekenen(
@@ -64,8 +67,8 @@ export class KaartTekenComponent extends KaartComponentBase implements OnInit {
   @Output()
   getekendeGeom: EventEmitter<ol.geom.Geometry> = new EventEmitter();
 
-  constructor(readonly kaart: KaartClassicComponent, zone: NgZone) {
-    super(zone);
+  constructor(injector: Injector) {
+    super(injector);
 
     this.initialising$.subscribe(() => this.kaart.dispatch(prt.VoegUiElementToe(TekenenUiSelector)));
     this.destroying$.subscribe(() => this.kaart.dispatch(prt.VerwijderUiElement(TekenenUiSelector)));

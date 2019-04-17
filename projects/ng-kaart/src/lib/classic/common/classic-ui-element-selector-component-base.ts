@@ -1,18 +1,18 @@
-import { NgZone, OnChanges, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
+import { Injector, OnChanges, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
 
-import { KaartComponentBase } from "../../kaart/kaart-component-base";
 import * as prt from "../../kaart/kaart-protocol";
-import { KaartClassicComponent } from "../kaart-classic.component";
+import { ClassicBaseComponent } from "../classic-base.component";
 
-export abstract class ClassicUIElementSelectorComponentBase extends KaartComponentBase implements OnInit, OnDestroy, OnChanges {
-  constructor(readonly uiSelector: string, readonly kaart: KaartClassicComponent, zone: NgZone) {
-    super(zone);
+export abstract class ClassicUIElementSelectorComponentBase extends ClassicBaseComponent implements OnInit, OnDestroy, OnChanges {
+  private alToegevoegd = false;
+
+  constructor(readonly uiSelector: string, injector: Injector) {
+    super(injector);
   }
 
   ngOnInit(): void {
     super.ngOnInit();
-    this.kaart.dispatch(prt.VoegUiElementToe(this.uiSelector));
-    this.kaart.dispatch(prt.ZetUiElementOpties(this.uiSelector, this.opties()));
+    this.zetOpties();
   }
 
   ngOnDestroy(): void {
@@ -21,6 +21,14 @@ export abstract class ClassicUIElementSelectorComponentBase extends KaartCompone
   }
 
   ngOnChanges(changes: SimpleChanges) {
+    this.zetOpties();
+  }
+
+  private zetOpties() {
+    if (!this.alToegevoegd) {
+      this.kaart.dispatch(prt.VoegUiElementToe(this.uiSelector));
+      this.alToegevoegd = true;
+    }
     this.kaart.dispatch(prt.ZetUiElementOpties(this.uiSelector, this.opties()));
   }
 

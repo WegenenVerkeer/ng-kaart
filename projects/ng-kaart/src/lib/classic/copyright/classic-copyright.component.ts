@@ -1,24 +1,34 @@
-import { Component, Input, NgZone } from "@angular/core";
+import { Component, Injector, Input } from "@angular/core";
 
 import { CopyrightOpties, CopyrightUISelector } from "../../kaart/copyright/kaart-copyright.component";
 import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
-import { KaartClassicComponent } from "../kaart-classic.component";
+import * as val from "../webcomponent-support/params";
 
+/**
+ * De copyright tag zorgt voor een copyright boodschap rechts onderaan de kaart. De tekst van de boodschap is configureerbaar.
+ */
 @Component({
   selector: "awv-kaart-copyright",
   template: ""
 })
 export class ClassicCopyrightComponent extends ClassicUIElementSelectorComponentBase {
-  @Input()
-  copyright = "\u00A9 Agentschap Wegen en Verkeer";
+  private _copyright = "\u00A9 Agentschap Wegen en Verkeer";
 
-  constructor(kaart: KaartClassicComponent, zone: NgZone) {
-    super(CopyrightUISelector, kaart, zone);
+  /**
+   * De tekst die getoond wordt. Gebruik zelf het copyrightsymbool © indien je dit wenst te tonen.
+   */
+  @Input()
+  set copyright(param: string) {
+    this._copyright = val.str(param, this._copyright);
+  }
+
+  constructor(injector: Injector) {
+    super(CopyrightUISelector, injector);
   }
 
   protected opties(): CopyrightOpties {
     return {
-      copyright: this.copyright
+      copyright: this._copyright
     };
   }
 }

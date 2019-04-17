@@ -210,7 +210,10 @@
               "projects/webcomponent/src/assets"
             ],
             "styles": [
-              "projects/webcomponent/src/styles.css"
+              {
+                "input": "node_modules/@angular/material/prebuilt-themes/indigo-pink.css"
+              },
+              "projects/webcomponent/src/styles.scss"
             ],
             "scripts": []
           },

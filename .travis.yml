@@ -2,13 +2,13 @@ language: node_js
 node_js:
 - lts/carbon
 after_success:
-- npm run build # Maak een dist folder
+- npm run build:elements # Maak een dist folder met de webcomponent
 cache:
   directories:
   - node_modules
 before_install: 
 before_deploy:
-  - cd dist/ng-kaart # Naar dist gaan zodat de publish van daaruit gebeurt
+  - cd dist/webcomponent # Naar dist gaan zodat de publish van daaruit gebeurt
 deploy:
   provider: npm
   email: geert.subcribe1+npm@gmail.com
@@ -18,12 +18,6 @@ deploy:
   on:
     tags: true 
     branch: master
-notifications:
-  hipchat:
-    rooms:
-      secure: Y3ktCQtIz6GB3jopjAJSMD52I7qBMQaQojQtmXleSlWuQjbyU8mQSewF4uh0cAVrAybFEK+1OzH0kKYwIvqJk6hcw8lG7QR7e5xm3DuuMrsbDbT5/us9P1A0lw61UMr+TaWneKyZAfNBuBeysdqTOaYyuh7bZlC4jNoWfZxRitKv9jPzs61yZjVTXMkmQ471UO/yiE8FVnNk8Uh6IxUz0LyXOyeansTvYDNldCvIjqJ+bConOdRJleOzitQ2b5OdN91OzC+3Xjd9e+9MzWAkOPNmwOen3CKfcFSEA0sdpC1RZGzyU9cB2+a2VwwGPMoCOXWC8TrhH9P8Rn8VYwhtu4dSD00xzy17/NRO0x4PNLoDMKNhrWtl5bUud4cO4qSkYmXV3+21RZ4/UganxaMYNS59wqfoqGMiCAupoxki4ZUvyEAcgwRSRQaw+eSHQQ2UNmWR5MLhxV9zKcL/uwsCGy+XM0NgJED/U2HPDHJsH9orN2/8G2nk7W700LYr3MYMfEcV/HWHieT8WKyg0Cc/971twKQnJaS5mgyE1dHgPyVmMXLYm5ZGTNbpOyxC/8fhj2Hc/YAeyNAZ8TlRahqXhYPJKFHV/haS/tlIN4/5aVxVfOoO+sHR1WJHMX+3wn+v+b3q7Hmt6bqF3HJJ993U502PQsE/gEDTkrQoWHLIlu4=
-    template:
-    - "%{repository}#%{build_number} (%{branch} - %{commit} : %{author}): %{message}"
 sudo: required
 addons:
   chrome: stable

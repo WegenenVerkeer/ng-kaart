@@ -1,4 +1,5 @@
 import { AfterViewInit, NgZone, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
+import { Function1, Function2, identity } from "fp-ts/lib/function";
 import { Refinement } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import { filter, map, mapTo, switchMap, takeUntil } from "rxjs/operators";
@@ -106,13 +107,14 @@ export abstract class KaartComponentBase implements AfterViewInit, OnInit, OnDes
   }
 }
 
-export function forChangedValue(
+export function forChangedValue<A, B>(
   changes: SimpleChanges,
   prop: string,
-  action: (cur: any, prev: any) => void,
-  pred: (cur: any, prev: any) => boolean = () => true
+  action: (cur: B, prev: B) => void,
+  conv: Function1<A, B> = identity as Function1<A, B>,
+  pred: (cur: B, prev: B) => boolean = () => true
 ): void {
-  if (prop in changes && (!changes[prop].previousValue || pred(changes[prop].currentValue, changes[prop].previousValue))) {
-    action(changes[prop].currentValue, changes[prop].previousValue);
+  if (prop in changes && (!changes[prop].previousValue || pred(conv(changes[prop].currentValue), conv(changes[prop].previousValue)))) {
+    action(conv(changes[prop].currentValue), conv(changes[prop].previousValue));
   }
 }

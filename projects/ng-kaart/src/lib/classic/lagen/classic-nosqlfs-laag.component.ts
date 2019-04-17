@@ -1,4 +1,4 @@
-import { Component, Input, NgZone, ViewEncapsulation } from "@angular/core";
+import { Component, Injector, Input, ViewEncapsulation } from "@angular/core";
 import { option } from "fp-ts";
 import { identity } from "fp-ts/lib/function";
 import { fromNullable } from "fp-ts/lib/Option";
@@ -13,8 +13,8 @@ import { NosqlFsSource } from "../../source/nosql-fs-source";
 import { ofType } from "../../util";
 import { asap } from "../../util/asap";
 import { Consumer } from "../../util/function";
-import { KaartClassicComponent } from "../kaart-classic.component";
 import { cachedFeaturesLookupReadyMsg, CachedFeaturesLookupReadyMsg, logOnlyWrapper } from "../messages";
+import * as val from "../webcomponent-support/params";
 
 import { ClassicVectorLaagLikeComponent } from "./classic-vector-laag-like.component";
 
@@ -29,21 +29,51 @@ export interface PrecacheFeatures {
   encapsulation: ViewEncapsulation.None
 })
 export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent {
+  _url = "/geolatte-nosqlfs";
+  _database: string;
+  _view = "default";
+  _collection: string;
+  _filter: string;
+  _gebruikCache = false;
+  _maxFeaturesInMemCache = 2500;
+  _veldinfos: ke.VeldInfo[] = [];
+
   @Input()
-  url = "/geolatte-nosqlfs";
+  set url(param: string) {
+    this._url = val.str(param, this._url);
+  }
+
   @Input()
-  database: string;
+  set database(param: string) {
+    this._database = val.str(param, this._database);
+  }
+
   @Input()
-  view = "default";
+  set view(param: string) {
+    this._view = val.str(param, this._view);
+  }
+
   @Input()
-  collection: string;
+  set collection(param: string) {
+    this._collection = val.str(param, this._collection);
+  }
+
   @Input()
-  filter: string;
+  set filter(param: string) {
+    this._filter = val.str(param, this._filter);
+  }
+
   @Input()
-  gebruikCache = false;
+  set gebruikCache(param: boolean) {
+    this._gebruikCache = val.bool(param, this._gebruikCache);
+  }
+
   @Input()
-  veldinfos: ke.VeldInfo[] = [];
-  /* Deze waarde bepaalt hoeveel features er in geheugen bijgehouden worden (tussen verschillende fetches van de NosqlFS
+  set veldinfos(param: ke.VeldInfo[]) {
+    this._veldinfos = val.veldInfoArray(param, this._veldinfos);
+  }
+
+  /** Deze waarde bepaalt hoeveel features er in geheugen bijgehouden worden (tussen verschillende fetches van de NosqlFS
      source) om te verhinderen dat ze opnieuw getekend moeten worden bij het verschuiven of uitzoomen van de kaart.
      Gebruik deze instelling alleen wanneer je weet dat het echt nodig is! Grotere waarden zorgen voor meer
      geheugengebruik maar features worden potentieel sneller getoond bij uitzoomen en verschuiven van de kaart. Het
@@ -52,20 +82,22 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
      applicatie bepaald worden obv performantietests. Sommige applicaties gebruiken features met meer en omvangrijkere
      properties dan andere. */
   @Input()
-  maxFeaturesInMemCache = 2500;
+  set maxFeaturesInMemCache(param: number) {
+    this._maxFeaturesInMemCache = val.num(param, this._maxFeaturesInMemCache);
+  }
 
   private _cachedFeaturesProviderConsumer: Consumer<CachedFeatureLookup> = () => {};
 
   @Input()
   set precache(input: PrecacheFeatures) {
     if (input) {
-      this.dispatch(prt.VulCacheVoorNosqlLaag(this.titel, input.wkt, input.startMetLegeCache, logOnlyWrapper));
+      this.dispatch(prt.VulCacheVoorNosqlLaag(this._titel, input.wkt, input.startMetLegeCache, logOnlyWrapper));
     }
   }
 
   @Input()
   set offline(offline: boolean) {
-    this.dispatch(prt.ZetOffline(this.titel, offline, logOnlyWrapper));
+    this.dispatch(prt.ZetOffline(this._titel, offline, logOnlyWrapper));
   }
 
   @Input()
@@ -74,12 +106,12 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
       this._cachedFeaturesProviderConsumer = input;
       // Dit moet op de volgende execution gescheduled worden omdat de laag niet geregistreerd is op het moment dat de
       // eerste @Input gezet wordt.
-      asap(() => this.dispatch(prt.VraagCachedFeaturesLookupCmd(this.titel, cachedFeaturesLookupReadyMsg)));
+      asap(() => this.dispatch(prt.VraagCachedFeaturesLookupCmd(this._titel, cachedFeaturesLookupReadyMsg)));
     }
   }
 
-  constructor(kaart: KaartClassicComponent, zone: NgZone) {
-    super(kaart, zone);
+  constructor(injector: Injector) {
+    super(injector);
 
     this.bindToLifeCycle(
       this.viewReady$.pipe(
@@ -98,27 +130,27 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
   createLayer(): ke.VectorLaag {
     return {
       type: ke.VectorType,
-      titel: this.titel,
+      titel: this._titel,
       source: new NosqlFsSource(
-        this.database,
-        this.collection,
-        this.url,
-        option.fromNullable(this.view),
-        option.fromNullable(this.filter),
-        this.titel,
-        this.maxFeaturesInMemCache,
-        this.gebruikCache
+        this._database,
+        this._collection,
+        this._url,
+        option.fromNullable(this._view),
+        option.fromNullable(this._filter),
+        this._titel,
+        this._maxFeaturesInMemCache,
+        this._gebruikCache
       ),
       styleSelector: this.getMaybeStyleSelector(),
       styleSelectorBron: this.getMaybeStyleSelectorBron(),
       selectieStyleSelector: fromNullable(this.selectieStyle).chain(ss.asStyleSelector),
       hoverStyleSelector: fromNullable(this.hoverStyle).chain(ss.asStyleSelector),
-      selecteerbaar: this.selecteerbaar,
-      hover: this.hover,
-      minZoom: this.minZoom,
-      maxZoom: this.maxZoom,
-      offsetveld: fromNullable(this.offsetveld),
-      velden: new Map<string, ke.VeldInfo>(this.veldinfos.map(vi => [vi.naam, vi] as [string, ke.VeldInfo])),
+      selecteerbaar: this._selecteerbaar,
+      hover: this._hover,
+      minZoom: this._minZoom,
+      maxZoom: this._maxZoom,
+      offsetveld: this._offsetveld,
+      velden: new Map<string, ke.VeldInfo>(this._veldinfos.map(vi => [vi.naam, vi] as [string, ke.VeldInfo])),
       verwijderd: false,
       rijrichtingIsDigitalisatieZin: false
       // TODO: dit veld (en offsetveld en ident8) zijn eigenlijk stijl concerns en zouden beter naar daar verhuisd moet worden

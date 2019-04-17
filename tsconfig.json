@@ -29,7 +29,8 @@
       "@wegenenverkeer/ng-kaart/*": [
         "dist/ng-kaart/*"
       ]
-    }
+    },
+    "strictNullChecks": true
   },
   "exclude": [
     "test.ts",

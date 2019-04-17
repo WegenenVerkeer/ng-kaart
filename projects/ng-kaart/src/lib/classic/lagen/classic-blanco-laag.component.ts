@@ -1,32 +1,32 @@
-import { Component, Input, NgZone, ViewEncapsulation } from "@angular/core";
+import { Component, Injector, Input, ViewEncapsulation } from "@angular/core";
 
 import { BlancoLaag, BlancoType, Laaggroep } from "../../kaart/kaart-elementen";
-import { KaartClassicComponent } from "../kaart-classic.component";
 
 import { ClassicLaagComponent } from "./classic-laag.component";
 
 export const blancoLaag = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
-
+/**
+ * Zorgt voor een transparante achtergrondlaag. Uiteraard pas interessant als er ook andere achtergrondlagen zijn.
+ */
 @Component({
   selector: "awv-kaart-blanco-laag",
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
 export class ClassicBlancoLaagComponent extends ClassicLaagComponent {
-  @Input()
-  titel = "Blanco";
+  _titel = "Blanco";
 
-  constructor(kaart: KaartClassicComponent, zone: NgZone) {
-    super(kaart, zone);
+  constructor(injector: Injector) {
+    super(injector);
   }
 
   createLayer(): BlancoLaag {
     return {
       type: BlancoType,
-      titel: this.titel,
+      titel: this._titel,
       backgroundUrl: blancoLaag,
-      minZoom: this.minZoom,
-      maxZoom: this.maxZoom,
+      minZoom: this._minZoom,
+      maxZoom: this._maxZoom,
       verwijderd: false
     };
   }

@@ -78,7 +78,8 @@ export interface ModelChanger {
 // Hieronder wordt een paar keer BehaviourSubject gebruikt. Dat is equivalent met, maar beknopter dan, een startWith + shareReplay
 export const ModelChanger: () => ModelChanger = () => ({
   uiElementSelectieSubj: new rx.Subject<UiElementSelectie>(),
-  uiElementOptiesSubj: new rx.ReplaySubject<UiElementOpties>(1),
+  // Om zeker te zijn dat late subscribers wel hun config messages krijgen.
+  uiElementOptiesSubj: new rx.ReplaySubject<UiElementOpties>(100, 2000),
   viewPortSizeSubj: new rx.Subject<undefined>(),
   lagenOpGroepSubj: new Map<ke.Laaggroep, rx.Subject<Array<ke.ToegevoegdeLaag>>>([
     ["Achtergrond", new rx.BehaviorSubject<Array<ke.ToegevoegdeLaag>>([])],

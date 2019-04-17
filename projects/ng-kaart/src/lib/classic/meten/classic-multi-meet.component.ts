@@ -1,38 +1,59 @@
-import { Component, Input, NgZone } from "@angular/core";
+import { Component, Injector, Input } from "@angular/core";
 
 import * as clr from "../../stijl/colour";
 
 import { MultiMetenOpties, MultiMetenUiSelector } from "../../kaart/meten/kaart-multi-meten.component";
 import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
-import { KaartClassicComponent } from "../kaart-classic.component";
 
+import * as val from "../webcomponent-support/params";
+
+/**
+ * De component zorgt voor een knop aan de rechterkant waarmee een meet-tool geactiveerd kan worden.
+ */
 @Component({
   selector: "awv-multi-meet-knop",
   template: ""
 })
 export class ClassicMultiMetenComponent extends ClassicUIElementSelectorComponentBase {
-  @Input() // Dit moet dus effectief een code zijn in het formaat #rrggbb(tt?). De string 'white' bijv. is niet ok.
-  tekenKleurCode = clr.kleurcodeValue(clr.zwartig);
+  _tekenKleurCode = clr.kleurcodeValue(clr.zwartig);
+  _toonInfoBoodschap = true;
+  _metRouting = false;
+  _keuzemogelijkheidTonen = false;
 
-  @Input() // Mag de infobox met de lengte en evt oppervlakte getoond worden?
-  toonInfoBoodschap = true;
+  /** Dit moet dus effectief een code zijn in het formaat #rrggbb(tt?). De string 'white' bijv. is niet ok. */
+  @Input()
+  set tekenKleurCode(param: string) {
+    this._tekenKleurCode = val.str(param, this._tekenKleurCode);
+  }
 
-  @Input() // moet std routing via de weg gebeuren?
-  metRouting = false;
+  /** Mag de infobox met de lengte en evt oppervlakte getoond worden? */
+  @Input()
+  set toonInfoBoodschap(param: boolean) {
+    this._toonInfoBoodschap = val.bool(param, this._toonInfoBoodschap);
+  }
 
-  @Input() // moet de gebruiker kunnen kiezen tussen  rechte lijnen en via de weg?
-  keuzemogelijkheidTonen = false;
+  /** moet std routing via de weg gebeuren? */
+  @Input()
+  set metRouting(param: boolean) {
+    this._metRouting = val.bool(param, this._metRouting);
+  }
 
-  constructor(kaart: KaartClassicComponent, zone: NgZone) {
-    super(MultiMetenUiSelector, kaart, zone);
+  /** moet de gebruiker kunnen kiezen tussen  rechte lijnen en via de weg? */
+  @Input()
+  set keuzemogelijkheidTonen(param: boolean) {
+    this._keuzemogelijkheidTonen = val.bool(param, this._keuzemogelijkheidTonen);
+  }
+
+  constructor(injector: Injector) {
+    super(MultiMetenUiSelector, injector);
   }
 
   protected opties(): MultiMetenOpties {
     return {
-      markColour: clr.toKleur("naam", this.tekenKleurCode).getOrElse(clr.zwartig),
-      useRouting: this.metRouting,
-      showInfoMessage: this.toonInfoBoodschap,
-      connectionSelectable: this.keuzemogelijkheidTonen
+      markColour: clr.toKleur("naam", this._tekenKleurCode).getOrElse(clr.zwartig),
+      useRouting: this._metRouting,
+      showInfoMessage: this._toonInfoBoodschap,
+      connectionSelectable: this._keuzemogelijkheidTonen
     };
   }
 }
