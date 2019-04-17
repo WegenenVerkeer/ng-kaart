@@ -1334,7 +1334,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           noSqlFsSource.clear();
           noSqlFsSource.refresh();
           const updatedLaag = pasLaagFilterAan(cmnd.filter, laag.filter.actief)(laag);
-          const updatedModel = pasLaagInModelAan(model)(laag);
+          const updatedModel = pasLaagInModelAan(model)(updatedLaag);
           zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
           zendFilterWijziging(updatedLaag, updatedLaag.filter.spec);
           return ModelAndEmptyResult(updatedModel);
