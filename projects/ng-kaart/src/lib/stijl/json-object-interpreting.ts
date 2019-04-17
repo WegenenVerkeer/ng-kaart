@@ -53,6 +53,10 @@ export function optional<T>(interpreter: Interpreter<T>): Interpreter<Option<T>>
   return firstOf(map<T, Option<T>>(some, interpreter), succeed(none));
 }
 
+export function nullable<T>(interpreter: Interpreter<T>): Interpreter<T | undefined> {
+  return firstOf(interpreter, succeed(undefined));
+}
+
 export function at<T>(nest: Array<string>, interpreter: Interpreter<T>): Interpreter<T> {
   return array.fold(
     array.reverse(nest), //

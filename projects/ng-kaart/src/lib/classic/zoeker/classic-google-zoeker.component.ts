@@ -1,16 +1,20 @@
-import { Component, NgZone } from "@angular/core";
+import { Component, Injector } from "@angular/core";
 
 import { ZoekerGoogleWdbService } from "../../zoeker/google-wdb/zoeker-google-wdb.service";
 
 import { ClassicSingleZoekerComponentBase } from "./classic-single-zoeker.component";
-import { ClassicZoekerComponent } from "./classic-zoeker.component";
 
+/**
+ * Voegt een zoeker voor vrije-tekst-zoeken via Google toe.
+ *
+ * Moet gebruikt worden als een child tag van <code>&lt;awv-kaart-zoeker&gt;</code>.
+ */
 @Component({
   selector: "awv-kaart-google-zoeker",
   template: ""
 })
 export class ClassicGoogleZoekerComponent extends ClassicSingleZoekerComponentBase {
-  constructor(zone: NgZone, zoekerComponent: ClassicZoekerComponent, googleZoeker: ZoekerGoogleWdbService) {
-    super(zone, zoekerComponent, googleZoeker);
+  constructor(injector: Injector, googleZoeker: ZoekerGoogleWdbService) {
+    super(injector, googleZoeker);
   }
 }

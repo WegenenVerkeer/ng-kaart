@@ -1,6 +1,6 @@
 import * as array from "fp-ts/lib/Array";
 import { Function1, Function2, Function3 } from "fp-ts/lib/function";
-import { fromNullable, Option } from "fp-ts/lib/Option";
+import { fromPredicate, Option } from "fp-ts/lib/Option";
 import { Ordering, sign } from "fp-ts/lib/Ordering";
 import { insert, remove, StrMap } from "fp-ts/lib/StrMap";
 import * as ol from "openlayers";
@@ -115,21 +115,23 @@ export class ZoekAntwoord {
 
 export const nietOndersteund: Function2<string, Zoektype, ZoekAntwoord> = (naam, zoektype) => new ZoekAntwoord(naam, zoektype);
 
+const nonNegative = fromPredicate((n: number) => n >= 0);
+
 export const zoekerMetPrioriteiten: (
   zoeker: Zoeker,
-  volledigPrioriteit?: number,
-  suggestiesPrioriteit?: number,
+  volledigPrioriteit: number,
+  suggestiesPrioriteit: number,
   toonIcoon?: boolean,
   toonOppervlak?: boolean
-) => ZoekerMetWeergaveopties = (zoeker, volledigPrioriteit, suggestiesPrioriteit, toonIcoon, toonOppervlak) => ({
+) => ZoekerMetWeergaveopties = (zoeker, volledigPrioriteit, suggestiesPrioriteit, toonIcoon = true, toonOppervlak = true) => ({
   zoeker: zoeker,
   prioriteiten: maybeInsertPrioriteit(
-    fromNullable(volledigPrioriteit),
+    nonNegative(volledigPrioriteit),
     "Volledig",
-    maybeInsertPrioriteit(fromNullable(suggestiesPrioriteit), "Suggesties", emptyPrioriteitenOpZoekertype)
+    maybeInsertPrioriteit(nonNegative(suggestiesPrioriteit), "Suggesties", emptyPrioriteitenOpZoekertype)
   ),
-  toonIcoon: fromNullable(toonIcoon).getOrElse(true),
-  toonOppervlak: fromNullable(toonOppervlak).getOrElse(true)
+  toonIcoon: toonIcoon,
+  toonOppervlak: toonOppervlak
 });
 
 export const zoekerMetNaam: Function1<string, Function1<ZoekerMetWeergaveopties[], Option<Zoeker>>> = naam => zmps =>

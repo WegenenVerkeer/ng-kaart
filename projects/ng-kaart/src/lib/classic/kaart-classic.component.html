@@ -1,8 +1,8 @@
 <awv-kaart
-  [naam]='naam'
-  [minZoom]='minZoom'
-  [maxZoom]='maxZoom'
-  [kaartLinksBreedte]='kaartLinksBreedte'
+  [naam]='_naam'
+  [minZoom]='_minZoom'
+  [maxZoom]='_maxZoom'
+  [kaartLinksBreedte]='_kaartLinksBreedte'
   [kaartCmd$]='kaartCmd$'
   [messageObsConsumer]='kaartMsgObservableConsumer'
   (click)="focus()"
@@ -16,3 +16,4 @@
   </ng-container>
 </awv-kaart>
 <awv-ol-style></awv-ol-style>
+<ng-content></ng-content>

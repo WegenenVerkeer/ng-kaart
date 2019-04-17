@@ -1,0 +1,11 @@
+{
+  "disableSourceCode": true,
+  "disableDomTree": true,
+  "disableGraph": true,
+  "disableTemplateTab": true,
+  "disableCoverage": true,
+  "disablePrivate": true,  
+  "disableProtected": true,
+  "disableInternal": true,
+  "disableLifeCycleHooks": true
+}

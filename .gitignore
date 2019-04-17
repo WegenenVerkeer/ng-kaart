@@ -42,3 +42,6 @@ Thumbs.db
 reports/
 package-lock.json
 videos/
+
+# Gegenereerde documentatie
+documentation

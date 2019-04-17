@@ -1,7 +1,7 @@
 import { HttpClient } from "@angular/common/http";
-import { AfterViewInit, Component, EventEmitter, Input, NgZone, OnInit, Output, ViewEncapsulation } from "@angular/core";
+import { AfterViewInit, Component, EventEmitter, Injector, Input, OnInit, Output, ViewEncapsulation } from "@angular/core";
 import { Function1, Function2, Function4, pipe } from "fp-ts/lib/function";
-import { fromNullable } from "fp-ts/lib/Option";
+import { fromNullable, none, Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import { merge } from "rxjs";
 import * as rx from "rxjs";
@@ -11,10 +11,11 @@ import { LaagLocationInfo, TextLaagLocationInfo, VeldinfoLaagLocationInfo, Veldw
 import * as ke from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
 import { VoegLaagLocatieInformatieServiceToe } from "../../kaart/kaart-protocol";
-import { ofType } from "../../util";
+import { forEach, ofType } from "../../util";
 import { urlWithParams } from "../../util/url";
-import { classicMsgSubscriptionCmdOperator, KaartClassicComponent } from "../kaart-classic.component";
+import { classicMsgSubscriptionCmdOperator } from "../kaart-classic.component";
 import { KaartClassicMsg, LaatsteCacheRefreshMsg, logOnlyWrapper, PrecacheProgressMsg } from "../messages";
+import * as val from "../webcomponent-support/params";
 
 import { ClassicLaagComponent } from "./classic-laag.component";
 
@@ -51,27 +52,6 @@ export interface PrecacheWMS {
   encapsulation: ViewEncapsulation.None
 })
 export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnInit, AfterViewInit {
-  @Input()
-  laagNaam: string;
-  @Input()
-  urls: string[];
-  @Input()
-  tiled = true;
-  @Input()
-  versie?: string;
-  @Input()
-  format = "image/png";
-  @Input()
-  // tslint:disable-next-line:whitespace
-  tileSize? = 256;
-  @Input()
-  opacity?: number;
-  @Input()
-  cacheActief = false;
-  // metadata van de velden zoals die geparsed worden door textParser
-  // alsl er geen veldinfos opgegeven zijn, wordt hoogstens een textresultaat getoond bij kaart bevragen
-  @Input()
-  veldinfos?: ke.VeldInfo[] = undefined;
   // Een functie die de output van een WMS featureInfo of een WFS GetFeature request omzet naar een lijst van key-value paren.
   // De keys moeten een subset zijn van de titels van de veldinfos
   @Input()
@@ -85,7 +65,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   set precache(input: PrecacheWMS) {
     if (input) {
       this.dispatch(
-        prt.VulCacheVoorWMSLaag(this.titel, input.startZoom, input.eindZoom, input.wkt, input.startMetLegeCache, logOnlyWrapper)
+        prt.VulCacheVoorWMSLaag(this._titel, input.startZoom, input.eindZoom, input.wkt, input.startMetLegeCache, logOnlyWrapper)
       );
     }
   }
@@ -96,8 +76,65 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   @Output()
   laatsteCacheRefresh: EventEmitter<Date> = new EventEmitter<Date>();
 
-  constructor(kaart: KaartClassicComponent, zone: NgZone, private readonly http: HttpClient) {
-    super(kaart, zone);
+  _laagNaam: string;
+  _versie: Option<string> = none;
+  _format = "image/png";
+  _urls: string[];
+  _tiled: boolean;
+  _tileSize = 256;
+  _opacity: Option<number> = none;
+  _cacheActief = false;
+  _veldinfos: Option<ke.VeldInfo[]> = none;
+
+  @Input()
+  set laagNaam(param: string) {
+    this._laagNaam = val.str(param, this._laagNaam);
+  }
+
+  @Input()
+  set versie(param: string) {
+    this._versie = val.optStr(param);
+  }
+
+  @Input()
+  set format(param: string) {
+    this._format = val.str(param, this._format);
+  }
+
+  @Input()
+  set urls(param: string[]) {
+    this._urls = val.stringArray(param, this._urls);
+  }
+
+  @Input()
+  set tiled(param: boolean) {
+    this._tiled = val.bool(param, this._tiled);
+  }
+
+  @Input()
+  set tileSize(param: number) {
+    this._tileSize = val.num(param, this._tileSize);
+  }
+
+  @Input()
+  set opacity(param: number) {
+    this._opacity = val.optNum(param);
+  }
+
+  @Input()
+  set cacheActief(param: boolean) {
+    this._cacheActief = val.bool(param, this._cacheActief);
+  }
+
+  // metadata van de velden zoals die geparsed worden door textParser
+  // als er geen veldinfos opgegeven zijn, wordt hoogstens een textresultaat getoond bij kaart bevragen
+  @Input()
+  set veldinfos(param: ke.VeldInfo[]) {
+    this._veldinfos = val.optVeldInfoArray(param);
+  }
+
+  constructor(injector: Injector, private readonly http: HttpClient) {
+    super(injector);
   }
 
   ngOnInit() {
@@ -109,40 +146,38 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
 
   protected voegLaagToe() {
     super.voegLaagToe();
-    if (this.queryUrlFn) {
-      if (!this.veldinfos) {
-        this.dispatch(
-          VoegLaagLocatieInformatieServiceToe(
-            this.titel,
-            { infoByLocation$: textWmsFeatureInfo(this.http, this.queryUrlFn) },
-            logOnlyWrapper
+    forEach(fromNullable(this.queryUrlFn), queryUrlFn =>
+      this.dispatch(
+        this._veldinfos
+          .chain(veldinfos =>
+            fromNullable(this.textParser).map(textParser =>
+              VoegLaagLocatieInformatieServiceToe(
+                this._titel,
+                { infoByLocation$: veldWmsFeatureInfo(this.http, queryUrlFn, textParser, veldinfos) },
+                logOnlyWrapper
+              )
+            )
           )
-        );
-      } else if (this.textParser && this.veldinfos) {
-        this.dispatch(
-          VoegLaagLocatieInformatieServiceToe(
-            this.titel,
-            { infoByLocation$: veldWmsFeatureInfo(this.http, this.queryUrlFn, this.textParser, this.veldinfos) },
-            logOnlyWrapper
+          .getOrElseL(() =>
+            VoegLaagLocatieInformatieServiceToe(this._titel, { infoByLocation$: textWmsFeatureInfo(this.http, queryUrlFn) }, logOnlyWrapper)
           )
-        );
-      }
-    }
+      )
+    );
   }
 
   createLayer(): ke.WmsLaag {
     return {
       type: ke.TiledWmsType,
-      titel: this.titel,
-      naam: this.laagNaam,
-      urls: this.urls,
-      versie: fromNullable(this.versie),
-      tileSize: fromNullable(this.tileSize),
-      format: fromNullable(this.format),
-      opacity: fromNullable(this.opacity),
-      backgroundUrl: this.backgroundUrl(this.urls, this.laagNaam),
-      minZoom: this.minZoom,
-      maxZoom: this.maxZoom,
+      titel: this._titel,
+      naam: this._laagNaam,
+      urls: this._urls,
+      versie: this._versie,
+      tileSize: fromNullable(this._tileSize),
+      format: fromNullable(this._format),
+      opacity: this._opacity,
+      backgroundUrl: this.backgroundUrl(this._urls, this._laagNaam),
+      minZoom: this._minZoom,
+      maxZoom: this._maxZoom,
       verwijderd: false
     };
   }
@@ -160,10 +195,10 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
       request: "GetMap",
       version: "1.3.0",
       transparant: false,
-      tiled: true,
+      tiled: this._tiled,
       width: 256,
       height: 256,
-      format: this.format,
+      format: this._format,
       srs: "EPSG:31370",
       crs: "EPSG:31370",
       bbox: "104528,188839.75,105040,189351.75"
@@ -173,8 +208,8 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   ngAfterViewInit() {
     super.ngAfterViewInit();
 
-    if (this.cacheActief) {
-      this.dispatch(prt.ActiveerCacheVoorLaag(this.titel, logOnlyWrapper));
+    if (this._cacheActief) {
+      this.dispatch(prt.ActiveerCacheVoorLaag(this._titel, logOnlyWrapper));
 
       this.bindToLifeCycle(
         merge(
@@ -197,14 +232,14 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
           ),
           this.kaart.kaartClassicSubMsg$.pipe(
             ofType<PrecacheProgressMsg>("PrecacheProgress"),
-            map(m => (m.progress[this.titel] ? m.progress[this.titel] : 0)),
+            map(m => (m.progress[this._titel] ? m.progress[this._titel] : 0)),
             distinctUntilChanged(),
             tap(progress => this.precacheProgress.emit(progress))
           ),
           this.kaart.kaartClassicSubMsg$.pipe(
             ofType<LaatsteCacheRefreshMsg>("LaatsteCacheRefresh"),
-            filter(m => fromNullable(m.laatsteCacheRefresh[this.titel]).isSome()),
-            map(m => m.laatsteCacheRefresh[this.titel]),
+            filter(m => fromNullable(m.laatsteCacheRefresh[this._titel]).isSome()),
+            map(m => m.laatsteCacheRefresh[this._titel]),
             distinctUntilChanged(),
             tap(laatsteCacheRefresh => this.laatsteCacheRefresh.emit(laatsteCacheRefresh))
           )

@@ -2,6 +2,7 @@ import {
   Component,
   ElementRef,
   EventEmitter,
+  Inject,
   Input,
   NgZone,
   OnChanges,
@@ -29,9 +30,11 @@ import { subscriptionCmdOperator } from "../kaart/subscription-helper";
 import * as arrays from "../util/arrays";
 import { Feature } from "../util/feature";
 import { ofType } from "../util/operators";
+import { forEach } from "../util/option";
 import * as progress from "../util/progress";
 import { TypedRecord } from "../util/typed-record";
 
+import { KaartClassicLocatorService } from "./kaart-classic-locator.service";
 import { classicLogger } from "./log";
 import {
   AchtergrondLagenInGroepAangepastMsg,
@@ -50,6 +53,7 @@ import {
   ZichtbareFeaturesAangepastMsg,
   ZoomAangepastMsg
 } from "./messages";
+import * as val from "./webcomponent-support/params";
 
 // Dit is een type dat de interne KartLocaties plat klopt voor extern gebruik.
 export interface ClassicKlikInfoEnStatus {
@@ -78,47 +82,122 @@ const flattenKaartLocaties: Function1<KaartLocaties, ClassicKlikInfoEnStatus> = 
   )
 });
 
+const nop = () => {};
+
 @Component({
   selector: "awv-kaart-classic",
   templateUrl: "./kaart-classic.component.html"
 })
 export class KaartClassicComponent extends KaartComponentBase implements OnInit, OnDestroy, OnChanges, KaartCmdDispatcher<TypedRecord> {
+  /** @ignore */
   private static counter = 1;
+  /** @ignore */
   kaartClassicSubMsg$: rx.Observable<KaartClassicSubMsg> = rx.EMPTY;
+  /** @ignore */
   private hasFocus = false;
 
+  /** @ignore */
   readonly dispatcher: ReplaySubjectKaartCmdDispatcher<TypedRecord> = new ReplaySubjectKaartCmdDispatcher();
+  /** @ignore */
   readonly kaartMsgObservableConsumer: KaartMsgObservableConsumer;
 
-  @Input()
-  zoom: number;
-  @Input()
-  minZoom = 1;
-  @Input()
-  maxZoom = 15;
-  @Input()
-  middelpunt: ol.Coordinate; // = [130000, 193000]; // "extent" heeft voorrang
-  @Input()
-  breedte: number | undefined; // neem standaard de hele breedte in
-  @Input()
-  hoogte: number | undefined;
-  @Input()
-  kaartLinksBreedte; // breedte van linker-paneel (de default is 480px bij kaart breedte > 1240 en 360px voor smallere kaarten)
-  @Input()
-  mijnLocatieZoom: number | undefined;
-  @Input()
-  extent: ol.Extent;
-  @Input()
-  selectieModus: prt.SelectieModus = "none";
-  @Input()
-  hoverModus: prt.HoverModus = "off";
-  @Input()
-  naam = "kaart" + KaartClassicComponent.counter++;
+  _zoom: Option<number> = none;
+  _minZoom = 1;
+  _maxZoom = 15;
+  _middelpunt: Option<ol.Coordinate> = none;
+  _breedte: Option<number> = none;
+  _hoogte: Option<number> = none;
+  _kaartLinksBreedte: number;
+  _mijnLocatieZoom: Option<number> = none;
+  _extent: Option<ol.Extent> = none;
+  _selectieModus: prt.SelectieModus = "none";
+  _hoverModus: prt.HoverModus = "off";
+  _naam = "kaart" + KaartClassicComponent.counter++;
+  _onderdrukKaartBevragenBoodschappen = false;
+
+  /** Geselecteerde features */
   @Input()
   geselecteerdeFeatures: Array<ol.Feature> = [];
-  @Input()
-  onderdrukKaartBevragenBoodschappen = false;
 
+  /** Zoom niveau */
+  @Input()
+  set zoom(param: number) {
+    this._zoom = val.optNum(param);
+  }
+
+  /** Minimum zoom niveau */
+  @Input()
+  set minZoom(param: number) {
+    this._minZoom = val.num(param, this._minZoom);
+  }
+
+  /** Maximum zoom niveau */
+  @Input()
+  set maxZoom(param: number) {
+    this._maxZoom = val.num(param, this._maxZoom);
+  }
+
+  /** Het middelpunt van de kaart. "extent" heeft voorrang */
+  @Input()
+  set middelpunt(param: ol.Coordinate) {
+    this._middelpunt = val.optCoord(param);
+  }
+
+  /** Breedte van de kaart, neem standaard de hele breedte in */
+  @Input()
+  set breedte(param: number) {
+    this._breedte = val.optNum(param);
+  }
+
+  /** Hoogte van de kaart, neem standaard de hele hoogte in */
+  @Input()
+  set hoogte(param: number) {
+    this._hoogte = val.optNum(param);
+  }
+
+  /** Breedte van linker-paneel (de default is 480px bij kaart breedte > 1240 en 360px voor smallere kaarten) */
+  @Input()
+  set kaartLinksBreedte(param: number) {
+    this._kaartLinksBreedte = val.num(param, this._kaartLinksBreedte);
+  }
+
+  /** Zoom niveau om te gebruiken bij "Mijn Locatie" */
+  @Input()
+  set mijnLocatieZoom(param: number) {
+    this._mijnLocatieZoom = val.optNum(param);
+  }
+
+  /** De extent van de kaart, heeft voorang op "middelpunt" */
+  @Input()
+  set extent(param: ol.Extent) {
+    this._extent = val.optExtent(param);
+  }
+
+  /** De selectiemodus: "single" | "multipleKlik" | "multipleShift" | "none" */
+  @Input()
+  set selectieModus(param: prt.SelectieModus) {
+    this._selectieModus = val.enu(param, this._selectieModus, "single", "multipleKlik", "multipleShift", "none");
+  }
+
+  /** Info bij hover: "on" | "off" */
+  @Input()
+  set hoverModus(param: prt.HoverModus) {
+    this._hoverModus = val.enu(param, this._hoverModus, "on", "off");
+  }
+
+  /** Naam van de kaart */
+  @Input()
+  set naam(param: string) {
+    this._naam = val.str(param, this._naam);
+  }
+
+  /** Onderdrukken we kaart info boodschappen? */
+  @Input()
+  set onderdrukKaartBevragenBoodschappen(param: boolean) {
+    this._onderdrukKaartBevragenBoodschappen = val.bool(param, this._onderdrukKaartBevragenBoodschappen);
+  }
+
+  /** De geselecteerde features */
   @Output()
   geselecteerdeFeaturesChange: EventEmitter<Array<ol.Feature>> = new EventEmitter();
   @Output()
@@ -140,10 +219,16 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   @Output()
   kaartLocaties: EventEmitter<ClassicKlikInfoEnStatus> = new EventEmitter();
 
+  /** @ignore */
   @ViewChild("kaart", { read: ElementRef })
   mapElement: ElementRef;
 
-  constructor(zone: NgZone) {
+  /** @ignore */
+  constructor(
+    zone: NgZone,
+    private el: ElementRef<Element>,
+    private kaartLocatorService: KaartClassicLocatorService<KaartClassicComponent>
+  ) {
     super(zone);
     this.kaartMsgObservableConsumer = (msg$: rx.Observable<prt.KaartMsg>) => {
       // We zijn enkel geïnteresseerd in messages van ons eigen type
@@ -262,49 +347,64 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
     this.viewReady$.subscribe(() => this.zetKaartGrootte());
   }
 
+  /** @ignore */
   ngOnInit() {
     super.ngOnInit();
     // De volgorde van de dispatching hier is van belang voor wat de overhand heeft
-    if (this.zoom) {
-      this.dispatch(prt.VeranderZoomCmd(this.zoom, logOnlyWrapper));
+    this._zoom.foldL(nop, zoom => this.dispatch(prt.VeranderZoomCmd(zoom, logOnlyWrapper)));
+    this._extent.foldL(nop, extent => this.dispatch(prt.VeranderExtentCmd(extent)));
+    this._middelpunt.foldL(nop, middelpunt => this.dispatch(prt.VeranderMiddelpuntCmd(middelpunt, none)));
+    if (this._breedte.isSome() || this._hoogte.isSome()) {
+      this.dispatch(prt.VeranderViewportCmd([this._breedte.toUndefined(), this._hoogte.toUndefined()]));
     }
-    if (this.extent) {
-      this.dispatch(prt.VeranderExtentCmd(this.extent));
-    }
-    if (this.middelpunt) {
-      this.dispatch(prt.VeranderMiddelpuntCmd(this.middelpunt, none));
-    }
-    if (this.breedte || this.hoogte) {
-      this.dispatch(prt.VeranderViewportCmd([this.breedte!, this.hoogte!]));
-    }
-    if (this.hoverModus) {
-      this.dispatch(prt.ActiveerHoverModusCmd(this.hoverModus));
-    }
-    if (this.selectieModus) {
-      this.dispatch(prt.ActiveerSelectieModusCmd(this.selectieModus));
-    }
+    this.dispatch(prt.ActiveerHoverModusCmd(this._hoverModus));
+    this.dispatch(prt.ActiveerSelectieModusCmd(this._selectieModus));
+
+    this.kaartLocatorService.registerComponent(this, this.el);
   }
 
+  /** @ignore */
   ngOnChanges(changes: SimpleChanges) {
     const dispatch: (cmd: prt.Command<TypedRecord>) => void = cmd => this.dispatch(cmd);
-    forChangedValue(changes, "zoom", zoom => this.dispatch(prt.VeranderZoomCmd(zoom, logOnlyWrapper)));
-    forChangedValue(changes, "middelpunt", middelpunt => this.dispatch(prt.VeranderMiddelpuntCmd(middelpunt, none)));
+    forChangedValue(
+      changes,
+      "zoom",
+      // TODO: Eigenlijk moeten we iets doen als de input leeggemaakt wordt, maar wat?
+      zoomOpt => forEach(zoomOpt, zoom => this.dispatch(prt.VeranderZoomCmd(zoom, logOnlyWrapper))),
+      val.optNum
+    );
+    forChangedValue(
+      changes,
+      "middelpunt",
+      middelpuntOpt => forEach(middelpuntOpt, middelpunt => this.dispatch(prt.VeranderMiddelpuntCmd(middelpunt, none))),
+      val.optCoord
+    );
     forChangedValue(
       changes,
       "extent",
-      pipe(
-        prt.VeranderExtentCmd,
-        dispatch
-      )
+      extentOpt =>
+        forEach(
+          extentOpt,
+          pipe(
+            prt.VeranderExtentCmd,
+            dispatch
+          )
+        ),
+      val.optExtent
     );
     forChangedValue(
       changes,
       "mijnLocatieZoom",
-      pipe(
-        option.fromNullable,
-        prt.ZetMijnLocatieZoomCmd,
-        dispatch
-      )
+      zoomOpt =>
+        forEach(
+          zoomOpt,
+          pipe(
+            option.fromNullable,
+            prt.ZetMijnLocatieZoomCmd,
+            dispatch
+          )
+        ),
+      val.optNum
     );
     forChangedValue(
       changes,
@@ -316,28 +416,31 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
     );
     forChangedValue(changes, "breedte", () => this.zetKaartGrootte());
     forChangedValue(changes, "hoogte", () => this.zetKaartGrootte());
-    forChangedValue(changes, "onderdrukKaartBevragenBoodschappen", onderdruk =>
-      this.dispatch(prt.ZetUiElementOpties(KaartInfoBoodschapUiSelector, { kaartBevragenOnderdrukt: onderdruk }))
+    forChangedValue(
+      changes,
+      "onderdrukKaartBevragenBoodschappen",
+      onderdruk => this.dispatch(prt.ZetUiElementOpties(KaartInfoBoodschapUiSelector, { kaartBevragenOnderdrukt: onderdruk })),
+      val.zonderFallback<boolean>(val.bool)
     );
   }
 
+  /** @ignore */
   dispatch(cmd: prt.Command<TypedRecord>) {
     this.dispatcher.dispatch(cmd);
   }
 
+  /** @ignore */
   get kaartCmd$(): rx.Observable<prt.Command<TypedRecord>> {
     return this.dispatcher.commands$;
   }
 
+  /** @ignore */
   private zetKaartGrootte() {
-    if (this.breedte) {
-      this.mapElement.nativeElement.style.width = `${this.breedte}px`;
-    }
-    if (this.hoogte) {
-      this.mapElement.nativeElement.style.height = `${this.hoogte}px`;
-    }
+    this._breedte.foldL(nop, breedte => (this.mapElement.nativeElement.style.width = `${breedte}px`));
+    this._hoogte.foldL(nop, hoogte => (this.mapElement.nativeElement.style.height = `${hoogte}px`));
   }
 
+  /** @ignore */
   focus(): void {
     // Voor performantie
     if (!this.hasFocus) {
@@ -346,6 +449,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
     }
   }
 
+  /** @ignore */
   geenFocus(): void {
     // Stuur enkel enkel indien nodig
     if (this.hasFocus) {
@@ -354,6 +458,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
     }
   }
 
+  /** @ignore */
   toonIdentifyInformatie(feature: ol.Feature): void {
     const featureId = Feature.propertyId(feature).getOrElse("");
     this.dispatch(
@@ -370,6 +475,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
     );
   }
 
+  /** @ignore */
   verbergIdentifyInformatie(id: string): void {
     this.dispatch(prt.VerbergInfoBoodschapCmd(id));
   }

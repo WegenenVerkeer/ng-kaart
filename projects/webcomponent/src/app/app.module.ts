@@ -5,16 +5,14 @@ import { BrowserModule } from "@angular/platform-browser";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { ClickOutsideModule } from "ng4-click-outside";
 
-import { ClassicModule } from "../../../ng-kaart/src/lib/classic";
-import { FilterComponent, FilterModule } from "../../../ng-kaart/src/lib/filter";
+import { ClassicModule, componentMap, KaartClassicComponent } from "../../../ng-kaart/src/lib/classic";
+import { FilterModule } from "../../../ng-kaart/src/lib/filter";
 import { KaartModule } from "../../../ng-kaart/src/lib/kaart";
 import { LagenkiezerModule } from "../../../ng-kaart/src/lib/lagenkiezer";
 import { ZoekerModule } from "../../../ng-kaart/src/lib/zoeker";
 
-import { KaartElementComponent } from "./kaart-element/kaart-element.component";
-
 @NgModule({
-  declarations: [KaartElementComponent],
+  declarations: [],
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
@@ -30,13 +28,13 @@ import { KaartElementComponent } from "./kaart-element/kaart-element.component";
     ClickOutsideModule,
     FilterModule
   ],
-  providers: [],
-  entryComponents: [KaartElementComponent]
+  entryComponents: []
 })
 export class AppModule {
-  public constructor(private readonly injector: Injector) {
-    const el = createCustomElement(KaartElementComponent, { injector });
-    customElements.define("awv-kaart-element", el);
+  public constructor(injector: Injector) {
+    // Pas op!!! De volgorde is heel belangrijk hier. De kaart moet eerst zijn.
+    customElements.define("awv-kaart-classic", createCustomElement(KaartClassicComponent, { injector }));
+    Object.keys(componentMap).forEach(tag => customElements.define(tag, createCustomElement(componentMap[tag], { injector })));
   }
 
   ngDoBootstrap() {}
