@@ -331,13 +331,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       modelChanger.laagstijlGezetSubj.next(laag);
     }
 
-    function zendFilterWijziging(laag: ke.ToegevoegdeVectorLaag, filter: Filter): void {
-      modelChanger.laagFilterGezetSubj.next({
-        laagnaam: laag.titel,
-        filter: filter
-      });
-    }
-
     function zetLayerIndex(layer: ol.layer.Base, groepIndex: number, groep: ke.Laaggroep): void {
       layer.setZIndex(groepIndexNaarZIndex(groepIndex, groep));
     }
@@ -1336,7 +1329,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           const updatedLaag = pasLaagFilterAan(cmnd.filter, laag.filter.actief)(laag);
           const updatedModel = pasLaagInModelAan(model)(updatedLaag);
           zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
-          zendFilterWijziging(updatedLaag, updatedLaag.filter.spec);
           return ModelAndEmptyResult(updatedModel);
         })
       );
