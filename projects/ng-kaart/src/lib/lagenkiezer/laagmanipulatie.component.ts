@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
 import { MatMenuTrigger } from "@angular/material";
-import { none } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, shareReplay, switchMap } from "rxjs/operators";
 
