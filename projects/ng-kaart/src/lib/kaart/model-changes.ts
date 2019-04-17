@@ -50,7 +50,7 @@ export interface LaatsteCacheRefresh {
 }
 
 export interface FilterGezet {
-  laag: ke.ToegevoegdeVectorLaag;
+  laagnaam: string;
   filter: Filter;
 }
 

@@ -2,7 +2,7 @@ import { Component, NgZone } from "@angular/core";
 import { FormControl, ValidationErrors, Validators } from "@angular/forms";
 import * as array from "fp-ts/lib/Array";
 import { Function1, Function2 } from "fp-ts/lib/function";
-import { Option, some } from "fp-ts/lib/Option";
+import { Option } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { Observable } from "rxjs";
 import { filter, map, sample, shareReplay, startWith, switchMap, tap } from "rxjs/operators";
@@ -19,7 +19,7 @@ import { collectOption } from "../util/operators";
 import { forEvery } from "../util/operators";
 
 import { FilterAanpassingBezig, isAanpassingBezig } from "./filter-aanpassing-state";
-import { Equality, ExpressionFilter, FilterBuilder, Literal, Property } from "./filter-model";
+import { Comparison, Equality, ExpressionFilter, FilterBuilder, Literal, Property } from "./filter-model";
 
 const autoCompleteSelectieVerplichtValidator: Function1<FormControl, ValidationErrors | null> = control => {
   if (typeof control.value === "string") {
@@ -41,7 +41,7 @@ export class FilterComponent extends KaartChildComponentBase {
   readonly filteredOperatoren$: rx.Observable<FilterBuilder.FilterBuildElement[]>;
 
   readonly veldControl = new FormControl("", [Validators.required, autoCompleteSelectieVerplichtValidator]);
-  readonly operatorControl = new FormControl(Equality, [Validators.required, autoCompleteSelectieVerplichtValidator]);
+  readonly operatorControl = new FormControl(null, [Validators.required, autoCompleteSelectieVerplichtValidator]);
   readonly waardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
 
   readonly geldigFilterCmd$: rx.Observable<prt.ZetFilter<KaartInternalMsg>>;
@@ -64,12 +64,37 @@ export class FilterComponent extends KaartChildComponentBase {
         .get(aanpassing.laag.laaggroep)!
         .pipe(collectOption(lgn => findLaagOpTitel(aanpassing.laag.titel, lgn)))
     ).pipe(
-      shareReplay(1) // De huidige laag moet bewaard blijven voor alle volgende subscribers
+      switchMap(laag =>
+        kaart.modelChanges.laagFilterAanpassingState$.pipe(map(isAanpassingBezig)).pipe(
+          tap(zichtbaar => {
+            if (zichtbaar) {
+              // zet control waarden bij start aanpassen filter van een laag
+              if (laag.filter.spec.kind === "ExpressionFilter") {
+                const exprFilter = laag.filter.spec as ExpressionFilter;
+                const comparison = exprFilter.expression as Comparison;
+                this.veldControl.setValue(
+                  ToegevoegdeVectorLaag.veldInfosLens.get(laag).find(veldinfo => veldinfo.naam === comparison.property.ref)
+                );
+                this.operatorControl.setValue(
+                  comparison.kind === "Equality"
+                    ? FilterBuilder.comparisonBuilders.find(operator => operator.description === "is")
+                    : FilterBuilder.comparisonBuilders.find(operator => operator.description === "is niet")
+                );
+                this.waardeControl.setValue(comparison.value.value);
+              } else {
+                this.veldControl.reset();
+                this.operatorControl.reset();
+                this.waardeControl.reset();
+              }
+            }
+          }),
+          map(() => laag)
+        )
+      ),
+      shareReplay(1)
     );
 
     const velden$: rx.Observable<VeldInfo[]> = laag$.pipe(map(laag => ToegevoegdeVectorLaag.veldInfosLens.get(laag)));
-
-    this.titel$ = laag$.pipe(map(laag => laag.titel));
 
     this.filteredVelden$ = velden$.pipe(
       switchMap(velden =>
@@ -79,8 +104,11 @@ export class FilterComponent extends KaartChildComponentBase {
           map(getypt => velden.filter(veld => veld.label.toLowerCase().startsWith(getypt.toLowerCase()))),
           map(velden => velden.sort((a, b) => a.label.localeCompare(b.label))) // opletten: mutable! Gebruik van fp-ts
         )
-      )
+      ),
+      shareReplay(1)
     );
+
+    this.titel$ = laag$.pipe(map(laag => laag.titel));
 
     this.filteredOperatoren$ = this.operatorControl.valueChanges.pipe(
       startWith<FilterBuilder.FilterBuildElement | string>(""), // nog niets ingetypt -> Moet beter kunnen!
@@ -116,13 +144,13 @@ export class FilterComponent extends KaartChildComponentBase {
               tap(() => this.waardeControl.enable()),
               switchMap(operator =>
                 gekozenWaarde$.pipe(
-                  map(waarde =>
-                    prt.ZetFilter(
+                  map(waarde => {
+                    return prt.ZetFilter(
                       laag.titel,
                       ExpressionFilter("filter", operator.build(Property(veldInfo.type, veldInfo.naam), Literal("string", waarde))),
                       kaartLogOnlyWrapper
-                    )
-                  )
+                    );
+                  })
                 )
               )
             )
@@ -133,8 +161,8 @@ export class FilterComponent extends KaartChildComponentBase {
 
     const pasToeGeklikt$ = this.actionFor$("pasFilterToe");
     this.bindToLifeCycle(this.geldigFilterCmd$.pipe(sample(pasToeGeklikt$))).subscribe(command => {
-      this.dispatch(command);
       this.dispatch(prt.StopVectorFilterBewerkingCmd());
+      this.dispatch(command);
     });
   }
 

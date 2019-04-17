@@ -333,7 +333,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function zendFilterWijziging(laag: ke.ToegevoegdeVectorLaag, filter: Filter): void {
       modelChanger.laagFilterGezetSubj.next({
-        laag: laag,
+        laagnaam: laag.titel,
         filter: filter
       });
     }

@@ -19,7 +19,7 @@
     <button mat-icon-button class="filter-inhoud" (click)="pasFilterAan()"> <!-- TODO: in volgende story: toggleFilterActief() -->
       <mat-icon *ngIf="filterActief$ | async">filter_list</mat-icon>
       <mat-icon *ngIf="!(filterActief$ | async)">not_interested</mat-icon>
-      {{ filterTotaal$ | async }}
+<!--      {{ filterTotaal$ | async }}-->
     </button>
   </div>
   <div class="laag-acties" *ngIf="minstensEenLaagActie$ | async">

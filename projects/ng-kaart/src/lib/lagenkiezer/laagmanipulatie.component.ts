@@ -1,20 +1,19 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
 import { MatMenuTrigger } from "@angular/material";
+import * as array from "fp-ts/lib/Array";
+import { Function2 } from "fp-ts/lib/function";
+import { Option } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
-import { distinctUntilChanged, filter, map, shareReplay, switchMap } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, shareReplay, switchMap, tap } from "rxjs/operators";
 
+import { FilterAanpassingBezig, isAanpassingBezig } from "../filter/filter-aanpassing-state";
 import * as fltr from "../filter/filter-model";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
-import {
-  asNosqlSource,
-  asToegevoegdeNosqlVectorLaag,
-  asToegevoegdeVectorLaag,
-  ToegevoegdeLaag,
-  ToegevoegdeVectorLaag
-} from "../kaart/kaart-elementen";
+import * as ke from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as cmd from "../kaart/kaart-protocol-commands";
 import { KaartComponent } from "../kaart/kaart.component";
+import { collectOption, forEvery, subSpy } from "../util";
 import { observeOnAngular } from "../util/observe-on-angular";
 
 import { LagenkiezerComponent } from "./lagenkiezer.component";
@@ -42,7 +41,7 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
   readonly filterActief$: rx.Observable<boolean> = this.filterActiefSubj.asObservable();
 
   @Input()
-  laag: ToegevoegdeLaag;
+  laag: ke.ToegevoegdeLaag;
   @Input()
   dragSource: boolean;
   @Input()
@@ -51,8 +50,6 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
   dragUntargetable: boolean;
   @ViewChild(MatMenuTrigger)
   laagMenuTrigger: MatMenuTrigger;
-
-  filterActief = true;
 
   constructor(lagenkiezer: LagenkiezerComponent, kaartComponent: KaartComponent, zone: NgZone) {
     super(kaartComponent, zone);
@@ -75,7 +72,8 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
     );
     this.kanStijlAanpassen$ = lagenkiezer.opties$.pipe(
       map(o =>
-        asToegevoegdeVectorLaag(this.laag)
+        ke
+          .asToegevoegdeVectorLaag(this.laag)
           .map(vlg => o.stijlbareVectorlagen(vlg.titel))
           .getOrElse(false)
       ),
@@ -83,34 +81,52 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
     );
     this.kanFilteren$ = lagenkiezer.opties$.pipe(
       map(o =>
-        asToegevoegdeNosqlVectorLaag(this.laag)
+        ke
+          .asToegevoegdeNosqlVectorLaag(this.laag)
           .map(vlg => o.filterbareLagen)
           .getOrElse(false)
       ),
       shareReplay(1)
     );
-    this.heeftFilter$ = kaartComponent.modelChanges.laagFilterGezet$.pipe(
-      filter(filterGezet => this.laag.titel === filterGezet.laag.titel),
-      map(filterGezet => fltr.isDefined(filterGezet.filter)),
+
+    const findLaagOpTitel: Function2<string, ke.ToegevoegdeLaag[], Option<ke.ToegevoegdeVectorLaag>> = (titel, lgn) =>
+      array.findFirst(lgn.filter(lg => lg.titel === titel), ke.isToegevoegdeVectorLaag);
+
+    const laag$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Hoog")!.pipe(
+      collectOption(lgn => findLaagOpTitel(this.laag.titel, lgn)),
       shareReplay(1)
     );
-    this.filterTotaal$ = rx.merge(
-      kaartComponent.modelChanges.laagFilterGezet$.pipe(
-        filter(filterGezet => this.laag.titel === filterGezet.laag.titel),
-        // TODO werk met startWith ipv merge
-        map(() => ". . .") // vorig totaal wissen, terwijl nieuw opgehaald wordt
-      ),
-      kaartComponent.modelChanges.laagFilterGezet$.pipe(
-        filter(filterGezet => this.laag.titel === filterGezet.laag.titel),
-        filter(filterGezet => fltr.isDefined(filterGezet.filter)),
-        switchMap(filterGezet =>
-          asNosqlSource(filterGezet.laag.layer.getSource()).foldL(
-            () => rx.of(""),
-            source => source.fetchTotal$().pipe(map(num => `${num}`))
-          )
-        )
-      )
+
+    this.heeftFilter$ = laag$.pipe(
+      filter(laag => this.laag.titel === laag.titel),
+      map(laag => fltr.isDefined(laag.filter.spec)),
+      shareReplay(1)
     );
+
+    // TODO: voorlopig af vermits dit voor grote collections een te dure query is
+    // FilterTotaal wordt ook niet geupdate in de UI, ondanks dat er wel events geemit worden..
+    // Indien in de reducer dit wordt afgezet, werkt het wel: zendFilterWijziging(updatedLaag, updatedLaag.filter.spec);
+    // this.filterTotaal$ = subSpy("********* filterTotaal$")(
+    //   rx.merge(
+    //     kaartComponent.modelChanges.laagFilterGezet$.pipe(
+    //       filter(filterGezet => this.laag.titel === filterGezet.laagnaam),
+    //       // TODO werk met startWith ipv merge
+    //       map(() => ". . .") // vorig totaal wissen, terwijl nieuw opgehaald wordt
+    //     ),
+    //     laag$.pipe(
+    //       switchMap(laag =>
+    //         kaartComponent.modelChanges.laagFilterGezet$.pipe(
+    //           filter(filterGezet => this.laag.titel === filterGezet.laagnaam),
+    //           filter(filterGezet => fltr.isDefined(filterGezet.filter)),
+    //           switchMap(() =>
+    //           ke.asNosqlSource(laag.layer.getSource()).foldL(() => rx.of(""), source => source.fetchTotal$().pipe(map(num => `${num}`)))
+    //           )
+    //         )
+    //       )
+    //     )
+    //   )
+    // );
+
     this.minstensEenLaagActie$ = rx.combineLatest(this.kanVerwijderen$, this.kanStijlAanpassen$, (v, a) => v || a).pipe(shareReplay(1));
   }
 
@@ -151,11 +167,11 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
   }
 
   pasStijlAan() {
-    this.dispatch(cmd.BewerkVectorlaagstijlCmd(this.laag as ToegevoegdeVectorLaag));
+    this.dispatch(cmd.BewerkVectorlaagstijlCmd(this.laag as ke.ToegevoegdeVectorLaag));
   }
 
   pasFilterAan() {
-    this.dispatch(cmd.BewerkVectorFilterCmd(this.laag as ToegevoegdeVectorLaag));
+    this.dispatch(cmd.BewerkVectorFilterCmd(this.laag as ke.ToegevoegdeVectorLaag));
   }
 
   verwijderFilter() {
