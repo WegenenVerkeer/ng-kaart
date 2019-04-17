@@ -4,16 +4,15 @@ import * as array from "fp-ts/lib/Array";
 import { Function2 } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
-import { distinctUntilChanged, filter, map, shareReplay, switchMap, tap } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, shareReplay } from "rxjs/operators";
 
-import { FilterAanpassingBezig, isAanpassingBezig } from "../filter/filter-aanpassing-state";
 import * as fltr from "../filter/filter-model";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import * as ke from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as cmd from "../kaart/kaart-protocol-commands";
 import { KaartComponent } from "../kaart/kaart.component";
-import { collectOption, forEvery, subSpy } from "../util";
+import { collectOption } from "../util";
 import { observeOnAngular } from "../util/observe-on-angular";
 
 import { LagenkiezerComponent } from "./lagenkiezer.component";
