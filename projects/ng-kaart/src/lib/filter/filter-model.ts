@@ -30,8 +30,8 @@ export interface Conjunction {
 
 export interface Disjunction {
   readonly kind: "Or";
-  readonly left: BaseExpression;
-  readonly right: BaseExpression;
+  readonly left: Expression;
+  readonly right: Expression;
 }
 
 export type Comparison = Equality | Inequality;
@@ -68,12 +68,6 @@ export interface Property {
   readonly kind: "Property";
   readonly type: TypeType;
   readonly ref: string;
-}
-
-export interface SimpleFilter {
-  readonly kind: Equality | Inequality;
-  readonly left: Property;
-  readonly right: Literal;
 }
 
 function Comparison<C extends Comparison, K extends C["kind"]>(kind: K): Function2<Property, Literal, C> {

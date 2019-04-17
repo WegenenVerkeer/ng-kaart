@@ -53,7 +53,7 @@ export namespace AwvV0FilterInterpreters {
   const propertyValueOperator: oi.Interpreter<PropertyValueOperator> = oi.suchThat(
     oi.interpretRecord<PropertyValueOperator>({
       property: oi.field("property", property),
-      value: oi.field("literal", literal)
+      value: oi.field("value", literal)
     }),
     propertyAndValueCompatible,
     `Het type van de property komt niet overeen met dat van de waarde`
@@ -81,14 +81,16 @@ export namespace AwvV0FilterInterpreters {
 
   const disjunction: oi.Interpreter<Disjunction> = oi.interpretRecord({
     kind: oi.field("kind", oi.value("Or")),
-    left: oi.field("left", baseExpression),
-    right: oi.field("right", baseExpression)
+    left: oi.field("left", expression),
+    right: oi.field("right", expression)
   });
 
-  const expression: oi.Interpreter<Expression> = oi.firstOf<Expression>(conjunction, disjunction, comparison);
+  function expression(json: Object): oi.Validation<Expression> {
+    return oi.firstOf<Expression>(conjunction, disjunction, comparison)(json);
+  }
 
   const expressionFilter: oi.Interpreter<ExpressionFilter> = oi.interpretRecord({
-    kind: oi.pure("ExpressionFilter" as "ExpressionFilter"),
+    kind: oi.pure("ExpressionFilter" as "ExpressionFilter"), // volgt op byKind
     name: oi.field("name", oi.str),
     expression: oi.field("expression", expression)
   });

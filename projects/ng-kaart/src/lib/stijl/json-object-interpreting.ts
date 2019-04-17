@@ -523,6 +523,14 @@ export function suchThat<T, U extends T>(interpreter: Interpreter<T>, refinement
   return chain(interpreter, a => (refinement(a) ? succeed(a) : () => fail<U>(failureMsg)));
 }
 
+export function trace<T>(lbl: string, interpreter: Interpreter<T>): Interpreter<T> {
+  return (json: Object) => {
+    const result = interpreter(json);
+    console.log(lbl, result);
+    return result;
+  };
+}
+
 export function toString(json: Object): string {
   return JSON.stringify(json);
 }
