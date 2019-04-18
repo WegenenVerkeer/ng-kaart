@@ -4,14 +4,16 @@ import * as array from "fp-ts/lib/Array";
 import { Function2 } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
-import { distinctUntilChanged, filter, map, sample, shareReplay, startWith } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, sample, shareReplay, startWith, tap } from "rxjs/operators";
 
 import * as fltr from "../filter/filter-model";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import * as ke from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
+import * as prt from "../kaart/kaart-protocol";
 import * as cmd from "../kaart/kaart-protocol-commands";
 import { KaartComponent } from "../kaart/kaart.component";
+import { StopDrawing } from "../kaart/tekenen/tekenen-model";
 import { observeOnAngular } from "../util/observe-on-angular";
 import { collectOption } from "../util/operators";
 import { atLeastOneTrue, negate } from "../util/thruth";
@@ -25,7 +27,7 @@ import { LagenkiezerComponent } from "./lagenkiezer.component";
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class LaagmanipulatieComponent extends KaartChildComponentBase implements OnInit, AfterViewInit {
+export class LaagmanipulatieComponent extends KaartChildComponentBase implements OnInit {
   private readonly zoom$: rx.Observable<number>;
   readonly zichtbaar$: rx.Observable<boolean>;
   readonly onzichtbaar$: rx.Observable<boolean>;
@@ -138,14 +140,14 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
     this.minstensEenLaagActie$ = rx
       .combineLatest(this.kanVerwijderen$, this.kanStijlAanpassen$, this.kanFilteren$, atLeastOneTrue)
       .pipe(shareReplay(1));
-  }
 
-  ngAfterViewInit() {
-    super.ngAfterViewInit();
     const toggleFilterActief$ = this.actionFor$("toggleFilterActief");
-    this.filterActief$.pipe(sample(toggleFilterActief$)).subscribe(actief => {
-      this.dispatch(cmd.ActiveerFilter(this.laag.titel, !actief, kaartLogOnlyWrapper));
-    });
+    this.runInViewReady(
+      this.filterActief$.pipe(
+        sample(toggleFilterActief$),
+        tap(actief => this.dispatch(cmd.ActiveerFilter(this.laag.titel, !actief, kaartLogOnlyWrapper)))
+      )
+    );
   }
 
   get title(): string {
