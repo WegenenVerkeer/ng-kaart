@@ -41,7 +41,10 @@ export class FilterComponent extends KaartChildComponentBase {
   readonly filteredOperatoren$: rx.Observable<FilterBuilder.FilterBuildElement[]>;
 
   readonly veldControl = new FormControl("", [Validators.required, autoCompleteSelectieVerplichtValidator]);
-  readonly operatorControl = new FormControl(null, [Validators.required, autoCompleteSelectieVerplichtValidator]);
+  readonly operatorControl = new FormControl(FilterBuilder.comparisonBuilders.find(operator => operator.description === "is"), [
+    Validators.required,
+    autoCompleteSelectieVerplichtValidator
+  ]);
   readonly waardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
 
   readonly geldigFilterCmd$: rx.Observable<prt.ZetFilter<KaartInternalMsg>>;
@@ -85,7 +88,7 @@ export class FilterComponent extends KaartChildComponentBase {
                 this.waardeControl.setValue(comparison.value.value);
               } else {
                 this.veldControl.reset();
-                this.operatorControl.reset();
+                this.operatorControl.reset(FilterBuilder.comparisonBuilders.find(operator => operator.description === "is"));
                 this.waardeControl.reset();
               }
             }
