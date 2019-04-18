@@ -7,7 +7,7 @@ import { Predicate } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, filter, map, scan, share, shareReplay, startWith, take } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, filter, map, scan, share, shareReplay, startWith, take, tap } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
@@ -101,10 +101,16 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
     );
     this.lagenHoog$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Hoog")!.pipe(
       debounceTime(100),
-      share()
+      shareReplay(1)
     );
-    this.lagenLaag$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Laag")!;
-    const achtergrondLagen$ = this.modelChanges.lagenOpGroep.get("Achtergrond")!;
+    this.lagenLaag$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Laag")!.pipe(
+      debounceTime(100),
+      shareReplay(1)
+    );
+    const achtergrondLagen$ = this.modelChanges.lagenOpGroep.get("Achtergrond")!.pipe(
+      debounceTime(100),
+      shareReplay(1)
+    );
     this.lagenMetLegende$ = rx
       .combineLatest(this.lagenHoog$, this.lagenLaag$, achtergrondLagen$, zoom$, (lagenHoog, lagenLaag, achtergrondLagen, zoom) => {
         const lagen = lagenHoog.concat(lagenLaag, achtergrondLagen);
