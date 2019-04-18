@@ -56,6 +56,20 @@
         padding: 0 12px 0 12px;
         height: 30px;
         line-height: 30px;
+
+        .niet-actief::after {
+          position: absolute;
+          width: 22px;
+          left: 15px;
+          top: 56%;
+          right: 0;
+          content: "";
+          border-top: 2px solid;
+          border-color: inherit;
+          transform: rotate(-55deg);
+          box-shadow: 0 0 0 1px white;
+          margin: -2px;
+        }
       }
     }
   }

@@ -1,19 +1,19 @@
-import { ChangeDetectionStrategy, Component, Input, NgZone, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
+import { AfterViewInit, ChangeDetectionStrategy, Component, Input, NgZone, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
 import { MatMenuTrigger } from "@angular/material";
 import * as array from "fp-ts/lib/Array";
 import { Function2 } from "fp-ts/lib/function";
-import * as fpMap from "fp-ts/lib/Map";
 import { Option } from "fp-ts/lib/Option";
-import { setoidString } from "fp-ts/lib/Setoid";
 import * as rx from "rxjs";
-import { distinctUntilChanged, filter, map, shareReplay, startWith } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, sample, shareReplay, startWith, tap } from "rxjs/operators";
 
 import * as fltr from "../filter/filter-model";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import * as ke from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
+import * as prt from "../kaart/kaart-protocol";
 import * as cmd from "../kaart/kaart-protocol-commands";
 import { KaartComponent } from "../kaart/kaart.component";
+import { StopDrawing } from "../kaart/tekenen/tekenen-model";
 import { observeOnAngular } from "../util/observe-on-angular";
 import { collectOption } from "../util/operators";
 import { atLeastOneTrue, negate } from "../util/thruth";
@@ -37,11 +37,8 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
   readonly minstensEenLaagActie$: rx.Observable<boolean>;
   readonly heeftFilter$: rx.Observable<boolean>;
   readonly heeftGeenFilter$: rx.Observable<boolean>;
+  readonly filterActief$: rx.Observable<boolean>;
   readonly filterTotaal$: rx.Observable<string>;
-
-  // TODO: subject moet luisteren op messages. Zit in volgende story
-  readonly filterActiefSubj: rx.BehaviorSubject<boolean> = new rx.BehaviorSubject<boolean>(true);
-  readonly filterActief$: rx.Observable<boolean> = this.filterActiefSubj.asObservable();
 
   @Input()
   laag: ke.ToegevoegdeLaag;
@@ -109,6 +106,13 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
 
     this.heeftGeenFilter$ = this.heeftFilter$.pipe(map(negate));
 
+    this.filterActief$ = laag$.pipe(
+      filter(laag => this.laag.titel === laag.titel),
+      map(laag => laag.filterInstellingen.actief),
+      startWith(true),
+      shareReplay(1)
+    );
+
     // TODO: voorlopig af vermits dit voor grote collections een te dure query is
     // FilterTotaal wordt ook niet geupdate in de UI, ondanks dat er wel events geemit worden..
     // Indien in de reducer dit wordt afgezet, werkt het wel: zendFilterWijziging(updatedLaag, updatedLaag.filter.spec);
@@ -136,6 +140,14 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
     this.minstensEenLaagActie$ = rx
       .combineLatest(this.kanVerwijderen$, this.kanStijlAanpassen$, this.kanFilteren$, atLeastOneTrue)
       .pipe(shareReplay(1));
+
+    const toggleFilterActief$ = this.actionFor$("toggleFilterActief");
+    this.runInViewReady(
+      this.filterActief$.pipe(
+        sample(toggleFilterActief$),
+        tap(actief => this.dispatch(cmd.ActiveerFilter(this.laag.titel, !actief, kaartLogOnlyWrapper)))
+      )
+    );
   }
 
   get title(): string {
@@ -184,10 +196,5 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
 
   verwijderFilter() {
     this.dispatch(cmd.ZetFilter(this.laag.titel, fltr.pure(), kaartLogOnlyWrapper));
-  }
-
-  toggleFilterActief() {
-    // TODO: dit moet met messages, want moet doorstromen naar reducer. Zit in volgende story
-    this.filterActiefSubj.next(!this.filterActiefSubj.value);
   }
 }

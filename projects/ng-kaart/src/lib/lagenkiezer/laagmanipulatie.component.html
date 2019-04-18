@@ -16,9 +16,9 @@
     <div [ngClass]="stijlInKiezer">{{ title }}</div>
   </div>
   <div [hidden]="heeftGeenFilter$ | async" class="filter-icoon">
-    <button mat-icon-button class="filter-inhoud" (click)="pasFilterAan()"> <!-- TODO: in volgende story: toggleFilterActief() -->
-      <mat-icon *ngIf="filterActief$ | async">filter_list</mat-icon>
-      <mat-icon *ngIf="!(filterActief$ | async)">not_interested</mat-icon>
+    <button mat-icon-button class="filter-inhoud" (click)="onAction('toggleFilterActief')">
+      <mat-icon *ngIf="filterActief$ | async" matTooltip="Deactiveer filter">filter_list</mat-icon>
+      <mat-icon *ngIf="!(filterActief$ | async)" class="niet-actief" matTooltip="Activeer filter">filter_list</mat-icon>
 <!--      {{ filterTotaal$ | async }}-->
     </button>
   </div>

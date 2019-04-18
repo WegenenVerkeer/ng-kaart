@@ -18,6 +18,7 @@ import { DrawOps } from "./tekenen/tekenen-model";
 export type Command<Msg extends KaartMsg> =
   | AbortTileLoadingCmd
   | ActiveerCacheVoorLaag<Msg>
+  | ActiveerFilter<Msg>
   | ActiveerHighlightModusCmd
   | ActiveerHoverModusCmd
   | ActiveerSelectieModusCmd
@@ -396,6 +397,13 @@ export interface ZetFilter<Msg extends KaartMsg> {
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
+export interface ActiveerFilter<Msg extends KaartMsg> {
+  readonly type: "ActiveerFilter";
+  readonly titel: string;
+  readonly actief: boolean;
+  readonly wrapper: BareValidationWrapper<Msg>;
+}
+
 export interface VoegInteractieToeCmd {
   readonly type: "VoegInteractieToe";
   readonly interactie: ol.interaction.Pointer;
@@ -637,6 +645,19 @@ export function ZetFilter<Msg extends KaartMsg>(titel: string, filter: Filter, w
     type: "ZetFilter",
     titel: titel,
     filter: filter,
+    wrapper: wrapper
+  };
+}
+
+export function ActiveerFilter<Msg extends KaartMsg>(
+  titel: string,
+  actief: boolean,
+  wrapper: BareValidationWrapper<Msg>
+): ActiveerFilter<Msg> {
+  return {
+    type: "ActiveerFilter",
+    titel: titel,
+    actief: actief,
     wrapper: wrapper
   };
 }
