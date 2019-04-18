@@ -1313,24 +1313,28 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
+    function activeerFilterOpSource(laag: ke.ToegevoegdeVectorLaag, noSqlFsSource: NosqlFsSource, filter: Filter): void {
+      laag.bron.filter.foldL(
+        // indien de bron al een vaste filter bevat, dient deze gecombineerd te worden met de filter van de user
+        () => noSqlFsSource.setFilter(FilterCql.cql(filter)),
+        bronFilter =>
+          noSqlFsSource.setFilter(
+            FilterCql.cql(filter)
+              .map(cql => `(${bronFilter}) AND (${cql})`)
+              .alt(some(bronFilter))
+          )
+      );
+      noSqlFsSource.clear();
+      noSqlFsSource.refresh();
+    }
+
     function zetFilter(cmnd: prt.ZetFilter<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
         chain(valideerToegevoegdeVectorLaagBestaat(cmnd.titel), laag =>
           valideerNoSqlFsSourceBestaat(cmnd.titel).map(noSqlFsSource => [laag, noSqlFsSource])
         ).map(([laag, noSqlFsSource]: [ke.ToegevoegdeVectorLaag, NosqlFsSource]) => {
-          laag.bron.filter.foldL(
-            // indien de bron al een vaste filter bevat, dient deze gecombineerd te worden met de filter van de user
-            () => noSqlFsSource.setFilter(FilterCql.cql(cmnd.filter)),
-            bronFilter =>
-              noSqlFsSource.setFilter(
-                FilterCql.cql(cmnd.filter)
-                  .map(cql => `(${bronFilter}) AND (${cql})`)
-                  .alt(some(bronFilter))
-              )
-          );
-          noSqlFsSource.clear();
-          noSqlFsSource.refresh();
+          activeerFilterOpSource(laag, noSqlFsSource, cmnd.filter);
           const updatedLaag = pasLaagFilterAan(cmnd.filter, laag.filterInstellingen.actief)(laag);
           const updatedModel = pasLaagInModelAan(model)(updatedLaag);
           zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
@@ -1346,18 +1350,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           valideerNoSqlFsSourceBestaat(cmnd.titel).map(noSqlFsSource => [laag, noSqlFsSource])
         ).map(([laag, noSqlFsSource]: [ke.ToegevoegdeVectorLaag, NosqlFsSource]) => {
           const filter: (actief: boolean) => Filter = actief => (actief ? laag.filterInstellingen.spec : pure());
-          laag.bron.filter.foldL(
-            // indien de bron al een vaste filter bevat, dient deze gecombineerd te worden met de filter van de user
-            () => noSqlFsSource.setFilter(FilterCql.cql(filter(cmnd.actief))),
-            bronFilter =>
-              noSqlFsSource.setFilter(
-                FilterCql.cql(filter(cmnd.actief))
-                  .map(cql => `(${bronFilter}) AND (${cql})`)
-                  .alt(some(bronFilter))
-              )
-          );
-          noSqlFsSource.clear();
-          noSqlFsSource.refresh();
+          activeerFilterOpSource(laag, noSqlFsSource, filter(cmnd.actief));
           const updatedLaag = pasLaagFilterAan(laag.filterInstellingen.spec, cmnd.actief)(laag);
           const updatedModel = pasLaagInModelAan(model)(updatedLaag);
           zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
