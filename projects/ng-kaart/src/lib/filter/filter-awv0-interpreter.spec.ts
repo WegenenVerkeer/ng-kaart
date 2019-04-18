@@ -4,9 +4,9 @@ import { AwvV0FilterInterpreters } from "./filter-awv0-interpreter";
 import { Filter, Literal, Property, PureFilter } from "./filter-model";
 
 describe("De filterinterpreter", () => {
+  const property: Property = Property("string", "prop");
+  const literal: Literal = Literal("string", "value");
   describe("bij het interpreteren van geldige structuren", () => {
-    const property: Property = Property("string", "prop");
-    const literal: Literal = Literal("string", "value");
     it("moet een 'pure' filter kunnen verwerken", () => {
       const pure: Filter = PureFilter;
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(pure);
@@ -174,6 +174,36 @@ describe("De filterinterpreter", () => {
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(orAnd);
       expect(result.isSuccess()).toBe(true);
       expect(result.getOrElse(undefined)).toEqual(orAnd);
+    });
+  });
+  describe("Bij het interpreteren van ongeldige structuren", () => {
+    it("moet een fout geven bij een expressie met een ontbrekende property ", () => {
+      const eq: Object = {
+        kind: "ExpressionFilter",
+        name: "testFilter",
+        expression: {
+          kind: "Equality",
+          value: literal
+        }
+      };
+      const result = AwvV0FilterInterpreters.jsonAwv0Definition(eq);
+      console.log(result);
+      expect(result.isFailure()).toBe(true);
+      expect(result.fold(msgs => msgs.find(m => m.endsWith("heeft geen veld 'property'")), undefined)).toBeTruthy();
+    });
+    it("moet een fout geven wanneer het type van property en waarde niet overeenkomen", () => {
+      const eq: Object = {
+        kind: "ExpressionFilter",
+        name: "testFilter",
+        expression: {
+          kind: "Inequality",
+          property: property,
+          value: { ...literal, type: "double" }
+        }
+      };
+      const result = AwvV0FilterInterpreters.jsonAwv0Definition(eq);
+      expect(result.isFailure()).toBe(true);
+      expect(result.fold(msgs => msgs.includes("Het type van de property komt niet overeen met dat van de waarde"), undefined)).toBe(true);
     });
   });
 });

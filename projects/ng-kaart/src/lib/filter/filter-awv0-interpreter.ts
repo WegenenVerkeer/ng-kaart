@@ -1,4 +1,4 @@
-import { constant } from "fp-ts/lib/function";
+import * as array from "fp-ts/lib/Array";
 
 import * as oi from "../stijl/json-object-interpreting";
 
@@ -47,7 +47,10 @@ export namespace AwvV0FilterInterpreters {
   const literal: oi.Interpreter<Literal> = oi.interpretRecord({
     kind: oi.field("kind", oi.value("Literal")),
     type: oi.field("type", typeType),
-    value: oi.field("value", oi.firstOf<ValueType>(oi.bool, oi.num, oi.str))
+    value: oi.field(
+      "value",
+      oi.mapFailureTo(oi.firstOf<ValueType>(oi.bool, oi.num, oi.str), "De waarde moet een bool, number of string zijn")
+    )
   });
 
   const propertyValueOperator: oi.Interpreter<PropertyValueOperator> = oi.suchThat(
@@ -67,7 +70,10 @@ export namespace AwvV0FilterInterpreters {
     Inequality: inequality
   });
 
-  const baseExpression: oi.Interpreter<BaseExpression> = oi.firstOf<BaseExpression>(conjunction, comparison);
+  const baseExpression: oi.Interpreter<BaseExpression> = oi.mapFailureTo(
+    oi.firstOf<BaseExpression>(conjunction, comparison),
+    "We verwachten een 'and' of een vergelijking"
+  );
 
   // Een functie ipv een const omdat het een recursieve definitie betreft en consts strikt na elkaar
   // gedefinieerd moeten zijn.
@@ -85,8 +91,11 @@ export namespace AwvV0FilterInterpreters {
     right: oi.field("right", expression)
   });
 
+  // functie omwille van recursie
   function expression(json: Object): oi.Validation<Expression> {
-    return oi.firstOf<Expression>(conjunction, disjunction, comparison)(json);
+    return oi.mapFailure(oi.firstOf<Expression>(conjunction, disjunction, comparison), fls =>
+      array.snoc(fls, "We verwachten een 'and', 'or' of vergelijking")
+    )(json);
   }
 
   const expressionFilter: oi.Interpreter<ExpressionFilter> = oi.interpretRecord({

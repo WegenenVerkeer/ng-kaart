@@ -5,7 +5,7 @@ import * as ol from "openlayers";
 
 import { ZoekAntwoord, ZoekerMetWeergaveopties, ZoekResultaat } from "../zoeker/zoeker";
 
-import { KaartLocaties, WegLocatie } from "./kaart-bevragen/laaginfo.model";
+import { KaartLocaties } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { TekenResultaat } from "./kaart-elementen";
 import { InfoBoodschap } from "./kaart-with-info-model";

@@ -1,11 +1,11 @@
 import * as array from "fp-ts/lib/Array";
-import { Refinement } from "fp-ts/lib/function";
+import { identity, Refinement } from "fp-ts/lib/function";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import * as traversable from "fp-ts/lib/Traversable";
 import * as validation from "fp-ts/lib/Validation";
 
 import { kaartLogger } from "../kaart/log";
-import { failure, success, validationAp, validationChain } from "../util/validation";
+import { failure, success, validationAp, validationChain, validationSemigroup } from "../util/validation";
 
 export type Error = string;
 export type Validation<T> = validation.Validation<Error[], T>;
@@ -169,13 +169,14 @@ export function atMostOneDefined<T>(...interpreters: Interpreter<T | undefined>[
  */
 export function firstOf<T>(...interpreters: Interpreter<T>[]): Interpreter<T> {
   return (json: Object) => {
-    for (const interpreter of interpreters) {
-      const validated = interpreter(json);
-      if (validated.isSuccess()) {
-        return validated;
-      }
-    }
-    return fail("Er moet 1 waarde aanwezig zijn");
+    return interpreters.reduce(
+      (validation, interpreter) =>
+        validation.fold(
+          allMsgs => interpreter(json).mapFailure(msgs => validationSemigroup.concat(allMsgs, msgs)), // foutboodschappen verzamelen
+          success
+        ),
+      fail<T>("Er moet 1 waarde aanwezig zijn")
+    );
   };
 }
 
@@ -525,6 +526,14 @@ export function value<T extends string | number | boolean>(value: T): Interprete
 
 export function suchThat<T, U extends T>(interpreter: Interpreter<T>, refinement: Refinement<T, U>, failureMsg: string): Interpreter<U> {
   return chain(interpreter, a => (refinement(a) ? succeed(a) : () => fail<U>(failureMsg)));
+}
+
+export function mapFailure<T>(interpreter: Interpreter<T>, failureMsgF: (msgs: string[]) => string[]): Interpreter<T> {
+  return (json: Object) => interpreter(json).bimap(failureMsgF, identity);
+}
+
+export function mapFailureTo<T>(interpreter: Interpreter<T>, failureMsg: string): Interpreter<T> {
+  return mapFailure(interpreter, () => [failureMsg]);
 }
 
 export function trace<T>(lbl: string, interpreter: Interpreter<T>): Interpreter<T> {
