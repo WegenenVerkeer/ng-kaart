@@ -207,7 +207,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     }))
   );
 
-  const lagenOpGroep$ = filterable.map(changer.lagenOpGroepSubj, s => s!.asObservable());
+  const lagenOpGroep$ = filterable.map(changer.lagenOpGroepSubj, s => s.asObservable());
   const filterVectorLagen = (tlgn: ke.ToegevoegdeLaag[]) => tlgn.filter(ke.isToegevoegdeVectorLaag);
   const vectorlagen$ = lagenOpGroep$.get("Voorgrond.Hoog")!.pipe(map(filterVectorLagen));
 

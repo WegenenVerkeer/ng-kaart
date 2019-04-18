@@ -7,7 +7,7 @@ import { Predicate } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, filter, map, scan, shareReplay, startWith, take } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, filter, map, scan, share, shareReplay, startWith, take } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
@@ -16,6 +16,7 @@ import { LegendeItem } from "../kaart/kaart-legende";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
 import { isAanpassingBezig } from "../kaart/stijleditor/state";
+import { subSpy } from "../util";
 
 export const LagenUiSelector = "Lagenkiezer";
 
@@ -98,7 +99,10 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
       map(i => i.zoom),
       distinctUntilChanged()
     );
-    this.lagenHoog$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Hoog")!;
+    this.lagenHoog$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Hoog")!.pipe(
+      debounceTime(100),
+      share()
+    );
     this.lagenLaag$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Laag")!;
     const achtergrondLagen$ = this.modelChanges.lagenOpGroep.get("Achtergrond")!;
     this.lagenMetLegende$ = rx

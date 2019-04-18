@@ -69,8 +69,8 @@ export class FilterComponent extends KaartChildComponentBase {
           tap(zichtbaar => {
             if (zichtbaar) {
               // zet control waarden bij start aanpassen filter van een laag
-              if (laag.filter.spec.kind === "ExpressionFilter") {
-                const exprFilter = laag.filter.spec as ExpressionFilter;
+              if (laag.filterInstellingen.spec.kind === "ExpressionFilter") {
+                const exprFilter = laag.filterInstellingen.spec as ExpressionFilter;
                 const comparison = exprFilter.expression as Comparison;
                 this.veldControl.setValue(
                   ToegevoegdeVectorLaag.veldInfosLens.get(laag).find(veldinfo => veldinfo.naam === comparison.property.ref)

@@ -1,6 +1,6 @@
 import * as array from "fp-ts/lib/Array";
 import { Curried2, Function1, Function2, not, or, Predicate } from "fp-ts/lib/function";
-import { fromNullable, fromPredicate, none, Option, some } from "fp-ts/lib/Option";
+import { fromPredicate, none, Option, some } from "fp-ts/lib/Option";
 import { setoidString } from "fp-ts/lib/Setoid";
 import { Optional } from "monocle-ts";
 import { isUndefined } from "util";

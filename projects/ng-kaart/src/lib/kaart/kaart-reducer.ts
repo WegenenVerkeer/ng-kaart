@@ -26,7 +26,7 @@ import { allOf, fromBoolean, fromOption, fromPredicate, success, validationChain
 import { zoekerMetNaam } from "../zoeker/zoeker";
 
 import { CachedFeatureLookup } from "./cache/lookup";
-import { LaagFilter } from "./kaart-elementen";
+import { LaagFilterInstellingen } from "./kaart-elementen";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { MsgGen } from "./kaart-protocol-subscriptions";
@@ -370,8 +370,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                 positieInGroep: groepPositie,
                 magGetoondWorden: cmnd.magGetoondWorden,
                 legende: cmnd.legende,
-                stijlInLagenKiezer: cmnd.stijlInLagenKiezer,
-                filter: LaagFilter(pure(), true)
+                stijlInLagenKiezer: cmnd.stijlInLagenKiezer
               };
               const toegevoegdeLaag: ke.ToegevoegdeLaag = ke
                 .asVectorLaag(cmnd.laag)
@@ -383,7 +382,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                   stijlSel: vlg.styleSelector,
                   stijlSelBron: vlg.styleSelectorBron,
                   selectiestijlSel: vlg.selectieStyleSelector,
-                  hoverstijlSel: vlg.hoverStyleSelector
+                  hoverstijlSel: vlg.hoverStyleSelector,
+                  filterInstellingen: LaagFilterInstellingen(pure(), true)
                 }))
                 .getOrElse(toegevoegdeLaagCommon);
               layer.set("titel", titel);
@@ -463,8 +463,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               positieInGroep: laag.positieInGroep,
               magGetoondWorden: laag.magGetoondWorden,
               legende: laag.legende,
-              stijlInLagenKiezer: laag.stijlInLagenKiezer,
-              filter: LaagFilter(pure(), true)
+              stijlInLagenKiezer: laag.stijlInLagenKiezer
             };
             const toegevoegdeLaag = ke
               .asVectorLaag(cmnd.laag)
@@ -473,7 +472,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                 stijlPositie: vectorLaagPositie(laag.positieInGroep, laag.laaggroep),
                 stijlSel: vlg.styleSelector,
                 selectiestijlSel: vlg.selectieStyleSelector,
-                hoverstijlSel: vlg.hoverStyleSelector
+                hoverstijlSel: vlg.hoverStyleSelector,
+                filterInstellingen: LaagFilterInstellingen(pure(), true)
               }))
               .getOrElse(toegevoegdeLaagCommon);
             const oldLayer = laag.layer;
@@ -716,19 +716,15 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     // Lensaardig met side-effect
-    const pasLaagZichtbaarheidAan: (toon: boolean) => (laag: ke.ToegevoegdeLaag) => ke.ToegevoegdeLaag = magGetoondWorden => laag => {
+    const pasLaagZichtbaarheidAan: (toon: boolean) => Endomorphism<ke.ToegevoegdeLaag> = magGetoondWorden => laag => {
       laag.layer.setVisible(magGetoondWorden);
       return laag.magGetoondWorden === magGetoondWorden ? laag : { ...laag, magGetoondWorden: magGetoondWorden };
     };
 
-    // Lensaardig met side-effect
-    const pasLaagFilterAan: (spec: Filter, actief: boolean) => (laag: ke.ToegevoegdeVectorLaag) => ke.ToegevoegdeVectorLaag = (
-      spec,
-      actief
-    ) => laag => {
+    const pasLaagFilterAan: (spec: Filter, actief: boolean) => Endomorphism<ke.ToegevoegdeVectorLaag> = (spec, actief) => laag => {
       return {
         ...laag,
-        filter: LaagFilter(spec, actief)
+        filterInstellingen: LaagFilterInstellingen(spec, actief)
       };
     };
 
@@ -1326,7 +1322,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           noSqlFsSource.setFilter(FilterCql.cql(cmnd.filter));
           noSqlFsSource.clear();
           noSqlFsSource.refresh();
-          const updatedLaag = pasLaagFilterAan(cmnd.filter, laag.filter.actief)(laag);
+          const updatedLaag = pasLaagFilterAan(cmnd.filter, laag.filterInstellingen.actief)(laag);
           const updatedModel = pasLaagInModelAan(model)(updatedLaag);
           zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
           return ModelAndEmptyResult(updatedModel);

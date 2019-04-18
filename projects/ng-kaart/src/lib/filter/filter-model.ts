@@ -214,7 +214,7 @@ export namespace FilterCql {
     and: expr => expressionCql(expr.left) + " AND " + expressionCql(expr.right),
     or: expr => expressionCql(expr.left) + " OR " + expressionCql(expr.right),
     equality: expr => propertyCql(expr.property) + " = " + literalCql(expr.value),
-    inequality: expr => propertyCql(expr.property) + " <> " + literalCql(expr.value)
+    inequality: expr => propertyCql(expr.property) + " != " + literalCql(expr.value)
   });
 
   export const cql: Function1<Filter, Option<string>> = switchFilter({

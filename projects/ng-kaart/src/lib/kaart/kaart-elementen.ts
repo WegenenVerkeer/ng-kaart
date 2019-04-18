@@ -141,7 +141,7 @@ export interface TekenResultaat {
   readonly featureId: number | string;
 }
 
-export interface LaagFilter {
+export interface LaagFilterInstellingen {
   readonly spec: Filter;
   readonly actief: boolean;
 }
@@ -158,7 +158,6 @@ export interface ToegevoegdeLaag {
   readonly magGetoondWorden: boolean;
   readonly legende: Option<Legende>;
   readonly stijlInLagenKiezer: Option<string>; // optionele naam van een CSS klasse om lijn in lagenkiezer individueel te stijlen
-  readonly filter: LaagFilter;
 }
 
 export interface ToegevoegdeVectorLaag extends ToegevoegdeLaag {
@@ -169,6 +168,7 @@ export interface ToegevoegdeVectorLaag extends ToegevoegdeLaag {
   readonly stijlSelBron: Option<AwvV0StyleSpec>; // Het JSON document dat aan de basis ligt van de StyleSelector
   readonly selectiestijlSel: Option<StyleSelector>;
   readonly hoverstijlSel: Option<StyleSelector>;
+  readonly filterInstellingen: LaagFilterInstellingen;
 }
 
 export const isWmsLaag: (laag: Laag) => boolean = laag => laag.type === SingleTileWmsType || laag.type === TiledWmsType;
@@ -230,7 +230,8 @@ export function TekenResultaat(geometry: ol.geom.Geometry, volgnummer: number, f
     geometry: geometry
   };
 }
-export function LaagFilter(spec: Filter, actief: boolean): LaagFilter {
+
+export function LaagFilterInstellingen(spec: Filter, actief: boolean): LaagFilterInstellingen {
   return {
     spec: spec,
     actief: actief
