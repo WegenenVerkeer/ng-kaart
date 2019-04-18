@@ -105,6 +105,7 @@ export interface VectorLaag {
   readonly offsetveld: Option<string>;
   readonly verwijderd: boolean;
   readonly rijrichtingIsDigitalisatieZin: boolean;
+  readonly filter: Option<string>;
 }
 
 export interface BlancoLaag {

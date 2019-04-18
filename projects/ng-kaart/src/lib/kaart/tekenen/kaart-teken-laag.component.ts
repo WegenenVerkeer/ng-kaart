@@ -184,7 +184,8 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
       offsetveld: none,
       velden: new Map<string, VeldInfo>(),
       verwijderd: false,
-      rijrichtingIsDigitalisatieZin: false
+      rijrichtingIsDigitalisatieZin: false,
+      filter: none
     };
   }
 

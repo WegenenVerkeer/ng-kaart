@@ -1319,7 +1319,16 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         chain(valideerToegevoegdeVectorLaagBestaat(cmnd.titel), laag =>
           valideerNoSqlFsSourceBestaat(cmnd.titel).map(noSqlFsSource => [laag, noSqlFsSource])
         ).map(([laag, noSqlFsSource]: [ke.ToegevoegdeVectorLaag, NosqlFsSource]) => {
-          noSqlFsSource.setFilter(FilterCql.cql(cmnd.filter));
+          laag.bron.filter.foldL(
+            // indien de bron al een vaste filter bevat, dient deze gecombineerd te worden met de filter van de user
+            () => noSqlFsSource.setFilter(FilterCql.cql(cmnd.filter)),
+            bronFilter =>
+              noSqlFsSource.setFilter(
+                FilterCql.cql(cmnd.filter)
+                  .map(cql => `(${bronFilter}) AND (${cql})`)
+                  .alt(some(bronFilter))
+              )
+          );
           noSqlFsSource.clear();
           noSqlFsSource.refresh();
           const updatedLaag = pasLaagFilterAan(cmnd.filter, laag.filterInstellingen.actief)(laag);

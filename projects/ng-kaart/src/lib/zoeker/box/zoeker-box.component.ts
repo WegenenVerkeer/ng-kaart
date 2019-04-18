@@ -349,7 +349,8 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       offsetveld: none,
       velden: new Map<string, VeldInfo>(),
       verwijderd: false,
-      rijrichtingIsDigitalisatieZin: false
+      rijrichtingIsDigitalisatieZin: false,
+      filter: none
     };
   }
 

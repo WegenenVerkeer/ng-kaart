@@ -125,7 +125,8 @@ const createLayer: Function2<string, ol.source.Vector, ke.VectorLaag> = (titel, 
     offsetveld: none, // veel ruis
     velden: new Map<string, ke.VeldInfo>(),
     verwijderd: false,
-    rijrichtingIsDigitalisatieZin: false
+    rijrichtingIsDigitalisatieZin: false,
+    filter: none
   };
 };
 

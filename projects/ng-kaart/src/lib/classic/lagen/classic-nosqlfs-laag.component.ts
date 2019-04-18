@@ -152,8 +152,9 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
       offsetveld: this._offsetveld,
       velden: new Map<string, ke.VeldInfo>(this._veldinfos.map(vi => [vi.naam, vi] as [string, ke.VeldInfo])),
       verwijderd: false,
-      rijrichtingIsDigitalisatieZin: false
       // TODO: dit veld (en offsetveld en ident8) zijn eigenlijk stijl concerns en zouden beter naar daar verhuisd moet worden
+      rijrichtingIsDigitalisatieZin: false,
+      filter: option.fromNullable(this._filter)
     };
   }
 }
