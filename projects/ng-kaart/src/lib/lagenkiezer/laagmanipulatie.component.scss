@@ -57,7 +57,7 @@
         height: 30px;
         line-height: 30px;
 
-        .niet-actief::after {
+        .niet-actief::after { // diagonale lijn door icoon tekenen
           position: absolute;
           width: 22px;
           left: 15px;
