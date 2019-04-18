@@ -17,8 +17,8 @@
   </div>
   <div [hidden]="heeftGeenFilter$ | async" class="filter-icoon">
     <button mat-icon-button class="filter-inhoud" (click)="onAction('toggleFilterActief')">
-      <mat-icon *ngIf="filterActief$ | async">filter_list</mat-icon>
-      <mat-icon *ngIf="!(filterActief$ | async)">not_interested</mat-icon>
+      <mat-icon *ngIf="filterActief$ | async" matTooltip="Deactiveer filter">filter_list</mat-icon>
+      <mat-icon *ngIf="!(filterActief$ | async)" matTooltip="Activeer filter">not_interested</mat-icon>
 <!--      {{ filterTotaal$ | async }}-->
     </button>
   </div>
