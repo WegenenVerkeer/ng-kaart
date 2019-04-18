@@ -1,0 +1,7 @@
+<div class="alle-lagen-form">
+  <mat-form-field>
+    <mat-select placeholder="Selecteer een categorie" [formControl]="categorieControl">
+      <mat-option *ngFor="let categorie of categorieen$ | async" [value]="categorie">{{ categorie }}</mat-option>
+    </mat-select>
+  </mat-form-field>
+</div>

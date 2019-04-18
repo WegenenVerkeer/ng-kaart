@@ -18,6 +18,10 @@
         <mat-icon>search</mat-icon>
         <span>Zoek een WMS-laag</span>
       </button>
+      <button mat-menu-item *ngIf="availability$(AlleLagen) | async" (click)="kiesZoeker(AlleLagen)" [disabled]="actieveZoeker === AlleLagen">
+        <mat-icon>search</mat-icon>
+        <span>Zoek een laag</span>
+      </button>
       <button mat-menu-item (click)="toggleHelp()">
         <mat-icon>help</mat-icon>
         <span *ngIf="!toonHelp">Toon hulp bij zoeken</span>
@@ -32,6 +36,7 @@
     <span class="actieve-zoeker-titel" *ngIf="actieveZoeker === Perceel">Zoek op perceel</span>
     <span class="actieve-zoeker-titel" *ngIf="actieveZoeker === Crab">Zoek op adres via CRAB</span>
     <span class="actieve-zoeker-titel" *ngIf="actieveZoeker === ExterneWms">Zoek een WMS-laag</span>
+    <span class="actieve-zoeker-titel" *ngIf="actieveZoeker === AlleLagen">Zoek een laag</span>
     <div class="zoek-bezig-indicator" *ngIf="isBusy()">
       <mat-spinner diameter="20"></mat-spinner>
     </div>
@@ -47,6 +52,10 @@
       <mat-icon>close</mat-icon>
     </button>
     <button mat-icon-button *ngIf="actieveZoeker === ExterneWms && isZoekerMaakLeegEnabled(ExterneWms)" (click)="maakVeldenLeeg(ExterneWms)"
+            [matTooltip]="alleZoekResultaten.length > 0 ? 'Wis invoer en zoekresultaat' : 'Wis invoer'" matTooltipPosition="right">
+      <mat-icon>close</mat-icon>
+    </button>
+    <button mat-icon-button *ngIf="actieveZoeker === AlleLagen && isZoekerMaakLeegEnabled(AlleLagen)" (click)="maakVeldenLeeg(AlleLagen)"
             [matTooltip]="alleZoekResultaten.length > 0 ? 'Wis invoer en zoekresultaat' : 'Wis invoer'" matTooltipPosition="right">
       <mat-icon>close</mat-icon>
     </button>
@@ -80,6 +89,9 @@
   <awv-zoeker-externe-wms-getrapt *ngIf="actieveZoeker === ExterneWms" [hidden]="!toonResultaat"
                                   (leegMakenDisabledChange)="onMaakLeegDisabledChange(ExterneWms, $event)"
                                   #zoekerExterneWmsGetrapt></awv-zoeker-externe-wms-getrapt>                           
+  <awv-zoeker-alle-lagen-getrapt *ngIf="actieveZoeker === AlleLagen" [hidden]="!toonResultaat"
+                                  (leegMakenDisabledChange)="onMaakLeegDisabledChange(AlleLagen, $event)"
+                                  #zoekerAlleLagenGetrapt></awv-zoeker-alle-lagen-getrapt>
   <div *ngIf="toonResultaat && isInklapbaar()" class="divider"></div>
   <div class="zoeker-resultaat-box" *ngIf="toonResultaat" [@enterAnimation]>
     <button *ngFor="let resultaat of alleZoekResultaten; let index=index; let isFirst=first; let isLast=last"
