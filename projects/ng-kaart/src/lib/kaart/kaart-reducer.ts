@@ -1339,6 +1339,33 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
+    function activeerFilter(cmnd: prt.ActiveerFilter<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        chain(valideerToegevoegdeVectorLaagBestaat(cmnd.titel), laag =>
+          valideerNoSqlFsSourceBestaat(cmnd.titel).map(noSqlFsSource => [laag, noSqlFsSource])
+        ).map(([laag, noSqlFsSource]: [ke.ToegevoegdeVectorLaag, NosqlFsSource]) => {
+          const filter: (actief: boolean) => Filter = actief => (actief ? laag.filterInstellingen.spec : pure());
+          laag.bron.filter.foldL(
+            // indien de bron al een vaste filter bevat, dient deze gecombineerd te worden met de filter van de user
+            () => noSqlFsSource.setFilter(FilterCql.cql(filter(cmnd.actief))),
+            bronFilter =>
+              noSqlFsSource.setFilter(
+                FilterCql.cql(filter(cmnd.actief))
+                  .map(cql => `(${bronFilter}) AND (${cql})`)
+                  .alt(some(bronFilter))
+              )
+          );
+          noSqlFsSource.clear();
+          noSqlFsSource.refresh();
+          const updatedLaag = pasLaagFilterAan(laag.filterInstellingen.spec, cmnd.actief)(laag);
+          const updatedModel = pasLaagInModelAan(model)(updatedLaag);
+          zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
+          return ModelAndEmptyResult(updatedModel);
+        })
+      );
+    }
+
     function zetOffline(cmnd: prt.ZetOffline<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
@@ -1732,6 +1759,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return stopVectorFilterBewerking(cmd);
         case "ZetFilter":
           return zetFilter(cmd);
+        case "ActiveerFilter":
+          return activeerFilter(cmd);
       }
     }
 
