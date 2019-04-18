@@ -180,12 +180,7 @@ awv-kaart-info-boodschappen {
 }
 
 .kaart-centraal {
-  z-index: 3; // boven lagenkiezer
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: auto;
+  height: 100%;
 }
 
 .kaart-rechts-onderaan {

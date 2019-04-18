@@ -19,7 +19,7 @@ import { collectOption } from "../util/operators";
 import { forEvery } from "../util/operators";
 
 import { FilterAanpassingBezig, isAanpassingBezig } from "./filter-aanpassing-state";
-import { Comparison, Equality, ExpressionFilter, FilterBuilder, Literal, Property } from "./filter-model";
+import { Comparison, ExpressionFilter, FilterBuilder, Literal, Property } from "./filter-model";
 
 const autoCompleteSelectieVerplichtValidator: Function1<FormControl, ValidationErrors | null> = control => {
   if (typeof control.value === "string") {
@@ -45,6 +45,8 @@ export class FilterComponent extends KaartChildComponentBase {
   readonly waardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
 
   readonly geldigFilterCmd$: rx.Observable<prt.ZetFilter<KaartInternalMsg>>;
+
+  private clickInsideDialog = false;
 
   constructor(kaart: KaartComponent, zone: NgZone) {
     super(kaart, zone);
@@ -182,11 +184,24 @@ export class FilterComponent extends KaartChildComponentBase {
     return operator ? operator.description : undefined;
   }
 
-  errorOperator() {
+  errorOperator(): string {
     return this.operatorControl.hasError("required") ? "Gelieve een operator te kiezen" : "";
   }
 
-  errorWaarde() {
+  errorWaarde(): string {
     return this.waardeControl.hasError("required") ? "Gelieve een waarde in te geven" : "";
+  }
+
+  onClickOutside(event: Event) {
+    if (!this.clickInsideDialog) {
+      this.close();
+    }
+    this.clickInsideDialog = false;
+    return false;
+  }
+
+  onClickInside(event: Event) {
+    this.clickInsideDialog = true;
+    return false;
   }
 }
