@@ -104,7 +104,8 @@ export class FilterComponent extends KaartChildComponentBase {
           startWith<VeldInfo | string>(""), // nog niets ingetypt
           map(waarde => (typeof waarde === "string" ? waarde : waarde.label)),
           map(getypt => velden.filter(veld => veld.label.toLowerCase().startsWith(getypt.toLowerCase()))),
-          map(velden => velden.sort((a, b) => a.label.localeCompare(b.label))) // opletten: mutable! Gebruik van fp-ts
+          map(velden => velden.sort((a, b) => (a.isBasisVeld === b.isBasisVeld ? 0 : a.isBasisVeld ? -1 : 1)))
+          // opletten: mutable! Gebruik van fp-ts
         )
       ),
       shareReplay(1)

@@ -238,7 +238,8 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
       velden: new Map<string, ke.VeldInfo>(),
       offsetveld: none,
       verwijderd: false,
-      rijrichtingIsDigitalisatieZin: false
+      rijrichtingIsDigitalisatieZin: false,
+      filter: none
     };
   }
 }
