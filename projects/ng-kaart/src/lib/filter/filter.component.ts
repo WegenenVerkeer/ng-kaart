@@ -166,6 +166,7 @@ export class FilterComponent extends KaartChildComponentBase {
     this.bindToLifeCycle(this.geldigFilterCmd$.pipe(sample(pasToeGeklikt$))).subscribe(command => {
       this.dispatch(prt.StopVectorFilterBewerkingCmd());
       this.dispatch(command);
+      this.dispatch(prt.ActiveerFilter(command.titel, true, kaartLogOnlyWrapper));
     });
   }
 
