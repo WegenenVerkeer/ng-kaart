@@ -11,6 +11,8 @@ import { Subscription } from "rxjs";
 import * as rx from "rxjs";
 import { bufferCount, debounceTime, distinctUntilChanged, map, switchMap, throttleTime } from "rxjs/operators";
 
+import { FilterAanpassend, GeenFilterAanpassingBezig } from "../filter/filter-aanpassing-state";
+import { Filter, FilterCql, pure } from "../filter/filter-model";
 import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
 import * as arrays from "../util/arrays";
 import { refreshTiles } from "../util/cachetiles";
@@ -24,6 +26,7 @@ import { allOf, fromBoolean, fromOption, fromPredicate, success, validationChain
 import { zoekerMetNaam } from "../zoeker/zoeker";
 
 import { CachedFeatureLookup } from "./cache/lookup";
+import { LaagFilterInstellingen } from "./kaart-elementen";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { MsgGen } from "./kaart-protocol-subscriptions";
@@ -379,7 +382,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                   stijlSel: vlg.styleSelector,
                   stijlSelBron: vlg.styleSelectorBron,
                   selectiestijlSel: vlg.selectieStyleSelector,
-                  hoverstijlSel: vlg.hoverStyleSelector
+                  hoverstijlSel: vlg.hoverStyleSelector,
+                  filterInstellingen: LaagFilterInstellingen(pure(), true)
                 }))
                 .getOrElse(toegevoegdeLaagCommon);
               layer.set("titel", titel);
@@ -468,7 +472,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                 stijlPositie: vectorLaagPositie(laag.positieInGroep, laag.laaggroep),
                 stijlSel: vlg.styleSelector,
                 selectiestijlSel: vlg.selectieStyleSelector,
-                hoverstijlSel: vlg.hoverStyleSelector
+                hoverstijlSel: vlg.hoverStyleSelector,
+                filterInstellingen: LaagFilterInstellingen(pure(), true)
               }))
               .getOrElse(toegevoegdeLaagCommon);
             const oldLayer = laag.layer;
@@ -711,9 +716,16 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     // Lensaardig met side-effect
-    const pasLaagZichtbaarheidAan: (toon: boolean) => (laag: ke.ToegevoegdeLaag) => ke.ToegevoegdeLaag = magGetoondWorden => laag => {
+    const pasLaagZichtbaarheidAan: (toon: boolean) => Endomorphism<ke.ToegevoegdeLaag> = magGetoondWorden => laag => {
       laag.layer.setVisible(magGetoondWorden);
       return laag.magGetoondWorden === magGetoondWorden ? laag : { ...laag, magGetoondWorden: magGetoondWorden };
+    };
+
+    const pasLaagFilterAan: (spec: Filter, actief: boolean) => Endomorphism<ke.ToegevoegdeVectorLaag> = (spec, actief) => laag => {
+      return {
+        ...laag,
+        filterInstellingen: LaagFilterInstellingen(spec, actief)
+      };
     };
 
     // Uiteraard is het *nooit* de bedoeling om de titel van een laag aan te passen.
@@ -1222,6 +1234,17 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
+    function bewerkVectorFilter(cmnd: prt.BewerkVectorFilterCmd): ModelWithResult<Msg> {
+      // We zouden kunnen controleren of de laag effectief in het model zit, maar dat is spijkers op laag water zoeken.
+      modelChanger.laagFilterAanpassingStateSubj.next(FilterAanpassend(cmnd.laag));
+      return ModelWithResult(model);
+    }
+
+    function stopVectorFilterBewerking(cmnd: prt.StopVectorFilterBewerkingCmd): ModelWithResult<Msg> {
+      modelChanger.laagFilterAanpassingStateSubj.next(GeenFilterAanpassingBezig);
+      return ModelWithResult(model);
+    }
+
     function sluitPanelen(cmnd: prt.SluitPanelenCmd): ModelWithResult<Msg> {
       updateBehaviorSubject(model.infoBoodschappenSubj, () => new Map());
       modelChanger.laagstijlaanpassingStateSubj.next(GeenLaagstijlaanpassing);
@@ -1286,6 +1309,32 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             )
             .subscribe(aantal => kaartLogger.debug(`${aantal} features in cache bewaard`), error => kaartLogger.error(error));
           return ModelAndEmptyResult(model);
+        })
+      );
+    }
+
+    function zetFilter(cmnd: prt.ZetFilter<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        chain(valideerToegevoegdeVectorLaagBestaat(cmnd.titel), laag =>
+          valideerNoSqlFsSourceBestaat(cmnd.titel).map(noSqlFsSource => [laag, noSqlFsSource])
+        ).map(([laag, noSqlFsSource]: [ke.ToegevoegdeVectorLaag, NosqlFsSource]) => {
+          laag.bron.filter.foldL(
+            // indien de bron al een vaste filter bevat, dient deze gecombineerd te worden met de filter van de user
+            () => noSqlFsSource.setFilter(FilterCql.cql(cmnd.filter)),
+            bronFilter =>
+              noSqlFsSource.setFilter(
+                FilterCql.cql(cmnd.filter)
+                  .map(cql => `(${bronFilter}) AND (${cql})`)
+                  .alt(some(bronFilter))
+              )
+          );
+          noSqlFsSource.clear();
+          noSqlFsSource.refresh();
+          const updatedLaag = pasLaagFilterAan(cmnd.filter, laag.filterInstellingen.actief)(laag);
+          const updatedModel = pasLaagInModelAan(model)(updatedLaag);
+          zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
+          return ModelAndEmptyResult(updatedModel);
         })
       );
     }
@@ -1677,6 +1726,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return zetGetekendeGeometry(cmd);
         case "ZetOffline":
           return zetOffline(cmd);
+        case "BewerkVectorFilter":
+          return bewerkVectorFilter(cmd);
+        case "StopVectorFilterBewerking":
+          return stopVectorFilterBewerking(cmd);
+        case "ZetFilter":
+          return zetFilter(cmd);
       }
     }
 

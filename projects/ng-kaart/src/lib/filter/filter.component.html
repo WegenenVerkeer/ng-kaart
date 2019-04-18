@@ -1,0 +1,81 @@
+<div class="modal-dialog-background" *ngIf="(zichtbaar$ | async)" (click)="onClickOutside($event)">
+  <div class="mat-dialog-container modal-dialog filter-dialog" (click)="onClickInside($event)">
+    <div class="filter-header">
+      <div class="filter-titel">{{ titel$ | async }} filter instellen</div>
+      <mat-icon class="filter-sluit-button" (click)="close()">close</mat-icon>
+    </div>
+
+    <div class="filter-content">
+      <div class="filter-definitie">
+        <mat-form-field class="filter-velden-combo">
+          <input
+            type="text"
+            placeholder="Eigenschap"
+            matInput
+            [formControl]="veldControl"
+            [matAutocomplete]="velden"
+          />
+          <mat-autocomplete
+            #velden="matAutocomplete"
+            autoActiveFirstOption
+            [displayWith]="displayVeld"
+          >
+            <mat-option
+              *ngFor="let veld of (filteredVelden$ | async)"
+              [value]="veld"
+              >{{ veld.label }}</mat-option
+            >
+          </mat-autocomplete>
+          <mat-error *ngIf="veldControl.invalid">{{ errorVeld() }}</mat-error>
+        </mat-form-field>
+
+        <mat-form-field class="filter-operator-combo">
+          <input
+            type="text"
+            placeholder="Operator"
+            matInput
+            [formControl]="operatorControl"
+            [matAutocomplete]="operatoren"
+          />
+          <mat-autocomplete
+            #operatoren="matAutocomplete"
+            autoActiveFirstOption
+            [displayWith]="displayOperator"
+          >
+            <mat-option
+              *ngFor="let operator of (filteredOperatoren$ | async)"
+              [value]="operator"
+              >{{ operator.description }}</mat-option
+            >
+          </mat-autocomplete>
+          <mat-error *ngIf="operatorControl.invalid">{{
+            errorOperator()
+          }}</mat-error>
+        </mat-form-field>
+
+        <mat-form-field class="filter-waarde-editbox">
+          <input matInput placeholder="Waarde" [formControl]="waardeControl" />
+          <mat-error *ngIf="waardeControl.invalid">{{
+            errorWaarde()
+          }}</mat-error>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div class="filter-footer">
+      <button mat-button class="filter-sluit-button" (click)="close()">
+        Annuleer
+      </button>
+
+      <button
+        mat-button
+        color="primary"
+        class="filter-pas-toe-button"
+        (click)="onAction('pasFilterToe')"
+        [disabled]="!(geldigFilterCmd$ | async)"
+      >
+        Pas toe
+      </button>
+    </div>
+  </div>
+</div>

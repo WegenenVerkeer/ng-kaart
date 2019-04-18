@@ -36,6 +36,7 @@ import { KaartInternalMsg, kaartLogOnlyWrapper } from "../../kaart/kaart-interna
 import * as prt from "../../kaart/kaart-protocol";
 import { KaartComponent } from "../../kaart/kaart.component";
 import { kaartLogger } from "../../kaart/log";
+import { isNotNullObject } from "../../util/function";
 import { matchGeometryType } from "../../util/geometries";
 import * as maps from "../../util/maps";
 import { collect, Pipeable } from "../../util/operators";
@@ -102,10 +103,6 @@ const prioriteitVoorZoekresultaat: Function1<
   Zoektype,
   Function2<WeergaveoptiesOpZoekernaam, number, Function1<ZoekResultaat, number>>
 > = zoektype => (optiesOpNaam, stdPrio) => resultaat => prioriteitVoorZoekerNaam(zoektype)(optiesOpNaam, stdPrio)(resultaat.zoeker);
-
-export function isNotNullObject(object: any) {
-  return object && object instanceof Object;
-}
 
 export function toTrimmedLowerCasedString(s: string): string {
   return s
@@ -352,7 +349,8 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       offsetveld: none,
       velden: new Map<string, VeldInfo>(),
       verwijderd: false,
-      rijrichtingIsDigitalisatieZin: false
+      rijrichtingIsDigitalisatieZin: false,
+      filter: none
     };
   }
 

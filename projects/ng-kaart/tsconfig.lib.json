@@ -27,7 +27,6 @@
     "enableResourceInlining": true
   },
   "exclude": [
-    "src/test.ts",
-    "**/*.spec.ts"
+    "src/test.ts"
   ]
 }

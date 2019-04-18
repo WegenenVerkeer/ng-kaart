@@ -43,6 +43,21 @@
       margin-left: 4px;
       padding: 8px 0;
     }
+
+    .filter-icoon {
+      border: 1px solid #ccc;
+      border-radius: 16px;
+      height: 30px;
+      line-height: 30px;
+
+      .filter-inhoud {
+        width: 100%;
+        font-size: 14px;
+        padding: 0 12px 0 12px;
+        height: 30px;
+        line-height: 30px;
+      }
+    }
   }
 
   &.laag-menu {

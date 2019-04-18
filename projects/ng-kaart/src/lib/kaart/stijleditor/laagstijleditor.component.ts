@@ -9,12 +9,12 @@ import * as rx from "rxjs";
 import { delay, filter, map, mapTo, sample, scan, shareReplay, startWith, switchMap } from "rxjs/operators";
 
 import * as clr from "../../stijl/colour";
-import { forEach } from "../../util";
 import { expand2 } from "../../util/function";
 import { collectOption, forEvery, scan2 } from "../../util/operators";
 import { negate } from "../../util/thruth";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
+
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-messages";
 import { Legende } from "../kaart-legende";
 import * as prt from "../kaart-protocol";

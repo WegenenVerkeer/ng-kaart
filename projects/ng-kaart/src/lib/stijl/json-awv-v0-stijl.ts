@@ -114,17 +114,6 @@ export namespace AwvV0StaticStyleInterpreters {
     )
   });
 
-  export const fullStyle2: Interpreter<ss.FullStyle> = st.mapRecord(ss.FullStyle, {
-    fill: st.undefField("fill", fillStyle),
-    stroke: st.undefField("stroke", strokeStyle),
-    text: st.undefField("text", textStyle),
-    image: st.atMostOneDefined<ss.ImageStyle>(
-      st.undefField("circle", circleStyle),
-      st.undefField("icon", iconStyle),
-      st.undefField("regularShape", regularShapeStyle)
-    )
-  });
-
   export const jsonAwvV0Definition: Interpreter<ss.AwvV0StaticStyle> = fullStyle;
 }
 

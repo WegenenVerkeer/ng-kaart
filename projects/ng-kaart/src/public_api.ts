@@ -6,3 +6,4 @@ export * from "./lib/source/index";
 export * from "./lib/stijl/index";
 export * from "./lib/util/index";
 export * from "./lib/zoeker/index";
+export * from "./lib/filter/index";

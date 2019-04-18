@@ -519,6 +519,22 @@ export function byTypeDiscriminator<T>(discriminatorField: string, interpretersB
   };
 }
 
+export function value<T extends string | number | boolean>(value: T): Interpreter<T> {
+  return (json: Object) => (json === value ? success(value) : fail<T>(`De waarde '${value}' was verwacht`));
+}
+
+export function suchThat<T, U extends T>(interpreter: Interpreter<T>, refinement: Refinement<T, U>, failureMsg: string): Interpreter<U> {
+  return chain(interpreter, a => (refinement(a) ? succeed(a) : () => fail<U>(failureMsg)));
+}
+
+export function trace<T>(lbl: string, interpreter: Interpreter<T>): Interpreter<T> {
+  return (json: Object) => {
+    const result = interpreter(json);
+    console.log(lbl, result);
+    return result;
+  };
+}
+
 export function toString(json: Object): string {
   return JSON.stringify(json);
 }

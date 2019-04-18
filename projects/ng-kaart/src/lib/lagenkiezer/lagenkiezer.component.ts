@@ -7,7 +7,7 @@ import { Predicate } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, filter, map, scan, shareReplay, startWith, take } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, filter, map, scan, share, shareReplay, startWith, take, tap } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
@@ -16,6 +16,7 @@ import { LegendeItem } from "../kaart/kaart-legende";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
 import { isAanpassingBezig } from "../kaart/stijleditor/state";
+import { subSpy } from "../util";
 
 export const LagenUiSelector = "Lagenkiezer";
 
@@ -25,6 +26,7 @@ export interface LagenUiOpties {
   readonly toonLegende: boolean;
   readonly verwijderbareLagen: boolean;
   readonly verplaatsbareLagen: boolean;
+  readonly filterbareLagen: boolean;
   readonly stijlbareVectorlagen: Predicate<string>;
   readonly kleur?: ol.Color;
 }
@@ -35,6 +37,7 @@ export const DefaultOpties: LagenUiOpties = {
   toonLegende: false,
   verwijderbareLagen: false,
   verplaatsbareLagen: true,
+  filterbareLagen: false,
   stijlbareVectorlagen: () => false
 };
 
@@ -96,9 +99,18 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
       map(i => i.zoom),
       distinctUntilChanged()
     );
-    this.lagenHoog$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Hoog")!;
-    this.lagenLaag$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Laag")!;
-    const achtergrondLagen$ = this.modelChanges.lagenOpGroep.get("Achtergrond")!;
+    this.lagenHoog$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Hoog")!.pipe(
+      debounceTime(100),
+      shareReplay(1)
+    );
+    this.lagenLaag$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Laag")!.pipe(
+      debounceTime(100),
+      shareReplay(1)
+    );
+    const achtergrondLagen$ = this.modelChanges.lagenOpGroep.get("Achtergrond")!.pipe(
+      debounceTime(100),
+      shareReplay(1)
+    );
     this.lagenMetLegende$ = rx
       .combineLatest(this.lagenHoog$, this.lagenLaag$, achtergrondLagen$, zoom$, (lagenHoog, lagenLaag, achtergrondLagen, zoom) => {
         const lagen = lagenHoog.concat(lagenLaag, achtergrondLagen);

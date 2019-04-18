@@ -2,6 +2,7 @@ import { Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 
+import { Filter } from "../filter/filter-model";
 import { TypedRecord } from "../util/typed-record";
 import { ZoekerMetWeergaveopties, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
 
@@ -22,6 +23,7 @@ export type Command<Msg extends KaartMsg> =
   | ActiveerSelectieModusCmd
   | DeactiveerSelectieModusCmd
   | ReactiveerSelectieModusCmd
+  | BewerkVectorFilterCmd
   | BewerkVectorlaagstijlCmd
   | DeselecteerAlleFeaturesCmd
   | DeselecteerFeatureCmd
@@ -35,6 +37,7 @@ export type Command<Msg extends KaartMsg> =
   | SelecteerFeaturesCmd
   | SluitInfoBoodschapCmd
   | SluitPanelenCmd
+  | StopVectorFilterBewerkingCmd
   | StopVectorlaagstijlBewerkingCmd
   | SubscribeCmd<Msg>
   | ToonAchtergrondKeuzeCmd<Msg>
@@ -75,6 +78,7 @@ export type Command<Msg extends KaartMsg> =
   | VulCacheVoorWMSLaag<Msg>
   | ZetActieveModusCmd
   | ZetFocusOpKaartCmd
+  | ZetFilter<Msg>
   | ZetOffline<Msg>
   | ZetLaagLegendeCmd<Msg>
   | ZetMijnLocatieZoomCmd
@@ -385,6 +389,13 @@ export interface ZetOffline<Msg extends KaartMsg> {
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
+export interface ZetFilter<Msg extends KaartMsg> {
+  readonly type: "ZetFilter";
+  readonly titel: string;
+  readonly filter: Filter;
+  readonly wrapper: BareValidationWrapper<Msg>;
+}
+
 export interface VoegInteractieToeCmd {
   readonly type: "VoegInteractieToe";
   readonly interactie: ol.interaction.Pointer;
@@ -489,8 +500,17 @@ export interface BewerkVectorlaagstijlCmd {
   readonly laag: ke.ToegevoegdeVectorLaag;
 }
 
+export interface BewerkVectorFilterCmd {
+  readonly type: "BewerkVectorFilter";
+  readonly laag: ke.ToegevoegdeVectorLaag;
+}
+
 export interface StopVectorlaagstijlBewerkingCmd {
   readonly type: "StopVectorlaagstijlBewerking";
+}
+
+export interface StopVectorFilterBewerkingCmd {
+  readonly type: "StopVectorFilterBewerking";
 }
 
 export interface DrawOpsCmd {
@@ -608,6 +628,15 @@ export function VerplaatsLaagCmd<Msg extends KaartMsg>(
 export function VraagSchaalAanCmd<Msg extends KaartMsg>(wrapper: BareValidationWrapper<Msg>): VraagSchaalAanCmd<Msg> {
   return {
     type: "VraagSchaalAan",
+    wrapper: wrapper
+  };
+}
+
+export function ZetFilter<Msg extends KaartMsg>(titel: string, filter: Filter, wrapper: BareValidationWrapper<Msg>): ZetFilter<Msg> {
+  return {
+    type: "ZetFilter",
+    titel: titel,
+    filter: filter,
     wrapper: wrapper
   };
 }
@@ -874,8 +903,16 @@ export function BewerkVectorlaagstijlCmd(laag: ke.ToegevoegdeVectorLaag): Bewerk
   return { type: "BewerkVectorlaagstijl", laag: laag };
 }
 
+export function BewerkVectorFilterCmd(laag: ke.ToegevoegdeVectorLaag): BewerkVectorFilterCmd {
+  return { type: "BewerkVectorFilter", laag: laag };
+}
+
 export function StopVectorlaagstijlBewerkingCmd(): StopVectorlaagstijlBewerkingCmd {
   return { type: "StopVectorlaagstijlBewerking" };
+}
+
+export function StopVectorFilterBewerkingCmd(): StopVectorFilterBewerkingCmd {
+  return { type: "StopVectorFilterBewerking" };
 }
 
 export function DrawOpsCmd(ops: DrawOps): DrawOpsCmd {

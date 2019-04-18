@@ -17,6 +17,10 @@
     <span class="material-icons" *ngIf="!voorbeeldenSectie.sectieZichtbaar">expand_more</span>
   </div>
   <div *ngIf="voorbeeldenSectie.sectieZichtbaar" [@enterAnimation]>
+    <div (click)="filterenSectie.toggleSectieZichtbaar();scrollTo('orthophotos')" class="sub-titel">
+      Filteren
+      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !filterenSectie.sectieZichtbaar }">visibility</span>
+    </div>
     <div (click)="orthophotosSectie.toggleSectieZichtbaar();scrollTo('orthophotos')" class="sub-titel">
       Orthophotos
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !orthophotosSectie.sectieZichtbaar }">visibility</span>
@@ -241,6 +245,40 @@
   <awv-test-sectie sectieId="voorbeelden" sectieTitel="Voorbeelden" [bevatSubSecties]="true" #voorbeeldenSectie>
 
     <div [style.display]="voorbeeldenSectie.sectieZichtbaar ? 'block' : 'none'">
+
+      <awv-test-sectie sectieId="filteren" sectieTitel="Filteren" [subSectie]="true" #filterenSectie
+                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && filterenSectie.sectieZichtbaar">
+        <div *ngIf="filterenSectie.sectieZichtbaar" [@enterAnimation]>
+          <awv-kaart-classic [naam]="'filteren'" [breedte]="1200" [hoogte]="600" [zoom]="10" [middelpunt]="[151732, 210498]"
+                             #filterKaart (geselecteerdeFeaturesChange)="featuresGeselecteerd($event, filterKaart)"
+                             [selectieModus]="'single'">
+
+            <awv-kaart-lagenkiezer [headerTitel]="'Mijn legende en lagen'" [initieelDichtgeklapt]="false"
+                                   [verwijderbareLagen]="true" [filterbareLagen]="true" [toonLegende]="false"></awv-kaart-lagenkiezer>
+
+            <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'/geolatte-nosqlfs'"
+                                    [database]="'featureserver'" [collection]="'fietspaden'"
+                                    [styleFunction]="fietspadStyleMetOffset" [selectieStyle]="fietspadSelectieStyleMetOffset"
+                                    [minZoom]="7"
+                                    [veldinfos]="fietspadenVeldinfos"></awv-kaart-nosqlfs-laag>
+
+            <awv-kaart-nosqlfs-laag [titel]="'Verkeersborden'" [url]="'/geolatte-nosqlfs'"
+                                    [database]="'featureserver'" [collection]="'verkeersborden'"
+                                    [styleFunction]="verkeersbordenStyleFunction"
+                                    [selectieStyle]="verkeersbordenSelectieStyleFunction"
+                                    [minZoom]="9"
+                                    [view]="'aanzicht'"
+                                    [gebruikCache]="true"
+                                    [veldinfos]="verkeersbordenVeldinfos"></awv-kaart-nosqlfs-laag>
+
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+            <awv-kaart-schaal></awv-kaart-schaal>
+            <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+            <awv-bevraag-kaart></awv-bevraag-kaart>
+            <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
+          </awv-kaart-classic>
+        </div>
+      </awv-test-sectie>
 
       <awv-test-sectie sectieId="orthophotos" sectieTitel="Orthophotos" [subSectie]="true" #orthophotosSectie
                        [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && orthophotosSectie.sectieZichtbaar">

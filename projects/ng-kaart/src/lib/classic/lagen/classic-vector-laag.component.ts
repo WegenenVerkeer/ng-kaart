@@ -1,5 +1,5 @@
 import { Component, Injector, Input, ViewEncapsulation } from "@angular/core";
-import { fromNullable } from "fp-ts/lib/Option";
+import { fromNullable, none } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 
 import * as ke from "../../kaart/kaart-elementen";
@@ -44,7 +44,8 @@ export class ClassicVectorLaagComponent extends ClassicVectorLaagLikeComponent {
       offsetveld: this._offsetveld,
       velden: this._veldInfos.reduce((m, vi) => m.set(vi.naam, vi), new Map<string, ke.VeldInfo>()),
       verwijderd: false,
-      rijrichtingIsDigitalisatieZin: false
+      rijrichtingIsDigitalisatieZin: false,
+      filter: none
     };
   }
 }

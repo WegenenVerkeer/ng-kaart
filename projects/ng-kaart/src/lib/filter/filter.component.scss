@@ -1,0 +1,73 @@
+@import "../css/kaart.component-common.scss";
+
+.filter-sluit-button {
+  padding: 8px 12px 8px 12px;
+  margin: 8px;
+  background-color: $awv-secondary-d4;
+  line-height: 24px;
+  cursor: pointer;
+}
+
+.filter-pas-toe-button {
+  padding: 8px 12px 8px 12px;
+  margin: 8px;
+  color: white;
+  background-color: $awv-primary-3;
+  line-height: 24px;
+}
+
+.filter-dialog {
+  min-width: 400px;
+  display: flex;
+  flex-direction: column;
+}
+
+.filter-header {
+  display: flex;
+  background-color: $awv-secondary-d4;
+  border-bottom: 1px solid $awv-secondary-d3;
+
+  .filter-titel {
+    padding: 16px;
+    flex-grow: 1;
+    font-size: 16px;
+    color: rgba(black, 0.87);
+    line-height: 24px;
+  }
+}
+
+.filter-content {
+  flex: 1;
+  margin: 16px;
+  font-size: 14px;
+  color: rgba(black, 0.87);
+
+  .filter-definitie {
+    display: flex;
+    flex-direction: row;
+
+    .filter-velden-combo {
+      padding: 8px;
+      min-width: 200px;
+    }
+
+    .filter-operator-combo {
+      padding: 8px;
+      width: 80px;
+    }
+
+    .filter-waarde-editbox {
+      padding: 8px;
+      min-width: 200px;
+    }
+  }
+
+
+}
+
+.filter-footer {
+  margin: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+

@@ -1,14 +1,17 @@
+import * as array from "fp-ts/lib/Array";
 import { Function1, Refinement } from "fp-ts/lib/function";
 import { fromPredicate, Option } from "fp-ts/lib/Option";
 import { contramap, Setoid, setoidString } from "fp-ts/lib/Setoid";
 import { Iso, Lens, Optional } from "monocle-ts";
 import * as ol from "openlayers";
 
-import { isNoSqlFsSource } from "../source/nosql-fs-source";
+import { Filter } from "../filter/filter-model";
+import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
 import { mapToOptionalByKey } from "../util/lenses";
 
 import { Legende } from "./kaart-legende";
 import { AwvV0StyleSpec, StyleSelector } from "./stijl-selector";
+import { VeldProps } from "./stijleditor/model";
 
 export const SingleTileWmsType = "LaagType.SingleTileWms";
 export type SingleTileWmsType = typeof SingleTileWmsType;
@@ -102,6 +105,7 @@ export interface VectorLaag {
   readonly offsetveld: Option<string>;
   readonly verwijderd: boolean;
   readonly rijrichtingIsDigitalisatieZin: boolean;
+  readonly filter: Option<string>;
 }
 
 export interface BlancoLaag {
@@ -138,6 +142,11 @@ export interface TekenResultaat {
   readonly featureId: number | string;
 }
 
+export interface LaagFilterInstellingen {
+  readonly spec: Filter;
+  readonly actief: boolean;
+}
+
 /**
  * Dit is een wrapper rond Laag die naast de laag zelf ook het gebruik van de laag bij houdt.
  */
@@ -160,6 +169,7 @@ export interface ToegevoegdeVectorLaag extends ToegevoegdeLaag {
   readonly stijlSelBron: Option<AwvV0StyleSpec>; // Het JSON document dat aan de basis ligt van de StyleSelector
   readonly selectiestijlSel: Option<StyleSelector>;
   readonly hoverstijlSel: Option<StyleSelector>;
+  readonly filterInstellingen: LaagFilterInstellingen;
 }
 
 export const isWmsLaag: (laag: Laag) => boolean = laag => laag.type === SingleTileWmsType || laag.type === TiledWmsType;
@@ -175,6 +185,11 @@ export const asToegevoegdeVectorLaag: (laag: ToegevoegdeLaag) => Option<Toegevoe
   fromPredicate<ToegevoegdeLaag>(lg => isVectorLaag(lg.bron))(laag) as Option<ToegevoegdeVectorLaag>;
 export const isZichtbaar: (_: number) => (_: ToegevoegdeLaag) => boolean = currentRes => laag =>
   laag.layer.getMinResolution() <= currentRes && laag.layer.getMaxResolution() > currentRes && laag.layer.getVisible();
+export const asToegevoegdeNosqlVectorLaag: (laag: ToegevoegdeLaag) => Option<ToegevoegdeVectorLaag> = laag =>
+  fromPredicate<ToegevoegdeLaag>(lg => isNoSqlFsLaag(lg.bron))(laag) as Option<ToegevoegdeVectorLaag>;
+export const asNosqlSource: (source: ol.source.Vector) => Option<NosqlFsSource> = fromPredicate(isNoSqlFsSource) as (
+  _: ol.source.Vector
+) => Option<NosqlFsSource>;
 
 ///////////////
 // Constructors
@@ -214,6 +229,13 @@ export function TekenResultaat(geometry: ol.geom.Geometry, volgnummer: number, f
     volgnummer: volgnummer,
     featureId: featureId,
     geometry: geometry
+  };
+}
+
+export function LaagFilterInstellingen(spec: Filter, actief: boolean): LaagFilterInstellingen {
+  return {
+    spec: spec,
+    actief: actief
   };
 }
 

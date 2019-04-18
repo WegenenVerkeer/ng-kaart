@@ -39,7 +39,6 @@ describe("de stijl functie", () => {
           }
         })
       );
-      console.log(result);
       expect(result.isSuccess()).toBe(true);
       expect(result.map(f => f(feature, resolution)).getOrElse(undefined)).toEqual(new ol.style.Style());
     });

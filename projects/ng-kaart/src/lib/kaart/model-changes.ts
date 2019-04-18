@@ -8,6 +8,7 @@ import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, map, mapTo, mergeAll, share, shareReplay, switchMap } from "rxjs/operators";
 
+import { FilterAanpassingState, GeenFilterAanpassingBezig } from "../filter/filter-aanpassing-state";
 import { NosqlFsSource } from "../source/nosql-fs-source";
 import * as tilecacheMetadataDb from "../util/indexeddb-tilecache-metadata";
 import { observableFromOlEvents } from "../util/ol-observable";
@@ -68,6 +69,7 @@ export interface ModelChanger {
   readonly laagLocationInfoServicesOpTitelSubj: rx.BehaviorSubject<Map<string, LaagLocationInfoService>>;
   readonly laagstijlaanpassingStateSubj: rx.Subject<LaagstijlaanpassingState>;
   readonly laagstijlGezetSubj: rx.Subject<ke.ToegevoegdeVectorLaag>;
+  readonly laagFilterAanpassingStateSubj: rx.Subject<FilterAanpassingState>;
   readonly dragInfoSubj: rx.Subject<DragInfo>;
   readonly tekenenOpsSubj: rx.Subject<DrawOps>;
   readonly getekendeGeometrySubj: rx.Subject<ol.geom.Geometry>;
@@ -96,6 +98,7 @@ export const ModelChanger: () => ModelChanger = () => ({
   laagLocationInfoServicesOpTitelSubj: new rx.BehaviorSubject(new Map()),
   laagstijlaanpassingStateSubj: new rx.BehaviorSubject(GeenLaagstijlaanpassing),
   laagstijlGezetSubj: new rx.Subject<ke.ToegevoegdeVectorLaag>(),
+  laagFilterAanpassingStateSubj: new rx.BehaviorSubject(GeenFilterAanpassingBezig),
   dragInfoSubj: new rx.Subject<DragInfo>(),
   tekenenOpsSubj: new rx.Subject<DrawOps>(),
   getekendeGeometrySubj: new rx.Subject<ol.geom.Geometry>(),
@@ -121,6 +124,7 @@ export interface ModelChanges {
   readonly laagLocationInfoServicesOpTitel$: rx.Observable<Map<string, LaagLocationInfoService>>;
   readonly laagstijlaanpassingState$: rx.Observable<LaagstijlaanpassingState>;
   readonly laagstijlGezet$: rx.Observable<ke.ToegevoegdeVectorLaag>;
+  readonly laagFilterAanpassingState$: rx.Observable<FilterAanpassingState>;
   readonly dragInfo$: rx.Observable<DragInfo>;
   readonly rotatie$: rx.Observable<number>; // een niet gedebouncede variant van "viewinstellingen$.rotatie" voor live rotatie
   readonly tekenenOps$: rx.Observable<DrawOps>;
@@ -203,7 +207,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     }))
   );
 
-  const lagenOpGroep$ = filterable.map(changer.lagenOpGroepSubj, s => s!.asObservable());
+  const lagenOpGroep$ = filterable.map(changer.lagenOpGroepSubj, s => s.asObservable());
   const filterVectorLagen = (tlgn: ke.ToegevoegdeLaag[]) => tlgn.filter(ke.isToegevoegdeVectorLaag);
   const vectorlagen$ = lagenOpGroep$.get("Voorgrond.Hoog")!.pipe(map(filterVectorLagen));
 
@@ -284,6 +288,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     laagLocationInfoServicesOpTitel$: changer.laagLocationInfoServicesOpTitelSubj.asObservable(),
     laagstijlaanpassingState$: changer.laagstijlaanpassingStateSubj.asObservable(),
     laagstijlGezet$: changer.laagstijlGezetSubj.asObservable(),
+    laagFilterAanpassingState$: changer.laagFilterAanpassingStateSubj.asObservable(),
     dragInfo$: dragInfo$,
     rotatie$: rotation$,
     tekenenOps$: changer.tekenenOpsSubj.asObservable(),

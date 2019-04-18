@@ -1,14 +1,22 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
 import { MatMenuTrigger } from "@angular/material";
+import * as array from "fp-ts/lib/Array";
+import { Function2 } from "fp-ts/lib/function";
+import * as fpMap from "fp-ts/lib/Map";
+import { Option } from "fp-ts/lib/Option";
+import { setoidString } from "fp-ts/lib/Setoid";
 import * as rx from "rxjs";
-import { distinctUntilChanged, map, mapTo, share, shareReplay, startWith, tap } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, shareReplay, startWith } from "rxjs/operators";
 
+import * as fltr from "../filter/filter-model";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
-import { asToegevoegdeVectorLaag, ToegevoegdeLaag, ToegevoegdeVectorLaag } from "../kaart/kaart-elementen";
+import * as ke from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as cmd from "../kaart/kaart-protocol-commands";
 import { KaartComponent } from "../kaart/kaart.component";
 import { observeOnAngular } from "../util/observe-on-angular";
+import { collectOption } from "../util/operators";
+import { atLeastOneTrue, negate } from "../util/thruth";
 
 import { LagenkiezerComponent } from "./lagenkiezer.component";
 
@@ -24,11 +32,19 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
   readonly zichtbaar$: rx.Observable<boolean>;
   readonly onzichtbaar$: rx.Observable<boolean>;
   readonly kanVerwijderen$: rx.Observable<boolean>;
+  readonly kanFilteren$: rx.Observable<boolean>;
   readonly kanStijlAanpassen$: rx.Observable<boolean>;
   readonly minstensEenLaagActie$: rx.Observable<boolean>;
+  readonly heeftFilter$: rx.Observable<boolean>;
+  readonly heeftGeenFilter$: rx.Observable<boolean>;
+  readonly filterTotaal$: rx.Observable<string>;
+
+  // TODO: subject moet luisteren op messages. Zit in volgende story
+  readonly filterActiefSubj: rx.BehaviorSubject<boolean> = new rx.BehaviorSubject<boolean>(true);
+  readonly filterActief$: rx.Observable<boolean> = this.filterActiefSubj.asObservable();
 
   @Input()
-  laag: ToegevoegdeLaag;
+  laag: ke.ToegevoegdeLaag;
   @Input()
   dragSource: boolean;
   @Input()
@@ -59,13 +75,67 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
     );
     this.kanStijlAanpassen$ = lagenkiezer.opties$.pipe(
       map(o =>
-        asToegevoegdeVectorLaag(this.laag)
+        ke
+          .asToegevoegdeVectorLaag(this.laag)
           .map(vlg => o.stijlbareVectorlagen(vlg.titel))
           .getOrElse(false)
       ),
       shareReplay(1)
     );
-    this.minstensEenLaagActie$ = rx.combineLatest(this.kanVerwijderen$, this.kanStijlAanpassen$, (v, a) => v || a).pipe(shareReplay(1));
+    this.kanFilteren$ = lagenkiezer.opties$.pipe(
+      map(o =>
+        ke
+          .asToegevoegdeNosqlVectorLaag(this.laag)
+          .map(() => o.filterbareLagen)
+          .getOrElse(false)
+      ),
+      shareReplay(1)
+    );
+
+    const findLaagOpTitel: Function2<string, ke.ToegevoegdeLaag[], Option<ke.ToegevoegdeVectorLaag>> = (titel, lgn) =>
+      array.findFirst(lgn, lg => lg.titel === titel).filter(ke.isToegevoegdeVectorLaag);
+
+    const laag$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Hoog")!.pipe(
+      collectOption(lgn => findLaagOpTitel(this.laag.titel, lgn)),
+      shareReplay(1)
+    );
+
+    this.heeftFilter$ = laag$.pipe(
+      filter(laag => this.laag.titel === laag.titel),
+      map(laag => fltr.isDefined(laag.filterInstellingen.spec)),
+      startWith(false), // Er moet iets uit de observable komen of hidden wordt nooit gezet
+      shareReplay(1)
+    );
+
+    this.heeftGeenFilter$ = this.heeftFilter$.pipe(map(negate));
+
+    // TODO: voorlopig af vermits dit voor grote collections een te dure query is
+    // FilterTotaal wordt ook niet geupdate in de UI, ondanks dat er wel events geemit worden..
+    // Indien in de reducer dit wordt afgezet, werkt het wel: zendFilterWijziging(updatedLaag, updatedLaag.filter.spec);
+    // this.filterTotaal$ = subSpy("********* filterTotaal$")(
+    //   rx.merge(
+    //     kaartComponent.modelChanges.laagFilterGezet$.pipe(
+    //       filter(filterGezet => this.laag.titel === filterGezet.laagnaam),
+    //       // TODO werk met startWith ipv merge
+    //       map(() => ". . .") // vorig totaal wissen, terwijl nieuw opgehaald wordt
+    //     ),
+    //     laag$.pipe(
+    //       switchMap(laag =>
+    //         kaartComponent.modelChanges.laagFilterGezet$.pipe(
+    //           filter(filterGezet => this.laag.titel === filterGezet.laagnaam),
+    //           filter(filterGezet => fltr.isDefined(filterGezet.filter)),
+    //           switchMap(() =>
+    //           ke.asNosqlSource(laag.layer.getSource()).foldL(() => rx.of(""), source => source.fetchTotal$().pipe(map(num => `${num}`)))
+    //           )
+    //         )
+    //       )
+    //     )
+    //   )
+    // );
+
+    this.minstensEenLaagActie$ = rx
+      .combineLatest(this.kanVerwijderen$, this.kanStijlAanpassen$, this.kanFilteren$, atLeastOneTrue)
+      .pipe(shareReplay(1));
   }
 
   get title(): string {
@@ -105,6 +175,19 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
   }
 
   pasStijlAan() {
-    this.dispatch(cmd.BewerkVectorlaagstijlCmd(this.laag as ToegevoegdeVectorLaag));
+    this.dispatch(cmd.BewerkVectorlaagstijlCmd(this.laag as ke.ToegevoegdeVectorLaag));
+  }
+
+  pasFilterAan() {
+    this.dispatch(cmd.BewerkVectorFilterCmd(this.laag as ke.ToegevoegdeVectorLaag));
+  }
+
+  verwijderFilter() {
+    this.dispatch(cmd.ZetFilter(this.laag.titel, fltr.pure(), kaartLogOnlyWrapper));
+  }
+
+  toggleFilterActief() {
+    // TODO: dit moet met messages, want moet doorstromen naar reducer. Zit in volgende story
+    this.filterActiefSubj.next(!this.filterActiefSubj.value);
   }
 }
