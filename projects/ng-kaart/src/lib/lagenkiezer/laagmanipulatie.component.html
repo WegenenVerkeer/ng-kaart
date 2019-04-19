@@ -19,7 +19,7 @@
     <button mat-icon-button class="filter-inhoud" (click)="onAction('toggleFilterActief')">
       <mat-icon *ngIf="filterActief$ | async" matTooltip="Deactiveer filter">filter_list</mat-icon>
       <mat-icon *ngIf="!(filterActief$ | async)" class="niet-actief" matTooltip="Activeer filter">filter_list</mat-icon>
-<!--      {{ filterTotaal$ | async }}-->
+      {{ filterTotaal$ | async }}
     </button>
   </div>
   <div class="laag-acties" *ngIf="minstensEenLaagActie$ | async">

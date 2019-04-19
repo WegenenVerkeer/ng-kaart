@@ -35,3 +35,8 @@ export interface FeatureCollection {
   total: number;
   features: GeoJsonLike[];
 }
+
+export interface CollectionSummary {
+  collection: string;
+  count: number;
+}

@@ -12,7 +12,7 @@ import { Pipeable } from "../util";
 import { Feature, toOlFeature } from "../util/feature";
 import { fetchObs$, fetchWithTimeoutObs$ } from "../util/fetch-with-timeout";
 import { ReduceFunction } from "../util/function";
-import { FeatureCollection, GeoJsonLike } from "../util/geojson-types";
+import { CollectionSummary, FeatureCollection, GeoJsonLike } from "../util/geojson-types";
 import * as geojsonStore from "../util/indexeddb-geojson-store";
 
 /**
@@ -95,6 +95,19 @@ const mapToFeatureCollection: Pipeable<string, FeatureCollection> = obs =>
     map(lijn => {
       try {
         return JSON.parse(lijn) as FeatureCollection;
+      } catch (error) {
+        const msg = `Kan JSON data niet parsen: ${error} JSON: ${lijn}`;
+        kaartLogger.error(msg);
+        throw new Error(msg);
+      }
+    })
+  );
+
+const mapToCollectionSummary: Pipeable<string, CollectionSummary> = obs =>
+  obs.pipe(
+    map(lijn => {
+      try {
+        return JSON.parse(lijn) as CollectionSummary;
       } catch (error) {
         const msg = `Kan JSON data niet parsen: ${error} JSON: ${lijn}`;
         kaartLogger.error(msg);
@@ -254,6 +267,10 @@ export class NosqlFsSource extends ol.source.Vector {
       .join("&")}`;
   }
 
+  private composeCollectionSummaryUrl() {
+    return `${this.url}/api/databases/${this.database}/${this.collection}`;
+  }
+
   cacheStoreName(): string {
     return this.laagnaam;
   }
@@ -308,6 +325,17 @@ export class NosqlFsSource extends ol.source.Vector {
       split(featureDelimiter),
       mapToFeatureCollection,
       map(featureCollection => featureCollection.total)
+    );
+  }
+
+  fetchCollectionSummary$(): rx.Observable<CollectionSummary> {
+    return fetchObs$(this.composeCollectionSummaryUrl(), {
+      method: "GET",
+      cache: "no-store", // geen client side caching van nosql data
+      credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
+    }).pipe(
+      split(featureDelimiter),
+      mapToCollectionSummary
     );
   }
 
