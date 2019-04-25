@@ -1,17 +1,15 @@
-import * as array from "fp-ts/lib/Array";
 import { Function1, Refinement } from "fp-ts/lib/function";
 import { fromPredicate, Option } from "fp-ts/lib/Option";
 import { contramap, Setoid, setoidString } from "fp-ts/lib/Setoid";
 import { Iso, Lens, Optional } from "monocle-ts";
 import * as ol from "openlayers";
 
-import { Filter } from "../filter/filter-model";
+import { Filter as fltr } from "../filter/filter-model";
 import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
 import { mapToOptionalByKey } from "../util/lenses";
 
 import { Legende } from "./kaart-legende";
 import { AwvV0StyleSpec, StyleSelector } from "./stijl-selector";
-import { VeldProps } from "./stijleditor/model";
 
 export const SingleTileWmsType = "LaagType.SingleTileWms";
 export type SingleTileWmsType = typeof SingleTileWmsType;
@@ -136,14 +134,14 @@ export interface StopTekenen {
 
 export type TekenenCommand = StartTekenen | StopTekenen;
 
-export interface TekenResultaat {
+export interface Tekenresultaat {
   readonly geometry: ol.geom.Geometry;
   readonly volgnummer: number;
   readonly featureId: number | string;
 }
 
-export interface LaagFilterInstellingen {
-  readonly spec: Filter;
+export interface Laagfilterinstellingen {
+  readonly spec: fltr.Filter;
   readonly actief: boolean;
 }
 
@@ -169,7 +167,7 @@ export interface ToegevoegdeVectorLaag extends ToegevoegdeLaag {
   readonly stijlSelBron: Option<AwvV0StyleSpec>; // Het JSON document dat aan de basis ligt van de StyleSelector
   readonly selectiestijlSel: Option<StyleSelector>;
   readonly hoverstijlSel: Option<StyleSelector>;
-  readonly filterInstellingen: LaagFilterInstellingen;
+  readonly filterinstellingen: Laagfilterinstellingen;
 }
 
 export const isWmsLaag: (laag: Laag) => boolean = laag => laag.type === SingleTileWmsType || laag.type === TiledWmsType;
@@ -224,7 +222,7 @@ export function StopTekenen(): StopTekenen {
   };
 }
 
-export function TekenResultaat(geometry: ol.geom.Geometry, volgnummer: number, featureId: number | string): TekenResultaat {
+export function TekenResultaat(geometry: ol.geom.Geometry, volgnummer: number, featureId: number | string): Tekenresultaat {
   return {
     volgnummer: volgnummer,
     featureId: featureId,
@@ -232,12 +230,14 @@ export function TekenResultaat(geometry: ol.geom.Geometry, volgnummer: number, f
   };
 }
 
-export function LaagFilterInstellingen(spec: Filter, actief: boolean): LaagFilterInstellingen {
+export function Laagfilterinstellingen(spec: fltr.Filter, actief: boolean): Laagfilterinstellingen {
   return {
     spec: spec,
     actief: actief
   };
 }
+
+export const stdLaagfilterinstellingen = Laagfilterinstellingen(fltr.pure(), false);
 
 ////////////////////////////
 // Manipulatie en inspectie

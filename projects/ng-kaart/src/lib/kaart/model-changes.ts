@@ -68,6 +68,7 @@ export interface ModelChanger {
   readonly zoekresultaatselectieSubj: rx.Subject<ZoekResultaat>;
   readonly laagLocationInfoServicesOpTitelSubj: rx.BehaviorSubject<Map<string, LaagLocationInfoService>>;
   readonly laagstijlaanpassingStateSubj: rx.Subject<LaagstijlaanpassingState>;
+  readonly laagfilterGezetSubj: rx.Subject<ke.ToegevoegdeVectorLaag>;
   readonly laagstijlGezetSubj: rx.Subject<ke.ToegevoegdeVectorLaag>;
   readonly laagFilterAanpassingStateSubj: rx.Subject<FilterAanpassingState>;
   readonly dragInfoSubj: rx.Subject<DragInfo>;
@@ -97,6 +98,7 @@ export const ModelChanger: () => ModelChanger = () => ({
   zoekresultaatselectieSubj: new rx.Subject<ZoekResultaat>(),
   laagLocationInfoServicesOpTitelSubj: new rx.BehaviorSubject(new Map()),
   laagstijlaanpassingStateSubj: new rx.BehaviorSubject(GeenLaagstijlaanpassing),
+  laagfilterGezetSubj: new rx.Subject<ke.ToegevoegdeVectorLaag>(),
   laagstijlGezetSubj: new rx.Subject<ke.ToegevoegdeVectorLaag>(),
   laagFilterAanpassingStateSubj: new rx.BehaviorSubject(GeenFilterAanpassingBezig),
   dragInfoSubj: new rx.Subject<DragInfo>(),
@@ -125,6 +127,7 @@ export interface ModelChanges {
   readonly laagstijlaanpassingState$: rx.Observable<LaagstijlaanpassingState>;
   readonly laagstijlGezet$: rx.Observable<ke.ToegevoegdeVectorLaag>;
   readonly laagFilterAanpassingState$: rx.Observable<FilterAanpassingState>;
+  readonly laagfilterGezet$: rx.Observable<ke.ToegevoegdeVectorLaag>;
   readonly dragInfo$: rx.Observable<DragInfo>;
   readonly rotatie$: rx.Observable<number>; // een niet gedebouncede variant van "viewinstellingen$.rotatie" voor live rotatie
   readonly tekenenOps$: rx.Observable<DrawOps>;
@@ -289,6 +292,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     laagstijlaanpassingState$: changer.laagstijlaanpassingStateSubj.asObservable(),
     laagstijlGezet$: changer.laagstijlGezetSubj.asObservable(),
     laagFilterAanpassingState$: changer.laagFilterAanpassingStateSubj.asObservable(),
+    laagfilterGezet$: changer.laagfilterGezetSubj.asObservable(),
     dragInfo$: dragInfo$,
     rotatie$: rotation$,
     tekenenOps$: changer.tekenenOpsSubj.asObservable(),

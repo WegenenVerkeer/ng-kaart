@@ -7,7 +7,7 @@ import { ZoekAntwoord, ZoekerMetWeergaveopties, ZoekResultaat } from "../zoeker/
 
 import { KaartLocaties } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
-import { TekenResultaat } from "./kaart-elementen";
+import { Tekenresultaat } from "./kaart-elementen";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import { LaatsteCacheRefresh, PrecacheLaagProgress } from "./model-changes";
 
@@ -25,13 +25,14 @@ export type Subscription<Msg> =
   | HoverFeaturesSubscription<Msg>
   | InfoBoodschappenSubscription<Msg>
   | KaartClickSubscription<Msg>
-  | PublishedKaartLocatiesSubscription<Msg>
+  | LaagfilterGezetSubscription<Msg>
   | LaagstijlGezetSubscription<Msg>
   | LaagVerwijderdSubscription<Msg>
   | LaatsteCacheRefreshSubscription<Msg>
   | LagenInGroepSubscription<Msg>
   | MiddelpuntSubscription<Msg>
   | PrecacheProgressSubscription<Msg>
+  | PublishedKaartLocatiesSubscription<Msg>
   | TekenenSubscription<Msg>
   | ViewinstellingenSubscription<Msg>
   | ZichtbareFeaturesSubscription<Msg>
@@ -141,7 +142,7 @@ export interface ActieveModusSubscription<Msg> {
 export interface GeometryChangedSubscription<Msg> {
   readonly type: "GeometryChanged";
   readonly tekenSettings: ke.TekenSettings;
-  readonly wrapper: MsgGen<TekenResultaat, Msg>;
+  readonly wrapper: MsgGen<Tekenresultaat, Msg>;
 }
 
 export interface TekenenSubscription<Msg> {
@@ -156,13 +157,18 @@ export interface InfoBoodschappenSubscription<Msg> {
 
 export interface ComponentFoutSubscription<Msg> {
   readonly type: "ComponentFout";
-  readonly wrapper: (fouten: Array<string>) => Msg;
+  readonly wrapper: MsgGen<string[], Msg>;
 }
 
+export interface LaagfilterGezetSubscription<Msg> {
+  readonly type: "LaagfilterGezet";
+  readonly wrapper: MsgGen<ke.ToegevoegdeVectorLaag, Msg>;
+}
 export interface LaagstijlGezetSubscription<Msg> {
   readonly type: "LaagstijlGezet";
   readonly wrapper: MsgGen<ke.ToegevoegdeVectorLaag, Msg>;
 }
+
 export interface PublishedKaartLocatiesSubscription<Msg> {
   readonly type: "PublishedKaartLocaties";
   readonly wrapper: MsgGen<KaartLocaties, Msg>;
@@ -257,7 +263,7 @@ export function InfoBoodschappenSubscription<Msg>(wrapper: (boodschappen: Map<st
 
 export function GeometryChangedSubscription<Msg>(
   tekenSettings: ke.TekenSettings,
-  wrapper: MsgGen<TekenResultaat, Msg>
+  wrapper: MsgGen<Tekenresultaat, Msg>
 ): GeometryChangedSubscription<Msg> {
   return { type: "GeometryChanged", tekenSettings: tekenSettings, wrapper: wrapper };
 }
@@ -275,6 +281,10 @@ export function ComponentFoutSubscription<Msg>(wrapper: (fouten: Array<string>) 
     type: "ComponentFout",
     wrapper: wrapper
   };
+}
+
+export function LaagfilterGezetSubscription<Msg>(wrapper: MsgGen<ke.ToegevoegdeVectorLaag, Msg>): LaagfilterGezetSubscription<Msg> {
+  return { type: "LaagfilterGezet", wrapper: wrapper };
 }
 
 export function LaagstijlGezetSubscription<Msg>(wrapper: MsgGen<ke.ToegevoegdeVectorLaag, Msg>): LaagstijlGezetSubscription<Msg> {

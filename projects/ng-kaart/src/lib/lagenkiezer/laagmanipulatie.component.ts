@@ -1,4 +1,4 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, Input, NgZone, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
+import { ChangeDetectionStrategy, Component, Input, NgZone, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
 import { MatMenuTrigger } from "@angular/material";
 import * as array from "fp-ts/lib/Array";
 import { Function2 } from "fp-ts/lib/function";
@@ -6,14 +6,12 @@ import { Option } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, sample, shareReplay, startWith, tap } from "rxjs/operators";
 
-import * as fltr from "../filter/filter-model";
+import { Filter as fltr } from "../filter/filter-model";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import * as ke from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
-import * as prt from "../kaart/kaart-protocol";
 import * as cmd from "../kaart/kaart-protocol-commands";
 import { KaartComponent } from "../kaart/kaart.component";
-import { StopDrawing } from "../kaart/tekenen/tekenen-model";
 import { observeOnAngular } from "../util/observe-on-angular";
 import { collectOption } from "../util/operators";
 import { atLeastOneTrue, negate } from "../util/thruth";
@@ -99,7 +97,7 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
 
     this.heeftFilter$ = laag$.pipe(
       filter(laag => this.laag.titel === laag.titel),
-      map(laag => fltr.isDefined(laag.filterInstellingen.spec)),
+      map(laag => fltr.isDefined(laag.filterinstellingen.spec)),
       startWith(false), // Er moet iets uit de observable komen of hidden wordt nooit gezet
       shareReplay(1)
     );
@@ -108,7 +106,7 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
 
     this.filterActief$ = laag$.pipe(
       filter(laag => this.laag.titel === laag.titel),
-      map(laag => laag.filterInstellingen.actief),
+      map(laag => laag.filterinstellingen.actief),
       startWith(true),
       shareReplay(1)
     );

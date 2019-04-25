@@ -173,7 +173,8 @@
         <awv-kaart-lagenkiezer *ngIf="isOptieActief('lagenkiezer')"
                                [headerTitel]="'Mijn legende en lagen'" [initieelDichtgeklapt]="true"
                                [verwijderbareLagen]="isOptieActief('lagenVerwijderbaar')" [verplaatsbareLagen]="true" [stijlbareVectorlagen]="stijlbareVectorlagen"
-                               [toonLegende]="isOptieActief('legende')"></awv-kaart-lagenkiezer>
+                               [toonLegende]="isOptieActief('legende')"
+                               [filterbareLagen]="true"></awv-kaart-lagenkiezer>
         <awv-kaart-geoserver-laag [titel]="'Referentiepunten'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'">
           <awv-legende-bolletje-item [beschrijving]="'Referentiepunten'" [kleur]="'orange'"></awv-legende-bolletje-item>
         </awv-kaart-geoserver-laag>

@@ -126,6 +126,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
       laaggroep: "Tools",
       legende: none,
       stijlInLagenKiezer: none,
+      filterinstellingen: none,
       wrapper: kaartLogOnlyWrapper
     });
 

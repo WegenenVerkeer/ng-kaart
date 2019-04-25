@@ -62,7 +62,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   queryUrlFn?: Function1<ol.Coordinate, string> = undefined;
 
   @Input()
-  set precache(input: PrecacheWMS) {
+  set precache(input: PrecacheWMS | undefined) {
     if (input) {
       this.dispatch(
         prt.VulCacheVoorWMSLaag(this._titel, input.startZoom, input.eindZoom, input.wkt, input.startMetLegeCache, logOnlyWrapper)

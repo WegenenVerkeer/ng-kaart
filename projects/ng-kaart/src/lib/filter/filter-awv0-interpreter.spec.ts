@@ -187,7 +187,6 @@ describe("De filterinterpreter", () => {
         }
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(eq);
-      console.log(result);
       expect(result.isFailure()).toBe(true);
       expect(result.fold(msgs => msgs.find(m => m.endsWith("heeft geen veld 'property'")), undefined)).toBeTruthy();
     });

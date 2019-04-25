@@ -1,7 +1,7 @@
 import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 
-import { TekenResultaat, TekenSettings } from "./kaart-elementen";
+import { Tekenresultaat, TekenSettings } from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import { kaartLogger } from "./log";
@@ -133,7 +133,7 @@ function GeometryChangedMsg(geometry: ol.geom.Geometry, volgnummer: number, feat
   return { type: "GeometryChanged", geometry: geometry, volgnummer: volgnummer, featureId: featureId };
 }
 
-export const tekenResultaatWrapper = (resultaat: TekenResultaat) =>
+export const tekenResultaatWrapper = (resultaat: Tekenresultaat) =>
   KaartInternalMsg(some(GeometryChangedMsg(resultaat.geometry, resultaat.volgnummer, resultaat.featureId)));
 
 function TekenMsg(settings: Option<TekenSettings>): TekenMsg {

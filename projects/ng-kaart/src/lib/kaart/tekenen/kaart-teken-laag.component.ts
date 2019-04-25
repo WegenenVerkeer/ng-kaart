@@ -60,7 +60,7 @@ const defaultDrawStyle = new ol.style.Style({
   encapsulation: ViewEncapsulation.None
 })
 export class KaartTekenLaagComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
-  private changedGeometriesSubj: Subject<ke.TekenResultaat>;
+  private changedGeometriesSubj: Subject<ke.Tekenresultaat>;
 
   private tekenen = false;
   private source: ol.source.Vector;
@@ -142,6 +142,7 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
       laaggroep: "Tools",
       legende: none,
       stijlInLagenKiezer: none,
+      filterinstellingen: none,
       wrapper: kaartLogOnlyWrapper
     });
 

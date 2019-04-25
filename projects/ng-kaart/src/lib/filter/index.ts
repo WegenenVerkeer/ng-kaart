@@ -35,3 +35,5 @@ export class FilterModule {
 }
 
 export * from "./filter.component";
+export * from "./filter-model";
+export * from "./filter-persistence";

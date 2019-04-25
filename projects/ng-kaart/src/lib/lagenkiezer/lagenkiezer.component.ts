@@ -16,7 +16,6 @@ import { LegendeItem } from "../kaart/kaart-legende";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
 import { isAanpassingBezig } from "../kaart/stijleditor/state";
-import { subSpy } from "../util";
 
 export const LagenUiSelector = "Lagenkiezer";
 

@@ -43,7 +43,7 @@ export class KaartWithInfo {
 
   readonly achtergrondlaagtitelSubj: Subject<string> = new ReplaySubject<string>(1);
   readonly componentFoutSubj: Subject<Array<string>> = new ReplaySubject<Array<string>>(1);
-  readonly geometryChangedSubj: Subject<ke.TekenResultaat> = new Subject<ke.TekenResultaat>();
+  readonly geometryChangedSubj: Subject<ke.Tekenresultaat> = new Subject<ke.Tekenresultaat>();
   readonly tekenSettingsSubj: BehaviorSubject<Option<ke.TekenSettings>> = new BehaviorSubject<Option<ke.TekenSettings>>(none);
   readonly infoBoodschappenSubj = new BehaviorSubject<Map<string, InfoBoodschap>>(new Map());
   readonly publishedKaartLocatiesSubj: Subject<KaartLocaties> = new Subject();
