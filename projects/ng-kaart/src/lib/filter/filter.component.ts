@@ -2,7 +2,7 @@ import { Component, NgZone } from "@angular/core";
 import { FormControl, ValidationErrors, Validators } from "@angular/forms";
 import * as array from "fp-ts/lib/Array";
 import { Function1, Function2 } from "fp-ts/lib/function";
-import { Option } from "fp-ts/lib/Option";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { Observable } from "rxjs";
 import { filter, map, sample, shareReplay, startWith, switchMap, tap } from "rxjs/operators";
@@ -42,7 +42,10 @@ export class FilterComponent extends KaartChildComponentBase {
   readonly filteredOperatoren$: rx.Observable<FilterBuilder.FilterBuildElement[]>;
 
   readonly veldControl = new FormControl("", [Validators.required, autoCompleteSelectieVerplichtValidator]);
-  readonly operatorControl = new FormControl(null, [Validators.required, autoCompleteSelectieVerplichtValidator]);
+  readonly operatorControl = new FormControl(FilterBuilder.comparisonBuilders.find(operator => operator.description === "is"), [
+    Validators.required,
+    autoCompleteSelectieVerplichtValidator
+  ]);
   readonly waardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
 
   readonly geldigFilterCmd$: rx.Observable<prt.ZetFilter<KaartInternalMsg>>;
@@ -86,7 +89,7 @@ export class FilterComponent extends KaartChildComponentBase {
                 this.waardeControl.setValue(comparison.value.value);
               } else {
                 this.veldControl.reset();
-                this.operatorControl.reset();
+                this.operatorControl.reset(FilterBuilder.comparisonBuilders.find(operator => operator.description === "is"));
                 this.waardeControl.reset();
               }
             }
@@ -97,7 +100,19 @@ export class FilterComponent extends KaartChildComponentBase {
       shareReplay(1)
     );
 
-    const velden$: rx.Observable<VeldInfo[]> = laag$.pipe(map(laag => ToegevoegdeVectorLaag.veldInfosLens.get(laag)));
+    const velden$: rx.Observable<VeldInfo[]> = laag$.pipe(
+      map(laag =>
+        ToegevoegdeVectorLaag.veldInfosLens.get(laag).filter(
+          // filter de speciale velden er uit
+          veld =>
+            fromNullable(veld.constante).isNone() &&
+            fromNullable(veld.template).isNone() &&
+            fromNullable(veld.html).isNone() &&
+            veld.type !== "geometry" &&
+            veld.type !== "json"
+        )
+      )
+    );
 
     this.filteredVelden$ = velden$.pipe(
       switchMap(velden =>

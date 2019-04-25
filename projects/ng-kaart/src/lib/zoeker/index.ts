@@ -14,6 +14,7 @@ import {
   MatTooltipModule
 } from "@angular/material";
 
+import { ZoekerAlleLagenGetraptComponent } from "./alle-lagen/zoeker-alle-lagen-getrapt.component";
 import { ZoekerBoxComponent } from "./box/zoeker-box.component";
 import { ZOEKER_CFG, ZoekerConfigData } from "./config/zoeker-config";
 import { ZoekerCrabGetraptComponent } from "./crab/zoeker-crab-getrapt.component";
@@ -30,6 +31,7 @@ const components: any[] = [
   ZoekerBoxComponent,
   ZoekerCrabGetraptComponent,
   ZoekerExterneWmsGetraptComponent,
+  ZoekerAlleLagenGetraptComponent,
   ZoekerHelpComponent,
   ZoekerHighlightPipe,
   ZoekerPerceelGetraptComponent
@@ -75,6 +77,8 @@ export * from "./perceel/zoeker-perceel-getrapt.component";
 
 export * from "./externe-wms/zoeker-externe-wms.service";
 export * from "./externe-wms/zoeker-externe-wms-getrapt.component";
+
+export * from "./alle-lagen/zoeker-alle-lagen.service";
 
 export * from "./zoeker-highlight.pipe";
 export * from "./box/zoeker-box.component";

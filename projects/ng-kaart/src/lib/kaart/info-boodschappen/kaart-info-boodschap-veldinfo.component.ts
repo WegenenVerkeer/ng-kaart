@@ -18,10 +18,14 @@ const IDENT8EN = "ident8en";
 const LOCATIE_IDENT8 = "locatie.ident8";
 const BEGIN_POSITIE = "locatie.begin.positie";
 const BEGIN_AFSTAND = "locatie.begin.afstand";
+const BEGIN_AFSTAND_ALT = "van_afstand";
 const BEGIN_OPSCHRIFT = "locatie.begin.opschrift";
+const BEGIN_OPSCHRIFT_ALT = "van_referentiepaal";
 const EIND_POSITIE = "locatie.eind.positie";
 const EIND_AFSTAND = "locatie.eind.afstand";
+const EIND_AFSTAND_ALT = "tot_afstand";
 const EIND_OPSCHRIFT = "locatie.eind.opschrift";
+const EIND_OPSCHRIFT_ALT = "tot_referentiepaal";
 const LENGTE = "lengte";
 const LOCATIE_GEOMETRY_LENGTE = "locatie.geometry.lengte";
 const LOCATIE_LENGTE = "locatie.lengte";
@@ -111,10 +115,14 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
     GEOMETRY,
     BEGIN_POSITIE,
     BEGIN_AFSTAND,
+    BEGIN_AFSTAND_ALT,
     BEGIN_OPSCHRIFT,
+    BEGIN_OPSCHRIFT_ALT,
     EIND_POSITIE,
     EIND_AFSTAND,
+    EIND_AFSTAND_ALT,
     EIND_OPSCHRIFT,
+    EIND_OPSCHRIFT_ALT,
     LENGTE,
     LOCATIE_GEOMETRY_LENGTE,
     LOCATIE_LENGTE,
@@ -187,7 +195,10 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
   }
 
   heeftVanTot(): boolean {
-    return geldigeWaarde(this.waarde(BEGIN_OPSCHRIFT)) && geldigeWaarde(this.waarde(EIND_OPSCHRIFT));
+    return (
+      (geldigeWaarde(this.waarde(BEGIN_OPSCHRIFT)) && geldigeWaarde(this.waarde(EIND_OPSCHRIFT))) ||
+      (geldigeWaarde(this.waarde(BEGIN_OPSCHRIFT_ALT)) && geldigeWaarde(this.waarde(EIND_OPSCHRIFT_ALT)))
+    );
   }
 
   heeftIdent8en(): boolean {
@@ -213,25 +224,31 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
   }
 
   van(): string {
-    return this.pos(BEGIN_OPSCHRIFT).getOrElse("");
-  }
-
-  tot(): string {
-    return this.pos(EIND_OPSCHRIFT).getOrElse("");
-  }
-
-  private afstand(afstandVeld: string): string {
-    return fromNullable(this.waarde(afstandVeld))
-      .map(this.signed)
+    return this.pos(BEGIN_OPSCHRIFT)
+      .alt(this.pos(BEGIN_OPSCHRIFT_ALT))
       .getOrElse("");
   }
 
+  tot(): string {
+    return this.pos(EIND_OPSCHRIFT)
+      .alt(this.pos(EIND_OPSCHRIFT_ALT))
+      .getOrElse("");
+  }
+
+  private afstand(afstandVeld: string): Option<string> {
+    return fromNullable(this.waarde(afstandVeld)).map(this.signed);
+  }
+
   vanAfstand(): string {
-    return this.afstand(BEGIN_AFSTAND);
+    return this.afstand(BEGIN_AFSTAND)
+      .alt(this.afstand(BEGIN_AFSTAND_ALT))
+      .getOrElse("");
   }
 
   totAfstand(): string {
-    return this.afstand(EIND_AFSTAND);
+    return this.afstand(EIND_AFSTAND)
+      .alt(this.afstand(EIND_AFSTAND_ALT))
+      .getOrElse("");
   }
 
   label(veld: string): string {

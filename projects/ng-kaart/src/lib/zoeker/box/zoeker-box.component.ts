@@ -68,12 +68,13 @@ export interface HuidigeSelectie {
   zoekResultaat: ZoekKaartResultaat;
 }
 
-export type ZoekerType = typeof BASIS | typeof PERCEEL | typeof CRAB | typeof EXTERNE_WMS;
+export type ZoekerType = typeof BASIS | typeof PERCEEL | typeof CRAB | typeof EXTERNE_WMS | typeof ALLE_LAGEN;
 
 export const BASIS = "Basis";
 export const PERCEEL = "Perceel";
 export const CRAB = "Crab";
 export const EXTERNE_WMS = "ExterneWms";
+export const ALLE_LAGEN = "AlleLagen";
 
 type WeergaveoptiesOpZoekernaam = Map<string, Weergaveopties>;
 
@@ -299,6 +300,11 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.zoekerComponentSubj.next(new Tuple<ZoekerType, GetraptZoekerComponent>(EXTERNE_WMS, zoekerExterneWmsGetrapt));
   }
 
+  @ViewChild("zoekerAlleLagenGetrapt")
+  set setZoekerAlleLagenGetraptComponent(zoekerAlleLagenGetrapt: GetraptZoekerComponent) {
+    this.zoekerComponentSubj.next(new Tuple<ZoekerType, GetraptZoekerComponent>(ALLE_LAGEN, zoekerAlleLagenGetrapt));
+  }
+
   // Gevaarlijk: de key ZoekResultaat is een record en er wordt op objectreferentie vergeleken. We moeten er dus steeds
   // voor zorgen dat we dezelfde objecten gebruiken om op te zoeken en op te slaan.
   featuresByResultaat = new Map<ZoekResultaat, ol.Feature[]>();
@@ -332,6 +338,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   readonly Crab: ZoekerType = CRAB;
   readonly Perceel: ZoekerType = PERCEEL;
   readonly ExterneWms: ZoekerType = EXTERNE_WMS;
+  readonly AlleLagen: ZoekerType = ALLE_LAGEN;
 
   private static createLayer(): ke.VectorLaag {
     return {
@@ -737,7 +744,9 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   isInklapbaar(): boolean {
-    return this.heeftFout() || this.alleZoekResultaten.length > 0 || [PERCEEL, CRAB, EXTERNE_WMS].indexOf(this.actieveZoeker) >= 0;
+    return (
+      this.heeftFout() || this.alleZoekResultaten.length > 0 || [PERCEEL, CRAB, EXTERNE_WMS, ALLE_LAGEN].indexOf(this.actieveZoeker) >= 0
+    );
   }
 
   kiesZoeker(zoeker: ZoekerType) {
