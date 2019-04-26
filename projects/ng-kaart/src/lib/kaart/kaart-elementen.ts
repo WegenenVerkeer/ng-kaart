@@ -161,24 +161,12 @@ export interface LaagFilterInstellingen {
   readonly totaal: FilterTotaal;
 }
 
-export function teVeelData(): FilterTotaal {
-  return {
-    type: "TeVeelData"
-  };
-}
-
-export function totaalOpTeHalen(): FilterTotaal {
-  return {
-    type: "TotaalOpTeHalen"
-  };
-}
-
-export function totaalOpgehaald(totaal: number): FilterTotaal {
-  return {
-    type: "TotaalOpgehaald",
-    totaal: totaal
-  };
-}
+export const teVeelData: () => FilterTotaal = () => ({ type: "TeVeelData" });
+export const totaalOpTeHalen: () => FilterTotaal = () => ({ type: "TotaalOpTeHalen" });
+export const totaalOpgehaald: (number) => FilterTotaal = totaal => ({
+  type: "TotaalOpgehaald",
+  totaal: totaal
+});
 
 /**
  * Dit is een wrapper rond Laag die naast de laag zelf ook het gebruik van de laag bij houdt.
