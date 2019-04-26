@@ -22,6 +22,51 @@ import { AdresResult, LaagLocationInfo, LaagLocationInfoResult, LaagLocationInfo
 
 export const BevraagKaartUiSelector = "Bevraagkaart";
 
+export interface MeterUnit {
+  readonly type: "Meter";
+  readonly waarde: number;
+}
+export function MeterUnit(waarde: number): MeterUnit {
+  return {
+    type: "Meter",
+    waarde: waarde
+  };
+}
+
+export interface PixelUnit {
+  readonly type: "Pixel";
+  readonly waarde: number;
+}
+export function PixelUnit(waarde: number): PixelUnit {
+  return {
+    type: "Pixel",
+    waarde: waarde
+  };
+}
+
+export type UnitType = "Meter" | "Pixel";
+export type ZoekAfstand = MeterUnit | PixelUnit;
+
+export function ZoekAfstand(type: UnitType, waarde: number): ZoekAfstand {
+  switch (type) {
+    case "Pixel":
+      return PixelUnit(waarde);
+    default:
+      return MeterUnit(waarde);
+  }
+}
+
+export interface BevraagKaartOpties {
+  readonly zoekAfstand: ZoekAfstand;
+}
+
+const defaultOptions: BevraagKaartOpties = {
+  zoekAfstand: {
+    type: "Meter",
+    waarde: 25
+  }
+};
+
 @Component({
   selector: "awv-kaart-bevragen",
   template: ""
@@ -42,21 +87,40 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
   ngOnInit(): void {
     super.ngOnInit();
 
+    const zoekAfstandInMeter = (resolution: number, zoekAfstand: ZoekAfstand) => {
+      switch (zoekAfstand.type) {
+        case "Meter":
+          return zoekAfstand.waarde;
+        case "Pixel":
+          // We gaan er hier van uit dat de mapUnits van de kaart in meter is
+          return zoekAfstand.waarde * resolution;
+      }
+    };
+
+    const options$ = this.modusOpties$<BevraagKaartOpties>(defaultOptions);
     const stableReferentielagen$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Laag")!.pipe(debounceTime(250));
     const stableInfoServices$ = this.modelChanges.laagLocationInfoServicesOpTitel$.pipe(debounceTime(250));
     const geklikteLocatie$ = this.modelChanges.kaartKlikLocatie$.pipe(filter(l => this.isActief() && !l.coversFeature));
+    const stableZoekAfstand$ = this.modelChanges.viewinstellingen$.pipe(
+      debounceTime(250),
+      map(view => view.resolution),
+      switchMap(resolution => options$.pipe(map(options => zoekAfstandInMeter(resolution, options.zoekAfstand))))
+    );
 
     const allSvcCalls: (
       _1: Array<ke.ToegevoegdeLaag>,
       _2: Map<string, LaagLocationInfoService>,
-      _3: ol.Coordinate
-    ) => Array<rx.Observable<srv.LocatieInfo>> = (lgn, svcs, locatie) => {
+      _3: ol.Coordinate,
+      _4: number
+    ) => Array<rx.Observable<srv.LocatieInfo>> = (lgn, svcs, locatie, zoekAfstand) => {
       const timestamp = Date.now();
       return lgn
         .filter(lg => lg!.layer.getVisible() && svcs.has(lg!.titel)) // zichtbare lagen met een info service
         .map(lg => infoForLaag(timestamp, locatie, lg!, svcs.get(lg!.titel)!))
         .concat([
-          srv.wegLocatiesViaXY$(this.http, locatie).pipe(map(weglocatie => srv.fromWegLocaties(timestamp, locatie, weglocatie))),
+          srv
+            .wegLocatiesViaXY$(this.http, locatie, zoekAfstand)
+            .pipe(map(weglocatie => srv.fromWegLocaties(timestamp, locatie, weglocatie))),
           srv.adresViaXY$(this.http, locatie).pipe(map(adres => srv.withAdres(timestamp, locatie, adres)))
         ]);
     };
@@ -66,11 +130,15 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
         switchMap(lgn =>
           stableInfoServices$.pipe(
             switchMap(svcs =>
-              geklikteLocatie$.pipe(
-                switchMap(locatie =>
-                  rx.from(allSvcCalls(lgn, svcs, locatie.coordinate)).pipe(
-                    mergeAll(5), //
-                    scan(srv.merge)
+              stableZoekAfstand$.pipe(
+                switchMap(zoekAfstand =>
+                  geklikteLocatie$.pipe(
+                    switchMap(locatie =>
+                      rx.from(allSvcCalls(lgn, svcs, locatie.coordinate, zoekAfstand)).pipe(
+                        mergeAll(5), //
+                        scan(srv.merge)
+                      )
+                    )
                   )
                 )
               )

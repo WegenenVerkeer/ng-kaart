@@ -6,14 +6,7 @@ import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { RouterModule } from "@angular/router";
 import { ClickOutsideModule } from "ng4-click-outside";
 
-import {
-  ClassicModule,
-  FilterComponent,
-  FilterModule,
-  KaartModule,
-  LagenkiezerModule,
-  ZoekerModule
-} from "../../projects/ng-kaart/src/public_api";
+import { ClassicModule, FilterModule, KaartModule, LagenkiezerModule, ZoekerModule } from "../../projects/ng-kaart/src/public_api";
 
 import { AppComponent, routes } from "./app.component";
 import { AvKaartInnerComponent } from "./av-kaart-inner.component";
