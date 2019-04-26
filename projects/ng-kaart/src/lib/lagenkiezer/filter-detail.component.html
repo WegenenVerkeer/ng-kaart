@@ -25,6 +25,6 @@
   </div>
   <div (click)="pasFilterAan()">
     <div class="filter-omschrijving">{{omschrijving()}}</div>
-    <div class="filter-specificatie" [innerHTML]="prettyPrintFilter()"></div>
+    <awv-filter-expression [expression]="filter.expression"></awv-filter-expression>
   </div>
 </div>

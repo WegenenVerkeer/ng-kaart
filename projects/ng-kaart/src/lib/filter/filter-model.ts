@@ -34,6 +34,8 @@ export interface Disjunction {
   readonly right: Expression;
 }
 
+export type LogicalConnective = Conjunction | Disjunction;
+
 export type Comparison = Equality | Inequality;
 
 export interface PropertyValueOperator {
@@ -251,34 +253,6 @@ export namespace FilterText {
   });
 
   export const filterText: Generator<Filter> = switchFilter({
-    pure: () => "alle waarden",
-    expression: expressionText
-  });
-}
-
-export namespace PrettyPrintFilter {
-  export type Generator<A> = Function1<A, string>;
-
-  const propertyText: Generator<Property> = property => property.ref;
-  const literalText: Generator<Literal> = switchLiteral({
-    bool: b => (b ? "waar" : "vals"),
-    date: d => d.toString(),
-    datetime: d => d.toString(),
-    dbl: d => d.toString(), // Afronden of sprintf?
-    geom: d => "<geometrie>",
-    int: i => i.toString(),
-    json: j => "<json>",
-    str: s => s
-  });
-
-  const expressionText: Generator<Expression> = switchExpression({
-    and: expr => `${expressionText(expr.left)}  <b>EN</b>  ${expressionText(expr.right)}`,
-    or: expr => `( ${expressionText(expr.left)} )  <b>OF</b>  ( ${expressionText(expr.right)} )`,
-    equality: expr => `${propertyText(expr.property)} is ${literalText(expr.value)}`,
-    inequality: expr => `${propertyText(expr.property)} is niet ${literalText(expr.value)}`
-  });
-
-  export const prettyPrint: Generator<Filter> = switchFilter({
     pure: () => "alle waarden",
     expression: expressionText
   });

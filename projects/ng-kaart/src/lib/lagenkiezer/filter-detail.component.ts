@@ -61,10 +61,6 @@ export class FilterDetailComponent extends KaartChildComponentBase {
     return this.filter.name;
   }
 
-  prettyPrintFilter(): string {
-    return fltr.PrettyPrintFilter.prettyPrint(this.filter);
-  }
-
   verwijderFilter() {
     this.dispatch(cmd.ZetFilter(this.laag.titel, fltr.pure(), kaartLogOnlyWrapper));
   }

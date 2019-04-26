@@ -4,12 +4,13 @@ import { MatButtonModule, MatIconModule, MatInputModule, MatMenuModule, MatToolt
 import { MatTabsModule } from "@angular/material/tabs";
 
 import { FilterDetailComponent } from "./filter-detail.component";
+import { FilterExpressionComponent } from "./filter-expression.component";
 
 import { LaagmanipulatieComponent } from "./laagmanipulatie.component";
 import { LAGENKIEZER_CFG, LagenkiezerConfig } from "./lagenkiezer-config";
 import { LagenkiezerComponent } from "./lagenkiezer.component";
 
-const components: any[] = [LagenkiezerComponent, LaagmanipulatieComponent, FilterDetailComponent];
+const components: any[] = [LagenkiezerComponent, LaagmanipulatieComponent, FilterDetailComponent, FilterExpressionComponent];
 
 @NgModule({
   imports: [CommonModule, MatIconModule, MatInputModule, MatButtonModule, MatMenuModule, MatTabsModule, MatTooltipModule],
