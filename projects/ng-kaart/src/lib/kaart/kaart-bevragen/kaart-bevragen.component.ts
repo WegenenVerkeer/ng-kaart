@@ -73,7 +73,6 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
         .filter(lg => lg!.layer.getVisible() && svcs.has(lg!.titel)) // zichtbare lagen met een info service
         .map(lg => infoForLaag(timestamp, locatie, lg!, svcs.get(lg!.titel)!))
         .concat([
-          // Bereken de maxAfstand op basis van de opgegeven aantal pixels en de resolutie
           srv
             .wegLocatiesViaXY$(this.http, locatie, zoekAfstand)
             .pipe(map(weglocatie => srv.fromWegLocaties(timestamp, locatie, weglocatie))),
