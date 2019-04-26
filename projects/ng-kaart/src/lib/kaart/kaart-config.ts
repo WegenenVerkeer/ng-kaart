@@ -33,7 +33,7 @@ export interface KaartConfig {
     resolutions: number[];
     extent: ol.Extent;
     style: ol.style.Style;
-    bevragenZoekRadius: MeterUnit | PixelUnit;
+    bevragenZoekAfstand: MeterUnit | PixelUnit;
   };
 }
 

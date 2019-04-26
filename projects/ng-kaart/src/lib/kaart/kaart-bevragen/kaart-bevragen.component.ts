@@ -43,12 +43,13 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
   ngOnInit(): void {
     super.ngOnInit();
 
-    const resolutionToMeters = (resolution: number) => {
-      switch (this.config.defaults.bevragenZoekRadius.type) {
+    const zoekAfstandInMeter = (resolution: number) => {
+      switch (this.config.defaults.bevragenZoekAfstand.type) {
         case "Meter":
-          return this.config.defaults.bevragenZoekRadius.waarde;
+          return this.config.defaults.bevragenZoekAfstand.waarde;
         case "Pixel":
-          return this.config.defaults.bevragenZoekRadius.waarde * resolution;
+          // We gaan er hier van uit dat de mapUnits van de kaart in meter is
+          return this.config.defaults.bevragenZoekAfstand.waarde * resolution;
       }
     };
 
@@ -58,7 +59,7 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
     const stableZoekAfstand$ = this.modelChanges.viewinstellingen$.pipe(
       debounceTime(250),
       map(view => view.resolution),
-      map(resolutionToMeters)
+      map(zoekAfstandInMeter)
     );
 
     const allSvcCalls: (
