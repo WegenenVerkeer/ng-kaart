@@ -179,13 +179,13 @@ export function adresViaXY$(http: HttpClient, coordinaat: ol.Coordinate): rx.Obs
     );
 }
 
-export function wegLocatiesViaXY$(http: HttpClient, coordinaat: ol.Coordinate): rx.Observable<WegLocatiesResult> {
+export function wegLocatiesViaXY$(http: HttpClient, coordinaat: ol.Coordinate, maxAfstand = 25): rx.Observable<WegLocatiesResult> {
   return http
     .get<LsWegLocaties>("/wegendatabank/v1/locator/xy2loc", {
       params: {
         x: `${coordinaat[0]}`,
         y: `${coordinaat[1]}`,
-        maxAfstand: "25",
+        maxAfstand: maxAfstand.toString(),
         showall: "true"
       }
     })

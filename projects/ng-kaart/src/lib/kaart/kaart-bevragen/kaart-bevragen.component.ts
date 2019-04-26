@@ -1,5 +1,5 @@
 import { HttpClient } from "@angular/common/http";
-import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
+import { Component, Inject, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { left, right } from "fp-ts/lib/Either";
 import * as option from "fp-ts/lib/Option";
 import { none } from "fp-ts/lib/Option";
@@ -11,6 +11,7 @@ import * as arrays from "../../util/arrays";
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { Progress, Received, Requested, TimedOut } from "../../util/progress";
 import * as progress from "../../util/progress";
+import { KAART_CFG, KaartConfig } from "../kaart-config";
 import * as ke from "../kaart-elementen";
 import { KaartModusComponent } from "../kaart-modus-component";
 import * as prt from "../kaart-protocol";
@@ -27,7 +28,7 @@ export const BevraagKaartUiSelector = "Bevraagkaart";
   template: ""
 })
 export class KaartBevragenComponent extends KaartModusComponent implements OnInit, OnDestroy {
-  constructor(parent: KaartComponent, zone: NgZone, private http: HttpClient) {
+  constructor(parent: KaartComponent, zone: NgZone, private http: HttpClient, @Inject(KAART_CFG) private readonly config: KaartConfig) {
     super(parent, zone);
   }
 
@@ -42,21 +43,39 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
   ngOnInit(): void {
     super.ngOnInit();
 
+    const resolutionToMeters = (resolution: number) => {
+      switch (this.config.defaults.bevragenZoekRadius.type) {
+        case "Map":
+          return this.config.defaults.bevragenZoekRadius.waarde;
+        case "Pixel":
+          return this.config.defaults.bevragenZoekRadius.waarde * resolution;
+      }
+    };
+
     const stableReferentielagen$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Laag")!.pipe(debounceTime(250));
     const stableInfoServices$ = this.modelChanges.laagLocationInfoServicesOpTitel$.pipe(debounceTime(250));
     const geklikteLocatie$ = this.modelChanges.kaartKlikLocatie$.pipe(filter(l => this.isActief() && !l.coversFeature));
+    const stableZoekAfstand$ = this.modelChanges.viewinstellingen$.pipe(
+      debounceTime(250),
+      map(view => view.resolution),
+      map(resolutionToMeters)
+    );
 
     const allSvcCalls: (
       _1: Array<ke.ToegevoegdeLaag>,
       _2: Map<string, LaagLocationInfoService>,
-      _3: ol.Coordinate
-    ) => Array<rx.Observable<srv.LocatieInfo>> = (lgn, svcs, locatie) => {
+      _3: ol.Coordinate,
+      _4: number
+    ) => Array<rx.Observable<srv.LocatieInfo>> = (lgn, svcs, locatie, zoekAfstand) => {
       const timestamp = Date.now();
       return lgn
         .filter(lg => lg!.layer.getVisible() && svcs.has(lg!.titel)) // zichtbare lagen met een info service
         .map(lg => infoForLaag(timestamp, locatie, lg!, svcs.get(lg!.titel)!))
         .concat([
-          srv.wegLocatiesViaXY$(this.http, locatie).pipe(map(weglocatie => srv.fromWegLocaties(timestamp, locatie, weglocatie))),
+          // Bereken de maxAfstand op basis van de opgegeven aantal pixels en de resolutie
+          srv
+            .wegLocatiesViaXY$(this.http, locatie, zoekAfstand)
+            .pipe(map(weglocatie => srv.fromWegLocaties(timestamp, locatie, weglocatie))),
           srv.adresViaXY$(this.http, locatie).pipe(map(adres => srv.withAdres(timestamp, locatie, adres)))
         ]);
     };
@@ -66,11 +85,15 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
         switchMap(lgn =>
           stableInfoServices$.pipe(
             switchMap(svcs =>
-              geklikteLocatie$.pipe(
-                switchMap(locatie =>
-                  rx.from(allSvcCalls(lgn, svcs, locatie.coordinate)).pipe(
-                    mergeAll(5), //
-                    scan(srv.merge)
+              stableZoekAfstand$.pipe(
+                switchMap(zoekAfstand =>
+                  geklikteLocatie$.pipe(
+                    switchMap(locatie =>
+                      rx.from(allSvcCalls(lgn, svcs, locatie.coordinate, zoekAfstand)).pipe(
+                        mergeAll(5), //
+                        scan(srv.merge)
+                      )
+                    )
                   )
                 )
               )
