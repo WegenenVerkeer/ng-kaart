@@ -17,7 +17,6 @@ import {
 import { none, some } from "fp-ts/lib/Option";
 import { ClickOutsideModule } from "ng4-click-outside";
 import * as ol from "openlayers";
-import { kaartConfig } from "src/app/app.module";
 
 import { AbbameldaModule } from "../abbamelda/index";
 import { KaartOpenLayersStyleComponent } from "../classic/openlayers-style/classic-openlayers-style.component";
@@ -80,8 +79,6 @@ const components: any[] = [
   KaartVoorwaardenComponent,
   KaartZoomComponent
 ];
-
-export type KaartConfig = KaartConfig;
 
 // Weersta de drang om deze variabele in een andere module te plaatsen, want dat geeft problemen met gebruik in AOT app.
 export const defaultKaartConfig: KaartConfig = {
@@ -168,6 +165,7 @@ export * from "./kaart-event-dispatcher";
 export * from "./kaart-legende";
 export * from "./kaart-protocol";
 export * from "./kaart.component";
+export * from "./kaart-config";
 export * from "./log";
 export * from "./meten/kaart-meten.component";
 export * from "./meten/kaart-multi-meten.component";
