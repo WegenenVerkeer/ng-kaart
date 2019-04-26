@@ -1,17 +1,7 @@
 import { InjectionToken } from "@angular/core";
-import { Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 
 export const KAART_CFG = new InjectionToken<KaartConfig>("kaartcfg");
-
-export interface MeterUnit {
-  readonly type: "Meter";
-  readonly waarde: number;
-}
-export interface PixelUnit {
-  readonly type: "Pixel";
-  readonly waarde: number;
-}
 
 export interface KaartConfig {
   readonly tilecache: {
@@ -33,7 +23,6 @@ export interface KaartConfig {
     resolutions: number[];
     extent: ol.Extent;
     style: ol.style.Style;
-    bevragenZoekAfstand: MeterUnit | PixelUnit;
   };
 }
 

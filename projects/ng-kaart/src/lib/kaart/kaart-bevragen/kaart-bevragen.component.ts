@@ -1,5 +1,5 @@
 import { HttpClient } from "@angular/common/http";
-import { Component, Inject, NgZone, OnDestroy, OnInit } from "@angular/core";
+import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { left, right } from "fp-ts/lib/Either";
 import * as option from "fp-ts/lib/Option";
 import { none } from "fp-ts/lib/Option";
@@ -11,7 +11,6 @@ import * as arrays from "../../util/arrays";
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { Progress, Received, Requested, TimedOut } from "../../util/progress";
 import * as progress from "../../util/progress";
-import { KAART_CFG, KaartConfig } from "../kaart-config";
 import * as ke from "../kaart-elementen";
 import { KaartModusComponent } from "../kaart-modus-component";
 import * as prt from "../kaart-protocol";
@@ -23,12 +22,57 @@ import { AdresResult, LaagLocationInfo, LaagLocationInfoResult, LaagLocationInfo
 
 export const BevraagKaartUiSelector = "Bevraagkaart";
 
+export interface MeterUnit {
+  readonly type: "Meter";
+  readonly waarde: number;
+}
+export function MeterUnit(waarde: number): MeterUnit {
+  return {
+    type: "Meter",
+    waarde: waarde
+  };
+}
+
+export interface PixelUnit {
+  readonly type: "Pixel";
+  readonly waarde: number;
+}
+export function PixelUnit(waarde: number): PixelUnit {
+  return {
+    type: "Pixel",
+    waarde: waarde
+  };
+}
+
+export type UnitType = "Meter" | "Pixel";
+export type ZoekAfstand = MeterUnit | PixelUnit;
+
+export function Unit(type: UnitType, waarde: number): ZoekAfstand {
+  switch (type) {
+    case "Pixel":
+      return PixelUnit(waarde);
+    default:
+      return MeterUnit(waarde);
+  }
+}
+
+export interface BevraagKaartOpties {
+  readonly zoekAfstand: ZoekAfstand;
+}
+
+const defaultOptions: BevraagKaartOpties = {
+  zoekAfstand: {
+    type: "Meter",
+    waarde: 25
+  }
+};
+
 @Component({
   selector: "awv-kaart-bevragen",
   template: ""
 })
 export class KaartBevragenComponent extends KaartModusComponent implements OnInit, OnDestroy {
-  constructor(parent: KaartComponent, zone: NgZone, private http: HttpClient, @Inject(KAART_CFG) private readonly config: KaartConfig) {
+  constructor(parent: KaartComponent, zone: NgZone, private http: HttpClient) {
     super(parent, zone);
   }
 
@@ -43,23 +87,24 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
   ngOnInit(): void {
     super.ngOnInit();
 
-    const zoekAfstandInMeter = (resolution: number) => {
-      switch (this.config.defaults.bevragenZoekAfstand.type) {
+    const zoekAfstandInMeter = (resolution: number, zoekAfstand: ZoekAfstand) => {
+      switch (zoekAfstand.type) {
         case "Meter":
-          return this.config.defaults.bevragenZoekAfstand.waarde;
+          return zoekAfstand.waarde;
         case "Pixel":
           // We gaan er hier van uit dat de mapUnits van de kaart in meter is
-          return this.config.defaults.bevragenZoekAfstand.waarde * resolution;
+          return zoekAfstand.waarde * resolution;
       }
     };
 
+    const options$ = this.modusOpties$<BevraagKaartOpties>(defaultOptions);
     const stableReferentielagen$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Laag")!.pipe(debounceTime(250));
     const stableInfoServices$ = this.modelChanges.laagLocationInfoServicesOpTitel$.pipe(debounceTime(250));
     const geklikteLocatie$ = this.modelChanges.kaartKlikLocatie$.pipe(filter(l => this.isActief() && !l.coversFeature));
     const stableZoekAfstand$ = this.modelChanges.viewinstellingen$.pipe(
       debounceTime(250),
       map(view => view.resolution),
-      map(zoekAfstandInMeter)
+      switchMap(resolution => options$.pipe(map(options => zoekAfstandInMeter(resolution, options.zoekAfstand))))
     );
 
     const allSvcCalls: (
