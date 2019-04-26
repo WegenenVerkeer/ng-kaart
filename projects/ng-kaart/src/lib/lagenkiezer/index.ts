@@ -3,11 +3,13 @@ import { ModuleWithProviders, NgModule } from "@angular/core";
 import { MatButtonModule, MatIconModule, MatInputModule, MatMenuModule, MatTooltipModule } from "@angular/material";
 import { MatTabsModule } from "@angular/material/tabs";
 
+import { FilterDetailComponent } from "./filter-detail.component";
+
 import { LaagmanipulatieComponent } from "./laagmanipulatie.component";
 import { LAGENKIEZER_CFG, LagenkiezerConfig } from "./lagenkiezer-config";
 import { LagenkiezerComponent } from "./lagenkiezer.component";
 
-const components: any[] = [LagenkiezerComponent, LaagmanipulatieComponent];
+const components: any[] = [LagenkiezerComponent, LaagmanipulatieComponent, FilterDetailComponent];
 
 @NgModule({
   imports: [CommonModule, MatIconModule, MatInputModule, MatButtonModule, MatMenuModule, MatTabsModule, MatTooltipModule],
@@ -29,3 +31,4 @@ export class LagenkiezerModule {
 export * from "./lagenkiezer.component";
 export * from "./lagenkiezer-config";
 export * from "./laagmanipulatie.component";
+export * from "./filter-detail.component";
