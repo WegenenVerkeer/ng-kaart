@@ -62,9 +62,9 @@
       <div class="geen-lagen" *ngIf="geenLegende$ | async">Er zijn geen zichtbare lagen met een legende</div>
     </ng-template>
     <ng-template #filters>
-      <div *ngFor="let laag of (lagenMetFilter$ | async)" class="filter">
+      <div *ngFor="let laag of (lagenMetFilter$ | async); last as isLaatste" class="filter">
         <awv-filter-detail [laag]="laag"></awv-filter-detail>
-        <div class="divider" *ngIf="!isLaatsteFilter(laag)"></div>
+        <div class="divider" *ngIf="!isLaatste"></div>
       </div>
     </ng-template>
   </div>

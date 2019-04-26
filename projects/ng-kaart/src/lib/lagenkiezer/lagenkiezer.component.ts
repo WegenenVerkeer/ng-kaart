@@ -86,7 +86,6 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
   readonly lagenHoog$: rx.Observable<Array<ToegevoegdeLaag>>;
   readonly lagenLaag$: rx.Observable<Array<ToegevoegdeLaag>>;
   readonly lagenMetLegende$: rx.Observable<Array<ToegevoegdeLaag>>;
-  readonly lagenMetFilterSubj: rx.BehaviorSubject<Array<ToegevoegdeVectorLaag>> = new rx.BehaviorSubject([]);
   readonly lagenMetFilter$: rx.Observable<Array<ToegevoegdeVectorLaag>>;
   readonly filterTabHeader$: rx.Observable<string>;
   readonly heeftDivider$: rx.Observable<boolean>;
@@ -134,11 +133,7 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
     );
     this.lagenMetFilter$ = this.lagenHoog$.pipe(
       map(lagen => array.filter(lagen, isToegevoegdeVectorLaag)),
-      map(vlagen => array.filter(vlagen, vlaag => fltr.isDefined(vlaag.filterInstellingen.spec))),
-      map(flagen => {
-        this.lagenMetFilterSubj.next(flagen);
-        return flagen;
-      })
+      map(vlagen => array.filter(vlagen, vlaag => fltr.isDefined(vlaag.filterInstellingen.spec)))
     );
 
     this.filterTabHeader$ = this.lagenMetFilter$.pipe(
@@ -335,12 +330,5 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
     }
 
     return this.sanitizer.bypassSecurityTrustHtml(itemToHtml());
-  }
-
-  isLaatsteFilter(laag: ToegevoegdeVectorLaag): boolean {
-    return array
-      .last(this.lagenMetFilterSubj.getValue())
-      .map(llaag => llaag === laag)
-      .getOrElse(true);
   }
 }
