@@ -182,6 +182,7 @@ export class FilterComponent extends KaartChildComponentBase {
       this.dispatch(prt.StopVectorFilterBewerkingCmd());
       this.dispatch(command);
       this.dispatch(prt.ActiveerFilter(command.titel, true, kaartLogOnlyWrapper));
+      this.dispatch(prt.HaalFilterTotaalOp(command.titel, kaartLogOnlyWrapper));
     });
   }
 

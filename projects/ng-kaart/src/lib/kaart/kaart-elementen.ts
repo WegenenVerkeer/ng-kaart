@@ -1,4 +1,3 @@
-import * as array from "fp-ts/lib/Array";
 import { Function1, Refinement } from "fp-ts/lib/function";
 import { fromPredicate, Option } from "fp-ts/lib/Option";
 import { contramap, Setoid, setoidString } from "fp-ts/lib/Setoid";
@@ -11,7 +10,6 @@ import { mapToOptionalByKey } from "../util/lenses";
 
 import { Legende } from "./kaart-legende";
 import { AwvV0StyleSpec, StyleSelector } from "./stijl-selector";
-import { VeldProps } from "./stijleditor/model";
 
 export const SingleTileWmsType = "LaagType.SingleTileWms";
 export type SingleTileWmsType = typeof SingleTileWmsType;
@@ -142,9 +140,44 @@ export interface TekenResultaat {
   readonly featureId: number | string;
 }
 
+export interface TeVeelData {
+  readonly type: "TeVeelData";
+}
+
+export interface TotaalOpTeHalen {
+  readonly type: "TotaalOpTeHalen";
+}
+
+export interface TotaalOpgehaald {
+  readonly type: "TotaalOpgehaald";
+  readonly totaal: number;
+}
+
+export type FilterTotaal = TotaalOpTeHalen | TotaalOpgehaald | TeVeelData;
+
 export interface LaagFilterInstellingen {
   readonly spec: Filter;
   readonly actief: boolean;
+  readonly totaal: FilterTotaal;
+}
+
+export function teVeelData(): FilterTotaal {
+  return {
+    type: "TeVeelData"
+  };
+}
+
+export function totaalOpTeHalen(): FilterTotaal {
+  return {
+    type: "TotaalOpTeHalen"
+  };
+}
+
+export function totaalOpgehaald(totaal: number): FilterTotaal {
+  return {
+    type: "TotaalOpgehaald",
+    totaal: totaal
+  };
 }
 
 /**
@@ -232,10 +265,11 @@ export function TekenResultaat(geometry: ol.geom.Geometry, volgnummer: number, f
   };
 }
 
-export function LaagFilterInstellingen(spec: Filter, actief: boolean): LaagFilterInstellingen {
+export function LaagFilterInstellingen(spec: Filter, actief: boolean, totaal: FilterTotaal): LaagFilterInstellingen {
   return {
     spec: spec,
-    actief: actief
+    actief: actief,
+    totaal: totaal
   };
 }
 

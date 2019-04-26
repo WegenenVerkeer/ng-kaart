@@ -1,35 +1,22 @@
-import { AfterViewInit, ChangeDetectionStrategy, Component, Input, NgZone, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
+import { ChangeDetectionStrategy, Component, Input, NgZone, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
 import { MatMenuTrigger } from "@angular/material";
 import * as array from "fp-ts/lib/Array";
-import { Function1, Function2 } from "fp-ts/lib/function";
+import { Function2 } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, filter, map, sample, shareReplay, startWith, switchMap, tap } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, sample, shareReplay, startWith, tap } from "rxjs/operators";
 
 import * as fltr from "../filter/filter-model";
-import { FilterCql } from "../filter/filter-model";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import * as ke from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as cmd from "../kaart/kaart-protocol-commands";
 import { KaartComponent } from "../kaart/kaart.component";
 import { observeOnAngular } from "../util/observe-on-angular";
-import { collectOption, subSpy } from "../util/operators";
+import { collectOption } from "../util/operators";
 import { atLeastOneTrue, negate } from "../util/thruth";
 
 import { LagenkiezerComponent } from "./lagenkiezer.component";
-
-const fetchFilterTotaal$: Function1<ke.ToegevoegdeVectorLaag, rx.Observable<string>> = laag => {
-  return ke
-    .asNosqlSource(laag.layer.getSource())
-    .foldL(
-      () => rx.of(""),
-      source =>
-        source
-          .fetchCollectionSummary$()
-          .pipe(switchMap(summary => (summary.count < 100000 ? source.fetchTotal$().pipe(map(num => `${num}`)) : rx.of(""))))
-    );
-};
 
 @Component({
   selector: "awv-laagmanipulatie",
@@ -124,23 +111,19 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
       shareReplay(1)
     );
 
-    // TODO: dit werkt niet omdat het dit laagmanipulatie object elke keer opnieuw aangemaakt wordt door de lagenkiezer (luisteren op
-    //  lagenInGroep vernieuwd de array volledig) waardoor je de vorige state verliest. Fijnmaziger luisteren op laag aanpassingen?
-    //  bvb volgen op Lagen.Hoog (e.d.) en daarbinnen filter op titel + distinctUntil op referentie + iets voorzien om te luisteren
-    //  op laag veranderingen
-    this.filterTotaal$ = subSpy("filterTotaal$")(
-      this.modelChanges.lagenOpGroep.get("Voorgrond.Hoog")!.pipe(
-        collectOption(lgn => findLaagOpTitel(this.laag.titel, lgn)),
-        filter(laag => this.laag.titel === laag.titel),
-        filter(laag => laag.filterInstellingen.actief && laag.filterInstellingen.spec !== fltr.pure()),
-        distinctUntilChanged((p, q) => {
-          console.log(FilterCql.cql(p.filterInstellingen.spec).toString());
-          console.log(FilterCql.cql(q.filterInstellingen.spec).toString());
-          return FilterCql.cql(p.filterInstellingen.spec).toString() === FilterCql.cql(q.filterInstellingen.spec).toString();
-        }),
-        debounceTime(500),
-        switchMap(fetchFilterTotaal$)
-      )
+    this.filterTotaal$ = laag$.pipe(
+      filter(laag => this.laag.titel === laag.titel),
+      map(laag => {
+        switch (laag.filterInstellingen.totaal.type) {
+          case "TotaalOpTeHalen":
+            return ". . . ";
+          case "TotaalOpgehaald":
+            return `${laag.filterInstellingen.totaal.totaal}`;
+          case "TeVeelData":
+            return "onbekend";
+        }
+      }),
+      shareReplay(1)
     );
 
     this.minstensEenLaagActie$ = rx
