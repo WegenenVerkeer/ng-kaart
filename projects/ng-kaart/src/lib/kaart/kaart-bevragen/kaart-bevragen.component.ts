@@ -45,7 +45,7 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
 
     const resolutionToMeters = (resolution: number) => {
       switch (this.config.defaults.bevragenZoekRadius.type) {
-        case "Map":
+        case "Meter":
           return this.config.defaults.bevragenZoekRadius.waarde;
         case "Pixel":
           return this.config.defaults.bevragenZoekRadius.waarde * resolution;

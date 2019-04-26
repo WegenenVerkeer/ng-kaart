@@ -4,8 +4,8 @@ import * as ol from "openlayers";
 
 export const KAART_CFG = new InjectionToken<KaartConfig>("kaartcfg");
 
-export interface MapUnit {
-  readonly type: "Map";
+export interface MeterUnit {
+  readonly type: "Meter";
   readonly waarde: number;
 }
 export interface PixelUnit {
@@ -33,7 +33,7 @@ export interface KaartConfig {
     resolutions: number[];
     extent: ol.Extent;
     style: ol.style.Style;
-    bevragenZoekRadius: MapUnit | PixelUnit;
+    bevragenZoekRadius: MeterUnit | PixelUnit;
   };
 }
 

@@ -104,7 +104,7 @@ export const defaultKaartConfig: KaartConfig = {
     extent: [18000.0, 152999.75, 280144.0, 415143.75],
     style: (null as any) as ol.style.Style,
     bevragenZoekRadius: {
-      type: "Map",
+      type: "Meter",
       waarde: 25
     }
   }
