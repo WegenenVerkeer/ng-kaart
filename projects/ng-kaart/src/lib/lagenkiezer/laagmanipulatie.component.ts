@@ -9,6 +9,7 @@ import { distinctUntilChanged, filter, map, sample, shareReplay, startWith, tap 
 import * as fltr from "../filter/filter-model";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import * as ke from "../kaart/kaart-elementen";
+import { FilterTotaal, TotaalOpgehaald } from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as cmd from "../kaart/kaart-protocol-commands";
 import { KaartComponent } from "../kaart/kaart.component";
@@ -36,7 +37,10 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
   readonly heeftFilter$: rx.Observable<boolean>;
   readonly heeftGeenFilter$: rx.Observable<boolean>;
   readonly filterActief$: rx.Observable<boolean>;
-  readonly filterTotaal$: rx.Observable<string>;
+  readonly filterTotaal$: rx.Observable<number>;
+  readonly filterTotaalOnbekend$: rx.Observable<boolean>;
+  readonly filterTotaalOpgehaald$: rx.Observable<boolean>;
+  readonly filterTotaalOpTeHalen$: rx.Observable<boolean>;
 
   @Input()
   laag: ke.ToegevoegdeLaag;
@@ -111,19 +115,19 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
       shareReplay(1)
     );
 
-    this.filterTotaal$ = laag$.pipe(
+    const filterTotaalChanges$ = laag$.pipe(
       filter(laag => this.laag.titel === laag.titel),
-      map(laag => {
-        switch (laag.filterInstellingen.totaal.type) {
-          case "TotaalOpTeHalen":
-            return ". . . ";
-          case "TotaalOpgehaald":
-            return `${laag.filterInstellingen.totaal.totaal}`;
-          case "TeVeelData":
-            return "onbekend";
-        }
-      }),
+      map(laag => laag.filterInstellingen.totaal),
       shareReplay(1)
+    );
+
+    this.filterTotaalOnbekend$ = filterTotaalChanges$.pipe(map(filterTotaal => filterTotaal.type === "TeVeelData"));
+    this.filterTotaalOpTeHalen$ = filterTotaalChanges$.pipe(map(filterTotaal => filterTotaal.type === "TotaalOpTeHalen"));
+    this.filterTotaalOpgehaald$ = filterTotaalChanges$.pipe(map(filterTotaal => filterTotaal.type === "TotaalOpgehaald"));
+    this.filterTotaal$ = filterTotaalChanges$.pipe(
+      filter(filterTotaal => filterTotaal.type === "TotaalOpgehaald"),
+      map(totaal => totaal as TotaalOpgehaald),
+      map(totaal => totaal.totaal)
     );
 
     this.minstensEenLaagActie$ = rx
