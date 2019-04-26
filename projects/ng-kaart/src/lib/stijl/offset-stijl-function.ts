@@ -216,8 +216,16 @@ function closeTo(value1: number, value2: number) {
   return value1 < value2 + 0.00001 && value1 > value2 - 0.00001;
 }
 
+const wegnummerRegex = /^[ABNRFT][0-9]+([hatrfpz]|bob)([0-9])([0-9])*$/gm;
 function getDirection(ident8: string): Direction {
-  return ident8 && ident8.endsWith("2") ? Down : Up;
+  const match = wegnummerRegex.exec(ident8);
+  if (match !== null) {
+    // het eerste cijfer van de laatste cijfers toont de richting aan, oneven => oplopend
+    const direction = parseInt(match[2], 10);
+    return direction % 2 === 0 ? Down : Up;
+  } else {
+    return ident8 && ident8.endsWith("2") ? Down : Up;
+  }
 }
 
 function getZijdeSpiegeling(zijderijweg: string, direction: Direction): ZijdeSpiegeling {
