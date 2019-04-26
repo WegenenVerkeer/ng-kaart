@@ -47,7 +47,7 @@ export function PixelUnit(waarde: number): PixelUnit {
 export type UnitType = "Meter" | "Pixel";
 export type ZoekAfstand = MeterUnit | PixelUnit;
 
-export function Unit(type: UnitType, waarde: number): ZoekAfstand {
+export function ZoekAfstand(type: UnitType, waarde: number): ZoekAfstand {
   switch (type) {
     case "Pixel":
       return PixelUnit(waarde);

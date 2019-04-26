@@ -1,6 +1,6 @@
 import { Component, Injector, Input } from "@angular/core";
 
-import { BevraagKaartOpties, BevraagKaartUiSelector, Unit, UnitType } from "../../kaart/kaart-bevragen/kaart-bevragen.component";
+import { BevraagKaartOpties, BevraagKaartUiSelector, UnitType, ZoekAfstand } from "../../kaart/kaart-bevragen/kaart-bevragen.component";
 import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
 
 import * as val from "../webcomponent-support/params";
@@ -35,7 +35,7 @@ export class ClassicKaartBevragenComponent extends ClassicUIElementSelectorCompo
 
   protected opties(): BevraagKaartOpties {
     return {
-      zoekAfstand: Unit(this._unit, this._zoekAfstand)
+      zoekAfstand: ZoekAfstand(this._unit, this._zoekAfstand)
     };
   }
 }
