@@ -26,7 +26,6 @@ import { allOf, fromBoolean, fromOption, fromPredicate, success, validationChain
 import { zoekerMetNaam } from "../zoeker/zoeker";
 
 import { CachedFeatureLookup } from "./cache/lookup";
-import { FilterTotaal, LaagFilterInstellingen, teVeelData, totaalOpgehaald, totaalOpTeHalen, TotaalOpTeHalen } from "./kaart-elementen";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { MsgGen } from "./kaart-protocol-subscriptions";
@@ -383,7 +382,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                   stijlSelBron: vlg.styleSelectorBron,
                   selectiestijlSel: vlg.selectieStyleSelector,
                   hoverstijlSel: vlg.hoverStyleSelector,
-                  filterInstellingen: LaagFilterInstellingen(pure(), true, totaalOpTeHalen())
+                  filterInstellingen: ke.LaagFilterInstellingen(pure(), true, ke.totaalOpTeHalen())
                 }))
                 .getOrElse(toegevoegdeLaagCommon);
               layer.set("titel", titel);
@@ -473,7 +472,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                 stijlSel: vlg.styleSelector,
                 selectiestijlSel: vlg.selectieStyleSelector,
                 hoverstijlSel: vlg.hoverStyleSelector,
-                filterInstellingen: LaagFilterInstellingen(pure(), true, totaalOpTeHalen())
+                filterInstellingen: ke.LaagFilterInstellingen(pure(), true, ke.totaalOpTeHalen())
               }))
               .getOrElse(toegevoegdeLaagCommon);
             const oldLayer = laag.layer;
@@ -721,14 +720,14 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return laag.magGetoondWorden === magGetoondWorden ? laag : { ...laag, magGetoondWorden: magGetoondWorden };
     };
 
-    const pasLaagFilterAan: (spec: Filter, actief: boolean, totaal: FilterTotaal) => Endomorphism<ke.ToegevoegdeVectorLaag> = (
+    const pasLaagFilterAan: (spec: Filter, actief: boolean, totaal: ke.FilterTotaal) => Endomorphism<ke.ToegevoegdeVectorLaag> = (
       spec,
       actief,
       totaal
     ) => laag => {
       return {
         ...laag,
-        filterInstellingen: LaagFilterInstellingen(spec, actief, totaal)
+        filterInstellingen: ke.LaagFilterInstellingen(spec, actief, totaal)
       };
     };
 
@@ -1373,7 +1372,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             .fetchCollectionSummary$()
             .pipe(
               switchMap(summary =>
-                summary.count > 100000 ? rx.of(teVeelData()) : noSqlFsSource.fetchTotal$().pipe(map(num => totaalOpgehaald(num)))
+                summary.count > 100000 ? rx.of(ke.teVeelData()) : noSqlFsSource.fetchTotal$().pipe(map(num => ke.totaalOpgehaald(num)))
               )
             )
             .subscribe(totaal => {
@@ -1382,7 +1381,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
             });
 
-          const updatedLaag = pasLaagFilterAan(laag.filterInstellingen.spec, laag.filterInstellingen.actief, totaalOpTeHalen())(laag);
+          const updatedLaag = pasLaagFilterAan(laag.filterInstellingen.spec, laag.filterInstellingen.actief, ke.totaalOpTeHalen())(laag);
           const updatedModel = pasLaagInModelAan(model)(updatedLaag);
           zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
           return ModelAndEmptyResult(updatedModel);
