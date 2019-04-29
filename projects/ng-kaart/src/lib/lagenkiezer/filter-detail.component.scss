@@ -6,7 +6,6 @@
     padding: 0px 8px;
     display: flex;
     align-items: center;
-    cursor: pointer;
 
     &:hover {
       background-color: rgba(0, 0, 0, 0.04);
@@ -23,7 +22,6 @@
   }
 
   .filter-icoon {
-    border: 1px solid #ccc;
     border-radius: 16px;
     height: 30px;
     line-height: 30px;

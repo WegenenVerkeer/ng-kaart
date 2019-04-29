@@ -1,6 +1,8 @@
 import { Component, Input, NgZone } from "@angular/core";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
+import * as ke from "../kaart/kaart-elementen";
+import * as cmd from "../kaart/kaart-protocol-commands";
 import { KaartComponent } from "../kaart/kaart.component";
 
 import * as fltr from "../filter/filter-model";
@@ -13,6 +15,8 @@ import * as fltr from "../filter/filter-model";
 export class FilterExpressionComponent extends KaartChildComponentBase {
   @Input()
   expression: fltr.Expression;
+  @Input()
+  laag: ke.ToegevoegdeVectorLaag;
 
   constructor(kaart: KaartComponent, zone: NgZone) {
     super(kaart, zone);
@@ -26,27 +30,15 @@ export class FilterExpressionComponent extends KaartChildComponentBase {
     return (<fltr.Comparison>this.expression).value.value.toString();
   }
 
-  isEquality(): boolean {
-    return this.expression.kind === "Equality";
-  }
-
-  isInequality(): boolean {
-    return this.expression.kind === "Inequality";
-  }
-
-  isConjunction(): boolean {
-    return this.expression.kind === "And";
-  }
-
-  isDisjunction(): boolean {
-    return this.expression.kind === "Or";
-  }
-
   left(): fltr.Expression {
     return (<fltr.LogicalConnective>this.expression).left;
   }
 
   right(): fltr.Expression {
     return (<fltr.LogicalConnective>this.expression).right;
+  }
+
+  pasFilterAan() {
+    this.dispatch(cmd.BewerkVectorFilterCmd(this.laag as ke.ToegevoegdeVectorLaag));
   }
 }

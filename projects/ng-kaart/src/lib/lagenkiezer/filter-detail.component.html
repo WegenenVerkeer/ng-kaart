@@ -23,8 +23,8 @@
       </button>
   </div>
   </div>
-  <div (click)="pasFilterAan()">
-    <div class="filter-omschrijving">{{omschrijving()}}</div>
-    <awv-filter-expression [expression]="filter.expression"></awv-filter-expression>
+  <div>
+    <div class="filter-omschrijving" *ngIf="omschrijving()">{{omschrijving()}}</div>
+    <awv-filter-expression [expression]="filter.expression" [laag]="laag"></awv-filter-expression>
   </div>
 </div>

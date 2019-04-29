@@ -57,8 +57,8 @@ export class FilterDetailComponent extends KaartChildComponentBase {
     );
   }
 
-  omschrijving(): string {
-    return this.filter.name;
+  omschrijving(): string | undefined {
+    return this.filter.name.toUndefined();
   }
 
   verwijderFilter() {

@@ -11,7 +11,7 @@ export interface PureFilter {
 
 export interface ExpressionFilter {
   readonly kind: "ExpressionFilter";
-  readonly name: string;
+  readonly name: Option<string>;
   readonly expression: Expression;
 }
 
@@ -84,9 +84,9 @@ function Comparison<C extends Comparison, K extends C["kind"]>(kind: K): Functio
 export const PureFilter: PureFilter = { kind: "PureFilter" };
 export const pure: Lazy<Filter> = constant(PureFilter);
 
-export const ExpressionFilter: Function2<string, Expression, ExpressionFilter> = (name, expression) => ({
+export const ExpressionFilter: Function2<Option<string>, Expression, ExpressionFilter> = (maybeName, expression) => ({
   kind: "ExpressionFilter",
-  name: name,
+  name: maybeName,
   expression: expression
 });
 
