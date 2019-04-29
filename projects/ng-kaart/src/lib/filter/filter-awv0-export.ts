@@ -33,5 +33,5 @@ export namespace FilterText {
 }
 
 export namespace FilterAwv0Json {
-  export const encode: Function1<fltr.Filter, string> = JSON.stringify;
+  export const encode: Function1<fltr.Filter, string> = filter => JSON.stringify({ version: "awv-v0", definition: filter });
 }

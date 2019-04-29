@@ -8,15 +8,13 @@ import { FilterAwv0Json } from "./filter-awv0-export";
 import { AwvV0FilterInterpreters } from "./filter-awv0-interpreter";
 import { Filter as fltr } from "./filter-model";
 
-const Version0 = "awv-v0";
-
 export const definitieToFilter: Function2<string, string, oi.Validation<fltr.Filter>> = (encoding, definitieText) =>
   validationChain2(properlyJsonDeclaredText(encoding, definitieText), textToJson, interpretJsonAsSpec);
 
 export const interpretJsonAsSpec: oi.Interpreter<fltr.Filter> = json =>
   chain(oi.field("version", oi.str)(json), version => {
     switch (version) {
-      case Version0:
+      case "awv-v0":
         return oi.field("definition", AwvV0FilterInterpreters.jsonAwv0Definition)(json);
       default:
         return oi.fail(`Versie '${version}' wordt niet ondersteund`);
@@ -30,5 +28,5 @@ export interface EncodedFilter {
 
 export const filterToDefinitie: Function1<fltr.Filter, EncodedFilter> = filter => ({
   filterDefinitie: FilterAwv0Json.encode(filter),
-  encoding: Version0
+  encoding: "json"
 });

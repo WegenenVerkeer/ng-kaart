@@ -5,6 +5,7 @@ import { fromNullable, isNone, none, option, Option, some } from "fp-ts/lib/Opti
 import * as ord from "fp-ts/lib/Ord";
 import { setoidString } from "fp-ts/lib/Setoid";
 import * as validation from "fp-ts/lib/Validation";
+import { Lens } from "monocle-ts";
 import { olx } from "openlayers";
 import * as ol from "openlayers";
 import { Subscription } from "rxjs";
@@ -12,7 +13,6 @@ import * as rx from "rxjs";
 import { bufferCount, debounceTime, distinctUntilChanged, map, switchMap, throttleTime } from "rxjs/operators";
 
 import { FilterAanpassend, GeenFilterAanpassingBezig } from "../filter/filter-aanpassing-state";
-import { FilterCql } from "../filter/filter-cql";
 import { Filter as fltr } from "../filter/filter-model";
 import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
 import * as arrays from "../util/arrays";
@@ -389,12 +389,21 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                   hoverstijlSel: vlg.hoverStyleSelector,
                   filterinstellingen: cmnd.filterinstellingen.getOrElse(ke.stdLaagfilterinstellingen)
                 }))
+                .chain(nslg => ke.asToegevoegdeNosqlVectorLaag(nslg))
+                .map<ke.ToegevoegdeLaag>(tgnslg => {
+                  // NosqlFsSource is mutable
+                  (tgnslg.layer.getSource() as NosqlFsSource).setFilter(
+                    cmnd.filterinstellingen.chain(fi => (fi.actief ? some(fi.spec) : none)).getOrElse(fltr.pure())
+                  );
+                  return tgnslg;
+                })
                 .getOrElse(toegevoegdeLaagCommon);
               layer.set("titel", titel);
               layer.setVisible(cmnd.magGetoondWorden && !cmnd.laag.verwijderd); // achtergrondlagen expliciet zichtbaar maken!
               // met positie hoeven we nog geen rekening te houden
               forEach(ke.asToegevoegdeVectorLaag(toegevoegdeLaag), pasVectorLaagStijlToe);
               zetLayerIndex(layer, groepPositie, groep);
+
               model.map.addLayer(layer);
               const updatedModel = {
                 ...modelMetAangepasteLagen,
@@ -725,12 +734,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return laag.magGetoondWorden === magGetoondWorden ? laag : { ...laag, magGetoondWorden: magGetoondWorden };
     };
 
-    const pasLaagFilterAan: (spec: fltr.Filter, actief: boolean) => Endomorphism<ke.ToegevoegdeVectorLaag> = (spec, actief) => laag => {
-      return {
-        ...laag,
-        filterinstellingen: ke.Laagfilterinstellingen(spec, actief)
-      };
-    };
+    const pasLaagFilterAan: (spec: fltr.Filter, actief: boolean) => Endomorphism<ke.ToegevoegdeVectorLaag> = (spec, actief) =>
+      Lens.fromProp<ke.ToegevoegdeVectorLaag, "filterinstellingen">("filterinstellingen").set(ke.Laagfilterinstellingen(spec, actief));
 
     // Uiteraard is het *nooit* de bedoeling om de titel van een laag aan te passen.
     const pasLaagInModelAan: (mdl: Model) => (laag: ke.ToegevoegdeLaag) => Model = mdl => laag => ({
@@ -1317,17 +1322,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
-    function activeerFilterOpSource(laag: ke.ToegevoegdeVectorLaag, noSqlFsSource: NosqlFsSource, filter: fltr.Filter): void {
-      laag.bron.filter.foldL(
-        // indien de bron al een vaste filter bevat, dient deze gecombineerd te worden met de filter van de user
-        () => noSqlFsSource.setFilter(FilterCql.cql(filter)),
-        bronFilter =>
-          noSqlFsSource.setFilter(
-            FilterCql.cql(filter)
-              .map(cql => `(${bronFilter}) AND (${cql})`)
-              .alt(some(bronFilter))
-          )
-      );
+    function activeerFilterOpSource(noSqlFsSource: NosqlFsSource, filter: fltr.Filter): void {
+      noSqlFsSource.setFilter(filter);
       noSqlFsSource.clear();
       noSqlFsSource.refresh();
     }
@@ -1338,7 +1334,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         chain(valideerToegevoegdeVectorLaagBestaat(cmnd.titel), laag =>
           valideerNoSqlFsSourceBestaat(cmnd.titel).map(noSqlFsSource => [laag, noSqlFsSource])
         ).map(([laag, noSqlFsSource]: [ke.ToegevoegdeVectorLaag, NosqlFsSource]) => {
-          activeerFilterOpSource(laag, noSqlFsSource, cmnd.filter);
+          activeerFilterOpSource(noSqlFsSource, cmnd.filter);
           const updatedLaag = pasLaagFilterAan(cmnd.filter, laag.filterinstellingen.actief)(laag);
           const updatedModel = pasLaagInModelAan(model)(updatedLaag);
           zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
@@ -1355,7 +1351,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           valideerNoSqlFsSourceBestaat(cmnd.titel).map(noSqlFsSource => [laag, noSqlFsSource])
         ).map(([laag, noSqlFsSource]: [ke.ToegevoegdeVectorLaag, NosqlFsSource]) => {
           const filter: (actief: boolean) => fltr.Filter = actief => (actief ? laag.filterinstellingen.spec : fltr.pure());
-          activeerFilterOpSource(laag, noSqlFsSource, filter(cmnd.actief));
+          activeerFilterOpSource(noSqlFsSource, filter(cmnd.actief));
           const updatedLaag = pasLaagFilterAan(laag.filterinstellingen.spec, cmnd.actief)(laag);
           const updatedModel = pasLaagInModelAan(model)(updatedLaag);
           zendLagenInGroep(updatedModel, updatedLaag.laaggroep);

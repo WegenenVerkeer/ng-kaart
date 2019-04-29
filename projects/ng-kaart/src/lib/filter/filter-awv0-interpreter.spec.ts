@@ -1,20 +1,18 @@
-import * as oi from "../stijl/json-object-interpreting";
-
 import { AwvV0FilterInterpreters } from "./filter-awv0-interpreter";
-import { Filter, Literal, Property, PureFilter } from "./filter-model";
+import { Filter as fltr } from "./filter-model";
 
 describe("De filterinterpreter", () => {
-  const property: Property = Property("string", "prop");
-  const literal: Literal = Literal("string", "value");
+  const property: fltr.Property = fltr.Property("string", "prop");
+  const literal: fltr.Literal = fltr.Literal("string", "value");
   describe("bij het interpreteren van geldige structuren", () => {
     it("moet een 'pure' filter kunnen verwerken", () => {
-      const pure: Filter = PureFilter;
+      const pure: fltr.Filter = fltr.PureFilter;
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(pure);
       expect(result.isSuccess()).toBe(true);
       expect(result.getOrElse(undefined)).toEqual(pure);
     });
     it("moet een filter met 1 'gelijk aan' kunnen verwerken", () => {
-      const eq: Filter = {
+      const eq: fltr.Filter = {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
@@ -28,7 +26,7 @@ describe("De filterinterpreter", () => {
       expect(result.getOrElse(undefined)).toEqual(eq);
     });
     it("moet een filter met 1 'niet gelijk aan' kunnen verwerken", () => {
-      const neq: Filter = {
+      const neq: fltr.Filter = {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
@@ -42,7 +40,7 @@ describe("De filterinterpreter", () => {
       expect(result.getOrElse(undefined)).toEqual(neq);
     });
     it("moet een filter met 1 'and' kunnen verwerken", () => {
-      const and: Filter = {
+      const and: fltr.Filter = {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
@@ -64,7 +62,7 @@ describe("De filterinterpreter", () => {
       expect(result.getOrElse(undefined)).toEqual(and);
     });
     it("moet een filter met 2x 'and' kunnen verwerken", () => {
-      const and: Filter = {
+      const and: fltr.Filter = {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
@@ -94,7 +92,7 @@ describe("De filterinterpreter", () => {
       expect(result.getOrElse(undefined)).toEqual(and);
     });
     it("moet een filter met 1 'or' kunnen verwerken", () => {
-      const or: Filter = {
+      const or: fltr.Filter = {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
@@ -116,7 +114,7 @@ describe("De filterinterpreter", () => {
       expect(result.getOrElse(undefined)).toEqual(or);
     });
     it("moet een filter met 2x 'or' kunnen verwerken", () => {
-      const or: Filter = {
+      const or: fltr.Filter = {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
@@ -146,7 +144,7 @@ describe("De filterinterpreter", () => {
       expect(result.getOrElse(undefined)).toEqual(or);
     });
     it("moet een filter met 'or' en 'and' kunnen verwerken", () => {
-      const orAnd: Filter = {
+      const orAnd: fltr.Filter = {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
