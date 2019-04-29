@@ -1,0 +1,75 @@
+@import "../css/kaart.component-common.scss";
+
+.awv-filter-detail {
+
+  .filter-header {
+    padding: 0px 8px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.04);
+    }
+  }
+
+  .laag-naam {
+    margin-left: 12px;
+    font-size: 16px;
+    flex-grow: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .filter-icoon {
+    border: 1px solid #ccc;
+    border-radius: 16px;
+    height: 30px;
+    line-height: 30px;
+
+    .filter-inhoud {
+      width: 100%;
+      font-size: 14px;
+      padding: 0 12px 0 12px;
+      height: 30px;
+      line-height: 30px;
+
+      .niet-actief::after { // diagonale lijn door icoon tekenen
+        position: absolute;
+        width: 22px;
+        left: 15px;
+        top: 56%;
+        right: 0;
+        content: "";
+        border-top: 2px solid;
+        border-color: inherit;
+        transform: rotate(-55deg);
+        box-shadow: 0 0 0 1px white;
+        margin: -2px;
+      }
+    }
+  }
+
+  .filter-omschrijving {
+    margin-left: 70px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    font-weight: bold;
+  }
+
+  .filter-specificatie {
+    margin-left: 70px;
+  }
+
+  .filter-menu {
+    .mat-menu-content {
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+
+    .mat-menu-item .mat-icon {
+      margin-right: 4px;
+    }
+  }
+}

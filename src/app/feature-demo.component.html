@@ -254,7 +254,7 @@
                              [selectieModus]="'single'">
 
             <awv-kaart-lagenkiezer [headerTitel]="'Mijn legende en lagen'" [initieelDichtgeklapt]="false"
-                                   [verwijderbareLagen]="true" [filterbareLagen]="true" [toonLegende]="false"></awv-kaart-lagenkiezer>
+                                   [verwijderbareLagen]="true" [filterbareLagen]="true" [toonLegende]="false" [toonFilters]="true"></awv-kaart-lagenkiezer>
 
             <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'/geolatte-nosqlfs'"
                                     [database]="'featureserver'" [collection]="'fietspaden'"
@@ -627,7 +627,7 @@
             <awv-kaart-knop-achtergrondlaag-kiezer></awv-kaart-knop-achtergrondlaag-kiezer>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
             <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
-            <awv-bevraag-kaart></awv-bevraag-kaart>
+            <awv-bevraag-kaart unit="Pixel" zoekAfstand="64"></awv-bevraag-kaart>
           </awv-kaart-classic>
         </div>
       </awv-test-sectie>
