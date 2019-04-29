@@ -403,6 +403,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               // met positie hoeven we nog geen rekening te houden
               forEach(ke.asToegevoegdeVectorLaag(toegevoegdeLaag), pasVectorLaagStijlToe);
               zetLayerIndex(layer, groepPositie, groep);
+              forEach(ke.asToegevoegdeNosqlVectorLaag(toegevoegdeLaag).filter(tnl => tnl.filterinstellingen.actief), zendFilterwijziging);
 
               model.map.addLayer(layer);
               const updatedModel = {

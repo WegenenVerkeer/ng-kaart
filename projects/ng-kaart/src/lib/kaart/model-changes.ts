@@ -6,7 +6,7 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import { setoidString } from "fp-ts/lib/Setoid";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, map, mapTo, mergeAll, share, shareReplay, switchMap } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, map, mapTo, mergeAll, observeOn, share, shareReplay, switchMap } from "rxjs/operators";
 
 import { FilterAanpassingState, GeenFilterAanpassingBezig } from "../filter/filter-aanpassing-state";
 import { NosqlFsSource } from "../source/nosql-fs-source";
@@ -210,7 +210,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     }))
   );
 
-  const lagenOpGroep$ = filterable.map(changer.lagenOpGroepSubj, s => s.asObservable());
+  const lagenOpGroep$ = filterable.map(changer.lagenOpGroepSubj, s => s.pipe(observeOn(rx.asapScheduler)));
   const filterVectorLagen = (tlgn: ke.ToegevoegdeLaag[]) => tlgn.filter(ke.isToegevoegdeVectorLaag);
   const vectorlagen$ = lagenOpGroep$.get("Voorgrond.Hoog")!.pipe(map(filterVectorLagen));
 
@@ -273,31 +273,36 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     });
   });
 
+  // De reden van de asapScheduler is dat we willen dat events die naar de subjects gestuurd worden pas gezien worden
+  // door eventuele observers nadat de huidige unit of execution afgehandeld is. Anders kan het gebeuren dat de output
+  // van kaartCmdReducer pas opgepikt wordt nadat die van de subjects hieronder gezien is. De subjects veronderstellen
+  // echter steeds het model dat door de KaartReducer gegenereerd is. We moeten dus wachten tot het nieuwe model
+  // geobserveerd is (of, beter, kan geobserveerd zijn). Dit is verwant met het async posten op het model subject.
   return {
-    uiElementSelectie$: changer.uiElementSelectieSubj.asObservable(),
-    uiElementOpties$: changer.uiElementOptiesSubj.asObservable(),
-    laagVerwijderd$: changer.laagVerwijderdSubj.asObservable(),
-    viewinstellingen$: viewinstellingen$,
+    uiElementSelectie$: changer.uiElementSelectieSubj.pipe(observeOn(rx.asapScheduler)),
+    uiElementOpties$: changer.uiElementOptiesSubj.pipe(observeOn(rx.asapScheduler)),
+    laagVerwijderd$: changer.laagVerwijderdSubj.pipe(observeOn(rx.asapScheduler)),
+    viewinstellingen$: viewinstellingen$.pipe(observeOn(rx.asapScheduler)),
     lagenOpGroep: lagenOpGroep$,
-    geselecteerdeFeatures$: geselecteerdeFeatures$,
-    hoverFeatures$: hoverFeatures$,
-    zichtbareFeatures$: zichtbareFeatures$,
-    kaartKlikLocatie$: kaartKlikLocatie$,
-    mijnLocatieZoomDoel$: changer.mijnLocatieZoomDoelSubj.asObservable(),
-    actieveModus$: changer.actieveModusSubj.asObservable(),
-    zoekerServices$: changer.zoekerServicesSubj.asObservable(),
-    zoekresultaten$: zoekresultaten$,
-    zoekresultaatselectie$: changer.zoekresultaatselectieSubj.asObservable(),
-    laagLocationInfoServicesOpTitel$: changer.laagLocationInfoServicesOpTitelSubj.asObservable(),
-    laagstijlaanpassingState$: changer.laagstijlaanpassingStateSubj.asObservable(),
-    laagstijlGezet$: changer.laagstijlGezetSubj.asObservable(),
-    laagFilterAanpassingState$: changer.laagFilterAanpassingStateSubj.asObservable(),
-    laagfilterGezet$: changer.laagfilterGezetSubj.asObservable(),
-    dragInfo$: dragInfo$,
-    rotatie$: rotation$,
-    tekenenOps$: changer.tekenenOpsSubj.asObservable(),
-    getekendeGeometry$: changer.getekendeGeometrySubj.asObservable(),
-    precacheProgress$: changer.precacheProgressSubj.asObservable(),
-    laatsteCacheRefresh$: changer.laatsteCacheRefreshSubj.asObservable()
+    geselecteerdeFeatures$: geselecteerdeFeatures$.pipe(observeOn(rx.asapScheduler)),
+    hoverFeatures$: hoverFeatures$.pipe(observeOn(rx.asapScheduler)),
+    zichtbareFeatures$: zichtbareFeatures$.pipe(observeOn(rx.asapScheduler)),
+    kaartKlikLocatie$: kaartKlikLocatie$.pipe(observeOn(rx.asapScheduler)),
+    mijnLocatieZoomDoel$: changer.mijnLocatieZoomDoelSubj.pipe(observeOn(rx.asapScheduler)),
+    actieveModus$: changer.actieveModusSubj.pipe(observeOn(rx.asapScheduler)),
+    zoekerServices$: changer.zoekerServicesSubj.pipe(observeOn(rx.asapScheduler)),
+    zoekresultaten$: zoekresultaten$.pipe(observeOn(rx.asapScheduler)),
+    zoekresultaatselectie$: changer.zoekresultaatselectieSubj.pipe(observeOn(rx.asapScheduler)),
+    laagLocationInfoServicesOpTitel$: changer.laagLocationInfoServicesOpTitelSubj.pipe(observeOn(rx.asapScheduler)),
+    laagstijlaanpassingState$: changer.laagstijlaanpassingStateSubj.pipe(observeOn(rx.asapScheduler)),
+    laagstijlGezet$: changer.laagstijlGezetSubj.pipe(observeOn(rx.asapScheduler)),
+    laagFilterAanpassingState$: changer.laagFilterAanpassingStateSubj.pipe(observeOn(rx.asapScheduler)),
+    laagfilterGezet$: changer.laagfilterGezetSubj.pipe(observeOn(rx.asapScheduler)),
+    dragInfo$: dragInfo$.pipe(observeOn(rx.asapScheduler)),
+    rotatie$: rotation$.pipe(observeOn(rx.asapScheduler)),
+    tekenenOps$: changer.tekenenOpsSubj.pipe(observeOn(rx.asapScheduler)),
+    getekendeGeometry$: changer.getekendeGeometrySubj.pipe(observeOn(rx.asapScheduler)),
+    precacheProgress$: changer.precacheProgressSubj.pipe(observeOn(rx.asapScheduler)),
+    laatsteCacheRefresh$: changer.laatsteCacheRefreshSubj.pipe(observeOn(rx.asapScheduler))
   };
 };
