@@ -37,6 +37,5 @@ export interface FeatureCollection {
 }
 
 export interface CollectionSummary {
-  collection: string;
   count: number;
 }
