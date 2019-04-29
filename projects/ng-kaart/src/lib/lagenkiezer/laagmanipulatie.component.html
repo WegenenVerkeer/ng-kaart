@@ -16,10 +16,18 @@
     <div [ngClass]="stijlInKiezer">{{ title }}</div>
   </div>
   <div [hidden]="heeftGeenFilter$ | async" class="filter-icoon">
-    <button mat-icon-button class="filter-inhoud" (click)="onAction('toggleFilterActief')">
+    <button mat-icon-button class="filter-actief" (click)="onAction('toggleFilterActief')">
       <mat-icon *ngIf="filterActief$ | async" matTooltip="Deactiveer filter">filter_list</mat-icon>
       <mat-icon *ngIf="!(filterActief$ | async)" class="niet-actief" matTooltip="Activeer filter">filter_list</mat-icon>
-<!--      {{ filterTotaal$ | async }}-->
+    </button>
+    <button mat-icon-button class="filter-totaal onbekend" *ngIf="filterTotaalOnbekend$ | async" (click)="pasFilterAan()" matTooltip="Kon niet berekend worden omdat de totale dataset te groot is">
+      onbekend
+    </button>
+    <button mat-icon-button class="filter-totaal" *ngIf="filterTotaalOpTeHalen$ | async" (click)="pasFilterAan()">
+      <mat-icon svgIcon="spinner"></mat-icon>
+    </button>
+    <button mat-icon-button class="filter-totaal" *ngIf="filterTotaalOpgehaald$ | async" (click)="pasFilterAan()">
+      {{ filterTotaal$ | async }}
     </button>
   </div>
   <div class="laag-acties" *ngIf="minstensEenLaagActie$ | async">

@@ -6,13 +6,14 @@ import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { bufferCount, catchError, filter, map, mapTo, mergeMap, reduce, scan, share, switchMap, takeLast, tap } from "rxjs/operators";
 
+import { FilterTotaal } from "../kaart";
 import * as le from "../kaart/kaart-load-events";
 import { kaartLogger } from "../kaart/log";
 import { Pipeable } from "../util";
 import { Feature, toOlFeature } from "../util/feature";
 import { fetchObs$, fetchWithTimeoutObs$ } from "../util/fetch-with-timeout";
 import { ReduceFunction } from "../util/function";
-import { FeatureCollection, GeoJsonLike } from "../util/geojson-types";
+import { CollectionSummary, FeatureCollection, GeoJsonLike } from "../util/geojson-types";
 import * as geojsonStore from "../util/indexeddb-geojson-store";
 
 /**
@@ -31,6 +32,22 @@ const FETCH_TIMEOUT = 5000; // max time to wait for data from featureserver befo
 const BATCH_SIZE = 100; // aantal features per keer toevoegen aan laag
 
 const featureDelimiter = "\n";
+
+const cacheCredentials: () => RequestInit = () => ({
+  cache: "no-store", // geen client side caching van nosql data
+  credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
+});
+
+const get: () => RequestInit = () => ({
+  ...cacheCredentials(),
+  method: "GET"
+});
+
+const post: (string) => RequestInit = body => ({
+  ...cacheCredentials(),
+  method: "POST",
+  body: body
+});
 
 interface SplitterState {
   readonly seen: string;
@@ -95,6 +112,19 @@ const mapToFeatureCollection: Pipeable<string, FeatureCollection> = obs =>
     map(lijn => {
       try {
         return JSON.parse(lijn) as FeatureCollection;
+      } catch (error) {
+        const msg = `Kan JSON data niet parsen: ${error} JSON: ${lijn}`;
+        kaartLogger.error(msg);
+        throw new Error(msg);
+      }
+    })
+  );
+
+const mapToCollectionSummary: Pipeable<string, CollectionSummary> = obs =>
+  obs.pipe(
+    map(lijn => {
+      try {
+        return JSON.parse(lijn) as CollectionSummary;
       } catch (error) {
         const msg = `Kan JSON data niet parsen: ${error} JSON: ${lijn}`;
         kaartLogger.error(msg);
@@ -254,31 +284,23 @@ export class NosqlFsSource extends ol.source.Vector {
       .join("&")}`;
   }
 
+  private composeCollectionSummaryUrl() {
+    return `${this.url}/api/databases/${this.database}/${this.collection}`;
+  }
+
   cacheStoreName(): string {
     return this.laagnaam;
   }
 
   fetchFeatures$(extent: number[], gebruikCache: boolean): rx.Observable<GeoJsonLike> {
     if (gebruikCache) {
-      return fetchWithTimeoutObs$(
-        this.composeQueryUrl(extent),
-        {
-          method: "GET",
-          cache: "no-store", // geen client side caching van nosql data
-          credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
-        },
-        FETCH_TIMEOUT
-      ).pipe(
+      return fetchWithTimeoutObs$(this.composeQueryUrl(extent), get(), FETCH_TIMEOUT).pipe(
         split(featureDelimiter),
         filter(lijn => lijn.trim().length > 0),
         mapToGeoJson
       );
     } else {
-      return fetchObs$(this.composeQueryUrl(extent), {
-        method: "GET",
-        cache: "no-store", // geen client side caching van nosql data
-        credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
-      }).pipe(
+      return fetchObs$(this.composeQueryUrl(extent), get()).pipe(
         split(featureDelimiter),
         filter(lijn => lijn.trim().length > 0),
         mapToGeoJson
@@ -287,12 +309,7 @@ export class NosqlFsSource extends ol.source.Vector {
   }
 
   fetchFeaturesByWkt$(wkt: string): rx.Observable<GeoJsonLike> {
-    return fetchObs$(this.composeQueryUrl(), {
-      method: "POST",
-      cache: "no-store", // geen client side caching van nosql data
-      credentials: "include", // essentieel om ACM Authenticatie cookies mee te sturen
-      body: wkt
-    }).pipe(
+    return fetchObs$(this.composeQueryUrl(), post(wkt)).pipe(
       split(featureDelimiter),
       filter(lijn => lijn.trim().length > 0),
       mapToGeoJson
@@ -300,14 +317,17 @@ export class NosqlFsSource extends ol.source.Vector {
   }
 
   fetchTotal$(): rx.Observable<number> {
-    return fetchObs$(this.composeFeatureCollectionUrl(1), {
-      method: "GET",
-      cache: "no-store", // geen client side caching van nosql data
-      credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
-    }).pipe(
+    return fetchObs$(this.composeFeatureCollectionUrl(1), get()).pipe(
       split(featureDelimiter),
       mapToFeatureCollection,
       map(featureCollection => featureCollection.total)
+    );
+  }
+
+  fetchCollectionSummary$(): rx.Observable<CollectionSummary> {
+    return fetchObs$(this.composeCollectionSummaryUrl(), get()).pipe(
+      split(featureDelimiter),
+      mapToCollectionSummary
     );
   }
 

@@ -30,6 +30,7 @@ export type Command<Msg extends KaartMsg> =
   | DeselecteerFeatureCmd
   | DrawOpsCmd
   | ZetGetekendeGeometryCmd
+  | HaalFilterTotaalOp<Msg>
   | HighlightFeaturesCmd<Msg>
   | KiesAchtergrondCmd<Msg>
   | MaakLaagOnzichtbaarCmd<Msg>
@@ -404,6 +405,12 @@ export interface ActiveerFilter<Msg extends KaartMsg> {
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
+export interface HaalFilterTotaalOp<Msg extends KaartMsg> {
+  readonly type: "HaalFilterTotaalOp";
+  readonly titel: string;
+  readonly wrapper: BareValidationWrapper<Msg>;
+}
+
 export interface VoegInteractieToeCmd {
   readonly type: "VoegInteractieToe";
   readonly interactie: ol.interaction.Pointer;
@@ -658,6 +665,14 @@ export function ActiveerFilter<Msg extends KaartMsg>(
     type: "ActiveerFilter",
     titel: titel,
     actief: actief,
+    wrapper: wrapper
+  };
+}
+
+export function HaalFilterTotaalOp<Msg extends KaartMsg>(titel: string, wrapper: BareValidationWrapper<Msg>): HaalFilterTotaalOp<Msg> {
+  return {
+    type: "HaalFilterTotaalOp",
+    titel: titel,
     wrapper: wrapper
   };
 }
