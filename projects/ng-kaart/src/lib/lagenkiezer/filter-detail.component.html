@@ -1,0 +1,30 @@
+<div class="awv-filter-detail">
+  <div class="filter-header">
+    <div class="filter-icoon">
+      <button mat-icon-button class="filter-inhoud" (click)="onAction('toggleFilterActief')">
+        <mat-icon *ngIf="filterActief$ | async" matTooltip="Deactiveer filter">filter_list</mat-icon>
+        <mat-icon *ngIf="!(filterActief$ | async)" class="niet-actief" matTooltip="Activeer filter">filter_list</mat-icon>
+      </button>
+    </div>
+    <div class="laag-naam">{{laag.titel}}</div>
+    <div class="filter-acties">
+      <mat-menu #filterMenu="matMenu" class="filter-menu" [overlapTrigger]="true">
+        <button mat-menu-item (click)="verwijderFilter()">
+          <mat-icon>delete</mat-icon>
+          <span>Filter Verwijderen</span>
+        </button>
+        <button mat-menu-item (click)="pasFilterAan()">
+          <mat-icon>filter_list</mat-icon>
+          <span>Filter Aanpassen</span>
+        </button>
+      </mat-menu>
+      <button mat-icon-button [matMenuTriggerFor]="filterMenu" matTooltip="Toon filter opties" matTooltipPosition="right">
+          <mat-icon>more_vert</mat-icon>
+      </button>
+  </div>
+  </div>
+  <div (click)="pasFilterAan()">
+    <div class="filter-omschrijving">{{omschrijving()}}</div>
+    <awv-filter-expression [expression]="filter.expression"></awv-filter-expression>
+  </div>
+</div>

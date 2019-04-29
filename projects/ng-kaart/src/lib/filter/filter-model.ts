@@ -34,6 +34,8 @@ export interface Disjunction {
   readonly right: Expression;
 }
 
+export type LogicalConnective = Conjunction | Disjunction;
+
 export type Comparison = Equality | Inequality;
 
 export interface PropertyValueOperator {

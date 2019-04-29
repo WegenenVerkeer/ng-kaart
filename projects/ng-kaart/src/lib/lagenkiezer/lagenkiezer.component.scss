@@ -41,6 +41,7 @@ $laag-height: 40px;
   }
 
   .mat-tab-label {
+    min-width: 130px;
     height: $laag-height;
     text-transform: uppercase;
   }

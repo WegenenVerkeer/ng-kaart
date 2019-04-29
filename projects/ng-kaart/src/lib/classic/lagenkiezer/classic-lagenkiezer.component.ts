@@ -23,6 +23,7 @@ export class ClassicLagenkiezerComponent extends ClassicBaseComponent implements
   private _headerTitel: string = DefaultOpties.headerTitel;
   private _initieelDichtgeklapt: boolean = DefaultOpties.initieelDichtgeklapt;
   private _toonLegende: boolean = DefaultOpties.toonLegende;
+  private _toonFilters: boolean = DefaultOpties.toonFilters;
   private _verwijderbareLagen: boolean = DefaultOpties.verwijderbareLagen;
   private _verplaatsbareLagen: boolean = DefaultOpties.verplaatsbareLagen;
   private _stijlbareVectorlagen: Predicate<string> = DefaultOpties.stijlbareVectorlagen;
@@ -64,6 +65,15 @@ export class ClassicLagenkiezerComponent extends ClassicBaseComponent implements
   @Input()
   public set toonLegende(param: boolean) {
     this._toonLegende = val.bool(param, this._toonLegende);
+  }
+
+  public get toonFilters(): boolean {
+    return this._toonFilters;
+  }
+
+  @Input()
+  public set toonFilters(param: boolean) {
+    this._toonFilters = val.bool(param, this._toonFilters);
   }
 
   public get verwijderbareLagen(): boolean {
@@ -138,6 +148,7 @@ export class ClassicLagenkiezerComponent extends ClassicBaseComponent implements
       headerTitel: this.headerTitel,
       initieelDichtgeklapt: this.initieelDichtgeklapt,
       toonLegende: this.toonLegende,
+      toonFilters: this.toonFilters,
       verwijderbareLagen: this.verwijderbareLagen,
       verplaatsbareLagen: this.verplaatsbareLagen,
       stijlbareVectorlagen: this.stijlbareVectorlagen,

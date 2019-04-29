@@ -3,14 +3,15 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnDestro
 import { MatTabChangeEvent } from "@angular/material";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import * as array from "fp-ts/lib/Array";
-import { Predicate } from "fp-ts/lib/function";
+import { not, Predicate } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, filter, map, scan, share, shareReplay, startWith, take, tap } from "rxjs/operators";
 
+import * as fltr from "../filter/filter-model";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
-import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
+import { isToegevoegdeVectorLaag, ToegevoegdeLaag, ToegevoegdeVectorLaag } from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import { LegendeItem } from "../kaart/kaart-legende";
 import * as prt from "../kaart/kaart-protocol";
@@ -24,6 +25,7 @@ export interface LagenUiOpties {
   readonly headerTitel: string;
   readonly initieelDichtgeklapt: boolean;
   readonly toonLegende: boolean;
+  readonly toonFilters: boolean;
   readonly verwijderbareLagen: boolean;
   readonly verplaatsbareLagen: boolean;
   readonly filterbareLagen: boolean;
@@ -35,6 +37,7 @@ export const DefaultOpties: LagenUiOpties = {
   headerTitel: "Legende en lagen",
   initieelDichtgeklapt: false,
   toonLegende: false,
+  toonFilters: false,
   verwijderbareLagen: false,
   verplaatsbareLagen: true,
   filterbareLagen: false,
@@ -83,9 +86,12 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
   readonly lagenHoog$: rx.Observable<Array<ToegevoegdeLaag>>;
   readonly lagenLaag$: rx.Observable<Array<ToegevoegdeLaag>>;
   readonly lagenMetLegende$: rx.Observable<Array<ToegevoegdeLaag>>;
+  readonly lagenMetFilter$: rx.Observable<Array<ToegevoegdeVectorLaag>>;
+  readonly filterTabHeader$: rx.Observable<string>;
   readonly heeftDivider$: rx.Observable<boolean>;
   readonly geenLagen$: rx.Observable<boolean>;
   readonly geenLegende$: rx.Observable<boolean>;
+  readonly heeftFilters$: rx.Observable<boolean>;
   readonly opties$: rx.Observable<LagenUiOpties>;
 
   constructor(parent: KaartComponent, ngZone: NgZone, private readonly cdr: ChangeDetectorRef, private readonly sanitizer: DomSanitizer) {
@@ -123,6 +129,19 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
     this.geenLagen$ = rx.combineLatest(lagenHoogLeeg$, lagenLaagLeeg$, (h, l) => h && l).pipe(shareReplay(1));
     this.geenLegende$ = this.lagenMetLegende$.pipe(
       map(array.isEmpty),
+      shareReplay(1)
+    );
+    this.lagenMetFilter$ = this.lagenHoog$.pipe(
+      map(lagen => array.filter(lagen, isToegevoegdeVectorLaag)),
+      map(vlagen => array.filter(vlagen, vlaag => fltr.isDefined(vlaag.filterInstellingen.spec)))
+    );
+
+    this.filterTabHeader$ = this.lagenMetFilter$.pipe(
+      map(tvlagen => `Filters (${tvlagen.filter(vlaag => vlaag.filterInstellingen.actief).length}/${tvlagen.length})`)
+    );
+
+    this.heeftFilters$ = this.lagenMetFilter$.pipe(
+      map(not(array.isEmpty)),
       shareReplay(1)
     );
     this.opties$ = this.modelChanges.uiElementOpties$.pipe(
