@@ -1,12 +1,12 @@
 <div>
   <div class="filter-expression" *ngIf="isEquality()">
     <div>{{property()}} </div>
-    <div>&nbsp;is&nbsp;</div>
+    <div class ="comparison">is</div>
     <div> {{value()}}</div>
   </div>
   <div class="filter-expression" *ngIf="isInequality()">
     <div>{{property()}}</div>
-    <div>&nbsp;is niet&nbsp;</div>
+    <div class ="comparison">is niet</div>
     <div>{{value()}}</div>
   </div>
   <div class="filter-expression" *ngIf="isConjunction()">
@@ -15,10 +15,8 @@
     <awv-filter-expression [expression]="right"></awv-filter-expression>
   </div>
   <div class="filter-expression" *ngIf="isDisjunction()">
-      <div>( </div>
       <awv-filter-expression [expression]="left"></awv-filter-expression>
       <div class="logical-connective">&nbsp;&nbsp;OF&nbsp;&nbsp;</div>
       <awv-filter-expression [expression]="right"></awv-filter-expression>
-      <div> )</div>
     </div>
 </div>
