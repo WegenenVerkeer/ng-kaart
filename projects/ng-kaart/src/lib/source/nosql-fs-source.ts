@@ -152,14 +152,14 @@ export class NosqlFsSource extends ol.source.Vector {
   private offline = false;
   private busyCount = 0;
   private outstandingRequests: ol.Extent[] = [];
-  private extraFilter: Option<string> = none; // Een arbitraire filter bovenop de basisfilter
+  private userFilter: Option<string> = none; // Een arbitraire filter bovenop de basisfilter
 
   constructor(
     private readonly database: string,
     private readonly collection: string,
     private readonly url = "/geolatte-nosqlfs",
     private readonly view: Option<string>,
-    private readonly filter: Option<string>, // De basisfilter voor de data (bijv. voor EM-installaties)
+    private readonly baseFilter: Option<string>, // De basisfilter voor de data (bijv. voor EM-installaties)
     private readonly laagnaam: string,
     readonly memCacheSize: number,
     readonly gebruikCache: boolean
@@ -229,11 +229,17 @@ export class NosqlFsSource extends ol.source.Vector {
     });
   }
 
+  private viewAndFilterParams() {
+    return {
+      ...this.view.fold({}, v => ({ "with-view": encodeURIComponent(v) })),
+      ...this.composedFilter().fold({}, f => ({ query: encodeURIComponent(f) }))
+    };
+  }
+
   private composeQueryUrl(extent?: number[]) {
     const params = {
       ...fromNullable(extent).fold({}, v => ({ bbox: v.join(",") })),
-      ...this.view.fold({}, v => ({ "with-view": encodeURIComponent(v) })),
-      ...this.composedFilter().fold({}, f => ({ query: encodeURIComponent(f) }))
+      ...this.viewAndFilterParams()
     };
 
     return `${this.url}/api/databases/${this.database}/${this.collection}/query?${Object.keys(params)
@@ -245,9 +251,8 @@ export class NosqlFsSource extends ol.source.Vector {
 
   private composeFeatureCollectionUrl(limit: number) {
     const params = {
-      ...{ limit: limit },
-      ...this.view.fold({}, v => ({ "with-view": encodeURIComponent(v) })),
-      ...this.filter.fold({}, f => ({ query: encodeURIComponent(f) }))
+      limit: limit,
+      ...this.viewAndFilterParams()
     };
 
     return `${this.url}/api/databases/${this.database}/${this.collection}/featurecollection?${Object.keys(params)
@@ -258,9 +263,9 @@ export class NosqlFsSource extends ol.source.Vector {
   }
 
   private composedFilter(): Option<string> {
-    return this.filter.foldL(
-      () => this.extraFilter,
-      basisFilter => this.extraFilter.map(extraFilter => `(${basisFilter}) AND (${extraFilter})`)
+    return this.baseFilter.foldL(
+      () => this.userFilter,
+      basisFilter => this.userFilter.map(extraFilter => `(${basisFilter}) AND (${extraFilter})`)
     );
   }
 
@@ -325,8 +330,8 @@ export class NosqlFsSource extends ol.source.Vector {
     this.offline = offline;
   }
 
-  setFilter(cqlFilter: fltr.Filter) {
-    this.extraFilter = FilterCql.cql(cqlFilter);
+  setUserFilter(cqlFilter: fltr.Filter) {
+    this.userFilter = FilterCql.cql(cqlFilter);
   }
 
   dispatchLoadEvent(evt: le.DataLoadEvent) {

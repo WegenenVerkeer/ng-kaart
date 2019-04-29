@@ -392,7 +392,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                 .chain(nslg => ke.asToegevoegdeNosqlVectorLaag(nslg))
                 .map<ke.ToegevoegdeLaag>(tgnslg => {
                   // NosqlFsSource is mutable
-                  (tgnslg.layer.getSource() as NosqlFsSource).setFilter(
+                  (tgnslg.layer.getSource() as NosqlFsSource).setUserFilter(
                     cmnd.filterinstellingen.chain(fi => (fi.actief ? some(fi.spec) : none)).getOrElse(fltr.pure())
                   );
                   return tgnslg;
@@ -1323,7 +1323,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function activeerFilterOpSource(noSqlFsSource: NosqlFsSource, filter: fltr.Filter): void {
-      noSqlFsSource.setFilter(filter);
+      noSqlFsSource.setUserFilter(filter);
       noSqlFsSource.clear();
       noSqlFsSource.refresh();
     }
