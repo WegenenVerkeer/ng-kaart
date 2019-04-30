@@ -12,7 +12,7 @@ import * as cmd from "../kaart/kaart-protocol-commands";
 import { KaartComponent } from "../kaart/kaart.component";
 import { collectOption } from "../util/operators";
 
-import { Filter as fltr } from "../filter/filter-model";
+import { Filter as fltr } from "./filter-model";
 
 @Component({
   selector: "awv-filter-detail",

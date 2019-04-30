@@ -25,8 +25,8 @@ import { ZoekerModule } from "../../../ng-kaart/src/lib/zoeker";
       }
     }),
     LagenkiezerModule.withDefaults(),
-    ClickOutsideModule,
-    FilterModule
+    FilterModule,
+    ClickOutsideModule
   ],
   entryComponents: []
 })
