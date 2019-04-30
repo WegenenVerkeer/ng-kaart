@@ -1,4 +1,5 @@
 import { constant, Function1, Function2, Lazy, not, Predicate } from "fp-ts/lib/function";
+import { Option } from "fp-ts/lib/Option";
 
 // Een namespace is nodig omdat verschillende types dezelfde naam hebben als die voor stijlen en er kan maar 1 naam
 // geëxporteerd worden buiten de module.
@@ -11,7 +12,7 @@ export namespace Filter {
 
   export interface ExpressionFilter {
     readonly kind: "ExpressionFilter";
-    readonly name: string;
+    readonly name: Option<string>;
     readonly expression: Expression;
   }
 
@@ -33,6 +34,8 @@ export namespace Filter {
     readonly left: Expression;
     readonly right: Expression;
   }
+
+  export type LogicalConnective = Conjunction | Disjunction;
 
   export type Comparison = Equality | Inequality;
 
@@ -79,10 +82,47 @@ export namespace Filter {
       } as unknown) as C);
   }
 
+  export interface Conjunction {
+    readonly kind: "And";
+    readonly left: BaseExpression;
+    readonly right: Comparison;
+  }
+
+  export interface Disjunction {
+    readonly kind: "Or";
+    readonly left: Expression;
+    readonly right: Expression;
+  }
+
+  export interface PropertyValueOperator {
+    readonly property: Property;
+    readonly value: Literal;
+  }
+
+  export interface Equality extends PropertyValueOperator {
+    readonly kind: "Equality";
+  }
+
+  export interface Inequality extends PropertyValueOperator {
+    readonly kind: "Inequality";
+  }
+
+  export interface Literal {
+    readonly kind: "Literal";
+    readonly type: TypeType;
+    readonly value: ValueType;
+  }
+
+  export interface Property {
+    readonly kind: "Property";
+    readonly type: TypeType;
+    readonly ref: string;
+  }
+
   export const PureFilter: PureFilter = { kind: "PureFilter" };
   export const pure: Lazy<Filter> = constant(PureFilter);
 
-  export const ExpressionFilter: Function2<string, Expression, ExpressionFilter> = (name, expression) => ({
+  export const ExpressionFilter: Function2<Option<string>, Expression, ExpressionFilter> = (name, expression) => ({
     kind: "ExpressionFilter",
     name: name,
     expression: expression

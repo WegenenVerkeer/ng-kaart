@@ -143,7 +143,30 @@ export interface Tekenresultaat {
 export interface Laagfilterinstellingen {
   readonly spec: fltr.Filter;
   readonly actief: boolean;
+  readonly totaal: FilterTotaal;
 }
+
+export interface TeVeelData {
+  readonly type: "TeVeelData";
+}
+
+export interface TotaalOpTeHalen {
+  readonly type: "TotaalOpTeHalen";
+}
+
+export interface TotaalOpgehaald {
+  readonly type: "TotaalOpgehaald";
+  readonly totaal: number;
+}
+
+export type FilterTotaal = TotaalOpTeHalen | TotaalOpgehaald | TeVeelData;
+
+export const teVeelData: () => FilterTotaal = () => ({ type: "TeVeelData" });
+export const totaalOpTeHalen: () => FilterTotaal = () => ({ type: "TotaalOpTeHalen" });
+export const totaalOpgehaald: (number) => FilterTotaal = totaal => ({
+  type: "TotaalOpgehaald",
+  totaal: totaal
+});
 
 /**
  * Dit is een wrapper rond Laag die naast de laag zelf ook het gebruik van de laag bij houdt.
@@ -188,6 +211,8 @@ export const asToegevoegdeNosqlVectorLaag: (laag: ToegevoegdeLaag) => Option<Toe
 export const asNosqlSource: (source: ol.source.Vector) => Option<NosqlFsSource> = fromPredicate(isNoSqlFsSource) as (
   _: ol.source.Vector
 ) => Option<NosqlFsSource>;
+export const isTotaalOpgehaald: Refinement<FilterTotaal, TotaalOpgehaald> = (filterTotaal): filterTotaal is TotaalOpgehaald =>
+  filterTotaal.type === "TotaalOpgehaald";
 
 ///////////////
 // Constructors
@@ -230,14 +255,15 @@ export function TekenResultaat(geometry: ol.geom.Geometry, volgnummer: number, f
   };
 }
 
-export function Laagfilterinstellingen(spec: fltr.Filter, actief: boolean): Laagfilterinstellingen {
+export function Laagfilterinstellingen(spec: fltr.Filter, actief: boolean, totaal: FilterTotaal): Laagfilterinstellingen {
   return {
     spec: spec,
-    actief: actief
+    actief: actief,
+    totaal: totaal
   };
 }
 
-export const stdLaagfilterinstellingen = Laagfilterinstellingen(fltr.pure(), false);
+export const stdLaagfilterinstellingen = Laagfilterinstellingen(fltr.pure(), true, totaalOpTeHalen());
 
 ////////////////////////////
 // Manipulatie en inspectie

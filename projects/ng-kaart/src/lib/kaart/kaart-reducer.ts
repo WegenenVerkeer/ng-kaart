@@ -735,8 +735,14 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return laag.magGetoondWorden === magGetoondWorden ? laag : { ...laag, magGetoondWorden: magGetoondWorden };
     };
 
-    const pasLaagFilterAan: (spec: fltr.Filter, actief: boolean) => Endomorphism<ke.ToegevoegdeVectorLaag> = (spec, actief) =>
-      Lens.fromProp<ke.ToegevoegdeVectorLaag, "filterinstellingen">("filterinstellingen").set(ke.Laagfilterinstellingen(spec, actief));
+    const pasLaagFilterAan: (spec: fltr.Filter, actief: boolean, totaal: ke.FilterTotaal) => Endomorphism<ke.ToegevoegdeVectorLaag> = (
+      spec,
+      actief,
+      totaal
+    ) =>
+      Lens.fromProp<ke.ToegevoegdeVectorLaag, "filterinstellingen">("filterinstellingen").set(
+        ke.Laagfilterinstellingen(spec, actief, totaal)
+      );
 
     // Uiteraard is het *nooit* de bedoeling om de titel van een laag aan te passen.
     const pasLaagInModelAan: (mdl: Model) => (laag: ke.ToegevoegdeLaag) => Model = mdl => laag => ({
@@ -1336,7 +1342,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           valideerNoSqlFsSourceBestaat(cmnd.titel).map(noSqlFsSource => [laag, noSqlFsSource])
         ).map(([laag, noSqlFsSource]: [ke.ToegevoegdeVectorLaag, NosqlFsSource]) => {
           activeerFilterOpSource(noSqlFsSource, cmnd.filter);
-          const updatedLaag = pasLaagFilterAan(cmnd.filter, laag.filterinstellingen.actief)(laag);
+          const updatedLaag = pasLaagFilterAan(cmnd.filter, laag.filterinstellingen.actief, laag.filterinstellingen.totaal)(laag);
           const updatedModel = pasLaagInModelAan(model)(updatedLaag);
           zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
           zendFilterwijziging(updatedLaag);
@@ -1353,7 +1359,34 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         ).map(([laag, noSqlFsSource]: [ke.ToegevoegdeVectorLaag, NosqlFsSource]) => {
           const filter: (actief: boolean) => fltr.Filter = actief => (actief ? laag.filterinstellingen.spec : fltr.pure());
           activeerFilterOpSource(noSqlFsSource, filter(cmnd.actief));
-          const updatedLaag = pasLaagFilterAan(laag.filterinstellingen.spec, cmnd.actief)(laag);
+          const updatedLaag = pasLaagFilterAan(laag.filterinstellingen.spec, cmnd.actief, laag.filterinstellingen.totaal)(laag);
+          const updatedModel = pasLaagInModelAan(model)(updatedLaag);
+          zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
+          return ModelAndEmptyResult(updatedModel);
+        })
+      );
+    }
+
+    function haalFilterTotaalOp(cmnd: prt.HaalFilterTotaalOp<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        chain(valideerToegevoegdeVectorLaagBestaat(cmnd.titel), laag =>
+          valideerNoSqlFsSourceBestaat(cmnd.titel).map(noSqlFsSource => [laag, noSqlFsSource])
+        ).map(([laag, noSqlFsSource]: [ke.ToegevoegdeVectorLaag, NosqlFsSource]) => {
+          noSqlFsSource
+            .fetchCollectionSummary$()
+            .pipe(
+              switchMap(summary =>
+                summary.count > 100000 ? rx.of(ke.teVeelData()) : noSqlFsSource.fetchTotal$().pipe(map(num => ke.totaalOpgehaald(num)))
+              )
+            )
+            .subscribe(totaal => {
+              const updatedLaag = pasLaagFilterAan(laag.filterinstellingen.spec, laag.filterinstellingen.actief, totaal)(laag);
+              const updatedModel = pasLaagInModelAan(model)(updatedLaag);
+              zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
+            });
+
+          const updatedLaag = pasLaagFilterAan(laag.filterinstellingen.spec, laag.filterinstellingen.actief, ke.totaalOpTeHalen())(laag);
           const updatedModel = pasLaagInModelAan(model)(updatedLaag);
           zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
           zendFilterwijziging(updatedLaag);
@@ -1763,6 +1796,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return zetFilter(cmd);
         case "ActiveerFilter":
           return activeerFilter(cmd);
+        case "HaalFilterTotaalOp":
+          return haalFilterTotaalOp(cmd);
       }
     }
 

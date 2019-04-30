@@ -2,7 +2,7 @@ import { Component, NgZone } from "@angular/core";
 import { FormControl, ValidationErrors, Validators } from "@angular/forms";
 import * as array from "fp-ts/lib/Array";
 import { Function1, Function2 } from "fp-ts/lib/function";
-import { fromNullable, Option } from "fp-ts/lib/Option";
+import { fromNullable, none, Option } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { Observable } from "rxjs";
 import { filter, map, sample, shareReplay, startWith, switchMap, tap } from "rxjs/operators";
@@ -167,7 +167,7 @@ export class FilterComponent extends KaartChildComponentBase {
                     return prt.ZetFilter(
                       laag.titel,
                       fltr.ExpressionFilter(
-                        "filter",
+                        none,
                         operator.build(fltr.Property(veldInfo.type, veldInfo.naam), fltr.Literal("string", waarde))
                       ),
                       kaartLogOnlyWrapper
@@ -186,6 +186,7 @@ export class FilterComponent extends KaartChildComponentBase {
       this.dispatch(prt.StopVectorFilterBewerkingCmd());
       this.dispatch(command);
       this.dispatch(prt.ActiveerFilter(command.titel, true, kaartLogOnlyWrapper));
+      this.dispatch(prt.HaalFilterTotaalOp(command.titel, kaartLogOnlyWrapper));
     });
   }
 

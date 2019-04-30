@@ -1,5 +1,21 @@
+import { Function1 } from "fp-ts/lib/function";
+import { fromNullable, some } from "fp-ts/lib/Option";
+
 import { AwvV0FilterInterpreters } from "./filter-awv0-interpreter";
 import { Filter as fltr } from "./filter-model";
+
+// Het type dat we parsen is een platte JSON, dus zonder Option of andere complexe datatypes. Maar voor de rest is het
+// zo goed als gelijk aan model type. Om met een minimum aan code en een maximum aan typesafety te kunnen werken,
+// introduceren we een type specifiel voor de test.
+type Omit<T, K> = Pick<T, Exclude<keyof T, K>>;
+interface RawExpressionFilter extends Omit<fltr.ExpressionFilter, "name"> {
+  readonly name: string | undefined;
+}
+
+const fixName: Function1<RawExpressionFilter, fltr.Filter> = rawFilter => ({
+  ...rawFilter,
+  name: fromNullable(rawFilter.name)
+});
 
 describe("De filterinterpreter", () => {
   const property: fltr.Property = fltr.Property("string", "prop");
@@ -12,7 +28,7 @@ describe("De filterinterpreter", () => {
       expect(result.getOrElse(undefined)).toEqual(pure);
     });
     it("moet een filter met 1 'gelijk aan' kunnen verwerken", () => {
-      const eq: fltr.Filter = {
+      const eq: RawExpressionFilter = {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
@@ -23,10 +39,10 @@ describe("De filterinterpreter", () => {
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(eq);
       expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(eq);
+      expect(result.getOrElse(undefined)).toEqual(fixName(eq));
     });
     it("moet een filter met 1 'niet gelijk aan' kunnen verwerken", () => {
-      const neq: fltr.Filter = {
+      const neq: RawExpressionFilter = {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
@@ -37,10 +53,10 @@ describe("De filterinterpreter", () => {
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(neq);
       expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(neq);
+      expect(result.getOrElse(undefined)).toEqual(fixName(neq));
     });
     it("moet een filter met 1 'and' kunnen verwerken", () => {
-      const and: fltr.Filter = {
+      const and: RawExpressionFilter = {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
@@ -59,10 +75,10 @@ describe("De filterinterpreter", () => {
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(and);
       expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(and);
+      expect(result.getOrElse(undefined)).toEqual(fixName(and));
     });
     it("moet een filter met 2x 'and' kunnen verwerken", () => {
-      const and: fltr.Filter = {
+      const and: RawExpressionFilter = {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
@@ -89,10 +105,10 @@ describe("De filterinterpreter", () => {
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(and);
       expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(and);
+      expect(result.getOrElse(undefined)).toEqual(fixName(and));
     });
     it("moet een filter met 1 'or' kunnen verwerken", () => {
-      const or: fltr.Filter = {
+      const or: RawExpressionFilter = {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
@@ -111,10 +127,10 @@ describe("De filterinterpreter", () => {
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(or);
       expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(or);
+      expect(result.getOrElse(undefined)).toEqual(fixName(or));
     });
     it("moet een filter met 2x 'or' kunnen verwerken", () => {
-      const or: fltr.Filter = {
+      const or: RawExpressionFilter = {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
@@ -141,10 +157,10 @@ describe("De filterinterpreter", () => {
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(or);
       expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(or);
+      expect(result.getOrElse(undefined)).toEqual(fixName(or));
     });
     it("moet een filter met 'or' en 'and' kunnen verwerken", () => {
-      const orAnd: fltr.Filter = {
+      const orAnd: RawExpressionFilter = {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
@@ -171,7 +187,7 @@ describe("De filterinterpreter", () => {
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(orAnd);
       expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(orAnd);
+      expect(result.getOrElse(undefined)).toEqual(fixName(orAnd));
     });
   });
   describe("Bij het interpreteren van ongeldige structuren", () => {

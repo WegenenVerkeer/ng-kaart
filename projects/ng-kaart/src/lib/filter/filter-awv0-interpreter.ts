@@ -86,7 +86,7 @@ export namespace AwvV0FilterInterpreters {
 
   const expressionFilter: oi.Interpreter<fltr.ExpressionFilter> = oi.interpretRecord({
     kind: oi.pure("ExpressionFilter" as "ExpressionFilter"), // volgt op byKind
-    name: oi.field("name", oi.str),
+    name: oi.optional(oi.field("name", oi.str)),
     expression: oi.field("expression", expression)
   });
 
