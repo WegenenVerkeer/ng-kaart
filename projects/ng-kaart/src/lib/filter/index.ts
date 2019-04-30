@@ -12,10 +12,10 @@ import {
 } from "@angular/material";
 
 import { FilterDetailComponent } from "./filter-detail.component";
+import { FilterEditorComponent } from "./filter-editor.component";
 import { FilterExpressionComponent } from "./filter-expression.component";
-import { FilterComponent } from "./filter.component";
 
-const components: any[] = [FilterComponent, FilterExpressionComponent, FilterDetailComponent];
+const components: any[] = [FilterEditorComponent, FilterExpressionComponent, FilterDetailComponent];
 
 @NgModule({
   imports: [
@@ -48,4 +48,4 @@ export * from "./filter-detail.component";
 export * from "./filter-expression.component";
 export * from "./filter-model";
 export * from "./filter-persistence";
-export * from "./filter.component";
+export * from "./filter-editor.component";

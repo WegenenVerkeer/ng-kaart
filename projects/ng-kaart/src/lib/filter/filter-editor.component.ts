@@ -30,11 +30,11 @@ const autoCompleteSelectieVerplichtValidator: Function1<FormControl, ValidationE
 };
 
 @Component({
-  selector: "awv-filter",
-  templateUrl: "./filter.component.html",
-  styleUrls: ["./filter.component.scss"]
+  selector: "awv-filter-editor",
+  templateUrl: "./filter-editor.component.html",
+  styleUrls: ["./filter-editor.component.scss"]
 })
-export class FilterComponent extends KaartChildComponentBase {
+export class FilterEditorComponent extends KaartChildComponentBase {
   readonly zichtbaar$: rx.Observable<boolean>;
   readonly titel$: rx.Observable<string>;
 
