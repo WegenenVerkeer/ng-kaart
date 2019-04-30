@@ -376,9 +376,9 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                 legende: cmnd.legende,
                 stijlInLagenKiezer: cmnd.stijlInLagenKiezer
               };
-              const toegevoegdeLaag: ke.ToegevoegdeLaag = ke
-                .asVectorLaag(cmnd.laag)
-                .map<ke.ToegevoegdeLaag>(vlg => ({
+              const toegevoegdeVectorLaagCommon: ke.ToegevoegdeLaag = ke.asVectorLaag(cmnd.laag).fold(
+                toegevoegdeLaagCommon, //
+                vlg => ({
                   ...toegevoegdeLaagCommon,
                   bron: vlg,
                   layer: layer as ol.layer.Vector, // veilig omdat laag een VectorLaag is
@@ -388,16 +388,18 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                   selectiestijlSel: vlg.selectieStyleSelector,
                   hoverstijlSel: vlg.hoverStyleSelector,
                   filterinstellingen: cmnd.filterinstellingen.getOrElse(ke.stdLaagfilterinstellingen)
-                }))
-                .chain(nslg => ke.asToegevoegdeNosqlVectorLaag(nslg))
-                .map<ke.ToegevoegdeLaag>(tgnslg => {
+                })
+              );
+              const toegevoegdeLaag: ke.ToegevoegdeLaag = ke.asToegevoegdeNosqlVectorLaag(toegevoegdeVectorLaagCommon).fold(
+                toegevoegdeVectorLaagCommon, //
+                tgnslg => {
                   // NosqlFsSource is mutable
                   (tgnslg.layer.getSource() as NosqlFsSource).setUserFilter(
                     cmnd.filterinstellingen.chain(fi => (fi.actief ? some(fi.spec) : none)).getOrElse(fltr.pure())
                   );
                   return tgnslg;
-                })
-                .getOrElse(toegevoegdeLaagCommon);
+                }
+              );
               layer.set("titel", titel);
               layer.setVisible(cmnd.magGetoondWorden && !cmnd.laag.verwijderd); // achtergrondlagen expliciet zichtbaar maken!
               // met positie hoeven we nog geen rekening te houden

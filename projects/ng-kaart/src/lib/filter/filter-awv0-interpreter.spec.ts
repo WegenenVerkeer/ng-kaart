@@ -1,5 +1,5 @@
 import { Function1 } from "fp-ts/lib/function";
-import { fromNullable, some } from "fp-ts/lib/Option";
+import { fromNullable } from "fp-ts/lib/Option";
 
 import { AwvV0FilterInterpreters } from "./filter-awv0-interpreter";
 import { Filter as fltr } from "./filter-model";

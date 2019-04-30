@@ -1,5 +1,5 @@
 import { Function1, Refinement } from "fp-ts/lib/function";
-import { fromPredicate, Option } from "fp-ts/lib/Option";
+import { fromPredicate, fromRefinement, Option } from "fp-ts/lib/Option";
 import { contramap, Setoid, setoidString } from "fp-ts/lib/Setoid";
 import { Iso, Lens, Optional } from "monocle-ts";
 import * as ol from "openlayers";
@@ -193,13 +193,16 @@ export interface ToegevoegdeVectorLaag extends ToegevoegdeLaag {
   readonly filterinstellingen: Laagfilterinstellingen;
 }
 
-export const isWmsLaag: (laag: Laag) => boolean = laag => laag.type === SingleTileWmsType || laag.type === TiledWmsType;
-export const isTiledWmsLaag: (laag: Laag) => boolean = laag => laag.type === TiledWmsType;
-export const isBlancoLaag: (laag: Laag) => boolean = laag => laag.type === BlancoType;
-export const isVectorLaag: (laag: Laag) => boolean = laag => laag.type === VectorType;
-export const isNoSqlFsLaag: (laag: Laag) => boolean = laag => laag.type === VectorType && isNoSqlFsSource(laag.source);
+export const isWmsLaag: Refinement<Laag, WmsLaag> = (laag): laag is WmsLaag =>
+  laag.type === SingleTileWmsType || laag.type === TiledWmsType;
+export const isTiledWmsLaag: Refinement<Laag, WmsLaag> = (laag): laag is WmsLaag => laag.type === TiledWmsType;
+export const isBlancoLaag: Refinement<Laag, BlancoLaag> = (laag): laag is BlancoLaag => laag.type === BlancoType;
+export const isVectorLaag: Refinement<Laag, VectorLaag> = (laag): laag is VectorLaag => laag.type === VectorType;
+// tslint:disable-next-line:max-line-length
+export const isNoSqlFsLaag: Refinement<Laag, VectorLaag> = (laag): laag is VectorLaag =>
+  laag.type === VectorType && isNoSqlFsSource(laag.source);
 export const asVectorLaag: (laag: Laag) => Option<VectorLaag> = fromPredicate(isVectorLaag) as (_: Laag) => Option<VectorLaag>;
-export const asTiledWmsLaag: (laag: Laag) => Option<WmsLaag> = fromPredicate(isTiledWmsLaag) as (_: Laag) => Option<WmsLaag>;
+export const asTiledWmsLaag: (laag: Laag) => Option<WmsLaag> = fromRefinement(isTiledWmsLaag);
 export const isToegevoegdeVectorLaag: Refinement<ToegevoegdeLaag, ToegevoegdeVectorLaag> = (laag): laag is ToegevoegdeVectorLaag =>
   isVectorLaag(laag.bron);
 export const asToegevoegdeVectorLaag: (laag: ToegevoegdeLaag) => Option<ToegevoegdeVectorLaag> = laag =>
