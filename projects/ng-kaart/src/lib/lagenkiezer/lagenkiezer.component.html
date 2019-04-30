@@ -19,7 +19,7 @@
         <mat-tab label="Lagen">
           <ng-container *ngTemplateOutlet="lagen"></ng-container>
         </mat-tab>
-        <mat-tab [label]="filterTabHeader$ | async" *ngIf="heeftFilters$ | async">
+        <mat-tab label="Filters" *ngIf="heeftFilters$ | async">
           <ng-container *ngTemplateOutlet="filters"></ng-container>
         </mat-tab>
       </mat-tab-group>

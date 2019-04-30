@@ -1379,7 +1379,9 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             .fetchCollectionSummary$()
             .pipe(
               switchMap(summary =>
-                summary.count > 100000 ? rx.of(ke.teVeelData()) : noSqlFsSource.fetchTotal$().pipe(map(num => ke.totaalOpgehaald(num)))
+                summary.count > 100000
+                  ? rx.of(ke.teVeelData(summary.count))
+                  : noSqlFsSource.fetchTotal$().pipe(map(num => ke.totaalOpgehaald(summary.count)(num)))
               )
             )
             .subscribe(totaal => {

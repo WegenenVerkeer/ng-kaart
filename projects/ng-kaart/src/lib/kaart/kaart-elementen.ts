@@ -148,6 +148,7 @@ export interface Laagfilterinstellingen {
 
 export interface TeVeelData {
   readonly type: "TeVeelData";
+  readonly collection_totaal: number;
 }
 
 export interface TotaalOpTeHalen {
@@ -156,15 +157,17 @@ export interface TotaalOpTeHalen {
 
 export interface TotaalOpgehaald {
   readonly type: "TotaalOpgehaald";
+  readonly collection_totaal: number;
   readonly totaal: number;
 }
 
 export type FilterTotaal = TotaalOpTeHalen | TotaalOpgehaald | TeVeelData;
 
-export const teVeelData: () => FilterTotaal = () => ({ type: "TeVeelData" });
+export const teVeelData: (number) => FilterTotaal = collection_totaal => ({ type: "TeVeelData", collection_totaal: collection_totaal });
 export const totaalOpTeHalen: () => FilterTotaal = () => ({ type: "TotaalOpTeHalen" });
-export const totaalOpgehaald: (number) => FilterTotaal = totaal => ({
+export const totaalOpgehaald: (number) => (number) => FilterTotaal = collection_totaal => totaal => ({
   type: "TotaalOpgehaald",
+  collection_totaal: collection_totaal,
   totaal: totaal
 });
 

@@ -84,7 +84,7 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
   readonly lagenLaag$: rx.Observable<Array<ToegevoegdeLaag>>;
   readonly lagenMetLegende$: rx.Observable<Array<ToegevoegdeLaag>>;
   readonly lagenMetFilter$: rx.Observable<Array<ToegevoegdeVectorLaag>>;
-  readonly filterTabHeader$: rx.Observable<string>;
+  // readonly filterTabHeader$: rx.Observable<string>;
   readonly heeftDivider$: rx.Observable<boolean>;
   readonly geenLagen$: rx.Observable<boolean>;
   readonly geenLegende$: rx.Observable<boolean>;
@@ -133,9 +133,9 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
       map(vlagen => array.filter(vlagen, vlaag => fltr.isDefined(vlaag.filterinstellingen.spec)))
     );
 
-    this.filterTabHeader$ = this.lagenMetFilter$.pipe(
-      map(tvlagen => `Filters (${tvlagen.filter(vlaag => vlaag.filterinstellingen.actief).length}/${tvlagen.length})`)
-    );
+    // this.filterTabHeader$ = this.lagenMetFilter$.pipe(
+    //   map(tvlagen => `Filters (${tvlagen.filter(vlaag => vlaag.filterinstellingen.actief).length}/${tvlagen.length})`)
+    // );
 
     this.heeftFilters$ = this.lagenMetFilter$.pipe(
       map(not(array.isEmpty)),
