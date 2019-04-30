@@ -3,7 +3,7 @@ import { ModuleWithProviders, NgModule } from "@angular/core";
 import { MatButtonModule, MatIconModule, MatInputModule, MatMenuModule, MatTooltipModule } from "@angular/material";
 import { MatTabsModule } from "@angular/material/tabs";
 
-import { FilterModule } from "../filter";
+import { FilterModule } from "../filter/index";
 
 import { LaagmanipulatieComponent } from "./laagmanipulatie.component";
 import { LAGENKIEZER_CFG, LagenkiezerConfig } from "./lagenkiezer-config";

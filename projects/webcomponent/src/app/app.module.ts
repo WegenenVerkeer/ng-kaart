@@ -19,13 +19,13 @@ import { ZoekerModule } from "../../../ng-kaart/src/lib/zoeker";
     FormsModule,
     KaartModule.withDefaults(),
     ClassicModule,
+    FilterModule,
     ZoekerModule.forRoot({
       googleWdb: {
         apiKey: "AIzaSyApbXMl5DGL60g17JU6MazMxNcUGooey7I"
       }
     }),
     LagenkiezerModule.withDefaults(),
-    FilterModule,
     ClickOutsideModule
   ],
   entryComponents: []
