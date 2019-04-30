@@ -196,12 +196,12 @@ export const validateAwvV0StyleSpec: Validator<AwvV0StyleSpec, Stylish> = matchS
 
 export const AwvV0StaticStyleSpecIso: Iso<AwvV0StaticStyleSpec, AwvV0StaticStyle> = new Iso(
   spec => spec.definition,
-  definition => ({ type: "StaticStyle", definition: definition } as AwvV0StaticStyleSpec)
+  definition => ({ type: "StaticStyle" as "StaticStyle", definition: definition })
 );
 
 export const AwvV0DynamicStyleSpecIso: Iso<AwvV0DynamicStyleSpec, RuleConfig> = new Iso(
   spec => spec.definition,
-  definition => ({ type: "DynamicStyle", definition: definition } as AwvV0DynamicStyleSpec)
+  definition => ({ type: "DynamicStyle" as "DynamicStyle", definition: definition })
 );
 
 const getDefintion = (x: AwvV0StyleSpec) => x.definition;

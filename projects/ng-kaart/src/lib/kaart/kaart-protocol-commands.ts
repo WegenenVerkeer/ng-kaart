@@ -2,7 +2,7 @@ import { Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 
-import { Filter } from "../filter/filter-model";
+import { Filter as fltr } from "../filter/filter-model";
 import { TypedRecord } from "../util/typed-record";
 import { ZoekerMetWeergaveopties, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
 
@@ -119,6 +119,7 @@ export interface VoegLaagToeCmd<Msg extends KaartMsg> {
   readonly laaggroep: ke.Laaggroep;
   readonly legende: Option<Legende>;
   readonly stijlInLagenKiezer: Option<string>;
+  readonly filterinstellingen: Option<ke.Laagfilterinstellingen>;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -394,7 +395,7 @@ export interface ZetOffline<Msg extends KaartMsg> {
 export interface ZetFilter<Msg extends KaartMsg> {
   readonly type: "ZetFilter";
   readonly titel: string;
-  readonly filter: Filter;
+  readonly filter: fltr.Filter;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -564,6 +565,7 @@ export function VoegLaagToeCmd<Msg extends KaartMsg>(
   laagGroep: ke.Laaggroep,
   legende: Option<Legende>,
   stijlInLagenKiezer: Option<string>,
+  filterinstellingen: Option<ke.Laagfilterinstellingen>,
   wrapper: BareValidationWrapper<Msg>
 ): VoegLaagToeCmd<Msg> {
   return {
@@ -574,6 +576,7 @@ export function VoegLaagToeCmd<Msg extends KaartMsg>(
     laaggroep: laagGroep,
     legende: legende,
     stijlInLagenKiezer: stijlInLagenKiezer,
+    filterinstellingen: filterinstellingen,
     wrapper: wrapper
   };
 }
@@ -647,7 +650,7 @@ export function VraagSchaalAanCmd<Msg extends KaartMsg>(wrapper: BareValidationW
   };
 }
 
-export function ZetFilter<Msg extends KaartMsg>(titel: string, filter: Filter, wrapper: BareValidationWrapper<Msg>): ZetFilter<Msg> {
+export function ZetFilter<Msg extends KaartMsg>(titel: string, filter: fltr.Filter, wrapper: BareValidationWrapper<Msg>): ZetFilter<Msg> {
   return {
     type: "ZetFilter",
     titel: titel,

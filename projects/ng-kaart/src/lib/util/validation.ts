@@ -11,7 +11,8 @@ import { URI, Validation } from "fp-ts/lib/Validation";
 export type ErrValidation<A> = Validation<string[], A>;
 export type Validator<A, B> = Function1<A, ErrValidation<B>>;
 
-export const validationAp: Applicative2C<URI, string[]> = validation.getApplicative(getArraySemigroup<string>());
+export const validationSemigroup = getArraySemigroup<string>();
+export const validationAp: Applicative2C<URI, string[]> = validation.getApplicative(validationSemigroup);
 
 export const allOf = sequence(validationAp, Array);
 

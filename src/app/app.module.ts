@@ -43,12 +43,12 @@ import { TestSectieComponent } from "./test-sectie.component";
         apiKey: "AIzaSyApbXMl5DGL60g17JU6MazMxNcUGooey7I"
       }
     }),
-    FilterModule,
     LagenkiezerModule.withDefaults(),
     // Deze lijkt niet te werken. Zie main.ts voor registratie
     // ServiceWorkerModule.register("ng-kaart/ng-kaart-service-worker.js", {
     //   enabled: true
     // }),
+    FilterModule,
     ClickOutsideModule
   ],
   providers: [],

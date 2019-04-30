@@ -19,7 +19,8 @@ import { collectOption } from "../util/operators";
 import { forEvery } from "../util/operators";
 
 import { FilterAanpassingBezig, isAanpassingBezig } from "./filter-aanpassing-state";
-import { Comparison, ExpressionFilter, FilterBuilder, Literal, Property } from "./filter-model";
+import { FilterBuilder } from "./filter-builder";
+import { Filter as fltr } from "./filter-model";
 
 const autoCompleteSelectieVerplichtValidator: Function1<FormControl, ValidationErrors | null> = control => {
   if (typeof control.value === "string") {
@@ -29,11 +30,11 @@ const autoCompleteSelectieVerplichtValidator: Function1<FormControl, ValidationE
 };
 
 @Component({
-  selector: "awv-filter",
-  templateUrl: "./filter.component.html",
-  styleUrls: ["./filter.component.scss"]
+  selector: "awv-filter-editor",
+  templateUrl: "./filter-editor.component.html",
+  styleUrls: ["./filter-editor.component.scss"]
 })
-export class FilterComponent extends KaartChildComponentBase {
+export class FilterEditorComponent extends KaartChildComponentBase {
   readonly zichtbaar$: rx.Observable<boolean>;
   readonly titel$: rx.Observable<string>;
 
@@ -74,9 +75,9 @@ export class FilterComponent extends KaartChildComponentBase {
           tap(zichtbaar => {
             if (zichtbaar) {
               // zet control waarden bij start aanpassen filter van een laag
-              if (laag.filterInstellingen.spec.kind === "ExpressionFilter") {
-                const exprFilter = laag.filterInstellingen.spec as ExpressionFilter;
-                const comparison = exprFilter.expression as Comparison;
+              if (laag.filterinstellingen.spec.kind === "ExpressionFilter") {
+                const exprFilter = laag.filterinstellingen.spec as fltr.ExpressionFilter; // TODO dit moet veralgemeend worden
+                const comparison = exprFilter.expression as fltr.Comparison;
                 this.veldControl.setValue(
                   ToegevoegdeVectorLaag.veldInfosLens.get(laag).find(veldinfo => veldinfo.naam === comparison.property.ref)
                 );
@@ -165,7 +166,10 @@ export class FilterComponent extends KaartChildComponentBase {
                   map(waarde => {
                     return prt.ZetFilter(
                       laag.titel,
-                      ExpressionFilter(none, operator.build(Property(veldInfo.type, veldInfo.naam), Literal("string", waarde))),
+                      fltr.ExpressionFilter(
+                        none,
+                        operator.build(fltr.Property(veldInfo.type, veldInfo.naam), fltr.Literal("string", waarde))
+                      ),
                       kaartLogOnlyWrapper
                     );
                   })

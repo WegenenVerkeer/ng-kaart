@@ -7,9 +7,9 @@ import { not, Predicate } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, filter, map, scan, share, shareReplay, startWith, take, tap } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, filter, map, scan, shareReplay, startWith, take } from "rxjs/operators";
 
-import * as fltr from "../filter/filter-model";
+import { Filter as fltr } from "../filter/filter-model";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { isToegevoegdeVectorLaag, ToegevoegdeLaag, ToegevoegdeVectorLaag } from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
@@ -17,7 +17,6 @@ import { LegendeItem } from "../kaart/kaart-legende";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
 import { isAanpassingBezig } from "../kaart/stijleditor/state";
-import { subSpy } from "../util";
 
 export const LagenUiSelector = "Lagenkiezer";
 
@@ -43,8 +42,6 @@ export const DefaultOpties: LagenUiOpties = {
   filterbareLagen: false,
   stijlbareVectorlagen: () => false
 };
-
-type GapDirection = "Up" | "Down" | "Here";
 
 interface DragState {
   readonly from: ToegevoegdeLaag;
@@ -133,11 +130,11 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
     );
     this.lagenMetFilter$ = this.lagenHoog$.pipe(
       map(lagen => array.filter(lagen, isToegevoegdeVectorLaag)),
-      map(vlagen => array.filter(vlagen, vlaag => fltr.isDefined(vlaag.filterInstellingen.spec)))
+      map(vlagen => array.filter(vlagen, vlaag => fltr.isDefined(vlaag.filterinstellingen.spec)))
     );
 
     this.filterTabHeader$ = this.lagenMetFilter$.pipe(
-      map(tvlagen => `Filters (${tvlagen.filter(vlaag => vlaag.filterInstellingen.actief).length}/${tvlagen.length})`)
+      map(tvlagen => `Filters (${tvlagen.filter(vlaag => vlaag.filterinstellingen.actief).length}/${tvlagen.length})`)
     );
 
     this.heeftFilters$ = this.lagenMetFilter$.pipe(

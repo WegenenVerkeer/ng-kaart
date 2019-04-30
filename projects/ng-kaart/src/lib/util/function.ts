@@ -1,4 +1,4 @@
-import { Endomorphism, Function1, Function2 } from "fp-ts/lib/function";
+import { Endomorphism, Function1, Function2, Refinement } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import { Lens, Setter } from "monocle-ts";
 

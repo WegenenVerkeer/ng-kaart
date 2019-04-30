@@ -1,10 +1,9 @@
 import { Component, Input, NgZone } from "@angular/core";
 import * as array from "fp-ts/lib/Array";
-import { Function1, Function2 } from "fp-ts/lib/function";
-import { fromNullable, Option } from "fp-ts/lib/Option";
+import { Function2 } from "fp-ts/lib/function";
+import { Option } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
-import { Observable } from "rxjs";
-import { filter, map, sample, shareReplay, startWith, switchMap, tap } from "rxjs/operators";
+import { filter, map, sample, shareReplay, startWith, tap } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import * as ke from "../kaart/kaart-elementen";
@@ -13,7 +12,7 @@ import * as cmd from "../kaart/kaart-protocol-commands";
 import { KaartComponent } from "../kaart/kaart.component";
 import { collectOption } from "../util/operators";
 
-import * as fltr from "../filter/filter-model";
+import { Filter as fltr } from "./filter-model";
 
 @Component({
   selector: "awv-filter-detail",
@@ -25,7 +24,7 @@ export class FilterDetailComponent extends KaartChildComponentBase {
   laag: ke.ToegevoegdeVectorLaag;
 
   get filter(): fltr.ExpressionFilter {
-    return <fltr.ExpressionFilter>this.laag.filterInstellingen.spec;
+    return <fltr.ExpressionFilter>this.laag.filterinstellingen.spec;
   }
 
   readonly filterActief$: rx.Observable<boolean>;
@@ -43,7 +42,7 @@ export class FilterDetailComponent extends KaartChildComponentBase {
 
     this.filterActief$ = laag$.pipe(
       filter(laag => this.laag.titel === laag.titel),
-      map(laag => laag.filterInstellingen.actief),
+      map(laag => laag.filterinstellingen.actief),
       startWith(true),
       shareReplay(1)
     );
