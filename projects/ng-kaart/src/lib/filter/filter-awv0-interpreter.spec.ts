@@ -6,7 +6,7 @@ import { Filter as fltr } from "./filter-model";
 
 // Het type dat we parsen is een platte JSON, dus zonder Option of andere complexe datatypes. Maar voor de rest is het
 // zo goed als gelijk aan model type. Om met een minimum aan code en een maximum aan typesafety te kunnen werken,
-// introduceren we een type specifiel voor de test.
+// introduceren we een type specifiek voor de test.
 type Omit<T, K> = Pick<T, Exclude<keyof T, K>>;
 interface RawExpressionFilter extends Omit<fltr.ExpressionFilter, "name"> {
   readonly name: string | undefined;
