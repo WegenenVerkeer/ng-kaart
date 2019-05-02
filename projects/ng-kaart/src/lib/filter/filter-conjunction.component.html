@@ -9,7 +9,7 @@
 
   <div *ngSwitchCase="'And'" class="conjunction">
 
-    <awv-filter-conjunction [expression]="expression.right"></awv-filter-conjunction>
+    <awv-filter-conjunction [expression]="expression.left"></awv-filter-conjunction>
 
     <div class="logical-connective">
       <div class="with-border">
@@ -18,7 +18,7 @@
     </div>
 
     <div class="term">
-      <awv-filter-term [expression]="expression.left"></awv-filter-term>
+      <awv-filter-term [expression]="expression.right"></awv-filter-term>
       <mat-icon class="checkmark">checkmark</mat-icon>
 <!--      <mat-icon class="cross" *ngIf="isPureFilter">cross</mat-icon>-->
     </div>

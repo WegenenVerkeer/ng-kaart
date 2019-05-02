@@ -13,10 +13,13 @@ import { Filter, Filter as fltr } from "../filter/filter-model";
 export class FilterQueryBuilderComponent extends KaartChildComponentBase {
   comp1 = fltr.Equality(fltr.Property("string", "ident8", "Ident8"), fltr.Literal("string", "R0040001"));
   comp2 = fltr.Equality(fltr.Property("string", "type", "Type"), fltr.Literal("string", "Aanliggend"));
-  conj = fltr.Conjunction(this.comp1, this.comp2);
+  comp3 = fltr.Inequality(fltr.Property("string", "type", "Type"), fltr.Literal("string", "Verhoogd"));
+
+  conj1 = fltr.Conjunction(this.comp1, this.comp2);
+  conj2 = fltr.Conjunction(this.conj1, this.comp3);
 
   @Input()
-  expression: fltr.Expression = this.conj;
+  expression: fltr.Expression = this.conj2;
 
   constructor(kaart: KaartComponent, zone: NgZone) {
     super(kaart, zone);
