@@ -53,11 +53,15 @@
     }
   }
 
-  .filter-omschrijving {
-    margin-left: 52px;
-    margin-top: 10px;
-    margin-bottom: 10px;
-    font-weight: bold;
+  .filter-detail-inhoud {
+    cursor: pointer;
+
+    .filter-detail-omschrijving {
+      margin-left: 52px;
+      margin-top: 10px;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
   }
 
   .filter-menu {

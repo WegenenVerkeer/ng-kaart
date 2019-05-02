@@ -1,4 +1,4 @@
-<div (click)="pasFilterAan()" [ngSwitch]="expression.kind">
+<div [ngSwitch]="expression.kind">
   <div class="filter-expression" *ngSwitchCase="'Equality'">
     <div>{{property()}} </div>
     <div class ="comparison">is</div>
