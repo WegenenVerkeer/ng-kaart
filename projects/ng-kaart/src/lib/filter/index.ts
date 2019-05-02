@@ -11,6 +11,7 @@ import {
   MatMenuModule
 } from "@angular/material";
 
+import { FilterChipComponent } from "./filter-chip.component";
 import { FilterConjunctionComponent } from "./filter-conjunction.component";
 import { FilterDetailComponent } from "./filter-detail.component";
 import { FilterEditorComponent } from "./filter-editor.component";
@@ -24,7 +25,8 @@ const components: any[] = [
   FilterDetailComponent,
   FilterTermComponent,
   FilterQueryBuilderComponent,
-  FilterConjunctionComponent
+  FilterConjunctionComponent,
+  FilterChipComponent
 ];
 
 @NgModule({

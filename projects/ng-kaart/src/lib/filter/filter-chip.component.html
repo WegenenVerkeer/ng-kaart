@@ -1,0 +1,9 @@
+<div class="chip">
+
+  <div *ngIf="expression.kind == 'Equality' || expression.kind == 'Inequality'" class="term">
+    <awv-filter-term [expression]="expression"></awv-filter-term>
+    <mat-icon class="checkmark">checkmark</mat-icon>
+    <!--      <mat-icon class="cross" *ngIf="isPureFilter">cross</mat-icon>-->
+  </div>
+
+</div>
