@@ -1,22 +1,19 @@
 <div [ngSwitch]="expression.kind">
-  <div class="filter-expression" *ngSwitchCase="'Equality'">
-    <div>{{property()}} </div>
-    <div class ="comparison">is</div>
-    <div> {{value()}}</div>
+
+  <div class="filter-expression" >
+    <awv-filter-term [expression]="expression"></awv-filter-term>
   </div>
-  <div class="filter-expression" *ngSwitchCase="'InEquality'">
-    <div>{{property()}}</div>
-    <div class ="comparison">is niet</div>
-    <div>{{value()}}</div>
-  </div>
+
   <div class="filter-expression" *ngSwitchCase="'And'">
     <awv-filter-expression [expression]="left"></awv-filter-expression>
     <div class="logical-connective">EN</div>
     <awv-filter-expression [expression]="right"></awv-filter-expression>
   </div>
+
   <div class="filter-expression" *ngSwitchCase="'Or'">
     <awv-filter-expression [expression]="left"></awv-filter-expression>
     <div class="logical-connective">OF</div>
     <awv-filter-expression [expression]="right"></awv-filter-expression>
   </div>
+
 </div>

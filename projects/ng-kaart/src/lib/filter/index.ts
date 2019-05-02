@@ -11,11 +11,21 @@ import {
   MatMenuModule
 } from "@angular/material";
 
+import { FilterConjunctionComponent } from "./filter-conjunction.component";
 import { FilterDetailComponent } from "./filter-detail.component";
 import { FilterEditorComponent } from "./filter-editor.component";
 import { FilterExpressionComponent } from "./filter-expression.component";
+import { FilterQueryBuilderComponent } from "./filter-query-builder.component";
+import { FilterTermComponent } from "./filter-term.component";
 
-const components: any[] = [FilterEditorComponent, FilterExpressionComponent, FilterDetailComponent];
+const components: any[] = [
+  FilterEditorComponent,
+  FilterExpressionComponent,
+  FilterDetailComponent,
+  FilterTermComponent,
+  FilterQueryBuilderComponent,
+  FilterConjunctionComponent
+];
 
 @NgModule({
   imports: [
@@ -49,3 +59,6 @@ export * from "./filter-editor.component";
 export * from "./filter-expression.component";
 export * from "./filter-model";
 export * from "./filter-persistence";
+export * from "./filter-editor.component";
+export * from "./filter-term.component";
+export * from "./filter-conjunction.component";

@@ -1,0 +1,63 @@
+@import "../css/kaart.component-common.scss";
+
+.conjunction {
+  display: flex;
+  flex-direction: row;
+
+  .logical-connective {
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+
+    .with-border {
+      color: rgba(0, 0, 0, 0.87);
+      border-radius: 4px;
+      border-width: 1px;
+      border-color: rgb(204, 204, 204);
+      border-style: dotted;
+      width: 32px;
+      height: 32px;
+      line-height: 32px;
+      text-align: center;
+      font-size: 12px;
+      font-weight: bold;
+      font-style: normal;
+    }
+
+    &.klikbaar {
+      cursor: pointer;
+      color: rgba(0, 0, 0, 0.54);
+      border-style: dashed;
+    }
+  }
+
+  .term {
+    display: flex;
+    line-height: 32px;
+    height: 32px;
+    text-align: center;
+    margin: auto;
+    color: rgba(0, 0, 0, 0.87);
+    font-size: 12px;
+    font-weight: bold;
+    font-style: normal;
+    border-radius: 20px;
+    border-width: 1px;
+    border-color: rgb(85, 85, 85);
+    border-style: solid;
+    box-shadow: rgba(0, 0, 0, 0.2) 0 3px 1px -2px, rgba(0, 0, 0, 0.14) 0px 2px 2px 0px, rgba(0, 0, 0, 0.12) 0px 1px 5px 0px;
+    padding: 0 16px 0 16px;
+
+    .checkmark {
+      margin-left: 4px;
+      line-height: 30px;
+      color: green;
+    }
+
+    .cross {
+      margin-left: 4px;
+      line-height: 30px;
+      color: red;
+    }
+  }
+
+}

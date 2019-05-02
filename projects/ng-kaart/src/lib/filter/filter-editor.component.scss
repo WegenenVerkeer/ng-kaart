@@ -17,7 +17,7 @@
 }
 
 .filter-dialog {
-  min-width: 400px;
+  min-width: 600px;
   display: flex;
   flex-direction: column;
   align-content: stretch;
@@ -39,6 +39,7 @@
 
 .filter-content {
   margin: 16px;
+  flex: 1;
   font-size: 14px;
   color: rgba(black, 0.87);
   display: flex;
@@ -53,10 +54,14 @@
     flex: 1;
     display: flex;
     flex-direction: row;
+    border-bottom-style: solid;
+    border-bottom-width: 1px;
+    border-bottom-color: rgb(204, 204, 204);
 
     .filter-velden-combo {
       padding: 8px;
       min-width: 200px;
+      padding-left: 16px;
     }
 
     .filter-operator-combo {
@@ -65,9 +70,14 @@
     }
 
     .filter-waarde-editbox {
-      padding: 8px;
+      padding: 8px 16px 8px 8px;
       min-width: 200px;
     }
+  }
+
+
+  .query-builder {
+
   }
 
 

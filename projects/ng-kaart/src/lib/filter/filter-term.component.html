@@ -1,0 +1,15 @@
+<div [ngSwitch]="expression.kind">
+
+  <div class="filter-term" *ngSwitchCase="'Equality'">
+    <div>{{property()}} </div>
+    <div class ="comparison">is</div>
+    <div> {{value()}}</div>
+  </div>
+
+  <div class="filter-term" *ngSwitchCase="'InEquality'">
+    <div>{{property()}}</div>
+    <div class ="comparison">is niet</div>
+    <div>{{value()}}</div>
+  </div>
+
+</div>

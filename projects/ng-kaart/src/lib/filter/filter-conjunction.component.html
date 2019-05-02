@@ -1,0 +1,29 @@
+
+<div [ngSwitch]="expression.kind" class="conjunction">
+
+  <div *ngSwitchCase="'Equality' || 'Inequality'" class="term">
+    <awv-filter-term [expression]="expression"></awv-filter-term>
+    <mat-icon class="checkmark">checkmark</mat-icon>
+    <!--      <mat-icon class="cross" *ngIf="isPureFilter">cross</mat-icon>-->
+  </div>
+
+  <div *ngSwitchCase="'And'" class="conjunction">
+
+    <awv-filter-conjunction [expression]="expression.right"></awv-filter-conjunction>
+
+    <div class="logical-connective">
+      <div class="with-border">
+        EN
+      </div>
+    </div>
+
+    <div class="term">
+      <awv-filter-term [expression]="expression.left"></awv-filter-term>
+      <mat-icon class="checkmark">checkmark</mat-icon>
+<!--      <mat-icon class="cross" *ngIf="isPureFilter">cross</mat-icon>-->
+    </div>
+
+  </div>
+
+</div>
+

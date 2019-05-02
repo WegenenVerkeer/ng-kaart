@@ -20,14 +20,6 @@ export class FilterExpressionComponent extends KaartChildComponentBase {
     super(kaart, zone);
   }
 
-  property(): string {
-    return (<fltr.Comparison>this.expression).property.ref;
-  }
-
-  value(): string {
-    return (<fltr.Comparison>this.expression).value.value.toString();
-  }
-
   left(): fltr.Expression {
     return (<fltr.LogicalConnective>this.expression).left;
   }
