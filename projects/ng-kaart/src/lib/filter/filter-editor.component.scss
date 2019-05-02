@@ -38,7 +38,6 @@
 }
 
 .filter-content {
-  margin: 16px;
   flex: 1;
   font-size: 14px;
   color: rgba(black, 0.87);
@@ -46,12 +45,11 @@
   flex-direction: column;
 
   .filter-naam {
-    padding: 4px;
+    padding: 4px 4px 4px 8px;
     min-width: 512px;
   }
 
   .filter-definitie {
-    flex: 1;
     display: flex;
     flex-direction: row;
     border-bottom-style: solid;
