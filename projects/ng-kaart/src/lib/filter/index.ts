@@ -11,13 +11,13 @@ import {
   MatMenuModule
 } from "@angular/material";
 
-import { FilterChipComponent } from "./filter-chip.component";
-import { FilterConjunctionComponent } from "./filter-conjunction.component";
 import { FilterDetailComponent } from "./filter-detail.component";
 import { FilterEditorComponent } from "./filter-editor.component";
 import { FilterExpressionComponent } from "./filter-expression.component";
-import { FilterQueryBuilderComponent } from "./filter-query-builder.component";
 import { FilterTermComponent } from "./filter-term.component";
+import { FilterChipComponent } from "./querybuilder/filter-chip.component";
+import { FilterConjunctionComponent } from "./querybuilder/filter-conjunction.component";
+import { FilterQueryBuilderComponent } from "./querybuilder/filter-query-builder.component";
 
 const components: any[] = [
   FilterEditorComponent,
@@ -63,4 +63,6 @@ export * from "./filter-model";
 export * from "./filter-persistence";
 export * from "./filter-editor.component";
 export * from "./filter-term.component";
-export * from "./filter-conjunction.component";
+export * from "./querybuilder/filter-conjunction.component";
+export * from "./querybuilder/filter-chip.component";
+export * from "./querybuilder/filter-query-builder.component";
