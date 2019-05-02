@@ -30,8 +30,8 @@
       </button>
   </div>
   </div>
-  <div>
-    <div class="filter-omschrijving" *ngIf="omschrijving()">{{omschrijving()}}</div>
-    <awv-filter-expression [expression]="filter.expression" [laag]="laag"></awv-filter-expression>
+  <div class="filter-detail-inhoud"(click)="pasFilterAan()" >
+    <div class="filter-detail-omschrijving" *ngIf="omschrijving()">{{omschrijving()}}</div>
+    <awv-filter-expression [expression]="filter.expression"></awv-filter-expression>
   </div>
 </div>
