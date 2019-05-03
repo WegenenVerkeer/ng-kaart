@@ -1376,10 +1376,13 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function berekenFilterTotalen(laag: ke.ToegevoegdeVectorLaag): void {
       forEach(ke.asNosqlSource(laag.layer.getSource()), nosqlFsSource =>
-        nosqlFsSource.fetchTotal$().subscribe(totaal => {
-          const updatedLaag = pasLaagFilterAan(laag.filterinstellingen.spec, laag.filterinstellingen.actief, totaal)(laag);
-          const updatedModel = pasLaagInModelAan(model)(updatedLaag);
-          zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
+        nosqlFsSource.fetchTotal$().subscribe({
+          next: totaal => {
+            const updatedLaag = pasLaagFilterAan(laag.filterinstellingen.spec, laag.filterinstellingen.actief, totaal)(laag);
+            const updatedModel = pasLaagInModelAan(model)(updatedLaag);
+            zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
+          },
+          error: e => kaartLogger.error("fout in berekenen totalen")
         })
       );
     }
