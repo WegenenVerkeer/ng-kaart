@@ -49,3 +49,4 @@ export * from "./filter-editor.component";
 export * from "./filter-expression.component";
 export * from "./filter-model";
 export * from "./filter-persistence";
+export * from "./filter-totaal";
