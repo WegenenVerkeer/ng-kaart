@@ -14,8 +14,9 @@ export class FilterQueryBuilderComponent {
 
   conj1 = fltr.Conjunction(this.comp1, this.comp2);
   conj2 = fltr.Conjunction(this.conj1, this.comp3);
+  conj3 = fltr.Conjunction(this.conj2, this.comp2);
 
-  disj1 = fltr.Disjunction(this.conj1, this.conj2);
+  disj1 = fltr.Disjunction(this.conj1, this.conj3);
   disj2 = fltr.Disjunction(this.disj1, this.disj1);
 
   @Input()
