@@ -1,6 +1,6 @@
 import { Function1, Function2, Function3 } from "fp-ts/lib/function";
 import * as rx from "rxjs";
-import { delay, map, switchMap, timeoutWith } from "rxjs/operators";
+import { map, switchMap, timeoutWith } from "rxjs/operators";
 
 import { Pipeable } from "./operators";
 
@@ -51,6 +51,7 @@ const readerToObservable: Function1<ReadableStreamReader, rx.Observable<Uint8Arr
             observable.next(value);
             push();
           } else {
+            reader.releaseLock();
             observable.complete();
           }
         })

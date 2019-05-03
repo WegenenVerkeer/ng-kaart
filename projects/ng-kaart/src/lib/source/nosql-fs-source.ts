@@ -1,21 +1,40 @@
 import { array } from "fp-ts";
-import { concat, Function1, Refinement } from "fp-ts/lib/function";
+import { concat, Function1, not, Refinement } from "fp-ts/lib/function";
 import { fromNullable, none, Option } from "fp-ts/lib/Option";
 import { setoidNumber } from "fp-ts/lib/Setoid";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { bufferCount, catchError, filter, map, mapTo, mergeMap, reduce, scan, share, switchMap, takeLast, tap } from "rxjs/operators";
+import {
+  bufferCount,
+  catchError,
+  distinctUntilChanged,
+  filter,
+  map,
+  mapTo,
+  mergeMap,
+  reduce,
+  scan,
+  share,
+  shareReplay,
+  startWith,
+  switchMap,
+  takeLast,
+  takeWhile,
+  tap
+} from "rxjs/operators";
 
 import { FilterCql } from "../filter/filter-cql";
 import { Filter as fltr } from "../filter/filter-model";
+import { FilterTotaal, isTotaalTerminaal, teVeelData, totaalOpgehaald, totaalOpTeHalen } from "../filter/filter-totaal";
 import * as le from "../kaart/kaart-load-events";
 import { kaartLogger } from "../kaart/log";
-import { Pipeable } from "../util";
 import { Feature, toOlFeature } from "../util/feature";
 import { fetchObs$, fetchWithTimeoutObs$ } from "../util/fetch-with-timeout";
 import { ReduceFunction } from "../util/function";
 import { CollectionSummary, FeatureCollection, GeoJsonLike } from "../util/geojson-types";
 import * as geojsonStore from "../util/indexeddb-geojson-store";
+import { Pipeable } from "../util/operators";
+import { forEach } from "../util/option";
 
 /**
  * Stappen:
@@ -39,12 +58,12 @@ const cacheCredentials: () => RequestInit = () => ({
   credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
 });
 
-const get: () => RequestInit = () => ({
+const getWithCommonHeaders: () => RequestInit = () => ({
   ...cacheCredentials(),
   method: "GET"
 });
 
-const post: (string) => RequestInit = body => ({
+const postWithCommonHeaders: (_: string) => RequestInit = body => ({
   ...cacheCredentials(),
   method: "POST",
   body: body
@@ -182,6 +201,10 @@ export class NosqlFsSource extends ol.source.Vector {
   private busyCount = 0;
   private outstandingRequests: ol.Extent[] = [];
   private userFilter: Option<string> = none; // Een arbitraire filter bovenop de basisfilter
+  private userFilterActive = false;
+
+  private filterSubj: rx.Subject<string> = new rx.Subject();
+  private readonly filterTotal$: rx.Observable<FilterTotaal>;
 
   constructor(
     private readonly database: string,
@@ -256,12 +279,39 @@ export class NosqlFsSource extends ol.source.Vector {
       },
       strategy: ol.loadingstrategy.bbox
     });
+
+    const filterTotal$ = () =>
+      fetchObs$(this.composeFeatureCollectionTotalUrl(1), getWithCommonHeaders()).pipe(
+        split(featureDelimiter),
+        mapToFeatureCollection,
+        map(featureCollection => featureCollection.total)
+      );
+
+    // initialiseer ophalen van totalen
+    this.filterTotal$ = this.fetchCollectionSummary$().pipe(
+      switchMap(summary =>
+        summary.count > 100000
+          ? rx.of(teVeelData())
+          : this.filterSubj.pipe(
+              tap(() => console.log("****Nieuwe filter")),
+              distinctUntilChanged(),
+              tap(() => console.log("****Distinct filter")),
+              switchMap(() =>
+                filterTotal$().pipe(
+                  map(totaalOpgehaald),
+                  startWith(totaalOpTeHalen())
+                )
+              )
+            )
+      ),
+      shareReplay(1) // Wie later leest moet de meest recente waarden krijgen. Dit is een cache.
+    );
   }
 
-  private viewAndFilterParams() {
+  private viewAndFilterParams(respectUserFilterActivity = true) {
     return {
       ...this.view.fold({}, v => ({ "with-view": encodeURIComponent(v) })),
-      ...this.composedFilter().fold({}, f => ({ query: encodeURIComponent(f) }))
+      ...this.composedFilter(respectUserFilterActivity).fold({}, f => ({ query: encodeURIComponent(f) }))
     };
   }
 
@@ -278,10 +328,10 @@ export class NosqlFsSource extends ol.source.Vector {
       .join("&")}`;
   }
 
-  private composeFeatureCollectionUrl(limit: number) {
+  private composeFeatureCollectionTotalUrl(limit: number) {
     const params = {
       limit: limit,
-      ...this.viewAndFilterParams()
+      ...this.viewAndFilterParams(false)
     };
 
     return `${this.url}/api/databases/${this.database}/${this.collection}/featurecollection?${Object.keys(params)
@@ -291,11 +341,16 @@ export class NosqlFsSource extends ol.source.Vector {
       .join("&")}`;
   }
 
-  private composedFilter(): Option<string> {
+  private composedFilter(respectUserFilterActivity: boolean): Option<string> {
+    const userFilter = this.applicableUserFilter(respectUserFilterActivity);
     return this.baseFilter.foldL(
-      () => this.userFilter,
-      basisFilter => this.userFilter.map(extraFilter => `(${basisFilter}) AND (${extraFilter})`)
+      () => userFilter, //
+      basisFilter => userFilter.map(extraFilter => `(${basisFilter}) AND (${extraFilter})`)
     );
+  }
+
+  private applicableUserFilter(respectUserFilterActivity: boolean): Option<string> {
+    return this.userFilter.filter(() => !respectUserFilterActivity || this.userFilterActive);
   }
 
   private composeCollectionSummaryUrl() {
@@ -308,13 +363,13 @@ export class NosqlFsSource extends ol.source.Vector {
 
   fetchFeatures$(extent: number[], gebruikCache: boolean): rx.Observable<GeoJsonLike> {
     if (gebruikCache) {
-      return fetchWithTimeoutObs$(this.composeQueryUrl(extent), get(), FETCH_TIMEOUT).pipe(
+      return fetchWithTimeoutObs$(this.composeQueryUrl(extent), getWithCommonHeaders(), FETCH_TIMEOUT).pipe(
         split(featureDelimiter),
         filter(lijn => lijn.trim().length > 0),
         mapToGeoJson
       );
     } else {
-      return fetchObs$(this.composeQueryUrl(extent), get()).pipe(
+      return fetchObs$(this.composeQueryUrl(extent), getWithCommonHeaders()).pipe(
         split(featureDelimiter),
         filter(lijn => lijn.trim().length > 0),
         mapToGeoJson
@@ -323,23 +378,19 @@ export class NosqlFsSource extends ol.source.Vector {
   }
 
   fetchFeaturesByWkt$(wkt: string): rx.Observable<GeoJsonLike> {
-    return fetchObs$(this.composeQueryUrl(), post(wkt)).pipe(
+    return fetchObs$(this.composeQueryUrl(), postWithCommonHeaders(wkt)).pipe(
       split(featureDelimiter),
       filter(lijn => lijn.trim().length > 0),
       mapToGeoJson
     );
   }
 
-  fetchTotal$(): rx.Observable<number> {
-    return fetchObs$(this.composeFeatureCollectionUrl(1), get()).pipe(
-      split(featureDelimiter),
-      mapToFeatureCollection,
-      map(featureCollection => featureCollection.total)
-    );
+  fetchTotal$(): rx.Observable<FilterTotaal> {
+    return this.filterTotal$.pipe(takeWhile(not(isTotaalTerminaal), true));
   }
 
-  fetchCollectionSummary$(): rx.Observable<CollectionSummary> {
-    return fetchObs$(this.composeCollectionSummaryUrl(), get()).pipe(
+  private fetchCollectionSummary$(): rx.Observable<CollectionSummary> {
+    return fetchObs$(this.composeCollectionSummaryUrl(), getWithCommonHeaders()).pipe(
       split(featureDelimiter),
       mapToCollectionSummary
     );
@@ -349,8 +400,13 @@ export class NosqlFsSource extends ol.source.Vector {
     this.offline = offline;
   }
 
-  setUserFilter(cqlFilter: fltr.Filter) {
-    this.userFilter = FilterCql.cql(cqlFilter);
+  setUserFilter(cqlFilter: fltr.Filter, filterActive: boolean) {
+    const mayebCql = FilterCql.cql(cqlFilter);
+    this.userFilter = mayebCql;
+    this.userFilterActive = filterActive;
+    this.clear();
+    this.refresh();
+    forEach(mayebCql, cql => this.filterSubj.next(cql));
   }
 
   dispatchLoadEvent(evt: le.DataLoadEvent) {

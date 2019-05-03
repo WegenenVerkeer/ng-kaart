@@ -185,8 +185,6 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     this.bindToLifeCycle(this.geldigFilterCmd$.pipe(sample(pasToeGeklikt$))).subscribe(command => {
       this.dispatch(prt.StopVectorFilterBewerkingCmd());
       this.dispatch(command);
-      this.dispatch(prt.ActiveerFilter(command.titel, true, kaartLogOnlyWrapper));
-      this.dispatch(prt.HaalFilterTotaalOp(command.titel, kaartLogOnlyWrapper));
     });
   }
 

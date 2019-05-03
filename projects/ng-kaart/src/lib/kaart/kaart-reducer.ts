@@ -14,6 +14,7 @@ import { bufferCount, debounceTime, distinctUntilChanged, map, switchMap, thrott
 
 import { FilterAanpassend, GeenFilterAanpassingBezig } from "../filter/filter-aanpassing-state";
 import { Filter as fltr } from "../filter/filter-model";
+import { FilterTotaal, totaalOpTeHalen } from "../filter/filter-totaal";
 import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
 import * as arrays from "../util/arrays";
 import { refreshTiles } from "../util/cachetiles";
@@ -393,10 +394,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               const toegevoegdeLaag: ke.ToegevoegdeLaag = ke.asToegevoegdeNosqlVectorLaag(toegevoegdeVectorLaagCommon).fold(
                 toegevoegdeVectorLaagCommon, //
                 tgnslg => {
+                  const [filter, actief] = cmnd.filterinstellingen.fold<[fltr.Filter, boolean]>([fltr.pure(), false], fi => [
+                    fi.spec,
+                    fi.actief
+                  ]);
                   // NosqlFsSource is mutable
-                  (tgnslg.layer.getSource() as NosqlFsSource).setUserFilter(
-                    cmnd.filterinstellingen.chain(fi => (fi.actief ? some(fi.spec) : none)).getOrElse(fltr.pure())
-                  );
+                  (tgnslg.layer.getSource() as NosqlFsSource).setUserFilter(filter, actief);
                   return tgnslg;
                 }
               );
@@ -406,6 +409,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               forEach(ke.asToegevoegdeVectorLaag(toegevoegdeLaag), pasVectorLaagStijlToe);
               zetLayerIndex(layer, groepPositie, groep);
               forEach(ke.asToegevoegdeNosqlVectorLaag(toegevoegdeLaag).filter(tnl => tnl.filterinstellingen.actief), zendFilterwijziging);
+              forEach(
+                ke.asToegevoegdeNosqlVectorLaag(toegevoegdeLaag).filter(tnl => fltr.isDefined(tnl.filterinstellingen.spec)),
+                berekenFilterTotalen
+              );
 
               model.map.addLayer(layer);
               const updatedModel = {
@@ -737,7 +744,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return laag.magGetoondWorden === magGetoondWorden ? laag : { ...laag, magGetoondWorden: magGetoondWorden };
     };
 
-    const pasLaagFilterAan: (spec: fltr.Filter, actief: boolean, totaal: ke.FilterTotaal) => Endomorphism<ke.ToegevoegdeVectorLaag> = (
+    const pasLaagFilterAan: (spec: fltr.Filter, actief: boolean, totaal: FilterTotaal) => Endomorphism<ke.ToegevoegdeVectorLaag> = (
       spec,
       actief,
       totaal
@@ -1331,10 +1338,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
-    function activeerFilterOpSource(noSqlFsSource: NosqlFsSource, filter: fltr.Filter): void {
-      noSqlFsSource.setUserFilter(filter);
-      noSqlFsSource.clear();
-      noSqlFsSource.refresh();
+    function activeerFilterOpSource(noSqlFsSource: NosqlFsSource, filter: fltr.Filter, actief: boolean): void {
+      noSqlFsSource.setUserFilter(filter, actief);
     }
 
     function zetFilter(cmnd: prt.ZetFilter<Msg>): ModelWithResult<Msg> {
@@ -1343,11 +1348,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         chain(valideerToegevoegdeVectorLaagBestaat(cmnd.titel), laag =>
           valideerNoSqlFsSourceBestaat(cmnd.titel).map(noSqlFsSource => [laag, noSqlFsSource])
         ).map(([laag, noSqlFsSource]: [ke.ToegevoegdeVectorLaag, NosqlFsSource]) => {
-          activeerFilterOpSource(noSqlFsSource, cmnd.filter);
-          const updatedLaag = pasLaagFilterAan(cmnd.filter, laag.filterinstellingen.actief, laag.filterinstellingen.totaal)(laag);
+          activeerFilterOpSource(noSqlFsSource, cmnd.filter, true);
+          const updatedLaag = pasLaagFilterAan(cmnd.filter, true, laag.filterinstellingen.totaal)(laag);
           const updatedModel = pasLaagInModelAan(model)(updatedLaag);
           zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
           zendFilterwijziging(updatedLaag);
+          berekenFilterTotalen(updatedLaag);
           return ModelAndEmptyResult(updatedModel);
         })
       );
@@ -1359,8 +1365,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         chain(valideerToegevoegdeVectorLaagBestaat(cmnd.titel), laag =>
           valideerNoSqlFsSourceBestaat(cmnd.titel).map(noSqlFsSource => [laag, noSqlFsSource])
         ).map(([laag, noSqlFsSource]: [ke.ToegevoegdeVectorLaag, NosqlFsSource]) => {
-          const filter: (actief: boolean) => fltr.Filter = actief => (actief ? laag.filterinstellingen.spec : fltr.pure());
-          activeerFilterOpSource(noSqlFsSource, filter(cmnd.actief));
+          activeerFilterOpSource(noSqlFsSource, laag.filterinstellingen.spec, cmnd.actief);
           const updatedLaag = pasLaagFilterAan(laag.filterinstellingen.spec, cmnd.actief, laag.filterinstellingen.totaal)(laag);
           const updatedModel = pasLaagInModelAan(model)(updatedLaag);
           zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
@@ -1369,26 +1374,23 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
+    function berekenFilterTotalen(laag: ke.ToegevoegdeVectorLaag): void {
+      forEach(ke.asNosqlSource(laag.layer.getSource()), nosqlFsSource =>
+        nosqlFsSource.fetchTotal$().subscribe(totaal => {
+          const updatedLaag = pasLaagFilterAan(laag.filterinstellingen.spec, laag.filterinstellingen.actief, totaal)(laag);
+          const updatedModel = pasLaagInModelAan(model)(updatedLaag);
+          zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
+        })
+      );
+    }
+
     function haalFilterTotaalOp(cmnd: prt.HaalFilterTotaalOp<Msg>): ModelWithResult<Msg> {
       return toModelWithValueResult(
         cmnd.wrapper,
-        chain(valideerToegevoegdeVectorLaagBestaat(cmnd.titel), laag =>
-          valideerNoSqlFsSourceBestaat(cmnd.titel).map(noSqlFsSource => [laag, noSqlFsSource])
-        ).map(([laag, noSqlFsSource]: [ke.ToegevoegdeVectorLaag, NosqlFsSource]) => {
-          noSqlFsSource
-            .fetchCollectionSummary$()
-            .pipe(
-              switchMap(summary =>
-                summary.count > 100000 ? rx.of(ke.teVeelData()) : noSqlFsSource.fetchTotal$().pipe(map(num => ke.totaalOpgehaald(num)))
-              )
-            )
-            .subscribe(totaal => {
-              const updatedLaag = pasLaagFilterAan(laag.filterinstellingen.spec, laag.filterinstellingen.actief, totaal)(laag);
-              const updatedModel = pasLaagInModelAan(model)(updatedLaag);
-              zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
-            });
+        valideerToegevoegdeVectorLaagBestaat(cmnd.titel).map(laag => {
+          berekenFilterTotalen(laag);
 
-          const updatedLaag = pasLaagFilterAan(laag.filterinstellingen.spec, laag.filterinstellingen.actief, ke.totaalOpTeHalen())(laag);
+          const updatedLaag = pasLaagFilterAan(laag.filterinstellingen.spec, laag.filterinstellingen.actief, totaalOpTeHalen())(laag);
           const updatedModel = pasLaagInModelAan(model)(updatedLaag);
           zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
           zendFilterwijziging(updatedLaag);
