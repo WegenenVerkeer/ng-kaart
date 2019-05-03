@@ -5,6 +5,7 @@ import { Iso, Lens, Optional } from "monocle-ts";
 import * as ol from "openlayers";
 
 import { Filter as fltr } from "../filter/filter-model";
+import { FilterTotaal, totaalOpTeHalen } from "../filter/filter-totaal";
 import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
 import { mapToOptionalByKey } from "../util/lenses";
 
@@ -146,31 +147,6 @@ export interface Laagfilterinstellingen {
   readonly totaal: FilterTotaal;
 }
 
-export interface TeVeelData {
-  readonly type: "TeVeelData";
-  readonly collection_totaal: number;
-}
-
-export interface TotaalOpTeHalen {
-  readonly type: "TotaalOpTeHalen";
-}
-
-export interface TotaalOpgehaald {
-  readonly type: "TotaalOpgehaald";
-  readonly collection_totaal: number;
-  readonly totaal: number;
-}
-
-export type FilterTotaal = TotaalOpTeHalen | TotaalOpgehaald | TeVeelData;
-
-export const teVeelData: (number) => FilterTotaal = collection_totaal => ({ type: "TeVeelData", collection_totaal: collection_totaal });
-export const totaalOpTeHalen: () => FilterTotaal = () => ({ type: "TotaalOpTeHalen" });
-export const totaalOpgehaald: (number) => (number) => FilterTotaal = collection_totaal => totaal => ({
-  type: "TotaalOpgehaald",
-  collection_totaal: collection_totaal,
-  totaal: totaal
-});
-
 /**
  * Dit is een wrapper rond Laag die naast de laag zelf ook het gebruik van de laag bij houdt.
  */
@@ -217,8 +193,6 @@ export const asToegevoegdeNosqlVectorLaag: (laag: ToegevoegdeLaag) => Option<Toe
 export const asNosqlSource: (source: ol.source.Vector) => Option<NosqlFsSource> = fromPredicate(isNoSqlFsSource) as (
   _: ol.source.Vector
 ) => Option<NosqlFsSource>;
-export const isTotaalOpgehaald: Refinement<FilterTotaal, TotaalOpgehaald> = (filterTotaal): filterTotaal is TotaalOpgehaald =>
-  filterTotaal.type === "TotaalOpgehaald";
 
 ///////////////
 // Constructors

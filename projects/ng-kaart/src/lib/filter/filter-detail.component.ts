@@ -1,6 +1,6 @@
 import { Component, Input, NgZone } from "@angular/core";
 import * as array from "fp-ts/lib/Array";
-import { Function2, Refinement } from "fp-ts/lib/function";
+import { Function2 } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { filter, map, sample, shareReplay, startWith, tap } from "rxjs/operators";
@@ -13,6 +13,7 @@ import { KaartComponent } from "../kaart/kaart.component";
 import { collectOption } from "../util/operators";
 
 import { Filter as fltr } from "./filter-model";
+import { isTotaalOpgehaald } from "./filter-totaal";
 
 @Component({
   selector: "awv-filter-detail",
@@ -55,7 +56,7 @@ export class FilterDetailComponent extends KaartChildComponentBase {
     this.filterTotaalOpgehaald$ = filterTotaalChanges$.pipe(map(filterTotaal => filterTotaal.type === "TotaalOpgehaald"));
     this.filterTotalen$ = filterTotaalChanges$.pipe(
       filter(isTotaalOpgehaald),
-      map(totaal => `${totaal.totaal}/${totaal.collection_totaal}`)
+      map(totaal => `${totaal.totaal}/${totaal.collectionTotaal}`)
     );
 
     this.filterActief$ = laag$.pipe(
@@ -86,6 +87,3 @@ export class FilterDetailComponent extends KaartChildComponentBase {
     this.dispatch(cmd.BewerkVectorFilterCmd(this.laag as ke.ToegevoegdeVectorLaag));
   }
 }
-
-const isTotaalOpgehaald: Refinement<ke.FilterTotaal, ke.TotaalOpgehaald> = (filterTotaal): filterTotaal is ke.TotaalOpgehaald =>
-  filterTotaal.type === "TotaalOpgehaald";

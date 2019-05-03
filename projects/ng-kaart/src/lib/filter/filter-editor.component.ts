@@ -170,16 +170,16 @@ export class FilterEditorComponent extends KaartChildComponentBase {
                   tap(() => this.waardeControl.enable()),
                   switchMap(operator =>
                     gekozenWaarde$.pipe(
-                      map(waarde => {
-                        return prt.ZetFilter(
+                      map(waarde =>
+                        prt.ZetFilter(
                           laag.titel,
                           fltr.ExpressionFilter(
                             maybeNaam,
                             operator.build(fltr.Property(veldInfo.type, veldInfo.naam, veldInfo.label), fltr.Literal("string", waarde))
                           ),
                           kaartLogOnlyWrapper
-                        );
-                      })
+                        )
+                      )
                     )
                   )
                 )
@@ -194,8 +194,6 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     this.bindToLifeCycle(this.geldigFilterCmd$.pipe(sample(pasToeGeklikt$))).subscribe(command => {
       this.dispatch(prt.StopVectorFilterBewerkingCmd());
       this.dispatch(command);
-      this.dispatch(prt.ActiveerFilter(command.titel, true, kaartLogOnlyWrapper));
-      this.dispatch(prt.HaalFilterTotaalOp(command.titel, kaartLogOnlyWrapper));
     });
   }
 

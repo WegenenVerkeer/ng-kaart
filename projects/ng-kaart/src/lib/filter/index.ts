@@ -65,6 +65,7 @@ export * from "./filter-editor.component";
 export * from "./filter-expression.component";
 export * from "./filter-model";
 export * from "./filter-persistence";
+export * from "./filter-totaal";
 export * from "./filter-editor.component";
 export * from "./filter-term.component";
 export * from "./querybuilder/filter-conjunction.component";
