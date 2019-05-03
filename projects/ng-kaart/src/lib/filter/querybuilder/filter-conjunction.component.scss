@@ -21,13 +21,19 @@
       font-size: 12px;
       font-weight: bold;
       font-style: normal;
-    }
 
-    &.klikbaar {
-      cursor: pointer;
-      color: rgba(0, 0, 0, 0.54);
-      border-style: dashed;
+      &.klikbaar {
+        cursor: pointer;
+        color: rgba(0, 0, 0, 0.54);
+        border-style: dashed;
+      }
     }
+  }
+
+  .no-border {
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
   }
 
 }

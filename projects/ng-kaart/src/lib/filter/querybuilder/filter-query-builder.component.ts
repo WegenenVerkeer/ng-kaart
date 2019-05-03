@@ -15,8 +15,11 @@ export class FilterQueryBuilderComponent {
   conj1 = fltr.Conjunction(this.comp1, this.comp2);
   conj2 = fltr.Conjunction(this.conj1, this.comp3);
 
+  disj1 = fltr.Disjunction(this.conj1, this.conj2);
+  disj2 = fltr.Disjunction(this.disj1, this.disj1);
+
   @Input()
-  expression: fltr.Expression = this.conj2;
+  expression: fltr.Expression = this.disj2;
 
   property(): string {
     return (<fltr.Comparison>this.expression).property.ref;

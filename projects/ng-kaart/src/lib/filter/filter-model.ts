@@ -41,6 +41,12 @@ export namespace Filter {
     right: right
   });
 
+  export const Disjunction: Function2<Expression, Expression, Disjunction> = (left, right) => ({
+    kind: "Or",
+    left: left,
+    right: right
+  });
+
   export type LogicalConnective = Conjunction | Disjunction;
 
   export type Comparison = Equality | Inequality;

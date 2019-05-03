@@ -1,0 +1,45 @@
+
+<div *ngIf="expression.kind == 'Or'" class="horizontaal">
+
+  <div class="verticaal">
+
+    <awv-filter-disjunction [expression]="expression.left"></awv-filter-disjunction>
+
+    <awv-filter-disjunction [expression]="expression.right"></awv-filter-disjunction>
+
+  </div>
+
+</div>
+
+<div class="horizontaal">
+
+    <div *ngIf="expression.kind == 'Equality' || expression.kind == 'Inequality'" class="horizontaal lijn">
+      <div class="logical-connective">
+        <div class="no-border">
+
+        </div>
+      </div>
+      <awv-filter-chip [expression]="expression"></awv-filter-chip>
+      <div class="logical-connective">
+        <div class="with-border klikbaar">
+          EN
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="expression.kind == 'And'" class="horizontaal lijn">
+      <div class="logical-connective">
+        <div class="no-border">
+
+        </div>
+      </div>
+      <awv-filter-conjunction [expression]="expression"></awv-filter-conjunction>
+      <div class="logical-connective">
+        <div class="with-border klikbaar">
+          EN
+        </div>
+      </div>
+    </div>
+
+
+</div>
