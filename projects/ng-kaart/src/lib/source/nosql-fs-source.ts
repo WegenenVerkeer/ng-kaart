@@ -293,9 +293,7 @@ export class NosqlFsSource extends ol.source.Vector {
         summary.count > 100000
           ? rx.of(teVeelData(summary.count))
           : this.filterSubj.pipe(
-              tap(() => console.log("****Nieuwe filter")),
               distinctUntilChanged(),
-              tap(() => console.log("****Distinct filter")),
               switchMap(() =>
                 filterTotal$().pipe(
                   map(totaalOpgehaald(summary.count)),
