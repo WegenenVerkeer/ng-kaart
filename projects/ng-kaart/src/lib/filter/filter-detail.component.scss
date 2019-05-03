@@ -14,11 +14,15 @@
 
   .laag-naam {
     margin-left: 4px;
-    font-size: 16px;
+    font-size: 14px;
     flex-grow: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .filter-totalen {
+    font-size: 14px;
   }
 
   .filter-header {

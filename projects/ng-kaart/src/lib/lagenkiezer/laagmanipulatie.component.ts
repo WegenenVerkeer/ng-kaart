@@ -2,12 +2,13 @@ import { ChangeDetectionStrategy, Component, Input, NgZone, OnInit, ViewChild, V
 import { MatIconRegistry, MatMenuTrigger } from "@angular/material";
 import { DomSanitizer } from "@angular/platform-browser";
 import * as array from "fp-ts/lib/Array";
-import { Function2, Refinement } from "fp-ts/lib/function";
+import { Function2 } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, sample, shareReplay, startWith, tap } from "rxjs/operators";
 
 import { Filter as fltr } from "../filter/filter-model";
+import { isTotaalOpgehaald } from "../filter/filter-totaal";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import * as ke from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
@@ -139,7 +140,7 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
     this.filterTotaalOpTeHalen$ = filterTotaalChanges$.pipe(map(filterTotaal => filterTotaal.type === "TotaalOpTeHalen"));
     this.filterTotaalOpgehaald$ = filterTotaalChanges$.pipe(map(filterTotaal => filterTotaal.type === "TotaalOpgehaald"));
     this.filterTotaal$ = filterTotaalChanges$.pipe(
-      filter(ke.isTotaalOpgehaald),
+      filter(isTotaalOpgehaald),
       map(totaal => totaal.totaal)
     );
 

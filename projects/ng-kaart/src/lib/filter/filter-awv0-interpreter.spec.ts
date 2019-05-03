@@ -18,7 +18,7 @@ const fixName: Function1<RawExpressionFilter, fltr.Filter> = rawFilter => ({
 });
 
 describe("De filterinterpreter", () => {
-  const property: fltr.Property = fltr.Property("string", "prop");
+  const property: fltr.Property = fltr.Property("string", "prop", "Property");
   const literal: fltr.Literal = fltr.Literal("string", "value");
   describe("bij het interpreteren van geldige structuren", () => {
     it("moet een 'pure' filter kunnen verwerken", () => {

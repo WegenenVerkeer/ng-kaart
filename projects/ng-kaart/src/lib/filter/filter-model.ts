@@ -1,4 +1,4 @@
-import { constant, Function1, Function2, Lazy, not, Predicate } from "fp-ts/lib/function";
+import { constant, Function1, Function2, Function3, Lazy, not, Predicate } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 
 // Een namespace is nodig omdat verschillende types dezelfde naam hebben als die voor stijlen en er kan maar 1 naam
@@ -117,6 +117,7 @@ export namespace Filter {
     readonly kind: "Property";
     readonly type: TypeType;
     readonly ref: string;
+    readonly label: string;
   }
 
   export const PureFilter: PureFilter = { kind: "PureFilter" };
@@ -132,10 +133,11 @@ export namespace Filter {
 
   export const Inequality: Function2<Property, Literal, Inequality> = Comparison("Inequality");
 
-  export const Property: Function2<TypeType, string, Property> = (typetype, name) => ({
+  export const Property: Function3<TypeType, string, string, Property> = (typetype, name, label) => ({
     kind: "Property",
     type: typetype,
-    ref: name
+    ref: name,
+    label: label
   });
 
   export const Literal: Function2<TypeType, ValueType, Literal> = (typetype, value) => ({
