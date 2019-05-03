@@ -21,7 +21,7 @@ export class FilterExpressionComponent extends KaartChildComponentBase {
   }
 
   property(): string {
-    return (<fltr.Comparison>this.expression).property.ref;
+    return (<fltr.Comparison>this.expression).property.label;
   }
 
   value(): string {

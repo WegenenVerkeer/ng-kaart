@@ -175,7 +175,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
                           laag.titel,
                           fltr.ExpressionFilter(
                             maybeNaam,
-                            operator.build(fltr.Property(veldInfo.type, veldInfo.naam), fltr.Literal("string", waarde))
+                            operator.build(fltr.Property(veldInfo.type, veldInfo.naam, veldInfo.label), fltr.Literal("string", waarde))
                           ),
                           kaartLogOnlyWrapper
                         )
