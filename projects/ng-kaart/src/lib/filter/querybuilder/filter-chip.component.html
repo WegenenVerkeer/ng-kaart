@@ -2,8 +2,12 @@
 
   <div *ngIf="expression.kind == 'Equality' || expression.kind == 'Inequality'" class="term">
     <awv-filter-term [expression]="expression"></awv-filter-term>
-    <mat-icon class="checkmark">checkmark</mat-icon>
-    <!--      <mat-icon class="cross" *ngIf="isPureFilter">cross</mat-icon>-->
+    <mat-icon class="checkmark">done</mat-icon>
+  </div>
+
+  <div *ngIf="expression.kind == 'Incomplete'" class="term">
+    <awv-filter-term [expression]="expression"></awv-filter-term>
+    <mat-icon class="cross">error_outline</mat-icon>
   </div>
 
 </div>

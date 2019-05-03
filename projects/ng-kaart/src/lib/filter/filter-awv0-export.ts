@@ -23,7 +23,8 @@ export namespace FilterText {
     and: expr => `${expressionText(expr.left)} en ${expressionText(expr.right)}`,
     or: expr => `${expressionText(expr.left)} of ${expressionText(expr.right)}`,
     equality: expr => `${propertyText(expr.property)} = ${literalText(expr.value)}`,
-    inequality: expr => `${propertyText(expr.property)} <> ${literalText(expr.value)}`
+    inequality: expr => `${propertyText(expr.property)} <> ${literalText(expr.value)}`,
+    incomplete: expr => `${propertyText(expr.property)} <> ${literalText(expr.value)}`
   });
 
   export const filterText: Generator<fltr.Filter> = fltr.matchFilter({

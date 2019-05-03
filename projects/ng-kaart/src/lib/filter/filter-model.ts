@@ -16,7 +16,7 @@ export namespace Filter {
     readonly expression: Expression;
   }
 
-  export type Expression = Conjunction | Disjunction | Comparison;
+  export type Expression = Conjunction | Disjunction | Comparison | Incomplete;
 
   // Dit zou niet nodig zijn mochten we arbitraire combinaties van "And" en "Or" toelaten, maar dat mag niet in de UI.
   // Het is dan best dit hier ook niet toe te laten, want anders kan de UI niet met alle geldige filters overweg en moeten
@@ -49,7 +49,7 @@ export namespace Filter {
 
   export type LogicalConnective = Conjunction | Disjunction;
 
-  export type Comparison = Equality | Inequality;
+  export type Comparison = Equality | Inequality | Incomplete;
 
   export interface PropertyValueOperator {
     readonly property: Property;
@@ -66,6 +66,10 @@ export namespace Filter {
 
   export interface Inequality extends PropertyValueOperator {
     readonly kind: "Inequality";
+  }
+
+  export interface Incomplete extends PropertyValueOperator {
+    readonly kind: "Incomplete";
   }
 
   // TODO: laten we voorlopig overeen komen met alle veldtypes uit VeldInfo
@@ -120,6 +124,10 @@ export namespace Filter {
     readonly kind: "Inequality";
   }
 
+  export interface Incomplete extends PropertyValueOperator {
+    readonly kind: "Incomplete";
+  }
+
   export interface Literal {
     readonly kind: "Literal";
     readonly type: TypeType;
@@ -145,6 +153,8 @@ export namespace Filter {
   export const Equality: Function2<Property, Literal, Equality> = Comparison("Equality");
 
   export const Inequality: Function2<Property, Literal, Inequality> = Comparison("Inequality");
+
+  export const Incomplete: Function2<Property, Literal, Incomplete> = Comparison("Incomplete");
 
   export const Property: Function3<TypeType, string, string, Property> = (typetype, name, label) => ({
     kind: "Property",
@@ -179,6 +189,7 @@ export namespace Filter {
       or: Function1<Disjunction, A>;
       equality: Function1<Equality, A>;
       inequality: Function1<Inequality, A>;
+      incomplete: Function1<Incomplete, A>;
     }
   ) => (_: Expression) => A = switcher => expression => {
     switch (expression.kind) {
@@ -190,6 +201,8 @@ export namespace Filter {
         return switcher.equality(expression);
       case "Inequality":
         return switcher.inequality(expression);
+      case "Incomplete":
+        return switcher.incomplete(expression);
     }
   };
 

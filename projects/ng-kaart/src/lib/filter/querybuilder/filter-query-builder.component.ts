@@ -8,18 +8,20 @@ import { Filter as fltr } from "../../filter/filter-model";
   styleUrls: ["./filter-query-builder.component.scss"]
 })
 export class FilterQueryBuilderComponent {
-  comp1 = fltr.Equality(fltr.Property("string", "ident8", "Ident8"), fltr.Literal("string", "R0040001"));
-  comp2 = fltr.Equality(fltr.Property("string", "type", "Type"), fltr.Literal("string", "Aanliggend"));
-  comp3 = fltr.Inequality(fltr.Property("string", "type", "Type"), fltr.Literal("string", "Verhoogd"));
-  comp4 = fltr.Equality(fltr.Property("string", "ident8", "Ident8"), fltr.Literal("string", "R0010001"));
-  comp5 = fltr.Equality(fltr.Property("string", "ident8", "Ident8"), fltr.Literal("string", "R0010002"));
+  ident8IsR4 = fltr.Equality(fltr.Property("string", "ident8", "Ident8"), fltr.Literal("string", "R0040001"));
+  typeIsAanliggend = fltr.Equality(fltr.Property("string", "type", "Type"), fltr.Literal("string", "Aanliggend"));
+  typeIsNietVerhoogd = fltr.Inequality(fltr.Property("string", "type", "Type"), fltr.Literal("string", "Verhoogd"));
+  ident8IsR1 = fltr.Equality(fltr.Property("string", "ident8", "Ident8"), fltr.Literal("string", "R0010001"));
+  ident8IsR8 = fltr.Equality(fltr.Property("string", "ident8", "Ident8"), fltr.Literal("string", "R0080001"));
+  incomplete = fltr.Incomplete(fltr.Property("string", "?", "?"), fltr.Literal("string", "?"));
 
-  conj1 = fltr.Conjunction(this.comp1, this.comp2);
-  conj2 = fltr.Conjunction(this.conj1, this.comp3);
-  conj3 = fltr.Conjunction(this.conj2, this.comp4);
+  conj1 = fltr.Conjunction(this.ident8IsR4, this.typeIsAanliggend);
+  conj2 = fltr.Conjunction(this.conj1, this.typeIsNietVerhoogd);
+  conj3 = fltr.Conjunction(this.conj2, this.ident8IsR1);
+  conj4 = fltr.Conjunction(this.conj3, this.incomplete);
 
-  disj1 = fltr.Disjunction(this.conj1, this.conj3);
-  disj2 = fltr.Disjunction(this.disj1, this.comp5);
+  disj1 = fltr.Disjunction(this.conj4, this.conj3);
+  disj2 = fltr.Disjunction(this.disj1, this.ident8IsR8);
 
   @Input()
   expression: fltr.Expression = this.disj2;

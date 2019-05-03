@@ -1,8 +1,6 @@
 import { Component, Input, NgZone } from "@angular/core";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
-import * as ke from "../kaart/kaart-elementen";
-import * as cmd from "../kaart/kaart-protocol-commands";
 import { KaartComponent } from "../kaart/kaart.component";
 
 import { Filter as fltr } from "./filter-model";
