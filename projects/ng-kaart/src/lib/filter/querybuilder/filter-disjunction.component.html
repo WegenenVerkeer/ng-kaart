@@ -1,15 +1,15 @@
 <div class="verticaal">
 
-    <div *ngIf="expression.kind == 'Equality' || expression.kind == 'Inequality'" class="horizontaal lijn">
+    <div *ngIf="expression.kind == 'Equality' || expression.kind == 'Inequality' || expression.kind == 'Incomplete'" class="horizontaal lijn">
       <awv-filter-logical-connective operator="OF"></awv-filter-logical-connective>
       <awv-filter-chip [expression]="expression"></awv-filter-chip>
-      <awv-filter-logical-connective operator="EN" clickable="true"></awv-filter-logical-connective>
+      <awv-filter-logical-connective operator="EN" clickable="true" [expression]="expression" ></awv-filter-logical-connective>
     </div>
 
     <div *ngIf="expression.kind == 'And'" class="horizontaal lijn">
       <awv-filter-logical-connective operator="OF"></awv-filter-logical-connective>
       <awv-filter-conjunction [expression]="expression"></awv-filter-conjunction>
-      <awv-filter-logical-connective operator="EN" clickable="true"></awv-filter-logical-connective>
+      <awv-filter-logical-connective operator="EN" clickable="true" [expression]="expression" ></awv-filter-logical-connective>
     </div>
 
   <div *ngIf="expression.kind == 'Or'" class="horizontaal">
