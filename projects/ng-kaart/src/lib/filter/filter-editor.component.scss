@@ -46,14 +46,17 @@
   flex-direction: column;
 
   .filter-naam {
-    padding: 4px 4px 4px 8px;
+    padding: 0.5em;
     min-width: 512px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgb(204, 204, 204);
+    border-bottom-style: dotted;
   }
 
   .filter-definitie {
     display: flex;
     flex-direction: row;
-    border-bottom-style: solid;
+    border-bottom-style: dotted;
     border-bottom-width: 1px;
     border-bottom-color: rgb(204, 204, 204);
 
