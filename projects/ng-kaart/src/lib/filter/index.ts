@@ -18,6 +18,7 @@ import { FilterTermComponent } from "./filter-term.component";
 import { FilterChipComponent } from "./querybuilder/filter-chip.component";
 import { FilterConjunctionComponent } from "./querybuilder/filter-conjunction.component";
 import { FilterDisjunctionComponent } from "./querybuilder/filter-disjunction.component";
+import { FilterLogicalConnectiveComponent } from "./querybuilder/filter-logical-connective.component";
 import { FilterQueryBuilderComponent } from "./querybuilder/filter-query-builder.component";
 
 const components: any[] = [
@@ -28,7 +29,8 @@ const components: any[] = [
   FilterQueryBuilderComponent,
   FilterChipComponent,
   FilterConjunctionComponent,
-  FilterDisjunctionComponent
+  FilterDisjunctionComponent,
+  FilterLogicalConnectiveComponent
 ];
 
 @NgModule({
@@ -68,4 +70,5 @@ export * from "./filter-term.component";
 export * from "./querybuilder/filter-conjunction.component";
 export * from "./querybuilder/filter-chip.component";
 export * from "./querybuilder/filter-disjunction.component";
+export * from "./querybuilder/filter-logical-connective.component";
 export * from "./querybuilder/filter-query-builder.component";

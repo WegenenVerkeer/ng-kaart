@@ -5,13 +5,7 @@
   <div *ngIf="expression.kind == 'And'" class="conjunction">
 
     <awv-filter-conjunction [expression]="expression.left"></awv-filter-conjunction>
-
-    <div class="logical-connective">
-      <div class="with-border">
-        EN
-      </div>
-    </div>
-
+    <awv-filter-logical-connective operator="EN"></awv-filter-logical-connective>
     <awv-filter-chip [expression]="expression.right"></awv-filter-chip>
 
   </div>
