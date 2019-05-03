@@ -13,6 +13,7 @@ import { KaartComponent } from "../kaart/kaart.component";
 import { collectOption } from "../util/operators";
 
 import { Filter as fltr } from "./filter-model";
+import { isTotaalOpgehaald } from "./filter-totaal";
 
 @Component({
   selector: "awv-filter-detail",
@@ -23,11 +24,15 @@ export class FilterDetailComponent extends KaartChildComponentBase {
   @Input()
   laag: ke.ToegevoegdeVectorLaag;
 
+  readonly filterActief$: rx.Observable<boolean>;
+  readonly filterTotalen$: rx.Observable<string>;
+  readonly filterTotaalOnbekend$: rx.Observable<boolean>;
+  readonly filterTotaalOpgehaald$: rx.Observable<boolean>;
+  readonly filterTotaalOpTeHalen$: rx.Observable<boolean>;
+
   get filter(): fltr.ExpressionFilter {
     return <fltr.ExpressionFilter>this.laag.filterinstellingen.spec;
   }
-
-  readonly filterActief$: rx.Observable<boolean>;
 
   constructor(kaart: KaartComponent, zone: NgZone) {
     super(kaart, zone);
@@ -38,6 +43,20 @@ export class FilterDetailComponent extends KaartChildComponentBase {
     const laag$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Hoog")!.pipe(
       collectOption(lgn => findLaagOpTitel(this.laag.titel, lgn)),
       shareReplay(1)
+    );
+
+    const filterTotaalChanges$ = laag$.pipe(
+      filter(laag => this.laag.titel === laag.titel),
+      map(laag => laag.filterinstellingen.totaal),
+      shareReplay(1)
+    );
+
+    this.filterTotaalOnbekend$ = filterTotaalChanges$.pipe(map(filterTotaal => filterTotaal.type === "TeVeelData"));
+    this.filterTotaalOpTeHalen$ = filterTotaalChanges$.pipe(map(filterTotaal => filterTotaal.type === "TotaalOpTeHalen"));
+    this.filterTotaalOpgehaald$ = filterTotaalChanges$.pipe(map(filterTotaal => filterTotaal.type === "TotaalOpgehaald"));
+    this.filterTotalen$ = filterTotaalChanges$.pipe(
+      filter(isTotaalOpgehaald),
+      map(totaal => `${totaal.totaal}/${totaal.collectionTotaal}`)
     );
 
     this.filterActief$ = laag$.pipe(

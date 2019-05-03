@@ -203,7 +203,7 @@ export class NosqlFsSource extends ol.source.Vector {
   private userFilter: Option<string> = none; // Een arbitraire filter bovenop de basisfilter
   private userFilterActive = false;
 
-  private filterSubj: rx.Subject<string> = new rx.Subject();
+  private filterSubj: rx.Subject<string> = new rx.BehaviorSubject("1 = 1");
   private readonly filterTotal$: rx.Observable<FilterTotaal>;
 
   constructor(
@@ -291,14 +291,14 @@ export class NosqlFsSource extends ol.source.Vector {
     this.filterTotal$ = this.fetchCollectionSummary$().pipe(
       switchMap(summary =>
         summary.count > 100000
-          ? rx.of(teVeelData())
+          ? rx.of(teVeelData(summary.count))
           : this.filterSubj.pipe(
               tap(() => console.log("****Nieuwe filter")),
               distinctUntilChanged(),
               tap(() => console.log("****Distinct filter")),
               switchMap(() =>
                 filterTotal$().pipe(
-                  map(totaalOpgehaald),
+                  map(totaalOpgehaald(summary.count)),
                   startWith(totaalOpTeHalen())
                 )
               )

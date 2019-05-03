@@ -15,8 +15,6 @@ import { Filter as fltr } from "./filter-model";
 export class FilterExpressionComponent extends KaartChildComponentBase {
   @Input()
   expression: fltr.Expression;
-  @Input()
-  laag: ke.ToegevoegdeVectorLaag;
 
   constructor(kaart: KaartComponent, zone: NgZone) {
     super(kaart, zone);
@@ -36,9 +34,5 @@ export class FilterExpressionComponent extends KaartChildComponentBase {
 
   right(): fltr.Expression {
     return (<fltr.LogicalConnective>this.expression).right;
-  }
-
-  pasFilterAan() {
-    this.dispatch(cmd.BewerkVectorFilterCmd(this.laag as ke.ToegevoegdeVectorLaag));
   }
 }

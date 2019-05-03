@@ -6,6 +6,16 @@
     </div>
 
     <div class="filter-content">
+      <div class="filter-naam">
+          <mat-form-field class="filter-naam">
+              <input
+                type="text"
+                placeholder="Omschrijving filter"
+                matInput
+                [formControl]="naamControl"
+              />
+          </mat-form-field>
+      </div>
       <div class="filter-definitie">
         <mat-form-field class="filter-velden-combo">
           <input
