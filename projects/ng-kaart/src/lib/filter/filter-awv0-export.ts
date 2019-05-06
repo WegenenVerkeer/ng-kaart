@@ -33,5 +33,12 @@ export namespace FilterText {
 }
 
 export namespace FilterAwv0Json {
-  export const encode: Function1<fltr.Filter, string> = filter => JSON.stringify({ version: "awv-v0", definition: filter });
+  const fixName: Function1<fltr.Filter, any> = filter => {
+    return fltr.matchFilter<any>({
+      pure: () => filter,
+      expression: expr => ({ ...filter, name: expr.name.toUndefined() })
+    })(filter);
+  };
+
+  export const encode: Function1<fltr.Filter, string> = filter => JSON.stringify({ version: "awv-v0", definition: fixName(filter) });
 }
