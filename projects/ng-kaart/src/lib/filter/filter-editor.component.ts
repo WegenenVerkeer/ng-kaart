@@ -3,15 +3,14 @@ import { FormControl, ValidationErrors, Validators } from "@angular/forms";
 import * as array from "fp-ts/lib/Array";
 import { Function1, Function2 } from "fp-ts/lib/function";
 import { fromNullable, none, Option } from "fp-ts/lib/Option";
-import { some } from "fp-ts/lib/OptionT";
 import * as rx from "rxjs";
 import { Observable } from "rxjs";
-import { filter, map, sample, shareReplay, startWith, switchMap, tap } from "rxjs/operators";
+import { combineLatest, filter, map, sample, shareReplay, startWith, switchMap, take, tap } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
+import * as ke from "../kaart/kaart-elementen";
 import { VeldInfo } from "../kaart/kaart-elementen";
 import { ToegevoegdeVectorLaag } from "../kaart/kaart-elementen";
-import * as ke from "../kaart/kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
@@ -190,10 +189,30 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       )
     );
 
+    const laagNietZichtbaar$ = laag$.pipe(
+      switchMap(laag =>
+        kaart.modelChanges.viewinstellingen$.pipe(
+          map(zi => zi.zoom < laag.bron.minZoom || zi.zoom > laag.bron.maxZoom),
+          take(1)
+        )
+      )
+    );
+
     const pasToeGeklikt$ = this.actionFor$("pasFilterToe");
-    this.bindToLifeCycle(this.geldigFilterCmd$.pipe(sample(pasToeGeklikt$))).subscribe(command => {
+    this.bindToLifeCycle(
+      laagNietZichtbaar$.pipe(
+        combineLatest(this.geldigFilterCmd$),
+        sample(pasToeGeklikt$)
+      )
+    ).subscribe(([laagNietZichtbaar, command]) => {
       this.dispatch(prt.StopVectorFilterBewerkingCmd());
       this.dispatch(command);
+      this.dispatch(prt.MaakLaagZichtbaarCmd(command.titel, kaartLogOnlyWrapper));
+      if (laagNietZichtbaar) {
+        this.dispatch(
+          prt.MeldComponentFoutCmd([`De laag '${command.titel}' is niet zichtbaar op kaart op dit zoomniveau, gelieve verder in te zoomen`])
+        );
+      }
     });
   }
 
