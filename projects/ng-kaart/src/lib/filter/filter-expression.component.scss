@@ -1,0 +1,19 @@
+@import "../css/kaart.component-common.scss";
+
+.filter-expression {
+  margin-left: 52px;
+  display: flex;
+  align-items: center;
+  padding-bottom: 8px;
+}
+
+.comparison {
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+}
+
+.logical-connective {
+  padding-left: 1em;
+  padding-right: 1em;
+  font-weight: bold;
+}

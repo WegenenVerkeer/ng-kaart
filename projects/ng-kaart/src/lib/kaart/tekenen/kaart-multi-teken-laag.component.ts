@@ -255,6 +255,7 @@ function drawStateTransformer(
         laaggroep: "Tools",
         legende: none,
         stijlInLagenKiezer: none,
+        filterinstellingen: none,
         wrapper: kaartLogOnlyWrapper
       });
       dispatchCmd({
@@ -265,6 +266,7 @@ function drawStateTransformer(
         laaggroep: "Tools",
         legende: none,
         stijlInLagenKiezer: none,
+        filterinstellingen: none,
         wrapper: kaartLogOnlyWrapper
       });
       drawInteractions.forEach(inter => state.map.addInteraction(inter));

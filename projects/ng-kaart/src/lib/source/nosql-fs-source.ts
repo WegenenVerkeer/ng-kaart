@@ -1,19 +1,40 @@
 import { array } from "fp-ts";
-import { concat, Function1, Refinement } from "fp-ts/lib/function";
-import { fromNullable, Option } from "fp-ts/lib/Option";
+import { concat, Function1, not, Refinement } from "fp-ts/lib/function";
+import { fromNullable, none, Option } from "fp-ts/lib/Option";
 import { setoidNumber } from "fp-ts/lib/Setoid";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { bufferCount, catchError, filter, map, mapTo, mergeMap, reduce, scan, share, switchMap, takeLast, tap } from "rxjs/operators";
+import {
+  bufferCount,
+  catchError,
+  distinctUntilChanged,
+  filter,
+  map,
+  mapTo,
+  mergeMap,
+  reduce,
+  scan,
+  share,
+  shareReplay,
+  startWith,
+  switchMap,
+  takeLast,
+  takeWhile,
+  tap
+} from "rxjs/operators";
 
+import { FilterCql } from "../filter/filter-cql";
+import { Filter as fltr } from "../filter/filter-model";
+import { FilterTotaal, isTotaalTerminaal, teVeelData, totaalOpgehaald, totaalOpTeHalen } from "../filter/filter-totaal";
 import * as le from "../kaart/kaart-load-events";
 import { kaartLogger } from "../kaart/log";
-import { Pipeable } from "../util";
 import { Feature, toOlFeature } from "../util/feature";
 import { fetchObs$, fetchWithTimeoutObs$ } from "../util/fetch-with-timeout";
 import { ReduceFunction } from "../util/function";
-import { FeatureCollection, GeoJsonLike } from "../util/geojson-types";
+import { CollectionSummary, FeatureCollection, GeoJsonLike } from "../util/geojson-types";
 import * as geojsonStore from "../util/indexeddb-geojson-store";
+import { Pipeable } from "../util/operators";
+import { forEach } from "../util/option";
 
 /**
  * Stappen:
@@ -31,6 +52,22 @@ const FETCH_TIMEOUT = 5000; // max time to wait for data from featureserver befo
 const BATCH_SIZE = 100; // aantal features per keer toevoegen aan laag
 
 const featureDelimiter = "\n";
+
+const cacheCredentials: () => RequestInit = () => ({
+  cache: "no-store", // geen client side caching van nosql data
+  credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
+});
+
+const getWithCommonHeaders: () => RequestInit = () => ({
+  ...cacheCredentials(),
+  method: "GET"
+});
+
+const postWithCommonHeaders: (_: string) => RequestInit = body => ({
+  ...cacheCredentials(),
+  method: "POST",
+  body: body
+});
 
 interface SplitterState {
   readonly seen: string;
@@ -103,6 +140,19 @@ const mapToFeatureCollection: Pipeable<string, FeatureCollection> = obs =>
     })
   );
 
+const mapToCollectionSummary: Pipeable<string, CollectionSummary> = obs =>
+  obs.pipe(
+    map(lijn => {
+      try {
+        return JSON.parse(lijn) as CollectionSummary;
+      } catch (error) {
+        const msg = `Kan JSON data niet parsen: ${error} JSON: ${lijn}`;
+        kaartLogger.error(msg);
+        throw new Error(msg);
+      }
+    })
+  );
+
 function featuresFromCache(laagnaam: string, extent: ol.Extent): rx.Observable<GeoJsonLike[]> {
   return geojsonStore.getFeaturesByExtent(laagnaam, extent).pipe(
     bufferCount(BATCH_SIZE),
@@ -150,16 +200,21 @@ export class NosqlFsSource extends ol.source.Vector {
   private offline = false;
   private busyCount = 0;
   private outstandingRequests: ol.Extent[] = [];
+  private userFilter: Option<string> = none; // Een arbitraire filter bovenop de basisfilter
+  private userFilterActive = false;
+
+  private filterSubj: rx.Subject<string> = new rx.BehaviorSubject("1 = 1");
+  private readonly filterTotal$: rx.Observable<FilterTotaal>;
 
   constructor(
     private readonly database: string,
     private readonly collection: string,
     private readonly url = "/geolatte-nosqlfs",
     private readonly view: Option<string>,
-    private filter: Option<string>,
+    private readonly baseFilter: Option<string>, // De basisfilter voor de data (bijv. voor EM-installaties)
     private readonly laagnaam: string,
-    memCacheSize: number,
-    gebruikCache: boolean
+    readonly memCacheSize: number,
+    readonly gebruikCache: boolean
   ) {
     super({
       loader: function(extent: ol.Extent) {
@@ -224,13 +279,44 @@ export class NosqlFsSource extends ol.source.Vector {
       },
       strategy: ol.loadingstrategy.bbox
     });
+
+    const filterTotal$ = () =>
+      fetchObs$(this.composeFeatureCollectionTotalUrl(1), getWithCommonHeaders()).pipe(
+        split(featureDelimiter),
+        mapToFeatureCollection,
+        map(featureCollection => featureCollection.total)
+      );
+
+    // initialiseer ophalen van totalen
+    this.filterTotal$ = this.fetchCollectionSummary$().pipe(
+      switchMap(summary =>
+        summary.count > 100000
+          ? rx.of(teVeelData(summary.count))
+          : this.filterSubj.pipe(
+              distinctUntilChanged(),
+              switchMap(() =>
+                filterTotal$().pipe(
+                  map(totaalOpgehaald(summary.count)),
+                  startWith(totaalOpTeHalen())
+                )
+              )
+            )
+      ),
+      shareReplay(1) // Wie later leest moet de meest recente waarden krijgen. Dit is een cache.
+    );
+  }
+
+  private viewAndFilterParams(respectUserFilterActivity = true) {
+    return {
+      ...this.view.fold({}, v => ({ "with-view": encodeURIComponent(v) })),
+      ...this.composedFilter(respectUserFilterActivity).fold({}, f => ({ query: encodeURIComponent(f) }))
+    };
   }
 
   private composeQueryUrl(extent?: number[]) {
     const params = {
       ...fromNullable(extent).fold({}, v => ({ bbox: v.join(",") })),
-      ...this.view.fold({}, v => ({ "with-view": encodeURIComponent(v) })),
-      ...this.filter.fold({}, f => ({ query: encodeURIComponent(f) }))
+      ...this.viewAndFilterParams()
     };
 
     return `${this.url}/api/databases/${this.database}/${this.collection}/query?${Object.keys(params)
@@ -240,11 +326,10 @@ export class NosqlFsSource extends ol.source.Vector {
       .join("&")}`;
   }
 
-  private composeFeatureCollectionUrl(limit: number) {
+  private composeFeatureCollectionTotalUrl(limit: number) {
     const params = {
-      ...{ limit: limit },
-      ...this.view.fold({}, v => ({ "with-view": encodeURIComponent(v) })),
-      ...this.filter.fold({}, f => ({ query: encodeURIComponent(f) }))
+      limit: limit,
+      ...this.viewAndFilterParams(false)
     };
 
     return `${this.url}/api/databases/${this.database}/${this.collection}/featurecollection?${Object.keys(params)
@@ -254,31 +339,35 @@ export class NosqlFsSource extends ol.source.Vector {
       .join("&")}`;
   }
 
+  private composedFilter(respectUserFilterActivity: boolean): Option<string> {
+    const userFilter = this.applicableUserFilter(respectUserFilterActivity);
+    return this.baseFilter.foldL(
+      () => userFilter, //
+      basisFilter => userFilter.map(extraFilter => `(${basisFilter}) AND (${extraFilter})`)
+    );
+  }
+
+  private applicableUserFilter(respectUserFilterActivity: boolean): Option<string> {
+    return this.userFilter.filter(() => !respectUserFilterActivity || this.userFilterActive);
+  }
+
+  private composeCollectionSummaryUrl() {
+    return `${this.url}/api/databases/${this.database}/${this.collection}`;
+  }
+
   cacheStoreName(): string {
     return this.laagnaam;
   }
 
   fetchFeatures$(extent: number[], gebruikCache: boolean): rx.Observable<GeoJsonLike> {
     if (gebruikCache) {
-      return fetchWithTimeoutObs$(
-        this.composeQueryUrl(extent),
-        {
-          method: "GET",
-          cache: "no-store", // geen client side caching van nosql data
-          credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
-        },
-        FETCH_TIMEOUT
-      ).pipe(
+      return fetchWithTimeoutObs$(this.composeQueryUrl(extent), getWithCommonHeaders(), FETCH_TIMEOUT).pipe(
         split(featureDelimiter),
         filter(lijn => lijn.trim().length > 0),
         mapToGeoJson
       );
     } else {
-      return fetchObs$(this.composeQueryUrl(extent), {
-        method: "GET",
-        cache: "no-store", // geen client side caching van nosql data
-        credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
-      }).pipe(
+      return fetchObs$(this.composeQueryUrl(extent), getWithCommonHeaders()).pipe(
         split(featureDelimiter),
         filter(lijn => lijn.trim().length > 0),
         mapToGeoJson
@@ -287,27 +376,21 @@ export class NosqlFsSource extends ol.source.Vector {
   }
 
   fetchFeaturesByWkt$(wkt: string): rx.Observable<GeoJsonLike> {
-    return fetchObs$(this.composeQueryUrl(), {
-      method: "POST",
-      cache: "no-store", // geen client side caching van nosql data
-      credentials: "include", // essentieel om ACM Authenticatie cookies mee te sturen
-      body: wkt
-    }).pipe(
+    return fetchObs$(this.composeQueryUrl(), postWithCommonHeaders(wkt)).pipe(
       split(featureDelimiter),
       filter(lijn => lijn.trim().length > 0),
       mapToGeoJson
     );
   }
 
-  fetchTotal$(): rx.Observable<number> {
-    return fetchObs$(this.composeFeatureCollectionUrl(1), {
-      method: "GET",
-      cache: "no-store", // geen client side caching van nosql data
-      credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
-    }).pipe(
+  fetchTotal$(): rx.Observable<FilterTotaal> {
+    return this.filterTotal$.pipe(takeWhile(not(isTotaalTerminaal), true));
+  }
+
+  private fetchCollectionSummary$(): rx.Observable<CollectionSummary> {
+    return fetchObs$(this.composeCollectionSummaryUrl(), getWithCommonHeaders()).pipe(
       split(featureDelimiter),
-      mapToFeatureCollection,
-      map(featureCollection => featureCollection.total)
+      mapToCollectionSummary
     );
   }
 
@@ -315,8 +398,13 @@ export class NosqlFsSource extends ol.source.Vector {
     this.offline = offline;
   }
 
-  setFilter(cqlFilter: Option<string>) {
-    this.filter = cqlFilter;
+  setUserFilter(cqlFilter: fltr.Filter, filterActive: boolean) {
+    const mayebCql = FilterCql.cql(cqlFilter);
+    this.userFilter = mayebCql;
+    this.userFilterActive = filterActive;
+    this.clear();
+    this.refresh();
+    forEach(mayebCql, cql => this.filterSubj.next(cql));
   }
 
   dispatchLoadEvent(evt: le.DataLoadEvent) {

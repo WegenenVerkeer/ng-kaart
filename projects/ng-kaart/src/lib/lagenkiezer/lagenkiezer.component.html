@@ -10,7 +10,7 @@
     </button>
   </div>
   <div *ngIf="isOpengeklapt" [@enterAnimation]>
-    <ng-container *ngIf="opties.toonLegende; then inTabGroep; else zonderTabGroep"></ng-container>
+    <ng-container *ngIf="opties.toonLegende || opties.toonFilters; then inTabGroep; else zonderTabGroep"></ng-container>
     <ng-template #inTabGroep>
       <mat-tab-group [headerPosition]="'above'" (selectedTabChange)="tabChanged($event)" [selectedIndex]="geselecteerdeTab">
         <mat-tab label="Legende" *ngIf="opties.toonLegende">
@@ -18,6 +18,9 @@
         </mat-tab>
         <mat-tab label="Lagen">
           <ng-container *ngTemplateOutlet="lagen"></ng-container>
+        </mat-tab>
+        <mat-tab label="Filters" *ngIf="heeftFilters$ | async">
+          <ng-container *ngTemplateOutlet="filters"></ng-container>
         </mat-tab>
       </mat-tab-group>
     </ng-template>
@@ -57,6 +60,12 @@
         </div>
       </div>
       <div class="geen-lagen" *ngIf="geenLegende$ | async">Er zijn geen zichtbare lagen met een legende</div>
+    </ng-template>
+    <ng-template #filters>
+      <div *ngFor="let laag of (lagenMetFilter$ | async); last as isLaatste" class="filter">
+        <awv-filter-detail [laag]="laag"></awv-filter-detail>
+        <div class="divider" *ngIf="!isLaatste"></div>
+      </div>
     </ng-template>
   </div>
 </div>

@@ -5,6 +5,7 @@ import { fromNullable, isNone, none, option, Option, some } from "fp-ts/lib/Opti
 import * as ord from "fp-ts/lib/Ord";
 import { setoidString } from "fp-ts/lib/Setoid";
 import * as validation from "fp-ts/lib/Validation";
+import { Lens } from "monocle-ts";
 import { olx } from "openlayers";
 import * as ol from "openlayers";
 import { Subscription } from "rxjs";
@@ -12,7 +13,8 @@ import * as rx from "rxjs";
 import { bufferCount, debounceTime, distinctUntilChanged, map, switchMap, throttleTime } from "rxjs/operators";
 
 import { FilterAanpassend, GeenFilterAanpassingBezig } from "../filter/filter-aanpassing-state";
-import { Filter, FilterCql, pure } from "../filter/filter-model";
+import { Filter as fltr } from "../filter/filter-model";
+import { FilterTotaal, totaalOpTeHalen } from "../filter/filter-totaal";
 import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
 import * as arrays from "../util/arrays";
 import { refreshTiles } from "../util/cachetiles";
@@ -26,7 +28,6 @@ import { allOf, fromBoolean, fromOption, fromPredicate, success, validationChain
 import { zoekerMetNaam } from "../zoeker/zoeker";
 
 import { CachedFeatureLookup } from "./cache/lookup";
-import { LaagFilterInstellingen } from "./kaart-elementen";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { MsgGen } from "./kaart-protocol-subscriptions";
@@ -331,6 +332,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       modelChanger.laagstijlGezetSubj.next(laag);
     }
 
+    function zendFilterwijziging(laag: ke.ToegevoegdeVectorLaag): void {
+      modelChanger.laagfilterGezetSubj.next(laag);
+    }
+
     function zetLayerIndex(layer: ol.layer.Base, groepIndex: number, groep: ke.Laaggroep): void {
       layer.setZIndex(groepIndexNaarZIndex(groepIndex, groep));
     }
@@ -372,9 +377,9 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                 legende: cmnd.legende,
                 stijlInLagenKiezer: cmnd.stijlInLagenKiezer
               };
-              const toegevoegdeLaag: ke.ToegevoegdeLaag = ke
-                .asVectorLaag(cmnd.laag)
-                .map<ke.ToegevoegdeLaag>(vlg => ({
+              const toegevoegdeVectorLaagCommon: ke.ToegevoegdeLaag = ke.asVectorLaag(cmnd.laag).fold(
+                toegevoegdeLaagCommon, //
+                vlg => ({
                   ...toegevoegdeLaagCommon,
                   bron: vlg,
                   layer: layer as ol.layer.Vector, // veilig omdat laag een VectorLaag is
@@ -383,18 +388,36 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                   stijlSelBron: vlg.styleSelectorBron,
                   selectiestijlSel: vlg.selectieStyleSelector,
                   hoverstijlSel: vlg.hoverStyleSelector,
-                  filterInstellingen: LaagFilterInstellingen(pure(), true)
-                }))
-                .getOrElse(toegevoegdeLaagCommon);
+                  filterinstellingen: cmnd.filterinstellingen.getOrElse(ke.stdLaagfilterinstellingen)
+                })
+              );
+              const toegevoegdeLaag: ke.ToegevoegdeLaag = ke.asToegevoegdeNosqlVectorLaag(toegevoegdeVectorLaagCommon).fold(
+                toegevoegdeVectorLaagCommon, //
+                tgnslg => {
+                  const [filter, actief] = cmnd.filterinstellingen.fold<[fltr.Filter, boolean]>([fltr.pure(), false], fi => [
+                    fi.spec,
+                    fi.actief
+                  ]);
+                  // NosqlFsSource is mutable
+                  (tgnslg.layer.getSource() as NosqlFsSource).setUserFilter(filter, actief);
+                  return tgnslg;
+                }
+              );
               layer.set("titel", titel);
               layer.setVisible(cmnd.magGetoondWorden && !cmnd.laag.verwijderd); // achtergrondlagen expliciet zichtbaar maken!
               // met positie hoeven we nog geen rekening te houden
               forEach(ke.asToegevoegdeVectorLaag(toegevoegdeLaag), pasVectorLaagStijlToe);
               zetLayerIndex(layer, groepPositie, groep);
+              forEach(ke.asToegevoegdeNosqlVectorLaag(toegevoegdeLaag).filter(tnl => tnl.filterinstellingen.actief), zendFilterwijziging);
+              forEach(
+                ke.asToegevoegdeNosqlVectorLaag(toegevoegdeLaag).filter(tnl => fltr.isDefined(tnl.filterinstellingen.spec)),
+                berekenFilterTotalen
+              );
+
               model.map.addLayer(layer);
               const updatedModel = {
                 ...modelMetAangepasteLagen,
-                toegevoegdeLagenOpTitel: modelMetAangepasteLagen.toegevoegdeLagenOpTitel.set(titel, toegevoegdeLaag),
+                toegevoegdeLagenOpTitel: modelMetAangepasteLagen.toegevoegdeLagenOpTitel.set(titel, toegevoegdeLaag), // TODO immutable!
                 titelsOpGroep: modelMetAangepasteLagen.titelsOpGroep.set(groep, model.titelsOpGroep.get(groep)!.concat([titel])),
                 groepOpTitel: modelMetAangepasteLagen.groepOpTitel.set(titel, groep)
               };
@@ -473,7 +496,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                 stijlSel: vlg.styleSelector,
                 selectiestijlSel: vlg.selectieStyleSelector,
                 hoverstijlSel: vlg.hoverStyleSelector,
-                filterInstellingen: LaagFilterInstellingen(pure(), true)
+                filterinstellingen: ke.stdLaagfilterinstellingen
               }))
               .getOrElse(toegevoegdeLaagCommon);
             const oldLayer = laag.layer;
@@ -721,12 +744,14 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return laag.magGetoondWorden === magGetoondWorden ? laag : { ...laag, magGetoondWorden: magGetoondWorden };
     };
 
-    const pasLaagFilterAan: (spec: Filter, actief: boolean) => Endomorphism<ke.ToegevoegdeVectorLaag> = (spec, actief) => laag => {
-      return {
-        ...laag,
-        filterInstellingen: LaagFilterInstellingen(spec, actief)
-      };
-    };
+    const pasLaagFilterAan: (spec: fltr.Filter, actief: boolean, totaal: FilterTotaal) => Endomorphism<ke.ToegevoegdeVectorLaag> = (
+      spec,
+      actief,
+      totaal
+    ) =>
+      Lens.fromProp<ke.ToegevoegdeVectorLaag, "filterinstellingen">("filterinstellingen").set(
+        ke.Laagfilterinstellingen(spec, actief, totaal)
+      );
 
     // Uiteraard is het *nooit* de bedoeling om de titel van een laag aan te passen.
     const pasLaagInModelAan: (mdl: Model) => (laag: ke.ToegevoegdeLaag) => Model = mdl => laag => ({
@@ -1313,19 +1338,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
-    function activeerFilterOpSource(laag: ke.ToegevoegdeVectorLaag, noSqlFsSource: NosqlFsSource, filter: Filter): void {
-      laag.bron.filter.foldL(
-        // indien de bron al een vaste filter bevat, dient deze gecombineerd te worden met de filter van de user
-        () => noSqlFsSource.setFilter(FilterCql.cql(filter)),
-        bronFilter =>
-          noSqlFsSource.setFilter(
-            FilterCql.cql(filter)
-              .map(cql => `(${bronFilter}) AND (${cql})`)
-              .alt(some(bronFilter))
-          )
-      );
-      noSqlFsSource.clear();
-      noSqlFsSource.refresh();
+    function activeerFilterOpSource(noSqlFsSource: NosqlFsSource, filter: fltr.Filter, actief: boolean): void {
+      noSqlFsSource.setUserFilter(filter, actief);
     }
 
     function zetFilter(cmnd: prt.ZetFilter<Msg>): ModelWithResult<Msg> {
@@ -1334,10 +1348,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         chain(valideerToegevoegdeVectorLaagBestaat(cmnd.titel), laag =>
           valideerNoSqlFsSourceBestaat(cmnd.titel).map(noSqlFsSource => [laag, noSqlFsSource])
         ).map(([laag, noSqlFsSource]: [ke.ToegevoegdeVectorLaag, NosqlFsSource]) => {
-          activeerFilterOpSource(laag, noSqlFsSource, cmnd.filter);
-          const updatedLaag = pasLaagFilterAan(cmnd.filter, laag.filterInstellingen.actief)(laag);
+          activeerFilterOpSource(noSqlFsSource, cmnd.filter, true);
+          const updatedLaag = pasLaagFilterAan(cmnd.filter, true, laag.filterinstellingen.totaal)(laag);
           const updatedModel = pasLaagInModelAan(model)(updatedLaag);
           zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
+          zendFilterwijziging(updatedLaag);
+          berekenFilterTotalen(updatedLaag);
           return ModelAndEmptyResult(updatedModel);
         })
       );
@@ -1349,11 +1365,38 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         chain(valideerToegevoegdeVectorLaagBestaat(cmnd.titel), laag =>
           valideerNoSqlFsSourceBestaat(cmnd.titel).map(noSqlFsSource => [laag, noSqlFsSource])
         ).map(([laag, noSqlFsSource]: [ke.ToegevoegdeVectorLaag, NosqlFsSource]) => {
-          const filter: (actief: boolean) => Filter = actief => (actief ? laag.filterInstellingen.spec : pure());
-          activeerFilterOpSource(laag, noSqlFsSource, filter(cmnd.actief));
-          const updatedLaag = pasLaagFilterAan(laag.filterInstellingen.spec, cmnd.actief)(laag);
+          activeerFilterOpSource(noSqlFsSource, laag.filterinstellingen.spec, cmnd.actief);
+          const updatedLaag = pasLaagFilterAan(laag.filterinstellingen.spec, cmnd.actief, laag.filterinstellingen.totaal)(laag);
           const updatedModel = pasLaagInModelAan(model)(updatedLaag);
           zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
+          return ModelAndEmptyResult(updatedModel);
+        })
+      );
+    }
+
+    function berekenFilterTotalen(laag: ke.ToegevoegdeVectorLaag): void {
+      forEach(ke.asNosqlSource(laag.layer.getSource()), nosqlFsSource =>
+        nosqlFsSource.fetchTotal$().subscribe({
+          next: totaal => {
+            const updatedLaag = pasLaagFilterAan(laag.filterinstellingen.spec, laag.filterinstellingen.actief, totaal)(laag);
+            const updatedModel = pasLaagInModelAan(model)(updatedLaag);
+            zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
+          },
+          error: e => kaartLogger.error("fout in berekenen totalen")
+        })
+      );
+    }
+
+    function haalFilterTotaalOp(cmnd: prt.HaalFilterTotaalOp<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        valideerToegevoegdeVectorLaagBestaat(cmnd.titel).map(laag => {
+          berekenFilterTotalen(laag);
+
+          const updatedLaag = pasLaagFilterAan(laag.filterinstellingen.spec, laag.filterinstellingen.actief, totaalOpTeHalen())(laag);
+          const updatedModel = pasLaagInModelAan(model)(updatedLaag);
+          zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
+          zendFilterwijziging(updatedLaag);
           return ModelAndEmptyResult(updatedModel);
         })
       );
@@ -1499,7 +1542,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         // Deze is een klein beetje speciaal omdat we de unsubcribe willen opvangen om evt. het tekenen te stoppen
         return modelWithSubscriptionResult(
           "TekenGeometryChanged",
-          rx.Observable.create((observer: rx.Observer<ke.TekenResultaat>) => {
+          rx.Observable.create((observer: rx.Observer<ke.Tekenresultaat>) => {
             model.tekenSettingsSubj.next(some(sub.tekenSettings));
             const innerSub = model.geometryChangedSubj.pipe(debounceTime(100)).subscribe(observer);
             return () => {
@@ -1537,6 +1580,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
       function subscribeToLaagstijlGezet(sub: prt.LaagstijlGezetSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult("LaagstijlGezet", modelChanges.laagstijlGezet$.subscribe(consumeMessage(sub)));
+      }
+
+      function subscribeToLaagfilterGezet(sub: prt.LaagfilterGezetSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult("LaagfilterGezet", modelChanges.laagfilterGezet$.subscribe(consumeMessage(sub)));
       }
 
       function subscribeToPrecacheProgress(sub: prt.PrecacheProgressSubscription<Msg>): ModelWithResult<Msg> {
@@ -1596,6 +1643,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToActieveModus(cmnd.subscription);
         case "LaagstijlGezet":
           return subscribeToLaagstijlGezet(cmnd.subscription);
+        case "LaagfilterGezet":
+          return subscribeToLaagfilterGezet(cmnd.subscription);
         case "PrecacheProgress":
           return subscribeToPrecacheProgress(cmnd.subscription);
         case "LaatsteCacheRefresh":
@@ -1754,6 +1803,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return zetFilter(cmd);
         case "ActiveerFilter":
           return activeerFilter(cmd);
+        case "HaalFilterTotaalOp":
+          return haalFilterTotaalOp(cmd);
       }
     }
 

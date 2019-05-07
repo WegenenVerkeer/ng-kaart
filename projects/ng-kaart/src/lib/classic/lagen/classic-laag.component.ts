@@ -1,5 +1,5 @@
-import { AfterContentInit, ContentChildren, ElementRef, Injector, Input, OnDestroy, OnInit } from "@angular/core";
-import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
+import { AfterContentInit, ElementRef, Injector, Input, OnDestroy, OnInit } from "@angular/core";
+import { none, Option, some } from "fp-ts/lib/Option";
 
 import { Laag, Laaggroep } from "../../kaart/kaart-elementen";
 import { Legende } from "../../kaart/kaart-legende";
@@ -90,6 +90,7 @@ export abstract class ClassicLaagComponent extends ClassicBaseComponent implemen
       magGetoondWorden: this._zichtbaar,
       legende: none,
       stijlInLagenKiezer: this._stijlInLagenKiezer,
+      filterinstellingen: none,
       wrapper: logOnlyWrapper
     });
   }

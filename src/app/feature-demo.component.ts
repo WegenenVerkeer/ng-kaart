@@ -2,7 +2,7 @@ import { animate, style, transition, trigger } from "@angular/animations";
 import { ChangeDetectorRef, Component, NgZone, ViewChild, ViewEncapsulation } from "@angular/core";
 import { array } from "fp-ts";
 import { Function1 } from "fp-ts/lib/function";
-import { none, Option, some } from "fp-ts/lib/Option";
+import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import { CachedFeatureLookup } from "projects/ng-kaart/src/lib/kaart/cache/lookup";
 import { Feature } from "projects/ng-kaart/src/lib/util/feature";
@@ -322,10 +322,10 @@ export class FeatureDemoComponent {
   precacheProgress = 0;
   laatsteCacheRefresh = "";
   precacheWMSWkt = wkts.districten.gent;
-  precacheWMSInput: PrecacheWMS = null;
+  precacheWMSInput?: PrecacheWMS = undefined;
 
   precacheFeaturesWkt = wkts.gemeenten.brasschaat;
-  precacheFeaturesInput: PrecacheFeatures = null;
+  precacheFeaturesInput?: PrecacheFeatures = undefined;
 
   isOffline = false;
 
@@ -502,13 +502,7 @@ export class FeatureDemoComponent {
     }
   }.bind(this);
 
-  readonly afgeleideSnelheidsregimesStyleMetOffset = offsetStyleFunction(
-    this.afgeleideSnelheidsRegimesStyle,
-    null,
-    "zijderijbaan",
-    4,
-    true
-  );
+  readonly afgeleideSnelheidsregimesStyleMetOffset = offsetStyleFunction(this.afgeleideSnelheidsRegimesStyle, "", "zijderijbaan", 4, true);
 
   readonly afgeleideSnelheidsregimesSelectieStyleMetOffset = function(
     feature: ol.Feature,
@@ -519,7 +513,7 @@ export class FeatureDemoComponent {
       selectionStyle.getStroke().setColor([0, 153, 255, 1]);
       return selectionStyle;
     };
-    const offsetFunc = offsetStyleFunction(this!.afgeleideSnelheidsRegimesStyle, null, "zijderijbaan", 4, true);
+    const offsetFunc = offsetStyleFunction(this!.afgeleideSnelheidsRegimesStyle, "", "zijderijbaan", 4, true);
     const style = offsetFunc(feature, resolution);
     if (style instanceof ol.style.Style) {
       return applySelectionColor(style);
@@ -774,7 +768,7 @@ export class FeatureDemoComponent {
     if (this.mogelijkeOpties["mijnlocatie"].value) {
       return "10";
     } else {
-      return null;
+      return "";
     }
   }
 
@@ -782,7 +776,7 @@ export class FeatureDemoComponent {
     if (this.mogelijkeOpties["kaartLinksBreedte"].value) {
       return 300;
     } else {
-      return null;
+      return 0;
     }
   }
 
@@ -866,7 +860,7 @@ export class FeatureDemoComponent {
 
   scrollTo(idName: string): void {
     const element = document.getElementById(idName);
-    element.scrollIntoView({ behavior: "smooth" });
+    forEach(fromNullable(element), elt => elt.scrollIntoView({ behavior: "smooth" }));
   }
 
   onZetCenterManueel(coordTxt: string): void {

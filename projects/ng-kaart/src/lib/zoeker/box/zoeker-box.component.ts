@@ -466,6 +466,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       laaggroep: "Tools",
       legende: none,
       stijlInLagenKiezer: none,
+      filterinstellingen: none,
       wrapper: kaartLogOnlyWrapper
     });
     const minZoektermLength = 2;
