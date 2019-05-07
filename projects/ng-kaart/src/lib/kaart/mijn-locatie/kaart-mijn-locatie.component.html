@@ -1,6 +1,24 @@
 <div *ngIf="enabled$ | async" class="kaart-widget mijn-locatie">
-  <button #locateBtn mat-icon-button (click)="toggle()"
-          [matTooltip]="isActief() ? 'Stop locatie tracking' : 'Start locatie tracking'" matTooltipPosition="left">
-    <mat-icon [class.actief]="isActief()" aria-label="Mijn locatie">my_location</mat-icon>
+  <button #locateBtn mat-icon-button *ngIf="currentState$ | async as currentState" (click)="click()"
+    [disabled]="currentState === 'TrackingDisabled'"
+    [matTooltip]="isTrackingActief(currentState) ? 'Stop locatie tracking' : 'Start locatie tracking'"
+    matTooltipPosition="left">
+    <ng-container [ngSwitch]="currentState">
+      <ng-container *ngSwitchCase="'Tracking'">
+        <mat-icon aria-label="Mijn locatie">my_location</mat-icon>
+      </ng-container>
+      <ng-container *ngSwitchCase="'TrackingCenter'">
+        <mat-icon class="actief" aria-label="Mijn locatie">my_location</mat-icon>
+      </ng-container>
+      <ng-container *ngSwitchCase="'TrackingAutoRotate'">
+        <mat-icon aria-label="Mijn locatie">navigation</mat-icon>
+      </ng-container>
+      <ng-container *ngSwitchCase="'NoTracking'">
+        <mat-icon aria-label="Mijn locatie">my_location</mat-icon>
+      </ng-container>
+      <ng-container *ngSwitchCase="'TrackingDisabled'">
+        <mat-icon aria-label="Mijn locatie">my_location</mat-icon>
+      </ng-container>
+    </ng-container>
   </button>
 </div>
