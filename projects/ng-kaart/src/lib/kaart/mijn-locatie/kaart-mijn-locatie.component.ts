@@ -191,25 +191,31 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     this.bindToLifeCycle(this.parent.modelChanges.dragInfo$).subscribe(() => {
       this.eventsSubj.next("PanEvent");
     });
+
+    // We moeten de rotatie-events die we zelf triggeren negeren.
     this.bindToLifeCycle(this.parent.modelChanges.rotatie$).subscribe(rotatie => {
-      if (this.gevraagdeRotatie.isSome()) {
-        if (this.gevraagdeRotatie.toNullable()! === rotatie) {
-          // Het is waarschijnlijk de rotatie die wij gevraagd hebben voor de autorotate.
-          this.gevraagdeRotatie = none;
+      this.gevraagdeRotatie.foldL(
+        () => this.eventsSubj.next("RotateEvent"),
+        gevraagdeRotatie => {
+          if (gevraagdeRotatie === rotatie) {
+            // Het is waarschijnlijk de rotatie die wij gevraagd hebben voor de autorotate.
+            this.gevraagdeRotatie = none;
+          }
         }
-      } else {
-        this.eventsSubj.next("RotateEvent");
-      }
+      );
     });
+
+    // We moeten de zoom-events die we zelf triggeren negeren.
     this.bindToLifeCycle(zoom$).subscribe(zoom => {
-      if (this.gevraagdeZoom.isSome()) {
-        if (this.gevraagdeZoom.toNullable()! === zoom) {
-          // Het is waarschijnlijk de zoom die wij gevraagd hebben voor de autozoom.
-          this.gevraagdeZoom = none;
+      this.gevraagdeZoom.foldL(
+        () => this.eventsSubj.next("ZoomEvent"),
+        gevraagdeZoom => {
+          if (gevraagdeZoom === zoom) {
+            // Het is waarschijnlijk de zoom die wij gevraagd hebben voor de autozoom.
+            this.gevraagdeZoom = none;
+          }
         }
-      } else {
-        this.eventsSubj.next("ZoomEvent");
-      }
+      );
     });
 
     // "State machine"
