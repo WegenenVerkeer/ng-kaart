@@ -42,6 +42,7 @@ import { KaartLoadingComponent } from "./loading/kaart-loading.component";
 import { KaartMetenComponent } from "./meten/kaart-meten.component";
 import { KaartMultiMetenComponent } from "./meten/kaart-multi-meten.component";
 import { KaartMijnLocatieComponent } from "./mijn-locatie/kaart-mijn-locatie.component";
+import { KaartMijnMobieleLocatieComponent } from "./mijn-locatie/kaart-mijn-mobiele-locatie.component";
 import { KaartOpenStreetViewComponent } from "./open-street-view/kaart-open-street-view.component";
 import { KaartRotatieComponent } from "./rotatie/kaart-rotatie.component";
 import { KaartSchaalComponent } from "./schaal/kaart-schaal.component";
@@ -67,6 +68,7 @@ const components: any[] = [
   KaartLoadingComponent,
   KaartMetenComponent,
   KaartMijnLocatieComponent,
+  KaartMijnMobieleLocatieComponent,
   KaartMultiMetenComponent,
   KaartMultiTekenLaagComponent,
   KaartOpenLayersStyleComponent,
@@ -164,6 +166,7 @@ export * from "./log";
 export * from "./meten/kaart-meten.component";
 export * from "./meten/kaart-multi-meten.component";
 export * from "./mijn-locatie/kaart-mijn-locatie.component";
+export * from "./mijn-locatie/kaart-mijn-mobiele-locatie.component";
 export * from "./open-street-view/kaart-open-street-view.component";
 export * from "./schaal/kaart-schaal.component";
 export * from "./stijl-selector";
