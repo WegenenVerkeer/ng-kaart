@@ -108,7 +108,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
         ToegevoegdeVectorLaag.veldInfosLens.get(laag).filter(
           // filter de speciale velden er uit
           veld =>
-            fromNullable(veld.label).isNone() &&
+            fromNullable(veld.label).isSome() &&
             fromNullable(veld.constante).isNone() &&
             fromNullable(veld.template).isNone() &&
             fromNullable(veld.html).isNone() &&
