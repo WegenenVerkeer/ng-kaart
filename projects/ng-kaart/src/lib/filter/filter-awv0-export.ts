@@ -9,14 +9,14 @@ export namespace FilterText {
 
   const propertyText: Generator<fltr.Property> = property => property.ref;
   const literalText: Generator<fltr.Literal> = fltr.matchLiteral({
-    bool: b => (b ? "waar" : "vals"),
+    boolean: b => (b ? "waar" : "vals"),
     date: d => d.toString(),
     datetime: d => d.toString(),
-    dbl: d => d.toString(), // Afronden of sprintf?
-    geom: d => "<geometrie>",
-    int: i => i.toString(),
+    double: d => d.toString(), // Afronden of sprintf?
+    geometry: d => "<geometrie>",
+    integer: i => i.toString(),
     json: j => "<json>",
-    str: s => `'${s}'`
+    string: s => `'${s}'`
   });
 
   const expressionText: Generator<fltr.Expression> = fltr.matchExpression({
@@ -28,8 +28,8 @@ export namespace FilterText {
   });
 
   export const filterText: Generator<fltr.Filter> = fltr.matchFilter({
-    pure: () => "alle waarden",
-    expression: exprFltr => expressionText(exprFltr.expression)
+    PureFilter: () => "alle waarden",
+    ExpressionFilter: exprFltr => expressionText(exprFltr.expression)
   });
 }
 

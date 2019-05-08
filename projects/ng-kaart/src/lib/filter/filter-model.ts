@@ -8,6 +8,7 @@ import * as matchers from "../util/matchers";
 export namespace Filter {
   export type Filter = PureFilter | ExpressionFilter; // Later ook | RawCQLFilter
 
+  // TODO hernoemen naar Empty
   export interface PureFilter {
     readonly kind: "PureFilter";
   }
@@ -202,84 +203,20 @@ export namespace Filter {
     value: value
   });
 
-  export const matchFilter: <A>(
-    _: {
-      pure: Lazy<A>;
-      expression: Function1<ExpressionFilter, A>;
-    }
-  ) => (_: Filter) => A = switcher => filter => {
-    switch (filter.kind) {
-      case "PureFilter":
-        return switcher.pure();
-      case "ExpressionFilter":
-        return switcher.expression(filter);
-    }
-  };
+  export const matchFilter: <A>(_: matchers.FullKindMatcher<Filter, A, Filter["kind"]>) => Function1<Filter, A> = matchers.matchKind;
 
   export const matchExpression: <A>(_: matchers.FullKindMatcher<Expression, A, Expression["kind"]>) => Function1<Expression, A> =
     matchers.matchKind;
 
-  export const matchExpression2: <A>(
-    _: {
-      and: Function1<Conjunction, A>;
-      or: Function1<Disjunction, A>;
-      equality: Function1<Equality, A>;
-      inequality: Function1<Inequality, A>;
-      incomplete: Function1<Incomplete, A>;
-    }
-  ) => (_: Expression) => A = switcher => expression => {
-    switch (expression.kind) {
-      case "And":
-        return switcher.and(expression);
-      case "Or":
-        return switcher.or(expression);
-      case "Equality":
-        return switcher.equality(expression);
-      case "Inequality":
-        return switcher.inequality(expression);
-      case "Incomplete":
-        return switcher.incomplete(expression);
-    }
-  };
-
-  export const matchLiteral: <A>(
-    _: {
-      str: Function1<string, A>;
-      int: Function1<number, A>;
-      dbl: Function1<number, A>;
-      bool: Function1<boolean, A>;
-      geom: Function1<string, A>; // Nog uit te werken.
-      date: Function1<number, A>; // Nog uit te werken.
-      datetime: Function1<number, A>; // Nog uit te werken.
-      json: Function1<string, A>; // Nog uit te werken.
-    }
-  ) => (_: Literal) => A = switcher => literal => {
-    switch (literal.type) {
-      case "string":
-        return switcher.str(literal.value as string);
-      case "integer":
-        return switcher.int(literal.value as number);
-      case "boolean":
-        return switcher.bool(literal.value as boolean);
-      case "double":
-        return switcher.dbl(literal.value as number);
-      case "geometry":
-        return switcher.geom(literal.value as string);
-      case "date":
-        return switcher.date(literal.value as number);
-      case "datetime":
-        return switcher.datetime(literal.value as number);
-      case "json":
-        return switcher.json(literal.value as string);
-    }
-  };
+  export const matchLiteral: <A>(_: matchers.FullMatcher<Literal, A, TypeType>) => Function1<Literal, A> = matcher =>
+    matchers.match(matcher)(l => l.type);
 
   export const matchTypeTypeWithFallback: <A>(_: matchers.FallbackMatcher<TypeType, A, TypeType>) => (_: TypeType) => A = switcher =>
     matchers.matchWithFallback(switcher)(identity);
 
   export const isEmpty: Predicate<Filter> = matchFilter({
-    expression: constant(false),
-    pure: constant(true)
+    ExpressionFilter: constant(false),
+    PureFilter: constant(true)
   });
 
   export const isDefined: Predicate<Filter> = not(isEmpty);

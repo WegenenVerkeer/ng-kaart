@@ -9,13 +9,13 @@ export namespace FilterCql {
   const propertyCql: Generator<fltr.Property> = property => `properties.${property.ref}`;
 
   const literalCql: Generator<fltr.Literal> = fltr.matchLiteral({
-    bool: literal => (literal ? "true" : "false"),
-    str: literal => `'${literal}'`,
-    int: literal => `${literal}`,
-    dbl: literal => `${literal}`,
+    boolean: literal => (literal ? "true" : "false"),
+    string: literal => `'${literal}'`,
+    integer: literal => `${literal}`,
+    double: literal => `${literal}`,
     date: literal => `'${literal}'`, // beschouw al de rest als string. Zie TODO bij TypeType
     datetime: literal => `'${literal}'`, // beschouw al de rest als string. Zie TODO bij TypeType
-    geom: literal => `'${literal}'`, // beschouw al de rest als string. Zie TODO bij TypeType
+    geometry: literal => `'${literal}'`, // beschouw al de rest als string. Zie TODO bij TypeType
     json: literal => `'${literal}'` // beschouw al de rest als string. Zie TODO bij TypeType
   });
 
@@ -28,8 +28,8 @@ export namespace FilterCql {
   });
 
   export const cql: Function1<fltr.Filter, Option<string>> = fltr.matchFilter({
-    pure: constant(none),
-    expression: pipe(
+    PureFilter: constant(none),
+    ExpressionFilter: pipe(
       expr => expr.expression,
       expressionCql,
       some
