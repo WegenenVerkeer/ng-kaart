@@ -20,11 +20,11 @@ export namespace FilterText {
   });
 
   const expressionText: Generator<fltr.Expression> = fltr.matchExpression({
-    and: expr => `${expressionText(expr.left)} en ${expressionText(expr.right)}`,
-    or: expr => `${expressionText(expr.left)} of ${expressionText(expr.right)}`,
-    equality: expr => `${propertyText(expr.property)} = ${literalText(expr.value)}`,
-    inequality: expr => `${propertyText(expr.property)} <> ${literalText(expr.value)}`,
-    incomplete: expr => `${propertyText(expr.property)} <> ${literalText(expr.value)}`
+    And: expr => `${expressionText(expr.left)} en ${expressionText(expr.right)}`,
+    Or: expr => `${expressionText(expr.left)} of ${expressionText(expr.right)}`,
+    Equality: expr => `${propertyText(expr.property)} = ${literalText(expr.value)}`,
+    Inequality: expr => `${propertyText(expr.property)} <> ${literalText(expr.value)}`,
+    Incomplete: expr => `${propertyText(expr.property)} <> ${literalText(expr.value)}`
   });
 
   export const filterText: Generator<fltr.Filter> = fltr.matchFilter({

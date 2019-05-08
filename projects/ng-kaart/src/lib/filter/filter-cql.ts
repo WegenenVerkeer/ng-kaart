@@ -20,11 +20,11 @@ export namespace FilterCql {
   });
 
   const expressionCql: Generator<fltr.Expression> = fltr.matchExpression({
-    and: expr => expressionCql(expr.left) + " AND " + expressionCql(expr.right),
-    or: expr => expressionCql(expr.left) + " OR " + expressionCql(expr.right),
-    equality: expr => propertyCql(expr.property) + " = " + literalCql(expr.value),
-    inequality: expr => propertyCql(expr.property) + " != " + literalCql(expr.value),
-    incomplete: expr => propertyCql(expr.property) + " != " + literalCql(expr.value)
+    And: expr => expressionCql(expr.left) + " AND " + expressionCql(expr.right),
+    Or: expr => expressionCql(expr.left) + " OR " + expressionCql(expr.right),
+    Equality: expr => propertyCql(expr.property) + " = " + literalCql(expr.value),
+    Inequality: expr => propertyCql(expr.property) + " != " + literalCql(expr.value),
+    Incomplete: expr => propertyCql(expr.property) + " != " + literalCql(expr.value)
   });
 
   export const cql: Function1<fltr.Filter, Option<string>> = fltr.matchFilter({

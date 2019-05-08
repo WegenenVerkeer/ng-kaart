@@ -216,12 +216,10 @@ export namespace Filter {
     }
   };
 
-  export type ExpressionKind = Expression["kind"];
-  export type FullExpressionMatcher<A> = {
-    readonly [P in ExpressionKind]: Function1<Expression, A> | { readonly kind: P; readonly [key: string]: any }
-  };
+  export const matchExpression: <A>(_: matchers.FullKindMatcher<Expression, A, Expression["kind"]>) => Function1<Expression, A> =
+    matchers.matchKind;
 
-  export const matchExpression: <A>(
+  export const matchExpression2: <A>(
     _: {
       and: Function1<Conjunction, A>;
       or: Function1<Disjunction, A>;
