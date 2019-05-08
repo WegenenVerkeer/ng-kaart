@@ -1,5 +1,7 @@
-import { constant, Function1, Function2, Function3, Lazy, not, Predicate } from "fp-ts/lib/function";
+import { constant, Function1, Function2, Function3, identity, Lazy, not, Predicate } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
+
+import * as matchers from "../util/matchers";
 
 // Een namespace is nodig omdat verschillende types dezelfde naam hebben als die voor stijlen en er kan maar 1 naam
 // geëxporteerd worden buiten de module.
@@ -49,8 +51,11 @@ export namespace Filter {
 
   export type LogicalConnective = Conjunction | Disjunction;
 
-  export type Comparison = Equality | Inequality | Incomplete;
+  export type Comparison = Equality | Inequality | Incomplete; // Legacy
 
+  // We kiezen er (voorlopig) voor om de types van operatoren niet te encoderen mbv generic type parameters. De
+  // geserialiseerde JSON heeft daar geen benul van en dus moeten we toch at-runtime checken of de types wel
+  // overeenkomen. Het zou de code er ook niet eenvoudiger op maken.
   export interface PropertyValueOperator {
     readonly property: Property;
     readonly value: Literal;
@@ -72,6 +77,34 @@ export namespace Filter {
     readonly kind: "Incomplete";
   }
 
+  export interface Larger extends PropertyValueOperator {
+    readonly kind: "Larger";
+  }
+
+  export interface LargerOrEqual extends PropertyValueOperator {
+    readonly kind: "LargerOrEqual";
+  }
+
+  export interface Smaller extends PropertyValueOperator {
+    readonly kind: "Smaller";
+  }
+
+  export interface SmallerOrEqual extends PropertyValueOperator {
+    readonly kind: "SmallerOrEqual";
+  }
+
+  export interface StartsWith extends PropertyValueOperator {
+    readonly kind: "StartsWith";
+  }
+
+  export interface Contains extends PropertyValueOperator {
+    readonly kind: "Contains";
+  }
+
+  export interface EndsWith extends PropertyValueOperator {
+    readonly kind: "EndsWith";
+  }
+
   // TODO: laten we voorlopig overeen komen met alle veldtypes uit VeldInfo
   export type TypeType = "string" | "integer" | "double" | "geometry" | "date" | "datetime" | "boolean" | "json";
 
@@ -90,7 +123,7 @@ export namespace Filter {
     readonly label: string;
   }
 
-  function Comparison<C extends Comparison, K extends C["kind"]>(kind: K): Function2<Property, Literal, C> {
+  export function Comparison<C extends Comparison, K extends C["kind"]>(kind: K): Function2<Property, Literal, C> {
     return (property, value) =>
       (({
         kind: kind,
@@ -183,6 +216,11 @@ export namespace Filter {
     }
   };
 
+  export type ExpressionKind = Expression["kind"];
+  export type FullExpressionMatcher<A> = {
+    readonly [P in ExpressionKind]: Function1<Expression, A> | { readonly kind: P; readonly [key: string]: any }
+  };
+
   export const matchExpression: <A>(
     _: {
       and: Function1<Conjunction, A>;
@@ -237,6 +275,9 @@ export namespace Filter {
         return switcher.json(literal.value as string);
     }
   };
+
+  export const matchTypeTypeWithFallback: <A>(_: matchers.FallbackMatcher<TypeType, A, TypeType>) => (_: TypeType) => A = switcher =>
+    matchers.matchWithFallback(switcher)(identity);
 
   export const isEmpty: Predicate<Filter> = matchFilter({
     expression: constant(false),

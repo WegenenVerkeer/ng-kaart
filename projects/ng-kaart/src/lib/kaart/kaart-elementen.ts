@@ -8,6 +8,7 @@ import { Filter as fltr } from "../filter/filter-model";
 import { FilterTotaal, totaalOpTeHalen } from "../filter/filter-totaal";
 import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
 import { mapToOptionalByKey } from "../util/lenses";
+import * as matchers from "../util/matchers";
 
 import { Legende } from "./kaart-legende";
 import { AwvV0StyleSpec, StyleSelector } from "./stijl-selector";
@@ -270,4 +271,7 @@ export namespace ToegevoegdeVectorLaag {
 
 export namespace VeldInfo {
   export const setoidVeldOpNaam: Setoid<VeldInfo> = contramap(vi => vi.naam, setoidString);
+
+  export const matchWithFallback: <A>(_: matchers.FallbackMatcher<VeldInfo, A, VeldType>) => Function1<VeldInfo, A> = m =>
+    matchers.matchWithFallback(m)(veldinfo => veldinfo.type);
 }
