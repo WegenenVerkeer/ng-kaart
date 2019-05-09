@@ -201,7 +201,7 @@ export class NosqlFsSource extends ol.source.Vector {
   private offline = false;
   private busyCount = 0;
   private outstandingRequests: ol.Extent[] = [];
-  private outstandingQuerys: string[] = [];
+  private outstandingQueries: string[] = [];
   private userFilter: Option<string> = none; // Een arbitraire filter bovenop de basisfilter
   private userFilterActive = false;
 
@@ -224,7 +224,7 @@ export class NosqlFsSource extends ol.source.Vector {
         source.busyCount += 1;
         source.outstandingRequests = array.snoc(source.outstandingRequests, extent);
         const queryUrlVoorExtent = this.composeQueryUrl(extent);
-        source.outstandingQuerys = array.snoc(source.outstandingQuerys, queryUrlVoorExtent);
+        source.outstandingQueries = array.snoc(source.outstandingQueries, queryUrlVoorExtent);
         const featuresLoader$: rx.Observable<ol.Feature[]> = (source.offline
           ? featuresFromCache(laagnaam, extent)
           : featuresFromServer(source, laagnaam, gebruikCache, extent, queryUrlVoorExtent)
@@ -241,7 +241,7 @@ export class NosqlFsSource extends ol.source.Vector {
             // Zelfde met filter; als de filter is gewijzigd, dan zijn wij niet meer geïnteresseerd in de oude waarden
             if (
               array.last(source.outstandingRequests).contains(array.getSetoid(setoidNumber), extent) ||
-              array.last(source.outstandingQuerys).contains(setoidString, queryUrlVoorExtent)
+              array.last(source.outstandingQueries).contains(setoidString, queryUrlVoorExtent)
             ) {
               source.addFeatures([...newFeatures.values()]);
             }
@@ -280,7 +280,7 @@ export class NosqlFsSource extends ol.source.Vector {
               // dezelfde extent meer dan eens in de array zit.
               if (source.busyCount === 0) {
                 source.outstandingRequests = [];
-                source.outstandingQuerys = [];
+                source.outstandingQueries = [];
               }
             }
           }
