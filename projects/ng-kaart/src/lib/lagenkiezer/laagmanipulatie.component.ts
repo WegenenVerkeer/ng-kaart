@@ -8,7 +8,7 @@ import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, sample, shareReplay, startWith, tap } from "rxjs/operators";
 
 import { Filter as fltr } from "../filter/filter-model";
-import { isTotaalOpgehaald } from "../filter/filter-totaal";
+import { isTotaalMislukt, isTotaalOpgehaald } from "../filter/filter-totaal";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import * as ke from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
@@ -47,6 +47,8 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
   readonly filterTotaalOnbekend$: rx.Observable<boolean>;
   readonly filterTotaalOpgehaald$: rx.Observable<boolean>;
   readonly filterTotaalOpTeHalen$: rx.Observable<boolean>;
+  readonly filterTotaalOphalenMislukt$: rx.Observable<boolean>;
+  readonly filterTotaalMisluktFout$: rx.Observable<string>;
 
   @Input()
   laag: ke.ToegevoegdeLaag;
@@ -139,9 +141,14 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
     this.filterTotaalOnbekend$ = filterTotaalChanges$.pipe(map(filterTotaal => filterTotaal.type === "TeVeelData"));
     this.filterTotaalOpTeHalen$ = filterTotaalChanges$.pipe(map(filterTotaal => filterTotaal.type === "TotaalOpTeHalen"));
     this.filterTotaalOpgehaald$ = filterTotaalChanges$.pipe(map(filterTotaal => filterTotaal.type === "TotaalOpgehaald"));
+    this.filterTotaalOphalenMislukt$ = filterTotaalChanges$.pipe(map(filterTotaal => filterTotaal.type === "TotaalOphalenMislukt"));
     this.filterTotaal$ = filterTotaalChanges$.pipe(
       filter(isTotaalOpgehaald),
       map(totaal => totaal.totaal)
+    );
+    this.filterTotaalMisluktFout$ = filterTotaalChanges$.pipe(
+      filter(isTotaalMislukt),
+      map(mislukt => mislukt.foutmelding)
     );
 
     this.minstensEenLaagActie$ = rx

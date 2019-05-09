@@ -29,6 +29,9 @@
     <button mat-icon-button class="filter-totaal" *ngIf="filterTotaalOpgehaald$ | async" (click)="pasFilterAan()">
       {{ filterTotaal$ | async }}
     </button>
+    <button mat-icon-button class="filter-totaal mislukt" *ngIf="filterTotaalOphalenMislukt$ | async" (click)="pasFilterAan()" matTooltip="{{ filterTotaalMisluktFout$ | async }}">
+      <mat-icon>error_outline</mat-icon>
+    </button>
   </div>
   <div class="laag-acties" *ngIf="minstensEenLaagActie$ | async">
     <mat-menu #laagMenu="matMenu" class="awv-kaart-laagmanipulatie laag-menu" [overlapTrigger]="true">

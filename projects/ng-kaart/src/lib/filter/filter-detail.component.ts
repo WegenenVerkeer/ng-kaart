@@ -29,6 +29,7 @@ export class FilterDetailComponent extends KaartChildComponentBase {
   readonly filterTotaalOnbekend$: rx.Observable<boolean>;
   readonly filterTotaalOpgehaald$: rx.Observable<boolean>;
   readonly filterTotaalOpTeHalen$: rx.Observable<boolean>;
+  readonly filterTotaalOphalenMislukt$: rx.Observable<boolean>;
 
   get filter(): fltr.ExpressionFilter {
     return <fltr.ExpressionFilter>this.laag.filterinstellingen.spec;
@@ -54,6 +55,7 @@ export class FilterDetailComponent extends KaartChildComponentBase {
     this.filterTotaalOnbekend$ = filterTotaalChanges$.pipe(map(filterTotaal => filterTotaal.type === "TeVeelData"));
     this.filterTotaalOpTeHalen$ = filterTotaalChanges$.pipe(map(filterTotaal => filterTotaal.type === "TotaalOpTeHalen"));
     this.filterTotaalOpgehaald$ = filterTotaalChanges$.pipe(map(filterTotaal => filterTotaal.type === "TotaalOpgehaald"));
+    this.filterTotaalOphalenMislukt$ = filterTotaalChanges$.pipe(map(filterTotaal => filterTotaal.type === "TotaalOphalenMislukt"));
     this.filterTotalen$ = filterTotaalChanges$.pipe(
       filter(isTotaalOpgehaald),
       map(totaal => `${totaal.totaal}/${totaal.collectionTotaal}`)
