@@ -374,21 +374,16 @@ export class NosqlFsSource extends ol.source.Vector {
   }
 
   fetchTotal$(): rx.Observable<FilterTotaal> {
-    const filterFunc = () =>
-      fetchObs$(this.composeFeatureCollectionTotalUrl(1), getWithCommonHeaders()).pipe(
-        split(featureDelimiter),
-        mapToFeatureCollection,
-        map(featureCollection => featureCollection.total)
-      );
-
     return this.fetchCollectionSummary$().pipe(
       switchMap(summary =>
         summary.count > 100000
           ? rx.of(teVeelData(summary.count))
           : this.filterSubj.pipe(
-              distinctUntilChanged(),
               switchMap(() =>
-                filterFunc().pipe(
+                fetchObs$(this.composeFeatureCollectionTotalUrl(1), getWithCommonHeaders()).pipe(
+                  split(featureDelimiter),
+                  mapToFeatureCollection,
+                  map(featureCollection => featureCollection.total),
                   map(totaalOpgehaald(summary.count)),
                   startWith(totaalOpTeHalen())
                 )
