@@ -1,7 +1,7 @@
 import { array } from "fp-ts";
 import { concat, Function1, not, Refinement } from "fp-ts/lib/function";
 import { fromNullable, none, Option } from "fp-ts/lib/Option";
-import { setoidNumber } from "fp-ts/lib/Setoid";
+import { setoidNumber, setoidString } from "fp-ts/lib/Setoid";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import {
@@ -164,9 +164,10 @@ function featuresFromServer(
   source: NosqlFsSource,
   laagnaam: string,
   gebruikCache: boolean,
-  extent: ol.Extent
+  extent: ol.Extent,
+  composedQueryUrl: string
 ): rx.Observable<GeoJsonLike[]> {
-  const batchedFeatures$ = source.fetchFeatures$(extent, gebruikCache).pipe(
+  const batchedFeatures$ = source.fetchFeatures$(composedQueryUrl, gebruikCache).pipe(
     bufferCount(BATCH_SIZE),
     catchError(error => (gebruikCache ? featuresFromCache(laagnaam, extent) : rx.throwError(error)))
   );
@@ -200,6 +201,7 @@ export class NosqlFsSource extends ol.source.Vector {
   private offline = false;
   private busyCount = 0;
   private outstandingRequests: ol.Extent[] = [];
+  private outstandingQueries: string[] = [];
   private userFilter: Option<string> = none; // Een arbitraire filter bovenop de basisfilter
   private userFilterActive = false;
 
@@ -221,9 +223,11 @@ export class NosqlFsSource extends ol.source.Vector {
         const source: NosqlFsSource = this;
         source.busyCount += 1;
         source.outstandingRequests = array.snoc(source.outstandingRequests, extent);
+        const queryUrlVoorExtent = this.composeQueryUrl(extent);
+        source.outstandingQueries = array.snoc(source.outstandingQueries, queryUrlVoorExtent);
         const featuresLoader$: rx.Observable<ol.Feature[]> = (source.offline
           ? featuresFromCache(laagnaam, extent)
-          : featuresFromServer(source, laagnaam, gebruikCache, extent)
+          : featuresFromServer(source, laagnaam, gebruikCache, extent, queryUrlVoorExtent)
         ).pipe(
           map(geojsons => geojsons.map(toOlFeature(laagnaam))),
           share()
@@ -234,7 +238,11 @@ export class NosqlFsSource extends ol.source.Vector {
             source.dispatchLoadEvent(le.PartReceived);
             // Als we ondertussen op een ander stuk van de kaart aan het kijken zijn, dan hoeven we de features van een
             // oude request niet meer toe te voegen
-            if (array.last(source.outstandingRequests).contains(array.getSetoid(setoidNumber), extent)) {
+            // Zelfde met filter; als de filter is gewijzigd, dan zijn wij niet meer geïnteresseerd in de oude waarden
+            if (
+              array.last(source.outstandingRequests).contains(array.getSetoid(setoidNumber), extent) ||
+              array.last(source.outstandingQueries).contains(setoidString, queryUrlVoorExtent)
+            ) {
               source.addFeatures([...newFeatures.values()]);
             }
           },
@@ -272,6 +280,7 @@ export class NosqlFsSource extends ol.source.Vector {
               // dezelfde extent meer dan eens in de array zit.
               if (source.busyCount === 0) {
                 source.outstandingRequests = [];
+                source.outstandingQueries = [];
               }
             }
           }
@@ -359,15 +368,15 @@ export class NosqlFsSource extends ol.source.Vector {
     return this.laagnaam;
   }
 
-  fetchFeatures$(extent: number[], gebruikCache: boolean): rx.Observable<GeoJsonLike> {
+  fetchFeatures$(composedQueryUrl: string, gebruikCache: boolean): rx.Observable<GeoJsonLike> {
     if (gebruikCache) {
-      return fetchWithTimeoutObs$(this.composeQueryUrl(extent), getWithCommonHeaders(), FETCH_TIMEOUT).pipe(
+      return fetchWithTimeoutObs$(composedQueryUrl, getWithCommonHeaders(), FETCH_TIMEOUT).pipe(
         split(featureDelimiter),
         filter(lijn => lijn.trim().length > 0),
         mapToGeoJson
       );
     } else {
-      return fetchObs$(this.composeQueryUrl(extent), getWithCommonHeaders()).pipe(
+      return fetchObs$(composedQueryUrl, getWithCommonHeaders()).pipe(
         split(featureDelimiter),
         filter(lijn => lijn.trim().length > 0),
         mapToGeoJson
@@ -399,12 +408,12 @@ export class NosqlFsSource extends ol.source.Vector {
   }
 
   setUserFilter(cqlFilter: fltr.Filter, filterActive: boolean) {
-    const mayebCql = FilterCql.cql(cqlFilter);
-    this.userFilter = mayebCql;
+    const maybeCql = FilterCql.cql(cqlFilter);
+    this.userFilter = maybeCql;
     this.userFilterActive = filterActive;
     this.clear();
     this.refresh();
-    forEach(mayebCql, cql => this.filterSubj.next(cql));
+    forEach(maybeCql, cql => this.filterSubj.next(cql));
   }
 
   dispatchLoadEvent(evt: le.DataLoadEvent) {
