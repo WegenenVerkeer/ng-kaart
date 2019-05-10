@@ -14,7 +14,7 @@ import { bufferCount, debounceTime, distinctUntilChanged, map, switchMap, thrott
 
 import { FilterAanpassend, GeenFilterAanpassingBezig } from "../filter/filter-aanpassing-state";
 import { Filter as fltr } from "../filter/filter-model";
-import { FilterTotaal, totaalOpTeHalen } from "../filter/filter-totaal";
+import { FilterTotaal, totaalOphalenMislukt, totaalOpTeHalen } from "../filter/filter-totaal";
 import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
 import * as arrays from "../util/arrays";
 import { refreshTiles } from "../util/cachetiles";
@@ -1381,8 +1381,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             const updatedLaag = pasLaagFilterAan(laag.filterinstellingen.spec, laag.filterinstellingen.actief, totaal)(laag);
             const updatedModel = pasLaagInModelAan(model)(updatedLaag);
             zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
-          },
-          error: e => kaartLogger.error("fout in berekenen totalen")
+          }
         })
       );
     }

@@ -25,7 +25,14 @@ import {
 
 import { FilterCql } from "../filter/filter-cql";
 import { Filter as fltr } from "../filter/filter-model";
-import { FilterTotaal, isTotaalTerminaal, teVeelData, totaalOpgehaald, totaalOpTeHalen } from "../filter/filter-totaal";
+import {
+  FilterTotaal,
+  isTotaalTerminaal,
+  teVeelData,
+  totaalOpgehaald,
+  totaalOphalenMislukt,
+  totaalOpTeHalen
+} from "../filter/filter-totaal";
 import * as le from "../kaart/kaart-load-events";
 import { kaartLogger } from "../kaart/log";
 import { Feature, toOlFeature } from "../util/feature";
@@ -206,7 +213,6 @@ export class NosqlFsSource extends ol.source.Vector {
   private userFilterActive = false;
 
   private filterSubj: rx.Subject<string> = new rx.BehaviorSubject("1 = 1");
-  private readonly filterTotal$: rx.Observable<FilterTotaal>;
 
   constructor(
     private readonly database: string,
@@ -288,33 +294,8 @@ export class NosqlFsSource extends ol.source.Vector {
       },
       strategy: ol.loadingstrategy.bbox
     });
-
-    const filterTotal$ = () =>
-      fetchObs$(this.composeFeatureCollectionTotalUrl(1), getWithCommonHeaders()).pipe(
-        split(featureDelimiter),
-        mapToFeatureCollection,
-        map(featureCollection => featureCollection.total)
-      );
-
-    // initialiseer ophalen van totalen
-    this.filterTotal$ = this.fetchCollectionSummary$().pipe(
-      switchMap(summary =>
-        summary.count > 100000
-          ? rx.of(teVeelData(summary.count))
-          : this.filterSubj.pipe(
-              distinctUntilChanged(),
-              switchMap(() =>
-                filterTotal$().pipe(
-                  map(totaalOpgehaald(summary.count)),
-                  startWith(totaalOpTeHalen())
-                )
-              )
-            )
-      ),
-      shareReplay(1) // Wie later leest moet de meest recente waarden krijgen. Dit is een cache.
-    );
   }
-
+  //
   private viewAndFilterParams(respectUserFilterActivity = true) {
     return {
       ...this.view.fold({}, v => ({ "with-view": encodeURIComponent(v) })),
@@ -393,7 +374,25 @@ export class NosqlFsSource extends ol.source.Vector {
   }
 
   fetchTotal$(): rx.Observable<FilterTotaal> {
-    return this.filterTotal$.pipe(takeWhile(not(isTotaalTerminaal), true));
+    return this.fetchCollectionSummary$().pipe(
+      switchMap(summary =>
+        summary.count > 100000
+          ? rx.of(teVeelData(summary.count))
+          : this.filterSubj.pipe(
+              switchMap(() =>
+                fetchObs$(this.composeFeatureCollectionTotalUrl(1), getWithCommonHeaders()).pipe(
+                  split(featureDelimiter),
+                  mapToFeatureCollection,
+                  map(featureCollection => featureCollection.total),
+                  map(totaalOpgehaald(summary.count)),
+                  startWith(totaalOpTeHalen())
+                )
+              )
+            )
+      ),
+      catchError(err => rx.of(totaalOphalenMislukt(err))),
+      takeWhile(not(isTotaalTerminaal), true)
+    );
   }
 
   private fetchCollectionSummary$(): rx.Observable<CollectionSummary> {
