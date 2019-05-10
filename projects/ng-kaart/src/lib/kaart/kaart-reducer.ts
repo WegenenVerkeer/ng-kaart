@@ -931,7 +931,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return function(feature: ol.Feature, resolution: number): FeatureStyle {
         const executeStyleSelector: (_: ss.StyleSelector) => FeatureStyle = ss.matchStyleSelector(
           (s: ss.StaticStyle) => s.style,
-          (s: ss.DynamicStyle) => s.styleFunction(feature, resolution),
+          (s: ss.DynamicStyle) => s.styleFunction(feature, resolution)!,
           (s: ss.Styles) => s.styles
         );
 
