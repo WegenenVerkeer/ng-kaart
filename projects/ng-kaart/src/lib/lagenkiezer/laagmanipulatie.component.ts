@@ -152,7 +152,13 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
     this.runInViewReady(
       this.filterActief$.pipe(
         sample(toggleFilterActief$),
-        tap(actief => this.dispatch(cmd.ActiveerFilter(this.laag.titel, !actief, kaartLogOnlyWrapper)))
+        tap(actief => {
+          const wordtActief = !actief;
+          this.dispatch(cmd.ActiveerFilter(this.laag.titel, wordtActief, kaartLogOnlyWrapper));
+          if (wordtActief) {
+            this.dispatch(cmd.MaakLaagZichtbaarCmd(this.laag.titel, kaartLogOnlyWrapper));
+          }
+        })
       )
     );
   }
