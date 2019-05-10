@@ -6,11 +6,11 @@ import * as matchers from "../util/matchers";
 // Een namespace is nodig omdat verschillende types dezelfde naam hebben als die voor stijlen en er kan maar 1 naam
 // geëxporteerd worden buiten de module.
 export namespace Filter {
-  export type Filter = PureFilter | ExpressionFilter; // Later ook | RawCQLFilter
+  export type Filter = EmptyFilter | ExpressionFilter; // Later ook | RawCQLFilter
 
   // TODO hernoemen naar Empty
-  export interface PureFilter {
-    readonly kind: "PureFilter";
+  export interface EmptyFilter {
+    readonly kind: "EmptyFilter";
   }
 
   export interface ExpressionFilter {
@@ -130,8 +130,8 @@ export namespace Filter {
     readonly label: string;
   }
 
-  export const PureFilter: PureFilter = { kind: "PureFilter" };
-  export const pure: Lazy<Filter> = constant(PureFilter);
+  export const EmptyFilter: EmptyFilter = { kind: "EmptyFilter" };
+  export const empty: Lazy<Filter> = constant(EmptyFilter);
 
   export const ExpressionFilter: Function2<Option<string>, Expression, ExpressionFilter> = (name, expression) => ({
     kind: "ExpressionFilter",
@@ -170,7 +170,7 @@ export namespace Filter {
 
   export const isEmpty: Predicate<Filter> = matchFilter({
     ExpressionFilter: constant(false),
-    PureFilter: constant(true)
+    EmptyFilter: constant(true)
   });
 
   export const isDefined: Predicate<Filter> = not(isEmpty);

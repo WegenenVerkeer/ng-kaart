@@ -244,7 +244,7 @@ export function Laagfilterinstellingen(spec: fltr.Filter, actief: boolean, totaa
   };
 }
 
-export const stdLaagfilterinstellingen = Laagfilterinstellingen(fltr.pure(), true, totaalOpTeHalen());
+export const stdLaagfilterinstellingen = Laagfilterinstellingen(fltr.empty(), true, totaalOpTeHalen());
 
 ////////////////////////////
 // Manipulatie en inspectie

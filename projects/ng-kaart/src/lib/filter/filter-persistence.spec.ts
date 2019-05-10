@@ -3,7 +3,7 @@ import { definitieToFilter, filterToDefinitie } from "./filter-persistence";
 
 describe("De filterinterpreter", () => {
   it("moet een roundtrip serialisatie/deserialisatie van een filter kunnen uitvoeren", () => {
-    const filter: fltr.Filter = fltr.PureFilter;
+    const filter: fltr.Filter = fltr.empty();
     const definitie = filterToDefinitie(filter);
     const result = definitieToFilter(definitie.encoding, definitie.filterDefinitie);
 

@@ -21,11 +21,11 @@ describe("De filterinterpreter", () => {
   const property: fltr.Property = fltr.Property("string", "prop", "Property");
   const literal: fltr.Literal = fltr.Literal("string", "value");
   describe("bij het interpreteren van geldige structuren", () => {
-    it("moet een 'pure' filter kunnen verwerken", () => {
-      const pure: fltr.Filter = fltr.PureFilter;
-      const result = AwvV0FilterInterpreters.jsonAwv0Definition(pure);
+    it("moet een 'empty' filter kunnen verwerken", () => {
+      const empty: fltr.Filter = fltr.empty();
+      const result = AwvV0FilterInterpreters.jsonAwv0Definition(empty);
       expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(pure);
+      expect(result.getOrElse(undefined)).toEqual(empty);
     });
     it("moet een filter met 1 'gelijk aan' kunnen verwerken", () => {
       const eq: RawExpressionFilter = {

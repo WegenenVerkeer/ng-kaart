@@ -394,7 +394,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               const toegevoegdeLaag: ke.ToegevoegdeLaag = ke.asToegevoegdeNosqlVectorLaag(toegevoegdeVectorLaagCommon).fold(
                 toegevoegdeVectorLaagCommon, //
                 tgnslg => {
-                  const [filter, actief] = cmnd.filterinstellingen.fold<[fltr.Filter, boolean]>([fltr.pure(), false], fi => [
+                  const [filter, actief] = cmnd.filterinstellingen.fold<[fltr.Filter, boolean]>([fltr.empty(), false], fi => [
                     fi.spec,
                     fi.actief
                   ]);

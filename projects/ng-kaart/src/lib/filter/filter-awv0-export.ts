@@ -31,16 +31,16 @@ export namespace FilterText {
   });
 
   export const filterText: Generator<fltr.Filter> = fltr.matchFilter({
-    PureFilter: () => "alle waarden",
+    EmptyFilter: () => "alle waarden",
     ExpressionFilter: exprFltr => expressionText(exprFltr.expression)
   });
 }
 
 export namespace FilterAwv0Json {
   const fixName: Function1<fltr.Filter, any> = filter => {
-    return fltr.matchFilter<any>({
-      pure: () => filter,
-      expression: expr => ({ ...filter, name: expr.name.toUndefined() })
+    return fltr.matchFilter({
+      EmptyFilter: () => filter,
+      ExpressionFilter: expr => ({ ...filter, name: expr.name.toUndefined() })
     })(filter);
   };
 

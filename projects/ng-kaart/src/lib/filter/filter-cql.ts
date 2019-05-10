@@ -31,7 +31,7 @@ export namespace FilterCql {
   });
 
   export const cql: Function1<fltr.Filter, Option<string>> = fltr.matchFilter({
-    PureFilter: constant(none),
+    EmptyFilter: constant(none),
     ExpressionFilter: pipe(
       expr => expr.expression,
       expressionCql,

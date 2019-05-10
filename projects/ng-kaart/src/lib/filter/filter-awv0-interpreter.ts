@@ -8,7 +8,7 @@ export namespace AwvV0FilterInterpreters {
   const byKind: <A>(interpretersByKind: { [k: string]: oi.Interpreter<A> }) => oi.Interpreter<A> = interpretersByKind =>
     oi.byTypeDiscriminator("kind", interpretersByKind);
 
-  const pureFilter: oi.Interpreter<fltr.PureFilter> = oi.pure(fltr.PureFilter);
+  const pureFilter: oi.Interpreter<fltr.EmptyFilter> = oi.pure(fltr.EmptyFilter);
 
   const typeType: oi.Interpreter<fltr.TypeType> = oi.enu<fltr.TypeType>(
     "boolean",
@@ -90,6 +90,6 @@ export namespace AwvV0FilterInterpreters {
 
   export const jsonAwv0Definition: oi.Interpreter<fltr.Filter> = byKind<fltr.Filter>({
     ExpressionFilter: expressionFilter,
-    PureFilter: pureFilter
+    EmptyFilter: pureFilter
   });
 }
