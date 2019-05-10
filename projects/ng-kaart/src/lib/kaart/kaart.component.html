@@ -37,7 +37,8 @@
           <awv-kaart-open-street-view *ngIf="aanwezigeElementen.has('Streetview')"></awv-kaart-open-street-view>
           <awv-kaart-meten *ngIf="aanwezigeElementen.has('Meten')"></awv-kaart-meten>
           <awv-kaart-multi-meten *ngIf="aanwezigeElementen.has('MultiMeten')"></awv-kaart-multi-meten>
-          <awv-kaart-mijn-locatie></awv-kaart-mijn-locatie>
+          <awv-kaart-mijn-locatie *ngIf="aanwezigeElementen.has('Mijnlocatie')"></awv-kaart-mijn-locatie>
+          <awv-kaart-mijn-mobiele-locatie *ngIf="aanwezigeElementen.has('MijnMobielelocatie')"></awv-kaart-mijn-mobiele-locatie>
           <awv-kaart-zoom *ngIf="aanwezigeElementen.has('Zoomknoppen')"></awv-kaart-zoom>
           <awv-kaart-bevragen *ngIf="aanwezigeElementen.has('Bevraagkaart')"></awv-kaart-bevragen>
         </div>

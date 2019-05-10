@@ -38,6 +38,19 @@ Lagen worden toegevoegd aan de kaart in de volgorde die waarin ze gedefinieerd z
 er daarom voor dat je eerst achtergrondlagen toevoegt en dan pas vectorlagen, vermits achtergrondlagen meestal
 opaak zijn en de vectorlagen anders niet zichtbaar zullen zijn.
 
+### Slepen van lagen
+
+Om het slepen van lagen op mobiele toestellen te ondersteunen, dient de oproepende applicatie gebruik te maken van een polyfill die touch events voor draggable componenten omzet in drag events (mobiele toestellen doen dit standaard niet).
+
+Voeg dit toe in polyfills.ts:
+
+    import "drag-drop-touch/DragDropTouch"; // translates touch events into standard HTML5 drag drop events
+
+En dit in package.json:
+
+    "drag-drop-touch": "1.3.0",
+
+
 ### Code testen
 
 Deze component library is voorzien van een test Angular app. Omdat de build van de library en de testApp volledig gescheiden zijn, moet je eerst de library builden en watchen voor changes:

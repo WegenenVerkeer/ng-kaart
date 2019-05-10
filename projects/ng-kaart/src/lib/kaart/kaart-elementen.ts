@@ -80,7 +80,7 @@ export type VeldType = "string" | "integer" | "double" | "geometry" | "date" | "
 
 export interface VeldInfo {
   readonly naam: string; // naam zoals gekend in de feature
-  readonly label: string; // titel om weer te geven in de UI
+  readonly label?: string; // titel om weer te geven in de UI
   readonly type: VeldType;
   readonly isBasisVeld: boolean;
   readonly constante?: string;

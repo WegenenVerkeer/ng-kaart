@@ -73,4 +73,4 @@ import "zone.js/dist/zone"; // Included with Angular CLI.
 /***************************************************************************************************
  * APPLICATION IMPORTS
  */
-import "hammerjs/hammer";
+import "drag-drop-touch/DragDropTouch"; // translates touch events into standard HTML5 drag drop events
