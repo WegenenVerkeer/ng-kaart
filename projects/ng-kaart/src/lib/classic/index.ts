@@ -23,6 +23,8 @@ import { ClassicLegendeLijnItemComponent } from "./legende/classic-legende-lijn-
 import { ClassicLegendePolygoonItemComponent } from "./legende/classic-legende-polygoon-item.component";
 import { ClassicMetenComponent } from "./meten/classic-meet.component";
 import { ClassicMultiMetenComponent } from "./meten/classic-multi-meet.component";
+import { ClassicMijnLocatieComponent } from "./mijn-locatie/classic-mijn-locatie.component";
+import { ClassicMijnMobieleLocatieComponent } from "./mijn-locatie/classic-mijn-mobiele-locatie.component";
 import { ClassicSchaalComponent } from "./schaal/classic-schaal.component";
 import { ClassicStandaardInteractiesComponent } from "./standaard-interacties/classic-standaard-interacties.component";
 import { ClassicStreetviewComponent } from "./streetview/classic-streetview.component";
@@ -64,6 +66,8 @@ export const componentMap = {
   "awv-legende-image-item": ClassicLegendeImageItemComponent,
   "awv-legende-lijn-item": ClassicLegendeLijnItemComponent,
   "awv-legende-polygoon-item": ClassicLegendePolygoonItemComponent,
+  "awv-kaart-mijn-locatie": ClassicMijnLocatieComponent,
+  "awv-kaart-mijn-mobiele-locatie": ClassicMijnMobieleLocatieComponent,
   "awv-kaart-classic-dummy": KaartClassicComponent
 };
 
@@ -97,6 +101,8 @@ const components = [
   ClassicWmtsLaagComponent,
   ClassicZoekerComponent,
   ClassicZoomComponent,
+  ClassicMijnLocatieComponent,
+  ClassicMijnMobieleLocatieComponent,
   KaartClassicComponent
 ];
 
@@ -128,6 +134,8 @@ export * from "./legende/classic-legende-bolletje-item.component";
 export * from "./legende/classic-legende-image-item.component";
 export * from "./legende/classic-legende-lijn-item.component";
 export * from "./legende/classic-legende-polygoon-item.component";
+export * from "./mijn-locatie/classic-mijn-locatie.component";
+export * from "./mijn-locatie/classic-mijn-mobiele-locatie.component";
 export * from "./log";
 export * from "./meten/classic-meet.component";
 export * from "./openlayers-style/classic-openlayers-style.component";

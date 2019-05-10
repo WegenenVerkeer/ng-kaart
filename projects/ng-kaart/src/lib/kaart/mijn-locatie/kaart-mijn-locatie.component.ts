@@ -4,7 +4,7 @@ import { Function1, Function3, Function4 } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, filter, map } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, filter, map, pairwise, scan, shareReplay, startWith } from "rxjs/operators";
 
 import { catOptions } from "../../util/operators";
 import * as ke from "../kaart-elementen";
@@ -20,13 +20,55 @@ const MijnLocatieLaagNaam = "Mijn Locatie";
 
 const TrackingInterval = 500; // aantal milliseconden tussen tracking updates
 
-interface Resultaat {
-  zoom: number;
-  doel: number;
-  positie: Position;
-}
+export type State = "TrackingDisabled" | "NoTracking" | "Tracking" | "TrackingCenter" | "TrackingAutoRotate";
 
-const Resultaat: Function3<number, number, Position, Resultaat> = (zoom, doel, positie) => ({ zoom: zoom, doel: doel, positie: positie });
+export type Event = "ActiveerEvent" | "DeactiveerEvent" | "PanEvent" | "ZoomEvent" | "RotateEvent" | "ClickEvent";
+
+export type EventMap = { [event in Event]: State };
+export type StateMachine = { [state in State]: EventMap };
+
+export const NoOpStateMachine: StateMachine = {
+  NoTracking: {
+    ClickEvent: "NoTracking",
+    ActiveerEvent: "NoTracking",
+    DeactiveerEvent: "NoTracking",
+    PanEvent: "NoTracking",
+    ZoomEvent: "NoTracking",
+    RotateEvent: "NoTracking"
+  },
+  TrackingCenter: {
+    ClickEvent: "TrackingCenter",
+    PanEvent: "TrackingCenter",
+    ActiveerEvent: "TrackingCenter",
+    DeactiveerEvent: "NoTracking",
+    ZoomEvent: "TrackingCenter",
+    RotateEvent: "TrackingCenter"
+  },
+  TrackingDisabled: {
+    ClickEvent: "TrackingDisabled",
+    ActiveerEvent: "NoTracking",
+    DeactiveerEvent: "NoTracking",
+    PanEvent: "TrackingDisabled",
+    ZoomEvent: "TrackingDisabled",
+    RotateEvent: "TrackingDisabled"
+  },
+  Tracking: {
+    ClickEvent: "Tracking",
+    ActiveerEvent: "Tracking",
+    DeactiveerEvent: "NoTracking",
+    PanEvent: "Tracking",
+    ZoomEvent: "Tracking",
+    RotateEvent: "Tracking"
+  },
+  TrackingAutoRotate: {
+    ClickEvent: "TrackingAutoRotate",
+    ActiveerEvent: "TrackingAutoRotate",
+    DeactiveerEvent: "NoTracking",
+    PanEvent: "TrackingAutoRotate",
+    ZoomEvent: "TrackingAutoRotate",
+    RotateEvent: "TrackingAutoRotate"
+  }
+};
 
 const pasLocatieFeatureAan: Function4<ol.Feature, ol.Coordinate, number, number, ol.Feature> = (feature, coordinate, zoom, accuracy) => {
   feature.setGeometry(new ol.geom.Point(coordinate));
@@ -34,6 +76,10 @@ const pasLocatieFeatureAan: Function4<ol.Feature, ol.Coordinate, number, number,
   feature.changed(); // force redraw meteen
   return feature;
 };
+
+const moetCentreren = (state: State) => state === "TrackingCenter" || state === "TrackingAutoRotate";
+
+const moetLocatieTonen = (state: State) => state === "Tracking" || state === "TrackingCenter" || state === "TrackingAutoRotate";
 
 const zetStijl: Function3<ol.Feature, number, number, void> = (feature, zoom, accuracy) => feature.setStyle(locatieStijlFunctie(accuracy));
 
@@ -78,11 +124,17 @@ const locatieStijlFunctie: Function1<number, ol.FeatureStyleFunction> = accuracy
   styleUrls: ["./kaart-mijn-locatie.component.scss"]
 })
 export class KaartMijnLocatieComponent extends KaartModusComponent implements OnInit, AfterViewInit {
+  constructor(zone: NgZone, private readonly parent: KaartComponent) {
+    super(parent, zone);
+  }
+
   private viewinstellingen$: rx.Observable<Viewinstellingen> = rx.EMPTY;
   private zoomdoelSetting$: rx.Observable<Option<number>> = rx.EMPTY;
-  private activeerSubj: rx.Subject<boolean> = new rx.Subject<boolean>();
   private locatieSubj: rx.Subject<Position> = new rx.Subject<Position>();
 
+  private eventsSubj: rx.Subject<Event> = new rx.Subject<Event>();
+
+  currentState$: rx.Observable<State> = rx.of("TrackingDisabled" as State);
   enabled$: rx.Observable<boolean> = rx.of(true);
 
   @ViewChildren("locateBtn")
@@ -91,28 +143,19 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
   private mijnLocatie: Option<ol.Feature> = none;
   private watchId: Option<number> = none;
 
+  private gevraagdeZoom: Option<number> = none;
+  private gevraagdeRotatie: Option<number> = none;
+
   modus(): string {
     return MijnLocatieUiSelector;
   }
 
-  // geactiveerd van buiten af (bij enabled andere modus)
   activeer() {
-    this.activeerSubj.next(true);
+    this.eventsSubj.next("ActiveerEvent");
   }
 
   deactiveer() {
-    this.activeerSubj.next(false);
-    this.verwijderFeature();
-  }
-
-  // deactiveer bij pannen. Locatie laten staan
-  deactiveerTracking(): void {
-    this.activeerSubj.next(false);
-    this.zetModeAf();
-  }
-
-  constructor(zone: NgZone, private readonly parent: KaartComponent) {
-    super(parent, zone);
+    this.eventsSubj.next("DeactiveerEvent");
   }
 
   ngOnInit(): void {
@@ -144,32 +187,97 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
       map(vi => vi.zoom)
     );
 
-    // start of stop tracking
-    this.bindToLifeCycle(this.activeerSubj).subscribe(actief => (actief ? this.startTracking() : this.stopTracking()));
+    // Event handlers
+    this.bindToLifeCycle(this.parent.modelChanges.dragInfo$).subscribe(() => {
+      this.eventsSubj.next("PanEvent");
+    });
+
+    // We moeten de rotatie-events die we zelf triggeren negeren.
+    this.bindToLifeCycle(this.parent.modelChanges.rotatie$).subscribe(rotatie => {
+      this.gevraagdeRotatie.foldL(
+        () => this.eventsSubj.next("RotateEvent"),
+        gevraagdeRotatie => {
+          if (gevraagdeRotatie === rotatie) {
+            // Het is waarschijnlijk de rotatie die wij gevraagd hebben voor de autorotate.
+            this.gevraagdeRotatie = none;
+          }
+        }
+      );
+    });
+
+    // We moeten de zoom-events die we zelf triggeren negeren.
+    this.bindToLifeCycle(zoom$).subscribe(zoom => {
+      this.gevraagdeZoom.foldL(
+        () => this.eventsSubj.next("ZoomEvent"),
+        gevraagdeZoom => {
+          if (gevraagdeZoom === zoom) {
+            // Het is waarschijnlijk de zoom die wij gevraagd hebben voor de autozoom.
+            this.gevraagdeZoom = none;
+          }
+        }
+      );
+    });
+
+    // "State machine"
+    const stateMachine: StateMachine = this.getStateMachine();
+
+    this.currentState$ = this.eventsSubj.pipe(
+      shareReplay(1),
+      startWith("TrackingDisabled"),
+      scan<Event, State>((state: State, event: Event) => {
+        return stateMachine[state][event];
+      })
+    );
 
     // pas positie aan bij nieuwe locatie
     this.bindToLifeCycle(
-      rx.combineLatest(zoom$, zoomdoel$, this.locatieSubj.pipe(debounceTime(TrackingInterval))).pipe(
-        filter(() => this.isActief()),
-        map(([zoom, doel, locatie]) => Resultaat(zoom, doel, locatie))
+      rx.combineLatest(zoom$, zoomdoel$, this.locatieSubj.pipe(debounceTime(TrackingInterval)), this.currentState$.pipe(pairwise())).pipe(
+        filter(([, , , [, state]]) => {
+          return this.isTrackingActief(state);
+        }),
+        map(([zoom, doel, locatie, [prevState, state]]) => {
+          return { zoom: zoom, doelzoom: doel, position: locatie, state: state, stateVeranderd: prevState !== state };
+        })
       )
-    ).subscribe(resultaat => this.zetMijnPositie(resultaat.positie, resultaat.zoom, resultaat.doel));
+    ).subscribe(r => this.zetMijnPositie(r.position, r.zoom, r.doelzoom, r.state, r.stateVeranderd));
 
-    // deactiveer tracking bij pannen kaart
-    this.bindToLifeCycle(this.parent.modelChanges.dragInfo$.pipe(filter(() => this.isActief()))).subscribe(() => {
-      this.deactiveerTracking();
+    this.bindToLifeCycle(this.currentState$).subscribe(state => {
+      if ((moetCentreren(state) || moetLocatieTonen(state)) && this.watchId.isNone()) {
+        this.startTracking();
+      }
+      if (!(moetCentreren(state) || moetLocatieTonen(state)) && this.watchId.isSome()) {
+        this.stopTracking();
+      }
+      this.centreerIndienNodig(state);
     });
+
+    if (navigator.geolocation) {
+      this.eventsSubj.next("ActiveerEvent");
+    }
   }
 
-  private maakNieuwFeature(coordinate: ol.Coordinate, zoom: number, accuracy: number): Option<ol.Feature> {
+  isTrackingActief(state: State): boolean {
+    return state !== "TrackingDisabled" && state !== "NoTracking";
+  }
+
+  // Dit is het statemachine van deze modus: Altijd tussen TrackingCenter en NoTracking, initialState: NoTracking
+  protected getStateMachine(): StateMachine {
+    return {
+      ...NoOpStateMachine,
+      NoTracking: { ...NoOpStateMachine.NoTracking, ClickEvent: "TrackingCenter" },
+      TrackingCenter: { ...NoOpStateMachine.TrackingCenter, ClickEvent: "NoTracking", PanEvent: "NoTracking" }
+    };
+  }
+
+  click() {
+    this.eventsSubj.next("ClickEvent");
+  }
+
+  private maakNieuwFeature(coordinate: ol.Coordinate, accuracy: number): Option<ol.Feature> {
     const feature = new ol.Feature(new ol.geom.Point(coordinate));
     feature.setStyle(locatieStijlFunctie(accuracy));
     this.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, [feature], kaartLogOnlyWrapper));
     return some(feature);
-  }
-
-  private verwijderFeature() {
-    this.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, <Array<ol.Feature>>[], kaartLogOnlyWrapper));
   }
 
   private meldFout(fout: PositionError | string) {
@@ -184,46 +292,68 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
 
   private stopTracking() {
     this.watchId.map(watchId => navigator.geolocation.clearWatch(watchId));
+    this.watchId = none;
     this.mijnLocatie = none;
+    this.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, <Array<ol.Feature>>[], kaartLogOnlyWrapper));
   }
 
   private startTracking() {
     if (navigator.geolocation) {
-      this.watchId = some(
-        navigator.geolocation.watchPosition(
-          //
-          positie => this.locatieSubj.next(positie),
-          fout => this.meldFout(fout),
-          {
-            enableHighAccuracy: true,
-            timeout: 20000 // genoeg tijd geven aan gebruiker om locatie toestemming te geven
-          }
-        )
-      );
+      if (this.watchId.isNone()) {
+        this.watchId = some(
+          navigator.geolocation.watchPosition(
+            //
+            positie => this.locatieSubj.next(positie),
+            fout => this.meldFout(fout),
+            {
+              enableHighAccuracy: true,
+              timeout: 20000 // genoeg tijd geven aan gebruiker om locatie toestemming te geven
+            }
+          )
+        );
+      }
     } else {
       this.meldFout("Geen geolocatie mogelijk");
     }
   }
 
-  private zetMijnPositie(position: Position, zoom: number, doelzoom: number) {
+  private zetMijnPositie(position: Position, zoom: number, doelzoom: number, state: State, stateVeranderd: boolean) {
     const longLat: ol.Coordinate = [position.coords.longitude, position.coords.latitude];
     const coordinate = ol.proj.fromLonLat(longLat, "EPSG:31370");
 
-    this.mijnLocatie = this.mijnLocatie
-      .map(feature => pasLocatieFeatureAan(feature, coordinate, zoom, position.coords.accuracy))
-      .orElse(() => {
-        if (zoom <= 8) {
-          // We zitten nu op een te laag zoomniveau, dus gaan we eerst inzoomen.
-          this.dispatch(prt.VeranderZoomCmd(doelzoom, kaartLogOnlyWrapper));
-        }
-        return this.maakNieuwFeature(coordinate, zoom, position.coords.accuracy);
-      });
+    if (moetLocatieTonen(state)) {
+      this.mijnLocatie = this.mijnLocatie
+        .map(feature => pasLocatieFeatureAan(feature, coordinate, zoom, position.coords.accuracy))
+        .orElse(() => {
+          return this.maakNieuwFeature(coordinate, position.coords.accuracy);
+        })
+        .map(feature => {
+          if (stateVeranderd && zoom < doelzoom && moetCentreren(state)) {
+            // We zitten nu op een te laag zoomniveau, dus gaan we eerst inzoomen,
+            // maar we doen dit alleen wanneer we van een state veranderd zijn.
+            this.gevraagdeZoom = some(doelzoom);
+            this.dispatch(prt.VeranderZoomCmd(doelzoom, kaartLogOnlyWrapper));
+          }
+          return feature;
+        });
+    }
 
-    // kleine delay om OL tijd te geven eerst de icon te verplaatsen
-    setTimeout(() => this.dispatch(prt.VeranderMiddelpuntCmd(coordinate, some(TrackingInterval))), 50);
+    this.centreerIndienNodig(state);
   }
 
-  createLayer(): ke.VectorLaag {
+  private centreerIndienNodig(state: State) {
+    if (moetCentreren(state)) {
+      // kleine delay om OL tijd te geven eerst de icon te verplaatsen
+      this.mijnLocatie.map(feature =>
+        setTimeout(
+          () => this.dispatch(prt.VeranderMiddelpuntCmd((<ol.geom.Point>feature.getGeometry()).getCoordinates(), some(TrackingInterval))),
+          50
+        )
+      );
+    }
+  }
+
+  private createLayer(): ke.VectorLaag {
     return {
       type: ke.VectorType,
       titel: MijnLocatieLaagNaam,

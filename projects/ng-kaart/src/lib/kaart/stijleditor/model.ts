@@ -1,6 +1,6 @@
 import * as array from "fp-ts/lib/Array";
 import { Curried2, Endomorphism, Function1, Function2, Function3, Function4, Function5, Predicate, Refinement } from "fp-ts/lib/function";
-import { fromPredicate, none, Option, some } from "fp-ts/lib/Option";
+import { fromNullable, fromPredicate, none, Option, some } from "fp-ts/lib/Option";
 import { getArraySetoid, getStructSetoid, Setoid, setoidBoolean, setoidString } from "fp-ts/lib/Setoid";
 import { Lens, Optional } from "monocle-ts";
 
@@ -23,7 +23,7 @@ export interface VeldwaardeKleur {
 // is. We zouden dan met Option moeten werken en dan nog het none geval niet goed kunnen afhandelen.
 export interface VeldProps {
   readonly naam: string;
-  readonly label: string;
+  readonly label?: string;
   readonly weergavetype: ke.VeldType; // voor bijv. afronding en sortering
   readonly expressietype: sft.TypeType; // zoals gebruint in onze stijlfuncties
   readonly uniekeWaarden: sft.ValueType[];
@@ -117,7 +117,9 @@ export namespace VeldProps {
     fromPredicate(hasRightNumberOfUniekeWaarden)(veldinfo) //
       .chain(veld =>
         convertType(veld.type) //
-          .map(exprtype => create(veld.naam, veld.label, veld.type, exprtype, veld.uniekeWaarden!.map(convertData(exprtype))))
+          .map(exprtype =>
+            create(veld.naam, fromNullable(veld.label).getOrElse(""), veld.type, exprtype, veld.uniekeWaarden!.map(convertData(exprtype)))
+          )
       );
   export const setoidWithoutUniekeWaarden: Setoid<VeldProps> = getStructSetoid({
     expressietype: setoidString,
