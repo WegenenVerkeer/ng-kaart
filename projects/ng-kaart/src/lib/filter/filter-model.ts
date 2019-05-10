@@ -152,7 +152,12 @@ export namespace Filter {
     value: value
   });
 
-  export const matchFilter: <A>(_: matchers.FullKindMatcher<Filter, A, Filter["kind"]>) => Function1<Filter, A> = matchers.matchKind;
+  export interface FilterMatcher<A> {
+    readonly EmptyFilter: Lazy<A>;
+    readonly ExpressionFilter: Function1<ExpressionFilter, A>;
+  }
+
+  export const matchFilter: <A>(_: FilterMatcher<A>) => Function1<Filter, A> = matchers.matchKind;
 
   export interface ExpressionMatcher<A> {
     readonly And: Function1<Conjunction, A>;
@@ -167,6 +172,10 @@ export namespace Filter {
 
   export const matchTypeTypeWithFallback: <A>(_: matchers.FallbackMatcher<TypeType, A, TypeType>) => (_: TypeType) => A = switcher =>
     matchers.matchWithFallback(switcher)(identity);
+
+  export const matchBinaryComparisonOperator: <A>(
+    _: matchers.FullMatcher<BinaryComparisonOperator, A, BinaryComparisonOperator>
+  ) => Function1<BinaryComparisonOperator, A> = matcher => matchers.match(matcher)(identity);
 
   export const isEmpty: Predicate<Filter> = matchFilter({
     ExpressionFilter: constant(false),

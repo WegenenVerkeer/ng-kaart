@@ -8,6 +8,7 @@ import { Filter as fltr } from "../filter/filter-model";
 import { FilterTotaal, totaalOpTeHalen } from "../filter/filter-totaal";
 import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
 import { mapToOptionalByKey } from "../util/lenses";
+import * as maps from "../util/maps";
 import * as matchers from "../util/matchers";
 
 import { Legende } from "./kaart-legende";
@@ -261,7 +262,7 @@ export namespace ToegevoegdeVectorLaag {
   ]).composeIso(
     new Iso(
       map => Array.from(map.values()), //
-      infos => infos.reduce((m, info) => m.set(info.naam, info), new Map<string, VeldInfo>())
+      infos => maps.toMapByKey(infos, info => info.naam)
     )
   );
 

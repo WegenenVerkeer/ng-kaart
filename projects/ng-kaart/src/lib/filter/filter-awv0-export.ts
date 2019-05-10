@@ -39,7 +39,7 @@ export namespace FilterText {
 export namespace FilterAwv0Json {
   const fixName: Function1<fltr.Filter, any> = filter => {
     return fltr.matchFilter({
-      EmptyFilter: () => filter,
+      EmptyFilter: () => filter as any, // cast nodig omdat TS beide resultaattypes gelijk wil trekken and wat the eager is
       ExpressionFilter: expr => ({ ...filter, name: expr.name.toUndefined() })
     })(filter);
   };

@@ -1,17 +1,18 @@
 import * as array from "fp-ts/lib/Array";
 import { array as ArrayMonad } from "fp-ts/lib/Array";
-import { Endomorphism, Function1, Function2, Function3, Predicate } from "fp-ts/lib/function";
-import { none, Option, option, some } from "fp-ts/lib/Option";
+import { Curried2, Endomorphism, Function1, Function2, Function3, Function4, Predicate, Refinement } from "fp-ts/lib/function";
+import { fromNullable, none, Option, option, some } from "fp-ts/lib/Option";
 import { fromTraversable, Lens, Prism, Traversal } from "monocle-ts";
 
 import * as ke from "../kaart/kaart-elementen";
 import { applySequential } from "../util/function";
 import * as maps from "../util/maps";
+import * as matchers from "../util/matchers";
 
 import { Filter as fltr } from "./filter-model";
 
-// Hulp bij het opbouwen van een filter
-export namespace FilterBuilder {
+// Hulp bij het bewerken van een filter
+export namespace FilterEditor {
   export interface ConjunctionEditor {
     readonly termEditors: TermEditor[];
   }
@@ -24,7 +25,8 @@ export namespace FilterBuilder {
     readonly current: TermEditor;
     readonly disjunctions: DisjunctionsEditor;
 
-    readonly laag: ke.VectorLaag;
+    readonly name: Option<string>;
+    readonly laag: ke.ToegevoegdeVectorLaag;
   }
 
   export type TermEditor = FieldSelection | OperatorSelection | ValueSelection | Completed;
@@ -84,12 +86,28 @@ export namespace FilterBuilder {
     readonly selectedValue: SelectedValue;
   }
 
-  const veldinfos: Function1<ke.VectorLaag, ke.VeldInfo[]> = laag => maps.values(laag.velden);
-  const properties: Function1<ke.VectorLaag, fltr.Property[]> = laag =>
-    veldinfos(laag).map(vi => fltr.Property(vi.type, vi.naam, vi.label));
+  export const isAtLeastOperatorSelection: Refinement<TermEditor, OperatorSelection> = (termEditor): termEditor is OperatorSelection =>
+    termEditor.kind === "Operator" || termEditor.kind === "Value" || termEditor.kind === "Completed";
+  export const isAtLeastValueSelection: Refinement<TermEditor, ValueSelection> = (termEditor): termEditor is ValueSelection =>
+    termEditor.kind === "Value" || termEditor.kind === "Completed";
+  export const isCompleted: Refinement<TermEditor, Completed> = (termEditor): termEditor is Completed => termEditor.kind === "Completed";
+
+  const veldinfos: Function1<ke.ToegevoegdeVectorLaag, ke.VeldInfo[]> = laag =>
+    ke.ToegevoegdeVectorLaag.veldInfosLens.get(laag).filter(
+      // filter de speciale velden er uit
+      veld =>
+        fromNullable(veld.label).isSome() &&
+        fromNullable(veld.constante).isNone() &&
+        fromNullable(veld.template).isNone() &&
+        fromNullable(veld.html).isNone() &&
+        veld.type !== "geometry" &&
+        veld.type !== "json"
+    );
+  const properties: Function1<ke.ToegevoegdeVectorLaag, fltr.Property[]> = laag =>
+    veldinfos(laag).map(vi => fltr.Property(vi.type, vi.naam, fromNullable(vi.label).getOrElse(vi.naam)));
 
   // Initieer aanmaak van een Comparison
-  const FieldSelection: Function1<ke.VectorLaag, FieldSelection> = laag => ({ kind: "Field", properties: properties(laag) });
+  const FieldSelection: Function1<ke.ToegevoegdeVectorLaag, FieldSelection> = laag => ({ kind: "Field", properties: properties(laag) });
 
   const BinaryComparisonOperator: Function3<string, fltr.BinaryComparisonOperator, fltr.TypeType, BinaryComparisonOperator> = (
     label,
@@ -119,7 +137,7 @@ export namespace FilterBuilder {
   // Overgang van FieldSelection naar OperatorSelection -> De overgangen zouden beter Validations zijn om er rekening
   // mee te houden dat de overgang eventueel niet mogelijk is. Bijvoorbeeld wanneer een veld opgegeven wordt dat niet in
   // de lijst staat.
-  export const OperatorSelection: Function2<FieldSelection, fltr.Property, OperatorSelection> = (selection, property) => ({
+  export const OperatorSelection: Curried2<fltr.Property, FieldSelection, OperatorSelection> = property => selection => ({
     ...selection,
     kind: "Operator",
     selectedProperty: property,
@@ -143,14 +161,14 @@ export namespace FilterBuilder {
   const DisjunctionEditor: Function1<ConjunctionEditor[], DisjunctionsEditor> = conjunctionEditors => ({ conjunctionEditors });
 
   // Overgang van OperatorSelection naar ValueSelection
-  export const ValueSelection: Function2<OperatorSelection, ComparisonOperator, ValueSelection> = (selection, operator) =>
+  export const ValueSelection: Curried2<ComparisonOperator, OperatorSelection, ValueSelection> = operator => selection =>
     fltr.matchTypeTypeWithFallback({
       string: () => specificValueSelection(selection, operator, "FreeString"), // Hier moeten we kijken of er unieke waarden zijn
       fallback: () => specificValueSelection(selection, operator, "NoSelection")
     })(selection.selectedProperty.type);
 
   // Overgang van ValueSelection naar Completed
-  export const Completed: Function2<ValueSelection, SelectedValue, Completed> = (selection, selectedValue) => ({
+  export const Completed: Curried2<SelectedValue, ValueSelection, Completed> = selectedValue => selection => ({
     ...selection,
     kind: "Completed",
     selectedValue
@@ -159,10 +177,11 @@ export namespace FilterBuilder {
   const initConjunctionEditor: Function1<TermEditor, ConjunctionEditor> = termEditor => ConjunctionEditor([termEditor]);
 
   // Maak een compleete nieuwe builder aan
-  export const init: Function1<ke.VectorLaag, ExpressionEditor> = laag => {
+  export const init: Function1<ke.ToegevoegdeVectorLaag, ExpressionEditor> = laag => {
     const current = FieldSelection(laag);
     return {
       laag,
+      name: none,
       current: current,
       disjunctions: DisjunctionEditor([ConjunctionEditor([current])])
     };
@@ -188,6 +207,7 @@ export namespace FilterBuilder {
     Prism.fromPredicate(containsSameEditorAs(ee));
   const getConjunctionEditorPrism: Function1<ConjunctionEditor, Prism<ConjunctionEditor, ConjunctionEditor>> = conj =>
     Prism.fromPredicate(sameConjuctionEditorAs(conj));
+  const nameLens: Lens<ExpressionEditor, Option<string>> = Lens.fromProp("name");
 
   const getTermEditorTraversal: Function1<TermEditor, Traversal<ExpressionEditor, TermEditor>> = ee =>
     disjunctionsLens
@@ -218,6 +238,8 @@ export namespace FilterBuilder {
     ])(expressionEditor);
   };
 
+  export const setName: Function1<Option<string>, Endomorphism<ExpressionEditor>> = nameLens.set;
+
   export const setCurrent: Function1<TermEditor, Endomorphism<ExpressionEditor>> = currentLens.set;
 
   export const isCurrent: Function1<ExpressionEditor, Predicate<TermEditor>> = expressionEditor =>
@@ -247,13 +269,14 @@ export namespace FilterBuilder {
       .composeLens(termEditorsLens)
       .modify(ce => array.snoc(ce, FieldSelection(expressionEditor.laag)))(expressionEditor);
 
-  const ExpressionEditor: Function3<ke.VectorLaag, TermEditor, DisjunctionsEditor, ExpressionEditor> = (laag, current, disjunctions) => ({
+  const ExpressionEditor: Function4<Option<string>, ke.ToegevoegdeVectorLaag, TermEditor, DisjunctionsEditor, ExpressionEditor> = (
+    name,
     laag,
     current,
     disjunctions
-  });
+  ) => ({ name, laag, current, disjunctions });
 
-  const completedTermEditor: Function2<ke.VectorLaag, fltr.Comparison, TermEditor> = (laag, comparison) => ({
+  const completedTermEditor: Function2<ke.ToegevoegdeVectorLaag, fltr.Comparison, TermEditor> = (laag, comparison) => ({
     kind: "Completed",
     properties: properties(laag),
     selectedProperty: comparison.property,
@@ -263,12 +286,16 @@ export namespace FilterBuilder {
     valueSelector: "FreeString" // TODO laten afhangen van type
   });
 
-  const fromComparison: Function2<ke.VectorLaag, fltr.Comparison, ExpressionEditor> = (laag, comparison) => {
+  const fromComparison: Function3<Option<string>, ke.ToegevoegdeVectorLaag, fltr.Comparison, ExpressionEditor> = (
+    name,
+    laag,
+    comparison
+  ) => {
     const current: TermEditor = completedTermEditor(laag, comparison);
-    return ExpressionEditor(laag, current, DisjunctionEditor([ConjunctionEditor([current])]));
+    return ExpressionEditor(name, laag, current, DisjunctionEditor([ConjunctionEditor([current])]));
   };
 
-  const toConjunctionEditor: Function2<ke.VectorLaag, fltr.ConjunctionExpression, ConjunctionEditor> = (laag, expression) => {
+  const toConjunctionEditor: Function2<ke.ToegevoegdeVectorLaag, fltr.ConjunctionExpression, ConjunctionEditor> = (laag, expression) => {
     switch (expression.kind) {
       case "And":
         return ConjunctionEditor(ArrayMonad.chain([expression.left, expression.right], exp => toConjunctionEditor(laag, exp).termEditors));
@@ -277,13 +304,17 @@ export namespace FilterBuilder {
     }
   };
 
-  const fromConjunction: Function2<ke.VectorLaag, fltr.Conjunction, ExpressionEditor> = (laag, conjunction) => {
+  const fromConjunction: Function3<Option<string>, ke.ToegevoegdeVectorLaag, fltr.Conjunction, ExpressionEditor> = (
+    name,
+    laag,
+    conjunction
+  ) => {
     const conjunctionEditor = toConjunctionEditor(laag, conjunction);
     const current = conjunctionEditor.termEditors[0]; // Bij constructie heeft een Conjunction minstens 2 comparisons
-    return ExpressionEditor(laag, current, DisjunctionEditor([conjunctionEditor]));
+    return ExpressionEditor(name, laag, current, DisjunctionEditor([conjunctionEditor]));
   };
 
-  const toDisjunctionsEditor: Function2<ke.VectorLaag, fltr.Expression, DisjunctionsEditor> = (laag, expression) => {
+  const toDisjunctionsEditor: Function2<ke.ToegevoegdeVectorLaag, fltr.Expression, DisjunctionsEditor> = (laag, expression) => {
     switch (expression.kind) {
       case "Or":
         return DisjunctionEditor(
@@ -296,20 +327,30 @@ export namespace FilterBuilder {
     }
   };
 
-  const fromDisjunction: Function2<ke.VectorLaag, fltr.Disjunction, ExpressionEditor> = (laag, disjunction) => {
+  const fromDisjunction: Function3<Option<string>, ke.ToegevoegdeVectorLaag, fltr.Disjunction, ExpressionEditor> = (
+    name,
+    laag,
+    disjunction
+  ) => {
     const disjunctions = toDisjunctionsEditor(laag, disjunction);
     // Bij constructie minstens 2 conjunctions en elke conjunction minstens 1 comparison
     const current = disjunctions.conjunctionEditors[0].termEditors[0];
-    return ExpressionEditor(laag, current, disjunctions);
+    return ExpressionEditor(name, laag, current, disjunctions);
   };
 
   // Maak een builder aan voor een bestaande expressie
-  export const fromExpression: Function2<ke.VectorLaag, fltr.Expression, ExpressionEditor> = (laag, expression) =>
+  const fromExpression: Function3<Option<string>, ke.ToegevoegdeVectorLaag, fltr.Expression, ExpressionEditor> = (name, laag, expression) =>
     fltr.matchExpression({
-      And: expr => fromConjunction(laag, expr),
-      Or: expr => fromDisjunction(laag, expr),
-      BinaryComparison: expr => fromComparison(laag, expr)
+      And: expr => fromConjunction(name, laag, expr),
+      Or: expr => fromDisjunction(name, laag, expr),
+      BinaryComparison: expr => fromComparison(name, laag, expr)
     })(expression);
+
+  export const fromToegevoegdeVectorLaag: Function1<ke.ToegevoegdeVectorLaag, ExpressionEditor> = laag =>
+    fltr.matchFilter({
+      EmptyFilter: () => init(laag),
+      ExpressionFilter: expr => fromExpression(expr.name, laag, expr.expression)
+    })(laag.filterinstellingen.spec);
 
   const toLiteral: Function2<ComparisonOperator, LiteralValue, fltr.Literal> = (operator, lv) => fltr.Literal(operator.typeType, lv.value);
 
@@ -346,6 +387,18 @@ export namespace FilterBuilder {
       )
     );
 
-  export const toExpression: Function1<ExpressionEditor, Option<fltr.Expression>> = expressionEditor =>
+  const toExpression: Function1<ExpressionEditor, Option<fltr.Expression>> = expressionEditor =>
     toDisjunctionExpression(expressionEditor.disjunctions.conjunctionEditors);
+
+  export const toExpressionFilter: Function1<ExpressionEditor, Option<fltr.ExpressionFilter>> = expressionEditor =>
+    toExpression(expressionEditor).map(expression => fltr.ExpressionFilter(expressionEditor.name, expression));
+
+  export interface TermEditorMatcher<A> {
+    readonly Field: Function1<FieldSelection, A>;
+    readonly Operator: Function1<OperatorSelection, A>;
+    readonly Value: Function1<ValueSelection, A>;
+    readonly Completed: Function1<Completed, A>;
+  }
+
+  export const matchTermEditor: <A>(_: TermEditorMatcher<A>) => Function1<TermEditor, A> = matchers.matchKind;
 }
