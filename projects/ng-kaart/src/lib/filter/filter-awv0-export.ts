@@ -19,12 +19,15 @@ export namespace FilterText {
     string: s => `'${s}'`
   });
 
+  const operatorSymbols = {
+    equality: "=",
+    inequality: "!="
+  };
+
   const expressionText: Generator<fltr.Expression> = fltr.matchExpression({
     And: expr => `${expressionText(expr.left)} en ${expressionText(expr.right)}`,
     Or: expr => `${expressionText(expr.left)} of ${expressionText(expr.right)}`,
-    Equality: expr => `${propertyText(expr.property)} = ${literalText(expr.value)}`,
-    Inequality: expr => `${propertyText(expr.property)} <> ${literalText(expr.value)}`,
-    Incomplete: expr => `${propertyText(expr.property)} <> ${literalText(expr.value)}`
+    BinaryComparison: expr => `${propertyText(expr.property)} ${operatorSymbols[expr.operator]} ${literalText(expr.value)}`
   });
 
   export const filterText: Generator<fltr.Filter> = fltr.matchFilter({

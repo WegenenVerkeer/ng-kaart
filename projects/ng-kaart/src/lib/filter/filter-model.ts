@@ -19,17 +19,17 @@ export namespace Filter {
     readonly expression: Expression;
   }
 
-  export type Expression = Conjunction | Disjunction | Comparison | Incomplete;
+  export type Expression = ConjunctionExpression | Disjunction;
 
   // Dit zou niet nodig zijn mochten we arbitraire combinaties van "And" en "Or" toelaten, maar dat mag niet in de UI.
-  // Het is dan best dit hier ook niet toe te laten, want anders kan de UI niet met alle geldige filters overweg en moeten
-  // we weer veronderstellingen maken of extra tests invoeren.
-  export type BaseExpression = Conjunction | Comparison;
+  // Het is dan best dit hier ook niet toe te laten, want anders kan de UI niet met alle geldige filters overweg en
+  // moeten we weer veronderstellingen maken of extra tests invoeren.
+  export type ConjunctionExpression = Conjunction | Comparison;
 
   export interface Conjunction {
     readonly kind: "And";
-    readonly left: BaseExpression;
-    readonly right: Comparison;
+    readonly left: ConjunctionExpression;
+    readonly right: ConjunctionExpression;
   }
 
   export interface Disjunction {
@@ -38,72 +38,30 @@ export namespace Filter {
     readonly right: Expression;
   }
 
-  export const Conjunction: Function2<BaseExpression, Comparison, Conjunction> = (left, right) => ({
-    kind: "And",
-    left: left,
-    right: right
-  });
+  export const Conjunction: Function2<ConjunctionExpression, Comparison, Conjunction> = (left, right) => ({ kind: "And", left, right });
 
-  export const Disjunction: Function2<Expression, Expression, Disjunction> = (left, right) => ({
-    kind: "Or",
-    left: left,
-    right: right
-  });
+  export const Disjunction: Function2<Expression, Expression, Disjunction> = (left, right) => ({ kind: "Or", left, right });
 
   export type LogicalConnective = Conjunction | Disjunction;
 
-  export type Comparison = Equality | Inequality | Incomplete; // Legacy
+  export type Comparison = BinaryComparison;
 
-  // We kiezen er (voorlopig) voor om de types van operatoren niet te encoderen mbv generic type parameters. De
-  // geserialiseerde JSON heeft daar geen benul van en dus moeten we toch at-runtime checken of de types wel
-  // overeenkomen. Het zou de code er ook niet eenvoudiger op maken.
+  export type BinaryComparisonOperator = "equality" | "inequality";
+
+  export interface BinaryComparison {
+    readonly kind: "BinaryComparison";
+    readonly operator: BinaryComparisonOperator;
+    readonly property: Property;
+    readonly value: Literal;
+  }
+
   export interface PropertyValueOperator {
     readonly property: Property;
     readonly value: Literal;
   }
 
-  export function propertyAndValueCompatible<A extends PropertyValueOperator>(pvo: PropertyValueOperator): pvo is A {
+  export function propertyAndValueCompatible<A extends BinaryComparison>(pvo: PropertyValueOperator): pvo is A {
     return pvo.property.type === pvo.value.type; // TODO double -> integer bijvoorbeeld is ook toegelaten
-  }
-
-  export interface Equality extends PropertyValueOperator {
-    readonly kind: "Equality";
-  }
-
-  export interface Inequality extends PropertyValueOperator {
-    readonly kind: "Inequality";
-  }
-
-  export interface Incomplete extends PropertyValueOperator {
-    readonly kind: "Incomplete";
-  }
-
-  export interface Larger extends PropertyValueOperator {
-    readonly kind: "Larger";
-  }
-
-  export interface LargerOrEqual extends PropertyValueOperator {
-    readonly kind: "LargerOrEqual";
-  }
-
-  export interface Smaller extends PropertyValueOperator {
-    readonly kind: "Smaller";
-  }
-
-  export interface SmallerOrEqual extends PropertyValueOperator {
-    readonly kind: "SmallerOrEqual";
-  }
-
-  export interface StartsWith extends PropertyValueOperator {
-    readonly kind: "StartsWith";
-  }
-
-  export interface Contains extends PropertyValueOperator {
-    readonly kind: "Contains";
-  }
-
-  export interface EndsWith extends PropertyValueOperator {
-    readonly kind: "EndsWith";
   }
 
   // TODO: laten we voorlopig overeen komen met alle veldtypes uit VeldInfo
@@ -124,19 +82,16 @@ export namespace Filter {
     readonly label: string;
   }
 
-  export function Comparison<C extends Comparison, K extends C["kind"]>(kind: K): Function2<Property, Literal, C> {
-    return (property, value) =>
-      (({
-        kind: kind,
-        property: property,
-        value: value
-      } as unknown) as C);
-  }
+  export const BinaryComparison: Function3<BinaryComparisonOperator, Property, Literal, BinaryComparison> = (
+    operator,
+    property,
+    value
+  ) => ({ kind: "BinaryComparison", operator, property, value });
 
   export interface Conjunction {
     readonly kind: "And";
-    readonly left: BaseExpression;
-    readonly right: Comparison;
+    readonly left: ConjunctionExpression;
+    readonly right: ConjunctionExpression;
   }
 
   export interface Disjunction {
@@ -184,12 +139,6 @@ export namespace Filter {
     expression: expression
   });
 
-  export const Equality: Function2<Property, Literal, Equality> = Comparison("Equality");
-
-  export const Inequality: Function2<Property, Literal, Inequality> = Comparison("Inequality");
-
-  export const Incomplete: Function2<Property, Literal, Incomplete> = Comparison("Incomplete");
-
   export const Property: Function3<TypeType, string, string, Property> = (typetype, name, label) => ({
     kind: "Property",
     type: typetype,
@@ -205,8 +154,13 @@ export namespace Filter {
 
   export const matchFilter: <A>(_: matchers.FullKindMatcher<Filter, A, Filter["kind"]>) => Function1<Filter, A> = matchers.matchKind;
 
-  export const matchExpression: <A>(_: matchers.FullKindMatcher<Expression, A, Expression["kind"]>) => Function1<Expression, A> =
-    matchers.matchKind;
+  export interface ExpressionMatcher<A> {
+    readonly And: Function1<Conjunction, A>;
+    readonly Or: Function1<Disjunction, A>;
+    readonly BinaryComparison: Function1<BinaryComparison, A>;
+  }
+
+  export const matchExpression: <A>(_: ExpressionMatcher<A>) => Function1<Expression, A> = matchers.matchKind;
 
   export const matchLiteral: <A>(_: matchers.FullMatcher<Literal, A, TypeType>) => Function1<Literal, A> = matcher =>
     matchers.match(matcher)(l => l.type);

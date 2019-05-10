@@ -19,12 +19,15 @@ export namespace FilterCql {
     json: literal => `'${literal}'` // beschouw al de rest als string. Zie TODO bij TypeType
   });
 
+  const binaryOperatorSymbols = {
+    equality: "=",
+    inequality: "!="
+  };
+
   const expressionCql: Generator<fltr.Expression> = fltr.matchExpression({
     And: expr => expressionCql(expr.left) + " AND " + expressionCql(expr.right),
     Or: expr => expressionCql(expr.left) + " OR " + expressionCql(expr.right),
-    Equality: expr => propertyCql(expr.property) + " = " + literalCql(expr.value),
-    Inequality: expr => propertyCql(expr.property) + " != " + literalCql(expr.value),
-    Incomplete: expr => propertyCql(expr.property) + " != " + literalCql(expr.value)
+    BinaryComparison: expr => `${propertyCql(expr.property)} ${binaryOperatorSymbols[expr.operator]} ${literalCql(expr.value)}`
   });
 
   export const cql: Function1<fltr.Filter, Option<string>> = fltr.matchFilter({

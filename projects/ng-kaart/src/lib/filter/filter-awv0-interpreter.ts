@@ -37,8 +37,12 @@ export namespace AwvV0FilterInterpreters {
     )
   });
 
-  const propertyValueOperator: oi.Interpreter<fltr.PropertyValueOperator> = oi.suchThat(
-    oi.interpretRecord<fltr.PropertyValueOperator>({
+  const binaryComparisonOperator: oi.Interpreter<fltr.BinaryComparisonOperator> = oi.enu("equality", "inequality");
+
+  const binaryComparison: oi.Interpreter<fltr.BinaryComparison> = oi.suchThat(
+    oi.interpretRecord({
+      kind: oi.field("kind", oi.value("BinaryComparison")),
+      operator: oi.field("operator", binaryComparisonOperator),
       property: oi.field("property", property),
       value: oi.field("value", literal)
     }),
@@ -46,19 +50,12 @@ export namespace AwvV0FilterInterpreters {
     `Het type van de property komt niet overeen met dat van de waarde`
   );
 
-  const equality: oi.Interpreter<fltr.Equality> = oi.map(pvo => ({ kind: "Equality" as "Equality", ...pvo }), propertyValueOperator);
-  const inequality: oi.Interpreter<fltr.Inequality> = oi.map(
-    pvo => ({ kind: "Inequality" as "Inequality", ...pvo }),
-    propertyValueOperator
-  );
-
   const comparison: oi.Interpreter<fltr.Comparison> = byKind<fltr.Comparison>({
-    Equality: equality,
-    Inequality: inequality
+    BinaryComparison: binaryComparison
   });
 
-  const baseExpression: oi.Interpreter<fltr.BaseExpression> = oi.mapFailureTo(
-    oi.firstOf<fltr.BaseExpression>(conjunction, comparison),
+  const conjunctionExpression: oi.Interpreter<fltr.ConjunctionExpression> = oi.mapFailureTo(
+    oi.firstOf<fltr.ConjunctionExpression>(conjunction, comparison),
     "We verwachten een 'and' of een vergelijking"
   );
 
@@ -67,7 +64,7 @@ export namespace AwvV0FilterInterpreters {
   function conjunction(json: Object): oi.Validation<fltr.Conjunction> {
     return oi.interpretRecord<fltr.Conjunction>({
       kind: oi.field("kind", oi.value("And")),
-      left: oi.field("left", baseExpression),
+      left: oi.field("left", conjunctionExpression),
       right: oi.field("right", comparison)
     })(json);
   }
