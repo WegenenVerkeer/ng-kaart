@@ -111,7 +111,10 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
      */
 
     const vector = new ol.layer.Vector({
-      source: vectorlaag.source,
+      source: vectorlaag.clusterDistance.foldL(
+        () => vectorlaag.source,
+        distance => new ol.source.Cluster({ source: vectorlaag.source, distance: distance })
+      ),
       visible: true,
       style: vectorlaag.styleSelector.map(toStylish).getOrElse(kaart.config.defaults.style),
       minResolution: array

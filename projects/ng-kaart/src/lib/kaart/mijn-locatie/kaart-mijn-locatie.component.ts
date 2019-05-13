@@ -427,6 +427,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
       type: ke.VectorType,
       titel: MijnLocatieLaagNaam,
       source: new ol.source.Vector(),
+      clusterDistance: none,
       styleSelector: none,
       styleSelectorBron: none,
       selectieStyleSelector: none,

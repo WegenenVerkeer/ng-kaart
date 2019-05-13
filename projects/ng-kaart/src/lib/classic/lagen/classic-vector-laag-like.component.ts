@@ -32,6 +32,7 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
   }
 
   _stijlSpec: Option<ss.AwvV0StyleSpec> = none; // heeft voorrang op style
+  _clusterDistance: Option<number> = none;
   _zichtbaar = true;
   _selecteerbaar = true;
   _hover = false;
@@ -42,6 +43,11 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
   @Input()
   set stijlSpec(param: ss.AwvV0StyleSpec) {
     this._stijlSpec = val.optStyleSpec(param);
+  }
+
+  @Input()
+  set clusterDistance(param: number) {
+    this._clusterDistance = val.optNum(param);
   }
 
   @Input()

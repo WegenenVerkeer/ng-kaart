@@ -141,6 +141,7 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
         this._maxFeaturesInMemCache,
         this._gebruikCache
       ),
+      clusterDistance: this._clusterDistance,
       styleSelector: this.getMaybeStyleSelector(),
       styleSelectorBron: this.getMaybeStyleSelectorBron(),
       selectieStyleSelector: fromNullable(this.selectieStyle).chain(ss.asStyleSelector),

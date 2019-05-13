@@ -91,6 +91,7 @@ export interface VeldInfo {
 export interface VectorLaag {
   readonly type: VectorType;
   readonly source: ol.source.Vector;
+  readonly clusterDistance: Option<number>;
   readonly titel: string;
   readonly styleSelector: Option<StyleSelector>;
   readonly styleSelectorBron: Option<AwvV0StyleSpec>; // De JSON specificatie die aan de basis ligt van de StyleSelector
