@@ -217,13 +217,13 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       )
     ).subscribe(([laagNietZichtbaar, command]) => {
       this.dispatch(prt.StopVectorFilterBewerkingCmd());
-      this.dispatch(command);
       this.dispatch(prt.MaakLaagZichtbaarCmd(command.titel, kaartLogOnlyWrapper));
       if (laagNietZichtbaar) {
         this.dispatch(
           prt.MeldComponentFoutCmd([`De laag '${command.titel}' is niet zichtbaar op kaart op dit zoomniveau, gelieve verder in te zoomen`])
         );
       }
+      this.dispatch(command);
     });
   }
 
