@@ -78,6 +78,10 @@
         height: 30px;
         line-height: 30px;
         width: fit-content;
+
+        &.mislukt {
+          color: red;
+        }
       }
     }
   }

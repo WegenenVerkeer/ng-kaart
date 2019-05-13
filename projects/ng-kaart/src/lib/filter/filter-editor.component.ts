@@ -108,6 +108,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
         ToegevoegdeVectorLaag.veldInfosLens.get(laag).filter(
           // filter de speciale velden er uit
           veld =>
+            fromNullable(veld.label).isSome() &&
             fromNullable(veld.constante).isNone() &&
             fromNullable(veld.template).isNone() &&
             fromNullable(veld.html).isNone() &&
@@ -121,8 +122,15 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       switchMap(velden =>
         this.veldControl.valueChanges.pipe(
           startWith<VeldInfo | string>(""), // nog niets ingetypt
-          map(waarde => (typeof waarde === "string" ? waarde : waarde.label)),
-          map(getypt => velden.filter(veld => veld.label.toLowerCase().startsWith(getypt.toLowerCase()))),
+          map(waarde => (typeof waarde === "string" ? waarde : fromNullable(waarde.label).getOrElse(""))),
+          map(getypt =>
+            velden.filter(veld =>
+              fromNullable(veld.label)
+                .getOrElse("")
+                .toLowerCase()
+                .startsWith(getypt.toLowerCase())
+            )
+          ),
           map(velden => velden.sort((a, b) => (a.isBasisVeld === b.isBasisVeld ? 0 : a.isBasisVeld ? -1 : 1)))
           // opletten: mutable! Gebruik van fp-ts
         )
@@ -174,7 +182,10 @@ export class FilterEditorComponent extends KaartChildComponentBase {
                           laag.titel,
                           fltr.ExpressionFilter(
                             maybeNaam,
-                            operator.build(fltr.Property(veldInfo.type, veldInfo.naam, veldInfo.label), fltr.Literal("string", waarde))
+                            operator.build(
+                              fltr.Property(veldInfo.type, veldInfo.naam, fromNullable(veldInfo.label).getOrElse("")),
+                              fltr.Literal("string", waarde)
+                            )
                           ),
                           kaartLogOnlyWrapper
                         )
@@ -206,13 +217,13 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       )
     ).subscribe(([laagNietZichtbaar, command]) => {
       this.dispatch(prt.StopVectorFilterBewerkingCmd());
-      this.dispatch(command);
       this.dispatch(prt.MaakLaagZichtbaarCmd(command.titel, kaartLogOnlyWrapper));
       if (laagNietZichtbaar) {
         this.dispatch(
           prt.MeldComponentFoutCmd([`De laag '${command.titel}' is niet zichtbaar op kaart op dit zoomniveau, gelieve verder in te zoomen`])
         );
       }
+      this.dispatch(command);
     });
   }
 

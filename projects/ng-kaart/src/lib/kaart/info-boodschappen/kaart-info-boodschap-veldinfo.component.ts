@@ -253,7 +253,7 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
 
   label(veld: string): string {
     return veldbeschrijving(veld, this.veldbeschrijvingen)
-      .map(veldInfo => veldInfo.label)
+      .map(veldInfo => fromNullable(veldInfo.label).getOrElse(""))
       .getOrElse(veld);
   }
 
