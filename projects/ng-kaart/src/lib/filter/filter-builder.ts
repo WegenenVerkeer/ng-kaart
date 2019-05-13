@@ -126,12 +126,40 @@ export namespace FilterEditor {
 
   const freeStringOperators: ComparisonOperator[] = [
     BinaryComparisonOperator("is", "equality", "string"),
-    BinaryComparisonOperator("is niet", "inequality", "string")
+    BinaryComparisonOperator("is niet", "inequality", "string"),
+    BinaryComparisonOperator("bevat", "contains", "string"),
+    BinaryComparisonOperator("start met", "starts", "string"),
+    BinaryComparisonOperator("eindigt met", "ends", "string")
+  ];
+
+  const freeDoubleOperators: ComparisonOperator[] = [
+    BinaryComparisonOperator("is", "equality", "double"),
+    BinaryComparisonOperator("is niet", "inequality", "double"),
+    BinaryComparisonOperator("<", "smaller", "double"),
+    BinaryComparisonOperator("<=", "smallerOrEqual", "double"),
+    BinaryComparisonOperator(">", "larger", "double"),
+    BinaryComparisonOperator(">=", "largerOrEqual", "double")
+  ];
+
+  const freeIntegerOperators: ComparisonOperator[] = [
+    BinaryComparisonOperator("is", "equality", "integer"),
+    BinaryComparisonOperator("is niet", "inequality", "integer"),
+    BinaryComparisonOperator("<", "smaller", "integer"),
+    BinaryComparisonOperator("<=", "smallerOrEqual", "integer"),
+    BinaryComparisonOperator(">", "larger", "integer"),
+    BinaryComparisonOperator(">=", "largerOrEqual", "integer")
+  ];
+
+  const booleanOperators: ComparisonOperator[] = [
+    BinaryComparisonOperator("is", "equality", "boolean"),
+    BinaryComparisonOperator("is niet", "inequality", "boolean")
   ];
 
   const operatorSelectors: Function1<fltr.Property, ComparisonOperator[]> = property =>
     fltr.matchTypeTypeWithFallback({
       string: () => freeStringOperators, // Hier moeten we kijken of er unieke waarden zijn
+      double: () => freeDoubleOperators,
+      integer: () => freeIntegerOperators,
       fallback: () => [] // Geen operatoren voor onbekende types: beter een terminale error operator
     })(property.type);
 

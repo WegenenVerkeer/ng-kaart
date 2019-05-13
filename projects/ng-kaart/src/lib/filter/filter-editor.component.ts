@@ -1,7 +1,6 @@
 import { Component, NgZone } from "@angular/core";
 import { FormControl, ValidationErrors, Validators } from "@angular/forms";
-import * as array from "fp-ts/lib/Array";
-import { Endomorphism, Function1, Function2, identity } from "fp-ts/lib/function";
+import { Endomorphism, Function1 } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import {
@@ -23,12 +22,12 @@ import {
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import * as ke from "../kaart/kaart-elementen";
-import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
+import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
 import { kaartLogger } from "../kaart/log";
 import { isNotNull, isNotNullObject } from "../util/function";
-import { catOptions, collectOption, subSpy } from "../util/operators";
+import { catOptions, subSpy } from "../util/operators";
 import { forEvery } from "../util/operators";
 
 import { FilterAanpassingBezig, isAanpassingBezig } from "./filter-aanpassing-state";
@@ -127,7 +126,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     const initExpressionEditor$: rx.Observable<fed.ExpressionEditor> = subSpy("****initExpressionEditor$")(
       laag$.pipe(
         map(fed.fromToegevoegdeVectorLaag),
-        shareReplay(1)
+        share()
       )
     );
 
@@ -142,7 +141,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
             startWith(initTermEditor)
           )
         ),
-        shareReplay(1)
+        share()
       )
     );
 
@@ -158,7 +157,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
             throttleTime(100)
           )
         ),
-        shareReplay(1)
+        share()
       )
     );
 
@@ -171,24 +170,24 @@ export class FilterEditorComponent extends KaartChildComponentBase {
         expressionEditor.name.foldL(() => this.naamControl.reset(), name => this.naamControl.setValue(name, { emitEvent: false }));
         fed.matchTermEditor({
           Field: () => {
-            this.veldControl.reset({ emitEvent: false });
-            this.operatorControl.reset({ emitEvent: false });
+            this.veldControl.reset(undefined, { emitEvent: false });
+            this.operatorControl.reset(undefined, { emitEvent: false });
             this.operatorControl.disable();
-            this.waardeControl.reset({ emitEvent: false });
+            this.waardeControl.reset(undefined, { emitEvent: false });
             this.waardeControl.disable();
           },
           Operator: opr => {
             this.veldControl.setValue(opr.selectedProperty, { emitEvent: false });
-            this.operatorControl.reset({ emitEvent: false });
+            this.operatorControl.reset(undefined, { emitEvent: false });
             this.operatorControl.enable({ emitEvent: false });
-            this.waardeControl.reset({ emitEvent: false });
+            this.waardeControl.reset(undefined, { emitEvent: false });
             this.waardeControl.disable();
           },
           Value: val => {
             this.veldControl.setValue(val.selectedProperty, { emitEvent: false });
             this.operatorControl.setValue(val.selectedOperator, { emitEvent: false });
             this.operatorControl.enable({ emitEvent: false });
-            this.waardeControl.reset({ emitEvent: false });
+            this.waardeControl.reset(undefined, { emitEvent: false });
             this.waardeControl.enable({ emitEvent: false });
           },
           Completed: compl => {
@@ -311,7 +310,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     return this.waardeControl.hasError("required") ? "Gelieve een waarde in te geven" : "";
   }
 
-  onClickOutside(event: Event) {
+  onClickOutside() {
     if (!this.clickInsideDialog) {
       this.close();
     }
@@ -319,7 +318,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     return false;
   }
 
-  onClickInside(event: Event) {
+  onClickInside() {
     this.clickInsideDialog = true;
     return false;
   }

@@ -1,41 +1,75 @@
-import { constant, Function1, pipe } from "fp-ts/lib/function";
-import { none, Option, some } from "fp-ts/lib/Option";
+import { constant, Function1, Function2, Function3 } from "fp-ts/lib/function";
+import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 
 import { Filter as fltr } from "../filter/filter-model";
 
 export namespace FilterCql {
-  type Generator<A> = Function1<A, string>;
+  type Generator<A> = Function1<A, Option<string>>;
 
-  const propertyCql: Generator<fltr.Property> = property => `properties.${property.ref}`;
+  const propertyRef: Function1<fltr.Property, String> = property => `properties.${property.ref}`;
 
   const literalCql: Generator<fltr.Literal> = fltr.matchLiteral({
-    boolean: literal => (literal ? "true" : "false"),
-    string: literal => `'${literal.value}'`,
-    integer: literal => `${literal.value}`,
-    double: literal => `${literal.value}`,
-    date: literal => `'${literal.value}'`, // beschouw al de rest als string. Zie TODO bij TypeType
-    datetime: literal => `'${literal.value}'`, // beschouw al de rest als string. Zie TODO bij TypeType
-    geometry: literal => `'${literal.value}'`, // beschouw al de rest als string. Zie TODO bij TypeType
-    json: literal => `'${literal.value}'` // beschouw al de rest als string. Zie TODO bij TypeType
+    boolean: literal => some(literal.value ? "true" : "false"),
+    string: literal => some(`'${literal.value}'`),
+    integer: literal => some(`${literal.value}`),
+    double: literal => some(`${literal.value}`),
+    date: () => none, // niet ondersteund
+    datetime: () => none,
+    geometry: () => none,
+    json: () => none
   });
 
-  const binaryOperatorSymbols = {
+  // TODO prevent CQL injection
+  const stringBinaryOperator: Function3<fltr.Property, fltr.BinaryComparisonOperator, fltr.Literal, Option<string>> = (
+    property,
+    operator,
+    literal
+  ) =>
+    fltr.matchBinaryComparisonOperatorWithFallback({
+      equality: () => some(`${propertyRef(property)} = '${literal.value}'`),
+      inequality: () => some(`${propertyRef(property)} != '${literal.value}'`),
+      starts: () => some(`${propertyRef(property)} like '${literal.value}%'`), // TODO prevent %
+      ends: () => some(`${propertyRef(property)} like '%${literal.value}'`), // TODO prevent %
+      contains: () => some(`${propertyRef(property)} like '%${literal.value}%'`), // TODO prevent %,
+      fallback: () => none // de andere operators worden niet ondersteund
+    })(operator);
+
+  const numberBinaryOperatorSymbols = {
     equality: "=",
-    inequality: "!="
+    inequality: "!=",
+    smaller: "<",
+    smallerOrEqual: "<=",
+    larger: ">",
+    largerOrEqual: ">="
   };
 
+  const numberBinaryOperator: Function3<fltr.Property, fltr.BinaryComparisonOperator, fltr.Literal, Option<string>> = (
+    property,
+    operator,
+    value
+  ) => fromNullable(numberBinaryOperatorSymbols[operator]).map(symbol => `${propertyRef(property)} ${symbol} ${literalCql(value)}`);
+
+  const both: Function3<Option<string>, Option<string>, string, Option<string>> = (maybeLeft, maybeRight, separator) =>
+    maybeLeft.fold(
+      maybeRight, //
+      left => some(maybeRight.fold(left, right => `${left} ${separator} ${right}`))
+    );
+
   const expressionCql: Generator<fltr.Expression> = fltr.matchExpression({
-    And: expr => expressionCql(expr.left) + " AND " + expressionCql(expr.right),
-    Or: expr => expressionCql(expr.left) + " OR " + expressionCql(expr.right),
-    BinaryComparison: expr => `${propertyCql(expr.property)} ${binaryOperatorSymbols[expr.operator]} ${literalCql(expr.value)}`
+    And: expr => both(expressionCql(expr.left), expressionCql(expr.right), "AND"),
+    Or: expr => both(expressionCql(expr.left), expressionCql(expr.right), "OR"),
+    BinaryComparison: expr =>
+      fltr.matchTypeTypeWithFallback({
+        string: () => stringBinaryOperator(expr.property, expr.operator, expr.value),
+        double: () => numberBinaryOperator(expr.property, expr.operator, expr.value),
+        integer: () => numberBinaryOperator(expr.property, expr.operator, expr.value),
+        boolean: () => numberBinaryOperator(expr.property, expr.operator, expr.value), // zouden we in principe niet mogen hebben
+        fallback: () => none
+      })(expr.property.type)
   });
 
   export const cql: Function1<fltr.Filter, Option<string>> = fltr.matchFilter({
     EmptyFilter: constant(none),
-    ExpressionFilter: pipe(
-      expr => expr.expression,
-      expressionCql,
-      some
-    )
+    ExpressionFilter: expr => expressionCql(expr.expression)
   });
 }

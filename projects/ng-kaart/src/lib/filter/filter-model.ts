@@ -46,7 +46,16 @@ export namespace Filter {
 
   export type Comparison = BinaryComparison;
 
-  export type BinaryComparisonOperator = "equality" | "inequality";
+  export type BinaryComparisonOperator =
+    | "equality"
+    | "inequality"
+    | "contains"
+    | "starts"
+    | "ends"
+    | "smaller"
+    | "smallerOrEqual"
+    | "larger"
+    | "largerOrEqual";
 
   export interface BinaryComparison {
     readonly kind: "BinaryComparison";
@@ -173,9 +182,9 @@ export namespace Filter {
   export const matchTypeTypeWithFallback: <A>(_: matchers.FallbackMatcher<TypeType, A, TypeType>) => (_: TypeType) => A = switcher =>
     matchers.matchWithFallback(switcher)(identity);
 
-  export const matchBinaryComparisonOperator: <A>(
-    _: matchers.FullMatcher<BinaryComparisonOperator, A, BinaryComparisonOperator>
-  ) => Function1<BinaryComparisonOperator, A> = matcher => matchers.match(matcher)(identity);
+  export const matchBinaryComparisonOperatorWithFallback: <A>(
+    _: matchers.FallbackMatcher<BinaryComparisonOperator, A, BinaryComparisonOperator>
+  ) => Function1<BinaryComparisonOperator, A> = matcher => matchers.matchWithFallback(matcher)(identity);
 
   export const isEmpty: Predicate<Filter> = matchFilter({
     ExpressionFilter: constant(false),
