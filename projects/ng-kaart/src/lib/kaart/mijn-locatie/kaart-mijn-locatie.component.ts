@@ -2,9 +2,10 @@ import { AfterViewInit, Component, NgZone, OnInit, QueryList, ViewChildren } fro
 import { MatButton } from "@angular/material";
 import { Function1, Function3, Function4 } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
+import { AbsoluteOrientationSensor } from "motion-sensors-polyfill";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, filter, map, pairwise, scan, shareReplay, startWith } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, filter, map, pairwise, scan, shareReplay, startWith, throttle } from "rxjs/operators";
 
 import { catOptions } from "../../util/operators";
 import * as ke from "../kaart-elementen";
@@ -12,6 +13,7 @@ import { kaartLogOnlyWrapper } from "../kaart-internal-messages";
 import { KaartModusComponent } from "../kaart-modus-component";
 import * as prt from "../kaart-protocol";
 import { Viewinstellingen } from "../kaart-protocol";
+import { MijnLocatieStateChangeCmd } from "../kaart-protocol-commands";
 import { KaartComponent } from "../kaart.component";
 import { kaartLogger } from "../log";
 
@@ -81,6 +83,8 @@ const moetCentreren = (state: State) => state === "TrackingCenter" || state === 
 
 const moetLocatieTonen = (state: State) => state === "Tracking" || state === "TrackingCenter" || state === "TrackingAutoRotate";
 
+const moetRoteren = (state: State) => state === "TrackingAutoRotate";
+
 const zetStijl: Function3<ol.Feature, number, number, void> = (feature, zoom, accuracy) => feature.setStyle(locatieStijlFunctie(accuracy));
 
 const locatieStijlFunctie: Function1<number, ol.FeatureStyleFunction> = accuracy => {
@@ -131,6 +135,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
   private viewinstellingen$: rx.Observable<Viewinstellingen> = rx.EMPTY;
   private zoomdoelSetting$: rx.Observable<Option<number>> = rx.EMPTY;
   private locatieSubj: rx.Subject<Position> = new rx.Subject<Position>();
+  private rotatieSubj: rx.Subject<number> = new rx.Subject<number>();
 
   private eventsSubj: rx.Subject<Event> = new rx.Subject<Event>();
 
@@ -142,9 +147,10 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
 
   private mijnLocatie: Option<ol.Feature> = none;
   private watchId: Option<number> = none;
+  private sensor: Option<AbsoluteOrientationSensor> = none;
 
-  private gevraagdeZoom: Option<number> = none;
-  private gevraagdeRotatie: Option<number> = none;
+  private zoomIsGevraagd = false;
+  private rotatieIsGevraagd = false;
 
   modus(): string {
     return MijnLocatieUiSelector;
@@ -193,40 +199,46 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     });
 
     // We moeten de rotatie-events die we zelf triggeren negeren.
-    this.bindToLifeCycle(this.parent.modelChanges.rotatie$).subscribe(rotatie => {
-      this.gevraagdeRotatie.foldL(
-        () => this.eventsSubj.next("RotateEvent"),
-        gevraagdeRotatie => {
-          if (gevraagdeRotatie === rotatie) {
-            // Het is waarschijnlijk de rotatie die wij gevraagd hebben voor de autorotate.
-            this.gevraagdeRotatie = none;
+    this.bindToLifeCycle(
+      this.parent.modelChanges.rotatie$.pipe(
+        throttle(() => {
+          if (this.rotatieIsGevraagd) {
+            this.rotatieIsGevraagd = false;
+            return rx.timer(500);
+          } else {
+            return rx.of(1);
           }
-        }
-      );
-    });
+        }),
+        filter(() => !this.rotatieIsGevraagd)
+      )
+    ).subscribe(() => this.eventsSubj.next("RotateEvent"));
 
     // We moeten de zoom-events die we zelf triggeren negeren.
-    this.bindToLifeCycle(zoom$).subscribe(zoom => {
-      this.gevraagdeZoom.foldL(
-        () => this.eventsSubj.next("ZoomEvent"),
-        gevraagdeZoom => {
-          if (gevraagdeZoom === zoom) {
-            // Het is waarschijnlijk de zoom die wij gevraagd hebben voor de autozoom.
-            this.gevraagdeZoom = none;
+    this.bindToLifeCycle(
+      zoom$.pipe(
+        throttle(() => {
+          if (this.zoomIsGevraagd) {
+            this.zoomIsGevraagd = false;
+            return rx.timer(500);
+          } else {
+            return rx.of(1);
           }
-        }
-      );
-    });
+        }),
+        filter(() => !this.zoomIsGevraagd)
+      )
+    ).subscribe(() => this.eventsSubj.next("ZoomEvent"));
 
     // "State machine"
     const stateMachine: StateMachine = this.getStateMachine();
 
     this.currentState$ = this.eventsSubj.pipe(
-      shareReplay(1),
       startWith("TrackingDisabled"),
       scan<Event, State>((state: State, event: Event) => {
-        return stateMachine[state][event];
-      })
+        const newState = stateMachine[state][event];
+        this.dispatch(MijnLocatieStateChangeCmd(state, newState, event));
+        return newState;
+      }),
+      shareReplay(1)
     );
 
     // pas positie aan bij nieuwe locatie
@@ -241,12 +253,31 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
       )
     ).subscribe(r => this.zetMijnPositie(r.position, r.zoom, r.doelzoom, r.state, r.stateVeranderd));
 
+    // pas rotatie aan
+    this.bindToLifeCycle(
+      rx.combineLatest(this.rotatieSubj.pipe(debounceTime(TrackingInterval)), this.currentState$).pipe(
+        filter(([, state]) => {
+          return moetRoteren(state);
+        }),
+        map(([rotatie]) => rotatie)
+      )
+    ).subscribe(rotatie => {
+      this.rotatieIsGevraagd = true;
+      this.dispatch(prt.VeranderRotatieCmd(rotatie, some(250)));
+    });
+
     this.bindToLifeCycle(this.currentState$).subscribe(state => {
       if ((moetCentreren(state) || moetLocatieTonen(state)) && this.watchId.isNone()) {
-        this.startTracking();
+        this.startPositieTracking();
       }
       if (!(moetCentreren(state) || moetLocatieTonen(state)) && this.watchId.isSome()) {
-        this.stopTracking();
+        this.stopPositieTracking();
+      }
+      if (moetRoteren(state) && this.sensor.isNone()) {
+        this.startRotatieTracking();
+      }
+      if (!moetRoteren(state) && this.watchId.isSome()) {
+        this.stopRotatieTracking();
       }
       this.centreerIndienNodig(state);
     });
@@ -290,14 +321,14 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     );
   }
 
-  private stopTracking() {
+  private stopPositieTracking() {
     this.watchId.map(watchId => navigator.geolocation.clearWatch(watchId));
     this.watchId = none;
     this.mijnLocatie = none;
     this.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, <Array<ol.Feature>>[], kaartLogOnlyWrapper));
   }
 
-  private startTracking() {
+  private startPositieTracking() {
     if (navigator.geolocation) {
       if (this.watchId.isNone()) {
         this.watchId = some(
@@ -317,6 +348,44 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     }
   }
 
+  private startRotatieTracking() {
+    const sensor = new AbsoluteOrientationSensor({ frequency: 60 });
+
+    const nav = navigator as any; // Onze versie van typescript bevat de permissions typing nog niet.
+    Promise.all([
+      nav.permissions.query({ name: "accelerometer" }),
+      nav.permissions.query({ name: "magnetometer" }),
+      nav.permissions.query({ name: "gyroscope" })
+    ]).then(results => {
+      if (results.every(result => result.state === "granted")) {
+        sensor.addEventListener("reading", (e: any) => {
+          if (e.target) {
+            const sensorEvent = e.target as AbsoluteOrientationSensor;
+            const q = sensorEvent.quaternion;
+            if (q) {
+              let heading = Math.atan2(2 * q[0] * q[1] + 2 * q[2] * q[3], 1 - 2 * q[1] * q[1] - 2 * q[2] * q[2]);
+              if (heading < 0) {
+                heading = 2 * Math.PI + heading;
+              }
+              this.rotatieSubj.next(heading);
+            }
+          }
+        });
+        sensor.start();
+        this.sensor = some(sensor);
+      } else {
+        this.meldFout("Geen toestemming om AbsoluteOrientationSensor te gebruiken");
+      }
+    });
+  }
+
+  private stopRotatieTracking() {
+    this.sensor = this.sensor.chain(sensor => {
+      sensor.stop();
+      return none;
+    });
+  }
+
   private zetMijnPositie(position: Position, zoom: number, doelzoom: number, state: State, stateVeranderd: boolean) {
     const longLat: ol.Coordinate = [position.coords.longitude, position.coords.latitude];
     const coordinate = ol.proj.fromLonLat(longLat, "EPSG:31370");
@@ -331,7 +400,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
           if (stateVeranderd && zoom < doelzoom && moetCentreren(state)) {
             // We zitten nu op een te laag zoomniveau, dus gaan we eerst inzoomen,
             // maar we doen dit alleen wanneer we van een state veranderd zijn.
-            this.gevraagdeZoom = some(doelzoom);
+            this.zoomIsGevraagd = true;
             this.dispatch(prt.VeranderZoomCmd(doelzoom, kaartLogOnlyWrapper));
           }
           return feature;

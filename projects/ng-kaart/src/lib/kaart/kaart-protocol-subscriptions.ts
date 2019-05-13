@@ -3,13 +3,14 @@ import { Function1 } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 
+import { MijnLocatieStateChangeMsg } from "../classic/messages";
 import { ZoekAntwoord, ZoekerMetWeergaveopties, ZoekResultaat } from "../zoeker/zoeker";
 
 import { KaartLocaties } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { Tekenresultaat } from "./kaart-elementen";
 import { InfoBoodschap } from "./kaart-with-info-model";
-import { LaatsteCacheRefresh, PrecacheLaagProgress } from "./model-changes";
+import { LaatsteCacheRefresh, MijnLocatieStateChange, PrecacheLaagProgress } from "./model-changes";
 
 /////////
 // Types
@@ -31,6 +32,7 @@ export type Subscription<Msg> =
   | LaatsteCacheRefreshSubscription<Msg>
   | LagenInGroepSubscription<Msg>
   | MiddelpuntSubscription<Msg>
+  | MijnLocatieStateChangeSubscription<Msg>
   | PrecacheProgressSubscription<Msg>
   | PublishedKaartLocatiesSubscription<Msg>
   | TekenenSubscription<Msg>
@@ -184,6 +186,11 @@ export interface LaatsteCacheRefreshSubscription<Msg> {
   readonly wrapper: (progress: LaatsteCacheRefresh) => Msg;
 }
 
+export interface MijnLocatieStateChangeSubscription<Msg> {
+  readonly type: "MijnLocatieStateChange";
+  readonly wrapper: (stateChange: MijnLocatieStateChange) => Msg;
+}
+
 ///////////////
 // Constructors
 //
@@ -299,4 +306,10 @@ export function LaatsteCacheRefreshSubscription<Msg>(
   wrapper: (progress: LaatsteCacheRefresh) => Msg
 ): LaatsteCacheRefreshSubscription<Msg> {
   return { type: "LaatsteCacheRefresh", wrapper };
+}
+
+export function MijnLocatieStateChangeSubscription<Msg>(
+  wrapper: (stateChange: MijnLocatieStateChange) => Msg
+): MijnLocatieStateChangeSubscription<Msg> {
+  return { type: "MijnLocatieStateChange", wrapper };
 }

@@ -21,7 +21,13 @@ export class KaartMijnMobieleLocatieComponent extends KaartMijnLocatieComponent 
       TrackingDisabled: { ...NoOpStateMachine.TrackingDisabled, ActiveerEvent: "Tracking" },
       NoTracking: { ...NoOpStateMachine.NoTracking, ActiveerEvent: "Tracking" },
       Tracking: { ...NoOpStateMachine.Tracking, ClickEvent: "TrackingCenter" },
-      TrackingCenter: { ...NoOpStateMachine.TrackingCenter, ClickEvent: "Tracking", PanEvent: "Tracking" }
+      TrackingCenter: { ...NoOpStateMachine.TrackingCenter, ClickEvent: "TrackingAutoRotate", PanEvent: "Tracking" },
+      TrackingAutoRotate: {
+        ...NoOpStateMachine.TrackingAutoRotate,
+        ClickEvent: "TrackingCenter",
+        PanEvent: "Tracking",
+        RotateEvent: "TrackingCenter"
+      }
     };
   }
 }

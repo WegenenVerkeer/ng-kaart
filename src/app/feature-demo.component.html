@@ -207,7 +207,7 @@
         <awv-kaart-knop-achtergrondlaag-kiezer *ngIf="isOptieActief('achtergrond')"></awv-kaart-knop-achtergrondlaag-kiezer>
         <!-- kaart widgets-->
         <awv-kaart-streetview *ngIf="isOptieActief('streetview')"></awv-kaart-streetview>
-        <awv-mijn-mobiele-locatie></awv-mijn-mobiele-locatie>
+        <awv-mijn-mobiele-locatie (stateChange)="onMijnMobieleLocatieStateChange($event)"></awv-mijn-mobiele-locatie>
         <!--de awv-meet-knop blijft voorlopig beschikbaar maar is deprecated -->
         <!-- <awv-meet-knop [toonInfoBoodschap]="isOptieActief('metenToon')" [meerdereGeometrieen]="isOptieActief('metenMeerdere')" *ngIf="isOptieActief('meten')"></awv-meet-knop> -->
         <awv-multi-meet-knop [toonInfoBoodschap]="isOptieActief('metenToon')" *ngIf="isOptieActief('meten')" [keuzemogelijkheidTonen]="isOptieActief('keuzemogelijkheidTonen')" [metRouting]="isOptieActief('metRouting')"></awv-multi-meet-knop>

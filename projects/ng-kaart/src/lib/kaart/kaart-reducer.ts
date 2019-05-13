@@ -1426,6 +1426,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
+    function emitMijnLocatieStateChange(cmnd: prt.MijnLocatieStateChangeCmd): ModelWithResult<Msg> {
+      modelChanger.mijnLocatieStateChangeSubj.next({ oudeState: cmnd.oudeState, nieuweState: cmnd.nieuweState, event: cmnd.event });
+      return ModelWithResult(model);
+    }
+
     function zetGetekendeGeometry(cmnd: prt.ZetGetekendeGeometryCmd): ModelWithResult<Msg> {
       modelChanger.getekendeGeometrySubj.next(cmnd.geometry);
       return ModelWithResult(model);
@@ -1600,6 +1605,13 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         );
       }
 
+      function subscribeToMijnLocatieStateChange(sub: prt.MijnLocatieStateChangeSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult(
+          "MijnLocatieStateChange",
+          modelChanges.mijnLocatieStateChange$.pipe(distinctUntilChanged()).subscribe(consumeMessage(sub))
+        );
+      }
+
       switch (cmnd.subscription.type) {
         case "Viewinstellingen":
           return subscribeToViewinstellingen(cmnd.subscription);
@@ -1649,6 +1661,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToPrecacheProgress(cmnd.subscription);
         case "LaatsteCacheRefresh":
           return subscribeToLaatsteCacheRefresh(cmnd.subscription);
+        case "MijnLocatieStateChange":
+          return subscribeToMijnLocatieStateChange(cmnd.subscription);
       }
     }
 
@@ -1805,6 +1819,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return activeerFilter(cmd);
         case "HaalFilterTotaalOp":
           return haalFilterTotaalOp(cmd);
+        case "MijnLocatieStateChange":
+          return emitMijnLocatieStateChange(cmd);
       }
     }
 

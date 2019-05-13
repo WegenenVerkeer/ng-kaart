@@ -7,6 +7,7 @@ import * as ke from "../kaart/kaart-elementen";
 import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
 import * as prt from "../kaart/kaart-protocol";
 import { GeselecteerdeFeatures, HoverFeature } from "../kaart/kaart-with-info-model";
+import * as loc from "../kaart/mijn-locatie/kaart-mijn-locatie.component";
 import { LaatsteCacheRefresh, PrecacheLaagProgress } from "../kaart/model-changes";
 
 import { classicLogger } from "./log";
@@ -39,6 +40,7 @@ export type KaartClassicSubMsg =
   | VoorgrondLaagLagenInGroepAangepastMsg
   | PublishedKaartLocatiesMsg
   | CachedFeaturesLookupReadyMsg
+  | MijnLocatieStateChangeMsg
   | DummyMsg;
 
 export interface FeatureSelectieAangepastMsg {
@@ -132,6 +134,13 @@ export interface CachedFeaturesLookupReadyMsg {
   readonly cacheLookupValidation: prt.KaartCmdValidation<CachedFeatureLookup>;
 }
 
+export interface MijnLocatieStateChangeMsg {
+  readonly type: "MijnLocatieStateChangeMsg";
+  readonly oudeState: loc.State;
+  readonly nieuweState: loc.State;
+  readonly event: loc.Event;
+}
+
 export interface DummyMsg {
   readonly type: "Dummy";
 }
@@ -166,6 +175,10 @@ export function TekenGeomAangepastMsg(geom: ol.geom.Geometry): TekenGeomAangepas
 
 export function PrecacheProgressMsg(progress: PrecacheLaagProgress): PrecacheProgressMsg {
   return { type: "PrecacheProgress", progress: progress };
+}
+
+export function MijnLocatieStateChangeMsg(oudeState: loc.State, nieuweState: loc.State, event: loc.Event): MijnLocatieStateChangeMsg {
+  return { type: "MijnLocatieStateChangeMsg", oudeState: oudeState, nieuweState: nieuweState, event: event };
 }
 
 export function LaatsteCacheRefreshMsg(laatsteCacheRefresh: LaatsteCacheRefresh): LaatsteCacheRefreshMsg {
