@@ -172,6 +172,15 @@ export interface ToegevoegdeVectorLaag extends ToegevoegdeLaag {
   readonly filterinstellingen: Laagfilterinstellingen;
 }
 
+export function underlyingSource(layer: ol.layer.Layer): ol.source.Source {
+  const source = layer.getSource();
+  if (source instanceof ol.source.Cluster) {
+    return (source as ol.source.Cluster).getSource();
+  } else {
+    return source;
+  }
+}
+
 export const isWmsLaag: Refinement<Laag, WmsLaag> = (laag): laag is WmsLaag =>
   laag.type === SingleTileWmsType || laag.type === TiledWmsType;
 export const isTiledWmsLaag: Refinement<Laag, WmsLaag> = (laag): laag is WmsLaag => laag.type === TiledWmsType;

@@ -143,7 +143,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function valideerNoSqlFsSourceBestaat(titel: string): prt.KaartCmdValidation<NosqlFsSource> {
       return chain(valideerVectorLayerBestaat(titel), layer => {
-        const source = layer.getSource();
+        const source = ke.underlyingSource(layer);
         return fromPredicate(source, isNoSqlFsSource, `De laag met titel ${titel} is geen NoSqlFslaag`);
       });
     }
@@ -399,7 +399,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                     fi.actief
                   ]);
                   // NosqlFsSource is mutable
-                  (tgnslg.layer.getSource() as NosqlFsSource).setUserFilter(filter, actief);
+                  const source = ke.underlyingSource(tgnslg.layer);
+                  (source as NosqlFsSource).setUserFilter(filter, actief);
                   return tgnslg;
                 }
               );
