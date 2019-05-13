@@ -25,11 +25,11 @@ export class FilterLogicalConnectiveComponent {
     switch (this.operator) {
       case "EN":
         // TODO: nieuwe conjunction toevoegen
-        const conj = fltr.Conjunction(this.expression, fltr.Incomplete(fltr.Property("string", "?", "?"), fltr.Literal("string", "?")));
+        // const conj = fltr.Conjunction(this.expression, fltr.Incomplete(fltr.Property("string", "?", "?"), fltr.Literal("string", "?")));
         break;
       case "OF":
         // TODO: nieuwe disjunction toevoegen
-        const disj = fltr.Disjunction(this.expression, fltr.Incomplete(fltr.Property("string", "?", "?"), fltr.Literal("string", "?")));
+        // const disj = fltr.Disjunction(this.expression, fltr.Incomplete(fltr.Property("string", "?", "?"), fltr.Literal("string", "?")));
         break;
     }
   }

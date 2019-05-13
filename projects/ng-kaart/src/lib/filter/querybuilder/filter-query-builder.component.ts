@@ -8,14 +8,12 @@ import { Filter as fltr } from "../../filter/filter-model";
   styleUrls: ["./filter-query-builder.component.scss"]
 })
 export class FilterQueryBuilderComponent {
-  typeIsAanliggend = fltr.Equality(fltr.Property("string", "type", "Type"), fltr.Literal("string", "Aanliggend"));
-  typeIsNietVerhoogd = fltr.Inequality(fltr.Property("string", "type", "Type"), fltr.Literal("string", "Verhoogd"));
+  typeIsAanliggend = fltr.BinaryComparison("equality", fltr.Property("string", "type", "Type"), fltr.Literal("string", "Aanliggend"));
+  typeIsNietVerhoogd = fltr.BinaryComparison("inequality", fltr.Property("string", "type", "Type"), fltr.Literal("string", "Verhoogd"));
 
-  ident8IsR4 = fltr.Equality(fltr.Property("string", "ident8", "Ident8"), fltr.Literal("string", "R0040001"));
-  ident8IsR1 = fltr.Equality(fltr.Property("string", "ident8", "Ident8"), fltr.Literal("string", "R0010001"));
-  ident8IsR8 = fltr.Equality(fltr.Property("string", "ident8", "Ident8"), fltr.Literal("string", "R0080001"));
-
-  incomplete = fltr.Incomplete(fltr.Property("string", "?", "?"), fltr.Literal("string", "?"));
+  ident8IsR4 = fltr.BinaryComparison("equality", fltr.Property("string", "ident8", "Ident8"), fltr.Literal("string", "R0040001"));
+  ident8IsR1 = fltr.BinaryComparison("equality", fltr.Property("string", "ident8", "Ident8"), fltr.Literal("string", "R0010001"));
+  ident8IsR8 = fltr.BinaryComparison("equality", fltr.Property("string", "ident8", "Ident8"), fltr.Literal("string", "R0080001"));
 
   conj1 = fltr.Conjunction(this.ident8IsR4, this.typeIsAanliggend);
   conj2 = fltr.Conjunction(this.conj1, this.typeIsNietVerhoogd);
@@ -24,10 +22,9 @@ export class FilterQueryBuilderComponent {
 
   disj1 = fltr.Disjunction(this.conj2, this.conj3);
   disj2 = fltr.Disjunction(this.disj1, this.ident8IsR8);
-  disj3 = fltr.Disjunction(this.disj2, this.incomplete);
 
   @Input()
-  expression: fltr.Expression = this.disj3;
+  expression: fltr.Expression = this.disj2;
 
   property(): string {
     return (<fltr.Comparison>this.expression).property.ref;

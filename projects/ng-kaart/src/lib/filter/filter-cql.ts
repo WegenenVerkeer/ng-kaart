@@ -10,13 +10,13 @@ export namespace FilterCql {
 
   const literalCql: Generator<fltr.Literal> = fltr.matchLiteral({
     boolean: literal => (literal ? "true" : "false"),
-    string: literal => `'${literal}'`,
-    integer: literal => `${literal}`,
-    double: literal => `${literal}`,
-    date: literal => `'${literal}'`, // beschouw al de rest als string. Zie TODO bij TypeType
-    datetime: literal => `'${literal}'`, // beschouw al de rest als string. Zie TODO bij TypeType
-    geometry: literal => `'${literal}'`, // beschouw al de rest als string. Zie TODO bij TypeType
-    json: literal => `'${literal}'` // beschouw al de rest als string. Zie TODO bij TypeType
+    string: literal => `'${literal.value}'`,
+    integer: literal => `${literal.value}`,
+    double: literal => `${literal.value}`,
+    date: literal => `'${literal.value}'`, // beschouw al de rest als string. Zie TODO bij TypeType
+    datetime: literal => `'${literal.value}'`, // beschouw al de rest als string. Zie TODO bij TypeType
+    geometry: literal => `'${literal.value}'`, // beschouw al de rest als string. Zie TODO bij TypeType
+    json: literal => `'${literal.value}'` // beschouw al de rest als string. Zie TODO bij TypeType
   });
 
   const binaryOperatorSymbols = {

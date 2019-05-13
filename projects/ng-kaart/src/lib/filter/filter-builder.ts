@@ -6,7 +6,6 @@ import { fromTraversable, Lens, Prism, Traversal } from "monocle-ts";
 
 import * as ke from "../kaart/kaart-elementen";
 import { applySequential } from "../util/function";
-import * as maps from "../util/maps";
 import * as matchers from "../util/matchers";
 
 import { Filter as fltr } from "./filter-model";
@@ -104,7 +103,9 @@ export namespace FilterEditor {
         veld.type !== "json"
     );
   const properties: Function1<ke.ToegevoegdeVectorLaag, fltr.Property[]> = laag =>
-    veldinfos(laag).map(vi => fltr.Property(vi.type, vi.naam, fromNullable(vi.label).getOrElse(vi.naam)));
+    veldinfos(laag)
+      .map(vi => fltr.Property(vi.type, vi.naam, fromNullable(vi.label).getOrElse(vi.naam)))
+      .filter(property => property.type === "string"); // TODO ook boolean, number, date op termijn
 
   // Initieer aanmaak van een Comparison
   const FieldSelection: Function1<ke.ToegevoegdeVectorLaag, FieldSelection> = laag => ({ kind: "Field", properties: properties(laag) });

@@ -55,7 +55,7 @@
             <mat-option
               *ngFor="let operator of (filteredOperatoren$ | async)"
               [value]="operator"
-              >{{ operator.description }}</mat-option
+              >{{ operator.label }}</mat-option
             >
           </mat-autocomplete>
           <mat-error *ngIf="operatorControl.invalid">{{
@@ -87,7 +87,7 @@
         color="primary"
         class="filter-pas-toe-button"
         (click)="onAction('pasFilterToe')"
-        [disabled]="!(geldigFilterCmd$ | async)"
+        [disabled]="ongeldigeFilterCmd$ | async"
       >
         Pas toe
       </button>
