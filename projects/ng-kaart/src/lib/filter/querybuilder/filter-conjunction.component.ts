@@ -18,8 +18,10 @@ export class FilterConjunctionComponent {
   @Output()
   newExpressionEditor: EventEmitter<Endomorphism<fed.ExpressionEditor>> = new EventEmitter();
 
-  voegConjunctionToe() {
-    this.newExpressionEditor.emit(fed.addConjunction(this.editor));
+  voegConjunctionToe(isLast: boolean) {
+    if (isLast) {
+      this.newExpressionEditor.emit(fed.addConjunction(this.editor));
+    }
   }
 
   onNewExpressionEditor(newExpressionEditor: Endomorphism<fed.ExpressionEditor>) {

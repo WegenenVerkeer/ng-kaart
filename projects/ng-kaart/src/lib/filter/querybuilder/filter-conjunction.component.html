@@ -1,4 +1,4 @@
 <div class="conjunction" *ngFor="let termEditor of editor.termEditors; last as isLast">
     <awv-filter-chip [editor]="termEditor" [globalExpressionEditor]="globalExpressionEditor" (newExpressionEditor)="onNewExpressionEditor($event)"></awv-filter-chip>
-    <awv-filter-logical-connective operator="EN" (click)="voegConjunctionToe()"  [clickable]="isLast"></awv-filter-logical-connective>
+    <awv-filter-logical-connective operator="EN" (click)="voegConjunctionToe(isLast)"  [clickable]="isLast"></awv-filter-logical-connective>
 </div>
