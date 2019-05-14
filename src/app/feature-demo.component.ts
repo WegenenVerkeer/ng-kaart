@@ -824,6 +824,10 @@ export class FeatureDemoComponent {
     console.log("------> kaartLocaties", locaties);
   }
 
+  onMijnMobieleLocatieStateChange(stateChange: any): void {
+    console.log("-----> stateChange", stateChange);
+  }
+
   onFietspadsegmentenZichtbaar(features: Array<ol.Feature>): void {
     this.fietspadsegmentenSelectie = features.map(feature => ({
       feature: feature,

@@ -22,6 +22,7 @@ import { UiElementOpties } from "./kaart-protocol-commands";
 import { Viewinstellingen } from "./kaart-protocol-subscriptions";
 import { KaartWithInfo } from "./kaart-with-info";
 import { GeselecteerdeFeatures, HoverFeature } from "./kaart-with-info-model";
+import * as loc from "./mijn-locatie/kaart-mijn-locatie.component";
 import { GeenLaagstijlaanpassing, LaagstijlaanpassingState } from "./stijleditor/state";
 import { DrawOps } from "./tekenen/tekenen-model";
 
@@ -46,6 +47,12 @@ export interface PrecacheLaagProgress {
 
 export interface LaatsteCacheRefresh {
   readonly [laagnaam: string]: Date; // laagnaam -> laatste cache refresh
+}
+
+export interface MijnLocatieStateChange {
+  readonly oudeState: loc.State;
+  readonly nieuweState: loc.State;
+  readonly event: loc.Event;
 }
 
 /**
@@ -76,6 +83,7 @@ export interface ModelChanger {
   readonly getekendeGeometrySubj: rx.Subject<ol.geom.Geometry>;
   readonly precacheProgressSubj: rx.BehaviorSubject<PrecacheLaagProgress>;
   readonly laatsteCacheRefreshSubj: rx.BehaviorSubject<LaatsteCacheRefresh>;
+  readonly mijnLocatieStateChangeSubj: rx.Subject<MijnLocatieStateChange>;
 }
 
 // Hieronder wordt een paar keer BehaviourSubject gebruikt. Dat is equivalent met, maar beknopter dan, een startWith + shareReplay
@@ -105,7 +113,8 @@ export const ModelChanger: () => ModelChanger = () => ({
   tekenenOpsSubj: new rx.Subject<DrawOps>(),
   getekendeGeometrySubj: new rx.Subject<ol.geom.Geometry>(),
   precacheProgressSubj: new rx.BehaviorSubject({}),
-  laatsteCacheRefreshSubj: new rx.BehaviorSubject({})
+  laatsteCacheRefreshSubj: new rx.BehaviorSubject({}),
+  mijnLocatieStateChangeSubj: new rx.Subject<MijnLocatieStateChange>()
 });
 
 export interface ModelChanges {
@@ -134,6 +143,7 @@ export interface ModelChanges {
   readonly getekendeGeometry$: rx.Observable<ol.geom.Geometry>;
   readonly precacheProgress$: rx.Observable<PrecacheLaagProgress>;
   readonly laatsteCacheRefresh$: rx.Observable<LaatsteCacheRefresh>;
+  readonly mijnLocatieStateChange$: rx.Observable<MijnLocatieStateChange>;
 }
 
 const viewinstellingen = (olmap: ol.Map) => ({
@@ -303,6 +313,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     tekenenOps$: changer.tekenenOpsSubj.pipe(observeOn(rx.asapScheduler)),
     getekendeGeometry$: changer.getekendeGeometrySubj.pipe(observeOn(rx.asapScheduler)),
     precacheProgress$: changer.precacheProgressSubj.pipe(observeOn(rx.asapScheduler)),
-    laatsteCacheRefresh$: changer.laatsteCacheRefreshSubj.pipe(observeOn(rx.asapScheduler))
+    laatsteCacheRefresh$: changer.laatsteCacheRefreshSubj.pipe(observeOn(rx.asapScheduler)),
+    mijnLocatieStateChange$: changer.mijnLocatieStateChangeSubj.pipe(observeOn(rx.asapScheduler))
   };
 };
