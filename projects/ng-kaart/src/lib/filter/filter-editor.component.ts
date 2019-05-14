@@ -4,11 +4,10 @@ import * as array from "fp-ts/lib/Array";
 import { Endomorphism, Function1 } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import * as option from "fp-ts/lib/Option";
-import { contramap, Ord, ordBoolean } from "fp-ts/lib/Ord";
+import { Ord } from "fp-ts/lib/Ord";
 import * as ord from "fp-ts/lib/Ord";
 import * as rx from "rxjs";
 import {
-  combineLatest,
   debounceTime,
   distinctUntilChanged,
   filter,
@@ -20,8 +19,7 @@ import {
   startWith,
   switchMap,
   take,
-  tap,
-  throttleTime
+  tap
 } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
@@ -121,7 +119,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     const gekozenOperator$: rx.Observable<fed.BinaryComparisonOperator> = forControlValue(this.operatorControl).pipe(
       filter(isNotNullObject),
       tap(o => console.log("*****Operator gekozen", o)),
-      distinctUntilChanged(), // gebruikt object identity, maar de onderliggende objecten worden geherbruikt dus geen probleem
+      distinctUntilChanged(), // gebruikt object identity, maar de onderliggende objecten worden hergebruikt dus geen probleem
       tap(o => console.log("*****Distinct operator gekozen", o))
     );
     const gekozenWaarde$: rx.Observable<fltr.Literal> = forControlValue(this.waardeControl).pipe(
@@ -134,12 +132,15 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     const zetNaam$: rx.Observable<Endomorphism<fed.ExpressionEditor>> = gekozenNaam$.pipe(map(fed.setName));
     const zetProperty$: rx.Observable<TermEditorUpdate> = gekozenVeld$.pipe(map(fed.OperatorSelection));
     const zetOperator$: rx.Observable<TermEditorUpdate> = gekozenOperator$.pipe(map(fed.ValueSelection));
-    const zetWaarde$: rx.Observable<TermEditorUpdate> = gekozenWaarde$.pipe(map(fed.Completed));
+    const zetWaarde$: rx.Observable<TermEditorUpdate> = gekozenWaarde$.pipe(
+      tap(w => console.log("***waarde$", w)),
+      map(fed.Completed)
+    );
 
     const initExpressionEditor$: rx.Observable<fed.ExpressionEditor> = subSpy("****initExpressionEditor$")(
       laag$.pipe(
         map(fed.fromToegevoegdeVectorLaag),
-        share()
+        shareReplay(1)
       )
     );
 
@@ -154,7 +155,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
             startWith(initTermEditor)
           )
         ),
-        share()
+        shareReplay(1)
       )
     );
 
@@ -166,8 +167,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
           expressionEditorUpdates$.pipe(
             scan((expEd: fed.ExpressionEditor, update: Endomorphism<fed.ExpressionEditor>) => update(expEd), initExpressionEditor),
             startWith(initExpressionEditor),
-            tap(expressionEditor => kaartLogger.debug("****expressionEditor", expressionEditor)),
-            throttleTime(100)
+            tap(expressionEditor => kaartLogger.debug("****expressionEditor", expressionEditor))
           )
         ),
         share()
@@ -268,8 +268,15 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       )
     );
 
-    const geldigFilterCmd$ = maybeZetFilterCmd$.pipe(catOptions);
-    this.ongeldigeFilter$ = maybeZetFilterCmd$.pipe(map(m => m.isNone()));
+    const geldigFilterCmd$ = maybeZetFilterCmd$.pipe(
+      catOptions,
+      tap(gfc => console.log("****geldigFilterCmd$", gfc))
+    );
+    this.ongeldigeFilter$ = rx
+      .combineLatest(maybeZetFilterCmd$, this.waardeControl.statusChanges)
+      // TODO we moeten de status wat gesofisticeerder aanpakken in de zin dat we de invalid status van de andere velden
+      // ook moeten gebruiken. Als operator bijv. invalid is, zouden we in de OperatorSelection state moeten zitten.
+      .pipe(map(([cmd, status]) => cmd.isNone() || status !== "VALID")); // constante VALID lijkt niet exposed te zijn in Angular
 
     const laagNietZichtbaar$ = laag$.pipe(
       switchMap(laag =>
@@ -282,8 +289,8 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
     const pasToeGeklikt$ = this.actionFor$("pasFilterToe");
     this.bindToLifeCycle(
-      laagNietZichtbaar$.pipe(
-        combineLatest(geldigFilterCmd$),
+      rx.combineLatest(laagNietZichtbaar$, geldigFilterCmd$).pipe(
+        tap(lnz => console.log("****laagNietZichtbaar", lnz)),
         sample(pasToeGeklikt$)
       )
     ).subscribe(([laagNietZichtbaar, command]) => {
