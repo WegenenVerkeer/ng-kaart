@@ -72,7 +72,7 @@
       </div>
 
       <div class="query-builder">
-        <awv-filter-query-builder></awv-filter-query-builder>
+        <awv-filter-query-builder [expressionEditor]="filterEditor$ | async" (newExpressionEditor)="onNewExpressionEditor($event)"></awv-filter-query-builder>
       </div>
 
     </div>

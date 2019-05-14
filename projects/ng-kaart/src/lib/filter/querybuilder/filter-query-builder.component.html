@@ -1,17 +1,14 @@
+<div class="query-builder">
 
-<div [ngSwitch]="expression.kind">
+  <div class="disjunctions" *ngFor="let conjunction of expressionEditor?.disjunctions?.conjunctionEditors; first as isFirst">
+    <div class="spacer" *ngIf="isFirst"></div>
+    <awv-filter-logical-connective operator="OF" *ngIf="!isFirst"></awv-filter-logical-connective>
 
-  <div class="query-builder">
+    <awv-filter-conjunction class="conjunctions" [editor]="conjunction" [globalExpressionEditor]="expressionEditor" (newExpressionEditor)="onNewExpressionEditor($event)"></awv-filter-conjunction>
+  </div>
 
-    <div>
-      <awv-filter-disjunction [expression]="expression"></awv-filter-disjunction>
-    </div>
-
-    <div class="lijn">
-      <awv-filter-logical-connective operator="OF" clickable="true" [expression]="expression"></awv-filter-logical-connective>
-    </div>
-
+  <div class="of-knop">
+    <awv-filter-logical-connective operator="OF" clickable="true" (click)="voegDisjunctionToe()"></awv-filter-logical-connective>
   </div>
 
 </div>
-

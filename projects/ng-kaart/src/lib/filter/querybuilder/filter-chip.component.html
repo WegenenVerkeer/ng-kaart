@@ -1,13 +1,39 @@
-<div class="chip">
+<div class="chip" [ngSwitch]="editor.kind" (click)="setCurrent()">
 
-  <div *ngIf="expression.kind == 'Equality' || expression.kind == 'Inequality'" class="term">
-    <awv-filter-term [expression]="expression"></awv-filter-term>
-    <mat-icon class="checkmark">done</mat-icon>
+  <div *ngSwitchCase="'Field'" class="term {{ isCurrentStyle() }}">
+    <div class="filter-term">
+      <div>?</div>
+      <div class ="comparison">is</div>
+      <div>?</div>
+    </div>
+    <mat-icon class="cross">error_outline</mat-icon>
   </div>
 
-  <div *ngIf="expression.kind == 'Incomplete'" class="term">
-    <awv-filter-term [expression]="expression"></awv-filter-term>
+  <div *ngSwitchCase="'Operator'" class="term {{ isCurrentStyle() }}">
+    <div class="filter-term">
+      <div>{{ editor.selectedProperty.label }}</div>
+      <div class ="comparison">is</div>
+      <div>?</div>
+    </div>
     <mat-icon class="cross">error_outline</mat-icon>
+  </div>
+
+  <div *ngSwitchCase="'Value'" class="term {{ isCurrentStyle() }}">
+    <div class="filter-term">
+      <div>{{ editor.selectedProperty.label }}</div>
+      <div class ="comparison">{{editor.selectedOperator.label }}</div>
+      <div>?</div>
+    </div>
+    <mat-icon class="cross">error_outline</mat-icon>
+  </div>
+
+  <div *ngSwitchCase="'Completed'" class="term {{ isCurrentStyle() }}">
+    <div class="filter-term">
+      <div>{{ editor.selectedProperty.label }}</div>
+      <div class ="comparison">{{editor.selectedOperator.label }}</div>
+      <div>{{ editor.selectedValue.value }}</div>
+    </div>
+    <mat-icon class="checkmark">done</mat-icon>
   </div>
 
 </div>

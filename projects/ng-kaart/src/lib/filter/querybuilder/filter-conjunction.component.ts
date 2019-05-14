@@ -1,6 +1,7 @@
-import { Component, Input } from "@angular/core";
+import { Component, EventEmitter, Input, Output } from "@angular/core";
+import { Endomorphism } from "fp-ts/lib/function";
 
-import { Filter as fltr } from "../../filter/filter-model";
+import { FilterEditor as fed } from "../filter-builder";
 
 @Component({
   selector: "awv-filter-conjunction",
@@ -9,5 +10,19 @@ import { Filter as fltr } from "../../filter/filter-model";
 })
 export class FilterConjunctionComponent {
   @Input()
-  expression: fltr.Expression;
+  editor: fed.ConjunctionEditor;
+
+  @Input()
+  globalExpressionEditor: fed.ExpressionEditor;
+
+  @Output()
+  newExpressionEditor: EventEmitter<Endomorphism<fed.ExpressionEditor>> = new EventEmitter();
+
+  voegConjunctionToe() {
+    this.newExpressionEditor.emit(fed.addConjunction(this.editor));
+  }
+
+  onNewExpressionEditor(newExpressionEditor: Endomorphism<fed.ExpressionEditor>) {
+    this.newExpressionEditor.next(newExpressionEditor);
+  }
 }

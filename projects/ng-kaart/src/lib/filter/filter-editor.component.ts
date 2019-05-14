@@ -66,6 +66,10 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
   readonly ongeldigeFilter$: rx.Observable<boolean>;
 
+  readonly filterEditor$: rx.Observable<fed.ExpressionEditor>;
+
+  readonly newFilterEditor$ = new rx.Subject<Endomorphism<fed.ExpressionEditor>>();
+
   private clickInsideDialog = false;
 
   constructor(kaart: KaartComponent, zone: NgZone) {
@@ -159,9 +163,9 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       )
     );
 
-    const expressionEditorUpdates$ = rx.merge(zetNaam$, currentTermEditor$.pipe(map(fed.update)));
+    const expressionEditorUpdates$ = rx.merge(zetNaam$, currentTermEditor$.pipe(map(fed.update)), this.newFilterEditor$.asObservable());
 
-    const filterEditor$: rx.Observable<fed.ExpressionEditor> = subSpy("****filterEditor$")(
+    this.filterEditor$ = subSpy("****filterEditor$")(
       initExpressionEditor$.pipe(
         switchMap(initExpressionEditor =>
           expressionEditorUpdates$.pipe(
@@ -176,7 +180,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
     // Deze subscribe zorgt er voor dat de updates effectief uitgevoerd worden
     this.bindToLifeCycle(
-      rx.combineLatest(filterEditor$, kaart.modelChanges.laagFilterAanpassingState$.pipe(map(isAanpassingBezig)))
+      rx.combineLatest(this.filterEditor$, kaart.modelChanges.laagFilterAanpassingState$.pipe(map(isAanpassingBezig)))
     ).subscribe(([expressionEditor, zichtbaar]) => {
       if (zichtbaar) {
         // zet control waarden bij aanpassen van expressionEditor
@@ -217,7 +221,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     const operatorSelection$ = currentTermEditor$.pipe(filter(fed.isAtLeastOperatorSelection));
 
     const properties$: rx.Observable<fltr.Property[]> = subSpy("****velden$")(
-      filterEditor$.pipe(
+      this.filterEditor$.pipe(
         map(editor => editor.current.properties),
         shareReplay(1)
       )
@@ -261,7 +265,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       .pipe(map(([getypt, operators]) => operators.filter(operator => operator.label.toLowerCase().startsWith(getypt.toLowerCase()))));
 
     const maybeZetFilterCmd$ = forEveryLaag(laag =>
-      filterEditor$.pipe(
+      this.filterEditor$.pipe(
         map(fed.toExpressionFilter),
         map(maybeExpFilter => maybeExpFilter.map(expFilter => prt.ZetFilter(laag.titel, expFilter, kaartLogOnlyWrapper))),
         share()
@@ -303,6 +307,11 @@ export class FilterEditorComponent extends KaartChildComponentBase {
         );
       }
     });
+  }
+
+  onNewExpressionEditor(newExpressionEditor: Endomorphism<fed.ExpressionEditor>) {
+    console.log("Nieuwe expression editor!");
+    this.newFilterEditor$.next(newExpressionEditor);
   }
 
   close() {

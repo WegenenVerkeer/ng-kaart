@@ -1,34 +1,39 @@
 @import "../../css/kaart.component-common.scss";
 
-.verticaal {
-  display: flex;
-  flex-direction: column;
-}
-
-.horizontaal {
-  display: flex;
-  flex-direction: row;
-}
-
-.disjunctions {
-  padding: 8px 0 8px 0;
-}
-
 .query-builder {
   display: flex;
   flex-direction: column;
 
-  border-bottom-width: 1px;
-  border-bottom-color: rgb(204, 204, 204);
-  border-bottom-style: dotted;
-  padding: 8px 0 8px 0;
+  .disjunctions {
+    display: flex;
+    flex-direction: row;
+
+    padding: 0.5em;
+
+    border-bottom-width: 1px;
+    border-bottom-color: rgb(204, 204, 204);
+    border-bottom-style: dotted;
+  }
 
   .spacer {
-    flex-grow: 1;
+    padding-left: 0.5em;
+    width: 34px;
+    height: 34px;
+    line-height: 32px;
   }
 
-  .lijn {
+  .of-knop {
     padding: 0.5em;
+
+    border-bottom-width: 1px;
+    border-bottom-color: rgb(204, 204, 204);
+    border-bottom-style: dashed;
   }
+
+
 }
 
+.conjunctions {
+  display: flex;
+  flex-direction: row;
+}

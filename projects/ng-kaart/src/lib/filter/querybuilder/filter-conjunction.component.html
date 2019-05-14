@@ -1,13 +1,4 @@
-<div class="conjunction">
-
-  <awv-filter-chip [expression]="expression"></awv-filter-chip>
-
-  <div *ngIf="expression.kind == 'And'" class="conjunction">
-
-    <awv-filter-conjunction [expression]="expression.left"></awv-filter-conjunction>
-    <awv-filter-logical-connective operator="EN"></awv-filter-logical-connective>
-    <awv-filter-chip [expression]="expression.right"></awv-filter-chip>
-
-  </div>
-
+<div class="conjunction" *ngFor="let termEditor of editor.termEditors; last as isLast">
+    <awv-filter-chip [editor]="termEditor" [globalExpressionEditor]="globalExpressionEditor" (newExpressionEditor)="onNewExpressionEditor($event)"></awv-filter-chip>
+    <awv-filter-logical-connective operator="EN" (click)="voegConjunctionToe()"  [clickable]="isLast"></awv-filter-logical-connective>
 </div>

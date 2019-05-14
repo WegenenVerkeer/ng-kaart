@@ -1,6 +1,7 @@
-import { Component, Input } from "@angular/core";
+import { Component, EventEmitter, Input, Output } from "@angular/core";
+import { Endomorphism } from "fp-ts/lib/function";
 
-import { Filter as fltr } from "../../filter/filter-model";
+import { FilterEditor as fed } from "../filter-builder";
 
 @Component({
   selector: "awv-filter-query-builder",
@@ -8,29 +9,17 @@ import { Filter as fltr } from "../../filter/filter-model";
   styleUrls: ["./filter-query-builder.component.scss"]
 })
 export class FilterQueryBuilderComponent {
-  typeIsAanliggend = fltr.BinaryComparison("equality", fltr.Property("string", "type", "Type"), fltr.Literal("string", "Aanliggend"));
-  typeIsNietVerhoogd = fltr.BinaryComparison("inequality", fltr.Property("string", "type", "Type"), fltr.Literal("string", "Verhoogd"));
-
-  ident8IsR4 = fltr.BinaryComparison("equality", fltr.Property("string", "ident8", "Ident8"), fltr.Literal("string", "R0040001"));
-  ident8IsR1 = fltr.BinaryComparison("equality", fltr.Property("string", "ident8", "Ident8"), fltr.Literal("string", "R0010001"));
-  ident8IsR8 = fltr.BinaryComparison("equality", fltr.Property("string", "ident8", "Ident8"), fltr.Literal("string", "R0080001"));
-
-  conj1 = fltr.Conjunction(this.ident8IsR4, this.typeIsAanliggend);
-  conj2 = fltr.Conjunction(this.conj1, this.typeIsNietVerhoogd);
-
-  conj3 = fltr.Conjunction(this.ident8IsR1, this.typeIsAanliggend);
-
-  disj1 = fltr.Disjunction(this.conj2, this.conj3);
-  disj2 = fltr.Disjunction(this.disj1, this.ident8IsR8);
-
   @Input()
-  expression: fltr.Expression = this.disj2;
+  expressionEditor: fed.ExpressionEditor;
 
-  property(): string {
-    return (<fltr.Comparison>this.expression).property.ref;
+  @Output()
+  newExpressionEditor: EventEmitter<Endomorphism<fed.ExpressionEditor>> = new EventEmitter();
+
+  voegDisjunctionToe() {
+    this.newExpressionEditor.emit(fed.addDisjunction);
   }
 
-  value(): string {
-    return (<fltr.Comparison>this.expression).value.value.toString();
+  onNewExpressionEditor(newExpressionEditor: Endomorphism<fed.ExpressionEditor>) {
+    this.newExpressionEditor.next(newExpressionEditor);
   }
 }
