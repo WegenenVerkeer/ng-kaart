@@ -1,6 +1,9 @@
-import { Function1, Refinement } from "fp-ts/lib/function";
+import { Function1, Function2, Refinement } from "fp-ts/lib/function";
 import { fromPredicate, fromRefinement, Option } from "fp-ts/lib/Option";
-import { contramap, Setoid, setoidString } from "fp-ts/lib/Setoid";
+import * as ord from "fp-ts/lib/Ord";
+import { Ord } from "fp-ts/lib/Ord";
+import * as setoid from "fp-ts/lib/Setoid";
+import { Setoid, setoidString } from "fp-ts/lib/Setoid";
 import { Iso, Lens, Optional } from "monocle-ts";
 import * as ol from "openlayers";
 
@@ -256,10 +259,13 @@ export namespace ToegevoegdeVectorLaag {
     "stijlSelBron"
   );
 
-  export const veldInfosLens: Lens<ToegevoegdeVectorLaag, VeldInfo[]> = Lens.fromPath<ToegevoegdeVectorLaag, "bron", "velden">([
+  export const veldInfosMapLens: Lens<ToegevoegdeVectorLaag, Map<string, VeldInfo>> = Lens.fromPath<
+    ToegevoegdeVectorLaag,
     "bron",
     "velden"
-  ]).composeIso(
+  >(["bron", "velden"]);
+
+  export const veldInfosLens: Lens<ToegevoegdeVectorLaag, VeldInfo[]> = veldInfosMapLens.composeIso(
     new Iso(
       map => Array.from(map.values()), //
       infos => maps.toMapByKey(infos, info => info.naam)
@@ -271,7 +277,11 @@ export namespace ToegevoegdeVectorLaag {
 }
 
 export namespace VeldInfo {
-  export const setoidVeldOpNaam: Setoid<VeldInfo> = contramap(vi => vi.naam, setoidString);
+  export const setoidVeldOpNaam: Setoid<VeldInfo> = setoid.contramap(vi => vi.naam, setoidString);
+  export const ordVeldOpBasisVeld: Ord<VeldInfo> = ord.contramap(vi => vi.isBasisVeld, ord.ordBoolean);
+
+  export const veldInfoOpNaam: Function2<string, Map<string, VeldInfo>, Option<VeldInfo>> = (naam, veldinfos) =>
+    maps.findFirst(veldinfos, vi => vi.naam === naam);
 
   export const matchWithFallback: <A>(_: matchers.FallbackMatcher<VeldInfo, A, VeldType>) => Function1<VeldInfo, A> = m =>
     matchers.matchWithFallback(m)(veldinfo => veldinfo.type);

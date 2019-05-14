@@ -152,13 +152,13 @@ export namespace Filter {
     kind: "Property",
     type: typetype,
     ref: name,
-    label: label
+    label
   });
 
   export const Literal: Function2<TypeType, ValueType, Literal> = (typetype, value) => ({
     kind: "Literal",
     type: typetype,
-    value: value
+    value
   });
 
   export interface FilterMatcher<A> {

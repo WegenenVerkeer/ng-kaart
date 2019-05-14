@@ -98,14 +98,12 @@ export namespace FilterEditor {
         fromNullable(veld.label).isSome() &&
         fromNullable(veld.constante).isNone() &&
         fromNullable(veld.template).isNone() &&
-        fromNullable(veld.html).isNone() &&
-        veld.type !== "geometry" &&
-        veld.type !== "json"
+        fromNullable(veld.html).isNone()
     );
   const properties: Function1<ke.ToegevoegdeVectorLaag, fltr.Property[]> = laag =>
     veldinfos(laag)
       .map(vi => fltr.Property(vi.type, vi.naam, fromNullable(vi.label).getOrElse(vi.naam)))
-      .filter(property => property.type === "string"); // TODO ook boolean, number, date op termijn
+      .filter(property => ["string", "boolean", "double", "integer"].includes(property.type));
 
   // Initieer aanmaak van een Comparison
   const FieldSelection: Function1<ke.ToegevoegdeVectorLaag, FieldSelection> = laag => ({ kind: "Field", properties: properties(laag) });

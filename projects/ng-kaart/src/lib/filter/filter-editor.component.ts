@@ -1,7 +1,11 @@
 import { Component, NgZone } from "@angular/core";
 import { FormControl, ValidationErrors, Validators } from "@angular/forms";
+import * as array from "fp-ts/lib/Array";
 import { Endomorphism, Function1 } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
+import * as option from "fp-ts/lib/Option";
+import { contramap, Ord, ordBoolean } from "fp-ts/lib/Ord";
+import * as ord from "fp-ts/lib/Ord";
 import * as rx from "rxjs";
 import {
   combineLatest,
@@ -27,8 +31,7 @@ import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
 import { kaartLogger } from "../kaart/log";
 import { isNotNull, isNotNullObject } from "../util/function";
-import { catOptions, subSpy } from "../util/operators";
-import { forEvery } from "../util/operators";
+import { catOptions, forEvery, subSpy } from "../util/operators";
 
 import { FilterAanpassingBezig, isAanpassingBezig } from "./filter-aanpassing-state";
 import { FilterEditor as fed } from "./filter-builder";
@@ -40,6 +43,9 @@ const autoCompleteSelectieVerplichtValidator: Function1<FormControl, ValidationE
   }
   return null;
 };
+
+const ordPropertyByBaseField: Function1<Map<string, ke.VeldInfo>, Ord<fltr.Property>> = veldinfos =>
+  ord.contramap(prop => ke.VeldInfo.veldInfoOpNaam(prop.ref, veldinfos), option.getOrd(ord.getDualOrd(ke.VeldInfo.ordVeldOpBasisVeld)));
 
 @Component({
   selector: "awv-filter-editor",
@@ -78,6 +84,13 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       aanpassing$.pipe(
         map(aanpassing => aanpassing.laag),
         shareReplay(1)
+      )
+    );
+
+    const veldinfos$ = subSpy("****veldinfo$s")(
+      laag$.pipe(
+        map(ke.ToegevoegdeVectorLaag.veldInfosMapLens.get),
+        share()
       )
     );
 
@@ -203,16 +216,16 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
     const operatorSelection$ = currentTermEditor$.pipe(filter(fed.isAtLeastOperatorSelection));
 
-    const velden$: rx.Observable<fltr.Property[]> = subSpy("****velden$")(
-      currentTermEditor$.pipe(
-        map(editor => editor.properties),
+    const properties$: rx.Observable<fltr.Property[]> = subSpy("****velden$")(
+      filterEditor$.pipe(
+        map(editor => editor.current.properties),
         shareReplay(1)
       )
     );
-    velden$.subscribe();
+
     this.filteredVelden$ = subSpy("****filteredVelden$")(
-      velden$.pipe(
-        switchMap(properties =>
+      rx.combineLatest(properties$, veldinfos$).pipe(
+        switchMap(([properties, veldinfos]) =>
           this.veldControl.valueChanges.pipe(
             filter(isNotNull),
             startWith<fltr.Property | string>(""), // nog niets ingetypt
@@ -224,9 +237,8 @@ export class FilterEditorComponent extends KaartChildComponentBase {
                   .toLowerCase()
                   .startsWith(getypt.toLowerCase())
               )
-            )
-            // TODO ordBasisVeld maken, maar daarvoor uitbreiding Property (PrioritisedProperty bijv) nodig.
-            // , map(velden => array.sort(ordBasisVeld)(velden))
+            ),
+            map(properties => array.sort(ordPropertyByBaseField(veldinfos))(properties))
           )
         ),
         shareReplay(1)

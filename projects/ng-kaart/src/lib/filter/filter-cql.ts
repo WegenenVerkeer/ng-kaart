@@ -1,4 +1,4 @@
-import { constant, Function1, Function2, Function3 } from "fp-ts/lib/function";
+import { constant, Function1, Function3 } from "fp-ts/lib/function";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 
 import { Filter as fltr } from "../filter/filter-model";
@@ -46,8 +46,11 @@ export namespace FilterCql {
   const numberBinaryOperator: Function3<fltr.Property, fltr.BinaryComparisonOperator, fltr.Literal, Option<string>> = (
     property,
     operator,
-    value
-  ) => fromNullable(numberBinaryOperatorSymbols[operator]).map(symbol => `${propertyRef(property)} ${symbol} ${literalCql(value)}`);
+    literal
+  ) =>
+    fromNullable(numberBinaryOperatorSymbols[operator]).chain(symbol =>
+      literalCql(literal).map(value => `${propertyRef(property)} ${symbol} ${value}`)
+    );
 
   const both: Function3<Option<string>, Option<string>, string, Option<string>> = (maybeLeft, maybeRight, separator) =>
     maybeLeft.fold(
