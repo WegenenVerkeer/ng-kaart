@@ -3,37 +3,31 @@
 .query-builder {
   display: flex;
   flex-direction: column;
-
-  .disjunctions {
-    display: flex;
-    flex-direction: row;
-
-    padding: 0.5em;
-
-    border-bottom-width: 1px;
-    border-bottom-color: rgb(204, 204, 204);
-    border-bottom-style: dotted;
-  }
-
-  .spacer {
-    padding-left: 0.5em;
-    width: 34px;
-    height: 34px;
-    line-height: 32px;
-  }
-
-  .of-knop {
-    padding: 0.5em;
-
-    border-bottom-width: 1px;
-    border-bottom-color: rgb(204, 204, 204);
-    border-bottom-style: dashed;
-  }
-
-
 }
 
 .conjunctions {
   display: flex;
   flex-direction: row;
+}
+
+.disjunctions {
+  display: flex;
+  flex-direction: row;
+  padding: 0.5em;
+  border-bottom-width: 1px;
+  border-bottom-color: rgb(204, 204, 204);
+  border-bottom-style: dotted;
+}
+
+.spacer {
+  padding-left: 0.5em;
+  width: 34px;
+  height: 34px;
+}
+
+.of-knop {
+  padding: 0.5em;
+  border-bottom-width: 1px;
+  border-bottom-color: rgb(204, 204, 204);
+  border-bottom-style: dashed;
 }
