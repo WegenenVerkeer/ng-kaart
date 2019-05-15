@@ -334,13 +334,16 @@ export namespace FilterEditor {
     return canRemoveCurrent(expressionEditor) ? reallyRemove(expressionEditor) : expressionEditor;
   };
 
-  // voeg onderaan een OF toe
-  export const addDisjunction: Endomorphism<ExpressionEditor> = expressionEditor =>
-    disjunctionsLens
+  // voeg onderaan een OF toe en maak de nieuwe TermEditor de actieve
+  export const addDisjunction: Endomorphism<ExpressionEditor> = expressionEditor => {
+    const newEditor = FieldSelection(expressionEditor.laag);
+    const disjunctionAdded = disjunctionsLens
       .compose(conjunctionEditorsLens)
-      .modify(de => array.snoc(de, initConjunctionEditor(FieldSelection(expressionEditor.laag))))(expressionEditor);
+      .modify(de => array.snoc(de, initConjunctionEditor(newEditor)))(expressionEditor);
+    return setCurrent(newEditor)(disjunctionAdded);
+  };
 
-  // voeg een EN toe op geselecteerde rij van de huidige TermEditor, en maak die de nieuwe actieve
+  // voeg een EN toe op geselecteerde rij van de huidige TermEditor en maak die de nieuwe actieve
   export const addConjunction: Function1<ConjunctionEditor, Endomorphism<ExpressionEditor>> = conjunctionEditor => expressionEditor => {
     const newEditor = FieldSelection(expressionEditor.laag);
     const conjunctionAdded = getConjunctionEditorTraversal(conjunctionEditor)
