@@ -13,16 +13,28 @@ export class FilterChipComponent {
   editor: fed.TermEditor;
 
   @Input()
-  globalExpressionEditor: fed.ExpressionEditor;
+  expressionEditor: fed.ExpressionEditor;
 
   @Output()
-  newExpressionEditor: EventEmitter<Endomorphism<fed.ExpressionEditor>> = new EventEmitter();
+  expressionEditorUpdate: EventEmitter<Endomorphism<fed.ExpressionEditor>> = new EventEmitter();
 
   setCurrent() {
-    this.newExpressionEditor.emit(fed.setCurrent(this.editor));
+    this.expressionEditorUpdate.emit(fed.setCurrent(this.editor));
   }
 
   isCurrentStyle(): string {
-    return this.globalExpressionEditor && fed.isCurrent(this.globalExpressionEditor)(this.editor) ? "selected" : "";
+    return this.expressionEditor && fed.isCurrent(this.expressionEditor)(this.editor) ? "selected" : "";
+  }
+
+  asOperatorSelection(): fed.OperatorSelection {
+    return this.editor as fed.OperatorSelection;
+  }
+
+  asValueSelection(): fed.ValueSelection {
+    return this.editor as fed.ValueSelection;
+  }
+
+  asCompleted(): fed.Completed {
+    return this.editor as fed.Completed;
   }
 }

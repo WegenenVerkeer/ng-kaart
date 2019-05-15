@@ -309,8 +309,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     });
   }
 
-  onNewExpressionEditor(newExpressionEditor: Endomorphism<fed.ExpressionEditor>) {
-    console.log("Nieuwe expression editor!");
+  onExpressionEditorUpdate(newExpressionEditor: Endomorphism<fed.ExpressionEditor>) {
     this.newFilterEditor$.next(newExpressionEditor);
   }
 

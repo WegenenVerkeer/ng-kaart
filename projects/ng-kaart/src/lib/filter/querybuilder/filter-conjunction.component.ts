@@ -13,18 +13,18 @@ export class FilterConjunctionComponent {
   editor: fed.ConjunctionEditor;
 
   @Input()
-  globalExpressionEditor: fed.ExpressionEditor;
+  expressionEditor: fed.ExpressionEditor;
 
   @Output()
-  newExpressionEditor: EventEmitter<Endomorphism<fed.ExpressionEditor>> = new EventEmitter();
+  expressionEditorUpdate: EventEmitter<Endomorphism<fed.ExpressionEditor>> = new EventEmitter();
 
   voegConjunctionToe(isLast: boolean) {
     if (isLast) {
-      this.newExpressionEditor.emit(fed.addConjunction(this.editor));
+      this.expressionEditorUpdate.emit(fed.addConjunction(this.editor));
     }
   }
 
-  onNewExpressionEditor(newExpressionEditor: Endomorphism<fed.ExpressionEditor>) {
-    this.newExpressionEditor.next(newExpressionEditor);
+  onExpressionEditorUpdate(expressionEditorUpdate: Endomorphism<fed.ExpressionEditor>) {
+    this.expressionEditorUpdate.next(expressionEditorUpdate);
   }
 }
