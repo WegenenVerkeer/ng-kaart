@@ -8,12 +8,18 @@
 .conjunctions {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
+  flex-grow: 1;
 }
 
 .disjunctions {
   display: flex;
   flex-direction: row;
-  padding: 0.5em;
+  flex-grow: 1;
+
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+
   border-bottom-width: 1px;
   border-bottom-color: rgb(204, 204, 204);
   border-bottom-style: dotted;

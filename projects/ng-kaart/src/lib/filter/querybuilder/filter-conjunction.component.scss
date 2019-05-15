@@ -3,7 +3,7 @@
 .conjunction {
   display: flex;
   flex-direction: row;
-  width: 100%;
+  flex-wrap: wrap;
 
   .no-border {
     width: 32px;
