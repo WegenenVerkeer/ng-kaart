@@ -1,10 +1,12 @@
 import * as array from "fp-ts/lib/Array";
 import { array as ArrayMonad } from "fp-ts/lib/Array";
-import { Curried2, Endomorphism, Function1, Function2, Function3, Function4, Predicate, Refinement } from "fp-ts/lib/function";
+import { Curried2, Endomorphism, Function1, Function2, Function3, Function4, not, Predicate, Refinement } from "fp-ts/lib/function";
+import { NonEmptyArray } from "fp-ts/lib/NonEmptyArray";
 import { fromNullable, none, Option, option, some } from "fp-ts/lib/Option";
 import { fromTraversable, Lens, Prism, Traversal } from "monocle-ts";
 
 import * as ke from "../kaart/kaart-elementen";
+import * as arrays from "../util/arrays";
 import { applySequential } from "../util/function";
 import * as matchers from "../util/matchers";
 
@@ -221,15 +223,17 @@ export namespace FilterEditor {
   const conjunctionEditorTraversal: Traversal<ConjunctionEditor[], ConjunctionEditor> = fromTraversable(array.array)<ConjunctionEditor>();
   const termEditorTraversal: Traversal<TermEditor[], TermEditor> = fromTraversable(array.array)<TermEditor>();
 
-  const sameEditorAs: Function1<TermEditor, Predicate<TermEditor>> = ee1 => ee2 => ee1 === ee2;
+  const sameTermEditorAs: Function1<TermEditor, Predicate<TermEditor>> = ee1 => ee2 => ee1 === ee2;
+  const differentTermEditorFrom: Function1<TermEditor, Predicate<TermEditor>> = ee => not(sameTermEditorAs(ee));
   const sameConjuctionEditorAs: Function1<ConjunctionEditor, Predicate<ConjunctionEditor>> = conj1 => conj2 => conj1 === conj2;
   const containsSameEditorAs: Function1<TermEditor, Predicate<ConjunctionEditor>> = ee1 =>
     termEditorsLens
       .composeTraversal(termEditorTraversal)
       .asFold()
-      .exist(sameEditorAs(ee1));
+      .exist(sameTermEditorAs(ee1));
 
-  const getTermEditorInTermEditorsPrism: Function1<TermEditor, Prism<TermEditor, TermEditor>> = ee => Prism.fromPredicate(sameEditorAs(ee));
+  const getTermEditorInTermEditorsPrism: Function1<TermEditor, Prism<TermEditor, TermEditor>> = ee =>
+    Prism.fromPredicate(sameTermEditorAs(ee));
   const getTermEditorInConjunctionEditorPrism: Function1<TermEditor, Prism<ConjunctionEditor, ConjunctionEditor>> = ee =>
     Prism.fromPredicate(containsSameEditorAs(ee));
   const getConjunctionEditorPrism: Function1<ConjunctionEditor, Prism<ConjunctionEditor, ConjunctionEditor>> = conj =>
@@ -270,18 +274,48 @@ export namespace FilterEditor {
   export const setCurrent: Function1<TermEditor, Endomorphism<ExpressionEditor>> = currentLens.set;
 
   export const isCurrent: Function1<ExpressionEditor, Predicate<TermEditor>> = expressionEditor =>
-    sameEditorAs(currentLens.get(expressionEditor));
+    sameTermEditorAs(currentLens.get(expressionEditor));
 
-  // controleer of het huidige element verwijderd mag worden (geen lege expressies!)
+  // Controleer of het huidige element verwijderd mag worden (geen lege expressies!)
   export const canRemoveCurrent: Predicate<ExpressionEditor> = expressionEditor =>
     expressionEditor.disjunctions.conjunctionEditors.length > 1 ||
     expressionEditor.disjunctions.conjunctionEditors.some(ce => ce.termEditors.length > 1);
 
-  // verwijder het huidige element
+  const reallyRemove: Endomorphism<ExpressionEditor> = expressionEditor => {
+    const affectedConjunctionEditorTraversal = getConjunctionEditorForTermEditorTraversal(expressionEditor.current);
+    // De ExpressionEditor zonder current in de disjunctions (heeft mogelijks lege conjunctions)
+    const unsafeRemoved = affectedConjunctionEditorTraversal
+      .composeLens(termEditorsLens)
+      .modify(terms => array.filter(terms, differentTermEditorFrom(expressionEditor.current)))(expressionEditor);
+    // We moeten er voor zorgen dat er geen conjunctions zonder terms in zijn
+    const normalised = disjunctionsLens
+      .compose(conjunctionEditorsLens)
+      .modify(conjunctionEditors =>
+        array.filter(conjunctionEditors, conjunctionEditor => arrays.isNonEmpty(conjunctionEditor.termEditors))
+      )(unsafeRemoved);
+    // De laatste TermEditor in dezelfde ConjunctionEditor als current
+    const maybeLastSibling = affectedConjunctionEditorTraversal
+      .composeLens(termEditorsLens)
+      .asFold()
+      .headOption(expressionEditor)
+      .chain(terms => array.findLast(terms, differentTermEditorFrom(expressionEditor.current)));
+    // Met NonEmptyArray ipv Array zou `last` veel properder zijn
+    const next = maybeLastSibling.getOrElseL(
+      () =>
+        array
+          .last(normalised.disjunctions.conjunctionEditors)
+          .chain(ce => array.last(ce.termEditors))
+          .getOrElse(expressionEditor.current) // Omdat de arrays niet leeg kunnen zijn, weten we dat dit nooit nodig zal zijn
+    );
+    return setCurrent(next)(normalised);
+  };
+
+  // Verwijder het huidige element
   export const remove: Endomorphism<ExpressionEditor> = expressionEditor => {
-    // We kunnen de laatste builder niet verwijderen
-    // TODO: later. Vraag is wat de volgende current editor wordt
-    return expressionEditor;
+    // We kunnen de laatste builder niet verwijderen. Wanneer we het huidige element in de conjunction verwijderen, dan
+    // maken we de laatste term in de conjunction het nieuwe huidige element. Indien er geen is, dan gaan we naar de de
+    // laatste term van de laatste disjunction.
+    return canRemoveCurrent(expressionEditor) ? reallyRemove(expressionEditor) : expressionEditor;
   };
 
   // voeg onderaan een OF toe
