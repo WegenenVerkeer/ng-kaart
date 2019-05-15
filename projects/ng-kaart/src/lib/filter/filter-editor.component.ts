@@ -123,7 +123,6 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     const gekozenOperator$: rx.Observable<fed.BinaryComparisonOperator> = forControlValue(this.operatorControl).pipe(
       filter(isNotNullObject),
       tap(o => console.log("*****Operator gekozen", o)),
-      distinctUntilChanged(), // gebruikt object identity, maar de onderliggende objecten worden hergebruikt dus geen probleem
       tap(o => console.log("*****Distinct operator gekozen", o))
     );
     const gekozenWaarde$: rx.Observable<fltr.Literal> = forControlValue(this.waardeControl).pipe(
@@ -187,27 +186,31 @@ export class FilterEditorComponent extends KaartChildComponentBase {
         expressionEditor.name.foldL(() => this.naamControl.reset(), name => this.naamControl.setValue(name, { emitEvent: false }));
         fed.matchTermEditor({
           Field: () => {
-            this.veldControl.reset(undefined, { emitEvent: false });
-            this.operatorControl.reset(undefined, { emitEvent: false });
+            console.log("****reset naar Field");
+            this.veldControl.reset("", { emitEvent: false });
+            this.operatorControl.reset("", { emitEvent: false });
             this.operatorControl.disable();
-            this.waardeControl.reset(undefined, { emitEvent: false });
+            this.waardeControl.reset("", { emitEvent: false });
             this.waardeControl.disable();
           },
           Operator: opr => {
+            console.log("****reset naar Operator");
             this.veldControl.setValue(opr.selectedProperty, { emitEvent: false });
-            this.operatorControl.reset(undefined, { emitEvent: false });
+            this.operatorControl.reset("", { emitEvent: false });
             this.operatorControl.enable({ emitEvent: false });
-            this.waardeControl.reset(undefined, { emitEvent: false });
+            this.waardeControl.reset("", { emitEvent: false });
             this.waardeControl.disable();
           },
           Value: val => {
+            console.log("****reset naar Value");
             this.veldControl.setValue(val.selectedProperty, { emitEvent: false });
             this.operatorControl.setValue(val.selectedOperator, { emitEvent: false });
             this.operatorControl.enable({ emitEvent: false });
-            this.waardeControl.reset(undefined, { emitEvent: false });
+            this.waardeControl.reset("", { emitEvent: false });
             this.waardeControl.enable({ emitEvent: false });
           },
           Completed: compl => {
+            console.log("****reset naar Completed");
             this.veldControl.setValue(compl.selectedProperty, { emitEvent: false });
             this.operatorControl.setValue(compl.selectedOperator, { emitEvent: false });
             this.operatorControl.enable({ emitEvent: false });
