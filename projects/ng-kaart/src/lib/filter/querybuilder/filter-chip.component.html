@@ -11,7 +11,7 @@
 
   <div *ngSwitchCase="'Operator'" class="term {{ isCurrentStyle() }}">
     <div class="filter-term">
-      <div>{{ editor.selectedProperty.label }}</div>
+      <div>{{ asOperatorSelection().selectedProperty.label }}</div>
       <div class ="comparison">is</div>
       <div>?</div>
     </div>
@@ -20,8 +20,8 @@
 
   <div *ngSwitchCase="'Value'" class="term {{ isCurrentStyle() }}">
     <div class="filter-term">
-      <div>{{ editor.selectedProperty.label }}</div>
-      <div class ="comparison">{{editor.selectedOperator.label }}</div>
+      <div>{{ asValueSelection().selectedProperty.label }}</div>
+      <div class ="comparison">{{ asValueSelection().selectedOperator.label }}</div>
       <div>?</div>
     </div>
     <mat-icon class="cross">error_outline</mat-icon>
@@ -29,9 +29,9 @@
 
   <div *ngSwitchCase="'Completed'" class="term {{ isCurrentStyle() }}">
     <div class="filter-term">
-      <div>{{ editor.selectedProperty.label }}</div>
-      <div class ="comparison">{{editor.selectedOperator.label }}</div>
-      <div>{{ editor.selectedValue.value }}</div>
+      <div>{{ asCompleted().selectedProperty.label }}</div>
+      <div class ="comparison">{{ asCompleted().selectedOperator.label }}</div>
+      <div>{{ asCompleted().selectedValue.value }}</div>
     </div>
     <mat-icon class="checkmark">done</mat-icon>
   </div>

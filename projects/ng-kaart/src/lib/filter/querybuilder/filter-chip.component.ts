@@ -25,4 +25,16 @@ export class FilterChipComponent {
   isCurrentStyle(): string {
     return this.globalExpressionEditor && fed.isCurrent(this.globalExpressionEditor)(this.editor) ? "selected" : "";
   }
+
+  asOperatorSelection(): fed.OperatorSelection {
+    return this.editor as fed.OperatorSelection;
+  }
+
+  asValueSelection(): fed.ValueSelection {
+    return this.editor as fed.ValueSelection;
+  }
+
+  asCompleted(): fed.Completed {
+    return this.editor as fed.Completed;
+  }
 }
