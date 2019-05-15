@@ -1,5 +1,5 @@
-<div class="modal-dialog-background" *ngIf="(zichtbaar$ | async)" (click)="onClickOutside($event)">
-  <div class="mat-dialog-container modal-dialog filter-dialog" (click)="onClickInside($event)">
+<div class="modal-dialog-background" *ngIf="(zichtbaar$ | async)" (click)="onClickOutside()">
+  <div class="mat-dialog-container modal-dialog filter-dialog" (click)="onClickInside()">
     <div class="filter-header">
       <div class="filter-titel">{{ titel$ | async }} filter instellen</div>
       <mat-icon class="filter-sluit-button" (click)="close()">close</mat-icon>
