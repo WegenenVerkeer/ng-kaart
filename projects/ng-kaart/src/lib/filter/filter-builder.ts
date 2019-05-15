@@ -340,11 +340,14 @@ export namespace FilterEditor {
       .compose(conjunctionEditorsLens)
       .modify(de => array.snoc(de, initConjunctionEditor(FieldSelection(expressionEditor.laag))))(expressionEditor);
 
-  // voeg een EN toe op geselecteerde rij van de huidige TermEditor
-  export const addConjunction: Function1<ConjunctionEditor, Endomorphism<ExpressionEditor>> = conjunctionEditor => expressionEditor =>
-    getConjunctionEditorTraversal(conjunctionEditor)
+  // voeg een EN toe op geselecteerde rij van de huidige TermEditor, en maak die de nieuwe actieve
+  export const addConjunction: Function1<ConjunctionEditor, Endomorphism<ExpressionEditor>> = conjunctionEditor => expressionEditor => {
+    const newEditor = FieldSelection(expressionEditor.laag);
+    const conjunctionAdded = getConjunctionEditorTraversal(conjunctionEditor)
       .composeLens(termEditorsLens)
-      .modify(ce => array.snoc(ce, FieldSelection(expressionEditor.laag)))(expressionEditor);
+      .modify(ce => array.snoc(ce, newEditor))(expressionEditor);
+    return setCurrent(newEditor)(conjunctionAdded);
+  };
 
   const ExpressionEditor: Function4<Option<string>, ke.ToegevoegdeVectorLaag, TermEditor, DisjunctionsEditor, ExpressionEditor> = (
     name,
