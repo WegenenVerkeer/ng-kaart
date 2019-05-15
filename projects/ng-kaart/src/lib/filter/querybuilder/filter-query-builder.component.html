@@ -4,7 +4,10 @@
     <div class="spacer" *ngIf="isFirst"></div>
     <awv-filter-logical-connective operator="OF" *ngIf="!isFirst"></awv-filter-logical-connective>
 
-    <awv-filter-conjunction class="conjunctions" [editor]="conjunction" [globalExpressionEditor]="expressionEditor" (newExpressionEditor)="onNewExpressionEditor($event)"></awv-filter-conjunction>
+    <awv-filter-conjunction class="conjunctions"
+                            [editor]="conjunction"
+                            [expressionEditor]="expressionEditor"
+                            (expressionEditorUpdate)="onExpressionEditorUpdate($event)"></awv-filter-conjunction>
   </div>
 
   <div class="of-knop">

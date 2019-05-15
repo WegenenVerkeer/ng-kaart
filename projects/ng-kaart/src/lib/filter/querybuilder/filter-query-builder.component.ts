@@ -13,13 +13,13 @@ export class FilterQueryBuilderComponent {
   expressionEditor: fed.ExpressionEditor;
 
   @Output()
-  newExpressionEditor: EventEmitter<Endomorphism<fed.ExpressionEditor>> = new EventEmitter();
+  expressionEditorUpdate: EventEmitter<Endomorphism<fed.ExpressionEditor>> = new EventEmitter();
 
   voegDisjunctionToe() {
-    this.newExpressionEditor.emit(fed.addDisjunction);
+    this.expressionEditorUpdate.emit(fed.addDisjunction);
   }
 
-  onNewExpressionEditor(newExpressionEditor: Endomorphism<fed.ExpressionEditor>) {
-    this.newExpressionEditor.next(newExpressionEditor);
+  onExpressionEditorUpdate(expressionEditorUpdate: Endomorphism<fed.ExpressionEditor>) {
+    this.expressionEditorUpdate.next(expressionEditorUpdate);
   }
 }
