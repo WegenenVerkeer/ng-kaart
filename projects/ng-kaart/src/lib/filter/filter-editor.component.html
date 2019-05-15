@@ -69,6 +69,14 @@
             errorWaarde()
           }}</mat-error>
         </mat-form-field>
+
+        <div class="delete-icon">
+          <button  mat-icon-button (click)="verwijderActieveEditor()"
+                   [disabled]="!(kanHuidigeEditorVerwijderen$ | async)"
+                   matTooltip="Verwijder actieve chip">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
       </div>
 
       <div class="query-builder">

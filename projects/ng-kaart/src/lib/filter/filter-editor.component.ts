@@ -68,6 +68,8 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
   readonly filterEditor$: rx.Observable<fed.ExpressionEditor>;
 
+  readonly kanHuidigeEditorVerwijderen$: rx.Observable<boolean>;
+
   readonly newFilterEditor$ = new rx.Subject<Endomorphism<fed.ExpressionEditor>>();
 
   private clickInsideDialog = false;
@@ -177,6 +179,8 @@ export class FilterEditorComponent extends KaartChildComponentBase {
         share()
       )
     );
+
+    this.kanHuidigeEditorVerwijderen$ = this.filterEditor$.pipe(map(editor => fed.canRemoveCurrent(editor)));
 
     // Deze subscribe zorgt er voor dat de updates effectief uitgevoerd worden
     this.bindToLifeCycle(
@@ -311,6 +315,10 @@ export class FilterEditorComponent extends KaartChildComponentBase {
         );
       }
     });
+  }
+
+  verwijderActieveEditor() {
+    this.newFilterEditor$.next(fed.remove);
   }
 
   onExpressionEditorUpdate(newExpressionEditor: Endomorphism<fed.ExpressionEditor>) {
