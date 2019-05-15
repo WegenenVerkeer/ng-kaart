@@ -49,6 +49,11 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
   }
 
   @Input()
+  set clusterDistance(param: number) {
+    this._clusterDistance = val.optNum(param);
+  }
+
+  @Input()
   set view(param: string) {
     this._view = val.str(param, this._view);
   }
