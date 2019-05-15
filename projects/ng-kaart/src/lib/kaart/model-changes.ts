@@ -256,7 +256,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
       coversFeature: model.map.hasFeatureAtPixel(event.pixel, {
         hitTolerance: KaartWithInfo.clickHitTolerance,
         // enkel json data features die een identify hebben beschouwen we. Zoekresultaten bvb niet
-        layerFilter: layer => layer.getSource() instanceof NosqlFsSource
+        layerFilter: layer => ke.underlyingSource(layer) instanceof NosqlFsSource
       })
     })),
     share()

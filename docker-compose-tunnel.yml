@@ -1,0 +1,33 @@
+# Deze docker-compose gaat alles tunnelen naar apps-dev behalve de GUI.
+# Dit om GUI ontwikkeling te doen zonder lokaal iets te moeden draaien in docker.
+# Vergeet in .ssh/config niet volgend entry toe te voegen met eigen login naam:
+# Host management.apps.mow.vlaanderen.be
+#  User vdcastna
+version: '3.6'
+
+services:
+
+  apigateway:
+    image: 162510209540.dkr.ecr.eu-west-1.amazonaws.com/rood/nginx
+    container_name: ng-kaart-local-apigateway
+    dns_search: .
+    dns:  # uitleg: https://collab.mow.vlaanderen.be/gitlab/Rood/dockers-private/blob/develop/nginx/Dockerfile
+      - 127.0.0.1
+      - 8.8.8.8
+    volumes:
+      - ./docker-nginx-tunnel.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - 80:80
+    extra_hosts:
+      - ng-kaart-local:${DOCKER_OUTER_HOST}
+
+  apigateway-remote-ng-kaart:
+    image: buildo/alpine-ssh
+    hostname: apigateway-remote-ng-kaart
+    container_name: apigateway-remote-ng-kaart
+    ports:
+      - 8081:8080
+    volumes:
+      - ~/.ssh/config:/tmp/config
+      - ~/.ssh/id_rsa:/tmp/id_rsa
+    command: ssh -o ServerAliveInterval=60 -N -A management.apps.mow.vlaanderen.be -L \*:8081:apigateway.dev.awv.internal:80 -o StrictHostKeyChecking=no -i /tmp/id_rsa -F /tmp/config
