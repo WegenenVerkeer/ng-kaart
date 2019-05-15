@@ -1,4 +1,4 @@
-import { Component, NgZone } from "@angular/core";
+import { ChangeDetectorRef, Component, NgZone } from "@angular/core";
 import { FormControl, ValidationErrors, Validators } from "@angular/forms";
 import * as array from "fp-ts/lib/Array";
 import { Endomorphism, Function1 } from "fp-ts/lib/function";
@@ -72,7 +72,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
   private clickInsideDialog = false;
 
-  constructor(kaart: KaartComponent, zone: NgZone) {
+  constructor(kaart: KaartComponent, zone: NgZone, private readonly cdr: ChangeDetectorRef) {
     super(kaart, zone);
 
     this.zichtbaar$ = kaart.modelChanges.laagFilterAanpassingState$.pipe(map(isAanpassingBezig));
@@ -170,6 +170,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
           expressionEditorUpdates$.pipe(
             scan((expEd: fed.ExpressionEditor, update: Endomorphism<fed.ExpressionEditor>) => update(expEd), initExpressionEditor),
             startWith(initExpressionEditor),
+            tap(() => this.cdr.detectChanges()),
             tap(expressionEditor => kaartLogger.debug("****expressionEditor", expressionEditor))
           )
         ),
