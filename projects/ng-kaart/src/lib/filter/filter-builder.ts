@@ -1,13 +1,24 @@
 import * as array from "fp-ts/lib/Array";
 import { array as ArrayMonad } from "fp-ts/lib/Array";
-import { Curried2, Endomorphism, Function1, Function2, Function3, Function4, not, Predicate, Refinement } from "fp-ts/lib/function";
-import { NonEmptyArray } from "fp-ts/lib/NonEmptyArray";
+import {
+  Curried2,
+  Endomorphism,
+  Function1,
+  Function2,
+  Function3,
+  Function4,
+  identity,
+  not,
+  Predicate,
+  Refinement
+} from "fp-ts/lib/function";
 import { fromNullable, none, Option, option, some } from "fp-ts/lib/Option";
 import { fromTraversable, Lens, Prism, Traversal } from "monocle-ts";
 
 import * as ke from "../kaart/kaart-elementen";
 import * as arrays from "../util/arrays";
 import { applySequential } from "../util/function";
+import * as maps from "../util/maps";
 import * as matchers from "../util/matchers";
 
 import { Filter as fltr } from "./filter-model";
@@ -116,14 +127,6 @@ export namespace FilterEditor {
     typeType
   ) => ({ kind: "BinaryComparisonOperator", label, operator, typeType });
 
-  const comparisonOperatorMap = {
-    equality: "is",
-    inequality: "is niet"
-  };
-
-  const binaryComparisonOperator: Function2<fltr.BinaryComparisonOperator, fltr.Literal, BinaryComparisonOperator> = (operator, literal) =>
-    BinaryComparisonOperator(comparisonOperatorMap[operator], operator, literal.type);
-
   const freeStringOperators: ComparisonOperator[] = [
     BinaryComparisonOperator("is", "equality", "string"),
     BinaryComparisonOperator("is niet", "inequality", "string"),
@@ -154,6 +157,19 @@ export namespace FilterEditor {
     BinaryComparisonOperator("is", "equality", "boolean"),
     BinaryComparisonOperator("is niet", "inequality", "boolean")
   ];
+
+  const comparisonOperatorMap: Map<fltr.BinaryComparisonOperator, string> = maps.toMapByKeyAndValue(
+    ArrayMonad.chain([freeStringOperators, freeIntegerOperators, freeDoubleOperators, booleanOperators], identity),
+    op => op.operator,
+    op => op.label
+  );
+
+  const binaryComparisonOperator: Function2<fltr.BinaryComparisonOperator, fltr.Literal, BinaryComparisonOperator> = (operator, literal) =>
+    BinaryComparisonOperator(
+      comparisonOperatorMap.get(operator)!, // We moeten er maar voor zorgen dat onze map volledig is
+      operator,
+      literal.type
+    );
 
   const operatorSelectors: Function1<fltr.Property, ComparisonOperator[]> = property =>
     fltr.matchTypeTypeWithFallback({
