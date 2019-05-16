@@ -7,80 +7,43 @@
 
     <div class="filter-content">
       <div class="filter-naam">
-          <mat-form-field class="filter-naam">
-              <input
-                type="text"
-                placeholder="Omschrijving filter"
-                matInput
-                [formControl]="naamControl"
-              />
-          </mat-form-field>
+        <mat-form-field class="filter-naam">
+          <input type="text" placeholder="Omschrijving filter" matInput [formControl]="naamControl"/>
+        </mat-form-field>
       </div>
       <div class="filter-definitie">
         <mat-form-field class="filter-velden-combo">
-          <input
-            type="text"
-            placeholder="Eigenschap"
-            matInput
-            [formControl]="veldControl"
-            [matAutocomplete]="velden"
-          />
-          <mat-autocomplete
-            #velden="matAutocomplete"
-            autoActiveFirstOption
-            [displayWith]="displayVeld"
-          >
-            <mat-option
-              *ngFor="let veld of (filteredVelden$ | async)"
-              [value]="veld"
-              >{{ veld.label }}</mat-option
-            >
+          <input type="text" placeholder="Eigenschap" matInput [formControl]="veldControl" [matAutocomplete]="velden"/>
+          <mat-autocomplete #velden="matAutocomplete" autoActiveFirstOption [displayWith]="displayVeld">
+            <mat-option *ngFor="let veld of (filteredVelden$ | async)" [value]="veld">{{ veld.label }}</mat-option>
           </mat-autocomplete>
           <mat-error *ngIf="veldControl.invalid">{{ errorVeld() }}</mat-error>
         </mat-form-field>
 
         <mat-form-field class="filter-operator-combo">
-          <input
-            type="text"
-            placeholder="Operator"
-            matInput
-            [formControl]="operatorControl"
-            [matAutocomplete]="operatoren"
-          />
-          <mat-autocomplete
-            #operatoren="matAutocomplete"
-            autoActiveFirstOption
-            [displayWith]="displayOperator"
-          >
-            <mat-option
-              *ngFor="let operator of (filteredOperatoren$ | async)"
-              [value]="operator"
-              >{{ operator.label }}</mat-option
-            >
+          <input type="text" placeholder="Operator" matInput [formControl]="operatorControl" [matAutocomplete]="operatoren"/>
+          <mat-autocomplete #operatoren="matAutocomplete" autoActiveFirstOption [displayWith]="displayOperator">
+            <mat-option *ngFor="let operator of (filteredOperatoren$ | async)" [value]="operator">{{ operator.label }}</mat-option>
           </mat-autocomplete>
-          <mat-error *ngIf="operatorControl.invalid">{{
-            errorOperator()
-          }}</mat-error>
+          <mat-error *ngIf="operatorControl.invalid">{{errorOperator()}}</mat-error>
         </mat-form-field>
 
         <mat-form-field class="filter-waarde-editbox">
-          <input matInput placeholder="Waarde" [formControl]="waardeControl" />
-          <mat-error *ngIf="waardeControl.invalid">{{
-            errorWaarde()
-          }}</mat-error>
+          <input *ngIf="gekozenVeldTypeNumeriek$ | async" type="number" matInput placeholder="Waarde" [formControl]="waardeControl"/>
+          <input *ngIf="!(gekozenVeldTypeNumeriek$ | async)" type="text" matInput placeholder="Waarde" [formControl]="waardeControl"/>
+          <mat-error *ngIf="waardeControl.invalid">{{errorWaarde()}}</mat-error>
         </mat-form-field>
 
         <div class="delete-icon">
-          <button  mat-icon-button (click)="verwijderActieveEditor()"
-                   [disabled]="!(kanHuidigeEditorVerwijderen$ | async)"
-                   matTooltip="Verwijder actieve chip">
+          <button mat-icon-button (click)="verwijderActieveEditor()" [disabled]="!(kanHuidigeEditorVerwijderen$ | async)" matTooltip="Verwijder actieve chip">
             <mat-icon>delete</mat-icon>
           </button>
         </div>
       </div>
 
       <div class="query-builder">
-        <awv-filter-query-builder [expressionEditor]="filterEditor$ | async" (expressionEditorUpdate)="onExpressionEditorUpdate($event)"></awv-filter-query-builder>
+        <awv-filter-query-builder [expressionEditor]="filterEditor$ | async"
+                                  (expressionEditorUpdate)="onExpressionEditorUpdate($event)"></awv-filter-query-builder>
       </div>
 
     </div>
@@ -90,13 +53,7 @@
         Annuleer
       </button>
 
-      <button
-        mat-button
-        color="primary"
-        class="filter-pas-toe-button"
-        (click)="onAction('pasFilterToe')"
-        [disabled]="ongeldigeFilter$ | async"
-      >
+      <button mat-button color="primary" class="filter-pas-toe-button" (click)="onAction('pasFilterToe')" [disabled]="ongeldigeFilter$ | async">
         Pas toe
       </button>
     </div>

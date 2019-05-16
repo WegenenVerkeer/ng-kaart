@@ -68,6 +68,8 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
   readonly filterEditor$: rx.Observable<fed.ExpressionEditor>;
 
+  readonly gekozenVeldTypeNumeriek$: rx.Observable<boolean>;
+
   readonly kanHuidigeEditorVerwijderen$: rx.Observable<boolean>;
 
   readonly newFilterEditor$ = new rx.Subject<Endomorphism<fed.ExpressionEditor>>();
@@ -181,6 +183,8 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     );
 
     this.kanHuidigeEditorVerwijderen$ = this.filterEditor$.pipe(map(editor => fed.canRemoveCurrent(editor)));
+
+    this.gekozenVeldTypeNumeriek$ = gekozenVeld$.pipe(map(veld => veld.type === "integer" || veld.type === "double"));
 
     // Deze subscribe zorgt er voor dat de updates effectief uitgevoerd worden
     this.bindToLifeCycle(
