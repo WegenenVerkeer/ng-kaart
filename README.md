@@ -53,6 +53,16 @@ En dit in package.json:
 
 ### Motion sensors.
 
+Om de mobiele-tracking te doen werken op alle browsers, hebben we een polyfill nodig.
+
+Voeg dit toe in polyfills.ts:
+
+    import "motion-sensors-polyfill/src/motion-sensors.js";
+
+En dit in package.json:
+
+    "motion-sensors-polyfill": "0.3.1",
+
 
 ### Code testen
 
