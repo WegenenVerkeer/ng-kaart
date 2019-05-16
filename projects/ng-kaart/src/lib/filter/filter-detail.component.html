@@ -11,7 +11,7 @@
 
     <div class="filter-totalen" *ngIf="(filterTotaalOnbekend$ | async)">?</div>
     <mat-icon class="filter-totalen" svgIcon="spinner" *ngIf="(filterTotaalOpTeHalen$ | async)"></mat-icon>
-    <div class="filter-totalen" *ngIf="(filterTotaalOpgehaald$ | async)">
+    <div class="filter-totalen">
       {{ filterTotalen$ | async }}
     </div>
 

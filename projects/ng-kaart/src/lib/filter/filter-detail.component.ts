@@ -1,14 +1,16 @@
 import { Component, Input, NgZone } from "@angular/core";
-import { Function1 } from "fp-ts/lib/function";
+import * as array from "fp-ts/lib/Array";
+import { Function1, Function2 } from "fp-ts/lib/function";
+import { Option } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
-import { filter, map, sample, share, shareReplay, switchMap, tap } from "rxjs/operators";
+import { filter, map, share, shareReplay, switchMap } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import * as ke from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as cmd from "../kaart/kaart-protocol-commands";
 import { KaartComponent } from "../kaart/kaart.component";
-import { collectOption, subSpy } from "../util/operators";
+import { collectOption } from "../util/operators";
 
 import { Filter as fltr } from "./filter-model";
 import { isTotaalOpgehaald } from "./filter-totaal";
@@ -34,8 +36,6 @@ export class FilterDetailComponent extends KaartChildComponentBase {
   constructor(kaart: KaartComponent, zone: NgZone) {
     super(kaart, zone);
 
-    // We krijgen de laag binnen telkens als ze verandert, maar we moeten er nog wel voor zorgen dat de observable
-    // blijft leven.
     const laag$ = this.viewReady$.pipe(
       switchMap(() => rx.merge(rx.of(this.laag), rx.never())),
       shareReplay(1)
@@ -68,13 +68,24 @@ export class FilterDetailComponent extends KaartChildComponentBase {
       share()
     );
 
-    // TODO hiervoor moeten we op de updates aan de laag luisteren
-    const filterTotaalChanges$ = laag$.pipe(
+    const findLaagOpTitel: Function2<string, ke.ToegevoegdeLaag[], Option<ke.ToegevoegdeVectorLaag>> = (titel, lgn) =>
+      array.findFirst(lgn, lg => lg.titel === titel).filter(ke.isToegevoegdeVectorLaag);
+
+    const laagUpdates$ = laag$.pipe(
+      switchMap(laag =>
+        this.modelChanges.lagenOpGroep.get("Voorgrond.Hoog")!.pipe(
+          collectOption(lgn => findLaagOpTitel(laag.titel, lgn)),
+          shareReplay(1)
+        )
+      )
+    );
+
+    const filterTotaalChanges$ = laagUpdates$.pipe(
       map(laag => laag.filterinstellingen.totaal),
       share()
     );
 
-    this.filterActief$ = laag$.pipe(map(laag => laag.filterinstellingen.actief));
+    this.filterActief$ = laagUpdates$.pipe(map(laag => laag.filterinstellingen.actief));
 
     this.filterTotaalOnbekend$ = filterTotaalChanges$.pipe(map(filterTotaal => filterTotaal.type === "TeVeelData"));
     this.filterTotaalOpTeHalen$ = filterTotaalChanges$.pipe(map(filterTotaal => filterTotaal.type === "TotaalOpTeHalen"));
