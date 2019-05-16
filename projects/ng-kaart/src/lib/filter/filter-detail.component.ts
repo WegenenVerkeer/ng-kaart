@@ -47,23 +47,19 @@ export class FilterDetailComponent extends KaartChildComponentBase {
     );
 
     this.expression$ = expressionFilter$.pipe(
-      // TODO gebruik de onderstaande lijn ipv de fixed expressie
-      // map(expressionFilter => expressionFilter.expression),
-      map(() =>
-        fltr.Disjunction(
-          fltr.Conjunction(
-            fltr.Conjunction(
-              fltr.BinaryComparison("equality", fltr.Property("string", "naam", "naam"), fltr.Literal("string", "mijn naam")),
-              fltr.BinaryComparison("contains", fltr.Property("string", "ident8", "ident8"), fltr.Literal("string", "N008"))
-            ),
-            fltr.BinaryComparison("equality", fltr.Property("string", "zijde rijweg", "zijde rijweg"), fltr.Literal("string", "Links"))
-          ),
-          fltr.Conjunction(
-            fltr.BinaryComparison("largerOrEqual", fltr.Property("integer", "lengte", "lengte"), fltr.Literal("integer", 10)),
-            fltr.BinaryComparison("smallerOrEqual", fltr.Property("integer", "breedte", "breedte"), fltr.Literal("integer", 1000))
-          )
-        )
-      ),
+      map(expressionFilter => expressionFilter.expression),
+      // map(() =>
+      //   fltr.Disjunction(
+      //     fltr.Conjunction(
+      //       fltr.BinaryComparison("equality", fltr.Property("string", "naam", "Naam"), fltr.Literal("string", "mijn naam")),
+      //       fltr.BinaryComparison("equality", fltr.Property("string", "zijde rijweg", "Zijde rijweg"), fltr.Literal("string", "Links"))
+      //     ),
+      //     fltr.Conjunction(
+      //       fltr.BinaryComparison("largerOrEqual", fltr.Property("integer", "lengte", "Lengte"), fltr.Literal("integer", 10)),
+      //       fltr.BinaryComparison("smallerOrEqual", fltr.Property("integer", "breedte", "Breedte"), fltr.Literal("integer", 1000))
+      //     )
+      //   )
+      // ),
       share()
     );
 

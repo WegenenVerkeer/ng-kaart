@@ -1,10 +1,20 @@
 @import "../css/kaart.component-common.scss";
 
-.filter-expression {
+.opening-bracket {
+  font-weight: bold;
+  padding-right: 4px;
 }
 
-.logical-connective {
-  padding-left: 2px;
-  padding-right: 2px;
+.closing-bracket {
   font-weight: bold;
+}
+
+.logical-connective-en {
+  font-weight: bold;
+  padding: 0 4px 0 0;
+}
+
+.logical-connective-of {
+  font-weight: bold;
+  padding: 0 4px 0 4px;
 }

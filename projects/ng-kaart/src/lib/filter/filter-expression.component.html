@@ -1,17 +1,21 @@
 <span [ngSwitch]="kind">
-  <span class="filter-expression" *ngSwitchCase="'BinaryComparison'">
-    <awv-filter-term [term]="term"></awv-filter-term>
-  </span>
+  <awv-filter-term *ngSwitchCase="'BinaryComparison'" [term]="term"></awv-filter-term>
 
-  <span class="filter-expression" *ngSwitchCase="'And'">
+  <span *ngSwitchCase="'And'">
     <awv-filter-expression [expression]="left"></awv-filter-expression>
-    <span class="logical-connective">EN</span>
+    <span class="logical-connective-en">EN</span>
     <awv-filter-expression [expression]="right"></awv-filter-expression>
   </span>
 
-  <span class="filter-expression" *ngSwitchCase="'Or'">
-    (<awv-filter-expression [expression]="left"></awv-filter-expression>)
-    <span class="logical-connective">OF</span>
-    (<awv-filter-expression [expression]="right"></awv-filter-expression>)
+  <span *ngSwitchCase="'Or'">
+    <span class="opening-bracket">(</span>
+      <awv-filter-expression [expression]="left"></awv-filter-expression>
+    <span class="closing-bracket">)</span>
+
+    <span class="logical-connective-of">OF</span>
+
+    <span class="opening-bracket">(</span>
+      <awv-filter-expression [expression]="right"></awv-filter-expression>
+    <span class="closing-bracket">)</span>
   </span>
 </span>
