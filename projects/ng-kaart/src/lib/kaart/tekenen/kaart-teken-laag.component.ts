@@ -174,6 +174,7 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
       type: ke.VectorType,
       titel: TekenLaagNaam,
       source: source,
+      clusterDistance: none,
       styleSelector: tekenSettings.laagStyle.orElse(() => asStyleSelector(defaultlaagStyle)),
       styleSelectorBron: none,
       selectieStyleSelector: none,

@@ -37,6 +37,14 @@
       Straatkolken
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !straatkolkenSectie.sectieZichtbaar }">visibility</span>
     </div>
+    <div (click)="propClusterStraatkolkenSectie.toggleSectieZichtbaar();scrollTo('propClusterStraatkolken')" class="sub-titel">
+      Proportioneel Geclusterde Straatkolken
+      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !propClusterStraatkolkenSectie.sectieZichtbaar }">visibility</span>
+    </div>
+    <div (click)="clusterStraatkolkenSectie.toggleSectieZichtbaar();scrollTo('clusterStraatkolken')" class="sub-titel">
+      Geclusterde Straatkolken
+      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !clusterStraatkolkenSectie.sectieZichtbaar }">visibility</span>
+    </div>
     <div (click)="fietspadenSectie.toggleSectieZichtbaar();scrollTo('fietspaden')" class="sub-titel">
       Fietspaden
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !fietspadenSectie.sectieZichtbaar }">visibility</span>
@@ -342,7 +350,38 @@
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
             <awv-kaart-nosqlfs-laag [titel]="'Straatkolken'" [url]="'/geolatte-nosqlfs'"
                                     [database]="'featureserver'" [collection]="'straatkolken'" [style]="kolkStyle"
-                                    [minZoom]="9"></awv-kaart-nosqlfs-laag>
+                                    [minZoom]="8"></awv-kaart-nosqlfs-laag>
+            <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+            <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
+          </awv-kaart-classic>
+        </div>
+      </awv-test-sectie>
+
+      <awv-test-sectie sectieId="propClusterStraatkolken" sectieTitel="Proportioneel Geclusterde Straatkolken" [subSectie]="true" #propClusterStraatkolkenSectie
+                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && propClusterStraatkolkenSectie.sectieZichtbaar">
+        <div *ngIf="propClusterStraatkolkenSectie.sectieZichtbaar" [@enterAnimation]>
+          <awv-kaart-classic [naam]="'propClusterStraatkolken'" [hoogte]="600">
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
+            <awv-kaart-nosqlfs-laag [titel]="'Straatkolken'" [url]="'/geolatte-nosqlfs'" [clusterDistance]="100"
+                                    [database]="'featureserver'" [collection]="'straatkolken'" [clusterStyleFunction]="clusterStyle(kolkStyle)"
+                                    [minZoom]="10"></awv-kaart-nosqlfs-laag>
+            <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+            <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
+          </awv-kaart-classic>
+        </div>
+      </awv-test-sectie>
+
+      <awv-test-sectie sectieId="clusterStraatkolken" sectieTitel="Geclusterde Straatkolken" [subSectie]="true" #clusterStraatkolkenSectie
+                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && clusterStraatkolkenSectie.sectieZichtbaar">
+        <div *ngIf="clusterStraatkolkenSectie.sectieZichtbaar" [@enterAnimation]>
+          <awv-kaart-classic [naam]="'clusterstraatkolken'" [hoogte]="600">
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
+            <awv-kaart-nosqlfs-laag [titel]="'Straatkolken'" [url]="'/geolatte-nosqlfs'"
+                                    [clusterDistance]="100"
+                                    [clusterCircleColor]="'white'"
+                                    [clusterCircleStrokeColor]="'white'"
+                                    [database]="'featureserver'" [collection]="'straatkolken'"
+                                    [minZoom]="10"></awv-kaart-nosqlfs-laag>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
             <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
           </awv-kaart-classic>

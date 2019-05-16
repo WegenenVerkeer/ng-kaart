@@ -91,6 +91,7 @@ export interface VeldInfo {
 export interface VectorLaag {
   readonly type: VectorType;
   readonly source: ol.source.Vector;
+  readonly clusterDistance: Option<number>;
   readonly titel: string;
   readonly styleSelector: Option<StyleSelector>;
   readonly styleSelectorBron: Option<AwvV0StyleSpec>; // De JSON specificatie die aan de basis ligt van de StyleSelector
@@ -170,6 +171,15 @@ export interface ToegevoegdeVectorLaag extends ToegevoegdeLaag {
   readonly selectiestijlSel: Option<StyleSelector>;
   readonly hoverstijlSel: Option<StyleSelector>;
   readonly filterinstellingen: Laagfilterinstellingen;
+}
+
+export function underlyingSource(layer: ol.layer.Layer): ol.source.Source {
+  const source = layer.getSource();
+  if (source instanceof ol.source.Cluster) {
+    return (source as ol.source.Cluster).getSource();
+  } else {
+    return source;
+  }
 }
 
 export const isWmsLaag: Refinement<Laag, WmsLaag> = (laag): laag is WmsLaag =>

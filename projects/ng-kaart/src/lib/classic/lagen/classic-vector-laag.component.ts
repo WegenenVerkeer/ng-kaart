@@ -33,6 +33,7 @@ export class ClassicVectorLaagComponent extends ClassicVectorLaagLikeComponent {
       type: ke.VectorType,
       titel: this._titel,
       source: this.source,
+      clusterDistance: this._clusterDistance,
       styleSelector: this.getMaybeStyleSelector(),
       styleSelectorBron: this.getMaybeStyleSelectorBron(),
       selectieStyleSelector: fromNullable(this.selectieStyle).chain(ss.asStyleSelector),

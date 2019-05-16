@@ -26,8 +26,8 @@ export function offsetStyleFunction(
   positie: number,
   rijrichtingIsDigitalisatieZin: boolean
 ): ol.StyleFunction {
-  function offsetStyleFunc(feature: ol.Feature, resolution: number): ol.style.Style | ol.style.Style[] {
-    const style: ol.style.Style | ol.style.Style[] = styleFunction(feature, resolution);
+  function offsetStyleFunc(feature: ol.Feature, resolution: number): ol.style.Style | ol.style.Style[] | null {
+    const style: ol.style.Style | ol.style.Style[] | null = styleFunction(feature, resolution);
 
     // indien er geen stijl gedefinieerd is of we geen rijrichting kunnen afleiden
     // (als er geen ident8 is en de rijrichting is niet de digitalisatie zin),
