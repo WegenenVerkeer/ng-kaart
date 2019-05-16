@@ -1,4 +1,4 @@
-import { Component, NgZone } from "@angular/core";
+import { ChangeDetectorRef, Component, NgZone } from "@angular/core";
 import { FormControl, ValidationErrors, Validators } from "@angular/forms";
 import * as array from "fp-ts/lib/Array";
 import { Endomorphism, Function1 } from "fp-ts/lib/function";
@@ -68,11 +68,13 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
   readonly filterEditor$: rx.Observable<fed.ExpressionEditor>;
 
+  readonly kanHuidigeEditorVerwijderen$: rx.Observable<boolean>;
+
   readonly newFilterEditor$ = new rx.Subject<Endomorphism<fed.ExpressionEditor>>();
 
   private clickInsideDialog = false;
 
-  constructor(kaart: KaartComponent, zone: NgZone) {
+  constructor(kaart: KaartComponent, zone: NgZone, private readonly cdr: ChangeDetectorRef) {
     super(kaart, zone);
 
     this.zichtbaar$ = kaart.modelChanges.laagFilterAanpassingState$.pipe(map(isAanpassingBezig));
@@ -170,12 +172,15 @@ export class FilterEditorComponent extends KaartChildComponentBase {
           expressionEditorUpdates$.pipe(
             scan((expEd: fed.ExpressionEditor, update: Endomorphism<fed.ExpressionEditor>) => update(expEd), initExpressionEditor),
             startWith(initExpressionEditor),
+            tap(() => this.cdr.detectChanges()),
             tap(expressionEditor => kaartLogger.debug("****expressionEditor", expressionEditor))
           )
         ),
         share()
       )
     );
+
+    this.kanHuidigeEditorVerwijderen$ = this.filterEditor$.pipe(map(editor => fed.canRemoveCurrent(editor)));
 
     // Deze subscribe zorgt er voor dat de updates effectief uitgevoerd worden
     this.bindToLifeCycle(
@@ -310,6 +315,10 @@ export class FilterEditorComponent extends KaartChildComponentBase {
         );
       }
     });
+  }
+
+  verwijderActieveEditor() {
+    this.newFilterEditor$.next(fed.remove);
   }
 
   onExpressionEditorUpdate(newExpressionEditor: Endomorphism<fed.ExpressionEditor>) {
