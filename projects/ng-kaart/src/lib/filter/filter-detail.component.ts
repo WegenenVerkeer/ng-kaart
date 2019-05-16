@@ -82,7 +82,7 @@ export class FilterDetailComponent extends KaartChildComponentBase {
 
     const filterTotaalChanges$ = laagUpdates$.pipe(
       map(laag => laag.filterinstellingen.totaal),
-      share()
+      shareReplay(1)
     );
 
     this.filterActief$ = laagUpdates$.pipe(map(laag => laag.filterinstellingen.actief));
@@ -93,7 +93,8 @@ export class FilterDetailComponent extends KaartChildComponentBase {
     this.filterTotaalOphalenMislukt$ = filterTotaalChanges$.pipe(map(filterTotaal => filterTotaal.type === "TotaalOphalenMislukt"));
     this.filterTotalen$ = filterTotaalChanges$.pipe(
       filter(isTotaalOpgehaald),
-      map(totaal => `${totaal.totaal}/${totaal.collectionTotaal}`)
+      map(totaal => `${totaal.totaal}/${totaal.collectionTotaal}`),
+      shareReplay(1)
     );
 
     const actionOnLaag$: <A>(action: string, f: Function1<ke.ToegevoegdeVectorLaag, A>) => rx.Observable<A> = (action, f) =>
