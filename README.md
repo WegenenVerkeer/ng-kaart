@@ -51,6 +51,9 @@ En dit in package.json:
     "drag-drop-touch": "1.3.0",
 
 
+### Motion sensors.
+
+
 ### Code testen
 
 Deze component library is voorzien van een test Angular app. Omdat de build van de library en de testApp volledig gescheiden zijn, moet je eerst de library builden en watchen voor changes:
