@@ -11,18 +11,29 @@ import { Filter as fltr } from "./filter-model";
   styleUrls: ["./filter-expression.component.scss"]
 })
 export class FilterExpressionComponent extends KaartChildComponentBase {
+  left?: fltr.Expression;
+  right?: fltr.Expression;
+  term?: fltr.BinaryComparison;
+  kind: fltr.Expression["kind"];
+
   @Input()
-  expression: fltr.Expression;
+  public set expression(v: fltr.Expression) {
+    this.kind = v.kind;
+    switch (v.kind) {
+      case "And":
+      case "Or":
+        this.left = v.left;
+        this.right = v.right;
+        this.term = undefined;
+        break;
+      case "BinaryComparison":
+        this.left = undefined;
+        this.right = undefined;
+        this.term = v;
+    }
+  }
 
   constructor(kaart: KaartComponent, zone: NgZone) {
     super(kaart, zone);
-  }
-
-  left(): fltr.Expression {
-    return (<fltr.LogicalConnective>this.expression).left;
-  }
-
-  right(): fltr.Expression {
-    return (<fltr.LogicalConnective>this.expression).right;
   }
 }

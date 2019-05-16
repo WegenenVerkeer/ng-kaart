@@ -5,24 +5,36 @@ import { KaartComponent } from "../kaart/kaart.component";
 
 import { Filter as fltr } from "../filter/filter-model";
 
+const binaryComparisonOperatorMapping = {
+  equality: "is",
+  inequality: "is niet",
+  contains: "bevat",
+  starts: "begint met",
+  ends: "eindigt met",
+  smaller: "kleiner dan",
+  smallerOrEqual: "kleiner of gelijk aan",
+  larger: "groter dan",
+  largerOrEqual: "groter dan of gelijk aan"
+};
+
 @Component({
   selector: "awv-filter-term",
   templateUrl: "./filter-term.component.html",
   styleUrls: ["./filter-term.component.scss"]
 })
 export class FilterTermComponent extends KaartChildComponentBase {
+  property: string;
+  value: string;
+  operator: string;
+
   @Input()
-  expression: fltr.Expression;
+  public set term(term: fltr.BinaryComparison) {
+    this.property = term.property.label;
+    this.value = term.value.value.toString();
+    this.operator = binaryComparisonOperatorMapping[term.operator];
+  }
 
   constructor(kaart: KaartComponent, zone: NgZone) {
     super(kaart, zone);
-  }
-
-  property(): string {
-    return (<fltr.Comparison>this.expression).property.label;
-  }
-
-  value(): string {
-    return (<fltr.Comparison>this.expression).value.value.toString();
   }
 }

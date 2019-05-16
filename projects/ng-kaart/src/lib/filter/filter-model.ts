@@ -1,5 +1,5 @@
 import { constant, Function1, Function2, Function3, identity, Lazy, not, Predicate } from "fp-ts/lib/function";
-import { Option } from "fp-ts/lib/Option";
+import { none, Option, some } from "fp-ts/lib/Option";
 
 import * as matchers from "../util/matchers";
 
@@ -167,6 +167,11 @@ export namespace Filter {
   }
 
   export const matchFilter: <A>(_: FilterMatcher<A>) => Function1<Filter, A> = matchers.matchKind;
+
+  export const asExpressionFilter: Function1<Filter, Option<ExpressionFilter>> = matchFilter({
+    EmptyFilter: constant(none),
+    ExpressionFilter: some
+  });
 
   export interface ExpressionMatcher<A> {
     readonly And: Function1<Conjunction, A>;

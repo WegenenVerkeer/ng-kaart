@@ -1,14 +1,10 @@
 @import "../css/kaart.component-common.scss";
 
 .filter-expression {
-  margin-left: 52px;
-  display: flex;
-  align-items: center;
-  padding-bottom: 8px;
 }
 
 .logical-connective {
-  padding-left: 1em;
-  padding-right: 1em;
+  padding-left: 2px;
+  padding-right: 2px;
   font-weight: bold;
 }

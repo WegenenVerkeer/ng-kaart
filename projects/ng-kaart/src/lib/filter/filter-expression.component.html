@@ -1,19 +1,17 @@
-<div [ngSwitch]="expression.kind">
+<span [ngSwitch]="kind">
+  <span class="filter-expression" *ngSwitchCase="'BinaryComparison'">
+    <awv-filter-term [term]="term"></awv-filter-term>
+  </span>
 
-  <div class="filter-expression" >
-    <awv-filter-term [expression]="expression"></awv-filter-term>
-  </div>
-
-  <div class="filter-expression" *ngSwitchCase="'And'">
+  <span class="filter-expression" *ngSwitchCase="'And'">
     <awv-filter-expression [expression]="left"></awv-filter-expression>
-    <div class="logical-connective">EN</div>
+    <span class="logical-connective">EN</span>
     <awv-filter-expression [expression]="right"></awv-filter-expression>
-  </div>
+  </span>
 
-  <div class="filter-expression" *ngSwitchCase="'Or'">
-    <awv-filter-expression [expression]="left"></awv-filter-expression>
-    <div class="logical-connective">OF</div>
-    <awv-filter-expression [expression]="right"></awv-filter-expression>
-  </div>
-
-</div>
+  <span class="filter-expression" *ngSwitchCase="'Or'">
+    (<awv-filter-expression [expression]="left"></awv-filter-expression>)
+    <span class="logical-connective">OF</span>
+    (<awv-filter-expression [expression]="right"></awv-filter-expression>)
+  </span>
+</span>

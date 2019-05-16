@@ -1,12 +1,15 @@
 @import "../css/kaart.component-common.scss";
 
 .filter-term {
-  display: flex;
-  align-items: center;
-  white-space: nowrap;
+  padding-left: 2px;
+  padding-right: 2px;
 }
 
 .comparison {
-  padding-left: 0.5em;
-  padding-right: 0.5em;
+  margin-left: 0.4rem;
+  margin-right: 0.4rem;
+  padding-left: 5px;
+  // border: 1px solid #caa;
+  padding-right: 5px;
+  white-space: nowrap;
 }
