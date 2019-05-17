@@ -139,10 +139,12 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       tap(o => console.log("*****Operator gekozen", o)),
       tap(o => console.log("*****Distinct operator gekozen", o))
     );
-    const gekozenWaarde$: rx.Observable<fltr.Literal> = forControlValue(this.waardeControl).pipe(
-      filter(isNotNull),
-      distinctUntilChanged(), // in dit geval vgln we op strings, dus ook OK
-      map(value => fltr.Literal("string", value))
+    const gekozenWaarde$: rx.Observable<fltr.Literal> = subSpy("****gekozenWaarde")(
+      forControlValue(this.waardeControl).pipe(
+        filter(isNotNull),
+        distinctUntilChanged(), // in dit geval vgln we op strings, dus ook OK
+        map(value => fltr.Literal("string", value))
+      )
     );
 
     type ExpressionEditorUpdate = Endomorphism<fed.ExpressionEditor>;
@@ -220,7 +222,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
             this.operatorControl.setValue(val.selectedOperator, { emitEvent: false });
             this.operatorControl.enable({ emitEvent: false });
             this.waardeControl.reset("", { emitEvent: false });
-            this.waardeControl.enable({ emitEvent: false });
+            this.waardeControl.enable({ emitEvent: true });
           },
           Completed: compl => {
             console.log("****reset naar Completed");
@@ -228,7 +230,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
             this.operatorControl.setValue(compl.selectedOperator, { emitEvent: false });
             this.operatorControl.enable({ emitEvent: false });
             this.waardeControl.setValue(compl.selectedValue.value, { emitEvent: false });
-            this.waardeControl.enable({ emitEvent: false });
+            this.waardeControl.enable({ emitEvent: true });
           }
         })(expressionEditor.current);
       }
