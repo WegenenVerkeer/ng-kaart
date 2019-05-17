@@ -84,7 +84,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   _tileSize = 256;
   _opacity: Option<number> = none;
   _cacheActief = false;
-  _veldinfos: Option<ke.VeldInfo[]> = none;
+  _veldInfos: Option<ke.VeldInfo[]> = none;
 
   @Input()
   set laagNaam(param: string) {
@@ -130,7 +130,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   // als er geen veldinfos opgegeven zijn, wordt hoogstens een textresultaat getoond bij kaart bevragen
   @Input()
   set veldinfos(param: ke.VeldInfo[]) {
-    this._veldinfos = val.optVeldInfoArray(param);
+    this._veldInfos = val.optVeldInfoArray(param);
   }
 
   constructor(injector: Injector, private readonly http: HttpClient) {
@@ -148,7 +148,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
     super.voegLaagToe();
     forEach(fromNullable(this.queryUrlFn), queryUrlFn =>
       this.dispatch(
-        this._veldinfos
+        this._veldInfos
           .chain(veldinfos =>
             fromNullable(this.textParser).map(textParser =>
               VoegLaagLocatieInformatieServiceToe(

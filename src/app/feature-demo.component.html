@@ -306,10 +306,11 @@
         <div *ngIf="districtenSectie.sectieZichtbaar" [@enterAnimation]>
           <awv-kaart-classic [naam]="'districten'" [hoogte]="400">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
-            <awv-kaart-vector-laag [titel]="'Districten'"
-                                   [source]="districtSource"
-                                   [style]="districtStyle"
-                                   [minZoom]="2"></awv-kaart-vector-laag>
+            <awv-kaart-wfs-laag [url]="'/geoserver/wfs'"
+                                [titel]="'Districten'"
+                                [typeNames] = "'awv:districten'"
+                                [style]="districtStyle"
+                                [minZoom]="2"></awv-kaart-wfs-laag>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
             <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
           </awv-kaart-classic>

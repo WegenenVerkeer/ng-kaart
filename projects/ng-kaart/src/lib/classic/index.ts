@@ -14,6 +14,7 @@ import { ClassicNosqlfsLaagComponent } from "./lagen/classic-nosqlfs-laag.compon
 import { ClassicOrthoLaagComponent } from "./lagen/classic-ortho-laag.component";
 import { ClassicTilecacheLaagComponent } from "./lagen/classic-tilecache-laag.component";
 import { ClassicVectorLaagComponent } from "./lagen/classic-vector-laag.component";
+import { ClassicWfsLaagComponent } from "./lagen/classic-wfs-laag.component";
 import { ClassicWmsLaagComponent } from "./lagen/classic-wms-laag.component";
 import { ClassicWmtsLaagComponent } from "./lagen/classic-wmts-laag.component";
 import { ClassicLagenkiezerComponent } from "./lagenkiezer/classic-lagenkiezer.component";
@@ -57,6 +58,7 @@ export const componentMap = {
   "awv-kaart-tilecache-laag": ClassicTilecacheLaagComponent,
   "awv-kaart-vector-laag": ClassicVectorLaagComponent,
   "awv-kaart-knop-volledig-scherm": ClassicVolledigSchermComponent,
+  "awv-kaart-wfs-laag": ClassicWfsLaagComponent,
   "awv-kaart-wms-laag": ClassicWmsLaagComponent,
   "awv-kaart-wmts-laag": ClassicWmtsLaagComponent,
   "awv-kaart-zoomknoppen": ClassicZoomComponent,
@@ -97,6 +99,7 @@ const components = [
   ClassicVectorLaagComponent,
   ClassicVolledigSchermComponent,
   ClassicVoorwaardenComponent,
+  ClassicWfsLaagComponent,
   ClassicWmsLaagComponent,
   ClassicWmtsLaagComponent,
   ClassicZoekerComponent,
@@ -126,6 +129,7 @@ export * from "./lagen/classic-nosqlfs-laag.component";
 export * from "./lagen/classic-ortho-laag.component";
 export * from "./lagen/classic-tilecache-laag.component";
 export * from "./lagen/classic-vector-laag.component";
+export * from "./lagen/classic-wfs-laag.component";
 export * from "./lagen/classic-wms-laag.component";
 export * from "./lagen/classic-wmts-laag.component";
 export * from "./lagenkiezer/classic-lagenkiezer.component";
