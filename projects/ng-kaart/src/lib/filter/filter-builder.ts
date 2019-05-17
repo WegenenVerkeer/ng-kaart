@@ -13,6 +13,7 @@ import {
   Refinement
 } from "fp-ts/lib/function";
 import { fromNullable, none, Option, option, some } from "fp-ts/lib/Option";
+import { contramap, fromEquals, getRecordSetoid, Setoid, setoidString, strictEqual } from "fp-ts/lib/Setoid";
 import { fromTraversable, Lens, Prism, Traversal } from "monocle-ts";
 
 import * as ke from "../kaart/kaart-elementen";
@@ -486,4 +487,54 @@ export namespace FilterEditor {
   }
 
   export const matchTermEditor: <A>(_: TermEditorMatcher<A>) => Function1<TermEditor, A> = matchers.matchKind;
+
+  const setoidFieldSelection: Setoid<FilterEditor.FieldSelection> = getRecordSetoid({
+    kind: setoidString,
+    properties: array.getSetoid(contramap<string, fltr.Property>(p => p.ref, setoidString))
+  });
+
+  const setoidBinaryComparisonOperator: Setoid<BinaryComparisonOperator> = contramap(o => o.operator, fltr.setoidBinaryComparisonOperator);
+
+  const setoidOperatorSelection: Setoid<OperatorSelection> = getRecordSetoid({
+    kind: setoidString,
+    properties: array.getSetoid(fltr.setoidPropertyByRef),
+    selectedProperty: fltr.setoidPropertyByRef,
+    operatorSelectors: array.getSetoid(setoidBinaryComparisonOperator)
+  });
+
+  const setoidValueSelector: Setoid<ValueSelector> = setoidString;
+
+  const setoidValueSelection: Setoid<ValueSelection> = getRecordSetoid({
+    kind: setoidString,
+    properties: array.getSetoid(fltr.setoidPropertyByRef),
+    selectedProperty: fltr.setoidPropertyByRef,
+    operatorSelectors: array.getSetoid(setoidBinaryComparisonOperator),
+    selectedOperator: setoidBinaryComparisonOperator,
+    valueSelector: setoidValueSelector
+  });
+
+  const setoidLiteralValue: Setoid<LiteralValue> = fromEquals(strictEqual); // de waarden zijn v/h type string, number of boolean
+
+  const setoidSelectedValue: Setoid<SelectedValue> = setoidLiteralValue;
+
+  const setoidCompleted: Setoid<Completed> = getRecordSetoid({
+    kind: setoidString,
+    properties: array.getSetoid(fltr.setoidPropertyByRef),
+    selectedProperty: fltr.setoidPropertyByRef,
+    operatorSelectors: array.getSetoid(setoidBinaryComparisonOperator),
+    selectedOperator: setoidBinaryComparisonOperator,
+    valueSelector: setoidValueSelector,
+    selectedValue: setoidSelectedValue
+  });
+
+  export const setoidTermEditor: Setoid<TermEditor> = fromEquals(
+    (te1, te2) =>
+      te1.kind === te2.kind &&
+      matchTermEditor({
+        Field: () => setoidFieldSelection.equals(te1 as FieldSelection, te2 as FieldSelection),
+        Operator: () => setoidOperatorSelection.equals(te1 as OperatorSelection, te2 as OperatorSelection),
+        Value: () => setoidValueSelection.equals(te1 as ValueSelection, te2 as ValueSelection),
+        Completed: () => setoidCompleted.equals(te1 as Completed, te2 as Completed)
+      })(te1)
+  );
 }

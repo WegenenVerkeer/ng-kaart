@@ -30,7 +30,7 @@ import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
 import { kaartLogger } from "../kaart/log";
-import { isNotNull, isNotNullObject } from "../util/function";
+import { Consumer, isNotNull, isNotNullObject } from "../util/function";
 import { catOptions, forEvery, subSpy } from "../util/operators";
 
 import { FilterAanpassingBezig, isAanpassingBezig } from "./filter-aanpassing-state";
@@ -46,6 +46,12 @@ const autoCompleteSelectieVerplichtValidator: Function1<FormControl, ValidationE
 
 const ordPropertyByBaseField: Function1<Map<string, ke.VeldInfo>, Ord<fltr.Property>> = veldinfos =>
   ord.contramap(prop => ke.VeldInfo.veldInfoOpNaam(prop.ref, veldinfos), option.getOrd(ord.getDualOrd(ke.VeldInfo.ordVeldOpBasisVeld)));
+
+const enableDisabled: Consumer<FormControl> = formControl => {
+  if (formControl.disabled) {
+    formControl.enable();
+  }
+};
 
 @Component({
   selector: "awv-filter-editor",
@@ -109,6 +115,11 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     const forControlValue: Function1<FormControl, rx.Observable<any>> = formcontrol =>
       forEveryLaag(() =>
         formcontrol.valueChanges.pipe(
+          tap(() => {
+            if (!formcontrol.enabled) {
+              console.log("****not enabled", formcontrol.value);
+            }
+          }),
           filter(() => formcontrol.enabled),
           share()
         )
@@ -189,7 +200,16 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
     this.kanHuidigeEditorVerwijderen$ = this.filterEditor$.pipe(map(editor => fed.canRemoveCurrent(editor)));
 
-    this.gekozenVeldTypeNumeriek$ = gekozenProperty$.pipe(map(veld => veld.type === "integer" || veld.type === "double"));
+    this.gekozenVeldTypeNumeriek$ = this.filterEditor$.pipe(
+      map(editor =>
+        fed.matchTermEditor({
+          Field: () => false,
+          Operator: () => false,
+          Value: valueSelection => valueSelection.valueSelector === "FreeNumber",
+          Completed: completed => completed.valueSelector === "FreeNumber"
+        })(editor.current)
+      )
+    );
 
     const editStateChange$ = this.filterEditor$.pipe(
       map(fe => option.some(fe.current.kind)),
@@ -198,11 +218,15 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       map(([previous, current]) => !previous.foldL(() => current.isNone(), prev => current.contains(setoidString, prev)))
     );
 
+    const changedFilterEditor$ = this.filterEditor$.pipe(
+      distinctUntilChanged((fed1, fed2) => fed.setoidTermEditor.equals(fed1.current, fed2.current))
+    );
+
     // Deze subscribe zorgt er voor dat de updates effectief uitgevoerd worden
     this.bindToLifeCycle(
-      rx.combineLatest(this.filterEditor$, kaart.modelChanges.laagFilterAanpassingState$.pipe(map(isAanpassingBezig)), editStateChange$)
-    ).subscribe(([expressionEditor, zichtbaar, editStateChange]) => {
-      if (zichtbaar && editStateChange) {
+      rx.combineLatest(changedFilterEditor$, kaart.modelChanges.laagFilterAanpassingState$.pipe(map(isAanpassingBezig)))
+    ).subscribe(([expressionEditor, zichtbaar]) => {
+      if (zichtbaar) {
         // zet control waarden bij aanpassen van expressionEditor
         expressionEditor.name.foldL(
           () => this.naamControl.reset("", { emitEvent: false }),
@@ -221,7 +245,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
             console.log("****reset naar Operator");
             this.veldControl.setValue(opr.selectedProperty, { emitEvent: false });
             this.operatorControl.reset("", { emitEvent: false });
-            this.operatorControl.enable({ emitEvent: false });
+            enableDisabled(this.operatorControl);
             this.waardeControl.reset("", { emitEvent: false });
             this.waardeControl.disable();
           },
@@ -229,7 +253,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
             console.log("****reset naar Value");
             this.veldControl.setValue(val.selectedProperty, { emitEvent: false });
             this.operatorControl.setValue(val.selectedOperator, { emitEvent: false });
-            this.operatorControl.enable({ emitEvent: false });
+            enableDisabled(this.operatorControl);
             this.waardeControl.reset("", { emitEvent: false });
             this.waardeControl.enable({ emitEvent: true });
           },
@@ -237,9 +261,9 @@ export class FilterEditorComponent extends KaartChildComponentBase {
             console.log("****reset naar Completed");
             this.veldControl.setValue(compl.selectedProperty, { emitEvent: false });
             this.operatorControl.setValue(compl.selectedOperator, { emitEvent: false });
-            this.operatorControl.enable({ emitEvent: false });
+            enableDisabled(this.operatorControl);
             this.waardeControl.setValue(compl.selectedValue.value, { emitEvent: false });
-            this.waardeControl.enable({ emitEvent: true });
+            enableDisabled(this.waardeControl);
           }
         })(expressionEditor.current);
       }
