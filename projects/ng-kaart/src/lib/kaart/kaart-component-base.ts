@@ -40,7 +40,7 @@ export abstract class KaartComponentBase implements AfterViewInit, OnInit, OnDes
 
   /**
    * Event methode bedoeld om aangeroepen te worden vanuit een HTML template. Componenten kunnen luisteren op een afgeleide Observable
-   * om deze acties te volgen. De actienaam wordt gedeeld door alle actieve componenten, dus best iets uniek kiezen.
+   * om deze acties te volgen.
    * @param actionName Een string die een actie identificeert.
    * @param data Optionele, arbitraire data
    */

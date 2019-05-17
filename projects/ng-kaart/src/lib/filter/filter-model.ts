@@ -1,13 +1,16 @@
-import { constant, Function1, Function2, Function3, Lazy, not, Predicate } from "fp-ts/lib/function";
-import { Option } from "fp-ts/lib/Option";
+import { constant, Function1, Function2, Function3, identity, Lazy, not, Predicate } from "fp-ts/lib/function";
+import { none, Option, some } from "fp-ts/lib/Option";
+
+import * as matchers from "../util/matchers";
 
 // Een namespace is nodig omdat verschillende types dezelfde naam hebben als die voor stijlen en er kan maar 1 naam
 // geëxporteerd worden buiten de module.
 export namespace Filter {
-  export type Filter = PureFilter | ExpressionFilter; // Later ook | RawCQLFilter
+  export type Filter = EmptyFilter | ExpressionFilter; // Later ook | RawCQLFilter
 
-  export interface PureFilter {
-    readonly kind: "PureFilter";
+  // TODO hernoemen naar Empty
+  export interface EmptyFilter {
+    readonly kind: "EmptyFilter";
   }
 
   export interface ExpressionFilter {
@@ -16,17 +19,17 @@ export namespace Filter {
     readonly expression: Expression;
   }
 
-  export type Expression = Conjunction | Disjunction | Comparison;
+  export type Expression = ConjunctionExpression | Disjunction;
 
   // Dit zou niet nodig zijn mochten we arbitraire combinaties van "And" en "Or" toelaten, maar dat mag niet in de UI.
-  // Het is dan best dit hier ook niet toe te laten, want anders kan de UI niet met alle geldige filters overweg en moeten
-  // we weer veronderstellingen maken of extra tests invoeren.
-  export type BaseExpression = Conjunction | Comparison;
+  // Het is dan best dit hier ook niet toe te laten, want anders kan de UI niet met alle geldige filters overweg en
+  // moeten we weer veronderstellingen maken of extra tests invoeren.
+  export type ConjunctionExpression = Conjunction | Comparison;
 
   export interface Conjunction {
     readonly kind: "And";
-    readonly left: BaseExpression;
-    readonly right: Comparison;
+    readonly left: ConjunctionExpression;
+    readonly right: ConjunctionExpression;
   }
 
   export interface Disjunction {
@@ -35,25 +38,39 @@ export namespace Filter {
     readonly right: Expression;
   }
 
+  export const Conjunction: Function2<ConjunctionExpression, Comparison, Conjunction> = (left, right) => ({ kind: "And", left, right });
+
+  export const Disjunction: Function2<Expression, Expression, Disjunction> = (left, right) => ({ kind: "Or", left, right });
+
   export type LogicalConnective = Conjunction | Disjunction;
 
-  export type Comparison = Equality | Inequality;
+  export type Comparison = BinaryComparison;
+
+  export type BinaryComparisonOperator =
+    | "equality"
+    | "inequality"
+    | "contains"
+    | "starts"
+    | "ends"
+    | "smaller"
+    | "smallerOrEqual"
+    | "larger"
+    | "largerOrEqual";
+
+  export interface BinaryComparison {
+    readonly kind: "BinaryComparison";
+    readonly operator: BinaryComparisonOperator;
+    readonly property: Property;
+    readonly value: Literal;
+  }
 
   export interface PropertyValueOperator {
     readonly property: Property;
     readonly value: Literal;
   }
 
-  export function propertyAndValueCompatible<A extends PropertyValueOperator>(pvo: PropertyValueOperator): pvo is A {
+  export function propertyAndValueCompatible<A extends BinaryComparison>(pvo: PropertyValueOperator): pvo is A {
     return pvo.property.type === pvo.value.type; // TODO double -> integer bijvoorbeeld is ook toegelaten
-  }
-
-  export interface Equality extends PropertyValueOperator {
-    readonly kind: "Equality";
-  }
-
-  export interface Inequality extends PropertyValueOperator {
-    readonly kind: "Inequality";
   }
 
   // TODO: laten we voorlopig overeen komen met alle veldtypes uit VeldInfo
@@ -71,21 +88,19 @@ export namespace Filter {
     readonly kind: "Property";
     readonly type: TypeType;
     readonly ref: string;
+    readonly label: string;
   }
 
-  function Comparison<C extends Comparison, K extends C["kind"]>(kind: K): Function2<Property, Literal, C> {
-    return (property, value) =>
-      (({
-        kind: kind,
-        property: property,
-        value: value
-      } as unknown) as C);
-  }
+  export const BinaryComparison: Function3<BinaryComparisonOperator, Property, Literal, BinaryComparison> = (
+    operator,
+    property,
+    value
+  ) => ({ kind: "BinaryComparison", operator, property, value });
 
   export interface Conjunction {
     readonly kind: "And";
-    readonly left: BaseExpression;
-    readonly right: Comparison;
+    readonly left: ConjunctionExpression;
+    readonly right: ConjunctionExpression;
   }
 
   export interface Disjunction {
@@ -107,6 +122,10 @@ export namespace Filter {
     readonly kind: "Inequality";
   }
 
+  export interface Incomplete extends PropertyValueOperator {
+    readonly kind: "Incomplete";
+  }
+
   export interface Literal {
     readonly kind: "Literal";
     readonly type: TypeType;
@@ -120,8 +139,8 @@ export namespace Filter {
     readonly label: string;
   }
 
-  export const PureFilter: PureFilter = { kind: "PureFilter" };
-  export const pure: Lazy<Filter> = constant(PureFilter);
+  export const EmptyFilter: EmptyFilter = { kind: "EmptyFilter" };
+  export const empty: Lazy<Filter> = constant(EmptyFilter);
 
   export const ExpressionFilter: Function2<Option<string>, Expression, ExpressionFilter> = (name, expression) => ({
     kind: "ExpressionFilter",
@@ -129,92 +148,52 @@ export namespace Filter {
     expression: expression
   });
 
-  export const Equality: Function2<Property, Literal, Equality> = Comparison("Equality");
-
-  export const Inequality: Function2<Property, Literal, Inequality> = Comparison("Inequality");
-
   export const Property: Function3<TypeType, string, string, Property> = (typetype, name, label) => ({
     kind: "Property",
     type: typetype,
     ref: name,
-    label: label
+    label
   });
 
   export const Literal: Function2<TypeType, ValueType, Literal> = (typetype, value) => ({
     kind: "Literal",
     type: typetype,
-    value: value
+    value
   });
 
-  export const matchFilter: <A>(
-    _: {
-      pure: Lazy<A>;
-      expression: Function1<ExpressionFilter, A>;
-    }
-  ) => (_: Filter) => A = switcher => filter => {
-    switch (filter.kind) {
-      case "PureFilter":
-        return switcher.pure();
-      case "ExpressionFilter":
-        return switcher.expression(filter);
-    }
-  };
+  export interface FilterMatcher<A> {
+    readonly EmptyFilter: Lazy<A>;
+    readonly ExpressionFilter: Function1<ExpressionFilter, A>;
+  }
 
-  export const matchExpression: <A>(
-    _: {
-      and: Function1<Conjunction, A>;
-      or: Function1<Disjunction, A>;
-      equality: Function1<Equality, A>;
-      inequality: Function1<Inequality, A>;
-    }
-  ) => (_: Expression) => A = switcher => expression => {
-    switch (expression.kind) {
-      case "And":
-        return switcher.and(expression);
-      case "Or":
-        return switcher.or(expression);
-      case "Equality":
-        return switcher.equality(expression);
-      case "Inequality":
-        return switcher.inequality(expression);
-    }
-  };
+  export const matchFilter: <A>(_: FilterMatcher<A>) => Function1<Filter, A> = matchers.matchKind;
 
-  export const matchLiteral: <A>(
-    _: {
-      str: Function1<string, A>;
-      int: Function1<number, A>;
-      dbl: Function1<number, A>;
-      bool: Function1<boolean, A>;
-      geom: Function1<string, A>; // Nog uit te werken.
-      date: Function1<number, A>; // Nog uit te werken.
-      datetime: Function1<number, A>; // Nog uit te werken.
-      json: Function1<string, A>; // Nog uit te werken.
-    }
-  ) => (_: Literal) => A = switcher => literal => {
-    switch (literal.type) {
-      case "string":
-        return switcher.str(literal.value as string);
-      case "integer":
-        return switcher.int(literal.value as number);
-      case "boolean":
-        return switcher.bool(literal.value as boolean);
-      case "double":
-        return switcher.dbl(literal.value as number);
-      case "geometry":
-        return switcher.geom(literal.value as string);
-      case "date":
-        return switcher.date(literal.value as number);
-      case "datetime":
-        return switcher.datetime(literal.value as number);
-      case "json":
-        return switcher.json(literal.value as string);
-    }
-  };
+  export const asExpressionFilter: Function1<Filter, Option<ExpressionFilter>> = matchFilter({
+    EmptyFilter: constant(none),
+    ExpressionFilter: some
+  });
+
+  export interface ExpressionMatcher<A> {
+    readonly And: Function1<Conjunction, A>;
+    readonly Or: Function1<Disjunction, A>;
+    readonly BinaryComparison: Function1<BinaryComparison, A>;
+  }
+
+  export const matchExpression: <A>(_: ExpressionMatcher<A>) => Function1<Expression, A> = matchers.matchKind;
+
+  export const matchLiteral: <A>(_: matchers.FullMatcher<Literal, A, TypeType>) => Function1<Literal, A> = matcher =>
+    matchers.match(matcher)(l => l.type);
+
+  export const matchTypeTypeWithFallback: <A>(_: matchers.FallbackMatcher<TypeType, A, TypeType>) => (_: TypeType) => A = switcher =>
+    matchers.matchWithFallback(switcher)(identity);
+
+  export const matchBinaryComparisonOperatorWithFallback: <A>(
+    _: matchers.FallbackMatcher<BinaryComparisonOperator, A, BinaryComparisonOperator>
+  ) => Function1<BinaryComparisonOperator, A> = matcher => matchers.matchWithFallback(matcher)(identity);
 
   export const isEmpty: Predicate<Filter> = matchFilter({
-    expression: constant(false),
-    pure: constant(true)
+    ExpressionFilter: constant(false),
+    EmptyFilter: constant(true)
   });
 
   export const isDefined: Predicate<Filter> = not(isEmpty);

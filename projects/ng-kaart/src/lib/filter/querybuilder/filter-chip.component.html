@@ -1,0 +1,39 @@
+<div class="chip" [ngSwitch]="editor.kind" (click)="setCurrent()">
+
+  <div *ngSwitchCase="'Field'" class="term {{ isCurrentStyle() }}">
+    <div class="filter-term">
+      <div>?</div>
+      <div class ="comparison">is</div>
+      <div>?</div>
+    </div>
+    <mat-icon class="cross">error_outline</mat-icon>
+  </div>
+
+  <div *ngSwitchCase="'Operator'" class="term {{ isCurrentStyle() }}">
+    <div class="filter-term">
+      <div>{{ asOperatorSelection().selectedProperty.label }}</div>
+      <div class ="comparison">is</div>
+      <div>?</div>
+    </div>
+    <mat-icon class="cross">error_outline</mat-icon>
+  </div>
+
+  <div *ngSwitchCase="'Value'" class="term {{ isCurrentStyle() }}">
+    <div class="filter-term">
+      <div>{{ asValueSelection().selectedProperty.label }}</div>
+      <div class ="comparison">{{ asValueSelection().selectedOperator.label }}</div>
+      <div>?</div>
+    </div>
+    <mat-icon class="cross">error_outline</mat-icon>
+  </div>
+
+  <div *ngSwitchCase="'Completed'" class="term {{ isCurrentStyle() }}">
+    <div class="filter-term">
+      <div>{{ asCompleted().selectedProperty.label }}</div>
+      <div class ="comparison">{{ asCompleted().selectedOperator.label }}</div>
+      <div>{{ asCompleted().selectedValue.value }}</div>
+    </div>
+    <mat-icon class="checkmark">done</mat-icon>
+  </div>
+
+</div>

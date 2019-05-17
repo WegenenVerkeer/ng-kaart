@@ -1,22 +1,21 @@
-<div [ngSwitch]="expression.kind">
-  <div class="filter-expression" *ngSwitchCase="'Equality'">
-    <div>{{property()}} </div>
-    <div class ="comparison">is</div>
-    <div> {{value()}}</div>
-  </div>
-  <div class="filter-expression" *ngSwitchCase="'InEquality'">
-    <div>{{property()}}</div>
-    <div class ="comparison">is niet</div>
-    <div>{{value()}}</div>
-  </div>
-  <div class="filter-expression" *ngSwitchCase="'And'">
+<span [ngSwitch]="kind">
+  <awv-filter-term *ngSwitchCase="'BinaryComparison'" [term]="term"></awv-filter-term>
+
+  <span *ngSwitchCase="'And'">
     <awv-filter-expression [expression]="left"></awv-filter-expression>
-    <div class="logical-connective">EN</div>
+    <span class="logical-connective-en">EN</span>
     <awv-filter-expression [expression]="right"></awv-filter-expression>
-  </div>
-  <div class="filter-expression" *ngSwitchCase="'Or'">
-    <awv-filter-expression [expression]="left"></awv-filter-expression>
-    <div class="logical-connective">OF</div>
-    <awv-filter-expression [expression]="right"></awv-filter-expression>
-  </div>
-</div>
+  </span>
+
+  <span *ngSwitchCase="'Or'">
+    <span class="opening-bracket">(</span>
+      <awv-filter-expression [expression]="left"></awv-filter-expression>
+    <span class="closing-bracket">)</span>
+
+    <span class="logical-connective-of">OF</span>
+
+    <span class="opening-bracket">(</span>
+      <awv-filter-expression [expression]="right"></awv-filter-expression>
+    <span class="closing-bracket">)</span>
+  </span>
+</span>

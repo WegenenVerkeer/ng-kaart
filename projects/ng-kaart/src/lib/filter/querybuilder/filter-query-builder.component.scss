@@ -1,0 +1,39 @@
+@import "../../css/kaart.component-common.scss";
+
+.query-builder {
+  display: flex;
+  flex-direction: column;
+}
+
+.conjunctions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  flex-grow: 1;
+}
+
+.disjunctions {
+  display: flex;
+  flex-direction: row;
+  flex-grow: 1;
+
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+
+  border-bottom-width: 1px;
+  border-bottom-color: rgb(204, 204, 204);
+  border-bottom-style: dotted;
+}
+
+.spacer {
+  padding-left: 0.5em;
+  width: 34px;
+  height: 34px;
+}
+
+.of-knop {
+  padding: 0 0.5em 0 0.5em;
+  border-bottom-width: 1px;
+  border-bottom-color: rgb(204, 204, 204);
+  border-bottom-style: dashed;
+}

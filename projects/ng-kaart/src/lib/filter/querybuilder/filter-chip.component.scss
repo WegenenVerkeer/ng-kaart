@@ -1,0 +1,59 @@
+@import "../../css/kaart.component-common.scss";
+
+.filter-term {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.comparison {
+  padding-left: 0.5em;
+  padding-right: 0.5em;
+}
+
+.chip {
+  display: flex;
+  flex-direction: row;
+
+  padding-left: 0.5em;
+
+  padding-top: 0.5em;
+  padding-bottom: 0.5em;
+
+  .term {
+    cursor: pointer;
+    display: flex;
+    line-height: 32px;
+    height: 32px;
+    text-align: center;
+    margin: auto;
+    color: rgba(0, 0, 0, 0.87);
+    font-size: 12px;
+    font-style: normal;
+    border-radius: 20px;
+    border-width: 1px;
+    border-color: rgb(204, 204, 204);
+    border-style: dotted;
+    padding: 0 1em 0 1em;
+
+    &.selected {
+      font-weight: bold;
+      box-shadow: rgba(0, 0, 0, 0.2) 0 3px 1px -2px, rgba(0, 0, 0, 0.14) 0px 2px 2px 0px, rgba(0, 0, 0, 0.12) 0px 1px 5px 0px;
+      border-color: rgb(85, 85, 85);
+      border-style: solid;
+    }
+
+    .checkmark {
+      margin-left: 4px;
+      line-height: 30px;
+      color: green;
+    }
+
+    .cross {
+      margin-left: 4px;
+      line-height: 30px;
+      color: rgb(244, 67, 54);
+    }
+  }
+
+}

@@ -38,7 +38,7 @@ export function collectOption<A, B>(f: (a: A) => Option<B>): Pipeable<A, B> {
 }
 
 /**
- * Filtert de gedfinieerd Option<A>'s en converteert ze naar A's.
+ * Filtert de gedefinieerde Option<A>'s en converteert ze naar A's.
  */
 export const catOptions: <A>(o: rx.Observable<Option<A>>) => rx.Observable<A> = <A>(o: rx.Observable<Option<A>>) =>
   o.pipe(
