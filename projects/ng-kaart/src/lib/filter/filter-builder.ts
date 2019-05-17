@@ -115,7 +115,7 @@ export namespace FilterEditor {
     );
   const properties: Function1<ke.ToegevoegdeVectorLaag, fltr.Property[]> = laag =>
     veldinfos(laag)
-      .map(vi => fltr.Property(vi.type, vi.naam, fromNullable(vi.label).getOrElse(vi.naam)))
+      .map(vi => fltr.Property(vi.type, vi.naam, fromNullable(vi.label).getOrElse("")))
       .filter(property => ["string", "boolean", "double", "integer"].includes(property.type));
 
   // Initieer aanmaak van een Comparison
