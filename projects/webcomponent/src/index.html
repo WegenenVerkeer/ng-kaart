@@ -43,7 +43,15 @@
       matrix-set="BPL72VL" matrix-ids='[ "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15" ]'>
     </awv-kaart-wmts-laag>
 
-    <awv-kaart-nosqlfs-laag titel="Straatkolken" url="/geolatte-nosqlfs" database="featureserver" collection="straatkolken" minZoom="9"
+    <awv-kaart-nosqlfs-laag titel="Straatkolken"
+                            url="/geolatte-nosqlfs"
+                            database="featureserver"
+                            collection="straatkolken"
+                            min-zoom="9"
+                            cluster-distance="100"
+                            cluster-text-color = "navy"
+                            cluster-circle-color = "dodgerblue"
+                            cluster-circle-stroke-color = "navy"
       stijl-spec='
       {
         "type": "DynamicStyle",

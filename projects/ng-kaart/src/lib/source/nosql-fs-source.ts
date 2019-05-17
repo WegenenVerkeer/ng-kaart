@@ -333,7 +333,7 @@ export class NosqlFsSource extends ol.source.Vector {
     const userFilter = this.applicableUserFilter(respectUserFilterActivity);
     return this.baseFilter.foldL(
       () => userFilter, //
-      basisFilter => userFilter.map(extraFilter => `(${basisFilter}) AND (${extraFilter})`)
+      basisFilter => userFilter.map(extraFilter => `(${basisFilter}) AND (${extraFilter})`).alt(this.baseFilter)
     );
   }
 

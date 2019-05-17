@@ -21,7 +21,7 @@
       height: 100%;
     }
   </style>
-  <script type="text/javascript" src="webcomponent.js"></script>
+  <script type="text/javascript" src="../../dist/webcomponent/ng-kaart-webcomponent.js"></script>
   <script>
       window.onload = () => {
         const kaartElement = document.getElementById("k1");
@@ -49,7 +49,7 @@
       matrix-set="BPL72VL" matrix-ids='[ "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15" ]'>
     </awv-kaart-wmts-laag>
 
-    <awv-kaart-nosqlfs-laag titel="Straatkolken" url="/geolatte-nosqlfs" database="featureserver" collection="straatkolken" minZoom="9"
+    <awv-kaart-nosqlfs-laag titel="Straatkolken" url="/geolatte-nosqlfs" database="featureserver" collection="straatkolken" min-zoom="9"
       stijl-spec='
       {
         "type": "DynamicStyle",

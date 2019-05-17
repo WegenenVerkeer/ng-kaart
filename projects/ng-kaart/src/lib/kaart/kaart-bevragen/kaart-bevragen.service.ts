@@ -46,6 +46,7 @@ interface LsWegLocatie {
   readonly position: number;
   readonly distance: number;
   readonly distancetopole: number;
+  readonly projected: any;
 }
 
 interface LsWegLocaties {
@@ -93,13 +94,21 @@ export function toWegLocaties(lsWegLocaties: LsWegLocaties): Array<WegLocatie> {
   return lsWegLocaties.items.map(toWegLocatie);
 }
 
+const geoJSONOptions = <ol.olx.format.GeoJSONOptions>{
+  ignoreExtraDims: true,
+  defaultDataProjection: undefined,
+  featureProjection: undefined
+};
+
 function toWegLocatie(lsWegLocatie: LsWegLocatie): WegLocatie {
+  const geometry = new ol.format.GeoJSON(geoJSONOptions).readGeometry(lsWegLocatie.projected);
   return {
     ident8: lsWegLocatie.ident8,
     hm: lsWegLocatie.hm,
     afstand: lsWegLocatie.distancetopole,
     wegbeheerder: lsWegLocatie.district,
-    projectieafstand: lsWegLocatie.distance
+    projectieafstand: lsWegLocatie.distance,
+    projected: geometry
   };
 }
 
