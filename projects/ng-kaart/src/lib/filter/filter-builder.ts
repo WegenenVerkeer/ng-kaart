@@ -63,6 +63,7 @@ export namespace FilterEditor {
   export interface BinaryComparisonOperator {
     readonly kind: "BinaryComparisonOperator";
     readonly label: string;
+    readonly shortLabel: string;
     readonly operator: fltr.BinaryComparisonOperator;
     readonly typeType: fltr.TypeType;
   }
@@ -122,52 +123,59 @@ export namespace FilterEditor {
   // Initieer aanmaak van een Comparison
   const FieldSelection: Function1<ke.ToegevoegdeVectorLaag, FieldSelection> = laag => ({ kind: "Field", properties: properties(laag) });
 
-  const BinaryComparisonOperator: Function3<string, fltr.BinaryComparisonOperator, fltr.TypeType, BinaryComparisonOperator> = (
+  const BinaryComparisonOperator: Function4<string, string, fltr.BinaryComparisonOperator, fltr.TypeType, BinaryComparisonOperator> = (
     label,
+    shortLabel,
     operator,
     typeType
-  ) => ({ kind: "BinaryComparisonOperator", label, operator, typeType });
+  ) => ({ kind: "BinaryComparisonOperator", label, shortLabel, operator, typeType });
 
   const freeStringOperators: ComparisonOperator[] = [
-    BinaryComparisonOperator("is", "equality", "string"),
-    BinaryComparisonOperator("is niet", "inequality", "string"),
-    BinaryComparisonOperator("bevat", "contains", "string"),
-    BinaryComparisonOperator("start met", "starts", "string"),
-    BinaryComparisonOperator("eindigt met", "ends", "string")
+    BinaryComparisonOperator("is", "is", "equality", "string"),
+    BinaryComparisonOperator("is niet", "is niet", "inequality", "string"),
+    BinaryComparisonOperator("bevat", "bevat", "contains", "string"),
+    BinaryComparisonOperator("start met", "start met", "starts", "string"),
+    BinaryComparisonOperator("eindigt met", "eindigt met", "ends", "string")
   ];
 
   const freeDoubleOperators: ComparisonOperator[] = [
-    BinaryComparisonOperator("is", "equality", "double"),
-    BinaryComparisonOperator("is niet", "inequality", "double"),
-    BinaryComparisonOperator("<", "smaller", "double"),
-    BinaryComparisonOperator("<=", "smallerOrEqual", "double"),
-    BinaryComparisonOperator(">", "larger", "double"),
-    BinaryComparisonOperator(">=", "largerOrEqual", "double")
+    BinaryComparisonOperator("is", "is", "equality", "double"),
+    BinaryComparisonOperator("is niet", "is niet", "inequality", "double"),
+    BinaryComparisonOperator("kleiner dan", "<", "smaller", "double"),
+    BinaryComparisonOperator("kleiner dan of gelijk aan", "<=", "smallerOrEqual", "double"),
+    BinaryComparisonOperator("groter dan", ">", "larger", "double"),
+    BinaryComparisonOperator("groter dan of gelijk aan", ">=", "largerOrEqual", "double")
   ];
 
   const freeIntegerOperators: ComparisonOperator[] = [
-    BinaryComparisonOperator("is", "equality", "integer"),
-    BinaryComparisonOperator("is niet", "inequality", "integer"),
-    BinaryComparisonOperator("<", "smaller", "integer"),
-    BinaryComparisonOperator("<=", "smallerOrEqual", "integer"),
-    BinaryComparisonOperator(">", "larger", "integer"),
-    BinaryComparisonOperator(">=", "largerOrEqual", "integer")
+    BinaryComparisonOperator("is", "is", "equality", "integer"),
+    BinaryComparisonOperator("is niet", "is niet", "inequality", "integer"),
+    BinaryComparisonOperator("kleiner dan", "<", "smaller", "integer"),
+    BinaryComparisonOperator("kleiner dan of gelijk aan", "<=", "smallerOrEqual", "integer"),
+    BinaryComparisonOperator("groter dan", ">", "larger", "integer"),
+    BinaryComparisonOperator("groter dan of gelijk aan", ">=", "largerOrEqual", "integer")
   ];
 
   const booleanOperators: ComparisonOperator[] = [
-    BinaryComparisonOperator("is", "equality", "boolean"),
-    BinaryComparisonOperator("is niet", "inequality", "boolean")
+    BinaryComparisonOperator("is", "is", "equality", "boolean"),
+    BinaryComparisonOperator("is niet", "is niet", "inequality", "boolean")
   ];
 
-  const comparisonOperatorMap: Map<fltr.BinaryComparisonOperator, string> = maps.toMapByKeyAndValue(
+  interface OperatorLabels {
+    readonly label: string;
+    readonly shortLabel: string;
+  }
+
+  const comparisonOperatorMap: Map<fltr.BinaryComparisonOperator, OperatorLabels> = maps.toMapByKeyAndValue(
     ArrayMonad.chain([freeStringOperators, freeIntegerOperators, freeDoubleOperators, booleanOperators], identity),
     op => op.operator,
-    op => op.label
+    op => ({ label: op.label, shortLabel: op.shortLabel })
   );
 
   const binaryComparisonOperator: Function2<fltr.BinaryComparisonOperator, fltr.Literal, BinaryComparisonOperator> = (operator, literal) =>
     BinaryComparisonOperator(
-      comparisonOperatorMap.get(operator)!, // We moeten er maar voor zorgen dat onze map volledig is
+      comparisonOperatorMap.get(operator)!.label, // We moeten er maar voor zorgen dat onze map volledig is
+      comparisonOperatorMap.get(operator)!.shortLabel, // We moeten er maar voor zorgen dat onze map volledig is
       operator,
       literal.type
     );
