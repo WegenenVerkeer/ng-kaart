@@ -12,7 +12,8 @@ describe("De filter exporter", () => {
         kind: "ExpressionFilter",
         name: some("testFilter"),
         expression: {
-          kind: "Equality",
+          kind: "BinaryComparison",
+          operator: "equality",
           property: property,
           value: literal
         }
@@ -26,7 +27,8 @@ describe("De filter exporter", () => {
         kind: "ExpressionFilter",
         name: none,
         expression: {
-          kind: "Equality",
+          kind: "BinaryComparison",
+          operator: "equality",
           property: property,
           value: literal
         }

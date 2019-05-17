@@ -215,6 +215,6 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
   }
 
   verwijderFilter() {
-    this.dispatch(cmd.ZetFilter(this.laag.titel, fltr.pure(), kaartLogOnlyWrapper));
+    this.dispatch(cmd.ZetFilter(this.laag.titel, fltr.empty(), kaartLogOnlyWrapper));
   }
 }

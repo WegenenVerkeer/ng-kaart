@@ -21,18 +21,19 @@ describe("De filterinterpreter", () => {
   const property: fltr.Property = fltr.Property("string", "prop", "Property");
   const literal: fltr.Literal = fltr.Literal("string", "value");
   describe("bij het interpreteren van geldige structuren", () => {
-    it("moet een 'pure' filter kunnen verwerken", () => {
-      const pure: fltr.Filter = fltr.PureFilter;
-      const result = AwvV0FilterInterpreters.jsonAwv0Definition(pure);
+    it("moet een 'empty' filter kunnen verwerken", () => {
+      const empty: fltr.Filter = fltr.empty();
+      const result = AwvV0FilterInterpreters.jsonAwv0Definition(empty);
       expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(pure);
+      expect(result.getOrElse(undefined)).toEqual(empty);
     });
     it("moet een filter met 1 'gelijk aan' kunnen verwerken", () => {
       const eq: RawExpressionFilter = {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
-          kind: "Equality",
+          kind: "BinaryComparison",
+          operator: "equality",
           property: property,
           value: literal
         }
@@ -46,7 +47,8 @@ describe("De filterinterpreter", () => {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
-          kind: "Inequality",
+          kind: "BinaryComparison",
+          operator: "inequality",
           property: property,
           value: literal
         }
@@ -62,12 +64,14 @@ describe("De filterinterpreter", () => {
         expression: {
           kind: "And",
           left: {
-            kind: "Inequality",
+            kind: "BinaryComparison",
+            operator: "inequality",
             property: property,
             value: literal
           },
           right: {
-            kind: "Equality",
+            kind: "BinaryComparison",
+            operator: "equality",
             property: property,
             value: literal
           }
@@ -86,18 +90,21 @@ describe("De filterinterpreter", () => {
           left: {
             kind: "And",
             left: {
-              kind: "Equality",
+              kind: "BinaryComparison",
+              operator: "equality",
               property: property,
               value: literal
             },
             right: {
-              kind: "Equality",
+              kind: "BinaryComparison",
+              operator: "equality",
               property: property,
               value: literal
             }
           },
           right: {
-            kind: "Equality",
+            kind: "BinaryComparison",
+            operator: "equality",
             property: property,
             value: literal
           }
@@ -114,12 +121,14 @@ describe("De filterinterpreter", () => {
         expression: {
           kind: "Or",
           left: {
-            kind: "Inequality",
+            kind: "BinaryComparison",
+            operator: "inequality",
             property: property,
             value: literal
           },
           right: {
-            kind: "Equality",
+            kind: "BinaryComparison",
+            operator: "equality",
             property: property,
             value: literal
           }
@@ -138,18 +147,21 @@ describe("De filterinterpreter", () => {
           left: {
             kind: "Or",
             left: {
-              kind: "Equality",
+              kind: "BinaryComparison",
+              operator: "equality",
               property: property,
               value: literal
             },
             right: {
-              kind: "Equality",
+              kind: "BinaryComparison",
+              operator: "equality",
               property: property,
               value: literal
             }
           },
           right: {
-            kind: "Equality",
+            kind: "BinaryComparison",
+            operator: "equality",
             property: property,
             value: literal
           }
@@ -168,18 +180,21 @@ describe("De filterinterpreter", () => {
           left: {
             kind: "And",
             left: {
-              kind: "Equality",
+              kind: "BinaryComparison",
+              operator: "equality",
               property: property,
               value: literal
             },
             right: {
-              kind: "Equality",
+              kind: "BinaryComparison",
+              operator: "equality",
               property: property,
               value: literal
             }
           },
           right: {
-            kind: "Equality",
+            kind: "BinaryComparison",
+            operator: "equality",
             property: property,
             value: literal
           }
@@ -196,7 +211,8 @@ describe("De filterinterpreter", () => {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
-          kind: "Equality",
+          kind: "BinaryComparison",
+          operator: "equality",
           value: literal
         }
       };
@@ -209,7 +225,8 @@ describe("De filterinterpreter", () => {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
-          kind: "Inequality",
+          kind: "BinaryComparison",
+          operator: "inequality",
           property: property,
           value: { ...literal, type: "double" }
         }

@@ -1,0 +1,13 @@
+@import "../../css/kaart.component-common.scss";
+
+.conjunction {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+
+  .no-border {
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
+  }
+}

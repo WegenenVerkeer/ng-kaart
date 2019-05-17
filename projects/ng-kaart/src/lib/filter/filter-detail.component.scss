@@ -3,7 +3,7 @@
 .awv-filter-detail {
 
   .filter-header {
-    padding: 0px 8px;
+    padding: 0 8px;
     display: flex;
     align-items: center;
 
@@ -59,10 +59,10 @@
 
   .filter-detail-inhoud {
     cursor: pointer;
+    line-height: 140%;
+    margin: 0 16px 16px 52px;
 
     .filter-detail-omschrijving {
-      margin-left: 52px;
-      margin-top: 10px;
       margin-bottom: 10px;
       font-weight: bold;
     }

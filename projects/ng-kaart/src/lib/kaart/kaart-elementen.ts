@@ -1,6 +1,9 @@
-import { Function1, Refinement } from "fp-ts/lib/function";
+import { Function1, Function2, Refinement } from "fp-ts/lib/function";
 import { fromPredicate, fromRefinement, Option } from "fp-ts/lib/Option";
-import { contramap, Setoid, setoidString } from "fp-ts/lib/Setoid";
+import * as ord from "fp-ts/lib/Ord";
+import { Ord } from "fp-ts/lib/Ord";
+import * as setoid from "fp-ts/lib/Setoid";
+import { Setoid, setoidString } from "fp-ts/lib/Setoid";
 import { Iso, Lens, Optional } from "monocle-ts";
 import * as ol from "openlayers";
 
@@ -8,6 +11,8 @@ import { Filter as fltr } from "../filter/filter-model";
 import { FilterTotaal, totaalOpTeHalen } from "../filter/filter-totaal";
 import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
 import { mapToOptionalByKey } from "../util/lenses";
+import * as maps from "../util/maps";
+import * as matchers from "../util/matchers";
 
 import { Legende } from "./kaart-legende";
 import { AwvV0StyleSpec, StyleSelector } from "./stijl-selector";
@@ -253,7 +258,7 @@ export function Laagfilterinstellingen(spec: fltr.Filter, actief: boolean, totaa
   };
 }
 
-export const stdLaagfilterinstellingen = Laagfilterinstellingen(fltr.pure(), true, totaalOpTeHalen());
+export const stdLaagfilterinstellingen = Laagfilterinstellingen(fltr.empty(), true, totaalOpTeHalen());
 
 ////////////////////////////
 // Manipulatie en inspectie
@@ -264,13 +269,16 @@ export namespace ToegevoegdeVectorLaag {
     "stijlSelBron"
   );
 
-  export const veldInfosLens: Lens<ToegevoegdeVectorLaag, VeldInfo[]> = Lens.fromPath<ToegevoegdeVectorLaag, "bron", "velden">([
+  export const veldInfosMapLens: Lens<ToegevoegdeVectorLaag, Map<string, VeldInfo>> = Lens.fromPath<
+    ToegevoegdeVectorLaag,
     "bron",
     "velden"
-  ]).composeIso(
+  >(["bron", "velden"]);
+
+  export const veldInfosLens: Lens<ToegevoegdeVectorLaag, VeldInfo[]> = veldInfosMapLens.composeIso(
     new Iso(
       map => Array.from(map.values()), //
-      infos => infos.reduce((m, info) => m.set(info.naam, info), new Map<string, VeldInfo>())
+      infos => maps.toMapByKey(infos, info => info.naam)
     )
   );
 
@@ -279,5 +287,12 @@ export namespace ToegevoegdeVectorLaag {
 }
 
 export namespace VeldInfo {
-  export const setoidVeldOpNaam: Setoid<VeldInfo> = contramap(vi => vi.naam, setoidString);
+  export const setoidVeldOpNaam: Setoid<VeldInfo> = setoid.contramap(vi => vi.naam, setoidString);
+  export const ordVeldOpBasisVeld: Ord<VeldInfo> = ord.contramap(vi => vi.isBasisVeld, ord.ordBoolean);
+
+  export const veldInfoOpNaam: Function2<string, Map<string, VeldInfo>, Option<VeldInfo>> = (naam, veldinfos) =>
+    maps.findFirst(veldinfos, vi => vi.naam === naam);
+
+  export const matchWithFallback: <A>(_: matchers.FallbackMatcher<VeldInfo, A, VeldType>) => Function1<VeldInfo, A> = m =>
+    matchers.matchWithFallback(m)(veldinfo => veldinfo.type);
 }

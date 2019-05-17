@@ -68,3 +68,5 @@ export function toMapByKey<K, V>(array: ReadonlyArray<V>, extractor: Function1<V
 
 export const map: <A, B>(_: Function1<A, B>) => <K>(_: Map<K, A>) => Map<K, B> = f => mp =>
   toMapByKeyAndValue(Array.from(mp.entries()), e => e[0], e => f(e[1]));
+
+export const values: <K, A>(_: Map<K, A>) => A[] = mp => Array.from(mp.values());

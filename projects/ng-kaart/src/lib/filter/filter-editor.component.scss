@@ -17,10 +17,13 @@
 }
 
 .filter-dialog {
-  min-width: 400px;
+  min-width: 600px;
+  max-width: 90%;
+  max-height: 90%;
   display: flex;
   flex-direction: column;
   align-content: stretch;
+  overflow: auto;
 }
 
 .filter-header {
@@ -38,25 +41,31 @@
 }
 
 .filter-content {
-  margin: 16px;
+  flex: 1;
   font-size: 14px;
   color: rgba(black, 0.87);
   display: flex;
   flex-direction: column;
 
   .filter-naam {
-    padding: 4px;
+    padding: 0.5em;
     min-width: 512px;
+    border-bottom-width: 1px;
+    border-bottom-color: rgb(204, 204, 204);
+    border-bottom-style: dotted;
   }
 
   .filter-definitie {
-    flex: 1;
     display: flex;
     flex-direction: row;
+    border-bottom-style: dotted;
+    border-bottom-width: 1px;
+    border-bottom-color: rgb(204, 204, 204);
 
     .filter-velden-combo {
       padding: 8px;
       min-width: 200px;
+      padding-left: 16px;
     }
 
     .filter-operator-combo {
@@ -65,11 +74,18 @@
     }
 
     .filter-waarde-editbox {
-      padding: 8px;
+      padding: 8px 16px 8px 8px;
       min-width: 200px;
     }
   }
 
+  .delete-icon {
+    line-height: 64px;
+  }
+
+  .query-builder {
+
+  }
 
 }
 

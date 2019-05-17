@@ -1,25 +1,38 @@
-import { Component, NgZone } from "@angular/core";
+import { ChangeDetectorRef, Component, NgZone } from "@angular/core";
 import { FormControl, ValidationErrors, Validators } from "@angular/forms";
 import * as array from "fp-ts/lib/Array";
-import { Function1, Function2 } from "fp-ts/lib/function";
-import { fromNullable, none, Option } from "fp-ts/lib/Option";
+import { Endomorphism, Function1 } from "fp-ts/lib/function";
+import { fromNullable, Option } from "fp-ts/lib/Option";
+import * as option from "fp-ts/lib/Option";
+import { Ord } from "fp-ts/lib/Ord";
+import * as ord from "fp-ts/lib/Ord";
 import * as rx from "rxjs";
-import { Observable } from "rxjs";
-import { combineLatest, filter, map, sample, shareReplay, startWith, switchMap, take, tap } from "rxjs/operators";
+import {
+  debounceTime,
+  distinctUntilChanged,
+  filter,
+  map,
+  sample,
+  scan,
+  share,
+  shareReplay,
+  startWith,
+  switchMap,
+  take,
+  tap
+} from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import * as ke from "../kaart/kaart-elementen";
-import { VeldInfo } from "../kaart/kaart-elementen";
-import { ToegevoegdeVectorLaag } from "../kaart/kaart-elementen";
-import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
+import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
+import { kaartLogger } from "../kaart/log";
 import { isNotNull, isNotNullObject } from "../util/function";
-import { collectOption } from "../util/operators";
-import { forEvery } from "../util/operators";
+import { catOptions, forEvery, subSpy } from "../util/operators";
 
 import { FilterAanpassingBezig, isAanpassingBezig } from "./filter-aanpassing-state";
-import { FilterBuilder } from "./filter-builder";
+import { FilterEditor as fed } from "./filter-builder";
 import { Filter as fltr } from "./filter-model";
 
 const autoCompleteSelectieVerplichtValidator: Function1<FormControl, ValidationErrors | null> = control => {
@@ -28,6 +41,9 @@ const autoCompleteSelectieVerplichtValidator: Function1<FormControl, ValidationE
   }
   return null;
 };
+
+const ordPropertyByBaseField: Function1<Map<string, ke.VeldInfo>, Ord<fltr.Property>> = veldinfos =>
+  ord.contramap(prop => ke.VeldInfo.veldInfoOpNaam(prop.ref, veldinfos), option.getOrd(ord.getDualOrd(ke.VeldInfo.ordVeldOpBasisVeld)));
 
 @Component({
   selector: "awv-filter-editor",
@@ -38,22 +54,29 @@ export class FilterEditorComponent extends KaartChildComponentBase {
   readonly zichtbaar$: rx.Observable<boolean>;
   readonly titel$: rx.Observable<string>;
 
-  readonly filteredVelden$: rx.Observable<VeldInfo[]>;
-  readonly filteredOperatoren$: rx.Observable<FilterBuilder.FilterBuildElement[]>;
+  readonly filteredVelden$: rx.Observable<fltr.Property[]>;
+  readonly filteredOperatoren$: rx.Observable<fed.BinaryComparisonOperator[]>;
 
   readonly naamControl = new FormControl("");
   readonly veldControl = new FormControl("", [Validators.required, autoCompleteSelectieVerplichtValidator]);
-  readonly operatorControl = new FormControl(FilterBuilder.comparisonBuilders.find(operator => operator.description === "is"), [
-    Validators.required,
-    autoCompleteSelectieVerplichtValidator
-  ]);
+  // Als we het oude gedrag weer willen waar de operator direct op '=' staat, dan moeten we de selectedOperator
+  // doorschuiven naar FieldSelection
+  readonly operatorControl = new FormControl("", [Validators.required, autoCompleteSelectieVerplichtValidator]);
   readonly waardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
 
-  readonly geldigFilterCmd$: rx.Observable<prt.ZetFilter<KaartInternalMsg>>;
+  readonly ongeldigeFilter$: rx.Observable<boolean>;
+
+  readonly filterEditor$: rx.Observable<fed.ExpressionEditor>;
+
+  readonly gekozenVeldTypeNumeriek$: rx.Observable<boolean>;
+
+  readonly kanHuidigeEditorVerwijderen$: rx.Observable<boolean>;
+
+  readonly newFilterEditor$ = new rx.Subject<Endomorphism<fed.ExpressionEditor>>();
 
   private clickInsideDialog = false;
 
-  constructor(kaart: KaartComponent, zone: NgZone) {
+  constructor(kaart: KaartComponent, zone: NgZone, private readonly cdr: ChangeDetectorRef) {
     super(kaart, zone);
 
     this.zichtbaar$ = kaart.modelChanges.laagFilterAanpassingState$.pipe(map(isAanpassingBezig));
@@ -63,142 +86,222 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       shareReplay(1) // Alle observables die later subscriben (en er zijn er veel) moeten de huidige toestand kennen.
     );
 
-    const findLaagOpTitel: Function2<string, ke.ToegevoegdeLaag[], Option<ke.ToegevoegdeVectorLaag>> = (titel, lgn) =>
-      array.findFirst(lgn.filter(lg => lg.titel === titel), ke.isToegevoegdeVectorLaag);
-
-    const laag$: rx.Observable<ke.ToegevoegdeVectorLaag> = forEvery(aanpassing$)(aanpassing =>
-      kaart.modelChanges.lagenOpGroep
-        .get(aanpassing.laag.laaggroep)!
-        .pipe(collectOption(lgn => findLaagOpTitel(aanpassing.laag.titel, lgn)))
-    ).pipe(
-      switchMap(laag =>
-        kaart.modelChanges.laagFilterAanpassingState$.pipe(map(isAanpassingBezig)).pipe(
-          tap(zichtbaar => {
-            if (zichtbaar) {
-              // zet control waarden bij start aanpassen filter van een laag
-              if (laag.filterinstellingen.spec.kind === "ExpressionFilter") {
-                const exprFilter = laag.filterinstellingen.spec as fltr.ExpressionFilter; // TODO dit moet veralgemeend worden
-                this.naamControl.setValue(exprFilter.name.toNullable());
-                const comparison = exprFilter.expression as fltr.Comparison;
-                this.veldControl.setValue(
-                  ToegevoegdeVectorLaag.veldInfosLens.get(laag).find(veldinfo => veldinfo.naam === comparison.property.ref)
-                );
-                this.operatorControl.setValue(
-                  comparison.kind === "Equality"
-                    ? FilterBuilder.comparisonBuilders.find(operator => operator.description === "is")
-                    : FilterBuilder.comparisonBuilders.find(operator => operator.description === "is niet")
-                );
-                this.waardeControl.setValue(comparison.value.value);
-              } else {
-                this.naamControl.reset();
-                this.veldControl.reset();
-                this.operatorControl.reset(FilterBuilder.comparisonBuilders.find(operator => operator.description === "is"));
-                this.waardeControl.reset();
-              }
-            }
-          }),
-          map(() => laag)
-        )
-      ),
-      shareReplay(1)
-    );
-
-    const velden$: rx.Observable<VeldInfo[]> = laag$.pipe(
-      map(laag =>
-        ToegevoegdeVectorLaag.veldInfosLens.get(laag).filter(
-          // filter de speciale velden er uit
-          veld =>
-            fromNullable(veld.label).isSome() &&
-            fromNullable(veld.constante).isNone() &&
-            fromNullable(veld.template).isNone() &&
-            fromNullable(veld.html).isNone() &&
-            veld.type !== "geometry" &&
-            veld.type !== "json"
-        )
+    const laag$: rx.Observable<ke.ToegevoegdeVectorLaag> = subSpy("****laag")(
+      aanpassing$.pipe(
+        map(aanpassing => aanpassing.laag), // Neemt de laag op het moment dat de gebruiker de aanpassing vroeg. Ok in dit geval.
+        shareReplay(1)
       )
     );
 
-    this.filteredVelden$ = velden$.pipe(
-      switchMap(velden =>
-        this.veldControl.valueChanges.pipe(
-          startWith<VeldInfo | string>(""), // nog niets ingetypt
-          map(waarde => (typeof waarde === "string" ? waarde : fromNullable(waarde.label).getOrElse(""))),
-          map(getypt =>
-            velden.filter(veld =>
-              fromNullable(veld.label)
-                .getOrElse("")
-                .toLowerCase()
-                .startsWith(getypt.toLowerCase())
-            )
-          ),
-          map(velden => velden.sort((a, b) => (a.isBasisVeld === b.isBasisVeld ? 0 : a.isBasisVeld ? -1 : 1)))
-          // opletten: mutable! Gebruik van fp-ts
-        )
-      ),
-      shareReplay(1)
+    const veldinfos$ = subSpy("****veldinfo$s")(
+      laag$.pipe(
+        map(ke.ToegevoegdeVectorLaag.veldInfosMapLens.get),
+        share()
+      )
     );
 
     this.titel$ = laag$.pipe(map(laag => laag.titel));
 
-    this.filteredOperatoren$ = this.operatorControl.valueChanges.pipe(
-      startWith<FilterBuilder.FilterBuildElement | string>(""), // nog niets ingetypt -> Moet beter kunnen!
-      map(waarde => (typeof waarde === "string" ? waarde : waarde.description)),
-      map(getypt =>
-        FilterBuilder.comparisonBuilders.filter(
-          operator => operator.description.toLowerCase().startsWith(getypt) || operator.description.startsWith(getypt)
-        )
-      )
-    );
-
     const forEveryLaag = forEvery(laag$);
 
-    const forControlValue: Function1<FormControl, Observable<any>> = formcontrol =>
+    const forControlValue: Function1<FormControl, rx.Observable<any>> = formcontrol =>
       forEveryLaag(() =>
         formcontrol.valueChanges.pipe(
-          startWith(formcontrol.value),
-          shareReplay(1) // ook voor toekomstige subscribers
+          filter(() => formcontrol.enabled),
+          share()
         )
       );
 
-    const gekozenNaam$: Observable<Option<string>> = forControlValue(this.naamControl).pipe(map(x => (x === "" ? none : fromNullable(x))));
-    const gekozenOperator$: Observable<FilterBuilder.FilterBuildElement> = forControlValue(this.operatorControl).pipe(
-      filter(isNotNullObject)
-    );
-    const gekozenVeld$: Observable<VeldInfo> = forControlValue(this.veldControl).pipe(filter(isNotNullObject));
-    const gekozenWaarde$: Observable<string> = forControlValue(this.waardeControl).pipe(filter(isNotNull));
+    laag$.subscribe(() => {
+      this.naamControl.reset("", { emitEvent: false });
+      this.veldControl.reset("", { emitEvent: false });
+      this.operatorControl.reset("", { emitEvent: false });
+      this.waardeControl.reset("", { emitEvent: false });
+    });
 
-    this.geldigFilterCmd$ = laag$.pipe(
-      switchMap(laag =>
-        gekozenNaam$.pipe(
-          switchMap(maybeNaam =>
-            gekozenVeld$.pipe(
-              switchMap(veldInfo =>
-                gekozenOperator$.pipe(
-                  tap(() => this.waardeControl.enable()),
-                  switchMap(operator =>
-                    gekozenWaarde$.pipe(
-                      map(waarde =>
-                        prt.ZetFilter(
-                          laag.titel,
-                          fltr.ExpressionFilter(
-                            maybeNaam,
-                            operator.build(
-                              fltr.Property(veldInfo.type, veldInfo.naam, fromNullable(veldInfo.label).getOrElse("")),
-                              fltr.Literal("string", waarde)
-                            )
-                          ),
-                          kaartLogOnlyWrapper
-                        )
-                      )
-                    )
-                  )
-                )
-              )
-            )
+    const gekozenNaam$: rx.Observable<Option<string>> = subSpy("****gekozenNaam$")(
+      forControlValue(this.naamControl).pipe(
+        debounceTime(100), // voor de snelle typers
+        distinctUntilChanged(),
+        map(x => fromNullable(x).filter(x => x !== ""))
+      )
+    ).pipe(share());
+
+    const gekozenProperty$: rx.Observable<fltr.Property> = subSpy("****gekozenProperty")(
+      forControlValue(this.veldControl).pipe(
+        filter(isNotNullObject),
+        distinctUntilChanged() // gebruikt object identity, maar de onderliggende objecten worden geherbruikt dus geen probleem
+      )
+    );
+
+    const gekozenOperator$: rx.Observable<fed.BinaryComparisonOperator> = forControlValue(this.operatorControl).pipe(
+      filter(isNotNullObject),
+      tap(o => console.log("*****Operator gekozen", o)),
+      tap(o => console.log("*****Distinct operator gekozen", o))
+    );
+    const gekozenWaarde$: rx.Observable<fltr.Literal> = subSpy("****gekozenWaarde")(
+      forControlValue(this.waardeControl).pipe(
+        filter(isNotNull),
+        distinctUntilChanged(), // in dit geval vgln we op strings, dus ook OK
+        map(value => fltr.Literal("string", value))
+      )
+    );
+
+    type ExpressionEditorUpdate = Endomorphism<fed.ExpressionEditor>;
+    type TermEditorUpdate = Endomorphism<fed.TermEditor>;
+
+    const zetNaam$: rx.Observable<ExpressionEditorUpdate> = gekozenNaam$.pipe(map(fed.setName));
+    const zetProperty$: rx.Observable<TermEditorUpdate> = gekozenProperty$.pipe(map(fed.OperatorSelection));
+    const zetOperator$: rx.Observable<TermEditorUpdate> = gekozenOperator$.pipe(map(fed.ValueSelection));
+    const zetWaarde$: rx.Observable<TermEditorUpdate> = gekozenWaarde$.pipe(
+      tap(w => console.log("***waarde$", w)),
+      map(fed.Completed)
+    );
+
+    const initExpressionEditor$: rx.Observable<fed.ExpressionEditor> = subSpy("****initExpressionEditor$")(
+      laag$.pipe(
+        tap(l => console.log("****laag emits in initExpressionEditor$")),
+        map(fed.fromToegevoegdeVectorLaag)
+      )
+    );
+
+    const termEditorUpdates$: rx.Observable<ExpressionEditorUpdate> = subSpy("****termEditorUpdates$")(
+      rx.merge(zetProperty$, zetOperator$, zetWaarde$).pipe(map(teu => (ee: fed.ExpressionEditor) => fed.update(teu(ee.current))(ee)))
+    );
+
+    const expressionEditorUpdates$ = rx.merge(zetNaam$, termEditorUpdates$, this.newFilterEditor$.asObservable());
+
+    this.filterEditor$ = subSpy("****filterEditor$")(
+      initExpressionEditor$.pipe(
+        tap(() => console.log("****resetting filterEditor$ from initExpressionEditor$")),
+        switchMap(initExpressionEditor =>
+          expressionEditorUpdates$.pipe(
+            scan((expEd: fed.ExpressionEditor, update: Endomorphism<fed.ExpressionEditor>) => update(expEd), initExpressionEditor),
+            startWith(initExpressionEditor),
+            tap(() => this.cdr.detectChanges()),
+            tap(expressionEditor => kaartLogger.debug("****expressionEditor", expressionEditor))
           )
         )
       )
+    ).pipe(shareReplay());
+
+    this.kanHuidigeEditorVerwijderen$ = this.filterEditor$.pipe(map(editor => fed.canRemoveCurrent(editor)));
+
+    this.gekozenVeldTypeNumeriek$ = gekozenProperty$.pipe(map(veld => veld.type === "integer" || veld.type === "double"));
+
+    // Deze subscribe zorgt er voor dat de updates effectief uitgevoerd worden
+    this.bindToLifeCycle(
+      rx.combineLatest(this.filterEditor$, kaart.modelChanges.laagFilterAanpassingState$.pipe(map(isAanpassingBezig)))
+    ).subscribe(([expressionEditor, zichtbaar]) => {
+      if (zichtbaar) {
+        // zet control waarden bij aanpassen van expressionEditor
+        expressionEditor.name.foldL(
+          () => this.naamControl.reset("", { emitEvent: false }),
+          name => this.naamControl.setValue(name, { emitEvent: false })
+        );
+        fed.matchTermEditor({
+          Field: () => {
+            console.log("****reset naar Field");
+            this.veldControl.reset("", { emitEvent: false });
+            this.operatorControl.reset("", { emitEvent: false });
+            this.operatorControl.disable();
+            this.waardeControl.reset("", { emitEvent: false });
+            this.waardeControl.disable();
+          },
+          Operator: opr => {
+            console.log("****reset naar Operator");
+            this.veldControl.setValue(opr.selectedProperty, { emitEvent: false });
+            this.operatorControl.reset("", { emitEvent: false });
+            this.operatorControl.enable({ emitEvent: false });
+            this.waardeControl.reset("", { emitEvent: false });
+            this.waardeControl.disable();
+          },
+          Value: val => {
+            console.log("****reset naar Value");
+            this.veldControl.setValue(val.selectedProperty, { emitEvent: false });
+            this.operatorControl.setValue(val.selectedOperator, { emitEvent: false });
+            this.operatorControl.enable({ emitEvent: false });
+            this.waardeControl.reset("", { emitEvent: false });
+            this.waardeControl.enable({ emitEvent: true });
+          },
+          Completed: compl => {
+            console.log("****reset naar Completed");
+            this.veldControl.setValue(compl.selectedProperty, { emitEvent: false });
+            this.operatorControl.setValue(compl.selectedOperator, { emitEvent: false });
+            this.operatorControl.enable({ emitEvent: false });
+            this.waardeControl.setValue(compl.selectedValue.value, { emitEvent: false });
+            this.waardeControl.enable({ emitEvent: true });
+          }
+        })(expressionEditor.current);
+      }
+    });
+
+    const operatorSelection$ = this.filterEditor$.pipe(
+      map(fe => fe.current), // veiliger om enkel van filterEditor te beginnen
+      filter(fed.isAtLeastOperatorSelection)
     );
+
+    const properties$: rx.Observable<fltr.Property[]> = subSpy("****properties$")(
+      this.filterEditor$.pipe(map(editor => editor.current.properties))
+    );
+
+    this.filteredVelden$ = subSpy("****filteredVelden$")(
+      rx.combineLatest(properties$, veldinfos$).pipe(
+        switchMap(([properties, veldinfos]) =>
+          this.veldControl.valueChanges.pipe(
+            filter(isNotNull),
+            startWith<fltr.Property | string>(""), // nog niets ingetypt
+            map(waarde => (typeof waarde === "string" ? waarde : fromNullable(waarde.label).getOrElse(""))),
+            map(getypt =>
+              properties.filter(veld =>
+                fromNullable(veld.label)
+                  .getOrElse("")
+                  .toLowerCase()
+                  .startsWith(getypt.toLowerCase())
+              )
+            ),
+            map(properties => array.sort(ordPropertyByBaseField(veldinfos))(properties))
+          )
+        ),
+        shareReplay(1)
+      )
+    );
+
+    const binaryOperators$: rx.Observable<fed.BinaryComparisonOperator[]> = subSpy("****binaryOperators$")(
+      operatorSelection$.pipe(map(os => os.operatorSelectors))
+    );
+
+    this.filteredOperatoren$ = rx
+      .combineLatest(
+        this.operatorControl.valueChanges.pipe(
+          filter(isNotNull),
+          startWith<fed.BinaryComparisonOperator | string>(""), // nog niets ingetypt -> Moet beter kunnen!
+          map(waarde => (typeof waarde === "string" ? waarde : waarde.label))
+        ),
+        binaryOperators$
+      )
+      .pipe(map(([getypt, operators]) => operators.filter(operator => operator.label.toLowerCase().startsWith(getypt.toLowerCase()))));
+
+    const maybeZetFilterCmd$ = forEveryLaag(laag =>
+      this.filterEditor$.pipe(
+        tap(fe => console.log("*****filterEditor$ in maybeZetFilterCmd", fe)),
+        map(fed.toExpressionFilter),
+        map(maybeExpFilter => maybeExpFilter.map(expFilter => prt.ZetFilter(laag.titel, expFilter, kaartLogOnlyWrapper)))
+      )
+    );
+
+    const geldigFilterCmd$ = maybeZetFilterCmd$.pipe(
+      catOptions,
+      tap(gfc => console.log("****geldigFilterCmd$", gfc))
+    );
+    this.ongeldigeFilter$ = rx
+      .combineLatest(maybeZetFilterCmd$, this.waardeControl.statusChanges)
+      // TODO we moeten de status wat gesofisticeerder aanpakken in de zin dat we de invalid status van de andere velden
+      // ook moeten gebruiken. Als operator bijv. invalid is, zouden we in de OperatorSelection state moeten zitten.
+      .pipe(
+        tap(([cmd, status]) => console.log("****ongeldigeFilter$", cmd.isNone(), status)),
+        map(([cmd, status]) => cmd.isNone() || status !== "VALID")
+      ); // constante VALID lijkt niet exposed te zijn in Angular
 
     const laagNietZichtbaar$ = laag$.pipe(
       switchMap(laag =>
@@ -211,13 +314,13 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
     const pasToeGeklikt$ = this.actionFor$("pasFilterToe");
     this.bindToLifeCycle(
-      laagNietZichtbaar$.pipe(
-        combineLatest(this.geldigFilterCmd$),
+      rx.combineLatest(laagNietZichtbaar$, geldigFilterCmd$).pipe(
+        tap(lnz => console.log("****laagNietZichtbaar", lnz)),
         sample(pasToeGeklikt$)
       )
     ).subscribe(([laagNietZichtbaar, command]) => {
-      this.dispatch(prt.StopVectorFilterBewerkingCmd());
       this.dispatch(prt.MaakLaagZichtbaarCmd(command.titel, kaartLogOnlyWrapper));
+      this.dispatch(prt.StopVectorFilterBewerkingCmd());
       if (laagNietZichtbaar) {
         this.dispatch(
           prt.MeldComponentFoutCmd([`De laag '${command.titel}' is niet zichtbaar op kaart op dit zoomniveau, gelieve verder in te zoomen`])
@@ -227,11 +330,19 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     });
   }
 
+  verwijderActieveEditor() {
+    this.newFilterEditor$.next(fed.remove);
+  }
+
+  onExpressionEditorUpdate(newExpressionEditor: Endomorphism<fed.ExpressionEditor>) {
+    this.newFilterEditor$.next(newExpressionEditor);
+  }
+
   close() {
     this.dispatch(prt.StopVectorFilterBewerkingCmd());
   }
 
-  displayVeld(veld?: VeldInfo): string | undefined {
+  displayVeld(veld?: fltr.Property): string | undefined {
     return veld ? veld.label : undefined;
   }
 
@@ -239,8 +350,8 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     return this.veldControl.hasError("required") ? "Gelieve een eigenschap te kiezen" : "";
   }
 
-  displayOperator(operator?: FilterBuilder.FilterBuildElement): string | undefined {
-    return operator ? operator.description : undefined;
+  displayOperator(operator?: fed.BinaryComparisonOperator): string | undefined {
+    return operator ? operator.label : undefined;
   }
 
   errorOperator(): string {
@@ -251,7 +362,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     return this.waardeControl.hasError("required") ? "Gelieve een waarde in te geven" : "";
   }
 
-  onClickOutside(event: Event) {
+  onClickOutside() {
     if (!this.clickInsideDialog) {
       this.close();
     }
@@ -259,7 +370,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     return false;
   }
 
-  onClickInside(event: Event) {
+  onClickInside() {
     this.clickInsideDialog = true;
     return false;
   }
