@@ -88,7 +88,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
     const laag$: rx.Observable<ke.ToegevoegdeVectorLaag> = subSpy("****laag")(
       aanpassing$.pipe(
-        map(aanpassing => aanpassing.laag),
+        map(aanpassing => aanpassing.laag), // Neemt de laag op het moment dat de gebruiker de aanpassing vroeg. Ok in dit geval.
         shareReplay(1)
       )
     );
@@ -107,11 +107,17 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     const forControlValue: Function1<FormControl, rx.Observable<any>> = formcontrol =>
       forEveryLaag(() =>
         formcontrol.valueChanges.pipe(
-          startWith(formcontrol.value),
           filter(() => formcontrol.enabled),
-          shareReplay(1) // ook voor toekomstige subscribers
+          share()
         )
       );
+
+    laag$.subscribe(() => {
+      this.naamControl.reset("", { emitEvent: false });
+      this.veldControl.reset("", { emitEvent: false });
+      this.operatorControl.reset("", { emitEvent: false });
+      this.waardeControl.reset("", { emitEvent: false });
+    });
 
     const gekozenNaam$: rx.Observable<Option<string>> = subSpy("****gekozenNaam$")(
       forControlValue(this.naamControl).pipe(
@@ -120,10 +126,14 @@ export class FilterEditorComponent extends KaartChildComponentBase {
         map(x => fromNullable(x).filter(x => x !== ""))
       )
     ).pipe(share());
-    const gekozenVeld$: rx.Observable<fltr.Property> = forControlValue(this.veldControl).pipe(
-      filter(isNotNullObject),
-      distinctUntilChanged() // gebruikt object identity, maar de onderliggende objecten worden geherbruikt dus geen probleem
+
+    const gekozenProperty$: rx.Observable<fltr.Property> = subSpy("****gekozenProperty")(
+      forControlValue(this.veldControl).pipe(
+        filter(isNotNullObject),
+        distinctUntilChanged() // gebruikt object identity, maar de onderliggende objecten worden geherbruikt dus geen probleem
+      )
     );
+
     const gekozenOperator$: rx.Observable<fed.BinaryComparisonOperator> = forControlValue(this.operatorControl).pipe(
       filter(isNotNullObject),
       tap(o => console.log("*****Operator gekozen", o)),
@@ -135,9 +145,11 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       map(value => fltr.Literal("string", value))
     );
 
+    type ExpressionEditorUpdate = Endomorphism<fed.ExpressionEditor>;
     type TermEditorUpdate = Endomorphism<fed.TermEditor>;
-    const zetNaam$: rx.Observable<Endomorphism<fed.ExpressionEditor>> = gekozenNaam$.pipe(map(fed.setName));
-    const zetProperty$: rx.Observable<TermEditorUpdate> = gekozenVeld$.pipe(map(fed.OperatorSelection));
+
+    const zetNaam$: rx.Observable<ExpressionEditorUpdate> = gekozenNaam$.pipe(map(fed.setName));
+    const zetProperty$: rx.Observable<TermEditorUpdate> = gekozenProperty$.pipe(map(fed.OperatorSelection));
     const zetOperator$: rx.Observable<TermEditorUpdate> = gekozenOperator$.pipe(map(fed.ValueSelection));
     const zetWaarde$: rx.Observable<TermEditorUpdate> = gekozenWaarde$.pipe(
       tap(w => console.log("***waarde$", w)),
@@ -146,30 +158,20 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
     const initExpressionEditor$: rx.Observable<fed.ExpressionEditor> = subSpy("****initExpressionEditor$")(
       laag$.pipe(
-        map(fed.fromToegevoegdeVectorLaag),
-        shareReplay(1)
+        tap(l => console.log("****laag emits in initExpressionEditor$")),
+        map(fed.fromToegevoegdeVectorLaag)
       )
     );
 
-    const termEditorUpdates$: rx.Observable<TermEditorUpdate> = rx.merge(zetProperty$, zetOperator$, zetWaarde$);
-
-    const currentTermEditor$: rx.Observable<fed.TermEditor> = subSpy("****currentTermEditor$")(
-      initExpressionEditor$.pipe(
-        map(expEd => expEd.current),
-        switchMap(initTermEditor =>
-          termEditorUpdates$.pipe(
-            scan((current: fed.TermEditor, update: TermEditorUpdate) => update(current), initTermEditor),
-            startWith(initTermEditor)
-          )
-        ),
-        shareReplay(1)
-      )
+    const termEditorUpdates$: rx.Observable<ExpressionEditorUpdate> = subSpy("****termEditorUpdates$")(
+      rx.merge(zetProperty$, zetOperator$, zetWaarde$).pipe(map(teu => (ee: fed.ExpressionEditor) => fed.update(teu(ee.current))(ee)))
     );
 
-    const expressionEditorUpdates$ = rx.merge(zetNaam$, currentTermEditor$.pipe(map(fed.update)), this.newFilterEditor$.asObservable());
+    const expressionEditorUpdates$ = rx.merge(zetNaam$, termEditorUpdates$, this.newFilterEditor$.asObservable());
 
     this.filterEditor$ = subSpy("****filterEditor$")(
       initExpressionEditor$.pipe(
+        tap(() => console.log("****resetting filterEditor$ from initExpressionEditor$")),
         switchMap(initExpressionEditor =>
           expressionEditorUpdates$.pipe(
             scan((expEd: fed.ExpressionEditor, update: Endomorphism<fed.ExpressionEditor>) => update(expEd), initExpressionEditor),
@@ -177,14 +179,13 @@ export class FilterEditorComponent extends KaartChildComponentBase {
             tap(() => this.cdr.detectChanges()),
             tap(expressionEditor => kaartLogger.debug("****expressionEditor", expressionEditor))
           )
-        ),
-        share()
+        )
       )
-    );
+    ).pipe(shareReplay());
 
     this.kanHuidigeEditorVerwijderen$ = this.filterEditor$.pipe(map(editor => fed.canRemoveCurrent(editor)));
 
-    this.gekozenVeldTypeNumeriek$ = gekozenVeld$.pipe(map(veld => veld.type === "integer" || veld.type === "double"));
+    this.gekozenVeldTypeNumeriek$ = gekozenProperty$.pipe(map(veld => veld.type === "integer" || veld.type === "double"));
 
     // Deze subscribe zorgt er voor dat de updates effectief uitgevoerd worden
     this.bindToLifeCycle(
@@ -192,7 +193,10 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     ).subscribe(([expressionEditor, zichtbaar]) => {
       if (zichtbaar) {
         // zet control waarden bij aanpassen van expressionEditor
-        expressionEditor.name.foldL(() => this.naamControl.reset(), name => this.naamControl.setValue(name, { emitEvent: false }));
+        expressionEditor.name.foldL(
+          () => this.naamControl.reset("", { emitEvent: false }),
+          name => this.naamControl.setValue(name, { emitEvent: false })
+        );
         fed.matchTermEditor({
           Field: () => {
             console.log("****reset naar Field");
@@ -230,13 +234,13 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       }
     });
 
-    const operatorSelection$ = currentTermEditor$.pipe(filter(fed.isAtLeastOperatorSelection));
+    const operatorSelection$ = this.filterEditor$.pipe(
+      map(fe => fe.current), // veiliger om enkel van filterEditor te beginnen
+      filter(fed.isAtLeastOperatorSelection)
+    );
 
-    const properties$: rx.Observable<fltr.Property[]> = subSpy("****velden$")(
-      this.filterEditor$.pipe(
-        map(editor => editor.current.properties),
-        shareReplay(1)
-      )
+    const properties$: rx.Observable<fltr.Property[]> = subSpy("****properties$")(
+      this.filterEditor$.pipe(map(editor => editor.current.properties))
     );
 
     this.filteredVelden$ = subSpy("****filteredVelden$")(
@@ -278,9 +282,9 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
     const maybeZetFilterCmd$ = forEveryLaag(laag =>
       this.filterEditor$.pipe(
+        tap(fe => console.log("*****filterEditor$ in maybeZetFilterCmd", fe)),
         map(fed.toExpressionFilter),
-        map(maybeExpFilter => maybeExpFilter.map(expFilter => prt.ZetFilter(laag.titel, expFilter, kaartLogOnlyWrapper))),
-        share()
+        map(maybeExpFilter => maybeExpFilter.map(expFilter => prt.ZetFilter(laag.titel, expFilter, kaartLogOnlyWrapper)))
       )
     );
 
@@ -292,7 +296,10 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       .combineLatest(maybeZetFilterCmd$, this.waardeControl.statusChanges)
       // TODO we moeten de status wat gesofisticeerder aanpakken in de zin dat we de invalid status van de andere velden
       // ook moeten gebruiken. Als operator bijv. invalid is, zouden we in de OperatorSelection state moeten zitten.
-      .pipe(map(([cmd, status]) => cmd.isNone() || status !== "VALID")); // constante VALID lijkt niet exposed te zijn in Angular
+      .pipe(
+        tap(([cmd, status]) => console.log("****ongeldigeFilter$", cmd.isNone(), status)),
+        map(([cmd, status]) => cmd.isNone() || status !== "VALID")
+      ); // constante VALID lijkt niet exposed te zijn in Angular
 
     const laagNietZichtbaar$ = laag$.pipe(
       switchMap(laag =>

@@ -337,19 +337,21 @@ export namespace FilterEditor {
   // voeg onderaan een OF toe en maak de nieuwe TermEditor de actieve
   export const addDisjunction: Endomorphism<ExpressionEditor> = expressionEditor => {
     const newEditor = FieldSelection(expressionEditor.laag);
-    const disjunctionAdded = disjunctionsLens
-      .compose(conjunctionEditorsLens)
-      .modify(de => array.snoc(de, initConjunctionEditor(newEditor)))(expressionEditor);
-    return setCurrent(newEditor)(disjunctionAdded);
+    return applySequential([
+      disjunctionsLens.compose(conjunctionEditorsLens).modify(de => array.snoc(de, initConjunctionEditor(newEditor))),
+      setCurrent(newEditor)
+    ])(expressionEditor);
   };
 
   // voeg een EN toe op geselecteerde rij van de huidige TermEditor en maak die de nieuwe actieve
   export const addConjunction: Function1<ConjunctionEditor, Endomorphism<ExpressionEditor>> = conjunctionEditor => expressionEditor => {
     const newEditor = FieldSelection(expressionEditor.laag);
-    const conjunctionAdded = getConjunctionEditorTraversal(conjunctionEditor)
-      .composeLens(termEditorsLens)
-      .modify(ce => array.snoc(ce, newEditor))(expressionEditor);
-    return setCurrent(newEditor)(conjunctionAdded);
+    return applySequential([
+      getConjunctionEditorTraversal(conjunctionEditor)
+        .composeLens(termEditorsLens)
+        .modify(ce => array.snoc(ce, newEditor)),
+      setCurrent(newEditor)
+    ])(expressionEditor);
   };
 
   const ExpressionEditor: Function4<Option<string>, ke.ToegevoegdeVectorLaag, TermEditor, DisjunctionsEditor, ExpressionEditor> = (

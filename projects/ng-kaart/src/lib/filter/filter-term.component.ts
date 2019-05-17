@@ -9,7 +9,7 @@ const binaryComparisonOperatorMapping = {
   equality: "is",
   inequality: "is niet",
   contains: "bevat",
-  starts: "begint met",
+  starts: "start met",
   ends: "eindigt met",
   smaller: "kleiner dan",
   smallerOrEqual: "kleiner of gelijk aan",
