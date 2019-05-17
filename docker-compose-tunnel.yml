@@ -21,6 +21,26 @@ services:
     extra_hosts:
       - ng-kaart-local:${DOCKER_OUTER_HOST}
 
+  # https://hub.docker.com/r/justsml/ssl-proxy/
+  # https://github.com/justsml/ssl-proxy#docker-compose-example
+  ssl-proxy:
+    image: justsml/ssl-proxy:latest
+    container_name: ng-kaart-ssl-proxy
+    environment:
+      - HTTPS_PORT=443
+      - SERVER_NAME=apps-local.mow.vlaanderen.be
+      - UPSTREAM_TARGET=apigateway:80
+      - CERT_PUBLIC_PATH=/certs/cert.pem
+      - CERT_PRIVATE_PATH=/certs/key.pem
+    volumes:
+      - ./certs:/certs:ro
+    links:
+      - apigateway:apigateway
+    ports:
+      - 443:443
+    depends_on:
+      - apigateway
+
   apigateway-remote-ng-kaart:
     image: buildo/alpine-ssh
     hostname: apigateway-remote-ng-kaart
