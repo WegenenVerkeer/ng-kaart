@@ -20,6 +20,7 @@ export class ClassicWfsLaagComponent extends ClassicVectorLaagLikeComponent {
   _version = "2.0.0";
   _srsName = "EPSG:31370";
   _typeNames: Option<string> = none;
+  _cqlFilter: Option<string> = none;
 
   constructor(injector: Injector) {
     super(injector);
@@ -50,7 +51,13 @@ export class ClassicWfsLaagComponent extends ClassicVectorLaagLikeComponent {
     this._typeNames = fromNullable(param);
   }
 
+  @Input()
+  set cqlFilter(param: string) {
+    this._cqlFilter = fromNullable(param);
+  }
+
   createLayer(): ke.VectorLaag {
+    const maybeEncodedFilter = this._cqlFilter.map(f => ` AND (${f})`).map(encodeURIComponent);
     const precalculatedUrl = urlWithParams(this._url, {
       srsname: this._srsName,
       version: this._version,
@@ -65,8 +72,9 @@ export class ClassicWfsLaagComponent extends ClassicVectorLaagLikeComponent {
       titel: this._titel,
       source: new ol.source.Vector({
         format: new ol.format.GeoJSON(),
-        url: function(extent) {
-          return `${precalculatedUrl}&bbox=${extent.join(",")}`;
+        url: extent => {
+          const url = `${precalculatedUrl}&cql_filter=bbox(the_geom,${extent.join(",")})`;
+          return maybeEncodedFilter.fold(url, encodedFilter => url + encodedFilter);
         },
         strategy: ol.loadingstrategy.bbox
       }),

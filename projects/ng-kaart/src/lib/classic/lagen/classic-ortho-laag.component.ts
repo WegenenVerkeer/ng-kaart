@@ -28,6 +28,7 @@ export class ClassicOrthoLaagComponent extends ClassicWmsLaagComponent {
       naam: laagnaam,
       urls: urls,
       versie: fromNullable(this.versie),
+      cqlFilter: this._cqlFilter,
       tileSize: fromNullable(this._tileSize),
       format: fromNullable(this.format),
       opacity: this._opacity,

@@ -29,7 +29,8 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
           TILED: true,
           SRS: kaart.config.srs,
           VERSION: l.versie.getOrElse("1.3.0"),
-          FORMAT: l.format.getOrElse("image/png")
+          FORMAT: l.format.getOrElse("image/png"),
+          ...l.cqlFilter.fold({}, cqlFilter => ({ CQL_FILTER: cqlFilter }))
         }
       })
     });

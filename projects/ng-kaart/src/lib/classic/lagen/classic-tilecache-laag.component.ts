@@ -27,6 +27,7 @@ export class ClassicTilecacheLaagComponent extends ClassicWmsLaagComponent {
       naam: this._laagNaam,
       urls: urls,
       versie: fromNullable(this.versie),
+      cqlFilter: this._cqlFilter,
       tileSize: fromNullable(this._tileSize),
       format: fromNullable(this.format),
       opacity: this._opacity,

@@ -27,6 +27,7 @@ export class ClassicGeoserverLaagComponent extends ClassicWmsLaagComponent {
       naam: this._laagNaam,
       urls: urls,
       versie: this._versie,
+      cqlFilter: this._cqlFilter,
       tileSize: fromNullable(this._tileSize),
       format: fromNullable(this._format),
       opacity: this._opacity,

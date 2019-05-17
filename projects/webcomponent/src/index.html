@@ -38,6 +38,8 @@
       <awv-legende-bolletje-item beschrijving="Referentiepunt met opschrift" kleur="black"></awv-legende-bolletje-item>
     </awv-kaart-geoserver-laag>
 
+    <awv-kaart-wfs-laag titel="Korte Straten" type-names="awv:straten" min-zoom="6" cql-filter="shape_leng<100"></awv-kaart-wfs-laag>
+
     <awv-kaart-wmts-laag titel="GRB" laag-naam="grb_bsk" urls='["https://tile.informatievlaanderen.be/ws/raadpleegdiensten/wmts"]'
       extent="[ 9928, 66928, 272072, 329072 ]" origin="[ 9928, 329072 ]"
       matrix-set="BPL72VL" matrix-ids='[ "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15" ]'>
