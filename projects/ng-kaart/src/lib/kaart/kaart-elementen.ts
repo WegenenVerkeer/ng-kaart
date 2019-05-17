@@ -42,6 +42,7 @@ export interface WmsLaag {
   readonly backgroundUrl: string;
   readonly urls: Array<string>;
   readonly versie: Option<string>;
+  readonly cqlFilter: Option<string>;
   readonly tileSize: Option<number>;
   readonly format: Option<string>;
   readonly opacity: Option<number>;

@@ -10,6 +10,13 @@ import { toStylish } from "./stijl-selector";
 
 export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {
   function createdTileWms(l: ke.WmsLaag) {
+    const params: { [key: string]: any } = {
+      LAYERS: l.naam,
+      TILED: true,
+      SRS: kaart.config.srs,
+      VERSION: l.versie.getOrElse("1.3.0"),
+      FORMAT: l.format.getOrElse("image/png")
+    };
     return new ol.layer.Tile(<olx.layer.TileOptions>{
       title: l.titel,
       visible: true,
@@ -24,13 +31,10 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
           tileSize: l.tileSize.getOrElse(256)
         }),
         tileLoadFunction: kaart.tileLoader.tileLoadFunction,
-        params: {
-          LAYERS: l.naam,
-          TILED: true,
-          SRS: kaart.config.srs,
-          VERSION: l.versie.getOrElse("1.3.0"),
-          FORMAT: l.format.getOrElse("image/png")
-        }
+        params: l.cqlFilter.fold(params, cqlFilter => ({
+          ...params,
+          CQL_FILTER: cqlFilter
+        }))
       })
     });
   }

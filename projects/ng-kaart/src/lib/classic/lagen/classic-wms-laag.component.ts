@@ -80,6 +80,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   _versie: Option<string> = none;
   _format = "image/png";
   _urls: string[];
+  _cqlFilter: Option<string> = none;
   _tiled: boolean;
   _tileSize = 256;
   _opacity: Option<number> = none;
@@ -124,6 +125,11 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   @Input()
   set cacheActief(param: boolean) {
     this._cacheActief = val.bool(param, this._cacheActief);
+  }
+
+  @Input()
+  set cqlFilter(param: string) {
+    this._cqlFilter = fromNullable(param);
   }
 
   // metadata van de velden zoals die geparsed worden door textParser
@@ -172,6 +178,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
       naam: this._laagNaam,
       urls: this._urls,
       versie: this._versie,
+      cqlFilter: this._cqlFilter,
       tileSize: fromNullable(this._tileSize),
       format: fromNullable(this._format),
       opacity: this._opacity,
