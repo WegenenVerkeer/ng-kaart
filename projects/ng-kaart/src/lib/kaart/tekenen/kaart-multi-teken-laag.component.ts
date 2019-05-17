@@ -114,6 +114,7 @@ const createLayer: Function2<string, ol.source.Vector, ke.VectorLaag> = (titel, 
     type: ke.VectorType,
     titel: titel,
     source: source,
+    clusterDistance: none,
     styleSelector: none,
     styleSelectorBron: none,
     selectieStyleSelector: none,
@@ -131,7 +132,7 @@ const createLayer: Function2<string, ol.source.Vector, ke.VectorLaag> = (titel, 
 };
 
 const isTekenLayer: Predicate<ol.layer.Layer> = layer =>
-  fromNullable(layer.getSource())
+  fromNullable(ke.underlyingSource(layer))
     .chain(source => fromNullable(source.get("laagTitel")))
     .contains(setoidString, PuntLaagNaam);
 

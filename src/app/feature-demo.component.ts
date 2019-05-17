@@ -616,6 +616,35 @@ export class FeatureDemoComponent {
     { isBasisVeld: false, label: "Shape area", naam: "SHAPE_Area", type: "double" }
   ];
 
+  clusterStyle(defaultStyle: ol.style.Style): ol.StyleFunction {
+    return feature => {
+      const size = feature.get("features").length;
+
+      if (size > 1) {
+        return new ol.style.Style({
+          image: new ol.style.Circle({
+            radius: Math.max(12, size),
+            stroke: new ol.style.Stroke({
+              color: "navy",
+              width: 1.5
+            }),
+            fill: new ol.style.Fill({
+              color: "dodgerblue"
+            })
+          }),
+          text: new ol.style.Text({
+            text: size.toString(),
+            fill: new ol.style.Fill({
+              color: "navy"
+            })
+          })
+        });
+      } else {
+        return defaultStyle;
+      }
+    };
+  }
+
   readonly cachedFeaturesProviderConsumer = (cfpc: CachedFeatureLookup) => (this.cachedFeaturesProvider = some(cfpc));
 
   readonly percelenQueryUrl: Function1<ol.Coordinate, string> = location => {
@@ -822,6 +851,10 @@ export class FeatureDemoComponent {
 
   onKaartLocaties(locaties: any): void {
     console.log("------> kaartLocaties", locaties);
+  }
+
+  onMijnMobieleLocatieStateChange(stateChange: any): void {
+    console.log("-----> stateChange", stateChange);
   }
 
   onFietspadsegmentenZichtbaar(features: Array<ol.Feature>): void {

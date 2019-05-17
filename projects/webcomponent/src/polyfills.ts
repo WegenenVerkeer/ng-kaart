@@ -77,3 +77,4 @@ import "zone.js/dist/zone"; // Included with Angular CLI.
 /***************************************************************************************************
  * APPLICATION IMPORTS
  */
+import "motion-sensors-polyfill/src/motion-sensors.js";

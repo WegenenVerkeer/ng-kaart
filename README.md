@@ -51,6 +51,19 @@ En dit in package.json:
     "drag-drop-touch": "1.3.0",
 
 
+### Motion sensors.
+
+Om de mobiele-tracking te doen werken op alle browsers, hebben we een polyfill nodig.
+
+Voeg dit toe in polyfills.ts:
+
+    import "motion-sensors-polyfill/src/motion-sensors.js";
+
+En dit in package.json:
+
+    "motion-sensors-polyfill": "0.3.1",
+
+
 ### Code testen
 
 Deze component library is voorzien van een test Angular app. Omdat de build van de library en de testApp volledig gescheiden zijn, moet je eerst de library builden en watchen voor changes:

@@ -12,6 +12,7 @@ import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { Legende } from "./kaart-legende";
 import { InfoBoodschap } from "./kaart-with-info-model";
+import * as loc from "./mijn-locatie/kaart-mijn-locatie.component";
 import * as ss from "./stijl-selector";
 import { DrawOps } from "./tekenen/tekenen-model";
 
@@ -36,6 +37,7 @@ export type Command<Msg extends KaartMsg> =
   | MaakLaagOnzichtbaarCmd<Msg>
   | MaakLaagZichtbaarCmd<Msg>
   | MeldComponentFoutCmd
+  | MijnLocatieStateChangeCmd
   | SelecteerFeaturesCmd
   | SluitInfoBoodschapCmd
   | SluitPanelenCmd
@@ -540,6 +542,13 @@ export interface VraagCachedFeaturesLookupCmd<Msg extends TypedRecord> {
   readonly msgGen: ValidationWrapper<CachedFeatureLookup, Msg>;
 }
 
+export interface MijnLocatieStateChangeCmd {
+  readonly type: "MijnLocatieStateChange";
+  readonly oudeState: loc.State;
+  readonly nieuweState: loc.State;
+  readonly event: loc.Event;
+}
+
 ////////////////////////
 // constructor functies
 //
@@ -967,4 +976,8 @@ export function VraagCachedFeaturesLookupCmd<Msg extends TypedRecord>(
   msgGen: ValidationWrapper<CachedFeatureLookup, Msg>
 ): VraagCachedFeaturesLookupCmd<Msg> {
   return { type: "VraagCachedFeaturesLookup", titel: titel, msgGen: msgGen };
+}
+
+export function MijnLocatieStateChangeCmd(oudeState: loc.State, nieuweState: loc.State, event: loc.Event): MijnLocatieStateChangeCmd {
+  return { type: "MijnLocatieStateChange", oudeState: oudeState, nieuweState: nieuweState, event: event };
 }

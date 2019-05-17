@@ -39,6 +39,7 @@ export interface WegLocatie {
   readonly afstand: number;
   readonly wegbeheerder: string;
   readonly projectieafstand: number;
+  readonly projected: ol.geom.Geometry;
 }
 
 export type WegLocaties = WegLocatie[];

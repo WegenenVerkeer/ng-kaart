@@ -19,6 +19,8 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
   @Input()
   styleFunction?: ol.StyleFunction = getDefaultStyleFunction(); // TODO combineren met style tot type Stylish
   @Input()
+  clusterStyleFunction?: ol.StyleFunction = undefined;
+  @Input()
   selectieStyle?: ss.Stylish = getDefaultSelectionStyleFunction();
   @Input()
   hoverStyle?: ss.Stylish = getDefaultHoverStyleFunction();
@@ -32,6 +34,10 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
   }
 
   _stijlSpec: Option<ss.AwvV0StyleSpec> = none; // heeft voorrang op style
+  _clusterDistance: Option<number> = none;
+  _clusterTextColor = "black";
+  _clusterCircleColor = "yellow";
+  _clusterCircleStrokeColor = "black";
   _zichtbaar = true;
   _selecteerbaar = true;
   _hover = false;
@@ -42,6 +48,26 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
   @Input()
   set stijlSpec(param: ss.AwvV0StyleSpec) {
     this._stijlSpec = val.optStyleSpec(param);
+  }
+
+  @Input()
+  set clusterDistance(param: number) {
+    this._clusterDistance = val.optNum(param);
+  }
+
+  @Input()
+  set clusterTextColor(param: string) {
+    this._clusterTextColor = fromNullable(param).getOrElse(this._clusterTextColor);
+  }
+
+  @Input()
+  set clusterCircleColor(param: string) {
+    this._clusterCircleColor = fromNullable(param).getOrElse(this._clusterCircleColor);
+  }
+
+  @Input()
+  set clusterCircleStrokeColor(param: string) {
+    this._clusterCircleStrokeColor = fromNullable(param).getOrElse(this._clusterCircleStrokeColor);
   }
 
   @Input()
@@ -77,11 +103,49 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
   }
 
   protected getMaybeStyleSelector(): Option<ss.StyleSelector> {
-    return this._stijlSpec
-      .chain(spec => fromValidation(ss.validateAwvV0StyleSpec(spec)))
-      .orElse(() => fromNullable(this.style))
-      .map(ss.StaticStyle)
-      .orElse(() => fromNullable(this.styleFunction).map(ss.DynamicStyle));
+    return fromNullable(this.clusterStyleFunction)
+      .map(ss.DynamicStyle)
+      .orElse(() => {
+        const maybeUnclusteredStyleSelector = this._stijlSpec
+          .chain(spec => fromValidation(ss.validateAwvV0StyleSpec(spec)))
+          .orElse(() => fromNullable(this.style))
+          .orElse(() => fromNullable(this.styleFunction))
+          .chain(ss.asStyleSelector);
+
+        const maybeClusterStyleSelector = this._clusterDistance.chain(_ =>
+          maybeUnclusteredStyleSelector.map(unclusteredStylish => ss.DynamicStyle(this.clusterStyle(unclusteredStylish)))
+        );
+        return maybeClusterStyleSelector.orElse(() => maybeUnclusteredStyleSelector);
+      });
+  }
+
+  clusterStyle(defaultStyleSelector: ss.StyleSelector): ol.StyleFunction {
+    return (feature, resolution) => {
+      const size = feature.get("features").length;
+
+      if (size > 1) {
+        return new ol.style.Style({
+          image: new ol.style.Circle({
+            radius: 15,
+            stroke: new ol.style.Stroke({
+              color: this._clusterCircleStrokeColor,
+              width: 1.5
+            }),
+            fill: new ol.style.Fill({
+              color: this._clusterCircleColor
+            })
+          }),
+          text: new ol.style.Text({
+            text: size.toString(),
+            fill: new ol.style.Fill({
+              color: this._clusterTextColor
+            })
+          })
+        });
+      } else {
+        return ss.matchStyleSelector(s => s.style, s => s.styleFunction(feature, resolution), s => s.styles)(defaultStyleSelector);
+      }
+    };
   }
 
   voegLaagToe() {
