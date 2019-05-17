@@ -7,7 +7,7 @@ import { filter, map, share, shareReplay, switchMap } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import * as ke from "../kaart/kaart-elementen";
-import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
+import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as cmd from "../kaart/kaart-protocol-commands";
 import { KaartComponent } from "../kaart/kaart.component";
 import { collectOption } from "../util/operators";
@@ -101,10 +101,19 @@ export class FilterDetailComponent extends KaartChildComponentBase {
       rx.combineLatest(laag$, this.actionFor$(action)).pipe(map(([laag]) => f(laag)));
 
     const cmnds$ = rx.merge(
-      actionOnLaag$("toggleFilterActief", laag => cmd.ActiveerFilter(laag.titel, !laag.filterinstellingen.actief, kaartLogOnlyWrapper)),
-      actionOnLaag$("pasFilterAan", laag => cmd.BewerkVectorFilterCmd(laag)),
-      actionOnLaag$("verwijderFilter", laag => cmd.ZetFilter(laag.titel, fltr.empty(), kaartLogOnlyWrapper))
+      actionOnLaag$<cmd.Command<KaartInternalMsg>[]>("toggleFilterActief", laag => {
+        return !laag.filterinstellingen.actief // als de filter actief wordt, maak dan ook de laag zichtbaar
+          ? [
+              cmd.ActiveerFilter(laag.titel, !laag.filterinstellingen.actief, kaartLogOnlyWrapper),
+              cmd.MaakLaagZichtbaarCmd(this.laag.titel, kaartLogOnlyWrapper)
+            ]
+          : [cmd.ActiveerFilter(laag.titel, !laag.filterinstellingen.actief, kaartLogOnlyWrapper)];
+      }),
+      actionOnLaag$<cmd.Command<KaartInternalMsg>[]>("pasFilterAan", laag => [cmd.BewerkVectorFilterCmd(laag)]),
+      actionOnLaag$<cmd.Command<KaartInternalMsg>[]>("verwijderFilter", laag => [
+        cmd.ZetFilter(laag.titel, fltr.empty(), kaartLogOnlyWrapper)
+      ])
     );
-    this.bindToLifeCycle(cmnds$).subscribe(cmnd => this.dispatch(cmnd));
+    this.bindToLifeCycle(cmnds$).subscribe(cmnds => cmnds.map(msg => this.dispatch(msg)));
   }
 }
