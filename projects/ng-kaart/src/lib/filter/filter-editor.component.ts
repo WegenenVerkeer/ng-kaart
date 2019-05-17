@@ -6,12 +6,14 @@ import { fromNullable, Option } from "fp-ts/lib/Option";
 import * as option from "fp-ts/lib/Option";
 import { Ord } from "fp-ts/lib/Ord";
 import * as ord from "fp-ts/lib/Ord";
+import { setoidString } from "fp-ts/lib/Setoid";
 import * as rx from "rxjs";
 import {
   debounceTime,
   distinctUntilChanged,
   filter,
   map,
+  pairwise,
   sample,
   scan,
   share,
@@ -189,11 +191,18 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
     this.gekozenVeldTypeNumeriek$ = gekozenProperty$.pipe(map(veld => veld.type === "integer" || veld.type === "double"));
 
+    const editStateChange$ = this.filterEditor$.pipe(
+      map(fe => option.some(fe.current.kind)),
+      startWith(option.none as Option<fed.TermEditor["kind"]>),
+      pairwise(),
+      map(([previous, current]) => !previous.foldL(() => current.isNone(), prev => current.contains(setoidString, prev)))
+    );
+
     // Deze subscribe zorgt er voor dat de updates effectief uitgevoerd worden
     this.bindToLifeCycle(
-      rx.combineLatest(this.filterEditor$, kaart.modelChanges.laagFilterAanpassingState$.pipe(map(isAanpassingBezig)))
-    ).subscribe(([expressionEditor, zichtbaar]) => {
-      if (zichtbaar) {
+      rx.combineLatest(this.filterEditor$, kaart.modelChanges.laagFilterAanpassingState$.pipe(map(isAanpassingBezig)), editStateChange$)
+    ).subscribe(([expressionEditor, zichtbaar, editStateChange]) => {
+      if (zichtbaar && editStateChange) {
         // zet control waarden bij aanpassen van expressionEditor
         expressionEditor.name.foldL(
           () => this.naamControl.reset("", { emitEvent: false }),
