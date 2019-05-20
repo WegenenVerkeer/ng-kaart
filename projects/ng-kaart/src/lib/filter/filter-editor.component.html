@@ -28,11 +28,17 @@
           <mat-error *ngIf="operatorControl.invalid">{{errorOperator()}}</mat-error>
         </mat-form-field>
 
-        <mat-form-field class="filter-waarde-editbox">
-          <input *ngIf="gekozenVeldTypeNumeriek$ | async" type="number" matInput placeholder="Waarde" [formControl]="waardeControl"/>
-          <input *ngIf="!(gekozenVeldTypeNumeriek$ | async)" type="text" matInput placeholder="Waarde" [formControl]="waardeControl"/>
-          <mat-error *ngIf="waardeControl.invalid">{{errorWaarde()}}</mat-error>
-        </mat-form-field>
+        <ng-container [ngSwitch]="veldwaardeType$ | async">
+          <mat-form-field *ngSwitchCase="'FreeString'" class="filter-waarde-editbox">
+            <input type="text" matInput placeholder="Waarde" [formControl]="waardeControl"/>
+            <mat-error *ngIf="waardeControl.invalid">{{errorWaarde()}}</mat-error>
+          </mat-form-field>
+          <mat-form-field *ngSwitchCase="'FreeNumber'" class="filter-waarde-editbox">
+            <input type="number" matInput placeholder="Getal" [formControl]="waardeControl"/>
+            <mat-error *ngIf="waardeControl.invalid">{{errorWaarde()}}</mat-error>
+          </mat-form-field>
+          <span *ngSwitchDefault class="filter-waarde-editbox"></span>
+        </ng-container>
 
         <div class="delete-icon">
           <button mat-icon-button (click)="verwijderActieveEditor()" [disabled]="!(kanHuidigeEditorVerwijderen$ | async)" matTooltip="Verwijder actieve chip">

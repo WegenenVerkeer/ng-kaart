@@ -50,6 +50,8 @@ export namespace FilterEditor {
     readonly properties: fltr.Property[];
   }
 
+  export type ValueSelector = "FreeString" | "FreeNumber" | "NoSelection";
+
   export interface OperatorSelection {
     readonly kind: "Operator";
 
@@ -57,9 +59,12 @@ export namespace FilterEditor {
 
     readonly selectedProperty: fltr.Property;
     readonly operatorSelectors: ComparisonOperator[];
+
+    readonly valueSelector: ValueSelector; // Deze ValueSelector is maar voorlopig. Kan verfijnd worden wanneer de operator gekozen is.
   }
 
   export type ComparisonOperator = BinaryComparisonOperator;
+
   export interface BinaryComparisonOperator {
     readonly kind: "BinaryComparisonOperator";
     readonly label: string;
@@ -67,8 +72,6 @@ export namespace FilterEditor {
     readonly operator: fltr.BinaryComparisonOperator;
     readonly typeType: fltr.TypeType;
   }
-
-  export type ValueSelector = "FreeString" | "FreeNumber" | "NoSelection";
 
   export interface ValueSelection {
     readonly kind: "Value";
@@ -100,6 +103,8 @@ export namespace FilterEditor {
     readonly selectedValue: SelectedValue;
   }
 
+  const LiteralValue: Function1<fltr.ValueType, LiteralValue> = value => ({ kind: "Literal", value });
+
   export const isAtLeastOperatorSelection: Refinement<TermEditor, OperatorSelection> = (termEditor): termEditor is OperatorSelection =>
     termEditor.kind === "Operator" || termEditor.kind === "Value" || termEditor.kind === "Completed";
   export const isAtLeastValueSelection: Refinement<TermEditor, ValueSelection> = (termEditor): termEditor is ValueSelection =>
@@ -121,7 +126,7 @@ export namespace FilterEditor {
       .filter(property => ["string", "boolean", "double", "integer"].includes(property.type));
 
   // Initieer aanmaak van een Comparison
-  const FieldSelection: Function1<ke.ToegevoegdeVectorLaag, FieldSelection> = laag => ({ kind: "Field", properties: properties(laag) });
+  const FieldSelection: Function1<ke.ToegevoegdeVectorLaag, TermEditor> = laag => ({ kind: "Field", properties: properties(laag) });
 
   const BinaryComparisonOperator: Function4<string, string, fltr.BinaryComparisonOperator, fltr.TypeType, BinaryComparisonOperator> = (
     label,
@@ -157,8 +162,8 @@ export namespace FilterEditor {
   ];
 
   const booleanOperators: ComparisonOperator[] = [
-    BinaryComparisonOperator("is", "is", "equality", "boolean"),
-    BinaryComparisonOperator("is niet", "is niet", "inequality", "boolean")
+    BinaryComparisonOperator("is waar", "is waar", "equality", "boolean"),
+    BinaryComparisonOperator("is niet waar", "is niet waar", "inequality", "boolean")
   ];
 
   interface OperatorLabels {
@@ -180,33 +185,53 @@ export namespace FilterEditor {
       literal.type
     );
 
-  const operatorSelectors: Function1<fltr.Property, ComparisonOperator[]> = property =>
+  // Een eenvoudige wrapper om 2 soorten gegevens in 1 functie te kunnen berekenen
+  interface OperatorsAndValueSelector {
+    readonly operators: ComparisonOperator[];
+    readonly valueSelector: ValueSelector;
+  }
+
+  const OperatorsAndValueSelector: Function2<ComparisonOperator[], ValueSelector, OperatorsAndValueSelector> = (
+    operators,
+    valueSelector
+  ) => ({ operators, valueSelector });
+
+  const genericOperatorSelectors: Function1<fltr.Property, OperatorsAndValueSelector> = property =>
     fltr.matchTypeTypeWithFallback({
-      string: () => freeStringOperators, // Hier moeten we kijken of er unieke waarden zijn
-      double: () => freeDoubleOperators,
-      integer: () => freeIntegerOperators,
-      fallback: () => [] // Geen operatoren voor onbekende types: beter een terminale error operator
+      string: () => OperatorsAndValueSelector(freeStringOperators, "FreeString"),
+      double: () => OperatorsAndValueSelector(freeDoubleOperators, "FreeNumber"),
+      integer: () => OperatorsAndValueSelector(freeIntegerOperators, "FreeNumber"),
+      boolean: () => OperatorsAndValueSelector(booleanOperators, "NoSelection"),
+      fallback: () => OperatorsAndValueSelector([], "NoSelection") // Geen operatoren voor onbekende types: beter terminale error operator
     })(property.type);
 
   // Overgang van FieldSelection naar OperatorSelection -> De overgangen zouden beter Validations zijn om er rekening
   // mee te houden dat de overgang eventueel niet mogelijk is. Bijvoorbeeld wanneer een veld opgegeven wordt dat niet in
   // de lijst staat.
-  export const OperatorSelection: Curried2<fltr.Property, FieldSelection, OperatorSelection> = property => selection => ({
+  export const selectedProperty: Curried2<fltr.Property, FieldSelection, TermEditor> = property => selection => ({
     ...selection,
     kind: "Operator",
     selectedProperty: property,
-    operatorSelectors: operatorSelectors(property)
+    operatorSelectors: genericOperatorSelectors(property).operators,
+    valueSelector: genericOperatorSelectors(property).valueSelector
   });
 
-  const specificValueSelection: Function3<OperatorSelection, ComparisonOperator, ValueSelector, ValueSelection> = (
-    selection,
-    selectedOperator,
-    valueSelector
-  ) => ({
+  // Dit lijkt op de genericOperatorSelectors, maar hier kunnen we de selectedOperator gebruiken om de ValueSelector te verfijnen
+  const specificOperatorSelectors: Function2<fltr.Property, ComparisonOperator, ValueSelector> = (property, selectedOperator) =>
+    fltr.matchTypeTypeWithFallback({
+      string: () => "FreeString" as "FreeString", // Hier moeten we kijken of er unieke waarden zijn
+      double: () => "FreeNumber" as "FreeNumber",
+      integer: () => "FreeNumber" as "FreeNumber",
+      boolean: () => "NoSelection" as "NoSelection",
+      fallback: () => "NoSelection" as "NoSelection"
+    })(property.type);
+
+  const booleanCompleted: Function2<OperatorSelection, ComparisonOperator, TermEditor> = (selection, selectedOperator) => ({
     ...selection,
-    kind: "Value",
+    kind: "Completed",
     selectedOperator,
-    valueSelector
+    valueSelector: "NoSelection",
+    selectedValue: selectedOperator.operator === "equality" ? LiteralValue(true) : LiteralValue(false)
   });
 
   // nooit aanroepen met lege array
@@ -214,15 +239,16 @@ export namespace FilterEditor {
 
   const DisjunctionEditor: Function1<ConjunctionEditor[], DisjunctionsEditor> = conjunctionEditors => ({ conjunctionEditors });
 
-  // Overgang van OperatorSelection naar ValueSelection
-  export const ValueSelection: Curried2<ComparisonOperator, OperatorSelection, ValueSelection> = operator => selection =>
-    fltr.matchTypeTypeWithFallback({
-      string: () => specificValueSelection(selection, operator, "FreeString"), // Hier moeten we kijken of er unieke waarden zijn
-      fallback: () => specificValueSelection(selection, operator, "NoSelection")
-    })(selection.selectedProperty.type);
+  // Overgang van OperatorSelection naar ValueSelection (of Completed voor unaire operators)
+  export const selectOperator: Curried2<ComparisonOperator, OperatorSelection, TermEditor> = operator => selection => ({
+    ...selection,
+    kind: "Value",
+    selectedOperator: operator,
+    valueSelector: specificOperatorSelectors(selection.selectedProperty, operator)
+  });
 
   // Overgang van ValueSelection naar Completed
-  export const Completed: Curried2<SelectedValue, ValueSelection, Completed> = selectedValue => selection => ({
+  export const selectValue: Curried2<SelectedValue, ValueSelection, Completed> = selectedValue => selection => ({
     ...selection,
     kind: "Completed",
     selectedValue
@@ -374,10 +400,10 @@ export namespace FilterEditor {
     kind: "Completed",
     properties: properties(laag),
     selectedProperty: comparison.property,
-    operatorSelectors: operatorSelectors(comparison.property),
+    operatorSelectors: genericOperatorSelectors(comparison.property).operators,
     selectedOperator: binaryComparisonOperator(comparison.operator, comparison.value),
     selectedValue: comparison.value,
-    valueSelector: "FreeString" // TODO laten afhangen van type
+    valueSelector: genericOperatorSelectors(comparison.property).valueSelector
   });
 
   const fromComparison: Function3<Option<string>, ke.ToegevoegdeVectorLaag, fltr.Comparison, ExpressionEditor> = (

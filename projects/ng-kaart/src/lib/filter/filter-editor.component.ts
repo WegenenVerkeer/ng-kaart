@@ -6,14 +6,12 @@ import { fromNullable, Option } from "fp-ts/lib/Option";
 import * as option from "fp-ts/lib/Option";
 import { Ord } from "fp-ts/lib/Ord";
 import * as ord from "fp-ts/lib/Ord";
-import { setoidString } from "fp-ts/lib/Setoid";
 import * as rx from "rxjs";
 import {
   debounceTime,
   distinctUntilChanged,
   filter,
   map,
-  pairwise,
   sample,
   scan,
   share,
@@ -76,7 +74,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
   readonly filterEditor$: rx.Observable<fed.ExpressionEditor>;
 
-  readonly gekozenVeldTypeNumeriek$: rx.Observable<boolean>;
+  readonly veldwaardeType$: rx.Observable<fed.ValueSelector>;
 
   readonly kanHuidigeEditorVerwijderen$: rx.Observable<boolean>;
 
@@ -164,11 +162,11 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     type TermEditorUpdate = Endomorphism<fed.TermEditor>;
 
     const zetNaam$: rx.Observable<ExpressionEditorUpdate> = gekozenNaam$.pipe(map(fed.setName));
-    const zetProperty$: rx.Observable<TermEditorUpdate> = gekozenProperty$.pipe(map(fed.OperatorSelection));
-    const zetOperator$: rx.Observable<TermEditorUpdate> = gekozenOperator$.pipe(map(fed.ValueSelection));
+    const zetProperty$: rx.Observable<TermEditorUpdate> = gekozenProperty$.pipe(map(fed.selectedProperty));
+    const zetOperator$: rx.Observable<TermEditorUpdate> = gekozenOperator$.pipe(map(fed.selectOperator));
     const zetWaarde$: rx.Observable<TermEditorUpdate> = gekozenWaarde$.pipe(
       tap(w => console.log("***waarde$", w)),
-      map(fed.Completed)
+      map(fed.selectValue)
     );
 
     const initExpressionEditor$: rx.Observable<fed.ExpressionEditor> = subSpy("****initExpressionEditor$")(
@@ -200,22 +198,15 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
     this.kanHuidigeEditorVerwijderen$ = this.filterEditor$.pipe(map(editor => fed.canRemoveCurrent(editor)));
 
-    this.gekozenVeldTypeNumeriek$ = this.filterEditor$.pipe(
+    this.veldwaardeType$ = this.filterEditor$.pipe(
       map(editor =>
         fed.matchTermEditor({
-          Field: () => false,
-          Operator: () => false,
-          Value: valueSelection => valueSelection.valueSelector === "FreeNumber",
-          Completed: completed => completed.valueSelector === "FreeNumber"
+          Field: () => "FreeString" as "FreeString", // we zouder er kunnen voor kiezen om het inputveld voorlopig niet te tonen
+          Operator: termEditor => termEditor.valueSelector,
+          Value: termEditor => termEditor.valueSelector,
+          Completed: termEditor => termEditor.valueSelector
         })(editor.current)
       )
-    );
-
-    const editStateChange$ = this.filterEditor$.pipe(
-      map(fe => option.some(fe.current.kind)),
-      startWith(option.none as Option<fed.TermEditor["kind"]>),
-      pairwise(),
-      map(([previous, current]) => !previous.foldL(() => current.isNone(), prev => current.contains(setoidString, prev)))
     );
 
     const changedFilterEditor$ = this.filterEditor$.pipe(
