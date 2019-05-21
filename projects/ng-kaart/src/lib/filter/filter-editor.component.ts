@@ -1,7 +1,7 @@
 import { ChangeDetectorRef, Component, NgZone } from "@angular/core";
 import { FormControl, ValidationErrors, Validators } from "@angular/forms";
 import * as array from "fp-ts/lib/Array";
-import { Endomorphism, Function1 } from "fp-ts/lib/function";
+import { Endomorphism, Function1, Function2 } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import * as option from "fp-ts/lib/Option";
 import { Ord } from "fp-ts/lib/Ord";
@@ -28,8 +28,9 @@ import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
 import { kaartLogger } from "../kaart/log";
-import { isNotNull, isNotNullObject } from "../util/function";
-import { catOptions, forEvery, subSpy } from "../util/operators";
+import { Consumer1, isNotNull, isNotNullObject } from "../util/function";
+import { parseDouble, parseInteger } from "../util/number";
+import { catOptions, collectOption, forEvery, subSpy } from "../util/operators";
 
 import { FilterAanpassingBezig, isAanpassingBezig } from "./filter-aanpassing-state";
 import { FilterEditor as fed } from "./filter-builder";
@@ -44,6 +45,30 @@ const autoCompleteSelectieVerplichtValidator: Function1<FormControl, ValidationE
 
 const ordPropertyByBaseField: Function1<Map<string, ke.VeldInfo>, Ord<fltr.Property>> = veldinfos =>
   ord.contramap(prop => ke.VeldInfo.veldInfoOpNaam(prop.ref, veldinfos), option.getOrd(ord.getDualOrd(ke.VeldInfo.ordVeldOpBasisVeld)));
+
+function enableDisabled(...controls: FormControl[]) {
+  controls.forEach(control => {
+    if (control.disabled) {
+      control.enable({ emitEvent: false });
+    }
+  });
+}
+
+function disableEnabled(...controls: FormControl[]) {
+  controls.forEach(control => {
+    if (control.enabled) {
+      control.disable({ emitEvent: false });
+    }
+  });
+}
+
+function resetWithEvent(...controls: FormControl[]): void {
+  controls.forEach(control => control.reset(""));
+}
+
+function resetWithoutEvent(...controls: FormControl[]): void {
+  controls.forEach(control => control.reset("", { emitEvent: false }));
+}
 
 @Component({
   selector: "awv-filter-editor",
@@ -62,13 +87,15 @@ export class FilterEditorComponent extends KaartChildComponentBase {
   // Als we het oude gedrag weer willen waar de operator direct op '=' staat, dan moeten we de selectedOperator
   // doorschuiven naar FieldSelection
   readonly operatorControl = new FormControl("", [Validators.required, autoCompleteSelectieVerplichtValidator]);
-  readonly waardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
+  readonly textWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
+  readonly integerWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
+  readonly doubleWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
 
   readonly ongeldigeFilter$: rx.Observable<boolean>;
 
   readonly filterEditor$: rx.Observable<fed.ExpressionEditor>;
 
-  readonly gekozenVeldTypeNumeriek$: rx.Observable<boolean>;
+  readonly veldwaardeType$: rx.Observable<fed.ValueSelector>;
 
   readonly kanHuidigeEditorVerwijderen$: rx.Observable<boolean>;
 
@@ -107,6 +134,12 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     const forControlValue: Function1<FormControl, rx.Observable<any>> = formcontrol =>
       forEveryLaag(() =>
         formcontrol.valueChanges.pipe(
+          tap(value => {
+            console.log("****raw value", formcontrol.value, value);
+            if (!formcontrol.enabled) {
+              console.log("****not enabled", formcontrol.value);
+            }
+          }),
           filter(() => formcontrol.enabled),
           share()
         )
@@ -116,7 +149,9 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       this.naamControl.reset("", { emitEvent: false });
       this.veldControl.reset("", { emitEvent: false });
       this.operatorControl.reset("", { emitEvent: false });
-      this.waardeControl.reset("", { emitEvent: false });
+      this.textWaardeControl.reset("", { emitEvent: false });
+      this.integerWaardeControl.reset(0, { emitEvent: false });
+      this.doubleWaardeControl.reset(0, { emitEvent: false });
     });
 
     const gekozenNaam$: rx.Observable<Option<string>> = subSpy("****gekozenNaam$")(
@@ -139,23 +174,35 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       tap(o => console.log("*****Operator gekozen", o)),
       tap(o => console.log("*****Distinct operator gekozen", o))
     );
-    const gekozenWaarde$: rx.Observable<fltr.Literal> = subSpy("****gekozenWaarde")(
-      forControlValue(this.waardeControl).pipe(
-        filter(isNotNull),
+    const gekozenText$: rx.Observable<Option<fed.LiteralValue>> = subSpy("****gekozenText")(
+      forControlValue(this.textWaardeControl).pipe(
         distinctUntilChanged(), // in dit geval vgln we op strings, dus ook OK
-        map(value => fltr.Literal("string", value))
+        map(input => fromNullable(input).map(value => fed.LiteralValue(value.toString(), "string")))
       )
     );
+    const gekozenInteger$: rx.Observable<Option<fed.LiteralValue>> = subSpy("****gekozenInteger")(
+      forControlValue(this.integerWaardeControl).pipe(
+        distinctUntilChanged(), // in dit geval vgln we op getallen, dus ook OK
+        map(input => parseInteger(input).map(num => fed.LiteralValue(num, "integer")))
+      )
+    );
+    const gekozenDouble$: rx.Observable<Option<fed.LiteralValue>> = subSpy("****gekozenDouble")(
+      forControlValue(this.doubleWaardeControl).pipe(
+        distinctUntilChanged(), // in dit geval vgln we op getallen, dus ook OK
+        map(input => parseDouble(input).map(value => fed.LiteralValue(value, "double")))
+      )
+    );
+    const gekozenWaarde$: rx.Observable<Option<fed.LiteralValue>> = rx.merge(gekozenText$, gekozenInteger$, gekozenDouble$);
 
     type ExpressionEditorUpdate = Endomorphism<fed.ExpressionEditor>;
     type TermEditorUpdate = Endomorphism<fed.TermEditor>;
 
     const zetNaam$: rx.Observable<ExpressionEditorUpdate> = gekozenNaam$.pipe(map(fed.setName));
-    const zetProperty$: rx.Observable<TermEditorUpdate> = gekozenProperty$.pipe(map(fed.OperatorSelection));
-    const zetOperator$: rx.Observable<TermEditorUpdate> = gekozenOperator$.pipe(map(fed.ValueSelection));
+    const zetProperty$: rx.Observable<TermEditorUpdate> = gekozenProperty$.pipe(map(fed.selectedProperty));
+    const zetOperator$: rx.Observable<TermEditorUpdate> = gekozenOperator$.pipe(map(fed.selectOperator));
     const zetWaarde$: rx.Observable<TermEditorUpdate> = gekozenWaarde$.pipe(
       tap(w => console.log("***waarde$", w)),
-      map(fed.Completed)
+      map(fed.selectValue)
     );
 
     const initExpressionEditor$: rx.Observable<fed.ExpressionEditor> = subSpy("****initExpressionEditor$")(
@@ -183,15 +230,28 @@ export class FilterEditorComponent extends KaartChildComponentBase {
           )
         )
       )
-    ).pipe(shareReplay());
+    ).pipe(shareReplay(1));
 
     this.kanHuidigeEditorVerwijderen$ = this.filterEditor$.pipe(map(editor => fed.canRemoveCurrent(editor)));
 
-    this.gekozenVeldTypeNumeriek$ = gekozenProperty$.pipe(map(veld => veld.type === "integer" || veld.type === "double"));
+    this.veldwaardeType$ = this.filterEditor$.pipe(
+      map(editor =>
+        fed.matchTermEditor({
+          Field: () => "FreeString" as "FreeString", // we zouder er kunnen voor kiezen om het inputveld voorlopig niet te tonen
+          Operator: termEditor => termEditor.valueSelector,
+          Value: termEditor => termEditor.valueSelector,
+          Completed: termEditor => termEditor.valueSelector
+        })(editor.current)
+      )
+    );
+
+    const changedFilterEditor$ = this.filterEditor$.pipe(
+      distinctUntilChanged((fed1, fed2) => fed.setoidTermEditor.equals(fed1.current, fed2.current))
+    );
 
     // Deze subscribe zorgt er voor dat de updates effectief uitgevoerd worden
     this.bindToLifeCycle(
-      rx.combineLatest(this.filterEditor$, kaart.modelChanges.laagFilterAanpassingState$.pipe(map(isAanpassingBezig)))
+      rx.combineLatest(changedFilterEditor$, kaart.modelChanges.laagFilterAanpassingState$.pipe(map(isAanpassingBezig)))
     ).subscribe(([expressionEditor, zichtbaar]) => {
       if (zichtbaar) {
         // zet control waarden bij aanpassen van expressionEditor
@@ -202,35 +262,52 @@ export class FilterEditorComponent extends KaartChildComponentBase {
         fed.matchTermEditor({
           Field: () => {
             console.log("****reset naar Field");
-            this.veldControl.reset("", { emitEvent: false });
-            this.operatorControl.reset("", { emitEvent: false });
-            this.operatorControl.disable();
-            this.waardeControl.reset("", { emitEvent: false });
-            this.waardeControl.disable();
+            disableEnabled(this.operatorControl, this.textWaardeControl, this.integerWaardeControl, this.doubleWaardeControl);
+            resetWithoutEvent(
+              this.veldControl,
+              this.operatorControl,
+              this.textWaardeControl,
+              this.integerWaardeControl,
+              this.doubleWaardeControl
+            );
           },
           Operator: opr => {
             console.log("****reset naar Operator");
+            enableDisabled(this.operatorControl);
+            disableEnabled(this.textWaardeControl, this.integerWaardeControl, this.doubleWaardeControl);
             this.veldControl.setValue(opr.selectedProperty, { emitEvent: false });
-            this.operatorControl.reset("", { emitEvent: false });
-            this.operatorControl.enable({ emitEvent: false });
-            this.waardeControl.reset("", { emitEvent: false });
-            this.waardeControl.disable();
+            resetWithoutEvent(this.operatorControl, this.textWaardeControl, this.integerWaardeControl, this.doubleWaardeControl);
           },
           Value: val => {
             console.log("****reset naar Value");
+            enableDisabled(this.operatorControl, this.textWaardeControl, this.integerWaardeControl, this.doubleWaardeControl);
             this.veldControl.setValue(val.selectedProperty, { emitEvent: false });
             this.operatorControl.setValue(val.selectedOperator, { emitEvent: false });
-            this.operatorControl.enable({ emitEvent: false });
-            this.waardeControl.reset("", { emitEvent: false });
-            this.waardeControl.enable({ emitEvent: true });
+            // We mogen enkel de getoonde control resetten, want anders krijgen we een event en daaropvolgende update
+            // voor de andere controls
+            switch (val.valueSelector) {
+              case "FreeString":
+                this.textWaardeControl.reset("", { emitEvent: true });
+                break;
+              case "FreeDouble":
+                this.doubleWaardeControl.reset(0.0, { emitEvent: true });
+                break;
+              case "FreeInteger":
+                this.integerWaardeControl.reset(0, { emitEvent: true });
+                break;
+            }
           },
           Completed: compl => {
             console.log("****reset naar Completed");
+            enableDisabled(this.operatorControl, this.textWaardeControl, this.integerWaardeControl, this.doubleWaardeControl);
             this.veldControl.setValue(compl.selectedProperty, { emitEvent: false });
             this.operatorControl.setValue(compl.selectedOperator, { emitEvent: false });
-            this.operatorControl.enable({ emitEvent: false });
-            this.waardeControl.setValue(compl.selectedValue.value, { emitEvent: false });
-            this.waardeControl.enable({ emitEvent: true });
+            fed.matchLiteralValueWithFallback({
+              string: () => this.textWaardeControl.setValue(compl.selectedValue.value, { emitEvent: true }),
+              integer: () => this.integerWaardeControl.setValue(compl.selectedValue.value, { emitEvent: true }),
+              double: () => this.doubleWaardeControl.setValue(compl.selectedValue.value, { emitEvent: true }),
+              fallback: () => {}
+            })(compl.selectedValue);
           }
         })(expressionEditor.current);
       }
@@ -241,35 +318,29 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       filter(fed.isAtLeastOperatorSelection)
     );
 
-    const properties$: rx.Observable<fltr.Property[]> = subSpy("****properties$")(
-      this.filterEditor$.pipe(map(editor => editor.current.properties))
+    const properties$: rx.Observable<fltr.Property[]> = this.filterEditor$.pipe(map(editor => editor.current.properties));
+
+    this.filteredVelden$ = rx.combineLatest(properties$, veldinfos$).pipe(
+      switchMap(([properties, veldinfos]) =>
+        this.veldControl.valueChanges.pipe(
+          filter(isNotNull),
+          startWith<fltr.Property | string>(""), // nog niets ingetypt
+          map(waarde => (typeof waarde === "string" ? waarde : fromNullable(waarde.label).getOrElse(""))),
+          map(getypt =>
+            properties.filter(veld =>
+              fromNullable(veld.label)
+                .getOrElse("")
+                .toLowerCase()
+                .startsWith(getypt.toLowerCase())
+            )
+          ),
+          map(properties => array.sort(ordPropertyByBaseField(veldinfos))(properties))
+        )
+      ),
+      shareReplay(1)
     );
 
-    this.filteredVelden$ = subSpy("****filteredVelden$")(
-      rx.combineLatest(properties$, veldinfos$).pipe(
-        switchMap(([properties, veldinfos]) =>
-          this.veldControl.valueChanges.pipe(
-            filter(isNotNull),
-            startWith<fltr.Property | string>(""), // nog niets ingetypt
-            map(waarde => (typeof waarde === "string" ? waarde : fromNullable(waarde.label).getOrElse(""))),
-            map(getypt =>
-              properties.filter(veld =>
-                fromNullable(veld.label)
-                  .getOrElse("")
-                  .toLowerCase()
-                  .startsWith(getypt.toLowerCase())
-              )
-            ),
-            map(properties => array.sort(ordPropertyByBaseField(veldinfos))(properties))
-          )
-        ),
-        shareReplay(1)
-      )
-    );
-
-    const binaryOperators$: rx.Observable<fed.BinaryComparisonOperator[]> = subSpy("****binaryOperators$")(
-      operatorSelection$.pipe(map(os => os.operatorSelectors))
-    );
+    const binaryOperators$: rx.Observable<fed.BinaryComparisonOperator[]> = operatorSelection$.pipe(map(os => os.operatorSelectors));
 
     this.filteredOperatoren$ = rx
       .combineLatest(
@@ -286,22 +357,16 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       this.filterEditor$.pipe(
         tap(fe => console.log("*****filterEditor$ in maybeZetFilterCmd", fe)),
         map(fed.toExpressionFilter),
-        map(maybeExpFilter => maybeExpFilter.map(expFilter => prt.ZetFilter(laag.titel, expFilter, kaartLogOnlyWrapper)))
+        map(maybeExpFilter => maybeExpFilter.map(expFilter => prt.ZetFilter(laag.titel, expFilter, kaartLogOnlyWrapper))),
+        share()
       )
     );
 
-    const geldigFilterCmd$ = maybeZetFilterCmd$.pipe(
-      catOptions,
-      tap(gfc => console.log("****geldigFilterCmd$", gfc))
+    const geldigFilterCmd$ = maybeZetFilterCmd$.pipe(catOptions);
+    this.ongeldigeFilter$ = maybeZetFilterCmd$.pipe(
+      tap(cmd => console.log("****ongeldigeFilter$", cmd.isNone(), status)),
+      map(cmd => cmd.isNone())
     );
-    this.ongeldigeFilter$ = rx
-      .combineLatest(maybeZetFilterCmd$, this.waardeControl.statusChanges)
-      // TODO we moeten de status wat gesofisticeerder aanpakken in de zin dat we de invalid status van de andere velden
-      // ook moeten gebruiken. Als operator bijv. invalid is, zouden we in de OperatorSelection state moeten zitten.
-      .pipe(
-        tap(([cmd, status]) => console.log("****ongeldigeFilter$", cmd.isNone(), status)),
-        map(([cmd, status]) => cmd.isNone() || status !== "VALID")
-      ); // constante VALID lijkt niet exposed te zijn in Angular
 
     const laagNietZichtbaar$ = laag$.pipe(
       switchMap(laag =>
@@ -358,8 +423,16 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     return this.operatorControl.hasError("required") ? "Gelieve een operator te kiezen" : "";
   }
 
-  errorWaarde(): string {
-    return this.waardeControl.hasError("required") ? "Gelieve een waarde in te geven" : "";
+  errorTextWaarde(): string {
+    return this.textWaardeControl.hasError("required") ? "Gelieve een waarde in te geven" : "";
+  }
+
+  errorIntegerWaarde(): string {
+    return this.integerWaardeControl.hasError("required") ? "Gelieve een waarde in te geven" : "";
+  }
+
+  errorDoubleWaarde(): string {
+    return this.doubleWaardeControl.hasError("required") ? "Gelieve een waarde in te geven" : "";
   }
 
   onClickOutside() {

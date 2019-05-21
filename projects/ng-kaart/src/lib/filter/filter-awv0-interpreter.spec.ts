@@ -57,6 +57,21 @@ describe("De filterinterpreter", () => {
       expect(result.isSuccess()).toBe(true);
       expect(result.getOrElse(undefined)).toEqual(fixName(neq));
     });
+    it("moet een filter met 1 'begint met' kunnen verwerken", () => {
+      const neq: RawExpressionFilter = {
+        kind: "ExpressionFilter",
+        name: "testFilter",
+        expression: {
+          kind: "BinaryComparison",
+          operator: "starts",
+          property: property,
+          value: literal
+        }
+      };
+      const result = AwvV0FilterInterpreters.jsonAwv0Definition(neq);
+      expect(result.isSuccess()).toBe(true);
+      expect(result.getOrElse(undefined)).toEqual(fixName(neq));
+    });
     it("moet een filter met 1 'and' kunnen verwerken", () => {
       const and: RawExpressionFilter = {
         kind: "ExpressionFilter",

@@ -12,6 +12,7 @@ export class FilterChipComponent {
   @Input()
   editor: fed.TermEditor;
 
+  // TODO setter gebruiken om methodes weg te werken
   @Input()
   expressionEditor: fed.ExpressionEditor;
 
@@ -36,5 +37,11 @@ export class FilterChipComponent {
 
   asCompleted(): fed.Completed {
     return this.editor as fed.Completed;
+  }
+
+  completedValue(): string {
+    return this.editor.kind === "Completed" && this.editor.valueSelector !== "NoSelection"
+      ? this.editor.selectedValue.value.toString()
+      : "";
   }
 }

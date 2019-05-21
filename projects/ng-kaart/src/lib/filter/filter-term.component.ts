@@ -17,6 +17,11 @@ const binaryComparisonOperatorMapping = {
   largerOrEqual: "groter dan of gelijk aan"
 };
 
+const booleanComparisonOperatorMapping = {
+  equality: "is waar",
+  inequality: "is niet waar"
+};
+
 @Component({
   selector: "awv-filter-term",
   templateUrl: "./filter-term.component.html",
@@ -30,8 +35,13 @@ export class FilterTermComponent extends KaartChildComponentBase {
   @Input()
   public set term(term: fltr.BinaryComparison) {
     this.property = term.property.label;
-    this.value = term.value.value.toString();
-    this.operator = binaryComparisonOperatorMapping[term.operator];
+    if (term.property.type === "boolean") {
+      this.value = "";
+      this.operator = booleanComparisonOperatorMapping[term.operator] || "???";
+    } else {
+      this.value = term.value.value.toString();
+      this.operator = binaryComparisonOperatorMapping[term.operator] || "???";
+    }
   }
 
   constructor(kaart: KaartComponent, zone: NgZone) {

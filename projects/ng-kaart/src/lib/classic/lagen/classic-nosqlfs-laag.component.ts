@@ -12,7 +12,7 @@ import * as ss from "../../kaart/stijl-selector";
 import { NosqlFsSource } from "../../source/nosql-fs-source";
 import { ofType } from "../../util";
 import { asap } from "../../util/asap";
-import { Consumer } from "../../util/function";
+import { Consumer1 } from "../../util/function";
 import { cachedFeaturesLookupReadyMsg, CachedFeaturesLookupReadyMsg, logOnlyWrapper } from "../messages";
 import * as val from "../webcomponent-support/params";
 
@@ -91,7 +91,7 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
     this._maxFeaturesInMemCache = val.num(param, this._maxFeaturesInMemCache);
   }
 
-  private _cachedFeaturesProviderConsumer: Consumer<CachedFeatureLookup> = () => {};
+  private _cachedFeaturesProviderConsumer: Consumer1<CachedFeatureLookup> = () => {};
 
   @Input()
   set precache(input: PrecacheFeatures) {
@@ -106,7 +106,7 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
   }
 
   @Input()
-  set cachedFeaturesProviderConsumer(input: Consumer<CachedFeatureLookup>) {
+  set cachedFeaturesProviderConsumer(input: Consumer1<CachedFeatureLookup>) {
     if (input) {
       this._cachedFeaturesProviderConsumer = input;
       // Dit moet op de volgende execution gescheduled worden omdat de laag niet geregistreerd is op het moment dat de

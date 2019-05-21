@@ -1,5 +1,6 @@
 import { constant, Function1, Function2, Function3, identity, Lazy, not, Predicate } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
+import { contramap, Setoid, setoidString } from "fp-ts/lib/Setoid";
 
 import * as matchers from "../util/matchers";
 
@@ -197,4 +198,7 @@ export namespace Filter {
   });
 
   export const isDefined: Predicate<Filter> = not(isEmpty);
+
+  export const setoidPropertyByRef: Setoid<Property> = contramap(p => p.ref, setoidString);
+  export const setoidBinaryComparisonOperator: Setoid<BinaryComparisonOperator> = setoidString;
 }
