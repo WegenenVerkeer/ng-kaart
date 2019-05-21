@@ -5,7 +5,7 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import { AbsoluteOrientationSensor } from "motion-sensors-polyfill";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, filter, map, pairwise, scan, shareReplay, startWith, throttle } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, pairwise, scan, shareReplay, startWith, throttle, throttleTime } from "rxjs/operators";
 
 import { catOptions } from "../../util/operators";
 import * as ke from "../kaart-elementen";
@@ -243,7 +243,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
 
     // pas positie aan bij nieuwe locatie
     this.bindToLifeCycle(
-      rx.combineLatest(zoom$, zoomdoel$, this.locatieSubj.pipe(debounceTime(TrackingInterval)), this.currentState$.pipe(pairwise())).pipe(
+      rx.combineLatest([zoom$, zoomdoel$, this.locatieSubj.pipe(throttleTime(TrackingInterval)), this.currentState$.pipe(pairwise())]).pipe(
         filter(([, , , [, state]]) => {
           return this.isTrackingActief(state);
         }),
@@ -255,7 +255,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
 
     // pas rotatie aan
     this.bindToLifeCycle(
-      rx.combineLatest(this.rotatieSubj.pipe(debounceTime(TrackingInterval)), this.currentState$).pipe(
+      rx.combineLatest([this.rotatieSubj.pipe(throttleTime(TrackingInterval)), this.currentState$]).pipe(
         filter(([, state]) => {
           return moetRoteren(state);
         }),

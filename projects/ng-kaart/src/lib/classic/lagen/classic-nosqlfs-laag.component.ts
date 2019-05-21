@@ -36,7 +36,7 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
   _filter: string;
   _gebruikCache = false;
   _maxFeaturesInMemCache = 2500;
-  _veldinfos: ke.VeldInfo[] = [];
+  _veldInfos: ke.VeldInfo[] = [];
 
   @Input()
   set url(param: string) {
@@ -75,7 +75,7 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
 
   @Input()
   set veldinfos(param: ke.VeldInfo[]) {
-    this._veldinfos = val.veldInfoArray(param, this._veldinfos);
+    this._veldInfos = val.veldInfoArray(param, this._veldInfos);
   }
 
   /** Deze waarde bepaalt hoeveel features er in geheugen bijgehouden worden (tussen verschillende fetches van de NosqlFS
@@ -156,7 +156,7 @@ export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent 
       minZoom: this._minZoom,
       maxZoom: this._maxZoom,
       offsetveld: this._offsetveld,
-      velden: new Map<string, ke.VeldInfo>(this._veldinfos.map(vi => [vi.naam, vi] as [string, ke.VeldInfo])),
+      velden: new Map<string, ke.VeldInfo>(this._veldInfos.map(vi => [vi.naam, vi] as [string, ke.VeldInfo])),
       verwijderd: false,
       // TODO: dit veld (en offsetveld en ident8) zijn eigenlijk stijl concerns en zouden beter naar daar verhuisd moet worden
       rijrichtingIsDigitalisatieZin: false,

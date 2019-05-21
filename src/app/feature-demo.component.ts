@@ -377,20 +377,6 @@ export class FeatureDemoComponent {
 
   configuratorMiddelpunt = [130000, 193000];
 
-  // Dit werkt alleen als apigateway bereikbaar is. Zie CORS waarschuwing in README.
-  readonly districtSource: ol.source.Vector = new ol.source.Vector({
-    format: new ol.format.GeoJSON(),
-    url: function(extent) {
-      return (
-        `http://apigateway/geoserver/wfs/?service=WFS&version=1.1.0&request=GetFeature&` +
-        `typename=awv:districten&` +
-        "outputFormat=application/json&srsname=EPSG:31370&" +
-        `bbox=${extent.join(",")},EPSG:31370`
-      );
-    },
-    strategy: ol.loadingstrategy.bbox
-  });
-
   readonly districtStyle: ol.style.Style = definitieToStyle(
     "json",
     '{"version": "awv-v0", "definition": {"stroke": {"color": "rgba(0,127,255,0.8)", "width": 1.5}}}'

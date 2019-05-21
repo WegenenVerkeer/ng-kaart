@@ -81,6 +81,10 @@
       Kaart bevragen
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !kaartInfoSectie.sectieZichtbaar }">visibility</span>
     </div>
+    <div (click)="wfsFilterSectie.toggleSectieZichtbaar();scrollTo('wfsFilter')" class="sub-titel">
+      WFS filter
+      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !wfsFilterSectie.sectieZichtbaar }">visibility</span>
+    </div>
   </div>
 
   <!-- applicaties -->
@@ -305,10 +309,11 @@
         <div *ngIf="districtenSectie.sectieZichtbaar" [@enterAnimation]>
           <awv-kaart-classic [naam]="'districten'" [hoogte]="400">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
-            <awv-kaart-vector-laag [titel]="'Districten'"
-                                   [source]="districtSource"
-                                   [style]="districtStyle"
-                                   [minZoom]="2"></awv-kaart-vector-laag>
+            <awv-kaart-wfs-laag [url]="'/geoserver/wfs'"
+                                [titel]="'Districten'"
+                                [typeNames] = "'awv:districten'"
+                                [style]="districtStyle"
+                                [minZoom]="2"></awv-kaart-wfs-laag>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
             <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
           </awv-kaart-classic>
@@ -668,6 +673,24 @@
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
             <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
             <awv-bevraag-kaart unit="Pixel" zoekAfstand="64"></awv-bevraag-kaart>
+          </awv-kaart-classic>
+        </div>
+      </awv-test-sectie>
+
+      <awv-test-sectie #wfsFilterSectie sectieId="wfsFilter" sectieTitel="WFS filter" [subSectie]="true" #wfsFilterSectie
+                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && wfsFilterSectie.sectieZichtbaar">
+        <div *ngIf="wfsFilterSectie.sectieZichtbaar" [@enterAnimation]>
+          <awv-kaart-classic #wfsFilterKaart naam="wfsFilter" zoom="3" hoogte="600">
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+            <awv-kaart-blanco-laag [titel]="'Leeg'"></awv-kaart-blanco-laag>
+
+            <awv-kaart-lagenkiezer></awv-kaart-lagenkiezer>
+
+            <awv-kaart-wfs-laag [titel]="'Korte Straten'" [typeNames]="'awv:straten'" [minZoom]="6" [cqlFilter]="'shape_leng<100'"></awv-kaart-wfs-laag>
+
+            <awv-kaart-knop-achtergrondlaag-kiezer></awv-kaart-knop-achtergrondlaag-kiezer>
+            <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+            <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
           </awv-kaart-classic>
         </div>
       </awv-test-sectie>
