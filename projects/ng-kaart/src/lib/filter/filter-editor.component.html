@@ -30,12 +30,16 @@
 
         <ng-container [ngSwitch]="veldwaardeType$ | async">
           <mat-form-field *ngSwitchCase="'FreeString'" class="filter-waarde-editbox">
-            <input type="text" matInput placeholder="Waarde" [formControl]="waardeControl"/>
-            <mat-error *ngIf="waardeControl.invalid">{{errorWaarde()}}</mat-error>
+            <input type="text" matInput placeholder="Waarde" [formControl]="textWaardeControl"/>
+            <mat-error *ngIf="textWaardeControl.invalid">{{errorTextWaarde()}}</mat-error>
           </mat-form-field>
-          <mat-form-field *ngSwitchCase="'FreeNumber'" class="filter-waarde-editbox">
-            <input type="number" matInput placeholder="Getal" [formControl]="waardeControl"/>
-            <mat-error *ngIf="waardeControl.invalid">{{errorWaarde()}}</mat-error>
+          <mat-form-field *ngSwitchCase="'FreeDouble'" class="filter-waarde-editbox">
+            <input type="number" step="0.1" matInput placeholder="Getal" [formControl]="doubleWaardeControl"/>
+            <mat-error *ngIf="doubleWaardeControl.invalid">{{errorDoubleWaarde()}}</mat-error>
+          </mat-form-field>
+          <mat-form-field *ngSwitchCase="'FreeInteger'" class="filter-waarde-editbox">
+            <input type="number" step="1" matInput placeholder="Getal" [formControl]="integerWaardeControl"/>
+            <mat-error *ngIf="integerWaardeControl.invalid">{{errorIntegerWaarde()}}</mat-error>
           </mat-form-field>
           <span *ngSwitchDefault class="filter-waarde-editbox"></span>
         </ng-container>

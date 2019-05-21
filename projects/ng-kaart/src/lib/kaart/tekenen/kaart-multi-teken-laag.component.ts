@@ -12,7 +12,7 @@ import { bufferTime, debounceTime, filter, map, mapTo, scan, share, startWith, s
 import * as clr from "../../stijl/colour";
 import { disc, solidLine } from "../../stijl/common-shapes";
 import { asap } from "../../util/asap";
-import { applySequential, Consumer, PartialFunction1, ReduceFunction } from "../../util/function";
+import { applySequential, Consumer1, PartialFunction1, ReduceFunction } from "../../util/function";
 import {
   numberMapOptional,
   NumberMapped,
@@ -166,17 +166,17 @@ const findPreviousWaypoint: PartialFunction1<ol.Feature, Waypoint> = feature => 
 
 const selectFilter: ol.SelectFilterFunction = feature => isWaypointProperties(feature.getProperties());
 
-const updatePointProperties: Function1<Endomorphism<PointProperties>, Consumer<ol.Feature>> = f => feature =>
+const updatePointProperties: Function1<Endomorphism<PointProperties>, Consumer1<ol.Feature>> = f => feature =>
   forEach(extractPointProperties(feature), props => feature.setProperties(f(props)));
 
 function drawStateTransformer(
-  dispatchDrawOps: Consumer<DrawOps>,
-  dispatchWaypointOps: Consumer<WaypointOperation>,
-  dispatchCmd: Consumer<Command<KaartInternalMsg>>,
+  dispatchDrawOps: Consumer1<DrawOps>,
+  dispatchWaypointOps: Consumer1<WaypointOperation>,
+  dispatchCmd: Consumer1<Command<KaartInternalMsg>>,
   state: DrawState,
   ops: DrawOps
 ): Endomorphism<DrawState> {
-  const handleAdd: Consumer<ol.events.Event> = event => {
+  const handleAdd: Consumer1<ol.events.Event> = event => {
     const drawEvent = event as ol.interaction.Draw.Event;
     const maybeCurrentCoordinate = extractCoordinate(drawEvent.feature);
     forEach(maybeCurrentCoordinate, coordinate => dispatchDrawOps(AddPoint(coordinate)));
@@ -185,7 +185,7 @@ function drawStateTransformer(
   // Jammer genoeg hebben we in het move event hieronder geen informatie over welke feature er precies van plaats veranderd is.
   // Daarom maken we een tussentijds event waarin we deze informatie wel hebben. In principe zouden we ook een heleboel move
   // events kunnen genereren, maar dat zou belastend zijn voor de server en flikkeren aan de client.
-  const handleFeatureDrag: Consumer<ol.events.Event> = evt => {
+  const handleFeatureDrag: Consumer1<ol.events.Event> = evt => {
     const feature: ol.Feature = evt.target as ol.Feature;
     dispatchDrawOps(DraggingPoint(feature));
   };
@@ -193,9 +193,9 @@ function drawStateTransformer(
   // We krijgen in het event enkel alle features samen. Er is wel een revision methode op een feature, maar om die te gebruiken
   // zouden we ergens de versies van alle features moeten bijhouden. En bovendien zouden we dan alle soorten interacties met die
   // features die de versie ophogen moeten opvangen.
-  const handleFeatureMove: Consumer<ol.events.Event> = () => dispatchDrawOps(MovePoint());
+  const handleFeatureMove: Consumer1<ol.events.Event> = () => dispatchDrawOps(MovePoint());
 
-  const handleSelect: Consumer<ol.events.Event> = evt => {
+  const handleSelect: Consumer1<ol.events.Event> = evt => {
     const selectEvent = evt as ol.interaction.Select.Event;
     forEach(
       array.head(selectEvent.selected),
@@ -206,7 +206,7 @@ function drawStateTransformer(
     );
   };
 
-  const handlePointermove: Function2<FeaturePicker, ol.source.Vector, Consumer<ol.events.Event>> = (featurePicker, source) => evt => {
+  const handlePointermove: Function2<FeaturePicker, ol.source.Vector, Consumer1<ol.events.Event>> = (featurePicker, source) => evt => {
     const moveEvent = evt as ol.MapBrowserEvent;
     if (!moveEvent.dragging) {
       forEach(featurePicker(moveEvent.pixel), selectedFeature => {
@@ -402,9 +402,9 @@ function drawStateTransformer(
 }
 
 const drawOpsReducer: Function3<
-  Consumer<DrawOps>,
-  Consumer<WaypointOperation>,
-  Consumer<Command<KaartInternalMsg>>,
+  Consumer1<DrawOps>,
+  Consumer1<WaypointOperation>,
+  Consumer1<Command<KaartInternalMsg>>,
   ReduceFunction<DrawState, DrawOps>
 > = (dispatchDrawOps, dispatchWaypointOps, dispatchCmd) => (state, ops) =>
   drawStateTransformer(dispatchDrawOps, dispatchWaypointOps, dispatchCmd, state, ops)(state);
@@ -435,7 +435,7 @@ const removeFeature: Function2<RouteEventId, WaypointId, Endomorphism<RouteSegme
     featuresByRouteIdLens.modify(removeFromStringMap(routeId))
   ]);
 
-const routeSegmentReducer: Function2<clr.Kleur, Consumer<DrawOps>, ReduceFunction<RouteSegmentState, RouteEvent>> = (
+const routeSegmentReducer: Function2<clr.Kleur, Consumer1<DrawOps>, ReduceFunction<RouteSegmentState, RouteEvent>> = (
   lineColour,
   dispatchDrawOps
 ) => (state, ops) => {

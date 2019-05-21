@@ -1,3 +1,4 @@
+import { PartialFunction1 } from "@wegenenverkeer/ng-kaart/lib/util/function";
 import * as array from "fp-ts/lib/Array";
 import { array as ArrayMonad } from "fp-ts/lib/Array";
 import {
@@ -12,7 +13,7 @@ import {
   Predicate,
   Refinement
 } from "fp-ts/lib/function";
-import { fromNullable, none, Option, option, some } from "fp-ts/lib/Option";
+import { fromNullable, fromPredicate, none, Option, option, some } from "fp-ts/lib/Option";
 import { contramap, fromEquals, getRecordSetoid, Setoid, setoidString, strictEqual } from "fp-ts/lib/Setoid";
 import { fromTraversable, Lens, Prism, Traversal } from "monocle-ts";
 
@@ -50,7 +51,7 @@ export namespace FilterEditor {
     readonly properties: fltr.Property[];
   }
 
-  export type ValueSelector = "FreeString" | "FreeNumber" | "NoSelection";
+  export type ValueSelector = "FreeString" | "FreeInteger" | "FreeDouble" | "NoSelection";
 
   export interface OperatorSelection {
     readonly kind: "Operator";
@@ -89,6 +90,7 @@ export namespace FilterEditor {
   export interface LiteralValue {
     readonly kind: "Literal";
     readonly value: fltr.ValueType;
+    readonly valueType: fltr.TypeType; // We moeten onze eerstecommuniezieltje beloven dat overeenkomt met ValueType
   }
 
   export interface Completed {
@@ -103,7 +105,11 @@ export namespace FilterEditor {
     readonly selectedValue: SelectedValue;
   }
 
-  const LiteralValue: Function1<fltr.ValueType, LiteralValue> = value => ({ kind: "Literal", value });
+  export const LiteralValue: Function2<fltr.ValueType, fltr.TypeType, LiteralValue> = (value, valueType) => ({
+    kind: "Literal",
+    value,
+    valueType
+  });
 
   export const isAtLeastOperatorSelection: Refinement<TermEditor, OperatorSelection> = (termEditor): termEditor is OperatorSelection =>
     termEditor.kind === "Operator" || termEditor.kind === "Value" || termEditor.kind === "Completed";
@@ -199,8 +205,8 @@ export namespace FilterEditor {
   const genericOperatorSelectors: Function1<fltr.Property, OperatorsAndValueSelector> = property =>
     fltr.matchTypeTypeWithFallback({
       string: () => OperatorsAndValueSelector(freeStringOperators, "FreeString"),
-      double: () => OperatorsAndValueSelector(freeDoubleOperators, "FreeNumber"),
-      integer: () => OperatorsAndValueSelector(freeIntegerOperators, "FreeNumber"),
+      double: () => OperatorsAndValueSelector(freeDoubleOperators, "FreeDouble"),
+      integer: () => OperatorsAndValueSelector(freeIntegerOperators, "FreeInteger"),
       boolean: () => OperatorsAndValueSelector(booleanOperators, "NoSelection"),
       fallback: () => OperatorsAndValueSelector([], "NoSelection") // Geen operatoren voor onbekende types: beter terminale error operator
     })(property.type);
@@ -216,22 +222,12 @@ export namespace FilterEditor {
     valueSelector: genericOperatorSelectors(property).valueSelector
   });
 
-  // Dit lijkt op de genericOperatorSelectors, maar hier kunnen we de selectedOperator gebruiken om de ValueSelector te verfijnen
-  const specificOperatorSelectors: Function2<fltr.Property, ComparisonOperator, ValueSelector> = (property, selectedOperator) =>
-    fltr.matchTypeTypeWithFallback({
-      string: () => "FreeString" as "FreeString", // Hier moeten we kijken of er unieke waarden zijn
-      double: () => "FreeNumber" as "FreeNumber",
-      integer: () => "FreeNumber" as "FreeNumber",
-      boolean: () => "NoSelection" as "NoSelection",
-      fallback: () => "NoSelection" as "NoSelection"
-    })(property.type);
-
   const booleanCompleted: Function2<OperatorSelection, ComparisonOperator, TermEditor> = (selection, selectedOperator) => ({
     ...selection,
     kind: "Completed",
     selectedOperator,
     valueSelector: "NoSelection",
-    selectedValue: selectedOperator.operator === "equality" ? LiteralValue(true) : LiteralValue(false)
+    selectedValue: selectedOperator.operator === "equality" ? LiteralValue(true, "boolean") : LiteralValue(false, "boolean")
   });
 
   // nooit aanroepen met lege array
@@ -240,19 +236,40 @@ export namespace FilterEditor {
   const DisjunctionEditor: Function1<ConjunctionEditor[], DisjunctionsEditor> = conjunctionEditors => ({ conjunctionEditors });
 
   // Overgang van OperatorSelection naar ValueSelection (of Completed voor unaire operators)
-  export const selectOperator: Curried2<ComparisonOperator, OperatorSelection, TermEditor> = operator => selection => ({
-    ...selection,
-    kind: "Value",
-    selectedOperator: operator,
-    valueSelector: specificOperatorSelectors(selection.selectedProperty, operator)
-  });
+  export const selectOperator: Curried2<ComparisonOperator, OperatorSelection, TermEditor> = selectedOperator => selection =>
+    fltr.matchTypeTypeWithFallback<TermEditor>({
+      string: () => ({
+        ...selection,
+        kind: "Value",
+        selectedOperator
+        // verfijn ook nog de ValueSelector adhv de operator
+      }),
+      double: () => ({ ...selection, kind: "Value", selectedOperator }),
+      integer: () => ({ ...selection, kind: "Value", selectedOperator }),
+      boolean: () => booleanCompleted(selection, selectedOperator),
+      fallback: () => ({ ...selection, kind: "Value", selectedOperator }) // In principe gaan we hier niet raken wegens geen operator
+    })(selection.selectedProperty.type);
 
-  // Overgang van ValueSelection naar Completed
-  export const selectValue: Curried2<SelectedValue, ValueSelection, Completed> = selectedValue => selection => ({
-    ...selection,
-    kind: "Completed",
-    selectedValue
-  });
+  // Overgang van ValueSelection naar Completed als alles OK is. Kan dus ook van Completed naar ValueSelection gaan.
+  export const selectValue: Curried2<Option<SelectedValue>, ValueSelection, TermEditor> = maybeSelectedValue => selection => {
+    // Voorlopig ondersteunen we dus enkel LiteralValues
+
+    // in theorie zouden we meer constraints kunnen hebben
+    const validateText: PartialFunction1<SelectedValue, SelectedValue> = fromPredicate(selectedValue =>
+      selectedValue.valueType === "string" ? selectedValue.value.toString().length > 0 : true
+    );
+    const validateType: PartialFunction1<SelectedValue, SelectedValue> = fromPredicate(
+      selectedValue => selectedValue.valueType === selection.selectedProperty.type
+    );
+
+    return maybeSelectedValue
+      .chain(validateType)
+      .chain(validateText)
+      .foldL<TermEditor>(
+        () => ({ ...selection, kind: "Value" }), // we zouden de selectedValue kunnen verwijderen, maar maakt geen verschil
+        selectedValue => ({ ...selection, kind: "Completed", selectedValue })
+      );
+  };
 
   const initConjunctionEditor: Function1<TermEditor, ConjunctionEditor> = termEditor => ConjunctionEditor([termEditor]);
 
@@ -396,13 +413,15 @@ export namespace FilterEditor {
     disjunctions
   ) => ({ name, laag, current, disjunctions });
 
+  const toLiteralValue: Function1<fltr.Literal, LiteralValue> = literal => LiteralValue(literal.value, literal.type);
+
   const completedTermEditor: Function2<ke.ToegevoegdeVectorLaag, fltr.Comparison, TermEditor> = (laag, comparison) => ({
     kind: "Completed",
     properties: properties(laag),
     selectedProperty: comparison.property,
     operatorSelectors: genericOperatorSelectors(comparison.property).operators,
     selectedOperator: binaryComparisonOperator(comparison.operator, comparison.value),
-    selectedValue: comparison.value,
+    selectedValue: toLiteralValue(comparison.value),
     valueSelector: genericOperatorSelectors(comparison.property).valueSelector
   });
 
@@ -571,4 +590,12 @@ export namespace FilterEditor {
         Completed: () => setoidCompleted.equals(te1 as Completed, te2 as Completed)
       })(te1)
   );
+
+  export interface LiteralValueMatcher<A> {
+    readonly;
+  }
+
+  export const matchLiteralValueWithFallback: <A>(
+    _: matchers.FallbackMatcher<LiteralValue, A, fltr.TypeType>
+  ) => Function1<LiteralValue, A> = matcher => matchers.matchWithFallback(matcher)(lv => lv.valueType);
 }

@@ -1,4 +1,4 @@
-import { Endomorphism, Function1, Function2, Refinement } from "fp-ts/lib/function";
+import { Endomorphism, Function1, Function2 } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import { Lens, Setter } from "monocle-ts";
 
@@ -34,7 +34,12 @@ export type Comparator<A> = Function2<A, A, number>;
 /**
  * Een side-effectful functie die waarden van type A consumeert en er "iets vies" mee doet.
  */
-export type Consumer<A> = (a: A) => void;
+export type Consumer1<A> = (a: A) => void;
+
+/**
+ * Een side-effectful functie die waarden van type A en B consumeert en er "iets vies" mee doet.
+ */
+export type Consumer2<A, B> = (a: A, b: B) => void;
 
 /**
  * Een functie die none terug geeft waar die niet gedefineerd is in het domein A.
