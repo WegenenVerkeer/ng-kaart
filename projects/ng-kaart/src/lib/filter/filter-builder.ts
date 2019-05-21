@@ -1,4 +1,3 @@
-import { PartialFunction1 } from "@wegenenverkeer/ng-kaart/lib/util/function";
 import * as array from "fp-ts/lib/Array";
 import { array as ArrayMonad } from "fp-ts/lib/Array";
 import {
@@ -19,7 +18,7 @@ import { fromTraversable, Lens, Prism, Traversal } from "monocle-ts";
 
 import * as ke from "../kaart/kaart-elementen";
 import * as arrays from "../util/arrays";
-import { applySequential } from "../util/function";
+import { applySequential, PartialFunction1 } from "../util/function";
 import * as maps from "../util/maps";
 import * as matchers from "../util/matchers";
 
