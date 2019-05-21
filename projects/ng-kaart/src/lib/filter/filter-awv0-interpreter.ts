@@ -37,7 +37,19 @@ export namespace AwvV0FilterInterpreters {
     )
   });
 
-  const binaryComparisonOperator: oi.Interpreter<fltr.BinaryComparisonOperator> = oi.enu("equality", "inequality");
+  // Vanaf TS 3.4 kunnen we de as const syntax gebruiken om de array van operators en het type automatisch gelijk te
+  // laten lopen. Zie https://stackoverflow.com/questions/44480644/typescript-string-union-to-string-array
+  const binaryComparisonOperator: oi.Interpreter<fltr.BinaryComparisonOperator> = oi.enu(
+    "equality",
+    "inequality",
+    "contains",
+    "starts",
+    "ends",
+    "smaller",
+    "smallerOrEqual",
+    "larger",
+    "largerOrEqual"
+  );
 
   const binaryComparison: oi.Interpreter<fltr.BinaryComparison> = oi.suchThat(
     oi.interpretRecord({
