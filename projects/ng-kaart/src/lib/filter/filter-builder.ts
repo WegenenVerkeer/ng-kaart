@@ -209,6 +209,14 @@ export namespace FilterEditor {
     valueSelector
   ) => ({ operators, valueSelector });
 
+  const specificOperatorSelectors: Function1<fltr.Comparison, OperatorsAndValueSelector> = comparison => {
+    if (comparison.operator === "isempty" || comparison.operator === "isnotempty") {
+      return OperatorsAndValueSelector(booleanOperators, "NoSelection");
+    } else {
+      return genericOperatorSelectors(comparison.property);
+    }
+  };
+
   const genericOperatorSelectors: Function1<fltr.Property, OperatorsAndValueSelector> = property =>
     fltr.matchTypeTypeWithFallback({
       string: () => OperatorsAndValueSelector(freeStringOperators, "FreeString"),
@@ -450,7 +458,7 @@ export namespace FilterEditor {
     operatorSelectors: genericOperatorSelectors(comparison.property).operators,
     selectedOperator: binaryComparisonOperator(comparison.operator, comparison.value),
     selectedValue: toLiteralValue(comparison.value),
-    valueSelector: genericOperatorSelectors(comparison.property).valueSelector
+    valueSelector: specificOperatorSelectors(comparison).valueSelector
   });
 
   const fromComparison: Function3<Option<string>, ke.ToegevoegdeVectorLaag, fltr.Comparison, ExpressionEditor> = (
