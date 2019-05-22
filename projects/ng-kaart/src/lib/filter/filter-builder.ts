@@ -170,7 +170,9 @@ export namespace FilterEditor {
     );
   const properties: Function1<ke.ToegevoegdeVectorLaag, Property[]> = laag =>
     veldinfos(laag)
-      .map(vi => Property(vi.type, vi.naam, fromNullable(vi.label).getOrElse(vi.naam), vi.uniekeWaarden || []))
+      .map(vi =>
+        Property(vi.type, vi.naam, fromNullable(vi.label).getOrElse(vi.naam), array.sort(ordString)(arrays.fromNullable(vi.uniekeWaarden)))
+      )
       .filter(property => ["string", "boolean", "double", "integer"].includes(property.type));
 
   // Initieer aanmaak van een Comparison
