@@ -29,6 +29,7 @@ import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
 import { kaartLogger } from "../kaart/log";
 import { isNotNull, isNotNullObject } from "../util/function";
+import { isOfKind } from "../util/kinded";
 import { parseDouble, parseInteger } from "../util/number";
 import { catOptions, forEvery, subSpy } from "../util/operators";
 
@@ -77,6 +78,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
   readonly filteredVelden$: rx.Observable<fltr.Property[]>;
   readonly filteredOperatoren$: rx.Observable<fed.BinaryComparisonOperator[]>;
+  readonly filteredWaarden$: rx.Observable<string[]>;
 
   readonly naamControl = new FormControl("");
   readonly veldControl = new FormControl("", [Validators.required, autoCompleteSelectieVerplichtValidator]);
@@ -86,7 +88,8 @@ export class FilterEditorComponent extends KaartChildComponentBase {
   readonly textWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
   readonly integerWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
   readonly doubleWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
-  readonly dropdownSelectionWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
+  readonly dropdownWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
+  readonly autocompleteWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
 
   readonly ongeldigeFilter$: rx.Observable<boolean>;
 
@@ -149,6 +152,8 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       this.textWaardeControl.reset("", { emitEvent: false });
       this.integerWaardeControl.reset(0, { emitEvent: false });
       this.doubleWaardeControl.reset(0, { emitEvent: false });
+      this.dropdownWaardeControl.reset("", { emitEvent: false });
+      this.autocompleteWaardeControl.reset("", { emitEvent: false });
     });
 
     const gekozenNaam$: rx.Observable<Option<string>> = subSpy("****gekozenNaam$")(
@@ -172,10 +177,16 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       tap(o => console.log("*****Distinct operator gekozen", o))
     );
     const gekozenText$: rx.Observable<Option<fed.LiteralValue>> = subSpy("****gekozenText")(
-      rx.merge(forControlValue(this.textWaardeControl), forControlValue(this.dropdownSelectionWaardeControl)).pipe(
-        distinctUntilChanged(), // in dit geval vgln we op strings, dus ook OK
-        map(input => fromNullable(input).map(value => fed.LiteralValue(value.toString(), "string")))
-      )
+      rx
+        .merge(
+          forControlValue(this.textWaardeControl),
+          forControlValue(this.dropdownWaardeControl),
+          forControlValue(this.autocompleteWaardeControl)
+        )
+        .pipe(
+          distinctUntilChanged(), // in dit geval vgln we op strings, dus ook OK
+          map(input => fromNullable(input).map(value => fed.LiteralValue(value.toString(), "string")))
+        )
     );
     const gekozenInteger$: rx.Observable<Option<fed.LiteralValue>> = subSpy("****gekozenInteger")(
       forControlValue(this.integerWaardeControl).pipe(
@@ -260,21 +271,43 @@ export class FilterEditorComponent extends KaartChildComponentBase {
         fed.matchTermEditor({
           Field: () => {
             console.log("****reset naar Field");
-            disableEnabled(this.operatorControl, this.textWaardeControl, this.integerWaardeControl, this.doubleWaardeControl);
+            disableEnabled(
+              this.operatorControl,
+              this.textWaardeControl,
+              this.integerWaardeControl,
+              this.doubleWaardeControl,
+              this.dropdownWaardeControl,
+              this.autocompleteWaardeControl
+            );
             resetWithoutEvent(
               this.veldControl,
               this.operatorControl,
               this.textWaardeControl,
               this.integerWaardeControl,
-              this.doubleWaardeControl
+              this.doubleWaardeControl,
+              this.dropdownWaardeControl,
+              this.autocompleteWaardeControl
             );
           },
           Operator: opr => {
             console.log("****reset naar Operator");
             enableDisabled(this.operatorControl);
-            disableEnabled(this.textWaardeControl, this.integerWaardeControl, this.doubleWaardeControl);
+            disableEnabled(
+              this.textWaardeControl,
+              this.integerWaardeControl,
+              this.doubleWaardeControl,
+              this.dropdownWaardeControl,
+              this.autocompleteWaardeControl
+            );
             this.veldControl.setValue(opr.selectedProperty, { emitEvent: false });
-            resetWithoutEvent(this.operatorControl, this.textWaardeControl, this.integerWaardeControl, this.doubleWaardeControl);
+            resetWithoutEvent(
+              this.operatorControl,
+              this.textWaardeControl,
+              this.integerWaardeControl,
+              this.doubleWaardeControl,
+              this.dropdownWaardeControl,
+              this.autocompleteWaardeControl
+            );
           },
           Value: val => {
             console.log("****reset naar Value");
@@ -283,7 +316,8 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.textWaardeControl,
               this.integerWaardeControl,
               this.doubleWaardeControl,
-              this.dropdownSelectionWaardeControl
+              this.dropdownWaardeControl,
+              this.autocompleteWaardeControl
             );
             this.veldControl.setValue(val.selectedProperty, { emitEvent: false });
             this.operatorControl.setValue(val.selectedOperator, { emitEvent: false });
@@ -307,16 +341,24 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               selection: valueSelector => {
                 switch (valueSelector.selectionType) {
                   case "autocomplete":
+                    this.autocompleteWaardeControl.reset("", { emitEvent: true });
                     break;
                   case "dropdown":
-                    this.dropdownSelectionWaardeControl.reset("", { emitEvent: true });
+                    this.dropdownWaardeControl.reset("", { emitEvent: true });
                 }
               }
             })(val.valueSelector);
           },
           Completed: compl => {
             console.log("****reset naar Completed");
-            enableDisabled(this.operatorControl, this.textWaardeControl, this.integerWaardeControl, this.doubleWaardeControl);
+            enableDisabled(
+              this.operatorControl,
+              this.textWaardeControl,
+              this.integerWaardeControl,
+              this.doubleWaardeControl,
+              this.dropdownWaardeControl,
+              this.autocompleteWaardeControl
+            );
             this.veldControl.setValue(compl.selectedProperty, { emitEvent: false });
             this.operatorControl.setValue(compl.selectedOperator, { emitEvent: false });
             fed.matchLiteralValueWithFallback({
@@ -331,7 +373,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     });
 
     const operatorSelection$ = this.filterEditor$.pipe(
-      map(fe => fe.current), // veiliger om enkel van filterEditor te beginnen
+      map(fe => fe.current),
       filter(fed.isAtLeastOperatorSelection)
     );
 
@@ -369,6 +411,18 @@ export class FilterEditorComponent extends KaartChildComponentBase {
         binaryOperators$
       )
       .pipe(map(([getypt, operators]) => operators.filter(operator => operator.label.toLowerCase().startsWith(getypt.toLowerCase()))));
+
+    const distinctValues$: rx.Observable<string[]> = this.filterEditor$.pipe(
+      map(fe => fe.current),
+      filter(fed.isAtLeastValueSelection),
+      map(vs => vs.valueSelector),
+      filter(isOfKind<string, fed.ValueSelector, fed.SelectionValueSelector, "selection">("selection")),
+      map(selection => selection.values)
+    );
+
+    this.filteredWaarden$ = rx
+      .combineLatest(this.autocompleteWaardeControl.valueChanges, distinctValues$)
+      .pipe(map(([typed, values]) => array.filter(values, value => value.toLowerCase().startsWith(typed))));
 
     const maybeZetFilterCmd$ = forEveryLaag(laag =>
       this.filterEditor$.pipe(
@@ -450,6 +504,10 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
   errorDoubleWaarde(): string {
     return this.doubleWaardeControl.hasError("required") ? "Gelieve een waarde in te geven" : "";
+  }
+
+  errorAutocompleteWaarde(): string {
+    return this.autocompleteWaardeControl.hasError("required") ? "Gelieve een waarde in te geven" : "";
   }
 
   onClickOutside() {
