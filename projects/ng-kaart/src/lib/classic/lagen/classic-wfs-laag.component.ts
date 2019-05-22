@@ -32,7 +32,7 @@ export class ClassicWfsLaagComponent extends ClassicVectorLaagLikeComponent {
   }
 
   @Input()
-  set veldInfos(param: ke.VeldInfo[]) {
+  set veldinfos(param: ke.VeldInfo[]) {
     this._veldInfos = val.veldInfoArray(param, this._veldInfos);
   }
 
@@ -67,17 +67,29 @@ export class ClassicWfsLaagComponent extends ClassicVectorLaagLikeComponent {
         throw new Error("Een WFS kaag moet verplicht een waarde voor typenames hebben");
       })
     });
+    const source = new ol.source.Vector({
+      format: new ol.format.GeoJSON(),
+      url: extent => {
+        const url = `${precalculatedUrl}&cql_filter=bbox(the_geom,${extent.join(",")})`;
+        return maybeEncodedFilter.fold(url, encodedFilter => url + encodedFilter);
+      },
+      strategy: ol.loadingstrategy.bbox
+    });
+    source.on(
+      "addfeature",
+      evt => {
+        const feature = evt["feature"] as ol.Feature;
+        const properties = feature.getProperties();
+        feature.setProperties({});
+        feature.set("properties", properties);
+        feature.set("laagnaam", this._titel);
+      },
+      this
+    );
     return {
       type: ke.VectorType,
       titel: this._titel,
-      source: new ol.source.Vector({
-        format: new ol.format.GeoJSON(),
-        url: extent => {
-          const url = `${precalculatedUrl}&cql_filter=bbox(the_geom,${extent.join(",")})`;
-          return maybeEncodedFilter.fold(url, encodedFilter => url + encodedFilter);
-        },
-        strategy: ol.loadingstrategy.bbox
-      }),
+      source: source,
       clusterDistance: this._clusterDistance,
       styleSelector: this.getMaybeStyleSelector(),
       styleSelectorBron: this.getMaybeStyleSelectorBron(),

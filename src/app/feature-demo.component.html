@@ -29,6 +29,10 @@
       Ingezoomd
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !ingezoomdSectie.sectieZichtbaar }">visibility</span>
     </div>
+    <div (click)="districtenSectie.toggleSectieZichtbaar();scrollTo('districten')" class="sub-titel">
+      Districten
+      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !districtenSectie.sectieZichtbaar }">visibility</span>
+    </div>
     <div (click)="dynamischeFeatures.toggleSectieZichtbaar();scrollTo('dynamische-features')" class="sub-titel">
       Dynamische features
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !dynamischeFeatures.sectieZichtbaar }">visibility</span>
@@ -201,7 +205,7 @@
           <awv-legende-polygoon-item [beschrijving]="'Referentiepunten 3 (polygoon)'" [kleur]="'green'"></awv-legende-polygoon-item>
         </awv-kaart-geoserver-laag>
         <awv-kaart-features-laag [titel]="'Mechelen allerlei'" [features]="mechelenFeatures" [style]="pinIcon" [minZoom]="4"
-                                 [zichtbaar]="true" [veldInfos]="mechelenVeldInfos"></awv-kaart-features-laag>
+                                 [zichtbaar]="true" [veldinfos]="mechelenVeldInfos"></awv-kaart-features-laag>
         <awv-kaart-features-laag [titel]="'Vliegtuig'" [features]="installatie" [style]="pinIcon2" [minZoom]="3"
                                  [zichtbaar]="false"></awv-kaart-features-laag>
         <!-- achtergrondlagen -->
@@ -680,13 +684,22 @@
       <awv-test-sectie #wfsFilterSectie sectieId="wfsFilter" sectieTitel="WFS filter" [subSectie]="true" #wfsFilterSectie
                        [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && wfsFilterSectie.sectieZichtbaar">
         <div *ngIf="wfsFilterSectie.sectieZichtbaar" [@enterAnimation]>
-          <awv-kaart-classic #wfsFilterKaart naam="wfsFilter" zoom="3" hoogte="600">
+          <awv-kaart-classic  #wfsFilterKaart
+                              (geselecteerdeFeaturesChange)="featuresGeselecteerd($event, wfsFilterKaart)"
+                              [naam]="'wfsFilter'"
+                              [zoom]="3"
+                              [selectieModus]="'single'"
+                              [hoogte]="600">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
             <awv-kaart-blanco-laag [titel]="'Leeg'"></awv-kaart-blanco-laag>
 
             <awv-kaart-lagenkiezer></awv-kaart-lagenkiezer>
 
-            <awv-kaart-wfs-laag [titel]="'Korte Straten'" [typeNames]="'awv:straten'" [minZoom]="6" [cqlFilter]="'shape_leng<100'"></awv-kaart-wfs-laag>
+            <awv-kaart-wfs-laag [titel]="'Korte Straten'"
+                                [typeNames]="'awv:straten'"
+                                [minZoom]="6"
+                                [veldinfos]="wfsStratenVeldinfos"
+                                [cqlFilter]="'shape_leng<100'"></awv-kaart-wfs-laag>
 
             <awv-kaart-knop-achtergrondlaag-kiezer></awv-kaart-knop-achtergrondlaag-kiezer>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
