@@ -49,8 +49,8 @@ export namespace AwvV0FilterInterpreters {
     "smallerOrEqual",
     "larger",
     "largerOrEqual",
-    "isempty",
-    "isnotempty"
+    "isEmpty",
+    "isNotEmpty"
   );
 
   const binaryComparison: oi.Interpreter<fltr.BinaryComparison> = oi.suchThat(
