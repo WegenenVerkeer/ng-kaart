@@ -28,20 +28,37 @@
           <mat-error *ngIf="operatorControl.invalid">{{errorOperator()}}</mat-error>
         </mat-form-field>
 
-        <ng-container [ngSwitch]="veldwaardeType$ | async">
-          <mat-form-field *ngSwitchCase="'FreeString'" class="filter-waarde-editbox">
-            <input type="text" matInput placeholder="Waarde" [formControl]="textWaardeControl"/>
-            <mat-error *ngIf="textWaardeControl.invalid">{{errorTextWaarde()}}</mat-error>
-          </mat-form-field>
-          <mat-form-field *ngSwitchCase="'FreeDouble'" class="filter-waarde-editbox">
-            <input type="number" step="0.1" matInput placeholder="Getal" [formControl]="doubleWaardeControl"/>
-            <mat-error *ngIf="doubleWaardeControl.invalid">{{errorDoubleWaarde()}}</mat-error>
-          </mat-form-field>
-          <mat-form-field *ngSwitchCase="'FreeInteger'" class="filter-waarde-editbox">
-            <input type="number" step="1" matInput placeholder="Getal" [formControl]="integerWaardeControl"/>
-            <mat-error *ngIf="integerWaardeControl.invalid">{{errorIntegerWaarde()}}</mat-error>
-          </mat-form-field>
-          <span *ngSwitchDefault class="filter-waarde-editbox"></span>
+        <ng-container *ngIf="(veldwaardeType$ | async) as valueSelector">
+          <ng-container [ngSwitch]="valueSelector.kind">
+            <ng-container *ngSwitchCase="'free'" [ngSwitch]="valueSelector.valueType">
+              <mat-form-field *ngSwitchCase="'string'" class="filter-waarde-editbox">
+                <input type="text" matInput placeholder="Waarde" [formControl]="textWaardeControl"/>
+                <mat-error *ngIf="textWaardeControl.invalid">{{errorTextWaarde()}}</mat-error>
+              </mat-form-field>
+              <mat-form-field *ngSwitchCase="'double'" class="filter-waarde-editbox">
+                <input type="number" step="0.1" matInput placeholder="Getal" [formControl]="doubleWaardeControl"/>
+                <mat-error *ngIf="doubleWaardeControl.invalid">{{errorDoubleWaarde()}}</mat-error>
+              </mat-form-field>
+              <mat-form-field *ngSwitchCase="'integer'" class="filter-waarde-editbox">
+                <input type="number" step="1" matInput placeholder="Getal" [formControl]="integerWaardeControl"/>
+                <mat-error *ngIf="integerWaardeControl.invalid">{{errorIntegerWaarde()}}</mat-error>
+              </mat-form-field>
+            </ng-container>
+            <ng-container *ngSwitchCase="'selection'">
+              <ng-container [ngSwitch]="valueSelector.selectionType">
+                <mat-form-field *ngSwitchCase="'autocomplete'" class="filter-waarde-autocomplete">
+                  Autocomplete <input type="text" placeholder="Waarde" matInput/>
+                </mat-form-field>
+                <mat-form-field *ngSwitchCase="'dropdown'" class="filter-waarde-dropdown">
+                  <mat-label>Kies een waarde</mat-label>
+                  <mat-select [formControl]="dropdownSelectionWaardeControl">
+                    <mat-option *ngFor="let value of valueSelector.values" [value]="value">{{value}}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </ng-container>
+            </ng-container>
+            <span *ngSwitchCase="'empty'" class="filter-waarde-editbox"></span>
+          </ng-container>
         </ng-container>
 
         <div class="delete-icon">

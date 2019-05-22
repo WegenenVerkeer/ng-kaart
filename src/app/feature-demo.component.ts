@@ -534,7 +534,7 @@ export class FeatureDemoComponent {
     { isBasisVeld: false, label: "Bron Id", naam: "bronid", type: "string" },
     { isBasisVeld: false, label: "Opnamedatum", naam: "opnamedatum", type: "date" },
     { isBasisVeld: false, label: "Wijzigingsdatum", naam: "wijzigingsdatum", type: "date" },
-    { isBasisVeld: true, label: "Zijde", naam: "zijderijbaan", type: "string", uniekeWaarden: ["L", "M", "NVT", "R"] },
+    { isBasisVeld: true, label: "Zijde", naam: "zijderijbaan", type: "string", uniekeWaarden: ["R", "L", "M", "NVT"] }, // niet alfabetisch!
     {
       isBasisVeld: true,
       label: "Type",

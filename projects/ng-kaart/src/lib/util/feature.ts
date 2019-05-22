@@ -17,7 +17,7 @@ export const toOlFeature: Curried2<string, GeoJsonCore, ol.Feature> = laagnaam =
       id: geojson.id,
       properties: geojson.properties,
       geometry: format.readGeometry(geojson.geometry),
-      laagnaam: laagnaam
+      laagnaam: laagnaam // o.a. voor gebruik bij stijlen en identify
     });
     feature.setId(geojson.id);
     return feature;

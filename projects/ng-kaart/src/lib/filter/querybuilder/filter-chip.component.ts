@@ -40,8 +40,6 @@ export class FilterChipComponent {
   }
 
   completedValue(): string {
-    return this.editor.kind === "Completed" && this.editor.valueSelector !== "NoSelection"
-      ? this.editor.selectedValue.value.toString()
-      : "";
+    return this.editor.kind === "Completed" && this.editor.valueSelector.kind !== "empty" ? this.editor.selectedValue.value.toString() : "";
   }
 }

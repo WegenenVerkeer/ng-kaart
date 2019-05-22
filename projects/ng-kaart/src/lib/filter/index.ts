@@ -8,7 +8,8 @@ import {
   MatFormFieldModule,
   MatIconModule,
   MatInputModule,
-  MatMenuModule
+  MatMenuModule,
+  MatSelectModule
 } from "@angular/material";
 
 import { FilterDetailComponent } from "./filter-detail.component";
@@ -43,7 +44,8 @@ const components: any[] = [
     MatInputModule,
     MatFormFieldModule,
     MatMenuModule,
-    MatAutocompleteModule
+    MatAutocompleteModule,
+    MatSelectModule
   ],
   declarations: [components],
   exports: [components],
