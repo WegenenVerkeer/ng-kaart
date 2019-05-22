@@ -127,19 +127,6 @@ export namespace Filter {
     readonly kind: "Incomplete";
   }
 
-  export interface Literal {
-    readonly kind: "Literal";
-    readonly type: TypeType;
-    readonly value: ValueType;
-  }
-
-  export interface Property {
-    readonly kind: "Property";
-    readonly type: TypeType;
-    readonly ref: string;
-    readonly label: string;
-  }
-
   export const EmptyFilter: EmptyFilter = { kind: "EmptyFilter" };
   export const empty: Lazy<Filter> = constant(EmptyFilter);
 

@@ -44,20 +44,24 @@ export namespace FilterEditor {
 
   export type TermEditor = FieldSelection | OperatorSelection | ValueSelection | Completed;
 
+  export interface Property extends fltr.Property {
+    readonly distinctValues: string[];
+  }
+
   export interface FieldSelection {
     readonly kind: "Field";
 
-    readonly properties: fltr.Property[];
+    readonly properties: Property[];
   }
 
-  export type ValueSelector = "FreeString" | "FreeInteger" | "FreeDouble" | "NoSelection";
+  export type ValueSelector = "FreeString" | "FreeInteger" | "FreeDouble" | "SelectString" | "AutoCompleteString" | "NoSelection";
 
   export interface OperatorSelection {
     readonly kind: "Operator";
 
-    readonly properties: fltr.Property[];
+    readonly properties: Property[];
 
-    readonly selectedProperty: fltr.Property;
+    readonly selectedProperty: Property;
     readonly operatorSelectors: ComparisonOperator[];
 
     readonly valueSelector: ValueSelector; // Deze ValueSelector is maar voorlopig. Kan verfijnd worden wanneer de operator gekozen is.
@@ -76,8 +80,8 @@ export namespace FilterEditor {
   export interface ValueSelection {
     readonly kind: "Value";
 
-    readonly properties: fltr.Property[];
-    readonly selectedProperty: fltr.Property;
+    readonly properties: Property[];
+    readonly selectedProperty: Property;
     readonly operatorSelectors: ComparisonOperator[];
 
     readonly selectedOperator: ComparisonOperator;
@@ -95,14 +99,22 @@ export namespace FilterEditor {
   export interface Completed {
     readonly kind: "Completed";
 
-    readonly properties: fltr.Property[];
-    readonly selectedProperty: fltr.Property;
+    readonly properties: Property[];
+    readonly selectedProperty: Property;
     readonly operatorSelectors: ComparisonOperator[];
     readonly selectedOperator: ComparisonOperator;
     readonly valueSelector: ValueSelector;
 
     readonly selectedValue: SelectedValue;
   }
+
+  const Property: Function4<fltr.TypeType, string, string, string[], Property> = (typetype, name, label, distinctValues) => ({
+    kind: "Property",
+    type: typetype,
+    ref: name,
+    label,
+    distinctValues
+  });
 
   export const LiteralValue: Function2<fltr.ValueType, fltr.TypeType, LiteralValue> = (value, valueType) => ({
     kind: "Literal",
@@ -125,9 +137,9 @@ export namespace FilterEditor {
         fromNullable(veld.template).isNone() &&
         fromNullable(veld.html).isNone()
     );
-  const properties: Function1<ke.ToegevoegdeVectorLaag, fltr.Property[]> = laag =>
+  const properties: Function1<ke.ToegevoegdeVectorLaag, Property[]> = laag =>
     veldinfos(laag)
-      .map(vi => fltr.Property(vi.type, vi.naam, fromNullable(vi.label).getOrElse(vi.naam)))
+      .map(vi => Property(vi.type, vi.naam, fromNullable(vi.label).getOrElse(vi.naam), vi.uniekeWaarden || []))
       .filter(property => ["string", "boolean", "double", "integer"].includes(property.type));
 
   // Initieer aanmaak van een Comparison
@@ -201,7 +213,7 @@ export namespace FilterEditor {
     valueSelector
   ) => ({ operators, valueSelector });
 
-  const genericOperatorSelectors: Function1<fltr.Property, OperatorsAndValueSelector> = property =>
+  const genericOperatorSelectors: Function1<Property, OperatorsAndValueSelector> = property =>
     fltr.matchTypeTypeWithFallback({
       string: () => OperatorsAndValueSelector(freeStringOperators, "FreeString"),
       double: () => OperatorsAndValueSelector(freeDoubleOperators, "FreeDouble"),
@@ -210,10 +222,17 @@ export namespace FilterEditor {
       fallback: () => OperatorsAndValueSelector([], "NoSelection") // Geen operatoren voor onbekende types: beter terminale error operator
     })(property.type);
 
+  const bestStringValueSelector: Function2<Property, BinaryComparisonOperator, ValueSelector> = (property, operator) =>
+    arrays.isNonEmpty(property.distinctValues) && ["equality", "inequality"].includes(operator.operator)
+      ? arrays.hasAtLeastLength(8)
+        ? "AutoCompleteString"
+        : "SelectString"
+      : "FreeString";
+
   // Overgang van FieldSelection naar OperatorSelection -> De overgangen zouden beter Validations zijn om er rekening
   // mee te houden dat de overgang eventueel niet mogelijk is. Bijvoorbeeld wanneer een veld opgegeven wordt dat niet in
   // de lijst staat.
-  export const selectedProperty: Curried2<fltr.Property, FieldSelection, TermEditor> = property => selection => ({
+  export const selectedProperty: Curried2<Property, FieldSelection, TermEditor> = property => selection => ({
     ...selection,
     kind: "Operator",
     selectedProperty: property,
@@ -240,7 +259,8 @@ export namespace FilterEditor {
       string: () => ({
         ...selection,
         kind: "Value",
-        selectedOperator
+        selectedOperator,
+        valueSelector: bestStringValueSelector(selection.selectedProperty, selectedOperator)
         // verfijn ook nog de ValueSelector adhv de operator
       }),
       double: () => ({ ...selection, kind: "Value", selectedOperator }),
@@ -414,15 +434,22 @@ export namespace FilterEditor {
 
   const toLiteralValue: Function1<fltr.Literal, LiteralValue> = literal => LiteralValue(literal.value, literal.type);
 
-  const completedTermEditor: Function2<ke.ToegevoegdeVectorLaag, fltr.Comparison, TermEditor> = (laag, comparison) => ({
-    kind: "Completed",
-    properties: properties(laag),
-    selectedProperty: comparison.property,
-    operatorSelectors: genericOperatorSelectors(comparison.property).operators,
-    selectedOperator: binaryComparisonOperator(comparison.operator, comparison.value),
-    selectedValue: toLiteralValue(comparison.value),
-    valueSelector: genericOperatorSelectors(comparison.property).valueSelector
-  });
+  const completedTermEditor: Function2<ke.ToegevoegdeVectorLaag, fltr.Comparison, TermEditor> = (laag, comparison) => {
+    const distinctValues = array
+      .findFirst(veldinfos(laag), vi => vi.naam === comparison.property.ref)
+      .chain(vi => fromNullable(vi.uniekeWaarden))
+      .getOrElse([]);
+    const property: Property = { ...comparison.property, distinctValues };
+    return {
+      kind: "Completed",
+      properties: properties(laag),
+      selectedProperty: property,
+      operatorSelectors: genericOperatorSelectors(property).operators,
+      selectedOperator: binaryComparisonOperator(comparison.operator, comparison.value),
+      selectedValue: toLiteralValue(comparison.value),
+      valueSelector: genericOperatorSelectors(property).valueSelector
+    };
+  };
 
   const fromComparison: Function3<Option<string>, ke.ToegevoegdeVectorLaag, fltr.Comparison, ExpressionEditor> = (
     name,
@@ -542,7 +569,7 @@ export namespace FilterEditor {
 
   const setoidFieldSelection: Setoid<FilterEditor.FieldSelection> = getRecordSetoid({
     kind: setoidString,
-    properties: array.getSetoid(contramap<string, fltr.Property>(p => p.ref, setoidString))
+    properties: array.getSetoid(contramap<string, Property>(p => p.ref, setoidString))
   });
 
   const setoidBinaryComparisonOperator: Setoid<BinaryComparisonOperator> = contramap(o => o.operator, fltr.setoidBinaryComparisonOperator);
