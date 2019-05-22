@@ -30,6 +30,8 @@ export namespace FilterCql {
       inequality: () => some(`${propertyRef(property)} != '${literal.value}'`),
       starts: () => some(`${propertyRef(property)} like '${literal.value}%'`), // TODO prevent %
       ends: () => some(`${propertyRef(property)} like '%${literal.value}'`), // TODO prevent %
+      isempty: () => some(`${propertyRef(property)} is null`), // TODO prevent %
+      isnotempty: () => some(`${propertyRef(property)} is not null`), // TODO prevent %
       contains: () => some(`${propertyRef(property)} like '%${literal.value}%'`), // TODO prevent %,
       fallback: () => none // de andere operators worden niet ondersteund
     })(operator);

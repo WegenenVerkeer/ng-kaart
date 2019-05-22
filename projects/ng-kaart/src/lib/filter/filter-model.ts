@@ -56,7 +56,9 @@ export namespace Filter {
     | "smaller"
     | "smallerOrEqual"
     | "larger"
-    | "largerOrEqual";
+    | "largerOrEqual"
+    | "isempty"
+    | "isnotempty";
 
   export interface BinaryComparison {
     readonly kind: "BinaryComparison";

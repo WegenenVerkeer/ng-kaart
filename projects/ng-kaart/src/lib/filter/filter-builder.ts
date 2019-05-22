@@ -145,7 +145,9 @@ export namespace FilterEditor {
     BinaryComparisonOperator("is niet", "is niet", "inequality", "string"),
     BinaryComparisonOperator("bevat", "bevat", "contains", "string"),
     BinaryComparisonOperator("start met", "start met", "starts", "string"),
-    BinaryComparisonOperator("eindigt met", "eindigt met", "ends", "string")
+    BinaryComparisonOperator("eindigt met", "eindigt met", "ends", "string"),
+    BinaryComparisonOperator("heeft geen waarde", "heeft geen waarde", "isempty", "string"),
+    BinaryComparisonOperator("heeft een waarde", "heeft een waarde", "isnotempty", "string")
   ];
 
   const freeDoubleOperators: ComparisonOperator[] = [
@@ -154,7 +156,9 @@ export namespace FilterEditor {
     BinaryComparisonOperator("kleiner dan", "<", "smaller", "double"),
     BinaryComparisonOperator("kleiner dan of gelijk aan", "<=", "smallerOrEqual", "double"),
     BinaryComparisonOperator("groter dan", ">", "larger", "double"),
-    BinaryComparisonOperator("groter dan of gelijk aan", ">=", "largerOrEqual", "double")
+    BinaryComparisonOperator("groter dan of gelijk aan", ">=", "largerOrEqual", "double"),
+    BinaryComparisonOperator("heeft geen waarde", "heeft geen waarde", "isempty", "string"),
+    BinaryComparisonOperator("heeft een waarde", "heeft een waarde", "isnotempty", "string")
   ];
 
   const freeIntegerOperators: ComparisonOperator[] = [
@@ -163,12 +167,16 @@ export namespace FilterEditor {
     BinaryComparisonOperator("kleiner dan", "<", "smaller", "integer"),
     BinaryComparisonOperator("kleiner dan of gelijk aan", "<=", "smallerOrEqual", "integer"),
     BinaryComparisonOperator("groter dan", ">", "larger", "integer"),
-    BinaryComparisonOperator("groter dan of gelijk aan", ">=", "largerOrEqual", "integer")
+    BinaryComparisonOperator("groter dan of gelijk aan", ">=", "largerOrEqual", "integer"),
+    BinaryComparisonOperator("heeft geen waarde", "heeft geen waarde", "isempty", "string"),
+    BinaryComparisonOperator("heeft een waarde", "heeft een waarde", "isnotempty", "string")
   ];
 
   const booleanOperators: ComparisonOperator[] = [
     BinaryComparisonOperator("is waar", "is waar", "equality", "boolean"),
-    BinaryComparisonOperator("is niet waar", "is niet waar", "inequality", "boolean")
+    BinaryComparisonOperator("is niet waar", "is niet waar", "inequality", "boolean"),
+    BinaryComparisonOperator("heeft geen waarde", "heeft geen waarde", "isempty", "string"),
+    BinaryComparisonOperator("heeft een waarde", "heeft een waarde", "isnotempty", "string")
   ];
 
   interface OperatorLabels {
@@ -221,13 +229,39 @@ export namespace FilterEditor {
     valueSelector: genericOperatorSelectors(property).valueSelector
   });
 
-  const booleanCompleted: Function2<OperatorSelection, ComparisonOperator, TermEditor> = (selection, selectedOperator) => ({
-    ...selection,
-    kind: "Completed",
-    selectedOperator,
-    valueSelector: "NoSelection",
-    selectedValue: selectedOperator.operator === "equality" ? LiteralValue(true, "boolean") : LiteralValue(false, "boolean")
-  });
+  const valueOrCompleted: Function2<OperatorSelection, ComparisonOperator, TermEditor> = (selection, selectedOperator) => {
+    if (selectedOperator.operator === "isempty" || selectedOperator.operator === "isnotempty") {
+      return {
+        ...selection,
+        kind: "Completed",
+        selectedOperator,
+        valueSelector: "NoSelection",
+        selectedValue: selectedOperator.operator === "isempty" ? LiteralValue(true, "boolean") : LiteralValue(false, "boolean")
+      };
+    } else {
+      return { ...selection, kind: "Value", selectedOperator };
+    }
+  };
+
+  const booleanCompleted: Function2<OperatorSelection, ComparisonOperator, TermEditor> = (selection, selectedOperator) => {
+    if (selectedOperator.operator === "isempty" || selectedOperator.operator === "isnotempty") {
+      return {
+        ...selection,
+        kind: "Completed",
+        selectedOperator,
+        valueSelector: "NoSelection",
+        selectedValue: selectedOperator.operator === "isempty" ? LiteralValue(true, "boolean") : LiteralValue(false, "boolean")
+      };
+    } else {
+      return {
+        ...selection,
+        kind: "Completed",
+        selectedOperator,
+        valueSelector: "NoSelection",
+        selectedValue: selectedOperator.operator === "equality" ? LiteralValue(true, "boolean") : LiteralValue(false, "boolean")
+      };
+    }
+  };
 
   // nooit aanroepen met lege array
   const ConjunctionEditor: Function1<TermEditor[], ConjunctionEditor> = termEditors => ({ termEditors });
@@ -237,16 +271,11 @@ export namespace FilterEditor {
   // Overgang van OperatorSelection naar ValueSelection (of Completed voor unaire operators)
   export const selectOperator: Curried2<ComparisonOperator, OperatorSelection, TermEditor> = selectedOperator => selection =>
     fltr.matchTypeTypeWithFallback<TermEditor>({
-      string: () => ({
-        ...selection,
-        kind: "Value",
-        selectedOperator
-        // verfijn ook nog de ValueSelector adhv de operator
-      }),
-      double: () => ({ ...selection, kind: "Value", selectedOperator }),
-      integer: () => ({ ...selection, kind: "Value", selectedOperator }),
+      string: () => valueOrCompleted(selection, selectedOperator),
+      double: () => valueOrCompleted(selection, selectedOperator),
+      integer: () => valueOrCompleted(selection, selectedOperator),
       boolean: () => booleanCompleted(selection, selectedOperator),
-      fallback: () => ({ ...selection, kind: "Value", selectedOperator }) // In principe gaan we hier niet raken wegens geen operator
+      fallback: () => valueOrCompleted(selection, selectedOperator) // In principe gaan we hier niet raken wegens geen operator
     })(selection.selectedProperty.type);
 
   // Overgang van ValueSelection naar Completed als alles OK is. Kan dus ook van Completed naar ValueSelection gaan.
