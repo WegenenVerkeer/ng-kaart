@@ -197,7 +197,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
         )
         .pipe(
           distinctUntilChanged(), // in dit geval vgln we op strings, dus ook OK
-          map(input => fromNullable(input).map(value => fed.LiteralValue(value.toString(), "string")))
+          map(input => fromNullable(input).map(value => fed.LiteralValue(value.toString().trim(), "string")))
         )
     );
     const gekozenInteger$: rx.Observable<Option<fed.LiteralValue>> = subSpy("****gekozenInteger")(
