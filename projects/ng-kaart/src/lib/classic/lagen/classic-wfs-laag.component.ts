@@ -4,6 +4,7 @@ import * as ol from "openlayers";
 
 import * as ke from "../../kaart/kaart-elementen";
 import * as ss from "../../kaart/stijl-selector";
+import { setLaagnaam } from "../../util/feature";
 import { urlWithParams } from "../../util/url";
 import * as val from "../webcomponent-support/params";
 
@@ -82,7 +83,7 @@ export class ClassicWfsLaagComponent extends ClassicVectorLaagLikeComponent {
         const properties = feature.getProperties();
         feature.setProperties({});
         feature.set("properties", properties);
-        feature.set("laagnaam", this._titel);
+        setLaagnaam(this._titel)(feature);
       },
       this
     );
