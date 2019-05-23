@@ -117,6 +117,7 @@ export namespace FilterEditor {
 
     readonly selectedOperator: ComparisonOperator;
     readonly valueSelector: ValueSelector;
+    readonly workingValue: Option<SelectedValue>; // voorlopig ongelidge ingevoerde waarde bij te houden
   }
 
   export type SelectedValue = LiteralValue;
@@ -279,7 +280,7 @@ export namespace FilterEditor {
 
   const bestStringValueSelector: Function2<Property, BinaryComparisonOperator, ValueSelector> = (property, operator) =>
     arrays.isNonEmpty(property.distinctValues) && ["equality", "inequality"].includes(operator.operator)
-      ? arrays.hasAtLeastLength(8)(property.distinctValues)
+      ? arrays.hasAtLeastLength(0)(property.distinctValues) // Volgens acceptatiecrits AGL-3454 8 ipv 0, maar meerwaarde onduidelijk
         ? SelectionValueSelector("autocomplete", property.distinctValues)
         : SelectionValueSelector("dropdown", property.distinctValues)
       : FreeInputValueSelector("string");
@@ -315,13 +316,13 @@ export namespace FilterEditor {
         ...selection,
         kind: "Value",
         selectedOperator,
-        valueSelector: bestStringValueSelector(selection.selectedProperty, selectedOperator)
-        // verfijn ook nog de ValueSelector adhv de operator
+        valueSelector: bestStringValueSelector(selection.selectedProperty, selectedOperator),
+        workingValue: none
       }),
-      double: () => ({ ...selection, kind: "Value", selectedOperator }),
-      integer: () => ({ ...selection, kind: "Value", selectedOperator }),
+      double: () => ({ ...selection, kind: "Value", selectedOperator, workingValue: none }),
+      integer: () => ({ ...selection, kind: "Value", selectedOperator, workingValue: none }),
       boolean: () => booleanCompleted(selection, selectedOperator),
-      fallback: () => ({ ...selection, kind: "Value", selectedOperator }) // In principe gaan we hier niet raken wegens geen operator
+      fallback: () => ({ ...selection, kind: "Value", selectedOperator, workingValue: none }) // Hier raken we niet wegens geen operator
     })(selection.selectedProperty.type);
 
   // Overgang van ValueSelection naar Completed als alles OK is. Kan dus ook van Completed naar ValueSelection gaan.
@@ -332,6 +333,11 @@ export namespace FilterEditor {
     const validateText: PartialFunction1<SelectedValue, SelectedValue> = fromPredicate(selectedValue =>
       selectedValue.valueType === "string" ? selectedValue.value.toString().length > 0 : true
     );
+    const validateDistinct: PartialFunction1<SelectedValue, SelectedValue> = fromPredicate(selectedValue =>
+      selection.valueSelector.kind === "selection"
+        ? typeof selectedValue.value === "string" && selection.valueSelector.values.includes(selectedValue.value)
+        : true
+    );
     const validateType: PartialFunction1<SelectedValue, SelectedValue> = fromPredicate(
       selectedValue => selectedValue.valueType === selection.selectedProperty.type
     );
@@ -339,8 +345,9 @@ export namespace FilterEditor {
     return maybeSelectedValue
       .chain(validateType)
       .chain(validateText)
+      .chain(validateDistinct)
       .foldL<TermEditor>(
-        () => ({ ...selection, kind: "Value" }), // we zouden de selectedValue kunnen verwijderen, maar maakt geen verschil
+        () => ({ ...selection, kind: "Value", workingValue: maybeSelectedValue }), // selectedValue verwijderen maakt geen verschil
         selectedValue => ({ ...selection, kind: "Completed", selectedValue })
       );
   };

@@ -53,8 +53,8 @@
               </mat-form-field>
               <mat-form-field *ngSwitchCase="'autocomplete'" class="filter-waarde-combo">
                 <input type="text" placeholder="Waarde" matInput [formControl]="autocompleteWaardeControl" [matAutocomplete]="waarden"/>
-                <mat-autocomplete #waarden="matAutocomplete">
-                  <mat-option *ngFor="let waarde of (filteredWaarden$ | async)" [value]="waarde">{{waarde}}</mat-option>
+                <mat-autocomplete #waarden="matAutocomplete" [displayWith]="displayAutocompleteWaarde">
+                  <mat-option *ngFor="let waarde of (filteredWaarden$ | async)" [value]="waarde">{{waarde.value}}</mat-option>
                 </mat-autocomplete>
                 <mat-error *ngIf="autocompleteWaardeControl.invalid">{{errorAutocompleteWaarde()}}</mat-error>
               </mat-form-field>
