@@ -99,7 +99,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
   readonly integerWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
   readonly doubleWaardeControl = new FormControl({ value: null });
 
-  readonly hoofdLetterGevoeligControl = new FormControl({ value: false, disabled: true });
+  readonly hoofdLetterGevoeligControl = new FormControl({ value: null, disabled: true });
 
   readonly dropdownWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
   readonly autocompleteWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
@@ -167,7 +167,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       this.doubleWaardeControl.reset(0, { emitEvent: false });
       this.dropdownWaardeControl.reset("", { emitEvent: false });
       this.autocompleteWaardeControl.reset("", { emitEvent: false });
-      this.hoofdLetterGevoeligControl.reset(false, { emitEvent: false });
+      this.hoofdLetterGevoeligControl.reset(null, { emitEvent: false });
     });
 
     const gekozenNaam$: rx.Observable<Option<string>> = subSpy("****gekozenNaam$")(
@@ -192,7 +192,6 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     );
 
     const gekozenHoofdLetterGevoelig$: rx.Observable<boolean> = forControlValue(this.hoofdLetterGevoeligControl).pipe(
-      startWith(false),
       tap(o => console.log("*****Hoofdlettergevoeligheid gekozen", o))
     );
 
@@ -230,9 +229,9 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     const zetNaam$: rx.Observable<ExpressionEditorUpdate> = gekozenNaam$.pipe(map(fed.setName));
     const zetHoofdletterGevoelig$: rx.Observable<TermEditorUpdate> = gekozenHoofdLetterGevoelig$.pipe(map(fed.selectHoofdletterGevoelig));
     const zetProperty$: rx.Observable<TermEditorUpdate> = gekozenProperty$.pipe(map(fed.selectedProperty));
-    const zetOperator$: rx.Observable<TermEditorUpdate> = rx
-      .combineLatest(gekozenOperator$, gekozenHoofdLetterGevoelig$)
-      .pipe(map(([operator, caseSensitive]) => fed.selectOperator(operator)(caseSensitive)));
+    const zetOperator$: rx.Observable<TermEditorUpdate> = gekozenOperator$.pipe(
+      map(operator => fed.selectOperator(operator)(this.hoofdLetterGevoeligControl.value))
+    );
     const zetWaarde$: rx.Observable<TermEditorUpdate> = gekozenWaarde$.pipe(
       tap(w => console.log("***waarde$", w)),
       map(fed.selectValue)
@@ -390,7 +389,8 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.integerWaardeControl,
               this.doubleWaardeControl,
               this.dropdownWaardeControl,
-              this.autocompleteWaardeControl
+              this.autocompleteWaardeControl,
+              this.hoofdLetterGevoeligControl
             );
             this.veldControl.setValue(compl.selectedProperty, { emitEvent: false });
             this.operatorControl.setValue(compl.selectedOperator, { emitEvent: false });
