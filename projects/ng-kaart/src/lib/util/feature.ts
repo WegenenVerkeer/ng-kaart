@@ -16,16 +16,21 @@ export const toOlFeature: Curried2<string, GeoJsonCore, ol.Feature> = laagnaam =
     const feature = new ol.Feature({
       id: geojson.id,
       properties: geojson.properties,
-      geometry: format.readGeometry(geojson.geometry),
-      laagnaam: laagnaam // o.a. voor gebruik bij stijlen en identify
+      geometry: format.readGeometry(geojson.geometry)
     });
     feature.setId(geojson.id);
-    return feature;
+    return setLaagnaam(laagnaam)(feature);
   } catch (error) {
     const msg = `Kan geometry niet parsen: ${error}`;
     kaartLogger.error(msg);
     throw new Error(msg);
   }
+};
+
+// o.a. voor gebruik bij stijlen en identify
+export const setLaagnaam: Curried2<string, ol.Feature, ol.Feature> = laagnaam => feature => {
+  feature.set("laagnaam", laagnaam);
+  return feature;
 };
 
 export namespace Feature {

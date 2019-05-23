@@ -20,7 +20,7 @@ export class ClassicVectorLaagComponent extends ClassicVectorLaagLikeComponent {
   _veldInfos: ke.VeldInfo[] = [];
 
   @Input()
-  set veldInfos(param: ke.VeldInfo[]) {
+  set veldinfos(param: ke.VeldInfo[]) {
     this._veldInfos = val.veldInfoArray(param, this._veldInfos);
   }
 
