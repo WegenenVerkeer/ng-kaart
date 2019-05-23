@@ -64,8 +64,8 @@
 
     .filter-velden-combo {
       padding: 8px;
-      min-width: 200px;
       padding-left: 16px;
+      min-width: 200px;
     }
 
     .filter-operator-combo {
@@ -74,7 +74,20 @@
     }
 
     .filter-waarde-editbox {
-      padding: 8px 16px 8px 8px;
+      padding: 8px;
+      padding-left: 16px;
+      min-width: 200px;
+    }
+
+    .filter-waarde-dropdown {
+      padding: 8px;
+      padding-left: 16px;
+      min-width: 200px;
+    }
+
+    .filter-waarde-combo {
+      padding: 8px;
+      padding-left: 16px;
       min-width: 200px;
     }
   }
@@ -82,11 +95,6 @@
   .delete-icon {
     line-height: 64px;
   }
-
-  .query-builder {
-
-  }
-
 }
 
 .filter-footer {

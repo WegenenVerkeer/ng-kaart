@@ -1,19 +1,18 @@
 import * as array from "fp-ts/lib/Array";
 import { array as ArrayMonad } from "fp-ts/lib/Array";
-import {
-  Curried2,
-  Endomorphism,
-  Function1,
-  Function2,
-  Function3,
-  Function4,
-  identity,
-  not,
-  Predicate,
-  Refinement
-} from "fp-ts/lib/function";
+import { Curried2, Endomorphism, Function1, Function2, Function3, Function4, not, Predicate, Refinement } from "fp-ts/lib/function";
 import { fromNullable, fromPredicate, none, Option, option, some } from "fp-ts/lib/Option";
-import { contramap, fromEquals, getRecordSetoid, Setoid, setoidString, strictEqual } from "fp-ts/lib/Setoid";
+import { ordString } from "fp-ts/lib/Ord";
+import {
+  contramap,
+  fromEquals,
+  getArraySetoid,
+  getRecordSetoid,
+  getTupleSetoid,
+  Setoid,
+  setoidString,
+  strictEqual
+} from "fp-ts/lib/Setoid";
 import { fromTraversable, Lens, Prism, Traversal } from "monocle-ts";
 
 import * as ke from "../kaart/kaart-elementen";
@@ -21,6 +20,7 @@ import * as arrays from "../util/arrays";
 import { applySequential, PartialFunction1 } from "../util/function";
 import * as maps from "../util/maps";
 import * as matchers from "../util/matchers";
+import { byKindSetoid, singletonSetoid } from "../util/setoid";
 
 import { Filter as fltr } from "./filter-model";
 
@@ -44,20 +44,44 @@ export namespace FilterEditor {
 
   export type TermEditor = FieldSelection | OperatorSelection | ValueSelection | Completed;
 
+  export interface Property extends fltr.Property {
+    readonly distinctValues: string[];
+  }
+
+  // export type ValueSelector = "FreeString" | "FreeInteger" | "FreeDouble" | "SelectString" | "AutoCompleteString" | "NoSelection";
+  export type ValueSelector = FreeInputValueSelector | SelectionValueSelector | EmptyValueSelector;
+
+  export type FreeInputValueType = "string" | "integer" | "double";
+
+  export interface FreeInputValueSelector {
+    readonly kind: "free";
+    readonly valueType: FreeInputValueType;
+  }
+
+  export type SelectionType = "autocomplete" | "dropdown";
+
+  export interface SelectionValueSelector {
+    readonly kind: "selection";
+    readonly selectionType: SelectionType;
+    readonly values: string[];
+  }
+
+  export interface EmptyValueSelector {
+    readonly kind: "empty";
+  }
+
   export interface FieldSelection {
     readonly kind: "Field";
 
-    readonly properties: fltr.Property[];
+    readonly properties: Property[];
   }
-
-  export type ValueSelector = "FreeString" | "FreeInteger" | "FreeDouble" | "NoSelection";
 
   export interface OperatorSelection {
     readonly kind: "Operator";
 
-    readonly properties: fltr.Property[];
+    readonly properties: Property[];
 
-    readonly selectedProperty: fltr.Property;
+    readonly selectedProperty: Property;
     readonly operatorSelectors: ComparisonOperator[];
 
     readonly valueSelector: ValueSelector; // Deze ValueSelector is maar voorlopig. Kan verfijnd worden wanneer de operator gekozen is.
@@ -76,12 +100,13 @@ export namespace FilterEditor {
   export interface ValueSelection {
     readonly kind: "Value";
 
-    readonly properties: fltr.Property[];
-    readonly selectedProperty: fltr.Property;
+    readonly properties: Property[];
+    readonly selectedProperty: Property;
     readonly operatorSelectors: ComparisonOperator[];
 
     readonly selectedOperator: ComparisonOperator;
     readonly valueSelector: ValueSelector;
+    readonly workingValue: Option<SelectedValue>; // voorlopig ongelidge ingevoerde waarde bij te houden
   }
 
   export type SelectedValue = LiteralValue;
@@ -95,14 +120,22 @@ export namespace FilterEditor {
   export interface Completed {
     readonly kind: "Completed";
 
-    readonly properties: fltr.Property[];
-    readonly selectedProperty: fltr.Property;
+    readonly properties: Property[];
+    readonly selectedProperty: Property;
     readonly operatorSelectors: ComparisonOperator[];
     readonly selectedOperator: ComparisonOperator;
     readonly valueSelector: ValueSelector;
 
     readonly selectedValue: SelectedValue;
   }
+
+  const Property: Function4<fltr.TypeType, string, string, string[], Property> = (typetype, name, label, distinctValues) => ({
+    kind: "Property",
+    type: typetype,
+    ref: name,
+    label,
+    distinctValues
+  });
 
   export const LiteralValue: Function2<fltr.ValueType, fltr.TypeType, LiteralValue> = (value, valueType) => ({
     kind: "Literal",
@@ -125,9 +158,11 @@ export namespace FilterEditor {
         fromNullable(veld.template).isNone() &&
         fromNullable(veld.html).isNone()
     );
-  const properties: Function1<ke.ToegevoegdeVectorLaag, fltr.Property[]> = laag =>
+  const properties: Function1<ke.ToegevoegdeVectorLaag, Property[]> = laag =>
     veldinfos(laag)
-      .map(vi => fltr.Property(vi.type, vi.naam, fromNullable(vi.label).getOrElse(vi.naam)))
+      .map(vi =>
+        Property(vi.type, vi.naam, fromNullable(vi.label).getOrElse(vi.naam), array.sort(ordString)(arrays.fromNullable(vi.uniekeWaarden)))
+      )
       .filter(property => ["string", "boolean", "double", "integer"].includes(property.type));
 
   // Initieer aanmaak van een Comparison
@@ -140,7 +175,7 @@ export namespace FilterEditor {
     typeType
   ) => ({ kind: "BinaryComparisonOperator", label, shortLabel, operator, typeType });
 
-  const freeStringOperators: ComparisonOperator[] = [
+  const stringOperators = [
     BinaryComparisonOperator("is", "is", "equality", "string"),
     BinaryComparisonOperator("is niet", "is niet", "inequality", "string"),
     BinaryComparisonOperator("bevat", "bevat", "contains", "string"),
@@ -150,27 +185,19 @@ export namespace FilterEditor {
     BinaryComparisonOperator("heeft een waarde", "heeft een waarde", "isNotEmpty", "boolean")
   ];
 
-  const freeDoubleOperators: ComparisonOperator[] = [
-    BinaryComparisonOperator("is", "is", "equality", "double"),
-    BinaryComparisonOperator("is niet", "is niet", "inequality", "double"),
-    BinaryComparisonOperator("kleiner dan", "<", "smaller", "double"),
-    BinaryComparisonOperator("kleiner dan of gelijk aan", "<=", "smallerOrEqual", "double"),
-    BinaryComparisonOperator("groter dan", ">", "larger", "double"),
-    BinaryComparisonOperator("groter dan of gelijk aan", ">=", "largerOrEqual", "double"),
+  const orderedOperatorsGen: Function1<fltr.TypeType, ComparisonOperator[]> = typeType => [
+    BinaryComparisonOperator("is", "is", "equality", typeType),
+    BinaryComparisonOperator("is niet", "is niet", "inequality", typeType),
+    BinaryComparisonOperator("kleiner dan", "<", "smaller", typeType),
+    BinaryComparisonOperator("kleiner dan of gelijk aan", "<=", "smallerOrEqual", typeType),
+    BinaryComparisonOperator("groter dan", ">", "larger", typeType),
+    BinaryComparisonOperator("groter dan of gelijk aan", ">=", "largerOrEqual", typeType),
     BinaryComparisonOperator("heeft geen waarde", "heeft geen waarde", "isEmpty", "boolean"),
     BinaryComparisonOperator("heeft een waarde", "heeft een waarde", "isNotEmpty", "boolean")
   ];
 
-  const freeIntegerOperators: ComparisonOperator[] = [
-    BinaryComparisonOperator("is", "is", "equality", "integer"),
-    BinaryComparisonOperator("is niet", "is niet", "inequality", "integer"),
-    BinaryComparisonOperator("kleiner dan", "<", "smaller", "integer"),
-    BinaryComparisonOperator("kleiner dan of gelijk aan", "<=", "smallerOrEqual", "integer"),
-    BinaryComparisonOperator("groter dan", ">", "larger", "integer"),
-    BinaryComparisonOperator("groter dan of gelijk aan", ">=", "largerOrEqual", "integer"),
-    BinaryComparisonOperator("heeft geen waarde", "heeft geen waarde", "isEmpty", "boolean"),
-    BinaryComparisonOperator("heeft een waarde", "heeft een waarde", "isNotEmpty", "boolean")
-  ];
+  const doubleOperators = orderedOperatorsGen("double");
+  const integerOperators = orderedOperatorsGen("integer");
 
   const booleanOperators: ComparisonOperator[] = [
     BinaryComparisonOperator("is waar", "is waar", "equality", "boolean"),
@@ -184,19 +211,47 @@ export namespace FilterEditor {
     readonly shortLabel: string;
   }
 
-  const comparisonOperatorMap: Map<fltr.BinaryComparisonOperator, OperatorLabels> = maps.toMapByKeyAndValue(
-    ArrayMonad.chain([freeStringOperators, freeIntegerOperators, freeDoubleOperators, booleanOperators], identity),
-    op => op.operator,
-    op => ({ label: op.label, shortLabel: op.shortLabel })
-  );
+  const operatorMap: Function1<ComparisonOperator[], Map<fltr.BinaryComparisonOperator, OperatorLabels>> = operators =>
+    maps.toMapByKeyAndValue(operators, op => op.operator, op => ({ label: op.label, shortLabel: op.shortLabel }));
+
+  const stringOperatorMap = operatorMap(stringOperators);
+  const doubleOperatorMap = operatorMap(doubleOperators);
+  const integerOperatorMap = operatorMap(integerOperators);
+  const booleanOperatorMap = operatorMap(booleanOperators);
+
+  const typedBinaryComparisonOperator: Function3<
+    Map<fltr.BinaryComparisonOperator, OperatorLabels>,
+    fltr.BinaryComparisonOperator,
+    fltr.TypeType,
+    BinaryComparisonOperator
+  > = (opMap, operator, typeType) =>
+    BinaryComparisonOperator(
+      opMap.get(operator)!.label, // We moeten er maar voor zorgen dat onze map volledig is
+      opMap.get(operator)!.shortLabel, // We moeten er maar voor zorgen dat onze map volledig is
+      operator,
+      typeType
+    );
 
   const binaryComparisonOperator: Function2<fltr.BinaryComparisonOperator, fltr.Literal, BinaryComparisonOperator> = (operator, literal) =>
-    BinaryComparisonOperator(
-      comparisonOperatorMap.get(operator)!.label, // We moeten er maar voor zorgen dat onze map volledig is
-      comparisonOperatorMap.get(operator)!.shortLabel, // We moeten er maar voor zorgen dat onze map volledig is
-      operator,
-      literal.type
-    );
+    fltr.matchTypeTypeWithFallback({
+      string: () => typedBinaryComparisonOperator(stringOperatorMap, operator, literal.type),
+      integer: () => typedBinaryComparisonOperator(integerOperatorMap, operator, literal.type),
+      double: () => typedBinaryComparisonOperator(doubleOperatorMap, operator, literal.type),
+      boolean: () => typedBinaryComparisonOperator(booleanOperatorMap, operator, literal.type),
+      fallback: () => BinaryComparisonOperator("is", "is", "equality", "string") // niet ondersteund!
+    })(literal.type);
+
+  const FreeInputValueSelector: Function1<FreeInputValueType, FreeInputValueSelector> = valueType => ({ kind: "free", valueType });
+
+  export const freeStringInputValueSelector: FreeInputValueSelector = FreeInputValueSelector("string");
+
+  const SelectionValueSelector: Function2<SelectionType, string[], SelectionValueSelector> = (selectionType, values) => ({
+    kind: "selection",
+    selectionType,
+    values
+  });
+
+  const EmptyValueSelector: EmptyValueSelector = { kind: "empty" };
 
   // Een eenvoudige wrapper om 2 soorten gegevens in 1 functie te kunnen berekenen
   interface OperatorsAndValueSelector {
@@ -211,7 +266,7 @@ export namespace FilterEditor {
 
   const specificOperatorSelectors: Function1<fltr.Comparison, OperatorsAndValueSelector> = comparison => {
     if (comparison.operator === "isEmpty" || comparison.operator === "isNotEmpty") {
-      return OperatorsAndValueSelector(booleanOperators, "NoSelection");
+      return OperatorsAndValueSelector(booleanOperators, EmptyValueSelector);
     } else {
       return genericOperatorSelectors(comparison.property);
     }
@@ -219,17 +274,24 @@ export namespace FilterEditor {
 
   const genericOperatorSelectors: Function1<fltr.Property, OperatorsAndValueSelector> = property =>
     fltr.matchTypeTypeWithFallback({
-      string: () => OperatorsAndValueSelector(freeStringOperators, "FreeString"),
-      double: () => OperatorsAndValueSelector(freeDoubleOperators, "FreeDouble"),
-      integer: () => OperatorsAndValueSelector(freeIntegerOperators, "FreeInteger"),
-      boolean: () => OperatorsAndValueSelector(booleanOperators, "NoSelection"),
-      fallback: () => OperatorsAndValueSelector([], "NoSelection") // Geen operatoren voor onbekende types: beter terminale error operator
+      string: () => OperatorsAndValueSelector(stringOperators, FreeInputValueSelector("string")),
+      double: () => OperatorsAndValueSelector(doubleOperators, FreeInputValueSelector("double")),
+      integer: () => OperatorsAndValueSelector(integerOperators, FreeInputValueSelector("integer")),
+      boolean: () => OperatorsAndValueSelector(booleanOperators, EmptyValueSelector),
+      fallback: () => OperatorsAndValueSelector([], EmptyValueSelector) // Geen ops voor onbekende types: beter terminale error operator
     })(property.type);
+
+  const bestStringValueSelector: Function2<Property, BinaryComparisonOperator, ValueSelector> = (property, operator) =>
+    arrays.isNonEmpty(property.distinctValues) && ["equality", "inequality"].includes(operator.operator)
+      ? arrays.hasAtLeastLength(0)(property.distinctValues) // Volgens acceptatiecrits AGL-3454 8 ipv 0, maar meerwaarde onduidelijk
+        ? SelectionValueSelector("autocomplete", property.distinctValues)
+        : SelectionValueSelector("dropdown", property.distinctValues)
+      : FreeInputValueSelector("string");
 
   // Overgang van FieldSelection naar OperatorSelection -> De overgangen zouden beter Validations zijn om er rekening
   // mee te houden dat de overgang eventueel niet mogelijk is. Bijvoorbeeld wanneer een veld opgegeven wordt dat niet in
   // de lijst staat.
-  export const selectedProperty: Curried2<fltr.Property, FieldSelection, TermEditor> = property => selection => ({
+  export const selectedProperty: Curried2<Property, FieldSelection, TermEditor> = property => selection => ({
     ...selection,
     kind: "Operator",
     selectedProperty: property,
@@ -237,39 +299,33 @@ export namespace FilterEditor {
     valueSelector: genericOperatorSelectors(property).valueSelector
   });
 
-  const valueOrCompleted: Function2<OperatorSelection, ComparisonOperator, TermEditor> = (selection, selectedOperator) => {
-    if (selectedOperator.operator === "isEmpty" || selectedOperator.operator === "isNotEmpty") {
+  const valueOrCompleted: Function3<OperatorSelection, ComparisonOperator, ValueSelector, TermEditor> = (
+    selection,
+    selectedOperator,
+    valueSelector
+  ) => {
+    if (["isEmpty", "isNotEmpty"].includes(selectedOperator.operator)) {
       return {
         ...selection,
         kind: "Completed",
         selectedOperator,
-        valueSelector: "NoSelection",
-        selectedValue: selectedOperator.operator === "isEmpty" ? LiteralValue(true, "boolean") : LiteralValue(false, "boolean")
+        valueSelector: EmptyValueSelector,
+        selectedValue: LiteralValue(selectedOperator.operator === "isEmpty", "boolean"),
+        workingValue: none
       };
     } else {
-      return { ...selection, kind: "Value", selectedOperator };
+      return { ...selection, kind: "Value", selectedOperator, valueSelector, workingValue: none };
     }
   };
 
-  const booleanCompleted: Function2<OperatorSelection, ComparisonOperator, TermEditor> = (selection, selectedOperator) => {
-    if (selectedOperator.operator === "isEmpty" || selectedOperator.operator === "isNotEmpty") {
-      return {
-        ...selection,
-        kind: "Completed",
-        selectedOperator,
-        valueSelector: "NoSelection",
-        selectedValue: selectedOperator.operator === "isEmpty" ? LiteralValue(true, "boolean") : LiteralValue(false, "boolean")
-      };
-    } else {
-      return {
-        ...selection,
-        kind: "Completed",
-        selectedOperator,
-        valueSelector: "NoSelection",
-        selectedValue: selectedOperator.operator === "equality" ? LiteralValue(true, "boolean") : LiteralValue(false, "boolean")
-      };
-    }
-  };
+  const booleanCompleted: Function2<OperatorSelection, ComparisonOperator, TermEditor> = (selection, selectedOperator) => ({
+    ...selection,
+    kind: "Completed",
+    selectedOperator,
+    EmptyValueSelector,
+    selectedValue: LiteralValue(["isEmpty", "equality"].includes(selectedOperator.operator), "boolean"),
+    workingValue: none
+  });
 
   // nooit aanroepen met lege array
   const ConjunctionEditor: Function1<TermEditor[], ConjunctionEditor> = termEditors => ({ termEditors });
@@ -279,11 +335,11 @@ export namespace FilterEditor {
   // Overgang van OperatorSelection naar ValueSelection (of Completed voor unaire operators)
   export const selectOperator: Curried2<ComparisonOperator, OperatorSelection, TermEditor> = selectedOperator => selection =>
     fltr.matchTypeTypeWithFallback<TermEditor>({
-      string: () => valueOrCompleted(selection, selectedOperator),
-      double: () => valueOrCompleted(selection, selectedOperator),
-      integer: () => valueOrCompleted(selection, selectedOperator),
+      string: () => valueOrCompleted(selection, selectedOperator, bestStringValueSelector(selection.selectedProperty, selectedOperator)),
+      double: () => valueOrCompleted(selection, selectedOperator, selection.valueSelector),
+      integer: () => valueOrCompleted(selection, selectedOperator, selection.valueSelector),
       boolean: () => booleanCompleted(selection, selectedOperator),
-      fallback: () => valueOrCompleted(selection, selectedOperator) // In principe gaan we hier niet raken wegens geen operator
+      fallback: () => valueOrCompleted(selection, selectedOperator, selection.valueSelector) // Hier raken we niet wegens geen operator
     })(selection.selectedProperty.type);
 
   // Overgang van ValueSelection naar Completed als alles OK is. Kan dus ook van Completed naar ValueSelection gaan.
@@ -294,6 +350,11 @@ export namespace FilterEditor {
     const validateText: PartialFunction1<SelectedValue, SelectedValue> = fromPredicate(selectedValue =>
       selectedValue.valueType === "string" ? selectedValue.value.toString().length > 0 : true
     );
+    const validateDistinct: PartialFunction1<SelectedValue, SelectedValue> = fromPredicate(selectedValue =>
+      selection.valueSelector.kind === "selection"
+        ? typeof selectedValue.value === "string" && selection.valueSelector.values.includes(selectedValue.value)
+        : true
+    );
     const validateType: PartialFunction1<SelectedValue, SelectedValue> = fromPredicate(
       selectedValue => selectedValue.valueType === selection.selectedProperty.type
     );
@@ -301,8 +362,9 @@ export namespace FilterEditor {
     return maybeSelectedValue
       .chain(validateType)
       .chain(validateText)
+      .chain(validateDistinct)
       .foldL<TermEditor>(
-        () => ({ ...selection, kind: "Value" }), // we zouden de selectedValue kunnen verwijderen, maar maakt geen verschil
+        () => ({ ...selection, kind: "Value", workingValue: maybeSelectedValue }), // selectedValue verwijderen maakt geen verschil
         selectedValue => ({ ...selection, kind: "Completed", selectedValue })
       );
   };
@@ -451,15 +513,22 @@ export namespace FilterEditor {
 
   const toLiteralValue: Function1<fltr.Literal, LiteralValue> = literal => LiteralValue(literal.value, literal.type);
 
-  const completedTermEditor: Function2<ke.ToegevoegdeVectorLaag, fltr.Comparison, TermEditor> = (laag, comparison) => ({
-    kind: "Completed",
-    properties: properties(laag),
-    selectedProperty: comparison.property,
-    operatorSelectors: genericOperatorSelectors(comparison.property).operators,
-    selectedOperator: binaryComparisonOperator(comparison.operator, comparison.value),
-    selectedValue: toLiteralValue(comparison.value),
-    valueSelector: specificOperatorSelectors(comparison).valueSelector
-  });
+  const completedTermEditor: Function2<ke.ToegevoegdeVectorLaag, fltr.Comparison, TermEditor> = (laag, comparison) => {
+    const distinctValues = array
+      .findFirst(veldinfos(laag), vi => vi.naam === comparison.property.ref)
+      .chain(vi => fromNullable(vi.uniekeWaarden).map(array.sort(ordString)))
+      .getOrElse([]);
+    const property: Property = { ...comparison.property, distinctValues };
+    return {
+      kind: "Completed",
+      properties: properties(laag),
+      selectedProperty: property,
+      operatorSelectors: genericOperatorSelectors(property).operators,
+      selectedOperator: binaryComparisonOperator(comparison.operator, comparison.value),
+      selectedValue: toLiteralValue(comparison.value),
+      valueSelector: specificOperatorSelectors(comparison).valueSelector
+    };
+  };
 
   const fromComparison: Function3<Option<string>, ke.ToegevoegdeVectorLaag, fltr.Comparison, ExpressionEditor> = (
     name,
@@ -579,7 +648,7 @@ export namespace FilterEditor {
 
   const setoidFieldSelection: Setoid<FilterEditor.FieldSelection> = getRecordSetoid({
     kind: setoidString,
-    properties: array.getSetoid(contramap<string, fltr.Property>(p => p.ref, setoidString))
+    properties: array.getSetoid(contramap<string, Property>(p => p.ref, setoidString))
   });
 
   const setoidBinaryComparisonOperator: Setoid<BinaryComparisonOperator> = contramap(o => o.operator, fltr.setoidBinaryComparisonOperator);
@@ -591,7 +660,20 @@ export namespace FilterEditor {
     operatorSelectors: array.getSetoid(setoidBinaryComparisonOperator)
   });
 
-  const setoidValueSelector: Setoid<ValueSelector> = setoidString;
+  const freeInputValueTypeSetoid: Setoid<FreeInputValueType> = setoidString;
+
+  const freeInputValueSelectorSetoid: Setoid<FreeInputValueSelector> = contramap(vs => vs.valueType, freeInputValueTypeSetoid);
+
+  const selectionValueSelectorSetoid: Setoid<SelectionValueSelector> = contramap(
+    vs => [vs.selectionType, vs.values] as [SelectionType, string[]],
+    getTupleSetoid(setoidString, getArraySetoid(setoidString))
+  );
+
+  const setoidValueSelector: Setoid<ValueSelector> = byKindSetoid({
+    empty: singletonSetoid,
+    free: freeInputValueSelectorSetoid,
+    selection: selectionValueSelectorSetoid
+  });
 
   const setoidValueSelection: Setoid<ValueSelection> = getRecordSetoid({
     kind: setoidString,
@@ -627,11 +709,15 @@ export namespace FilterEditor {
       })(te1)
   );
 
-  export interface LiteralValueMatcher<A> {
-    readonly;
-  }
-
   export const matchLiteralValueWithFallback: <A>(
     _: matchers.FallbackMatcher<LiteralValue, A, fltr.TypeType>
   ) => Function1<LiteralValue, A> = matcher => matchers.matchWithFallback(matcher)(lv => lv.valueType);
+
+  export interface ValueSelectorMatcher<A> {
+    readonly empty: Function1<EmptyValueSelector, A>;
+    readonly free: Function1<FreeInputValueSelector, A>;
+    readonly selection: Function1<SelectionValueSelector, A>;
+  }
+
+  export const matchValueSelector: <A>(matcher: ValueSelectorMatcher<A>) => Function1<ValueSelector, A> = matchers.matchKind;
 }

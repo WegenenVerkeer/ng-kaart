@@ -1,6 +1,6 @@
 import { Curried2, Function1, Lazy } from "fp-ts/lib/function";
 
-export type Key = string | number | symbol;
+import { Key, Kinded } from "./kinded";
 
 export type FallbackMatcher<A, B, K extends Key> = { readonly [P in K]?: Function1<A, B> } & { readonly fallback: Lazy<B> };
 
@@ -15,10 +15,6 @@ export type FullMatcher<A, B, K extends Key> = { readonly [P in K]: Function1<A,
 
 export function match<A, B, K extends Key>(mapper: FullMatcher<A, B, K>): Curried2<Function1<A, K>, A, B> {
   return f => a => mapper[f(a)](a);
-}
-
-export interface Kinded<K extends Key> {
-  readonly kind: K;
 }
 
 export type FullKindMatcher<A extends Kinded<K>, B, K extends Key> = {

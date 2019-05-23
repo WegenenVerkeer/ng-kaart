@@ -27,6 +27,7 @@ export const toOlFeature: Curried2<string, GeoJsonCore, ol.Feature> = laagnaam =
   }
 };
 
+// o.a. voor gebruik bij stijlen en identify
 export const setLaagnaam: Curried2<string, ol.Feature, ol.Feature> = laagnaam => feature => {
   feature.set("laagnaam", laagnaam);
   return feature;
