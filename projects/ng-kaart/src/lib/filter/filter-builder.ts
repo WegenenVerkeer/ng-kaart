@@ -393,7 +393,7 @@ export namespace FilterEditor {
       );
   };
 
-  export const selectHoofdletterGevoelig: Curried2<boolean, ValueSelection, TermEditor> = hoofdLetterGevoelig => selection => {
+  export const selectHoofdletterGevoelig: Curried2<boolean, ValueSelection | Completed, TermEditor> = hoofdLetterGevoelig => selection => {
     return { ...selection, caseSensitive: some(hoofdLetterGevoelig) };
   };
 

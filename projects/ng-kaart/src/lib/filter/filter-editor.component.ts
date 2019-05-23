@@ -99,7 +99,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
   readonly integerWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
   readonly doubleWaardeControl = new FormControl({ value: null });
 
-  readonly hoofdLetterGevoeligControl = new FormControl(false);
+  readonly hoofdLetterGevoeligControl = new FormControl({ value: false, disabled: true });
 
   readonly dropdownWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
   readonly autocompleteWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
@@ -167,6 +167,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       this.doubleWaardeControl.reset(0, { emitEvent: false });
       this.dropdownWaardeControl.reset("", { emitEvent: false });
       this.autocompleteWaardeControl.reset("", { emitEvent: false });
+      this.hoofdLetterGevoeligControl.reset(false, { emitEvent: false });
     });
 
     const gekozenNaam$: rx.Observable<Option<string>> = subSpy("****gekozenNaam$")(
@@ -303,7 +304,8 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.integerWaardeControl,
               this.doubleWaardeControl,
               this.dropdownWaardeControl,
-              this.autocompleteWaardeControl
+              this.autocompleteWaardeControl,
+              this.hoofdLetterGevoeligControl
             );
             resetWithoutEvent(
               this.veldControl,
@@ -314,6 +316,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.dropdownWaardeControl,
               this.autocompleteWaardeControl
             );
+            this.hoofdLetterGevoeligControl.reset(false, { emitEvent: false });
           },
           Operator: opr => {
             console.log("****reset naar Operator");
@@ -323,7 +326,8 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.integerWaardeControl,
               this.doubleWaardeControl,
               this.dropdownWaardeControl,
-              this.autocompleteWaardeControl
+              this.autocompleteWaardeControl,
+              this.hoofdLetterGevoeligControl
             );
             this.veldControl.setValue(opr.selectedProperty, { emitEvent: false });
             resetWithoutEvent(
@@ -334,6 +338,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.dropdownWaardeControl,
               this.autocompleteWaardeControl
             );
+            this.hoofdLetterGevoeligControl.reset(false, { emitEvent: false });
             this.operatorControl.setValue("");
           },
           Value: val => {
@@ -344,10 +349,11 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.integerWaardeControl,
               this.doubleWaardeControl,
               this.dropdownWaardeControl,
-              this.autocompleteWaardeControl
+              this.hoofdLetterGevoeligControl
             );
             this.veldControl.setValue(val.selectedProperty, { emitEvent: false });
             this.operatorControl.setValue(val.selectedOperator, { emitEvent: false });
+            this.hoofdLetterGevoeligControl.setValue(val.caseSensitive.getOrElse(false), { emitEvent: false });
             // We mogen enkel de getoonde control resetten, want anders krijgen we een event en daaropvolgende update
             // voor de andere controls
             fed.matchValueSelector({
@@ -388,6 +394,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
             );
             this.veldControl.setValue(compl.selectedProperty, { emitEvent: false });
             this.operatorControl.setValue(compl.selectedOperator, { emitEvent: false });
+            this.hoofdLetterGevoeligControl.setValue(compl.caseSensitive.getOrElse(false), { emitEvent: false });
             fed.matchValueSelector({
               empty: () => {},
               free: valueSelector => {
