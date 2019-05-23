@@ -63,6 +63,15 @@
           </ng-container>
         </ng-container>
 
+        <ng-container [ngSwitch]="veldwaardeType$ | async">
+          <span *ngSwitchCase="'FreeString'" class="hoofdlettergevoeligheid">
+            <mat-checkbox [formControl]="hoofdLetterGevoeligControl" (click)="onClickCheckbox($event)">
+              Hoofdlettergevoelig
+            </mat-checkbox>
+          </span>
+          <span *ngSwitchDefault class="hoofdlettergevoeligheid"></span>
+        </ng-container>
+
         <div class="delete-icon">
           <button mat-icon-button (click)="verwijderActieveEditor()" [disabled]="!(kanHuidigeEditorVerwijderen$ | async)" matTooltip="Verwijder actieve chip">
             <mat-icon>delete</mat-icon>

@@ -1,4 +1,4 @@
-import { constant, Function1, Function3 } from "fp-ts/lib/function";
+import { constant, Function1, Function3, Function4 } from "fp-ts/lib/function";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 
 import { Filter as fltr } from "../filter/filter-model";
@@ -7,6 +7,8 @@ export namespace FilterCql {
   type Generator<A> = Function1<A, Option<string>>;
 
   const propertyRef: Function1<fltr.Property, String> = property => `properties.${property.ref}`;
+
+  const like: Function1<boolean, string> = caseSensitive => (caseSensitive ? "like" : "ilike");
 
   const literalCql: Generator<fltr.Literal> = fltr.matchLiteral({
     boolean: literal => some(literal.value ? "true" : "false"),
@@ -20,19 +22,20 @@ export namespace FilterCql {
   });
 
   // TODO prevent CQL injection
-  const stringBinaryOperator: Function3<fltr.Property, fltr.BinaryComparisonOperator, fltr.Literal, Option<string>> = (
+  const stringBinaryOperator: Function4<fltr.Property, fltr.BinaryComparisonOperator, fltr.Literal, boolean, Option<string>> = (
     property,
     operator,
-    literal
+    literal,
+    caseSensitive
   ) =>
     fltr.matchBinaryComparisonOperatorWithFallback({
-      equality: () => some(`${propertyRef(property)} = '${literal.value}'`),
-      inequality: () => some(`${propertyRef(property)} != '${literal.value}'`),
-      starts: () => some(`${propertyRef(property)} like '${literal.value}%'`), // TODO prevent %
-      ends: () => some(`${propertyRef(property)} like '%${literal.value}'`), // TODO prevent %
+      equality: () => some(`${propertyRef(property)} ${like(caseSensitive)} '${literal.value}'`),
+      inequality: () => some(`${propertyRef(property)} not ${like(caseSensitive)} '${literal.value}'`),
+      starts: () => some(`${propertyRef(property)} ${like(caseSensitive)} '${literal.value}%'`), // TODO prevent %
+      ends: () => some(`${propertyRef(property)} ${like(caseSensitive)} '%${literal.value}'`), // TODO prevent %
       isEmpty: () => some(`${propertyRef(property)} is null`), // TODO prevent %
       isNotEmpty: () => some(`${propertyRef(property)} is not null`), // TODO prevent %
-      contains: () => some(`${propertyRef(property)} like '%${literal.value}%'`), // TODO prevent %,
+      contains: () => some(`${propertyRef(property)} ${like(caseSensitive)} '%${literal.value}%'`), // TODO prevent %,
       fallback: () => none // de andere operators worden niet ondersteund
     })(operator);
 
@@ -65,7 +68,7 @@ export namespace FilterCql {
     Or: expr => both(expressionCql(expr.left), expressionCql(expr.right), "OR"),
     BinaryComparison: expr =>
       fltr.matchTypeTypeWithFallback({
-        string: () => stringBinaryOperator(expr.property, expr.operator, expr.value),
+        string: () => stringBinaryOperator(expr.property, expr.operator, expr.value, expr.caseSensitive.getOrElse(false)),
         double: () => numberBinaryOperator(expr.property, expr.operator, expr.value),
         integer: () => numberBinaryOperator(expr.property, expr.operator, expr.value),
         boolean: () => numberBinaryOperator(expr.property, expr.operator, expr.value), // zouden we in principe niet mogen hebben

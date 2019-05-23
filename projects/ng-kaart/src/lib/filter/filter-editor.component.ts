@@ -2,8 +2,8 @@ import { ChangeDetectorRef, Component, NgZone } from "@angular/core";
 import { FormControl, ValidationErrors, Validators } from "@angular/forms";
 import * as array from "fp-ts/lib/Array";
 import { Endomorphism, Function1, Refinement } from "fp-ts/lib/function";
-import { fromNullable, Option } from "fp-ts/lib/Option";
 import * as option from "fp-ts/lib/Option";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 import { Ord } from "fp-ts/lib/Ord";
 import * as ord from "fp-ts/lib/Ord";
 import * as rx from "rxjs";
@@ -97,7 +97,10 @@ export class FilterEditorComponent extends KaartChildComponentBase {
   readonly operatorControl = new FormControl("", [Validators.required, autoCompleteSelectieVerplichtValidator]);
   readonly textWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
   readonly integerWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
-  readonly doubleWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
+  readonly doubleWaardeControl = new FormControl({ value: null });
+
+  readonly hoofdLetterGevoeligControl = new FormControl(false);
+
   readonly dropdownWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
   readonly autocompleteWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
 
@@ -186,6 +189,12 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       tap(o => console.log("*****Operator gekozen", o)),
       tap(o => console.log("*****Distinct operator gekozen", o))
     );
+
+    const gekozenHoofdLetterGevoelig$: rx.Observable<boolean> = forControlValue(this.hoofdLetterGevoeligControl).pipe(
+      startWith(false),
+      tap(o => console.log("*****Hoofdlettergevoeligheid gekozen", o))
+    );
+
     const gekozenText$: rx.Observable<Option<fed.LiteralValue>> = subSpy("****gekozenText")(
       rx
         .merge(
@@ -218,8 +227,11 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     type TermEditorUpdate = Endomorphism<fed.TermEditor>;
 
     const zetNaam$: rx.Observable<ExpressionEditorUpdate> = gekozenNaam$.pipe(map(fed.setName));
+    const zetHoofdletterGevoelig$: rx.Observable<TermEditorUpdate> = gekozenHoofdLetterGevoelig$.pipe(map(fed.selectHoofdletterGevoelig));
     const zetProperty$: rx.Observable<TermEditorUpdate> = gekozenProperty$.pipe(map(fed.selectedProperty));
-    const zetOperator$: rx.Observable<TermEditorUpdate> = gekozenOperator$.pipe(map(fed.selectOperator));
+    const zetOperator$: rx.Observable<TermEditorUpdate> = rx
+      .combineLatest(gekozenOperator$, gekozenHoofdLetterGevoelig$)
+      .pipe(map(([operator, caseSensitive]) => fed.selectOperator(operator)(caseSensitive)));
     const zetWaarde$: rx.Observable<TermEditorUpdate> = gekozenWaarde$.pipe(
       tap(w => console.log("***waarde$", w)),
       map(fed.selectValue)
@@ -233,7 +245,9 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     );
 
     const termEditorUpdates$: rx.Observable<ExpressionEditorUpdate> = subSpy("****termEditorUpdates$")(
-      rx.merge(zetProperty$, zetOperator$, zetWaarde$).pipe(map(teu => (ee: fed.ExpressionEditor) => fed.update(teu(ee.current))(ee)))
+      rx
+        .merge(zetProperty$, zetOperator$, zetWaarde$, zetHoofdletterGevoelig$)
+        .pipe(map(teu => (ee: fed.ExpressionEditor) => fed.update(teu(ee.current))(ee)))
     );
 
     const expressionEditorUpdates$ = rx.merge(zetNaam$, termEditorUpdates$, this.newFilterEditor$.asObservable());
@@ -570,6 +584,11 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
   onClickInside() {
     this.clickInsideDialog = true;
+    return false;
+  }
+
+  onClickCheckbox(event) {
+    this.hoofdLetterGevoeligControl.setValue(!this.hoofdLetterGevoeligControl.value);
     return false;
   }
 }

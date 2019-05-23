@@ -1,4 +1,4 @@
-import { constant, Function1, Function2, Function3, identity, Lazy, not, Predicate } from "fp-ts/lib/function";
+import { constant, Function1, Function2, Function3, Function4, identity, Lazy, not, Predicate } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { contramap, Setoid, setoidString } from "fp-ts/lib/Setoid";
 
@@ -65,6 +65,7 @@ export namespace Filter {
     readonly operator: BinaryComparisonOperator;
     readonly property: Property;
     readonly value: Literal;
+    readonly caseSensitive: Option<boolean>;
   }
 
   export interface PropertyValueOperator {
@@ -94,11 +95,12 @@ export namespace Filter {
     readonly label: string;
   }
 
-  export const BinaryComparison: Function3<BinaryComparisonOperator, Property, Literal, BinaryComparison> = (
+  export const BinaryComparison: Function4<BinaryComparisonOperator, Property, Literal, Option<boolean>, BinaryComparison> = (
     operator,
     property,
-    value
-  ) => ({ kind: "BinaryComparison", operator, property, value });
+    value,
+    caseSensitive
+  ) => ({ kind: "BinaryComparison", operator, property, value, caseSensitive });
 
   export interface Conjunction {
     readonly kind: "And";
