@@ -31,18 +31,29 @@
         <ng-container *ngIf="(veldwaardeType$ | async) as valueSelector">
           <ng-container [ngSwitch]="valueSelector.kind">
             <ng-container *ngSwitchCase="'free'" [ngSwitch]="valueSelector.valueType">
+
               <mat-form-field *ngSwitchCase="'string'" class="filter-waarde-editbox">
                 <input type="text" matInput placeholder="Waarde" [formControl]="textWaardeControl"/>
                 <mat-error *ngIf="textWaardeControl.invalid">{{errorTextWaarde()}}</mat-error>
               </mat-form-field>
+              <span *ngSwitchCase="'string'" class="hoofdlettergevoeligheid">
+                 <mat-checkbox  [formControl]="hoofdLetterGevoeligControl" (click)="onClickCheckbox($event)">
+                    Hoofdlettergevoelig
+                </mat-checkbox>
+              </span>
+
               <mat-form-field *ngSwitchCase="'double'" class="filter-waarde-editbox">
                 <input type="number" step="0.1" matInput placeholder="Getal" [formControl]="doubleWaardeControl"/>
                 <mat-error *ngIf="doubleWaardeControl.invalid">{{errorDoubleWaarde()}}</mat-error>
               </mat-form-field>
+              <span *ngSwitchCase="'double'" class="hoofdlettergevoeligheid"></span>
+
               <mat-form-field *ngSwitchCase="'integer'" class="filter-waarde-editbox">
                 <input type="number" step="1" matInput placeholder="Getal" [formControl]="integerWaardeControl"/>
                 <mat-error *ngIf="integerWaardeControl.invalid">{{errorIntegerWaarde()}}</mat-error>
               </mat-form-field>
+              <span *ngSwitchCase="'integer'" class="hoofdlettergevoeligheid"></span>
+
             </ng-container>
             <ng-container *ngSwitchCase="'selection'" [ngSwitch]="valueSelector.selectionType">
               <mat-form-field *ngSwitchCase="'dropdown'" class="filter-waarde-dropdown">
@@ -61,15 +72,6 @@
             </ng-container>
             <span *ngSwitchCase="'empty'" class="filter-waarde-editbox"></span>
           </ng-container>
-        </ng-container>
-
-        <ng-container [ngSwitch]="veldwaardeType$ | async">
-          <span *ngSwitchCase="'FreeString'" class="hoofdlettergevoeligheid">
-            <mat-checkbox [formControl]="hoofdLetterGevoeligControl" (click)="onClickCheckbox($event)">
-              Hoofdlettergevoelig
-            </mat-checkbox>
-          </span>
-          <span *ngSwitchDefault class="hoofdlettergevoeligheid"></span>
         </ng-container>
 
         <div class="delete-icon">
