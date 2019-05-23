@@ -42,4 +42,8 @@ export class FilterChipComponent {
   completedValue(): string {
     return this.editor.kind === "Completed" && this.editor.valueSelector.kind !== "empty" ? this.editor.selectedValue.value.toString() : "";
   }
+
+  isCaseSensitive(termEditor: fed.ValueSelection | fed.Completed): boolean {
+    return termEditor.caseSensitive.getOrElse(false);
+  }
 }
