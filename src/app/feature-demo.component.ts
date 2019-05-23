@@ -602,6 +602,12 @@ export class FeatureDemoComponent {
     { isBasisVeld: false, label: "Shape area", naam: "SHAPE_Area", type: "double" }
   ];
 
+  readonly wfsStratenVeldinfos: VeldInfo[] = [
+    { isBasisVeld: true, label: "ID", naam: "id", type: "string" },
+    { isBasisVeld: true, label: "Straatnaam", naam: "name", type: "string" },
+    { isBasisVeld: true, label: "Lengte", naam: "meters", type: "double" }
+  ];
+
   clusterStyle(defaultStyle: ol.style.Style): ol.StyleFunction {
     return feature => {
       const size = feature.get("features").length;
