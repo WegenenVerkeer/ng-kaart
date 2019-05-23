@@ -393,9 +393,10 @@ export namespace FilterEditor {
       );
   };
 
-  export const selectHoofdletterGevoelig: Curried2<boolean, ValueSelection | Completed, TermEditor> = hoofdLetterGevoelig => selection => {
-    return { ...selection, caseSensitive: some(hoofdLetterGevoelig) };
-  };
+  export const selectHoofdletterGevoelig: Curried2<boolean, ValueSelection | Completed, TermEditor> = hoofdLetterGevoelig => selection => ({
+    ...selection,
+    caseSensitive: some(hoofdLetterGevoelig)
+  });
 
   const initConjunctionEditor: Function1<TermEditor, ConjunctionEditor> = termEditor => ConjunctionEditor([termEditor]);
 
