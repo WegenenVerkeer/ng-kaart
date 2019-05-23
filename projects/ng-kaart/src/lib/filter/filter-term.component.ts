@@ -5,7 +5,9 @@ import { KaartComponent } from "../kaart/kaart.component";
 
 import { Filter as fltr } from "../filter/filter-model";
 
-const binaryComparisonOperatorMapping = {
+type BinaryComparisonOperatorMapping = { [P in fltr.BinaryComparisonOperator]: string };
+
+const binaryComparisonOperatorMapping: BinaryComparisonOperatorMapping = {
   equality: "is",
   inequality: "is niet",
   contains: "bevat",
@@ -14,7 +16,9 @@ const binaryComparisonOperatorMapping = {
   smaller: "kleiner dan",
   smallerOrEqual: "kleiner of gelijk aan",
   larger: "groter dan",
-  largerOrEqual: "groter dan of gelijk aan"
+  largerOrEqual: "groter dan of gelijk aan",
+  isEmpty: "heeft geen waarde",
+  isNotEmpty: "heeft een waarde"
 };
 
 const booleanComparisonOperatorMapping = {
@@ -38,6 +42,9 @@ export class FilterTermComponent extends KaartChildComponentBase {
     if (term.property.type === "boolean") {
       this.value = "";
       this.operator = booleanComparisonOperatorMapping[term.operator] || "???";
+    } else if (["isEmpty", "isNotEmpty"].includes(term.operator)) {
+      this.value = "";
+      this.operator = binaryComparisonOperatorMapping[term.operator] || "???";
     } else {
       this.value = term.value.value.toString();
       this.operator = binaryComparisonOperatorMapping[term.operator] || "???";

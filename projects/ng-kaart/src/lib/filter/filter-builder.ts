@@ -1,17 +1,6 @@
 import * as array from "fp-ts/lib/Array";
 import { array as ArrayMonad } from "fp-ts/lib/Array";
-import {
-  Curried2,
-  Endomorphism,
-  Function1,
-  Function2,
-  Function3,
-  Function4,
-  identity,
-  not,
-  Predicate,
-  Refinement
-} from "fp-ts/lib/function";
+import { Curried2, Endomorphism, Function1, Function2, Function3, Function4, not, Predicate, Refinement } from "fp-ts/lib/function";
 import { fromNullable, fromPredicate, none, Option, option, some } from "fp-ts/lib/Option";
 import { ordString } from "fp-ts/lib/Ord";
 import {
