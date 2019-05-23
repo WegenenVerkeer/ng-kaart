@@ -19,7 +19,8 @@ import {
   startWith,
   switchMap,
   take,
-  tap
+  tap,
+  withLatestFrom
 } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
@@ -230,7 +231,8 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     const zetHoofdletterGevoelig$: rx.Observable<TermEditorUpdate> = gekozenHoofdLetterGevoelig$.pipe(map(fed.selectHoofdletterGevoelig));
     const zetProperty$: rx.Observable<TermEditorUpdate> = gekozenProperty$.pipe(map(fed.selectedProperty));
     const zetOperator$: rx.Observable<TermEditorUpdate> = gekozenOperator$.pipe(
-      map(operator => fed.selectOperator(operator)(this.hoofdLetterGevoeligControl.value))
+      withLatestFrom(rx.merge(gekozenHoofdLetterGevoelig$, rx.of(false))),
+      map(([operator, caseSensitive]) => fed.selectOperator(operator)(caseSensitive))
     );
     const zetWaarde$: rx.Observable<TermEditorUpdate> = gekozenWaarde$.pipe(
       tap(w => console.log("***waarde$", w)),
