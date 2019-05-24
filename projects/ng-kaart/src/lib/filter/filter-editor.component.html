@@ -37,7 +37,7 @@
                 <mat-error *ngIf="textWaardeControl.invalid">{{errorTextWaarde()}}</mat-error>
               </mat-form-field>
               <span *ngSwitchCase="'string'" class="hoofdlettergevoeligheid">
-                 <mat-checkbox  [formControl]="hoofdLetterGevoeligControl" (click)="onClickCheckbox($event)">
+                 <mat-checkbox  [formControl]="hoofdLetterGevoeligControl" (click)="onClickCheckbox()">
                     Hoofdlettergevoelig
                 </mat-checkbox>
               </span>
