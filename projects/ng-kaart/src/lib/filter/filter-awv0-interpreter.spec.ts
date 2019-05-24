@@ -1,5 +1,5 @@
 import { Function1 } from "fp-ts/lib/function";
-import { fromNullable, none } from "fp-ts/lib/Option";
+import { fromNullable, none, some } from "fp-ts/lib/Option";
 
 import { AwvV0FilterInterpreters } from "./filter-awv0-interpreter";
 import { Filter as fltr } from "./filter-model";
@@ -37,6 +37,38 @@ describe("De filterinterpreter", () => {
           property: property,
           value: literal,
           caseSensitive: none
+        }
+      };
+      const result = AwvV0FilterInterpreters.jsonAwv0Definition(eq);
+      expect(result.isSuccess()).toBe(true);
+      expect(result.getOrElse(undefined)).toEqual(fixName(eq));
+    });
+    it("moet een filter met 1 case sensitive 'gelijk aan' kunnen verwerken", () => {
+      const eq: RawExpressionFilter = {
+        kind: "ExpressionFilter",
+        name: "testFilter",
+        expression: {
+          kind: "BinaryComparison",
+          operator: "equality",
+          property: property,
+          value: literal,
+          caseSensitive: some(true)
+        }
+      };
+      const result = AwvV0FilterInterpreters.jsonAwv0Definition(eq);
+      expect(result.isSuccess()).toBe(true);
+      expect(result.getOrElse(undefined)).toEqual(fixName(eq));
+    });
+    it("moet een filter met 1 niet case sensitive 'gelijk aan' kunnen verwerken", () => {
+      const eq: RawExpressionFilter = {
+        kind: "ExpressionFilter",
+        name: "testFilter",
+        expression: {
+          kind: "BinaryComparison",
+          operator: "equality",
+          property: property,
+          value: literal,
+          caseSensitive: some(false)
         }
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(eq);
