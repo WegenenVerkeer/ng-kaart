@@ -53,9 +53,15 @@ export namespace FilterCql {
     operator,
     literal
   ) =>
-    fromNullable(numberBinaryOperatorSymbols[operator]).chain(symbol =>
-      literalCql(literal).map(value => `${propertyRef(property)} ${symbol} ${value}`)
-    );
+    fromNullable(numberBinaryOperatorSymbols[operator])
+      .chain(symbol => literalCql(literal).map(value => `${propertyRef(property)} ${symbol} ${value}`))
+      .alt(
+        fltr.matchBinaryComparisonOperatorWithFallback({
+          isEmpty: () => some(`${propertyRef(property)} is null`),
+          isNotEmpty: () => some(`${propertyRef(property)} is not null`),
+          fallback: () => none // operator niet herkend
+        })(operator)
+      );
 
   const both: Function3<Option<string>, Option<string>, string, Option<string>> = (maybeLeft, maybeRight, separator) =>
     maybeLeft.fold(
@@ -71,7 +77,7 @@ export namespace FilterCql {
         string: () => stringBinaryOperator(expr.property, expr.operator, expr.value, expr.caseSensitive.getOrElse(false)),
         double: () => numberBinaryOperator(expr.property, expr.operator, expr.value),
         integer: () => numberBinaryOperator(expr.property, expr.operator, expr.value),
-        boolean: () => numberBinaryOperator(expr.property, expr.operator, expr.value), // zouden we in principe niet mogen hebben
+        boolean: () => numberBinaryOperator(expr.property, expr.operator, expr.value),
         fallback: () => none
       })(expr.property.type)
   });
