@@ -198,7 +198,7 @@ export namespace FilterEditor {
     BinaryComparisonOperator("heeft een waarde", "heeft een waarde", "isNotEmpty", "boolean")
   ];
 
-  const orderedOperatorsGen: Function1<fltr.TypeType, ComparisonOperator[]> = typeType => [
+  const numberOperatorsGen: Function1<fltr.TypeType, ComparisonOperator[]> = typeType => [
     BinaryComparisonOperator("is", "is", "equality", typeType),
     BinaryComparisonOperator("is niet", "is niet", "inequality", typeType),
     BinaryComparisonOperator("kleiner dan", "<", "smaller", typeType),
@@ -209,8 +209,8 @@ export namespace FilterEditor {
     BinaryComparisonOperator("heeft een waarde", "heeft een waarde", "isNotEmpty", "boolean")
   ];
 
-  const doubleOperators = orderedOperatorsGen("double");
-  const integerOperators = orderedOperatorsGen("integer");
+  const doubleOperators = numberOperatorsGen("double");
+  const integerOperators = numberOperatorsGen("integer");
 
   const booleanOperators: ComparisonOperator[] = [
     BinaryComparisonOperator("is waar", "is waar", "equality", "boolean"),
@@ -277,13 +277,12 @@ export namespace FilterEditor {
     valueSelector
   ) => ({ operators, valueSelector });
 
-  const specificOperatorSelectors: Function1<fltr.Comparison, OperatorsAndValueSelector> = comparison => {
-    if (comparison.operator === "isEmpty" || comparison.operator === "isNotEmpty") {
-      return OperatorsAndValueSelector(booleanOperators, EmptyValueSelector);
-    } else {
-      return genericOperatorSelectors(comparison.property);
-    }
-  };
+  const bestStringValueSelector: Function2<Property, BinaryComparisonOperator, ValueSelector> = (property, operator) =>
+    arrays.isNonEmpty(property.distinctValues) && ["equality", "inequality"].includes(operator.operator)
+      ? arrays.hasAtLeastLength(0)(property.distinctValues) // Volgens acceptatiecrits AGL-3454 8 ipv 0, maar meerwaarde onduidelijk
+        ? SelectionValueSelector("autocomplete", property.distinctValues)
+        : SelectionValueSelector("dropdown", property.distinctValues)
+      : FreeInputValueSelector("string");
 
   const genericOperatorSelectors: Function1<fltr.Property, OperatorsAndValueSelector> = property =>
     fltr.matchTypeTypeWithFallback({
@@ -294,12 +293,22 @@ export namespace FilterEditor {
       fallback: () => OperatorsAndValueSelector([], EmptyValueSelector) // Geen ops voor onbekende types: beter terminale error operator
     })(property.type);
 
-  const bestStringValueSelector: Function2<Property, BinaryComparisonOperator, ValueSelector> = (property, operator) =>
-    arrays.isNonEmpty(property.distinctValues) && ["equality", "inequality"].includes(operator.operator)
-      ? arrays.hasAtLeastLength(0)(property.distinctValues) // Volgens acceptatiecrits AGL-3454 8 ipv 0, maar meerwaarde onduidelijk
-        ? SelectionValueSelector("autocomplete", property.distinctValues)
-        : SelectionValueSelector("dropdown", property.distinctValues)
-      : FreeInputValueSelector("string");
+  const specificOperatorSelectors: Function2<Property, BinaryComparisonOperator, OperatorsAndValueSelector> = (property, operator) =>
+    fltr.matchTypeTypeWithFallback({
+      string: () => OperatorsAndValueSelector(stringOperators, bestStringValueSelector(property, operator)),
+      double: () => OperatorsAndValueSelector(doubleOperators, FreeInputValueSelector("double")),
+      integer: () => OperatorsAndValueSelector(integerOperators, FreeInputValueSelector("integer")),
+      boolean: () => OperatorsAndValueSelector(booleanOperators, EmptyValueSelector),
+      fallback: () => OperatorsAndValueSelector([], EmptyValueSelector) // Geen ops voor onbekende types: beter terminale error operator
+    })(property.type);
+
+  const completedOperatorSelectors: Function2<Property, BinaryComparisonOperator, OperatorsAndValueSelector> = (property, operator) => {
+    if (operator.operator === "isEmpty" || operator.operator === "isNotEmpty") {
+      return OperatorsAndValueSelector(booleanOperators, EmptyValueSelector);
+    } else {
+      return specificOperatorSelectors(property, operator);
+    }
+  };
 
   // Overgang van FieldSelection naar OperatorSelection -> De overgangen zouden beter Validations zijn om er rekening
   // mee te houden dat de overgang eventueel niet mogelijk is. Bijvoorbeeld wanneer een veld opgegeven wordt dat niet in
@@ -547,15 +556,16 @@ export namespace FilterEditor {
       .findFirst(veldinfos(laag), vi => vi.naam === comparison.property.ref)
       .chain(vi => fromNullable(vi.uniekeWaarden).map(array.sort(ordString)))
       .getOrElse([]);
-    const property: Property = { ...comparison.property, distinctValues };
+    const selectedProperty: Property = { ...comparison.property, distinctValues };
+    const selectedOperator: BinaryComparisonOperator = binaryComparisonOperator(comparison.operator, comparison.value);
     return {
       kind: "Completed",
       properties: properties(laag),
-      selectedProperty: property,
-      operatorSelectors: genericOperatorSelectors(property).operators,
-      selectedOperator: binaryComparisonOperator(comparison.operator, comparison.value),
+      selectedProperty,
+      operatorSelectors: genericOperatorSelectors(selectedProperty).operators,
+      selectedOperator,
       selectedValue: toLiteralValue(comparison.value),
-      valueSelector: specificOperatorSelectors(comparison).valueSelector,
+      valueSelector: completedOperatorSelectors(selectedProperty, selectedOperator).valueSelector,
       caseSensitive: comparison.caseSensitive
     };
   };
