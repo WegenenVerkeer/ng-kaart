@@ -23,7 +23,9 @@ const binaryComparisonOperatorMapping: BinaryComparisonOperatorMapping = {
 
 const booleanComparisonOperatorMapping = {
   equality: "is waar",
-  inequality: "is niet waar"
+  inequality: "is niet waar",
+  isEmpty: "heeft geen waarde",
+  isNotEmpty: "heeft een waarde"
 };
 
 @Component({
