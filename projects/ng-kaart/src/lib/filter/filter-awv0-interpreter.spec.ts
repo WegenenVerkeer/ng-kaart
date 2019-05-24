@@ -1,21 +1,29 @@
-import { Function1 } from "fp-ts/lib/function";
+import { Function1, Function2 } from "fp-ts/lib/function";
 import { fromNullable, none, some } from "fp-ts/lib/Option";
+
+import { Consumer1, Consumer2 } from "../util/function";
 
 import { AwvV0FilterInterpreters } from "./filter-awv0-interpreter";
 import { Filter as fltr } from "./filter-model";
 
-// Het type dat we parsen is een platte JSON, dus zonder Option of andere complexe datatypes. Maar voor de rest is het
-// zo goed als gelijk aan model type. Om met een minimum aan code en een maximum aan typesafety te kunnen werken,
-// introduceren we een type specifiek voor de test.
-type Omit<T, K> = Pick<T, Exclude<keyof T, K>>;
-interface RawExpressionFilter extends Omit<fltr.ExpressionFilter, "name"> {
-  readonly name: string | undefined;
-}
+// Beware of lots of dragons here
+const modifyKinded: Consumer2<any, { [p: string]: Consumer1<any> }> = (obj, modifiersByKind) => {
+  if (modifiersByKind.hasOwnProperty(obj["kind"])) {
+    modifiersByKind[obj["kind"]](obj);
+  }
+  if (typeof obj === "object") {
+    Object.values(obj).forEach(value => {
+      modifyKinded(value, modifiersByKind);
+    });
+  }
+  return obj;
+};
 
-const fixName: Function1<RawExpressionFilter, fltr.Filter> = rawFilter => ({
-  ...rawFilter,
-  name: fromNullable(rawFilter.name)
-});
+const fixOptionals: Function1<any, fltr.Filter> = rawFilter =>
+  (modifyKinded(rawFilter, {
+    ExpressionFilter: ef => (ef.name = fromNullable(ef.name)),
+    BinaryComparison: bc => (bc.caseSensitive = fromNullable(bc.caseSensitive))
+  }) as any) as fltr.Filter; // super fishy. gelukkig "maar" een test
 
 describe("De filterinterpreter", () => {
   const property: fltr.Property = fltr.Property("string", "prop", "Property");
@@ -28,23 +36,22 @@ describe("De filterinterpreter", () => {
       expect(result.getOrElse(undefined)).toEqual(empty);
     });
     it("moet een filter met 1 'gelijk aan' kunnen verwerken", () => {
-      const eq: RawExpressionFilter = {
+      const eq = {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
           kind: "BinaryComparison",
           operator: "equality",
           property: property,
-          value: literal,
-          caseSensitive: none
+          value: literal
         }
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(eq);
       expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(fixName(eq));
+      expect(result.getOrElse(undefined)).toEqual(fixOptionals(eq));
     });
     it("moet een filter met 1 case sensitive 'gelijk aan' kunnen verwerken", () => {
-      const eq: RawExpressionFilter = {
+      const eq = {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
@@ -52,15 +59,15 @@ describe("De filterinterpreter", () => {
           operator: "equality",
           property: property,
           value: literal,
-          caseSensitive: some(true)
+          caseSensitive: true
         }
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(eq);
       expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(fixName(eq));
+      expect(result.getOrElse(undefined)).toEqual(fixOptionals(eq));
     });
     it("moet een filter met 1 niet case sensitive 'gelijk aan' kunnen verwerken", () => {
-      const eq: RawExpressionFilter = {
+      const eq = {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
@@ -68,63 +75,60 @@ describe("De filterinterpreter", () => {
           operator: "equality",
           property: property,
           value: literal,
-          caseSensitive: some(false)
+          caseSensitive: false
         }
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(eq);
       expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(fixName(eq));
+      expect(result.getOrElse(undefined)).toEqual(fixOptionals(eq));
     });
     it("moet een filter met 1 'niet gelijk aan' kunnen verwerken", () => {
-      const neq: RawExpressionFilter = {
+      const neq = {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
           kind: "BinaryComparison",
           operator: "inequality",
           property: property,
-          value: literal,
-          caseSensitive: none
+          value: literal
         }
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(neq);
       expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(fixName(neq));
+      expect(result.getOrElse(undefined)).toEqual(fixOptionals(neq));
     });
     it("moet een filter met 1 'begint met' kunnen verwerken", () => {
-      const neq: RawExpressionFilter = {
+      const neq = {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
           kind: "BinaryComparison",
           operator: "starts",
           property: property,
-          value: literal,
-          caseSensitive: none
+          value: literal
         }
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(neq);
       expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(fixName(neq));
+      expect(result.getOrElse(undefined)).toEqual(fixOptionals(neq));
     });
     it("moet een filter met 1 'geen waarde' kunnen verwerken", () => {
-      const neq: RawExpressionFilter = {
+      const neq = {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
           kind: "BinaryComparison",
           operator: "isEmpty",
           property: property,
-          value: literal,
-          caseSensitive: none
+          value: literal
         }
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(neq);
       expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(fixName(neq));
+      expect(result.getOrElse(undefined)).toEqual(fixOptionals(neq));
     });
     it("moet een filter met 1 'and' kunnen verwerken", () => {
-      const and: RawExpressionFilter = {
+      const and = {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
@@ -133,24 +137,22 @@ describe("De filterinterpreter", () => {
             kind: "BinaryComparison",
             operator: "inequality",
             property: property,
-            value: literal,
-            caseSensitive: none
+            value: literal
           },
           right: {
             kind: "BinaryComparison",
             operator: "equality",
             property: property,
-            value: literal,
-            caseSensitive: none
+            value: literal
           }
         }
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(and);
       expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(fixName(and));
+      expect(result.getOrElse(undefined)).toEqual(fixOptionals(and));
     });
     it("moet een filter met 2x 'and' kunnen verwerken", () => {
-      const and: RawExpressionFilter = {
+      const and = {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
@@ -161,32 +163,29 @@ describe("De filterinterpreter", () => {
               kind: "BinaryComparison",
               operator: "equality",
               property: property,
-              value: literal,
-              caseSensitive: none
+              value: literal
             },
             right: {
               kind: "BinaryComparison",
               operator: "equality",
               property: property,
-              value: literal,
-              caseSensitive: none
+              value: literal
             }
           },
           right: {
             kind: "BinaryComparison",
             operator: "equality",
             property: property,
-            value: literal,
-            caseSensitive: none
+            value: literal
           }
         }
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(and);
       expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(fixName(and));
+      expect(result.getOrElse(undefined)).toEqual(fixOptionals(and));
     });
     it("moet een filter met 1 'or' kunnen verwerken", () => {
-      const or: RawExpressionFilter = {
+      const or = {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
@@ -195,24 +194,22 @@ describe("De filterinterpreter", () => {
             kind: "BinaryComparison",
             operator: "inequality",
             property: property,
-            value: literal,
-            caseSensitive: none
+            value: literal
           },
           right: {
             kind: "BinaryComparison",
             operator: "equality",
             property: property,
-            value: literal,
-            caseSensitive: none
+            value: literal
           }
         }
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(or);
       expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(fixName(or));
+      expect(result.getOrElse(undefined)).toEqual(fixOptionals(or));
     });
     it("moet een filter met 2x 'or' kunnen verwerken", () => {
-      const or: RawExpressionFilter = {
+      const or = {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
@@ -223,32 +220,29 @@ describe("De filterinterpreter", () => {
               kind: "BinaryComparison",
               operator: "equality",
               property: property,
-              value: literal,
-              caseSensitive: none
+              value: literal
             },
             right: {
               kind: "BinaryComparison",
               operator: "equality",
               property: property,
-              value: literal,
-              caseSensitive: none
+              value: literal
             }
           },
           right: {
             kind: "BinaryComparison",
             operator: "equality",
             property: property,
-            value: literal,
-            caseSensitive: none
+            value: literal
           }
         }
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(or);
       expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(fixName(or));
+      expect(result.getOrElse(undefined)).toEqual(fixOptionals(or));
     });
     it("moet een filter met 'or' en 'and' kunnen verwerken", () => {
-      const orAnd: RawExpressionFilter = {
+      const orAnd = {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
@@ -259,41 +253,37 @@ describe("De filterinterpreter", () => {
               kind: "BinaryComparison",
               operator: "equality",
               property: property,
-              value: literal,
-              caseSensitive: none
+              value: literal
             },
             right: {
               kind: "BinaryComparison",
               operator: "equality",
               property: property,
-              value: literal,
-              caseSensitive: none
+              value: literal
             }
           },
           right: {
             kind: "BinaryComparison",
             operator: "equality",
             property: property,
-            value: literal,
-            caseSensitive: none
+            value: literal
           }
         }
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(orAnd);
       expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(fixName(orAnd));
+      expect(result.getOrElse(undefined)).toEqual(fixOptionals(orAnd));
     });
   });
   describe("Bij het interpreteren van ongeldige structuren", () => {
-    it("moet een fout geven bij een expressie met een ontbrekende property ", () => {
+    it("moet een  bij een expressie met een ontbrekende property ", () => {
       const eq: Object = {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
           kind: "BinaryComparison",
           operator: "equality",
-          value: literal,
-          caseSensitive: none
+          value: literal
         }
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(eq);
