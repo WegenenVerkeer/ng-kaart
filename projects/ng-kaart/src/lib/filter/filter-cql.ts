@@ -29,13 +29,13 @@ export namespace FilterCql {
     caseSensitive
   ) =>
     fltr.matchBinaryComparisonOperatorWithFallback({
-      equality: () => some(`${propertyRef(property)} ${like(caseSensitive)} '${literal.value}'`),
-      inequality: () => some(`${propertyRef(property)} not ${like(caseSensitive)} '${literal.value}'`),
+      equality: () => some(`${propertyRef(property)} ${like(caseSensitive)} '${literal.value}'`), // TODO prevent %
+      inequality: () => some(`${propertyRef(property)} not ${like(caseSensitive)} '${literal.value}'`), // TODO prevent %
       starts: () => some(`${propertyRef(property)} ${like(caseSensitive)} '${literal.value}%'`), // TODO prevent %
       ends: () => some(`${propertyRef(property)} ${like(caseSensitive)} '%${literal.value}'`), // TODO prevent %
       isEmpty: () => some(`${propertyRef(property)} is null`), // TODO prevent %
       isNotEmpty: () => some(`${propertyRef(property)} is not null`), // TODO prevent %
-      contains: () => some(`${propertyRef(property)} ${like(caseSensitive)} '%${literal.value}%'`), // TODO prevent %,
+      contains: () => some(`${propertyRef(property)} ${like(caseSensitive)} '%${literal.value}%'`), // TODO prevent %
       fallback: () => none // de andere operators worden niet ondersteund
     })(operator);
 

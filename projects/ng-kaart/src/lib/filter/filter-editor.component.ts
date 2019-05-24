@@ -596,7 +596,8 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     return false;
   }
 
-  onClickCheckbox(event) {
+  // Dit is nodig om de event op te vangen vóór dat de dialog zelf het doet
+  onClickCheckbox() {
     this.hoofdLetterGevoeligControl.setValue(!this.hoofdLetterGevoeligControl.value);
     return false;
   }
