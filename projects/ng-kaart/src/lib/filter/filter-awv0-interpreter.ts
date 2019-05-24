@@ -58,7 +58,8 @@ export namespace AwvV0FilterInterpreters {
       kind: oi.field("kind", oi.value("BinaryComparison")),
       operator: oi.field("operator", binaryComparisonOperator),
       property: oi.field("property", property),
-      value: oi.field("value", literal)
+      value: oi.field("value", literal),
+      caseSensitive: oi.optional(oi.field("caseSensitive", oi.bool))
     }),
     fltr.propertyAndValueCompatible,
     `Het type van de property komt niet overeen met dat van de waarde`

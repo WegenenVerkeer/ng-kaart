@@ -1,6 +1,17 @@
 import * as array from "fp-ts/lib/Array";
 import { array as ArrayMonad } from "fp-ts/lib/Array";
-import { Curried2, Endomorphism, Function1, Function2, Function3, Function4, not, Predicate, Refinement } from "fp-ts/lib/function";
+import {
+  Curried2,
+  Curried3,
+  Endomorphism,
+  Function1,
+  Function2,
+  Function3,
+  Function4,
+  not,
+  Predicate,
+  Refinement
+} from "fp-ts/lib/function";
 import { fromNullable, fromPredicate, none, Option, option, some } from "fp-ts/lib/Option";
 import { ordString } from "fp-ts/lib/Ord";
 import {
@@ -105,6 +116,7 @@ export namespace FilterEditor {
     readonly operatorSelectors: ComparisonOperator[];
 
     readonly selectedOperator: ComparisonOperator;
+    readonly caseSensitive: Option<boolean>;
     readonly valueSelector: ValueSelector;
     readonly workingValue: Option<SelectedValue>; // voorlopig ongelidge ingevoerde waarde bij te houden
   }
@@ -124,6 +136,7 @@ export namespace FilterEditor {
     readonly selectedProperty: Property;
     readonly operatorSelectors: ComparisonOperator[];
     readonly selectedOperator: ComparisonOperator;
+    readonly caseSensitive: Option<boolean>;
     readonly valueSelector: ValueSelector;
 
     readonly selectedValue: SelectedValue;
@@ -308,10 +321,11 @@ export namespace FilterEditor {
     valueSelector: genericOperatorSelectors(property).valueSelector
   });
 
-  const valueOrCompleted: Function3<OperatorSelection, ComparisonOperator, ValueSelector, TermEditor> = (
+  const valueOrCompleted: Function4<OperatorSelection, ComparisonOperator, ValueSelector, boolean, TermEditor> = (
     selection,
     selectedOperator,
-    valueSelector
+    valueSelector,
+    caseSensitive
   ) => {
     if (["isEmpty", "isNotEmpty"].includes(selectedOperator.operator)) {
       return {
@@ -320,10 +334,11 @@ export namespace FilterEditor {
         selectedOperator,
         valueSelector: EmptyValueSelector,
         selectedValue: LiteralValue(selectedOperator.operator === "isEmpty", "boolean"),
-        workingValue: none
+        workingValue: none,
+        caseSensitive: none
       };
     } else {
-      return { ...selection, kind: "Value", selectedOperator, valueSelector, workingValue: none };
+      return { ...selection, kind: "Value", selectedOperator, valueSelector, workingValue: none, caseSensitive: some(caseSensitive) };
     }
   };
 
@@ -333,7 +348,8 @@ export namespace FilterEditor {
     selectedOperator,
     EmptyValueSelector,
     selectedValue: LiteralValue(["isEmpty", "equality"].includes(selectedOperator.operator), "boolean"),
-    workingValue: none
+    workingValue: none,
+    caseSensitive: none
   });
 
   // nooit aanroepen met lege array
@@ -342,13 +358,21 @@ export namespace FilterEditor {
   const DisjunctionEditor: Function1<ConjunctionEditor[], DisjunctionsEditor> = conjunctionEditors => ({ conjunctionEditors });
 
   // Overgang van OperatorSelection naar ValueSelection (of Completed voor unaire operators)
-  export const selectOperator: Curried2<ComparisonOperator, OperatorSelection, TermEditor> = selectedOperator => selection =>
+  export const selectOperator: Curried3<
+    ComparisonOperator,
+    boolean,
+    OperatorSelection,
+    TermEditor
+  > = selectedOperator => caseSensitive => selection =>
     fltr.matchTypeTypeWithFallback<TermEditor>({
-      string: () => valueOrCompleted(selection, selectedOperator, bestStringValueSelector(selection.selectedProperty, selectedOperator)),
-      double: () => valueOrCompleted(selection, selectedOperator, selection.valueSelector),
-      integer: () => valueOrCompleted(selection, selectedOperator, selection.valueSelector),
+      string: () =>
+        valueOrCompleted(selection, selectedOperator, bestStringValueSelector(selection.selectedProperty, selectedOperator), caseSensitive),
+      double: () => valueOrCompleted(selection, selectedOperator, selection.valueSelector, caseSensitive),
+      integer: () => valueOrCompleted(selection, selectedOperator, selection.valueSelector, caseSensitive),
       boolean: () => booleanCompleted(selection, selectedOperator),
-      fallback: () => valueOrCompleted(selection, selectedOperator, selection.valueSelector) // Hier raken we niet wegens geen operator
+      fallback: () =>
+        // Hier raken we niet wegens geen operator
+        valueOrCompleted(selection, selectedOperator, selection.valueSelector, caseSensitive)
     })(selection.selectedProperty.type);
 
   // Overgang van ValueSelection naar Completed als alles OK is. Kan dus ook van Completed naar ValueSelection gaan.
@@ -377,6 +401,11 @@ export namespace FilterEditor {
         selectedValue => ({ ...selection, kind: "Completed", selectedValue })
       );
   };
+
+  export const selectHoofdletterGevoelig: Curried2<boolean, ValueSelection | Completed, TermEditor> = hoofdLetterGevoelig => selection => ({
+    ...selection,
+    caseSensitive: some(hoofdLetterGevoelig)
+  });
 
   const initConjunctionEditor: Function1<TermEditor, ConjunctionEditor> = termEditor => ConjunctionEditor([termEditor]);
 
@@ -536,7 +565,8 @@ export namespace FilterEditor {
       operatorSelectors: genericOperatorSelectors(selectedProperty).operators,
       selectedOperator,
       selectedValue: toLiteralValue(comparison.value),
-      valueSelector: completedOperatorSelectors(selectedProperty, selectedOperator).valueSelector
+      valueSelector: completedOperatorSelectors(selectedProperty, selectedOperator).valueSelector,
+      caseSensitive: comparison.caseSensitive
     };
   };
 
@@ -615,7 +645,8 @@ export namespace FilterEditor {
           fltr.BinaryComparison(
             termEditor.selectedOperator.operator,
             termEditor.selectedProperty,
-            toLiteral(termEditor.selectedOperator, termEditor.selectedValue)
+            toLiteral(termEditor.selectedOperator, termEditor.selectedValue),
+            termEditor.caseSensitive
           )
         );
       default:

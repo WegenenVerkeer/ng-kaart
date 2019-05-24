@@ -37,12 +37,21 @@ export namespace FilterText {
 }
 
 export namespace FilterAwv0Json {
-  const fixName: Function1<fltr.Filter, any> = filter => {
-    return fltr.matchFilter({
-      EmptyFilter: () => filter as any, // cast nodig omdat TS beide resultaattypes gelijk wil trekken and wat the eager is
-      ExpressionFilter: expr => ({ ...filter, name: expr.name.toUndefined() })
-    })(filter);
-  };
+  function flattenOptionRecursively(obj: any) {
+    Object.entries(obj).forEach(([key, value]) => {
+      const toUndefined = value["toUndefined"];
+      if (typeof toUndefined === "function") {
+        // We veronderstellen een object dat gelijkaardig is aan Option
+        obj[key] = (value as any).toUndefined();
+      } else if (typeof value === "object") {
+        flattenOptionRecursively(value);
+      }
+    });
+    return obj;
+  }
 
-  export const encode: Function1<fltr.Filter, string> = filter => JSON.stringify({ version: "awv-v0", definition: fixName(filter) });
+  // JSON kan enkel primitives, key-values en arrays aan. Option e.d. mogen dus niet.
+  const flattenOption: Function1<fltr.Filter, any> = filter => flattenOptionRecursively({ ...filter });
+
+  export const encode: Function1<fltr.Filter, string> = filter => JSON.stringify({ version: "awv-v0", definition: flattenOption(filter) });
 }

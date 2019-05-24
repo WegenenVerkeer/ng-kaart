@@ -5,6 +5,7 @@ import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import {
   MatAutocompleteModule,
   MatButtonModule,
+  MatCheckboxModule,
   MatFormFieldModule,
   MatIconModule,
   MatInputModule,
@@ -40,6 +41,7 @@ const components: any[] = [
     FormsModule,
     ReactiveFormsModule,
     MatButtonModule,
+    MatCheckboxModule,
     MatIconModule,
     MatInputModule,
     MatFormFieldModule,

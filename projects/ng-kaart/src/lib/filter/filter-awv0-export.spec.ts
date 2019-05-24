@@ -15,7 +15,8 @@ describe("De filter exporter", () => {
           kind: "BinaryComparison",
           operator: "equality",
           property: property,
-          value: literal
+          value: literal,
+          caseSensitive: none
         }
       };
       const encoded = FilterAwv0Json.encode(filter);
@@ -30,7 +31,8 @@ describe("De filter exporter", () => {
           kind: "BinaryComparison",
           operator: "equality",
           property: property,
-          value: literal
+          value: literal,
+          caseSensitive: none
         }
       };
       const encoded = FilterAwv0Json.encode(filter);
