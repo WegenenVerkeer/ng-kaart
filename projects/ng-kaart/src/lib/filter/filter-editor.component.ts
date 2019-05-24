@@ -350,6 +350,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.integerWaardeControl,
               this.doubleWaardeControl,
               this.dropdownWaardeControl,
+              this.autocompleteWaardeControl,
               this.hoofdLetterGevoeligControl
             );
             this.veldControl.setValue(val.selectedProperty, { emitEvent: false });
