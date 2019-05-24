@@ -1,5 +1,5 @@
 import { Function1 } from "fp-ts/lib/function";
-import { fromNullable } from "fp-ts/lib/Option";
+import { fromNullable, none } from "fp-ts/lib/Option";
 
 import { AwvV0FilterInterpreters } from "./filter-awv0-interpreter";
 import { Filter as fltr } from "./filter-model";
@@ -35,7 +35,8 @@ describe("De filterinterpreter", () => {
           kind: "BinaryComparison",
           operator: "equality",
           property: property,
-          value: literal
+          value: literal,
+          caseSensitive: none
         }
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(eq);
@@ -50,7 +51,8 @@ describe("De filterinterpreter", () => {
           kind: "BinaryComparison",
           operator: "inequality",
           property: property,
-          value: literal
+          value: literal,
+          caseSensitive: none
         }
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(neq);
@@ -65,7 +67,8 @@ describe("De filterinterpreter", () => {
           kind: "BinaryComparison",
           operator: "starts",
           property: property,
-          value: literal
+          value: literal,
+          caseSensitive: none
         }
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(neq);
@@ -80,7 +83,8 @@ describe("De filterinterpreter", () => {
           kind: "BinaryComparison",
           operator: "isEmpty",
           property: property,
-          value: literal
+          value: literal,
+          caseSensitive: none
         }
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(neq);
@@ -97,13 +101,15 @@ describe("De filterinterpreter", () => {
             kind: "BinaryComparison",
             operator: "inequality",
             property: property,
-            value: literal
+            value: literal,
+            caseSensitive: none
           },
           right: {
             kind: "BinaryComparison",
             operator: "equality",
             property: property,
-            value: literal
+            value: literal,
+            caseSensitive: none
           }
         }
       };
@@ -123,20 +129,23 @@ describe("De filterinterpreter", () => {
               kind: "BinaryComparison",
               operator: "equality",
               property: property,
-              value: literal
+              value: literal,
+              caseSensitive: none
             },
             right: {
               kind: "BinaryComparison",
               operator: "equality",
               property: property,
-              value: literal
+              value: literal,
+              caseSensitive: none
             }
           },
           right: {
             kind: "BinaryComparison",
             operator: "equality",
             property: property,
-            value: literal
+            value: literal,
+            caseSensitive: none
           }
         }
       };
@@ -154,13 +163,15 @@ describe("De filterinterpreter", () => {
             kind: "BinaryComparison",
             operator: "inequality",
             property: property,
-            value: literal
+            value: literal,
+            caseSensitive: none
           },
           right: {
             kind: "BinaryComparison",
             operator: "equality",
             property: property,
-            value: literal
+            value: literal,
+            caseSensitive: none
           }
         }
       };
@@ -180,20 +191,23 @@ describe("De filterinterpreter", () => {
               kind: "BinaryComparison",
               operator: "equality",
               property: property,
-              value: literal
+              value: literal,
+              caseSensitive: none
             },
             right: {
               kind: "BinaryComparison",
               operator: "equality",
               property: property,
-              value: literal
+              value: literal,
+              caseSensitive: none
             }
           },
           right: {
             kind: "BinaryComparison",
             operator: "equality",
             property: property,
-            value: literal
+            value: literal,
+            caseSensitive: none
           }
         }
       };
@@ -213,20 +227,23 @@ describe("De filterinterpreter", () => {
               kind: "BinaryComparison",
               operator: "equality",
               property: property,
-              value: literal
+              value: literal,
+              caseSensitive: none
             },
             right: {
               kind: "BinaryComparison",
               operator: "equality",
               property: property,
-              value: literal
+              value: literal,
+              caseSensitive: none
             }
           },
           right: {
             kind: "BinaryComparison",
             operator: "equality",
             property: property,
-            value: literal
+            value: literal,
+            caseSensitive: none
           }
         }
       };
@@ -243,7 +260,8 @@ describe("De filterinterpreter", () => {
         expression: {
           kind: "BinaryComparison",
           operator: "equality",
-          value: literal
+          value: literal,
+          caseSensitive: none
         }
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(eq);
