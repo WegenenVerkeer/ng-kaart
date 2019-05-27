@@ -58,14 +58,14 @@ import { forEach } from "../util/option";
 const FETCH_TIMEOUT = 5000; // max time to wait for data from featureserver before checking cache, enkel indien gebruikCache = true
 const BATCH_SIZE = 100; // aantal features per keer toevoegen aan laag
 
-const featureDelimiter = "\n";
+export const featureDelimiter = "\n";
 
 const cacheCredentials: () => RequestInit = () => ({
   cache: "no-store", // geen client side caching van nosql data
   credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
 });
 
-const getWithCommonHeaders: () => RequestInit = () => ({
+export const getWithCommonHeaders: () => RequestInit = () => ({
   ...cacheCredentials(),
   method: "GET"
 });
@@ -92,7 +92,7 @@ const splitter: Function1<string, ReduceFunction<SplitterState, string>> = delim
   );
 };
 
-const split: Function1<string, Pipeable<string, string>> = delimiter => obs => {
+export const split: Function1<string, Pipeable<string, string>> = delimiter => obs => {
   const splitterState$: rx.Observable<SplitterState> = obs.pipe(
     scan(splitter(delimiter), { seen: "", output: [] }),
     share()
@@ -134,7 +134,7 @@ const mapToGeoJson: Pipeable<string, GeoJsonLike> = obs =>
     })
   );
 
-const mapToFeatureCollection: Pipeable<string, FeatureCollection> = obs =>
+export const mapToFeatureCollection: Pipeable<string, FeatureCollection> = obs =>
   obs.pipe(
     map(lijn => {
       try {

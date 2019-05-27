@@ -4,8 +4,7 @@ import * as ol from "openlayers";
 
 import * as ke from "../../kaart/kaart-elementen";
 import * as ss from "../../kaart/stijl-selector";
-import { setLaagnaam } from "../../util/feature";
-import { urlWithParams } from "../../util/url";
+import { wfsSource } from "../../source/wfs-source";
 import * as val from "../webcomponent-support/params";
 
 import { ClassicVectorLaagLikeComponent } from "./classic-vector-laag-like.component";
@@ -58,39 +57,19 @@ export class ClassicWfsLaagComponent extends ClassicVectorLaagLikeComponent {
   }
 
   createLayer(): ke.VectorLaag {
-    const maybeEncodedFilter = this._cqlFilter.map(f => ` AND (${f})`).map(encodeURIComponent);
-    const precalculatedUrl = urlWithParams(this._url, {
-      srsname: this._srsName,
-      version: this._version,
-      outputFormat: "application/json",
-      request: "GetFeature",
-      typenames: this._typeNames.getOrElseL(() => {
-        throw new Error("Een WFS kaag moet verplicht een waarde voor typenames hebben");
-      })
-    });
-    const source = new ol.source.Vector({
-      format: new ol.format.GeoJSON(),
-      url: extent => {
-        const url = `${precalculatedUrl}&cql_filter=bbox(the_geom,${extent.join(",")})`;
-        return maybeEncodedFilter.fold(url, encodedFilter => url + encodedFilter);
-      },
-      strategy: ol.loadingstrategy.bbox
-    });
-    source.on(
-      "addfeature",
-      evt => {
-        const feature = evt["feature"] as ol.Feature;
-        const properties = feature.getProperties();
-        feature.setProperties({});
-        feature.set("properties", properties);
-        setLaagnaam(this._titel)(feature);
-      },
-      this
-    );
     return {
       type: ke.VectorType,
       titel: this._titel,
-      source: source,
+      source: wfsSource(
+        this._titel,
+        this._srsName,
+        this._version,
+        this._typeNames.getOrElseL(() => {
+          throw new Error("Een WFS kaag moet verplicht een waarde voor typenames hebben");
+        }),
+        this._url,
+        this._cqlFilter
+      ),
       clusterDistance: this._clusterDistance,
       styleSelector: this.getMaybeStyleSelector(),
       styleSelectorBron: this.getMaybeStyleSelectorBron(),
