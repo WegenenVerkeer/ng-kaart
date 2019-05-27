@@ -116,7 +116,7 @@ export namespace FilterEditor {
     readonly operatorSelectors: ComparisonOperator[];
 
     readonly selectedOperator: ComparisonOperator;
-    readonly caseSensitive: Option<boolean>;
+    readonly caseSensitive: boolean;
     readonly valueSelector: ValueSelector;
     readonly workingValue: Option<SelectedValue>; // voorlopig ongelidge ingevoerde waarde bij te houden
   }
@@ -136,7 +136,7 @@ export namespace FilterEditor {
     readonly selectedProperty: Property;
     readonly operatorSelectors: ComparisonOperator[];
     readonly selectedOperator: ComparisonOperator;
-    readonly caseSensitive: Option<boolean>;
+    readonly caseSensitive: boolean;
     readonly valueSelector: ValueSelector;
 
     readonly selectedValue: SelectedValue;
@@ -335,10 +335,10 @@ export namespace FilterEditor {
         valueSelector: EmptyValueSelector,
         selectedValue: LiteralValue(selectedOperator.operator === "isEmpty", "boolean"),
         workingValue: none,
-        caseSensitive: none
+        caseSensitive: false
       };
     } else {
-      return { ...selection, kind: "Value", selectedOperator, valueSelector, workingValue: none, caseSensitive: some(caseSensitive) };
+      return { ...selection, kind: "Value", selectedOperator, valueSelector, workingValue: none, caseSensitive: caseSensitive };
     }
   };
 
@@ -349,7 +349,7 @@ export namespace FilterEditor {
     EmptyValueSelector,
     selectedValue: LiteralValue(["isEmpty", "equality"].includes(selectedOperator.operator), "boolean"),
     workingValue: none,
-    caseSensitive: none
+    caseSensitive: false
   });
 
   // nooit aanroepen met lege array
@@ -404,7 +404,7 @@ export namespace FilterEditor {
 
   export const selectHoofdletterGevoelig: Curried2<boolean, ValueSelection | Completed, TermEditor> = hoofdLetterGevoelig => selection => ({
     ...selection,
-    caseSensitive: some(hoofdLetterGevoelig)
+    caseSensitive: hoofdLetterGevoelig
   });
 
   const initConjunctionEditor: Function1<TermEditor, ConjunctionEditor> = termEditor => ConjunctionEditor([termEditor]);

@@ -24,7 +24,7 @@
       <div class ="comparison">{{ asValueSelection().selectedOperator.shortLabel }}</div>
       <div>?</div>
     </div>
-    <mat-icon *ngIf="isCaseSensitive(asValueSelection())" class="hoofdletter">font_download</mat-icon>
+    <mat-icon *ngIf="asValueSelection().caseSensitive" class="hoofdletter">font_download</mat-icon>
     <mat-icon class="cross">error_outline</mat-icon>
   </div>
 
@@ -34,7 +34,7 @@
       <div class ="comparison">{{ asCompleted().selectedOperator.shortLabel }}</div>
       <div>{{ completedValue() }}</div>
     </div>
-    <mat-icon *ngIf="isCaseSensitive(asCompleted())" class="hoofdletter">font_download</mat-icon>
+    <mat-icon *ngIf="asCompleted().caseSensitive" class="hoofdletter">font_download</mat-icon>
     <mat-icon class="checkmark">done</mat-icon>
   </div>
 

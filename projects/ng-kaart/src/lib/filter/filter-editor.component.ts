@@ -355,7 +355,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
             );
             this.veldControl.setValue(val.selectedProperty, { emitEvent: false });
             this.operatorControl.setValue(val.selectedOperator, { emitEvent: false });
-            this.hoofdLetterGevoeligControl.setValue(val.caseSensitive.getOrElse(false), { emitEvent: false });
+            this.hoofdLetterGevoeligControl.setValue(val.caseSensitive, { emitEvent: false });
             // We mogen enkel de getoonde control resetten, want anders krijgen we een event en daaropvolgende update
             // voor de andere controls
             fed.matchValueSelector({
@@ -397,7 +397,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
             );
             this.veldControl.setValue(compl.selectedProperty, { emitEvent: false });
             this.operatorControl.setValue(compl.selectedOperator, { emitEvent: false });
-            this.hoofdLetterGevoeligControl.setValue(compl.caseSensitive.getOrElse(false), { emitEvent: false });
+            this.hoofdLetterGevoeligControl.setValue(compl.caseSensitive, { emitEvent: false });
             fed.matchValueSelector({
               empty: () => {},
               free: valueSelector => {

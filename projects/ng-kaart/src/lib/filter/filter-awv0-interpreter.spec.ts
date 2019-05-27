@@ -21,8 +21,7 @@ const modifyKinded: Consumer2<any, { [p: string]: Consumer1<any> }> = (obj, modi
 
 const fixOptionals: Function1<any, fltr.Filter> = rawFilter =>
   (modifyKinded(rawFilter, {
-    ExpressionFilter: ef => (ef.name = fromNullable(ef.name)),
-    BinaryComparison: bc => (bc.caseSensitive = fromNullable(bc.caseSensitive))
+    ExpressionFilter: ef => (ef.name = fromNullable(ef.name))
   }) as any) as fltr.Filter; // super fishy. gelukkig "maar" een test
 
 describe("De filterinterpreter", () => {
@@ -43,7 +42,8 @@ describe("De filterinterpreter", () => {
           kind: "BinaryComparison",
           operator: "equality",
           property: property,
-          value: literal
+          value: literal,
+          caseSensitive: false
         }
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(eq);
@@ -90,7 +90,8 @@ describe("De filterinterpreter", () => {
           kind: "BinaryComparison",
           operator: "inequality",
           property: property,
-          value: literal
+          value: literal,
+          caseSensitive: false
         }
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(neq);
@@ -105,7 +106,8 @@ describe("De filterinterpreter", () => {
           kind: "BinaryComparison",
           operator: "starts",
           property: property,
-          value: literal
+          value: literal,
+          caseSensitive: false
         }
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(neq);
@@ -120,7 +122,8 @@ describe("De filterinterpreter", () => {
           kind: "BinaryComparison",
           operator: "isEmpty",
           property: property,
-          value: literal
+          value: literal,
+          caseSensitive: false
         }
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(neq);
@@ -137,13 +140,15 @@ describe("De filterinterpreter", () => {
             kind: "BinaryComparison",
             operator: "inequality",
             property: property,
-            value: literal
+            value: literal,
+            caseSensitive: false
           },
           right: {
             kind: "BinaryComparison",
             operator: "equality",
             property: property,
-            value: literal
+            value: literal,
+            caseSensitive: false
           }
         }
       };
@@ -163,20 +168,23 @@ describe("De filterinterpreter", () => {
               kind: "BinaryComparison",
               operator: "equality",
               property: property,
-              value: literal
+              value: literal,
+              caseSensitive: false
             },
             right: {
               kind: "BinaryComparison",
               operator: "equality",
               property: property,
-              value: literal
+              value: literal,
+              caseSensitive: false
             }
           },
           right: {
             kind: "BinaryComparison",
             operator: "equality",
             property: property,
-            value: literal
+            value: literal,
+            caseSensitive: false
           }
         }
       };
@@ -194,13 +202,15 @@ describe("De filterinterpreter", () => {
             kind: "BinaryComparison",
             operator: "inequality",
             property: property,
-            value: literal
+            value: literal,
+            caseSensitive: false
           },
           right: {
             kind: "BinaryComparison",
             operator: "equality",
             property: property,
-            value: literal
+            value: literal,
+            caseSensitive: false
           }
         }
       };
@@ -220,20 +230,23 @@ describe("De filterinterpreter", () => {
               kind: "BinaryComparison",
               operator: "equality",
               property: property,
-              value: literal
+              value: literal,
+              caseSensitive: false
             },
             right: {
               kind: "BinaryComparison",
               operator: "equality",
               property: property,
-              value: literal
+              value: literal,
+              caseSensitive: false
             }
           },
           right: {
             kind: "BinaryComparison",
             operator: "equality",
             property: property,
-            value: literal
+            value: literal,
+            caseSensitive: false
           }
         }
       };
@@ -253,20 +266,23 @@ describe("De filterinterpreter", () => {
               kind: "BinaryComparison",
               operator: "equality",
               property: property,
-              value: literal
+              value: literal,
+              caseSensitive: false
             },
             right: {
               kind: "BinaryComparison",
               operator: "equality",
               property: property,
-              value: literal
+              value: literal,
+              caseSensitive: false
             }
           },
           right: {
             kind: "BinaryComparison",
             operator: "equality",
             property: property,
-            value: literal
+            value: literal,
+            caseSensitive: false
           }
         }
       };
@@ -283,7 +299,8 @@ describe("De filterinterpreter", () => {
         expression: {
           kind: "BinaryComparison",
           operator: "equality",
-          value: literal
+          value: literal,
+          caseSensitive: false
         }
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(eq);
@@ -298,7 +315,8 @@ describe("De filterinterpreter", () => {
           kind: "BinaryComparison",
           operator: "inequality",
           property: property,
-          value: { ...literal, type: "double" }
+          value: { ...literal, type: "double" },
+          caseSensitive: false
         }
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(eq);

@@ -65,7 +65,7 @@ export namespace Filter {
     readonly operator: BinaryComparisonOperator;
     readonly property: Property;
     readonly value: Literal;
-    readonly caseSensitive: Option<boolean>;
+    readonly caseSensitive: boolean;
   }
 
   export interface PropertyValueOperator {
@@ -95,7 +95,7 @@ export namespace Filter {
     readonly label: string;
   }
 
-  export const BinaryComparison: Function4<BinaryComparisonOperator, Property, Literal, Option<boolean>, BinaryComparison> = (
+  export const BinaryComparison: Function4<BinaryComparisonOperator, Property, Literal, boolean, BinaryComparison> = (
     operator,
     property,
     value,

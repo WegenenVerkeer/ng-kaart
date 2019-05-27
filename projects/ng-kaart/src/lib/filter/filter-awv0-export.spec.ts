@@ -16,7 +16,7 @@ describe("De filter exporter", () => {
           operator: "equality",
           property: property,
           value: literal,
-          caseSensitive: none
+          caseSensitive: false
         }
       };
       const encoded = FilterAwv0Json.encode(filter);
@@ -32,7 +32,7 @@ describe("De filter exporter", () => {
           operator: "equality",
           property: property,
           value: literal,
-          caseSensitive: none
+          caseSensitive: false
         }
       };
       const encoded = FilterAwv0Json.encode(filter);

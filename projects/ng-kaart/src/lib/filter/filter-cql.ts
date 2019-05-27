@@ -74,7 +74,7 @@ export namespace FilterCql {
     Or: expr => both(expressionCql(expr.left), expressionCql(expr.right), "OR"),
     BinaryComparison: expr =>
       fltr.matchTypeTypeWithFallback({
-        string: () => stringBinaryOperator(expr.property, expr.operator, expr.value, expr.caseSensitive.getOrElse(false)),
+        string: () => stringBinaryOperator(expr.property, expr.operator, expr.value, expr.caseSensitive),
         double: () => numberBinaryOperator(expr.property, expr.operator, expr.value),
         integer: () => numberBinaryOperator(expr.property, expr.operator, expr.value),
         boolean: () => numberBinaryOperator(expr.property, expr.operator, expr.value),
