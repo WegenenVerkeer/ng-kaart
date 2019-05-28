@@ -15,8 +15,8 @@ export namespace FilterCql {
     string: literal => some(`'${literal.value}'`),
     integer: literal => some(`${literal.value}`),
     double: literal => some(`${literal.value}`),
-    date: () => none, // niet ondersteund
-    datetime: () => none,
+    date: literal => some(`'${literal.value}'`),
+    datetime: literal => some(`'${literal.value}'`),
     geometry: () => none,
     json: () => none
   });
@@ -66,7 +66,7 @@ export namespace FilterCql {
   const both: Function3<Option<string>, Option<string>, string, Option<string>> = (maybeLeft, maybeRight, separator) =>
     maybeLeft.fold(
       maybeRight, //
-      left => some(maybeRight.fold(left, right => `${left} ${separator} ${right}`))
+      left => some(maybeRight.fold(left, right => `(${left} ${separator} ${right})`))
     );
 
   const expressionCql: Generator<fltr.Expression> = fltr.matchExpression({
@@ -75,6 +75,8 @@ export namespace FilterCql {
     BinaryComparison: expr =>
       fltr.matchTypeTypeWithFallback({
         string: () => stringBinaryOperator(expr.property, expr.operator, expr.value, expr.caseSensitive),
+        date: () => stringBinaryOperator(expr.property, expr.operator, expr.value, expr.caseSensitive),
+        datetime: () => stringBinaryOperator(expr.property, expr.operator, expr.value, expr.caseSensitive),
         double: () => numberBinaryOperator(expr.property, expr.operator, expr.value),
         integer: () => numberBinaryOperator(expr.property, expr.operator, expr.value),
         boolean: () => numberBinaryOperator(expr.property, expr.operator, expr.value),

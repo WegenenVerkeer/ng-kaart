@@ -176,7 +176,7 @@ export namespace FilterEditor {
       .map(vi =>
         Property(vi.type, vi.naam, fromNullable(vi.label).getOrElse(vi.naam), array.sort(ordString)(arrays.fromNullable(vi.uniekeWaarden)))
       )
-      .filter(property => ["string", "boolean", "double", "integer"].includes(property.type));
+      .filter(property => ["string", "boolean", "double", "integer", "date", "datetime"].includes(property.type));
 
   // Initieer aanmaak van een Comparison
   const FieldSelection: Function1<ke.ToegevoegdeVectorLaag, TermEditor> = laag => ({ kind: "Field", properties: properties(laag) });
@@ -248,6 +248,8 @@ export namespace FilterEditor {
   const binaryComparisonOperator: Function2<fltr.BinaryComparisonOperator, fltr.Literal, BinaryComparisonOperator> = (operator, literal) =>
     fltr.matchTypeTypeWithFallback({
       string: () => typedBinaryComparisonOperator(stringOperatorMap, operator, literal.type),
+      date: () => typedBinaryComparisonOperator(stringOperatorMap, operator, literal.type),
+      datetime: () => typedBinaryComparisonOperator(stringOperatorMap, operator, literal.type),
       integer: () => typedBinaryComparisonOperator(integerOperatorMap, operator, literal.type),
       double: () => typedBinaryComparisonOperator(doubleOperatorMap, operator, literal.type),
       boolean: () => typedBinaryComparisonOperator(booleanOperatorMap, operator, literal.type),
@@ -287,6 +289,8 @@ export namespace FilterEditor {
   const genericOperatorSelectors: Function1<fltr.Property, OperatorsAndValueSelector> = property =>
     fltr.matchTypeTypeWithFallback({
       string: () => OperatorsAndValueSelector(stringOperators, FreeInputValueSelector("string")),
+      date: () => OperatorsAndValueSelector(stringOperators, FreeInputValueSelector("string")),
+      datetime: () => OperatorsAndValueSelector(stringOperators, FreeInputValueSelector("string")),
       double: () => OperatorsAndValueSelector(doubleOperators, FreeInputValueSelector("double")),
       integer: () => OperatorsAndValueSelector(integerOperators, FreeInputValueSelector("integer")),
       boolean: () => OperatorsAndValueSelector(booleanOperators, EmptyValueSelector),
@@ -296,6 +300,8 @@ export namespace FilterEditor {
   const specificOperatorSelectors: Function2<Property, BinaryComparisonOperator, OperatorsAndValueSelector> = (property, operator) =>
     fltr.matchTypeTypeWithFallback({
       string: () => OperatorsAndValueSelector(stringOperators, bestStringValueSelector(property, operator)),
+      date: () => OperatorsAndValueSelector(stringOperators, bestStringValueSelector(property, operator)),
+      datetime: () => OperatorsAndValueSelector(stringOperators, bestStringValueSelector(property, operator)),
       double: () => OperatorsAndValueSelector(doubleOperators, FreeInputValueSelector("double")),
       integer: () => OperatorsAndValueSelector(integerOperators, FreeInputValueSelector("integer")),
       boolean: () => OperatorsAndValueSelector(booleanOperators, EmptyValueSelector),
@@ -369,6 +375,10 @@ export namespace FilterEditor {
     fltr.matchTypeTypeWithFallback<TermEditor>({
       string: () =>
         valueOrCompleted(selection, selectedOperator, bestStringValueSelector(selection.selectedProperty, selectedOperator), caseSensitive),
+      date: () =>
+        valueOrCompleted(selection, selectedOperator, bestStringValueSelector(selection.selectedProperty, selectedOperator), caseSensitive),
+      datetime: () =>
+        valueOrCompleted(selection, selectedOperator, bestStringValueSelector(selection.selectedProperty, selectedOperator), caseSensitive),
       double: () => valueOrCompleted(selection, selectedOperator, selection.valueSelector, caseSensitive),
       integer: () => valueOrCompleted(selection, selectedOperator, selection.valueSelector, caseSensitive),
       boolean: () => booleanCompleted(selection, selectedOperator),
@@ -383,15 +393,17 @@ export namespace FilterEditor {
 
     // in theorie zouden we meer constraints kunnen hebben
     const validateText: PartialFunction1<SelectedValue, SelectedValue> = fromPredicate(selectedValue =>
-      selectedValue.valueType === "string" ? selectedValue.value.toString().length > 0 : true
+      ["string", "date", "datetime"].includes(selectedValue.valueType) ? selectedValue.value.toString().length > 0 : true
     );
     const validateDistinct: PartialFunction1<SelectedValue, SelectedValue> = fromPredicate(selectedValue =>
       selection.valueSelector.kind === "selection"
         ? typeof selectedValue.value === "string" && selection.valueSelector.values.includes(selectedValue.value)
         : true
     );
-    const validateType: PartialFunction1<SelectedValue, SelectedValue> = fromPredicate(
-      selectedValue => selectedValue.valueType === selection.selectedProperty.type
+    const validateType: PartialFunction1<SelectedValue, SelectedValue> = fromPredicate(selectedValue =>
+      selectedValue.valueType === "string"
+        ? ["string", "date", "datetime"].includes(selection.selectedProperty.type)
+        : selectedValue.valueType === selection.selectedProperty.type
     );
 
     return maybeSelectedValue
