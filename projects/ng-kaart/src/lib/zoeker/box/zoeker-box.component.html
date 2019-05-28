@@ -104,7 +104,11 @@
       </span>
       <span class="zoeker-data-box">
         <div class="zoeker-omschrijving" [innerHTML]="resultaat.omschrijving | highlight: zoekVeld.value"></div>
-        <div class="zoeker-extra" [innerHTML]="resultaat.extraOmschrijving.getOrElse('') | highlight: zoekVeld.value"></div>
+        <div class="zoeker-extra"
+             id="{{ 'zoeker-extra-' + resultaatId(index, isFirst, isLast)}}"
+             (click)="expandBeschrijving($event, 'zoeker-extra-' + resultaatId(index, isFirst, isLast), resultaat)"
+             [innerHTML]="resultaat.extraOmschrijving.getOrElse('') | highlight: zoekVeld.value">
+        </div>
       </span>
     </button>
     <div *ngIf="heeftFout()" class="divider"></div>

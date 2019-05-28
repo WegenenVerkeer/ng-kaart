@@ -62,22 +62,34 @@
       vertical-align: middle;
       margin-right: 4px;
     }
-    
+
     .zoeker-data-box {
       display: flex;
       flex-direction: column;
       justify-content: center;
-      
+      width: 100%;
+
       .zoeker-omschrijving {
         font-size: 100%;
+        width: 95%;
+        white-space: normal;
       }
 
       .zoeker-extra {
         font-size: 80%;
+        width: 90%;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
       }
-    }  
-  }  
-  
+
+      .zoeker-extra-expanded {
+        text-overflow: ellipsis;
+        white-space: normal;
+      }
+    }
+  }
+
   .zoeker-fout {
     text-overflow: initial;
     white-space: normal;
