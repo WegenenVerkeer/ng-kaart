@@ -1,5 +1,6 @@
 import { option, setoid } from "fp-ts";
 import { Curried2, Function1, Refinement } from "fp-ts/lib/function";
+import { fromNullable } from "fp-ts/lib/Option";
 import { Setoid, setoidString } from "fp-ts/lib/Setoid";
 import * as ol from "openlayers";
 
@@ -31,6 +32,27 @@ export const toOlFeature: Curried2<string, GeoJsonCore, ol.Feature> = laagnaam =
 export const setLaagnaam: Curried2<string, ol.Feature, ol.Feature> = laagnaam => feature => {
   feature.set("laagnaam", laagnaam);
   return feature;
+};
+
+export const featureToGeojson: Function1<ol.Feature, any> = feature => {
+  if (feature.get("features")) {
+    return {
+      type: "FeatureCollection",
+      geometry: format.writeGeometryObject(feature.getGeometry()),
+      features: feature.get("features").map(singleFeatureToGeojson)
+    };
+  } else {
+    return singleFeatureToGeojson(feature);
+  }
+};
+
+const singleFeatureToGeojson: Function1<ol.Feature, any> = feature => {
+  return {
+    type: "Feature",
+    id: feature.getId(),
+    geometry: format.writeGeometryObject(feature.getGeometry()),
+    properties: feature.get("properties")
+  };
 };
 
 export namespace Feature {

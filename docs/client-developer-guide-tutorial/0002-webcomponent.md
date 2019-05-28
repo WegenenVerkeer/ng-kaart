@@ -73,3 +73,19 @@ const kaartElement = document.getElementById("k1");
 kaartElement.addEventListener("extentChange", function(event) { console.log("***** extent", event.detail);});
 kaartElement.addEventListener("zoomChange", function(event) { console.log("***** zoom ", event.detail);});
 ```
+
+Een interessante output is de geojson van de geselecteerde feature, hier kan je dan verder verwerken in je eigen applicatie.
+
+Je zet die output aan via de eigenschap produceer-geojson-output op te zetten, vergeet evenwel niet
+een selectie-modus te kiezen:
+```html
+<awv-kaart-classic id="kaart1" selectie-modus="single" produceer-geojson-output="true">
+</awv-kaart-classic>
+```
+
+Deze geselecteerde feature kunnen dan werwerkt worden via:
+
+```js
+const kaartElement = document.getElementById("kaart1");
+kaartElement.addEventListener("geselecteerdeFeatureGeojson", function(event) { console.log("++++++++++ feature", event.detail);}); 
+```
