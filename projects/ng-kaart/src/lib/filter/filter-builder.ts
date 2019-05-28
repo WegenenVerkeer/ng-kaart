@@ -347,7 +347,9 @@ export namespace FilterEditor {
     kind: "Completed",
     selectedOperator,
     EmptyValueSelector,
-    selectedValue: LiteralValue(["isEmpty", "equality"].includes(selectedOperator.operator), "boolean"),
+    // contra-intuitief willen we ook bij 'inequality' als boolean waarde 'true'
+    // vermits we dan 'true' vergelijken via '!=' voor operator 'is niet waar'
+    selectedValue: LiteralValue(["isEmpty", "equality", "inequality"].includes(selectedOperator.operator), "boolean"),
     workingValue: none,
     caseSensitive: false
   });
