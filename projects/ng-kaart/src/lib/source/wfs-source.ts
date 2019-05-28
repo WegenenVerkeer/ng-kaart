@@ -1,12 +1,7 @@
-import { array } from "fp-ts";
-import { not } from "fp-ts/lib/function";
-import { fromNullable, none, Option } from "fp-ts/lib/Option";
-import { setoidNumber, setoidString } from "fp-ts/lib/Setoid";
+import { Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
-import * as rx from "rxjs";
-import { concatMap, filter, map, tap } from "rxjs/operators";
+import { concatMap, filter, map } from "rxjs/operators";
 
-import { kaartLogger } from "../kaart/log";
 import { toOlFeature } from "../util/feature";
 import { fetchObs$ } from "../util/fetch-with-timeout";
 import { urlWithParams } from "../util/url";

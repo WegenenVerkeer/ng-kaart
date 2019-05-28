@@ -6,7 +6,7 @@ import * as ol from "openlayers";
 import { kaartLogger } from "../kaart/log";
 
 import { PartialFunction1 } from "./function";
-import { GeoJsonCore } from "./geojson-types";
+import { GeoJsonCore, GeoJsonFeature, GeoJsonFeatureCollection } from "./geojson-types";
 
 // De GeoJSON ziet er thread safe uit (volgens de Openlayers source code)
 const format = new ol.format.GeoJSON();
@@ -31,6 +31,27 @@ export const toOlFeature: Curried2<string, GeoJsonCore, ol.Feature> = laagnaam =
 export const setLaagnaam: Curried2<string, ol.Feature, ol.Feature> = laagnaam => feature => {
   feature.set("laagnaam", laagnaam);
   return feature;
+};
+
+export const featureToGeojson: Function1<ol.Feature, GeoJsonFeatureCollection | GeoJsonFeature> = feature => {
+  if (feature.get("features")) {
+    return {
+      type: "FeatureCollection",
+      geometry: format.writeGeometryObject(feature.getGeometry()),
+      features: feature.get("features").map(singleFeatureToGeojson)
+    };
+  } else {
+    return singleFeatureToGeojson(feature);
+  }
+};
+
+const singleFeatureToGeojson: Function1<ol.Feature, GeoJsonFeature> = feature => {
+  return {
+    type: "Feature",
+    id: feature.getId(),
+    geometry: format.writeGeometryObject(feature.getGeometry()),
+    properties: feature.get("properties")
+  };
 };
 
 export namespace Feature {

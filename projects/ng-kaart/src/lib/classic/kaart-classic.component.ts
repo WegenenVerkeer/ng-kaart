@@ -17,7 +17,7 @@ import * as option from "fp-ts/lib/Option";
 import { fromEither, none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { map, share, tap } from "rxjs/operators";
+import { concatAll, distinctUntilChanged, map, share, tap } from "rxjs/operators";
 
 import { ToegevoegdeLaag } from "../kaart";
 import { KaartInfoBoodschapUiSelector } from "../kaart/info-boodschappen/kaart-info-boodschappen.component";
@@ -28,7 +28,9 @@ import * as prt from "../kaart/kaart-protocol";
 import { KaartMsgObservableConsumer } from "../kaart/kaart.component";
 import { subscriptionCmdOperator } from "../kaart/subscription-helper";
 import * as arrays from "../util/arrays";
+import { featureToGeojson } from "../util/feature";
 import { Feature } from "../util/feature";
+import { GeoJsonFeature, GeoJsonFeatureCollection } from "../util/geojson-types";
 import { ofType } from "../util/operators";
 import { forEach } from "../util/option";
 import * as progress from "../util/progress";
@@ -197,9 +199,25 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
     this._onderdrukKaartBevragenBoodschappen = val.bool(param, this._onderdrukKaartBevragenBoodschappen);
   }
 
+  /** Produceren we geojson output voor de geselecteerde features */
+  @Input()
+  set produceerGeojsonOutput(produceerGeojson: boolean) {
+    if (produceerGeojson) {
+      this.bindToLifeCycle(this.geselecteerdeFeaturesChange)
+        .pipe(
+          concatAll(),
+          distinctUntilChanged(),
+          map(featureToGeojson)
+        )
+        .subscribe(gj => this.geselecteerdeFeatureGeojson.emit(gj));
+    }
+  }
+
   /** De geselecteerde features */
   @Output()
   geselecteerdeFeaturesChange: EventEmitter<Array<ol.Feature>> = new EventEmitter();
+  @Output()
+  geselecteerdeFeatureGeojson: EventEmitter<GeoJsonFeatureCollection | GeoJsonFeature> = new EventEmitter();
   @Output()
   middelpuntChange: EventEmitter<ol.Coordinate> = new EventEmitter();
   @Output()

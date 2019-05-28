@@ -39,3 +39,16 @@ export interface FeatureCollection {
 export interface CollectionSummary {
   count: number;
 }
+
+export interface GeoJsonFeature {
+  readonly type: "Feature";
+  readonly id: GeoJsonKeyType;
+  readonly properties: any;
+  readonly geometry: ol.format.GeoJSONGeometry;
+}
+
+export interface GeoJsonFeatureCollection {
+  type: "FeatureCollection";
+  readonly geometry: ol.format.GeoJSONFeatureCollection;
+  readonly features: Array<GeoJsonFeature>;
+}
