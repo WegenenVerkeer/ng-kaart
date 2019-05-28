@@ -1,13 +1,12 @@
 import { option, setoid } from "fp-ts";
 import { Curried2, Function1, Refinement } from "fp-ts/lib/function";
-import { fromNullable } from "fp-ts/lib/Option";
 import { Setoid, setoidString } from "fp-ts/lib/Setoid";
 import * as ol from "openlayers";
 
 import { kaartLogger } from "../kaart/log";
 
 import { PartialFunction1 } from "./function";
-import { GeoJsonCore } from "./geojson-types";
+import { GeoJsonCore, GeoJsonFeature, GeoJsonFeatureCollection } from "./geojson-types";
 
 // De GeoJSON ziet er thread safe uit (volgens de Openlayers source code)
 const format = new ol.format.GeoJSON();
@@ -34,7 +33,7 @@ export const setLaagnaam: Curried2<string, ol.Feature, ol.Feature> = laagnaam =>
   return feature;
 };
 
-export const featureToGeojson: Function1<ol.Feature, any> = feature => {
+export const featureToGeojson: Function1<ol.Feature, GeoJsonFeatureCollection | GeoJsonFeature> = feature => {
   if (feature.get("features")) {
     return {
       type: "FeatureCollection",
@@ -46,7 +45,7 @@ export const featureToGeojson: Function1<ol.Feature, any> = feature => {
   }
 };
 
-const singleFeatureToGeojson: Function1<ol.Feature, any> = feature => {
+const singleFeatureToGeojson: Function1<ol.Feature, GeoJsonFeature> = feature => {
   return {
     type: "Feature",
     id: feature.getId(),

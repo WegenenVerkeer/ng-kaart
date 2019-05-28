@@ -30,6 +30,7 @@ import { subscriptionCmdOperator } from "../kaart/subscription-helper";
 import * as arrays from "../util/arrays";
 import { featureToGeojson } from "../util/feature";
 import { Feature } from "../util/feature";
+import { GeoJsonFeature, GeoJsonFeatureCollection } from "../util/geojson-types";
 import { ofType } from "../util/operators";
 import { forEach } from "../util/option";
 import * as progress from "../util/progress";
@@ -216,7 +217,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   @Output()
   geselecteerdeFeaturesChange: EventEmitter<Array<ol.Feature>> = new EventEmitter();
   @Output()
-  geselecteerdeFeatureGeojson: EventEmitter<JSON> = new EventEmitter();
+  geselecteerdeFeatureGeojson: EventEmitter<GeoJsonFeatureCollection | GeoJsonFeature> = new EventEmitter();
   @Output()
   middelpuntChange: EventEmitter<ol.Coordinate> = new EventEmitter();
   @Output()
