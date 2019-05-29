@@ -576,17 +576,12 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.zoomNaarResultaat(resultaat);
   }
 
-  expandBeschrijving(event, id: string, resultaat: ZoekResultaat) {
-    const element = document.getElementById(id);
-    if (element && this.isExpandable(id)) {
-      element.classList.toggle("zoeker-extra-expanded");
+  expandBeschrijvingIndienNodig(event) {
+    const element = event.target;
+    if (element && element.scrollWidth > element.clientWidth) {
+      element.classList.add("zoeker-extra-expanded");
       event.stopPropagation(); // mag niet doorklikken naar resultaat
     }
-  }
-
-  isExpandable(id: string) {
-    const element = document.getElementById(id);
-    return element && element.scrollWidth > element.clientWidth;
   }
 
   kiesSuggestiesResultaat(resultaat: ZoekResultaat) {

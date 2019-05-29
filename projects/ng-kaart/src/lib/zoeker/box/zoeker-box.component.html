@@ -88,7 +88,7 @@
                            #zoekerCrabGetrapt></awv-zoeker-crab-getrapt>
   <awv-zoeker-externe-wms-getrapt *ngIf="actieveZoeker === ExterneWms" [hidden]="!toonResultaat"
                                   (leegMakenDisabledChange)="onMaakLeegDisabledChange(ExterneWms, $event)"
-                                  #zoekerExterneWmsGetrapt></awv-zoeker-externe-wms-getrapt>                           
+                                  #zoekerExterneWmsGetrapt></awv-zoeker-externe-wms-getrapt>
   <awv-zoeker-alle-lagen-getrapt *ngIf="actieveZoeker === AlleLagen" [hidden]="!toonResultaat"
                                   (leegMakenDisabledChange)="onMaakLeegDisabledChange(AlleLagen, $event)"
                                   #zoekerAlleLagenGetrapt></awv-zoeker-alle-lagen-getrapt>
@@ -105,8 +105,7 @@
       <span class="zoeker-data-box">
         <div class="zoeker-omschrijving" [innerHTML]="resultaat.omschrijving | highlight: zoekVeld.value"></div>
         <div class="zoeker-extra"
-             id="{{ 'zoeker-extra-' + resultaatId(index, isFirst, isLast)}}"
-             (click)="expandBeschrijving($event, 'zoeker-extra-' + resultaatId(index, isFirst, isLast), resultaat)"
+             (click)="expandBeschrijvingIndienNodig($event)"
              [innerHTML]="resultaat.extraOmschrijving.getOrElse('') | highlight: zoekVeld.value">
         </div>
       </span>

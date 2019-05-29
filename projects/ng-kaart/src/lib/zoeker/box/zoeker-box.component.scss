@@ -78,13 +78,12 @@
       .zoeker-extra {
         font-size: 80%;
         width: 90%;
+        overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
-        overflow: hidden;
       }
 
       .zoeker-extra-expanded {
-        text-overflow: ellipsis;
         white-space: normal;
       }
     }
