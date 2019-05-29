@@ -484,9 +484,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
       prt.ToonInfoBoodschapCmd({
         type: "InfoBoodschapIdentify",
         id: featureId,
-        titel: getLaagnaam(feature).getOrElseL(() => {
-          throw new Error(`Geen laagnaam voor ${feature}`);
-        }),
+        titel: getLaagnaam(feature).getOrElse("??? Obekende laag ???"),
         feature: feature,
         bron: none,
         sluit: "DOOR_APPLICATIE",
