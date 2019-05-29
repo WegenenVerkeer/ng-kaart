@@ -1,5 +1,6 @@
 import { Injector, Input } from "@angular/core";
-import { fromNullable, none, Option } from "fp-ts/lib/Option";
+import { identity } from "fp-ts/lib/function";
+import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 
@@ -35,6 +36,8 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
 
   _stijlSpec: Option<ss.AwvV0StyleSpec> = none; // heeft voorrang op style
   _clusterDistance: Option<number> = none;
+  _clusterMinSize = 15;
+  _clusterSizeFactor = 0;
   _clusterTextColor = "black";
   _clusterCircleColor = "yellow";
   _clusterCircleStrokeColor = "black";
@@ -53,6 +56,16 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
   @Input()
   set clusterDistance(param: number) {
     this._clusterDistance = val.optNum(param);
+  }
+
+  @Input()
+  set clusterMinSize(param: number) {
+    this._clusterMinSize = fromNullable(param).getOrElse(this._clusterMinSize);
+  }
+
+  @Input()
+  set clusterSizeFactor(param: number) {
+    this._clusterSizeFactor = fromNullable(param).getOrElse(this._clusterSizeFactor);
   }
 
   @Input()
@@ -121,30 +134,36 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
 
   clusterStyle(defaultStyleSelector: ss.StyleSelector): ol.StyleFunction {
     return (feature, resolution) => {
-      const size = feature.get("features").length;
+      return fromNullable(feature.get("features"))
+        .map(features => {
+          const size = features.length;
 
-      if (size > 1) {
-        return new ol.style.Style({
-          image: new ol.style.Circle({
-            radius: 15,
-            stroke: new ol.style.Stroke({
-              color: this._clusterCircleStrokeColor,
-              width: 1.5
-            }),
-            fill: new ol.style.Fill({
-              color: this._clusterCircleColor
-            })
-          }),
-          text: new ol.style.Text({
-            text: size.toString(),
-            fill: new ol.style.Fill({
-              color: this._clusterTextColor
-            })
-          })
+          if (size > 1) {
+            return new ol.style.Style({
+              image: new ol.style.Circle({
+                radius: Math.max(this._clusterMinSize, this._clusterSizeFactor * size),
+                stroke: new ol.style.Stroke({
+                  color: this._clusterCircleStrokeColor,
+                  width: 1.5
+                }),
+                fill: new ol.style.Fill({
+                  color: this._clusterCircleColor
+                })
+              }),
+              text: new ol.style.Text({
+                text: size.toString(),
+                fill: new ol.style.Fill({
+                  color: this._clusterTextColor
+                })
+              })
+            });
+          } else {
+            return ss.matchStyleSelector(s => s.style, s => s.styleFunction(features[0], resolution), s => s.styles)(defaultStyleSelector);
+          }
+        })
+        .getOrElseL(() => {
+          throw new Error("Voor cluster stijl hebben we geclusterde features nodig");
         });
-      } else {
-        return ss.matchStyleSelector(s => s.style, s => s.styleFunction(feature, resolution), s => s.styles)(defaultStyleSelector);
-      }
     };
   }
 

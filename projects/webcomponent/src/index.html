@@ -44,11 +44,11 @@
     <awv-kaart-standaard-interacties focus-voor-zoom="false"></awv-kaart-standaard-interacties>
     <awv-kaart-multi-meet-knop toon-info-boodschap="true"></awv-kaart-multi-meet-knop>
 
-    <awv-kaart-geoserver-laag titel="Referentiepunten" laag-naam="referentiepunten" versie="1.1.1" min-zoom="6">
+    <awv-kaart-geoserver-laag titel="Referentiepunten" laag-naam="referentiepunten" versie="1.1.1" min-zoom="10">
       <awv-legende-bolletje-item beschrijving="Referentiepunt met opschrift" kleur="black"></awv-legende-bolletje-item>
     </awv-kaart-geoserver-laag>
 
-    <awv-kaart-wfs-laag titel="Korte Straten" type-names="awv:straten" min-zoom="8" cql-filter="shape_leng<100"></awv-kaart-wfs-laag>
+    <awv-kaart-wfs-laag titel="Korte Straten" type-names="awv:straten" min-zoom="10" cql-filter="shape_leng<100"></awv-kaart-wfs-laag>
 
     <awv-kaart-wmts-laag titel="GRB" laag-naam="grb_bsk" urls='["https://tile.informatievlaanderen.be/ws/raadpleegdiensten/wmts"]'
       extent="[ 9928, 66928, 272072, 329072 ]" origin="[ 9928, 329072 ]"
@@ -59,11 +59,12 @@
                             url="/geolatte-nosqlfs"
                             database="featureserver"
                             collection="straatkolken"
-                            min-zoom="9"
+                            min-zoom="10"
                             cluster-distance="100"
                             cluster-text-color = "navy"
                             cluster-circle-color = "dodgerblue"
                             cluster-circle-stroke-color = "navy"
+                            cluster-size-factor = "1.2"
       stijl-spec='
       {
         "type": "DynamicStyle",

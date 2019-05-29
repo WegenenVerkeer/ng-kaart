@@ -370,8 +370,15 @@
         <div *ngIf="propClusterStraatkolkenSectie.sectieZichtbaar" [@enterAnimation]>
           <awv-kaart-classic [naam]="'propClusterStraatkolken'" [hoogte]="600">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
-            <awv-kaart-nosqlfs-laag [titel]="'Straatkolken'" [url]="'/geolatte-nosqlfs'" [clusterDistance]="100"
-                                    [database]="'featureserver'" [collection]="'straatkolken'" [clusterStyleFunction]="clusterStyle(kolkStyle)"
+            <awv-kaart-nosqlfs-laag [titel]="'Straatkolken'"
+                                    [url]="'/geolatte-nosqlfs'"
+                                    [clusterDistance]="100"
+                                    [clusterCircleColor] = "'dodgerblue'"
+                                    [clusterCircleStrokeColor] = "'navy'"
+                                    [clusterTextColor] = "'navy'"
+                                    [clusterSizeFactor] = "1.2"
+                                    [database]="'featureserver'"
+                                    [collection]="'straatkolken'"
                                     [minZoom]="10"></awv-kaart-nosqlfs-laag>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
             <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
@@ -386,9 +393,12 @@
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
             <awv-kaart-nosqlfs-laag [titel]="'Straatkolken'" [url]="'/geolatte-nosqlfs'"
                                     [clusterDistance]="100"
-                                    [clusterCircleColor]="'white'"
-                                    [clusterCircleStrokeColor]="'white'"
-                                    [database]="'featureserver'" [collection]="'straatkolken'"
+                                    [clusterCircleColor]="'aqua'"
+                                    [clusterCircleStrokeColor]="'black'"
+                                    [clusterTextColor] = "'black'"
+                                    [clusterMinSize] = "20"
+                                    [database]="'featureserver'"
+                                    [collection]="'straatkolken'"
                                     [minZoom]="10"></awv-kaart-nosqlfs-laag>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
             <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
