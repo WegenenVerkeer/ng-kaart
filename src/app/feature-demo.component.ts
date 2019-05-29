@@ -10,6 +10,7 @@ import { encodeParams } from "projects/ng-kaart/src/lib/util/url";
 import * as rx from "rxjs";
 import { reduce, scan, share, throttleTime } from "rxjs/operators";
 
+import { getUnderlyingFeatures } from "../../projects/ng-kaart/src/lib/util/feature";
 import {
   AwvV0DynamicStyle,
   definitieToStyle,
@@ -765,7 +766,7 @@ export class FeatureDemoComponent {
     array.mapOption(nietLangerGeselecteerdeFeatures, Feature.propertyId).forEach(id => selectieKaart.verbergIdentifyInformatie(id));
 
     // voeg de nieuwe toe
-    this.geselecteerdeFeatures = array.copy(event);
+    this.geselecteerdeFeatures = getUnderlyingFeatures(event);
     this.geselecteerdeFeatures.forEach(feature => selectieKaart.toonIdentifyInformatie(feature));
   }
 

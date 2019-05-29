@@ -30,6 +30,7 @@ import { subscriptionCmdOperator } from "../kaart/subscription-helper";
 import * as arrays from "../util/arrays";
 import { featureToGeojson } from "../util/feature";
 import { Feature } from "../util/feature";
+import { getLaagnaam } from "../util/feature";
 import { GeoJsonFeature, GeoJsonFeatureCollection } from "../util/geojson-types";
 import { ofType } from "../util/operators";
 import { forEach } from "../util/option";
@@ -483,7 +484,9 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
       prt.ToonInfoBoodschapCmd({
         type: "InfoBoodschapIdentify",
         id: featureId,
-        titel: feature.get("laagnaam"),
+        titel: getLaagnaam(feature).getOrElseL(() => {
+          throw new Error(`Geen laagnaam voor ${feature}`);
+        }),
         feature: feature,
         bron: none,
         sluit: "DOOR_APPLICATIE",

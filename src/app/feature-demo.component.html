@@ -354,7 +354,10 @@
       <awv-test-sectie sectieId="straatkolken" sectieTitel="Straatkolken" [subSectie]="true" #straatkolkenSectie
                        [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && straatkolkenSectie.sectieZichtbaar">
         <div *ngIf="straatkolkenSectie.sectieZichtbaar" [@enterAnimation]>
-          <awv-kaart-classic [naam]="'straatkolken'" [hoogte]="400">
+          <awv-kaart-classic  [naam]="'straatkolken'"
+                              #kolkenKaart (geselecteerdeFeaturesChange)="featuresGeselecteerd($event, kolkenKaart)"
+                              [selectieModus]="'multipleShift'"
+                              [hoogte]="400">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
             <awv-kaart-nosqlfs-laag [titel]="'Straatkolken'" [url]="'/geolatte-nosqlfs'"
                                     [database]="'featureserver'" [collection]="'straatkolken'" [style]="kolkStyle"
@@ -389,7 +392,10 @@
       <awv-test-sectie sectieId="clusterStraatkolken" sectieTitel="Geclusterde Straatkolken" [subSectie]="true" #clusterStraatkolkenSectie
                        [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && clusterStraatkolkenSectie.sectieZichtbaar">
         <div *ngIf="clusterStraatkolkenSectie.sectieZichtbaar" [@enterAnimation]>
-          <awv-kaart-classic [naam]="'clusterstraatkolken'" [hoogte]="600">
+          <awv-kaart-classic  [naam]="'clusterstraatkolken'"
+                              #clusterKaart (geselecteerdeFeaturesChange)="featuresGeselecteerd($event, clusterKaart)"
+                              [selectieModus]="'single'"
+                              [hoogte]="600">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
             <awv-kaart-nosqlfs-laag [titel]="'Straatkolken'" [url]="'/geolatte-nosqlfs'"
                                     [clusterDistance]="100"
