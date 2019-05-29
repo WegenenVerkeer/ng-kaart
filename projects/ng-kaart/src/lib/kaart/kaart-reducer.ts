@@ -18,6 +18,7 @@ import { FilterTotaal, totaalOphalenMislukt, totaalOpTeHalen } from "../filter/f
 import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
 import * as arrays from "../util/arrays";
 import { refreshTiles } from "../util/cachetiles";
+import { getLaagnaam } from "../util/feature";
 import * as featureStore from "../util/indexeddb-geojson-store";
 import * as metaDataDb from "../util/indexeddb-tilecache-metadata";
 import * as maps from "../util/maps";
@@ -440,7 +441,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       // Als er features van onze laag geselecteerd waren, moeten we die verwijderen uit de door ol gemanagede collection.
       const teVerwijderenGeselecteerdeFeatures = model.geselecteerdeFeatures
         .getArray()
-        .filter(feature => feature.get("laagnaam") === laagnaam);
+        .filter(feature => getLaagnaam(feature).exists(ln => ln === laagnaam));
       teVerwijderenGeselecteerdeFeatures.forEach(feature => model.geselecteerdeFeatures.remove(feature));
     }
 
@@ -936,7 +937,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           (s: ss.Styles) => s.styles
         );
 
-        return fromNullable(feature.get("laagnaam")).foldL(
+        return getLaagnaam(feature).foldL(
           () => {
             kaartLogger.warn("Geen laagnaam gevonden voor: ", feature);
             return noStyle;

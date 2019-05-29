@@ -1,5 +1,7 @@
 import { option, setoid } from "fp-ts";
+import { array } from "fp-ts/lib/Array";
 import { Curried2, Function1, Refinement } from "fp-ts/lib/function";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 import { Setoid, setoidString } from "fp-ts/lib/Setoid";
 import * as ol from "openlayers";
 
@@ -32,6 +34,16 @@ export const setLaagnaam: Curried2<string, ol.Feature, ol.Feature> = laagnaam =>
   feature.set("laagnaam", laagnaam);
   return feature;
 };
+
+export const getLaagnaam: Function1<ol.Feature, Option<string>> = feature => {
+  const singleFeature = fromNullable(feature.get("features"))
+    .chain(features => fromNullable(features[0]))
+    .getOrElse(feature);
+  return fromNullable(singleFeature.get("laagnaam") as string);
+};
+
+export const getUnderlyingFeatures: Function1<Array<ol.Feature>, Array<ol.Feature>> = features =>
+  array.chain(features, feature => (feature.get("features") ? feature.get("features") : [feature]));
 
 export const featureToGeojson: Function1<ol.Feature, GeoJsonFeatureCollection | GeoJsonFeature> = feature => {
   if (feature.get("features")) {
