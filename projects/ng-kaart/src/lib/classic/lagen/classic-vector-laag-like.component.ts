@@ -35,6 +35,8 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
 
   _stijlSpec: Option<ss.AwvV0StyleSpec> = none; // heeft voorrang op style
   _clusterDistance: Option<number> = none;
+  _clusterMinSize = 15;
+  _clusterSizeFactor = 0;
   _clusterTextColor = "black";
   _clusterCircleColor = "yellow";
   _clusterCircleStrokeColor = "black";
@@ -53,6 +55,16 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
   @Input()
   set clusterDistance(param: number) {
     this._clusterDistance = val.optNum(param);
+  }
+
+  @Input()
+  set clusterMinSize(param: number) {
+    this._clusterMinSize = fromNullable(param).getOrElse(this._clusterMinSize);
+  }
+
+  @Input()
+  set clusterSizeFactor(param: number) {
+    this._clusterSizeFactor = fromNullable(param).getOrElse(this._clusterSizeFactor);
   }
 
   @Input()
@@ -121,12 +133,13 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
 
   clusterStyle(defaultStyleSelector: ss.StyleSelector): ol.StyleFunction {
     return (feature, resolution) => {
-      const size = feature.get("features").length;
+      const features = feature.get("features");
+      const size = features.length;
 
       if (size > 1) {
         return new ol.style.Style({
           image: new ol.style.Circle({
-            radius: 15,
+            radius: Math.max(this._clusterMinSize, this._clusterSizeFactor * size),
             stroke: new ol.style.Stroke({
               color: this._clusterCircleStrokeColor,
               width: 1.5
@@ -143,7 +156,7 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
           })
         });
       } else {
-        return ss.matchStyleSelector(s => s.style, s => s.styleFunction(feature, resolution), s => s.styles)(defaultStyleSelector);
+        return ss.matchStyleSelector(s => s.style, s => s.styleFunction(features[0], resolution), s => s.styles)(defaultStyleSelector);
       }
     };
   }
