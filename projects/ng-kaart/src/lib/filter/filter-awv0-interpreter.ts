@@ -14,6 +14,7 @@ export namespace AwvV0FilterInterpreters {
     "boolean",
     "string",
     "double",
+    "integer",
     "geometry",
     "date",
     "datetime",
