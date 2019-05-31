@@ -75,8 +75,8 @@
           </ng-container>
         </ng-container>
 
-        <div class="delete-icon">
-          <button mat-icon-button (click)="verwijderActieveEditor()" [disabled]="!(kanHuidigeEditorVerwijderen$ | async)" matTooltip="Verwijder actieve chip">
+        <div class="delete-icon" *ngIf="(kanHuidigeEditorVerwijderen$ | async)">
+          <button mat-icon-button (click)="verwijderActieveEditor()" matTooltip="Verwijder conditie">
             <mat-icon>delete</mat-icon>
           </button>
         </div>
