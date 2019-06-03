@@ -528,12 +528,14 @@ export namespace FilterEditor {
     return setCurrent(next)(normalised);
   };
 
-  // Verwijder het huidige element
+  // Verwijder het huidige element, tenzij laatste chip, maak die dan leeg
   export const remove: Endomorphism<ExpressionEditor> = expressionEditor => {
     // We kunnen de laatste builder niet verwijderen. Wanneer we het huidige element in de conjunction verwijderen, dan
     // maken we de laatste term in de conjunction het nieuwe huidige element. Indien er geen is, dan gaan we naar de de
     // laatste term van de laatste disjunction.
-    return canRemoveCurrent(expressionEditor) ? reallyRemove(expressionEditor) : expressionEditor;
+    return canRemoveCurrent(expressionEditor)
+      ? reallyRemove(expressionEditor)
+      : update(FieldSelection(expressionEditor.laag))(expressionEditor);
   };
 
   // voeg onderaan een OF toe en maak de nieuwe TermEditor de actieve
