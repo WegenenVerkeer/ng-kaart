@@ -1,7 +1,12 @@
 import * as array from "fp-ts/lib/Array";
+import { Function1 } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
+import * as set from "fp-ts/lib/Set";
+import { setoidString } from "fp-ts/lib/Setoid";
 import * as ol from "openlayers";
 import { olx } from "openlayers";
+
+import { Epsg } from "../coordinaten";
 
 import * as ke from "./kaart-elementen";
 import { KaartWithInfo } from "./kaart-with-info";
@@ -9,6 +14,15 @@ import { kaartLogger } from "./log";
 import { toStylish } from "./stijl-selector";
 
 export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {
+  const supportedProjections = new Set([Epsg.Lambert72, Epsg.Lambert2008, Epsg.WebMercator, Epsg.Wgs84, Epsg.Etrs89, Epsg.LaeaEurope]);
+
+  const stringIntersector = set.intersection(setoidString);
+
+  const first: Function1<Set<string>, Option<string>> = (set: Set<string>) => (set.size > 0 ? some(set.values().next().value) : none);
+
+  const projection: Function1<string[], string> = projections =>
+    first(stringIntersector(supportedProjections, new Set(projections))).getOrElse(kaart.config.srs);
+
   function createdTileWms(l: ke.WmsLaag) {
     return new ol.layer.Tile(<olx.layer.TileOptions>{
       title: l.titel,
@@ -16,7 +30,7 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
       extent: kaart.config.defaults.extent,
       opacity: l.opacity.toUndefined(),
       source: new ol.source.TileWMS({
-        projection: kaart.config.srs,
+        projection: projection(l.beschikbareProjecties),
         cacheSize: kaart.tileLoader.maxMislukteTiles,
         urls: l.urls,
         tileGrid: ol.tilegrid.createXYZ({
@@ -27,7 +41,7 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
         params: {
           LAYERS: l.naam,
           TILED: true,
-          SRS: kaart.config.srs,
+          SRS: projection(l.beschikbareProjecties),
           VERSION: l.versie.getOrElse("1.3.0"),
           FORMAT: l.format.getOrElse("image/png"),
           ...l.cqlFilter.fold({}, cqlFilter => ({ CQL_FILTER: cqlFilter }))
@@ -77,11 +91,13 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
         url: l.urls[0],
         params: {
           LAYERS: l.naam,
-          SRS: kaart.config.srs,
+          SRS: projection(l.beschikbareProjecties),
           VERSION: l.versie.getOrElse("1.3.0"),
           FORMAT: l.format.getOrElse("image/png")
         },
-        projection: kaart.config.srs
+        projection: projection(l.beschikbareProjecties),
+        ratio: 1.1,
+        hidpi: false
       })
     });
   }

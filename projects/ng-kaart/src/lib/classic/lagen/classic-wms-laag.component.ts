@@ -7,7 +7,7 @@ import { merge } from "rxjs";
 import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, tap } from "rxjs/operators";
 
-import { LaagLocationInfo, TextLaagLocationInfo, VeldinfoLaagLocationInfo, Veldwaarde } from "../../kaart";
+import { Epsg, LaagLocationInfo, lambert72ToWgs84, TextLaagLocationInfo, VeldinfoLaagLocationInfo, Veldwaarde } from "../../kaart";
 import * as ke from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
 import { VoegLaagLocatieInformatieServiceToe } from "../../kaart/kaart-protocol";
@@ -86,6 +86,7 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   _opacity: Option<number> = none;
   _cacheActief = false;
   _veldInfos: Option<ke.VeldInfo[]> = none;
+  _beschikbareProjecties: string[] = [Epsg.Lambert72];
 
   @Input()
   set laagNaam(param: string) {
@@ -139,6 +140,11 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
     this._veldInfos = val.optVeldInfoArray(param);
   }
 
+  @Input()
+  public set beschikbareProjecties(param: string[]) {
+    this._beschikbareProjecties = val.stringArray(param, this._beschikbareProjecties);
+  }
+
   constructor(injector: Injector, private readonly http: HttpClient) {
     super(injector);
   }
@@ -172,21 +178,41 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   }
 
   createLayer(): ke.WmsLaag {
-    return {
-      type: ke.TiledWmsType,
-      titel: this._titel,
-      naam: this._laagNaam,
-      urls: this._urls,
-      versie: this._versie,
-      cqlFilter: this._cqlFilter,
-      tileSize: fromNullable(this._tileSize),
-      format: fromNullable(this._format),
-      opacity: this._opacity,
-      backgroundUrl: this.backgroundUrl(this._urls, this._laagNaam),
-      minZoom: this._minZoom,
-      maxZoom: this._maxZoom,
-      verwijderd: false
-    };
+    if (this._tiled) {
+      return {
+        type: ke.TiledWmsType,
+        titel: this._titel,
+        naam: this._laagNaam,
+        urls: this._urls,
+        versie: this._versie,
+        cqlFilter: this._cqlFilter,
+        tileSize: fromNullable(this._tileSize),
+        format: fromNullable(this._format),
+        opacity: this._opacity,
+        backgroundUrl: this.backgroundUrl(this._urls, this._laagNaam),
+        minZoom: this._minZoom,
+        maxZoom: this._maxZoom,
+        verwijderd: false,
+        beschikbareProjecties: this._beschikbareProjecties
+      };
+    } else {
+      return {
+        type: ke.SingleTileWmsType,
+        titel: this._titel,
+        naam: this._laagNaam,
+        urls: this._urls,
+        versie: this._versie,
+        cqlFilter: this._cqlFilter, // wordt niet gebruikt evenwel
+        tileSize: none,
+        format: fromNullable(this._format),
+        opacity: this._opacity,
+        backgroundUrl: this.backgroundUrl(this._urls, this._laagNaam),
+        minZoom: this._minZoom,
+        maxZoom: this._maxZoom,
+        verwijderd: false,
+        beschikbareProjecties: this._beschikbareProjecties
+      };
+    }
   }
 
   laaggroep(): ke.Laaggroep {

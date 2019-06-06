@@ -49,6 +49,7 @@ export interface WmsLaag {
   readonly minZoom: number;
   readonly maxZoom: number;
   readonly verwijderd: boolean;
+  readonly beschikbareProjecties: string[];
 }
 
 export interface WmtsCapaConfig {

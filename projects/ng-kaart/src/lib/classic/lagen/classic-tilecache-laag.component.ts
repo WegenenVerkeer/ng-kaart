@@ -1,6 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { Component, Inject, Injector, ViewEncapsulation } from "@angular/core";
-import { fromNullable } from "fp-ts/lib/Option";
+import { fromNullable, none } from "fp-ts/lib/Option";
 
 import { KAART_CFG, KaartConfig } from "../../kaart/kaart-config";
 import * as ke from "../../kaart/kaart-elementen";
@@ -34,7 +34,8 @@ export class ClassicTilecacheLaagComponent extends ClassicWmsLaagComponent {
       backgroundUrl: this.backgroundUrl(urls, this._laagNaam),
       minZoom: this._minZoom,
       maxZoom: this._maxZoom,
-      verwijderd: false
+      verwijderd: false,
+      beschikbareProjecties: this._beschikbareProjecties
     };
   }
 }
