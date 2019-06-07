@@ -2,6 +2,7 @@ import { constant, Function1, Function2, Function3, Function4, identity, Lazy, n
 import { none, Option, some } from "fp-ts/lib/Option";
 import { contramap, Setoid, setoidString } from "fp-ts/lib/Setoid";
 
+import { PartialFunction1 } from "../util/function";
 import * as matchers from "../util/matchers";
 
 // Een namespace is nodig omdat verschillende types dezelfde naam hebben als die voor stijlen en er kan maar 1 naam
@@ -152,6 +153,10 @@ export namespace Filter {
     type: typetype,
     value
   });
+
+  export const stringValue: PartialFunction1<ValueType, string> = value => (typeof value === "string" ? some(value) : none);
+  export const boolValue: PartialFunction1<ValueType, boolean> = value => (typeof value === "boolean" ? some(value) : none);
+  export const numberValue: PartialFunction1<ValueType, number> = value => (typeof value === "number" ? some(value) : none);
 
   export interface FilterMatcher<A> {
     readonly EmptyFilter: Lazy<A>;

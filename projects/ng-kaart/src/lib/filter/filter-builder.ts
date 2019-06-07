@@ -162,6 +162,9 @@ export namespace FilterEditor {
     termEditor.kind === "Value" || termEditor.kind === "Completed";
   export const isCompleted: Refinement<TermEditor, Completed> = (termEditor): termEditor is Completed => termEditor.kind === "Completed";
 
+  // We zijn heel conservatief en laten enkel kolomen met ASCII letters en underscore toe
+  const hasAcceptableName: Predicate<ke.VeldInfo> = veld => veld.naam.match(/^[\w]+$/) !== null;
+
   const veldinfos: Function1<ke.ToegevoegdeVectorLaag, ke.VeldInfo[]> = laag =>
     ke.ToegevoegdeVectorLaag.veldInfosLens.get(laag).filter(
       // filter de speciale velden er uit
@@ -169,7 +172,8 @@ export namespace FilterEditor {
         fromNullable(veld.label).isSome() &&
         fromNullable(veld.constante).isNone() &&
         fromNullable(veld.template).isNone() &&
-        fromNullable(veld.html).isNone()
+        fromNullable(veld.html).isNone() &&
+        hasAcceptableName(veld)
     );
   const properties: Function1<ke.ToegevoegdeVectorLaag, Property[]> = laag =>
     veldinfos(laag)

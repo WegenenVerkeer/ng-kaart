@@ -1,27 +1,61 @@
-import { constant, Function1, Function3, Function4 } from "fp-ts/lib/function";
+import { constant, Endomorphism, Function1, Function3, Function4 } from "fp-ts/lib/function";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 
 import { Filter as fltr } from "../filter/filter-model";
+import { PartialFunction1 } from "../util/function";
 
 export namespace FilterCql {
   type Generator<A> = Function1<A, Option<string>>;
 
-  const propertyRef: Function1<fltr.Property, String> = property => `properties.${property.ref}`;
-
   const like: Function1<boolean, string> = caseSensitive => (caseSensitive ? "like" : "ilike");
 
+  // % en ' moeten escaped worden
+  const escapeText: Endomorphism<string> = text =>
+    text
+      .replace(/\\/g, "\\") // eerst de escapes escapen
+      .replace(/%/g, "\\%") // dan % escape
+      .replace(/'/g, "''"); // en dan ' escapen
+
+  const asDate: PartialFunction1<fltr.ValueType, string> = fltr.stringValue; // Uiteraard nog te verfijnen
+  const asDateTime: PartialFunction1<fltr.ValueType, string> = fltr.stringValue; // Uiteraard nog te verfijnen
+
+  const quoteString: Endomorphism<string> = text => `'${text}'`;
+
+  const stringGenerator: Generator<fltr.Literal> = literal =>
+    fltr
+      .stringValue(literal.value)
+      .map(escapeText)
+      .map(quoteString);
+
+  const integerGenerator: Generator<fltr.Literal> = literal =>
+    fltr
+      .numberValue(literal.value)
+      .filter(Number.isInteger)
+      .map(value => value.toString());
+
+  const doubleGenerator: Generator<fltr.Literal> = literal => fltr.numberValue(literal.value).map(value => value.toString());
+
+  const dateGenerator: Generator<fltr.Literal> = literal => asDate(literal.value).map(quoteString);
+
+  const dateTimeGenerator: Generator<fltr.Literal> = literal => asDateTime(literal.value).map(quoteString);
+
+  // In principe heeft de gebruiker niet veel zeggenschap over de properties. Maar ingeval van eigen data kan dat dus om
+  // het even wat zijn (voor zover het in een shape file past). We verwachten dat de gebruikers geen "rare" kolomnamen
+  // gebruiken. We filteren aan de bron properties weg die toch vreemde kolommen gebruiken. De featureserver laat ons
+  // immers niet toe om kolomnamen te quoten zoals dat wel kan bij ruwe SQL.
+  const propertyRef: Function1<fltr.Property, String> = property => `properties.${property.ref}`;
+
   const literalCql: Generator<fltr.Literal> = fltr.matchLiteral({
-    boolean: literal => some(literal.value ? "true" : "false"),
-    string: literal => some(`'${literal.value}'`),
-    integer: literal => some(`${literal.value}`),
-    double: literal => some(`${literal.value}`),
-    date: literal => some(`'${literal.value}'`),
-    datetime: literal => some(`'${literal.value}'`),
+    boolean: literal => fltr.boolValue(literal.value).map(value => (value ? "true" : "false")),
+    string: stringGenerator,
+    integer: integerGenerator,
+    double: doubleGenerator,
+    date: dateGenerator,
+    datetime: dateTimeGenerator,
     geometry: () => none,
     json: () => none
   });
 
-  // TODO prevent CQL injection
   const stringBinaryOperator: Function4<fltr.Property, fltr.BinaryComparisonOperator, fltr.Literal, boolean, Option<string>> = (
     property,
     operator,
