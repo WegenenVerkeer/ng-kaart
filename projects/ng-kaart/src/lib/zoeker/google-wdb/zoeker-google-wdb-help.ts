@@ -25,6 +25,20 @@ export const identPlusHuisnummer = `Om te zoeken op een huisnummer naast een ide
   </li>
 </ul>`;
 
+export const wegNummer = `Voer de wegnummer in in het zoekveld om de volledige weg te vinden.
+<p class="voorbeelden">Voorbeeld:</p>
+<ul>
+  <li><i>E17</i>
+      zoek de volledige E17
+  </li>    
+  <li><i>N8</i>
+      zoek de volledige N8
+   </li>
+   <li><i>N0080002</i>
+      zoek de volledige N0080002
+  </li>
+</ul>`;
+
 export const eNummer = `Voer de Europese wegnummer in in het zoekveld om de volledige weg te vinden. Als je referentiepunt en optioneel de afstand tot het referentiepunt meegeeft, krijg je de exacte locatie naast de weg.
 <p class="voorbeelden">Voorbeeld:</p>
 <ul>
