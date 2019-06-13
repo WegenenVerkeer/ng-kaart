@@ -2,7 +2,6 @@ import {
   Component,
   ElementRef,
   EventEmitter,
-  Inject,
   Input,
   NgZone,
   OnChanges,
@@ -17,7 +16,7 @@ import * as option from "fp-ts/lib/Option";
 import { fromEither, none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { concatAll, distinctUntilChanged, map, share, tap } from "rxjs/operators";
+import { debounceTime, map, share, tap } from "rxjs/operators";
 
 import { ToegevoegdeLaag } from "../kaart";
 import { KaartInfoBoodschapUiSelector } from "../kaart/info-boodschappen/kaart-info-boodschappen.component";
@@ -28,11 +27,11 @@ import * as prt from "../kaart/kaart-protocol";
 import { KaartMsgObservableConsumer } from "../kaart/kaart.component";
 import { subscriptionCmdOperator } from "../kaart/subscription-helper";
 import * as arrays from "../util/arrays";
-import { featureToGeojson } from "../util/feature";
+import { clusterFeaturesToGeoJson } from "../util/feature";
 import { Feature } from "../util/feature";
 import { getLaagnaam } from "../util/feature";
-import { GeoJsonFeature, GeoJsonFeatureCollection } from "../util/geojson-types";
-import { ofType } from "../util/operators";
+import { GeoJsonFeatures } from "../util/geojson-types";
+import { collectOption, ofType } from "../util/operators";
 import { forEach } from "../util/option";
 import * as progress from "../util/progress";
 import { TypedRecord } from "../util/typed-record";
@@ -200,25 +199,11 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
     this._onderdrukKaartBevragenBoodschappen = val.bool(param, this._onderdrukKaartBevragenBoodschappen);
   }
 
-  /** Produceren we geojson output voor de geselecteerde features */
-  @Input()
-  set produceerGeojsonOutput(produceerGeojson: boolean) {
-    if (produceerGeojson) {
-      this.bindToLifeCycle(this.geselecteerdeFeaturesChange)
-        .pipe(
-          concatAll(),
-          distinctUntilChanged(),
-          map(featureToGeojson)
-        )
-        .subscribe(gj => this.geselecteerdeFeatureGeojson.emit(gj));
-    }
-  }
-
   /** De geselecteerde features */
   @Output()
   geselecteerdeFeaturesChange: EventEmitter<Array<ol.Feature>> = new EventEmitter();
   @Output()
-  geselecteerdeFeatureGeojson: EventEmitter<GeoJsonFeatureCollection | GeoJsonFeature> = new EventEmitter();
+  geselecteerdeFeatureGeoJson: EventEmitter<GeoJsonFeatures[]> = new EventEmitter();
   @Output()
   middelpuntChange: EventEmitter<ol.Coordinate> = new EventEmitter();
   @Output()
@@ -331,11 +316,23 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
         )
       ).subscribe(err => classicLogger.error(err));
 
+      // We willen vermijden dat te vlugge veranderingen naar de client doorgestuurd worden. In het bijzonder is het zo
+      // dat bij het programmatorisch zetten van een geselecteerde feature er eerst een clear gebeurt en dat we op die
+      // manier 2 updates krijgen. Eén met een lege array en één met aantal features erin.
+      const selectionBuffer: rx.Subject<ol.Feature[]> = new rx.Subject();
+      const debouncedSelectedFeatures = selectionBuffer.pipe(debounceTime(25));
+      this.bindToLifeCycle(debouncedSelectedFeatures).subscribe(e => this.geselecteerdeFeaturesChange.emit(e));
+
+      // Voor de webcomponent willen we de features als GeoJson exposen
+      this.bindToLifeCycle(debouncedSelectedFeatures.pipe(collectOption(clusterFeaturesToGeoJson))).subscribe(e =>
+        this.geselecteerdeFeatureGeoJson.emit(e)
+      );
+
       this.bindToLifeCycle(this.kaartClassicSubMsg$).subscribe(msg => {
         switch (msg.type) {
           case "FeatureSelectieAangepast":
             // Zorg ervoor dat de geselecteerde features in de @Output terecht komen
-            return this.geselecteerdeFeaturesChange.emit(msg.geselecteerdeFeatures.geselecteerd);
+            return selectionBuffer.next(msg.geselecteerdeFeatures.geselecteerd);
           case "FeatureHoverAangepast":
             return this.hoverFeature.emit(fromEither(msg.feature.hover));
           case "ZichtbareFeaturesAangepast":

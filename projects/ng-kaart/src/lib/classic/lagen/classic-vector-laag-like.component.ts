@@ -1,5 +1,4 @@
 import { Injector, Input } from "@angular/core";
-import { identity } from "fp-ts/lib/function";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
@@ -8,6 +7,7 @@ import * as ke from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
 import * as ss from "../../kaart/stijl-selector";
 import { getDefaultHoverStyleFunction, getDefaultSelectionStyleFunction, getDefaultStyleFunction } from "../../kaart/styles";
+import * as arrays from "../../util/arrays";
 import { forEach, fromValidation } from "../../util/option";
 import { logOnlyWrapper } from "../messages";
 import * as val from "../webcomponent-support/params";
@@ -135,6 +135,8 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
   clusterStyle(defaultStyleSelector: ss.StyleSelector): ol.StyleFunction {
     return (feature, resolution) => {
       return fromNullable(feature.get("features"))
+        .filter(arrays.isArray)
+        .filter(arrays.isNonEmpty)
         .map(features => {
           const size = features.length;
 
