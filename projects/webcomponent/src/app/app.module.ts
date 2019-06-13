@@ -22,7 +22,8 @@ import { ZoekerModule } from "../../../ng-kaart/src/lib/zoeker";
     FilterModule,
     ZoekerModule.forRoot({
       googleWdb: {
-        apiKey: "AIzaSyApbXMl5DGL60g17JU6MazMxNcUGooey7I"
+        apiKey: "AIzaSyApbXMl5DGL60g17JU6MazMxNcUGooey7I",
+        gebruiktPubliekeLocatieZoeker: true
       }
     }),
     LagenkiezerModule.withDefaults(),
