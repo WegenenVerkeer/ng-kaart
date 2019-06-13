@@ -226,6 +226,7 @@ export class FeatureDemoComponent {
       geometry: new ol.geom.Circle([157821, 190530], 50)
     })
   ];
+  mechelenCentrum: ol.Coordinate = [157562, 190726];
   mechelenVeldInfos: VeldInfo[] = [
     {
       naam: "vorm",
@@ -290,6 +291,27 @@ export class FeatureDemoComponent {
         width: 2
       }),
       text: "Zis is a pin"
+    })
+  });
+
+  pinIconSelect = new ol.style.Style({
+    image: new ol.style.Icon({
+      anchor: [0.5, 1],
+      anchorXUnits: "fraction",
+      anchorYUnits: "fraction",
+      scale: 1,
+      opacity: 1,
+      src: require("material-design-icons/maps/svg/production/ic_place_48px.svg")
+    }),
+    text: new ol.style.Text({
+      font: "12px 'Helvetica Neue', sans-serif",
+      fill: new ol.style.Fill({ color: "#000" }),
+      offsetY: -60,
+      stroke: new ol.style.Stroke({
+        color: "#f88",
+        width: 2
+      }),
+      text: "Selected"
     })
   });
 
@@ -988,5 +1010,13 @@ export class FeatureDemoComponent {
 
   verwijderZoeker() {
     this.demoZoekers.pop();
+  }
+
+  onFeatureSelectie(features: ol.Feature[]) {
+    console.log("---> Geselecteerde features", features);
+  }
+
+  onClickSelecteerFeatures() {
+    this.geselecteerdeFeatures = [...this.mechelenFeatures];
   }
 }

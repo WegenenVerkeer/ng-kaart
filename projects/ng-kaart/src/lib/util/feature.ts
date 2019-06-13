@@ -1,14 +1,16 @@
-import { option, setoid } from "fp-ts";
-import { array } from "fp-ts/lib/Array";
+import { setoid } from "fp-ts";
+import { array, mapOption } from "fp-ts/lib/Array";
 import { Curried2, Function1, Refinement } from "fp-ts/lib/function";
-import { fromNullable, Option } from "fp-ts/lib/Option";
+import { fromNullable, getSetoid, Option, option, tryCatch } from "fp-ts/lib/Option";
 import { Setoid, setoidString } from "fp-ts/lib/Setoid";
+import * as traversable from "fp-ts/lib/Traversable";
 import * as ol from "openlayers";
 
 import { kaartLogger } from "../kaart/log";
 
+import * as arrays from "./arrays";
 import { PartialFunction1 } from "./function";
-import { GeoJsonCore, GeoJsonFeature, GeoJsonFeatureCollection } from "./geojson-types";
+import { GeoJsonCore, GeoJsonFeature, GeoJsonFeatureCollection, GeoJsonFeatures } from "./geojson-types";
 
 // De GeoJSON ziet er thread safe uit (volgens de Openlayers source code)
 const format = new ol.format.GeoJSON();
@@ -21,7 +23,7 @@ export const toOlFeature: Curried2<string, GeoJsonCore, ol.Feature> = laagnaam =
       geometry: format.readGeometry(geojson.geometry)
     });
     feature.setId(geojson.id);
-    return setLaagnaam(laagnaam)(feature);
+    return modifyWithLaagnaam(laagnaam)(feature);
   } catch (error) {
     const msg = `Kan geometry niet parsen: ${error}`;
     kaartLogger.error(msg);
@@ -30,46 +32,54 @@ export const toOlFeature: Curried2<string, GeoJsonCore, ol.Feature> = laagnaam =
 };
 
 // o.a. voor gebruik bij stijlen en identify
-export const setLaagnaam: Curried2<string, ol.Feature, ol.Feature> = laagnaam => feature => {
-  feature.set("laagnaam", laagnaam);
+export const modifyWithLaagnaam: Curried2<string, ol.Feature, ol.Feature> = laagnaam => feature => {
+  feature.set("laagnaam", laagnaam); // Opgelet: side-effect!
   return feature;
 };
 
 export const getLaagnaam: Function1<ol.Feature, Option<string>> = feature => {
   const singleFeature = fromNullable(feature.get("features"))
+    .filter(arrays.isArray)
+    .filter(arrays.isNonEmpty)
     .chain(features => fromNullable(features[0]))
     .getOrElse(feature);
-  return fromNullable(singleFeature.get("laagnaam") as string);
+  return fromNullable(singleFeature.get("laagnaam").toString());
 };
 
-export const getUnderlyingFeatures: Function1<Array<ol.Feature>, Array<ol.Feature>> = features =>
+export const getUnderlyingFeatures: Function1<ol.Feature[], ol.Feature[]> = features =>
   array.chain(features, feature => (feature.get("features") ? feature.get("features") : [feature]));
 
-export const featureToGeojson: Function1<ol.Feature, GeoJsonFeatureCollection | GeoJsonFeature> = feature => {
-  if (feature.get("features")) {
-    return {
-      type: "FeatureCollection",
-      geometry: format.writeGeometryObject(feature.getGeometry()),
-      features: feature.get("features").map(singleFeatureToGeojson)
-    };
-  } else {
-    return singleFeatureToGeojson(feature);
-  }
-};
-
-const singleFeatureToGeojson: Function1<ol.Feature, GeoJsonFeature> = feature => {
-  return {
-    type: "Feature",
+const singleFeatureToGeoJson: PartialFunction1<ol.Feature, GeoJsonFeature> = feature =>
+  tryCatch(() => ({
+    type: "Feature" as "Feature",
     id: feature.getId(),
     geometry: format.writeGeometryObject(feature.getGeometry()),
     properties: feature.get("properties")
-  };
+  }));
+
+const multipleFeatureToGeoJson: Curried2<ol.geom.Geometry, ol.Feature[], Option<GeoJsonFeatureCollection>> = geometry => features => {
+  return tryCatch(() => ({
+    type: "FeatureCollection" as "FeatureCollection",
+    geometry: format.writeGeometryObject(geometry),
+    features: mapOption(features, singleFeatureToGeoJson)
+  }));
 };
 
-export namespace Feature {
-  export const propertyId: PartialFunction1<ol.Feature, string> = f => option.fromNullable(f.get("id")).map(id => id.toString());
+export const featureToGeoJson: PartialFunction1<ol.Feature, GeoJsonFeatures> = feature => {
+  const features = fromNullable(feature.get("features"));
+  return features
+    .filter(arrays.isArray)
+    .chain<GeoJsonFeatureCollection | GeoJsonFeature>(multipleFeatureToGeoJson(feature.getGeometry()))
+    .orElse(() => singleFeatureToGeoJson(feature));
+};
 
-  export const setoidFeaturePropertyId: Setoid<ol.Feature> = setoid.contramap(propertyId, option.getSetoid(setoidString));
+export const clusterFeaturesToGeoJson: PartialFunction1<ol.Feature[], GeoJsonFeatures[]> = features =>
+  traversable.traverse(option, array)(features, featureToGeoJson);
+
+export namespace Feature {
+  export const propertyId: PartialFunction1<ol.Feature, string> = f => fromNullable(f.get("id")).map(id => id.toString());
+
+  export const setoidFeaturePropertyId: Setoid<ol.Feature> = setoid.contramap(propertyId, getSetoid(setoidString));
 
   export const notInExtent: Function1<ol.Extent, Refinement<ol.Feature, ol.Feature>> = extent => (feature): feature is ol.Feature => {
     const [featureMinX, featureMinY, featureMaxX, featureMaxY]: ol.Extent = feature.getGeometry().getExtent();

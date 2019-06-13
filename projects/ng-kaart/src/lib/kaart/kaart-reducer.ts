@@ -14,11 +14,11 @@ import { bufferCount, debounceTime, distinctUntilChanged, map, switchMap, thrott
 
 import { FilterAanpassend, GeenFilterAanpassingBezig } from "../filter/filter-aanpassing-state";
 import { Filter as fltr } from "../filter/filter-model";
-import { FilterTotaal, totaalOphalenMislukt, totaalOpTeHalen } from "../filter/filter-totaal";
+import { FilterTotaal, totaalOpTeHalen } from "../filter/filter-totaal";
 import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
 import * as arrays from "../util/arrays";
 import { refreshTiles } from "../util/cachetiles";
-import { getLaagnaam } from "../util/feature";
+import { getLaagnaam, modifyWithLaagnaam, toOlFeature } from "../util/feature";
 import * as featureStore from "../util/indexeddb-geojson-store";
 import * as metaDataDb from "../util/indexeddb-tilecache-metadata";
 import * as maps from "../util/maps";
@@ -734,7 +734,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         cmnd.wrapper,
         valideerVectorLayerBestaat(cmnd.titel).map(layer => {
           layer.getSource().clear(false);
-          layer.getSource().addFeatures(cmnd.features);
+          layer.getSource().addFeatures(cmnd.features.map(modifyWithLaagnaam(cmnd.titel)));
           return ModelAndEmptyResult(model);
         })
       );

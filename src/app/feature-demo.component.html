@@ -21,6 +21,10 @@
       Filteren
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !filterenSectie.sectieZichtbaar }">visibility</span>
     </div>
+    <div (click)="geselecteerdeFeatureSectie.toggleSectieZichtbaar();scrollTo('orthophotos')" class="sub-titel">
+      Featureselectie
+      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !geselecteerdeFeatureSectie.sectieZichtbaar }">visibility</span>
+    </div>
     <div (click)="orthophotosSectie.toggleSectieZichtbaar();scrollTo('orthophotos')" class="sub-titel">
       Orthophotos
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !orthophotosSectie.sectieZichtbaar }">visibility</span>
@@ -522,6 +526,33 @@
       </awv-test-sectie>
 
 
+      <awv-test-sectie sectieId="featureSelectie" sectieTitel="Featureselectie" [subSectie]="true" #geselecteerdeFeatureSectie
+                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && geselecteerdeFeatureSectie.sectieZichtbaar">
+        <div *ngIf="geselecteerdeFeatureSectie.sectieZichtbaar" [@enterAnimation]>
+          <div style="height: 500px;">
+            <awv-kaart-classic [naam]="'featureselectie'"
+            [geselecteerdeFeatures]="geselecteerdeFeatures"
+            (geselecteerdeFeaturesChange)="onFeatureSelectie($event)"
+            [selectieModus]="'multipleKlik'"
+            [zoom]="10"
+            [middelpunt]="mechelenCentrum">
+              <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+              <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
+              <awv-kaart-features-laag [titel]="'Mechelen features'" [features]="mechelenFeatures"
+              [style]="pinIcon" [minZoom]="4"
+              [selectieStyle]="pinIconSelect"
+              [zichtbaar]="true" [veldinfos]="mechelenVeldInfos"></awv-kaart-features-laag>
+              <awv-kaart-schaal></awv-kaart-schaal>
+              <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+            </awv-kaart-classic>
+          </div>
+        </div>
+        <div class="onder-kaart">
+          <button (click)="onClickSelecteerFeatures()">Selecteer</button>
+        </div>
+      </awv-test-sectie>
+
+
       <awv-test-sectie sectieId="zoeken" sectieTitel="Zoeken" [subSectie]="true" #zoekenSectie
                        [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && zoekenSectie.sectieZichtbaar">
         <div *ngIf="zoekenSectie.sectieZichtbaar" [@enterAnimation]>
@@ -727,19 +758,14 @@
           </awv-kaart-classic>
         </div>
       </awv-test-sectie>
-
     </div>
-
   </awv-test-sectie>
 
 
   <awv-test-sectie sectieId="lambert2008" sectieTitel="Andere projectie" [subSectie]="true" #lambert2008Sectie
                    [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && lambert2008Sectie.sectieZichtbaar">
     <div *ngIf="lambert2008Sectie.sectieZichtbaar" [@enterAnimation]>
-      <awv-kaart-classic  [naam]="'lambert2008'"
-              #clusterKaart (geselecteerdeFeaturesChange)="featuresGeselecteerd($event, clusterKaart)"
-              [selectieModus]="'single'"
-              [hoogte]="600">
+      <awv-kaart-classic  [naam]="'lambert2008'" [hoogte]="600">
         <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
         <awv-kaart-wms-laag
           [titel]="'Inspire water transport'"

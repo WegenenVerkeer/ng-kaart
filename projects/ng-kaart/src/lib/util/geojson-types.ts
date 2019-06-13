@@ -40,6 +40,8 @@ export interface CollectionSummary {
   count: number;
 }
 
+export type GeoJsonFeatures = GeoJsonFeatureCollection | GeoJsonFeature;
+
 export interface GeoJsonFeature {
   readonly type: "Feature";
   readonly id: GeoJsonKeyType;
