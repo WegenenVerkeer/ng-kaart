@@ -733,8 +733,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         cmnd.wrapper,
         valideerVectorLayerBestaat(cmnd.titel).map(layer => {
-          layer.getSource().clear(false);
-          layer.getSource().addFeatures(cmnd.features.map(modifyWithLaagnaam(cmnd.titel)));
+          const layerSource = layer.getSource();
+          const source = layerSource instanceof ol.source.Cluster ? layerSource.getSource() : layerSource;
+          source.clear(false);
+          source.addFeatures(cmnd.features.map(modifyWithLaagnaam(cmnd.titel)));
           return ModelAndEmptyResult(model);
         })
       );

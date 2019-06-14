@@ -183,7 +183,7 @@ export interface ToegevoegdeVectorLaag extends ToegevoegdeLaag {
 export function underlyingSource(layer: ol.layer.Layer): ol.source.Source {
   const source = layer.getSource();
   if (source instanceof ol.source.Cluster) {
-    return (source as ol.source.Cluster).getSource();
+    return source.getSource();
   } else {
     return source;
   }

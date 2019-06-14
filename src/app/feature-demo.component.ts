@@ -130,6 +130,8 @@ export class FeatureDemoComponent {
     ]
   };
 
+  readonly featuresToCluster: ol.Feature[] = this.generateFeaturesToCluster();
+
   polygoonEvents: string[] = [];
   installatieGeselecteerdEvents: string[] = [];
   geoJsonFormatter = new ol.format.GeoJSON();
@@ -1018,5 +1020,26 @@ export class FeatureDemoComponent {
 
   onClickSelecteerFeatures() {
     this.geselecteerdeFeatures = [...this.mechelenFeatures];
+  }
+
+  generateFeaturesToCluster(): ol.Feature[] {
+    let id = 0;
+    const pointFeature = (c: ol.Coordinate) =>
+      new ol.Feature({
+        id: id++,
+        geometry: new ol.geom.Point(c)
+      });
+    const offset = (r: number) => (c: ol.Coordinate) =>
+      [c[0] + (Math.random() * 2 * r - r), c[1] + (Math.random() * 2 * r - r)] as ol.Coordinate;
+    const features: ol.Feature[] = [];
+    const radius1 = 20000; // 20 km
+    const radius2 = 2000; // 2 km
+    for (let c = 0; c < 5; ++c) {
+      const center = offset(radius1)([157562, 190726]);
+      for (let i = 0; i < Math.random() * 30 + 20; ++i) {
+        features.push(pointFeature(offset(radius2)(center)));
+      }
+    }
+    return features;
   }
 }
