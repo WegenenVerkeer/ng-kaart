@@ -555,7 +555,7 @@
             <awv-kaart-classic [naam]="'featureselectie'"
             [geselecteerdeFeatures]="geselecteerdeFeatures"
             (geselecteerdeFeaturesChange)="onFeatureSelectie($event)"
-            [selectieModus]="'multipleKlik'"
+            [selectieModus]="featureSelectieModus$ | async"
             [zoom]="10"
             [middelpunt]="mechelenCentrum">
               <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
@@ -571,6 +571,9 @@
         </div>
         <div class="onder-kaart">
           <button (click)="onClickSelecteerFeatures()">Selecteer</button>
+          <button (click)="onFeatureSelectionOff()">Geen selectie</button>
+          <button (click)="onFeatureSelectionSingle()">Enkelvoudige selectie</button>
+          <button (click)="onFeatureSelectionMulti()">Meervoudige selectie</button>
         </div>
       </awv-test-sectie>
 
@@ -780,28 +783,27 @@
           </awv-kaart-classic>
         </div>
       </awv-test-sectie>
-    </div>
-  </awv-test-sectie>
 
-
-  <awv-test-sectie sectieId="lambert2008" sectieTitel="Andere projectie" [subSectie]="true" #lambert2008Sectie
-                   [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && lambert2008Sectie.sectieZichtbaar">
-    <div *ngIf="lambert2008Sectie.sectieZichtbaar" [@enterAnimation]>
-      <awv-kaart-classic  [naam]="'lambert2008'" [hoogte]="600">
-        <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
-        <awv-kaart-wms-laag
-          [titel]="'Inspire water transport'"
-          [minZoom]="4"
-          [urls]="['http://wms.ngi.be/inspire/ngi_inspire_view_service/service?SERVICE=WMS']"
-          [tiled]="false"
-          [laagNaam]="'waterwaylink'"
-          [groep]="'Voorgrond.Laag'"
-          [versie]="'1.1.1'"
-          [beschikbareProjecties]="['EPSG:999999', 'EPSG:4326', 'EPSG:3857', 'EPSG:3812']"
-        ></awv-kaart-wms-laag>
-        <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
-        <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
-      </awv-kaart-classic>
+      <awv-test-sectie sectieId="lambert2008" sectieTitel="Andere projectie" [subSectie]="true" #lambert2008Sectie
+                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && lambert2008Sectie.sectieZichtbaar">
+        <div *ngIf="lambert2008Sectie.sectieZichtbaar" [@enterAnimation]>
+          <awv-kaart-classic  [naam]="'lambert2008'" [hoogte]="600">
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
+            <awv-kaart-wms-laag
+            [titel]="'Inspire water transport'"
+            [minZoom]="4"
+            [urls]="['http://wms.ngi.be/inspire/ngi_inspire_view_service/service?SERVICE=WMS']"
+            [tiled]="false"
+            [laagNaam]="'waterwaylink'"
+            [groep]="'Voorgrond.Laag'"
+            [versie]="'1.1.1'"
+            [beschikbareProjecties]="['EPSG:999999', 'EPSG:4326', 'EPSG:3857', 'EPSG:3812']"
+            ></awv-kaart-wms-laag>
+            <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+            <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
+          </awv-kaart-classic>
+        </div>
+      </awv-test-sectie>
     </div>
   </awv-test-sectie>
 

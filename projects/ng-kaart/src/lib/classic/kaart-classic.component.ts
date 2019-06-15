@@ -438,6 +438,26 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
       onderdruk => this.dispatch(prt.ZetUiElementOpties(KaartInfoBoodschapUiSelector, { kaartBevragenOnderdrukt: onderdruk })),
       val.zonderFallback<boolean>(val.bool)
     );
+    forChangedValue(
+      changes,
+      "selectieModus",
+      pipe(
+        prt.ActiveerSelectieModusCmd,
+        dispatch
+      ),
+      (param: string) => val.enu(param, this._selectieModus, "single", "multipleKlik", "multipleShift", "none"),
+      value => value !== undefined && value != null
+    );
+    forChangedValue(
+      changes,
+      "hovermodus",
+      pipe(
+        prt.ActiveerHoverModusCmd,
+        dispatch
+      ),
+      (param: string) => val.enu(param, this._hoverModus, "on", "off"),
+      value => value !== undefined && value != null
+    );
   }
 
   /** @ignore */

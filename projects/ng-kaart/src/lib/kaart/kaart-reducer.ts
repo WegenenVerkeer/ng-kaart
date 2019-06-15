@@ -18,7 +18,7 @@ import { FilterTotaal, totaalOpTeHalen } from "../filter/filter-totaal";
 import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
 import * as arrays from "../util/arrays";
 import { refreshTiles } from "../util/cachetiles";
-import { getLaagnaam, modifyWithLaagnaam, toOlFeature } from "../util/feature";
+import { getLaagnaam, modifyWithLaagnaam } from "../util/feature";
 import * as featureStore from "../util/indexeddb-geojson-store";
 import * as metaDataDb from "../util/indexeddb-tilecache-metadata";
 import * as maps from "../util/maps";
@@ -1001,18 +1001,19 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         }
       }
 
-      model.selectInteracties.splice(10); // alle interacties verwijderen
-      forEach(getSelectInteraction(cmnd.selectieModus), selectInteraction => {
-        const selectionInteraction = new ol.interaction.Select(selectInteraction);
-        const dragboxInteraction = new ol.interaction.DragBox({
-          condition: ol.events.condition.platformModifierKeyOnly
-        });
+      const newSelectInteracties = arrays.fromOption(
+        getSelectInteraction(cmnd.selectieModus).map(selectOption => [
+          new ol.interaction.Select(selectOption),
+          new ol.interaction.DragBox({
+            condition: ol.events.condition.platformModifierKeyOnly
+          })
+        ])
+      );
 
-        model.selectInteracties.push(selectionInteraction, dragboxInteraction);
-      });
-      model.selectInteracties.forEach(i => model.map.addInteraction(i));
+      model.selectInteracties.forEach(i => model.map.removeInteraction(i));
+      newSelectInteracties.forEach(i => model.map.addInteraction(i));
 
-      return ModelWithResult(model);
+      return ModelWithResult({ ...model, selectInteracties: newSelectInteracties });
     }
 
     function deactiveerSelectieModus(cmnd: prt.DeactiveerSelectieModusCmd): ModelWithResult<Msg> {
@@ -1040,15 +1041,16 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         }
       }
 
-      forEach(getHoverInteraction(cmnd.hoverModus), selectInteraction => {
-        model.map.addInteraction(new ol.interaction.Select(selectInteraction));
-      });
+      const newHoverInteractie = getHoverInteraction(cmnd.hoverModus).map(selectOption => new ol.interaction.Select(selectOption));
 
-      return ModelWithResult(model);
+      forEach(model.hoverInteractie, interactie => model.map.removeInteraction(interactie));
+      forEach(newHoverInteractie, interactie => model.map.addInteraction(interactie));
+
+      return ModelWithResult({ ...model, hoverInteractie: newHoverInteractie });
     }
 
     function activeerHighlightModus(cmnd: prt.ActiveerHighlightModusCmd): ModelWithResult<Msg> {
-      function getHighlightFeaturesInteraction(modus: prt.HighlightModus): Option<olx.interaction.SelectOptions> {
+      function getHighlightInteraction(modus: prt.HighlightModus): Option<olx.interaction.SelectOptions> {
         switch (modus) {
           case "on":
             return some({
@@ -1061,11 +1063,14 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         }
       }
 
-      forEach(getHighlightFeaturesInteraction(cmnd.highlightModus), selectInteraction => {
-        model.map.addInteraction(new ol.interaction.Select(selectInteraction));
-      });
+      const newHighlightInteractie = getHighlightInteraction(cmnd.highlightModus).map(
+        selectOption => new ol.interaction.Select(selectOption)
+      );
 
-      return ModelWithResult(model);
+      forEach(model.highlightInteractie, interactie => model.map.removeInteraction(interactie));
+      forEach(newHighlightInteractie, interactie => model.map.addInteraction(interactie));
+
+      return ModelWithResult({ ...model, highlightInteractie: newHighlightInteractie });
     }
 
     function zetStijlVoorLaagCmd(cmnd: prt.ZetStijlVoorLaagCmd<Msg>): ModelWithResult<Msg> {

@@ -30,11 +30,13 @@ export class KaartWithInfo {
   readonly groepOpTitel: Map<string, ke.Laaggroep> = new Map();
   readonly schaal: Option<ol.control.Control> = none;
   readonly fullScreen: Option<ol.control.FullScreen> = none;
-  readonly stdInteracties: Array<ol.interaction.Interaction> = [];
+  readonly stdInteracties: ol.interaction.Interaction[] = [];
   readonly selectInteracties: ol.interaction.Interaction[] = [];
+  readonly hoverInteractie: Option<ol.interaction.Interaction> = none;
+  readonly highlightInteractie: Option<ol.interaction.Interaction> = none;
   readonly scrollZoomOnFocus: boolean = false;
   readonly showBackgroundSelector: boolean = false;
-  readonly zoekersMetPrioriteiten: Array<ZoekerMetWeergaveopties> = Array();
+  readonly zoekersMetPrioriteiten: ZoekerMetWeergaveopties[] = [];
 
   // Een serieuze doorn in het oog. Dit is een collectie die automagisch door OL up-to-date gehouden wordt (mbv interactie).
   readonly geselecteerdeFeatures: ol.Collection<ol.Feature> = new ol.Collection<ol.Feature>();

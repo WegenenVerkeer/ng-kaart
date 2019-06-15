@@ -22,6 +22,7 @@ import {
   parseCoordinate,
   PrecacheFeatures,
   PrecacheWMS,
+  SelectieModus,
   ToegevoegdeLaag,
   validateAwvV0RuleDefintion,
   VeldInfo,
@@ -688,6 +689,9 @@ export class FeatureDemoComponent {
     { isBasisVeld: true, label: "Lengte", naam: "meters", type: "double" }
   ];
 
+  private readonly featureSelectieModusSubj: rx.Subject<SelectieModus> = new rx.Subject();
+  readonly featureSelectieModus$: rx.Observable<SelectieModus> = this.featureSelectieModusSubj.asObservable();
+
   readonly cachedFeaturesProviderConsumer = (cfpc: CachedFeatureLookup) => (this.cachedFeaturesProvider = some(cfpc));
 
   readonly percelenQueryUrl: Function1<ol.Coordinate, string> = location => {
@@ -1041,5 +1045,17 @@ export class FeatureDemoComponent {
       }
     }
     return features;
+  }
+
+  onFeatureSelectionOff() {
+    this.featureSelectieModusSubj.next("none");
+  }
+
+  onFeatureSelectionSingle() {
+    this.featureSelectieModusSubj.next("single");
+  }
+
+  onFeatureSelectionMulti() {
+    this.featureSelectieModusSubj.next("multipleKlik");
   }
 }
