@@ -14,7 +14,7 @@ import { kaartLogger } from "./log";
 import { toStylish } from "./stijl-selector";
 
 export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {
-  const supportedProjections = new Set([Epsg.Lambert72, Epsg.Lambert2008, Epsg.WebMercator, Epsg.Wgs84, Epsg.Etrs89, Epsg.LaeaEurope]);
+  const supportedProjections = new Set(Epsg.all);
 
   const stringIntersector = set.intersection(setoidString);
 
