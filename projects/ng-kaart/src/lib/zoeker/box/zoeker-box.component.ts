@@ -46,12 +46,15 @@ import { minLength } from "../../util/string";
 import {
   IconDescription,
   StringZoekInput,
+  SuggestiesZoekOpdracht,
   UrlZoekInput,
+  VolledigeZoekOpdracht,
   Weergaveopties,
   ZoekAntwoord,
   ZoekerMetWeergaveopties,
   ZoekInput,
   ZoekKaartResultaat,
+  Zoekopdracht,
   ZoekResultaat,
   zoekResultaatOrdering,
   Zoektype
@@ -171,11 +174,7 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
     this.zoekerComponent.toonResultaat = true;
     this.zoekerComponent.toonSuggesties = false;
     this.zoekerComponent.increaseBusy();
-    this.dispatch({
-      type: "Zoek",
-      opdracht: { zoekpatroon: zoekInput, zoektype: "Volledig", zoekernamen: zoekers },
-      wrapper: kaartLogOnlyWrapper
-    });
+    this.dispatch(prt.ZoekCmd(VolledigeZoekOpdracht(zoekers, zoekInput), kaartLogOnlyWrapper));
   }
 
   // Gebruik de waarde van de VORIGE control om een request te doen,
@@ -183,9 +182,9 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
   // Filter het antwoord daarvan met de (eventuele) waarde van onze HUIDIGE control, dit om autocomplete te doen.
   protected autocomplete<T, A>(
     vorige: FormControl,
-    provider: (A) => rx.Observable<T[]>,
+    provider: (a: A) => rx.Observable<T[]>,
     huidige: FormControl,
-    propertyGetter: (T) => string
+    propertyGetter: (t: T) => string
   ): rx.Observable<T[]> {
     // Filter een array van waardes met de waarde van een filter (control), de filter kan een string of een object zijn.
     function filterMetWaarde(): Pipeable<T[], T[]> {
@@ -386,7 +385,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
         geometry: middlePoint,
         name: resultaat.omschrijving
       });
-      resultaat.kaartInfo.map(kaartInfo => feature.setStyle(kaartInfo.style));
+      forEach(resultaat.kaartInfo, kaartInfo => feature.setStyle(kaartInfo.style));
       return feature;
     }
 
@@ -440,7 +439,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
 
     // Luister naar de "leegmaken" opdracht en voer uit
     this.bindToLifeCycle(
-      this.zoekerComponentOpNaam$.pipe(switchMap(zcon => this.maakVeldenLeegSubj.pipe(collect((naam: ZoekerType) => zcon.get(naam)!))))
+      this.zoekerComponentOpNaam$.pipe(switchMap(zcon => this.maakVeldenLeegSubj.pipe(collect((naam: ZoekerType) => zcon.get(naam)))))
     ).subscribe(zoekerGetraptComponent => zoekerGetraptComponent.maakVeldenLeeg(0));
 
     const weergaveoptiesOpZoekernaam$: rx.Observable<WeergaveoptiesOpZoekernaam> = this.zoekers$.pipe(
@@ -501,12 +500,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       rx.combineLatest(
         this.zoekerNamen$, // In theorie ook zoeken wanneer er nieuwe zoekers geregistreerd worden. In de praktijk gebeurt dat niet
         zoekterm$.pipe(filter(minLength(minZoektermLength))), // Enkel emitten wanneer zoekterm minimale lengte heeft,
-        (zoekerNamen, zoekterm) =>
-          ({
-            type: "Zoek",
-            opdracht: { zoektype: "Suggesties", zoekernamen: zoekerNamen, zoekpatroon: zoektermToZoekpatroon(zoekterm) },
-            wrapper: kaartLogOnlyWrapper
-          } as prt.ZoekCmd<KaartInternalMsg>)
+        (zoekernamen, zoekterm) => prt.ZoekCmd(SuggestiesZoekOpdracht(zoekernamen, zoektermToZoekpatroon(zoekterm)), kaartLogOnlyWrapper)
       )
     )
       .pipe(
@@ -529,12 +523,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
         .combineLatest(
           this.zoekerNamen$,
           this.zoekInputSubj, // ipv zoekTerm$, want anders zoeken op woord dat 250ms onveranderd is gebleven -> probleem bij snelle enter
-          (zoekerNamen, zoekterm) =>
-            ({
-              type: "Zoek",
-              opdracht: { zoektype: "Volledig", zoekernamen: zoekerNamen, zoekpatroon: zoektermToZoekpatroon(zoekterm) },
-              wrapper: kaartLogOnlyWrapper
-            } as prt.ZoekCmd<KaartInternalMsg>)
+          (zoekernamen, zoekterm) => prt.ZoekCmd(VolledigeZoekOpdracht(zoekernamen, zoektermToZoekpatroon(zoekterm)), kaartLogOnlyWrapper)
         )
         .pipe(
           switchMap(
@@ -828,8 +817,8 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
 
     forEach(weerhoudenResultaten, resultaten => {
       // Stap 2 is sorteren van de antwoorden van de zoekers op prioriteit
-      const ordering: Ord<ZoekAntwoord> = ord.contramap(prioriteit, ord.ordNumber);
-      this.suggestiesBuffer = array.sort<ZoekAntwoord>(ordering)(array.snoc(this.suggestiesBuffer, resultaten));
+      const opPrioriteit: Ord<ZoekAntwoord> = ord.contramap(prioriteit, ord.ordNumber);
+      this.suggestiesBuffer = array.sort(opPrioriteit)(array.snoc(this.suggestiesBuffer, resultaten));
 
       // Stap 3 is alle individuele resultaten uit de resultaten halen voor zover de prioriteiten ononderbroken oplopen van 1
       // Het is perfect mogelijk dat er voor een bepaalde prioriteit geen resultaten zijn (lege array). We verwachten dit

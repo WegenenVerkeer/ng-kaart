@@ -15,11 +15,11 @@ export type Pipeable<A, B> = Function1<rx.Observable<A>, rx.Observable<B>>;
  *
  * @param f een transformatie van A naar B
  */
-export function collect<A, B>(f: (a: A) => B): Pipeable<A, B> {
+export function collect<A, B>(f: (a: A) => B | undefined): Pipeable<A, B> {
   return o =>
     o.pipe(
       map(f), //
-      filter(b => b !== undefined && b !== null)
+      filter<B>(b => b !== undefined && b !== null)
     );
 }
 

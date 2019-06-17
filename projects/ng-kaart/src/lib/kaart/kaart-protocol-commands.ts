@@ -981,3 +981,7 @@ export function VraagCachedFeaturesLookupCmd<Msg extends TypedRecord>(
 export function MijnLocatieStateChangeCmd(oudeState: loc.State, nieuweState: loc.State, event: loc.Event): MijnLocatieStateChangeCmd {
   return { type: "MijnLocatieStateChange", oudeState: oudeState, nieuweState: nieuweState, event: event };
 }
+
+export function ZoekCmd<Msg extends KaartMsg>(opdracht: Zoekopdracht, wrapper: BareValidationWrapper<Msg>): ZoekCmd<Msg> {
+  return { type: "Zoek", opdracht, wrapper };
+}

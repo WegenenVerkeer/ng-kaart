@@ -183,3 +183,15 @@ function matchesInput(res: ZoekResultaat, input: string): boolean {
 
 export const StringZoekInput: Function1<string, StringZoekInput> = value => ({ type: "string", value: value });
 export const UrlZoekInput: Function1<string, UrlZoekInput> = value => ({ type: "url", value: value });
+
+export const VolledigeZoekOpdracht: Function2<string[], ZoekInput, Zoekopdracht> = (zoekernamen, zoekpatroon) => ({
+  zoektype: "Volledig",
+  zoekernamen,
+  zoekpatroon
+});
+
+export const SuggestiesZoekOpdracht: Function2<string[], ZoekInput, Zoekopdracht> = (zoekernamen, zoekpatroon) => ({
+  zoektype: "Suggesties",
+  zoekernamen,
+  zoekpatroon
+});
