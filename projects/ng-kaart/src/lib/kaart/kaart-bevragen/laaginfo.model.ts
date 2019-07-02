@@ -3,7 +3,7 @@ import { Function1, Function2 } from "fp-ts/lib/function";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 
-import { Progress } from "../../util";
+import { Progress } from "../../util/progress";
 import { VeldInfo } from "../kaart-elementen";
 
 export type LaagLocationInfo = TextLaagLocationInfo | VeldinfoLaagLocationInfo;

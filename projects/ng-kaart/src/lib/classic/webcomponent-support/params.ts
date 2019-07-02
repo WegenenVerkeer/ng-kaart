@@ -1,5 +1,5 @@
 import { Function1, Function2, identity } from "fp-ts/lib/function";
-import { none, Option, some } from "fp-ts/lib/Option";
+import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 
 import * as ke from "../../kaart/kaart-elementen";
@@ -18,6 +18,8 @@ import { jsonAwvV0RuleInterpreter } from "../../stijl/json-awv-v0-stijlfunctie";
  *
  * De strategie die we gebruiken is om eerst te zien of we een string hebben en als dat zo is die te beschouwen als een
  * JSON-representatie en die dan te parsen naar het type dat we verwachten.
+ *
+ * Ingeval we null of undefined als waarde meegeven, zal het resultaat ook de fallbackwaarde zijn.
  */
 
 export type ParamGetter<A> = Function2<A, A, A>;
@@ -38,11 +40,11 @@ const getParameter: <A>(_: json.Interpreter<A>) => ParamGetter<A> = interpreter 
       return fallback;
     });
   } else {
-    return param;
+    return fromNullable(param).getOrElse(fallback);
   }
 };
 
-export function enu<T extends string>(param: string | T, fallback: T, ...values: T[]) {
+export function enu<T extends string>(param: string | T, fallback: T, ...values: T[]): T {
   if (typeof param === "string") {
     return json
       .enu(...values)(param)
@@ -51,26 +53,26 @@ export function enu<T extends string>(param: string | T, fallback: T, ...values:
         return fallback;
       });
   } else {
-    return param;
+    return fromNullable(param as T).getOrElse(fallback);
   }
 }
 
-export function optEnu<T extends string>(param: string | Option<T>, ...values: T[]) {
+export function optEnu<T extends string>(param: string | Option<T>, ...values: T[]): Option<T> {
   if (typeof param === "string") {
     return json
       .optional(json.enu(...values))(param)
-      .getOrElseL(
-        () => none // Dit kan niet omdat json.optional zelf al none returned
+      .getOrElse(
+        none // Dit kan niet omdat json.optional zelf al none returnt
       );
   } else {
-    return param;
+    return fromNullable(param as Option<T>).getOrElse(none);
   }
 }
 
 const getOptionalParameter: <A>(_: json.Interpreter<A>) => OptionalParamGetter<A> = interpreter => param => {
   if (typeof param === "string") {
-    return validationChain(parseJSON(param), json.optional(interpreter)).getOrElseL(
-      () => none // Dit kan niet omdat json.optional zelf al none returned
+    return validationChain(parseJSON(param), json.optional(interpreter)).getOrElse(
+      none // Dit kan niet omdat json.optional zelf al none returnt
     );
   } else {
     return some(param);

@@ -3,7 +3,7 @@ import { Applicative2C } from "fp-ts/lib/Applicative";
 import { array as Array } from "fp-ts/lib/Array";
 import { Function1, Predicate, Refinement } from "fp-ts/lib/function";
 import { Monad2C } from "fp-ts/lib/Monad";
-import { Option } from "fp-ts/lib/Option";
+import { none, Option, some } from "fp-ts/lib/Option";
 import { getArraySemigroup } from "fp-ts/lib/Semigroup";
 import { sequence } from "fp-ts/lib/Traversable";
 import { URI, Validation } from "fp-ts/lib/Validation";
@@ -21,6 +21,10 @@ export const failure = <A>(err: string) => validation.failure<string[], A>([err]
 
 export function fromOption<A>(maybe: Option<A>, errorMsg: string): ErrValidation<A> {
   return maybe.map(t => validation.success<string[], A>(t)).getOrElse(validation.failure([errorMsg]));
+}
+
+export function toOption<A>(validation: ErrValidation<A>): Option<A> {
+  return validation.map(some).getOrElse(none);
 }
 
 export function fromPredicate<A, B extends A>(a: A, pred: Refinement<A, B>, errMsg: string): ErrValidation<B>;

@@ -997,6 +997,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               layers: layer => layer.get("selecteerbaar")
             });
           case "none":
+          default:
             return none;
         }
       }
