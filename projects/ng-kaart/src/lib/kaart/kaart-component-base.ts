@@ -39,8 +39,8 @@ export abstract class KaartComponentBase implements AfterViewInit, OnInit, OnDes
   }
 
   /**
-   * Event methode bedoeld om aangeroepen te worden vanuit een HTML template. Componenten kunnen luisteren op een afgeleide Observable
-   * om deze acties te volgen.
+   * Event methode bedoeld om aangeroepen te worden vanuit een HTML template. Componenten kunnen luisteren op een
+   * afgeleide Observable om deze acties te volgen.
    * @param actionName Een string die een actie identificeert.
    * @param data Optionele, arbitraire data
    */
@@ -48,6 +48,9 @@ export abstract class KaartComponentBase implements AfterViewInit, OnInit, OnDes
     this.clickActionSubj.next({ name: actionName, data: data });
   }
 
+  /**
+   * Transformeert de input observable zodat die afgesloten wordt op het moment dat de component verwijderd wordt.
+   */
   protected bindToLifeCycle<T>(source: rx.Observable<T>): rx.Observable<T> {
     return source ? source.pipe(takeUntil(this.destroyingSubj)) : source;
   }

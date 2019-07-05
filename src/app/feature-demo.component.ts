@@ -13,6 +13,7 @@ import { reduce, scan, share, throttleTime } from "rxjs/operators";
 import { getUnderlyingFeatures } from "../../projects/ng-kaart/src/lib/util/feature";
 import {
   AwvV0DynamicStyle,
+  AwvV0StaticStyleSpec,
   definitieToStyle,
   definitieToStyleFunction,
   forEach,
@@ -394,6 +395,11 @@ export class FeatureDemoComponent {
     metRouting: { value: false, label: "Verbinding via weg staat standaard aan" },
     keuzemogelijkheidTonen: { value: true, label: "Laat keuze tussen 'rechte lijn'/'via de weg' toe" },
 
+    // --- Identify
+    optieDivider3b: { divider: true, value: true, label: "Identify opties" },
+    markeerLocatie: { value: true, label: "Toon kliklocatie" },
+    customKlikIcon: { value: true, label: "Gecustomiseerd icoon" },
+
     // --- Kaartinfo
     optieDivider4: { divider: true, value: true, label: "Kaartinfo onderaan rechts" },
     schaal: { value: true, label: "Kaartschaal" },
@@ -691,6 +697,61 @@ export class FeatureDemoComponent {
 
   private readonly featureSelectieModusSubj: rx.Subject<SelectieModus> = new rx.Subject();
   readonly featureSelectieModus$: rx.Observable<SelectieModus> = this.featureSelectieModusSubj.asObservable();
+
+  readonly mannetjeStijlSpec: AwvV0StaticStyleSpec = {
+    type: "StaticStyle",
+    definition: {
+      icon: {
+        anchor: [0.5, 0.5],
+        anchorXUnits: "fraction",
+        anchorYUnits: "fraction",
+        scale: 1,
+        opacity: 1,
+        src: "https://loading.io/s/icon/8fqf7h.png"
+      }
+    }
+  };
+
+  readonly mannetje = JSON.stringify(this.mannetjeStijlSpec);
+
+  // Deze specificatie is JSON die ook geserialiseerd als string kan doorgegeven worden
+  readonly sterSpec: AwvV0StaticStyleSpec = {
+    type: "StaticStyle",
+    definition: {
+      icon: {
+        anchor: [0.5, 0.5],
+        anchorXUnits: "fraction",
+        anchorYUnits: "fraction",
+        scale: 1,
+        opacity: 1,
+        src: require("src/assets/images/icon.svg")
+      }
+    }
+  };
+
+  // Dit is een arbitraire OL stijl.
+  readonly ster = new ol.style.Style({
+    image: new ol.style.Icon({
+      anchor: [0.5, 0.5],
+      anchorXUnits: "fraction",
+      anchorYUnits: "fraction",
+      scale: 1,
+      opacity: 1,
+      src: require("src/assets/images/icon.svg")
+    })
+  });
+
+  // Dit is een arbitraire OL stijl. Toevallig gelijk aan de standaard.
+  readonly ballon = new ol.style.Style({
+    image: new ol.style.Icon({
+      anchor: [0.5, 1],
+      anchorXUnits: "fraction",
+      anchorYUnits: "fraction",
+      scale: 1,
+      opacity: 1,
+      src: require("material-design-icons/maps/svg/production/ic_place_48px.svg")
+    })
+  });
 
   readonly cachedFeaturesProviderConsumer = (cfpc: CachedFeatureLookup) => (this.cachedFeaturesProvider = some(cfpc));
 

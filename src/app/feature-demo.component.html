@@ -242,6 +242,10 @@
         <awv-kaart-copyright *ngIf="isOptieActief('copyright')"></awv-kaart-copyright>
         <awv-kaart-voorwaarden *ngIf="isOptieActief('voorwaarden')" [titel]="voorwaarden"></awv-kaart-voorwaarden>
         <awv-kaart-schaal *ngIf="isOptieActief('schaal')"></awv-kaart-schaal>
+        <awv-kaart-markeer-kaartklik
+          [markeerStijl]="isOptieActief('customKlikIcon') ? ster : ballon"
+          [disabled]="!isOptieActief('markeerLocatie')">
+        </awv-kaart-markeer-kaartklik>
       </awv-kaart-classic>
       <div class="sub-content onder-kaart opties">
         <div *ngFor="let key of objectKeys(mogelijkeOpties)"

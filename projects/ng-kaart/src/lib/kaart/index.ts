@@ -39,6 +39,7 @@ import { KAART_CFG, KaartConfig } from "./kaart-config";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { KaartComponent } from "./kaart.component";
 import { KaartLoadingComponent } from "./loading/kaart-loading.component";
+import { MarkeerKaartklikComponent } from "./maarkeer-kaartklik/markeer-kaartklik.component";
 import { KaartMetenComponent } from "./meten/kaart-meten.component";
 import { KaartMultiMetenComponent } from "./meten/kaart-multi-meten.component";
 import { KaartMijnLocatieComponent } from "./mijn-locatie/kaart-mijn-locatie.component";
@@ -65,6 +66,7 @@ const components: any[] = [
   KaartInfoBoodschapMetenComponent,
   KaartInfoBoodschappenComponent,
   KaartInfoBoodschapVeldinfoComponent,
+  MarkeerKaartklikComponent,
   KaartLoadingComponent,
   KaartMetenComponent,
   KaartMijnLocatieComponent,
@@ -162,6 +164,7 @@ export * from "./kaart-event-dispatcher";
 export * from "./kaart-legende";
 export * from "./kaart-protocol";
 export * from "./kaart.component";
+export * from "./maarkeer-kaartklik/markeer-kaartklik.component";
 export * from "./log";
 export * from "./meten/kaart-meten.component";
 export * from "./meten/kaart-multi-meten.component";

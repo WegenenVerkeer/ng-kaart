@@ -18,7 +18,7 @@ import { FilterTotaal, totaalOpTeHalen } from "../filter/filter-totaal";
 import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
 import * as arrays from "../util/arrays";
 import { refreshTiles } from "../util/cachetiles";
-import { getLaagnaam, modifyWithLaagnaam } from "../util/feature";
+import { Feature, modifyWithLaagnaam } from "../util/feature";
 import * as featureStore from "../util/indexeddb-geojson-store";
 import * as metaDataDb from "../util/indexeddb-tilecache-metadata";
 import * as maps from "../util/maps";
@@ -441,7 +441,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       // Als er features van onze laag geselecteerd waren, moeten we die verwijderen uit de door ol gemanagede collection.
       const teVerwijderenGeselecteerdeFeatures = model.geselecteerdeFeatures
         .getArray()
-        .filter(feature => getLaagnaam(feature).exists(ln => ln === laagnaam));
+        .filter(feature => Feature.getLaagnaam(feature).exists(ln => ln === laagnaam));
       teVerwijderenGeselecteerdeFeatures.forEach(feature => model.geselecteerdeFeatures.remove(feature));
     }
 
@@ -691,7 +691,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       // Openlayers moet weten dat de grootte van de container aangepast is of de kaart is uitgerekt
       model.map.setSize([cmnd.size[0]!, cmnd.size[1]!]); // OL kan wel degelijk undefined aan, maar de declaratie beweert anders
       model.map.updateSize();
-      modelChanger.viewPortSizeSubj.next(); // Omdat extent wschl gewijzigd wordt
+      modelChanger.viewPortSizeSubj.next(null); // Omdat extent wschl gewijzigd wordt
       return ModelWithResult(model);
     }
 
@@ -939,7 +939,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           (s: ss.Styles) => s.styles
         );
 
-        return getLaagnaam(feature).foldL(
+        return Feature.getLaagnaam(feature).foldL(
           () => {
             kaartLogger.warn("Geen laagnaam gevonden voor: ", feature);
             return noStyle;

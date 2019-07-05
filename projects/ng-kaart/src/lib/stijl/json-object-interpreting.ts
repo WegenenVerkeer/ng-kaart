@@ -71,11 +71,12 @@ export function reqField<T>(name: string, interpreter: Interpreter<T>): Interpre
 
 export function optField<T>(name: string, interpreter: Interpreter<T>): Interpreter<Option<T>> {
   // Kan ook met een fold op field, maar gezien deze methode meer gebruikt wordt en de velden doorgaans undefined zijn, is dit effciënter.
-  return (json: Object) => (json.hasOwnProperty(name) ? interpreter(json[name]).map(some) : ok(none));
+  return (json: Object) => (json.hasOwnProperty(name) && json[name] !== undefined ? interpreter(json[name]).map(some) : ok(none));
 }
 
 export function undefField<T>(name: string, interpreter: Interpreter<T>): Interpreter<T | undefined> {
-  return (json: Object) => (json.hasOwnProperty(name) ? interpreter(json[name]) : ok(undefined));
+  // Het kan gebeuren dat de json velden wel gezet heeft, maar dat die op undefined staan
+  return (json: Object) => (json.hasOwnProperty(name) && json[name] !== undefined ? interpreter(json[name]) : ok(undefined));
 }
 
 export function succeed<T>(t: T): Interpreter<T> {
