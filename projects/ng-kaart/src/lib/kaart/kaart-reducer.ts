@@ -1141,7 +1141,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       const featureReferenceEquality = (f1: ol.Feature, f2: ol.Feature) => f1 === f2;
       const featuresToRemove = array.difference(setoid.fromEquals(featureReferenceEquality))(currentFeatures, newFeatures);
       const featuresToAdd = array.difference(setoid.fromEquals(featureReferenceEquality))(newFeatures, currentFeatures);
-      featuresToRemove.forEach(f => model.geselecteerdeFeatures.remove(f));
+      if (featuresToRemove.length === currentFeatures.length) {
+        model.geselecteerdeFeatures.clear();
+      } else {
+        featuresToRemove.forEach(f => model.geselecteerdeFeatures.remove(f));
+      }
       model.geselecteerdeFeatures.extend(featuresToAdd);
       return ModelWithResult(model);
     }
