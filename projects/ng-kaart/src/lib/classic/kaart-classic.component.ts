@@ -317,10 +317,11 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
       ).subscribe(err => classicLogger.error(err));
 
       // We willen vermijden dat te vlugge veranderingen naar de client doorgestuurd worden. In het bijzonder is het zo
-      // dat bij het programmatorisch zetten van een geselecteerde feature er eerst een clear gebeurt en dat we op die
-      // manier 2 updates krijgen. Eén met een lege array en één met aantal features erin.
+      // dat bij het programmatorisch zetten van een geselecteerde feature er eerst een clear gebeurt (er is geen
+      // vervang API in OL) en dat we op die manier 2 updates krijgen. Eén met een lege array en één met aantal features
+      // erin.
       const selectionBuffer: rx.Subject<ol.Feature[]> = new rx.Subject();
-      const debouncedSelectedFeatures = selectionBuffer.pipe(debounceTime(25));
+      const debouncedSelectedFeatures = selectionBuffer.pipe(debounceTime(20));
       this.bindToLifeCycle(debouncedSelectedFeatures).subscribe(e => this.geselecteerdeFeaturesChange.emit(e));
 
       // Voor de webcomponent willen we de features als GeoJson exposen
