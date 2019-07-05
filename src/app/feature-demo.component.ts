@@ -698,21 +698,23 @@ export class FeatureDemoComponent {
   private readonly featureSelectieModusSubj: rx.Subject<SelectieModus> = new rx.Subject();
   readonly featureSelectieModus$: rx.Observable<SelectieModus> = this.featureSelectieModusSubj.asObservable();
 
-  readonly mannetjeStijlSpec: AwvV0StaticStyleSpec = {
+  readonly schopStijlSpec: AwvV0StaticStyleSpec = {
     type: "StaticStyle",
     definition: {
       icon: {
-        anchor: [0.5, 0.5],
+        anchor: [0.5, 1],
         anchorXUnits: "fraction",
         anchorYUnits: "fraction",
         scale: 1,
         opacity: 1,
-        src: "https://loading.io/s/icon/8fqf7h.png"
+        src:
+          // tslint:disable-next-line: max-line-length
+          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgAgMAAAAOFJJnAAAAGXRFWHRDb21tZW50AENyZWF0ZWQgd2l0aCBHSU1QV4EOFwAAAAlQTFRFAAAA//QA////2q2SgwAAAAF0Uk5TAEDm2GYAAAABYktHRAJmC3xkAAAALklEQVQY02NgYGAQDWGAAAEWKENEBMpgDYAxHKAMxkHPCA0lgQH3O5wB9zLYQAAL0AqM5iwu/gAAAABJRU5ErkJggg=="
       }
     }
   };
 
-  readonly mannetje = JSON.stringify(this.mannetjeStijlSpec);
+  readonly schop = JSON.stringify(this.schopStijlSpec);
 
   // Deze specificatie is JSON die ook geserialiseerd als string kan doorgegeven worden
   readonly sterSpec: AwvV0StaticStyleSpec = {
