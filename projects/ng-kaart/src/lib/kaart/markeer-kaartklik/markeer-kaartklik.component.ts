@@ -103,7 +103,6 @@ export class MarkeerKaartklikComponent extends KaartModusComponent {
 
     const opties$ = this.modusOpties$<MarkeerKaartklikOpties>(defaultOpties);
     const kliklocatie$ = this.modelChanges.kaartKlikLocatie$.pipe(map(ki => ki.coordinate));
-    // const wis$ = this.modelChanges.markeerKaartklikWis$;
     const wis$ = opties$.pipe(
       filter(opties => opties.disabled),
       distinctUntilChanged()
