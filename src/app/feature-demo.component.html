@@ -582,6 +582,30 @@
       </awv-test-sectie>
 
 
+      <awv-test-sectie sectieId="featureSelectieLoop" sectieTitel="Featureselectie loop" [subSectie]="true" #geselecteerdeFeatureLoopSectie
+                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && geselecteerdeFeatureLoopSectie.sectieZichtbaar">
+        <div *ngIf="geselecteerdeFeatureLoopSectie.sectieZichtbaar" [@enterAnimation]>
+          <div style="height: 500px;">
+            <awv-kaart-classic [naam]="'featureselectie'"
+            [geselecteerdeFeatures]="featureLoopSelectie$ | async"
+            (geselecteerdeFeaturesChange)="onFeatureLoopSelectie($event)"
+            [selectieModus]="'single'"
+            [zoom]="10"
+            [middelpunt]="mechelenCentrum">
+              <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+              <awv-kaart-standaard-interacties></awv-kaart-standaard-interacties>
+              <awv-kaart-features-laag [titel]="'Mechelen features'" [features]="mechelenFeatures"
+              [style]="pinIcon" [minZoom]="4"
+              [selectieStyle]="pinIconSelect"
+              [zichtbaar]="true" [veldinfos]="mechelenVeldInfos"></awv-kaart-features-laag>
+              <awv-kaart-schaal></awv-kaart-schaal>
+              <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+            </awv-kaart-classic>
+          </div>
+        </div>
+      </awv-test-sectie>
+
+
       <awv-test-sectie sectieId="zoeken" sectieTitel="Zoeken" [subSectie]="true" #zoekenSectie
                        [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && zoekenSectie.sectieZichtbaar">
         <div *ngIf="zoekenSectie.sectieZichtbaar" [@enterAnimation]>

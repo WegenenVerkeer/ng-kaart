@@ -755,6 +755,8 @@ export class FeatureDemoComponent {
     })
   });
 
+  readonly featureLoopSelectie$ = new rx.Subject<ol.Feature[]>();
+
   readonly cachedFeaturesProviderConsumer = (cfpc: CachedFeatureLookup) => (this.cachedFeaturesProvider = some(cfpc));
 
   readonly percelenQueryUrl: Function1<ol.Coordinate, string> = location => {
@@ -1120,5 +1122,10 @@ export class FeatureDemoComponent {
 
   onFeatureSelectionMulti() {
     this.featureSelectieModusSubj.next("multipleKlik");
+  }
+
+  onFeatureLoopSelectie(features: ol.Feature[]) {
+    console.log("****Feature in loop", features);
+    this.featureLoopSelectie$.next(features);
   }
 }

@@ -1,3 +1,4 @@
+import { setoid } from "fp-ts";
 import * as array from "fp-ts/lib/Array";
 import { Endomorphism, Function1, Function2, identity, not, pipe } from "fp-ts/lib/function";
 import * as fptsmap from "fp-ts/lib/Map";
@@ -6,8 +7,8 @@ import * as ord from "fp-ts/lib/Ord";
 import { setoidString } from "fp-ts/lib/Setoid";
 import * as validation from "fp-ts/lib/Validation";
 import { Lens } from "monocle-ts";
-import { olx } from "openlayers";
 import * as ol from "openlayers";
+import { olx } from "openlayers";
 import { Subscription } from "rxjs";
 import * as rx from "rxjs";
 import { bufferCount, debounceTime, distinctUntilChanged, map, switchMap, throttleTime } from "rxjs/operators";
@@ -735,8 +736,14 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         valideerVectorLayerBestaat(cmnd.titel).map(layer => {
           const layerSource = layer.getSource();
           const source = layerSource instanceof ol.source.Cluster ? layerSource.getSource() : layerSource;
-          source.clear(false);
-          source.addFeatures(cmnd.features.map(modifyWithLaagnaam(cmnd.titel)));
+          if (!arrays.isEmpty(source.getFeatures())) {
+            // Zit binnen een conditie omdat we onnodigie OL events willen voorkomen
+            source.clear(false);
+          }
+          if (!arrays.isEmpty(cmnd.features)) {
+            // Zit binnen een conditie omdat we onnodigie OL events willen voorkomen
+            source.addFeatures(cmnd.features.map(modifyWithLaagnaam(cmnd.titel)));
+          }
           return ModelAndEmptyResult(model);
         })
       );
@@ -1128,8 +1135,18 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function selecteerFeatures(cmnd: prt.SelecteerFeaturesCmd): ModelWithResult<Msg> {
-      model.geselecteerdeFeatures.clear();
-      model.geselecteerdeFeatures.extend(cmnd.features);
+      const currentFeatures = model.geselecteerdeFeatures.getArray();
+      const newFeatures = cmnd.features;
+
+      const featureReferenceEquality = (f1: ol.Feature, f2: ol.Feature) => f1 === f2;
+      const featuresToRemove = array.difference(setoid.fromEquals(featureReferenceEquality))(currentFeatures, newFeatures);
+      const featuresToAdd = array.difference(setoid.fromEquals(featureReferenceEquality))(newFeatures, currentFeatures);
+      if (featuresToRemove.length === currentFeatures.length) {
+        model.geselecteerdeFeatures.clear();
+      } else {
+        featuresToRemove.forEach(f => model.geselecteerdeFeatures.remove(f));
+      }
+      model.geselecteerdeFeatures.extend(featuresToAdd);
       return ModelWithResult(model);
     }
 
