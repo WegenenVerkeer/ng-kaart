@@ -19,7 +19,6 @@ import { ZoekerBoxComponent } from "./box/zoeker-box.component";
 import { ZOEKER_CFG, ZoekerConfigData } from "./config/zoeker-config";
 import { ZoekerCrabGetraptComponent } from "./crab/zoeker-crab-getrapt.component";
 import { ZoekerCrabService } from "./crab/zoeker-crab.service";
-import { ZoekerExterneWmsGetraptComponent } from "./externe-wms/zoeker-externe-wms-getrapt.component";
 import { ZoekerGoogleWdbService } from "./google-wdb/zoeker-google-wdb.service";
 import { ZoekerHelpComponent } from "./help/zoeker-help.component";
 import { ZoekerPerceelGetraptComponent } from "./perceel/zoeker-perceel-getrapt.component";
@@ -30,7 +29,6 @@ import { DefaultRepresentatieService, ZOEKER_REPRESENTATIE } from "./zoeker-repr
 const components: any[] = [
   ZoekerBoxComponent,
   ZoekerCrabGetraptComponent,
-  ZoekerExterneWmsGetraptComponent,
   ZoekerAlleLagenGetraptComponent,
   ZoekerHelpComponent,
   ZoekerHighlightPipe,
@@ -74,9 +72,6 @@ export * from "./config/zoeker-config-locator-services.config";
 
 export * from "./perceel/zoeker-perceel.service";
 export * from "./perceel/zoeker-perceel-getrapt.component";
-
-export * from "./externe-wms/zoeker-externe-wms.service";
-export * from "./externe-wms/zoeker-externe-wms-getrapt.component";
 
 export * from "./alle-lagen/zoeker-alle-lagen.service";
 
