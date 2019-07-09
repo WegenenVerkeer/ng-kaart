@@ -1,6 +1,6 @@
 import { animate, style, transition, trigger } from "@angular/animations";
 import { HttpErrorResponse } from "@angular/common/http";
-import { ChangeDetectorRef, Component, ElementRef, Inject, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
+import { ChangeDetectorRef, Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import * as array from "fp-ts/lib/Array";
 import { concat, Function1, Function2, identity, Predicate } from "fp-ts/lib/function";
@@ -32,7 +32,7 @@ import {
 import { KaartChildComponentBase } from "../../kaart/kaart-child-component-base";
 import * as ke from "../../kaart/kaart-elementen";
 import { VeldInfo } from "../../kaart/kaart-elementen";
-import { KaartInternalMsg, kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
+import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import * as prt from "../../kaart/kaart-protocol";
 import { KaartComponent } from "../../kaart/kaart.component";
 import { kaartLogger } from "../../kaart/log";
@@ -54,7 +54,6 @@ import {
   ZoekerMetWeergaveopties,
   ZoekInput,
   ZoekKaartResultaat,
-  Zoekopdracht,
   ZoekResultaat,
   zoekResultaatOrdering,
   Zoektype
@@ -170,7 +169,7 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
     );
   }
 
-  protected zoek<I extends ZoekInput>(zoekInput: I, zoekers: Array<string>) {
+  protected zoek(zoekInput: ZoekInput, zoekers: string[]) {
     this.zoekerComponent.toonResultaat = true;
     this.zoekerComponent.toonSuggesties = false;
     this.zoekerComponent.increaseBusy();
