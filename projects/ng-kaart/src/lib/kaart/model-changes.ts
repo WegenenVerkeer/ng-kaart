@@ -65,7 +65,7 @@ export interface MijnLocatieStateChange {
 export interface ModelChanger {
   readonly uiElementSelectieSubj: rx.Subject<UiElementSelectie>;
   readonly uiElementOptiesSubj: rx.Subject<UiElementOpties>;
-  readonly viewPortSizeSubj: rx.Subject<undefined>;
+  readonly viewPortSizeSubj: rx.Subject<null>;
   readonly lagenOpGroepSubj: Map<ke.Laaggroep, rx.Subject<ke.ToegevoegdeLaag[]>>;
   readonly laagVerwijderdSubj: rx.Subject<ke.ToegevoegdeLaag>;
   readonly mijnLocatieZoomDoelSubj: rx.Subject<Option<number>>;
@@ -91,7 +91,7 @@ export const ModelChanger: () => ModelChanger = () => ({
   uiElementSelectieSubj: new rx.Subject<UiElementSelectie>(),
   // Om zeker te zijn dat late subscribers wel hun config messages krijgen.
   uiElementOptiesSubj: new rx.ReplaySubject<UiElementOpties>(100, 2000),
-  viewPortSizeSubj: new rx.Subject<undefined>(),
+  viewPortSizeSubj: new rx.Subject<null>(),
   lagenOpGroepSubj: new Map<ke.Laaggroep, rx.Subject<Array<ke.ToegevoegdeLaag>>>([
     ["Achtergrond", new rx.BehaviorSubject<Array<ke.ToegevoegdeLaag>>([])],
     ["Voorgrond.Hoog", new rx.BehaviorSubject<Array<ke.ToegevoegdeLaag>>([])],
@@ -287,7 +287,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
   // door eventuele observers nadat de huidige unit of execution afgehandeld is. Anders kan het gebeuren dat de output
   // van kaartCmdReducer pas opgepikt wordt nadat die van de subjects hieronder gezien is. De subjects veronderstellen
   // echter steeds het model dat door de KaartReducer gegenereerd is. We moeten dus wachten tot het nieuwe model
-  // geobserveerd is (of, beter, kan geobserveerd zijn). Dit is verwant met het async posten op het model subject.
+  // geobserveerd is (of beter, kan geobserveerd zijn). Dit is verwant met het async posten op het model subject.
   return {
     uiElementSelectie$: changer.uiElementSelectieSubj.pipe(observeOn(rx.asapScheduler)),
     uiElementOpties$: changer.uiElementOptiesSubj.pipe(observeOn(rx.asapScheduler)),

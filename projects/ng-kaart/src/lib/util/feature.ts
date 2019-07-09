@@ -37,15 +37,6 @@ export const modifyWithLaagnaam: Curried2<string, ol.Feature, ol.Feature> = laag
   return feature;
 };
 
-export const getLaagnaam: Function1<ol.Feature, Option<string>> = feature => {
-  const singleFeature = fromNullable(feature.get("features"))
-    .filter(arrays.isArray)
-    .filter(arrays.isNonEmpty)
-    .chain(features => fromNullable(features[0]))
-    .getOrElse(feature);
-  return fromNullable(singleFeature.get("laagnaam").toString());
-};
-
 export const getUnderlyingFeatures: Function1<ol.Feature[], ol.Feature[]> = features =>
   array.chain(features, feature => (feature.get("features") ? feature.get("features") : [feature]));
 
@@ -78,6 +69,15 @@ export const clusterFeaturesToGeoJson: PartialFunction1<ol.Feature[], GeoJsonFea
 
 export namespace Feature {
   export const propertyId: PartialFunction1<ol.Feature, string> = f => fromNullable(f.get("id")).map(id => id.toString());
+
+  export const getLaagnaam: PartialFunction1<ol.Feature, string> = feature => {
+    const singleFeature = fromNullable(feature.get("features"))
+      .filter(arrays.isArray)
+      .filter(arrays.isNonEmpty)
+      .chain(features => fromNullable(features[0]))
+      .getOrElse(feature);
+    return fromNullable(singleFeature.get("laagnaam").toString());
+  };
 
   export const setoidFeaturePropertyId: Setoid<ol.Feature> = setoid.contramap(propertyId, getSetoid(setoidString));
 

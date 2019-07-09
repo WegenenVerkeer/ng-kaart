@@ -22,6 +22,7 @@ import { ClassicLegendeBolletjeItemComponent } from "./legende/classic-legende-b
 import { ClassicLegendeImageItemComponent } from "./legende/classic-legende-image-item.component";
 import { ClassicLegendeLijnItemComponent } from "./legende/classic-legende-lijn-item.component";
 import { ClassicLegendePolygoonItemComponent } from "./legende/classic-legende-polygoon-item.component";
+import { ClassicMarkeerKaartklikComponent } from "./markeer-kaartklik/classic-markeer-kaartklik.component";
 import { ClassicMetenComponent } from "./meten/classic-meet.component";
 import { ClassicMultiMetenComponent } from "./meten/classic-multi-meet.component";
 import { ClassicMijnLocatieComponent } from "./mijn-locatie/classic-mijn-locatie.component";
@@ -38,16 +39,20 @@ import { ClassicZoekerComponent } from "./zoeker/classic-zoeker.component";
 import { ClassicZoomComponent } from "./zoom/classic-zoom.component";
 
 export const componentMap = {
+  "awv-bevraag-kaart": ClassicKaartBevragenComponent,
   "awv-kaart-blanco-laag": ClassicBlancoLaagComponent,
+  "awv-kaart-classic-dummy": KaartClassicComponent,
   "awv-kaart-copyright": ClassicCopyrightComponent,
-  "awv-kaart-zoeker": ClassicZoekerComponent,
   "awv-kaart-crab-zoeker": ClassicCrabZoekerComponent,
   "awv-kaart-features-laag": ClassicFeaturesLaagComponent,
   "awv-kaart-geoserver-laag": ClassicGeoserverLaagComponent,
   "awv-kaart-google-zoeker": ClassicGoogleZoekerComponent,
-  "awv-bevraag-kaart": ClassicKaartBevragenComponent,
+  "awv-kaart-knop-achtergrondlaag-kiezer": ClassicAchtergrondSelectorComponent,
+  "awv-kaart-knop-volledig-scherm": ClassicVolledigSchermComponent,
   "awv-kaart-lagenkiezer": ClassicLagenkiezerComponent,
-  "awv-meet-knop": ClassicMetenComponent,
+  "awv-kaart-markeer-kaartklik": ClassicMarkeerKaartklikComponent,
+  "awv-kaart-mijn-locatie": ClassicMijnLocatieComponent,
+  "awv-kaart-mijn-mobiele-locatie": ClassicMijnMobieleLocatieComponent,
   "awv-kaart-multi-meet-knop": ClassicMultiMetenComponent,
   "awv-kaart-nosqlfs-laag": ClassicNosqlfsLaagComponent,
   "awv-kaart-ortho-laag": ClassicOrthoLaagComponent,
@@ -57,20 +62,17 @@ export const componentMap = {
   "awv-kaart-streetview": ClassicStreetviewComponent,
   "awv-kaart-tilecache-laag": ClassicTilecacheLaagComponent,
   "awv-kaart-vector-laag": ClassicVectorLaagComponent,
-  "awv-kaart-knop-volledig-scherm": ClassicVolledigSchermComponent,
+  "awv-kaart-voorwaarden": ClassicVoorwaardenComponent,
   "awv-kaart-wfs-laag": ClassicWfsLaagComponent,
   "awv-kaart-wms-laag": ClassicWmsLaagComponent,
   "awv-kaart-wmts-laag": ClassicWmtsLaagComponent,
+  "awv-kaart-zoeker": ClassicZoekerComponent,
   "awv-kaart-zoomknoppen": ClassicZoomComponent,
-  "awv-kaart-knop-achtergrondlaag-kiezer": ClassicAchtergrondSelectorComponent,
-  "awv-kaart-voorwaarden": ClassicVoorwaardenComponent,
   "awv-legende-bolletje-item": ClassicLegendeBolletjeItemComponent,
   "awv-legende-image-item": ClassicLegendeImageItemComponent,
   "awv-legende-lijn-item": ClassicLegendeLijnItemComponent,
   "awv-legende-polygoon-item": ClassicLegendePolygoonItemComponent,
-  "awv-kaart-mijn-locatie": ClassicMijnLocatieComponent,
-  "awv-kaart-mijn-mobiele-locatie": ClassicMijnMobieleLocatieComponent,
-  "awv-kaart-classic-dummy": KaartClassicComponent
+  "awv-meet-knop": ClassicMetenComponent
 };
 
 const components = [
@@ -87,7 +89,10 @@ const components = [
   ClassicLegendeImageItemComponent,
   ClassicLegendeLijnItemComponent,
   ClassicLegendePolygoonItemComponent,
+  ClassicMarkeerKaartklikComponent,
   ClassicMetenComponent,
+  ClassicMijnLocatieComponent,
+  ClassicMijnMobieleLocatieComponent,
   ClassicMultiMetenComponent,
   ClassicNosqlfsLaagComponent,
   ClassicOrthoLaagComponent,
@@ -104,8 +109,6 @@ const components = [
   ClassicWmtsLaagComponent,
   ClassicZoekerComponent,
   ClassicZoomComponent,
-  ClassicMijnLocatieComponent,
-  ClassicMijnMobieleLocatieComponent,
   KaartClassicComponent
 ];
 
@@ -133,15 +136,16 @@ export * from "./lagen/classic-wfs-laag.component";
 export * from "./lagen/classic-wms-laag.component";
 export * from "./lagen/classic-wmts-laag.component";
 export * from "./lagenkiezer/classic-lagenkiezer.component";
-export * from "./legende/classic-legende-item.component";
 export * from "./legende/classic-legende-bolletje-item.component";
 export * from "./legende/classic-legende-image-item.component";
+export * from "./legende/classic-legende-item.component";
 export * from "./legende/classic-legende-lijn-item.component";
 export * from "./legende/classic-legende-polygoon-item.component";
+export * from "./log";
+export * from "./markeer-kaartklik/classic-markeer-kaartklik.component";
+export * from "./meten/classic-meet.component";
 export * from "./mijn-locatie/classic-mijn-locatie.component";
 export * from "./mijn-locatie/classic-mijn-mobiele-locatie.component";
-export * from "./log";
-export * from "./meten/classic-meet.component";
 export * from "./openlayers-style/classic-openlayers-style.component";
 export * from "./schaal/classic-schaal.component";
 export * from "./standaard-interacties/classic-standaard-interacties.component";
