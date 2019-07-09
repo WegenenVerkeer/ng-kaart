@@ -162,8 +162,8 @@ export namespace FilterEditor {
     termEditor.kind === "Value" || termEditor.kind === "Completed";
   export const isCompleted: Refinement<TermEditor, Completed> = (termEditor): termEditor is Completed => termEditor.kind === "Completed";
 
-  // We zijn heel conservatief en laten enkel kolomen met ASCII letters en underscore toe
-  const hasAcceptableName: Predicate<ke.VeldInfo> = veld => veld.naam.match(/^[\w]+$/) !== null;
+  // We zijn heel conservatief en laten enkel kolommen met ASCII letters, underscore en punt toe
+  const hasAcceptableName: Predicate<ke.VeldInfo> = veld => veld.naam.match(/^[\w\.]+$/) !== null;
 
   const veldinfos: Function1<ke.ToegevoegdeVectorLaag, ke.VeldInfo[]> = laag =>
     ke.ToegevoegdeVectorLaag.veldInfosLens.get(laag).filter(
