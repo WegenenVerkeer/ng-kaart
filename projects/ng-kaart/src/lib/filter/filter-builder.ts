@@ -383,8 +383,8 @@ export namespace FilterEditor {
         valueOrCompleted(selection, selectedOperator, bestStringValueSelector(selection.selectedProperty, selectedOperator), caseSensitive),
       datetime: () =>
         valueOrCompleted(selection, selectedOperator, bestStringValueSelector(selection.selectedProperty, selectedOperator), caseSensitive),
-      double: () => valueOrCompleted(selection, selectedOperator, selection.valueSelector, caseSensitive),
-      integer: () => valueOrCompleted(selection, selectedOperator, selection.valueSelector, caseSensitive),
+      double: () => valueOrCompleted(selection, selectedOperator, FreeInputValueSelector("double"), caseSensitive),
+      integer: () => valueOrCompleted(selection, selectedOperator, FreeInputValueSelector("integer"), caseSensitive),
       boolean: () => booleanCompleted(selection, selectedOperator),
       fallback: () =>
         // Hier raken we niet wegens geen operator
