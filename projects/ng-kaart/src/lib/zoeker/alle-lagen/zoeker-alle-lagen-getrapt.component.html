@@ -1,5 +1,10 @@
 <div class="alle-lagen-form">
   <mat-form-field>
+    <mat-select placeholder="Selecteer een bron" [formControl]="bronControl">
+      <mat-option *ngFor="let bron of bronnen$ | async" [value]="bron">{{ bron }}</mat-option>
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field *ngIf="hasCategorieen$ | async">
     <mat-select placeholder="Selecteer een categorie" [formControl]="categorieControl">
       <mat-option *ngFor="let categorie of categorieen$ | async" [value]="categorie">{{ categorie }}</mat-option>
     </mat-select>

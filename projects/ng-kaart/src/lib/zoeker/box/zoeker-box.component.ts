@@ -1,6 +1,6 @@
 import { animate, style, transition, trigger } from "@angular/animations";
 import { HttpErrorResponse } from "@angular/common/http";
-import { ChangeDetectorRef, Component, ElementRef, Inject, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
+import { ChangeDetectorRef, Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
 import { FormControl } from "@angular/forms";
 import * as array from "fp-ts/lib/Array";
 import { concat, Function1, Function2, identity, Predicate } from "fp-ts/lib/function";
@@ -32,7 +32,7 @@ import {
 import { KaartChildComponentBase } from "../../kaart/kaart-child-component-base";
 import * as ke from "../../kaart/kaart-elementen";
 import { VeldInfo } from "../../kaart/kaart-elementen";
-import { KaartInternalMsg, kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
+import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import * as prt from "../../kaart/kaart-protocol";
 import { KaartComponent } from "../../kaart/kaart.component";
 import { kaartLogger } from "../../kaart/log";
@@ -54,7 +54,6 @@ import {
   ZoekerMetWeergaveopties,
   ZoekInput,
   ZoekKaartResultaat,
-  Zoekopdracht,
   ZoekResultaat,
   zoekResultaatOrdering,
   Zoektype
@@ -71,12 +70,11 @@ export interface HuidigeSelectie {
   zoekResultaat: ZoekKaartResultaat;
 }
 
-export type ZoekerType = typeof BASIS | typeof PERCEEL | typeof CRAB | typeof EXTERNE_WMS | typeof ALLE_LAGEN;
+export type ZoekerType = typeof BASIS | typeof PERCEEL | typeof CRAB | typeof ALLE_LAGEN;
 
 export const BASIS = "Basis";
 export const PERCEEL = "Perceel";
 export const CRAB = "Crab";
-export const EXTERNE_WMS = "ExterneWms";
 export const ALLE_LAGEN = "AlleLagen";
 
 type WeergaveoptiesOpZoekernaam = Map<string, Weergaveopties>;
@@ -170,7 +168,7 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
     );
   }
 
-  protected zoek<I extends ZoekInput>(zoekInput: I, zoekers: Array<string>) {
+  protected zoek(zoekInput: ZoekInput, zoekers: string[]) {
     this.zoekerComponent.toonResultaat = true;
     this.zoekerComponent.toonSuggesties = false;
     this.zoekerComponent.increaseBusy();
@@ -294,11 +292,6 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     this.zoekerComponentSubj.next(new Tuple<ZoekerType, GetraptZoekerComponent>(CRAB, zoekerCrabGetrapt));
   }
 
-  @ViewChild("zoekerExterneWmsGetrapt")
-  set setZoekerExterneWmsGetraptComponent(zoekerExterneWmsGetrapt: GetraptZoekerComponent) {
-    this.zoekerComponentSubj.next(new Tuple<ZoekerType, GetraptZoekerComponent>(EXTERNE_WMS, zoekerExterneWmsGetrapt));
-  }
-
   @ViewChild("zoekerAlleLagenGetrapt")
   set setZoekerAlleLagenGetraptComponent(zoekerAlleLagenGetrapt: GetraptZoekerComponent) {
     this.zoekerComponentSubj.next(new Tuple<ZoekerType, GetraptZoekerComponent>(ALLE_LAGEN, zoekerAlleLagenGetrapt));
@@ -323,7 +316,6 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   perceelMaakLeegDisabled = true;
   crabMaakLeegDisabled = true;
   zoekerMaakLeegDisabled = new Set<ZoekerType>();
-  externeWmsMaakLeegDisabled = true;
   private readonly zoekerComponentSubj: rx.Subject<Tuple<ZoekerType, GetraptZoekerComponent>> = new rx.Subject();
   private readonly zoekerComponentOpNaam$: rx.Observable<Map<ZoekerType, GetraptZoekerComponent>>;
   private readonly maakVeldenLeegSubj: rx.Subject<ZoekerType> = new rx.Subject<ZoekerType>();
@@ -336,7 +328,6 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   readonly Basis: ZoekerType = BASIS;
   readonly Crab: ZoekerType = CRAB;
   readonly Perceel: ZoekerType = PERCEEL;
-  readonly ExterneWms: ZoekerType = EXTERNE_WMS;
   readonly AlleLagen: ZoekerType = ALLE_LAGEN;
 
   private static createLayer(): ke.VectorLaag {
@@ -742,9 +733,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   }
 
   isInklapbaar(): boolean {
-    return (
-      this.heeftFout() || this.alleZoekResultaten.length > 0 || [PERCEEL, CRAB, EXTERNE_WMS, ALLE_LAGEN].indexOf(this.actieveZoeker) >= 0
-    );
+    return this.heeftFout() || this.alleZoekResultaten.length > 0 || [PERCEEL, CRAB, ALLE_LAGEN].indexOf(this.actieveZoeker) >= 0;
   }
 
   kiesZoeker(zoeker: ZoekerType) {
