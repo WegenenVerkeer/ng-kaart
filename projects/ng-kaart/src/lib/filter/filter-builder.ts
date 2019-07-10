@@ -162,8 +162,8 @@ export namespace FilterEditor {
     termEditor.kind === "Value" || termEditor.kind === "Completed";
   export const isCompleted: Refinement<TermEditor, Completed> = (termEditor): termEditor is Completed => termEditor.kind === "Completed";
 
-  // We zijn heel conservatief en laten enkel kolomen met ASCII letters en underscore toe
-  const hasAcceptableName: Predicate<ke.VeldInfo> = veld => veld.naam.match(/^[\w]+$/) !== null;
+  // We zijn heel conservatief en laten enkel kolommen met ASCII letters, underscore en punt toe
+  const hasAcceptableName: Predicate<ke.VeldInfo> = veld => veld.naam.match(/^[\w\.]+$/) !== null;
 
   const veldinfos: Function1<ke.ToegevoegdeVectorLaag, ke.VeldInfo[]> = laag =>
     ke.ToegevoegdeVectorLaag.veldInfosLens.get(laag).filter(
@@ -383,8 +383,8 @@ export namespace FilterEditor {
         valueOrCompleted(selection, selectedOperator, bestStringValueSelector(selection.selectedProperty, selectedOperator), caseSensitive),
       datetime: () =>
         valueOrCompleted(selection, selectedOperator, bestStringValueSelector(selection.selectedProperty, selectedOperator), caseSensitive),
-      double: () => valueOrCompleted(selection, selectedOperator, selection.valueSelector, caseSensitive),
-      integer: () => valueOrCompleted(selection, selectedOperator, selection.valueSelector, caseSensitive),
+      double: () => valueOrCompleted(selection, selectedOperator, FreeInputValueSelector("double"), caseSensitive),
+      integer: () => valueOrCompleted(selection, selectedOperator, FreeInputValueSelector("integer"), caseSensitive),
       boolean: () => booleanCompleted(selection, selectedOperator),
       fallback: () =>
         // Hier raken we niet wegens geen operator

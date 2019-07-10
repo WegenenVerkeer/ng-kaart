@@ -161,12 +161,10 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
       distinctUntilChanged()
     );
     // Zorg dat de lijst initieel open of dicht is zoals ingesteld
-    initieelDichtgeklapt$
-      .pipe(
-        debounceTime(250),
-        take(1)
-      )
-      .subscribe(dichtgeklapt => (this.dichtgeklapt = dichtgeklapt));
+    initieelDichtgeklapt$.pipe(debounceTime(50)).subscribe(dichtgeklapt => {
+      this.cdr.detectChanges();
+      this.dichtgeklapt = dichtgeklapt;
+    });
   }
 
   get isOpengeklapt(): boolean {
