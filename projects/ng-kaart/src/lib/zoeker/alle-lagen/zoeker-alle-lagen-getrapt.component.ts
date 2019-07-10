@@ -47,7 +47,7 @@ export class ZoekerAlleLagenGetraptComponent extends GetraptZoekerComponent impl
     this.bronnen$ = services$.pipe(
       switchMap(svcs =>
         svcs.foldL(
-          () => rx.of([]), // Geen service betekent geen categorieën
+          () => rx.of([]), // Geen service betekent geen bronnen
           svc => svc.bronnen$
         )
       )
