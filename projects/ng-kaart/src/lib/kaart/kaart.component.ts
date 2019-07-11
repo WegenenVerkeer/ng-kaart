@@ -1,5 +1,4 @@
 import { Component, ElementRef, Inject, Input, NgZone, ViewChild, ViewEncapsulation } from "@angular/core";
-import * as MobileDetect from "mobile-detect/mobile-detect";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import {
@@ -102,6 +101,7 @@ export class KaartComponent extends KaartComponentBase {
   // Dit dient om messages naar toe te sturen
 
   internalMessage$: rx.Observable<KaartInternalSubMsg> = rx.EMPTY;
+
   constructor(@Inject(KAART_CFG) readonly config: KaartConfig, zone: NgZone) {
     super(zone);
     this.internalMessage$ = this.msgSubj.pipe(
@@ -196,70 +196,6 @@ export class KaartComponent extends KaartComponentBase {
     );
   }
 
-  get modelChanges(): ModelChanges {
-    return this.innerModelChanges;
-  }
-
-  get aanwezigeElementen$(): rx.Observable<Set<string>> {
-    return this.innerAanwezigeElementen$;
-  }
-
-  kaartLinksZichtbaar = true;
-  kaartLinksToggleZichtbaar = false;
-  kaartLinksScrollbarZichtbaar = false;
-  private readonly modelChanger: ModelChanger = ModelChanger();
-  private innerModelChanges: ModelChanges;
-  private innerAanwezigeElementen$: rx.Observable<Set<string>>;
-  readonly kaartModel$: rx.Observable<KaartWithInfo> = rx.EMPTY;
-  private readonly resizeCommand$: rx.Observable<prt.VeranderViewportCmd>;
-
-  @ViewChild("map")
-  mapElement: ElementRef;
-  @ViewChild("kaartLinks")
-  kaartLinksElement: ElementRef;
-  @ViewChild("kaartFixedLinksBoven")
-  kaartFixedLinksBovenElement: ElementRef;
-  @ViewChild("kaartLinksZichtbaarToggleKnop", { read: ElementRef })
-  kaartLinksZichtbaarToggleKnopElement: ElementRef;
-
-  /**
-   * Dit houdt heel de constructie bij elkaar. Ofwel awv-kaart-classic (in geval van declaratief gebruik) ofwel
-   * een component van de gebruikende applicatie (in geval van programmatorisch gebruik) zet hier een Observable
-   * waarmee events naar de component gestuurd kunnen worden.
-   */
-  @Input()
-  kaartCmd$: rx.Observable<prt.Command<prt.KaartMsg>> = rx.EMPTY;
-  /**
-   * Hier wordt een callback verwacht die een Msg observable zal krijgen. Die observable kan dan gebruikt worden
-   * op te luisteren op feedback van commands of uitvoer van subscriptions.
-   */
-  @Input()
-  messageObsConsumer: KaartMsgObservableConsumer = vacuousKaartMsgObservableConsumer;
-
-  /**
-   * Dit is een beetje ongelukkig, maar ook componenten die door de KaartComponent zelf aangemaakt worden moeten events kunnen sturen
-   * naar de KaartComponent. Een alternatief zou kunnen zijn één dispatcher hier te maken en de KaartClassicComponent die te laten
-   * ophalen in afterViewInit.
-   */
-  readonly internalCmdDispatcher: ReplaySubjectKaartCmdDispatcher<KaartInternalMsg> = new ReplaySubjectKaartCmdDispatcher();
-
-  private readonly msgSubj = new rx.ReplaySubject<prt.KaartMsg>(1000, 500);
-
-  @Input()
-  minZoom = 2; // TODO naar config
-  @Input()
-  maxZoom = 15; // TODO naar config
-  @Input()
-  naam = "kaart";
-  @Input()
-  kaartLinksBreedte;
-
-  readonly moveTolerance = new MobileDetect(window.navigator.userAgent).mobile() ? 40 : 1; // 1 is default
-
-  // Dit dient om messages naar toe te sturen
-
-  internalMessage$: rx.Observable<KaartInternalSubMsg> = rx.EMPTY;
-
   private createMapModelForCommands(initieelModel: KaartWithInfo): rx.Observable<KaartWithInfo> {
     kaartLogger.info(`Kaart '${this.naam}' aangemaakt`);
 
@@ -294,7 +230,6 @@ export class KaartComponent extends KaartComponentBase {
       pixelRatio: 1, // dit moet op 1 staan anders zal OL 512x512 tiles ophalen op retina displays en die zitten niet in onze geowebcache
       target: this.mapElement.nativeElement,
       logo: false,
-      moveTolerance: this.moveTolerance,
       view: new ol.View({
         projection: dienstkaartProjectie,
         center: this.config.defaults.middelpunt,
@@ -305,6 +240,14 @@ export class KaartComponent extends KaartComponentBase {
     });
 
     return new KaartWithInfo(this.config, this.naam, this.mapElement.nativeElement.parentElement, kaart, this.modelChanger);
+  }
+
+  get modelChanges(): ModelChanges {
+    return this.innerModelChanges;
+  }
+
+  get aanwezigeElementen$(): rx.Observable<Set<string>> {
+    return this.innerAanwezigeElementen$;
   }
 
   bepaalKaartLinksMarginTopEnMaxHeight() {
