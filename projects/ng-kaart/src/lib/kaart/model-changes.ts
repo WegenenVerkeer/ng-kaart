@@ -20,7 +20,7 @@ import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { UiElementOpties } from "./kaart-protocol-commands";
 import { Viewinstellingen } from "./kaart-protocol-subscriptions";
-import { KaartWithInfo } from "./kaart-with-info";
+import { EnvironmentParams, KaartWithInfo } from "./kaart-with-info";
 import { GeselecteerdeFeatures, HoverFeature } from "./kaart-with-info-model";
 import * as loc from "./mijn-locatie/kaart-mijn-locatie.component";
 import { GeenLaagstijlaanpassing, LaagstijlaanpassingState } from "./stijleditor/state";
@@ -254,7 +254,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     map((event: ol.MapBrowserEvent) => ({
       coordinate: event.coordinate,
       coversFeature: model.map.hasFeatureAtPixel(event.pixel, {
-        hitTolerance: KaartWithInfo.clickHitTolerance,
+        hitTolerance: EnvironmentParams.clickHitTolerance,
         // enkel json data features die een identify hebben beschouwen we. Zoekresultaten bvb niet
         layerFilter: layer => ke.underlyingSource(layer) instanceof NosqlFsSource
       })

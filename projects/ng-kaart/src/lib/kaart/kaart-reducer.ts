@@ -33,7 +33,7 @@ import { CachedFeatureLookup } from "./cache/lookup";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { MsgGen } from "./kaart-protocol-subscriptions";
-import { KaartWithInfo } from "./kaart-with-info";
+import { EnvironmentParams, KaartWithInfo } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
 import { kaartLogger } from "./log";
 import { ModelChanger, ModelChanges } from "./model-changes";
@@ -996,7 +996,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               features: model.geselecteerdeFeatures,
               multi: false,
               style: createSelectionStyleFn(getSelectionStyleSelector),
-              hitTolerance: KaartWithInfo.clickHitTolerance,
+              hitTolerance: EnvironmentParams.clickHitTolerance,
               layers: layer => layer.get(ke.LayerProperties.Selecteerbaar)
             });
           case "multipleShift":
@@ -1005,7 +1005,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               features: model.geselecteerdeFeatures,
               multi: true,
               style: createSelectionStyleFn(getSelectionStyleSelector),
-              hitTolerance: KaartWithInfo.clickHitTolerance,
+              hitTolerance: EnvironmentParams.clickHitTolerance,
               layers: layer => layer.get(ke.LayerProperties.Selecteerbaar)
             });
           case "multipleKlik":
@@ -1015,7 +1015,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               features: model.geselecteerdeFeatures,
               multi: true,
               style: createSelectionStyleFn(getSelectionStyleSelector),
-              hitTolerance: KaartWithInfo.clickHitTolerance,
+              hitTolerance: EnvironmentParams.clickHitTolerance,
               layers: layer => layer.get(ke.LayerProperties.Selecteerbaar)
             });
           case "none":
