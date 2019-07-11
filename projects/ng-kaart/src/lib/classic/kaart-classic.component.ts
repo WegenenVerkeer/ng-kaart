@@ -436,7 +436,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
       changes,
       "onderdrukKaartBevragenBoodschappen",
       onderdruk => this.dispatch(prt.ZetUiElementOpties(KaartInfoBoodschapUiSelector, { kaartBevragenOnderdrukt: onderdruk })),
-      val.zonderFallback<boolean>(val.bool)
+      (value: boolean) => val.bool(value, this._onderdrukKaartBevragenBoodschappen)
     );
     forChangedValue(
       changes,

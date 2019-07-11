@@ -85,6 +85,7 @@ export type Command<Msg extends KaartMsg> =
   | ZetFilter<Msg>
   | ZetOffline<Msg>
   | ZetLaagLegendeCmd<Msg>
+  | ZetLaagSelecteerbaarCmd<Msg>
   | ZetMijnLocatieZoomCmd
   | ZetStijlSpecVoorLaagCmd<Msg>
   | ZetStijlVoorLaagCmd<Msg>
@@ -320,6 +321,13 @@ export interface MaakLaagZichtbaarCmd<Msg extends KaartMsg> {
 export interface MaakLaagOnzichtbaarCmd<Msg extends KaartMsg> {
   readonly type: "MaakLaagOnzichtbaar";
   readonly titel: string;
+  readonly wrapper: BareValidationWrapper<Msg>;
+}
+
+export interface ZetLaagSelecteerbaarCmd<Msg extends KaartMsg> {
+  readonly type: "ZetLaagSelecteerbaar";
+  readonly titel: string;
+  readonly selecteerbaar: boolean;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -802,6 +810,14 @@ export function MaakLaagOnzichtbaarCmd<Msg extends KaartMsg>(
   wrapper: BareValidationWrapper<Msg>
 ): MaakLaagOnzichtbaarCmd<Msg> {
   return { type: "MaakLaagOnzichtbaar", titel: titel, wrapper: wrapper };
+}
+
+export function ZetLaagSelecteerbaarCmd<Msg extends KaartMsg>(
+  titel: string,
+  selecteerbaar: boolean,
+  wrapper: BareValidationWrapper<Msg>
+): ZetLaagSelecteerbaarCmd<Msg> {
+  return { type: "ZetLaagSelecteerbaar", titel, selecteerbaar, wrapper };
 }
 
 export function ToonAchtergrondKeuzeCmd<Msg extends KaartMsg>(wrapper: BareValidationWrapper<Msg>): ToonAchtergrondKeuzeCmd<Msg> {

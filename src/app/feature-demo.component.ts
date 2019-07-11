@@ -8,7 +8,7 @@ import { CachedFeatureLookup } from "projects/ng-kaart/src/lib/kaart/cache/looku
 import { Feature } from "projects/ng-kaart/src/lib/util/feature";
 import { encodeParams } from "projects/ng-kaart/src/lib/util/url";
 import * as rx from "rxjs";
-import { reduce, scan, share, throttleTime } from "rxjs/operators";
+import { reduce, scan, share, startWith, throttleTime } from "rxjs/operators";
 
 import { getUnderlyingFeatures } from "../../projects/ng-kaart/src/lib/util/feature";
 import {
@@ -757,6 +757,18 @@ export class FeatureDemoComponent {
 
   readonly featureLoopSelectie$ = new rx.Subject<ol.Feature[]>();
 
+  readonly mechelenZichtbaarToggleSubj: rx.Subject<null> = new rx.Subject();
+  readonly mechelenZichtbaar$ = this.mechelenZichtbaarToggleSubj.pipe(
+    scan<null, boolean>(prev => !prev, true),
+    startWith(true)
+  );
+
+  readonly mechelenSelecteerbaarToggleSubj: rx.Subject<null> = new rx.Subject();
+  readonly mechelenSelecteerbaar$ = this.mechelenSelecteerbaarToggleSubj.pipe(
+    scan<null, boolean>(prev => !prev, true),
+    startWith(true)
+  );
+
   readonly cachedFeaturesProviderConsumer = (cfpc: CachedFeatureLookup) => (this.cachedFeaturesProvider = some(cfpc));
 
   readonly percelenQueryUrl: Function1<ol.Coordinate, string> = location => {
@@ -1127,5 +1139,13 @@ export class FeatureDemoComponent {
   onFeatureLoopSelectie(features: ol.Feature[]) {
     console.log("****Feature in loop", features);
     this.featureLoopSelectie$.next(features);
+  }
+
+  onToggleZichtbaar() {
+    this.mechelenZichtbaarToggleSubj.next();
+  }
+
+  onToggleSelecteerbaar() {
+    this.mechelenSelecteerbaarToggleSubj.next();
   }
 }
