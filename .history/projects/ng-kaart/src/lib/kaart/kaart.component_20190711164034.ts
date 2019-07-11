@@ -1,23 +1,7 @@
 import { Component, ElementRef, Inject, Input, NgZone, ViewChild, ViewEncapsulation } from "@angular/core";
-import * as MobileDetect from "mobile-detect/mobile-detect";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import {
-  debounceTime,
-  delay,
-  distinctUntilChanged,
-  filter,
-  last,
-  map,
-  scan,
-  shareReplay,
-  startWith,
-  switchMap,
-  take,
-  takeUntil,
-  tap
-} from "rxjs/operators";
-
+import { debounceTime, delay, distinctUntilChanged, filter, last, map, scan, shareReplay, startWith, switchMap, take, takeUntil, tap } from "rxjs/operators";
 import { isNonEmpty } from "../util/arrays";
 import { asap } from "../util/asap";
 import * as maps from "../util/maps";
@@ -27,9 +11,8 @@ import { catOptions, ofType } from "../util/operators";
 import { forEach } from "../util/option";
 import { resizeObservable } from "../util/resize-observable";
 import * as sets from "../util/sets";
-
 import { KaartComponentBase } from "./kaart-component-base";
-import { KAART_CFG, KaartConfig } from "./kaart-config";
+import { KaartConfig, KAART_CFG } from "./kaart-config";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { InfoBoodschappenMsg, KaartInternalMsg, KaartInternalSubMsg } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
@@ -37,6 +20,8 @@ import * as red from "./kaart-reducer";
 import { cleanup, KaartWithInfo } from "./kaart-with-info";
 import { kaartLogger } from "./log";
 import { ModelChanger, ModelChanges, modelChanges, UiElementSelectie } from "./model-changes";
+
+
 
 // Om enkel met @Input properties te moeten werken. Op deze manier kan een stream van KaartMsg naar de caller gestuurd worden
 export type KaartMsgObservableConsumer = (msg$: rx.Observable<prt.KaartMsg>) => void;
@@ -49,6 +34,7 @@ export const vacuousKaartMsgObservableConsumer: KaartMsgObservableConsumer = () 
   encapsulation: ViewEncapsulation.Emulated // Omwille hiervan kunnen we geen globale CSS gebruiken, maar met Native werken animaties niet
 })
 export class KaartComponent extends KaartComponentBase {
+
   constructor(@Inject(KAART_CFG) readonly config: KaartConfig, zone: NgZone) {
     super(zone);
     this.internalMessage$ = this.msgSubj.pipe(
@@ -150,7 +136,7 @@ export class KaartComponent extends KaartComponentBase {
   get aanwezigeElementen$(): rx.Observable<Set<string>> {
     return this.innerAanwezigeElementen$;
   }
-
+  static readonly moveTolerance = new MobileDetect(window.navigator.userAgent).mobile() ? 40 : 5;
   kaartLinksZichtbaar = true;
   kaartLinksToggleZichtbaar = false;
   kaartLinksScrollbarZichtbaar = false;
@@ -201,8 +187,6 @@ export class KaartComponent extends KaartComponentBase {
   @Input()
   kaartLinksBreedte;
 
-  readonly moveTolerance = new MobileDetect(window.navigator.userAgent).mobile() ? 40 : 1; // 1 is default
-
   // Dit dient om messages naar toe te sturen
 
   internalMessage$: rx.Observable<KaartInternalSubMsg> = rx.EMPTY;
@@ -241,7 +225,6 @@ export class KaartComponent extends KaartComponentBase {
       pixelRatio: 1, // dit moet op 1 staan anders zal OL 512x512 tiles ophalen op retina displays en die zitten niet in onze geowebcache
       target: this.mapElement.nativeElement,
       logo: false,
-      moveTolerance: this.moveTolerance,
       view: new ol.View({
         projection: dienstkaartProjectie,
         center: this.config.defaults.middelpunt,
