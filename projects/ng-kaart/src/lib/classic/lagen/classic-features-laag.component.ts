@@ -84,6 +84,7 @@ export class ClassicFeaturesLaagComponent extends ClassicVectorLaagComponent imp
           prevFeatures !== undefined && !this.featuresSetoid.equals(curFeatures, prevFeatures)
       );
     }
+    super.ngOnChanges(changes);
   }
 
   private dispatchVervangFeatures(features: ol.Feature[]) {

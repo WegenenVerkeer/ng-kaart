@@ -143,8 +143,8 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
         .getOrElse(kaart.config.defaults.resolutions[0])
     });
 
-    vector.set("selecteerbaar", vectorlaag.selecteerbaar);
-    vector.set("hover", vectorlaag.hover);
+    vector.set(ke.LayerProperties.Selecteerbaar, vectorlaag.selecteerbaar);
+    vector.set(ke.LayerProperties.Hover, vectorlaag.hover);
     return vector;
   }
 

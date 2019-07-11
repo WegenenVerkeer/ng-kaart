@@ -1,20 +1,23 @@
-import { Injector, Input } from "@angular/core";
-import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
+import { Injector, Input, OnChanges, SimpleChanges } from "@angular/core";
+import { fromNullable, none, Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 
+import { forChangedValue } from "../../kaart/kaart-component-base";
 import * as ke from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
 import * as ss from "../../kaart/stijl-selector";
 import { getDefaultHoverStyleFunction, getDefaultSelectionStyleFunction, getDefaultStyleFunction } from "../../kaart/styles";
 import * as arrays from "../../util/arrays";
+import { Consumer1 } from "../../util/function";
 import { forEach, fromValidation } from "../../util/option";
+import { TypedRecord } from "../../util/typed-record";
 import { logOnlyWrapper } from "../messages";
 import * as val from "../webcomponent-support/params";
 
 import { ClassicLaagComponent } from "./classic-laag.component";
 
-export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponent {
+export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponent implements OnChanges {
   @Input()
   style?: ol.style.Style = undefined; // heeft voorrang op styleFunction
   @Input()
@@ -130,6 +133,26 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
         );
         return maybeClusterStyleSelector.orElse(() => maybeUnclusteredStyleSelector);
       });
+  }
+
+  /** @ignore */
+  ngOnChanges(changes: SimpleChanges) {
+    const dispatch: Consumer1<prt.Command<TypedRecord>> = cmd => this.kaart.dispatch(cmd);
+    forChangedValue<boolean, boolean>(
+      changes,
+      "zichtbaar",
+      zichtbaar =>
+        dispatch(
+          zichtbaar ? prt.MaakLaagZichtbaarCmd(this._titel, logOnlyWrapper) : prt.MaakLaagOnzichtbaarCmd(this._titel, logOnlyWrapper)
+        ),
+      (value: boolean) => val.bool(value, this._zichtbaar)
+    );
+    forChangedValue<boolean, boolean>(
+      changes,
+      "selecteerbaar",
+      selecteerbaar => dispatch(prt.ZetLaagSelecteerbaarCmd(this._titel, selecteerbaar, logOnlyWrapper)),
+      (value: boolean) => val.bool(value, this._selecteerbaar)
+    );
   }
 
   clusterStyle(defaultStyleSelector: ss.StyleSelector): ol.StyleFunction {

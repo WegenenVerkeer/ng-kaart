@@ -298,3 +298,9 @@ export namespace VeldInfo {
   export const matchWithFallback: <A>(_: matchers.FallbackMatcher<VeldInfo, A, VeldType>) => Function1<VeldInfo, A> = m =>
     matchers.matchWithFallback(m)(veldinfo => veldinfo.type);
 }
+
+export namespace LayerProperties {
+  export const Selecteerbaar = "selecteerbaar";
+  export const Hover = "hover";
+  export const Titel = "titel";
+}
