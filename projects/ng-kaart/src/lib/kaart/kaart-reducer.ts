@@ -406,7 +406,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                   return tgnslg;
                 }
               );
-              layer.set("titel", titel);
+              layer.set(ke.LayerProperties.Titel, titel);
               layer.setVisible(cmnd.magGetoondWorden && !cmnd.laag.verwijderd); // achtergrondlagen expliciet zichtbaar maken!
               // met positie hoeven we nog geen rekening te houden
               forEach(ke.asToegevoegdeVectorLaag(toegevoegdeLaag), pasVectorLaagStijlToe);
@@ -503,7 +503,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               }))
               .getOrElse(toegevoegdeLaagCommon);
             const oldLayer = laag.layer;
-            layer.set("titel", oldLayer.get("titel"));
+            layer.set(ke.LayerProperties.Titel, oldLayer.get(ke.LayerProperties.Titel));
             layer.setVisible(oldLayer.getVisible());
             forEach(ke.asToegevoegdeVectorLaag(toegevoegdeLaag), pasVectorLaagStijlToe);
             zetLayerIndex(layer, laag.positieInGroep, laag.laaggroep);
@@ -871,6 +871,21 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
+    function zetLaagSelecteerbaarCmd(cmnd: prt.ZetLaagSelecteerbaarCmd<Msg>): ModelWithResult<Msg> {
+      // ke.LayerProperties.Selecteerbaar is een custom property op alle lagen die wij toegevoegd hebben. Het wordt
+      // gebruikt als filterfunctie bij Select interacties. Het is niet duidelijk uit de documentatie of die filter elke
+      // keer geëvalueerd wordt bij elke selectie of eenmaal tijdens de initialisatie van de interactie. Uit de source
+      // code echter blijkt dit voor elke selectie event te zijn. We mogen dus verwachten dat
+      // ke.LayerProperties.Selecteerbaar zetten op een laag onmiddellijk effect heeft.
+      return toModelWithValueResult(
+        cmnd.wrapper,
+        valideerToegevoegdeVectorLaagBestaat(cmnd.titel).map(laag => {
+          laag.layer.set(ke.LayerProperties.Selecteerbaar, cmnd.selecteerbaar);
+          return ModelAndEmptyResult(model);
+        })
+      );
+    }
+
     const applySelectionColor: Endomorphism<ol.style.Style> = function(style: ol.style.Style): ol.style.Style {
       // TODO ipv dit gepruts op het niveau van OL zou het veel makkelijker en veiliger zijn om met lenzen op een AwvV0StyleSpec te werken
       const selectionStrokeColor: ol.Color = [0, 153, 255, 1]; // TODO maak configureerbaar
@@ -982,7 +997,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               multi: false,
               style: createSelectionStyleFn(getSelectionStyleSelector),
               hitTolerance: KaartWithInfo.clickHitTolerance,
-              layers: layer => layer.get("selecteerbaar")
+              layers: layer => layer.get(ke.LayerProperties.Selecteerbaar)
             });
           case "multipleShift":
             return some({
@@ -991,7 +1006,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               multi: true,
               style: createSelectionStyleFn(getSelectionStyleSelector),
               hitTolerance: KaartWithInfo.clickHitTolerance,
-              layers: layer => layer.get("selecteerbaar")
+              layers: layer => layer.get(ke.LayerProperties.Selecteerbaar)
             });
           case "multipleKlik":
             return some({
@@ -1001,7 +1016,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               multi: true,
               style: createSelectionStyleFn(getSelectionStyleSelector),
               hitTolerance: KaartWithInfo.clickHitTolerance,
-              layers: layer => layer.get("selecteerbaar")
+              layers: layer => layer.get(ke.LayerProperties.Selecteerbaar)
             });
           case "none":
           default:
@@ -1042,7 +1057,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               condition: ol.events.condition.pointerMove,
               features: model.hoverFeatures,
               style: createSelectionStyleFn(getHoverStyleSelector),
-              layers: layer => layer.get("hover")
+              layers: layer => layer.get(ke.LayerProperties.Hover)
             });
           case "off":
             return none;
@@ -1761,6 +1776,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return maakLaagZichtbaarCmd(cmd);
         case "MaakLaagOnzichtbaar":
           return maakLaagOnzichtbaarCmd(cmd);
+        case "ZetLaagSelecteerbaar":
+          return zetLaagSelecteerbaarCmd(cmd);
         case "ZetStijlVoorLaag":
           return zetStijlVoorLaagCmd(cmd);
         case "ZetStijlSpecVoorLaag":
