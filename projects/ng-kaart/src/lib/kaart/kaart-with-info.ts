@@ -13,13 +13,25 @@ import { ModelChanger } from "./model-changes";
 import { initStyleSelectorsInMap } from "./stijl-selector";
 import { TileLoader } from "./tile-loader";
 
+// Alternatief is detect touchscreen van modernizer, maar touch != mobile
+const mobileDetect = new MobileDetect(window.navigator.userAgent);
+
+const DesktopEnvParams = {
+  clickHitTolerance: 5, // px
+  moveTolerance: 1 // px
+};
+
+const MobileEnvParams = {
+  clickHitTolerance: 40, // px
+  moveTolerance: 10 // px
+};
+
+export const EnvironmentParams = mobileDetect.mobile() ? MobileEnvParams : DesktopEnvParams;
+
 /**
  * Het model achter de kaartcomponent.
  */
 export class KaartWithInfo {
-  // Andere click tolerance op mobiel toestel (40px ipv 5px) - alternatief is detect touchscreen van modernizer, maar touch != mobile
-  static readonly clickHitTolerance = new MobileDetect(window.navigator.userAgent).mobile() ? 40 : 5;
-
   readonly toegevoegdeLagenOpTitel: Map<string, ke.ToegevoegdeLaag> = new Map();
   readonly titelsOpGroep: Map<ke.Laaggroep, Array<string>> = new Map<ke.Laaggroep, Array<string>>([
     ["Voorgrond.Laag", []],
