@@ -1,8 +1,9 @@
 import { NgZone } from "@angular/core";
 import { none, some } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
-import { filter, map, scan, shareReplay, startWith, switchMap } from "rxjs/operators";
+import { switchMap } from "rxjs/operators";
 
+import { subSpy } from "../util";
 import { observeOnAngular } from "../util/observe-on-angular";
 import { containsText } from "../util/option";
 
@@ -18,7 +19,7 @@ export abstract class KaartModusComponent extends KaartChildComponentBase {
 
     this.bindToLifeCycle(
       this.initialising$.pipe(
-        switchMap(() => this.modelChanges.actieveModus$),
+        switchMap(() => subSpy("***activeModus$")(this.modelChanges.actieveModus$)),
         observeOnAngular(zone)
       )
     ).subscribe(maybeModus => {
@@ -38,13 +39,7 @@ export abstract class KaartModusComponent extends KaartChildComponentBase {
   abstract modus(): string;
 
   protected modusOpties$<A extends object>(init: A): rx.Observable<A> {
-    return this.modelChanges.uiElementOpties$.pipe(
-      filter(optie => optie.naam === this.modus()),
-      map(o => o.opties as A),
-      scan((oudeOpties, nieuweOpties) => Object.assign({}, oudeOpties, nieuweOpties), init),
-      startWith(init),
-      shareReplay(1)
-    );
+    return this.accumulatedOpties$(this.modus(), init);
   }
 
   protected isDefaultModus(): boolean {
