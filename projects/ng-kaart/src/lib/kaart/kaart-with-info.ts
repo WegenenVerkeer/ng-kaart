@@ -19,6 +19,8 @@ import { TileLoader } from "./tile-loader";
 export class KaartWithInfo {
   // Andere click tolerance op mobiel toestel (40px ipv 5px) - alternatief is detect touchscreen van modernizer, maar touch != mobile
   static readonly clickHitTolerance = new MobileDetect(window.navigator.userAgent).mobile() ? 40 : 5;
+  // Anddere move tolerance op mobiel toestel (20px ipv 1px)
+  static readonly moverTolerance = new MobileDetect(window.navigator.userAgent).mobile() ? 10 : 1;
 
   readonly toegevoegdeLagenOpTitel: Map<string, ke.ToegevoegdeLaag> = new Map();
   readonly titelsOpGroep: Map<ke.Laaggroep, Array<string>> = new Map<ke.Laaggroep, Array<string>>([

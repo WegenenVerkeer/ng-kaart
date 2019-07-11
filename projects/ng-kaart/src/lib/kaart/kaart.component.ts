@@ -1,5 +1,4 @@
 import { Component, ElementRef, Inject, Input, NgZone, ViewChild, ViewEncapsulation } from "@angular/core";
-import * as MobileDetect from "mobile-detect/mobile-detect";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import {
@@ -98,8 +97,6 @@ export class KaartComponent extends KaartComponentBase {
   naam = "kaart";
   @Input()
   kaartLinksBreedte;
-
-  readonly moveTolerance = new MobileDetect(window.navigator.userAgent).mobile() ? 40 : 1; // 1 is default
 
   // Dit dient om messages naar toe te sturen
   internalMessage$: rx.Observable<KaartInternalSubMsg> = rx.EMPTY;
@@ -232,7 +229,7 @@ export class KaartComponent extends KaartComponentBase {
       pixelRatio: 1, // dit moet op 1 staan anders zal OL 512x512 tiles ophalen op retina displays en die zitten niet in onze geowebcache
       target: this.mapElement.nativeElement,
       logo: false,
-      moveTolerance: this.moveTolerance,
+      moveTolerance: KaartWithInfo.moverTolerance,
       view: new ol.View({
         projection: dienstkaartProjectie,
         center: this.config.defaults.middelpunt,
