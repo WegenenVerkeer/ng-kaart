@@ -49,6 +49,59 @@ export const vacuousKaartMsgObservableConsumer: KaartMsgObservableConsumer = () 
   encapsulation: ViewEncapsulation.Emulated // Omwille hiervan kunnen we geen globale CSS gebruiken, maar met Native werken animaties niet
 })
 export class KaartComponent extends KaartComponentBase {
+  kaartLinksZichtbaar = true;
+  kaartLinksToggleZichtbaar = false;
+  kaartLinksScrollbarZichtbaar = false;
+  private readonly modelChanger: ModelChanger = ModelChanger();
+  private innerModelChanges: ModelChanges;
+  private innerAanwezigeElementen$: rx.Observable<Set<string>>;
+  readonly kaartModel$: rx.Observable<KaartWithInfo> = rx.EMPTY;
+  private readonly resizeCommand$: rx.Observable<prt.VeranderViewportCmd>;
+
+  @ViewChild("map")
+  mapElement: ElementRef;
+  @ViewChild("kaartLinks")
+  kaartLinksElement: ElementRef;
+  @ViewChild("kaartFixedLinksBoven")
+  kaartFixedLinksBovenElement: ElementRef;
+  @ViewChild("kaartLinksZichtbaarToggleKnop", { read: ElementRef })
+  kaartLinksZichtbaarToggleKnopElement: ElementRef;
+
+  /**
+   * Dit houdt heel de constructie bij elkaar. Ofwel awv-kaart-classic (in geval van declaratief gebruik) ofwel
+   * een component van de gebruikende applicatie (in geval van programmatorisch gebruik) zet hier een Observable
+   * waarmee events naar de component gestuurd kunnen worden.
+   */
+  @Input()
+  kaartCmd$: rx.Observable<prt.Command<prt.KaartMsg>> = rx.EMPTY;
+  /**
+   * Hier wordt een callback verwacht die een Msg observable zal krijgen. Die observable kan dan gebruikt worden
+   * op te luisteren op feedback van commands of uitvoer van subscriptions.
+   */
+  @Input()
+  messageObsConsumer: KaartMsgObservableConsumer = vacuousKaartMsgObservableConsumer;
+
+  /**
+   * Dit is een beetje ongelukkig, maar ook componenten die door de KaartComponent zelf aangemaakt worden moeten events kunnen sturen
+   * naar de KaartComponent. Een alternatief zou kunnen zijn één dispatcher hier te maken en de KaartClassicComponent die te laten
+   * ophalen in afterViewInit.
+   */
+  readonly internalCmdDispatcher: ReplaySubjectKaartCmdDispatcher<KaartInternalMsg> = new ReplaySubjectKaartCmdDispatcher();
+
+  private readonly msgSubj = new rx.ReplaySubject<prt.KaartMsg>(1000, 500);
+
+  @Input()
+  minZoom = 2; // TODO naar config
+  @Input()
+  maxZoom = 15; // TODO naar config
+  @Input()
+  naam = "kaart";
+  @Input()
+  kaartLinksBreedte;
+
+  // Dit dient om messages naar toe te sturen
+
+  internalMessage$: rx.Observable<KaartInternalSubMsg> = rx.EMPTY;
   constructor(@Inject(KAART_CFG) readonly config: KaartConfig, zone: NgZone) {
     super(zone);
     this.internalMessage$ = this.msgSubj.pipe(
