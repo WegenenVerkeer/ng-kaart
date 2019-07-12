@@ -3,12 +3,12 @@ import { Predicate } from "fp-ts/lib/function";
 import { fromPredicate, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { combineLatest, debounceTime, distinctUntilChanged, filter, map, share, startWith, switchMap, tap } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, filter, map, share, startWith, switchMap, tap } from "rxjs/operators";
 
 import * as clr from "../../stijl/colour";
 import * as arrays from "../../util/arrays";
 import { distance, geometryLength, matchGeometryType, toLineString } from "../../util/geometries";
-import { ofType } from "../../util/operators";
+import { ofType, select } from "../../util/operators";
 import { tekenInfoboodschapGeslotenMsgWrapper, VerwijderTekenFeatureMsg } from "../kaart-internal-messages";
 import { KaartModusComponent } from "../kaart-modus-component";
 import * as prt from "../kaart-protocol";
@@ -66,14 +66,17 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
       map(o => o.showInfoMessage),
       distinctUntilChanged()
     );
-    const scale$ = this.modelChanges.viewinstellingen$.pipe(
-      debounceTime(250),
-      map(vi => vi.resolution * 64), // arbitrair, komt ongeveer overeen met 1 cm op mijn scherm
-      distinctUntilChanged()
+    const scale$ = this.isActief$.pipe(
+      select({
+        ifTrue: this.modelChanges.viewinstellingen$.pipe(
+          debounceTime(250),
+          map(vi => vi.resolution * 64), // arbitrair, komt ongeveer overeen met 1 cm op mijn scherm
+          distinctUntilChanged()
+        )
+      })
     );
 
-    const measure$: rx.Observable<Measure> = this.modelChanges.getekendeGeometry$.pipe(
-      combineLatest(scale$),
+    const measure$: rx.Observable<Measure> = rx.combineLatest(this.modelChanges.getekendeGeometry$, scale$).pipe(
       map(([geom, scale]) => {
         const length = some(geometryLength(geom));
         const area = matchGeometryType(geom, {
@@ -154,7 +157,21 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
           })
         ),
         modeSwitchMogelijk$.pipe(tap(m => (this.viaRoadAvailable = m))),
-        this.metingGestartSubj.pipe(tap(() => this.rechteLijn()))
+        this.metingGestartSubj.pipe(tap(() => this.rechteLijn())),
+        this.wordtActief$.pipe(
+          tap(() => {
+            this.startMetMeten();
+            if (this.metenOpties.connectionSelectable) {
+              this.toonOpties();
+            }
+          })
+        ),
+        this.wordtInactief$.pipe(
+          tap(() => {
+            this.stopMetenEnVerbergBoodschapen();
+            this.verbergOpties();
+          })
+        )
       )
     );
     this.destroying$.subscribe(() => this.stopMetenEnVerbergBoodschapen());
@@ -164,17 +181,7 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
     return MultiMetenUiSelector;
   }
 
-  activeer() {
-    this.startMetMeten();
-    if (this.metenOpties.connectionSelectable) {
-      this.toonOpties();
-    }
-  }
-
-  deactiveer() {
-    this.stopMetenEnVerbergBoodschapen();
-    this.verbergOpties();
-  }
+  onDeactivatie() {}
 
   rechteLijn() {
     if (!this.inStateStraight) {

@@ -1,6 +1,7 @@
 import { Component, NgZone } from "@angular/core";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
+import { tap } from "rxjs/operators";
 
 import { lambert72ToWgs84 } from "../../coordinaten/coordinaten.service";
 import { KaartModusComponent } from "../kaart-modus-component";
@@ -19,18 +20,17 @@ export class KaartOpenStreetViewComponent extends KaartModusComponent {
 
   constructor(kaartComponent: KaartComponent, zone: NgZone) {
     super(kaartComponent, zone);
+
+    this.runInViewReady(
+      rx.merge(
+        this.wordtActief$.pipe(tap(() => this.startLuisterenOpClickEvents())),
+        this.wordtInactief$.pipe(tap(() => this.stopLuisterenOpClickEvents()))
+      )
+    );
   }
 
   modus(): string {
     return StreetviewUiSelector;
-  }
-
-  activeer() {
-    this.startLuisterenOpClickEvents();
-  }
-
-  deactiveer() {
-    this.stopLuisterenOpClickEvents();
   }
 
   private startLuisterenOpClickEvents(): void {
@@ -51,7 +51,6 @@ export class KaartOpenStreetViewComponent extends KaartModusComponent {
   }
 
   private openGoogleStreetView(coordinaat: ol.Coordinate): void {
-    // const wsg84xy = ol.proj.transform(coordinaat, ol.proj.get("EPSG:31370"), ol.proj.get("EPSG:4326"));
     const wsg84xy = lambert72ToWgs84(coordinaat);
     const strtvUrl = `https://maps.google.com/?cbll= ${wsg84xy[1]},${wsg84xy[0]} &cbp=12,0,0,0,0&layer=c&source=embed&z=14&output=svembed`;
 

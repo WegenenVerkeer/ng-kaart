@@ -5,7 +5,7 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import { AbsoluteOrientationSensor } from "motion-sensors-polyfill";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { distinctUntilChanged, filter, map, pairwise, scan, shareReplay, startWith, throttle, throttleTime } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, mapTo, pairwise, scan, shareReplay, startWith, throttle, throttleTime } from "rxjs/operators";
 
 import { catOptions } from "../../util/operators";
 import * as ke from "../kaart-elementen";
@@ -122,6 +122,8 @@ const locatieStijlFunctie: Function1<number, ol.FeatureStyleFunction> = accuracy
   };
 };
 
+// FIXME: deze component leidt af van KaartModusComponent maar voldoet niet aan het contract (moet laten weten wanneer
+// hij ge(de)activeerd wordt). Dus ofwel niet als modus component te bezien ofwel contract naleven.
 @Component({
   selector: "awv-kaart-mijn-locatie",
   templateUrl: "./kaart-mijn-locatie.component.html",
@@ -154,14 +156,6 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
 
   modus(): string {
     return MijnLocatieUiSelector;
-  }
-
-  activeer() {
-    this.eventsSubj.next("ActiveerEvent");
-  }
-
-  deactiveer() {
-    this.eventsSubj.next("DeactiveerEvent");
   }
 
   ngOnInit(): void {
@@ -231,15 +225,21 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     // "State machine"
     const stateMachine: StateMachine = this.getStateMachine();
 
-    this.currentState$ = this.eventsSubj.pipe(
-      startWith("TrackingDisabled"),
-      scan<Event, State>((state: State, event: Event) => {
-        const newState = stateMachine[state][event];
-        this.dispatch(MijnLocatieStateChangeCmd(state, newState, event));
-        return newState;
-      }),
-      shareReplay(1)
-    );
+    this.currentState$ = rx
+      .merge(
+        this.eventsSubj, //
+        this.wordtActief$.pipe(mapTo("ActiveerEvent")),
+        this.wordtInactief$.pipe(mapTo("DeactiveerEvent"))
+      )
+      .pipe(
+        startWith("TrackingDisabled"),
+        scan<Event, State>((state: State, event: Event) => {
+          const newState = stateMachine[state][event];
+          this.dispatch(MijnLocatieStateChangeCmd(state, newState, event));
+          return newState;
+        }),
+        shareReplay(1)
+      );
 
     // pas positie aan bij nieuwe locatie
     this.bindToLifeCycle(
@@ -351,32 +351,35 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
   private startRotatieTracking() {
     const sensor = new AbsoluteOrientationSensor({ frequency: 60 });
 
-    const nav = navigator as any; // Onze versie van typescript bevat de permissions typing nog niet.
+    const nav = navigator as any; // Onze versie van javascript bevat de permissions typing nog niet.
     Promise.all([
       nav.permissions.query({ name: "accelerometer" }),
       nav.permissions.query({ name: "magnetometer" }),
       nav.permissions.query({ name: "gyroscope" })
-    ]).then(results => {
-      if (results.every(result => result.state === "granted")) {
-        sensor.addEventListener("reading", (e: any) => {
-          if (e.target) {
-            const sensorEvent = e.target as AbsoluteOrientationSensor;
-            const q = sensorEvent.quaternion;
-            if (q) {
-              let heading = Math.atan2(2 * q[0] * q[1] + 2 * q[2] * q[3], 1 - 2 * q[1] * q[1] - 2 * q[2] * q[2]);
-              if (heading < 0) {
-                heading = 2 * Math.PI + heading;
+    ]).then(
+      results => {
+        if (results.every(result => result.state === "granted")) {
+          sensor.addEventListener("reading", (e: any) => {
+            if (e.target) {
+              const sensorEvent = e.target as AbsoluteOrientationSensor;
+              const q = sensorEvent.quaternion;
+              if (q) {
+                let heading = Math.atan2(2 * q[0] * q[1] + 2 * q[2] * q[3], 1 - 2 * q[1] * q[1] - 2 * q[2] * q[2]);
+                if (heading < 0) {
+                  heading = 2 * Math.PI + heading;
+                }
+                this.rotatieSubj.next(heading);
               }
-              this.rotatieSubj.next(heading);
             }
-          }
-        });
-        sensor.start();
-        this.sensor = some(sensor);
-      } else {
-        this.meldFout("Geen toestemming om AbsoluteOrientationSensor te gebruiken");
-      }
-    });
+          });
+          sensor.start();
+          this.sensor = some(sensor);
+        } else {
+          this.meldFout("Geen toestemming om AbsoluteOrientationSensor te gebruiken");
+        }
+      },
+      () => this.meldFout("Kon geen toestemming krijgen om AbsoluteOrientationSensor te gebruiken")
+    );
   }
 
   private stopRotatieTracking() {

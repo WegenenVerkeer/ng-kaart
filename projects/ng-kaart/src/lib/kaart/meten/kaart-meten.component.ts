@@ -2,7 +2,7 @@ import { Component, EventEmitter, NgZone, OnDestroy, OnInit, Output } from "@ang
 import { none, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { filter, map, startWith, takeUntil } from "rxjs/operators";
+import { filter, map, startWith, takeUntil, tap } from "rxjs/operators";
 
 import { dimensieBeschrijving } from "../../util/geometries";
 import * as maps from "../../util/maps";
@@ -46,18 +46,17 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
+
+    this.runInViewReady(
+      rx.merge(
+        this.wordtActief$.pipe(tap(() => this.startMetMeten())), //
+        this.wordtInactief$.pipe(tap(() => this.stopMeten()))
+      )
+    );
   }
 
   modus(): string {
     return MetenUiSelector;
-  }
-
-  activeer() {
-    this.startMetMeten();
-  }
-
-  deactiveer() {
-    this.stopMetenEnVerbergBoodschapen();
   }
 
   ngOnInit(): void {

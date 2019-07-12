@@ -1,38 +1,63 @@
 import { NgZone } from "@angular/core";
+import { identity } from "fp-ts/lib/function";
 import { none, some } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
-import { switchMap } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, mapTo, sample, share, skipUntil, tap } from "rxjs/operators";
 
-import { observeOnAngular } from "../util/observe-on-angular";
-import { containsText } from "../util/option";
+import { scan2 } from "../util";
 
 import { KaartChildComponentBase } from "./kaart-child-component-base";
 import * as prt from "./kaart-protocol";
 import { KaartComponent } from "./kaart.component";
 
 export abstract class KaartModusComponent extends KaartChildComponentBase {
-  private actief = false;
+  private readonly zetActiefSubj: rx.Subject<boolean> = new rx.Subject<boolean>();
+  private readonly toggleActiefSubj: rx.Subject<null> = new rx.Subject<null>();
+  readonly isActief$: rx.Observable<boolean>;
+  protected readonly wordtActief$: rx.Observable<null>;
+  protected readonly wordtInactief$: rx.Observable<null>;
 
   constructor(protected readonly kaartComponent: KaartComponent, zone: NgZone) {
     super(kaartComponent, zone);
 
-    this.bindToLifeCycle(
-      this.initialising$.pipe(
-        switchMap(() => this.modelChanges.actieveModus$),
-        observeOnAngular(zone)
+    const externIsActief$ = this.modelChanges.actieveModus$.pipe(
+      map(maybeModus => maybeModus.foldL(() => this.isDefaultModus(), modus => modus === this.modus()))
+    );
+
+    this.isActief$ = scan2(
+      rx.merge(externIsActief$, this.zetActiefSubj),
+      this.toggleActiefSubj,
+      (_, actief) => actief,
+      activiteit => !activiteit,
+      false
+    ).pipe(
+      distinctUntilChanged(),
+      share()
+    );
+
+    this.wordtActief$ = this.isActief$.pipe(
+      filter(identity),
+      mapTo(null)
+    );
+    this.wordtInactief$ = this.isActief$.pipe(
+      filter(actief => actief === false),
+      mapTo(null),
+      skipUntil(this.wordtActief$) // kan maar inactief worden indien ooit actief
+    );
+
+    const internIsActief$ = this.isActief$.pipe(
+      sample(rx.merge(this.zetActiefSubj, this.toggleActiefSubj)),
+      distinctUntilChanged()
+    );
+
+    this.runInViewReady(
+      rx.merge(
+        // Deze mag weg wanneer de afgeleiden op de observable luisteren
+        this.isActief$.pipe(tap(isActief => (isActief ? this.onActivatie() : this.onDeactivatie()))),
+        // Laat de buitenwereld weten dat we (in)actief worden
+        internIsActief$.pipe(tap(isActief => (isActief ? this.publiceerActivatie() : this.publiceerDeactivatie())))
       )
-    ).subscribe(maybeModus => {
-      if ((maybeModus.isNone() && this.isDefaultModus()) || containsText(maybeModus, this.modus())) {
-        if (!this.actief) {
-          this.maakActief();
-        }
-      } else {
-        // aanvraag tot andere modus, disable deze modus
-        if (this.actief) {
-          this.maakInactief();
-        }
-      }
-    });
+    );
   }
 
   abstract modus(): string;
@@ -45,45 +70,48 @@ export abstract class KaartModusComponent extends KaartChildComponentBase {
     return false;
   }
 
-  protected activeer() {}
+  protected onActivatie() {}
 
-  protected deactiveer() {}
+  protected onDeactivatie() {}
 
-  isActief() {
-    return this.actief;
-  }
+  // isActief() {
+  //   return this.actief;
+  // }
 
   toggle() {
-    if (this.actief) {
-      this.zetModeAf();
-    } else {
-      this.zetModeAan();
-    }
+    this.toggleActiefSubj.next(null);
+    // if (this.actief) {
+    //   this.zetModeAf();
+    // } else {
+    //   this.zetModeAan();
+    // }
   }
 
   zetModeAf() {
-    if (this.actief) {
-      this.maakInactief();
-      this.publiceerDeactivatie();
-    }
+    this.zetActiefSubj.next(false);
+    // if (this.actief) {
+    //   this.maakInactief();
+    //   this.publiceerDeactivatie();
+    // }
   }
 
   zetModeAan() {
-    if (!this.actief) {
-      this.publiceerActivatie();
-      this.maakActief();
-    }
+    this.zetActiefSubj.next(true);
+    // if (!this.actief) {
+    //   this.publiceerActivatie();
+    //   this.maakActief();
+    // }
   }
 
-  private maakActief() {
-    this.actief = true; // wees voorzichtig met het aanpassen van de volgorde hier
-    this.activeer();
-  }
+  // private maakActief() {
+  //   this.actief = true; // wees voorzichtig met het aanpassen van de volgorde hier
+  //   this.onActivatie();
+  // }
 
-  private maakInactief() {
-    this.actief = false; // wees voorzichtig met het aanpassen van de volgorde hier
-    this.deactiveer();
-  }
+  // private maakInactief() {
+  //   this.actief = false; // wees voorzichtig met het aanpassen van de volgorde hier
+  //   this.onDeactivatie();
+  // }
 
   private publiceerActivatie() {
     this.dispatch(prt.ZetActieveModusCmd(some(this.modus())));

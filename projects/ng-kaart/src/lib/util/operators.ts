@@ -1,3 +1,4 @@
+import { option } from "fp-ts";
 import { Function1, Function2, Refinement } from "fp-ts/lib/function";
 import { isSome, Option } from "fp-ts/lib/Option";
 import { Tuple } from "fp-ts/lib/Tuple";
@@ -144,4 +145,23 @@ export function scanState<A, S, B>(obsA: rx.Observable<A>, runState: Function2<S
     scan(accumulate, initial),
     map(ps => ps.snd)
   );
+}
+
+export interface ObsSelectOps<A> {
+  readonly ifFalse?: rx.Observable<A>;
+  readonly ifTrue?: rx.Observable<A>;
+}
+
+/**
+ * Kiest tussen 2 observables op basis van de waarde van de bron observable. Vaak wordt immers obv een boolean 1 tussen
+ * 2 andere observables gekozen.
+ * @param selectOps de 2 observables waarvan er 1 gekozen zal worden
+ */
+export function select<A>(selectOps: ObsSelectOps<A>): Pipeable<boolean, A> {
+  return obs =>
+    obs.pipe(
+      switchMap(value =>
+        value ? option.fromNullable(selectOps.ifTrue).getOrElse(rx.EMPTY) : option.fromNullable(selectOps.ifFalse).getOrElse(rx.EMPTY)
+      )
+    );
 }

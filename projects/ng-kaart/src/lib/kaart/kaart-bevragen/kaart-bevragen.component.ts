@@ -100,7 +100,8 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
     const options$ = this.modusOpties$<BevraagKaartOpties>(defaultOptions);
     const stableReferentielagen$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Laag")!.pipe(debounceTime(250));
     const stableInfoServices$ = this.modelChanges.laagLocationInfoServicesOpTitel$.pipe(debounceTime(250));
-    const geklikteLocatie$ = this.modelChanges.kaartKlikLocatie$.pipe(filter(l => this.isActief() && !l.coversFeature));
+    const clickOutsideFeature$ = this.modelChanges.kaartKlikLocatie$.pipe(filter(l => !l.coversFeature));
+    const geklikteLocatie$ = this.isActief$.pipe(switchMap(isActief => (isActief ? clickOutsideFeature$ : rx.EMPTY)));
     const stableZoekAfstand$ = this.modelChanges.viewinstellingen$.pipe(
       debounceTime(250),
       map(view => view.resolution),
