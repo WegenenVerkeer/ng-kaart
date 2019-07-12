@@ -3,7 +3,6 @@ import { none, some } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { switchMap } from "rxjs/operators";
 
-import { subSpy } from "../util";
 import { observeOnAngular } from "../util/observe-on-angular";
 import { containsText } from "../util/option";
 
@@ -19,7 +18,7 @@ export abstract class KaartModusComponent extends KaartChildComponentBase {
 
     this.bindToLifeCycle(
       this.initialising$.pipe(
-        switchMap(() => subSpy("***activeModus$")(this.modelChanges.actieveModus$)),
+        switchMap(() => this.modelChanges.actieveModus$),
         observeOnAngular(zone)
       )
     ).subscribe(maybeModus => {

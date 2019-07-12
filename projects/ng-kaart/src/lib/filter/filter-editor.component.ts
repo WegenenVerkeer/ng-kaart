@@ -28,11 +28,10 @@ import * as ke from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
-import { kaartLogger } from "../kaart/log";
 import { isNotNull, isNotNullObject } from "../util/function";
 import { isOfKind } from "../util/kinded";
 import { parseDouble, parseInteger } from "../util/number";
-import { catOptions, forEvery, subSpy } from "../util/operators";
+import { catOptions, forEvery } from "../util/operators";
 
 import { FilterAanpassingBezig, isAanpassingBezig } from "./filter-aanpassing-state";
 import { FilterEditor as fed } from "./filter-builder";
@@ -130,18 +129,14 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       shareReplay(1) // Alle observables die later subscriben (en er zijn er veel) moeten de huidige toestand kennen.
     );
 
-    const laag$: rx.Observable<ke.ToegevoegdeVectorLaag> = subSpy("****laag")(
-      aanpassing$.pipe(
-        map(aanpassing => aanpassing.laag), // Neemt de laag op het moment dat de gebruiker de aanpassing vroeg. Ok in dit geval.
-        shareReplay(1)
-      )
+    const laag$: rx.Observable<ke.ToegevoegdeVectorLaag> = aanpassing$.pipe(
+      map(aanpassing => aanpassing.laag), // Neemt de laag op het moment dat de gebruiker de aanpassing vroeg. Ok in dit geval.
+      shareReplay(1)
     );
 
-    const veldinfos$ = subSpy("****veldinfo$s")(
-      laag$.pipe(
-        map(ke.ToegevoegdeVectorLaag.veldInfosMapLens.get),
-        share()
-      )
+    const veldinfos$ = laag$.pipe(
+      map(ke.ToegevoegdeVectorLaag.veldInfosMapLens.get),
+      share()
     );
 
     this.titel$ = laag$.pipe(map(laag => laag.titel));
@@ -151,12 +146,6 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     const forControlValue: Function1<FormControl, rx.Observable<any>> = formcontrol =>
       forEveryLaag(() =>
         formcontrol.valueChanges.pipe(
-          tap(value => {
-            console.log("****raw value", formcontrol.value, value);
-            if (!formcontrol.enabled) {
-              console.log("****not enabled", formcontrol.value);
-            }
-          }),
           filter(() => formcontrol.enabled),
           share()
         )
@@ -174,56 +163,44 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       this.hoofdLetterGevoeligControl.reset(null, { emitEvent: false });
     });
 
-    const gekozenNaam$: rx.Observable<Option<string>> = subSpy("****gekozenNaam$")(
-      forControlValue(this.naamControl).pipe(
+    const gekozenNaam$: rx.Observable<Option<string>> = forControlValue(this.naamControl)
+      .pipe(
         debounceTime(100), // voor de snelle typers
         distinctUntilChanged(),
         map(x => fromNullable(x).filter(x => x !== ""))
       )
-    ).pipe(share());
+      .pipe(share());
 
-    const gekozenProperty$: rx.Observable<fltr.Property> = subSpy("****gekozenProperty")(
-      forControlValue(this.veldControl).pipe(
-        filter(isNotNullObject),
-        distinctUntilChanged() // gebruikt object identity, maar de onderliggende objecten worden geherbruikt dus geen probleem
-      )
+    const gekozenProperty$: rx.Observable<fltr.Property> = forControlValue(this.veldControl).pipe(
+      filter(isNotNullObject),
+      distinctUntilChanged() // gebruikt object identity, maar de onderliggende objecten worden geherbruikt dus geen probleem
     );
 
     const gekozenOperator$: rx.Observable<fed.BinaryComparisonOperator> = forControlValue(this.operatorControl).pipe(
-      filter(isNotNullObject),
-      tap(o => console.log("*****Operator gekozen", o)),
-      tap(o => console.log("*****Distinct operator gekozen", o))
+      filter(isNotNullObject)
     );
 
-    const gekozenHoofdLetterGevoelig$: rx.Observable<boolean> = forControlValue(this.hoofdLetterGevoeligControl).pipe(
-      tap(o => console.log("*****Hoofdlettergevoeligheid gekozen", o))
-    );
+    const gekozenHoofdLetterGevoelig$: rx.Observable<boolean> = forControlValue(this.hoofdLetterGevoeligControl);
 
-    const gekozenText$: rx.Observable<Option<fed.LiteralValue>> = subSpy("****gekozenText")(
-      rx
-        .merge(
-          forControlValue(this.textWaardeControl),
-          forControlValue(this.dropdownWaardeControl),
-          forControlValue(this.autocompleteWaardeControl).pipe(
-            map(input => (isWrapped(input) ? extractValue(input) : input)) // Partiële invoer -> invalid input
-          )
+    const gekozenText$: rx.Observable<Option<fed.LiteralValue>> = rx
+      .merge(
+        forControlValue(this.textWaardeControl),
+        forControlValue(this.dropdownWaardeControl),
+        forControlValue(this.autocompleteWaardeControl).pipe(
+          map(input => (isWrapped(input) ? extractValue(input) : input)) // Partiële invoer -> invalid input
         )
-        .pipe(
-          distinctUntilChanged(), // in dit geval vgln we op strings, dus ook OK
-          map(input => fromNullable(input).map(value => fed.LiteralValue(sanitiseText(value.toString()), "string")))
-        )
-    );
-    const gekozenInteger$: rx.Observable<Option<fed.LiteralValue>> = subSpy("****gekozenInteger")(
-      forControlValue(this.integerWaardeControl).pipe(
-        distinctUntilChanged(), // in dit geval vgln we op getallen, dus ook OK
-        map(input => parseInteger(input).map(num => fed.LiteralValue(num, "integer")))
       )
+      .pipe(
+        distinctUntilChanged(), // in dit geval vgln we op strings, dus ook OK
+        map(input => fromNullable(input).map(value => fed.LiteralValue(sanitiseText(value.toString()), "string")))
+      );
+    const gekozenInteger$: rx.Observable<Option<fed.LiteralValue>> = forControlValue(this.integerWaardeControl).pipe(
+      distinctUntilChanged(), // in dit geval vgln we op getallen, dus ook OK
+      map(input => parseInteger(input).map(num => fed.LiteralValue(num, "integer")))
     );
-    const gekozenDouble$: rx.Observable<Option<fed.LiteralValue>> = subSpy("****gekozenDouble")(
-      forControlValue(this.doubleWaardeControl).pipe(
-        distinctUntilChanged(), // in dit geval vgln we op getallen, dus ook OK
-        map(input => parseDouble(input).map(value => fed.LiteralValue(value, "double")))
-      )
+    const gekozenDouble$: rx.Observable<Option<fed.LiteralValue>> = forControlValue(this.doubleWaardeControl).pipe(
+      distinctUntilChanged(), // in dit geval vgln we op getallen, dus ook OK
+      map(input => parseDouble(input).map(value => fed.LiteralValue(value, "double")))
     );
     const gekozenWaarde$: rx.Observable<Option<fed.LiteralValue>> = rx.merge(gekozenText$, gekozenInteger$, gekozenDouble$);
 
@@ -237,39 +214,27 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       withLatestFrom(rx.merge(gekozenHoofdLetterGevoelig$, rx.of(false))),
       map(([operator, caseSensitive]) => fed.selectOperator(operator)(caseSensitive))
     );
-    const zetWaarde$: rx.Observable<TermEditorUpdate> = gekozenWaarde$.pipe(
-      tap(w => console.log("***waarde$", w)),
-      map(fed.selectValue)
-    );
+    const zetWaarde$: rx.Observable<TermEditorUpdate> = gekozenWaarde$.pipe(map(fed.selectValue));
 
-    const initExpressionEditor$: rx.Observable<fed.ExpressionEditor> = subSpy("****initExpressionEditor$")(
-      laag$.pipe(
-        tap(() => console.log("****laag emits in initExpressionEditor$")),
-        map(fed.fromToegevoegdeVectorLaag)
-      )
-    );
+    const initExpressionEditor$: rx.Observable<fed.ExpressionEditor> = laag$.pipe(map(fed.fromToegevoegdeVectorLaag));
 
-    const termEditorUpdates$: rx.Observable<ExpressionEditorUpdate> = subSpy("****termEditorUpdates$")(
-      rx
-        .merge(zetProperty$, zetOperator$, zetWaarde$, zetHoofdletterGevoelig$)
-        .pipe(map(teu => (ee: fed.ExpressionEditor) => fed.update(teu(ee.current))(ee)))
-    );
+    const termEditorUpdates$: rx.Observable<ExpressionEditorUpdate> = rx
+      .merge(zetProperty$, zetOperator$, zetWaarde$, zetHoofdletterGevoelig$)
+      .pipe(map(teu => (ee: fed.ExpressionEditor) => fed.update(teu(ee.current))(ee)));
 
     const expressionEditorUpdates$ = rx.merge(zetNaam$, termEditorUpdates$, this.newFilterEditor$.asObservable());
 
-    this.filterEditor$ = subSpy("****filterEditor$")(
-      initExpressionEditor$.pipe(
-        tap(() => console.log("****resetting filterEditor$ from initExpressionEditor$")),
+    this.filterEditor$ = initExpressionEditor$
+      .pipe(
         switchMap(initExpressionEditor =>
           expressionEditorUpdates$.pipe(
             scan((expEd: fed.ExpressionEditor, update: Endomorphism<fed.ExpressionEditor>) => update(expEd), initExpressionEditor),
             startWith(initExpressionEditor),
-            tap(() => this.cdr.detectChanges()),
-            tap(expressionEditor => kaartLogger.debug("****expressionEditor", expressionEditor))
+            tap(() => this.cdr.detectChanges())
           )
         )
       )
-    ).pipe(shareReplay(1));
+      .pipe(shareReplay(1));
 
     this.kanHuidigeEditorVerwijderen$ = this.filterEditor$.pipe(map(editor => fed.canRemoveCurrent(editor)));
 
@@ -281,8 +246,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
           Value: termEditor => termEditor.valueSelector,
           Completed: termEditor => termEditor.valueSelector
         })(editor.current)
-      ),
-      tap(vwt => console.log("****vwt", vwt))
+      )
     );
 
     const changedFilterEditor$ = this.filterEditor$.pipe(
@@ -301,7 +265,6 @@ export class FilterEditorComponent extends KaartChildComponentBase {
         );
         fed.matchTermEditor({
           Field: () => {
-            console.log("****reset naar Field");
             disableEnabled(
               this.operatorControl,
               this.textWaardeControl,
@@ -323,7 +286,6 @@ export class FilterEditorComponent extends KaartChildComponentBase {
             this.hoofdLetterGevoeligControl.reset(false, { emitEvent: false });
           },
           Operator: opr => {
-            console.log("****reset naar Operator");
             enableDisabled(this.operatorControl);
             disableEnabled(
               this.textWaardeControl,
@@ -346,7 +308,6 @@ export class FilterEditorComponent extends KaartChildComponentBase {
             this.operatorControl.setValue("");
           },
           Value: val => {
-            console.log("****reset naar Value");
             enableDisabled(
               this.operatorControl,
               this.textWaardeControl,
@@ -388,7 +349,6 @@ export class FilterEditorComponent extends KaartChildComponentBase {
             })(val.valueSelector);
           },
           Completed: compl => {
-            console.log("****reset naar Completed");
             enableDisabled(
               this.operatorControl,
               this.textWaardeControl,
@@ -491,7 +451,6 @@ export class FilterEditorComponent extends KaartChildComponentBase {
         distinctValues$
       )
       .pipe(
-        tap(([typed, values]) => console.log("****tv", typed, values)),
         map(([typed, values]) =>
           array.filter(values, value => value.toLowerCase().startsWith(typed.toLowerCase())).map(value => Wrapped(value))
         )
@@ -499,7 +458,6 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
     const maybeZetFilterCmd$ = forEveryLaag(laag =>
       this.filterEditor$.pipe(
-        tap(fe => console.log("*****filterEditor$ in maybeZetFilterCmd", fe)),
         map(fed.toExpressionFilter),
         map(maybeExpFilter => maybeExpFilter.map(expFilter => prt.ZetFilter(laag.titel, expFilter, kaartLogOnlyWrapper))),
         share()
@@ -507,10 +465,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     );
 
     const geldigFilterCmd$ = maybeZetFilterCmd$.pipe(catOptions);
-    this.ongeldigeFilter$ = maybeZetFilterCmd$.pipe(
-      tap(cmd => console.log("****ongeldigeFilter$", cmd.isNone(), status)),
-      map(cmd => cmd.isNone())
-    );
+    this.ongeldigeFilter$ = maybeZetFilterCmd$.pipe(map(cmd => cmd.isNone()));
 
     const laagNietZichtbaar$ = laag$.pipe(
       switchMap(laag =>
@@ -522,21 +477,20 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     );
 
     const pasToeGeklikt$ = this.actionFor$("pasFilterToe");
-    this.bindToLifeCycle(
-      rx.combineLatest(laagNietZichtbaar$, geldigFilterCmd$).pipe(
-        tap(lnz => console.log("****laagNietZichtbaar", lnz)),
-        sample(pasToeGeklikt$)
-      )
-    ).subscribe(([laagNietZichtbaar, command]) => {
-      this.dispatch(prt.MaakLaagZichtbaarCmd(command.titel, kaartLogOnlyWrapper));
-      this.dispatch(prt.StopVectorFilterBewerkingCmd());
-      if (laagNietZichtbaar) {
-        this.dispatch(
-          prt.MeldComponentFoutCmd([`De laag '${command.titel}' is niet zichtbaar op kaart op dit zoomniveau, gelieve verder in te zoomen`])
-        );
+    this.bindToLifeCycle(rx.combineLatest(laagNietZichtbaar$, geldigFilterCmd$).pipe(sample(pasToeGeklikt$))).subscribe(
+      ([laagNietZichtbaar, command]) => {
+        this.dispatch(prt.MaakLaagZichtbaarCmd(command.titel, kaartLogOnlyWrapper));
+        this.dispatch(prt.StopVectorFilterBewerkingCmd());
+        if (laagNietZichtbaar) {
+          this.dispatch(
+            prt.MeldComponentFoutCmd([
+              `De laag '${command.titel}' is niet zichtbaar op kaart op dit zoomniveau, gelieve verder in te zoomen`
+            ])
+          );
+        }
+        this.dispatch(command);
       }
-      this.dispatch(command);
-    });
+    );
   }
 
   verwijderActieveEditor() {
