@@ -2,7 +2,7 @@ import { NgZone } from "@angular/core";
 import { identity } from "fp-ts/lib/function";
 import { none, some } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
-import { distinctUntilChanged, filter, map, mapTo, sample, share, skipUntil, tap } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, mapTo, sample, shareReplay, skipUntil, tap } from "rxjs/operators";
 
 import { scan2 } from "../util";
 
@@ -32,7 +32,7 @@ export abstract class KaartModusComponent extends KaartChildComponentBase {
       false
     ).pipe(
       distinctUntilChanged(),
-      share()
+      shareReplay(1) // wordt in een switchMap subscribed (herhaalde malen)
     );
 
     this.wordtActief$ = this.isActief$.pipe(
