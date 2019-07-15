@@ -243,7 +243,7 @@
         <awv-kaart-voorwaarden *ngIf="isOptieActief('voorwaarden')" [titel]="voorwaarden"></awv-kaart-voorwaarden>
         <awv-kaart-schaal *ngIf="isOptieActief('schaal')"></awv-kaart-schaal>
         <awv-kaart-markeer-kaartklik
-          [markeerStijl]="isOptieActief('customKlikIcon') ? ster : ballon"
+          [markeerStijl]="isOptieActief('customKlikIcon') ? ster : standaardIcoon"
           [disabled]="!isOptieActief('markeerLocatie')">
         </awv-kaart-markeer-kaartklik>
       </awv-kaart-classic>

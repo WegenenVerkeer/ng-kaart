@@ -14,6 +14,7 @@ import { getUnderlyingFeatures } from "../../projects/ng-kaart/src/lib/util/feat
 import {
   AwvV0DynamicStyle,
   AwvV0StaticStyleSpec,
+  defaultMarkerStyle,
   definitieToStyle,
   definitieToStyleFunction,
   forEach,
@@ -744,16 +745,7 @@ export class FeatureDemoComponent {
   });
 
   // Dit is een arbitraire OL stijl. Toevallig gelijk aan de standaard.
-  readonly ballon = new ol.style.Style({
-    image: new ol.style.Icon({
-      anchor: [0.5, 1],
-      anchorXUnits: "fraction",
-      anchorYUnits: "fraction",
-      scale: 1,
-      opacity: 1,
-      src: require("material-design-icons/maps/svg/production/ic_place_48px.svg")
-    })
-  });
+  readonly standaardIcoon = defaultMarkerStyle;
 
   readonly featureLoopSelectie$ = new rx.Subject<ol.Feature[]>();
 
