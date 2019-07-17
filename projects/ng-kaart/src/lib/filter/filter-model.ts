@@ -46,7 +46,9 @@ export namespace Filter {
 
   export type LogicalConnective = Conjunction | Disjunction;
 
-  export type Comparison = BinaryComparison;
+  export type Comparison = BinaryComparison | UnaryComparison;
+
+  export type ComparisonOperator = BinaryComparisonOperator | UnaryComparisonOperator;
 
   export type BinaryComparisonOperator =
     | "equality"
@@ -57,9 +59,7 @@ export namespace Filter {
     | "smaller"
     | "smallerOrEqual"
     | "larger"
-    | "largerOrEqual"
-    | "isEmpty"
-    | "isNotEmpty";
+    | "largerOrEqual";
 
   export interface BinaryComparison {
     readonly kind: "BinaryComparison";
@@ -67,6 +67,14 @@ export namespace Filter {
     readonly property: Property;
     readonly value: Literal;
     readonly caseSensitive: boolean;
+  }
+
+  export type UnaryComparisonOperator = "isEmpty" | "isNotEmpty";
+
+  export interface UnaryComparison {
+    readonly kind: "UnaryComparison";
+    readonly operator: UnaryComparisonOperator;
+    readonly property: Property;
   }
 
   export interface PropertyValueOperator {
@@ -102,6 +110,12 @@ export namespace Filter {
     value,
     caseSensitive
   ) => ({ kind: "BinaryComparison", operator, property, value, caseSensitive });
+
+  export const UnaryComparison: Function2<UnaryComparisonOperator, Property, UnaryComparison> = (operator, property) => ({
+    kind: "UnaryComparison",
+    operator,
+    property
+  });
 
   export interface Conjunction {
     readonly kind: "And";
@@ -174,6 +188,7 @@ export namespace Filter {
     readonly And: Function1<Conjunction, A>;
     readonly Or: Function1<Disjunction, A>;
     readonly BinaryComparison: Function1<BinaryComparison, A>;
+    readonly UnaryComparison: Function1<UnaryComparison, A>;
   }
 
   export const matchExpression: <A>(_: ExpressionMatcher<A>) => Function1<Expression, A> = matchers.matchKind;
@@ -184,9 +199,20 @@ export namespace Filter {
   export const matchTypeTypeWithFallback: <A>(_: matchers.FallbackMatcher<TypeType, A, TypeType>) => (_: TypeType) => A = switcher =>
     matchers.matchWithFallback(switcher)(identity);
 
+  export interface ComparisonMatcher<A> {
+    readonly BinaryComparison: Function1<BinaryComparison, A>;
+    readonly UnaryComparison: Function1<UnaryComparison, A>;
+  }
+
+  export const matchComparison: <A>(_: ComparisonMatcher<A>) => Function1<Comparison, A> = matchers.matchKind;
+
   export const matchBinaryComparisonOperatorWithFallback: <A>(
     _: matchers.FallbackMatcher<BinaryComparisonOperator, A, BinaryComparisonOperator>
   ) => Function1<BinaryComparisonOperator, A> = matcher => matchers.matchWithFallback(matcher)(identity);
+
+  export const matchUnaryComparisonOperator: <A>(
+    _: matchers.FullMatcher<UnaryComparisonOperator, A, UnaryComparisonOperator>
+  ) => Function1<UnaryComparisonOperator, A> = matcher => matchers.match(matcher)(identity);
 
   export const isEmpty: Predicate<Filter> = matchFilter({
     ExpressionFilter: constant(false),
@@ -197,4 +223,5 @@ export namespace Filter {
 
   export const setoidPropertyByRef: Setoid<Property> = contramap(p => p.ref, setoidString);
   export const setoidBinaryComparisonOperator: Setoid<BinaryComparisonOperator> = setoidString;
+  export const setoidUnaryComparisonOperator: Setoid<UnaryComparisonOperator> = setoidString;
 }

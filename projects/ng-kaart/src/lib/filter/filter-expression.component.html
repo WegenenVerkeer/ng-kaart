@@ -1,5 +1,6 @@
 <span [ngSwitch]="kind">
   <awv-filter-term *ngSwitchCase="'BinaryComparison'" [term]="term"></awv-filter-term>
+  <awv-filter-term *ngSwitchCase="'UnaryComparison'" [term]="term"></awv-filter-term>
 
   <span *ngSwitchCase="'And'">
     <awv-filter-expression [expression]="left"></awv-filter-expression>

@@ -1,4 +1,4 @@
-import { constant, Endomorphism, Function1, Function3, Function4 } from "fp-ts/lib/function";
+import { constant, Endomorphism, Function1, Function2, Function3, Function4 } from "fp-ts/lib/function";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 
 import { Filter as fltr } from "../filter/filter-model";
@@ -67,8 +67,6 @@ export namespace FilterCql {
       inequality: () => some(`not (${propertyRef(property)} ${like(caseSensitive)} '${literal.value}')`),
       starts: () => some(`${propertyRef(property)} ${like(caseSensitive)} '${literal.value}%'`),
       ends: () => some(`${propertyRef(property)} ${like(caseSensitive)} '%${literal.value}'`),
-      isEmpty: () => some(`${propertyRef(property)} is null`),
-      isNotEmpty: () => some(`${propertyRef(property)} is not null`),
       contains: () => some(`${propertyRef(property)} ${like(caseSensitive)} '%${literal.value}%'`),
       fallback: () => none // de andere operators worden niet ondersteund
     })(operator);
@@ -87,21 +85,21 @@ export namespace FilterCql {
     operator,
     literal
   ) =>
-    fromNullable(numberBinaryOperatorSymbols[operator])
-      .chain(symbol => literalCql(literal).map(value => `${propertyRef(property)} ${symbol} ${value}`))
-      .alt(
-        fltr.matchBinaryComparisonOperatorWithFallback({
-          isEmpty: () => some(`${propertyRef(property)} is null`),
-          isNotEmpty: () => some(`${propertyRef(property)} is not null`),
-          fallback: () => none // operator niet herkend
-        })(operator)
-      );
+    fromNullable(numberBinaryOperatorSymbols[operator]).chain(symbol =>
+      literalCql(literal).map(value => `${propertyRef(property)} ${symbol} ${value}`)
+    );
 
   const both: Function3<Option<string>, Option<string>, string, Option<string>> = (maybeLeft, maybeRight, separator) =>
     maybeLeft.fold(
       maybeRight, //
       left => some(maybeRight.fold(left, right => `(${left} ${separator} ${right})`))
     );
+
+  const unaryOperator: Function2<fltr.Property, fltr.UnaryComparisonOperator, Option<string>> = (property, operator) =>
+    fltr.matchUnaryComparisonOperator({
+      isEmpty: () => some(`${propertyRef(property)} is null`),
+      isNotEmpty: () => some(`${propertyRef(property)} is not null`)
+    })(operator);
 
   const expressionCql: Generator<fltr.Expression> = fltr.matchExpression({
     And: expr => both(expressionCql(expr.left), expressionCql(expr.right), "AND"),
@@ -115,7 +113,8 @@ export namespace FilterCql {
         integer: () => numberBinaryOperator(expr.property, expr.operator, expr.value),
         boolean: () => numberBinaryOperator(expr.property, expr.operator, expr.value),
         fallback: () => none
-      })(expr.property.type)
+      })(expr.property.type),
+    UnaryComparison: expr => unaryOperator(expr.property, expr.operator)
   });
 
   export const cql: Function1<fltr.Filter, Option<string>> = fltr.matchFilter({

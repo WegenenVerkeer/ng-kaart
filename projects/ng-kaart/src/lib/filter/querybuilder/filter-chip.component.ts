@@ -39,7 +39,13 @@ export class FilterChipComponent {
     return this.editor as fed.Completed;
   }
 
+  asCompletedWithValue(): fed.CompletedWithValue {
+    return this.editor as fed.CompletedWithValue;
+  }
+
   completedValue(): string {
-    return this.editor.kind === "Completed" && this.editor.valueSelector.kind !== "empty" ? this.editor.selectedValue.value.toString() : "";
+    return this.editor.kind === "CompletedWithValue" && this.editor.valueSelector.kind !== "empty"
+      ? this.editor.selectedValue.value.toString()
+      : "";
   }
 }

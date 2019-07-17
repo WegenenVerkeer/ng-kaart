@@ -27,7 +27,8 @@ export namespace FilterText {
   const expressionText: Generator<fltr.Expression> = fltr.matchExpression({
     And: expr => `${expressionText(expr.left)} en ${expressionText(expr.right)}`,
     Or: expr => `${expressionText(expr.left)} of ${expressionText(expr.right)}`,
-    BinaryComparison: expr => `${propertyText(expr.property)} ${operatorSymbols[expr.operator]} ${literalText(expr.value)}`
+    BinaryComparison: expr => `${propertyText(expr.property)} ${operatorSymbols[expr.operator]} ${literalText(expr.value)}`,
+    UnaryComparison: expr => `${propertyText(expr.property)} ${operatorSymbols[expr.operator]}`
   });
 
   export const filterText: Generator<fltr.Filter> = fltr.matchFilter({
@@ -39,12 +40,14 @@ export namespace FilterText {
 export namespace FilterAwv0Json {
   function flattenOptionRecursively(obj: any) {
     Object.entries(obj).forEach(([key, value]) => {
-      const toUndefined = value["toUndefined"];
-      if (typeof toUndefined === "function") {
-        // We veronderstellen een object dat gelijkaardig is aan Option
-        obj[key] = (value as any).toUndefined();
-      } else if (typeof value === "object") {
-        flattenOptionRecursively(value);
+      if (value instanceof Object) {
+        const toUndefined = value["toUndefined"];
+        if (typeof toUndefined === "function") {
+          // We veronderstellen een object dat gelijkaardig is aan Option
+          obj[key] = (value as any).toUndefined();
+        } else if (typeof value === "object") {
+          flattenOptionRecursively(value);
+        }
       }
     });
     return obj;

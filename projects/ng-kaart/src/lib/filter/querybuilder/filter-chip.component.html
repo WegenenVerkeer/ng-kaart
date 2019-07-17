@@ -32,9 +32,17 @@
     <div class="filter-term">
       <div>{{ asCompleted().selectedProperty.label }}</div>
       <div class ="comparison">{{ asCompleted().selectedOperator.shortLabel }}</div>
+    </div>
+    <mat-icon class="checkmark">done</mat-icon>
+  </div>
+
+  <div *ngSwitchCase="'CompletedWithValue'" class="term {{ isCurrentStyle() }}">
+    <div class="filter-term">
+      <div>{{ asCompletedWithValue().selectedProperty.label }}</div>
+      <div class ="comparison">{{ asCompletedWithValue().selectedOperator.shortLabel }}</div>
       <div>{{ completedValue() }}</div>
     </div>
-    <mat-icon *ngIf="asCompleted().caseSensitive" class="hoofdletter">font_download</mat-icon>
+    <mat-icon *ngIf="asCompletedWithValue().caseSensitive" class="hoofdletter">font_download</mat-icon>
     <mat-icon class="checkmark">done</mat-icon>
   </div>
 

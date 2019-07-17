@@ -115,20 +115,32 @@ describe("De filterinterpreter", () => {
       expect(result.getOrElse(undefined)).toEqual(fixOptionals(neq));
     });
     it("moet een filter met 1 'geen waarde' kunnen verwerken", () => {
-      const neq = {
+      const ndef = {
         kind: "ExpressionFilter",
         name: "testFilter",
         expression: {
-          kind: "BinaryComparison",
+          kind: "UnaryComparison",
           operator: "isEmpty",
-          property: property,
-          value: literal,
-          caseSensitive: false
+          property: property
         }
       };
-      const result = AwvV0FilterInterpreters.jsonAwv0Definition(neq);
+      const result = AwvV0FilterInterpreters.jsonAwv0Definition(ndef);
       expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(fixOptionals(neq));
+      expect(result.getOrElse(undefined)).toEqual(fixOptionals(ndef));
+    });
+    it("moet een filter met 1 'heeft een waarde' kunnen verwerken", () => {
+      const def = {
+        kind: "ExpressionFilter",
+        name: "testFilter",
+        expression: {
+          kind: "UnaryComparison",
+          operator: "isNotEmpty",
+          property: property
+        }
+      };
+      const result = AwvV0FilterInterpreters.jsonAwv0Definition(def);
+      expect(result.isSuccess()).toBe(true);
+      expect(result.getOrElse(undefined)).toEqual(fixOptionals(def));
     });
     it("moet een filter met 1 'and' kunnen verwerken", () => {
       const and = {

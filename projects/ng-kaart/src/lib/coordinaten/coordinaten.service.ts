@@ -38,7 +38,7 @@ export namespace Epsg {
   export const LaeaEurope = "EPSG:3035";
   export const GoogleMercator = "EPSG:900913";
 
-  export const all = [Lambert72, Lambert2008, WebMercator, GoogleMercator, Wgs84, Etrs89, LaeaEurope];
+  export const all = [Lambert72, Wgs84, WebMercator, GoogleMercator, Lambert2008, Etrs89, LaeaEurope];
 }
 
 // Onze dienstkaartextent

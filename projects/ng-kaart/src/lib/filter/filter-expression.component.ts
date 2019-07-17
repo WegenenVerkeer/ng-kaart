@@ -13,7 +13,7 @@ import { Filter as fltr } from "./filter-model";
 export class FilterExpressionComponent extends KaartChildComponentBase {
   left?: fltr.Expression;
   right?: fltr.Expression;
-  term?: fltr.BinaryComparison;
+  term?: fltr.Comparison;
   kind: fltr.Expression["kind"];
 
   @Input()
@@ -27,6 +27,7 @@ export class FilterExpressionComponent extends KaartChildComponentBase {
         this.term = undefined;
         break;
       case "BinaryComparison":
+      case "UnaryComparison":
         this.left = undefined;
         this.right = undefined;
         this.term = v;

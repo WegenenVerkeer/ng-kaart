@@ -49,10 +49,10 @@ export namespace AwvV0FilterInterpreters {
     "smaller",
     "smallerOrEqual",
     "larger",
-    "largerOrEqual",
-    "isEmpty",
-    "isNotEmpty"
+    "largerOrEqual"
   );
+
+  const unaryComparisonOperator: oi.Interpreter<fltr.UnaryComparisonOperator> = oi.enu("isEmpty", "isNotEmpty");
 
   const binaryComparison: oi.Interpreter<fltr.BinaryComparison> = oi.suchThat(
     oi.interpretRecord({
@@ -66,8 +66,15 @@ export namespace AwvV0FilterInterpreters {
     `Het type van de property komt niet overeen met dat van de waarde`
   );
 
+  const unaryComparison: oi.Interpreter<fltr.UnaryComparison> = oi.interpretRecord({
+    kind: oi.field("kind", oi.value("UnaryComparison")),
+    operator: oi.field("operator", unaryComparisonOperator),
+    property: oi.field("property", property)
+  });
+
   const comparison: oi.Interpreter<fltr.Comparison> = byKind<fltr.Comparison>({
-    BinaryComparison: binaryComparison
+    BinaryComparison: binaryComparison,
+    UnaryComparison: unaryComparison
   });
 
   const conjunctionExpression: oi.Interpreter<fltr.ConjunctionExpression> = oi.mapFailureTo(

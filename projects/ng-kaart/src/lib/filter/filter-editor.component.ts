@@ -90,7 +90,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
   readonly titel$: rx.Observable<string>;
 
   readonly filteredVelden$: rx.Observable<fltr.Property[]>;
-  readonly filteredOperatoren$: rx.Observable<fed.BinaryComparisonOperator[]>;
+  readonly filteredOperatoren$: rx.Observable<fed.ComparisonOperator[]>;
   readonly filteredWaarden$: rx.Observable<Wrapped[]>;
 
   readonly naamControl = new FormControl("");
@@ -244,7 +244,8 @@ export class FilterEditorComponent extends KaartChildComponentBase {
           Field: () => fed.freeStringInputValueSelector, // we zouden er kunnen voor kiezen om het inputveld voorlopig niet te tonen
           Operator: termEditor => termEditor.valueSelector,
           Value: termEditor => termEditor.valueSelector,
-          Completed: termEditor => termEditor.valueSelector
+          Completed: termEditor => termEditor.valueSelector,
+          CompletedWithValue: termEditor => termEditor.valueSelector
         })(editor.current)
       )
     );
@@ -360,6 +361,19 @@ export class FilterEditorComponent extends KaartChildComponentBase {
             );
             this.veldControl.setValue(compl.selectedProperty, { emitEvent: false });
             this.operatorControl.setValue(compl.selectedOperator, { emitEvent: false });
+          },
+          CompletedWithValue: compl => {
+            enableDisabled(
+              this.operatorControl,
+              this.textWaardeControl,
+              this.integerWaardeControl,
+              this.doubleWaardeControl,
+              this.dropdownWaardeControl,
+              this.autocompleteWaardeControl,
+              this.hoofdLetterGevoeligControl
+            );
+            this.veldControl.setValue(compl.selectedProperty, { emitEvent: false });
+            this.operatorControl.setValue(compl.selectedOperator, { emitEvent: false });
             this.hoofdLetterGevoeligControl.setValue(compl.caseSensitive, { emitEvent: false });
             fed.matchValueSelector({
               empty: () => {},
@@ -418,7 +432,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       shareReplay(1)
     );
 
-    const binaryOperators$: rx.Observable<fed.BinaryComparisonOperator[]> = operatorSelection$.pipe(map(os => os.operatorSelectors));
+    const operators$: rx.Observable<fed.ComparisonOperator[]> = operatorSelection$.pipe(map(os => os.operatorSelectors));
 
     this.filteredOperatoren$ = rx
       .combineLatest(
@@ -428,7 +442,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
           // map(waarde => (typeof waarde === "string" ? waarde : waarde.label)),
           startWith("") // nog niets ingetypt -> Moet beter kunnen!
         ),
-        binaryOperators$
+        operators$
       )
       .pipe(
         map(([getypt, operators]) => operators.filter(operator => operator.label.toLowerCase().startsWith(getypt.toLowerCase()))) //
