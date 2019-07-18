@@ -1,14 +1,18 @@
 import { Component, NgZone } from "@angular/core";
+import * as arrays from "fp-ts/lib/Array";
 import { Function1, Function2 } from "fp-ts/lib/function";
+import * as maps from "fp-ts/lib/Map";
 import { none } from "fp-ts/lib/Option";
+import { setoidString } from "fp-ts/lib/Setoid";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { distinctUntilChanged, map, switchMap } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, pairwise, switchMap, tap } from "rxjs/operators";
 
 import * as ss from "../../kaart/stijl-selector";
+import { ofType } from "../../util";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
-import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-messages";
+import { InfoBoodschappenMsg, KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 
@@ -107,7 +111,23 @@ export class MarkeerKaartklikComponent extends KaartChildComponentBase {
     const kliklocatie$ = this.modelChanges.kaartKlikLocatie$.pipe(map(ki => ki.coordinate));
     const otherActive$ = this.modelChanges.actieveModus$.pipe(map(maybeModus => maybeModus.isSome()));
 
-    const wis$ = rx.combineLatest(opties$, otherActive$, (o, a) => o.disabled || a).pipe(distinctUntilChanged());
+    const identifyBoodschapGesloten$ = this.internalMessage$.pipe(
+      ofType<InfoBoodschappenMsg>("InfoBoodschappen"), // enkel de lijst van boodschappen intereseert ons
+      map(
+        msg =>
+          maps
+            .lookup(setoidString)("kaart_bevragen", msg.infoBoodschappen)
+            .isSome() // was er een kaart bevragen boodschap bij?
+      ),
+      distinctUntilChanged(),
+      tap(aanwezig => console.log("****aanwezig", aanwezig)),
+      pairwise(), // combineer met de vorige
+      filter(([before, after]) => before && !after) // bingo als er eerst een was en nu niet meer
+    );
+
+    const wis$ = rx
+      .merge(rx.combineLatest(opties$, otherActive$, (o, a) => o.disabled || a), identifyBoodschapGesloten$)
+      .pipe(distinctUntilChanged());
 
     const markerFeature$ = rx
       .combineLatest(opties$, otherActive$, (a, b) => [a, b] as [MarkeerKaartklikOpties, boolean])
@@ -117,7 +137,11 @@ export class MarkeerKaartklikComponent extends KaartChildComponentBase {
         )
       );
 
-    this.bindToLifeCycle(markerFeature$).subscribe(feature => this.dispatch(vervangFeatures([feature])));
-    this.bindToLifeCycle(wis$).subscribe(() => this.dispatch(vervangFeatures([])));
+    this.runInViewReady(
+      rx.merge(
+        markerFeature$.pipe(tap(feature => this.dispatch(vervangFeatures([feature])))),
+        wis$.pipe(tap(() => this.dispatch(vervangFeatures([]))))
+      )
+    );
   }
 }
