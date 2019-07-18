@@ -3,6 +3,7 @@ import * as ol from "openlayers";
 import * as rx from "rxjs";
 
 import { Filter as fltr } from "../filter/filter-model";
+import { Transparantie } from "../stijl/transparancy";
 import { TypedRecord } from "../util/typed-record";
 import { ZoekerMetWeergaveopties, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
 
@@ -119,6 +120,7 @@ export interface VoegLaagToeCmd<Msg extends KaartMsg> {
   readonly positie: number;
   readonly laag: ke.Laag;
   readonly magGetoondWorden: boolean;
+  readonly transparantie: Transparantie;
   readonly laaggroep: ke.Laaggroep;
   readonly legende: Option<Legende>;
   readonly stijlInLagenKiezer: Option<string>;
@@ -579,7 +581,8 @@ export function VoegLaagToeCmd<Msg extends KaartMsg>(
   positie: number,
   laag: ke.Laag,
   magGetoondWorden: boolean,
-  laagGroep: ke.Laaggroep,
+  transparantie: Transparantie,
+  laaggroep: ke.Laaggroep,
   legende: Option<Legende>,
   stijlInLagenKiezer: Option<string>,
   filterinstellingen: Option<ke.Laagfilterinstellingen>,
@@ -587,14 +590,15 @@ export function VoegLaagToeCmd<Msg extends KaartMsg>(
 ): VoegLaagToeCmd<Msg> {
   return {
     type: "VoegLaagToe",
-    positie: positie,
-    laag: laag,
-    magGetoondWorden: magGetoondWorden,
-    laaggroep: laagGroep,
-    legende: legende,
-    stijlInLagenKiezer: stijlInLagenKiezer,
-    filterinstellingen: filterinstellingen,
-    wrapper: wrapper
+    positie,
+    laag,
+    magGetoondWorden,
+    transparantie,
+    laaggroep,
+    legende,
+    stijlInLagenKiezer,
+    filterinstellingen,
+    wrapper
   };
 }
 

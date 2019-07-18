@@ -1,6 +1,5 @@
-import * as array from "fp-ts/lib/Array";
 import { concat, Curried2, Curried3, Endomorphism, Function1, Function2, pipe, Refinement } from "fp-ts/lib/function";
-import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
+import { fromNullable, none, Option } from "fp-ts/lib/Option";
 import { contramap, Setoid, setoidString } from "fp-ts/lib/Setoid";
 import { Getter, Iso, Lens, Prism } from "monocle-ts";
 import { iso, Newtype, prism } from "newtype-ts";

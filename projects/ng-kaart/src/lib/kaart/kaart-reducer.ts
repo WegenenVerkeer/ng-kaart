@@ -376,6 +376,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                 laaggroep: groep,
                 positieInGroep: groepPositie,
                 magGetoondWorden: cmnd.magGetoondWorden,
+                transparantie: cmnd.transparantie,
                 legende: cmnd.legende,
                 stijlInLagenKiezer: cmnd.stijlInLagenKiezer
               };
@@ -488,6 +489,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               laaggroep: laag.laaggroep,
               positieInGroep: laag.positieInGroep,
               magGetoondWorden: laag.magGetoondWorden,
+              transparantie: laag.transparantie,
               legende: laag.legende,
               stijlInLagenKiezer: laag.stijlInLagenKiezer
             };

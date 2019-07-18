@@ -30,12 +30,13 @@ import {
 } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../../kaart/kaart-child-component-base";
-import * as ke from "../../kaart/kaart-elementen";
 import { VeldInfo } from "../../kaart/kaart-elementen";
+import * as ke from "../../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import * as prt from "../../kaart/kaart-protocol";
 import { KaartComponent } from "../../kaart/kaart.component";
 import { kaartLogger } from "../../kaart/log";
+import { Transparantie } from "../../stijl/transparancy";
 import { isNotNullObject } from "../../util/function";
 import { matchGeometryType } from "../../util/geometries";
 import * as maps from "../../util/maps";
@@ -455,6 +456,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       laag: ZoekerBoxComponent.createLayer(),
       magGetoondWorden: true,
       laaggroep: "Tools",
+      transparantie: Transparantie.opaak,
       legende: none,
       stijlInLagenKiezer: none,
       filterinstellingen: none,

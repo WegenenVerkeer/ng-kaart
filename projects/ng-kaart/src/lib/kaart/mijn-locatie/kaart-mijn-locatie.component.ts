@@ -7,6 +7,7 @@ import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, mapTo, pairwise, scan, shareReplay, startWith, throttle, throttleTime } from "rxjs/operators";
 
+import { Transparantie } from "../../stijl/transparancy";
 import { catOptions } from "../../util/operators";
 import * as ke from "../kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart-internal-messages";
@@ -166,6 +167,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
       positie: 0,
       laag: this.createLayer(),
       magGetoondWorden: true,
+      transparantie: Transparantie.opaak,
       laaggroep: "Tools",
       legende: none,
       stijlInLagenKiezer: none,

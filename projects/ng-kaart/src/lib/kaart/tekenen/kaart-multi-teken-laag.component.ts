@@ -11,6 +11,7 @@ import { bufferTime, debounceTime, filter, map, mapTo, scan, share, startWith, s
 
 import * as clr from "../../stijl/colour";
 import { disc, solidLine } from "../../stijl/common-shapes";
+import { Transparantie } from "../../stijl/transparancy";
 import { asap } from "../../util/asap";
 import { applySequential, Consumer1, PartialFunction1, ReduceFunction } from "../../util/function";
 import {
@@ -253,6 +254,7 @@ function drawStateTransformer(
         positie: 0,
         laag: createLayer(SegmentLaagNaam, new ol.source.Vector()),
         magGetoondWorden: true,
+        transparantie: Transparantie.opaak,
         laaggroep: "Tools",
         legende: none,
         stijlInLagenKiezer: none,
@@ -264,6 +266,7 @@ function drawStateTransformer(
         positie: 1,
         laag: createLayer(PuntLaagNaam, drawSource),
         magGetoondWorden: true,
+        transparantie: Transparantie.opaak,
         laaggroep: "Tools",
         legende: none,
         stijlInLagenKiezer: none,

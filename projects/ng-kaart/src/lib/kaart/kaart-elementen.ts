@@ -10,6 +10,7 @@ import * as ol from "openlayers";
 import { Filter as fltr } from "../filter/filter-model";
 import { FilterTotaal, totaalOpTeHalen } from "../filter/filter-totaal";
 import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
+import { Transparantie } from "../stijl/transparancy";
 import { mapToOptionalByKey } from "../util/lenses";
 import * as maps from "../util/maps";
 import * as matchers from "../util/matchers";
@@ -165,6 +166,7 @@ export interface ToegevoegdeLaag {
   readonly laaggroep: Laaggroep;
   readonly positieInGroep: number;
   readonly magGetoondWorden: boolean;
+  readonly transparantie: Transparantie;
   readonly legende: Option<Legende>;
   readonly stijlInLagenKiezer: Option<string>; // optionele naam van een CSS klasse om lijn in lagenkiezer individueel te stijlen
 }

@@ -1,5 +1,4 @@
 import { Component, NgZone } from "@angular/core";
-import * as arrays from "fp-ts/lib/Array";
 import { Function1, Function2 } from "fp-ts/lib/function";
 import * as maps from "fp-ts/lib/Map";
 import { none } from "fp-ts/lib/Option";
@@ -9,6 +8,7 @@ import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, pairwise, switchMap, tap } from "rxjs/operators";
 
 import * as ss from "../../kaart/stijl-selector";
+import { Transparantie } from "../../stijl/transparancy";
 import { ofType } from "../../util";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
@@ -92,6 +92,7 @@ export class MarkeerKaartklikComponent extends KaartChildComponentBase {
         positie: 0,
         laag: markerLayer,
         magGetoondWorden: true,
+        transparantie: Transparantie.opaak,
         laaggroep: "Tools",
         legende: none,
         stijlInLagenKiezer: none,
@@ -120,7 +121,6 @@ export class MarkeerKaartklikComponent extends KaartChildComponentBase {
             .isSome() // was er een kaart bevragen boodschap bij?
       ),
       distinctUntilChanged(),
-      tap(aanwezig => console.log("****aanwezig", aanwezig)),
       pairwise(), // combineer met de vorige
       filter(([before, after]) => before && !after) // bingo als er eerst een was en nu niet meer
     );
