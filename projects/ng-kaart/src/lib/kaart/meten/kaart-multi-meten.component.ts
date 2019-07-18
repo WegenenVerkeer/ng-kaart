@@ -76,32 +76,36 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
       })
     );
 
-    const measure$: rx.Observable<Measure> = rx.combineLatest(this.modelChanges.getekendeGeometry$, scale$).pipe(
-      map(([geom, scale]) => {
-        const length = some(geometryLength(geom));
-        const area = matchGeometryType(geom, {
-          geometryCollection: collection => {
-            if (collection.getGeometries().length >= 2) {
-              return toLineString(collection)
-                .map(line => {
-                  const begin = line.getFirstCoordinate();
-                  const end = line.getLastCoordinate();
-                  // Wanneer de punten dicht genoeg bij elkaar liggen, sluiten we de geometrie en berekenen we een oppervlakte.
-                  // Dicht genoeg hangt af van de schaal van de kaart.
-                  if (distance(begin, end) < scale && arrays.isNonEmpty(line.getCoordinates())) {
-                    return ol.Sphere.getArea(new ol.geom.Polygon([line.getCoordinates()]));
-                  } else {
-                    return 0;
-                  }
-                })
-                .getOrElse(0);
-            } else {
-              return 0;
-            }
-          }
-        }).chain(fromPredicate<number>(area => area > 0)); // flatten had ook gekund, maar dit is analoog aan lengte
-        return { length: length, area: area };
-      })
+    const measure$: rx.Observable<Measure> = this.wordtActief$.pipe(
+      switchMap(() =>
+        rx.combineLatest(this.modelChanges.getekendeGeometry$, scale$).pipe(
+          map(([geom, scale]) => {
+            const length = some(geometryLength(geom));
+            const area = matchGeometryType(geom, {
+              geometryCollection: collection => {
+                if (collection.getGeometries().length >= 2) {
+                  return toLineString(collection)
+                    .map(line => {
+                      const begin = line.getFirstCoordinate();
+                      const end = line.getLastCoordinate();
+                      // Wanneer de punten dicht genoeg bij elkaar liggen, sluiten we de geometrie en berekenen we een oppervlakte.
+                      // Dicht genoeg hangt af van de schaal van de kaart.
+                      if (distance(begin, end) < scale && arrays.isNonEmpty(line.getCoordinates())) {
+                        return ol.Sphere.getArea(new ol.geom.Polygon([line.getCoordinates()]));
+                      } else {
+                        return 0;
+                      }
+                    })
+                    .getOrElse(0);
+                } else {
+                  return 0;
+                }
+              }
+            }).chain(fromPredicate<number>(area => area > 0)); // flatten had ook gekund, maar dit is analoog aan lengte
+            return { length: length, area: area };
+          })
+        )
+      )
     );
 
     const boodschap$ = toonInfoBoodschap$.pipe(
