@@ -5,7 +5,7 @@ import { Subject } from "rxjs";
 import { distinctUntilChanged, map, skipWhile } from "rxjs/operators";
 import * as uuid from "uuid";
 
-import { Transparantie } from "../../stijl/transparancy";
+import { Transparantie } from "../../transparantieeditor/transparancy";
 import { dimensieBeschrijving } from "../../util/geometries";
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { ofType } from "../../util/operators";

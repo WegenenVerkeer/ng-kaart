@@ -17,6 +17,7 @@ import { FilterAanpassend, GeenFilterAanpassingBezig } from "../filter/filter-aa
 import { Filter as fltr } from "../filter/filter-model";
 import { FilterTotaal, totaalOpTeHalen } from "../filter/filter-totaal";
 import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
+import { GeenTransparantieaanpassingBezig, Transparantieaanpassend } from "../transparantieeditor/state";
 import * as arrays from "../util/arrays";
 import { refreshTiles } from "../util/cachetiles";
 import { Feature, modifyWithLaagnaam } from "../util/feature";
@@ -1305,12 +1306,23 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function bewerkVectorFilter(cmnd: prt.BewerkVectorFilterCmd): ModelWithResult<Msg> {
       // We zouden kunnen controleren of de laag effectief in het model zit, maar dat is spijkers op laag water zoeken.
-      modelChanger.laagFilterAanpassingStateSubj.next(FilterAanpassend(cmnd.laag));
+      modelChanger.laagfilteraanpassingStateSubj.next(FilterAanpassend(cmnd.laag));
       return ModelWithResult(model);
     }
 
     function stopVectorFilterBewerking(cmnd: prt.StopVectorFilterBewerkingCmd): ModelWithResult<Msg> {
-      modelChanger.laagFilterAanpassingStateSubj.next(GeenFilterAanpassingBezig);
+      modelChanger.laagfilteraanpassingStateSubj.next(GeenFilterAanpassingBezig);
+      return ModelWithResult(model);
+    }
+
+    function bewerkTransparantie(cmnd: prt.BewerkTransparantieCmd): ModelWithResult<Msg> {
+      // We zouden kunnen controleren of de laag effectief in het model zit, maar dat is spijkers op laag water zoeken.
+      modelChanger.transparantieAanpassingStateSubj.next(Transparantieaanpassend(cmnd.laag));
+      return ModelWithResult(model);
+    }
+
+    function stopTransparantieBewerking(cmnd: prt.StopTransparantieBewerkingCmd): ModelWithResult<Msg> {
+      modelChanger.transparantieAanpassingStateSubj.next(GeenTransparantieaanpassingBezig);
       return ModelWithResult(model);
     }
 
@@ -1866,6 +1878,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return haalFilterTotaalOp(cmd);
         case "MijnLocatieStateChange":
           return emitMijnLocatieStateChange(cmd);
+        case "BewerkTransparantie":
+          return bewerkTransparantie(cmd);
+        case "StopTransparantieBewerking":
+          return stopTransparantieBewerking(cmd);
       }
     }
 

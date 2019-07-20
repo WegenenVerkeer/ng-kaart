@@ -1,0 +1,75 @@
+@import "../css/kaart.component-common.scss";
+
+.awv-kaart-transparantieeditor {
+  color: $kaart-primary-text-color;
+
+  .header {
+    padding: 0px 8px;
+    display: flex;
+    align-items: center;
+
+    .header-logo {
+      flex-shrink: 0;
+    }
+    .header-openclose {
+      flex-shrink: 0;
+    }
+
+    .header-title {
+      margin-left: 4px;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+
+      .header-title-main {
+        font-size: 16px;
+      }
+      .header-title-sub {
+        font-size: 12px;
+      }
+    }
+  }
+
+  .body {
+    padding-left: 16px;
+    padding-right: 16px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+
+    mat-slider {
+      display: block;
+    }
+
+    .guide {
+      display: flex;
+      flex-direction: row;
+
+      .value {
+        color: $kaart-secondary-text-color;
+      }
+
+      .spacer {
+        flex-grow: 1;
+      }
+    }
+  }
+
+  .action {
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px 16px 16px 16px;
+
+    button {
+      margin-left: 8px;
+
+    }
+
+    // Dit zou niet nodig zijn mochten we de material stdn beter (mogen) volgen
+    .mat-raised-button:not([class*=primary]) {
+      background-color: $awv-secondary-d4;
+    }
+  }
+}

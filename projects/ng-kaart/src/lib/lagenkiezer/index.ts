@@ -4,6 +4,7 @@ import { MatButtonModule, MatIconModule, MatInputModule, MatMenuModule, MatToolt
 import { MatTabsModule } from "@angular/material/tabs";
 
 import { FilterModule } from "../filter/index";
+import { TransparantieeditorModule } from "../transparantieeditor";
 
 import { LaagmanipulatieComponent } from "./laagmanipulatie.component";
 import { LAGENKIEZER_CFG, LagenkiezerConfig } from "./lagenkiezer-config";
@@ -12,7 +13,17 @@ import { LagenkiezerComponent } from "./lagenkiezer.component";
 const components: any[] = [LagenkiezerComponent, LaagmanipulatieComponent];
 
 @NgModule({
-  imports: [CommonModule, FilterModule, MatIconModule, MatInputModule, MatButtonModule, MatMenuModule, MatTabsModule, MatTooltipModule],
+  imports: [
+    CommonModule,
+    FilterModule,
+    TransparantieeditorModule,
+    MatIconModule,
+    MatInputModule,
+    MatButtonModule,
+    MatMenuModule,
+    MatTabsModule,
+    MatTooltipModule
+  ],
   declarations: [components],
   exports: [components]
 })

@@ -22,6 +22,7 @@ import { KaartOpenLayersStyleComponent } from "../classic/openlayers-style/class
 import { KaartTekenComponent } from "../classic/tekenen/kaart-teken.component";
 import { FilterModule } from "../filter/index";
 import { LagenkiezerModule } from "../lagenkiezer/index";
+import { TransparantieeditorModule } from "../transparantieeditor";
 import { ZoekerModule } from "../zoeker/index";
 
 import { KaartAchtergrondSelectorComponent } from "./achtergrond-selector/kaart-achtergrond-selector.component";
@@ -132,7 +133,8 @@ export const myCustomTooltipDefaults: MatTooltipDefaultOptions = {
     ZoekerModule.forRoot({}),
     LagenkiezerModule.withDefaults(),
     StijleditorModule,
-    FilterModule
+    FilterModule,
+    TransparantieeditorModule
   ],
   declarations: [components],
   exports: [components],

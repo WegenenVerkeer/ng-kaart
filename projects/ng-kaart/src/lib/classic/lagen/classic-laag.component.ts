@@ -6,7 +6,7 @@ import { Legende } from "../../kaart/kaart-legende";
 import * as prt from "../../kaart/kaart-protocol";
 import * as val from "../webcomponent-support/params";
 
-import { prismTransparantie, Transparantie } from "../../stijl/transparancy";
+import { prismTransparantie, Transparantie } from "../../transparantieeditor/transparancy";
 import { ClassicBaseComponent } from "../classic-base.component";
 import { KaartClassicLocatorService } from "../kaart-classic-locator.service";
 import { ClassicLegendeItemComponent } from "../legende/classic-legende-item.component";

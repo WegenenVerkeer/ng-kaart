@@ -29,6 +29,7 @@ export interface LagenUiOpties {
   readonly verplaatsbareLagen: boolean;
   readonly filterbareLagen: boolean;
   readonly stijlbareVectorlagen: Predicate<string>;
+  readonly transparantieaanpasbareLagen: Predicate<string>;
   readonly kleur?: ol.Color;
 }
 
@@ -40,7 +41,8 @@ export const DefaultOpties: LagenUiOpties = {
   verwijderbareLagen: false,
   verplaatsbareLagen: true,
   filterbareLagen: false,
-  stijlbareVectorlagen: () => false
+  stijlbareVectorlagen: () => false,
+  transparantieaanpasbareLagen: () => false
 };
 
 interface DragState {

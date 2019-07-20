@@ -4,6 +4,7 @@ import { FormsModule } from "@angular/forms";
 import { BrowserModule } from "@angular/platform-browser";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { ClickOutsideModule } from "ng4-click-outside";
+import { TransparantieeditorModule } from "projects/ng-kaart/src/lib/transparantieeditor";
 
 import { ClassicModule, componentMap, KaartClassicComponent } from "../../../ng-kaart/src/lib/classic";
 import { FilterModule } from "../../../ng-kaart/src/lib/filter";
@@ -20,6 +21,7 @@ import { ZoekerModule } from "../../../ng-kaart/src/lib/zoeker";
     KaartModule.withDefaults(),
     ClassicModule,
     FilterModule,
+    TransparantieeditorModule,
     ZoekerModule.forRoot({
       googleWdb: {
         apiKey: "AIzaSyApbXMl5DGL60g17JU6MazMxNcUGooey7I",

@@ -51,6 +51,10 @@
         <mat-icon>format_color_fill</mat-icon>
         <span>Stijl aanpassen</span>
       </button>
+      <button mat-menu-item (click)="pasTransparantieAan()" *ngIf="kanTransparantieAanpassen$ | async">
+        <mat-icon>opacity</mat-icon>
+        <span>Transparantie aanpassen</span>
+      </button>
     </mat-menu>
     <button mat-icon-button [matMenuTriggerFor]="laagMenu" matTooltip="Toon laag opties" matTooltipPosition="right">
       <mat-icon>more_vert</mat-icon>

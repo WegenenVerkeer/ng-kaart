@@ -49,6 +49,7 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
   readonly filterTotaalOpTeHalen$: rx.Observable<boolean>;
   readonly filterTotaalOphalenMislukt$: rx.Observable<boolean>;
   readonly filterTotaalMisluktFout$: rx.Observable<string>;
+  readonly kanTransparantieAanpassen$: rx.Observable<boolean>;
 
   @Input()
   laag: ke.ToegevoegdeLaag;
@@ -105,6 +106,10 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
           .map(() => o.filterbareLagen)
           .getOrElse(false)
       ),
+      shareReplay(1)
+    );
+    this.kanTransparantieAanpassen$ = lagenkiezer.opties$.pipe(
+      map(o => o.transparantieaanpasbareLagen(this.laag.titel)),
       shareReplay(1)
     );
 
@@ -216,5 +221,9 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
 
   verwijderFilter() {
     this.dispatch(cmd.ZetFilter(this.laag.titel, fltr.empty(), kaartLogOnlyWrapper));
+  }
+
+  pasTransparantieAan() {
+    this.dispatch(cmd.BewerkTransparantieCmd(this.laag));
   }
 }

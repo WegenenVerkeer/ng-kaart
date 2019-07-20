@@ -28,6 +28,7 @@ export class ClassicLagenkiezerComponent extends ClassicBaseComponent implements
   private _verplaatsbareLagen: boolean = DefaultOpties.verplaatsbareLagen;
   private _stijlbareVectorlagen: Predicate<string> = DefaultOpties.stijlbareVectorlagen;
   private _filterbareLagen: boolean = DefaultOpties.filterbareLagen;
+  private _transparantieaanpasbareLagen: Predicate<string> = DefaultOpties.transparantieaanpasbareLagen;
 
   public get headerTitel(): string {
     return this._headerTitel;
@@ -128,6 +129,19 @@ export class ClassicLagenkiezerComponent extends ClassicBaseComponent implements
     this._filterbareLagen = param;
   }
 
+  public get transparantieaanpasbareLagen(): Predicate<string> {
+    return this._transparantieaanpasbareLagen;
+  }
+
+  /**
+   * Hiermee kan een functie gezet worden die obv de titel van een laag beslist of de stijleditor aangeboden mag worden.
+   * Niet bruikbaar in webcomponent mode.
+   */
+  @Input()
+  public set transparantieaanpasbareLagen(param: Predicate<string>) {
+    this._transparantieaanpasbareLagen = param;
+  }
+
   ngOnInit() {
     super.ngOnInit();
     this.kaart.dispatch(VoegUiElementToe(LagenUiSelector));
@@ -152,7 +166,8 @@ export class ClassicLagenkiezerComponent extends ClassicBaseComponent implements
       verwijderbareLagen: this.verwijderbareLagen,
       verplaatsbareLagen: this.verplaatsbareLagen,
       stijlbareVectorlagen: this.stijlbareVectorlagen,
-      filterbareLagen: this.filterbareLagen
+      filterbareLagen: this.filterbareLagen,
+      transparantieaanpasbareLagen: this.transparantieaanpasbareLagen
     };
   }
 }
