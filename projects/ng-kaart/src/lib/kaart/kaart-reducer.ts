@@ -18,6 +18,7 @@ import { Filter as fltr } from "../filter/filter-model";
 import { FilterTotaal, totaalOpTeHalen } from "../filter/filter-totaal";
 import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
 import { GeenTransparantieaanpassingBezig, Transparantieaanpassend } from "../transparantieeditor/state";
+import { Transparantie } from "../transparantieeditor/transparancy";
 import * as arrays from "../util/arrays";
 import { refreshTiles } from "../util/cachetiles";
 import { Feature, modifyWithLaagnaam } from "../util/feature";
@@ -1326,6 +1327,19 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
+    function zetTransparantieVoorLaag(cmnd: prt.ZetTransparantieVoorLaagCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.msgGen,
+        valideerToegevoegdeLaagBestaat(cmnd.titel).map(laag => {
+          const updatedLaag = { ...laag, transparantie: cmnd.transparantie };
+          const updatedModel = pasLaagInModelAan(model)(updatedLaag);
+          laag.layer.setOpacity(1 - Transparantie.toNumber(cmnd.transparantie));
+          zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
+          return ModelAndEmptyResult(updatedModel);
+        })
+      );
+    }
+
     function sluitPanelen(cmnd: prt.SluitPanelenCmd): ModelWithResult<Msg> {
       updateBehaviorSubject(model.infoBoodschappenSubj, () => new Map());
       modelChanger.laagstijlaanpassingStateSubj.next(GeenLaagstijlaanpassing);
@@ -1882,6 +1896,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return bewerkTransparantie(cmd);
         case "StopTransparantieBewerking":
           return stopTransparantieBewerking(cmd);
+        case "ZetTransparantieVoorLaag":
+          return zetTransparantieVoorLaag(cmd);
       }
     }
 

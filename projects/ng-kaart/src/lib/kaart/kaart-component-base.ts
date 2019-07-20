@@ -81,7 +81,7 @@ export abstract class KaartComponentBase implements AfterViewInit, OnInit, OnDes
     );
   }
 
-  protected actionDataFor$<T extends object>(actionName: string, refinement: Refinement<any, T>): rx.Observable<T> {
+  protected actionDataFor$<T>(actionName: string, refinement: Refinement<any, T>): rx.Observable<T> {
     return this.clickActionSubj.pipe(
       filter(a => a.name === actionName && !isNullOrUndefined(a.data) && refinement(a.data)),
       map(a => a.data)

@@ -92,6 +92,7 @@ export type Command<Msg extends KaartMsg> =
   | ZetOffline<Msg>
   | ZetStijlSpecVoorLaagCmd<Msg>
   | ZetStijlVoorLaagCmd<Msg>
+  | ZetTransparantieVoorLaagCmd<Msg>
   | ZetUiElementOpties
   | ZoekCmd<Msg>
   | ZoekGekliktCmd;
@@ -570,6 +571,13 @@ export interface MijnLocatieStateChangeCmd {
   readonly event: loc.Event;
 }
 
+export interface ZetTransparantieVoorLaagCmd<Msg extends TypedRecord> {
+  readonly type: "ZetTransparantieVoorLaag";
+  readonly titel: string;
+  readonly transparantie: Transparantie;
+  readonly msgGen: BareValidationWrapper<Msg>;
+}
+
 ////////////////////////
 // constructor functies
 //
@@ -954,4 +962,12 @@ export function MijnLocatieStateChangeCmd(oudeState: loc.State, nieuweState: loc
 
 export function ZoekCmd<Msg extends KaartMsg>(opdracht: Zoekopdracht, wrapper: BareValidationWrapper<Msg>): ZoekCmd<Msg> {
   return { type: "Zoek", opdracht, wrapper };
+}
+
+export function ZetTransparantieVoorLaagCmd<Msg extends TypedRecord>(
+  titel: string,
+  transparantie: Transparantie,
+  msgGen: BareValidationWrapper<Msg>
+): ZetTransparantieVoorLaagCmd<Msg> {
+  return { type: "ZetTransparantieVoorLaag", titel, transparantie, msgGen };
 }

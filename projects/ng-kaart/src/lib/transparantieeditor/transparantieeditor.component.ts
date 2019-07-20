@@ -1,18 +1,20 @@
 import { ChangeDetectionStrategy, Component, ElementRef, NgZone, QueryList, ViewChildren, ViewEncapsulation } from "@angular/core";
 import * as array from "fp-ts/lib/Array";
-import { Curried2, Function1, Function2, identity, Predicate, Refinement, tuple } from "fp-ts/lib/function";
+import { Function2, identity } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
-import { setoidString } from "fp-ts/lib/Setoid";
 import * as rx from "rxjs";
-import { filter, map, sample, shareReplay, switchMap, tap } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, sample, shareReplay, startWith, tap } from "rxjs/operators";
+import { isNumber } from "util";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import * as ke from "../kaart/kaart-elementen";
+import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
 import { collectOption, forEvery, subSpy } from "../util/operators";
 
-import { isAanpassingBezig, isAanpassingNietBezig, TransparantieaanpassingBezig, TransparantieaanpassingState } from "./state";
+import { isAanpassingBezig, isAanpassingNietBezig, TransparantieaanpassingBezig } from "./state";
+import { Transparantie } from "./transparancy";
 
 @Component({
   selector: "awv-transparantieeditor",
@@ -25,18 +27,13 @@ export class TransparantieeditorComponent extends KaartChildComponentBase {
   readonly zichtbaar$: rx.Observable<boolean>;
   readonly titel$: rx.Observable<string>;
   readonly nietToepassen$: rx.Observable<boolean>;
+  readonly gezetteWaarde$: rx.Observable<number>;
 
   @ViewChildren("editor")
   editorElement: QueryList<ElementRef>; // QueryList omdat enkel beschikbaar wanneer ngIf true is
 
   constructor(kaart: KaartComponent, zone: NgZone) {
     super(kaart, zone);
-
-    const editorElement$ = this.viewReady$.pipe(
-      switchMap(() => this.editorElement.changes),
-      filter(ql => ql.length > 0),
-      map(ql => ql.first.nativeElement)
-    );
 
     const aanpassing$: rx.Observable<TransparantieaanpassingBezig> = subSpy("***aanpassing$")(
       kaart.modelChanges.transparantieaanpassingState$.pipe(
@@ -48,12 +45,37 @@ export class TransparantieeditorComponent extends KaartChildComponentBase {
 
     this.zichtbaar$ = kaart.modelChanges.transparantieaanpassingState$.pipe(map(isAanpassingBezig));
 
-    const laag$: rx.Observable<ke.ToegevoegdeLaag> = aanpassing$.pipe(
-      // TODO ook luisteren op veranderingen in de lagen.
-      map(aanpassing => aanpassing.laag),
+    const findLaagOpTitel: Function2<string, ke.ToegevoegdeLaag[], Option<ke.ToegevoegdeLaag>> = (titel, lgn) =>
+      array.findFirst(lgn, lg => lg.titel === titel);
+    const laag$: rx.Observable<ke.ToegevoegdeLaag> = forEvery(aanpassing$)(aanpassing =>
+      kaart.modelChanges.lagenOpGroep.get(aanpassing.laag.laaggroep)!.pipe(
+        collectOption(lgn => findLaagOpTitel(aanpassing.laag.titel, lgn)),
+        startWith(aanpassing.laag)
+      )
+    ).pipe(
       shareReplay(1) // De huidige laag moet bewaard blijven voor alle volgende subscribers
     );
+
     this.titel$ = laag$.pipe(map(laag => laag.titel));
+    this.gezetteWaarde$ = subSpy("****gezetteWaarde")(
+      laag$.pipe(
+        map(laag => laag.transparantie),
+        map(Transparantie.toNumber),
+        distinctUntilChanged(),
+        shareReplay(1)
+      )
+    );
+
+    const pasToeClick$ = this.actionFor$("pasTransparantieToe");
+
+    const waarde$: rx.Observable<number> = this.actionDataFor$("value", isNumber);
+    const cmd$ = forEvery(this.titel$)(titel =>
+      waarde$.pipe(
+        collectOption(Transparantie.fromNumber),
+        map(value => prt.ZetTransparantieVoorLaagCmd(titel, value, kaartLogOnlyWrapper)),
+        sample(pasToeClick$)
+      )
+    );
 
     const sluit$ = rx.merge(
       this.zichtbaar$.pipe(
@@ -61,10 +83,15 @@ export class TransparantieeditorComponent extends KaartChildComponentBase {
         sample(geenAanpassing$) // en het signaal komt dat er geen aanpassing nodig meer is
       ),
       this.actionFor$("sluitTransparantieeditor"),
-      this.actionFor$("annuleerTransparantie") // TODO wijzingen ongedaan maken
+      this.actionFor$("annuleerTransparantie") // TODO wijzingen ongedaan maken ofwel knop verwijderen
     );
 
-    this.nietToepassen$ = rx.of(false); // TODO kijken of er iets gewijzigd is.
+    this.nietToepassen$ = forEvery(laag$)(() =>
+      rx.combineLatest(this.gezetteWaarde$, waarde$).pipe(
+        map(([origineleWaarde, waarde]) => origineleWaarde === waarde),
+        startWith(true)
+      )
+    );
 
     this.runInViewReady(
       rx.merge(
@@ -73,7 +100,8 @@ export class TransparantieeditorComponent extends KaartChildComponentBase {
           tap(() => {
             this.dispatch(prt.StopTransparantieBewerkingCmd());
           })
-        )
+        ),
+        cmd$.pipe(tap(cmd => this.dispatch(cmd)))
       )
     );
   }

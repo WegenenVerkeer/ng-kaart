@@ -6,7 +6,7 @@ import { Legende } from "../../kaart/kaart-legende";
 import * as prt from "../../kaart/kaart-protocol";
 import * as val from "../webcomponent-support/params";
 
-import { prismTransparantie, Transparantie } from "../../transparantieeditor/transparancy";
+import { Transparantie } from "../../transparantieeditor/transparancy";
 import { ClassicBaseComponent } from "../classic-base.component";
 import { KaartClassicLocatorService } from "../kaart-classic-locator.service";
 import { ClassicLegendeItemComponent } from "../legende/classic-legende-item.component";
@@ -59,7 +59,7 @@ export abstract class ClassicLaagComponent extends ClassicBaseComponent implemen
   set transparantie(param: number) {
     this._transparantie = val
       .optNum(param)
-      .chain(prismTransparantie.getOption)
+      .chain(Transparantie.fromNumber)
       .getOrElse(this._transparantie);
   }
 

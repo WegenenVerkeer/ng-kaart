@@ -1,4 +1,4 @@
-<div class="awv-kaart-transparantieeditor kaart-widget" *ngIf="zichtbaar$ | async" #editor>
+<div class="awv-kaart-transparantieeditor kaart-widget" *ngIf="zichtbaar$ | async">
   <div class="header">
     <button class="header-logo" mat-icon-button><mat-icon>opacity</mat-icon></button>
     <div class="header-title">
@@ -9,7 +9,7 @@
   </div>
 
   <div class="body">
-      <mat-slider min="0" max="0.75" step="0.25" tickInterval="1"></mat-slider>
+      <mat-slider [min]="0" [max]="0.75" [step]="0.25" [tickInterval]="1" [value]="gezetteWaarde$ | async" (change)="onAction('value', $event.value)"></mat-slider>
       <div class="guide">
         <div class="value">Minimum</div>
         <div class="spacer"></div>
