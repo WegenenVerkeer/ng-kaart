@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, ElementRef, NgZone, QueryList, ViewChildren, ViewEncapsulation } from "@angular/core";
+import { ChangeDetectionStrategy, Component, NgZone, ViewEncapsulation } from "@angular/core";
 import * as array from "fp-ts/lib/Array";
 import { Function2, identity } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
@@ -11,7 +11,7 @@ import * as ke from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
-import { collectOption, forEvery, subSpy } from "../util/operators";
+import { collectOption, forEvery } from "../util/operators";
 
 import { isAanpassingBezig, isAanpassingNietBezig, TransparantieaanpassingBezig } from "./state";
 import { Transparantie } from "./transparancy";
@@ -29,17 +29,12 @@ export class TransparantieeditorComponent extends KaartChildComponentBase {
   readonly nietToepassen$: rx.Observable<boolean>;
   readonly gezetteWaarde$: rx.Observable<number>;
 
-  @ViewChildren("editor")
-  editorElement: QueryList<ElementRef>; // QueryList omdat enkel beschikbaar wanneer ngIf true is
-
   constructor(kaart: KaartComponent, zone: NgZone) {
     super(kaart, zone);
 
-    const aanpassing$: rx.Observable<TransparantieaanpassingBezig> = subSpy("***aanpassing$")(
-      kaart.modelChanges.transparantieaanpassingState$.pipe(
-        filter(isAanpassingBezig),
-        shareReplay(1) // Alle observables die later subscriben (en er zijn er veel) moeten de huidige toestand kennen.
-      )
+    const aanpassing$: rx.Observable<TransparantieaanpassingBezig> = kaart.modelChanges.transparantieaanpassingState$.pipe(
+      filter(isAanpassingBezig),
+      shareReplay(1) // Alle observables die later subscriben (en er zijn er veel) moeten de huidige toestand kennen.
     );
     const geenAanpassing$ = kaart.modelChanges.transparantieaanpassingState$.pipe(filter(isAanpassingNietBezig));
 
@@ -57,13 +52,11 @@ export class TransparantieeditorComponent extends KaartChildComponentBase {
     );
 
     this.titel$ = laag$.pipe(map(laag => laag.titel));
-    this.gezetteWaarde$ = subSpy("****gezetteWaarde")(
-      laag$.pipe(
-        map(laag => laag.transparantie),
-        map(Transparantie.toNumber),
-        distinctUntilChanged(),
-        shareReplay(1)
-      )
+    this.gezetteWaarde$ = laag$.pipe(
+      map(laag => laag.transparantie),
+      map(Transparantie.toNumber),
+      distinctUntilChanged(),
+      shareReplay(1)
     );
 
     const pasToeClick$ = this.actionFor$("pasTransparantieToe");
@@ -82,8 +75,7 @@ export class TransparantieeditorComponent extends KaartChildComponentBase {
         filter(identity), // wel zichtbaar
         sample(geenAanpassing$) // en het signaal komt dat er geen aanpassing nodig meer is
       ),
-      this.actionFor$("sluitTransparantieeditor"),
-      this.actionFor$("annuleerTransparantie") // TODO wijzingen ongedaan maken ofwel knop verwijderen
+      this.actionFor$("sluitTransparantieeditor")
     );
 
     this.nietToepassen$ = forEvery(laag$)(() =>
@@ -95,7 +87,6 @@ export class TransparantieeditorComponent extends KaartChildComponentBase {
 
     this.runInViewReady(
       rx.merge(
-        laag$.pipe(tap(laag => console.log("****laag", laag))),
         sluit$.pipe(
           tap(() => {
             this.dispatch(prt.StopTransparantieBewerkingCmd());

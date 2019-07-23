@@ -18,7 +18,6 @@
   </div>
 
   <div class="action">
-    <button mat-raised-button class="cancel" (click)="onAction('annuleerTransparantie')">Annuleer</button>
     <button mat-raised-button color="primary" [disabled]="nietToepassen$ | async" (click)="onAction('pasTransparantieToe')">Pas toe</button>
   </div>
 </div>
