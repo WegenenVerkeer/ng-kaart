@@ -121,8 +121,7 @@ export class ClassicLagenkiezerComponent extends ClassicBaseComponent implements
   }
 
   /**
-   * Hiermee kan een functie gezet worden die obv de titel van een laag beslist of de stijleditor aangeboden mag worden.
-   * Niet bruikbaar in webcomponent mode.
+   * Indien gezet kunnen vectorlagen gefilterd worden. Er moeten dan ook veldbeschrijvingen gezet worden.
    */
   @Input()
   public set filterbareLagen(param: boolean) {
@@ -134,8 +133,8 @@ export class ClassicLagenkiezerComponent extends ClassicBaseComponent implements
   }
 
   /**
-   * Hiermee kan een functie gezet worden die obv de titel van een laag beslist of de stijleditor aangeboden mag worden.
-   * Niet bruikbaar in webcomponent mode.
+   * Hiermee kan een functie gezet worden die obv de titel van een laag beslist of de transparantie-editor aangeboden
+   * mag worden. Niet bruikbaar in webcomponent mode.
    */
   @Input()
   public set transparantieaanpasbareLagen(param: Predicate<string>) {
