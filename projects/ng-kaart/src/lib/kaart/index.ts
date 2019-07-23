@@ -22,7 +22,7 @@ import { KaartOpenLayersStyleComponent } from "../classic/openlayers-style/class
 import { KaartTekenComponent } from "../classic/tekenen/kaart-teken.component";
 import { FilterModule } from "../filter/index";
 import { LagenkiezerModule } from "../lagenkiezer/index";
-import { TransparantieeditorModule } from "../transparantieeditor";
+import { TransparantieeditorModule } from "../transparantieeditor/index";
 import { ZoekerModule } from "../zoeker/index";
 
 import { KaartAchtergrondSelectorComponent } from "./achtergrond-selector/kaart-achtergrond-selector.component";

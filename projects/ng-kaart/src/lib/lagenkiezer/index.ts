@@ -4,7 +4,7 @@ import { MatButtonModule, MatIconModule, MatInputModule, MatMenuModule, MatToolt
 import { MatTabsModule } from "@angular/material/tabs";
 
 import { FilterModule } from "../filter/index";
-import { TransparantieeditorModule } from "../transparantieeditor";
+import { TransparantieeditorModule } from "../transparantieeditor/index";
 
 import { LaagmanipulatieComponent } from "./laagmanipulatie.component";
 import { LAGENKIEZER_CFG, LagenkiezerConfig } from "./lagenkiezer-config";

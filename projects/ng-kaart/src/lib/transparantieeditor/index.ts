@@ -1,17 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { ModuleWithProviders, NgModule } from "@angular/core";
 import { ReactiveFormsModule } from "@angular/forms";
-import {
-  MatButtonModule,
-  MatFormFieldModule,
-  MatIconModule,
-  MatInputModule,
-  MatOptionModule,
-  MatSelectModule,
-  MatSliderModule,
-  MatTooltipModule
-} from "@angular/material";
-import { MatTabsModule } from "@angular/material/tabs";
+import { MatButtonModule, MatFormFieldModule, MatIconModule, MatInputModule, MatSliderModule, MatTooltipModule } from "@angular/material";
 
 import { TransparantieeditorComponent } from "./transparantieeditor.component";
 
@@ -24,10 +14,7 @@ const components = [TransparantieeditorComponent];
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatOptionModule,
-    MatSelectModule,
     MatSliderModule,
-    MatTabsModule,
     MatTooltipModule,
     ReactiveFormsModule
   ],
@@ -44,5 +31,6 @@ export class TransparantieeditorModule {
   }
 }
 
-export * from "./transparantieeditor.component";
 export * from "./state";
+export * from "./transparancy";
+export * from "./transparantieeditor.component";

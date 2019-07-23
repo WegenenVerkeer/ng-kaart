@@ -4,12 +4,12 @@ import { FormsModule } from "@angular/forms";
 import { BrowserModule } from "@angular/platform-browser";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { ClickOutsideModule } from "ng4-click-outside";
-import { TransparantieeditorModule } from "projects/ng-kaart/src/lib/transparantieeditor";
 
 import { ClassicModule, componentMap, KaartClassicComponent } from "../../../ng-kaart/src/lib/classic";
 import { FilterModule } from "../../../ng-kaart/src/lib/filter";
 import { KaartModule } from "../../../ng-kaart/src/lib/kaart";
 import { LagenkiezerModule } from "../../../ng-kaart/src/lib/lagenkiezer";
+import { TransparantieeditorModule } from "../../../ng-kaart/src/lib/transparantieeditor";
 import { ZoekerModule } from "../../../ng-kaart/src/lib/zoeker";
 
 @NgModule({
