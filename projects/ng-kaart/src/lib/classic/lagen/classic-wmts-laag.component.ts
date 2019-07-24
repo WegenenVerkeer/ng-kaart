@@ -33,7 +33,6 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
   private _matrixIds: string[];
   private _origin: Option<ol.Coordinate> = none;
   private _extent: Option<ol.Extent> = none;
-  private _opacity: Option<number> = none;
 
   constructor(injector: Injector, private http: HttpClient) {
     super(injector);
@@ -57,11 +56,6 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
   @Input()
   set extent(param: ol.Extent) {
     this._extent = val.optExtent(param);
-  }
-
-  @Input()
-  set opacity(param: number) {
-    this._opacity = val.optNum(param);
   }
 
   @Input()
@@ -151,7 +145,6 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
       naam: this._laagNaam,
       versie: this._versie,
       format: some(this._format),
-      opacity: this._opacity,
       matrixSet: this._matrixSet,
       config: config,
       backgroundUrl: this.backgroundUrl(config),

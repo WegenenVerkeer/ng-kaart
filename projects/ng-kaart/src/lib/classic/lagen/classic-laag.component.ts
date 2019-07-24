@@ -6,7 +6,7 @@ import { Legende } from "../../kaart/kaart-legende";
 import * as prt from "../../kaart/kaart-protocol";
 import * as val from "../webcomponent-support/params";
 
-import { Transparantie } from "../../transparantieeditor/transparancy";
+import { Opaciteit, Transparantie } from "../../transparantieeditor/transparantie";
 import { ClassicBaseComponent } from "../classic-base.component";
 import { KaartClassicLocatorService } from "../kaart-classic-locator.service";
 import { ClassicLegendeItemComponent } from "../legende/classic-legende-item.component";
@@ -60,6 +60,15 @@ export abstract class ClassicLaagComponent extends ClassicBaseComponent implemen
     this._transparantie = val
       .optNum(param)
       .chain(Transparantie.fromNumber)
+      .getOrElse(this._transparantie);
+  }
+
+  @Input()
+  set opacity(param: number) {
+    this._transparantie = val
+      .optNum(param)
+      .chain(Opaciteit.fromNumber)
+      .map(Opaciteit.toTransparantie)
       .getOrElse(this._transparantie);
   }
 

@@ -32,5 +32,5 @@ export class TransparantieeditorModule {
 }
 
 export * from "./state";
-export * from "./transparancy";
+export * from "./transparantie";
 export * from "./transparantieeditor.component";

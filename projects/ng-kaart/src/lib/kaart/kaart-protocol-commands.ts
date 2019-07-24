@@ -3,7 +3,7 @@ import * as ol from "openlayers";
 import * as rx from "rxjs";
 
 import { Filter as fltr } from "../filter/filter-model";
-import { Transparantie } from "../transparantieeditor/transparancy";
+import { Transparantie } from "../transparantieeditor/transparantie";
 import { TypedRecord } from "../util/typed-record";
 import { ZoekerMetWeergaveopties, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
 

@@ -14,7 +14,7 @@ import * as ke from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as cmd from "../kaart/kaart-protocol-commands";
 import { KaartComponent } from "../kaart/kaart.component";
-import { Transparantie } from "../transparantieeditor/transparancy";
+import { Transparantie } from "../transparantieeditor/transparantie";
 import { observeOnAngular } from "../util/observe-on-angular";
 import { collectOption } from "../util/operators";
 import { atLeastOneTrue, negate } from "../util/thruth";

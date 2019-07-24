@@ -7,7 +7,7 @@ import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, mapTo, pairwise, scan, shareReplay, startWith, throttle, throttleTime } from "rxjs/operators";
 
-import { Transparantie } from "../../transparantieeditor/transparancy";
+import { Transparantie } from "../../transparantieeditor/transparantie";
 import { catOptions } from "../../util/operators";
 import * as ke from "../kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart-internal-messages";

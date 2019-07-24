@@ -11,7 +11,7 @@ import { bufferTime, debounceTime, filter, map, mapTo, scan, share, startWith, s
 
 import * as clr from "../../stijl/colour";
 import { disc, solidLine } from "../../stijl/common-shapes";
-import { Transparantie } from "../../transparantieeditor/transparancy";
+import { Transparantie } from "../../transparantieeditor/transparantie";
 import { asap } from "../../util/asap";
 import { applySequential, Consumer1, PartialFunction1, ReduceFunction } from "../../util/function";
 import {

@@ -8,7 +8,7 @@ import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, pairwise, switchMap, tap } from "rxjs/operators";
 
 import * as ss from "../../kaart/stijl-selector";
-import { Transparantie } from "../../transparantieeditor/transparancy";
+import { Transparantie } from "../../transparantieeditor/transparantie";
 import { ofType } from "../../util";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";

@@ -18,7 +18,7 @@ import { Filter as fltr } from "../filter/filter-model";
 import { FilterTotaal, totaalOpTeHalen } from "../filter/filter-totaal";
 import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
 import { GeenTransparantieaanpassingBezig, Transparantieaanpassend } from "../transparantieeditor/state";
-import { Transparantie } from "../transparantieeditor/transparancy";
+import { Opaciteit, Transparantie } from "../transparantieeditor/transparantie";
 import * as arrays from "../util/arrays";
 import { refreshTiles } from "../util/cachetiles";
 import { Feature, modifyWithLaagnaam } from "../util/feature";
@@ -411,6 +411,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               );
               layer.set(ke.LayerProperties.Titel, titel);
               layer.setVisible(cmnd.magGetoondWorden && !cmnd.laag.verwijderd); // achtergrondlagen expliciet zichtbaar maken!
+              layer.setOpacity(
+                pipe(
+                  Transparantie.toOpaciteit,
+                  Opaciteit.toNumber
+                )(cmnd.transparantie)
+              );
               // met positie hoeven we nog geen rekening te houden
               forEach(ke.asToegevoegdeVectorLaag(toegevoegdeLaag), pasVectorLaagStijlToe);
               zetLayerIndex(layer, groepPositie, groep);
@@ -509,6 +515,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             const oldLayer = laag.layer;
             layer.set(ke.LayerProperties.Titel, oldLayer.get(ke.LayerProperties.Titel));
             layer.setVisible(oldLayer.getVisible());
+            layer.setOpacity(oldLayer.getOpacity());
             forEach(ke.asToegevoegdeVectorLaag(toegevoegdeLaag), pasVectorLaagStijlToe);
             zetLayerIndex(layer, laag.positieInGroep, laag.laaggroep);
             model.map.addLayer(layer);

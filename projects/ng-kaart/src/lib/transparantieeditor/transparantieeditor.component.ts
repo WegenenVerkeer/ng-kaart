@@ -14,7 +14,7 @@ import { KaartComponent } from "../kaart/kaart.component";
 import { collectOption, forEvery } from "../util/operators";
 
 import { isAanpassingBezig, isAanpassingNietBezig, TransparantieaanpassingBezig } from "./state";
-import { Transparantie } from "./transparancy";
+import { Transparantie } from "./transparantie";
 
 @Component({
   selector: "awv-transparantieeditor",

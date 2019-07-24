@@ -28,7 +28,6 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
       title: l.titel,
       visible: true,
       extent: kaart.config.defaults.extent,
-      opacity: l.opacity.toUndefined(),
       source: new ol.source.TileWMS({
         projection: projection(l.beschikbareProjecties),
         cacheSize: kaart.tileLoader.maxMislukteTiles,
@@ -79,14 +78,12 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
       title: l.titel,
       visible: true,
       extent: extent,
-      opacity: l.opacity.toUndefined(),
       source: source
     });
   }
 
   function createSingleTileWmsLayer(l: ke.WmsLaag) {
     return new ol.layer.Image({
-      opacity: l.opacity.toUndefined(),
       source: new ol.source.ImageWMS({
         url: l.urls[0],
         params: {

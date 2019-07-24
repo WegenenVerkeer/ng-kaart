@@ -36,7 +36,7 @@ import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import * as prt from "../../kaart/kaart-protocol";
 import { KaartComponent } from "../../kaart/kaart.component";
 import { kaartLogger } from "../../kaart/log";
-import { Transparantie } from "../../transparantieeditor/transparancy";
+import { Transparantie } from "../../transparantieeditor/transparantie";
 import { isNotNullObject } from "../../util/function";
 import { matchGeometryType } from "../../util/geometries";
 import * as maps from "../../util/maps";

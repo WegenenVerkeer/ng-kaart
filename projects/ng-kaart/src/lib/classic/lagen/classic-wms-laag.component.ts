@@ -83,7 +83,6 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   _cqlFilter: Option<string> = none;
   _tiled: boolean;
   _tileSize = 256;
-  _opacity: Option<number> = none;
   _cacheActief = false;
   _veldInfos: Option<ke.VeldInfo[]> = none;
   _beschikbareProjecties: string[] = [Epsg.Lambert72];
@@ -116,11 +115,6 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
   @Input()
   set tileSize(param: number) {
     this._tileSize = val.num(param, this._tileSize);
-  }
-
-  @Input()
-  set opacity(param: number) {
-    this._opacity = val.optNum(param);
   }
 
   @Input()
@@ -188,7 +182,6 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
         cqlFilter: this._cqlFilter,
         tileSize: fromNullable(this._tileSize),
         format: fromNullable(this._format),
-        opacity: this._opacity,
         backgroundUrl: this.backgroundUrl(this._urls, this._laagNaam),
         minZoom: this._minZoom,
         maxZoom: this._maxZoom,
@@ -205,7 +198,6 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
         cqlFilter: this._cqlFilter, // wordt niet gebruikt evenwel
         tileSize: none,
         format: fromNullable(this._format),
-        opacity: this._opacity,
         backgroundUrl: this.backgroundUrl(this._urls, this._laagNaam),
         minZoom: this._minZoom,
         maxZoom: this._maxZoom,
