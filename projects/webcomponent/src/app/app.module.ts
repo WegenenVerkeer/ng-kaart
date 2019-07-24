@@ -9,6 +9,7 @@ import { ClassicModule, componentMap, KaartClassicComponent } from "../../../ng-
 import { FilterModule } from "../../../ng-kaart/src/lib/filter";
 import { KaartModule } from "../../../ng-kaart/src/lib/kaart";
 import { LagenkiezerModule } from "../../../ng-kaart/src/lib/lagenkiezer";
+import { TransparantieeditorModule } from "../../../ng-kaart/src/lib/transparantieeditor";
 import { ZoekerModule } from "../../../ng-kaart/src/lib/zoeker";
 
 @NgModule({
@@ -20,6 +21,7 @@ import { ZoekerModule } from "../../../ng-kaart/src/lib/zoeker";
     KaartModule.withDefaults(),
     ClassicModule,
     FilterModule,
+    TransparantieeditorModule,
     ZoekerModule.forRoot({
       googleWdb: {
         apiKey: "AIzaSyApbXMl5DGL60g17JU6MazMxNcUGooey7I",

@@ -122,9 +122,9 @@ export class FilterEditorComponent extends KaartChildComponentBase {
   constructor(kaart: KaartComponent, zone: NgZone, private readonly cdr: ChangeDetectorRef) {
     super(kaart, zone);
 
-    this.zichtbaar$ = kaart.modelChanges.laagFilterAanpassingState$.pipe(map(isAanpassingBezig));
+    this.zichtbaar$ = kaart.modelChanges.laagfilteraanpassingState$.pipe(map(isAanpassingBezig));
 
-    const aanpassing$: rx.Observable<FilterAanpassingBezig> = kaart.modelChanges.laagFilterAanpassingState$.pipe(
+    const aanpassing$: rx.Observable<FilterAanpassingBezig> = kaart.modelChanges.laagfilteraanpassingState$.pipe(
       filter(isAanpassingBezig),
       shareReplay(1) // Alle observables die later subscriben (en er zijn er veel) moeten de huidige toestand kennen.
     );
@@ -256,7 +256,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
     // Deze subscribe zorgt er voor dat de updates effectief uitgevoerd worden
     this.bindToLifeCycle(
-      rx.combineLatest(changedFilterEditor$, kaart.modelChanges.laagFilterAanpassingState$.pipe(map(isAanpassingBezig)))
+      rx.combineLatest(changedFilterEditor$, kaart.modelChanges.laagfilteraanpassingState$.pipe(map(isAanpassingBezig)))
     ).subscribe(([expressionEditor, zichtbaar]) => {
       if (zichtbaar) {
         // zet control waarden bij aanpassen van expressionEditor

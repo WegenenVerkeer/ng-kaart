@@ -6,6 +6,7 @@ import { Legende } from "../../kaart/kaart-legende";
 import * as prt from "../../kaart/kaart-protocol";
 import * as val from "../webcomponent-support/params";
 
+import { Opaciteit, Transparantie } from "../../transparantieeditor/transparantie";
 import { ClassicBaseComponent } from "../classic-base.component";
 import { KaartClassicLocatorService } from "../kaart-classic-locator.service";
 import { ClassicLegendeItemComponent } from "../legende/classic-legende-item.component";
@@ -19,6 +20,7 @@ export abstract class ClassicLaagComponent extends ClassicBaseComponent implemen
   _titel = "";
   _stijlInLagenKiezer: Option<string> = none;
   _zichtbaar = true;
+  _transparantie: Transparantie = Transparantie.opaak;
   _groep: Option<Laaggroep> = none;
   _minZoom = 2;
   _maxZoom = 16;
@@ -53,10 +55,27 @@ export abstract class ClassicLaagComponent extends ClassicBaseComponent implemen
     this._maxZoom = val.num(param, this._maxZoom);
   }
 
+  @Input()
+  set transparantie(param: number) {
+    this._transparantie = val
+      .optNum(param)
+      .chain(Transparantie.fromNumber)
+      .getOrElse(this._transparantie);
+  }
+
+  @Input()
+  set opacity(param: number) {
+    this._transparantie = val
+      .optNum(param)
+      .chain(Opaciteit.fromNumber)
+      .map(Opaciteit.toTransparantie)
+      .getOrElse(this._transparantie);
+  }
+
   constructor(injector: Injector) {
     super(injector);
     const locatorService = injector.get(KaartClassicLocatorService) as KaartClassicLocatorService<ClassicLaagComponent>;
-    const el: ElementRef<Element> = injector.get(ElementRef);
+    const el: ElementRef<Element> = injector.get<ElementRef<Element>>(ElementRef);
     locatorService.registerComponent(this, el);
   }
 
@@ -88,6 +107,7 @@ export abstract class ClassicLaagComponent extends ClassicBaseComponent implemen
       laag: lg,
       laaggroep: this.gekozenLaagGroep(),
       magGetoondWorden: this._zichtbaar,
+      transparantie: this._transparantie,
       legende: none,
       stijlInLagenKiezer: this._stijlInLagenKiezer,
       filterinstellingen: none,

@@ -8,8 +8,9 @@ import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, map, mapTo, mergeAll, observeOn, share, shareReplay, switchMap } from "rxjs/operators";
 
-import { FilterAanpassingState, GeenFilterAanpassingBezig } from "../filter/filter-aanpassing-state";
+import { FilterAanpassingState as FilteraanpassingState, GeenFilterAanpassingBezig } from "../filter/filter-aanpassing-state";
 import { NosqlFsSource } from "../source/nosql-fs-source";
+import { GeenTransparantieaanpassingBezig, TransparantieaanpassingState } from "../transparantieeditor/state";
 import * as tilecacheMetadataDb from "../util/indexeddb-tilecache-metadata";
 import { observableFromOlEvents } from "../util/ol-observable";
 import { updateBehaviorSubject } from "../util/subject-update";
@@ -77,7 +78,8 @@ export interface ModelChanger {
   readonly laagstijlaanpassingStateSubj: rx.Subject<LaagstijlaanpassingState>;
   readonly laagfilterGezetSubj: rx.Subject<ke.ToegevoegdeVectorLaag>;
   readonly laagstijlGezetSubj: rx.Subject<ke.ToegevoegdeVectorLaag>;
-  readonly laagFilterAanpassingStateSubj: rx.Subject<FilterAanpassingState>;
+  readonly laagfilteraanpassingStateSubj: rx.Subject<FilteraanpassingState>;
+  readonly transparantieAanpassingStateSubj: rx.Subject<TransparantieaanpassingState>;
   readonly dragInfoSubj: rx.Subject<DragInfo>;
   readonly tekenenOpsSubj: rx.Subject<DrawOps>;
   readonly getekendeGeometrySubj: rx.Subject<ol.geom.Geometry>;
@@ -108,7 +110,8 @@ export const ModelChanger: () => ModelChanger = () => ({
   laagstijlaanpassingStateSubj: new rx.BehaviorSubject(GeenLaagstijlaanpassing),
   laagfilterGezetSubj: new rx.Subject<ke.ToegevoegdeVectorLaag>(),
   laagstijlGezetSubj: new rx.Subject<ke.ToegevoegdeVectorLaag>(),
-  laagFilterAanpassingStateSubj: new rx.BehaviorSubject(GeenFilterAanpassingBezig),
+  laagfilteraanpassingStateSubj: new rx.BehaviorSubject(GeenFilterAanpassingBezig),
+  transparantieAanpassingStateSubj: new rx.BehaviorSubject(GeenTransparantieaanpassingBezig),
   dragInfoSubj: new rx.Subject<DragInfo>(),
   tekenenOpsSubj: new rx.Subject<DrawOps>(),
   getekendeGeometrySubj: new rx.Subject<ol.geom.Geometry>(),
@@ -135,7 +138,8 @@ export interface ModelChanges {
   readonly laagLocationInfoServicesOpTitel$: rx.Observable<Map<string, LaagLocationInfoService>>;
   readonly laagstijlaanpassingState$: rx.Observable<LaagstijlaanpassingState>;
   readonly laagstijlGezet$: rx.Observable<ke.ToegevoegdeVectorLaag>;
-  readonly laagFilterAanpassingState$: rx.Observable<FilterAanpassingState>;
+  readonly laagfilteraanpassingState$: rx.Observable<FilteraanpassingState>;
+  readonly transparantieaanpassingState$: rx.Observable<TransparantieaanpassingState>;
   readonly laagfilterGezet$: rx.Observable<ke.ToegevoegdeVectorLaag>;
   readonly dragInfo$: rx.Observable<DragInfo>;
   readonly rotatie$: rx.Observable<number>; // een niet gedebouncede variant van "viewinstellingen$.rotatie" voor live rotatie
@@ -306,7 +310,8 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     laagLocationInfoServicesOpTitel$: changer.laagLocationInfoServicesOpTitelSubj.pipe(observeOn(rx.asapScheduler)),
     laagstijlaanpassingState$: changer.laagstijlaanpassingStateSubj.pipe(observeOn(rx.asapScheduler)),
     laagstijlGezet$: changer.laagstijlGezetSubj.pipe(observeOn(rx.asapScheduler)),
-    laagFilterAanpassingState$: changer.laagFilterAanpassingStateSubj.pipe(observeOn(rx.asapScheduler)),
+    laagfilteraanpassingState$: changer.laagfilteraanpassingStateSubj.pipe(observeOn(rx.asapScheduler)),
+    transparantieaanpassingState$: changer.transparantieAanpassingStateSubj.pipe(observeOn(rx.asapScheduler)),
     laagfilterGezet$: changer.laagfilterGezetSubj.pipe(observeOn(rx.asapScheduler)),
     dragInfo$: dragInfo$.pipe(observeOn(rx.asapScheduler)),
     rotatie$: rotation$.pipe(observeOn(rx.asapScheduler)),

@@ -31,7 +31,6 @@ export class ClassicOrthoLaagComponent extends ClassicWmsLaagComponent {
       cqlFilter: this._cqlFilter,
       tileSize: fromNullable(this._tileSize),
       format: fromNullable(this.format),
-      opacity: this._opacity,
       backgroundUrl: this.backgroundUrl(urls, laagnaam),
       minZoom: this._minZoom,
       maxZoom: this._maxZoom,

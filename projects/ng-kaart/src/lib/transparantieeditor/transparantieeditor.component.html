@@ -1,0 +1,23 @@
+<div class="awv-kaart-transparantieeditor kaart-widget" *ngIf="zichtbaar$ | async">
+  <div class="header">
+    <button class="header-logo" mat-icon-button><mat-icon>opacity</mat-icon></button>
+    <div class="header-title">
+      <div class="header-title-main">Transparantie aanpassen</div>
+      <div class="header-title-sub">{{titel$ | async}}</div>
+    </div>
+    <button class="header-openclose" mat-icon-button (click)="onAction('sluitTransparantieeditor')" [matTooltip]="'Sluit en verwerp wijzigingen'"><mat-icon>close</mat-icon></button>
+  </div>
+
+  <div class="body">
+      <mat-slider [min]="0" [max]="0.75" [step]="0.25" [tickInterval]="1" [value]="gezetteWaarde$ | async" (change)="onAction('value', $event.value)"></mat-slider>
+      <div class="guide">
+        <div class="value">Minimum</div>
+        <div class="spacer"></div>
+        <div class="value">Maximum</div>
+      </div>
+  </div>
+
+  <div class="action">
+    <button mat-raised-button color="primary" [disabled]="nietToepassen$ | async" (click)="onAction('pasTransparantieToe')">Pas toe</button>
+  </div>
+</div>

@@ -5,5 +5,6 @@ export * from "./lib/kaart/index";
 export * from "./lib/lagenkiezer/index";
 export * from "./lib/source/index";
 export * from "./lib/stijl/index";
+export * from "./lib/transparantieeditor/index";
 export * from "./lib/util/index";
 export * from "./lib/zoeker/index";

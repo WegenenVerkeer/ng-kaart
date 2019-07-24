@@ -195,8 +195,12 @@
         <awv-kaart-zoeker *ngIf="isOptieActief('zoeker')"></awv-kaart-zoeker>
         <!-- lagen -->
         <awv-kaart-lagenkiezer *ngIf="isOptieActief('lagenkiezer')"
-                               [headerTitel]="'Mijn legende en lagen'" [initieelDichtgeklapt]="true"
-                               [verwijderbareLagen]="isOptieActief('lagenVerwijderbaar')" [verplaatsbareLagen]="true" [stijlbareVectorlagen]="stijlbareVectorlagen"
+                               [headerTitel]="'Mijn legende en lagen'"
+                               [initieelDichtgeklapt]="true"
+                               [verwijderbareLagen]="isOptieActief('lagenVerwijderbaar')"
+                               [verplaatsbareLagen]="true"
+                               [stijlbareVectorlagen]="stijlbareVectorlagen"
+                               [transparantieaanpasbareLagen]="transparantieaanpasbareLagen"
                                [toonLegende]="isOptieActief('legende')"
                                [filterbareLagen]="true"></awv-kaart-lagenkiezer>
         <awv-kaart-geoserver-laag [titel]="'Referentiepunten'" [laagNaam]="'referentiepunten'" [versie]="'1.1.1'">

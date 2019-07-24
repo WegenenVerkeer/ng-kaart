@@ -5,6 +5,7 @@ import { BrowserModule } from "@angular/platform-browser";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { RouterModule } from "@angular/router";
 import { ClickOutsideModule } from "ng4-click-outside";
+import { TransparantieeditorModule } from "projects/ng-kaart/src/lib/transparantieeditor";
 
 import { ClassicModule, FilterModule, KaartModule, LagenkiezerModule, ZoekerModule } from "../../projects/ng-kaart/src/public_api";
 
@@ -49,6 +50,7 @@ import { TestSectieComponent } from "./test-sectie.component";
     //   enabled: true
     // }),
     FilterModule,
+    TransparantieeditorModule,
     ClickOutsideModule
   ],
   providers: [],

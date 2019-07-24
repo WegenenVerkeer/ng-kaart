@@ -4,12 +4,17 @@
     <mat-icon class="laag-drag-indicator" *ngIf="dragSource">swap_vert</mat-icon>
     <mat-icon class="laag-drag-indicator" *ngIf="dragTarget && !dragSource">vertical_align_center</mat-icon>
     <mat-icon class="laag-drag-indicator" *ngIf="dragUntargetable">block</mat-icon>
-    <button *ngIf="!isDragState" mat-icon-button (click)="toggleGekozen()" [disabled]="verwijderd">
-      <mat-icon *ngIf="gekozen && (zichtbaar$ | async) && !verwijderd" matTooltip="Verberg laag" [matTooltipPosition]="'right'" [ngClass]="stijlInKiezer">visibility</mat-icon>
-      <mat-icon *ngIf="!gekozen && (zichtbaar$ | async) && !verwijderd" matTooltip="Toon laag" [matTooltipPosition]="'right'" [ngClass]="stijlInKiezer">visibility_off</mat-icon>
-      <mat-icon *ngIf="gekozen && (onzichtbaar$ | async) && !verwijderd" matTooltip="Niet zichtbaar in huidig zoomniveau" [matTooltipPosition]="'right'" class="onzichtbaar">visibility</mat-icon>
-      <mat-icon *ngIf="!gekozen && (onzichtbaar$ | async) && !verwijderd" matTooltip="Niet zichtbaar in huidige zoomniveau" [matTooltipPosition]="'right'" class="onzichtbaar">visibility_off</mat-icon>
-      <mat-icon *ngIf="verwijderd" matTooltip="Verwijderde laag" [matTooltipPosition]="'right'" class="verwijderd">error</mat-icon>
+    <button *ngIf="zichtbaarheid$ | async as zichtbaarheid" mat-icon-button (click)="toggleGekozen()" [disabled]="zichtbaarheid.verwijderd">
+      <ng-container *ngIf="!zichtbaarheid.verwijderd; else welVerwijderd">
+        <mat-icon *ngIf="zichtbaarheid.gekozen && zichtbaarheid.zichtbaar && zichtbaarheid.transparant" matTooltip="Verberg laag" [matTooltipPosition]="'right'" [ngClass]="zichtbaarheid.stijlInKiezer" svgIcon="transparant"></mat-icon>
+        <mat-icon *ngIf="zichtbaarheid.gekozen && zichtbaarheid.zichtbaar && !zichtbaarheid.transparant" matTooltip="Verberg laag" [matTooltipPosition]="'right'" [ngClass]="zichtbaarheid.stijlInKiezer">visibility</mat-icon>
+        <mat-icon *ngIf="!zichtbaarheid.gekozen && zichtbaarheid.zichtbaar" matTooltip="Toon laag" [matTooltipPosition]="'right'" [ngClass]="zichtbaarheid.stijlInKiezer">visibility_off</mat-icon>
+        <mat-icon *ngIf="zichtbaarheid.gekozen && !zichtbaarheid.zichtbaar" matTooltip="Niet zichtbaar in huidig zoomniveau" [matTooltipPosition]="'right'" class="onzichtbaar">visibility</mat-icon>
+        <mat-icon *ngIf="!zichtbaarheid.gekozen && !zichtbaarheid.zichtbaar" matTooltip="Niet zichtbaar in huidige zoomniveau" [matTooltipPosition]="'right'" class="onzichtbaar">visibility_off</mat-icon>
+      </ng-container>
+      <ng-template #welVerwijderd>
+        <mat-icon matTooltip="Verwijderde laag" [matTooltipPosition]="'right'" class="verwijderd">error</mat-icon>
+      </ng-template>
     </button>
   </div>
   <div class="laag-naam">
@@ -50,6 +55,10 @@
       <button mat-menu-item (click)="pasStijlAan()" *ngIf="kanStijlAanpassen$ | async">
         <mat-icon>format_color_fill</mat-icon>
         <span>Stijl aanpassen</span>
+      </button>
+      <button mat-menu-item (click)="pasTransparantieAan()" *ngIf="kanTransparantieAanpassen$ | async">
+        <mat-icon>opacity</mat-icon>
+        <span>Transparantie aanpassen</span>
       </button>
     </mat-menu>
     <button mat-icon-button [matMenuTriggerFor]="laagMenu" matTooltip="Toon laag opties" matTooltipPosition="right">

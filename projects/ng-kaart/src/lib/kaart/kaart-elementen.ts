@@ -10,6 +10,7 @@ import * as ol from "openlayers";
 import { Filter as fltr } from "../filter/filter-model";
 import { FilterTotaal, totaalOpTeHalen } from "../filter/filter-totaal";
 import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
+import { Transparantie } from "../transparantieeditor/transparantie";
 import { mapToOptionalByKey } from "../util/lenses";
 import * as maps from "../util/maps";
 import * as matchers from "../util/matchers";
@@ -45,7 +46,6 @@ export interface WmsLaag {
   readonly cqlFilter: Option<string>;
   readonly tileSize: Option<number>;
   readonly format: Option<string>;
-  readonly opacity: Option<number>;
   readonly minZoom: number;
   readonly maxZoom: number;
   readonly verwijderd: boolean;
@@ -72,7 +72,6 @@ export interface WmtsLaag {
   readonly titel: string;
   readonly naam: string;
   readonly backgroundUrl: string;
-  readonly opacity: Option<number>;
   readonly versie: Option<string>;
   readonly format: Option<string>;
   readonly matrixSet: string;
@@ -165,6 +164,7 @@ export interface ToegevoegdeLaag {
   readonly laaggroep: Laaggroep;
   readonly positieInGroep: number;
   readonly magGetoondWorden: boolean;
+  readonly transparantie: Transparantie;
   readonly legende: Option<Legende>;
   readonly stijlInLagenKiezer: Option<string>; // optionele naam van een CSS klasse om lijn in lagenkiezer individueel te stijlen
 }

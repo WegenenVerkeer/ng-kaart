@@ -17,6 +17,8 @@ import { FilterAanpassend, GeenFilterAanpassingBezig } from "../filter/filter-aa
 import { Filter as fltr } from "../filter/filter-model";
 import { FilterTotaal, totaalOpTeHalen } from "../filter/filter-totaal";
 import { isNoSqlFsSource, NosqlFsSource } from "../source/nosql-fs-source";
+import { GeenTransparantieaanpassingBezig, Transparantieaanpassend } from "../transparantieeditor/state";
+import { Opaciteit, Transparantie } from "../transparantieeditor/transparantie";
 import * as arrays from "../util/arrays";
 import { refreshTiles } from "../util/cachetiles";
 import { Feature, modifyWithLaagnaam } from "../util/feature";
@@ -376,6 +378,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                 laaggroep: groep,
                 positieInGroep: groepPositie,
                 magGetoondWorden: cmnd.magGetoondWorden,
+                transparantie: cmnd.transparantie,
                 legende: cmnd.legende,
                 stijlInLagenKiezer: cmnd.stijlInLagenKiezer
               };
@@ -408,6 +411,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               );
               layer.set(ke.LayerProperties.Titel, titel);
               layer.setVisible(cmnd.magGetoondWorden && !cmnd.laag.verwijderd); // achtergrondlagen expliciet zichtbaar maken!
+              layer.setOpacity(
+                pipe(
+                  Transparantie.toOpaciteit,
+                  Opaciteit.toNumber
+                )(cmnd.transparantie)
+              );
               // met positie hoeven we nog geen rekening te houden
               forEach(ke.asToegevoegdeVectorLaag(toegevoegdeLaag), pasVectorLaagStijlToe);
               zetLayerIndex(layer, groepPositie, groep);
@@ -488,6 +497,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               laaggroep: laag.laaggroep,
               positieInGroep: laag.positieInGroep,
               magGetoondWorden: laag.magGetoondWorden,
+              transparantie: laag.transparantie,
               legende: laag.legende,
               stijlInLagenKiezer: laag.stijlInLagenKiezer
             };
@@ -505,6 +515,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             const oldLayer = laag.layer;
             layer.set(ke.LayerProperties.Titel, oldLayer.get(ke.LayerProperties.Titel));
             layer.setVisible(oldLayer.getVisible());
+            layer.setOpacity(oldLayer.getOpacity());
             forEach(ke.asToegevoegdeVectorLaag(toegevoegdeLaag), pasVectorLaagStijlToe);
             zetLayerIndex(layer, laag.positieInGroep, laag.laaggroep);
             model.map.addLayer(layer);
@@ -1303,13 +1314,37 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function bewerkVectorFilter(cmnd: prt.BewerkVectorFilterCmd): ModelWithResult<Msg> {
       // We zouden kunnen controleren of de laag effectief in het model zit, maar dat is spijkers op laag water zoeken.
-      modelChanger.laagFilterAanpassingStateSubj.next(FilterAanpassend(cmnd.laag));
+      modelChanger.laagfilteraanpassingStateSubj.next(FilterAanpassend(cmnd.laag));
       return ModelWithResult(model);
     }
 
     function stopVectorFilterBewerking(cmnd: prt.StopVectorFilterBewerkingCmd): ModelWithResult<Msg> {
-      modelChanger.laagFilterAanpassingStateSubj.next(GeenFilterAanpassingBezig);
+      modelChanger.laagfilteraanpassingStateSubj.next(GeenFilterAanpassingBezig);
       return ModelWithResult(model);
+    }
+
+    function bewerkTransparantie(cmnd: prt.BewerkTransparantieCmd): ModelWithResult<Msg> {
+      // We zouden kunnen controleren of de laag effectief in het model zit, maar dat is spijkers op laag water zoeken.
+      modelChanger.transparantieAanpassingStateSubj.next(Transparantieaanpassend(cmnd.laag));
+      return ModelWithResult(model);
+    }
+
+    function stopTransparantieBewerking(cmnd: prt.StopTransparantieBewerkingCmd): ModelWithResult<Msg> {
+      modelChanger.transparantieAanpassingStateSubj.next(GeenTransparantieaanpassingBezig);
+      return ModelWithResult(model);
+    }
+
+    function zetTransparantieVoorLaag(cmnd: prt.ZetTransparantieVoorLaagCmd<Msg>): ModelWithResult<Msg> {
+      return toModelWithValueResult(
+        cmnd.msgGen,
+        valideerToegevoegdeLaagBestaat(cmnd.titel).map(laag => {
+          const updatedLaag = { ...laag, transparantie: cmnd.transparantie };
+          const updatedModel = pasLaagInModelAan(model)(updatedLaag);
+          laag.layer.setOpacity(1 - Transparantie.toNumber(cmnd.transparantie));
+          zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
+          return ModelAndEmptyResult(updatedModel);
+        })
+      );
     }
 
     function sluitPanelen(cmnd: prt.SluitPanelenCmd): ModelWithResult<Msg> {
@@ -1864,6 +1899,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return haalFilterTotaalOp(cmd);
         case "MijnLocatieStateChange":
           return emitMijnLocatieStateChange(cmd);
+        case "BewerkTransparantie":
+          return bewerkTransparantie(cmd);
+        case "StopTransparantieBewerking":
+          return stopTransparantieBewerking(cmd);
+        case "ZetTransparantieVoorLaag":
+          return zetTransparantieVoorLaag(cmd);
       }
     }
 

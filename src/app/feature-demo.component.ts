@@ -936,6 +936,10 @@ export class FeatureDemoComponent {
     return true;
   }
 
+  transparantieaanpasbareLagen(titel: string) {
+    return true; // we zouden kunnen beperken tot WMS lagen door naar het titel argument te kijken
+  }
+
   // De volgende methodes loggen gewoon naar de console. Er is weinig toegevoegde waarde om hier een UI voor te maken.
   onZoom(zoom: number): void {
     console.log("------> zoom", zoom);

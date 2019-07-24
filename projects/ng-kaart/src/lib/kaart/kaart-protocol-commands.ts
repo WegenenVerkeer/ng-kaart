@@ -3,6 +3,7 @@ import * as ol from "openlayers";
 import * as rx from "rxjs";
 
 import { Filter as fltr } from "../filter/filter-model";
+import { Transparantie } from "../transparantieeditor/transparantie";
 import { TypedRecord } from "../util/typed-record";
 import { ZoekerMetWeergaveopties, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
 
@@ -23,14 +24,13 @@ export type Command<Msg extends KaartMsg> =
   | ActiveerHighlightModusCmd
   | ActiveerHoverModusCmd
   | ActiveerSelectieModusCmd
-  | DeactiveerSelectieModusCmd
-  | ReactiveerSelectieModusCmd
+  | BewerkTransparantieCmd
   | BewerkVectorFilterCmd
   | BewerkVectorlaagstijlCmd
+  | DeactiveerSelectieModusCmd
   | DeselecteerAlleFeaturesCmd
   | DeselecteerFeatureCmd
   | DrawOpsCmd
-  | ZetGetekendeGeometryCmd
   | HaalFilterTotaalOp<Msg>
   | HighlightFeaturesCmd<Msg>
   | KiesAchtergrondCmd<Msg>
@@ -38,21 +38,23 @@ export type Command<Msg extends KaartMsg> =
   | MaakLaagZichtbaarCmd<Msg>
   | MeldComponentFoutCmd
   | MijnLocatieStateChangeCmd
+  | PublishKaartLocatiesCmd
+  | ReactiveerSelectieModusCmd
   | SelecteerFeaturesCmd
   | SluitInfoBoodschapCmd
   | SluitPanelenCmd
+  | StopTransparantieBewerkingCmd
   | StopVectorFilterBewerkingCmd
   | StopVectorlaagstijlBewerkingCmd
   | SubscribeCmd<Msg>
   | ToonAchtergrondKeuzeCmd<Msg>
   | ToonInfoBoodschapCmd
-  | PublishKaartLocatiesCmd
   | UnsubscribeCmd
   | VeranderExtentCmd
   | VeranderMiddelpuntCmd
+  | VeranderRotatieCmd
   | VeranderViewportCmd
   | VeranderZoomCmd<Msg>
-  | VeranderRotatieCmd
   | VerbergAchtergrondKeuzeCmd<Msg>
   | VerbergInfoBoodschapCmd
   | VerliesFocusOpKaartCmd
@@ -81,14 +83,16 @@ export type Command<Msg extends KaartMsg> =
   | VulCacheVoorNosqlLaag<Msg>
   | VulCacheVoorWMSLaag<Msg>
   | ZetActieveModusCmd
-  | ZetFocusOpKaartCmd
   | ZetFilter<Msg>
-  | ZetOffline<Msg>
+  | ZetFocusOpKaartCmd
+  | ZetGetekendeGeometryCmd
   | ZetLaagLegendeCmd<Msg>
   | ZetLaagSelecteerbaarCmd<Msg>
   | ZetMijnLocatieZoomCmd
+  | ZetOffline<Msg>
   | ZetStijlSpecVoorLaagCmd<Msg>
   | ZetStijlVoorLaagCmd<Msg>
+  | ZetTransparantieVoorLaagCmd<Msg>
   | ZetUiElementOpties
   | ZoekCmd<Msg>
   | ZoekGekliktCmd;
@@ -119,6 +123,7 @@ export interface VoegLaagToeCmd<Msg extends KaartMsg> {
   readonly positie: number;
   readonly laag: ke.Laag;
   readonly magGetoondWorden: boolean;
+  readonly transparantie: Transparantie;
   readonly laaggroep: ke.Laaggroep;
   readonly legende: Option<Legende>;
   readonly stijlInLagenKiezer: Option<string>;
@@ -539,6 +544,15 @@ export interface StopVectorFilterBewerkingCmd {
   readonly type: "StopVectorFilterBewerking";
 }
 
+export interface BewerkTransparantieCmd {
+  readonly type: "BewerkTransparantie";
+  readonly laag: ke.ToegevoegdeLaag;
+}
+
+export interface StopTransparantieBewerkingCmd {
+  readonly type: "StopTransparantieBewerking";
+}
+
 export interface DrawOpsCmd {
   readonly type: "DrawOps";
   readonly ops: DrawOps;
@@ -557,6 +571,13 @@ export interface MijnLocatieStateChangeCmd {
   readonly event: loc.Event;
 }
 
+export interface ZetTransparantieVoorLaagCmd<Msg extends TypedRecord> {
+  readonly type: "ZetTransparantieVoorLaag";
+  readonly titel: string;
+  readonly transparantie: Transparantie;
+  readonly msgGen: BareValidationWrapper<Msg>;
+}
+
 ////////////////////////
 // constructor functies
 //
@@ -566,20 +587,21 @@ export function VoegStandaardInteractiesToeCmd<Msg extends KaartMsg>(
   rotatie: boolean,
   wrapper: BareValidationWrapper<Msg>
 ): VoegStandaardInteractiesToeCmd<Msg> {
-  return { type: "VoegStandaardInteractiesToe", scrollZoomOnFocus: scrollZoomOnFocus, rotatie: rotatie, wrapper: wrapper };
+  return { type: "VoegStandaardInteractiesToe", scrollZoomOnFocus, rotatie, wrapper };
 }
 
 export function VerwijderStandaardInteractiesCmd<Msg extends KaartMsg>(
   wrapper: BareValidationWrapper<Msg>
 ): VerwijderStandaardInteractiesCmd<Msg> {
-  return { type: "VerwijderStandaardInteracties", wrapper: wrapper };
+  return { type: "VerwijderStandaardInteracties", wrapper };
 }
 
 export function VoegLaagToeCmd<Msg extends KaartMsg>(
   positie: number,
   laag: ke.Laag,
   magGetoondWorden: boolean,
-  laagGroep: ke.Laaggroep,
+  transparantie: Transparantie,
+  laaggroep: ke.Laaggroep,
   legende: Option<Legende>,
   stijlInLagenKiezer: Option<string>,
   filterinstellingen: Option<ke.Laagfilterinstellingen>,
@@ -587,14 +609,15 @@ export function VoegLaagToeCmd<Msg extends KaartMsg>(
 ): VoegLaagToeCmd<Msg> {
   return {
     type: "VoegLaagToe",
-    positie: positie,
-    laag: laag,
-    magGetoondWorden: magGetoondWorden,
-    laaggroep: laagGroep,
-    legende: legende,
-    stijlInLagenKiezer: stijlInLagenKiezer,
-    filterinstellingen: filterinstellingen,
-    wrapper: wrapper
+    positie,
+    laag,
+    magGetoondWorden,
+    transparantie,
+    laaggroep,
+    legende,
+    stijlInLagenKiezer,
+    filterinstellingen,
+    wrapper
   };
 }
 
@@ -602,7 +625,7 @@ export function ActiveerCacheVoorLaag<Msg extends KaartMsg>(
   titel: string,
   wrapper: BareValidationWrapper<Msg>
 ): ActiveerCacheVoorLaag<Msg> {
-  return { type: "ActiveerCacheVoorLaag", titel: titel, wrapper: wrapper };
+  return { type: "ActiveerCacheVoorLaag", titel, wrapper };
 }
 
 export function VulCacheVoorWMSLaag<Msg extends KaartMsg>(
@@ -613,15 +636,7 @@ export function VulCacheVoorWMSLaag<Msg extends KaartMsg>(
   startMetLegeCache: boolean,
   wrapper: BareValidationWrapper<Msg>
 ): VulCacheVoorWMSLaag<Msg> {
-  return {
-    type: "VulCacheVoorWMSLaag",
-    titel: titel,
-    startZoom: startZoom,
-    eindZoom: eindZoom,
-    wkt: wkt,
-    startMetLegeCache: startMetLegeCache,
-    wrapper: wrapper
-  };
+  return { type: "VulCacheVoorWMSLaag", titel, startZoom, eindZoom, wkt: wkt, startMetLegeCache, wrapper };
 }
 
 export function VulCacheVoorNosqlLaag<Msg extends KaartMsg>(
@@ -630,26 +645,15 @@ export function VulCacheVoorNosqlLaag<Msg extends KaartMsg>(
   startMetLegeCache: boolean,
   wrapper: BareValidationWrapper<Msg>
 ): VulCacheVoorNosqlLaag<Msg> {
-  return {
-    type: "VulCacheVoorNosqlLaag",
-    titel: titel,
-    wkt: wkt,
-    startMetLegeCache: startMetLegeCache,
-    wrapper: wrapper
-  };
+  return { type: "VulCacheVoorNosqlLaag", titel, wkt, startMetLegeCache, wrapper };
 }
 
 export function ZetOffline<Msg extends KaartMsg>(titel: string, offline: boolean, wrapper: BareValidationWrapper<Msg>): ZetOffline<Msg> {
-  return {
-    type: "ZetOffline",
-    titel: titel,
-    offline: offline,
-    wrapper: wrapper
-  };
+  return { type: "ZetOffline", titel, offline, wrapper };
 }
 
 export function VerwijderLaagCmd<Msg extends KaartMsg>(titel: string, wrapper: BareValidationWrapper<Msg>): VerwijderLaagCmd<Msg> {
-  return { type: "VerwijderLaag", titel: titel, wrapper: wrapper };
+  return { type: "VerwijderLaag", titel, wrapper };
 }
 
 export function VerplaatsLaagCmd<Msg extends KaartMsg>(
@@ -657,23 +661,15 @@ export function VerplaatsLaagCmd<Msg extends KaartMsg>(
   naarPositie: number,
   wrapper: BareValidationWrapper<Msg>
 ): VerplaatsLaagCmd<Msg> {
-  return { type: "VerplaatsLaag", titel: titel, naarPositie: naarPositie, wrapper: wrapper };
+  return { type: "VerplaatsLaag", titel, naarPositie, wrapper };
 }
 
 export function VraagSchaalAanCmd<Msg extends KaartMsg>(wrapper: BareValidationWrapper<Msg>): VraagSchaalAanCmd<Msg> {
-  return {
-    type: "VraagSchaalAan",
-    wrapper: wrapper
-  };
+  return { type: "VraagSchaalAan", wrapper };
 }
 
 export function ZetFilter<Msg extends KaartMsg>(titel: string, filter: fltr.Filter, wrapper: BareValidationWrapper<Msg>): ZetFilter<Msg> {
-  return {
-    type: "ZetFilter",
-    titel: titel,
-    filter: filter,
-    wrapper: wrapper
-  };
+  return { type: "ZetFilter", titel, filter, wrapper };
 }
 
 export function ActiveerFilter<Msg extends KaartMsg>(
@@ -681,31 +677,22 @@ export function ActiveerFilter<Msg extends KaartMsg>(
   actief: boolean,
   wrapper: BareValidationWrapper<Msg>
 ): ActiveerFilter<Msg> {
-  return {
-    type: "ActiveerFilter",
-    titel: titel,
-    actief: actief,
-    wrapper: wrapper
-  };
+  return { type: "ActiveerFilter", titel, actief, wrapper };
 }
 
 export function HaalFilterTotaalOp<Msg extends KaartMsg>(titel: string, wrapper: BareValidationWrapper<Msg>): HaalFilterTotaalOp<Msg> {
-  return {
-    type: "HaalFilterTotaalOp",
-    titel: titel,
-    wrapper: wrapper
-  };
+  return { type: "HaalFilterTotaalOp", titel, wrapper };
 }
 
 export function VoegSchaalToeCmd<Msg extends KaartMsg>(
   target: Option<Element>,
   wrapper: BareValidationWrapper<Msg>
 ): VoegSchaalToeCmd<Msg> {
-  return { type: "VoegSchaalToe", target: target, wrapper: wrapper };
+  return { type: "VoegSchaalToe", target, wrapper };
 }
 
 export function VerwijderSchaalCmd<Msg extends KaartMsg>(wrapper: BareValidationWrapper<Msg>): VerwijderSchaalCmd<Msg> {
-  return { type: "VerwijderSchaal", wrapper: wrapper };
+  return { type: "VerwijderSchaal", wrapper };
 }
 
 export function ZetStijlVoorLaagCmd<Msg extends KaartMsg>(
@@ -714,7 +701,7 @@ export function ZetStijlVoorLaagCmd<Msg extends KaartMsg>(
   selectieStijl: Option<ss.StyleSelector>,
   wrapper: BareValidationWrapper<Msg>
 ): ZetStijlVoorLaagCmd<Msg> {
-  return { type: "ZetStijlVoorLaag", stijl: stijl, selectieStijl: selectieStijl, titel: titel, wrapper: wrapper };
+  return { type: "ZetStijlVoorLaag", stijl, selectieStijl, titel, wrapper };
 }
 
 export function ZetStijlSpecVoorLaagCmd<Msg extends KaartMsg>(
@@ -723,34 +710,34 @@ export function ZetStijlSpecVoorLaagCmd<Msg extends KaartMsg>(
   legende: Legende,
   wrapper: BareValidationWrapper<Msg>
 ): ZetStijlSpecVoorLaagCmd<Msg> {
-  return { type: "ZetStijlSpecVoorLaag", stijlSpec: stijlSpec, legende: legende, titel: titel, wrapper: wrapper };
+  return { type: "ZetStijlSpecVoorLaag", stijlSpec, legende, titel, wrapper };
 }
 
 export function VeranderMiddelpuntCmd<Msg extends KaartMsg>(
   coordinate: ol.Coordinate,
   animationDuration: Option<number>
 ): VeranderMiddelpuntCmd {
-  return { type: "VeranderMiddelpunt", coordinate: coordinate, animationDuration: animationDuration };
+  return { type: "VeranderMiddelpunt", coordinate, animationDuration };
 }
 
 export function VeranderZoomCmd<Msg extends KaartMsg>(zoom: number, wrapper: BareValidationWrapper<Msg>): VeranderZoomCmd<Msg> {
-  return { type: "VeranderZoom", zoom: zoom, wrapper: wrapper };
+  return { type: "VeranderZoom", zoom, wrapper };
 }
 
 export function VeranderRotatieCmd(rotatie: number, animationDuration: Option<number>): VeranderRotatieCmd {
-  return { type: "VeranderRotatie", rotatie: rotatie, animationDuration: animationDuration };
+  return { type: "VeranderRotatie", rotatie, animationDuration };
 }
 
 export function VeranderExtentCmd(extent: ol.Extent): VeranderExtentCmd {
-  return { type: "VeranderExtent", extent: extent };
+  return { type: "VeranderExtent", extent };
 }
 
 export function ZoekGekliktCmd(resultaat: ZoekResultaat): ZoekGekliktCmd {
-  return { type: "ZoekGeklikt", resultaat: resultaat };
+  return { type: "ZoekGeklikt", resultaat };
 }
 
 export function VeranderViewportCmd(size: [number | undefined, number | undefined]): VeranderViewportCmd {
-  return { type: "VeranderViewport", size: size };
+  return { type: "VeranderViewport", size };
 }
 
 export function AbortTileLoadingCmd(): AbortTileLoadingCmd {
@@ -762,7 +749,7 @@ export function HighlightFeaturesCmd<Msg extends KaartMsg>(
   selector: (feature: ol.Feature) => boolean,
   wrapper: BareValidationWrapper<Msg>
 ): HighlightFeaturesCmd<Msg> {
-  return { type: "HighlightFeatures", titel: titel, selector: selector, wrapper: wrapper };
+  return { type: "HighlightFeatures", titel, selector, wrapper };
 }
 
 export function VervangFeaturesCmd<Msg extends KaartMsg>(
@@ -770,11 +757,11 @@ export function VervangFeaturesCmd<Msg extends KaartMsg>(
   features: Array<ol.Feature>,
   wrapper: BareValidationWrapper<Msg>
 ): VervangFeaturesCmd<Msg> {
-  return { type: "VervangFeatures", titel: titel, features: features, wrapper: wrapper };
+  return { type: "VervangFeatures", titel, features, wrapper };
 }
 
 export function ActiveerSelectieModusCmd(selectieModus: SelectieModus): ActiveerSelectieModusCmd {
-  return { type: "ActiveerSelectieModus", selectieModus: selectieModus };
+  return { type: "ActiveerSelectieModus", selectieModus };
 }
 
 export function DeactiveerSelectieModusCmd(): DeactiveerSelectieModusCmd {
@@ -786,30 +773,30 @@ export function ReactiveerSelectieModusCmd(): ReactiveerSelectieModusCmd {
 }
 
 export function ActiveerHighlightModusCmd(highlightModus: HighlightModus): ActiveerHighlightModusCmd {
-  return { type: "ActiveerHighlightModus", highlightModus: highlightModus };
+  return { type: "ActiveerHighlightModus", highlightModus };
 }
 
 export function ActiveerHoverModusCmd(hoverModus: HoverModus): ActiveerHoverModusCmd {
-  return { type: "ActiveerHoverModus", hoverModus: hoverModus };
+  return { type: "ActiveerHoverModus", hoverModus };
 }
 
 export function MeldComponentFoutCmd(fouten: Array<string>): MeldComponentFoutCmd {
-  return { type: "MeldComponentFout", fouten: fouten };
+  return { type: "MeldComponentFout", fouten };
 }
 
 export function KiesAchtergrondCmd<Msg extends KaartMsg>(titel: string, wrapper: BareValidationWrapper<Msg>): KiesAchtergrondCmd<Msg> {
-  return { type: "KiesAchtergrond", titel: titel, wrapper: wrapper };
+  return { type: "KiesAchtergrond", titel, wrapper };
 }
 
 export function MaakLaagZichtbaarCmd<Msg extends KaartMsg>(titel: string, wrapper: BareValidationWrapper<Msg>): MaakLaagZichtbaarCmd<Msg> {
-  return { type: "MaakLaagZichtbaar", titel: titel, wrapper: wrapper };
+  return { type: "MaakLaagZichtbaar", titel, wrapper };
 }
 
 export function MaakLaagOnzichtbaarCmd<Msg extends KaartMsg>(
   titel: string,
   wrapper: BareValidationWrapper<Msg>
 ): MaakLaagOnzichtbaarCmd<Msg> {
-  return { type: "MaakLaagOnzichtbaar", titel: titel, wrapper: wrapper };
+  return { type: "MaakLaagOnzichtbaar", titel, wrapper };
 }
 
 export function ZetLaagSelecteerbaarCmd<Msg extends KaartMsg>(
@@ -821,123 +808,90 @@ export function ZetLaagSelecteerbaarCmd<Msg extends KaartMsg>(
 }
 
 export function ToonAchtergrondKeuzeCmd<Msg extends KaartMsg>(wrapper: BareValidationWrapper<Msg>): ToonAchtergrondKeuzeCmd<Msg> {
-  return {
-    type: "ToonAchtergrondKeuze",
-    wrapper: wrapper
-  };
+  return { type: "ToonAchtergrondKeuze", wrapper };
 }
 
 export function VerbergAchtergrondKeuzeCmd<Msg extends KaartMsg>(wrapper: BareValidationWrapper<Msg>): VerbergAchtergrondKeuzeCmd<Msg> {
-  return { type: "VerbergAchtergrondKeuze", wrapper: wrapper };
+  return { type: "VerbergAchtergrondKeuze", wrapper };
 }
 
 export function VoegInteractieToeCmd(interactie: ol.interaction.Pointer): VoegInteractieToeCmd {
-  return {
-    type: "VoegInteractieToe",
-    interactie: interactie
-  };
+  return { type: "VoegInteractieToe", interactie };
 }
 
 export function VerwijderInteractieCmd(interactie: ol.interaction.Pointer): VerwijderInteractieCmd {
-  return {
-    type: "VerwijderInteractie",
-    interactie: interactie
-  };
+  return { type: "VerwijderInteractie", interactie };
 }
 
 export function VoegOverlayToeCmd(overlay: ol.Overlay): VoegOverlayToeCmd {
-  return {
-    type: "VoegOverlayToe",
-    overlay: overlay
-  };
+  return { type: "VoegOverlayToe", overlay };
 }
 
 export function VerwijderOverlaysCmd(overlays: Array<ol.Overlay>): VerwijderOverlaysCmd {
-  return {
-    type: "VerwijderOverlays",
-    overlays: overlays
-  };
+  return { type: "VerwijderOverlays", overlays };
 }
 
 export function SubscribeCmd<Msg extends KaartMsg>(
   subscription: Subscription<Msg>,
   wrapper: ValidationWrapper<SubscriptionResult, Msg>
 ): SubscribeCmd<Msg> {
-  return { type: "Subscription", subscription: subscription, wrapper: wrapper };
+  return { type: "Subscription", subscription, wrapper };
 }
 
 export function UnsubscribeCmd(subscriptionResult: SubscriptionResult): UnsubscribeCmd {
-  return { type: "Unsubscription", subscriptionResult: subscriptionResult };
+  return { type: "Unsubscription", subscriptionResult };
 }
 
 export function ZetMijnLocatieZoomCmd(doelniveau: Option<number>): ZetMijnLocatieZoomCmd {
-  return { type: "ZetMijnLocatieZoomStatus", doelniveau: doelniveau };
+  return { type: "ZetMijnLocatieZoomStatus", doelniveau };
 }
 
 export function ZetActieveModusCmd(modus: Option<string>): ZetActieveModusCmd {
-  return { type: "ZetActieveModus", modus: modus };
+  return { type: "ZetActieveModus", modus };
 }
 
 export function ToonInfoBoodschapCmd<Bdschp extends InfoBoodschap>(boodschap: Bdschp): ToonInfoBoodschapCmd {
-  return {
-    type: "ToonInfoBoodschap",
-    boodschap: boodschap
-  };
+  return { type: "ToonInfoBoodschap", boodschap };
 }
 
 export function PublishKaartLocatiesCmd(locaties: KaartLocaties): PublishKaartLocatiesCmd {
-  return {
-    type: "PublishKaartLocaties",
-    locaties: locaties
-  };
+  return { type: "PublishKaartLocaties", locaties };
 }
 
 export function VerbergInfoBoodschapCmd(id: string): VerbergInfoBoodschapCmd {
-  return { type: "VerbergInfoBoodschap", id: id };
+  return { type: "VerbergInfoBoodschap", id };
 }
 
 export function VoegUiElementToe(naam: string): VoegUiElementToe {
-  return { type: "VoegUiElementToe", naam: naam };
+  return { type: "VoegUiElementToe", naam };
 }
 
 export function VerwijderUiElement(naam: string): VerwijderUiElement {
-  return { type: "VerwijderUiElement", naam: naam };
+  return { type: "VerwijderUiElement", naam };
 }
 
 export function ZetUiElementOpties(naam: string, opties: any): ZetUiElementOpties {
-  return { type: "ZetUiElementOpties", naam: naam, opties: opties };
+  return { type: "ZetUiElementOpties", naam, opties };
 }
 
 export function SelecteerFeaturesCmd(features: Array<ol.Feature>): SelecteerFeaturesCmd {
-  return { type: "SelecteerFeatures", features: features };
+  return { type: "SelecteerFeatures", features };
 }
 
 export function DeselecteerFeatureCmd(id: string): DeselecteerFeatureCmd {
-  return {
-    type: "DeselecteerFeature",
-    id: id
-  };
+  return { type: "DeselecteerFeature", id };
 }
 
 export function DeselecteerAlleFeaturesCmd(): DeselecteerAlleFeaturesCmd {
-  return {
-    type: "DeselecteerAlleFeatures"
-  };
+  return { type: "DeselecteerAlleFeatures" };
 }
 
 export function SluitInfoBoodschapCmd(id: string, sluit: boolean, msgGen: () => Option<TypedRecord>): SluitInfoBoodschapCmd {
-  return {
-    type: "SluitInfoBoodschap",
-    id: id,
-    sluit: sluit,
-    msgGen: msgGen
-  };
+  return { type: "SluitInfoBoodschap", id, sluit, msgGen };
 }
 
 export function SluitPanelenCmd(): SluitPanelenCmd {
-  return {
-    type: "SluitPanelen"
-  };
+  return { type: "SluitPanelen" };
 }
 
 export function ZetLaagLegendeCmd<Msg extends KaartMsg>(
@@ -945,14 +899,14 @@ export function ZetLaagLegendeCmd<Msg extends KaartMsg>(
   legende: Legende,
   wrapper: BareValidationWrapper<Msg>
 ): ZetLaagLegendeCmd<Msg> {
-  return { type: "ZetLaagLegende", titel: titel, legende: legende, wrapper: wrapper };
+  return { type: "ZetLaagLegende", titel, legende, wrapper };
 }
 
 export function VoegZoekerToeCmd<Msg extends KaartMsg>(
   zoeker: ZoekerMetWeergaveopties,
   wrapper: BareValidationWrapper<Msg>
 ): VoegZoekerToeCmd<Msg> {
-  return { type: "VoegZoekerToe", zoekerPrioriteit: zoeker, wrapper: wrapper };
+  return { type: "VoegZoekerToe", zoekerPrioriteit: zoeker, wrapper };
 }
 
 export function VoegLaagLocatieInformatieServiceToe(
@@ -960,15 +914,15 @@ export function VoegLaagLocatieInformatieServiceToe(
   service: LaagLocationInfoService,
   msgGen: BareValidationWrapper<TypedRecord>
 ): VoegLaagLocatieInformatieServiceToe {
-  return { type: "VoegLaagLocatieInformatieServiceToe", titel: titel, service: service, msgGen: msgGen };
+  return { type: "VoegLaagLocatieInformatieServiceToe", titel, service, msgGen };
 }
 
 export function BewerkVectorlaagstijlCmd(laag: ke.ToegevoegdeVectorLaag): BewerkVectorlaagstijlCmd {
-  return { type: "BewerkVectorlaagstijl", laag: laag };
+  return { type: "BewerkVectorlaagstijl", laag };
 }
 
 export function BewerkVectorFilterCmd(laag: ke.ToegevoegdeVectorLaag): BewerkVectorFilterCmd {
-  return { type: "BewerkVectorFilter", laag: laag };
+  return { type: "BewerkVectorFilter", laag };
 }
 
 export function StopVectorlaagstijlBewerkingCmd(): StopVectorlaagstijlBewerkingCmd {
@@ -979,25 +933,41 @@ export function StopVectorFilterBewerkingCmd(): StopVectorFilterBewerkingCmd {
   return { type: "StopVectorFilterBewerking" };
 }
 
+export function BewerkTransparantieCmd(laag: ke.ToegevoegdeLaag): BewerkTransparantieCmd {
+  return { type: "BewerkTransparantie", laag };
+}
+
+export function StopTransparantieBewerkingCmd(): StopTransparantieBewerkingCmd {
+  return { type: "StopTransparantieBewerking" };
+}
+
 export function DrawOpsCmd(ops: DrawOps): DrawOpsCmd {
-  return { type: "DrawOps", ops: ops };
+  return { type: "DrawOps", ops };
 }
 
 export function ZetGetekendeGeometryCmd(geometry: ol.geom.Geometry): ZetGetekendeGeometryCmd {
-  return { type: "ZetGetekendeGeometry", geometry: geometry };
+  return { type: "ZetGetekendeGeometry", geometry };
 }
 
 export function VraagCachedFeaturesLookupCmd<Msg extends TypedRecord>(
   titel: string,
   msgGen: ValidationWrapper<CachedFeatureLookup, Msg>
 ): VraagCachedFeaturesLookupCmd<Msg> {
-  return { type: "VraagCachedFeaturesLookup", titel: titel, msgGen: msgGen };
+  return { type: "VraagCachedFeaturesLookup", titel, msgGen };
 }
 
 export function MijnLocatieStateChangeCmd(oudeState: loc.State, nieuweState: loc.State, event: loc.Event): MijnLocatieStateChangeCmd {
-  return { type: "MijnLocatieStateChange", oudeState: oudeState, nieuweState: nieuweState, event: event };
+  return { type: "MijnLocatieStateChange", oudeState, nieuweState, event };
 }
 
 export function ZoekCmd<Msg extends KaartMsg>(opdracht: Zoekopdracht, wrapper: BareValidationWrapper<Msg>): ZoekCmd<Msg> {
   return { type: "Zoek", opdracht, wrapper };
+}
+
+export function ZetTransparantieVoorLaagCmd<Msg extends TypedRecord>(
+  titel: string,
+  transparantie: Transparantie,
+  msgGen: BareValidationWrapper<Msg>
+): ZetTransparantieVoorLaagCmd<Msg> {
+  return { type: "ZetTransparantieVoorLaag", titel, transparantie, msgGen };
 }
