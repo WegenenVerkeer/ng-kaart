@@ -1,9 +1,9 @@
-import { Component, Injector, Input, OnChanges, OnDestroy, SimpleChanges, ViewEncapsulation } from "@angular/core";
+import { Component, Injector, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewEncapsulation } from "@angular/core";
+import * as rx from "rxjs";
 
 import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import * as prt from "../../kaart/kaart-protocol";
 import { ClassicBaseComponent } from "../classic-base.component";
-
 import * as val from "../webcomponent-support/params";
 
 /**
@@ -16,7 +16,7 @@ import * as val from "../webcomponent-support/params";
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class ClassicStandaardInteractiesComponent extends ClassicBaseComponent implements OnDestroy, OnChanges {
+export class ClassicStandaardInteractiesComponent extends ClassicBaseComponent implements OnDestroy, OnChanges, OnInit {
   private standaardInteractieToegevoegd = false;
   _focusVoorZoom = false;
   _rotatie = false;
@@ -45,17 +45,19 @@ export class ClassicStandaardInteractiesComponent extends ClassicBaseComponent i
     super(injector);
   }
 
+  ngOnInit(): void {
+    this.kaart.dispatch(prt.VoegStandaardInteractiesToeCmd(this._focusVoorZoom, this._rotatie, kaartLogOnlyWrapper));
+  }
+
   ngOnDestroy(): void {
     super.ngOnDestroy();
     this.kaart.dispatch(prt.VerwijderStandaardInteractiesCmd(kaartLogOnlyWrapper));
-    this.standaardInteractieToegevoegd = false;
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if ((changes.focusVoorZoom || changes.rotatie) && this.standaardInteractieToegevoegd) {
+    if (changes["focusVoorZoom"] || changes["rotatie"]) {
       this.kaart.dispatch(prt.VerwijderStandaardInteractiesCmd(kaartLogOnlyWrapper));
     }
     this.kaart.dispatch(prt.VoegStandaardInteractiesToeCmd(this._focusVoorZoom, this._rotatie, kaartLogOnlyWrapper));
-    this.standaardInteractieToegevoegd = true;
   }
 }
