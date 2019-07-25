@@ -21,6 +21,7 @@ export const MarkeerKaartklikUiSelector = "MarkeerKaartklik";
 export interface MarkeerKaartklikOpties {
   readonly markerStyle: ss.Stylish;
   readonly disabled: boolean;
+  readonly includeFeatureClick: boolean;
 }
 
 const featureGen: Function2<ol.Coordinate, ss.Stylish, ol.Feature> = (location, style) => {
@@ -46,7 +47,8 @@ export const defaultMarkerStyle = new ol.style.Style({
 
 const defaultOpties: MarkeerKaartklikOpties = {
   markerStyle: defaultMarkerStyle,
-  disabled: false
+  disabled: false,
+  includeFeatureClick: false
 };
 
 const markerLayerTitle = "markeerkaartkliklayer";
@@ -109,7 +111,7 @@ export class MarkeerKaartklikComponent extends KaartChildComponentBase {
     );
 
     const opties$ = this.accumulatedOpties$(MarkeerKaartklikUiSelector, defaultOpties);
-    const kliklocatie$ = this.modelChanges.kaartKlikLocatie$.pipe(map(ki => ki.coordinate));
+    const kaartKlik$ = this.modelChanges.kaartKlikLocatie$;
     const otherActive$ = this.modelChanges.actieveModus$.pipe(map(maybeModus => maybeModus.isSome()));
 
     const identifyBoodschapGesloten$ = this.internalMessage$.pipe(
@@ -133,7 +135,12 @@ export class MarkeerKaartklikComponent extends KaartChildComponentBase {
       .combineLatest(opties$, otherActive$, (a, b) => [a, b] as [MarkeerKaartklikOpties, boolean])
       .pipe(
         switchMap(([opties, otherActive]) =>
-          opties.disabled || otherActive ? rx.empty() : kliklocatie$.pipe(map(locatie => featureGen(locatie, opties.markerStyle)))
+          opties.disabled || otherActive
+            ? rx.empty()
+            : kaartKlik$.pipe(
+                filter(klik => !klik.coversFeature || opties.includeFeatureClick),
+                map(klik => featureGen(klik.coordinate, opties.markerStyle))
+              )
         )
       );
 

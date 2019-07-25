@@ -17,6 +17,7 @@ import * as val from "../webcomponent-support/params";
 export class ClassicMarkeerKaartklikComponent extends ClassicUIElementSelectorComponentBase {
   private _markerStyle: ss.Stylish = defaultClickMarkerStyle;
   private _disabled = false;
+  private _includeFeatureClick = false;
 
   constructor(injector: Injector) {
     super(MarkeerKaartklikUiSelector, injector);
@@ -25,7 +26,8 @@ export class ClassicMarkeerKaartklikComponent extends ClassicUIElementSelectorCo
   protected opties(): MarkeerKaartklikOpties {
     return {
       markerStyle: this._markerStyle,
-      disabled: this._disabled
+      disabled: this._disabled,
+      includeFeatureClick: this._includeFeatureClick
     };
   }
 
@@ -52,5 +54,14 @@ export class ClassicMarkeerKaartklikComponent extends ClassicUIElementSelectorCo
   @Input()
   set disabled(disabled: boolean) {
     this._disabled = val.bool(disabled, this._disabled);
+  }
+
+  /**
+   * Enkel wanneer dit op `true` staat wordt het icoontje getoond wanneer op een feature geklikt wordt. De
+   * standaardwaarde is false.
+   */
+  @Input()
+  set includeFeatureClick(include: boolean) {
+    this._includeFeatureClick = val.bool(include, this._includeFeatureClick);
   }
 }
