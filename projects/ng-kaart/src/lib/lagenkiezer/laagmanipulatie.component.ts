@@ -47,7 +47,6 @@ export interface ZichtbaarheidsInfo {
 })
 export class LaagmanipulatieComponent extends KaartChildComponentBase implements OnInit {
   private readonly zoom$: rx.Observable<number>;
-  readonly zichtbaar$: rx.Observable<boolean>;
   readonly onzichtbaar$: rx.Observable<boolean>;
   readonly kanVerwijderen$: rx.Observable<boolean>;
   readonly kanFilteren$: rx.Observable<boolean>;
@@ -93,11 +92,11 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
       distinctUntilChanged(),
       observeOnAngular(zone)
     );
-    this.zichtbaar$ = this.zoom$.pipe(
+    const zichtbaar$ = this.zoom$.pipe(
       map(zoom => zoom >= this.laag.bron.minZoom && zoom <= this.laag.bron.maxZoom),
       observeOnAngular(this.zone)
     );
-    this.onzichtbaar$ = this.zichtbaar$.pipe(
+    this.onzichtbaar$ = zichtbaar$.pipe(
       map(m => !m),
       shareReplay(1)
     );
