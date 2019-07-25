@@ -389,6 +389,8 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
       zoomOpt => forEach(zoomOpt, zoom => this.dispatch(prt.VeranderZoomCmd(zoom, logOnlyWrapper))),
       val.optNum
     );
+    forChangedValue(changes, "minZoom", () => this.zetZoomRange());
+    forChangedValue(changes, "maxZoom", () => this.zetZoomRange());
     forChangedValue(
       changes,
       "middelpunt",
@@ -474,6 +476,11 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   private zetKaartGrootte() {
     this._breedte.foldL(nop, breedte => (this.mapElement.nativeElement.style.width = `${breedte}px`));
     this._hoogte.foldL(nop, hoogte => (this.mapElement.nativeElement.style.height = `${hoogte}px`));
+  }
+
+  /** @ignore */
+  private zetZoomRange() {
+    this.dispatch(prt.ZetZoomBereikCmd(this._minZoom, this._maxZoom));
   }
 
   /** @ignore */

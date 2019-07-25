@@ -1347,6 +1347,18 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
+    function zetZoomBereik(cmnd: prt.ZetZoomBereikCmd): ModelWithResult<Msg> {
+      const view = model.map.getView();
+      const minZoom = Math.max(1, Math.min(15, cmnd.minZoom));
+      const maxZoom = Math.max(minZoom, Math.min(15, cmnd.maxZoom));
+      const zoom = Math.max(minZoom, Math.min(maxZoom, view.getZoom()));
+      view.setMinZoom(minZoom);
+      view.setMaxZoom(maxZoom);
+      view.setZoom(zoom);
+      model.changer.zoombereikChangeSubj.next();
+      return ModelWithResult(model);
+    }
+
     function sluitPanelen(cmnd: prt.SluitPanelenCmd): ModelWithResult<Msg> {
       updateBehaviorSubject(model.infoBoodschappenSubj, () => new Map());
       modelChanger.laagstijlaanpassingStateSubj.next(GeenLaagstijlaanpassing);
@@ -1905,6 +1917,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return stopTransparantieBewerking(cmd);
         case "ZetTransparantieVoorLaag":
           return zetTransparantieVoorLaag(cmd);
+        case "ZetZoomBereik":
+          return zetZoomBereik(cmd);
       }
     }
 

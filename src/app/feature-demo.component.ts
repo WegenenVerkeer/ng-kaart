@@ -364,6 +364,10 @@ export class FeatureDemoComponent {
   voorwaarden = this.alleVoorwaarden[0];
   private voorwaardenIndex = 0;
 
+  huidigeZoom = -1;
+  minZoom = 2;
+  maxZoom = 5;
+
   objectKeys = Object.keys;
   mogelijkeOpties = {
     // --- Algemeen
@@ -1143,5 +1147,17 @@ export class FeatureDemoComponent {
 
   onToggleSelecteerbaar() {
     this.mechelenSelecteerbaarToggleSubj.next();
+  }
+
+  onSetMinZoom(value: number) {
+    this.minZoom = value;
+  }
+
+  onSetMaxZoom(value: number) {
+    this.maxZoom = value;
+  }
+
+  onZoomEvent(value: number) {
+    this.huidigeZoom = value;
   }
 }

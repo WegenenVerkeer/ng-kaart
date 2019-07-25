@@ -96,7 +96,7 @@ export class KaartComponent extends KaartComponentBase {
   @Input()
   naam = "kaart";
   @Input()
-  kaartLinksBreedte;
+  kaartLinksBreedte: number;
 
   // Dit dient om messages naar toe te sturen
   internalMessage$: rx.Observable<KaartInternalSubMsg> = rx.EMPTY;

@@ -1,6 +1,6 @@
 import * as array from "fp-ts/lib/Array";
 import { left, right } from "fp-ts/lib/Either";
-import { Function2 } from "fp-ts/lib/function";
+import { Function1, Function2 } from "fp-ts/lib/function";
 import { map as filterable } from "fp-ts/lib/Map";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { setoidString } from "fp-ts/lib/Setoid";
@@ -86,6 +86,7 @@ export interface ModelChanger {
   readonly precacheProgressSubj: rx.BehaviorSubject<PrecacheLaagProgress>;
   readonly laatsteCacheRefreshSubj: rx.BehaviorSubject<LaatsteCacheRefresh>;
   readonly mijnLocatieStateChangeSubj: rx.Subject<MijnLocatieStateChange>;
+  readonly zoombereikChangeSubj: rx.Subject<null>;
 }
 
 // Hieronder wordt een paar keer BehaviourSubject gebruikt. Dat is equivalent met, maar beknopter dan, een startWith + shareReplay
@@ -117,7 +118,8 @@ export const ModelChanger: () => ModelChanger = () => ({
   getekendeGeometrySubj: new rx.Subject<ol.geom.Geometry>(),
   precacheProgressSubj: new rx.BehaviorSubject({}),
   laatsteCacheRefreshSubj: new rx.BehaviorSubject({}),
-  mijnLocatieStateChangeSubj: new rx.Subject<MijnLocatieStateChange>()
+  mijnLocatieStateChangeSubj: new rx.Subject<MijnLocatieStateChange>(),
+  zoombereikChangeSubj: new rx.Subject<null>()
 });
 
 export interface ModelChanges {
@@ -150,7 +152,7 @@ export interface ModelChanges {
   readonly mijnLocatieStateChange$: rx.Observable<MijnLocatieStateChange>;
 }
 
-const viewinstellingen = (olmap: ol.Map) => ({
+const viewinstellingen: Function1<ol.Map, prt.Viewinstellingen> = olmap => ({
   zoom: olmap.getView().getZoom(),
   minZoom: olmap.getView().getMinZoom(),
   maxZoom: olmap.getView().getMaxZoom(),
@@ -210,7 +212,9 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
 
   const viewportSize$ = changer.viewPortSizeSubj.pipe(debounceTime(100));
 
-  const viewinstellingen$ = rx.merge(viewportSize$, resize$, center$, numlayers$, zoom$, rotation$).pipe(
+  const zoombereik$ = changer.zoombereikChangeSubj;
+
+  const viewinstellingen$ = rx.merge(viewportSize$, resize$, center$, numlayers$, zoom$, rotation$, zoombereik$).pipe(
     debounceTime(50), // Deze is om de map hierna niet te veel werk te geven
     map(() => viewinstellingen(model.map)),
     shareReplay(1)

@@ -94,6 +94,7 @@ export type Command<Msg extends KaartMsg> =
   | ZetStijlVoorLaagCmd<Msg>
   | ZetTransparantieVoorLaagCmd<Msg>
   | ZetUiElementOpties
+  | ZetZoomBereikCmd
   | ZoekCmd<Msg>
   | ZoekGekliktCmd;
 
@@ -578,6 +579,12 @@ export interface ZetTransparantieVoorLaagCmd<Msg extends TypedRecord> {
   readonly msgGen: BareValidationWrapper<Msg>;
 }
 
+export interface ZetZoomBereikCmd {
+  readonly type: "ZetZoomBereik";
+  readonly minZoom: number;
+  readonly maxZoom: number;
+}
+
 ////////////////////////
 // constructor functies
 //
@@ -970,4 +977,8 @@ export function ZetTransparantieVoorLaagCmd<Msg extends TypedRecord>(
   msgGen: BareValidationWrapper<Msg>
 ): ZetTransparantieVoorLaagCmd<Msg> {
   return { type: "ZetTransparantieVoorLaag", titel, transparantie, msgGen };
+}
+
+export function ZetZoomBereikCmd(minZoom: number, maxZoom: number): ZetZoomBereikCmd {
+  return { type: "ZetZoomBereik", minZoom, maxZoom };
 }
