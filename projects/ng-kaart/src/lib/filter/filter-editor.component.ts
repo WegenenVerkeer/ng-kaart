@@ -67,6 +67,8 @@ const resetWithoutEvent = (...controls: FormControl[]): void => {
   controls.forEach(control => control.reset("", { emitEvent: false }));
 };
 
+const sanitiseText: Endomorphism<string> = text => text.trim().replace(/[\x00-\x1F ]/g, "");
+
 // We willen fragmenten van waarden scheiden van volledige waarden. Dat doen we liefst zonder steeds te controleren tov
 // de volledige lijst van waarden. Die lijst is immers niet eenvoudig voorhanden. De manier die hier gebruiken is om
 // waarden in een object te wrappen om zo het verschil met een string te detecteren.
@@ -189,7 +191,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       )
       .pipe(
         distinctUntilChanged(), // in dit geval vgln we op strings, dus ook OK
-        map(input => fromNullable(input).map(value => fed.LiteralValue(value.toString(), "string")))
+        map(input => fromNullable(input).map(value => fed.LiteralValue(sanitiseText(value.toString()), "string")))
       );
     const gekozenInteger$: rx.Observable<Option<fed.LiteralValue>> = forControlValue(this.integerWaardeControl).pipe(
       distinctUntilChanged(), // in dit geval vgln we op getallen, dus ook OK
