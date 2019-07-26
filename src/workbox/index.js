@@ -10,7 +10,7 @@ self.addEventListener('message', event => {
     case 'REGISTER_ROUTE':
       const { requestPattern, cacheName } = payload;
       info(`Routing ${requestPattern} to cache ${cacheName}`);
-      const handler = strategies.cacheFirst({
+      const handler = new strategies.CacheFirst({
           cacheName: cacheName,
           plugins: typeof ngKaartRoutePlugins !== 'undefined' ? ngKaartRoutePlugins : []
       });
