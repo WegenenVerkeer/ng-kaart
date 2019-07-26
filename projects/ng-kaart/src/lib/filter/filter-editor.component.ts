@@ -67,8 +67,7 @@ const resetWithoutEvent = (...controls: FormControl[]): void => {
   controls.forEach(control => control.reset("", { emitEvent: false }));
 };
 
-// White list welke characters toegelaten worden.
-const sanitiseText: Endomorphism<string> = text => text.trim().replace(/[^\d\w\u00c0-\u024f\u1e00-\u1eff#$^',.<>_\-=@*?!+ ]/g, "");
+const sanitiseText: Endomorphism<string> = text => text.trim().replace(/[\x00-\x1F ]/g, "");
 
 // We willen fragmenten van waarden scheiden van volledige waarden. Dat doen we liefst zonder steeds te controleren tov
 // de volledige lijst van waarden. Die lijst is immers niet eenvoudig voorhanden. De manier die hier gebruiken is om
