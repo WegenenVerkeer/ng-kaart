@@ -1,12 +1,10 @@
 import * as array from "fp-ts/lib/Array";
 import { Function1 } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
-import * as set from "fp-ts/lib/Set";
-import { setoidString } from "fp-ts/lib/Setoid";
 import * as ol from "openlayers";
 import { olx } from "openlayers";
 
-import { Epsg } from "../coordinaten";
+import { supportedProjection } from "../coordinaten/coordinaten.service";
 
 import * as ke from "./kaart-elementen";
 import { KaartWithInfo } from "./kaart-with-info";
@@ -14,14 +12,7 @@ import { kaartLogger } from "./log";
 import { toStylish } from "./stijl-selector";
 
 export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.Base> {
-  const supportedProjections = new Set(Epsg.all);
-
-  const stringIntersector = set.intersection(setoidString);
-
-  const first: Function1<Set<string>, Option<string>> = (set: Set<string>) => (set.size > 0 ? some(set.values().next().value) : none);
-
-  const projection: Function1<string[], string> = projections =>
-    first(stringIntersector(supportedProjections, new Set(projections))).getOrElse(kaart.config.srs);
+  const projection: Function1<string[], string> = projections => supportedProjection(projections).getOrElse(kaart.config.srs);
 
   function createdTileWms(l: ke.WmsLaag) {
     return new ol.layer.Tile(<olx.layer.TileOptions>{
