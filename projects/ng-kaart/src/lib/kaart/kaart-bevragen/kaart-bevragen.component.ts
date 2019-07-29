@@ -1,4 +1,4 @@
-import { HttpClient } from "@angular/common/http";
+import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { left, right } from "fp-ts/lib/Either";
 import * as option from "fp-ts/lib/Option";
@@ -18,7 +18,14 @@ import { KaartComponent } from "../kaart.component";
 import { kaartLogger } from "../log";
 
 import * as srv from "./kaart-bevragen.service";
-import { AdresResult, LaagLocationInfo, LaagLocationInfoResult, LaagLocationInfoService, WegLocatiesResult } from "./laaginfo.model";
+import {
+  AdresResult,
+  BevragenErrorReason,
+  LaagLocationInfo,
+  LaagLocationInfoResult,
+  LaagLocationInfoService,
+  WegLocatiesResult
+} from "./laaginfo.model";
 
 export const BevraagKaartUiSelector = "Bevraagkaart";
 
@@ -211,7 +218,7 @@ function infoForLaag(
         srv.withLaagLocationInfo(
           srv.fromTimestampAndCoordinate(timestamp, location),
           laag.titel,
-          Received(right<string, LaagLocationInfo>(info))
+          Received(right<BevragenErrorReason, LaagLocationInfo>(info))
         )
       ),
       startWith(srv.withLaagLocationInfo(srv.fromTimestampAndCoordinate(timestamp, location), laag.titel, Requested)),
@@ -223,7 +230,7 @@ function infoForLaag(
           srv.withLaagLocationInfo(
             srv.fromTimestampAndCoordinate(timestamp, location),
             laag.titel,
-            Received(left<string, LaagLocationInfo>("Kon gegevens niet ophalen"))
+            Received(left<BevragenErrorReason, LaagLocationInfo>(srv.errorToReason(error)))
           )
         );
       })
