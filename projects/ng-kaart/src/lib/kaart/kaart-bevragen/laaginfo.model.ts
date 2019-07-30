@@ -1,9 +1,11 @@
 import { Either } from "fp-ts/lib/Either";
 import { Function1, Function2 } from "fp-ts/lib/function";
+import * as option from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 
 import { Progress } from "../../util/progress";
+import * as progress from "../../util/progress";
 import { VeldInfo } from "../kaart-elementen";
 
 export type LaagLocationInfo = TextLaagLocationInfo | VeldinfoLaagLocationInfo;
@@ -64,3 +66,9 @@ export interface KaartLocaties {
   readonly wegLocaties: Progress<WegLocatiesResult>;
   readonly lagenLocatieInfo: Map<string, Progress<LaagLocationInfoResult>>;
 }
+
+export const progressFailure: <A>(_: Progress<Either<BevragenErrorReason, A>>) => BevragenErrorReason | undefined = p =>
+  progress
+    .toOption(p)
+    .chain(e => option.fromEither(e.swap()))
+    .toUndefined();

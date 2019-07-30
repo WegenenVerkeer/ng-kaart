@@ -11,7 +11,6 @@ import {
   SimpleChanges,
   ViewChild
 } from "@angular/core";
-import { Either } from "fp-ts/lib/Either";
 import { Function1, pipe } from "fp-ts/lib/function";
 import * as option from "fp-ts/lib/Option";
 import { fromEither, none, Option, some } from "fp-ts/lib/Option";
@@ -19,10 +18,10 @@ import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { debounceTime, map, share, tap } from "rxjs/operators";
 
-import { ToegevoegdeLaag } from "../kaart";
 import { KaartInfoBoodschapUiSelector } from "../kaart/info-boodschappen/kaart-info-boodschappen.component";
-import { Adres, BevragenErrorReason, KaartLocaties, WegLocaties } from "../kaart/kaart-bevragen/laaginfo.model";
+import { Adres, BevragenErrorReason, KaartLocaties, progressFailure, WegLocaties } from "../kaart/kaart-bevragen/laaginfo.model";
 import { forChangedValue, KaartComponentBase } from "../kaart/kaart-component-base";
+import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
 import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "../kaart/kaart-event-dispatcher";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartMsgObservableConsumer } from "../kaart/kaart.component";
@@ -57,7 +56,7 @@ import {
 } from "./messages";
 import * as val from "./webcomponent-support/params";
 
-// Dit is een type dat de interne KartLocaties plat klopt voor extern gebruik.
+// Dit is een type dat de interne KaartLocaties plat klopt voor extern gebruik.
 export interface ClassicKlikInfoEnStatus {
   readonly timestamp: number;
   readonly coordinaat: ol.Coordinate;
@@ -69,12 +68,6 @@ export interface ClassicKlikInfoEnStatus {
   readonly wegLocatiesFailure?: BevragenErrorReason;
   readonly combinedLaagLocatieStatus: progress.ProgressStatus;
 }
-
-const progressFailure: <A>(_: progress.Progress<Either<BevragenErrorReason, A>>) => BevragenErrorReason | undefined = p =>
-  progress
-    .toOption(p)
-    .chain(e => option.fromEither(e.swap()))
-    .toUndefined();
 
 const flattenKaartLocaties: Function1<KaartLocaties, ClassicKlikInfoEnStatus> = locaties => ({
   timestamp: locaties.timestamp,

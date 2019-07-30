@@ -1,20 +1,34 @@
 import { HttpClient } from "@angular/common/http";
 import { AfterViewInit, Component, EventEmitter, Injector, Input, OnInit, Output, ViewEncapsulation } from "@angular/core";
-import { Function1, Function2, Function4, pipe } from "fp-ts/lib/function";
+import { array, option } from "fp-ts";
+import { Curried2, Function1, Function2, Function4, pipe } from "fp-ts/lib/function";
+import * as fpMap from "fp-ts/lib/Map";
 import { fromNullable, none, Option } from "fp-ts/lib/Option";
+import { getStructSetoid, Setoid, setoidNumber, setoidString } from "fp-ts/lib/Setoid";
 import * as ol from "openlayers";
 import { merge } from "rxjs";
 import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, tap } from "rxjs/operators";
 
-import { Epsg, LaagLocationInfo, lambert72ToWgs84, TextLaagLocationInfo, VeldinfoLaagLocationInfo, Veldwaarde } from "../../kaart";
+import { Epsg } from "../../coordinaten/coordinaten.service";
+import {
+  BevragenErrorReason,
+  KaartLocaties,
+  LaagLocationInfo,
+  LaagLocationInfoResult,
+  progressFailure,
+  TextLaagLocationInfo,
+  VeldinfoLaagLocationInfo,
+  Veldwaarde
+} from "../../kaart/kaart-bevragen/laaginfo.model";
 import * as ke from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
 import { VoegLaagLocatieInformatieServiceToe } from "../../kaart/kaart-protocol";
-import { forEach, ofType } from "../../util";
+import { collectOption, forEach, ofType } from "../../util";
+import * as progress from "../../util/progress";
 import { urlWithParams } from "../../util/url";
 import { classicMsgSubscriptionCmdOperator } from "../kaart-classic.component";
-import { KaartClassicMsg, LaatsteCacheRefreshMsg, logOnlyWrapper, PrecacheProgressMsg } from "../messages";
+import { KaartClassicMsg, LaatsteCacheRefreshMsg, logOnlyWrapper, PrecacheProgressMsg, PublishedKaartLocatiesMsg } from "../messages";
 import * as val from "../webcomponent-support/params";
 
 import { ClassicLaagComponent } from "./classic-laag.component";
@@ -46,6 +60,37 @@ export interface PrecacheWMS {
   readonly startMetLegeCache: boolean;
 }
 
+export interface ClassicLaagKlikInfoEnStatus {
+  readonly timestamp: number;
+  readonly coordinaat: ol.Coordinate;
+  readonly laagInfoStatus: progress.ProgressStatus;
+  readonly laagInfo?: LaagLocationInfo;
+  readonly laagInfoFailure?: BevragenErrorReason;
+}
+
+const flatten: Curried2<string, KaartLocaties, Option<ClassicLaagKlikInfoEnStatus>> = titel => kaartLocaties => {
+  const maybeLaagInfoResult: Option<progress.Progress<LaagLocationInfoResult>> = fpMap.lookup(setoidString)(
+    titel,
+    kaartLocaties.lagenLocatieInfo
+  );
+  return maybeLaagInfoResult.map(laagInfoResult => ({
+    timestamp: kaartLocaties.timestamp,
+    coordinaat: kaartLocaties.coordinaat,
+    laagInfoStatus: progress.toProgressStatus(laagInfoResult),
+    laagInfo: progress
+      .toOption(laagInfoResult)
+      .chain(option.fromEither)
+      .toUndefined(),
+    laagInfoFailure: progressFailure(laagInfoResult)
+  }));
+};
+
+const infoSetoid: Setoid<ClassicLaagKlikInfoEnStatus> = getStructSetoid({
+  timestamp: setoidNumber,
+  coordinaat: array.getSetoid(setoidNumber),
+  laagInfoStatus: progress.setoidProgressStatus
+});
+
 @Component({
   selector: "awv-kaart-wms-laag",
   template: "<ng-content></ng-content>",
@@ -75,6 +120,12 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
 
   @Output()
   laatsteCacheRefresh: EventEmitter<Date> = new EventEmitter<Date>();
+
+  /**
+   * Vuurt events wanneer er informatie voor deze laag is betreffende de locatie waar geklikt is.
+   */
+  @Output()
+  laagLocaties: EventEmitter<ClassicLaagKlikInfoEnStatus> = new EventEmitter();
 
   _laagNaam: string;
   _versie: Option<string> = none;
@@ -271,5 +322,14 @@ export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnI
         )
       ).subscribe();
     }
+    this.bindToLifeCycle(
+      this.kaart.kaartClassicSubMsg$.pipe(
+        ofType<PublishedKaartLocatiesMsg>("PublishedKaartLocaties"),
+        map(loc => loc.locaties),
+        collectOption(flatten(this._titel)),
+        distinctUntilChanged(infoSetoid.equals),
+        tap(info => this.laagLocaties.emit(info))
+      )
+    ).subscribe();
   }
 }
