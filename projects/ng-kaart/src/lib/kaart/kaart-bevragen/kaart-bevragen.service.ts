@@ -1,6 +1,7 @@
-import { HttpClient } from "@angular/common/http";
+import { HttpClient, HttpErrorResponse } from "@angular/common/http";
 import { either } from "fp-ts";
 import { left, right } from "fp-ts/lib/Either";
+import { Function1 } from "fp-ts/lib/function";
 import { fromNullable } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
@@ -12,7 +13,15 @@ import * as maps from "../../util/maps";
 import { proceed, Progress, Received, Requested } from "../../util/progress";
 import { kaartLogger } from "../log";
 
-import { Adres, AdresResult, LaagLocationInfoResult, WegLocatie, WegLocaties, WegLocatiesResult } from "./laaginfo.model";
+import {
+  Adres,
+  AdresResult,
+  BevragenErrorReason,
+  LaagLocationInfoResult,
+  WegLocatie,
+  WegLocaties,
+  WegLocatiesResult
+} from "./laaginfo.model";
 
 export interface LocatieInfo {
   readonly timestamp: number;
@@ -123,20 +132,27 @@ function toAdres(agivAdres: AgivAdres): Adres {
 
 export function XY2AdresResponseToEither(response: XY2AdresResponse): AdresResult {
   if (!arrays.isArray(response)) {
-    return left((response as XY2AdresError).error);
+    kaartLogger.warn("Fout bij opvragen adres", (response as XY2AdresError).error);
+    return left<BevragenErrorReason, Adres>("ServiceError");
   } else {
     const succes = response as XY2AdresSucces[];
     if (arrays.isNonEmpty(succes)) {
       return right(toAdres(succes[0].adres));
     } else {
-      return left("Er is niet minstens 1 adres gevonden");
+      return left<BevragenErrorReason, Adres>("NoData");
     }
   }
 }
 
 export function LsWegLocatiesResultToEither(response: LsWegLocaties): WegLocatiesResult {
   return either
-    .fromPredicate<string, LsWegLocaties>(r => r.items != null, r => fromNullable(r.error).getOrElse("Geen items gevonden"))(response)
+    .fromPredicate<BevragenErrorReason, LsWegLocaties>(
+      r => r.items != null,
+      r =>
+        fromNullable(r.error)
+          .map<BevragenErrorReason>(() => "ServiceError")
+          .getOrElse("NoData")
+    )(response)
     .map(toWegLocaties);
 }
 
@@ -169,6 +185,22 @@ export function withLaagLocationInfo(i: LocatieInfo, laagTitel: string, lli: Pro
   return { ...i, lagenLocatieInfo: maps.set(i.lagenLocatieInfo, laagTitel, lli) };
 }
 
+export const errorToReason: Function1<any, BevragenErrorReason> = error => {
+  if (error instanceof HttpErrorResponse) {
+    if (error.status === 404) {
+      return "NoData";
+    } else if (error.status === 0) {
+      return "Unreachable";
+    } else {
+      // Eén of andere ander fout
+      return "ServiceError";
+    }
+  } else {
+    // Dit zou niet mogen
+    return "ServiceError";
+  }
+};
+
 export function adresViaXY$(http: HttpClient, coordinaat: ol.Coordinate): rx.Observable<AdresResult> {
   return http
     .get<XY2AdresSucces[] | XY2AdresError>("/agivservices/rest/locatie/adres/via/xy", {
@@ -183,7 +215,7 @@ export function adresViaXY$(http: HttpClient, coordinaat: ol.Coordinate): rx.Obs
       catchError(error => {
         kaartLogger.error("Fout bij opvragen weglocatie", error);
         // bij fout toch zeker geldige observable doorsturen, anders geen volgende events
-        return rx.of(left<string, Adres>(`Fout bij opvragen weglocatie: ${error}`));
+        return rx.of(left<BevragenErrorReason, Adres>(errorToReason(error)));
       })
     );
 }
@@ -203,7 +235,7 @@ export function wegLocatiesViaXY$(http: HttpClient, coordinaat: ol.Coordinate, z
       catchError(error => {
         // bij fout toch zeker geldige observable doorsturen, anders geen volgende events
         kaartLogger.error("Fout bij opvragen adres", error);
-        return rx.of(left<string, WegLocaties>(`Fout bij opvragen adres: ${error}`));
+        return rx.of(left<BevragenErrorReason, WegLocaties>(errorToReason(error)));
       })
     );
 }

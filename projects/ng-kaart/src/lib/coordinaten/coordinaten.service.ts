@@ -1,33 +1,11 @@
-import { Function1, Function2, Predicate } from "fp-ts/lib/function";
-import { fromPredicate, Option } from "fp-ts/lib/Option";
-import { getArraySetoid, Setoid, setoidNumber } from "fp-ts/lib/Setoid";
+import { Curried2, Endomorphism, Function1, Function2, Predicate } from "fp-ts/lib/function";
+import { fromPredicate, none, Option, some } from "fp-ts/lib/Option";
+import * as set from "fp-ts/lib/Set";
+import { getArraySetoid, Setoid, setoidNumber, setoidString } from "fp-ts/lib/Setoid";
 import * as ol from "openlayers";
 import proj4 from "proj4";
 
-import { Consumer1 } from "../util/function";
-
-export function wgs84ToLambert72(coordinate: [number, number]): [number, number] {
-  return ol.proj.transform(coordinate, "EPSG:4326", "EPSG:31370");
-}
-
-export function lambert72ToWgs84(coordinate: [number, number]): [number, number] {
-  return ol.proj.transform(coordinate, "EPSG:31370", "EPSG:4326");
-}
-
-export function switchVolgorde(coordinate: [number, number]): [number, number] {
-  return [coordinate[1], coordinate[0]];
-}
-
-export const formatCoordinate: (_: number) => (_: [number, number]) => string = decimals => coordinate =>
-  `${coordinate[0].toFixed(decimals)}, ${coordinate[1].toFixed(decimals)}`;
-
-export const parseCoordinate: (_: string) => Option<[number, number]> = coordTxt => {
-  const coords = coordTxt
-    .split(",")
-    .map(s => Number(s))
-    .filter(n => !isNaN(n));
-  return fromPredicate((cs: number[]) => cs.length === 2)(coords) as Option<[number, number]>;
-};
+import { Consumer1, PartialFunction1 } from "../util/function";
 
 export namespace Epsg {
   export const Lambert72 = "EPSG:31370";
@@ -40,6 +18,41 @@ export namespace Epsg {
 
   export const all = [Lambert72, Wgs84, WebMercator, GoogleMercator, Lambert2008, Etrs89, LaeaEurope];
 }
+
+export function wgs84ToLambert72(coordinate: ol.Coordinate): ol.Coordinate {
+  return ol.proj.transform(coordinate, Epsg.Wgs84, Epsg.Lambert72);
+}
+
+export function lambert72ToWgs84(coordinate: ol.Coordinate): ol.Coordinate {
+  return ol.proj.transform(coordinate, Epsg.Lambert72, Epsg.Wgs84);
+}
+
+export const reprojectLambert72: Function1<string, Endomorphism<ol.Coordinate>> = projection => coordinate =>
+  ol.proj.transform(coordinate, Epsg.Lambert72, projection);
+
+export function switchVolgorde(coordinate: ol.Coordinate): ol.Coordinate {
+  return [coordinate[1], coordinate[0]];
+}
+
+export const formatCoordinate: (_: number) => (_: ol.Coordinate) => string = decimals => coordinate =>
+  `${coordinate[0].toFixed(decimals)}, ${coordinate[1].toFixed(decimals)}`;
+
+export const parseCoordinate: (_: string) => Option<ol.Coordinate> = coordTxt => {
+  const coords = coordTxt
+    .split(",")
+    .map(s => Number(s))
+    .filter(n => !isNaN(n));
+  return fromPredicate((cs: number[]) => cs.length === 2)(coords) as Option<ol.Coordinate>;
+};
+
+const supportedProjections = new Set(Epsg.all);
+
+const stringIntersector = set.intersection(setoidString);
+
+const first: Function1<Set<string>, Option<string>> = (xs: Set<string>) => (xs.size > 0 ? some(xs.values().next().value) : none);
+
+export const supportedProjection: PartialFunction1<string[], string> = projections =>
+  first(stringIntersector(supportedProjections, new Set(projections)));
 
 // Onze dienstkaartextent
 const Lambert72Extent: ol.Extent = [18000.0, 152999.75, 280144.0, 415143.75];

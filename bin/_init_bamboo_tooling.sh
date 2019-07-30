@@ -19,12 +19,13 @@ function addCommandToPath() {
 }
 
 echo "== NODEJS =="
-if ! [ -z $bamboo_capability_system_builder_node_Node_js_8 ]; then
-  echo "We gebruiken de NodeJS capability van Bamboo: $bamboo_capability_system_builder_node_Node_js_8"
-  addCommandToPath $bamboo_capability_system_builder_node_Node_js_8
+if ! [ -z $bamboo_capability_system_builder_node_Node_js_10 ]; then
+  echo "We gebruiken de NodeJS capability van Bamboo: $bamboo_capability_system_builder_node_Node_js_10"
+  addCommandToPath $bamboo_capability_system_builder_node_Node_js_10
   echo Node "$(node --version)"
   echo NPM "$(npm --version)"
 else
   echo "Issue met NodeJS capability van Bamboo"
+  set
 fi
 echo

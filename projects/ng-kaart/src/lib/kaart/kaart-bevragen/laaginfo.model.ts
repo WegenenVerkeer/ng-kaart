@@ -51,9 +51,11 @@ export interface Adres {
   readonly gemeente: string;
 }
 
-export type AdresResult = Either<string, Adres>;
-export type WegLocatiesResult = Either<string, WegLocaties>;
-export type LaagLocationInfoResult = Either<string, LaagLocationInfo>;
+export type BevragenErrorReason = "Unreachable" | "ServiceError" | "NoData";
+
+export type AdresResult = Either<BevragenErrorReason, Adres>;
+export type WegLocatiesResult = Either<BevragenErrorReason, WegLocaties>;
+export type LaagLocationInfoResult = Either<BevragenErrorReason, LaagLocationInfo>;
 
 export interface KaartLocaties {
   readonly timestamp: number;

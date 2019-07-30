@@ -11,6 +11,7 @@ import {
   SimpleChanges,
   ViewChild
 } from "@angular/core";
+import { Either } from "fp-ts/lib/Either";
 import { Function1, pipe } from "fp-ts/lib/function";
 import * as option from "fp-ts/lib/Option";
 import { fromEither, none, Option, some } from "fp-ts/lib/Option";
@@ -20,7 +21,7 @@ import { debounceTime, map, share, tap } from "rxjs/operators";
 
 import { ToegevoegdeLaag } from "../kaart";
 import { KaartInfoBoodschapUiSelector } from "../kaart/info-boodschappen/kaart-info-boodschappen.component";
-import { Adres, KaartLocaties, WegLocaties } from "../kaart/kaart-bevragen/laaginfo.model";
+import { Adres, BevragenErrorReason, KaartLocaties, WegLocaties } from "../kaart/kaart-bevragen/laaginfo.model";
 import { forChangedValue, KaartComponentBase } from "../kaart/kaart-component-base";
 import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "../kaart/kaart-event-dispatcher";
 import * as prt from "../kaart/kaart-protocol";
@@ -62,10 +63,18 @@ export interface ClassicKlikInfoEnStatus {
   readonly coordinaat: ol.Coordinate;
   readonly adres?: Adres;
   readonly adresStatus: progress.ProgressStatus;
+  readonly adresFailure?: BevragenErrorReason;
   readonly wegLocaties: WegLocaties;
   readonly wegLocatiesStatus: progress.ProgressStatus;
+  readonly wegLocatiesFailure?: BevragenErrorReason;
   readonly combinedLaagLocatieStatus: progress.ProgressStatus;
 }
+
+const progressFailure: <A>(_: progress.Progress<Either<BevragenErrorReason, A>>) => BevragenErrorReason | undefined = p =>
+  progress
+    .toOption(p)
+    .chain(e => option.fromEither(e.swap()))
+    .toUndefined();
 
 const flattenKaartLocaties: Function1<KaartLocaties, ClassicKlikInfoEnStatus> = locaties => ({
   timestamp: locaties.timestamp,
@@ -75,8 +84,10 @@ const flattenKaartLocaties: Function1<KaartLocaties, ClassicKlikInfoEnStatus> = 
     .chain(option.fromEither)
     .toUndefined(),
   adresStatus: progress.toProgressStatus(locaties.maybeAdres),
+  adresFailure: progressFailure(locaties.maybeAdres),
   wegLocaties: arrays.fromOption(progress.toOption(locaties.wegLocaties).map(arrays.fromEither)),
   wegLocatiesStatus: progress.toProgressStatus(locaties.wegLocaties),
+  wegLocatiesFailure: progressFailure(locaties.wegLocaties),
   combinedLaagLocatieStatus: progress.combineStatus(
     progress.toProgressStatus(locaties.maybeAdres),
     progress.toProgressStatus(locaties.wegLocaties)

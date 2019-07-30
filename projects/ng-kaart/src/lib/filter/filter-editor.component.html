@@ -13,7 +13,7 @@
       </div>
       <div class="filter-definitie">
         <mat-form-field class="filter-velden-combo">
-          <input type="text" placeholder="Eigenschap" matInput [formControl]="veldControl" [matAutocomplete]="velden"/>
+          <input type="text" placeholder="Eigenschap" autocomplete="off" matInput [formControl]="veldControl" [matAutocomplete]="velden"/>
           <mat-autocomplete #velden="matAutocomplete" autoActiveFirstOption [displayWith]="displayVeld">
             <mat-option *ngFor="let veld of (filteredVelden$ | async)" [value]="veld">{{ veld.label }}</mat-option>
           </mat-autocomplete>
@@ -21,7 +21,7 @@
         </mat-form-field>
 
         <mat-form-field class="filter-operator-combo">
-          <input type="text" placeholder="Operator" matInput [formControl]="operatorControl" [matAutocomplete]="operatoren"/>
+          <input type="text" placeholder="Operator" autocomplete="off" matInput [formControl]="operatorControl" [matAutocomplete]="operatoren"/>
           <mat-autocomplete #operatoren="matAutocomplete" autoActiveFirstOption [displayWith]="displayOperator">
             <mat-option *ngFor="let operator of (filteredOperatoren$ | async)" [value]="operator">{{ operator.label }}</mat-option>
           </mat-autocomplete>
@@ -63,7 +63,7 @@
                 </mat-select>
               </mat-form-field>
               <mat-form-field *ngSwitchCase="'autocomplete'" class="filter-waarde-combo">
-                <input type="text" placeholder="Waarde" matInput [formControl]="autocompleteWaardeControl" [matAutocomplete]="waarden"/>
+                <input type="text" placeholder="Waarde" autocomplete="off" matInput [formControl]="autocompleteWaardeControl" [matAutocomplete]="waarden"/>
                 <mat-autocomplete #waarden="matAutocomplete" [displayWith]="displayAutocompleteWaarde">
                   <mat-option *ngFor="let waarde of (filteredWaarden$ | async)" [value]="waarde">{{waarde.value}}</mat-option>
                 </mat-autocomplete>

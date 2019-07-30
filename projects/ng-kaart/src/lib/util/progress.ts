@@ -1,4 +1,4 @@
-import { Function1, Lazy } from "fp-ts/lib/function";
+import { constant, Function1, Lazy } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 
 export type Progress<A> = Requested | TimedOut | Received<A>;
@@ -26,14 +26,14 @@ export const TimedOut: TimedOut = "TimedOut";
 export const Received: <A>(_: A) => Received<A> = a => ({ value: a });
 
 export function map<A, B>(pr: Progress<A>, f: Function1<A, B>): Progress<B> {
-  return withProgress<A, Progress<B>>(() => Requested, () => TimedOut, a => Received(f(a)))(pr);
+  return withProgress<A, Progress<B>>(constant(Requested), constant(TimedOut), a => Received(f(a)))(pr);
 }
 
 export const proceed: <A>(pr1: Progress<A>, pr2: Progress<A>) => Progress<A> = (pr1, pr2) =>
   withProgress(
     () => pr2, // indien requested, vervang door opvolger
-    () => pr1, // timedout is een finale toestand
-    () => pr1 // received is een finale toestand
+    () => pr1, // TimedOut is een finale toestand
+    () => pr1 // Received is een finale toestand
   )(pr1);
 
 export const toOption: <A>(_: Progress<A>) => Option<A> = withProgress(
@@ -48,13 +48,17 @@ export const toProgressStatus: <A>(_: Progress<A>) => ProgressStatus = withProgr
   () => "Received" as ProgressStatus
 );
 
+// Regels zijn vrij arbitrair, maar moet wel symmetrisch zijn: combineStatus(ps1, ps2) === combineStatus(ps2, ps1 )
 export const combineStatus: <A>(ps1: ProgressStatus, ps2: ProgressStatus) => ProgressStatus = (ps1, ps2) => {
   switch (ps1) {
     case "Requested":
+      // Rq + T -> T, Rq + Rq -> Rq, Rq + Rc -> Rq
       return "Requested";
     case "TimedOut":
-      return ps2 === "Requested" ? "Requested" : "TimedOut"; // vrij arbitrair, maar moet wel symmetrisch zijn
+      // T + T -> T , T + Rq -> T , T + Rc -> T
+      return ps2 === "Requested" ? "Requested" : "TimedOut";
     case "Received":
+      // Rc + T -> T, Rc + Rq -> Rq, Rc + Rc -> Rc
       return ps2;
   }
 };
