@@ -1,5 +1,6 @@
 import { constant, Function1, Lazy } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
+import { Setoid, setoidString } from "fp-ts/lib/Setoid";
 
 export type Progress<A> = Requested | TimedOut | Received<A>;
 
@@ -49,7 +50,7 @@ export const toProgressStatus: <A>(_: Progress<A>) => ProgressStatus = withProgr
 );
 
 // Regels zijn vrij arbitrair, maar moet wel symmetrisch zijn: combineStatus(ps1, ps2) === combineStatus(ps2, ps1 )
-export const combineStatus: <A>(ps1: ProgressStatus, ps2: ProgressStatus) => ProgressStatus = (ps1, ps2) => {
+export const combineStatus: (ps1: ProgressStatus, ps2: ProgressStatus) => ProgressStatus = (ps1, ps2) => {
   switch (ps1) {
     case "Requested":
       // Rq + T -> T, Rq + Rq -> Rq, Rq + Rc -> Rq
@@ -62,3 +63,5 @@ export const combineStatus: <A>(ps1: ProgressStatus, ps2: ProgressStatus) => Pro
       return ps2;
   }
 };
+
+export const setoidProgressStatus: Setoid<ProgressStatus> = setoidString;

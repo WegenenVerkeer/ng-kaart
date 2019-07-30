@@ -14,6 +14,7 @@ import { getUnderlyingFeatures } from "../../projects/ng-kaart/src/lib/util/feat
 import {
   AwvV0DynamicStyle,
   AwvV0StaticStyleSpec,
+  ClassicLaagKlikInfoEnStatus,
   defaultMarkerStyle,
   definitieToStyle,
   definitieToStyleFunction,
@@ -1159,5 +1160,9 @@ export class FeatureDemoComponent {
 
   onZoomEvent(value: number) {
     this.huidigeZoom = value;
+  }
+
+  onPercelenBevragen(info: ClassicLaagKlikInfoEnStatus) {
+    console.log("***Percelen info:", info);
   }
 }

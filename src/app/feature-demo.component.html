@@ -785,7 +785,8 @@
                [groep]="'Voorgrond.Laag'"
                [queryUrlFn]="percelenQueryUrl"
                [veldinfos]="percelenVeldinfos"
-               [textParser]="percelenWmsParser"></awv-kaart-wms-laag>
+               [textParser]="percelenWmsParser"
+               (laagLocaties)="onPercelenBevragen($event)"></awv-kaart-wms-laag>
             <awv-kaart-knop-achtergrondlaag-kiezer></awv-kaart-knop-achtergrondlaag-kiezer>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
             <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
@@ -845,7 +846,7 @@
       <awv-test-sectie sectieId="zoombereik" sectieTitel="Zoombereik" [subSectie]="true" #zoombereikSectie
                        [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && zoombereikSectie.sectieZichtbaar">
         <div *ngIf="zoombereikSectie.sectieZichtbaar" [@enterAnimation]>
-          <awv-kaart-classic 
+          <awv-kaart-classic
             [naam]="'zoombereik'" [hoogte]="600" (zoomChange)="onZoomEvent($event)"
             [minZoom]="minZoom" [maxZoom]="maxZoom">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
@@ -857,7 +858,7 @@
             <button (click)="onSetMinZoom(1)">Zet minimum zoom op 1</button>
             <button (click)="onSetMinZoom(8)">Zet minimum zoom op 8</button>
             <button (click)="onSetMaxZoom(7)">Zet maximum zoom op 7</button>
-            <button (click)="onSetMaxZoom(15)">Zet maximum zoom op 15</button>    
+            <button (click)="onSetMaxZoom(15)">Zet maximum zoom op 15</button>
         </div>
         <div class="onder-kaart">
           Huidige zoom: {{ huidigeZoom }}
