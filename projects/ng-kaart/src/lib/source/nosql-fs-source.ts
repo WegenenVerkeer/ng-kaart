@@ -1,13 +1,12 @@
 import { array } from "fp-ts";
 import { concat, Function1, not, Refinement } from "fp-ts/lib/function";
-import { fromNullable, none, Option } from "fp-ts/lib/Option";
+import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import { setoidNumber, setoidString } from "fp-ts/lib/Setoid";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import {
   bufferCount,
   catchError,
-  distinctUntilChanged,
   filter,
   map,
   mapTo,
@@ -15,7 +14,6 @@ import {
   reduce,
   scan,
   share,
-  shareReplay,
   startWith,
   switchMap,
   takeLast,
@@ -42,6 +40,8 @@ import { CollectionSummary, FeatureCollection, GeoJsonLike } from "../util/geojs
 import * as geojsonStore from "../util/indexeddb-geojson-store";
 import { Pipeable } from "../util/operators";
 import { forEach } from "../util/option";
+
+import { Extent } from "./extent";
 
 /**
  * Stappen:
@@ -160,7 +160,7 @@ const mapToCollectionSummary: Pipeable<string, CollectionSummary> = obs =>
     })
   );
 
-function featuresFromCache(laagnaam: string, extent: ol.Extent): rx.Observable<GeoJsonLike[]> {
+function featuresFromCache(laagnaam: string, extent: Extent): rx.Observable<GeoJsonLike[]> {
   return geojsonStore.getFeaturesByExtent(laagnaam, extent).pipe(
     bufferCount(BATCH_SIZE),
     tap(geojsons => kaartLogger.debug(`${geojsons.length} features opgehaald uit cache`))
@@ -171,12 +171,17 @@ function featuresFromServer(
   source: NosqlFsSource,
   laagnaam: string,
   gebruikCache: boolean,
-  extent: ol.Extent,
-  composedQueryUrl: string
+  extent: Extent,
+  prevExtent: Extent
 ): rx.Observable<GeoJsonLike[]> {
-  const batchedFeatures$ = source.fetchFeatures$(composedQueryUrl, gebruikCache).pipe(
-    bufferCount(BATCH_SIZE),
-    catchError(error => (gebruikCache ? featuresFromCache(laagnaam, extent) : rx.throwError(error)))
+  const toFetch = Extent.difference(extent, prevExtent);
+  const batchedFeatures$ = rx.merge(
+    ...toFetch.map(ext =>
+      source.fetchFeatures$(source.composeQueryUrl(ext), gebruikCache).pipe(
+        bufferCount(BATCH_SIZE),
+        catchError(error => (gebruikCache ? featuresFromCache(laagnaam, extent) : rx.throwError(error)))
+      )
+    )
   );
   const cacheWriter$ = gebruikCache
     ? batchedFeatures$.pipe(
@@ -207,7 +212,8 @@ export class NosqlFsSource extends ol.source.Vector {
   readonly loadEvent$: rx.Observable<le.DataLoadEvent> = this.loadEventSubj;
   private offline = false;
   private busyCount = 0;
-  private outstandingRequests: ol.Extent[] = [];
+  private outstandingRequestExtents: Extent[] = []; // De extents die opgevraagd zijn en nog niet ontvangen op een moment van rust
+  private prevExtent: Extent = [0, 0, 0, 0]; // De vorig opgegevraagde extent
   private outstandingQueries: string[] = [];
   private userFilter: Option<string> = none; // Een arbitraire filter bovenop de basisfilter
   private userFilterActive = false;
@@ -225,28 +231,29 @@ export class NosqlFsSource extends ol.source.Vector {
     readonly gebruikCache: boolean
   ) {
     super({
-      loader: function(extent: ol.Extent) {
+      loader: function(extent: Extent) {
         const source: NosqlFsSource = this;
         source.busyCount += 1;
-        source.outstandingRequests = array.snoc(source.outstandingRequests, extent);
-        const queryUrlVoorExtent = this.composeQueryUrl(extent);
+        source.outstandingRequestExtents = array.snoc(source.outstandingRequestExtents, extent);
+        const queryUrlVoorExtent = source.composeQueryUrl(extent);
         source.outstandingQueries = array.snoc(source.outstandingQueries, queryUrlVoorExtent);
         const featuresLoader$: rx.Observable<ol.Feature[]> = (source.offline
           ? featuresFromCache(laagnaam, extent)
-          : featuresFromServer(source, laagnaam, gebruikCache, extent, queryUrlVoorExtent)
+          : featuresFromServer(source, laagnaam, gebruikCache, extent, source.prevExtent)
         ).pipe(
           map(geojsons => geojsons.map(toOlFeature(laagnaam))),
           share()
         );
+        source.prevExtent = extent;
         const newFeatures$ = featuresLoader$.pipe(map(features => features));
         newFeatures$.subscribe({
           next: newFeatures => {
             source.dispatchLoadEvent(le.PartReceived);
             // Als we ondertussen op een ander stuk van de kaart aan het kijken zijn, dan hoeven we de features van een
             // oude request niet meer toe te voegen
-            // Zelfde met filter; als de filter is gewijzigd, dan zijn wij niet meer geïnteresseerd in de oude waarden
+            // Zelfde met filter: als de filter is gewijzigd, dan zijn wij niet meer geïnteresseerd in de oude waarden
             if (
-              array.last(source.outstandingRequests).contains(array.getSetoid(setoidNumber), extent) ||
+              array.last(source.outstandingRequestExtents).contains(array.getSetoid(setoidNumber), extent) ||
               array.last(source.outstandingQueries).contains(setoidString, queryUrlVoorExtent)
             ) {
               source.addFeatures([...newFeatures.values()]);
@@ -267,12 +274,12 @@ export class NosqlFsSource extends ol.source.Vector {
             // binnen komen zijn. Wat we daarmee niet opvangen is de mogelijkheid dat we de verkeerde extent aan het
             // behouden zijn. Het kan immers gebeuren dat een fetch van een extent waar we eerder waren later binnen
             // komt. De volgorde van de resultaten is immers niet gegarandeerd. Wanneer dat gebeurt, verwijderen we de
-            // features op het zichtbare gedeelte van de kaart. Daarvoor gebruiken we de recentste extent zoals gezet
-            // bij de start van de loader (dat gebeurt wel in de goede volgorde) en gebruiken we die extent om features
-            // van te behouden.
+            // features op het zichtbare gedeelte van de kaart. Daarom gebruiken we de recentste extent zoals gezet bij
+            // de start van de loader (dat gebeurt wel in de goede volgorde) en gebruiken we die extent om features van
+            // te behouden.
             if (allFeatures.length > memCacheSize && source.busyCount === 0) {
               const featuresOutsideExtent = array
-                .last(source.outstandingRequests)
+                .last(source.outstandingRequestExtents)
                 .fold([], lastExtent => array.filter(allFeatures, Feature.notInExtent(lastExtent)));
 
               kaartLogger.debug("Te verwijderen", featuresOutsideExtent.length);
@@ -285,7 +292,7 @@ export class NosqlFsSource extends ol.source.Vector {
               // Af en toe kuisen we de outstanding requests op. Tussentijds is lastig omdat het mogelijk is dat
               // dezelfde extent meer dan eens in de array zit.
               if (source.busyCount === 0) {
-                source.outstandingRequests = [];
+                source.outstandingRequestExtents = [];
                 source.outstandingQueries = [];
               }
             }
@@ -303,9 +310,11 @@ export class NosqlFsSource extends ol.source.Vector {
     };
   }
 
-  private composeQueryUrl(extent?: number[]) {
+  composeQueryUrl(extent?: number[]) {
     const params = {
-      ...fromNullable(extent).fold({}, v => ({ bbox: v.join(",") })),
+      ...fromNullable(extent)
+        .map(Extent.toQueryValue)
+        .fold({}, bbox => ({ bbox })),
       ...this.viewAndFilterParams()
     };
 
