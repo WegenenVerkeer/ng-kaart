@@ -32,10 +32,11 @@ import { allOf, fromBoolean, fromOption, fromPredicate, success, validationChain
 import { zoekerMetNaam } from "../zoeker/zoeker";
 
 import { CachedFeatureLookup } from "./cache/lookup";
+import { envParams } from "./kaart-config";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { MsgGen } from "./kaart-protocol-subscriptions";
-import { EnvironmentParams, KaartWithInfo } from "./kaart-with-info";
+import { KaartWithInfo } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
 import { kaartLogger } from "./log";
 import { ModelChanger, ModelChanges } from "./model-changes";
@@ -1000,6 +1001,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function activeerSelectieModus(cmnd: prt.ActiveerSelectieModusCmd): ModelWithResult<Msg> {
       function getSelectInteraction(modus: prt.SelectieModus): Option<olx.interaction.SelectOptions> {
+        const hitTolerance = envParams(model.config).clickHitTolerance;
         switch (modus) {
           case "single":
             return some({
@@ -1007,7 +1009,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               features: model.geselecteerdeFeatures,
               multi: false,
               style: createSelectionStyleFn(getSelectionStyleSelector),
-              hitTolerance: EnvironmentParams.clickHitTolerance,
+              hitTolerance: hitTolerance,
               layers: layer => layer.get(ke.LayerProperties.Selecteerbaar)
             });
           case "multipleShift":
@@ -1016,7 +1018,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               features: model.geselecteerdeFeatures,
               multi: true,
               style: createSelectionStyleFn(getSelectionStyleSelector),
-              hitTolerance: EnvironmentParams.clickHitTolerance,
+              hitTolerance: hitTolerance,
               layers: layer => layer.get(ke.LayerProperties.Selecteerbaar)
             });
           case "multipleKlik":
@@ -1026,7 +1028,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               features: model.geselecteerdeFeatures,
               multi: true,
               style: createSelectionStyleFn(getSelectionStyleSelector),
-              hitTolerance: EnvironmentParams.clickHitTolerance,
+              hitTolerance: hitTolerance,
               layers: layer => layer.get(ke.LayerProperties.Selecteerbaar)
             });
           case "none":

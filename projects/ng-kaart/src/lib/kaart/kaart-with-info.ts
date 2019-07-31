@@ -1,5 +1,4 @@
 import { none, Option } from "fp-ts/lib/Option";
-import * as MobileDetect from "mobile-detect/mobile-detect";
 import * as ol from "openlayers";
 import { BehaviorSubject, ReplaySubject, Subject } from "rxjs";
 
@@ -12,21 +11,6 @@ import { InfoBoodschap } from "./kaart-with-info-model";
 import { ModelChanger } from "./model-changes";
 import { initStyleSelectorsInMap } from "./stijl-selector";
 import { TileLoader } from "./tile-loader";
-
-// Alternatief is detect touchscreen van modernizer, maar touch != mobile
-const mobileDetect = new MobileDetect(window.navigator.userAgent);
-
-const DesktopEnvParams = {
-  clickHitTolerance: 5, // px
-  moveTolerance: 1 // px
-};
-
-const MobileEnvParams = {
-  clickHitTolerance: 40, // px
-  moveTolerance: 10 // px
-};
-
-export const EnvironmentParams = mobileDetect.mobile() ? MobileEnvParams : DesktopEnvParams;
 
 /**
  * Het model achter de kaartcomponent.

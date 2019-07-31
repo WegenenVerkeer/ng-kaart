@@ -17,11 +17,12 @@ import { updateBehaviorSubject } from "../util/subject-update";
 import { ZoekAntwoord, ZoekerMetWeergaveopties, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
 
 import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
+import { envParams } from "./kaart-config";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { UiElementOpties } from "./kaart-protocol-commands";
 import { Viewinstellingen } from "./kaart-protocol-subscriptions";
-import { EnvironmentParams, KaartWithInfo } from "./kaart-with-info";
+import { KaartWithInfo } from "./kaart-with-info";
 import { GeselecteerdeFeatures, HoverFeature } from "./kaart-with-info-model";
 import * as loc from "./mijn-locatie/kaart-mijn-locatie.component";
 import { GeenLaagstijlaanpassing, LaagstijlaanpassingState } from "./stijleditor/state";
@@ -162,7 +163,7 @@ const viewinstellingen: Function1<ol.Map, prt.Viewinstellingen> = olmap => ({
   rotation: olmap.getView().getRotation()
 });
 
-export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges = (model, changer) => {
+export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> = (model, changer) => {
   const toegevoegdeGeselecteerdeFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.geselecteerdeFeatures, "add").pipe(
     // we zouden de events kunnen bufferen met bufferTime. We moeten dan evenwel `toegevoegd` en `verwijderd` een array
     // maken ipv een option. Zolang we echter maar een paar features tegelijkertijd selecteren maakt het niet zo veel
@@ -262,7 +263,7 @@ export const modelChanges: (_1: KaartWithInfo, _2: ModelChanger) => ModelChanges
     map((event: ol.MapBrowserEvent) => ({
       coordinate: event.coordinate,
       coversFeature: model.map.hasFeatureAtPixel(event.pixel, {
-        hitTolerance: EnvironmentParams.clickHitTolerance,
+        hitTolerance: envParams(model.config).clickHitTolerance,
         // enkel json data features die een identify hebben beschouwen we. Zoekresultaten bvb niet
         layerFilter: layer => ke.underlyingSource(layer) instanceof NosqlFsSource
       })
