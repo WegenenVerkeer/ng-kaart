@@ -360,7 +360,7 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
     }
   }
 
-  private eigenschappen(filter: (string) => boolean): string[] {
+  private eigenschappen(filter: Predicate<string>): string[] {
     return veldnamen(this.veldbeschrijvingen)
       .filter(veldNaam => filter(veldNaam))
       .filter(veldNaam => geldigeWaarde(nestedProperty(veldNaam!, this.properties)) || this.constante(veldNaam!).isSome())
