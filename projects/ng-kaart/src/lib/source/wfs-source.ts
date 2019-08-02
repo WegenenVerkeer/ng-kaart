@@ -23,7 +23,6 @@ export function wfsSource(
     version,
     outputFormat: "application/json",
     request: "GetFeature",
-    service: "WFS",
     typenames
   });
 

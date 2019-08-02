@@ -6,7 +6,7 @@ import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import { CachedFeatureLookup } from "projects/ng-kaart/src/lib/kaart/cache/lookup";
 import { Feature } from "projects/ng-kaart/src/lib/util/feature";
-import { encodeParams } from "projects/ng-kaart/src/lib/util/url";
+import { urlWithParams } from "projects/ng-kaart/src/lib/util/url";
 import * as rx from "rxjs";
 import { reduce, scan, share, startWith, throttleTime } from "rxjs/operators";
 
@@ -784,7 +784,7 @@ export class FeatureDemoComponent {
       bbox: `${location[0] - 1},${location[1] - 1},${location[0] + 1},${location[1] + 1}`,
       bron: "Bestuurszaken Percelen"
     };
-    return `/geoloket2/rest/externewms/featureInfo?${encodeParams(params)}`;
+    return urlWithParams("/geoloket2/rest/externewms/featureInfo", params);
     // const corsProxy = "http://localhost:9090/"; // TODO iets dat altijd bereikbaar is
     // const targetServer = "http://bzgis.vlaanderen.be/ArcGIS/services/DBZ/Vastgoed_Percelen_Vlaamse_overheid/MapServer/WMSServer";
     // return `${corsProxy}${targetServer}?${encodeParams(params)}`;

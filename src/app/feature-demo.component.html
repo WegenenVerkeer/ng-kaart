@@ -814,15 +814,13 @@
                                 [minZoom]="6"
                                 [veldinfos]="wfsStratenVeldinfos"
                                 [cqlFilter]="'shape_leng<100'"></awv-kaart-wfs-laag>
-            <!-- CORS bescherming moet afgezet worden omwille van URL op ander domein
             <awv-kaart-wfs-laag [titel]="'Borden'"
                                 [typeNames]="'awv:Verkeersborden.Vlaanderen_Borden'"
-                                [url]="'https://opendata.apps.mow.vlaanderen.be/opendata-geoserver/awv/ows'"
+                                [url]="'/opendata-geoserver/awv/ows?service=WFS'"
                                 [version]="'1.0.0'"
                                 [geom]="'geometry'"
                                 [minZoom]="8"
                                 ></awv-kaart-wfs-laag>
-            -->
 
             <awv-kaart-knop-achtergrondlaag-kiezer></awv-kaart-knop-achtergrondlaag-kiezer>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
