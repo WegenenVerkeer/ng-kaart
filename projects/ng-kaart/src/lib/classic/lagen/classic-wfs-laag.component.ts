@@ -19,6 +19,7 @@ export class ClassicWfsLaagComponent extends ClassicVectorLaagLikeComponent {
   _veldInfos: ke.VeldInfo[] = [];
   _version = "2.0.0";
   _srsName = "EPSG:31370";
+  _geom = "the_geom";
   _typeNames: Option<string> = none;
   _cqlFilter: Option<string> = none;
 
@@ -56,6 +57,11 @@ export class ClassicWfsLaagComponent extends ClassicVectorLaagLikeComponent {
     this._cqlFilter = fromNullable(param);
   }
 
+  @Input()
+  set geom(param: string) {
+    this._geom = fromNullable(param).getOrElse(this._geom);
+  }
+
   createLayer(): ke.VectorLaag {
     return {
       type: ke.VectorType,
@@ -65,9 +71,10 @@ export class ClassicWfsLaagComponent extends ClassicVectorLaagLikeComponent {
         this._srsName,
         this._version,
         this._typeNames.getOrElseL(() => {
-          throw new Error("Een WFS kaag moet verplicht een waarde voor typenames hebben");
+          throw new Error("Een WFS laag moet verplicht een waarde voor typenames hebben");
         }),
         this._url,
+        this._geom,
         this._cqlFilter
       ),
       clusterDistance: this._clusterDistance,

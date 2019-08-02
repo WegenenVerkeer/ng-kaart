@@ -10,23 +10,25 @@ import { featureDelimiter, getWithCommonHeaders, mapToFeatureCollection, split }
 
 export function wfsSource(
   laagnaam: string,
-  srsName: string,
+  srsname: string,
   version: string,
   typenames: string,
   baseUrl: string,
+  geomField: string,
   cqlFilter: Option<string>
 ): ol.source.Vector {
   const maybeEncodedFilter = cqlFilter.map(f => ` AND (${f})`).map(encodeURIComponent);
   const precalculatedUrl = urlWithParams(baseUrl, {
-    srsname: srsName,
-    version: version,
+    srsname,
+    version,
     outputFormat: "application/json",
     request: "GetFeature",
-    typenames: typenames
+    service: "WFS",
+    typenames
   });
 
   function load(extent: ol.Extent) {
-    const extentUrl = `${precalculatedUrl}&cql_filter=bbox(the_geom,${extent.join(",")})`;
+    const extentUrl = `${precalculatedUrl}&cql_filter=bbox(${geomField},${extent.join(",")})`;
     const composedQueryUrl = maybeEncodedFilter.fold(extentUrl, encodedFilter => extentUrl + encodedFilter);
     const feature$ = fetchObs$(composedQueryUrl, getWithCommonHeaders()).pipe(
       split(featureDelimiter),
