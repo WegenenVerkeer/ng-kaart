@@ -419,6 +419,7 @@ export class NosqlFsSource extends ol.source.Vector {
     const maybeCql = FilterCql.cql(cqlFilter);
     this.userFilter = maybeCql;
     this.userFilterActive = filterActive;
+    this.prevExtent = [0, 0, 0, 0]; // Ook de data voor de huidige viewport moet weer opgevraagd worden
     this.clear();
     this.refresh();
     forEach(maybeCql, cql => this.filterSubj.next(cql));
