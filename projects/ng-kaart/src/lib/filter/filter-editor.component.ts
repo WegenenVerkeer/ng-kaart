@@ -67,7 +67,7 @@ const resetWithoutEvent = (...controls: FormControl[]): void => {
   controls.forEach(control => control.reset("", { emitEvent: false }));
 };
 
-const sanitiseText: Endomorphism<string> = text => text.trim().replace(/[\x00-\x1F ]/g, "");
+const sanitiseText: Endomorphism<string> = text => text.trim().replace(/[\x00-\x1F]/g, "");
 
 // We willen fragmenten van waarden scheiden van volledige waarden. Dat doen we liefst zonder steeds te controleren tov
 // de volledige lijst van waarden. Die lijst is immers niet eenvoudig voorhanden. De manier die hier gebruiken is om
