@@ -33,7 +33,7 @@
             <ng-container *ngSwitchCase="'free'" [ngSwitch]="valueSelector.valueType">
 
               <mat-form-field *ngSwitchCase="'string'" class="filter-waarde-editbox">
-                <input type="text" matInput placeholder="Waarde" [formControl]="textWaardeControl"/>
+                <input type="text" matInput placeholder="Waarde" autocomplete="off" [formControl]="textWaardeControl"/>
                 <mat-error *ngIf="textWaardeControl.invalid">{{errorTextWaarde()}}</mat-error>
               </mat-form-field>
               <span *ngSwitchCase="'string'" class="hoofdlettergevoeligheid">
