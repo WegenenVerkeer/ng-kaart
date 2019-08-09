@@ -80,7 +80,7 @@
     "openlayers": "^4.6.5",
     "proj4": "2.5.0",
     "resize-observer": "1.0.0",
-    "rxjs": "6.5.1",
+    "rxjs": "6.5.2",
     "scroll-into-view-if-needed": "2.2.20",
     "zone.js": "0.8.26"
   },

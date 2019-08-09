@@ -185,7 +185,7 @@ function featuresFromServer(
   );
   const cacheWriter$ = gebruikCache
     ? batchedFeatures$.pipe(
-        reduce(concat, []), // alles in  1 grote array steken
+        reduce<GeoJsonLike[], GeoJsonLike[]>(concat, []), // alles in  1 grote array steken
         switchMap(allFeatures =>
           // dan de oude gecachte features in de extent verwijderen
           geojsonStore.deleteFeatures(laagnaam, extent).pipe(
@@ -200,7 +200,7 @@ function featuresFromServer(
           )
         )
       )
-    : rx.empty();
+    : rx.EMPTY;
   return rx.merge(batchedFeatures$, cacheWriter$);
 }
 // Instanceof blijkt niet betrouwbaar te zijn
