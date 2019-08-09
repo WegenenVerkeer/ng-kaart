@@ -61,6 +61,7 @@
     "@angular/platform-browser-dynamic": "7.1.2",
     "@angular/router": "7.1.2",
     "@angular/service-worker": "7.1.2",
+    "@awv/awv-clientlogging": "^1.1.0",
     "@types/loglevel": "1.5.3",
     "core-js": "2.6.0",
     "document-register-element": "^1.7.2",
