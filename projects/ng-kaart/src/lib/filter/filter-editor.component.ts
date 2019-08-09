@@ -85,6 +85,8 @@ const extractValue: Function1<Wrapped, string> = wrapped => wrapped.value;
   styleUrls: ["./filter-editor.component.scss"]
 })
 export class FilterEditorComponent extends KaartChildComponentBase {
+  readonly mobile = window.matchMedia("(pointer: coarse)").matches;
+
   readonly zichtbaar$: rx.Observable<boolean>;
   readonly titel$: rx.Observable<string>;
 
@@ -119,6 +121,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
   private clickInsideDialog = false;
 
   readonly operatorCompare: (o1: fed.ComparisonOperator, o2: fed.ComparisonOperator) => boolean = (o1, o2) => o1.operator === o2.operator;
+  readonly veldCompare: (o1: fltr.Property, o2: fltr.Property) => boolean = (o1, o2) => o1.ref === o2.ref;
 
   constructor(kaart: KaartComponent, zone: NgZone, private readonly cdr: ChangeDetectorRef) {
     super(kaart, zone);
@@ -392,12 +395,10 @@ export class FilterEditorComponent extends KaartChildComponentBase {
                 }
               },
               selection: valueSelector => {
-                switch (valueSelector.selectionType) {
-                  case "autocomplete":
-                    this.autocompleteWaardeControl.reset(Wrapped(compl.selectedValue.value as string), { emitEvent: true });
-                    break;
-                  case "dropdown":
-                    this.dropdownWaardeControl.reset(Wrapped(compl.selectedValue.value as string), { emitEvent: true });
+                if (this.mobile) {
+                  this.dropdownWaardeControl.reset(compl.selectedValue.value as string, { emitEvent: true });
+                } else {
+                  this.autocompleteWaardeControl.reset(Wrapped(compl.selectedValue.value as string), { emitEvent: true });
                 }
               }
             })(compl.valueSelector);
