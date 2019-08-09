@@ -227,7 +227,7 @@ export class ZoekerGoogleWdbService implements Zoeker {
             mergeMap(prediction => {
               return this.geocodePlace(prediction.place_id, prediction.description);
             }, 2), // geocode 2 predictions concurrently
-            reduce((acc, val) => acc.concat(val), []) // verzamel geocoded predictions in 1 'next'
+            reduce<ExtendedGeocoderResult[]>((acc, val) => acc.concat(val), []) // verzamel geocoded predictions in 1 'next'
           );
         })
       );
