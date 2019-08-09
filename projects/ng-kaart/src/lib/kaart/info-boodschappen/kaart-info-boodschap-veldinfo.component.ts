@@ -56,34 +56,36 @@ const formateerJson = (veld: string, veldtype: string, json: any, formatString: 
   return Mustache.render(formatString, jsonObject);
 };
 
-const formateerDatum = (date: DateTime): string => {
+const formateerDate = (date: DateTime): string => {
   return date.setLocale("nl-BE").toFormat("dd/LL/yyyy");
 };
 
-const formateerDateTime = (dateString: string): string => {
-  // FIXME
-  return dateString;
-  // if (isValidDate(dateString)) {
-  //   const date = new Date(dateString);
-  //   return date.toLocaleDateString("nl-BE") + " " + date.toLocaleTimeString("nl-BE");
-  // } else {
-  //   return dateString; // date string niet herkend, geef input terug
-  // }
+const formateerDateTime = (dateTime: DateTime): string => {
+  return dateTime.setLocale("nl-BE").toFormat("dd/LL/yyyy hh:mm:ss");
 };
 
 const parseDate: PartialFunction2<string, Option<string>, DateTime> = (text, maybeFormat) =>
-  maybeFormat.foldL(() => parseDateHeuristically, parseDateWithFormat)(text);
+  maybeFormat.foldL(() => parseDateHeuristically, parseDateTimeWithFormat)(text);
 
 const parseDateHeuristically: PartialFunction1<string, DateTime> = text => {
   // Er zijn veel manieren hoe een datum geformatteerd kan zijn. Het vervelende is dat JSON geen datum formaat heeft en
   // dat datums dus als string doorkomen. Dat zou allemaal nog geen probleem zijn mocht er een std formaat (epoch
   // timestamps of ISO 6801 strings) voor alle feature sources gedefinieerd zou zijn. Helaas is dat niet zo. We moeten
   // dus heuristieken gebruiken. De browser doet dat ook, maar niet toegespitst op onze, Vlaamse, situatie.
-  return parseDateWithFormat("dd/LL/yyyy")(text).orElse(() => parseDateWithFormat("yyyy/LL/ddd")(text));
+  return parseDateTimeWithFormat("dd/LL/yyyy")(text).orElse(() => parseDateTimeWithFormat("yyyy/LL/ddd")(text));
+};
+
+const parseDateTime: PartialFunction2<string, Option<string>, DateTime> = (text, maybeFormat) =>
+  maybeFormat.foldL(() => parseDateTimeHeuristically, parseDateTimeWithFormat)(text);
+
+const parseDateTimeHeuristically: PartialFunction1<string, DateTime> = text => {
+  // We ondersteunen enkel het ISO-formaat. Dat is in de praktijk ook de enige DateTime die we hebben (gegenereerd in
+  // Scala).
+  return option.fromPredicate((d: DateTime) => d.isValid)(DateTime.fromISO(text));
 };
 
 // We ondersteunen enkel de formaten die luxon (https://moment.github.io/luxon/docs/manual/parsing.html) ondersteunt.
-const parseDateWithFormat: Function1<string, PartialFunction1<string, DateTime>> = format => text => {
+const parseDateTimeWithFormat: Function1<string, PartialFunction1<string, DateTime>> = format => text => {
   return option.fromPredicate((d: DateTime) => d.isValid)(DateTime.fromFormat(text, format));
 };
 
@@ -101,7 +103,7 @@ const isType: Function1<string, Function2<VeldinfoMap, string, boolean>> = type 
 
 const isBooleanVeld: Function2<VeldinfoMap, string, boolean> = isType("boolean");
 const isDateVeld: Function2<VeldinfoMap, string, boolean> = isType("date");
-const isDateTime: Function2<VeldinfoMap, string, boolean> = isType("datetime");
+const isDateTimeVeld: Function2<VeldinfoMap, string, boolean> = isType("datetime");
 
 // indien geen meta informatie functie, toon alle velden
 const isBasisVeld: Function2<VeldinfoMap, string, boolean> = hasVeldSatisfying(veldInfo => veldInfo.isBasisVeld);
@@ -280,6 +282,7 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
         !this.isLinkVeld(veldnaam) &&
         !isBooleanVeld(this.veldbeschrijvingen, veldnaam) &&
         !isDateVeld(this.veldbeschrijvingen, veldnaam) &&
+        !isDateTimeVeld(this.veldbeschrijvingen, veldnaam) &&
         !this.teVerbergenProperties.includes(veldnaam)
     );
   }
@@ -302,6 +305,15 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
     );
   }
 
+  dateTimeEigenschappen(): string[] {
+    return this.eigenschappen(
+      veldnaam =>
+        isBasisVeld(this.veldbeschrijvingen, veldnaam) &&
+        isDateTimeVeld(this.veldbeschrijvingen, veldnaam) &&
+        !this.teVerbergenProperties.includes(veldnaam)
+    );
+  }
+
   linkEigenschappen(): string[] {
     return this.eigenschappen(
       veldnaam =>
@@ -319,6 +331,7 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
         !isBasisVeld(this.veldbeschrijvingen, veldnaam) &&
         !isBooleanVeld(this.veldbeschrijvingen, veldnaam) &&
         !isDateVeld(this.veldbeschrijvingen, veldnaam) &&
+        !isDateTimeVeld(this.veldbeschrijvingen, veldnaam) &&
         !this.isLinkVeld(veldnaam) &&
         !this.teVerbergenProperties.includes(veldnaam)
     );
@@ -338,6 +351,15 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
       veldnaam =>
         !isBasisVeld(this.veldbeschrijvingen, veldnaam) &&
         isDateVeld(this.veldbeschrijvingen, veldnaam) &&
+        !this.teVerbergenProperties.includes(veldnaam)
+    );
+  }
+
+  geavanceerdeDateTimeEigenschappen(): string[] {
+    return this.eigenschappen(
+      veldnaam =>
+        !isBasisVeld(this.veldbeschrijvingen, veldnaam) &&
+        isDateTimeVeld(this.veldbeschrijvingen, veldnaam) &&
         !this.teVerbergenProperties.includes(veldnaam)
     );
   }
@@ -368,9 +390,7 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
     // indien er een 'constante' object in de definitie is, geef dat terug, anders geef de waarde in het veld terug
     return this.constante(name).getOrElseL(() => {
       const waarde = nestedPropertyValue(name, this.properties);
-      if (isDateTime(this.veldbeschrijvingen, name) && waarde) {
-        return formateerDateTime(waarde.toString());
-      } else if (this.hasHtml(name) && waarde) {
+      if (this.hasHtml(name) && waarde) {
         return this.sanitizer.bypassSecurityTrustHtml(formateerJson(name, this.veldtype(name), waarde, this.html(name)));
       } else if (this.hasTemplate(name) && waarde) {
         return formateerJson(name, this.veldtype(name), waarde, this.template(name));
@@ -380,22 +400,40 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
     });
   }
 
-  private maybeDatumWaarde(name: string): Option<string> {
+  private maybeDateWaarde(name: string): Option<string> {
     return this.constante(name).orElse(() => {
       const waarde = nestedPropertyValue(name, this.properties);
       return option
         .fromNullable(waarde)
         .chain(value => parseDate(value, option.none))
-        .map(formateerDatum);
+        .map(formateerDate);
     });
   }
 
-  datumWaarde(name: string): string {
-    return this.maybeDatumWaarde(name).getOrElse("");
+  dateWaarde(name: string): string {
+    return this.maybeDateWaarde(name).getOrElse("");
   }
 
-  validDatumWaarde(name: string): boolean {
-    return this.maybeDatumWaarde(name).isSome();
+  validDateWaarde(name: string): boolean {
+    return this.maybeDateWaarde(name).isSome();
+  }
+
+  private maybeDateTimeWaarde(name: string): Option<string> {
+    return this.constante(name).orElse(() => {
+      const waarde = nestedPropertyValue(name, this.properties);
+      return option
+        .fromNullable(waarde)
+        .chain(value => parseDateTime(value, option.none))
+        .map(formateerDateTime);
+    });
+  }
+
+  dateTimeWaarde(name: string): string {
+    return this.maybeDateTimeWaarde(name).getOrElse("");
+  }
+
+  validDateTimeWaarde(name: string): boolean {
+    return this.maybeDateTimeWaarde(name).isSome();
   }
 
   verpl(): string {

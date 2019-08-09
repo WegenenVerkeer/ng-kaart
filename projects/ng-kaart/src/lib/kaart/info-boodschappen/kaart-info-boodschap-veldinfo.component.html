@@ -62,7 +62,18 @@
       </div>
     </div>
     <div class="veldwaarden">
-      <div class="veldwaarde">{{datumWaarde(veld)}} <span *ngIf="!validDatumWaarde(veld)" class="badParse" matTooltip="waarde kan niet als datum geïnterpreteerd worden">{{waarde(veld)}}</span></div>
+      <div class="veldwaarde">{{dateWaarde(veld)}} <span *ngIf="!validDateWaarde(veld)" class="badParse" matTooltip="waarde kan niet als datum geïnterpreteerd worden">{{waarde(veld)}}</span></div>
+    </div>
+  </div>
+
+  <div class="velden" *ngFor="let veld of dateTimeEigenschappen()">
+    <div class="veldnamen">
+      <div class="veldnaam">
+        {{ label(veld) }}
+      </div>
+    </div>
+    <div class="veldwaarden">
+      <div class="veldwaarde">{{dateTimeWaarde(veld)}} <span *ngIf="!validDateTimeWaarde(veld)" class="badParse" matTooltip="waarde kan niet als datum/tijd geïnterpreteerd worden">{{waarde(veld)}}</span></div>
     </div>
   </div>
 
@@ -118,7 +129,18 @@
       </div>
     </div>
     <div class="veldwaarden">
-      <div class="veldwaarde">{{datumWaarde(veld)}} <span *ngIf="!validDatumWaarde(veld)" class="badParse" matTooltip="waarde kan niet als datum geïnterpreteerd worden">{{waarde(veld)}}</span></div>
+      <div class="veldwaarde">{{dateWaarde(veld)}} <span *ngIf="!validDateWaarde(veld)" class="badParse" matTooltip="waarde kan niet als datum geïnterpreteerd worden">{{waarde(veld)}}</span></div>
+    </div>
+  </div>
+
+  <div class="velden" *ngFor="let veld of geavanceerdeDateTimeEigenschappen()">
+    <div class="veldnamen">
+      <div class="veldnaam">
+        {{ label(veld) }}
+      </div>
+    </div>
+    <div class="veldwaarden">
+      <div class="veldwaarde">{{dateTimeWaarde(veld)}} x<span *ngIf="!validDateTimeWaarde(veld)" class="badParse" matTooltip="waarde kan niet als datum/tijd geïnterpreteerd worden">{{waarde(veld)}}</span></div>
     </div>
   </div>
 

@@ -701,6 +701,11 @@ export class FeatureDemoComponent {
     { isBasisVeld: true, label: "Lengte", naam: "meters", type: "double" }
   ];
 
+  readonly innamesVeldinfos: VeldInfo[] = [
+    { isBasisVeld: true, label: "Vanaf", naam: "vandatum", type: "datetime" },
+    { isBasisVeld: true, label: "Tot", naam: "totdatum", type: "datetime" }
+  ];
+
   private readonly featureSelectieModusSubj: rx.Subject<SelectieModus> = new rx.Subject();
   readonly featureSelectieModus$: rx.Observable<SelectieModus> = this.featureSelectieModusSubj.asObservable();
 
