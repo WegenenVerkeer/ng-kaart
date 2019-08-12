@@ -1088,7 +1088,7 @@ export class FeatureDemoComponent {
       });
     sharedFeature$
       .pipe(
-        scan(array.snoc, []),
+        scan<ol.Feature, ol.Feature[]>(array.snoc, []),
         throttleTime(500, undefined, { leading: true, trailing: true })
       )
       .subscribe(features => {

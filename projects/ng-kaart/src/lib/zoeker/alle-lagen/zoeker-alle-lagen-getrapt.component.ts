@@ -68,7 +68,7 @@ export class ZoekerAlleLagenGetraptComponent extends GetraptZoekerComponent impl
     );
 
     this.categorieen$ = bronEnProvider$.pipe(
-      switchMap(([bron, subCatProv]) => subCatProv(bron).getOrElseL(() => rx.empty())),
+      switchMap(([bron, subCatProv]) => subCatProv(bron).getOrElseL(() => rx.EMPTY)),
       share()
     );
 
