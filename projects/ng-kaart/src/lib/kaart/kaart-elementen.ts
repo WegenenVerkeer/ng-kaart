@@ -92,6 +92,8 @@ export interface VeldInfo {
   readonly template?: string;
   readonly html?: string;
   readonly uniekeWaarden?: string[];
+  readonly parseFormat?: string; // voor date en datetime
+  readonly displayFormat?: string; // voor date en datetime
 }
 
 export interface VectorLaag {

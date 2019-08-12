@@ -139,3 +139,11 @@
 .expand-line {
   padding-bottom: 32px;
 }
+
+.badParse {
+  font: italic;
+}
+
+.badParse:after {
+  content: " *"
+}
