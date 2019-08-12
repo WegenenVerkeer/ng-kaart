@@ -8,6 +8,7 @@ import { setoidString } from "fp-ts/lib/Setoid";
 import { DateTime } from "luxon";
 import * as Mustache from "mustache";
 
+import * as arrays from "../../util/arrays";
 import { PartialFunction1 } from "../../util/function";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { VeldInfo } from "../kaart-elementen";
@@ -43,9 +44,9 @@ export interface Properties {
   readonly [key: string]: any;
 }
 
-const hasValue = (value: any) => value !== undefined && value !== null;
+const hasValue: Predicate<any> = value => value !== undefined && value !== null;
 
-const nestedPropertyValue = (propertyKey: string, object: Object) =>
+const nestedPropertyValue: Function2<string, Object, any> = (propertyKey, object) =>
   hasValue(propertyKey)
     ? propertyKey.split(".").reduce((obj, key) => (hasValue(obj) && hasValue(obj[key]) ? obj[key] : null), object)
     : null;
@@ -72,7 +73,10 @@ const parseDateHeuristically: PartialFunction1<string, DateTime> = text => {
   // dat datums dus als string doorkomen. Dat zou allemaal nog geen probleem zijn mocht er een std formaat (epoch
   // timestamps of ISO 6801 strings) voor alle feature sources gedefinieerd zou zijn. Helaas is dat niet zo. We moeten
   // dus heuristieken gebruiken. De browser doet dat ook, maar niet toegespitst op onze, Vlaamse, situatie.
-  return parseDateTimeWithFormat("dd/LL/yyyy")(text).orElse(() => parseDateTimeWithFormat("yyyy/LL/ddd")(text));
+  return parseDateTimeWithFormat("dd/LL/yyyy")(text)
+    .orElse(() => parseDateTimeWithFormat("dd-LL-yyyy")(text))
+    .orElse(() => parseDateTimeWithFormat("yyyy/LL/dd")(text))
+    .orElse(() => parseDateTimeWithFormat("yyyy-LL-dd")(text));
 };
 
 const parseDateTime: Curried2<Option<string>, string, Option<DateTime>> = maybeFormat => text =>
@@ -81,6 +85,7 @@ const parseDateTime: Curried2<Option<string>, string, Option<DateTime>> = maybeF
 const parseDateTimeHeuristically: PartialFunction1<string, DateTime> = text => {
   // We ondersteunen enkel het ISO-formaat. Dat is in de praktijk ook de enige DateTime die we hebben (gegenereerd in
   // Scala).
+  // return parseDateTimeWithFormat(DateTime.)
   return option.fromPredicate((d: DateTime) => d.isValid)(DateTime.fromISO(text));
 };
 
@@ -218,12 +223,17 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
 
   heeftIdent8en(): boolean {
     // TODO we ontbreken een string[] type
-    return this.heeft(IDENT8EN) && ((this.waarde(IDENT8EN) as unknown) as string[]).length > 0;
+    const waarde = this.waarde(IDENT8EN);
+    return arrays.isArray(waarde) && arrays.isNonEmpty(waarde);
   }
 
   ident8en() {
     // TODO we ontbreken een string[] type
-    return option.fromNullable(((this.waarde(IDENT8EN) as unknown) as string[]).join(", ")).getOrElse("");
+    const waarde = this.waarde(IDENT8EN);
+    return option
+      .fromPredicate(arrays.isArray)(waarde)
+      .map(s => s.join(", "))
+      .getOrElse("");
   }
 
   heeftIdent8(): boolean {

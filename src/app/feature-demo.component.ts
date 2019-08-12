@@ -715,6 +715,12 @@ export class FeatureDemoComponent {
       naam: "totdatum",
       type: "datetime",
       displayFormat: "dd/LL/yyyy hh:mm"
+    },
+    {
+      isBasisVeld: true,
+      label: "Gewijzigd",
+      naam: "gewijzigd_op",
+      type: "datetime"
     }
   ];
 

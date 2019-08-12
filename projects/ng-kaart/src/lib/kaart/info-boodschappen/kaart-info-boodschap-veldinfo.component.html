@@ -140,7 +140,7 @@
       </div>
     </div>
     <div class="veldwaarden">
-      <div class="veldwaarde">{{dateTimeWaarde(veld)}} x<span *ngIf="!validDateTimeWaarde(veld)" class="badParse" matTooltip="waarde kan niet als datum/tijd geïnterpreteerd worden">{{waarde(veld)}}</span></div>
+      <div class="veldwaarde">{{dateTimeWaarde(veld)}}<span *ngIf="!validDateTimeWaarde(veld)" class="badParse" matTooltip="waarde kan niet als datum/tijd geïnterpreteerd worden">{{waarde(veld)}}</span></div>
     </div>
   </div>
 
