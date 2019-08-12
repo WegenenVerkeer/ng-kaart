@@ -1,14 +1,14 @@
 import { Component, Input, NgZone } from "@angular/core";
 import { DomSanitizer } from "@angular/platform-browser";
 import { option } from "fp-ts";
-import { constTrue, Function1, Function2, Predicate } from "fp-ts/lib/function";
+import { constTrue, Curried2, Function1, Function2, Predicate } from "fp-ts/lib/function";
 import * as map from "fp-ts/lib/Map";
 import { Option } from "fp-ts/lib/Option";
 import { setoidString } from "fp-ts/lib/Setoid";
 import { DateTime } from "luxon";
 import * as Mustache from "mustache";
 
-import { PartialFunction1, PartialFunction2 } from "../../util/function";
+import { PartialFunction1 } from "../../util/function";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { VeldInfo } from "../kaart-elementen";
 import { KaartComponent } from "../kaart.component";
@@ -56,15 +56,15 @@ const formateerJson = (veld: string, veldtype: string, json: any, formatString: 
   return Mustache.render(formatString, jsonObject);
 };
 
-const formateerDate = (date: DateTime): string => {
-  return date.setLocale("nl-BE").toFormat("dd/LL/yyyy");
+const formateerDate: Curried2<Option<string>, DateTime, string> = maybeFormat => date => {
+  return date.setLocale("nl-BE").toFormat(maybeFormat.getOrElse("dd/MM/yyyy"));
 };
 
-const formateerDateTime = (dateTime: DateTime): string => {
-  return dateTime.setLocale("nl-BE").toFormat("dd/LL/yyyy hh:mm:ss");
+const formateerDateTime: Curried2<Option<string>, DateTime, string> = maybeFormat => dateTime => {
+  return dateTime.setLocale("nl-BE").toFormat(maybeFormat.getOrElse("dd/MM/yyyy hh:mm:ss"));
 };
 
-const parseDate: PartialFunction2<string, Option<string>, DateTime> = (text, maybeFormat) =>
+const parseDate: Curried2<Option<string>, string, Option<DateTime>> = maybeFormat => text =>
   maybeFormat.foldL(() => parseDateHeuristically, parseDateTimeWithFormat)(text);
 
 const parseDateHeuristically: PartialFunction1<string, DateTime> = text => {
@@ -75,7 +75,7 @@ const parseDateHeuristically: PartialFunction1<string, DateTime> = text => {
   return parseDateTimeWithFormat("dd/LL/yyyy")(text).orElse(() => parseDateTimeWithFormat("yyyy/LL/ddd")(text));
 };
 
-const parseDateTime: PartialFunction2<string, Option<string>, DateTime> = (text, maybeFormat) =>
+const parseDateTime: Curried2<Option<string>, string, Option<DateTime>> = maybeFormat => text =>
   maybeFormat.foldL(() => parseDateTimeHeuristically, parseDateTimeWithFormat)(text);
 
 const parseDateTimeHeuristically: PartialFunction1<string, DateTime> = text => {
@@ -386,54 +386,64 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
     );
   }
 
-  waarde(name: string): string | number {
+  parseFormat(veldnaam: string): Option<string> {
+    return veldbeschrijving(veldnaam, this.veldbeschrijvingen).chain(veldInfo => option.fromNullable(veldInfo.parseFormat));
+  }
+
+  displayFormat(veldnaam: string): Option<string> {
+    return veldbeschrijving(veldnaam, this.veldbeschrijvingen).chain(veldInfo =>
+      option.fromNullable(veldInfo.displayFormat).orElse(() => option.fromNullable(veldInfo.parseFormat))
+    );
+  }
+
+  waarde(veldnaam: string): string | number {
     // indien er een 'constante' object in de definitie is, geef dat terug, anders geef de waarde in het veld terug
-    return this.constante(name).getOrElseL(() => {
-      const waarde = nestedPropertyValue(name, this.properties);
-      if (this.hasHtml(name) && waarde) {
-        return this.sanitizer.bypassSecurityTrustHtml(formateerJson(name, this.veldtype(name), waarde, this.html(name)));
-      } else if (this.hasTemplate(name) && waarde) {
-        return formateerJson(name, this.veldtype(name), waarde, this.template(name));
+    return this.constante(veldnaam).getOrElseL(() => {
+      const waarde = nestedPropertyValue(veldnaam, this.properties);
+      if (this.hasHtml(veldnaam) && waarde) {
+        return this.sanitizer.bypassSecurityTrustHtml(formateerJson(veldnaam, this.veldtype(veldnaam), waarde, this.html(veldnaam)));
+      } else if (this.hasTemplate(veldnaam) && waarde) {
+        return formateerJson(veldnaam, this.veldtype(veldnaam), waarde, this.template(veldnaam));
       } else {
         return waarde;
       }
     });
   }
 
-  private maybeDateWaarde(name: string): Option<string> {
-    return this.constante(name).orElse(() => {
-      const waarde = nestedPropertyValue(name, this.properties);
+  private maybeDateWaarde(veldnaam: string): Option<string> {
+    return this.constante(veldnaam).orElse(() => {
+      const waarde = nestedPropertyValue(veldnaam, this.properties);
       return option
         .fromNullable(waarde)
-        .chain(value => parseDate(value, option.none))
-        .map(formateerDate);
+        .chain(parseDate(this.parseFormat(veldnaam)))
+        .map(formateerDate(this.displayFormat(veldnaam)));
     });
   }
 
-  dateWaarde(name: string): string {
-    return this.maybeDateWaarde(name).getOrElse("");
+  dateWaarde(veldnaam: string): string {
+    return this.maybeDateWaarde(veldnaam).getOrElse("");
   }
 
-  validDateWaarde(name: string): boolean {
-    return this.maybeDateWaarde(name).isSome();
+  validDateWaarde(veldnaam: string): boolean {
+    return this.maybeDateWaarde(veldnaam).isSome();
   }
 
-  private maybeDateTimeWaarde(name: string): Option<string> {
-    return this.constante(name).orElse(() => {
-      const waarde = nestedPropertyValue(name, this.properties);
+  private maybeDateTimeWaarde(veldnaam: string): Option<string> {
+    return this.constante(veldnaam).orElse(() => {
+      const waarde = nestedPropertyValue(veldnaam, this.properties);
       return option
         .fromNullable(waarde)
-        .chain(value => parseDateTime(value, option.none))
-        .map(formateerDateTime);
+        .chain(parseDateTime(this.parseFormat(veldnaam)))
+        .map(formateerDateTime(this.displayFormat(veldnaam)));
     });
   }
 
-  dateTimeWaarde(name: string): string {
-    return this.maybeDateTimeWaarde(name).getOrElse("");
+  dateTimeWaarde(veldnaam: string): string {
+    return this.maybeDateTimeWaarde(veldnaam).getOrElse("");
   }
 
-  validDateTimeWaarde(name: string): boolean {
-    return this.maybeDateTimeWaarde(name).isSome();
+  validDateTimeWaarde(veldnaam: string): boolean {
+    return this.maybeDateTimeWaarde(veldnaam).isSome();
   }
 
   verpl(): string {

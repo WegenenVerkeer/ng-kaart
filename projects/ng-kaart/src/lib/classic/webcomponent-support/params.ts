@@ -112,7 +112,9 @@ const veldInfoInter: json.Interpreter<ke.VeldInfo> = json.interpretUndefinedReco
   constante: json.nullable(json.field("constante", json.str)),
   template: json.nullable(json.field("template", json.str)),
   html: json.nullable(json.field("html", json.str)),
-  uniekeWaarden: json.nullable(json.field("uniekeWaarden", json.arr(json.str)))
+  uniekeWaarden: json.nullable(json.field("uniekeWaarden", json.arr(json.str))),
+  parseFormat: json.nullable(json.field("parseFormat", json.str)),
+  displayFormat: json.nullable(json.field("displayFormat", json.str))
 });
 export const veldInfoArray: ParamGetter<ke.VeldInfo[]> = getParameter(json.arr(veldInfoInter));
 export const optVeldInfoArray: OptionalParamGetter<ke.VeldInfo[]> = getOptionalParameter(json.arr(veldInfoInter));
