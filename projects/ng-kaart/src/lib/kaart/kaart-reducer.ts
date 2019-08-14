@@ -1004,7 +1004,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       function getSelectInteraction(modus: prt.SelectieModus): Option<olx.interaction.SelectOptions> {
         const hitTolerance = envParams(model.config).clickHitTolerance;
         switch (modus) {
-          case "single":
+          case "singleQuick":
             return some({
               condition: ol.events.condition.click,
               features: model.geselecteerdeFeatures,
@@ -1013,12 +1013,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               hitTolerance: hitTolerance,
               layers: layer => layer.get(ke.LayerProperties.Selecteerbaar)
             });
-          case "singleClosest":
+          case "single":
             return some({
               condition: ol.events.condition.click,
               toggleCondition: ol.events.condition.click,
               features: model.geselecteerdeFeatures,
-              multi: true,
+              multi: true, // true voor single, maar event handler wat lager houdt enkel 1 feature over
               style: createSelectionStyleFn(getSelectionStyleSelector),
               hitTolerance: hitTolerance,
               layers: layer => layer.get(ke.LayerProperties.Selecteerbaar)
@@ -1049,25 +1049,29 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
 
       const newSelectInteracties = arrays.fromOption(
-        getSelectInteraction(cmnd.selectieModus).map(selectOption => [
-          new ol.interaction.Select(selectOption),
-          new ol.interaction.DragBox({
-            condition: ol.events.condition.platformModifierKeyOnly
-          })
-        ])
-      );
+        getSelectInteraction(cmnd.selectieModus).map(selectOption => {
+          const selectInteraction = new ol.interaction.Select(selectOption);
 
-      if (cmnd.selectieModus === "singleClosest") {
-        newSelectInteracties[0].on("select", (s: ol.interaction.Select.Event) => {
-          const selectedFeaturesCollection = s.target.getFeatures();
-          const maybeClosest = findClosest(selectedFeaturesCollection.getArray(), s.mapBrowserEvent.coordinate);
-          selectedFeaturesCollection.clear();
-          forEach(maybeClosest, closest => {
-            console.log(`Closest feature: ${closest}`);
-            selectedFeaturesCollection.extend([closest]);
-          });
-        });
-      }
+          if (cmnd.selectieModus === "single") {
+            selectInteraction.on("select", (s: ol.interaction.Select.Event) => {
+              const selectedFeaturesCollection = s.target.getFeatures();
+              const selectedFeatures = selectedFeaturesCollection.getArray();
+              if (arrays.isNonEmpty(selectedFeatures)) {
+                const maybeClosest = findClosest(selectedFeatures, s.mapBrowserEvent.coordinate);
+                selectedFeaturesCollection.clear();
+                forEach(maybeClosest, closest => selectedFeaturesCollection.extend([closest]));
+              }
+            });
+          }
+
+          return [
+            selectInteraction,
+            new ol.interaction.DragBox({
+              condition: ol.events.condition.platformModifierKeyOnly
+            })
+          ];
+        })
+      );
 
       model.selectInteracties.forEach(i => model.map.removeInteraction(i));
       newSelectInteracties.forEach(i => model.map.addInteraction(i));

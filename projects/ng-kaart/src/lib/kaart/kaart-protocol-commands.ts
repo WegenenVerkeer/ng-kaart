@@ -274,7 +274,7 @@ export interface VervangFeaturesCmd<Msg extends KaartMsg> {
 // singleClosest: zoals single, maar selecteert de feature dichtst bij de klik. Minder performant.
 // multipleKlik: een klik voegt een element toe aan de selectie
 // multipleShift: een shift-klik voegt een element toe aan de selectie
-export type SelectieModus = "single" | "singleClosest" | "multipleKlik" | "multipleShift" | "none";
+export type SelectieModus = "single" | "singleQuick" | "multipleKlik" | "multipleShift" | "none";
 
 export interface ActiveerSelectieModusCmd {
   readonly type: "ActiveerSelectieModus";
