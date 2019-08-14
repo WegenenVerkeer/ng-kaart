@@ -178,10 +178,10 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
     this._extent = val.optExtent(param);
   }
 
-  /** De selectiemodus: "single" | "multipleKlik" | "multipleShift" | "none" */
+  /** De selectiemodus: "single" | "singleQuick" | "multipleKlik" | "multipleShift" | "none" */
   @Input()
   set selectieModus(param: prt.SelectieModus) {
-    this._selectieModus = val.enu(param, this._selectieModus, "single", "multipleKlik", "multipleShift", "none");
+    this._selectieModus = val.enu(param, this._selectieModus, "single", "singleQuick", "multipleKlik", "multipleShift", "none");
   }
 
   /** Info bij hover: "on" | "off" */
@@ -451,7 +451,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
         prt.ActiveerSelectieModusCmd,
         dispatch
       ),
-      (param: string) => val.enu(param, this._selectieModus, "single", "multipleKlik", "multipleShift", "none"),
+      (param: string) => val.enu(param, this._selectieModus, "single", "singleQuick", "multipleKlik", "multipleShift", "none"),
       value => value !== undefined && value != null
     );
     forChangedValue(

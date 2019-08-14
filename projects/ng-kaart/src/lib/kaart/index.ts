@@ -107,7 +107,7 @@ export const defaultKaartConfig: KaartConfig = {
   },
   envParams: {
     mobile: {
-      clickHitTolerance: 40, // px
+      clickHitTolerance: 15, // px
       moveTolerance: 10 // px
     },
     desktop: {

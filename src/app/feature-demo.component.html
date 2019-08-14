@@ -373,7 +373,7 @@
         <div *ngIf="straatkolkenSectie.sectieZichtbaar" [@enterAnimation]>
           <awv-kaart-classic  [naam]="'straatkolken'"
                               #kolkenKaart (geselecteerdeFeaturesChange)="featuresGeselecteerd($event, kolkenKaart)"
-                              [selectieModus]="'multipleShift'"
+                              [selectieModus]="'single'"
                               [hoogte]="400">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
             <awv-kaart-nosqlfs-laag [titel]="'Straatkolken'" [url]="'/geolatte-nosqlfs'"
