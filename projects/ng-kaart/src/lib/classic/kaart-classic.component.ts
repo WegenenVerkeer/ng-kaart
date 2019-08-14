@@ -181,7 +181,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   /** De selectiemodus: "single" | "multipleKlik" | "multipleShift" | "none" */
   @Input()
   set selectieModus(param: prt.SelectieModus) {
-    this._selectieModus = val.enu(param, this._selectieModus, "single", "multipleKlik", "multipleShift", "none");
+    this._selectieModus = val.enu(param, this._selectieModus, "single", "singleClosest", "multipleKlik", "multipleShift", "none");
   }
 
   /** Info bij hover: "on" | "off" */

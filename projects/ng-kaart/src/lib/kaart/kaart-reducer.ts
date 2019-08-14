@@ -40,6 +40,7 @@ import { KaartWithInfo } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
 import { kaartLogger } from "./log";
 import { ModelChanger, ModelChanges } from "./model-changes";
+import { findClosest } from "./select-closest";
 import {
   AwvV0StyleSpec,
   getFeatureStyleSelector,
@@ -1012,6 +1013,16 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               hitTolerance: hitTolerance,
               layers: layer => layer.get(ke.LayerProperties.Selecteerbaar)
             });
+          case "singleClosest":
+            return some({
+              condition: ol.events.condition.click,
+              toggleCondition: ol.events.condition.click,
+              features: model.geselecteerdeFeatures,
+              multi: true,
+              style: createSelectionStyleFn(getSelectionStyleSelector),
+              hitTolerance: hitTolerance,
+              layers: layer => layer.get(ke.LayerProperties.Selecteerbaar)
+            });
           case "multipleShift":
             return some({
               condition: ol.events.condition.click,
@@ -1045,6 +1056,18 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           })
         ])
       );
+
+      if (cmnd.selectieModus === "singleClosest") {
+        newSelectInteracties[0].on("select", (s: ol.interaction.Select.Event) => {
+          const selectedFeaturesCollection = s.target.getFeatures();
+          const maybeClosest = findClosest(selectedFeaturesCollection.getArray(), s.mapBrowserEvent.coordinate);
+          selectedFeaturesCollection.clear();
+          forEach(maybeClosest, closest => {
+            console.log(`Closest feature: ${closest}`);
+            selectedFeaturesCollection.extend([closest]);
+          });
+        });
+      }
 
       model.selectInteracties.forEach(i => model.map.removeInteraction(i));
       newSelectInteracties.forEach(i => model.map.addInteraction(i));

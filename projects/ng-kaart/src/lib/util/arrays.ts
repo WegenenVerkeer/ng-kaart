@@ -1,8 +1,10 @@
-import { option } from "fp-ts";
+import { option, ord } from "fp-ts";
 import * as array from "fp-ts/lib/Array";
 import { Either } from "fp-ts/lib/Either";
 import { identity, pipe, Predicate, Refinement } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
+
+import { PartialFunction1 } from "./function";
 
 export const isArray: Refinement<any, any[]> = Array.isArray;
 export const isOfLength: (_: number) => <A>(_: A[]) => boolean = length => array => array.length === length;
@@ -40,3 +42,14 @@ export const fromEither: <L, A>(eitherArray: Either<L, A[]>) => A[] = pipe(
   fromOption
 );
 export const fromNullable: <A>(aOrAs: null | undefined | A | A[]) => A[] = aOrAs => option.fromNullable(aOrAs).fold([], toArray);
+
+/**
+ * Finds the first element of an array according to some ordering.
+ * @param order The Ord to use as a comparison
+ */
+export const findFirstBy: <A>(order: ord.Ord<A>) => PartialFunction1<A[], A> = order => as =>
+  array.fold(as, option.none, (head, tail) =>
+    findFirstBy(order)(tail)
+      .map(first => (order.compare(head, first) < 0 ? head : first))
+      .orElse(() => option.some(head))
+  );
