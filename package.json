@@ -82,7 +82,7 @@
     "openlayers": "^4.6.5",
     "proj4": "2.5.0",
     "resize-observer": "1.0.0",
-    "rxjs": "6.5.2",
+    "rxjs": "^6.5.2",
     "scroll-into-view-if-needed": "2.2.20",
     "zone.js": "0.8.26"
   },
@@ -101,7 +101,7 @@
     "@types/mocha": "^5.2.5",
     "@types/mustache": "0.8.32",
     "@types/node": "~8.9.4",
-    "@types/openlayers": "^4.6.16",
+    "@types/openlayers": "^4.6.17",
     "codelyzer": "~4.5.0",
     "concat": "^1.0.3",
     "copy-webpack-plugin": "4.6.0",

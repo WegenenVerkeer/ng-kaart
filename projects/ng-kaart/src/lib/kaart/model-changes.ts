@@ -1,16 +1,30 @@
+import { setoid } from "fp-ts";
 import * as array from "fp-ts/lib/Array";
 import { left, right } from "fp-ts/lib/Either";
 import { Function1, Function2 } from "fp-ts/lib/function";
 import { map as filterable } from "fp-ts/lib/Map";
-import { none, Option, some } from "fp-ts/lib/Option";
+import { none, Option } from "fp-ts/lib/Option";
 import { setoidString } from "fp-ts/lib/Setoid";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, map, mapTo, mergeAll, observeOn, share, shareReplay, switchMap } from "rxjs/operators";
+import {
+  debounceTime,
+  distinctUntilChanged,
+  map,
+  mapTo,
+  mergeAll,
+  observeOn,
+  pairwise,
+  share,
+  shareReplay,
+  startWith,
+  switchMap
+} from "rxjs/operators";
 
 import { FilterAanpassingState as FilteraanpassingState, GeenFilterAanpassingBezig } from "../filter/filter-aanpassing-state";
 import { NosqlFsSource } from "../source/nosql-fs-source";
 import { GeenTransparantieaanpassingBezig, TransparantieaanpassingState } from "../transparantieeditor/state";
+import { Feature } from "../util/feature";
 import * as tilecacheMetadataDb from "../util/indexeddb-tilecache-metadata";
 import { observableFromOlEvents } from "../util/ol-observable";
 import { updateBehaviorSubject } from "../util/subject-update";
@@ -21,9 +35,9 @@ import { envParams } from "./kaart-config";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { UiElementOpties } from "./kaart-protocol-commands";
-import { Viewinstellingen } from "./kaart-protocol-subscriptions";
+import { GeselecteerdeFeatures, Viewinstellingen } from "./kaart-protocol-subscriptions";
 import { KaartWithInfo } from "./kaart-with-info";
-import { GeselecteerdeFeatures, HoverFeature } from "./kaart-with-info-model";
+import { HoverFeature } from "./kaart-with-info-model";
 import * as loc from "./mijn-locatie/kaart-mijn-locatie.component";
 import { GeenLaagstijlaanpassing, LaagstijlaanpassingState } from "./stijleditor/state";
 import { DrawOps } from "./tekenen/tekenen-model";
@@ -164,36 +178,22 @@ const viewinstellingen: Function1<ol.Map, prt.Viewinstellingen> = olmap => ({
 });
 
 export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> = (model, changer) => {
-  const toegevoegdeGeselecteerdeFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.geselecteerdeFeatures, "add").pipe(
-    // we zouden de events kunnen bufferen met bufferTime. We moeten dan evenwel `toegevoegd` en `verwijderd` een array
-    // maken ipv een option. Zolang we echter maar een paar features tegelijkertijd selecteren maakt het niet zo veel
-    // uit. debounceTime is evenwel uit den boze: dan gaan er toegevoegde features verloren.
-    map(evt => ({
-      geselecteerd: model.geselecteerdeFeatures.getArray(),
-      toegevoegd: some(evt.element),
-      verwijderd: none
+  const geselecteerdeFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.geselecteerdeFeatures, "add", "remove").pipe(
+    debounceTime(20),
+    map(evt => [...(evt.target as ol.Collection<ol.Feature>).getArray()]), // getArray heeft altijd dezelfde array terug!
+    startWith([] as ol.Feature[]),
+    pairwise(),
+    map(([prev, current]) => ({
+      geselecteerd: current,
+      toegevoegd: array.difference(Feature.setoidFeaturePropertyId)(current, prev),
+      verwijderd: array.difference(Feature.setoidFeaturePropertyId)(prev, current)
     }))
   );
-  const verwijderdeGeselecteerdeFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.geselecteerdeFeatures, "remove").pipe(
-    map(evt => ({
-      geselecteerd: model.geselecteerdeFeatures.getArray(),
-      toegevoegd: none,
-      verwijderd: some(evt.element)
-    }))
-  );
-
-  const geselecteerdeFeatures$ = rx.merge(toegevoegdeGeselecteerdeFeatures$, verwijderdeGeselecteerdeFeatures$).pipe(shareReplay(1));
 
   const hoverFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.hoverFeatures, "add", "remove").pipe(
-    map(event =>
-      event.type === "add"
-        ? {
-            hover: right<ol.Feature, ol.Feature>(event.element)
-          }
-        : {
-            hover: left<ol.Feature, ol.Feature>(event.element)
-          }
-    )
+    map(event => ({
+      hover: event.type === "add" ? right<ol.Feature, ol.Feature>(event.element) : left<ol.Feature, ol.Feature>(event.element)
+    }))
   );
 
   // Met window resize hebben we niet alle bronnen van herschaling, maar toch al een grote
@@ -240,12 +240,10 @@ export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> 
   // te weinig resultaten opleveren. Daarom voegen we nog een extra event toe wanneer openlayers klaar is met laden.
   // We gebruiker de addfeature en removefeature, and clear triggers. Het interesseert ons daarbij niet wat de features zijn. Het is ons
   // enkel te doen om te weten dat er veranderingen zijn (de generieke change event op zich blijkt geen events te genereren).
-  // Implementatienota: doordat alles via observables gaat (en de swithMap), worden de unsubscribes naar OL doorgespeeld.
-  const featuresChanged$: rx.Observable<undefined> = vectorlagen$.pipe(
+  // Implementatienota: doordat alles via observables gaat (en de switchMap), worden de unsubscribes naar OL doorgespeeld.
+  const featuresChanged$: rx.Observable<void> = vectorlagen$.pipe(
     debounceTime(100), // vlugge verandering van het aantal vectorlagen willen we niet zien
-    switchMap(vlgn =>
-      rx.merge(...vlgn.map(vlg => observableFromOlEvents(vlg!.layer.getSource(), "addfeature", "removefeature", "clear", "clear")))
-    ),
+    switchMap(vlgn => rx.merge(...vlgn.map(vlg => observableFromOlEvents(vlg!.layer.getSource(), "addfeature", "removefeature", "clear")))),
     // Vlugge veranderingen van de features willen we ook niet zien.
     // Best om dit groter te houden dan de tijd voorzien om cleanup te doen. Anders overbodige events.
     debounceTime(150),
