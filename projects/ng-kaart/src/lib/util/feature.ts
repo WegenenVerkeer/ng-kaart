@@ -1,7 +1,7 @@
-import { setoid } from "fp-ts";
+import { option, setoid } from "fp-ts";
 import { array, mapOption } from "fp-ts/lib/Array";
 import { Curried2, Function1, Refinement } from "fp-ts/lib/function";
-import { fromNullable, getSetoid, Option, option, tryCatch } from "fp-ts/lib/Option";
+import { fromNullable, Option, option as optionMonad, tryCatch } from "fp-ts/lib/Option";
 import { Setoid, setoidString } from "fp-ts/lib/Setoid";
 import * as traversable from "fp-ts/lib/Traversable";
 import * as ol from "openlayers";
@@ -65,10 +65,14 @@ export const featureToGeoJson: PartialFunction1<ol.Feature, GeoJsonFeatures> = f
 };
 
 export const clusterFeaturesToGeoJson: PartialFunction1<ol.Feature[], GeoJsonFeatures[]> = features =>
-  traversable.traverse(option, array)(features, featureToGeoJson);
+  traversable.traverse(optionMonad, array)(features, featureToGeoJson);
 
 export namespace Feature {
-  export const propertyId: PartialFunction1<ol.Feature, string> = f => fromNullable(f.get("id")).map(id => id.toString());
+  export const propertyId: PartialFunction1<ol.Feature, string> = feature =>
+    option
+      .fromNullable(feature.get("id"))
+      .orElse(() => option.fromNullable(feature.getProperties().get("id")))
+      .map(id => id.toString());
 
   export const getLaagnaam: PartialFunction1<ol.Feature, string> = feature => {
     const singleFeature = fromNullable(feature.get("features"))
@@ -79,7 +83,7 @@ export namespace Feature {
     return fromNullable(singleFeature.get("laagnaam").toString());
   };
 
-  export const setoidFeaturePropertyId: Setoid<ol.Feature> = setoid.contramap(propertyId, getSetoid(setoidString));
+  export const setoidFeaturePropertyId: Setoid<ol.Feature> = setoid.contramap(propertyId, option.getSetoid(setoidString));
 
   export const notInExtent: Function1<ol.Extent, Refinement<ol.Feature, ol.Feature>> = extent => (feature): feature is ol.Feature => {
     const [featureMinX, featureMinY, featureMaxX, featureMaxY]: ol.Extent = feature.getGeometry().getExtent();

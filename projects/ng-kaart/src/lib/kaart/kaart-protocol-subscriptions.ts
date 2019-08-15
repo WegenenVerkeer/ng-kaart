@@ -3,12 +3,10 @@ import { Function1 } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 
-import { MijnLocatieStateChangeMsg } from "../classic/messages";
 import { ZoekAntwoord, ZoekerMetWeergaveopties, ZoekResultaat } from "../zoeker/zoeker";
 
 import { KaartLocaties } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
-import { Tekenresultaat } from "./kaart-elementen";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import { LaatsteCacheRefresh, MijnLocatieStateChange, PrecacheLaagProgress } from "./model-changes";
 
@@ -54,9 +52,9 @@ export interface Viewinstellingen {
 }
 
 export interface GeselecteerdeFeatures {
-  geselecteerd: Array<ol.Feature>;
-  toegevoegd: Option<ol.Feature>;
-  verwijderd: Option<ol.Feature>;
+  readonly geselecteerd: ol.Feature[];
+  readonly toegevoegd: ol.Feature[];
+  readonly verwijderd: ol.Feature[];
 }
 
 export interface HoverFeature {
@@ -144,7 +142,7 @@ export interface ActieveModusSubscription<Msg> {
 export interface GeometryChangedSubscription<Msg> {
   readonly type: "GeometryChanged";
   readonly tekenSettings: ke.TekenSettings;
-  readonly wrapper: MsgGen<Tekenresultaat, Msg>;
+  readonly wrapper: MsgGen<ke.Tekenresultaat, Msg>;
 }
 
 export interface TekenenSubscription<Msg> {
@@ -270,7 +268,7 @@ export function InfoBoodschappenSubscription<Msg>(wrapper: (boodschappen: Map<st
 
 export function GeometryChangedSubscription<Msg>(
   tekenSettings: ke.TekenSettings,
-  wrapper: MsgGen<Tekenresultaat, Msg>
+  wrapper: MsgGen<ke.Tekenresultaat, Msg>
 ): GeometryChangedSubscription<Msg> {
   return { type: "GeometryChanged", tekenSettings: tekenSettings, wrapper: wrapper };
 }
