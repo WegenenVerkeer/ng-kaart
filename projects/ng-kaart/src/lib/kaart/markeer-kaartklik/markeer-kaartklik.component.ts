@@ -136,7 +136,7 @@ export class MarkeerKaartklikComponent extends KaartChildComponentBase {
       .pipe(
         switchMap(([opties, otherActive]) =>
           opties.disabled || otherActive
-            ? rx.empty()
+            ? rx.EMPTY
             : kaartKlik$.pipe(
                 filter(klik => !klik.coversFeature || opties.includeFeatureClick),
                 map(klik => featureGen(klik.coordinate, opties.markerStyle))

@@ -89,14 +89,14 @@ export class FilterEditorComponent extends KaartChildComponentBase {
   readonly titel$: rx.Observable<string>;
 
   readonly filteredVelden$: rx.Observable<fltr.Property[]>;
-  readonly filteredOperatoren$: rx.Observable<fed.ComparisonOperator[]>;
+  readonly operators$: rx.Observable<fed.ComparisonOperator[]>;
   readonly filteredWaarden$: rx.Observable<Wrapped[]>;
 
   readonly naamControl = new FormControl("");
   readonly veldControl = new FormControl("", [Validators.required, autoCompleteSelectieVerplichtValidator]);
   // Als we het oude gedrag weer willen waar de operator direct op '=' staat, dan moeten we de selectedOperator
   // doorschuiven naar FieldSelection
-  readonly operatorControl = new FormControl("", [Validators.required, autoCompleteSelectieVerplichtValidator]);
+  readonly operatorControl = new FormControl(null, [Validators.required, autoCompleteSelectieVerplichtValidator]);
   readonly textWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
   readonly integerWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
   readonly doubleWaardeControl = new FormControl({ value: null });
@@ -117,6 +117,8 @@ export class FilterEditorComponent extends KaartChildComponentBase {
   readonly newFilterEditor$ = new rx.Subject<Endomorphism<fed.ExpressionEditor>>();
 
   private clickInsideDialog = false;
+
+  readonly operatorCompare: (o1: fed.ComparisonOperator, o2: fed.ComparisonOperator) => boolean = (o1, o2) => o1.operator === o2.operator;
 
   constructor(kaart: KaartComponent, zone: NgZone, private readonly cdr: ChangeDetectorRef) {
     super(kaart, zone);
@@ -153,7 +155,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     laag$.subscribe(() => {
       this.naamControl.reset("", { emitEvent: false });
       this.veldControl.reset("", { emitEvent: false });
-      this.operatorControl.reset("", { emitEvent: false });
+      this.operatorControl.reset(null, { emitEvent: false });
       this.textWaardeControl.reset("", { emitEvent: false });
       this.integerWaardeControl.reset(0, { emitEvent: false });
       this.doubleWaardeControl.reset(0, { emitEvent: false });
@@ -255,7 +257,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
     // Deze subscribe zorgt er voor dat de updates effectief uitgevoerd worden
     this.bindToLifeCycle(
-      rx.combineLatest(changedFilterEditor$, kaart.modelChanges.laagfilteraanpassingState$.pipe(map(isAanpassingBezig)))
+      rx.combineLatest([changedFilterEditor$, kaart.modelChanges.laagfilteraanpassingState$.pipe(map(isAanpassingBezig))])
     ).subscribe(([expressionEditor, zichtbaar]) => {
       if (zichtbaar) {
         // zet control waarden bij aanpassen van expressionEditor
@@ -305,7 +307,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.autocompleteWaardeControl
             );
             this.hoofdLetterGevoeligControl.reset(false, { emitEvent: false });
-            this.operatorControl.setValue("");
+            this.operatorControl.setValue(null);
           },
           Value: val => {
             enableDisabled(
@@ -411,7 +413,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
     const properties$: rx.Observable<fltr.Property[]> = this.filterEditor$.pipe(map(editor => editor.current.properties));
 
-    this.filteredVelden$ = rx.combineLatest(properties$, veldinfos$).pipe(
+    this.filteredVelden$ = rx.combineLatest([properties$, veldinfos$]).pipe(
       switchMap(([properties, veldinfos]) =>
         this.veldControl.valueChanges.pipe(
           filter(isNotNull),
@@ -431,21 +433,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       shareReplay(1)
     );
 
-    const operators$: rx.Observable<fed.ComparisonOperator[]> = operatorSelection$.pipe(map(os => os.operatorSelectors));
-
-    this.filteredOperatoren$ = rx
-      .combineLatest(
-        this.operatorControl.valueChanges.pipe(
-          map(waarde => (waarde.label ? waarde.label : waarde)),
-          // filter(isNotNull),
-          // map(waarde => (typeof waarde === "string" ? waarde : waarde.label)),
-          startWith("") // nog niets ingetypt -> Moet beter kunnen!
-        ),
-        operators$
-      )
-      .pipe(
-        map(([getypt, operators]) => operators.filter(operator => operator.label.toLowerCase().startsWith(getypt.toLowerCase()))) //
-      );
+    this.operators$ = operatorSelection$.pipe(map(os => os.operatorSelectors));
 
     const distinctValues$: rx.Observable<string[]> = this.filterEditor$.pipe(
       map(fe => fe.current),
@@ -456,13 +444,13 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     );
 
     this.filteredWaarden$ = rx
-      .combineLatest(
+      .combineLatest([
         this.autocompleteWaardeControl.valueChanges.pipe(
           map(input => (isWrapped(input) ? input.value : input)),
           startWith("")
         ),
         distinctValues$
-      )
+      ])
       .pipe(
         map(([typed, values]) =>
           array.filter(values, value => value.toLowerCase().startsWith(typed.toLowerCase())).map(value => Wrapped(value))
@@ -490,7 +478,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     );
 
     const pasToeGeklikt$ = this.actionFor$("pasFilterToe");
-    this.bindToLifeCycle(rx.combineLatest(laagNietZichtbaar$, geldigFilterCmd$).pipe(sample(pasToeGeklikt$))).subscribe(
+    this.bindToLifeCycle(rx.combineLatest([laagNietZichtbaar$, geldigFilterCmd$]).pipe(sample(pasToeGeklikt$))).subscribe(
       ([laagNietZichtbaar, command]) => {
         this.dispatch(prt.MaakLaagZichtbaarCmd(command.titel, kaartLogOnlyWrapper));
         this.dispatch(prt.StopVectorFilterBewerkingCmd());
@@ -524,10 +512,6 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
   errorVeld() {
     return this.veldControl.hasError("required") ? "Gelieve een eigenschap te kiezen" : "";
-  }
-
-  displayOperator(operator?: fed.BinaryComparisonOperator | string): string | undefined {
-    return typeof operator === "object" ? operator.label : operator;
   }
 
   errorOperator(): string {

@@ -570,7 +570,7 @@ export class FeatureDemoComponent {
     { isBasisVeld: true, label: "Lengte", naam: "locatie.lengte", type: "double" },
     { isBasisVeld: false, label: "Werkelijke lengte", naam: "werkelijkelengte", type: "double" },
     { isBasisVeld: false, label: "Bron Id", naam: "bronid", type: "string" },
-    { isBasisVeld: false, label: "Opnamedatum", naam: "opnamedatum", type: "date" },
+    { isBasisVeld: false, label: "Opnamedatum", naam: "opnamedatum", type: "date", parseFormat: "dd/LL/yyyy" },
     { isBasisVeld: false, label: "Wijzigingsdatum", naam: "wijzigingsdatum", type: "date" },
     { isBasisVeld: true, label: "Zijde", naam: "zijderijbaan", type: "string", uniekeWaarden: ["R", "L", "M", "NVT"] }, // niet alfabetisch!
     {
@@ -699,6 +699,29 @@ export class FeatureDemoComponent {
     { isBasisVeld: true, label: "ID", naam: "id", type: "string" },
     { isBasisVeld: true, label: "Straatnaam", naam: "name", type: "string" },
     { isBasisVeld: true, label: "Lengte", naam: "meters", type: "double" }
+  ];
+
+  readonly innamesVeldinfos: VeldInfo[] = [
+    {
+      isBasisVeld: true,
+      label: "Vanaf",
+      naam: "vandatum",
+      type: "datetime",
+      displayFormat: "dd/LL/yyyy hh:mm"
+    },
+    {
+      isBasisVeld: true,
+      label: "Tot",
+      naam: "totdatum",
+      type: "datetime",
+      displayFormat: "dd/LL/yyyy hh:mm"
+    },
+    {
+      isBasisVeld: true,
+      label: "Gewijzigd",
+      naam: "gewijzigd_op",
+      type: "datetime"
+    }
   ];
 
   private readonly featureSelectieModusSubj: rx.Subject<SelectieModus> = new rx.Subject();
@@ -1071,7 +1094,7 @@ export class FeatureDemoComponent {
       });
     sharedFeature$
       .pipe(
-        scan(array.snoc, []),
+        scan<ol.Feature, ol.Feature[]>(array.snoc, []),
         throttleTime(500, undefined, { leading: true, trailing: true })
       )
       .subscribe(features => {

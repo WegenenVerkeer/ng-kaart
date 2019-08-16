@@ -175,9 +175,12 @@ export namespace FilterEditor {
   });
 
   export const isAtLeastOperatorSelection: Refinement<TermEditor, OperatorSelection> = (termEditor): termEditor is OperatorSelection =>
-    termEditor.kind === "Operator" || termEditor.kind === "Value" || termEditor.kind === "Completed";
+    termEditor.kind === "Operator" ||
+    termEditor.kind === "Value" ||
+    termEditor.kind === "Completed" ||
+    termEditor.kind === "CompletedWithValue";
   export const isAtLeastValueSelection: Refinement<TermEditor, ValueSelection> = (termEditor): termEditor is ValueSelection =>
-    termEditor.kind === "Value" || termEditor.kind === "Completed";
+    termEditor.kind === "Value" || termEditor.kind === "Completed" || termEditor.kind === "CompletedWithValue";
   export const isCompleted: Refinement<TermEditor, Completed> = (termEditor): termEditor is Completed => termEditor.kind === "Completed";
 
   // We zijn heel conservatief en laten enkel kolommen met ASCII letters, underscore en punt toe

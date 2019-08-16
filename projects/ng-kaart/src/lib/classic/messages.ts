@@ -6,7 +6,7 @@ import { KaartLocaties } from "../kaart/kaart-bevragen/laaginfo.model";
 import * as ke from "../kaart/kaart-elementen";
 import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
 import * as prt from "../kaart/kaart-protocol";
-import { GeselecteerdeFeatures, HoverFeature } from "../kaart/kaart-with-info-model";
+import { HoverFeature } from "../kaart/kaart-with-info-model";
 import * as loc from "../kaart/mijn-locatie/kaart-mijn-locatie.component";
 import { LaatsteCacheRefresh, PrecacheLaagProgress } from "../kaart/model-changes";
 
@@ -45,7 +45,7 @@ export type KaartClassicSubMsg =
 
 export interface FeatureSelectieAangepastMsg {
   readonly type: "FeatureSelectieAangepast";
-  readonly geselecteerdeFeatures: GeselecteerdeFeatures;
+  readonly geselecteerdeFeatures: prt.GeselecteerdeFeatures;
 }
 
 export interface FeatureHoverAangepastMsg {
@@ -157,7 +157,7 @@ export function KaartClassicMsg(payload: KaartClassicSubMsg): KaartClassicMsg {
   return { type: "KaartClassic", payload: payload };
 }
 
-export function FeatureSelectieAangepastMsg(geselecteerdeFeatures: GeselecteerdeFeatures): FeatureSelectieAangepastMsg {
+export function FeatureSelectieAangepastMsg(geselecteerdeFeatures: prt.GeselecteerdeFeatures): FeatureSelectieAangepastMsg {
   return { type: "FeatureSelectieAangepast", geselecteerdeFeatures: geselecteerdeFeatures };
 }
 

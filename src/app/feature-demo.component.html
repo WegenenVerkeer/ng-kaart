@@ -373,7 +373,7 @@
         <div *ngIf="straatkolkenSectie.sectieZichtbaar" [@enterAnimation]>
           <awv-kaart-classic  [naam]="'straatkolken'"
                               #kolkenKaart (geselecteerdeFeaturesChange)="featuresGeselecteerd($event, kolkenKaart)"
-                              [selectieModus]="'multipleShift'"
+                              [selectieModus]="'single'"
                               [hoogte]="400">
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
             <awv-kaart-nosqlfs-laag [titel]="'Straatkolken'" [url]="'/geolatte-nosqlfs'"
@@ -787,6 +787,18 @@
                [veldinfos]="percelenVeldinfos"
                [textParser]="percelenWmsParser"
                (laagLocaties)="onPercelenBevragen($event)"></awv-kaart-wms-laag>
+
+            <awv-kaart-nosqlfs-laag [titel]="'Fietspaden'" [url]="'/geolatte-nosqlfs'"
+               [database]="'featureserver'" [collection]="'fietspaden'"
+               [styleFunction]="fietspadStyleMetOffset" [selectieStyle]="fietspadSelectieStyleMetOffset"
+               [minZoom]="7"
+               [veldinfos]="fietspadenVeldinfos"></awv-kaart-nosqlfs-laag>
+
+            <awv-kaart-nosqlfs-laag [titel]="'Innames'" [url]="'/geolatte-nosqlfs'"
+               [database]="'featureserver'" [collection]="'innames'"
+               [minZoom]="6"
+               [veldinfos]="innamesVeldinfos"></awv-kaart-nosqlfs-laag>
+
             <awv-kaart-knop-achtergrondlaag-kiezer></awv-kaart-knop-achtergrondlaag-kiezer>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
             <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>

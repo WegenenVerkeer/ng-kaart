@@ -66,13 +66,7 @@ export const foldInfoBoodschap = (boodschap: InfoBoodschap) => <A>(
 
 export interface Groeplagen {
   readonly laaggroep: ke.Laaggroep;
-  readonly lagen: Array<ke.ToegevoegdeLaag>;
-}
-
-export interface GeselecteerdeFeatures {
-  readonly geselecteerd: Array<ol.Feature>;
-  readonly toegevoegd: Option<ol.Feature>;
-  readonly verwijderd: Option<ol.Feature>;
+  readonly lagen: ke.ToegevoegdeLaag[];
 }
 
 export interface HoverFeature {
