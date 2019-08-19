@@ -182,6 +182,13 @@ export interface ToegevoegdeVectorLaag extends ToegevoegdeLaag {
   readonly filterinstellingen: Laagfilterinstellingen;
 }
 
+export interface OpLaagGroep<T> {
+  readonly Achtergrond: T;
+  readonly "Voorgrond.Hoog": T;
+  readonly "Voorgrond.Laag": T;
+  readonly Tools: T;
+}
+
 export function underlyingSource(layer: ol.layer.Layer): ol.source.Source {
   const source = layer.getSource();
   if (source instanceof ol.source.Cluster) {

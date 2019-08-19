@@ -104,15 +104,15 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
       map(i => i.zoom),
       distinctUntilChanged()
     );
-    this.lagenHoog$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Hoog")!.pipe(
+    this.lagenHoog$ = this.modelChanges.lagenOpGroep["Voorgrond.Hoog"].pipe(
       debounceTime(100),
       shareReplay(1)
     );
-    this.lagenLaag$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Laag")!.pipe(
+    this.lagenLaag$ = this.modelChanges.lagenOpGroep["Voorgrond.Laag"].pipe(
       debounceTime(100),
       shareReplay(1)
     );
-    const achtergrondLagen$ = this.modelChanges.lagenOpGroep.get("Achtergrond")!.pipe(
+    const achtergrondLagen$ = this.modelChanges.lagenOpGroep["Achtergrond"].pipe(
       debounceTime(100),
       shareReplay(1)
     );

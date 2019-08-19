@@ -1,4 +1,3 @@
-import { setoid } from "fp-ts";
 import * as array from "fp-ts/lib/Array";
 import { Endomorphism, Function1, Function2, identity, not, pipe } from "fp-ts/lib/function";
 import * as fptsmap from "fp-ts/lib/Map";
@@ -329,7 +328,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     const ordToegevoegdeLaag: ord.Ord<ke.ToegevoegdeLaag> = ord.contramap(laag => -laag!.layer.getZIndex(), ord.ordNumber);
 
     function zendLagenInGroep(mdl: Model, groep: ke.Laaggroep): void {
-      modelChanger.lagenOpGroepSubj.get(groep)!.next(
+      modelChanger.lagenOpGroepSubj[groep].next(
         array.sort(ordToegevoegdeLaag)(lagenInGroep(mdl, groep)) // en dus ook geldige titels
       );
     }
@@ -1637,10 +1636,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       const subscribeToLagenInGroep = (sub: prt.LagenInGroepSubscription<Msg>) => {
         return modelWithSubscriptionResult(
           "LagenInGroep",
-          modelChanger.lagenOpGroepSubj
-            .get(sub.groep)! // we vertrouwen op de typechecker
-            .pipe(debounceTime(50))
-            .subscribe(consumeMessage(sub))
+          modelChanger.lagenOpGroepSubj[sub.groep].pipe(debounceTime(50)).subscribe(consumeMessage(sub))
         );
       };
 

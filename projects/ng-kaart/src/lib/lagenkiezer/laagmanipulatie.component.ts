@@ -130,7 +130,7 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
     const findLaagOpTitel: Function2<string, ke.ToegevoegdeLaag[], Option<ke.ToegevoegdeVectorLaag>> = (titel, lgn) =>
       array.findFirst(lgn, lg => lg.titel === titel).filter(ke.isToegevoegdeVectorLaag);
 
-    const voorgrondlaag$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Hoog")!.pipe(
+    const voorgrondlaag$ = this.modelChanges.lagenOpGroep["Voorgrond.Hoog"].pipe(
       collectOption(lgn => findLaagOpTitel(this.laag.titel, lgn)),
       shareReplay(1)
     );
