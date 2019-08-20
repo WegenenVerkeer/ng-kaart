@@ -4,7 +4,7 @@ import * as ord from "fp-ts/lib/Ord";
 import { Ord } from "fp-ts/lib/Ord";
 import * as setoid from "fp-ts/lib/Setoid";
 import { Setoid, setoidString } from "fp-ts/lib/Setoid";
-import { Iso, Lens, Optional } from "monocle-ts";
+import { Fold, Getter, Iso, Lens, Optional, Prism } from "monocle-ts";
 import * as ol from "openlayers";
 
 import { Filter as fltr } from "../filter/filter-model";
@@ -295,6 +295,13 @@ export namespace ToegevoegdeVectorLaag {
 
   export const veldInfoOpNaamOptional: Function1<string, Optional<ToegevoegdeVectorLaag, VeldInfo>> = veldnaam =>
     Lens.fromPath<ToegevoegdeVectorLaag, "bron", "velden">(["bron", "velden"]).composeOptional(mapToOptionalByKey(veldnaam));
+
+  export const noSqlFsSourceFold: Fold<ToegevoegdeVectorLaag, NosqlFsSource> = Lens.fromPath<ToegevoegdeVectorLaag, "bron", "source">([
+    "bron",
+    "source"
+  ])
+    .asGetter()
+    .composePrism(Prism.fromRefinement(isNoSqlFsSource));
 }
 
 export namespace VeldInfo {
