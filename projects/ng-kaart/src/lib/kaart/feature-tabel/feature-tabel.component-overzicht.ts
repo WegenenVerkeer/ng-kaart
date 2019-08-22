@@ -12,9 +12,9 @@ import { NoSqlFsLaagAndData, TableModel } from "./model";
 export const FeatureTabelUiSelector = "FeatureTabel";
 
 @Component({
-  selector: "awv-feature-tabel-weergave",
-  templateUrl: "./feature-tabel-weergave.component.html",
-  styleUrls: ["./feature-tabel-weergave.component.scss"],
+  selector: "awv-feature-tabel-overzicht",
+  templateUrl: "./feature-tabel-overzicht.component.html",
+  styleUrls: ["./feature-tabel-overzicht.component.scss"],
   animations: [
     trigger("enterAnimation", [
       transition(":enter", [
@@ -30,7 +30,7 @@ export const FeatureTabelUiSelector = "FeatureTabel";
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush // Omdat angular anders veel te veel change detection uitvoert
 })
-export class FeatureTabelWeergaveComponent extends KaartChildComponentBase {
+export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
   public zichtbaar$: rx.Observable<boolean> = rx.of(true);
   public lagen$: rx.Observable<NoSqlFsLaagAndData[]>;
 

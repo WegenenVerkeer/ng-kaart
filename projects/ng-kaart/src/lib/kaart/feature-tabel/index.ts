@@ -4,9 +4,9 @@ import { MatButtonModule, MatIconModule, MatInputModule, MatTooltipModule } from
 import { MatTabsModule } from "@angular/material/tabs";
 
 import { FeatureTabelDataComponent } from "./feature-tabel-data.component";
-import { FeatureTabelWeergaveComponent } from "./feature-tabel.component-weergave";
+import { FeatureTabelOverzichtComponent } from "./feature-tabel.component-overzicht";
 
-const components: any[] = [FeatureTabelWeergaveComponent, FeatureTabelDataComponent];
+const components: any[] = [FeatureTabelOverzichtComponent, FeatureTabelDataComponent];
 
 @NgModule({
   imports: [CommonModule, MatIconModule, MatInputModule, MatButtonModule, MatTabsModule, MatTooltipModule],
@@ -22,4 +22,4 @@ export class FeatureTabelModule {
   }
 }
 
-export * from "./feature-tabel.component-weergave";
+export * from "./feature-tabel.component-overzicht";
