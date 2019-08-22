@@ -1,15 +1,19 @@
 import { animate, style, transition, trigger } from "@angular/animations";
 import { ChangeDetectionStrategy, Component, NgZone, ViewEncapsulation } from "@angular/core";
-import { array } from "fp-ts";
+import { Function2 } from "fp-ts/lib/function";
 import * as rx from "rxjs";
-import { map, share, switchMap } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, share, switchMap } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart-child-component-base";
+import * as ke from "../kaart-elementen";
 import { KaartComponent } from "../kaart.component";
 
 import { NoSqlFsLaagAndData, TableModel } from "./model";
 
 export const FeatureTabelUiSelector = "FeatureTabel";
+
+const laagMagZichtbaarZijn: Function2<ke.ToegevoegdeLaag, number, boolean> = (laag, zoom) =>
+  zoom >= laag.bron.minZoom && zoom <= laag.bron.maxZoom;
 
 @Component({
   selector: "awv-feature-tabel-overzicht",
@@ -37,12 +41,24 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
   constructor(kaart: KaartComponent, ngZone: NgZone) {
     super(kaart, ngZone);
 
+    const zoom$ = kaart.modelChanges.viewinstellingen$.pipe(
+      map(i => i.zoom),
+      distinctUntilChanged()
+    );
+
+    const voorgrondLagen$ = kaart.modelChanges.lagenOpGroep["Voorgrond.Hoog"];
+
     const model$: rx.Observable<TableModel> = this.viewReady$.pipe(
       switchMap(() =>
-        this.modelChanges.lagenOpGroep["Voorgrond.Hoog"].pipe(
-          // TODO distinctUntilChanged op titels? Verandering van volgorde nodig?
-          map(TableModel),
-          share()
+        voorgrondLagen$.pipe(
+          switchMap(lagen =>
+            zoom$.pipe(
+              // TODO distinctUntilChanged op titels? Verandering van volgorde nodig?
+              map(zoom => lagen.filter(laag => laag.magGetoondWorden && laagMagZichtbaarZijn(laag, zoom))),
+              map(TableModel),
+              share()
+            )
+          )
         )
       )
     );

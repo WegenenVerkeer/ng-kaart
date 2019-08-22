@@ -119,7 +119,7 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
     this.lagenMetLegende$ = rx
       .combineLatest(this.lagenHoog$, this.lagenLaag$, achtergrondLagen$, zoom$, (lagenHoog, lagenLaag, achtergrondLagen, zoom) => {
         const lagen = lagenHoog.concat(lagenLaag, achtergrondLagen);
-        return lagen.filter(laag => isZichtbaar(laag!, zoom) && laag!.magGetoondWorden && laag!.legende.isSome());
+        return lagen.filter(laag => isZichtbaar(laag, zoom) && laag.magGetoondWorden && laag.legende.isSome());
       })
       .pipe(shareReplay(1));
     const lagenHoogLeeg$ = this.lagenHoog$.pipe(map(array.isEmpty));
