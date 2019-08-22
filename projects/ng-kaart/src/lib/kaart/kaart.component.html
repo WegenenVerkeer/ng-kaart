@@ -52,4 +52,9 @@
       </div>
     </div>
   </div>
+  <ng-container *ngIf="aanwezigeElementen$ | async as aanwezigeElementen">
+    <div class="data-container" *ngIf="aanwezigeElementen.has('FeatureTabel')">
+      <awv-feature-tabel-weergave></awv-feature-tabel-weergave>
+    </div>
+  </ng-container>
 </div>

@@ -74,6 +74,8 @@ export namespace Feature {
       .orElse(() => option.fromNullable(feature.getProperties().get("id")))
       .map(id => id.toString());
 
+  export const properties: Function1<ol.Feature, any> = feature => feature.getProperties().properties;
+
   export const getLaagnaam: PartialFunction1<ol.Feature, string> = feature => {
     const singleFeature = fromNullable(feature.get("features"))
       .filter(arrays.isArray)

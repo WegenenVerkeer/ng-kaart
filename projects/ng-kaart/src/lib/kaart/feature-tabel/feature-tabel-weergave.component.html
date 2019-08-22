@@ -1,0 +1,8 @@
+<div *ngIf="zichtbaar$ | async" class="feature-tabel-weergave-content">
+  <mat-tab-group [headerPosition]="above">
+    <mat-tab *ngFor="let laag of lagen$ | async">
+      <ng-template mat-tab-label>{{laag.titel}}</ng-template>
+      <awv-feature-tabel [laag]="laag"></awv-feature-tabel>
+    </mat-tab>
+  </mat-tab-group>
+</div>

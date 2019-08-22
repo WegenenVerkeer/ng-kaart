@@ -1,0 +1,78 @@
+@import "../../css/kaart.component-common.scss";
+
+.feature-table-data-content {
+  * {
+    box-sizing: border-box;
+  }
+
+  table {
+    min-width: 100vw;
+    width: auto;
+    display: grid;
+    border-collapse: collapse;
+  }
+
+  thead,
+  tbody,
+  tr {
+    display: contents;
+    scroll-snap-type: x mandatory;
+  }
+
+  th,
+  td {
+    padding: 15px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  td {
+    font-size: 14px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e5e5e5;
+    z-index: 1;
+    scroll-snap-align: start;
+  }
+
+  // tr:nth-child(even) td {
+  //   background: #f8f6ff;
+  // }
+
+  tr td:first-child {
+    position: sticky;
+    left: 0;
+    background-color: white;
+    z-index: 2;
+  }
+
+  tr th:first-child {
+    position: sticky;
+    left: 0;
+    top: 0;
+    z-index: 3;
+  }
+
+  th {
+    position: sticky;
+    top: 0;
+    font-weight: normal;
+    font-size: 14px;
+    font-weight: bold;
+    background-color: white;
+    color: #808080;
+    text-decoration: none solid rgb(128, 128, 128);
+    text-align: left;
+    border-bottom: 1px solid #e5e5e5;
+    z-index: 2;
+  }
+
+  th:last-child {
+    border: 0;
+  }
+
+  .empty-field {
+    background-color: rgba(black, 0.04);
+  }
+}

@@ -380,6 +380,8 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
     this.dispatch(prt.ActiveerHoverModusCmd(this._hoverModus));
     this.dispatch(prt.ActiveerSelectieModusCmd(this._selectieModus));
 
+    this.dispatch(prt.VoegUiElementToe("FeatureTabel")); // FIXME -> dit moet naar een nieuwe classic-feature-tabel component verhuizen
+
     this.kaartLocatorService.registerComponent(this, this.el);
   }
 

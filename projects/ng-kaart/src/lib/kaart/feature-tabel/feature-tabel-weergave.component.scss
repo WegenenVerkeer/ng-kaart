@@ -1,0 +1,24 @@
+@import "../../css/kaart.component-common.scss";
+
+.feature-tabel-weergave-content {
+  background-color: rgba(255,255,255,0.75);
+  height: 100%;
+  display: flex;
+  flex-flow: column;
+
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+    background-color: $awv-secondary-c1;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: $awv-primary-3;
+  }
+}
+
+mat-tab-group {
+  flex-grow: 1;
+  flex-shrink: 1;
+  overflow: auto;
+}

@@ -1,15 +1,14 @@
 import { Component, Input, NgZone } from "@angular/core";
 import { DomSanitizer } from "@angular/platform-browser";
 import { option } from "fp-ts";
-import { constTrue, Curried2, Function1, Function2, Predicate } from "fp-ts/lib/function";
+import { constTrue, Function1, Function2, Predicate } from "fp-ts/lib/function";
 import * as map from "fp-ts/lib/Map";
 import { Option } from "fp-ts/lib/Option";
 import { setoidString } from "fp-ts/lib/Setoid";
-import { DateTime } from "luxon";
 import * as Mustache from "mustache";
 
 import * as arrays from "../../util/arrays";
-import { PartialFunction1 } from "../../util/function";
+import { formateerDate, formateerDateTime, parseDate, parseDateTime } from "../../util/date-time";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { VeldInfo } from "../kaart-elementen";
 import { KaartComponent } from "../kaart.component";
@@ -55,43 +54,6 @@ const formateerJson = (veld: string, veldtype: string, json: any, formatString: 
   const jsonString = typeof json === "string" || json instanceof String ? json : JSON.stringify(json);
   const jsonObject = veldtype === "json" ? JSON.parse(`{"${veld}": ${jsonString}}`) : JSON.parse(`{"${veld}": "${jsonString}"}`);
   return Mustache.render(formatString, jsonObject);
-};
-
-const formateerDate: Curried2<Option<string>, DateTime, string> = maybeFormat => date => {
-  return date.setLocale("nl-BE").toFormat(maybeFormat.getOrElse("dd/MM/yyyy"));
-};
-
-const formateerDateTime: Curried2<Option<string>, DateTime, string> = maybeFormat => dateTime => {
-  return dateTime.setLocale("nl-BE").toFormat(maybeFormat.getOrElse("dd/MM/yyyy hh:mm:ss"));
-};
-
-const parseDate: Curried2<Option<string>, string, Option<DateTime>> = maybeFormat => text =>
-  maybeFormat.foldL(() => parseDateHeuristically, parseDateTimeWithFormat)(text);
-
-const parseDateHeuristically: PartialFunction1<string, DateTime> = text => {
-  // Er zijn veel manieren hoe een datum geformatteerd kan zijn. Het vervelende is dat JSON geen datum formaat heeft en
-  // dat datums dus als string doorkomen. Dat zou allemaal nog geen probleem zijn mocht er een std formaat (epoch
-  // timestamps of ISO 6801 strings) voor alle feature sources gedefinieerd zou zijn. Helaas is dat niet zo. We moeten
-  // dus heuristieken gebruiken. De browser doet dat ook, maar niet toegespitst op onze, Vlaamse, situatie.
-  return parseDateTimeWithFormat("dd/LL/yyyy")(text)
-    .orElse(() => parseDateTimeWithFormat("dd-LL-yyyy")(text))
-    .orElse(() => parseDateTimeWithFormat("yyyy/LL/dd")(text))
-    .orElse(() => parseDateTimeWithFormat("yyyy-LL-dd")(text));
-};
-
-const parseDateTime: Curried2<Option<string>, string, Option<DateTime>> = maybeFormat => text =>
-  maybeFormat.foldL(() => parseDateTimeHeuristically, parseDateTimeWithFormat)(text);
-
-const parseDateTimeHeuristically: PartialFunction1<string, DateTime> = text => {
-  // We ondersteunen enkel het ISO-formaat. Dat is in de praktijk ook de enige DateTime die we hebben (gegenereerd in
-  // Scala).
-  // return parseDateTimeWithFormat(DateTime.)
-  return option.fromPredicate((d: DateTime) => d.isValid)(DateTime.fromISO(text));
-};
-
-// We ondersteunen enkel de formaten die luxon (https://moment.github.io/luxon/docs/manual/parsing.html) ondersteunt.
-const parseDateTimeWithFormat: Function1<string, PartialFunction1<string, DateTime>> = format => text => {
-  return option.fromPredicate((d: DateTime) => d.isValid)(DateTime.fromFormat(text, format));
 };
 
 const veldnamen: Function1<VeldinfoMap, string[]> = veldbeschrijvingen => [...veldbeschrijvingen.keys()];
