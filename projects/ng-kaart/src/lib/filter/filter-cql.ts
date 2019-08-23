@@ -53,7 +53,8 @@ export namespace FilterCql {
     date: dateGenerator,
     datetime: dateTimeGenerator,
     geometry: () => none,
-    json: () => none
+    json: () => none,
+    url: () => none
   });
 
   const stringBinaryOperator: Function4<fltr.Property, fltr.BinaryComparisonOperator, fltr.Literal, boolean, Option<string>> = (
