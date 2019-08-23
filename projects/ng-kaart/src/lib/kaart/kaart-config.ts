@@ -1,6 +1,5 @@
 import { InjectionToken } from "@angular/core";
 import { Function1 } from "fp-ts/lib/function";
-import * as MobileDetect from "mobile-detect/mobile-detect";
 import * as ol from "openlayers";
 
 export const KAART_CFG = new InjectionToken<KaartConfig>("kaartcfg");
@@ -40,7 +39,7 @@ export interface KaartConfig {
   };
 }
 
-// Alternatief is detect touchscreen van modernizer, maar touch != mobile
-const mobileDetect = new MobileDetect(window.navigator.userAgent);
+// pointer: coarse -> The primary input mechanism of the device includes a pointing device of limited accuracy.
+export const mobile = window.matchMedia && window.matchMedia("(pointer: coarse)").matches;
 
-export const envParams: Function1<KaartConfig, EnvParams> = config => config.envParams[mobileDetect.mobile() ? "mobile" : "desktop"];
+export const envParams: Function1<KaartConfig, EnvParams> = config => config.envParams[mobile ? "mobile" : "desktop"];

@@ -26,6 +26,7 @@ import {
 } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
+import { mobile } from "../kaart/kaart-config";
 import * as ke from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as prt from "../kaart/kaart-protocol";
@@ -93,7 +94,7 @@ type InputFocus = "eigenschap" | "operator" | "waarde" | "plainTextWaarde";
   styleUrls: ["./filter-editor.component.scss"]
 })
 export class FilterEditorComponent extends KaartChildComponentBase {
-  readonly mobile = window.matchMedia("(pointer: coarse)").matches;
+  readonly onMobileDevice = mobile;
 
   readonly zichtbaar$: rx.Observable<boolean>;
   readonly titel$: rx.Observable<string>;
@@ -196,7 +197,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       );
 
     this.keyboardActive$ = rx.merge(forControlValue(this.forceAutoCompleteControl), rx.of(false)).pipe(
-      map(force => !this.mobile || force), // altijd actief indien niet op mobiel toestel
+      map(force => !this.onMobileDevice || force), // altijd actief indien niet op mobiel toestel
       shareReplay(1)
     );
 

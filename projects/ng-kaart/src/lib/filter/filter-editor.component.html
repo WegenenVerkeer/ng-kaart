@@ -104,7 +104,7 @@
 
         <span class="hoofdlettergevoeligheid" [ngSwitch]="checkboxState$ | async">
           <span *ngSwitchCase="'activateKeyboard'">
-            <mat-checkbox *ngIf="mobile" [formControl]="forceAutoCompleteControl" (click)="onAction('forceAutoComplete')">
+            <mat-checkbox *ngIf="onMobileDevice" [formControl]="forceAutoCompleteControl" (click)="onAction('forceAutoComplete')">
               Activeer keyboard
             </mat-checkbox>
           </span>
