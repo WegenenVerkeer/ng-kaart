@@ -1,17 +1,19 @@
-import { ChangeDetectorRef, Component, NgZone } from "@angular/core";
+import { ChangeDetectorRef, Component, ElementRef, NgZone, ViewChild } from "@angular/core";
 import { FormControl, ValidationErrors, Validators } from "@angular/forms";
+import { MatAutocompleteTrigger } from "@angular/material";
 import * as array from "fp-ts/lib/Array";
 import { Endomorphism, Function1, Refinement } from "fp-ts/lib/function";
 import * as option from "fp-ts/lib/Option";
 import { fromNullable, Option } from "fp-ts/lib/Option";
-import { Ord } from "fp-ts/lib/Ord";
 import * as ord from "fp-ts/lib/Ord";
+import { Ord } from "fp-ts/lib/Ord";
 import * as rx from "rxjs";
 import {
   debounceTime,
   distinctUntilChanged,
   filter,
   map,
+  mergeMap,
   sample,
   scan,
   share,
@@ -24,10 +26,12 @@ import {
 } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
+import { mobile } from "../kaart/kaart-config";
 import * as ke from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
+import { asap } from "../util/asap";
 import { isNotNull, isNotNullObject } from "../util/function";
 import { isOfKind } from "../util/kinded";
 import { parseDouble, parseInteger } from "../util/number";
@@ -75,9 +79,14 @@ const sanitiseText: Endomorphism<string> = text => text.trim().replace(/[\x00-\x
 interface Wrapped {
   readonly value: string;
 }
+
 const Wrapped: Function1<string, Wrapped> = value => ({ value });
 const isWrapped: Refinement<any, Wrapped> = (obj): obj is Wrapped => obj && obj.value && typeof obj.value === "string";
 const extractValue: Function1<Wrapped, string> = wrapped => wrapped.value;
+
+type CheckboxState = "caseSensitive" | "activateKeyboard" | "none";
+type ActieveAutoComplete = "eigenschap" | "waarde";
+type InputFocus = "eigenschap" | "operator" | "waarde" | "plainTextWaarde";
 
 @Component({
   selector: "awv-filter-editor",
@@ -85,10 +94,14 @@ const extractValue: Function1<Wrapped, string> = wrapped => wrapped.value;
   styleUrls: ["./filter-editor.component.scss"]
 })
 export class FilterEditorComponent extends KaartChildComponentBase {
+  readonly onMobileDevice = mobile;
+
   readonly zichtbaar$: rx.Observable<boolean>;
   readonly titel$: rx.Observable<string>;
+  readonly keyboardActive$: rx.Observable<boolean>;
 
   readonly filteredVelden$: rx.Observable<fltr.Property[]>;
+  readonly properties$: rx.Observable<fltr.Property[]>;
   readonly operators$: rx.Observable<fed.ComparisonOperator[]>;
   readonly filteredWaarden$: rx.Observable<Wrapped[]>;
 
@@ -102,6 +115,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
   readonly doubleWaardeControl = new FormControl({ value: null });
 
   readonly hoofdLetterGevoeligControl = new FormControl({ value: null, disabled: true });
+  readonly forceAutoCompleteControl = new FormControl({ value: false, disabled: false });
 
   readonly dropdownWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
   readonly autocompleteWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
@@ -118,7 +132,37 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
   private clickInsideDialog = false;
 
-  readonly operatorCompare: (o1: fed.ComparisonOperator, o2: fed.ComparisonOperator) => boolean = (o1, o2) => o1.operator === o2.operator;
+  readonly checkboxState$: rx.Observable<CheckboxState>;
+  private actieveAutoComplete$: rx.Observable<ActieveAutoComplete>;
+
+  // in angular 8 kan de setter vervangen worden door {static: false}
+  // we hebben dit nodig omdat de input velden er niet altijd zijn (afhankelijk van keyboardActive$)
+  @ViewChild("eigenschapAutocompleteTrigger") set setEigenschapAutocompleteTrigger(content: MatAutocompleteTrigger) {
+    this.eigenschapAutocompleteTrigger = content;
+  }
+
+  @ViewChild("waardeAutocompleteTrigger") set setWaardeAutocompleteTrigger(content: MatAutocompleteTrigger) {
+    this.waardeAutocompleteTrigger = content;
+  }
+
+  @ViewChild("eigenschapAutocompleteInput") set setEigenschapAutocompleteInput(content: ElementRef) {
+    if (content) {
+      this.eigenschapAutocompleteInput = content.nativeElement;
+    }
+  }
+
+  @ViewChild("waardeAutocompleteInput") set setWaardeAutocompleteInput(content: ElementRef) {
+    if (content) {
+      this.waardeAutocompleteInput = content.nativeElement;
+    }
+  }
+  private eigenschapAutocompleteTrigger: MatAutocompleteTrigger;
+  private waardeAutocompleteTrigger: MatAutocompleteTrigger;
+  private eigenschapAutocompleteInput: HTMLInputElement;
+  private waardeAutocompleteInput: HTMLInputElement;
+
+  readonly operatorCompare = fed.setoidComparisonOperator.equals;
+  readonly veldCompare = fltr.setoidPropertyByRef.equals;
 
   constructor(kaart: KaartComponent, zone: NgZone, private readonly cdr: ChangeDetectorRef) {
     super(kaart, zone);
@@ -152,6 +196,11 @@ export class FilterEditorComponent extends KaartChildComponentBase {
         )
       );
 
+    this.keyboardActive$ = rx.merge(forControlValue(this.forceAutoCompleteControl), rx.of(false)).pipe(
+      map(force => !this.onMobileDevice || force), // altijd actief indien niet op mobiel toestel
+      shareReplay(1)
+    );
+
     laag$.subscribe(() => {
       this.naamControl.reset("", { emitEvent: false });
       this.veldControl.reset("", { emitEvent: false });
@@ -162,6 +211,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       this.dropdownWaardeControl.reset("", { emitEvent: false });
       this.autocompleteWaardeControl.reset("", { emitEvent: false });
       this.hoofdLetterGevoeligControl.reset(null, { emitEvent: false });
+      this.forceAutoCompleteControl.reset(false, { emitEvent: true });
     });
 
     const gekozenNaam$: rx.Observable<Option<string>> = forControlValue(this.naamControl)
@@ -212,7 +262,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     const zetHoofdletterGevoelig$: rx.Observable<TermEditorUpdate> = gekozenHoofdLetterGevoelig$.pipe(map(fed.selectHoofdletterGevoelig));
     const zetProperty$: rx.Observable<TermEditorUpdate> = gekozenProperty$.pipe(map(fed.selectedProperty));
     const zetOperator$: rx.Observable<TermEditorUpdate> = gekozenOperator$.pipe(
-      withLatestFrom(rx.merge(gekozenHoofdLetterGevoelig$, rx.of(false))),
+      withLatestFrom(rx.merge(gekozenHoofdLetterGevoelig$, rx.of(false), this.newFilterEditor$.pipe(map(() => false)))),
       map(([operator, caseSensitive]) => fed.selectOperator(operator)(caseSensitive))
     );
     const zetWaarde$: rx.Observable<TermEditorUpdate> = gekozenWaarde$.pipe(map(fed.selectValue));
@@ -223,7 +273,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       .merge(zetProperty$, zetOperator$, zetWaarde$, zetHoofdletterGevoelig$)
       .pipe(map(teu => (ee: fed.ExpressionEditor) => fed.update(teu(ee.current))(ee)));
 
-    const expressionEditorUpdates$ = rx.merge(zetNaam$, termEditorUpdates$, this.newFilterEditor$.asObservable());
+    const expressionEditorUpdates$ = rx.merge(zetNaam$, termEditorUpdates$, this.newFilterEditor$);
 
     this.filterEditor$ = initExpressionEditor$
       .pipe(
@@ -339,14 +389,9 @@ export class FilterEditorComponent extends KaartChildComponentBase {
                     break;
                 }
               },
-              selection: valueSelector => {
-                switch (valueSelector.selectionType) {
-                  case "autocomplete":
-                    this.autocompleteWaardeControl.setValue(val.workingValue.fold("", sv => sv.value), { emitEvent: true });
-                    break;
-                  case "dropdown":
-                    this.dropdownWaardeControl.reset("", { emitEvent: true });
-                }
+              selection: () => {
+                this.autocompleteWaardeControl.reset(val.workingValue.fold("", sv => sv.value), { emitEvent: true });
+                this.dropdownWaardeControl.reset(val.workingValue.fold("", sv => sv.value), { emitEvent: true });
               }
             })(val.valueSelector);
           },
@@ -391,14 +436,9 @@ export class FilterEditorComponent extends KaartChildComponentBase {
                     break;
                 }
               },
-              selection: valueSelector => {
-                switch (valueSelector.selectionType) {
-                  case "autocomplete":
-                    this.autocompleteWaardeControl.reset(Wrapped(compl.selectedValue.value as string), { emitEvent: true });
-                    break;
-                  case "dropdown":
-                    this.dropdownWaardeControl.reset(Wrapped(compl.selectedValue.value as string), { emitEvent: true });
-                }
+              selection: () => {
+                this.dropdownWaardeControl.reset(compl.selectedValue.value, { emitEvent: true });
+                this.autocompleteWaardeControl.reset(compl.selectedValue.value, { emitEvent: true });
               }
             })(compl.valueSelector);
           }
@@ -411,9 +451,9 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       filter(fed.isAtLeastOperatorSelection)
     );
 
-    const properties$: rx.Observable<fltr.Property[]> = this.filterEditor$.pipe(map(editor => editor.current.properties));
+    this.properties$ = this.filterEditor$.pipe(map(editor => editor.current.properties));
 
-    this.filteredVelden$ = rx.combineLatest([properties$, veldinfos$]).pipe(
+    this.filteredVelden$ = rx.combineLatest([this.properties$, veldinfos$]).pipe(
       switchMap(([properties, veldinfos]) =>
         this.veldControl.valueChanges.pipe(
           filter(isNotNull),
@@ -457,6 +497,96 @@ export class FilterEditorComponent extends KaartChildComponentBase {
         )
       );
 
+    const inputFocus$ = this.actionDataFor$("inputFocus", (uc): uc is InputFocus => true);
+
+    this.checkboxState$ = rx.combineLatest([this.veldwaardeType$, inputFocus$]).pipe(
+      mergeMap(([valueSelector, focus]) => {
+        switch (focus) {
+          case "eigenschap":
+            // focus op eigenschap: altijd checkbox voor keyboard te activeren
+            return rx.of<CheckboxState>("activateKeyboard");
+          case "waarde":
+          case "operator":
+            // focus op waarde of operator: afhankelijk van veldwaardetype
+            if (valueSelector.kind === "selection") {
+              // meerkeuze -> activeer keyboard
+              return rx.of<CheckboxState>("activateKeyboard");
+            } else if (valueSelector.kind === "free" && valueSelector.valueType === "string") {
+              // vrije input -> hoofdelettergevoeligheid
+              return rx.of<CheckboxState>("caseSensitive");
+            } else {
+              // overige -> toon geen checkbox
+              return rx.of<CheckboxState>("none");
+            }
+          case "plainTextWaarde":
+            // focus op vrije input -> hoofdelettergevoeligheid
+            return rx.of<CheckboxState>("caseSensitive");
+          default:
+            return rx.EMPTY;
+        }
+      }),
+      distinctUntilChanged()
+    );
+
+    // bij een nieuwe editor -> telkens autocomplete af
+    this.bindToLifeCycle(this.newFilterEditor$).subscribe(() => {
+      this.disableAutoComplete();
+    });
+
+    // naar welke autocomplete moeten we focussen?
+    this.actieveAutoComplete$ = rx.merge(
+      // bij een nieuwe filter editor focussen we op eigenschap
+      this.newFilterEditor$.pipe(map(() => <ActieveAutoComplete>"eigenschap")),
+      inputFocus$.pipe(
+        mergeMap(value => {
+          switch (value) {
+            case "eigenschap":
+              // na focus op eigenschap -> focus op eigenschap
+              return rx.of<ActieveAutoComplete>("eigenschap");
+            case "waarde":
+            case "plainTextWaarde":
+            case "operator":
+              // na focus op waarde, plainTextWaarde of operator -> focus op waarde
+              return rx.of<ActieveAutoComplete>("waarde");
+            default:
+              return rx.EMPTY;
+          }
+        })
+      )
+    );
+
+    // handle clicks on forceAutoComplete checkbox
+    this.bindToLifeCycle(this.actionFor$("forceAutoComplete").pipe(withLatestFrom(this.actieveAutoComplete$))).subscribe(
+      ([, actieveAutoComplete]) => {
+        this.forceAutoCompleteControl.setValue(!this.forceAutoCompleteControl.value);
+        // als de autocomplete getoond moet worden, zet focus op input element, selecteer alle tekst
+        // en verberg keuzeopties (deze worden over het input veld getoond)
+        if (this.forceAutoCompleteControl.value) {
+          const c = this;
+          asap(() => {
+            if (actieveAutoComplete === "waarde") {
+              if (c.waardeAutocompleteInput) {
+                c.waardeAutocompleteInput.focus();
+                c.waardeAutocompleteInput.select();
+              }
+              if (c.waardeAutocompleteTrigger) {
+                c.waardeAutocompleteTrigger.closePanel();
+              }
+            } else {
+              if (c.eigenschapAutocompleteInput) {
+                c.eigenschapAutocompleteInput.focus();
+                c.eigenschapAutocompleteInput.select();
+              }
+              if (c.eigenschapAutocompleteTrigger) {
+                c.eigenschapAutocompleteTrigger.closePanel();
+              }
+            }
+          });
+        }
+        return false;
+      }
+    );
+
     const maybeZetFilterCmd$ = forEveryLaag(laag =>
       this.filterEditor$.pipe(
         map(fed.toExpressionFilter),
@@ -492,6 +622,10 @@ export class FilterEditorComponent extends KaartChildComponentBase {
         this.dispatch(command);
       }
     );
+  }
+
+  disableAutoComplete() {
+    this.forceAutoCompleteControl.setValue(false);
   }
 
   verwijderActieveEditor() {
@@ -552,8 +686,10 @@ export class FilterEditorComponent extends KaartChildComponentBase {
   }
 
   // Dit is nodig om de event op te vangen vóór dat de dialog zelf het doet
-  onClickCheckbox() {
-    this.hoofdLetterGevoeligControl.setValue(!this.hoofdLetterGevoeligControl.value);
+  onClickHoofdLetterGevoelig() {
+    if (this.hoofdLetterGevoeligControl.enabled) {
+      this.hoofdLetterGevoeligControl.setValue(!this.hoofdLetterGevoeligControl.value);
+    }
     return false;
   }
 }
