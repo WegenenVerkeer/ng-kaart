@@ -16,7 +16,8 @@ export namespace FilterText {
     geometry: d => "<geometrie>",
     integer: i => i.toString(),
     json: j => "<json>",
-    string: s => `'${s}'`
+    string: s => `'${s}'`,
+    url: u => `'${u}'`,
   });
 
   const operatorSymbols = {

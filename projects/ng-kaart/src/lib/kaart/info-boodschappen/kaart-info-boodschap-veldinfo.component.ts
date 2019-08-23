@@ -493,7 +493,8 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
         .exists(waarde => `${waarde}`.startsWith("http")) ||
       veldbeschrijving(veld, this.veldbeschrijvingen) // indien 'constante' veld start met http
         .chain(veldInfo => option.fromNullable(veldInfo.constante)) //
-        .exists(constante => constante.startsWith("http"))
+        .exists(constante => constante.startsWith("http")) ||
+      this.veldtype(veld) === 'url'
     );
   }
 

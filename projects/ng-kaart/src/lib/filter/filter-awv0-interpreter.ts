@@ -19,7 +19,8 @@ export namespace AwvV0FilterInterpreters {
     "date",
     "datetime",
     "boolean",
-    "json"
+    "json",
+    "url"
   );
 
   const property: oi.Interpreter<fltr.Property> = oi.interpretRecord({
