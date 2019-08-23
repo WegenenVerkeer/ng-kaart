@@ -12,31 +12,38 @@
         </mat-form-field>
       </div>
       <div class="filter-definitie">
-          <ng-container
-              *ngIf="mobile; then dropdownVeld; else autocompleteVeld">
-          </ng-container>
-          <ng-template #dropdownVeld>
-            <mat-form-field class="filter-velden-combo">
-              <mat-label>Eigenschap</mat-label>
-              <mat-select [formControl]="veldControl" [compareWith]="veldCompare">
-                <mat-option *ngFor="let veld of (filteredVelden$ | async)" [value]="veld">{{ veld.label }}</mat-option>
-              </mat-select>
-              <mat-error *ngIf="veldControl.invalid">{{ errorVeld() }}</mat-error>
-            </mat-form-field>
-          </ng-template>
-          <ng-template #autocompleteVeld>
-            <mat-form-field class="filter-velden-combo">
-              <input type="text" placeholder="Eigenschap" autocomplete="off" matInput [formControl]="veldControl" [matAutocomplete]="velden"/>
-              <mat-autocomplete #velden="matAutocomplete" autoActiveFirstOption [displayWith]="displayVeld">
-                <mat-option *ngFor="let veld of (filteredVelden$ | async)" [value]="veld">{{ veld.label }}</mat-option>
-              </mat-autocomplete>
-              <mat-error *ngIf="veldControl.invalid">{{ errorVeld() }}</mat-error>
-            </mat-form-field>
-          </ng-template>
+        <ng-container
+            *ngIf="keyboardActive$ | async; then autocompleteVeld; else dropdownVeld">
+        </ng-container>
+        <ng-template #autocompleteVeld>
+          <mat-form-field class="filter-velden-combo">
+            <input type="text" placeholder="Eigenschap" autocomplete="off" matInput
+                   [formControl]="veldControl"
+                   [matAutocomplete]="velden"
+                   #eigenschapAutocompleteTrigger="matAutocompleteTrigger"
+                   #eigenschapAutocompleteInput
+                   (focus)="onAction('inputFocus', 'eigenschap')"/>
+            <mat-autocomplete #velden="matAutocomplete" autoActiveFirstOption [displayWith]="displayVeld">
+              <mat-option *ngFor="let veld of (filteredVelden$ | async)" [value]="veld" (onSelectionChange)="disableAutoComplete()">{{ veld.label }}</mat-option>
+            </mat-autocomplete>
+            <mat-error *ngIf="veldControl.invalid">{{ errorVeld() }}</mat-error>
+          </mat-form-field>
+        </ng-template>
+        <ng-template #dropdownVeld>
+          <mat-form-field class="filter-velden-combo">
+            <mat-label>Eigenschap</mat-label>
+            <mat-select [formControl]="veldControl" [compareWith]="veldCompare"
+                        (focus)="onAction('inputFocus', 'eigenschap')">
+              <mat-option *ngFor="let veld of (properties$ | async)" [value]="veld">{{ veld.label }}</mat-option>
+            </mat-select>
+            <mat-error *ngIf="veldControl.invalid">{{ errorVeld() }}</mat-error>
+          </mat-form-field>
+        </ng-template>
 
         <mat-form-field class="filter-operator-combo">
           <mat-label>Operator</mat-label>
-          <mat-select [formControl]="operatorControl" [compareWith]="operatorCompare">
+          <mat-select [formControl]="operatorControl" [compareWith]="operatorCompare"
+                      (focus)="onAction('inputFocus', 'operator')">
             <mat-option *ngFor="let operator of (operators$ | async)" [value]="operator">{{ operator.label }}</mat-option>
           </mat-select>
           <mat-error *ngIf="operatorControl.invalid">{{errorOperator()}}</mat-error>
@@ -46,57 +53,68 @@
           <ng-container [ngSwitch]="valueSelector.kind">
             <ng-container *ngSwitchCase="'free'" [ngSwitch]="valueSelector.valueType">
 
-              <mat-form-field *ngSwitchCase="'string'" class="filter-waarde-editbox">
-                <input type="text" matInput placeholder="Waarde" autocomplete="off" [formControl]="textWaardeControl"/>
+              <mat-form-field  *ngSwitchCase="'string'" class="filter-waarde-editbox">
+                <input type="text" matInput placeholder="Waarde" autocomplete="off" [formControl]="textWaardeControl"
+                       (focus)="onAction('inputFocus', 'plainTextWaarde')"/>
                 <mat-error *ngIf="textWaardeControl.invalid">{{errorTextWaarde()}}</mat-error>
               </mat-form-field>
-              <span *ngSwitchCase="'string'" class="hoofdlettergevoeligheid">
-                 <mat-checkbox  [formControl]="hoofdLetterGevoeligControl" (click)="onClickCheckbox()">
-                    Hoofdlettergevoelig
-                </mat-checkbox>
-              </span>
 
               <mat-form-field *ngSwitchCase="'double'" class="filter-waarde-editbox">
                 <input type="number" step="0.1" matInput placeholder="Getal" [formControl]="doubleWaardeControl"/>
                 <mat-error *ngIf="doubleWaardeControl.invalid">{{errorDoubleWaarde()}}</mat-error>
               </mat-form-field>
-              <span *ngSwitchCase="'double'" class="hoofdlettergevoeligheid"></span>
 
               <mat-form-field *ngSwitchCase="'integer'" class="filter-waarde-editbox">
                 <input type="number" step="1" matInput placeholder="Getal" [formControl]="integerWaardeControl"/>
                 <mat-error *ngIf="integerWaardeControl.invalid">{{errorIntegerWaarde()}}</mat-error>
               </mat-form-field>
-              <span *ngSwitchCase="'integer'" class="hoofdlettergevoeligheid"></span>
 
             </ng-container>
             <ng-container *ngSwitchCase="'selection'">
               <ng-container
-                  *ngIf="mobile; then dropdownWaarde; else autocompleteWaarde">
+                  *ngIf="keyboardActive$ | async; then autocompleteWaarde; else dropdownWaarde">
               </ng-container>
-              <ng-template #dropdownWaarde>
-                <mat-form-field class="filter-waarde-dropdown">
-                  <mat-label>Kies een waarde</mat-label>
-                  <mat-select [formControl]="dropdownWaardeControl">
-                    <mat-option *ngFor="let waarde of valueSelector.values" [value]="waarde">{{waarde}}</mat-option>
-                  </mat-select>
-                </mat-form-field>
-              </ng-template>
-
               <ng-template #autocompleteWaarde>
                 <mat-form-field class="filter-waarde-combo">
-                  <input type="text" placeholder="Waarde" autocomplete="off" matInput [formControl]="autocompleteWaardeControl" [matAutocomplete]="waarden"/>
+                  <input type="text" placeholder="Waarde" autocomplete="off" matInput
+                         [formControl]="autocompleteWaardeControl"
+                         [matAutocomplete]="waarden"
+                         #waardeAutocompleteTrigger="matAutocompleteTrigger"
+                         #waardeAutocompleteInput
+                         (focus)="onAction('inputFocus', 'waarde')"/>
                   <mat-autocomplete #waarden="matAutocomplete" [displayWith]="displayAutocompleteWaarde">
-                    <mat-option *ngFor="let waarde of (filteredWaarden$ | async)" [value]="waarde">{{waarde.value}}</mat-option>
+                    <mat-option *ngFor="let waarde of (filteredWaarden$ | async)" [value]="waarde" (onSelectionChange)="disableAutoComplete()">{{waarde.value}}</mat-option>
                   </mat-autocomplete>
                   <mat-error *ngIf="autocompleteWaardeControl.invalid">{{errorAutocompleteWaarde()}}</mat-error>
                 </mat-form-field>
               </ng-template>
-
-              <span class="hoofdlettergevoeligheid"></span>
+              <ng-template #dropdownWaarde>
+                <mat-form-field class="filter-waarde-dropdown">
+                  <mat-label>Kies een waarde</mat-label>
+                  <mat-select [formControl]="dropdownWaardeControl"
+                              (focus)="onAction('inputFocus', 'waarde')">
+                    <mat-option *ngFor="let waarde of valueSelector.values" [value]="waarde">{{waarde}}</mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </ng-template>
             </ng-container>
             <span *ngSwitchCase="'empty'" class="filter-waarde-editbox"></span>
           </ng-container>
         </ng-container>
+
+        <span class="hoofdlettergevoeligheid" [ngSwitch]="checkboxState$ | async">
+          <span *ngSwitchCase="'activateKeyboard'">
+            <mat-checkbox *ngIf="mobile" [formControl]="forceAutoCompleteControl" (click)="onAction('forceAutoComplete')">
+              Activeer keyboard
+            </mat-checkbox>
+          </span>
+
+          <span *ngSwitchCase="'caseSensitive'">
+            <mat-checkbox [formControl]="hoofdLetterGevoeligControl" (click)="onClickHoofdLetterGevoelig()">
+              Hoofdlettergevoelig
+            </mat-checkbox>
+          </span>
+        </span>
 
         <div class="delete-icon">
           <button mat-icon-button (click)="verwijderActieveEditor()" matTooltip="Verwijder conditie">
