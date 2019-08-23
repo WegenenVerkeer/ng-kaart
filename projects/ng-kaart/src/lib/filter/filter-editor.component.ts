@@ -30,11 +30,11 @@ import * as ke from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
-import { catOptions, forEvery } from "../util";
 import { asap } from "../util/asap";
 import { isNotNull, isNotNullObject } from "../util/function";
 import { isOfKind } from "../util/kinded";
 import { parseDouble, parseInteger } from "../util/number";
+import { catOptions, forEvery } from "../util/operators";
 
 import { FilterAanpassingBezig, isAanpassingBezig } from "./filter-aanpassing-state";
 import { FilterEditor as fed } from "./filter-builder";
@@ -131,7 +131,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
   private clickInsideDialog = false;
 
-  private checkboxState$: rx.Observable<CheckboxState>;
+  readonly checkboxState$: rx.Observable<CheckboxState>;
   private actieveAutoComplete$: rx.Observable<ActieveAutoComplete>;
 
   // in angular 8 kan de setter vervangen worden door {static: false}
@@ -160,10 +160,8 @@ export class FilterEditorComponent extends KaartChildComponentBase {
   private eigenschapAutocompleteInput: HTMLInputElement;
   private waardeAutocompleteInput: HTMLInputElement;
 
-  readonly operatorCompare = function(o1: fed.ComparisonOperator, o2: fed.ComparisonOperator): boolean {
-    return !!o1 && !!o2 && o1.operator === o2.operator;
-  };
-  readonly veldCompare: (o1: fltr.Property, o2: fltr.Property) => boolean = (o1, o2) => o1.ref === o2.ref;
+  readonly operatorCompare = fed.setoidComparisonOperator.equals;
+  readonly veldCompare = fltr.setoidPropertyByRef.equals;
 
   constructor(kaart: KaartComponent, zone: NgZone, private readonly cdr: ChangeDetectorRef) {
     super(kaart, zone);
@@ -263,7 +261,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     const zetHoofdletterGevoelig$: rx.Observable<TermEditorUpdate> = gekozenHoofdLetterGevoelig$.pipe(map(fed.selectHoofdletterGevoelig));
     const zetProperty$: rx.Observable<TermEditorUpdate> = gekozenProperty$.pipe(map(fed.selectedProperty));
     const zetOperator$: rx.Observable<TermEditorUpdate> = gekozenOperator$.pipe(
-      withLatestFrom(rx.merge(gekozenHoofdLetterGevoelig$, rx.of(false), this.newFilterEditor$.asObservable().pipe(map(() => false)))),
+      withLatestFrom(rx.merge(gekozenHoofdLetterGevoelig$, rx.of(false), this.newFilterEditor$.pipe(map(() => false)))),
       map(([operator, caseSensitive]) => fed.selectOperator(operator)(caseSensitive))
     );
     const zetWaarde$: rx.Observable<TermEditorUpdate> = gekozenWaarde$.pipe(map(fed.selectValue));
@@ -274,7 +272,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       .merge(zetProperty$, zetOperator$, zetWaarde$, zetHoofdletterGevoelig$)
       .pipe(map(teu => (ee: fed.ExpressionEditor) => fed.update(teu(ee.current))(ee)));
 
-    const expressionEditorUpdates$ = rx.merge(zetNaam$, termEditorUpdates$, this.newFilterEditor$.asObservable());
+    const expressionEditorUpdates$ = rx.merge(zetNaam$, termEditorUpdates$, this.newFilterEditor$);
 
     this.filterEditor$ = initExpressionEditor$
       .pipe(
@@ -530,14 +528,14 @@ export class FilterEditorComponent extends KaartChildComponentBase {
     );
 
     // bij een nieuwe editor -> telkens autocomplete af
-    this.bindToLifeCycle(this.newFilterEditor$.asObservable()).subscribe(() => {
+    this.bindToLifeCycle(this.newFilterEditor$).subscribe(() => {
       this.disableAutoComplete();
     });
 
     // naar welke autocomplete moeten we focussen?
     this.actieveAutoComplete$ = rx.merge(
       // bij een nieuwe filter editor focussen we op eigenschap
-      this.newFilterEditor$.asObservable().pipe(map(() => <ActieveAutoComplete>"eigenschap")),
+      this.newFilterEditor$.pipe(map(() => <ActieveAutoComplete>"eigenschap")),
       inputFocus$.pipe(
         mergeMap(value => {
           switch (value) {

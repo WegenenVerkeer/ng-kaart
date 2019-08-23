@@ -790,7 +790,7 @@ export namespace FilterEditor {
 
   const setoidUnaryComparisonOperator: Setoid<UnaryComparisonOperator> = contramap(o => o.operator, fltr.setoidUnaryComparisonOperator);
 
-  const setoidComparisonOperator: Setoid<ComparisonOperator> = byKindSetoid<ComparisonOperator, string>({
+  export const setoidComparisonOperator: Setoid<ComparisonOperator> = byKindSetoid<ComparisonOperator, string>({
     BinaryComparisonOperator: setoidBinaryComparisonOperator,
     UnaryComparisonOperator: setoidUnaryComparisonOperator
   });
