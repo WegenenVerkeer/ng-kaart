@@ -24,6 +24,6 @@ import { Key, Kinded } from "./kinded";
  */
 export const byKindSetoid = <A extends Kinded<K>, K extends Key>(
   setoidRecord: { [P in A["kind"]]: Setoid<A & { readonly kind: P; readonly [key: string]: any }> }
-) => fromEquals((a1: A, a2: A) => a1.kind === a2.kind && setoidRecord[a1.kind].equals(a1, a2));
+) => fromEquals((a1: A, a2: A) => !!a1 && !!a2 && a1.kind === a2.kind && setoidRecord[a1.kind].equals(a1, a2));
 
 export const singletonSetoid = fromEquals(() => true);
