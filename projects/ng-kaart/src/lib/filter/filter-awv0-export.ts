@@ -17,7 +17,7 @@ export namespace FilterText {
     integer: i => i.toString(),
     json: j => "<json>",
     string: s => `'${s}'`,
-    url: u => `'${u}'`,
+    url: u => `'${u}'`
   });
 
   const operatorSymbols = {
