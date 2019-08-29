@@ -1,7 +1,7 @@
 @import "../../css/kaart.component-common.scss";
 
 .feature-tabel-weergave-content {
-  background-color: rgba(255,255,255,0.75);
+  background-color: rgba(255,255,255,1);
   height: 100%;
   display: flex;
   flex-flow: column;
@@ -14,6 +14,19 @@
 
   ::-webkit-scrollbar-thumb {
     background-color: $awv-primary-3;
+  }
+
+  .header {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    font-size: 12px;
+
+    .title {
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
   }
 }
 

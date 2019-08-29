@@ -302,6 +302,8 @@ export namespace ToegevoegdeVectorLaag {
   ])
     .asGetter()
     .composePrism(Prism.fromRefinement(isNoSqlFsSource));
+
+  export const opTitelSetoid: Setoid<ToegevoegdeVectorLaag> = setoid.contramap(laag => laag.titel, setoidString);
 }
 
 export namespace VeldInfo {

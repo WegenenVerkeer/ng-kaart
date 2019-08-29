@@ -1,5 +1,7 @@
+import { array } from "fp-ts/lib/Array";
+import { Predicate } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
-import { Lens, Optional } from "monocle-ts";
+import { fromTraversable, Lens, Optional, Prism, Traversal } from "monocle-ts";
 
 /**
  * Een optional die waarde zoekt in een Map op basis van een key  waarbij er, in lijn met het Optional zijn, rekening mee
@@ -87,3 +89,6 @@ export const stringMapLens: <V>(k: string) => Lens<StringMapped<V>, Option<V>> =
       return cloned;
     }
   );
+
+export const selectiveArrayTraversal: <A>(pred: Predicate<A>) => Traversal<A[], A> = <A>(pred: Predicate<A>) =>
+  fromTraversable(array)<A>().composePrism(Prism.fromPredicate<A>(pred));

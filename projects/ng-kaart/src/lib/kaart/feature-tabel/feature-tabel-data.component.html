@@ -1,13 +1,13 @@
 <div class="feature-table-data-content">
-  <table *ngIf="(headers$ | async) as headers" [ngStyle]="{'grid-template-columns': columnWidths(headers)}">
+  <table *ngIf="(headers$ | async) as headers" [ngStyle]="{'grid-template-columns': headers.columnWidths}">
     <thead>
       <tr>
-        <th *ngFor="let header of headers">{{ header.label }}</th>
+        <th *ngFor="let header of headers.headers">{{ header.label }}</th>
       </tr>
     </thead>
     <tbody>
       <tr *ngFor="let row of (rows$ | async)">
-        <td *ngFor="let header of headers" [ngClass]="{'empty-field':row[header.key].maybeValue.isNone()}">{{ row[header.key].maybeValue.getOrElse("") }}</td>
+        <td *ngFor="let header of headers.headers" [ngClass]="{'empty-field':row[header.key].maybeValue.isNone()}">{{ row[header.key].maybeValue.getOrElse("") }}</td>
       </tr>
     </tbody>
   </table>

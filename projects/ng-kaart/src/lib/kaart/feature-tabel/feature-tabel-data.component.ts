@@ -1,55 +1,63 @@
-import { Component, Input, NgZone } from "@angular/core";
-import { option } from "fp-ts";
+import { ChangeDetectionStrategy, Component, Input, NgZone } from "@angular/core";
 import * as rx from "rxjs";
-import { delay, map, share, tap } from "rxjs/operators";
+import { map, share, switchMap } from "rxjs/operators";
 
+import { collectOption, subSpy } from "../../util/operators";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { KaartComponent } from "../kaart.component";
 
-import { laagToRows, NoSqlFsLaagAndData, Row } from "./model";
-
-interface Header {
-  readonly key: string; // om op te zoeken in een row
-  readonly label: string; // voor weergave
-}
+import { FeatureTabelOverzichtComponent } from "./feature-tabel-overzicht.component";
+import { ColumnHeaders, Row, TableModel } from "./model";
 
 @Component({
   selector: "awv-feature-tabel",
   templateUrl: "./feature-tabel-data.component.html",
-  styleUrls: ["./feature-tabel-data.component.scss"]
+  styleUrls: ["./feature-tabel-data.component.scss"],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FeatureTabelDataComponent extends KaartChildComponentBase {
-  headers$: rx.Observable<Header[]>;
+  headers$: rx.Observable<ColumnHeaders>;
   rows$: rx.Observable<Row[]>;
 
   @Input()
-  laag: NoSqlFsLaagAndData;
+  laagTitel: string;
 
-  constructor(kaart: KaartComponent, ngZone: NgZone) {
+  constructor(kaart: KaartComponent, overzicht: FeatureTabelOverzichtComponent, ngZone: NgZone) {
     super(kaart, ngZone);
-    const laag$ = this.viewReady$.pipe(
-      map(() => this.laag),
-      share()
-    ); // Input parameter maar beschikbaar na initialisatie
-    this.headers$ = laag$.pipe(
-      map(laag =>
-        laag.veldInfos.map(vi => ({
-          key: vi.naam,
-          label: option.fromNullable(vi.label).getOrElse(vi.naam)
-        }))
-      ),
-      share()
+
+    const model$ = overzicht.model$;
+
+    const laag$ = subSpy("****laag$")(
+      this.viewReady$.pipe(
+        // De input is pas beschikbaar nadat de view klaar is
+        switchMap(() =>
+          model$.pipe(
+            collectOption(TableModel.laagForTitel(this.laagTitel)),
+            share()
+          )
+        )
+      )
     );
 
-    this.rows$ = laag$.pipe(
-      delay(3000), // TODO moet beter -> event wanneer data geladen is
-      map(laagToRows),
-      tap(rows => console.log("****rows", rows))
+    this.headers$ = subSpy("****headers$")(
+      laag$.pipe(
+        map(laag => laag.headers),
+        share()
+      )
     );
-  }
 
-  columnWidths(headers: Header[]) {
-    console.log("****widths", headers.map(_ => "minmax(104px, 1fr)").join(" "));
-    return headers.map(_ => "minmax(150px, 1fr)").join(" ");
+    const page$ = subSpy("****page$")(
+      laag$.pipe(
+        collectOption(laag => laag.page),
+        share()
+      )
+    );
+
+    this.rows$ = subSpy("****row$")(
+      page$.pipe(
+        map(page => page.rows),
+        share()
+      )
+    );
   }
 }
