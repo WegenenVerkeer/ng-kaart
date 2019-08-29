@@ -71,6 +71,7 @@ export interface LaagModel {
   readonly featureCount: FeatureCount; // aantal features in de tabel over alle pagina's heen
 
   readonly headers: ColumnHeaders;
+  readonly selectedVeldnamen: string[]; // enkel een subset van de velden is zichtbaar
 
   readonly source: NosqlFsSource;
   readonly page: Option<Page>; // We houden maar 1 pagina van data tegelijkertijd in het geheugen. (later meer)
@@ -84,7 +85,6 @@ export interface LaagModel {
   // readonly fetchAllData();  --> of nog beter in losse functie?
   // readonly ord: Ord<ol.Feature>;
   // readonly viewAsFilter: boolean;
-  // readonly selectedVeldNamen: string[];
 }
 
 // headers.map(_ => "minmax(150px, 1fr)").join(" ")
@@ -130,15 +130,27 @@ interface Properties {
 
 export type ValueType = string | number | boolean | DateTime;
 
-const ColumnHeaders: Function1<ColumnHeader[], ColumnHeaders> = headers => ({
-  headers,
-  columnWidths: headers.map(_ => "minmax(150px, 1fr)").join(" ")
-});
-
 const Page: Function2<Row[], number, Page> = (rows, pageNumber) => ({
   rows,
   pageNumber
 });
+
+namespace ColumnHeaders {
+  const create: Function1<ColumnHeader[], ColumnHeaders> = headers => ({
+    headers,
+    columnWidths: headers.map(_ => "minmax(150px, 1fr)").join(" ")
+  });
+
+  export const createFromSelectedVeldInfos: Function2<ke.VeldInfo[], string[], ColumnHeaders> = (veldinfos, veldnamen) =>
+    create(
+      veldinfos
+        .filter(vi => veldnamen.includes(vi.naam))
+        .map(vi => ({
+          key: vi.naam,
+          label: option.fromNullable(vi.label).getOrElse(vi.naam)
+        }))
+    );
+}
 
 export namespace FeatureCount {
   const setoidFeatureCountFetched: Setoid<FeatureCountFetched> = setoid.contramap(fcp => fcp.count, setoid.setoidNumber);
@@ -186,18 +198,14 @@ export namespace LaagModel {
   export const create: PartialFunction2<ke.ToegevoegdeVectorLaag, Viewinstellingen, LaagModel> = (laag, viewinstellingen) =>
     ke.ToegevoegdeVectorLaag.noSqlFsSourceFold.headOption(laag).map(source => {
       const veldinfos = ke.ToegevoegdeVectorLaag.veldInfosLens.get(laag);
+      const selectedVeldnamen = veldinfos.filter(vi => vi.isBasisVeld).map(vi => vi.naam);
       return {
         titel: laag.titel,
         veldinfos,
         totaal: laag.filterinstellingen.totaal,
         featureCount: FeatureCount.pending,
-        headers: ColumnHeaders(
-          veldinfos.map(vi => ({
-            key: vi.naam,
-            label: option.fromNullable(vi.label).getOrElse(vi.naam),
-            aantalFeatures: 123
-          }))
-        ),
+        selectedVeldnamen,
+        headers: ColumnHeaders.createFromSelectedVeldInfos(veldinfos, selectedVeldnamen),
         source,
         page: option.none,
         nextPageUpdate: 0,

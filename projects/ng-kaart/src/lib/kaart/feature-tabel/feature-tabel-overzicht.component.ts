@@ -9,7 +9,7 @@ import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { KaartComponent } from "../kaart.component";
 import { kaartLogger } from "../log";
 
-import { LaagModel, TableHeader, TableModel, Update } from "./model";
+import { LaagModel, TableModel, Update } from "./model";
 
 export const FeatureTabelUiSelector = "FeatureTabel";
 
