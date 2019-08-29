@@ -10,7 +10,7 @@ import { FeatureTabelOverzichtComponent } from "./feature-tabel-overzicht.compon
 import { ColumnHeaders, Row, TableModel } from "./model";
 
 @Component({
-  selector: "awv-feature-tabel",
+  selector: "awv-feature-tabel-data",
   templateUrl: "./feature-tabel-data.component.html",
   styleUrls: ["./feature-tabel-data.component.scss"],
   changeDetection: ChangeDetectionStrategy.OnPush

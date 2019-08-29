@@ -1,14 +1,10 @@
 <div *ngIf="(zichtbaar$ | async)" class="feature-tabel-weergave-content">
   <mat-tab-group [headerPosition]="above">
-    <mat-tab *ngFor="let header of (laagHeaders$ | async)">
+    <mat-tab *ngFor="let titel of (laagTitels$ | async)">
       <ng-template mat-tab-label>
-        <div class="header">
-          <div class="title">{{ header.titel }}</div>
-          <div class="count" *ngIf="header.count">{{ header.count }}</div>
-          <div class="noCount" *ngIf="! header.count">...</div>
-        </div>
-        </ng-template>
-      <awv-feature-tabel [laagTitel]="header.titel"></awv-feature-tabel>
+        <awv-feature-tabel-header [laagTitel]="titel"></awv-feature-tabel-header>
+      </ng-template>
+      <awv-feature-tabel-data [laagTitel]="titel"></awv-feature-tabel-data>
     </mat-tab>
   </mat-tab-group>
 </div>

@@ -17,7 +17,7 @@ import {
 import { Option } from "fp-ts/lib/Option";
 import { Setoid, setoidNumber, setoidString } from "fp-ts/lib/Setoid";
 import { DateTime } from "luxon";
-import { Fold, Getter, Lens, Optional, Prism, Traversal } from "monocle-ts";
+import { Fold, fromTraversable, Getter, Lens, Optional, Prism, Traversal } from "monocle-ts";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { delay, map, switchMap, take } from "rxjs/operators";
@@ -32,6 +32,7 @@ import { selectiveArrayTraversal } from "../../util/lenses";
 import { Pipeable } from "../../util/operators";
 import * as setoids from "../../util/setoid";
 import * as ke from "../kaart-elementen";
+import { Viewinstellingen } from "../kaart-protocol-subscriptions";
 import { ModelChanges } from "../model-changes";
 
 // export const tabulerbareLagen$: Function1<ModelChanges, rx.Observable<ke.ToegevoegdeVectorLaag[]>> = changes =>
@@ -55,14 +56,15 @@ export interface Update {
 }
 
 export interface TableModel {
-  readonly laagData: NoSqlFsLaagAndData[];
+  readonly laagData: LaagModel[];
 
   // andere globale eigenschappen
+  readonly viewinstellingen: Viewinstellingen;
 }
 
 // Deze interface verzamelt de gegevens die we nodig hebben om 1 laag weer te geven in de tabelview. Het is
 // tegelijkertijd een abstractie van het onderliggende model + state nodig voor de tabel use cases (MVP).
-export interface NoSqlFsLaagAndData {
+export interface LaagModel {
   readonly titel: string;
   readonly veldinfos: ke.VeldInfo[]; // enkel de VeldInfos die we kunnen weergeven
   readonly totaal: FilterTotaal;
@@ -74,6 +76,9 @@ export interface NoSqlFsLaagAndData {
   readonly page: Option<Page>; // We houden maar 1 pagina van data tegelijkertijd in het geheugen. (later meer)
   readonly nextPageUpdate: number; // Het sequentienummer dat verwacht is, niet het paginanummer
   readonly updatePending: boolean;
+
+  readonly viewinstellingen: Viewinstellingen; // Kopie van gegevens in TableModel. Handig om hier te refereren
+
   // later
   // readonly canRequestFullData: boolean;
   // readonly fetchAllData();  --> of nog beter in losse functie?
@@ -125,28 +130,6 @@ interface Properties {
 
 export type ValueType = string | number | boolean | DateTime;
 
-const NoSqlFsLaagAndData: PartialFunction1<ke.ToegevoegdeVectorLaag, NoSqlFsLaagAndData> = laag =>
-  ke.ToegevoegdeVectorLaag.noSqlFsSourceFold.headOption(laag).map(source => {
-    const veldinfos = ke.ToegevoegdeVectorLaag.veldInfosLens.get(laag);
-    return {
-      titel: laag.titel,
-      veldinfos,
-      totaal: laag.filterinstellingen.totaal,
-      featureCount: FeatureCount.pending,
-      headers: ColumnHeaders(
-        veldinfos.map(vi => ({
-          key: vi.naam,
-          label: option.fromNullable(vi.label).getOrElse(vi.naam),
-          aantalFeatures: 123
-        }))
-      ),
-      source,
-      page: option.none,
-      nextPageUpdate: 0,
-      updatePending: true
-    };
-  });
-
 const ColumnHeaders: Function1<ColumnHeader[], ColumnHeaders> = headers => ({
   headers,
   columnWidths: headers.map(_ => "minmax(150px, 1fr)").join(" ")
@@ -177,7 +160,7 @@ export namespace FeatureCount {
 }
 
 export namespace TableHeader {
-  export const toHeader: Function1<NoSqlFsLaagAndData, TableHeader> = laag => ({
+  export const toHeader: Function1<LaagModel, TableHeader> = laag => ({
     titel: laag.titel,
     count: laag.featureCount.kind === "FeatureCountPending" ? undefined : laag.featureCount.count
   });
@@ -188,13 +171,49 @@ export namespace TableHeader {
   });
 }
 
-export namespace TableModel {
-  export const empty: Lazy<TableModel> = () => ({
-    laagData: []
-  });
+export namespace LaagModel {
+  export const titelLens: Lens<LaagModel, string> = Lens.fromProp<LaagModel>()("titel");
+  export const pageOptional: Optional<LaagModel, Page> = Optional.fromOptionProp<LaagModel>()("page");
+  export const headersLens: Lens<LaagModel, ColumnHeaders> = Lens.fromProp<LaagModel, "headers">("headers");
+  export const pageLens: Lens<LaagModel, Option<Page>> = Lens.fromProp<LaagModel>()("page");
+  export const nextPageUpdateLens: Lens<LaagModel, number> = Lens.fromProp<LaagModel>()("nextPageUpdate");
+  export const updatePendingLens: Lens<LaagModel, boolean> = Lens.fromProp<LaagModel>()("updatePending");
+  export const aantalFeaturesLens: Lens<LaagModel, FeatureCount> = Lens.fromProp<LaagModel>()("featureCount");
+  export const viewinstellingLens: Lens<LaagModel, Viewinstellingen> = Lens.fromProp<LaagModel>()("viewinstellingen");
+  export const zoomLens: Lens<LaagModel, number> = Lens.fromPath<LaagModel>()(["viewinstellingen", "zoom"]);
+  export const extentLens: Lens<LaagModel, ol.Extent> = Lens.fromPath<LaagModel>()(["viewinstellingen", "extent"]);
 
-  export const create: Function1<ke.ToegevoegdeVectorLaag[], TableModel> = lagen => ({
-    laagData: array.catOptions(lagen.map(NoSqlFsLaagAndData))
+  export const create: PartialFunction2<ke.ToegevoegdeVectorLaag, Viewinstellingen, LaagModel> = (laag, viewinstellingen) =>
+    ke.ToegevoegdeVectorLaag.noSqlFsSourceFold.headOption(laag).map(source => {
+      const veldinfos = ke.ToegevoegdeVectorLaag.veldInfosLens.get(laag);
+      return {
+        titel: laag.titel,
+        veldinfos,
+        totaal: laag.filterinstellingen.totaal,
+        featureCount: FeatureCount.pending,
+        headers: ColumnHeaders(
+          veldinfos.map(vi => ({
+            key: vi.naam,
+            label: option.fromNullable(vi.label).getOrElse(vi.naam),
+            aantalFeatures: 123
+          }))
+        ),
+        source,
+        page: option.none,
+        nextPageUpdate: 0,
+        updatePending: true,
+        viewinstellingen
+      };
+    });
+
+  export const isExpectedPage: Function1<number, Prism<LaagModel, LaagModel>> = sequenceNumber =>
+    Prism.fromPredicate(laag => laag.nextPageUpdate === sequenceNumber);
+}
+
+export namespace TableModel {
+  export const empty: Function1<Viewinstellingen, TableModel> = viewinstellingen => ({
+    laagData: [],
+    viewinstellingen
   });
 
   export const Update: Function2<SyncUpdate, AsyncUpdate, Update> = (syncUpdate, asyncUpdate) => ({
@@ -204,31 +223,24 @@ export namespace TableModel {
 
   export const syncUpdateOnly: Function1<SyncUpdate, Update> = flip(curry(Update))(constant(rx.EMPTY));
 
-  const laagDataLens: Lens<TableModel, NoSqlFsLaagAndData[]> = Lens.fromProp<TableModel, "laagData">("laagData");
+  const laagDataLens: Lens<TableModel, LaagModel[]> = Lens.fromProp<TableModel>()("laagData");
+  const viewinstellingLens: Lens<TableModel, Viewinstellingen> = Lens.fromProp<TableModel>()("viewinstellingen");
 
-  const pageOptional: Optional<NoSqlFsLaagAndData, Page> = Optional.fromOptionProp<NoSqlFsLaagAndData>()("page");
-  const headersLens: Lens<NoSqlFsLaagAndData, ColumnHeaders> = Lens.fromProp<NoSqlFsLaagAndData, "headers">("headers");
-  const pageLens: Lens<NoSqlFsLaagAndData, Option<Page>> = Lens.fromProp<NoSqlFsLaagAndData>()("page");
-  const nextPageUpdateLens: Lens<NoSqlFsLaagAndData, number> = Lens.fromProp<NoSqlFsLaagAndData>()("nextPageUpdate");
-  const updatePendingLens: Lens<NoSqlFsLaagAndData, boolean> = Lens.fromProp<NoSqlFsLaagAndData>()("updatePending");
-  const aantalFeaturesLens: Lens<NoSqlFsLaagAndData, FeatureCount> = Lens.fromProp<NoSqlFsLaagAndData>()("featureCount");
-
-  const isFeatureCountPending: Predicate<NoSqlFsLaagAndData> = pipe(
-    aantalFeaturesLens.get,
+  const isFeatureCountPending: Predicate<LaagModel> = pipe(
+    LaagModel.aantalFeaturesLens.get,
     FeatureCount.isPending
   );
 
-  const isExpectedPage: Function1<number, Prism<NoSqlFsLaagAndData, NoSqlFsLaagAndData>> = sequenceNumber =>
-    Prism.fromPredicate(laag => laag.nextPageUpdate === sequenceNumber);
-
-  const laagForTitelTraversal: Function1<string, Traversal<TableModel, NoSqlFsLaagAndData>> = titel => {
+  const laagForTitelTraversal: Function1<string, Traversal<TableModel, LaagModel>> = titel => {
     return laagDataLens.composeTraversal(selectiveArrayTraversal(tl => tl.titel === titel));
   };
 
-  export const laagForTitelOnLaagData: Curried2<string, NoSqlFsLaagAndData[], Option<NoSqlFsLaagAndData>> = titel => laagData =>
+  const allLagenTraversal: Traversal<TableModel, LaagModel> = laagDataLens.composeTraversal(fromTraversable(array.array)<LaagModel>());
+
+  export const laagForTitelOnLaagData: Curried2<string, LaagModel[], Option<LaagModel>> = titel => laagData =>
     array.findFirst(laagData, laag => laag.titel === titel);
 
-  export const laagForTitel: Curried2<string, TableModel, Option<NoSqlFsLaagAndData>> = titel => model => {
+  export const laagForTitel: Curried2<string, TableModel, Option<LaagModel>> = titel => model => {
     // asFold geeft een bug: Zie https://github.com/gcanti/monocle-ts/issues/96
     // return laagForTitelTraversal(titel).asFold().headOption;
     return laagForTitelOnLaagData(titel)(model.laagData);
@@ -238,33 +250,37 @@ export namespace TableModel {
     // return laagForTitelTraversal(titel)
     //   .composeLens(headersLens)
     //   .asFold().headOption;
-    return model => array.findFirst(laagDataLens.get(model), laag => laag.titel === titel).map(headersLens.get);
+    return model => array.findFirst(laagDataLens.get(model), laag => laag.titel === titel).map(LaagModel.headersLens.get);
   };
 
   const currentPageForTitelTraversal: Function1<string, Traversal<TableModel, Page>> = titel =>
-    laagForTitelTraversal(titel).composeOptional(pageOptional);
+    laagForTitelTraversal(titel).composeOptional(LaagModel.pageOptional);
 
   export const currentPageForTitel: Curried2<string, TableModel, Option<Page>> = titel => {
     // return currentPageForTitelTraversal(titel).asFold().headOption;
-    return model => laagForTitel(titel)(model).chain(pageLens.get);
+    return model => laagForTitel(titel)(model).chain(LaagModel.pageLens.get);
   };
 
   // Uiteraard moet er ook nog gesorteerd en tot de extent beperkt worden.
-  const noSqlFsPage: Function2<NoSqlFsLaagAndData, number, Page> = (laag, pageNumber) => {
+  const noSqlFsPage: Function2<LaagModel, number, Page> = (laag, pageNumber) => {
     console.log("****Fetching ", pageNumber, " for ", laag.titel);
-    return Page(array.take(PageSize, laag.source.getFeatures().map(featureToRow(laag.veldinfos))), pageNumber);
+    return Page(
+      array.take(PageSize, laag.source.getFeaturesInExtent(laag.viewinstellingen.extent).map(featureToRow(laag.veldinfos))),
+      pageNumber
+    );
   };
 
-  const noSqlFsCount: Function1<NoSqlFsLaagAndData, FeatureCount> = laag => FeatureCount.createFetched(laag.source.getFeatures().length);
+  const noSqlFsCount: Function1<LaagModel, FeatureCount> = laag =>
+    FeatureCount.createFetched(laag.source.getFeaturesInExtent(laag.viewinstellingen.extent).length);
 
   // Zet de binnenkomende pagina indien diens sequenceNumber dat is dat we verwachten
-  const pageUpdate: Function3<Page, string, number, SyncUpdate> = (page, laagTitel, sequenceNumber) =>
-    laagForTitelTraversal(laagTitel)
-      .composePrism(isExpectedPage(sequenceNumber))
-      .modify(applySequential([pageLens.set(option.some(page)), updatePendingLens.set(false)]));
+  const pageUpdate: Function2<LaagModel, Page, SyncUpdate> = (laag, page) =>
+    laagForTitelTraversal(laag.titel)
+      .composePrism(LaagModel.isExpectedPage(laag.nextPageUpdate))
+      .modify(applySequential([LaagModel.pageLens.set(option.some(page)), LaagModel.updatePendingLens.set(false)]));
 
-  const featureCountUpdate: Function2<NoSqlFsLaagAndData, FeatureCount, SyncUpdate> = (laag, count) =>
-    laagForTitelTraversal(laag.titel).modify(aantalFeaturesLens.set(count));
+  const featureCountUpdate: Function2<LaagModel, FeatureCount, SyncUpdate> = (laag, count) =>
+    laagForTitelTraversal(laag.titel).modify(LaagModel.aantalFeaturesLens.set(count));
 
   const fetchTableTotals: AsyncUpdate = model =>
     rx.timer(2000).pipe(
@@ -274,14 +290,15 @@ export namespace TableModel {
 
   // We willen hier niet de state voor alle lagen opnieuw initialiseren. We moeten enkel de nieuwe lagen toevoegen en de
   // oude verwijderen.
-  export const pasLagenAan: Function1<ke.ToegevoegdeVectorLaag[], Update> = lagen => {
+  export const updateLagen: Function1<ke.ToegevoegdeVectorLaag[], Update> = lagen => {
     return Update(
-      laagDataLens.modify(laagData =>
-        array.catOptions(
-          // Deze constructie met eerst iteren over lagen is gekozen om de volgorde zoals in de lagenkiezer te behouden
-          lagen.map(laag => laagForTitelOnLaagData(laag.titel)(laagData).orElse(() => NoSqlFsLaagAndData(laag)))
-        )
-      ),
+      model =>
+        laagDataLens.modify(laagData =>
+          array.catOptions(
+            // Deze constructie met eerst iteren over lagen is gekozen om de volgorde zoals in de lagenkiezer te behouden
+            lagen.map(laag => laagForTitelOnLaagData(laag.titel)(laagData).orElse(() => LaagModel.create(laag, model.viewinstellingen)))
+          )
+        )(model),
       model =>
         rx.merge(
           // De eerste page ophalen van alle nieuwe lagen ophalen
@@ -291,7 +308,7 @@ export namespace TableModel {
               rx.from(
                 model.laagData
                   .filter(laag => laag.updatePending) // risico om zelfde data 2x op te vragen indien vorige toevoeging nog niet verwerkt
-                  .map(laag => pageUpdate(noSqlFsPage(laag, 0), laag.titel, laag.nextPageUpdate))
+                  .map(laag => pageUpdate(laag, noSqlFsPage(laag, 0)))
               )
             )
           ),
@@ -299,6 +316,19 @@ export namespace TableModel {
         )
     );
   };
+
+  export const updateZoomAndExtent: Function1<Viewinstellingen, Update> = vi =>
+    Update(
+      applySequential([
+        viewinstellingLens.set(vi), //
+        allLagenTraversal.composeLens(LaagModel.viewinstellingLens).set(vi)
+      ]),
+      model =>
+        rx.merge(
+          rx.from(model.laagData.map(laag => pageUpdate(laag, noSqlFsPage(laag, laag.page.fold(0, page => page.pageNumber))))),
+          rx.from(model.laagData.map(laag => featureCountUpdate(laag, noSqlFsCount(laag))))
+        )
+    );
 }
 
 const Field: Function1<Option<ValueType>, Field> = maybeValue => ({ maybeValue });

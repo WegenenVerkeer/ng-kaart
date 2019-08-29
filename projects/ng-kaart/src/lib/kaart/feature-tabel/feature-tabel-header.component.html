@@ -1,0 +1,5 @@
+<div class="feature-table-header-content" *ngIf="(header$ | async) as header">
+  <div class="title">{{ header.titel }}</div>
+  <div class="count" *ngIf="header.count >= 0">{{ header.count }}</div>
+  <div class="noCount" *ngIf="!(header.count >= 0)">...</div>
+</div>

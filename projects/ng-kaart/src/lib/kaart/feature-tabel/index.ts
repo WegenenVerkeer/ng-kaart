@@ -4,9 +4,10 @@ import { MatButtonModule, MatIconModule, MatInputModule, MatTooltipModule } from
 import { MatTabsModule } from "@angular/material/tabs";
 
 import { FeatureTabelDataComponent } from "./feature-tabel-data.component";
+import { FeatureTabelHeaderComponent } from "./feature-tabel-header.component";
 import { FeatureTabelOverzichtComponent } from "./feature-tabel-overzicht.component";
 
-const components: any[] = [FeatureTabelOverzichtComponent, FeatureTabelDataComponent];
+const components: any[] = [FeatureTabelOverzichtComponent, FeatureTabelDataComponent, FeatureTabelHeaderComponent];
 
 @NgModule({
   imports: [CommonModule, MatIconModule, MatInputModule, MatButtonModule, MatTabsModule, MatTooltipModule],
