@@ -1,23 +1,11 @@
 import { AfterViewInit, Component, NgZone, OnInit, QueryList, ViewChildren } from "@angular/core";
 import { MatButton } from "@angular/material";
-import { Function4, Function6, Function7 } from "fp-ts/lib/function";
+import { Function1 } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { AbsoluteOrientationSensor } from "motion-sensors-polyfill";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import {
-  distinctUntilChanged,
-  filter,
-  map,
-  mapTo,
-  pairwise,
-  scan,
-  shareReplay,
-  startWith,
-  tap,
-  throttle,
-  throttleTime
-} from "rxjs/operators";
+import { distinctUntilChanged, filter, map, mapTo, pairwise, scan, shareReplay, startWith, throttle, throttleTime } from "rxjs/operators";
 
 import { Transparantie } from "../../transparantieeditor/transparantie";
 import { catOptions } from "../../util/operators";
@@ -41,6 +29,18 @@ export type Event = "ActiveerEvent" | "DeactiveerEvent" | "PanEvent" | "ZoomEven
 
 export type EventMap = { [event in Event]: State };
 export type StateMachine = { [state in State]: EventMap };
+
+interface TrackingInfo {
+  feature: Option<ol.Feature>;
+  zoom: number;
+  accuracy: number;
+  doelzoom: number;
+  currentRotation: number;
+  rotatie: number;
+  coordinate: ol.Coordinate;
+  state: State;
+  stateVeranderd: boolean;
+}
 
 export const NoOpStateMachine: StateMachine = {
   NoTracking: {
@@ -85,19 +85,13 @@ export const NoOpStateMachine: StateMachine = {
   }
 };
 
-const pasLocatieFeatureAan: Function7<ol.Feature, ol.Coordinate, number, number, number, number, boolean, ol.Feature> = (
-  feature,
-  coordinate,
-  zoom,
-  accuracy,
-  currentRotation,
-  rotatie,
-  moetKijkrichtingTonen
-) => {
-  feature.setGeometry(new ol.geom.Point(coordinate));
-  zetStijl(feature, zoom, accuracy, currentRotation, rotatie, moetKijkrichtingTonen);
-  feature.changed(); // force redraw meteen
-  return feature;
+const pasLocatieFeatureAan: Function1<TrackingInfo, Option<ol.Feature>> = info => {
+  return info.feature.map(feature => {
+    feature.setGeometry(new ol.geom.Point(info.coordinate));
+    zetStijl(info);
+    feature.changed(); // force redraw meteen
+    return feature;
+  });
 };
 
 const moetCentreren = (state: State) => state === "TrackingCenter" || state === "TrackingAutoRotate";
@@ -108,23 +102,11 @@ const moetRoteren = (state: State) => state === "TrackingAutoRotate";
 
 const moetKijkrichtingTonen = (state: State) => state === "Tracking" || state === "TrackingCenter" || state === "TrackingAutoRotate";
 
-const zetStijl: Function6<ol.Feature, number, number, number, number, boolean, void> = (
-  feature,
-  zoom,
-  accuracy,
-  currentRotation,
-  rotatie,
-  moetKijkrichtingTonen
-) => feature.setStyle(locatieStijlFunctie(accuracy, currentRotation, rotatie, moetKijkrichtingTonen));
+const zetStijl: Function1<TrackingInfo, void> = info => info.feature.map(feature => feature.setStyle(locatieStijlFunctie(info)));
 
-const locatieStijlFunctie: Function4<number, number, number, boolean, ol.FeatureStyleFunction> = (
-  accuracy,
-  currentRotation,
-  rotatie,
-  moetKijkrichtingTonen
-) => {
+const locatieStijlFunctie: Function1<TrackingInfo, ol.FeatureStyleFunction> = info => {
   return resolution => {
-    const accuracyInPixels = Math.min(accuracy, 500) / resolution; // max 500m cirkel, soms accuracy 86000 in chrome bvb...
+    const accuracyInPixels = Math.min(info.accuracy, 500) / resolution; // max 500m cirkel, soms accuracy 86000 in chrome bvb...
     const radius = Math.max(accuracyInPixels, 12); // nauwkeurigheid cirkel toch nog tonen zelfs indien ver uitgezoomd
 
     const binnencirkel = new ol.style.Style({
@@ -155,7 +137,7 @@ const locatieStijlFunctie: Function4<number, number, number, boolean, ol.Feature
       })
     });
 
-    if (moetKijkrichtingTonen) {
+    if (moetKijkrichtingTonen(info.state)) {
       const radius2 = Math.min(radius, 50);
 
       const canvas = document.createElement("canvas");
@@ -196,7 +178,7 @@ const locatieStijlFunctie: Function4<number, number, number, boolean, ol.Feature
           image: new ol.style.Icon({
             img: canvas,
             imgSize: [canvas.width, canvas.height],
-            rotation: currentRotation - (rotatie + Math.PI / 4)
+            rotation: info.currentRotation - (info.rotatie + Math.PI / 4)
           })
         });
         return [binnencirkel, buitencirkel, buitenArc];
@@ -347,18 +329,22 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
             return this.isTrackingActief(state);
           }),
           map(([zoom, doel, currentRotation, rotatie, locatie, [prevState, state]]) => {
+            const longLat: ol.Coordinate = [locatie.coords.longitude, locatie.coords.latitude];
+            const coordinate = ol.proj.fromLonLat(longLat, "EPSG:31370");
             return {
+              feature: none,
               zoom: zoom,
+              accuracy: locatie.coords.accuracy,
               doelzoom: doel,
               currentRotation: currentRotation,
               rotatie: rotatie,
-              position: locatie,
+              coordinate: coordinate,
               state: state,
               stateVeranderd: prevState !== state
             };
           })
         )
-    ).subscribe(r => this.zetMijnPositie(r.position, r.zoom, r.doelzoom, r.currentRotation, r.rotatie, r.state, r.stateVeranderd));
+    ).subscribe(r => this.zetMijnPositie(r));
 
     // pas rotatie aan
     this.bindToLifeCycle(
@@ -413,15 +399,9 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     this.eventsSubj.next("ClickEvent");
   }
 
-  private maakNieuwFeature(
-    coordinate: ol.Coordinate,
-    accuracy: number,
-    currentRotation: number,
-    rotatie: number,
-    moetKijkrichtingTonen: boolean
-  ): Option<ol.Feature> {
-    const feature = new ol.Feature(new ol.geom.Point(coordinate));
-    feature.setStyle(locatieStijlFunctie(accuracy, currentRotation, rotatie, moetKijkrichtingTonen));
+  private maakNieuwFeature(info: TrackingInfo): Option<ol.Feature> {
+    const feature = new ol.Feature(new ol.geom.Point(info.coordinate));
+    feature.setStyle(locatieStijlFunctie({ feature: some(feature), ...info }));
     this.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, [feature], kaartLogOnlyWrapper));
     return some(feature);
   }
@@ -504,38 +484,25 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     });
   }
 
-  private zetMijnPositie(
-    position: Position,
-    zoom: number,
-    doelzoom: number,
-    currentRotation: number,
-    rotatie: number,
-    state: State,
-    stateVeranderd: boolean
-  ) {
-    const longLat: ol.Coordinate = [position.coords.longitude, position.coords.latitude];
-    const coordinate = ol.proj.fromLonLat(longLat, "EPSG:31370");
-
-    if (moetLocatieTonen(state)) {
+  private zetMijnPositie(info: TrackingInfo) {
+    if (moetLocatieTonen(info.state)) {
       this.mijnLocatie = this.mijnLocatie
-        .map(feature =>
-          pasLocatieFeatureAan(feature, coordinate, zoom, position.coords.accuracy, currentRotation, rotatie, moetKijkrichtingTonen(state))
-        )
+        .chain(feature => pasLocatieFeatureAan({ feature: some(feature), ...info }))
         .orElse(() => {
-          return this.maakNieuwFeature(coordinate, position.coords.accuracy, currentRotation, rotatie, moetKijkrichtingTonen(state));
+          return this.maakNieuwFeature(info);
         })
         .map(feature => {
-          if (stateVeranderd && zoom < doelzoom && moetCentreren(state)) {
+          if (info.stateVeranderd && info.zoom < info.doelzoom && moetCentreren(info.state)) {
             // We zitten nu op een te laag zoomniveau, dus gaan we eerst inzoomen,
             // maar we doen dit alleen wanneer we van een state veranderd zijn.
             this.zoomIsGevraagd = true;
-            this.dispatch(prt.VeranderZoomCmd(doelzoom, kaartLogOnlyWrapper));
+            this.dispatch(prt.VeranderZoomCmd(info.doelzoom, kaartLogOnlyWrapper));
           }
           return feature;
         });
     }
 
-    this.centreerIndienNodig(state);
+    this.centreerIndienNodig(info.state);
   }
 
   private centreerIndienNodig(state: State) {
