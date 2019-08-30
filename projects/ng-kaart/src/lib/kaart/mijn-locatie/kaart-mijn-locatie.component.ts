@@ -1,6 +1,6 @@
 import { AfterViewInit, Component, NgZone, OnInit, QueryList, ViewChildren } from "@angular/core";
 import { MatButton } from "@angular/material";
-import { Function1 } from "fp-ts/lib/function";
+import { Function1, Predicate } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { AbsoluteOrientationSensor } from "motion-sensors-polyfill";
 import * as ol from "openlayers";
@@ -31,15 +31,15 @@ export type EventMap = { [event in Event]: State };
 export type StateMachine = { [state in State]: EventMap };
 
 interface TrackingInfo {
-  feature: Option<ol.Feature>;
-  zoom: number;
-  accuracy: number;
-  doelzoom: number;
-  currentRotation: number;
-  rotatie: number;
-  coordinate: ol.Coordinate;
-  state: State;
-  stateVeranderd: boolean;
+  readonly feature: Option<ol.Feature>;
+  readonly zoom: number;
+  readonly accuracy: number;
+  readonly doelzoom: number;
+  readonly currentRotation: number;
+  readonly rotatie: number;
+  readonly coordinate: ol.Coordinate;
+  readonly state: State;
+  readonly stateVeranderd: boolean;
 }
 
 export const NoOpStateMachine: StateMachine = {
@@ -94,22 +94,24 @@ const pasLocatieFeatureAan: Function1<TrackingInfo, Option<ol.Feature>> = info =
   });
 };
 
-const moetCentreren = (state: State) => state === "TrackingCenter" || state === "TrackingAutoRotate";
+const moetCentreren: Predicate<State> = state => state === "TrackingCenter" || state === "TrackingAutoRotate";
 
-const moetLocatieTonen = (state: State) => state === "Tracking" || state === "TrackingCenter" || state === "TrackingAutoRotate";
+const moetLocatieTonen: Predicate<State> = state => state === "Tracking" || state === "TrackingCenter" || state === "TrackingAutoRotate";
 
-const moetRoteren = (state: State) => state === "TrackingAutoRotate";
+const moetRoteren: Predicate<State> = state => state === "TrackingAutoRotate";
 
-const moetKijkrichtingTonen = (state: State) => state === "Tracking" || state === "TrackingCenter" || state === "TrackingAutoRotate";
+const moetKijkrichtingTonen: Predicate<State> = state =>
+  state === "Tracking" || state === "TrackingCenter" || state === "TrackingAutoRotate";
 
 const zetStijl: Function1<TrackingInfo, void> = info => info.feature.map(feature => feature.setStyle(locatieStijlFunctie(info)));
 
 const locatieStijlFunctie: Function1<TrackingInfo, ol.FeatureStyleFunction> = info => {
-  return resolution => {
-    const accuracyInPixels = Math.min(info.accuracy, 500) / resolution; // max 500m cirkel, soms accuracy 86000 in chrome bvb...
-    const radius = Math.max(accuracyInPixels, 12); // nauwkeurigheid cirkel toch nog tonen zelfs indien ver uitgezoomd
+  const fillColor = "rgba(65, 105, 225, 0.15)";
+  const strokeColor = "rgba(65, 105, 225, 0.5)";
+  const fillColorDark = "rgba(65, 105, 225, 0.25)";
 
-    const binnencirkel = new ol.style.Style({
+  function binnencirkelStyle(): ol.style.Style {
+    return new ol.style.Style({
       zIndex: 2,
       image: new ol.style.Circle({
         fill: new ol.style.Fill({
@@ -122,12 +124,10 @@ const locatieStijlFunctie: Function1<TrackingInfo, ol.FeatureStyleFunction> = in
         radius: 6
       })
     });
+  }
 
-    const fillColor = "rgba(65, 105, 225, 0.15)";
-    const strokeColor = "rgba(65, 105, 225, 0.5)";
-    const fillColorDark = "rgba(65, 105, 225, 0.25)";
-
-    const buitencirkel = new ol.style.Style({
+  function buitencirkelStyle(radius: number): ol.style.Style {
+    return new ol.style.Style({
       zIndex: 1,
       image: new ol.style.Circle({
         fill: new ol.style.Fill({
@@ -136,7 +136,9 @@ const locatieStijlFunctie: Function1<TrackingInfo, ol.FeatureStyleFunction> = in
         radius: radius
       })
     });
+  }
 
+  function kijkrichtingStyle(info: TrackingInfo, radius: number): Option<ol.style.Style> {
     if (moetKijkrichtingTonen(info.state)) {
       const radius2 = Math.min(radius, 50);
 
@@ -181,11 +183,21 @@ const locatieStijlFunctie: Function1<TrackingInfo, ol.FeatureStyleFunction> = in
             rotation: info.currentRotation - (info.rotatie + Math.PI / 4)
           })
         });
-        return [binnencirkel, buitencirkel, buitenArc];
+        return some(buitenArc);
       }
     }
+    return none;
+  }
 
-    return [binnencirkel, buitencirkel];
+  return resolution => {
+    const accuracyInPixels = Math.min(info.accuracy, 500) / resolution; // max 500m cirkel, soms accuracy 86000 in chrome bvb...
+    const radius = Math.max(accuracyInPixels, 12); // nauwkeurigheid cirkel toch nog tonen zelfs indien ver uitgezoomd
+
+    const binnencirkel: ol.style.Style = binnencirkelStyle();
+    const buitencirkel: ol.style.Style = buitencirkelStyle(radius);
+    const kijkrichting: Option<ol.style.Style> = kijkrichtingStyle(info, radius);
+
+    return kijkrichting.map(arc => [binnencirkel, buitencirkel, arc]).getOrElse([binnencirkel, buitencirkel]);
   };
 };
 
@@ -333,13 +345,13 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
             const coordinate = ol.proj.fromLonLat(longLat, "EPSG:31370");
             return {
               feature: none,
-              zoom: zoom,
+              zoom,
               accuracy: locatie.coords.accuracy,
               doelzoom: doel,
-              currentRotation: currentRotation,
-              rotatie: rotatie,
-              coordinate: coordinate,
-              state: state,
+              currentRotation,
+              rotatie,
+              coordinate,
+              state,
               stateVeranderd: prevState !== state
             };
           })
