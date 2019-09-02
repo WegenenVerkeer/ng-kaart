@@ -309,6 +309,8 @@ export namespace ToegevoegdeVectorLaag {
 export namespace VeldInfo {
   export const setoidVeldOpNaam: Setoid<VeldInfo> = setoid.contramap(vi => vi.naam, setoidString);
   export const ordVeldOpBasisVeld: Ord<VeldInfo> = ord.contramap(vi => vi.isBasisVeld, ord.ordBoolean);
+  export const veldnaamLens: Lens<VeldInfo, string> = Lens.fromProp<VeldInfo>()("naam");
+  export const veldlabelLens: Lens<VeldInfo, string | undefined> = Lens.fromProp<VeldInfo>()("label");
 
   export const veldInfoOpNaam: Function2<string, Map<string, VeldInfo>, Option<VeldInfo>> = (naam, veldinfos) =>
     maps.findFirst(veldinfos, vi => vi.naam === naam);

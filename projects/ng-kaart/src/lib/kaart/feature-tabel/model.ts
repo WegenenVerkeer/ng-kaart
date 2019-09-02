@@ -1,4 +1,4 @@
-import { array, option, record, setoid, strmap } from "fp-ts";
+import { array, option, record, setoid, strmap, traversable } from "fp-ts";
 import {
   constant,
   curried,
@@ -6,6 +6,7 @@ import {
   curry,
   Endomorphism,
   flip,
+  flow,
   Function1,
   Function2,
   Function3,
@@ -15,12 +16,14 @@ import {
   Predicate
 } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
+import { some } from "fp-ts/lib/Record";
 import { Setoid, setoidNumber, setoidString } from "fp-ts/lib/Setoid";
 import { DateTime } from "luxon";
 import { Fold, fromTraversable, Getter, Lens, Optional, Prism, Traversal } from "monocle-ts";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { delay, map, switchMap, take } from "rxjs/operators";
+import { isNumber } from "util";
 
 import { FilterTotaal } from "../../filter";
 import { NosqlFsSource } from "../../source";
@@ -72,6 +75,7 @@ export interface LaagModel {
 
   readonly headers: ColumnHeaders;
   readonly selectedVeldnamen: string[]; // enkel een subset van de velden is zichtbaar
+  readonly rowTransformer: Endomorphism<Row>; // bewerkt de ruwe rij (bijv. locatieveld toevoegen)
 
   readonly source: NosqlFsSource;
   readonly page: Option<Page>; // We houden maar 1 pagina van data tegelijkertijd in het geheugen. (later meer)
@@ -87,7 +91,6 @@ export interface LaagModel {
   // readonly viewAsFilter: boolean;
 }
 
-// headers.map(_ => "minmax(150px, 1fr)").join(" ")
 export interface ColumnHeaders {
   readonly headers: ColumnHeader[];
   readonly columnWidths: string; // we willen dit niet in de template opbouwen
@@ -136,20 +139,18 @@ const Page: Function2<Row[], number, Page> = (rows, pageNumber) => ({
 });
 
 namespace ColumnHeaders {
-  const create: Function1<ColumnHeader[], ColumnHeaders> = headers => ({
+  export const create: Function1<ColumnHeader[], ColumnHeaders> = headers => ({
     headers,
     columnWidths: headers.map(_ => "minmax(150px, 1fr)").join(" ")
   });
+}
 
-  export const createFromSelectedVeldInfos: Function2<ke.VeldInfo[], string[], ColumnHeaders> = (veldinfos, veldnamen) =>
-    create(
-      veldinfos
-        .filter(vi => veldnamen.includes(vi.naam))
-        .map(vi => ({
-          key: vi.naam,
-          label: option.fromNullable(vi.label).getOrElse(vi.naam)
-        }))
-    );
+namespace Row {
+  export const addField: Function2<string, Field, Endomorphism<Row>> = (label, field) => row => {
+    const newRow = { ...row };
+    newRow[label] = field;
+    return newRow;
+  };
 }
 
 export namespace FeatureCount {
@@ -195,22 +196,74 @@ export namespace LaagModel {
   export const zoomLens: Lens<LaagModel, number> = Lens.fromPath<LaagModel>()(["viewinstellingen", "zoom"]);
   export const extentLens: Lens<LaagModel, ol.Extent> = Lens.fromPath<LaagModel>()(["viewinstellingen", "extent"]);
 
+  const locationTransformer: Function1<ke.VeldInfo[], [Endomorphism<ColumnHeader[]>, Endomorphism<Row>]> = veldinfos => {
+    // We moeten op label werken, want de gegevens zitten op verschillende plaatsen bij verschillende lagen
+    const veldlabels = veldinfos.map(ke.VeldInfo.veldlabelLens.get);
+    const wegLabel = "Ident8";
+    const maybeWegKey = array.findFirst(veldinfos, vi => vi.label === wegLabel).map(ke.VeldInfo.veldnaamLens.get);
+    return maybeWegKey.fold([identity, identity] as [Endomorphism<ColumnHeader[]>, Endomorphism<Row>], wegKey => {
+      const afstandLabels = ["Van refpunt", "Van afst", "Tot refpunt", "Tot afst"];
+      const allLabelsPresent = afstandLabels.filter(label => veldlabels.includes(label)).length === afstandLabels.length; // alles of niks!
+      const locationLabels = allLabelsPresent ? afstandLabels : [];
+
+      const locationKeys = array.array.filterMap(locationLabels, label =>
+        array.findFirst(veldinfos, vi => vi.label === label).map(ke.VeldInfo.veldnaamLens.get)
+      );
+
+      const allLocationLabels = array.cons(wegLabel, locationLabels);
+      const headersTrf: Endomorphism<ColumnHeader[]> = headers =>
+        array.cons({ key: "syntheticLocation", label: "Locatie" }, headers).filter(header => !allLocationLabels.includes(header.label));
+
+      const distance: Function2<number, number, string> = (ref, offset) => (offset >= 0 ? `${ref} +${offset}` : `${ref} ${offset}`);
+
+      const rowTrf: Endomorphism<Row> = row => {
+        const maybeWegValue = row[wegKey];
+        const maybeDistances: Option<number[]> = traversable
+          .sequence(option.option, array.array)(locationKeys.map(key => row[key].maybeValue.filter(isNumber)))
+          .filter(ns => ns.length === afstandLabels.length);
+        const locatieField: Field = {
+          maybeValue: maybeWegValue.maybeValue
+            .map(wegValue =>
+              maybeDistances.fold(
+                `${wegValue}`,
+                distances => `${wegValue} van ${distance(distances[0], distances[1])} tot ${distance(distances[2], distances[3])}`
+              )
+            )
+            .orElse(() => option.some("Geen weglocatie"))
+        };
+        return Row.addField("syntheticLocation", locatieField)(row);
+      };
+      return [headersTrf, rowTrf] as [Endomorphism<ColumnHeader[]>, Endomorphism<Row>];
+    });
+  };
+
   export const create: PartialFunction2<ke.ToegevoegdeVectorLaag, Viewinstellingen, LaagModel> = (laag, viewinstellingen) =>
     ke.ToegevoegdeVectorLaag.noSqlFsSourceFold.headOption(laag).map(source => {
+      // We mogen niet zomaar alle velden gebruiken. Om te beginnen enkel de bassisvelden en de locatievelden moeten
+      // afzonderlijk behandeld worden.
       const veldinfos = ke.ToegevoegdeVectorLaag.veldInfosLens.get(laag);
-      const selectedVeldnamen = veldinfos.filter(vi => vi.isBasisVeld).map(vi => vi.naam);
+      const selectedVeldnamen = veldinfos.filter(vi => vi.isBasisVeld).map(ke.VeldInfo.veldnaamLens.get);
+      const baseColumnHeaders: ColumnHeader[] = veldinfos
+        .filter(vi => selectedVeldnamen.includes(vi.naam))
+        .map(vi => ({
+          key: vi.naam,
+          label: option.fromNullable(vi.label).getOrElse(vi.naam)
+        }));
+      const [headersTransformer, rowTransformer] = locationTransformer(veldinfos);
+      const headers = ColumnHeaders.create(headersTransformer(baseColumnHeaders));
       return {
         titel: laag.titel,
         veldinfos,
         totaal: laag.filterinstellingen.totaal,
         featureCount: FeatureCount.pending,
         selectedVeldnamen,
-        headers: ColumnHeaders.createFromSelectedVeldInfos(veldinfos, selectedVeldnamen),
+        headers,
         source,
         page: option.none,
         nextPageUpdate: 0,
         updatePending: true,
-        viewinstellingen
+        viewinstellingen,
+        rowTransformer
       };
     });
 
@@ -273,7 +326,15 @@ export namespace TableModel {
   const noSqlFsPage: Function2<LaagModel, number, Page> = (laag, pageNumber) => {
     console.log("****Fetching ", pageNumber, " for ", laag.titel);
     return Page(
-      array.take(PageSize, laag.source.getFeaturesInExtent(laag.viewinstellingen.extent).map(featureToRow(laag.veldinfos))),
+      array.take(
+        PageSize,
+        laag.source.getFeaturesInExtent(laag.viewinstellingen.extent).map(
+          flow(
+            featureToRow(laag.veldinfos),
+            laag.rowTransformer
+          )
+        )
+      ),
       pageNumber
     );
   };
