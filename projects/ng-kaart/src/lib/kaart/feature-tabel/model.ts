@@ -1,7 +1,6 @@
-import { array, option, record, setoid, strmap, traversable } from "fp-ts";
+import { array, option, setoid, traversable } from "fp-ts";
 import {
   constant,
-  curried,
   Curried2,
   curry,
   Endomorphism,
@@ -11,32 +10,28 @@ import {
   Function2,
   Function3,
   identity,
-  Lazy,
   pipe,
   Predicate
 } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
-import { some } from "fp-ts/lib/Record";
-import { Setoid, setoidNumber, setoidString } from "fp-ts/lib/Setoid";
+import { Setoid, setoidBoolean, setoidNumber, setoidString } from "fp-ts/lib/Setoid";
 import { DateTime } from "luxon";
-import { Fold, fromTraversable, Getter, Lens, Optional, Prism, Traversal } from "monocle-ts";
+import { fromTraversable, Lens, Optional, Prism, Traversal } from "monocle-ts";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { delay, map, switchMap, take } from "rxjs/operators";
+import { switchMap, take } from "rxjs/operators";
 import { isNumber } from "util";
 
-import { FilterTotaal } from "../../filter";
+import { Filter } from "../../filter";
 import { NosqlFsSource } from "../../source";
 import * as arrays from "../../util/arrays";
 import { parseDate, parseDateTime } from "../../util/date-time";
 import { Feature } from "../../util/feature";
-import { applySequential, PartialFunction1, PartialFunction2 } from "../../util/function";
+import { applySequential, PartialFunction2 } from "../../util/function";
 import { selectiveArrayTraversal } from "../../util/lenses";
-import { Pipeable } from "../../util/operators";
 import * as setoids from "../../util/setoid";
 import * as ke from "../kaart-elementen";
 import { Viewinstellingen } from "../kaart-protocol-subscriptions";
-import { ModelChanges } from "../model-changes";
 
 // export const tabulerbareLagen$: Function1<ModelChanges, rx.Observable<ke.ToegevoegdeVectorLaag[]>> = changes =>
 //   changes.lagenOpGroep["Voorgrond.Hoog"].pipe(map(lgn => lgn.filter(ke.isToegevoegdeVectorLaag)));
@@ -70,7 +65,8 @@ export interface TableModel {
 export interface LaagModel {
   readonly titel: string;
   readonly veldinfos: ke.VeldInfo[]; // enkel de VeldInfos die we kunnen weergeven
-  readonly totaal: FilterTotaal;
+  readonly hasFilter: boolean;
+  readonly filterIsActive: boolean;
   readonly featureCount: FeatureCount; // aantal features in de tabel over alle pagina's heen
 
   readonly headers: ColumnHeaders;
@@ -103,6 +99,8 @@ export interface ColumnHeader {
 
 export interface TableHeader {
   readonly titel: string;
+  readonly filterIsActive: boolean;
+  readonly hasFilter: boolean;
   readonly count: number | undefined;
 }
 
@@ -173,13 +171,19 @@ export namespace FeatureCount {
 }
 
 export namespace TableHeader {
+  export const filterIsActiveLens: Lens<TableHeader, boolean> = Lens.fromProp<TableHeader>()("filterIsActive");
+
   export const toHeader: Function1<LaagModel, TableHeader> = laag => ({
     titel: laag.titel,
+    filterIsActive: laag.filterIsActive,
+    hasFilter: laag.hasFilter,
     count: laag.featureCount.kind === "FeatureCountPending" ? undefined : laag.featureCount.count
   });
 
   export const setoidTableHeader: Setoid<TableHeader> = setoid.getStructSetoid({
     titel: setoidString,
+    filterIsActive: setoidBoolean,
+    hasFilter: setoidBoolean,
     count: setoidNumber // TODO controleer undefined
   });
 }
@@ -195,6 +199,8 @@ export namespace LaagModel {
   export const viewinstellingLens: Lens<LaagModel, Viewinstellingen> = Lens.fromProp<LaagModel>()("viewinstellingen");
   export const zoomLens: Lens<LaagModel, number> = Lens.fromPath<LaagModel>()(["viewinstellingen", "zoom"]);
   export const extentLens: Lens<LaagModel, ol.Extent> = Lens.fromPath<LaagModel>()(["viewinstellingen", "extent"]);
+  export const hasFilterLens: Lens<LaagModel, boolean> = Lens.fromProp<LaagModel>()("hasFilter");
+  export const filterIsActiveLens: Lens<LaagModel, boolean> = Lens.fromProp<LaagModel>()("filterIsActive");
 
   const locationTransformer: Function1<ke.VeldInfo[], [Endomorphism<ColumnHeader[]>, Endomorphism<Row>]> = veldinfos => {
     // We moeten op label werken, want de gegevens zitten op verschillende plaatsen bij verschillende lagen
@@ -254,6 +260,8 @@ export namespace LaagModel {
       return {
         titel: laag.titel,
         veldinfos,
+        hasFilter: Filter.isDefined(laag.filterinstellingen.spec),
+        filterIsActive: laag.filterinstellingen.actief,
         totaal: laag.filterinstellingen.totaal,
         featureCount: FeatureCount.pending,
         selectedVeldnamen,
@@ -314,9 +322,6 @@ export namespace TableModel {
     return model => array.findFirst(laagDataLens.get(model), laag => laag.titel === titel).map(LaagModel.headersLens.get);
   };
 
-  const currentPageForTitelTraversal: Function1<string, Traversal<TableModel, Page>> = titel =>
-    laagForTitelTraversal(titel).composeOptional(LaagModel.pageOptional);
-
   export const currentPageForTitel: Curried2<string, TableModel, Option<Page>> = titel => {
     // return currentPageForTitelTraversal(titel).asFold().headOption;
     return model => laagForTitel(titel)(model).chain(LaagModel.pageLens.get);
@@ -342,7 +347,7 @@ export namespace TableModel {
   const noSqlFsCount: Function1<LaagModel, FeatureCount> = laag =>
     FeatureCount.createFetched(laag.source.getFeaturesInExtent(laag.viewinstellingen.extent).length);
 
-  // Zet de binnenkomende pagina indien diens sequenceNumber dat is dat we verwachten
+  // Zet de binnenkomende pagina indien diens sequenceNumber hetgene is dat we verwachten
   const pageUpdate: Function2<LaagModel, Page, SyncUpdate> = (laag, page) =>
     laagForTitelTraversal(laag.titel)
       .composePrism(LaagModel.isExpectedPage(laag.nextPageUpdate))
@@ -358,14 +363,22 @@ export namespace TableModel {
     );
 
   // We willen hier niet de state voor alle lagen opnieuw initialiseren. We moeten enkel de nieuwe lagen toevoegen en de
-  // oude verwijderen.
+  // oude verwijderen. Van de bestaande moeten we de state aanpassen indien nodig.
   export const updateLagen: Function1<ke.ToegevoegdeVectorLaag[], Update> = lagen => {
+    const updateFilterInstellingen: Function1<ke.Laagfilterinstellingen, Endomorphism<LaagModel>> = instellingen =>
+      pipe(
+        LaagModel.filterIsActiveLens.set(instellingen.actief),
+        LaagModel.hasFilterLens.set(Filter.isDefined(instellingen.spec))
+      );
     return Update(
       model =>
         laagDataLens.modify(laagData =>
-          array.catOptions(
-            // Deze constructie met eerst iteren over lagen is gekozen om de volgorde zoals in de lagenkiezer te behouden
-            lagen.map(laag => laagForTitelOnLaagData(laag.titel)(laagData).orElse(() => LaagModel.create(laag, model.viewinstellingen)))
+          array.array.filterMap(
+            lagen,
+            laag =>
+              laagForTitelOnLaagData(laag.titel)(laagData) // kennen we die laag al?
+                .map(updateFilterInstellingen(laag.filterinstellingen)) // pas ze dan aan
+                .orElse(() => LaagModel.create(laag, model.viewinstellingen)) // of creeer er een nieuw model voor
           )
         )(model),
       model =>

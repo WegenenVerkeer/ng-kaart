@@ -1,9 +1,11 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone } from "@angular/core";
 import * as rx from "rxjs";
-import { map, share, switchMap } from "rxjs/operators";
+import { distinctUntilChanged, map, mapTo, share, switchMap, tap } from "rxjs/operators";
 
 import { collectOption, subSpy } from "../../util/operators";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { kaartLogOnlyWrapper } from "../kaart-internal-messages";
+import * as cmd from "../kaart-protocol-commands";
 import { KaartComponent } from "../kaart.component";
 
 import { FeatureTabelOverzichtComponent } from "./feature-tabel-overzicht.component";
@@ -42,5 +44,13 @@ export class FeatureTabelHeaderComponent extends KaartChildComponentBase {
         share()
       )
     );
+
+    const toggleActivityCmd$ = this.header$.pipe(
+      switchMap(header =>
+        this.actionFor$("toggleFilterActive").pipe(mapTo(cmd.ActiveerFilter(header.titel, !header.filterIsActive, kaartLogOnlyWrapper)))
+      )
+    );
+
+    this.runInViewReady(toggleActivityCmd$.pipe(tap(cmd => this.dispatch(cmd))));
   }
 }
