@@ -85,11 +85,11 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
                   .pipe(
                     observeOn(rx.asapScheduler), // voer eerst de rest van de ketting uit
                     tap(page => console.log("***page", page)),
-                    takeUntil(rx.timer(6000))
+                    takeUntil(rx.timer(6000)) // TODO moeten we dit houden?
                   )
                   .subscribe({
                     next: page => asyncUpdatesSubj.next(page),
-                    error: err => kaartLogger.error("Probleem bij ophalen van gegevens", err) // Moet ook in UI komen. Evt retry
+                    error: err => kaartLogger.error("Probleem bij async model update", err) // Moet ook in UI komen. Evt retry
                   });
                 return newModel;
               }, TableModel.empty(vi))

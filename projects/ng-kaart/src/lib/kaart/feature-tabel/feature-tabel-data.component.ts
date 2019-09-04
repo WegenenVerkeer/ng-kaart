@@ -1,13 +1,14 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone } from "@angular/core";
 import * as rx from "rxjs";
-import { map, share, switchMap } from "rxjs/operators";
+import { distinctUntilChanged, map, share, switchMap } from "rxjs/operators";
 
 import { collectOption, subSpy } from "../../util/operators";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { KaartComponent } from "../kaart.component";
 
+import { Page, Row } from "./data-provider";
 import { FeatureTabelOverzichtComponent } from "./feature-tabel-overzicht.component";
-import { ColumnHeaders, Row, TableModel } from "./model";
+import { ColumnHeaders, LaagModel, TableModel } from "./model";
 
 @Component({
   selector: "awv-feature-tabel-data",
@@ -41,21 +42,22 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
 
     this.headers$ = subSpy("****headers$")(
       laag$.pipe(
-        map(laag => laag.headers),
+        map(LaagModel.headersLens.get),
+        distinctUntilChanged(ColumnHeaders.setoidColumnHeaders.equals),
         share()
       )
     );
 
     const page$ = subSpy("****page$")(
       laag$.pipe(
-        collectOption(laag => laag.page),
+        collectOption(LaagModel.pageLens.get),
         share()
       )
     );
 
     this.rows$ = subSpy("****row$")(
       page$.pipe(
-        map(page => page.rows),
+        map(Page.rowsLens.get),
         share()
       )
     );

@@ -41,6 +41,7 @@ export class FeatureTabelHeaderComponent extends KaartChildComponentBase {
     this.header$ = subSpy("****header$")(
       laag$.pipe(
         map(TableHeader.toHeader),
+        distinctUntilChanged(TableHeader.setoidTableHeader.equals),
         share()
       )
     );
