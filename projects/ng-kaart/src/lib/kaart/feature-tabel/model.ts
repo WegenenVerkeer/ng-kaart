@@ -301,8 +301,10 @@ export namespace TableModel {
         dataExtent: laag.viewinstellingen.extent,
         fieldSortings: [],
         pageNumber: currentPageNumber(laag),
-        rowPostProcessor: laag.rowTransformer,
-        rowCreator: Row.featureToRow(laag.veldinfos),
+        rowCreator: flow(
+          Row.featureToRow(laag.veldinfos),
+          laag.rowTransformer
+        ),
         requestSequence: laag.nextPageSequence
       })
       .pipe(
@@ -372,8 +374,10 @@ export namespace TableModel {
           dataExtent: laag.viewinstellingen.extent,
           fieldSortings: [],
           pageNumber: currentPageNumber(laag),
-          rowCreator: Row.featureToRow(laag.veldinfos),
-          rowPostProcessor: laag.rowTransformer,
+          rowCreator: flow(
+            Row.featureToRow(laag.veldinfos),
+            laag.rowTransformer
+          ),
           requestSequence: laag.nextPageSequence
         })
       )

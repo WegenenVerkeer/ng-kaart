@@ -63,7 +63,6 @@ export interface PageRequest {
   readonly dataExtent: ol.Extent;
   readonly fieldSortings: FieldSorting[];
   readonly rowCreator: Function1<ol.Feature, Row>;
-  readonly rowPostProcessor: Endomorphism<Row>; // TODO dit met de rowCreator combineren
 }
 
 export type PageFetcher = Function1<PageRequest, rx.Observable<DataRequest>>;
@@ -190,15 +189,7 @@ export namespace PageFetcher {
         map(() =>
           DataRequest.DataReady(
             pageRequest.pageNumber,
-            array.take(
-              PageSize,
-              source.getFeaturesInExtent(pageRequest.dataExtent).map(
-                flow(
-                  pageRequest.rowCreator,
-                  pageRequest.rowPostProcessor // transformer op dit niveau vermijdt overtollige creatie van lijst
-                )
-              )
-            )
+            array.take(PageSize, source.getFeaturesInExtent(pageRequest.dataExtent).map(pageRequest.rowCreator))
           )
         )
       )
@@ -208,15 +199,7 @@ export namespace PageFetcher {
   export const pageFromSource: Function2<ol.source.Vector, PageRequest, Page> = (source, pageRequest) =>
     Page.create(
       pageRequest.pageNumber,
-      array.take(
-        PageSize,
-        source.getFeaturesInExtent(pageRequest.dataExtent).map(
-          flow(
-            pageRequest.rowCreator,
-            pageRequest.rowPostProcessor // transformer op dit niveau vermijdt overtollige creatie van lijst
-          )
-        )
-      )
+      array.take(PageSize, source.getFeaturesInExtent(pageRequest.dataExtent).map(pageRequest.rowCreator))
     );
 }
 
