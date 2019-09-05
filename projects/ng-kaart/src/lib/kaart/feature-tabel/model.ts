@@ -11,6 +11,7 @@ import {
   Function2,
   Function3,
   identity,
+  Lazy,
   Predicate
 } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
@@ -62,13 +63,18 @@ export interface LaagModel {
   readonly hasFilter: boolean;
   readonly filterIsActive: boolean;
   readonly featureCount: FeatureCount; // aantal features in de tabel over alle pagina's heen
+  readonly page: Option<Page>; // We houden maar 1 pagina van data tegelijkertijd in het geheugen. (later meer)
 
   readonly headers: ColumnHeaders;
   readonly selectedVeldnamen: string[]; // enkel een subset van de velden is zichtbaar
   readonly rowTransformer: Endomorphism<Row>; // bewerkt de ruwe rij (bijv. locatieveld toevoegen)
 
   readonly source: NosqlFsSource;
-  readonly page: Option<Page>; // We houden maar 1 pagina van data tegelijkertijd in het geheugen. (later meer)
+  readonly minZoom: number;
+  readonly maxZoom: number;
+
+  // volgende 4 properties worden voorlopig niet meer gebruikt. Misschien wel weer wanneer volledige dataset ipv view
+  // gebruikt wordt.
   readonly nextPageSequence: number; // Het sequentienummer dat verwacht is, niet het paginanummer
   readonly updatePending: boolean;
   readonly pageFetcher: PageFetcher;
@@ -222,6 +228,8 @@ export namespace LaagModel {
         selectedVeldnamen,
         headers,
         source,
+        minZoom: laag.bron.minZoom,
+        maxZoom: laag.bron.maxZoom,
         page: option.none,
         nextPageSequence: 0,
         updatePending: true,
@@ -367,6 +375,9 @@ export namespace TableModel {
           ()
     );
 
+  const inZoom = (ifInZoom: Endomorphism<LaagModel>, ifOutsideZoom: Endomorphism<LaagModel>): Endomorphism<LaagModel> => laag =>
+    (laag.viewinstellingen.zoom >= laag.minZoom && laag.viewinstellingen.zoom <= laag.maxZoom ? ifInZoom : ifOutsideZoom)(laag);
+
   const updateLaagPage: Endomorphism<LaagModel> = laag =>
     LaagModel.pageLens.set(
       option.some(
@@ -383,15 +394,26 @@ export namespace TableModel {
       )
     )(laag);
 
+  const clearLaagPage: Endomorphism<LaagModel> = LaagModel.pageLens.set(option.none);
+
   const updateLaagFeatureCount: Endomorphism<LaagModel> = laag =>
     LaagModel.aantalFeaturesLens.set(FeatureCountFetcher.countFromSource(laag.source, { dataExtent: laag.viewinstellingen.extent }))(laag);
+
+  // TODO: misschien beter specifiek type voor buiten zoom
+  const clearLaagFeatureCount: Endomorphism<LaagModel> = LaagModel.aantalFeaturesLens.set(FeatureCount.createFetched(0));
 
   export const featuresUpdate: Function1<ke.ToegevoegdeVectorLaag, Update> = tvlg =>
     syncUpdateOnly(
       laagForTitelTraversal(tvlg.titel).modify(
-        flow(
-          updateLaagPage,
-          updateLaagFeatureCount
+        inZoom(
+          flow(
+            updateLaagPage,
+            updateLaagFeatureCount
+          ),
+          flow(
+            clearLaagPage,
+            clearLaagFeatureCount
+          )
         )
       )
     );

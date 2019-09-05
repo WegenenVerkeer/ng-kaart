@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, Input, NgZone } from "@angular/core
 import * as rx from "rxjs";
 import { distinctUntilChanged, map, share, switchMap } from "rxjs/operators";
 
-import { collectOption, subSpy } from "../../util/operators";
+import { catOptions, collectOption, subSpy } from "../../util/operators";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { KaartComponent } from "../kaart.component";
 
@@ -19,6 +19,8 @@ import { ColumnHeaders, LaagModel, TableModel } from "./model";
 export class FeatureTabelDataComponent extends KaartChildComponentBase {
   headers$: rx.Observable<ColumnHeaders>;
   rows$: rx.Observable<Row[]>;
+  noDataAvailable$: rx.Observable<boolean>;
+  dataAvailable$: rx.Observable<boolean>;
 
   @Input()
   laagTitel: string;
@@ -48,12 +50,11 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
       )
     );
 
-    const page$ = subSpy("****page$")(
-      laag$.pipe(
-        collectOption(LaagModel.pageLens.get),
-        share()
-      )
+    const maybePage$ = laag$.pipe(
+      map(LaagModel.pageLens.get),
+      share()
     );
+    const page$ = subSpy("****page$")(maybePage$.pipe(catOptions));
 
     this.rows$ = subSpy("****row$")(
       page$.pipe(
@@ -61,5 +62,8 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
         share()
       )
     );
+
+    this.noDataAvailable$ = maybePage$.pipe(map(opt => opt.isNone()));
+    this.dataAvailable$ = maybePage$.pipe(map(opt => opt.isSome()));
   }
 }
