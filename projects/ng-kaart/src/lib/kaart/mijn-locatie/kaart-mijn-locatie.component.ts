@@ -5,7 +5,21 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import { AbsoluteOrientationSensor } from "motion-sensors-polyfill";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { distinctUntilChanged, filter, map, mapTo, pairwise, scan, shareReplay, startWith, throttle, throttleTime } from "rxjs/operators";
+import {
+  buffer,
+  debounceTime,
+  distinctUntilChanged,
+  filter,
+  map,
+  mapTo,
+  mergeAll,
+  pairwise,
+  scan,
+  shareReplay,
+  startWith,
+  throttle,
+  throttleTime
+} from "rxjs/operators";
 
 import { Transparantie } from "../../transparantieeditor/transparantie";
 import { catOptions } from "../../util/operators";
@@ -27,8 +41,30 @@ export type State = "TrackingDisabled" | "NoTracking" | "Tracking" | "TrackingCe
 
 export type Event = "ActiveerEvent" | "DeactiveerEvent" | "PanEvent" | "ZoomEvent" | "RotateEvent" | "ClickEvent";
 
+interface EventMetVerschil {
+  readonly event: Event;
+  readonly verschil: number;
+}
+
 export type EventMap = { [event in Event]: State };
 export type StateMachine = { [state in State]: EventMap };
+
+const isEventRelevant = (event: EventMetVerschil) => {
+  switch (event.event) {
+    case "ActiveerEvent":
+      return true;
+    case "DeactiveerEvent":
+      return true;
+    case "PanEvent":
+      return true;
+    case "ZoomEvent":
+      return event.verschil > 1.0;
+    case "RotateEvent":
+      return event.verschil > 0.5;
+    case "ClickEvent":
+      return true;
+  }
+};
 
 interface TrackingInfo {
   readonly feature: Option<ol.Feature>;
@@ -41,6 +77,21 @@ interface TrackingInfo {
   readonly state: State;
   readonly stateVeranderd: boolean;
 }
+
+const afstandTussenCoordinaten = (c1: ol.Coordinate, c2: ol.Coordinate) => {
+  const line = new ol.geom.LineString([c1, c2]);
+  return line.getLength();
+};
+
+const isTrackingInfoGelijk = (t1: TrackingInfo, t2: TrackingInfo) => {
+  return (
+    Math.round(t1.zoom) === Math.round(t2.zoom) &&
+    Math.abs(t1.currentRotation - t2.currentRotation) < 0.5 &&
+    afstandTussenCoordinaten(t1.coordinate, t2.coordinate) < 1.0 &&
+    t1.state === t2.state &&
+    t1.stateVeranderd === t2.stateVeranderd
+  );
+};
 
 export const NoOpStateMachine: StateMachine = {
   NoTracking: {
@@ -218,7 +269,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
   private locatieSubj: rx.Subject<Position> = new rx.Subject<Position>();
   private rotatieSubj: rx.Subject<number> = new rx.Subject<number>();
 
-  private eventsSubj: rx.Subject<Event> = new rx.Subject<Event>();
+  private eventsSubj: rx.Subject<EventMetVerschil> = new rx.Subject<EventMetVerschil>();
 
   currentState$: rx.Observable<State> = rx.of("TrackingDisabled" as State);
   enabled$: rx.Observable<boolean> = rx.of(true);
@@ -273,45 +324,62 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
 
     // Event handlers
     this.bindToLifeCycle(this.parent.modelChanges.dragInfo$).subscribe(() => {
-      this.eventsSubj.next("PanEvent");
+      this.eventsSubj.next({ event: "PanEvent", verschil: 0 });
     });
 
     // We moeten de rotatie-events die we zelf triggeren negeren.
     this.bindToLifeCycle(
       this.parent.modelChanges.rotatie$.pipe(
+        pairwise(),
         throttle(() => {
           if (this.rotatieIsGevraagd) {
             this.rotatieIsGevraagd = false;
             return rx.timer(500);
           } else {
-            return rx.of(1);
+            return rx.timer(1);
           }
         }),
-        filter(() => !this.rotatieIsGevraagd)
+        filter(() => !this.rotatieIsGevraagd),
+        map(([oud, nieuw]) => Math.abs(oud - nieuw))
       )
-    ).subscribe(() => this.eventsSubj.next("RotateEvent"));
+    ).subscribe(verschil => this.eventsSubj.next({ event: "RotateEvent", verschil }));
 
     // We moeten de zoom-events die we zelf triggeren negeren.
     this.bindToLifeCycle(
       zoom$.pipe(
+        pairwise(),
         throttle(() => {
           if (this.zoomIsGevraagd) {
             this.zoomIsGevraagd = false;
             return rx.timer(500);
           } else {
-            return rx.of(1);
+            return rx.timer(1);
           }
         }),
-        filter(() => !this.zoomIsGevraagd)
+        filter(() => !this.zoomIsGevraagd),
+        map(([oud, nieuw]) => Math.abs(oud - nieuw))
       )
-    ).subscribe(() => this.eventsSubj.next("ZoomEvent"));
+    ).subscribe(verschil => this.eventsSubj.next({ event: "ZoomEvent", verschil }));
 
     // "State machine"
     const stateMachine: StateMachine = this.getStateMachine();
 
     this.currentState$ = rx
       .merge(
-        this.eventsSubj, //
+        this.eventsSubj.pipe(
+          // Wanneer er op mobile met twee vingers gedragd wordt, krijgen we op korte tijd een zoom-, somes een rotate- en dragevent
+          // we willen die hier groeperen en dan de "niet relevante" (kleine verandering) events eruit halen.
+          buffer(this.eventsSubj.pipe(debounceTime(500))),
+          map(events => {
+            if (events.length === 1) {
+              return events;
+            } else {
+              return events.filter(isEventRelevant);
+            }
+          }),
+          map(events => events.map(event => event.event)),
+          mergeAll()
+        ), //
         this.wordtActief$.pipe(mapTo("ActiveerEvent")),
         this.wordtInactief$.pipe(mapTo("DeactiveerEvent"))
       )
@@ -354,7 +422,8 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
               state,
               stateVeranderd: prevState !== state
             };
-          })
+          }),
+          distinctUntilChanged(isTrackingInfoGelijk)
         )
     ).subscribe(r => this.zetMijnPositie(r));
 
@@ -388,7 +457,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     });
 
     if (navigator.geolocation) {
-      this.eventsSubj.next("ActiveerEvent");
+      this.eventsSubj.next({ event: "ActiveerEvent", verschil: 0 });
     }
     // Nodig omdat we anders wachten tot we een rotatieevent binnenkrijgen voor we de locatie tonen.
     this.rotatieSubj.next(0);
@@ -408,7 +477,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
   }
 
   click() {
-    this.eventsSubj.next("ClickEvent");
+    this.eventsSubj.next({ event: "ClickEvent", verschil: 0 });
   }
 
   private maakNieuwFeature(info: TrackingInfo): Option<ol.Feature> {
