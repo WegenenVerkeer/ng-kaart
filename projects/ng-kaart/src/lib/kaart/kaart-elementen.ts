@@ -3,9 +3,11 @@ import { fromPredicate, fromRefinement, Option } from "fp-ts/lib/Option";
 import * as ord from "fp-ts/lib/Ord";
 import { Ord } from "fp-ts/lib/Ord";
 import * as setoid from "fp-ts/lib/Setoid";
-import { Setoid, setoidString } from "fp-ts/lib/Setoid";
-import { Fold, Getter, Iso, Lens, Optional, Prism } from "monocle-ts";
+import { Setoid } from "fp-ts/lib/Setoid";
+import { Fold, Iso, Lens, Optional, Prism } from "monocle-ts";
 import * as ol from "openlayers";
+import * as rx from "rxjs";
+import { debounceTime, mapTo } from "rxjs/operators";
 
 import { Filter as fltr } from "../filter/filter-model";
 import { FilterTotaal, totaalOpTeHalen } from "../filter/filter-totaal";
@@ -14,6 +16,7 @@ import { Transparantie } from "../transparantieeditor/transparantie";
 import { mapToOptionalByKey } from "../util/lenses";
 import * as maps from "../util/maps";
 import * as matchers from "../util/matchers";
+import { observableFromOlEvents } from "../util/ol-observable";
 
 import { Legende } from "./kaart-legende";
 import { AwvV0StyleSpec, StyleSelector } from "./stijl-selector";
@@ -275,6 +278,10 @@ export const stdLaagfilterinstellingen = Laagfilterinstellingen(fltr.empty(), tr
 // Manipulatie en inspectie
 //
 
+export namespace ToegevoegdeLaag {
+  export const setoidToegevoegdeLaagByTitel: Setoid<ToegevoegdeLaag> = setoid.contramap(tl => tl.titel, setoid.setoidString);
+}
+
 export namespace ToegevoegdeVectorLaag {
   export const stijlSelBronLens: Optional<ToegevoegdeVectorLaag, AwvV0StyleSpec> = Optional.fromOptionProp<ToegevoegdeVectorLaag>()(
     "stijlSelBron"
@@ -303,11 +310,17 @@ export namespace ToegevoegdeVectorLaag {
     .asGetter()
     .composePrism(Prism.fromRefinement(isNoSqlFsSource));
 
-  export const opTitelSetoid: Setoid<ToegevoegdeVectorLaag> = setoid.contramap(laag => laag.titel, setoidString);
+  export const opTitelSetoid: Setoid<ToegevoegdeVectorLaag> = setoid.contramap(laag => laag.titel, setoid.setoidString);
+
+  export const featuresChanged$: Function1<ToegevoegdeVectorLaag, rx.Observable<null>> = vlg =>
+    observableFromOlEvents(vlg!.layer.getSource(), "addfeature", "removefeature", "clear").pipe(
+      debounceTime(150),
+      mapTo(null)
+    );
 }
 
 export namespace VeldInfo {
-  export const setoidVeldOpNaam: Setoid<VeldInfo> = setoid.contramap(vi => vi.naam, setoidString);
+  export const setoidVeldOpNaam: Setoid<VeldInfo> = setoid.contramap(vi => vi.naam, setoid.setoidString);
   export const ordVeldOpBasisVeld: Ord<VeldInfo> = ord.contramap(vi => vi.isBasisVeld, ord.ordBoolean);
   export const veldnaamLens: Lens<VeldInfo, string> = Lens.fromProp<VeldInfo>()("naam");
   export const veldlabelLens: Lens<VeldInfo, string | undefined> = Lens.fromProp<VeldInfo>()("label");

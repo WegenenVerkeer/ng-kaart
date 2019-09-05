@@ -210,8 +210,8 @@ export namespace LaagModel {
         }));
       const [headersTransformer, rowTransformer] = locationTransformer(veldinfos);
       const headers = ColumnHeaders.create(headersTransformer(baseColumnHeaders));
-      const pageFetcher = PageFetcher.sourceBasedPageFetcher(laag);
-      const featureCountFetcher = FeatureCountFetcher.sourceBasedFeatureCountFetcher(laag);
+      const pageFetcher = PageFetcher.sourceBasedPageFetcher(laag.bron.source);
+      const featureCountFetcher = FeatureCountFetcher.sourceBasedFeatureCountFetcher(laag.bron.source);
       return {
         titel: laag.titel,
         veldinfos,
@@ -252,9 +252,8 @@ export namespace TableModel {
   const laagDataLens: Lens<TableModel, LaagModel[]> = Lens.fromProp<TableModel>()("laagData");
   const viewinstellingLens: Lens<TableModel, Viewinstellingen> = Lens.fromProp<TableModel>()("viewinstellingen");
 
-  const laagForTitelTraversal: Function1<string, Traversal<TableModel, LaagModel>> = titel => {
-    return laagDataLens.composeTraversal(selectiveArrayTraversal(tl => tl.titel === titel));
-  };
+  const laagForTitelTraversal: Function1<string, Traversal<TableModel, LaagModel>> = titel =>
+    laagDataLens.composeTraversal(selectiveArrayTraversal(tl => tl.titel === titel));
 
   const allLagenTraversal: Traversal<TableModel, LaagModel> = laagDataLens.composeTraversal(fromTraversable(array.array)<LaagModel>());
 
@@ -294,7 +293,7 @@ export namespace TableModel {
   const featureCountUpdate: Function2<LaagModel, FeatureCount, SyncUpdate> = (laag, count) =>
     laagForTitelTraversal(laag.titel).modify(LaagModel.aantalFeaturesLens.set(count));
 
-  const currentPageNumber: Function1<LaagModel, PageNumber> = laag => laag.page.fold(Page.First, Page.pageNumberLens.get);
+  const currentPageNumber: Function1<LaagModel, PageNumber> = laag => laag.page.fold(Page.first, Page.pageNumberLens.get);
 
   const asyncLaagPageUpdate: Function1<LaagModel, rx.Observable<SyncUpdate>> = laag =>
     laag
@@ -303,6 +302,7 @@ export namespace TableModel {
         fieldSortings: [],
         pageNumber: currentPageNumber(laag),
         rowPostProcessor: laag.rowTransformer,
+        rowCreator: Row.featureToRow(laag.veldinfos),
         requestSequence: laag.nextPageSequence
       })
       .pipe(
@@ -338,10 +338,11 @@ export namespace TableModel {
           )
         )(model),
       model =>
-        rx.merge(
-          ...model.laagData.filter(LaagModel.updatePendingLens.get).map(asyncLaagPageUpdate),
-          ...model.laagData.map(asyncFeatureCountUpdate)
-        )
+        rx
+          .merge
+          // ...model.laagData.filter(LaagModel.updatePendingLens.get).map(asyncLaagPageUpdate),
+          // ...model.laagData.map(asyncFeatureCountUpdate)
+          ()
     );
   };
 
@@ -357,9 +358,40 @@ export namespace TableModel {
         )
       ]),
       model =>
-        rx.merge(
-          ...model.laagData.map(asyncLaagPageUpdate), //
-          ...model.laagData.map(asyncFeatureCountUpdate)
-        )
+        rx
+          .merge
+          // ...model.laagData.map(asyncLaagPageUpdate), //
+          // ...model.laagData.map(asyncFeatureCountUpdate)
+          ()
     );
+
+  const updateLaagPage: Endomorphism<LaagModel> = laag =>
+    LaagModel.pageLens.set(
+      option.some(
+        PageFetcher.pageFromSource(laag.source, {
+          dataExtent: laag.viewinstellingen.extent,
+          fieldSortings: [],
+          pageNumber: currentPageNumber(laag),
+          rowCreator: Row.featureToRow(laag.veldinfos),
+          rowPostProcessor: laag.rowTransformer,
+          requestSequence: laag.nextPageSequence
+        })
+      )
+    )(laag);
+
+  const updateLaagFeatureCount: Endomorphism<LaagModel> = laag =>
+    LaagModel.aantalFeaturesLens.set(FeatureCountFetcher.countFromSource(laag.source, { dataExtent: laag.viewinstellingen.extent }))(laag);
+
+  export const featuresUpdate: Function1<ke.ToegevoegdeVectorLaag, Update> = tvlg =>
+    syncUpdateOnly(
+      laagForTitelTraversal(tvlg.titel).modify(
+        flow(
+          updateLaagPage,
+          updateLaagFeatureCount
+        )
+      )
+    );
+
+  export const followViewFeatureUpdates: Function1<ke.ToegevoegdeVectorLaag, rx.Observable<Update>> = tvlg =>
+    ke.ToegevoegdeVectorLaag.featuresChanged$(tvlg).pipe(map(() => featuresUpdate(tvlg)));
 }

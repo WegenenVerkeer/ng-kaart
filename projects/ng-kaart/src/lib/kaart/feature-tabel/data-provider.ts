@@ -7,7 +7,7 @@ import { Iso, Lens, Prism } from "monocle-ts";
 import { iso, Newtype, prism } from "newtype-ts";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { map, startWith, take } from "rxjs/operators";
+import { debounceTime, map, share, startWith, take, takeUntil } from "rxjs/operators";
 
 import * as arrays from "../../util/arrays";
 import { parseDate, parseDateTime } from "../../util/date-time";
@@ -62,7 +62,8 @@ export interface PageRequest {
   readonly requestSequence: number;
   readonly dataExtent: ol.Extent;
   readonly fieldSortings: FieldSorting[];
-  readonly rowPostProcessor: Endomorphism<Row>;
+  readonly rowCreator: Function1<ol.Feature, Row>;
+  readonly rowPostProcessor: Endomorphism<Row>; // TODO dit met de rowCreator combineren
 }
 
 export type PageFetcher = Function1<PageRequest, rx.Observable<DataRequest>>;
@@ -153,7 +154,7 @@ export namespace Page {
   export const pageNumberLens: Lens<Page, PageNumber> = Lens.fromProp<Page>()("pageNumber");
   export const rowsLens: Lens<Page, Row[]> = Lens.fromProp<Page>()("rows");
 
-  export const First: PageNumber = isoPageNumber.wrap(0);
+  export const first: PageNumber = isoPageNumber.wrap(0);
   export const previous: Endomorphism<PageNumber> = isoPageNumber.modify(n => Math.max(0, n - 1));
   export const next: Endomorphism<PageNumber> = isoPageNumber.modify(n => n + 1);
 }
@@ -178,8 +179,10 @@ export namespace DataRequest {
 export namespace PageFetcher {
   const PageSize = 100;
 
-  export const sourceBasedPageFetcher: Function1<ke.ToegevoegdeVectorLaag, PageFetcher> = laag => pageRequest => {
-    console.log(`****Fetching ${pageRequest.pageNumber} (${pageRequest.requestSequence}) for ${laag.titel}`);
+  export const sourceBasedPageFetcher: Function1<ol.source.Vector, PageFetcher> = source => pageRequest => {
+    // We willen zo vlug als mogelijk de data bijwerken. Het is evenwel mogelijk dat het een tijd duurt vooraleer de
+    // data binnen komt en we willen ook niet blijven wachten. Daarnaast willen we de observable niet voor altijd open
+    // houden.
     return rx.merge(
       rx.of(DataRequest.RequestingData),
       rx.timer(2000).pipe(
@@ -189,9 +192,9 @@ export namespace PageFetcher {
             pageRequest.pageNumber,
             array.take(
               PageSize,
-              laag.bron.source.getFeaturesInExtent(pageRequest.dataExtent).map(
+              source.getFeaturesInExtent(pageRequest.dataExtent).map(
                 flow(
-                  Row.featureToRow(ke.ToegevoegdeVectorLaag.veldInfosLens.get(laag)), // eventueel kunnen we dit als parameter mee geven
+                  pageRequest.rowCreator,
                   pageRequest.rowPostProcessor // transformer op dit niveau vermijdt overtollige creatie van lijst
                 )
               )
@@ -201,6 +204,20 @@ export namespace PageFetcher {
       )
     );
   };
+
+  export const pageFromSource: Function2<ol.source.Vector, PageRequest, Page> = (source, pageRequest) =>
+    Page.create(
+      pageRequest.pageNumber,
+      array.take(
+        PageSize,
+        source.getFeaturesInExtent(pageRequest.dataExtent).map(
+          flow(
+            pageRequest.rowCreator,
+            pageRequest.rowPostProcessor // transformer op dit niveau vermijdt overtollige creatie van lijst
+          )
+        )
+      )
+    );
 }
 
 export namespace FeatureCount {
@@ -223,10 +240,13 @@ export namespace FeatureCount {
 }
 
 export namespace FeatureCountFetcher {
-  export const sourceBasedFeatureCountFetcher: Function1<ke.ToegevoegdeVectorLaag, FeatureCountFetcher> = laag => featureCountRequest =>
+  export const sourceBasedFeatureCountFetcher: Function1<ol.source.Vector, FeatureCountFetcher> = source => featureCountRequest =>
     rx.timer(2000).pipe(
       take(1),
-      map(() => FeatureCount.createFetched(laag.bron.source.getFeaturesInExtent(featureCountRequest.dataExtent).length)),
+      map(() => countFromSource(source, featureCountRequest)),
       startWith(FeatureCount.pending)
     );
+
+  export const countFromSource: Function2<ol.source.Vector, FeatureCountRequest, FeatureCount> = (source, featureCountRequest) =>
+    FeatureCount.createFetched(source.getFeaturesInExtent(featureCountRequest.dataExtent).length);
 }

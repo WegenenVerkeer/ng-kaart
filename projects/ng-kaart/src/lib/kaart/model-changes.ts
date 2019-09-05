@@ -246,7 +246,7 @@ export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> 
   // Implementatienota: doordat alles via observables gaat (en de switchMap), worden de unsubscribes naar OL doorgespeeld.
   const featuresChanged$: rx.Observable<void> = vectorlagen$.pipe(
     debounceTime(100), // vlugge verandering van het aantal vectorlagen willen we niet zien
-    switchMap(vlgn => rx.merge(...vlgn.map(vlg => observableFromOlEvents(vlg!.layer.getSource(), "addfeature", "removefeature", "clear")))),
+    switchMap(vlgn => rx.merge(...vlgn.map(ke.ToegevoegdeVectorLaag.featuresChanged$))),
     // Vlugge veranderingen van de features willen we ook niet zien.
     // Best om dit groter te houden dan de tijd voorzien om cleanup te doen. Anders overbodige events.
     debounceTime(150),

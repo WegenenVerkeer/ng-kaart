@@ -1,15 +1,29 @@
 import { animate, style, transition, trigger } from "@angular/animations";
 import { ChangeDetectionStrategy, Component, NgZone, ViewEncapsulation } from "@angular/core";
 import { array, setoid } from "fp-ts";
-import { Endomorphism } from "fp-ts/lib/function";
+import { Setoid } from "fp-ts/lib/Setoid";
 import * as rx from "rxjs";
-import { distinctUntilChanged, map, observeOn, scan, shareReplay, switchMap, take, takeUntil, tap } from "rxjs/operators";
+import {
+  debounceTime,
+  distinctUntilChanged,
+  map,
+  observeOn,
+  scan,
+  share,
+  shareReplay,
+  switchMap,
+  take,
+  takeUntil,
+  tap
+} from "rxjs/operators";
 
+import { subSpy } from "../../util";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
+import * as ke from "../kaart-elementen";
 import { KaartComponent } from "../kaart.component";
 import { kaartLogger } from "../log";
 
-import { LaagModel, TableModel, Update } from "./model";
+import { LaagModel, SyncUpdate, TableModel, Update } from "./model";
 
 export const FeatureTabelUiSelector = "FeatureTabel";
 
@@ -20,6 +34,8 @@ interface FeatureTabelUiOpties {
 const DefaultOpties: FeatureTabelUiOpties = {
   filterbareLagen: true
 };
+
+const equalTitels: Setoid<ke.ToegevoegdeVectorLaag[]> = array.getSetoid(ke.ToegevoegdeLaag.setoidToegevoegdeLaagByTitel);
 
 @Component({
   selector: "awv-feature-tabel-overzicht",
@@ -52,20 +68,44 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
   constructor(kaart: KaartComponent, ngZone: NgZone) {
     super(kaart, ngZone);
 
-    const voorgrondLagen$ = this.modelChanges.lagenOpGroep["Voorgrond.Hoog"];
+    const voorgrondLagen$ = this.modelChanges.lagenOpGroep["Voorgrond.Hoog"].pipe(
+      map(array.filter(ke.isToegevoegdeVectorLaag)),
+      share()
+    );
 
     this.opties$ = this.accumulatedOpties$(FeatureTabelUiSelector, DefaultOpties);
 
     const updateLagen$ = voorgrondLagen$.pipe(
-      map(lagen => lagen.filter(laag => laag.magGetoondWorden)),
+      map(lagen => lagen.filter(laag => laag.magGetoondWorden).filter(ke.isToegevoegdeVectorLaag)),
       map(TableModel.updateLagen)
     );
 
     const updateZoomAndExtent$ = this.modelChanges.viewinstellingen$.pipe(map(vi => TableModel.updateZoomAndExtent(vi)));
 
-    const asyncUpdatesSubj: rx.Subject<Endomorphism<TableModel>> = new rx.Subject();
-    const asyncUpdates$ = asyncUpdatesSubj.pipe(map(TableModel.syncUpdateOnly));
-    const modelUpdate$: rx.Observable<Update> = rx.merge(asyncUpdates$, updateLagen$, updateZoomAndExtent$);
+    // De volgende combinatie zet Updates die asynchroon gegenereerd zijn om in toekomstige synchrone updates
+    const asyncUpdatesSubj: rx.Subject<SyncUpdate> = new rx.Subject();
+    const delayedUpdates$ = asyncUpdatesSubj.pipe(map(TableModel.syncUpdateOnly));
+
+    // Voor de view als filter kunnen we gewoon de zichtbare features volgen. Het model zal de updates neutraliseren als
+    // het niet in de view als filter mode is.
+    const directPageUpdates$: rx.Observable<Update> = subSpy("****directPageUpdates$")(
+      rx
+        .combineLatest(
+          voorgrondLagen$.pipe(distinctUntilChanged(equalTitels.equals)),
+          this.modelChanges.viewinstellingen$, // OL past collectie niet aan voor elke zoom/pan, dus moeten we update forceren
+          (vectorlagen, _) => vectorlagen
+        )
+        .pipe(
+          switchMap(vectorLagen =>
+            rx.concat(
+              rx.from(vectorLagen.map(TableModel.featuresUpdate)), // Bij een zoom/pan dus geen featureUpdate
+              rx.merge(...vectorLagen.map(TableModel.followViewFeatureUpdates))
+            )
+          )
+        )
+    );
+
+    const modelUpdate$: rx.Observable<Update> = rx.merge(delayedUpdates$, updateLagen$, updateZoomAndExtent$, directPageUpdates$);
 
     // Dit is het zenuwcenter van de hele component en zijn afhankelijke componenten. Alle andere observables moeten
     // hier van aftakken. Dit is het alternatief voor alles in de kaartreducer te steken. Dat is niet aangewezen, want
@@ -85,10 +125,10 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
                   .pipe(
                     observeOn(rx.asapScheduler), // voer eerst de rest van de ketting uit
                     tap(page => console.log("***page", page)),
-                    takeUntil(rx.timer(6000)) // TODO moeten we dit houden?
+                    takeUntil(rx.timer(6000)) // Om helemaal zeker te zijn dat de observable ooit unsubscribed wordt
                   )
                   .subscribe({
-                    next: page => asyncUpdatesSubj.next(page),
+                    next: syncUpdate => asyncUpdatesSubj.next(syncUpdate),
                     error: err => kaartLogger.error("Probleem bij async model update", err) // Moet ook in UI komen. Evt retry
                   });
                 return newModel;
