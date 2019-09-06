@@ -71,10 +71,15 @@ export namespace Feature {
   export const propertyId: PartialFunction1<ol.Feature, string> = feature =>
     option
       .fromNullable(feature.get("id"))
-      .orElse(() => option.fromNullable(feature.getProperties().get("id")))
+      .orElse(() => option.fromNullable(feature.getProperties()["id"]))
       .map(id => id.toString());
 
   export const properties: Function1<ol.Feature, any> = feature => feature.getProperties().properties;
+
+  export const propertiesWithId: Function1<ol.Feature, any> = feature => ({
+    id: propertyId(feature).toUndefined(),
+    ...properties(feature) // id in properties heeft dus voorrang
+  });
 
   export const getLaagnaam: PartialFunction1<ol.Feature, string> = feature => {
     const singleFeature = fromNullable(feature.get("features"))

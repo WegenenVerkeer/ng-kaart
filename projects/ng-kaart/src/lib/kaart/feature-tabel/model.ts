@@ -1,5 +1,5 @@
 import { ValueType } from "@wegenenverkeer/ng-kaart/lib/stijl";
-import { array, option, setoid, traversable } from "fp-ts";
+import { array, option, ord, setoid, traversable } from "fp-ts";
 import {
   constant,
   Curried2,
@@ -26,14 +26,23 @@ import { isNumber } from "util";
 import { Filter } from "../../filter";
 import { NosqlFsSource } from "../../source";
 import * as arrays from "../../util/arrays";
-import { parseDate, parseDateTime } from "../../util/date-time";
-import { Feature } from "../../util/feature";
 import { applySequential, PartialFunction2 } from "../../util/function";
 import { selectiveArrayTraversal } from "../../util/lenses";
 import * as ke from "../kaart-elementen";
 import { Viewinstellingen } from "../kaart-protocol-subscriptions";
 
-import { DataRequest, FeatureCount, FeatureCountFetcher, Field, Page, PageFetcher, PageNumber, Row } from "./data-provider";
+import {
+  DataRequest,
+  FeatureCount,
+  FeatureCountFetcher,
+  Field,
+  FieldSorting,
+  Page,
+  PageFetcher,
+  PageNumber,
+  Row,
+  SortDirection
+} from "./data-provider";
 
 // export const tabulerbareLagen$: Function1<ModelChanges, rx.Observable<ke.ToegevoegdeVectorLaag[]>> = changes =>
 //   changes.lagenOpGroep["Voorgrond.Hoog"].pipe(map(lgn => lgn.filter(ke.isToegevoegdeVectorLaag)));
@@ -67,6 +76,7 @@ export interface LaagModel {
 
   readonly headers: ColumnHeaders;
   readonly selectedVeldnamen: string[]; // enkel een subset van de velden is zichtbaar
+  readonly fieldSortings: FieldSorting[];
   readonly rowTransformer: Endomorphism<Row>; // bewerkt de ruwe rij (bijv. locatieveld toevoegen)
 
   readonly source: NosqlFsSource;
@@ -77,7 +87,7 @@ export interface LaagModel {
   // gebruikt wordt.
   readonly nextPageSequence: number; // Het sequentienummer dat verwacht is, niet het paginanummer
   readonly updatePending: boolean;
-  readonly pageFetcher: PageFetcher;
+  readonly pageFetcher: PageFetcher; // Voorlopig niet meer gebruikt
   readonly featureCountFetcher: FeatureCountFetcher;
 
   readonly viewinstellingen: Viewinstellingen; // Kopie van gegevens in TableModel. Handig om hier te refereren
@@ -94,11 +104,14 @@ export interface ColumnHeaders {
   readonly columnWidths: string; // we willen dit niet in de template opbouwen
 }
 
+// De titel van een kolom. Wordt ook gebruikt om een Feature om te zetten naar een Row.
 export interface ColumnHeader {
   readonly key: string; // om op te zoeken in een row
   readonly label: string; // voor weergave
+  readonly contributingVeldinfos: ke.VeldInfo[]; // support voor sortering: alle velden die bijdragen tot de kolom
 }
 
+// De titel van een laag + geassocieerde state
 export interface TableHeader {
   readonly titel: string;
   readonly filterIsActive: boolean;
@@ -165,9 +178,9 @@ export namespace LaagModel {
     // We moeten op label werken, want de gegevens zitten op verschillende plaatsen bij verschillende lagen
     const veldlabels = veldinfos.map(ke.VeldInfo.veldlabelLens.get);
     const wegLabel = "Ident8";
+    const afstandLabels = ["Van refpunt", "Van afst", "Tot refpunt", "Tot afst"];
     const maybeWegKey = array.findFirst(veldinfos, vi => vi.label === wegLabel).map(ke.VeldInfo.veldnaamLens.get);
     return maybeWegKey.fold([identity, identity] as [Endomorphism<ColumnHeader[]>, Endomorphism<Row>], wegKey => {
-      const afstandLabels = ["Van refpunt", "Van afst", "Tot refpunt", "Tot afst"];
       const allLabelsPresent = afstandLabels.filter(label => veldlabels.includes(label)).length === afstandLabels.length; // alles of niks!
       const locationLabels = allLabelsPresent ? afstandLabels : [];
 
@@ -176,8 +189,13 @@ export namespace LaagModel {
       );
 
       const allLocationLabels = array.cons(wegLabel, locationLabels);
+      const allLocationKeys = array.cons(wegKey, locationKeys);
+      const allLocationVeldinfos = array.filterMap(key => array.findFirst<ke.VeldInfo>(vi => vi.naam === key)(veldinfos))(allLocationKeys);
+      const locationHeader: ColumnHeader = { key: "syntheticLocation", label: "Locatie", contributingVeldinfos: allLocationVeldinfos };
       const headersTrf: Endomorphism<ColumnHeader[]> = headers =>
-        array.cons({ key: "syntheticLocation", label: "Locatie" }, headers).filter(header => !allLocationLabels.includes(header.label));
+        array
+          .cons(locationHeader, headers) // De synthetische header toevoegen
+          .filter(header => !allLocationLabels.includes(header.label)); // en de bijdragende headers verwijderen
 
       const distance: Function2<number, number, string> = (ref, offset) => (offset >= 0 ? `${ref} +${offset}` : `${ref} ${offset}`);
 
@@ -194,7 +212,7 @@ export namespace LaagModel {
                 distances => `${wegValue} van ${distance(distances[0], distances[1])} tot ${distance(distances[2], distances[3])}`
               )
             )
-            .orElse(() => option.some("Geen weglocatie"))
+            .orElse(() => option.some("<Geen weglocatie>"))
         };
         return Row.addField("syntheticLocation", locatieField)(row);
       };
@@ -212,12 +230,23 @@ export namespace LaagModel {
         .filter(vi => selectedVeldnamen.includes(vi.naam))
         .map(vi => ({
           key: vi.naam,
-          label: option.fromNullable(vi.label).getOrElse(vi.naam)
+          label: option.fromNullable(vi.label).getOrElse(vi.naam),
+          contributingVeldinfos: [vi]
         }));
       const [headersTransformer, rowTransformer] = locationTransformer(veldinfos);
       const headers = ColumnHeaders.create(headersTransformer(baseColumnHeaders));
+
       const pageFetcher = PageFetcher.sourceBasedPageFetcher(laag.bron.source);
       const featureCountFetcher = FeatureCountFetcher.sourceBasedFeatureCountFetcher(laag.bron.source);
+
+      const firstHeader = array.take(1, headers.headers);
+      const contributingVeldinfos = array.chain((header: ColumnHeader) => header.contributingVeldinfos)(firstHeader);
+      const fieldSortings = contributingVeldinfos.map(vi => ({
+        fieldKey: vi.naam,
+        direction: "ASCENDING" as SortDirection,
+        veldinfo: vi
+      }));
+
       return {
         titel: laag.titel,
         veldinfos,
@@ -227,6 +256,7 @@ export namespace LaagModel {
         featureCount: FeatureCount.pending,
         selectedVeldnamen,
         headers,
+        fieldSortings,
         source,
         minZoom: laag.bron.minZoom,
         maxZoom: laag.bron.maxZoom,
@@ -383,7 +413,7 @@ export namespace TableModel {
       option.some(
         PageFetcher.pageFromSource(laag.source, {
           dataExtent: laag.viewinstellingen.extent,
-          fieldSortings: [],
+          fieldSortings: laag.fieldSortings,
           pageNumber: currentPageNumber(laag),
           rowCreator: flow(
             Row.featureToRow(laag.veldinfos),

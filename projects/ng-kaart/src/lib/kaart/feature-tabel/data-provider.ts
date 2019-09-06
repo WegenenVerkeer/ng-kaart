@@ -1,6 +1,19 @@
-import { array, option, setoid } from "fp-ts";
-import { Curried2, Endomorphism, flow, Function1, Function2, Function3, Predicate, Refinement } from "fp-ts/lib/function";
+import { array, option, ord, setoid } from "fp-ts";
+import {
+  curried,
+  Curried2,
+  curry,
+  Endomorphism,
+  flow,
+  Function1,
+  Function2,
+  Function3,
+  identity,
+  Predicate,
+  Refinement
+} from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
+import { between, Ord } from "fp-ts/lib/Ord";
 import { Setoid } from "fp-ts/lib/Setoid";
 import { DateTime } from "luxon";
 import { Iso, Lens, Prism } from "monocle-ts";
@@ -14,6 +27,7 @@ import { parseDate, parseDateTime } from "../../util/date-time";
 import { Feature } from "../../util/feature";
 import { PartialFunction2 } from "../../util/function";
 import { isOfKind } from "../../util/kinded";
+import * as matchers from "../../util/matchers";
 import * as setoids from "../../util/setoid";
 import * as ke from "../kaart-elementen";
 
@@ -33,8 +47,9 @@ export interface PageNumber extends Newtype<{ readonly PAGENUMBER: unique symbol
 export type SortDirection = "ASCENDING" | "DESCENDING";
 
 export interface FieldSorting {
-  readonly fieldName: string;
+  readonly fieldKey: string;
   readonly direction: SortDirection;
+  readonly veldinfo: ke.VeldInfo;
 }
 
 export interface Page {
@@ -111,9 +126,6 @@ export namespace Row {
       )
       .orElse(() => option.fromPredicate<string>(v => typeof v === "string" && veldinfo.type === "string")(value));
 
-  // export const dataInBbox: Function2<NoSqlFsLaagAndData, ol.Extent, ol.Feature[]> = (laagAndData, bbox) =>
-  //   laagAndData.data().filter(feature => ol.extent.intersects(feature.getGeometry().getExtent(), bbox));
-
   const nestedPropertyValue: Function3<Properties, string[], ke.VeldInfo, Field> = (properties, path, veldinfo) =>
     array.fold(path, emptyField, (head, tail) =>
       arrays.isEmpty(tail)
@@ -123,17 +135,16 @@ export namespace Row {
         : emptyField
     );
 
-  const extractField: Curried2<Properties, ke.VeldInfo, Field> = properties => veldinfo =>
+  export const extractField: Function2<Properties, ke.VeldInfo, Field> = (properties, veldinfo) =>
     nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo);
 
-  export const featureToRow: Curried2<ke.VeldInfo[], ol.Feature, Row> = veldInfos => feature =>
-    veldInfos.reduce((row, vi) => {
-      row[vi.naam] = extractField({
-        id: Feature.propertyId(feature).toUndefined(),
-        ...Feature.properties(feature)
-      })(vi);
+  export const featureToRow: Curried2<ke.VeldInfo[], ol.Feature, Row> = veldInfos => feature => {
+    const propertiesWithId = Feature.propertiesWithId(feature);
+    return veldInfos.reduce((row, vi) => {
+      row[vi.naam] = extractField(propertiesWithId, vi);
       return row;
     }, {});
+  };
 
   export const addField: Function2<string, Field, Endomorphism<Row>> = (label, field) => row => {
     const newRow = { ...row };
@@ -143,6 +154,8 @@ export namespace Row {
 }
 
 export namespace Page {
+  export const PageSize = 100;
+
   export const create: Function2<PageNumber, Row[], Page> = (pageNumber, rows) => ({
     pageNumber,
     rows
@@ -156,6 +169,11 @@ export namespace Page {
   export const first: PageNumber = isoPageNumber.wrap(0);
   export const previous: Endomorphism<PageNumber> = isoPageNumber.modify(n => Math.max(0, n - 1));
   export const next: Endomorphism<PageNumber> = isoPageNumber.modify(n => n + 1);
+
+  export const isInPage: Function1<PageNumber, Predicate<number>> = pageNumber => i => {
+    const lowerPageBound = isoPageNumber.unwrap(pageNumber) * PageSize;
+    return i >= lowerPageBound && i < lowerPageBound + PageSize;
+  };
 }
 
 export namespace DataRequest {
@@ -176,8 +194,6 @@ export namespace DataRequest {
 }
 
 export namespace PageFetcher {
-  const PageSize = 100;
-
   export const sourceBasedPageFetcher: Function1<ol.source.Vector, PageFetcher> = source => pageRequest => {
     // We willen zo vlug als mogelijk de data bijwerken. Het is evenwel mogelijk dat het een tijd duurt vooraleer de
     // data binnen komt en we willen ook niet blijven wachten. Daarnaast willen we de observable niet voor altijd open
@@ -189,17 +205,46 @@ export namespace PageFetcher {
         map(() =>
           DataRequest.DataReady(
             pageRequest.pageNumber,
-            array.take(PageSize, source.getFeaturesInExtent(pageRequest.dataExtent).map(pageRequest.rowCreator))
+            array.take(Page.PageSize, source.getFeaturesInExtent(pageRequest.dataExtent).map(pageRequest.rowCreator))
           )
         )
       )
     );
   };
 
+  const featuresInExtend: Curried2<ol.Extent, ol.source.Vector, ol.Feature[]> = extent => source => source.getFeaturesInExtent(extent);
+  const takePage: Function1<PageNumber, Endomorphism<ol.Feature[]>> = pageNumber => array.filterWithIndex(Page.isInPage(pageNumber));
+  const toRows: Curried2<Function1<ol.Feature, Row>, ol.Feature[], Row[]> = array.map;
+  const featureToFieldValue: Curried2<FieldSorting, ol.Feature, Option<ValueType>> = sorting => feature =>
+    Row.extractField(Feature.properties(feature), sorting.veldinfo).maybeValue;
+  const ordFor: Function1<FieldSorting, Ord<ValueType>> = sorting =>
+    ke.VeldInfo.matchWithFallback<Ord<ValueType>>({
+      string: () => ord.ordString,
+      integer: () => ord.ordNumber,
+      double: () => ord.ordNumber,
+      boolean: () => ord.ordBoolean,
+      // TODO + date en datetime -> parse + ordNumber
+      fallback: () => ord.ordString
+    })(sorting.veldinfo);
+  const sortingToOrd: Function1<FieldSorting, Ord<ol.Feature>> = sorting =>
+    ord.contramap(featureToFieldValue(sorting), option.getOrd(ordFor(sorting)));
+  const sortingsToOrds: Function1<FieldSorting[], Ord<ol.Feature>[]> = array.map(sortingToOrd);
+  const unlessNoSortableFields: Function1<Option<Endomorphism<ol.Feature[]>>, Endomorphism<ol.Feature[]>> = o => o.getOrElse(identity);
+  const sortFeatures: Function1<FieldSorting[], Endomorphism<ol.Feature[]>> = flow(
+    sortingsToOrds,
+    array.sortBy,
+    unlessNoSortableFields
+  );
+
   export const pageFromSource: Function2<ol.source.Vector, PageRequest, Page> = (source, pageRequest) =>
     Page.create(
       pageRequest.pageNumber,
-      array.take(PageSize, source.getFeaturesInExtent(pageRequest.dataExtent).map(pageRequest.rowCreator))
+      flow(
+        featuresInExtend(pageRequest.dataExtent),
+        sortFeatures(pageRequest.fieldSortings),
+        takePage(pageRequest.pageNumber),
+        toRows(pageRequest.rowCreator)
+      )(source)
     );
 }
 
