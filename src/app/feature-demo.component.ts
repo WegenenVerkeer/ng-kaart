@@ -672,7 +672,7 @@ export class FeatureDemoComponent {
     { isBasisVeld: false, label: "Locatie X", naam: "geometry.location.0", type: "double" },
     { isBasisVeld: false, label: "Locatie Y", naam: "geometry.location.1", type: "double" },
     { isBasisVeld: true, label: "Type bord", naam: "code", type: "string" },
-    { isBasisVeld: true, label: "Breedte", naam: "breedte", type: "double", geenLocatieVeld: true },
+    { isBasisVeld: true, label: "Breedte", naam: "breedte", type: "double", isGeenLocatieVeld: true },
     { isBasisVeld: true, label: "Hoogte", naam: "hoogte", type: "double" }
   ];
 
