@@ -4,17 +4,17 @@
     <span class="afstand">{{ vanAfstand() }}</span>
     tot {{ tot() }}
     <span class="afstand">{{ totAfstand() }}</span>
-    <span *ngIf="heeft('zijderijbaan') || heeft('afstandrijbaan')">
+    <span *ngIf="heeftLocatieGegevensVoor('zijderijbaan') || heeftLocatieGegevensVoor('afstandrijbaan')">
     / {{ zijderijbaan() }}
-    <span class="afstand" *ngIf="heeft('afstandrijbaan')">+{{ waarde("afstandrijbaan") }}cm</span>
+    <span class="afstand" *ngIf="heeftLocatieGegevensVoor('afstandrijbaan')">+{{ waarde("afstandrijbaan") }}cm</span>
   </span>
   </div>
 
-  <div class="vantot" *ngIf="heeft('hm')">{{ waarde("hm") }}
+  <div class="vantot" *ngIf="heeftLocatieGegevensVoor('hm')">{{ waarde("hm") }}
     <span class="afstand">{{ verpl() }}</span>
-    <span *ngIf="heeft('zijderijbaan') || heeft('afstandrijbaan')">
+    <span *ngIf="heeftLocatieGegevensVoor('zijderijbaan') || heeftLocatieGegevensVoor('afstandrijbaan')">
     / {{ zijderijbaan() }}
-    <span class="afstand" *ngIf="heeft('afstandrijbaan')">+{{ waarde("afstandrijbaan") }}cm</span>
+    <span class="afstand" *ngIf="heeftLocatieGegevensVoor('afstandrijbaan')">+{{ waarde("afstandrijbaan") }}cm</span>
   </span>
   </div>
 
