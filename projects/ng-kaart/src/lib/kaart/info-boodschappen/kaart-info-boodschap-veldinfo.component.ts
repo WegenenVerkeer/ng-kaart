@@ -122,8 +122,8 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
     super(parent, zone);
   }
 
-  heeft(key: string) {
-    return hasValue(this.waarde(key));
+  heeftLocatieGegevensVoor(key: string) {
+    return hasValue(this.waarde(key)) && this.isLocatieVeld(key);
   }
 
   alleVeldenZichtbaar() {
@@ -148,7 +148,12 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
   }
 
   heeftDimensies() {
-    return this.lengte().isSome() || this.breedte().isSome();
+    return (
+      this.heeftLocatieGegevensVoor(LOCATIE_LENGTE) ||
+      this.heeftLocatieGegevensVoor(LOCATIE_LENGTE) ||
+      this.heeftLocatieGegevensVoor(LOCATIE_GEOMETRY_LENGTE) ||
+      this.heeftLocatieGegevensVoor(BREEDTE)
+    );
   }
 
   dimensies(): string {
@@ -178,8 +183,8 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
 
   heeftVanTot(): boolean {
     return (
-      (hasValue(this.waarde(BEGIN_OPSCHRIFT)) && hasValue(this.waarde(EIND_OPSCHRIFT))) ||
-      (hasValue(this.waarde(BEGIN_OPSCHRIFT_ALT)) && hasValue(this.waarde(EIND_OPSCHRIFT_ALT)))
+      (this.heeftLocatieGegevensVoor(BEGIN_OPSCHRIFT) && this.heeftLocatieGegevensVoor(EIND_OPSCHRIFT)) ||
+      (this.heeftLocatieGegevensVoor(BEGIN_OPSCHRIFT_ALT) && this.heeftLocatieGegevensVoor(EIND_OPSCHRIFT_ALT))
     );
   }
 
@@ -199,7 +204,9 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
   }
 
   heeftIdent8(): boolean {
-    return this.heeft(IDENT8) || this.heeft(LOCATIE_IDENT8) || this.heeft(IDENT8EN);
+    return (
+      this.heeftLocatieGegevensVoor(IDENT8) || this.heeftLocatieGegevensVoor(LOCATIE_IDENT8) || this.heeftLocatieGegevensVoor(IDENT8EN)
+    );
   }
 
   ident8() {
@@ -255,7 +262,7 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
         !isBooleanVeld(this.veldbeschrijvingen, veldnaam) &&
         !isDateVeld(this.veldbeschrijvingen, veldnaam) &&
         !isDateTimeVeld(this.veldbeschrijvingen, veldnaam) &&
-        !this.teVerbergenProperties.includes(veldnaam)
+        (!this.teVerbergenProperties.includes(veldnaam) || this.isGeenLocatieVeld(veldnaam))
     );
   }
 
@@ -366,6 +373,16 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
     return veldbeschrijving(veldnaam, this.veldbeschrijvingen).chain(veldInfo =>
       option.fromNullable(veldInfo.displayFormat).orElse(() => option.fromNullable(veldInfo.parseFormat))
     );
+  }
+
+  isLocatieVeld(veldnaam: string): boolean {
+    return !this.isGeenLocatieVeld(veldnaam);
+  }
+
+  isGeenLocatieVeld(veldnaam: string): boolean {
+    return veldbeschrijving(veldnaam, this.veldbeschrijvingen)
+      .chain(veldInfo => option.fromNullable(veldInfo.geenLocatieVeld))
+      .getOrElse(false);
   }
 
   waarde(veldnaam: string): string | number {

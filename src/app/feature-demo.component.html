@@ -769,6 +769,14 @@
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
             <awv-kaart-blanco-laag [titel]="'Leeg'"></awv-kaart-blanco-laag>
 
+            <awv-kaart-nosqlfs-laag [titel]="'Borden'" [url]="'/geolatte-nosqlfs'"
+                                    [database]="'featureserver'" [collection]="'borden'"
+                                    [style]="bordStyle"
+                                    [minZoom]="9"
+                                    [gebruikCache]="true"
+                                    [veldinfos]="bordenVeldinfos"
+            ></awv-kaart-nosqlfs-laag>
+
             <awv-kaart-nosqlfs-laag [titel]="'Verkeersborden'" [url]="'/geolatte-nosqlfs'"
                                     [database]="'featureserver'" [collection]="'verkeersborden'"
                                     [styleFunction]="verkeersbordenStyleFunction"
