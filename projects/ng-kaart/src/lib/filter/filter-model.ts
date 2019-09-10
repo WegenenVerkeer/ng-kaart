@@ -87,7 +87,7 @@ export namespace Filter {
   }
 
   // TODO: laten we voorlopig overeen komen met alle veldtypes uit VeldInfo
-  export type TypeType = "string" | "integer" | "double" | "geometry" | "date" | "datetime" | "boolean" | "json";
+  export type TypeType = "string" | "integer" | "double" | "geometry" | "date" | "datetime" | "boolean" | "json" | "url";
 
   export type ValueType = boolean | string | number;
 

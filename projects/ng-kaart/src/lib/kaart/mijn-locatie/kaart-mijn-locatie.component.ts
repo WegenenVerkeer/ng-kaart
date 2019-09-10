@@ -1,11 +1,25 @@
 import { AfterViewInit, Component, NgZone, OnInit, QueryList, ViewChildren } from "@angular/core";
 import { MatButton } from "@angular/material";
-import { Function1, Function3, Function4 } from "fp-ts/lib/function";
+import { Function1, Predicate } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { AbsoluteOrientationSensor } from "motion-sensors-polyfill";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { distinctUntilChanged, filter, map, mapTo, pairwise, scan, shareReplay, startWith, throttle, throttleTime } from "rxjs/operators";
+import {
+  buffer,
+  debounceTime,
+  distinctUntilChanged,
+  filter,
+  map,
+  mapTo,
+  mergeAll,
+  pairwise,
+  scan,
+  shareReplay,
+  startWith,
+  throttle,
+  throttleTime
+} from "rxjs/operators";
 
 import { Transparantie } from "../../transparantieeditor/transparantie";
 import { catOptions } from "../../util/operators";
@@ -27,8 +41,57 @@ export type State = "TrackingDisabled" | "NoTracking" | "Tracking" | "TrackingCe
 
 export type Event = "ActiveerEvent" | "DeactiveerEvent" | "PanEvent" | "ZoomEvent" | "RotateEvent" | "ClickEvent";
 
+interface EventMetVerschil {
+  readonly event: Event;
+  readonly verschil: number;
+}
+
 export type EventMap = { [event in Event]: State };
 export type StateMachine = { [state in State]: EventMap };
+
+const isEventRelevant = (event: EventMetVerschil) => {
+  switch (event.event) {
+    case "ActiveerEvent":
+      return true;
+    case "DeactiveerEvent":
+      return true;
+    case "PanEvent":
+      return true;
+    case "ZoomEvent":
+      return event.verschil > 1.0;
+    case "RotateEvent":
+      return event.verschil > 0.5;
+    case "ClickEvent":
+      return true;
+  }
+};
+
+interface TrackingInfo {
+  readonly feature: Option<ol.Feature>;
+  readonly zoom: number;
+  readonly accuracy: number;
+  readonly doelzoom: number;
+  readonly currentRotation: number;
+  readonly rotatie: number;
+  readonly coordinate: ol.Coordinate;
+  readonly state: State;
+  readonly stateVeranderd: boolean;
+}
+
+const afstandTussenCoordinaten = (c1: ol.Coordinate, c2: ol.Coordinate) => {
+  const line = new ol.geom.LineString([c1, c2]);
+  return line.getLength();
+};
+
+const isTrackingInfoGelijk = (t1: TrackingInfo, t2: TrackingInfo) => {
+  return (
+    Math.round(t1.zoom) === Math.round(t2.zoom) &&
+    Math.abs(t1.currentRotation - t2.currentRotation) < 0.5 &&
+    afstandTussenCoordinaten(t1.coordinate, t2.coordinate) < 1.0 &&
+    t1.state === t2.state &&
+    t1.stateVeranderd === t2.stateVeranderd
+  );
+};
 
 export const NoOpStateMachine: StateMachine = {
   NoTracking: {
@@ -73,53 +136,119 @@ export const NoOpStateMachine: StateMachine = {
   }
 };
 
-const pasLocatieFeatureAan: Function4<ol.Feature, ol.Coordinate, number, number, ol.Feature> = (feature, coordinate, zoom, accuracy) => {
-  feature.setGeometry(new ol.geom.Point(coordinate));
-  zetStijl(feature, zoom, accuracy);
-  feature.changed(); // force redraw meteen
-  return feature;
+const pasLocatieFeatureAan: Function1<TrackingInfo, Option<ol.Feature>> = info => {
+  return info.feature.map(feature => {
+    feature.setGeometry(new ol.geom.Point(info.coordinate));
+    zetStijl(info);
+    feature.changed(); // force redraw meteen
+    return feature;
+  });
 };
 
-const moetCentreren = (state: State) => state === "TrackingCenter" || state === "TrackingAutoRotate";
+const moetCentreren: Predicate<State> = state => state === "TrackingCenter" || state === "TrackingAutoRotate";
 
-const moetLocatieTonen = (state: State) => state === "Tracking" || state === "TrackingCenter" || state === "TrackingAutoRotate";
+const moetLocatieTonen: Predicate<State> = state => state === "Tracking" || state === "TrackingCenter" || state === "TrackingAutoRotate";
 
-const moetRoteren = (state: State) => state === "TrackingAutoRotate";
+const moetRoteren: Predicate<State> = state => state === "TrackingAutoRotate";
 
-const zetStijl: Function3<ol.Feature, number, number, void> = (feature, zoom, accuracy) => feature.setStyle(locatieStijlFunctie(accuracy));
+const moetKijkrichtingTonen: Predicate<State> = state =>
+  state === "Tracking" || state === "TrackingCenter" || state === "TrackingAutoRotate";
 
-const locatieStijlFunctie: Function1<number, ol.FeatureStyleFunction> = accuracy => {
-  return resolution => {
-    const accuracyInPixels = Math.min(accuracy, 500) / resolution; // max 500m cirkel, soms accuracy 86000 in chrome bvb...
-    const radius = Math.max(accuracyInPixels, 12); // nauwkeurigheid cirkel toch nog tonen zelfs indien ver uitgezoomd
-    return [
-      new ol.style.Style({
-        zIndex: 2,
-        image: new ol.style.Circle({
-          fill: new ol.style.Fill({
-            color: "rgba(66, 133, 244, 1.0)"
-          }),
-          stroke: new ol.style.Stroke({
-            color: "rgba(255, 255, 255, 1.0)",
-            width: 2
-          }),
-          radius: 6
-        })
-      }),
-      new ol.style.Style({
-        zIndex: 1,
-        image: new ol.style.Circle({
-          fill: new ol.style.Fill({
-            color: "rgba(65, 105, 225, 0.15)"
-          }),
-          stroke: new ol.style.Stroke({
-            color: "rgba(65, 105, 225, 0.5)",
-            width: 1
-          }),
-          radius: radius
-        })
+const zetStijl: Function1<TrackingInfo, void> = info => info.feature.map(feature => feature.setStyle(locatieStijlFunctie(info)));
+
+const locatieStijlFunctie: Function1<TrackingInfo, ol.FeatureStyleFunction> = info => {
+  const fillColor = "rgba(65, 105, 225, 0.15)";
+  const strokeColor = "rgba(65, 105, 225, 0.5)";
+  const fillColorDark = "rgba(65, 105, 225, 0.25)";
+
+  function binnencirkelStyle(): ol.style.Style {
+    return new ol.style.Style({
+      zIndex: 2,
+      image: new ol.style.Circle({
+        fill: new ol.style.Fill({
+          color: "rgba(66, 133, 244, 1.0)"
+        }),
+        stroke: new ol.style.Stroke({
+          color: "rgba(255, 255, 255, 1.0)",
+          width: 2
+        }),
+        radius: 6
       })
-    ];
+    });
+  }
+
+  function buitencirkelStyle(radius: number): ol.style.Style {
+    return new ol.style.Style({
+      zIndex: 1,
+      image: new ol.style.Circle({
+        fill: new ol.style.Fill({
+          color: fillColor
+        }),
+        radius: radius
+      })
+    });
+  }
+
+  function kijkrichtingStyle(info: TrackingInfo, radius: number): Option<ol.style.Style> {
+    if (moetKijkrichtingTonen(info.state)) {
+      const radius2 = Math.min(radius, 50);
+
+      const canvas = document.createElement("canvas");
+      canvas.width = radius2 * 2;
+      canvas.height = radius2 * 2;
+      const context = canvas.getContext("2d");
+      if (context) {
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+
+        const angle1 = 67.5 * (Math.PI / 180.0);
+        const angle2 = 22.5 * (Math.PI / 180.0);
+
+        const x1 = centerX + Math.cos(angle1) * centerX;
+        const y1 = centerY - Math.sin(angle1) * centerY;
+        const x2 = centerX + Math.cos(angle2) * centerX;
+        const y2 = centerY - Math.sin(angle2) * centerY;
+
+        const grad = context.createRadialGradient(centerX, centerY, radius2 / 2, centerX, centerY, radius2);
+        grad.addColorStop(0, fillColorDark);
+        grad.addColorStop(1, "transparent");
+
+        context.beginPath();
+        context.moveTo(centerX, centerY);
+        context.lineTo(x1, y1);
+        context.arcTo(x2, y1, x2, y2, y2 - y1);
+        context.lineTo(centerX, centerY);
+        context.fillStyle = grad;
+        context.fill();
+
+        context.beginPath();
+        context.moveTo(x1, y1);
+        context.lineTo(centerX, centerY);
+        context.lineTo(x2, y2);
+        context.strokeStyle = strokeColor;
+        context.stroke();
+        const buitenArc = new ol.style.Style({
+          image: new ol.style.Icon({
+            img: canvas,
+            imgSize: [canvas.width, canvas.height],
+            rotation: info.currentRotation - (info.rotatie + Math.PI / 4)
+          })
+        });
+        return some(buitenArc);
+      }
+    }
+    return none;
+  }
+
+  return resolution => {
+    const accuracyInPixels = Math.min(info.accuracy, 500) / resolution; // max 500m cirkel, soms accuracy 86000 in chrome bvb...
+    const radius = Math.max(accuracyInPixels, 12); // nauwkeurigheid cirkel toch nog tonen zelfs indien ver uitgezoomd
+
+    const binnencirkel: ol.style.Style = binnencirkelStyle();
+    const buitencirkel: ol.style.Style = buitencirkelStyle(radius);
+    const kijkrichting: Option<ol.style.Style> = kijkrichtingStyle(info, radius);
+
+    return kijkrichting.map(arc => [binnencirkel, buitencirkel, arc]).getOrElse([binnencirkel, buitencirkel]);
   };
 };
 
@@ -140,7 +269,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
   private locatieSubj: rx.Subject<Position> = new rx.Subject<Position>();
   private rotatieSubj: rx.Subject<number> = new rx.Subject<number>();
 
-  private eventsSubj: rx.Subject<Event> = new rx.Subject<Event>();
+  private eventsSubj: rx.Subject<EventMetVerschil> = new rx.Subject<EventMetVerschil>();
 
   currentState$: rx.Observable<State> = rx.of("TrackingDisabled" as State);
   enabled$: rx.Observable<boolean> = rx.of(true);
@@ -188,48 +317,69 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
       distinctUntilChanged((vi1, vi2) => vi1.zoom === vi2.zoom && vi1.minZoom === vi2.minZoom && vi1.maxZoom === vi2.maxZoom),
       map(vi => vi.zoom)
     );
+    const currentRotation$ = this.viewinstellingen$.pipe(
+      distinctUntilChanged((vi1, vi2) => vi1.rotation === vi2.rotation),
+      map(vi => vi.rotation)
+    );
 
     // Event handlers
     this.bindToLifeCycle(this.parent.modelChanges.dragInfo$).subscribe(() => {
-      this.eventsSubj.next("PanEvent");
+      this.eventsSubj.next({ event: "PanEvent", verschil: 0 });
     });
 
     // We moeten de rotatie-events die we zelf triggeren negeren.
     this.bindToLifeCycle(
       this.parent.modelChanges.rotatie$.pipe(
+        pairwise(),
         throttle(() => {
           if (this.rotatieIsGevraagd) {
             this.rotatieIsGevraagd = false;
             return rx.timer(500);
           } else {
-            return rx.of(1);
+            return rx.timer(1);
           }
         }),
-        filter(() => !this.rotatieIsGevraagd)
+        filter(() => !this.rotatieIsGevraagd),
+        map(([oud, nieuw]) => Math.abs(oud - nieuw))
       )
-    ).subscribe(() => this.eventsSubj.next("RotateEvent"));
+    ).subscribe(verschil => this.eventsSubj.next({ event: "RotateEvent", verschil }));
 
     // We moeten de zoom-events die we zelf triggeren negeren.
     this.bindToLifeCycle(
       zoom$.pipe(
+        pairwise(),
         throttle(() => {
           if (this.zoomIsGevraagd) {
             this.zoomIsGevraagd = false;
             return rx.timer(500);
           } else {
-            return rx.of(1);
+            return rx.timer(1);
           }
         }),
-        filter(() => !this.zoomIsGevraagd)
+        filter(() => !this.zoomIsGevraagd),
+        map(([oud, nieuw]) => Math.abs(oud - nieuw))
       )
-    ).subscribe(() => this.eventsSubj.next("ZoomEvent"));
+    ).subscribe(verschil => this.eventsSubj.next({ event: "ZoomEvent", verschil }));
 
     // "State machine"
     const stateMachine: StateMachine = this.getStateMachine();
 
     this.currentState$ = rx
       .merge(
-        this.eventsSubj, //
+        this.eventsSubj.pipe(
+          // Wanneer er op mobile met twee vingers gedragd wordt, krijgen we op korte tijd een zoom-, somes een rotate- en dragevent
+          // we willen die hier groeperen en dan de "niet relevante" (kleine verandering) events eruit halen.
+          buffer(this.eventsSubj.pipe(debounceTime(500))),
+          map(events => {
+            if (events.length === 1) {
+              return events;
+            } else {
+              return events.filter(isEventRelevant);
+            }
+          }),
+          map(events => events.map(event => event.event)),
+          mergeAll()
+        ), //
         this.wordtActief$.pipe(mapTo("ActiveerEvent")),
         this.wordtInactief$.pipe(mapTo("DeactiveerEvent"))
       )
@@ -245,15 +395,37 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
 
     // pas positie aan bij nieuwe locatie
     this.bindToLifeCycle(
-      rx.combineLatest([zoom$, zoomdoel$, this.locatieSubj.pipe(throttleTime(TrackingInterval)), this.currentState$.pipe(pairwise())]).pipe(
-        filter(([, , , [, state]]) => {
-          return this.isTrackingActief(state);
-        }),
-        map(([zoom, doel, locatie, [prevState, state]]) => {
-          return { zoom: zoom, doelzoom: doel, position: locatie, state: state, stateVeranderd: prevState !== state };
-        })
-      )
-    ).subscribe(r => this.zetMijnPositie(r.position, r.zoom, r.doelzoom, r.state, r.stateVeranderd));
+      rx
+        .combineLatest([
+          zoom$,
+          zoomdoel$,
+          currentRotation$,
+          this.rotatieSubj.pipe(throttleTime(TrackingInterval)),
+          this.locatieSubj.pipe(throttleTime(TrackingInterval)),
+          this.currentState$.pipe(pairwise())
+        ])
+        .pipe(
+          filter(([, , , , , [, state]]) => {
+            return this.isTrackingActief(state);
+          }),
+          map(([zoom, doel, currentRotation, rotatie, locatie, [prevState, state]]) => {
+            const longLat: ol.Coordinate = [locatie.coords.longitude, locatie.coords.latitude];
+            const coordinate = ol.proj.fromLonLat(longLat, "EPSG:31370");
+            return {
+              feature: none,
+              zoom,
+              accuracy: locatie.coords.accuracy,
+              doelzoom: doel,
+              currentRotation,
+              rotatie,
+              coordinate,
+              state,
+              stateVeranderd: prevState !== state
+            };
+          }),
+          distinctUntilChanged(isTrackingInfoGelijk)
+        )
+    ).subscribe(r => this.zetMijnPositie(r));
 
     // pas rotatie aan
     this.bindToLifeCycle(
@@ -275,18 +447,20 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
       if (!(moetCentreren(state) || moetLocatieTonen(state)) && this.watchId.isSome()) {
         this.stopPositieTracking();
       }
-      if (moetRoteren(state) && this.sensor.isNone()) {
+      if ((moetRoteren(state) || moetKijkrichtingTonen(state)) && this.sensor.isNone()) {
         this.startRotatieTracking();
       }
-      if (!moetRoteren(state) && this.watchId.isSome()) {
+      if (!moetRoteren(state) && !moetKijkrichtingTonen(state) && this.sensor.isSome()) {
         this.stopRotatieTracking();
       }
       this.centreerIndienNodig(state);
     });
 
     if (navigator.geolocation) {
-      this.eventsSubj.next("ActiveerEvent");
+      this.eventsSubj.next({ event: "ActiveerEvent", verschil: 0 });
     }
+    // Nodig omdat we anders wachten tot we een rotatieevent binnenkrijgen voor we de locatie tonen.
+    this.rotatieSubj.next(0);
   }
 
   isTrackingActief(state: State): boolean {
@@ -303,12 +477,12 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
   }
 
   click() {
-    this.eventsSubj.next("ClickEvent");
+    this.eventsSubj.next({ event: "ClickEvent", verschil: 0 });
   }
 
-  private maakNieuwFeature(coordinate: ol.Coordinate, accuracy: number): Option<ol.Feature> {
-    const feature = new ol.Feature(new ol.geom.Point(coordinate));
-    feature.setStyle(locatieStijlFunctie(accuracy));
+  private maakNieuwFeature(info: TrackingInfo): Option<ol.Feature> {
+    const feature = new ol.Feature(new ol.geom.Point(info.coordinate));
+    feature.setStyle(locatieStijlFunctie({ feature: some(feature), ...info }));
     this.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, [feature], kaartLogOnlyWrapper));
     return some(feature);
   }
@@ -391,28 +565,25 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
     });
   }
 
-  private zetMijnPositie(position: Position, zoom: number, doelzoom: number, state: State, stateVeranderd: boolean) {
-    const longLat: ol.Coordinate = [position.coords.longitude, position.coords.latitude];
-    const coordinate = ol.proj.fromLonLat(longLat, "EPSG:31370");
-
-    if (moetLocatieTonen(state)) {
+  private zetMijnPositie(info: TrackingInfo) {
+    if (moetLocatieTonen(info.state)) {
       this.mijnLocatie = this.mijnLocatie
-        .map(feature => pasLocatieFeatureAan(feature, coordinate, zoom, position.coords.accuracy))
+        .chain(feature => pasLocatieFeatureAan({ feature: some(feature), ...info }))
         .orElse(() => {
-          return this.maakNieuwFeature(coordinate, position.coords.accuracy);
+          return this.maakNieuwFeature(info);
         })
         .map(feature => {
-          if (stateVeranderd && zoom < doelzoom && moetCentreren(state)) {
+          if (info.stateVeranderd && info.zoom < info.doelzoom && moetCentreren(info.state)) {
             // We zitten nu op een te laag zoomniveau, dus gaan we eerst inzoomen,
             // maar we doen dit alleen wanneer we van een state veranderd zijn.
             this.zoomIsGevraagd = true;
-            this.dispatch(prt.VeranderZoomCmd(doelzoom, kaartLogOnlyWrapper));
+            this.dispatch(prt.VeranderZoomCmd(info.doelzoom, kaartLogOnlyWrapper));
           }
           return feature;
         });
     }
 
-    this.centreerIndienNodig(state);
+    this.centreerIndienNodig(info.state);
   }
 
   private centreerIndienNodig(state: State) {
