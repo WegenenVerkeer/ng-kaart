@@ -1,8 +1,8 @@
-<div class="feature-table-pager-content" *ngIf="(pageData$ | async) as page" >
-  <div>{{page.currentPageNumber + 1}} / {{page.lastPageNumber + 1}}</div>
+<div class="feature-table-pager-content" *ngIf="(pageData$ | async) as page">
+  <div>{{ page.currentPageNumber + 1 }} / {{ page.lastPageNumber + 1 }}</div>
   <button
     mat-icon-button
-    matToolTip="Vorige pagina"
+    matTooltip="Vorige pagina"
     (click)="onAction('previous')"
     [disabled]="page.isFirstPage"
   >
@@ -17,10 +17,11 @@
     [max]="page.lastPageNumber"
     [value]="page.currentPageNumber"
     [disabled]="page.doesNotHaveMultiplePages"
+    matTooltip="Kies een pagina"
   ></mat-slider>
   <button
     mat-icon-button
-    matToolTip="Volgende pagina"
+    matTooltip="Volgende pagina"
     (click)="onAction('next')"
     [disabled]="page.isLastPage"
   >
