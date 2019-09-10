@@ -1,3 +1,4 @@
+import { setoid } from "fp-ts";
 import * as array from "fp-ts/lib/Array";
 import { Endomorphism, Function1, Function2, identity, not, pipe } from "fp-ts/lib/function";
 import * as fptsmap from "fp-ts/lib/Map";
@@ -38,7 +39,7 @@ import { MsgGen } from "./kaart-protocol-subscriptions";
 import { KaartWithInfo } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
 import { kaartLogger } from "./log";
-import { ModelChanger, ModelChanges, TabelStateChange } from "./model-changes";
+import { ModelChanger, ModelChanges } from "./model-changes";
 import { findClosest } from "./select-closest";
 import {
   AwvV0StyleSpec,
@@ -328,7 +329,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     const ordToegevoegdeLaag: ord.Ord<ke.ToegevoegdeLaag> = ord.contramap(laag => -laag!.layer.getZIndex(), ord.ordNumber);
 
     function zendLagenInGroep(mdl: Model, groep: ke.Laaggroep): void {
-      modelChanger.lagenOpGroepSubj[groep].next(
+      modelChanger.lagenOpGroepSubj.get(groep)!.next(
         array.sort(ordToegevoegdeLaag)(lagenInGroep(mdl, groep)) // en dus ook geldige titels
       );
     }
@@ -1188,11 +1189,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
-    function deleteAlleBoodschappen(): ModelWithResult<Msg> {
-      model.infoBoodschappenSubj.next(new Map());
-      return ModelWithResult(model);
-    }
-
     function selecteerFeatures(cmnd: prt.SelecteerFeaturesCmd): ModelWithResult<Msg> {
       const currentFeatures = model.geselecteerdeFeatures.getArray();
       const newFeatures = cmnd.features;
@@ -1391,6 +1387,22 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
+    function ZetDataloadBusy(cmd: prt.ZetDataloadBusyCmd): ModelWithResult<Msg> {
+      modelChanger.dataloadBusySubj.next(cmd.busy);
+      return ModelWithResult(model);
+    }
+
+    function ZetUserBusy(cmd: prt.ZetUserBusyCmd): ModelWithResult<Msg> {
+      modelChanger.userBusySubj.next(cmd.busy);
+      return ModelWithResult(model);
+    }
+
+    function registreerError(cmd: prt.RegistreerErrorCmd): ModelWithResult<Msg> {
+      console.log("registreerError: ", cmd);
+      modelChanger.inErrorSubj.next(cmd.inError);
+      return ModelWithResult(model);
+    }
+
     function sluitPanelen(cmnd: prt.SluitPanelenCmd): ModelWithResult<Msg> {
       updateBehaviorSubject(model.infoBoodschappenSubj, () => new Map());
       modelChanger.laagstijlaanpassingStateSubj.next(GeenLaagstijlaanpassing);
@@ -1551,20 +1563,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
-    function emitTabelStateChange(state: TabelStateChange): ModelWithResult<Msg> {
-      modelChanger.tabelStateSubj.next(state);
-      return ModelWithResult(model);
-    }
-
-    function openTabel(): ModelWithResult<Msg> {
-      modelChanger.tabelStateSubj.next(TabelStateChange("Opengeklapt", true));
-      // Bij openen van het tabel paneel met deze 2 knoppen:
-      // Verdwijnen alle openstaande pop-up cards (bv kaart bevragen, meten,...)
-      modelChanger.laagstijlaanpassingStateSubj.next(GeenLaagstijlaanpassing);
-      modelChanger.transparantieAanpassingStateSubj.next(GeenTransparantieaanpassingBezig);
-      return deleteAlleBoodschappen();
-    }
-
     function zetGetekendeGeometry(cmnd: prt.ZetGetekendeGeometryCmd): ModelWithResult<Msg> {
       modelChanger.getekendeGeometrySubj.next(cmnd.geometry);
       return ModelWithResult(model);
@@ -1655,7 +1653,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       const subscribeToLagenInGroep = (sub: prt.LagenInGroepSubscription<Msg>) => {
         return modelWithSubscriptionResult(
           "LagenInGroep",
-          modelChanger.lagenOpGroepSubj[sub.groep].pipe(debounceTime(50)).subscribe(consumeMessage(sub))
+          modelChanger.lagenOpGroepSubj
+            .get(sub.groep)! // we vertrouwen op de typechecker
+            .pipe(debounceTime(50))
+            .subscribe(consumeMessage(sub))
         );
       };
 
@@ -1743,11 +1744,16 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         );
       }
 
-      function subscribeToTableState(sub: prt.TabelStateSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult(
-          "TableState",
-          modelChanges.tabelState$.pipe(distinctUntilChanged()).subscribe(consumeMessage(sub))
-        );
+      function subscribeToBusy(sub: prt.BusySubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult("Busy", modelChanges.dataloadBusy$.pipe(distinctUntilChanged()).subscribe(consumeMessage(sub)));
+      }
+
+      function subscribeToUserBusy(sub: prt.UserBusySubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult("UserBusy", modelChanges.userBusy$.pipe(distinctUntilChanged()).subscribe(consumeMessage(sub)));
+      }
+
+      function subscribeToInError(sub: prt.InErrorSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult("InError", modelChanges.inError$.pipe(distinctUntilChanged()).subscribe(consumeMessage(sub)));
       }
 
       switch (cmnd.subscription.type) {
@@ -1801,8 +1807,14 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToLaatsteCacheRefresh(cmnd.subscription);
         case "MijnLocatieStateChange":
           return subscribeToMijnLocatieStateChange(cmnd.subscription);
-        case "TabelState":
-          return subscribeToTableState(cmnd.subscription);
+        case "Busy":
+          return subscribeToBusy(cmnd.subscription);
+        case "UserBusy":
+          return subscribeToUserBusy(cmnd.subscription);
+        case "InError":
+          return subscribeToInError(cmnd.subscription);
+        default:
+          console.log("Error: niet afgehandelde subscription: ", cmnd);
       }
     }
 
@@ -1963,12 +1975,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return haalFilterTotaalOp(cmd);
         case "MijnLocatieStateChange":
           return emitMijnLocatieStateChange(cmd);
-        case "TabelStateChange":
-          return emitTabelStateChange(cmd.state);
-        case "OpenTabel":
-          return openTabel();
-        case "SluitTabel":
-          return emitTabelStateChange(TabelStateChange("Dichtgeklapt", true));
         case "BewerkTransparantie":
           return bewerkTransparantie(cmd);
         case "StopTransparantieBewerking":
@@ -1977,6 +1983,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return zetTransparantieVoorLaag(cmd);
         case "ZetZoomBereik":
           return zetZoomBereik(cmd);
+        case "RegistreerError":
+          return registreerError(cmd);
+        case "ZetDataloadBusy":
+          return ZetDataloadBusy(cmd);
+        case "ZetUserBusy":
+          return ZetUserBusy(cmd);
       }
     }
 

@@ -1,0 +1,50 @@
+import { AfterViewInit, Component, EventEmitter, Injector, Input, Output } from "@angular/core";
+import { distinctUntilChanged, tap } from "rxjs/operators";
+
+import * as prt from "../../kaart/kaart-protocol";
+import { DefaultProgressBarEnabledSelector } from "../../kaart/loading/kaart-loading.component";
+import { ofType } from "../../util";
+import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
+import { BusyMsg } from "../messages";
+
+@Component({
+  selector: "awv-kaart-laden",
+  template: ""
+})
+export class ClassicKaartLadenComponent extends ClassicUIElementSelectorComponentBase implements AfterViewInit {
+  /**
+   * Is de progressbar van ng-kaart bezig? True indien userBusy op true staat of indien er data geladen wordt.
+   */
+  @Output()
+  busy: EventEmitter<boolean> = new EventEmitter<boolean>();
+
+  /**
+   * Zet de progress bar aan, moet ook weer expliciet afgezet worden.
+   */
+  @Input()
+  set userBusy(param: boolean) {
+    this.kaart.dispatch(prt.ZetUserBusyCmd(param));
+  }
+
+  /** Toon de default progress bar als er features geladen worden? Default true. Indien false rendert ng-kaart zelf geen progressbar.
+   * Je kan wel nog altijd weten of ng-kaart 'bezig' is via de busy output.
+   */
+  @Input()
+  set defaultProgressbarEnabled(param: boolean) {
+    this.kaart.dispatch(prt.ZetUiElementOpties(DefaultProgressBarEnabledSelector, { defaultProgressBar: param }));
+  }
+
+  constructor(injector: Injector) {
+    super(DefaultProgressBarEnabledSelector, injector);
+  }
+
+  ngAfterViewInit() {
+    this.bindToLifeCycle(
+      this.kaart.kaartClassicSubMsg$.pipe(
+        ofType<BusyMsg>("Busy"),
+        distinctUntilChanged(),
+        tap(value => this.busy.emit(value.busy))
+      )
+    ).subscribe();
+  }
+}
