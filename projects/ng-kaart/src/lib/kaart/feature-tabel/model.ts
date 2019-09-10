@@ -1,53 +1,21 @@
-import { ValueType } from "@wegenenverkeer/ng-kaart/lib/stijl";
 import { array, option, ord, setoid, traversable } from "fp-ts";
-import {
-  constant,
-  Curried2,
-  curry,
-  Endomorphism,
-  flip,
-  flow,
-  Function1,
-  Function2,
-  Function3,
-  identity,
-  Lazy,
-  Predicate
-} from "fp-ts/lib/function";
+import { constant, Curried2, curry, Endomorphism, flip, flow, Function1, Function2, identity, Predicate } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import { Setoid } from "fp-ts/lib/Setoid";
-import { DateTime } from "luxon";
 import { fromTraversable, Lens, Optional, Prism, Traversal } from "monocle-ts";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { filter, map, switchMap, take } from "rxjs/operators";
+import { map } from "rxjs/operators";
 import { isNumber } from "util";
 
 import { Filter } from "../../filter";
 import { NosqlFsSource } from "../../source";
-import * as arrays from "../../util/arrays";
 import { applySequential, PartialFunction2 } from "../../util/function";
 import { selectiveArrayTraversal } from "../../util/lenses";
 import * as ke from "../kaart-elementen";
 import { Viewinstellingen } from "../kaart-protocol-subscriptions";
 
-import {
-  DataRequest,
-  FeatureCount,
-  FeatureCountFetcher,
-  Field,
-  FieldSorting,
-  Page,
-  PageFetcher,
-  PageNumber,
-  Row,
-  SortDirection
-} from "./data-provider";
-
-// export const tabulerbareLagen$: Function1<ModelChanges, rx.Observable<ke.ToegevoegdeVectorLaag[]>> = changes =>
-//   changes.lagenOpGroep["Voorgrond.Hoog"].pipe(map(lgn => lgn.filter(ke.isToegevoegdeVectorLaag)));
-
-// export const laagTitels$: Pipeable<ke.ToegevoegdeVectorLaag[], string[]> = lagen$ => lagen$.pipe(map(lgn => lgn.map(lg => lg.titel)));
+import { FeatureCount, FeatureCountFetcher, Field, FieldSorting, Page, PageFetcher, PageNumber, Row, SortDirection } from "./data-provider";
 
 export type SyncUpdate = Endomorphism<TableModel>;
 export type AsyncUpdate = Function1<TableModel, rx.Observable<SyncUpdate>>;
@@ -333,45 +301,6 @@ export namespace TableModel {
     return model => laagForTitel(titel)(model).chain(LaagModel.pageLens.get);
   };
 
-  // Zet de binnenkomende pagina indien diens sequenceNumber hetgene is dat we verwachten
-  const pageUpdate: Function2<LaagModel, Page, SyncUpdate> = (laag, page) =>
-    laagForTitelTraversal(laag.titel)
-      .composePrism(LaagModel.isExpectedPage(laag.nextPageSequence))
-      .modify(
-        flow(
-          LaagModel.pageLens.set(option.some(page)),
-          LaagModel.updatePendingLens.set(false),
-          LaagModel.nextPageSequenceLens.modify(n => n + 1)
-        )
-      );
-
-  const featureCountUpdate: Function2<LaagModel, FeatureCount, SyncUpdate> = (laag, count) =>
-    laagForTitelTraversal(laag.titel).modify(LaagModel.aantalFeaturesLens.set(count));
-
-  const asyncLaagPageUpdate: Function1<LaagModel, rx.Observable<SyncUpdate>> = laag =>
-    laag
-      .pageFetcher({
-        dataExtent: laag.viewinstellingen.extent,
-        fieldSortings: [],
-        pageNumber: laag.expectedPageNumber,
-        rowCreator: flow(
-          Row.featureToRow(laag.veldinfos),
-          laag.rowTransformer
-        ),
-        requestSequence: laag.nextPageSequence
-      })
-      .pipe(
-        filter(DataRequest.isDataReady), // risico om zelfde data 2x op te vragen indien vorige toevoeging nog niet verwerkt
-        map(dr => pageUpdate(laag, dr.page))
-      );
-
-  const asyncFeatureCountUpdate: Function1<LaagModel, rx.Observable<SyncUpdate>> = laag =>
-    laag
-      .featureCountFetcher({
-        dataExtent: laag.viewinstellingen.extent
-      })
-      .pipe(map(count => featureCountUpdate(laag, count)));
-
   // We willen hier niet de state voor alle lagen opnieuw initialiseren. We moeten enkel de nieuwe lagen toevoegen en de
   // oude verwijderen. Van de bestaande moeten we de state aanpassen indien nodig.
   export const updateLagen: Function1<ke.ToegevoegdeVectorLaag[], Update> = lagen => {
@@ -392,7 +321,7 @@ export namespace TableModel {
                 .orElse(() => LaagModel.create(laag, model.viewinstellingen)) // of creeer er een nieuw model voor
           )
         )(model),
-      model =>
+      () =>
         rx
           .merge
           // ...model.laagData.filter(LaagModel.updatePendingLens.get).map(asyncLaagPageUpdate),
@@ -412,7 +341,7 @@ export namespace TableModel {
           )
         )
       ]),
-      model =>
+      () =>
         rx
           .merge
           // ...model.laagData.map(asyncLaagPageUpdate), //
@@ -470,8 +399,6 @@ export namespace TableModel {
 
   export const followViewFeatureUpdates: Function1<ke.ToegevoegdeVectorLaag, rx.Observable<Update>> = tvlg =>
     ke.ToegevoegdeVectorLaag.featuresChanged$(tvlg).pipe(map(() => featuresUpdate(tvlg)));
-
-  const setLaagPageNumber: Function1<PageNumber, Endomorphism<LaagModel>> = LaagModel.expectedPageNumberLens.set;
 
   const modifyPageNumberUpdate: Curried2<Endomorphism<PageNumber>, string, Update> = f => titel =>
     syncUpdateOnly(
