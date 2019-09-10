@@ -314,7 +314,7 @@ export namespace ToegevoegdeVectorLaag {
 
   export const featuresChanged$: Function1<ToegevoegdeVectorLaag, rx.Observable<null>> = vlg =>
     observableFromOlEvents(vlg!.layer.getSource(), "addfeature", "removefeature", "clear").pipe(
-      debounceTime(150),
+      debounceTime(100),
       mapTo(null)
     );
 }

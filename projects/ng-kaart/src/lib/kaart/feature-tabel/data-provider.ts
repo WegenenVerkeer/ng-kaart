@@ -1,33 +1,21 @@
 import { array, option, ord, setoid } from "fp-ts";
-import {
-  curried,
-  Curried2,
-  curry,
-  Endomorphism,
-  flow,
-  Function1,
-  Function2,
-  Function3,
-  identity,
-  Predicate,
-  Refinement
-} from "fp-ts/lib/function";
+import { Curried2, Endomorphism, flow, Function1, Function2, Function3, identity, Predicate, Refinement } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
-import { between, Ord } from "fp-ts/lib/Ord";
+import { Ord } from "fp-ts/lib/Ord";
 import { Setoid } from "fp-ts/lib/Setoid";
 import { DateTime } from "luxon";
-import { Iso, Lens, Prism } from "monocle-ts";
-import { iso, Newtype, prism } from "newtype-ts";
+import { Getter, Iso, Lens, Prism } from "monocle-ts";
+import { iso, Newtype } from "newtype-ts";
+import { NonNegativeInteger, prismNonNegativeInteger } from "newtype-ts/lib/NonNegativeInteger";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { debounceTime, map, share, startWith, take, takeUntil } from "rxjs/operators";
+import { map, startWith, take } from "rxjs/operators";
 
 import * as arrays from "../../util/arrays";
 import { parseDate, parseDateTime } from "../../util/date-time";
 import { Feature } from "../../util/feature";
-import { PartialFunction2 } from "../../util/function";
+import { PartialFunction1, PartialFunction2 } from "../../util/function";
 import { isOfKind } from "../../util/kinded";
-import * as matchers from "../../util/matchers";
 import * as setoids from "../../util/setoid";
 import * as ke from "../kaart-elementen";
 
@@ -42,7 +30,7 @@ export interface Row {
   readonly [key: string]: Field;
 }
 
-export interface PageNumber extends Newtype<{ readonly PAGENUMBER: unique symbol }, number> {}
+export interface PageNumber extends Newtype<{ readonly PAGENUMBER: unique symbol }, NonNegativeInteger> {}
 
 export type SortDirection = "ASCENDING" | "DESCENDING";
 
@@ -53,7 +41,8 @@ export interface FieldSorting {
 }
 
 export interface Page {
-  readonly pageNumber: PageNumber;
+  readonly pageNumber: PageNumber; // Het nummer dat gebruikt werd in de request die Page opleverde
+  readonly lastPageNumber: PageNumber; // Handig om dit hier op te slaan omdat we er vaak naar refereren
   readonly rows: Row[];
 }
 
@@ -156,24 +145,38 @@ export namespace Row {
 export namespace Page {
   export const PageSize = 100;
 
-  export const create: Function2<PageNumber, Row[], Page> = (pageNumber, rows) => ({
+  export const create: Function3<PageNumber, PageNumber, Row[], Page> = (pageNumber, lastPageNumber, rows) => ({
     pageNumber,
+    lastPageNumber,
     rows
   });
 
-  const isoPageNumber: Iso<PageNumber, number> = iso<PageNumber>();
-  const prismPageNumer: Prism<number, PageNumber> = prism<PageNumber>(n => n >= 0);
+  const isoPageNumber: Iso<PageNumber, number> = iso<PageNumber>().compose(iso<NonNegativeInteger>());
+  const prismPageNumer: Prism<number, PageNumber> = prismNonNegativeInteger.composeIso(iso<PageNumber>().reverse());
+  export const getterPageNumber: Getter<PageNumber, number> = new Getter(prismPageNumer.reverseGet);
+  export const asPageNumber: PartialFunction1<number, PageNumber> = prismPageNumer.getOption;
+  export const toPageNumberWithFallback: Function2<number, PageNumber, PageNumber> = (n, fallback) => asPageNumber(n).getOrElse(fallback);
   export const pageNumberLens: Lens<Page, PageNumber> = Lens.fromProp<Page>()("pageNumber");
+  export const lastPageNumberLens: Lens<Page, PageNumber> = Lens.fromProp<Page>()("lastPageNumber");
   export const rowsLens: Lens<Page, Row[]> = Lens.fromProp<Page>()("rows");
+  export const ordPageNumber: Ord<PageNumber> = ord.contramap(prismPageNumer.reverseGet, ord.ordNumber);
 
   export const first: PageNumber = isoPageNumber.wrap(0);
   export const previous: Endomorphism<PageNumber> = isoPageNumber.modify(n => Math.max(0, n - 1));
   export const next: Endomorphism<PageNumber> = isoPageNumber.modify(n => n + 1);
+  export const set: Function1<number, Endomorphism<PageNumber>> = value => pageNumber =>
+    prismPageNumer.getOption(value).getOrElse(pageNumber);
 
   export const isInPage: Function1<PageNumber, Predicate<number>> = pageNumber => i => {
     const lowerPageBound = isoPageNumber.unwrap(pageNumber) * PageSize;
     return i >= lowerPageBound && i < lowerPageBound + PageSize;
   };
+
+  export const last: Function1<number, PageNumber> = numFeatures =>
+    prismPageNumer.getOption(Math.floor(numFeatures / PageSize)).getOrElse(first);
+  export const isFirst: Predicate<PageNumber> = pageNumber => ordPageNumber.equals(pageNumber, first);
+  export const isTop: Function1<PageNumber, Predicate<PageNumber>> = largestPageNumber => pageNumber =>
+    ordPageNumber.equals(pageNumber, largestPageNumber);
 }
 
 export namespace DataRequest {
@@ -181,9 +184,9 @@ export namespace DataRequest {
     kind: "RequestingData"
   };
 
-  export const DataReady: Function2<PageNumber, Row[], DataReady> = (pageNumber, rows) => ({
+  export const DataReady: Function3<PageNumber, PageNumber, Row[], DataReady> = (pageNumber, lastPageNumber, rows) => ({
     kind: "DataReady",
-    page: Page.create(pageNumber, rows)
+    page: Page.create(pageNumber, lastPageNumber, rows)
   });
 
   export const RequestFailed: RequestFailed = {
@@ -205,6 +208,7 @@ export namespace PageFetcher {
         map(() =>
           DataRequest.DataReady(
             pageRequest.pageNumber,
+            Page.last(FeatureCountFetcher.countFromSource(source, pageRequest).count),
             array.take(Page.PageSize, source.getFeaturesInExtent(pageRequest.dataExtent).map(pageRequest.rowCreator))
           )
         )
@@ -239,6 +243,7 @@ export namespace PageFetcher {
   export const pageFromSource: Function2<ol.source.Vector, PageRequest, Page> = (source, pageRequest) =>
     Page.create(
       pageRequest.pageNumber,
+      Page.last(FeatureCountFetcher.countFromSource(source, pageRequest).count),
       flow(
         featuresInExtend(pageRequest.dataExtent),
         sortFeatures(pageRequest.fieldSortings),
@@ -257,7 +262,10 @@ export namespace FeatureCount {
     FeatureCountPending: setoidFeatureCountPending
   });
 
-  export const isPending: Predicate<FeatureCount> = featureCount => featureCount.kind === "FeatureCountPending";
+  export const isPending: Refinement<FeatureCount, FeatureCountPending> = (featureCount): featureCount is FeatureCountPending =>
+    featureCount.kind === "FeatureCountPending";
+  export const isFetched: Refinement<FeatureCount, FeatureCountFetched> = (featureCount): featureCount is FeatureCountFetched =>
+    featureCount.kind === "FeatureCountFetched";
 
   export const pending: FeatureCountPending = { kind: "FeatureCountPending" };
 
@@ -265,6 +273,11 @@ export namespace FeatureCount {
     kind: "FeatureCountFetched",
     count
   });
+
+  export const fetchedCount: PartialFunction1<FeatureCount, number> = flow(
+    option.fromRefinement(isFetched),
+    option.map(p => p.count)
+  );
 }
 
 export namespace FeatureCountFetcher {
@@ -275,6 +288,6 @@ export namespace FeatureCountFetcher {
       startWith(FeatureCount.pending)
     );
 
-  export const countFromSource: Function2<ol.source.Vector, FeatureCountRequest, FeatureCount> = (source, featureCountRequest) =>
+  export const countFromSource: Function2<ol.source.Vector, FeatureCountRequest, FeatureCountFetched> = (source, featureCountRequest) =>
     FeatureCount.createFetched(source.getFeaturesInExtent(featureCountRequest.dataExtent).length);
 }

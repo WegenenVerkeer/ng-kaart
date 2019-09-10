@@ -1,19 +1,32 @@
 <div class="feature-table-data-content">
-  <div *ngIf="dataAvailable$ | async">
-    <table *ngIf="(headers$ | async) as headers" [ngStyle]="{'grid-template-columns': headers.columnWidths}">
-      <thead>
-        <tr>
-          <th *ngFor="let header of headers.headers">{{ header.label }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let row of (rows$ | async)">
-          <td *ngFor="let header of headers.headers" [ngClass]="{'empty-field':row[header.key].maybeValue.isNone()}">{{ row[header.key].maybeValue.getOrElse("") }}</td>
-        </tr>
-      </tbody>
-    </table>
+  <div class="feature-table-data-main">
+    <div *ngIf="(dataAvailable$ | async)">
+      <table
+        *ngIf="(headers$ | async) as headers"
+        [ngStyle]="{ 'grid-template-columns': headers.columnWidths }"
+      >
+        <thead>
+          <tr>
+            <th *ngFor="let header of headers.headers">{{ header.label }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of (rows$ | async)">
+            <td
+              *ngFor="let header of headers.headers"
+              [ngClass]="{ 'empty-field': row[header.key].maybeValue.isNone() }"
+            >
+              {{ row[header.key].maybeValue.getOrElse("") }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div *ngIf="(noDataAvailable$ | async)">Geen data op dit zoomniveau</div>
   </div>
-  <div *ngIf="noDataAvailable$ | async">
-    Geen data op dit zoomniveau
+  <div class="feature-table-data-footer">
+    <awv-feature-tabel-pager
+      *ngIf="(dataAvailable$ | async)"
+    ></awv-feature-tabel-pager>
   </div>
 </div>

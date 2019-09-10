@@ -3,21 +3,10 @@ import { ChangeDetectionStrategy, Component, NgZone, ViewEncapsulation } from "@
 import { array, setoid } from "fp-ts";
 import { Setoid } from "fp-ts/lib/Setoid";
 import * as rx from "rxjs";
-import {
-  debounceTime,
-  distinctUntilChanged,
-  map,
-  observeOn,
-  scan,
-  share,
-  shareReplay,
-  switchMap,
-  take,
-  takeUntil,
-  tap
-} from "rxjs/operators";
+import { distinctUntilChanged, map, observeOn, scan, share, shareReplay, switchMap, take, takeUntil, tap } from "rxjs/operators";
 
 import { subSpy } from "../../util";
+import { Consumer1 } from "../../util/function";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
 import { KaartComponent } from "../kaart.component";
@@ -64,6 +53,7 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
   // Voor de child components (Op DOM niveau. Access via Angular injection).
   public readonly opties$: rx.Observable<FeatureTabelUiOpties>;
   public readonly model$: rx.Observable<TableModel>;
+  public readonly updater: Consumer1<Update>;
 
   constructor(kaart: KaartComponent, ngZone: NgZone) {
     super(kaart, ngZone);
@@ -98,14 +88,23 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
         .pipe(
           switchMap(vectorLagen =>
             rx.concat(
-              rx.from(vectorLagen.map(TableModel.featuresUpdate)), // Bij een zoom/pan dus geen featureUpdate
+              rx.from(vectorLagen.map(TableModel.featuresUpdate)), // Dit is de "geforceerde" update
               rx.merge(...vectorLagen.map(TableModel.followViewFeatureUpdates))
             )
           )
         )
     );
 
-    const modelUpdate$: rx.Observable<Update> = rx.merge(delayedUpdates$, updateLagen$, updateZoomAndExtent$, directPageUpdates$);
+    const clientUpdateSubj: rx.Subject<Update> = new rx.Subject();
+    this.updater = (update: Update) => clientUpdateSubj.next(update);
+
+    const modelUpdate$: rx.Observable<Update> = rx.merge(
+      delayedUpdates$,
+      updateLagen$,
+      updateZoomAndExtent$,
+      directPageUpdates$,
+      clientUpdateSubj
+    );
 
     // Dit is het zenuwcenter van de hele component en zijn afhankelijke componenten. Alle andere observables moeten
     // hier van aftakken. Dit is het alternatief voor alles in de kaartreducer te steken. Dat is niet aangewezen, want
@@ -147,9 +146,5 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
       map(model => model.laagData.map(LaagModel.titelLens.get)),
       distinctUntilChanged(array.getSetoid(setoid.setoidString).equals)
     );
-  }
-
-  public onTitelChanged(titel: string) {
-    console.log("titel", titel);
   }
 }

@@ -17,10 +17,11 @@ import { ColumnHeaders, LaagModel, TableModel } from "./model";
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FeatureTabelDataComponent extends KaartChildComponentBase {
-  headers$: rx.Observable<ColumnHeaders>;
-  rows$: rx.Observable<Row[]>;
-  noDataAvailable$: rx.Observable<boolean>;
-  dataAvailable$: rx.Observable<boolean>;
+  public readonly headers$: rx.Observable<ColumnHeaders>;
+  public readonly rows$: rx.Observable<Row[]>;
+  public readonly noDataAvailable$: rx.Observable<boolean>;
+  public readonly dataAvailable$: rx.Observable<boolean>;
+  public readonly laag$: rx.Observable<LaagModel>;
 
   @Input()
   laagTitel: string;
@@ -30,27 +31,23 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
 
     const model$ = overzicht.model$;
 
-    const laag$ = subSpy("****laag$")(
+    this.laag$ = subSpy("****laag$")(
       this.viewReady$.pipe(
         // De input is pas beschikbaar nadat de view klaar is
-        switchMap(() =>
-          model$.pipe(
-            collectOption(TableModel.laagForTitel(this.laagTitel)),
-            share()
-          )
-        )
+        switchMap(() => model$.pipe(collectOption(TableModel.laagForTitel(this.laagTitel)))),
+        share()
       )
     );
 
     this.headers$ = subSpy("****headers$")(
-      laag$.pipe(
+      this.laag$.pipe(
         map(LaagModel.headersLens.get),
         distinctUntilChanged(ColumnHeaders.setoidColumnHeaders.equals),
         share()
       )
     );
 
-    const maybePage$ = laag$.pipe(
+    const maybePage$ = this.laag$.pipe(
       map(LaagModel.pageLens.get),
       share()
     );

@@ -72,6 +72,7 @@ export interface LaagModel {
   readonly hasFilter: boolean;
   readonly filterIsActive: boolean;
   readonly featureCount: FeatureCount; // aantal features in de tabel over alle pagina's heen
+  readonly expectedPageNumber: PageNumber; // Het PageNumber dat we verwachten te zien. Potentieel anders dan in Page wegens asynchoniciteit
   readonly page: Option<Page>; // We houden maar 1 pagina van data tegelijkertijd in het geheugen. (later meer)
 
   readonly headers: ColumnHeaders;
@@ -162,6 +163,7 @@ export namespace LaagModel {
   export const titelLens: Lens<LaagModel, string> = Lens.fromProp<LaagModel>()("titel");
   export const pageOptional: Optional<LaagModel, Page> = Optional.fromOptionProp<LaagModel>()("page");
   export const headersLens: Lens<LaagModel, ColumnHeaders> = Lens.fromProp<LaagModel, "headers">("headers");
+  export const expectedPageNumberLens: Lens<LaagModel, PageNumber> = Lens.fromProp<LaagModel>()("expectedPageNumber");
   export const pageLens: Lens<LaagModel, Option<Page>> = Lens.fromProp<LaagModel>()("page");
   export const nextPageSequenceLens: Lens<LaagModel, number> = Lens.fromProp<LaagModel>()("nextPageSequence");
   export const updatePendingLens: Lens<LaagModel, boolean> = Lens.fromProp<LaagModel>()("updatePending");
@@ -171,6 +173,11 @@ export namespace LaagModel {
   export const extentLens: Lens<LaagModel, ol.Extent> = Lens.fromPath<LaagModel>()(["viewinstellingen", "extent"]);
   export const hasFilterLens: Lens<LaagModel, boolean> = Lens.fromProp<LaagModel>()("hasFilter");
   export const filterIsActiveLens: Lens<LaagModel, boolean> = Lens.fromProp<LaagModel>()("filterIsActive");
+
+  export const clampExpectedPageNumber: Endomorphism<LaagModel> = laag =>
+    expectedPageNumberLens.modify(
+      ord.clamp(Page.ordPageNumber)(Page.first, Page.last(FeatureCount.fetchedCount(laag.featureCount).getOrElse(0)))
+    )(laag);
 
   // Bepaalde velden moeten samengevoegd worden tot 1 synthetisch locatieveld. Daarvoor moeten we enerzijds de headers
   // aanpassen en anderzijds elke Row die binnen komt.
@@ -254,6 +261,7 @@ export namespace LaagModel {
         filterIsActive: laag.filterinstellingen.actief,
         totaal: laag.filterinstellingen.totaal,
         featureCount: FeatureCount.pending,
+        expectedPageNumber: Page.first,
         selectedVeldnamen,
         headers,
         fieldSortings,
@@ -272,6 +280,15 @@ export namespace LaagModel {
 
   export const isExpectedPage: Function1<number, Prism<LaagModel, LaagModel>> = sequenceNumber =>
     Prism.fromPredicate(laag => laag.nextPageSequence === sequenceNumber);
+
+  export const isOnFirstPage: Predicate<LaagModel> = laag => laag.page.map(Page.pageNumberLens.get).exists(Page.isFirst);
+  export const isOnLastPage: Predicate<LaagModel> = laag =>
+    FeatureCount.fetchedCount(laag.featureCount).fold(
+      true, //
+      featureCount => laag.page.map(Page.pageNumberLens.get).exists(Page.isTop(Page.last(featureCount)))
+    );
+  export const hasMultiplePages: Predicate<LaagModel> = laag =>
+    FeatureCount.fetchedCount(laag.featureCount).fold(false, featureCount => !Page.isFirst(Page.last(featureCount)));
 }
 
 export namespace TableModel {
@@ -331,14 +348,12 @@ export namespace TableModel {
   const featureCountUpdate: Function2<LaagModel, FeatureCount, SyncUpdate> = (laag, count) =>
     laagForTitelTraversal(laag.titel).modify(LaagModel.aantalFeaturesLens.set(count));
 
-  const currentPageNumber: Function1<LaagModel, PageNumber> = laag => laag.page.fold(Page.first, Page.pageNumberLens.get);
-
   const asyncLaagPageUpdate: Function1<LaagModel, rx.Observable<SyncUpdate>> = laag =>
     laag
       .pageFetcher({
         dataExtent: laag.viewinstellingen.extent,
         fieldSortings: [],
-        pageNumber: currentPageNumber(laag),
+        pageNumber: laag.expectedPageNumber,
         rowCreator: flow(
           Row.featureToRow(laag.veldinfos),
           laag.rowTransformer
@@ -408,13 +423,13 @@ export namespace TableModel {
   const inZoom = (ifInZoom: Endomorphism<LaagModel>, ifOutsideZoom: Endomorphism<LaagModel>): Endomorphism<LaagModel> => laag =>
     (laag.viewinstellingen.zoom >= laag.minZoom && laag.viewinstellingen.zoom <= laag.maxZoom ? ifInZoom : ifOutsideZoom)(laag);
 
-  const updateLaagPage: Endomorphism<LaagModel> = laag =>
+  const updateLaagPageData: Endomorphism<LaagModel> = laag =>
     LaagModel.pageLens.set(
       option.some(
         PageFetcher.pageFromSource(laag.source, {
           dataExtent: laag.viewinstellingen.extent,
           fieldSortings: laag.fieldSortings,
-          pageNumber: currentPageNumber(laag),
+          pageNumber: laag.expectedPageNumber,
           rowCreator: flow(
             Row.featureToRow(laag.veldinfos),
             laag.rowTransformer
@@ -423,6 +438,10 @@ export namespace TableModel {
         })
       )
     )(laag);
+
+  const clampLaagPageNumber: Endomorphism<LaagModel> = LaagModel.pageOptional.modify(page =>
+    Page.pageNumberLens.modify(ord.clamp(Page.ordPageNumber)(Page.first, page.lastPageNumber))(page)
+  );
 
   const clearLaagPage: Endomorphism<LaagModel> = LaagModel.pageLens.set(option.none);
 
@@ -437,8 +456,9 @@ export namespace TableModel {
       laagForTitelTraversal(tvlg.titel).modify(
         inZoom(
           flow(
-            updateLaagPage,
-            updateLaagFeatureCount
+            updateLaagFeatureCount,
+            clampLaagPageNumber,
+            updateLaagPageData
           ),
           flow(
             clearLaagPage,
@@ -450,4 +470,23 @@ export namespace TableModel {
 
   export const followViewFeatureUpdates: Function1<ke.ToegevoegdeVectorLaag, rx.Observable<Update>> = tvlg =>
     ke.ToegevoegdeVectorLaag.featuresChanged$(tvlg).pipe(map(() => featuresUpdate(tvlg)));
+
+  const setLaagPageNumber: Function1<PageNumber, Endomorphism<LaagModel>> = LaagModel.expectedPageNumberLens.set;
+
+  const modifyPageNumberUpdate: Curried2<Endomorphism<PageNumber>, string, Update> = f => titel =>
+    syncUpdateOnly(
+      laagForTitelTraversal(titel).modify(
+        flow(
+          LaagModel.expectedPageNumberLens.modify(f),
+          LaagModel.clampExpectedPageNumber,
+          updateLaagPageData
+        )
+      )
+    );
+
+  export const previousPageUpdate: Function1<string, Update> = modifyPageNumberUpdate(Page.previous);
+
+  export const nextPageUpdate: Function1<string, Update> = modifyPageNumberUpdate(Page.next);
+
+  export const setPageNumberUpdate: Curried2<string, number, Update> = titel => pageNr => modifyPageNumberUpdate(Page.set(pageNr))(titel);
 }
