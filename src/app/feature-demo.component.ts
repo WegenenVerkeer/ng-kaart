@@ -427,6 +427,14 @@ export class FeatureDemoComponent {
     throw new Error(`slecht formaat ${join(msg)}`);
   });
 
+  readonly bordStyle: ol.style.Style = definitieToStyle(
+    "json",
+    // tslint:disable-next-line:max-line-length
+    '{"version": "awv-v0", "definition": {"circle": {"stroke": {"color": "#7D3C98", "width": 1.5}, "fill": {"color": "#D7BDE2"}, "radius": 6}}}'
+  ).getOrElseL(msg => {
+    throw new Error(`slecht formaat ${join(msg)}`);
+  });
+
   readonly kolkStyle: ol.style.Style = definitieToStyle(
     "json",
     // tslint:disable-next-line:max-line-length
@@ -663,6 +671,14 @@ export class FeatureDemoComponent {
     { isBasisVeld: false, label: "UUID", naam: "uuid", type: "string" },
     { isBasisVeld: true, label: "Status", naam: "status", type: "string" },
     { isBasisVeld: false, label: "Wijzigingsdatum", naam: "wijzigingsdatum", type: "date" }
+  ];
+
+  readonly bordenVeldinfos: VeldInfo[] = [
+    { isBasisVeld: false, label: "Locatie X", naam: "geometry.location.0", type: "double" },
+    { isBasisVeld: false, label: "Locatie Y", naam: "geometry.location.1", type: "double" },
+    { isBasisVeld: true, label: "Type bord", naam: "code", type: "string" },
+    { isBasisVeld: true, label: "Breedte", naam: "breedte", type: "double", geenLocatieVeld: true },
+    { isBasisVeld: true, label: "Hoogte", naam: "hoogte", type: "double" }
   ];
 
   readonly percelenVeldinfos: VeldInfo[] = [

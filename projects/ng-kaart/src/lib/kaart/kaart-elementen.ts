@@ -94,6 +94,7 @@ export interface VeldInfo {
   readonly uniekeWaarden?: string[];
   readonly parseFormat?: string; // voor date en datetime
   readonly displayFormat?: string; // voor date en datetime
+  readonly geenLocatieVeld?: boolean; // beschouw veld niet als deel van de weglocatie informatie
 }
 
 export interface VectorLaag {
