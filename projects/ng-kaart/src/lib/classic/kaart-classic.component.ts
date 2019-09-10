@@ -25,7 +25,6 @@ import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
 import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "../kaart/kaart-event-dispatcher";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartMsgObservableConsumer } from "../kaart/kaart.component";
-import { DefaultProgressBarEnabledSelector } from "../kaart/loading/kaart-loading.component";
 import { subscriptionCmdOperator } from "../kaart/subscription-helper";
 import * as arrays from "../util/arrays";
 import { clusterFeaturesToGeoJson } from "../util/feature";
@@ -205,11 +204,6 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
     this._onderdrukKaartBevragenBoodschappen = val.bool(param, this._onderdrukKaartBevragenBoodschappen);
   }
 
-  @Input()
-  set userBusy(param: boolean) {
-    this.dispatch(prt.ZetUserBusyCmd(param));
-  }
-
   /** De geselecteerde features */
   @Output()
   geselecteerdeFeaturesChange: EventEmitter<Array<ol.Feature>> = new EventEmitter();
@@ -233,8 +227,6 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   voorgrondLaagLagen: EventEmitter<Array<ToegevoegdeLaag>> = new EventEmitter();
   @Output()
   kaartLocaties: EventEmitter<ClassicKlikInfoEnStatus> = new EventEmitter();
-  @Output()
-  busyChange: EventEmitter<boolean> = new EventEmitter();
   @Output()
   inErrorChange: EventEmitter<boolean> = new EventEmitter();
 
@@ -382,8 +374,6 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
             return this.voorgrondLaagLagen.emit(msg.lagen);
           case "PublishedKaartLocaties":
             return this.kaartLocaties.emit(flattenKaartLocaties(msg.locaties));
-          case "Busy":
-            return this.busyChange.emit(msg.busy);
           case "InError":
             return this.inErrorChange.emit(msg.inError);
           default:
