@@ -1387,6 +1387,22 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
+    function ZetDataloadBusy(cmd: prt.ZetDataloadBusyCmd): ModelWithResult<Msg> {
+      modelChanger.dataloadBusySubj.next(cmd.busy);
+      return ModelWithResult(model);
+    }
+
+    function ZetUserBusy(cmd: prt.ZetUserBusyCmd): ModelWithResult<Msg> {
+      modelChanger.userBusySubj.next(cmd.busy);
+      return ModelWithResult(model);
+    }
+
+    function registreerError(cmd: prt.RegistreerErrorCmd): ModelWithResult<Msg> {
+      console.log("registreerError: ", cmd);
+      modelChanger.inErrorSubj.next(cmd.inError);
+      return ModelWithResult(model);
+    }
+
     function sluitPanelen(cmnd: prt.SluitPanelenCmd): ModelWithResult<Msg> {
       updateBehaviorSubject(model.infoBoodschappenSubj, () => new Map());
       modelChanger.laagstijlaanpassingStateSubj.next(GeenLaagstijlaanpassing);
@@ -1728,6 +1744,18 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         );
       }
 
+      function subscribeToBusy(sub: prt.BusySubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult("Busy", modelChanges.dataloadBusy$.pipe(distinctUntilChanged()).subscribe(consumeMessage(sub)));
+      }
+
+      function subscribeToUserBusy(sub: prt.UserBusySubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult("UserBusy", modelChanges.userBusy$.pipe(distinctUntilChanged()).subscribe(consumeMessage(sub)));
+      }
+
+      function subscribeToInError(sub: prt.InErrorSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult("InError", modelChanges.inError$.pipe(distinctUntilChanged()).subscribe(consumeMessage(sub)));
+      }
+
       switch (cmnd.subscription.type) {
         case "Viewinstellingen":
           return subscribeToViewinstellingen(cmnd.subscription);
@@ -1779,6 +1807,14 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToLaatsteCacheRefresh(cmnd.subscription);
         case "MijnLocatieStateChange":
           return subscribeToMijnLocatieStateChange(cmnd.subscription);
+        case "Busy":
+          return subscribeToBusy(cmnd.subscription);
+        case "UserBusy":
+          return subscribeToUserBusy(cmnd.subscription);
+        case "InError":
+          return subscribeToInError(cmnd.subscription);
+        default:
+          console.log("Error: niet afgehandelde subscription: ", cmnd);
       }
     }
 
@@ -1947,6 +1983,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return zetTransparantieVoorLaag(cmd);
         case "ZetZoomBereik":
           return zetZoomBereik(cmd);
+        case "RegistreerError":
+          return registreerError(cmd);
+        case "ZetDataloadBusy":
+          return ZetDataloadBusy(cmd);
+        case "ZetUserBusy":
+          return ZetUserBusy(cmd);
       }
     }
 

@@ -33,6 +33,7 @@ import { ZoekAntwoord, ZoekerMetWeergaveopties, Zoekopdracht, ZoekResultaat } fr
 import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
 import { envParams } from "./kaart-config";
 import * as ke from "./kaart-elementen";
+import { DataLoadEvent, LoadComplete } from "./kaart-load-events";
 import * as prt from "./kaart-protocol";
 import { UiElementOpties } from "./kaart-protocol-commands";
 import { GeselecteerdeFeatures, Viewinstellingen } from "./kaart-protocol-subscriptions";
@@ -102,6 +103,9 @@ export interface ModelChanger {
   readonly laatsteCacheRefreshSubj: rx.BehaviorSubject<LaatsteCacheRefresh>;
   readonly mijnLocatieStateChangeSubj: rx.Subject<MijnLocatieStateChange>;
   readonly zoombereikChangeSubj: rx.Subject<null>;
+  readonly dataloadBusySubj: rx.BehaviorSubject<boolean>;
+  readonly userBusySubj: rx.BehaviorSubject<boolean>;
+  readonly inErrorSubj: rx.BehaviorSubject<boolean>;
 }
 
 // Hieronder wordt een paar keer BehaviourSubject gebruikt. Dat is equivalent met, maar beknopter dan, een startWith + shareReplay
@@ -134,7 +138,10 @@ export const ModelChanger: () => ModelChanger = () => ({
   precacheProgressSubj: new rx.BehaviorSubject({}),
   laatsteCacheRefreshSubj: new rx.BehaviorSubject({}),
   mijnLocatieStateChangeSubj: new rx.Subject<MijnLocatieStateChange>(),
-  zoombereikChangeSubj: new rx.Subject<null>()
+  zoombereikChangeSubj: new rx.Subject<null>(),
+  dataloadBusySubj: new rx.BehaviorSubject<boolean>(false),
+  userBusySubj: new rx.BehaviorSubject<boolean>(false),
+  inErrorSubj: new rx.BehaviorSubject<boolean>(false)
 });
 
 export interface ModelChanges {
@@ -165,6 +172,9 @@ export interface ModelChanges {
   readonly precacheProgress$: rx.Observable<PrecacheLaagProgress>;
   readonly laatsteCacheRefresh$: rx.Observable<LaatsteCacheRefresh>;
   readonly mijnLocatieStateChange$: rx.Observable<MijnLocatieStateChange>;
+  readonly dataloadBusy$: rx.Observable<boolean>;
+  readonly userBusy$: rx.Observable<boolean>;
+  readonly inError$: rx.Observable<boolean>;
 }
 
 const viewinstellingen: Function1<ol.Map, prt.Viewinstellingen> = olmap => ({
@@ -180,7 +190,7 @@ const viewinstellingen: Function1<ol.Map, prt.Viewinstellingen> = olmap => ({
 export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> = (model, changer) => {
   const geselecteerdeFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.geselecteerdeFeatures, "add", "remove").pipe(
     debounceTime(20),
-    map(evt => [...(evt.target as ol.Collection<ol.Feature>).getArray()]), // getArray heeft altijd dezelfde array terug!
+    map(evt => [...(evt.target as ol.Collection<ol.Feature>).getArray()]), // getArray geeft altijd dezelfde array terug!
     startWith([] as ol.Feature[]),
     pairwise(),
     map(([prev, current]) => ({
@@ -322,6 +332,9 @@ export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> 
     getekendeGeometry$: changer.getekendeGeometrySubj.pipe(observeOn(rx.asapScheduler)),
     precacheProgress$: changer.precacheProgressSubj.pipe(observeOn(rx.asapScheduler)),
     laatsteCacheRefresh$: changer.laatsteCacheRefreshSubj.pipe(observeOn(rx.asapScheduler)),
-    mijnLocatieStateChange$: changer.mijnLocatieStateChangeSubj.pipe(observeOn(rx.asapScheduler))
+    mijnLocatieStateChange$: changer.mijnLocatieStateChangeSubj.pipe(observeOn(rx.asapScheduler)),
+    dataloadBusy$: changer.dataloadBusySubj.pipe(observeOn(rx.asapScheduler)),
+    userBusy$: changer.userBusySubj.pipe(observeOn(rx.asapScheduler)),
+    inError$: changer.inErrorSubj.pipe(observeOn(rx.asapScheduler))
   };
 };

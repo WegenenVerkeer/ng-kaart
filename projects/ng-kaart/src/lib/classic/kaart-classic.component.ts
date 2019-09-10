@@ -25,6 +25,7 @@ import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
 import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "../kaart/kaart-event-dispatcher";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartMsgObservableConsumer } from "../kaart/kaart.component";
+import { DefaultProgressBarEnabledSelector } from "../kaart/loading/kaart-loading.component";
 import { subscriptionCmdOperator } from "../kaart/subscription-helper";
 import * as arrays from "../util/arrays";
 import { clusterFeaturesToGeoJson } from "../util/feature";
@@ -39,10 +40,12 @@ import { KaartClassicLocatorService } from "./kaart-classic-locator.service";
 import { classicLogger } from "./log";
 import {
   AchtergrondLagenInGroepAangepastMsg,
+  BusyMsg,
   ExtentAangepastMsg,
   FeatureGedeselecteerdMsg,
   FeatureHoverAangepastMsg,
   FeatureSelectieAangepastMsg,
+  InErrorMsg,
   KaartClassicMsg,
   KaartClassicSubMsg,
   logOnlyWrapper,
@@ -182,7 +185,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   @Input()
   set selectieModus(param: prt.SelectieModus) {
     this._selectieModus = val.enu(param, this._selectieModus, "single", "singleQuick", "multipleKlik", "multipleShift", "none");
-  }
+  } /** De selectiemodus: "single" | "singleQuick" | "multipleKlik" | "multipleShift" | "none" */
 
   /** Info bij hover: "on" | "off" */
   @Input()
@@ -200,6 +203,11 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   @Input()
   set onderdrukKaartBevragenBoodschappen(param: boolean) {
     this._onderdrukKaartBevragenBoodschappen = val.bool(param, this._onderdrukKaartBevragenBoodschappen);
+  }
+
+  @Input()
+  set userBusy(param: boolean) {
+    this.dispatch(prt.ZetUserBusyCmd(param));
   }
 
   /** De geselecteerde features */
@@ -225,6 +233,10 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   voorgrondLaagLagen: EventEmitter<Array<ToegevoegdeLaag>> = new EventEmitter();
   @Output()
   kaartLocaties: EventEmitter<ClassicKlikInfoEnStatus> = new EventEmitter();
+  @Output()
+  busyChange: EventEmitter<boolean> = new EventEmitter();
+  @Output()
+  inErrorChange: EventEmitter<boolean> = new EventEmitter();
 
   /** @ignore */
   @ViewChild("kaart", { read: ElementRef })
@@ -314,6 +326,18 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
                 PublishedKaartLocatiesMsg,
                 KaartClassicMsg
               )
+            ),
+            prt.InErrorSubscription(
+              pipe(
+                InErrorMsg,
+                KaartClassicMsg
+              )
+            ),
+            prt.BusySubscription(
+              pipe(
+                BusyMsg,
+                KaartClassicMsg
+              )
             )
           )
         )
@@ -358,6 +382,10 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
             return this.voorgrondLaagLagen.emit(msg.lagen);
           case "PublishedKaartLocaties":
             return this.kaartLocaties.emit(flattenKaartLocaties(msg.locaties));
+          case "Busy":
+            return this.busyChange.emit(msg.busy);
+          case "InError":
+            return this.inErrorChange.emit(msg.inError);
           default:
             return; // Op de andere boodschappen reageren we niet
         }

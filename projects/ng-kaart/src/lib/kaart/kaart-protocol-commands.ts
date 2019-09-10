@@ -40,6 +40,7 @@ export type Command<Msg extends KaartMsg> =
   | MijnLocatieStateChangeCmd
   | PublishKaartLocatiesCmd
   | ReactiveerSelectieModusCmd
+  | RegistreerErrorCmd
   | SelecteerFeaturesCmd
   | SluitInfoBoodschapCmd
   | SluitPanelenCmd
@@ -83,6 +84,7 @@ export type Command<Msg extends KaartMsg> =
   | VulCacheVoorNosqlLaag<Msg>
   | VulCacheVoorWMSLaag<Msg>
   | ZetActieveModusCmd
+  | ZetDataloadBusyCmd
   | ZetFilter<Msg>
   | ZetFocusOpKaartCmd
   | ZetGetekendeGeometryCmd
@@ -94,6 +96,7 @@ export type Command<Msg extends KaartMsg> =
   | ZetStijlVoorLaagCmd<Msg>
   | ZetTransparantieVoorLaagCmd<Msg>
   | ZetUiElementOpties
+  | ZetUserBusyCmd
   | ZetZoomBereikCmd
   | ZoekCmd<Msg>
   | ZoekGekliktCmd;
@@ -491,6 +494,21 @@ export interface ZetUiElementOpties {
   readonly opties: any;
 }
 
+export interface ZetDataloadBusyCmd {
+  readonly type: "ZetDataloadBusy";
+  readonly busy: boolean;
+}
+
+export interface ZetUserBusyCmd {
+  readonly type: "ZetUserBusy";
+  readonly busy: boolean;
+}
+
+export interface RegistreerErrorCmd {
+  readonly type: "RegistreerError";
+  readonly inError: boolean;
+}
+
 // De features zullen "geselecteerd" worden, ook al zouden ze geen onderdeel uitmaken van één van de lagen. Het is dus de
 // verantwoordelijkheid van de zender om enkel feature mee te geven die zichtbaar zijn.
 // De gegeven features vervangen de eventueel reeds geselecteerde features. Maw, om alles te deslecteren, kan dit commando verzonden worden
@@ -738,6 +756,18 @@ export function VeranderRotatieCmd(rotatie: number, animationDuration: Option<nu
 
 export function VeranderExtentCmd(extent: ol.Extent): VeranderExtentCmd {
   return { type: "VeranderExtent", extent };
+}
+
+export function RegistreerErrorCmd(inError: boolean): RegistreerErrorCmd {
+  return { type: "RegistreerError", inError };
+}
+
+export function ZetDataloadBusyCmd(busy: boolean): ZetDataloadBusyCmd {
+  return { type: "ZetDataloadBusy", busy };
+}
+
+export function ZetUserBusyCmd(busy: boolean): ZetUserBusyCmd {
+  return { type: "ZetUserBusy", busy };
 }
 
 export function ZoekGekliktCmd(resultaat: ZoekResultaat): ZoekGekliktCmd {
