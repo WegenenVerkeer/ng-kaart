@@ -16,16 +16,22 @@ import { LaagModel, SyncUpdate, TableModel, Update } from "./model";
 
 export const FeatureTabelUiSelector = "FeatureTabel";
 
-interface FeatureTabelUiOpties {
+export interface FeatureTabelUiOpties {
+  readonly zichtbaar: boolean; // TODO totdat we de slider hebben
   readonly filterbareLagen: boolean;
 }
 
 const DefaultOpties: FeatureTabelUiOpties = {
+  zichtbaar: false,
   filterbareLagen: true
 };
 
 const equalTitels: Setoid<ke.ToegevoegdeVectorLaag[]> = array.getSetoid(ke.ToegevoegdeLaag.setoidToegevoegdeLaagByTitel);
 
+/**
+ * Dit is de hoofdcomponent van feature tabel. Deze component zorgt voor het raamwerk waar alle andere componenten in
+ * passen en voor het beheer van het model onderliggend aan de tabel.
+ */
 @Component({
   selector: "awv-feature-tabel-overzicht",
   templateUrl: "./feature-tabel-overzicht.component.html",
@@ -46,7 +52,7 @@ const equalTitels: Setoid<ke.ToegevoegdeVectorLaag[]> = array.getSetoid(ke.Toege
   changeDetection: ChangeDetectionStrategy.OnPush // Omdat angular anders veel te veel change detection uitvoert
 })
 export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
-  public readonly zichtbaar$: rx.Observable<boolean> = rx.of(true);
+  public readonly zichtbaar$: rx.Observable<boolean>;
   public readonly laagTitels$: rx.Observable<string[]>;
   public readonly toonFilters$: rx.Observable<boolean>;
 
@@ -63,7 +69,9 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
       share()
     );
 
-    this.opties$ = this.accumulatedOpties$(FeatureTabelUiSelector, DefaultOpties);
+    this.opties$ = subSpy("****opties")(this.accumulatedOpties$(FeatureTabelUiSelector, DefaultOpties));
+
+    this.zichtbaar$ = this.opties$.pipe(map(o => o.zichtbaar));
 
     const updateLagen$ = voorgrondLagen$.pipe(
       map(lagen => lagen.filter(laag => laag.magGetoondWorden).filter(ke.isToegevoegdeVectorLaag)),
