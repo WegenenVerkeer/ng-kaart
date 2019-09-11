@@ -381,7 +381,7 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
 
   isGeenLocatieVeld(veldnaam: string): boolean {
     return veldbeschrijving(veldnaam, this.veldbeschrijvingen)
-      .chain(veldInfo => option.fromNullable(veldInfo.geenLocatieVeld))
+      .chain(veldInfo => option.fromNullable(veldInfo.isGeenLocatieVeld))
       .getOrElse(false);
   }
 
