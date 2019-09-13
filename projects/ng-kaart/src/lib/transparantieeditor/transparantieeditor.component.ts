@@ -43,7 +43,7 @@ export class TransparantieeditorComponent extends KaartChildComponentBase {
     const findLaagOpTitel: Function2<string, ke.ToegevoegdeLaag[], Option<ke.ToegevoegdeLaag>> = (titel, lgn) =>
       array.findFirst(lgn, lg => lg.titel === titel);
     const laag$: rx.Observable<ke.ToegevoegdeLaag> = forEvery(aanpassing$)(aanpassing =>
-      kaart.modelChanges.lagenOpGroep.get(aanpassing.laag.laaggroep)!.pipe(
+      kaart.modelChanges.lagenOpGroep[aanpassing.laag.laaggroep].pipe(
         collectOption(lgn => findLaagOpTitel(aanpassing.laag.titel, lgn)),
         startWith(aanpassing.laag)
       )

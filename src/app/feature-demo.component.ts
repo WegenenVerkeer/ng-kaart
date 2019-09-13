@@ -358,7 +358,8 @@ export class FeatureDemoComponent {
 
   isOffline = false;
 
-  private tekenenActief = false;
+  tekenenActief = false;
+  geometryType = "Polygon";
   private getekendeGeom: Option<ol.geom.Geometry> = none;
 
   private alleVoorwaarden = ["Voorwaarden disclaimer", "Er zijn nieuwe voorwaarden", "Er zijn nog nieuwere voorwaarden"];
@@ -656,7 +657,7 @@ export class FeatureDemoComponent {
   ];
 
   readonly verkeersbordenVeldinfos: VeldInfo[] = [
-    { isBasisVeld: false, label: "ID", naam: "id", type: "string" },
+    { isBasisVeld: false, label: "ID", naam: "id", type: "integer" },
     { isBasisVeld: true, label: "Ident8", naam: "ident8", type: "string" },
     { isBasisVeld: true, label: "Refpunt", naam: "opschrift", type: "double" },
     { isBasisVeld: true, label: "Afstand", naam: "afstand", type: "integer" },

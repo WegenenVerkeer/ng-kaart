@@ -7,7 +7,7 @@ import { not, Predicate } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, filter, map, scan, shareReplay, startWith, take } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, filter, map, scan, shareReplay, startWith } from "rxjs/operators";
 
 import { Filter as fltr } from "../filter/filter-model";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
@@ -104,22 +104,22 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
       map(i => i.zoom),
       distinctUntilChanged()
     );
-    this.lagenHoog$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Hoog")!.pipe(
+    this.lagenHoog$ = this.modelChanges.lagenOpGroep["Voorgrond.Hoog"].pipe(
       debounceTime(100),
       shareReplay(1)
     );
-    this.lagenLaag$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Laag")!.pipe(
+    this.lagenLaag$ = this.modelChanges.lagenOpGroep["Voorgrond.Laag"].pipe(
       debounceTime(100),
       shareReplay(1)
     );
-    const achtergrondLagen$ = this.modelChanges.lagenOpGroep.get("Achtergrond")!.pipe(
+    const achtergrondLagen$ = this.modelChanges.lagenOpGroep["Achtergrond"].pipe(
       debounceTime(100),
       shareReplay(1)
     );
     this.lagenMetLegende$ = rx
       .combineLatest(this.lagenHoog$, this.lagenLaag$, achtergrondLagen$, zoom$, (lagenHoog, lagenLaag, achtergrondLagen, zoom) => {
         const lagen = lagenHoog.concat(lagenLaag, achtergrondLagen);
-        return lagen.filter(laag => isZichtbaar(laag!, zoom) && laag!.magGetoondWorden && laag!.legende.isSome());
+        return lagen.filter(laag => isZichtbaar(laag, zoom) && laag.magGetoondWorden && laag.legende.isSome());
       })
       .pipe(shareReplay(1));
     const lagenHoogLeeg$ = this.lagenHoog$.pipe(map(array.isEmpty));

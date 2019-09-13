@@ -1,8 +1,8 @@
-import { option, ord } from "fp-ts";
-import * as array from "fp-ts/lib/Array";
+import { array, option, ord, setoid } from "fp-ts";
 import { Either } from "fp-ts/lib/Either";
 import { identity, pipe, Predicate, Refinement } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
+import { Setoid } from "fp-ts/lib/Setoid";
 
 import { PartialFunction1 } from "./function";
 
@@ -53,3 +53,5 @@ export const findFirstBy: <A>(order: ord.Ord<A>) => PartialFunction1<A[], A> = o
       .map(first => (order.compare(head, first) < 0 ? head : first))
       .orElse(() => option.some(head))
   );
+
+export const getStringsSetoid: Setoid<string[]> = array.getSetoid(setoid.setoidString);

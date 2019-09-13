@@ -1,0 +1,10 @@
+.feature-table-pager-content{
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+
+  .feature-table-pager-content-slider {
+    width: 200px;
+  }
+}

@@ -1,12 +1,12 @@
 language: node_js
 node_js:
-- lts/carbon
+- lts/dubnium
 after_success:
 - npm run build:elements # Maak een dist folder met de webcomponent
 cache:
   directories:
   - node_modules
-before_install: 
+before_install:
 before_deploy:
   - cd dist/webcomponent # Naar dist gaan zodat de publish van daaruit gebeurt
 deploy:
@@ -16,7 +16,7 @@ deploy:
     secure: axk0wuGoTqhyICGL91mwInYiCrIiMtBZxYqMqKUHPr2J8oN6/D1DlvGIktvPT4lwMRa8PMrPtO2uDpeO5i7FErc/qgKU0tlUeWp5jLGzfpKsPJx6Jyu75oHKDb8wnufSbxWNsmkn6l7P7cDYym2K2/iXJc7i3UTdmZ+dymxFHmi2uLUmI4SfORxgNDCqwM8AyXnsBjHhPgWEFOfqTkI7is04Dy8g1V6TA+CXlLTp76EBZrcxEPAyRFJjiEJgIp/DqYpFJhwBwOY0cE+aSCTzNK0ZIyYVVEPs63HLgjR7LZ9Mmx37HiKQQ16hLppBAl3vCXHQaEt/fV0FMYrhFkM7XKAEr/qHiZwvqGuinszh2yi00gYQU0IO753djOhWWjEO5GMrXnFLHIb7RyTaV5LhY4Es1Ndv+ezAye3PxkufOODCNkkJh6Iv0Bmg9oJGlge/z+Yj+6rsFhJOF+66Yid4O8GctuTKXgEOcrfJCcdld4HQbmXsnOhdZZnspLpkDM0BeyMtac8Q2GXAOw5DO7got2D+CvOHImx4yNSJ82qo8S8tCCkz65HHolXHFohG06ofBEVpIFg4+agvtQKHNKQ3CqE9L1P/PkWbocWgKbVYXkxZUbHaWgGlU1hOm0xEioUOA8kZmLTYMBE6JLZIsJttWbAr3AVDW95blts/jx6+Sr8=
   skip_cleanup: true # dist niet weg gooien
   on:
-    tags: true 
+    tags: true
     branch: master
 sudo: required
 addons:

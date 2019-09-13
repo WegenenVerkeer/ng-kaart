@@ -94,7 +94,7 @@ export class ClassicLagenkiezerComponent extends ClassicBaseComponent implements
   }
 
   /**
-   * Indien gezet kunnen gebruiker lagen verplaatsen van volgorde. Er zijn 2 groepen van lagen: featurelagen (groep
+   * Indien gezet kunnen gebruikers lagen verplaatsen van volgorde. Er zijn 2 groepen van lagen: featurelagen (groep
    * <code>"Voorgroond.hoog"</code>) en tilelagen (groep <code>"Voorgroond.laag"</code>)  Er kan enkel binnen een groep
    * verplaatst worden.
    */
