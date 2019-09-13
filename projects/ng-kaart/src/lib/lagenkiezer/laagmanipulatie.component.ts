@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, NgZone, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
+import { ChangeDetectionStrategy, Component, Input, NgZone, ViewChild, ViewEncapsulation } from "@angular/core";
 import { MatIconRegistry, MatMenuTrigger } from "@angular/material";
 import { DomSanitizer } from "@angular/platform-browser";
 import * as array from "fp-ts/lib/Array";
@@ -45,7 +45,7 @@ export interface ZichtbaarheidsInfo {
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class LaagmanipulatieComponent extends KaartChildComponentBase implements OnInit {
+export class LaagmanipulatieComponent extends KaartChildComponentBase {
   private readonly zoom$: rx.Observable<number>;
   readonly onzichtbaar$: rx.Observable<boolean>;
   readonly kanVerwijderen$: rx.Observable<boolean>;
@@ -130,7 +130,7 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase implements
     const findLaagOpTitel: Function2<string, ke.ToegevoegdeLaag[], Option<ke.ToegevoegdeVectorLaag>> = (titel, lgn) =>
       array.findFirst(lgn, lg => lg.titel === titel).filter(ke.isToegevoegdeVectorLaag);
 
-    const voorgrondlaag$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Hoog")!.pipe(
+    const voorgrondlaag$ = this.modelChanges.lagenOpGroep["Voorgrond.Hoog"].pipe(
       collectOption(lgn => findLaagOpTitel(this.laag.titel, lgn)),
       shareReplay(1)
     );

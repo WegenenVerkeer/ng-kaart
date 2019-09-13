@@ -1,0 +1,13 @@
+<div class="feature-table-header-content" *ngIf="(header$ | async) as header">
+  <div class="table-header-filter" *ngIf="header.hasFilter">
+    <button mat-icon-button (click)="onAction('toggleFilterActive')">
+      <mat-icon *ngIf="header.filterIsActive" matTooltip="Deactiveer filter">filter_list</mat-icon>
+      <mat-icon *ngIf="!header.filterIsActive" class="table-header-filter-inactive" matTooltip="Activeer filter">filter_list</mat-icon>
+    </button>
+  </div>
+  <div class="table-header-title">
+    <div class="table-header-title-name">{{ header.titel }}</div>
+    <div class="count" *ngIf="header.count >= 0">{{ header.count }}</div>
+    <div class="noCount" *ngIf="!(header.count >= 0)">...</div>
+  </div>
+</div>

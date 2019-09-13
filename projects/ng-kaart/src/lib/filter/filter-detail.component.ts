@@ -73,7 +73,7 @@ export class FilterDetailComponent extends KaartChildComponentBase {
 
     const laagUpdates$ = laag$.pipe(
       switchMap(laag =>
-        this.modelChanges.lagenOpGroep.get("Voorgrond.Hoog")!.pipe(
+        this.modelChanges.lagenOpGroep["Voorgrond.Hoog"].pipe(
           collectOption(lgn => findLaagOpTitel(laag.titel, lgn)),
           shareReplay(1)
         )

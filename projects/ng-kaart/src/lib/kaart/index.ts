@@ -28,6 +28,7 @@ import { ZoekerModule } from "../zoeker/index";
 import { KaartAchtergrondSelectorComponent } from "./achtergrond-selector/kaart-achtergrond-selector.component";
 import { KaartAchtergrondTileComponent } from "./achtergrond-selector/kaart-achtergrond-tile.component";
 import { KaartCopyrightComponent } from "./copyright/kaart-copyright.component";
+import { FeatureTabelModule } from "./feature-tabel/index";
 import { KaartInfoBoodschapAlertComponent } from "./info-boodschappen/kaart-info-boodschap-alert.component";
 import { KaartInfoBoodschapIdentifyComponent } from "./info-boodschappen/kaart-info-boodschap-identify.component";
 import { KaartInfoBoodschapKaartBevragenComponent } from "./info-boodschappen/kaart-info-boodschap-kaart-bevragen.component";
@@ -144,7 +145,8 @@ export const myCustomTooltipDefaults: MatTooltipDefaultOptions = {
     LagenkiezerModule.withDefaults(),
     StijleditorModule,
     FilterModule,
-    TransparantieeditorModule
+    TransparantieeditorModule,
+    FeatureTabelModule
   ],
   declarations: [components],
   exports: [components],

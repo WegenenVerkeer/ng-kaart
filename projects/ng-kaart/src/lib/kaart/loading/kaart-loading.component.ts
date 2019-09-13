@@ -33,11 +33,11 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
         // want het kan zijn dat er lagen zijn die al gereed zijn en dus nooit nog een event uitsturen
         .map(lg => ((lg as VectorLaag)!.source as NosqlFsSource).loadEvent$.pipe(startWith(LoadComplete as DataLoadEvent)));
 
-    const lagenHoog$$: rx.Observable<Array<rx.Observable<DataLoadEvent>>> = this.modelChanges.lagenOpGroep.get("Voorgrond.Hoog")!.pipe(
+    const lagenHoog$$: rx.Observable<Array<rx.Observable<DataLoadEvent>>> = this.modelChanges.lagenOpGroep["Voorgrond.Hoog"].pipe(
       map(noSqlFsLagenDataLoadEvents),
       startWith(new Array<rx.Observable<DataLoadEvent>>())
     );
-    const lagenLaag$$: rx.Observable<Array<rx.Observable<DataLoadEvent>>> = this.modelChanges.lagenOpGroep.get("Voorgrond.Laag")!.pipe(
+    const lagenLaag$$: rx.Observable<Array<rx.Observable<DataLoadEvent>>> = this.modelChanges.lagenOpGroep["Voorgrond.Laag"].pipe(
       map(noSqlFsLagenDataLoadEvents),
       startWith(new Array<rx.Observable<DataLoadEvent>>())
     );

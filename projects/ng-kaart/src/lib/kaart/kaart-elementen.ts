@@ -3,9 +3,11 @@ import { fromPredicate, fromRefinement, Option } from "fp-ts/lib/Option";
 import * as ord from "fp-ts/lib/Ord";
 import { Ord } from "fp-ts/lib/Ord";
 import * as setoid from "fp-ts/lib/Setoid";
-import { Setoid, setoidString } from "fp-ts/lib/Setoid";
-import { Iso, Lens, Optional } from "monocle-ts";
+import { Setoid } from "fp-ts/lib/Setoid";
+import { Fold, Iso, Lens, Optional, Prism } from "monocle-ts";
 import * as ol from "openlayers";
+import * as rx from "rxjs";
+import { debounceTime, mapTo } from "rxjs/operators";
 
 import { Filter as fltr } from "../filter/filter-model";
 import { FilterTotaal, totaalOpTeHalen } from "../filter/filter-totaal";
@@ -14,6 +16,7 @@ import { Transparantie } from "../transparantieeditor/transparantie";
 import { mapToOptionalByKey } from "../util/lenses";
 import * as maps from "../util/maps";
 import * as matchers from "../util/matchers";
+import { observableFromOlEvents } from "../util/ol-observable";
 
 import { Legende } from "./kaart-legende";
 import { AwvV0StyleSpec, StyleSelector } from "./stijl-selector";
@@ -183,6 +186,13 @@ export interface ToegevoegdeVectorLaag extends ToegevoegdeLaag {
   readonly filterinstellingen: Laagfilterinstellingen;
 }
 
+export interface OpLaagGroep<T> {
+  readonly Achtergrond: T;
+  readonly "Voorgrond.Hoog": T;
+  readonly "Voorgrond.Laag": T;
+  readonly Tools: T;
+}
+
 export function underlyingSource(layer: ol.layer.Layer): ol.source.Source {
   const source = layer.getSource();
   if (source instanceof ol.source.Cluster) {
@@ -269,6 +279,10 @@ export const stdLaagfilterinstellingen = Laagfilterinstellingen(fltr.empty(), tr
 // Manipulatie en inspectie
 //
 
+export namespace ToegevoegdeLaag {
+  export const setoidToegevoegdeLaagByTitel: Setoid<ToegevoegdeLaag> = setoid.contramap(tl => tl.titel, setoid.setoidString);
+}
+
 export namespace ToegevoegdeVectorLaag {
   export const stijlSelBronLens: Optional<ToegevoegdeVectorLaag, AwvV0StyleSpec> = Optional.fromOptionProp<ToegevoegdeVectorLaag>()(
     "stijlSelBron"
@@ -289,11 +303,28 @@ export namespace ToegevoegdeVectorLaag {
 
   export const veldInfoOpNaamOptional: Function1<string, Optional<ToegevoegdeVectorLaag, VeldInfo>> = veldnaam =>
     Lens.fromPath<ToegevoegdeVectorLaag, "bron", "velden">(["bron", "velden"]).composeOptional(mapToOptionalByKey(veldnaam));
+
+  export const noSqlFsSourceFold: Fold<ToegevoegdeVectorLaag, NosqlFsSource> = Lens.fromPath<ToegevoegdeVectorLaag, "bron", "source">([
+    "bron",
+    "source"
+  ])
+    .asGetter()
+    .composePrism(Prism.fromRefinement(isNoSqlFsSource));
+
+  export const opTitelSetoid: Setoid<ToegevoegdeVectorLaag> = setoid.contramap(laag => laag.titel, setoid.setoidString);
+
+  export const featuresChanged$: Function1<ToegevoegdeVectorLaag, rx.Observable<null>> = vlg =>
+    observableFromOlEvents(vlg!.layer.getSource(), "addfeature", "removefeature", "clear").pipe(
+      debounceTime(100),
+      mapTo(null)
+    );
 }
 
 export namespace VeldInfo {
-  export const setoidVeldOpNaam: Setoid<VeldInfo> = setoid.contramap(vi => vi.naam, setoidString);
+  export const setoidVeldOpNaam: Setoid<VeldInfo> = setoid.contramap(vi => vi.naam, setoid.setoidString);
   export const ordVeldOpBasisVeld: Ord<VeldInfo> = ord.contramap(vi => vi.isBasisVeld, ord.ordBoolean);
+  export const veldnaamLens: Lens<VeldInfo, string> = Lens.fromProp<VeldInfo>()("naam");
+  export const veldlabelLens: Lens<VeldInfo, string | undefined> = Lens.fromProp<VeldInfo>()("label");
 
   export const veldInfoOpNaam: Function2<string, Map<string, VeldInfo>, Option<VeldInfo>> = (naam, veldinfos) =>
     maps.findFirst(veldinfos, vi => vi.naam === naam);

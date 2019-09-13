@@ -1,4 +1,4 @@
-import { Component, Injector, Input, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
+import { Component, Injector, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 
 import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import * as prt from "../../kaart/kaart-protocol";
@@ -15,9 +15,9 @@ import { ClassicBaseComponent } from "../classic-base.component";
  * De volgorde van de lagen in de template/HTML bepaalt de volgorde in de lagenkiezer en welke eerst getoond wordt. (Nog
  * open probleem in webcomponent versie)
  *
- * Door de tag <code>groep</code> te zetten op ofwel <code>'Voorgrond.Laag'</code> of <code>'Achtergrond'</code>, wordt
- * een laag respectievelijk niet of wel bij de selecteerbare achtergronden opgenomen. Het is doorgaans geen goed idee om
- * een volledig dekkende laag in de voorgrond te gebruiken als de achtergrondselectie aanwezig is.
+ * Door de tag <code>groep</code> te zetten op ofwel <code>'Voorgrond.Laag'</code> of <code>'Achtergrond.laag'</code>,
+ * wordt een laag respectievelijk niet of wel bij de selecteerbare achtergronden opgenomen. Het is doorgaans geen goed
+ * idee om een volledig dekkende laag in de voorgrond te gebruiken als de achtergrondselectie aanwezig is.
  */
 @Component({
   selector: "awv-kaart-knop-achtergrondlaag-kiezer",

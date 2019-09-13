@@ -1,0 +1,31 @@
+@import "../../css/kaart.component-common.scss";
+
+.feature-table-header-content {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+
+  .table-header-filter {
+    .table-header-filter-inactive::after { // diagonale lijn door icoon tekenen
+      position: absolute;
+      width: 22px;
+      left: 11px;
+      top: 56%;
+      right: 0;
+      content: "";
+      border-top: 2px solid;
+      border-color: inherit;
+      transform: rotate(-55deg);
+      box-shadow: 0 0 0 1px white;
+      margin: -2px;
+    }
+  }
+
+  .table-header-title {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+}

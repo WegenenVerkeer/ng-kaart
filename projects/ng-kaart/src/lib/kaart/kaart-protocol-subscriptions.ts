@@ -1,5 +1,5 @@
 import { Either } from "fp-ts/lib/Either";
-import { Function1 } from "fp-ts/lib/function";
+import { Function1, Predicate } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 
@@ -187,6 +187,13 @@ export interface LaatsteCacheRefreshSubscription<Msg> {
 export interface MijnLocatieStateChangeSubscription<Msg> {
   readonly type: "MijnLocatieStateChange";
   readonly wrapper: (stateChange: MijnLocatieStateChange) => Msg;
+}
+
+//////////
+// Helpers
+
+export namespace Viewinstellingen {
+  export const visible: Predicate<Viewinstellingen> = vi => vi.zoom >= vi.minZoom && vi.zoom <= vi.maxZoom;
 }
 
 ///////////////
