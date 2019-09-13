@@ -152,20 +152,20 @@ export namespace Page {
   });
 
   const isoPageNumber: Iso<PageNumber, number> = iso<PageNumber>().compose(iso<NonNegativeInteger>());
-  const prismPageNumer: Prism<number, PageNumber> = prismNonNegativeInteger.composeIso(iso<PageNumber>().reverse());
-  export const getterPageNumber: Getter<PageNumber, number> = new Getter(prismPageNumer.reverseGet);
-  export const asPageNumber: PartialFunction1<number, PageNumber> = prismPageNumer.getOption;
+  const prismPageNumber: Prism<number, PageNumber> = prismNonNegativeInteger.composeIso(iso<PageNumber>().reverse());
+  export const getterPageNumber: Getter<PageNumber, number> = new Getter(prismPageNumber.reverseGet);
+  export const asPageNumber: PartialFunction1<number, PageNumber> = prismPageNumber.getOption;
   export const toPageNumberWithFallback: Function2<number, PageNumber, PageNumber> = (n, fallback) => asPageNumber(n).getOrElse(fallback);
   export const pageNumberLens: Lens<Page, PageNumber> = Lens.fromProp<Page>()("pageNumber");
   export const lastPageNumberLens: Lens<Page, PageNumber> = Lens.fromProp<Page>()("lastPageNumber");
   export const rowsLens: Lens<Page, Row[]> = Lens.fromProp<Page>()("rows");
-  export const ordPageNumber: Ord<PageNumber> = ord.contramap(prismPageNumer.reverseGet, ord.ordNumber);
+  export const ordPageNumber: Ord<PageNumber> = ord.contramap(prismPageNumber.reverseGet, ord.ordNumber);
 
   export const first: PageNumber = isoPageNumber.wrap(0);
   export const previous: Endomorphism<PageNumber> = isoPageNumber.modify(n => Math.max(0, n - 1));
   export const next: Endomorphism<PageNumber> = isoPageNumber.modify(n => n + 1);
   export const set: Function1<number, Endomorphism<PageNumber>> = value => pageNumber =>
-    prismPageNumer.getOption(value).getOrElse(pageNumber);
+    prismPageNumber.getOption(value).getOrElse(pageNumber);
 
   export const isInPage: Function1<PageNumber, Predicate<number>> = pageNumber => i => {
     const lowerPageBound = isoPageNumber.unwrap(pageNumber) * PageSize;
@@ -173,7 +173,7 @@ export namespace Page {
   };
 
   export const last: Function1<number, PageNumber> = numFeatures =>
-    prismPageNumer.getOption(Math.floor(numFeatures / PageSize)).getOrElse(first);
+    prismPageNumber.getOption(Math.floor(numFeatures / PageSize)).getOrElse(first);
   export const isFirst: Predicate<PageNumber> = pageNumber => ordPageNumber.equals(pageNumber, first);
   export const isTop: Function1<PageNumber, Predicate<PageNumber>> = largestPageNumber => pageNumber =>
     ordPageNumber.equals(pageNumber, largestPageNumber);
@@ -216,7 +216,7 @@ export namespace PageFetcher {
     );
   };
 
-  const featuresInExtend: Curried2<ol.Extent, ol.source.Vector, ol.Feature[]> = extent => source => source.getFeaturesInExtent(extent);
+  const featuresInExtent: Curried2<ol.Extent, ol.source.Vector, ol.Feature[]> = extent => source => source.getFeaturesInExtent(extent);
   const takePage: Function1<PageNumber, Endomorphism<ol.Feature[]>> = pageNumber => array.filterWithIndex(Page.isInPage(pageNumber));
   const toRows: Curried2<Function1<ol.Feature, Row>, ol.Feature[], Row[]> = array.map;
   const featureToFieldValue: Curried2<FieldSorting, ol.Feature, Option<ValueType>> = sorting => feature =>
@@ -245,7 +245,7 @@ export namespace PageFetcher {
       pageRequest.pageNumber,
       Page.last(FeatureCountFetcher.countFromSource(source, pageRequest).count),
       flow(
-        featuresInExtend(pageRequest.dataExtent),
+        featuresInExtent(pageRequest.dataExtent),
         sortFeatures(pageRequest.fieldSortings),
         takePage(pageRequest.pageNumber),
         toRows(pageRequest.rowCreator)
