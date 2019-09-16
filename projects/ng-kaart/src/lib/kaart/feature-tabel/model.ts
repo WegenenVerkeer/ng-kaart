@@ -186,7 +186,7 @@ export namespace LaagModel {
   export const hasFilterLens: Lens<LaagModel, boolean> = Lens.fromProp<LaagModel>()("hasFilter");
   export const filterIsActiveLens: Lens<LaagModel, boolean> = Lens.fromProp<LaagModel>()("filterIsActive");
   export const veldInfosGetter: Getter<LaagModel, ke.VeldInfo[]> = Lens.fromProp<LaagModel>()("veldinfos").asGetter();
-  const unsafeFieldSortinsLens: Lens<LaagModel, FieldSorting[]> = Lens.fromProp<LaagModel>()("fieldSortings");
+  const unsafeFieldSortingsLens: Lens<LaagModel, FieldSorting[]> = Lens.fromProp<LaagModel>()("fieldSortings");
   const unsafeHeadersLens: Lens<LaagModel, ColumnHeaders> = Lens.fromProp<LaagModel, "headers">("headers");
   export const headersGetter: Getter<LaagModel, ColumnHeaders> = Lens.fromProp<LaagModel, "headers">("headers").asGetter();
   const unsafeFieldSelectionsLens: Lens<LaagModel, FieldSelection[]> = Lens.fromProp<LaagModel>()("fieldSelections");
@@ -197,7 +197,7 @@ export namespace LaagModel {
       return flow(
         unsafeFieldSelectionsLens.set(fixedFieldSelections),
         unsafeHeadersLens.set(ColumnHeaders.createFromFieldSelection(fixedFieldSelections)),
-        unsafeFieldSortinsLens.modify(FieldSelection.maintainFieldSortings(fixedFieldSelections))
+        unsafeFieldSortingsLens.modify(FieldSelection.maintainFieldSortings(fixedFieldSelections))
       );
     }
   );
