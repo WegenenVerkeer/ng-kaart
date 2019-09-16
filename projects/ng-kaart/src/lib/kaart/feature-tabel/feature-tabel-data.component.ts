@@ -77,6 +77,10 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     this.fieldNameSelections$ = subSpy("****fieldNameSelections$")(
       this.laag$.pipe(
         map(laag => laag.fieldSelections),
+        // De distinctUntilChanged is OK omdat de eerste kolom disabled staat. Mocht dat niet zo zijn, maar we willen
+        // die toch altijd geselecteerd hebben, dan zou het model daar voor zorgen (dat doet het ook), maar als gevolg
+        // zou er geen verandering aan het LaagModel zijn en bij gevolg ook geen emit. De checkbox state zou dan niet
+        // overeenstemmen met het model.
         distinctUntilChanged(array.getSetoid(FieldSelection.setoidFieldSelection).equals)
       )
     );
