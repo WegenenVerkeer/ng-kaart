@@ -67,6 +67,11 @@ export abstract class KaartComponentBase implements AfterViewInit, OnInit, OnDes
     return this.viewReadySubj;
   }
 
+  // Enkel voor debug! Handig om te weten wat er nu exact doorgestuurd wordt.
+  protected action$(): rx.Observable<ClickAction> {
+    return this.clickActionSubj.asObservable();
+  }
+
   protected actionFor$(action: string): rx.Observable<void> {
     return this.clickActionSubj.pipe(
       filter(a => a.name === action),

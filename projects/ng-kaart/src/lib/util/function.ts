@@ -70,3 +70,10 @@ export function isNotNullObject(object: any) {
 export function isNotNull(object: any) {
   return object !== null;
 }
+
+export function valueSpy<A>(msg: string): Endomorphism<A> {
+  return a => {
+    console.log(msg, a);
+    return a;
+  };
+}

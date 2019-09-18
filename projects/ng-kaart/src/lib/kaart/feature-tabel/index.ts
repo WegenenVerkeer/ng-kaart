@@ -1,6 +1,14 @@
 import { CommonModule } from "@angular/common";
 import { ModuleWithProviders, NgModule } from "@angular/core";
-import { MatButtonModule, MatIconModule, MatInputModule, MatSliderModule, MatTooltipModule } from "@angular/material";
+import {
+  MatButtonModule,
+  MatCheckboxModule,
+  MatIconModule,
+  MatInputModule,
+  MatMenuModule,
+  MatSliderModule,
+  MatTooltipModule
+} from "@angular/material";
 import { MatTabsModule } from "@angular/material/tabs";
 
 import { FeatureTabelDataComponent } from "./feature-tabel-data.component";
@@ -16,7 +24,17 @@ const components: any[] = [
 ];
 
 @NgModule({
-  imports: [CommonModule, MatIconModule, MatInputModule, MatButtonModule, MatTabsModule, MatTooltipModule, MatSliderModule],
+  imports: [
+    CommonModule,
+    MatButtonModule,
+    MatCheckboxModule,
+    MatIconModule,
+    MatInputModule,
+    MatMenuModule,
+    MatSliderModule,
+    MatTabsModule,
+    MatTooltipModule
+  ],
   declarations: [components],
   exports: [components]
 })

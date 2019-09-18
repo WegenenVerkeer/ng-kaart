@@ -54,4 +54,11 @@ export const findFirstBy: <A>(order: ord.Ord<A>) => PartialFunction1<A[], A> = o
       .orElse(() => option.some(head))
   );
 
+/**
+ * True if at least one array element satisfies the predicate. Thin wrapper around the standard library function that is
+ * more composable.
+ * @param pred The predicate to apply to the array elements.
+ */
+export const exists: <A>(pred: Predicate<A>) => Predicate<A[]> = pred => as => as.some(pred);
+
 export const getStringsSetoid: Setoid<string[]> = array.getSetoid(setoid.setoidString);
