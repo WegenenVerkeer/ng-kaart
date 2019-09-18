@@ -22,14 +22,12 @@ import * as ke from "../kaart-elementen";
 
 export type ValueType = string | number | boolean | DateTime;
 
+// Zou kunen new-type zijn. Afwachten of er nog properties nuttig zijn
 export interface Field {
   readonly maybeValue: Option<ValueType>;
 }
 
-// Zou kunen new-type zijn. Afwachten of er nog properties nuttig zijn
-export interface Row {
-  readonly [key: string]: Field;
-}
+export type Row = Record<string, Field>;
 
 export interface PageNumber extends Newtype<{ readonly PAGENUMBER: unique symbol }, NonNegativeInteger> {}
 
@@ -246,7 +244,7 @@ export namespace PageFetcher {
       string: () => ord.ordString,
       integer: () => ord.ordNumber,
       double: () => ord.ordNumber,
-      boolean: () => ord.ordBoolean,
+      boolean: () => ord.getDualOrd(ord.ordBoolean), // Hack: omdat JA < NEEN, maar false < true
       // TODO + date en datetime -> parse + ordNumber
       fallback: () => ord.ordString
     })(sorting.veldinfo);

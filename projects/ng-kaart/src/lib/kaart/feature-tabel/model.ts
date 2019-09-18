@@ -1,7 +1,8 @@
-import { array, option, ord, setoid, traversable } from "fp-ts";
+import { array, option, ord, record, setoid, traversable } from "fp-ts";
 import { constant, Curried2, curry, Endomorphism, flip, flow, Function1, Function2, identity, Predicate } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
+import { getLastSemigroup } from "fp-ts/lib/Semigroup";
 import { Setoid } from "fp-ts/lib/Setoid";
 import { fromTraversable, Getter, Lens, Optional, Prism, Traversal } from "monocle-ts";
 import * as ol from "openlayers";
@@ -56,6 +57,7 @@ export interface LaagModel {
   readonly fieldSelections: FieldSelection[]; // enkel een subset van de velden is zichtbaar
   readonly fieldSortings: FieldSorting[];
   readonly rowTransformer: Endomorphism<Row>; // bewerkt de ruwe rij (bijv. locatieveld toevoegen)
+  readonly rowFormats: RowFormatSpec; // instructies om velden aan te passen.
 
   readonly source: NosqlFsSource;
   readonly minZoom: number;
@@ -83,6 +85,11 @@ export interface TableHeader {
   readonly hasFilter: boolean;
   readonly count: number | undefined;
 }
+
+// Een RowFormatSpec laat toe om veldwaarden om te zetten naar een andere representatie. Een transformatiefunctie obv
+// een RowFormatSpec wordt heel vroeg bij het interpreteren van de laag VeldInfo aangemaakt omdat die voor alle rijen
+// dezelfde is. Zoals altijd geldt dat een
+export type RowFormatSpec = Record<string, Endomorphism<Field>>;
 
 export namespace FieldSelection {
   export const nameLens: Lens<FieldSelection, string> = Lens.fromProp<FieldSelection>()("name");
@@ -242,6 +249,15 @@ export namespace LaagModel {
     });
   };
 
+  const formatBoolean: Endomorphism<Field> = field => ({ maybeValue: field.maybeValue.map(value => (value ? "JA" : "NEEN")) });
+  const rowFormat: Function1<ke.VeldInfo, Option<Endomorphism<Field>>> = vi =>
+    vi.type === "boolean" ? option.some(formatBoolean) : option.none;
+  const rowFormatsFromVeldinfos: Function1<ke.VeldInfo[], RowFormatSpec> = veldinfos =>
+    pipe(
+      record.fromFoldableMap(getLastSemigroup<ke.VeldInfo>(), array.array)(veldinfos, vi => [vi.naam, vi]),
+      record.filterMap(rowFormat)
+    );
+
   export const create: PartialFunction2<ke.ToegevoegdeVectorLaag, Viewinstellingen, LaagModel> = (laag, viewinstellingen) =>
     ke.ToegevoegdeVectorLaag.noSqlFsSourceFold.headOption(laag).map(source => {
       // We mogen niet zomaar alle velden gebruiken. Om te beginnen enkel de basisvelden en de locatievelden moeten
@@ -261,6 +277,7 @@ export namespace LaagModel {
       const firstField = array.take(1, fieldSelections);
       const contributingVeldinfos = array.chain(FieldSelection.contributingVeldinfosGetter.get)(firstField);
       const fieldSortings = contributingVeldinfos.map(FieldSorting.create("ASCENDING"));
+      const rowFormats = rowFormatsFromVeldinfos(veldinfos);
 
       return {
         titel: laag.titel,
@@ -272,6 +289,7 @@ export namespace LaagModel {
         expectedPageNumber: Page.first,
         fieldSelections,
         fieldSortings,
+        rowFormats,
         source,
         minZoom: laag.bron.minZoom,
         maxZoom: laag.bron.maxZoom,
@@ -409,6 +427,27 @@ export namespace TableModel {
   const inZoom = (ifInZoom: Endomorphism<LaagModel>, ifOutsideZoom: Endomorphism<LaagModel>): Endomorphism<LaagModel> => laag =>
     (laag.viewinstellingen.zoom >= laag.minZoom && laag.viewinstellingen.zoom <= laag.maxZoom ? ifInZoom : ifOutsideZoom)(laag);
 
+  const fieldFormatter: Function2<string[], RowFormatSpec, Function2<string, Field, Field>> = (selectedFieldNames, formats) => (
+    fieldName,
+    field
+  ) =>
+    array.elem(setoid.setoidString)(fieldName, selectedFieldNames)
+      ? record
+          .lookup(fieldName, formats)
+          .map(f => f(field))
+          .getOrElse(field)
+      : field;
+
+  // Deze formatteert de waarden in de rij (enkel voor de geselecteerde kolommen). Dit is nu een transformatie van Row.
+  // Misschien is het nuttig om nog een ander concept in te voeren (FormattedRow?)
+  const rowFormatter: Function1<LaagModel, Endomorphism<Row>> = laag => row =>
+    pipe(
+      laag.fieldSelections,
+      array.filter(FieldSelection.selectedLens.get),
+      array.map(FieldSelection.nameLens.get), // we willen enkel de namen van de zichtbare kolommen
+      selectedFieldNames => record.mapWithIndex(fieldFormatter(selectedFieldNames, laag.rowFormats))(row)
+    );
+
   const updateLaagPageData: Endomorphism<LaagModel> = laag =>
     LaagModel.pageLens.set(
       option.some(
@@ -418,7 +457,8 @@ export namespace TableModel {
           pageNumber: laag.expectedPageNumber,
           rowCreator: flow(
             Row.featureToRow(laag.veldinfos),
-            laag.rowTransformer
+            laag.rowTransformer,
+            rowFormatter(laag)
           ),
           requestSequence: laag.nextPageSequence
         })
