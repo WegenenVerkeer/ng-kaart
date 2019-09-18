@@ -39,6 +39,15 @@ $footer-height: 48px;
       white-space: nowrap;
     }
 
+    th {
+      height: 48px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-start;
+      cursor: pointer;
+    }
+
     td {
       font-size: 14px;
       padding-top: 10px;

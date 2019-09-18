@@ -15,12 +15,14 @@ import { FeatureTabelDataComponent } from "./feature-tabel-data.component";
 import { FeatureTabelHeaderComponent } from "./feature-tabel-header.component";
 import { FeatureTabelOverzichtComponent } from "./feature-tabel-overzicht.component";
 import { FeatureTabelPagerComponent } from "./feature-tabel-pager.component";
+import { FeatureTabelSorteringStatusComponent } from "./feature-tabel-sortering-status.component";
 
 const components: any[] = [
   FeatureTabelDataComponent,
   FeatureTabelHeaderComponent,
   FeatureTabelOverzichtComponent,
-  FeatureTabelPagerComponent
+  FeatureTabelPagerComponent,
+  FeatureTabelSorteringStatusComponent
 ];
 
 @NgModule({
