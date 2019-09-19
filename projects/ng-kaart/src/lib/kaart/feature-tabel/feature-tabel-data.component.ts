@@ -8,7 +8,6 @@ import * as rx from "rxjs";
 import { distinctUntilChanged, map, mapTo, share, switchMap, tap } from "rxjs/operators";
 import { isString } from "util";
 
-import { NoOptionRecord, optionsToUndefined } from "../../util";
 import { catOptions, collectOption, subSpy } from "../../util/operators";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { KaartComponent } from "../kaart.component";
