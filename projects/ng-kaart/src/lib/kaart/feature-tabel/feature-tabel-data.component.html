@@ -71,12 +71,12 @@
             let fieldNameSelection of (fieldNameSelections$ | async);
             let first = first
           "
-          [disabled]="first"
+          [disabled]="first || fieldNameSelection.sortDirection.isSome()"
           (click)="onAction('toggleField', fieldNameSelection)"
         >
           <mat-checkbox
             [checked]="fieldNameSelection.selected"
-            [disabled]="first"
+            [disabled]="first || fieldNameSelection.sortDirection.isSome()"
             ><span>{{ fieldNameSelection.label }}</span></mat-checkbox
           >
         </button>
