@@ -1,6 +1,6 @@
 import { option, record } from "fp-ts";
 import { Predicate } from "fp-ts/lib/function";
-import { fromNullable, fromPredicate, none, Option, some, URI as OptionURI } from "fp-ts/lib/Option";
+import { fromNullable, fromPredicate, none, Option, some } from "fp-ts/lib/Option";
 import { setoidString } from "fp-ts/lib/Setoid";
 import { Validation } from "fp-ts/lib/Validation";
 import { isNullOrUndefined } from "util";
