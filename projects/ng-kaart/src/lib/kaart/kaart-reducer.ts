@@ -1558,6 +1558,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function openTabel(): ModelWithResult<Msg> {
       modelChanger.tabelStateSubj.next(TabelStateChange("Opengeklapt", true));
+      // Bij openen van het tabel paneel met deze 2 knoppen:
+      // Verdwijnen alle openstaande pop-up cards (bv kaart bevragen, meten,...)
       modelChanger.laagstijlaanpassingStateSubj.next(GeenLaagstijlaanpassing);
       modelChanger.transparantieAanpassingStateSubj.next(GeenTransparantieaanpassingBezig);
       return deleteAlleBoodschappen();
