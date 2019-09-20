@@ -154,10 +154,7 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
       shareReplay(1)
     );
 
-    this.tabelState$ = this.internalMessage$.pipe(
-      ofType<TabelStateMsg>("TabelState"),
-      map(msg => msg.state.state)
-    );
+    this.tabelState$ = this.modelChanges.tabelState$.pipe(map(msg => msg.state));
 
     // Klap dicht wanneer laagstijleditor actief wordt
     this.bindToLifeCycle(this.modelChanges.laagstijlaanpassingState$.pipe(filter(isAanpassingBezig))).subscribe(
@@ -165,9 +162,7 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
     );
 
     // Klap dicht wanneer tabel opengeklapt wordt
-    this.bindToLifeCycle(this.modelChanges.tabelState$.pipe(filter(change => change.state === "Opengeklapt" && change.doorKnop))).subscribe(
-      () => (this.dichtgeklapt = true)
-    );
+    this.bindToLifeCycle(this.kaartComponent.tabelGeopendDoorKnop$).subscribe(() => (this.dichtgeklapt = true));
   }
 
   ngOnInit() {

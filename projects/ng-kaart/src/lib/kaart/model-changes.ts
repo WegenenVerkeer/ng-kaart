@@ -145,7 +145,7 @@ export const ModelChanger: () => ModelChanger = () => ({
   laatsteCacheRefreshSubj: new rx.BehaviorSubject({}),
   mijnLocatieStateChangeSubj: new rx.Subject<MijnLocatieStateChange>(),
   zoombereikChangeSubj: new rx.Subject<null>(),
-  tabelStateSubj: new rx.BehaviorSubject({ state: "NietMogelijk", doorKnop: false } as TabelStateChange)
+  tabelStateSubj: new rx.BehaviorSubject(TabelStateChange("NietMogelijk"))
 });
 
 export interface ModelChanges {

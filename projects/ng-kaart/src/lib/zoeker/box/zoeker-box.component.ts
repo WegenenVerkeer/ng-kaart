@@ -448,13 +448,11 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     ).subscribe(t => this.processZoekerAntwoord(t.fst, t.snd));
 
     // Klap dicht wanneer tabel opengeklapt wordt
-    this.bindToLifeCycle(this.modelChanges.tabelState$.pipe(filter(change => change.state === "Opengeklapt" && change.doorKnop))).subscribe(
-      () => {
-        this.toonHelp = false;
-        this.toonResultaat = false;
-        this.actieveZoeker = "Basis";
-      }
-    );
+    this.bindToLifeCycle(this.kaartComponent.tabelGeopendDoorKnop$).subscribe(() => {
+      this.toonHelp = false;
+      this.toonResultaat = false;
+      this.actieveZoeker = "Basis";
+    });
   }
 
   ngOnInit(): void {

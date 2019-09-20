@@ -35,7 +35,7 @@ import * as prt from "./kaart-protocol";
 import * as red from "./kaart-reducer";
 import { cleanup, KaartWithInfo } from "./kaart-with-info";
 import { kaartLogger } from "./log";
-import { ModelChanger, ModelChanges, modelChanges, UiElementSelectie } from "./model-changes";
+import { ModelChanger, ModelChanges, modelChanges, TabelStateChange, UiElementSelectie } from "./model-changes";
 
 // Om enkel met @Input properties te moeten werken. Op deze manier kan een stream van KaartMsg naar de caller gestuurd worden
 export type KaartMsgObservableConsumer = (msg$: rx.Observable<prt.KaartMsg>) => void;
@@ -57,6 +57,7 @@ export class KaartComponent extends KaartComponentBase {
   readonly kaartModel$: rx.Observable<KaartWithInfo> = rx.EMPTY;
   private readonly resizeCommand$: rx.Observable<prt.VeranderViewportCmd>;
   readonly containerResize$: rx.Observable<ol.Size>;
+  tabelGeopendDoorKnop$: rx.Observable<TabelStateChange>;
 
   @ViewChild("map")
   mapElement: ElementRef;
@@ -118,6 +119,9 @@ export class KaartComponent extends KaartComponentBase {
       map(() => this.initieelModel()),
       tap(model => {
         this.innerModelChanges = modelChanges(model, this.modelChanger);
+        this.tabelGeopendDoorKnop$ = this.modelChanges.tabelState$.pipe(
+          filter(change => change.state === "Opengeklapt" && change.doorKnop)
+        );
         this.innerAanwezigeElementen$ = this.modelChanges.uiElementSelectie$.pipe(
           scan(
             (st: Set<string>, selectie: UiElementSelectie) => (selectie.aan ? st.add(selectie.naam) : sets.removeSimple(st)(selectie.naam)),
