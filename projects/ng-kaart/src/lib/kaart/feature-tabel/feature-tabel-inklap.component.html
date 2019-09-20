@@ -1,0 +1,14 @@
+<div class="top-menu" *ngIf="magGetoondWorden$ | async">
+  <button mat-icon-button class="tabel-knop" (click)="toggleTabelZichtbaar()"
+    [matTooltip]="tabelZichtbaar ? 'Verberg paneel' : 'Toon paneel'" matTooltipPosition="right">
+    <mat-icon *ngIf="tabelZichtbaar">keyboard_arrow_down</mat-icon>
+    <mat-icon *ngIf="!tabelZichtbaar">keyboard_arrow_up</mat-icon>
+  </button>
+  <button mat-icon-button class="tabel-knop drag-knop" [ngClass]="{ 'dragging': bezigMetSlepen}" (mousedown)="startDragging($event)"
+       (touchstart)="onTouchStart($event)" (touchend)="onTouchEnd($event)" (touchmove)="onTouchMove($event)">
+    <mat-icon>drag_handle</mat-icon>
+  </button>
+</div>
+<div #datacontainer class="data-container" [@tabel-zichtbaar]="{value: tabelZichtbaar ? 'zichtbaar' : 'niet-zichtbaar', params:{hoogte: huidigeHoogte}}">
+  <awv-feature-tabel-overzicht #tabeloverzicht></awv-feature-tabel-overzicht>
+</div>

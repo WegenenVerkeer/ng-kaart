@@ -1,0 +1,58 @@
+:host {
+  flex-shrink: 0;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  min-height: 0px;
+}
+
+.top-menu { 
+  flex-grow: 0;
+  height: 0px; 
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.data-container {
+  flex-grow: 0;
+  flex-shrink: 0;
+  width: 100%;
+  opacity:1;
+  z-index: 2;
+}
+
+.tabel-knop {
+  top: -24px;
+  height: 24px;
+  z-index: 1;
+  cursor: pointer;
+  border: none;
+  border-radius: 0 2px 2px 0;
+  box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.3);
+  background: #ffffff;
+  pointer-events: initial;
+  color: #777;
+
+  &:hover {
+    color: #333;
+  }
+
+  ::ng-deep .mat-button-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.drag-knop {
+  touch-action: none;
+  &:hover {
+    color: orange;
+  }
+
+  &.dragging {
+    color: orange;
+  }
+}
