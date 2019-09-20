@@ -16,16 +16,6 @@ import { LaagModel, SyncUpdate, TableModel, Update } from "./model";
 
 export const FeatureTabelUiSelector = "FeatureTabel";
 
-export interface FeatureTabelUiOpties {
-  readonly zichtbaar: boolean; // TODO totdat we de slider hebben
-  readonly filterbareLagen: boolean;
-}
-
-const DefaultOpties: FeatureTabelUiOpties = {
-  zichtbaar: false,
-  filterbareLagen: true
-};
-
 const equalTitels: Setoid<ke.ToegevoegdeVectorLaag[]> = array.getSetoid(ke.ToegevoegdeLaag.setoidToegevoegdeLaagByTitel);
 
 /**
@@ -52,12 +42,10 @@ const equalTitels: Setoid<ke.ToegevoegdeVectorLaag[]> = array.getSetoid(ke.Toege
   changeDetection: ChangeDetectionStrategy.OnPush // Omdat angular anders veel te veel change detection uitvoert
 })
 export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
-  public readonly zichtbaar$: rx.Observable<boolean>;
   public readonly laagTitels$: rx.Observable<string[]>;
   public readonly toonFilters$: rx.Observable<boolean>;
 
   // Voor de child components (Op DOM niveau. Access via Angular injection).
-  public readonly opties$: rx.Observable<FeatureTabelUiOpties>;
   public readonly model$: rx.Observable<TableModel>;
   public readonly updater: Consumer1<Update>;
 
@@ -68,10 +56,6 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
       map(array.filter(ke.isToegevoegdeVectorLaag)),
       share()
     );
-
-    this.opties$ = subSpy("****opties")(this.accumulatedOpties$(FeatureTabelUiSelector, DefaultOpties));
-
-    this.zichtbaar$ = this.opties$.pipe(map(o => o.zichtbaar));
 
     const updateLagen$ = voorgrondLagen$.pipe(
       map(lagen => lagen.filter(laag => laag.magGetoondWorden).filter(ke.isToegevoegdeVectorLaag)),

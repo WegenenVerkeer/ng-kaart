@@ -1,4 +1,4 @@
-<div *ngIf="(zichtbaar$ | async)" class="feature-tabel-weergave-content">
+<div class="feature-tabel-weergave-content">
   <mat-tab-group [headerPosition]="'above'">
     <mat-tab *ngFor="let titel of (laagTitels$ | async)">
       <ng-template mat-tab-label>
