@@ -4,7 +4,7 @@
     <mat-icon *ngIf="tabelZichtbaar">keyboard_arrow_down</mat-icon>
     <mat-icon *ngIf="!tabelZichtbaar">keyboard_arrow_up</mat-icon>
   </button>
-  <button mat-icon-button class="tabel-knop drag-knop" [ngClass]="{ 'dragging': isDragging}" (mousedown)="startDragging($event)"
+  <button mat-icon-button class="tabel-knop drag-knop" [ngClass]="{ 'dragging': bezigMetSlepen}" (mousedown)="startDragging($event)"
        (touchstart)="onTouchStart($event)" (touchend)="onTouchEnd($event)" (touchmove)="onTouchMove($event)">
     <mat-icon>drag_handle</mat-icon>
   </button>

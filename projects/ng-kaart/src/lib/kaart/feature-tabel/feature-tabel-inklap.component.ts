@@ -41,8 +41,8 @@ import { FeatureTabelOverzichtComponent } from "./feature-tabel-overzicht.compon
 export class FeatureTabelInklapComponent extends KaartChildComponentBase implements AfterViewInit {
   public tabelZichtbaar = false;
   public magGetoondWorden$: rx.Observable<boolean>;
-  private bezigMetSlepen = false;
-  private huidigeHoogte = 0;
+  public huidigeHoogte = 0;
+  public bezigMetSlepen = false;
   private standaardHoogte: number;
   private startSleepHoogte: number;
   private startSleepY: number;
