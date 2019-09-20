@@ -90,5 +90,7 @@ export const stringMapLens: <V>(k: string) => Lens<StringMapped<V>, Option<V>> =
     }
   );
 
+export const arrayTraversal: <A>() => Traversal<A[], A> = fromTraversable(array);
+
 export const selectiveArrayTraversal: <A>(pred: Predicate<A>) => Traversal<A[], A> = <A>(pred: Predicate<A>) =>
   fromTraversable(array)<A>().composePrism(Prism.fromPredicate<A>(pred));

@@ -1,8 +1,9 @@
 import { array, option, ord, setoid, traversable } from "fp-ts";
 import { constant, Curried2, curry, Endomorphism, flip, flow, Function1, Function2, identity, Predicate } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
+import { pipe } from "fp-ts/lib/pipeable";
 import { Setoid } from "fp-ts/lib/Setoid";
-import { fromTraversable, Lens, Optional, Prism, Traversal } from "monocle-ts";
+import { fromTraversable, Getter, Lens, Optional, Prism, Traversal } from "monocle-ts";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { map } from "rxjs/operators";
@@ -10,8 +11,9 @@ import { isNumber } from "util";
 
 import { Filter } from "../../filter";
 import { NosqlFsSource } from "../../source";
-import { applySequential, PartialFunction2 } from "../../util/function";
-import { selectiveArrayTraversal } from "../../util/lenses";
+import * as arrays from "../../util/arrays";
+import { applySequential, PartialFunction2, valueSpy } from "../../util/function";
+import { arrayTraversal, selectiveArrayTraversal } from "../../util/lenses";
 import * as ke from "../kaart-elementen";
 import { Viewinstellingen } from "../kaart-protocol-subscriptions";
 
@@ -32,6 +34,13 @@ export interface TableModel {
   readonly viewinstellingen: Viewinstellingen;
 }
 
+export interface FieldSelection {
+  readonly selected: boolean;
+  readonly name: string;
+  readonly label: string;
+  readonly contributingVeldinfos: ke.VeldInfo[]; // voor de synthetische velden
+}
+
 // Deze interface verzamelt de gegevens die we nodig hebben om 1 laag weer te geven in de tabelview. Het is
 // tegelijkertijd een abstractie van het onderliggende model + state nodig voor de tabel use cases (MVP).
 export interface LaagModel {
@@ -44,7 +53,7 @@ export interface LaagModel {
   readonly page: Option<Page>; // We houden maar 1 pagina van data tegelijkertijd in het geheugen. (later meer)
 
   readonly headers: ColumnHeaders;
-  readonly selectedVeldnamen: string[]; // enkel een subset van de velden is zichtbaar
+  readonly fieldSelections: FieldSelection[]; // enkel een subset van de velden is zichtbaar
   readonly fieldSortings: FieldSorting[];
   readonly rowTransformer: Endomorphism<Row>; // bewerkt de ruwe rij (bijv. locatieveld toevoegen)
 
@@ -69,15 +78,8 @@ export interface LaagModel {
 }
 
 export interface ColumnHeaders {
-  readonly headers: ColumnHeader[];
+  readonly headers: FieldSelection[];
   readonly columnWidths: string; // we willen dit niet in de template opbouwen
-}
-
-// De titel van een kolom. Wordt ook gebruikt om een Feature om te zetten naar een Row.
-export interface ColumnHeader {
-  readonly key: string; // om op te zoeken in een row
-  readonly label: string; // voor weergave
-  readonly contributingVeldinfos: ke.VeldInfo[]; // support voor sortering: alle velden die bijdragen tot de kolom
 }
 
 // De titel van een laag + geassocieerde state
@@ -88,24 +90,67 @@ export interface TableHeader {
   readonly count: number | undefined;
 }
 
-namespace ColumnHeader {
-  export const setoidColumnHeader: Setoid<ColumnHeader> = setoid.getStructSetoid({
-    key: setoid.setoidString,
-    label: setoid.setoidString
-  });
+export namespace FieldSelection {
+  export const nameLens: Lens<FieldSelection, string> = Lens.fromProp<FieldSelection>()("name");
+  export const selectedLens: Lens<FieldSelection, boolean> = Lens.fromProp<FieldSelection>()("selected");
+  export const contributingVeldinfosGetter: Getter<FieldSelection, ke.VeldInfo[]> = Lens.fromProp<FieldSelection>()(
+    "contributingVeldinfos"
+  ).asGetter();
 
-  export const setoidColumnHeaderByKey: Setoid<ColumnHeader> = setoid.contramap(ch => ch.key, setoid.setoidString);
+  export const fieldsFromVeldinfo: Function1<ke.VeldInfo[], FieldSelection[]> = array.map(vi => ({
+    name: vi.naam,
+    selected: false,
+    label: ke.VeldInfo.veldGuaranteedLabelGetter.get(vi),
+    contributingVeldinfos: [vi]
+  }));
+
+  const isBaseField: Predicate<FieldSelection> = field => arrays.exists(ke.VeldInfo.isBasisveldLens.get)(field.contributingVeldinfos);
+
+  export const selectBaseFields: Endomorphism<FieldSelection[]> = arrayTraversal<FieldSelection>().modify(field =>
+    selectedLens.set(isBaseField(field))(field)
+  );
+
+  export const selectAllFields: Endomorphism<FieldSelection[]> = arrayTraversal<FieldSelection>().modify(selectedLens.set(true));
+
+  export const selectedVeldnamen: Function1<FieldSelection[], string[]> = flow(
+    array.filter(selectedLens.get),
+    array.map(nameLens.get)
+  );
+
+  export const setoidFieldSelection: Setoid<FieldSelection> = setoid.getStructSetoid({
+    selected: setoid.setoidBoolean,
+    name: setoid.setoidString
+  });
+  export const setoidFieldSelectionByKey: Setoid<FieldSelection> = setoid.contramap(nameLens.get, setoid.setoidString);
+
+  const sortingStillApplicable: Function1<FieldSelection[], Predicate<FieldSorting>> = fields => sorting =>
+    arrays.exists<FieldSelection>(field => field.name === sorting.fieldKey)(fields);
+
+  export const selectFirstField: Endomorphism<FieldSelection[]> = fields =>
+    array.mapWithIndex<FieldSelection, FieldSelection>((i, field) => selectedLens.modify(set => set || i === 0)(field))(fields);
+
+  export const maintainFieldSortings: Function1<FieldSelection[], Endomorphism<FieldSorting[]>> = fields =>
+    flow(
+      array.filter(sortingStillApplicable(fields))
+      // wanneer de array van sortings leeg is, moeten we er een sorting aan toevoegen obv de eerste kolem. Voorlopig kan
+      // dat niet omdat we de sorteerkolommen nog niet zelf kunnen kiezen en we de eerste kolom niet mogen deselecteren.
+    );
 }
 
 export namespace ColumnHeaders {
-  export const create: Function1<ColumnHeader[], ColumnHeaders> = headers => ({
+  const create: Function1<FieldSelection[], ColumnHeaders> = headers => ({
     headers,
     columnWidths: headers.map(_ => "minmax(150px, 1fr)").join(" ")
   });
 
   export const setoidColumnHeaders: Setoid<ColumnHeaders> = setoid.contramap(
     ch => ch.headers,
-    array.getSetoid(ColumnHeader.setoidColumnHeaderByKey)
+    array.getSetoid(FieldSelection.setoidFieldSelectionByKey)
+  );
+
+  export const createFromFieldSelection: Function1<FieldSelection[], ColumnHeaders> = flow(
+    array.filter(FieldSelection.selectedLens.get),
+    create
   );
 }
 
@@ -130,7 +175,6 @@ export namespace TableHeader {
 export namespace LaagModel {
   export const titelLens: Lens<LaagModel, string> = Lens.fromProp<LaagModel>()("titel");
   export const pageOptional: Optional<LaagModel, Page> = Optional.fromOptionProp<LaagModel>()("page");
-  export const headersLens: Lens<LaagModel, ColumnHeaders> = Lens.fromProp<LaagModel, "headers">("headers");
   export const expectedPageNumberLens: Lens<LaagModel, PageNumber> = Lens.fromProp<LaagModel>()("expectedPageNumber");
   export const pageLens: Lens<LaagModel, Option<Page>> = Lens.fromProp<LaagModel>()("page");
   export const nextPageSequenceLens: Lens<LaagModel, number> = Lens.fromProp<LaagModel>()("nextPageSequence");
@@ -141,6 +185,25 @@ export namespace LaagModel {
   export const extentLens: Lens<LaagModel, ol.Extent> = Lens.fromPath<LaagModel>()(["viewinstellingen", "extent"]);
   export const hasFilterLens: Lens<LaagModel, boolean> = Lens.fromProp<LaagModel>()("hasFilter");
   export const filterIsActiveLens: Lens<LaagModel, boolean> = Lens.fromProp<LaagModel>()("filterIsActive");
+  export const veldInfosGetter: Getter<LaagModel, ke.VeldInfo[]> = Lens.fromProp<LaagModel>()("veldinfos").asGetter();
+  const unsafeFieldSortingsLens: Lens<LaagModel, FieldSorting[]> = Lens.fromProp<LaagModel>()("fieldSortings");
+  const unsafeHeadersLens: Lens<LaagModel, ColumnHeaders> = Lens.fromProp<LaagModel, "headers">("headers");
+  export const headersGetter: Getter<LaagModel, ColumnHeaders> = Lens.fromProp<LaagModel, "headers">("headers").asGetter();
+  const unsafeFieldSelectionsLens: Lens<LaagModel, FieldSelection[]> = Lens.fromProp<LaagModel>()("fieldSelections");
+  export const fieldSelectionsLens: Lens<LaagModel, FieldSelection[]> = new Lens(
+    unsafeFieldSelectionsLens.get, //
+    fieldSelections => {
+      const fixedFieldSelections = FieldSelection.selectFirstField(fieldSelections);
+      return flow(
+        unsafeFieldSelectionsLens.set(fixedFieldSelections),
+        unsafeHeadersLens.set(ColumnHeaders.createFromFieldSelection(fixedFieldSelections)),
+        unsafeFieldSortingsLens.modify(FieldSelection.maintainFieldSortings(fixedFieldSelections))
+      );
+    }
+  );
+
+  export const fieldSelectionForNameTraversal: Function1<string, Traversal<LaagModel, FieldSelection>> = fieldName =>
+    fieldSelectionsLens.composeTraversal(selectiveArrayTraversal(fs => fs.name === fieldName));
 
   export const clampExpectedPageNumber: Endomorphism<LaagModel> = laag =>
     expectedPageNumberLens.modify(
@@ -149,13 +212,13 @@ export namespace LaagModel {
 
   // Bepaalde velden moeten samengevoegd worden tot 1 synthetisch locatieveld. Daarvoor moeten we enerzijds de headers
   // aanpassen en anderzijds elke Row die binnen komt.
-  const locationTransformer: Function1<ke.VeldInfo[], [Endomorphism<ColumnHeader[]>, Endomorphism<Row>]> = veldinfos => {
+  const locationTransformer: Function1<ke.VeldInfo[], [Endomorphism<FieldSelection[]>, Endomorphism<Row>]> = veldinfos => {
     // We moeten op label werken, want de gegevens zitten op verschillende plaatsen bij verschillende lagen
     const veldlabels = veldinfos.map(ke.VeldInfo.veldlabelLens.get);
     const wegLabel = "Ident8";
     const afstandLabels = ["Van refpunt", "Van afst", "Tot refpunt", "Tot afst"];
     const maybeWegKey = array.findFirst(veldinfos, vi => vi.label === wegLabel).map(ke.VeldInfo.veldnaamLens.get);
-    return maybeWegKey.fold([identity, identity] as [Endomorphism<ColumnHeader[]>, Endomorphism<Row>], wegKey => {
+    return maybeWegKey.fold([identity, identity] as [Endomorphism<FieldSelection[]>, Endomorphism<Row>], wegKey => {
       const allLabelsPresent = afstandLabels.filter(label => veldlabels.includes(label)).length === afstandLabels.length; // alles of niks!
       const locationLabels = allLabelsPresent ? afstandLabels : [];
 
@@ -166,11 +229,17 @@ export namespace LaagModel {
       const allLocationLabels = array.cons(wegLabel, locationLabels);
       const allLocationKeys = array.cons(wegKey, locationKeys);
       const allLocationVeldinfos = array.filterMap(key => array.findFirst<ke.VeldInfo>(vi => vi.naam === key)(veldinfos))(allLocationKeys);
-      const locationHeader: ColumnHeader = { key: "syntheticLocation", label: "Locatie", contributingVeldinfos: allLocationVeldinfos };
-      const headersTrf: Endomorphism<ColumnHeader[]> = headers =>
+
+      const locationFieldSelection: FieldSelection = {
+        name: "syntheticLocation",
+        label: "Locatie",
+        selected: true,
+        contributingVeldinfos: allLocationVeldinfos
+      };
+      const fieldsSelectionTrf: Endomorphism<FieldSelection[]> = fieldSelections =>
         array
-          .cons(locationHeader, headers) // De synthetische header toevoegen
-          .filter(header => !allLocationLabels.includes(header.label)); // en de bijdragende headers verwijderen
+          .cons(locationFieldSelection, fieldSelections) // Het synthetische veld toevoegen
+          .filter(fieldSelection => !allLocationLabels.includes(fieldSelection.label)); // en de bijdragende velden verwijderen
 
       const distance: Function2<number, number, string> = (ref, offset) => (offset >= 0 ? `${ref} +${offset}` : `${ref} ${offset}`);
 
@@ -191,31 +260,30 @@ export namespace LaagModel {
         };
         return Row.addField("syntheticLocation", locatieField)(row);
       };
-      return [headersTrf, rowTrf] as [Endomorphism<ColumnHeader[]>, Endomorphism<Row>];
+      return [fieldsSelectionTrf, rowTrf] as [Endomorphism<FieldSelection[]>, Endomorphism<Row>];
     });
   };
 
   export const create: PartialFunction2<ke.ToegevoegdeVectorLaag, Viewinstellingen, LaagModel> = (laag, viewinstellingen) =>
     ke.ToegevoegdeVectorLaag.noSqlFsSourceFold.headOption(laag).map(source => {
-      // We mogen niet zomaar alle velden gebruiken. Om te beginnen enkel de bassisvelden en de locatievelden moeten
+      // We mogen niet zomaar alle velden gebruiken. Om te beginnen enkel de basisvelden en de locatievelden moeten
       // afzonderlijk behandeld worden.
       const veldinfos = ke.ToegevoegdeVectorLaag.veldInfosLens.get(laag);
-      const selectedVeldnamen = veldinfos.filter(vi => vi.isBasisVeld).map(ke.VeldInfo.veldnaamLens.get);
-      const baseColumnHeaders: ColumnHeader[] = veldinfos
-        .filter(vi => selectedVeldnamen.includes(vi.naam))
-        .map(vi => ({
-          key: vi.naam,
-          label: option.fromNullable(vi.label).getOrElse(vi.naam),
-          contributingVeldinfos: [vi]
-        }));
-      const [headersTransformer, rowTransformer] = locationTransformer(veldinfos);
-      const headers = ColumnHeaders.create(headersTransformer(baseColumnHeaders));
+      const [fieldsTransformer, rowTransformer] = locationTransformer(veldinfos);
+      const fieldSelections = pipe(
+        veldinfos,
+        FieldSelection.fieldsFromVeldinfo,
+        fieldsTransformer,
+        FieldSelection.selectBaseFields
+      );
+
+      const headers = ColumnHeaders.createFromFieldSelection(fieldSelections);
 
       const pageFetcher = PageFetcher.sourceBasedPageFetcher(laag.bron.source);
       const featureCountFetcher = FeatureCountFetcher.sourceBasedFeatureCountFetcher(laag.bron.source);
 
       const firstHeader = array.take(1, headers.headers);
-      const contributingVeldinfos = array.chain((header: ColumnHeader) => header.contributingVeldinfos)(firstHeader);
+      const contributingVeldinfos = array.chain(FieldSelection.contributingVeldinfosGetter.get)(firstHeader);
       const fieldSortings = contributingVeldinfos.map(vi => ({
         fieldKey: vi.naam,
         direction: "ASCENDING" as SortDirection,
@@ -230,7 +298,7 @@ export namespace LaagModel {
         totaal: laag.filterinstellingen.totaal,
         featureCount: FeatureCount.pending,
         expectedPageNumber: Page.first,
-        selectedVeldnamen,
+        fieldSelections,
         headers,
         fieldSortings,
         source,
@@ -293,7 +361,7 @@ export namespace TableModel {
     // return laagForTitelTraversal(titel)
     //   .composeLens(headersLens)
     //   .asFold().headOption;
-    return model => array.findFirst(laagDataLens.get(model), laag => laag.titel === titel).map(LaagModel.headersLens.get);
+    return model => array.findFirst(laagDataLens.get(model), laag => laag.titel === titel).map(LaagModel.headersGetter.get);
   };
 
   export const currentPageForTitel: Curried2<string, TableModel, Option<Page>> = titel => {
@@ -380,19 +448,20 @@ export namespace TableModel {
   // TODO: misschien beter specifiek type voor buiten zoom
   const clearLaagFeatureCount: Endomorphism<LaagModel> = LaagModel.aantalFeaturesLens.set(FeatureCount.createFetched(0));
 
+  const syncUpdateLaagWithTitel: Curried2<string, Endomorphism<LaagModel>, Update> = titel => f =>
+    syncUpdateOnly(laagForTitelTraversal(titel).modify(f));
+
   export const featuresUpdate: Function1<ke.ToegevoegdeVectorLaag, Update> = tvlg =>
-    syncUpdateOnly(
-      laagForTitelTraversal(tvlg.titel).modify(
-        inZoom(
-          flow(
-            updateLaagFeatureCount,
-            clampLaagPageNumber,
-            updateLaagPageData
-          ),
-          flow(
-            clearLaagPage,
-            clearLaagFeatureCount
-          )
+    syncUpdateLaagWithTitel(tvlg.titel)(
+      inZoom(
+        flow(
+          updateLaagFeatureCount,
+          clampLaagPageNumber,
+          updateLaagPageData
+        ),
+        flow(
+          clearLaagPage,
+          clearLaagFeatureCount
         )
       )
     );
@@ -401,13 +470,11 @@ export namespace TableModel {
     ke.ToegevoegdeVectorLaag.featuresChanged$(tvlg).pipe(map(() => featuresUpdate(tvlg)));
 
   const modifyPageNumberUpdate: Curried2<Endomorphism<PageNumber>, string, Update> = f => titel =>
-    syncUpdateOnly(
-      laagForTitelTraversal(titel).modify(
-        flow(
-          LaagModel.expectedPageNumberLens.modify(f),
-          LaagModel.clampExpectedPageNumber,
-          updateLaagPageData
-        )
+    syncUpdateLaagWithTitel(titel)(
+      flow(
+        LaagModel.expectedPageNumberLens.modify(f),
+        LaagModel.clampExpectedPageNumber,
+        updateLaagPageData
       )
     );
 
@@ -416,4 +483,17 @@ export namespace TableModel {
   export const nextPageUpdate: Function1<string, Update> = modifyPageNumberUpdate(Page.next);
 
   export const setPageNumberUpdate: Curried2<string, number, Update> = titel => pageNr => modifyPageNumberUpdate(Page.set(pageNr))(titel);
+
+  export const chooseBaseFieldsUpdate: Function1<string, Update> = titel =>
+    syncUpdateLaagWithTitel(titel)(LaagModel.fieldSelectionsLens.modify(FieldSelection.selectBaseFields));
+
+  export const chooseAllFieldsUpdate: Function1<string, Update> = titel =>
+    syncUpdateLaagWithTitel(titel)(LaagModel.fieldSelectionsLens.modify(FieldSelection.selectAllFields));
+
+  export const setFieldSelectedUpdate: Function1<string, Function2<string, boolean, Update>> = titel => (fieldName, value) =>
+    syncUpdateLaagWithTitel(titel)(
+      LaagModel.fieldSelectionForNameTraversal(fieldName)
+        .composeLens(FieldSelection.selectedLens)
+        .set(value)
+    );
 }

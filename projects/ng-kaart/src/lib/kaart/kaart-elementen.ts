@@ -4,7 +4,7 @@ import * as ord from "fp-ts/lib/Ord";
 import { Ord } from "fp-ts/lib/Ord";
 import * as setoid from "fp-ts/lib/Setoid";
 import { Setoid } from "fp-ts/lib/Setoid";
-import { Fold, Iso, Lens, Optional, Prism } from "monocle-ts";
+import { Fold, Getter, Iso, Lens, Optional, Prism } from "monocle-ts";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { debounceTime, mapTo } from "rxjs/operators";
@@ -325,6 +325,9 @@ export namespace VeldInfo {
   export const ordVeldOpBasisVeld: Ord<VeldInfo> = ord.contramap(vi => vi.isBasisVeld, ord.ordBoolean);
   export const veldnaamLens: Lens<VeldInfo, string> = Lens.fromProp<VeldInfo>()("naam");
   export const veldlabelLens: Lens<VeldInfo, string | undefined> = Lens.fromProp<VeldInfo>()("label");
+  export const isBasisveldLens: Lens<VeldInfo, boolean> = Lens.fromProp<VeldInfo>()("isBasisVeld");
+  // Als er geen of een leeg label is, gebruiken we de naam
+  export const veldGuaranteedLabelGetter: Getter<VeldInfo, string> = new Getter(vi => vi.label || vi.naam);
 
   export const veldInfoOpNaam: Function2<string, Map<string, VeldInfo>, Option<VeldInfo>> = (naam, veldinfos) =>
     maps.findFirst(veldinfos, vi => vi.naam === naam);
