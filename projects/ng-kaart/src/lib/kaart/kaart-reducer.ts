@@ -38,7 +38,7 @@ import { MsgGen } from "./kaart-protocol-subscriptions";
 import { KaartWithInfo } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
 import { kaartLogger } from "./log";
-import { ModelChanger, ModelChanges } from "./model-changes";
+import { ModelChanger, ModelChanges, TabelStateChange } from "./model-changes";
 import { findClosest } from "./select-closest";
 import {
   AwvV0StyleSpec,
@@ -1188,6 +1188,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
+    function deleteAlleBoodschappen(): ModelWithResult<Msg> {
+      model.infoBoodschappenSubj.next(new Map());
+      return ModelWithResult(model);
+    }
+
     function selecteerFeatures(cmnd: prt.SelecteerFeaturesCmd): ModelWithResult<Msg> {
       const currentFeatures = model.geselecteerdeFeatures.getArray();
       const newFeatures = cmnd.features;
@@ -1546,6 +1551,20 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
+    function emitTabelStateChange(state: TabelStateChange): ModelWithResult<Msg> {
+      modelChanger.tabelStateSubj.next(state);
+      return ModelWithResult(model);
+    }
+
+    function openTabel(): ModelWithResult<Msg> {
+      modelChanger.tabelStateSubj.next(TabelStateChange("Opengeklapt", true));
+      // Bij openen van het tabel paneel met deze 2 knoppen:
+      // Verdwijnen alle openstaande pop-up cards (bv kaart bevragen, meten,...)
+      modelChanger.laagstijlaanpassingStateSubj.next(GeenLaagstijlaanpassing);
+      modelChanger.transparantieAanpassingStateSubj.next(GeenTransparantieaanpassingBezig);
+      return deleteAlleBoodschappen();
+    }
+
     function zetGetekendeGeometry(cmnd: prt.ZetGetekendeGeometryCmd): ModelWithResult<Msg> {
       modelChanger.getekendeGeometrySubj.next(cmnd.geometry);
       return ModelWithResult(model);
@@ -1724,6 +1743,13 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         );
       }
 
+      function subscribeToTableState(sub: prt.TabelStateSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult(
+          "TableState",
+          modelChanges.tabelState$.pipe(distinctUntilChanged()).subscribe(consumeMessage(sub))
+        );
+      }
+
       switch (cmnd.subscription.type) {
         case "Viewinstellingen":
           return subscribeToViewinstellingen(cmnd.subscription);
@@ -1775,6 +1801,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToLaatsteCacheRefresh(cmnd.subscription);
         case "MijnLocatieStateChange":
           return subscribeToMijnLocatieStateChange(cmnd.subscription);
+        case "TabelState":
+          return subscribeToTableState(cmnd.subscription);
       }
     }
 
@@ -1935,6 +1963,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return haalFilterTotaalOp(cmd);
         case "MijnLocatieStateChange":
           return emitMijnLocatieStateChange(cmd);
+        case "TabelStateChange":
+          return emitTabelStateChange(cmd.state);
+        case "OpenTabel":
+          return openTabel();
+        case "SluitTabel":
+          return emitTabelStateChange(TabelStateChange("Dichtgeklapt", true));
         case "BewerkTransparantie":
           return bewerkTransparantie(cmd);
         case "StopTransparantieBewerking":

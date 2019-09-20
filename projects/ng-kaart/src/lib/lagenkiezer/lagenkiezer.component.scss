@@ -100,4 +100,10 @@ $laag-height: 40px;
     stroke: rgba(0, 0, 0, .14);
     stroke-width: 1px;
   }
+
+  .tabelBtn {
+    &.tabelIsOpen {
+      color: orange;
+    }    
+  }
 }

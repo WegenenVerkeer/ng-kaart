@@ -13,6 +13,7 @@ import { MatTabsModule } from "@angular/material/tabs";
 
 import { FeatureTabelDataComponent } from "./feature-tabel-data.component";
 import { FeatureTabelHeaderComponent } from "./feature-tabel-header.component";
+import { FeatureTabelInklapComponent } from "./feature-tabel-inklap.component";
 import { FeatureTabelOverzichtComponent } from "./feature-tabel-overzicht.component";
 import { FeatureTabelPagerComponent } from "./feature-tabel-pager.component";
 
@@ -20,7 +21,8 @@ const components: any[] = [
   FeatureTabelDataComponent,
   FeatureTabelHeaderComponent,
   FeatureTabelOverzichtComponent,
-  FeatureTabelPagerComponent
+  FeatureTabelPagerComponent,
+  FeatureTabelInklapComponent
 ];
 
 @NgModule({

@@ -14,6 +14,7 @@ import * as ke from "./kaart-elementen";
 import { Legende } from "./kaart-legende";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import * as loc from "./mijn-locatie/kaart-mijn-locatie.component";
+import { TabelStateChange } from "./model-changes";
 import * as ss from "./stijl-selector";
 import { DrawOps } from "./tekenen/tekenen-model";
 
@@ -38,15 +39,18 @@ export type Command<Msg extends KaartMsg> =
   | MaakLaagZichtbaarCmd<Msg>
   | MeldComponentFoutCmd
   | MijnLocatieStateChangeCmd
+  | OpenTabelCmd
   | PublishKaartLocatiesCmd
   | ReactiveerSelectieModusCmd
   | SelecteerFeaturesCmd
   | SluitInfoBoodschapCmd
   | SluitPanelenCmd
+  | SluitTabelCmd
   | StopTransparantieBewerkingCmd
   | StopVectorFilterBewerkingCmd
   | StopVectorlaagstijlBewerkingCmd
   | SubscribeCmd<Msg>
+  | TabelStateChangeCmd
   | ToonAchtergrondKeuzeCmd<Msg>
   | ToonInfoBoodschapCmd
   | UnsubscribeCmd
@@ -573,6 +577,19 @@ export interface MijnLocatieStateChangeCmd {
   readonly event: loc.Event;
 }
 
+export interface TabelStateChangeCmd {
+  readonly type: "TabelStateChange";
+  readonly state: TabelStateChange;
+}
+
+export interface OpenTabelCmd {
+  readonly type: "OpenTabel";
+}
+
+export interface SluitTabelCmd {
+  readonly type: "SluitTabel";
+}
+
 export interface ZetTransparantieVoorLaagCmd<Msg extends TypedRecord> {
   readonly type: "ZetTransparantieVoorLaag";
   readonly titel: string;
@@ -968,6 +985,10 @@ export function MijnLocatieStateChangeCmd(oudeState: loc.State, nieuweState: loc
   return { type: "MijnLocatieStateChange", oudeState, nieuweState, event };
 }
 
+export function TabelStateChangeCmd(state: TabelStateChange): TabelStateChangeCmd {
+  return { type: "TabelStateChange", state };
+}
+
 export function ZoekCmd<Msg extends KaartMsg>(opdracht: Zoekopdracht, wrapper: BareValidationWrapper<Msg>): ZoekCmd<Msg> {
   return { type: "Zoek", opdracht, wrapper };
 }
@@ -982,4 +1003,12 @@ export function ZetTransparantieVoorLaagCmd<Msg extends TypedRecord>(
 
 export function ZetZoomBereikCmd(minZoom: number, maxZoom: number): ZetZoomBereikCmd {
   return { type: "ZetZoomBereik", minZoom, maxZoom };
+}
+
+export function OpenTabelCmd(): OpenTabelCmd {
+  return { type: "OpenTabel" };
+}
+
+export function SluitTabelCmd(): SluitTabelCmd {
+  return { type: "SluitTabel" };
 }

@@ -250,6 +250,7 @@
           [markeerStijl]="isOptieActief('customKlikIcon') ? ster : standaardIcoon"
           [disabled]="!isOptieActief('markeerLocatie')">
         </awv-kaart-markeer-kaartklik>
+        
       </awv-kaart-classic>
       <div class="sub-content onder-kaart opties">
         <div *ngFor="let key of objectKeys(mogelijkeOpties)"
@@ -287,8 +288,17 @@
                              #filterKaart (geselecteerdeFeaturesChange)="featuresGeselecteerd($event, filterKaart)"
                              [selectieModus]="'single'">
 
+            <awv-kaart-zoeker>
+              <awv-kaart-google-zoeker></awv-kaart-google-zoeker>
+              <awv-kaart-crab-zoeker [toonIcoon]="false"></awv-kaart-crab-zoeker>
+              <awv-kaart-perceel-zoeker [toonGeometrie]="false" [suggestiesPrioriteit]="undefined"></awv-kaart-perceel-zoeker>  
+            </awv-kaart-zoeker>
             <awv-feature-tabel></awv-feature-tabel>
 
+            <awv-multi-meet-knop [toonInfoBoodschap]="true" [keuzemogelijkheidTonen]="true" [metRouting]="true"></awv-multi-meet-knop>
+            <awv-kaart-teken></awv-kaart-teken>
+            <awv-bevraag-kaart></awv-bevraag-kaart>
+            
             <awv-kaart-lagenkiezer [headerTitel]="'Mijn legende en lagen'" [initieelDichtgeklapt]="false"
                                    [verwijderbareLagen]="true" [filterbareLagen]="true" [toonLegende]="false" [toonFilters]="true"></awv-kaart-lagenkiezer>
 

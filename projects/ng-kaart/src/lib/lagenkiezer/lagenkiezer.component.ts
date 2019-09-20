@@ -12,11 +12,13 @@ import { debounceTime, distinctUntilChanged, filter, map, scan, shareReplay, sta
 import { Filter as fltr } from "../filter/filter-model";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { isToegevoegdeVectorLaag, ToegevoegdeLaag, ToegevoegdeVectorLaag } from "../kaart/kaart-elementen";
-import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
+import { kaartLogOnlyWrapper, TabelStateMsg } from "../kaart/kaart-internal-messages";
 import { LegendeItem } from "../kaart/kaart-legende";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
+import { TabelState } from "../kaart/model-changes";
 import { isAanpassingBezig } from "../kaart/stijleditor/state";
+import { ofType } from "../util/operators";
 
 export const LagenUiSelector = "Lagenkiezer";
 
@@ -92,6 +94,7 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
   readonly geenLegende$: rx.Observable<boolean>;
   readonly heeftFilters$: rx.Observable<boolean>;
   readonly opties$: rx.Observable<LagenUiOpties>;
+  readonly tabelState$: rx.Observable<TabelState>;
 
   constructor(parent: KaartComponent, ngZone: NgZone, private readonly cdr: ChangeDetectorRef, private readonly sanitizer: DomSanitizer) {
     super(parent, ngZone);
@@ -150,10 +153,16 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
       scan((prevOptions, newOptions) => ({ ...prevOptions, ...newOptions }), DefaultOpties),
       shareReplay(1)
     );
+
+    this.tabelState$ = this.modelChanges.tabelState$.pipe(map(msg => msg.state));
+
     // Klap dicht wanneer laagstijleditor actief wordt
     this.bindToLifeCycle(this.modelChanges.laagstijlaanpassingState$.pipe(filter(isAanpassingBezig))).subscribe(
       () => (this.dichtgeklapt = true)
     );
+
+    // Klap dicht wanneer tabel opengeklapt wordt
+    this.bindToLifeCycle(this.kaartComponent.tabelGeopendDoorKnop$).subscribe(() => (this.dichtgeklapt = true));
   }
 
   ngOnInit() {
@@ -179,6 +188,15 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
 
   toggleDichtgeklapt() {
     this.dichtgeklapt = !this.dichtgeklapt;
+  }
+
+  toggleTabel(klapDicht: boolean, event: MouseEvent) {
+    if (klapDicht) {
+      this.dispatch(prt.SluitTabelCmd());
+    } else {
+      this.dispatch(prt.OpenTabelCmd());
+    }
+    event.stopPropagation();
   }
 
   public tabChanged(tabChangeEvent: MatTabChangeEvent): void {
