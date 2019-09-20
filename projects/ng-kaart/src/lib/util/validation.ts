@@ -47,11 +47,3 @@ export const validationChain2: <A, B, C>(fa: ErrValidation<A>, f: Validator<A, B
 export function composeValidators2<A, B, C>(f: Validator<A, B>, g: Validator<B, C>): Validator<A, C> {
   return (a: A) => validationChain(f(a), g);
 }
-
-export function join(texts: string[], sep = ","): string {
-  return Array.reduce(
-    texts, //
-    "",
-    (head: string, elt: string) => (head.length === 0 ? elt : head + sep + elt)
-  );
-}

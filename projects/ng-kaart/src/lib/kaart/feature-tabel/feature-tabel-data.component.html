@@ -84,6 +84,14 @@
     </mat-menu>
   </div>
   <div class="feature-table-data-footer">
+    <div class="feature-table-data-view-mode-selector">
+      <mat-slide-toggle
+        [checked]="mapAsFilterState$ | async"
+        [disabled]="cannotChooseMapAsFilter$ | async"
+        (change)="onAction('mapAsFilter', $event.checked)"
+        >Kaart als filter</mat-slide-toggle
+      >
+    </div>
     <awv-feature-tabel-pager
       *ngIf="(dataAvailable$ | async)"
     ></awv-feature-tabel-pager>

@@ -125,6 +125,10 @@ $footer-height: 48px;
     flex-direction: row;
     justify-content: flex-end;
     align-items: center;
+
+    .feature-table-data-view-mode-selector {
+      margin-right: 2em;
+    }
   }
 }
 

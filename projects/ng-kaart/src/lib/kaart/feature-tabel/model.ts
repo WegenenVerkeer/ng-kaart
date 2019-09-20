@@ -10,7 +10,7 @@ import * as rx from "rxjs";
 import { map } from "rxjs/operators";
 import { isNumber } from "util";
 
-import { Filter } from "../../filter";
+import { Filter, FilterTotaal, isTotaalOpgehaald } from "../../filter";
 import { NosqlFsSource } from "../../source";
 import * as arrays from "../../util/arrays";
 import { applySequential, PartialFunction2 } from "../../util/function";
@@ -52,6 +52,8 @@ export interface LaagModel {
   readonly veldinfos: ke.VeldInfo[]; // enkel de VeldInfos die we kunnen weergeven
   readonly hasFilter: boolean;
   readonly filterIsActive: boolean;
+  readonly mapAsFilter: boolean;
+  readonly canUseAllFeatures: boolean; // geeft aan dat mogelijk is om meer dan de features op de zichtbare kaart te tonen
   readonly featureCount: FeatureCount; // aantal features in de tabel over alle pagina's heen
   readonly expectedPageNumber: PageNumber; // Het PageNumber dat we verwachten te zien. Potentieel anders dan in Page wegens asynchoniciteit
   readonly page: Option<Page>; // We houden maar 1 pagina van data tegelijkertijd in het geheugen. (later meer)
@@ -159,23 +161,29 @@ export namespace TableHeader {
 }
 
 export namespace LaagModel {
-  export const titelLens: Lens<LaagModel, string> = Lens.fromProp<LaagModel>()("titel");
+  type LaagModelLens<A> = Lens<LaagModel, A>;
+  type LaagModelGetter<A> = Getter<LaagModel, A>;
+  const laagPropLens = Lens.fromProp<LaagModel>();
+
+  export const titelLens: LaagModelLens<string> = laagPropLens("titel");
   export const pageOptional: Optional<LaagModel, Page> = Optional.fromOptionProp<LaagModel>()("page");
-  export const expectedPageNumberLens: Lens<LaagModel, PageNumber> = Lens.fromProp<LaagModel>()("expectedPageNumber");
-  export const pageLens: Lens<LaagModel, Option<Page>> = Lens.fromProp<LaagModel>()("page");
-  export const nextPageSequenceLens: Lens<LaagModel, number> = Lens.fromProp<LaagModel>()("nextPageSequence");
-  export const updatePendingLens: Lens<LaagModel, boolean> = Lens.fromProp<LaagModel>()("updatePending");
-  export const aantalFeaturesLens: Lens<LaagModel, FeatureCount> = Lens.fromProp<LaagModel>()("featureCount");
-  export const viewinstellingLens: Lens<LaagModel, Viewinstellingen> = Lens.fromProp<LaagModel>()("viewinstellingen");
-  export const zoomLens: Lens<LaagModel, number> = Lens.fromPath<LaagModel>()(["viewinstellingen", "zoom"]);
-  export const extentLens: Lens<LaagModel, ol.Extent> = Lens.fromPath<LaagModel>()(["viewinstellingen", "extent"]);
-  export const hasFilterLens: Lens<LaagModel, boolean> = Lens.fromProp<LaagModel>()("hasFilter");
-  export const filterIsActiveLens: Lens<LaagModel, boolean> = Lens.fromProp<LaagModel>()("filterIsActive");
-  export const veldInfosGetter: Getter<LaagModel, ke.VeldInfo[]> = Lens.fromProp<LaagModel>()("veldinfos").asGetter();
-  const unsafeFieldSortingsLens: Lens<LaagModel, FieldSorting[]> = Lens.fromProp<LaagModel>()("fieldSortings");
-  const unsafeFieldSelectionsLens: Lens<LaagModel, FieldSelection[]> = Lens.fromProp<LaagModel>()("fieldSelections");
-  const unsafeRowFormatterLens: Lens<LaagModel, Endomorphism<Row>> = Lens.fromProp<LaagModel>()("rowFormatter");
-  export const fieldSelectionsLens: Lens<LaagModel, FieldSelection[]> = new Lens(
+  export const expectedPageNumberLens: LaagModelLens<PageNumber> = laagPropLens("expectedPageNumber");
+  export const pageLens: LaagModelLens<Option<Page>> = laagPropLens("page");
+  export const nextPageSequenceLens: LaagModelLens<number> = laagPropLens("nextPageSequence");
+  export const updatePendingLens: LaagModelLens<boolean> = laagPropLens("updatePending");
+  export const aantalFeaturesLens: LaagModelLens<FeatureCount> = laagPropLens("featureCount");
+  export const viewinstellingLens: LaagModelLens<Viewinstellingen> = laagPropLens("viewinstellingen");
+  export const zoomLens: LaagModelLens<number> = Lens.fromPath<LaagModel>()(["viewinstellingen", "zoom"]);
+  export const extentLens: LaagModelLens<ol.Extent> = Lens.fromPath<LaagModel>()(["viewinstellingen", "extent"]);
+  export const hasFilterLens: LaagModelLens<boolean> = laagPropLens("hasFilter");
+  export const filterIsActiveLens: LaagModelLens<boolean> = laagPropLens("filterIsActive");
+  export const veldInfosGetter: LaagModelGetter<ke.VeldInfo[]> = laagPropLens("veldinfos").asGetter();
+  const unsafeMapAsFilterLens: LaagModelLens<boolean> = laagPropLens("mapAsFilter");
+  export const mapAsFilterGetter: LaagModelGetter<boolean> = unsafeMapAsFilterLens.asGetter();
+  const unsafeFieldSortingsLens: LaagModelLens<FieldSorting[]> = laagPropLens("fieldSortings");
+  const unsafeFieldSelectionsLens: LaagModelLens<FieldSelection[]> = laagPropLens("fieldSelections");
+  const unsafeRowFormatterLens: LaagModelLens<Endomorphism<Row>> = laagPropLens("rowFormatter");
+  export const fieldSelectionsLens: LaagModelLens<FieldSelection[]> = new Lens(
     unsafeFieldSelectionsLens.get, //
     fieldSelections => {
       const fixedFieldSelections = FieldSelection.selectFirstField(fieldSelections);
@@ -188,6 +196,8 @@ export namespace LaagModel {
         );
     }
   );
+  const canUseAllFeaturesLens: LaagModelLens<boolean> = laagPropLens("canUseAllFeatures");
+  export const canUseAllFeaturesGetter: LaagModelGetter<boolean> = canUseAllFeaturesLens.asGetter();
 
   export const fieldSelectionForNameTraversal: Function1<string, Traversal<LaagModel, FieldSelection>> = fieldName =>
     fieldSelectionsLens.composeTraversal(selectiveArrayTraversal(fs => fs.name === fieldName));
@@ -312,7 +322,9 @@ export namespace LaagModel {
         veldinfos,
         hasFilter: Filter.isDefined(laag.filterinstellingen.spec),
         filterIsActive: laag.filterinstellingen.actief,
+        mapAsFilter: true,
         totaal: laag.filterinstellingen.totaal,
+        canUseAllFeatures: false,
         featureCount: FeatureCount.pending,
         expectedPageNumber: Page.first,
         fieldSelections,
@@ -368,6 +380,10 @@ export namespace LaagModel {
           )
       )
     )(laag);
+
+  export const setMapAsFilter: Function1<boolean, Endomorphism<LaagModel>> = unsafeMapAsFilterLens.set;
+
+  export const setCanUseAllFeatures: Function1<boolean, Endomorphism<LaagModel>> = canUseAllFeaturesLens.set;
 }
 
 export namespace TableModel {
@@ -506,6 +522,21 @@ export namespace TableModel {
   export const followViewFeatureUpdates: Function1<ke.ToegevoegdeVectorLaag, rx.Observable<Update>> = tvlg =>
     ke.ToegevoegdeVectorLaag.featuresChanged$(tvlg).pipe(map(() => featuresUpdate(tvlg)));
 
+  const totaalUpdate: Curried2<ke.ToegevoegdeVectorLaag, FilterTotaal, Update> = tvlg => totaal =>
+    syncUpdateLaagWithTitel(tvlg.titel)(
+      pipe(
+        totaal,
+        isTotaalOpgehaald, // We gebruiken op deze manier automatisch hetzelfde aantal features als grens als voor filters
+        LaagModel.setCanUseAllFeatures
+      )
+    );
+
+  export const followTotalFeaturesUpdate: Function1<ke.ToegevoegdeVectorLaag, rx.Observable<Update>> = tvlg =>
+    ke.ToegevoegdeVectorLaag.noSqlFsSourceFold
+      .headOption(tvlg)
+      .map(source => source.fetchTotal$().pipe(map(totaalUpdate(tvlg))))
+      .getOrElse(rx.EMPTY);
+
   const modifyPageNumberUpdate: Curried2<Endomorphism<PageNumber>, string, Update> = f => titel =>
     syncUpdateLaagWithTitel(titel)(
       flow(
@@ -541,6 +572,14 @@ export namespace TableModel {
     syncUpdateLaagWithTitel(titel)(
       flow(
         LaagModel.toggleSortingField(fieldName),
+        updateLaagPageData
+      )
+    );
+
+  export const mapAsFilterUpdate: Curried2<string, boolean, Update> = titel => onOff =>
+    syncUpdateLaagWithTitel(titel)(
+      flow(
+        LaagModel.setMapAsFilter(onOff),
         updateLaagPageData
       )
     );

@@ -1,14 +1,13 @@
-import { ChangeDetectionStrategy, Component, Input, NgZone, ViewEncapsulation } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, NgZone, ViewEncapsulation } from "@angular/core";
 import { array } from "fp-ts";
-import { intercalate } from "fp-ts/lib/Foldable2v";
-import { Curried2, flow, Function1, Refinement } from "fp-ts/lib/function";
-import { monoidString } from "fp-ts/lib/Monoid";
+import { flow, Function1, not, Refinement } from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
-import { distinctUntilChanged, map, mapTo, share, switchMap, tap } from "rxjs/operators";
-import { isString } from "util";
+import { debounceTime, delay, distinctUntilChanged, map, mapTo, share, switchMap, take, tap } from "rxjs/operators";
+import { isBoolean, isString } from "util";
 
 import { catOptions, collectOption, subSpy } from "../../util/operators";
+import { join } from "../../util/string";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { KaartComponent } from "../kaart.component";
 
@@ -23,8 +22,6 @@ interface ColumnHeaders {
 }
 
 namespace ColumnHeaders {
-  const join: Curried2<string, string[], string> = sep => a => intercalate(monoidString, array.array)(sep, a);
-
   const create: Function1<FieldSelection[], ColumnHeaders> = fieldSelections => ({
     headers: fieldSelections,
     columnWidths: pipe(
@@ -57,6 +54,8 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
   public readonly noDataAvailable$: rx.Observable<boolean>;
   public readonly dataAvailable$: rx.Observable<boolean>;
   public readonly fieldNameSelections$: rx.Observable<FieldSelection[]>;
+  public readonly mapAsFilterState$: rx.Observable<boolean>;
+  public readonly cannotChooseMapAsFilter$: rx.Observable<boolean>;
 
   // Voor child components
   public readonly laag$: rx.Observable<LaagModel>;
@@ -64,7 +63,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
   @Input()
   laagTitel: string;
 
-  constructor(kaart: KaartComponent, overzicht: FeatureTabelOverzichtComponent, ngZone: NgZone) {
+  constructor(kaart: KaartComponent, overzicht: FeatureTabelOverzichtComponent, ngZone: NgZone, private readonly cdr: ChangeDetectorRef) {
     super(kaart, ngZone);
 
     const model$ = overzicht.model$;
@@ -105,11 +104,27 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
       )
     );
 
-    this.headers$ = subSpy("****headers$")(
-      this.fieldNameSelections$.pipe(
-        map(ColumnHeaders.createFromFieldSelection),
-        share()
-      )
+    this.headers$ = this.fieldNameSelections$.pipe(
+      map(ColumnHeaders.createFromFieldSelection),
+      share()
+    );
+
+    this.cannotChooseMapAsFilter$ = this.laag$.pipe(map(not(LaagModel.canUseAllFeaturesGetter.get)));
+
+    this.mapAsFilterState$ = this.laag$.pipe(
+      map(LaagModel.mapAsFilterGetter.get),
+      debounceTime(40),
+      // De hack hieronder is nodig omdat Angular's change detection het equivalent van een distinctUntilChanged doet.
+      // Maw, als de waarde uit de observable niet verandert, dan gebeurt er niks. Ook niet als de gebruiker manueel de
+      // waarde aangepast heeft. Een eenvoudige rx.of(!onOff, onOff) is overigens niet voldoende omdat er intern ook het
+      // equivalent van een debounceTime gebeurt.
+      switchMap(onOff =>
+        rx.timer(0, 1).pipe(
+          take(2),
+          map(i => (i % 2 === 0 ? !onOff : onOff))
+        )
+      ),
+      share()
     );
 
     const withLaagTitel: Function1<Function1<string, rx.Observable<Update>>, rx.Observable<Update>> = titelBasedOps =>
@@ -126,10 +141,14 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     );
 
     const sortUpdate$ = withLaagTitel(titel =>
-      this.actionDataFor$("toggleSort", isString).pipe(map(fieldName => TableModel.sortFieldToggleUpdate(titel)(fieldName)))
+      this.actionDataFor$("toggleSort", isString).pipe(map(TableModel.sortFieldToggleUpdate(titel)))
     );
 
-    const doUpdate$ = rx.merge(fieldSelectionsUpdate$, sortUpdate$).pipe(tap(overzicht.updater));
+    const viewModeUpdate$ = withLaagTitel(titel =>
+      this.actionDataFor$("mapAsFilter", isBoolean).pipe(map(TableModel.mapAsFilterUpdate(titel)))
+    );
+
+    const doUpdate$ = rx.merge(fieldSelectionsUpdate$, sortUpdate$, viewModeUpdate$).pipe(tap(overzicht.updater));
 
     this.runInViewReady(rx.merge(doUpdate$));
   }

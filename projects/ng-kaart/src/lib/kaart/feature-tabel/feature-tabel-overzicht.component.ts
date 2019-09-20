@@ -1,6 +1,7 @@
 import { animate, style, transition, trigger } from "@angular/animations";
 import { ChangeDetectionStrategy, Component, NgZone, ViewEncapsulation } from "@angular/core";
 import { array, setoid } from "fp-ts";
+import { Curried2, Function1 } from "fp-ts/lib/function";
 import { Setoid } from "fp-ts/lib/Setoid";
 import * as rx from "rxjs";
 import { distinctUntilChanged, map, observeOn, scan, share, shareReplay, switchMap, take, takeUntil, tap } from "rxjs/operators";
@@ -84,6 +85,12 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
     const asyncUpdatesSubj: rx.Subject<SyncUpdate> = new rx.Subject();
     const delayedUpdates$ = asyncUpdatesSubj.pipe(map(TableModel.syncUpdateOnly));
 
+    const mergeAsyncLagenUpdates: Curried2<
+      Function1<ke.ToegevoegdeVectorLaag, rx.Observable<Update>>,
+      ke.ToegevoegdeVectorLaag[],
+      rx.Observable<Update>
+    > = f => lagen => rx.merge(...array.map(f)(lagen));
+
     // Voor de view als filter kunnen we gewoon de zichtbare features volgen. Het model zal de updates neutraliseren als
     // het niet in de view als filter mode is.
     const directPageUpdates$: rx.Observable<Update> = subSpy("****directPageUpdates$")(
@@ -97,10 +104,14 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
           switchMap(vectorLagen =>
             rx.concat(
               rx.from(vectorLagen.map(TableModel.featuresUpdate)), // Dit is de "geforceerde" update
-              rx.merge(...vectorLagen.map(TableModel.followViewFeatureUpdates))
+              mergeAsyncLagenUpdates(TableModel.followViewFeatureUpdates)(vectorLagen)
             )
           )
         )
+    );
+
+    const totalFeaturesUpdate$: rx.Observable<Update> = voorgrondLagen$.pipe(
+      switchMap(mergeAsyncLagenUpdates(TableModel.followTotalFeaturesUpdate))
     );
 
     const clientUpdateSubj: rx.Subject<Update> = new rx.Subject();
@@ -111,6 +122,7 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
       updateLagen$,
       updateZoomAndExtent$,
       directPageUpdates$,
+      totalFeaturesUpdate$,
       clientUpdateSubj
     );
 
@@ -124,7 +136,6 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
           switchMap(vi =>
             modelUpdate$.pipe(
               scan((model: TableModel, update: Update) => {
-                console.log("***origineel model", model, update);
                 const newModel = update.syncUpdate(model);
                 console.log("***aangepast model", newModel);
                 update
@@ -144,7 +155,7 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
           )
         )
       ),
-      shareReplay(1) // ook late subscribers moet toestand van model kennen
+      shareReplay(1) // ook late subscribers moeten toestand van model kennen
     );
 
     // Het is belangrijk dat deze (en soortgelijke) observable maar emit op het moment dat het echt nodig is. Zeker niet
