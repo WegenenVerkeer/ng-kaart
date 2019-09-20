@@ -56,6 +56,7 @@ export class KaartComponent extends KaartComponentBase {
   private innerAanwezigeElementen$: rx.Observable<Set<string>>;
   readonly kaartModel$: rx.Observable<KaartWithInfo> = rx.EMPTY;
   private readonly resizeCommand$: rx.Observable<prt.VeranderViewportCmd>;
+  readonly containerResize$: rx.Observable<ol.Size>;
 
   @ViewChild("map")
   mapElement: ElementRef;
@@ -182,17 +183,19 @@ export class KaartComponent extends KaartComponentBase {
       )
       .subscribe(() => this.pasKaartLinksWeergaveAan());
 
-    // Het kan gebeuren dat de container waar wij ons in bevinden een andere grootte krijgt. In dat geval moeten we dat laten weten aan OL.
-    // We hebben geen subject waar we commands kunnen naar toe sturen (en dat willen we ook niet), dus gebruiken we een observable die we
-    // mergen met de externe en interne componentcommandos.
-    this.resizeCommand$ = this.viewReady$.pipe(
+    // Dit kan ook bruikbaar zijn voor kind componenten.
+    this.containerResize$ = this.viewReady$.pipe(
       observeOutsideAngular(this.zone),
       switchMap(() => resizeObservable(this.mapElement.nativeElement)),
       debounceTime(200), // resize events komen heel vlug
       filter(isNonEmpty),
-      map(entries => [entries[0].contentRect.width, entries[0].contentRect.height] as ol.Size),
-      map(prt.VeranderViewportCmd)
+      map(entries => [entries[0].contentRect.width, entries[0].contentRect.height] as ol.Size)
     );
+
+    // Het kan gebeuren dat de container waar wij ons in bevinden een andere grootte krijgt. In dat geval moeten we dat laten weten aan OL.
+    // We hebben geen subject waar we commands kunnen naar toe sturen (en dat willen we ook niet), dus gebruiken we een observable die we
+    // mergen met de externe en interne componentcommandos.
+    this.resizeCommand$ = this.containerResize$.pipe(map(prt.VeranderViewportCmd));
   }
 
   private createMapModelForCommands(initieelModel: KaartWithInfo): rx.Observable<KaartWithInfo> {

@@ -1,7 +1,7 @@
 import { animate, state, style, transition, trigger } from "@angular/animations";
 import { ChangeDetectionStrategy, Component, NgZone } from "@angular/core";
 import * as array from "fp-ts/lib/Array";
-import { not } from "fp-ts/lib/function";
+import { and, not } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import { debounceTime, filter, map, startWith, withLatestFrom } from "rxjs/operators";
 
@@ -50,6 +50,8 @@ export class KaartInfoBoodschappenComponent extends KaartChildComponentBase {
       map(kibo => kibo.kaartBevragenOnderdrukt)
     );
 
+    const identifyOnderdrukt$: rx.Observable<boolean> = this.modelChanges.tabelState$.pipe(map(change => change.state === "Opengeklapt"));
+
     const infoBoodschappen$ = this.internalMessage$.pipe(
       ofType<InfoBoodschappenMsg>("InfoBoodschappen"), //
       observeOnAngular(this.zone),
@@ -58,9 +60,15 @@ export class KaartInfoBoodschappenComponent extends KaartChildComponentBase {
     );
 
     const filteredInfoboodschappen = infoBoodschappen$.pipe(
-      withLatestFrom(kaartBevragenOnderdrukt$),
-      map(([boodschappen, onderdrukt]) =>
-        array.filter(boodschappen, not(boodschap => boodschap.type === "InfoBoodschapKaartBevragen" && onderdrukt))
+      withLatestFrom(kaartBevragenOnderdrukt$, identifyOnderdrukt$),
+      map(([boodschappen, kaartBevragenOnderdrukt, identifyOnderdrukt]) =>
+        array.filter(
+          boodschappen,
+          and(
+            not(boodschap => boodschap.type === "InfoBoodschapKaartBevragen" && kaartBevragenOnderdrukt),
+            not(boodschap => boodschap.type === "InfoBoodschapIdentify" && identifyOnderdrukt)
+          )
+        )
       )
     );
 
