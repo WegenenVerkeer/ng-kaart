@@ -1,3 +1,5 @@
+@import "../../css/kaart.component-common.scss";
+
 :host {
   flex-shrink: 0;
   flex-grow: 1;
@@ -49,10 +51,10 @@
 .drag-knop {
   touch-action: none;
   &:hover {
-    color: orange;
+    color: $awv-primary-2;
   }
 
   &.dragging {
-    color: orange;
+    color: $awv-primary-2;
   }
 }
