@@ -241,6 +241,10 @@ awv-kaart-info-boodschappen {
     color: black;
     padding: 0;
 
+    &.tabel-geopend {
+      display: none;
+    }
+
     > * {
       background-color: rgba(white, 0.87);
       min-height: 16px;

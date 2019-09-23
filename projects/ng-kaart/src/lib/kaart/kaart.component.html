@@ -49,7 +49,7 @@
             <awv-markeer-kaartklik *ngIf="aanwezigeElementen.has('MarkeerKaartklik')"></awv-markeer-kaartklik>
           </div>
         </div>
-        <div class="kaart-footer-info">
+        <div class="kaart-footer-info" [ngClass]="{ 'tabel-geopend': (tabelGeopend$ | async)}">
           <awv-copyright *ngIf="aanwezigeElementen.has('Copyright')"></awv-copyright>
           <awv-voorwaarden *ngIf="aanwezigeElementen.has('Voorwaarden')"></awv-voorwaarden>
           <awv-schaal *ngIf="aanwezigeElementen.has('Schaal')"></awv-schaal>

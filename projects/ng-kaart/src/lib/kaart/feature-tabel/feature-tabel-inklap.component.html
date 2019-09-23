@@ -1,6 +1,5 @@
 <div class="top-menu" *ngIf="magGetoondWorden$ | async">
-  <button mat-icon-button class="tabel-knop" (click)="toggleTabelZichtbaar()"
-    [matTooltip]="tabelZichtbaar ? 'Verberg paneel' : 'Toon paneel'" matTooltipPosition="right">
+  <button mat-icon-button class="tabel-knop" (click)="toggleTabelZichtbaar()">
     <mat-icon *ngIf="tabelZichtbaar">keyboard_arrow_down</mat-icon>
     <mat-icon *ngIf="!tabelZichtbaar">keyboard_arrow_up</mat-icon>
   </button>
