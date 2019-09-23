@@ -44,6 +44,7 @@ export class FeatureTabelInklapComponent extends KaartChildComponentBase impleme
   public huidigeHoogte = 0;
   public bezigMetSlepen = false;
   private standaardHoogte: number;
+  private maximumHoogte: number;
   private startSleepHoogte: number;
   private startSleepY: number;
 
@@ -56,7 +57,10 @@ export class FeatureTabelInklapComponent extends KaartChildComponentBase impleme
   constructor(kaart: KaartComponent, ngZone: NgZone) {
     super(kaart, ngZone);
     // Zet de standaard grootte van de tabel op 2/5 van de grootte van de kaart
-    this.bindToLifeCycle(kaart.containerResize$).subscribe(size => (this.huidigeHoogte = this.standaardHoogte = (size[1] / 5) * 2));
+    this.bindToLifeCycle(kaart.containerResize$).subscribe(([_, hoogte]) => {
+      this.maximumHoogte = hoogte - 24;
+      this.huidigeHoogte = this.standaardHoogte = (hoogte / 5) * 2;
+    });
 
     this.magGetoondWorden$ = this.internalMessage$.pipe(
       ofType<TabelStateMsg>("TabelState"),
@@ -132,6 +136,9 @@ export class FeatureTabelInklapComponent extends KaartChildComponentBase impleme
   private handleDrag(clientY: number) {
     if (this.bezigMetSlepen) {
       this.huidigeHoogte = this.startSleepY - clientY + this.startSleepHoogte;
+      if (this.huidigeHoogte > this.maximumHoogte) {
+        this.huidigeHoogte = this.maximumHoogte;
+      }
       if (this.huidigeHoogte <= 40) {
         if (this.tabelZichtbaar) {
           // Dicht snappen.
