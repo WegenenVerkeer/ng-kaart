@@ -71,7 +71,7 @@ export function isNotNull(object: any) {
   return object !== null;
 }
 
-export function valueSpy<A>(msg: string): Endomorphism<A> {
+export function flowSpy<A>(msg: string): Endomorphism<A> {
   return a => {
     console.log(msg, a);
     return a;

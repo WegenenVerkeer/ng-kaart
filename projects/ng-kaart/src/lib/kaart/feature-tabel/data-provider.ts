@@ -2,6 +2,7 @@ import { array, option, ord, setoid } from "fp-ts";
 import { Curried2, Endomorphism, flow, Function1, Function2, Function3, identity, Predicate, Refinement } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import { Ord } from "fp-ts/lib/Ord";
+import { pipe } from "fp-ts/lib/pipeable";
 import { Setoid } from "fp-ts/lib/Setoid";
 import { DateTime } from "luxon";
 import { Getter, Iso, Lens, Prism } from "monocle-ts";
@@ -21,14 +22,12 @@ import * as ke from "../kaart-elementen";
 
 export type ValueType = string | number | boolean | DateTime;
 
+// Zou kunen new-type zijn. Afwachten of er nog properties nuttig zijn
 export interface Field {
   readonly maybeValue: Option<ValueType>;
 }
 
-// Zou kunen new-type zijn. Afwachten of er nog properties nuttig zijn
-export interface Row {
-  readonly [key: string]: Field;
-}
+export type Row = Record<string, Field>;
 
 export interface PageNumber extends Newtype<{ readonly PAGENUMBER: unique symbol }, NonNegativeInteger> {}
 
@@ -91,6 +90,12 @@ export type FeatureCountFetcher = Function1<FeatureCountRequest, rx.Observable<F
 // Zou kunen new-type zijn. Afwachten of er nog properties nuttig zijn
 interface Properties {
   readonly [key: string]: ValueType | Properties;
+}
+
+export namespace SortDirection {
+  export const setoidSortDirection: Setoid<SortDirection> = setoid.setoidString;
+
+  export const invert: Endomorphism<SortDirection> = direction => (direction === "ASCENDING" ? "DESCENDING" : "ASCENDING");
 }
 
 export namespace Row {
@@ -179,6 +184,16 @@ export namespace Page {
     ordPageNumber.equals(pageNumber, largestPageNumber);
 }
 
+export namespace FieldSorting {
+  export const directionLens: Lens<FieldSorting, SortDirection> = Lens.fromProp<FieldSorting>()("direction");
+
+  export const create: Curried2<SortDirection, ke.VeldInfo, FieldSorting> = direction => veldinfo => ({
+    fieldKey: veldinfo.naam,
+    direction,
+    veldinfo
+  });
+}
+
 export namespace DataRequest {
   export const RequestingData: RequestingData = {
     kind: "RequestingData"
@@ -221,18 +236,25 @@ export namespace PageFetcher {
   const toRows: Curried2<Function1<ol.Feature, Row>, ol.Feature[], Row[]> = array.map;
   const featureToFieldValue: Curried2<FieldSorting, ol.Feature, Option<ValueType>> = sorting => feature =>
     Row.extractField(Feature.properties(feature), sorting.veldinfo).maybeValue;
+
+  const directionOrd: <A>(direction: SortDirection) => Endomorphism<Ord<A>> = direction =>
+    direction === "ASCENDING" ? identity : ord.getDualOrd;
   const ordFor: Function1<FieldSorting, Ord<ValueType>> = sorting =>
     ke.VeldInfo.matchWithFallback<Ord<ValueType>>({
       string: () => ord.ordString,
       integer: () => ord.ordNumber,
       double: () => ord.ordNumber,
-      boolean: () => ord.ordBoolean,
+      boolean: () => ord.getDualOrd(ord.ordBoolean), // Hack: omdat JA < NEEN, maar false < true
       // TODO + date en datetime -> parse + ordNumber
       fallback: () => ord.ordString
     })(sorting.veldinfo);
   const sortingToOrd: Function1<FieldSorting, Ord<ol.Feature>> = sorting =>
-    ord.contramap(featureToFieldValue(sorting), option.getOrd(ordFor(sorting)));
+    pipe(
+      ord.contramap(featureToFieldValue(sorting), option.getOrd(ordFor(sorting))),
+      directionOrd(sorting.direction)
+    );
   const sortingsToOrds: Function1<FieldSorting[], Ord<ol.Feature>[]> = array.map(sortingToOrd);
+
   const unlessNoSortableFields: Function1<Option<Endomorphism<ol.Feature[]>>, Endomorphism<ol.Feature[]>> = o => o.getOrElse(identity);
   const sortFeatures: Function1<FieldSorting[], Endomorphism<ol.Feature[]>> = flow(
     sortingsToOrds,

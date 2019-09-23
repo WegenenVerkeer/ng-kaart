@@ -1,7 +1,8 @@
-import { array, option, ord, setoid, traversable } from "fp-ts";
+import { array, option, ord, record, setoid, traversable } from "fp-ts";
 import { constant, Curried2, curry, Endomorphism, flip, flow, Function1, Function2, identity, Predicate } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
+import { getLastSemigroup } from "fp-ts/lib/Semigroup";
 import { Setoid } from "fp-ts/lib/Setoid";
 import { fromTraversable, Getter, Lens, Optional, Prism, Traversal } from "monocle-ts";
 import * as ol from "openlayers";
@@ -12,7 +13,7 @@ import { isNumber } from "util";
 import { Filter } from "../../filter";
 import { NosqlFsSource } from "../../source";
 import * as arrays from "../../util/arrays";
-import { applySequential, PartialFunction2, valueSpy } from "../../util/function";
+import { applySequential, PartialFunction2 } from "../../util/function";
 import { arrayTraversal, selectiveArrayTraversal } from "../../util/lenses";
 import * as ke from "../kaart-elementen";
 import { Viewinstellingen } from "../kaart-protocol-subscriptions";
@@ -35,11 +36,14 @@ export interface TableModel {
 }
 
 export interface FieldSelection {
-  readonly selected: boolean;
   readonly name: string;
   readonly label: string;
+  readonly selected: boolean;
+  readonly sortDirection: Option<SortDirection>;
   readonly contributingVeldinfos: ke.VeldInfo[]; // voor de synthetische velden
 }
+
+export type RowFormatter = Endomorphism<Row>;
 
 // Deze interface verzamelt de gegevens die we nodig hebben om 1 laag weer te geven in de tabelview. Het is
 // tegelijkertijd een abstractie van het onderliggende model + state nodig voor de tabel use cases (MVP).
@@ -52,10 +56,11 @@ export interface LaagModel {
   readonly expectedPageNumber: PageNumber; // Het PageNumber dat we verwachten te zien. Potentieel anders dan in Page wegens asynchoniciteit
   readonly page: Option<Page>; // We houden maar 1 pagina van data tegelijkertijd in het geheugen. (later meer)
 
-  readonly headers: ColumnHeaders;
   readonly fieldSelections: FieldSelection[]; // enkel een subset van de velden is zichtbaar
   readonly fieldSortings: FieldSorting[];
   readonly rowTransformer: Endomorphism<Row>; // bewerkt de ruwe rij (bijv. locatieveld toevoegen)
+  readonly rowFormats: RowFormatSpec; // instructies om velden aan te passen.
+  readonly rowFormatter: RowFormatter; // formateert een rij. zou kunnen in rowTransformer zitten, maar heeft andere life cycle
 
   readonly source: NosqlFsSource;
   readonly minZoom: number;
@@ -73,13 +78,7 @@ export interface LaagModel {
   // later
   // readonly canRequestFullData: boolean;
   // readonly fetchAllData();  --> of nog beter in losse functie?
-  // readonly ord: Ord<ol.Feature>;
   // readonly viewAsFilter: boolean;
-}
-
-export interface ColumnHeaders {
-  readonly headers: FieldSelection[];
-  readonly columnWidths: string; // we willen dit niet in de template opbouwen
 }
 
 // De titel van een laag + geassocieerde state
@@ -90,17 +89,24 @@ export interface TableHeader {
   readonly count: number | undefined;
 }
 
+// Een RowFormatSpec laat toe om veldwaarden om te zetten naar een andere representatie. Een transformatiefunctie obv
+// een RowFormatSpec wordt heel vroeg bij het interpreteren van de laag VeldInfo aangemaakt omdat die voor alle rijen
+// dezelfde is. Zoals altijd geldt dat een
+export type RowFormatSpec = Record<string, Endomorphism<Field>>;
+
 export namespace FieldSelection {
   export const nameLens: Lens<FieldSelection, string> = Lens.fromProp<FieldSelection>()("name");
   export const selectedLens: Lens<FieldSelection, boolean> = Lens.fromProp<FieldSelection>()("selected");
   export const contributingVeldinfosGetter: Getter<FieldSelection, ke.VeldInfo[]> = Lens.fromProp<FieldSelection>()(
     "contributingVeldinfos"
   ).asGetter();
+  export const maybeSortDirectionLens: Lens<FieldSelection, Option<SortDirection>> = Lens.fromProp<FieldSelection>()("sortDirection");
 
   export const fieldsFromVeldinfo: Function1<ke.VeldInfo[], FieldSelection[]> = array.map(vi => ({
     name: vi.naam,
-    selected: false,
     label: ke.VeldInfo.veldGuaranteedLabelGetter.get(vi),
+    selected: false,
+    sortDirection: option.none,
     contributingVeldinfos: [vi]
   }));
 
@@ -118,40 +124,20 @@ export namespace FieldSelection {
   );
 
   export const setoidFieldSelection: Setoid<FieldSelection> = setoid.getStructSetoid({
+    name: setoid.setoidString,
     selected: setoid.setoidBoolean,
-    name: setoid.setoidString
+    sortDirection: option.getSetoid(SortDirection.setoidSortDirection)
   });
-  export const setoidFieldSelectionByKey: Setoid<FieldSelection> = setoid.contramap(nameLens.get, setoid.setoidString);
 
-  const sortingStillApplicable: Function1<FieldSelection[], Predicate<FieldSorting>> = fields => sorting =>
-    arrays.exists<FieldSelection>(field => field.name === sorting.fieldKey)(fields);
+  export const setoidFieldSelectionByKey: Setoid<FieldSelection> = setoid.contramap(nameLens.get, setoid.setoidString);
 
   export const selectFirstField: Endomorphism<FieldSelection[]> = fields =>
     array.mapWithIndex<FieldSelection, FieldSelection>((i, field) => selectedLens.modify(set => set || i === 0)(field))(fields);
 
-  export const maintainFieldSortings: Function1<FieldSelection[], Endomorphism<FieldSorting[]>> = fields =>
-    flow(
-      array.filter(sortingStillApplicable(fields))
-      // wanneer de array van sortings leeg is, moeten we er een sorting aan toevoegen obv de eerste kolem. Voorlopig kan
-      // dat niet omdat we de sorteerkolommen nog niet zelf kunnen kiezen en we de eerste kolom niet mogen deselecteren.
-    );
-}
+  const sortingsForFieldSelection: Function1<FieldSelection, FieldSorting[]> = fs =>
+    fs.sortDirection.foldL(() => [], direction => fs.contributingVeldinfos.map(FieldSorting.create(direction)));
 
-export namespace ColumnHeaders {
-  const create: Function1<FieldSelection[], ColumnHeaders> = headers => ({
-    headers,
-    columnWidths: headers.map(_ => "minmax(150px, 1fr)").join(" ")
-  });
-
-  export const setoidColumnHeaders: Setoid<ColumnHeaders> = setoid.contramap(
-    ch => ch.headers,
-    array.getSetoid(FieldSelection.setoidFieldSelectionByKey)
-  );
-
-  export const createFromFieldSelection: Function1<FieldSelection[], ColumnHeaders> = flow(
-    array.filter(FieldSelection.selectedLens.get),
-    create
-  );
+  export const maintainFieldSortings: Function1<FieldSelection[], FieldSorting[]> = array.chain(sortingsForFieldSelection);
 }
 
 export namespace TableHeader {
@@ -168,7 +154,7 @@ export namespace TableHeader {
     titel: setoid.setoidString,
     filterIsActive: setoid.setoidBoolean,
     hasFilter: setoid.setoidBoolean,
-    count: setoid.setoidNumber // TODO controleer undefined
+    count: setoid.setoidNumber
   });
 }
 
@@ -187,23 +173,25 @@ export namespace LaagModel {
   export const filterIsActiveLens: Lens<LaagModel, boolean> = Lens.fromProp<LaagModel>()("filterIsActive");
   export const veldInfosGetter: Getter<LaagModel, ke.VeldInfo[]> = Lens.fromProp<LaagModel>()("veldinfos").asGetter();
   const unsafeFieldSortingsLens: Lens<LaagModel, FieldSorting[]> = Lens.fromProp<LaagModel>()("fieldSortings");
-  const unsafeHeadersLens: Lens<LaagModel, ColumnHeaders> = Lens.fromProp<LaagModel, "headers">("headers");
-  export const headersGetter: Getter<LaagModel, ColumnHeaders> = Lens.fromProp<LaagModel, "headers">("headers").asGetter();
   const unsafeFieldSelectionsLens: Lens<LaagModel, FieldSelection[]> = Lens.fromProp<LaagModel>()("fieldSelections");
+  const unsafeRowFormatterLens: Lens<LaagModel, Endomorphism<Row>> = Lens.fromProp<LaagModel>()("rowFormatter");
   export const fieldSelectionsLens: Lens<LaagModel, FieldSelection[]> = new Lens(
     unsafeFieldSelectionsLens.get, //
     fieldSelections => {
       const fixedFieldSelections = FieldSelection.selectFirstField(fieldSelections);
-      return flow(
-        unsafeFieldSelectionsLens.set(fixedFieldSelections),
-        unsafeHeadersLens.set(ColumnHeaders.createFromFieldSelection(fixedFieldSelections)),
-        unsafeFieldSortingsLens.modify(FieldSelection.maintainFieldSortings(fixedFieldSelections))
-      );
+      return laag =>
+        pipe(
+          laag,
+          unsafeFieldSelectionsLens.set(fixedFieldSelections),
+          unsafeFieldSortingsLens.set(FieldSelection.maintainFieldSortings(fixedFieldSelections)),
+          unsafeRowFormatterLens.set(rowFormatterForFields(fixedFieldSelections, laag.rowFormats))
+        );
     }
   );
 
   export const fieldSelectionForNameTraversal: Function1<string, Traversal<LaagModel, FieldSelection>> = fieldName =>
     fieldSelectionsLens.composeTraversal(selectiveArrayTraversal(fs => fs.name === fieldName));
+  const fieldSelectionTraversal: Traversal<LaagModel, FieldSelection> = fieldSelectionsLens.composeTraversal(arrayTraversal());
 
   export const clampExpectedPageNumber: Endomorphism<LaagModel> = laag =>
     expectedPageNumberLens.modify(
@@ -234,6 +222,7 @@ export namespace LaagModel {
         name: "syntheticLocation",
         label: "Locatie",
         selected: true,
+        sortDirection: option.some("ASCENDING" as "ASCENDING"),
         contributingVeldinfos: allLocationVeldinfos
       };
       const fieldsSelectionTrf: Endomorphism<FieldSelection[]> = fieldSelections =>
@@ -264,6 +253,38 @@ export namespace LaagModel {
     });
   };
 
+  const formatBoolean: Endomorphism<Field> = field => ({ maybeValue: field.maybeValue.map(value => (value ? "JA" : "NEEN")) });
+  const rowFormat: Function1<ke.VeldInfo, Option<Endomorphism<Field>>> = vi =>
+    vi.type === "boolean" ? option.some(formatBoolean) : option.none;
+  const rowFormatsFromVeldinfos: Function1<ke.VeldInfo[], RowFormatSpec> = veldinfos =>
+    pipe(
+      record.fromFoldableMap(getLastSemigroup<ke.VeldInfo>(), array.array)(veldinfos, vi => [vi.naam, vi]),
+      record.filterMap(rowFormat)
+    );
+
+  const fieldFormatter: Function2<string[], RowFormatSpec, Function2<string, Field, Field>> = (selectedFieldNames, formats) => (
+    fieldName,
+    field
+  ) =>
+    array.elem(setoid.setoidString)(fieldName, selectedFieldNames)
+      ? record
+          .lookup(fieldName, formats)
+          .map(f => f(field))
+          .getOrElse(field)
+      : field;
+
+  // Deze formatteert de waarden in de rij (enkel voor de geselecteerde kolommen). Dit is nu een transformatie van Row.
+  // Misschien is het nuttig om nog een ander concept in te voeren (FormattedRow?). In elk geval is dit een verzameling
+  // van functies die berekend worden op het moment dat de FieldSelections bekend zijn, zodat bij het transformeren van
+  // een rij enkel de transformaties zelf uitgevoerd moeten worden, en niet de berekening van welke er nodig zijn.
+  const rowFormatterForFields: Function2<FieldSelection[], RowFormatSpec, Endomorphism<Row>> = (fieldSelections, rowFormats) =>
+    pipe(
+      fieldSelections,
+      array.filter(FieldSelection.selectedLens.get),
+      array.map(FieldSelection.nameLens.get), // we willen enkel de namen van de zichtbare kolommen
+      selectedFieldNames => record.mapWithIndex(fieldFormatter(selectedFieldNames, rowFormats))
+    );
+
   export const create: PartialFunction2<ke.ToegevoegdeVectorLaag, Viewinstellingen, LaagModel> = (laag, viewinstellingen) =>
     ke.ToegevoegdeVectorLaag.noSqlFsSourceFold.headOption(laag).map(source => {
       // We mogen niet zomaar alle velden gebruiken. Om te beginnen enkel de basisvelden en de locatievelden moeten
@@ -277,18 +298,14 @@ export namespace LaagModel {
         FieldSelection.selectBaseFields
       );
 
-      const headers = ColumnHeaders.createFromFieldSelection(fieldSelections);
-
       const pageFetcher = PageFetcher.sourceBasedPageFetcher(laag.bron.source);
       const featureCountFetcher = FeatureCountFetcher.sourceBasedFeatureCountFetcher(laag.bron.source);
 
-      const firstHeader = array.take(1, headers.headers);
-      const contributingVeldinfos = array.chain(FieldSelection.contributingVeldinfosGetter.get)(firstHeader);
-      const fieldSortings = contributingVeldinfos.map(vi => ({
-        fieldKey: vi.naam,
-        direction: "ASCENDING" as SortDirection,
-        veldinfo: vi
-      }));
+      const firstField = array.take(1, fieldSelections);
+      const contributingVeldinfos = array.chain(FieldSelection.contributingVeldinfosGetter.get)(firstField);
+      const fieldSortings = contributingVeldinfos.map(FieldSorting.create("ASCENDING"));
+      const rowFormats = rowFormatsFromVeldinfos(veldinfos);
+      const rowFormatter = rowFormatterForFields(fieldSelections, rowFormats);
 
       return {
         titel: laag.titel,
@@ -299,8 +316,9 @@ export namespace LaagModel {
         featureCount: FeatureCount.pending,
         expectedPageNumber: Page.first,
         fieldSelections,
-        headers,
         fieldSortings,
+        rowFormats,
+        rowFormatter,
         source,
         minZoom: laag.bron.minZoom,
         maxZoom: laag.bron.maxZoom,
@@ -325,6 +343,31 @@ export namespace LaagModel {
     );
   export const hasMultiplePages: Predicate<LaagModel> = laag =>
     FeatureCount.fetchedCount(laag.featureCount).fold(false, featureCount => !Page.isFirst(Page.last(featureCount)));
+
+  const toggleSortDirection: Endomorphism<Option<SortDirection>> = flow(
+    option.map(SortDirection.invert),
+    option.alt(() => option.some("ASCENDING") as Option<"ASCENDING">)
+  );
+
+  // Vervangt de huidige sortingFields door een sorting op 1 enkel logisch veld
+  export const toggleSortingField: Function1<string, Endomorphism<LaagModel>> = fieldName => laag =>
+    pipe(
+      fieldSelectionsLens.get(laag),
+      array.findFirst(fs => fs.name === fieldName), // Het veld moet bestaan (anders zouden we zonder sortering kunnen eindigen)
+      option.fold(
+        () => identity, // als het toch niet bestaat, wijzigen we niets
+        fs =>
+          flow(
+            // Eerst alle sorts wissen
+            fieldSelectionTraversal.composeLens(FieldSelection.maybeSortDirectionLens).set(option.none),
+            // En daarna het (zeker bestaande) veld een andere sortering geven. Set ipv modify omdat in vorige stap
+            // alles gereset is.
+            fieldSelectionForNameTraversal(fieldName)
+              .composeLens(FieldSelection.maybeSortDirectionLens)
+              .set(toggleSortDirection(fs.sortDirection))
+          )
+      )
+    )(laag);
 }
 
 export namespace TableModel {
@@ -355,13 +398,6 @@ export namespace TableModel {
     // asFold geeft een bug: Zie https://github.com/gcanti/monocle-ts/issues/96
     // return laagForTitelTraversal(titel).asFold().headOption;
     return laagForTitelOnLaagData(titel)(model.laagData);
-  };
-
-  export const headersForTitel: Curried2<string, TableModel, Option<ColumnHeaders>> = titel => {
-    // return laagForTitelTraversal(titel)
-    //   .composeLens(headersLens)
-    //   .asFold().headOption;
-    return model => array.findFirst(laagDataLens.get(model), laag => laag.titel === titel).map(LaagModel.headersGetter.get);
   };
 
   export const currentPageForTitel: Curried2<string, TableModel, Option<Page>> = titel => {
@@ -429,7 +465,8 @@ export namespace TableModel {
           pageNumber: laag.expectedPageNumber,
           rowCreator: flow(
             Row.featureToRow(laag.veldinfos),
-            laag.rowTransformer
+            laag.rowTransformer,
+            laag.rowFormatter
           ),
           requestSequence: laag.nextPageSequence
         })
@@ -492,8 +529,19 @@ export namespace TableModel {
 
   export const setFieldSelectedUpdate: Function1<string, Function2<string, boolean, Update>> = titel => (fieldName, value) =>
     syncUpdateLaagWithTitel(titel)(
-      LaagModel.fieldSelectionForNameTraversal(fieldName)
-        .composeLens(FieldSelection.selectedLens)
-        .set(value)
+      flow(
+        LaagModel.fieldSelectionForNameTraversal(fieldName)
+          .composeLens(FieldSelection.selectedLens)
+          .set(value),
+        updateLaagPageData
+      )
+    );
+
+  export const sortFieldToggleUpdate: Curried2<string, string, Update> = titel => fieldName =>
+    syncUpdateLaagWithTitel(titel)(
+      flow(
+        LaagModel.toggleSortingField(fieldName),
+        updateLaagPageData
+      )
     );
 }
