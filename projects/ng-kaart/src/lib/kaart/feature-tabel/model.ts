@@ -1,6 +1,7 @@
 import { array, option, ord, record, setoid, traversable } from "fp-ts";
 import { constant, Curried2, curry, Endomorphism, flip, flow, Function1, Function2, identity, Predicate } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
+import { Ord } from "fp-ts/lib/Ord";
 import { pipe } from "fp-ts/lib/pipeable";
 import { getLastSemigroup } from "fp-ts/lib/Semigroup";
 import { Setoid } from "fp-ts/lib/Setoid";
@@ -102,13 +103,18 @@ export namespace FieldSelection {
   ).asGetter();
   export const maybeSortDirectionLens: Lens<FieldSelection, Option<SortDirection>> = Lens.fromProp<FieldSelection>()("sortDirection");
 
-  export const fieldsFromVeldinfo: Function1<ke.VeldInfo[], FieldSelection[]> = array.map(vi => ({
-    name: vi.naam,
-    label: ke.VeldInfo.veldGuaranteedLabelGetter.get(vi),
-    selected: false,
-    sortDirection: option.none,
-    contributingVeldinfos: [vi]
-  }));
+  const basisVeldOrd: Ord<ke.VeldInfo> = ord.contramap(ke.VeldInfo.isBasisveldLens.get)(ord.getDualOrd(ord.ordBoolean));
+
+  export const fieldsFromVeldinfo: Function1<ke.VeldInfo[], FieldSelection[]> = flow(
+    array.sortBy1(basisVeldOrd, []),
+    array.map(vi => ({
+      name: vi.naam,
+      label: ke.VeldInfo.veldGuaranteedLabelGetter.get(vi),
+      selected: false,
+      sortDirection: option.none,
+      contributingVeldinfos: [vi]
+    }))
+  );
 
   const isBaseField: Predicate<FieldSelection> = field => arrays.exists(ke.VeldInfo.isBasisveldLens.get)(field.contributingVeldinfos);
 
