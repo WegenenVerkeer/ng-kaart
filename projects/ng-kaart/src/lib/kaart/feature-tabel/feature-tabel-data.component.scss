@@ -92,7 +92,7 @@ $footer-height: 48px;
     }
 
     .empty-field {
-      background-color: rgba(black, 0.04);
+      background-color: inherit;
     }
 
     .feature-table-data-no-data {
@@ -111,6 +111,7 @@ $footer-height: 48px;
     height: 47px;
     width: 48px;
     background-color: white;
+    color: $kaart-secondary-text-color;
     border-left: solid 1px #e5e5e5;
     padding: 4px;
 
