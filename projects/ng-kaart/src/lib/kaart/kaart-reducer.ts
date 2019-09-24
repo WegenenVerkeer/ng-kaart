@@ -1,3 +1,4 @@
+import { setoid } from "fp-ts";
 import * as array from "fp-ts/lib/Array";
 import { Endomorphism, Function1, Function2, identity, not, pipe } from "fp-ts/lib/function";
 import * as fptsmap from "fp-ts/lib/Map";
@@ -1391,6 +1392,22 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
+    function ZetDataloadBusy(cmd: prt.ZetDataloadBusyCmd): ModelWithResult<Msg> {
+      console.log("ZetDataloadBusy ontvangen: ", cmd);
+      modelChanger.dataloadBusySubj.next(cmd.busy);
+      return ModelWithResult(model);
+    }
+
+    function ZetForceProgressBar(cmd: prt.ZetForceProgressBarCmd): ModelWithResult<Msg> {
+      modelChanger.forceProgressBarSubj.next(cmd.busy);
+      return ModelWithResult(model);
+    }
+
+    function registreerError(cmd: prt.RegistreerErrorCmd): ModelWithResult<Msg> {
+      modelChanger.inErrorSubj.next(cmd.inError);
+      return ModelWithResult(model);
+    }
+
     function sluitPanelen(cmnd: prt.SluitPanelenCmd): ModelWithResult<Msg> {
       updateBehaviorSubject(model.infoBoodschappenSubj, () => new Map());
       modelChanger.laagstijlaanpassingStateSubj.next(GeenLaagstijlaanpassing);
@@ -1743,11 +1760,26 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         );
       }
 
+      function subscribeToBusy(sub: prt.BusySubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult("Busy", modelChanges.dataloadBusy$.pipe(distinctUntilChanged()).subscribe(consumeMessage(sub)));
+      }
+
+      function subscribeToForceProgressBar(sub: prt.ForceProgressBarSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult(
+          "ForceProgressBar",
+          modelChanges.forceProgressBar$.pipe(distinctUntilChanged()).subscribe(consumeMessage(sub))
+        );
+      }
+
       function subscribeToTableState(sub: prt.TabelStateSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
           "TableState",
           modelChanges.tabelState$.pipe(distinctUntilChanged()).subscribe(consumeMessage(sub))
         );
+      }
+
+      function subscribeToInError(sub: prt.InErrorSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult("InError", modelChanges.inError$.pipe(distinctUntilChanged()).subscribe(consumeMessage(sub)));
       }
 
       switch (cmnd.subscription.type) {
@@ -1803,6 +1835,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToMijnLocatieStateChange(cmnd.subscription);
         case "TabelState":
           return subscribeToTableState(cmnd.subscription);
+        case "Busy":
+          return subscribeToBusy(cmnd.subscription);
+        case "ForceProgressBar":
+          return subscribeToForceProgressBar(cmnd.subscription);
+        case "InError":
+          return subscribeToInError(cmnd.subscription);
       }
     }
 
@@ -1963,12 +2001,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return haalFilterTotaalOp(cmd);
         case "MijnLocatieStateChange":
           return emitMijnLocatieStateChange(cmd);
-        case "TabelStateChange":
-          return emitTabelStateChange(cmd.state);
-        case "OpenTabel":
-          return openTabel();
-        case "SluitTabel":
-          return emitTabelStateChange(TabelStateChange("Dichtgeklapt", true));
         case "BewerkTransparantie":
           return bewerkTransparantie(cmd);
         case "StopTransparantieBewerking":
@@ -1977,6 +2009,18 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return zetTransparantieVoorLaag(cmd);
         case "ZetZoomBereik":
           return zetZoomBereik(cmd);
+        case "TabelStateChange":
+          return emitTabelStateChange(cmd.state);
+        case "OpenTabel":
+          return openTabel();
+        case "SluitTabel":
+          return emitTabelStateChange(TabelStateChange("Dichtgeklapt", true));
+        case "RegistreerError":
+          return registreerError(cmd);
+        case "ZetDataloadBusy":
+          return ZetDataloadBusy(cmd);
+        case "ZetForceProgressBar":
+          return ZetForceProgressBar(cmd);
       }
     }
 

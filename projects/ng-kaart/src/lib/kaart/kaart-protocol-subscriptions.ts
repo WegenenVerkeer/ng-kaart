@@ -17,11 +17,13 @@ import { LaatsteCacheRefresh, MijnLocatieStateChange, PrecacheLaagProgress, Tabe
 export type Subscription<Msg> =
   | AchtergrondTitelSubscription<Msg>
   | ActieveModusSubscription<Msg>
+  | BusySubscription<Msg>
   | ComponentFoutSubscription<Msg>
   | ExtentSubscription<Msg>
   | GeometryChangedSubscription<Msg>
   | GeselecteerdeFeaturesSubscription<Msg>
   | HoverFeaturesSubscription<Msg>
+  | InErrorSubscription<Msg>
   | InfoBoodschappenSubscription<Msg>
   | KaartClickSubscription<Msg>
   | LaagfilterGezetSubscription<Msg>
@@ -35,6 +37,7 @@ export type Subscription<Msg> =
   | PublishedKaartLocatiesSubscription<Msg>
   | TabelStateSubscription<Msg>
   | TekenenSubscription<Msg>
+  | ForceProgressBarSubscription<Msg>
   | ViewinstellingenSubscription<Msg>
   | ZichtbareFeaturesSubscription<Msg>
   | ZoekersSubscription<Msg>
@@ -195,6 +198,21 @@ export interface TabelStateSubscription<Msg> {
   readonly wrapper: (state: TabelStateChange) => Msg;
 }
 
+export interface BusySubscription<Msg> {
+  readonly type: "Busy";
+  readonly wrapper: MsgGen<boolean, Msg>;
+}
+
+export interface ForceProgressBarSubscription<Msg> {
+  readonly type: "ForceProgressBar";
+  readonly wrapper: MsgGen<boolean, Msg>;
+}
+
+export interface InErrorSubscription<Msg> {
+  readonly type: "InError";
+  readonly wrapper: MsgGen<boolean, Msg>;
+}
+
 //////////
 // Helpers
 
@@ -311,6 +329,14 @@ export function LaagstijlGezetSubscription<Msg>(wrapper: MsgGen<ke.ToegevoegdeVe
 
 export function PrecacheProgressSubscription<Msg>(wrapper: (progress: PrecacheLaagProgress) => Msg): PrecacheProgressSubscription<Msg> {
   return { type: "PrecacheProgress", wrapper };
+}
+
+export function BusySubscription<Msg>(wrapper: (busy: boolean) => Msg): BusySubscription<Msg> {
+  return { type: "Busy", wrapper };
+}
+
+export function InErrorSubscription<Msg>(wrapper: (inError: boolean) => Msg): InErrorSubscription<Msg> {
+  return { type: "InError", wrapper };
 }
 
 export function LaatsteCacheRefreshSubscription<Msg>(

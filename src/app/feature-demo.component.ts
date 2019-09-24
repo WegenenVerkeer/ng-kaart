@@ -411,7 +411,12 @@ export class FeatureDemoComponent {
     optieDivider4: { divider: true, value: true, label: "Kaartinfo onderaan rechts" },
     schaal: { value: true, label: "Kaartschaal" },
     voorwaarden: { value: true, label: "Voorwaarden disclaimer" },
-    copyright: { value: true, label: "Copyright boodschap" }
+    copyright: { value: true, label: "Copyright boodschap" },
+
+    // -- progressbar dingen
+    optieDivider5: { divider: true, value: true, label: "Laden opties" },
+    forceProgressBar: { value: false, label: "Activeer progressbar" },
+    progressbar: { value: false, label: "Progressbar zichtbaar" }
   };
 
   configuratorMiddelpunt = [130000, 193000];
@@ -910,6 +915,10 @@ export class FeatureDemoComponent {
     // voeg de nieuwe toe
     this.geselecteerdeFeatures = getUnderlyingFeatures(event);
     this.geselecteerdeFeatures.forEach(feature => selectieKaart.toonIdentifyInformatie(feature));
+  }
+
+  busy(event: any) {
+    console.log("busy via de classic component attribuut: ", event);
   }
 
   setOffline(offline: boolean) {

@@ -2,7 +2,18 @@ import { Component, NgZone } from "@angular/core";
 import * as array from "fp-ts/lib/Array";
 import { not, Predicate } from "fp-ts/lib/function";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, map, mergeAll, shareReplay, startWith, switchMap, switchMapTo, take } from "rxjs/operators";
+import {
+  debounceTime,
+  distinctUntilChanged,
+  map,
+  mergeAll,
+  shareReplay,
+  startWith,
+  switchMap,
+  switchMapTo,
+  take,
+  tap
+} from "rxjs/operators";
 
 import { NosqlFsSource } from "../../source/nosql-fs-source";
 import { observeOnAngular } from "../../util/observe-on-angular";
@@ -13,6 +24,8 @@ import { DataLoadEvent, LoadComplete, LoadError } from "../kaart-load-events";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 
+export const KaartLoadingUISelector = "KaartLoadingUISelector";
+
 @Component({
   selector: "awv-ladend",
   templateUrl: "./kaart-loading.component.html",
@@ -21,6 +34,7 @@ import { KaartComponent } from "../kaart.component";
 export class KaartLoadingComponent extends KaartChildComponentBase {
   readonly activityClass$: rx.Observable<string>;
   readonly progressStyle$: rx.Observable<object>;
+  readonly enableProgressBar: rx.Observable<boolean>;
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
@@ -48,17 +62,25 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
       (lgnHg, lgnLg) => lgnHg.concat(lgnLg)
     );
 
+    const defaultOpties = { defaultProgressBar: true };
+    const opties$ = this.accumulatedOpties$(KaartLoadingUISelector, defaultOpties);
+    this.enableProgressBar = opties$.pipe(map(opties => opties.defaultProgressBar));
+
     // Als het laatste event voor een laag LoadStart of PartReceived is, is de laag nog bezig met laden.
     const isBusyEvent: Predicate<DataLoadEvent> = dlEvt => dlEvt.type === "LoadStart" || dlEvt.type === "PartReceived";
     // Als tenminste 1 (= niet 0) van de events een busy event is, dan wordt er nog op data gewacht
     const waitingForMoreData: Predicate<DataLoadEvent[]> = not(dlEvts => array.isEmpty(array.filter(dlEvts, isBusyEvent)));
 
-    const busy$: rx.Observable<boolean> = toegevoegdeLagenEvts$$.pipe(
+    const dataloadBusy$: rx.Observable<boolean> = toegevoegdeLagenEvts$$.pipe(
       switchMap(lagenEvts$ => rx.combineLatest(lagenEvts$)),
       map(waitingForMoreData), // dus true als nog niet alle data binnen is
       startWith(false), // dus std alles ok.
       distinctUntilChanged()
     );
+
+    const busy$ = rx
+      .combineLatest(this.modelChanges.forceProgressBar$, dataloadBusy$)
+      .pipe(map(([forced, dataloadBusy]) => forced || dataloadBusy));
 
     const mergedDataloadEvent$: rx.Observable<DataLoadEvent> = toegevoegdeLagenEvts$$.pipe(
       // subscribe/unsubscribe voor elke nieuwe lijst van toegevoegde lagen
@@ -80,6 +102,26 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
       ), // Produceert direct true, dan na een seconde false
       startWith(false)
     );
+
+    this.runInViewReady(
+      stableError$(500).pipe(
+        tap(evt => {
+          this.dispatch(prt.RegistreerErrorCmd(true));
+          this.dispatch(prt.MeldComponentFoutCmd(["Fout bij laden van features: " + evt.error]));
+        })
+      )
+    );
+
+    this.runInViewReady(
+      busy$.pipe(
+        tap(evt => {
+          console.log("dispatch zetDataloadBusy: ", evt);
+          this.dispatch(prt.ZetDataloadBusyCmd(evt));
+        })
+      )
+    );
+
+    // this.bindToLifeCycle(busy$).subscribe(evt => this.dispatch(prt.ZetDataloadBusyCmd(evt)));
 
     // busy$ heeft voorrang op inactive$
     this.activityClass$ = rx
@@ -103,10 +145,6 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
             )
       ),
       observeOnAngular(this.zone)
-    );
-
-    this.bindToLifeCycle(stableError$(500)).subscribe(evt =>
-      this.dispatch(prt.MeldComponentFoutCmd(["Fout bij laden van features: " + evt.error]))
     );
   }
 }
