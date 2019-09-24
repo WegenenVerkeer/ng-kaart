@@ -2,15 +2,14 @@
   <div id="kaart-container" style="height: 100%; width: 100%;">
     <div class="kaart" #map style="height: 100%; width: 100%;"></div>
   </div>
-  <div id="overlay" *ngIf="aanwezigeElementen$ | async as aanwezigeElementen"
-       [ngClass]="{ 'kaart-links-zichtbaar': kaartLinksZichtbaar,
-                    'kaart-links-niet-zichtbaar': !kaartLinksZichtbaar,
-                    'kaart-links-scrollbar-zichtbaar': kaartLinksScrollbarZichtbaar,
-                    'kaart-links-scrollbar-niet-zichtbaar': !kaartLinksScrollbarZichtbaar }">
+  <div class="full-height-overlay" *ngIf="aanwezigeElementen$ | async as aanwezigeElementen" [ngClass]="{ 'kaart-links-zichtbaar': kaartLinksZichtbaar,
+  'kaart-links-niet-zichtbaar': !kaartLinksZichtbaar,
+  'kaart-links-scrollbar-zichtbaar': kaartLinksScrollbarZichtbaar,
+  'kaart-links-scrollbar-niet-zichtbaar': !kaartLinksScrollbarZichtbaar }">
     <awv-ladend></awv-ladend>
     <button #kaartLinksZichtbaarToggleKnop mat-icon-button *ngIf="kaartLinksToggleZichtbaar"
-            class="kaart-links-zichtbaar-toggle-knop" (click)="toggleKaartLinks()"
-            [matTooltip]="kaartLinksZichtbaar ? 'Verberg paneel' : 'Toon paneel'" matTooltipPosition="right">
+      class="kaart-links-zichtbaar-toggle-knop" (click)="toggleKaartLinks()"
+      [matTooltip]="kaartLinksZichtbaar ? 'Verberg paneel' : 'Toon paneel'" matTooltipPosition="right">
       <mat-icon *ngIf="kaartLinksZichtbaar">chevron_left</mat-icon>
       <mat-icon *ngIf="!kaartLinksZichtbaar">chevron_right</mat-icon>
     </button>
@@ -30,26 +29,36 @@
     </div>
     <awv-kaart-teken-laag *ngIf="aanwezigeElementen.has('Kaarttekenen')"></awv-kaart-teken-laag>
     <awv-kaart-multi-teken-laag *ngIf="aanwezigeElementen.has('MultiKaarttekenen')"></awv-kaart-multi-teken-laag>
-    <div class="kaart-rechts-onderaan">
-      <div class="kaart-interacties">
-        <awv-kaart-achtergrond-selector class="kaart-achtergrond-selector" *ngIf="aanwezigeElementen.has('Achtergrondkeuze')"></awv-kaart-achtergrond-selector>
-        <div class="kaart-controls">
-          <awv-kaart-rotatie></awv-kaart-rotatie>
-          <awv-kaart-open-street-view *ngIf="aanwezigeElementen.has('Streetview')"></awv-kaart-open-street-view>
-          <awv-kaart-meten *ngIf="aanwezigeElementen.has('Meten')"></awv-kaart-meten>
-          <awv-kaart-multi-meten *ngIf="aanwezigeElementen.has('MultiMeten')"></awv-kaart-multi-meten>
-          <awv-kaart-mijn-locatie *ngIf="aanwezigeElementen.has('Mijnlocatie')"></awv-kaart-mijn-locatie>
-          <awv-kaart-mijn-mobiele-locatie *ngIf="aanwezigeElementen.has('MijnMobielelocatie')"></awv-kaart-mijn-mobiele-locatie>
-          <awv-kaart-zoom *ngIf="aanwezigeElementen.has('Zoomknoppen')"></awv-kaart-zoom>
-          <awv-kaart-bevragen *ngIf="aanwezigeElementen.has('Bevraagkaart')"></awv-kaart-bevragen>
-          <awv-markeer-kaartklik *ngIf="aanwezigeElementen.has('MarkeerKaartklik')"></awv-markeer-kaartklik>
+  </div>
+  <div class="overlay-container" *ngIf="aanwezigeElementen$ | async as aanwezigeElementen">
+    <div id="overlay">
+      <div class="kaart-rechts-onderaan">
+        <div class="kaart-interacties">
+          <awv-kaart-achtergrond-selector class="kaart-achtergrond-selector"
+            *ngIf="aanwezigeElementen.has('Achtergrondkeuze')"></awv-kaart-achtergrond-selector>
+          <div class="kaart-controls">
+            <awv-kaart-rotatie></awv-kaart-rotatie>
+            <awv-kaart-open-street-view *ngIf="aanwezigeElementen.has('Streetview')"></awv-kaart-open-street-view>
+            <awv-kaart-meten *ngIf="aanwezigeElementen.has('Meten')"></awv-kaart-meten>
+            <awv-kaart-multi-meten *ngIf="aanwezigeElementen.has('MultiMeten')"></awv-kaart-multi-meten>
+            <awv-kaart-mijn-locatie *ngIf="aanwezigeElementen.has('Mijnlocatie')"></awv-kaart-mijn-locatie>
+            <awv-kaart-mijn-mobiele-locatie *ngIf="aanwezigeElementen.has('MijnMobielelocatie')">
+            </awv-kaart-mijn-mobiele-locatie>
+            <awv-kaart-zoom *ngIf="aanwezigeElementen.has('Zoomknoppen')"></awv-kaart-zoom>
+            <awv-kaart-bevragen *ngIf="aanwezigeElementen.has('Bevraagkaart')"></awv-kaart-bevragen>
+            <awv-markeer-kaartklik *ngIf="aanwezigeElementen.has('MarkeerKaartklik')"></awv-markeer-kaartklik>
+          </div>
+        </div>
+        <div class="kaart-footer-info" [ngClass]="{ 'tabel-geopend': (tabelGeopend$ | async)}">
+          <awv-copyright *ngIf="aanwezigeElementen.has('Copyright')"></awv-copyright>
+          <awv-voorwaarden *ngIf="aanwezigeElementen.has('Voorwaarden')"></awv-voorwaarden>
+          <awv-schaal *ngIf="aanwezigeElementen.has('Schaal')"></awv-schaal>
         </div>
       </div>
-      <div class="kaart-footer-info">
-        <awv-copyright *ngIf="aanwezigeElementen.has('Copyright')"></awv-copyright>
-        <awv-voorwaarden *ngIf="aanwezigeElementen.has('Voorwaarden')"></awv-voorwaarden>
-        <awv-schaal *ngIf="aanwezigeElementen.has('Schaal')"></awv-schaal>
-      </div>
     </div>
+    <ng-container>
+      <awv-feature-tabel-inklap *ngIf="aanwezigeElementen.has('FeatureTabel')">
+      </awv-feature-tabel-inklap>
+    </ng-container>
   </div>
 </div>

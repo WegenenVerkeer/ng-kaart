@@ -99,7 +99,9 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   /** @ignore */
   private static counter = 1;
   /** @ignore */
-  kaartClassicSubMsg$: rx.Observable<KaartClassicSubMsg> = rx.EMPTY;
+  kaartClassicSubMsg$: rx.Observable<KaartClassicSubMsg> = rx.throwError(
+    "Gebruik kaartClassicSubMsg$ niet vooraleer die geinitaliseerd is. Subscribe pas later."
+  );
   /** @ignore */
   private hasFocus = false;
 
@@ -241,6 +243,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
     private kaartLocatorService: KaartClassicLocatorService<KaartClassicComponent>
   ) {
     super(zone);
+
     this.kaartMsgObservableConsumer = (msg$: rx.Observable<prt.KaartMsg>) => {
       // We zijn enkel geïnteresseerd in messages van ons eigen type
       this.kaartClassicSubMsg$ = msg$.pipe(

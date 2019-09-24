@@ -358,7 +358,8 @@ export class FeatureDemoComponent {
 
   isOffline = false;
 
-  private tekenenActief = false;
+  tekenenActief = false;
+  geometryType = "Polygon";
   private getekendeGeom: Option<ol.geom.Geometry> = none;
 
   private alleVoorwaarden = ["Voorwaarden disclaimer", "Er zijn nieuwe voorwaarden", "Er zijn nog nieuwere voorwaarden"];
@@ -414,7 +415,7 @@ export class FeatureDemoComponent {
 
     // -- progressbar dingen
     optieDivider5: { divider: true, value: true, label: "Laden opties" },
-    userBusy: { value: false, label: "Activeer progressbar" },
+    forceProgressBar: { value: false, label: "Activeer progressbar" },
     progressbar: { value: false, label: "Progressbar zichtbaar" }
   };
 
@@ -661,7 +662,7 @@ export class FeatureDemoComponent {
   ];
 
   readonly verkeersbordenVeldinfos: VeldInfo[] = [
-    { isBasisVeld: false, label: "ID", naam: "id", type: "string" },
+    { isBasisVeld: false, label: "ID", naam: "id", type: "integer" },
     { isBasisVeld: true, label: "Ident8", naam: "ident8", type: "string" },
     { isBasisVeld: true, label: "Refpunt", naam: "opschrift", type: "double" },
     { isBasisVeld: true, label: "Afstand", naam: "afstand", type: "integer" },
@@ -677,7 +678,7 @@ export class FeatureDemoComponent {
     { isBasisVeld: false, label: "Locatie X", naam: "geometry.location.0", type: "double" },
     { isBasisVeld: false, label: "Locatie Y", naam: "geometry.location.1", type: "double" },
     { isBasisVeld: true, label: "Type bord", naam: "code", type: "string" },
-    { isBasisVeld: true, label: "Breedte", naam: "breedte", type: "double", geenLocatieVeld: true },
+    { isBasisVeld: true, label: "Breedte", naam: "breedte", type: "double", isGeenLocatieVeld: true },
     { isBasisVeld: true, label: "Hoogte", naam: "hoogte", type: "double" }
   ];
 

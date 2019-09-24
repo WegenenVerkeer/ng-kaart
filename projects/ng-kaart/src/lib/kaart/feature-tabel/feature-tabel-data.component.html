@@ -1,0 +1,91 @@
+<div class="feature-table-data-content">
+  <div class="feature-table-data-main">
+    <div *ngIf="(dataAvailable$ | async)">
+      <table
+        *ngIf="(headers$ | async) as headers"
+        [ngStyle]="{ 'grid-template-columns': headers.columnWidths }"
+      >
+        <thead>
+          <tr>
+            <th
+              *ngFor="let header of headers.headers"
+              (click)="onAction('toggleSort', header.name)"
+            >
+              <span>{{ header.label }}</span>
+              <awv-feature-tabel-sortering-status
+                [sortering]="header.sortDirection"
+              ></awv-feature-tabel-sortering-status>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of (rows$ | async)">
+            <td
+              *ngFor="let header of headers.headers"
+              [ngClass]="{
+                'empty-field': row[header.name].maybeValue.isNone()
+              }"
+            >
+              {{ row[header.name].maybeValue.getOrElse("") }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div *ngIf="(noDataAvailable$ | async)" class="feature-table-data-no-data">
+      Geen data op dit zoomniveau
+    </div>
+  </div>
+  <div
+    *ngIf="(dataAvailable$ | async)"
+    class="feature-tabel-data-header-menu"
+    #headerMenu
+  >
+    <button
+      mat-icon-button
+      [matMenuTriggerFor]="fieldChoiceMenu"
+      (menuOpened)="onAction('showSelections')"
+      matTooltip="Kolommen wijzigen"
+      class="feature-table-select-columns"
+    >
+      <mat-icon>view_column</mat-icon>
+    </button>
+    <mat-menu
+      #fieldChoiceMenu="matMenu"
+      xPosition="before"
+      yPosition="above"
+      (closed)="onAction('hideSelections')"
+    >
+      <div (click)="$event.stopPropagation()">
+        <button mat-menu-item (click)="onAction('chooseBaseFields')">
+          <mat-icon>replay</mat-icon>
+          <span>Enkel basiskolommen</span>
+        </button>
+        <button mat-menu-item (click)="onAction('chooseAllFields')">
+          <mat-icon>playlist_add_check</mat-icon>
+          <span>Alle kolommen</span>
+        </button>
+        <button
+          mat-menu-item
+          *ngFor="
+            let fieldNameSelection of (fieldNameSelections$ | async);
+            let first = first
+          "
+          [disabled]="first || fieldNameSelection.sortDirection.isSome()"
+          (click)="onAction('toggleField', fieldNameSelection)"
+        >
+          <mat-checkbox
+            [checked]="fieldNameSelection.selected"
+            [disabled]="first || fieldNameSelection.sortDirection.isSome()"
+            ><span>{{ fieldNameSelection.label }}</span></mat-checkbox
+          >
+        </button>
+      </div>
+    </mat-menu>
+  </div>
+  <div class="feature-table-data-footer">
+    <awv-feature-tabel-pager
+      *ngIf="(dataAvailable$ | async)"
+    ></awv-feature-tabel-pager>
+  </div>
+</div>

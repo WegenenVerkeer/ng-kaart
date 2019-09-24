@@ -1,8 +1,6 @@
-import { setoid } from "fp-ts";
 import * as array from "fp-ts/lib/Array";
 import { left, right } from "fp-ts/lib/Either";
 import { Function1, Function2 } from "fp-ts/lib/function";
-import { map as filterable } from "fp-ts/lib/Map";
 import { none, Option } from "fp-ts/lib/Option";
 import { setoidString } from "fp-ts/lib/Setoid";
 import * as ol from "openlayers";
@@ -72,6 +70,17 @@ export interface MijnLocatieStateChange {
   readonly event: loc.Event;
 }
 
+export type TabelState = "NietMogelijk" | "Opengeklapt" | "Dichtgeklapt";
+
+export interface TabelStateChange {
+  readonly state: TabelState;
+  readonly doorKnop: boolean;
+}
+
+export function TabelStateChange(state: TabelState, doorKnop = false): TabelStateChange {
+  return { state, doorKnop };
+}
+
 /**
  * Dit is een verzameling van subjects waarmee de reducer wijzingen kan laten weten aan de child components.
  * Dit is isomorf aan het zetten van de overeenkomstige attributen op het model en die laten volgen. Het probleem daarbij
@@ -83,7 +92,7 @@ export interface ModelChanger {
   readonly uiElementSelectieSubj: rx.Subject<UiElementSelectie>;
   readonly uiElementOptiesSubj: rx.Subject<UiElementOpties>;
   readonly viewPortSizeSubj: rx.Subject<null>;
-  readonly lagenOpGroepSubj: Map<ke.Laaggroep, rx.Subject<ke.ToegevoegdeLaag[]>>;
+  readonly lagenOpGroepSubj: ke.OpLaagGroep<rx.Subject<ke.ToegevoegdeLaag[]>>;
   readonly laagVerwijderdSubj: rx.Subject<ke.ToegevoegdeLaag>;
   readonly mijnLocatieZoomDoelSubj: rx.Subject<Option<number>>;
   readonly actieveModusSubj: rx.Subject<Option<string>>;
@@ -103,8 +112,9 @@ export interface ModelChanger {
   readonly laatsteCacheRefreshSubj: rx.BehaviorSubject<LaatsteCacheRefresh>;
   readonly mijnLocatieStateChangeSubj: rx.Subject<MijnLocatieStateChange>;
   readonly zoombereikChangeSubj: rx.Subject<null>;
+  readonly tabelStateSubj: rx.Subject<TabelStateChange>;
   readonly dataloadBusySubj: rx.BehaviorSubject<boolean>;
-  readonly userBusySubj: rx.BehaviorSubject<boolean>;
+  readonly forceProgressBarSubj: rx.BehaviorSubject<boolean>;
   readonly inErrorSubj: rx.BehaviorSubject<boolean>;
 }
 
@@ -114,12 +124,12 @@ export const ModelChanger: () => ModelChanger = () => ({
   // Om zeker te zijn dat late subscribers wel hun config messages krijgen.
   uiElementOptiesSubj: new rx.ReplaySubject<UiElementOpties>(100, 2000),
   viewPortSizeSubj: new rx.Subject<null>(),
-  lagenOpGroepSubj: new Map<ke.Laaggroep, rx.Subject<Array<ke.ToegevoegdeLaag>>>([
-    ["Achtergrond", new rx.BehaviorSubject<Array<ke.ToegevoegdeLaag>>([])],
-    ["Voorgrond.Hoog", new rx.BehaviorSubject<Array<ke.ToegevoegdeLaag>>([])],
-    ["Voorgrond.Laag", new rx.BehaviorSubject<Array<ke.ToegevoegdeLaag>>([])],
-    ["Tools", new rx.BehaviorSubject<Array<ke.ToegevoegdeLaag>>([])]
-  ]),
+  lagenOpGroepSubj: {
+    Achtergrond: new rx.BehaviorSubject<ke.ToegevoegdeLaag[]>([]),
+    "Voorgrond.Hoog": new rx.BehaviorSubject<ke.ToegevoegdeLaag[]>([]),
+    "Voorgrond.Laag": new rx.BehaviorSubject<ke.ToegevoegdeLaag[]>([]),
+    Tools: new rx.BehaviorSubject<ke.ToegevoegdeLaag[]>([])
+  },
   laagVerwijderdSubj: new rx.Subject<ke.ToegevoegdeLaag>(),
   mijnLocatieZoomDoelSubj: new rx.BehaviorSubject<Option<number>>(none),
   actieveModusSubj: new rx.BehaviorSubject(none),
@@ -139,8 +149,9 @@ export const ModelChanger: () => ModelChanger = () => ({
   laatsteCacheRefreshSubj: new rx.BehaviorSubject({}),
   mijnLocatieStateChangeSubj: new rx.Subject<MijnLocatieStateChange>(),
   zoombereikChangeSubj: new rx.Subject<null>(),
+  tabelStateSubj: new rx.BehaviorSubject(TabelStateChange("NietMogelijk")),
   dataloadBusySubj: new rx.BehaviorSubject<boolean>(false),
-  userBusySubj: new rx.BehaviorSubject<boolean>(false),
+  forceProgressBarSubj: new rx.BehaviorSubject<boolean>(false),
   inErrorSubj: new rx.BehaviorSubject<boolean>(false)
 });
 
@@ -148,7 +159,7 @@ export interface ModelChanges {
   readonly uiElementSelectie$: rx.Observable<UiElementSelectie>;
   readonly uiElementOpties$: rx.Observable<UiElementOpties>;
   readonly viewinstellingen$: rx.Observable<Viewinstellingen>;
-  readonly lagenOpGroep: Map<ke.Laaggroep, rx.Observable<Array<ke.ToegevoegdeLaag>>>;
+  readonly lagenOpGroep: ke.OpLaagGroep<rx.Observable<ke.ToegevoegdeLaag[]>>;
   readonly laagVerwijderd$: rx.Observable<ke.ToegevoegdeLaag>;
   readonly geselecteerdeFeatures$: rx.Observable<GeselecteerdeFeatures>;
   readonly hoverFeatures$: rx.Observable<HoverFeature>;
@@ -173,8 +184,9 @@ export interface ModelChanges {
   readonly laatsteCacheRefresh$: rx.Observable<LaatsteCacheRefresh>;
   readonly mijnLocatieStateChange$: rx.Observable<MijnLocatieStateChange>;
   readonly dataloadBusy$: rx.Observable<boolean>;
-  readonly userBusy$: rx.Observable<boolean>;
+  readonly forceProgressBar$: rx.Observable<boolean>;
   readonly inError$: rx.Observable<boolean>;
+  readonly tabelState$: rx.Observable<TabelStateChange>;
 }
 
 const viewinstellingen: Function1<ol.Map, prt.Viewinstellingen> = olmap => ({
@@ -239,9 +251,14 @@ export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> 
     }))
   );
 
-  const lagenOpGroep$ = filterable.map(changer.lagenOpGroepSubj, s => s.pipe(observeOn(rx.asapScheduler)));
+  const lagenOpGroep$ = {
+    Achtergrond: changer.lagenOpGroepSubj.Achtergrond.pipe(observeOn(rx.asapScheduler)),
+    "Voorgrond.Hoog": changer.lagenOpGroepSubj["Voorgrond.Hoog"].pipe(observeOn(rx.asapScheduler)),
+    "Voorgrond.Laag": changer.lagenOpGroepSubj["Voorgrond.Laag"].pipe(observeOn(rx.asapScheduler)),
+    Tools: changer.lagenOpGroepSubj.Tools.pipe(observeOn(rx.asapScheduler))
+  };
   const filterVectorLagen = (tlgn: ke.ToegevoegdeLaag[]) => tlgn.filter(ke.isToegevoegdeVectorLaag);
-  const vectorlagen$ = lagenOpGroep$.get("Voorgrond.Hoog")!.pipe(map(filterVectorLagen));
+  const vectorlagen$ = lagenOpGroep$["Voorgrond.Hoog"].pipe(map(filterVectorLagen));
 
   // Om te weten welke features er zichtbaar zijn op een pagina zou het voldoende moeten zijn om te weten welke lagen er zijn, welke van
   // die lagen zichtbaar zijn en welke features er op de lagen in de huidige extent staan. Op zich is dat ook zo, maar het probleem is
@@ -253,7 +270,7 @@ export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> 
   // Implementatienota: doordat alles via observables gaat (en de switchMap), worden de unsubscribes naar OL doorgespeeld.
   const featuresChanged$: rx.Observable<void> = vectorlagen$.pipe(
     debounceTime(100), // vlugge verandering van het aantal vectorlagen willen we niet zien
-    switchMap(vlgn => rx.merge(...vlgn.map(vlg => observableFromOlEvents(vlg!.layer.getSource(), "addfeature", "removefeature", "clear")))),
+    switchMap(vlgn => rx.merge(...vlgn.map(ke.ToegevoegdeVectorLaag.featuresChanged$))),
     // Vlugge veranderingen van de features willen we ook niet zien.
     // Best om dit groter te houden dan de tijd voorzien om cleanup te doen. Anders overbodige events.
     debounceTime(150),
@@ -332,9 +349,10 @@ export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> 
     getekendeGeometry$: changer.getekendeGeometrySubj.pipe(observeOn(rx.asapScheduler)),
     precacheProgress$: changer.precacheProgressSubj.pipe(observeOn(rx.asapScheduler)),
     laatsteCacheRefresh$: changer.laatsteCacheRefreshSubj.pipe(observeOn(rx.asapScheduler)),
+    tabelState$: changer.tabelStateSubj.pipe(observeOn(rx.asapScheduler)),
     mijnLocatieStateChange$: changer.mijnLocatieStateChangeSubj.pipe(observeOn(rx.asapScheduler)),
     dataloadBusy$: changer.dataloadBusySubj.pipe(observeOn(rx.asapScheduler)),
-    userBusy$: changer.userBusySubj.pipe(observeOn(rx.asapScheduler)),
+    forceProgressBar$: changer.forceProgressBarSubj.pipe(observeOn(rx.asapScheduler)),
     inError$: changer.inErrorSubj.pipe(observeOn(rx.asapScheduler))
   };
 };

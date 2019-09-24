@@ -5,6 +5,7 @@ import { KaartModule } from "../kaart/index";
 
 import { ClassicAchtergrondSelectorComponent } from "./achtergrond-selector/classic-achtergrond-selector.component";
 import { ClassicCopyrightComponent } from "./copyright/classic-copyright.component";
+import { ClassicFeatureTabelComponent } from "./feature-tabel/classic-feature-tabel";
 import { ClassicKaartBevragenComponent } from "./kaart-bevragen/classic-kaart-bevragen.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
 import { ClassicKaartLadenComponent } from "./kaart-laden/classic-kaart-laden.component";
@@ -74,7 +75,8 @@ export const componentMap = {
   "awv-legende-image-item": ClassicLegendeImageItemComponent,
   "awv-legende-lijn-item": ClassicLegendeLijnItemComponent,
   "awv-legende-polygoon-item": ClassicLegendePolygoonItemComponent,
-  "awv-meet-knop": ClassicMetenComponent
+  "awv-meet-knop": ClassicMetenComponent,
+  "awv-feature-tabel": ClassicFeatureTabelComponent
 };
 
 const components = [
@@ -83,6 +85,7 @@ const components = [
   ClassicCopyrightComponent,
   ClassicCrabZoekerComponent,
   ClassicFeaturesLaagComponent,
+  ClassicFeatureTabelComponent,
   ClassicGeoserverLaagComponent,
   ClassicGoogleZoekerComponent,
   ClassicKaartBevragenComponent,
@@ -126,6 +129,7 @@ export class ClassicModule {}
 export * from "./achtergrond-selector/classic-achtergrond-selector.component";
 export * from "./common/classic-ui-element-selector-component-base";
 export * from "./copyright/classic-copyright.component";
+export * from "./feature-tabel/classic-feature-tabel";
 export * from "./kaart-classic.component";
 export * from "./lagen/classic-blanco-laag.component";
 export * from "./lagen/classic-features-laag.component";

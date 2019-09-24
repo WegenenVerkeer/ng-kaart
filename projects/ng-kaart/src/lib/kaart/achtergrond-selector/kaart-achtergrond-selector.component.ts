@@ -71,9 +71,7 @@ export class KaartAchtergrondSelectorComponent extends KaartChildComponentBase i
   constructor(private readonly cdr: ChangeDetectorRef, kaartComponent: KaartComponent, zone: NgZone) {
     super(kaartComponent, zone);
 
-    this.backgroundTiles$ = this.initialising$.pipe(
-      switchMap(() => this.modelChanges.lagenOpGroep.get("Achtergrond")!.pipe(map(lgn => lgn)))
-    );
+    this.backgroundTiles$ = this.initialising$.pipe(switchMap(() => this.modelChanges.lagenOpGroep.Achtergrond.pipe(map(lgn => lgn))));
 
     this.initialising$
       .pipe(

@@ -105,7 +105,7 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
     };
 
     const options$ = this.modusOpties$<BevraagKaartOpties>(defaultOptions);
-    const stableReferentielagen$ = this.modelChanges.lagenOpGroep.get("Voorgrond.Laag")!.pipe(debounceTime(250));
+    const stableReferentielagen$ = this.modelChanges.lagenOpGroep["Voorgrond.Laag"].pipe(debounceTime(250));
     const stableInfoServices$ = this.modelChanges.laagLocationInfoServicesOpTitel$.pipe(debounceTime(250));
     const clickOutsideFeature$ = this.modelChanges.kaartKlikLocatie$.pipe(filter(l => !l.coversFeature));
     const geklikteLocatie$ = this.isActief$.pipe(switchMap(isActief => (isActief ? clickOutsideFeature$ : rx.EMPTY)));

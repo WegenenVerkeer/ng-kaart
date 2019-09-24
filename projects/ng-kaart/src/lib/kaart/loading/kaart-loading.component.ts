@@ -24,7 +24,7 @@ import { DataLoadEvent, LoadComplete, LoadError } from "../kaart-load-events";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 
-export const DefaultProgressBarEnabledSelector = "DefaultProgressBarEnabled";
+export const KaartLoadingUISelector = "KaartLoadingUISelector";
 
 @Component({
   selector: "awv-ladend",
@@ -47,11 +47,11 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
         // want het kan zijn dat er lagen zijn die al gereed zijn en dus nooit nog een event uitsturen
         .map(lg => ((lg as VectorLaag)!.source as NosqlFsSource).loadEvent$.pipe(startWith(LoadComplete as DataLoadEvent)));
 
-    const lagenHoog$$: rx.Observable<Array<rx.Observable<DataLoadEvent>>> = this.modelChanges.lagenOpGroep.get("Voorgrond.Hoog")!.pipe(
+    const lagenHoog$$: rx.Observable<Array<rx.Observable<DataLoadEvent>>> = this.modelChanges.lagenOpGroep["Voorgrond.Hoog"].pipe(
       map(noSqlFsLagenDataLoadEvents),
       startWith(new Array<rx.Observable<DataLoadEvent>>())
     );
-    const lagenLaag$$: rx.Observable<Array<rx.Observable<DataLoadEvent>>> = this.modelChanges.lagenOpGroep.get("Voorgrond.Laag")!.pipe(
+    const lagenLaag$$: rx.Observable<Array<rx.Observable<DataLoadEvent>>> = this.modelChanges.lagenOpGroep["Voorgrond.Laag"].pipe(
       map(noSqlFsLagenDataLoadEvents),
       startWith(new Array<rx.Observable<DataLoadEvent>>())
     );
@@ -63,7 +63,7 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
     );
 
     const defaultOpties = { defaultProgressBar: true };
-    const opties$ = this.accumulatedOpties$(DefaultProgressBarEnabledSelector, defaultOpties);
+    const opties$ = this.accumulatedOpties$(KaartLoadingUISelector, defaultOpties);
     this.enableProgressBar = opties$.pipe(map(opties => opties.defaultProgressBar));
 
     // Als het laatste event voor een laag LoadStart of PartReceived is, is de laag nog bezig met laden.
@@ -78,7 +78,9 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
       distinctUntilChanged()
     );
 
-    const busy$ = rx.combineLatest(this.modelChanges.userBusy$, dataloadBusy$).pipe(map(comb => comb[0] || comb[1]));
+    const busy$ = rx
+      .combineLatest(this.modelChanges.forceProgressBar$, dataloadBusy$)
+      .pipe(map(([forced, dataloadBusy]) => forced || dataloadBusy));
 
     const mergedDataloadEvent$: rx.Observable<DataLoadEvent> = toegevoegdeLagenEvts$$.pipe(
       // subscribe/unsubscribe voor elke nieuwe lijst van toegevoegde lagen
@@ -101,8 +103,25 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
       startWith(false)
     );
 
-    this.bindToLifeCycle(stableError$(500)).subscribe(evt => this.dispatch(prt.RegistreerErrorCmd(true)));
-    this.bindToLifeCycle(busy$).subscribe(evt => this.dispatch(prt.ZetDataloadBusyCmd(evt)));
+    this.runInViewReady(
+      stableError$(500).pipe(
+        tap(evt => {
+          this.dispatch(prt.RegistreerErrorCmd(true));
+          this.dispatch(prt.MeldComponentFoutCmd(["Fout bij laden van features: " + evt.error]));
+        })
+      )
+    );
+
+    this.runInViewReady(
+      busy$.pipe(
+        tap(evt => {
+          console.log("dispatch zetDataloadBusy: ", evt);
+          this.dispatch(prt.ZetDataloadBusyCmd(evt));
+        })
+      )
+    );
+
+    // this.bindToLifeCycle(busy$).subscribe(evt => this.dispatch(prt.ZetDataloadBusyCmd(evt)));
 
     // busy$ heeft voorrang op inactive$
     this.activityClass$ = rx
@@ -126,10 +145,6 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
             )
       ),
       observeOnAngular(this.zone)
-    );
-
-    this.bindToLifeCycle(stableError$(500)).subscribe(evt =>
-      this.dispatch(prt.MeldComponentFoutCmd(["Fout bij laden van features: " + evt.error]))
     );
   }
 }
