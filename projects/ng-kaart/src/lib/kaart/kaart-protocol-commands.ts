@@ -100,7 +100,7 @@ export type Command<Msg extends KaartMsg> =
   | ZetStijlVoorLaagCmd<Msg>
   | ZetTransparantieVoorLaagCmd<Msg>
   | ZetUiElementOpties
-  | ZetUserBusyCmd
+  | ZetForceProgressBarCmd
   | ZetZoomBereikCmd
   | ZoekCmd<Msg>
   | ZoekGekliktCmd;
@@ -503,8 +503,8 @@ export interface ZetDataloadBusyCmd {
   readonly busy: boolean;
 }
 
-export interface ZetUserBusyCmd {
-  readonly type: "ZetUserBusy";
+export interface ZetForceProgressBarCmd {
+  readonly type: "ZetForceProgressBar";
   readonly busy: boolean;
 }
 
@@ -783,8 +783,8 @@ export function ZetDataloadBusyCmd(busy: boolean): ZetDataloadBusyCmd {
   return { type: "ZetDataloadBusy", busy };
 }
 
-export function ZetUserBusyCmd(busy: boolean): ZetUserBusyCmd {
-  return { type: "ZetUserBusy", busy };
+export function ZetForceProgressBarCmd(busy: boolean): ZetForceProgressBarCmd {
+  return { type: "ZetForceProgressBar", busy };
 }
 
 export function ZoekGekliktCmd(resultaat: ZoekResultaat): ZoekGekliktCmd {

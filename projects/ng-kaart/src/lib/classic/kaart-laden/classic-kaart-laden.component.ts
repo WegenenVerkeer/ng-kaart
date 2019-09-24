@@ -1,8 +1,9 @@
 import { AfterViewInit, Component, EventEmitter, Injector, Input, Output } from "@angular/core";
-import { distinctUntilChanged, tap } from "rxjs/operators";
+import * as rx from "rxjs";
+import { distinctUntilChanged, distinctUntilKeyChanged, tap } from "rxjs/operators";
 
 import * as prt from "../../kaart/kaart-protocol";
-import { DefaultProgressBarEnabledSelector } from "../../kaart/loading/kaart-loading.component";
+import { KaartLoadingUISelector } from "../../kaart/loading/kaart-loading.component";
 import { ofType } from "../../util";
 import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
 import { BusyMsg } from "../messages";
@@ -11,7 +12,7 @@ import { BusyMsg } from "../messages";
   selector: "awv-kaart-laden",
   template: ""
 })
-export class ClassicKaartLadenComponent extends ClassicUIElementSelectorComponentBase implements AfterViewInit {
+export class ClassicKaartLadenComponent extends ClassicUIElementSelectorComponentBase {
   /**
    * Is de progressbar van ng-kaart bezig? True indien userBusy op true staat of indien er data geladen wordt.
    */
@@ -22,8 +23,8 @@ export class ClassicKaartLadenComponent extends ClassicUIElementSelectorComponen
    * Zet de progress bar aan, moet ook weer expliciet afgezet worden.
    */
   @Input()
-  set userBusy(param: boolean) {
-    this.kaart.dispatch(prt.ZetUserBusyCmd(param));
+  set forceProgressBar(param: boolean) {
+    this.kaart.dispatch(prt.ZetForceProgressBarCmd(param));
   }
 
   /** Toon de default progress bar als er features geladen worden? Default true. Indien false rendert ng-kaart zelf geen progressbar.
@@ -31,20 +32,21 @@ export class ClassicKaartLadenComponent extends ClassicUIElementSelectorComponen
    */
   @Input()
   set defaultProgressbarEnabled(param: boolean) {
-    this.kaart.dispatch(prt.ZetUiElementOpties(DefaultProgressBarEnabledSelector, { defaultProgressBar: param }));
+    this.kaart.dispatch(prt.ZetUiElementOpties(KaartLoadingUISelector, { defaultProgressBar: param }));
   }
 
   constructor(injector: Injector) {
-    super(DefaultProgressBarEnabledSelector, injector);
-  }
-
-  ngAfterViewInit() {
-    this.bindToLifeCycle(
-      this.kaart.kaartClassicSubMsg$.pipe(
-        ofType<BusyMsg>("Busy"),
-        distinctUntilChanged(),
-        tap(value => this.busy.emit(value.busy))
+    super(KaartLoadingUISelector, injector);
+    this.runInViewReady(
+      rx.defer(() =>
+        this.kaart.kaartClassicSubMsg$.pipe(
+          ofType<BusyMsg>("Busy"),
+          distinctUntilKeyChanged("busy"),
+          tap(value => {
+            this.busy.emit(value.busy);
+          })
+        )
       )
-    ).subscribe();
+    );
   }
 }

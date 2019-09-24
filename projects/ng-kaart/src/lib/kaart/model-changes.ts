@@ -114,7 +114,7 @@ export interface ModelChanger {
   readonly zoombereikChangeSubj: rx.Subject<null>;
   readonly tabelStateSubj: rx.Subject<TabelStateChange>;
   readonly dataloadBusySubj: rx.BehaviorSubject<boolean>;
-  readonly userBusySubj: rx.BehaviorSubject<boolean>;
+  readonly forceProgressBarSubj: rx.BehaviorSubject<boolean>;
   readonly inErrorSubj: rx.BehaviorSubject<boolean>;
 }
 
@@ -150,9 +150,8 @@ export const ModelChanger: () => ModelChanger = () => ({
   mijnLocatieStateChangeSubj: new rx.Subject<MijnLocatieStateChange>(),
   zoombereikChangeSubj: new rx.Subject<null>(),
   tabelStateSubj: new rx.BehaviorSubject(TabelStateChange("NietMogelijk")),
-  zoombereikChangeSubj: new rx.Subject<null>(),
   dataloadBusySubj: new rx.BehaviorSubject<boolean>(false),
-  userBusySubj: new rx.BehaviorSubject<boolean>(false),
+  forceProgressBarSubj: new rx.BehaviorSubject<boolean>(false),
   inErrorSubj: new rx.BehaviorSubject<boolean>(false)
 });
 
@@ -185,7 +184,7 @@ export interface ModelChanges {
   readonly laatsteCacheRefresh$: rx.Observable<LaatsteCacheRefresh>;
   readonly mijnLocatieStateChange$: rx.Observable<MijnLocatieStateChange>;
   readonly dataloadBusy$: rx.Observable<boolean>;
-  readonly userBusy$: rx.Observable<boolean>;
+  readonly forceProgressBar$: rx.Observable<boolean>;
   readonly inError$: rx.Observable<boolean>;
   readonly tabelState$: rx.Observable<TabelStateChange>;
 }
@@ -350,11 +349,10 @@ export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> 
     getekendeGeometry$: changer.getekendeGeometrySubj.pipe(observeOn(rx.asapScheduler)),
     precacheProgress$: changer.precacheProgressSubj.pipe(observeOn(rx.asapScheduler)),
     laatsteCacheRefresh$: changer.laatsteCacheRefreshSubj.pipe(observeOn(rx.asapScheduler)),
-    mijnLocatieStateChange$: changer.mijnLocatieStateChangeSubj.pipe(observeOn(rx.asapScheduler)),
     tabelState$: changer.tabelStateSubj.pipe(observeOn(rx.asapScheduler)),
     mijnLocatieStateChange$: changer.mijnLocatieStateChangeSubj.pipe(observeOn(rx.asapScheduler)),
     dataloadBusy$: changer.dataloadBusySubj.pipe(observeOn(rx.asapScheduler)),
-    userBusy$: changer.userBusySubj.pipe(observeOn(rx.asapScheduler)),
+    forceProgressBar$: changer.forceProgressBarSubj.pipe(observeOn(rx.asapScheduler)),
     inError$: changer.inErrorSubj.pipe(observeOn(rx.asapScheduler))
   };
 };

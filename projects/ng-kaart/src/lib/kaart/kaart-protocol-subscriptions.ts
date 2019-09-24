@@ -37,7 +37,7 @@ export type Subscription<Msg> =
   | PublishedKaartLocatiesSubscription<Msg>
   | TabelStateSubscription<Msg>
   | TekenenSubscription<Msg>
-  | UserBusySubscription<Msg>
+  | ForceProgressBarSubscription<Msg>
   | ViewinstellingenSubscription<Msg>
   | ZichtbareFeaturesSubscription<Msg>
   | ZoekersSubscription<Msg>
@@ -198,26 +198,26 @@ export interface TabelStateSubscription<Msg> {
   readonly wrapper: (state: TabelStateChange) => Msg;
 }
 
+export interface BusySubscription<Msg> {
+  readonly type: "Busy";
+  readonly wrapper: MsgGen<boolean, Msg>;
+}
+
+export interface ForceProgressBarSubscription<Msg> {
+  readonly type: "ForceProgressBar";
+  readonly wrapper: MsgGen<boolean, Msg>;
+}
+
+export interface InErrorSubscription<Msg> {
+  readonly type: "InError";
+  readonly wrapper: MsgGen<boolean, Msg>;
+}
+
 //////////
 // Helpers
 
 export namespace Viewinstellingen {
   export const visible: Predicate<Viewinstellingen> = vi => vi.zoom >= vi.minZoom && vi.zoom <= vi.maxZoom;
-}
-
-export interface BusySubscription<Msg> {
-  readonly type: "Busy";
-  readonly wrapper: (busy: boolean) => Msg;
-}
-
-export interface UserBusySubscription<Msg> {
-  readonly type: "UserBusy";
-  readonly wrapper: (busy: boolean) => Msg;
-}
-
-export interface InErrorSubscription<Msg> {
-  readonly type: "InError";
-  readonly wrapper: (inError: boolean) => Msg;
 }
 
 ///////////////

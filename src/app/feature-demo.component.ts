@@ -415,7 +415,7 @@ export class FeatureDemoComponent {
 
     // -- progressbar dingen
     optieDivider5: { divider: true, value: true, label: "Laden opties" },
-    userBusy: { value: false, label: "Activeer progressbar" },
+    forceProgressBar: { value: false, label: "Activeer progressbar" },
     progressbar: { value: false, label: "Progressbar zichtbaar" }
   };
 
