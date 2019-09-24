@@ -112,14 +112,7 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
       )
     );
 
-    this.runInViewReady(
-      busy$.pipe(
-        tap(evt => {
-          console.log("dispatch zetDataloadBusy: ", evt);
-          this.dispatch(prt.ZetDataloadBusyCmd(evt));
-        })
-      )
-    );
+    this.runInViewReady(busy$.pipe(tap(evt => this.dispatch(prt.ZetDataloadBusyCmd(evt)))));
 
     // this.bindToLifeCycle(busy$).subscribe(evt => this.dispatch(prt.ZetDataloadBusyCmd(evt)));
 

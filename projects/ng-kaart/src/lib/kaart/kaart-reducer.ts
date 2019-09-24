@@ -1393,7 +1393,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function ZetDataloadBusy(cmd: prt.ZetDataloadBusyCmd): ModelWithResult<Msg> {
-      console.log("ZetDataloadBusy ontvangen: ", cmd);
       modelChanger.dataloadBusySubj.next(cmd.busy);
       return ModelWithResult(model);
     }
