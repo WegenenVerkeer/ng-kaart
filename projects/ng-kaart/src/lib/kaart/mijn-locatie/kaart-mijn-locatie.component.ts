@@ -158,8 +158,8 @@ const zetStijl: Function1<TrackingInfo, void> = info => info.feature.map(feature
 
 const locatieStijlFunctie: Function1<TrackingInfo, ol.FeatureStyleFunction> = info => {
   const fillColor = "rgba(65, 105, 225, 0.15)";
-  const strokeColor = "rgba(65, 105, 225, 0.5)";
   const fillColorDark = "rgba(65, 105, 225, 0.25)";
+  const fillColorDarkTransparant = "rgba(65, 105, 225, 0.0)";
 
   function binnencirkelStyle(): ol.style.Style {
     return new ol.style.Style({
@@ -211,7 +211,7 @@ const locatieStijlFunctie: Function1<TrackingInfo, ol.FeatureStyleFunction> = in
 
         const grad = context.createRadialGradient(centerX, centerY, radius2 / 2, centerX, centerY, radius2);
         grad.addColorStop(0, fillColorDark);
-        grad.addColorStop(1, "transparent");
+        grad.addColorStop(1, fillColorDarkTransparant);
 
         context.beginPath();
         context.moveTo(centerX, centerY);
@@ -221,12 +221,6 @@ const locatieStijlFunctie: Function1<TrackingInfo, ol.FeatureStyleFunction> = in
         context.fillStyle = grad;
         context.fill();
 
-        context.beginPath();
-        context.moveTo(x1, y1);
-        context.lineTo(centerX, centerY);
-        context.lineTo(x2, y2);
-        context.strokeStyle = strokeColor;
-        context.stroke();
         const buitenArc = new ol.style.Style({
           image: new ol.style.Icon({
             img: canvas,
