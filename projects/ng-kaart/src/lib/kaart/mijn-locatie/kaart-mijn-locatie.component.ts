@@ -191,7 +191,7 @@ const locatieStijlFunctie: Function1<TrackingInfo, ol.FeatureStyleFunction> = in
 
   function kijkrichtingStyle(info: TrackingInfo, radius: number): Option<ol.style.Style> {
     if (moetKijkrichtingTonen(info.state)) {
-      const radius2 = Math.min(radius, 50);
+      const radius2 = 50;
 
       const canvas = document.createElement("canvas");
       canvas.width = radius2 * 2;
