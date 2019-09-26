@@ -8,7 +8,7 @@ import { ZoekAntwoord, ZoekerMetWeergaveopties, ZoekResultaat } from "../zoeker/
 import { KaartLocaties } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { InfoBoodschap } from "./kaart-with-info-model";
-import { LaatsteCacheRefresh, MijnLocatieStateChange, PrecacheLaagProgress } from "./model-changes";
+import { LaatsteCacheRefresh, MijnLocatieStateChange, PrecacheLaagProgress, TabelStateChange } from "./model-changes";
 
 /////////
 // Types
@@ -17,11 +17,13 @@ import { LaatsteCacheRefresh, MijnLocatieStateChange, PrecacheLaagProgress } fro
 export type Subscription<Msg> =
   | AchtergrondTitelSubscription<Msg>
   | ActieveModusSubscription<Msg>
+  | BusySubscription<Msg>
   | ComponentFoutSubscription<Msg>
   | ExtentSubscription<Msg>
   | GeometryChangedSubscription<Msg>
   | GeselecteerdeFeaturesSubscription<Msg>
   | HoverFeaturesSubscription<Msg>
+  | InErrorSubscription<Msg>
   | InfoBoodschappenSubscription<Msg>
   | KaartClickSubscription<Msg>
   | LaagfilterGezetSubscription<Msg>
@@ -33,7 +35,9 @@ export type Subscription<Msg> =
   | MijnLocatieStateChangeSubscription<Msg>
   | PrecacheProgressSubscription<Msg>
   | PublishedKaartLocatiesSubscription<Msg>
+  | TabelStateSubscription<Msg>
   | TekenenSubscription<Msg>
+  | ForceProgressBarSubscription<Msg>
   | ViewinstellingenSubscription<Msg>
   | ZichtbareFeaturesSubscription<Msg>
   | ZoekersSubscription<Msg>
@@ -189,6 +193,26 @@ export interface MijnLocatieStateChangeSubscription<Msg> {
   readonly wrapper: (stateChange: MijnLocatieStateChange) => Msg;
 }
 
+export interface TabelStateSubscription<Msg> {
+  readonly type: "TabelState";
+  readonly wrapper: (state: TabelStateChange) => Msg;
+}
+
+export interface BusySubscription<Msg> {
+  readonly type: "Busy";
+  readonly wrapper: MsgGen<boolean, Msg>;
+}
+
+export interface ForceProgressBarSubscription<Msg> {
+  readonly type: "ForceProgressBar";
+  readonly wrapper: MsgGen<boolean, Msg>;
+}
+
+export interface InErrorSubscription<Msg> {
+  readonly type: "InError";
+  readonly wrapper: MsgGen<boolean, Msg>;
+}
+
 //////////
 // Helpers
 
@@ -307,6 +331,14 @@ export function PrecacheProgressSubscription<Msg>(wrapper: (progress: PrecacheLa
   return { type: "PrecacheProgress", wrapper };
 }
 
+export function BusySubscription<Msg>(wrapper: (busy: boolean) => Msg): BusySubscription<Msg> {
+  return { type: "Busy", wrapper };
+}
+
+export function InErrorSubscription<Msg>(wrapper: (inError: boolean) => Msg): InErrorSubscription<Msg> {
+  return { type: "InError", wrapper };
+}
+
 export function LaatsteCacheRefreshSubscription<Msg>(
   wrapper: (progress: LaatsteCacheRefresh) => Msg
 ): LaatsteCacheRefreshSubscription<Msg> {
@@ -317,4 +349,8 @@ export function MijnLocatieStateChangeSubscription<Msg>(
   wrapper: (stateChange: MijnLocatieStateChange) => Msg
 ): MijnLocatieStateChangeSubscription<Msg> {
   return { type: "MijnLocatieStateChange", wrapper };
+}
+
+export function TabelStateSubscription<Msg>(wrapper: (stateChange: TabelStateChange) => Msg): TabelStateSubscription<Msg> {
+  return { type: "TabelState", wrapper };
 }

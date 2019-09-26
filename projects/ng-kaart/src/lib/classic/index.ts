@@ -8,6 +8,7 @@ import { ClassicCopyrightComponent } from "./copyright/classic-copyright.compone
 import { ClassicFeatureTabelComponent } from "./feature-tabel/classic-feature-tabel";
 import { ClassicKaartBevragenComponent } from "./kaart-bevragen/classic-kaart-bevragen.component";
 import { KaartClassicComponent } from "./kaart-classic.component";
+import { ClassicKaartLadenComponent } from "./kaart-laden/classic-kaart-laden.component";
 import { ClassicBlancoLaagComponent } from "./lagen/classic-blanco-laag.component";
 import { ClassicFeaturesLaagComponent } from "./lagen/classic-features-laag.component";
 import { ClassicGeoserverLaagComponent } from "./lagen/classic-geoserver-laag.component";
@@ -50,6 +51,7 @@ export const componentMap = {
   "awv-kaart-google-zoeker": ClassicGoogleZoekerComponent,
   "awv-kaart-knop-achtergrondlaag-kiezer": ClassicAchtergrondSelectorComponent,
   "awv-kaart-knop-volledig-scherm": ClassicVolledigSchermComponent,
+  "awv-kaart-laden": ClassicKaartLadenComponent,
   "awv-kaart-lagenkiezer": ClassicLagenkiezerComponent,
   "awv-kaart-markeer-kaartklik": ClassicMarkeerKaartklikComponent,
   "awv-kaart-mijn-locatie": ClassicMijnLocatieComponent,
@@ -112,6 +114,7 @@ const components = [
   ClassicWmtsLaagComponent,
   ClassicZoekerComponent,
   ClassicZoomComponent,
+  ClassicKaartLadenComponent,
   KaartClassicComponent
 ];
 
@@ -157,4 +160,5 @@ export * from "./streetview/classic-streetview.component";
 export * from "./volledig-scherm/classic-volledig-scherm.component";
 export * from "./voorwaarden/classic-voorwaarden.component";
 export * from "./zoeker/classic-zoeker.component";
+export * from "./kaart-laden/classic-kaart-laden.component";
 export * from "./zoom/classic-zoom.component";

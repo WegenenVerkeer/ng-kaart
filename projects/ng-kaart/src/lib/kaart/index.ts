@@ -169,6 +169,7 @@ export class KaartModule {
 
 export * from "../coordinaten/coordinaten.service";
 export * from "./copyright/kaart-copyright.component";
+export * from "./feature-tabel/index";
 export * from "./info-boodschappen/kaart-info-boodschap-veldinfo.component";
 export * from "./kaart-bevragen/kaart-bevragen.component";
 export * from "./kaart-bevragen/laaginfo.model";

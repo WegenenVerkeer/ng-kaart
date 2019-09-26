@@ -1,12 +1,12 @@
 import { array } from "fp-ts";
-import { Curried2, Endomorphism, flow, Function1 } from "fp-ts/lib/function";
+import { Curried2, Endomorphism, flow, Function1, Predicate } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import { fromTraversable, Lens, Traversal } from "monocle-ts";
 import * as rx from "rxjs";
 import { map } from "rxjs/operators";
 
 import { Filter } from "../../filter";
-import { flowSpy } from "../../util/function";
+import * as arrays from "../../util/arrays";
 import { selectiveArrayTraversal } from "../../util/lenses";
 import * as ke from "../kaart-elementen";
 import { Viewinstellingen } from "../kaart-protocol-subscriptions";
@@ -39,6 +39,11 @@ export namespace TableModel {
     laagDataLens.composeTraversal(selectiveArrayTraversal(tl => tl.titel === titel));
 
   const allLagenTraversal: Traversal<TableModel, LaagModel> = laagDataLens.composeTraversal(fromTraversable(array.array)<LaagModel>());
+
+  export const hasLagen: Predicate<TableModel> = flow(
+    laagDataLens.get,
+    arrays.isNonEmpty
+  );
 
   export const laagForTitelOnLaagData: Curried2<string, LaagModel[], Option<LaagModel>> = titel => laagData =>
     array.findFirst(laagData, laag => laag.titel === titel);

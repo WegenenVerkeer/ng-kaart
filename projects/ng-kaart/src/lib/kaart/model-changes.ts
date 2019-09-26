@@ -31,6 +31,7 @@ import { ZoekAntwoord, ZoekerMetWeergaveopties, Zoekopdracht, ZoekResultaat } fr
 import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
 import { envParams } from "./kaart-config";
 import * as ke from "./kaart-elementen";
+import { DataLoadEvent, LoadComplete } from "./kaart-load-events";
 import * as prt from "./kaart-protocol";
 import { UiElementOpties } from "./kaart-protocol-commands";
 import { GeselecteerdeFeatures, Viewinstellingen } from "./kaart-protocol-subscriptions";
@@ -69,6 +70,17 @@ export interface MijnLocatieStateChange {
   readonly event: loc.Event;
 }
 
+export type TabelState = "NietMogelijk" | "Opengeklapt" | "Dichtgeklapt";
+
+export interface TabelStateChange {
+  readonly state: TabelState;
+  readonly doorKnop: boolean;
+}
+
+export function TabelStateChange(state: TabelState, doorKnop = false): TabelStateChange {
+  return { state, doorKnop };
+}
+
 /**
  * Dit is een verzameling van subjects waarmee de reducer wijzingen kan laten weten aan de child components.
  * Dit is isomorf aan het zetten van de overeenkomstige attributen op het model en die laten volgen. Het probleem daarbij
@@ -100,6 +112,10 @@ export interface ModelChanger {
   readonly laatsteCacheRefreshSubj: rx.BehaviorSubject<LaatsteCacheRefresh>;
   readonly mijnLocatieStateChangeSubj: rx.Subject<MijnLocatieStateChange>;
   readonly zoombereikChangeSubj: rx.Subject<null>;
+  readonly tabelStateSubj: rx.Subject<TabelStateChange>;
+  readonly dataloadBusySubj: rx.BehaviorSubject<boolean>;
+  readonly forceProgressBarSubj: rx.BehaviorSubject<boolean>;
+  readonly inErrorSubj: rx.BehaviorSubject<boolean>;
 }
 
 // Hieronder wordt een paar keer BehaviourSubject gebruikt. Dat is equivalent met, maar beknopter dan, een startWith + shareReplay
@@ -132,7 +148,11 @@ export const ModelChanger: () => ModelChanger = () => ({
   precacheProgressSubj: new rx.BehaviorSubject({}),
   laatsteCacheRefreshSubj: new rx.BehaviorSubject({}),
   mijnLocatieStateChangeSubj: new rx.Subject<MijnLocatieStateChange>(),
-  zoombereikChangeSubj: new rx.Subject<null>()
+  zoombereikChangeSubj: new rx.Subject<null>(),
+  tabelStateSubj: new rx.BehaviorSubject(TabelStateChange("NietMogelijk")),
+  dataloadBusySubj: new rx.BehaviorSubject<boolean>(false),
+  forceProgressBarSubj: new rx.BehaviorSubject<boolean>(false),
+  inErrorSubj: new rx.BehaviorSubject<boolean>(false)
 });
 
 export interface ModelChanges {
@@ -163,6 +183,10 @@ export interface ModelChanges {
   readonly precacheProgress$: rx.Observable<PrecacheLaagProgress>;
   readonly laatsteCacheRefresh$: rx.Observable<LaatsteCacheRefresh>;
   readonly mijnLocatieStateChange$: rx.Observable<MijnLocatieStateChange>;
+  readonly dataloadBusy$: rx.Observable<boolean>;
+  readonly forceProgressBar$: rx.Observable<boolean>;
+  readonly inError$: rx.Observable<boolean>;
+  readonly tabelState$: rx.Observable<TabelStateChange>;
 }
 
 const viewinstellingen: Function1<ol.Map, prt.Viewinstellingen> = olmap => ({
@@ -178,7 +202,7 @@ const viewinstellingen: Function1<ol.Map, prt.Viewinstellingen> = olmap => ({
 export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> = (model, changer) => {
   const geselecteerdeFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.geselecteerdeFeatures, "add", "remove").pipe(
     debounceTime(20),
-    map(evt => [...(evt.target as ol.Collection<ol.Feature>).getArray()]), // getArray heeft altijd dezelfde array terug!
+    map(evt => [...(evt.target as ol.Collection<ol.Feature>).getArray()]), // getArray geeft altijd dezelfde array terug!
     startWith([] as ol.Feature[]),
     pairwise(),
     map(([prev, current]) => ({
@@ -325,6 +349,10 @@ export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> 
     getekendeGeometry$: changer.getekendeGeometrySubj.pipe(observeOn(rx.asapScheduler)),
     precacheProgress$: changer.precacheProgressSubj.pipe(observeOn(rx.asapScheduler)),
     laatsteCacheRefresh$: changer.laatsteCacheRefreshSubj.pipe(observeOn(rx.asapScheduler)),
-    mijnLocatieStateChange$: changer.mijnLocatieStateChangeSubj.pipe(observeOn(rx.asapScheduler))
+    tabelState$: changer.tabelStateSubj.pipe(observeOn(rx.asapScheduler)),
+    mijnLocatieStateChange$: changer.mijnLocatieStateChangeSubj.pipe(observeOn(rx.asapScheduler)),
+    dataloadBusy$: changer.dataloadBusySubj.pipe(observeOn(rx.asapScheduler)),
+    forceProgressBar$: changer.forceProgressBarSubj.pipe(observeOn(rx.asapScheduler)),
+    inError$: changer.inErrorSubj.pipe(observeOn(rx.asapScheduler))
   };
 };

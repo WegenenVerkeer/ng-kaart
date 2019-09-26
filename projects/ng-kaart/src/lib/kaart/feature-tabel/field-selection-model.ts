@@ -1,6 +1,7 @@
-import { array, option, setoid } from "fp-ts";
+import { array, option, ord, setoid } from "fp-ts";
 import { Endomorphism, flow, Function1, Predicate } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
+import { Ord } from "fp-ts/lib/Ord";
 import { Setoid } from "fp-ts/lib/Setoid";
 import { Getter, Lens } from "monocle-ts";
 
@@ -26,13 +27,18 @@ export namespace FieldSelection {
   ).asGetter();
   export const maybeSortDirectionLens: Lens<FieldSelection, Option<SortDirection>> = Lens.fromProp<FieldSelection>()("sortDirection");
 
-  export const fieldsFromVeldinfo: Function1<ke.VeldInfo[], FieldSelection[]> = array.map(vi => ({
-    name: vi.naam,
-    label: ke.VeldInfo.veldGuaranteedLabelGetter.get(vi),
-    selected: false,
-    sortDirection: option.none,
-    contributingVeldinfos: [vi]
-  }));
+  const basisVeldOrd: Ord<ke.VeldInfo> = ord.contramap(ke.VeldInfo.isBasisveldLens.get)(ord.getDualOrd(ord.ordBoolean));
+
+  export const fieldsFromVeldinfo: Function1<ke.VeldInfo[], FieldSelection[]> = flow(
+    array.sortBy1(basisVeldOrd, []),
+    array.map(vi => ({
+      name: vi.naam,
+      label: ke.VeldInfo.veldGuaranteedLabelGetter.get(vi),
+      selected: false,
+      sortDirection: option.none,
+      contributingVeldinfos: [vi]
+    }))
+  );
 
   const isBaseField: Predicate<FieldSelection> = field => arrays.exists(ke.VeldInfo.isBasisveldLens.get)(field.contributingVeldinfos);
 

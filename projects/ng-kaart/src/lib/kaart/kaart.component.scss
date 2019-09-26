@@ -42,7 +42,17 @@ $animatie-timing: 0.35s cubic-bezier(.62, .28, .23, .99);
   left: 0px;
 }
 
-#overlay {
+.overlay-container {
+  height: 100%;
+  width: 100%;
+  top: 0px;
+  left: 0px;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+}
+
+.full-height-overlay {
   position: absolute;
   height: 100%;
   width: 100%;
@@ -90,6 +100,18 @@ $animatie-timing: 0.35s cubic-bezier(.62, .28, .23, .99);
       left: 0;
     }
   }
+}
+
+#overlay {
+  position: relative;
+  height: 100%;
+  width: 100%;
+  top: 0px;
+  left: 0px;
+  pointer-events: none;
+  overflow: hidden;
+  flex-grow: 1;
+  flex-shrink: 1;
 }
 
 .kaart-fixed-links-boven {
@@ -219,6 +241,10 @@ awv-kaart-info-boodschappen {
     color: black;
     padding: 0;
 
+    &.tabel-geopend {
+      display: none;
+    }
+
     > * {
       background-color: rgba(white, 0.87);
       min-height: 16px;
@@ -230,11 +256,4 @@ awv-kaart-info-boodschappen {
       }
     }
   }
-}
-
-.data-container {
-  position: absolute;
-  bottom: 0px;
-  width: 100%;
-  height: 280px;
 }

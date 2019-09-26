@@ -39,10 +39,12 @@ import { KaartClassicLocatorService } from "./kaart-classic-locator.service";
 import { classicLogger } from "./log";
 import {
   AchtergrondLagenInGroepAangepastMsg,
+  BusyMsg,
   ExtentAangepastMsg,
   FeatureGedeselecteerdMsg,
   FeatureHoverAangepastMsg,
   FeatureSelectieAangepastMsg,
+  InErrorMsg,
   KaartClassicMsg,
   KaartClassicSubMsg,
   logOnlyWrapper,
@@ -97,7 +99,9 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   /** @ignore */
   private static counter = 1;
   /** @ignore */
-  kaartClassicSubMsg$: rx.Observable<KaartClassicSubMsg> = rx.EMPTY;
+  kaartClassicSubMsg$: rx.Observable<KaartClassicSubMsg> = rx.throwError(
+    "Gebruik kaartClassicSubMsg$ niet vooraleer die geinitaliseerd is. Subscribe pas later."
+  );
   /** @ignore */
   private hasFocus = false;
 
@@ -182,7 +186,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   @Input()
   set selectieModus(param: prt.SelectieModus) {
     this._selectieModus = val.enu(param, this._selectieModus, "single", "singleQuick", "multipleKlik", "multipleShift", "none");
-  }
+  } /** De selectiemodus: "single" | "singleQuick" | "multipleKlik" | "multipleShift" | "none" */
 
   /** Info bij hover: "on" | "off" */
   @Input()
@@ -225,6 +229,8 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   voorgrondLaagLagen: EventEmitter<Array<ToegevoegdeLaag>> = new EventEmitter();
   @Output()
   kaartLocaties: EventEmitter<ClassicKlikInfoEnStatus> = new EventEmitter();
+  @Output()
+  inErrorChange: EventEmitter<boolean> = new EventEmitter();
 
   /** @ignore */
   @ViewChild("kaart", { read: ElementRef })
@@ -237,6 +243,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
     private kaartLocatorService: KaartClassicLocatorService<KaartClassicComponent>
   ) {
     super(zone);
+
     this.kaartMsgObservableConsumer = (msg$: rx.Observable<prt.KaartMsg>) => {
       // We zijn enkel geïnteresseerd in messages van ons eigen type
       this.kaartClassicSubMsg$ = msg$.pipe(
@@ -314,6 +321,18 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
                 PublishedKaartLocatiesMsg,
                 KaartClassicMsg
               )
+            ),
+            prt.InErrorSubscription(
+              pipe(
+                InErrorMsg,
+                KaartClassicMsg
+              )
+            ),
+            prt.BusySubscription(
+              pipe(
+                BusyMsg,
+                KaartClassicMsg
+              )
             )
           )
         )
@@ -358,6 +377,8 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
             return this.voorgrondLaagLagen.emit(msg.lagen);
           case "PublishedKaartLocaties":
             return this.kaartLocaties.emit(flattenKaartLocaties(msg.locaties));
+          case "InError":
+            return this.inErrorChange.emit(msg.inError);
           default:
             return; // Op de andere boodschappen reageren we niet
         }

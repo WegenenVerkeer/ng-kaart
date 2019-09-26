@@ -191,6 +191,9 @@
             </div>
           </div>
         </div>
+        <awv-kaart-laden
+          [forceProgressBar]="isOptieActief('forceProgressBar')"
+          [defaultProgressbarEnabled]="isOptieActief('progressbar')"></awv-kaart-laden>
         <!-- zoeker -->
         <awv-kaart-zoeker *ngIf="isOptieActief('zoeker')"></awv-kaart-zoeker>
         <!-- lagen -->
@@ -250,6 +253,7 @@
           [markeerStijl]="isOptieActief('customKlikIcon') ? ster : standaardIcoon"
           [disabled]="!isOptieActief('markeerLocatie')">
         </awv-kaart-markeer-kaartklik>
+
       </awv-kaart-classic>
       <div class="sub-content onder-kaart opties">
         <div *ngFor="let key of objectKeys(mogelijkeOpties)"
@@ -287,7 +291,16 @@
                              #filterKaart (geselecteerdeFeaturesChange)="featuresGeselecteerd($event, filterKaart)"
                              [selectieModus]="'single'">
 
+            <awv-kaart-zoeker>
+              <awv-kaart-google-zoeker></awv-kaart-google-zoeker>
+              <awv-kaart-crab-zoeker [toonIcoon]="false"></awv-kaart-crab-zoeker>
+              <awv-kaart-perceel-zoeker [toonGeometrie]="false" [suggestiesPrioriteit]="undefined"></awv-kaart-perceel-zoeker>
+            </awv-kaart-zoeker>
             <awv-feature-tabel></awv-feature-tabel>
+
+            <awv-multi-meet-knop [toonInfoBoodschap]="true" [keuzemogelijkheidTonen]="true" [metRouting]="true"></awv-multi-meet-knop>
+            <awv-kaart-teken></awv-kaart-teken>
+            <awv-bevraag-kaart></awv-bevraag-kaart>
 
             <awv-kaart-lagenkiezer [headerTitel]="'Mijn legende en lagen'" [initieelDichtgeklapt]="false"
                                    [verwijderbareLagen]="true" [filterbareLagen]="true" [toonLegende]="false" [toonFilters]="true"></awv-kaart-lagenkiezer>
@@ -370,18 +383,20 @@
         </div>
       </awv-test-sectie>
 
-      <awv-test-sectie sectieId="straatkolken" sectieTitel="Straatkolken" [subSectie]="true" #straatkolkenSectie
+      <awv-test-sectie sectieId="straatkolken" sectieTitel="Straatkolken (geen default progressbar, logt busy naar de console)" [subSectie]="true" #straatkolkenSectie
                        [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && straatkolkenSectie.sectieZichtbaar">
         <div *ngIf="straatkolkenSectie.sectieZichtbaar" [@enterAnimation]>
-          <awv-kaart-classic  [naam]="'straatkolken'"
-                              #kolkenKaart (geselecteerdeFeaturesChange)="featuresGeselecteerd($event, kolkenKaart)"
-                              [selectieModus]="'single'"
-                              [hoogte]="400">
+          <awv-kaart-classic [naam]="'straatkolken'"
+                             #kolkenKaart (geselecteerdeFeaturesChange)="featuresGeselecteerd($event, kolkenKaart)"
+                             [selectieModus]="'single'"
+                             [hoogte]="400">
+            <awv-kaart-laden (busy)="busy($event)" [forceProgressBar]="false" [defaultProgressbarEnabled]="true"></awv-kaart-laden>
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
             <awv-kaart-nosqlfs-laag [titel]="'Straatkolken'" [url]="'/geolatte-nosqlfs'"
                                     [database]="'featureserver'" [collection]="'straatkolken'" [style]="kolkStyle"
                                     [minZoom]="8"></awv-kaart-nosqlfs-laag>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+            <awv-kaart-streetview ></awv-kaart-streetview>
             <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
           </awv-kaart-classic>
         </div>

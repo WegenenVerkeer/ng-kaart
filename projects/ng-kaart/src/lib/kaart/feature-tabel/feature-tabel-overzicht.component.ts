@@ -1,12 +1,12 @@
 import { animate, style, transition, trigger } from "@angular/animations";
 import { ChangeDetectionStrategy, Component, NgZone, ViewEncapsulation } from "@angular/core";
 import { array, setoid } from "fp-ts";
-import { Curried2, Function1 } from "fp-ts/lib/function";
+import { Function1 } from "fp-ts/lib/function";
 import { Setoid } from "fp-ts/lib/Setoid";
 import * as rx from "rxjs";
 import { distinctUntilChanged, map, observeOn, scan, share, shareReplay, switchMap, take, takeUntil, tap } from "rxjs/operators";
 
-import { collectOption, subSpy } from "../../util";
+import { collectOption } from "../../util";
 import { Consumer1 } from "../../util/function";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
@@ -18,16 +18,6 @@ import { TableModel } from "./table-model";
 import { Update } from "./update";
 
 export const FeatureTabelUiSelector = "FeatureTabel";
-
-export interface FeatureTabelUiOpties {
-  readonly zichtbaar: boolean; // TODO totdat we de slider hebben
-  readonly filterbareLagen: boolean;
-}
-
-const DefaultOpties: FeatureTabelUiOpties = {
-  zichtbaar: false,
-  filterbareLagen: true
-};
 
 const equalTitels: Setoid<ke.ToegevoegdeVectorLaag[]> = array.getSetoid(ke.ToegevoegdeLaag.setoidToegevoegdeLaagByTitel);
 
@@ -55,12 +45,10 @@ const equalTitels: Setoid<ke.ToegevoegdeVectorLaag[]> = array.getSetoid(ke.Toege
   changeDetection: ChangeDetectionStrategy.OnPush // Omdat angular anders veel te veel change detection uitvoert
 })
 export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
-  public readonly zichtbaar$: rx.Observable<boolean>;
   public readonly laagTitels$: rx.Observable<string[]>;
   public readonly toonFilters$: rx.Observable<boolean>;
 
   // Voor de child components (Op DOM niveau. Access via Angular injection).
-  public readonly opties$: rx.Observable<FeatureTabelUiOpties>;
   public readonly tableModel$: rx.Observable<TableModel>;
   public readonly laagModel$: Function1<string, rx.Observable<LaagModel>>;
   public readonly laagUpdater: Function1<string, Consumer1<LaagModel.LaagModelUpdate>>;
@@ -72,10 +60,6 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
       map(array.filter(ke.isToegevoegdeVectorLaag)),
       share()
     );
-
-    this.opties$ = subSpy("****opties")(this.accumulatedOpties$(FeatureTabelUiSelector, DefaultOpties));
-
-    this.zichtbaar$ = this.opties$.pipe(map(o => o.zichtbaar));
 
     const updateLagen$ = voorgrondLagen$.pipe(
       map(lagen => lagen.filter(laag => laag.magGetoondWorden).filter(ke.isToegevoegdeVectorLaag)),

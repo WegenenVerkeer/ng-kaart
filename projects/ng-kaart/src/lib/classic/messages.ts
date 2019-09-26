@@ -22,9 +22,11 @@ export interface KaartClassicMsg {
 //
 
 export type KaartClassicSubMsg =
+  | BusyMsg
   | FeatureGedeselecteerdMsg
   | FeatureSelectieAangepastMsg
   | FeatureHoverAangepastMsg
+  | InErrorMsg
   | ZichtbareFeaturesAangepastMsg
   | TekenGeomAangepastMsg
   | SubscribedMsg
@@ -145,6 +147,16 @@ export interface DummyMsg {
   readonly type: "Dummy";
 }
 
+export interface BusyMsg {
+  readonly type: "Busy";
+  readonly busy: boolean;
+}
+
+export interface InErrorMsg {
+  readonly type: "InError";
+  readonly inError: boolean;
+}
+
 ///////////////
 // Constructors
 //
@@ -199,6 +211,14 @@ export function VoorgrondHoogLagenInGroepAangepastMsg(lagen: Array<ToegevoegdeLa
 
 export function SubscribedMsg(subscription: prt.KaartCmdValidation<prt.SubscriptionResult>, reference: any): SubscribedMsg {
   return { type: "Subscribed", reference: reference, subscription: subscription };
+}
+
+export function BusyMsg(busy: boolean): BusyMsg {
+  return { type: "Busy", busy: busy };
+}
+
+export function InErrorMsg(inError: boolean): InErrorMsg {
+  return { type: "InError", inError: inError };
 }
 
 export const ZoomAangepastMsg: (_: number) => ZoomAangepastMsg = zoom => ({ type: "ZoomAangepast", zoom: zoom });

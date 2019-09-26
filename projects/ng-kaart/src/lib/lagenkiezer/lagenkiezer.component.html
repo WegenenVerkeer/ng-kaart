@@ -4,6 +4,12 @@
       <mat-icon>layers</mat-icon>
     </button>
     <span class="lagen-titel">{{ opties.headerTitel }}</span>
+    <div *ngIf="(tabelState$ | async) as tabelState">
+      <button class="tabelBtn" *ngIf="tabelState !== 'NietMogelijk'" (click)="toggleTabel(tabelState === 'Opengeklapt', $event)"  [ngClass]="{ 'tabelIsOpen': tabelState === 'Opengeklapt'}" 
+              [matTooltip]="tabelState === 'Opengeklapt' ? 'Sluit tabel' : 'Toon tabel'" matTooltipPosition="below" mat-icon-button>
+        <mat-icon>view_list</mat-icon>
+      </button>
+    </div>
     <button id="openOfDichtBtn" mat-icon-button>
       <mat-icon *ngIf="isOpengeklapt">expand_less</mat-icon>
       <mat-icon *ngIf="isDichtgeklapt">expand_more</mat-icon>

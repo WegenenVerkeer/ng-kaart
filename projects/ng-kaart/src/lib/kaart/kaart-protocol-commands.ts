@@ -14,6 +14,7 @@ import * as ke from "./kaart-elementen";
 import { Legende } from "./kaart-legende";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import * as loc from "./mijn-locatie/kaart-mijn-locatie.component";
+import { TabelStateChange } from "./model-changes";
 import * as ss from "./stijl-selector";
 import { DrawOps } from "./tekenen/tekenen-model";
 
@@ -38,15 +39,19 @@ export type Command<Msg extends KaartMsg> =
   | MaakLaagZichtbaarCmd<Msg>
   | MeldComponentFoutCmd
   | MijnLocatieStateChangeCmd
+  | OpenTabelCmd
   | PublishKaartLocatiesCmd
   | ReactiveerSelectieModusCmd
+  | RegistreerErrorCmd
   | SelecteerFeaturesCmd
   | SluitInfoBoodschapCmd
   | SluitPanelenCmd
+  | SluitTabelCmd
   | StopTransparantieBewerkingCmd
   | StopVectorFilterBewerkingCmd
   | StopVectorlaagstijlBewerkingCmd
   | SubscribeCmd<Msg>
+  | TabelStateChangeCmd
   | ToonAchtergrondKeuzeCmd<Msg>
   | ToonInfoBoodschapCmd
   | UnsubscribeCmd
@@ -83,6 +88,7 @@ export type Command<Msg extends KaartMsg> =
   | VulCacheVoorNosqlLaag<Msg>
   | VulCacheVoorWMSLaag<Msg>
   | ZetActieveModusCmd
+  | ZetDataloadBusyCmd
   | ZetFilter<Msg>
   | ZetFocusOpKaartCmd
   | ZetGetekendeGeometryCmd
@@ -94,6 +100,7 @@ export type Command<Msg extends KaartMsg> =
   | ZetStijlVoorLaagCmd<Msg>
   | ZetTransparantieVoorLaagCmd<Msg>
   | ZetUiElementOpties
+  | ZetForceProgressBarCmd
   | ZetZoomBereikCmd
   | ZoekCmd<Msg>
   | ZoekGekliktCmd;
@@ -491,6 +498,21 @@ export interface ZetUiElementOpties {
   readonly opties: any;
 }
 
+export interface ZetDataloadBusyCmd {
+  readonly type: "ZetDataloadBusy";
+  readonly busy: boolean;
+}
+
+export interface ZetForceProgressBarCmd {
+  readonly type: "ZetForceProgressBar";
+  readonly busy: boolean;
+}
+
+export interface RegistreerErrorCmd {
+  readonly type: "RegistreerError";
+  readonly inError: boolean;
+}
+
 // De features zullen "geselecteerd" worden, ook al zouden ze geen onderdeel uitmaken van één van de lagen. Het is dus de
 // verantwoordelijkheid van de zender om enkel feature mee te geven die zichtbaar zijn.
 // De gegeven features vervangen de eventueel reeds geselecteerde features. Maw, om alles te deslecteren, kan dit commando verzonden worden
@@ -571,6 +593,19 @@ export interface MijnLocatieStateChangeCmd {
   readonly oudeState: loc.State;
   readonly nieuweState: loc.State;
   readonly event: loc.Event;
+}
+
+export interface TabelStateChangeCmd {
+  readonly type: "TabelStateChange";
+  readonly state: TabelStateChange;
+}
+
+export interface OpenTabelCmd {
+  readonly type: "OpenTabel";
+}
+
+export interface SluitTabelCmd {
+  readonly type: "SluitTabel";
 }
 
 export interface ZetTransparantieVoorLaagCmd<Msg extends TypedRecord> {
@@ -738,6 +773,18 @@ export function VeranderRotatieCmd(rotatie: number, animationDuration: Option<nu
 
 export function VeranderExtentCmd(extent: ol.Extent): VeranderExtentCmd {
   return { type: "VeranderExtent", extent };
+}
+
+export function RegistreerErrorCmd(inError: boolean): RegistreerErrorCmd {
+  return { type: "RegistreerError", inError };
+}
+
+export function ZetDataloadBusyCmd(busy: boolean): ZetDataloadBusyCmd {
+  return { type: "ZetDataloadBusy", busy };
+}
+
+export function ZetForceProgressBarCmd(busy: boolean): ZetForceProgressBarCmd {
+  return { type: "ZetForceProgressBar", busy };
 }
 
 export function ZoekGekliktCmd(resultaat: ZoekResultaat): ZoekGekliktCmd {
@@ -968,6 +1015,10 @@ export function MijnLocatieStateChangeCmd(oudeState: loc.State, nieuweState: loc
   return { type: "MijnLocatieStateChange", oudeState, nieuweState, event };
 }
 
+export function TabelStateChangeCmd(state: TabelStateChange): TabelStateChangeCmd {
+  return { type: "TabelStateChange", state };
+}
+
 export function ZoekCmd<Msg extends KaartMsg>(opdracht: Zoekopdracht, wrapper: BareValidationWrapper<Msg>): ZoekCmd<Msg> {
   return { type: "Zoek", opdracht, wrapper };
 }
@@ -982,4 +1033,12 @@ export function ZetTransparantieVoorLaagCmd<Msg extends TypedRecord>(
 
 export function ZetZoomBereikCmd(minZoom: number, maxZoom: number): ZetZoomBereikCmd {
   return { type: "ZetZoomBereik", minZoom, maxZoom };
+}
+
+export function OpenTabelCmd(): OpenTabelCmd {
+  return { type: "OpenTabel" };
+}
+
+export function SluitTabelCmd(): SluitTabelCmd {
+  return { type: "SluitTabel" };
 }
