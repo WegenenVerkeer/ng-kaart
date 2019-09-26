@@ -8,9 +8,10 @@
         <thead>
           <tr>
             <th
-              *ngFor="let header of headers.headers"
+              *ngFor="let header of headers.headers; let first = first"
               (click)="onAction('toggleSort', header.name)"
             >
+              <mat-checkbox *ngIf="first" (change)="onAction('selectAll', $event.checked);" (click)="$event.stopPropagation()">&nbsp;</mat-checkbox>
               <span>{{ header.label }}</span>
               <awv-feature-tabel-sortering-status
                 [sortering]="header.sortDirection"
@@ -21,11 +22,12 @@
         <tbody>
           <tr *ngFor="let row of (rows$ | async)">
             <td
-              *ngFor="let header of headers.headers"
+              *ngFor="let header of headers.headers; let first = first"
               [ngClass]="{
                 'empty-field': row[header.name].maybeValue.isNone()
               }"
             >
+              <mat-checkbox *ngIf="first" (click)="onAction('selectRow(row)')">&nbsp;</mat-checkbox>
               {{ row[header.name].maybeValue.getOrElse("") }}
             </td>
           </tr>
