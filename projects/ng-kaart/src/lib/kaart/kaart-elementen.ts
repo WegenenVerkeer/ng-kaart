@@ -314,7 +314,7 @@ export namespace ToegevoegdeVectorLaag {
   export const opTitelSetoid: Setoid<ToegevoegdeVectorLaag> = setoid.contramap(laag => laag.titel, setoid.setoidString);
 
   export const featuresChanged$: Function1<ToegevoegdeVectorLaag, rx.Observable<null>> = vlg =>
-    observableFromOlEvents(vlg!.layer.getSource(), "addfeature", "removefeature", "clear").pipe(
+    observableFromOlEvents(vlg.layer.getSource(), "addfeature", "removefeature", "clear").pipe(
       debounceTime(100),
       mapTo(null)
     );

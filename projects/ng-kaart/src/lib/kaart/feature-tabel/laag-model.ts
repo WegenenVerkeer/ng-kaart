@@ -1,52 +1,39 @@
 import { array, option, ord, record, setoid, traversable } from "fp-ts";
-import { constant, Curried2, curry, Endomorphism, flip, flow, Function1, Function2, identity, Predicate } from "fp-ts/lib/function";
+import { Endomorphism, flow, Function1, Function2, identity, Predicate } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
 import { getLastSemigroup } from "fp-ts/lib/Semigroup";
-import { Setoid } from "fp-ts/lib/Setoid";
-import { fromTraversable, Getter, Lens, Optional, Prism, Traversal } from "monocle-ts";
+import { Getter, Lens, Optional, Prism, Traversal } from "monocle-ts";
 import * as ol from "openlayers";
-import * as rx from "rxjs";
-import { map } from "rxjs/operators";
+import { debounceTime, map, mapTo } from "rxjs/operators";
 import { isNumber } from "util";
 
 import { Filter, FilterTotaal, isTotaalOpgehaald } from "../../filter";
 import { NosqlFsSource } from "../../source";
-import * as arrays from "../../util/arrays";
-import { applySequential, PartialFunction2 } from "../../util/function";
+import { subSpy } from "../../util";
+import { PartialFunction2 } from "../../util/function";
+import { flowSpy } from "../../util/function";
 import { arrayTraversal, selectiveArrayTraversal } from "../../util/lenses";
+import { observableFromOlEvents } from "../../util/ol-observable";
 import * as ke from "../kaart-elementen";
 import { Viewinstellingen } from "../kaart-protocol-subscriptions";
 
-import { FeatureCount, FeatureCountFetcher, Field, FieldSorting, Page, PageFetcher, PageNumber, Row, SortDirection } from "./data-provider";
+import {
+  DataReady,
+  DataRequest,
+  FeatureCount,
+  FeatureCountFetcher,
+  FieldSorting,
+  Page,
+  PageFetcher,
+  PageNumber,
+  PageRequest,
+  SortDirection
+} from "./data-provider";
+import { FieldSelection } from "./field-selection-model";
+import { Field, Row, RowFormatSpec, RowFormatter } from "./row-model";
+import { AsyncUpdate, SyncUpdate, Update } from "./update";
 
-export type SyncUpdate = Endomorphism<TableModel>;
-export type AsyncUpdate = Function1<TableModel, rx.Observable<SyncUpdate>>;
-
-export interface Update {
-  readonly syncUpdate: SyncUpdate;
-  readonly asyncUpdate: AsyncUpdate;
-}
-
-export interface TableModel {
-  readonly laagData: LaagModel[];
-
-  // andere globale eigenschappen
-  readonly viewinstellingen: Viewinstellingen;
-}
-
-export interface FieldSelection {
-  readonly name: string;
-  readonly label: string;
-  readonly selected: boolean;
-  readonly sortDirection: Option<SortDirection>;
-  readonly contributingVeldinfos: ke.VeldInfo[]; // voor de synthetische velden
-}
-
-export type RowFormatter = Endomorphism<Row>;
-
-// Deze interface verzamelt de gegevens die we nodig hebben om 1 laag weer te geven in de tabelview. Het is
-// tegelijkertijd een abstractie van het onderliggende model + state nodig voor de tabel use cases (MVP).
 export interface LaagModel {
   readonly titel: string;
   readonly veldinfos: ke.VeldInfo[]; // enkel de VeldInfos die we kunnen weergeven
@@ -68,11 +55,10 @@ export interface LaagModel {
   readonly minZoom: number;
   readonly maxZoom: number;
 
-  // volgende 4 properties worden voorlopig niet meer gebruikt. Misschien wel weer wanneer volledige dataset ipv view
+  // volgende 3 properties worden voorlopig niet meer gebruikt. Misschien wel weer wanneer volledige dataset ipv view
   // gebruikt wordt.
   readonly nextPageSequence: number; // Het sequentienummer dat verwacht is, niet het paginanummer
   readonly updatePending: boolean;
-  readonly pageFetcher: PageFetcher; // Voorlopig niet meer gebruikt
   readonly featureCountFetcher: FeatureCountFetcher;
 
   readonly viewinstellingen: Viewinstellingen; // Kopie van gegevens in TableModel. Handig om hier te refereren
@@ -83,84 +69,11 @@ export interface LaagModel {
   // readonly viewAsFilter: boolean;
 }
 
-// De titel van een laag + geassocieerde state
-export interface TableHeader {
-  readonly titel: string;
-  readonly filterIsActive: boolean;
-  readonly hasFilter: boolean;
-  readonly count: number | undefined;
-}
-
-// Een RowFormatSpec laat toe om veldwaarden om te zetten naar een andere representatie. Een transformatiefunctie obv
-// een RowFormatSpec wordt heel vroeg bij het interpreteren van de laag VeldInfo aangemaakt omdat die voor alle rijen
-// dezelfde is. Zoals altijd geldt dat een
-export type RowFormatSpec = Record<string, Endomorphism<Field>>;
-
-export namespace FieldSelection {
-  export const nameLens: Lens<FieldSelection, string> = Lens.fromProp<FieldSelection>()("name");
-  export const selectedLens: Lens<FieldSelection, boolean> = Lens.fromProp<FieldSelection>()("selected");
-  export const contributingVeldinfosGetter: Getter<FieldSelection, ke.VeldInfo[]> = Lens.fromProp<FieldSelection>()(
-    "contributingVeldinfos"
-  ).asGetter();
-  export const maybeSortDirectionLens: Lens<FieldSelection, Option<SortDirection>> = Lens.fromProp<FieldSelection>()("sortDirection");
-
-  export const fieldsFromVeldinfo: Function1<ke.VeldInfo[], FieldSelection[]> = array.map(vi => ({
-    name: vi.naam,
-    label: ke.VeldInfo.veldGuaranteedLabelGetter.get(vi),
-    selected: false,
-    sortDirection: option.none,
-    contributingVeldinfos: [vi]
-  }));
-
-  const isBaseField: Predicate<FieldSelection> = field => arrays.exists(ke.VeldInfo.isBasisveldLens.get)(field.contributingVeldinfos);
-
-  export const selectBaseFields: Endomorphism<FieldSelection[]> = arrayTraversal<FieldSelection>().modify(field =>
-    selectedLens.set(isBaseField(field))(field)
-  );
-
-  export const selectAllFields: Endomorphism<FieldSelection[]> = arrayTraversal<FieldSelection>().modify(selectedLens.set(true));
-
-  export const selectedVeldnamen: Function1<FieldSelection[], string[]> = flow(
-    array.filter(selectedLens.get),
-    array.map(nameLens.get)
-  );
-
-  export const setoidFieldSelection: Setoid<FieldSelection> = setoid.getStructSetoid({
-    name: setoid.setoidString,
-    selected: setoid.setoidBoolean,
-    sortDirection: option.getSetoid(SortDirection.setoidSortDirection)
-  });
-
-  export const setoidFieldSelectionByKey: Setoid<FieldSelection> = setoid.contramap(nameLens.get, setoid.setoidString);
-
-  export const selectFirstField: Endomorphism<FieldSelection[]> = fields =>
-    array.mapWithIndex<FieldSelection, FieldSelection>((i, field) => selectedLens.modify(set => set || i === 0)(field))(fields);
-
-  const sortingsForFieldSelection: Function1<FieldSelection, FieldSorting[]> = fs =>
-    fs.sortDirection.foldL(() => [], direction => fs.contributingVeldinfos.map(FieldSorting.create(direction)));
-
-  export const maintainFieldSortings: Function1<FieldSelection[], FieldSorting[]> = array.chain(sortingsForFieldSelection);
-}
-
-export namespace TableHeader {
-  export const filterIsActiveLens: Lens<TableHeader, boolean> = Lens.fromProp<TableHeader>()("filterIsActive");
-
-  export const toHeader: Function1<LaagModel, TableHeader> = laag => ({
-    titel: laag.titel,
-    filterIsActive: laag.filterIsActive,
-    hasFilter: laag.hasFilter,
-    count: laag.featureCount.kind === "FeatureCountPending" ? undefined : laag.featureCount.count
-  });
-
-  export const setoidTableHeader: Setoid<TableHeader> = setoid.getStructSetoid({
-    titel: setoid.setoidString,
-    filterIsActive: setoid.setoidBoolean,
-    hasFilter: setoid.setoidBoolean,
-    count: setoid.setoidNumber
-  });
-}
-
 export namespace LaagModel {
+  export type LaagModelSyncUpdate = SyncUpdate<LaagModel>;
+  export type LaagModelAsyncUpdate = AsyncUpdate<LaagModel>;
+  export type LaagModelUpdate = Update<LaagModel>;
+
   type LaagModelLens<A> = Lens<LaagModel, A>;
   type LaagModelGetter<A> = Getter<LaagModel, A>;
   const laagPropLens = Lens.fromProp<LaagModel>();
@@ -172,7 +85,7 @@ export namespace LaagModel {
   export const nextPageSequenceLens: LaagModelLens<number> = laagPropLens("nextPageSequence");
   export const updatePendingLens: LaagModelLens<boolean> = laagPropLens("updatePending");
   export const aantalFeaturesLens: LaagModelLens<FeatureCount> = laagPropLens("featureCount");
-  export const viewinstellingLens: LaagModelLens<Viewinstellingen> = laagPropLens("viewinstellingen");
+  export const viewinstellingenLens: LaagModelLens<Viewinstellingen> = laagPropLens("viewinstellingen");
   export const zoomLens: LaagModelLens<number> = Lens.fromPath<LaagModel>()(["viewinstellingen", "zoom"]);
   export const extentLens: LaagModelLens<ol.Extent> = Lens.fromPath<LaagModel>()(["viewinstellingen", "extent"]);
   export const hasFilterLens: LaagModelLens<boolean> = laagPropLens("hasFilter");
@@ -199,14 +112,9 @@ export namespace LaagModel {
   const canUseAllFeaturesLens: LaagModelLens<boolean> = laagPropLens("canUseAllFeatures");
   export const canUseAllFeaturesGetter: LaagModelGetter<boolean> = canUseAllFeaturesLens.asGetter();
 
-  export const fieldSelectionForNameTraversal: Function1<string, Traversal<LaagModel, FieldSelection>> = fieldName =>
+  const fieldSelectionForNameTraversal: Function1<string, Traversal<LaagModel, FieldSelection>> = fieldName =>
     fieldSelectionsLens.composeTraversal(selectiveArrayTraversal(fs => fs.name === fieldName));
   const fieldSelectionTraversal: Traversal<LaagModel, FieldSelection> = fieldSelectionsLens.composeTraversal(arrayTraversal());
-
-  export const clampExpectedPageNumber: Endomorphism<LaagModel> = laag =>
-    expectedPageNumberLens.modify(
-      ord.clamp(Page.ordPageNumber)(Page.first, Page.last(FeatureCount.fetchedCount(laag.featureCount).getOrElse(0)))
-    )(laag);
 
   // Bepaalde velden moeten samengevoegd worden tot 1 synthetisch locatieveld. Daarvoor moeten we enerzijds de headers
   // aanpassen en anderzijds elke Row die binnen komt.
@@ -308,7 +216,6 @@ export namespace LaagModel {
         FieldSelection.selectBaseFields
       );
 
-      const pageFetcher = PageFetcher.sourceBasedPageFetcher(laag.bron.source);
       const featureCountFetcher = FeatureCountFetcher.sourceBasedFeatureCountFetcher(laag.bron.source);
 
       const firstField = array.take(1, fieldSelections);
@@ -339,7 +246,6 @@ export namespace LaagModel {
         updatePending: true,
         viewinstellingen,
         rowTransformer,
-        pageFetcher,
         featureCountFetcher
       };
     });
@@ -381,206 +287,184 @@ export namespace LaagModel {
       )
     )(laag);
 
-  export const setMapAsFilter: Function1<boolean, Endomorphism<LaagModel>> = unsafeMapAsFilterLens.set;
-
   export const setCanUseAllFeatures: Function1<boolean, Endomorphism<LaagModel>> = canUseAllFeaturesLens.set;
-}
 
-export namespace TableModel {
-  export const empty: Function1<Viewinstellingen, TableModel> = viewinstellingen => ({
-    laagData: [],
-    viewinstellingen
+  const laagPageRequest: Function1<LaagModel, PageRequest> = laag => ({
+    dataExtent: laag.viewinstellingen.extent,
+    fieldSortings: laag.fieldSortings,
+    pageNumber: laag.expectedPageNumber,
+    rowCreator: flow(
+      Row.featureToRow(laag.veldinfos),
+      laag.rowTransformer,
+      laag.rowFormatter
+    ),
+    requestSequence: laag.nextPageSequence
   });
 
-  export const Update: Function2<SyncUpdate, AsyncUpdate, Update> = (syncUpdate, asyncUpdate) => ({
-    syncUpdate,
-    asyncUpdate
-  });
+  // TODO controleer hier of pagenumber overeenkomt met wat we gevraagd hebben.
+  // requestSequence moet aan Page toegevoegd worden. Ook pending moet aangepast
+  // worden.
+  const updateLaagPage: Function1<Page, Endomorphism<LaagModel>> = page => laag =>
+    LaagModel.pageLens.set(ifInZoom(laag) ? option.some(page) : option.none)(laag);
 
-  export const syncUpdateOnly: Function1<SyncUpdate, Update> = flip(curry(Update))(constant(rx.EMPTY));
+  // Pas de huidige Page aan indien de kaart als filter gebruikt wordt. Hoewel de test op "kaart als filter" ook vroeger
+  // in de ketting gebeurt, testen we hier opnieuw omdat er een race-conditie kan zijn wanneer er ondertussen geschakeld
+  // wordt van mode.
+  const updateSyncLaagPageDataFromSource: LaagModelSyncUpdate = laag =>
+    LaagModel.mapAsFilterGetter.get(laag) ? updateLaagPage(PageFetcher.pageFromSource(laag.source, laagPageRequest(laag)))(laag) : laag;
 
-  const laagDataLens: Lens<TableModel, LaagModel[]> = Lens.fromProp<TableModel>()("laagData");
-  const viewinstellingLens: Lens<TableModel, Viewinstellingen> = Lens.fromProp<TableModel>()("viewinstellingen");
+  // Pas de huidige Page aan indien de kaart als filter gebruikt wordt.
+  const updateLaagPageDataFromSource: LaagModelUpdate = Update.createSync(updateSyncLaagPageDataFromSource);
 
-  const laagForTitelTraversal: Function1<string, Traversal<TableModel, LaagModel>> = titel =>
-    laagDataLens.composeTraversal(selectiveArrayTraversal(tl => tl.titel === titel));
-
-  const allLagenTraversal: Traversal<TableModel, LaagModel> = laagDataLens.composeTraversal(fromTraversable(array.array)<LaagModel>());
-
-  export const laagForTitelOnLaagData: Curried2<string, LaagModel[], Option<LaagModel>> = titel => laagData =>
-    array.findFirst(laagData, laag => laag.titel === titel);
-
-  export const laagForTitel: Curried2<string, TableModel, Option<LaagModel>> = titel => model => {
-    // asFold geeft een bug: Zie https://github.com/gcanti/monocle-ts/issues/96
-    // return laagForTitelTraversal(titel).asFold().headOption;
-    return laagForTitelOnLaagData(titel)(model.laagData);
-  };
-
-  export const currentPageForTitel: Curried2<string, TableModel, Option<Page>> = titel => {
-    // return currentPageForTitelTraversal(titel).asFold().headOption;
-    return model => laagForTitel(titel)(model).chain(LaagModel.pageLens.get);
-  };
-
-  // We willen hier niet de state voor alle lagen opnieuw initialiseren. We moeten enkel de nieuwe lagen toevoegen en de
-  // oude verwijderen. Van de bestaande moeten we de state aanpassen indien nodig.
-  export const updateLagen: Function1<ke.ToegevoegdeVectorLaag[], Update> = lagen => {
-    const updateFilterInstellingen: Function1<ke.Laagfilterinstellingen, Endomorphism<LaagModel>> = instellingen =>
-      flow(
-        LaagModel.filterIsActiveLens.set(instellingen.actief),
-        LaagModel.hasFilterLens.set(Filter.isDefined(instellingen.spec))
-      );
-
-    return Update(
-      model =>
-        laagDataLens.modify(laagData =>
-          array.array.filterMap(
-            lagen,
-            laag =>
-              laagForTitelOnLaagData(laag.titel)(laagData) // kennen we die laag al?
-                .map(updateFilterInstellingen(laag.filterinstellingen)) // pas ze dan aan
-                .orElse(() => LaagModel.create(laag, model.viewinstellingen)) // of creeer er een nieuw model voor
-          )
-        )(model),
-      () =>
-        rx
-          .merge
-          // ...model.laagData.filter(LaagModel.updatePendingLens.get).map(asyncLaagPageUpdate),
-          // ...model.laagData.map(asyncFeatureCountUpdate)
-          ()
-    );
-  };
-
-  export const updateZoomAndExtent: Function1<Viewinstellingen, Update> = vi =>
-    Update(
-      applySequential([
-        viewinstellingLens.set(vi), // zorg dat de nieuwe extent globaal bekend is
-        allLagenTraversal.modify(
-          flow(
-            LaagModel.viewinstellingLens.set(vi), // en in alle lagen
-            LaagModel.updatePendingLens.set(true) // en maak de laag klaar om een page te ontvangen
-          )
-        )
-      ]),
-      () =>
-        rx
-          .merge
-          // ...model.laagData.map(asyncLaagPageUpdate), //
-          // ...model.laagData.map(asyncFeatureCountUpdate)
-          ()
-    );
-
-  const inZoom = (ifInZoom: Endomorphism<LaagModel>, ifOutsideZoom: Endomorphism<LaagModel>): Endomorphism<LaagModel> => laag =>
-    (laag.viewinstellingen.zoom >= laag.minZoom && laag.viewinstellingen.zoom <= laag.maxZoom ? ifInZoom : ifOutsideZoom)(laag);
-
-  const updateLaagPageData: Endomorphism<LaagModel> = laag =>
-    LaagModel.pageLens.set(
-      option.some(
-        PageFetcher.pageFromSource(laag.source, {
-          dataExtent: laag.viewinstellingen.extent,
-          fieldSortings: laag.fieldSortings,
-          pageNumber: laag.expectedPageNumber,
-          rowCreator: flow(
-            Row.featureToRow(laag.veldinfos),
-            laag.rowTransformer,
-            laag.rowFormatter
-          ),
-          requestSequence: laag.nextPageSequence
+  // Pas uiteindelijk de huidige Page aan indien de volledige data gebruikt wordt.
+  const updateLaagPageDataFromServer: LaagModelUpdate = Update.createAsync((laag: LaagModel) =>
+    PageFetcher.pageFromServer({}, laagPageRequest(laag)).pipe(
+      map(
+        DataRequest.match({
+          RequestingData: () => identity, // Doe voorlopig niks. We kunnen hier een progress spinner aanzetten
+          DataReady: (dataready: DataReady) => updateLaagPage(dataready.page),
+          RequestFailed: () => identity // Doe voorlopig niks. We kunnen hier de tabel leeg maken of een error icoontje oid tonen
         })
       )
-    )(laag);
+    )
+  );
 
+  // Voer gepaste update uit naargelang de laag in "kaart als filter" mode staat of niet
+  const updateIfMapAsFilterOrElse = Update.ifOrElse(mapAsFilterGetter.get);
+  const updateIfMapAsFilter: Endomorphism<LaagModelUpdate> = Update.ifPredicate(mapAsFilterGetter.get);
+  const ifInZoom = (laag: LaagModel) => laag.viewinstellingen.zoom >= laag.minZoom && laag.viewinstellingen.zoom <= laag.maxZoom;
+  const updateIfInZoom = Update.ifPredicate(ifInZoom);
+
+  // Enkel een page opvragen en in het model steken
+  const updateLaagPageData: LaagModelUpdate = updateIfInZoom(
+    updateIfMapAsFilterOrElse(updateLaagPageDataFromSource, updateLaagPageDataFromServer)
+  );
+
+  // Deze functie zal in het model voor de laag met de gegeven titel eerst de functie f uitvoeren (initiële
+  // transformaties) en daarna zorgen dat de Page aangepast wordt. Op zich is dit niet meer dan 2 Updates na elkaar
+  // uitvoeren, maar we willen de boilerplate voor de lifting en de concattenatie concenteren op 1 plaats.
+  const andThenUpdatePageData: Function1<Endomorphism<LaagModel>, LaagModelUpdate> = f =>
+    Update.mappend(Update.createSync(f), updateLaagPageData);
+
+  // Leest beter in traditionele functieaanroepstijl
+  const updatePageDataAfter = andThenUpdatePageData;
+
+  const ifInZoomOrElse = (endoInZoom: Endomorphism<LaagModel>, endoOutsideZoom: Endomorphism<LaagModel>): Endomorphism<LaagModel> => laag =>
+    (ifInZoom(laag) ? endoInZoom : endoOutsideZoom)(laag);
+
+  export const setViewInstellingen: Function1<Viewinstellingen, LaagModelUpdate> = vi =>
+    Update.createSync(
+      flow(
+        viewinstellingenLens.set(vi),
+        clearLaagPage,
+        flowSpy("****clearLaagPage"),
+        ifInZoomOrElse(updatePendingLens.set(true), updatePendingLens.set(false))
+      )
+    );
+
+  const updateLaagFeatureCountFromSource: LaagModelUpdate = Update.createSync(laag =>
+    aantalFeaturesLens.set(FeatureCountFetcher.countFromSource(laag.source, { dataExtent: laag.viewinstellingen.extent }))(laag)
+  );
+
+  // const updateLaagFeatureCountFromServer: LaagModelUpdate = Update.createAsync(laag => FeatureCountFetcher.countFromServer(laag.));
+
+  // TODO uiteraard switchen op mode
+  const updateLaagFeatureCount = (laag: LaagModel) =>
+    aantalFeaturesLens.set(FeatureCountFetcher.countFromSource(laag.source, { dataExtent: laag.viewinstellingen.extent }))(laag);
+
+  // Zorg ervoor dat het paginanmmer binnen de grnezen van beschikbare paginas ligt
   const clampLaagPageNumber: Endomorphism<LaagModel> = LaagModel.pageOptional.modify(page =>
     Page.pageNumberLens.modify(ord.clamp(Page.ordPageNumber)(Page.first, page.lastPageNumber))(page)
   );
 
   const clearLaagPage: Endomorphism<LaagModel> = LaagModel.pageLens.set(option.none);
 
-  const updateLaagFeatureCount: Endomorphism<LaagModel> = laag =>
-    LaagModel.aantalFeaturesLens.set(FeatureCountFetcher.countFromSource(laag.source, { dataExtent: laag.viewinstellingen.extent }))(laag);
-
   // TODO: misschien beter specifiek type voor buiten zoom
   const clearLaagFeatureCount: Endomorphism<LaagModel> = LaagModel.aantalFeaturesLens.set(FeatureCount.createFetched(0));
 
-  const syncUpdateLaagWithTitel: Curried2<string, Endomorphism<LaagModel>, Update> = titel => f =>
-    syncUpdateOnly(laagForTitelTraversal(titel).modify(f));
+  const featuresUpdate: Endomorphism<LaagModel> = ifInZoomOrElse(
+    flow(
+      updateLaagFeatureCount,
+      clampLaagPageNumber,
+      flowSpy("****FeaturesUpdate in zoom")
+    ),
+    flow(
+      clearLaagPage,
+      clearLaagFeatureCount,
+      clampLaagPageNumber,
+      flowSpy("****FeaturesUpdate uit zoom")
+    )
+  );
 
-  export const featuresUpdate: Function1<ke.ToegevoegdeVectorLaag, Update> = tvlg =>
-    syncUpdateLaagWithTitel(tvlg.titel)(
-      inZoom(
-        flow(
-          updateLaagFeatureCount,
-          clampLaagPageNumber,
-          updateLaagPageData
-        ),
-        flow(
-          clearLaagPage,
-          clearLaagFeatureCount
+  // Zal de tabel data aanpassen indien we in "kaart als filter mode zitten"
+  export const sourceFeaturesUpdate: LaagModelUpdate = updateIfMapAsFilter(updatePageDataAfter(featuresUpdate));
+
+  export const followViewFeatureUpdates: LaagModelUpdate = updateIfMapAsFilter(
+    Update.createAsync(laag =>
+      observableFromOlEvents(laag.source, "addfeature", "removefeature", "clear")
+        .pipe(
+          debounceTime(100),
+          mapTo(null)
         )
-      )
-    );
+        .pipe(
+          map(() =>
+            flow(
+              featuresUpdate,
+              updateSyncLaagPageDataFromSource
+            )
+          )
+        )
+    )
+  );
 
-  export const followViewFeatureUpdates: Function1<ke.ToegevoegdeVectorLaag, rx.Observable<Update>> = tvlg =>
-    ke.ToegevoegdeVectorLaag.featuresChanged$(tvlg).pipe(map(() => featuresUpdate(tvlg)));
+  const totaalUpdate: Function1<FilterTotaal, Endomorphism<LaagModel>> = flow(
+    isTotaalOpgehaald, // We gebruiken op deze manier automatisch hetzelfde aantal features als grens als voor filters
+    LaagModel.setCanUseAllFeatures
+  );
 
-  const totaalUpdate: Curried2<ke.ToegevoegdeVectorLaag, FilterTotaal, Update> = tvlg => totaal =>
-    syncUpdateLaagWithTitel(tvlg.titel)(
-      pipe(
-        totaal,
-        isTotaalOpgehaald, // We gebruiken op deze manier automatisch hetzelfde aantal features als grens als voor filters
-        LaagModel.setCanUseAllFeatures
-      )
-    );
+  // TODO deze werkt enkel voor view in filter. Voor alle data niet nodig om te volgen
+  export const followTotalFeaturesUpdate: LaagModelUpdate = Update.createAsync<LaagModel>(laag => {
+    console.log("****voor fetchTotal$");
+    return subSpy("****fetchTotal$")(laag.source.fetchTotal$().pipe(map(totaalUpdate)));
+  }) as LaagModelUpdate;
 
-  export const followTotalFeaturesUpdate: Function1<ke.ToegevoegdeVectorLaag, rx.Observable<Update>> = tvlg =>
-    ke.ToegevoegdeVectorLaag.noSqlFsSourceFold
-      .headOption(tvlg)
-      .map(source => source.fetchTotal$().pipe(map(totaalUpdate(tvlg))))
-      .getOrElse(rx.EMPTY);
+  const clampExpectedPageNumber: Endomorphism<LaagModel> = laag =>
+    expectedPageNumberLens.modify(
+      ord.clamp(Page.ordPageNumber)(Page.first, Page.last(FeatureCount.fetchedCount(laag.featureCount).getOrElse(0)))
+    )(laag);
 
-  const modifyPageNumberUpdate: Curried2<Endomorphism<PageNumber>, string, Update> = f => titel =>
-    syncUpdateLaagWithTitel(titel)(
+  const modifyPageNumberUpdate: Function1<Endomorphism<PageNumber>, LaagModelUpdate> = pageNumberUpdate =>
+    updatePageDataAfter(
       flow(
-        LaagModel.expectedPageNumberLens.modify(f),
-        LaagModel.clampExpectedPageNumber,
-        updateLaagPageData
+        expectedPageNumberLens.modify(pageNumberUpdate),
+        clampExpectedPageNumber
       )
     );
 
-  export const previousPageUpdate: Function1<string, Update> = modifyPageNumberUpdate(Page.previous);
+  export const previousPageUpdate: LaagModelUpdate = modifyPageNumberUpdate(Page.previous);
 
-  export const nextPageUpdate: Function1<string, Update> = modifyPageNumberUpdate(Page.next);
+  export const nextPageUpdate: LaagModelUpdate = modifyPageNumberUpdate(Page.next);
 
-  export const setPageNumberUpdate: Curried2<string, number, Update> = titel => pageNr => modifyPageNumberUpdate(Page.set(pageNr))(titel);
+  export const setPageNumberUpdate: Function1<number, LaagModelUpdate> = pageNr => modifyPageNumberUpdate(Page.set(pageNr));
 
-  export const chooseBaseFieldsUpdate: Function1<string, Update> = titel =>
-    syncUpdateLaagWithTitel(titel)(LaagModel.fieldSelectionsLens.modify(FieldSelection.selectBaseFields));
+  export const chooseBaseFieldsUpdate: LaagModelUpdate = updatePageDataAfter(fieldSelectionsLens.modify(FieldSelection.selectBaseFields));
 
-  export const chooseAllFieldsUpdate: Function1<string, Update> = titel =>
-    syncUpdateLaagWithTitel(titel)(LaagModel.fieldSelectionsLens.modify(FieldSelection.selectAllFields));
+  export const chooseAllFieldsUpdate: LaagModelUpdate = updatePageDataAfter(fieldSelectionsLens.modify(FieldSelection.selectAllFields));
 
-  export const setFieldSelectedUpdate: Function1<string, Function2<string, boolean, Update>> = titel => (fieldName, value) =>
-    syncUpdateLaagWithTitel(titel)(
-      flow(
-        LaagModel.fieldSelectionForNameTraversal(fieldName)
-          .composeLens(FieldSelection.selectedLens)
-          .set(value),
-        updateLaagPageData
-      )
+  export const setFieldSelectedUpdate: Function2<string, boolean, LaagModelUpdate> = (fieldName, value) =>
+    updatePageDataAfter(
+      fieldSelectionForNameTraversal(fieldName)
+        .composeLens(FieldSelection.selectedLens)
+        .set(value)
     );
 
-  export const sortFieldToggleUpdate: Curried2<string, string, Update> = titel => fieldName =>
-    syncUpdateLaagWithTitel(titel)(
-      flow(
-        LaagModel.toggleSortingField(fieldName),
-        updateLaagPageData
-      )
-    );
+  export const sortFieldToggleUpdate: Function1<string, LaagModelUpdate> = flow(
+    toggleSortingField,
+    andThenUpdatePageData
+  );
 
-  export const mapAsFilterUpdate: Curried2<string, boolean, Update> = titel => onOff =>
-    syncUpdateLaagWithTitel(titel)(
-      flow(
-        LaagModel.setMapAsFilter(onOff),
-        updateLaagPageData
-      )
-    );
+  export const mapAsFilterUpdate: Function1<boolean, LaagModelUpdate> = flow(
+    unsafeMapAsFilterLens.set,
+    andThenUpdatePageData
+  );
 }

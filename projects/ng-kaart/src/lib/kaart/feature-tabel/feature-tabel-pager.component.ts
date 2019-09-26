@@ -12,7 +12,7 @@ import { KaartComponent } from "../kaart.component";
 import { Page } from "./data-provider";
 import { FeatureTabelDataComponent } from "./feature-tabel-data.component";
 import { FeatureTabelOverzichtComponent } from "./feature-tabel-overzicht.component";
-import { LaagModel, TableModel } from "./model";
+import { LaagModel } from "./laag-model";
 
 export interface PagerData {
   readonly currentPageNumber: number;
@@ -21,9 +21,6 @@ export interface PagerData {
   readonly isLastPage: boolean;
   readonly doesNotHaveMultiplePages: boolean;
 }
-
-const filledMatSliderChange: Refinement<any, MatSliderChange> = (event): event is MatSliderChange =>
-  event.hasOwnProperty("value") && Number.isInteger(event.value);
 
 @Component({
   selector: "awv-feature-tabel-pager",
@@ -63,17 +60,13 @@ export class FeatureTabelPagerComponent extends KaartChildComponentBase {
       share()
     );
 
-    const actions$ = laagData.laag$.pipe(
-      switchMap(laag =>
-        rx.merge(
-          this.actionFor$("previous").pipe(mapTo(TableModel.previousPageUpdate(laag.titel))),
-          this.actionFor$("next").pipe(mapTo(TableModel.nextPageUpdate(laag.titel))),
-          this.actionDataFor$("setPageNumber", isNumber).pipe(map(TableModel.setPageNumberUpdate(laag.titel)))
-        )
-      )
+    const actions$ = rx.merge(
+      this.actionFor$("previous").pipe(mapTo(LaagModel.previousPageUpdate)),
+      this.actionFor$("next").pipe(mapTo(LaagModel.nextPageUpdate)),
+      this.actionDataFor$("setPageNumber", isNumber).pipe(map(LaagModel.setPageNumberUpdate))
     );
 
-    this.runInViewReady(actions$.pipe(tap(overzicht.updater)));
+    this.runInViewReady(laag$.pipe(switchMap(laag => actions$.pipe(tap(overzicht.laagUpdater(laag.titel))))));
   }
 
   public pageLabel(value: number): string {

@@ -12,22 +12,18 @@ import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { map, startWith, take } from "rxjs/operators";
 
+import * as FilterTotaal from "../../filter/filter-totaal";
+import { NosqlFsSource } from "../../source";
 import * as arrays from "../../util/arrays";
 import { parseDate, parseDateTime } from "../../util/date-time";
 import { Feature } from "../../util/feature";
 import { PartialFunction1, PartialFunction2 } from "../../util/function";
 import { isOfKind } from "../../util/kinded";
+import * as matchers from "../../util/matchers";
 import * as setoids from "../../util/setoid";
 import * as ke from "../kaart-elementen";
 
-export type ValueType = string | number | boolean | DateTime;
-
-// Zou kunen new-type zijn. Afwachten of er nog properties nuttig zijn
-export interface Field {
-  readonly maybeValue: Option<ValueType>;
-}
-
-export type Row = Record<string, Field>;
+import { Row, ValueType } from "./row-model";
 
 export interface PageNumber extends Newtype<{ readonly PAGENUMBER: unique symbol }, NonNegativeInteger> {}
 
@@ -87,64 +83,10 @@ export interface FeatureCountRequest {
 
 export type FeatureCountFetcher = Function1<FeatureCountRequest, rx.Observable<FeatureCount>>;
 
-// Zou kunen new-type zijn. Afwachten of er nog properties nuttig zijn
-interface Properties {
-  readonly [key: string]: ValueType | Properties;
-}
-
 export namespace SortDirection {
   export const setoidSortDirection: Setoid<SortDirection> = setoid.setoidString;
 
   export const invert: Endomorphism<SortDirection> = direction => (direction === "ASCENDING" ? "DESCENDING" : "ASCENDING");
-}
-
-export namespace Row {
-  const Field: Function1<Option<ValueType>, Field> = maybeValue => ({ maybeValue });
-
-  const emptyField: Field = Field(option.none);
-
-  // We zouden dit ook helemaal naar de NoSqlFsSource kunnen schuiven (met een Either om geen info te verliezen).
-  const matchingTypeValue: PartialFunction2<any, ke.VeldInfo, ValueType> = (value, veldinfo) =>
-    option
-      .fromPredicate<ValueType>(v => typeof v === "number" && (veldinfo.type === "double" || veldinfo.type === "integer"))(value)
-      .orElse(() => option.fromPredicate<boolean>(v => typeof v === "boolean" && veldinfo.type === "boolean")(value))
-      .orElse(() =>
-        option
-          .fromPredicate<string>(v => typeof v === "string" && veldinfo.type === "datetime")(value)
-          .chain(v => parseDateTime(option.fromNullable(veldinfo.parseFormat))(v))
-      )
-      .orElse(() =>
-        option
-          .fromPredicate<string>(v => typeof v === "string" && veldinfo.type === "date")(value)
-          .chain(v => parseDate(option.fromNullable(veldinfo.parseFormat))(v))
-      )
-      .orElse(() => option.fromPredicate<string>(v => typeof v === "string" && veldinfo.type === "string")(value));
-
-  const nestedPropertyValue: Function3<Properties, string[], ke.VeldInfo, Field> = (properties, path, veldinfo) =>
-    array.fold(path, emptyField, (head, tail) =>
-      arrays.isEmpty(tail)
-        ? Field(option.fromNullable(properties[head]).chain(value => matchingTypeValue(value, veldinfo)))
-        : typeof properties[head] === "object"
-        ? nestedPropertyValue(properties[head] as Properties, tail, veldinfo)
-        : emptyField
-    );
-
-  export const extractField: Function2<Properties, ke.VeldInfo, Field> = (properties, veldinfo) =>
-    nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo);
-
-  export const featureToRow: Curried2<ke.VeldInfo[], ol.Feature, Row> = veldInfos => feature => {
-    const propertiesWithId = Feature.propertiesWithId(feature);
-    return veldInfos.reduce((row, vi) => {
-      row[vi.naam] = extractField(propertiesWithId, vi);
-      return row;
-    }, {});
-  };
-
-  export const addField: Function2<string, Field, Endomorphism<Row>> = (label, field) => row => {
-    const newRow = { ...row };
-    newRow[label] = field;
-    return newRow;
-  };
 }
 
 export namespace Page {
@@ -209,28 +151,11 @@ export namespace DataRequest {
   };
 
   export const isDataReady: Refinement<DataRequest, DataReady> = isOfKind("DataReady");
+
+  export const match: <A>(_: matchers.FullKindMatcher<DataRequest, A>) => Function1<DataRequest, A> = matchers.matchKind;
 }
 
 export namespace PageFetcher {
-  export const sourceBasedPageFetcher: Function1<ol.source.Vector, PageFetcher> = source => pageRequest => {
-    // We willen zo vlug als mogelijk de data bijwerken. Het is evenwel mogelijk dat het een tijd duurt vooraleer de
-    // data binnen komt en we willen ook niet blijven wachten. Daarnaast willen we de observable niet voor altijd open
-    // houden.
-    return rx.merge(
-      rx.of(DataRequest.RequestingData),
-      rx.timer(2000).pipe(
-        take(1), // bij de start zijn de features nog niet geladen. beter uiteraard wachten op event van source
-        map(() =>
-          DataRequest.DataReady(
-            pageRequest.pageNumber,
-            Page.last(FeatureCountFetcher.countFromSource(source, pageRequest).count),
-            array.take(Page.PageSize, source.getFeaturesInExtent(pageRequest.dataExtent).map(pageRequest.rowCreator))
-          )
-        )
-      )
-    );
-  };
-
   const featuresInExtent: Curried2<ol.Extent, ol.source.Vector, ol.Feature[]> = extent => source => source.getFeaturesInExtent(extent);
   const takePage: Function1<PageNumber, Endomorphism<ol.Feature[]>> = pageNumber => array.filterWithIndex(Page.isInPage(pageNumber));
   const toRows: Curried2<Function1<ol.Feature, Row>, ol.Feature[], Row[]> = array.map;
@@ -273,6 +198,9 @@ export namespace PageFetcher {
         toRows(pageRequest.rowCreator)
       )(source)
     );
+
+  // TODO
+  export const pageFromServer: Function2<any, PageRequest, rx.Observable<DataRequest>> = (serverParams, pageRequest) => rx.EMPTY;
 }
 
 export namespace FeatureCount {
@@ -312,4 +240,17 @@ export namespace FeatureCountFetcher {
 
   export const countFromSource: Function2<ol.source.Vector, FeatureCountRequest, FeatureCountFetched> = (source, featureCountRequest) =>
     FeatureCount.createFetched(source.getFeaturesInExtent(featureCountRequest.dataExtent).length);
+
+  const filterTotaalToFeatureCount: Function1<FilterTotaal.FilterTotaal, FeatureCount> = FilterTotaal.match({
+    TotaalOpTeHalen: (ft: FilterTotaal.TotaalOpTeHalen) => FeatureCount.pending,
+    TotaalOpgehaald: (ft: FilterTotaal.TotaalOpgehaald) => FeatureCount.pending,
+    TotaalOphalenMislukt: (ft: FilterTotaal.TotaalOphalenMislukt) => FeatureCount.pending,
+    TeVeelData: (ft: FilterTotaal.TeVeelData) => FeatureCount.pending
+  });
+
+  // Haalt het totaal aantal features van server.
+  // De onderliggende observable kan op elk moment emitten. In concreto wanneer een filter gezet wordt.
+  // TODO. Gezien deze obs blijft leven, moeten we afsluiten er een nieuwe FeatureCountRequest binnen komt.
+  export const serverBasedFeatureCountFetcher: Function1<NosqlFsSource, FeatureCountFetcher> = source => () =>
+    source.fetchTotal$().pipe(map(filterTotaalToFeatureCount));
 }

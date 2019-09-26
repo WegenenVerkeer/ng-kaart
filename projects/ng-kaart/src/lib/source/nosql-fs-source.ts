@@ -305,8 +305,8 @@ export class NosqlFsSource extends ol.source.Vector {
   //
   private viewAndFilterParams(respectUserFilterActivity = true) {
     return {
-      ...this.view.fold({}, v => ({ "with-view": encodeURIComponent(v) })),
-      ...this.composedFilter(respectUserFilterActivity).fold({}, f => ({ query: encodeURIComponent(f) }))
+      ...this.view.fold<any>({}, v => ({ "with-view": encodeURIComponent(v) })),
+      ...this.composedFilter(respectUserFilterActivity).fold<any>({}, f => ({ query: encodeURIComponent(f) }))
     };
   }
 
@@ -314,7 +314,7 @@ export class NosqlFsSource extends ol.source.Vector {
     const params = {
       ...fromNullable(extent)
         .map(Extent.toQueryValue)
-        .fold({}, bbox => ({ bbox })),
+        .fold<any>({}, bbox => ({ bbox })),
       ...this.viewAndFilterParams()
     };
 

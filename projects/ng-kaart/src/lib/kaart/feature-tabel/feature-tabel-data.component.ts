@@ -3,17 +3,20 @@ import { array } from "fp-ts";
 import { flow, Function1, not, Refinement } from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
-import { debounceTime, delay, distinctUntilChanged, map, mapTo, share, switchMap, take, tap } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, map, mapTo, share, startWith, switchMap, take, tap } from "rxjs/operators";
 import { isBoolean, isString } from "util";
 
-import { catOptions, collectOption, subSpy } from "../../util/operators";
+import { catOptions, subSpy } from "../../util/operators";
 import { join } from "../../util/string";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { KaartComponent } from "../kaart.component";
 
-import { Page, Row } from "./data-provider";
+import { Page } from "./data-provider";
 import { FeatureTabelOverzichtComponent } from "./feature-tabel-overzicht.component";
-import { FieldSelection, LaagModel, TableModel, Update } from "./model";
+import { FieldSelection } from "./field-selection-model";
+import { LaagModel } from "./laag-model";
+import { Row } from "./row-model";
+import { Update } from "./update";
 
 // Dit is een interface die bedoeld is voor gebruik in de template
 interface ColumnHeaders {
@@ -66,14 +69,34 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
   constructor(kaart: KaartComponent, overzicht: FeatureTabelOverzichtComponent, ngZone: NgZone, private readonly cdr: ChangeDetectorRef) {
     super(kaart, ngZone);
 
-    const model$ = overzicht.model$;
-
     this.laag$ = subSpy("****laag$")(
       this.viewReady$.pipe(
         // De input is pas beschikbaar nadat de view klaar is
-        switchMap(() => model$.pipe(collectOption(TableModel.laagForTitel(this.laagTitel)))),
+        switchMap(() => overzicht.laagModel$(this.laagTitel)),
         share()
       )
+    );
+
+    // TODO luisteren op filterupdates
+    // Dit zorgt enkel voor het al dan niet kunnen schakelen tussen kaart als filter en alle data
+    const totalFeaturesUpdate$: rx.Observable<LaagModel.LaagModelUpdate> = rx.of(LaagModel.followTotalFeaturesUpdate); // equiv. startWith
+
+    // Voor de kaart als filter kunnen we gewoon de zichtbare features volgen. Het model zal de updates neutraliseren als
+    // het niet in de kaart als filter mode is.
+    const directPageUpdates$: rx.Observable<LaagModel.LaagModelUpdate> = subSpy("****directPageUpdates$")(
+      this.modelChanges.viewinstellingen$ // OL past collectie niet aan voor elke zoom/pan, dus moeten we update forceren
+        .pipe(
+          mapTo(null), // Om startWith te kunnen doen
+          startWith(null), // We willen direct bij subscribe emitten
+          map(() =>
+            Update.mappend(
+              // Eerst de "geforceerde" update
+              LaagModel.sourceFeaturesUpdate,
+              // Dan volgen van de features in de view (wat dus niks oplevert als er geen nieuwe features van de backend komen)
+              LaagModel.followViewFeatureUpdates
+            )
+          )
+        )
     );
 
     const maybePage$ = this.laag$.pipe(
@@ -92,16 +115,14 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     this.noDataAvailable$ = maybePage$.pipe(map(opt => opt.isNone()));
     this.dataAvailable$ = maybePage$.pipe(map(opt => opt.isSome()));
 
-    this.fieldNameSelections$ = subSpy("****fieldNameSelections$")(
-      this.laag$.pipe(
-        map(laag => laag.fieldSelections),
-        // De distinctUntilChanged is OK omdat de eerste kolom disabled staat. Mocht dat niet zo zijn, maar we willen
-        // die toch altijd geselecteerd hebben, dan zou het model daar voor zorgen (dat doet het ook), maar als gevolg
-        // zou er geen verandering aan het LaagModel zijn en bij gevolg ook geen emit. De checkbox state zou dan niet
-        // overeenstemmen met het model.
-        distinctUntilChanged(array.getSetoid(FieldSelection.setoidFieldSelection).equals),
-        share()
-      )
+    this.fieldNameSelections$ = this.laag$.pipe(
+      map(laag => laag.fieldSelections),
+      // De distinctUntilChanged is OK omdat de eerste kolom disabled staat. Mocht dat niet zo zijn, maar we willen
+      // die toch altijd geselecteerd hebben, dan zou het model daar voor zorgen (dat doet het ook), maar als gevolg
+      // zou er geen verandering aan het LaagModel zijn en bij gevolg ook geen emit. De checkbox state zou dan niet
+      // overeenstemmen met het model.
+      distinctUntilChanged(array.getSetoid(FieldSelection.setoidFieldSelection).equals),
+      share()
     );
 
     this.headers$ = this.fieldNameSelections$.pipe(
@@ -127,29 +148,23 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
       share()
     );
 
-    const withLaagTitel: Function1<Function1<string, rx.Observable<Update>>, rx.Observable<Update>> = titelBasedOps =>
-      this.laag$.pipe(switchMap(laag => titelBasedOps(laag.titel)));
-
-    const fieldSelectionsUpdate$ = withLaagTitel(titel =>
-      rx.merge(
-        this.actionFor$("chooseBaseFields").pipe(mapTo(TableModel.chooseBaseFieldsUpdate(titel))),
-        this.actionFor$("chooseAllFields").pipe(mapTo(TableModel.chooseAllFieldsUpdate(titel))),
-        this.actionDataFor$("toggleField", isFieldSelection).pipe(
-          map(fieldSelection => TableModel.setFieldSelectedUpdate(titel)(fieldSelection.name, !fieldSelection.selected))
-        )
+    const fieldSelectionsUpdate$ = rx.merge(
+      this.actionFor$("chooseBaseFields").pipe(mapTo(LaagModel.chooseBaseFieldsUpdate)),
+      this.actionFor$("chooseAllFields").pipe(mapTo(LaagModel.chooseAllFieldsUpdate)),
+      this.actionDataFor$("toggleField", isFieldSelection).pipe(
+        map(fieldSelection => LaagModel.setFieldSelectedUpdate(fieldSelection.name, !fieldSelection.selected))
       )
     );
 
-    const sortUpdate$ = withLaagTitel(titel =>
-      this.actionDataFor$("toggleSort", isString).pipe(map(TableModel.sortFieldToggleUpdate(titel)))
-    );
+    const sortUpdate$ = this.actionDataFor$("toggleSort", isString).pipe(map(LaagModel.sortFieldToggleUpdate));
 
-    const viewModeUpdate$ = withLaagTitel(titel =>
-      this.actionDataFor$("mapAsFilter", isBoolean).pipe(map(TableModel.mapAsFilterUpdate(titel)))
-    );
+    const viewModeUpdate$ = this.actionDataFor$("mapAsFilter", isBoolean).pipe(map(LaagModel.mapAsFilterUpdate));
 
-    const doUpdate$ = rx.merge(fieldSelectionsUpdate$, sortUpdate$, viewModeUpdate$).pipe(tap(overzicht.updater));
+    const doUpdate$ = (titel: string) =>
+      rx
+        .merge(fieldSelectionsUpdate$, sortUpdate$, viewModeUpdate$, totalFeaturesUpdate$, directPageUpdates$)
+        .pipe(tap(overzicht.laagUpdater(titel)));
 
-    this.runInViewReady(rx.merge(doUpdate$));
+    this.runInViewReady(rx.defer(() => doUpdate$(this.laagTitel)));
   }
 }
