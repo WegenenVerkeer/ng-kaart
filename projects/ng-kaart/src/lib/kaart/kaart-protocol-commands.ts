@@ -520,6 +520,7 @@ export interface RegistreerErrorCmd {
 export interface SelecteerFeaturesCmd {
   readonly type: "SelecteerFeatures";
   readonly features: Array<ol.Feature>;
+  readonly incremental: boolean;
 }
 
 export interface DeselecteerFeatureCmd {
@@ -930,7 +931,11 @@ export function ZetUiElementOpties(naam: string, opties: any): ZetUiElementOptie
 }
 
 export function SelecteerFeaturesCmd(features: Array<ol.Feature>): SelecteerFeaturesCmd {
-  return { type: "SelecteerFeatures", features };
+  return { type: "SelecteerFeatures", features, incremental: false };
+}
+
+export function SelecteerExtraFeaturesCmd(features: Array<ol.Feature>): SelecteerFeaturesCmd {
+  return { type: "SelecteerFeatures", features, incremental: true };
 }
 
 export function DeselecteerFeatureCmd(id: string): DeselecteerFeatureCmd {

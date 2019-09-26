@@ -12,6 +12,7 @@ import { catOptions, collectOption, subSpy } from "../../util/operators";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { kaartLogOnlyWrapper } from "../kaart-internal-messages";
 import * as cmd from "../kaart-protocol-commands";
+import { DeselecteerFeatureCmd, SelecteerExtraFeaturesCmd } from "../kaart-protocol-commands";
 import { KaartComponent } from "../kaart.component";
 
 import { Page, Row } from "./data-provider";
@@ -141,9 +142,11 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
         tap(select => {
           console.log("selectAll: ", select);
           if (select) {
+            this.dispatch(SelecteerExtraFeaturesCmd([]));
             // selecteer alles van binnen huidige page
           } else {
             // deselecteer alles van huidige page
+            this.dispatch(DeselecteerFeatureCmd([]));
           }
         })
       )
