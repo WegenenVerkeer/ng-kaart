@@ -1,4 +1,4 @@
-import { array } from "fp-ts";
+import { array, tuple } from "fp-ts";
 import { concat, Function1, not, Refinement } from "fp-ts/lib/function";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import { setoidNumber, setoidString } from "fp-ts/lib/Setoid";
@@ -59,6 +59,35 @@ const FETCH_TIMEOUT = 5000; // max time to wait for data from featureserver befo
 const BATCH_SIZE = 100; // aantal features per keer toevoegen aan laag
 
 export const featureDelimiter = "\n";
+
+export type Params = Record<string, string | number>;
+
+namespace Params {
+  export const toQueryString = (params: Params): string =>
+    Object.keys(params)
+      .map(key => key + "=" + params[key])
+      .join("&");
+}
+
+export interface PagingSpec {
+  readonly start: number;
+  readonly count: number;
+  readonly sortFields: string[];
+  readonly sortDirections: PagingSpec.SortDirection[];
+}
+
+export namespace PagingSpec {
+  export type SortDirection = "ASC" | "DESC";
+  export const toQueryParams = (spec: PagingSpec) => {
+    const [sort, sortDirection] = array.unzip(array.zip(spec.sortFields, spec.sortDirections));
+    return {
+      start: spec.start,
+      limit: spec.count,
+      sort,
+      "sort-direction": sortDirection
+    };
+  };
+}
 
 const cacheCredentials: () => RequestInit = () => ({
   cache: "no-store", // geen client side caching van nosql data
@@ -177,7 +206,7 @@ function featuresFromServer(
   const toFetch = Extent.difference(extent, prevExtent);
   const batchedFeatures$ = rx.merge(
     ...toFetch.map(ext =>
-      source.fetchFeatures$(source.composeQueryUrl(ext), gebruikCache).pipe(
+      source.fetchFeatures$(source.composeQueryUrl(some(ext), none), gebruikCache).pipe(
         bufferCount(BATCH_SIZE),
         catchError(error => (gebruikCache ? featuresFromCache(laagnaam, extent) : rx.throwError(error)))
       )
@@ -235,7 +264,7 @@ export class NosqlFsSource extends ol.source.Vector {
         const source: NosqlFsSource = this;
         source.busyCount += 1;
         source.outstandingRequestExtents = array.snoc(source.outstandingRequestExtents, extent);
-        const queryUrlVoorExtent = source.composeQueryUrl(extent);
+        const queryUrlVoorExtent = source.composeQueryUrl(some(extent), none);
         source.outstandingQueries = array.snoc(source.outstandingQueries, queryUrlVoorExtent);
         const featuresLoader$: rx.Observable<ol.Feature[]> = (source.offline
           ? featuresFromCache(laagnaam, extent)
@@ -302,7 +331,7 @@ export class NosqlFsSource extends ol.source.Vector {
       strategy: ol.loadingstrategy.bbox
     });
   }
-  //
+
   private viewAndFilterParams(respectUserFilterActivity = true) {
     return {
       ...this.view.fold<any>({}, v => ({ "with-view": encodeURIComponent(v) })),
@@ -310,32 +339,32 @@ export class NosqlFsSource extends ol.source.Vector {
     };
   }
 
-  composeQueryUrl(extent?: number[]) {
+  composeQueryUrl(extent: Option<number[]>, pagingSpec: Option<PagingSpec>) {
     const params = {
-      ...fromNullable(extent)
-        .map(Extent.toQueryValue)
-        .fold<any>({}, bbox => ({ bbox })),
+      ...extent.map(Extent.toQueryValue).fold<any>({}, bbox => ({ bbox })),
+      ...pagingSpec.map<any>(PagingSpec.toQueryParams).getOrElse({}),
       ...this.viewAndFilterParams()
     };
 
-    return `${this.url}/api/databases/${this.database}/${this.collection}/query?${Object.keys(params)
-      .map(function(key) {
-        return key + "=" + params[key];
-      })
-      .join("&")}`;
+    return `${this.url}/api/databases/${this.database}/${this.collection}/query?${Params.toQueryString(params)}`;
   }
 
-  private composeFeatureCollectionTotalUrl(limit: number) {
-    const params = {
-      limit: limit,
-      ...this.viewAndFilterParams(false)
-    };
+  private composeFeatureCollectionUrl(params: Record<string, string | number>) {
+    return `${this.url}/api/databases/${this.database}/${this.collection}/featurecollection?${Params.toQueryString(params)}`;
+  }
 
-    return `${this.url}/api/databases/${this.database}/${this.collection}/featurecollection?${Object.keys(params)
-      .map(function(key) {
-        return key + "=" + params[key];
-      })
-      .join("&")}`;
+  private composeFeatureCollectionTotalUrl() {
+    return this.composeFeatureCollectionUrl({
+      limit: 1,
+      ...this.viewAndFilterParams(false)
+    });
+  }
+
+  private composeFeatureCollectionWithFilteredTotalUrl(pagingSpec: PagingSpec) {
+    return this.composeFeatureCollectionUrl({
+      ...PagingSpec.toQueryParams(pagingSpec),
+      ...this.viewAndFilterParams(true)
+    });
   }
 
   private composedFilter(respectUserFilterActivity: boolean): Option<string> {
@@ -375,7 +404,7 @@ export class NosqlFsSource extends ol.source.Vector {
   }
 
   fetchFeaturesByWkt$(wkt: string): rx.Observable<GeoJsonLike> {
-    return fetchObs$(this.composeQueryUrl(), postWithCommonHeaders(wkt)).pipe(
+    return fetchObs$(this.composeQueryUrl(none, none), postWithCommonHeaders(wkt)).pipe(
       split(featureDelimiter),
       filter(lijn => lijn.trim().length > 0),
       mapToGeoJson
@@ -389,7 +418,7 @@ export class NosqlFsSource extends ol.source.Vector {
           ? rx.of(teVeelData(summary.count))
           : this.filterSubj.pipe(
               switchMap(() =>
-                fetchObs$(this.composeFeatureCollectionTotalUrl(1), getWithCommonHeaders()).pipe(
+                fetchObs$(this.composeFeatureCollectionTotalUrl(), getWithCommonHeaders()).pipe(
                   split(featureDelimiter),
                   mapToFeatureCollection,
                   map(featureCollection => featureCollection.total),
@@ -404,9 +433,16 @@ export class NosqlFsSource extends ol.source.Vector {
     );
   }
 
+  fetchFeatureCollection$(pagingSpec: PagingSpec): rx.Observable<FeatureCollection> {
+    return fetchObs$(this.composeFeatureCollectionWithFilteredTotalUrl(pagingSpec), getWithCommonHeaders()).pipe(
+      split(featureDelimiter), // Eigenlijk 1 lange lijn
+      mapToFeatureCollection
+    );
+  }
+
   private fetchCollectionSummary$(): rx.Observable<CollectionSummary> {
     return fetchObs$(this.composeCollectionSummaryUrl(), getWithCommonHeaders()).pipe(
-      split(featureDelimiter),
+      split(featureDelimiter), // Eigenlijk alles op 1 lijn
       mapToCollectionSummary
     );
   }

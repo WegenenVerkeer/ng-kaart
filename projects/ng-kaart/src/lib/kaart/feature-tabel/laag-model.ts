@@ -314,7 +314,7 @@ export namespace LaagModel {
 
   // Pas uiteindelijk de huidige Page aan indien de volledige data gebruikt wordt.
   const updateLaagPageDataFromServer: LaagModelUpdate = Update.createAsync((laag: LaagModel) =>
-    PageFetcher.pageFromServer({}, laagPageRequest(laag)).pipe(
+    PageFetcher.pageFromServer(laag.titel, laag.source, laagPageRequest(laag)).pipe(
       map(
         DataRequest.match({
           RequestingData: () => identity, // Doe voorlopig niks. We kunnen hier een progress spinner aanzetten
@@ -425,7 +425,6 @@ export namespace LaagModel {
 
   // TODO deze werkt enkel voor view in filter. Voor alle data niet nodig om te volgen
   export const followTotalFeaturesUpdate: LaagModelUpdate = Update.createAsync<LaagModel>(laag => {
-    console.log("****voor fetchTotal$");
     return subSpy("****fetchTotal$")(laag.source.fetchTotal$().pipe(map(totaalUpdate)));
   }) as LaagModelUpdate;
 
@@ -467,13 +466,12 @@ export namespace LaagModel {
   const clearPageIfMapAsFilterChangeUpdate: Function1<boolean, LaagModelUpdate> = newMapAsFilterSetting =>
     Update.createSync(laag => (laag.mapAsFilter !== newMapAsFilterSetting ? clearLaagPage(laag) : laag));
 
-  export const mapAsFilterUpdate: Function1<boolean, LaagModelUpdate> = newMapAsFilterSetting =>
+  export const setMapAsFilterUpdate: Function1<boolean, LaagModelUpdate> = newMapAsFilterSetting =>
     Update.combineAll(
       clearPageIfMapAsFilterChangeUpdate(newMapAsFilterSetting),
       pipe(
         newMapAsFilterSetting,
         unsafeMapAsFilterLens.set,
-        flowSpy("****voor andThenUpdatePageData"),
         andThenUpdatePageData
       )
     );

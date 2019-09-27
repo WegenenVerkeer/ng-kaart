@@ -1,12 +1,12 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, NgZone, ViewEncapsulation } from "@angular/core";
 import { array, option } from "fp-ts";
-import { flow, Function1, not, Refinement } from "fp-ts/lib/function";
+import { flow, Function1, Refinement } from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, map, mapTo, share, startWith, switchMap, take, tap } from "rxjs/operators";
+import { map, mapTo, share, startWith, switchMap, tap } from "rxjs/operators";
 import { isBoolean, isString } from "util";
 
-import { catOptions, subSpy } from "../../util/operators";
+import { subSpy } from "../../util/operators";
 import { join } from "../../util/string";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { KaartComponent } from "../kaart.component";
@@ -69,7 +69,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
   @Input()
   laagTitel: string;
 
-  constructor(kaart: KaartComponent, overzicht: FeatureTabelOverzichtComponent, ngZone: NgZone, private readonly cdr: ChangeDetectorRef) {
+  constructor(kaart: KaartComponent, overzicht: FeatureTabelOverzichtComponent, ngZone: NgZone) {
     super(kaart, ngZone);
 
     this.laag$ = subSpy("****laag$")(
@@ -102,31 +102,9 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
         )
     );
 
-    const maybePage$ = this.laag$.pipe(
-      tap(laag => console.log("*****maybePage$ 1", laag)),
-      map(LaagModel.pageLens.get),
-      tap(page => console.log("*****maybePage$ 2", page)),
-      share()
-    );
-
-    // this.mapAsFilterState$ = this.laag$.pipe(
-    //   map(LaagModel.mapAsFilterGetter.get),
-    //   debounceTime(40),
-    //   // De hack hieronder is nodig omdat Angular's change detection het equivalent van een distinctUntilChanged doet.
-    //   // Maw, als de waarde uit de observable niet verandert, dan gebeurt er niks. Ook niet als de gebruiker manueel de
-    //   // waarde aangepast heeft. Een eenvoudige rx.of(!onOff, onOff) is overigens niet voldoende omdat er intern ook het
-    //   // equivalent van een debounceTime gebeurt.
-    //   switchMap(onOff =>
-    //     rx.timer(0, 1).pipe(
-    //       take(2),
-    //       map(i => (i % 2 === 0 ? !onOff : onOff))
-    //     )
-    //   ),
-    //   share()
-    // );
-
     // Alle data voor de template wordt in 1 custom datastructuur gegoten. Dat heeft als voordeel dat er geen gezever is
-    // met observables die binnen *ngIf staan.
+    // met observables die binnen *ngIf staan. Het nadeel is frequentere updates omdat er geen distinctUntil is. Die zou
+    // immers de rows array moeten meenemen.
     this.templateData$ = this.laag$.pipe(
       map(laag => {
         const fieldNameSelections = LaagModel.fieldSelectionsLens.get(laag);
@@ -152,7 +130,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
 
     const sortUpdate$ = this.actionDataFor$("toggleSort", isString).pipe(map(LaagModel.sortFieldToggleUpdate));
 
-    const viewModeUpdate$ = this.actionDataFor$("mapAsFilter", isBoolean).pipe(map(LaagModel.mapAsFilterUpdate));
+    const viewModeUpdate$ = this.actionDataFor$("mapAsFilter", isBoolean).pipe(map(LaagModel.setMapAsFilterUpdate));
 
     const doUpdate$ = (titel: string) =>
       rx

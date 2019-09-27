@@ -4,20 +4,17 @@ import { Option } from "fp-ts/lib/Option";
 import { Ord } from "fp-ts/lib/Ord";
 import { pipe } from "fp-ts/lib/pipeable";
 import { Setoid } from "fp-ts/lib/Setoid";
-import { DateTime } from "luxon";
 import { Getter, Iso, Lens, Prism } from "monocle-ts";
 import { iso, Newtype } from "newtype-ts";
 import { NonNegativeInteger, prismNonNegativeInteger } from "newtype-ts/lib/NonNegativeInteger";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { map, startWith, take } from "rxjs/operators";
+import { catchError, map, startWith, take } from "rxjs/operators";
 
 import * as FilterTotaal from "../../filter/filter-totaal";
-import { NosqlFsSource } from "../../source";
-import * as arrays from "../../util/arrays";
-import { parseDate, parseDateTime } from "../../util/date-time";
-import { Feature } from "../../util/feature";
-import { PartialFunction1, PartialFunction2 } from "../../util/function";
+import { NosqlFsSource, PagingSpec } from "../../source";
+import { Feature, toOlFeature } from "../../util/feature";
+import { PartialFunction1 } from "../../util/function";
 import { isOfKind } from "../../util/kinded";
 import * as matchers from "../../util/matchers";
 import * as setoids from "../../util/setoid";
@@ -66,7 +63,7 @@ export interface PageRequest {
 
 export type PageFetcher = Function1<PageRequest, rx.Observable<DataRequest>>;
 
-export type FeatureCount = FeatureCountPending | FeatureCountFetched;
+export type FeatureCount = FeatureCountPending | FeatureCountFetched | FeatureCountFailed;
 
 export interface FeatureCountPending {
   readonly kind: "FeatureCountPending";
@@ -75,6 +72,10 @@ export interface FeatureCountPending {
 export interface FeatureCountFetched {
   readonly kind: "FeatureCountFetched";
   readonly count: number;
+}
+
+export interface FeatureCountFailed {
+  readonly kind: "FeatureCountFailed";
 }
 
 export interface FeatureCountRequest {
@@ -128,12 +129,16 @@ export namespace Page {
 
 export namespace FieldSorting {
   export const directionLens: Lens<FieldSorting, SortDirection> = Lens.fromProp<FieldSorting>()("direction");
+  export const fieldKeyLens: Lens<FieldSorting, string> = Lens.fromProp<FieldSorting>()("fieldKey");
 
   export const create: Curried2<SortDirection, ke.VeldInfo, FieldSorting> = direction => veldinfo => ({
     fieldKey: veldinfo.naam,
     direction,
     veldinfo
   });
+
+  export const toPagingSpecDirection = (fieldSorting: FieldSorting): PagingSpec.SortDirection =>
+    fieldSorting.direction === "ASCENDING" ? "ASC" : "DESC";
 }
 
 export namespace DataRequest {
@@ -199,17 +204,44 @@ export namespace PageFetcher {
       )(source)
     );
 
-  // TODO
-  export const pageFromServer: Function2<any, PageRequest, rx.Observable<DataRequest>> = (serverParams, pageRequest) => rx.EMPTY;
+  // we gebruiken geen streaming API. Net zoals het oude Geoloket dat ook niet doet.
+  export const pageFromServer: Function3<string, NosqlFsSource, PageRequest, rx.Observable<DataRequest>> = (titel, source, request) =>
+    source
+      .fetchFeatureCollection$({
+        count: Page.PageSize,
+        sortDirections: request.fieldSortings.map(FieldSorting.toPagingSpecDirection),
+        sortFields: pipe(
+          request.fieldSortings,
+          array.map(FieldSorting.fieldKeyLens.get),
+          array.map(Feature.fieldKeyToPropertyPath)
+        ),
+        start: Page.getterPageNumber.get(request.pageNumber)
+      })
+      .pipe(
+        map(featureCollection =>
+          DataRequest.DataReady(
+            request.pageNumber,
+            Page.asPageNumber(featureCollection.total).getOrElse(Page.first), // TODO dit is een hack
+            pipe(
+              featureCollection.features,
+              array.map(toOlFeature(titel)),
+              toRows(request.rowCreator)
+            )
+          )
+        ),
+        catchError(() => rx.of(DataRequest.RequestFailed))
+      );
 }
 
 export namespace FeatureCount {
   const setoidFeatureCountFetched: Setoid<FeatureCountFetched> = setoid.contramap(fcp => fcp.count, setoid.setoidNumber);
   const setoidFeatureCountPending: Setoid<FeatureCountPending> = setoid.fromEquals(() => true);
+  const setoidFeatureCountFailed: Setoid<FeatureCountFailed> = setoid.fromEquals(() => true);
 
   export const setoidFeatureCount: Setoid<FeatureCount> = setoids.byKindSetoid<FeatureCount, string>({
     FeatureCountFetched: setoidFeatureCountFetched,
-    FeatureCountPending: setoidFeatureCountPending
+    FeatureCountPending: setoidFeatureCountPending,
+    FeatureCountFailed: setoidFeatureCountFailed
   });
 
   export const isPending: Refinement<FeatureCount, FeatureCountPending> = (featureCount): featureCount is FeatureCountPending =>
@@ -218,6 +250,7 @@ export namespace FeatureCount {
     featureCount.kind === "FeatureCountFetched";
 
   export const pending: FeatureCountPending = { kind: "FeatureCountPending" };
+  export const failed: FeatureCountFailed = { kind: "FeatureCountFailed" };
 
   export const createFetched: Function1<number, FeatureCountFetched> = count => ({
     kind: "FeatureCountFetched",
@@ -242,10 +275,10 @@ export namespace FeatureCountFetcher {
     FeatureCount.createFetched(source.getFeaturesInExtent(featureCountRequest.dataExtent).length);
 
   const filterTotaalToFeatureCount: Function1<FilterTotaal.FilterTotaal, FeatureCount> = FilterTotaal.match({
-    TotaalOpTeHalen: (ft: FilterTotaal.TotaalOpTeHalen) => FeatureCount.pending,
-    TotaalOpgehaald: (ft: FilterTotaal.TotaalOpgehaald) => FeatureCount.pending,
-    TotaalOphalenMislukt: (ft: FilterTotaal.TotaalOphalenMislukt) => FeatureCount.pending,
-    TeVeelData: (ft: FilterTotaal.TeVeelData) => FeatureCount.pending
+    TotaalOpTeHalen: () => FeatureCount.pending as FeatureCount,
+    TotaalOpgehaald: (ft: FilterTotaal.TotaalOpgehaald) => FeatureCount.createFetched(ft.totaal),
+    TotaalOphalenMislukt: () => FeatureCount.failed,
+    TeVeelData: () => FeatureCount.failed
   });
 
   // Haalt het totaal aantal features van server.

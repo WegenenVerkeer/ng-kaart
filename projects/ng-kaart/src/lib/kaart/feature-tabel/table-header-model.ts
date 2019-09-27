@@ -19,7 +19,7 @@ export namespace TableHeader {
     titel: laag.titel,
     filterIsActive: laag.filterIsActive,
     hasFilter: laag.hasFilter,
-    count: laag.featureCount.kind === "FeatureCountPending" ? undefined : laag.featureCount.count
+    count: laag.featureCount.kind === "FeatureCountFetched" ? laag.featureCount.count : undefined
   });
 
   export const setoidTableHeader: Setoid<TableHeader> = setoid.getStructSetoid({

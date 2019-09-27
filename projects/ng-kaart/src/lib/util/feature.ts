@@ -81,6 +81,8 @@ export namespace Feature {
     ...properties(feature) // id in properties heeft dus voorrang
   });
 
+  export const fieldKeyToPropertyPath: Function1<string, string> = fieldKey => `properties.${fieldKey}`;
+
   export const getLaagnaam: PartialFunction1<ol.Feature, string> = feature => {
     const singleFeature = fromNullable(feature.get("features"))
       .filter(arrays.isArray)
