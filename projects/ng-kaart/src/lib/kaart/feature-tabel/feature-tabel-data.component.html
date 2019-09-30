@@ -27,7 +27,7 @@
                 'empty-field': row.velden[header.name].maybeValue.isNone()
               }"
             >
-              <mat-checkbox *ngIf="first" (click)="onAction('selectRow(row)')">&nbsp;</mat-checkbox>
+              <mat-checkbox *ngIf="first" (change)="onAction('selectRow', {row:row, selected:$event.checked})">&nbsp;</mat-checkbox>
               {{ row.velden[header.name].maybeValue.getOrElse("") }}
             </td>
           </tr>

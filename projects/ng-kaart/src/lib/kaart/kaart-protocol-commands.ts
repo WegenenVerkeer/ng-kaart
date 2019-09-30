@@ -515,8 +515,8 @@ export interface RegistreerErrorCmd {
 
 // De features zullen "geselecteerd" worden, ook al zouden ze geen onderdeel uitmaken van één van de lagen. Het is dus de
 // verantwoordelijkheid van de zender om enkel feature mee te geven die zichtbaar zijn.
-// De gegeven features vervangen de eventueel reeds geselecteerde features. Maw, om alles te deslecteren, kan dit commando verzonden worden
-// met een lege verzameling features.
+// De gegeven features vervangen enkel de eventueel reeds geselecteerde features indien incremental op false staat.
+// Indien incremental true is wordt de nieuwe met de bestaande selectie gecombineerd.
 export interface SelecteerFeaturesCmd {
   readonly type: "SelecteerFeatures";
   readonly features: Array<ol.Feature>;
@@ -525,7 +525,7 @@ export interface SelecteerFeaturesCmd {
 
 export interface DeselecteerFeatureCmd {
   readonly type: "DeselecteerFeature";
-  readonly id: string;
+  readonly ids: Array<string>;
 }
 
 export interface DeselecteerAlleFeaturesCmd {
@@ -938,8 +938,8 @@ export function SelecteerExtraFeaturesCmd(features: Array<ol.Feature>): Selectee
   return { type: "SelecteerFeatures", features, incremental: true };
 }
 
-export function DeselecteerFeatureCmd(id: string): DeselecteerFeatureCmd {
-  return { type: "DeselecteerFeature", id };
+export function DeselecteerFeatureCmd(ids: Array<string>): DeselecteerFeatureCmd {
+  return { type: "DeselecteerFeature", ids };
 }
 
 export function DeselecteerAlleFeaturesCmd(): DeselecteerAlleFeaturesCmd {

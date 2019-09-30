@@ -1198,20 +1198,25 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       const currentFeatures = model.geselecteerdeFeatures.getArray();
       const newFeatures = cmnd.features;
 
-      const featuresToRemove = array.difference(Feature.setoidFeaturePropertyId)(currentFeatures, newFeatures);
-      const featuresToAdd = array.difference(Feature.setoidFeaturePropertyId)(newFeatures, currentFeatures);
-      if (featuresToRemove.length === currentFeatures.length) {
-        model.geselecteerdeFeatures.clear();
-      } else {
-        featuresToRemove.forEach(f => model.geselecteerdeFeatures.remove(f));
+      if (!cmnd.incremental) {
+        const featuresToRemove = array.difference(Feature.setoidFeaturePropertyId)(currentFeatures, newFeatures);
+        if (featuresToRemove.length === currentFeatures.length) {
+          model.geselecteerdeFeatures.clear();
+        } else {
+          featuresToRemove.forEach(f => model.geselecteerdeFeatures.remove(f));
+        }
       }
+
+      const featuresToAdd = array.difference(Feature.setoidFeaturePropertyId)(newFeatures, currentFeatures);
       model.geselecteerdeFeatures.extend(featuresToAdd);
+
       return ModelWithResult(model);
     }
 
     function deselecteerFeature(cmnd: prt.DeselecteerFeatureCmd): ModelWithResult<Msg> {
-      const maybeSelectedFeature = fromNullable(model.geselecteerdeFeatures.getArray().find(f => f.get("id") === cmnd.id));
-      forEach(maybeSelectedFeature, selected => model.geselecteerdeFeatures.remove(selected));
+      const toDeselect = model.geselecteerdeFeatures.getArray().filter(f => cmnd.ids.includes(f.get("id")));
+
+      toDeselect.forEach(deselect => model.geselecteerdeFeatures.remove(deselect));
       return ModelWithResult(model);
     }
 

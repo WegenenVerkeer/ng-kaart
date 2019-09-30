@@ -1,18 +1,21 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone, ViewEncapsulation } from "@angular/core";
 import { array } from "fp-ts";
+import * as fpArray from "fp-ts/lib/Array";
 import { intercalate } from "fp-ts/lib/Foldable2v";
 import { Curried2, flow, Function1, Refinement } from "fp-ts/lib/function";
 import { monoidString } from "fp-ts/lib/Monoid";
+import * as fpOption from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
 import { distinctUntilChanged, map, mapTo, sample, share, switchMap, tap } from "rxjs/operators";
 import { isString } from "util";
 
+import { Feature } from "../../util/feature";
 import { catOptions, collectOption, subSpy } from "../../util/operators";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { kaartLogOnlyWrapper } from "../kaart-internal-messages";
 import * as cmd from "../kaart-protocol-commands";
-import { DeselecteerFeatureCmd, SelecteerExtraFeaturesCmd } from "../kaart-protocol-commands";
+import { DeselecteerAlleFeaturesCmd, DeselecteerFeatureCmd, SelecteerExtraFeaturesCmd } from "../kaart-protocol-commands";
 import { KaartComponent } from "../kaart.component";
 
 import { Page, Row } from "./data-provider";
@@ -137,15 +140,36 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     this.runInViewReady(rx.merge(doUpdate$));
 
     const selectAll$ = this.rawActionDataFor$("selectAll");
+
+    const selectRow$ = this.rawActionDataFor$("selectRow");
     this.runInViewReady(
-      selectAll$.pipe(
-        tap(select => {
-          console.log("selectAll: ", select);
-          if (select) {
-            this.dispatch(SelecteerExtraFeaturesCmd([]));
-            // selecteer alles van binnen huidige page
+      selectRow$.pipe(
+        tap(data => {
+          if (data.selected) {
+            this.dispatch(SelecteerExtraFeaturesCmd([data.row.feature]));
           } else {
-            // deselecteer alles van huidige page
+            const ids = [data.row]
+              .map(row => Feature.propertyId(row.feature))
+              .filter(fpOption.isSome)
+              .map(fpOption.toNullable);
+            this.dispatch(DeselecteerFeatureCmd(ids));
+          }
+        })
+      )
+    );
+
+    this.runInViewReady(
+      rx.combineLatest([this.rows$, selectAll$]).pipe(
+        tap(([rows, selected]) => {
+          console.log("selectAll: ", selected);
+          if (selected) {
+            this.dispatch(SelecteerExtraFeaturesCmd(rows.map(row => row.feature)));
+          } else {
+            const ids = rows
+              .map(row => Feature.propertyId(row.feature))
+              .filter(fpOption.isSome)
+              .map(fpOption.toNullable);
+            this.dispatch(DeselecteerFeatureCmd(ids));
           }
         })
       )
