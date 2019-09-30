@@ -146,7 +146,6 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
             // selecteer alles van binnen huidige page
           } else {
             // deselecteer alles van huidige page
-            this.dispatch(DeselecteerFeatureCmd([]));
           }
         })
       )

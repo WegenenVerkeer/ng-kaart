@@ -24,11 +24,11 @@
             <td
               *ngFor="let header of headers.headers; let first = first"
               [ngClass]="{
-                'empty-field': row[header.name].maybeValue.isNone()
+                'empty-field': row.velden[header.name].maybeValue.isNone()
               }"
             >
               <mat-checkbox *ngIf="first" (click)="onAction('selectRow(row)')">&nbsp;</mat-checkbox>
-              {{ row[header.name].maybeValue.getOrElse("") }}
+              {{ row.velden[header.name].maybeValue.getOrElse("") }}
             </td>
           </tr>
         </tbody>

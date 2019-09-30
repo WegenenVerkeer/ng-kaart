@@ -27,7 +27,12 @@ export interface Field {
   readonly maybeValue: Option<ValueType>;
 }
 
-export type Row = Record<string, Field>;
+export type Velden = Record<string, Field>;
+
+export interface Row {
+  readonly feature: ol.Feature;
+  readonly velden: Velden;
+}
 
 export interface PageNumber extends Newtype<{ readonly PAGENUMBER: unique symbol }, NonNegativeInteger> {}
 
@@ -134,13 +139,26 @@ export namespace Row {
 
   export const featureToRow: Curried2<ke.VeldInfo[], ol.Feature, Row> = veldInfos => feature => {
     const propertiesWithId = Feature.propertiesWithId(feature);
-    return veldInfos.reduce((row, vi) => {
-      row[vi.naam] = extractField(propertiesWithId, vi);
-      return row;
+    const velden = veldInfos.reduce((veld, vi) => {
+      veld[vi.naam] = extractField(propertiesWithId, vi);
+      return veld;
     }, {});
+    return {
+      feature: feature,
+      velden: velden
+    };
   };
 
-  export const addField: Function2<string, Field, Endomorphism<Row>> = (label, field) => row => {
+  export const featureToVelden: Curried2<ke.VeldInfo[], ol.Feature, Velden> = veldInfos => feature => {
+    const propertiesWithId = Feature.propertiesWithId(feature);
+    const velden = veldInfos.reduce((veld, vi) => {
+      veld[vi.naam] = extractField(propertiesWithId, vi);
+      return veld;
+    }, {});
+    return velden;
+  };
+
+  export const addField: Function2<string, Field, Endomorphism<Velden>> = (label, field) => row => {
     const newRow = { ...row };
     newRow[label] = field;
     return newRow;
