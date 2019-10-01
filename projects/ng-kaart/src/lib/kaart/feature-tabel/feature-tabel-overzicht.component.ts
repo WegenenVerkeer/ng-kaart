@@ -1,18 +1,21 @@
 import { animate, style, transition, trigger } from "@angular/animations";
 import { ChangeDetectionStrategy, Component, NgZone, ViewEncapsulation } from "@angular/core";
 import { array, setoid } from "fp-ts";
+import { Function1 } from "fp-ts/lib/function";
 import { Setoid } from "fp-ts/lib/Setoid";
 import * as rx from "rxjs";
 import { distinctUntilChanged, map, observeOn, scan, share, shareReplay, switchMap, take, takeUntil, tap } from "rxjs/operators";
 
-import { subSpy } from "../../util";
+import { collectOption } from "../../util";
 import { Consumer1 } from "../../util/function";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
 import { KaartComponent } from "../kaart.component";
 import { kaartLogger } from "../log";
 
-import { LaagModel, SyncUpdate, TableModel, Update } from "./model";
+import { LaagModel } from "./laag-model";
+import { TableModel } from "./table-model";
+import { Update } from "./update";
 
 export const FeatureTabelUiSelector = "FeatureTabel";
 
@@ -46,8 +49,9 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
   public readonly toonFilters$: rx.Observable<boolean>;
 
   // Voor de child components (Op DOM niveau. Access via Angular injection).
-  public readonly model$: rx.Observable<TableModel>;
-  public readonly updater: Consumer1<Update>;
+  public readonly tableModel$: rx.Observable<TableModel>;
+  public readonly laagModel$: Function1<string, rx.Observable<LaagModel>>;
+  public readonly laagUpdater: Function1<string, Consumer1<LaagModel.LaagModelUpdate>>;
 
   constructor(kaart: KaartComponent, ngZone: NgZone) {
     super(kaart, ngZone);
@@ -65,58 +69,41 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
     const updateZoomAndExtent$ = this.modelChanges.viewinstellingen$.pipe(map(vi => TableModel.updateZoomAndExtent(vi)));
 
     // De volgende combinatie zet Updates die asynchroon gegenereerd zijn om in toekomstige synchrone updates
-    const asyncUpdatesSubj: rx.Subject<SyncUpdate> = new rx.Subject();
-    const delayedUpdates$ = asyncUpdatesSubj.pipe(map(TableModel.syncUpdateOnly));
+    const asyncUpdatesSubj: rx.Subject<TableModel.TableModelSyncUpdate> = new rx.Subject();
+    const delayedUpdates$: rx.Observable<TableModel.TableModelUpdate> = asyncUpdatesSubj.pipe(map(Update.createSync));
 
-    // Voor de view als filter kunnen we gewoon de zichtbare features volgen. Het model zal de updates neutraliseren als
-    // het niet in de view als filter mode is.
-    const directPageUpdates$: rx.Observable<Update> = subSpy("****directPageUpdates$")(
-      rx
-        .combineLatest(
-          voorgrondLagen$.pipe(distinctUntilChanged(equalTitels.equals)),
-          this.modelChanges.viewinstellingen$, // OL past collectie niet aan voor elke zoom/pan, dus moeten we update forceren
-          (vectorlagen, _) => vectorlagen
-        )
-        .pipe(
-          switchMap(vectorLagen =>
-            rx.concat(
-              rx.from(vectorLagen.map(TableModel.featuresUpdate)), // Dit is de "geforceerde" update
-              rx.merge(...vectorLagen.map(TableModel.followViewFeatureUpdates))
-            )
-          )
-        )
-    );
+    const clientUpdateSubj: rx.Subject<TableModel.TableModelUpdate> = new rx.Subject();
+    this.laagUpdater = (titel: string) => (update: LaagModel.LaagModelUpdate) => {
+      console.log("****we hebben een update voor", titel, update);
+      return clientUpdateSubj.next(TableModel.liftLaagUpdate(titel)(update));
+    };
+    const laagInTablesUpdate$: rx.Observable<TableModel.TableModelUpdate> = clientUpdateSubj;
 
-    const clientUpdateSubj: rx.Subject<Update> = new rx.Subject();
-    this.updater = (update: Update) => clientUpdateSubj.next(update);
-
-    const modelUpdate$: rx.Observable<Update> = rx.merge(
+    const modelUpdate$: rx.Observable<TableModel.TableModelUpdate> = rx.merge(
       delayedUpdates$,
       updateLagen$,
       updateZoomAndExtent$,
-      directPageUpdates$,
-      clientUpdateSubj
+      laagInTablesUpdate$
     );
 
     // Dit is het zenuwcenter van de hele component en zijn afhankelijke componenten. Alle andere observables moeten
     // hier van aftakken. Dit is het alternatief voor alles in de kaartreducer te steken. Dat is niet aangewezen, want
     // de state is enkel hier nodig. Bovendien hebben we het hier opgelost met pure functies ipv messages + lookup.
-    this.model$ = this.viewReady$.pipe(
+    this.tableModel$ = this.viewReady$.pipe(
       switchMap(() =>
         this.modelChanges.viewinstellingen$.pipe(
           take(1), // We hebben een enkele zoom, etc nodig om te bootstrappen. Daarna volgen we via Updates
           switchMap(vi =>
             modelUpdate$.pipe(
-              scan((model: TableModel, update: Update) => {
-                console.log("***origineel model", model, update);
+              scan((model: TableModel, update: TableModel.TableModelUpdate) => {
                 const newModel = update.syncUpdate(model);
                 console.log("***aangepast model", newModel);
                 update
                   .asyncUpdate(newModel)
                   .pipe(
                     observeOn(rx.asapScheduler), // voer eerst de rest van de ketting uit
-                    tap(page => console.log("***page", page)),
-                    takeUntil(rx.timer(6000)) // Om helemaal zeker te zijn dat de observable ooit unsubscribed wordt
+                    tap(delayed => console.log("***delayed", delayed)),
+                    takeUntil(rx.timer(60000)) // Om helemaal zeker te zijn dat de observable ooit unsubscribed wordt
                   )
                   .subscribe({
                     next: syncUpdate => asyncUpdatesSubj.next(syncUpdate),
@@ -128,13 +115,15 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
           )
         )
       ),
-      shareReplay(1) // ook late subscribers moet toestand van model kennen
+      shareReplay(1) // ook late subscribers moeten toestand van model kennen
     );
+
+    this.laagModel$ = titel => this.tableModel$.pipe(collectOption(TableModel.laagForTitel(titel)));
 
     // Het is belangrijk dat deze (en soortgelijke) observable maar emit op het moment dat het echt nodig is. Zeker niet
     // elke keer dat het model update. Bij een update worden immers alle childcomponents opnieuw aangemaakt. Wat dus
     // verlies van DOM + state betekent.
-    this.laagTitels$ = this.model$.pipe(
+    this.laagTitels$ = this.tableModel$.pipe(
       map(model => model.laagData.map(LaagModel.titelLens.get)),
       distinctUntilChanged(array.getSetoid(setoid.setoidString).equals)
     );

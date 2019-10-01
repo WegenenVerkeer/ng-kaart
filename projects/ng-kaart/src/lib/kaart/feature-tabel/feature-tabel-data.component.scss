@@ -18,7 +18,6 @@ $footer-height: 48px;
     overflow: auto;
 
     table {
-      min-width: 100vw;
       width: auto;
       display: grid;
       border-collapse: collapse;
@@ -140,8 +139,15 @@ $footer-height: 48px;
 
   .feature-table-data-footer {
     height: $footer-height;
-    width: 100%;
     overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+
+    .feature-table-data-view-mode-selector {
+      margin-right: 2em;
+    }
   }
 }
 

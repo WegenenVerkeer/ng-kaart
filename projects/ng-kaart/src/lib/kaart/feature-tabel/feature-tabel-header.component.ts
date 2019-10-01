@@ -9,7 +9,8 @@ import * as cmd from "../kaart-protocol-commands";
 import { KaartComponent } from "../kaart.component";
 
 import { FeatureTabelOverzichtComponent } from "./feature-tabel-overzicht.component";
-import { TableHeader, TableModel } from "./model";
+import { TableHeader } from "./table-header-model";
+import { TableModel } from "./table-model";
 
 @Component({
   selector: "awv-feature-tabel-header",
@@ -26,7 +27,7 @@ export class FeatureTabelHeaderComponent extends KaartChildComponentBase {
   constructor(kaart: KaartComponent, overzicht: FeatureTabelOverzichtComponent, ngZone: NgZone) {
     super(kaart, ngZone);
 
-    const model$ = overzicht.model$;
+    const model$ = overzicht.tableModel$;
 
     const laag$ = this.viewReady$.pipe(
       // De input is pas beschikbaar nadat de view klaar is

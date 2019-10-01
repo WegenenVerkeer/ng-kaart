@@ -4,35 +4,23 @@ import { Option } from "fp-ts/lib/Option";
 import { Ord } from "fp-ts/lib/Ord";
 import { pipe } from "fp-ts/lib/pipeable";
 import { Setoid } from "fp-ts/lib/Setoid";
-import { DateTime } from "luxon";
 import { Getter, Iso, Lens, Prism } from "monocle-ts";
 import { iso, Newtype } from "newtype-ts";
 import { NonNegativeInteger, prismNonNegativeInteger } from "newtype-ts/lib/NonNegativeInteger";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { map, startWith, take } from "rxjs/operators";
+import { catchError, map, startWith, take } from "rxjs/operators";
 
-import * as arrays from "../../util/arrays";
-import { parseDate, parseDateTime } from "../../util/date-time";
-import { Feature } from "../../util/feature";
-import { PartialFunction1, PartialFunction2 } from "../../util/function";
+import * as FilterTotaal from "../../filter/filter-totaal";
+import { NosqlFsSource, PagingSpec } from "../../source";
+import { Feature, toOlFeature } from "../../util/feature";
+import { PartialFunction1 } from "../../util/function";
 import { isOfKind } from "../../util/kinded";
+import * as matchers from "../../util/matchers";
 import * as setoids from "../../util/setoid";
 import * as ke from "../kaart-elementen";
 
-export type ValueType = string | number | boolean | DateTime;
-
-// Zou kunen new-type zijn. Afwachten of er nog properties nuttig zijn
-export interface Field {
-  readonly maybeValue: Option<ValueType>;
-}
-
-export type Velden = Record<string, Field>;
-
-export interface Row {
-  readonly feature: ol.Feature;
-  readonly velden: Velden;
-}
+import { Row, ValueType } from "./row-model";
 
 export interface PageNumber extends Newtype<{ readonly PAGENUMBER: unique symbol }, NonNegativeInteger> {}
 
@@ -75,7 +63,7 @@ export interface PageRequest {
 
 export type PageFetcher = Function1<PageRequest, rx.Observable<DataRequest>>;
 
-export type FeatureCount = FeatureCountPending | FeatureCountFetched;
+export type FeatureCount = FeatureCountPending | FeatureCountFetched | FeatureCountFailed;
 
 export interface FeatureCountPending {
   readonly kind: "FeatureCountPending";
@@ -86,83 +74,20 @@ export interface FeatureCountFetched {
   readonly count: number;
 }
 
+export interface FeatureCountFailed {
+  readonly kind: "FeatureCountFailed";
+}
+
 export interface FeatureCountRequest {
   readonly dataExtent: ol.Extent;
 }
 
 export type FeatureCountFetcher = Function1<FeatureCountRequest, rx.Observable<FeatureCount>>;
 
-// Zou kunen new-type zijn. Afwachten of er nog properties nuttig zijn
-interface Properties {
-  readonly [key: string]: ValueType | Properties;
-}
-
 export namespace SortDirection {
   export const setoidSortDirection: Setoid<SortDirection> = setoid.setoidString;
 
   export const invert: Endomorphism<SortDirection> = direction => (direction === "ASCENDING" ? "DESCENDING" : "ASCENDING");
-}
-
-export namespace Row {
-  const Field: Function1<Option<ValueType>, Field> = maybeValue => ({ maybeValue });
-
-  const emptyField: Field = Field(option.none);
-
-  // We zouden dit ook helemaal naar de NoSqlFsSource kunnen schuiven (met een Either om geen info te verliezen).
-  const matchingTypeValue: PartialFunction2<any, ke.VeldInfo, ValueType> = (value, veldinfo) =>
-    option
-      .fromPredicate<ValueType>(v => typeof v === "number" && (veldinfo.type === "double" || veldinfo.type === "integer"))(value)
-      .orElse(() => option.fromPredicate<boolean>(v => typeof v === "boolean" && veldinfo.type === "boolean")(value))
-      .orElse(() =>
-        option
-          .fromPredicate<string>(v => typeof v === "string" && veldinfo.type === "datetime")(value)
-          .chain(v => parseDateTime(option.fromNullable(veldinfo.parseFormat))(v))
-      )
-      .orElse(() =>
-        option
-          .fromPredicate<string>(v => typeof v === "string" && veldinfo.type === "date")(value)
-          .chain(v => parseDate(option.fromNullable(veldinfo.parseFormat))(v))
-      )
-      .orElse(() => option.fromPredicate<string>(v => typeof v === "string" && veldinfo.type === "string")(value));
-
-  const nestedPropertyValue: Function3<Properties, string[], ke.VeldInfo, Field> = (properties, path, veldinfo) =>
-    array.fold(path, emptyField, (head, tail) =>
-      arrays.isEmpty(tail)
-        ? Field(option.fromNullable(properties[head]).chain(value => matchingTypeValue(value, veldinfo)))
-        : typeof properties[head] === "object"
-        ? nestedPropertyValue(properties[head] as Properties, tail, veldinfo)
-        : emptyField
-    );
-
-  export const extractField: Function2<Properties, ke.VeldInfo, Field> = (properties, veldinfo) =>
-    nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo);
-
-  export const featureToRow: Curried2<ke.VeldInfo[], ol.Feature, Row> = veldInfos => feature => {
-    const propertiesWithId = Feature.propertiesWithId(feature);
-    const velden = veldInfos.reduce((veld, vi) => {
-      veld[vi.naam] = extractField(propertiesWithId, vi);
-      return veld;
-    }, {});
-    return {
-      feature: feature,
-      velden: velden
-    };
-  };
-
-  export const featureToVelden: Curried2<ke.VeldInfo[], ol.Feature, Velden> = veldInfos => feature => {
-    const propertiesWithId = Feature.propertiesWithId(feature);
-    const velden = veldInfos.reduce((veld, vi) => {
-      veld[vi.naam] = extractField(propertiesWithId, vi);
-      return veld;
-    }, {});
-    return velden;
-  };
-
-  export const addField: Function2<string, Field, Endomorphism<Velden>> = (label, field) => row => {
-    const newRow = { ...row };
-    newRow[label] = field;
-    return newRow;
-  };
 }
 
 export namespace Page {
@@ -204,12 +129,16 @@ export namespace Page {
 
 export namespace FieldSorting {
   export const directionLens: Lens<FieldSorting, SortDirection> = Lens.fromProp<FieldSorting>()("direction");
+  export const fieldKeyLens: Lens<FieldSorting, string> = Lens.fromProp<FieldSorting>()("fieldKey");
 
   export const create: Curried2<SortDirection, ke.VeldInfo, FieldSorting> = direction => veldinfo => ({
     fieldKey: veldinfo.naam,
     direction,
     veldinfo
   });
+
+  export const toPagingSpecDirection = (fieldSorting: FieldSorting): PagingSpec.SortDirection =>
+    fieldSorting.direction === "ASCENDING" ? "ASC" : "DESC";
 }
 
 export namespace DataRequest {
@@ -227,28 +156,11 @@ export namespace DataRequest {
   };
 
   export const isDataReady: Refinement<DataRequest, DataReady> = isOfKind("DataReady");
+
+  export const match: <A>(_: matchers.FullKindMatcher<DataRequest, A>) => Function1<DataRequest, A> = matchers.matchKind;
 }
 
 export namespace PageFetcher {
-  export const sourceBasedPageFetcher: Function1<ol.source.Vector, PageFetcher> = source => pageRequest => {
-    // We willen zo vlug als mogelijk de data bijwerken. Het is evenwel mogelijk dat het een tijd duurt vooraleer de
-    // data binnen komt en we willen ook niet blijven wachten. Daarnaast willen we de observable niet voor altijd open
-    // houden.
-    return rx.merge(
-      rx.of(DataRequest.RequestingData),
-      rx.timer(2000).pipe(
-        take(1), // bij de start zijn de features nog niet geladen. beter uiteraard wachten op event van source
-        map(() =>
-          DataRequest.DataReady(
-            pageRequest.pageNumber,
-            Page.last(FeatureCountFetcher.countFromSource(source, pageRequest).count),
-            array.take(Page.PageSize, source.getFeaturesInExtent(pageRequest.dataExtent).map(pageRequest.rowCreator))
-          )
-        )
-      )
-    );
-  };
-
   const featuresInExtent: Curried2<ol.Extent, ol.source.Vector, ol.Feature[]> = extent => source => source.getFeaturesInExtent(extent);
   const takePage: Function1<PageNumber, Endomorphism<ol.Feature[]>> = pageNumber => array.filterWithIndex(Page.isInPage(pageNumber));
   const toRows: Curried2<Function1<ol.Feature, Row>, ol.Feature[], Row[]> = array.map;
@@ -291,15 +203,45 @@ export namespace PageFetcher {
         toRows(pageRequest.rowCreator)
       )(source)
     );
+
+  // we gebruiken geen streaming API. Net zoals het oude Geoloket dat ook niet doet.
+  export const pageFromServer: Function3<string, NosqlFsSource, PageRequest, rx.Observable<DataRequest>> = (titel, source, request) =>
+    source
+      .fetchFeatureCollection$({
+        count: Page.PageSize,
+        sortDirections: request.fieldSortings.map(FieldSorting.toPagingSpecDirection),
+        sortFields: pipe(
+          request.fieldSortings,
+          array.map(FieldSorting.fieldKeyLens.get),
+          array.map(Feature.fieldKeyToPropertyPath)
+        ),
+        start: Page.getterPageNumber.get(request.pageNumber)
+      })
+      .pipe(
+        map(featureCollection =>
+          DataRequest.DataReady(
+            request.pageNumber,
+            Page.asPageNumber(featureCollection.total).getOrElse(Page.first), // TODO dit is een hack
+            pipe(
+              featureCollection.features,
+              array.map(toOlFeature(titel)),
+              toRows(request.rowCreator)
+            )
+          )
+        ),
+        catchError(() => rx.of(DataRequest.RequestFailed))
+      );
 }
 
 export namespace FeatureCount {
   const setoidFeatureCountFetched: Setoid<FeatureCountFetched> = setoid.contramap(fcp => fcp.count, setoid.setoidNumber);
   const setoidFeatureCountPending: Setoid<FeatureCountPending> = setoid.fromEquals(() => true);
+  const setoidFeatureCountFailed: Setoid<FeatureCountFailed> = setoid.fromEquals(() => true);
 
   export const setoidFeatureCount: Setoid<FeatureCount> = setoids.byKindSetoid<FeatureCount, string>({
     FeatureCountFetched: setoidFeatureCountFetched,
-    FeatureCountPending: setoidFeatureCountPending
+    FeatureCountPending: setoidFeatureCountPending,
+    FeatureCountFailed: setoidFeatureCountFailed
   });
 
   export const isPending: Refinement<FeatureCount, FeatureCountPending> = (featureCount): featureCount is FeatureCountPending =>
@@ -308,6 +250,7 @@ export namespace FeatureCount {
     featureCount.kind === "FeatureCountFetched";
 
   export const pending: FeatureCountPending = { kind: "FeatureCountPending" };
+  export const failed: FeatureCountFailed = { kind: "FeatureCountFailed" };
 
   export const createFetched: Function1<number, FeatureCountFetched> = count => ({
     kind: "FeatureCountFetched",
@@ -330,4 +273,17 @@ export namespace FeatureCountFetcher {
 
   export const countFromSource: Function2<ol.source.Vector, FeatureCountRequest, FeatureCountFetched> = (source, featureCountRequest) =>
     FeatureCount.createFetched(source.getFeaturesInExtent(featureCountRequest.dataExtent).length);
+
+  const filterTotaalToFeatureCount: Function1<FilterTotaal.FilterTotaal, FeatureCount> = FilterTotaal.match({
+    TotaalOpTeHalen: () => FeatureCount.pending as FeatureCount,
+    TotaalOpgehaald: (ft: FilterTotaal.TotaalOpgehaald) => FeatureCount.createFetched(ft.totaal),
+    TotaalOphalenMislukt: () => FeatureCount.failed,
+    TeVeelData: () => FeatureCount.failed
+  });
+
+  // Haalt het totaal aantal features van server.
+  // De onderliggende observable kan op elk moment emitten. In concreto wanneer een filter gezet wordt.
+  // TODO. Gezien deze obs blijft leven, moeten we afsluiten er een nieuwe FeatureCountRequest binnen komt.
+  export const serverBasedFeatureCountFetcher: Function1<NosqlFsSource, FeatureCountFetcher> = source => () =>
+    source.fetchTotal$().pipe(map(filterTotaalToFeatureCount));
 }

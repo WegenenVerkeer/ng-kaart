@@ -1,8 +1,8 @@
-<div class="feature-table-data-content">
+<div class="feature-table-data-content" *ngIf="(templateData$ | async) as data">
   <div class="feature-table-data-main">
-    <div *ngIf="(dataAvailable$ | async)">
+    <div *ngIf="data.dataAvailable">
       <table
-        *ngIf="(headers$ | async) as headers"
+        *ngIf="data.headers as headers"
         [ngStyle]="{ 'grid-template-columns': headers.columnWidths }"
       >
         <thead>
@@ -20,7 +20,7 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let row of (rows$ | async)" [ngClass]="{'geselecteerd' : (isSelected$(row) | async)}">
+          <tr *ngFor="let row of data.rows" [ngClass]="{'geselecteerd' : (isSelected$(row) | async)}">
             <td
               *ngFor="let header of headers.headers; let first = first"
               [ngClass]="{
@@ -34,12 +34,12 @@
         </tbody>
       </table>
     </div>
-    <div *ngIf="(noDataAvailable$ | async)" class="feature-table-data-no-data">
+    <div *ngIf="!data.dataAvailable" class="feature-table-data-no-data">
       Geen data op dit zoomniveau
     </div>
   </div>
   <div
-    *ngIf="(dataAvailable$ | async)"
+    *ngIf="data.dataAvailable"
     class="feature-tabel-data-header-menu"
     #headerMenu
   >
@@ -70,7 +70,7 @@
         <button
           mat-menu-item
           *ngFor="
-            let fieldNameSelection of (fieldNameSelections$ | async);
+            let fieldNameSelection of data.fieldNameSelections;
             let first = first
           "
           [disabled]="first || fieldNameSelection.sortDirection.isSome()"
@@ -87,8 +87,16 @@
   </div>
   <div class="feature-table-data-footer">
     <span>Aantal: {{numberOfSelectedFeatures$ | async}}</span>
+    <div class="feature-table-data-view-mode-selector">
+      <mat-slide-toggle
+        [checked]="data.mapAsFilterState"
+        [disabled]="data.cannotChooseMapAsFilter"
+        (change)="onAction('mapAsFilter', $event.checked)"
+        >Kaart als filter</mat-slide-toggle
+      >
+    </div>
     <awv-feature-tabel-pager
-      *ngIf="(dataAvailable$ | async)"
+      *ngIf="data.dataAvailable"
     ></awv-feature-tabel-pager>
   </div>
 </div>

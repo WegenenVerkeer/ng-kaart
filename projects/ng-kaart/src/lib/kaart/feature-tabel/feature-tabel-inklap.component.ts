@@ -1,7 +1,7 @@
 import { animate, state, style, transition, trigger } from "@angular/animations";
 import { AfterViewInit, Component, ElementRef, HostListener, NgZone, ViewChild } from "@angular/core";
 import * as rx from "rxjs";
-import { distinctUntilChanged, filter, map, tap } from "rxjs/operators";
+import { filter, map } from "rxjs/operators";
 
 import { ofType } from "../../util";
 import { observeOnAngular } from "../../util/observe-on-angular";
@@ -12,6 +12,7 @@ import { KaartComponent } from "../kaart.component";
 import { TabelStateChange } from "../model-changes";
 
 import { FeatureTabelOverzichtComponent } from "./feature-tabel-overzicht.component";
+import { TableModel } from "./table-model";
 
 @Component({
   selector: "awv-feature-tabel-inklap",
@@ -89,7 +90,7 @@ export class FeatureTabelInklapComponent extends KaartChildComponentBase impleme
   ngAfterViewInit() {
     // volg de lagen en stuur "NietMogelijk" event indien niet getoond moet worden.
     this.bindToLifeCycle(
-      rx.combineLatest(this.magGetoondWorden$, this.tabelOverzicht.model$.pipe(map(model => model.laagData.length > 0)))
+      rx.combineLatest(this.magGetoondWorden$, this.tabelOverzicht.tableModel$.pipe(map(TableModel.hasLagen)))
     ).subscribe(([isEnabled, moetEnabledWorden]) => {
       if (isEnabled !== moetEnabledWorden) {
         this.tabelZichtbaar = false;
