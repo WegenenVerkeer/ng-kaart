@@ -29,6 +29,21 @@ $footer-height: 48px;
     tr {
       display: contents;
       scroll-snap-type: x mandatory;
+      &:hover, &.geselecteerd {
+        background-color: rgba(0, 0, 0, 0.04);
+        cursor: pointer;
+      }
+    }
+
+    tr {
+      &:hover, &.geselecteerd {
+        background-color: rgba(0, 0, 0, 0.04);
+        cursor: pointer;
+
+        td {
+          background-color: rgba(0, 0, 0, 0.04);
+        }
+      }
     }
 
     th,
@@ -64,7 +79,7 @@ $footer-height: 48px;
     tr td:first-child {
       position: sticky;
       left: 0;
-      background-color: white;
+      //background-color: white;
       z-index: 2;
     }
 
@@ -101,6 +116,9 @@ $footer-height: 48px;
       text-align: center;
       color: $awv-secondary-d1;
     }
+
+
+
   }
 
   .feature-tabel-data-header-menu {

@@ -200,7 +200,7 @@ const viewinstellingen: Function1<ol.Map, prt.Viewinstellingen> = olmap => ({
 });
 
 export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> = (model, changer) => {
-  const geselecteerdeFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.geselecteerdeFeatures, "add", "remove").pipe(
+  const geselecteerdeFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.geselecteerdeFeatures.features, "add", "remove").pipe(
     debounceTime(20),
     map(evt => [...(evt.target as ol.Collection<ol.Feature>).getArray()]), // getArray geeft altijd dezelfde array terug!
     startWith([] as ol.Feature[]),

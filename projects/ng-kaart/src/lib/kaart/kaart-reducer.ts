@@ -451,10 +451,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
     function verwijderGeselecteerdeFeaturesVanLaag(laagnaam: string) {
       // Als er features van onze laag geselecteerd waren, moeten we die verwijderen uit de door ol gemanagede collection.
-      const teVerwijderenGeselecteerdeFeatures = model.geselecteerdeFeatures
+      const teVerwijderenGeselecteerdeFeatures = model.geselecteerdeFeatures.features
         .getArray()
         .filter(feature => Feature.getLaagnaam(feature).exists(ln => ln === laagnaam));
-      teVerwijderenGeselecteerdeFeatures.forEach(feature => model.geselecteerdeFeatures.remove(feature));
+      teVerwijderenGeselecteerdeFeatures.forEach(feature => model.geselecteerdeFeatures.features.remove(feature));
     }
 
     /**
@@ -570,9 +570,9 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           // Deselect en selecteer alle features om terug een correcte offset rendering te krijgen
           // Indien OL geupgrade kunnen we dit eleganter doen door de stijl van de features op de overlay laag aan te passen, zie:
           // https://openlayers.org/en/latest/apidoc/module-ol_interaction_Select-Select.html#getOverlay
-          const geselecteerd = [...model.geselecteerdeFeatures.getArray()];
-          model.geselecteerdeFeatures.clear();
-          model.geselecteerdeFeatures.extend(geselecteerd);
+          const geselecteerd = [...model.geselecteerdeFeatures.features.getArray()];
+          model.geselecteerdeFeatures.features.clear();
+          model.geselecteerdeFeatures.features.extend(geselecteerd);
 
           zendLagenInGroep(updatedModel, groep);
           return ModelAndEmptyResult(updatedModel);
@@ -1007,7 +1007,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           case "singleQuick":
             return some({
               condition: ol.events.condition.click,
-              features: model.geselecteerdeFeatures,
+              features: model.geselecteerdeFeatures.features,
               multi: false,
               style: createSelectionStyleFn(getSelectionStyleSelector),
               hitTolerance: hitTolerance,
@@ -1017,7 +1017,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             return some({
               condition: ol.events.condition.click,
               toggleCondition: ol.events.condition.click,
-              features: model.geselecteerdeFeatures,
+              features: model.geselecteerdeFeatures.features,
               multi: true, // true voor single, maar event handler wat lager houdt enkel 1 feature over
               style: createSelectionStyleFn(getSelectionStyleSelector),
               hitTolerance: hitTolerance,
@@ -1026,7 +1026,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           case "multipleShift":
             return some({
               condition: ol.events.condition.click,
-              features: model.geselecteerdeFeatures,
+              features: model.geselecteerdeFeatures.features,
               multi: true,
               style: createSelectionStyleFn(getSelectionStyleSelector),
               hitTolerance: hitTolerance,
@@ -1036,7 +1036,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             return some({
               condition: ol.events.condition.click,
               toggleCondition: ol.events.condition.click,
-              features: model.geselecteerdeFeatures,
+              features: model.geselecteerdeFeatures.features,
               multi: true,
               style: createSelectionStyleFn(getSelectionStyleSelector),
               hitTolerance: hitTolerance,
@@ -1195,33 +1195,33 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function selecteerFeatures(cmnd: prt.SelecteerFeaturesCmd): ModelWithResult<Msg> {
-      const currentFeatures = model.geselecteerdeFeatures.getArray();
+      const currentFeatures = model.geselecteerdeFeatures.features.getArray();
       const newFeatures = cmnd.features;
 
       if (!cmnd.incremental) {
         const featuresToRemove = array.difference(Feature.setoidFeaturePropertyId)(currentFeatures, newFeatures);
         if (featuresToRemove.length === currentFeatures.length) {
-          model.geselecteerdeFeatures.clear();
+          model.geselecteerdeFeatures.features.clear();
         } else {
-          featuresToRemove.forEach(f => model.geselecteerdeFeatures.remove(f));
+          featuresToRemove.forEach(f => model.geselecteerdeFeatures.features.remove(f));
         }
       }
 
       const featuresToAdd = array.difference(Feature.setoidFeaturePropertyId)(newFeatures, currentFeatures);
-      model.geselecteerdeFeatures.extend(featuresToAdd);
+      model.geselecteerdeFeatures.features.extend(featuresToAdd);
 
       return ModelWithResult(model);
     }
 
     function deselecteerFeature(cmnd: prt.DeselecteerFeatureCmd): ModelWithResult<Msg> {
-      const toDeselect = model.geselecteerdeFeatures.getArray().filter(f => cmnd.ids.includes(f.get("id")));
+      const toDeselect = model.geselecteerdeFeatures.features.getArray().filter(f => cmnd.ids.includes(f.get("id")));
 
-      toDeselect.forEach(deselect => model.geselecteerdeFeatures.remove(deselect));
+      toDeselect.forEach(deselect => model.geselecteerdeFeatures.features.remove(deselect));
       return ModelWithResult(model);
     }
 
     function deselecteerAlleFeatures(): ModelWithResult<Msg> {
-      model.geselecteerdeFeatures.clear();
+      model.geselecteerdeFeatures.features.clear();
       return ModelWithResult(model);
     }
 

@@ -7,6 +7,7 @@ import { ZoekerMetWeergaveopties } from "../zoeker/zoeker";
 import { KaartLocaties } from "./kaart-bevragen/laaginfo.model";
 import { KaartConfig } from "./kaart-config";
 import * as ke from "./kaart-elementen";
+import { FeatureSelection } from "./kaart-protocol-subscriptions";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import { ModelChanger } from "./model-changes";
 import { initStyleSelectorsInMap } from "./stijl-selector";
@@ -35,7 +36,7 @@ export class KaartWithInfo {
   readonly zoekersMetPrioriteiten: ZoekerMetWeergaveopties[] = [];
 
   // Een serieuze doorn in het oog. Dit is een collectie die automagisch door OL up-to-date gehouden wordt (mbv interactie).
-  readonly geselecteerdeFeatures: ol.Collection<ol.Feature> = new ol.Collection<ol.Feature>();
+  readonly geselecteerdeFeatures: FeatureSelection = FeatureSelection(new ol.Collection<ol.Feature>(), new Map());
   readonly hoverFeatures: ol.Collection<ol.Feature> = new ol.Collection<ol.Feature>();
   readonly highlightedFeatures: ol.Collection<ol.Feature> = new ol.Collection<ol.Feature>();
 

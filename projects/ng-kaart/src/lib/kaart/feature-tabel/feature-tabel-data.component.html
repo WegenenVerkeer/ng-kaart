@@ -11,7 +11,7 @@
               *ngFor="let header of headers.headers; let first = first"
               (click)="onAction('toggleSort', header.name)"
             >
-              <mat-checkbox *ngIf="first" (change)="onAction('selectAll', $event.checked);" (click)="$event.stopPropagation()">&nbsp;</mat-checkbox>
+              <mat-checkbox *ngIf="first" #selectAllCheckBox (change)="onAction('selectAll', $event.checked);" (click)="$event.stopPropagation()">&nbsp;</mat-checkbox>
               <span>{{ header.label }}</span>
               <awv-feature-tabel-sortering-status
                 [sortering]="header.sortDirection"
@@ -20,14 +20,14 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let row of (rows$ | async)">
+          <tr *ngFor="let row of (rows$ | async)" [ngClass]="{'geselecteerd' : (isSelected$(row) | async)}">
             <td
               *ngFor="let header of headers.headers; let first = first"
               [ngClass]="{
                 'empty-field': row.velden[header.name].maybeValue.isNone()
               }"
             >
-              <mat-checkbox *ngIf="first" (change)="onAction('selectRow', {row:row, selected:$event.checked})">&nbsp;</mat-checkbox>
+              <mat-checkbox *ngIf="first" (change)="onAction('selectRow', {row:row, selected:$event.checked})" [checked]="isSelected$(row) | async">&nbsp;</mat-checkbox>
               {{ row.velden[header.name].maybeValue.getOrElse("") }}
             </td>
           </tr>
@@ -86,6 +86,7 @@
     </mat-menu>
   </div>
   <div class="feature-table-data-footer">
+    <span>Aantal: {{numberOfSelectedFeatures$ | async}}</span>
     <awv-feature-tabel-pager
       *ngIf="(dataAvailable$ | async)"
     ></awv-feature-tabel-pager>

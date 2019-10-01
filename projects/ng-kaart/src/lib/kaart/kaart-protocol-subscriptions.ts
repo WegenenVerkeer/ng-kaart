@@ -1,14 +1,17 @@
 import { Either } from "fp-ts/lib/Either";
 import { Function1, Predicate } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
+import { Lens } from "monocle-ts";
 import * as ol from "openlayers";
 
+import * as sft from "../stijl/stijl-function-types";
 import { ZoekAntwoord, ZoekerMetWeergaveopties, ZoekResultaat } from "../zoeker/zoeker";
 
 import { KaartLocaties } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import { LaatsteCacheRefresh, MijnLocatieStateChange, PrecacheLaagProgress, TabelStateChange } from "./model-changes";
+import { VeldwaardeKleur } from "./stijleditor/model";
 
 /////////
 // Types
@@ -53,6 +56,11 @@ export interface Viewinstellingen {
   extent: ol.Extent;
   center: ol.Coordinate;
   rotation: number;
+}
+
+export interface FeatureSelection {
+  features: ol.Collection<ol.Feature>;
+  perLaag: Map<string, Set<string>>;
 }
 
 export interface GeselecteerdeFeatures {
@@ -232,6 +240,15 @@ export function GeselecteerdeFeaturesSubscription<Msg>(
   wrapper: MsgGen<GeselecteerdeFeatures, Msg>
 ): GeselecteerdeFeaturesSubscription<Msg> {
   return { type: "GeselecteerdeFeatures", wrapper: wrapper };
+}
+
+export function FeatureSelection(features: ol.Collection<ol.Feature>, perLaag: Map<string, Set<string>>) {
+  return { type: "FeatureSelection", features: features, perLaag: perLaag };
+}
+
+export namespace FeatureSelection {
+  export const featuresLens: Lens<FeatureSelection, ol.Collection<ol.Feature>> = Lens.fromProp("features");
+  export const perLaagLens: Lens<FeatureSelection, Map<string, Set<string>>> = Lens.fromProp("perLaag");
 }
 
 export function HoverFeaturesSubscription<Msg>(wrapper: MsgGen<HoverFeature, Msg>): HoverFeaturesSubscription<Msg> {
