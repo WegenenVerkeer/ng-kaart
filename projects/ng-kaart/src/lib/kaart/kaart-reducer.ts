@@ -35,6 +35,7 @@ import { CachedFeatureLookup } from "./cache/lookup";
 import { envParams } from "./kaart-config";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
+import { FeatureSelection } from "./kaart-protocol";
 import { MsgGen } from "./kaart-protocol-subscriptions";
 import { KaartWithInfo } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
@@ -1207,7 +1208,20 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         }
       }
 
+      // TODO CVF mutable code
       const featuresToAdd = array.difference(Feature.setoidFeaturePropertyId)(newFeatures, currentFeatures);
+      featuresToAdd.forEach(f => {
+        const laagnaam = f.getProperties()["laagnaam"];
+        const currentSet = fromNullable(model.geselecteerdeFeatures.perLaag.get(laagnaam)).getOrElse(new Set<string>());
+        model.geselecteerdeFeatures.perLaag.set(
+          laagnaam,
+          currentSet.add(
+            Feature.propertyId(f).getOrElseL(() => {
+              throw new Error("moet id hebben");
+            })
+          )
+        );
+      });
       model.geselecteerdeFeatures.features.extend(featuresToAdd);
 
       return ModelWithResult(model);
