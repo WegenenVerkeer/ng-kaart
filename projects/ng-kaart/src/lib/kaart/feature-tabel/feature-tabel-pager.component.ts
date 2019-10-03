@@ -6,6 +6,7 @@ import * as rx from "rxjs";
 import { map, mapTo, share, switchMap, tap } from "rxjs/operators";
 import { isNumber } from "util";
 
+import { subSpy } from "../../util";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { KaartComponent } from "../kaart.component";
 
@@ -40,24 +41,26 @@ export class FeatureTabelPagerComponent extends KaartChildComponentBase {
       share()
     );
 
-    this.pageData$ = maybePage$.pipe(
-      map(
-        flow(
-          option.map(page => {
-            const currentPageNumber = Page.pageNumberLens.get(page);
-            const lastPageNumber = Page.lastPageNumberLens.get(page);
-            return {
-              currentPageNumber: Page.getterPageNumber.get(currentPageNumber),
-              lastPageNumber: Page.getterPageNumber.get(lastPageNumber),
-              isFirstPage: Page.isFirst(currentPageNumber),
-              isLastPage: Page.isTop(lastPageNumber)(currentPageNumber),
-              doesNotHaveMultiplePages: Page.ordPageNumber.equals(Page.first, lastPageNumber)
-            };
-          }),
-          option.toUndefined // Voor Angular
-        )
-      ),
-      share()
+    this.pageData$ = subSpy("***pageData$")(
+      maybePage$.pipe(
+        map(
+          flow(
+            option.map(page => {
+              const currentPageNumber = Page.pageNumberLens.get(page);
+              const lastPageNumber = Page.lastPageNumberLens.get(page);
+              return {
+                currentPageNumber: Page.getterPageNumber.get(currentPageNumber),
+                lastPageNumber: Page.getterPageNumber.get(lastPageNumber),
+                isFirstPage: Page.isFirst(currentPageNumber),
+                isLastPage: Page.isTop(lastPageNumber)(currentPageNumber),
+                doesNotHaveMultiplePages: Page.ordPageNumber.equals(Page.first, lastPageNumber)
+              };
+            }),
+            option.toUndefined // Voor Angular
+          )
+        ),
+        share()
+      )
     );
 
     const actions$ = rx.merge(

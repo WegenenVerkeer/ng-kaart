@@ -1,9 +1,9 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, NgZone, ViewEncapsulation } from "@angular/core";
+import { ChangeDetectionStrategy, Component, Input, NgZone, ViewEncapsulation } from "@angular/core";
 import { array, option } from "fp-ts";
 import { flow, Function1, Refinement } from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
-import { map, mapTo, share, startWith, switchMap, tap } from "rxjs/operators";
+import { map, mapTo, share, shareReplay, startWith, switchMap, tap } from "rxjs/operators";
 import { isBoolean, isString } from "util";
 
 import { subSpy } from "../../util/operators";
@@ -78,7 +78,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
         switchMap(() => overzicht.laagModel$(this.laagTitel)),
         share()
       )
-    ).pipe(share());
+    ).pipe(shareReplay(1)); // De pager zit in een *ngIf, dus subscribe na emit
 
     // TODO luisteren op filterupdates
     // Dit zorgt enkel voor het al dan niet kunnen schakelen tussen kaart als filter en alle data
@@ -105,19 +105,21 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     // Alle data voor de template wordt in 1 custom datastructuur gegoten. Dat heeft als voordeel dat er geen gezever is
     // met observables die binnen *ngIf staan. Het nadeel is frequentere updates omdat er geen distinctUntil is. Die zou
     // immers de rows array moeten meenemen.
-    this.templateData$ = this.laag$.pipe(
-      map(laag => {
-        const fieldNameSelections = LaagModel.fieldSelectionsLens.get(laag);
-        const rows = option.toUndefined(LaagModel.pageLens.get(laag).map(Page.rowsLens.get));
-        return {
-          dataAvailable: rows !== undefined,
-          fieldNameSelections,
-          headers: ColumnHeaders.createFromFieldSelection(fieldNameSelections),
-          rows,
-          mapAsFilterState: LaagModel.mapAsFilterGetter.get(laag),
-          cannotChooseMapAsFilter: !LaagModel.canUseAllFeaturesGetter.get(laag)
-        };
-      })
+    this.templateData$ = subSpy("****templateData$")(
+      this.laag$.pipe(
+        map(laag => {
+          const fieldNameSelections = LaagModel.fieldSelectionsLens.get(laag);
+          const rows = option.toUndefined(LaagModel.pageLens.get(laag).map(Page.rowsLens.get));
+          return {
+            dataAvailable: rows !== undefined,
+            fieldNameSelections,
+            headers: ColumnHeaders.createFromFieldSelection(fieldNameSelections),
+            rows,
+            mapAsFilterState: LaagModel.mapAsFilterGetter.get(laag),
+            cannotChooseMapAsFilter: !LaagModel.canUseAllFeaturesGetter.get(laag)
+          };
+        })
+      )
     );
 
     const fieldSelectionsUpdate$ = rx.merge(
