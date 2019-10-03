@@ -86,7 +86,14 @@
     </mat-menu>
   </div>
   <div class="feature-table-data-footer">
-    <span>Aantal: {{numberOfSelectedFeatures$ | async}}</span>
+    <span *ngIf="(numberOfSelectedFeatures$ | async) > 0">
+      <mat-button-toggle-group [multiple]="true">
+        <mat-button-toggle matTooltip="Enkel selectie tonen" matTooltipPosition="right">{{numberOfSelectedFeatures$ | async}}</mat-button-toggle> geselecteerd
+      </mat-button-toggle-group>
+      <button mat-icon-button (click)="onAction('eraseSelection')" matTooltip="Selectie wissen"  matTooltipPosition="right">
+        <mat-icon>clear</mat-icon>
+      </button>
+    </span>
     <div class="feature-table-data-view-mode-selector">
       <mat-slide-toggle
         [checked]="data.mapAsFilterState"

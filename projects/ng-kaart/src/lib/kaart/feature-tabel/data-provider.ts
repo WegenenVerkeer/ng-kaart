@@ -47,6 +47,7 @@ export interface RequestingData {
 export interface DataReady {
   readonly kind: "DataReady";
   readonly page: Page;
+  readonly featureCount: FeatureCountFetched;
 }
 
 export interface RequestFailed {
@@ -101,8 +102,13 @@ export namespace Page {
 
   const isoPageNumber: Iso<PageNumber, number> = iso<PageNumber>().compose(iso<NonNegativeInteger>());
   const prismPageNumber: Prism<number, PageNumber> = prismNonNegativeInteger.composeIso(iso<PageNumber>().reverse());
+  const countToPages = (numFeatures: number) => Math.floor(numFeatures / PageSize);
   export const getterPageNumber: Getter<PageNumber, number> = new Getter(prismPageNumber.reverseGet);
   export const asPageNumber: PartialFunction1<number, PageNumber> = prismPageNumber.getOption;
+  export const asPageNumberFromNumberOfFeatures: Function1<NonNegativeInteger, PageNumber> = flow(
+    iso<PageNumber>().wrap,
+    isoPageNumber.modify(countToPages)
+  );
   export const toPageNumberWithFallback: Function2<number, PageNumber, PageNumber> = (n, fallback) => asPageNumber(n).getOrElse(fallback);
   export const pageNumberLens: Lens<Page, PageNumber> = Lens.fromProp<Page>()("pageNumber");
   export const lastPageNumberLens: Lens<Page, PageNumber> = Lens.fromProp<Page>()("lastPageNumber");
@@ -120,8 +126,10 @@ export namespace Page {
     return i >= lowerPageBound && i < lowerPageBound + PageSize;
   };
 
-  export const last: Function1<number, PageNumber> = numFeatures =>
-    prismPageNumber.getOption(Math.floor(numFeatures / PageSize)).getOrElse(first);
+  export const last: Function1<number, PageNumber> = flow(
+    countToPages,
+    n => prismPageNumber.getOption(n).getOrElse(first)
+  );
   export const isFirst: Predicate<PageNumber> = pageNumber => ordPageNumber.equals(pageNumber, first);
   export const isTop: Function1<PageNumber, Predicate<PageNumber>> = largestPageNumber => pageNumber =>
     ordPageNumber.equals(pageNumber, largestPageNumber);
@@ -146,9 +154,10 @@ export namespace DataRequest {
     kind: "RequestingData"
   };
 
-  export const DataReady: Function3<PageNumber, PageNumber, Row[], DataReady> = (pageNumber, lastPageNumber, rows) => ({
+  export const DataReady: Function3<PageNumber, NonNegativeInteger, Row[], DataReady> = (pageNumber, numberOfFeatures, rows) => ({
     kind: "DataReady",
-    page: Page.create(pageNumber, lastPageNumber, rows)
+    page: Page.create(pageNumber, Page.asPageNumberFromNumberOfFeatures(numberOfFeatures), rows),
+    featureCount: FeatureCount.createFetched(prismNonNegativeInteger.reverseGet(numberOfFeatures))
   });
 
   export const RequestFailed: RequestFailed = {
@@ -215,18 +224,23 @@ export namespace PageFetcher {
           array.map(FieldSorting.fieldKeyLens.get),
           array.map(Feature.fieldKeyToPropertyPath)
         ),
-        start: Page.getterPageNumber.get(request.pageNumber)
+        start: Page.getterPageNumber.get(request.pageNumber) * Page.PageSize
       })
       .pipe(
         map(featureCollection =>
-          DataRequest.DataReady(
-            request.pageNumber,
-            Page.asPageNumber(featureCollection.total).getOrElse(Page.first), // TODO dit is een hack
-            pipe(
-              featureCollection.features,
-              array.map(toOlFeature(titel)),
-              toRows(request.rowCreator)
-            )
+          prismNonNegativeInteger.getOption(featureCollection.total).fold(
+            DataRequest.RequestFailed as DataRequest, // normaal OK
+            featureCount =>
+              DataRequest.DataReady(
+                request.pageNumber,
+                featureCount,
+                pipe(
+                  featureCollection.features,
+                  array.map(toOlFeature(titel)),
+                  toRows(request.rowCreator)
+                )
+              )
+
           )
         ),
         catchError(() => rx.of(DataRequest.RequestFailed))

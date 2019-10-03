@@ -1,14 +1,5 @@
-import {
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
-  ElementRef,
-  Input,
-  NgZone,
-  ViewChild,
-  ViewEncapsulation
-} from "@angular/core";
-import { MatCheckbox } from "@angular/material";
+import { ChangeDetectionStrategy, Component, Input, NgZone, ViewChild, ViewEncapsulation } from "@angular/core";
+import { MatCheckbox } from "@angular/material/checkbox";
 import { array, option } from "fp-ts";
 import { intercalate } from "fp-ts/lib/Foldable2v";
 import { Curried2, flow, Function1, FunctionN, Refinement } from "fp-ts/lib/function";
@@ -16,7 +7,7 @@ import { monoidString } from "fp-ts/lib/Monoid";
 import * as fpOption from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
-import { distinctUntilChanged, map, mapTo, sample, share, startWith, switchMap, tap, withLatestFrom } from "rxjs/operators";
+import { map, mapTo, share, shareReplay, startWith, switchMap, tap, withLatestFrom } from "rxjs/operators";
 import { isBoolean, isString } from "util";
 
 import { Feature } from "../../util/feature";
@@ -101,7 +92,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
         switchMap(() => overzicht.laagModel$(this.laagTitel)),
         share()
       )
-    ).pipe(share());
+    ).pipe(shareReplay(1)); // De pager zit in een *ngIf, dus subscribe na emit
 
     // TODO luisteren op filterupdates
     // Dit zorgt enkel voor het al dan niet kunnen schakelen tussen kaart als filter en alle data
@@ -128,19 +119,21 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     // Alle data voor de template wordt in 1 custom datastructuur gegoten. Dat heeft als voordeel dat er geen gezever is
     // met observables die binnen *ngIf staan. Het nadeel is frequentere updates omdat er geen distinctUntil is. Die zou
     // immers de rows array moeten meenemen.
-    this.templateData$ = this.laag$.pipe(
-      map(laag => {
-        const fieldNameSelections = LaagModel.fieldSelectionsLens.get(laag);
-        const rows = option.toUndefined(LaagModel.pageLens.get(laag).map(Page.rowsLens.get));
-        return {
-          dataAvailable: rows !== undefined,
-          fieldNameSelections,
-          headers: ColumnHeaders.createFromFieldSelection(fieldNameSelections),
-          rows,
-          mapAsFilterState: LaagModel.mapAsFilterGetter.get(laag),
-          cannotChooseMapAsFilter: !LaagModel.canUseAllFeaturesGetter.get(laag)
-        };
-      })
+    this.templateData$ = subSpy("****templateData$")(
+      this.laag$.pipe(
+        map(laag => {
+          const fieldNameSelections = LaagModel.fieldSelectionsLens.get(laag);
+          const rows = option.toUndefined(LaagModel.pageLens.get(laag).map(Page.rowsLens.get));
+          return {
+            dataAvailable: rows !== undefined,
+            fieldNameSelections,
+            headers: ColumnHeaders.createFromFieldSelection(fieldNameSelections),
+            rows,
+            mapAsFilterState: LaagModel.mapAsFilterGetter.get(laag),
+            cannotChooseMapAsFilter: !LaagModel.canUseAllFeaturesGetter.get(laag)
+          };
+        })
+      )
     );
 
     const maybePage$ = this.laag$.pipe(
@@ -178,13 +171,25 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
 
     const selectAll$ = this.actionDataFor$("selectAll", isBoolean);
     const selectRow$ = this.rawActionDataFor$("selectRow");
+    const eraseSelection$ = this.actionFor$("eraseSelection");
 
-    const extractIds: FunctionN<[Row], string> = row => {
-      return [row]
-        .map(row => Feature.propertyId(row.feature))
+    const extractIds: FunctionN<[ol.Feature], string> = feature => {
+      return [feature]
+        .map(f => Feature.propertyId(f))
         .filter(fpOption.isSome)
         .map(fpOption.getOrElse(() => ""))[0];
     };
+
+    // wis volledige selectie voor deze laag
+    this.runInViewReady(
+      eraseSelection$.pipe(
+        withLatestFrom(this.kaartModel$),
+        tap(([x, model]) => {
+          const selected = model.geselecteerdeFeatures.features.getArray().filter(f => f.getProperties()["laagnaam"] === this.laagTitel);
+          this.dispatch(DeselecteerFeatureCmd(selected.map(extractIds)));
+        })
+      )
+    );
 
     // uncheck de selectAll indien de rijen veranderen
     this.runInViewReady(
@@ -225,7 +230,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
           if (data.selected) {
             this.dispatch(SelecteerExtraFeaturesCmd([row.feature]));
           } else {
-            const ids = extractIds(row);
+            const ids = extractIds(row.feature);
             this.dispatch(DeselecteerFeatureCmd([ids]));
           }
         })
@@ -241,7 +246,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
           if (selected) {
             this.dispatch(SelecteerExtraFeaturesCmd(rows.map(row => row.feature)));
           } else {
-            const ids = rows.map(extractIds);
+            const ids = rows.map(row => row.feature).map(extractIds);
             this.dispatch(DeselecteerFeatureCmd(ids));
           }
         })
@@ -254,7 +259,9 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
       return features.geselecteerd.filter(f => {
         return f.getProperties()["laagnaam"] === this.laagTitel;
       }).length;
-    })
+    }),
+    startWith(0),
+    shareReplay(1)
   );
 
   // dit wordt wel heel vaak opgeroepen, geen perf issues?

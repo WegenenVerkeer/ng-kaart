@@ -328,7 +328,11 @@ export namespace LaagModel {
       map(
         DataRequest.match({
           RequestingData: () => identity, // Doe voorlopig niks. We kunnen hier een progress spinner aanzetten
-          DataReady: (dataready: DataReady) => updateLaagPage(dataready.page),
+          DataReady: (dataready: DataReady) =>
+            flow(
+              updateLaagPage(dataready.page),
+              aantalFeaturesLens.set(dataready.featureCount)
+            ),
           RequestFailed: () => identity // Doe voorlopig niks. We kunnen hier de tabel leeg maken of een error icoontje oid tonen
         })
       )
@@ -371,14 +375,10 @@ export namespace LaagModel {
       )
     );
 
-  const updateLaagFeatureCountFromSource: LaagModelUpdate = Update.createSync(laag =>
-    aantalFeaturesLens.set(FeatureCountFetcher.countFromSource(laag.source, { dataExtent: laag.viewinstellingen.extent }))(laag)
-  );
-
   // const updateLaagFeatureCountFromServer: LaagModelUpdate = Update.createAsync(laag => FeatureCountFetcher.countFromServer(laag.));
 
   // TODO uiteraard switchen op mode
-  const updateLaagFeatureCount = (laag: LaagModel) =>
+  const updateSourceLaagFeatureCount = (laag: LaagModel) =>
     aantalFeaturesLens.set(FeatureCountFetcher.countFromSource(laag.source, { dataExtent: laag.viewinstellingen.extent }))(laag);
 
   // Zorg ervoor dat het paginanmmer binnen de grnezen van beschikbare paginas ligt
@@ -391,10 +391,10 @@ export namespace LaagModel {
   // TODO: misschien beter specifiek type voor buiten zoom
   const clearLaagFeatureCount: Endomorphism<LaagModel> = aantalFeaturesLens.set(FeatureCount.createFetched(0));
 
-  const prepareSourcefeaturesUpdate: Endomorphism<LaagModel> = applyIfMapAsFilter(
+  const prepareSourceFeaturesUpdate: Endomorphism<LaagModel> = applyIfMapAsFilter(
     applyIfInZoomOrElse(
       flow(
-        updateLaagFeatureCount,
+        updateSourceLaagFeatureCount,
         clampLaagPageNumber,
         flowSpy("****FeaturesUpdate in zoom")
       ),
@@ -408,7 +408,7 @@ export namespace LaagModel {
   );
 
   // Zal de tabel data aanpassen indien we in "kaart als filter mode zitten"
-  export const sourceFeaturesUpdate: LaagModelUpdate = updateIfMapAsFilter(updatePageDataAfter(prepareSourcefeaturesUpdate));
+  export const sourceFeaturesUpdate: LaagModelUpdate = updateIfMapAsFilter(updatePageDataAfter(prepareSourceFeaturesUpdate));
 
   export const followViewFeatureUpdates: LaagModelUpdate = updateIfMapAsFilter(
     Update.createAsync(laag =>
@@ -420,7 +420,7 @@ export namespace LaagModel {
         .pipe(
           map(() =>
             flow(
-              prepareSourcefeaturesUpdate,
+              prepareSourceFeaturesUpdate,
               updateSyncLaagPageDataFromSource
             )
           )
@@ -447,7 +447,9 @@ export namespace LaagModel {
     updatePageDataAfter(
       flow(
         expectedPageNumberLens.modify(pageNumberUpdate),
-        clampExpectedPageNumber
+        flowSpy("****pnu after modify"),
+        clampExpectedPageNumber,
+        flowSpy("****pnu after clamp")
       )
     );
 
