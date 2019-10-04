@@ -1,4 +1,5 @@
 import { option, setoid } from "fp-ts";
+import { FunctionN } from "fp-ts/es6/function";
 import { array, mapOption } from "fp-ts/lib/Array";
 import { Curried2, Function1, Refinement } from "fp-ts/lib/function";
 import { fromNullable, Option, option as optionMonad, tryCatch } from "fp-ts/lib/Option";
@@ -68,11 +69,22 @@ export const clusterFeaturesToGeoJson: PartialFunction1<ol.Feature[], GeoJsonFea
   traversable.traverse(optionMonad, array)(features, featureToGeoJson);
 
 export namespace Feature {
+  /** @deprecated Ga ervan uit dat Features een idee zullen hebben, gebruik `propertyIdRequired` */
   export const propertyId: PartialFunction1<ol.Feature, string> = feature =>
     option
       .fromNullable(feature.get("id"))
       .orElse(() => option.fromNullable(feature.getProperties()["id"]))
       .map(id => id.toString());
+
+  export const propertyIdRequired: FunctionN<[ol.Feature], string> = feature =>
+    option
+      .fromNullable(feature.get("id"))
+      .orElse(() => option.fromNullable(feature.getProperties()["id"]))
+      .orElse(() => option.fromNullable(feature.getId()))
+      .map(id => id.toString())
+      .getOrElse(() => {
+        throw new Error("Id is required op een feature: ${feature}");
+      });
 
   export const properties: Function1<ol.Feature, any> = feature => feature.getProperties().properties;
 

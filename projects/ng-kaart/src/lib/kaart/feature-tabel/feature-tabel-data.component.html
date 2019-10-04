@@ -90,6 +90,9 @@
       <mat-button-toggle-group [multiple]="true">
         <mat-button-toggle matTooltip="Enkel selectie tonen" matTooltipPosition="right">{{numberOfSelectedFeatures$ | async}}</mat-button-toggle> geselecteerd
       </mat-button-toggle-group>
+       <button mat-icon-button (click)="onAction('zoomToSelection')" matTooltip="Zoom naar selectie"  matTooltipPosition="right">
+        <mat-icon>zoom_in</mat-icon>
+      </button>
       <button mat-icon-button (click)="onAction('eraseSelection')" matTooltip="Selectie wissen"  matTooltipPosition="right">
         <mat-icon>clear</mat-icon>
       </button>

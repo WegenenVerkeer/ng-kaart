@@ -1,10 +1,12 @@
+import * as array from "fp-ts/lib/Array";
 import { Either } from "fp-ts/lib/Either";
-import { Function1, Predicate } from "fp-ts/lib/function";
-import { Option } from "fp-ts/lib/Option";
+import { Curried2, Function1, FunctionN, Predicate } from "fp-ts/lib/function";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 import { Lens } from "monocle-ts";
 import * as ol from "openlayers";
 
 import * as sft from "../stijl/stijl-function-types";
+import { Feature } from "../util/feature";
 import { ZoekAntwoord, ZoekerMetWeergaveopties, ZoekResultaat } from "../zoeker/zoeker";
 
 import { KaartLocaties } from "./kaart-bevragen/laaginfo.model";
@@ -247,8 +249,58 @@ export function FeatureSelection(features: ol.Collection<ol.Feature>, perLaag: M
 }
 
 export namespace FeatureSelection {
-  export const featuresLens: Lens<FeatureSelection, ol.Collection<ol.Feature>> = Lens.fromProp("features");
-  export const perLaagLens: Lens<FeatureSelection, Map<string, Set<string>>> = Lens.fromProp("perLaag");
+  export const isSelected: Curried2<FeatureSelection, ol.Feature, boolean> = featureSelection => feature => {
+    const selectedInLaag = featureSelection.perLaag.get(feature.getProperties()["laagnaam"]);
+    return fromNullable(selectedInLaag)
+      .getOrElse(new Set<string>())
+      .has(Feature.propertyIdRequired(feature));
+  };
+
+  export const selectedFeaturesIdsInLaag: Curried2<FeatureSelection, string, Set<string>> = featureSelection => laagnaam => {
+    const selectedInLaag = featureSelection.perLaag.get(laagnaam);
+    return selectedInLaag || new Set<string>();
+  };
+
+  export const deselecteerAlleFeatures: FunctionN<[FeatureSelection], FeatureSelection> = featureSelection => {
+    featureSelection.features.clear();
+    featureSelection.perLaag.clear();
+
+    // TODO CVF nieuwe versie van immutable model returnen
+    return featureSelection;
+  };
+
+  export const deselecteerFeatures: Curried2<FeatureSelection, Array<ol.Feature>, FeatureSelection> = featureSelection => features => {
+    features.forEach(feature => {
+      // we doen de manipulatie per feature, omdat ze van verschillende lagen kunnen zijn
+      // performantie zou maybe iets beter kunnen als we ze eerst per laag groeperen en dan in batch toevoegen aan de map / set
+      const laagnaam = feature.getProperties()["laagnaam"];
+      const currentSet = fromNullable(featureSelection.perLaag.get(laagnaam)).getOrElse(new Set<string>());
+      currentSet.delete(Feature.propertyIdRequired(feature));
+      featureSelection.perLaag.set(laagnaam, currentSet);
+      featureSelection.features.remove(feature);
+    });
+
+    // TODO CVF nieuwe versie van immutable model returnen
+    return featureSelection;
+  };
+
+  export const selecteerFeatures: Curried2<FeatureSelection, Array<ol.Feature>, FeatureSelection> = featureSelection => features => {
+    features.forEach(f => {
+      // we doen de manipulatie per feature, omdat ze van verschillende lagen kunnen zijn
+      // performantie zou maybe iets beter kunnen als we ze eerst per laag groeperen en dan in batch toevoegen aan de map / set
+      const laagnaam = f.getProperties()["laagnaam"];
+      const currentSet = fromNullable(featureSelection.perLaag.get(laagnaam)).getOrElse(new Set<string>());
+      featureSelection.perLaag.set(laagnaam, currentSet.add(Feature.propertyIdRequired(f)));
+    });
+
+    // TODO CVF nieuwe versie van immutable model returnen
+    featureSelection.features.extend(features);
+    return featureSelection;
+  };
+
+  export const getGeselecteerdeFeaturesInLaag: Curried2<FeatureSelection, string, Array<ol.Feature>> = featureSelection => laagnaam => {
+    return featureSelection.features.getArray().filter(r => r.getProperties()["laagnaam"] === laagnaam);
+  };
 }
 
 export function HoverFeaturesSubscription<Msg>(wrapper: MsgGen<HoverFeature, Msg>): HoverFeaturesSubscription<Msg> {

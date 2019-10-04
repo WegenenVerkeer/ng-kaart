@@ -4,19 +4,27 @@ import { array, option } from "fp-ts";
 import { intercalate } from "fp-ts/lib/Foldable2v";
 import { Curried2, flow, Function1, FunctionN, Refinement } from "fp-ts/lib/function";
 import { monoidString } from "fp-ts/lib/Monoid";
+import { fromNullable } from "fp-ts/lib/Option";
 import * as fpOption from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
+import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { map, mapTo, share, shareReplay, startWith, switchMap, tap, withLatestFrom } from "rxjs/operators";
 import { isBoolean, isString } from "util";
 
 import { Feature } from "../../util/feature";
-import { catOptions, collectOption, subSpy } from "../../util/operators";
+import { catOptions, collectOption, select, subSpy } from "../../util/operators";
 import { join } from "../../util/string";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { kaartLogOnlyWrapper } from "../kaart-internal-messages";
 import * as cmd from "../kaart-protocol-commands";
-import { DeselecteerAlleFeaturesCmd, DeselecteerFeatureCmd, SelecteerExtraFeaturesCmd } from "../kaart-protocol-commands";
+import {
+  DeselecteerAlleFeaturesCmd,
+  DeselecteerFeatureCmd,
+  SelecteerExtraFeaturesCmd,
+  VeranderExtentCmd
+} from "../kaart-protocol-commands";
+import { FeatureSelection } from "../kaart-protocol-subscriptions";
 import { KaartComponent } from "../kaart.component";
 
 import { Page } from "./data-provider";
@@ -172,6 +180,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     const selectAll$ = this.actionDataFor$("selectAll", isBoolean);
     const selectRow$ = this.rawActionDataFor$("selectRow");
     const eraseSelection$ = this.actionFor$("eraseSelection");
+    const zoomToSelection$ = this.actionFor$("zoomToSelection");
 
     const extractIds: FunctionN<[ol.Feature], string> = feature => {
       return [feature]
@@ -179,6 +188,20 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
         .filter(fpOption.isSome)
         .map(fpOption.getOrElse(() => ""))[0];
     };
+
+    this.runInViewReady(
+      zoomToSelection$.pipe(
+        withLatestFrom(this.kaartModel$),
+        tap(([x, model]) => {
+          const selection = FeatureSelection.getGeselecteerdeFeaturesInLaag(model.geselecteerdeFeatures)(this.laagTitel);
+
+          const extent = selection[0].getGeometry().getExtent();
+          selection.forEach(feature => ol.extent.extend(extent, feature.getGeometry().getExtent()));
+
+          this.dispatch(VeranderExtentCmd(extent));
+        })
+      )
+    );
 
     // wis volledige selectie voor deze laag
     this.runInViewReady(
@@ -255,15 +278,20 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
   }
 
   public numberOfSelectedFeatures$ = this.modelChanges.geselecteerdeFeatures$.pipe(
-    map(features => {
-      return features.geselecteerd.filter(f => {
-        return f.getProperties()["laagnaam"] === this.laagTitel;
-      }).length;
+    withLatestFrom(this.kaartModel$),
+    map(([features, model]) => {
+      return FeatureSelection.selectedFeaturesIdsInLaag(model.geselecteerdeFeatures)(this.laagTitel).size;
     }),
     startWith(0),
     shareReplay(1)
   );
 
   // dit wordt wel heel vaak opgeroepen, geen perf issues?
-  public isSelected$ = row => this.kaartModel$.pipe(map(m => m.geselecteerdeFeatures.features.getArray().includes(row.feature)));
+  isSelected$(row) {
+    return this.kaartModel$.pipe(
+      map(m => {
+        return FeatureSelection.isSelected(m.geselecteerdeFeatures)(row.feature);
+      })
+    );
+  }
 }

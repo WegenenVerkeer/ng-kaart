@@ -1197,46 +1197,30 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function selecteerFeatures(cmnd: prt.SelecteerFeaturesCmd): ModelWithResult<Msg> {
       const currentFeatures = model.geselecteerdeFeatures.features.getArray();
+
       const newFeatures = cmnd.features;
+      const featuresToAdd = array.difference(Feature.setoidFeaturePropertyId)(newFeatures, currentFeatures);
 
       if (!cmnd.incremental) {
-        const featuresToRemove = array.difference(Feature.setoidFeaturePropertyId)(currentFeatures, newFeatures);
-        if (featuresToRemove.length === currentFeatures.length) {
-          model.geselecteerdeFeatures.features.clear();
-        } else {
-          featuresToRemove.forEach(f => model.geselecteerdeFeatures.features.remove(f));
-        }
+        // als we niet incremental werken moet de nieuwe selectie de vorige vervangen
+        FeatureSelection.deselecteerAlleFeatures(model.geselecteerdeFeatures);
       }
 
-      // TODO CVF mutable code
-      const featuresToAdd = array.difference(Feature.setoidFeaturePropertyId)(newFeatures, currentFeatures);
-      featuresToAdd.forEach(f => {
-        const laagnaam = f.getProperties()["laagnaam"];
-        const currentSet = fromNullable(model.geselecteerdeFeatures.perLaag.get(laagnaam)).getOrElse(new Set<string>());
-        model.geselecteerdeFeatures.perLaag.set(
-          laagnaam,
-          currentSet.add(
-            Feature.propertyId(f).getOrElseL(() => {
-              throw new Error("moet id hebben");
-            })
-          )
-        );
-      });
-      model.geselecteerdeFeatures.features.extend(featuresToAdd);
+      const featureSelection = FeatureSelection.selecteerFeatures(model.geselecteerdeFeatures)(featuresToAdd);
 
-      return ModelWithResult(model);
+      return ModelWithResult({ ...model, geselecteerdeFeatures: featureSelection });
     }
 
     function deselecteerFeature(cmnd: prt.DeselecteerFeatureCmd): ModelWithResult<Msg> {
       const toDeselect = model.geselecteerdeFeatures.features.getArray().filter(f => cmnd.ids.includes(f.get("id")));
+      const featureSelection = FeatureSelection.deselecteerFeatures(model.geselecteerdeFeatures)(toDeselect);
 
-      toDeselect.forEach(deselect => model.geselecteerdeFeatures.features.remove(deselect));
-      return ModelWithResult(model);
+      return ModelWithResult({ ...model, geselecteerdeFeatures: featureSelection });
     }
 
     function deselecteerAlleFeatures(): ModelWithResult<Msg> {
-      model.geselecteerdeFeatures.features.clear();
-      return ModelWithResult(model);
+      const featureSelection = FeatureSelection.deselecteerAlleFeatures(model.geselecteerdeFeatures);
+      return ModelWithResult({ ...model, geselecteerdeFeatures: featureSelection });
     }
 
     function sluitInfoBoodschap(cmnd: prt.SluitInfoBoodschapCmd): ModelWithResult<Msg> {
