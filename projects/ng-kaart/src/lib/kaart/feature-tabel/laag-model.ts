@@ -4,6 +4,7 @@ import { Option } from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
 import { getLastSemigroup } from "fp-ts/lib/Semigroup";
 import { Getter, Lens, Optional, Prism, Traversal } from "monocle-ts";
+import { indexArray } from "monocle-ts/lib/Index/Array";
 import * as ol from "openlayers";
 import { debounceTime, map, mapTo } from "rxjs/operators";
 import { isNumber } from "util";
@@ -208,11 +209,18 @@ export namespace LaagModel {
       // afzonderlijk behandeld worden.
       const veldinfos = ke.ToegevoegdeVectorLaag.veldInfosLens.get(laag);
       const [fieldsTransformer, rowTransformer] = locationTransformer(veldinfos);
+
+      const sortOnFirstField = indexArray<FieldSelection>()
+        .index(0)
+        .composeLens(FieldSelection.maybeSortDirectionLens)
+        .set(option.some("ASCENDING"));
+
       const fieldSelections = pipe(
         veldinfos,
         FieldSelection.fieldsFromVeldinfo,
         fieldsTransformer,
-        FieldSelection.selectBaseFields
+        FieldSelection.selectBaseFields,
+        sortOnFirstField
       );
 
       const firstField = array.take(1, fieldSelections);
@@ -260,7 +268,7 @@ export namespace LaagModel {
 
   const toggleSortDirection: Endomorphism<Option<SortDirection>> = flow(
     option.map(SortDirection.invert),
-    option.alt(() => option.some("ASCENDING") as Option<"ASCENDING">)
+    option.alt(() => option.some("ASCENDING") as Option<SortDirection>)
   );
 
   // Vervangt de huidige sortingFields door een sorting op 1 enkel logisch veld

@@ -28,6 +28,14 @@ $footer-height: 48px;
     tr {
       display: contents;
       scroll-snap-type: x mandatory;
+
+      .mat-icon {
+        height: 16px;
+        width: 16px;
+        font-size: 16px;
+        margin-left: 8px;
+        vertical-align: middle;
+      }
     }
 
     th,
