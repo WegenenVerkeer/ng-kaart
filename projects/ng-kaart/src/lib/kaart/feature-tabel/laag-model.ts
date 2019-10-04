@@ -213,7 +213,7 @@ export namespace LaagModel {
       const sortOnFirstField = indexArray<FieldSelection>()
         .index(0)
         .composeLens(FieldSelection.maybeSortDirectionLens)
-        .set(option.some("ASCENDING"));
+        .set(option.some("ASCENDING") as Option<SortDirection>);
 
       const fieldSelections = pipe(
         veldinfos,
@@ -266,6 +266,18 @@ export namespace LaagModel {
   export const hasMultiplePages: Predicate<LaagModel> = laag =>
     FeatureCount.fetchedCount(laag.featureCount).fold(false, featureCount => !Page.isFirst(Page.last(featureCount)));
 
+  const ifInFilter = mapAsFilterGetter.get;
+  const updateIfMapAsFilterOrElse = Update.ifOrElse(ifInFilter);
+  const updateIfMapAsFilter: Endomorphism<LaagModelUpdate> = Update.ifPredicate(ifInFilter);
+  const applyIfMapAsFilter: Endomorphism<Endomorphism<LaagModel>> = (f: Endomorphism<LaagModel>) => laag =>
+    ifInFilter(laag) ? f(laag) : laag;
+  const ifInZoom = (laag: LaagModel) => laag.viewinstellingen.zoom >= laag.minZoom && laag.viewinstellingen.zoom <= laag.maxZoom;
+  const updateIfInZoom = Update.ifPredicate(ifInZoom);
+  const applyIfInZoomOrElse = (
+    endoInZoom: Endomorphism<LaagModel>,
+    endoOutsideZoom: Endomorphism<LaagModel>
+  ): Endomorphism<LaagModel> => laag => (ifInZoom(laag) ? endoInZoom : endoOutsideZoom)(laag);
+
   const toggleSortDirection: Endomorphism<Option<SortDirection>> = flow(
     option.map(SortDirection.invert),
     option.alt(() => option.some("ASCENDING") as Option<SortDirection>)
@@ -314,11 +326,21 @@ export namespace LaagModel {
   // Pas de huidige Page aan indien de kaart als filter gebruikt wordt. Hoewel de test op "kaart als filter" ook vroeger
   // in de ketting gebeurt, testen we hier opnieuw omdat er een race-conditie kan zijn wanneer er ondertussen geschakeld
   // wordt van mode.
-  const updateSyncLaagPageDataFromSource: LaagModelSyncUpdate = laag =>
-    mapAsFilterGetter.get(laag) ? updateLaagPage(PageFetcher.pageFromSource(laag.source, laagPageRequest(laag)))(laag) : laag;
+  const modifySyncLaagPageDataFromSource: LaagModelSyncUpdate = applyIfMapAsFilter(laag =>
+    updateLaagPage(PageFetcher.pageFromSource(laag.source, laagPageRequest(laag)))(laag)
+  );
+
+  const modifySourceLaagFeatureCount: LaagModelSyncUpdate = applyIfMapAsFilter(laag =>
+    aantalFeaturesLens.set(FeatureCountFetcher.countFromSource(laag.source, { dataExtent: laag.viewinstellingen.extent }))(laag)
+  );
 
   // Pas de huidige Page aan indien de kaart als filter gebruikt wordt.
-  const updateLaagPageDataFromSource: LaagModelUpdate = Update.createSync(updateSyncLaagPageDataFromSource);
+  const updateLaagPageDataFromSource: LaagModelUpdate = Update.createSync(
+    flow(
+      modifySyncLaagPageDataFromSource,
+      modifySourceLaagFeatureCount
+    )
+  );
 
   // Pas uiteindelijk de huidige Page aan indien de volledige data gebruikt wordt.
   const updateLaagPageDataFromServer: LaagModelUpdate = Update.createAsync((laag: LaagModel) =>
@@ -336,18 +358,6 @@ export namespace LaagModel {
       )
     )
   );
-
-  const ifInFilter = mapAsFilterGetter.get;
-  const updateIfMapAsFilterOrElse = Update.ifOrElse(ifInFilter);
-  const updateIfMapAsFilter: Endomorphism<LaagModelUpdate> = Update.ifPredicate(ifInFilter);
-  const applyIfMapAsFilter: Endomorphism<Endomorphism<LaagModel>> = (f: Endomorphism<LaagModel>) => laag =>
-    ifInFilter(laag) ? f(laag) : laag;
-  const ifInZoom = (laag: LaagModel) => laag.viewinstellingen.zoom >= laag.minZoom && laag.viewinstellingen.zoom <= laag.maxZoom;
-  const updateIfInZoom = Update.ifPredicate(ifInZoom);
-  const applyIfInZoomOrElse = (
-    endoInZoom: Endomorphism<LaagModel>,
-    endoOutsideZoom: Endomorphism<LaagModel>
-  ): Endomorphism<LaagModel> => laag => (ifInZoom(laag) ? endoInZoom : endoOutsideZoom)(laag);
 
   // Enkel een page opvragen en in het model steken
   const updateLaagPageData: LaagModelUpdate = updateIfInZoom(
@@ -367,17 +377,14 @@ export namespace LaagModel {
     Update.createSync(
       flow(
         viewinstellingenLens.set(vi),
-        clearLaagPage,
-        flowSpy("****clearLaagPage"),
-        applyIfInZoomOrElse(updatePendingLens.set(true), updatePendingLens.set(false))
+        applyIfMapAsFilter(
+          flow(
+            clearLaagPage,
+            applyIfInZoomOrElse(updatePendingLens.set(true), updatePendingLens.set(false))
+          )
+        )
       )
     );
-
-  // const updateLaagFeatureCountFromServer: LaagModelUpdate = Update.createAsync(laag => FeatureCountFetcher.countFromServer(laag.));
-
-  // TODO uiteraard switchen op mode
-  const updateSourceLaagFeatureCount = (laag: LaagModel) =>
-    aantalFeaturesLens.set(FeatureCountFetcher.countFromSource(laag.source, { dataExtent: laag.viewinstellingen.extent }))(laag);
 
   // Zorg ervoor dat het paginanmmer binnen de grnezen van beschikbare paginas ligt
   const clampLaagPageNumber: Endomorphism<LaagModel> = pageOptional.modify(page =>
@@ -392,7 +399,7 @@ export namespace LaagModel {
   const prepareSourceFeaturesUpdate: Endomorphism<LaagModel> = applyIfMapAsFilter(
     applyIfInZoomOrElse(
       flow(
-        updateSourceLaagFeatureCount,
+        modifySourceLaagFeatureCount,
         clampLaagPageNumber,
         flowSpy("****FeaturesUpdate in zoom")
       ),
@@ -419,7 +426,8 @@ export namespace LaagModel {
           map(() =>
             flow(
               prepareSourceFeaturesUpdate,
-              updateSyncLaagPageDataFromSource
+              modifySyncLaagPageDataFromSource,
+              modifySourceLaagFeatureCount
             )
           )
         )
@@ -431,7 +439,6 @@ export namespace LaagModel {
     setCanUseAllFeatures
   );
 
-  // TODO deze werkt enkel voor view in filter. Voor alle data niet nodig om te volgen
   export const followTotalFeaturesUpdate: LaagModelUpdate = Update.createAsync<LaagModel>(laag => {
     return subSpy("****fetchTotal$")(laag.source.fetchTotal$().pipe(map(totaalUpdate)));
   }) as LaagModelUpdate;
@@ -445,9 +452,7 @@ export namespace LaagModel {
     updatePageDataAfter(
       flow(
         expectedPageNumberLens.modify(pageNumberUpdate),
-        flowSpy("****pnu after modify"),
-        clampExpectedPageNumber,
-        flowSpy("****pnu after clamp")
+        clampExpectedPageNumber
       )
     );
 

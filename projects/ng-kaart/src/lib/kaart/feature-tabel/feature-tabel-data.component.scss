@@ -115,11 +115,12 @@ $footer-height: 48px;
     top: -1px;
     z-index: 3;
     right: 4px;
-    height: 47px;
+    height: 49px;
     width: 48px;
     background-color: white;
     color: $kaart-secondary-text-color;
     border-left: solid 1px #e5e5e5;
+    border-bottom: solid 1px #e5e5e5;
     padding: 4px;
 
     button[aria-expanded] {
