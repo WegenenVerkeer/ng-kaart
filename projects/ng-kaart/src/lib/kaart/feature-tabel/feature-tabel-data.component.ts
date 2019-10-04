@@ -50,6 +50,7 @@ interface TemplateData {
   readonly rows?: Row[];
   readonly mapAsFilterState: boolean;
   readonly cannotChooseMapAsFilter: boolean;
+  readonly updatePending: boolean;
 }
 
 @Component({
@@ -116,7 +117,8 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
             headers: ColumnHeaders.createFromFieldSelection(fieldNameSelections),
             rows,
             mapAsFilterState: LaagModel.mapAsFilterGetter.get(laag),
-            cannotChooseMapAsFilter: !LaagModel.canUseAllFeaturesGetter.get(laag)
+            cannotChooseMapAsFilter: !LaagModel.canUseAllFeaturesGetter.get(laag),
+            updatePending: LaagModel.updatePendingLens.get(laag)
           };
         })
       )

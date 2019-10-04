@@ -339,7 +339,8 @@ export namespace LaagModel {
   const updateLaagPageDataFromSource: LaagModelUpdate = Update.createSync(
     flow(
       modifySyncLaagPageDataFromSource,
-      modifySourceLaagFeatureCount
+      modifySourceLaagFeatureCount,
+      updatePendingLens.set(false)
     )
   );
 
@@ -348,11 +349,12 @@ export namespace LaagModel {
     PageFetcher.pageFromServer(laag.titel, laag.source, laagPageRequest(laag)).pipe(
       map(
         DataRequest.match({
-          RequestingData: () => identity, // Doe voorlopig niks. We kunnen hier een progress spinner aanzetten
+          RequestingData: () => updatePendingLens.set(true),
           DataReady: (dataready: DataReady) =>
             flow(
               aantalFeaturesLens.set(dataready.featureCount),
-              updateLaagPage(dataready.page)
+              updateLaagPage(dataready.page),
+              updatePendingLens.set(false)
             ),
           RequestFailed: () => identity // Doe voorlopig niks. We kunnen hier de tabel leeg maken of een error icoontje oid tonen
         })
@@ -362,7 +364,10 @@ export namespace LaagModel {
 
   // Enkel een page opvragen en in het model steken
   const updateLaagPageData: LaagModelUpdate = updateIfInZoom(
-    updateIfMapAsFilterOrElse(updateLaagPageDataFromSource, updateLaagPageDataFromServer)
+    Update.combineAll(
+      Update.createSync(updatePendingLens.set(true)),
+      updateIfMapAsFilterOrElse(updateLaagPageDataFromSource, updateLaagPageDataFromServer)
+    )
   );
 
   // Deze functie zal in het model voor de laag met de gegeven titel eerst de functie f uitvoeren (initiële
@@ -388,16 +393,12 @@ export namespace LaagModel {
     );
 
   // Zorg ervoor dat het verwachte paginanummer binnen de grenzen van beschikbare paginas ligt
-  const clampExpecedLaagPageNumber: Endomorphism<LaagModel> = flow(
-    flowSpy("****clampLaagPageNumber before"),
-    (laag: LaagModel) =>
-      expectedPageNumberLens.modify(
-        FeatureCount.fetchedCount(laag.featureCount)
-          .chain(prismNonNegativeInteger.getOption)
-          .fold(identity, featureCount => ord.clamp(Page.ordPageNumber)(Page.first, Page.asPageNumberFromNumberOfFeatures(featureCount)))
-      )(laag),
-    flowSpy("****clampLaagPageNumber after")
-  );
+  const clampExpecedLaagPageNumber: Endomorphism<LaagModel> = (laag: LaagModel) =>
+    expectedPageNumberLens.modify(
+      FeatureCount.fetchedCount(laag.featureCount)
+        .chain(prismNonNegativeInteger.getOption)
+        .fold(identity, featureCount => ord.clamp(Page.ordPageNumber)(Page.first, Page.asPageNumberFromNumberOfFeatures(featureCount)))
+    )(laag);
 
   const clearLaagPage: Endomorphism<LaagModel> = pageLens.set(option.none);
 
@@ -408,14 +409,12 @@ export namespace LaagModel {
     applyIfInZoomOrElse(
       flow(
         modifySourceLaagFeatureCount,
-        clampExpecedLaagPageNumber,
-        flowSpy("****FeaturesUpdate in zoom")
+        clampExpecedLaagPageNumber
       ),
       flow(
         clearLaagPage,
         clearLaagFeatureCount,
-        clampExpecedLaagPageNumber,
-        flowSpy("****FeaturesUpdate uit zoom")
+        clampExpecedLaagPageNumber
       )
     )
   );
@@ -448,7 +447,7 @@ export namespace LaagModel {
   );
 
   export const followTotalFeaturesUpdate: LaagModelUpdate = Update.createAsync<LaagModel>(laag => {
-    return subSpy("****fetchTotal$")(laag.source.fetchTotal$().pipe(map(totaalUpdate)));
+    return subSpy("****fetchTotal$")(laag.source.fetchTotal$()).pipe(map(totaalUpdate));
   }) as LaagModelUpdate;
 
   const clampExpectedPageNumber: Endomorphism<LaagModel> = laag =>
@@ -460,7 +459,9 @@ export namespace LaagModel {
     updatePageDataAfter(
       flow(
         expectedPageNumberLens.modify(pageNumberUpdate),
-        clampExpectedPageNumber
+        clampExpectedPageNumber,
+        nextPageSequenceLens.modify(n => n + 1),
+        updatePendingLens.set(true)
       )
     );
 

@@ -6,6 +6,7 @@ import {
   MatIconModule,
   MatInputModule,
   MatMenuModule,
+  MatProgressSpinnerModule,
   MatSliderModule,
   MatSlideToggleModule,
   MatTooltipModule
@@ -36,6 +37,7 @@ const components: any[] = [
     MatIconModule,
     MatInputModule,
     MatMenuModule,
+    MatProgressSpinnerModule,
     MatSliderModule,
     MatSlideToggleModule,
     MatTabsModule,

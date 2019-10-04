@@ -108,6 +108,15 @@ $footer-height: 48px;
       text-align: center;
       color: $awv-secondary-d1;
     }
+
+    .feature-table-data-update-pending {
+      padding-top: 32px;
+      padding-bottom: 32px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+    }
   }
 
   .feature-tabel-data-header-menu {
@@ -135,6 +144,10 @@ $footer-height: 48px;
     flex-direction: row;
     justify-content: flex-end;
     align-items: center;
+
+    .feature-table-data-page-pending {
+      margin-right: 8px;
+    }
 
     .feature-table-data-view-mode-selector {
       margin-right: 2em;
