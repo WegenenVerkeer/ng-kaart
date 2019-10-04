@@ -5,6 +5,7 @@ import { pipe } from "fp-ts/lib/pipeable";
 import { getLastSemigroup } from "fp-ts/lib/Semigroup";
 import { Getter, Lens, Optional, Prism, Traversal } from "monocle-ts";
 import { indexArray } from "monocle-ts/lib/Index/Array";
+import { prismNonNegativeInteger } from "newtype-ts/lib/NonNegativeInteger";
 import * as ol from "openlayers";
 import { debounceTime, map, mapTo } from "rxjs/operators";
 import { isNumber } from "util";
@@ -350,8 +351,8 @@ export namespace LaagModel {
           RequestingData: () => identity, // Doe voorlopig niks. We kunnen hier een progress spinner aanzetten
           DataReady: (dataready: DataReady) =>
             flow(
-              updateLaagPage(dataready.page),
-              aantalFeaturesLens.set(dataready.featureCount)
+              aantalFeaturesLens.set(dataready.featureCount),
+              updateLaagPage(dataready.page)
             ),
           RequestFailed: () => identity // Doe voorlopig niks. We kunnen hier de tabel leeg maken of een error icoontje oid tonen
         })
@@ -386,9 +387,16 @@ export namespace LaagModel {
       )
     );
 
-  // Zorg ervoor dat het paginanmmer binnen de grnezen van beschikbare paginas ligt
-  const clampLaagPageNumber: Endomorphism<LaagModel> = pageOptional.modify(page =>
-    Page.pageNumberLens.modify(ord.clamp(Page.ordPageNumber)(Page.first, page.lastPageNumber))(page)
+  // Zorg ervoor dat het verwachte paginanummer binnen de grenzen van beschikbare paginas ligt
+  const clampExpecedLaagPageNumber: Endomorphism<LaagModel> = flow(
+    flowSpy("****clampLaagPageNumber before"),
+    (laag: LaagModel) =>
+      expectedPageNumberLens.modify(
+        FeatureCount.fetchedCount(laag.featureCount)
+          .chain(prismNonNegativeInteger.getOption)
+          .fold(identity, featureCount => ord.clamp(Page.ordPageNumber)(Page.first, Page.asPageNumberFromNumberOfFeatures(featureCount)))
+      )(laag),
+    flowSpy("****clampLaagPageNumber after")
   );
 
   const clearLaagPage: Endomorphism<LaagModel> = pageLens.set(option.none);
@@ -400,13 +408,13 @@ export namespace LaagModel {
     applyIfInZoomOrElse(
       flow(
         modifySourceLaagFeatureCount,
-        clampLaagPageNumber,
+        clampExpecedLaagPageNumber,
         flowSpy("****FeaturesUpdate in zoom")
       ),
       flow(
         clearLaagPage,
         clearLaagFeatureCount,
-        clampLaagPageNumber,
+        clampExpecedLaagPageNumber,
         flowSpy("****FeaturesUpdate uit zoom")
       )
     )
@@ -419,7 +427,7 @@ export namespace LaagModel {
     Update.createAsync(laag =>
       observableFromOlEvents(laag.source, "addfeature", "removefeature", "clear")
         .pipe(
-          debounceTime(100),
+          debounceTime(200),
           mapTo(null)
         )
         .pipe(
@@ -479,7 +487,14 @@ export namespace LaagModel {
   );
 
   const clearPageIfMapAsFilterChangeUpdate: Function1<boolean, LaagModelUpdate> = newMapAsFilterSetting =>
-    Update.createSync(laag => (laag.mapAsFilter !== newMapAsFilterSetting ? clearLaagPage(laag) : laag));
+    Update.createSync(laag =>
+      laag.mapAsFilter !== newMapAsFilterSetting
+        ? flow(
+            expectedPageNumberLens.set(Page.first),
+            clearLaagPage
+          )(laag)
+        : laag
+    );
 
   export const setMapAsFilterUpdate: Function1<boolean, LaagModelUpdate> = newMapAsFilterSetting =>
     Update.combineAll(
