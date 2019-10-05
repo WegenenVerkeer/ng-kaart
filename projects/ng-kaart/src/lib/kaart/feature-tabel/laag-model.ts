@@ -356,7 +356,7 @@ export namespace LaagModel {
               updateLaagPage(dataready.page),
               updatePendingLens.set(false)
             ),
-          RequestFailed: () => identity // Doe voorlopig niks. We kunnen hier de tabel leeg maken of een error icoontje oid tonen
+          RequestFailed: () => updatePendingLens.set(false) // We kunnen hier ook de tabel leeg maken of een error icoontje oid tonen
         })
       )
     )
