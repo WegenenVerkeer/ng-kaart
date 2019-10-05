@@ -29,7 +29,7 @@ namespace ColumnHeaders {
     headers: fieldSelections,
     columnWidths: pipe(
       fieldSelections,
-      array.map(_ => "minmax(40px, 200px)"),
+      array.map(_ => "minmax(150px, 400px)"),
       join(" ")
     )
   });
