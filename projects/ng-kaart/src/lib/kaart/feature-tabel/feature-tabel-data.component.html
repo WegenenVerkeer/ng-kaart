@@ -96,30 +96,33 @@
     </mat-menu>
   </div>
   <div class="feature-table-data-footer">
-    <span *ngIf="(numberOfSelectedFeatures$ | async) > 0">
-      <mat-button-toggle-group [multiple]="true">
-        <mat-button-toggle matTooltip="Enkel selectie tonen" matTooltipPosition="right">{{numberOfSelectedFeatures$ | async}}</mat-button-toggle> geselecteerd
-      </mat-button-toggle-group>
-       <button mat-icon-button (click)="onAction('zoomToSelection')" matTooltip="Zoom naar selectie"  matTooltipPosition="right">
-        <mat-icon>zoom_in</mat-icon>
-      </button>
-      <button mat-icon-button (click)="onAction('eraseSelection')" matTooltip="Selectie wissen"  matTooltipPosition="right">
-        <mat-icon>clear</mat-icon>
-      </button>
-    </span>
-    <div class="feature-table-data-view-mode-selector">
-      <mat-slide-toggle
-        [checked]="data.mapAsFilterState"
-        [disabled]="data.cannotChooseMapAsFilter"
-        (change)="onAction('mapAsFilter', $event.checked)"
-        >Kaart als filter</mat-slide-toggle
-      >
+
+    <div class="left">
+      <span *ngIf="(numberOfSelectedFeatures$ | async) > 0">
+        {{numberOfSelectedFeatures$ | async}} geselecteerd
+        <button mat-icon-button (click)="onAction('zoomToSelection')" matTooltip="Zoom naar selectie"  matTooltipPosition="right">
+          <mat-icon>zoom_in</mat-icon>
+        </button>
+        <button mat-icon-button (click)="onAction('eraseSelection')" matTooltip="Selectie wissen"  matTooltipPosition="right">
+          <mat-icon>clear</mat-icon>
+        </button>
+      </span>
     </div>
-    <div *ngIf="data.dataAvailable && data.updatePending" class="feature-table-data-page-pending">
-      <mat-spinner diameter="16"></mat-spinner>
+
+    <div class="right">
+      <div class="feature-table-data-view-mode-selector">
+        <mat-slide-toggle
+          [checked]="data.mapAsFilterState"
+          [disabled]="data.cannotChooseMapAsFilter"
+          (change)="onAction('mapAsFilter', $event.checked)"
+          >Kaart als filter</mat-slide-toggle
+        >
+      </div>
+      <div *ngIf="data.dataAvailable && data.updatePending" class="feature-table-data-page-pending">
+        <mat-spinner diameter="16"></mat-spinner>
+      </div>
+      <awv-feature-tabel-pager *ngIf="data.dataAvailable"></awv-feature-tabel-pager>
     </div>
-    <awv-feature-tabel-pager
-      *ngIf="data.dataAvailable"
-    ></awv-feature-tabel-pager>
+
   </div>
 </div>

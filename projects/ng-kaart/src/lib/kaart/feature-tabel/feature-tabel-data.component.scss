@@ -157,16 +157,29 @@ $footer-height: 48px;
     overflow: hidden;
     display: flex;
     flex-direction: row;
-    justify-content: flex-end;
     align-items: center;
+    justify-content: space-between;
 
-    .feature-table-data-page-pending {
-      margin-right: 8px;
+    .left {
+      margin-left: 2em;
+      align-items: center;
     }
 
-    .feature-table-data-view-mode-selector {
-      margin-right: 2em;
+    .right {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+
+      .feature-table-data-page-pending {
+        margin-right: 8px;
+      }
+
+      .feature-table-data-view-mode-selector {
+        margin-right: 2em;
+      }
     }
+
+
   }
 }
 
