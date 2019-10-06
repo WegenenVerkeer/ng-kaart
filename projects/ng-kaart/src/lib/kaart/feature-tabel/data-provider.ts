@@ -213,7 +213,7 @@ export namespace PageFetcher {
       )(source)
     );
 
-  // we gebruiken geen streaming API. Net zoals het oude Geoloket dat ook niet doet.
+  // we gebruiken geen streaming API. Net zoals het oude Geoloket dat ook niet doet. Het gaat ook maar om 100 features maximaal.
   export const pageFromServer: Function3<string, NosqlFsSource, PageRequest, rx.Observable<DataRequest>> = (titel, source, request) =>
     source
       .fetchFeatureCollection$({

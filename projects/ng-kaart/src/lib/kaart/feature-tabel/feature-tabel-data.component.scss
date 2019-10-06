@@ -43,6 +43,14 @@ $footer-height: 48px;
           background-color: rgba(0, 0, 0, 0.04);
         }
       }
+
+      .mat-icon {
+        height: 16px;
+        width: 16px;
+        font-size: 16px;
+        margin-left: 8px;
+        vertical-align: middle;
+      }
     }
 
     th,
@@ -116,8 +124,14 @@ $footer-height: 48px;
       color: $awv-secondary-d1;
     }
 
-
-
+    .feature-table-data-update-pending {
+      padding-top: 32px;
+      padding-bottom: 32px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+    }
   }
 
   .feature-tabel-data-header-menu {
@@ -125,11 +139,12 @@ $footer-height: 48px;
     top: -1px;
     z-index: 3;
     right: 4px;
-    height: 47px;
+    height: 49px;
     width: 48px;
     background-color: white;
     color: $kaart-secondary-text-color;
     border-left: solid 1px #e5e5e5;
+    border-bottom: solid 1px #e5e5e5;
     padding: 4px;
 
     button[aria-expanded] {
@@ -144,6 +159,10 @@ $footer-height: 48px;
     flex-direction: row;
     justify-content: flex-end;
     align-items: center;
+
+    .feature-table-data-page-pending {
+      margin-right: 8px;
+    }
 
     .feature-table-data-view-mode-selector {
       margin-right: 2em;

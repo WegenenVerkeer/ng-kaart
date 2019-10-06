@@ -45,7 +45,7 @@ namespace ColumnHeaders {
     headers: fieldSelections,
     columnWidths: pipe(
       fieldSelections,
-      array.map(_ => "minmax(40px, 200px)"),
+      array.map(_ => "minmax(150px, 400px)"),
       join(" ")
     )
   });
@@ -66,6 +66,7 @@ interface TemplateData {
   readonly rows?: Row[];
   readonly mapAsFilterState: boolean;
   readonly cannotChooseMapAsFilter: boolean;
+  readonly updatePending: boolean;
 }
 
 @Component({
@@ -138,7 +139,8 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
             headers: ColumnHeaders.createFromFieldSelection(fieldNameSelections),
             rows,
             mapAsFilterState: LaagModel.mapAsFilterGetter.get(laag),
-            cannotChooseMapAsFilter: !LaagModel.canUseAllFeaturesGetter.get(laag)
+            cannotChooseMapAsFilter: !LaagModel.canUseAllFeaturesGetter.get(laag),
+            updatePending: LaagModel.updatePendingLens.get(laag)
           };
         })
       )

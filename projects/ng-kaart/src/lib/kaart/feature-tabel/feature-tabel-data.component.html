@@ -34,8 +34,18 @@
         </tbody>
       </table>
     </div>
-    <div *ngIf="!data.dataAvailable" class="feature-table-data-no-data">
-      Geen data op dit zoomniveau
+    <div *ngIf="!data.dataAvailable" class="">
+      <div
+        *ngIf="data.updatePending; else otuOfZoom"
+        class="feature-table-data-update-pending"
+      >
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+      <ng-template #otuOfZoom>
+        <div class="feature-table-data-no-data">
+          Geen data op dit zoomniveau
+        </div>
+      </ng-template>
     </div>
   </div>
   <div
@@ -104,6 +114,9 @@
         (change)="onAction('mapAsFilter', $event.checked)"
         >Kaart als filter</mat-slide-toggle
       >
+    </div>
+    <div *ngIf="data.dataAvailable && data.updatePending" class="feature-table-data-page-pending">
+      <mat-spinner diameter="16"></mat-spinner>
     </div>
     <awv-feature-tabel-pager
       *ngIf="data.dataAvailable"
