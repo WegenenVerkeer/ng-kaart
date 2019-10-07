@@ -98,14 +98,16 @@
   <div class="feature-table-data-footer">
 
     <div class="left">
-      <span *ngIf="(numberOfSelectedFeatures$ | async) > 0">
-        {{numberOfSelectedFeatures$ | async}} geselecteerd
-        <button mat-icon-button (click)="onAction('zoomToSelection')" matTooltip="Zoom naar selectie"  matTooltipPosition="right">
-          <mat-icon>zoom_in</mat-icon>
-        </button>
-        <button mat-icon-button (click)="onAction('eraseSelection')" matTooltip="Selectie wissen"  matTooltipPosition="right">
-          <mat-icon>clear</mat-icon>
-        </button>
+      <span *ngIf="(numberOfSelectedFeatures$ | async) as numberSelected">
+         <span *ngIf="numberSelected > 0">
+          {{numberSelected}} geselecteerd
+          <button mat-icon-button (click)="onAction('zoomToSelection')" matTooltip="Zoom naar selectie"  matTooltipPosition="right">
+            <mat-icon>zoom_in</mat-icon>
+          </button>
+          <button mat-icon-button (click)="onAction('eraseSelection')" matTooltip="Selectie wissen"  matTooltipPosition="right">
+            <mat-icon>clear</mat-icon>
+          </button>
+        </span>
       </span>
     </div>
 

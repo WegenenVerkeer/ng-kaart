@@ -146,16 +146,14 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
       )
     );
 
-    const maybePage$ = this.laag$.pipe(
-      map(LaagModel.pageLens.get),
-      share()
-    );
-    const page$ = subSpy("****page$")(maybePage$.pipe(catOptions));
-
-    this.rows$ = subSpy("****row$")(
-      page$.pipe(
-        map(Page.rowsLens.get),
-        share()
+    this.rows$ = subSpy("****rows$")(
+      this.laag$.pipe(
+        map(laag =>
+          LaagModel.pageLens
+            .get(laag)
+            .map(Page.rowsLens.get)
+            .getOrElse([])
+        )
       )
     );
 
@@ -279,9 +277,10 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     );
   }
 
-  public numberOfSelectedFeatures$ = this.modelChanges.geselecteerdeFeatures$.pipe(
+  public readonly numberOfSelectedFeatures$ = this.modelChanges.geselecteerdeFeatures$.pipe(
     withLatestFrom(this.kaartModel$),
     map(([features, model]) => {
+      console.log("numberOfSelectedFeatures$: ", model.geselecteerdeFeatures);
       return FeatureSelection.selectedFeaturesIdsInLaag(model.geselecteerdeFeatures)(this.laagTitel).size;
     }),
     startWith(0),
