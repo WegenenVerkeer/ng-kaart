@@ -1,7 +1,7 @@
 import * as ol from "openlayers";
 
 import { kaartLogger } from "../kaart/log";
-import { join } from "../util/validation";
+import { join } from "../util/string";
 
 import { definitieToStyle } from "./stijl-static";
 
@@ -23,7 +23,7 @@ const basisOpstellingStyle: ol.style.Style = definitieToStyle(
   // tslint:disable-next-line:max-line-length
   '{"version": "awv-v0", "definition": {"circle": {"stroke": {"color": "black", "width": 1.5}, "fill": {"color": "black"}, "radius": 3}}}'
 ).getOrElseL(msg => {
-  throw new Error(`slecht formaat ${join(msg)}`);
+  throw new Error(`slecht formaat ${join(",")(msg)}`);
 });
 
 const basisOpstellingGeselecteerdStyle: ol.style.Style = definitieToStyle(
@@ -31,14 +31,14 @@ const basisOpstellingGeselecteerdStyle: ol.style.Style = definitieToStyle(
   // tslint:disable-next-line:max-line-length
   '{"version": "awv-v0", "definition": {"circle": {"stroke": {"color": "#25FFFF", "width": 1.5}, "fill": {"color": "#25FFFF"}, "radius": 3}}}'
 ).getOrElseL(msg => {
-  throw new Error(`slecht formaat ${join(msg)}`);
+  throw new Error(`slecht formaat ${join(",")(msg)}`);
 });
 
 const basisVerbindingsLijnStyle: ol.style.Style = definitieToStyle(
   "json",
   '{"version": "awv-v0", "definition": {"stroke": {"color": "black", "width": 2}}}'
 ).getOrElseL(msg => {
-  throw new Error(`slecht formaat ${join(msg)}`);
+  throw new Error(`slecht formaat ${join(",")(msg)}`);
 });
 
 basisOpstellingStyle.setZIndex(0);

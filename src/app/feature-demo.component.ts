@@ -425,7 +425,7 @@ export class FeatureDemoComponent {
     "json",
     '{"version": "awv-v0", "definition": {"stroke": {"color": "rgba(0,127,255,0.8)", "width": 1.5}}}'
   ).getOrElseL(msg => {
-    throw new Error(`slecht formaat ${join(msg)}`);
+    throw new Error(`slecht formaat ${join(",")(msg)}`);
   });
 
   readonly bordStyle: ol.style.Style = definitieToStyle(
@@ -433,7 +433,7 @@ export class FeatureDemoComponent {
     // tslint:disable-next-line:max-line-length
     '{"version": "awv-v0", "definition": {"circle": {"stroke": {"color": "#7D3C98", "width": 1.5}, "fill": {"color": "#D7BDE2"}, "radius": 6}}}'
   ).getOrElseL(msg => {
-    throw new Error(`slecht formaat ${join(msg)}`);
+    throw new Error(`slecht formaat ${join(",")(msg)}`);
   });
 
   readonly kolkStyle: ol.style.Style = definitieToStyle(
@@ -441,7 +441,7 @@ export class FeatureDemoComponent {
     // tslint:disable-next-line:max-line-length
     '{"version": "awv-v0", "definition": {"circle": {"stroke": {"color": "navy", "width": 1.5}, "fill": {"color": "dodgerblue"}, "radius": 6}}}'
   ).getOrElseL(msg => {
-    throw new Error(`slecht formaat ${join(msg)}`);
+    throw new Error(`slecht formaat ${join(",")(msg)}`);
   });
 
   readonly fietspadStyle: ol.StyleFunction = validateAwvV0RuleDefintion(this.fietspadStijlDef).getOrElse(msg => {
@@ -483,7 +483,7 @@ export class FeatureDemoComponent {
       }
     })
   ).getOrElseL(msg => {
-    throw new Error(`slecht formaat ${join(msg)}`);
+    throw new Error(`slecht formaat ${join(",")(msg)}`);
   });
 
   readonly elisaVerkeersbordenSelectedStyle = definitieToStyleFunction(
@@ -517,7 +517,7 @@ export class FeatureDemoComponent {
       }
     })
   ).getOrElseL(msg => {
-    throw new Error(`slecht formaat ${join(msg)}`);
+    throw new Error(`slecht formaat ${join(",")(msg)}`);
   });
 
   readonly verkeersbordenStyleFunction = verkeersbordenStyleFunction(false);

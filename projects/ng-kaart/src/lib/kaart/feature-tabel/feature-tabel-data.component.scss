@@ -18,7 +18,6 @@ $footer-height: 48px;
     overflow: auto;
 
     table {
-      min-width: 100vw;
       width: auto;
       display: grid;
       border-collapse: collapse;
@@ -29,6 +28,14 @@ $footer-height: 48px;
     tr {
       display: contents;
       scroll-snap-type: x mandatory;
+
+      .mat-icon {
+        height: 16px;
+        width: 16px;
+        font-size: 16px;
+        margin-left: 8px;
+        vertical-align: middle;
+      }
     }
 
     th,
@@ -101,6 +108,15 @@ $footer-height: 48px;
       text-align: center;
       color: $awv-secondary-d1;
     }
+
+    .feature-table-data-update-pending {
+      padding-top: 32px;
+      padding-bottom: 32px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+    }
   }
 
   .feature-tabel-data-header-menu {
@@ -108,11 +124,12 @@ $footer-height: 48px;
     top: -1px;
     z-index: 3;
     right: 4px;
-    height: 47px;
+    height: 49px;
     width: 48px;
     background-color: white;
     color: $kaart-secondary-text-color;
     border-left: solid 1px #e5e5e5;
+    border-bottom: solid 1px #e5e5e5;
     padding: 4px;
 
     button[aria-expanded] {
@@ -122,8 +139,19 @@ $footer-height: 48px;
 
   .feature-table-data-footer {
     height: $footer-height;
-    width: 100%;
     overflow: hidden;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+
+    .feature-table-data-page-pending {
+      margin-right: 8px;
+    }
+
+    .feature-table-data-view-mode-selector {
+      margin-right: 2em;
+    }
   }
 }
 

@@ -6,7 +6,9 @@ import {
   MatIconModule,
   MatInputModule,
   MatMenuModule,
+  MatProgressSpinnerModule,
   MatSliderModule,
+  MatSlideToggleModule,
   MatTooltipModule
 } from "@angular/material";
 import { MatTabsModule } from "@angular/material/tabs";
@@ -35,7 +37,9 @@ const components: any[] = [
     MatIconModule,
     MatInputModule,
     MatMenuModule,
+    MatProgressSpinnerModule,
     MatSliderModule,
+    MatSlideToggleModule,
     MatTabsModule,
     MatTooltipModule
   ],

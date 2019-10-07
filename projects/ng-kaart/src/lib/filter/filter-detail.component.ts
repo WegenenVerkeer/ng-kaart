@@ -13,7 +13,7 @@ import { KaartComponent } from "../kaart/kaart.component";
 import { collectOption } from "../util/operators";
 
 import { Filter as fltr } from "./filter-model";
-import { isTotaalOpgehaald } from "./filter-totaal";
+import * as FilterTotaal from "./filter-totaal";
 
 @Component({
   selector: "awv-filter-detail",
@@ -87,12 +87,12 @@ export class FilterDetailComponent extends KaartChildComponentBase {
 
     this.filterActief$ = laagUpdates$.pipe(map(laag => laag.filterinstellingen.actief));
 
-    this.filterTotaalOnbekend$ = filterTotaalChanges$.pipe(map(filterTotaal => filterTotaal.type === "TeVeelData"));
-    this.filterTotaalOpTeHalen$ = filterTotaalChanges$.pipe(map(filterTotaal => filterTotaal.type === "TotaalOpTeHalen"));
-    this.filterTotaalOpgehaald$ = filterTotaalChanges$.pipe(map(filterTotaal => filterTotaal.type === "TotaalOpgehaald"));
-    this.filterTotaalOphalenMislukt$ = filterTotaalChanges$.pipe(map(filterTotaal => filterTotaal.type === "TotaalOphalenMislukt"));
+    this.filterTotaalOnbekend$ = filterTotaalChanges$.pipe(map(FilterTotaal.isTeVeelData));
+    this.filterTotaalOpTeHalen$ = filterTotaalChanges$.pipe(map(FilterTotaal.isTotaalOpTeHalen));
+    this.filterTotaalOpgehaald$ = filterTotaalChanges$.pipe(map(FilterTotaal.isTotaalOpgehaald));
+    this.filterTotaalOphalenMislukt$ = filterTotaalChanges$.pipe(map(FilterTotaal.isTotaalMislukt));
     this.filterTotalen$ = filterTotaalChanges$.pipe(
-      filter(isTotaalOpgehaald),
+      filter(FilterTotaal.isTotaalOpgehaald),
       map(totaal => `${totaal.totaal}/${totaal.collectionTotaal}`),
       shareReplay(1)
     );
