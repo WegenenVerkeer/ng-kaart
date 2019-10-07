@@ -182,13 +182,6 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     const eraseSelection$ = this.actionFor$("eraseSelection");
     const zoomToSelection$ = this.actionFor$("zoomToSelection");
 
-    const extractIds: FunctionN<[ol.Feature], string> = feature => {
-      return [feature]
-        .map(f => Feature.propertyId(f))
-        .filter(fpOption.isSome)
-        .map(fpOption.getOrElse(() => ""))[0];
-    };
-
     this.runInViewReady(
       zoomToSelection$.pipe(
         withLatestFrom(this.kaartModel$),
@@ -209,7 +202,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
         withLatestFrom(this.kaartModel$),
         tap(([x, model]) => {
           const selected = model.geselecteerdeFeatures.features.getArray().filter(f => f.getProperties()["laagnaam"] === this.laagTitel);
-          this.dispatch(DeselecteerFeatureCmd(selected.map(extractIds)));
+          this.dispatch(DeselecteerFeatureCmd(selected.map(Feature.propertyIdRequired)));
         })
       )
     );
@@ -253,7 +246,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
           if (data.selected) {
             this.dispatch(SelecteerExtraFeaturesCmd([row.feature]));
           } else {
-            const ids = extractIds(row.feature);
+            const ids = Feature.propertyIdRequired(row.feature);
             this.dispatch(DeselecteerFeatureCmd([ids]));
           }
         })
@@ -269,7 +262,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
           if (selected) {
             this.dispatch(SelecteerExtraFeaturesCmd(rows.map(row => row.feature)));
           } else {
-            const ids = rows.map(row => row.feature).map(extractIds);
+            const ids = rows.map(row => row.feature).map(Feature.propertyIdRequired);
             this.dispatch(DeselecteerFeatureCmd(ids));
           }
         })
