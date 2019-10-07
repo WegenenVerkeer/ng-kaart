@@ -571,16 +571,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           // Deselect en selecteer alle features om terug een correcte offset rendering te krijgen
           // Indien OL geupgrade kunnen we dit eleganter doen door de stijl van de features op de overlay laag aan te passen, zie:
           // https://openlayers.org/en/latest/apidoc/module-ol_interaction_Select-Select.html#getOverlay
-          const geselecteerd = FeatureSelection.getGeselecteerdeFeaturesInLaag(model.geselecteerdeFeatures)(cmnd.titel);
-          const updatedSelection = FeatureSelection.deselecteerFeatures(model.geselecteerdeFeatures)(geselecteerd);
+          const geselecteerd = [...model.geselecteerdeFeatures.features.getArray()];
+          model.geselecteerdeFeatures.features.clear();
+          model.geselecteerdeFeatures.features.extend(geselecteerd);
 
-          const updatedMetSelectie = {
-            ...model,
-            updatedSelection
-          };
-
-          zendLagenInGroep(updatedMetSelectie, groep);
-          return ModelAndEmptyResult(updatedMetSelectie);
+          zendLagenInGroep(updatedModel, groep);
+          return ModelAndEmptyResult(updatedModel);
         })
       );
     }
@@ -1206,25 +1202,23 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       const featuresToAdd = array.difference(Feature.setoidFeaturePropertyId)(newFeatures, currentFeatures);
 
       if (!cmnd.incremental) {
-        // als we niet incremental werken moet de nieuwe selectie de vorige vervangen
-        FeatureSelection.deselecteerAlleFeatures(model.geselecteerdeFeatures);
+        model.geselecteerdeFeatures.features.clear();
       }
+      model.geselecteerdeFeatures.features.extend(featuresToAdd);
 
-      const featureSelection = FeatureSelection.selecteerFeatures(model.geselecteerdeFeatures)(featuresToAdd);
-
-      return ModelWithResult({ ...model, geselecteerdeFeatures: featureSelection });
+      return ModelWithResult(model);
     }
 
     function deselecteerFeature(cmnd: prt.DeselecteerFeatureCmd): ModelWithResult<Msg> {
       const toDeselect = model.geselecteerdeFeatures.features.getArray().filter(f => cmnd.ids.includes(f.get("id")));
-      const featureSelection = FeatureSelection.deselecteerFeatures(model.geselecteerdeFeatures)(toDeselect);
+      toDeselect.forEach(f => model.geselecteerdeFeatures.features.remove(f));
 
-      return ModelWithResult({ ...model, geselecteerdeFeatures: featureSelection });
+      return ModelWithResult(model);
     }
 
     function deselecteerAlleFeatures(): ModelWithResult<Msg> {
-      const featureSelection = FeatureSelection.deselecteerAlleFeatures(model.geselecteerdeFeatures);
-      return ModelWithResult({ ...model, geselecteerdeFeatures: featureSelection });
+      model.geselecteerdeFeatures.features.clear();
+      return ModelWithResult(model);
     }
 
     function sluitInfoBoodschap(cmnd: prt.SluitInfoBoodschapCmd): ModelWithResult<Msg> {

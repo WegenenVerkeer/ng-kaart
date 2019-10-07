@@ -16,7 +16,8 @@ import {
   share,
   shareReplay,
   startWith,
-  switchMap
+  switchMap,
+  tap
 } from "rxjs/operators";
 
 import { FilterAanpassingState as FilteraanpassingState, GeenFilterAanpassingBezig } from "../filter/filter-aanpassing-state";
@@ -33,6 +34,7 @@ import { envParams } from "./kaart-config";
 import * as ke from "./kaart-elementen";
 import { DataLoadEvent, LoadComplete } from "./kaart-load-events";
 import * as prt from "./kaart-protocol";
+import { FeatureSelection } from "./kaart-protocol";
 import { UiElementOpties } from "./kaart-protocol-commands";
 import { GeselecteerdeFeatures, Viewinstellingen } from "./kaart-protocol-subscriptions";
 import { KaartWithInfo } from "./kaart-with-info";
