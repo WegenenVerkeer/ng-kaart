@@ -255,8 +255,13 @@ export namespace LaagModel {
       };
     });
 
-  export const isExpectedPage: Function1<number, Prism<LaagModel, LaagModel>> = sequenceNumber =>
-    Prism.fromPredicate(laag => laag.nextPageSequence === sequenceNumber);
+  const isExpectedPageSequence: Function1<number, Predicate<LaagModel>> = sequenceNumber => laag =>
+    laag.nextPageSequence === sequenceNumber;
+
+  const ifIsExpectedPageSequence = (expectedPageSequence: number) => (f: Endomorphism<LaagModel>): Endomorphism<LaagModel> => laag =>
+    isExpectedPageSequence(expectedPageSequence)(laag) ? f(laag) : laag;
+
+  const incrementNextPageSequence = nextPageSequenceLens.modify(n => n + 1);
 
   export const isOnFirstPage: Predicate<LaagModel> = laag => laag.page.map(Page.pageNumberLens.get).exists(Page.isFirst);
   export const isOnLastPage: Predicate<LaagModel> = laag =>
@@ -318,9 +323,6 @@ export namespace LaagModel {
     requestSequence: laag.nextPageSequence
   });
 
-  // TODO controleer hier of pagenumber overeenkomt met wat we gevraagd hebben.
-  // requestSequence moet aan Page toegevoegd worden. Ook pending moet aangepast
-  // worden.
   const updateLaagPage: Function1<Page, Endomorphism<LaagModel>> = page => laag =>
     pageLens.set(ifInZoom(laag) ? option.some(page) : option.none)(laag);
 
@@ -345,16 +347,23 @@ export namespace LaagModel {
   );
 
   // Pas uiteindelijk de huidige Page aan indien de volledige data gebruikt wordt.
-  const updateLaagPageDataFromServer: LaagModelUpdate = Update.createAsync((laag: LaagModel) =>
+  const updateLaagPageDataFromServer: LaagModelUpdate = Update.create(
+    flow(
+      updatePendingLens.set(true),
+      incrementNextPageSequence
+    )
+  )((laag: LaagModel) =>
     PageFetcher.pageFromServer(laag.titel, laag.source, laagPageRequest(laag)).pipe(
       map(
         DataRequest.match({
           RequestingData: () => updatePendingLens.set(true),
           DataReady: (dataready: DataReady) =>
-            flow(
-              aantalFeaturesLens.set(dataready.featureCount),
-              updateLaagPage(dataready.page),
-              updatePendingLens.set(false)
+            ifIsExpectedPageSequence(dataready.pageSequence)(
+              flow(
+                aantalFeaturesLens.set(dataready.featureCount),
+                updateLaagPage(dataready.page),
+                updatePendingLens.set(false)
+              )
             ),
           RequestFailed: () => updatePendingLens.set(false) // We kunnen hier ook de tabel leeg maken of een error icoontje oid tonen
         })
@@ -364,10 +373,7 @@ export namespace LaagModel {
 
   // Enkel een page opvragen en in het model steken
   const updateLaagPageData: LaagModelUpdate = updateIfInZoom(
-    Update.combineAll(
-      Update.createSync(updatePendingLens.set(true)),
-      updateIfMapAsFilterOrElse(updateLaagPageDataFromSource, updateLaagPageDataFromServer)
-    )
+    updateIfMapAsFilterOrElse(updateLaagPageDataFromSource, updateLaagPageDataFromServer)
   );
 
   // Deze functie zal in het model voor de laag met de gegeven titel eerst de functie f uitvoeren (initiële

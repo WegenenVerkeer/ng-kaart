@@ -48,6 +48,7 @@ export interface DataReady {
   readonly kind: "DataReady";
   readonly page: Page;
   readonly featureCount: FeatureCountFetched;
+  readonly pageSequence: number;
 }
 
 export interface RequestFailed {
@@ -154,10 +155,16 @@ export namespace DataRequest {
     kind: "RequestingData"
   };
 
-  export const DataReady: Function3<PageNumber, NonNegativeInteger, Row[], DataReady> = (pageNumber, numberOfFeatures, rows) => ({
+  export const DataReady = (
+    pageNumber: PageNumber,
+    pageSequence: number,
+    numberOfFeatures: NonNegativeInteger,
+    rows: Row[]
+  ): DataReady => ({
     kind: "DataReady",
     page: Page.create(pageNumber, Page.asPageNumberFromNumberOfFeatures(numberOfFeatures), rows),
-    featureCount: FeatureCount.createFetched(prismNonNegativeInteger.reverseGet(numberOfFeatures))
+    featureCount: FeatureCount.createFetched(prismNonNegativeInteger.reverseGet(numberOfFeatures)),
+    pageSequence
   });
 
   export const RequestFailed: RequestFailed = {
@@ -233,6 +240,7 @@ export namespace PageFetcher {
             featureCount =>
               DataRequest.DataReady(
                 request.pageNumber,
+                request.requestSequence,
                 featureCount,
                 pipe(
                   featureCollection.features,
