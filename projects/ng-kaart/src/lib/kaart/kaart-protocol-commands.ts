@@ -273,7 +273,7 @@ export interface HighlightFeaturesCmd<Msg extends KaartMsg> {
 export interface VervangFeaturesCmd<Msg extends KaartMsg> {
   readonly type: "VervangFeatures";
   readonly titel: string;
-  readonly features: Array<ol.Feature>;
+  readonly features: ol.Feature[];
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -367,7 +367,7 @@ export interface AbortTileLoadingCmd {
 
 export interface MeldComponentFoutCmd {
   readonly type: "MeldComponentFout";
-  readonly fouten: Array<string>;
+  readonly fouten: string[];
 }
 
 export interface VoegZoekerToeCmd<Msg extends KaartMsg> {
@@ -453,7 +453,7 @@ export interface VoegOverlayToeCmd {
 
 export interface VerwijderOverlaysCmd {
   readonly type: "VerwijderOverlays";
-  readonly overlays: Array<ol.Overlay>;
+  readonly overlays: ol.Overlay[];
 }
 
 export interface ToonInfoBoodschapCmd {
@@ -519,13 +519,13 @@ export interface RegistreerErrorCmd {
 // Indien incremental true is wordt de nieuwe met de bestaande selectie gecombineerd.
 export interface SelecteerFeaturesCmd {
   readonly type: "SelecteerFeatures";
-  readonly features: Array<ol.Feature>;
+  readonly features: ol.Feature[];
   readonly incremental: boolean;
 }
 
 export interface DeselecteerFeatureCmd {
   readonly type: "DeselecteerFeature";
-  readonly ids: Array<string>;
+  readonly ids: string[];
 }
 
 export interface DeselecteerAlleFeaturesCmd {
@@ -810,7 +810,7 @@ export function HighlightFeaturesCmd<Msg extends KaartMsg>(
 
 export function VervangFeaturesCmd<Msg extends KaartMsg>(
   titel: string,
-  features: Array<ol.Feature>,
+  features: ol.Feature[],
   wrapper: BareValidationWrapper<Msg>
 ): VervangFeaturesCmd<Msg> {
   return { type: "VervangFeatures", titel, features, wrapper };
@@ -836,7 +836,7 @@ export function ActiveerHoverModusCmd(hoverModus: HoverModus): ActiveerHoverModu
   return { type: "ActiveerHoverModus", hoverModus };
 }
 
-export function MeldComponentFoutCmd(fouten: Array<string>): MeldComponentFoutCmd {
+export function MeldComponentFoutCmd(fouten: string[]): MeldComponentFoutCmd {
   return { type: "MeldComponentFout", fouten };
 }
 
@@ -883,7 +883,7 @@ export function VoegOverlayToeCmd(overlay: ol.Overlay): VoegOverlayToeCmd {
   return { type: "VoegOverlayToe", overlay };
 }
 
-export function VerwijderOverlaysCmd(overlays: Array<ol.Overlay>): VerwijderOverlaysCmd {
+export function VerwijderOverlaysCmd(overlays: ol.Overlay[]): VerwijderOverlaysCmd {
   return { type: "VerwijderOverlays", overlays };
 }
 
@@ -930,15 +930,15 @@ export function ZetUiElementOpties(naam: string, opties: any): ZetUiElementOptie
   return { type: "ZetUiElementOpties", naam, opties };
 }
 
-export function SelecteerFeaturesCmd(features: Array<ol.Feature>): SelecteerFeaturesCmd {
+export function SelecteerFeaturesCmd(features: ol.Feature[]): SelecteerFeaturesCmd {
   return { type: "SelecteerFeatures", features, incremental: false };
 }
 
-export function SelecteerExtraFeaturesCmd(features: Array<ol.Feature>): SelecteerFeaturesCmd {
+export function SelecteerExtraFeaturesCmd(features: ol.Feature[]): SelecteerFeaturesCmd {
   return { type: "SelecteerFeatures", features, incremental: true };
 }
 
-export function DeselecteerFeatureCmd(ids: Array<string>): DeselecteerFeatureCmd {
+export function DeselecteerFeatureCmd(ids: string[]): DeselecteerFeatureCmd {
   return { type: "DeselecteerFeature", ids };
 }
 
