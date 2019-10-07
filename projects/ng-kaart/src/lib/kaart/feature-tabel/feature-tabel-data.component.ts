@@ -280,15 +280,16 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
   public readonly numberOfSelectedFeatures$ = this.modelChanges.geselecteerdeFeatures$.pipe(
     withLatestFrom(this.kaartModel$),
     map(([features, model]) => {
-      console.log("numberOfSelectedFeatures$: ", model.geselecteerdeFeatures);
       return FeatureSelection.selectedFeaturesIdsInLaag(model.geselecteerdeFeatures)(this.laagTitel).size;
     }),
     startWith(0),
     shareReplay(1)
   );
 
+  public readonly hasSelectedFeatures$ = this.numberOfSelectedFeatures$.pipe(map(count => count > 0));
+
   // dit wordt wel heel vaak opgeroepen, geen perf issues?
-  isSelected$(row) {
+  public isSelected$(row) {
     return this.kaartModel$.pipe(
       map(m => {
         return FeatureSelection.isSelected(m.geselecteerdeFeatures)(row.feature);
