@@ -365,7 +365,16 @@ export namespace LaagModel {
                 updatePendingLens.set(false)
               )
             ),
-          RequestFailed: () => updatePendingLens.set(false) // We kunnen hier ook de tabel leeg maken of een error icoontje oid tonen
+          RequestFailed: () =>
+            flow(
+              updatePendingLens.set(false),
+              laag =>
+                pipe(
+                  laag.page,
+                  option.fold(() => Page.first, Page.pageNumberLens.get),
+                  expectedPageNumberLens.set // expected is gelijk aan wat in de page zit
+                )(laag)
+            ) // We kunnen hier ook de tabel leeg maken of een error icoontje oid tonen
         })
       )
     )

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, NgZone } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone } from "@angular/core";
 import { MatSliderChange } from "@angular/material";
 import { option } from "fp-ts";
 import { flow, Refinement } from "fp-ts/lib/function";
@@ -32,7 +32,13 @@ export interface PagerData {
 export class FeatureTabelPagerComponent extends KaartChildComponentBase {
   public readonly pageData$: rx.Observable<PagerData | undefined>;
 
-  constructor(kaart: KaartComponent, overzicht: FeatureTabelOverzichtComponent, laagData: FeatureTabelDataComponent, ngZone: NgZone) {
+  constructor(
+    kaart: KaartComponent,
+    overzicht: FeatureTabelOverzichtComponent,
+    laagData: FeatureTabelDataComponent,
+    ngZone: NgZone,
+    private readonly cdr: ChangeDetectorRef
+  ) {
     super(kaart, ngZone);
 
     const laag$ = laagData.laag$;
@@ -59,6 +65,7 @@ export class FeatureTabelPagerComponent extends KaartChildComponentBase {
             option.toUndefined // Voor Angular
           )
         ),
+        tap(() => this.cdr.markForCheck()),
         share()
       )
     );
