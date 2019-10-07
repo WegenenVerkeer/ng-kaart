@@ -1,9 +1,10 @@
 import { array, option, ord, record, setoid, traversable } from "fp-ts";
-import { Endomorphism, flow, Function1, Function2, identity, Predicate } from "fp-ts/lib/function";
+import { Curried2, Endomorphism, flow, Function1, Function2, identity, Predicate } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
+import { ordString } from "fp-ts/lib/Ord";
 import { pipe } from "fp-ts/lib/pipeable";
 import { getLastSemigroup } from "fp-ts/lib/Semigroup";
-import { Getter, Lens, Optional, Prism, Traversal } from "monocle-ts";
+import { Getter, Lens, Optional, Traversal } from "monocle-ts";
 import { indexArray } from "monocle-ts/lib/Index/Array";
 import { prismNonNegativeInteger } from "newtype-ts/lib/NonNegativeInteger";
 import * as ol from "openlayers";
@@ -12,11 +13,12 @@ import { isNumber } from "util";
 
 import { Filter, FilterTotaal, isTotaalOpgehaald } from "../../filter";
 import { NosqlFsSource } from "../../source";
-import { subSpy } from "../../util";
+import * as arrays from "../../util/arrays";
 import { PartialFunction2 } from "../../util/function";
 import { flowSpy } from "../../util/function";
 import { arrayTraversal, selectiveArrayTraversal } from "../../util/lenses";
 import { observableFromOlEvents } from "../../util/ol-observable";
+import { subSpy } from "../../util/operators";
 import * as ke from "../kaart-elementen";
 import { Viewinstellingen } from "../kaart-protocol-subscriptions";
 
@@ -121,13 +123,25 @@ export namespace LaagModel {
   // aanpassen en anderzijds elke Row die binnen komt.
   const locationTransformer: Function1<ke.VeldInfo[], [Endomorphism<FieldSelection[]>, Endomorphism<Row>]> = veldinfos => {
     // We moeten op label werken, want de gegevens zitten op verschillende plaatsen bij verschillende lagen
-    const veldlabels = veldinfos.map(ke.VeldInfo.veldlabelLens.get);
+    const veldlabels = veldinfos.map(ke.VeldInfo.veldlabelLens.get).filter(label => label !== undefined) as string[];
     const wegLabel = "Ident8";
-    const afstandLabels = ["Van refpunt", "Van afst", "Tot refpunt", "Tot afst"];
+    const lijnAfstandLabels = ["Van refpunt", "Van afst", "Tot refpunt", "Tot afst"];
+    const puntAfstandLabels = ["Refpunt", "Afstand"];
     const maybeWegKey = array.findFirst(veldinfos, vi => vi.label === wegLabel).map(ke.VeldInfo.veldnaamLens.get);
     return maybeWegKey.fold([identity, identity] as [Endomorphism<FieldSelection[]>, Endomorphism<Row>], wegKey => {
-      const allLabelsPresent = afstandLabels.filter(label => veldlabels.includes(label)).length === afstandLabels.length; // alles of niks!
-      const locationLabels = allLabelsPresent ? afstandLabels : [];
+      const distance: Function2<number, number, string> = (ref, offset) => (offset >= 0 ? `${ref} +${offset}` : `${ref} ${offset}`);
+      const lijnValueGen = (wegValue: string) => (distances: number[]): string =>
+        `${wegValue} van ${distance(distances[0], distances[1])} tot ${distance(distances[2], distances[3])}`;
+      const puntValueGen = (wegValue: string) => (distances: number[]): string => `${wegValue} ${distance(distances[0], distances[1])}`;
+
+      const allLijnLabelsPresent = arrays.containsAll(ordString)(veldlabels, lijnAfstandLabels);
+      const allPuntLabelsPresent = arrays.containsAll(ordString)(veldlabels, puntAfstandLabels);
+
+      const [locationLabels, locationValueGen]: [string[], Curried2<string, number[], string>] = allLijnLabelsPresent
+        ? [lijnAfstandLabels, lijnValueGen]
+        : allPuntLabelsPresent
+        ? [puntAfstandLabels, puntValueGen]
+        : [[], () => () => ""];
 
       const locationKeys = array.array.filterMap(locationLabels, label =>
         array.findFirst(veldinfos, vi => vi.label === label).map(ke.VeldInfo.veldnaamLens.get)
@@ -149,21 +163,14 @@ export namespace LaagModel {
           .cons(locationFieldSelection, fieldSelections) // Het synthetische veld toevoegen
           .filter(fieldSelection => !allLocationLabels.includes(fieldSelection.label)); // en de bijdragende velden verwijderen
 
-      const distance: Function2<number, number, string> = (ref, offset) => (offset >= 0 ? `${ref} +${offset}` : `${ref} ${offset}`);
-
       const rowTrf: Endomorphism<Row> = row => {
         const maybeWegValue = row[wegKey];
         const maybeDistances: Option<number[]> = traversable
           .sequence(option.option, array.array)(locationKeys.map(key => row[key].maybeValue.filter(isNumber)))
-          .filter(ns => ns.length === afstandLabels.length);
+          .filter(ns => ns.length === locationLabels.length);
         const locatieField: Field = {
           maybeValue: maybeWegValue.maybeValue
-            .map(wegValue =>
-              maybeDistances.fold(
-                `${wegValue}`,
-                distances => `${wegValue} van ${distance(distances[0], distances[1])} tot ${distance(distances[2], distances[3])}`
-              )
-            )
+            .map(wegValue => maybeDistances.fold(`${wegValue}`, locationValueGen(wegValue.toString())))
             .orElse(() => option.some("<Geen weglocatie>"))
         };
         return Row.addField("syntheticLocation", locatieField)(row);
