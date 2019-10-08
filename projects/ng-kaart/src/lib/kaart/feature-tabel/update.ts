@@ -34,11 +34,11 @@ export namespace Update {
 
   export const combineAll = <A>(...updates: Update<A>[]) => array.reduce(mempty, (us: Update<A>, u: Update<A>) => mappend(us, u))(updates);
 
-  export const ifOrElse = <A>(pred: Predicate<A>) => (ifTrue: Update<A>, ifFalse: Update<A>) => ({
+  export const ifOrElse = <A>(pred: Predicate<A>) => (ifTrue: Update<A>, ifFalse: Update<A>): Update<A> => ({
     syncUpdate: (a: A) => (pred(a) ? ifTrue.syncUpdate(a) : ifFalse.syncUpdate(a)),
     asyncUpdate: (a: A) => (pred(a) ? ifTrue.asyncUpdate(a) : ifFalse.asyncUpdate(a))
   });
-  export const ifPredicate = <A>(pred: Predicate<A>) => (ifTrue: Update<A>) => ifOrElse(pred)(ifTrue, mempty);
+  export const filter = <A>(pred: Predicate<A>) => (ifTrue: Update<A>): Update<A> => ifOrElse(pred)(ifTrue, mempty);
 
   // Vormt een Update<A> om naar een Update<B>
   export const liftUpdate: <A, B>(

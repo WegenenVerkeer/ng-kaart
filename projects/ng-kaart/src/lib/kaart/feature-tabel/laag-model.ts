@@ -67,10 +67,6 @@ export interface LaagModel {
   readonly viewinstellingen: Viewinstellingen; // Kopie van gegevens in TableModel. Handig om hier te refereren
 }
 
-namespace ViewSourceMode {
-  export const fromBoolean = (b: boolean): ViewSourceMode => (b ? "Map" : "AllFeatures");
-}
-
 export namespace LaagModel {
   export type LaagModelSyncUpdate = SyncUpdate<LaagModel>;
   export type LaagModelAsyncUpdate = AsyncUpdate<LaagModel>;
@@ -94,6 +90,7 @@ export namespace LaagModel {
   export const filterIsActiveLens: LaagModelLens<boolean> = laagPropLens("filterIsActive");
   export const veldInfosGetter: LaagModelGetter<ke.VeldInfo[]> = laagPropLens("veldinfos").asGetter();
   const unsafeViewSourceModeLens: LaagModelLens<ViewSourceMode> = laagPropLens("viewSourceMode");
+  const unsafeViewSelectionModeLens: LaagModelLens<ViewSelectionMode> = laagPropLens("viewSelectionMode");
   export const viewSourceModeGetter: LaagModelGetter<ViewSourceMode> = unsafeViewSourceModeLens.asGetter();
   const unsafeFieldSortingsLens: LaagModelLens<FieldSorting[]> = laagPropLens("fieldSortings");
   const unsafeFieldSelectionsLens: LaagModelLens<FieldSelection[]> = laagPropLens("fieldSelections");
@@ -279,11 +276,11 @@ export namespace LaagModel {
     equalToString("Map")
   );
   const updateIfMapAsFilterOrElse = Update.ifOrElse(ifInMapAsFilter);
-  const updateIfMapAsFilter: Endomorphism<LaagModelUpdate> = Update.ifPredicate(ifInMapAsFilter);
+  const updateIfMapAsFilter: Endomorphism<LaagModelUpdate> = Update.filter(ifInMapAsFilter);
   const applyIfMapAsFilter: Endomorphism<Endomorphism<LaagModel>> = (f: Endomorphism<LaagModel>) => laag =>
     ifInMapAsFilter(laag) ? f(laag) : laag;
   const ifInZoom = (laag: LaagModel) => laag.viewinstellingen.zoom >= laag.minZoom && laag.viewinstellingen.zoom <= laag.maxZoom;
-  const updateIfInZoom = Update.ifPredicate(ifInZoom);
+  const updateIfInZoom = Update.filter(ifInZoom);
   const applyIfInZoomOrElse = (
     endoInZoom: Endomorphism<LaagModel>,
     endoOutsideZoom: Endomorphism<LaagModel>
@@ -517,24 +514,31 @@ export namespace LaagModel {
     andThenUpdatePageData
   );
 
-  const clearPageIfMapAsFilterChangeUpdate: Function1<ViewSourceMode, LaagModelUpdate> = newMapAsFilterSetting =>
-    Update.createSync(laag =>
-      laag.viewSourceMode !== newMapAsFilterSetting
-        ? flow(
-            expectedPageNumberLens.set(Page.first),
-            clearLaagPage
-          )(laag)
-        : laag
-    );
-
   export const setMapAsFilterUpdate: Function1<boolean, LaagModelUpdate> = flow(
-    ViewSourceMode.fromBoolean,
+    setting => (setting ? "Map" : "AllFeatures"),
     viewSourceMode =>
-      Update.combineAll(
-        clearPageIfMapAsFilterChangeUpdate(viewSourceMode),
+      Update.filter((laag: LaagModel) => laag.viewSourceMode !== viewSourceMode)(
         pipe(
-          viewSourceMode,
-          unsafeViewSourceModeLens.set,
+          flow(
+            expectedPageNumberLens.set(Page.first),
+            clearLaagPage,
+            unsafeViewSourceModeLens.set(viewSourceMode)
+          ),
+          andThenUpdatePageData
+        )
+      )
+  );
+
+  export const setShowSelectedOnlyUpdate: Function1<boolean, LaagModelUpdate> = flow(
+    setting => (setting ? "SelectedOnly" : "SourceFeatures"),
+    viewSelectionMode =>
+      Update.filter((laag: LaagModel) => laag.viewSelectionMode !== viewSelectionMode)(
+        pipe(
+          flow(
+            expectedPageNumberLens.set(Page.first),
+            clearLaagPage,
+            unsafeViewSelectionModeLens.set(viewSelectionMode)
+          ),
           andThenUpdatePageData
         )
       )
