@@ -124,7 +124,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
             fieldNameSelections,
             headers: ColumnHeaders.createFromFieldSelection(fieldNameSelections),
             rows,
-            mapAsFilterState: LaagModel.mapAsFilterGetter.get(laag),
+            mapAsFilterState: LaagModel.viewSourceModeGetter.get(laag) === "Map",
             cannotChooseMapAsFilter: !LaagModel.canUseAllFeaturesGetter.get(laag),
             updatePending: LaagModel.updatePendingLens.get(laag)
           };
