@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone, OnChanges, SimpleChanges, ViewChild, ViewEncapsulation } from "@angular/core";
 import { MatCheckbox } from "@angular/material/checkbox";
 import { array, option } from "fp-ts";
+import { eqString } from "fp-ts/lib/Eq";
 import { flow, Function1, Refinement } from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
 import * as ol from "openlayers";
@@ -199,7 +200,10 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
       eraseSelection$.pipe(
         withLatestFrom(this.kaartModel$),
         tap(([x, model]) => {
-          const selected = model.geselecteerdeFeatures.features.getArray().filter(f => f.getProperties()["laagnaam"] === this.laagTitel);
+          this.selectAllChecked = false;
+          const selected = model.geselecteerdeFeatures.features
+            .getArray()
+            .filter(f => Feature.getLaagnaam(f).contains(eqString, this.laagTitel));
           this.dispatch(DeselecteerFeatureCmd(selected.map(Feature.propertyIdRequired)));
         })
       )

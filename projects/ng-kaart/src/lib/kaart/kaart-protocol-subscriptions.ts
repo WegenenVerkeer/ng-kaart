@@ -6,6 +6,7 @@ import { Lens } from "monocle-ts";
 import * as ol from "openlayers";
 
 import * as sft from "../stijl/stijl-function-types";
+import { forEach } from "../util";
 import { Feature } from "../util/feature";
 import { ZoekAntwoord, ZoekerMetWeergaveopties, ZoekResultaat } from "../zoeker/zoeker";
 
@@ -249,17 +250,19 @@ export function FeatureSelection(features: ol.Collection<ol.Feature>, idsPerLaag
 
   features.on("remove", evt => {
     const f = (evt as ol.Collection.Event).element as ol.Feature;
-    const laagnaam = f.getProperties()["laagnaam"];
-    const currentSet = fromNullable(featureSelection.idsPerLaag.get(laagnaam)).getOrElse(new Set<string>());
-    currentSet.delete(Feature.propertyIdRequired(f));
-    featureSelection.idsPerLaag.set(laagnaam, currentSet);
+    forEach(Feature.getLaagnaam(f), laagnaam => {
+      const currentSet = fromNullable(featureSelection.idsPerLaag.get(laagnaam)).getOrElse(new Set<string>());
+      currentSet.delete(Feature.propertyIdRequired(f));
+      featureSelection.idsPerLaag.set(laagnaam, currentSet);
+    });
   });
 
   features.on("add", evt => {
     const f = (evt as ol.Collection.Event).element as ol.Feature;
-    const laagnaam = f.getProperties()["laagnaam"];
-    const currentSet = fromNullable(featureSelection.idsPerLaag.get(laagnaam)).getOrElse(new Set<string>());
-    featureSelection.idsPerLaag.set(laagnaam, currentSet.add(Feature.propertyIdRequired(f)));
+    forEach(Feature.getLaagnaam(f), laagnaam => {
+      const currentSet = fromNullable(featureSelection.idsPerLaag.get(laagnaam)).getOrElse(new Set<string>());
+      featureSelection.idsPerLaag.set(laagnaam, currentSet.add(Feature.propertyIdRequired(f)));
+    });
   });
 
   return featureSelection;
