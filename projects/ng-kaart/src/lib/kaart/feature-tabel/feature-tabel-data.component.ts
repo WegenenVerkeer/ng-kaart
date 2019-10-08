@@ -226,7 +226,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
           // zijn er zeker items verwijderd
           // zelfs als multi select aanstaat kunnen er geen bijgekomen zijn zonder dat rows$ ging veranderd zijn
           // en die legt ook de selectAll af
-          if (array.isNonEmpty(geselecteerdeFeatures.verwijderd.length)) {
+          if (array.isNonEmpty(geselecteerdeFeatures.verwijderd)) {
             this.selectAllChecked = false;
           }
         })
