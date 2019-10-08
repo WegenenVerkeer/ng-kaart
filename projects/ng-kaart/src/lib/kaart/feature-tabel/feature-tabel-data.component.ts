@@ -168,6 +168,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     const selectRow$ = this.rawActionDataFor$("selectRow");
     const eraseSelection$ = this.actionFor$("eraseSelection");
     const zoomToSelection$ = this.actionFor$("zoomToSelection");
+    const zoomToRow$ = this.actionDataFor$("zoomToRow", (r): r is Row => true);
 
     // zoom naar de selectie
     this.runInViewReady(
@@ -179,6 +180,16 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
           const extent = selection[0].getGeometry().getExtent();
           selection.forEach(feature => ol.extent.extend(extent, feature.getGeometry().getExtent()));
 
+          this.dispatch(VeranderExtentCmd(extent));
+        })
+      )
+    );
+
+    // zoom naar individuele rij
+    this.runInViewReady(
+      zoomToRow$.pipe(
+        tap(row => {
+          const extent = row.feature.getGeometry().getExtent();
           this.dispatch(VeranderExtentCmd(extent));
         })
       )
@@ -226,7 +237,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
           // zijn er zeker items verwijderd
           // zelfs als multi select aanstaat kunnen er geen bijgekomen zijn zonder dat rows$ ging veranderd zijn
           // en die legt ook de selectAll af
-          if (array.isNonEmpty(geselecteerdeFeatures.verwijderd.length)) {
+          if (array.isNonEmpty(geselecteerdeFeatures.verwijderd)) {
             this.selectAllChecked = false;
           }
         })
