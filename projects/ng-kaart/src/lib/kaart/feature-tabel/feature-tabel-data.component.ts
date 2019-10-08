@@ -6,6 +6,7 @@ import { pipe } from "fp-ts/lib/pipeable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { map, mapTo, share, shareReplay, startWith, switchMap, tap, withLatestFrom } from "rxjs/operators";
+import { arraysAreEqual } from "tslint/lib/utils";
 import { isBoolean, isString } from "util";
 
 import { Feature } from "../../util/feature";
@@ -72,13 +73,10 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
   // Voor child components
   public readonly laag$: rx.Observable<LaagModel>;
 
-  public selectAll = false;
+  public selectAllChecked = false;
 
   @Input()
   laagTitel: string;
-
-  @ViewChild("selectAllCheckBox")
-  selectAllCheckBox: MatCheckbox;
 
   constructor(kaart: KaartComponent, overzicht: FeatureTabelOverzichtComponent, ngZone: NgZone) {
     super(kaart, ngZone);
@@ -166,7 +164,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     this.runInViewReady(rx.merge(doUpdate$));
 
     const selectAll$ = this.actionDataFor$("selectAll", isBoolean);
-    const selectRow$ = this.rawActionDataFor$("selectRow");
+    const selectRow$ = this.actionDataFor$("selectRow", (r): r is Row => true);
     const eraseSelection$ = this.actionFor$("eraseSelection");
     const zoomToSelection$ = this.actionFor$("zoomToSelection");
 
@@ -211,9 +209,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     this.runInViewReady(
       this.rows$.pipe(
         tap(() => {
-          if (this.selectAllCheckBox) {
-            this.selectAllCheckBox.checked = false;
-          }
+          this.selectAllChecked = false;
         })
       )
     );
@@ -226,10 +222,8 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
           // zijn er zeker items verwijderd
           // zelfs als multi select aanstaat kunnen er geen bijgekomen zijn zonder dat rows$ ging veranderd zijn
           // en die legt ook de selectAll af
-          if (geselecteerdeFeatures.verwijderd.length > 0) {
-            if (this.selectAllCheckBox) {
-              this.selectAllCheckBox.checked = false;
-            }
+          if (array.isNonEmpty(geselecteerdeFeatures.verwijderd.length)) {
+            this.selectAllChecked = false;
           }
         })
       )
@@ -238,12 +232,9 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     // (de)selecteer een enkele rij
     this.runInViewReady(
       selectRow$.pipe(
-        tap(data => {
-          const row = data.row as Row;
-          if (this.selectAllCheckBox) {
-            this.selectAllCheckBox.checked = false;
-          }
-          if (data.selected) {
+        tap(row => {
+          this.selectAllChecked = false;
+          if (row.selected) {
             this.dispatch(SelecteerExtraFeaturesCmd([row.feature]));
           } else {
             const ids = Feature.propertyIdRequired(row.feature);
@@ -258,6 +249,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
       selectAll$.pipe(
         withLatestFrom(this.rows$),
         tap(([selected, rows]) => {
+          this.selectAllChecked = selected;
           if (selected) {
             this.dispatch(SelecteerExtraFeaturesCmd(rows.map(row => row.feature)));
           } else {
@@ -279,8 +271,4 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
   );
 
   public readonly hasSelectedFeatures$ = this.numberOfSelectedFeatures$.pipe(map(count => count > 0));
-
-  public id(row: Row) {
-    return Feature.propertyIdRequired(row.feature);
-  }
 }

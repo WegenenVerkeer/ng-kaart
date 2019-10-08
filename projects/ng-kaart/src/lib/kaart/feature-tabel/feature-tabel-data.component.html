@@ -11,7 +11,9 @@
               *ngFor="let header of headers.headers; let first = first"
               (click)="onAction('toggleSort', header.name)"
             >
-              <mat-checkbox *ngIf="first" #selectAllCheckBox (change)="onAction('selectAll', $event.checked);" (click)="$event.stopPropagation()">&nbsp;</mat-checkbox>
+              <mat-checkbox *ngIf="first" #selectAllCheckBox
+                            [checked]="selectAllChecked"
+                            (change)="onAction('selectAll', $event.checked);" (click)="$event.stopPropagation()">&nbsp;</mat-checkbox>
               <span>{{ header.label }}</span>
               <awv-feature-tabel-sortering-status
                 [sortering]="header.sortDirection"
