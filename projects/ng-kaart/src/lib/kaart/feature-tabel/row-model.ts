@@ -35,6 +35,7 @@ export type Velden = Record<string, Field>;
 export interface Row {
   readonly feature: ol.Feature;
   readonly velden: Velden;
+  selected?: boolean; // support voor de gui
 }
 
 export type RowFormatter = Endomorphism<Velden>;

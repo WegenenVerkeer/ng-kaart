@@ -80,7 +80,6 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
   // Voor de template
   public readonly templateData$: rx.Observable<TemplateData>;
   public readonly rows$: rx.Observable<Row[]>;
-
   // Voor child components
   public readonly laag$: rx.Observable<LaagModel>;
 
@@ -182,6 +181,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     const eraseSelection$ = this.actionFor$("eraseSelection");
     const zoomToSelection$ = this.actionFor$("zoomToSelection");
 
+    // zoom naar de selectie
     this.runInViewReady(
       zoomToSelection$.pipe(
         withLatestFrom(this.kaartModel$),
@@ -192,6 +192,17 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
           selection.forEach(feature => ol.extent.extend(extent, feature.getGeometry().getExtent()));
 
           this.dispatch(VeranderExtentCmd(extent));
+        })
+      )
+    );
+
+    // hou in de row bij of die geselecteerd is of niet
+    this.runInViewReady(
+      rx.combineLatest([this.rows$, this.modelChanges.geselecteerdeFeatures$]).pipe(
+        withLatestFrom(this.kaartModel$),
+        tap(x => console.log("selectedFeatures$ triggered")),
+        tap(([[rows, selection], model]) => {
+          rows.forEach(r => (r.selected = FeatureSelection.isSelected(model.geselecteerdeFeatures)(r.feature)));
         })
       )
     );
@@ -281,12 +292,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
 
   public readonly hasSelectedFeatures$ = this.numberOfSelectedFeatures$.pipe(map(count => count > 0));
 
-  // dit wordt wel heel vaak opgeroepen, geen perf issues?
-  public isSelected$(row) {
-    return this.kaartModel$.pipe(
-      map(m => {
-        return FeatureSelection.isSelected(m.geselecteerdeFeatures)(row.feature);
-      })
-    );
+  public id(row: Row) {
+    return Feature.propertyIdRequired(row.feature);
   }
 }
