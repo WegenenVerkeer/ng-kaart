@@ -1,11 +1,7 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone, ViewChild, ViewEncapsulation } from "@angular/core";
 import { MatCheckbox } from "@angular/material/checkbox";
 import { array, option } from "fp-ts";
-import { intercalate } from "fp-ts/lib/Foldable2v";
-import { Curried2, flow, Function1, FunctionN, Refinement } from "fp-ts/lib/function";
-import { monoidString } from "fp-ts/lib/Monoid";
-import { fromNullable } from "fp-ts/lib/Option";
-import * as fpOption from "fp-ts/lib/Option";
+import { flow, Function1, Refinement } from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
@@ -13,17 +9,10 @@ import { map, mapTo, share, shareReplay, startWith, switchMap, tap, withLatestFr
 import { isBoolean, isString } from "util";
 
 import { Feature } from "../../util/feature";
-import { catOptions, collectOption, select, subSpy } from "../../util/operators";
+import { subSpy } from "../../util/operators";
 import { join } from "../../util/string";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
-import { kaartLogOnlyWrapper } from "../kaart-internal-messages";
-import * as cmd from "../kaart-protocol-commands";
-import {
-  DeselecteerAlleFeaturesCmd,
-  DeselecteerFeatureCmd,
-  SelecteerExtraFeaturesCmd,
-  VeranderExtentCmd
-} from "../kaart-protocol-commands";
+import { DeselecteerFeatureCmd, SelecteerExtraFeaturesCmd, VeranderExtentCmd } from "../kaart-protocol-commands";
 import { FeatureSelection } from "../kaart-protocol-subscriptions";
 import { KaartComponent } from "../kaart.component";
 
@@ -268,8 +257,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     this.runInViewReady(
       selectAll$.pipe(
         withLatestFrom(this.rows$),
-        tap(([selected, _rows]) => {
-          const rows = _rows as Array<Row>;
+        tap(([selected, rows]) => {
           if (selected) {
             this.dispatch(SelecteerExtraFeaturesCmd(rows.map(row => row.feature)));
           } else {
