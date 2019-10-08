@@ -33,7 +33,7 @@ import {
   SortDirection
 } from "./data-provider";
 import { FieldSelection } from "./field-selection-model";
-import { Field, Row, RowFormatSpec, RowFormatter, Velden } from "./row-model";
+import { Field, FieldsFormatSpec, Row, Velden, VeldenFormatter } from "./row-model";
 import { AsyncUpdate, SyncUpdate, Update } from "./update";
 
 export interface LaagModel {
@@ -49,9 +49,9 @@ export interface LaagModel {
 
   readonly fieldSelections: FieldSelection[]; // enkel een subset van de velden is zichtbaar
   readonly fieldSortings: FieldSorting[];
-  readonly rowTransformer: Endomorphism<Velden>; // bewerkt de ruwe rij (bijv. locatieveld toevoegen)
-  readonly rowFormats: RowFormatSpec; // instructies om velden aan te passen.
-  readonly rowFormatter: RowFormatter; // formateert een rij. zou kunnen in rowTransformer zitten, maar heeft andere life cycle
+  readonly veldenTransformer: Endomorphism<Velden>; // bewerkt de ruwe rij (bijv. locatieveld toevoegen)
+  readonly fieldFormats: FieldsFormatSpec; // instructies om velden aan te passen.
+  readonly veldenFormatter: VeldenFormatter; // formateert een rij. zou kunnen in veldenTransformer zitten, maar heeft andere life cycle
 
   readonly source: NosqlFsSource;
   readonly minZoom: number;
@@ -96,7 +96,7 @@ export namespace LaagModel {
   export const mapAsFilterGetter: LaagModelGetter<boolean> = unsafeMapAsFilterLens.asGetter();
   const unsafeFieldSortingsLens: LaagModelLens<FieldSorting[]> = laagPropLens("fieldSortings");
   const unsafeFieldSelectionsLens: LaagModelLens<FieldSelection[]> = laagPropLens("fieldSelections");
-  const unsafeRowFormatterLens: LaagModelLens<Endomorphism<Velden>> = laagPropLens("rowFormatter");
+  const unsafeVeldenFormatterLens: LaagModelLens<Endomorphism<Velden>> = laagPropLens("veldenFormatter");
   export const fieldSelectionsLens: LaagModelLens<FieldSelection[]> = new Lens(
     unsafeFieldSelectionsLens.get, //
     fieldSelections => {
@@ -106,7 +106,7 @@ export namespace LaagModel {
           laag,
           unsafeFieldSelectionsLens.set(fixedFieldSelections),
           unsafeFieldSortingsLens.set(FieldSelection.maintainFieldSortings(fixedFieldSelections)),
-          unsafeRowFormatterLens.set(rowFormatterForFields(fixedFieldSelections, laag.rowFormats))
+          unsafeVeldenFormatterLens.set(rowFormatterForFields(fixedFieldSelections, laag.fieldFormats))
         );
     }
   );
@@ -175,13 +175,13 @@ export namespace LaagModel {
   const formatBoolean: Endomorphism<Field> = field => ({ maybeValue: field.maybeValue.map(value => (value ? "JA" : "NEEN")) });
   const rowFormat: Function1<ke.VeldInfo, Option<Endomorphism<Field>>> = vi =>
     vi.type === "boolean" ? option.some(formatBoolean) : option.none;
-  const rowFormatsFromVeldinfos: Function1<ke.VeldInfo[], RowFormatSpec> = veldinfos =>
+  const rowFormatsFromVeldinfos: Function1<ke.VeldInfo[], FieldsFormatSpec> = veldinfos =>
     pipe(
       record.fromFoldableMap(getLastSemigroup<ke.VeldInfo>(), array.array)(veldinfos, vi => [vi.naam, vi]),
       record.filterMap(rowFormat)
     );
 
-  const fieldFormatter: Function2<string[], RowFormatSpec, Function2<string, Field, Field>> = (selectedFieldNames, formats) => (
+  const fieldFormatter: Function2<string[], FieldsFormatSpec, Function2<string, Field, Field>> = (selectedFieldNames, formats) => (
     fieldName,
     field
   ) =>
@@ -196,7 +196,7 @@ export namespace LaagModel {
   // Misschien is het nuttig om nog een ander concept in te voeren (FormattedRow?). In elk geval is dit een verzameling
   // van functies die berekend worden op het moment dat de FieldSelections bekend zijn, zodat bij het transformeren van
   // een rij enkel de transformaties zelf uitgevoerd moeten worden, en niet de berekening van welke er nodig zijn.
-  const rowFormatterForFields: Function2<FieldSelection[], RowFormatSpec, Endomorphism<Velden>> = (fieldSelections, rowFormats) =>
+  const rowFormatterForFields: Function2<FieldSelection[], FieldsFormatSpec, Endomorphism<Velden>> = (fieldSelections, rowFormats) =>
     pipe(
       fieldSelections,
       array.filter(FieldSelection.selectedLens.get),
@@ -209,7 +209,7 @@ export namespace LaagModel {
       // We mogen niet zomaar alle velden gebruiken. Om te beginnen enkel de basisvelden en de locatievelden moeten
       // afzonderlijk behandeld worden.
       const veldinfos = ke.ToegevoegdeVectorLaag.veldInfosLens.get(laag);
-      const [fieldsTransformer, rowTransformer] = locationTransformer(veldinfos);
+      const [fieldsTransformer, veldenTransformer] = locationTransformer(veldinfos);
 
       const sortOnFirstField = indexArray<FieldSelection>()
         .index(0)
@@ -227,8 +227,8 @@ export namespace LaagModel {
       const firstField = array.take(1, fieldSelections);
       const contributingVeldinfos = array.chain(FieldSelection.contributingVeldinfosGetter.get)(firstField);
       const fieldSortings = contributingVeldinfos.map(FieldSorting.create("ASCENDING"));
-      const rowFormats = rowFormatsFromVeldinfos(veldinfos);
-      const rowFormatter = rowFormatterForFields(fieldSelections, rowFormats);
+      const veldenFormats = rowFormatsFromVeldinfos(veldinfos);
+      const veldenFormatter = rowFormatterForFields(fieldSelections, veldenFormats);
 
       return {
         titel: laag.titel,
@@ -242,8 +242,8 @@ export namespace LaagModel {
         expectedPageNumber: Page.first,
         fieldSelections,
         fieldSortings,
-        rowFormats,
-        rowFormatter,
+        fieldFormats: veldenFormats,
+        veldenFormatter: veldenFormatter,
         source,
         minZoom: laag.bron.minZoom,
         maxZoom: laag.bron.maxZoom,
@@ -251,7 +251,7 @@ export namespace LaagModel {
         nextPageSequence: 0,
         updatePending: true,
         viewinstellingen,
-        rowTransformer
+        veldenTransformer: veldenTransformer
       };
     });
 
@@ -323,8 +323,8 @@ export namespace LaagModel {
     const origVelden = Row.featureToVelden(laag.veldinfos)(feature);
 
     const velden = flow(
-      laag.rowTransformer,
-      laag.rowFormatter
+      laag.veldenTransformer,
+      laag.veldenFormatter
     )(origVelden);
 
     return {
