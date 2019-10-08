@@ -1,5 +1,6 @@
 import * as array from "fp-ts/lib/Array";
 import { Either } from "fp-ts/lib/Either";
+import { eqString } from "fp-ts/lib/Eq";
 import { Curried2, Function1, FunctionN, Predicate } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import { Lens } from "monocle-ts";
@@ -279,10 +280,8 @@ export function FeatureSelection(features: ol.Collection<ol.Feature>, idsPerLaag
  */
 export namespace FeatureSelection {
   export const isSelected: Curried2<FeatureSelection, ol.Feature, boolean> = featureSelection => feature => {
-    const selectedInLaag = featureSelection.idsPerLaag.get(feature.getProperties()["laagnaam"]);
-    return fromNullable(selectedInLaag)
-      .getOrElse(new Set<string>())
-      .has(Feature.propertyIdRequired(feature));
+    const selectedInLaag = Feature.getLaagnaam(feature).chain(laagnaam => fromNullable(featureSelection.idsPerLaag.get(laagnaam)));
+    return selectedInLaag.getOrElse(new Set<string>()).has(Feature.propertyIdRequired(feature));
   };
 
   export const selectedFeaturesIdsInLaag: Curried2<FeatureSelection, string, Set<string>> = featureSelection => laagnaam => {
@@ -291,7 +290,7 @@ export namespace FeatureSelection {
   };
 
   export const getGeselecteerdeFeaturesInLaag: Curried2<FeatureSelection, string, Array<ol.Feature>> = featureSelection => laagnaam => {
-    return featureSelection.features.getArray().filter(r => r.getProperties()["laagnaam"] === laagnaam);
+    return featureSelection.features.getArray().filter(f => Feature.getLaagnaam(f).contains(eqString, laagnaam));
   };
 }
 
