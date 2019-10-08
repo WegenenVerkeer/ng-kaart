@@ -62,7 +62,7 @@ export interface Viewinstellingen {
 
 export interface FeatureSelection {
   features: ol.Collection<ol.Feature>;
-  perLaag: Map<string, Set<string>>;
+  idsPerLaag: Map<string, Set<string>>;
 }
 
 export interface GeselecteerdeFeatures {
@@ -244,22 +244,22 @@ export function GeselecteerdeFeaturesSubscription<Msg>(
   return { type: "GeselecteerdeFeatures", wrapper: wrapper };
 }
 
-export function FeatureSelection(features: ol.Collection<ol.Feature>, perLaag: Map<string, Set<string>>) {
-  const featureSelection = { type: "FeatureSelection", features: features, perLaag: perLaag };
+export function FeatureSelection(features: ol.Collection<ol.Feature>, idsPerLaag: Map<string, Set<string>>) {
+  const featureSelection = { type: "FeatureSelection", features, idsPerLaag };
 
   features.on("remove", evt => {
     const f = (evt as ol.Collection.Event).element as ol.Feature;
     const laagnaam = f.getProperties()["laagnaam"];
-    const currentSet = fromNullable(featureSelection.perLaag.get(laagnaam)).getOrElse(new Set<string>());
+    const currentSet = fromNullable(featureSelection.idsPerLaag.get(laagnaam)).getOrElse(new Set<string>());
     currentSet.delete(Feature.propertyIdRequired(f));
-    featureSelection.perLaag.set(laagnaam, currentSet);
+    featureSelection.idsPerLaag.set(laagnaam, currentSet);
   });
 
   features.on("add", evt => {
     const f = (evt as ol.Collection.Event).element as ol.Feature;
     const laagnaam = f.getProperties()["laagnaam"];
-    const currentSet = fromNullable(featureSelection.perLaag.get(laagnaam)).getOrElse(new Set<string>());
-    featureSelection.perLaag.set(laagnaam, currentSet.add(Feature.propertyIdRequired(f)));
+    const currentSet = fromNullable(featureSelection.idsPerLaag.get(laagnaam)).getOrElse(new Set<string>());
+    featureSelection.idsPerLaag.set(laagnaam, currentSet.add(Feature.propertyIdRequired(f)));
   });
 
   return featureSelection;
@@ -276,14 +276,14 @@ export function FeatureSelection(features: ol.Collection<ol.Feature>, perLaag: M
  */
 export namespace FeatureSelection {
   export const isSelected: Curried2<FeatureSelection, ol.Feature, boolean> = featureSelection => feature => {
-    const selectedInLaag = featureSelection.perLaag.get(feature.getProperties()["laagnaam"]);
+    const selectedInLaag = featureSelection.idsPerLaag.get(feature.getProperties()["laagnaam"]);
     return fromNullable(selectedInLaag)
       .getOrElse(new Set<string>())
       .has(Feature.propertyIdRequired(feature));
   };
 
   export const selectedFeaturesIdsInLaag: Curried2<FeatureSelection, string, Set<string>> = featureSelection => laagnaam => {
-    const selectedInLaag = featureSelection.perLaag.get(laagnaam);
+    const selectedInLaag = featureSelection.idsPerLaag.get(laagnaam);
     return selectedInLaag || new Set<string>();
   };
 

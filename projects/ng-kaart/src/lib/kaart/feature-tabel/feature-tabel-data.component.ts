@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, NgZone, ViewChild, ViewEncapsulation } from "@angular/core";
+import { ChangeDetectionStrategy, Component, Input, NgZone, OnChanges, SimpleChanges, ViewChild, ViewEncapsulation } from "@angular/core";
 import { MatCheckbox } from "@angular/material/checkbox";
 import { array, option } from "fp-ts";
 import { flow, Function1, Refinement } from "fp-ts/lib/function";
@@ -164,7 +164,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     this.runInViewReady(rx.merge(doUpdate$));
 
     const selectAll$ = this.actionDataFor$("selectAll", isBoolean);
-    const selectRow$ = this.actionDataFor$("selectRow", (r): r is Row => true);
+    const selectRow$ = this.rawActionDataFor$("selectRow");
     const eraseSelection$ = this.actionFor$("eraseSelection");
     const zoomToSelection$ = this.actionFor$("zoomToSelection");
 
@@ -184,10 +184,10 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     );
 
     // hou in de row bij of die geselecteerd is of niet
+    // kan dus veranderen als de rijen veranderen, of de selection veranderd
     this.runInViewReady(
       rx.combineLatest([this.rows$, this.modelChanges.geselecteerdeFeatures$]).pipe(
         withLatestFrom(this.kaartModel$),
-        tap(x => console.log("selectedFeatures$ triggered")),
         tap(([[rows, selection], model]) => {
           rows.forEach(r => (r.selected = FeatureSelection.isSelected(model.geselecteerdeFeatures)(r.feature)));
         })
@@ -232,12 +232,12 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     // (de)selecteer een enkele rij
     this.runInViewReady(
       selectRow$.pipe(
-        tap(row => {
+        tap(data => {
           this.selectAllChecked = false;
-          if (row.selected) {
-            this.dispatch(SelecteerExtraFeaturesCmd([row.feature]));
+          if (data.selected) {
+            this.dispatch(SelecteerExtraFeaturesCmd([data.row.feature]));
           } else {
-            const ids = Feature.propertyIdRequired(row.feature);
+            const ids = Feature.propertyIdRequired(data.row.feature);
             this.dispatch(DeselecteerFeatureCmd([ids]));
           }
         })
