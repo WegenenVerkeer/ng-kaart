@@ -3,7 +3,7 @@ import { Curried2, Endomorphism, flow, Function1, Function2, identity, Predicate
 import { Option } from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
 import { getLastSemigroup } from "fp-ts/lib/Semigroup";
-import { Getter, Lens, Optional, Prism, Traversal } from "monocle-ts";
+import { Getter, Lens, Optional, Traversal } from "monocle-ts";
 import { indexArray } from "monocle-ts/lib/Index/Array";
 import { prismNonNegativeInteger } from "newtype-ts/lib/NonNegativeInteger";
 import * as ol from "openlayers";
@@ -14,7 +14,6 @@ import { Filter, FilterTotaal, isTotaalOpgehaald } from "../../filter";
 import { NosqlFsSource } from "../../source";
 import { subSpy } from "../../util";
 import { PartialFunction2 } from "../../util/function";
-import { flowSpy } from "../../util/function";
 import { arrayTraversal, selectiveArrayTraversal } from "../../util/lenses";
 import { observableFromOlEvents } from "../../util/ol-observable";
 import * as ke from "../kaart-elementen";
