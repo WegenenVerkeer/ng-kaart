@@ -37,7 +37,7 @@ import { Field, Row, RowFormatSpec, RowFormatter, Velden } from "./row-model";
 import { AsyncUpdate, SyncUpdate, Update } from "./update";
 
 export type ViewSourceMode = "Map" | "AllFeatures";
-export type ViewSelectionMode = "SelectedOnly" | "SourceFeatures";
+export type SelectionViewMode = "SelectedOnly" | "SourceFeatures";
 
 export interface LaagModel {
   readonly titel: string;
@@ -45,7 +45,7 @@ export interface LaagModel {
   readonly hasFilter: boolean;
   readonly filterIsActive: boolean;
   readonly viewSourceMode: ViewSourceMode;
-  readonly viewSelectionMode: ViewSelectionMode;
+  readonly selectionViewMode: SelectionViewMode;
   readonly canUseAllFeatures: boolean; // geeft aan dat mogelijk is om meer dan de features op de zichtbare kaart te tonen
   readonly featureCount: FeatureCount; // aantal features in de tabel over alle pagina's heen
   readonly expectedPageNumber: PageNumber; // Het PageNumber dat we verwachten te zien. Potentieel anders dan in Page wegens asynchoniciteit
@@ -90,8 +90,9 @@ export namespace LaagModel {
   export const filterIsActiveLens: LaagModelLens<boolean> = laagPropLens("filterIsActive");
   export const veldInfosGetter: LaagModelGetter<ke.VeldInfo[]> = laagPropLens("veldinfos").asGetter();
   const unsafeViewSourceModeLens: LaagModelLens<ViewSourceMode> = laagPropLens("viewSourceMode");
-  const unsafeViewSelectionModeLens: LaagModelLens<ViewSelectionMode> = laagPropLens("viewSelectionMode");
+  const unsafeSelectionViewModeLens: LaagModelLens<SelectionViewMode> = laagPropLens("selectionViewMode");
   export const viewSourceModeGetter: LaagModelGetter<ViewSourceMode> = unsafeViewSourceModeLens.asGetter();
+  export const selectionViewModeGetter: LaagModelGetter<SelectionViewMode> = unsafeSelectionViewModeLens.asGetter();
   const unsafeFieldSortingsLens: LaagModelLens<FieldSorting[]> = laagPropLens("fieldSortings");
   const unsafeFieldSelectionsLens: LaagModelLens<FieldSelection[]> = laagPropLens("fieldSelections");
   const unsafeRowFormatterLens: LaagModelLens<Endomorphism<Velden>> = laagPropLens("rowFormatter");
@@ -234,7 +235,7 @@ export namespace LaagModel {
         hasFilter: Filter.isDefined(laag.filterinstellingen.spec),
         filterIsActive: laag.filterinstellingen.actief,
         viewSourceMode: "Map" as ViewSourceMode,
-        viewSelectionMode: "SourceFeatures" as ViewSelectionMode,
+        selectionViewMode: "SourceFeatures" as SelectionViewMode,
         totaal: laag.filterinstellingen.totaal,
         canUseAllFeatures: false,
         featureCount: FeatureCount.pending,
@@ -532,12 +533,12 @@ export namespace LaagModel {
   export const setShowSelectedOnlyUpdate: Function1<boolean, LaagModelUpdate> = flow(
     setting => (setting ? "SelectedOnly" : "SourceFeatures"),
     viewSelectionMode =>
-      Update.filter((laag: LaagModel) => laag.viewSelectionMode !== viewSelectionMode)(
+      Update.filter((laag: LaagModel) => laag.selectionViewMode !== viewSelectionMode)(
         pipe(
           flow(
             expectedPageNumberLens.set(Page.first),
             clearLaagPage,
-            unsafeViewSelectionModeLens.set(viewSelectionMode)
+            unsafeSelectionViewModeLens.set(viewSelectionMode)
           ),
           andThenUpdatePageData
         )

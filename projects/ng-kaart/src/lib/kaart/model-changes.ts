@@ -211,7 +211,8 @@ export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> 
       geselecteerd: current,
       toegevoegd: array.difference(Feature.setoidFeaturePropertyId)(current, prev),
       verwijderd: array.difference(Feature.setoidFeaturePropertyId)(prev, current)
-    }))
+    })),
+    share()
   );
 
   const hoverFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.hoverFeatures, "add", "remove").pipe(

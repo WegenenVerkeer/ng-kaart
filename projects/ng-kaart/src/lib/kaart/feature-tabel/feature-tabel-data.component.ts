@@ -6,7 +6,6 @@ import { pipe } from "fp-ts/lib/pipeable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { map, mapTo, share, shareReplay, startWith, switchMap, tap, withLatestFrom } from "rxjs/operators";
-import { arraysAreEqual } from "tslint/lib/utils";
 import { isBoolean, isString } from "util";
 
 import { Feature } from "../../util/feature";
@@ -55,8 +54,10 @@ interface TemplateData {
   readonly headers: ColumnHeaders;
   readonly rows?: Row[];
   readonly mapAsFilterState: boolean;
+  readonly showOnlySelected: boolean;
   readonly cannotChooseMapAsFilter: boolean;
   readonly updatePending: boolean;
+  readonly numGeselecteerdeFeatures: number;
 }
 
 @Component({
@@ -111,12 +112,17 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
         )
     );
 
+    const numGeselecteerdeFeatures$ = this.modelChanges.geselecteerdeFeatures$.pipe(
+      map(features => features.geselecteerd.length),
+      startWith(0)
+    );
+
     // Alle data voor de template wordt in 1 custom datastructuur gegoten. Dat heeft als voordeel dat er geen gezever is
     // met observables die binnen *ngIf staan. Het nadeel is frequentere updates omdat er geen distinctUntil is. Die zou
     // immers de rows array moeten meenemen.
     this.templateData$ = subSpy("****templateData$")(
-      this.laag$.pipe(
-        map(laag => {
+      rx.combineLatest(this.laag$, numGeselecteerdeFeatures$).pipe(
+        map(([laag, numGeselecteerdeFeatures]) => {
           const fieldNameSelections = LaagModel.fieldSelectionsLens.get(laag);
           const rows = option.toUndefined(LaagModel.pageLens.get(laag).map(Page.rowsLens.get));
           return {
@@ -126,7 +132,9 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
             rows,
             mapAsFilterState: LaagModel.viewSourceModeGetter.get(laag) === "Map",
             cannotChooseMapAsFilter: !LaagModel.canUseAllFeaturesGetter.get(laag),
-            updatePending: LaagModel.updatePendingLens.get(laag)
+            updatePending: LaagModel.updatePendingLens.get(laag),
+            showOnlySelected: LaagModel.selectionViewModeGetter.get(laag) === "SelectedOnly",
+            numGeselecteerdeFeatures
           };
         })
       )
@@ -184,7 +192,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     );
 
     // hou in de row bij of die geselecteerd is of niet
-    // kan dus veranderen als de rijen veranderen, of de selection veranderd
+    // kan dus veranderen als de rijen veranderen, of de selection verandert
     this.runInViewReady(
       rx.combineLatest([this.rows$, this.modelChanges.geselecteerdeFeatures$]).pipe(
         withLatestFrom(this.kaartModel$),
