@@ -206,7 +206,7 @@ export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> 
   // features als een groep geselecteerd worden. Openlayers daarentegen genereert afzonderlijke events per feature dat
   // toegevoegd of verwijderd wordt. Daarom nemen wij een tweetrapsaanpak waarbij we eerst een collectie opbouwen met
   // adds en deletes.
-  const featureSelectionUpdateInterval = 50;
+  const featureSelectionUpdateInterval = 2;
   // Features zonder laagnaam en id negeren we gewoon
   const selectionEventToFeature = (evt: ol.Collection.Event) => Feature.featureWithIdAndLaagnaam(evt.element as ol.Feature);
 
