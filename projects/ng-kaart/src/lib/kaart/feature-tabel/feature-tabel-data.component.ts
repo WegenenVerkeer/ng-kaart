@@ -207,16 +207,27 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     // wis volledige selectie voor deze laag
     this.runInViewReady(
       eraseSelection$.pipe(
-        withLatestFrom(this.kaartModel$),
-        tap(([_, model]) => {
+        withLatestFrom(this.modelChanges.geselecteerdeFeatures$),
+        tap(([_, geselecteerdeFeatures]) => {
           this.selectAllChecked = false;
-          const selected = model.geselecteerdeFeatures.features
-            .getArray()
-            .filter(f => Feature.getLaagnaam(f).contains(eqString, this.laagTitel));
-          this.dispatch(DeselecteerFeatureCmd(selected.map(Feature.propertyIdRequired)));
+          const selectedIds = FeatureSelection.getGeselecteerdeFeatureIdsInLaag(this.laagTitel)(geselecteerdeFeatures);
+          this.dispatch(DeselecteerFeatureCmd(selectedIds));
         })
       )
     );
+
+    // this.runInViewReady(
+    //   eraseSelection$.pipe(
+    //     withLatestFrom(this.kaartModel$),
+    //     tap(([_, model]) => {
+    //       this.selectAllChecked = false;
+    //       const selected = model.geselecteerdeFeatures.features
+    //         .getArray()
+    //         .filter(f => Feature.getLaagnaam(f).contains(eqString, this.laagTitel));
+    //       this.dispatch(DeselecteerFeatureCmd(selected.map(Feature.propertyIdRequired)));
+    //     })
+    //   )
+    // );
 
     // uncheck de selectAll indien de rijen veranderen
     this.runInViewReady(

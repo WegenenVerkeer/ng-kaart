@@ -241,38 +241,6 @@ export function GeselecteerdeFeaturesSubscription<Msg>(
   return { type: "GeselecteerdeFeatures", wrapper: wrapper };
 }
 
-export function FeatureSelection(features: ol.Collection<ol.Feature>, idsPerLaag: Map<string, Set<string>>) {
-  const featureSelection = { type: "FeatureSelection", features, idsPerLaag };
-
-  features.on("remove", evt => {
-    const f = (evt as ol.Collection.Event).element as ol.Feature;
-    forEach(Feature.getLaagnaam(f), laagnaam => {
-      const currentSet = fromNullable(featureSelection.idsPerLaag.get(laagnaam)).getOrElse(new Set<string>());
-      currentSet.delete(Feature.propertyIdRequired(f));
-      featureSelection.idsPerLaag.set(laagnaam, currentSet);
-    });
-  });
-
-  features.on("add", evt => {
-    const f = (evt as ol.Collection.Event).element as ol.Feature;
-    forEach(Feature.getLaagnaam(f), laagnaam => {
-      const currentSet = fromNullable(featureSelection.idsPerLaag.get(laagnaam)).getOrElse(new Set<string>());
-      featureSelection.idsPerLaag.set(laagnaam, currentSet.add(Feature.propertyIdRequired(f)));
-    });
-  });
-
-  return featureSelection;
-}
-
-/**
- * Let op met FeatureSelection:
- *
- * de bedoeling is dat hier een extra lookup map wordt bijgehouden, die zich automatisch up-to-date houdt met de "echte" openlayers
- * selection, de Collection<ol.Feature>.
- * Die is mutable, en wordt rechtstreeks door openlayers zo gebruikt.
- * Om de extra map te maintainen reageren we op de "add" en "remove" events van die collection.
- * Dit gebeurt bij het aanmaken van de FeatureSelection. Dit betekent dus wel de de datastructuren in FeatureSelection allebei mutable zijn!
- */
 export namespace FeatureSelection {
   export const isSelected: Curried2<GeselecteerdeFeatures, ol.Feature, boolean> = featureSelection =>
     flow(
@@ -291,6 +259,11 @@ export namespace FeatureSelection {
   export const getGeselecteerdeFeaturesInLaag: Curried2<string, GeselecteerdeFeatures, ol.Feature[]> = laagnaam => featureSelection => {
     const featuresInLaag = featureSelection.featuresPerLaag.get(laagnaam);
     return (featuresInLaag && [...featuresInLaag.values()].map(fil => fil.feature)) || [];
+  };
+
+  export const getGeselecteerdeFeatureIdsInLaag: Curried2<string, GeselecteerdeFeatures, string[]> = laagnaam => featureSelection => {
+    const featuresInLaag = featureSelection.featuresPerLaag.get(laagnaam);
+    return (featuresInLaag && [...featuresInLaag.keys()]) || [];
   };
 }
 
