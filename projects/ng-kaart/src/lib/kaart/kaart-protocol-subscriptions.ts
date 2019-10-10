@@ -242,14 +242,10 @@ export function GeselecteerdeFeaturesSubscription<Msg>(
 }
 
 export namespace FeatureSelection {
-  export const isSelected: Curried2<GeselecteerdeFeatures, ol.Feature, boolean> = featureSelection =>
-    flow(
-      Feature.featureWithIdAndLaagnaam,
-      option.exists(({ id, laagnaam }) => {
-        const idsInLaag = featureSelection.featuresPerLaag.get(laagnaam);
-        return idsInLaag !== undefined && idsInLaag.has(id);
-      })
-    );
+  export const isSelected: Curried2<GeselecteerdeFeatures, FeatureWithIdAndLaagnaam, boolean> = featureSelection => feature => {
+    const idsInLaag = featureSelection.featuresPerLaag.get(feature.laagnaam);
+    return idsInLaag !== undefined && idsInLaag.has(feature.id);
+  };
 
   export const selectedFeaturesInLaagSize: Curried2<string, GeselecteerdeFeatures, number> = laagnaam => featureSelection => {
     const selectedInLaag = featureSelection.featuresPerLaag.get(laagnaam);

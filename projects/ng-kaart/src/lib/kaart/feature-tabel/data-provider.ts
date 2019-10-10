@@ -60,7 +60,7 @@ export interface PageRequest {
   readonly requestSequence: number;
   readonly dataExtent: ol.Extent;
   readonly fieldSortings: FieldSorting[];
-  readonly rowCreator: Function1<ol.Feature, Row>;
+  readonly rowCreator: PartialFunction1<ol.Feature, Row>;
 }
 
 export type PageFetcher = Function1<PageRequest, rx.Observable<DataRequest>>;
@@ -179,7 +179,7 @@ export namespace DataRequest {
 export namespace PageFetcher {
   const featuresInExtent: Curried2<ol.Extent, ol.source.Vector, ol.Feature[]> = extent => source => source.getFeaturesInExtent(extent);
   const takePage: Function1<PageNumber, Endomorphism<ol.Feature[]>> = pageNumber => array.filterWithIndex(Page.isInPage(pageNumber));
-  const toRows: Curried2<Function1<ol.Feature, Row>, ol.Feature[], Row[]> = array.map;
+  const toRows: Curried2<PartialFunction1<ol.Feature, Row>, ol.Feature[], Row[]> = array.filterMap;
   const featureToFieldValue: Curried2<FieldSorting, ol.Feature, Option<ValueType>> = sorting => feature =>
     Row.extractField(Feature.properties(feature), sorting.veldinfo).maybeValue;
 

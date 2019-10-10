@@ -60,6 +60,12 @@ interface TemplateData {
   readonly hasSelectedFeatures: boolean;
 }
 
+// Een datatype gebruikt in de template
+interface RowSelection {
+  readonly row: Row;
+  readonly selected: boolean;
+}
+
 @Component({
   selector: "awv-feature-tabel-data",
   templateUrl: "./feature-tabel-data.component.html",
@@ -174,7 +180,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     // this.runInViewReady(rx.merge(doUpdate$));
 
     const selectAll$ = this.actionDataFor$("selectAll", isBoolean);
-    const selectRow$ = this.rawActionDataFor$("selectRow");
+    const selectRow$ = this.rawActionDataFor$("selectRow") as rx.Observable<RowSelection>;
     const eraseSelection$ = this.actionFor$("eraseSelection");
     const zoomToSelection$ = this.actionFor$("zoomToSelection");
 
@@ -193,13 +199,14 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
       )
     );
 
-    // TODO dit moet via een update gebeuren
     // hou in de row bij of die geselecteerd is of niet
     // kan dus veranderen als de rijen veranderen, of de selection verandert
     this.runInViewReady(
       rx.combineLatest([this.rows$, this.modelChanges.geselecteerdeFeatures$]).pipe(
         tap(([rows, selection]: [Row[], GeselecteerdeFeatures]) => {
-          rows.forEach(r => (r.selected = FeatureSelection.isSelected(selection)(r.feature)));
+          rows.forEach(r => {
+            r.selected = FeatureSelection.isSelected(selection)(r.feature);
+          });
         })
       )
     );
@@ -243,13 +250,12 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     // (de)selecteer een enkele rij
     this.runInViewReady(
       selectRow$.pipe(
-        tap(data => {
+        tap((rowSelection: RowSelection) => {
           this.selectAllChecked = false;
-          if (data.selected) {
-            this.dispatch(SelecteerExtraFeaturesCmd([data.row.feature]));
+          if (rowSelection.selected) {
+            this.dispatch(SelecteerExtraFeaturesCmd([rowSelection.row.feature.feature]));
           } else {
-            const ids = Feature.propertyIdRequired(data.row.feature);
-            this.dispatch(DeselecteerFeatureCmd([ids]));
+            this.dispatch(DeselecteerFeatureCmd([rowSelection.row.feature.id]));
           }
         })
       )
@@ -259,12 +265,12 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     this.runInViewReady(
       selectAll$.pipe(
         withLatestFrom(this.rows$),
-        tap(([selected, rows]) => {
+        tap(([selected, rows]: [boolean, Row[]]) => {
           this.selectAllChecked = selected;
           if (selected) {
-            this.dispatch(SelecteerExtraFeaturesCmd(rows.map(row => row.feature)));
+            this.dispatch(SelecteerExtraFeaturesCmd(rows.map(row => row.feature.feature)));
           } else {
-            const ids = rows.map(row => row.feature).map(Feature.propertyIdRequired);
+            const ids = rows.map(row => row.feature.id);
             this.dispatch(DeselecteerFeatureCmd(ids));
           }
         })

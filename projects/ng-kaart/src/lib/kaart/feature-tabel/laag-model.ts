@@ -13,6 +13,7 @@ import { isNumber } from "util";
 import { Filter, FilterTotaal, isTotaalOpgehaald } from "../../filter";
 import { NosqlFsSource } from "../../source";
 import { subSpy } from "../../util";
+import { Feature } from "../../util/feature";
 import { PartialFunction2 } from "../../util/function";
 import { arrayTraversal, selectiveArrayTraversal } from "../../util/lenses";
 import { observableFromOlEvents } from "../../util/ol-observable";
@@ -318,18 +319,23 @@ export namespace LaagModel {
     requestSequence: laag.nextPageSequence
   });
 
-  const maakRow: Curried2<LaagModel, ol.Feature, Row> = laag => feature => {
-    const origVelden = Row.featureToVelden(laag.veldinfos)(feature);
+  const maakRow: Curried2<LaagModel, ol.Feature, Option<Row>> = laag => feature => {
+    return pipe(
+      Feature.featureWithIdAndLaagnaam(feature),
+      option.map(featureWithIdAndLaagnaam => {
+        const origVelden = Row.featureToVelden(laag.veldinfos)(featureWithIdAndLaagnaam);
 
-    const velden = flow(
-      laag.veldenTransformer,
-      laag.veldenFormatter
-    )(origVelden);
+        const velden = flow(
+          laag.veldenTransformer,
+          laag.veldenFormatter
+        )(origVelden);
 
-    return {
-      feature: feature,
-      velden: velden
-    };
+        return {
+          feature: featureWithIdAndLaagnaam,
+          velden: velden
+        };
+      })
+    );
   };
 
   const updateLaagPage: Function1<Page, Endomorphism<LaagModel>> = page => laag =>

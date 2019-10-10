@@ -6,7 +6,7 @@ import * as ol from "openlayers";
 
 import * as arrays from "../../util/arrays";
 import { parseDate, parseDateTime } from "../../util/date-time";
-import { Feature } from "../../util/feature";
+import { Feature, FeatureWithIdAndLaagnaam } from "../../util/feature";
 import { PartialFunction2 } from "../../util/function";
 import * as ke from "../kaart-elementen";
 
@@ -20,7 +20,7 @@ export interface Field {
 export type Velden = Record<string, Field>;
 
 export interface Row {
-  readonly feature: ol.Feature;
+  readonly feature: FeatureWithIdAndLaagnaam;
   readonly velden: Velden;
   selected?: boolean; // puur support voor de gui, dit aanpassen heeft geen invloed op het al of niet geselecteerd zijn voor openlayers
 }
@@ -72,7 +72,7 @@ export namespace Row {
   export const extractField: FunctionN<[Properties, ke.VeldInfo], Field> = (properties, veldinfo) =>
     nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo);
 
-  export const featureToVelden: Curried2<ke.VeldInfo[], ol.Feature, Velden> = veldInfos => feature => {
+  export const featureToVelden: Curried2<ke.VeldInfo[], FeatureWithIdAndLaagnaam, Velden> = veldInfos => feature => {
     const propertiesWithId = Feature.propertiesWithId(feature);
     const velden = veldInfos.reduce((veld, vi) => {
       veld[vi.naam] = extractField(propertiesWithId, vi);
