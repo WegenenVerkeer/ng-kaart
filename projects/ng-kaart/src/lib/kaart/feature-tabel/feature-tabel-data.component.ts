@@ -1,5 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, NgZone, OnChanges, SimpleChanges, ViewChild, ViewEncapsulation } from "@angular/core";
-import { MatCheckbox } from "@angular/material/checkbox";
+import { ChangeDetectionStrategy, Component, Input, NgZone, ViewEncapsulation } from "@angular/core";
 import { array, option } from "fp-ts";
 import { eqString } from "fp-ts/lib/Eq";
 import { flow, Function1, Refinement } from "fp-ts/lib/function";
@@ -7,7 +6,6 @@ import { pipe } from "fp-ts/lib/pipeable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { map, mapTo, share, shareReplay, startWith, switchMap, tap, withLatestFrom } from "rxjs/operators";
-import { arraysAreEqual } from "tslint/lib/utils";
 import { isBoolean, isString } from "util";
 
 import { Feature } from "../../util/feature";
@@ -15,7 +13,7 @@ import { subSpy } from "../../util/operators";
 import { join } from "../../util/string";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { DeselecteerFeatureCmd, SelecteerExtraFeaturesCmd, VeranderExtentCmd } from "../kaart-protocol-commands";
-import { FeatureSelection } from "../kaart-protocol-subscriptions";
+import { FeatureSelection, GeselecteerdeFeatures } from "../kaart-protocol-subscriptions";
 import { KaartComponent } from "../kaart.component";
 
 import { Page } from "./data-provider";
@@ -162,7 +160,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
         .pipe(tap(overzicht.laagUpdater(titel)));
 
     this.runInViewReady(rx.defer(() => doUpdate$(this.laagTitel)));
-    this.runInViewReady(rx.merge(doUpdate$));
+    // this.runInViewReady(rx.merge(doUpdate$));
 
     const selectAll$ = this.actionDataFor$("selectAll", isBoolean);
     const selectRow$ = this.rawActionDataFor$("selectRow");
@@ -172,25 +170,25 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     // zoom naar de selectie
     this.runInViewReady(
       zoomToSelection$.pipe(
-        withLatestFrom(this.kaartModel$),
-        tap(([x, model]) => {
-          const selection = FeatureSelection.getGeselecteerdeFeaturesInLaag(model.geselecteerdeFeatures)(this.laagTitel);
+        withLatestFrom(this.modelChanges.geselecteerdeFeatures$),
+        tap(([_, selection]) => {
+          const laagSelection = FeatureSelection.getGeselecteerdeFeaturesInLaag(this.laagTitel)(selection);
 
-          const extent = selection[0].getGeometry().getExtent();
-          selection.forEach(feature => ol.extent.extend(extent, feature.getGeometry().getExtent()));
+          const extent = laagSelection[0].getGeometry().getExtent();
+          laagSelection.forEach(feature => ol.extent.extend(extent, feature.getGeometry().getExtent()));
 
           this.dispatch(VeranderExtentCmd(extent));
         })
       )
     );
 
+    // TODO dit moet via een update gebeuren
     // hou in de row bij of die geselecteerd is of niet
-    // kan dus veranderen als de rijen veranderen, of de selection veranderd
+    // kan dus veranderen als de rijen veranderen, of de selection verandert
     this.runInViewReady(
       rx.combineLatest([this.rows$, this.modelChanges.geselecteerdeFeatures$]).pipe(
-        withLatestFrom(this.kaartModel$),
-        tap(([[rows, selection], model]) => {
-          rows.forEach(r => (r.selected = FeatureSelection.isSelected(model.geselecteerdeFeatures)(r.feature)));
+        tap(([rows, selection]: [Row[], GeselecteerdeFeatures]) => {
+          rows.forEach(r => (r.selected = FeatureSelection.isSelected(selection)(r.feature)));
         })
       )
     );
@@ -199,7 +197,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     this.runInViewReady(
       eraseSelection$.pipe(
         withLatestFrom(this.kaartModel$),
-        tap(([x, model]) => {
+        tap(([_, model]) => {
           this.selectAllChecked = false;
           const selected = model.geselecteerdeFeatures.features
             .getArray()
@@ -266,10 +264,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
   }
 
   public readonly numberOfSelectedFeatures$ = this.modelChanges.geselecteerdeFeatures$.pipe(
-    withLatestFrom(this.kaartModel$),
-    map(([features, model]) => {
-      return FeatureSelection.selectedFeaturesIdsInLaag(model.geselecteerdeFeatures)(this.laagTitel).size;
-    }),
+    map(FeatureSelection.selectedFeaturesInLaagSize(this.laagTitel)),
     startWith(0),
     shareReplay(1)
   );

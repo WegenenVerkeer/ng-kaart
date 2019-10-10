@@ -1,8 +1,9 @@
 import { option, setoid } from "fp-ts";
 import { FunctionN } from "fp-ts/es6/function";
 import { array, mapOption } from "fp-ts/lib/Array";
-import { Curried2, Function1, Refinement } from "fp-ts/lib/function";
+import { Curried2, flow, Function1, Refinement } from "fp-ts/lib/function";
 import { fromNullable, Option, option as optionMonad, tryCatch } from "fp-ts/lib/Option";
+import { pipe } from "fp-ts/lib/pipeable";
 import { Setoid, setoidString } from "fp-ts/lib/Setoid";
 import * as traversable from "fp-ts/lib/Traversable";
 import * as ol from "openlayers";
@@ -68,6 +69,13 @@ export const featureToGeoJson: PartialFunction1<ol.Feature, GeoJsonFeatures> = f
 export const clusterFeaturesToGeoJson: PartialFunction1<ol.Feature[], GeoJsonFeatures[]> = features =>
   traversable.traverse(optionMonad, array)(features, featureToGeoJson);
 
+// Een type dat onze features encapsuleert. Die hebben in 99% van de gevallen een id en een laagnaam.
+export interface FeatureWithIdAndLaagnaam {
+  readonly id: string;
+  readonly laagnaam: string;
+  readonly feature: ol.Feature;
+}
+
 export namespace Feature {
   /** @deprecated Ga ervan uit dat Features een idee zullen hebben, gebruik `propertyIdRequired` */
   export const propertyId: PartialFunction1<ol.Feature, string> = feature =>
@@ -103,6 +111,18 @@ export namespace Feature {
       .getOrElse(feature);
     return fromNullable(singleFeature.get("laagnaam").toString());
   };
+
+  export const featureWithIdAndLaagnaam: PartialFunction1<ol.Feature, FeatureWithIdAndLaagnaam> = feature =>
+    pipe(
+      feature,
+      propertyId,
+      option.chain(id =>
+        pipe(
+          getLaagnaam(feature),
+          option.map(laagnaam => ({ id, laagnaam, feature }))
+        )
+      )
+    );
 
   export const setoidFeaturePropertyId: Setoid<ol.Feature> = setoid.contramap(propertyId, option.getSetoid(setoidString));
 
