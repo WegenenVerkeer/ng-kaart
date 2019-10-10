@@ -216,19 +216,6 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
       )
     );
 
-    // this.runInViewReady(
-    //   eraseSelection$.pipe(
-    //     withLatestFrom(this.kaartModel$),
-    //     tap(([_, model]) => {
-    //       this.selectAllChecked = false;
-    //       const selected = model.geselecteerdeFeatures.features
-    //         .getArray()
-    //         .filter(f => Feature.getLaagnaam(f).contains(eqString, this.laagTitel));
-    //       this.dispatch(DeselecteerFeatureCmd(selected.map(Feature.propertyIdRequired)));
-    //     })
-    //   )
-    // );
-
     // uncheck de selectAll indien de rijen veranderen
     this.runInViewReady(
       this.rows$.pipe(
