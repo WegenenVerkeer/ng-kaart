@@ -1,8 +1,12 @@
+import { option } from "fp-ts";
+import { flow } from "fp-ts/es6/function";
 import { Either } from "fp-ts/lib/Either";
-import { Function1, Predicate } from "fp-ts/lib/function";
-import { Option } from "fp-ts/lib/Option";
+import { Curried2, Function1, Predicate } from "fp-ts/lib/function";
+import { fromNullable, Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 
+import { forEach } from "../util";
+import { Feature, FeatureWithIdAndLaagnaam } from "../util/feature";
 import { ZoekAntwoord, ZoekerMetWeergaveopties, ZoekResultaat } from "../zoeker/zoeker";
 
 import { KaartLocaties } from "./kaart-bevragen/laaginfo.model";
@@ -55,8 +59,11 @@ export interface Viewinstellingen {
   rotation: number;
 }
 
+export type KaartFeaturesOpId = ReadonlyMap<string, FeatureWithIdAndLaagnaam>;
+export type KaartFeaturesOpLaag = ReadonlyMap<string, KaartFeaturesOpId>;
 export interface GeselecteerdeFeatures {
   readonly geselecteerd: ol.Feature[];
+  readonly featuresPerLaag: KaartFeaturesOpLaag;
   readonly toegevoegd: ol.Feature[];
   readonly verwijderd: ol.Feature[];
 }
@@ -232,6 +239,28 @@ export function GeselecteerdeFeaturesSubscription<Msg>(
   wrapper: MsgGen<GeselecteerdeFeatures, Msg>
 ): GeselecteerdeFeaturesSubscription<Msg> {
   return { type: "GeselecteerdeFeatures", wrapper: wrapper };
+}
+
+export namespace FeatureSelection {
+  export const isSelected: Curried2<GeselecteerdeFeatures, FeatureWithIdAndLaagnaam, boolean> = featureSelection => feature => {
+    const idsInLaag = featureSelection.featuresPerLaag.get(feature.laagnaam);
+    return idsInLaag !== undefined && idsInLaag.has(feature.id);
+  };
+
+  export const selectedFeaturesInLaagSize: Curried2<string, GeselecteerdeFeatures, number> = laagnaam => featureSelection => {
+    const selectedInLaag = featureSelection.featuresPerLaag.get(laagnaam);
+    return selectedInLaag ? selectedInLaag.size : 0;
+  };
+
+  export const getGeselecteerdeFeaturesInLaag: Curried2<string, GeselecteerdeFeatures, ol.Feature[]> = laagnaam => featureSelection => {
+    const featuresInLaag = featureSelection.featuresPerLaag.get(laagnaam);
+    return (featuresInLaag && [...featuresInLaag.values()].map(fil => fil.feature)) || [];
+  };
+
+  export const getGeselecteerdeFeatureIdsInLaag: Curried2<string, GeselecteerdeFeatures, string[]> = laagnaam => featureSelection => {
+    const featuresInLaag = featureSelection.featuresPerLaag.get(laagnaam);
+    return (featuresInLaag && [...featuresInLaag.keys()]) || [];
+  };
 }
 
 export function HoverFeaturesSubscription<Msg>(wrapper: MsgGen<HoverFeature, Msg>): HoverFeaturesSubscription<Msg> {

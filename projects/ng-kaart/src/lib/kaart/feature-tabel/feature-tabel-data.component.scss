@@ -28,6 +28,21 @@ $footer-height: 48px;
     tr {
       display: contents;
       scroll-snap-type: x mandatory;
+      &:hover, &.geselecteerd {
+        background-color: rgba(0, 0, 0, 0.04);
+        cursor: pointer;
+      }
+    }
+
+    tr {
+      &:hover, &.geselecteerd {
+        background-color: rgba(0, 0, 0, 0.04);
+        cursor: pointer;
+
+        td {
+          background-color: rgba(0, 0, 0, 0.04);
+        }
+      }
 
       .mat-icon {
         height: 16px;
@@ -71,7 +86,7 @@ $footer-height: 48px;
     tr td:first-child {
       position: sticky;
       left: 0;
-      background-color: white;
+      //background-color: white;
       z-index: 2;
     }
 
@@ -142,16 +157,29 @@ $footer-height: 48px;
     overflow: hidden;
     display: flex;
     flex-direction: row;
-    justify-content: flex-end;
     align-items: center;
+    justify-content: space-between;
 
-    .feature-table-data-page-pending {
-      margin-right: 8px;
+    .left {
+      margin-left: 2em;
+      align-items: center;
     }
 
-    .feature-table-data-view-mode-selector {
-      margin-right: 2em;
+    .right {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+
+      .feature-table-data-page-pending {
+        margin-right: 8px;
+      }
+
+      .feature-table-data-view-mode-selector {
+        margin-right: 2em;
+      }
     }
+
+
   }
 }
 
