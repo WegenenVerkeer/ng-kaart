@@ -56,6 +56,8 @@ interface TemplateData {
   readonly mapAsFilterState: boolean;
   readonly cannotChooseMapAsFilter: boolean;
   readonly updatePending: boolean;
+  readonly numGeselecteerdeFeatures: number;
+  readonly hasSelectedFeatures: boolean;
 }
 
 @Component({
@@ -110,12 +112,19 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
         )
     );
 
+    const numGeselecteerdeFeatures$ = this.inViewReady(() =>
+      this.modelChanges.geselecteerdeFeatures$.pipe(
+        map(FeatureSelection.selectedFeaturesInLaagSize(this.laagTitel)),
+        startWith(0)
+      )
+    );
+
     // Alle data voor de template wordt in 1 custom datastructuur gegoten. Dat heeft als voordeel dat er geen gezever is
     // met observables die binnen *ngIf staan. Het nadeel is frequentere updates omdat er geen distinctUntil is. Die zou
     // immers de rows array moeten meenemen.
     this.templateData$ = subSpy("****templateData$")(
-      this.laag$.pipe(
-        map(laag => {
+      rx.combineLatest(this.laag$, numGeselecteerdeFeatures$).pipe(
+        map(([laag, numGeselecteerdeFeatures]) => {
           const fieldNameSelections = LaagModel.fieldSelectionsLens.get(laag);
           const rows = option.toUndefined(LaagModel.pageLens.get(laag).map(Page.rowsLens.get));
           return {
@@ -125,7 +134,9 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
             rows,
             mapAsFilterState: LaagModel.mapAsFilterGetter.get(laag),
             cannotChooseMapAsFilter: !LaagModel.canUseAllFeaturesGetter.get(laag),
-            updatePending: LaagModel.updatePendingLens.get(laag)
+            updatePending: LaagModel.updatePendingLens.get(laag),
+            numGeselecteerdeFeatures,
+            hasSelectedFeatures: numGeselecteerdeFeatures > 0
           };
         })
       )
@@ -262,12 +273,4 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
       )
     );
   }
-
-  public readonly numberOfSelectedFeatures$ = this.modelChanges.geselecteerdeFeatures$.pipe(
-    map(FeatureSelection.selectedFeaturesInLaagSize(this.laagTitel)),
-    startWith(0),
-    shareReplay(1)
-  );
-
-  public readonly hasSelectedFeatures$ = this.numberOfSelectedFeatures$.pipe(map(count => count > 0));
 }

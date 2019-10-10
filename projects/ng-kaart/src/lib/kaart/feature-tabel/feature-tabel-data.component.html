@@ -100,8 +100,8 @@
 
   <div class="feature-table-data-footer">
     <div class="left">
-       <span *ngIf="hasSelectedFeatures$ | async">
-        {{numberOfSelectedFeatures$ | async}} geselecteerd
+       <span *ngIf="data.hasSelectedFeatures">
+        {{ data.numGeselecteerdeFeatures }} geselecteerd
         <button mat-icon-button (click)="onAction('zoomToSelection')" matTooltip="Zoom naar selectie"  matTooltipPosition="right">
           <mat-icon>zoom_in</mat-icon>
         </button>
