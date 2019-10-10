@@ -1,5 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, NgZone, OnChanges, SimpleChanges, ViewChild, ViewEncapsulation } from "@angular/core";
-import { MatCheckbox } from "@angular/material/checkbox";
+import { ChangeDetectionStrategy, Component, Input, NgZone, ViewEncapsulation } from "@angular/core";
 import { array, option } from "fp-ts";
 import { eqString } from "fp-ts/lib/Eq";
 import { flow, Function1, Refinement } from "fp-ts/lib/function";
@@ -7,7 +6,6 @@ import { pipe } from "fp-ts/lib/pipeable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { map, mapTo, share, shareReplay, startWith, switchMap, tap, withLatestFrom } from "rxjs/operators";
-import { arraysAreEqual } from "tslint/lib/utils";
 import { isBoolean, isString } from "util";
 
 import { Feature } from "../../util/feature";
@@ -15,7 +13,7 @@ import { subSpy } from "../../util/operators";
 import { join } from "../../util/string";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { DeselecteerFeatureCmd, SelecteerExtraFeaturesCmd, VeranderExtentCmd } from "../kaart-protocol-commands";
-import { FeatureSelection } from "../kaart-protocol-subscriptions";
+import { FeatureSelection, GeselecteerdeFeatures } from "../kaart-protocol-subscriptions";
 import { KaartComponent } from "../kaart.component";
 
 import { Page } from "./data-provider";
@@ -58,6 +56,8 @@ interface TemplateData {
   readonly mapAsFilterState: boolean;
   readonly cannotChooseMapAsFilter: boolean;
   readonly updatePending: boolean;
+  readonly numGeselecteerdeFeatures: number;
+  readonly hasSelectedFeatures: boolean;
 }
 
 @Component({
@@ -112,12 +112,19 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
         )
     );
 
+    const numGeselecteerdeFeatures$ = this.inViewReady(() =>
+      this.modelChanges.geselecteerdeFeatures$.pipe(
+        map(FeatureSelection.selectedFeaturesInLaagSize(this.laagTitel)),
+        startWith(0)
+      )
+    );
+
     // Alle data voor de template wordt in 1 custom datastructuur gegoten. Dat heeft als voordeel dat er geen gezever is
     // met observables die binnen *ngIf staan. Het nadeel is frequentere updates omdat er geen distinctUntil is. Die zou
     // immers de rows array moeten meenemen.
     this.templateData$ = subSpy("****templateData$")(
-      this.laag$.pipe(
-        map(laag => {
+      rx.combineLatest(this.laag$, numGeselecteerdeFeatures$).pipe(
+        map(([laag, numGeselecteerdeFeatures]) => {
           const fieldNameSelections = LaagModel.fieldSelectionsLens.get(laag);
           const rows = option.toUndefined(LaagModel.pageLens.get(laag).map(Page.rowsLens.get));
           return {
@@ -127,7 +134,9 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
             rows,
             mapAsFilterState: LaagModel.mapAsFilterGetter.get(laag),
             cannotChooseMapAsFilter: !LaagModel.canUseAllFeaturesGetter.get(laag),
-            updatePending: LaagModel.updatePendingLens.get(laag)
+            updatePending: LaagModel.updatePendingLens.get(laag),
+            numGeselecteerdeFeatures,
+            hasSelectedFeatures: numGeselecteerdeFeatures > 0
           };
         })
       )
@@ -162,7 +171,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
         .pipe(tap(overzicht.laagUpdater(titel)));
 
     this.runInViewReady(rx.defer(() => doUpdate$(this.laagTitel)));
-    this.runInViewReady(rx.merge(doUpdate$));
+    // this.runInViewReady(rx.merge(doUpdate$));
 
     const selectAll$ = this.actionDataFor$("selectAll", isBoolean);
     const selectRow$ = this.rawActionDataFor$("selectRow");
@@ -173,12 +182,12 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     // zoom naar de selectie
     this.runInViewReady(
       zoomToSelection$.pipe(
-        withLatestFrom(this.kaartModel$),
-        tap(([x, model]) => {
-          const selection = FeatureSelection.getGeselecteerdeFeaturesInLaag(model.geselecteerdeFeatures)(this.laagTitel);
+        withLatestFrom(this.modelChanges.geselecteerdeFeatures$),
+        tap(([_, selection]) => {
+          const laagSelection = FeatureSelection.getGeselecteerdeFeaturesInLaag(this.laagTitel)(selection);
 
-          const extent = selection[0].getGeometry().getExtent();
-          selection.forEach(feature => ol.extent.extend(extent, feature.getGeometry().getExtent()));
+          const extent = laagSelection[0].getGeometry().getExtent();
+          laagSelection.forEach(feature => ol.extent.extend(extent, feature.getGeometry().getExtent()));
 
           this.dispatch(VeranderExtentCmd(extent));
         })
@@ -195,13 +204,13 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
       )
     );
 
+    // TODO dit moet via een update gebeuren
     // hou in de row bij of die geselecteerd is of niet
-    // kan dus veranderen als de rijen veranderen, of de selection veranderd
+    // kan dus veranderen als de rijen veranderen, of de selection verandert
     this.runInViewReady(
       rx.combineLatest([this.rows$, this.modelChanges.geselecteerdeFeatures$]).pipe(
-        withLatestFrom(this.kaartModel$),
-        tap(([[rows, selection], model]) => {
-          rows.forEach(r => (r.selected = FeatureSelection.isSelected(model.geselecteerdeFeatures)(r.feature)));
+        tap(([rows, selection]: [Row[], GeselecteerdeFeatures]) => {
+          rows.forEach(r => (r.selected = FeatureSelection.isSelected(selection)(r.feature)));
         })
       )
     );
@@ -209,13 +218,11 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     // wis volledige selectie voor deze laag
     this.runInViewReady(
       eraseSelection$.pipe(
-        withLatestFrom(this.kaartModel$),
-        tap(([x, model]) => {
+        withLatestFrom(this.modelChanges.geselecteerdeFeatures$),
+        tap(([_, geselecteerdeFeatures]) => {
           this.selectAllChecked = false;
-          const selected = model.geselecteerdeFeatures.features
-            .getArray()
-            .filter(f => Feature.getLaagnaam(f).contains(eqString, this.laagTitel));
-          this.dispatch(DeselecteerFeatureCmd(selected.map(Feature.propertyIdRequired)));
+          const selectedIds = FeatureSelection.getGeselecteerdeFeatureIdsInLaag(this.laagTitel)(geselecteerdeFeatures);
+          this.dispatch(DeselecteerFeatureCmd(selectedIds));
         })
       )
     );
@@ -275,15 +282,4 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
       )
     );
   }
-
-  public readonly numberOfSelectedFeatures$ = this.modelChanges.geselecteerdeFeatures$.pipe(
-    withLatestFrom(this.kaartModel$),
-    map(([features, model]) => {
-      return FeatureSelection.selectedFeaturesIdsInLaag(model.geselecteerdeFeatures)(this.laagTitel).size;
-    }),
-    startWith(0),
-    shareReplay(1)
-  );
-
-  public readonly hasSelectedFeatures$ = this.numberOfSelectedFeatures$.pipe(map(count => count > 0));
 }

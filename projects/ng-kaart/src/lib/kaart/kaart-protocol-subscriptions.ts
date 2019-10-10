@@ -1,21 +1,18 @@
-import * as array from "fp-ts/lib/Array";
+import { option } from "fp-ts";
+import { flow } from "fp-ts/es6/function";
 import { Either } from "fp-ts/lib/Either";
-import { eqString } from "fp-ts/lib/Eq";
-import { Curried2, Function1, FunctionN, Predicate } from "fp-ts/lib/function";
+import { Curried2, Function1, Predicate } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
-import { Lens } from "monocle-ts";
 import * as ol from "openlayers";
 
-import * as sft from "../stijl/stijl-function-types";
 import { forEach } from "../util";
-import { Feature } from "../util/feature";
+import { Feature, FeatureWithIdAndLaagnaam } from "../util/feature";
 import { ZoekAntwoord, ZoekerMetWeergaveopties, ZoekResultaat } from "../zoeker/zoeker";
 
 import { KaartLocaties } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import { LaatsteCacheRefresh, MijnLocatieStateChange, PrecacheLaagProgress, TabelStateChange } from "./model-changes";
-import { VeldwaardeKleur } from "./stijleditor/model";
 
 /////////
 // Types
@@ -62,13 +59,11 @@ export interface Viewinstellingen {
   rotation: number;
 }
 
-export interface FeatureSelection {
-  features: ol.Collection<ol.Feature>;
-  idsPerLaag: Map<string, Set<string>>;
-}
-
+export type KaartFeaturesOpId = ReadonlyMap<string, FeatureWithIdAndLaagnaam>;
+export type KaartFeaturesOpLaag = ReadonlyMap<string, KaartFeaturesOpId>;
 export interface GeselecteerdeFeatures {
   readonly geselecteerd: ol.Feature[];
+  readonly featuresPerLaag: KaartFeaturesOpLaag;
   readonly toegevoegd: ol.Feature[];
   readonly verwijderd: ol.Feature[];
 }
@@ -246,51 +241,29 @@ export function GeselecteerdeFeaturesSubscription<Msg>(
   return { type: "GeselecteerdeFeatures", wrapper: wrapper };
 }
 
-export function FeatureSelection(features: ol.Collection<ol.Feature>, idsPerLaag: Map<string, Set<string>>) {
-  const featureSelection = { type: "FeatureSelection", features, idsPerLaag };
-
-  features.on("remove", evt => {
-    const f = (evt as ol.Collection.Event).element as ol.Feature;
-    forEach(Feature.getLaagnaam(f), laagnaam => {
-      const currentSet = fromNullable(featureSelection.idsPerLaag.get(laagnaam)).getOrElse(new Set<string>());
-      currentSet.delete(Feature.propertyIdRequired(f));
-      featureSelection.idsPerLaag.set(laagnaam, currentSet);
-    });
-  });
-
-  features.on("add", evt => {
-    const f = (evt as ol.Collection.Event).element as ol.Feature;
-    forEach(Feature.getLaagnaam(f), laagnaam => {
-      const currentSet = fromNullable(featureSelection.idsPerLaag.get(laagnaam)).getOrElse(new Set<string>());
-      featureSelection.idsPerLaag.set(laagnaam, currentSet.add(Feature.propertyIdRequired(f)));
-    });
-  });
-
-  return featureSelection;
-}
-
-/**
- * Let op met FeatureSelection:
- *
- * de bedoeling is dat hier een extra lookup map wordt bijgehouden, die zich automatisch up-to-date houdt met de "echte" openlayers
- * selection, de Collection<ol.Feature>.
- * Die is mutable, en wordt rechtstreeks door openlayers zo gebruikt.
- * Om de extra map te maintainen reageren we op de "add" en "remove" events van die collection.
- * Dit gebeurt bij het aanmaken van de FeatureSelection. Dit betekent dus wel de de datastructuren in FeatureSelection allebei mutable zijn!
- */
 export namespace FeatureSelection {
-  export const isSelected: Curried2<FeatureSelection, ol.Feature, boolean> = featureSelection => feature => {
-    const selectedInLaag = Feature.getLaagnaam(feature).chain(laagnaam => fromNullable(featureSelection.idsPerLaag.get(laagnaam)));
-    return selectedInLaag.getOrElse(new Set<string>()).has(Feature.propertyIdRequired(feature));
+  export const isSelected: Curried2<GeselecteerdeFeatures, ol.Feature, boolean> = featureSelection =>
+    flow(
+      Feature.featureWithIdAndLaagnaam,
+      option.exists(({ id, laagnaam }) => {
+        const idsInLaag = featureSelection.featuresPerLaag.get(laagnaam);
+        return idsInLaag !== undefined && idsInLaag.has(id);
+      })
+    );
+
+  export const selectedFeaturesInLaagSize: Curried2<string, GeselecteerdeFeatures, number> = laagnaam => featureSelection => {
+    const selectedInLaag = featureSelection.featuresPerLaag.get(laagnaam);
+    return selectedInLaag ? selectedInLaag.size : 0;
   };
 
-  export const selectedFeaturesIdsInLaag: Curried2<FeatureSelection, string, Set<string>> = featureSelection => laagnaam => {
-    const selectedInLaag = featureSelection.idsPerLaag.get(laagnaam);
-    return selectedInLaag || new Set<string>();
+  export const getGeselecteerdeFeaturesInLaag: Curried2<string, GeselecteerdeFeatures, ol.Feature[]> = laagnaam => featureSelection => {
+    const featuresInLaag = featureSelection.featuresPerLaag.get(laagnaam);
+    return (featuresInLaag && [...featuresInLaag.values()].map(fil => fil.feature)) || [];
   };
 
-  export const getGeselecteerdeFeaturesInLaag: Curried2<FeatureSelection, string, Array<ol.Feature>> = featureSelection => laagnaam => {
-    return featureSelection.features.getArray().filter(f => Feature.getLaagnaam(f).contains(eqString, laagnaam));
+  export const getGeselecteerdeFeatureIdsInLaag: Curried2<string, GeselecteerdeFeatures, string[]> = laagnaam => featureSelection => {
+    const featuresInLaag = featureSelection.featuresPerLaag.get(laagnaam);
+    return (featuresInLaag && [...featuresInLaag.keys()]) || [];
   };
 }
 

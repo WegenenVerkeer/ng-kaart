@@ -1,4 +1,5 @@
 import { AfterViewInit, NgZone, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
+import { Lazy } from "fp-ts/es6/function";
 import { Function1, Function2, identity } from "fp-ts/lib/function";
 import { Refinement } from "fp-ts/lib/function";
 import * as rx from "rxjs";
@@ -105,13 +106,17 @@ export abstract class KaartComponentBase implements AfterViewInit, OnInit, OnDes
     return this.zone.runOutsideAngular(f);
   }
 
+  protected inViewReady<T>(obsGen: Lazy<rx.Observable<T>>): rx.Observable<T> {
+    return this.viewReady$.pipe(switchMap(obsGen));
+  }
+
   /**
    * Voer de observable uit vanaf de component klaar is tot die stopt.
    * Om iets nuttig te doen, moeten de observables side-effects gebruiken. Als dat op de gepaste plaats
    * gebeurt, i.e. als allerlaatste operatie in een tap, is dit nog overzichtelijk.
    */
   protected runInViewReady(os: rx.Observable<any>) {
-    this.bindToLifeCycle(this.viewReady$.pipe(switchMap(() => os))).subscribe();
+    this.bindToLifeCycle(this.inViewReady(() => os)).subscribe();
   }
 }
 

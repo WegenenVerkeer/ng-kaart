@@ -288,7 +288,7 @@
                        [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && filterenSectie.sectieZichtbaar">
         <div *ngIf="filterenSectie.sectieZichtbaar" [@enterAnimation]>
           <awv-kaart-classic [naam]="'filteren'" [breedte]="1600" [hoogte]="1200" [zoom]="10" [middelpunt]="[151732, 210498]"
-                             #filterKaart (geselecteerdeFeaturesChange)="featuresGeselecteerd($event, filterKaart)"
+                             #filterKaart
                              [selectieModus]="'multipleShift'">
 
             <awv-kaart-zoeker>
