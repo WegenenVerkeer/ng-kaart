@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, Input, NgZone, ViewEncapsulation } from "@angular/core";
+import { ChangeDetectionStrategy, Component, Input, NgZone, OnChanges, SimpleChanges, ViewChild, ViewEncapsulation } from "@angular/core";
+import { MatCheckbox } from "@angular/material/checkbox";
 import { array, option } from "fp-ts";
 import { eqString } from "fp-ts/lib/Eq";
 import { flow, Function1, Refinement } from "fp-ts/lib/function";
@@ -55,6 +56,7 @@ interface TemplateData {
   readonly headers: ColumnHeaders;
   readonly rows?: Row[];
   readonly mapAsFilterState: boolean;
+  readonly showOnlySelected: boolean;
   readonly cannotChooseMapAsFilter: boolean;
   readonly updatePending: boolean;
   readonly numGeselecteerdeFeatures: number;
@@ -139,11 +141,12 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
             fieldNameSelections,
             headers: ColumnHeaders.createFromFieldSelection(fieldNameSelections),
             rows,
-            mapAsFilterState: LaagModel.mapAsFilterGetter.get(laag),
+            mapAsFilterState: LaagModel.viewSourceModeGetter.get(laag) === "Map",
             cannotChooseMapAsFilter: !LaagModel.canUseAllFeaturesGetter.get(laag),
             updatePending: LaagModel.updatePendingLens.get(laag),
             numGeselecteerdeFeatures,
-            hasSelectedFeatures: numGeselecteerdeFeatures > 0
+            hasSelectedFeatures: numGeselecteerdeFeatures > 0,
+            showOnlySelected: LaagModel.selectionViewModeGetter.get(laag) === "SelectedOnly"
           };
         })
       )

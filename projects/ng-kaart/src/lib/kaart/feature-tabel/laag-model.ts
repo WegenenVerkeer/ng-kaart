@@ -14,6 +14,7 @@ import { isNumber } from "util";
 import { Filter, FilterTotaal, isTotaalOpgehaald } from "../../filter";
 import { NosqlFsSource } from "../../source";
 import * as arrays from "../../util/arrays";
+import { equalToString } from "../../util/equal";
 import { Feature } from "../../util/feature";
 import { PartialFunction2 } from "../../util/function";
 import { arrayTraversal, selectiveArrayTraversal } from "../../util/lenses";
@@ -38,12 +39,16 @@ import { FieldSelection } from "./field-selection-model";
 import { Field, FieldsFormatSpec, Row, Velden, VeldenFormatter } from "./row-model";
 import { AsyncUpdate, SyncUpdate, Update } from "./update";
 
+export type ViewSourceMode = "Map" | "AllFeatures";
+export type SelectionViewMode = "SelectedOnly" | "SourceFeatures";
+
 export interface LaagModel {
   readonly titel: string;
   readonly veldinfos: ke.VeldInfo[]; // enkel de VeldInfos die we kunnen weergeven
   readonly hasFilter: boolean;
   readonly filterIsActive: boolean;
-  readonly mapAsFilter: boolean;
+  readonly viewSourceMode: ViewSourceMode;
+  readonly selectionViewMode: SelectionViewMode;
   readonly canUseAllFeatures: boolean; // geeft aan dat mogelijk is om meer dan de features op de zichtbare kaart te tonen
   readonly featureCount: FeatureCount; // aantal features in de tabel over alle pagina's heen
   readonly expectedPageNumber: PageNumber; // Het PageNumber dat we verwachten te zien. Potentieel anders dan in Page wegens asynchoniciteit
@@ -59,17 +64,10 @@ export interface LaagModel {
   readonly minZoom: number;
   readonly maxZoom: number;
 
-  // volgende 3 properties worden voorlopig niet meer gebruikt. Misschien wel weer wanneer volledige dataset ipv view
-  // gebruikt wordt.
   readonly nextPageSequence: number; // Het sequentienummer dat verwacht is, niet het paginanummer
   readonly updatePending: boolean;
 
   readonly viewinstellingen: Viewinstellingen; // Kopie van gegevens in TableModel. Handig om hier te refereren
-
-  // later
-  // readonly canRequestFullData: boolean;
-  // readonly fetchAllData();  --> of nog beter in losse functie?
-  // readonly viewAsFilter: boolean;
 }
 
 export namespace LaagModel {
@@ -94,8 +92,10 @@ export namespace LaagModel {
   export const hasFilterLens: LaagModelLens<boolean> = laagPropLens("hasFilter");
   export const filterIsActiveLens: LaagModelLens<boolean> = laagPropLens("filterIsActive");
   export const veldInfosGetter: LaagModelGetter<ke.VeldInfo[]> = laagPropLens("veldinfos").asGetter();
-  const unsafeMapAsFilterLens: LaagModelLens<boolean> = laagPropLens("mapAsFilter");
-  export const mapAsFilterGetter: LaagModelGetter<boolean> = unsafeMapAsFilterLens.asGetter();
+  const unsafeViewSourceModeLens: LaagModelLens<ViewSourceMode> = laagPropLens("viewSourceMode");
+  const unsafeSelectionViewModeLens: LaagModelLens<SelectionViewMode> = laagPropLens("selectionViewMode");
+  export const viewSourceModeGetter: LaagModelGetter<ViewSourceMode> = unsafeViewSourceModeLens.asGetter();
+  export const selectionViewModeGetter: LaagModelGetter<SelectionViewMode> = unsafeSelectionViewModeLens.asGetter();
   const unsafeFieldSortingsLens: LaagModelLens<FieldSorting[]> = laagPropLens("fieldSortings");
   const unsafeFieldSelectionsLens: LaagModelLens<FieldSelection[]> = laagPropLens("fieldSelections");
   const unsafeVeldenFormatterLens: LaagModelLens<Endomorphism<Velden>> = laagPropLens("veldenFormatter");
@@ -242,7 +242,8 @@ export namespace LaagModel {
         veldinfos,
         hasFilter: Filter.isDefined(laag.filterinstellingen.spec),
         filterIsActive: laag.filterinstellingen.actief,
-        mapAsFilter: true,
+        viewSourceMode: "Map" as ViewSourceMode,
+        selectionViewMode: "SourceFeatures" as SelectionViewMode,
         totaal: laag.filterinstellingen.totaal,
         canUseAllFeatures: false,
         featureCount: FeatureCount.pending,
@@ -279,13 +280,16 @@ export namespace LaagModel {
   export const hasMultiplePages: Predicate<LaagModel> = laag =>
     FeatureCount.fetchedCount(laag.featureCount).fold(false, featureCount => !Page.isFirst(Page.last(featureCount)));
 
-  const ifInFilter = mapAsFilterGetter.get;
-  const updateIfMapAsFilterOrElse = Update.ifOrElse(ifInFilter);
-  const updateIfMapAsFilter: Endomorphism<LaagModelUpdate> = Update.ifPredicate(ifInFilter);
+  const ifInMapAsFilter = flow(
+    viewSourceModeGetter.get,
+    equalToString("Map")
+  );
+  const updateIfMapAsFilterOrElse = Update.ifOrElse(ifInMapAsFilter);
+  const updateIfMapAsFilter: Endomorphism<LaagModelUpdate> = Update.filter(ifInMapAsFilter);
   const applyIfMapAsFilter: Endomorphism<Endomorphism<LaagModel>> = (f: Endomorphism<LaagModel>) => laag =>
-    ifInFilter(laag) ? f(laag) : laag;
+    ifInMapAsFilter(laag) ? f(laag) : laag;
   const ifInZoom = (laag: LaagModel) => laag.viewinstellingen.zoom >= laag.minZoom && laag.viewinstellingen.zoom <= laag.maxZoom;
-  const updateIfInZoom = Update.ifPredicate(ifInZoom);
+  const updateIfInZoom = Update.filter(ifInZoom);
   const applyIfInZoomOrElse = (
     endoInZoom: Endomorphism<LaagModel>,
     endoOutsideZoom: Endomorphism<LaagModel>
@@ -293,7 +297,7 @@ export namespace LaagModel {
 
   const toggleSortDirection: Endomorphism<Option<SortDirection>> = flow(
     option.map(SortDirection.invert),
-    option.alt(() => option.some("ASCENDING") as Option<SortDirection>)
+    option.alt(() => option.some("ASCENDING" as SortDirection))
   );
 
   // Vervangt de huidige sortingFields door een sorting op 1 enkel logisch veld
@@ -524,23 +528,33 @@ export namespace LaagModel {
     andThenUpdatePageData
   );
 
-  const clearPageIfMapAsFilterChangeUpdate: Function1<boolean, LaagModelUpdate> = newMapAsFilterSetting =>
-    Update.createSync(laag =>
-      laag.mapAsFilter !== newMapAsFilterSetting
-        ? flow(
+  export const setMapAsFilterUpdate: Function1<boolean, LaagModelUpdate> = flow(
+    setting => (setting ? "Map" : "AllFeatures"),
+    viewSourceMode =>
+      Update.filter((laag: LaagModel) => laag.viewSourceMode !== viewSourceMode)(
+        pipe(
+          flow(
             expectedPageNumberLens.set(Page.first),
-            clearLaagPage
-          )(laag)
-        : laag
-    );
-
-  export const setMapAsFilterUpdate: Function1<boolean, LaagModelUpdate> = newMapAsFilterSetting =>
-    Update.combineAll(
-      clearPageIfMapAsFilterChangeUpdate(newMapAsFilterSetting),
-      pipe(
-        newMapAsFilterSetting,
-        unsafeMapAsFilterLens.set,
-        andThenUpdatePageData
+            clearLaagPage,
+            unsafeViewSourceModeLens.set(viewSourceMode)
+          ),
+          andThenUpdatePageData
+        )
       )
-    );
+  );
+
+  export const setShowSelectedOnlyUpdate: Function1<boolean, LaagModelUpdate> = flow(
+    setting => (setting ? "SelectedOnly" : "SourceFeatures"),
+    viewSelectionMode =>
+      Update.filter((laag: LaagModel) => laag.selectionViewMode !== viewSelectionMode)(
+        pipe(
+          flow(
+            expectedPageNumberLens.set(Page.first),
+            clearLaagPage,
+            unsafeSelectionViewModeLens.set(viewSelectionMode)
+          ),
+          andThenUpdatePageData
+        )
+      )
+  );
 }

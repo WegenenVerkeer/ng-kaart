@@ -35,6 +35,7 @@ import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
 import { envParams } from "./kaart-config";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
+import { FeatureSelection } from "./kaart-protocol";
 import { UiElementOpties } from "./kaart-protocol-commands";
 import { GeselecteerdeFeatures, Viewinstellingen } from "./kaart-protocol-subscriptions";
 import { KaartWithInfo } from "./kaart-with-info";
