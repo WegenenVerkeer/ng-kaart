@@ -21,7 +21,6 @@
     "start:e2e": "ng serve testApp --port 4221",
     "cy:run": "CYPRESS_baseUrl=http://localhost:4221/ cypress run",
     "cy:e2e": "start-server-and-test start:e2e http-get://localhost:4221/ cy:run",
-    "precommit": "lint-staged",
     "publishToNexus": "node script/patchRegistry.js https://collab.mow.vlaanderen.be/artifacts/repository/npm-internal/",
     "publishToNpmjs": "node script/patchRegistry.js",
     "build:elements": "ng build --prod --output-hashing none webcomponent && npm run generate-docs && node script/elements-build.js",
@@ -145,5 +144,10 @@
     "typescript": "~3.2.4",
     "webdriver-manager": "^12.1.6",
     "webpack-dev-server": "^3.1.5"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
   }
 }
