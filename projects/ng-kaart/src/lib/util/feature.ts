@@ -77,22 +77,11 @@ export interface FeatureWithIdAndLaagnaam {
 }
 
 export namespace Feature {
-  /** @deprecated Ga ervan uit dat Features een idee zullen hebben, gebruik `propertyIdRequired` */
   export const propertyId: PartialFunction1<ol.Feature, string> = feature =>
     option
       .fromNullable(feature.get("id"))
       .orElse(() => option.fromNullable(feature.getProperties()["id"]))
       .map(id => id.toString());
-
-  export const propertyIdRequired: FunctionN<[ol.Feature], string> = feature =>
-    option
-      .fromNullable(feature.get("id"))
-      .orElse(() => option.fromNullable(feature.getProperties()["id"]))
-      .orElse(() => option.fromNullable(feature.getId()))
-      .map(id => id.toString())
-      .getOrElse(() => {
-        throw new Error("Id is required op een feature: ${feature}");
-      });
 
   export const properties: Function1<ol.Feature, any> = feature => feature.getProperties().properties;
 

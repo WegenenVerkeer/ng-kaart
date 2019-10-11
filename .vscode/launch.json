@@ -26,6 +26,14 @@
       "outFiles": [
         "${workspaceFolder}/**/*.js"
       ]
-    }
+    },
+    {
+      "name": "Launch ng-kaart",
+      "type": "chrome",
+      "request": "launch",
+      "url": "http://apigateway/ng-kaart/",
+      "webRoot": "${workspaceFolder}/projects/ng-kaart/src",
+      "runtimeExecutable": "/usr/bin/chromium-browser"
+  },
   ]
 }

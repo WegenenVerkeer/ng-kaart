@@ -16,7 +16,7 @@ import { NosqlFsSource } from "../../source";
 import * as arrays from "../../util/arrays";
 import { equalToString } from "../../util/equal";
 import { Feature } from "../../util/feature";
-import { PartialFunction2 } from "../../util/function";
+import { flowSpy, PartialFunction2 } from "../../util/function";
 import { arrayTraversal, selectiveArrayTraversal } from "../../util/lenses";
 import { observableFromOlEvents } from "../../util/ol-observable";
 import { subSpy } from "../../util/operators";
@@ -399,8 +399,9 @@ export namespace LaagModel {
                   laag.page,
                   option.fold(() => Page.first, Page.pageNumberLens.get),
                   expectedPageNumberLens.set // expected is gelijk aan wat in de page zit
+                  // We kunnen hier ook de tabel leeg maken of een error icoontje oid tonen
                 )(laag)
-            ) // We kunnen hier ook de tabel leeg maken of een error icoontje oid tonen
+            )
         })
       )
     )
@@ -531,30 +532,26 @@ export namespace LaagModel {
   export const setMapAsFilterUpdate: Function1<boolean, LaagModelUpdate> = flow(
     setting => (setting ? "Map" : "AllFeatures"),
     viewSourceMode =>
-      Update.filter((laag: LaagModel) => laag.viewSourceMode !== viewSourceMode)(
-        pipe(
-          flow(
-            expectedPageNumberLens.set(Page.first),
-            clearLaagPage,
-            unsafeViewSourceModeLens.set(viewSourceMode)
-          ),
-          andThenUpdatePageData
-        )
+      pipe(
+        flow(
+          expectedPageNumberLens.set(Page.first),
+          clearLaagPage,
+          unsafeViewSourceModeLens.set(viewSourceMode)
+        ),
+        andThenUpdatePageData
       )
   );
 
   export const setShowSelectedOnlyUpdate: Function1<boolean, LaagModelUpdate> = flow(
     setting => (setting ? "SelectedOnly" : "SourceFeatures"),
     viewSelectionMode =>
-      Update.filter((laag: LaagModel) => laag.selectionViewMode !== viewSelectionMode)(
-        pipe(
-          flow(
-            expectedPageNumberLens.set(Page.first),
-            clearLaagPage,
-            unsafeSelectionViewModeLens.set(viewSelectionMode)
-          ),
-          andThenUpdatePageData
-        )
+      pipe(
+        flow(
+          expectedPageNumberLens.set(Page.first),
+          clearLaagPage,
+          unsafeSelectionViewModeLens.set(viewSelectionMode)
+        ),
+        andThenUpdatePageData
       )
   );
 }

@@ -21,7 +21,7 @@ export namespace Update {
   // Eigenlijk definieren we hier een paar Monoids. Nog te bezien of het voordelig is
   // dat formeel te doen.
   export const mappendS: <A>(s1: SyncUpdate<A>, s2: SyncUpdate<A>) => SyncUpdate<A> = flow;
-  export const mappendA = <A>(u1: AsyncUpdate<A>, u2: AsyncUpdate<A>) => (model: A) => rx.merge(u1(model), u2(model));
+  export const mappendA = <A>(u1: AsyncUpdate<A>, u2: AsyncUpdate<A>) => (a: A) => rx.merge(u1(a), u2(a));
   export const mappend: <A>(a1: Update<A>, a2: Update<A>) => Update<A> = (u1, u2) =>
     create(mappendS(u1.syncUpdate, u2.syncUpdate))(mappendA(u1.asyncUpdate, u2.asyncUpdate));
 
@@ -34,6 +34,8 @@ export namespace Update {
 
   export const combineAll = <A>(...updates: Update<A>[]) => array.reduce(mempty, (us: Update<A>, u: Update<A>) => mappend(us, u))(updates);
 
+  // Opgelet! Het predicaat wordt 2x uitgevoerd. Het is mogelijk dat het een verschillend resultaat heeft en dus dat
+  // syncUpdate niet maar asyncUpdate wel uitgevoerd wordt (of omgekeerd).
   export const ifOrElse = <A>(pred: Predicate<A>) => (ifTrue: Update<A>, ifFalse: Update<A>): Update<A> => ({
     syncUpdate: (a: A) => (pred(a) ? ifTrue.syncUpdate(a) : ifFalse.syncUpdate(a)),
     asyncUpdate: (a: A) => (pred(a) ? ifTrue.asyncUpdate(a) : ifFalse.asyncUpdate(a))

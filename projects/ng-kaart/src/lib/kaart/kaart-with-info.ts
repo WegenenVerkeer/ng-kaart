@@ -7,7 +7,6 @@ import { ZoekerMetWeergaveopties } from "../zoeker/zoeker";
 import { KaartLocaties } from "./kaart-bevragen/laaginfo.model";
 import { KaartConfig } from "./kaart-config";
 import * as ke from "./kaart-elementen";
-import { FeatureSelection } from "./kaart-protocol-subscriptions";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import { ModelChanger } from "./model-changes";
 import { initStyleSelectorsInMap } from "./stijl-selector";
