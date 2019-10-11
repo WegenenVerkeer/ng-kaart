@@ -209,7 +209,11 @@ function featuresFromServer(
       source.fetchFeatures$(source.composeQueryUrl(some(ext), none), gebruikCache).pipe(
         bufferCount(BATCH_SIZE),
         catchError(error => {
-          source.clearPrevExtent(); // Volgende keer moeten we proberen alles weer op te halen.
+          // Volgende keer moeten we proberen alles weer op te halen,
+          // anders gaan we gaten krijgen omdat we door onze optimalisatie denken dat de features binnen prevExtent al
+          // correct opgehaald zijn, wat niet noodzakelijk waar is.
+          // Dit is een fix voor CK-205.
+          source.clearPrevExtent();
           return gebruikCache ? featuresFromCache(laagnaam, extent) : rx.throwError(error);
         })
       )
