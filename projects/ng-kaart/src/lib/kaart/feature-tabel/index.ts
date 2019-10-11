@@ -2,6 +2,7 @@ import { CommonModule } from "@angular/common";
 import { ModuleWithProviders, NgModule } from "@angular/core";
 import {
   MatButtonModule,
+  MatButtonToggleModule,
   MatCheckboxModule,
   MatIconModule,
   MatInputModule,
@@ -33,6 +34,7 @@ const components: any[] = [
   imports: [
     CommonModule,
     MatButtonModule,
+    MatButtonToggleModule,
     MatCheckboxModule,
     MatIconModule,
     MatInputModule,

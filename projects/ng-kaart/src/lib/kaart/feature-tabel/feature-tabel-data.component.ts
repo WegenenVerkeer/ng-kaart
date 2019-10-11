@@ -1,14 +1,19 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone, ViewEncapsulation } from "@angular/core";
 import { array, option } from "fp-ts";
+import { eqString } from "fp-ts/lib/Eq";
 import { flow, Function1, Refinement } from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
+import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { map, mapTo, share, shareReplay, startWith, switchMap, tap } from "rxjs/operators";
+import { map, mapTo, share, shareReplay, startWith, switchMap, tap, withLatestFrom } from "rxjs/operators";
 import { isBoolean, isString } from "util";
 
+import { Feature } from "../../util/feature";
 import { subSpy } from "../../util/operators";
 import { join } from "../../util/string";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { DeselecteerFeatureCmd, SelecteerExtraFeaturesCmd, VeranderExtentCmd } from "../kaart-protocol-commands";
+import { FeatureSelection, GeselecteerdeFeatures } from "../kaart-protocol-subscriptions";
 import { KaartComponent } from "../kaart.component";
 
 import { Page } from "./data-provider";
@@ -51,6 +56,14 @@ interface TemplateData {
   readonly mapAsFilterState: boolean;
   readonly cannotChooseMapAsFilter: boolean;
   readonly updatePending: boolean;
+  readonly numGeselecteerdeFeatures: number;
+  readonly hasSelectedFeatures: boolean;
+}
+
+// Een datatype gebruikt in de template
+interface RowSelection {
+  readonly row: Row;
+  readonly selected: boolean;
 }
 
 @Component({
@@ -63,9 +76,11 @@ interface TemplateData {
 export class FeatureTabelDataComponent extends KaartChildComponentBase {
   // Voor de template
   public readonly templateData$: rx.Observable<TemplateData>;
-
+  public readonly rows$: rx.Observable<Row[]>;
   // Voor child components
   public readonly laag$: rx.Observable<LaagModel>;
+
+  public selectAllChecked = false;
 
   @Input()
   laagTitel: string;
@@ -103,12 +118,19 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
         )
     );
 
+    const numGeselecteerdeFeatures$ = this.inViewReady(() =>
+      this.modelChanges.geselecteerdeFeatures$.pipe(
+        map(FeatureSelection.selectedFeaturesInLaagSize(this.laagTitel)),
+        startWith(0)
+      )
+    );
+
     // Alle data voor de template wordt in 1 custom datastructuur gegoten. Dat heeft als voordeel dat er geen gezever is
     // met observables die binnen *ngIf staan. Het nadeel is frequentere updates omdat er geen distinctUntil is. Die zou
     // immers de rows array moeten meenemen.
     this.templateData$ = subSpy("****templateData$")(
-      this.laag$.pipe(
-        map(laag => {
+      rx.combineLatest(this.laag$, numGeselecteerdeFeatures$).pipe(
+        map(([laag, numGeselecteerdeFeatures]) => {
           const fieldNameSelections = LaagModel.fieldSelectionsLens.get(laag);
           const rows = option.toUndefined(LaagModel.pageLens.get(laag).map(Page.rowsLens.get));
           return {
@@ -118,9 +140,22 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
             rows,
             mapAsFilterState: LaagModel.mapAsFilterGetter.get(laag),
             cannotChooseMapAsFilter: !LaagModel.canUseAllFeaturesGetter.get(laag),
-            updatePending: LaagModel.updatePendingLens.get(laag)
+            updatePending: LaagModel.updatePendingLens.get(laag),
+            numGeselecteerdeFeatures,
+            hasSelectedFeatures: numGeselecteerdeFeatures > 0
           };
         })
+      )
+    );
+
+    this.rows$ = subSpy("****rows$")(
+      this.laag$.pipe(
+        map(laag =>
+          LaagModel.pageLens
+            .get(laag)
+            .map(Page.rowsLens.get)
+            .getOrElse([])
+        )
       )
     );
 
@@ -142,5 +177,104 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
         .pipe(tap(overzicht.laagUpdater(titel)));
 
     this.runInViewReady(rx.defer(() => doUpdate$(this.laagTitel)));
+    // this.runInViewReady(rx.merge(doUpdate$));
+
+    const selectAll$ = this.actionDataFor$("selectAll", isBoolean);
+    const selectRow$ = this.rawActionDataFor$("selectRow") as rx.Observable<RowSelection>;
+    const eraseSelection$ = this.actionFor$("eraseSelection");
+    const zoomToSelection$ = this.actionFor$("zoomToSelection");
+
+    // zoom naar de selectie
+    this.runInViewReady(
+      zoomToSelection$.pipe(
+        withLatestFrom(this.modelChanges.geselecteerdeFeatures$),
+        tap(([_, selection]) => {
+          const laagSelection = FeatureSelection.getGeselecteerdeFeaturesInLaag(this.laagTitel)(selection);
+
+          const extent = laagSelection[0].getGeometry().getExtent();
+          laagSelection.forEach(feature => ol.extent.extend(extent, feature.getGeometry().getExtent()));
+
+          this.dispatch(VeranderExtentCmd(extent));
+        })
+      )
+    );
+
+    // hou in de row bij of die geselecteerd is of niet
+    // kan dus veranderen als de rijen veranderen, of de selection verandert
+    this.runInViewReady(
+      rx.combineLatest([this.rows$, this.modelChanges.geselecteerdeFeatures$]).pipe(
+        tap(([rows, selection]: [Row[], GeselecteerdeFeatures]) => {
+          rows.forEach(r => {
+            r.selected = FeatureSelection.isSelected(selection)(r.feature);
+          });
+        })
+      )
+    );
+
+    // wis volledige selectie voor deze laag
+    this.runInViewReady(
+      eraseSelection$.pipe(
+        withLatestFrom(this.modelChanges.geselecteerdeFeatures$),
+        tap(([_, geselecteerdeFeatures]) => {
+          this.selectAllChecked = false;
+          const selectedIds = FeatureSelection.getGeselecteerdeFeatureIdsInLaag(this.laagTitel)(geselecteerdeFeatures);
+          this.dispatch(DeselecteerFeatureCmd(selectedIds));
+        })
+      )
+    );
+
+    // uncheck de selectAll indien de rijen veranderen
+    this.runInViewReady(
+      this.rows$.pipe(
+        tap(() => {
+          this.selectAllChecked = false;
+        })
+      )
+    );
+
+    // uncheck de select all indien een rij ge(de)selecteerd wordt via de kaart
+    this.runInViewReady(
+      this.modelChanges.geselecteerdeFeatures$.pipe(
+        tap(geselecteerdeFeatures => {
+          // als we via de kaart selecteren en we hadden reeds alles geselecteerd
+          // zijn er zeker items verwijderd
+          // zelfs als multi select aanstaat kunnen er geen bijgekomen zijn zonder dat rows$ ging veranderd zijn
+          // en die legt ook de selectAll af
+          if (array.isNonEmpty(geselecteerdeFeatures.verwijderd)) {
+            this.selectAllChecked = false;
+          }
+        })
+      )
+    );
+
+    // (de)selecteer een enkele rij
+    this.runInViewReady(
+      selectRow$.pipe(
+        tap((rowSelection: RowSelection) => {
+          this.selectAllChecked = false;
+          if (rowSelection.selected) {
+            this.dispatch(SelecteerExtraFeaturesCmd([rowSelection.row.feature.feature]));
+          } else {
+            this.dispatch(DeselecteerFeatureCmd([rowSelection.row.feature.id]));
+          }
+        })
+      )
+    );
+
+    // (de)selecteer alle rijen
+    this.runInViewReady(
+      selectAll$.pipe(
+        withLatestFrom(this.rows$),
+        tap(([selected, rows]: [boolean, Row[]]) => {
+          this.selectAllChecked = selected;
+          if (selected) {
+            this.dispatch(SelecteerExtraFeaturesCmd(rows.map(row => row.feature.feature)));
+          } else {
+            const ids = rows.map(row => row.feature.id);
+            this.dispatch(DeselecteerFeatureCmd(ids));
+          }
+        })
+      )
+    );
   }
 }

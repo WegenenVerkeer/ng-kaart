@@ -35,6 +35,7 @@ import { CachedFeatureLookup } from "./cache/lookup";
 import { envParams } from "./kaart-config";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
+import { FeatureSelection } from "./kaart-protocol";
 import { MsgGen } from "./kaart-protocol-subscriptions";
 import { KaartWithInfo } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
@@ -449,6 +450,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         }
       );
     }
+
     function verwijderGeselecteerdeFeaturesVanLaag(laagnaam: string) {
       // Als er features van onze laag geselecteerd waren, moeten we die verwijderen uit de door ol gemanagede collection.
       const teVerwijderenGeselecteerdeFeatures = model.geselecteerdeFeatures
@@ -1196,22 +1198,22 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function selecteerFeatures(cmnd: prt.SelecteerFeaturesCmd): ModelWithResult<Msg> {
       const currentFeatures = model.geselecteerdeFeatures.getArray();
-      const newFeatures = cmnd.features;
 
-      const featuresToRemove = array.difference(Feature.setoidFeaturePropertyId)(currentFeatures, newFeatures);
+      const newFeatures = cmnd.features;
       const featuresToAdd = array.difference(Feature.setoidFeaturePropertyId)(newFeatures, currentFeatures);
-      if (featuresToRemove.length === currentFeatures.length) {
+
+      if (!cmnd.incremental) {
         model.geselecteerdeFeatures.clear();
-      } else {
-        featuresToRemove.forEach(f => model.geselecteerdeFeatures.remove(f));
       }
       model.geselecteerdeFeatures.extend(featuresToAdd);
+
       return ModelWithResult(model);
     }
 
     function deselecteerFeature(cmnd: prt.DeselecteerFeatureCmd): ModelWithResult<Msg> {
-      const maybeSelectedFeature = fromNullable(model.geselecteerdeFeatures.getArray().find(f => f.get("id") === cmnd.id));
-      forEach(maybeSelectedFeature, selected => model.geselecteerdeFeatures.remove(selected));
+      const toDeselect = model.geselecteerdeFeatures.getArray().filter(f => cmnd.ids.includes(f.get("id")));
+      toDeselect.forEach(f => model.geselecteerdeFeatures.remove(f));
+
       return ModelWithResult(model);
     }
 

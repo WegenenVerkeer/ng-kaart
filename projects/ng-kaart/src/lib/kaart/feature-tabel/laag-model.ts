@@ -14,8 +14,8 @@ import { isNumber } from "util";
 import { Filter, FilterTotaal, isTotaalOpgehaald } from "../../filter";
 import { NosqlFsSource } from "../../source";
 import * as arrays from "../../util/arrays";
+import { Feature } from "../../util/feature";
 import { PartialFunction2 } from "../../util/function";
-import { flowSpy } from "../../util/function";
 import { arrayTraversal, selectiveArrayTraversal } from "../../util/lenses";
 import { observableFromOlEvents } from "../../util/ol-observable";
 import { subSpy } from "../../util/operators";
@@ -35,7 +35,7 @@ import {
   SortDirection
 } from "./data-provider";
 import { FieldSelection } from "./field-selection-model";
-import { Field, Row, RowFormatSpec, RowFormatter } from "./row-model";
+import { Field, FieldsFormatSpec, Row, Velden, VeldenFormatter } from "./row-model";
 import { AsyncUpdate, SyncUpdate, Update } from "./update";
 
 export interface LaagModel {
@@ -51,9 +51,9 @@ export interface LaagModel {
 
   readonly fieldSelections: FieldSelection[]; // enkel een subset van de velden is zichtbaar
   readonly fieldSortings: FieldSorting[];
-  readonly rowTransformer: Endomorphism<Row>; // bewerkt de ruwe rij (bijv. locatieveld toevoegen)
-  readonly rowFormats: RowFormatSpec; // instructies om velden aan te passen.
-  readonly rowFormatter: RowFormatter; // formateert een rij. zou kunnen in rowTransformer zitten, maar heeft andere life cycle
+  readonly veldenTransformer: Endomorphism<Velden>; // bewerkt de ruwe rij (bijv. locatieveld toevoegen)
+  readonly fieldFormats: FieldsFormatSpec; // instructies om velden aan te passen.
+  readonly veldenFormatter: VeldenFormatter; // formateert een rij. zou kunnen in veldenTransformer zitten, maar heeft andere life cycle
 
   readonly source: NosqlFsSource;
   readonly minZoom: number;
@@ -98,7 +98,7 @@ export namespace LaagModel {
   export const mapAsFilterGetter: LaagModelGetter<boolean> = unsafeMapAsFilterLens.asGetter();
   const unsafeFieldSortingsLens: LaagModelLens<FieldSorting[]> = laagPropLens("fieldSortings");
   const unsafeFieldSelectionsLens: LaagModelLens<FieldSelection[]> = laagPropLens("fieldSelections");
-  const unsafeRowFormatterLens: LaagModelLens<Endomorphism<Row>> = laagPropLens("rowFormatter");
+  const unsafeVeldenFormatterLens: LaagModelLens<Endomorphism<Velden>> = laagPropLens("veldenFormatter");
   export const fieldSelectionsLens: LaagModelLens<FieldSelection[]> = new Lens(
     unsafeFieldSelectionsLens.get, //
     fieldSelections => {
@@ -108,7 +108,7 @@ export namespace LaagModel {
           laag,
           unsafeFieldSelectionsLens.set(fixedFieldSelections),
           unsafeFieldSortingsLens.set(FieldSelection.maintainFieldSortings(fixedFieldSelections)),
-          unsafeRowFormatterLens.set(rowFormatterForFields(fixedFieldSelections, laag.rowFormats))
+          unsafeVeldenFormatterLens.set(rowFormatterForFields(fixedFieldSelections, laag.fieldFormats))
         );
     }
   );
@@ -121,14 +121,14 @@ export namespace LaagModel {
 
   // Bepaalde velden moeten samengevoegd worden tot 1 synthetisch locatieveld. Daarvoor moeten we enerzijds de headers
   // aanpassen en anderzijds elke Row die binnen komt.
-  const locationTransformer: Function1<ke.VeldInfo[], [Endomorphism<FieldSelection[]>, Endomorphism<Row>]> = veldinfos => {
+  const locationTransformer: Function1<ke.VeldInfo[], [Endomorphism<FieldSelection[]>, Endomorphism<Velden>]> = veldinfos => {
     // We moeten op label werken, want de gegevens zitten op verschillende plaatsen bij verschillende lagen
     const veldlabels = veldinfos.map(ke.VeldInfo.veldlabelLens.get).filter(label => label !== undefined) as string[];
     const wegLabel = "Ident8";
     const lijnAfstandLabels = ["Van refpunt", "Van afst", "Tot refpunt", "Tot afst"];
     const puntAfstandLabels = ["Refpunt", "Afstand"];
     const maybeWegKey = array.findFirst(veldinfos, vi => vi.label === wegLabel).map(ke.VeldInfo.veldnaamLens.get);
-    return maybeWegKey.fold([identity, identity] as [Endomorphism<FieldSelection[]>, Endomorphism<Row>], wegKey => {
+    return maybeWegKey.fold([identity, identity] as [Endomorphism<FieldSelection[]>, Endomorphism<Velden>], wegKey => {
       const distance: Function2<number, number, string> = (ref, offset) => (offset >= 0 ? `${ref} +${offset}` : `${ref} ${offset}`);
       const lijnValueGen = (wegValue: string) => (distances: number[]): string =>
         `${wegValue} van ${distance(distances[0], distances[1])} tot ${distance(distances[2], distances[3])}`;
@@ -163,7 +163,7 @@ export namespace LaagModel {
           .cons(locationFieldSelection, fieldSelections) // Het synthetische veld toevoegen
           .filter(fieldSelection => !allLocationLabels.includes(fieldSelection.label)); // en de bijdragende velden verwijderen
 
-      const rowTrf: Endomorphism<Row> = row => {
+      const rowTrf: Endomorphism<Velden> = row => {
         const maybeWegValue = row[wegKey];
         const maybeDistances: Option<number[]> = traversable
           .sequence(option.option, array.array)(locationKeys.map(key => row[key].maybeValue.filter(isNumber)))
@@ -175,20 +175,20 @@ export namespace LaagModel {
         };
         return Row.addField("syntheticLocation", locatieField)(row);
       };
-      return [fieldsSelectionTrf, rowTrf] as [Endomorphism<FieldSelection[]>, Endomorphism<Row>];
+      return [fieldsSelectionTrf, rowTrf] as [Endomorphism<FieldSelection[]>, Endomorphism<Velden>];
     });
   };
 
   const formatBoolean: Endomorphism<Field> = field => ({ maybeValue: field.maybeValue.map(value => (value ? "JA" : "NEEN")) });
   const rowFormat: Function1<ke.VeldInfo, Option<Endomorphism<Field>>> = vi =>
     vi.type === "boolean" ? option.some(formatBoolean) : option.none;
-  const rowFormatsFromVeldinfos: Function1<ke.VeldInfo[], RowFormatSpec> = veldinfos =>
+  const rowFormatsFromVeldinfos: Function1<ke.VeldInfo[], FieldsFormatSpec> = veldinfos =>
     pipe(
       record.fromFoldableMap(getLastSemigroup<ke.VeldInfo>(), array.array)(veldinfos, vi => [vi.naam, vi]),
       record.filterMap(rowFormat)
     );
 
-  const fieldFormatter: Function2<string[], RowFormatSpec, Function2<string, Field, Field>> = (selectedFieldNames, formats) => (
+  const fieldFormatter: Function2<string[], FieldsFormatSpec, Function2<string, Field, Field>> = (selectedFieldNames, formats) => (
     fieldName,
     field
   ) =>
@@ -203,7 +203,7 @@ export namespace LaagModel {
   // Misschien is het nuttig om nog een ander concept in te voeren (FormattedRow?). In elk geval is dit een verzameling
   // van functies die berekend worden op het moment dat de FieldSelections bekend zijn, zodat bij het transformeren van
   // een rij enkel de transformaties zelf uitgevoerd moeten worden, en niet de berekening van welke er nodig zijn.
-  const rowFormatterForFields: Function2<FieldSelection[], RowFormatSpec, Endomorphism<Row>> = (fieldSelections, rowFormats) =>
+  const rowFormatterForFields: Function2<FieldSelection[], FieldsFormatSpec, Endomorphism<Velden>> = (fieldSelections, rowFormats) =>
     pipe(
       fieldSelections,
       array.filter(FieldSelection.selectedLens.get),
@@ -216,7 +216,7 @@ export namespace LaagModel {
       // We mogen niet zomaar alle velden gebruiken. Om te beginnen enkel de basisvelden en de locatievelden moeten
       // afzonderlijk behandeld worden.
       const veldinfos = ke.ToegevoegdeVectorLaag.veldInfosLens.get(laag);
-      const [fieldsTransformer, rowTransformer] = locationTransformer(veldinfos);
+      const [fieldsTransformer, veldenTransformer] = locationTransformer(veldinfos);
 
       const sortOnFirstField = indexArray<FieldSelection>()
         .index(0)
@@ -234,8 +234,8 @@ export namespace LaagModel {
       const firstField = array.take(1, fieldSelections);
       const contributingVeldinfos = array.chain(FieldSelection.contributingVeldinfosGetter.get)(firstField);
       const fieldSortings = contributingVeldinfos.map(FieldSorting.create("ASCENDING"));
-      const rowFormats = rowFormatsFromVeldinfos(veldinfos);
-      const rowFormatter = rowFormatterForFields(fieldSelections, rowFormats);
+      const veldenFormats = rowFormatsFromVeldinfos(veldinfos);
+      const veldenFormatter = rowFormatterForFields(fieldSelections, veldenFormats);
 
       return {
         titel: laag.titel,
@@ -249,8 +249,8 @@ export namespace LaagModel {
         expectedPageNumber: Page.first,
         fieldSelections,
         fieldSortings,
-        rowFormats,
-        rowFormatter,
+        fieldFormats: veldenFormats,
+        veldenFormatter: veldenFormatter,
         source,
         minZoom: laag.bron.minZoom,
         maxZoom: laag.bron.maxZoom,
@@ -258,7 +258,7 @@ export namespace LaagModel {
         nextPageSequence: 0,
         updatePending: true,
         viewinstellingen,
-        rowTransformer
+        veldenTransformer: veldenTransformer
       };
     });
 
@@ -322,13 +322,28 @@ export namespace LaagModel {
     dataExtent: laag.viewinstellingen.extent,
     fieldSortings: laag.fieldSortings,
     pageNumber: laag.expectedPageNumber,
-    rowCreator: flow(
-      Row.featureToRow(laag.veldinfos),
-      laag.rowTransformer,
-      laag.rowFormatter
-    ),
+    rowCreator: maakRow(laag),
     requestSequence: laag.nextPageSequence
   });
+
+  const maakRow: Curried2<LaagModel, ol.Feature, Option<Row>> = laag => feature => {
+    return pipe(
+      Feature.featureWithIdAndLaagnaam(feature),
+      option.map(featureWithIdAndLaagnaam => {
+        const origVelden = Row.featureToVelden(laag.veldinfos)(featureWithIdAndLaagnaam);
+
+        const velden = flow(
+          laag.veldenTransformer,
+          laag.veldenFormatter
+        )(origVelden);
+
+        return {
+          feature: featureWithIdAndLaagnaam,
+          velden: velden
+        };
+      })
+    );
+  };
 
   const updateLaagPage: Function1<Page, Endomorphism<LaagModel>> = page => laag =>
     pageLens.set(ifInZoom(laag) ? option.some(page) : option.none)(laag);

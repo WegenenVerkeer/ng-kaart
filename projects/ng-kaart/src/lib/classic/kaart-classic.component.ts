@@ -362,7 +362,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
             return this.zichtbareFeatures.emit(msg.features);
           case "FeatureGedeselecteerd":
             // Zorg ervoor dat deselecteer van een feature via infoboodschap terug naar kaart-reducer gaat
-            return this.dispatch(prt.DeselecteerFeatureCmd(msg.featureid));
+            return this.dispatch(prt.DeselecteerFeatureCmd([msg.featureid]));
           case "ZoomAangepast":
             return this.zoomChange.emit(msg.zoom);
           case "MiddelpuntAangepast":
