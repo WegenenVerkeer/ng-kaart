@@ -208,7 +208,10 @@ function featuresFromServer(
     ...toFetch.map(ext =>
       source.fetchFeatures$(source.composeQueryUrl(some(ext), none), gebruikCache).pipe(
         bufferCount(BATCH_SIZE),
-        catchError(error => (gebruikCache ? featuresFromCache(laagnaam, extent) : rx.throwError(error)))
+        catchError(error => {
+          source.clearPrevExtent(); // Volgende keer moeten we proberen alles weer op te halen.
+          return gebruikCache ? featuresFromCache(laagnaam, extent) : rx.throwError(error);
+        })
       )
     )
   );
@@ -455,7 +458,7 @@ export class NosqlFsSource extends ol.source.Vector {
     const maybeCql = FilterCql.cql(cqlFilter);
     this.userFilter = maybeCql;
     this.userFilterActive = filterActive;
-    this.prevExtent = [0, 0, 0, 0]; // Ook de data voor de huidige viewport moet weer opgevraagd worden
+    this.clearPrevExtent(); // Ook de data voor de huidige viewport moet weer opgevraagd worden
     this.clear();
     this.refresh();
     forEach(maybeCql, cql => this.filterSubj.next(cql));
@@ -471,5 +474,9 @@ export class NosqlFsSource extends ol.source.Vector {
 
   dispatchLoadError(error: any) {
     this.dispatchLoadEvent(le.LoadError(error.toString()));
+  }
+
+  clearPrevExtent() {
+    this.prevExtent = [0, 0, 0, 0];
   }
 }
