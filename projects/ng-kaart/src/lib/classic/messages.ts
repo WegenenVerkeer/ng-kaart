@@ -23,6 +23,7 @@ export interface KaartClassicMsg {
 
 export type KaartClassicSubMsg =
   | BusyMsg
+  | KaartClickMsg
   | FeatureGedeselecteerdMsg
   | FeatureSelectieAangepastMsg
   | FeatureHoverAangepastMsg
@@ -44,6 +45,11 @@ export type KaartClassicSubMsg =
   | CachedFeaturesLookupReadyMsg
   | MijnLocatieStateChangeMsg
   | DummyMsg;
+
+export interface KaartClickMsg {
+  readonly type: "KaartClick";
+  readonly clickCoordinaat: ol.Coordinate;
+}
 
 export interface FeatureSelectieAangepastMsg {
   readonly type: "FeatureSelectieAangepast";
@@ -160,6 +166,10 @@ export interface InErrorMsg {
 ///////////////
 // Constructors
 //
+
+export function KaartClickMsg(clickCoordinaat: ol.Coordinate): KaartClickMsg {
+  return { type: "KaartClick", clickCoordinaat: clickCoordinaat };
+}
 
 export function FeatureGedeselecteerdMsg(featureid: string): FeatureGedeselecteerdMsg {
   return { type: "FeatureGedeselecteerd", featureid: featureid };
