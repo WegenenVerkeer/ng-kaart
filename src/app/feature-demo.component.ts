@@ -1027,6 +1027,10 @@ export class FeatureDemoComponent {
     console.log("------> kaartLocaties", locaties);
   }
 
+  onKaartClick(clickCoordinaat: any): void {
+    console.log("------> kaartClick", clickCoordinaat);
+  }
+
   onMijnMobieleLocatieStateChange(stateChange: any): void {
     console.log("-----> stateChange", stateChange);
   }
