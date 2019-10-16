@@ -1,6 +1,6 @@
 import { array } from "fp-ts";
 import { left, right } from "fp-ts/lib/Either";
-import { Function1, Function2 } from "fp-ts/lib/function";
+import { flow, Function1, Function2 } from "fp-ts/lib/function";
 import { none, Option } from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
 import { setoidString } from "fp-ts/lib/Setoid";
@@ -17,8 +17,7 @@ import {
   share,
   shareReplay,
   startWith,
-  switchMap,
-  tap
+  switchMap
 } from "rxjs/operators";
 
 import { FilterAanpassingState as FilteraanpassingState, GeenFilterAanpassingBezig } from "../filter/filter-aanpassing-state";
@@ -165,7 +164,8 @@ export interface ModelChanges {
   readonly laagVerwijderd$: rx.Observable<ke.ToegevoegdeLaag>;
   readonly geselecteerdeFeatures$: rx.Observable<GeselecteerdeFeatures>;
   readonly hoverFeatures$: rx.Observable<HoverFeature>;
-  readonly zichtbareFeatures$: rx.Observable<Array<ol.Feature>>;
+  readonly zichtbareFeatures$: rx.Observable<ol.Feature[]>;
+  readonly zichtbareFeaturesPerLaag$: rx.Observable<ReadonlyMap<string, ol.Feature[]>>;
   readonly kaartKlikLocatie$: rx.Observable<KlikInfo>;
   readonly mijnLocatieZoomDoel$: rx.Observable<Option<number>>;
   readonly actieveModus$: rx.Observable<Option<string>>;
@@ -201,6 +201,9 @@ const viewinstellingen: Function1<ol.Map, prt.Viewinstellingen> = olmap => ({
   rotation: olmap.getView().getRotation()
 });
 
+export const featuresOpIdToArray = (perLaag: prt.KaartFeaturesOpId): ol.Feature[] =>
+  array.map((f: FeatureWithIdAndLaagnaam) => f.feature)([...perLaag.values()]);
+
 export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> = (model, changer) => {
   // We updaten de features niet constant. We doen dat omdat we naar de buitenwereld de illusie willen wekken dat
   // features als een groep geselecteerd worden. Openlayers daarentegen genereert afzonderlijke events per feature dat
@@ -214,9 +217,6 @@ export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> 
     observableFromOlEvents<ol.Collection.Event>(model.geselecteerdeFeatures, operation).pipe(collectOption(selectionEventToFeature));
   const addedFeature$ = collectFeaturesFromOl$("add");
   const removedFeature$ = collectFeaturesFromOl$("remove");
-
-  const featuresOpIdToArray = (perLaag: prt.KaartFeaturesOpId): ol.Feature[] =>
-    array.map((f: FeatureWithIdAndLaagnaam) => f.feature)([...perLaag.values()]);
 
   const featuresOpLaagToArray = (featuresPerLaag: prt.KaartFeaturesOpLaag) =>
     array.chain(featuresOpIdToArray)([...featuresPerLaag.values()]);
@@ -263,7 +263,6 @@ export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> 
       removed: new Map<string, FeatureWithIdAndLaagnaam>()
     }
   ).pipe(
-    tap(m => console.log("****featureMap", m)),
     debounceTime(featureSelectionUpdateInterval),
     startWith({
       featuresPerLaag: new Map<string, Map<string, FeatureWithIdAndLaagnaam>>(),
@@ -292,7 +291,6 @@ export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> 
       toegevoegd: difference(current.added, prev.added),
       verwijderd: difference(current.removed, prev.removed)
     })),
-    tap(m => console.log("****featureMap agg", m)),
     share()
   );
 
@@ -361,12 +359,27 @@ export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> 
     mapTo(void 0)
   );
 
-  const collectFeatures: (_1: prt.Viewinstellingen, _2: Array<ke.ToegevoegdeVectorLaag>) => Array<ol.Feature> = (vw, vlgn) =>
-    array.array.chain(vlgn, vlg => {
-      return ke.isZichtbaar(vw.resolution)(vlg) ? vlg.layer.getSource().getFeaturesInExtent(vw.extent) : [];
-    });
+  const collectFeaturesPerLaag = (vw: prt.Viewinstellingen, tvlgn: ke.ToegevoegdeVectorLaag[]): ReadonlyMap<string, ol.Feature[]> =>
+    new Map(
+      pipe(
+        tvlgn,
+        array.filter(ke.isZichtbaar(vw.resolution)),
+        array.map(
+          (tvlg: ke.ToegevoegdeVectorLaag) => [tvlg.titel, tvlg.layer.getSource().getFeaturesInExtent(vw.extent)] as [string, ol.Feature[]]
+        )
+      )
+    );
 
-  const zichtbareFeatures$ = rx.combineLatest(viewinstellingen$, vectorlagen$, featuresChanged$, collectFeatures);
+  const zichtbareFeaturesPerLaag$: rx.Observable<ReadonlyMap<string, ol.Feature[]>> = rx
+    .combineLatest(viewinstellingen$, vectorlagen$, featuresChanged$, collectFeaturesPerLaag)
+    .pipe(share());
+
+  const zichtbareFeatures$: rx.Observable<ol.Feature[]> = zichtbareFeaturesPerLaag$.pipe(
+    map(flow(
+      m => [...m.values()],
+      array.flatten
+    ) as ((value: ReadonlyMap<string, ol.Feature[]>) => ol.Feature[]))
+  );
 
   const kaartKlikLocatie$ = observableFromOlEvents(model.map, "click").pipe(
     map((event: ol.MapBrowserEvent) => ({
@@ -415,6 +428,7 @@ export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> 
     geselecteerdeFeatures$: geselecteerdeFeatures$.pipe(observeOn(rx.asapScheduler)),
     hoverFeatures$: hoverFeatures$.pipe(observeOn(rx.asapScheduler)),
     zichtbareFeatures$: zichtbareFeatures$.pipe(observeOn(rx.asapScheduler)),
+    zichtbareFeaturesPerLaag$: zichtbareFeaturesPerLaag$.pipe(observeOn(rx.asapScheduler)),
     kaartKlikLocatie$: kaartKlikLocatie$.pipe(observeOn(rx.asapScheduler)),
     mijnLocatieZoomDoel$: changer.mijnLocatieZoomDoelSubj.pipe(observeOn(rx.asapScheduler)),
     actieveModus$: changer.actieveModusSubj.pipe(observeOn(rx.asapScheduler)),

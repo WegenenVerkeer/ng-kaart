@@ -284,6 +284,8 @@ export namespace ToegevoegdeLaag {
 }
 
 export namespace ToegevoegdeVectorLaag {
+  export const titelGetter = Lens.fromProp<ToegevoegdeVectorLaag>()("titel").asGetter();
+
   export const stijlSelBronLens: Optional<ToegevoegdeVectorLaag, AwvV0StyleSpec> = Optional.fromOptionProp<ToegevoegdeVectorLaag>()(
     "stijlSelBron"
   );

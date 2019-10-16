@@ -9,7 +9,7 @@ import { iso, Newtype } from "newtype-ts";
 import { NonNegativeInteger, prismNonNegativeInteger } from "newtype-ts/lib/NonNegativeInteger";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { catchError, map, startWith, take } from "rxjs/operators";
+import { catchError, map } from "rxjs/operators";
 
 import * as FilterTotaal from "../../filter/filter-totaal";
 import { NosqlFsSource, PagingSpec } from "../../source";
@@ -177,7 +177,8 @@ export namespace DataRequest {
 }
 
 export namespace PageFetcher {
-  const featuresInExtent: Curried2<ol.Extent, ol.source.Vector, ol.Feature[]> = extent => source => source.getFeaturesInExtent(extent);
+  const selectedFeaturesInExtent: Function2<ol.Extent, ol.Feature[], ol.Feature[]> = (extent, selected) =>
+    array.filter(Feature.inExtent(extent))(selected);
   const takePage: Function1<PageNumber, Endomorphism<ol.Feature[]>> = pageNumber => array.filterWithIndex(Page.isInPage(pageNumber));
   const toRows: Curried2<PartialFunction1<ol.Feature, Row>, ol.Feature[], Row[]> = array.filterMap;
   const featureToFieldValue: Curried2<FieldSorting, ol.Feature, Option<ValueType>> = sorting => feature =>
@@ -208,17 +209,26 @@ export namespace PageFetcher {
     unlessNoSortableFields
   );
 
-  export const pageFromSource: Function2<ol.source.Vector, PageRequest, Page> = (source, pageRequest) =>
-    Page.create(
-      pageRequest.pageNumber,
-      Page.last(FeatureCountFetcher.countFromSource(source, pageRequest).count),
-      flow(
-        featuresInExtent(pageRequest.dataExtent),
+  const featuresToPage = (features: ol.Feature[], pageRequest: PageRequest): Page => {
+    const lastPage = Page.last(features.length);
+    const pageNumber = ord.clamp(Page.ordPageNumber)(Page.first, lastPage)(pageRequest.pageNumber);
+    return Page.create(
+      pageNumber,
+      lastPage,
+      pipe(
+        features,
         sortFeatures(pageRequest.fieldSortings),
         takePage(pageRequest.pageNumber),
         toRows(pageRequest.rowCreator)
-      )(source)
+      )
     );
+  };
+
+  export const pageFromAllFeatures: Curried2<ol.Feature[], PageRequest, Page> = features => pageRequest =>
+    featuresToPage(features, pageRequest);
+
+  export const pageFromSelected: Curried2<ol.Feature[], PageRequest, Page> = selected => pageRequest =>
+    featuresToPage(selectedFeaturesInExtent(pageRequest.dataExtent, selected), pageRequest);
 
   // we gebruiken geen streaming API. Net zoals het oude Geoloket dat ook niet doet. Het gaat ook maar om 100 features maximaal.
   export const pageFromServer: Function3<string, NosqlFsSource, PageRequest, rx.Observable<DataRequest>> = (titel, source, request) =>
@@ -286,13 +296,7 @@ export namespace FeatureCount {
 }
 
 export namespace FeatureCountFetcher {
-  export const sourceBasedFeatureCountFetcher: Function1<ol.source.Vector, FeatureCountFetcher> = source => featureCountRequest =>
-    rx.timer(2000).pipe(
-      take(1),
-      map(() => countFromSource(source, featureCountRequest)),
-      startWith(FeatureCount.pending)
-    );
-
+  // TODO kunnen we dit wegwerken tvv data reeds in Page?
   export const countFromSource: Function2<ol.source.Vector, FeatureCountRequest, FeatureCountFetched> = (source, featureCountRequest) =>
     FeatureCount.createFetched(source.getFeaturesInExtent(featureCountRequest.dataExtent).length);
 

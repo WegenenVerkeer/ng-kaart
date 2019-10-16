@@ -11,9 +11,14 @@
               *ngFor="let header of headers.headers; let first = first"
               (click)="onAction('toggleSort', header.name)"
             >
-              <mat-checkbox *ngIf="first" #selectAllCheckBox
-                            [checked]="selectAllChecked"
-                            (change)="onAction('selectAll', $event.checked);" (click)="$event.stopPropagation()">&nbsp;</mat-checkbox>
+              <mat-checkbox
+                *ngIf="first"
+                #selectAllCheckBox
+                [checked]="selectAllChecked"
+                (change)="onAction('selectAll', $event.checked)"
+                (click)="$event.stopPropagation()"
+                >&nbsp;</mat-checkbox
+              >
               <span>{{ header.label }}</span>
               <awv-feature-tabel-sortering-status
                 [sortering]="header.sortDirection"
@@ -22,14 +27,24 @@
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let row of data.rows" [ngClass]="{'geselecteerd' : row.selected}">
+          <tr
+            *ngFor="let row of data.rows"
+            [ngClass]="{ geselecteerd: row.selected }"
+          >
             <td
               *ngFor="let header of headers.headers; let first = first"
               [ngClass]="{
                 'empty-field': row.velden[header.name].maybeValue.isNone()
               }"
             >
-              <mat-checkbox *ngIf="first" (change)="onAction('selectRow', { row: row, selected: $event.checked })" [checked]="row.selected">&nbsp;</mat-checkbox>
+              <mat-checkbox
+                *ngIf="first"
+                (change)="
+                  onAction('selectRow', { row: row, selected: $event.checked })
+                "
+                [checked]="row.selected"
+                >&nbsp;</mat-checkbox
+              >
               {{ row.velden[header.name].maybeValue.getOrElse("") }}
             </td>
           </tr>
@@ -100,12 +115,44 @@
 
   <div class="feature-table-data-footer">
     <div class="left">
-       <span *ngIf="data.hasSelectedFeatures">
-        {{ data.numGeselecteerdeFeatures }} geselecteerd
-        <button mat-icon-button (click)="onAction('zoomToSelection')" matTooltip="Zoom naar selectie"  matTooltipPosition="right">
+      <span *ngIf="data.hasSelectedFeatures">
+        <button
+          *ngIf="!data.showOnlySelectedFeatures"
+          mat-button
+          matTooltip="Enkel selectie tonen"
+          matTooltipPosition="right"
+          (click)="onAction('showOnlySelectedFeatures')"
+        >
+          <span class="feature-table-data-selection-all"
+            >{{ data.numGeselecteerdeFeatures }} geselecteerd</span
+          >
+        </button>
+        <button
+          *ngIf="data.showOnlySelectedFeatures"
+          mat-button
+          matTooltip="Alles tonen"
+          matTooltipPosition="right"
+          (click)="onAction('showAllFeatures')"
+        >
+          <span class="feature-table-data-selection-selected-only">{{
+            data.numGeselecteerdeFeatures
+          }}</span>
+          <span class="feature-table-data-selection-hidden">geselecteerd</span>
+        </button>
+        <button
+          mat-icon-button
+          (click)="onAction('zoomToSelection')"
+          matTooltip="Zoom naar selectie"
+          matTooltipPosition="right"
+        >
           <mat-icon>zoom_in</mat-icon>
         </button>
-        <button mat-icon-button (click)="onAction('eraseSelection')" matTooltip="Selectie wissen"  matTooltipPosition="right">
+        <button
+          mat-icon-button
+          (click)="onAction('eraseSelection')"
+          matTooltip="Selectie wissen"
+          matTooltipPosition="right"
+        >
           <mat-icon>clear</mat-icon>
         </button>
       </span>
@@ -120,10 +167,15 @@
           >Kaart als filter</mat-slide-toggle
         >
       </div>
-      <div *ngIf="data.dataAvailable && data.updatePending" class="feature-table-data-page-pending">
+      <div
+        *ngIf="data.dataAvailable && data.updatePending"
+        class="feature-table-data-page-pending"
+      >
         <mat-spinner diameter="16"></mat-spinner>
       </div>
-      <awv-feature-tabel-pager *ngIf="data.dataAvailable"></awv-feature-tabel-pager>
+      <awv-feature-tabel-pager
+        *ngIf="data.dataAvailable"
+      ></awv-feature-tabel-pager>
     </div>
   </div>
 </div>

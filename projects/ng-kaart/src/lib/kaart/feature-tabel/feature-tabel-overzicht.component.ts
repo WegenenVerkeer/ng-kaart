@@ -66,7 +66,11 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
       map(TableModel.updateLagen)
     );
 
-    const updateZoomAndExtent$ = this.modelChanges.viewinstellingen$.pipe(map(vi => TableModel.updateZoomAndExtent(vi)));
+    const updateZoomAndExtent$ = this.modelChanges.viewinstellingen$.pipe(map(TableModel.updateZoomAndExtent));
+
+    const zichtbareFeatures$ = this.modelChanges.zichtbareFeaturesPerLaag$.pipe(map(TableModel.updateZichtbareFeatures));
+
+    const featureSelection$ = this.modelChanges.geselecteerdeFeatures$.pipe(map(TableModel.updateSelectedFeatures));
 
     // De volgende combinatie zet Updates die asynchroon gegenereerd zijn om in toekomstige synchrone updates
     const asyncUpdatesSubj: rx.Subject<TableModel.TableModelSyncUpdate> = new rx.Subject();
@@ -83,6 +87,8 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
       delayedUpdates$,
       updateLagen$,
       updateZoomAndExtent$,
+      featureSelection$,
+      zichtbareFeatures$,
       laagInTablesUpdate$
     );
 

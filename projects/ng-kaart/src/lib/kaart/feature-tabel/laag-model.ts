@@ -8,17 +8,16 @@ import { Getter, Lens, Optional, Traversal } from "monocle-ts";
 import { indexArray } from "monocle-ts/lib/Index/Array";
 import { prismNonNegativeInteger } from "newtype-ts/lib/NonNegativeInteger";
 import * as ol from "openlayers";
-import { debounceTime, map, mapTo } from "rxjs/operators";
+import { map } from "rxjs/operators";
 import { isNumber } from "util";
 
-import { Filter, FilterTotaal, isTotaalOpgehaald } from "../../filter";
+import { Filter, FilterTotaal, match as FilterTotaalMatch } from "../../filter";
 import { NosqlFsSource } from "../../source";
 import * as arrays from "../../util/arrays";
 import { equalToString } from "../../util/equal";
 import { Feature } from "../../util/feature";
 import { flowSpy, PartialFunction2 } from "../../util/function";
 import { arrayTraversal, selectiveArrayTraversal } from "../../util/lenses";
-import { observableFromOlEvents } from "../../util/ol-observable";
 import { subSpy } from "../../util/operators";
 import * as ke from "../kaart-elementen";
 import { Viewinstellingen } from "../kaart-protocol-subscriptions";
@@ -50,7 +49,8 @@ export interface LaagModel {
   readonly viewSourceMode: ViewSourceMode;
   readonly selectionViewMode: SelectionViewMode;
   readonly canUseAllFeatures: boolean; // geeft aan dat mogelijk is om meer dan de features op de zichtbare kaart te tonen
-  readonly featureCount: FeatureCount; // aantal features in de tabel over alle pagina's heen
+  readonly featureCount: FeatureCount; // aantal features in de tabel over alle pagina's heen. Hangt af van viewsourcemode.
+  // readonly fullFeatureCount: FeatureCount; // aantal features in de laag rekening houdend met de filter. Hangt niet af van viewsourcemode
   readonly expectedPageNumber: PageNumber; // Het PageNumber dat we verwachten te zien. Potentieel anders dan in Page wegens asynchoniciteit
   readonly page: Option<Page>; // We houden maar 1 pagina van data tegelijkertijd in het geheugen. (later meer)
 
@@ -66,6 +66,9 @@ export interface LaagModel {
 
   readonly nextPageSequence: number; // Het sequentienummer dat verwacht is, niet het paginanummer
   readonly updatePending: boolean;
+
+  readonly visibleFeatures: ol.Feature[]; // Alle features van de laag die momenteel zichtbaar zijn
+  readonly selectedFeatures: ol.Feature[]; // Alle features van de laag die momenteel geselecteerd zijn. Niet noodzakelijk zichtbaar
 
   readonly viewinstellingen: Viewinstellingen; // Kopie van gegevens in TableModel. Handig om hier te refereren
 }
@@ -85,7 +88,8 @@ export namespace LaagModel {
   export const pageLens: LaagModelLens<Option<Page>> = laagPropLens("page");
   export const nextPageSequenceLens: LaagModelLens<number> = laagPropLens("nextPageSequence");
   export const updatePendingLens: LaagModelLens<boolean> = laagPropLens("updatePending");
-  export const aantalFeaturesLens: LaagModelLens<FeatureCount> = laagPropLens("featureCount");
+  export const featureCountLens: LaagModelLens<FeatureCount> = laagPropLens("featureCount");
+  // export const fullFeatureCountLens: LaagModelLens<FeatureCount> = laagPropLens("fullFeatureCount");
   export const viewinstellingenLens: LaagModelLens<Viewinstellingen> = laagPropLens("viewinstellingen");
   export const zoomLens: LaagModelLens<number> = Lens.fromPath<LaagModel>()(["viewinstellingen", "zoom"]);
   export const extentLens: LaagModelLens<ol.Extent> = Lens.fromPath<LaagModel>()(["viewinstellingen", "extent"]);
@@ -114,6 +118,8 @@ export namespace LaagModel {
   );
   const canUseAllFeaturesLens: LaagModelLens<boolean> = laagPropLens("canUseAllFeatures");
   export const canUseAllFeaturesGetter: LaagModelGetter<boolean> = canUseAllFeaturesLens.asGetter();
+  export const visibleFeaturesLens: LaagModelLens<ol.Feature[]> = laagPropLens("visibleFeatures");
+  export const selectedFeaturesLens: LaagModelLens<ol.Feature[]> = laagPropLens("selectedFeatures");
 
   const fieldSelectionForNameTraversal: Function1<string, Traversal<LaagModel, FieldSelection>> = fieldName =>
     fieldSelectionsLens.composeTraversal(selectiveArrayTraversal(fs => fs.name === fieldName));
@@ -247,6 +253,7 @@ export namespace LaagModel {
         totaal: laag.filterinstellingen.totaal,
         canUseAllFeatures: false,
         featureCount: FeatureCount.pending,
+        fullFeatureCount: FeatureCount.pending,
         expectedPageNumber: Page.first,
         fieldSelections,
         fieldSortings,
@@ -259,7 +266,9 @@ export namespace LaagModel {
         nextPageSequence: 0,
         updatePending: true,
         viewinstellingen,
-        veldenTransformer: veldenTransformer
+        veldenTransformer: veldenTransformer,
+        visibleFeatures: [],
+        selectedFeatures: []
       };
     });
 
@@ -280,14 +289,28 @@ export namespace LaagModel {
   export const hasMultiplePages: Predicate<LaagModel> = laag =>
     FeatureCount.fetchedCount(laag.featureCount).fold(false, featureCount => !Page.isFirst(Page.last(featureCount)));
 
+  const applyIfOrElse = (pred: Predicate<LaagModel>) => (
+    ifTrue: Endomorphism<LaagModel>,
+    ifFalse: Endomorphism<LaagModel>
+  ): Endomorphism<LaagModel> => laag => (pred(laag) ? ifTrue(laag) : ifFalse(laag));
+  const applyIf = (pred: Predicate<LaagModel>) => (ifTrue: Endomorphism<LaagModel>): Endomorphism<LaagModel> =>
+    applyIfOrElse(pred)(ifTrue, identity);
+
   const ifInMapAsFilter = flow(
     viewSourceModeGetter.get,
     equalToString("Map")
   );
   const updateIfMapAsFilterOrElse = Update.ifOrElse(ifInMapAsFilter);
   const updateIfMapAsFilter: Endomorphism<LaagModelUpdate> = Update.filter(ifInMapAsFilter);
-  const applyIfMapAsFilter: Endomorphism<Endomorphism<LaagModel>> = (f: Endomorphism<LaagModel>) => laag =>
-    ifInMapAsFilter(laag) ? f(laag) : laag;
+  const applyIfMapAsFilter: Endomorphism<Endomorphism<LaagModel>> = applyIf(ifInMapAsFilter);
+
+  const ifShowAllFeatures = flow(
+    selectionViewModeGetter.get,
+    equalToString("SourceFeatures")
+  );
+  const ifShowSelectedOnly = (laag: LaagModel) => !ifShowAllFeatures(laag);
+  const updateIfShowAllFeaturesOrElse = Update.ifOrElse(ifShowAllFeatures);
+
   const ifInZoom = (laag: LaagModel) => laag.viewinstellingen.zoom >= laag.minZoom && laag.viewinstellingen.zoom <= laag.maxZoom;
   const updateIfInZoom = Update.filter(ifInZoom);
   const applyIfInZoomOrElse = (
@@ -320,8 +343,6 @@ export namespace LaagModel {
       )
     )(laag);
 
-  export const setCanUseAllFeatures: Function1<boolean, Endomorphism<LaagModel>> = canUseAllFeaturesLens.set;
-
   const laagPageRequest: Function1<LaagModel, PageRequest> = laag => ({
     dataExtent: laag.viewinstellingen.extent,
     fieldSortings: laag.fieldSortings,
@@ -349,27 +370,63 @@ export namespace LaagModel {
     );
   };
 
-  const updateLaagPage: Function1<Page, Endomorphism<LaagModel>> = page => laag =>
-    pageLens.set(ifInZoom(laag) ? option.some(page) : option.none)(laag);
+  const withFullExtent: Endomorphism<PageRequest> = pageRequest => ({
+    ...pageRequest,
+    dataExtent: [18000.0, 152999.75, 280144.0, 415143.75]
+  });
 
-  // Pas de huidige Page aan indien de kaart als filter gebruikt wordt. Hoewel de test op "kaart als filter" ook vroeger
-  // in de ketting gebeurt, testen we hier opnieuw omdat er een race-conditie kan zijn wanneer er ondertussen geschakeld
-  // wordt van mode.
-  const modifySyncLaagPageDataFromSource: LaagModelSyncUpdate = applyIfMapAsFilter(laag =>
-    updateLaagPage(PageFetcher.pageFromSource(laag.source, laagPageRequest(laag)))(laag)
-  );
+  const updateLaagPage: Function1<Page, Endomorphism<LaagModel>> = page =>
+    flow(
+      laag => pageLens.set(ifInZoom(laag) || !ifInMapAsFilter(laag) ? option.some(page) : option.none)(laag),
+      expectedPageNumberLens.set(page.pageNumber) // Het kan gebeuren dat er minder paginas zijn dan we vroegen
+    );
 
   const modifySourceLaagFeatureCount: LaagModelSyncUpdate = applyIfMapAsFilter(laag =>
-    aantalFeaturesLens.set(FeatureCountFetcher.countFromSource(laag.source, { dataExtent: laag.viewinstellingen.extent }))(laag)
+    featureCountLens.set(FeatureCountFetcher.countFromSource(laag.source, { dataExtent: laag.viewinstellingen.extent }))(laag)
   );
 
   // Pas de huidige Page aan indien de kaart als filter gebruikt wordt.
-  const updateLaagPageDataFromSource: LaagModelUpdate = Update.createSync(
+  const updateLaagPageDataFromVisible: LaagModelUpdate = Update.createSync(laag =>
     flow(
-      modifySyncLaagPageDataFromSource,
-      modifySourceLaagFeatureCount,
+      pipe(
+        laag,
+        laagPageRequest,
+        PageFetcher.pageFromAllFeatures(laag.visibleFeatures),
+        updateLaagPage
+      ),
+      modifySourceLaagFeatureCount, // tel features na zoom, pan, etc.
       updatePendingLens.set(false)
-    )
+    )(laag)
+  );
+
+  // Pas de huidige Page aan met geselecteerde features indien de kaart als filter gebruikt wordt. Andere functie nodig
+  // dan zonder selectie omdat dit op het niveau van de source niet geweten is.
+  const updateLaagPageDataFromSelected: LaagModelUpdate = Update.createSync(laag =>
+    flow(
+      pipe(
+        laag,
+        laagPageRequest,
+        PageFetcher.pageFromSelected(laag.selectedFeatures),
+        updateLaagPage
+      ),
+      updatePendingLens.set(false)
+    )(laag)
+  );
+
+  // Pas de huidige Page aan met geselecteerde features indien de kaart niet als filter gebruikt wordt, maar we toch aan
+  // de source kunnen refereren omdat we alleen geselecteerde features willen kennen en die altijd op de source aanwezig
+  // zijn.
+  const updateLaagPageDataFromSelectedFullExtent: LaagModelUpdate = Update.createSync(laag =>
+    flow(
+      pipe(
+        laag,
+        laagPageRequest,
+        withFullExtent,
+        PageFetcher.pageFromSelected(laag.selectedFeatures),
+        updateLaagPage
+      ),
+      updatePendingLens.set(false)
+    )(laag)
   );
 
   // Pas uiteindelijk de huidige Page aan indien de volledige data gebruikt wordt.
@@ -386,7 +443,7 @@ export namespace LaagModel {
           DataReady: (dataready: DataReady) =>
             ifIsExpectedPageSequence(dataready.pageSequence)(
               flow(
-                aantalFeaturesLens.set(dataready.featureCount),
+                featureCountLens.set(dataready.featureCount),
                 updateLaagPage(dataready.page),
                 updatePendingLens.set(false)
               )
@@ -408,8 +465,9 @@ export namespace LaagModel {
   );
 
   // Enkel een page opvragen en in het model steken
-  const updateLaagPageData: LaagModelUpdate = updateIfInZoom(
-    updateIfMapAsFilterOrElse(updateLaagPageDataFromSource, updateLaagPageDataFromServer)
+  const updateLaagPageData: LaagModelUpdate = updateIfMapAsFilterOrElse(
+    updateIfInZoom(updateIfShowAllFeaturesOrElse(updateLaagPageDataFromVisible, updateLaagPageDataFromSelected)),
+    updateIfShowAllFeaturesOrElse(updateLaagPageDataFromServer, updateLaagPageDataFromSelectedFullExtent)
   );
 
   // Deze functie zal in het model voor de laag met de gegeven titel eerst de functie f uitvoeren (initiële
@@ -418,77 +476,75 @@ export namespace LaagModel {
   const andThenUpdatePageData: Function1<Endomorphism<LaagModel>, LaagModelUpdate> = f =>
     Update.combineAll(Update.createSync(f), updateLaagPageData);
 
+  // Maakt een (Sync)Update van het endomorfisme en ververst daarna conditioneel de page
+  const andThenUpdatePageDataIf: Curried2<Predicate<LaagModel>, Endomorphism<LaagModel>, LaagModelUpdate> = pred => f =>
+    Update.combineAll(Update.createSync(f), Update.filter(pred)(updateLaagPageData));
+
   // Leest beter in traditionele functieaanroepstijl
   const updatePageDataAfter = andThenUpdatePageData;
 
+  const clearLaagPage: Endomorphism<LaagModel> = pageLens.set(option.none);
+
+  // TODO: Aangeroepen wanneer viewInstelling veranderen. Dit gebeurt heel kort voor of na het zetten van visibleFeatures. De
+  // page update zal dus ook 2x kort na elkaar uitgevoerd worden. We kunnen dit oplossen door een combineLatest +
+  // debounceTime waar de udpates aangemaakt worden.
   export const setViewInstellingen: Function1<Viewinstellingen, LaagModelUpdate> = vi =>
-    Update.createSync(
+    pipe(
       flow(
         viewinstellingenLens.set(vi),
         applyIfMapAsFilter(
-          flow(
-            clearLaagPage,
-            applyIfInZoomOrElse(updatePendingLens.set(true), updatePendingLens.set(false))
-          )
-        )
-      )
-    );
-
-  // Zorg ervoor dat het verwachte paginanummer binnen de grenzen van beschikbare paginas ligt
-  const clampExpecedLaagPageNumber: Endomorphism<LaagModel> = (laag: LaagModel) =>
-    expectedPageNumberLens.modify(
-      FeatureCount.fetchedCount(laag.featureCount)
-        .chain(prismNonNegativeInteger.getOption)
-        .fold(identity, featureCount => ord.clamp(Page.ordPageNumber)(Page.first, Page.asPageNumberFromNumberOfFeatures(featureCount)))
-    )(laag);
-
-  const clearLaagPage: Endomorphism<LaagModel> = pageLens.set(option.none);
-
-  // TODO: misschien beter specifiek type voor buiten zoom
-  const clearLaagFeatureCount: Endomorphism<LaagModel> = aantalFeaturesLens.set(FeatureCount.createFetched(0));
-
-  const prepareSourceFeaturesUpdate: Endomorphism<LaagModel> = applyIfMapAsFilter(
-    applyIfInZoomOrElse(
-      flow(
-        modifySourceLaagFeatureCount,
-        clampExpecedLaagPageNumber
-      ),
-      flow(
-        clearLaagPage,
-        clearLaagFeatureCount,
-        clampExpecedLaagPageNumber
-      )
-    )
-  );
-
-  // Zal de tabel data aanpassen indien we in "kaart als filter mode zitten"
-  export const sourceFeaturesUpdate: LaagModelUpdate = updateIfMapAsFilter(updatePageDataAfter(prepareSourceFeaturesUpdate));
-
-  export const followViewFeatureUpdates: LaagModelUpdate = updateIfMapAsFilter(
-    Update.createAsync(laag =>
-      observableFromOlEvents(laag.source, "addfeature", "removefeature", "clear")
-        .pipe(
-          debounceTime(200),
-          mapTo(null)
-        )
-        .pipe(
-          map(() =>
+          applyIfInZoomOrElse(
+            identity,
             flow(
-              prepareSourceFeaturesUpdate,
-              modifySyncLaagPageDataFromSource,
-              modifySourceLaagFeatureCount
+              clearLaagPage,
+              clearLaagFeatureCount
             )
           )
         )
-    )
+      ),
+      andThenUpdatePageDataIf(ifInMapAsFilter)
+    );
+
+  // TODO: misschien beter specifiek type voor buiten zoom
+  const clearLaagFeatureCount: Endomorphism<LaagModel> = featureCountLens.set(FeatureCount.createFetched(0));
+
+  const noSelectedFeatures = (laag: LaagModel): boolean => arrays.isEmpty(laag.selectedFeatures);
+
+  const getOutOfSelectedOnlyModeIgNoFeaturesSelected: LaagModelUpdate = pipe(
+    laag =>
+      noSelectedFeatures(laag)
+        ? flow(
+            unsafeSelectionViewModeLens.set("SourceFeatures"),
+            updatePendingLens.set(true) // kleine hack om page update enkel te triggeren indien mode switch
+          )(laag)
+        : laag,
+    andThenUpdatePageDataIf(updatePendingLens.get)
   );
 
-  const totaalUpdate: Function1<FilterTotaal, Endomorphism<LaagModel>> = flow(
-    isTotaalOpgehaald, // We gebruiken op deze manier automatisch hetzelfde aantal features als grens als voor filters
-    setCanUseAllFeatures
-  );
+  const totaalUpdate: Function1<FilterTotaal, Endomorphism<LaagModel>> = FilterTotaalMatch({
+    TotaalOpTeHalen: () =>
+      flow(
+        // fullFeatureCountLens.set(FeatureCount.pending),
+        canUseAllFeaturesLens.set(false)
+      ),
+    TeVeelData: () =>
+      flow(
+        // fullFeatureCountLens.set(FeatureCount.failed), // we zouden ander type kunnen gebruiken, maar is toch nooit zichtbaar
+        canUseAllFeaturesLens.set(false)
+      ),
+    TotaalOpgehaald: () =>
+      flow(
+        // fullFeatureCountLens.set(FeatureCount.createFetched(opgehaald.totaal)), // dus afhankelijk van filter
+        canUseAllFeaturesLens.set(true)
+      ),
+    TotaalOphalenMislukt: () =>
+      flow(
+        // fullFeatureCountLens.set(FeatureCount.failed),
+        canUseAllFeaturesLens.set(false)
+      )
+  });
 
-  export const followTotalFeaturesUpdate: LaagModelUpdate = Update.createAsync<LaagModel>(laag => {
+  export const getTotalFeaturesUpdate: LaagModelUpdate = Update.createAsync<LaagModel>(laag => {
     return subSpy("****fetchTotal$")(laag.source.fetchTotal$()).pipe(map(totaalUpdate));
   }) as LaagModelUpdate;
 
@@ -554,4 +610,20 @@ export namespace LaagModel {
         andThenUpdatePageData
       )
   );
+
+  export const updateVisibleFeatures: Function1<ol.Feature[], LaagModelUpdate> = features =>
+    pipe(
+      features,
+      visibleFeaturesLens.set,
+      andThenUpdatePageDataIf(ifInMapAsFilter)
+    );
+
+  export const updateSelectedFeatures: Function1<ol.Feature[], LaagModelUpdate> = featuresOpLaag =>
+    Update.combineAll(
+      pipe(
+        selectedFeaturesLens.set(featuresOpLaag),
+        andThenUpdatePageDataIf(ifShowSelectedOnly)
+      ),
+      getOutOfSelectedOnlyModeIgNoFeaturesSelected
+    );
 }

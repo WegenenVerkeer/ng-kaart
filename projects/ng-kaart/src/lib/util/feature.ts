@@ -120,4 +120,17 @@ export namespace Feature {
     const [extentMinX, extentMinY, extentMaxX, extentMaxY]: ol.Extent = extent;
     return extentMinX > featureMaxX || extentMaxX < featureMinX || extentMinY > featureMaxY || extentMaxY < featureMinY;
   };
+
+  export const inExtent: Function1<ol.Extent, Refinement<ol.Feature, ol.Feature>> = extent => (feature): feature is ol.Feature => {
+    const [featureMinX, featureMinY, featureMaxX, featureMaxY]: ol.Extent = feature.getGeometry().getExtent();
+    const [extentMinX, extentMinY, extentMaxX, extentMaxY]: ol.Extent = extent;
+    return (
+      ((extentMinX <= featureMaxX && extentMinX >= featureMinX) ||
+        (extentMaxX <= featureMaxX && extentMaxX >= featureMinX) ||
+        (extentMaxX >= featureMaxX && extentMinX <= featureMinX)) &&
+      ((extentMinY <= featureMaxY && extentMinY >= featureMinY) ||
+        (extentMaxY <= featureMaxY && extentMaxY >= featureMinY) ||
+        (extentMaxY >= featureMaxY && extentMinY <= featureMinY))
+    );
+  };
 }
