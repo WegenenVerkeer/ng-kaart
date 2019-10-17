@@ -409,6 +409,7 @@ export namespace LaagModel {
         updateLaagPage
       ),
       incrementNextPageSequence, // voorkom dat vroegere update deze overschrijft
+      modifySourceLaagFeatureCount, // tel features na zoom, pan, etc.
       updatePendingLens.set(false)
     )(laag)
   );
