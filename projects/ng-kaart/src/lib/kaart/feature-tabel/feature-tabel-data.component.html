@@ -30,7 +30,8 @@
               }"
             >
               <mat-checkbox *ngIf="first" (change)="onAction('selectRow', { row: row, selected: $event.checked })" [checked]="row.selected">&nbsp;</mat-checkbox>
-              {{ row.velden[header.name].maybeValue.getOrElse("") }}
+              <span *ngIf="first" (click)="onAction('zoomToRow', row)"  matTooltip="Zoom naar locatie">{{ row.velden[header.name].maybeValue.getOrElse("") }}</span>
+              <span *ngIf="! first">{{ row.velden[header.name].maybeValue.getOrElse("") }}</span>
             </td>
           </tr>
         </tbody>
