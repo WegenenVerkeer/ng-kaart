@@ -395,7 +395,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                   stijlSelBron: vlg.styleSelectorBron,
                   selectiestijlSel: vlg.selectieStyleSelector,
                   hoverstijlSel: vlg.hoverStyleSelector,
-                  filterinstellingen: cmnd.filterinstellingen.getOrElse(ke.stdLaagfilterinstellingen)
+                  filterinstellingen: cmnd.filterinstellingen.getOrElse(ke.stdLaagfilterinstellingen),
+                  tabelInstellingen: cmnd.tabelInstellingen
                 })
               );
               const toegevoegdeLaag: ke.ToegevoegdeLaag = ke.asToegevoegdeNosqlVectorLaag(toegevoegdeVectorLaagCommon).fold(
@@ -698,6 +699,12 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function veranderExtentCmd(cmnd: prt.VeranderExtentCmd): ModelWithResult<Msg> {
       model.map.getView().fit(cmnd.extent);
+      return ModelWithResult(model);
+    }
+
+    function veranderTabelInstellingen(cmnd: prt.VeranderTabelInstellingenCmd): ModelWithResult<Msg> {
+      console.log("veranderTabelInstellingen: ", cmnd);
+      modelChanger.tabelInstellingenSubj.next(cmnd.instellingen);
       return ModelWithResult(model);
     }
 
@@ -1598,6 +1605,13 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         );
       }
 
+      function subscribeToTabelInstellingen(sub: prt.TabelInstellingenSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult(
+          "TabelInstellingen",
+          modelChanges.tabelInstellingen$.pipe(debounceTime(100)).subscribe(consumeMessage(sub))
+        );
+      }
+
       function subscribeToGeselecteerdeFeatures(sub: prt.GeselecteerdeFeaturesSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult("GeselecteerdeFeatures", modelChanges.geselecteerdeFeatures$.subscribe(consumeMessage(sub)));
       }
@@ -1784,6 +1798,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       switch (cmnd.subscription.type) {
         case "Viewinstellingen":
           return subscribeToViewinstellingen(cmnd.subscription);
+        case "TabelInstellingen":
+          return subscribeToTabelInstellingen(cmnd.subscription);
         case "Zoom":
           return subscribeToZoom(cmnd.subscription);
         case "Middelpunt":
@@ -1884,6 +1900,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return veranderExtentCmd(cmd);
         case "VeranderViewport":
           return veranderViewportCmd(cmd);
+        case "VeranderTabelInstellingen":
+          return veranderTabelInstellingen(cmd);
         case "FocusOpKaart":
           return focusOpKaartCmd(cmd);
         case "VerliesFocusOpKaart":

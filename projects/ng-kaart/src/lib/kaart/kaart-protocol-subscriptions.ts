@@ -8,12 +8,6 @@ import { ZoekAntwoord, ZoekerMetWeergaveopties, ZoekResultaat } from "../zoeker/
 import { KaartLocaties } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { InfoBoodschap } from "./kaart-with-info-model";
-import { LaatsteCacheRefresh, MijnLocatieStateChange, PrecacheLaagProgress, TabelStateChange } from "./model-changes";
-
-/////////
-// Types
-//
-
 export type Subscription<Msg> =
   | AchtergrondTitelSubscription<Msg>
   | ActieveModusSubscription<Msg>
@@ -35,6 +29,7 @@ export type Subscription<Msg> =
   | MijnLocatieStateChangeSubscription<Msg>
   | PrecacheProgressSubscription<Msg>
   | PublishedKaartLocatiesSubscription<Msg>
+  | TabelInstellingenSubscription<Msg>
   | TabelStateSubscription<Msg>
   | TekenenSubscription<Msg>
   | ForceProgressBarSubscription<Msg>
@@ -45,6 +40,12 @@ export type Subscription<Msg> =
   | ZoekResultatenSubscription<Msg>
   | ZoomSubscription<Msg>;
 
+import { LaatsteCacheRefresh, MijnLocatieStateChange, PrecacheLaagProgress, TabelStateChange } from "./model-changes";
+
+/////////
+// Types
+//
+
 export interface Viewinstellingen {
   zoom: number;
   minZoom: number;
@@ -53,6 +54,15 @@ export interface Viewinstellingen {
   extent: ol.Extent;
   center: ol.Coordinate;
   rotation: number;
+}
+
+export interface TabelInstellingen {
+  laagnaam: string;
+  selectie: Set<string>;
+}
+
+export function TabelInstellingen(laagnaam: string, selectie: Set<string>) {
+  return { laagnaam, selectie };
 }
 
 export interface GeselecteerdeFeatures {
@@ -196,6 +206,11 @@ export interface MijnLocatieStateChangeSubscription<Msg> {
 export interface TabelStateSubscription<Msg> {
   readonly type: "TabelState";
   readonly wrapper: (state: TabelStateChange) => Msg;
+}
+
+export interface TabelInstellingenSubscription<Msg> {
+  readonly type: "TabelInstellingen";
+  readonly wrapper: MsgGen<TabelInstellingen, Msg>;
 }
 
 export interface BusySubscription<Msg> {
@@ -353,4 +368,10 @@ export function MijnLocatieStateChangeSubscription<Msg>(
 
 export function TabelStateSubscription<Msg>(wrapper: (stateChange: TabelStateChange) => Msg): TabelStateSubscription<Msg> {
   return { type: "TabelState", wrapper };
+}
+
+export function TabelInstellingenSubscription<Msg>(
+  wrapper: (tabelInstellingen: TabelInstellingen) => Msg
+): TabelInstellingenSubscription<Msg> {
+  return { type: "TabelInstellingen", wrapper };
 }

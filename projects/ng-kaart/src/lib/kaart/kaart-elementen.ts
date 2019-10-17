@@ -19,6 +19,7 @@ import * as matchers from "../util/matchers";
 import { observableFromOlEvents } from "../util/ol-observable";
 
 import { Legende } from "./kaart-legende";
+import { TabelInstellingen } from "./kaart-protocol-subscriptions";
 import { AwvV0StyleSpec, StyleSelector } from "./stijl-selector";
 
 export const SingleTileWmsType = "LaagType.SingleTileWms";
@@ -184,6 +185,7 @@ export interface ToegevoegdeVectorLaag extends ToegevoegdeLaag {
   readonly selectiestijlSel: Option<StyleSelector>;
   readonly hoverstijlSel: Option<StyleSelector>;
   readonly filterinstellingen: Laagfilterinstellingen;
+  readonly tabelInstellingen: Option<TabelInstellingen>;
 }
 
 export interface OpLaagGroep<T> {

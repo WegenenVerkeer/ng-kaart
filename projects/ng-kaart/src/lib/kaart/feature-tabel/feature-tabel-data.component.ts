@@ -3,12 +3,15 @@ import { array, option } from "fp-ts";
 import { flow, Function1, Refinement } from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
-import { map, mapTo, share, shareReplay, startWith, switchMap, tap } from "rxjs/operators";
+import { distinctUntilChanged, map, mapTo, share, shareReplay, startWith, switchMap, tap } from "rxjs/operators";
 import { isBoolean, isString } from "util";
 
 import { subSpy } from "../../util/operators";
 import { join } from "../../util/string";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { TabelInstellingenMsg, tabelInstellingenMsgGen } from "../kaart-internal-messages";
+import { VeranderTabelInstellingenCmd } from "../kaart-protocol-commands";
+import { TabelInstellingen, TabelInstellingenSubscription, Viewinstellingen } from "../kaart-protocol-subscriptions";
 import { KaartComponent } from "../kaart.component";
 
 import { Page } from "./data-provider";
@@ -17,6 +20,7 @@ import { FieldSelection } from "./field-selection-model";
 import { LaagModel } from "./laag-model";
 import { Row } from "./row-model";
 import { Update } from "./update";
+import fieldSelectionsLens = LaagModel.fieldSelectionsLens;
 
 // Dit is een interface die bedoeld is voor gebruik in de template
 interface ColumnHeaders {
@@ -121,6 +125,15 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
             updatePending: LaagModel.updatePendingLens.get(laag)
           };
         })
+      )
+    );
+
+    this.runInViewReady(
+      this.laag$.pipe(
+        map(fieldSelectionsLens.get),
+        distinctUntilChanged(array.getEq(FieldSelection.setoidFieldSelection).equals),
+        map(selection => selection.filter(f => f.selected)),
+        tap(selected => this.dispatch(VeranderTabelInstellingenCmd(TabelInstellingen(this.laagTitel, new Set(selected.map(f => f.name))))))
       )
     );
 

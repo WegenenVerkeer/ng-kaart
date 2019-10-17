@@ -295,6 +295,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
       legende: none,
       stijlInLagenKiezer: none,
       filterinstellingen: none,
+      tabelInstellingen: none,
       wrapper: kaartLogOnlyWrapper
     });
 

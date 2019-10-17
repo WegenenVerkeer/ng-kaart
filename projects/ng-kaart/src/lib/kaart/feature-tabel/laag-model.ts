@@ -216,12 +216,21 @@ export namespace LaagModel {
         .composeLens(FieldSelection.maybeSortDirectionLens)
         .set(option.some("ASCENDING") as Option<SortDirection>);
 
+      const makeFieldSelected: Endomorphism<FieldSelection[]> = fields => {
+        return laag.tabelInstellingen
+          .map(instellingen => {
+            return fields.map(field => FieldSelection.selectedLens.set(instellingen.selectie.has(field.name))(field));
+          })
+          .getOrElse(fields);
+      };
+
       const fieldSelections = pipe(
         veldinfos,
         FieldSelection.fieldsFromVeldinfo,
         fieldsTransformer,
         FieldSelection.selectBaseFields,
-        sortOnFirstField
+        sortOnFirstField,
+        makeFieldSelected
       );
 
       const firstField = array.take(1, fieldSelections);
