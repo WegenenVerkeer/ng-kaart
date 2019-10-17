@@ -52,7 +52,7 @@ export type PartialFunction1<A, B> = Function1<A, Option<B>>;
 export type PartialFunction2<A, B, C> = Function2<A, B, Option<C>>;
 
 /**
- * Een (endo)functie die alle (endo)functies na elkaar uitvoert. Lijkt heel sterk op pipe.
+ * Een (endo)functie die alle (endo)functies na elkaar uitvoert. Lijkt heel sterk op pipe/flow.
  */
 export const applySequential: <S>(_: Endomorphism<S>[]) => Endomorphism<S> = fs => init => fs.reduce((s, f) => f(s), init);
 
@@ -77,3 +77,9 @@ export function flowSpy<A>(msg: string): Endomorphism<A> {
     return a;
   };
 }
+
+/**
+ * Een functie die toelaat om te reageren op wijzigingen veroorzaakt door een endomorfisme.
+ * @param c functie die zowel oude als nieuwe waarde krijgt om er een nieuwe, nieuwe waarde mee te maken.
+ */
+export const withChange = <A, B>(c: (oldA: A, newA: A) => B) => (f: Endomorphism<A>): Function1<A, B> => a => c(a, f(a));

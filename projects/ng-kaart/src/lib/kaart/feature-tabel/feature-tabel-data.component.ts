@@ -20,7 +20,7 @@ import { FieldSelection } from "./field-selection-model";
 import { LaagModel } from "./laag-model";
 import { Row } from "./row-model";
 
-// Dit is een interface die bedoeld is voor gebruik in de template
+// Volgende interfaces zijn bedoeld voor gebruik in de template.
 interface ColumnHeaders {
   readonly headers: FieldSelection[];
   readonly columnWidths: string; // we willen dit niet in de template opbouwen
@@ -57,9 +57,9 @@ interface TemplateData {
   readonly updatePending: boolean;
   readonly numGeselecteerdeFeatures: number;
   readonly hasSelectedFeatures: boolean;
+  readonly allRowsSelected: boolean;
 }
 
-// Een datatype gebruikt in de template
 interface RowSelection {
   readonly row: Row;
   readonly selected: boolean;
@@ -78,8 +78,6 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
   public readonly rows$: rx.Observable<Row[]>;
   // Voor child components
   public readonly laag$: rx.Observable<LaagModel>;
-
-  public selectAllChecked = false;
 
   @Input()
   laagTitel: string;
@@ -123,7 +121,15 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
       rx.combineLatest(this.laag$, numGeselecteerdeFeatures$).pipe(
         map(([laag, numGeselecteerdeFeatures]) => {
           const fieldNameSelections = LaagModel.fieldSelectionsLens.get(laag);
-          const rows = option.toUndefined(LaagModel.pageLens.get(laag).map(Page.rowsLens.get));
+          const showOnlySelectedFeatures = LaagModel.selectionViewModeGetter.get(laag) === "SelectedOnly";
+          const maybeRows = LaagModel.pageLens.get(laag).map(Page.rowsLens.get);
+          const rows = option.toUndefined(maybeRows); // -> handiger in template
+          const allRowsSelected =
+            showOnlySelectedFeatures ||
+            pipe(
+              maybeRows,
+              option.exists(array.reduce(true as boolean, (s, row) => s && !!row.selected))
+            );
           return {
             dataAvailable: rows !== undefined,
             fieldNameSelections,
@@ -134,9 +140,11 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
             updatePending: LaagModel.updatePendingLens.get(laag),
             numGeselecteerdeFeatures,
             hasSelectedFeatures: numGeselecteerdeFeatures > 0,
-            showOnlySelectedFeatures: LaagModel.selectionViewModeGetter.get(laag) === "SelectedOnly"
+            showOnlySelectedFeatures,
+            allRowsSelected
           };
-        })
+        }),
+        share()
       )
     );
 
@@ -205,33 +213,8 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
       eraseSelection$.pipe(
         withLatestFrom(this.modelChanges.geselecteerdeFeatures$),
         tap(([_, geselecteerdeFeatures]) => {
-          this.selectAllChecked = false;
           const selectedIds = FeatureSelection.getGeselecteerdeFeatureIdsInLaag(this.laagTitel)(geselecteerdeFeatures);
           this.dispatch(DeselecteerFeatureCmd(selectedIds));
-        })
-      )
-    );
-
-    // uncheck de selectAll indien de rijen veranderen
-    this.runInViewReady(
-      this.rows$.pipe(
-        tap(() => {
-          this.selectAllChecked = false;
-        })
-      )
-    );
-
-    // uncheck de select all indien een rij ge(de)selecteerd wordt via de kaart
-    this.runInViewReady(
-      this.modelChanges.geselecteerdeFeatures$.pipe(
-        tap(geselecteerdeFeatures => {
-          // als we via de kaart selecteren en we hadden reeds alles geselecteerd
-          // zijn er zeker items verwijderd
-          // zelfs als multi select aanstaat kunnen er geen bijgekomen zijn zonder dat rows$ ging veranderd zijn
-          // en die legt ook de selectAll af
-          if (array.isNonEmpty(geselecteerdeFeatures.verwijderd)) {
-            this.selectAllChecked = false;
-          }
         })
       )
     );
@@ -240,7 +223,6 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     this.runInViewReady(
       selectRow$.pipe(
         tap((rowSelection: RowSelection) => {
-          this.selectAllChecked = false;
           if (rowSelection.selected) {
             this.dispatch(SelecteerExtraFeaturesCmd([rowSelection.row.feature.feature]));
           } else {
@@ -255,7 +237,6 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
       selectAll$.pipe(
         withLatestFrom(this.rows$),
         tap(([selected, rows]: [boolean, Row[]]) => {
-          this.selectAllChecked = selected;
           if (selected) {
             this.dispatch(SelecteerExtraFeaturesCmd(rows.map(row => row.feature.feature)));
           } else {

@@ -13,8 +13,7 @@
             >
               <mat-checkbox
                 *ngIf="first"
-                #selectAllCheckBox
-                [checked]="selectAllChecked"
+                [checked]="data.allRowsSelected"
                 (change)="onAction('selectAll', $event.checked)"
                 (click)="$event.stopPropagation()"
                 >&nbsp;</mat-checkbox

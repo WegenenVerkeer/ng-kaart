@@ -6,7 +6,6 @@ import { pipe } from "fp-ts/lib/pipeable";
 import { getLastSemigroup } from "fp-ts/lib/Semigroup";
 import { Getter, Lens, Optional, Traversal } from "monocle-ts";
 import { indexArray } from "monocle-ts/lib/Index/Array";
-import { prismNonNegativeInteger } from "newtype-ts/lib/NonNegativeInteger";
 import * as ol from "openlayers";
 import { map } from "rxjs/operators";
 import { isNumber } from "util";
@@ -16,7 +15,7 @@ import { NosqlFsSource } from "../../source";
 import * as arrays from "../../util/arrays";
 import { equalToString } from "../../util/equal";
 import { Feature } from "../../util/feature";
-import { flowSpy, PartialFunction2 } from "../../util/function";
+import { PartialFunction2 } from "../../util/function";
 import { arrayTraversal, selectiveArrayTraversal } from "../../util/lenses";
 import { subSpy } from "../../util/operators";
 import * as ke from "../kaart-elementen";
@@ -301,7 +300,6 @@ export namespace LaagModel {
     equalToString("Map")
   );
   const updateIfMapAsFilterOrElse = Update.ifOrElse(ifInMapAsFilter);
-  const updateIfMapAsFilter: Endomorphism<LaagModelUpdate> = Update.filter(ifInMapAsFilter);
   const applyIfMapAsFilter: Endomorphism<Endomorphism<LaagModel>> = applyIf(ifInMapAsFilter);
 
   const ifShowAllFeatures = flow(
@@ -394,6 +392,7 @@ export namespace LaagModel {
         PageFetcher.pageFromAllFeatures(laag.visibleFeatures),
         updateLaagPage
       ),
+      incrementNextPageSequence, // voorkom dat vroegere update deze overschrijft
       modifySourceLaagFeatureCount, // tel features na zoom, pan, etc.
       updatePendingLens.set(false)
     )(laag)
@@ -409,6 +408,7 @@ export namespace LaagModel {
         PageFetcher.pageFromSelected(laag.selectedFeatures),
         updateLaagPage
       ),
+      incrementNextPageSequence, // voorkom dat vroegere update deze overschrijft
       updatePendingLens.set(false)
     )(laag)
   );
@@ -425,6 +425,7 @@ export namespace LaagModel {
         PageFetcher.pageFromSelected(laag.selectedFeatures),
         updateLaagPage
       ),
+      incrementNextPageSequence, // voorkom dat vroegere update deze overschrijft
       updatePendingLens.set(false)
     )(laag)
   );
@@ -510,7 +511,7 @@ export namespace LaagModel {
 
   const noSelectedFeatures = (laag: LaagModel): boolean => arrays.isEmpty(laag.selectedFeatures);
 
-  const getOutOfSelectedOnlyModeIgNoFeaturesSelected: LaagModelUpdate = pipe(
+  const getOutOfSelectedOnlyModeIfNoFeaturesSelected: LaagModelUpdate = pipe(
     laag =>
       noSelectedFeatures(laag)
         ? flow(
@@ -558,7 +559,7 @@ export namespace LaagModel {
       flow(
         expectedPageNumberLens.modify(pageNumberUpdate),
         clampExpectedPageNumber,
-        nextPageSequenceLens.modify(n => n + 1),
+        incrementNextPageSequence,
         updatePendingLens.set(true)
       )
     );
@@ -624,6 +625,6 @@ export namespace LaagModel {
         selectedFeaturesLens.set(featuresOpLaag),
         andThenUpdatePageDataIf(ifShowSelectedOnly)
       ),
-      getOutOfSelectedOnlyModeIgNoFeaturesSelected
+      getOutOfSelectedOnlyModeIfNoFeaturesSelected
     );
 }
