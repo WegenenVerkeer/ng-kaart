@@ -85,5 +85,9 @@ export function flowSpy<A>(msg: string): Endomorphism<A> {
  */
 export const withChange = <A, B>(c: (oldA: A, newA: A) => B) => (f: Endomorphism<A>): Function1<A, B> => a => c(a, f(a));
 
+/**
+ * Laat toe om een argument te gebruiken om meerdere endomorfismen aan te sturen. Bijv. 2 setters obv dezelfde waarde.
+ * @param fs functies van B die endomorfismen maken.
+ */
 export const distrib = <A, B>(...fs: Function1<B, Endomorphism<A>>[]): Function1<B, Endomorphism<A>> => (b: B) => (a: A) =>
   array.reduce<Function1<B, Endomorphism<A>>, A>(a, (s, f) => f(b)(s))(fs);

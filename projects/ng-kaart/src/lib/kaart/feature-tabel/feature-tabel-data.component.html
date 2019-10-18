@@ -125,7 +125,7 @@
       <span *ngIf="data.hasSelectedFeatures">
         <button
           *ngIf="!data.showOnlySelectedFeatures"
-          mat-button
+          mat-flat-button
           matTooltip="Enkel selectie tonen"
           matTooltipPosition="right"
           (click)="onAction('showOnlySelectedFeatures')"
@@ -136,15 +136,13 @@
         </button>
         <button
           *ngIf="data.showOnlySelectedFeatures"
-          mat-button
+          mat-flat-button
+          color="primary"
           matTooltip="Alles tonen"
           matTooltipPosition="right"
           (click)="onAction('showAllFeatures')"
         >
-          <span class="feature-table-data-selection-selected-only">{{
-            data.numGeselecteerdeFeatures
-          }}</span>
-          <span class="feature-table-data-selection-hidden">geselecteerd</span>
+          {{ data.numGeselecteerdeFeatures }} geselecteerd
         </button>
         <button
           mat-icon-button

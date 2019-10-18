@@ -111,10 +111,6 @@ $footer-height: 48px;
       z-index: 2;
     }
 
-    th:last-child {
-      // border: 0;
-    }
-
     .empty-field {
       background-color: inherit;
     }
@@ -168,12 +164,6 @@ $footer-height: 48px;
 
       .feature-table-data-selection-all {
         color: rgba(0, 0, 0, 0.6);
-      }
-      .feature-table-data-selection-selected-only {
-        color: $awv-primary-2;
-      }
-      .feature-table-data-selection-hidden {
-        color: white;
       }
     }
 
