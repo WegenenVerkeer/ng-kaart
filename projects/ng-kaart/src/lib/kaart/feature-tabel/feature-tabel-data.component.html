@@ -44,13 +44,21 @@
                 [checked]="row.selected"
                 >&nbsp;</mat-checkbox
               >
-              {{ row.velden[header.name].maybeValue.getOrElse("") }}
+              <span
+                *ngIf="first"
+                (click)="onAction('zoomToRow', row)"
+                matTooltip="Zoom naar locatie"
+                >{{ row.velden[header.name].maybeValue.getOrElse("") }}</span
+              >
+              <span *ngIf="!first">{{
+                row.velden[header.name].maybeValue.getOrElse("")
+              }}</span>
             </td>
           </tr>
         </tbody>
       </table>
     </div>
-    <div *ngIf="!data.dataAvailable" class="">
+    <div *ngIf="!data.dataAvailable">
       <div
         *ngIf="data.updatePending; else otuOfZoom"
         class="feature-table-data-update-pending"

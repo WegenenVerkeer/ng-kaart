@@ -28,12 +28,26 @@
       ]
     },
     {
-      "name": "Launch ng-kaart",
       "type": "chrome",
       "request": "launch",
-      "url": "http://apigateway/ng-kaart/",
-      "webRoot": "${workspaceFolder}/projects/ng-kaart/src",
+      "name": "Chrome ng-kaart demo against apigateway",
+      "url": "http://apigateway/ng-kaart",
+      "webRoot": "${workspaceFolder}"
+    },
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "Chromium ng-kaart demo against apigateway",
+      "url": "http://apigateway/ng-kaart",
+      "webRoot": "${workspaceFolder}",
       "runtimeExecutable": "/usr/bin/chromium-browser"
-  },
+    },
+    {
+      "type": "chrome",
+      "request": "attach",
+      "name": "Attach to Chrome",
+      "port": 9222,
+      "webRoot": "${workspaceFolder}"
+    }
   ]
 }
