@@ -55,11 +55,6 @@ export namespace TableModel {
     return laagForTitelOnLaagData(titel)(model.laagData);
   };
 
-  export const currentPageForTitel: Curried2<string, TableModel, Option<Page>> = titel => {
-    // return currentPageForTitelTraversal(titel).asFold().headOption;
-    return model => laagForTitel(titel)(model).chain(LaagModel.pageLens.get);
-  };
-
   // We willen hier niet de state voor alle lagen opnieuw initialiseren. We moeten enkel de nieuwe lagen toevoegen en de
   // oude verwijderen. Van de bestaande moeten we de state aanpassen indien nodig.
   export const updateLagen: Function1<ke.ToegevoegdeVectorLaag[], TableModelUpdate> = lagen => {
@@ -76,7 +71,7 @@ export namespace TableModel {
           laag =>
             laagForTitelOnLaagData(laag.titel)(laagData) // kennen we die laag al?
               .map(updateFilterInstellingen(laag.filterinstellingen)) // pas ze dan aan
-              .orElse(() => LaagModel.create(laag, model.viewinstellingen)) // of creeer er een nieuw model voor
+              .orElse(() => LaagModel.create(laag, model.viewinstellingen)) // of creëer er een nieuw model voor
         )
       )(model)
     );

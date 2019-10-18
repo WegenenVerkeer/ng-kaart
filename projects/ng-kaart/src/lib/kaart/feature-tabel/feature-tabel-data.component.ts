@@ -103,6 +103,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     );
 
     // Dit zorgt enkel voor het al dan niet kunnen schakelen tussen kaart als filter en alle data
+    // TODO we zouden dit moeten kunnen vermijden bij filterSet$ omdat de laag het zelf al opvraagt dan.
     const totalFeaturesUpdate$: rx.Observable<LaagModel.LaagModelUpdate> = rx
       .merge(filterSet$, rx.of(undefined)) // equiv. startWith
       .pipe(mapTo(LaagModel.getTotalFeaturesUpdate));
@@ -120,9 +121,9 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     this.templateData$ = subSpy("****templateData$")(
       rx.combineLatest(this.laag$, numGeselecteerdeFeatures$).pipe(
         map(([laag, numGeselecteerdeFeatures]) => {
-          const fieldNameSelections = LaagModel.fieldSelectionsLens.get(laag);
+          const fieldNameSelections = LaagModel.fieldSelectionsGetter.get(laag);
           const showOnlySelectedFeatures = LaagModel.selectionViewModeGetter.get(laag) === "SelectedOnly";
-          const maybeRows = LaagModel.pageLens.get(laag).map(Page.rowsLens.get);
+          const maybeRows = LaagModel.pageGetter.get(laag).map(Page.rowsLens.get);
           const rows = option.toUndefined(maybeRows); // -> handiger in template
           const allRowsSelected =
             showOnlySelectedFeatures ||
@@ -137,7 +138,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
             rows,
             mapAsFilterState: LaagModel.viewSourceModeGetter.get(laag) === "Map",
             cannotChooseMapAsFilter: !LaagModel.canUseAllFeaturesGetter.get(laag),
-            updatePending: LaagModel.updatePendingLens.get(laag),
+            updatePending: LaagModel.updatePendingGetter.get(laag),
             numGeselecteerdeFeatures,
             hasSelectedFeatures: numGeselecteerdeFeatures > 0,
             showOnlySelectedFeatures,
@@ -150,7 +151,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
 
     this.rows$ = this.laag$.pipe(
       map(laag =>
-        LaagModel.pageLens
+        LaagModel.pageGetter
           .get(laag)
           .map(Page.rowsLens.get)
           .getOrElse([])

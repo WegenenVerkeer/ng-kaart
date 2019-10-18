@@ -1,3 +1,4 @@
+import { array } from "fp-ts";
 import { Endomorphism, Function1, Function2 } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import { Lens, Setter } from "monocle-ts";
@@ -83,3 +84,6 @@ export function flowSpy<A>(msg: string): Endomorphism<A> {
  * @param c functie die zowel oude als nieuwe waarde krijgt om er een nieuwe, nieuwe waarde mee te maken.
  */
 export const withChange = <A, B>(c: (oldA: A, newA: A) => B) => (f: Endomorphism<A>): Function1<A, B> => a => c(a, f(a));
+
+export const distrib = <A, B>(...fs: Function1<B, Endomorphism<A>>[]): Function1<B, Endomorphism<A>> => (b: B) => (a: A) =>
+  array.reduce<Function1<B, Endomorphism<A>>, A>(a, (s, f) => f(b)(s))(fs);

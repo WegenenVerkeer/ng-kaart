@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone } from "@angular/core";
-import { MatSliderChange } from "@angular/material";
 import { option } from "fp-ts";
-import { flow, Refinement } from "fp-ts/lib/function";
+import { pipe } from "fp-ts/lib/pipeable";
 import * as rx from "rxjs";
 import { map, mapTo, share, switchMap, tap } from "rxjs/operators";
 import { isNumber } from "util";
@@ -42,27 +41,25 @@ export class FeatureTabelPagerComponent extends KaartChildComponentBase {
     super(kaart, ngZone);
 
     const laag$ = laagData.laag$;
-    const maybePage$ = laag$.pipe(
-      map(LaagModel.pageLens.get),
-      share()
-    );
 
     this.pageData$ = subSpy("***pageData$")(
-      maybePage$.pipe(
-        map(
-          flow(
-            option.map(page => {
-              const currentPageNumber = Page.pageNumberLens.get(page);
-              const lastPageNumber = Page.lastPageNumberLens.get(page);
-              return {
-                currentPageNumber: Page.getterPageNumber.get(currentPageNumber),
-                lastPageNumber: Page.getterPageNumber.get(lastPageNumber),
-                isFirstPage: Page.isFirst(currentPageNumber),
-                isLastPage: Page.isTop(lastPageNumber)(currentPageNumber),
-                doesNotHaveMultiplePages: Page.ordPageNumber.equals(Page.first, lastPageNumber)
-              };
-            }),
-            option.toUndefined // Voor Angular
+      laag$.pipe(
+        map(laag =>
+          pipe(
+            LaagModel.pageNumberFold.headOption(laag),
+            option.chain(currentPageNumber =>
+              pipe(
+                LaagModel.lastPageNumberFold.headOption(laag),
+                option.map(lastPageNumber => ({
+                  currentPageNumber: Page.getterPageNumber.get(currentPageNumber),
+                  lastPageNumber: Page.getterPageNumber.get(lastPageNumber),
+                  isFirstPage: Page.isFirst(currentPageNumber),
+                  isLastPage: Page.isTop(lastPageNumber)(currentPageNumber),
+                  doesNotHaveMultiplePages: Page.ordPageNumber.equals(Page.first, lastPageNumber)
+                }))
+              )
+            ),
+            option.toUndefined
           )
         ),
         tap(() => this.cdr.markForCheck()),
