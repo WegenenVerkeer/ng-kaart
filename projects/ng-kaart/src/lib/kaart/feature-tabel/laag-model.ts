@@ -15,7 +15,7 @@ import { NosqlFsSource } from "../../source";
 import * as arrays from "../../util/arrays";
 import { equalToString } from "../../util/equal";
 import { Feature } from "../../util/feature";
-import { PartialFunction2 } from "../../util/function";
+import { flowSpy, PartialFunction2 } from "../../util/function";
 import { arrayTraversal, selectiveArrayTraversal } from "../../util/lenses";
 import * as ke from "../kaart-elementen";
 import { Viewinstellingen } from "../kaart-protocol-subscriptions";
@@ -309,6 +309,7 @@ export namespace LaagModel {
   );
   const updateIfMapAsFilterOrElse = Update.ifOrElse(ifInMapAsFilter);
   const applyIfMapAsFilter: Endomorphism<Endomorphism<LaagModel>> = applyIf(ifInMapAsFilter);
+  const applyIfNotMapAsFilter: Endomorphism<Endomorphism<LaagModel>> = f => applyIfOrElse(ifInMapAsFilter)(identity, f);
 
   const ifShowAllFeatures = flow(
     selectionViewModeGetter.get,
@@ -576,6 +577,7 @@ export namespace LaagModel {
   );
 
   const totaalUpdate: Function1<FilterTotaal, Endomorphism<LaagModel>> = FilterTotaalMatch({
+    // We zouden hier op een featureCountPending flag kunnen updaten en adhdv een spinner tonen in de UI.
     TotaalOpTeHalen: () =>
       flow(
         fullFeatureCountLens.set(FeatureCount.pending),
@@ -601,6 +603,22 @@ export namespace LaagModel {
   export const getTotalFeaturesUpdate: LaagModelUpdate = Update.createAsync<LaagModel>(laag =>
     laag.source.fetchTotal$().pipe(map(totaalUpdate))
   );
+
+  export const updateFilter: Function1<ke.Laagfilterinstellingen, LaagModelUpdate> = instellingen =>
+    Update.createSync(
+      flow(
+        flowSpy("****filter aan/af"),
+        LaagModel.filterIsActiveLens.set(instellingen.actief),
+        LaagModel.hasFilterLens.set(Filter.isDefined(instellingen.spec)),
+        totaalUpdate(instellingen.totaal),
+        applyIfNotMapAsFilter(
+          flow(
+            setFeatureCountToFullFeatureCount,
+            setLastPageNumberFromFullFeatureCount
+          )
+        )
+      )
+    );
 
   const updateFullFeatureCountIfNotYetSet: LaagModelUpdate = pipe(
     getTotalFeaturesUpdate,

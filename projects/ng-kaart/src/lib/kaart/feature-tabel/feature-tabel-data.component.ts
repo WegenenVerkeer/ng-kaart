@@ -93,20 +93,10 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
       )
     ).pipe(shareReplay(1)); // De pager zit in een *ngIf, dus subscribe na emit
 
-    const filterSet$ = this.laag$.pipe(
-      switchMap(laag =>
-        this.modelChanges.laagfilterGezet$.pipe(
-          filter(tvlg => tvlg.titel === laag.titel),
-          mapTo(undefined)
-        )
-      )
-    );
-
-    // Dit zorgt enkel voor het al dan niet kunnen schakelen tussen kaart als filter en alle data
-    // TODO we zouden dit moeten kunnen vermijden bij filterSet$ omdat de laag het zelf al opvraagt dan.
-    const totalFeaturesUpdate$: rx.Observable<LaagModel.LaagModelUpdate> = rx
-      .merge(filterSet$, rx.of(undefined)) // equiv. startWith
-      .pipe(mapTo(LaagModel.getTotalFeaturesUpdate));
+    // Dit zorgt enkel voor het al dan niet kunnen schakelen tussen kaart als filter en alle data en wordt enkel 1 maal
+    // in het begin uitgevoerd. We kunnen dit niet krijgen door op een initiële filterupdate te luisteren, want die
+    // komt enkel als er effectief een filter gezet is.
+    const totalFeaturesUpdate$: rx.Observable<LaagModel.LaagModelUpdate> = rx.of(LaagModel.getTotalFeaturesUpdate);
 
     const numGeselecteerdeFeatures$ = this.inViewReady(() =>
       this.modelChanges.geselecteerdeFeatures$.pipe(

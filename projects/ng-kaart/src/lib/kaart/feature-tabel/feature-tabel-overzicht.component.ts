@@ -46,7 +46,6 @@ const equalTitels: Setoid<ke.ToegevoegdeVectorLaag[]> = array.getSetoid(ke.Toege
 })
 export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
   public readonly laagTitels$: rx.Observable<string[]>;
-  public readonly toonFilters$: rx.Observable<boolean>;
 
   // Voor de child components (Op DOM niveau. Access via Angular injection).
   public readonly tableModel$: rx.Observable<TableModel>;
@@ -72,6 +71,8 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
 
     const featureSelection$ = this.modelChanges.geselecteerdeFeatures$.pipe(map(TableModel.updateSelectedFeatures));
 
+    const filterGezet$ = this.modelChanges.laagfilterGezet$.pipe(map(TableModel.updateFilterSettings));
+
     // De volgende combinatie zet Updates die asynchroon gegenereerd zijn om in toekomstige synchrone updates
     const asyncUpdatesSubj: rx.Subject<TableModel.TableModelSyncUpdate> = new rx.Subject();
     const delayedUpdates$: rx.Observable<TableModel.TableModelUpdate> = asyncUpdatesSubj.pipe(map(Update.createSync));
@@ -87,6 +88,7 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
       delayedUpdates$,
       updateLagen$,
       updateZoomAndExtent$,
+      filterGezet$,
       featureSelection$,
       zichtbareFeatures$,
       laagInTablesUpdate$

@@ -1508,6 +1508,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           const updatedLaag = pasLaagFilterAan(laag.filterinstellingen.spec, cmnd.actief, laag.filterinstellingen.totaal)(laag);
           const updatedModel = pasLaagInModelAan(model)(updatedLaag);
           zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
+          zendFilterwijziging(updatedLaag);
           return ModelAndEmptyResult(updatedModel);
         })
       );
@@ -1520,6 +1521,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             const updatedLaag = pasLaagFilterAan(laag.filterinstellingen.spec, laag.filterinstellingen.actief, totaal)(laag);
             const updatedModel = pasLaagInModelAan(model)(updatedLaag);
             zendLagenInGroep(updatedModel, updatedLaag.laaggroep);
+            zendFilterwijziging(updatedLaag);
           }
         })
       );

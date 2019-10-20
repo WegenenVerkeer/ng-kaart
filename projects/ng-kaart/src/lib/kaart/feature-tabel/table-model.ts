@@ -1,18 +1,17 @@
 import { array, option } from "fp-ts";
 import { Curried2, Endomorphism, flow, Function1, Predicate } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
+import { pipe } from "fp-ts/lib/pipeable";
 import { fromTraversable, Lens, Traversal } from "monocle-ts";
 import * as rx from "rxjs";
 import { map } from "rxjs/operators";
 
-import { Filter } from "../../filter";
 import * as arrays from "../../util/arrays";
 import { selectiveArrayTraversal } from "../../util/lenses";
 import * as ke from "../kaart-elementen";
 import { GeselecteerdeFeatures, Viewinstellingen } from "../kaart-protocol-subscriptions";
 import { featuresOpIdToArray } from "../model-changes";
 
-import { Page } from "./data-provider";
 import { LaagModel } from "./laag-model";
 import { AsyncUpdate, SyncUpdate, Update } from "./update";
 
@@ -58,20 +57,15 @@ export namespace TableModel {
   // We willen hier niet de state voor alle lagen opnieuw initialiseren. We moeten enkel de nieuwe lagen toevoegen en de
   // oude verwijderen. Van de bestaande moeten we de state aanpassen indien nodig.
   export const updateLagen: Function1<ke.ToegevoegdeVectorLaag[], TableModelUpdate> = lagen => {
-    const updateFilterInstellingen: Function1<ke.Laagfilterinstellingen, Endomorphism<LaagModel>> = instellingen =>
-      flow(
-        LaagModel.filterIsActiveLens.set(instellingen.actief),
-        LaagModel.hasFilterLens.set(Filter.isDefined(instellingen.spec))
-      );
-
     return Update.createSync<TableModel>(model =>
       laagDataLens.modify(laagData =>
-        array.array.filterMap(
+        pipe(
           lagen,
-          laag =>
-            laagForTitelOnLaagData(laag.titel)(laagData) // kennen we die laag al?
-              .map(updateFilterInstellingen(laag.filterinstellingen)) // pas ze dan aan
-              .orElse(() => LaagModel.create(laag, model.viewinstellingen)) // of creëer er een nieuw model voor
+          array.filterMap(
+            laag =>
+              laagForTitelOnLaagData(laag.titel)(laagData) // kennen we die laag al?
+                .orElse(() => LaagModel.create(laag, model.viewinstellingen)) // indien niet, creëer er een nieuw model voor
+          )
         )
       )(model)
     );
@@ -122,5 +116,10 @@ export namespace TableModel {
           LaagModel.updateSelectedFeatures
         )
       )
+    );
+
+  export const updateFilterSettings: Function1<ke.ToegevoegdeVectorLaag, TableModelUpdate> = tvlg =>
+    liftLaagUpdateForAllLagenByTitle(titel =>
+      Update.filter<LaagModel>(laag => laag.titel === titel)(LaagModel.updateFilter(tvlg.filterinstellingen))
     );
 }
