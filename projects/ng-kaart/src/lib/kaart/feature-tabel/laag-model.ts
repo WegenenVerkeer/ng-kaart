@@ -133,7 +133,12 @@ export namespace LaagModel {
   const fieldSelectionTraversal: Traversal<LaagModel, FieldSelection> = fieldSelectionsLens.composeTraversal(arrayTraversal());
 
   // Bepaalde velden moeten samengevoegd worden tot 1 synthetisch locatieveld. Daarvoor moeten we enerzijds de headers
-  // aanpassen en anderzijds elke Row die binnen komt.
+  // aanpassen en anderzijds elke Row die binnen komt. Er is altijd een locatieveld. Ook als er geen enkel veld gevonden
+  // kan worden dat de basis voor een locatie kan zijn. Het locatieveld is dan niet synthetisch maar virtueel. Er is
+  // geen aanduiding op het laagniveau hoe het locatieveld opgebouwd is. We gebruiken een heuristiek obv de labels van
+  // de velden. De functie maakt 2 transformers in 1 keer omdat de logica zo gelijklopend is. De eerste bepaalt welke
+  // velden er getoond worden als kolomen in de tabel en de tweede hoe de waarden van binnenkomende rijen omgevormd
+  // worden tot waarden voor de velden van de tabel.
   const locationTransformer: Function1<ke.VeldInfo[], [Endomorphism<FieldSelection[]>, Endomorphism<Velden>]> = veldinfos => {
     // We moeten op label werken, want de gegevens zitten op verschillende plaatsen bij verschillende lagen
     const veldlabels = veldinfos.map(ke.VeldInfo.veldlabelLens.get).filter(label => label !== undefined) as string[];
@@ -141,7 +146,25 @@ export namespace LaagModel {
     const lijnAfstandLabels = ["Van refpunt", "Van afst", "Tot refpunt", "Tot afst"];
     const puntAfstandLabels = ["Refpunt", "Afstand"];
     const maybeWegKey = array.findFirst(veldinfos, vi => vi.label === wegLabel).map(ke.VeldInfo.veldnaamLens.get);
-    return maybeWegKey.fold([identity, identity] as [Endomorphism<FieldSelection[]>, Endomorphism<Velden>], wegKey => {
+
+    const syntheticLocattionFieldKey = "syntheticLocation";
+    const syntheticFieldSelection = (contributingVeldinfos: ke.VeldInfo[]): FieldSelection => ({
+      name: syntheticLocattionFieldKey,
+      label: "Locatie",
+      selected: true,
+      sortDirection: option.some("ASCENDING" as "ASCENDING"),
+      contributingVeldinfos
+    });
+    const geenWegLocatieValue = option.some("<Geen weglocatie>");
+
+    const noLocationFieldsTransformer = (fs: FieldSelection[]): FieldSelection[] => array.cons(syntheticFieldSelection([]), fs);
+    const noLocationVeldTransformer = Row.addField(syntheticLocattionFieldKey, { maybeValue: geenWegLocatieValue });
+    const noLocationTransformers = [noLocationFieldsTransformer, noLocationVeldTransformer] as [
+      Endomorphism<FieldSelection[]>,
+      Endomorphism<Velden>
+    ];
+
+    return maybeWegKey.fold(noLocationTransformers, wegKey => {
       const distance: Function2<number, number, string> = (ref, offset) => (offset >= 0 ? `${ref} +${offset}` : `${ref} ${offset}`);
       const lijnValueGen = (wegValue: string) => (distances: number[]): string =>
         `${wegValue} van ${distance(distances[0], distances[1])} tot ${distance(distances[2], distances[3])}`;
@@ -164,19 +187,13 @@ export namespace LaagModel {
       const allLocationKeys = array.cons(wegKey, locationKeys);
       const allLocationVeldinfos = array.filterMap(key => array.findFirst<ke.VeldInfo>(vi => vi.naam === key)(veldinfos))(allLocationKeys);
 
-      const locationFieldSelection: FieldSelection = {
-        name: "syntheticLocation",
-        label: "Locatie",
-        selected: true,
-        sortDirection: option.some("ASCENDING" as "ASCENDING"),
-        contributingVeldinfos: allLocationVeldinfos
-      };
+      const locationFieldSelection: FieldSelection = syntheticFieldSelection(allLocationVeldinfos);
       const fieldsSelectionTrf: Endomorphism<FieldSelection[]> = fieldSelections =>
         array
           .cons(locationFieldSelection, fieldSelections) // Het synthetische veld toevoegen
           .filter(fieldSelection => !allLocationLabels.includes(fieldSelection.label)); // en de bijdragende velden verwijderen
 
-      const rowTrf: Endomorphism<Velden> = row => {
+      const veldTrf: Endomorphism<Velden> = row => {
         const maybeWegValue = row[wegKey];
         const maybeDistances: Option<number[]> = traversable
           .sequence(option.option, array.array)(locationKeys.map(key => row[key].maybeValue.filter(isNumber)))
@@ -184,11 +201,11 @@ export namespace LaagModel {
         const locatieField: Field = {
           maybeValue: maybeWegValue.maybeValue
             .map(wegValue => maybeDistances.fold(`${wegValue}`, locationValueGen(wegValue.toString())))
-            .orElse(() => option.some("<Geen weglocatie>"))
+            .orElse(() => geenWegLocatieValue)
         };
-        return Row.addField("syntheticLocation", locatieField)(row);
+        return Row.addField(syntheticLocattionFieldKey, locatieField)(row);
       };
-      return [fieldsSelectionTrf, rowTrf] as [Endomorphism<FieldSelection[]>, Endomorphism<Velden>];
+      return [fieldsSelectionTrf, veldTrf] as [Endomorphism<FieldSelection[]>, Endomorphism<Velden>];
     });
   };
 
@@ -241,6 +258,7 @@ export namespace LaagModel {
         FieldSelection.fieldsFromVeldinfo,
         fieldsTransformer,
         FieldSelection.selectBaseFields,
+        FieldSelection.selectFirstField, // Indien er geen native locatie veld is, of dat zou geen basisveld zijn
         sortOnFirstField
       );
 
