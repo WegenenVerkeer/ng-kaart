@@ -631,7 +631,6 @@ export namespace LaagModel {
       )
   });
 
-  // TODO filter afzetten eerst anders kan het fout gaan bij lagen die initieel met filter ingeladen worden
   export const getTotalFeaturesUpdate: LaagModelUpdate = Update.createAsync<LaagModel>(laag =>
     laag.source.fetchTotal$().pipe(map(totaalUpdate))
   );
