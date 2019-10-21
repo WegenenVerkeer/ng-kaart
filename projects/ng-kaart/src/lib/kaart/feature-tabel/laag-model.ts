@@ -15,7 +15,7 @@ import { NosqlFsSource } from "../../source";
 import * as arrays from "../../util/arrays";
 import { equalToString } from "../../util/equal";
 import { Feature } from "../../util/feature";
-import { flowSpy, PartialFunction2 } from "../../util/function";
+import { PartialFunction2 } from "../../util/function";
 import { arrayTraversal, selectiveArrayTraversal } from "../../util/lenses";
 import * as ke from "../kaart-elementen";
 import { Viewinstellingen } from "../kaart-protocol-subscriptions";
@@ -314,10 +314,13 @@ export namespace LaagModel {
   export const hasMultiplePages: Predicate<LaagModel> = laag =>
     FeatureCount.fetchedCount(laag.featureCount).fold(false, featureCount => !Page.isFirst(Page.last(featureCount)));
 
-  const applyIfOrElse = (pred: Predicate<LaagModel>) => (
-    ifTrue: Endomorphism<LaagModel>,
-    ifFalse: Endomorphism<LaagModel>
-  ): Endomorphism<LaagModel> => laag => (pred(laag) ? ifTrue(laag) : ifFalse(laag));
+  const ifOrElse = (pred: Predicate<LaagModel>) => <A>(ifTrue: Function1<LaagModel, A>, ifFalse: Function1<LaagModel, A>) => (
+    laag: LaagModel
+  ): A => (pred(laag) ? ifTrue : ifFalse)(laag);
+  const applyIfOrElse: Function1<
+    Predicate<LaagModel>,
+    Function2<Endomorphism<LaagModel>, Endomorphism<LaagModel>, Endomorphism<LaagModel>>
+  > = ifOrElse;
   const applyIf = (pred: Predicate<LaagModel>) => (ifTrue: Endomorphism<LaagModel>): Endomorphism<LaagModel> =>
     applyIfOrElse(pred)(ifTrue, identity);
 
@@ -594,6 +597,16 @@ export namespace LaagModel {
     andThenUpdatePageDataIf(updatePendingLens.get)
   );
 
+  // In geval we niet in mapAsFilterZitten moeten we de juiste featureCount gebruiken afhankelijk van het al dan niet
+  // actief zijn van de filter.
+  const setFullFeatureCountToFilterAwareTotaal = (opgehaald: TotaalOpgehaald): Endomorphism<LaagModel> => laag =>
+    pipe(
+      laag,
+      ifOrElse(filterIsActiveLens.get)(() => opgehaald.totaal, () => opgehaald.collectionTotaal),
+      FeatureCount.createFetched,
+      fullFeatureCountLens.set
+    )(laag);
+
   const totaalUpdate: Function1<FilterTotaal, Endomorphism<LaagModel>> = FilterTotaalMatch({
     // We zouden hier op een featureCountPending flag kunnen updaten en adhdv een spinner tonen in de UI.
     TotaalOpTeHalen: () =>
@@ -608,7 +621,7 @@ export namespace LaagModel {
       ),
     TotaalOpgehaald: (opgehaald: TotaalOpgehaald) =>
       flow(
-        fullFeatureCountLens.set(FeatureCount.createFetched(opgehaald.totaal)), // dus afhankelijk van filter
+        setFullFeatureCountToFilterAwareTotaal(opgehaald),
         canUseAllFeaturesLens.set(true)
       ),
     TotaalOphalenMislukt: () =>
@@ -618,14 +631,14 @@ export namespace LaagModel {
       )
   });
 
+  // TODO filter afzetten eerst anders kan het fout gaan bij lagen die initieel met filter ingeladen worden
   export const getTotalFeaturesUpdate: LaagModelUpdate = Update.createAsync<LaagModel>(laag =>
     laag.source.fetchTotal$().pipe(map(totaalUpdate))
   );
 
   export const updateFilter: Function1<ke.Laagfilterinstellingen, LaagModelUpdate> = instellingen =>
-    Update.createSync(
+    pipe(
       flow(
-        flowSpy("****filter aan/af"),
         LaagModel.filterIsActiveLens.set(instellingen.actief),
         LaagModel.hasFilterLens.set(Filter.isDefined(instellingen.spec)),
         totaalUpdate(instellingen.totaal),
@@ -635,7 +648,8 @@ export namespace LaagModel {
             setLastPageNumberFromFullFeatureCount
           )
         )
-      )
+      ),
+      andThenUpdatePageDataIf(not(ifInMapAsFilter))
     );
 
   const updateFullFeatureCountIfNotYetSet: LaagModelUpdate = pipe(

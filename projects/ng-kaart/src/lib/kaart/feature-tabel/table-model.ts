@@ -119,7 +119,5 @@ export namespace TableModel {
     );
 
   export const updateFilterSettings: Function1<ke.ToegevoegdeVectorLaag, TableModelUpdate> = tvlg =>
-    liftLaagUpdateForAllLagenByTitle(titel =>
-      Update.filter<LaagModel>(laag => laag.titel === titel)(LaagModel.updateFilter(tvlg.filterinstellingen))
-    );
+    liftLaagUpdate(tvlg.titel)(LaagModel.updateFilter(tvlg.filterinstellingen));
 }

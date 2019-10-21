@@ -37,7 +37,10 @@ export namespace Update {
   // Opgelet! Het predicaat wordt 2x uitgevoerd. Het is mogelijk dat het een verschillend resultaat heeft en dus dat
   // syncUpdate niet maar asyncUpdate wel uitgevoerd wordt (of omgekeerd).
   export const ifOrElse = <A>(pred: Predicate<A>) => (ifTrue: Update<A>, ifFalse: Update<A>): Update<A> => ({
-    syncUpdate: (a: A) => (pred(a) ? ifTrue.syncUpdate(a) : ifFalse.syncUpdate(a)),
+    syncUpdate: (a: A) => {
+      const res = pred(a);
+      return res ? ifTrue.syncUpdate(a) : ifFalse.syncUpdate(a);
+    },
     asyncUpdate: (a: A) => (pred(a) ? ifTrue.asyncUpdate(a) : ifFalse.asyncUpdate(a))
   });
   export const filter = <A>(pred: Predicate<A>) => (ifTrue: Update<A>): Update<A> => ifOrElse(pred)(ifTrue, mempty);
