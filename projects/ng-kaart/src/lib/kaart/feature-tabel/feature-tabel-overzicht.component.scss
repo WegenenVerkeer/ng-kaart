@@ -1,6 +1,7 @@
 @import "../../css/kaart.component-common.scss";
 
 .feature-tabel-weergave-content {
+  position: relative;
   background-color: rgba(255,255,255,1);
   height: 100%;
   display: flex;
@@ -34,4 +35,23 @@ mat-tab-group {
   flex-grow: 1;
   flex-shrink: 1;
   overflow: auto;
+}
+
+.selecteer-features {
+  position: absolute;
+  top: 0px;
+  z-index: 3;
+  right: 6px;
+  width: 32px;
+  margin: 0 8px 8px 0;
+
+  > * {
+    width: 32px;
+    height: 32px;
+    line-height: 32px;
+  }
+
+  .actief {
+    color: $awv-primary-3;
+  }
 }

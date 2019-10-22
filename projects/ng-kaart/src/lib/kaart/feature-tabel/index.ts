@@ -20,6 +20,7 @@ import { FeatureTabelInklapComponent } from "./feature-tabel-inklap.component";
 import { FeatureTabelOverzichtComponent } from "./feature-tabel-overzicht.component";
 import { FeatureTabelPagerComponent } from "./feature-tabel-pager.component";
 import { FeatureTabelSorteringStatusComponent } from "./feature-tabel-sortering-status.component";
+import { FeatureTabelSelectieViaPolygonComponent } from "./selecteer-features/feature-tabel-polygon-selectie.component";
 
 const components: any[] = [
   FeatureTabelDataComponent,
@@ -27,7 +28,8 @@ const components: any[] = [
   FeatureTabelInklapComponent,
   FeatureTabelOverzichtComponent,
   FeatureTabelPagerComponent,
-  FeatureTabelSorteringStatusComponent
+  FeatureTabelSorteringStatusComponent,
+  FeatureTabelSelectieViaPolygonComponent
 ];
 
 @NgModule({

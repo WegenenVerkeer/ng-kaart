@@ -1,6 +1,6 @@
 import { Component, NgZone } from "@angular/core";
 import { Predicate } from "fp-ts/lib/function";
-import { fromPredicate, Option, some } from "fp-ts/lib/Option";
+import { fromPredicate, none, Option, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, filter, map, share, startWith, switchMap, tap } from "rxjs/operators";
@@ -204,7 +204,7 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
   }
 
   private startMetMeten(): void {
-    this.dispatch(DrawOpsCmd(StartDrawing(this.metenOpties.markColour, this.metenOpties.useRouting)));
+    this.dispatch(DrawOpsCmd(StartDrawing(this.metenOpties.markColour, this.metenOpties.useRouting, none)));
     this.metingGestartSubj.next();
   }
 
