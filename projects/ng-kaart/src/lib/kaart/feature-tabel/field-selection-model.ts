@@ -61,8 +61,13 @@ export namespace FieldSelection {
 
   export const setoidFieldSelectionByKey: Setoid<FieldSelection> = setoid.contramap(nameLens.get, setoid.setoidString);
 
-  export const selectFirstField: Endomorphism<FieldSelection[]> = fields =>
-    array.mapWithIndex<FieldSelection, FieldSelection>((i, field) => selectedLens.modify(set => set || i === 0)(field))(fields);
+  export const selectFirstField: Endomorphism<FieldSelection[]> = array.mapWithIndex<FieldSelection, FieldSelection>((i, field) =>
+    selectedLens.modify(set => set || i === 0)(field)
+  );
+
+  export const selectOnlyFirstField: Endomorphism<FieldSelection[]> = array.mapWithIndex<FieldSelection, FieldSelection>((i, field) =>
+    selectedLens.set(i === 0)(field)
+  );
 
   const sortingsForFieldSelection: Function1<FieldSelection, FieldSorting[]> = fs =>
     fs.sortDirection.foldL(() => [], direction => fs.contributingVeldinfos.map(FieldSorting.create(direction)));

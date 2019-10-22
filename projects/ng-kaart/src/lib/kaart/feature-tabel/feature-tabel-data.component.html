@@ -97,9 +97,21 @@
           <mat-icon>replay</mat-icon>
           <span>Enkel basiskolommen</span>
         </button>
-        <button mat-menu-item (click)="onAction('chooseAllFields')">
+        <button
+          *ngIf="!data.allFieldsSelected"
+          mat-menu-item
+          (click)="onAction('chooseAllFields')"
+        >
           <mat-icon>playlist_add_check</mat-icon>
           <span>Alle kolommen</span>
+        </button>
+        <button
+          *ngIf="data.allFieldsSelected"
+          mat-menu-item
+          (click)="onAction('chooseNoFields')"
+        >
+          <mat-icon>playlist_add_check</mat-icon>
+          <span>Geen kolommen</span>
         </button>
         <button
           mat-menu-item

@@ -4,9 +4,10 @@ import { flow, Function1, Refinement } from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { filter, map, mapTo, share, shareReplay, startWith, switchMap, tap, withLatestFrom } from "rxjs/operators";
+import { map, mapTo, share, shareReplay, startWith, switchMap, tap, withLatestFrom } from "rxjs/operators";
 import { isBoolean, isString } from "util";
 
+import * as arrays from "../../util/arrays";
 import { subSpy } from "../../util/operators";
 import { join } from "../../util/string";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
@@ -58,6 +59,7 @@ interface TemplateData {
   readonly numGeselecteerdeFeatures: number;
   readonly hasSelectedFeatures: boolean;
   readonly allRowsSelected: boolean;
+  readonly allFieldsSelected: boolean;
 }
 
 interface RowSelection {
@@ -110,29 +112,31 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     // immers de rows array moeten meenemen.
     this.templateData$ = subSpy("****templateData$")(
       rx.combineLatest(this.laag$, numGeselecteerdeFeatures$).pipe(
-        map(([laag, numGeselecteerdeFeatures]) => {
-          const fieldNameSelections = LaagModel.fieldSelectionsGetter.get(laag);
-          const showOnlySelectedFeatures = LaagModel.selectionViewModeGetter.get(laag) === "SelectedOnly";
-          const maybeRows = LaagModel.pageGetter.get(laag).map(Page.rowsLens.get);
+        map(([model, numGeselecteerdeFeatures]) => {
+          const fieldNameSelections = LaagModel.fieldSelectionsGetter.get(model);
+          const showOnlySelectedFeatures = LaagModel.selectionViewModeGetter.get(model) === "SelectedOnly";
+          const maybeRows = LaagModel.pageGetter.get(model).map(Page.rowsLens.get);
           const rows = option.toUndefined(maybeRows); // -> handiger in template
           const allRowsSelected =
             showOnlySelectedFeatures ||
             pipe(
               maybeRows,
-              option.exists(array.reduce(true as boolean, (s, row) => s && !!row.selected))
+              option.exists(arrays.forAll(row => !!row.selected))
             );
+          const allFieldsSelected = arrays.forAll(FieldSelection.selectedLens.get)(model.fieldSelections);
           return {
             dataAvailable: rows !== undefined,
             fieldNameSelections,
             headers: ColumnHeaders.createFromFieldSelection(fieldNameSelections),
             rows,
-            mapAsFilterState: LaagModel.viewSourceModeGetter.get(laag) === "Map",
-            cannotChooseMapAsFilter: !LaagModel.canUseAllFeaturesGetter.get(laag),
-            updatePending: LaagModel.updatePendingGetter.get(laag),
+            mapAsFilterState: LaagModel.viewSourceModeGetter.get(model) === "Map",
+            cannotChooseMapAsFilter: !LaagModel.canUseAllFeaturesGetter.get(model),
+            updatePending: LaagModel.updatePendingGetter.get(model),
             numGeselecteerdeFeatures,
             hasSelectedFeatures: numGeselecteerdeFeatures > 0,
             showOnlySelectedFeatures,
-            allRowsSelected
+            allRowsSelected,
+            allFieldsSelected
           };
         }),
         share()
@@ -151,6 +155,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     const fieldSelectionsUpdate$ = rx.merge(
       this.actionFor$("chooseBaseFields").pipe(mapTo(LaagModel.chooseBaseFieldsUpdate)),
       this.actionFor$("chooseAllFields").pipe(mapTo(LaagModel.chooseAllFieldsUpdate)),
+      this.actionFor$("chooseNoFields").pipe(mapTo(LaagModel.chooseNoFieldsUpdate)),
       this.actionDataFor$("toggleField", isFieldSelection).pipe(
         map(fieldSelection => LaagModel.setFieldSelectedUpdate(fieldSelection.name, !fieldSelection.selected))
       ),
