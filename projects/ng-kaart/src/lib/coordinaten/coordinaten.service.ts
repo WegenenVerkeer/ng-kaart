@@ -34,6 +34,11 @@ export function switchVolgorde(coordinate: ol.Coordinate): ol.Coordinate {
   return [coordinate[1], coordinate[0]];
 }
 
+export const roundCoordinate: Function2<ol.Coordinate, number, ol.Coordinate> = (coordinate, decimals) => {
+  const pow = Math.pow(10, decimals);
+  return [Math.round(coordinate[0] * pow) / pow, Math.round(coordinate[1] * pow) / pow];
+};
+
 export const formatCoordinate: (_: number) => (_: ol.Coordinate) => string = decimals => coordinate =>
   `${coordinate[0].toFixed(decimals)}, ${coordinate[1].toFixed(decimals)}`;
 
