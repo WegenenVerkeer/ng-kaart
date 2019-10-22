@@ -21,6 +21,7 @@ import {
   tap
 } from "rxjs/operators";
 
+import { roundCoordinate } from "../coordinaten";
 import { FilterAanpassingState as FilteraanpassingState, GeenFilterAanpassingBezig } from "../filter/filter-aanpassing-state";
 import { NosqlFsSource } from "../source/nosql-fs-source";
 import { GeenTransparantieaanpassingBezig, TransparantieaanpassingState } from "../transparantieeditor/state";
@@ -370,7 +371,7 @@ export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> 
 
   const kaartKlikLocatie$ = observableFromOlEvents(model.map, "click").pipe(
     map((event: ol.MapBrowserEvent) => ({
-      coordinate: event.coordinate,
+      coordinate: roundCoordinate(event.coordinate, 2),
       coversFeature: model.map.hasFeatureAtPixel(event.pixel, {
         hitTolerance: envParams(model.config).clickHitTolerance,
         // enkel json data features die een identify hebben beschouwen we. Zoekresultaten bvb niet
