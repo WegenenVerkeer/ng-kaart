@@ -91,8 +91,8 @@
     "@compodoc/compodoc": "^1.1.9",
     "@types/googlemaps": "3.30.16",
     "@types/hammerjs": "2.0.36",
-    "@types/jasmine-jquery": "1.5.33",
     "@types/jasmine": "~2.8.8",
+    "@types/jasmine-jquery": "1.5.33",
     "@types/jasminewd2": "~2.0.3",
     "@types/loglevel": "1.5.3",
     "@types/luxon": "^1.15.2",
@@ -142,7 +142,7 @@
     "tslint-defocus": "2.0.6",
     "tslint-plugin-prettier": "2.0.1",
     "typescript": "~3.2.4",
-    "webdriver-manager": "^12.1.6",
+    "webdriver-manager": "^12.1.7",
     "webpack-dev-server": "^3.1.5"
   },
   "husky": {
