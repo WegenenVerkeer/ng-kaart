@@ -1,5 +1,8 @@
 <div class="feature-table-data-content" *ngIf="(templateData$ | async) as data">
-  <div class="feature-table-data-main">
+  <div
+    class="feature-table-data-main"
+    [class.comfortable-table-layout]="data.comfortableLayout"
+  >
     <div *ngIf="data.dataAvailable">
       <table
         *ngIf="data.headers as headers"
@@ -75,7 +78,7 @@
   <div
     *ngIf="data.dataAvailable"
     class="feature-tabel-data-header-menu"
-    #headerMenu
+    [class.comfortable-table-layout]="data.comfortableLayout"
   >
     <button
       mat-icon-button

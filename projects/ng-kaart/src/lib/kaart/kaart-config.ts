@@ -9,6 +9,9 @@ export interface EnvParams {
   readonly clickHitTolerance: number;
   // hoeveel pixels de muis met ingedrukte knop moet bewegen, of een vinger het scherm raken, vooraleer een pan gebeurt
   readonly moveTolerance: number;
+  // hoe de tabellen standaard weergegeven worden. Een number om geen te diepe en evt circulaire dependency te maken.
+  // 1 = compact, 2 (en alles anders) = comfortable
+  readonly initialLayoutMode: number;
 }
 
 export interface KaartConfig {
