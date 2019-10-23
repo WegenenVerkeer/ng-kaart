@@ -8,7 +8,6 @@ import { distinctUntilChanged, map, mapTo, share, shareReplay, startWith, switch
 import { isBoolean, isString } from "util";
 
 import * as arrays from "../../util/arrays";
-import { subSpy } from "../../util/operators";
 import { join } from "../../util/string";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { DeselecteerFeatureCmd, SelecteerExtraFeaturesCmd, VeranderExtentCmd } from "../kaart-protocol-commands";
