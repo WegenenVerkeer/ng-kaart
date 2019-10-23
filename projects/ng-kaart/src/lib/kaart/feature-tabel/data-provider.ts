@@ -168,7 +168,7 @@ export namespace DataRequest {
 
 export namespace PageFetcher {
   const selectedFeaturesInExtent: Function2<ol.Extent, ol.Feature[], ol.Feature[]> = (extent, selected) =>
-    array.filter(Feature.inExtent(extent))(selected);
+    array.filter(Feature.overlapsExtent(extent))(selected);
   const takePage: Function1<PageNumber, Endomorphism<ol.Feature[]>> = pageNumber => array.filterWithIndex(Page.isInPage(pageNumber));
   const toRows: Curried2<PartialFunction1<ol.Feature, Row>, ol.Feature[], Row[]> = array.filterMap;
   const featureToFieldValue: Curried2<FieldSorting, ol.Feature, Option<ValueType>> = sorting => feature =>
