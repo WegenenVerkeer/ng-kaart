@@ -33,6 +33,7 @@ import {
 } from "../filter/filter-totaal";
 import * as le from "../kaart/kaart-load-events";
 import { kaartLogger } from "../kaart/log";
+import * as arrays from "../util/arrays";
 import { Feature, toOlFeature } from "../util/feature";
 import { fetchObs$, fetchWithTimeoutObs$ } from "../util/fetch-with-timeout";
 import { ReduceFunction } from "../util/function";
@@ -80,12 +81,19 @@ export namespace PagingSpec {
   export type SortDirection = "ASC" | "DESC";
   export const toQueryParams = (spec: PagingSpec) => {
     const [sort, sortDirection] = array.unzip(array.zip(spec.sortFields, spec.sortDirections));
-    return {
-      start: spec.start,
-      limit: spec.count,
-      sort,
-      "sort-direction": sortDirection
-    };
+    if (arrays.isNonEmpty(sort)) {
+      return {
+        start: spec.start,
+        limit: spec.count,
+        sort,
+        "sort-direction": sortDirection
+      };
+    } else {
+      return {
+        start: spec.start,
+        limit: spec.count
+      };
+    }
   };
 }
 

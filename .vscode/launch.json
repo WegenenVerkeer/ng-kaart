@@ -30,9 +30,17 @@
     {
       "type": "chrome",
       "request": "launch",
-      "name": "Launch Chrome ng-kaart demo against apigateway",
+      "name": "Chrome ng-kaart demo against apigateway",
       "url": "http://apigateway/ng-kaart",
       "webRoot": "${workspaceFolder}"
+    },
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "Chromium ng-kaart demo against apigateway",
+      "url": "http://apigateway/ng-kaart",
+      "webRoot": "${workspaceFolder}",
+      "runtimeExecutable": "/usr/bin/chromium-browser"
     },
     {
       "type": "chrome",
