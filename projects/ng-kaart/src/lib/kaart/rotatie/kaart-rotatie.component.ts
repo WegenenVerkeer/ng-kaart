@@ -28,17 +28,17 @@ export class KaartRotatieComponent extends KaartChildComponentBase implements On
   constructor(
     private readonly parent: KaartComponent,
     zone: NgZone,
-    private readonly matIconRegistry: MatIconRegistry,
-    private readonly domSanitize: DomSanitizer,
-    private readonly changeDector: ChangeDetectorRef
+    matIconRegistry: MatIconRegistry,
+    domSanitize: DomSanitizer,
+    changeDector: ChangeDetectorRef
   ) {
     super(parent, zone);
 
-    this.matIconRegistry.addSvgIcon("compass", this.domSanitize.bypassSecurityTrustResourceUrl(encodeAsSvgUrl(compassSVG)));
+    matIconRegistry.addSvgIcon("compass", domSanitize.bypassSecurityTrustResourceUrl(encodeAsSvgUrl(compassSVG)));
 
     this.rotatie$ = this.parent.modelChanges.rotatie$.pipe(
       distinctUntilChanged(),
-      tap(() => this.changeDector.detectChanges()) // force redraw rotated compass, anders wordt die niet dynamisch getekend
+      tap(() => changeDector.detectChanges()) // force redraw rotated compass, anders wordt die niet dynamisch getekend
     );
 
     this.zichtbaar$ = rx.merge(

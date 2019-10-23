@@ -1,18 +1,20 @@
 import { array, option } from "fp-ts";
-import { Curried2, Endomorphism, flow, Function1, Predicate } from "fp-ts/lib/function";
+import { Curried2, Endomorphism, flow, Function1, Function2, Predicate } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
-import { fromTraversable, Lens, Traversal } from "monocle-ts";
+import { fromTraversable, Getter, Lens, Traversal } from "monocle-ts";
 import * as rx from "rxjs";
 import { map } from "rxjs/operators";
 
 import * as arrays from "../../util/arrays";
 import { selectiveArrayTraversal } from "../../util/lenses";
+import { envParams, KaartConfig } from "../kaart-config";
 import * as ke from "../kaart-elementen";
 import { GeselecteerdeFeatures, Viewinstellingen } from "../kaart-protocol-subscriptions";
 import { featuresOpIdToArray } from "../model-changes";
 
 import { LaagModel } from "./laag-model";
+import { TableLayoutMode } from "./TableLayoutMode";
 import { AsyncUpdate, SyncUpdate, Update } from "./update";
 
 export interface TableModel {
@@ -20,6 +22,7 @@ export interface TableModel {
 
   // andere globale eigenschappen
   readonly viewinstellingen: Viewinstellingen;
+  readonly layout: TableLayoutMode;
 }
 
 export namespace TableModel {
@@ -27,13 +30,20 @@ export namespace TableModel {
   export type TableModelAsyncUpdate = AsyncUpdate<TableModel>;
   export type TableModelUpdate = Update<TableModel>;
 
-  export const empty: Function1<Viewinstellingen, TableModel> = viewinstellingen => ({
+  export const empty: Function2<Viewinstellingen, KaartConfig, TableModel> = (viewinstellingen, config) => ({
     laagData: [],
-    viewinstellingen
+    viewinstellingen,
+    layout: envParams(config).initialLayoutMode === 1 ? "Compact" : "Comfortable"
   });
 
-  const laagDataLens: Lens<TableModel, LaagModel[]> = Lens.fromProp<TableModel>()("laagData");
-  const viewinstellingLens: Lens<TableModel, Viewinstellingen> = Lens.fromProp<TableModel>()("viewinstellingen");
+  type TableModelLens<A> = Lens<TableModel, A>;
+  type TableModelGetter<A> = Getter<TableModel, A>;
+  const tableModelPropLens = Lens.fromProp<TableModel>();
+
+  const laagDataLens: Lens<TableModel, LaagModel[]> = tableModelPropLens("laagData");
+  const viewinstellingLens: Lens<TableModel, Viewinstellingen> = tableModelPropLens("viewinstellingen");
+  const layoutInstellingLens: TableModelLens<TableLayoutMode> = tableModelPropLens("layout");
+  export const layoutInstellingGetter: TableModelGetter<TableLayoutMode> = layoutInstellingLens.asGetter();
 
   const laagForTitelTraversal: Function1<string, Traversal<TableModel, LaagModel>> = titel =>
     laagDataLens.composeTraversal(selectiveArrayTraversal(tl => tl.titel === titel));
@@ -120,4 +130,7 @@ export namespace TableModel {
 
   export const updateFilterSettings: Function1<ke.ToegevoegdeVectorLaag, TableModelUpdate> = tvlg =>
     liftLaagUpdate(tvlg.titel)(LaagModel.updateFilter(tvlg.filterinstellingen));
+
+  export const setCompactLayout: TableModelUpdate = Update.createSync(layoutInstellingLens.set("Compact"));
+  export const setComfortableLayout: TableModelUpdate = Update.createSync(layoutInstellingLens.set("Comfortable"));
 }

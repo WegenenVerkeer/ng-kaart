@@ -4,10 +4,10 @@ import { flow, Function1, Refinement } from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { filter, map, mapTo, share, shareReplay, startWith, switchMap, tap, withLatestFrom } from "rxjs/operators";
+import { distinctUntilChanged, map, mapTo, share, shareReplay, startWith, switchMap, tap, withLatestFrom } from "rxjs/operators";
 import { isBoolean, isString } from "util";
 
-import { subSpy } from "../../util/operators";
+import * as arrays from "../../util/arrays";
 import { join } from "../../util/string";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { DeselecteerFeatureCmd, SelecteerExtraFeaturesCmd, VeranderExtentCmd } from "../kaart-protocol-commands";
@@ -19,6 +19,7 @@ import { FeatureTabelOverzichtComponent } from "./feature-tabel-overzicht.compon
 import { FieldSelection } from "./field-selection-model";
 import { LaagModel } from "./laag-model";
 import { Row } from "./row-model";
+import { TableModel } from "./table-model";
 
 // Volgende interfaces zijn bedoeld voor gebruik in de template.
 interface ColumnHeaders {
@@ -58,6 +59,8 @@ interface TemplateData {
   readonly numGeselecteerdeFeatures: number;
   readonly hasSelectedFeatures: boolean;
   readonly allRowsSelected: boolean;
+  readonly allFieldsSelected: boolean;
+  readonly comfortableLayout: boolean;
 }
 
 interface RowSelection {
@@ -85,13 +88,18 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
   constructor(kaart: KaartComponent, overzicht: FeatureTabelOverzichtComponent, ngZone: NgZone) {
     super(kaart, ngZone);
 
-    this.laag$ = subSpy("****laag$")(
-      this.viewReady$.pipe(
+    this.laag$ = this.viewReady$
+      .pipe(
         // De input is pas beschikbaar nadat de view klaar is
         switchMap(() => overzicht.laagModel$(this.laagTitel)),
         share()
       )
-    ).pipe(shareReplay(1)); // De pager zit in een *ngIf, dus subscribe na emit
+      .pipe(shareReplay(1)); // De pager zit in een *ngIf, dus subscribe na emit
+
+    const layoutMode$ = overzicht.tableModel$.pipe(
+      map(TableModel.layoutInstellingGetter.get),
+      distinctUntilChanged()
+    );
 
     // Dit zorgt enkel voor het al dan niet kunnen schakelen tussen kaart als filter en alle data en wordt enkel 1 maal
     // in het begin uitgevoerd. We kunnen dit niet krijgen door op een initiële filterupdate te luisteren, want die
@@ -108,35 +116,36 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     // Alle data voor de template wordt in 1 custom datastructuur gegoten. Dat heeft als voordeel dat er geen gezever is
     // met observables die binnen *ngIf staan. Het nadeel is frequentere updates omdat er geen distinctUntil is. Die zou
     // immers de rows array moeten meenemen.
-    this.templateData$ = subSpy("****templateData$")(
-      rx.combineLatest(this.laag$, numGeselecteerdeFeatures$).pipe(
-        map(([laag, numGeselecteerdeFeatures]) => {
-          const fieldNameSelections = LaagModel.fieldSelectionsGetter.get(laag);
-          const showOnlySelectedFeatures = LaagModel.selectionViewModeGetter.get(laag) === "SelectedOnly";
-          const maybeRows = LaagModel.pageGetter.get(laag).map(Page.rowsLens.get);
-          const rows = option.toUndefined(maybeRows); // -> handiger in template
-          const allRowsSelected =
-            showOnlySelectedFeatures ||
-            pipe(
-              maybeRows,
-              option.exists(array.reduce(true as boolean, (s, row) => s && !!row.selected))
-            );
-          return {
-            dataAvailable: rows !== undefined,
-            fieldNameSelections,
-            headers: ColumnHeaders.createFromFieldSelection(fieldNameSelections),
-            rows,
-            mapAsFilterState: LaagModel.viewSourceModeGetter.get(laag) === "Map",
-            cannotChooseMapAsFilter: !LaagModel.canUseAllFeaturesGetter.get(laag),
-            updatePending: LaagModel.updatePendingGetter.get(laag),
-            numGeselecteerdeFeatures,
-            hasSelectedFeatures: numGeselecteerdeFeatures > 0,
-            showOnlySelectedFeatures,
-            allRowsSelected
-          };
-        }),
-        share()
-      )
+    this.templateData$ = rx.combineLatest(layoutMode$, this.laag$, numGeselecteerdeFeatures$).pipe(
+      map(([layoutMode, laagModel, numGeselecteerdeFeatures]) => {
+        const fieldNameSelections = LaagModel.fieldSelectionsGetter.get(laagModel);
+        const showOnlySelectedFeatures = LaagModel.selectionViewModeGetter.get(laagModel) === "SelectedOnly";
+        const maybeRows = LaagModel.pageGetter.get(laagModel).map(Page.rowsLens.get);
+        const rows = option.toUndefined(maybeRows); // -> handiger in template
+        const allRowsSelected =
+          showOnlySelectedFeatures ||
+          pipe(
+            maybeRows,
+            option.exists(arrays.forAll(row => !!row.selected))
+          );
+        const allFieldsSelected = arrays.forAll(FieldSelection.selectedLens.get)(laagModel.fieldSelections);
+        return {
+          dataAvailable: rows !== undefined,
+          fieldNameSelections,
+          headers: ColumnHeaders.createFromFieldSelection(fieldNameSelections),
+          rows,
+          mapAsFilterState: LaagModel.viewSourceModeGetter.get(laagModel) === "Map",
+          cannotChooseMapAsFilter: !LaagModel.canUseAllFeaturesGetter.get(laagModel),
+          updatePending: LaagModel.updatePendingGetter.get(laagModel),
+          numGeselecteerdeFeatures,
+          hasSelectedFeatures: numGeselecteerdeFeatures > 0,
+          showOnlySelectedFeatures,
+          allRowsSelected,
+          allFieldsSelected,
+          comfortableLayout: layoutMode === "Comfortable"
+        };
+      }),
+      share()
     );
 
     this.rows$ = this.laag$.pipe(
@@ -151,6 +160,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     const fieldSelectionsUpdate$ = rx.merge(
       this.actionFor$("chooseBaseFields").pipe(mapTo(LaagModel.chooseBaseFieldsUpdate)),
       this.actionFor$("chooseAllFields").pipe(mapTo(LaagModel.chooseAllFieldsUpdate)),
+      this.actionFor$("chooseNoFields").pipe(mapTo(LaagModel.chooseNoFieldsUpdate)),
       this.actionDataFor$("toggleField", isFieldSelection).pipe(
         map(fieldSelection => LaagModel.setFieldSelectedUpdate(fieldSelection.name, !fieldSelection.selected))
       ),

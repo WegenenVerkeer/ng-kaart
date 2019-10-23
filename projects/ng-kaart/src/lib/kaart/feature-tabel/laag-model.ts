@@ -688,6 +688,8 @@ export namespace LaagModel {
 
   export const chooseAllFieldsUpdate: LaagModelUpdate = updatePageDataAfter(fieldSelectionsLens.modify(FieldSelection.selectAllFields));
 
+  export const chooseNoFieldsUpdate: LaagModelUpdate = updatePageDataAfter(fieldSelectionsLens.modify(FieldSelection.selectOnlyFirstField));
+
   export const setFieldSelectedUpdate: Function2<string, boolean, LaagModelUpdate> = (fieldName, value) =>
     updatePageDataAfter(
       fieldSelectionForNameTraversal(fieldName)

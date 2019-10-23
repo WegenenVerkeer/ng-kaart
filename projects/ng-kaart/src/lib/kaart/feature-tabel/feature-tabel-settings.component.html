@@ -1,0 +1,26 @@
+<div class="feature-tabel-settings" *ngIf="(templateData$ | async) as data">
+  <button
+    mat-icon-button
+    [matMenuTriggerFor]="settingsMenu"
+    matTooltip="Tabelinstellingen"
+    xPosition="before"
+    yPosition="above"
+  >
+    <mat-icon>settings</mat-icon>
+  </button>
+  <mat-menu #settingsMenu="matMenu" class="feature-tabel-settings-menu">
+    <div class="feature-tabel-settings-menu-header feature-tabel-settings-menu-item">Tabelweergave</div>
+    <mat-radio-group class="feature-tabel-settings-menu-radio feature-tabel-settings-menu-item" [value]="data.layout">
+      <mat-radio-button class="feature-tabel-settings-menu-radio-choice"
+        (click)="onAction('makeCompact')"
+        value="Compact"
+        >Compact</mat-radio-button
+      >
+      <mat-radio-button class="feature-tabel-settings-menu-radio-choice"
+        (click)="onAction('makeComfortable')"
+        value="Comfortable"
+        >Comfortabel</mat-radio-button
+      >
+    </mat-radio-group>
+  </mat-menu>
+</div>
