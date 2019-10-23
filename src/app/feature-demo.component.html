@@ -134,7 +134,7 @@
   </div>
 
   <!-- configurator -->
-  <awv-test-sectie sectieId="configurator" sectieTitel="Configurator" [sectieZichtbaar]="false" #configuratorSectie>
+  <awv-test-sectie sectieId="configurator" sectieTitel="Configurator" [sectieZichtbaar]="true" #configuratorSectie>
     <div *ngIf="configuratorSectie.sectieZichtbaar" [@enterAnimation]>
       <div class="sub-content">
         Via de configurator kan je de kaart opties aan of uitzetten en aanpassen om zo de gewenste kaart configuratie te bekomen.
@@ -281,12 +281,12 @@
   </awv-test-sectie>
 
   <!-- voorbeelden -->
-  <awv-test-sectie sectieId="voorbeelden" sectieTitel="Voorbeelden" [sectieZichtbaar]="true" [bevatSubSecties]="true" #voorbeeldenSectie>
+  <awv-test-sectie sectieId="voorbeelden" sectieTitel="Voorbeelden" [bevatSubSecties]="true" #voorbeeldenSectie>
 
     <div [style.display]="voorbeeldenSectie.sectieZichtbaar ? 'block' : 'none'">
 
       <awv-test-sectie sectieId="filteren" sectieTitel="Filteren" [subSectie]="true" #filterenSectie
-                       [sectieZichtbaar]="true">
+                       [sectieZichtbaar]="voorbeeldenSectie.sectieZichtbaar && filterenSectie.sectieZichtbaar">
         <div *ngIf="filterenSectie.sectieZichtbaar" [@enterAnimation]>
           <awv-kaart-classic [naam]="'filteren'" [breedte]="1600" [hoogte]="1200" [zoom]="10" [middelpunt]="[151732, 210498]"
                              #filterKaart
