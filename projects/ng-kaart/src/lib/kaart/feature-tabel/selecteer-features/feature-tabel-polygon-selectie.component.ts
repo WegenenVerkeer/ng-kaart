@@ -8,7 +8,7 @@ import { Function1, Function2, identity } from "fp-ts/lib/function";
 import * as option from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { filter, map, switchMap, tap, withLatestFrom } from "rxjs/operators";
+import { filter, map, tap, withLatestFrom } from "rxjs/operators";
 
 import * as clr from "../../../stijl/colour";
 import { GeometryMapper, matchGeometryType } from "../../../util";
@@ -118,26 +118,36 @@ export class FeatureTabelSelectieViaPolygonComponent extends KaartModusComponent
     const olToTurf: Function1<ol.geom.Geometry, option.Option<turf.Feature<turf.Geometry, turf.Properties>>> = geometry =>
       matchGeometryType(geometry, turfMapper);
 
-    const geometryToPolygon: Function1<ol.geom.Geometry, turf.Feature<turf.Polygon, turf.Properties>> = geometry => {
+    const geometryToPolygon: Function1<ol.geom.Geometry, option.Option<turf.Feature<turf.Polygon, turf.Properties>>> = geometry => {
       const edges = <Array<ol.geom.LineString>>(<ol.geom.GeometryCollection>geometry).getGeometries();
       const coordinates = array.flatten(array.map((l: ol.geom.LineString) => l.getCoordinates())(edges));
       coordinates.push(coordinates[0]);
-      return turf.polygon([coordinates]);
+      if (coordinates.length < 4) {
+        return option.none;
+      } else {
+        return option.some(turf.polygon([coordinates]));
+      }
     };
 
     const drawingDone$ = this.modelChanges.tekenenOps$.pipe(filter(drawOps => drawOps.type === "StopDrawing"));
 
-    const selectedFeatures$ = drawingDone$.pipe(
-      withLatestFrom(this.modelChanges.getekendeGeometry$, this.modelChanges.zichtbareFeatures$),
-      map(([_, getekendeGeometry, zichtbareFeatures]) => {
-        const polygon = geometryToPolygon(getekendeGeometry);
-        return zichtbareFeatures.filter(zichtbareFeature =>
-          olToTurf(zichtbareFeature.getGeometry())
-            .map(g => booleanIntersects(g, polygon))
-            .fold<boolean>(false, identity)
-        );
+    const selectFeatures$ = drawingDone$.pipe(
+      withLatestFrom(this.isActief$, this.modelChanges.getekendeGeometry$, this.modelChanges.zichtbareFeatures$),
+      map(([_, actief, getekendeGeometry, zichtbareFeatures]) => {
+        if (actief) {
+          const maybePolygon = geometryToPolygon(getekendeGeometry);
+          return maybePolygon.map(polygon =>
+            zichtbareFeatures.filter(zichtbareFeature =>
+              olToTurf(zichtbareFeature.getGeometry())
+                .map(g => booleanIntersects(g, polygon))
+                .fold<boolean>(false, identity)
+            )
+          );
+        } else {
+          return option.none;
+        }
       }),
-      tap(features => this.dispatch(prt.SelecteerExtraFeaturesCmd(features)))
+      tap(mfs => mfs.map(features => this.dispatch(prt.SelecteerExtraFeaturesCmd(features))))
     );
 
     this.zichtbaar$ = this.modelChanges.tabelState$.pipe(map(tsc => tsc.state === "Opengeklapt"));
@@ -146,8 +156,9 @@ export class FeatureTabelSelectieViaPolygonComponent extends KaartModusComponent
       rx.merge(
         this.wordtActief$.pipe(tap(() => this.startSelectie())), //
         this.wordtInactief$.pipe(tap(() => this.stopSelectie())),
+        this.isActief$,
         drawingDone$,
-        subSpy("***actief")(this.isActief$).pipe(switchMap(actief => (actief ? selectedFeatures$ : rx.empty())))
+        selectFeatures$
       )
     );
   }
