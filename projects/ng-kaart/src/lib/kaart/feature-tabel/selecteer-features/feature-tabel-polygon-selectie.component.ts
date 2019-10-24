@@ -154,8 +154,7 @@ export class FeatureTabelSelectieViaPolygonComponent extends KaartModusComponent
       rx.merge(
         this.wordtActief$.pipe(tap(() => this.startSelectie())), //
         this.wordtInactief$.pipe(tap(() => this.stopSelectie())),
-        this.isActief$,
-        drawingDone$,
+        drawingDone$, // ik moet hier subscriben, anders komt er niks binnen in features$, jammer
         selectFeatures$
       )
     );
