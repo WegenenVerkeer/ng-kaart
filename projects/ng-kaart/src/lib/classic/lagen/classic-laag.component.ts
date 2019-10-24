@@ -111,7 +111,7 @@ export abstract class ClassicLaagComponent extends ClassicBaseComponent implemen
       legende: none,
       stijlInLagenKiezer: this._stijlInLagenKiezer,
       filterinstellingen: none,
-      tabelInstellingen: none,
+      tabelLaagInstellingen: none,
       wrapper: logOnlyWrapper
     });
   }

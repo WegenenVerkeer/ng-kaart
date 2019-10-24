@@ -9,9 +9,9 @@ import { isBoolean, isString } from "util";
 import { subSpy } from "../../util/operators";
 import { join } from "../../util/string";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
-import { TabelInstellingenMsg, tabelInstellingenMsgGen } from "../kaart-internal-messages";
-import { VeranderTabelInstellingenCmd } from "../kaart-protocol-commands";
-import { TabelInstellingen, TabelInstellingenSubscription, Viewinstellingen } from "../kaart-protocol-subscriptions";
+import { TabelLaagInstellingenMsg, tabelLaagInstellingenMsgGen } from "../kaart-internal-messages";
+import { VeranderTabelLaagInstellingenCmd } from "../kaart-protocol-commands";
+import { TabelLaagInstellingen, TabelLaagInstellingenSubscription, Viewinstellingen } from "../kaart-protocol-subscriptions";
 import { KaartComponent } from "../kaart.component";
 
 import { Page } from "./data-provider";
@@ -20,7 +20,6 @@ import { FieldSelection } from "./field-selection-model";
 import { LaagModel } from "./laag-model";
 import { Row } from "./row-model";
 import { Update } from "./update";
-import fieldSelectionsLens = LaagModel.fieldSelectionsLens;
 
 // Dit is een interface die bedoeld is voor gebruik in de template
 interface ColumnHeaders {
@@ -130,10 +129,12 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
 
     this.runInViewReady(
       this.laag$.pipe(
-        map(fieldSelectionsLens.get),
+        map(LaagModel.fieldSelectionsLens.get),
         distinctUntilChanged(array.getEq(FieldSelection.setoidFieldSelection).equals),
         map(selection => selection.filter(f => f.selected)),
-        tap(selected => this.dispatch(VeranderTabelInstellingenCmd(TabelInstellingen(this.laagTitel, new Set(selected.map(f => f.name))))))
+        tap(selected =>
+          this.dispatch(VeranderTabelLaagInstellingenCmd(TabelLaagInstellingen(this.laagTitel, new Set(selected.map(f => f.name)))))
+        )
       )
     );
 

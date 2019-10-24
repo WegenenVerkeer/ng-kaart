@@ -29,7 +29,7 @@ export type Subscription<Msg> =
   | MijnLocatieStateChangeSubscription<Msg>
   | PrecacheProgressSubscription<Msg>
   | PublishedKaartLocatiesSubscription<Msg>
-  | TabelInstellingenSubscription<Msg>
+  | TabelLaagInstellingenSubscription<Msg>
   | TabelStateSubscription<Msg>
   | TekenenSubscription<Msg>
   | ForceProgressBarSubscription<Msg>
@@ -56,13 +56,13 @@ export interface Viewinstellingen {
   rotation: number;
 }
 
-export interface TabelInstellingen {
-  laagnaam: string;
-  selectie: Set<string>;
+export interface TabelLaagInstellingen {
+  laagnaam: string; // De laag voor welke de instellingen geldig zijn
+  zichtbareVelden: Set<string>; // De namen/keys van de velden die zichtbaar zijn
 }
 
-export function TabelInstellingen(laagnaam: string, selectie: Set<string>) {
-  return { laagnaam, selectie };
+export function TabelLaagInstellingen(laagnaam: string, zichtbareVelden: Set<string>): TabelLaagInstellingen {
+  return { laagnaam, zichtbareVelden };
 }
 
 export interface GeselecteerdeFeatures {
@@ -208,9 +208,9 @@ export interface TabelStateSubscription<Msg> {
   readonly wrapper: (state: TabelStateChange) => Msg;
 }
 
-export interface TabelInstellingenSubscription<Msg> {
-  readonly type: "TabelInstellingen";
-  readonly wrapper: MsgGen<TabelInstellingen, Msg>;
+export interface TabelLaagInstellingenSubscription<Msg> {
+  readonly type: "TabelLaagInstellingen";
+  readonly wrapper: MsgGen<TabelLaagInstellingen, Msg>;
 }
 
 export interface BusySubscription<Msg> {
@@ -316,7 +316,11 @@ export function GeometryChangedSubscription<Msg>(
   tekenSettings: ke.TekenSettings,
   wrapper: MsgGen<ke.Tekenresultaat, Msg>
 ): GeometryChangedSubscription<Msg> {
-  return { type: "GeometryChanged", tekenSettings: tekenSettings, wrapper: wrapper };
+  return {
+    type: "GeometryChanged",
+    tekenSettings: tekenSettings,
+    wrapper: wrapper
+  };
 }
 
 export function TekenenSubscription<Msg>(wrapper: (settings: Option<ke.TekenSettings>) => Msg): TekenenSubscription<Msg> {
@@ -370,8 +374,8 @@ export function TabelStateSubscription<Msg>(wrapper: (stateChange: TabelStateCha
   return { type: "TabelState", wrapper };
 }
 
-export function TabelInstellingenSubscription<Msg>(
-  wrapper: (tabelInstellingen: TabelInstellingen) => Msg
-): TabelInstellingenSubscription<Msg> {
-  return { type: "TabelInstellingen", wrapper };
+export function TabelLaagInstellingenSubscription<Msg>(
+  wrapper: (tabelLaagInstellingen: TabelLaagInstellingen) => Msg
+): TabelLaagInstellingenSubscription<Msg> {
+  return { type: "TabelLaagInstellingen", wrapper };
 }

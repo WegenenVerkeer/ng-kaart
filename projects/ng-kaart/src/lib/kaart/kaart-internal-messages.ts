@@ -3,7 +3,7 @@ import * as ol from "openlayers";
 
 import { Tekenresultaat, TekenSettings } from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
-import { TabelInstellingen } from "./kaart-protocol";
+import { TabelLaagInstellingen } from "./kaart-protocol";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import { kaartLogger } from "./log";
 import { TabelStateChange } from "./model-changes";
@@ -18,7 +18,7 @@ export type KaartInternalSubMsg =
   | MijnLocatieZoomdoelGezetMsg
   | SubscribedMsg
   | TabelStateMsg
-  | TabelInstellingenMsg
+  | TabelLaagInstellingenMsg
   | TekenInfoboodschapGeslotenMsg
   | TekenMsg
   | VerwijderTekenFeatureMsg
@@ -82,9 +82,9 @@ export interface TabelStateMsg {
   readonly state: TabelStateChange;
 }
 
-export interface TabelInstellingenMsg {
-  readonly type: "TabelInstellingen";
-  readonly instellingen: TabelInstellingen;
+export interface TabelLaagInstellingenMsg {
+  readonly type: "TabelLaagInstellingen";
+  readonly instellingen: TabelLaagInstellingen;
 }
 
 export interface VerwijderTekenFeatureMsg {
@@ -130,10 +130,11 @@ function TabelStateMsg(state: TabelStateChange): TabelStateMsg {
   return { type: "TabelState", state };
 }
 
-export const tabelInstellingenMsgGen = (instellingen: TabelInstellingen) => KaartInternalMsg(some(TabelInstellingenMsg(instellingen)));
+export const tabelLaagInstellingenMsgGen = (instellingen: TabelLaagInstellingen): KaartInternalMsg =>
+  KaartInternalMsg(some(TabelLaagInstellingenMsg(instellingen)));
 
-function TabelInstellingenMsg(instellingen: TabelInstellingen): TabelInstellingenMsg {
-  return { type: "TabelInstellingen", instellingen };
+function TabelLaagInstellingenMsg(instellingen: TabelLaagInstellingen): TabelLaagInstellingenMsg {
+  return { type: "TabelLaagInstellingen", instellingen };
 }
 
 export const kaartClickWrapper = (clickCoordinaat: ol.Coordinate) => KaartInternalMsg(some(KaartClickMsg(clickCoordinaat)));

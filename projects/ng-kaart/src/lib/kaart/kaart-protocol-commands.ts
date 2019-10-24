@@ -7,7 +7,7 @@ import { Transparantie } from "../transparantieeditor/transparantie";
 import { TypedRecord } from "../util/typed-record";
 import { ZoekerMetWeergaveopties, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
 
-import { BareValidationWrapper, KaartLocaties, KaartMsg, Subscription, TabelInstellingen, ValidationWrapper } from ".";
+import { BareValidationWrapper, KaartLocaties, KaartMsg, Subscription, TabelLaagInstellingen, ValidationWrapper } from ".";
 import { CachedFeatureLookup } from "./cache/lookup";
 import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
@@ -58,7 +58,7 @@ export type Command<Msg extends KaartMsg> =
   | VeranderExtentCmd
   | VeranderMiddelpuntCmd
   | VeranderRotatieCmd
-  | VeranderTabelInstellingenCmd
+  | VeranderTabelLaagInstellingenCmd
   | VeranderViewportCmd
   | VeranderZoomCmd<Msg>
   | VerbergAchtergrondKeuzeCmd<Msg>
@@ -127,9 +127,9 @@ export interface PositieAanpassing {
   readonly positie: number;
 }
 
-export interface VeranderTabelInstellingenCmd {
-  readonly type: "VeranderTabelInstellingen";
-  readonly instellingen: TabelInstellingen;
+export interface VeranderTabelLaagInstellingenCmd {
+  readonly type: "VeranderTabelLaagInstellingen";
+  readonly instellingen: TabelLaagInstellingen;
 }
 
 export interface VoegLaagToeCmd<Msg extends KaartMsg> {
@@ -142,7 +142,7 @@ export interface VoegLaagToeCmd<Msg extends KaartMsg> {
   readonly legende: Option<Legende>;
   readonly stijlInLagenKiezer: Option<string>;
   readonly filterinstellingen: Option<ke.Laagfilterinstellingen>;
-  readonly tabelInstellingen: Option<TabelInstellingen>;
+  readonly tabelLaagInstellingen: Option<TabelLaagInstellingen>;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -655,7 +655,7 @@ export function VoegLaagToeCmd<Msg extends KaartMsg>(
   legende: Option<Legende>,
   stijlInLagenKiezer: Option<string>,
   filterinstellingen: Option<ke.Laagfilterinstellingen>,
-  tabelInstellingen: Option<TabelInstellingen>,
+  tabelLaagInstellingen: Option<TabelLaagInstellingen>,
   wrapper: BareValidationWrapper<Msg>
 ): VoegLaagToeCmd<Msg> {
   return {
@@ -668,7 +668,7 @@ export function VoegLaagToeCmd<Msg extends KaartMsg>(
     legende,
     stijlInLagenKiezer,
     filterinstellingen,
-    tabelInstellingen,
+    tabelLaagInstellingen,
     wrapper
   };
 }
@@ -784,8 +784,8 @@ export function VeranderExtentCmd(extent: ol.Extent): VeranderExtentCmd {
   return { type: "VeranderExtent", extent };
 }
 
-export function VeranderTabelInstellingenCmd(instellingen: TabelInstellingen): VeranderTabelInstellingenCmd {
-  return { type: "VeranderTabelInstellingen", instellingen };
+export function VeranderTabelLaagInstellingenCmd(instellingen: TabelLaagInstellingen): VeranderTabelLaagInstellingenCmd {
+  return { type: "VeranderTabelLaagInstellingen", instellingen };
 }
 
 export function RegistreerErrorCmd(inError: boolean): RegistreerErrorCmd {

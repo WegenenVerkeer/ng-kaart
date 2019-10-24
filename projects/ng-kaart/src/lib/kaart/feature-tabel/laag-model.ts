@@ -217,9 +217,9 @@ export namespace LaagModel {
         .set(option.some("ASCENDING") as Option<SortDirection>);
 
       const makeFieldSelected: Endomorphism<FieldSelection[]> = fields => {
-        return laag.tabelInstellingen
+        return laag.tabelLaagInstellingen
           .map(instellingen => {
-            return fields.map(field => FieldSelection.selectedLens.set(instellingen.selectie.has(field.name))(field));
+            return fields.map(field => FieldSelection.selectedLens.set(instellingen.zichtbareVelden.has(field.name))(field));
           })
           .getOrElse(fields);
       };

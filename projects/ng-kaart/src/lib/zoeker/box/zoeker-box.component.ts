@@ -31,10 +31,9 @@ import {
 
 import { KaartChildComponentBase } from "../../kaart/kaart-child-component-base";
 import * as ke from "../../kaart/kaart-elementen";
-import { VeldInfo } from "../../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import * as prt from "../../kaart/kaart-protocol";
-import { TabelInstellingen } from "../../kaart/kaart-protocol";
+import { TabelLaagInstellingen } from "../../kaart/kaart-protocol";
 import { KaartComponent } from "../../kaart/kaart.component";
 import { kaartLogger } from "../../kaart/log";
 import { Transparantie } from "../../transparantieeditor/transparantie";
@@ -347,7 +346,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       minZoom: 2,
       maxZoom: 15,
       offsetveld: none,
-      velden: new Map<string, VeldInfo>(),
+      velden: new Map<string, ke.VeldInfo>(),
       verwijderd: false,
       rijrichtingIsDigitalisatieZin: false,
       filter: none
@@ -468,7 +467,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       legende: none,
       stijlInLagenKiezer: none,
       filterinstellingen: none,
-      tabelInstellingen: none,
+      tabelLaagInstellingen: none,
       wrapper: kaartLogOnlyWrapper
     });
     const minZoektermLength = 2;
