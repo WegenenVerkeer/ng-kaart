@@ -138,9 +138,7 @@ export class FeatureTabelSelectieViaPolygonComponent extends KaartModusComponent
           const maybePolygon = geometryToPolygon(getekendeGeometry);
           return maybePolygon.map(polygon =>
             zichtbareFeatures.filter(zichtbareFeature =>
-              olToTurf(zichtbareFeature.getGeometry())
-                .map(g => booleanIntersects(g, polygon))
-                .fold<boolean>(false, identity)
+              olToTurf(zichtbareFeature.getGeometry()).exists(g => booleanIntersects(g, polygon))
             )
           );
         } else {
