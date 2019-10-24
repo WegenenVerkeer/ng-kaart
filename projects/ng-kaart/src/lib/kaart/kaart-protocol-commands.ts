@@ -280,7 +280,7 @@ export interface HighlightFeaturesCmd<Msg extends KaartMsg> {
 export interface VervangFeaturesCmd<Msg extends KaartMsg> {
   readonly type: "VervangFeatures";
   readonly titel: string;
-  readonly features: Array<ol.Feature>;
+  readonly features: ol.Feature[];
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -374,7 +374,7 @@ export interface AbortTileLoadingCmd {
 
 export interface MeldComponentFoutCmd {
   readonly type: "MeldComponentFout";
-  readonly fouten: Array<string>;
+  readonly fouten: string[];
 }
 
 export interface VoegZoekerToeCmd<Msg extends KaartMsg> {
@@ -460,7 +460,7 @@ export interface VoegOverlayToeCmd {
 
 export interface VerwijderOverlaysCmd {
   readonly type: "VerwijderOverlays";
-  readonly overlays: Array<ol.Overlay>;
+  readonly overlays: ol.Overlay[];
 }
 
 export interface ToonInfoBoodschapCmd {
@@ -522,16 +522,17 @@ export interface RegistreerErrorCmd {
 
 // De features zullen "geselecteerd" worden, ook al zouden ze geen onderdeel uitmaken van één van de lagen. Het is dus de
 // verantwoordelijkheid van de zender om enkel feature mee te geven die zichtbaar zijn.
-// De gegeven features vervangen de eventueel reeds geselecteerde features. Maw, om alles te deslecteren, kan dit commando verzonden worden
-// met een lege verzameling features.
+// De gegeven features vervangen enkel de eventueel reeds geselecteerde features indien incremental op false staat.
+// Indien incremental true is wordt de nieuwe met de bestaande selectie gecombineerd.
 export interface SelecteerFeaturesCmd {
   readonly type: "SelecteerFeatures";
-  readonly features: Array<ol.Feature>;
+  readonly features: ol.Feature[];
+  readonly incremental: boolean;
 }
 
 export interface DeselecteerFeatureCmd {
   readonly type: "DeselecteerFeature";
-  readonly id: string;
+  readonly ids: string[];
 }
 
 export interface DeselecteerAlleFeaturesCmd {
@@ -822,7 +823,7 @@ export function HighlightFeaturesCmd<Msg extends KaartMsg>(
 
 export function VervangFeaturesCmd<Msg extends KaartMsg>(
   titel: string,
-  features: Array<ol.Feature>,
+  features: ol.Feature[],
   wrapper: BareValidationWrapper<Msg>
 ): VervangFeaturesCmd<Msg> {
   return { type: "VervangFeatures", titel, features, wrapper };
@@ -848,7 +849,7 @@ export function ActiveerHoverModusCmd(hoverModus: HoverModus): ActiveerHoverModu
   return { type: "ActiveerHoverModus", hoverModus };
 }
 
-export function MeldComponentFoutCmd(fouten: Array<string>): MeldComponentFoutCmd {
+export function MeldComponentFoutCmd(fouten: string[]): MeldComponentFoutCmd {
   return { type: "MeldComponentFout", fouten };
 }
 
@@ -895,7 +896,7 @@ export function VoegOverlayToeCmd(overlay: ol.Overlay): VoegOverlayToeCmd {
   return { type: "VoegOverlayToe", overlay };
 }
 
-export function VerwijderOverlaysCmd(overlays: Array<ol.Overlay>): VerwijderOverlaysCmd {
+export function VerwijderOverlaysCmd(overlays: ol.Overlay[]): VerwijderOverlaysCmd {
   return { type: "VerwijderOverlays", overlays };
 }
 
@@ -942,12 +943,16 @@ export function ZetUiElementOpties(naam: string, opties: any): ZetUiElementOptie
   return { type: "ZetUiElementOpties", naam, opties };
 }
 
-export function SelecteerFeaturesCmd(features: Array<ol.Feature>): SelecteerFeaturesCmd {
-  return { type: "SelecteerFeatures", features };
+export function SelecteerFeaturesCmd(features: ol.Feature[]): SelecteerFeaturesCmd {
+  return { type: "SelecteerFeatures", features, incremental: false };
 }
 
-export function DeselecteerFeatureCmd(id: string): DeselecteerFeatureCmd {
-  return { type: "DeselecteerFeature", id };
+export function SelecteerExtraFeaturesCmd(features: ol.Feature[]): SelecteerFeaturesCmd {
+  return { type: "SelecteerFeatures", features, incremental: true };
+}
+
+export function DeselecteerFeatureCmd(ids: string[]): DeselecteerFeatureCmd {
+  return { type: "DeselecteerFeature", ids };
 }
 
 export function DeselecteerAlleFeaturesCmd(): DeselecteerAlleFeaturesCmd {

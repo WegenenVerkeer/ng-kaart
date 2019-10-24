@@ -1,7 +1,9 @@
 import { option, setoid } from "fp-ts";
+import { FunctionN } from "fp-ts/es6/function";
 import { array, mapOption } from "fp-ts/lib/Array";
-import { Curried2, Function1, Refinement } from "fp-ts/lib/function";
+import { Curried2, flow, Function1, Refinement } from "fp-ts/lib/function";
 import { fromNullable, Option, option as optionMonad, tryCatch } from "fp-ts/lib/Option";
+import { pipe } from "fp-ts/lib/pipeable";
 import { Setoid, setoidString } from "fp-ts/lib/Setoid";
 import * as traversable from "fp-ts/lib/Traversable";
 import * as ol from "openlayers";
@@ -67,6 +69,13 @@ export const featureToGeoJson: PartialFunction1<ol.Feature, GeoJsonFeatures> = f
 export const clusterFeaturesToGeoJson: PartialFunction1<ol.Feature[], GeoJsonFeatures[]> = features =>
   traversable.traverse(optionMonad, array)(features, featureToGeoJson);
 
+// Een type dat onze features encapsuleert. Die hebben in 99% van de gevallen een id en een laagnaam.
+export interface FeatureWithIdAndLaagnaam {
+  readonly id: string;
+  readonly laagnaam: string;
+  readonly feature: ol.Feature;
+}
+
 export namespace Feature {
   export const propertyId: PartialFunction1<ol.Feature, string> = feature =>
     option
@@ -76,9 +85,9 @@ export namespace Feature {
 
   export const properties: Function1<ol.Feature, any> = feature => feature.getProperties().properties;
 
-  export const propertiesWithId: Function1<ol.Feature, any> = feature => ({
-    id: propertyId(feature).toUndefined(),
-    ...properties(feature) // id in properties heeft dus voorrang
+  export const propertiesWithId: Function1<FeatureWithIdAndLaagnaam, Record<string, any>> = feature => ({
+    id: feature.id,
+    ...properties(feature.feature) // id in properties heeft dus voorrang, maar is hetzelfde
   });
 
   export const fieldKeyToPropertyPath: Function1<string, string> = fieldKey => `properties.${fieldKey}`;
@@ -92,11 +101,36 @@ export namespace Feature {
     return fromNullable(singleFeature.get("laagnaam").toString());
   };
 
+  export const featureWithIdAndLaagnaam: PartialFunction1<ol.Feature, FeatureWithIdAndLaagnaam> = feature =>
+    pipe(
+      feature,
+      propertyId,
+      option.chain(id =>
+        pipe(
+          getLaagnaam(feature),
+          option.map(laagnaam => ({ id, laagnaam, feature }))
+        )
+      )
+    );
+
   export const setoidFeaturePropertyId: Setoid<ol.Feature> = setoid.contramap(propertyId, option.getSetoid(setoidString));
 
   export const notInExtent: Function1<ol.Extent, Refinement<ol.Feature, ol.Feature>> = extent => (feature): feature is ol.Feature => {
     const [featureMinX, featureMinY, featureMaxX, featureMaxY]: ol.Extent = feature.getGeometry().getExtent();
     const [extentMinX, extentMinY, extentMaxX, extentMaxY]: ol.Extent = extent;
     return extentMinX > featureMaxX || extentMaxX < featureMinX || extentMinY > featureMaxY || extentMaxY < featureMinY;
+  };
+
+  export const overlapsExtent: Function1<ol.Extent, Refinement<ol.Feature, ol.Feature>> = extent => (feature): feature is ol.Feature => {
+    const [featureMinX, featureMinY, featureMaxX, featureMaxY]: ol.Extent = feature.getGeometry().getExtent();
+    const [extentMinX, extentMinY, extentMaxX, extentMaxY]: ol.Extent = extent;
+    return (
+      ((extentMinX <= featureMaxX && extentMinX >= featureMinX) ||
+        (extentMaxX <= featureMaxX && extentMaxX >= featureMinX) ||
+        (extentMaxX >= featureMaxX && extentMinX <= featureMinX)) &&
+      ((extentMinY <= featureMaxY && extentMinY >= featureMinY) ||
+        (extentMaxY <= featureMaxY && extentMaxY >= featureMinY) ||
+        (extentMaxY >= featureMaxY && extentMinY <= featureMinY))
+    );
   };
 }

@@ -1,7 +1,8 @@
-import * as array from "fp-ts/lib/Array";
+import { array } from "fp-ts";
 import { left, right } from "fp-ts/lib/Either";
-import { Function1, Function2 } from "fp-ts/lib/function";
+import { flow, Function1, Function2 } from "fp-ts/lib/function";
 import { none, Option } from "fp-ts/lib/Option";
+import { pipe } from "fp-ts/lib/pipeable";
 import { setoidString } from "fp-ts/lib/Setoid";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
@@ -20,10 +21,12 @@ import {
   tap
 } from "rxjs/operators";
 
+import { roundCoordinate } from "../coordinaten";
 import { FilterAanpassingState as FilteraanpassingState, GeenFilterAanpassingBezig } from "../filter/filter-aanpassing-state";
 import { NosqlFsSource } from "../source/nosql-fs-source";
 import { GeenTransparantieaanpassingBezig, TransparantieaanpassingState } from "../transparantieeditor/state";
-import { Feature } from "../util/feature";
+import { collectOption, scan2 } from "../util";
+import { Feature, FeatureWithIdAndLaagnaam } from "../util/feature";
 import * as tilecacheMetadataDb from "../util/indexeddb-tilecache-metadata";
 import { observableFromOlEvents } from "../util/ol-observable";
 import { updateBehaviorSubject } from "../util/subject-update";
@@ -167,7 +170,8 @@ export interface ModelChanges {
   readonly laagVerwijderd$: rx.Observable<ke.ToegevoegdeLaag>;
   readonly geselecteerdeFeatures$: rx.Observable<GeselecteerdeFeatures>;
   readonly hoverFeatures$: rx.Observable<HoverFeature>;
-  readonly zichtbareFeatures$: rx.Observable<Array<ol.Feature>>;
+  readonly zichtbareFeatures$: rx.Observable<ol.Feature[]>;
+  readonly zichtbareFeaturesPerLaag$: rx.Observable<ReadonlyMap<string, ol.Feature[]>>;
   readonly kaartKlikLocatie$: rx.Observable<KlikInfo>;
   readonly mijnLocatieZoomDoel$: rx.Observable<Option<number>>;
   readonly actieveModus$: rx.Observable<Option<string>>;
@@ -203,17 +207,97 @@ const viewinstellingen: Function1<ol.Map, prt.Viewinstellingen> = olmap => ({
   rotation: olmap.getView().getRotation()
 });
 
+export const featuresOpIdToArray = (perLaag: prt.KaartFeaturesOpId): ol.Feature[] =>
+  array.map((f: FeatureWithIdAndLaagnaam) => f.feature)([...perLaag.values()]);
+
 export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> = (model, changer) => {
-  const geselecteerdeFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.geselecteerdeFeatures, "add", "remove").pipe(
-    debounceTime(20),
-    map(evt => [...(evt.target as ol.Collection<ol.Feature>).getArray()]), // getArray geeft altijd dezelfde array terug!
-    startWith([] as ol.Feature[]),
+  // We updaten de features niet constant. We doen dat omdat we naar de buitenwereld de illusie willen wekken dat
+  // features als een groep geselecteerd worden. Openlayers daarentegen genereert afzonderlijke events per feature dat
+  // toegevoegd of verwijderd wordt. Daarom nemen wij een tweetrapsaanpak waarbij we eerst een collectie opbouwen met
+  // adds en deletes.
+  const featureSelectionUpdateInterval = 2;
+  // Features zonder laagnaam en id negeren we gewoon
+  const selectionEventToFeature = (evt: ol.Collection.Event) => Feature.featureWithIdAndLaagnaam(evt.element as ol.Feature);
+
+  const collectFeaturesFromOl$ = (operation: string) =>
+    observableFromOlEvents<ol.Collection.Event>(model.geselecteerdeFeatures, operation).pipe(collectOption(selectionEventToFeature));
+  const addedFeature$ = collectFeaturesFromOl$("add");
+  const removedFeature$ = collectFeaturesFromOl$("remove");
+
+  const featuresOpLaagToArray = (featuresPerLaag: prt.KaartFeaturesOpLaag) =>
+    array.chain(featuresOpIdToArray)([...featuresPerLaag.values()]);
+
+  // Berekent de features die wel in map1 zitten, maar niet in map2
+  const difference = (map1: prt.KaartFeaturesOpId, map2: prt.KaartFeaturesOpId): ol.Feature[] =>
+    pipe(
+      [...map1.values()],
+      array.filter(f => !map2.has(f.id)),
+      array.map(f => f.feature)
+    );
+
+  // We gaan hier wat valsspelen in de zin dat we een mutable Map gebruiken als
+  // accumulator voor de scan. Maar alles voor performantie! (We hebben geen
+  // persistente Map in Typescript)
+  const geselecteerdeFeatures$ = scan2(
+    addedFeature$,
+    removedFeature$,
+    (state, addedFeature) => {
+      const featuresInLaag = state.featuresPerLaag.get(addedFeature.laagnaam);
+      if (featuresInLaag) {
+        featuresInLaag.set(addedFeature.id, addedFeature);
+      } else {
+        const featuresInLaag = new Map<string, FeatureWithIdAndLaagnaam>();
+        featuresInLaag.set(addedFeature.id, addedFeature);
+        state.featuresPerLaag.set(addedFeature.laagnaam, featuresInLaag);
+      }
+      state.added.set(addedFeature.id, addedFeature);
+      state.removed.delete(addedFeature.id);
+      return state;
+    },
+    (state, removedFeature) => {
+      const featuresInLaag = state.featuresPerLaag.get(removedFeature.laagnaam);
+      if (featuresInLaag) {
+        featuresInLaag.delete(removedFeature.id);
+      }
+      state.added.delete(removedFeature.id);
+      state.removed.set(removedFeature.id, removedFeature);
+      return state;
+    },
+    {
+      featuresPerLaag: new Map<string, Map<string, FeatureWithIdAndLaagnaam>>(),
+      added: new Map<string, FeatureWithIdAndLaagnaam>(),
+      removed: new Map<string, FeatureWithIdAndLaagnaam>()
+    }
+  ).pipe(
+    debounceTime(featureSelectionUpdateInterval),
+    startWith({
+      featuresPerLaag: new Map<string, Map<string, FeatureWithIdAndLaagnaam>>(),
+      added: new Map<string, FeatureWithIdAndLaagnaam>(), // toegevoegd en nog steeds aanwezig
+      removed: new Map<string, FeatureWithIdAndLaagnaam>() // verwijderd en niet meer toegevoegd
+    }),
+    map(state => ({
+      // We hebben tot nu tot met mutable structuren gewerkt, maar om de
+      // toegevoegde en verwijderde features te berekenen in pairwise, moeten we
+      // vergelijken en daarvoor kunnen we niet dezelfde instantie gebruiken. Er
+      // is een alternatief waarbij we de added en removed resetten in sync met
+      // de debounce van de featurewijzigingen, maar dat is veel complexer. Nog
+      // een andere mogelijkheid is om een deep copy van de maps te doen en die
+      // dan te vergelijken, maar ook dat is ingewikkelder en niet veel sneller.
+      // Wat ook zou kunnen is om de array in geselecteerd te gebruiken om een
+      // diff te berekenen, maar dan moet we arrays vergelijken ipv Maps, dus
+      // ook een orde trager.
+      featuresPerLaag: state.featuresPerLaag,
+      added: new Map<string, FeatureWithIdAndLaagnaam>(state.added.entries()),
+      removed: new Map<string, FeatureWithIdAndLaagnaam>(state.removed.entries())
+    })),
     pairwise(),
     map(([prev, current]) => ({
-      geselecteerd: current,
-      toegevoegd: array.difference(Feature.setoidFeaturePropertyId)(current, prev),
-      verwijderd: array.difference(Feature.setoidFeaturePropertyId)(prev, current)
-    }))
+      geselecteerd: featuresOpLaagToArray(current.featuresPerLaag),
+      featuresPerLaag: current.featuresPerLaag, // we laten een mutable map los in de wereld :-(
+      toegevoegd: difference(current.added, prev.added),
+      verwijderd: difference(current.removed, prev.removed)
+    })),
+    share()
   );
 
   const hoverFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.hoverFeatures, "add", "remove").pipe(
@@ -283,16 +367,31 @@ export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> 
     mapTo(void 0)
   );
 
-  const collectFeatures: (_1: prt.Viewinstellingen, _2: Array<ke.ToegevoegdeVectorLaag>) => Array<ol.Feature> = (vw, vlgn) =>
-    array.array.chain(vlgn, vlg => {
-      return ke.isZichtbaar(vw.resolution)(vlg) ? vlg.layer.getSource().getFeaturesInExtent(vw.extent) : [];
-    });
+  const collectFeaturesPerLaag = (vw: prt.Viewinstellingen, tvlgn: ke.ToegevoegdeVectorLaag[]): ReadonlyMap<string, ol.Feature[]> =>
+    new Map(
+      pipe(
+        tvlgn,
+        array.filter(ke.isZichtbaar(vw.resolution)),
+        array.map(
+          (tvlg: ke.ToegevoegdeVectorLaag) => [tvlg.titel, tvlg.layer.getSource().getFeaturesInExtent(vw.extent)] as [string, ol.Feature[]]
+        )
+      )
+    );
 
-  const zichtbareFeatures$ = rx.combineLatest(viewinstellingen$, vectorlagen$, featuresChanged$, collectFeatures);
+  const zichtbareFeaturesPerLaag$: rx.Observable<ReadonlyMap<string, ol.Feature[]>> = rx
+    .combineLatest(viewinstellingen$, vectorlagen$, featuresChanged$, collectFeaturesPerLaag)
+    .pipe(share());
+
+  const zichtbareFeatures$: rx.Observable<ol.Feature[]> = zichtbareFeaturesPerLaag$.pipe(
+    map(flow(
+      m => [...m.values()],
+      array.flatten
+    ) as ((value: ReadonlyMap<string, ol.Feature[]>) => ol.Feature[]))
+  );
 
   const kaartKlikLocatie$ = observableFromOlEvents(model.map, "click").pipe(
     map((event: ol.MapBrowserEvent) => ({
-      coordinate: event.coordinate,
+      coordinate: roundCoordinate(event.coordinate, 2),
       coversFeature: model.map.hasFeatureAtPixel(event.pixel, {
         hitTolerance: envParams(model.config).clickHitTolerance,
         // enkel json data features die een identify hebben beschouwen we. Zoekresultaten bvb niet
@@ -337,6 +436,7 @@ export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> 
     geselecteerdeFeatures$: geselecteerdeFeatures$.pipe(observeOn(rx.asapScheduler)),
     hoverFeatures$: hoverFeatures$.pipe(observeOn(rx.asapScheduler)),
     zichtbareFeatures$: zichtbareFeatures$.pipe(observeOn(rx.asapScheduler)),
+    zichtbareFeaturesPerLaag$: zichtbareFeaturesPerLaag$.pipe(observeOn(rx.asapScheduler)),
     kaartKlikLocatie$: kaartKlikLocatie$.pipe(observeOn(rx.asapScheduler)),
     mijnLocatieZoomDoel$: changer.mijnLocatieZoomDoelSubj.pipe(observeOn(rx.asapScheduler)),
     actieveModus$: changer.actieveModusSubj.pipe(observeOn(rx.asapScheduler)),

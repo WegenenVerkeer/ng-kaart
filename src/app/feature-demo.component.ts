@@ -1027,6 +1027,10 @@ export class FeatureDemoComponent {
     console.log("------> kaartLocaties", locaties);
   }
 
+  onKaartClick(clickCoordinaat: any): void {
+    console.log("------> kaartClick", clickCoordinaat);
+  }
+
   onMijnMobieleLocatieStateChange(stateChange: any): void {
     console.log("-----> stateChange", stateChange);
   }
@@ -1147,6 +1151,10 @@ export class FeatureDemoComponent {
 
   onFeatureSelectie(features: ol.Feature[]) {
     console.log("---> Geselecteerde features", features);
+    // Dit is zoals Elisa werkt. Hier om een regressie te testen/voorkomen.
+    setTimeout(() => {
+      this.geselecteerdeFeatures = features;
+    }, 500);
   }
 
   onClickSelecteerFeatures() {

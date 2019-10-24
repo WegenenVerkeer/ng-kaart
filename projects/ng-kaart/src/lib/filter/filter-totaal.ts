@@ -15,8 +15,8 @@ export interface TotaalOpTeHalen {
 
 export interface TotaalOpgehaald {
   readonly kind: "TotaalOpgehaald";
-  readonly collectionTotaal: number;
-  readonly totaal: number;
+  readonly collectionTotaal: number; // Ongeacht de actieve filter
+  readonly totaal: number; // Rekening houdend met de filter
 }
 
 export interface TotaalOphalenMislukt {

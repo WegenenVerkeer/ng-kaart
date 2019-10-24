@@ -269,7 +269,7 @@ export namespace FilterEditor {
 
   const unaryOperatorLabelsByOperator: OperatorLabelsByUnaryOperator = {
     isEmpty: { label: "heeft geen waarde", shortLabel: "heeft geen waarde" },
-    isNotEmpty: { label: "heeft geen waarde", shortLabel: "heeft geen waarde" }
+    isNotEmpty: { label: "heeft een waarde", shortLabel: "heeft een waarde" }
   };
 
   const typedComparisonOperator: Function3<

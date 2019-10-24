@@ -2,16 +2,22 @@ import { ChangeDetectionStrategy, Component, Input, NgZone, ViewEncapsulation } 
 import { array, option } from "fp-ts";
 import { flow, Function1, Refinement } from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
+import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { distinctUntilChanged, map, mapTo, share, shareReplay, startWith, switchMap, tap } from "rxjs/operators";
+import { distinctUntilChanged, map, mapTo, share, shareReplay, startWith, switchMap, tap, withLatestFrom } from "rxjs/operators";
 import { isBoolean, isString } from "util";
 
-import { subSpy } from "../../util/operators";
+import * as arrays from "../../util/arrays";
 import { join } from "../../util/string";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
-import { TabelLaagInstellingenMsg, tabelLaagInstellingenMsgGen } from "../kaart-internal-messages";
-import { VeranderTabelLaagInstellingenCmd } from "../kaart-protocol-commands";
-import { TabelLaagInstellingen, TabelLaagInstellingenSubscription, Viewinstellingen } from "../kaart-protocol-subscriptions";
+import {
+  DeselecteerFeatureCmd,
+  SelecteerExtraFeaturesCmd,
+  VeranderExtentCmd,
+  VeranderTabelLaagInstellingenCmd
+} from "../kaart-protocol-commands";
+import { TabelLaagInstellingen } from "../kaart-protocol-subscriptions";
+import { FeatureSelection, GeselecteerdeFeatures } from "../kaart-protocol-subscriptions";
 import { KaartComponent } from "../kaart.component";
 
 import { Page } from "./data-provider";
@@ -19,9 +25,9 @@ import { FeatureTabelOverzichtComponent } from "./feature-tabel-overzicht.compon
 import { FieldSelection } from "./field-selection-model";
 import { LaagModel } from "./laag-model";
 import { Row } from "./row-model";
-import { Update } from "./update";
+import { TableModel } from "./table-model";
 
-// Dit is een interface die bedoeld is voor gebruik in de template
+// Volgende interfaces zijn bedoeld voor gebruik in de template.
 interface ColumnHeaders {
   readonly headers: FieldSelection[];
   readonly columnWidths: string; // we willen dit niet in de template opbouwen
@@ -32,7 +38,8 @@ namespace ColumnHeaders {
     headers: fieldSelections,
     columnWidths: pipe(
       fieldSelections,
-      array.map(_ => "minmax(150px, 400px)"),
+      array.map(fs => fs.contributingVeldinfos.length),
+      array.map(numFields => `minmax(${140 + (numFields - 1) * 35}px, 400px)`),
       join(" ")
     )
   });
@@ -52,8 +59,19 @@ interface TemplateData {
   readonly headers: ColumnHeaders;
   readonly rows?: Row[];
   readonly mapAsFilterState: boolean;
+  readonly showOnlySelectedFeatures: boolean;
   readonly cannotChooseMapAsFilter: boolean;
   readonly updatePending: boolean;
+  readonly numGeselecteerdeFeatures: number;
+  readonly hasSelectedFeatures: boolean;
+  readonly allRowsSelected: boolean;
+  readonly allFieldsSelected: boolean;
+  readonly comfortableLayout: boolean;
+}
+
+interface RowSelection {
+  readonly row: Row;
+  readonly selected: boolean;
 }
 
 @Component({
@@ -66,7 +84,7 @@ interface TemplateData {
 export class FeatureTabelDataComponent extends KaartChildComponentBase {
   // Voor de template
   public readonly templateData$: rx.Observable<TemplateData>;
-
+  public readonly rows$: rx.Observable<Row[]>;
   // Voor child components
   public readonly laag$: rx.Observable<LaagModel>;
 
@@ -76,60 +94,78 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
   constructor(kaart: KaartComponent, overzicht: FeatureTabelOverzichtComponent, ngZone: NgZone) {
     super(kaart, ngZone);
 
-    this.laag$ = subSpy("****laag$")(
-      this.viewReady$.pipe(
+    this.laag$ = this.viewReady$
+      .pipe(
         // De input is pas beschikbaar nadat de view klaar is
         switchMap(() => overzicht.laagModel$(this.laagTitel)),
         share()
       )
-    ).pipe(shareReplay(1)); // De pager zit in een *ngIf, dus subscribe na emit
+      .pipe(shareReplay(1)); // De pager zit in een *ngIf, dus subscribe na emit
 
-    // TODO luisteren op filterupdates
-    // Dit zorgt enkel voor het al dan niet kunnen schakelen tussen kaart als filter en alle data
-    const totalFeaturesUpdate$: rx.Observable<LaagModel.LaagModelUpdate> = rx.of(LaagModel.followTotalFeaturesUpdate); // equiv. startWith
+    const layoutMode$ = overzicht.tableModel$.pipe(
+      map(TableModel.layoutInstellingGetter.get),
+      distinctUntilChanged()
+    );
 
-    // Voor de kaart als filter kunnen we gewoon de zichtbare features volgen. Het model zal de updates neutraliseren als
-    // het niet in de kaart als filter mode is.
-    const directPageUpdates$: rx.Observable<LaagModel.LaagModelUpdate> = subSpy("****directPageUpdates$")(
-      this.modelChanges.viewinstellingen$ // OL past collectie niet aan voor elke zoom/pan, dus moeten we update forceren
-        .pipe(
-          mapTo(null), // Om startWith te kunnen doen
-          startWith(null), // We willen direct bij subscribe emitten
-          map(() =>
-            Update.mappend(
-              // Eerst de "geforceerde" update
-              LaagModel.sourceFeaturesUpdate,
-              // Dan volgen van de features in de view (wat dus niks oplevert als er geen nieuwe features van de backend komen)
-              LaagModel.followViewFeatureUpdates
-            )
-          )
-        )
+    // Dit zorgt enkel voor het al dan niet kunnen schakelen tussen kaart als filter en alle data en wordt enkel 1 maal
+    // in het begin uitgevoerd. We kunnen dit niet krijgen door op een initiële filterupdate te luisteren, want die
+    // komt enkel als er effectief een filter gezet is.
+    const totalFeaturesUpdate$: rx.Observable<LaagModel.LaagModelUpdate> = rx.of(LaagModel.getTotalFeaturesUpdate);
+
+    const numGeselecteerdeFeatures$ = this.inViewReady(() =>
+      this.modelChanges.geselecteerdeFeatures$.pipe(
+        map(FeatureSelection.selectedFeaturesInLaagSize(this.laagTitel)),
+        startWith(0)
+      )
     );
 
     // Alle data voor de template wordt in 1 custom datastructuur gegoten. Dat heeft als voordeel dat er geen gezever is
     // met observables die binnen *ngIf staan. Het nadeel is frequentere updates omdat er geen distinctUntil is. Die zou
     // immers de rows array moeten meenemen.
-    this.templateData$ = subSpy("****templateData$")(
-      this.laag$.pipe(
-        map(laag => {
-          const fieldNameSelections = LaagModel.fieldSelectionsLens.get(laag);
-          const rows = option.toUndefined(LaagModel.pageLens.get(laag).map(Page.rowsLens.get));
-          return {
-            dataAvailable: rows !== undefined,
-            fieldNameSelections,
-            headers: ColumnHeaders.createFromFieldSelection(fieldNameSelections),
-            rows,
-            mapAsFilterState: LaagModel.mapAsFilterGetter.get(laag),
-            cannotChooseMapAsFilter: !LaagModel.canUseAllFeaturesGetter.get(laag),
-            updatePending: LaagModel.updatePendingLens.get(laag)
-          };
-        })
+    this.templateData$ = rx.combineLatest(layoutMode$, this.laag$, numGeselecteerdeFeatures$).pipe(
+      map(([layoutMode, laagModel, numGeselecteerdeFeatures]) => {
+        const fieldNameSelections = LaagModel.fieldSelectionsGetter.get(laagModel);
+        const showOnlySelectedFeatures = LaagModel.selectionViewModeGetter.get(laagModel) === "SelectedOnly";
+        const maybeRows = LaagModel.pageGetter.get(laagModel).map(Page.rowsLens.get);
+        const rows = option.toUndefined(maybeRows); // -> handiger in template
+        const allRowsSelected =
+          showOnlySelectedFeatures ||
+          pipe(
+            maybeRows,
+            option.exists(arrays.forAll(row => !!row.selected))
+          );
+        const allFieldsSelected = arrays.forAll(FieldSelection.selectedLens.get)(laagModel.fieldSelections);
+        return {
+          dataAvailable: rows !== undefined,
+          fieldNameSelections,
+          headers: ColumnHeaders.createFromFieldSelection(fieldNameSelections),
+          rows,
+          mapAsFilterState: LaagModel.viewSourceModeGetter.get(laagModel) === "Map",
+          cannotChooseMapAsFilter: !LaagModel.canUseAllFeaturesGetter.get(laagModel),
+          updatePending: LaagModel.updatePendingGetter.get(laagModel),
+          numGeselecteerdeFeatures,
+          hasSelectedFeatures: numGeselecteerdeFeatures > 0,
+          showOnlySelectedFeatures,
+          allRowsSelected,
+          allFieldsSelected,
+          comfortableLayout: layoutMode === "Comfortable"
+        };
+      }),
+      share()
+    );
+
+    this.rows$ = this.laag$.pipe(
+      map(laag =>
+        LaagModel.pageGetter
+          .get(laag)
+          .map(Page.rowsLens.get)
+          .getOrElse([])
       )
     );
 
     this.runInViewReady(
       this.laag$.pipe(
-        map(LaagModel.fieldSelectionsLens.get),
+        map(LaagModel.fieldSelectionsGetter.get),
         distinctUntilChanged(array.getEq(FieldSelection.setoidFieldSelection).equals),
         map(selection => selection.filter(f => f.selected)),
         tap(selected =>
@@ -141,9 +177,12 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     const fieldSelectionsUpdate$ = rx.merge(
       this.actionFor$("chooseBaseFields").pipe(mapTo(LaagModel.chooseBaseFieldsUpdate)),
       this.actionFor$("chooseAllFields").pipe(mapTo(LaagModel.chooseAllFieldsUpdate)),
+      this.actionFor$("chooseNoFields").pipe(mapTo(LaagModel.chooseNoFieldsUpdate)),
       this.actionDataFor$("toggleField", isFieldSelection).pipe(
         map(fieldSelection => LaagModel.setFieldSelectedUpdate(fieldSelection.name, !fieldSelection.selected))
-      )
+      ),
+      this.actionFor$("showOnlySelectedFeatures").pipe(mapTo(LaagModel.setShowSelectedOnlyUpdate(true))),
+      this.actionFor$("showAllFeatures").pipe(mapTo(LaagModel.setShowSelectedOnlyUpdate(false)))
     );
 
     const sortUpdate$ = this.actionDataFor$("toggleSort", isString).pipe(map(LaagModel.sortFieldToggleUpdate));
@@ -151,10 +190,90 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     const viewModeUpdate$ = this.actionDataFor$("mapAsFilter", isBoolean).pipe(map(LaagModel.setMapAsFilterUpdate));
 
     const doUpdate$ = (titel: string) =>
-      rx
-        .merge(fieldSelectionsUpdate$, sortUpdate$, viewModeUpdate$, totalFeaturesUpdate$, directPageUpdates$)
-        .pipe(tap(overzicht.laagUpdater(titel)));
+      rx.merge(fieldSelectionsUpdate$, sortUpdate$, viewModeUpdate$, totalFeaturesUpdate$).pipe(tap(overzicht.laagUpdater(titel)));
 
     this.runInViewReady(rx.defer(() => doUpdate$(this.laagTitel)));
+
+    const selectAll$ = this.actionDataFor$("selectAll", isBoolean);
+    const selectRow$ = this.rawActionDataFor$("selectRow") as rx.Observable<RowSelection>;
+    const eraseSelection$ = this.actionFor$("eraseSelection");
+    const zoomToSelection$ = this.actionFor$("zoomToSelection");
+    const zoomToRow$ = this.rawActionDataFor$("zoomToRow") as rx.Observable<Row>;
+
+    // zoom naar de selectie
+    this.runInViewReady(
+      zoomToSelection$.pipe(
+        withLatestFrom(this.modelChanges.geselecteerdeFeatures$),
+        tap(([_, selection]) => {
+          const laagSelection = FeatureSelection.getGeselecteerdeFeaturesInLaag(this.laagTitel)(selection);
+
+          const extent = laagSelection[0].getGeometry().getExtent();
+          laagSelection.forEach(feature => ol.extent.extend(extent, feature.getGeometry().getExtent()));
+
+          this.dispatch(VeranderExtentCmd(extent));
+        })
+      )
+    );
+
+    // hou in de row bij of die geselecteerd is of niet
+    // kan dus veranderen als de rijen veranderen, of de selection verandert
+    this.runInViewReady(
+      rx.combineLatest([this.rows$, this.modelChanges.geselecteerdeFeatures$]).pipe(
+        tap(([rows, selection]: [Row[], GeselecteerdeFeatures]) => {
+          rows.forEach(r => {
+            r.selected = FeatureSelection.isSelected(selection)(r.feature);
+          });
+        })
+      )
+    );
+
+    // wis volledige selectie voor deze laag
+    this.runInViewReady(
+      eraseSelection$.pipe(
+        withLatestFrom(this.modelChanges.geselecteerdeFeatures$),
+        tap(([_, geselecteerdeFeatures]) => {
+          const selectedIds = FeatureSelection.getGeselecteerdeFeatureIdsInLaag(this.laagTitel)(geselecteerdeFeatures);
+          this.dispatch(DeselecteerFeatureCmd(selectedIds));
+        })
+      )
+    );
+
+    // (de)selecteer een enkele rij
+    this.runInViewReady(
+      selectRow$.pipe(
+        tap((rowSelection: RowSelection) => {
+          if (rowSelection.selected) {
+            this.dispatch(SelecteerExtraFeaturesCmd([rowSelection.row.feature.feature]));
+          } else {
+            this.dispatch(DeselecteerFeatureCmd([rowSelection.row.feature.id]));
+          }
+        })
+      )
+    );
+
+    // (de)selecteer alle rijen
+    this.runInViewReady(
+      selectAll$.pipe(
+        withLatestFrom(this.rows$),
+        tap(([selected, rows]: [boolean, Row[]]) => {
+          if (selected) {
+            this.dispatch(SelecteerExtraFeaturesCmd(rows.map(row => row.feature.feature)));
+          } else {
+            const ids = rows.map(row => row.feature.id);
+            this.dispatch(DeselecteerFeatureCmd(ids));
+          }
+        })
+      )
+    );
+
+    // zoom naar individuele rij
+    this.runInViewReady(
+      zoomToRow$.pipe(
+        tap(row => {
+          const extent = row.feature.feature.getGeometry().getExtent();
+          this.dispatch(VeranderExtentCmd(extent));
+        })
+      )
+    );
   }
 }

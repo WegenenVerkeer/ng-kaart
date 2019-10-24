@@ -15,6 +15,7 @@ export const isSingleton: <A>(_: A[]) => boolean = isOfLength(1);
 export const isNonEmpty: <A>(_: A[]) => boolean = array => array.length > 0;
 export const hasAtLeastLength: (_: number) => <A>(_: A[]) => boolean = n => array => array.length >= n;
 export const toArray: <A>(aOrAs: A | A[]) => A[] = aOrAs => (Array.isArray(aOrAs) ? aOrAs : [aOrAs]);
+export const length: <A>(as: A[]) => number = as => as.length;
 
 export const pure: <A>() => A[] = () => [];
 
@@ -60,5 +61,16 @@ export const findFirstBy: <A>(order: ord.Ord<A>) => PartialFunction1<A[], A> = o
  * @param pred The predicate to apply to the array elements.
  */
 export const exists: <A>(pred: Predicate<A>) => Predicate<A[]> = pred => as => as.some(pred);
+
+/**
+ * True iff the predicatie holds for all elements of the array.
+ */
+export const forAll: <A>(pred: Predicate<A>) => (as: A[]) => boolean = pred =>
+  array.foldLeft(() => true, (head, tail) => pred(head) && forAll(pred)(tail));
+
+/**
+ * True iff the first array contains all elements of the second array.
+ */
+export const containsAll = <A>(eq: setoid.Setoid<A>) => (as: A[], bs: A[]): boolean => forAll((b: A) => array.elem(eq)(b, as))(bs);
 
 export const getStringsSetoid: Setoid<string[]> = array.getSetoid(setoid.setoidString);

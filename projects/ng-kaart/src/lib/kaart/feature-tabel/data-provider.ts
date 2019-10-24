@@ -9,9 +9,8 @@ import { iso, Newtype } from "newtype-ts";
 import { NonNegativeInteger, prismNonNegativeInteger } from "newtype-ts/lib/NonNegativeInteger";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { catchError, map, startWith, take } from "rxjs/operators";
+import { catchError, map } from "rxjs/operators";
 
-import * as FilterTotaal from "../../filter/filter-totaal";
 import { NosqlFsSource, PagingSpec } from "../../source";
 import { Feature, toOlFeature } from "../../util/feature";
 import { PartialFunction1 } from "../../util/function";
@@ -34,7 +33,6 @@ export interface FieldSorting {
 
 export interface Page {
   readonly pageNumber: PageNumber; // Het nummer dat gebruikt werd in de request die Page opleverde
-  readonly lastPageNumber: PageNumber; // Handig om dit hier op te slaan omdat we er vaak naar refereren
   readonly rows: Row[];
 }
 
@@ -47,7 +45,7 @@ export interface RequestingData {
 export interface DataReady {
   readonly kind: "DataReady";
   readonly page: Page;
-  readonly featureCount: FeatureCountFetched;
+  // readonly featureCount: FeatureCountFetched;
   readonly pageSequence: number;
 }
 
@@ -60,7 +58,7 @@ export interface PageRequest {
   readonly requestSequence: number;
   readonly dataExtent: ol.Extent;
   readonly fieldSortings: FieldSorting[];
-  readonly rowCreator: Function1<ol.Feature, Row>;
+  readonly rowCreator: PartialFunction1<ol.Feature, Row>;
 }
 
 export type PageFetcher = Function1<PageRequest, rx.Observable<DataRequest>>;
@@ -95,24 +93,22 @@ export namespace SortDirection {
 export namespace Page {
   export const PageSize = 100;
 
-  export const create: Function3<PageNumber, PageNumber, Row[], Page> = (pageNumber, lastPageNumber, rows) => ({
+  export const create: Function2<PageNumber, Row[], Page> = (pageNumber, rows) => ({
     pageNumber,
-    lastPageNumber,
     rows
   });
 
   const isoPageNumber: Iso<PageNumber, number> = iso<PageNumber>().compose(iso<NonNegativeInteger>());
   const prismPageNumber: Prism<number, PageNumber> = prismNonNegativeInteger.composeIso(iso<PageNumber>().reverse());
-  const countToPages = (numFeatures: number) => Math.floor(numFeatures / PageSize);
+  export const countToPages = (numFeatures: number): number => Math.max(0, Math.floor((numFeatures - 1) / PageSize));
   export const getterPageNumber: Getter<PageNumber, number> = new Getter(prismPageNumber.reverseGet);
   export const asPageNumber: PartialFunction1<number, PageNumber> = prismPageNumber.getOption;
-  export const asPageNumberFromNumberOfFeatures: Function1<NonNegativeInteger, PageNumber> = flow(
-    iso<PageNumber>().wrap,
-    isoPageNumber.modify(countToPages)
+  export const asPageNumberFromNumberOfFeatures: Function1<number, PageNumber> = flow(
+    countToPages,
+    asPageNumber,
+    option.getOrElse(() => first)
   );
-  export const toPageNumberWithFallback: Function2<number, PageNumber, PageNumber> = (n, fallback) => asPageNumber(n).getOrElse(fallback);
   export const pageNumberLens: Lens<Page, PageNumber> = Lens.fromProp<Page>()("pageNumber");
-  export const lastPageNumberLens: Lens<Page, PageNumber> = Lens.fromProp<Page>()("lastPageNumber");
   export const rowsLens: Lens<Page, Row[]> = Lens.fromProp<Page>()("rows");
   export const ordPageNumber: Ord<PageNumber> = ord.contramap(prismPageNumber.reverseGet, ord.ordNumber);
 
@@ -155,15 +151,9 @@ export namespace DataRequest {
     kind: "RequestingData"
   };
 
-  export const DataReady = (
-    pageNumber: PageNumber,
-    pageSequence: number,
-    numberOfFeatures: NonNegativeInteger,
-    rows: Row[]
-  ): DataReady => ({
+  export const DataReady = (pageNumber: PageNumber, pageSequence: number, rows: Row[]): DataReady => ({
     kind: "DataReady",
-    page: Page.create(pageNumber, Page.asPageNumberFromNumberOfFeatures(numberOfFeatures), rows),
-    featureCount: FeatureCount.createFetched(prismNonNegativeInteger.reverseGet(numberOfFeatures)),
+    page: Page.create(pageNumber, rows),
     pageSequence
   });
 
@@ -177,9 +167,10 @@ export namespace DataRequest {
 }
 
 export namespace PageFetcher {
-  const featuresInExtent: Curried2<ol.Extent, ol.source.Vector, ol.Feature[]> = extent => source => source.getFeaturesInExtent(extent);
+  const selectedFeaturesInExtent: Function2<ol.Extent, ol.Feature[], ol.Feature[]> = (extent, selected) =>
+    array.filter(Feature.overlapsExtent(extent))(selected);
   const takePage: Function1<PageNumber, Endomorphism<ol.Feature[]>> = pageNumber => array.filterWithIndex(Page.isInPage(pageNumber));
-  const toRows: Curried2<Function1<ol.Feature, Row>, ol.Feature[], Row[]> = array.map;
+  const toRows: Curried2<PartialFunction1<ol.Feature, Row>, ol.Feature[], Row[]> = array.filterMap;
   const featureToFieldValue: Curried2<FieldSorting, ol.Feature, Option<ValueType>> = sorting => feature =>
     Row.extractField(Feature.properties(feature), sorting.veldinfo).maybeValue;
 
@@ -208,17 +199,25 @@ export namespace PageFetcher {
     unlessNoSortableFields
   );
 
-  export const pageFromSource: Function2<ol.source.Vector, PageRequest, Page> = (source, pageRequest) =>
-    Page.create(
-      pageRequest.pageNumber,
-      Page.last(FeatureCountFetcher.countFromSource(source, pageRequest).count),
-      flow(
-        featuresInExtent(pageRequest.dataExtent),
+  const featuresToPage = (features: ol.Feature[], pageRequest: PageRequest): Page => {
+    const lastPage = Page.last(features.length);
+    const pageNumber = ord.clamp(Page.ordPageNumber)(Page.first, lastPage)(pageRequest.pageNumber);
+    return Page.create(
+      pageNumber,
+      pipe(
+        features,
         sortFeatures(pageRequest.fieldSortings),
         takePage(pageRequest.pageNumber),
         toRows(pageRequest.rowCreator)
-      )(source)
+      )
     );
+  };
+
+  export const pageFromAllFeatures: Curried2<ol.Feature[], PageRequest, Page> = features => pageRequest =>
+    featuresToPage(features, pageRequest);
+
+  export const pageFromSelected: Curried2<ol.Feature[], PageRequest, Page> = selected => pageRequest =>
+    featuresToPage(selectedFeaturesInExtent(pageRequest.dataExtent, selected), pageRequest);
 
   // we gebruiken geen streaming API. Net zoals het oude Geoloket dat ook niet doet. Het gaat ook maar om 100 features maximaal.
   export const pageFromServer: Function3<string, NosqlFsSource, PageRequest, rx.Observable<DataRequest>> = (titel, source, request) =>
@@ -235,20 +234,14 @@ export namespace PageFetcher {
       })
       .pipe(
         map(featureCollection =>
-          prismNonNegativeInteger.getOption(featureCollection.total).fold(
-            DataRequest.RequestFailed as DataRequest, // normaal OK
-            featureCount =>
-              DataRequest.DataReady(
-                request.pageNumber,
-                request.requestSequence,
-                featureCount,
-                pipe(
-                  featureCollection.features,
-                  array.map(toOlFeature(titel)),
-                  toRows(request.rowCreator)
-                )
-              )
-
+          DataRequest.DataReady(
+            request.pageNumber,
+            request.requestSequence,
+            pipe(
+              featureCollection.features,
+              array.map(toOlFeature(titel)),
+              toRows(request.rowCreator)
+            )
           )
         ),
         catchError(() => rx.of(DataRequest.RequestFailed))
@@ -283,29 +276,4 @@ export namespace FeatureCount {
     option.fromRefinement(isFetched),
     option.map(p => p.count)
   );
-}
-
-export namespace FeatureCountFetcher {
-  export const sourceBasedFeatureCountFetcher: Function1<ol.source.Vector, FeatureCountFetcher> = source => featureCountRequest =>
-    rx.timer(2000).pipe(
-      take(1),
-      map(() => countFromSource(source, featureCountRequest)),
-      startWith(FeatureCount.pending)
-    );
-
-  export const countFromSource: Function2<ol.source.Vector, FeatureCountRequest, FeatureCountFetched> = (source, featureCountRequest) =>
-    FeatureCount.createFetched(source.getFeaturesInExtent(featureCountRequest.dataExtent).length);
-
-  const filterTotaalToFeatureCount: Function1<FilterTotaal.FilterTotaal, FeatureCount> = FilterTotaal.match({
-    TotaalOpTeHalen: () => FeatureCount.pending as FeatureCount,
-    TotaalOpgehaald: (ft: FilterTotaal.TotaalOpgehaald) => FeatureCount.createFetched(ft.totaal),
-    TotaalOphalenMislukt: () => FeatureCount.failed,
-    TeVeelData: () => FeatureCount.failed
-  });
-
-  // Haalt het totaal aantal features van server.
-  // De onderliggende observable kan op elk moment emitten. In concreto wanneer een filter gezet wordt.
-  // TODO. Gezien deze obs blijft leven, moeten we afsluiten er een nieuwe FeatureCountRequest binnen komt.
-  export const serverBasedFeatureCountFetcher: Function1<NosqlFsSource, FeatureCountFetcher> = source => () =>
-    source.fetchTotal$().pipe(map(filterTotaalToFeatureCount));
 }

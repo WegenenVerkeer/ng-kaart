@@ -2,9 +2,8 @@ import { animate, style, transition, trigger } from "@angular/animations";
 import { ChangeDetectionStrategy, Component, NgZone, ViewEncapsulation } from "@angular/core";
 import { array, setoid } from "fp-ts";
 import { Function1 } from "fp-ts/lib/function";
-import { Setoid } from "fp-ts/lib/Setoid";
 import * as rx from "rxjs";
-import { distinctUntilChanged, map, observeOn, scan, share, shareReplay, switchMap, take, takeUntil, tap } from "rxjs/operators";
+import { delay, distinctUntilChanged, map, observeOn, scan, share, shareReplay, switchMap, take, takeUntil, tap } from "rxjs/operators";
 
 import { collectOption } from "../../util";
 import { Consumer1 } from "../../util/function";
@@ -19,7 +18,10 @@ import { Update } from "./update";
 
 export const FeatureTabelUiSelector = "FeatureTabel";
 
-const equalTitels: Setoid<ke.ToegevoegdeVectorLaag[]> = array.getSetoid(ke.ToegevoegdeLaag.setoidToegevoegdeLaagByTitel);
+interface TemplateData {
+  readonly laagTitles: string[];
+  readonly visible: boolean;
+}
 
 /**
  * Dit is de hoofdcomponent van feature tabel. Deze component zorgt voor het raamwerk waar alle andere componenten in
@@ -45,12 +47,12 @@ const equalTitels: Setoid<ke.ToegevoegdeVectorLaag[]> = array.getSetoid(ke.Toege
   changeDetection: ChangeDetectionStrategy.OnPush // Omdat angular anders veel te veel change detection uitvoert
 })
 export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
-  public readonly laagTitels$: rx.Observable<string[]>;
-  public readonly toonFilters$: rx.Observable<boolean>;
+  public readonly templateData$: rx.Observable<TemplateData>;
 
   // Voor de child components (Op DOM niveau. Access via Angular injection).
   public readonly tableModel$: rx.Observable<TableModel>;
   public readonly laagModel$: Function1<string, rx.Observable<LaagModel>>;
+  public readonly tableUpdater: Consumer1<TableModel.TableModelUpdate>;
   public readonly laagUpdater: Function1<string, Consumer1<LaagModel.LaagModelUpdate>>;
 
   constructor(kaart: KaartComponent, ngZone: NgZone) {
@@ -66,23 +68,31 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
       map(TableModel.updateLagen)
     );
 
-    const updateZoomAndExtent$ = this.modelChanges.viewinstellingen$.pipe(map(vi => TableModel.updateZoomAndExtent(vi)));
+    const updateZoomAndExtent$ = this.modelChanges.viewinstellingen$.pipe(map(TableModel.updateZoomAndExtent));
+
+    const zichtbareFeatures$ = this.modelChanges.zichtbareFeaturesPerLaag$.pipe(map(TableModel.updateZichtbareFeatures));
+
+    const featureSelection$ = this.modelChanges.geselecteerdeFeatures$.pipe(map(TableModel.updateSelectedFeatures));
+
+    const filterGezet$ = this.modelChanges.laagfilterGezet$.pipe(map(TableModel.updateFilterSettings));
 
     // De volgende combinatie zet Updates die asynchroon gegenereerd zijn om in toekomstige synchrone updates
     const asyncUpdatesSubj: rx.Subject<TableModel.TableModelSyncUpdate> = new rx.Subject();
     const delayedUpdates$: rx.Observable<TableModel.TableModelUpdate> = asyncUpdatesSubj.pipe(map(Update.createSync));
 
     const clientUpdateSubj: rx.Subject<TableModel.TableModelUpdate> = new rx.Subject();
-    this.laagUpdater = (titel: string) => (update: LaagModel.LaagModelUpdate) => {
-      console.log("****we hebben een update voor", titel, update);
-      return clientUpdateSubj.next(TableModel.liftLaagUpdate(titel)(update));
-    };
+    this.tableUpdater = (update: TableModel.TableModelUpdate) => clientUpdateSubj.next(update);
+    this.laagUpdater = (titel: string) => (update: LaagModel.LaagModelUpdate) =>
+      clientUpdateSubj.next(TableModel.liftLaagUpdate(titel)(update));
     const laagInTablesUpdate$: rx.Observable<TableModel.TableModelUpdate> = clientUpdateSubj;
 
     const modelUpdate$: rx.Observable<TableModel.TableModelUpdate> = rx.merge(
       delayedUpdates$,
       updateLagen$,
       updateZoomAndExtent$,
+      filterGezet$,
+      featureSelection$,
+      zichtbareFeatures$,
       laagInTablesUpdate$
     );
 
@@ -110,7 +120,7 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
                     error: err => kaartLogger.error("Probleem bij async model update", err) // Moet ook in UI komen. Evt retry
                   });
                 return newModel;
-              }, TableModel.empty(vi))
+              }, TableModel.empty(vi, kaart.config))
             )
           )
         )
@@ -123,9 +133,21 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
     // Het is belangrijk dat deze (en soortgelijke) observable maar emit op het moment dat het echt nodig is. Zeker niet
     // elke keer dat het model update. Bij een update worden immers alle childcomponents opnieuw aangemaakt. Wat dus
     // verlies van DOM + state betekent.
-    this.laagTitels$ = this.tableModel$.pipe(
+    const laagTitles$ = this.tableModel$.pipe(
       map(model => model.laagData.map(LaagModel.titelLens.get)),
       distinctUntilChanged(array.getSetoid(setoid.setoidString).equals)
+    );
+
+    const tabelVisible$ = this.modelChanges.tabelState$.pipe(
+      delay(200), // Omdat helemaal in het begin van de animatie het icoontje anders onder de kaart valt (wegens abs pos)
+      map(state => state.state === "Opengeklapt")
+    );
+
+    this.templateData$ = rx.combineLatest(laagTitles$, tabelVisible$).pipe(
+      map(([laagTitles, visible]) => ({
+        laagTitles,
+        visible
+      }))
     );
   }
 }

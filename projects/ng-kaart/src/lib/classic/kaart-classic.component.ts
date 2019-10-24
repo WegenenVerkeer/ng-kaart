@@ -47,6 +47,7 @@ import {
   InErrorMsg,
   KaartClassicMsg,
   KaartClassicSubMsg,
+  KaartClickMsg,
   logOnlyWrapper,
   MiddelpuntAangepastMsg,
   PublishedKaartLocatiesMsg,
@@ -230,6 +231,8 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   @Output()
   kaartLocaties: EventEmitter<ClassicKlikInfoEnStatus> = new EventEmitter();
   @Output()
+  kaartClick: EventEmitter<ol.Coordinate> = new EventEmitter();
+  @Output()
   inErrorChange: EventEmitter<boolean> = new EventEmitter();
 
   /** @ignore */
@@ -259,6 +262,12 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
         this.kaartClassicSubMsg$.lift(
           classicMsgSubscriptionCmdOperator(
             this.dispatcher,
+            prt.KaartClickSubscription(
+              pipe(
+                KaartClickMsg,
+                KaartClassicMsg
+              )
+            ),
             prt.GeselecteerdeFeaturesSubscription(
               pipe(
                 FeatureSelectieAangepastMsg,
@@ -362,7 +371,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
             return this.zichtbareFeatures.emit(msg.features);
           case "FeatureGedeselecteerd":
             // Zorg ervoor dat deselecteer van een feature via infoboodschap terug naar kaart-reducer gaat
-            return this.dispatch(prt.DeselecteerFeatureCmd(msg.featureid));
+            return this.dispatch(prt.DeselecteerFeatureCmd([msg.featureid]));
           case "ZoomAangepast":
             return this.zoomChange.emit(msg.zoom);
           case "MiddelpuntAangepast":
@@ -377,6 +386,8 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
             return this.voorgrondLaagLagen.emit(msg.lagen);
           case "PublishedKaartLocaties":
             return this.kaartLocaties.emit(flattenKaartLocaties(msg.locaties));
+          case "KaartClick":
+            return this.kaartClick.emit(msg.clickCoordinaat);
           case "InError":
             return this.inErrorChange.emit(msg.inError);
           default:
