@@ -1,7 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 import * as array from "fp-ts/lib/Array";
-import * as eq from "fp-ts/lib/Eq";
 import { Curried2, Endomorphism, flow, Function1, Function2, Function3, identity, Predicate, Refinement } from "fp-ts/lib/function";
 import { fromNullable, fromPredicate, none, Option, some } from "fp-ts/lib/Option";
 import * as option from "fp-ts/lib/Option";
@@ -28,6 +27,7 @@ import {
 import * as clr from "../../stijl/colour";
 import { disc, solidLine } from "../../stijl/common-shapes";
 import { Transparantie } from "../../transparantieeditor/transparantie";
+import { eqCoordinate } from "../../util";
 import { asap } from "../../util/asap";
 import { applySequential, Consumer1, PartialFunction1, ReduceFunction } from "../../util/function";
 import {
@@ -162,10 +162,8 @@ const featurePicker: Function1<ol.Map, FeaturePicker> = map => pixel => {
 
 const isPoint: Refinement<ol.geom.Geometry, ol.geom.Point> = (geom): geom is ol.geom.Point => geom instanceof ol.geom.Point;
 const isNumber: Refinement<any, number> = (value): value is number => typeof value === "number";
-const isWaypointProperties: Refinement<any, PointProperties> = (value): value is PointProperties => {
-  // console.log("****doubleClick$", "is waypoint", value);
-  return typeof value === "object" && fromNullable(value.type).exists(type => type === "Waypoint");
-};
+const isWaypointProperties: Refinement<any, PointProperties> = (value): value is PointProperties =>
+  typeof value === "object" && fromNullable(value.type).exists(type => type === "Waypoint");
 
 const extractCoordinate: PartialFunction1<ol.Feature, ol.Coordinate> = feature =>
   fromPredicate(isPoint)(feature.getGeometry()).map(point => point.getCoordinates());
@@ -442,8 +440,6 @@ interface RouteSegmentState {
   readonly featuresByRouteId: FeaturesByRouteId; // Elke route id heeft exact 1 feature/geometry
 }
 
-const eqCoordinate = eq.getTupleEq(eq.eqNumber, eq.eqNumber);
-
 const edgesToPolygon: Function1<ol.geom.LineString[], ol.geom.Polygon> = edges => {
   const coordinates = array.flatten(array.map((l: ol.geom.LineString) => l.getCoordinates())(edges));
   coordinates.push(coordinates[0]);
@@ -603,7 +599,6 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
       timeInterval(),
       pairwise(),
       filter(([prev, curr]) => {
-        // console.log("****doubleClick$", curr.interval, prev.value.type, prev.value.waypoint.id, curr.value.type, curr.value.waypoint.id);
         return (
           curr.interval < 500 &&
           prev.value.type === "AddWaypoint" &&
@@ -613,7 +608,6 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
       }),
       tap(([prev, curr]) => {
         const addWayPoint = prev.value;
-        // console.log("****doubleClick$", "END", addWayPoint);
         this.internalDrawOpsSubj.next(AddPoint(addWayPoint.waypoint.location));
       })
     );
