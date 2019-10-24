@@ -1198,13 +1198,19 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function selecteerFeatures(cmnd: prt.SelecteerFeaturesCmd): ModelWithResult<Msg> {
       const currentFeatures = model.geselecteerdeFeatures.getArray();
-
       const newFeatures = cmnd.features;
+
       const featuresToAdd = array.difference(Feature.setoidFeaturePropertyId)(newFeatures, currentFeatures);
 
       if (!cmnd.incremental) {
-        model.geselecteerdeFeatures.clear();
+        const featuresToRemove = array.difference(Feature.setoidFeaturePropertyId)(currentFeatures, newFeatures);
+        if (featuresToRemove.length === currentFeatures.length) {
+          model.geselecteerdeFeatures.clear();
+        } else {
+          featuresToRemove.forEach(f => model.geselecteerdeFeatures.remove(f));
+        }
       }
+
       model.geselecteerdeFeatures.extend(featuresToAdd);
 
       return ModelWithResult(model);
