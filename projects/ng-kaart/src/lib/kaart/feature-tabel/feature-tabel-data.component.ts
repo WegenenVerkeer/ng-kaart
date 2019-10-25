@@ -18,7 +18,7 @@ import {
   VeranderExtentCmd,
   VeranderTabelLaagInstellingenCmd
 } from "../kaart-protocol-commands";
-import { TabelLaagInstellingen, VeldSortering } from "../kaart-protocol-subscriptions";
+import { TabelLaagInstellingen, Veldsortering } from "../kaart-protocol-subscriptions";
 import { FeatureSelection, GeselecteerdeFeatures } from "../kaart-protocol-subscriptions";
 import { KaartComponent } from "../kaart.component";
 
@@ -267,12 +267,12 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
       )
     );
 
-    const fieldSelectionToVeldSortering: PartialFunction1<FieldSelection, VeldSortering> = selection =>
+    const fieldSelectionToVeldsortering: PartialFunction1<FieldSelection, Veldsortering> = selection =>
       pipe(
         selection,
         FieldSelection.maybeSortDirectionLens.get,
         option.map(sd =>
-          VeldSortering(
+          Veldsortering.create(
             pipe(
               selection,
               FieldSelection.nameLens.get
@@ -282,10 +282,10 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
         )
       );
 
-    const sortings: Function1<FieldSelection[], VeldSortering[]> = selections =>
+    const sortings: Function1<FieldSelection[], Veldsortering[]> = selections =>
       pipe(
         selections,
-        array.filterMap(fieldSelectionToVeldSortering)
+        array.filterMap(fieldSelectionToVeldsortering)
       );
 
     const veranderLaagInstellingenCmd$: rx.Observable<VeranderTabelLaagInstellingenCmd> = this.laag$.pipe(
@@ -293,7 +293,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
       distinctUntilChanged(array.getEq(FieldSelection.setoidFieldSelection).equals),
       map(selections =>
         pipe(
-          TabelLaagInstellingen(this.laagTitel, new Set(array.map(FieldSelection.nameLens.get)(selections)), sortings(selections)),
+          TabelLaagInstellingen.create(this.laagTitel, new Set(array.map(FieldSelection.nameLens.get)(selections)), sortings(selections)),
           VeranderTabelLaagInstellingenCmd
         )
       )

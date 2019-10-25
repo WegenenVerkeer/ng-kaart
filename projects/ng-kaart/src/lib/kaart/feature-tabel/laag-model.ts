@@ -4,7 +4,7 @@ import { Option } from "fp-ts/lib/Option";
 import { ordString } from "fp-ts/lib/Ord";
 import { pipe } from "fp-ts/lib/pipeable";
 import { getLastSemigroup } from "fp-ts/lib/Semigroup";
-import { Fold, Getter, Lens, Optional, Traversal } from "monocle-ts";
+import { Fold, Getter, Lens, Optional, Prism, Traversal } from "monocle-ts";
 import { indexArray } from "monocle-ts/lib/Index/Array";
 import * as ol from "openlayers";
 import { map } from "rxjs/operators";
@@ -13,12 +13,12 @@ import { isNumber } from "util";
 import { Filter, FilterTotaal, match as FilterTotaalMatch, TotaalOpgehaald } from "../../filter";
 import { NosqlFsSource } from "../../source";
 import * as arrays from "../../util/arrays";
-import { equalToString } from "../../util/equal";
+import { equalTo, equalToString } from "../../util/equal";
 import { Feature } from "../../util/feature";
 import { PartialFunction2 } from "../../util/function";
 import { arrayTraversal, selectiveArrayTraversal } from "../../util/lenses";
 import * as ke from "../kaart-elementen";
-import { Viewinstellingen } from "../kaart-protocol-subscriptions";
+import { TabelLaagInstellingen, Veldsortering, Viewinstellingen } from "../kaart-protocol-subscriptions";
 
 import {
   DataReady,
@@ -260,20 +260,32 @@ export namespace LaagModel {
         .composeLens(FieldSelection.maybeSortDirectionLens)
         .set(option.some("ASCENDING") as Option<SortDirection>);
 
-      const makeFieldSelected: Endomorphism<FieldSelection[]> = fields => {
+      const makeFieldSelectedFromInstellingen: Endomorphism<FieldSelection[]> = fields => {
         return laag.tabelLaagInstellingen
           .map(instellingen => fields.map(field => FieldSelection.selectedLens.set(instellingen.zichtbareVelden.has(field.name))(field)))
           .getOrElse(fields);
       };
+
+      const setSortFieldFromInstellingenOrFirst: Endomorphism<FieldSelection[]> = pipe(
+        laag.tabelLaagInstellingen,
+        option.chain(TabelLaagInstellingen.veldsorteringFold.headOption),
+        option.fold(
+          () => sortOnFirstField,
+          firstVs =>
+            selectiveArrayTraversal<FieldSelection>(fs => fs.name === firstVs.veldnaam)
+              .composeLens(FieldSelection.maybeSortDirectionLens)
+              .set(option.some("ASCENDING") as Option<SortDirection>)
+        )
+      );
 
       const fieldSelections = pipe(
         veldinfos,
         FieldSelection.fieldsFromVeldinfo,
         fieldsTransformer,
         FieldSelection.selectBaseFields,
-        sortOnFirstField,
-        makeFieldSelected,
-        FieldSelection.selectFirstField // Indien er geen native locatie veld is, of dat zou geen basisveld zijn
+        setSortFieldFromInstellingenOrFirst,
+        makeFieldSelectedFromInstellingen,
+        FieldSelection.selectFirstField // Indien er geen native locatie veld is, of dat zou geen basisveld zijn of niet in laaginstellingen
       );
 
       const firstField = array.take(1, fieldSelections);

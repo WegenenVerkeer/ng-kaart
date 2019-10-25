@@ -1,14 +1,20 @@
+import { eq } from "fp-ts";
 import { Either } from "fp-ts/lib/Either";
+import { Eq } from "fp-ts/lib/Eq";
 import { Curried2, Function1, Predicate } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
+import { Lens } from "monocle-ts";
 import * as ol from "openlayers";
 
 import { FeatureWithIdAndLaagnaam } from "../util/feature";
+import { arrayTraversal } from "../util/lenses";
 import { ZoekAntwoord, ZoekerMetWeergaveopties, ZoekResultaat } from "../zoeker/zoeker";
 
 import { KaartLocaties } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { InfoBoodschap } from "./kaart-with-info-model";
+import { LaatsteCacheRefresh, MijnLocatieStateChange, PrecacheLaagProgress, TabelStateChange } from "./model-changes";
+
 export type Subscription<Msg> =
   | AchtergrondTitelSubscription<Msg>
   | ActieveModusSubscription<Msg>
@@ -41,12 +47,6 @@ export type Subscription<Msg> =
   | ZoekResultatenSubscription<Msg>
   | ZoomSubscription<Msg>;
 
-import { LaatsteCacheRefresh, MijnLocatieStateChange, PrecacheLaagProgress, TabelStateChange } from "./model-changes";
-
-/////////
-// Types
-//
-
 export interface Viewinstellingen {
   readonly zoom: number;
   readonly minZoom: number;
@@ -57,25 +57,36 @@ export interface Viewinstellingen {
   readonly rotation: number;
 }
 
-export interface VeldSortering {
+export interface Veldsortering {
   readonly veldnaam: string;
   readonly sort: "ASCENDING" | "DESCENDING"; // Compatibel met SortDirection in data-provider
 }
 
-export const VeldSortering = (veldnaam: string, sort: "ASCENDING" | "DESCENDING"): VeldSortering => ({ veldnaam, sort });
+export namespace Veldsortering {
+  export const create = (veldnaam: string, sort: "ASCENDING" | "DESCENDING"): Veldsortering => ({ veldnaam, sort });
+
+  export const eqVeldsortering: Eq<Veldsortering> = eq.getStructEq({ veldnaam: eq.eqString, sort: eq.eqString });
+}
 
 export interface TabelLaagInstellingen {
   readonly laagnaam: string; // De laag voor welke de instellingen geldig zijn
   readonly zichtbareVelden: Set<string>; // De namen/keys van de velden die zichtbaar zijn
-  readonly veldSorteringen: VeldSortering[];
+  readonly veldsorteringen: Veldsortering[];
 }
 
-export function TabelLaagInstellingen(
-  laagnaam: string,
-  zichtbareVelden: Set<string>,
-  veldSorteringen: VeldSortering[]
-): TabelLaagInstellingen {
-  return { laagnaam, zichtbareVelden, veldSorteringen };
+export namespace TabelLaagInstellingen {
+  export const zichtbareVeldenLens: Lens<TabelLaagInstellingen, Set<string>> = Lens.fromProp<TabelLaagInstellingen>()("zichtbareVelden");
+  export const veldsorteringenLens: Lens<TabelLaagInstellingen, Veldsortering[]> = Lens.fromProp<TabelLaagInstellingen>()(
+    "veldsorteringen"
+  );
+  export const veldsorteringTraversal = veldsorteringenLens.composeTraversal(arrayTraversal());
+  export const veldsorteringFold = veldsorteringTraversal.asFold();
+
+  export const create = (laagnaam: string, zichtbareVelden: Set<string>, veldSorteringen: Veldsortering[]): TabelLaagInstellingen => ({
+    laagnaam,
+    zichtbareVelden,
+    veldsorteringen: veldSorteringen
+  });
 }
 
 export type KaartFeaturesOpId = ReadonlyMap<string, FeatureWithIdAndLaagnaam>;
