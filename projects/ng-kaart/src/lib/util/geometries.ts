@@ -1,4 +1,5 @@
 import * as array from "fp-ts/lib/Array";
+import * as eq from "fp-ts/lib/Eq";
 import { fieldNumber } from "fp-ts/lib/Field";
 import { sum } from "fp-ts/lib/Foldable2v";
 import { constant, Function1, identity } from "fp-ts/lib/function";
@@ -106,3 +107,5 @@ export function dimensieBeschrijving(geometry: ol.geom.Geometry, verbose = true)
     }
   }
 }
+
+export const eqCoordinate: eq.Eq<ol.Coordinate> = eq.getTupleEq(eq.eqNumber, eq.eqNumber);
