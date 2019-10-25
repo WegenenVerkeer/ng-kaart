@@ -8,6 +8,7 @@ import {
   MatInputModule,
   MatMenuModule,
   MatProgressSpinnerModule,
+  MatRadioModule,
   MatSliderModule,
   MatSlideToggleModule,
   MatTooltipModule
@@ -19,6 +20,7 @@ import { FeatureTabelHeaderComponent } from "./feature-tabel-header.component";
 import { FeatureTabelInklapComponent } from "./feature-tabel-inklap.component";
 import { FeatureTabelOverzichtComponent } from "./feature-tabel-overzicht.component";
 import { FeatureTabelPagerComponent } from "./feature-tabel-pager.component";
+import { FeatureTabelSettingsComponent } from "./feature-tabel-settings.component";
 import { FeatureTabelSorteringStatusComponent } from "./feature-tabel-sortering-status.component";
 import { FeatureTabelSelectieViaPolygonComponent } from "./selecteer-features/feature-tabel-polygon-selectie.component";
 
@@ -29,7 +31,9 @@ const components: any[] = [
   FeatureTabelOverzichtComponent,
   FeatureTabelPagerComponent,
   FeatureTabelSorteringStatusComponent,
-  FeatureTabelSelectieViaPolygonComponent
+  FeatureTabelSelectieViaPolygonComponent,
+  FeatureTabelSettingsComponent,
+  FeatureTabelSorteringStatusComponent
 ];
 
 @NgModule({
@@ -42,6 +46,7 @@ const components: any[] = [
     MatInputModule,
     MatMenuModule,
     MatProgressSpinnerModule,
+    MatRadioModule,
     MatSliderModule,
     MatSlideToggleModule,
     MatTabsModule,

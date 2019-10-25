@@ -1151,6 +1151,10 @@ export class FeatureDemoComponent {
 
   onFeatureSelectie(features: ol.Feature[]) {
     console.log("---> Geselecteerde features", features);
+    // Dit is zoals Elisa werkt. Hier om een regressie te testen/voorkomen.
+    setTimeout(() => {
+      this.geselecteerdeFeatures = features;
+    }, 500);
   }
 
   onClickSelecteerFeatures() {

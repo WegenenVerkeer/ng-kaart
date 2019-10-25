@@ -1,3 +1,4 @@
+import { array } from "fp-ts";
 import { Endomorphism, Function1, Function2 } from "fp-ts/lib/function";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import { Lens, Setter } from "monocle-ts";
@@ -52,7 +53,7 @@ export type PartialFunction1<A, B> = Function1<A, Option<B>>;
 export type PartialFunction2<A, B, C> = Function2<A, B, Option<C>>;
 
 /**
- * Een (endo)functie die alle (endo)functies na elkaar uitvoert. Lijkt heel sterk op pipe.
+ * Een (endo)functie die alle (endo)functies na elkaar uitvoert. Lijkt heel sterk op pipe/flow.
  */
 export const applySequential: <S>(_: Endomorphism<S>[]) => Endomorphism<S> = fs => init => fs.reduce((s, f) => f(s), init);
 
@@ -77,3 +78,16 @@ export function flowSpy<A>(msg: string): Endomorphism<A> {
     return a;
   };
 }
+
+/**
+ * Een functie die toelaat om te reageren op wijzigingen veroorzaakt door een endomorfisme.
+ * @param c functie die zowel oude als nieuwe waarde krijgt om er een nieuwe, nieuwe waarde mee te maken.
+ */
+export const withChange = <A, B>(c: (oldA: A, newA: A) => B) => (f: Endomorphism<A>): Function1<A, B> => a => c(a, f(a));
+
+/**
+ * Laat toe om een argument te gebruiken om meerdere endomorfismen aan te sturen. Bijv. 2 setters obv dezelfde waarde.
+ * @param fs functies van B die endomorfismen maken.
+ */
+export const distrib = <A, B>(...fs: Function1<B, Endomorphism<A>>[]): Function1<B, Endomorphism<A>> => (b: B) => (a: A) =>
+  array.reduce<Function1<B, Endomorphism<A>>, A>(a, (s, f) => f(b)(s))(fs);

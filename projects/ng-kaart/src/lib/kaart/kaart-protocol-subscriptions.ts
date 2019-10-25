@@ -1,12 +1,9 @@
-import { option } from "fp-ts";
-import { flow } from "fp-ts/es6/function";
 import { Either } from "fp-ts/lib/Either";
 import { Curried2, Function1, Predicate } from "fp-ts/lib/function";
-import { fromNullable, Option } from "fp-ts/lib/Option";
+import { Option } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 
-import { forEach } from "../util";
-import { Feature, FeatureWithIdAndLaagnaam } from "../util/feature";
+import { FeatureWithIdAndLaagnaam } from "../util/feature";
 import { ZoekAntwoord, ZoekerMetWeergaveopties, ZoekResultaat } from "../zoeker/zoeker";
 
 import { KaartLocaties } from "./kaart-bevragen/laaginfo.model";

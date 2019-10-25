@@ -1,11 +1,14 @@
-<div class="feature-tabel-weergave-content">
+<div class="feature-tabel-weergave-content" *ngIf="(templateData$ | async) as data">
   <mat-tab-group [headerPosition]="'above'">
-    <mat-tab *ngFor="let titel of (laagTitels$ | async)">
+    <mat-tab *ngFor="let titel of data.laagTitles">
       <ng-template mat-tab-label>
         <awv-feature-tabel-header [laagTitel]="titel"></awv-feature-tabel-header>
       </ng-template>
       <awv-feature-tabel-data [laagTitel]="titel"></awv-feature-tabel-data>
     </mat-tab>
   </mat-tab-group>
-  <awv-feature-tabel-polygon-selectie class="selecteer-features"></awv-feature-tabel-polygon-selectie>
+  <div class="feature-tabel-weergave-content-menu" [class.hidden-menu]="!data.visible">
+    <awv-feature-tabel-polygon-selectie class="selecteer-features"></awv-feature-tabel-polygon-selectie>
+    <awv-feature-tabel-settings></awv-feature-tabel-settings>
+  </div>
 </div>

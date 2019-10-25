@@ -1,11 +1,11 @@
 @import "../../css/kaart.component-common.scss";
 
 .feature-tabel-weergave-content {
-  position: relative;
-  background-color: rgba(255,255,255,1);
+  background-color: rgba(255, 255, 255, 1);
   height: 100%;
   display: flex;
   flex-flow: column;
+  position: relative;
 
   ::-webkit-scrollbar {
     width: 4px;
@@ -35,6 +35,23 @@ mat-tab-group {
   flex-grow: 1;
   flex-shrink: 1;
   overflow: auto;
+}
+
+.feature-tabel-weergave-content-menu {
+  position: absolute;
+  top: 0px;
+  z-index: 3;
+  right: 6px;
+  width: 32px;
+  margin: 0 8px 8px 0;
+
+  &.hidden-menu {
+    display: none;
+  }
+
+  .actief {
+    color: $awv-primary-3;
+  }
 }
 
 .selecteer-features {
