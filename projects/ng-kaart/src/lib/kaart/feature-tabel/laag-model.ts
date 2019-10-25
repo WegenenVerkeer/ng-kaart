@@ -132,6 +132,13 @@ export namespace LaagModel {
     fieldSelectionsLens.composeTraversal(selectiveArrayTraversal(fs => fs.name === fieldName));
   const fieldSelectionTraversal: Traversal<LaagModel, FieldSelection> = fieldSelectionsLens.composeTraversal(arrayTraversal());
 
+  export const selectedFieldSelectionGetter: LaagModelGetter<FieldSelection[]> = new Getter(
+    flow(
+      fieldSelectionsGetter.get,
+      array.filter(FieldSelection.isSelected)
+    )
+  );
+
   // Bepaalde velden moeten samengevoegd worden tot 1 synthetisch locatieveld. Daarvoor moeten we enerzijds de headers
   // aanpassen en anderzijds elke Row die binnen komt. Er is altijd een locatieveld. Ook als er geen enkel veld gevonden
   // kan worden dat de basis voor een locatie kan zijn. Het locatieveld is dan niet synthetisch maar virtueel. Er is

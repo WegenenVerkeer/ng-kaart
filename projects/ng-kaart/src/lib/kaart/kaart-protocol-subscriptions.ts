@@ -48,22 +48,34 @@ import { LaatsteCacheRefresh, MijnLocatieStateChange, PrecacheLaagProgress, Tabe
 //
 
 export interface Viewinstellingen {
-  zoom: number;
-  minZoom: number;
-  maxZoom: number;
-  resolution: number;
-  extent: ol.Extent;
-  center: ol.Coordinate;
-  rotation: number;
+  readonly zoom: number;
+  readonly minZoom: number;
+  readonly maxZoom: number;
+  readonly resolution: number;
+  readonly extent: ol.Extent;
+  readonly center: ol.Coordinate;
+  readonly rotation: number;
 }
+
+export interface VeldSortering {
+  readonly veldnaam: string;
+  readonly sort: "ASCENDING" | "DESCENDING"; // Compatibel met SortDirection in data-provider
+}
+
+export const VeldSortering = (veldnaam: string, sort: "ASCENDING" | "DESCENDING"): VeldSortering => ({ veldnaam, sort });
 
 export interface TabelLaagInstellingen {
-  laagnaam: string; // De laag voor welke de instellingen geldig zijn
-  zichtbareVelden: Set<string>; // De namen/keys van de velden die zichtbaar zijn
+  readonly laagnaam: string; // De laag voor welke de instellingen geldig zijn
+  readonly zichtbareVelden: Set<string>; // De namen/keys van de velden die zichtbaar zijn
+  readonly veldSorteringen: VeldSortering[];
 }
 
-export function TabelLaagInstellingen(laagnaam: string, zichtbareVelden: Set<string>): TabelLaagInstellingen {
-  return { laagnaam, zichtbareVelden };
+export function TabelLaagInstellingen(
+  laagnaam: string,
+  zichtbareVelden: Set<string>,
+  veldSorteringen: VeldSortering[]
+): TabelLaagInstellingen {
+  return { laagnaam, zichtbareVelden, veldSorteringen };
 }
 
 export type KaartFeaturesOpId = ReadonlyMap<string, FeatureWithIdAndLaagnaam>;

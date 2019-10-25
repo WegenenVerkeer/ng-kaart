@@ -8,6 +8,8 @@ import { distinctUntilChanged, map, mapTo, share, shareReplay, startWith, switch
 import { isBoolean, isString } from "util";
 
 import * as arrays from "../../util/arrays";
+import { Feature } from "../../util/feature";
+import { PartialFunction1 } from "../../util/function";
 import { join } from "../../util/string";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import {
@@ -16,7 +18,7 @@ import {
   VeranderExtentCmd,
   VeranderTabelLaagInstellingenCmd
 } from "../kaart-protocol-commands";
-import { TabelLaagInstellingen } from "../kaart-protocol-subscriptions";
+import { TabelLaagInstellingen, VeldSortering } from "../kaart-protocol-subscriptions";
 import { FeatureSelection, GeselecteerdeFeatures } from "../kaart-protocol-subscriptions";
 import { KaartComponent } from "../kaart.component";
 
@@ -163,17 +165,6 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
       )
     );
 
-    this.runInViewReady(
-      this.laag$.pipe(
-        map(LaagModel.fieldSelectionsGetter.get),
-        distinctUntilChanged(array.getEq(FieldSelection.setoidFieldSelection).equals),
-        map(selection => selection.filter(f => f.selected)),
-        tap(selected =>
-          this.dispatch(VeranderTabelLaagInstellingenCmd(TabelLaagInstellingen(this.laagTitel, new Set(selected.map(f => f.name)))))
-        )
-      )
-    );
-
     const fieldSelectionsUpdate$ = rx.merge(
       this.actionFor$("chooseBaseFields").pipe(mapTo(LaagModel.chooseBaseFieldsUpdate)),
       this.actionFor$("chooseAllFields").pipe(mapTo(LaagModel.chooseAllFieldsUpdate)),
@@ -200,21 +191,6 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     const zoomToSelection$ = this.actionFor$("zoomToSelection");
     const zoomToRow$ = this.rawActionDataFor$("zoomToRow") as rx.Observable<Row>;
 
-    // zoom naar de selectie
-    this.runInViewReady(
-      zoomToSelection$.pipe(
-        withLatestFrom(this.modelChanges.geselecteerdeFeatures$),
-        tap(([_, selection]) => {
-          const laagSelection = FeatureSelection.getGeselecteerdeFeaturesInLaag(this.laagTitel)(selection);
-
-          const extent = laagSelection[0].getGeometry().getExtent();
-          laagSelection.forEach(feature => ol.extent.extend(extent, feature.getGeometry().getExtent()));
-
-          this.dispatch(VeranderExtentCmd(extent));
-        })
-      )
-    );
-
     // hou in de row bij of die geselecteerd is of niet
     // kan dus veranderen als de rijen veranderen, of de selection verandert
     this.runInViewReady(
@@ -227,53 +203,113 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
       )
     );
 
+    // zoom naar de selectie
+    const zoomToSelectionCmd$ = zoomToSelection$.pipe(
+      withLatestFrom(this.modelChanges.geselecteerdeFeatures$),
+      map(([_, selection]) =>
+        pipe(
+          selection,
+          FeatureSelection.getGeselecteerdeFeaturesInLaag(this.laagTitel),
+          array.map(feature => feature.getGeometry().getExtent()),
+          Feature.combineExtents,
+          option.getOrElse(() => [0, 0, 0, 0] as ol.Extent), // Er is de praktijk altijd een geselecteerde feature
+          VeranderExtentCmd
+        )
+      )
+    );
+
     // wis volledige selectie voor deze laag
-    this.runInViewReady(
-      eraseSelection$.pipe(
-        withLatestFrom(this.modelChanges.geselecteerdeFeatures$),
-        tap(([_, geselecteerdeFeatures]) => {
-          const selectedIds = FeatureSelection.getGeselecteerdeFeatureIdsInLaag(this.laagTitel)(geselecteerdeFeatures);
-          this.dispatch(DeselecteerFeatureCmd(selectedIds));
-        })
+    const clearSelection$ = eraseSelection$.pipe(
+      withLatestFrom(this.modelChanges.geselecteerdeFeatures$),
+      map(([_, geselecteerdeFeatures]) =>
+        pipe(
+          geselecteerdeFeatures,
+          FeatureSelection.getGeselecteerdeFeatureIdsInLaag(this.laagTitel),
+          DeselecteerFeatureCmd
+        )
       )
     );
 
     // (de)selecteer een enkele rij
-    this.runInViewReady(
-      selectRow$.pipe(
-        tap((rowSelection: RowSelection) => {
-          if (rowSelection.selected) {
-            this.dispatch(SelecteerExtraFeaturesCmd([rowSelection.row.feature.feature]));
-          } else {
-            this.dispatch(DeselecteerFeatureCmd([rowSelection.row.feature.id]));
-          }
-        })
+    const toggleRowSelctionCmd$ = selectRow$.pipe(
+      map(rowSelection =>
+        rowSelection.selected
+          ? SelecteerExtraFeaturesCmd([rowSelection.row.feature.feature])
+          : DeselecteerFeatureCmd([rowSelection.row.feature.id])
       )
     );
 
     // (de)selecteer alle rijen
-    this.runInViewReady(
-      selectAll$.pipe(
-        withLatestFrom(this.rows$),
-        tap(([selected, rows]: [boolean, Row[]]) => {
-          if (selected) {
-            this.dispatch(SelecteerExtraFeaturesCmd(rows.map(row => row.feature.feature)));
-          } else {
-            const ids = rows.map(row => row.feature.id);
-            this.dispatch(DeselecteerFeatureCmd(ids));
-          }
-        })
+    const toggleAllRowsSelectionCmd$ = selectAll$.pipe(
+      withLatestFrom(this.rows$),
+      map(([select, rows]: [boolean, Row[]]) =>
+        select
+          ? pipe(
+              rows,
+              array.map(Row.olFeatureLens.get),
+              SelecteerExtraFeaturesCmd
+            )
+          : pipe(
+              rows,
+              array.map(Row.idLens.get),
+              DeselecteerFeatureCmd
+            )
       )
     );
 
     // zoom naar individuele rij
-    this.runInViewReady(
-      zoomToRow$.pipe(
-        tap(row => {
-          const extent = row.feature.feature.getGeometry().getExtent();
-          this.dispatch(VeranderExtentCmd(extent));
-        })
+    const zoomToIndividualRowCmd$ = zoomToRow$.pipe(
+      map(
+        flow(
+          row => row.feature.feature.getGeometry().getExtent(),
+          VeranderExtentCmd
+        )
       )
+    );
+
+    const fieldSelectionToVeldSortering: PartialFunction1<FieldSelection, VeldSortering> = selection =>
+      pipe(
+        selection,
+        FieldSelection.maybeSortDirectionLens.get,
+        option.map(sd =>
+          VeldSortering(
+            pipe(
+              selection,
+              FieldSelection.nameLens.get
+            ),
+            sd
+          )
+        )
+      );
+
+    const sortings: Function1<FieldSelection[], VeldSortering[]> = selections =>
+      pipe(
+        selections,
+        array.filterMap(fieldSelectionToVeldSortering)
+      );
+
+    const veranderLaagInstellingenCmd$: rx.Observable<VeranderTabelLaagInstellingenCmd> = this.laag$.pipe(
+      map(LaagModel.selectedFieldSelectionGetter.get),
+      distinctUntilChanged(array.getEq(FieldSelection.setoidFieldSelection).equals),
+      map(selections =>
+        pipe(
+          TabelLaagInstellingen(this.laagTitel, new Set(array.map(FieldSelection.nameLens.get)(selections)), sortings(selections)),
+          VeranderTabelLaagInstellingenCmd
+        )
+      )
+    );
+
+    this.runInViewReady(
+      rx
+        .merge(
+          zoomToSelectionCmd$,
+          clearSelection$,
+          toggleRowSelctionCmd$,
+          toggleAllRowsSelectionCmd$,
+          zoomToIndividualRowCmd$,
+          veranderLaagInstellingenCmd$
+        )
+        .pipe(tap(cmd => this.dispatch(cmd)))
     );
   }
 }
