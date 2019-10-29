@@ -175,20 +175,6 @@ describe("De filterinterpreter", () => {
       expect(result.isSuccess()).toBe(true);
       expect(result.getOrElse(undefined)).toEqual(fixOptionals(def));
     });
-    it("moet een filter met 1 'heeft een waarde' kunnen verwerken", () => {
-      const def = {
-        kind: "ExpressionFilter",
-        name: "testFilter",
-        expression: {
-          kind: "UnaryComparison",
-          operator: "isNotEmpty",
-          property: property()
-        }
-      };
-      const result = AwvV0FilterInterpreters.jsonAwv0Definition(def);
-      expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(fixOptionals(def));
-    });
     it("moet een filter met 1 'and' kunnen verwerken", () => {
       const and = {
         kind: "ExpressionFilter",
