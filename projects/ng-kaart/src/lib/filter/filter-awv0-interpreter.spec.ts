@@ -25,7 +25,7 @@ const fixOptionals: Function1<any, fltr.Filter> = rawFilter =>
   }) as any) as fltr.Filter; // super fishy. gelukkig "maar" een test
 
 describe("De filterinterpreter", () => {
-  const property: fltr.Property = fltr.Property("string", "prop", "Property");
+  const property: fltr.Property = fltr.Property("string", "prop", "Property", "DD/MM/YYYY");
   const literal: fltr.Literal = fltr.Literal("string", "value");
   describe("bij het interpreteren van geldige structuren", () => {
     it("moet een 'empty' filter kunnen verwerken", () => {
