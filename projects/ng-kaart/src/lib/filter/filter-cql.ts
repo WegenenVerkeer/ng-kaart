@@ -1,11 +1,19 @@
-import { constant, Endomorphism, Function1, Function2, Function3, Function4 } from "fp-ts/lib/function";
+import { constant, Curried2, Endomorphism, flow, Function1, Function2, Function3, Function4 } from "fp-ts/lib/function";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
+// https://github.com/ng-packagr/ng-packagr/issues/217
+// rollup problem
+// import * as moment from "moment";
+import * as momentImported from "moment";
+const moment = momentImported;
+// alternatief
+// const moment = require("moment");
 
 import { Filter as fltr } from "../filter/filter-model";
 import { PartialFunction1 } from "../util/function";
 
 export namespace FilterCql {
   type Generator<A> = Function1<A, Option<string>>;
+  type Generator2<A> = Curried2<Option<string>, A, Option<string>>;
 
   const like: Function1<boolean, string> = caseSensitive => (caseSensitive ? "like" : "ilike");
 
@@ -35,9 +43,13 @@ export namespace FilterCql {
 
   const doubleGenerator: Generator<fltr.Literal> = literal => fltr.numberValue(literal.value).map(value => value.toString());
 
-  const dateGenerator: Generator<fltr.Literal> = literal => asDate(literal.value).map(quoteString);
-
-  const dateTimeGenerator: Generator<fltr.Literal> = literal => asDateTime(literal.value).map(quoteString);
+  const dateTimeGenerator: Generator2<fltr.Literal> = sqlFormat => literal =>
+    fltr.dateValue(literal.value).map(value =>
+      sqlFormat.foldL(
+        () => moment(value).format("DD/MM/YYYY"), //
+        sqlFormat => moment(value).format(sqlFormat) //
+      )
+    );
 
   // In principe heeft de gebruiker niet veel zeggenschap over de properties. Maar ingeval van eigen data kan dat dus om
   // het even wat zijn (voor zover het in een shape file past). We verwachten dat de gebruikers geen "rare" kolomnamen
@@ -50,8 +62,8 @@ export namespace FilterCql {
     string: stringGenerator,
     integer: integerGenerator,
     double: doubleGenerator,
-    date: dateGenerator,
-    datetime: dateTimeGenerator,
+    date: dateTimeGenerator(none),
+    datetime: dateTimeGenerator(none),
     geometry: () => none,
     json: () => none,
     url: () => none
@@ -71,6 +83,19 @@ export namespace FilterCql {
       contains: () => some(`${propertyRef(property)} ${like(caseSensitive)} '%${literal.value}%'`),
       fallback: () => none // de andere operators worden niet ondersteund
     })(operator);
+
+  const datetimeBinaryOperator: Function3<fltr.Property, fltr.BinaryComparisonOperator, fltr.Literal, Option<string>> = (
+    property,
+    operator,
+    literal
+  ) =>
+    fromNullable(numberBinaryOperatorSymbols[operator]).chain(symbol => {
+      const query = dateTimeGenerator(property.sqlFormat)(literal).map(value => {
+        const format = property.sqlFormat.getOrElse("DD/MM/YYYY");
+        return `(to_date(${propertyRef(property)}, '${format}') ${symbol} to_date('${value}', '${format}'))`;
+      });
+      return query;
+    });
 
   const numberBinaryOperatorSymbols = {
     equality: "=",
@@ -108,8 +133,8 @@ export namespace FilterCql {
     BinaryComparison: expr =>
       fltr.matchTypeTypeWithFallback({
         string: () => stringBinaryOperator(expr.property, expr.operator, expr.value, expr.caseSensitive),
-        date: () => stringBinaryOperator(expr.property, expr.operator, expr.value, expr.caseSensitive),
-        datetime: () => stringBinaryOperator(expr.property, expr.operator, expr.value, expr.caseSensitive),
+        date: () => datetimeBinaryOperator(expr.property, expr.operator, expr.value),
+        datetime: () => datetimeBinaryOperator(expr.property, expr.operator, expr.value),
         double: () => numberBinaryOperator(expr.property, expr.operator, expr.value),
         integer: () => numberBinaryOperator(expr.property, expr.operator, expr.value),
         boolean: () => numberBinaryOperator(expr.property, expr.operator, expr.value),

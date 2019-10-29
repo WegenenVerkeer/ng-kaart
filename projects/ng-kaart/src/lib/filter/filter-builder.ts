@@ -8,6 +8,7 @@ import {
   Function2,
   Function3,
   Function4,
+  Function5,
   Lazy,
   not,
   Predicate,
@@ -61,7 +62,7 @@ export namespace FilterEditor {
   }
 
   // export type ValueSelector = "FreeString" | "FreeInteger" | "FreeDouble" | "SelectString" | "AutoCompleteString" | "NoSelection";
-  export type ValueSelector = FreeInputValueSelector | SelectionValueSelector | EmptyValueSelector;
+  export type ValueSelector = FreeInputValueSelector | SelectionValueSelector | DateValueSelector | EmptyValueSelector;
 
   export type FreeInputValueType = "string" | "integer" | "double";
 
@@ -76,6 +77,13 @@ export namespace FilterEditor {
     readonly kind: "selection";
     readonly selectionType: SelectionType;
     readonly values: string[];
+  }
+
+  export type DateType = "date" | "datetime";
+
+  export interface DateValueSelector {
+    readonly kind: "date";
+    readonly dateType: DateType;
   }
 
   export interface EmptyValueSelector {
@@ -160,11 +168,18 @@ export namespace FilterEditor {
     readonly selectedValue: SelectedValue;
   }
 
-  const Property: Function4<fltr.TypeType, string, string, string[], Property> = (typetype, name, label, distinctValues) => ({
+  const Property: Function5<fltr.TypeType, string, string, string | undefined, string[], Property> = (
+    typetype,
+    name,
+    label,
+    sqlFormat,
+    distinctValues
+  ) => ({
     kind: "Property",
     type: typetype,
     ref: name,
     label,
+    sqlFormat: fromNullable(sqlFormat),
     distinctValues
   });
 
@@ -173,6 +188,14 @@ export namespace FilterEditor {
     value,
     valueType
   });
+
+  export const literalValueStringRenderer: Function1<LiteralValue, string> = literalValue =>
+    fltr.matchTypeTypeWithFallback({
+      date: () => {
+        return (<Date>literalValue.value).toLocaleDateString("nl-BE");
+      },
+      fallback: () => literalValue.value.toString()
+    })(literalValue.valueType);
 
   export const isAtLeastOperatorSelection: Refinement<TermEditor, OperatorSelection> = (termEditor): termEditor is OperatorSelection =>
     termEditor.kind === "Operator" ||
@@ -199,7 +222,13 @@ export namespace FilterEditor {
   const properties: Function1<ke.ToegevoegdeVectorLaag, Property[]> = laag =>
     veldinfos(laag)
       .map(vi =>
-        Property(vi.type, vi.naam, fromNullable(vi.label).getOrElse(vi.naam), array.sort(ordString)(arrays.fromNullable(vi.uniekeWaarden)))
+        Property(
+          vi.type,
+          vi.naam,
+          fromNullable(vi.label).getOrElse(vi.naam),
+          vi.sqlFormat,
+          array.sort(ordString)(arrays.fromNullable(vi.uniekeWaarden))
+        )
       )
       .filter(property => ["string", "boolean", "double", "integer", "date", "datetime"].includes(property.type));
 
@@ -252,6 +281,16 @@ export namespace FilterEditor {
     ...unaryOperators
   ];
 
+  const dateOperators = [
+    BinaryComparisonOperator("op", "op", "equality", "date"),
+    BinaryComparisonOperator("niet", "niet op", "inequality", "date"),
+    BinaryComparisonOperator("tot", "<", "smaller", "date"),
+    BinaryComparisonOperator("tot en met", "<=", "smallerOrEqual", "date"),
+    BinaryComparisonOperator("na", ">", "larger", "date"),
+    BinaryComparisonOperator("vanaf", ">=", "largerOrEqual", "date"),
+    ...unaryOperators
+  ];
+
   interface OperatorLabels {
     readonly label: string;
     readonly shortLabel: string;
@@ -264,6 +303,7 @@ export namespace FilterEditor {
   const doubleOperatorMap = fullOperatorMap(doubleOperators);
   const integerOperatorMap = fullOperatorMap(integerOperators);
   const booleanOperatorMap = fullOperatorMap(booleanOperators);
+  const dateOperatorMap = fullOperatorMap(dateOperators);
 
   type OperatorLabelsByUnaryOperator = { readonly [P in fltr.UnaryComparisonOperator]: OperatorLabels };
 
@@ -291,8 +331,8 @@ export namespace FilterEditor {
   const binaryComparisonOperator: Function2<fltr.BinaryComparisonOperator, fltr.Literal, BinaryComparisonOperator> = (operator, literal) =>
     fltr.matchTypeTypeWithFallback({
       string: () => typedComparisonOperator(stringOperatorMap, operator, literal.type),
-      date: () => typedComparisonOperator(stringOperatorMap, operator, literal.type),
-      datetime: () => typedComparisonOperator(stringOperatorMap, operator, literal.type),
+      date: () => typedComparisonOperator(dateOperatorMap, operator, literal.type),
+      datetime: () => typedComparisonOperator(dateOperatorMap, operator, literal.type),
       integer: () => typedComparisonOperator(integerOperatorMap, operator, literal.type),
       double: () => typedComparisonOperator(doubleOperatorMap, operator, literal.type),
       boolean: () => typedComparisonOperator(booleanOperatorMap, operator, literal.type),
@@ -307,6 +347,11 @@ export namespace FilterEditor {
     kind: "selection",
     selectionType,
     values
+  });
+
+  const DateValueSelector: Function1<DateType, DateValueSelector> = dateType => ({
+    kind: "date",
+    dateType
   });
 
   const EmptyValueSelector: EmptyValueSelector = { kind: "empty" };
@@ -332,8 +377,8 @@ export namespace FilterEditor {
   const genericOperatorSelectors: Function1<fltr.Property, OperatorsAndValueSelector> = property =>
     fltr.matchTypeTypeWithFallback({
       string: () => OperatorsAndValueSelector(stringOperators, FreeInputValueSelector("string")),
-      date: () => OperatorsAndValueSelector(stringOperators, FreeInputValueSelector("string")),
-      datetime: () => OperatorsAndValueSelector(stringOperators, FreeInputValueSelector("string")),
+      date: () => OperatorsAndValueSelector(dateOperators, DateValueSelector("date")),
+      datetime: () => OperatorsAndValueSelector(dateOperators, DateValueSelector("datetime")),
       double: () => OperatorsAndValueSelector(doubleOperators, FreeInputValueSelector("double")),
       integer: () => OperatorsAndValueSelector(integerOperators, FreeInputValueSelector("integer")),
       boolean: () => OperatorsAndValueSelector(booleanOperators, EmptyValueSelector),
@@ -343,8 +388,8 @@ export namespace FilterEditor {
   const specificOperatorSelectors: Function2<Property, BinaryComparisonOperator, OperatorsAndValueSelector> = (property, operator) =>
     fltr.matchTypeTypeWithFallback({
       string: () => OperatorsAndValueSelector(stringOperators, bestStringValueSelector(property, operator)),
-      date: () => OperatorsAndValueSelector(stringOperators, bestStringValueSelector(property, operator)),
-      datetime: () => OperatorsAndValueSelector(stringOperators, bestStringValueSelector(property, operator)),
+      date: () => OperatorsAndValueSelector(dateOperators, DateValueSelector("date")),
+      datetime: () => OperatorsAndValueSelector(dateOperators, DateValueSelector("datetime")),
       double: () => OperatorsAndValueSelector(doubleOperators, FreeInputValueSelector("double")),
       integer: () => OperatorsAndValueSelector(integerOperators, FreeInputValueSelector("integer")),
       boolean: () => OperatorsAndValueSelector(booleanOperators, EmptyValueSelector),
@@ -410,8 +455,8 @@ export namespace FilterEditor {
       BinaryComparisonOperator: binOp =>
         fltr.matchTypeTypeWithFallback<TermEditor>({
           string: () => toValueSelection(selection, binOp, bestStringValueSelector(selection.selectedProperty, binOp), caseSensitive),
-          date: () => toValueSelection(selection, binOp, bestStringValueSelector(selection.selectedProperty, binOp), caseSensitive),
-          datetime: () => toValueSelection(selection, binOp, bestStringValueSelector(selection.selectedProperty, binOp), caseSensitive),
+          date: () => toValueSelection(selection, binOp, DateValueSelector("date"), caseSensitive),
+          datetime: () => toValueSelection(selection, binOp, DateValueSelector("datetime"), caseSensitive),
           double: () => toValueSelection(selection, binOp, FreeInputValueSelector("double"), caseSensitive),
           integer: () => toValueSelection(selection, binOp, FreeInputValueSelector("integer"), caseSensitive),
           boolean: () => booleanCompleted(selection, binOp),
@@ -811,10 +856,14 @@ export namespace FilterEditor {
     getTupleSetoid(setoidString, getArraySetoid(setoidString))
   );
 
+  const dateTypeSetoid: Setoid<DateType> = setoidString;
+  const dateValueSelectorSetoid: Setoid<DateValueSelector> = contramap(vs => vs.dateType, dateTypeSetoid);
+
   const setoidValueSelector: Setoid<ValueSelector> = byKindSetoid({
     empty: singletonSetoid,
     free: freeInputValueSelectorSetoid,
-    selection: selectionValueSelectorSetoid
+    selection: selectionValueSelectorSetoid,
+    date: dateValueSelectorSetoid
   });
 
   const setoidValueSelection: Setoid<ValueSelection> = getRecordSetoid({
@@ -868,6 +917,7 @@ export namespace FilterEditor {
     readonly empty: Function1<EmptyValueSelector, A>;
     readonly free: Function1<FreeInputValueSelector, A>;
     readonly selection: Function1<SelectionValueSelector, A>;
+    readonly date: Function1<DateValueSelector, A>;
   }
 
   export const matchValueSelector: <A>(matcher: ValueSelectorMatcher<A>) => Function1<ValueSelector, A> = matchers.matchKind;

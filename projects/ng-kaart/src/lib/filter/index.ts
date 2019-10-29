@@ -3,15 +3,21 @@ import { HttpClientModule } from "@angular/common/http";
 import { ModuleWithProviders, NgModule } from "@angular/core";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
 import {
+  DateAdapter,
+  MAT_DATE_FORMATS,
+  MAT_DATE_LOCALE,
   MatAutocompleteModule,
   MatButtonModule,
   MatCheckboxModule,
+  MatDatepickerModule,
   MatFormFieldModule,
   MatIconModule,
   MatInputModule,
   MatMenuModule,
   MatSelectModule
 } from "@angular/material";
+
+import { MatMomentDateModule, MomentDateAdapter } from "@angular/material-moment-adapter";
 
 import { FilterDetailComponent } from "./filter-detail.component";
 import { FilterEditorComponent } from "./filter-editor.component";
@@ -42,6 +48,8 @@ const components: any[] = [
     ReactiveFormsModule,
     MatButtonModule,
     MatCheckboxModule,
+    MatDatepickerModule,
+    MatMomentDateModule,
     MatIconModule,
     MatInputModule,
     MatFormFieldModule,
@@ -51,7 +59,10 @@ const components: any[] = [
   ],
   declarations: [components],
   exports: [components],
-  providers: []
+  providers: [
+    { provide: MAT_DATE_LOCALE, useValue: "nl-BE" },
+    { provide: DateAdapter, useClass: MomentDateAdapter, deps: [MAT_DATE_LOCALE] }
+  ]
 })
 export class FilterModule {
   static forRoot(): ModuleWithProviders {

@@ -7,6 +7,8 @@ import * as option from "fp-ts/lib/Option";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import * as ord from "fp-ts/lib/Ord";
 import { Ord } from "fp-ts/lib/Ord";
+import * as momentImported from "moment";
+const moment = momentImported;
 import * as rx from "rxjs";
 import {
   debounceTime,
@@ -35,7 +37,7 @@ import { asap } from "../util/asap";
 import { isNotNull, isNotNullObject } from "../util/function";
 import { isOfKind } from "../util/kinded";
 import { parseDouble, parseInteger } from "../util/number";
-import { catOptions, forEvery } from "../util/operators";
+import { catOptions, forEvery, subSpy } from "../util/operators";
 
 import { FilterAanpassingBezig, isAanpassingBezig } from "./filter-aanpassing-state";
 import { FilterEditor as fed } from "./filter-builder";
@@ -119,6 +121,8 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
   readonly dropdownWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
   readonly autocompleteWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
+
+  readonly datumWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
 
   readonly ongeldigeFilter$: rx.Observable<boolean>;
 
@@ -209,6 +213,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       this.integerWaardeControl.reset(0, { emitEvent: false });
       this.doubleWaardeControl.reset(0, { emitEvent: false });
       this.dropdownWaardeControl.reset("", { emitEvent: false });
+      this.datumWaardeControl.reset(null, { emitEvent: false });
       this.autocompleteWaardeControl.reset("", { emitEvent: false });
       this.hoofdLetterGevoeligControl.reset(null, { emitEvent: false });
       this.forceAutoCompleteControl.reset(false, { emitEvent: true });
@@ -245,6 +250,16 @@ export class FilterEditorComponent extends KaartChildComponentBase {
         distinctUntilChanged(), // in dit geval vgln we op strings, dus ook OK
         map(input => fromNullable(input).map(value => fed.LiteralValue(sanitiseText(value.toString()), "string")))
       );
+
+    const gekozenDatum$ = forControlValue(this.datumWaardeControl).pipe(
+      distinctUntilChanged(),
+      map(input =>
+        fromNullable(input)
+          .filter(moment.isMoment)
+          .map(m => fed.LiteralValue(m.toDate(), "date"))
+      )
+    );
+
     const gekozenInteger$: rx.Observable<Option<fed.LiteralValue>> = forControlValue(this.integerWaardeControl).pipe(
       distinctUntilChanged(), // in dit geval vgln we op getallen, dus ook OK
       map(input => parseInteger(input).map(num => fed.LiteralValue(num, "integer")))
@@ -253,7 +268,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       distinctUntilChanged(), // in dit geval vgln we op getallen, dus ook OK
       map(input => parseDouble(input).map(value => fed.LiteralValue(value, "double")))
     );
-    const gekozenWaarde$: rx.Observable<Option<fed.LiteralValue>> = rx.merge(gekozenText$, gekozenInteger$, gekozenDouble$);
+    const gekozenWaarde$: rx.Observable<Option<fed.LiteralValue>> = rx.merge(gekozenText$, gekozenInteger$, gekozenDouble$, gekozenDatum$);
 
     type ExpressionEditorUpdate = Endomorphism<fed.ExpressionEditor>;
     type TermEditorUpdate = Endomorphism<fed.TermEditor>;
@@ -323,6 +338,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.integerWaardeControl,
               this.doubleWaardeControl,
               this.dropdownWaardeControl,
+              this.datumWaardeControl,
               this.autocompleteWaardeControl,
               this.hoofdLetterGevoeligControl
             );
@@ -333,6 +349,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.integerWaardeControl,
               this.doubleWaardeControl,
               this.dropdownWaardeControl,
+              this.datumWaardeControl,
               this.autocompleteWaardeControl
             );
             this.hoofdLetterGevoeligControl.reset(false, { emitEvent: false });
@@ -344,6 +361,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.integerWaardeControl,
               this.doubleWaardeControl,
               this.dropdownWaardeControl,
+              this.datumWaardeControl,
               this.autocompleteWaardeControl,
               this.hoofdLetterGevoeligControl
             );
@@ -354,6 +372,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.integerWaardeControl,
               this.doubleWaardeControl,
               this.dropdownWaardeControl,
+              this.datumWaardeControl,
               this.autocompleteWaardeControl
             );
             this.hoofdLetterGevoeligControl.reset(false, { emitEvent: false });
@@ -366,6 +385,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.integerWaardeControl,
               this.doubleWaardeControl,
               this.dropdownWaardeControl,
+              this.datumWaardeControl,
               this.autocompleteWaardeControl,
               this.hoofdLetterGevoeligControl
             );
@@ -392,6 +412,9 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               selection: () => {
                 this.autocompleteWaardeControl.reset(val.workingValue.fold("", sv => sv.value), { emitEvent: true });
                 this.dropdownWaardeControl.reset(val.workingValue.fold("", sv => sv.value), { emitEvent: true });
+              },
+              date: () => {
+                this.datumWaardeControl.reset(val.workingValue.fold("", sv => sv.value), { emitEvent: true });
               }
             })(val.valueSelector);
           },
@@ -402,6 +425,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.integerWaardeControl,
               this.doubleWaardeControl,
               this.dropdownWaardeControl,
+              this.datumWaardeControl,
               this.autocompleteWaardeControl,
               this.hoofdLetterGevoeligControl
             );
@@ -415,6 +439,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.integerWaardeControl,
               this.doubleWaardeControl,
               this.dropdownWaardeControl,
+              this.datumWaardeControl,
               this.autocompleteWaardeControl,
               this.hoofdLetterGevoeligControl
             );
@@ -439,6 +464,11 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               selection: () => {
                 this.dropdownWaardeControl.reset(compl.selectedValue.value, { emitEvent: true });
                 this.autocompleteWaardeControl.reset(compl.selectedValue.value, { emitEvent: true });
+              },
+              date: () => {
+                // FIXME als ik dit enable kan ik een bewaarde toestand terugzetten, maar niet het datumveld manueel editeren
+                // als ik dit disable het omgekeerde
+                // this.datumWaardeControl.reset(moment(<Date>compl.selectedValue.value), { emitEvent: false });
               }
             })(compl.valueSelector);
           }
@@ -662,6 +692,10 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
   errorDoubleWaarde(): string {
     return this.doubleWaardeControl.hasError("required") ? "Gelieve een waarde in te geven" : "";
+  }
+
+  errorDateWaarde(): string {
+    return this.datumWaardeControl.hasError("required") ? "Gelieve een waarde in te geven" : "";
   }
 
   displayAutocompleteWaarde(waarde?: Wrapped | string): string | undefined {
