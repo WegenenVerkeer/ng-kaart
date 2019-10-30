@@ -1,14 +1,8 @@
 import { constant, Curried2, Endomorphism, flow, Function1, Function2, Function3, Function4 } from "fp-ts/lib/function";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
-// https://github.com/ng-packagr/ng-packagr/issues/217
-// rollup problem
-// import * as moment from "moment";
-import * as momentImported from "moment";
-const moment = momentImported;
-// alternatief
-// const moment = require("moment");
 
 import { Filter as fltr } from "../filter/filter-model";
+import { formateerJsDate } from "../util/date-time";
 import { PartialFunction1 } from "../util/function";
 
 export namespace FilterCql {
@@ -43,13 +37,7 @@ export namespace FilterCql {
 
   const doubleGenerator: Generator<fltr.Literal> = literal => fltr.numberValue(literal.value).map(value => value.toString());
 
-  const dateTimeGenerator: Generator2<fltr.Literal> = sqlFormat => literal =>
-    fltr.dateValue(literal.value).map(value =>
-      sqlFormat.foldL(
-        () => moment(value).format("DD/MM/YYYY"), //
-        sqlFormat => moment(value).format(sqlFormat) //
-      )
-    );
+  const dateTimeGenerator: Generator<fltr.Literal> = literal => fltr.dateValue(literal.value).map(formateerJsDate);
 
   // In principe heeft de gebruiker niet veel zeggenschap over de properties. Maar ingeval van eigen data kan dat dus om
   // het even wat zijn (voor zover het in een shape file past). We verwachten dat de gebruikers geen "rare" kolomnamen
@@ -62,8 +50,8 @@ export namespace FilterCql {
     string: stringGenerator,
     integer: integerGenerator,
     double: doubleGenerator,
-    date: dateTimeGenerator(none),
-    datetime: dateTimeGenerator(none),
+    date: dateTimeGenerator,
+    datetime: dateTimeGenerator,
     geometry: () => none,
     json: () => none,
     url: () => none
@@ -90,9 +78,9 @@ export namespace FilterCql {
     literal
   ) =>
     fromNullable(numberBinaryOperatorSymbols[operator]).chain(symbol => {
-      const query = dateTimeGenerator(property.sqlFormat)(literal).map(value => {
+      const query = literalCql(literal).map(value => {
         const format = property.sqlFormat.getOrElse("DD/MM/YYYY");
-        return `(to_date(${propertyRef(property)}, '${format}') ${symbol} to_date('${value}', '${format}'))`;
+        return `(to_date(${propertyRef(property)}, '${format}') ${symbol} to_date('${value}', 'DD/MM/YYYY'))`;
       });
       return query;
     });

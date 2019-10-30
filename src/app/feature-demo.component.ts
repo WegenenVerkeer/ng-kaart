@@ -584,8 +584,8 @@ export class FeatureDemoComponent {
     { isBasisVeld: true, label: "Lengte", naam: "locatie.lengte", type: "double" },
     { isBasisVeld: false, label: "Werkelijke lengte", naam: "werkelijkelengte", type: "double" },
     { isBasisVeld: false, label: "Bron Id", naam: "bronid", type: "string" },
-    { isBasisVeld: false, label: "Opnamedatum", naam: "opnamedatum", type: "date", parseFormat: "dd/LL/yyyy", sqlFormat: "DD/MM/YYYY" },
-    { isBasisVeld: false, label: "Wijzigingsdatum", naam: "wijzigingsdatum", type: "date", sqlFormat: "DD/MM/YYYY" },
+    { isBasisVeld: false, label: "Opnamedatum", naam: "opnamedatum", type: "date", parseFormat: "dd/LL/yyyy", sqlFormat: "dd/MM/yyyy" },
+    { isBasisVeld: false, label: "Wijzigingsdatum", naam: "wijzigingsdatum", type: "date" }, // standaard sqlFormat
     { isBasisVeld: true, label: "Zijde", naam: "zijderijbaan", type: "string", uniekeWaarden: ["R", "L", "M", "NVT"] }, // niet alfabetisch!
     {
       isBasisVeld: true,
