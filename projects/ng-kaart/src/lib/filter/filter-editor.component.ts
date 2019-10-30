@@ -37,7 +37,7 @@ import { asap } from "../util/asap";
 import { isNotNull, isNotNullObject } from "../util/function";
 import { isOfKind } from "../util/kinded";
 import { parseDouble, parseInteger } from "../util/number";
-import { catOptions, forEvery, subSpy } from "../util/operators";
+import { catOptions, forEvery } from "../util/operators";
 
 import { FilterAanpassingBezig, isAanpassingBezig } from "./filter-aanpassing-state";
 import { FilterEditor as fed } from "./filter-builder";
@@ -256,7 +256,24 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       map(input =>
         fromNullable(input)
           .filter(moment.isMoment)
-          .map(m => fed.LiteralValue(m.toDate(), "date"))
+          .map(m => {
+            // We hebben een probleem in de zin dat de date component verbergt wat de input is en enkel de geparste date
+            // terug geeft. Daar komt dan nog bij dat de parsing niet strikt is (de setting die we daarvoor gebruiken
+            // wordt blijkbaar genegeerd). Het gevolg is dat er bij manuele invoer datums gegenereerd worden die de
+            // gebruiker helemaal niet ingegeven heeft. Wat we eigenlijk willen, is de letterlijke invoer capteren.
+            //
+            // Het toeval wil dat het object dat Moment terug geeft, wel de input bevat wanneer niet alle input verwerkt
+            // is, maar dat is eigenlijk niet gedocumenteerd. Het alternatief is om ofwel met de parsingFlags te werken,
+            // ofwel een MomentDateAdapter te gebruiken. Beiden zijn evenwel veel meer werk dan onderstaande hack.
+            //
+            const input = m["_i"]; // Dit is de hack.
+            if (typeof input === "string") {
+              // input niet volledig verwerkt
+              return fed.LiteralValue(input, "string");
+            } else {
+              return fed.LiteralValue(m.toDate(), "date");
+            }
+          })
       )
     );
 
@@ -466,9 +483,9 @@ export class FilterEditorComponent extends KaartChildComponentBase {
                 this.autocompleteWaardeControl.reset(compl.selectedValue.value, { emitEvent: true });
               },
               date: () => {
-                // FIXME als ik dit enable kan ik een bewaarde toestand terugzetten, maar niet het datumveld manueel editeren
-                // als ik dit disable het omgekeerde
-                // this.datumWaardeControl.reset(moment(<Date>compl.selectedValue.value), { emitEvent: false });
+                // Wanneer we in de toestand completed zijn, dan weten we dat het type DateTime (van Luxon) is. De
+                // datepicker verwacht echter een moment date.
+                this.datumWaardeControl.reset(moment(compl.selectedValue.value.toString()), { emitEvent: false });
               }
             })(compl.valueSelector);
           }
@@ -687,15 +704,15 @@ export class FilterEditorComponent extends KaartChildComponentBase {
   }
 
   errorIntegerWaarde(): string {
-    return this.integerWaardeControl.hasError("required") ? "Gelieve een waarde in te geven" : "";
+    return this.integerWaardeControl.hasError("required") ? "Gelieve een geheel getal in te geven" : "";
   }
 
   errorDoubleWaarde(): string {
-    return this.doubleWaardeControl.hasError("required") ? "Gelieve een waarde in te geven" : "";
+    return this.doubleWaardeControl.hasError("required") ? "Gelieve een getal in te geven" : "";
   }
 
   errorDateWaarde(): string {
-    return this.datumWaardeControl.hasError("required") ? "Gelieve een waarde in te geven" : "";
+    return this.datumWaardeControl.hasError("required") ? "Gelieve een datum in te geven" : "";
   }
 
   displayAutocompleteWaarde(waarde?: Wrapped | string): string | undefined {

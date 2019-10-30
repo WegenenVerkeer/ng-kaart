@@ -17,7 +17,7 @@ import {
   MatSelectModule
 } from "@angular/material";
 
-import { MatMomentDateModule, MomentDateAdapter } from "@angular/material-moment-adapter";
+import { MAT_MOMENT_DATE_ADAPTER_OPTIONS, MatMomentDateModule, MomentDateAdapter } from "@angular/material-moment-adapter";
 
 import { FilterDetailComponent } from "./filter-detail.component";
 import { FilterEditorComponent } from "./filter-editor.component";
@@ -61,7 +61,8 @@ const components: any[] = [
   exports: [components],
   providers: [
     { provide: MAT_DATE_LOCALE, useValue: "nl-BE" },
-    { provide: DateAdapter, useClass: MomentDateAdapter, deps: [MAT_DATE_LOCALE] }
+    { provide: DateAdapter, useClass: MomentDateAdapter, deps: [MAT_DATE_LOCALE] },
+    { provide: MAT_MOMENT_DATE_ADAPTER_OPTIONS, useValue: { strict: true } } // Blijkt niet te werken!
   ]
 })
 export class FilterModule {

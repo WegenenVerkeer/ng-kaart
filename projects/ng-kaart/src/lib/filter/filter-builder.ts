@@ -1,3 +1,4 @@
+import { option } from "fp-ts";
 import * as array from "fp-ts/lib/Array";
 import { array as ArrayMonad } from "fp-ts/lib/Array";
 import {
@@ -14,7 +15,7 @@ import {
   Predicate,
   Refinement
 } from "fp-ts/lib/function";
-import { fromNullable, fromPredicate, none, Option, option, some } from "fp-ts/lib/Option";
+import { fromNullable, fromPredicate, none, Option, some } from "fp-ts/lib/Option";
 import { ordString } from "fp-ts/lib/Ord";
 import {
   contramap,
@@ -30,6 +31,7 @@ import { fromTraversable, Lens, Prism, Traversal } from "monocle-ts";
 
 import * as ke from "../kaart/kaart-elementen";
 import * as arrays from "../util/arrays";
+import { parseDate } from "../util/date-time";
 import { applySequential, PartialFunction1 } from "../util/function";
 import * as maps from "../util/maps";
 import * as matchers from "../util/matchers";
@@ -466,21 +468,34 @@ export namespace FilterEditor {
         })(selection.selectedProperty.type)
     })(selectedOperator);
 
-  // Overgang van ValueSelection naar CompletedWithValue als alles OK is. Kan dus ook van CompletedWithValue naar
-  // ValueSelection gaan.
+  // Overgang van ValueSelection naar CompletedWithValue als alles OK is. Kan ook van CompletedWithValue naar
+  // ValueSelection gaan wanneer nieuwe input gegeven wordt.
   export const selectValue: Curried2<Option<SelectedValue>, ValueSelection, TermEditor> = maybeSelectedValue => selection => {
     // Voorlopig ondersteunen we dus enkel LiteralValues
 
     // in theorie zouden we meer constraints kunnen hebben
-    const validateText: PartialFunction1<SelectedValue, SelectedValue> = fromPredicate(selectedValue =>
-      ["string", "date", "datetime"].includes(selectedValue.valueType) ? selectedValue.value.toString().length > 0 : true
+    const validateText: PartialFunction1<SelectedValue, SelectedValue> = option.fromPredicate(selectedValue =>
+      ["string", "datetime"].includes(selectedValue.valueType) ? selectedValue.value.toString().length > 0 : true
     );
-    const validateDistinct: PartialFunction1<SelectedValue, SelectedValue> = fromPredicate(selectedValue =>
+
+    // Wanneer de datum correct is, komt die binnen als een Literal met een type "date". Maar als dat niet zo is  met
+    // een type "string". Behalve wanneer de gebruiker zelf aan het typen geslagen is. Dan komt de waarde binnen als een
+    // "string", of die nu geldig is of niet. Een geldige datum willen we in dat geval omzetten naar een Date.
+    const validateDate: PartialFunction1<SelectedValue, SelectedValue> = selectedValue =>
+      option
+        .fromPredicate<SelectedValue>(selectedValue => selection.selectedProperty.type !== "date" || selectedValue.valueType === "date")(
+          selectedValue
+        )
+        .orElse(() =>
+          parseDate(option.some("d/M/yyyy"))(selectedValue.value.toString()).map(date => LiteralValue(date.toJSDate(), "date"))
+        );
+
+    const validateDistinct: PartialFunction1<SelectedValue, SelectedValue> = option.fromPredicate(selectedValue =>
       selection.valueSelector.kind === "selection"
         ? typeof selectedValue.value === "string" && selection.valueSelector.values.includes(selectedValue.value)
         : true
     );
-    const validateType: PartialFunction1<SelectedValue, SelectedValue> = fromPredicate(selectedValue =>
+    const validateType: PartialFunction1<SelectedValue, SelectedValue> = option.fromPredicate(selectedValue =>
       selectedValue.valueType === "string"
         ? ["string", "date", "datetime"].includes(selection.selectedProperty.type)
         : selectedValue.valueType === selection.selectedProperty.type
@@ -496,6 +511,7 @@ export namespace FilterEditor {
     return maybeSelectedValue
       .chain(validateType)
       .chain(validateText)
+      .chain(validateDate)
       .chain(validateDistinct)
       .foldL<TermEditor>(failTransition, selectedValue =>
         validatedOperator.foldL<TermEditor>(failTransition, binOp => ({
@@ -793,7 +809,7 @@ export namespace FilterEditor {
   };
 
   const toConjunctionExpression: Function1<TermEditor[], Option<fltr.ConjunctionExpression>> = termEditors =>
-    ArrayMonad.traverse(option)(termEditors, toComparison).chain(comps =>
+    ArrayMonad.traverse(option.option)(termEditors, toComparison).chain(comps =>
       array.fold(
         comps,
         array.head(comps), // ingeval er maar 1 element is, bnehouden we dat gewoon
@@ -802,7 +818,7 @@ export namespace FilterEditor {
     );
 
   const toDisjunctionExpression: Function1<ConjunctionEditor[], Option<fltr.Expression>> = conjunctionEditors =>
-    ArrayMonad.traverse(option)(conjunctionEditors.map(ce => ce.termEditors), toConjunctionExpression).chain(conjs =>
+    ArrayMonad.traverse(option.option)(conjunctionEditors.map(ce => ce.termEditors), toConjunctionExpression).chain(conjs =>
       array.fold(
         conjs,
         array.head(conjs), // ingeval er maar 1 element is, bnehouden we dat gewoon
