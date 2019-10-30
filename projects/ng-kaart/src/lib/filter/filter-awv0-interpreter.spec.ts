@@ -79,9 +79,8 @@ describe("De filterinterpreter", () => {
         }
       };
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(eq);
-      const target = fixOptionals(eq);
       expect(result.isSuccess()).toBe(true);
-      expect(result.getOrElse(undefined)).toEqual(target);
+      expect(result.getOrElse(undefined)).toEqual(fixOptionals(eq));
     });
     it("moet een filter met 1 case sensitive 'gelijk aan' kunnen verwerken", () => {
       const eq = {
@@ -337,7 +336,7 @@ describe("De filterinterpreter", () => {
     });
   });
   describe("Bij het interpreteren van ongeldige structuren", () => {
-    it("moet een  bij een expressie met een ontbrekende property ", () => {
+    it("moet een fout geven bij een expressie met een ontbrekende property", () => {
       const eq: Object = {
         kind: "ExpressionFilter",
         name: "testFilter",
