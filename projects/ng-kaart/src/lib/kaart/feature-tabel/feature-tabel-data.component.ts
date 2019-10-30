@@ -4,12 +4,13 @@ import { flow, Function1, Refinement } from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { distinctUntilChanged, map, mapTo, share, shareReplay, startWith, switchMap, tap, withLatestFrom } from "rxjs/operators";
+import { distinctUntilChanged, map, mapTo, share, shareReplay, startWith, switchMap, take, tap, withLatestFrom } from "rxjs/operators";
 import { isBoolean, isString } from "util";
 
 import * as arrays from "../../util/arrays";
 import { join } from "../../util/string";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
+import * as prt from "../kaart-protocol";
 import { DeselecteerFeatureCmd, SelecteerExtraFeaturesCmd, VeranderExtentCmd } from "../kaart-protocol-commands";
 import { FeatureSelection, GeselecteerdeFeatures } from "../kaart-protocol-subscriptions";
 import { KaartComponent } from "../kaart.component";
@@ -183,17 +184,33 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     const zoomToSelection$ = this.actionFor$("zoomToSelection");
     const zoomToRow$ = this.actionDataFor$("zoomToRow", (r): r is Row => true);
 
+    const olMap$ = this.kaartModel$.pipe(
+      map(m => m.map),
+      take(1)
+    );
+
     // zoom naar de selectie
     this.runInViewReady(
       zoomToSelection$.pipe(
-        withLatestFrom(this.modelChanges.geselecteerdeFeatures$),
-        tap(([_, selection]) => {
+        withLatestFrom(this.modelChanges.geselecteerdeFeatures$, olMap$, this.laag$),
+        map(([_, selection, map, laagModel]) => {
           const laagSelection = FeatureSelection.getGeselecteerdeFeaturesInLaag(this.laagTitel)(selection);
-
           const extent = laagSelection[0].getGeometry().getExtent();
           laagSelection.forEach(feature => ol.extent.extend(extent, feature.getGeometry().getExtent()));
-
           this.dispatch(VeranderExtentCmd(extent));
+
+          const view: ol.View = map.getView();
+          const neededZoom = view.getZoomForResolution(view.getResolutionForExtent(extent, map.getSize()));
+          if (neededZoom < laagModel.minZoom) {
+            this.dispatch(
+              prt.MeldComponentFoutCmd([
+                "Info: ",
+                laagSelection.length > 1
+                  ? "Extent van de features is te groot voor huidig zoom niveau"
+                  : "Feature is niet zichtbaar op huidig zoom niveau"
+              ])
+            );
+          }
         })
       )
     );
@@ -252,9 +269,16 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     // zoom naar individuele rij
     this.runInViewReady(
       zoomToRow$.pipe(
-        tap(row => {
+        withLatestFrom(olMap$, this.laag$),
+        tap(([row, map, laagModel]) => {
           const extent = row.feature.feature.getGeometry().getExtent();
           this.dispatch(VeranderExtentCmd(extent));
+
+          const view: ol.View = map.getView();
+          const neededZoom = view.getZoomForResolution(view.getResolutionForExtent(extent, map.getSize()));
+          if (neededZoom < laagModel.minZoom) {
+            this.dispatch(prt.MeldComponentFoutCmd(["Info: ", "Feature is niet zichtbaar op huidig zoom niveau"]));
+          }
         })
       )
     );
