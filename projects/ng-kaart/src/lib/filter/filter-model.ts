@@ -1,5 +1,5 @@
 import { constant, Function1, Function2, Function3, Function4, identity, Lazy, not, Predicate } from "fp-ts/lib/function";
-import { none, Option, some } from "fp-ts/lib/Option";
+import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import { contramap, Setoid, setoidString } from "fp-ts/lib/Setoid";
 
 import { PartialFunction1 } from "../util/function";
@@ -89,7 +89,7 @@ export namespace Filter {
   // TODO: laten we voorlopig overeen komen met alle veldtypes uit VeldInfo
   export type TypeType = "string" | "integer" | "double" | "geometry" | "date" | "datetime" | "boolean" | "json" | "url";
 
-  export type ValueType = boolean | string | number;
+  export type ValueType = boolean | string | number | Date;
 
   export interface Literal {
     readonly kind: "Literal";
@@ -102,6 +102,7 @@ export namespace Filter {
     readonly type: TypeType;
     readonly ref: string;
     readonly label: string;
+    readonly sqlFormat: Option<string>;
   }
 
   export const BinaryComparison: Function4<BinaryComparisonOperator, Property, Literal, boolean, BinaryComparison> = (
@@ -155,10 +156,11 @@ export namespace Filter {
     expression: expression
   });
 
-  export const Property: Function3<TypeType, string, string, Property> = (typetype, name, label) => ({
+  export const Property: Function4<TypeType, string, string, string, Property> = (typetype, name, label, sqlFormat) => ({
     kind: "Property",
     type: typetype,
     ref: name,
+    sqlFormat: fromNullable(sqlFormat),
     label
   });
 
@@ -171,7 +173,7 @@ export namespace Filter {
   export const stringValue: PartialFunction1<ValueType, string> = value => (typeof value === "string" ? some(value) : none);
   export const boolValue: PartialFunction1<ValueType, boolean> = value => (typeof value === "boolean" ? some(value) : none);
   export const numberValue: PartialFunction1<ValueType, number> = value => (typeof value === "number" ? some(value) : none);
-
+  export const dateValue: PartialFunction1<ValueType, Date> = value => (value instanceof Date ? some(value) : none);
   export interface FilterMatcher<A> {
     readonly EmptyFilter: Lazy<A>;
     readonly ExpressionFilter: Function1<ExpressionFilter, A>;

@@ -45,7 +45,7 @@ export class FilterChipComponent {
 
   completedValue(): string {
     return this.editor.kind === "CompletedWithValue" && this.editor.valueSelector.kind !== "empty"
-      ? this.editor.selectedValue.value.toString()
+      ? fed.literalValueStringRenderer(this.editor.selectedValue)
       : "";
   }
 }
