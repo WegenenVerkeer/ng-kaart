@@ -661,9 +661,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
         this.dispatch(prt.StopVectorFilterBewerkingCmd());
         if (laagNietZichtbaar) {
           this.dispatch(
-            prt.MeldComponentFoutCmd([
-              `De laag '${command.titel}' is niet zichtbaar op kaart op dit zoomniveau, gelieve verder in te zoomen`
-            ])
+            prt.ToonMeldingCmd([`De laag '${command.titel}' is niet zichtbaar op kaart op dit zoomniveau, gelieve verder in te zoomen`])
           );
         }
         this.dispatch(command);
