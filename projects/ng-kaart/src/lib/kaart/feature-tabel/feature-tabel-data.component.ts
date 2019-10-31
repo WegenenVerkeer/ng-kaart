@@ -202,7 +202,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
           laagSelection.forEach(feature => ol.extent.extend(extent, feature.getGeometry().getExtent()));
           this.dispatch(VeranderExtentCmd(extent));
 
-          if (neededZoom(map, laagModel) < laagModel.minZoom || neededZoom(map, laagModel) > laagModel.maxZoom) {
+          if (neededZoom(map, extent) < laagModel.minZoom || neededZoom(map, extent) > laagModel.maxZoom) {
             this.dispatch(
               prt.ToonMeldingCmd([
                 laagSelection.length > 1
@@ -274,7 +274,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
           const extent = row.feature.feature.getGeometry().getExtent();
           this.dispatch(VeranderExtentCmd(extent));
 
-          if (neededZoom(map, laagModel) < laagModel.minZoom || neededZoom(map, laagModel) > laagModel.maxZoom) {
+          if (neededZoom(map, extent) < laagModel.minZoom || neededZoom(map, extent) > laagModel.maxZoom) {
             this.dispatch(prt.ToonMeldingCmd(["Feature is niet zichtbaar op huidig zoom niveau"]));
           }
         })
