@@ -7,6 +7,8 @@ import * as option from "fp-ts/lib/Option";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import * as ord from "fp-ts/lib/Ord";
 import { Ord } from "fp-ts/lib/Ord";
+import * as momentImported from "moment";
+const moment = momentImported;
 import * as rx from "rxjs";
 import {
   debounceTime,
@@ -120,6 +122,8 @@ export class FilterEditorComponent extends KaartChildComponentBase {
   readonly dropdownWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
   readonly autocompleteWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
 
+  readonly datumWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
+
   readonly ongeldigeFilter$: rx.Observable<boolean>;
 
   readonly filterEditor$: rx.Observable<fed.ExpressionEditor>;
@@ -209,6 +213,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       this.integerWaardeControl.reset(0, { emitEvent: false });
       this.doubleWaardeControl.reset(0, { emitEvent: false });
       this.dropdownWaardeControl.reset("", { emitEvent: false });
+      this.datumWaardeControl.reset(null, { emitEvent: false });
       this.autocompleteWaardeControl.reset("", { emitEvent: false });
       this.hoofdLetterGevoeligControl.reset(null, { emitEvent: false });
       this.forceAutoCompleteControl.reset(false, { emitEvent: true });
@@ -245,6 +250,33 @@ export class FilterEditorComponent extends KaartChildComponentBase {
         distinctUntilChanged(), // in dit geval vgln we op strings, dus ook OK
         map(input => fromNullable(input).map(value => fed.LiteralValue(sanitiseText(value.toString()), "string")))
       );
+
+    const gekozenDatum$ = forControlValue(this.datumWaardeControl).pipe(
+      distinctUntilChanged(),
+      map(input =>
+        fromNullable(input)
+          .filter(moment.isMoment)
+          .map(m => {
+            // We hebben een probleem in de zin dat de date component verbergt wat de input is en enkel de geparste date
+            // terug geeft. Daar komt dan nog bij dat de parsing niet strikt is (de setting die we daarvoor gebruiken
+            // wordt blijkbaar genegeerd). Het gevolg is dat er bij manuele invoer datums gegenereerd worden die de
+            // gebruiker helemaal niet ingegeven heeft. Wat we eigenlijk willen, is de letterlijke invoer capteren.
+            //
+            // Het toeval wil dat het object dat Moment terug geeft, wel de input bevat wanneer niet alle input verwerkt
+            // is, maar dat is eigenlijk niet gedocumenteerd. Het alternatief is om ofwel met de parsingFlags te werken,
+            // ofwel een MomentDateAdapter te gebruiken. Beiden zijn evenwel veel meer werk dan onderstaande hack.
+            //
+            const input = m["_i"]; // Dit is de hack.
+            if (typeof input === "string") {
+              // input niet volledig verwerkt
+              return fed.LiteralValue(input, "string");
+            } else {
+              return fed.LiteralValue(m.toDate(), "date");
+            }
+          })
+      )
+    );
+
     const gekozenInteger$: rx.Observable<Option<fed.LiteralValue>> = forControlValue(this.integerWaardeControl).pipe(
       distinctUntilChanged(), // in dit geval vgln we op getallen, dus ook OK
       map(input => parseInteger(input).map(num => fed.LiteralValue(num, "integer")))
@@ -253,7 +285,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       distinctUntilChanged(), // in dit geval vgln we op getallen, dus ook OK
       map(input => parseDouble(input).map(value => fed.LiteralValue(value, "double")))
     );
-    const gekozenWaarde$: rx.Observable<Option<fed.LiteralValue>> = rx.merge(gekozenText$, gekozenInteger$, gekozenDouble$);
+    const gekozenWaarde$: rx.Observable<Option<fed.LiteralValue>> = rx.merge(gekozenText$, gekozenInteger$, gekozenDouble$, gekozenDatum$);
 
     type ExpressionEditorUpdate = Endomorphism<fed.ExpressionEditor>;
     type TermEditorUpdate = Endomorphism<fed.TermEditor>;
@@ -323,6 +355,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.integerWaardeControl,
               this.doubleWaardeControl,
               this.dropdownWaardeControl,
+              this.datumWaardeControl,
               this.autocompleteWaardeControl,
               this.hoofdLetterGevoeligControl
             );
@@ -333,6 +366,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.integerWaardeControl,
               this.doubleWaardeControl,
               this.dropdownWaardeControl,
+              this.datumWaardeControl,
               this.autocompleteWaardeControl
             );
             this.hoofdLetterGevoeligControl.reset(false, { emitEvent: false });
@@ -344,6 +378,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.integerWaardeControl,
               this.doubleWaardeControl,
               this.dropdownWaardeControl,
+              this.datumWaardeControl,
               this.autocompleteWaardeControl,
               this.hoofdLetterGevoeligControl
             );
@@ -354,6 +389,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.integerWaardeControl,
               this.doubleWaardeControl,
               this.dropdownWaardeControl,
+              this.datumWaardeControl,
               this.autocompleteWaardeControl
             );
             this.hoofdLetterGevoeligControl.reset(false, { emitEvent: false });
@@ -366,6 +402,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.integerWaardeControl,
               this.doubleWaardeControl,
               this.dropdownWaardeControl,
+              this.datumWaardeControl,
               this.autocompleteWaardeControl,
               this.hoofdLetterGevoeligControl
             );
@@ -392,6 +429,9 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               selection: () => {
                 this.autocompleteWaardeControl.reset(val.workingValue.fold("", sv => sv.value), { emitEvent: true });
                 this.dropdownWaardeControl.reset(val.workingValue.fold("", sv => sv.value), { emitEvent: true });
+              },
+              date: () => {
+                this.datumWaardeControl.reset(val.workingValue.fold("", sv => sv.value), { emitEvent: true });
               }
             })(val.valueSelector);
           },
@@ -402,6 +442,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.integerWaardeControl,
               this.doubleWaardeControl,
               this.dropdownWaardeControl,
+              this.datumWaardeControl,
               this.autocompleteWaardeControl,
               this.hoofdLetterGevoeligControl
             );
@@ -415,6 +456,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.integerWaardeControl,
               this.doubleWaardeControl,
               this.dropdownWaardeControl,
+              this.datumWaardeControl,
               this.autocompleteWaardeControl,
               this.hoofdLetterGevoeligControl
             );
@@ -439,6 +481,11 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               selection: () => {
                 this.dropdownWaardeControl.reset(compl.selectedValue.value, { emitEvent: true });
                 this.autocompleteWaardeControl.reset(compl.selectedValue.value, { emitEvent: true });
+              },
+              date: () => {
+                // Wanneer we in de toestand completed zijn, dan weten we dat het type DateTime (van Luxon) is. De
+                // datepicker verwacht echter een moment date.
+                this.datumWaardeControl.reset(moment(compl.selectedValue.value.toString()), { emitEvent: false });
               }
             })(compl.valueSelector);
           }
@@ -655,11 +702,15 @@ export class FilterEditorComponent extends KaartChildComponentBase {
   }
 
   errorIntegerWaarde(): string {
-    return this.integerWaardeControl.hasError("required") ? "Gelieve een waarde in te geven" : "";
+    return this.integerWaardeControl.hasError("required") ? "Gelieve een geheel getal in te geven" : "";
   }
 
   errorDoubleWaarde(): string {
-    return this.doubleWaardeControl.hasError("required") ? "Gelieve een waarde in te geven" : "";
+    return this.doubleWaardeControl.hasError("required") ? "Gelieve een getal in te geven" : "";
+  }
+
+  errorDateWaarde(): string {
+    return this.datumWaardeControl.hasError("required") ? "Gelieve een datum in te geven" : "";
   }
 
   displayAutocompleteWaarde(waarde?: Wrapped | string): string | undefined {

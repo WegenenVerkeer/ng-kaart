@@ -27,7 +27,8 @@ export namespace AwvV0FilterInterpreters {
     kind: oi.field("kind", oi.value("Property")),
     type: oi.field("type", typeType),
     ref: oi.field("ref", oi.str),
-    label: oi.field("label", oi.str)
+    label: oi.field("label", oi.str),
+    sqlFormat: oi.optField("sqlFormat", oi.str)
   });
 
   const literal: oi.Interpreter<fltr.Literal> = oi.interpretRecord({

@@ -95,8 +95,9 @@ export interface VeldInfo {
   readonly template?: string;
   readonly html?: string;
   readonly uniekeWaarden?: string[];
-  readonly parseFormat?: string; // voor date en datetime
+  readonly parseFormat?: string; // voor date en datetime. Alle formats zijn Luxon specs.
   readonly displayFormat?: string; // voor date en datetime
+  readonly sqlFormat?: string; // voor date en datetime
   readonly isGeenLocatieVeld?: boolean; // beschouw veld niet als deel van de weglocatie informatie
 }
 
