@@ -19,7 +19,7 @@ export type Subscription<Msg> =
   | AchtergrondTitelSubscription<Msg>
   | ActieveModusSubscription<Msg>
   | BusySubscription<Msg>
-  | ComponentFoutSubscription<Msg>
+  | MeldingenSubscription<Msg>
   | ExtentSubscription<Msg>
   | GeometryChangedSubscription<Msg>
   | GeselecteerdeFeaturesSubscription<Msg>
@@ -163,8 +163,8 @@ export interface InfoBoodschappenSubscription<Msg> {
   readonly wrapper: (infoBoodschappen: Map<string, InfoBoodschap>) => Msg;
 }
 
-export interface ComponentFoutSubscription<Msg> {
-  readonly type: "ComponentFout";
+export interface MeldingenSubscription<Msg> {
+  readonly type: "Meldingen";
   readonly wrapper: MsgGen<string[], Msg>;
 }
 
@@ -338,9 +338,9 @@ export function ActieveModusSubscription<Msg>(wrapper: (modus: Option<string>) =
   return { type: "ActieveModus", wrapper: wrapper };
 }
 
-export function ComponentFoutSubscription<Msg>(wrapper: (fouten: Array<string>) => Msg): ComponentFoutSubscription<Msg> {
+export function MeldingenSubscription<Msg>(wrapper: (fouten: Array<string>) => Msg): MeldingenSubscription<Msg> {
   return {
-    type: "ComponentFout",
+    type: "Meldingen",
     wrapper: wrapper
   };
 }

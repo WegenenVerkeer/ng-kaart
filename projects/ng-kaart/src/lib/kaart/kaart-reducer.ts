@@ -1736,8 +1736,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return modelWithSubscriptionResult("InfoBoodschappen", model.infoBoodschappenSubj.subscribe(consumeMessage(sub)));
       }
 
-      function subscribeToComponentFouten(sub: prt.ComponentFoutSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult("Componentfouten", model.meldingenSubj.subscribe(consumeMessage(sub)));
+      function subscribeToMeldingen(sub: prt.MeldingenSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult("Meldingen", model.meldingenSubj.subscribe(consumeMessage(sub)));
       }
 
       function subscribeToLaagstijlGezet(sub: prt.LaagstijlGezetSubscription<Msg>): ModelWithResult<Msg> {
@@ -1828,8 +1828,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToPublishedKaartLocaties(cmnd.subscription);
         case "InfoBoodschap":
           return subscribeToInfoBoodschappen(cmnd.subscription);
-        case "ComponentFout":
-          return subscribeToComponentFouten(cmnd.subscription);
+        case "Meldingen":
+          return subscribeToMeldingen(cmnd.subscription);
         case "ActieveModus":
           return subscribeToActieveModus(cmnd.subscription);
         case "LaagstijlGezet":
