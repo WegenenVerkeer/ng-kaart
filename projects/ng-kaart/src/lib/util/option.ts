@@ -37,6 +37,6 @@ function valueToUndefined(v: unknown): unknown {
   return isOption(v) ? option.toUndefined(v) : v;
 }
 
-export function optionsToUndefined<A extends Record<string, unknown>>(a: A): NoOptionRecord<A> {
+export function optionsToUndefined<A extends object>(a: A): NoOptionRecord<A> {
   return (record.map(valueToUndefined)(a) as unknown) as NoOptionRecord<A>;
 }

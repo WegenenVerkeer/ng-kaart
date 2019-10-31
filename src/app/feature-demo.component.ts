@@ -584,8 +584,8 @@ export class FeatureDemoComponent {
     { isBasisVeld: true, label: "Lengte", naam: "locatie.lengte", type: "double" },
     { isBasisVeld: false, label: "Werkelijke lengte", naam: "werkelijkelengte", type: "double" },
     { isBasisVeld: false, label: "Bron Id", naam: "bronid", type: "string" },
-    { isBasisVeld: false, label: "Opnamedatum", naam: "opnamedatum", type: "date", parseFormat: "dd/LL/yyyy" },
-    { isBasisVeld: false, label: "Wijzigingsdatum", naam: "wijzigingsdatum", type: "date" },
+    { isBasisVeld: false, label: "Opnamedatum", naam: "opnamedatum", type: "date", parseFormat: "dd/LL/yyyy", sqlFormat: "dd/MM/yyyy" },
+    { isBasisVeld: false, label: "Wijzigingsdatum", naam: "wijzigingsdatum", type: "date" }, // standaard sqlFormat
     { isBasisVeld: true, label: "Zijde", naam: "zijderijbaan", type: "string", uniekeWaarden: ["R", "L", "M", "NVT"] }, // niet alfabetisch!
     {
       isBasisVeld: true,
@@ -671,7 +671,7 @@ export class FeatureDemoComponent {
     { isBasisVeld: false, label: "Gebied", naam: "gebied", type: "string" },
     { isBasisVeld: false, label: "UUID", naam: "uuid", type: "string" },
     { isBasisVeld: true, label: "Status", naam: "status", type: "string" },
-    { isBasisVeld: false, label: "Wijzigingsdatum", naam: "wijzigingsdatum", type: "date" }
+    { isBasisVeld: false, label: "Wijzigingsdatum", naam: "wijzigingsdatum", type: "date", sqlFormat: "DD/MM/YYYY" }
   ];
 
   readonly bordenVeldinfos: VeldInfo[] = [

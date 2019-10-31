@@ -2,7 +2,7 @@
   <button mat-icon-button
           class="tabel-knop"
           (click)="toggle()"
-          [matTooltip]="(isActief$ | async) ? 'Stop selecteer features modus' : 'Start selecteer features modus'"
+          [matTooltip]="(isActief$ | async) ? 'Stop selectie op kaart' : ' Start selectie op kaart'"
           matTooltipPosition="right"
   >
     <mat-icon [class.actief]="(isActief$ | async)" aria-label="selecteer features" svgIcon="selecteer-via-polygon"></mat-icon>

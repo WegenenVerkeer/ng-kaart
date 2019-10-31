@@ -115,6 +115,7 @@ const veldInfoInter: json.Interpreter<ke.VeldInfo> = json.interpretUndefinedReco
   uniekeWaarden: json.nullable(json.field("uniekeWaarden", json.arr(json.str))),
   parseFormat: json.nullable(json.field("parseFormat", json.str)),
   displayFormat: json.nullable(json.field("displayFormat", json.str)),
+  sqlFormat: json.nullable(json.field("sqlFormat", json.str)),
   isGeenLocatieVeld: json.nullable(json.field("isGeenLocatieVeld", json.bool))
 });
 export const veldInfoArray: ParamGetter<ke.VeldInfo[]> = getParameter(json.arr(veldInfoInter));
