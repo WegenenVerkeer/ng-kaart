@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone, ViewEncapsulation } from "@angular/core";
 import { array, option } from "fp-ts";
-import { flow, Function1, Refinement } from "fp-ts/lib/function";
+import { flow, Function1, Function2, Refinement } from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
@@ -44,6 +44,9 @@ namespace ColumnHeaders {
     create
   );
 }
+
+const neededZoom: Function2<ol.Map, ol.Extent, number> = (map, extent) =>
+  map.getView().getZoomForResolution(map.getView().getResolutionForExtent(extent, map.getSize()));
 
 const isFieldSelection: Refinement<any, FieldSelection> = (fieldSelection): fieldSelection is FieldSelection =>
   fieldSelection.hasOwnProperty("selected") && fieldSelection.hasOwnProperty("name");
@@ -193,18 +196,15 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     this.runInViewReady(
       zoomToSelection$.pipe(
         withLatestFrom(this.modelChanges.geselecteerdeFeatures$, olMap$, this.laag$),
-        map(([_, selection, map, laagModel]) => {
+        tap(([_, selection, map, laagModel]) => {
           const laagSelection = FeatureSelection.getGeselecteerdeFeaturesInLaag(this.laagTitel)(selection);
           const extent = laagSelection[0].getGeometry().getExtent();
           laagSelection.forEach(feature => ol.extent.extend(extent, feature.getGeometry().getExtent()));
           this.dispatch(VeranderExtentCmd(extent));
 
-          const view: ol.View = map.getView();
-          const neededZoom = view.getZoomForResolution(view.getResolutionForExtent(extent, map.getSize()));
-          if (neededZoom < laagModel.minZoom) {
+          if (neededZoom(map, laagModel) < laagModel.minZoom || neededZoom(map, laagModel) > laagModel.maxZoom) {
             this.dispatch(
-              prt.MeldComponentFoutCmd([
-                "Info: ",
+              prt.ToonMeldingCmd([
                 laagSelection.length > 1
                   ? "Extent van de features is te groot voor huidig zoom niveau"
                   : "Feature is niet zichtbaar op huidig zoom niveau"
@@ -274,10 +274,8 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
           const extent = row.feature.feature.getGeometry().getExtent();
           this.dispatch(VeranderExtentCmd(extent));
 
-          const view: ol.View = map.getView();
-          const neededZoom = view.getZoomForResolution(view.getResolutionForExtent(extent, map.getSize()));
-          if (neededZoom < laagModel.minZoom) {
-            this.dispatch(prt.MeldComponentFoutCmd(["Info: ", "Feature is niet zichtbaar op huidig zoom niveau"]));
+          if (neededZoom(map, laagModel) < laagModel.minZoom || neededZoom(map, laagModel) > laagModel.maxZoom) {
+            this.dispatch(prt.ToonMeldingCmd(["Feature is niet zichtbaar op huidig zoom niveau"]));
           }
         })
       )

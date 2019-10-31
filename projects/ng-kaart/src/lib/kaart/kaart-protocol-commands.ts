@@ -37,7 +37,7 @@ export type Command<Msg extends KaartMsg> =
   | KiesAchtergrondCmd<Msg>
   | MaakLaagOnzichtbaarCmd<Msg>
   | MaakLaagZichtbaarCmd<Msg>
-  | MeldComponentFoutCmd
+  | ToonMeldingCmd
   | MijnLocatieStateChangeCmd
   | OpenTabelCmd
   | PublishKaartLocatiesCmd
@@ -365,9 +365,9 @@ export interface AbortTileLoadingCmd {
   readonly type: "AbortTileLoading";
 }
 
-export interface MeldComponentFoutCmd {
-  readonly type: "MeldComponentFout";
-  readonly fouten: string[];
+export interface ToonMeldingCmd {
+  readonly type: "ToonMelding";
+  readonly meldingen: string[];
 }
 
 export interface VoegZoekerToeCmd<Msg extends KaartMsg> {
@@ -836,8 +836,8 @@ export function ActiveerHoverModusCmd(hoverModus: HoverModus): ActiveerHoverModu
   return { type: "ActiveerHoverModus", hoverModus };
 }
 
-export function MeldComponentFoutCmd(fouten: string[]): MeldComponentFoutCmd {
-  return { type: "MeldComponentFout", fouten };
+export function ToonMeldingCmd(meldingen: string[]): ToonMeldingCmd {
+  return { type: "ToonMelding", meldingen };
 }
 
 export function KiesAchtergrondCmd<Msg extends KaartMsg>(titel: string, wrapper: BareValidationWrapper<Msg>): KiesAchtergrondCmd<Msg> {

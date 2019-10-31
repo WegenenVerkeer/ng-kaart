@@ -137,7 +137,7 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
 
   protected meldFout(fout: HttpErrorResponse) {
     kaartLogger.error("error", fout);
-    this.dispatch(prt.MeldComponentFoutCmd(["Fout bij ophalen perceel gegevens: ", fout.message]));
+    this.dispatch(prt.ToonMeldingCmd(["Fout bij ophalen perceel gegevens: ", fout.message]));
   }
 
   protected subscribeToDisableWhenEmpty<T>(observable: rx.Observable<T[]>, control: FormControl, maakLeegVanaf: number) {
