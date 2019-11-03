@@ -10,7 +10,7 @@ import * as arrays from "../../util/arrays";
 import { selectiveArrayTraversal } from "../../util/lenses";
 import { envParams, KaartConfig } from "../kaart-config";
 import * as ke from "../kaart-elementen";
-import { GeselecteerdeFeatures, Viewinstellingen } from "../kaart-protocol-subscriptions";
+import { GeselecteerdeFeatures, Laagtabelinstellingen, Viewinstellingen } from "../kaart-protocol-subscriptions";
 import { featuresOpIdToArray } from "../model-changes";
 
 import { LaagModel } from "./laag-model";
@@ -133,4 +133,19 @@ export namespace TableModel {
 
   export const setCompactLayout: TableModelUpdate = Update.createSync(layoutInstellingLens.set("Compact"));
   export const setComfortableLayout: TableModelUpdate = Update.createSync(layoutInstellingLens.set("Comfortable"));
+
+  export const updateLaagInstellingen: Function1<Laagtabelinstellingen, TableModelUpdate> = lti =>
+    liftLaagUpdate(lti.laagnaam)(
+      LaagModel.updateSelectedFieldsAndSortings(
+        lti.zichtbareVelden,
+        pipe(
+          lti.veldsorteringen,
+          array.head,
+          option.map(vs => ({
+            naam: vs.veldnaam,
+            direction: vs.sort
+          }))
+        )
+      )
+    );
 }

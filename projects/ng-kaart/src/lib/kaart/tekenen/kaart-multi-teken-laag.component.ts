@@ -259,7 +259,7 @@ function drawStateTransformer(
         legende: none,
         stijlInLagenKiezer: none,
         filterinstellingen: none,
-        tabelLaagInstellingen: none,
+        laagtabelinstellingen: none,
         wrapper: kaartLogOnlyWrapper
       });
       dispatchCmd({
@@ -272,7 +272,7 @@ function drawStateTransformer(
         legende: none,
         stijlInLagenKiezer: none,
         filterinstellingen: none,
-        tabelLaagInstellingen: none,
+        laagtabelinstellingen: none,
         wrapper: kaartLogOnlyWrapper
       });
       drawInteractions.forEach(inter => state.map.addInteraction(inter));

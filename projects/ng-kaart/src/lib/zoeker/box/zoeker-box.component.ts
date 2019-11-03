@@ -33,7 +33,7 @@ import { KaartChildComponentBase } from "../../kaart/kaart-child-component-base"
 import * as ke from "../../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import * as prt from "../../kaart/kaart-protocol";
-import { TabelLaagInstellingen } from "../../kaart/kaart-protocol";
+import { Laagtabelinstellingen } from "../../kaart/kaart-protocol";
 import { KaartComponent } from "../../kaart/kaart.component";
 import { kaartLogger } from "../../kaart/log";
 import { Transparantie } from "../../transparantieeditor/transparantie";
@@ -467,7 +467,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
       legende: none,
       stijlInLagenKiezer: none,
       filterinstellingen: none,
-      tabelLaagInstellingen: none,
+      laagtabelinstellingen: none,
       wrapper: kaartLogOnlyWrapper
     });
     const minZoektermLength = 2;

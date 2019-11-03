@@ -36,7 +36,7 @@ export type Subscription<Msg> =
   | MijnLocatieStateChangeSubscription<Msg>
   | PrecacheProgressSubscription<Msg>
   | PublishedKaartLocatiesSubscription<Msg>
-  | TabelLaagInstellingenSubscription<Msg>
+  | LaagtabelinstellingenSubscription<Msg>
   | TabelStateSubscription<Msg>
   | TekenenSubscription<Msg>
   | ForceProgressBarSubscription<Msg>
@@ -68,21 +68,19 @@ export namespace Veldsortering {
   export const eqVeldsortering: Eq<Veldsortering> = eq.getStructEq({ veldnaam: eq.eqString, sort: eq.eqString });
 }
 
-export interface TabelLaagInstellingen {
+export interface Laagtabelinstellingen {
   readonly laagnaam: string; // De laag voor welke de instellingen geldig zijn
   readonly zichtbareVelden: Set<string>; // De namen/keys van de velden die zichtbaar zijn
   readonly veldsorteringen: Veldsortering[];
 }
 
-export namespace TabelLaagInstellingen {
-  export const zichtbareVeldenLens: Lens<TabelLaagInstellingen, Set<string>> = Lens.fromProp<TabelLaagInstellingen>()("zichtbareVelden");
-  export const veldsorteringenLens: Lens<TabelLaagInstellingen, Veldsortering[]> = Lens.fromProp<TabelLaagInstellingen>()(
+export namespace Laagtabelinstellingen {
+  export const zichtbareVeldenLens: Lens<Laagtabelinstellingen, Set<string>> = Lens.fromProp<Laagtabelinstellingen>()("zichtbareVelden");
+  export const veldsorteringenLens: Lens<Laagtabelinstellingen, Veldsortering[]> = Lens.fromProp<Laagtabelinstellingen>()(
     "veldsorteringen"
   );
-  export const veldsorteringTraversal = veldsorteringenLens.composeTraversal(arrayTraversal());
-  export const veldsorteringFold = veldsorteringTraversal.asFold();
 
-  export const create = (laagnaam: string, zichtbareVelden: Set<string>, veldSorteringen: Veldsortering[]): TabelLaagInstellingen => ({
+  export const create = (laagnaam: string, zichtbareVelden: Set<string>, veldSorteringen: Veldsortering[]): Laagtabelinstellingen => ({
     laagnaam,
     zichtbareVelden,
     veldsorteringen: veldSorteringen
@@ -235,9 +233,9 @@ export interface TabelStateSubscription<Msg> {
   readonly wrapper: (state: TabelStateChange) => Msg;
 }
 
-export interface TabelLaagInstellingenSubscription<Msg> {
-  readonly type: "TabelLaagInstellingen";
-  readonly wrapper: MsgGen<TabelLaagInstellingen, Msg>;
+export interface LaagtabelinstellingenSubscription<Msg> {
+  readonly type: "Laagtabelinstellingen";
+  readonly wrapper: MsgGen<Laagtabelinstellingen, Msg>;
 }
 
 export interface BusySubscription<Msg> {
@@ -423,8 +421,8 @@ export function TabelStateSubscription<Msg>(wrapper: (stateChange: TabelStateCha
   return { type: "TabelState", wrapper };
 }
 
-export function TabelLaagInstellingenSubscription<Msg>(
-  wrapper: (tabelLaagInstellingen: TabelLaagInstellingen) => Msg
-): TabelLaagInstellingenSubscription<Msg> {
-  return { type: "TabelLaagInstellingen", wrapper };
+export function LaagtabelinstellingenSubscription<Msg>(
+  wrapper: (tabelLaagInstellingen: Laagtabelinstellingen) => Msg
+): LaagtabelinstellingenSubscription<Msg> {
+  return { type: "Laagtabelinstellingen", wrapper };
 }

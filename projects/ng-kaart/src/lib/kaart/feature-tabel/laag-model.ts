@@ -4,7 +4,7 @@ import { Option } from "fp-ts/lib/Option";
 import { ordString } from "fp-ts/lib/Ord";
 import { pipe } from "fp-ts/lib/pipeable";
 import { getLastSemigroup } from "fp-ts/lib/Semigroup";
-import { Fold, Getter, Lens, Optional, Prism, Traversal } from "monocle-ts";
+import { Fold, Getter, Lens, Optional, Traversal } from "monocle-ts";
 import { indexArray } from "monocle-ts/lib/Index/Array";
 import * as ol from "openlayers";
 import { map } from "rxjs/operators";
@@ -13,12 +13,12 @@ import { isNumber } from "util";
 import { Filter, FilterTotaal, match as FilterTotaalMatch, TotaalOpgehaald } from "../../filter";
 import { NosqlFsSource } from "../../source";
 import * as arrays from "../../util/arrays";
-import { equalTo, equalToString } from "../../util/equal";
+import { equalToString } from "../../util/equal";
 import { Feature } from "../../util/feature";
 import { PartialFunction2 } from "../../util/function";
 import { arrayTraversal, selectiveArrayTraversal } from "../../util/lenses";
 import * as ke from "../kaart-elementen";
-import { TabelLaagInstellingen, Veldsortering, Viewinstellingen } from "../kaart-protocol-subscriptions";
+import { Viewinstellingen } from "../kaart-protocol-subscriptions";
 
 import {
   DataReady,
@@ -268,7 +268,8 @@ export namespace LaagModel {
 
       const setSortFieldFromInstellingenOrFirst: Endomorphism<FieldSelection[]> = pipe(
         laag.tabelLaagInstellingen,
-        option.chain(TabelLaagInstellingen.veldsorteringFold.headOption),
+        option.map(ins => ins.veldsorteringen),
+        option.chain(array.head),
         option.fold(
           () => sortOnFirstField,
           firstVs =>
@@ -527,7 +528,9 @@ export namespace LaagModel {
     )(laag)
   );
 
-  // Pas uiteindelijk de huidige Page aan indien de volledige data gebruikt wordt.
+  // Pas uiteindelijk de huidige Page aan indien de volledige data gebruikt wordt. TODO als de laagPageRequest gelijk is
+  // aan de vorige, dan hoeven we de request eigenlijk niet uit te voeren. Met uitzondering van requests die effectief
+  // bedoeld zijn om een data refresh te doen of te herproberen na een fout-conditie.
   const updateLaagPageDataFromServer: LaagModelUpdate = Update.create(
     flow(
       updatePendingLens.set(true),
@@ -772,5 +775,31 @@ export namespace LaagModel {
         andThenUpdatePageDataIf(ifShowSelectedOnly)
       ),
       getOutOfSelectedOnlyModeIfNoFeaturesSelected
+    );
+
+  export const updateSelectedFieldsAndSortings: Function2<
+    Set<string>,
+    Option<{ naam: string; direction: SortDirection }>,
+    LaagModelUpdate
+  > = (selectedFieldNames, maybeSortSpec) =>
+    updatePageDataAfter(
+      flow(
+        fieldSelectionTraversal.modify(fs =>
+          flow(
+            FieldSelection.selectedLens.set(selectedFieldNames.has(fs.name)),
+            FieldSelection.maybeSortDirectionLens.set(
+              pipe(
+                maybeSortSpec,
+                option.filter(ss => ss.naam === fs.name),
+                option.map(ss => ss.direction)
+              )
+            )
+          )(fs)
+        ),
+        // Het eerste veld moet altijd geselecteerd zijn
+        fieldSelectionsLens.modify(FieldSelection.selectFirstField)
+        // TODO verhuis en gebruik setSortFieldFromInstellingenOrFirst + vorige functie overal waar selectie aangepast
+        // wordt
+      )
     );
 }

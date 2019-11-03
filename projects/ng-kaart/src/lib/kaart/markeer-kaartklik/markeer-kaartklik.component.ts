@@ -99,7 +99,7 @@ export class MarkeerKaartklikComponent extends KaartChildComponentBase {
         legende: none,
         stijlInLagenKiezer: none,
         filterinstellingen: none,
-        tabelLaagInstellingen: none,
+        laagtabelinstellingen: none,
         wrapper: kaartLogOnlyWrapper
       })
     );

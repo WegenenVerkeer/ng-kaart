@@ -36,7 +36,7 @@ import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
 import { envParams } from "./kaart-config";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
-import { TabelLaagInstellingen } from "./kaart-protocol";
+import { Laagtabelinstellingen } from "./kaart-protocol";
 import { UiElementOpties } from "./kaart-protocol-commands";
 import { GeselecteerdeFeatures, Viewinstellingen } from "./kaart-protocol-subscriptions";
 import { KaartWithInfo } from "./kaart-with-info";
@@ -120,7 +120,7 @@ export interface ModelChanger {
   readonly dataloadBusySubj: rx.BehaviorSubject<boolean>;
   readonly forceProgressBarSubj: rx.BehaviorSubject<boolean>;
   readonly inErrorSubj: rx.BehaviorSubject<boolean>;
-  readonly tabelLaagInstellingenSubj: rx.Subject<TabelLaagInstellingen>;
+  readonly tabelLaagInstellingenSubj: rx.Subject<Laagtabelinstellingen>;
 }
 
 // Hieronder wordt een paar keer BehaviourSubject gebruikt. Dat is equivalent met, maar beknopter dan, een startWith + shareReplay
@@ -158,14 +158,14 @@ export const ModelChanger: () => ModelChanger = () => ({
   dataloadBusySubj: new rx.BehaviorSubject<boolean>(false),
   forceProgressBarSubj: new rx.BehaviorSubject<boolean>(false),
   inErrorSubj: new rx.BehaviorSubject<boolean>(false),
-  tabelLaagInstellingenSubj: new rx.Subject<TabelLaagInstellingen>()
+  tabelLaagInstellingenSubj: new rx.Subject<Laagtabelinstellingen>()
 });
 
 export interface ModelChanges {
   readonly uiElementSelectie$: rx.Observable<UiElementSelectie>;
   readonly uiElementOpties$: rx.Observable<UiElementOpties>;
   readonly viewinstellingen$: rx.Observable<Viewinstellingen>;
-  readonly tabelLaagInstellingen$: rx.Observable<TabelLaagInstellingen>;
+  readonly tabelLaagInstellingen$: rx.Observable<Laagtabelinstellingen>;
   readonly lagenOpGroep: ke.OpLaagGroep<rx.Observable<ke.ToegevoegdeLaag[]>>;
   readonly laagVerwijderd$: rx.Observable<ke.ToegevoegdeLaag>;
   readonly geselecteerdeFeatures$: rx.Observable<GeselecteerdeFeatures>;

@@ -16,9 +16,9 @@ import {
   DeselecteerFeatureCmd,
   SelecteerExtraFeaturesCmd,
   VeranderExtentCmd,
-  VeranderTabelLaagInstellingenCmd
+  VeranderLaagtabelinstellingenCmd
 } from "../kaart-protocol-commands";
-import { TabelLaagInstellingen, Veldsortering } from "../kaart-protocol-subscriptions";
+import { Laagtabelinstellingen, Veldsortering } from "../kaart-protocol-subscriptions";
 import { FeatureSelection, GeselecteerdeFeatures } from "../kaart-protocol-subscriptions";
 import { KaartComponent } from "../kaart.component";
 
@@ -288,13 +288,13 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
         array.filterMap(fieldSelectionToVeldsortering)
       );
 
-    const veranderLaagInstellingenCmd$: rx.Observable<VeranderTabelLaagInstellingenCmd> = this.laag$.pipe(
+    const veranderLaagInstellingenCmd$: rx.Observable<VeranderLaagtabelinstellingenCmd> = this.laag$.pipe(
       map(LaagModel.selectedFieldSelectionGetter.get),
       distinctUntilChanged(array.getEq(FieldSelection.setoidFieldSelection).equals),
       map(selections =>
         pipe(
-          TabelLaagInstellingen.create(this.laagTitel, new Set(array.map(FieldSelection.nameLens.get)(selections)), sortings(selections)),
-          VeranderTabelLaagInstellingenCmd
+          Laagtabelinstellingen.create(this.laagTitel, new Set(array.map(FieldSelection.nameLens.get)(selections)), sortings(selections)),
+          VeranderLaagtabelinstellingenCmd
         )
       )
     );
