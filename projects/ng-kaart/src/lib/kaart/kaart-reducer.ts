@@ -1253,8 +1253,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       );
     }
 
-    function meldComponentFout(cmnd: prt.MeldComponentFoutCmd): ModelWithResult<Msg> {
-      model.componentFoutSubj.next(cmnd.fouten);
+    function toonMelding(cmnd: prt.ToonMeldingCmd): ModelWithResult<Msg> {
+      model.meldingenSubj.next(cmnd.meldingen);
       return ModelWithResult(model);
     }
 
@@ -1749,8 +1749,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         return modelWithSubscriptionResult("InfoBoodschappen", model.infoBoodschappenSubj.subscribe(consumeMessage(sub)));
       }
 
-      function subscribeToComponentFouten(sub: prt.ComponentFoutSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult("Componentfouten", model.componentFoutSubj.subscribe(consumeMessage(sub)));
+      function subscribeToMeldingen(sub: prt.MeldingenSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult("Meldingen", model.meldingenSubj.subscribe(consumeMessage(sub)));
       }
 
       function subscribeToLaagstijlGezet(sub: prt.LaagstijlGezetSubscription<Msg>): ModelWithResult<Msg> {
@@ -1843,8 +1843,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToPublishedKaartLocaties(cmnd.subscription);
         case "InfoBoodschap":
           return subscribeToInfoBoodschappen(cmnd.subscription);
-        case "ComponentFout":
-          return subscribeToComponentFouten(cmnd.subscription);
+        case "Meldingen":
+          return subscribeToMeldingen(cmnd.subscription);
         case "ActieveModus":
           return subscribeToActieveModus(cmnd.subscription);
         case "LaagstijlGezet":
@@ -1949,8 +1949,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return handleSubscriptions(cmd);
         case "Unsubscription":
           return handleUnsubscriptions(cmd);
-        case "MeldComponentFout":
-          return meldComponentFout(cmd);
+        case "ToonMelding":
+          return toonMelding(cmd);
         case "VoegZoekerToe":
           return voegZoekerToe(cmd);
         case "VerwijderZoeker":

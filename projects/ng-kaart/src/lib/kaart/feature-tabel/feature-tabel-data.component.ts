@@ -1,10 +1,22 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone, ViewEncapsulation } from "@angular/core";
 import { array, option } from "fp-ts";
-import { flow, Function1, Refinement } from "fp-ts/lib/function";
+import { flow, Function1, Function2, Refinement } from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { distinctUntilChanged, map, mapTo, share, shareReplay, startWith, switchMap, tap, withLatestFrom } from "rxjs/operators";
+import {
+  distinctUntilChanged,
+  filter,
+  map,
+  mapTo,
+  share,
+  shareReplay,
+  startWith,
+  switchMap,
+  take,
+  tap,
+  withLatestFrom
+} from "rxjs/operators";
 import { isBoolean, isString } from "util";
 
 import * as arrays from "../../util/arrays";
@@ -12,12 +24,7 @@ import { Feature } from "../../util/feature";
 import { PartialFunction1 } from "../../util/function";
 import { join } from "../../util/string";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
-import {
-  DeselecteerFeatureCmd,
-  SelecteerExtraFeaturesCmd,
-  VeranderExtentCmd,
-  VeranderLaagtabelinstellingenCmd
-} from "../kaart-protocol-commands";
+import * as prt from "../kaart-protocol";
 import { Laagtabelinstellingen, Veldsortering } from "../kaart-protocol-subscriptions";
 import { FeatureSelection, GeselecteerdeFeatures } from "../kaart-protocol-subscriptions";
 import { KaartComponent } from "../kaart.component";
@@ -51,6 +58,9 @@ namespace ColumnHeaders {
     create
   );
 }
+
+const neededZoom: Function2<ol.Map, ol.Extent, number> = (map, extent) =>
+  map.getView().getZoomForResolution(map.getView().getResolutionForExtent(extent, map.getSize()));
 
 const isFieldSelection: Refinement<any, FieldSelection> = (fieldSelection): fieldSelection is FieldSelection =>
   fieldSelection.hasOwnProperty("selected") && fieldSelection.hasOwnProperty("name");
@@ -204,7 +214,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     );
 
     // zoom naar de selectie
-    const zoomToSelectionCmd$ = zoomToSelection$.pipe(
+    const zoomToSelectionExtent$ = zoomToSelection$.pipe(
       withLatestFrom(this.modelChanges.geselecteerdeFeatures$),
       map(([_, selection]) =>
         pipe(
@@ -212,9 +222,38 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
           FeatureSelection.getGeselecteerdeFeaturesInLaag(this.laagTitel),
           array.map(feature => feature.getGeometry().getExtent()),
           Feature.combineExtents,
-          option.getOrElse(() => [0, 0, 0, 0] as ol.Extent), // Er is de praktijk altijd een geselecteerde feature
-          VeranderExtentCmd
+          option.getOrElse(() => [0, 0, 0, 0] as ol.Extent) // Er is de praktijk altijd een geselecteerde feature
         )
+      ),
+      share()
+    );
+
+    const zoomToSelectionCmd$ = zoomToSelectionExtent$.pipe(map(prt.VeranderExtentCmd));
+
+    const olMap$ = this.kaartModel$.pipe(
+      map(m => m.map),
+      take(1)
+    );
+    const numGeselecteerdeFeaturesInLaag$ = zoomToSelection$.pipe(
+      withLatestFrom(this.modelChanges.geselecteerdeFeatures$),
+      map(([_, selection]) =>
+        pipe(
+          selection,
+          FeatureSelection.getGeselecteerdeFeaturesInLaag(this.laagTitel),
+          arrays.length
+        )
+      )
+    );
+
+    const warnZoomToSelectionCmd$ = zoomToSelectionExtent$.pipe(
+      withLatestFrom(olMap$, this.laag$, numGeselecteerdeFeaturesInLaag$),
+      filter(([extent, map, laagModel, _]) => neededZoom(map, extent) < laagModel.minZoom || neededZoom(map, extent) > laagModel.maxZoom),
+      map(([_1, _2, _3, numGeselecteerdeFeaturesInLaag]) =>
+        prt.ToonMeldingCmd([
+          numGeselecteerdeFeaturesInLaag > 1
+            ? "Extent van de features is te groot voor huidig zoom niveau"
+            : "Feature is niet zichtbaar op huidig zoom niveau"
+        ])
       )
     );
 
@@ -225,7 +264,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
         pipe(
           geselecteerdeFeatures,
           FeatureSelection.getGeselecteerdeFeatureIdsInLaag(this.laagTitel),
-          DeselecteerFeatureCmd
+          prt.DeselecteerFeatureCmd
         )
       )
     );
@@ -234,8 +273,8 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     const toggleRowSelctionCmd$ = selectRow$.pipe(
       map(rowSelection =>
         rowSelection.selected
-          ? SelecteerExtraFeaturesCmd([rowSelection.row.feature.feature])
-          : DeselecteerFeatureCmd([rowSelection.row.feature.id])
+          ? prt.SelecteerExtraFeaturesCmd([rowSelection.row.feature.feature])
+          : prt.DeselecteerFeatureCmd([rowSelection.row.feature.id])
       )
     );
 
@@ -247,24 +286,28 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
           ? pipe(
               rows,
               array.map(Row.olFeatureLens.get),
-              SelecteerExtraFeaturesCmd
+              prt.SelecteerExtraFeaturesCmd
             )
           : pipe(
               rows,
               array.map(Row.idLens.get),
-              DeselecteerFeatureCmd
+              prt.DeselecteerFeatureCmd
             )
       )
     );
 
     // zoom naar individuele rij
-    const zoomToIndividualRowCmd$ = zoomToRow$.pipe(
-      map(
-        flow(
-          row => row.feature.feature.getGeometry().getExtent(),
-          VeranderExtentCmd
-        )
-      )
+    const zoomToIndividualRowExtent$ = zoomToRow$.pipe(
+      map(flow(row => row.feature.feature.getGeometry().getExtent())),
+      share()
+    );
+
+    const zoomToIndividualRowCmd$ = zoomToIndividualRowExtent$.pipe(map(prt.VeranderExtentCmd));
+
+    const warnZoomToIndividualRowCmd$ = zoomToIndividualRowExtent$.pipe(
+      withLatestFrom(olMap$, this.laag$),
+      filter(([extent, map, laagModel]) => neededZoom(map, extent) < laagModel.minZoom || neededZoom(map, extent) > laagModel.maxZoom),
+      mapTo(prt.ToonMeldingCmd(["Feature is niet zichtbaar op huidig zoom niveau"]))
     );
 
     const fieldSelectionToVeldsortering: PartialFunction1<FieldSelection, Veldsortering> = selection =>
@@ -288,13 +331,13 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
         array.filterMap(fieldSelectionToVeldsortering)
       );
 
-    const veranderLaagInstellingenCmd$: rx.Observable<VeranderLaagtabelinstellingenCmd> = this.laag$.pipe(
+    const veranderLaagInstellingenCmd$ = this.laag$.pipe(
       map(LaagModel.selectedFieldSelectionGetter.get),
       distinctUntilChanged(array.getEq(FieldSelection.setoidFieldSelection).equals),
       map(selections =>
         pipe(
           Laagtabelinstellingen.create(this.laagTitel, new Set(array.map(FieldSelection.nameLens.get)(selections)), sortings(selections)),
-          VeranderLaagtabelinstellingenCmd
+          prt.VeranderLaagtabelinstellingenCmd
         )
       )
     );
@@ -307,7 +350,9 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
           toggleRowSelctionCmd$,
           toggleAllRowsSelectionCmd$,
           zoomToIndividualRowCmd$,
-          veranderLaagInstellingenCmd$
+          veranderLaagInstellingenCmd$,
+          warnZoomToSelectionCmd$,
+          warnZoomToIndividualRowCmd$
         )
         .pipe(tap(cmd => this.dispatch(cmd)))
     );

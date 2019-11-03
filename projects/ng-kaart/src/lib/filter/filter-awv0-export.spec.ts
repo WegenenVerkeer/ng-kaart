@@ -4,7 +4,7 @@ import { FilterAwv0Json } from "./filter-awv0-export";
 import { Filter as fltr } from "./filter-model";
 
 describe("De filter exporter", () => {
-  const property: fltr.Property = fltr.Property("string", "prop", "Property");
+  const property: fltr.Property = fltr.Property("string", "prop", "Property", "DD/MM/YYYY");
   const literal: fltr.Literal = fltr.Literal("string", "value");
   describe("bij het exporteren van een expression filter", () => {
     it("moet een gezette naam naar een gezet 'name' veld omzetten", () => {

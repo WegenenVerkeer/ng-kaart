@@ -1,17 +1,33 @@
 import { HttpClient } from "@angular/common/http";
 import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 import * as array from "fp-ts/lib/Array";
-import { Endomorphism, Function1, Function2, Function3, identity, pipe, Predicate, Refinement } from "fp-ts/lib/function";
+import { Curried2, Endomorphism, flow, Function1, Function2, Function3, identity, Predicate, Refinement } from "fp-ts/lib/function";
 import { fromNullable, fromPredicate, none, Option, some } from "fp-ts/lib/Option";
+import * as option from "fp-ts/lib/Option";
+import { pipe } from "fp-ts/lib/pipeable";
 import { setoidNumber, setoidString } from "fp-ts/lib/Setoid";
 import { Lens, Optional } from "monocle-ts";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { bufferTime, debounceTime, filter, map, mapTo, scan, share, startWith, switchMap, take, tap, withLatestFrom } from "rxjs/operators";
+import {
+  debounceTime,
+  filter,
+  map,
+  pairwise,
+  scan,
+  share,
+  startWith,
+  switchMap,
+  take,
+  tap,
+  timeInterval,
+  withLatestFrom
+} from "rxjs/operators";
 
 import * as clr from "../../stijl/colour";
 import { disc, solidLine } from "../../stijl/common-shapes";
 import { Transparantie } from "../../transparantieeditor/transparantie";
+import { eqCoordinate } from "../../util";
 import { asap } from "../../util/asap";
 import { applySequential, Consumer1, PartialFunction1, ReduceFunction } from "../../util/function";
 import {
@@ -22,12 +38,13 @@ import {
   stringMapOptional,
   StringMapped
 } from "../../util/lenses";
+import { subSpy } from "../../util/operators";
 import { forEach } from "../../util/option";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
-import { Command, VerwijderLaagCmd } from "../kaart-protocol-commands";
+import { Command, DrawOpsCmd, VerwijderLaagCmd } from "../kaart-protocol-commands";
 import { KaartComponent } from "../kaart.component";
 import * as ss from "../stijl-selector";
 
@@ -196,11 +213,13 @@ function drawStateTransformer(
   // features die de versie ophogen moeten opvangen.
   const handleFeatureMove: Consumer1<ol.events.Event> = () => dispatchDrawOps(MovePoint());
 
+  const handleDoubleClick: Consumer1<ol.events.Event> = evt => dispatchCmd(DrawOpsCmd(StopDrawing()));
+
   const handleSelect: Consumer1<ol.events.Event> = evt => {
     const selectEvent = evt as ol.interaction.Select.Event;
     forEach(
       array.head(selectEvent.selected),
-      pipe(
+      flow(
         DeletePoint,
         dispatchDrawOps
       )
@@ -277,6 +296,7 @@ function drawStateTransformer(
       });
       drawInteractions.forEach(inter => state.map.addInteraction(inter));
       state.map.addInteraction(selectInteraction);
+      state.map.on("dblclick", handleDoubleClick);
       const moveKey = state.map.on("pointermove", handlePointermove(featurePicker(state.map), modifySource)) as ol.GlobalObject;
       return applySequential([
         drawInteractionsLens.set(drawInteractions),
@@ -381,7 +401,7 @@ function drawStateTransformer(
           dispatchCmd(prt.VervangFeaturesCmd(PuntLaagNaam, newFeatures, kaartLogOnlyWrapper));
           forEach(
             toWaypoint(ops.feature),
-            pipe(
+            flow(
               RemoveWaypoint,
               dispatchWaypointOps
             )
@@ -422,7 +442,45 @@ interface RouteSegmentState {
   readonly featuresByRouteId: FeaturesByRouteId; // Elke route id heeft exact 1 feature/geometry
 }
 
-const featuresIn: Function1<RouteSegmentState, Array<ol.Feature>> = state => Object.values(state.featuresByRouteId);
+const edgesToPolygon: Function1<ol.geom.LineString[], ol.geom.Polygon> = edges => {
+  const coordinates = array.flatten(array.map((l: ol.geom.LineString) => l.getCoordinates())(edges));
+  coordinates.push(coordinates[0]);
+  return new ol.geom.Polygon([coordinates]);
+};
+
+const featuresIn: Curried2<Option<ol.StyleFunction>, RouteSegmentState, Array<ol.Feature>> = maybePolygonStylefunction => state => {
+  const routes: Array<ol.Feature> = Object.values(state.featuresByRouteId);
+
+  return maybePolygonStylefunction.fold(routes, polygonStyleFunction => {
+    const lines = routes.map(f => <ol.geom.LineString>f.getGeometry());
+    const firsts = lines.map(l => l.getFirstCoordinate());
+    const lasts = lines.map(l => l.getLastCoordinate());
+    const begins = array.difference(eqCoordinate)(firsts, lasts);
+    const ends = array.difference(eqCoordinate)(lasts, firsts);
+    const maybeBegin = array.head(begins);
+    const maybeEnd = array.head(ends);
+
+    const maybePhantomLine = pipe(
+      maybeBegin,
+      option.chain(begin =>
+        pipe(
+          maybeEnd,
+          option.map(end => new ol.geom.LineString([begin, end]))
+        )
+      )
+    );
+
+    return pipe(
+      maybePhantomLine.fold(lines, l => lines.concat(l)),
+      edgesToPolygon,
+      poly => {
+        const polyF = new ol.Feature(poly);
+        polyF.setStyle(polygonStyleFunction);
+        return [polyF];
+      }
+    );
+  });
+};
 
 const featuresByStartWaypointIdLens: Lens<RouteSegmentState, FeaturesByWaypointId> = Lens.fromProp("featuresByStartWaypointId");
 const startWaypointIdOptional: Function1<WaypointId, Optional<RouteSegmentState, ol.Feature>> = waypointId =>
@@ -455,7 +513,7 @@ const routeSegmentReducer: Function2<clr.Kleur, Consumer1<DrawOps>, ReduceFuncti
         [ops.beginSnap, ops.endSnap].forEach(snap =>
           forEach(
             snap,
-            pipe(
+            flow(
               SnapWaypoint,
               dispatchDrawOps
             )
@@ -539,18 +597,22 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
 
     // We willen vlugge opeenvolgingen van add en remove interpreteren als een trigger om te stoppen met tekenen, maar toch
     // in de tekenmode blijven.
-    const doubleClick$: rx.Observable<unknown> = waypointObsSubj.pipe(
-      bufferTime(500),
-      filter(
-        buffer =>
-          buffer.length === 2 &&
-          buffer[0].type === "AddWaypoint" &&
-          buffer[1].type === "RemoveWaypoint" &&
-          buffer[0].waypoint.id === buffer[1].waypoint.id
-      ),
-      mapTo(0 as unknown)
+    const doubleClick$ = waypointObsSubj.pipe(
+      timeInterval(),
+      pairwise(),
+      filter(([prev, curr]) => {
+        return (
+          curr.interval < 500 &&
+          prev.value.type === "AddWaypoint" &&
+          curr.value.type === "RemoveWaypoint" &&
+          prev.value.waypoint.id === curr.value.waypoint.id
+        );
+      }),
+      tap(([prev, curr]) => {
+        const addWayPoint = prev.value;
+        this.internalDrawOpsSubj.next(AddPoint(addWayPoint.waypoint.location));
+      })
     );
-
     // Kies de correcte routering
     const routeSegmentOps$: Function1<boolean, rx.Observable<RouteEvent>> = useRouting =>
       waypointObsSubj.pipe(useRouting ? routesViaRoutering(this.http) : directeRoutes());
@@ -560,12 +622,17 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
     interface DrawOptions {
       readonly useRouting: boolean;
       readonly featureColour: clr.Kleur;
+      readonly polygonStyleFunction: option.Option<ol.StyleFunction>;
     }
 
     // Dit (her)start de routing service wanneer een nieuwe serie punten gestart wordt of het type van routing herzet wordt
     const routingStart$: rx.Observable<DrawOptions> = rx.merge(drawingStarts$, redrawStarts$).pipe(
       withLatestFrom(drawingStarts$),
-      map(([{ useRouting }, start]) => ({ useRouting: useRouting, featureColour: start.featureColour }))
+      map(([{ useRouting }, start]) => ({
+        useRouting: useRouting,
+        featureColour: start.featureColour,
+        polygonStyleFunction: start.polygonStyleFunction
+      }))
     );
 
     // Verbind de geproduceerde WaypointOps met de routing service
@@ -581,7 +648,7 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
 
     // Vorm de deelroutes om tot 1 geometrie
     const combinedGeometry$: rx.Observable<ol.geom.Geometry> = routeEventProcessor$.pipe(
-      withLatestFrom(drawOpsProcessor$.pipe(map(state => array.catOptions(state.pointFeatures.map(extractId))))),
+      withLatestFrom(drawOpsProcessor$.pipe(map(drawState => array.catOptions(drawState.pointFeatures.map(extractId))))),
       map(([routeSegmentState, pointFeatureIds]) => stichGeometries(pointFeatureIds, routeSegmentState.featuresByStartWaypointId))
     );
 
@@ -589,10 +656,18 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
     this.runInViewReady(
       rx.merge(
         combinedGeometry$.pipe(tap(geom => this.dispatch(prt.ZetGetekendeGeometryCmd(geom)))),
-        routeEventProcessor$.pipe(
-          tap(routeState => this.dispatch(prt.VervangFeaturesCmd(SegmentLaagNaam, featuresIn(routeState), kaartLogOnlyWrapper)))
+        routingStart$.pipe(
+          switchMap(start =>
+            routeEventProcessor$.pipe(
+              tap(routeState =>
+                this.dispatch(
+                  prt.VervangFeaturesCmd(SegmentLaagNaam, featuresIn(start.polygonStyleFunction)(routeState), kaartLogOnlyWrapper)
+                )
+              )
+            )
+          )
         ),
-        doubleClick$.pipe(tap(() => this.internalDrawOpsSubj.next(StopDrawing())))
+        doubleClick$
       )
     );
   }

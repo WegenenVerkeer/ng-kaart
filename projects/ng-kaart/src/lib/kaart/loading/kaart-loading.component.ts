@@ -107,7 +107,7 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
       stableError$(500).pipe(
         tap(evt => {
           this.dispatch(prt.RegistreerErrorCmd(true));
-          this.dispatch(prt.MeldComponentFoutCmd(["Fout bij laden van features: " + evt.error]));
+          this.dispatch(prt.ToonMeldingCmd(["Fout bij laden van features: " + evt.error]));
         })
       )
     );
