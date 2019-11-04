@@ -1,6 +1,7 @@
-import { constant, Function1, Function2, Function3, Function4, identity, Lazy, not, Predicate } from "fp-ts/lib/function";
+import { constant, Curried2, Function1, Function2, Function3, Function4, identity, Lazy, not, Predicate } from "fp-ts/lib/function";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import { contramap, Setoid, setoidString } from "fp-ts/lib/Setoid";
+import { DateTime, Duration, DurationObject } from "luxon";
 
 import { PartialFunction1 } from "../util/function";
 import * as matchers from "../util/matchers";
@@ -59,7 +60,8 @@ export namespace Filter {
     | "smaller"
     | "smallerOrEqual"
     | "larger"
-    | "largerOrEqual";
+    | "largerOrEqual"
+    | "within";
 
   export interface BinaryComparison {
     readonly kind: "BinaryComparison";
@@ -87,9 +89,25 @@ export namespace Filter {
   }
 
   // TODO: laten we voorlopig overeen komen met alle veldtypes uit VeldInfo
-  export type TypeType = "string" | "integer" | "double" | "geometry" | "date" | "datetime" | "boolean" | "json" | "url";
+  export type TypeType = "string" | "integer" | "double" | "geometry" | "date" | "datetime" | "boolean" | "json" | "url" | "quantity";
 
-  export type ValueType = boolean | string | number | Date;
+  export type ValueType = boolean | string | number | Date | Quantity;
+
+  const durationFallBackMatcher = matchers.matchWithFallback<Quantity, Option<DateTime>, string>({
+    "dag(en)": (q: Quantity) => some(DateTime.local().minus(Duration.fromObject({ days: q.magnitude }))),
+    "maand(en)": (q: Quantity) => some(DateTime.local().minus(Duration.fromObject({ months: q.magnitude }))),
+    jaar: (q: Quantity) => some(DateTime.local().minus(Duration.fromObject({ years: q.magnitude }))),
+    fallback: () => none
+  });
+
+  export const withinValueToDuration: Function1<Quantity, Option<DateTime>> = durationFallBackMatcher((q: Quantity) => q.unit);
+
+  export interface Quantity {
+    readonly unit: string;
+    readonly magnitude: number;
+  }
+
+  export const Quantity: Function2<string, number, Quantity> = (unit, magnitude) => ({ unit, magnitude });
 
   export interface Literal {
     readonly kind: "Literal";

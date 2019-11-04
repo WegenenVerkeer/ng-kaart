@@ -12,6 +12,7 @@ export namespace FilterText {
     boolean: b => (b ? "waar" : "vals"),
     date: d => d.toString(),
     datetime: d => d.toString(),
+    quantity: d => d.toString(),
     double: d => d.toString(), // Afronden of sprintf?
     geometry: d => "<geometrie>",
     integer: i => i.toString(),

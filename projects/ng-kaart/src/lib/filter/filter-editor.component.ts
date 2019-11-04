@@ -37,7 +37,8 @@ import { asap } from "../util/asap";
 import { isNotNull, isNotNullObject } from "../util/function";
 import { isOfKind } from "../util/kinded";
 import { parseDouble, parseInteger } from "../util/number";
-import { catOptions, forEvery } from "../util/operators";
+import { catOptions, forEvery, subSpy } from "../util/operators";
+import { nonEmptyString } from "../util/string";
 
 import { FilterAanpassingBezig, isAanpassingBezig } from "./filter-aanpassing-state";
 import { FilterEditor as fed } from "./filter-builder";
@@ -248,7 +249,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       )
       .pipe(
         distinctUntilChanged(), // in dit geval vgln we op strings, dus ook OK
-        map(input => fromNullable(input).map(value => fed.LiteralValue(sanitiseText(value.toString()), "string")))
+        map(input => fromNullable(input).map(value => fed.LiteralValue("string")(sanitiseText(value.toString()))))
       );
 
     const gekozenDatum$ = forControlValue(this.datumWaardeControl).pipe(
@@ -269,9 +270,9 @@ export class FilterEditorComponent extends KaartChildComponentBase {
             const input = m["_i"]; // Dit is de hack.
             if (typeof input === "string") {
               // input niet volledig verwerkt
-              return fed.LiteralValue(input, "string");
+              return fed.LiteralValue("string")(input);
             } else {
-              return fed.LiteralValue(m.toDate(), "date");
+              return fed.LiteralValue("date")(m.toDate());
             }
           })
       )
@@ -279,13 +280,41 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
     const gekozenInteger$: rx.Observable<Option<fed.LiteralValue>> = forControlValue(this.integerWaardeControl).pipe(
       distinctUntilChanged(), // in dit geval vgln we op getallen, dus ook OK
-      map(input => parseInteger(input).map(num => fed.LiteralValue(num, "integer")))
+      map(input => parseInteger(input).map(fed.LiteralValue("integer")))
     );
     const gekozenDouble$: rx.Observable<Option<fed.LiteralValue>> = forControlValue(this.doubleWaardeControl).pipe(
       distinctUntilChanged(), // in dit geval vgln we op getallen, dus ook OK
-      map(input => parseDouble(input).map(value => fed.LiteralValue(value, "double")))
+      map(input => parseDouble(input).map(fed.LiteralValue("double")))
     );
-    const gekozenWaarde$: rx.Observable<Option<fed.LiteralValue>> = rx.merge(gekozenText$, gekozenInteger$, gekozenDouble$, gekozenDatum$);
+
+    const filterEmptyStrings = option.fromPredicate(nonEmptyString);
+    const quantity$: rx.Observable<Option<fed.LiteralValue>> = subSpy("++++quantity$")(
+      rx
+        .combineLatest(
+          forControlValue(this.integerWaardeControl).pipe(
+            distinctUntilChanged(),
+            map(parseInteger)
+          ),
+          forControlValue(this.dropdownWaardeControl).pipe(
+            map(fromNullable),
+            map(option.filter(o => typeof o === "string")),
+            map(option.chain(filterEmptyStrings))
+          )
+        )
+        .pipe(
+          map(([maybeMagnitude, maybeSIUnit]) =>
+            maybeSIUnit.chain(siUnit => maybeMagnitude.map(magnitude => fltr.Quantity(siUnit, magnitude))).map(fed.LiteralValue("quantity"))
+          )
+        )
+    );
+
+    const gekozenWaarde$: rx.Observable<Option<fed.LiteralValue>> = rx.merge(
+      gekozenText$,
+      gekozenInteger$,
+      gekozenDouble$,
+      gekozenDatum$,
+      quantity$
+    );
 
     type ExpressionEditorUpdate = Endomorphism<fed.ExpressionEditor>;
     type TermEditorUpdate = Endomorphism<fed.TermEditor>;
@@ -432,7 +461,8 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               },
               date: () => {
                 this.datumWaardeControl.reset(val.workingValue.fold("", sv => sv.value), { emitEvent: true });
-              }
+              },
+              quantity: () => {}
             })(val.valueSelector);
           },
           Completed: compl => {
@@ -486,6 +516,11 @@ export class FilterEditorComponent extends KaartChildComponentBase {
                 // Wanneer we in de toestand completed zijn, dan weten we dat het type DateTime (van Luxon) is. De
                 // datepicker verwacht echter een moment date.
                 this.datumWaardeControl.reset(moment(compl.selectedValue.value.toString()), { emitEvent: false });
+              },
+              quantity: () => {
+                const quantity = <fltr.Quantity>compl.selectedValue.value;
+                this.integerWaardeControl.reset(quantity.magnitude, { emitEvent: false });
+                this.dropdownWaardeControl.reset(quantity.unit, { emitEvent: false });
               }
             })(compl.valueSelector);
           }

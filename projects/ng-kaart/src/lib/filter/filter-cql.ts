@@ -2,7 +2,7 @@ import { constant, Curried2, Endomorphism, flow, Function1, Function2, Function3
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 
 import { Filter as fltr } from "../filter/filter-model";
-import { formateerJsDate } from "../util/date-time";
+import { formateerDate, formateerJsDate } from "../util/date-time";
 import { PartialFunction1 } from "../util/function";
 
 export namespace FilterCql {
@@ -52,6 +52,7 @@ export namespace FilterCql {
     double: doubleGenerator,
     date: dateTimeGenerator,
     datetime: dateTimeGenerator,
+    quantity: () => none,
     geometry: () => none,
     json: () => none,
     url: () => none
@@ -76,14 +77,19 @@ export namespace FilterCql {
     property,
     operator,
     literal
-  ) =>
-    fromNullable(numberBinaryOperatorSymbols[operator]).chain(symbol => {
-      const query = literalCql(literal).map(value => {
-        const format = property.sqlFormat.getOrElse("DD/MM/YYYY");
-        return `(to_date(${propertyRef(property)}, '${format}') ${symbol} to_date('${value}', 'DD/MM/YYYY'))`;
-      });
-      return query;
-    });
+  ) => {
+    const format = property.sqlFormat.getOrElse("DD/MM/YYYY");
+    if (operator === "within") {
+      return fltr
+        .withinValueToDuration(<fltr.Quantity>literal.value)
+        .map(formateerDate(none))
+        .map(formattedDate => `(to_date(${propertyRef(property)}, '${format}') >= to_date('${formattedDate}', 'DD/MM/YYYY'))`);
+    } else {
+      return fromNullable(numberBinaryOperatorSymbols[operator]).chain(symbol =>
+        literalCql(literal).map(value => `(to_date(${propertyRef(property)}, '${format}') ${symbol} to_date('${value}', 'DD/MM/YYYY'))`)
+      );
+    }
+  };
 
   const numberBinaryOperatorSymbols = {
     equality: "=",

@@ -17,7 +17,8 @@ const binaryComparisonOperatorMapping: BinaryComparisonOperatorMapping = {
   smaller: "kleiner dan",
   smallerOrEqual: "kleiner of gelijk aan",
   larger: "groter dan",
-  largerOrEqual: "groter dan of gelijk aan"
+  largerOrEqual: "groter dan of gelijk aan",
+  within: "de laatste"
 };
 
 const unaryComparisonOperatorMapping: UnaryComparisonOperatorMapping = {
