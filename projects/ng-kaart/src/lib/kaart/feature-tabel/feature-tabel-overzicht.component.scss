@@ -29,6 +29,15 @@
       font-weight: 500;
     }
   }
+
+  .mat-tab-body-wrapper {
+    flex-grow: 1;
+  }
+
+  awv-feature-tabel-data {
+    display: flex;
+    height: 100%;
+  }
 }
 
 mat-tab-group {

@@ -60,6 +60,9 @@
           </tr>
         </tbody>
       </table>
+      <div *ngIf="data.rows.length === 0" class="feature-table-data-no-data">
+        Geen data
+      </div>
     </div>
     <div *ngIf="!data.dataAvailable">
       <div

@@ -17,6 +17,12 @@ $footer-height: 48px;
     flex: 1;
     overflow: auto;
 
+    > * {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
     table {
       width: auto;
       display: grid;
@@ -122,10 +128,11 @@ $footer-height: 48px;
     }
 
     .feature-table-data-no-data {
-      padding-top: 32px;
-      padding-bottom: 32px;
-      text-align: center;
       color: $awv-secondary-d1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-grow: 1;
     }
 
     .feature-table-data-update-pending {
@@ -173,6 +180,7 @@ $footer-height: 48px;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+    border-top: 1px solid #e5e5e5;
 
     .left {
       margin-left: 1em;
