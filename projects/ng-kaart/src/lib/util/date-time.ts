@@ -9,6 +9,12 @@ export const formateerDate: Curried2<Option<string>, DateTime, string> = maybeFo
   return date.setLocale("nl-BE").toFormat(maybeFormat.getOrElse("dd/MM/yyyy"));
 };
 
+export const formateerJsDate: Function1<Date, string> = date => {
+  return DateTime.fromJSDate(date)
+    .setLocale("nl-BE")
+    .toFormat("dd/MM/yyyy");
+};
+
 export const formateerDateTime: Curried2<Option<string>, DateTime, string> = maybeFormat => dateTime => {
   return dateTime.setLocale("nl-BE").toFormat(maybeFormat.getOrElse("dd/MM/yyyy hh:mm:ss"));
 };

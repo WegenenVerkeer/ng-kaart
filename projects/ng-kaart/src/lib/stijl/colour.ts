@@ -130,6 +130,7 @@ export const transparant: Kleur = toKleurUnsafe("transparant", "#00000000");
 
 export const onbekendGrijs: Kleur = toKleurUnsafe("onbekend", "#6d6d6d");
 export const donkergrijs: Kleur = toKleurUnsafe("donkergrijs", "#404040");
+export const transparantgrijs: Kleur = toKleurUnsafe("transparantgrijs", "#0000000f");
 const kastanje: Kleur = toKleurUnsafe("kastanje", " #800000"); // wordt veel gebruikt
 
 export const standaardKleuren = [

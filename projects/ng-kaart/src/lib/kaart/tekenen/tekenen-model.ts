@@ -1,4 +1,5 @@
-import { constant, Function1, Function2, Lazy, Refinement } from "fp-ts/lib/function";
+import { constant, Function1, Function2, Function3, Lazy, Refinement } from "fp-ts/lib/function";
+import * as option from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 
 import * as clr from "../../stijl/colour";
@@ -33,6 +34,7 @@ export interface StartDrawing {
   // readonly startGeometrie: Option<ol.geom.Geometry>;
   readonly featureColour: clr.Kleur;
   readonly useRouting: boolean;
+  readonly polygonStyleFunction: option.Option<ol.StyleFunction>;
 }
 
 // Hiermee beëindigen we de tekenmode
@@ -74,10 +76,15 @@ export interface SnapWaypoint {
   readonly waypoint: Waypoint;
 }
 
-export const StartDrawing: Function2<clr.Kleur, boolean, StartDrawing> = (featureColour, useRouting) => ({
+export const StartDrawing: Function3<clr.Kleur, boolean, option.Option<ol.StyleFunction>, StartDrawing> = (
+  featureColour,
+  useRouting,
+  polygonStyleFunction
+) => ({
   type: "StartDrawing",
   featureColour: featureColour,
-  useRouting: useRouting
+  useRouting: useRouting,
+  polygonStyleFunction: polygonStyleFunction
 });
 
 export const isStartDrawing: Refinement<DrawOps, StartDrawing> = (ops): ops is StartDrawing => ops.type === "StartDrawing";
