@@ -65,8 +65,8 @@ export namespace FieldSelection {
     selectedLens.modify(set => set || i === 0)(field)
   );
 
-  export const selectOnlyFirstField: Endomorphism<FieldSelection[]> = array.mapWithIndex<FieldSelection, FieldSelection>((i, field) =>
-    selectedLens.set(i === 0)(field)
+  export const selectOnlyFirstAndSortedField: Endomorphism<FieldSelection[]> = array.mapWithIndex<FieldSelection, FieldSelection>(
+    (i, field) => selectedLens.set(i === 0 || field.sortDirection.isSome())(field)
   );
 
   const sortingsForFieldSelection: Function1<FieldSelection, FieldSorting[]> = fs =>
