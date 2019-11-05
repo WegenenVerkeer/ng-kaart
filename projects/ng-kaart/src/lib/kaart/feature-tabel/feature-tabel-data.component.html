@@ -60,6 +60,9 @@
           </tr>
         </tbody>
       </table>
+      <div *ngIf="data.rows.length === 0" class="feature-table-data-no-data">
+        Geen data
+      </div>
     </div>
     <div *ngIf="!data.dataAvailable">
       <div
@@ -140,7 +143,7 @@
       <span *ngIf="data.hasSelectedFeatures">
         <button
           *ngIf="!data.showOnlySelectedFeatures"
-          mat-flat-button
+          mat-stroked-button
           matTooltip="Enkel selectie tonen"
           matTooltipPosition="right"
           (click)="onAction('showOnlySelectedFeatures')"

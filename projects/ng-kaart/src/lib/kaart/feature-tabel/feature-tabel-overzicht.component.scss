@@ -29,12 +29,25 @@
       font-weight: 500;
     }
   }
+
+  .mat-tab-body-wrapper {
+    flex-grow: 1;
+  }
+
+  awv-feature-tabel-data {
+    display: flex;
+    height: 100%;
+  }
 }
 
 mat-tab-group {
   flex-grow: 1;
   flex-shrink: 1;
   overflow: auto;
+}
+
+.mat-tab-header {
+  border-top: 1px solid #e5e5e5;
 }
 
 .feature-tabel-weergave-content-menu {

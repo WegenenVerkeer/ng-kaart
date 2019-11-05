@@ -1,8 +1,12 @@
+@import "../../css/kaart.component-common.scss";
+
 .feature-table-pager-content{
   display: flex;
   flex-direction: row;
   justify-content: flex-end;
   align-items: center;
+  font-size: 12px;
+  color: $kaart-secondary-text-color;
 
   .feature-table-pager-content-slider {
     width: 200px;
@@ -16,16 +20,16 @@
         top: -14px;
         background-color: white;
       }
-      
+
       .mat-slider-thumb {
         transform: scale(0) !important;
       }
-      
+
       .mat-slider-thumb-label-text {
         opacity: 1 !important;
-        color: black;
+        color: $kaart-primary-text-color;
       }
-    
-    }    
+
+    }
   }
 }

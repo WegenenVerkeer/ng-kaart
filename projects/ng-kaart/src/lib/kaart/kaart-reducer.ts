@@ -909,6 +909,13 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     const applySelectionColor: Endomorphism<ol.style.Style> = function(style: ol.style.Style): ol.style.Style {
       // TODO ipv dit gepruts op het niveau van OL zou het veel makkelijker en veiliger zijn om met lenzen op een AwvV0StyleSpec te werken
+
+      // In principe kan style nooit undefined zijn, maar uiteindelijk is dat het resultaat van een functie die toch
+      // onverhoopt undefined kan genereren. Daarom controleren we ngo eens extra om een run-time fout te vermijden.
+      if (!style) {
+        return style;
+      }
+
       const selectionStrokeColor: ol.Color = [0, 153, 255, 1]; // TODO maak configureerbaar
       const selectionFillColor: ol.Color = [112, 198, 255, 0.7]; // TODO maak configureerbaar
       const selectionIconColor: ol.Color = [0, 51, 153, 0.7]; // TODO maak configureerbaar
