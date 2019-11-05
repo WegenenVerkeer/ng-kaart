@@ -1,5 +1,5 @@
 import { array, option, ord, record, setoid, traversable } from "fp-ts";
-import { Curried2, Endomorphism, flow, Function1, Function2, identity, not, Predicate } from "fp-ts/lib/function";
+import { Curried2, Endomorphism, flow, Function1, Function2, FunctionN, identity, not, Predicate } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import { ordString } from "fp-ts/lib/Ord";
 import { pipe } from "fp-ts/lib/pipeable";
@@ -777,9 +777,8 @@ export namespace LaagModel {
       getOutOfSelectedOnlyModeIfNoFeaturesSelected
     );
 
-  export const updateSelectedFieldsAndSortings: Function2<
-    Set<string>,
-    Option<{ naam: string; direction: SortDirection }>,
+  export const updateSelectedFieldsAndSortings: FunctionN<
+    [Set<string>, Option<{ naam: string; direction: SortDirection }>],
     LaagModelUpdate
   > = (selectedFieldNames, maybeSortSpec) =>
     updatePageDataAfter(
