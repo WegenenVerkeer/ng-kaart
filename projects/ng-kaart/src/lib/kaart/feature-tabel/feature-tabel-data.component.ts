@@ -4,14 +4,28 @@ import { flow, Function1, Function2, Refinement } from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { distinctUntilChanged, map, mapTo, share, shareReplay, startWith, switchMap, take, tap, withLatestFrom } from "rxjs/operators";
+import {
+  distinctUntilChanged,
+  filter,
+  map,
+  mapTo,
+  share,
+  shareReplay,
+  startWith,
+  switchMap,
+  take,
+  tap,
+  withLatestFrom
+} from "rxjs/operators";
 import { isBoolean, isString } from "util";
 
 import * as arrays from "../../util/arrays";
+import { Feature } from "../../util/feature";
+import { PartialFunction1 } from "../../util/function";
 import { join } from "../../util/string";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as prt from "../kaart-protocol";
-import { DeselecteerFeatureCmd, SelecteerExtraFeaturesCmd, VeranderExtentCmd } from "../kaart-protocol-commands";
+import { Laagtabelinstellingen, Veldsortering } from "../kaart-protocol-subscriptions";
 import { FeatureSelection, GeselecteerdeFeatures } from "../kaart-protocol-subscriptions";
 import { KaartComponent } from "../kaart.component";
 
@@ -185,35 +199,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     const selectRow$ = this.rawActionDataFor$("selectRow") as rx.Observable<RowSelection>;
     const eraseSelection$ = this.actionFor$("eraseSelection");
     const zoomToSelection$ = this.actionFor$("zoomToSelection");
-    const zoomToRow$ = this.actionDataFor$("zoomToRow", (r): r is Row => true);
-
-    const olMap$ = this.kaartModel$.pipe(
-      map(m => m.map),
-      take(1)
-    );
-
-    // zoom naar de selectie
-    this.runInViewReady(
-      zoomToSelection$.pipe(
-        withLatestFrom(this.modelChanges.geselecteerdeFeatures$, olMap$, this.laag$),
-        tap(([_, selection, map, laagModel]) => {
-          const laagSelection = FeatureSelection.getGeselecteerdeFeaturesInLaag(this.laagTitel)(selection);
-          const extent = laagSelection[0].getGeometry().getExtent();
-          laagSelection.forEach(feature => ol.extent.extend(extent, feature.getGeometry().getExtent()));
-          this.dispatch(VeranderExtentCmd(extent));
-
-          if (neededZoom(map, extent) < laagModel.minZoom || neededZoom(map, extent) > laagModel.maxZoom) {
-            this.dispatch(
-              prt.ToonMeldingCmd([
-                laagSelection.length > 1
-                  ? "Extent van de features is te groot voor huidig zoom niveau"
-                  : "Feature is niet zichtbaar op huidig zoom niveau"
-              ])
-            );
-          }
-        })
-      )
-    );
+    const zoomToRow$ = this.rawActionDataFor$("zoomToRow") as rx.Observable<Row>;
 
     // hou in de row bij of die geselecteerd is of niet
     // kan dus veranderen als de rijen veranderen, of de selection verandert
@@ -227,58 +213,144 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
       )
     );
 
+    // zoom naar de selectie
+    const zoomToSelectionExtent$ = zoomToSelection$.pipe(
+      withLatestFrom(this.modelChanges.geselecteerdeFeatures$),
+      map(([_, selection]) =>
+        pipe(
+          selection,
+          FeatureSelection.getGeselecteerdeFeaturesInLaag(this.laagTitel),
+          array.map(feature => feature.getGeometry().getExtent()),
+          Feature.combineExtents,
+          option.getOrElse(() => [0, 0, 0, 0] as ol.Extent) // Er is de praktijk altijd een geselecteerde feature
+        )
+      ),
+      share()
+    );
+
+    const zoomToSelectionCmd$ = zoomToSelectionExtent$.pipe(map(prt.VeranderExtentCmd));
+
+    const olMap$ = this.kaartModel$.pipe(
+      map(m => m.map),
+      take(1)
+    );
+    const numGeselecteerdeFeaturesInLaag$ = zoomToSelection$.pipe(
+      withLatestFrom(this.modelChanges.geselecteerdeFeatures$),
+      map(([_, selection]) =>
+        pipe(
+          selection,
+          FeatureSelection.getGeselecteerdeFeaturesInLaag(this.laagTitel),
+          arrays.length
+        )
+      )
+    );
+
+    const warnZoomToSelectionCmd$ = zoomToSelectionExtent$.pipe(
+      withLatestFrom(olMap$, this.laag$, numGeselecteerdeFeaturesInLaag$),
+      filter(([extent, map, laagModel, _]) => neededZoom(map, extent) < laagModel.minZoom || neededZoom(map, extent) > laagModel.maxZoom),
+      map(([_1, _2, _3, numGeselecteerdeFeaturesInLaag]) =>
+        prt.ToonMeldingCmd([`${this.laagTitel} zijn niet zichtbaar op huidig zoom niveau`])
+      )
+    );
+
     // wis volledige selectie voor deze laag
-    this.runInViewReady(
-      eraseSelection$.pipe(
-        withLatestFrom(this.modelChanges.geselecteerdeFeatures$),
-        tap(([_, geselecteerdeFeatures]) => {
-          const selectedIds = FeatureSelection.getGeselecteerdeFeatureIdsInLaag(this.laagTitel)(geselecteerdeFeatures);
-          this.dispatch(DeselecteerFeatureCmd(selectedIds));
-        })
+    const clearSelection$ = eraseSelection$.pipe(
+      withLatestFrom(this.modelChanges.geselecteerdeFeatures$),
+      map(([_, geselecteerdeFeatures]) =>
+        pipe(
+          geselecteerdeFeatures,
+          FeatureSelection.getGeselecteerdeFeatureIdsInLaag(this.laagTitel),
+          prt.DeselecteerFeatureCmd
+        )
       )
     );
 
     // (de)selecteer een enkele rij
-    this.runInViewReady(
-      selectRow$.pipe(
-        tap((rowSelection: RowSelection) => {
-          if (rowSelection.selected) {
-            this.dispatch(SelecteerExtraFeaturesCmd([rowSelection.row.feature.feature]));
-          } else {
-            this.dispatch(DeselecteerFeatureCmd([rowSelection.row.feature.id]));
-          }
-        })
+    const toggleRowSelctionCmd$ = selectRow$.pipe(
+      map(rowSelection =>
+        rowSelection.selected
+          ? prt.SelecteerExtraFeaturesCmd([rowSelection.row.feature.feature])
+          : prt.DeselecteerFeatureCmd([rowSelection.row.feature.id])
       )
     );
 
     // (de)selecteer alle rijen
-    this.runInViewReady(
-      selectAll$.pipe(
-        withLatestFrom(this.rows$),
-        tap(([selected, rows]: [boolean, Row[]]) => {
-          if (selected) {
-            this.dispatch(SelecteerExtraFeaturesCmd(rows.map(row => row.feature.feature)));
-          } else {
-            const ids = rows.map(row => row.feature.id);
-            this.dispatch(DeselecteerFeatureCmd(ids));
-          }
-        })
+    const toggleAllRowsSelectionCmd$ = selectAll$.pipe(
+      withLatestFrom(this.rows$),
+      map(([select, rows]: [boolean, Row[]]) =>
+        select
+          ? pipe(
+              rows,
+              array.map(Row.olFeatureLens.get),
+              prt.SelecteerExtraFeaturesCmd
+            )
+          : pipe(
+              rows,
+              array.map(Row.idLens.get),
+              prt.DeselecteerFeatureCmd
+            )
       )
     );
 
     // zoom naar individuele rij
-    this.runInViewReady(
-      zoomToRow$.pipe(
-        withLatestFrom(olMap$, this.laag$),
-        tap(([row, map, laagModel]) => {
-          const extent = row.feature.feature.getGeometry().getExtent();
-          this.dispatch(VeranderExtentCmd(extent));
+    const zoomToIndividualRowExtent$ = zoomToRow$.pipe(
+      map(flow(row => row.feature.feature.getGeometry().getExtent())),
+      share()
+    );
 
-          if (neededZoom(map, extent) < laagModel.minZoom || neededZoom(map, extent) > laagModel.maxZoom) {
-            this.dispatch(prt.ToonMeldingCmd(["Feature is niet zichtbaar op huidig zoom niveau"]));
-          }
-        })
+    const zoomToIndividualRowCmd$ = zoomToIndividualRowExtent$.pipe(map(prt.VeranderExtentCmd));
+
+    const warnZoomToIndividualRowCmd$ = zoomToIndividualRowExtent$.pipe(
+      withLatestFrom(olMap$, this.laag$),
+      filter(([extent, map, laagModel]) => neededZoom(map, extent) < laagModel.minZoom || neededZoom(map, extent) > laagModel.maxZoom),
+      mapTo(prt.ToonMeldingCmd([`${this.laagTitel} zijn niet zichtbaar op huidig zoom niveau`]))
+    );
+
+    const fieldSelectionToVeldsortering: PartialFunction1<FieldSelection, Veldsortering> = selection =>
+      pipe(
+        selection,
+        FieldSelection.maybeSortDirectionLens.get,
+        option.map(sd =>
+          Veldsortering.create(
+            pipe(
+              selection,
+              FieldSelection.nameLens.get
+            ),
+            sd
+          )
+        )
+      );
+
+    const sortings: Function1<FieldSelection[], Veldsortering[]> = selections =>
+      pipe(
+        selections,
+        array.filterMap(fieldSelectionToVeldsortering)
+      );
+
+    const veranderLaagInstellingenCmd$ = this.laag$.pipe(
+      map(LaagModel.selectedFieldSelectionGetter.get),
+      distinctUntilChanged(array.getEq(FieldSelection.setoidFieldSelection).equals),
+      map(selections =>
+        pipe(
+          Laagtabelinstellingen.create(this.laagTitel, new Set(array.map(FieldSelection.nameLens.get)(selections)), sortings(selections)),
+          prt.VeranderLaagtabelinstellingenCmd
+        )
       )
+    );
+
+    this.runInViewReady(
+      rx
+        .merge(
+          zoomToSelectionCmd$,
+          clearSelection$,
+          toggleRowSelctionCmd$,
+          toggleAllRowsSelectionCmd$,
+          zoomToIndividualRowCmd$,
+          veranderLaagInstellingenCmd$,
+          warnZoomToSelectionCmd$,
+          warnZoomToIndividualRowCmd$
+        )
+        .pipe(tap(cmd => this.dispatch(cmd)))
     );
   }
 }

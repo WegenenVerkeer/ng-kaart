@@ -1,19 +1,19 @@
+import { eq } from "fp-ts";
 import { Either } from "fp-ts/lib/Either";
+import { Eq } from "fp-ts/lib/Eq";
 import { Curried2, Function1, Predicate } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
+import { Lens } from "monocle-ts";
 import * as ol from "openlayers";
 
 import { FeatureWithIdAndLaagnaam } from "../util/feature";
+import { arrayTraversal } from "../util/lenses";
 import { ZoekAntwoord, ZoekerMetWeergaveopties, ZoekResultaat } from "../zoeker/zoeker";
 
 import { KaartLocaties } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import { LaatsteCacheRefresh, MijnLocatieStateChange, PrecacheLaagProgress, TabelStateChange } from "./model-changes";
-
-/////////
-// Types
-//
 
 export type Subscription<Msg> =
   | AchtergrondTitelSubscription<Msg>
@@ -36,6 +36,7 @@ export type Subscription<Msg> =
   | MijnLocatieStateChangeSubscription<Msg>
   | PrecacheProgressSubscription<Msg>
   | PublishedKaartLocatiesSubscription<Msg>
+  | LaagtabelinstellingenSubscription<Msg>
   | TabelStateSubscription<Msg>
   | TekenenSubscription<Msg>
   | ForceProgressBarSubscription<Msg>
@@ -47,13 +48,43 @@ export type Subscription<Msg> =
   | ZoomSubscription<Msg>;
 
 export interface Viewinstellingen {
-  zoom: number;
-  minZoom: number;
-  maxZoom: number;
-  resolution: number;
-  extent: ol.Extent;
-  center: ol.Coordinate;
-  rotation: number;
+  readonly zoom: number;
+  readonly minZoom: number;
+  readonly maxZoom: number;
+  readonly resolution: number;
+  readonly extent: ol.Extent;
+  readonly center: ol.Coordinate;
+  readonly rotation: number;
+}
+
+export interface Veldsortering {
+  readonly veldnaam: string;
+  readonly sort: "ASCENDING" | "DESCENDING"; // Compatibel met SortDirection in data-provider
+}
+
+export namespace Veldsortering {
+  export const create = (veldnaam: string, sort: "ASCENDING" | "DESCENDING"): Veldsortering => ({ veldnaam, sort });
+
+  export const eqVeldsortering: Eq<Veldsortering> = eq.getStructEq({ veldnaam: eq.eqString, sort: eq.eqString });
+}
+
+export interface Laagtabelinstellingen {
+  readonly laagnaam: string; // De laag voor welke de instellingen geldig zijn
+  readonly zichtbareVelden: Set<string>; // De namen/keys van de velden die zichtbaar zijn
+  readonly veldsorteringen: Veldsortering[];
+}
+
+export namespace Laagtabelinstellingen {
+  export const zichtbareVeldenLens: Lens<Laagtabelinstellingen, Set<string>> = Lens.fromProp<Laagtabelinstellingen>()("zichtbareVelden");
+  export const veldsorteringenLens: Lens<Laagtabelinstellingen, Veldsortering[]> = Lens.fromProp<Laagtabelinstellingen>()(
+    "veldsorteringen"
+  );
+
+  export const create = (laagnaam: string, zichtbareVelden: Set<string>, veldSorteringen: Veldsortering[]): Laagtabelinstellingen => ({
+    laagnaam,
+    zichtbareVelden,
+    veldsorteringen: veldSorteringen
+  });
 }
 
 export type KaartFeaturesOpId = ReadonlyMap<string, FeatureWithIdAndLaagnaam>;
@@ -202,6 +233,11 @@ export interface TabelStateSubscription<Msg> {
   readonly wrapper: (state: TabelStateChange) => Msg;
 }
 
+export interface LaagtabelinstellingenSubscription<Msg> {
+  readonly type: "Laagtabelinstellingen";
+  readonly wrapper: MsgGen<Laagtabelinstellingen, Msg>;
+}
+
 export interface BusySubscription<Msg> {
   readonly type: "Busy";
   readonly wrapper: MsgGen<boolean, Msg>;
@@ -327,7 +363,11 @@ export function GeometryChangedSubscription<Msg>(
   tekenSettings: ke.TekenSettings,
   wrapper: MsgGen<ke.Tekenresultaat, Msg>
 ): GeometryChangedSubscription<Msg> {
-  return { type: "GeometryChanged", tekenSettings: tekenSettings, wrapper: wrapper };
+  return {
+    type: "GeometryChanged",
+    tekenSettings: tekenSettings,
+    wrapper: wrapper
+  };
 }
 
 export function TekenenSubscription<Msg>(wrapper: (settings: Option<ke.TekenSettings>) => Msg): TekenenSubscription<Msg> {
@@ -379,4 +419,10 @@ export function MijnLocatieStateChangeSubscription<Msg>(
 
 export function TabelStateSubscription<Msg>(wrapper: (stateChange: TabelStateChange) => Msg): TabelStateSubscription<Msg> {
   return { type: "TabelState", wrapper };
+}
+
+export function LaagtabelinstellingenSubscription<Msg>(
+  wrapper: (tabelLaagInstellingen: Laagtabelinstellingen) => Msg
+): LaagtabelinstellingenSubscription<Msg> {
+  return { type: "Laagtabelinstellingen", wrapper };
 }

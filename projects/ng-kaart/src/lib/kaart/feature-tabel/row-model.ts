@@ -2,6 +2,7 @@ import { array, option } from "fp-ts";
 import { Curried2, Endomorphism, FunctionN } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import { DateTime } from "luxon";
+import { Lens } from "monocle-ts";
 import * as ol from "openlayers";
 
 import * as arrays from "../../util/arrays";
@@ -40,6 +41,9 @@ interface Properties {
 
 export namespace Row {
   const Field: FunctionN<[Option<ValueType>], Field> = maybeValue => ({ maybeValue });
+
+  export const olFeatureLens: Lens<Row, ol.Feature> = Lens.fromPath<Row>()(["feature", "feature"]);
+  export const idLens: Lens<Row, string> = Lens.fromPath<Row>()(["feature", "id"]);
 
   const emptyField: Field = Field(option.none);
 

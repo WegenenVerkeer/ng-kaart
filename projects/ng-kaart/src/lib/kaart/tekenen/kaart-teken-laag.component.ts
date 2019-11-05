@@ -145,6 +145,7 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
       legende: none,
       stijlInLagenKiezer: none,
       filterinstellingen: none,
+      laagtabelinstellingen: none,
       wrapper: kaartLogOnlyWrapper
     });
 

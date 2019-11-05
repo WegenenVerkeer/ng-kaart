@@ -1,5 +1,5 @@
 import { array, option, ord, record, setoid, traversable } from "fp-ts";
-import { Curried2, Endomorphism, flow, Function1, Function2, identity, not, Predicate } from "fp-ts/lib/function";
+import { Curried2, Endomorphism, flow, Function1, Function2, FunctionN, identity, not, Predicate } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import { ordString } from "fp-ts/lib/Ord";
 import { pipe } from "fp-ts/lib/pipeable";
@@ -132,6 +132,13 @@ export namespace LaagModel {
     fieldSelectionsLens.composeTraversal(selectiveArrayTraversal(fs => fs.name === fieldName));
   const fieldSelectionTraversal: Traversal<LaagModel, FieldSelection> = fieldSelectionsLens.composeTraversal(arrayTraversal());
 
+  export const selectedFieldSelectionGetter: LaagModelGetter<FieldSelection[]> = new Getter(
+    flow(
+      fieldSelectionsGetter.get,
+      array.filter(FieldSelection.isSelected)
+    )
+  );
+
   // Bepaalde velden moeten samengevoegd worden tot 1 synthetisch locatieveld. Daarvoor moeten we enerzijds de headers
   // aanpassen en anderzijds elke Row die binnen komt. Er is altijd een locatieveld. Ook als er geen enkel veld gevonden
   // kan worden dat de basis voor een locatie kan zijn. Het locatieveld is dan niet synthetisch maar virtueel. Er is
@@ -253,13 +260,33 @@ export namespace LaagModel {
         .composeLens(FieldSelection.maybeSortDirectionLens)
         .set(option.some("ASCENDING") as Option<SortDirection>);
 
+      const makeFieldSelectedFromInstellingen: Endomorphism<FieldSelection[]> = fields => {
+        return laag.tabelLaagInstellingen
+          .map(instellingen => fields.map(field => FieldSelection.selectedLens.set(instellingen.zichtbareVelden.has(field.name))(field)))
+          .getOrElse(fields);
+      };
+
+      const setSortFieldFromInstellingenOrFirst: Endomorphism<FieldSelection[]> = pipe(
+        laag.tabelLaagInstellingen,
+        option.map(ins => ins.veldsorteringen),
+        option.chain(array.head),
+        option.fold(
+          () => sortOnFirstField,
+          firstVs =>
+            selectiveArrayTraversal<FieldSelection>(fs => fs.name === firstVs.veldnaam)
+              .composeLens(FieldSelection.maybeSortDirectionLens)
+              .set(option.some("ASCENDING") as Option<SortDirection>)
+        )
+      );
+
       const fieldSelections = pipe(
         veldinfos,
         FieldSelection.fieldsFromVeldinfo,
         fieldsTransformer,
         FieldSelection.selectBaseFields,
-        FieldSelection.selectFirstField, // Indien er geen native locatie veld is, of dat zou geen basisveld zijn
-        sortOnFirstField
+        setSortFieldFromInstellingenOrFirst,
+        makeFieldSelectedFromInstellingen,
+        FieldSelection.selectFirstField // Indien er geen native locatie veld is, of dat zou geen basisveld zijn of niet in laaginstellingen
       );
 
       const firstField = array.take(1, fieldSelections);
@@ -501,7 +528,9 @@ export namespace LaagModel {
     )(laag)
   );
 
-  // Pas uiteindelijk de huidige Page aan indien de volledige data gebruikt wordt.
+  // Pas uiteindelijk de huidige Page aan indien de volledige data gebruikt wordt. TODO als de laagPageRequest gelijk is
+  // aan de vorige, dan hoeven we de request eigenlijk niet uit te voeren. Met uitzondering van requests die effectief
+  // bedoeld zijn om een data refresh te doen of te herproberen na een fout-conditie.
   const updateLaagPageDataFromServer: LaagModelUpdate = Update.create(
     flow(
       updatePendingLens.set(true),
@@ -748,5 +777,30 @@ export namespace LaagModel {
         andThenUpdatePageDataIf(ifShowSelectedOnly)
       ),
       getOutOfSelectedOnlyModeIfNoFeaturesSelected
+    );
+
+  export const updateSelectedFieldsAndSortings: FunctionN<
+    [Set<string>, Option<{ naam: string; direction: SortDirection }>],
+    LaagModelUpdate
+  > = (selectedFieldNames, maybeSortSpec) =>
+    updatePageDataAfter(
+      flow(
+        fieldSelectionTraversal.modify(fs =>
+          flow(
+            FieldSelection.selectedLens.set(selectedFieldNames.has(fs.name)),
+            FieldSelection.maybeSortDirectionLens.set(
+              pipe(
+                maybeSortSpec,
+                option.filter(ss => ss.naam === fs.name),
+                option.map(ss => ss.direction)
+              )
+            )
+          )(fs)
+        ),
+        // Het eerste veld moet altijd geselecteerd zijn
+        fieldSelectionsLens.modify(FieldSelection.selectFirstField)
+        // TODO verhuis en gebruik setSortFieldFromInstellingenOrFirst + vorige functie overal waar selectie aangepast
+        // wordt
+      )
     );
 }
