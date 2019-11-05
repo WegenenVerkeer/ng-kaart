@@ -249,11 +249,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
       withLatestFrom(olMap$, this.laag$, numGeselecteerdeFeaturesInLaag$),
       filter(([extent, map, laagModel, _]) => neededZoom(map, extent) < laagModel.minZoom || neededZoom(map, extent) > laagModel.maxZoom),
       map(([_1, _2, _3, numGeselecteerdeFeaturesInLaag]) =>
-        prt.ToonMeldingCmd([
-          numGeselecteerdeFeaturesInLaag > 1
-            ? "Extent van de features is te groot voor huidig zoom niveau"
-            : "Feature is niet zichtbaar op huidig zoom niveau"
-        ])
+        prt.ToonMeldingCmd([`${this.laagTitel} zijn niet zichtbaar op huidig zoom niveau`])
       )
     );
 
@@ -307,7 +303,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     const warnZoomToIndividualRowCmd$ = zoomToIndividualRowExtent$.pipe(
       withLatestFrom(olMap$, this.laag$),
       filter(([extent, map, laagModel]) => neededZoom(map, extent) < laagModel.minZoom || neededZoom(map, extent) > laagModel.maxZoom),
-      mapTo(prt.ToonMeldingCmd(["Feature is niet zichtbaar op huidig zoom niveau"]))
+      mapTo(prt.ToonMeldingCmd([`${this.laagTitel} zijn niet zichtbaar op huidig zoom niveau`]))
     );
 
     const fieldSelectionToVeldsortering: PartialFunction1<FieldSelection, Veldsortering> = selection =>
