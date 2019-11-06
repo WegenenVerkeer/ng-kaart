@@ -174,7 +174,7 @@ $footer-height: 48px;
   }
 
   .feature-table-data-footer {
-    height: $footer-height;
+    min-height: $footer-height;
     overflow: hidden;
     display: flex;
     flex-direction: row;
@@ -183,8 +183,12 @@ $footer-height: 48px;
     border-top: 1px solid #e5e5e5;
 
     .left {
-      margin-left: 1em;
+      margin-left: 0.5em;
       align-items: center;
+
+      .mat-button-wrapper {
+        font-size: 12px;
+      }
 
       .feature-table-data-selection-all {
         color: rgba(0, 0, 0, 0.6);
