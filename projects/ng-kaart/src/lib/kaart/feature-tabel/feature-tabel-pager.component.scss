@@ -11,6 +11,10 @@
   .feature-table-pager-content-slider {
     width: 200px;
 
+    @media only screen and (max-width: 768px) {
+      display: none !important;
+    }
+
     ::ng-deep {
 
       .mat-slider-thumb-label {
