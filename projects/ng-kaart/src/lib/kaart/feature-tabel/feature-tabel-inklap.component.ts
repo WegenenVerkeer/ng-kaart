@@ -34,8 +34,8 @@ import { TableModel } from "./table-model";
           height: "0px"
         })
       ),
-      transition("zichtbaar => niet-zichtbaar", [animate("0.5s")]),
-      transition("niet-zichtbaar => zichtbaar", [animate("0.5s")])
+      transition("zichtbaar => niet-zichtbaar", [animate("0.35s cubic-bezier(.62,.28,.23,.99)")]),
+      transition("niet-zichtbaar => zichtbaar", [animate("0.35s cubic-bezier(.62,.28,.23,.99)")])
     ])
   ]
 })
