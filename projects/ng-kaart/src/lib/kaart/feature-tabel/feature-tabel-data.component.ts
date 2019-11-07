@@ -48,7 +48,9 @@ namespace ColumnHeaders {
     columnWidths: pipe(
       fieldSelections,
       array.map(fs => fs.contributingVeldinfos.length),
-      array.map(numFields => `minmax(${140 + (numFields - 1) * 35}px, 400px)`),
+      array.mapWithIndex(
+        (i, numFields) => `minmax(${140 + (numFields - 1) * 35}px, ${i === fieldSelections.length - 1 ? "1fr" : "400px"})`
+      ),
       join(" ")
     )
   });
