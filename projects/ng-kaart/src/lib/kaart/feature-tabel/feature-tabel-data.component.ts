@@ -67,6 +67,7 @@ const isFieldSelection: Refinement<any, FieldSelection> = (fieldSelection): fiel
 
 interface TemplateData {
   readonly dataAvailable: boolean;
+  readonly featureDataAvailable: boolean;
   readonly fieldNameSelections: FieldSelection[];
   readonly headers: ColumnHeaders;
   readonly rows?: Row[];
@@ -149,6 +150,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
         const allFieldsSelected = arrays.forAll(FieldSelection.selectedLens.get)(laagModel.fieldSelections);
         return {
           dataAvailable: rows !== undefined,
+          featureDataAvailable: option.exists(arrays.isNonEmpty)(maybeRows),
           fieldNameSelections,
           headers: ColumnHeaders.createFromFieldSelection(fieldNameSelections),
           rows,
