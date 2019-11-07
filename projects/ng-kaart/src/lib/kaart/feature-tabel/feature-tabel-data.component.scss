@@ -60,6 +60,12 @@ $footer-height: 48px;
         height: 32px;
         padding: 8px;
 
+        > * {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
         mat-checkbox + span {
           margin-left: 6px;
         }

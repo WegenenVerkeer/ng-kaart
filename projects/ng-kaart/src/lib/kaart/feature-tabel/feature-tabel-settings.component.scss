@@ -2,15 +2,13 @@
 
 .feature-tabel-settings-menu {
   .feature-tabel-settings-menu-item {
-    padding-bottom: 8px;
-    padding-left: 8px;
-    padding-right: 8px;
+    padding: 0;
   }
 
   .feature-tabel-settings-menu-header {
-    font-weight: bold;
-    color: rgb(128, 128, 128);
-    padding-bottom: 8px;
+    font-weight: 500;
+    color: rgba(0, 0, 0, 0.6);
+    padding: 8px 16px;
   }
 
   .feature-tabel-settings-menu-radio {
@@ -18,8 +16,11 @@
     flex-direction: column;
 
     .feature-tabel-settings-menu-radio-choice {
-      padding-left: 8px;
-      padding-bottom: 8px;
+      padding: 14px 16px;
+
+      &:hover {
+        background: rgba(0, 0, 0, 0.04);
+      }
     }
   }
 }
