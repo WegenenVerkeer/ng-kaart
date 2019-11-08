@@ -5,6 +5,7 @@ import { pipe } from "fp-ts/lib/pipeable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import {
+  debounceTime,
   distinctUntilChanged,
   filter,
   map,
@@ -15,6 +16,7 @@ import {
   switchMap,
   take,
   tap,
+  throttleTime,
   withLatestFrom
 } from "rxjs/operators";
 import { isBoolean, isString } from "util";
@@ -331,6 +333,12 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
         array.filterMap(fieldSelectionToVeldsortering)
       );
 
+    // Dit laat het globaal model ook weten dat er wijzingen zijn aan de FieldSelection. Op die manier kan Geoloket daar
+    // naar luisteren en die informatie in zijn view opslaan en desgewenst opslaan. Er is een probleem wanneer de
+    // instellingen in het model vlug na elkaar gewijzigd worden. Dan zal de distinctUntil die normalerwijs gelijke
+    // updates en een oneindige lus blokkeert (want we luisteren ook op het model) constant wijzingen zien. Daarom is er
+    // ook een debounceTime aanwezig. Op die manier krijgt de reducer enkel de stabiele toestand van het LaagModel en
+    // wordt een oneindige lus vermeden.
     const veranderLaagInstellingenCmd$ = this.laag$.pipe(
       map(LaagModel.selectedFieldSelectionGetter.get),
       distinctUntilChanged(array.getEq(FieldSelection.setoidFieldSelection).equals),
@@ -339,7 +347,8 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
           Laagtabelinstellingen.create(this.laagTitel, new Set(array.map(FieldSelection.nameLens.get)(selections)), sortings(selections)),
           prt.VeranderLaagtabelinstellingenCmd
         )
-      )
+      ),
+      debounceTime(500)
     );
 
     this.runInViewReady(
