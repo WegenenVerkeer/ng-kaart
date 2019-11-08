@@ -1,5 +1,5 @@
 import { array, option, ord, record, setoid, traversable } from "fp-ts";
-import { Curried2, Endomorphism, flow, Function1, Function2, FunctionN, identity, not, Predicate } from "fp-ts/lib/function";
+import { Curried2, Endomorphism, flow, Function1, Function2, identity, not, Predicate } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import { ordString } from "fp-ts/lib/Ord";
 import { pipe } from "fp-ts/lib/pipeable";
@@ -254,13 +254,15 @@ export namespace LaagModel {
     .set(option.some("ASCENDING") as Option<SortDirection>);
 
   const setFieldSelectionsWithFallbackToFirst = (
-    selectedFieldNames: Set<string>,
+    maybeSelectedFieldNames: Option<Set<string>>,
     maybeSortSpec: Option<{ veldnaam: string; sort: SortDirection }>
   ): Endomorphism<FieldSelection[]> =>
     flow(
       arrayTraversal<FieldSelection>().modify(fs =>
         flow(
-          FieldSelection.selectedLens.set(selectedFieldNames.has(fs.name)),
+          FieldSelection.selectedLens.modify(currentlySelected =>
+            maybeSelectedFieldNames.fold(currentlySelected, selectedFieldNames => selectedFieldNames.has(fs.name))
+          ),
           FieldSelection.maybeSortDirectionLens.set(
             pipe(
               maybeSortSpec,
@@ -289,7 +291,7 @@ export namespace LaagModel {
       const veldinfos = ke.ToegevoegdeVectorLaag.veldInfosLens.get(laag);
       const [fieldsTransformer, veldenTransformer] = locationTransformer(veldinfos);
 
-      const selectedFieldNamesFromInstellingen: Set<string> = laag.tabelLaagInstellingen.fold(new Set(), ins => ins.zichtbareVelden);
+      const selectedFieldNamesFromInstellingen = laag.tabelLaagInstellingen.map(ins => ins.zichtbareVelden);
       const sortFieldFromInstellingen = laag.tabelLaagInstellingen.chain(ins => array.head(ins.veldsorteringen));
 
       const fieldSelections = pipe(
@@ -794,7 +796,8 @@ export namespace LaagModel {
     selectedFieldNames: Set<string>,
     maybeSortSpec: Option<{ veldnaam: string; sort: SortDirection }>
   ): LaagModelUpdate => {
-    console.log("****updateSelectedFieldsAndSortings", selectedFieldNames, maybeSortSpec);
-    return updatePageDataAfter(fieldSelectionsLens.modify(setFieldSelectionsWithFallbackToFirst(selectedFieldNames, maybeSortSpec)));
+    return updatePageDataAfter(
+      fieldSelectionsLens.modify(setFieldSelectionsWithFallbackToFirst(option.some(selectedFieldNames), maybeSortSpec))
+    );
   };
 }
