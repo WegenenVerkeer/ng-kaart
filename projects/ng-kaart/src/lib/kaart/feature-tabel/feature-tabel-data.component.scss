@@ -30,7 +30,7 @@ $footer-height: 48px;
     }
 
     table {
-      width: auto;
+      min-width: 100%;
       display: grid;
       border-collapse: collapse;
     }
