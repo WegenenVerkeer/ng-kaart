@@ -30,7 +30,7 @@ $footer-height: 48px;
     }
 
     table {
-      min-width: 100%;
+      width: auto;
       display: grid;
       border-collapse: collapse;
     }
@@ -68,6 +68,10 @@ $footer-height: 48px;
 
         mat-checkbox + span {
           margin-left: 6px;
+        }
+
+        &:last-child {
+          border-right: 1px solid #e5e5e5;
         }
       }
 
