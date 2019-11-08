@@ -69,6 +69,10 @@ $footer-height: 48px;
         mat-checkbox + span {
           margin-left: 6px;
         }
+
+        &:last-child {
+          border-right: 1px solid #e5e5e5;
+        }
       }
 
       th {
