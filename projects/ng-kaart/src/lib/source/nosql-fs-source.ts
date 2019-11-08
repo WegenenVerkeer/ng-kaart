@@ -1,4 +1,4 @@
-import { array, tuple } from "fp-ts";
+import { array } from "fp-ts";
 import { concat, Function1, not, Refinement } from "fp-ts/lib/function";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import { setoidNumber, setoidString } from "fp-ts/lib/Setoid";
@@ -490,5 +490,10 @@ export class NosqlFsSource extends ol.source.Vector {
 
   clearPrevExtent() {
     this.prevExtent = [0, 0, 0, 0];
+  }
+
+  clear(opt_fast?: boolean): void {
+    super.clear(opt_fast);
+    this.clearPrevExtent();
   }
 }
