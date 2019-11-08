@@ -248,6 +248,40 @@ export namespace LaagModel {
       selectedFieldNames => record.mapWithIndex(fieldFormatter(selectedFieldNames, rowFormats))
     );
 
+  const sortOnFirstField: Endomorphism<FieldSelection[]> = indexArray<FieldSelection>()
+    .index(0)
+    .composeLens(FieldSelection.maybeSortDirectionLens)
+    .set(option.some("ASCENDING") as Option<SortDirection>);
+
+  const setFieldSelectionsWithFallbackToFirst = (
+    selectedFieldNames: Set<string>,
+    maybeSortSpec: Option<{ veldnaam: string; sort: SortDirection }>
+  ): Endomorphism<FieldSelection[]> =>
+    flow(
+      arrayTraversal<FieldSelection>().modify(fs =>
+        flow(
+          FieldSelection.selectedLens.set(selectedFieldNames.has(fs.name)),
+          FieldSelection.maybeSortDirectionLens.set(
+            pipe(
+              maybeSortSpec,
+              option.filter(ss => ss.veldnaam === fs.name),
+              option.map(ss => ss.sort)
+            )
+          )
+        )(fs)
+      ),
+      // Het eerste veld moet altijd geselecteerd zijn
+      FieldSelection.selectFirstField,
+      // Er moet juist op 1 veld gesorteerd zijn
+      fieldSelections =>
+        pipe(
+          fieldSelections,
+          array.findFirst(fs => fs.sortDirection.isSome()),
+          option.isSome,
+          hasSortField => (hasSortField ? fieldSelections : sortOnFirstField(fieldSelections))
+        )
+    );
+
   export const create: PartialFunction2<ke.ToegevoegdeVectorLaag, Viewinstellingen, LaagModel> = (laag, viewinstellingen) =>
     ke.ToegevoegdeVectorLaag.noSqlFsSourceFold.headOption(laag).map(source => {
       // We mogen niet zomaar alle velden gebruiken. Om te beginnen enkel de basisvelden en de locatievelden moeten
@@ -255,38 +289,15 @@ export namespace LaagModel {
       const veldinfos = ke.ToegevoegdeVectorLaag.veldInfosLens.get(laag);
       const [fieldsTransformer, veldenTransformer] = locationTransformer(veldinfos);
 
-      const sortOnFirstField = indexArray<FieldSelection>()
-        .index(0)
-        .composeLens(FieldSelection.maybeSortDirectionLens)
-        .set(option.some("ASCENDING") as Option<SortDirection>);
-
-      const makeFieldSelectedFromInstellingen: Endomorphism<FieldSelection[]> = fields => {
-        return laag.tabelLaagInstellingen
-          .map(instellingen => fields.map(field => FieldSelection.selectedLens.set(instellingen.zichtbareVelden.has(field.name))(field)))
-          .getOrElse(fields);
-      };
-
-      const setSortFieldFromInstellingenOrFirst: Endomorphism<FieldSelection[]> = pipe(
-        laag.tabelLaagInstellingen,
-        option.map(ins => ins.veldsorteringen),
-        option.chain(array.head),
-        option.fold(
-          () => sortOnFirstField,
-          firstVs =>
-            selectiveArrayTraversal<FieldSelection>(fs => fs.name === firstVs.veldnaam)
-              .composeLens(FieldSelection.maybeSortDirectionLens)
-              .set(option.some("ASCENDING") as Option<SortDirection>)
-        )
-      );
+      const selectedFieldNamesFromInstellingen: Set<string> = laag.tabelLaagInstellingen.fold(new Set(), ins => ins.zichtbareVelden);
+      const sortFieldFromInstellingen = laag.tabelLaagInstellingen.chain(ins => array.head(ins.veldsorteringen));
 
       const fieldSelections = pipe(
         veldinfos,
         FieldSelection.fieldsFromVeldinfo,
         fieldsTransformer,
         FieldSelection.selectBaseFields,
-        setSortFieldFromInstellingenOrFirst,
-        makeFieldSelectedFromInstellingen,
-        FieldSelection.selectFirstField // Indien er geen native locatie veld is, of dat zou geen basisveld zijn of niet in laaginstellingen
+        setFieldSelectionsWithFallbackToFirst(selectedFieldNamesFromInstellingen, sortFieldFromInstellingen)
       );
 
       const firstField = array.take(1, fieldSelections);
@@ -779,28 +790,11 @@ export namespace LaagModel {
       getOutOfSelectedOnlyModeIfNoFeaturesSelected
     );
 
-  export const updateSelectedFieldsAndSortings: FunctionN<
-    [Set<string>, Option<{ naam: string; direction: SortDirection }>],
-    LaagModelUpdate
-  > = (selectedFieldNames, maybeSortSpec) =>
-    updatePageDataAfter(
-      flow(
-        fieldSelectionTraversal.modify(fs =>
-          flow(
-            FieldSelection.selectedLens.set(selectedFieldNames.has(fs.name)),
-            FieldSelection.maybeSortDirectionLens.set(
-              pipe(
-                maybeSortSpec,
-                option.filter(ss => ss.naam === fs.name),
-                option.map(ss => ss.direction)
-              )
-            )
-          )(fs)
-        ),
-        // Het eerste veld moet altijd geselecteerd zijn
-        fieldSelectionsLens.modify(FieldSelection.selectFirstField)
-        // TODO verhuis en gebruik setSortFieldFromInstellingenOrFirst + vorige functie overal waar selectie aangepast
-        // wordt
-      )
-    );
+  export const updateSelectedFieldsAndSortings = (
+    selectedFieldNames: Set<string>,
+    maybeSortSpec: Option<{ veldnaam: string; sort: SortDirection }>
+  ): LaagModelUpdate => {
+    console.log("****updateSelectedFieldsAndSortings", selectedFieldNames, maybeSortSpec);
+    return updatePageDataAfter(fieldSelectionsLens.modify(setFieldSelectionsWithFallbackToFirst(selectedFieldNames, maybeSortSpec)));
+  };
 }

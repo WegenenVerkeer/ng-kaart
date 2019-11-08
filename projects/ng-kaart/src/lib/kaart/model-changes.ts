@@ -456,10 +456,7 @@ export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> 
     precacheProgress$: changer.precacheProgressSubj.pipe(observeOn(rx.asapScheduler)),
     laatsteCacheRefresh$: changer.laatsteCacheRefreshSubj.pipe(observeOn(rx.asapScheduler)),
     tabelState$: changer.tabelStateSubj.pipe(observeOn(rx.asapScheduler)),
-    tabelLaagInstellingen$: changer.tabelLaagInstellingenSubj.pipe(
-      observeOn(rx.asapScheduler),
-      tap(_ => console.log("verander tabelLaaginstellingen"))
-    ),
+    tabelLaagInstellingen$: changer.tabelLaagInstellingenSubj.pipe(observeOn(rx.asapScheduler)),
     mijnLocatieStateChange$: changer.mijnLocatieStateChangeSubj.pipe(observeOn(rx.asapScheduler)),
     dataloadBusy$: changer.dataloadBusySubj.pipe(observeOn(rx.asapScheduler)),
     forceProgressBar$: changer.forceProgressBarSubj.pipe(observeOn(rx.asapScheduler)),

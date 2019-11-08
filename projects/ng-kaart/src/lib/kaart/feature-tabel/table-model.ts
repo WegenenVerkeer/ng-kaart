@@ -140,11 +140,7 @@ export namespace TableModel {
         lti.zichtbareVelden,
         pipe(
           lti.veldsorteringen,
-          array.head,
-          option.map(vs => ({
-            naam: vs.veldnaam,
-            direction: vs.sort
-          }))
+          array.head
         )
       )
     );
