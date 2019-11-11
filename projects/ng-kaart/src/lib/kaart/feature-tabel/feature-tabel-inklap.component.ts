@@ -1,18 +1,13 @@
 import { animate, state, style, transition, trigger } from "@angular/animations";
 import { AfterViewInit, Component, ElementRef, HostListener, NgZone, ViewChild } from "@angular/core";
 import * as rx from "rxjs";
-import { filter, map } from "rxjs/operators";
+import { distinctUntilChanged, map, share } from "rxjs/operators";
 
-import { ofType } from "../../util";
-import { observeOnAngular } from "../../util/observe-on-angular";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
-import { KaartInternalMsg, TabelStateMsg, tabelStateMsgGen } from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
-import { TabelStateChange } from "../model-changes";
 
 import { FeatureTabelOverzichtComponent } from "./feature-tabel-overzicht.component";
-import { TableModel } from "./table-model";
 
 @Component({
   selector: "awv-feature-tabel-inklap",
@@ -63,42 +58,19 @@ export class FeatureTabelInklapComponent extends KaartChildComponentBase impleme
       this.huidigeHoogte = this.standaardHoogte = (hoogte / 5) * 2;
     });
 
-    this.magGetoondWorden$ = this.internalMessage$.pipe(
-      ofType<TabelStateMsg>("TabelState"),
-      map(msg => msg.state),
-      map(state => state.state !== "NietMogelijk")
-    );
-
-    const opengeklaptDoorKnop$ = this.internalMessage$.pipe(
-      ofType<TabelStateMsg>("TabelState"), //
-      observeOnAngular(this.zone),
-      map(msg => msg.state),
-      // We willen alleen de events die door een klik op de knop komen. De rest handelen we intern zelf al goed af.
-      filter(state => state.doorKnop),
-      map(state => state.state === "Opengeklapt")
-    );
+    this.magGetoondWorden$ = this.modelChanges.tabelActiviteit$.pipe(map(activiteit => activiteit !== "Onbeschikbaar"));
 
     // volg de TabelState om te openen/sluiten
-    this.bindToLifeCycle(opengeklaptDoorKnop$).subscribe(tabelZichtbaar => {
-      this.tabelZichtbaar = tabelZichtbaar;
-      if (this.tabelZichtbaar) {
-        this.huidigeHoogte = this.standaardHoogte;
-      }
-    });
-  }
+    const tabelZichtbaar$ = this.modelChanges.tabelActiviteit$.pipe(
+      map(activiteit => activiteit === "Opengeklapt"),
+      distinctUntilChanged(),
+      share()
+    );
 
-  ngAfterViewInit() {
-    // volg de lagen en stuur "NietMogelijk" event indien niet getoond moet worden.
-    this.bindToLifeCycle(
-      rx.combineLatest(this.magGetoondWorden$, this.tabelOverzicht.tableModel$.pipe(map(TableModel.hasLagen)))
-    ).subscribe(([isEnabled, moetEnabledWorden]) => {
-      if (isEnabled !== moetEnabledWorden) {
-        this.tabelZichtbaar = false;
-        if (moetEnabledWorden) {
-          this.dispatch(prt.TabelStateChangeCmd(TabelStateChange("Dichtgeklapt")));
-        } else {
-          this.dispatch(prt.TabelStateChangeCmd(TabelStateChange("NietMogelijk")));
-        }
+    this.bindToLifeCycle(tabelZichtbaar$).subscribe(zichtbaar => {
+      this.tabelZichtbaar = zichtbaar;
+      if (zichtbaar) {
+        this.huidigeHoogte = this.standaardHoogte;
       }
     });
   }
@@ -162,21 +134,18 @@ export class FeatureTabelInklapComponent extends KaartChildComponentBase impleme
   private zetTabelZichtbaar(zichtbaar: boolean) {
     if (this.tabelZichtbaar !== zichtbaar) {
       this.tabelZichtbaar = zichtbaar;
-      this.dispatch(prt.TabelStateChangeCmd(TabelStateChange(zichtbaar ? "Opengeklapt" : "Dichtgeklapt")));
+      this.dispatch(zichtbaar ? prt.OpenTabelCmd() : prt.SluitTabelCmd());
+      // this.dispatch(prt.ZetUiElementOpties(KaartInfoBoodschapUiSelector, { identifyOnderdrukt: zichtbaar }));
     }
   }
 
   @HostListener("document:mouseup", ["$event"])
-  onMouseUp(e: MouseEvent) {
+  onMouseUp() {
     this.bezigMetSlepen = false;
   }
 
   onTouchEnd(e: TouchEvent) {
     this.bezigMetSlepen = false;
     e.stopPropagation();
-  }
-
-  protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
-    return [prt.TabelStateSubscription(tabelStateMsgGen)];
   }
 }

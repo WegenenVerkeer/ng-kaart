@@ -9,7 +9,7 @@ import { ZoekAntwoord, ZoekerMetWeergaveopties, ZoekResultaat } from "../zoeker/
 import { KaartLocaties } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { InfoBoodschap } from "./kaart-with-info-model";
-import { LaatsteCacheRefresh, MijnLocatieStateChange, PrecacheLaagProgress, TabelStateChange } from "./model-changes";
+import { LaatsteCacheRefresh, MijnLocatieStateChange, PrecacheLaagProgress } from "./model-changes";
 
 /////////
 // Types
@@ -36,7 +36,6 @@ export type Subscription<Msg> =
   | MijnLocatieStateChangeSubscription<Msg>
   | PrecacheProgressSubscription<Msg>
   | PublishedKaartLocatiesSubscription<Msg>
-  | TabelStateSubscription<Msg>
   | TekenenSubscription<Msg>
   | ForceProgressBarSubscription<Msg>
   | ViewinstellingenSubscription<Msg>
@@ -195,11 +194,6 @@ export interface LaatsteCacheRefreshSubscription<Msg> {
 export interface MijnLocatieStateChangeSubscription<Msg> {
   readonly type: "MijnLocatieStateChange";
   readonly wrapper: (stateChange: MijnLocatieStateChange) => Msg;
-}
-
-export interface TabelStateSubscription<Msg> {
-  readonly type: "TabelState";
-  readonly wrapper: (state: TabelStateChange) => Msg;
 }
 
 export interface BusySubscription<Msg> {
@@ -375,8 +369,4 @@ export function MijnLocatieStateChangeSubscription<Msg>(
   wrapper: (stateChange: MijnLocatieStateChange) => Msg
 ): MijnLocatieStateChangeSubscription<Msg> {
   return { type: "MijnLocatieStateChange", wrapper };
-}
-
-export function TabelStateSubscription<Msg>(wrapper: (stateChange: TabelStateChange) => Msg): TabelStateSubscription<Msg> {
-  return { type: "TabelState", wrapper };
 }

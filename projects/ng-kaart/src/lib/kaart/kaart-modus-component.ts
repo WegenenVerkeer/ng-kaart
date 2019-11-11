@@ -2,7 +2,7 @@ import { NgZone } from "@angular/core";
 import { identity } from "fp-ts/lib/function";
 import { none, some } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
-import { distinctUntilChanged, filter, map, mapTo, sample, shareReplay, skipUntil, tap } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, filter, map, mapTo, sample, share, shareReplay, skipUntil, tap } from "rxjs/operators";
 
 import { scan2 } from "../util";
 
@@ -37,26 +37,24 @@ export abstract class KaartModusComponent extends KaartChildComponentBase {
 
     this.wordtActief$ = this.isActief$.pipe(
       filter(identity),
-      mapTo(null)
+      mapTo(null),
+      share()
     );
     this.wordtInactief$ = this.isActief$.pipe(
       filter(actief => actief === false),
       mapTo(null),
-      skipUntil(this.wordtActief$) // kan maar inactief worden indien ooit actief
+      skipUntil(this.wordtActief$), // kan maar inactief worden indien ooit actief
+      share()
     );
 
     const internIsActief$ = this.isActief$.pipe(
       sample(rx.merge(this.zetActiefSubj, this.toggleActiefSubj)),
-      distinctUntilChanged()
+      debounceTime(10) // distinctUntilChanged is niet goed want mogelijk intern aan en extern af (of omgekeerd)
     );
 
     this.runInViewReady(
-      rx.merge(
-        // Deze mag weg wanneer de afgeleiden op de observable luisteren
-        this.isActief$.pipe(tap(isActief => (isActief ? this.onActivatie() : this.onDeactivatie()))),
-        // Laat de buitenwereld weten dat we (in)actief worden
-        internIsActief$.pipe(tap(isActief => (isActief ? this.publiceerActivatie() : this.publiceerDeactivatie())))
-      )
+      // Laat de buitenwereld weten dat we (in)actief worden
+      internIsActief$.pipe(tap(isActief => (isActief ? this.publiceerActivatie() : this.publiceerDeactivatie())))
     );
   }
 
@@ -70,48 +68,17 @@ export abstract class KaartModusComponent extends KaartChildComponentBase {
     return false;
   }
 
-  protected onActivatie() {}
-
-  protected onDeactivatie() {}
-
-  // isActief() {
-  //   return this.actief;
-  // }
-
   toggle() {
     this.toggleActiefSubj.next(null);
-    // if (this.actief) {
-    //   this.zetModeAf();
-    // } else {
-    //   this.zetModeAan();
-    // }
   }
 
   zetModeAf() {
     this.zetActiefSubj.next(false);
-    // if (this.actief) {
-    //   this.maakInactief();
-    //   this.publiceerDeactivatie();
-    // }
   }
 
   zetModeAan() {
     this.zetActiefSubj.next(true);
-    // if (!this.actief) {
-    //   this.publiceerActivatie();
-    //   this.maakActief();
-    // }
   }
-
-  // private maakActief() {
-  //   this.actief = true; // wees voorzichtig met het aanpassen van de volgorde hier
-  //   this.onActivatie();
-  // }
-
-  // private maakInactief() {
-  //   this.actief = false; // wees voorzichtig met het aanpassen van de volgorde hier
-  //   this.onDeactivatie();
-  // }
 
   private publiceerActivatie() {
     this.dispatch(prt.ZetActieveModusCmd(some(this.modus())));

@@ -185,8 +185,6 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
     return MultiMetenUiSelector;
   }
 
-  onDeactivatie() {}
-
   rechteLijn() {
     if (!this.inStateStraight) {
       this.inStateStraight = true;

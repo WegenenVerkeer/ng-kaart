@@ -1,14 +1,15 @@
-import { setoid } from "fp-ts";
+import { option } from "fp-ts";
 import * as array from "fp-ts/lib/Array";
+import { eqString } from "fp-ts/lib/Eq";
 import { Endomorphism, Function1, Function2, identity, not, pipe } from "fp-ts/lib/function";
 import * as fptsmap from "fp-ts/lib/Map";
-import { fromNullable, isNone, none, option, Option, some } from "fp-ts/lib/Option";
+import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
 import * as ord from "fp-ts/lib/Ord";
 import { setoidString } from "fp-ts/lib/Setoid";
 import * as validation from "fp-ts/lib/Validation";
 import { Lens } from "monocle-ts";
-import * as ol from "openlayers";
 import { olx } from "openlayers";
+import * as ol from "openlayers";
 import { Subscription } from "rxjs";
 import * as rx from "rxjs";
 import { bufferCount, debounceTime, distinctUntilChanged, map, switchMap, throttleTime } from "rxjs/operators";
@@ -27,7 +28,7 @@ import * as metaDataDb from "../util/indexeddb-tilecache-metadata";
 import * as maps from "../util/maps";
 import { forEach } from "../util/option";
 import * as serviceworker from "../util/serviceworker";
-import { updateBehaviorSubject } from "../util/subject-update";
+import { updateBehaviorSubject, updateBehaviorSubjectIfChanged } from "../util/subject-update";
 import { allOf, fromBoolean, fromOption, fromPredicate, success, validationChain as chain } from "../util/validation";
 import { zoekerMetNaam } from "../zoeker/zoeker";
 
@@ -35,12 +36,11 @@ import { CachedFeatureLookup } from "./cache/lookup";
 import { envParams } from "./kaart-config";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
-import { FeatureSelection } from "./kaart-protocol";
 import { MsgGen } from "./kaart-protocol-subscriptions";
 import { KaartWithInfo } from "./kaart-with-info";
 import { toOlLayer } from "./laag-converter";
 import { kaartLogger } from "./log";
-import { ModelChanger, ModelChanges, TabelStateChange } from "./model-changes";
+import { ModelChanger, ModelChanges } from "./model-changes";
 import { findClosest } from "./select-closest";
 import {
   AwvV0StyleSpec,
@@ -55,6 +55,8 @@ import {
 import * as ss from "./stijl-selector";
 import { GeenLaagstijlaanpassing, LaagstijlAanpassend } from "./stijleditor/state";
 import { getDefaultStyleSelector } from "./styles";
+import { EndDrawing } from "./tekenen/tekenen-model";
+import { OptiesOpUiElement } from "./ui-element-opties";
 
 ///////////////////////////////////
 // Hulpfuncties
@@ -322,7 +324,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function lagenInGroep(mdl: Model, groep: ke.Laaggroep): Array<ke.ToegevoegdeLaag> {
       const maybeTitels: Option<string[]> = fptsmap.lookup(setoidString)(groep, mdl.titelsOpGroep);
       const maybeLagen: Option<ke.ToegevoegdeLaag[]> = maybeTitels.chain(titels =>
-        array.array.traverse(option)(titels, titel => fptsmap.lookup(setoidString)(titel, mdl.toegevoegdeLagenOpTitel))
+        array.array.traverse(option.option)(titels, titel => fptsmap.lookup(setoidString)(titel, mdl.toegevoegdeLagenOpTitel))
       );
       return arrays.fromOption(maybeLagen);
     }
@@ -332,6 +334,9 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     function zendLagenInGroep(mdl: Model, groep: ke.Laaggroep): void {
       modelChanger.lagenOpGroepSubj[groep].next(
         array.sort(ordToegevoegdeLaag)(lagenInGroep(mdl, groep)) // en dus ook geldige titels
+      );
+      updateBehaviorSubjectIfChanged(modelChanger.tabelActiviteitSubj, eqString, current =>
+        hasVisibleFeatureLagen() ? (current === "Onbeschikbaar" ? "Dichtgeklapt" : current) : "Onbeschikbaar"
       );
     }
 
@@ -1335,7 +1340,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function zetUiElementOpties(cmdn: prt.ZetUiElementOpties): ModelWithResult<Msg> {
-      modelChanger.uiElementOptiesSubj.next({ naam: cmdn.naam, opties: cmdn.opties });
+      updateBehaviorSubject(
+        modelChanger.optiesOpUiElementSubj,
+        (cmdn.initOnly ? OptiesOpUiElement.init : OptiesOpUiElement.extend)(cmdn.opties)(cmdn.naam)
+      );
       return ModelWithResult(model);
     }
 
@@ -1584,22 +1592,57 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
-    function emitTabelStateChange(state: TabelStateChange): ModelWithResult<Msg> {
-      modelChanger.tabelStateSubj.next(state);
+    function zetGetekendeGeometry(cmnd: prt.ZetGetekendeGeometryCmd): ModelWithResult<Msg> {
+      modelChanger.getekendeGeometrySubj.next(cmnd.geometry);
       return ModelWithResult(model);
     }
 
-    function openTabel(): ModelWithResult<Msg> {
-      modelChanger.tabelStateSubj.next(TabelStateChange("Opengeklapt", true));
-      // Bij openen van het tabel paneel met deze 2 knoppen:
-      // Verdwijnen alle openstaande pop-up cards (bv kaart bevragen, meten,...)
-      modelChanger.laagstijlaanpassingStateSubj.next(GeenLaagstijlaanpassing);
-      modelChanger.transparantieAanpassingStateSubj.next(GeenTransparantieaanpassingBezig);
-      return deleteAlleBoodschappen();
-    }
+    const hasVisibleFeatureLagen = () =>
+      arrays.isNonEmpty(modelChanger.lagenOpGroepSubj["Voorgrond.Hoog"].getValue().filter(tlg => tlg.magGetoondWorden));
 
-    function zetGetekendeGeometry(cmnd: prt.ZetGetekendeGeometryCmd): ModelWithResult<Msg> {
-      modelChanger.getekendeGeometrySubj.next(cmnd.geometry);
+    function zetTabeltoestand(cmnd: prt.ZetTabeltoestandCmd): ModelWithResult<Msg> {
+      // We controleren niet of de FeatureTableInklapComponent wel aanwezig is.
+      switch (cmnd.toestand) {
+        case "Opengeklapt":
+          if (hasVisibleFeatureLagen()) {
+            if (modelChanger.tabelActiviteitSubj.getValue() !== "Opengeklapt") {
+              updateBehaviorSubject(modelChanger.tabelActiviteitSubj, () => "Opengeklapt");
+              modelChanger.collapseUIRequestSubj.next();
+              updateBehaviorSubject(
+                modelChanger.optiesOpUiElementSubj,
+                OptiesOpUiElement.extend({ identifyOnderdrukt: true, kaartBevragenOnderdrukt: false })("KaartInfoBoodschap")
+              );
+              modelChanger.actieveModusSubj.next(option.none);
+              modelChanger.tekenenOpsSubj.next(EndDrawing());
+              modelChanger.uiElementSelectieSubj.next({ naam: "MultiKaarttekenen", aan: false });
+              return deleteAlleBoodschappen();
+            }
+          }
+          break;
+        case "Dichtgeklapt":
+          if (hasVisibleFeatureLagen()) {
+            updateBehaviorSubjectIfChanged(modelChanger.tabelActiviteitSubj, eqString, () => "Dichtgeklapt");
+            // TODO terugzetten van bewaarde toestand
+            updateBehaviorSubject(
+              modelChanger.optiesOpUiElementSubj,
+              OptiesOpUiElement.extend({ identifyOnderdrukt: false, kaartBevragenOnderdrukt: false })("KaartInfoBoodschap")
+            );
+          }
+          break;
+        case "Sluimerend":
+          if (hasVisibleFeatureLagen()) {
+            updateBehaviorSubjectIfChanged(modelChanger.tabelActiviteitSubj, eqString, () => "Sluimered");
+            updateBehaviorSubject(
+              modelChanger.optiesOpUiElementSubj,
+              OptiesOpUiElement.extend({ identifyOnderdrukt: true, kaartBevragenOnderdrukt: true })("KaartInfoBoodschap")
+            );
+          }
+          break;
+        case "Onbeschikbaar":
+          // We laten toe om tabellen te disablen ook als er featurelagen aanwezig zijn
+          updateBehaviorSubject(modelChanger.tabelActiviteitSubj, () => "Onbeschikbaar");
+          break;
+      }
       return ModelWithResult(model);
     }
 
@@ -1787,13 +1830,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         );
       }
 
-      function subscribeToTableState(sub: prt.TabelStateSubscription<Msg>): ModelWithResult<Msg> {
-        return modelWithSubscriptionResult(
-          "TableState",
-          modelChanges.tabelState$.pipe(distinctUntilChanged()).subscribe(consumeMessage(sub))
-        );
-      }
-
       function subscribeToInError(sub: prt.InErrorSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult("InError", modelChanges.inError$.pipe(distinctUntilChanged()).subscribe(consumeMessage(sub)));
       }
@@ -1849,8 +1885,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return subscribeToLaatsteCacheRefresh(cmnd.subscription);
         case "MijnLocatieStateChange":
           return subscribeToMijnLocatieStateChange(cmnd.subscription);
-        case "TabelState":
-          return subscribeToTableState(cmnd.subscription);
         case "Busy":
           return subscribeToBusy(cmnd.subscription);
         case "ForceProgressBar":
@@ -2025,18 +2059,14 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return zetTransparantieVoorLaag(cmd);
         case "ZetZoomBereik":
           return zetZoomBereik(cmd);
-        case "TabelStateChange":
-          return emitTabelStateChange(cmd.state);
-        case "OpenTabel":
-          return openTabel();
-        case "SluitTabel":
-          return emitTabelStateChange(TabelStateChange("Dichtgeklapt", true));
         case "RegistreerError":
           return registreerError(cmd);
         case "ZetDataloadBusy":
           return ZetDataloadBusy(cmd);
         case "ZetForceProgressBar":
           return ZetForceProgressBar(cmd);
+        case "ZetTabeltoestand":
+          return zetTabeltoestand(cmd);
       }
     }
 

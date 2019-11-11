@@ -448,7 +448,7 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     ).subscribe(t => this.processZoekerAntwoord(t.fst, t.snd));
 
     // Klap dicht wanneer tabel opengeklapt wordt
-    this.bindToLifeCycle(this.kaartComponent.tabelGeopendDoorKnop$).subscribe(() => {
+    this.bindToLifeCycle(this.modelChanges.collapseUIRequest$).subscribe(() => {
       this.toonHelp = false;
       this.toonResultaat = false;
       this.actieveZoeker = "Basis";

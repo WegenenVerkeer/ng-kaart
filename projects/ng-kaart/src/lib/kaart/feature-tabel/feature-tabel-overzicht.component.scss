@@ -41,9 +41,11 @@ mat-tab-group {
   position: absolute;
   top: 0px;
   z-index: 3;
-  right: 6px;
-  width: 32px;
-  margin: 0 8px 8px 0;
+  right: 8px;
+  width: 88px;
+
+  display: flex;
+  flex-direction: row;
 
   &.hidden-menu {
     display: none;
@@ -55,20 +57,20 @@ mat-tab-group {
 }
 
 .selecteer-features {
-  position: absolute;
-  top: 0px;
-  z-index: 3;
-  right: 24px;
-  width: 32px;
-  margin: 0 8px 8px 0;
+  // position: absolute;
+  // top: 0px;
+  // z-index: 3;
+  // right: 24px;
+  // width: 32px;
+  // margin: 0 8px 8px 0;
 
-  > * {
-    width: 32px;
-    height: 32px;
-    line-height: 32px;
-  }
+  // > * {
+  //   width: 32px;
+  //   height: 32px;
+  //   line-height: 32px;
+  // }
 
-  .actief {
-    color: $awv-primary-3;
-  }
+  // .actief {
+  //   color: $awv-primary-3;
+  // }
 }

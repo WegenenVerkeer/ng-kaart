@@ -5,7 +5,7 @@ import { none } from "fp-ts/lib/Option";
 import { setoidString } from "fp-ts/lib/Setoid";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { distinctUntilChanged, filter, map, pairwise, switchMap, tap } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, mapTo, pairwise, switchMap, tap } from "rxjs/operators";
 
 import * as ss from "../../kaart/stijl-selector";
 import { Transparantie } from "../../transparantieeditor/transparantie";
@@ -22,6 +22,7 @@ export interface MarkeerKaartklikOpties {
   readonly markerStyle: ss.Stylish;
   readonly disabled: boolean;
   readonly includeFeatureClick: boolean;
+  readonly id: string;
 }
 
 const featureGen: Function2<ol.Coordinate, ss.Stylish, ol.Feature> = (location, style) => {
@@ -48,7 +49,8 @@ export const defaultMarkerStyle = new ol.style.Style({
 const defaultOpties: MarkeerKaartklikOpties = {
   markerStyle: defaultMarkerStyle,
   disabled: false,
-  includeFeatureClick: false
+  includeFeatureClick: false,
+  id: "default"
 };
 
 const markerLayerTitle = "markeerkaartkliklayer";
@@ -131,24 +133,20 @@ export class MarkeerKaartklikComponent extends KaartChildComponentBase {
       .merge(rx.combineLatest(opties$, otherActive$, (o, a) => o.disabled || a), identifyBoodschapGesloten$)
       .pipe(distinctUntilChanged());
 
-    const markerFeature$ = rx
-      .combineLatest(opties$, otherActive$, (a, b) => [a, b] as [MarkeerKaartklikOpties, boolean])
-      .pipe(
-        switchMap(([opties, otherActive]) =>
-          opties.disabled || otherActive
-            ? rx.EMPTY
-            : kaartKlik$.pipe(
-                filter(klik => !klik.coversFeature || opties.includeFeatureClick),
-                map(klik => featureGen(klik.coordinate, opties.markerStyle))
-              )
-        )
-      );
-
-    this.runInViewReady(
-      rx.merge(
-        markerFeature$.pipe(tap(feature => this.dispatch(vervangFeatures([feature])))),
-        wis$.pipe(tap(() => this.dispatch(vervangFeatures([]))))
+    const markerFeature$ = rx.combineLatest(opties$, otherActive$).pipe(
+      switchMap(([opties, otherActive]) =>
+        opties.disabled || otherActive
+          ? rx.EMPTY
+          : kaartKlik$.pipe(
+              filter(klik => !klik.coversFeature || opties.includeFeatureClick),
+              map(klik => featureGen(klik.coordinate, opties.markerStyle))
+            )
       )
+    );
+
+    this.dispatchCmdsInViewReady(
+      markerFeature$.pipe(map(feature => vervangFeatures([feature]))), //
+      wis$.pipe(mapTo(vervangFeatures([])))
     );
   }
 }

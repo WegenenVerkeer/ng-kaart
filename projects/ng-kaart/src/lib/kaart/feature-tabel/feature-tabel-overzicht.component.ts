@@ -138,9 +138,9 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
       distinctUntilChanged(array.getSetoid(setoid.setoidString).equals)
     );
 
-    const tabelVisible$ = this.modelChanges.tabelState$.pipe(
+    const tabelVisible$ = this.modelChanges.tabelActiviteit$.pipe(
       delay(200), // Omdat helemaal in het begin van de animatie het icoontje anders onder de kaart valt (wegens abs pos)
-      map(state => state.state === "Opengeklapt")
+      map(activiteit => activiteit === "Opengeklapt")
     );
 
     this.templateData$ = rx.combineLatest(laagTitles$, tabelVisible$).pipe(

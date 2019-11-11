@@ -2,7 +2,7 @@ import { Component, Injector, Input, OnChanges, OnDestroy, OnInit, SimpleChanges
 import { Predicate } from "fp-ts/lib/function";
 
 import { VerwijderUiElement, VoegUiElementToe, ZetUiElementOpties } from "../../kaart/kaart-protocol-commands";
-import { DefaultOpties, LagenUiOpties, LagenUiSelector } from "../../lagenkiezer/lagenkiezer.component";
+import { defaultOpties, LagenUiOpties, LagenUiSelector } from "../../lagenkiezer/lagenkiezer.component";
 import { ClassicBaseComponent } from "../classic-base.component";
 import * as val from "../webcomponent-support/params";
 
@@ -20,15 +20,15 @@ export class ClassicLagenkiezerComponent extends ClassicBaseComponent implements
     super(injector);
   }
 
-  private _headerTitel: string = DefaultOpties.headerTitel;
-  private _initieelDichtgeklapt: boolean = DefaultOpties.initieelDichtgeklapt;
-  private _toonLegende: boolean = DefaultOpties.toonLegende;
-  private _toonFilters: boolean = DefaultOpties.toonFilters;
-  private _verwijderbareLagen: boolean = DefaultOpties.verwijderbareLagen;
-  private _verplaatsbareLagen: boolean = DefaultOpties.verplaatsbareLagen;
-  private _stijlbareVectorlagen: Predicate<string> = DefaultOpties.stijlbareVectorlagen;
-  private _filterbareLagen: boolean = DefaultOpties.filterbareLagen;
-  private _transparantieaanpasbareLagen: Predicate<string> = DefaultOpties.transparantieaanpasbareLagen;
+  private _headerTitel: string = defaultOpties.headerTitel;
+  private _initieelDichtgeklapt: boolean = defaultOpties.initieelDichtgeklapt;
+  private _toonLegende: boolean = defaultOpties.toonLegende;
+  private _toonFilters: boolean = defaultOpties.toonFilters;
+  private _verwijderbareLagen: boolean = defaultOpties.verwijderbareLagen;
+  private _verplaatsbareLagen: boolean = defaultOpties.verplaatsbareLagen;
+  private _stijlbareVectorlagen: Predicate<string> = defaultOpties.stijlbareVectorlagen;
+  private _filterbareLagen: boolean = defaultOpties.filterbareLagen;
+  private _transparantieaanpasbareLagen: Predicate<string> = defaultOpties.transparantieaanpasbareLagen;
 
   public get headerTitel(): string {
     return this._headerTitel;

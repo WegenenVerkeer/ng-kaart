@@ -1,6 +1,8 @@
 import { NgZone, OnDestroy, OnInit } from "@angular/core";
 import * as rx from "rxjs";
-import { filter, map, scan, shareReplay, startWith } from "rxjs/operators";
+import { distinctUntilChanged, share, shareReplay, tap } from "rxjs/operators";
+
+import { collectOption } from "../util/operators";
 
 import { KaartComponentBase } from "./kaart-component-base";
 import { KaartInternalMsg, KaartInternalSubMsg } from "./kaart-internal-messages";
@@ -10,6 +12,7 @@ import { KaartComponent } from "./kaart.component";
 import { kaartLogger } from "./log";
 import { ModelChanges } from "./model-changes";
 import { internalMsgSubscriptionCmdOperator } from "./subscription-helper";
+import { OptiesOpUiElement } from "./ui-element-opties";
 
 /**
  * Voor classes die view children zijn van kaart.component
@@ -43,19 +46,22 @@ export abstract class KaartChildComponentBase extends KaartComponentBase impleme
   }
 
   protected accumulatedOpties$<A extends object>(selectorName: string, init: A): rx.Observable<A> {
-    // Uit de element optie stream hoeven niet enkel objecten te komen die alle properties van het optietype bevatten.
-    // De properties die niet gezet zijn, worden overgenomen van de vorige keer dat ze gezet zijn.
-    return this.modelChanges.uiElementOpties$.pipe(
-      filter(optie => optie.naam === selectorName),
-      map(o => o.opties as A),
-      scan((oudeOpties, nieuweOpties) => Object.assign({}, oudeOpties, nieuweOpties), init),
-      startWith(init),
-      shareReplay(1)
+    // Dispatch zodat elke component de begintoestand kan kennen ipv enkel deze component.
+    this.dispatch(prt.InitUiElementOpties(selectorName, init));
+    // Volg de globale toestand
+    return this.modelChanges.optiesOpUiElement$.pipe(
+      collectOption(OptiesOpUiElement.get<A>(selectorName)),
+      distinctUntilChanged(), // object identity kan theoretisch te veel opties doorlaten, maar niet te weinig gezien immutable opties
+      shareReplay(1) // De bron is wel een BehaviorSubject, maar ook de rest van de ketting moet replayable zijn
     );
   }
 
-  protected dispatch(cmd: prt.Command<KaartInternalMsg>) {
+  protected dispatch(cmd: prt.Command<KaartInternalMsg> | prt.Command<prt.KaartMsg>) {
     this.kaartComponent.internalCmdDispatcher.dispatch(cmd);
+  }
+
+  protected dispatchCmdsInViewReady(...cmds: (rx.Observable<prt.Command<KaartInternalMsg | prt.KaartMsg>>)[]) {
+    this.runInViewReady(rx.merge(...cmds).pipe(tap(cmd => this.dispatch(cmd))));
   }
 
   protected get internalMessage$(): rx.Observable<KaartInternalSubMsg> {

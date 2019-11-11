@@ -5,7 +5,6 @@ import { Tekenresultaat, TekenSettings } from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import { kaartLogger } from "./log";
-import { TabelStateChange } from "./model-changes";
 
 // Dit zijn de types die als payload van KaartInternalMsg gebruikt kunnen worden.
 export type KaartInternalSubMsg =
@@ -16,7 +15,6 @@ export type KaartInternalSubMsg =
   | KaartClickMsg
   | MijnLocatieZoomdoelGezetMsg
   | SubscribedMsg
-  | TabelStateMsg
   | TekenInfoboodschapGeslotenMsg
   | TekenMsg
   | VerwijderTekenFeatureMsg
@@ -75,11 +73,6 @@ export interface InfoBoodschappenMsg {
   readonly infoBoodschappen: Map<string, InfoBoodschap>;
 }
 
-export interface TabelStateMsg {
-  readonly type: "TabelState";
-  readonly state: TabelStateChange;
-}
-
 export interface VerwijderTekenFeatureMsg {
   readonly type: "VerwijderTekenFeature";
   readonly featureId: string | number;
@@ -115,12 +108,6 @@ export const infoBoodschappenMsgGen = (infoBoodschappen: Map<string, InfoBoodsch
 
 function InfoBoodschappenMsg(infoBoodschappen: Map<string, InfoBoodschap>): InfoBoodschappenMsg {
   return { type: "InfoBoodschappen", infoBoodschappen: infoBoodschappen };
-}
-
-export const tabelStateMsgGen = (state: TabelStateChange) => KaartInternalMsg(some(TabelStateMsg(state)));
-
-function TabelStateMsg(state: TabelStateChange): TabelStateMsg {
-  return { type: "TabelState", state };
 }
 
 export const kaartClickWrapper = (clickCoordinaat: ol.Coordinate) => KaartInternalMsg(some(KaartClickMsg(clickCoordinaat)));

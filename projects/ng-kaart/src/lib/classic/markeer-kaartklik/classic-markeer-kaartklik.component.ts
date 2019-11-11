@@ -27,7 +27,8 @@ export class ClassicMarkeerKaartklikComponent extends ClassicUIElementSelectorCo
     return {
       markerStyle: this._markerStyle,
       disabled: this._disabled,
-      includeFeatureClick: this._includeFeatureClick
+      includeFeatureClick: this._includeFeatureClick,
+      id: "classic_opties"
     };
   }
 

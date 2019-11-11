@@ -14,6 +14,7 @@ import {
   filter,
   map,
   pairwise,
+  sample,
   scan,
   share,
   startWith,
@@ -38,14 +39,18 @@ import {
   stringMapOptional,
   StringMapped
 } from "../../util/lenses";
-import { subSpy } from "../../util/operators";
 import { forEach } from "../../util/option";
+import {
+  defaultOpties as infoboodschapDefaultOpties,
+  KaartInfoBoodschapUiSelector
+} from "../info-boodschappen/kaart-info-boodschappen.component";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
 import { Command, DrawOpsCmd, VerwijderLaagCmd } from "../kaart-protocol-commands";
 import { KaartComponent } from "../kaart.component";
+import { MarkeerKaartklikUiSelector } from "../markeer-kaartklik/markeer-kaartklik.component";
 import * as ss from "../stijl-selector";
 
 import { RouteEvent, RouteEventId } from "./route.msg";
@@ -213,7 +218,7 @@ function drawStateTransformer(
   // features die de versie ophogen moeten opvangen.
   const handleFeatureMove: Consumer1<ol.events.Event> = () => dispatchDrawOps(MovePoint());
 
-  const handleDoubleClick: Consumer1<ol.events.Event> = evt => dispatchCmd(DrawOpsCmd(StopDrawing()));
+  const handleDoubleClick: Consumer1<ol.events.Event> = () => dispatchCmd(DrawOpsCmd(StopDrawing()));
 
   const handleSelect: Consumer1<ol.events.Event> = evt => {
     const selectEvent = evt as ol.interaction.Select.Event;
@@ -606,7 +611,7 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
           prev.value.waypoint.id === curr.value.waypoint.id
         );
       }),
-      tap(([prev, curr]) => {
+      tap(([prev]) => {
         const addWayPoint = prev.value;
         this.internalDrawOpsSubj.next(AddPoint(addWayPoint.waypoint.location));
       })
@@ -668,5 +673,16 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
         doubleClick$
       )
     );
+
+    const onderdrukBoodschapOpties$ = this.accumulatedOpties$(KaartInfoBoodschapUiSelector, infoboodschapDefaultOpties).pipe(
+      sample(this.initialising$),
+      tap(() => {
+        this.dispatch(prt.ZetUiElementOpties(KaartInfoBoodschapUiSelector, { identifyOnderdrukt: true, kaartBevragenOnderdrukt: true }));
+        this.dispatch(prt.ZetUiElementOpties(MarkeerKaartklikUiSelector, { disabled: true }));
+      }),
+      switchMap(opties => this.destroying$.pipe(tap(() => this.dispatch(prt.ZetUiElementOpties(KaartInfoBoodschapUiSelector, opties)))))
+    );
+
+    onderdrukBoodschapOpties$.subscribe();
   }
 }

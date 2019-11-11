@@ -5,7 +5,6 @@ import * as rx from "rxjs";
 import { map, mapTo, share, switchMap, tap } from "rxjs/operators";
 import { isNumber } from "util";
 
-import { subSpy } from "../../util";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { KaartComponent } from "../kaart.component";
 
@@ -42,29 +41,27 @@ export class FeatureTabelPagerComponent extends KaartChildComponentBase {
 
     const laag$ = laagData.laag$;
 
-    this.pageData$ = subSpy("***pageData$")(
-      laag$.pipe(
-        map(laag =>
-          pipe(
-            LaagModel.pageNumberFold.headOption(laag),
-            option.chain(currentPageNumber =>
-              pipe(
-                LaagModel.lastPageNumberFold.headOption(laag),
-                option.map(lastPageNumber => ({
-                  currentPageNumber: Page.getterPageNumber.get(currentPageNumber),
-                  lastPageNumber: Page.getterPageNumber.get(lastPageNumber),
-                  isFirstPage: Page.isFirst(currentPageNumber),
-                  isLastPage: Page.isTop(lastPageNumber)(currentPageNumber),
-                  doesNotHaveMultiplePages: Page.ordPageNumber.equals(Page.first, lastPageNumber)
-                }))
-              )
-            ),
-            option.toUndefined
-          )
-        ),
-        tap(() => this.cdr.markForCheck()),
-        share()
-      )
+    this.pageData$ = laag$.pipe(
+      map(laag =>
+        pipe(
+          LaagModel.pageNumberFold.headOption(laag),
+          option.chain(currentPageNumber =>
+            pipe(
+              LaagModel.lastPageNumberFold.headOption(laag),
+              option.map(lastPageNumber => ({
+                currentPageNumber: Page.getterPageNumber.get(currentPageNumber),
+                lastPageNumber: Page.getterPageNumber.get(lastPageNumber),
+                isFirstPage: Page.isFirst(currentPageNumber),
+                isLastPage: Page.isTop(lastPageNumber)(currentPageNumber),
+                doesNotHaveMultiplePages: Page.ordPageNumber.equals(Page.first, lastPageNumber)
+              }))
+            )
+          ),
+          option.toUndefined
+        )
+      ),
+      tap(() => this.cdr.markForCheck()),
+      share()
     );
 
     const actions$ = rx.merge(

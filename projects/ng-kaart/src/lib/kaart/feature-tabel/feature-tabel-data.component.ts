@@ -11,8 +11,6 @@ import * as arrays from "../../util/arrays";
 import { join } from "../../util/string";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as prt from "../kaart-protocol";
-import { DeselecteerFeatureCmd, SelecteerExtraFeaturesCmd, VeranderExtentCmd } from "../kaart-protocol-commands";
-import { FeatureSelection, GeselecteerdeFeatures } from "../kaart-protocol-subscriptions";
 import { KaartComponent } from "../kaart.component";
 
 import { Page } from "./data-provider";
@@ -112,7 +110,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
 
     const numGeselecteerdeFeatures$ = this.inViewReady(() =>
       this.modelChanges.geselecteerdeFeatures$.pipe(
-        map(FeatureSelection.selectedFeaturesInLaagSize(this.laagTitel)),
+        map(prt.FeatureSelection.selectedFeaturesInLaagSize(this.laagTitel)),
         startWith(0)
       )
     );
@@ -197,10 +195,10 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
       zoomToSelection$.pipe(
         withLatestFrom(this.modelChanges.geselecteerdeFeatures$, olMap$, this.laag$),
         tap(([_, selection, map, laagModel]) => {
-          const laagSelection = FeatureSelection.getGeselecteerdeFeaturesInLaag(this.laagTitel)(selection);
+          const laagSelection = prt.FeatureSelection.getGeselecteerdeFeaturesInLaag(this.laagTitel)(selection);
           const extent = laagSelection[0].getGeometry().getExtent();
           laagSelection.forEach(feature => ol.extent.extend(extent, feature.getGeometry().getExtent()));
-          this.dispatch(VeranderExtentCmd(extent));
+          this.dispatch(prt.VeranderExtentCmd(extent));
 
           if (neededZoom(map, extent) < laagModel.minZoom || neededZoom(map, extent) > laagModel.maxZoom) {
             this.dispatch(
@@ -219,9 +217,9 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
     // kan dus veranderen als de rijen veranderen, of de selection verandert
     this.runInViewReady(
       rx.combineLatest([this.rows$, this.modelChanges.geselecteerdeFeatures$]).pipe(
-        tap(([rows, selection]: [Row[], GeselecteerdeFeatures]) => {
+        tap(([rows, selection]: [Row[], prt.GeselecteerdeFeatures]) => {
           rows.forEach(r => {
-            r.selected = FeatureSelection.isSelected(selection)(r.feature);
+            r.selected = prt.FeatureSelection.isSelected(selection)(r.feature);
           });
         })
       )
@@ -232,8 +230,8 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
       eraseSelection$.pipe(
         withLatestFrom(this.modelChanges.geselecteerdeFeatures$),
         tap(([_, geselecteerdeFeatures]) => {
-          const selectedIds = FeatureSelection.getGeselecteerdeFeatureIdsInLaag(this.laagTitel)(geselecteerdeFeatures);
-          this.dispatch(DeselecteerFeatureCmd(selectedIds));
+          const selectedIds = prt.FeatureSelection.getGeselecteerdeFeatureIdsInLaag(this.laagTitel)(geselecteerdeFeatures);
+          this.dispatch(prt.DeselecteerFeatureCmd(selectedIds));
         })
       )
     );
@@ -243,9 +241,9 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
       selectRow$.pipe(
         tap((rowSelection: RowSelection) => {
           if (rowSelection.selected) {
-            this.dispatch(SelecteerExtraFeaturesCmd([rowSelection.row.feature.feature]));
+            this.dispatch(prt.SelecteerExtraFeaturesCmd([rowSelection.row.feature.feature]));
           } else {
-            this.dispatch(DeselecteerFeatureCmd([rowSelection.row.feature.id]));
+            this.dispatch(prt.DeselecteerFeatureCmd([rowSelection.row.feature.id]));
           }
         })
       )
@@ -257,10 +255,10 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
         withLatestFrom(this.rows$),
         tap(([selected, rows]: [boolean, Row[]]) => {
           if (selected) {
-            this.dispatch(SelecteerExtraFeaturesCmd(rows.map(row => row.feature.feature)));
+            this.dispatch(prt.SelecteerExtraFeaturesCmd(rows.map(row => row.feature.feature)));
           } else {
             const ids = rows.map(row => row.feature.id);
-            this.dispatch(DeselecteerFeatureCmd(ids));
+            this.dispatch(prt.DeselecteerFeatureCmd(ids));
           }
         })
       )
@@ -272,7 +270,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
         withLatestFrom(olMap$, this.laag$),
         tap(([row, map, laagModel]) => {
           const extent = row.feature.feature.getGeometry().getExtent();
-          this.dispatch(VeranderExtentCmd(extent));
+          this.dispatch(prt.VeranderExtentCmd(extent));
 
           if (neededZoom(map, extent) < laagModel.minZoom || neededZoom(map, extent) > laagModel.maxZoom) {
             this.dispatch(prt.ToonMeldingCmd(["Feature is niet zichtbaar op huidig zoom niveau"]));

@@ -29,10 +29,6 @@ export class KaartVoorwaardenComponent extends KaartChildComponentBase {
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
-    this.voorwaardenOpties$ = this.modelChanges.uiElementOpties$.pipe(
-      filter(optie => optie.naam === VoorwaardenSelector),
-      map(o => o.opties as VoorwaardenOpties),
-      startWith(defaultOpties)
-    );
+    this.voorwaardenOpties$ = this.accumulatedOpties$(VoorwaardenSelector, defaultOpties);
   }
 }

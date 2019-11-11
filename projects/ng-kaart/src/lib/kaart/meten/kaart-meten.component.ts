@@ -2,7 +2,7 @@ import { Component, EventEmitter, NgZone, OnDestroy, OnInit, Output } from "@ang
 import { none, some } from "fp-ts/lib/Option";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { filter, map, startWith, takeUntil, tap } from "rxjs/operators";
+import { map, takeUntil, tap } from "rxjs/operators";
 
 import { dimensieBeschrijving } from "../../util/geometries";
 import * as maps from "../../util/maps";
@@ -23,6 +23,11 @@ export interface MetenOpties {
   toonInfoBoodschap: boolean;
   meerdereGeometrieen: boolean;
 }
+
+const defaultOpties: MetenOpties = {
+  toonInfoBoodschap: true,
+  meerdereGeometrieen: true
+};
 
 /**
  * Deze component is hier enkel nog voor de Elisa use case van het tekenen van geometrieën.
@@ -61,16 +66,7 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
 
   ngOnInit(): void {
     super.ngOnInit();
-    this.bindToLifeCycle(
-      this.modelChanges.uiElementOpties$.pipe(
-        filter(optie => optie.naam === MetenUiSelector),
-        map(o => o.opties),
-        startWith({
-          toonInfoBoodschap: true,
-          meerdereGeometrieen: true
-        })
-      )
-    ).subscribe(opties => {
+    this.bindToLifeCycle(this.accumulatedOpties$(MetenUiSelector, defaultOpties)).subscribe(opties => {
       this.toonInfoBoodschap = opties.toonInfoBoodschap;
       this.meerdereGeometrieen = opties.meerdereGeometrieen;
     });

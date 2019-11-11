@@ -3,9 +3,8 @@ import { ChangeDetectionStrategy, Component, NgZone } from "@angular/core";
 import * as array from "fp-ts/lib/Array";
 import { and, not } from "fp-ts/lib/function";
 import * as rx from "rxjs";
-import { debounceTime, filter, map, startWith, withLatestFrom } from "rxjs/operators";
+import { debounceTime, map, withLatestFrom } from "rxjs/operators";
 
-import * as maps from "../../util/maps";
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { ofType } from "../../util/operators";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
@@ -16,12 +15,14 @@ import { KaartComponent } from "../kaart.component";
 
 export interface KaartInfoBoodschapOpties {
   readonly kaartBevragenOnderdrukt: boolean;
+  readonly identifyOnderdrukt: boolean;
 }
 
 export const KaartInfoBoodschapUiSelector = "KaartInfoBoodschap";
 
-const defaultOpties: KaartInfoBoodschapOpties = {
-  kaartBevragenOnderdrukt: false
+export const defaultOpties: KaartInfoBoodschapOpties = {
+  kaartBevragenOnderdrukt: false,
+  identifyOnderdrukt: false
 };
 
 @Component({
@@ -43,19 +44,16 @@ export class KaartInfoBoodschappenComponent extends KaartChildComponentBase {
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
 
-    const kaartBevragenOnderdrukt$: rx.Observable<boolean> = this.modelChanges.uiElementOpties$.pipe(
-      filter(opties => opties.naam === KaartInfoBoodschapUiSelector),
-      map(opties => opties.opties as KaartInfoBoodschapOpties),
-      startWith(defaultOpties),
-      map(kibo => kibo.kaartBevragenOnderdrukt)
-    );
+    const opties$: rx.Observable<KaartInfoBoodschapOpties> = this.accumulatedOpties$(KaartInfoBoodschapUiSelector, defaultOpties);
 
-    const identifyOnderdrukt$: rx.Observable<boolean> = this.modelChanges.tabelState$.pipe(map(change => change.state === "Opengeklapt"));
+    const kaartBevragenOnderdrukt$: rx.Observable<boolean> = opties$.pipe(map(kibo => kibo.kaartBevragenOnderdrukt));
+
+    const identifyOnderdrukt$: rx.Observable<boolean> = opties$.pipe(map(kibo => kibo.identifyOnderdrukt));
 
     const infoBoodschappen$ = this.internalMessage$.pipe(
       ofType<InfoBoodschappenMsg>("InfoBoodschappen"), //
       observeOnAngular(this.zone),
-      map(msg => Array.from(maps.reverse(msg.infoBoodschappen).values())), // laatste boodschap bovenaan
+      map(msg => Array.from(msg.infoBoodschappen.values()).reverse()), // laatste boodschap bovenaan
       debounceTime(250) // omdat we requests in parallel afvuren, komen er vaak updates dicht tegen elkaar
     );
 
