@@ -57,6 +57,7 @@
 
 .drag-knop {
   touch-action: none;
+  cursor: ns-resize;
   &:hover {
     color: $awv-primary-2;
   }

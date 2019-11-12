@@ -60,7 +60,7 @@ $footer-height: 48px;
         height: 32px;
         padding: 8px;
 
-        > * {
+        > div, > span {
           overflow: hidden;
           text-overflow: ellipsis;
           white-space: nowrap;
@@ -98,6 +98,7 @@ $footer-height: 48px;
       &.geselecteerd {
         td {
           background-color: rgb(245, 245, 245);
+
           &:first-child {
             cursor: pointer; // Om zoom aan te duiden
             background-color: rgb(245, 245, 245); // mag niet transparant zijn
@@ -137,9 +138,11 @@ $footer-height: 48px;
       th, td {
         font-size: 14px;
       }
+
       th {
         height: 48px;
       }
+
       td {
         height: 40px;
       }
