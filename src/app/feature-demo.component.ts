@@ -905,16 +905,7 @@ export class FeatureDemoComponent {
   }
 
   featuresGeselecteerd(event: ol.Feature[], selectieKaart: KaartClassicComponent) {
-    // verwijder de bestaande info boodschappen voor features die niet meer geselecteerd zijn
-    const nietLangerGeselecteerdeFeatures: ol.Feature[] = array.difference(Feature.setoidFeaturePropertyId)(
-      this.geselecteerdeFeatures,
-      event
-    );
-    array.mapOption(nietLangerGeselecteerdeFeatures, Feature.propertyId).forEach(id => selectieKaart.verbergIdentifyInformatie(id));
-
-    // voeg de nieuwe toe
-    this.geselecteerdeFeatures = getUnderlyingFeatures(event);
-    this.geselecteerdeFeatures.forEach(feature => selectieKaart.toonIdentifyInformatie(feature));
+    console.log("Features geselecteerd", event);
   }
 
   busy(event: any) {

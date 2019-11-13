@@ -3,6 +3,7 @@ import { Predicate } from "fp-ts/lib/function";
 
 import { VerwijderUiElement, VoegUiElementToe, ZetUiElementOpties } from "../../kaart/kaart-protocol-commands";
 import { defaultOpties, LagenUiOpties, LagenUiSelector } from "../../lagenkiezer/lagenkiezer.component";
+import { asap } from "../../util/asap";
 import { ClassicBaseComponent } from "../classic-base.component";
 import * as val from "../webcomponent-support/params";
 

@@ -57,6 +57,7 @@ export class KaartComponent extends KaartComponentBase {
   readonly kaartModel$: rx.Observable<KaartWithInfo> = rx.EMPTY;
   private readonly resizeCommand$: rx.Observable<prt.VeranderViewportCmd>;
   readonly containerResize$: rx.Observable<ol.Size>;
+  tabelGeopend$: rx.Observable<boolean>;
 
   @ViewChild("map")
   mapElement: ElementRef;
@@ -123,6 +124,7 @@ export class KaartComponent extends KaartComponentBase {
       map(() => this.initieelModel()),
       tap(model => {
         this.innerModelChanges = modelChanges(model, this.modelChanger);
+        this.tabelGeopend$ = this.modelChanges.tabelActiviteit$.pipe(map(state => state === "Opengeklapt"));
         this.innerAanwezigeElementen$ = this.modelChanges.uiElementSelectie$.pipe(
           scan(
             (st: Set<string>, selectie: UiElementSelectie) => (selectie.aan ? st.add(selectie.naam) : sets.removeSimple(st)(selectie.naam)),

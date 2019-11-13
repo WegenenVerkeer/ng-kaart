@@ -82,6 +82,9 @@ const vervangFeatures: Function1<ol.Feature[], prt.VervangFeaturesCmd<KaartInter
   wrapper: kaartLogOnlyWrapper
 });
 
+export const ZetMaarkeerKaartklikOptiesCmd = (opties: Partial<MarkeerKaartklikOpties>): prt.ZetUiElementOpties =>
+  prt.ZetUiElementOpties(MarkeerKaartklikUiSelector, opties);
+
 @Component({
   selector: "awv-markeer-kaartklik",
   template: ""
@@ -112,7 +115,8 @@ export class MarkeerKaartklikComponent extends KaartChildComponentBase {
       })
     );
 
-    const opties$ = this.accumulatedOpties$(MarkeerKaartklikUiSelector, defaultOpties);
+    this.dispatch(prt.InitUiElementOpties(MarkeerKaartklikUiSelector, defaultOpties));
+    const opties$ = this.accumulatedOpties$<MarkeerKaartklikOpties>(MarkeerKaartklikUiSelector);
     const kaartKlik$ = this.modelChanges.kaartKlikLocatie$;
     const otherActive$ = this.modelChanges.actieveModus$.pipe(map(maybeModus => maybeModus.isSome()));
 

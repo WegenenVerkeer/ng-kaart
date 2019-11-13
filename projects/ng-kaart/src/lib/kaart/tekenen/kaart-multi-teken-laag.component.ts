@@ -25,6 +25,7 @@ import {
   withLatestFrom
 } from "rxjs/operators";
 
+import { Coordinate } from "../../coordinaten";
 import * as clr from "../../stijl/colour";
 import { disc, solidLine } from "../../stijl/common-shapes";
 import { Transparantie } from "../../transparantieeditor/transparantie";
@@ -40,17 +41,13 @@ import {
   StringMapped
 } from "../../util/lenses";
 import { forEach } from "../../util/option";
-import {
-  defaultOpties as infoboodschapDefaultOpties,
-  KaartInfoBoodschapUiSelector
-} from "../info-boodschappen/kaart-info-boodschappen.component";
+import { BevraagKaartUiSelector, ZetKaartBevragenOptiesCmd } from "../kaart-bevragen/kaart-bevragen-opties";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
 import { Command, DrawOpsCmd, VerwijderLaagCmd } from "../kaart-protocol-commands";
 import { KaartComponent } from "../kaart.component";
-import { MarkeerKaartklikUiSelector } from "../markeer-kaartklik/markeer-kaartklik.component";
 import * as ss from "../stijl-selector";
 
 import { RouteEvent, RouteEventId } from "./route.msg";
@@ -598,8 +595,10 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
       share()
     );
 
-    // We willen vlugge opeenvolgingen van add en remove interpreteren als een trigger om te stoppen met tekenen, maar toch
-    // in de tekenmode blijven.
+    // We willen vlugge opeenvolgingen van add en remove interpreteren als een
+    // trigger om te stoppen met tekenen, maar toch in de tekenmode blijven. We
+    // kunnen op dit niveau niet gebruik maken van de OL double click event. Die
+    // interfereert bovendien met de andere event handlers.
     const doubleClick$ = waypointObsSubj.pipe(
       timeInterval(),
       pairwise(),
@@ -608,7 +607,8 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
           curr.interval < 500 &&
           prev.value.type === "AddWaypoint" &&
           curr.value.type === "RemoveWaypoint" &&
-          prev.value.waypoint.id === curr.value.waypoint.id
+          prev.value.waypoint.id === curr.value.waypoint.id &&
+          Coordinate.equal(prev.value.waypoint.location, curr.value.waypoint.location)
         );
       }),
       tap(([prev]) => {
@@ -674,13 +674,14 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
       )
     );
 
-    const onderdrukBoodschapOpties$ = this.accumulatedOpties$(KaartInfoBoodschapUiSelector, infoboodschapDefaultOpties).pipe(
+    // TODO werkt selector weg
+    const onderdrukBoodschapOpties$ = this.accumulatedOpties$(BevraagKaartUiSelector).pipe(
       sample(this.initialising$),
       tap(() => {
-        this.dispatch(prt.ZetUiElementOpties(KaartInfoBoodschapUiSelector, { identifyOnderdrukt: true, kaartBevragenOnderdrukt: true }));
-        this.dispatch(prt.ZetUiElementOpties(MarkeerKaartklikUiSelector, { disabled: true }));
+        this.dispatch(ZetKaartBevragenOptiesCmd({ infoServiceOnderdrukt: true, kaartBevragenOnderdrukt: true }));
+        // this.dispatch(ZetMaarkeerKaartklikOptiesCmd({ disabled: true }));
       }),
-      switchMap(opties => this.destroying$.pipe(tap(() => this.dispatch(prt.ZetUiElementOpties(KaartInfoBoodschapUiSelector, opties)))))
+      switchMap(opties => this.destroying$.pipe(tap(() => this.dispatch(ZetKaartBevragenOptiesCmd(opties)))))
     );
 
     onderdrukBoodschapOpties$.subscribe();

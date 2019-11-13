@@ -1,6 +1,5 @@
 import { Component, Injector, Input, ViewEncapsulation } from "@angular/core";
 import { fromNullable, none, Option } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
 
 import * as ke from "../../kaart/kaart-elementen";
 import * as ss from "../../kaart/stijl-selector";

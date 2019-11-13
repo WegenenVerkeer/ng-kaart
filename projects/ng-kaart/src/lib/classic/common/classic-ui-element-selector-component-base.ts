@@ -12,6 +12,12 @@ export abstract class ClassicUIElementSelectorComponentBase extends ClassicBaseC
 
   ngOnInit(): void {
     super.ngOnInit();
+    if (!this.alToegevoegd) {
+      this.kaart.dispatch(prt.VoegUiElementToe(this.uiSelector));
+      this.alToegevoegd = true;
+    } else {
+      console.error("****Tiens", this.uiSelector);
+    }
     this.zetOpties();
   }
 
@@ -20,19 +26,15 @@ export abstract class ClassicUIElementSelectorComponentBase extends ClassicBaseC
     this.kaart.dispatch(prt.VerwijderUiElement(this.uiSelector));
   }
 
-  ngOnChanges(changes: SimpleChanges) {
+  ngOnChanges(_changes: SimpleChanges) {
     this.zetOpties();
   }
 
   private zetOpties() {
-    if (!this.alToegevoegd) {
-      this.kaart.dispatch(prt.VoegUiElementToe(this.uiSelector));
-      this.alToegevoegd = true;
-    }
     this.kaart.dispatch(prt.ZetUiElementOpties(this.uiSelector, this.opties()));
   }
 
-  protected opties(): any {
+  protected opties(): object {
     return {};
   }
 }

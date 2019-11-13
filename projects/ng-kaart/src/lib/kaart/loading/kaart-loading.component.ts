@@ -63,7 +63,8 @@ export class KaartLoadingComponent extends KaartChildComponentBase {
     );
 
     const defaultOpties = { defaultProgressBar: true };
-    const opties$ = this.accumulatedOpties$(KaartLoadingUISelector, defaultOpties);
+    this.dispatch(prt.InitUiElementOpties(KaartLoadingUISelector, defaultOpties));
+    const opties$ = this.accumulatedOpties$<{ readonly defaultProgressBar: boolean }>(KaartLoadingUISelector);
     this.enableProgressBar = opties$.pipe(map(opties => opties.defaultProgressBar));
 
     // Als het laatste event voor een laag LoadStart of PartReceived is, is de laag nog bezig met laden.

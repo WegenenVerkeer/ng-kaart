@@ -140,8 +140,9 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
       map(not(array.isEmpty)),
       shareReplay(1)
     );
-    this.opties$ = this.accumulatedOpties$(LagenUiSelector, defaultOpties).pipe(shareReplay(1));
-    this.opties$ = this.accumulatedOpties$(LagenUiSelector, defaultOpties).pipe();
+    // this.opties$ = this.accumulatedOpties$(LagenUiSelector, defaultOpties).pipe(shareReplay(1));
+    this.dispatch(prt.InitUiElementOpties(LagenUiSelector, defaultOpties));
+    this.opties$ = this.accumulatedOpties$<LagenUiOpties>(LagenUiSelector).pipe();
 
     this.tabelState$ = this.modelChanges.tabelActiviteit$;
 

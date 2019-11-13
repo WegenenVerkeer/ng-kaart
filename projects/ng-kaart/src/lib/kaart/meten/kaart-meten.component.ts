@@ -66,7 +66,7 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
 
   ngOnInit(): void {
     super.ngOnInit();
-    this.bindToLifeCycle(this.accumulatedOpties$(MetenUiSelector, defaultOpties)).subscribe(opties => {
+    this.bindToLifeCycle(this.modusOpties$(defaultOpties)).subscribe(opties => {
       this.toonInfoBoodschap = opties.toonInfoBoodschap;
       this.meerdereGeometrieen = opties.meerdereGeometrieen;
     });

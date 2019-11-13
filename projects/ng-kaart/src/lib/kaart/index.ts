@@ -37,6 +37,7 @@ import { KaartInfoBoodschapVeldinfoComponent } from "./info-boodschappen/kaart-i
 import { KaartInfoBoodschapComponent } from "./info-boodschappen/kaart-info-boodschap.component";
 import { KaartInfoBoodschappenComponent } from "./info-boodschappen/kaart-info-boodschappen.component";
 import { KaartBevragenComponent } from "./kaart-bevragen/kaart-bevragen.component";
+import { KaartIdentifyComponent } from "./kaart-bevragen/kaart-identify.component";
 import { KAART_CFG, KaartConfig } from "./kaart-config";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { KaartComponent } from "./kaart.component";
@@ -61,6 +62,7 @@ const components: any[] = [
   KaartBevragenComponent,
   KaartComponent,
   KaartCopyrightComponent,
+  KaartIdentifyComponent,
   KaartInfoBoodschapAlertComponent,
   KaartInfoBoodschapComponent,
   KaartInfoBoodschapIdentifyComponent,
@@ -174,6 +176,9 @@ export * from "./copyright/kaart-copyright.component";
 export * from "./feature-tabel/index";
 export * from "./info-boodschappen/kaart-info-boodschap-veldinfo.component";
 export * from "./kaart-bevragen/kaart-bevragen.component";
+export * from "./kaart-bevragen/kaart-bevragen-opties";
+export * from "./kaart-bevragen/kaart-identify.component";
+export * from "./kaart-bevragen/kaart-identify-opties";
 export * from "./kaart-bevragen/laaginfo.model";
 export * from "./kaart-component-base";
 export * from "./kaart-elementen";

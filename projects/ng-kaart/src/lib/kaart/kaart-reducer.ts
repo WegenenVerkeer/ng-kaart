@@ -1,7 +1,7 @@
 import { option } from "fp-ts";
 import * as array from "fp-ts/lib/Array";
 import { eqString } from "fp-ts/lib/Eq";
-import { Endomorphism, Function1, Function2, identity, not, pipe } from "fp-ts/lib/function";
+import { Endomorphism, flow, Function1, Function2, identity, not, pipe } from "fp-ts/lib/function";
 import * as fptsmap from "fp-ts/lib/Map";
 import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
 import * as ord from "fp-ts/lib/Ord";
@@ -33,6 +33,8 @@ import { allOf, fromBoolean, fromOption, fromPredicate, success, validationChain
 import { zoekerMetNaam } from "../zoeker/zoeker";
 
 import { CachedFeatureLookup } from "./cache/lookup";
+import { getKaartBevragenOpties, modifyKaartBevragenOpties } from "./kaart-bevragen/kaart-bevragen-opties";
+import { getIdentifyOpties, modifyIdentifyOpties } from "./kaart-bevragen/kaart-identify-opties";
 import { envParams } from "./kaart-config";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
@@ -55,6 +57,7 @@ import {
 import * as ss from "./stijl-selector";
 import { GeenLaagstijlaanpassing, LaagstijlAanpassend } from "./stijleditor/state";
 import { getDefaultStyleSelector } from "./styles";
+import * as TabelState from "./tabel-state";
 import { EndDrawing } from "./tekenen/tekenen-model";
 import { OptiesOpUiElement } from "./ui-element-opties";
 
@@ -336,7 +339,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         array.sort(ordToegevoegdeLaag)(lagenInGroep(mdl, groep)) // en dus ook geldige titels
       );
       updateBehaviorSubjectIfChanged(modelChanger.tabelActiviteitSubj, eqString, current =>
-        hasVisibleFeatureLagen() ? (current === "Onbeschikbaar" ? "Dichtgeklapt" : current) : "Onbeschikbaar"
+        hasVisibleFeatureLagen() ? (current === TabelState.Onbeschikbaar ? TabelState.Dichtgeklapt : current) : TabelState.Onbeschikbaar
       );
     }
 
@@ -1203,9 +1206,9 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
-    function deleteAlleBoodschappen(): ModelWithResult<Msg> {
+    function deleteAlleBoodschappen(updatedModel: Model): ModelWithResult<Msg> {
       model.infoBoodschappenSubj.next(new Map());
-      return ModelWithResult(model);
+      return ModelWithResult(updatedModel);
     }
 
     function selecteerFeatures(cmnd: prt.SelecteerFeaturesCmd): ModelWithResult<Msg> {
@@ -1600,47 +1603,87 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     const hasVisibleFeatureLagen = () =>
       arrays.isNonEmpty(modelChanger.lagenOpGroepSubj["Voorgrond.Hoog"].getValue().filter(tlg => tlg.magGetoondWorden));
 
+    // Zet de gewijzigde opties terug naar wat ze waren net voor het openklappen.
+    const resetOndrukkingenState = () => {
+      const savedState = model.onderdrukkingen;
+      updateBehaviorSubject(
+        modelChanger.optiesOpUiElementSubj,
+        flow(
+          modifyKaartBevragenOpties({
+            infoServiceOnderdrukt: option.toUndefined(savedState.infoServices),
+            kaartBevragenOnderdrukt: option.toUndefined(savedState.bevragen)
+          }),
+          modifyIdentifyOpties({
+            identifyOnderdrukt: option.toUndefined(savedState.identify)
+          })
+        )
+      );
+    };
+
     function zetTabeltoestand(cmnd: prt.ZetTabeltoestandCmd): ModelWithResult<Msg> {
       // We controleren niet of de FeatureTableInklapComponent wel aanwezig is.
+      // Behalve wat te veel operaties gebeurt er in dit geval verder ook niks
+      // schadelijks.
       switch (cmnd.toestand) {
-        case "Opengeklapt":
+        case TabelState.Opengeklapt:
           if (hasVisibleFeatureLagen()) {
-            if (modelChanger.tabelActiviteitSubj.getValue() !== "Opengeklapt") {
-              updateBehaviorSubject(modelChanger.tabelActiviteitSubj, () => "Opengeklapt");
+            const currentState = modelChanger.tabelActiviteitSubj.getValue();
+            if (currentState !== TabelState.Opengeklapt) {
+              updateBehaviorSubject(modelChanger.tabelActiviteitSubj, () => TabelState.Opengeklapt);
               modelChanger.collapseUIRequestSubj.next();
+              const maybeKaartBevragenOnderdrukkingen = getKaartBevragenOpties(modelChanger.optiesOpUiElementSubj.getValue());
+              const maybeIdentifyOnderdrukkingen = getIdentifyOpties(modelChanger.optiesOpUiElementSubj.getValue());
               updateBehaviorSubject(
                 modelChanger.optiesOpUiElementSubj,
-                OptiesOpUiElement.extend({ identifyOnderdrukt: true, kaartBevragenOnderdrukt: false })("KaartInfoBoodschap")
+                flow(
+                  modifyKaartBevragenOpties({ infoServiceOnderdrukt: true }),
+                  modifyIdentifyOpties({ identifyOnderdrukt: true })
+                )
               );
+              // Als er een mode actief was, sluit die nu af
               modelChanger.actieveModusSubj.next(option.none);
+              // Mocht tekenen nog actief zijn (onwaarschijnlijk!), sluit dat nu af
               modelChanger.tekenenOpsSubj.next(EndDrawing());
               modelChanger.uiElementSelectieSubj.next({ naam: "MultiKaarttekenen", aan: false });
-              return deleteAlleBoodschappen();
+              // De initiële toestand is sowieso "Onbeschikbaar". We willen op
+              // de overgang naar "Opengeklapt" onthouden wat de toestand van de
+              // opties was die we hier aanpassen zodat we die later kunnen
+              // terugzetten.
+              if (currentState === TabelState.Onbeschikbaar) {
+                const updatedModel: Model = {
+                  ...model,
+                  onderdrukkingen: {
+                    bevragen: maybeKaartBevragenOnderdrukkingen.map(onderdrukking => onderdrukking.kaartBevragenOnderdrukt),
+                    infoServices: maybeKaartBevragenOnderdrukkingen.map(onderdrukking => onderdrukking.infoServiceOnderdrukt),
+                    identify: maybeIdentifyOnderdrukkingen.map(onderdrukking => onderdrukking.identifyOnderdrukt)
+                  }
+                };
+                return deleteAlleBoodschappen(updatedModel);
+              } else {
+                return deleteAlleBoodschappen(model);
+              }
             }
           }
           break;
-        case "Dichtgeklapt":
+        case TabelState.Dichtgeklapt:
           if (hasVisibleFeatureLagen()) {
-            updateBehaviorSubjectIfChanged(modelChanger.tabelActiviteitSubj, eqString, () => "Dichtgeklapt");
-            // TODO terugzetten van bewaarde toestand
+            updateBehaviorSubjectIfChanged(modelChanger.tabelActiviteitSubj, eqString, () => TabelState.Dichtgeklapt);
+            resetOndrukkingenState();
+          }
+          break;
+        case TabelState.Sluimerend:
+          if (hasVisibleFeatureLagen()) {
+            updateBehaviorSubjectIfChanged(modelChanger.tabelActiviteitSubj, eqString, () => TabelState.Sluimerend);
             updateBehaviorSubject(
               modelChanger.optiesOpUiElementSubj,
-              OptiesOpUiElement.extend({ identifyOnderdrukt: false, kaartBevragenOnderdrukt: false })("KaartInfoBoodschap")
+              modifyKaartBevragenOpties({ kaartBevragenOnderdrukt: true }) // de andere opties zijn al goed gezet
             );
           }
           break;
-        case "Sluimerend":
-          if (hasVisibleFeatureLagen()) {
-            updateBehaviorSubjectIfChanged(modelChanger.tabelActiviteitSubj, eqString, () => "Sluimered");
-            updateBehaviorSubject(
-              modelChanger.optiesOpUiElementSubj,
-              OptiesOpUiElement.extend({ identifyOnderdrukt: true, kaartBevragenOnderdrukt: true })("KaartInfoBoodschap")
-            );
-          }
-          break;
-        case "Onbeschikbaar":
+        case TabelState.Onbeschikbaar:
           // We laten toe om tabellen te disablen ook als er featurelagen aanwezig zijn
-          updateBehaviorSubject(modelChanger.tabelActiviteitSubj, () => "Onbeschikbaar");
+          updateBehaviorSubject(modelChanger.tabelActiviteitSubj, () => TabelState.Onbeschikbaar);
+          resetOndrukkingenState();
           break;
       }
       return ModelWithResult(model);

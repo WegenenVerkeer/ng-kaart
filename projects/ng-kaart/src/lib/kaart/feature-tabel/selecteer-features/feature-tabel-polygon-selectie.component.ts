@@ -9,7 +9,7 @@ import * as option from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { filter, map, sample, switchMap, switchMapTo } from "rxjs/operators";
+import { filter, map, sample, switchMap, switchMapTo, tap } from "rxjs/operators";
 
 import * as clr from "../../../stijl/colour";
 import { GeometryMapper, matchGeometryType } from "../../../util";
@@ -180,7 +180,16 @@ export class FeatureTabelSelectieViaPolygonComponent extends KaartModusComponent
       )
     );
 
-    this.dispatchCmdsInViewReady(selectFeaturesCmd$, startCmds$, stopCmds$);
+    const restoreCmd$ = drawingDone$.pipe(
+      switchMapTo(
+        rx.from([
+          prt.OpenTabelCmd(), //
+          prt.ZetActieveModusCmd(option.none)
+        ])
+      )
+    );
+
+    this.dispatchCmdsInViewReady(selectFeaturesCmd$, startCmds$, stopCmds$, restoreCmd$);
   }
 
   modus(): string {

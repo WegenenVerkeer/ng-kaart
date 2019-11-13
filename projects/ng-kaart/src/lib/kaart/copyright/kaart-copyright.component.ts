@@ -5,6 +5,8 @@ import { map } from "rxjs/operators";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { KaartComponent } from "../kaart.component";
 
+import * as prt from "../kaart-protocol";
+
 export const CopyrightUISelector = "Copyright";
 
 export interface CopyrightOpties {
@@ -27,6 +29,8 @@ export class KaartCopyrightComponent extends KaartChildComponentBase {
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
-    this.copyright$ = this.accumulatedOpties$(CopyrightUISelector, defaultOpties).pipe(map(o => o.copyright));
+    this.dispatch(prt.InitUiElementOpties(CopyrightUISelector, defaultOpties));
+
+    this.copyright$ = this.accumulatedOpties$<CopyrightOpties>(CopyrightUISelector).pipe(map(o => o.copyright));
   }
 }

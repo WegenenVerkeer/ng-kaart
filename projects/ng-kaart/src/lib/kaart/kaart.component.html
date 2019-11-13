@@ -46,6 +46,7 @@
             </awv-kaart-mijn-mobiele-locatie>
             <awv-kaart-zoom *ngIf="aanwezigeElementen.has('Zoomknoppen')"></awv-kaart-zoom>
             <awv-kaart-bevragen *ngIf="aanwezigeElementen.has('Bevraagkaart')"></awv-kaart-bevragen>
+            <awv-identify *ngIf="aanwezigeElementen.has('Identify')"></awv-identify>
             <awv-markeer-kaartklik *ngIf="aanwezigeElementen.has('MarkeerKaartklik')"></awv-markeer-kaartklik>
           </div>
         </div>
@@ -57,8 +58,7 @@
       </div>
     </div>
     <ng-container>
-      <awv-feature-tabel-inklap *ngIf="aanwezigeElementen.has('FeatureTabel')">
-      </awv-feature-tabel-inklap>
+      <awv-feature-tabel-inklap *ngIf="aanwezigeElementen.has('FeatureTabel')"></awv-feature-tabel-inklap>
     </ng-container>
   </div>
 </div>

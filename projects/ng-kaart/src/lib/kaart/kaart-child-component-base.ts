@@ -45,9 +45,11 @@ export abstract class KaartChildComponentBase extends KaartComponentBase impleme
     super.ngOnDestroy();
   }
 
-  protected accumulatedOpties$<A extends object>(selectorName: string, init: A): rx.Observable<A> {
+  protected accumulatedOpties$<A extends object>(selectorName: string): rx.Observable<A> {
     // Dispatch zodat elke component de begintoestand kan kennen ipv enkel deze component.
-    this.dispatch(prt.InitUiElementOpties(selectorName, init));
+    // if (init !== undefined) {
+    //   this.dispatch(prt.InitUiElementOpties(selectorName, init));
+    // }
     // Volg de globale toestand
     return this.modelChanges.optiesOpUiElement$.pipe(
       collectOption(OptiesOpUiElement.get<A>(selectorName)),

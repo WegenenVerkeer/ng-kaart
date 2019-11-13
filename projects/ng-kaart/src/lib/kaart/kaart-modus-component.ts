@@ -61,7 +61,8 @@ export abstract class KaartModusComponent extends KaartChildComponentBase {
   abstract modus(): string;
 
   protected modusOpties$<A extends object>(init: A): rx.Observable<A> {
-    return this.accumulatedOpties$(this.modus(), init);
+    this.dispatch(prt.InitUiElementOpties(this.modus(), init));
+    return this.accumulatedOpties$(this.modus());
   }
 
   protected isDefaultModus(): boolean {

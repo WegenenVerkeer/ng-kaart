@@ -1,5 +1,5 @@
 import { animate, state, style, transition, trigger } from "@angular/animations";
-import { AfterViewInit, Component, ElementRef, HostListener, NgZone, ViewChild } from "@angular/core";
+import { Component, ElementRef, HostListener, NgZone, ViewChild } from "@angular/core";
 import * as rx from "rxjs";
 import { distinctUntilChanged, map, share } from "rxjs/operators";
 
@@ -34,7 +34,7 @@ import { FeatureTabelOverzichtComponent } from "./feature-tabel-overzicht.compon
     ])
   ]
 })
-export class FeatureTabelInklapComponent extends KaartChildComponentBase implements AfterViewInit {
+export class FeatureTabelInklapComponent extends KaartChildComponentBase {
   public tabelZichtbaar = false;
   public magGetoondWorden$: rx.Observable<boolean>;
   public huidigeHoogte = 0;
@@ -140,7 +140,7 @@ export class FeatureTabelInklapComponent extends KaartChildComponentBase impleme
   }
 
   @HostListener("document:mouseup", ["$event"])
-  onMouseUp() {
+  onMouseUp(_: MouseEvent) {
     this.bezigMetSlepen = false;
   }
 

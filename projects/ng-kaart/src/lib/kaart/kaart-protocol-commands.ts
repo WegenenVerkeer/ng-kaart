@@ -917,7 +917,7 @@ export function VerwijderUiElement(naam: string): VerwijderUiElement {
   return { type: "VerwijderUiElement", naam };
 }
 
-export function ZetUiElementOpties(naam: string, opties: any): ZetUiElementOpties {
+export function ZetUiElementOpties(naam: string, opties: object): ZetUiElementOpties {
   return { type: "ZetUiElementOpties", naam, opties, initOnly: false };
 }
 

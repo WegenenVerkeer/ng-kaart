@@ -11,6 +11,7 @@ export type KaartInternalSubMsg =
   | AchtergrondtitelGezetMsg
   | ActieveModusAangepastMsg
   | GeometryChangedMsg
+  | IdentifyInfoBoodschapGeslotenMsg
   | InfoBoodschappenMsg
   | KaartClickMsg
   | MijnLocatieZoomdoelGezetMsg
@@ -80,6 +81,11 @@ export interface VerwijderTekenFeatureMsg {
 
 export interface TekenInfoboodschapGeslotenMsg {
   readonly type: "TekenInfoboodschapGesloten";
+}
+
+export interface IdentifyInfoBoodschapGeslotenMsg {
+  readonly type: "IdentifyInfoBoodschapGesloten";
+  readonly featureId: string;
 }
 
 function KaartInternalMsg(payload: Option<KaartInternalSubMsg>): KaartInternalMsg {
@@ -181,3 +187,11 @@ export function TekenInfoboodschapGeslotenMsg(): TekenInfoboodschapGeslotenMsg {
 }
 
 export const tekenInfoboodschapGeslotenMsgWrapper = () => KaartInternalMsg(some(TekenInfoboodschapGeslotenMsg()));
+
+const IdentifyInfoBoodschapGeslotenMsg = (featureId: string): IdentifyInfoBoodschapGeslotenMsg => ({
+  type: "IdentifyInfoBoodschapGesloten",
+  featureId
+});
+
+export const identifyInfoBoodschapGeslotenMsgGen = (featureId: string) =>
+  KaartInternalMsg(some(IdentifyInfoBoodschapGeslotenMsg(featureId)));

@@ -48,6 +48,16 @@ export class KaartWithInfo {
   readonly publishedKaartLocatiesSubj: Subject<KaartLocaties> = new Subject();
   readonly tileLoader: TileLoader = new TileLoader();
 
+  readonly onderdrukkingen: {
+    readonly infoServices: Option<boolean>;
+    readonly bevragen: Option<boolean>;
+    readonly identify: Option<boolean>;
+  } = {
+    bevragen: none,
+    infoServices: none,
+    identify: none
+  };
+
   constructor(
     // TODO om de distinctWithInfo te versnellen zouden we als eerste element een versieteller kunnen toevoegen
     readonly config: KaartConfig,

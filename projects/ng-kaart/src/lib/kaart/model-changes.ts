@@ -40,7 +40,7 @@ import { KaartWithInfo } from "./kaart-with-info";
 import { HoverFeature } from "./kaart-with-info-model";
 import * as loc from "./mijn-locatie/kaart-mijn-locatie.component";
 import { GeenLaagstijlaanpassing, LaagstijlaanpassingState } from "./stijleditor/state";
-import { TabelActiviteit } from "./tabel-state";
+import * as TabelState from "./tabel-state";
 import { DrawOps } from "./tekenen/tekenen-model";
 import { OptiesOpUiElement } from "./ui-element-opties";
 
@@ -104,7 +104,7 @@ export interface ModelChanger {
   readonly laatsteCacheRefreshSubj: rx.BehaviorSubject<LaatsteCacheRefresh>;
   readonly mijnLocatieStateChangeSubj: rx.Subject<MijnLocatieStateChange>;
   readonly zoombereikChangeSubj: rx.Subject<null>;
-  readonly tabelActiviteitSubj: rx.BehaviorSubject<TabelActiviteit>;
+  readonly tabelActiviteitSubj: rx.BehaviorSubject<TabelState.TabelActiviteit>;
   readonly dataloadBusySubj: rx.BehaviorSubject<boolean>;
   readonly forceProgressBarSubj: rx.BehaviorSubject<boolean>;
   readonly collapseUIRequestSubj: rx.Subject<null>; // Indien nodig uit te breiden met doen en/of bron
@@ -141,7 +141,7 @@ export const ModelChanger: () => ModelChanger = () => ({
   laatsteCacheRefreshSubj: new rx.BehaviorSubject({}),
   mijnLocatieStateChangeSubj: new rx.Subject<MijnLocatieStateChange>(),
   zoombereikChangeSubj: new rx.Subject<null>(),
-  tabelActiviteitSubj: new rx.BehaviorSubject<TabelActiviteit>("Onbeschikbaar"),
+  tabelActiviteitSubj: new rx.BehaviorSubject<TabelState.TabelActiviteit>(TabelState.Onbeschikbaar),
   dataloadBusySubj: new rx.BehaviorSubject<boolean>(false),
   forceProgressBarSubj: new rx.BehaviorSubject<boolean>(false),
   collapseUIRequestSubj: new rx.Subject<null>(),
@@ -180,7 +180,7 @@ export interface ModelChanges {
   readonly dataloadBusy$: rx.Observable<boolean>;
   readonly forceProgressBar$: rx.Observable<boolean>;
   readonly inError$: rx.Observable<boolean>;
-  readonly tabelActiviteit$: rx.Observable<TabelActiviteit>;
+  readonly tabelActiviteit$: rx.Observable<TabelState.TabelActiviteit>;
   readonly collapseUIRequest$: rx.Observable<null>;
 }
 
