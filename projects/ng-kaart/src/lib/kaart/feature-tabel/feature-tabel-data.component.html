@@ -3,7 +3,7 @@
     class="feature-table-data-main"
     [class.comfortable-table-layout]="data.comfortableLayout"
   >
-    <div *ngIf="data.dataAvailable">
+    <div *ngIf="data.featureDataAvailable" class="feature-table-data-available">
       <table
         *ngIf="data.headers as headers"
         [ngStyle]="{ 'grid-template-columns': headers.columnWidths }"
@@ -61,6 +61,9 @@
         </tbody>
       </table>
     </div>
+    <div *ngIf="data.dataAvailable && !data.featureDataAvailable">
+      <div class="feature-table-data-no-data">Geen data op kaart</div>
+    </div>
     <div *ngIf="!data.dataAvailable">
       <div
         *ngIf="data.updatePending; else otuOfZoom"
@@ -76,7 +79,7 @@
     </div>
   </div>
   <div
-    *ngIf="data.dataAvailable"
+    *ngIf="data.featureDataAvailable"
     class="feature-tabel-data-header-menu"
     [class.comfortable-table-layout]="data.comfortableLayout"
   >
@@ -181,11 +184,12 @@
     <div class="right">
       <div class="feature-table-data-view-mode-selector">
         <mat-slide-toggle
+          *ngIf="!data.cannotChooseMapAsFilter"
           [checked]="data.mapAsFilterState"
-          [disabled]="data.cannotChooseMapAsFilter"
           (change)="onAction('mapAsFilter', $event.checked)"
           >Kaart als filter</mat-slide-toggle
         >
+        <div *ngIf="data.cannotChooseMapAsFilter" class="feature-table-data-allways-map-as-filter">Kaart als filter altijd actief</div>
       </div>
       <div
         *ngIf="data.dataAvailable && data.updatePending"

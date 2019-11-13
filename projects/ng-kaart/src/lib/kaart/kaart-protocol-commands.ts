@@ -7,7 +7,7 @@ import { Transparantie } from "../transparantieeditor/transparantie";
 import { TypedRecord } from "../util/typed-record";
 import { ZoekerMetWeergaveopties, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
 
-import { BareValidationWrapper, KaartLocaties, KaartMsg, Subscription, ValidationWrapper } from ".";
+import { BareValidationWrapper, KaartLocaties, KaartMsg, Laagtabelinstellingen, Subscription, ValidationWrapper } from ".";
 import { CachedFeatureLookup } from "./cache/lookup";
 import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
@@ -55,6 +55,7 @@ export type Command<Msg extends KaartMsg> =
   | VeranderExtentCmd
   | VeranderMiddelpuntCmd
   | VeranderRotatieCmd
+  | VeranderLaagtabelinstellingenCmd
   | VeranderViewportCmd
   | VeranderZoomCmd<Msg>
   | VerbergAchtergrondKeuzeCmd<Msg>
@@ -124,6 +125,11 @@ export interface PositieAanpassing {
   readonly positie: number;
 }
 
+export interface VeranderLaagtabelinstellingenCmd {
+  readonly type: "VeranderLaagtabelinstellingen";
+  readonly instellingen: Laagtabelinstellingen;
+}
+
 export interface VoegLaagToeCmd<Msg extends KaartMsg> {
   readonly type: "VoegLaagToe";
   readonly positie: number;
@@ -134,6 +140,7 @@ export interface VoegLaagToeCmd<Msg extends KaartMsg> {
   readonly legende: Option<Legende>;
   readonly stijlInLagenKiezer: Option<string>;
   readonly filterinstellingen: Option<ke.Laagfilterinstellingen>;
+  readonly laagtabelinstellingen: Option<Laagtabelinstellingen>;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -640,6 +647,7 @@ export function VoegLaagToeCmd<Msg extends KaartMsg>(
   legende: Option<Legende>,
   stijlInLagenKiezer: Option<string>,
   filterinstellingen: Option<ke.Laagfilterinstellingen>,
+  laagtabelinstellingen: Option<Laagtabelinstellingen>,
   wrapper: BareValidationWrapper<Msg>
 ): VoegLaagToeCmd<Msg> {
   return {
@@ -652,6 +660,7 @@ export function VoegLaagToeCmd<Msg extends KaartMsg>(
     legende,
     stijlInLagenKiezer,
     filterinstellingen,
+    laagtabelinstellingen,
     wrapper
   };
 }
@@ -765,6 +774,10 @@ export function VeranderRotatieCmd(rotatie: number, animationDuration: Option<nu
 
 export function VeranderExtentCmd(extent: ol.Extent): VeranderExtentCmd {
   return { type: "VeranderExtent", extent };
+}
+
+export function VeranderLaagtabelinstellingenCmd(instellingen: Laagtabelinstellingen): VeranderLaagtabelinstellingenCmd {
+  return { type: "VeranderLaagtabelinstellingen", instellingen };
 }
 
 export function RegistreerErrorCmd(inError: boolean): RegistreerErrorCmd {

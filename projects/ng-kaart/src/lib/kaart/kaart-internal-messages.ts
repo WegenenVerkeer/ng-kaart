@@ -3,6 +3,7 @@ import * as ol from "openlayers";
 
 import { Tekenresultaat, TekenSettings } from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
+import { Laagtabelinstellingen } from "./kaart-protocol";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import { kaartLogger } from "./log";
 
@@ -16,6 +17,7 @@ export type KaartInternalSubMsg =
   | KaartClickMsg
   | MijnLocatieZoomdoelGezetMsg
   | SubscribedMsg
+  | LaagtabelinstellingenMsg
   | TekenInfoboodschapGeslotenMsg
   | TekenMsg
   | VerwijderTekenFeatureMsg
@@ -74,6 +76,11 @@ export interface InfoBoodschappenMsg {
   readonly infoBoodschappen: Map<string, InfoBoodschap>;
 }
 
+export interface LaagtabelinstellingenMsg {
+  readonly type: "Laagtabelinstellingen";
+  readonly instellingen: Laagtabelinstellingen;
+}
+
 export interface VerwijderTekenFeatureMsg {
   readonly type: "VerwijderTekenFeature";
   readonly featureId: string | number;
@@ -114,6 +121,13 @@ export const infoBoodschappenMsgGen = (infoBoodschappen: Map<string, InfoBoodsch
 
 function InfoBoodschappenMsg(infoBoodschappen: Map<string, InfoBoodschap>): InfoBoodschappenMsg {
   return { type: "InfoBoodschappen", infoBoodschappen: infoBoodschappen };
+}
+
+export const tabelLaagInstellingenMsgGen = (instellingen: Laagtabelinstellingen): KaartInternalMsg =>
+  KaartInternalMsg(some(LaagtabelinstellingenMsg(instellingen)));
+
+function LaagtabelinstellingenMsg(instellingen: Laagtabelinstellingen): LaagtabelinstellingenMsg {
+  return { type: "Laagtabelinstellingen", instellingen };
 }
 
 export const kaartClickWrapper = (clickCoordinaat: ol.Coordinate) => KaartInternalMsg(some(KaartClickMsg(clickCoordinaat)));

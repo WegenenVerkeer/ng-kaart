@@ -10,7 +10,7 @@
   ::-webkit-scrollbar {
     width: 4px;
     height: 4px;
-    background-color: $awv-secondary-c1;
+    background-color: $awv-secondary-d4;
   }
 
   ::-webkit-scrollbar-thumb {
@@ -29,6 +29,20 @@
       font-weight: 500;
     }
   }
+
+  .mat-tab-header {
+    border-top: 1px solid #e5e5e5;
+    width: calc(100% - 80px);
+  }
+
+  .mat-tab-body-wrapper {
+    flex-grow: 1;
+  }
+
+  awv-feature-tabel-data {
+    display: flex;
+    height: 100%;
+  }
 }
 
 mat-tab-group {
@@ -41,11 +55,14 @@ mat-tab-group {
   position: absolute;
   top: 0px;
   z-index: 3;
-  right: 8px;
+  right: 0;
   width: 88px;
-
+  height: 48px;
+  border-top: 1px solid #e5e5e5;
+  border-bottom: 1px solid #e5e5e5;
   display: flex;
-  flex-direction: row;
+  align-items: center;
+  justify-content: center;
 
   &.hidden-menu {
     display: none;
@@ -57,20 +74,7 @@ mat-tab-group {
 }
 
 .selecteer-features {
-  // position: absolute;
-  // top: 0px;
-  // z-index: 3;
-  // right: 24px;
-  // width: 32px;
-  // margin: 0 8px 8px 0;
-
-  // > * {
-  //   width: 32px;
-  //   height: 32px;
-  //   line-height: 32px;
-  // }
-
-  // .actief {
-  //   color: $awv-primary-3;
-  // }
+  .actief {
+    color: $awv-primary-3;
+  }
 }

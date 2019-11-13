@@ -17,7 +17,8 @@ import {
   share,
   shareReplay,
   startWith,
-  switchMap
+  switchMap,
+  tap
 } from "rxjs/operators";
 
 import { roundCoordinate } from "../coordinaten";
@@ -35,6 +36,7 @@ import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
 import { envParams } from "./kaart-config";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
+import { Laagtabelinstellingen } from "./kaart-protocol";
 import { GeselecteerdeFeatures, Viewinstellingen } from "./kaart-protocol-subscriptions";
 import { KaartWithInfo } from "./kaart-with-info";
 import { HoverFeature } from "./kaart-with-info-model";
@@ -109,6 +111,7 @@ export interface ModelChanger {
   readonly forceProgressBarSubj: rx.BehaviorSubject<boolean>;
   readonly collapseUIRequestSubj: rx.Subject<null>; // Indien nodig uit te breiden met doen en/of bron
   readonly inErrorSubj: rx.BehaviorSubject<boolean>;
+  readonly tabelLaagInstellingenSubj: rx.Subject<Laagtabelinstellingen>;
 }
 
 // Hieronder wordt een paar keer BehaviourSubject gebruikt. Dat is equivalent met, maar beknopter dan, een startWith + shareReplay
@@ -145,13 +148,15 @@ export const ModelChanger: () => ModelChanger = () => ({
   dataloadBusySubj: new rx.BehaviorSubject<boolean>(false),
   forceProgressBarSubj: new rx.BehaviorSubject<boolean>(false),
   collapseUIRequestSubj: new rx.Subject<null>(),
-  inErrorSubj: new rx.BehaviorSubject<boolean>(false)
+  inErrorSubj: new rx.BehaviorSubject<boolean>(false),
+  tabelLaagInstellingenSubj: new rx.Subject<Laagtabelinstellingen>()
 });
 
 export interface ModelChanges {
   readonly uiElementSelectie$: rx.Observable<UiElementSelectie>;
   readonly optiesOpUiElement$: rx.Observable<OptiesOpUiElement>;
   readonly viewinstellingen$: rx.Observable<Viewinstellingen>;
+  readonly tabelLaagInstellingen$: rx.Observable<Laagtabelinstellingen>;
   readonly lagenOpGroep: ke.OpLaagGroep<rx.Observable<ke.ToegevoegdeLaag[]>>;
   readonly laagVerwijderd$: rx.Observable<ke.ToegevoegdeLaag>;
   readonly geselecteerdeFeatures$: rx.Observable<GeselecteerdeFeatures>;
@@ -318,6 +323,8 @@ export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> 
     shareReplay(1)
   );
 
+  const tabelLaagInstellingen$ = changer.tabelLaagInstellingenSubj;
+
   const dragInfo$ = observableFromOlEvents<ol.MapBrowserEvent>(model.map, "pointerdrag").pipe(
     debounceTime(100),
     map(event => ({
@@ -441,6 +448,7 @@ export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> 
     precacheProgress$: changer.precacheProgressSubj.pipe(observeOn(rx.asapScheduler)),
     laatsteCacheRefresh$: changer.laatsteCacheRefreshSubj.pipe(observeOn(rx.asapScheduler)),
     tabelActiviteit$: changer.tabelActiviteitSubj.pipe(observeOn(rx.asapScheduler)),
+    tabelLaagInstellingen$: changer.tabelLaagInstellingenSubj.pipe(observeOn(rx.asapScheduler)),
     mijnLocatieStateChange$: changer.mijnLocatieStateChangeSubj.pipe(observeOn(rx.asapScheduler)),
     dataloadBusy$: changer.dataloadBusySubj.pipe(observeOn(rx.asapScheduler)),
     forceProgressBar$: changer.forceProgressBarSubj.pipe(observeOn(rx.asapScheduler)),

@@ -40,8 +40,8 @@ const Invisible = "invisible";
           marginRight: "0px"
         })
       ),
-      transition(Invisible + " => " + Visible, animate("200ms ease-in")),
-      transition(Visible + " => " + Invisible, animate("150ms ease-in"))
+      transition(Invisible + " => " + Visible, animate("0.2s cubic-bezier(.62,.28,.23,.99)")),
+      transition(Visible + " => " + Invisible, animate("0.15s cubic-bezier(.62,.28,.23,.99)"))
     ]),
     trigger("popOverState", [
       state(

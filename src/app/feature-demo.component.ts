@@ -51,11 +51,11 @@ export interface FietspadSelectie {
     trigger("enterAnimation", [
       transition(":enter", [
         style({ opacity: 0, "max-height": 0 }),
-        animate("0.35s cubic-bezier(.62,.28,.23,.99)", style({ opacity: 1, "max-height": "1000px" }))
+        animate("0.2s cubic-bezier(.62,.28,.23,.99)", style({ opacity: 1, "max-height": "1000px" }))
       ]),
       transition(":leave", [
         style({ opacity: 1, "max-height": "1000px" }),
-        animate("0.35s cubic-bezier(.62,.28,.23,.99)", style({ opacity: 0, "max-height": 0 }))
+        animate("0.15s cubic-bezier(.62,.28,.23,.99)", style({ opacity: 0, "max-height": 0 }))
       ])
     ])
   ],

@@ -26,6 +26,11 @@ export namespace FieldSelection {
     "contributingVeldinfos"
   ).asGetter();
   export const maybeSortDirectionLens: Lens<FieldSelection, Option<SortDirection>> = Lens.fromProp<FieldSelection>()("sortDirection");
+  export const isSelected: Predicate<FieldSelection> = selectedLens.get;
+  export const isSortField: Predicate<FieldSelection> = flow(
+    maybeSortDirectionLens.get,
+    option.isSome
+  );
 
   const basisVeldOrd: Ord<ke.VeldInfo> = ord.contramap(ke.VeldInfo.isBasisveldLens.get)(ord.getDualOrd(ord.ordBoolean));
 

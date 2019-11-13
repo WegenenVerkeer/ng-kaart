@@ -17,6 +17,18 @@ $footer-height: 48px;
     flex: 1;
     overflow: auto;
 
+    > * {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+
+    > .feature-table-data-available {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+    }
+
     table {
       width: auto;
       display: grid;
@@ -41,17 +53,30 @@ $footer-height: 48px;
         flex-direction: row;
         align-items: center;
         justify-content: flex-start;
+        color: $kaart-primary-text-color;
 
         // compact is de std
-        font-size: 14px;
-        height: 40px;
-        padding-top: 8px;
-        padding-bottom: 8px;
-        padding-left: 8px;
-        padding-right: 8px;
+        font-size: 12px;
+        height: 32px;
+        padding: 8px;
+
+        > div, > span {
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        mat-checkbox + span {
+          margin-left: 6px;
+        }
+
+        &:last-child {
+          border-right: 1px solid #e5e5e5;
+        }
       }
 
       th {
+        height: 36px;
         cursor: pointer;
       }
 
@@ -66,12 +91,14 @@ $footer-height: 48px;
           background-color: white;
           z-index: 2;
           cursor: pointer; // Om zoom aan te duiden
+          border-right: 1px solid #e5e5e5;
         }
       }
 
       &.geselecteerd {
         td {
           background-color: rgb(245, 245, 245);
+
           &:first-child {
             cursor: pointer; // Om zoom aan te duiden
             background-color: rgb(245, 245, 245); // mag niet transparant zijn
@@ -82,9 +109,10 @@ $footer-height: 48px;
       th {
         position: sticky;
         top: 0;
-        font-weight: bold;
+        font-weight: 500;
+        font-size: 12px;
         background-color: white;
-        color: rgb(128, 128, 128);
+        color: $kaart-secondary-text-color;
         text-align: left;
         border-bottom: 1px solid #e5e5e5;
         z-index: 2;
@@ -93,6 +121,7 @@ $footer-height: 48px;
           left: 0;
           top: 0;
           z-index: 3;
+          border-right: 1px solid #e5e5e5;
         }
       }
 
@@ -106,14 +135,16 @@ $footer-height: 48px;
     }
 
     &.comfortable-table-layout {
-      th,
-      td {
+      th, td {
+        font-size: 14px;
+      }
+
+      th {
         height: 48px;
-        padding-top: 8px;
-        padding-bottom: 8px;
-        padding-left: 8px;
-        padding-right: 8px;
-        font-size: 16px;
+      }
+
+      td {
+        height: 40px;
       }
     }
 
@@ -122,61 +153,64 @@ $footer-height: 48px;
     }
 
     .feature-table-data-no-data {
-      padding-top: 32px;
-      padding-bottom: 32px;
-      text-align: center;
       color: $awv-secondary-d1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-grow: 1;
     }
 
     .feature-table-data-update-pending {
-      padding-top: 32px;
-      padding-bottom: 32px;
       display: flex;
       flex-direction: row;
       align-items: center;
       justify-content: center;
+      flex-grow: 1;
     }
   }
 
   .feature-tabel-data-header-menu {
-    $button_upshift: 4px;
-    position: absolute;
-    top: -($button_upshift);
     z-index: 3;
+    position: absolute;
+    top: 0;
     right: 4px;
-    height: 40px + $button_upshift;
-    width: 48px;
+    height: 36px;
+    width: 41px;
     background-color: white;
     color: $kaart-secondary-text-color;
     border-left: solid 1px #e5e5e5;
     border-bottom: solid 1px #e5e5e5;
-    padding: 4px;
+    padding: 0px;
+    display: flex;
+    align-items: center;
 
     button[aria-expanded] {
       color: $awv-primary-2;
     }
 
     &.comfortable-table-layout {
-      $button_upshift: 0px;
-      position: absolute;
-      top: -($button_upshift);
-      z-index: 3;
-      right: 4px;
-      height: 48px + $button_upshift;
+      height: 48px;
     }
   }
 
   .feature-table-data-footer {
-    height: $footer-height;
+    z-index: 3;
+    min-height: $footer-height;
     overflow: hidden;
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
+    border-top: 1px solid #e5e5e5;
+    background: white;
 
     .left {
-      margin-left: 1em;
+      margin-left: 0.5em;
       align-items: center;
+
+      .mat-button-wrapper {
+        font-size: 12px;
+      }
 
       .feature-table-data-selection-all {
         color: rgba(0, 0, 0, 0.6);
@@ -194,6 +228,12 @@ $footer-height: 48px;
 
       .feature-table-data-view-mode-selector {
         margin-right: 2em;
+        font-size: 12px;
+        color: $kaart-primary-text-color;
+      }
+
+      .feature-table-data-allways-map-as-filter {
+        color: $kaart-secondary-text-color;
       }
     }
   }

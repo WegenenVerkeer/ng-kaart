@@ -1,8 +1,7 @@
-import { option, setoid } from "fp-ts";
-import { FunctionN } from "fp-ts/es6/function";
-import { array, mapOption } from "fp-ts/lib/Array";
-import { Curried2, flow, Function1, Refinement } from "fp-ts/lib/function";
-import { fromNullable, Option, option as optionMonad, tryCatch } from "fp-ts/lib/Option";
+import { array, option, setoid } from "fp-ts";
+import { array as arrayTraversable, foldLeft, mapOption } from "fp-ts/lib/Array";
+import { Curried2, Function1, Refinement } from "fp-ts/lib/function";
+import { fromNullable, Option, option as optionApplcative, tryCatch } from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
 import { Setoid, setoidString } from "fp-ts/lib/Setoid";
 import * as traversable from "fp-ts/lib/Traversable";
@@ -39,8 +38,9 @@ export const modifyWithLaagnaam: Curried2<string, ol.Feature, ol.Feature> = laag
   return feature;
 };
 
-export const getUnderlyingFeatures: Function1<ol.Feature[], ol.Feature[]> = features =>
-  array.chain(features, feature => (feature.get("features") ? feature.get("features") : [feature]));
+export const getUnderlyingFeatures: Function1<ol.Feature[], ol.Feature[]> = array.chain(feature =>
+  feature.get("features") ? feature.get("features") : [feature]
+);
 
 const singleFeatureToGeoJson: PartialFunction1<ol.Feature, GeoJsonFeature> = feature =>
   tryCatch(() => ({
@@ -67,7 +67,7 @@ export const featureToGeoJson: PartialFunction1<ol.Feature, GeoJsonFeatures> = f
 };
 
 export const clusterFeaturesToGeoJson: PartialFunction1<ol.Feature[], GeoJsonFeatures[]> = features =>
-  traversable.traverse(optionMonad, array)(features, featureToGeoJson);
+  traversable.traverse(optionApplcative, arrayTraversable)(features, featureToGeoJson);
 
 // Een type dat onze features encapsuleert. Die hebben in 99% van de gevallen een id en een laagnaam.
 export interface FeatureWithIdAndLaagnaam {
@@ -133,4 +133,12 @@ export namespace Feature {
         (extentMaxY >= featureMaxY && extentMinY <= featureMinY))
     );
   };
+
+  export const combineExtents: PartialFunction1<ol.Extent[], ol.Extent> = foldLeft(
+    () => option.none,
+    (head, tail) =>
+      arrays.isEmpty(tail) //
+        ? option.some(head)
+        : option.some(array.reduce([...head] as ol.Extent, ol.extent.extend)(tail)) // copie omdat we head niet willen aanpassen
+  );
 }

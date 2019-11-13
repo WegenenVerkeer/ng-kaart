@@ -285,7 +285,7 @@ export namespace FilterEditor {
 
   const dateOperators = [
     BinaryComparisonOperator("op", "op", "equality", "date"),
-    BinaryComparisonOperator("niet", "niet op", "inequality", "date"),
+    BinaryComparisonOperator("niet op", "niet op", "inequality", "date"),
     BinaryComparisonOperator("tot", "<", "smaller", "date"),
     BinaryComparisonOperator("tot en met", "<=", "smallerOrEqual", "date"),
     BinaryComparisonOperator("na", ">", "larger", "date"),

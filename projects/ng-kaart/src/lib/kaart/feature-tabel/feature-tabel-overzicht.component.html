@@ -1,5 +1,5 @@
 <div class="feature-tabel-weergave-content" *ngIf="(templateData$ | async) as data">
-  <mat-tab-group [headerPosition]="'above'">
+  <mat-tab-group [headerPosition]="'above'" animationDuration="0ms">
     <mat-tab *ngFor="let titel of data.laagTitles">
       <ng-template mat-tab-label>
         <awv-feature-tabel-header [laagTitel]="titel"></awv-feature-tabel-header>
