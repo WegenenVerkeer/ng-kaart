@@ -138,20 +138,26 @@ export class KaartMultiMetenComponent extends KaartModusComponent {
             this.inStateViaRoad = opties.useRouting;
           })
         ),
-        boodschap$.pipe(
-          tap(measures =>
-            this.dispatch(
-              prt.ToonInfoBoodschapCmd({
-                id: InfoBoodschapId,
-                type: "InfoBoodschapMeten",
-                titel: "Meten",
-                sluit: "VANZELF",
-                bron: some("multi-meten"),
-                length: measures.length,
-                area: measures.area,
-                verbergMsgGen: () => some(tekenInfoboodschapGeslotenMsgWrapper())
-              })
-            )
+        this.isActief$.pipe(
+          switchMap(isActief =>
+            isActief
+              ? boodschap$.pipe(
+                  tap(measures =>
+                    this.dispatch(
+                      prt.ToonInfoBoodschapCmd({
+                        id: InfoBoodschapId,
+                        type: "InfoBoodschapMeten",
+                        titel: "Meten",
+                        sluit: "VANZELF",
+                        bron: some("multi-meten"),
+                        length: measures.length,
+                        area: measures.area,
+                        verbergMsgGen: () => some(tekenInfoboodschapGeslotenMsgWrapper())
+                      })
+                    )
+                  )
+                )
+              : rx.EMPTY
           )
         ),
         legeBoodschap$.pipe(tap(() => this.verbergBoodschappen())),
