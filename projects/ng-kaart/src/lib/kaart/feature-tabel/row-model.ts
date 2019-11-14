@@ -18,15 +18,15 @@ export interface Field {
   readonly maybeValue: Option<ValueType>;
 }
 
-export type Velden = Record<string, Field>;
+export type Fields = Record<string, Field>;
 
 export interface Row {
   readonly feature: FeatureWithIdAndLaagnaam;
-  readonly velden: Velden;
+  readonly velden: Fields;
   selected?: boolean; // puur support voor de gui, dit aanpassen heeft geen invloed op het al of niet geselecteerd zijn voor openlayers
 }
 
-export type VeldenFormatter = Endomorphism<Velden>;
+export type VeldenFormatter = Endomorphism<Fields>;
 
 // De titel van een laag + geassocieerde state
 // Een FieldsFormatSpec laat toe om veldwaarden om te zetten naar een andere representatie. Een transformatiefunctie obv
@@ -40,7 +40,7 @@ interface Properties {
 }
 
 export namespace Row {
-  const Field: FunctionN<[Option<ValueType>], Field> = maybeValue => ({ maybeValue });
+  export const Field = (maybeValue: Option<ValueType>): Field => ({ maybeValue });
 
   export const olFeatureLens: Lens<Row, ol.Feature> = Lens.fromPath<Row>()(["feature", "feature"]);
   export const idLens: Lens<Row, string> = Lens.fromPath<Row>()(["feature", "id"]);
@@ -64,19 +64,22 @@ export namespace Row {
       )
       .orElse(() => option.fromPredicate<string>(v => typeof v === "string" && veldinfo.type === "string")(value));
 
-  const nestedPropertyValue: FunctionN<[Properties, string[], ke.VeldInfo], Field> = (properties, path, veldinfo) =>
-    array.fold(path, emptyField, (head, tail) =>
+  const nestedPropertyValue = (properties: Properties, path: string[], veldinfo: ke.VeldInfo): Option<ValueType> =>
+    array.fold(path, option.none, (head, tail) =>
       arrays.isEmpty(tail)
-        ? Field(option.fromNullable(properties[head]).chain(value => matchingTypeValue(value, veldinfo)))
+        ? option.fromNullable(properties[head]).chain(value => matchingTypeValue(value, veldinfo))
         : typeof properties[head] === "object"
         ? nestedPropertyValue(properties[head] as Properties, tail, veldinfo)
-        : emptyField
+        : option.none
     );
 
-  export const extractField: FunctionN<[Properties, ke.VeldInfo], Field> = (properties, veldinfo) =>
+  const extractField: FunctionN<[Properties, ke.VeldInfo], Field> = (properties, veldinfo) =>
+    Field(nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo));
+
+  export const extractFieldValue = (properties: Properties, veldinfo: ke.VeldInfo): Option<ValueType> =>
     nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo);
 
-  export const featureToVelden: Curried2<ke.VeldInfo[], FeatureWithIdAndLaagnaam, Velden> = veldInfos => feature => {
+  export const featureToFields: Curried2<ke.VeldInfo[], FeatureWithIdAndLaagnaam, Fields> = veldInfos => feature => {
     const propertiesWithId = Feature.propertiesWithId(feature);
     const velden = veldInfos.reduce((veld, vi) => {
       veld[vi.naam] = extractField(propertiesWithId, vi);
@@ -85,7 +88,7 @@ export namespace Row {
     return velden;
   };
 
-  export const addField: FunctionN<[string, Field], Endomorphism<Velden>> = (label, field) => row => {
+  export const addField: FunctionN<[string, Field], Endomorphism<Fields>> = (label, field) => row => {
     const newRow = { ...row };
     newRow[label] = field;
     return newRow;

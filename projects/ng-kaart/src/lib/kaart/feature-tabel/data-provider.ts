@@ -172,7 +172,7 @@ export namespace PageFetcher {
   const takePage: Function1<PageNumber, Endomorphism<ol.Feature[]>> = pageNumber => array.filterWithIndex(Page.isInPage(pageNumber));
   const toRows: Curried2<PartialFunction1<ol.Feature, Row>, ol.Feature[], Row[]> = array.filterMap;
   const featureToFieldValue: Curried2<FieldSorting, ol.Feature, Option<ValueType>> = sorting => feature =>
-    Row.extractField(Feature.properties(feature), sorting.veldinfo).maybeValue;
+    Row.extractFieldValue(Feature.properties(feature), sorting.veldinfo);
 
   const directionOrd: <A>(direction: SortDirection) => Endomorphism<Ord<A>> = direction =>
     direction === "ASCENDING" ? identity : ord.getDualOrd;
