@@ -52,7 +52,7 @@ export abstract class KaartChildComponentBase extends KaartComponentBase impleme
     // }
     // Volg de globale toestand
     return this.modelChanges.optiesOpUiElement$.pipe(
-      collectOption(OptiesOpUiElement.get<A>(selectorName)),
+      collectOption(OptiesOpUiElement.getOption<A>(selectorName)),
       distinctUntilChanged(), // object identity kan theoretisch te veel opties doorlaten, maar niet te weinig gezien immutable opties
       shareReplay(1) // De bron is wel een BehaviorSubject, maar ook de rest van de ketting moet replayable zijn
     );

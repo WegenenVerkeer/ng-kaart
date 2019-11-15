@@ -1,5 +1,7 @@
-import { Function1, Function3, identity, Predicate } from "fp-ts/lib/function";
-import { none, Option, some } from "fp-ts/lib/Option";
+import { option } from "fp-ts";
+import { Endomorphism, Function1, Function3, identity, Predicate } from "fp-ts/lib/function";
+import { Option } from "fp-ts/lib/Option";
+import { pipe } from "fp-ts/lib/pipeable";
 
 export const isOfSize: (_: number) => <K, V>(_: Map<K, V>) => boolean = size => map => map.size === size;
 
@@ -8,10 +10,10 @@ export const isNonEmpty: <K, V>(_: Map<K, V>) => boolean = map => map.size > 0;
 export function findFirst<K, V>(kvs: Map<K, V>, predicate: Predicate<V>): Option<V> {
   for (const entry of kvs.entries()) {
     if (predicate(entry[1])) {
-      return some(entry[1]);
+      return option.some(entry[1]);
     }
   }
-  return none;
+  return option.none;
 }
 
 export function filter<K, V>(kvs: Map<K, V>, predicate: Predicate<V>): Map<K, V> {
@@ -38,6 +40,14 @@ export function set<V>(kvs: Map<string, V>, key: string, value: V): Map<string, 
   const newMap = new Map<string, V>(kvs.entries());
   newMap.set(key, value);
   return newMap;
+}
+
+export function modify<V>(kvs: Map<string, V>, key: string, f: Endomorphism<V>): Map<string, V> {
+  return pipe(
+    kvs.get(key),
+    option.fromNullable,
+    option.fold(() => kvs, value => set(kvs, key, f(value)))
+  );
 }
 
 export function mapValues<K, A, B>(kvs: Map<K, A>, f: Function1<A, B>): Map<K, B> {

@@ -41,7 +41,7 @@ import {
   StringMapped
 } from "../../util/lenses";
 import { forEach } from "../../util/option";
-import { BevraagKaartUiSelector, ZetKaartBevragenOptiesCmd } from "../kaart-bevragen/kaart-bevragen-opties";
+import { BevraagKaartOpties, BevraagKaartUiSelector } from "../kaart-bevragen/kaart-bevragen-opties";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-messages";
@@ -680,10 +680,10 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
     const onderdrukBoodschapOpties$ = this.accumulatedOpties$(BevraagKaartUiSelector).pipe(
       sample(this.initialising$),
       tap(() => {
-        this.dispatch(ZetKaartBevragenOptiesCmd({ infoServiceOnderdrukt: true, kaartBevragenOnderdrukt: true }));
+        this.dispatch(BevraagKaartOpties.ZetOptiesCmd({ infoServiceOnderdrukt: true, kaartBevragenOnderdrukt: true }));
         // this.dispatch(ZetMaarkeerKaartklikOptiesCmd({ disabled: true }));
       }),
-      switchMap(opties => this.destroying$.pipe(tap(() => this.dispatch(ZetKaartBevragenOptiesCmd(opties)))))
+      switchMap(opties => this.destroying$.pipe(tap(() => this.dispatch(BevraagKaartOpties.ZetOptiesCmd(opties)))))
     );
 
     onderdrukBoodschapOpties$.subscribe();

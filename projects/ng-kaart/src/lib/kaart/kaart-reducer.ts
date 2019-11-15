@@ -1,10 +1,11 @@
 import { option } from "fp-ts";
 import * as array from "fp-ts/lib/Array";
 import { eqString } from "fp-ts/lib/Eq";
-import { Endomorphism, flow, Function1, Function2, identity, not, pipe } from "fp-ts/lib/function";
+import { Endomorphism, flow, Function1, Function2, identity, not } from "fp-ts/lib/function";
 import * as fptsmap from "fp-ts/lib/Map";
 import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
 import * as ord from "fp-ts/lib/Ord";
+import { pipe } from "fp-ts/lib/pipeable";
 import { setoidString } from "fp-ts/lib/Setoid";
 import * as validation from "fp-ts/lib/Validation";
 import { Lens } from "monocle-ts";
@@ -33,8 +34,8 @@ import { allOf, fromBoolean, fromOption, fromPredicate, success, validationChain
 import { zoekerMetNaam } from "../zoeker/zoeker";
 
 import { CachedFeatureLookup } from "./cache/lookup";
-import { getKaartBevragenOpties, modifyKaartBevragenOpties } from "./kaart-bevragen/kaart-bevragen-opties";
-import { getIdentifyOpties, modifyIdentifyOpties } from "./kaart-bevragen/kaart-identify-opties";
+import { BevraagKaartOpties } from "./kaart-bevragen/kaart-bevragen-opties";
+import { IdentifyOpties } from "./kaart-bevragen/kaart-identify-opties";
 import { envParams } from "./kaart-config";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
@@ -262,7 +263,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         const groepPositie = layerIndexNaarGroepIndex(laag!.layer, groep);
         if (groepPositie >= vanaf && groepPositie <= tot && positieAanpassing !== 0) {
           const positie = groepPositie + positieAanpassing;
-          return pipe(
+          return flow(
             pasVectorLaagStijlPositieAan(positieAanpassing),
             pasLaagPositieAan(positieAanpassing),
             pasLaagInModelAan(mdl!)
@@ -338,6 +339,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       modelChanger.lagenOpGroepSubj[groep].next(
         array.sort(ordToegevoegdeLaag)(lagenInGroep(mdl, groep)) // en dus ook geldige titels
       );
+      // Dit is het perfecte moment om te zien of er wijzingen aan de tabeltoestand nodig zijn. Indien er geen
+      // tabelcomponent is, blijft dit verder zonder gevolg.
       updateBehaviorSubjectIfChanged(modelChanger.tabelActiviteitSubj, eqString, current =>
         hasVisibleFeatureLagen() ? (current === TabelState.Onbeschikbaar ? TabelState.Dichtgeklapt : current) : TabelState.Onbeschikbaar
       );
@@ -424,7 +427,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               layer.set(ke.LayerProperties.Titel, titel);
               layer.setVisible(cmnd.magGetoondWorden && !cmnd.laag.verwijderd); // achtergrondlagen expliciet zichtbaar maken!
               layer.setOpacity(
-                pipe(
+                flow(
                   Transparantie.toOpaciteit,
                   Opaciteit.toNumber
                 )(cmnd.transparantie)
@@ -572,7 +575,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               : pasLaagPositiesAan(1, naarPositie, vanPositie - 1, groep);
 
           // En ook de te verplaatsen laag moet een andere positie krijgen uiteraard
-          const updatedModel = pipe(
+          const updatedModel = flow(
             pasVectorLaagStijlPositieAan(naarPositie - vanPositie),
             pasLaagPositieAan(naarPositie - vanPositie),
             pasLaagInModelAan(modelMetAangepasteLagen)
@@ -816,7 +819,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           // Zorg ervoor dat er juist 1 achtergrondlaag zichtbaar is
           const modelMetAangepasteLagen = achtergrondLagen.reduce(
             (mdl, laag) =>
-              pipe(
+              flow(
                 pasLaagZichtbaarheidAan(laag!.titel === teSelecterenLaag.titel),
                 pasLaagInModelAan(mdl!)
               )(laag!),
@@ -857,7 +860,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             model.toegevoegdeLagenOpTitel,
             laag => laag!.laaggroep === "Achtergrond" && laag!.magGetoondWorden
           );
-          const modelMetNieuweZichtbaarheid = pipe(
+          const modelMetNieuweZichtbaarheid = flow(
             pasLaagZichtbaarheidAan(true),
             pasLaagInModelAan(model)
           )(nieuweAchtergrond);
@@ -866,7 +869,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             .fold(
               modelMetNieuweZichtbaarheid, //
               vorigeAchtergrond =>
-                pipe(
+                flow(
                   pasLaagZichtbaarheidAan(false),
                   pasLaagInModelAan(modelMetNieuweZichtbaarheid)
                 )(vorigeAchtergrond)
@@ -890,7 +893,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return toModelWithValueResult(
         wrapper,
         valideerToegevoegdeLaagBestaat(titel).map(laag => {
-          const aangepastModel = pipe(
+          const aangepastModel = flow(
             pasLaagZichtbaarheidAan(magGetoondWorden),
             pasLaagInModelAan(model)
           )(laag);
@@ -1011,7 +1014,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
                     kaartLogger.error("Geen stijlselector gevonden voor:", feature);
                     return noStyle;
                   },
-                  pipe(
+                  flow(
                     executeStyleSelector,
                     applySelectionColor
                   ) // we vallen terug op feature stijl met custom kleurtje
@@ -1609,23 +1612,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     const hasVisibleFeatureLagen = () =>
       arrays.isNonEmpty(modelChanger.lagenOpGroepSubj["Voorgrond.Hoog"].getValue().filter(tlg => tlg.magGetoondWorden));
 
-    // Zet de gewijzigde opties terug naar wat ze waren net voor het openklappen.
-    const resetOndrukkingenState = () => {
-      const savedState = model.onderdrukkingen;
-      updateBehaviorSubject(
-        modelChanger.optiesOpUiElementSubj,
-        flow(
-          modifyKaartBevragenOpties({
-            infoServiceOnderdrukt: option.toUndefined(savedState.infoServices),
-            kaartBevragenOnderdrukt: option.toUndefined(savedState.bevragen)
-          }),
-          modifyIdentifyOpties({
-            identifyOnderdrukt: option.toUndefined(savedState.identify)
-          })
-        )
-      );
-    };
-
     function zetTabeltoestand(cmnd: prt.ZetTabeltoestandCmd): ModelWithResult<Msg> {
       // We controleren niet of de FeatureTableInklapComponent wel aanwezig is.
       // Behalve wat te veel operaties gebeurt er in dit geval verder ook niks
@@ -1637,62 +1623,31 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             if (currentState !== TabelState.Opengeklapt) {
               updateBehaviorSubject(modelChanger.tabelActiviteitSubj, () => TabelState.Opengeklapt);
               modelChanger.collapseUIRequestSubj.next();
-              const maybeKaartBevragenOnderdrukkingen = getKaartBevragenOpties(modelChanger.optiesOpUiElementSubj.getValue());
-              const maybeIdentifyOnderdrukkingen = getIdentifyOpties(modelChanger.optiesOpUiElementSubj.getValue());
-              updateBehaviorSubject(
-                modelChanger.optiesOpUiElementSubj,
-                flow(
-                  modifyKaartBevragenOpties({ infoServiceOnderdrukt: true }),
-                  modifyIdentifyOpties({ identifyOnderdrukt: true })
-                )
-              );
               // Als er een mode actief was, sluit die nu af
               modelChanger.actieveModusSubj.next(option.none);
               // Mocht tekenen nog actief zijn (onwaarschijnlijk!), sluit dat nu af
               modelChanger.tekenenOpsSubj.next(EndDrawing());
               modelChanger.uiElementSelectieSubj.next({ naam: "MultiKaarttekenen", aan: false });
-              // De initiële toestand is sowieso "Onbeschikbaar". We willen op
-              // de overgang naar "Opengeklapt" onthouden wat de toestand van de
-              // opties was die we hier aanpassen zodat we die later kunnen
-              // terugzetten.
-              if (currentState === TabelState.Onbeschikbaar) {
-                const updatedModel: Model = {
-                  ...model,
-                  onderdrukkingen: {
-                    bevragen: maybeKaartBevragenOnderdrukkingen.map(onderdrukking => onderdrukking.kaartBevragenOnderdrukt),
-                    infoServices: maybeKaartBevragenOnderdrukkingen.map(onderdrukking => onderdrukking.infoServiceOnderdrukt),
-                    identify: maybeIdentifyOnderdrukkingen.map(onderdrukking => onderdrukking.identifyOnderdrukt)
-                  }
-                };
-                return deleteAlleBoodschappen(updatedModel);
-              } else {
-                return deleteAlleBoodschappen(model);
-              }
+              return deleteAlleBoodschappen(model);
             }
           }
-          break;
+          return ModelWithResult(model);
         case TabelState.Dichtgeklapt:
           if (hasVisibleFeatureLagen()) {
             updateBehaviorSubjectIfChanged(modelChanger.tabelActiviteitSubj, eqString, () => TabelState.Dichtgeklapt);
-            resetOndrukkingenState();
           }
-          break;
+          return ModelWithResult(model);
         case TabelState.Sluimerend:
           if (hasVisibleFeatureLagen()) {
             updateBehaviorSubjectIfChanged(modelChanger.tabelActiviteitSubj, eqString, () => TabelState.Sluimerend);
-            updateBehaviorSubject(
-              modelChanger.optiesOpUiElementSubj,
-              modifyKaartBevragenOpties({ kaartBevragenOnderdrukt: true }) // de andere opties zijn al goed gezet
-            );
           }
-          break;
+          return ModelWithResult(model);
         case TabelState.Onbeschikbaar:
           // We laten toe om tabellen te disablen ook als er featurelagen aanwezig zijn
           updateBehaviorSubject(modelChanger.tabelActiviteitSubj, () => TabelState.Onbeschikbaar);
-          resetOndrukkingenState();
-          break;
+          // resetOndrukkingenState();
+          return ModelWithResult(model);
       }
-      return ModelWithResult(model);
     }
 
     function handleSubscriptions(cmnd: prt.SubscribeCmd<Msg>): ModelWithResult<Msg> {
