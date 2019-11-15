@@ -5,14 +5,18 @@ import { DateTime } from "luxon";
 
 import { PartialFunction1 } from "./function";
 
+export const defaultDateFormat = "dd/MM/yyyy";
+
 export const formateerDate: Curried2<Option<string>, DateTime, string> = maybeFormat => date => {
-  return date.setLocale("nl-BE").toFormat(maybeFormat.getOrElse("dd/MM/yyyy"));
+  return date.setLocale("nl-BE").toFormat(maybeFormat.getOrElse(defaultDateFormat));
 };
+
+export const formateerDateAsDefaultDate: (date: DateTime) => string = formateerDate(option.some(defaultDateFormat));
 
 export const formateerJsDate: Function1<Date, string> = date => {
   return DateTime.fromJSDate(date)
     .setLocale("nl-BE")
-    .toFormat("dd/MM/yyyy");
+    .toFormat(defaultDateFormat);
 };
 
 export const formateerDateTime: Curried2<Option<string>, DateTime, string> = maybeFormat => dateTime => {
@@ -21,6 +25,19 @@ export const formateerDateTime: Curried2<Option<string>, DateTime, string> = may
 
 export const parseDate: Curried2<Option<string>, string, Option<DateTime>> = maybeFormat => text =>
   maybeFormat.foldL(() => parseDateHeuristically, parseDateTimeWithFormat)(text);
+
+const parseDateTimeHeuristically: PartialFunction1<string, DateTime> = text => {
+  // We ondersteunen enkel het ISO-formaat. Dat is in de praktijk ook de enige DateTime die we hebben (gegenereerd in
+  // Scala).
+  return option.fromPredicate((d: DateTime) => d.isValid)(DateTime.fromISO(text));
+};
+
+// We ondersteunen enkel de formaten die luxon (https://moment.github.io/luxon/docs/manual/parsing.html) ondersteunt.
+const parseDateTimeWithFormat: Function1<string, PartialFunction1<string, DateTime>> = format => text => {
+  return option.fromPredicate((d: DateTime) => d.isValid)(DateTime.fromFormat(text, format));
+};
+
+export const parseDefaultDate: PartialFunction1<string, DateTime> = parseDateTimeWithFormat(defaultDateFormat);
 
 const parseDateHeuristically: PartialFunction1<string, DateTime> = text => {
   // Er zijn veel manieren hoe een datum geformatteerd kan zijn. Het vervelende is dat JSON geen datum formaat heeft en
@@ -35,15 +52,3 @@ const parseDateHeuristically: PartialFunction1<string, DateTime> = text => {
 
 export const parseDateTime: Curried2<Option<string>, string, Option<DateTime>> = maybeFormat => text =>
   maybeFormat.foldL(() => parseDateTimeHeuristically, parseDateTimeWithFormat)(text);
-
-const parseDateTimeHeuristically: PartialFunction1<string, DateTime> = text => {
-  // We ondersteunen enkel het ISO-formaat. Dat is in de praktijk ook de enige DateTime die we hebben (gegenereerd in
-  // Scala).
-  // return parseDateTimeWithFormat(DateTime.)
-  return option.fromPredicate((d: DateTime) => d.isValid)(DateTime.fromISO(text));
-};
-
-// We ondersteunen enkel de formaten die luxon (https://moment.github.io/luxon/docs/manual/parsing.html) ondersteunt.
-const parseDateTimeWithFormat: Function1<string, PartialFunction1<string, DateTime>> = format => text => {
-  return option.fromPredicate((d: DateTime) => d.isValid)(DateTime.fromFormat(text, format));
-};

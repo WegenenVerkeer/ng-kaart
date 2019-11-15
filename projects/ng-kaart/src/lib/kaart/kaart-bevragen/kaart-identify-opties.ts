@@ -10,11 +10,13 @@ export interface IdentifyOpties {
   readonly identifyOnderdrukt: boolean;
 }
 
-export const ZetIdentifyOptiesCmd = (opties: Partial<IdentifyOpties>): prt.ZetUiElementOpties =>
-  prt.ZetUiElementOpties(IdentifyUiSelector, opties);
+export namespace IdentifyOpties {
+  export const ZetOptiesCmd = (opties: Partial<IdentifyOpties>): prt.ZetUiElementOpties =>
+    prt.ZetUiElementOpties(IdentifyUiSelector, opties);
 
-export const modifyIdentifyOpties = (opties: Partial<IdentifyOpties>): Endomorphism<Map<string, object>> =>
-  OptiesOpUiElement.extend(opties)(IdentifyUiSelector);
+  export const set = (opties: Partial<IdentifyOpties>): Endomorphism<OptiesOpUiElement> =>
+    OptiesOpUiElement.extend(opties)(IdentifyUiSelector);
 
-export const getIdentifyOpties = (optiesOpSelector: Map<string, object>): Option<IdentifyOpties> =>
-  OptiesOpUiElement.get<IdentifyOpties>(IdentifyUiSelector)(optiesOpSelector);
+  export const getOption = (optiesOpSelector: OptiesOpUiElement): Option<IdentifyOpties> =>
+    OptiesOpUiElement.getOption<IdentifyOpties>(IdentifyUiSelector)(optiesOpSelector);
+}

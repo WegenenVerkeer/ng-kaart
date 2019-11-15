@@ -2,7 +2,7 @@ import { constant, Curried2, Endomorphism, flow, Function1, Function2, Function3
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 
 import { Filter as fltr } from "../filter/filter-model";
-import { formateerJsDate } from "../util/date-time";
+import { formateerDateAsDefaultDate } from "../util/date-time";
 import { PartialFunction1 } from "../util/function";
 
 export namespace FilterCql {
@@ -37,7 +37,7 @@ export namespace FilterCql {
 
   const doubleGenerator: Generator<fltr.Literal> = literal => fltr.numberValue(literal.value).map(value => value.toString());
 
-  const dateTimeGenerator: Generator<fltr.Literal> = literal => fltr.dateValue(literal.value).map(formateerJsDate);
+  const dateTimeGenerator: Generator<fltr.Literal> = literal => fltr.dateValue(literal.value).map(formateerDateAsDefaultDate);
 
   // In principe heeft de gebruiker niet veel zeggenschap over de properties. Maar ingeval van eigen data kan dat dus om
   // het even wat zijn (voor zover het in een shape file past). We verwachten dat de gebruikers geen "rare" kolomnamen

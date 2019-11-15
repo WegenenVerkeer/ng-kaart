@@ -46,11 +46,13 @@ export interface BevraagKaartOpties {
   readonly infoServiceOnderdrukt: boolean;
 }
 
-export const ZetKaartBevragenOptiesCmd = (opties: Partial<BevraagKaartOpties>): prt.ZetUiElementOpties =>
-  prt.ZetUiElementOpties(BevraagKaartUiSelector, opties);
+export namespace BevraagKaartOpties {
+  export const ZetOptiesCmd = (opties: Partial<BevraagKaartOpties>): prt.ZetUiElementOpties =>
+    prt.ZetUiElementOpties(BevraagKaartUiSelector, opties);
 
-export const modifyKaartBevragenOpties = (opties: Partial<BevraagKaartOpties>): Endomorphism<Map<string, object>> =>
-  OptiesOpUiElement.extend(opties)(BevraagKaartUiSelector);
+  export const set = (opties: Partial<BevraagKaartOpties>): Endomorphism<OptiesOpUiElement> =>
+    OptiesOpUiElement.extend(opties)(BevraagKaartUiSelector);
 
-export const getKaartBevragenOpties = (optiesOpSelector: Map<string, object>): Option<BevraagKaartOpties> =>
-  OptiesOpUiElement.get<BevraagKaartOpties>(BevraagKaartUiSelector)(optiesOpSelector);
+  export const getOption = (optiesOpSelector: OptiesOpUiElement): Option<BevraagKaartOpties> =>
+    OptiesOpUiElement.getOption<BevraagKaartOpties>(BevraagKaartUiSelector)(optiesOpSelector);
+}

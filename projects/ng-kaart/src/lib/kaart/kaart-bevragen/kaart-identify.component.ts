@@ -23,6 +23,7 @@ export class KaartIdentifyComponent extends KaartChildComponentBase implements O
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
 
+    this.dispatch(prt.InitUiElementOpties(IdentifyUiSelector, { identifyOnderdrukt: false }));
     const options$ = this.accumulatedOpties$<IdentifyOpties>(IdentifyUiSelector);
     const geselecteerdeFeatures$ = this.modelChanges.geselecteerdeFeatures$;
 

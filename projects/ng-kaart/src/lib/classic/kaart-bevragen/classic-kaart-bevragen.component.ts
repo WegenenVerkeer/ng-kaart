@@ -1,13 +1,6 @@
-import { Component, Injector, Input, OnChanges, SimpleChanges } from "@angular/core";
+import { Component, Injector, Input, OnChanges } from "@angular/core";
 
-import { forChangedValue } from "../../kaart";
-import {
-  BevraagKaartOpties,
-  BevraagKaartUiSelector,
-  UnitType,
-  ZetKaartBevragenOptiesCmd,
-  ZoekAfstand
-} from "../../kaart/kaart-bevragen/kaart-bevragen-opties";
+import { BevraagKaartOpties, BevraagKaartUiSelector, UnitType, ZoekAfstand } from "../../kaart/kaart-bevragen/kaart-bevragen-opties";
 import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
 import * as val from "../webcomponent-support/params";
 

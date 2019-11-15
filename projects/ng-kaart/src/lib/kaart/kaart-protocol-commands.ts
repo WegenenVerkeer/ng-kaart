@@ -17,6 +17,7 @@ import * as loc from "./mijn-locatie/kaart-mijn-locatie.component";
 import * as ss from "./stijl-selector";
 import { TabelActiviteit } from "./tabel-state";
 import { DrawOps } from "./tekenen/tekenen-model";
+import { OptiesRecord } from "./ui-element-opties";
 
 export type Command<Msg extends KaartMsg> =
   | AbortTileLoadingCmd
@@ -500,7 +501,7 @@ export interface VerwijderUiElement {
 export interface ZetUiElementOpties {
   readonly type: "ZetUiElementOpties";
   readonly naam: string;
-  readonly opties: object;
+  readonly opties: OptiesRecord;
   readonly initOnly: boolean; // zet enkel indien opties voor deze selector nog niet gezet is
 }
 
@@ -930,7 +931,7 @@ export function VerwijderUiElement(naam: string): VerwijderUiElement {
   return { type: "VerwijderUiElement", naam };
 }
 
-export function ZetUiElementOpties(naam: string, opties: object): ZetUiElementOpties {
+export function ZetUiElementOpties(naam: string, opties: OptiesRecord): ZetUiElementOpties {
   return { type: "ZetUiElementOpties", naam, opties, initOnly: false };
 }
 

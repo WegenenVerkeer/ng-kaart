@@ -15,7 +15,7 @@ import {
   Predicate,
   Refinement
 } from "fp-ts/lib/function";
-import { fromNullable, fromPredicate, none, Option, some } from "fp-ts/lib/Option";
+import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import { ordString } from "fp-ts/lib/Ord";
 import {
   contramap,
@@ -27,11 +27,12 @@ import {
   setoidString,
   strictEqual
 } from "fp-ts/lib/Setoid";
+import { DateTime } from "luxon";
 import { fromTraversable, Lens, Prism, Traversal } from "monocle-ts";
 
 import * as ke from "../kaart/kaart-elementen";
 import * as arrays from "../util/arrays";
-import { parseDate } from "../util/date-time";
+import { formateerDateAsDefaultDate, parseDate } from "../util/date-time";
 import { applySequential, PartialFunction1 } from "../util/function";
 import * as maps from "../util/maps";
 import * as matchers from "../util/matchers";
@@ -170,7 +171,7 @@ export namespace FilterEditor {
     readonly selectedValue: SelectedValue;
   }
 
-  const Property: Function5<fltr.TypeType, string, string, string | undefined, string[], Property> = (
+  const Property: Function5<fltr.TypeType, string, string, Option<string>, string[], Property> = (
     typetype,
     name,
     label,
@@ -181,7 +182,7 @@ export namespace FilterEditor {
     type: typetype,
     ref: name,
     label,
-    sqlFormat: fromNullable(sqlFormat),
+    sqlFormat,
     distinctValues
   });
 
@@ -191,10 +192,10 @@ export namespace FilterEditor {
     valueType
   });
 
-  export const literalValueStringRenderer: Function1<LiteralValue, string> = literalValue =>
+  export const literalValueStringRenderer = (literalValue: LiteralValue): string =>
     fltr.matchTypeTypeWithFallback({
       date: () => {
-        return (<Date>literalValue.value).toLocaleDateString("nl-BE");
+        return formateerDateAsDefaultDate(literalValue.value as DateTime);
       },
       fallback: () => literalValue.value.toString()
     })(literalValue.valueType);
@@ -228,7 +229,7 @@ export namespace FilterEditor {
           vi.type,
           vi.naam,
           fromNullable(vi.label).getOrElse(vi.naam),
-          vi.sqlFormat,
+          fromNullable(vi.sqlFormat),
           array.sort(ordString)(arrays.fromNullable(vi.uniekeWaarden))
         )
       )
@@ -478,7 +479,7 @@ export namespace FilterEditor {
       ["string", "datetime"].includes(selectedValue.valueType) ? selectedValue.value.toString().length > 0 : true
     );
 
-    // Wanneer de datum correct is, komt die binnen als een Literal met een type "date". Maar als dat niet zo is  met
+    // Wanneer de datum correct is, komt die binnen als een Literal met een type "date". Maar als dat niet zo is met
     // een type "string". Behalve wanneer de gebruiker zelf aan het typen geslagen is. Dan komt de waarde binnen als een
     // "string", of die nu geldig is of niet. Een geldige datum willen we in dat geval omzetten naar een Date.
     const validateDate: PartialFunction1<SelectedValue, SelectedValue> = selectedValue =>
@@ -486,9 +487,7 @@ export namespace FilterEditor {
         .fromPredicate<SelectedValue>(selectedValue => selection.selectedProperty.type !== "date" || selectedValue.valueType === "date")(
           selectedValue
         )
-        .orElse(() =>
-          parseDate(option.some("d/M/yyyy"))(selectedValue.value.toString()).map(date => LiteralValue(date.toJSDate(), "date"))
-        );
+        .orElse(() => parseDate(option.some("d/M/yyyy"))(selectedValue.value.toString()).map(date => LiteralValue(date, "date")));
 
     const validateDistinct: PartialFunction1<SelectedValue, SelectedValue> = option.fromPredicate(selectedValue =>
       selection.valueSelector.kind === "selection"

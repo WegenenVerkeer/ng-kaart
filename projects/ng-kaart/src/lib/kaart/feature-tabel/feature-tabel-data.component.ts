@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input, NgZone, ViewEncapsulation } from "@angular/core";
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, NgZone, ViewEncapsulation } from "@angular/core";
 import { array, option } from "fp-ts";
 import { flow, Function1, Function2, Refinement } from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
@@ -104,7 +104,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
   @Input()
   laagTitel: string;
 
-  constructor(kaart: KaartComponent, overzicht: FeatureTabelOverzichtComponent, ngZone: NgZone) {
+  constructor(kaart: KaartComponent, overzicht: FeatureTabelOverzichtComponent, ngZone: NgZone, private readonly cdr: ChangeDetectorRef) {
     super(kaart, ngZone);
 
     this.laag$ = this.viewReady$
@@ -211,6 +211,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
           rows.forEach(r => {
             r.selected = prt.FeatureSelection.isSelected(selection)(r.feature);
           });
+          this.cdr.detectChanges();
         })
       )
     );
