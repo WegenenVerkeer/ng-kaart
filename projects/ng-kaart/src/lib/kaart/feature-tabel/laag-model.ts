@@ -328,7 +328,7 @@ export namespace LaagModel {
         maxZoom: laag.bron.maxZoom,
         page: option.none,
         nextPageSequence: 0,
-        updatePending: true,
+        updatePending: false,
         viewinstellingen,
         veldenTransformer: veldenTransformer,
         visibleFeatures: [],
