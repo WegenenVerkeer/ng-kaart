@@ -1,6 +1,12 @@
+import { option } from "fp-ts";
+import { Endomorphism } from "fp-ts/es6/function";
 import * as array from "fp-ts/lib/Array";
+import { pipe } from "fp-ts/lib/pipeable";
+import { DateTime } from "luxon";
 
 import * as oi from "../stijl/json-object-interpreting";
+import { asString } from "../util";
+import { parseDefaultDate } from "../util/date-time";
 
 import { Filter as fltr } from "./filter-model";
 
@@ -8,7 +14,7 @@ export namespace AwvV0FilterInterpreters {
   const byKind: <A>(interpretersByKind: { [k: string]: oi.Interpreter<A> }) => oi.Interpreter<A> = interpretersByKind =>
     oi.byTypeDiscriminator("kind", interpretersByKind);
 
-  const pureFilter: oi.Interpreter<fltr.EmptyFilter> = oi.pure(fltr.EmptyFilter);
+  const emptyFilter: oi.Interpreter<fltr.EmptyFilter> = oi.pure(fltr.EmptyFilter);
 
   const typeType: oi.Interpreter<fltr.TypeType> = oi.enu<fltr.TypeType>(
     "boolean",
@@ -31,13 +37,36 @@ export namespace AwvV0FilterInterpreters {
     sqlFormat: oi.optField("sqlFormat", oi.str)
   });
 
-  const literal: oi.Interpreter<fltr.Literal> = oi.interpretRecord({
+  const value: oi.Interpreter<fltr.ValueType> = oi.mapFailureTo(
+    oi.firstOf<fltr.ValueType>(oi.bool, oi.num, oi.str),
+    "De waarde moet een bool, number of string zijn"
+  );
+
+  // In JSON kunnen we enkel number en string kwijt. De rest moeten we interpreteren op basis daarvan.
+  const liftValueTypes: Endomorphism<fltr.Literal> = fltr.matchLiteral({
+    boolean: lit => ({ ...lit, value: lit.value !== "false" }),
+    date: lit => ({
+      ...lit,
+      value: pipe(
+        lit.value,
+        asString,
+        option.chain(parseDefaultDate),
+        option.getOrElse(() => new DateTime()) // TODO In een ideale wereld zouden we de fout propageren
+      )
+    }),
+    datetime: lit => lit, // TODO parse
+    double: lit => lit,
+    geometry: lit => lit, // TODO -> error
+    integer: lit => lit,
+    json: lit => lit, // TODO -> error
+    string: lit => lit,
+    url: lit => lit // TODO parse
+  });
+
+  const literal: oi.Interpreter<fltr.Literal> = oi.mapRecord(liftValueTypes, {
     kind: oi.field("kind", oi.value("Literal")),
     type: oi.field("type", typeType),
-    value: oi.field(
-      "value",
-      oi.mapFailureTo(oi.firstOf<fltr.ValueType>(oi.bool, oi.num, oi.str), "De waarde moet een bool, number of string zijn")
-    )
+    value: oi.field("value", value)
   });
 
   // Vanaf TS 3.4 kunnen we de as const syntax gebruiken om de array van operators en het type automatisch gelijk te
@@ -115,6 +144,6 @@ export namespace AwvV0FilterInterpreters {
 
   export const jsonAwv0Definition: oi.Interpreter<fltr.Filter> = byKind<fltr.Filter>({
     ExpressionFilter: expressionFilter,
-    EmptyFilter: pureFilter
+    EmptyFilter: emptyFilter
   });
 }

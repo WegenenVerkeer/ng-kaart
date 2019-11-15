@@ -1,6 +1,7 @@
 import { constant, Function1, Function2, Function3, Function4, identity, Lazy, not, Predicate } from "fp-ts/lib/function";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import { contramap, Setoid, setoidString } from "fp-ts/lib/Setoid";
+import { DateTime } from "luxon";
 
 import { PartialFunction1 } from "../util/function";
 import * as matchers from "../util/matchers";
@@ -89,7 +90,9 @@ export namespace Filter {
   // TODO: laten we voorlopig overeen komen met alle veldtypes uit VeldInfo
   export type TypeType = "string" | "integer" | "double" | "geometry" | "date" | "datetime" | "boolean" | "json" | "url";
 
-  export type ValueType = boolean | string | number | Date;
+  // Dit zijn alle types die we ondersteunen in het geheugen, maar denk eraan dat alles als string of number
+  // geserialiseerd moet worden.
+  export type ValueType = boolean | string | number | DateTime;
 
   export interface Literal {
     readonly kind: "Literal";
@@ -173,7 +176,7 @@ export namespace Filter {
   export const stringValue: PartialFunction1<ValueType, string> = value => (typeof value === "string" ? some(value) : none);
   export const boolValue: PartialFunction1<ValueType, boolean> = value => (typeof value === "boolean" ? some(value) : none);
   export const numberValue: PartialFunction1<ValueType, number> = value => (typeof value === "number" ? some(value) : none);
-  export const dateValue: PartialFunction1<ValueType, Date> = value => (value instanceof Date ? some(value) : none);
+  export const dateValue: PartialFunction1<ValueType, DateTime> = value => (value instanceof DateTime ? some(value) : none);
   export interface FilterMatcher<A> {
     readonly EmptyFilter: Lazy<A>;
     readonly ExpressionFilter: Function1<ExpressionFilter, A>;
@@ -215,6 +218,10 @@ export namespace Filter {
   export const matchUnaryComparisonOperator: <A>(
     _: matchers.FullMatcher<UnaryComparisonOperator, A, UnaryComparisonOperator>
   ) => Function1<UnaryComparisonOperator, A> = matcher => matchers.match(matcher)(identity);
+
+  export const matchConjunctionExpression: <A>(
+    _: matchers.FullKindMatcher<ConjunctionExpression, A>
+  ) => Function1<ConjunctionExpression, A> = matcher => matchers.matchKind(matcher);
 
   export const isEmpty: Predicate<Filter> = matchFilter({
     ExpressionFilter: constant(false),

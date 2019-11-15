@@ -7,6 +7,7 @@ import * as option from "fp-ts/lib/Option";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import * as ord from "fp-ts/lib/Ord";
 import { Ord } from "fp-ts/lib/Ord";
+import { DateTime } from "luxon";
 import * as momentImported from "moment";
 const moment = momentImported;
 import * as rx from "rxjs";
@@ -271,7 +272,7 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               // input niet volledig verwerkt
               return fed.LiteralValue(input, "string");
             } else {
-              return fed.LiteralValue(m.toDate(), "date");
+              return fed.LiteralValue(DateTime.fromJSDate(m.toDate()), "date");
             }
           })
       )
