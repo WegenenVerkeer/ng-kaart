@@ -39,13 +39,15 @@ interface Properties {
   readonly [key: string]: ValueType | Properties;
 }
 
-export namespace Row {
-  export const Field = (maybeValue: Option<ValueType>): Field => ({ maybeValue });
+export namespace Field {
+  export const create = (maybeValue: Option<ValueType>): Field => ({ maybeValue });
 
+  export const modify = (f: Endomorphism<ValueType>) => (field: Field): Field => Field.create(field.maybeValue.map(f));
+}
+
+export namespace Row {
   export const olFeatureLens: Lens<Row, ol.Feature> = Lens.fromPath<Row>()(["feature", "feature"]);
   export const idLens: Lens<Row, string> = Lens.fromPath<Row>()(["feature", "id"]);
-
-  const emptyField: Field = Field(option.none);
 
   // We zouden dit ook helemaal naar de NoSqlFsSource kunnen schuiven (met een Either om geen info te verliezen).
   const matchingTypeValue: PartialFunction2<any, ke.VeldInfo, ValueType> = (value, veldinfo) =>
@@ -74,7 +76,7 @@ export namespace Row {
     );
 
   const extractField: FunctionN<[Properties, ke.VeldInfo], Field> = (properties, veldinfo) =>
-    Field(nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo));
+    Field.create(nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo));
 
   export const extractFieldValue = (properties: Properties, veldinfo: ke.VeldInfo): Option<ValueType> =>
     nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo);

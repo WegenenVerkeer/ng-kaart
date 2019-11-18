@@ -1,3 +1,4 @@
+import { formatNumber } from "@angular/common";
 import { array, option, ord, record, setoid, traversable } from "fp-ts";
 import { Curried2, Endomorphism, flow, Function1, Function2, identity, not, Predicate } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
@@ -13,12 +14,14 @@ import { isNumber } from "util";
 import { Filter, FilterTotaal, match as FilterTotaalMatch, TotaalOpgehaald } from "../../filter";
 import { NosqlFsSource } from "../../source";
 import * as arrays from "../../util/arrays";
+import { formateerDate, formateerDateTime } from "../../util/date-time";
 import { equalToString } from "../../util/equal";
 import { Feature } from "../../util/feature";
-import { flowSpy, PartialFunction2 } from "../../util/function";
+import { PartialFunction2 } from "../../util/function";
 import { arrayTraversal, selectiveArrayTraversal } from "../../util/lenses";
 import * as ke from "../kaart-elementen";
 import { Viewinstellingen } from "../kaart-protocol-subscriptions";
+import { kaartLogger } from "../log";
 
 import {
   DataReady,
@@ -32,7 +35,7 @@ import {
   SortDirection
 } from "./data-provider";
 import { FieldSelection } from "./field-selection-model";
-import { Field, Fields, FieldsFormatSpec, Row, VeldenFormatter } from "./row-model";
+import { Field, Fields, FieldsFormatSpec, Row, ValueType, VeldenFormatter } from "./row-model";
 import { AsyncUpdate, SyncUpdate, Update } from "./update";
 
 export type ViewSourceMode = "Map" | "AllFeatures";
@@ -165,7 +168,7 @@ export namespace LaagModel {
     const geenWegLocatieValue = option.some("<Geen weglocatie>");
 
     const noLocationFieldsTransformer = (fs: FieldSelection[]): FieldSelection[] => array.cons(syntheticFieldSelection([]), fs);
-    const noLocationVeldTransformer = Row.addField(syntheticLocattionFieldKey, Row.Field(geenWegLocatieValue));
+    const noLocationVeldTransformer = Row.addField(syntheticLocattionFieldKey, Field.create(geenWegLocatieValue));
     const noLocationTransformers = [noLocationFieldsTransformer, noLocationVeldTransformer] as [
       Endomorphism<FieldSelection[]>,
       Endomorphism<Fields>
@@ -216,15 +219,44 @@ export namespace LaagModel {
     });
   };
 
-  const formatBoolean: Endomorphism<Field> = field => Row.Field(field.maybeValue.map(value => (value ? "JA" : "NEEN")));
-  const formatInteger: Endomorphism<Field> = field => Row.Field(field.maybeValue.map(value => Math.round(value as number)));
-  const formatDouble: Endomorphism<Field> = field => Row.Field(field.maybeValue.map(value => Math.round((value as number) * 100) / 100));
+  const safeDoubleFormat = (maybeFormat: Option<string>): string =>
+    maybeFormat
+      .map(format => {
+        // We validateren het formaat door het op een nummer te proberen. Dit wordt naar 1 maal uitgevoerd wanner het
+        // laagmodel geïnitialiseerd wordt, niet elke keer dat een nummer getoond moet worden.
+        try {
+          formatNumber(1.1, "nl-BE", format);
+          return format;
+        } catch {
+          return "1.2-2";
+        }
+      })
+      .getOrElse("1.2-2");
+  const formatNumberSafe = (format: string) => (value: ValueType): string => {
+    try {
+      return formatNumber(value as number, "nl-BE", format);
+    } catch {
+      kaartLogger.warn(`Waarde ${value} kan niet als een getal geïnterpreteerd worden`);
+      return "<geen getal>";
+    }
+  };
+
+  const formatBoolean: Endomorphism<Field> = Field.modify(value => (value ? "JA" : "NEEN"));
+  const formatInteger: Endomorphism<Field> = Field.modify(formatNumberSafe("0.0-0"));
+  const formatDouble: (maybeFormat: option.Option<string>) => Endomorphism<Field> = flow(
+    safeDoubleFormat,
+    formatNumberSafe,
+    Field.modify
+  );
+  const formatDate = (format: Option<string>): Endomorphism<Field> => Field.modify(formateerDate(format));
+  const formatDateTime = (format: Option<string>): Endomorphism<Field> => Field.modify(formateerDateTime(format));
   const rowFormat: Function1<ke.VeldInfo, Option<Endomorphism<Field>>> = vi =>
-    // vi.type === "boolean" ? option.some(formatBoolean) : option.none;
     ke.VeldInfo.matchWithFallback({
       boolean: () => option.some(formatBoolean),
       integer: () => option.some(formatInteger),
-      double: () => option.some(formatDouble),
+      double: () => option.some(formatDouble(option.fromNullable(vi.displayFormat))),
+      date: () => option.some(formatDate(option.fromNullable(vi.displayFormat))),
+      datetime: () => option.some(formatDateTime(option.fromNullable(vi.displayFormat))),
       fallback: () => option.none
     })(vi);
   const rowFormatsFromVeldinfos: Function1<ke.VeldInfo[], FieldsFormatSpec> = veldinfos =>
@@ -424,25 +456,22 @@ export namespace LaagModel {
     requestSequence: laag.nextPageSequence
   });
 
-  const maakRow: Curried2<LaagModel, ol.Feature, Option<Row>> = laag => feature => {
-    console.log("****maakRow", laag, feature);
-    return pipe(
+  const maakRow: Curried2<LaagModel, ol.Feature, Option<Row>> = laag => feature =>
+    pipe(
       Feature.featureWithIdAndLaagnaam(feature),
       option.map(featureWithIdAndLaagnaam => {
         const origVelden = Row.featureToFields(laag.veldinfos)(featureWithIdAndLaagnaam);
-
-        const velden = flow(
+        const velden = pipe(
+          origVelden,
           laag.veldenTransformer,
           laag.veldenFormatter
-        )(origVelden);
-
+        );
         return {
           feature: featureWithIdAndLaagnaam,
-          velden: velden
+          velden
         };
       })
     );
-  };
 
   const withFullExtent: Endomorphism<PageRequest> = pageRequest => ({
     ...pageRequest,
@@ -504,12 +533,10 @@ export namespace LaagModel {
         PageFetcher.pageFromAllFeatures(laag.visibleFeatures),
         updateLaagPage
       ),
-      flowSpy("****updateLaagPageDataFromVisible"),
       incrementNextPageSequence, // voorkom dat vroegere update deze overschrijft
       modifySourceLaagFeatureCount, // tel features na zoom, pan, etc.
       setLastPageNumberFromVisibleFeatures,
-      updatePendingLens.set(false),
-      flowSpy("****updateLaagPageDataFromVisible2")
+      updatePendingLens.set(false)
     )(laag)
   );
 

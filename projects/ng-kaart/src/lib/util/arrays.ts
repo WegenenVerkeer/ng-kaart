@@ -74,3 +74,5 @@ export const forAll: <A>(pred: Predicate<A>) => (as: A[]) => boolean = pred =>
 export const containsAll = <A>(eq: setoid.Setoid<A>) => (as: A[], bs: A[]): boolean => forAll((b: A) => array.elem(eq)(b, as))(bs);
 
 export const getStringsSetoid: Setoid<string[]> = array.getSetoid(setoid.setoidString);
+
+export const asSingleton = <A>(as: A[]): Option<A[]> => (as.length === 1 ? option.some(as) : option.none);

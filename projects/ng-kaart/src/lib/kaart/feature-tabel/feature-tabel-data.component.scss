@@ -114,6 +114,7 @@ $footer-height: 48px;
         background-color: white;
         color: $kaart-secondary-text-color;
         text-align: left;
+        justify-content: flex-start;
         border-bottom: 1px solid #e5e5e5;
         z-index: 2;
 
@@ -122,6 +123,10 @@ $footer-height: 48px;
           top: 0;
           z-index: 3;
           border-right: 1px solid #e5e5e5;
+        }
+
+        .align-right {
+          justify-content: flex-end;
         }
       }
 
@@ -150,6 +155,10 @@ $footer-height: 48px;
 
     .empty-field {
       background-color: inherit;
+    }
+
+    .align-right {
+      justify-content: flex-end;
     }
 
     .feature-table-data-no-data {

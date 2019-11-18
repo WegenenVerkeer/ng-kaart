@@ -581,7 +581,7 @@ export class FeatureDemoComponent {
     { isBasisVeld: true, label: "Tot refpunt", naam: "locatie.eind.opschrift", type: "double" },
     { isBasisVeld: true, label: "Tot afst", naam: "locatie.eind.afstand", type: "integer" },
     { isBasisVeld: true, label: "Tot Positie", naam: "locatie.eind.positie", type: "double" },
-    { isBasisVeld: true, label: "Lengte", naam: "locatie.lengte", type: "double" },
+    { isBasisVeld: true, label: "Lengte", naam: "locatie.lengte", type: "double", displayFormat: "1.0-0" }, // custom formaat
     { isBasisVeld: false, label: "Werkelijke lengte", naam: "werkelijkelengte", type: "double" },
     { isBasisVeld: false, label: "Bron Id", naam: "bronid", type: "string" },
     { isBasisVeld: false, label: "Opnamedatum", naam: "opnamedatum", type: "date", parseFormat: "dd/LL/yyyy", sqlFormat: "dd/MM/yyyy" },
