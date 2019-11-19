@@ -123,7 +123,7 @@ export class KaartComponent extends KaartComponentBase {
       tap(() => this.messageObsConsumer(this.msgSubj)), // Wie de messageObsConsumer @Input gezet heeft, krijgt een observable van messages
       map(() => this.initieelModel()),
       tap(model => {
-        this.innerModelChanges = modelChanges(model, this.modelChanger);
+        this.innerModelChanges = modelChanges(model, this.modelChanger, this.zone);
         this.tabelGeopend$ = this.modelChanges.tabelActiviteit$.pipe(map(state => state === "Opengeklapt"));
         this.innerAanwezigeElementen$ = this.modelChanges.uiElementSelectie$.pipe(
           scan(
