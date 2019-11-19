@@ -1,3 +1,5 @@
+import { registerLocaleData } from "@angular/common";
+import localeBe from "@angular/common/locales/nl-BE";
 import { NgModule } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { MatButtonToggleModule, MatDialogModule, MatSlideToggleModule } from "@angular/material";
@@ -17,6 +19,8 @@ import { PatKaartComponent } from "./pat-kaart.component";
 import { PerceelPopupComponent } from "./perceel-popup/perceel-popup.component";
 import { ProtractorComponent } from "./protractor.component";
 import { TestSectieComponent } from "./test-sectie.component";
+
+registerLocaleData(localeBe);
 
 @NgModule({
   declarations: [
