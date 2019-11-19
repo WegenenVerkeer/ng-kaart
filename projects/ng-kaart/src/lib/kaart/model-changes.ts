@@ -204,7 +204,7 @@ const viewinstellingen: Function1<ol.Map, prt.Viewinstellingen> = olmap => ({
 export const featuresOpIdToArray = (perLaag: prt.KaartFeaturesOpId): ol.Feature[] =>
   array.map((f: FeatureWithIdAndLaagnaam) => f.feature)([...perLaag.values()]);
 
-export const modelChanges: Function3<KaartWithInfo, ModelChanger, NgZone, ModelChanges> = (model, changer, zone) => {
+export const modelChanges = (model: KaartWithInfo, changer: ModelChanger, zone: NgZone): ModelChanges => {
   // We updaten de features niet constant. We doen dat omdat we naar de buitenwereld de illusie willen wekken dat
   // features als een groep geselecteerd worden. Openlayers daarentegen genereert afzonderlijke events per feature dat
   // toegevoegd of verwijderd wordt. Daarom nemen wij een tweetrapsaanpak waarbij we eerst een collectie opbouwen met
