@@ -18,7 +18,7 @@ import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { debounceTime, map, share, tap } from "rxjs/operators";
 
-import { KaartInfoBoodschapUiSelector } from "../kaart/info-boodschappen/kaart-info-boodschappen.component";
+import { BevraagKaartOpties } from "../kaart/kaart-bevragen/kaart-bevragen-opties";
 import { Adres, BevragenErrorReason, KaartLocaties, progressFailure, WegLocaties } from "../kaart/kaart-bevragen/laaginfo.model";
 import { forChangedValue, KaartComponentBase } from "../kaart/kaart-component-base";
 import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
@@ -473,7 +473,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
     forChangedValue(
       changes,
       "onderdrukKaartBevragenBoodschappen",
-      onderdruk => this.dispatch(prt.ZetUiElementOpties(KaartInfoBoodschapUiSelector, { kaartBevragenOnderdrukt: onderdruk })),
+      onderdruk => this.dispatch(BevraagKaartOpties.ZetOptiesCmd({ kaartBevragenOnderdrukt: onderdruk })),
       (value: boolean) => val.bool(value, this._onderdrukKaartBevragenBoodschappen)
     );
     forChangedValue(

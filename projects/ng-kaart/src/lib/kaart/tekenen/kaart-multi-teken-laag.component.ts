@@ -14,6 +14,7 @@ import {
   filter,
   map,
   pairwise,
+  sample,
   scan,
   share,
   startWith,
@@ -24,6 +25,7 @@ import {
   withLatestFrom
 } from "rxjs/operators";
 
+import { Coordinate } from "../../coordinaten";
 import * as clr from "../../stijl/colour";
 import { disc, solidLine } from "../../stijl/common-shapes";
 import { Transparantie } from "../../transparantieeditor/transparantie";
@@ -38,8 +40,8 @@ import {
   stringMapOptional,
   StringMapped
 } from "../../util/lenses";
-import { subSpy } from "../../util/operators";
 import { forEach } from "../../util/option";
+import { BevraagKaartOpties, BevraagKaartUiSelector } from "../kaart-bevragen/kaart-bevragen-opties";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-messages";
@@ -213,7 +215,7 @@ function drawStateTransformer(
   // features die de versie ophogen moeten opvangen.
   const handleFeatureMove: Consumer1<ol.events.Event> = () => dispatchDrawOps(MovePoint());
 
-  const handleDoubleClick: Consumer1<ol.events.Event> = evt => dispatchCmd(DrawOpsCmd(StopDrawing()));
+  const handleDoubleClick: Consumer1<ol.events.Event> = () => dispatchCmd(DrawOpsCmd(StopDrawing()));
 
   const handleSelect: Consumer1<ol.events.Event> = evt => {
     const selectEvent = evt as ol.interaction.Select.Event;
@@ -278,6 +280,7 @@ function drawStateTransformer(
         legende: none,
         stijlInLagenKiezer: none,
         filterinstellingen: none,
+        laagtabelinstellingen: none,
         wrapper: kaartLogOnlyWrapper
       });
       dispatchCmd({
@@ -290,6 +293,7 @@ function drawStateTransformer(
         legende: none,
         stijlInLagenKiezer: none,
         filterinstellingen: none,
+        laagtabelinstellingen: none,
         wrapper: kaartLogOnlyWrapper
       });
       drawInteractions.forEach(inter => state.map.addInteraction(inter));
@@ -593,8 +597,10 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
       share()
     );
 
-    // We willen vlugge opeenvolgingen van add en remove interpreteren als een trigger om te stoppen met tekenen, maar toch
-    // in de tekenmode blijven.
+    // We willen vlugge opeenvolgingen van add en remove interpreteren als een
+    // trigger om te stoppen met tekenen, maar toch in de tekenmode blijven. We
+    // kunnen op dit niveau niet gebruik maken van de OL double click event. Die
+    // interfereert bovendien met de andere event handlers.
     const doubleClick$ = waypointObsSubj.pipe(
       timeInterval(),
       pairwise(),
@@ -603,10 +609,11 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
           curr.interval < 500 &&
           prev.value.type === "AddWaypoint" &&
           curr.value.type === "RemoveWaypoint" &&
-          prev.value.waypoint.id === curr.value.waypoint.id
+          prev.value.waypoint.id === curr.value.waypoint.id &&
+          Coordinate.equal(prev.value.waypoint.location, curr.value.waypoint.location)
         );
       }),
-      tap(([prev, curr]) => {
+      tap(([prev]) => {
         const addWayPoint = prev.value;
         this.internalDrawOpsSubj.next(AddPoint(addWayPoint.waypoint.location));
       })
@@ -668,5 +675,17 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
         doubleClick$
       )
     );
+
+    // TODO werkt selector weg
+    const onderdrukBoodschapOpties$ = this.accumulatedOpties$(BevraagKaartUiSelector).pipe(
+      sample(this.initialising$),
+      tap(() => {
+        this.dispatch(BevraagKaartOpties.ZetOptiesCmd({ infoServiceOnderdrukt: true, kaartBevragenOnderdrukt: true }));
+        // this.dispatch(ZetMaarkeerKaartklikOptiesCmd({ disabled: true }));
+      }),
+      switchMap(opties => this.destroying$.pipe(tap(() => this.dispatch(BevraagKaartOpties.ZetOptiesCmd(opties)))))
+    );
+
+    onderdrukBoodschapOpties$.subscribe();
   }
 }

@@ -132,6 +132,13 @@ export namespace LaagModel {
     fieldSelectionsLens.composeTraversal(selectiveArrayTraversal(fs => fs.name === fieldName));
   const fieldSelectionTraversal: Traversal<LaagModel, FieldSelection> = fieldSelectionsLens.composeTraversal(arrayTraversal());
 
+  export const selectedFieldSelectionGetter: LaagModelGetter<FieldSelection[]> = new Getter(
+    flow(
+      fieldSelectionsGetter.get,
+      array.filter(FieldSelection.isSelected)
+    )
+  );
+
   // Bepaalde velden moeten samengevoegd worden tot 1 synthetisch locatieveld. Daarvoor moeten we enerzijds de headers
   // aanpassen en anderzijds elke Row die binnen komt. Er is altijd een locatieveld. Ook als er geen enkel veld gevonden
   // kan worden dat de basis voor een locatie kan zijn. Het locatieveld is dan niet synthetisch maar virtueel. Er is
@@ -241,6 +248,42 @@ export namespace LaagModel {
       selectedFieldNames => record.mapWithIndex(fieldFormatter(selectedFieldNames, rowFormats))
     );
 
+  const sortOnFirstField: Endomorphism<FieldSelection[]> = indexArray<FieldSelection>()
+    .index(0)
+    .composeLens(FieldSelection.maybeSortDirectionLens)
+    .set(option.some("ASCENDING") as Option<SortDirection>);
+
+  const setFieldSelectionsWithFallbackToFirst = (
+    maybeSelectedFieldNames: Option<Set<string>>,
+    maybeSortSpec: Option<{ veldnaam: string; sort: SortDirection }>
+  ): Endomorphism<FieldSelection[]> =>
+    flow(
+      arrayTraversal<FieldSelection>().modify(fs =>
+        flow(
+          FieldSelection.selectedLens.modify(currentlySelected =>
+            maybeSelectedFieldNames.fold(currentlySelected, selectedFieldNames => selectedFieldNames.has(fs.name))
+          ),
+          FieldSelection.maybeSortDirectionLens.set(
+            pipe(
+              maybeSortSpec,
+              option.filter(ss => ss.veldnaam === fs.name),
+              option.map(ss => ss.sort)
+            )
+          )
+        )(fs)
+      ),
+      // Het eerste veld moet altijd geselecteerd zijn
+      FieldSelection.selectFirstField,
+      // Er moet juist op 1 veld gesorteerd zijn
+      fieldSelections =>
+        pipe(
+          fieldSelections,
+          array.findFirst(fs => fs.sortDirection.isSome()),
+          option.isSome,
+          hasSortField => (hasSortField ? fieldSelections : sortOnFirstField(fieldSelections))
+        )
+    );
+
   export const create: PartialFunction2<ke.ToegevoegdeVectorLaag, Viewinstellingen, LaagModel> = (laag, viewinstellingen) =>
     ke.ToegevoegdeVectorLaag.noSqlFsSourceFold.headOption(laag).map(source => {
       // We mogen niet zomaar alle velden gebruiken. Om te beginnen enkel de basisvelden en de locatievelden moeten
@@ -248,18 +291,15 @@ export namespace LaagModel {
       const veldinfos = ke.ToegevoegdeVectorLaag.veldInfosLens.get(laag);
       const [fieldsTransformer, veldenTransformer] = locationTransformer(veldinfos);
 
-      const sortOnFirstField = indexArray<FieldSelection>()
-        .index(0)
-        .composeLens(FieldSelection.maybeSortDirectionLens)
-        .set(option.some("ASCENDING") as Option<SortDirection>);
+      const selectedFieldNamesFromInstellingen = laag.tabelLaagInstellingen.map(ins => ins.zichtbareVelden);
+      const sortFieldFromInstellingen = laag.tabelLaagInstellingen.chain(ins => array.head(ins.veldsorteringen));
 
       const fieldSelections = pipe(
         veldinfos,
         FieldSelection.fieldsFromVeldinfo,
         fieldsTransformer,
         FieldSelection.selectBaseFields,
-        FieldSelection.selectFirstField, // Indien er geen native locatie veld is, of dat zou geen basisveld zijn
-        sortOnFirstField
+        setFieldSelectionsWithFallbackToFirst(selectedFieldNamesFromInstellingen, sortFieldFromInstellingen)
       );
 
       const firstField = array.take(1, fieldSelections);
@@ -288,7 +328,7 @@ export namespace LaagModel {
         maxZoom: laag.bron.maxZoom,
         page: option.none,
         nextPageSequence: 0,
-        updatePending: true,
+        updatePending: false,
         viewinstellingen,
         veldenTransformer: veldenTransformer,
         visibleFeatures: [],
@@ -501,7 +541,9 @@ export namespace LaagModel {
     )(laag)
   );
 
-  // Pas uiteindelijk de huidige Page aan indien de volledige data gebruikt wordt.
+  // Pas uiteindelijk de huidige Page aan indien de volledige data gebruikt wordt. TODO als de laagPageRequest gelijk is
+  // aan de vorige, dan hoeven we de request eigenlijk niet uit te voeren. Met uitzondering van requests die effectief
+  // bedoeld zijn om een data refresh te doen of te herproberen na een fout-conditie.
   const updateLaagPageDataFromServer: LaagModelUpdate = Update.create(
     flow(
       updatePendingLens.set(true),
@@ -749,4 +791,13 @@ export namespace LaagModel {
       ),
       getOutOfSelectedOnlyModeIfNoFeaturesSelected
     );
+
+  export const updateSelectedFieldsAndSortings = (
+    selectedFieldNames: Set<string>,
+    maybeSortSpec: Option<{ veldnaam: string; sort: SortDirection }>
+  ): LaagModelUpdate => {
+    return updatePageDataAfter(
+      fieldSelectionsLens.modify(setFieldSelectionsWithFallbackToFirst(option.some(selectedFieldNames), maybeSortSpec))
+    );
+  };
 }

@@ -51,11 +51,11 @@ export interface FietspadSelectie {
     trigger("enterAnimation", [
       transition(":enter", [
         style({ opacity: 0, "max-height": 0 }),
-        animate("0.35s cubic-bezier(.62,.28,.23,.99)", style({ opacity: 1, "max-height": "1000px" }))
+        animate("0.2s cubic-bezier(.62,.28,.23,.99)", style({ opacity: 1, "max-height": "1000px" }))
       ]),
       transition(":leave", [
         style({ opacity: 1, "max-height": "1000px" }),
-        animate("0.35s cubic-bezier(.62,.28,.23,.99)", style({ opacity: 0, "max-height": 0 }))
+        animate("0.15s cubic-bezier(.62,.28,.23,.99)", style({ opacity: 0, "max-height": 0 }))
       ])
     ])
   ],
@@ -905,16 +905,7 @@ export class FeatureDemoComponent {
   }
 
   featuresGeselecteerd(event: ol.Feature[], selectieKaart: KaartClassicComponent) {
-    // verwijder de bestaande info boodschappen voor features die niet meer geselecteerd zijn
-    const nietLangerGeselecteerdeFeatures: ol.Feature[] = array.difference(Feature.setoidFeaturePropertyId)(
-      this.geselecteerdeFeatures,
-      event
-    );
-    array.mapOption(nietLangerGeselecteerdeFeatures, Feature.propertyId).forEach(id => selectieKaart.verbergIdentifyInformatie(id));
-
-    // voeg de nieuwe toe
-    this.geselecteerdeFeatures = getUnderlyingFeatures(event);
-    this.geselecteerdeFeatures.forEach(feature => selectieKaart.toonIdentifyInformatie(feature));
+    console.log("Features geselecteerd", event);
   }
 
   busy(event: any) {

@@ -1,10 +1,17 @@
-<div *ngIf="(zichtbaar$ | async)">
-  <button mat-icon-button
-          class="tabel-knop"
-          (click)="toggle()"
-          [matTooltip]="(isActief$ | async) ? 'Stop selectie op kaart' : ' Start selectie op kaart'"
-          matTooltipPosition="right"
+<div *ngIf="(templateData$ | async) as data">
+  <button
+    mat-icon-button
+    class="tabel-knop"
+    (click)="toggle()"
+    [matTooltip]="
+      data.actief ? 'Stop selectie op kaart' : 'Start selectie op kaart'
+    "
+    matTooltipPosition="right"
   >
-    <mat-icon [class.actief]="(isActief$ | async)" aria-label="selecteer features" svgIcon="selecteer-via-polygon"></mat-icon>
+    <mat-icon
+      [class.actief]="data.actief"
+      aria-label="selecteer features"
+      svgIcon="selecteer-via-polygon"
+    ></mat-icon>
   </button>
 </div>

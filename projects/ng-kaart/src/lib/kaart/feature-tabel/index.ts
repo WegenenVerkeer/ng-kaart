@@ -64,4 +64,5 @@ export class FeatureTabelModule {
   }
 }
 
+export * from "./feature-tabel-inklap.component";
 export * from "./feature-tabel-overzicht.component";

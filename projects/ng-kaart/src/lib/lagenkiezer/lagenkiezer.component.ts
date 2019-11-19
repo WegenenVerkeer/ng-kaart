@@ -12,13 +12,12 @@ import { debounceTime, distinctUntilChanged, filter, map, scan, shareReplay, sta
 import { Filter as fltr } from "../filter/filter-model";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { isToegevoegdeVectorLaag, ToegevoegdeLaag, ToegevoegdeVectorLaag } from "../kaart/kaart-elementen";
-import { kaartLogOnlyWrapper, TabelStateMsg } from "../kaart/kaart-internal-messages";
+import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import { LegendeItem } from "../kaart/kaart-legende";
 import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
-import { TabelState } from "../kaart/model-changes";
 import { isAanpassingBezig } from "../kaart/stijleditor/state";
-import { ofType } from "../util/operators";
+import { TabelActiviteit } from "../kaart/tabel-state";
 
 export const LagenUiSelector = "Lagenkiezer";
 
@@ -35,7 +34,7 @@ export interface LagenUiOpties {
   readonly kleur?: ol.Color;
 }
 
-export const DefaultOpties: LagenUiOpties = {
+export const defaultOpties: LagenUiOpties = {
   headerTitel: "Legende en lagen",
   initieelDichtgeklapt: false,
   toonLegende: false,
@@ -88,13 +87,12 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
   readonly lagenLaag$: rx.Observable<Array<ToegevoegdeLaag>>;
   readonly lagenMetLegende$: rx.Observable<Array<ToegevoegdeLaag>>;
   readonly lagenMetFilter$: rx.Observable<Array<ToegevoegdeVectorLaag>>;
-  // readonly filterTabHeader$: rx.Observable<string>;
   readonly heeftDivider$: rx.Observable<boolean>;
   readonly geenLagen$: rx.Observable<boolean>;
   readonly geenLegende$: rx.Observable<boolean>;
   readonly heeftFilters$: rx.Observable<boolean>;
   readonly opties$: rx.Observable<LagenUiOpties>;
-  readonly tabelState$: rx.Observable<TabelState>;
+  readonly tabelState$: rx.Observable<TabelActiviteit>;
 
   constructor(parent: KaartComponent, ngZone: NgZone, private readonly cdr: ChangeDetectorRef, private readonly sanitizer: DomSanitizer) {
     super(parent, ngZone);
@@ -138,31 +136,23 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
       map(vlagen => array.filter(vlagen, vlaag => fltr.isDefined(vlaag.filterinstellingen.spec)))
     );
 
-    // this.filterTabHeader$ = this.lagenMetFilter$.pipe(
-    //   map(tvlagen => `Filters (${tvlagen.filter(vlaag => vlaag.filterinstellingen.actief).length}/${tvlagen.length})`)
-    // );
-
     this.heeftFilters$ = this.lagenMetFilter$.pipe(
       map(not(array.isEmpty)),
       shareReplay(1)
     );
-    this.opties$ = this.modelChanges.uiElementOpties$.pipe(
-      filter(o => o.naam === LagenUiSelector),
-      map(o => o.opties as LagenUiOpties),
-      startWith(DefaultOpties),
-      scan((prevOptions, newOptions) => ({ ...prevOptions, ...newOptions }), DefaultOpties),
-      shareReplay(1)
-    );
+    this.dispatch(prt.InitUiElementOpties(LagenUiSelector, defaultOpties));
+    this.opties$ = this.accumulatedOpties$<LagenUiOpties>(LagenUiSelector).pipe();
 
-    this.tabelState$ = this.modelChanges.tabelState$.pipe(map(msg => msg.state));
+    this.tabelState$ = this.modelChanges.tabelActiviteit$;
 
-    // Klap dicht wanneer laagstijleditor actief wordt
+    // Klap dicht wanneer laagstijleditor actief wordt. TODO via collapseUIRequest$
     this.bindToLifeCycle(this.modelChanges.laagstijlaanpassingState$.pipe(filter(isAanpassingBezig))).subscribe(
       () => (this.dichtgeklapt = true)
     );
 
     // Klap dicht wanneer tabel opengeklapt wordt
-    this.bindToLifeCycle(this.kaartComponent.tabelGeopendDoorKnop$).subscribe(() => (this.dichtgeklapt = true));
+    const collapse$ = this.modelChanges.collapseUIRequest$;
+    this.bindToLifeCycle(collapse$).subscribe(() => (this.dichtgeklapt = true));
   }
 
   ngOnInit() {

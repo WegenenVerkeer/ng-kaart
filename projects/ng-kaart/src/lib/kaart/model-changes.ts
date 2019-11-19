@@ -17,17 +17,18 @@ import {
   share,
   shareReplay,
   startWith,
-  switchMap
+  switchMap,
+  tap
 } from "rxjs/operators";
 
 import { roundCoordinate } from "../coordinaten";
 import { FilterAanpassingState as FilteraanpassingState, GeenFilterAanpassingBezig } from "../filter/filter-aanpassing-state";
 import { NosqlFsSource } from "../source/nosql-fs-source";
 import { GeenTransparantieaanpassingBezig, TransparantieaanpassingState } from "../transparantieeditor/state";
-import { collectOption, scan2 } from "../util";
 import { Feature, FeatureWithIdAndLaagnaam } from "../util/feature";
 import * as tilecacheMetadataDb from "../util/indexeddb-tilecache-metadata";
 import { observableFromOlEvents } from "../util/ol-observable";
+import { collectOption, scan2 } from "../util/operators";
 import { updateBehaviorSubject } from "../util/subject-update";
 import { ZoekAntwoord, ZoekerMetWeergaveopties, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
 
@@ -35,13 +36,15 @@ import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
 import { envParams } from "./kaart-config";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
-import { UiElementOpties } from "./kaart-protocol-commands";
+import { Laagtabelinstellingen } from "./kaart-protocol";
 import { GeselecteerdeFeatures, Viewinstellingen } from "./kaart-protocol-subscriptions";
 import { KaartWithInfo } from "./kaart-with-info";
 import { HoverFeature } from "./kaart-with-info-model";
 import * as loc from "./mijn-locatie/kaart-mijn-locatie.component";
 import { GeenLaagstijlaanpassing, LaagstijlaanpassingState } from "./stijleditor/state";
+import * as TabelState from "./tabel-state";
 import { DrawOps } from "./tekenen/tekenen-model";
+import { OptiesOpUiElement } from "./ui-element-opties";
 
 export interface UiElementSelectie {
   readonly naam: string;
@@ -72,17 +75,6 @@ export interface MijnLocatieStateChange {
   readonly event: loc.Event;
 }
 
-export type TabelState = "NietMogelijk" | "Opengeklapt" | "Dichtgeklapt";
-
-export interface TabelStateChange {
-  readonly state: TabelState;
-  readonly doorKnop: boolean;
-}
-
-export function TabelStateChange(state: TabelState, doorKnop = false): TabelStateChange {
-  return { state, doorKnop };
-}
-
 /**
  * Dit is een verzameling van subjects waarmee de reducer wijzingen kan laten weten aan de child components.
  * Dit is isomorf aan het zetten van de overeenkomstige attributen op het model en die laten volgen. Het probleem daarbij
@@ -92,9 +84,9 @@ export function TabelStateChange(state: TabelState, doorKnop = false): TabelStat
  */
 export interface ModelChanger {
   readonly uiElementSelectieSubj: rx.Subject<UiElementSelectie>;
-  readonly uiElementOptiesSubj: rx.Subject<UiElementOpties>;
+  readonly optiesOpUiElementSubj: rx.BehaviorSubject<OptiesOpUiElement>;
   readonly viewPortSizeSubj: rx.Subject<null>;
-  readonly lagenOpGroepSubj: ke.OpLaagGroep<rx.Subject<ke.ToegevoegdeLaag[]>>;
+  readonly lagenOpGroepSubj: ke.OpLaagGroep<rx.BehaviorSubject<ke.ToegevoegdeLaag[]>>;
   readonly laagVerwijderdSubj: rx.Subject<ke.ToegevoegdeLaag>;
   readonly mijnLocatieZoomDoelSubj: rx.Subject<Option<number>>;
   readonly actieveModusSubj: rx.Subject<Option<string>>;
@@ -114,17 +106,18 @@ export interface ModelChanger {
   readonly laatsteCacheRefreshSubj: rx.BehaviorSubject<LaatsteCacheRefresh>;
   readonly mijnLocatieStateChangeSubj: rx.Subject<MijnLocatieStateChange>;
   readonly zoombereikChangeSubj: rx.Subject<null>;
-  readonly tabelStateSubj: rx.Subject<TabelStateChange>;
+  readonly tabelActiviteitSubj: rx.BehaviorSubject<TabelState.TabelActiviteit>;
   readonly dataloadBusySubj: rx.BehaviorSubject<boolean>;
   readonly forceProgressBarSubj: rx.BehaviorSubject<boolean>;
+  readonly collapseUIRequestSubj: rx.Subject<null>; // Indien nodig uit te breiden met doen en/of bron
   readonly inErrorSubj: rx.BehaviorSubject<boolean>;
+  readonly tabelLaagInstellingenSubj: rx.Subject<Laagtabelinstellingen>;
 }
 
 // Hieronder wordt een paar keer BehaviourSubject gebruikt. Dat is equivalent met, maar beknopter dan, een startWith + shareReplay
 export const ModelChanger: () => ModelChanger = () => ({
   uiElementSelectieSubj: new rx.Subject<UiElementSelectie>(),
-  // Om zeker te zijn dat late subscribers wel hun config messages krijgen.
-  uiElementOptiesSubj: new rx.ReplaySubject<UiElementOpties>(100, 2000),
+  optiesOpUiElementSubj: new rx.BehaviorSubject<OptiesOpUiElement>(OptiesOpUiElement.create()),
   viewPortSizeSubj: new rx.Subject<null>(),
   lagenOpGroepSubj: {
     Achtergrond: new rx.BehaviorSubject<ke.ToegevoegdeLaag[]>([]),
@@ -151,16 +144,19 @@ export const ModelChanger: () => ModelChanger = () => ({
   laatsteCacheRefreshSubj: new rx.BehaviorSubject({}),
   mijnLocatieStateChangeSubj: new rx.Subject<MijnLocatieStateChange>(),
   zoombereikChangeSubj: new rx.Subject<null>(),
-  tabelStateSubj: new rx.BehaviorSubject(TabelStateChange("NietMogelijk")),
+  tabelActiviteitSubj: new rx.BehaviorSubject<TabelState.TabelActiviteit>(TabelState.Onbeschikbaar),
   dataloadBusySubj: new rx.BehaviorSubject<boolean>(false),
   forceProgressBarSubj: new rx.BehaviorSubject<boolean>(false),
-  inErrorSubj: new rx.BehaviorSubject<boolean>(false)
+  collapseUIRequestSubj: new rx.Subject<null>(),
+  inErrorSubj: new rx.BehaviorSubject<boolean>(false),
+  tabelLaagInstellingenSubj: new rx.Subject<Laagtabelinstellingen>()
 });
 
 export interface ModelChanges {
   readonly uiElementSelectie$: rx.Observable<UiElementSelectie>;
-  readonly uiElementOpties$: rx.Observable<UiElementOpties>;
+  readonly optiesOpUiElement$: rx.Observable<OptiesOpUiElement>;
   readonly viewinstellingen$: rx.Observable<Viewinstellingen>;
+  readonly tabelLaagInstellingen$: rx.Observable<Laagtabelinstellingen>;
   readonly lagenOpGroep: ke.OpLaagGroep<rx.Observable<ke.ToegevoegdeLaag[]>>;
   readonly laagVerwijderd$: rx.Observable<ke.ToegevoegdeLaag>;
   readonly geselecteerdeFeatures$: rx.Observable<GeselecteerdeFeatures>;
@@ -189,7 +185,8 @@ export interface ModelChanges {
   readonly dataloadBusy$: rx.Observable<boolean>;
   readonly forceProgressBar$: rx.Observable<boolean>;
   readonly inError$: rx.Observable<boolean>;
-  readonly tabelState$: rx.Observable<TabelStateChange>;
+  readonly tabelActiviteit$: rx.Observable<TabelState.TabelActiviteit>;
+  readonly collapseUIRequest$: rx.Observable<null>;
 }
 
 const viewinstellingen: Function1<ol.Map, prt.Viewinstellingen> = olmap => ({
@@ -326,6 +323,8 @@ export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> 
     shareReplay(1)
   );
 
+  const tabelLaagInstellingen$ = changer.tabelLaagInstellingenSubj;
+
   const dragInfo$ = observableFromOlEvents<ol.MapBrowserEvent>(model.map, "pointerdrag").pipe(
     debounceTime(100),
     map(event => ({
@@ -422,7 +421,7 @@ export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> 
   // geobserveerd is (of beter, kan geobserveerd zijn). Dit is verwant met het async posten op het model subject.
   return {
     uiElementSelectie$: changer.uiElementSelectieSubj.pipe(observeOn(rx.asapScheduler)),
-    uiElementOpties$: changer.uiElementOptiesSubj.pipe(observeOn(rx.asapScheduler)),
+    optiesOpUiElement$: changer.optiesOpUiElementSubj.pipe(observeOn(rx.asapScheduler)),
     laagVerwijderd$: changer.laagVerwijderdSubj.pipe(observeOn(rx.asapScheduler)),
     viewinstellingen$: viewinstellingen$.pipe(observeOn(rx.asapScheduler)),
     lagenOpGroep: lagenOpGroep$,
@@ -448,10 +447,12 @@ export const modelChanges: Function2<KaartWithInfo, ModelChanger, ModelChanges> 
     getekendeGeometry$: changer.getekendeGeometrySubj.pipe(observeOn(rx.asapScheduler)),
     precacheProgress$: changer.precacheProgressSubj.pipe(observeOn(rx.asapScheduler)),
     laatsteCacheRefresh$: changer.laatsteCacheRefreshSubj.pipe(observeOn(rx.asapScheduler)),
-    tabelState$: changer.tabelStateSubj.pipe(observeOn(rx.asapScheduler)),
+    tabelActiviteit$: changer.tabelActiviteitSubj.pipe(observeOn(rx.asapScheduler)),
+    tabelLaagInstellingen$: changer.tabelLaagInstellingenSubj.pipe(observeOn(rx.asapScheduler)),
     mijnLocatieStateChange$: changer.mijnLocatieStateChangeSubj.pipe(observeOn(rx.asapScheduler)),
     dataloadBusy$: changer.dataloadBusySubj.pipe(observeOn(rx.asapScheduler)),
     forceProgressBar$: changer.forceProgressBarSubj.pipe(observeOn(rx.asapScheduler)),
-    inError$: changer.inErrorSubj.pipe(observeOn(rx.asapScheduler))
+    inError$: changer.inErrorSubj.pipe(observeOn(rx.asapScheduler)),
+    collapseUIRequest$: changer.collapseUIRequestSubj.pipe(observeOn(rx.asapScheduler))
   };
 };

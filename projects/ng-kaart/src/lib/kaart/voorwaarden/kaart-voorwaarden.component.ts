@@ -1,6 +1,7 @@
 import { Component, NgZone } from "@angular/core";
 import * as rx from "rxjs";
-import { filter, map, startWith } from "rxjs/operators";
+
+import * as prt from "../kaart-protocol";
 
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { KaartComponent } from "../kaart.component";
@@ -29,10 +30,7 @@ export class KaartVoorwaardenComponent extends KaartChildComponentBase {
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
-    this.voorwaardenOpties$ = this.modelChanges.uiElementOpties$.pipe(
-      filter(optie => optie.naam === VoorwaardenSelector),
-      map(o => o.opties as VoorwaardenOpties),
-      startWith(defaultOpties)
-    );
+    this.dispatch(prt.InitUiElementOpties(VoorwaardenSelector, defaultOpties));
+    this.voorwaardenOpties$ = this.accumulatedOpties$(VoorwaardenSelector);
   }
 }

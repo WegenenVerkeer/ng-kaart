@@ -1,9 +1,11 @@
 import { Component, Input, NgZone } from "@angular/core";
-
-import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
-import { KaartComponent } from "../kaart/kaart.component";
+import { option } from "fp-ts";
+import { DateTime } from "luxon";
 
 import { Filter as fltr } from "../filter/filter-model";
+import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
+import { KaartComponent } from "../kaart/kaart.component";
+import { formateerDate } from "../util/date-time";
 
 type BinaryComparisonOperatorMapping = { [P in fltr.BinaryComparisonOperator]: string };
 type UnaryComparisonOperatorMapping = { [P in fltr.UnaryComparisonOperator]: string };
@@ -38,7 +40,7 @@ const booleanComparisonOperatorMapping = {
 })
 export class FilterTermComponent extends KaartChildComponentBase {
   property: string;
-  value: string;
+  value: string | number;
   operator: string;
 
   @Input()
@@ -54,7 +56,15 @@ export class FilterTermComponent extends KaartChildComponentBase {
           this.value = "";
           this.operator = booleanComparisonOperatorMapping[term.operator] || "???";
         } else {
-          this.value = term.value.value.toString();
+          this.value = fltr.matchLiteral({
+            boolean: literal => (literal.value ? "Waar" : "Niet waar"),
+            integer: literal => literal.value.toString(),
+            double: literal => literal.value.toString(),
+            string: literal => literal.value.toString(),
+            date: literal => formateerDate(option.some("dd/MM/yyyy"))(literal.value as DateTime),
+            datetime: () => "-", // nog niet ondersteund
+            quantity: () => "-" // FIXME -> te doen
+          })(term.value);
           this.operator = binaryComparisonOperatorMapping[term.operator] || "???";
         }
     }

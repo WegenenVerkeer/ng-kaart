@@ -3,20 +3,21 @@ import * as ol from "openlayers";
 
 import { Tekenresultaat, TekenSettings } from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
+import { Laagtabelinstellingen } from "./kaart-protocol";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import { kaartLogger } from "./log";
-import { TabelStateChange } from "./model-changes";
 
 // Dit zijn de types die als payload van KaartInternalMsg gebruikt kunnen worden.
 export type KaartInternalSubMsg =
   | AchtergrondtitelGezetMsg
   | ActieveModusAangepastMsg
   | GeometryChangedMsg
+  | IdentifyInfoBoodschapGeslotenMsg
   | InfoBoodschappenMsg
   | KaartClickMsg
   | MijnLocatieZoomdoelGezetMsg
   | SubscribedMsg
-  | TabelStateMsg
+  | LaagtabelinstellingenMsg
   | TekenInfoboodschapGeslotenMsg
   | TekenMsg
   | VerwijderTekenFeatureMsg
@@ -75,9 +76,9 @@ export interface InfoBoodschappenMsg {
   readonly infoBoodschappen: Map<string, InfoBoodschap>;
 }
 
-export interface TabelStateMsg {
-  readonly type: "TabelState";
-  readonly state: TabelStateChange;
+export interface LaagtabelinstellingenMsg {
+  readonly type: "Laagtabelinstellingen";
+  readonly instellingen: Laagtabelinstellingen;
 }
 
 export interface VerwijderTekenFeatureMsg {
@@ -87,6 +88,11 @@ export interface VerwijderTekenFeatureMsg {
 
 export interface TekenInfoboodschapGeslotenMsg {
   readonly type: "TekenInfoboodschapGesloten";
+}
+
+export interface IdentifyInfoBoodschapGeslotenMsg {
+  readonly type: "IdentifyInfoBoodschapGesloten";
+  readonly featureId: string;
 }
 
 function KaartInternalMsg(payload: Option<KaartInternalSubMsg>): KaartInternalMsg {
@@ -117,10 +123,11 @@ function InfoBoodschappenMsg(infoBoodschappen: Map<string, InfoBoodschap>): Info
   return { type: "InfoBoodschappen", infoBoodschappen: infoBoodschappen };
 }
 
-export const tabelStateMsgGen = (state: TabelStateChange) => KaartInternalMsg(some(TabelStateMsg(state)));
+export const tabelLaagInstellingenMsgGen = (instellingen: Laagtabelinstellingen): KaartInternalMsg =>
+  KaartInternalMsg(some(LaagtabelinstellingenMsg(instellingen)));
 
-function TabelStateMsg(state: TabelStateChange): TabelStateMsg {
-  return { type: "TabelState", state };
+function LaagtabelinstellingenMsg(instellingen: Laagtabelinstellingen): LaagtabelinstellingenMsg {
+  return { type: "Laagtabelinstellingen", instellingen };
 }
 
 export const kaartClickWrapper = (clickCoordinaat: ol.Coordinate) => KaartInternalMsg(some(KaartClickMsg(clickCoordinaat)));
@@ -194,3 +201,11 @@ export function TekenInfoboodschapGeslotenMsg(): TekenInfoboodschapGeslotenMsg {
 }
 
 export const tekenInfoboodschapGeslotenMsgWrapper = () => KaartInternalMsg(some(TekenInfoboodschapGeslotenMsg()));
+
+const IdentifyInfoBoodschapGeslotenMsg = (featureId: string): IdentifyInfoBoodschapGeslotenMsg => ({
+  type: "IdentifyInfoBoodschapGesloten",
+  featureId
+});
+
+export const identifyInfoBoodschapGeslotenMsgGen = (featureId: string) =>
+  KaartInternalMsg(some(IdentifyInfoBoodschapGeslotenMsg(featureId)));

@@ -86,6 +86,13 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
       clientUpdateSubj.next(TableModel.liftLaagUpdate(titel)(update));
     const laagInTablesUpdate$: rx.Observable<TableModel.TableModelUpdate> = clientUpdateSubj;
 
+    // Naast het zetten van geselecteerde lagen en sorteringen intern in de FeatureTabelDataComponent, kan dit ook
+    // extern gebeuren via messages naar de reducer. In de praktijk is dat tijdens het laden van een laag. We luisteren
+    // ook op de changes die daardoor gegeneerd zijn. Het is uiteraard belangrijk dat we geen oneindige lus maken. Dit
+    // zou kunnen omdat wijzingen ook gedispatched worden en dus ook via de modelchanges terug binnen komen. De
+    // distintUntilChanged in veranderLaagInstellingenCmd$ is dus onontbeerlijk.
+    const externeInstellingUpdate$ = this.modelChanges.tabelLaagInstellingen$.pipe(map(TableModel.updateLaagInstellingen));
+
     const modelUpdate$: rx.Observable<TableModel.TableModelUpdate> = rx.merge(
       delayedUpdates$,
       updateLagen$,
@@ -93,7 +100,8 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
       filterGezet$,
       featureSelection$,
       zichtbareFeatures$,
-      laagInTablesUpdate$
+      laagInTablesUpdate$,
+      externeInstellingUpdate$
     );
 
     // Dit is het zenuwcenter van de hele component en zijn afhankelijke componenten. Alle andere observables moeten
@@ -138,9 +146,9 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
       distinctUntilChanged(array.getSetoid(setoid.setoidString).equals)
     );
 
-    const tabelVisible$ = this.modelChanges.tabelState$.pipe(
+    const tabelVisible$ = this.modelChanges.tabelActiviteit$.pipe(
       delay(200), // Omdat helemaal in het begin van de animatie het icoontje anders onder de kaart valt (wegens abs pos)
-      map(state => state.state === "Opengeklapt")
+      map(activiteit => activiteit === "Opengeklapt")
     );
 
     this.templateData$ = rx.combineLatest(laagTitles$, tabelVisible$).pipe(

@@ -2,7 +2,7 @@ import { constant, Curried2, Endomorphism, flow, Function1, Function2, Function3
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 
 import { Filter as fltr } from "../filter/filter-model";
-import { formateerDate, formateerJsDate } from "../util/date-time";
+import { formateerDate, formateerDateAsDefaultDate } from "../util/date-time";
 import { PartialFunction1 } from "../util/function";
 
 export namespace FilterCql {
@@ -37,7 +37,7 @@ export namespace FilterCql {
 
   const doubleGenerator: Generator<fltr.Literal> = literal => fltr.numberValue(literal.value).map(value => value.toString());
 
-  const dateTimeGenerator: Generator<fltr.Literal> = literal => fltr.dateValue(literal.value).map(formateerJsDate);
+  const dateTimeGenerator: Generator<fltr.Literal> = literal => fltr.dateValue(literal.value).map(formateerDateAsDefaultDate);
 
   // In principe heeft de gebruiker niet veel zeggenschap over de properties. Maar ingeval van eigen data kan dat dus om
   // het even wat zijn (voor zover het in een shape file past). We verwachten dat de gebruikers geen "rare" kolomnamen
@@ -52,10 +52,7 @@ export namespace FilterCql {
     double: doubleGenerator,
     date: dateTimeGenerator,
     datetime: dateTimeGenerator,
-    quantity: () => none,
-    geometry: () => none,
-    json: () => none,
-    url: () => none
+    quantity: () => none // FIXME
   });
 
   const stringBinaryOperator: Function4<fltr.Property, fltr.BinaryComparisonOperator, fltr.Literal, boolean, Option<string>> = (
@@ -73,11 +70,11 @@ export namespace FilterCql {
       fallback: () => none // de andere operators worden niet ondersteund
     })(operator);
 
-  const datetimeBinaryOperator: Function3<fltr.Property, fltr.BinaryComparisonOperator, fltr.Literal, Option<string>> = (
-    property,
-    operator,
-    literal
-  ) => {
+  const datetimeBinaryOperator = (
+    property: fltr.Property,
+    operator: fltr.BinaryComparisonOperator,
+    literal: fltr.Literal
+  ): Option<string> => {
     const format = property.sqlFormat.getOrElse("DD/MM/YYYY");
     if (operator === "within") {
       return fltr
@@ -100,11 +97,7 @@ export namespace FilterCql {
     largerOrEqual: ">="
   };
 
-  const numberBinaryOperator: Function3<fltr.Property, fltr.BinaryComparisonOperator, fltr.Literal, Option<string>> = (
-    property,
-    operator,
-    literal
-  ) =>
+  const numberBinaryOperator = (property: fltr.Property, operator: fltr.BinaryComparisonOperator, literal: fltr.Literal): Option<string> =>
     fromNullable(numberBinaryOperatorSymbols[operator]).chain(symbol =>
       literalCql(literal).map(value => `${propertyRef(property)} ${symbol} ${value}`)
     );

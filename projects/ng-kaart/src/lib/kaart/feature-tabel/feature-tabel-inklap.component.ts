@@ -1,18 +1,17 @@
 import { animate, state, style, transition, trigger } from "@angular/animations";
-import { AfterViewInit, Component, ElementRef, HostListener, NgZone, ViewChild } from "@angular/core";
+import { Component, ElementRef, HostListener, NgZone, ViewChild } from "@angular/core";
+import { option } from "fp-ts";
 import * as rx from "rxjs";
-import { filter, map } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, pairwise, sample, share } from "rxjs/operators";
 
-import { ofType } from "../../util";
-import { observeOnAngular } from "../../util/observe-on-angular";
+import { catOptions, collectOption, scan2 } from "../../util";
+import { IdentifyOpties } from "../kaart-bevragen/kaart-identify-opties";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
-import { KaartInternalMsg, TabelStateMsg, tabelStateMsgGen } from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
-import { TabelStateChange } from "../model-changes";
+import * as TabelState from "../tabel-state";
 
 import { FeatureTabelOverzichtComponent } from "./feature-tabel-overzicht.component";
-import { TableModel } from "./table-model";
 
 @Component({
   selector: "awv-feature-tabel-inklap",
@@ -34,12 +33,12 @@ import { TableModel } from "./table-model";
           height: "0px"
         })
       ),
-      transition("zichtbaar => niet-zichtbaar", [animate("0.5s")]),
-      transition("niet-zichtbaar => zichtbaar", [animate("0.5s")])
+      transition("zichtbaar => niet-zichtbaar", [animate("0.35s cubic-bezier(.62,.28,.23,.99)")]),
+      transition("niet-zichtbaar => zichtbaar", [animate("0.35s cubic-bezier(.62,.28,.23,.99)")])
     ])
   ]
 })
-export class FeatureTabelInklapComponent extends KaartChildComponentBase implements AfterViewInit {
+export class FeatureTabelInklapComponent extends KaartChildComponentBase {
   public tabelZichtbaar = false;
   public magGetoondWorden$: rx.Observable<boolean>;
   public huidigeHoogte = 0;
@@ -63,44 +62,44 @@ export class FeatureTabelInklapComponent extends KaartChildComponentBase impleme
       this.huidigeHoogte = this.standaardHoogte = (hoogte / 5) * 2;
     });
 
-    this.magGetoondWorden$ = this.internalMessage$.pipe(
-      ofType<TabelStateMsg>("TabelState"),
-      map(msg => msg.state),
-      map(state => state.state !== "NietMogelijk")
-    );
-
-    const opengeklaptDoorKnop$ = this.internalMessage$.pipe(
-      ofType<TabelStateMsg>("TabelState"), //
-      observeOnAngular(this.zone),
-      map(msg => msg.state),
-      // We willen alleen de events die door een klik op de knop komen. De rest handelen we intern zelf al goed af.
-      filter(state => state.doorKnop),
-      map(state => state.state === "Opengeklapt")
-    );
+    this.magGetoondWorden$ = this.modelChanges.tabelActiviteit$.pipe(map(activiteit => activiteit !== "Onbeschikbaar"));
 
     // volg de TabelState om te openen/sluiten
-    this.bindToLifeCycle(opengeklaptDoorKnop$).subscribe(tabelZichtbaar => {
-      this.tabelZichtbaar = tabelZichtbaar;
-      if (this.tabelZichtbaar) {
+    const tabelZichtbaar$ = this.modelChanges.tabelActiviteit$.pipe(
+      map(activiteit => activiteit === "Opengeklapt"),
+      distinctUntilChanged(),
+      share()
+    );
+
+    this.bindToLifeCycle(tabelZichtbaar$).subscribe(zichtbaar => {
+      this.tabelZichtbaar = zichtbaar;
+      if (zichtbaar) {
         this.huidigeHoogte = this.standaardHoogte;
       }
     });
-  }
 
-  ngAfterViewInit() {
-    // volg de lagen en stuur "NietMogelijk" event indien niet getoond moet worden.
-    this.bindToLifeCycle(
-      rx.combineLatest(this.magGetoondWorden$, this.tabelOverzicht.tableModel$.pipe(map(TableModel.hasLagen)))
-    ).subscribe(([isEnabled, moetEnabledWorden]) => {
-      if (isEnabled !== moetEnabledWorden) {
-        this.tabelZichtbaar = false;
-        if (moetEnabledWorden) {
-          this.dispatch(prt.TabelStateChangeCmd(TabelStateChange("Dichtgeklapt")));
-        } else {
-          this.dispatch(prt.TabelStateChangeCmd(TabelStateChange("NietMogelijk")));
-        }
-      }
-    });
+    const overgangen$ = this.modelChanges.tabelActiviteit$.pipe(
+      pairwise(),
+      share()
+    );
+    const openNaarDicht$ = overgangen$.pipe(filter(([prev, cur]) => prev === TabelState.Opengeklapt && cur === TabelState.Dichtgeklapt));
+    const dichtNaarOpen$ = overgangen$.pipe(filter(([prev, cur]) => prev === TabelState.Dichtgeklapt && cur === TabelState.Opengeklapt));
+    const identifyOpties$ = this.modelChanges.optiesOpUiElement$.pipe(map(IdentifyOpties.getOption));
+    const identifyOptiesByOpen$ = identifyOpties$.pipe(sample(dichtNaarOpen$));
+
+    const identifyOndrukInit: { readonly memo: option.Option<IdentifyOpties>; readonly action: option.Option<IdentifyOpties> } = {
+      memo: option.none,
+      action: option.none
+    };
+    const onderdrukUpdateCmd$ = scan2(
+      identifyOptiesByOpen$,
+      openNaarDicht$,
+      (_, optie) => ({ memo: optie, action: option.some({ identifyOnderdrukt: true }) }),
+      (o, _) => ({ memo: option.none, action: o.memo }),
+      identifyOndrukInit
+    ).pipe(collectOption(({ action }) => option.map(IdentifyOpties.ZetOptiesCmd)(action)));
+
+    this.dispatchCmdsInViewReady(onderdrukUpdateCmd$);
   }
 
   public toggleTabelZichtbaar() {
@@ -162,21 +161,17 @@ export class FeatureTabelInklapComponent extends KaartChildComponentBase impleme
   private zetTabelZichtbaar(zichtbaar: boolean) {
     if (this.tabelZichtbaar !== zichtbaar) {
       this.tabelZichtbaar = zichtbaar;
-      this.dispatch(prt.TabelStateChangeCmd(TabelStateChange(zichtbaar ? "Opengeklapt" : "Dichtgeklapt")));
+      this.dispatch(zichtbaar ? prt.OpenTabelCmd() : prt.SluitTabelCmd());
     }
   }
 
   @HostListener("document:mouseup", ["$event"])
-  onMouseUp(e: MouseEvent) {
+  onMouseUp(_: MouseEvent) {
     this.bezigMetSlepen = false;
   }
 
   onTouchEnd(e: TouchEvent) {
     this.bezigMetSlepen = false;
     e.stopPropagation();
-  }
-
-  protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
-    return [prt.TabelStateSubscription(tabelStateMsgGen)];
   }
 }

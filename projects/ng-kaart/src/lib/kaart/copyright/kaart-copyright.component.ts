@@ -1,9 +1,11 @@
 import { Component, NgZone } from "@angular/core";
 import * as rx from "rxjs";
-import { filter, map, startWith } from "rxjs/operators";
+import { map } from "rxjs/operators";
 
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { KaartComponent } from "../kaart.component";
+
+import * as prt from "../kaart-protocol";
 
 export const CopyrightUISelector = "Copyright";
 
@@ -27,10 +29,8 @@ export class KaartCopyrightComponent extends KaartChildComponentBase {
 
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
-    this.copyright$ = this.modelChanges.uiElementOpties$.pipe(
-      filter(optie => optie.naam === CopyrightUISelector),
-      map(o => o.opties.copyright),
-      startWith(defaultOpties.copyright)
-    );
+    this.dispatch(prt.InitUiElementOpties(CopyrightUISelector, defaultOpties));
+
+    this.copyright$ = this.accumulatedOpties$<CopyrightOpties>(CopyrightUISelector).pipe(map(o => o.copyright));
   }
 }

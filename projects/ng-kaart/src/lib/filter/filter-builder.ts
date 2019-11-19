@@ -1,10 +1,11 @@
-import { option } from "fp-ts";
+import { eq, option } from "fp-ts";
 import * as array from "fp-ts/lib/Array";
 import { array as ArrayMonad } from "fp-ts/lib/Array";
 import {
   Curried2,
   Curried3,
   Endomorphism,
+  flow,
   Function1,
   Function2,
   Function3,
@@ -15,8 +16,9 @@ import {
   Predicate,
   Refinement
 } from "fp-ts/lib/function";
-import { fromNullable, fromPredicate, none, Option, some } from "fp-ts/lib/Option";
+import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import { ordString } from "fp-ts/lib/Ord";
+import { pipe } from "fp-ts/lib/pipeable";
 import {
   contramap,
   fromEquals,
@@ -27,11 +29,12 @@ import {
   setoidString,
   strictEqual
 } from "fp-ts/lib/Setoid";
+import { DateTime } from "luxon";
 import { fromTraversable, Lens, Prism, Traversal } from "monocle-ts";
 
 import * as ke from "../kaart/kaart-elementen";
 import * as arrays from "../util/arrays";
-import { parseDate } from "../util/date-time";
+import { formateerDateAsDefaultDate, parseDate } from "../util/date-time";
 import { applySequential, PartialFunction1 } from "../util/function";
 import * as maps from "../util/maps";
 import * as matchers from "../util/matchers";
@@ -181,7 +184,7 @@ export namespace FilterEditor {
     readonly selectedValue: SelectedValue;
   }
 
-  const Property: Function5<fltr.TypeType, string, string, string | undefined, string[], Property> = (
+  const Property: Function5<fltr.TypeType, string, string, Option<string>, string[], Property> = (
     typetype,
     name,
     label,
@@ -192,7 +195,7 @@ export namespace FilterEditor {
     type: typetype,
     ref: name,
     label,
-    sqlFormat: fromNullable(sqlFormat),
+    sqlFormat,
     distinctValues
   });
 
@@ -202,10 +205,10 @@ export namespace FilterEditor {
     valueType
   });
 
-  export const literalValueStringRenderer: Function1<LiteralValue, string> = literalValue =>
+  export const literalValueStringRenderer = (literalValue: LiteralValue): string =>
     fltr.matchTypeTypeWithFallback({
       date: () => {
-        return (<Date>literalValue.value).toLocaleDateString("nl-BE");
+        return formateerDateAsDefaultDate(literalValue.value as DateTime);
       },
       quantity: () => {
         const quantity = <fltr.Quantity>literalValue.value;
@@ -236,18 +239,31 @@ export namespace FilterEditor {
         fromNullable(veld.html).isNone() &&
         hasAcceptableName(veld)
     );
-  const properties: Function1<ke.ToegevoegdeVectorLaag, Property[]> = laag =>
-    veldinfos(laag)
-      .map(vi =>
-        Property(
-          vi.type,
-          vi.naam,
-          fromNullable(vi.label).getOrElse(vi.naam),
-          vi.sqlFormat,
-          array.sort(ordString)(arrays.fromNullable(vi.uniekeWaarden))
+
+  type SimplePropertyType = Exclude<fltr.TypeType, "quantity">;
+  const isAcceptedVeldType: Refinement<ke.VeldType, SimplePropertyType> = (t): t is SimplePropertyType =>
+    array.elem(eq.eqString)(t, ["string", "boolean", "double", "integer", "date", "datetime"]);
+
+  const asAcceptedVeldType: PartialFunction1<ke.VeldType, fltr.TypeType> = option.fromRefinement(isAcceptedVeldType);
+
+  const properties: (laag: ke.ToegevoegdeVectorLaag) => Property[] = flow(
+    veldinfos,
+    array.filterMap(vi =>
+      pipe(
+        vi.type,
+        asAcceptedVeldType,
+        option.map(typetype =>
+          Property(
+            typetype,
+            vi.naam,
+            fromNullable(vi.label).getOrElse(vi.naam),
+            fromNullable(vi.sqlFormat),
+            array.sort(ordString)(arrays.fromNullable(vi.uniekeWaarden))
+          )
         )
       )
-      .filter(property => ["string", "boolean", "double", "integer", "date", "datetime"].includes(property.type));
+    )
+  );
 
   // Initieer aanmaak van een Comparison
   const FieldSelection: Function1<ke.ToegevoegdeVectorLaag, TermEditor> = laag => ({ kind: "Field", properties: properties(laag) });
@@ -300,7 +316,7 @@ export namespace FilterEditor {
 
   const dateOperators = [
     BinaryComparisonOperator("op", "op", "equality", "date"),
-    BinaryComparisonOperator("niet", "niet op", "inequality", "date"),
+    BinaryComparisonOperator("niet op", "niet op", "inequality", "date"),
     BinaryComparisonOperator("tot", "<", "smaller", "date"),
     BinaryComparisonOperator("tot en met", "<=", "smallerOrEqual", "date"),
     BinaryComparisonOperator("na", ">", "larger", "date"),
@@ -503,7 +519,7 @@ export namespace FilterEditor {
       ["string", "datetime"].includes(selectedValue.valueType) ? selectedValue.value.toString().length > 0 : true
     );
 
-    // Wanneer de datum correct is, komt die binnen als een Literal met een type "date". Maar als dat niet zo is  met
+    // Wanneer de datum correct is, komt die binnen als een Literal met een type "date". Maar als dat niet zo is met
     // een type "string". Behalve wanneer de gebruiker zelf aan het typen geslagen is. Dan komt de waarde binnen als een
     // "string", of die nu geldig is of niet. Een geldige datum willen we in dat geval omzetten naar een Date.
     const validateDate: PartialFunction1<SelectedValue, SelectedValue> = selectedValue =>
@@ -511,9 +527,7 @@ export namespace FilterEditor {
         .fromPredicate<SelectedValue>(
           selectedValue => selection.selectedProperty.type !== "date" || ["date", "quantity"].includes(selectedValue.valueType)
         )(selectedValue)
-        .orElse(() =>
-          parseDate(option.some("d/M/yyyy"))(selectedValue.value.toString()).map(date => LiteralValue("date")(date.toJSDate()))
-        );
+        .orElse(() => parseDate(option.some("d/M/yyyy"))(selectedValue.value.toString()).map(date => LiteralValue("date")(date)));
 
     const validateDistinct: PartialFunction1<SelectedValue, SelectedValue> = option.fromPredicate(selectedValue =>
       selection.valueSelector.kind === "selection"

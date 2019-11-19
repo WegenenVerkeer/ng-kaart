@@ -7,16 +7,17 @@ import { Transparantie } from "../transparantieeditor/transparantie";
 import { TypedRecord } from "../util/typed-record";
 import { ZoekerMetWeergaveopties, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
 
-import { BareValidationWrapper, KaartLocaties, KaartMsg, Subscription, ValidationWrapper } from ".";
+import { BareValidationWrapper, KaartLocaties, KaartMsg, Laagtabelinstellingen, Subscription, ValidationWrapper } from ".";
 import { CachedFeatureLookup } from "./cache/lookup";
 import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { Legende } from "./kaart-legende";
 import { InfoBoodschap } from "./kaart-with-info-model";
 import * as loc from "./mijn-locatie/kaart-mijn-locatie.component";
-import { TabelStateChange } from "./model-changes";
 import * as ss from "./stijl-selector";
+import { TabelActiviteit } from "./tabel-state";
 import { DrawOps } from "./tekenen/tekenen-model";
+import { OptiesRecord } from "./ui-element-opties";
 
 export type Command<Msg extends KaartMsg> =
   | AbortTileLoadingCmd
@@ -37,27 +38,25 @@ export type Command<Msg extends KaartMsg> =
   | KiesAchtergrondCmd<Msg>
   | MaakLaagOnzichtbaarCmd<Msg>
   | MaakLaagZichtbaarCmd<Msg>
-  | ToonMeldingCmd
   | MijnLocatieStateChangeCmd
-  | OpenTabelCmd
   | PublishKaartLocatiesCmd
   | ReactiveerSelectieModusCmd
   | RegistreerErrorCmd
   | SelecteerFeaturesCmd
   | SluitInfoBoodschapCmd
   | SluitPanelenCmd
-  | SluitTabelCmd
   | StopTransparantieBewerkingCmd
   | StopVectorFilterBewerkingCmd
   | StopVectorlaagstijlBewerkingCmd
   | SubscribeCmd<Msg>
-  | TabelStateChangeCmd
   | ToonAchtergrondKeuzeCmd<Msg>
   | ToonInfoBoodschapCmd
+  | ToonMeldingCmd
   | UnsubscribeCmd
   | VeranderExtentCmd
   | VeranderMiddelpuntCmd
   | VeranderRotatieCmd
+  | VeranderLaagtabelinstellingenCmd
   | VeranderViewportCmd
   | VeranderZoomCmd<Msg>
   | VerbergAchtergrondKeuzeCmd<Msg>
@@ -91,6 +90,7 @@ export type Command<Msg extends KaartMsg> =
   | ZetDataloadBusyCmd
   | ZetFilter<Msg>
   | ZetFocusOpKaartCmd
+  | ZetForceProgressBarCmd
   | ZetGetekendeGeometryCmd
   | ZetLaagLegendeCmd<Msg>
   | ZetLaagSelecteerbaarCmd<Msg>
@@ -98,9 +98,9 @@ export type Command<Msg extends KaartMsg> =
   | ZetOffline<Msg>
   | ZetStijlSpecVoorLaagCmd<Msg>
   | ZetStijlVoorLaagCmd<Msg>
+  | ZetTabeltoestandCmd
   | ZetTransparantieVoorLaagCmd<Msg>
   | ZetUiElementOpties
-  | ZetForceProgressBarCmd
   | ZetZoomBereikCmd
   | ZoekCmd<Msg>
   | ZoekGekliktCmd;
@@ -126,6 +126,11 @@ export interface PositieAanpassing {
   readonly positie: number;
 }
 
+export interface VeranderLaagtabelinstellingenCmd {
+  readonly type: "VeranderLaagtabelinstellingen";
+  readonly instellingen: Laagtabelinstellingen;
+}
+
 export interface VoegLaagToeCmd<Msg extends KaartMsg> {
   readonly type: "VoegLaagToe";
   readonly positie: number;
@@ -136,6 +141,7 @@ export interface VoegLaagToeCmd<Msg extends KaartMsg> {
   readonly legende: Option<Legende>;
   readonly stijlInLagenKiezer: Option<string>;
   readonly filterinstellingen: Option<ke.Laagfilterinstellingen>;
+  readonly laagtabelinstellingen: Option<Laagtabelinstellingen>;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -495,7 +501,8 @@ export interface VerwijderUiElement {
 export interface ZetUiElementOpties {
   readonly type: "ZetUiElementOpties";
   readonly naam: string;
-  readonly opties: any;
+  readonly opties: OptiesRecord;
+  readonly initOnly: boolean; // zet enkel indien opties voor deze selector nog niet gezet is
 }
 
 export interface ZetDataloadBusyCmd {
@@ -596,17 +603,9 @@ export interface MijnLocatieStateChangeCmd {
   readonly event: loc.Event;
 }
 
-export interface TabelStateChangeCmd {
-  readonly type: "TabelStateChange";
-  readonly state: TabelStateChange;
-}
-
-export interface OpenTabelCmd {
-  readonly type: "OpenTabel";
-}
-
-export interface SluitTabelCmd {
-  readonly type: "SluitTabel";
+export interface ZetTabeltoestandCmd {
+  readonly type: "ZetTabeltoestand";
+  readonly toestand: TabelActiviteit;
 }
 
 export interface ZetTransparantieVoorLaagCmd<Msg extends TypedRecord> {
@@ -649,6 +648,7 @@ export function VoegLaagToeCmd<Msg extends KaartMsg>(
   legende: Option<Legende>,
   stijlInLagenKiezer: Option<string>,
   filterinstellingen: Option<ke.Laagfilterinstellingen>,
+  laagtabelinstellingen: Option<Laagtabelinstellingen>,
   wrapper: BareValidationWrapper<Msg>
 ): VoegLaagToeCmd<Msg> {
   return {
@@ -661,6 +661,7 @@ export function VoegLaagToeCmd<Msg extends KaartMsg>(
     legende,
     stijlInLagenKiezer,
     filterinstellingen,
+    laagtabelinstellingen,
     wrapper
   };
 }
@@ -774,6 +775,10 @@ export function VeranderRotatieCmd(rotatie: number, animationDuration: Option<nu
 
 export function VeranderExtentCmd(extent: ol.Extent): VeranderExtentCmd {
   return { type: "VeranderExtent", extent };
+}
+
+export function VeranderLaagtabelinstellingenCmd(instellingen: Laagtabelinstellingen): VeranderLaagtabelinstellingenCmd {
+  return { type: "VeranderLaagtabelinstellingen", instellingen };
 }
 
 export function RegistreerErrorCmd(inError: boolean): RegistreerErrorCmd {
@@ -926,8 +931,12 @@ export function VerwijderUiElement(naam: string): VerwijderUiElement {
   return { type: "VerwijderUiElement", naam };
 }
 
-export function ZetUiElementOpties(naam: string, opties: any): ZetUiElementOpties {
-  return { type: "ZetUiElementOpties", naam, opties };
+export function ZetUiElementOpties(naam: string, opties: OptiesRecord): ZetUiElementOpties {
+  return { type: "ZetUiElementOpties", naam, opties, initOnly: false };
+}
+
+export function InitUiElementOpties(naam: string, opties: any): ZetUiElementOpties {
+  return { type: "ZetUiElementOpties", naam, opties, initOnly: true };
 }
 
 export function SelecteerFeaturesCmd(features: ol.Feature[]): SelecteerFeaturesCmd {
@@ -1020,10 +1029,6 @@ export function MijnLocatieStateChangeCmd(oudeState: loc.State, nieuweState: loc
   return { type: "MijnLocatieStateChange", oudeState, nieuweState, event };
 }
 
-export function TabelStateChangeCmd(state: TabelStateChange): TabelStateChangeCmd {
-  return { type: "TabelStateChange", state };
-}
-
 export function ZoekCmd<Msg extends KaartMsg>(opdracht: Zoekopdracht, wrapper: BareValidationWrapper<Msg>): ZoekCmd<Msg> {
   return { type: "Zoek", opdracht, wrapper };
 }
@@ -1040,10 +1045,14 @@ export function ZetZoomBereikCmd(minZoom: number, maxZoom: number): ZetZoomBerei
   return { type: "ZetZoomBereik", minZoom, maxZoom };
 }
 
-export function OpenTabelCmd(): OpenTabelCmd {
-  return { type: "OpenTabel" };
+export function OpenTabelCmd(): ZetTabeltoestandCmd {
+  return { type: "ZetTabeltoestand", toestand: "Opengeklapt" };
 }
 
-export function SluitTabelCmd(): SluitTabelCmd {
-  return { type: "SluitTabel" };
+export function SluitTabelCmd(): ZetTabeltoestandCmd {
+  return { type: "ZetTabeltoestand", toestand: "Dichtgeklapt" };
+}
+
+export function PlaatsTabelInSluimertoestandCmd(): ZetTabeltoestandCmd {
+  return { type: "ZetTabeltoestand", toestand: "Sluimerend" };
 }
