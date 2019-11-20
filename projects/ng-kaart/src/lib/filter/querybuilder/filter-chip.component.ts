@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, Output } from "@angular/core";
 import { Endomorphism } from "fp-ts/lib/function";
 
 import { FilterEditor as fed } from "../filter-builder";
+import { literalValueStringRenderer } from "../rederer-helper";
 
 @Component({
   selector: "awv-filter-chip",
@@ -45,7 +46,7 @@ export class FilterChipComponent {
 
   completedValue(): string {
     return this.editor.kind === "CompletedWithValue" && this.editor.valueSelector.kind !== "empty"
-      ? fed.literalValueStringRenderer(this.editor.selectedValue)
+      ? literalValueStringRenderer(this.editor.selectedValue)
       : "";
   }
 }

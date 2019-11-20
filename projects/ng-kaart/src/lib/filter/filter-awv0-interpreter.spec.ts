@@ -1,7 +1,7 @@
 import { option } from "fp-ts";
 import { eqString } from "fp-ts/lib/Eq";
-import { Function1, Function2, Lazy } from "fp-ts/lib/function";
-import { fromNullable, none, some } from "fp-ts/lib/Option";
+import { Function1, Lazy } from "fp-ts/lib/function";
+import { DateTime } from "luxon";
 
 import { Consumer1, Consumer2 } from "../util/function";
 import { NoOptionRecord, optionsToUndefined } from "../util/option";
@@ -173,6 +173,48 @@ describe("De filterinterpreter", () => {
       const result = AwvV0FilterInterpreters.jsonAwv0Definition(def);
       expect(result.isSuccess()).toBe(true);
       expect(result.getOrElse(undefined)).toEqual(fixOptionals(def));
+    });
+    it("moet een filter met 1 'within' kunnen verwerken", () => {
+      const def = {
+        kind: "ExpressionFilter",
+        name: "testFilter",
+        expression: {
+          kind: "BinaryComparison",
+          operator: "within",
+          property: { ...property(), type: "date" },
+          value: { ...literal, type: "range", value: { unit: "year", magnitude: 3 } },
+          caseSensitive: false
+        }
+      };
+      const result = AwvV0FilterInterpreters.jsonAwv0Definition(def);
+      expect(result.isSuccess()).toBe(true);
+      expect(result.getOrElse(undefined)).toEqual(fixOptionals(def));
+    });
+    it("moet een filter met 1 '<=' date kunnen verwerken", () => {
+      const def = {
+        kind: "ExpressionFilter",
+        name: "testFilter",
+        expression: {
+          kind: "BinaryComparison",
+          operator: "smallerOrEqual",
+          property: { ...property(), type: "date" },
+          value: { ...literal, type: "date", value: "31/12/2019" },
+          caseSensitive: false
+        }
+      };
+      const result = AwvV0FilterInterpreters.jsonAwv0Definition(def);
+      expect(result.isSuccess()).toBe(true);
+      const exprValue = result.getOrElse(undefined);
+      expect(exprValue.kind).toEqual("ExpressionFilter");
+      const expr = exprValue as fltr.ExpressionFilter;
+      expect(expr.expression.kind).toEqual("BinaryComparison");
+      const comp = expr.expression as fltr.BinaryComparison;
+      expect(comp.operator).toBe("smallerOrEqual");
+      expect(comp.value.type).toBe("date");
+      const dateValue = comp.value.value as DateTime;
+      expect(dateValue.year).toEqual(DateTime.local(2019, 12, 31).year);
+      expect(dateValue.month).toEqual(DateTime.local(2019, 12, 31).month);
+      expect(dateValue.day).toEqual(DateTime.local(2019, 12, 31).day);
     });
     it("moet een filter met 1 'and' kunnen verwerken", () => {
       const and = {
@@ -351,7 +393,23 @@ describe("De filterinterpreter", () => {
       expect(result.isFailure()).toBe(true);
       expect(result.fold(msgs => msgs.find(m => m.endsWith("heeft geen veld 'property'")), undefined)).toBeTruthy();
     });
-    it("moet een fout geven wanneer het type van property en waarde niet overeenkomen", () => {
+    it("moet een fout geven wanneer een literal van het range type geen Range object bevat", () => {
+      const def = {
+        kind: "ExpressionFilter",
+        name: "testFilter",
+        expression: {
+          kind: "BinaryComparison",
+          operator: "within",
+          property: { ...property(), type: "date" },
+          value: { ...literal, type: "range", value: "01/01/2019" },
+          caseSensitive: false
+        }
+      };
+      const result = AwvV0FilterInterpreters.jsonAwv0Definition(def);
+      expect(result.isFailure()).toBe(true);
+      expect(result.fold(msgs => msgs.includes("De operator, property en de waarde komen niet overeen"), undefined)).toBe(true);
+    });
+    it("moet een fout geven wanneer het type van de operator, property en waarde niet overeenkomen", () => {
       const eq: Object = {
         kind: "ExpressionFilter",
         name: "testFilter",

@@ -1,15 +1,16 @@
 import { ChangeDetectorRef, Component, ElementRef, NgZone, ViewChild } from "@angular/core";
 import { FormControl, ValidationErrors, Validators } from "@angular/forms";
 import { MatAutocompleteTrigger } from "@angular/material";
+import { apply } from "fp-ts";
 import * as array from "fp-ts/lib/Array";
 import { Endomorphism, Function1, Refinement } from "fp-ts/lib/function";
 import * as option from "fp-ts/lib/Option";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import * as ord from "fp-ts/lib/Ord";
 import { Ord } from "fp-ts/lib/Ord";
+import { pipe } from "fp-ts/lib/pipeable";
 import { DateTime } from "luxon";
 import * as momentImported from "moment";
-const moment = momentImported;
 import * as rx from "rxjs";
 import {
   debounceTime,
@@ -27,6 +28,7 @@ import {
   tap,
   withLatestFrom
 } from "rxjs/operators";
+import { isString } from "util";
 
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { mobile } from "../kaart/kaart-config";
@@ -38,12 +40,14 @@ import { asap } from "../util/asap";
 import { isNotNull, isNotNullObject } from "../util/function";
 import { isOfKind } from "../util/kinded";
 import { parseDouble, parseInteger } from "../util/number";
-import { catOptions, forEvery, subSpy } from "../util/operators";
+import { catOptions, forEvery } from "../util/operators";
 import { nonEmptyString } from "../util/string";
 
 import { FilterAanpassingBezig, isAanpassingBezig } from "./filter-aanpassing-state";
 import { FilterEditor as fed } from "./filter-builder";
 import { Filter as fltr } from "./filter-model";
+
+const moment = momentImported;
 
 const autoCompleteSelectieVerplichtValidator: Function1<FormControl, ValidationErrors | null> = control => {
   if (typeof control.value === "string") {
@@ -125,6 +129,9 @@ export class FilterEditorComponent extends KaartChildComponentBase {
   readonly autocompleteWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
 
   readonly datumWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
+
+  readonly rangeMagnitudeWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
+  readonly rangeUnitWaardeControl = new FormControl({ value: null, disabled: true }, [Validators.required]);
 
   readonly ongeldigeFilter$: rx.Observable<boolean>;
 
@@ -288,33 +295,34 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       map(input => parseDouble(input).map(fed.LiteralValue("double")))
     );
 
-    const filterEmptyStrings = option.fromPredicate(nonEmptyString);
-    const quantity$: rx.Observable<Option<fed.LiteralValue>> = subSpy("****quantity$")(
-      rx
-        .combineLatest(
-          forControlValue(this.integerWaardeControl).pipe(
-            distinctUntilChanged(),
-            map(parseInteger)
-          ),
-          forControlValue(this.dropdownWaardeControl).pipe(
-            map(fromNullable),
-            map(option.filter(o => typeof o === "string")),
-            map(option.chain(filterEmptyStrings))
+    const range$: rx.Observable<Option<fed.LiteralValue>> = rx
+      .combineLatest(
+        forControlValue(this.rangeMagnitudeWaardeControl).pipe(
+          distinctUntilChanged(),
+          map(parseInteger)
+        ),
+        forControlValue(this.rangeUnitWaardeControl).pipe(
+          map(fromNullable),
+          map(option.filter(isString)),
+          map(option.filter(nonEmptyString))
+        )
+      )
+      .pipe(
+        map(([maybeMagnitude, maybeUnit]) =>
+          pipe(
+            apply.sequenceT(option.option)(maybeMagnitude, maybeUnit),
+            option.map(([magnitude, unit]) => fltr.Range.create(unit, magnitude)),
+            option.map(fed.LiteralValue("range"))
           )
         )
-        .pipe(
-          map(([maybeMagnitude, maybeSIUnit]) =>
-            maybeSIUnit.chain(siUnit => maybeMagnitude.map(magnitude => fltr.Quantity(siUnit, magnitude))).map(fed.LiteralValue("quantity"))
-          )
-        )
-    );
+      );
 
     const gekozenWaarde$: rx.Observable<Option<fed.LiteralValue>> = rx.merge(
       gekozenText$,
       gekozenInteger$,
       gekozenDouble$,
       gekozenDatum$,
-      quantity$
+      range$
     );
 
     type ExpressionEditorUpdate = Endomorphism<fed.ExpressionEditor>;
@@ -387,7 +395,9 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.dropdownWaardeControl,
               this.datumWaardeControl,
               this.autocompleteWaardeControl,
-              this.hoofdLetterGevoeligControl
+              this.hoofdLetterGevoeligControl,
+              this.rangeMagnitudeWaardeControl,
+              this.rangeUnitWaardeControl
             );
             resetWithoutEvent(
               this.veldControl,
@@ -397,7 +407,9 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.doubleWaardeControl,
               this.dropdownWaardeControl,
               this.datumWaardeControl,
-              this.autocompleteWaardeControl
+              this.autocompleteWaardeControl,
+              this.rangeMagnitudeWaardeControl,
+              this.rangeUnitWaardeControl
             );
             this.hoofdLetterGevoeligControl.reset(false, { emitEvent: false });
           },
@@ -410,7 +422,9 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.dropdownWaardeControl,
               this.datumWaardeControl,
               this.autocompleteWaardeControl,
-              this.hoofdLetterGevoeligControl
+              this.hoofdLetterGevoeligControl,
+              this.rangeMagnitudeWaardeControl,
+              this.rangeUnitWaardeControl
             );
             this.veldControl.setValue(opr.selectedProperty, { emitEvent: false });
             resetWithoutEvent(
@@ -420,7 +434,9 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.doubleWaardeControl,
               this.dropdownWaardeControl,
               this.datumWaardeControl,
-              this.autocompleteWaardeControl
+              this.autocompleteWaardeControl,
+              this.rangeMagnitudeWaardeControl,
+              this.rangeUnitWaardeControl
             );
             this.hoofdLetterGevoeligControl.reset(false, { emitEvent: false });
             this.operatorControl.setValue(null);
@@ -434,7 +450,9 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.dropdownWaardeControl,
               this.datumWaardeControl,
               this.autocompleteWaardeControl,
-              this.hoofdLetterGevoeligControl
+              this.hoofdLetterGevoeligControl,
+              this.rangeMagnitudeWaardeControl,
+              this.rangeUnitWaardeControl
             );
             this.veldControl.setValue(val.selectedProperty, { emitEvent: false });
             this.operatorControl.setValue(val.selectedOperator, { emitEvent: false });
@@ -463,7 +481,10 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               date: () => {
                 this.datumWaardeControl.reset(val.workingValue.fold("", sv => sv.value), { emitEvent: true });
               },
-              quantity: () => {}
+              range: () => {
+                this.rangeUnitWaardeControl.reset(val.workingValue.fold("", sv => (sv.value as fltr.Range).unit), { emitEvent: true });
+                this.rangeMagnitudeWaardeControl.reset(1, { emitEvent: true });
+              }
             })(val.valueSelector);
           },
           Completed: compl => {
@@ -475,7 +496,9 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               this.dropdownWaardeControl,
               this.datumWaardeControl,
               this.autocompleteWaardeControl,
-              this.hoofdLetterGevoeligControl
+              this.hoofdLetterGevoeligControl,
+              this.rangeMagnitudeWaardeControl,
+              this.rangeUnitWaardeControl
             );
             this.veldControl.setValue(compl.selectedProperty, { emitEvent: false });
             this.operatorControl.setValue(compl.selectedOperator, { emitEvent: false });
@@ -518,10 +541,10 @@ export class FilterEditorComponent extends KaartChildComponentBase {
                 // datepicker verwacht echter een moment date.
                 this.datumWaardeControl.reset(moment(compl.selectedValue.value.toString()), { emitEvent: false });
               },
-              quantity: () => {
-                const quantity = <fltr.Quantity>compl.selectedValue.value;
-                this.integerWaardeControl.reset(quantity.magnitude, { emitEvent: false });
-                this.dropdownWaardeControl.reset(quantity.unit, { emitEvent: false });
+              range: () => {
+                const range = compl.selectedValue.value as fltr.Range;
+                this.rangeMagnitudeWaardeControl.reset(range.magnitude, { emitEvent: false });
+                this.rangeUnitWaardeControl.reset(range.unit, { emitEvent: false });
               }
             })(compl.valueSelector);
           }

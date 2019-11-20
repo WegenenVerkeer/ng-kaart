@@ -1,8 +1,10 @@
+import { option } from "fp-ts";
 import { constant, Curried2, Endomorphism, flow, Function1, Function2, Function3, Function4 } from "fp-ts/lib/function";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
+import { pipe } from "fp-ts/lib/pipeable";
 
 import { Filter as fltr } from "../filter/filter-model";
-import { formateerDate, formateerDateAsDefaultDate } from "../util/date-time";
+import { formateerDateAsDefaultDate } from "../util/date-time";
 import { PartialFunction1 } from "../util/function";
 
 export namespace FilterCql {
@@ -37,7 +39,11 @@ export namespace FilterCql {
 
   const doubleGenerator: Generator<fltr.Literal> = literal => fltr.numberValue(literal.value).map(value => value.toString());
 
-  const dateTimeGenerator: Generator<fltr.Literal> = literal => fltr.dateValue(literal.value).map(formateerDateAsDefaultDate);
+  const dateTimeGenerator: Generator<fltr.Literal> = flow(
+    fltr.literalValueGetter.get,
+    fltr.dateValue,
+    option.map(formateerDateAsDefaultDate)
+  );
 
   // In principe heeft de gebruiker niet veel zeggenschap over de properties. Maar ingeval van eigen data kan dat dus om
   // het even wat zijn (voor zover het in een shape file past). We verwachten dat de gebruikers geen "rare" kolomnamen
@@ -52,7 +58,7 @@ export namespace FilterCql {
     double: doubleGenerator,
     date: dateTimeGenerator,
     datetime: dateTimeGenerator,
-    quantity: () => none // FIXME
+    range: () => none
   });
 
   const stringBinaryOperator: Function4<fltr.Property, fltr.BinaryComparisonOperator, fltr.Literal, boolean, Option<string>> = (
@@ -70,22 +76,39 @@ export namespace FilterCql {
       fallback: () => none // de andere operators worden niet ondersteund
     })(operator);
 
+  const defaultSqlFormat = "DD/MM/YYYY";
   const datetimeBinaryOperator = (
     property: fltr.Property,
     operator: fltr.BinaryComparisonOperator,
     literal: fltr.Literal
   ): Option<string> => {
-    const format = property.sqlFormat.getOrElse("DD/MM/YYYY");
-    if (operator === "within") {
-      return fltr
-        .withinValueToDuration(<fltr.Quantity>literal.value)
-        .map(formateerDate(none))
-        .map(formattedDate => `(to_date(${propertyRef(property)}, '${format}') >= to_date('${formattedDate}', 'DD/MM/YYYY'))`);
-    } else {
-      return fromNullable(numberBinaryOperatorSymbols[operator]).chain(symbol =>
-        literalCql(literal).map(value => `(to_date(${propertyRef(property)}, '${format}') ${symbol} to_date('${value}', 'DD/MM/YYYY'))`)
-      );
-    }
+    const format = property.sqlFormat.getOrElse(defaultSqlFormat);
+    return fltr.matchBinaryComparisonOperatorWithFallback({
+      within: () =>
+        pipe(
+          literal.value,
+          option.fromRefinement(fltr.Range.isRelativeDateRange),
+          option.chain(fltr.Range.withinValueToDuration),
+          option.map(formateerDateAsDefaultDate),
+          option.map(
+            formattedDate => `(to_date(${propertyRef(property)}, '${format}') >= to_date('${formattedDate}', '${defaultSqlFormat}'))`
+          )
+        ),
+      fallback: () =>
+        pipe(
+          dateBinaryOperatorSymbols[operator],
+          option.fromNullable,
+          option.chain(symbol =>
+            pipe(
+              literalCql(literal),
+              option.map(
+                formattedDate =>
+                  `(to_date(${propertyRef(property)}, '${format}') ${symbol} to_date('${formattedDate}', '${defaultSqlFormat}'))`
+              )
+            )
+          )
+        )
+    })(operator);
   };
 
   const numberBinaryOperatorSymbols = {
@@ -96,6 +119,8 @@ export namespace FilterCql {
     larger: ">",
     largerOrEqual: ">="
   };
+
+  const dateBinaryOperatorSymbols = numberBinaryOperatorSymbols; // Toevallig gelijk
 
   const numberBinaryOperator = (property: fltr.Property, operator: fltr.BinaryComparisonOperator, literal: fltr.Literal): Option<string> =>
     fromNullable(numberBinaryOperatorSymbols[operator]).chain(symbol =>
@@ -117,7 +142,7 @@ export namespace FilterCql {
   const expressionCql: Generator<fltr.Expression> = fltr.matchExpression({
     And: expr => both(expressionCql(expr.left), expressionCql(expr.right), "AND"),
     Or: expr => both(expressionCql(expr.left), expressionCql(expr.right), "OR"),
-    BinaryComparison: expr =>
+    BinaryComparison: (expr: fltr.BinaryComparison) =>
       fltr.matchTypeTypeWithFallback({
         string: () => stringBinaryOperator(expr.property, expr.operator, expr.value, expr.caseSensitive),
         date: () => datetimeBinaryOperator(expr.property, expr.operator, expr.value),

@@ -7,6 +7,8 @@ import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { KaartComponent } from "../kaart/kaart.component";
 import { formateerDate } from "../util/date-time";
 
+import { formatRelativeDateRange } from "./date-range-helper";
+
 type BinaryComparisonOperatorMapping = { [P in fltr.BinaryComparisonOperator]: string };
 type UnaryComparisonOperatorMapping = { [P in fltr.UnaryComparisonOperator]: string };
 
@@ -20,7 +22,7 @@ const binaryComparisonOperatorMapping: BinaryComparisonOperatorMapping = {
   smallerOrEqual: "kleiner of gelijk aan",
   larger: "groter dan",
   largerOrEqual: "groter dan of gelijk aan",
-  within: "de laatste"
+  within: "laatste"
 };
 
 const unaryComparisonOperatorMapping: UnaryComparisonOperatorMapping = {
@@ -63,7 +65,7 @@ export class FilterTermComponent extends KaartChildComponentBase {
             string: literal => literal.value.toString(),
             date: literal => formateerDate(option.some("dd/MM/yyyy"))(literal.value as DateTime),
             datetime: () => "-", // nog niet ondersteund
-            quantity: () => "-" // FIXME -> te doen
+            range: literal => formatRelativeDateRange(literal.value as fltr.RelativeDateRange)
           })(term.value);
           this.operator = binaryComparisonOperatorMapping[term.operator] || "???";
         }

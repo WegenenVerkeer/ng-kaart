@@ -1,8 +1,6 @@
-import { option, record } from "fp-ts";
+import { record } from "fp-ts";
 import { Function1 } from "fp-ts/lib/function";
 import { DateTime } from "luxon";
-import { identity } from "rxjs";
-import { isArray } from "util";
 
 import { formateerDateAsDefaultDate } from "../util/date-time";
 
@@ -18,7 +16,7 @@ export namespace FilterText {
     boolean: b => (b ? "waar" : "vals"),
     date: d => d.toString(),
     datetime: d => d.toString(),
-    quantity: d => d.toString(), // FIXME
+    range: d => d.toString(), // FIXME
     double: d => d.toString(), // Afronden of sprintf?
     integer: i => i.toString(),
     string: s => `'${s}'`
@@ -45,41 +43,6 @@ export namespace FilterText {
 export namespace FilterAwv0Json {
   type Encoder<A> = Function1<A, object>;
 
-  // function flattenOptionRecursively(obj: any): any {
-  //   // De primitieven + null
-  //   if (null === obj || "object" !== typeof obj) {
-  //     return obj;
-  //   }
-
-  //   // Arrays
-  //   if (isArray(obj)) {
-  //     const cloned: any[] = [];
-  //     for (let i = 0; i < obj.length; ++i) {
-  //       cloned[i] = flattenOptionRecursively(obj[i]);
-  //     }
-  //     return cloned;
-  //   }
-
-  //   // Option
-  //   const toUndefined = obj["toUndefined"];
-  //   if (typeof toUndefined === "function") {
-  //     // We veronderstellen een object dat gelijkaardig is aan Option
-  //     return (obj as any).toUndefined();
-  //   }
-
-  //   // Algemene object
-  //   const cloned = {};
-  //   Object.entries(obj).forEach(([key, value]) => {
-  //     cloned[key] = flattenOptionRecursively(value);
-  //   });
-  //   return cloned;
-  // }
-
-  // // JSON kan enkel primitives, key-values en arrays aan. Option e.d. mogen dus niet.
-  // const flattenOption: Function1<fltr.Filter, any> = filter => flattenOptionRecursively(filter);
-
-  // const optionally = (key: string, value: unknown): object => (value === undefined ? {} : record.compact);
-
   const encodeProperty: Encoder<fltr.Property> = property => ({
     kind: property.kind,
     type: property.type,
@@ -97,6 +60,7 @@ export namespace FilterAwv0Json {
       integer: () => value as number,
       string: () => value as string,
       date: () => formateerDateAsDefaultDate(value as DateTime),
+      range: () => value as fltr.RelativeDateRange, // is simpel object dus serialiseerbaar
       fallback: () => "<unsupported>"
     })(valueType);
 
