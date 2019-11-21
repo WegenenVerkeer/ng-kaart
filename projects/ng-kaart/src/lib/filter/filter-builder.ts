@@ -303,10 +303,10 @@ export namespace FilterEditor {
   const dateOperators = [
     BinaryComparisonOperator("op", "op", "equality", "date"),
     BinaryComparisonOperator("niet op", "niet op", "inequality", "date"),
-    BinaryComparisonOperator("tot", "<", "smaller", "date"),
-    BinaryComparisonOperator("tot en met", "<=", "smallerOrEqual", "date"),
-    BinaryComparisonOperator("na", ">", "larger", "date"),
-    BinaryComparisonOperator("vanaf", ">=", "largerOrEqual", "date"),
+    BinaryComparisonOperator("tot", "tot", "smaller", "date"),
+    BinaryComparisonOperator("tot en met", "tot en met", "smallerOrEqual", "date"),
+    BinaryComparisonOperator("na", "na", "larger", "date"),
+    BinaryComparisonOperator("vanaf", "vanaf", "largerOrEqual", "date"),
     BinaryComparisonOperator("laatste", "binnen laatste", "within", "range"),
     ...unaryOperators
   ];
