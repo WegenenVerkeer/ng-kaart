@@ -76,3 +76,5 @@ export const containsAll = <A>(eq: setoid.Setoid<A>) => (as: A[], bs: A[]): bool
 export const getStringsSetoid: Setoid<string[]> = array.getSetoid(setoid.setoidString);
 
 export const isOneOf = <A>(...as: A[]) => (a: A): boolean => array.elem(eq.fromEquals(eq.strictEqual))(a, as);
+
+export const asSingleton = <A>(as: A[]): Option<A[]> => (as.length === 1 ? option.some(as) : option.none);

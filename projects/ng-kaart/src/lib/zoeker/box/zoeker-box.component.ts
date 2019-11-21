@@ -645,6 +645,12 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     });
   }
 
+  focusWegVanInput() {
+    setTimeout(() => {
+      this.setFocusEersteSuggestieOfResultaat();
+    });
+  }
+
   keydown(event: any) {
     // De gebruiker kan locatie voorstellen krijgen door in het zoekveld min. 2 tekens in te typen en op enter te drukken
     switch (event.key) {
@@ -771,12 +777,19 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
 
   private processZoekerAntwoord(nieuweResultaten: ZoekAntwoord, optiesOpNaam: WeergaveoptiesOpZoekernaam): void {
     kaartLogger.debug("Process " + nieuweResultaten.zoeker, nieuweResultaten);
-    this.focusOpZoekVeld();
     switch (nieuweResultaten.zoektype) {
       case "Volledig":
-        return this.processVolledigZoekerAntwoord(nieuweResultaten, optiesOpNaam);
+        this.processVolledigZoekerAntwoord(nieuweResultaten, optiesOpNaam);
+        if (nieuweResultaten.resultaten.length > 0) {
+          this.focusWegVanInput();
+        } else {
+          this.focusOpZoekVeld();
+        }
+        break;
       case "Suggesties":
-        return this.processSuggestiesAntwoord(nieuweResultaten, optiesOpNaam);
+        this.processSuggestiesAntwoord(nieuweResultaten, optiesOpNaam);
+        this.focusOpZoekVeld();
+        break;
     }
   }
 

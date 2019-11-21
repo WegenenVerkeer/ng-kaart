@@ -29,6 +29,7 @@ import * as prt from "../kaart-protocol";
 import { Laagtabelinstellingen, Veldsortering } from "../kaart-protocol-subscriptions";
 import { KaartComponent } from "../kaart.component";
 
+import { Alignment } from "./alignment-model";
 import { Page } from "./data-provider";
 import { FeatureTabelOverzichtComponent } from "./feature-tabel-overzicht.component";
 import { FieldSelection } from "./field-selection-model";
@@ -80,6 +81,7 @@ interface TemplateData {
   readonly allRowsSelected: boolean;
   readonly allFieldsSelected: boolean;
   readonly comfortableLayout: boolean;
+  readonly alignments: Record<string, Alignment>;
 }
 
 interface RowSelection {
@@ -148,6 +150,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
             option.exists(arrays.forAll(row => !!row.selected))
           );
         const allFieldsSelected = arrays.forAll(FieldSelection.selectedLens.get)(laagModel.fieldSelections);
+
         return {
           dataAvailable: rows !== undefined,
           featureDataAvailable: option.exists(arrays.isNonEmpty)(maybeRows),
@@ -162,7 +165,8 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
           showOnlySelectedFeatures,
           allRowsSelected,
           allFieldsSelected,
-          comfortableLayout: layoutMode === "Comfortable"
+          comfortableLayout: layoutMode === "Comfortable",
+          alignments: Alignment.createFromFieldSelection(fieldNameSelections)
         };
       }),
       share()

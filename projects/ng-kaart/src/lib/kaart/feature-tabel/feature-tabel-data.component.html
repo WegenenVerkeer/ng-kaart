@@ -13,6 +13,9 @@
             <th
               *ngFor="let header of headers.headers; let first = first"
               (click)="onAction('toggleSort', header.name)"
+              [ngClass]="{
+                'align-right': data.alignments[header.name] === 'right'
+              }"
             >
               <mat-checkbox
                 *ngIf="first"
@@ -36,7 +39,8 @@
             <td
               *ngFor="let header of headers.headers; let first = first"
               [ngClass]="{
-                'empty-field': row.velden[header.name].maybeValue.isNone()
+                'empty-field': row.velden[header.name].maybeValue.isNone(),
+                'align-right': data.alignments[header.name] === 'right'
               }"
             >
               <mat-checkbox

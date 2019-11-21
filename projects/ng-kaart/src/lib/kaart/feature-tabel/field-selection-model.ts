@@ -34,8 +34,19 @@ export namespace FieldSelection {
 
   const basisVeldOrd: Ord<ke.VeldInfo> = ord.contramap(ke.VeldInfo.isBasisveldLens.get)(ord.getDualOrd(ord.ordBoolean));
 
+  const hasSupportedType: (vi: ke.VeldInfo) => boolean = ke.VeldInfo.matchWithFallback({
+    boolean: () => true,
+    date: () => true,
+    datetime: () => true,
+    double: () => true,
+    integer: () => true,
+    string: () => true,
+    fallback: () => false
+  });
+
   export const fieldsFromVeldinfo: Function1<ke.VeldInfo[], FieldSelection[]> = flow(
     array.sortBy1(basisVeldOrd, []),
+    array.filter(hasSupportedType),
     array.map(vi => ({
       name: vi.naam,
       label: ke.VeldInfo.veldGuaranteedLabelGetter.get(vi),
