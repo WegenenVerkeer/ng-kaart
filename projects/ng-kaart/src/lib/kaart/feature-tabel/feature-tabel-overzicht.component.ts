@@ -115,12 +115,10 @@ export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
             modelUpdate$.pipe(
               scan((model: TableModel, update: TableModel.TableModelUpdate) => {
                 const newModel = update.syncUpdate(model);
-                console.log("***aangepast model", newModel);
                 update
                   .asyncUpdate(newModel)
                   .pipe(
                     observeOn(rx.asapScheduler), // voer eerst de rest van de ketting uit
-                    tap(delayed => console.log("***delayed", delayed)),
                     takeUntil(rx.timer(60000)) // Om helemaal zeker te zijn dat de observable ooit unsubscribed wordt
                   )
                   .subscribe({
