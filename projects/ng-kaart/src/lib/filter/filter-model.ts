@@ -1,8 +1,12 @@
-import { constant, Function1, Function2, Function3, Function4, identity, Lazy, not, Predicate } from "fp-ts/lib/function";
+import { option } from "fp-ts";
+import { constant, Function1, Function2, Function4, identity, Lazy, not, Predicate, Refinement } from "fp-ts/lib/function";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import { contramap, Setoid, setoidString } from "fp-ts/lib/Setoid";
-import { DateTime } from "luxon";
+import { DateTime, Duration } from "luxon";
+import { Getter, Lens } from "monocle-ts";
+import { isBoolean, isNumber, isObject, isString } from "util";
 
+import * as arrays from "../util/arrays";
 import { PartialFunction1 } from "../util/function";
 import * as matchers from "../util/matchers";
 
@@ -60,7 +64,8 @@ export namespace Filter {
     | "smaller"
     | "smallerOrEqual"
     | "larger"
-    | "largerOrEqual";
+    | "largerOrEqual"
+    | "within";
 
   export interface BinaryComparison {
     readonly kind: "BinaryComparison";
@@ -83,22 +88,64 @@ export namespace Filter {
     readonly value: Literal;
   }
 
+  // De ondersteunde propertytypes. Dit is niet helemaal gelijk aan de types in VeldInfo (+ range, - json, etc.)
+  export type TypeType = "string" | "integer" | "double" | "date" | "datetime" | "boolean" | "range";
+
+  const propertyAndValueTypeEqual: Predicate<PropertyValueOperator> = pvo => pvo.property.type === pvo.value.type;
+  const propertyAndValueNumericCompatible: Predicate<PropertyValueOperator> = pvo =>
+    pvo.property.type === "double" && pvo.value.type === "integer"; // wel gevaarlijk wegens afrondingsfouten
+  const propertyAndValueDateCompatible: Predicate<PropertyValueOperator> = pvo =>
+    pvo.property.type === "date" && pvo.value.type === "range"; // test komt na equal, dus niet nodig te herhalen
+
   export function propertyAndValueCompatible<A extends BinaryComparison>(pvo: PropertyValueOperator): pvo is A {
-    return pvo.property.type === pvo.value.type; // TODO double -> integer bijvoorbeeld is ook toegelaten
+    return propertyAndValueTypeEqual(pvo) || propertyAndValueNumericCompatible(pvo) || propertyAndValueDateCompatible(pvo);
   }
 
-  // TODO: laten we voorlopig overeen komen met alle veldtypes uit VeldInfo
-  export type TypeType = "string" | "integer" | "double" | "geometry" | "date" | "datetime" | "boolean" | "json" | "url";
+  export const operatorPropertyAndValueCompatible = <A extends BinaryComparison>(binop: BinaryComparison): binop is A =>
+    binop.operator !== "within" ||
+    (binop.property.type === "date" && // within is enkel ondersteund voor date
+    binop.value.type === "range" && // within vereist een range type
+      Range.isRelativeDateRange(binop.value.value)); // RelativeDateRange is het enige wat we toelaten voor within
+
+  export interface Range {
+    readonly unit: string; // ondersteunde waarden volgen uit type van Property + Operator
+    readonly magnitude: number;
+  }
+
+  export interface RelativeDateRange extends Range {
+    readonly unit: "year" | "month" | "day";
+  }
+
+  export namespace Range {
+    export const create = (unit: string, magnitude: number): Range => ({ unit, magnitude });
+
+    export const isRange: Refinement<ValueType, Range> = (range): range is Range =>
+      isObject(range) && typeof range["magnitude"] === "number" && typeof range["unit"] === "string";
+
+    export const isRelativeDateRange: Refinement<ValueType, Range> = (range): range is Range =>
+      isRange(range) && arrays.isOneOf("year", "month", "day")(range.unit) && range.magnitude > 0;
+
+    const durationFallBackMatcher = matchers.matchWithFallback<RelativeDateRange, Option<DateTime>>({
+      day: (q: RelativeDateRange) => some(DateTime.local().minus(Duration.fromObject({ days: q.magnitude }))),
+      month: (q: RelativeDateRange) => some(DateTime.local().minus(Duration.fromObject({ months: q.magnitude }))),
+      year: (q: RelativeDateRange) => some(DateTime.local().minus(Duration.fromObject({ years: q.magnitude }))),
+      fallback: () => none
+    });
+
+    export const withinValueToDuration: Function1<RelativeDateRange, Option<DateTime>> = durationFallBackMatcher((q: Range) => q.unit);
+  }
 
   // Dit zijn alle types die we ondersteunen in het geheugen, maar denk eraan dat alles als string of number
   // geserialiseerd moet worden.
-  export type ValueType = boolean | string | number | DateTime;
+  export type ValueType = boolean | string | number | DateTime | Range;
 
   export interface Literal {
     readonly kind: "Literal";
     readonly type: TypeType;
     readonly value: ValueType;
   }
+
+  export const literalValueGetter: Getter<Literal, ValueType> = Lens.fromProp<Literal>()("value").asGetter();
 
   export interface Property {
     readonly kind: "Property";
@@ -173,10 +220,10 @@ export namespace Filter {
     value
   });
 
-  export const stringValue: PartialFunction1<ValueType, string> = value => (typeof value === "string" ? some(value) : none);
-  export const boolValue: PartialFunction1<ValueType, boolean> = value => (typeof value === "boolean" ? some(value) : none);
-  export const numberValue: PartialFunction1<ValueType, number> = value => (typeof value === "number" ? some(value) : none);
-  export const dateValue: PartialFunction1<ValueType, DateTime> = value => (value instanceof DateTime ? some(value) : none);
+  export const stringValue: PartialFunction1<ValueType, string> = option.fromPredicate(isString);
+  export const boolValue: PartialFunction1<ValueType, boolean> = option.fromPredicate(isBoolean);
+  export const numberValue: PartialFunction1<ValueType, number> = option.fromPredicate(isNumber);
+  export const dateValue: PartialFunction1<ValueType, DateTime> = option.fromPredicate(DateTime.isDateTime);
   export interface FilterMatcher<A> {
     readonly EmptyFilter: Lazy<A>;
     readonly ExpressionFilter: Function1<ExpressionFilter, A>;

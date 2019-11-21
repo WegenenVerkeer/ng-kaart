@@ -1,10 +1,11 @@
-import { option } from "fp-ts";
+import { eq, option } from "fp-ts";
 import * as array from "fp-ts/lib/Array";
 import { array as ArrayMonad } from "fp-ts/lib/Array";
 import {
   Curried2,
   Curried3,
   Endomorphism,
+  flow,
   Function1,
   Function2,
   Function3,
@@ -17,6 +18,7 @@ import {
 } from "fp-ts/lib/function";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import { ordString } from "fp-ts/lib/Ord";
+import { pipe } from "fp-ts/lib/pipeable";
 import {
   contramap,
   fromEquals,
@@ -27,12 +29,11 @@ import {
   setoidString,
   strictEqual
 } from "fp-ts/lib/Setoid";
-import { DateTime } from "luxon";
 import { fromTraversable, Lens, Prism, Traversal } from "monocle-ts";
 
 import * as ke from "../kaart/kaart-elementen";
 import * as arrays from "../util/arrays";
-import { formateerDateAsDefaultDate, parseDate } from "../util/date-time";
+import { parseDate } from "../util/date-time";
 import { applySequential, PartialFunction1 } from "../util/function";
 import * as maps from "../util/maps";
 import * as matchers from "../util/matchers";
@@ -64,8 +65,7 @@ export namespace FilterEditor {
     readonly distinctValues: string[];
   }
 
-  // export type ValueSelector = "FreeString" | "FreeInteger" | "FreeDouble" | "SelectString" | "AutoCompleteString" | "NoSelection";
-  export type ValueSelector = FreeInputValueSelector | SelectionValueSelector | DateValueSelector | EmptyValueSelector;
+  export type ValueSelector = FreeInputValueSelector | SelectionValueSelector | RangeValueSelector | DateValueSelector | EmptyValueSelector;
 
   export type FreeInputValueType = "string" | "integer" | "double";
 
@@ -80,6 +80,17 @@ export namespace FilterEditor {
     readonly kind: "selection";
     readonly selectionType: SelectionType;
     readonly values: string[];
+  }
+
+  export interface RangeValue {
+    readonly label: string;
+    readonly value: string;
+  }
+
+  export interface RangeValueSelector {
+    readonly kind: "range";
+    readonly valueType: FreeInputValueType;
+    readonly values: RangeValue[];
   }
 
   export type DateType = "date" | "datetime";
@@ -186,19 +197,11 @@ export namespace FilterEditor {
     distinctValues
   });
 
-  export const LiteralValue: Function2<fltr.ValueType, fltr.TypeType, LiteralValue> = (value, valueType) => ({
+  export const LiteralValue: Curried2<fltr.TypeType, fltr.ValueType, LiteralValue> = valueType => value => ({
     kind: "Literal",
     value,
     valueType
   });
-
-  export const literalValueStringRenderer = (literalValue: LiteralValue): string =>
-    fltr.matchTypeTypeWithFallback({
-      date: () => {
-        return formateerDateAsDefaultDate(literalValue.value as DateTime);
-      },
-      fallback: () => literalValue.value.toString()
-    })(literalValue.valueType);
 
   export const isAtLeastOperatorSelection: Refinement<TermEditor, OperatorSelection> = (termEditor): termEditor is OperatorSelection =>
     termEditor.kind === "Operator" ||
@@ -222,18 +225,31 @@ export namespace FilterEditor {
         fromNullable(veld.html).isNone() &&
         hasAcceptableName(veld)
     );
-  const properties: Function1<ke.ToegevoegdeVectorLaag, Property[]> = laag =>
-    veldinfos(laag)
-      .map(vi =>
-        Property(
-          vi.type,
-          vi.naam,
-          fromNullable(vi.label).getOrElse(vi.naam),
-          fromNullable(vi.sqlFormat),
-          array.sort(ordString)(arrays.fromNullable(vi.uniekeWaarden))
+
+  type SimplePropertyType = Exclude<fltr.TypeType, "range">;
+  const isAcceptedVeldType: Refinement<ke.VeldType, SimplePropertyType> = (t): t is SimplePropertyType =>
+    array.elem(eq.eqString)(t, ["string", "boolean", "double", "integer", "date", "datetime"]);
+
+  const asAcceptedVeldType: PartialFunction1<ke.VeldType, fltr.TypeType> = option.fromRefinement(isAcceptedVeldType);
+
+  const properties: (laag: ke.ToegevoegdeVectorLaag) => Property[] = flow(
+    veldinfos,
+    array.filterMap(vi =>
+      pipe(
+        vi.type,
+        asAcceptedVeldType,
+        option.map(typetype =>
+          Property(
+            typetype,
+            vi.naam,
+            fromNullable(vi.label).getOrElse(vi.naam),
+            fromNullable(vi.sqlFormat),
+            array.sort(ordString)(arrays.fromNullable(vi.uniekeWaarden))
+          )
         )
       )
-      .filter(property => ["string", "boolean", "double", "integer", "date", "datetime"].includes(property.type));
+    )
+  );
 
   // Initieer aanmaak van een Comparison
   const FieldSelection: Function1<ke.ToegevoegdeVectorLaag, TermEditor> = laag => ({ kind: "Field", properties: properties(laag) });
@@ -291,6 +307,7 @@ export namespace FilterEditor {
     BinaryComparisonOperator("tot en met", "<=", "smallerOrEqual", "date"),
     BinaryComparisonOperator("na", ">", "larger", "date"),
     BinaryComparisonOperator("vanaf", ">=", "largerOrEqual", "date"),
+    BinaryComparisonOperator("laatste", "binnen laatste", "within", "range"),
     ...unaryOperators
   ];
 
@@ -339,6 +356,7 @@ export namespace FilterEditor {
       integer: () => typedComparisonOperator(integerOperatorMap, operator, literal.type),
       double: () => typedComparisonOperator(doubleOperatorMap, operator, literal.type),
       boolean: () => typedComparisonOperator(booleanOperatorMap, operator, literal.type),
+      range: () => typedComparisonOperator(dateOperatorMap, operator, literal.type),
       fallback: () => BinaryComparisonOperator("is", "is", "equality", "string") // niet ondersteund!
     })(literal.type);
 
@@ -350,6 +368,15 @@ export namespace FilterEditor {
     kind: "selection",
     selectionType,
     values
+  });
+
+  const RangeValueSelector = (valueType: FreeInputValueType, labels: string[], values: string[]): RangeValueSelector => ({
+    kind: "range",
+    valueType,
+    values: pipe(
+      array.zip(values, labels),
+      array.map(([value, label]) => ({ value, label }))
+    )
   });
 
   const DateValueSelector: Function1<DateType, DateValueSelector> = dateType => ({
@@ -377,6 +404,11 @@ export namespace FilterEditor {
         : SelectionValueSelector("dropdown", property.distinctValues)
       : FreeInputValueSelector("string");
 
+  const bestDateValueSelector: Function1<BinaryComparisonOperator, ValueSelector> = operator =>
+    operator.operator === "within"
+      ? RangeValueSelector("integer", ["dag(en)", "maand(en)", "jaar"], ["day", "month", "year"])
+      : DateValueSelector("date");
+
   const genericOperatorSelectors: Function1<fltr.Property, OperatorsAndValueSelector> = property =>
     fltr.matchTypeTypeWithFallback({
       string: () => OperatorsAndValueSelector(stringOperators, FreeInputValueSelector("string")),
@@ -391,7 +423,7 @@ export namespace FilterEditor {
   const specificOperatorSelectors: Function2<Property, BinaryComparisonOperator, OperatorsAndValueSelector> = (property, operator) =>
     fltr.matchTypeTypeWithFallback({
       string: () => OperatorsAndValueSelector(stringOperators, bestStringValueSelector(property, operator)),
-      date: () => OperatorsAndValueSelector(dateOperators, DateValueSelector("date")),
+      date: () => OperatorsAndValueSelector(dateOperators, bestDateValueSelector(operator)),
       datetime: () => OperatorsAndValueSelector(dateOperators, DateValueSelector("datetime")),
       double: () => OperatorsAndValueSelector(doubleOperators, FreeInputValueSelector("double")),
       integer: () => OperatorsAndValueSelector(integerOperators, FreeInputValueSelector("integer")),
@@ -430,7 +462,7 @@ export namespace FilterEditor {
     EmptyValueSelector,
     // contra-intuitief willen we ook bij 'inequality' als boolean waarde 'true'
     // vermits we dan 'true' vergelijken via '!=' voor operator 'is niet waar'
-    selectedValue: LiteralValue(["isEmpty", "equality", "inequality"].includes(selectedOperator.operator), "boolean"),
+    selectedValue: LiteralValue("boolean")(arrays.isOneOf("isEmpty", "equality", "inequality")(selectedOperator.operator)),
     workingValue: none,
     caseSensitive: false
   });
@@ -458,7 +490,7 @@ export namespace FilterEditor {
       BinaryComparisonOperator: binOp =>
         fltr.matchTypeTypeWithFallback<TermEditor>({
           string: () => toValueSelection(selection, binOp, bestStringValueSelector(selection.selectedProperty, binOp), caseSensitive),
-          date: () => toValueSelection(selection, binOp, DateValueSelector("date"), caseSensitive),
+          date: () => toValueSelection(selection, binOp, bestDateValueSelector(binOp), caseSensitive),
           datetime: () => toValueSelection(selection, binOp, DateValueSelector("datetime"), caseSensitive),
           double: () => toValueSelection(selection, binOp, FreeInputValueSelector("double"), caseSensitive),
           integer: () => toValueSelection(selection, binOp, FreeInputValueSelector("integer"), caseSensitive),
@@ -474,31 +506,62 @@ export namespace FilterEditor {
   export const selectValue: Curried2<Option<SelectedValue>, ValueSelection, TermEditor> = maybeSelectedValue => selection => {
     // Voorlopig ondersteunen we dus enkel LiteralValues
 
+    type SelectedValueChecker = PartialFunction1<SelectedValue, SelectedValue>;
+
     // in theorie zouden we meer constraints kunnen hebben
-    const validateText: PartialFunction1<SelectedValue, SelectedValue> = option.fromPredicate(selectedValue =>
+    const validateText: SelectedValueChecker = option.fromPredicate(selectedValue =>
       ["string", "datetime"].includes(selectedValue.valueType) ? selectedValue.value.toString().length > 0 : true
     );
 
     // Wanneer de datum correct is, komt die binnen als een Literal met een type "date". Maar als dat niet zo is met
     // een type "string". Behalve wanneer de gebruiker zelf aan het typen geslagen is. Dan komt de waarde binnen als een
     // "string", of die nu geldig is of niet. Een geldige datum willen we in dat geval omzetten naar een Date.
-    const validateDate: PartialFunction1<SelectedValue, SelectedValue> = selectedValue =>
-      option
-        .fromPredicate<SelectedValue>(selectedValue => selection.selectedProperty.type !== "date" || selectedValue.valueType === "date")(
-          selectedValue
-        )
-        .orElse(() => parseDate(option.some("d/M/yyyy"))(selectedValue.value.toString()).map(date => LiteralValue(date, "date")));
+    const validateDateValue: SelectedValueChecker = selectedValue =>
+      pipe(
+        selectedValue,
+        option.fromPredicate(
+          selectedValue => selection.selectedProperty.type !== "date" || ["date", "range"].includes(selectedValue.valueType)
+        ),
+        option.alt(() => parseDate(option.some("d/M/yyyy"))(selectedValue.value.toString()).map(date => LiteralValue("date")(date)))
+      );
 
-    const validateDistinct: PartialFunction1<SelectedValue, SelectedValue> = option.fromPredicate(selectedValue =>
-      selection.valueSelector.kind === "selection"
-        ? typeof selectedValue.value === "string" && selection.valueSelector.values.includes(selectedValue.value)
-        : true
+    const validateDistinct: SelectedValueChecker = option.fromPredicate(
+      selectedValue =>
+        selection.valueSelector.kind !== "selection" ||
+        (typeof selectedValue.value === "string" && selection.valueSelector.values.includes(selectedValue.value))
     );
-    const validateType: PartialFunction1<SelectedValue, SelectedValue> = option.fromPredicate(selectedValue =>
+
+    const validateType: SelectedValueChecker = option.fromPredicate(selectedValue =>
       selectedValue.valueType === "string"
         ? ["string", "date", "datetime"].includes(selection.selectedProperty.type)
+        : selection.selectedProperty.type === "date"
+        ? ["date", "range"].includes(selectedValue.valueType)
         : selectedValue.valueType === selection.selectedProperty.type
     );
+
+    // In de "normale" gevallen moet het type van de literal en de property overeenkomen
+    const validateEqualType: SelectedValueChecker = option.fromPredicate(
+      selectedValue => selection.selectedProperty.type === "date" || selectedValue.valueType === selection.selectedProperty.type
+    );
+
+    // Bij een date property kunnen de waarden ofwel een date ofwel een range zijn
+    const validateDateType: SelectedValueChecker = option.fromPredicate(
+      selectedValue =>
+        selection.selectedProperty.type !== "date" ||
+        pipe(
+          selectedValue.valueType,
+          arrays.isOneOf("date", "range")
+        )
+    );
+
+    // Als er gesteld wordt dat het een range is, dan moet het ook echt een range zijn
+    const validateDateRange: SelectedValueChecker = option.fromPredicate(
+      selectedValue =>
+        selection.selectedProperty.type !== "date" ||
+        selectedValue.valueType !== "range" ||
+        fltr.Range.isRelativeDateRange(selectedValue.value)
+    );
+
     const validatedOperator: Option<BinaryComparisonOperator> = matchComparisonOperator<Option<BinaryComparisonOperator>>({
       UnaryComparisonOperator: () => none,
       BinaryComparisonOperator: binOp => some(binOp)
@@ -507,10 +570,14 @@ export namespace FilterEditor {
     // selectedValue verwijderen maakt geen verschil
     const failTransition: Lazy<ValueSelection> = () => ({ ...selection, kind: "Value", workingValue: maybeSelectedValue });
 
+    // Alle onderstaande validaties moeten lukken om de transitie naar CompletedWithValue te kunnen maken. Validatie is
+    // eigenlijk wat misleidend omdat een geslaagde "validatie" ook de conversie naar kan inhouden.
     return maybeSelectedValue
-      .chain(validateType)
+      .chain(validateEqualType)
       .chain(validateText)
-      .chain(validateDate)
+      .chain(validateDateValue)
+      .chain(validateDateRange)
+      .chain(validateDateType)
       .chain(validateDistinct)
       .foldL<TermEditor>(failTransition, selectedValue =>
         validatedOperator.foldL<TermEditor>(failTransition, binOp => ({
@@ -671,7 +738,7 @@ export namespace FilterEditor {
     disjunctions
   ) => ({ name, laag, current, disjunctions });
 
-  const toLiteralValue: Function1<fltr.Literal, LiteralValue> = literal => LiteralValue(literal.value, literal.type);
+  const toLiteralValue: Function1<fltr.Literal, LiteralValue> = literal => LiteralValue(literal.type)(literal.value);
 
   const completedTermEditor: Function2<ke.ToegevoegdeVectorLaag, fltr.Comparison, TermEditor> = (laag, comparison) => {
     const distinctValues = array
@@ -866,6 +933,8 @@ export namespace FilterEditor {
 
   const freeInputValueSelectorSetoid: Setoid<FreeInputValueSelector> = contramap(vs => vs.valueType, freeInputValueTypeSetoid);
 
+  const rangeValueSelectorSetoid: Setoid<RangeValueSelector> = contramap(vs => vs.valueType, freeInputValueTypeSetoid);
+
   const selectionValueSelectorSetoid: Setoid<SelectionValueSelector> = contramap(
     vs => [vs.selectionType, vs.values] as [SelectionType, string[]],
     getTupleSetoid(setoidString, getArraySetoid(setoidString))
@@ -878,6 +947,7 @@ export namespace FilterEditor {
     empty: singletonSetoid,
     free: freeInputValueSelectorSetoid,
     selection: selectionValueSelectorSetoid,
+    range: rangeValueSelectorSetoid,
     date: dateValueSelectorSetoid
   });
 
@@ -933,6 +1003,7 @@ export namespace FilterEditor {
     readonly free: Function1<FreeInputValueSelector, A>;
     readonly selection: Function1<SelectionValueSelector, A>;
     readonly date: Function1<DateValueSelector, A>;
+    readonly range: Function1<RangeValueSelector, A>;
   }
 
   export const matchValueSelector: <A>(matcher: ValueSelectorMatcher<A>) => Function1<ValueSelector, A> = matchers.matchKind;
