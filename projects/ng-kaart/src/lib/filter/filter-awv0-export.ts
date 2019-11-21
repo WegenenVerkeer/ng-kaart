@@ -16,7 +16,10 @@ export namespace FilterText {
     boolean: b => (b ? "waar" : "vals"),
     date: d => d.toString(),
     datetime: d => d.toString(),
-    range: d => d.toString(), // FIXME
+    range: r => {
+      const range = r.value as fltr.Range;
+      return `${range.magnitude} ${range.unit}`;
+    },
     double: d => d.toString(), // Afronden of sprintf?
     integer: i => i.toString(),
     string: s => `'${s}'`
