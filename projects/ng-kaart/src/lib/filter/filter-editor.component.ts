@@ -3,7 +3,7 @@ import { FormControl, ValidationErrors, Validators } from "@angular/forms";
 import { MatAutocompleteTrigger } from "@angular/material";
 import { apply } from "fp-ts";
 import * as array from "fp-ts/lib/Array";
-import { Endomorphism, Function1, Refinement } from "fp-ts/lib/function";
+import { and, Endomorphism, Function1, Refinement } from "fp-ts/lib/function";
 import * as option from "fp-ts/lib/Option";
 import { fromNullable, Option } from "fp-ts/lib/Option";
 import * as ord from "fp-ts/lib/Ord";
@@ -261,7 +261,13 @@ export class FilterEditorComponent extends KaartChildComponentBase {
       );
 
     const gekozenDatum$ = forControlValue(this.datumWaardeControl).pipe(
-      distinctUntilChanged(),
+      distinctUntilChanged((v1, v2) => {
+        if (moment.isMoment(v1) && moment.isMoment(v2)) {
+          return v1.isSame(v2);
+        } else {
+          return v1 === v2;
+        }
+      }),
       map(input =>
         fromNullable(input)
           .filter(moment.isMoment)
@@ -302,9 +308,9 @@ export class FilterEditorComponent extends KaartChildComponentBase {
           map(parseInteger)
         ),
         forControlValue(this.rangeUnitWaardeControl).pipe(
+          distinctUntilChanged(),
           map(fromNullable),
-          map(option.filter(isString)),
-          map(option.filter(nonEmptyString))
+          map(option.filter(and(isString, nonEmptyString)))
         )
       )
       .pipe(
@@ -539,12 +545,12 @@ export class FilterEditorComponent extends KaartChildComponentBase {
               date: () => {
                 // Wanneer we in de toestand completed zijn, dan weten we dat het type DateTime (van Luxon) is. De
                 // datepicker verwacht echter een moment date.
-                this.datumWaardeControl.reset(moment(compl.selectedValue.value.toString()), { emitEvent: false });
+                this.datumWaardeControl.reset(moment((compl.selectedValue.value as DateTime).toJSDate()), { emitEvent: true });
               },
               range: () => {
                 const range = compl.selectedValue.value as fltr.Range;
-                this.rangeMagnitudeWaardeControl.reset(range.magnitude, { emitEvent: false });
-                this.rangeUnitWaardeControl.reset(range.unit, { emitEvent: false });
+                this.rangeMagnitudeWaardeControl.reset(range.magnitude, { emitEvent: true });
+                this.rangeUnitWaardeControl.reset(range.unit, { emitEvent: true });
               }
             })(compl.valueSelector);
           }

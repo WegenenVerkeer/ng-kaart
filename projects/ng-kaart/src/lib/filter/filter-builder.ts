@@ -531,14 +531,6 @@ export namespace FilterEditor {
         (typeof selectedValue.value === "string" && selection.valueSelector.values.includes(selectedValue.value))
     );
 
-    const validateType: SelectedValueChecker = option.fromPredicate(selectedValue =>
-      selectedValue.valueType === "string"
-        ? ["string", "date", "datetime"].includes(selection.selectedProperty.type)
-        : selection.selectedProperty.type === "date"
-        ? ["date", "range"].includes(selectedValue.valueType)
-        : selectedValue.valueType === selection.selectedProperty.type
-    );
-
     // In de "normale" gevallen moet het type van de literal en de property overeenkomen
     const validateEqualType: SelectedValueChecker = option.fromPredicate(
       selectedValue => selection.selectedProperty.type === "date" || selectedValue.valueType === selection.selectedProperty.type
@@ -572,21 +564,23 @@ export namespace FilterEditor {
 
     // Alle onderstaande validaties moeten lukken om de transitie naar CompletedWithValue te kunnen maken. Validatie is
     // eigenlijk wat misleidend omdat een geslaagde "validatie" ook de conversie naar kan inhouden.
-    return maybeSelectedValue
-      .chain(validateEqualType)
-      .chain(validateText)
-      .chain(validateDateValue)
-      .chain(validateDateRange)
-      .chain(validateDateType)
-      .chain(validateDistinct)
-      .foldL<TermEditor>(failTransition, selectedValue =>
+    return pipe(
+      maybeSelectedValue,
+      option.chain(validateEqualType),
+      option.chain(validateText),
+      option.chain(validateDateValue),
+      option.chain(validateDateRange),
+      option.chain(validateDateType),
+      option.chain(validateDistinct),
+      option.fold(failTransition, selectedValue =>
         validatedOperator.foldL<TermEditor>(failTransition, binOp => ({
           ...selection,
           kind: "CompletedWithValue",
           selectedValue,
           selectedOperator: binOp
         }))
-      );
+      )
+    );
   };
 
   export const selectHoofdletterGevoelig: Curried2<boolean, ValueSelection | Completed, TermEditor> = hoofdLetterGevoelig => selection => ({
