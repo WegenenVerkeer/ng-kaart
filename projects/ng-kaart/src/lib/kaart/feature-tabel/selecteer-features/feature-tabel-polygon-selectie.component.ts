@@ -4,15 +4,17 @@ import { DomSanitizer } from "@angular/platform-browser";
 import { default as booleanIntersects } from "@turf/boolean-intersects";
 import * as turf from "@turf/turf";
 import * as array from "fp-ts/lib/Array";
-import { Endomorphism, Function1, Function2 } from "fp-ts/lib/function";
+import { Endomorphism, flow, Function1, Function2, identity } from "fp-ts/lib/function";
 import * as option from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { filter, map, sample, switchMap, switchMapTo, tap } from "rxjs/operators";
+import { filter, map, sample, switchMap, switchMapTo } from "rxjs/operators";
 
+import { Coordinate } from "../../../coordinaten";
 import * as clr from "../../../stijl/colour";
-import { GeometryMapper, matchGeometryType } from "../../../util";
+import * as arrays from "../../../util/arrays";
+import { matchGeometryType, toLineString } from "../../../util/geometries";
 import { encodeAsSvgUrl } from "../../../util/url";
 import { KaartModusComponent } from "../../kaart-modus-component";
 import * as prt from "../../kaart-protocol";
@@ -84,34 +86,39 @@ const defaultOptions: SelecteerFeaturesViaPolygonOpties = {
 
 export const SelecteerFeaturesViaPolygonModusSelector = "SelecteerFeaturesViaPolygon";
 
-const turfMapper: GeometryMapper<turf.Feature<turf.Geometry, turf.Properties>> = {
-  lineString: l => turf.lineString(l.getCoordinates()),
-  point: p => turf.point(p.getCoordinates())
-};
-
-const olToTurf: Function1<ol.geom.Geometry, option.Option<turf.Feature<turf.Geometry, turf.Properties>>> = geometry =>
-  matchGeometryType(geometry, turfMapper);
-
-const geometryToPolygon: Function1<ol.geom.Geometry, option.Option<turf.Feature<turf.Polygon, turf.Properties>>> = geometry => {
-  const edges = <Array<ol.geom.LineString>>(<ol.geom.GeometryCollection>geometry).getGeometries();
-  const coordinates = array.flatten(array.map((l: ol.geom.LineString) => l.getCoordinates())(edges));
-  coordinates.push(coordinates[0]);
-  if (coordinates.length < 4) {
-    return option.none;
-  } else {
-    return option.some(turf.polygon([coordinates]));
-  }
-};
+const geometryToTurfPolygon: Function1<ol.geom.Geometry, option.Option<turf.Feature<turf.Polygon, turf.Properties>>> = flow(
+  toLineString,
+  option.map(line => line.getCoordinates()),
+  option.filter(arrays.hasAtLeastLength(3)),
+  option.map(coordinates =>
+    // Sluit de polygoon als dat nog niet het geval is. Turf staat daar op
+    Coordinate.equal(coordinates[0], coordinates[coordinates.length - 1]) ? coordinates : array.snoc(coordinates, coordinates[0])
+  ),
+  option.map(coordinates => turf.polygon([coordinates]))
+);
 
 const featureOverlapsPolygon = (polygon: ol.geom.Geometry) => (feature: ol.Feature): boolean =>
   pipe(
     polygon,
-    geometryToPolygon,
+    geometryToTurfPolygon,
     option.exists(turfPolygon =>
       pipe(
-        feature.getGeometry(),
-        olToTurf,
-        option.exists(turfFeature => booleanIntersects(turfFeature, turfPolygon))
+        matchGeometryType(feature.getGeometry(), {
+          point: p => {
+            const turfPoint = turf.point(p.getCoordinates());
+            return turf.booleanPointInPolygon(turfPoint, turfPolygon);
+          },
+          lineString: l => {
+            const turfLine = turf.lineString(l.getCoordinates());
+            return turf.booleanWithin(turfLine, turfPolygon) || turf.booleanCrosses(turfLine, turfPolygon);
+          },
+          polygon: p =>
+            flow(
+              geometryToTurfPolygon,
+              option.exists(featurePolygon => booleanIntersects(featurePolygon, turfPolygon))
+            )(p)
+        }),
+        option.exists(identity)
       )
     )
   );
