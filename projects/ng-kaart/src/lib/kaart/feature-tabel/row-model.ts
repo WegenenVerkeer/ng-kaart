@@ -73,8 +73,8 @@ export namespace Row {
       }
       case "string": {
         return ke.VeldInfo.matchWithFallback({
-          integer: () => option.fromPredicate<ValueType>(not(Number.isInteger))(Number.parseInt(value, 10)),
-          double: () => option.fromPredicate(not(Number.isNaN))(Number.parseFloat(value)),
+          integer: () => option.fromPredicate<ValueType>(Number.isInteger)(Number.parseInt(value, 10)),
+          double: () => option.fromPredicate(not(Number.isNaN))(Number.parseFloat(value.replace(",", "."))),
           string: () => option.some(value),
           boolean: () => option.some(value !== ""),
           date: () => parseDate(option.fromNullable(veldinfo.parseFormat))(value), // we zouden kunnen afronden
