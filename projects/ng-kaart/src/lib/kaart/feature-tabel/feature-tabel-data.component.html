@@ -83,11 +83,11 @@
     </div>
   </div>
   <div
-    *ngIf="data.featureDataAvailable"
     class="feature-tabel-data-header-menu"
     [class.comfortable-table-layout]="data.comfortableLayout"
   >
     <button
+      *ngIf="data.featureDataAvailable"
       mat-icon-button
       [matMenuTriggerFor]="fieldChoiceMenu"
       (menuOpened)="onAction('showSelections')"
@@ -95,6 +95,13 @@
       class="feature-table-select-columns"
     >
       <mat-icon>view_column</mat-icon>
+    </button>
+    <button
+      mat-icon-button
+      matTooltip="Exporteer data"
+      class="feature-table-select-columns"
+    >
+      <mat-icon>file_download</mat-icon>
     </button>
     <mat-menu
       #fieldChoiceMenu="matMenu"
