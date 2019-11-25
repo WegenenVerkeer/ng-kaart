@@ -1,12 +1,15 @@
+import { HttpClient } from "@angular/common/http";
 import { Component, EventEmitter, Injector, Input, OnChanges, Output, SimpleChanges, ViewEncapsulation } from "@angular/core";
 import { array } from "fp-ts";
 import { identity } from "fp-ts/lib/function";
 import { Setoid } from "fp-ts/lib/Setoid";
 import * as ol from "openlayers";
 
+import { kaartLogger } from "../../kaart";
 import { forChangedValue } from "../../kaart/kaart-component-base";
 import * as prt from "../../kaart/kaart-protocol";
 import * as arrays from "../../util/arrays";
+import { GeoJsonLike } from "../../util/geojson-types";
 import { logOnlyWrapper } from "../messages";
 
 import { ClassicVectorLaagComponent } from "./classic-vector-laag.component";
@@ -22,6 +25,20 @@ const id = (feat: ol.Feature) => {
     } else {
       return undefined;
     }
+  }
+};
+
+const toOlFeatures = (features: GeoJsonLike[]) => {
+  try {
+    return features.map(feature =>
+      new ol.format.GeoJSON().readFeature(feature, {
+        dataProjection: "EPSG:31370",
+        featureProjection: "EPSG:31370"
+      })
+    );
+  } catch (e) {
+    kaartLogger.error("Ongeldige geosjon data: ", e, features);
+    return [];
   }
 };
 
@@ -56,8 +73,22 @@ export class ClassicFeaturesLaagComponent extends ClassicVectorLaagComponent imp
   @Output()
   featureGeselecteerd: EventEmitter<ol.Feature> = new EventEmitter<ol.Feature>();
 
-  constructor(injector: Injector) {
+  constructor(injector: Injector, private readonly http: HttpClient) {
     super(injector);
+  }
+
+  @Input()
+  set featuresGeojson(geojsons: string) {
+    this.features = toOlFeatures(JSON.parse(geojsons));
+    this.dispatchVervangFeatures(this.features);
+  }
+
+  @Input()
+  set featuresUrl(url: string) {
+    this.http.get<GeoJsonLike[]>(url).subscribe(result => {
+      this.features = toOlFeatures(result);
+      this.dispatchVervangFeatures(this.features);
+    });
   }
 
   voegLaagToe(): void {
