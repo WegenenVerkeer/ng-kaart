@@ -92,7 +92,7 @@ export interface TekenInfoboodschapGeslotenMsg {
 
 export interface IdentifyInfoBoodschapGeslotenMsg {
   readonly type: "IdentifyInfoBoodschapGesloten";
-  readonly featureId: string;
+  readonly feature: ol.Feature;
 }
 
 function KaartInternalMsg(payload: Option<KaartInternalSubMsg>): KaartInternalMsg {
@@ -202,10 +202,10 @@ export function TekenInfoboodschapGeslotenMsg(): TekenInfoboodschapGeslotenMsg {
 
 export const tekenInfoboodschapGeslotenMsgWrapper = () => KaartInternalMsg(some(TekenInfoboodschapGeslotenMsg()));
 
-const IdentifyInfoBoodschapGeslotenMsg = (featureId: string): IdentifyInfoBoodschapGeslotenMsg => ({
+const IdentifyInfoBoodschapGeslotenMsg = (feature: ol.Feature): IdentifyInfoBoodschapGeslotenMsg => ({
   type: "IdentifyInfoBoodschapGesloten",
-  featureId
+  feature
 });
 
-export const identifyInfoBoodschapGeslotenMsgGen = (featureId: string) =>
-  KaartInternalMsg(some(IdentifyInfoBoodschapGeslotenMsg(featureId)));
+export const identifyInfoBoodschapGeslotenMsgGen = (feature: ol.Feature) =>
+  KaartInternalMsg(some(IdentifyInfoBoodschapGeslotenMsg(feature)));

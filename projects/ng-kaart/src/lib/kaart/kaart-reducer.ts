@@ -1246,7 +1246,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function deselecteerFeature(cmnd: prt.DeselecteerFeatureCmd): ModelWithResult<Msg> {
-      const toDeselect = model.geselecteerdeFeatures.getArray().filter(f => cmnd.ids.includes(f.get("id")));
+      const toDeselect = cmnd.features;
       toDeselect.forEach(f => model.geselecteerdeFeatures.remove(f));
 
       return ModelWithResult(model);

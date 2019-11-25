@@ -84,7 +84,7 @@ export interface SubscribedMsg {
 
 export interface FeatureGedeselecteerdMsg {
   readonly type: "FeatureGedeselecteerd";
-  readonly featureid: string;
+  readonly feature: ol.Feature;
 }
 
 export interface ZichtbareFeaturesAangepastMsg {
@@ -171,8 +171,8 @@ export function KaartClickMsg(clickCoordinaat: ol.Coordinate): KaartClickMsg {
   return { type: "KaartClick", clickCoordinaat: clickCoordinaat };
 }
 
-export function FeatureGedeselecteerdMsg(featureid: string): FeatureGedeselecteerdMsg {
-  return { type: "FeatureGedeselecteerd", featureid: featureid };
+export function FeatureGedeselecteerdMsg(feature: ol.Feature): FeatureGedeselecteerdMsg {
+  return { type: "FeatureGedeselecteerd", feature: feature };
 }
 
 export function KaartClassicMsg(payload: KaartClassicSubMsg): KaartClassicMsg {

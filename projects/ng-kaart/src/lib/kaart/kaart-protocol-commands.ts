@@ -547,7 +547,7 @@ export interface SelecteerFeaturesCmd {
 
 export interface DeselecteerFeatureCmd {
   readonly type: "DeselecteerFeature";
-  readonly ids: string[];
+  readonly features: ol.Feature[];
 }
 
 export interface DeselecteerAlleFeaturesCmd {
@@ -970,8 +970,8 @@ export function SelecteerExtraFeaturesCmd(features: ol.Feature[]): SelecteerFeat
   return { type: "SelecteerFeatures", features, incremental: true };
 }
 
-export function DeselecteerFeatureCmd(ids: string[]): DeselecteerFeatureCmd {
-  return { type: "DeselecteerFeature", ids };
+export function DeselecteerFeatureCmd(features: ol.Feature[]): DeselecteerFeatureCmd {
+  return { type: "DeselecteerFeature", features };
 }
 
 export function DeselecteerAlleFeaturesCmd(): DeselecteerAlleFeaturesCmd {

@@ -55,7 +55,7 @@ export class KaartIdentifyComponent extends KaartChildComponentBase implements O
                       bron: option.none,
                       laag: option.none,
                       sluit: "DOOR_APPLICATIE",
-                      verbergMsgGen: () => option.some(identifyInfoBoodschapGeslotenMsgGen(feature.id))
+                      verbergMsgGen: () => option.some(identifyInfoBoodschapGeslotenMsgGen(feature.feature))
                     })
                   )
                 )
@@ -67,7 +67,7 @@ export class KaartIdentifyComponent extends KaartChildComponentBase implements O
 
     const deselecteerCmd$ = this.internalMessage$.pipe(
       ofType<IdentifyInfoBoodschapGeslotenMsg>("IdentifyInfoBoodschapGesloten"),
-      map(msg => prt.DeselecteerFeatureCmd([msg.featureId]))
+      map(msg => prt.DeselecteerFeatureCmd([msg.feature]))
     );
 
     this.dispatchCmdsInViewReady(verwijderdMsgs$, toegevoegdMsgs$, deselecteerCmd$);
