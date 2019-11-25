@@ -31,7 +31,8 @@ import { KaartComponent } from "../kaart.component";
 
 import { Alignment } from "./alignment-model";
 import { Page } from "./data-provider";
-import { FeatureTabelOverzichtComponent } from "./feature-tabel-overzicht.component";
+import { FeatureTabelOpties, KnopActieParams, KnopConfiguratie } from "./feature-tabel-opties";
+import { FeatureTabelOverzichtComponent, FeatureTabelUiSelector } from "./feature-tabel-overzicht.component";
 import { FieldSelection } from "./field-selection-model";
 import { LaagModel } from "./laag-model";
 import { Row } from "./row-model";
@@ -103,11 +104,18 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
   // Voor child components
   public readonly laag$: rx.Observable<LaagModel>;
 
+  public readonly extraKnoppen$: rx.Observable<KnopConfiguratie[]>;
+
   @Input()
   laagTitel: string;
 
   constructor(kaart: KaartComponent, overzicht: FeatureTabelOverzichtComponent, ngZone: NgZone, private readonly cdr: ChangeDetectorRef) {
     super(kaart, ngZone);
+
+    this.dispatch(prt.InitUiElementOpties(FeatureTabelUiSelector, { dataHeaderMenuExtraKnoppen: [] }));
+    const options$ = this.accumulatedOpties$<FeatureTabelOpties>(FeatureTabelUiSelector);
+
+    this.extraKnoppen$ = options$.pipe(map(options => options.dataHeaderMenuExtraKnoppen));
 
     this.laag$ = this.viewReady$
       .pipe(
@@ -366,5 +374,9 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
         )
         .pipe(tap(cmd => this.dispatch(cmd)))
     );
+  }
+
+  handleExtraKnopClick(extraKnop: KnopConfiguratie) {
+    extraKnop.actie(KnopActieParams(this.laagTitel));
   }
 }

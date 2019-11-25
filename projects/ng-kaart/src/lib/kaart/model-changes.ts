@@ -325,8 +325,6 @@ export const modelChanges = (model: KaartWithInfo, changer: ModelChanger, zone: 
     shareReplay(1)
   );
 
-  const tabelLaagInstellingen$ = changer.tabelLaagInstellingenSubj;
-
   const dragInfo$ = observableFromOlEvents<ol.MapBrowserEvent>(model.map, "pointerdrag").pipe(
     debounceTime(100),
     map(event => ({
