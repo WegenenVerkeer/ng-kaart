@@ -2,6 +2,7 @@ import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { MatIconRegistry } from "@angular/material";
 import { DomSanitizer } from "@angular/platform-browser";
 import { default as booleanIntersects } from "@turf/boolean-intersects";
+import { geometry } from "@turf/helpers";
 import * as turf from "@turf/turf";
 import * as array from "fp-ts/lib/Array";
 import { Endomorphism, flow, Function1, Function2, identity } from "fp-ts/lib/function";
@@ -97,13 +98,13 @@ const geometryToTurfPolygon: Function1<ol.geom.Geometry, option.Option<turf.Feat
   option.map(coordinates => turf.polygon([coordinates]))
 );
 
-const featureOverlapsPolygon = (polygon: ol.geom.Geometry) => (feature: ol.Feature): boolean =>
+const geometryOverlapsPolygon = (polygon: ol.geom.Geometry) => (featureGeom: ol.geom.Geometry): boolean =>
   pipe(
     polygon,
     geometryToTurfPolygon,
     option.exists(turfPolygon =>
       pipe(
-        matchGeometryType(feature.getGeometry(), {
+        matchGeometryType(featureGeom, {
           point: p => {
             const turfPoint = turf.point(p.getCoordinates());
             return turf.booleanPointInPolygon(turfPoint, turfPolygon);
@@ -116,12 +117,18 @@ const featureOverlapsPolygon = (polygon: ol.geom.Geometry) => (feature: ol.Featu
             flow(
               geometryToTurfPolygon,
               option.exists(featurePolygon => booleanIntersects(featurePolygon, turfPolygon))
-            )(p)
+            )(p),
+          geometryCollection: gc =>
+            array.reduce<ol.geom.Geometry, boolean>(false, (overlaps, geom) => overlaps || geometryOverlapsPolygon(polygon)(geom))(
+              gc.getGeometries()
+            )
         }),
         option.exists(identity)
       )
     )
   );
+const featureOverlapsPolygon = (polygon: ol.geom.Geometry) => (feature: ol.Feature): boolean =>
+  geometryOverlapsPolygon(polygon)(feature.getGeometry());
 
 const featuresOverlappingPolygon = (polygon: ol.geom.Geometry): Endomorphism<ol.Feature[]> => array.filter(featureOverlapsPolygon(polygon));
 
