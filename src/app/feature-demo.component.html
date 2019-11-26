@@ -224,6 +224,9 @@
                                  [zichtbaar]="true" [veldinfos]="mechelenVeldInfos"></awv-kaart-features-laag>
         <awv-kaart-features-laag [titel]="'Vliegtuig'" [features]="installatie" [style]="pinIcon2" [minZoom]="3"
                                  [zichtbaar]="false"></awv-kaart-features-laag>
+        <awv-kaart-features-laag [titel]="'Meetpunten in Mechelen'" [featuresUrl]="'assets/points.json'" [minZoom]="3"
+                                 [zichtbaar]="true" ></awv-kaart-features-laag>
+
         <!-- achtergrondlagen -->
         <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
         <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"

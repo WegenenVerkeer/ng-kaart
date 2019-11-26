@@ -1,0 +1,2436 @@
+[
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158791.51,
+        190706.51,
+        158791.51,
+        190706.51
+      ],
+      "coordinates": [
+        158791.51,
+        190706.51
+      ]
+    },
+    "id": "0485e1b2-5e5b-4647-813e-ce933ba67146",
+    "properties": {
+      "opnamedatum": "17/10/2014"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158994.496426,
+        191243.519633,
+        158994.496426,
+        191243.519633
+      ],
+      "coordinates": [
+        158994.496426,
+        191243.519633
+      ]
+    },
+    "id": "09976d3c-3690-432e-a1d6-4413293dba10",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        159053.528254,
+        190691.081154,
+        159053.528254,
+        190691.081154
+      ],
+      "coordinates": [
+        159053.528254,
+        190691.081154
+      ]
+    },
+    "id": "0cecffcd-d146-44cf-8583-2e9cbdc3d235",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        159152.91,
+        190732.12,
+        159152.91,
+        190732.12
+      ],
+      "coordinates": [
+        159152.91,
+        190732.12
+      ]
+    },
+    "id": "0d3ba387-0ef9-4394-baa0-8dcffc468b9b",
+    "properties": {
+      "opnamedatum": "17/10/2014"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158810.790949,
+        191214.889978,
+        158810.790949,
+        191214.889978
+      ],
+      "coordinates": [
+        158810.790949,
+        191214.889978
+      ]
+    },
+    "id": "0eaa0bf9-db70-4a7b-bc42-7f761a3967b3",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158827.492133618,
+        190701.693568968,
+        158827.492133618,
+        190701.693568968
+      ],
+      "coordinates": [
+        158827.492133618,
+        190701.693568968,
+        0,
+        0.463
+      ]
+    },
+    "id": "144a1ccd-7f95-4853-b057-c2409c8bdb37",
+    "properties": {
+      "opnamedatum": "07/06/2012"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        159023.809405,
+        191263.819877,
+        159023.809405,
+        191263.819877
+      ],
+      "coordinates": [
+        159023.809405,
+        191263.819877
+      ]
+    },
+    "id": "148fbc1f-0e2b-4631-985c-200211314b53",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158931.388454,
+        190653.406047,
+        158931.388454,
+        190653.406047
+      ],
+      "coordinates": [
+        158931.388454,
+        190653.406047
+      ]
+    },
+    "id": "164faf14-e124-44fe-85e9-cfdc308a96cc",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158667.231228,
+        190765.171817,
+        158667.231228,
+        190765.171817
+      ],
+      "coordinates": [
+        158667.231228,
+        190765.171817
+      ]
+    },
+    "id": "1b15037c-4289-429a-b646-9a7c922a522e",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158727.220705,
+        191207.367319,
+        158727.220705,
+        191207.367319
+      ],
+      "coordinates": [
+        158727.220705,
+        191207.367319
+      ]
+    },
+    "id": "1b3b3a69-e115-4072-83e1-7ce491518a8c",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158750.73432,
+        190709.674505,
+        158750.73432,
+        190709.674505
+      ],
+      "coordinates": [
+        158750.73432,
+        190709.674505
+      ]
+    },
+    "id": "21c34e73-c777-4e5b-9f6c-e64fa6d24c4c",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        159044.67,
+        190701.7,
+        159044.67,
+        190701.7
+      ],
+      "coordinates": [
+        159044.67,
+        190701.7
+      ]
+    },
+    "id": "2be3bf2d-61d1-4c13-b40a-ecd3da7dfb95",
+    "properties": {
+      "opnamedatum": "17/10/2014"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158756.944191,
+        191206.383521,
+        158756.944191,
+        191206.383521
+      ],
+      "coordinates": [
+        158756.944191,
+        191206.383521
+      ]
+    },
+    "id": "2d37b0f6-3a1d-431f-98fb-ebcdb30db520",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158868.659009,
+        191218.75411,
+        158868.659009,
+        191218.75411
+      ],
+      "coordinates": [
+        158868.659009,
+        191218.75411
+      ]
+    },
+    "id": "2f7afa20-c76d-4647-bf1b-0fa442748b3b",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158822.164228,
+        191204.308987,
+        158822.164228,
+        191204.308987
+      ],
+      "coordinates": [
+        158822.164228,
+        191204.308987
+      ]
+    },
+    "id": "301e8a5b-6f5f-4bbd-8b02-548416777d74",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158709.114404,
+        190719.427627,
+        158709.114404,
+        190719.427627
+      ],
+      "coordinates": [
+        158709.114404,
+        190719.427627
+      ]
+    },
+    "id": "30462544-e598-4349-b2f8-9f731197bc4d",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158705.396492,
+        191222.440096,
+        158705.396492,
+        191222.440096
+      ],
+      "coordinates": [
+        158705.396492,
+        191222.440096
+      ]
+    },
+    "id": "32f7d42c-4e8e-4414-b0e3-670e093b2629",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158983.225258,
+        191247.71205,
+        158983.225258,
+        191247.71205
+      ],
+      "coordinates": [
+        158983.225258,
+        191247.71205
+      ]
+    },
+    "id": "35dc5ea5-1548-464c-9b2a-55811dfc429d",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158845.99,
+        190690.4,
+        158845.99,
+        190690.4
+      ],
+      "coordinates": [
+        158845.99,
+        190690.4
+      ]
+    },
+    "id": "371567d2-f80e-4518-9a45-e02c354213d8",
+    "properties": {
+      "opnamedatum": "17/10/2014"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        159022.14889,
+        191254.134488,
+        159022.14889,
+        191254.134488
+      ],
+      "coordinates": [
+        159022.14889,
+        191254.134488
+      ]
+    },
+    "id": "371b3d3d-0333-47c7-84af-7faf107e0447",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        159064.575839705,
+        190704.481501472,
+        159064.575839705,
+        190704.481501472
+      ],
+      "coordinates": [
+        159064.575839705,
+        190704.481501472,
+        0,
+        0.709
+      ]
+    },
+    "id": "3a0fc036-3f9d-48a6-9173-594d182bbcb0",
+    "properties": {
+      "opnamedatum": "07/06/2012"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158962.71461,
+        190655.128016,
+        158962.71461,
+        190655.128016
+      ],
+      "coordinates": [
+        158962.71461,
+        190655.128016
+      ]
+    },
+    "id": "3f8203f7-619d-4cd9-8241-131e80fea480",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158917.62,
+        190681.91,
+        158917.62,
+        190681.91
+      ],
+      "coordinates": [
+        158917.62,
+        190681.91
+      ]
+    },
+    "id": "41241192-10d7-4b68-988f-26cb95ff9e47",
+    "properties": {
+      "opnamedatum": "17/10/2014"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158849.755136,
+        190678.083488,
+        158849.755136,
+        190678.083488
+      ],
+      "coordinates": [
+        158849.755136,
+        190678.083488
+      ]
+    },
+    "id": "45c24e5d-6c03-455e-a60d-8e66c9a562ad",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158905.545927,
+        191217.532904,
+        158905.545927,
+        191217.532904
+      ],
+      "coordinates": [
+        158905.545927,
+        191217.532904
+      ]
+    },
+    "id": "469a9a06-c074-40cd-b996-625659dd0aa0",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158874.978227,
+        191210.545833,
+        158874.978227,
+        191210.545833
+      ],
+      "coordinates": [
+        158874.978227,
+        191210.545833
+      ]
+    },
+    "id": "47922154-a06a-4f91-a94c-2df8787100c6",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158841.37,
+        190701.67,
+        158841.37,
+        190701.67
+      ],
+      "coordinates": [
+        158841.37,
+        190701.67
+      ]
+    },
+    "id": "4be37c2a-4cfd-4db8-86ce-8a99c8edea35",
+    "properties": {
+      "opnamedatum": "17/10/2014"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        159053.085647,
+        191268.723727,
+        159053.085647,
+        191268.723727
+      ],
+      "coordinates": [
+        159053.085647,
+        191268.723727
+      ]
+    },
+    "id": "537d36eb-9e75-4d78-a7ad-b3c629888462",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158878.411341,
+        190672.514085,
+        158878.411341,
+        190672.514085
+      ],
+      "coordinates": [
+        158878.411341,
+        190672.514085
+      ]
+    },
+    "id": "53f9c5c7-3bee-40a3-92a4-5109d780cb22",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158819.303195,
+        191218.94215,
+        158819.303195,
+        191218.94215
+      ],
+      "coordinates": [
+        158819.303195,
+        191218.94215
+      ]
+    },
+    "id": "560a0320-1d3a-48b3-9ec1-9b3d86230d8d",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158738.928725,
+        191209.10837,
+        158738.928725,
+        191209.10837
+      ],
+      "coordinates": [
+        158738.928725,
+        191209.10837
+      ]
+    },
+    "id": "59f56fcd-15c2-497f-85e5-d6cc9fc5fbab",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        159167.536723,
+        191332.060957,
+        159167.536723,
+        191332.060957
+      ],
+      "coordinates": [
+        159167.536723,
+        191332.060957
+      ]
+    },
+    "id": "5a69970f-34cf-4181-b8d8-08196cd382a3",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158692.207873,
+        191218.994488,
+        158692.207873,
+        191218.994488
+      ],
+      "coordinates": [
+        158692.207873,
+        191218.994488
+      ]
+    },
+    "id": "5b982a18-642a-460a-ae59-2fab59441c42",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        159018.34,
+        190693.74,
+        159018.34,
+        190693.74
+      ],
+      "coordinates": [
+        159018.34,
+        190693.74
+      ]
+    },
+    "id": "5c74d39c-897a-4658-9cba-18cd6b0a8757",
+    "properties": {
+      "opnamedatum": "17/10/2014"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158731.242126,
+        191209.292665,
+        158731.242126,
+        191209.292665
+      ],
+      "coordinates": [
+        158731.242126,
+        191209.292665
+      ]
+    },
+    "id": "5d02f74d-1721-4ff6-8d00-09c81d8d36cc",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158706.357065,
+        190735.401858,
+        158706.357065,
+        190735.401858
+      ],
+      "coordinates": [
+        158706.357065,
+        190735.401858
+      ]
+    },
+    "id": "60c35cd6-f985-490b-9f99-7aa2e02b7721",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158830.46343662,
+        190690.46318662,
+        158830.46343662,
+        190690.46318662
+      ],
+      "coordinates": [
+        158830.46343662,
+        190690.46318662,
+        0,
+        0.469
+      ]
+    },
+    "id": "645049bb-89b2-4cdf-9054-68edff8c8aac",
+    "properties": {
+      "opnamedatum": "07/06/2012"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158853.171766,
+        191206.570543,
+        158853.171766,
+        191206.570543
+      ],
+      "coordinates": [
+        158853.171766,
+        191206.570543
+      ]
+    },
+    "id": "68c7d1c6-3770-473a-b456-f1b890881cce",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158694.062671,
+        190727.327642,
+        158694.062671,
+        190727.327642
+      ],
+      "coordinates": [
+        158694.062671,
+        190727.327642
+      ]
+    },
+    "id": "697f83e9-056b-4f53-bef7-c1f7b8853086",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158717.076555,
+        191206.989928,
+        158717.076555,
+        191206.989928
+      ],
+      "coordinates": [
+        158717.076555,
+        191206.989928
+      ]
+    },
+    "id": "6b89e29d-89a4-49f7-bb29-acf9c9eed296",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        159092.42729,
+        190704.884835,
+        159092.42729,
+        190704.884835
+      ],
+      "coordinates": [
+        159092.42729,
+        190704.884835
+      ]
+    },
+    "id": "6c477cd6-d682-4af5-b2a5-bbd6b9326efd",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158997.222494,
+        190676.169074,
+        158997.222494,
+        190676.169074
+      ],
+      "coordinates": [
+        158997.222494,
+        190676.169074
+      ]
+    },
+    "id": "6c656f54-83a0-44c4-8b91-8e0b54ecacda",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158711.862904,
+        191207.763481,
+        158711.862904,
+        191207.763481
+      ],
+      "coordinates": [
+        158711.862904,
+        191207.763481
+      ]
+    },
+    "id": "71d617ab-14f7-482a-b01c-5a6ef2dbc85b",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        159051.532037,
+        191276.023283,
+        159051.532037,
+        191276.023283
+      ],
+      "coordinates": [
+        159051.532037,
+        191276.023283
+      ]
+    },
+    "id": "78f83dd1-ded9-4383-94c5-a3b71f1bff8c",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158877.22,
+        190694.66,
+        158877.22,
+        190694.66
+      ],
+      "coordinates": [
+        158877.22,
+        190694.66
+      ]
+    },
+    "id": "84e02dc6-ad92-44f5-987f-6bbdc4b3bf6f",
+    "properties": {
+      "opnamedatum": "17/10/2014"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158726.297874,
+        190722.825347,
+        158726.297874,
+        190722.825347
+      ],
+      "coordinates": [
+        158726.297874,
+        190722.825347
+      ]
+    },
+    "id": "88d1c930-688c-4d5e-9095-31422279874e",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158678.546881,
+        191216.992501,
+        158678.546881,
+        191216.992501
+      ],
+      "coordinates": [
+        158678.546881,
+        191216.992501
+      ]
+    },
+    "id": "88f66496-eb02-42d7-b01e-1bcd85cf63b6",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        159080.185369,
+        191281.333301,
+        159080.185369,
+        191281.333301
+      ],
+      "coordinates": [
+        159080.185369,
+        191281.333301
+      ]
+    },
+    "id": "8b25d2bf-a339-4f87-8280-97c430318ee9",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158667.252992,
+        191205.105976,
+        158667.252992,
+        191205.105976
+      ],
+      "coordinates": [
+        158667.252992,
+        191205.105976
+      ]
+    },
+    "id": "8b70d357-36af-4fe0-a5d6-9c11602abee7",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158813.503529,
+        191219.602512,
+        158813.503529,
+        191219.602512
+      ],
+      "coordinates": [
+        158813.503529,
+        191219.602512
+      ]
+    },
+    "id": "90ca2e9a-c78e-4aad-b4bd-b7bf1d759c2b",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158696.404814569,
+        190754.826437085,
+        158696.404814569,
+        190754.826437085
+      ],
+      "coordinates": [
+        158696.404814569,
+        190754.826437085,
+        0,
+        0.318
+      ]
+    },
+    "id": "922ea8c8-1c02-4faa-8331-c3fa3cc5edd7",
+    "properties": {
+      "opnamedatum": "07/06/2012"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        159074.794285,
+        191287.181403,
+        159074.794285,
+        191287.181403
+      ],
+      "coordinates": [
+        159074.794285,
+        191287.181403
+      ]
+    },
+    "id": "92f4c980-a805-4e3b-9f10-2ba240118898",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158914.415887,
+        191229.122392,
+        158914.415887,
+        191229.122392
+      ],
+      "coordinates": [
+        158914.415887,
+        191229.122392
+      ]
+    },
+    "id": "949742c2-149f-4dac-a17f-a4a53ef6b426",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158990.333772,
+        190656.608447,
+        158990.333772,
+        190656.608447
+      ],
+      "coordinates": [
+        158990.333772,
+        190656.608447
+      ]
+    },
+    "id": "960b830d-a972-4245-ad29-9bea0ce1287b",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        159099.351032,
+        191298.995993,
+        159099.351032,
+        191298.995993
+      ],
+      "coordinates": [
+        159099.351032,
+        191298.995993
+      ]
+    },
+    "id": "9751aa1a-9c61-4c22-aabe-0ef4d7a1b3c6",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        159142.214367,
+        191319.525974,
+        159142.214367,
+        191319.525974
+      ],
+      "coordinates": [
+        159142.214367,
+        191319.525974
+      ]
+    },
+    "id": "981da6ae-16d2-41e9-b748-cb418f26f12a",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158728.217590913,
+        190733.316266231,
+        158728.217590913,
+        190733.316266231
+      ],
+      "coordinates": [
+        158728.217590913,
+        190733.316266231,
+        0,
+        0.357
+      ]
+    },
+    "id": "98201b06-1e2b-41cf-bdd4-d4bf2405225c",
+    "properties": {
+      "opnamedatum": "07/06/2012"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158863.603054,
+        190650.768567,
+        158863.603054,
+        190650.768567
+      ],
+      "coordinates": [
+        158863.603054,
+        190650.768567
+      ]
+    },
+    "id": "9a984794-30a1-4cd7-a92d-e8ee40645cf7",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158740.08012,
+        191219.304075,
+        158740.08012,
+        191219.304075
+      ],
+      "coordinates": [
+        158740.08012,
+        191219.304075
+      ]
+    },
+    "id": "9eed3650-32b6-448f-aad6-ff6ac44ffd43",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158759.762280001,
+        190716.490480001,
+        158759.762280001,
+        190716.490480001
+      ],
+      "coordinates": [
+        158759.762280001,
+        190716.490480001,
+        0,
+        0.393
+      ]
+    },
+    "id": "a15cb59d-c64f-4210-b12d-00fd2b146470",
+    "properties": {
+      "opnamedatum": "07/06/2012"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        159124.57,
+        190722.09,
+        159124.57,
+        190722.09
+      ],
+      "coordinates": [
+        159124.57,
+        190722.09
+      ]
+    },
+    "id": "a19f3cca-196a-4108-86db-695f2feabbd1",
+    "properties": {
+      "opnamedatum": "17/10/2014"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158732.299483,
+        191219.867531,
+        158732.299483,
+        191219.867531
+      ],
+      "coordinates": [
+        158732.299483,
+        191219.867531
+      ]
+    },
+    "id": "a1dd1604-f844-426d-a876-a3e57831fa8d",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158925.04,
+        190692.35,
+        158925.04,
+        190692.35
+      ],
+      "coordinates": [
+        158925.04,
+        190692.35
+      ]
+    },
+    "id": "a5c6db7d-0956-4f45-bdaf-3077a411dfc7",
+    "properties": {
+      "opnamedatum": "17/10/2014"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158696.369453,
+        191207.450228,
+        158696.369453,
+        191207.450228
+      ],
+      "coordinates": [
+        158696.369453,
+        191207.450228
+      ]
+    },
+    "id": "a6b3e808-0676-4420-bae3-c9d4f7d50e01",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158966.928318,
+        190671.630828,
+        158966.928318,
+        190671.630828
+      ],
+      "coordinates": [
+        158966.928318,
+        190671.630828
+      ]
+    },
+    "id": "a86133a5-d2a4-4b27-b4c2-981fc784d8ec",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        159152.894966941,
+        190736.115776859,
+        159152.894966941,
+        190736.115776859
+      ],
+      "coordinates": [
+        159152.894966941,
+        190736.115776859,
+        0,
+        0.803
+      ]
+    },
+    "id": "aa33377a-60bd-4879-a6f6-42e7cf714544",
+    "properties": {
+      "opnamedatum": "07/06/2012"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        159128.814551,
+        191304.488206,
+        159128.814551,
+        191304.488206
+      ],
+      "coordinates": [
+        159128.814551,
+        191304.488206
+      ]
+    },
+    "id": "ae15d64f-ad3d-4fcb-a5da-8d8a97657f13",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158904.984828,
+        190669.772497,
+        158904.984828,
+        190669.772497
+      ],
+      "coordinates": [
+        158904.984828,
+        190669.772497
+      ]
+    },
+    "id": "b1807e26-c7b4-4d6b-bd88-84462077fb09",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158903.892035,
+        190651.959611,
+        158903.892035,
+        190651.959611
+      ],
+      "coordinates": [
+        158903.892035,
+        190651.959611
+      ]
+    },
+    "id": "bbac3036-9603-44bf-93bb-fb470a36f4df",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        159181.94,
+        190742.4,
+        159181.94,
+        190742.4
+      ],
+      "coordinates": [
+        159181.94,
+        190742.4
+      ]
+    },
+    "id": "c0d377ee-9838-4ae6-9967-df9292d46f64",
+    "properties": {
+      "opnamedatum": "17/10/2014"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158833.791031,
+        191204.719368,
+        158833.791031,
+        191204.719368
+      ],
+      "coordinates": [
+        158833.791031,
+        191204.719368
+      ]
+    },
+    "id": "c604585f-5931-40f7-b189-af38cde11a63",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158704.749921,
+        191218.750956,
+        158704.749921,
+        191218.750956
+      ],
+      "coordinates": [
+        158704.749921,
+        191218.750956
+      ]
+    },
+    "id": "ca09d829-1a82-456d-a6ed-197690e50198",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        159160.376908,
+        191319.268949,
+        159160.376908,
+        191319.268949
+      ],
+      "coordinates": [
+        159160.376908,
+        191319.268949
+      ]
+    },
+    "id": "cadf7e94-0f6c-4708-ae13-983cf0976eb8",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158682.82975,
+        191207.336945,
+        158682.82975,
+        191207.336945
+      ],
+      "coordinates": [
+        158682.82975,
+        191207.336945
+      ]
+    },
+    "id": "cd1f6a9a-5c4c-430e-92c0-830560520082",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        159001.534956,
+        191254.486896,
+        159001.534956,
+        191254.486896
+      ],
+      "coordinates": [
+        159001.534956,
+        191254.486896
+      ]
+    },
+    "id": "cf200c2a-692d-4441-9c79-759e100cf0bd",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158966.161019,
+        191242.141032,
+        158966.161019,
+        191242.141032
+      ],
+      "coordinates": [
+        158966.161019,
+        191242.141032
+      ]
+    },
+    "id": "d0a20612-5de3-48fb-8d70-34ad91486d5c",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        159122.399157,
+        191309.869114,
+        159122.399157,
+        191309.869114
+      ],
+      "coordinates": [
+        159122.399157,
+        191309.869114
+      ]
+    },
+    "id": "d1a5cc2d-3ea6-4e2c-8e3c-f6787d700c3b",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        159114.952408,
+        190701.782312,
+        159114.952408,
+        190701.782312
+      ],
+      "coordinates": [
+        159114.952408,
+        190701.782312
+      ]
+    },
+    "id": "d1c52767-1c4d-4564-8edd-599ca9d996f6",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        159023.341468,
+        190681.978521,
+        159023.341468,
+        190681.978521
+      ],
+      "coordinates": [
+        159023.341468,
+        190681.978521
+      ]
+    },
+    "id": "d3c74112-9339-44d2-8c80-41ade3cf80ab",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        159175.274783,
+        191325.678535,
+        159175.274783,
+        191325.678535
+      ],
+      "coordinates": [
+        159175.274783,
+        191325.678535
+      ]
+    },
+    "id": "d735754e-b2fe-4524-afdf-61d0bcdd593d",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158979.09,
+        190685.97,
+        158979.09,
+        190685.97
+      ],
+      "coordinates": [
+        158979.09,
+        190685.97
+      ]
+    },
+    "id": "dc7a107c-7c2a-4619-b99d-6a376eae7509",
+    "properties": {
+      "opnamedatum": "17/10/2014"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158936.252586,
+        190669.34012,
+        158936.252586,
+        190669.34012
+      ],
+      "coordinates": [
+        158936.252586,
+        190669.34012
+      ]
+    },
+    "id": "dd3d1a51-8856-40a1-996c-049f460fe726",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158801.232536,
+        191204.801322,
+        158801.232536,
+        191204.801322
+      ],
+      "coordinates": [
+        158801.232536,
+        191204.801322
+      ]
+    },
+    "id": "e085fe2c-ac50-4737-a830-19fe22eab6b8",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        159105.602183,
+        191293.817488,
+        159105.602183,
+        191293.817488
+      ],
+      "coordinates": [
+        159105.602183,
+        191293.817488
+      ]
+    },
+    "id": "e2e2d636-2fbc-4e8a-925b-ca6331b417b7",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158794.12429,
+        190693.919953,
+        158794.12429,
+        190693.919953
+      ],
+      "coordinates": [
+        158794.12429,
+        190693.919953
+      ]
+    },
+    "id": "e6aaf8ea-6604-4384-af4c-dc7e3215c80e",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158722.700318,
+        191220.807143,
+        158722.700318,
+        191220.807143
+      ],
+      "coordinates": [
+        158722.700318,
+        191220.807143
+      ]
+    },
+    "id": "e97a980c-1cf4-41ad-b4bf-616ffdbaaa14",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        159022.92,
+        190706.02,
+        159022.92,
+        190706.02
+      ],
+      "coordinates": [
+        159022.92,
+        190706.02
+      ]
+    },
+    "id": "eb3a2822-705a-4431-9dac-6d673a19a16f",
+    "properties": {
+      "opnamedatum": "17/10/2014"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158947.558049177,
+        190678.796792349,
+        158947.558049177,
+        190678.796792349
+      ],
+      "coordinates": [
+        158947.558049177,
+        190678.796792349,
+        0,
+        0.588
+      ]
+    },
+    "id": "ee4a3572-c03a-4dc3-b524-4afc0aed3e05",
+    "properties": {
+      "opnamedatum": "07/06/2012"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158823.335168,
+        191213.770485,
+        158823.335168,
+        191213.770485
+      ],
+      "coordinates": [
+        158823.335168,
+        191213.770485
+      ]
+    },
+    "id": "f11e259a-b70e-4f74-a877-35463c4550ce",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158974.43,
+        190695.88,
+        158974.43,
+        190695.88
+      ],
+      "coordinates": [
+        158974.43,
+        190695.88
+      ]
+    },
+    "id": "f7224f76-1737-4bf5-9ed8-7aa9fbe2435d",
+    "properties": {
+      "opnamedatum": "17/10/2014"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158783.3,
+        190720.87,
+        158783.3,
+        190720.87
+      ],
+      "coordinates": [
+        158783.3,
+        190720.87
+      ]
+    },
+    "id": "f81906a8-e9fe-49f7-9d95-325ac634708a",
+    "properties": {
+      "opnamedatum": "17/10/2014"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158887.82,
+        190683.95,
+        158887.82,
+        190683.95
+      ],
+      "coordinates": [
+        158887.82,
+        190683.95
+      ]
+    },
+    "id": "fada9fc2-4fa6-4d80-9da8-5fcfa466ac7c",
+    "properties": {
+      "opnamedatum": "17/10/2014"
+    }
+  },
+  {
+    "type": "Feature",
+    "geometry": {
+      "type": "Point",
+      "crs": {
+        "properties": {
+          "name": "EPSG:31370"
+        },
+        "type": "name"
+      },
+      "bbox": [
+        158935.854195,
+        191224.51366,
+        158935.854195,
+        191224.51366
+      ],
+      "coordinates": [
+        158935.854195,
+        191224.51366
+      ]
+    },
+    "id": "ff6bdce9-f1e9-4c21-b0b4-5fb4c05e2ff7",
+    "properties": {
+      "opnamedatum": "01/01/2013"
+    }
+  }
+]

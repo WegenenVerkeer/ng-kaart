@@ -341,6 +341,15 @@ export class FeatureDemoComponent {
     })
   });
 
+  meetpuntStyle = new ol.style.Style({
+    image: new ol.style.Circle({
+      fill: new ol.style.Fill({
+        color: "green"
+      }),
+      radius: 5
+    })
+  });
+
   geselecteerdeFeatures: ol.Feature[] = [];
 
   fietspadsegmentenSelectie: FietspadSelectie[] = [];
