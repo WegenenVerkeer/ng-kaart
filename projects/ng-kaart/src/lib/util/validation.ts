@@ -16,8 +16,8 @@ export const validationAp: Applicative2C<URI, string[]> = validation.getApplicat
 
 export const allOf = sequence(validationAp, Array);
 
-export const success = <A>(a: A) => validation.success<string[], A>(a);
-export const failure = <A>(err: string) => validation.failure<string[], A>([err]);
+export const success = <A>(a: A): ErrValidation<A> => validation.success<string[], A>(a);
+export const failure = <A>(err: string): ErrValidation<A> => validation.failure<string[], A>([err]);
 
 export function fromOption<A>(maybe: Option<A>, errorMsg: string): ErrValidation<A> {
   return maybe.map(t => validation.success<string[], A>(t)).getOrElse(validation.failure([errorMsg]));

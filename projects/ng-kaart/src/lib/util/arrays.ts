@@ -1,4 +1,4 @@
-import { array, option, ord, setoid } from "fp-ts";
+import { array, eq, option, ord, setoid } from "fp-ts";
 import { Either } from "fp-ts/lib/Either";
 import { identity, pipe, Predicate, Refinement } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
@@ -74,5 +74,7 @@ export const forAll: <A>(pred: Predicate<A>) => (as: A[]) => boolean = pred =>
 export const containsAll = <A>(eq: setoid.Setoid<A>) => (as: A[], bs: A[]): boolean => forAll((b: A) => array.elem(eq)(b, as))(bs);
 
 export const getStringsSetoid: Setoid<string[]> = array.getSetoid(setoid.setoidString);
+
+export const isOneOf = <A>(...as: A[]) => (a: A): boolean => array.elem(eq.fromEquals(eq.strictEqual))(a, as);
 
 export const asSingleton = <A>(as: A[]): Option<A[]> => (as.length === 1 ? option.some(as) : option.none);

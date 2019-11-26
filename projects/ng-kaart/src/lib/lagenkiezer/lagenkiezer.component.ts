@@ -152,7 +152,10 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
 
     // Klap dicht wanneer tabel opengeklapt wordt
     const collapse$ = this.modelChanges.collapseUIRequest$;
-    this.bindToLifeCycle(collapse$).subscribe(() => (this.dichtgeklapt = true));
+    this.bindToLifeCycle(collapse$).subscribe(() => {
+      this.cdr.markForCheck();
+      return (this.dichtgeklapt = true);
+    });
   }
 
   ngOnInit() {

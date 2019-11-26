@@ -1,12 +1,12 @@
 import { array, option } from "fp-ts";
-import { Curried2, Endomorphism, FunctionN } from "fp-ts/lib/function";
+import { Curried2, Endomorphism, FunctionN, not } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import { DateTime } from "luxon";
 import { Lens } from "monocle-ts";
 import * as ol from "openlayers";
 
 import * as arrays from "../../util/arrays";
-import { parseDate, parseDateTime } from "../../util/date-time";
+import { fromTimestamp, parseDate } from "../../util/date-time";
 import { Feature, FeatureWithIdAndLaagnaam } from "../../util/feature";
 import { PartialFunction2 } from "../../util/function";
 import * as ke from "../kaart-elementen";
@@ -50,21 +50,42 @@ export namespace Row {
   export const idLens: Lens<Row, string> = Lens.fromPath<Row>()(["feature", "id"]);
 
   // We zouden dit ook helemaal naar de NoSqlFsSource kunnen schuiven (met een Either om geen info te verliezen).
-  const matchingTypeValue: PartialFunction2<any, ke.VeldInfo, ValueType> = (value, veldinfo) =>
-    option
-      .fromPredicate<ValueType>(v => typeof v === "number" && (veldinfo.type === "double" || veldinfo.type === "integer"))(value)
-      .orElse(() => option.fromPredicate<boolean>(v => typeof v === "boolean" && veldinfo.type === "boolean")(value))
-      .orElse(() =>
-        option
-          .fromPredicate<string>(v => typeof v === "string" && veldinfo.type === "datetime")(value)
-          .chain(v => parseDateTime(option.fromNullable(veldinfo.parseFormat))(v))
-      )
-      .orElse(() =>
-        option
-          .fromPredicate<string>(v => typeof v === "string" && veldinfo.type === "date")(value)
-          .chain(v => parseDate(option.fromNullable(veldinfo.parseFormat))(v))
-      )
-      .orElse(() => option.fromPredicate<string>(v => typeof v === "string" && veldinfo.type === "string")(value));
+  const matchingTypeValue: PartialFunction2<unknown, ke.VeldInfo, ValueType> = (value, veldinfo) => {
+    switch (typeof value) {
+      case "number": {
+        return ke.VeldInfo.matchWithFallback({
+          integer: () => option.some(value as ValueType),
+          double: () => option.some(value),
+          string: () => option.some(value.toString()),
+          boolean: () => option.some(value !== 0),
+          date: () => fromTimestamp(value),
+          datetime: () => fromTimestamp(value),
+          fallback: () => option.none
+        })(veldinfo);
+      }
+      case "boolean": {
+        return ke.VeldInfo.matchWithFallback({
+          boolean: () => option.some(value as ValueType),
+          integer: () => option.some(value ? 1 : 0),
+          string: () => option.some(value ? "JA" : "NEEN"),
+          fallback: () => option.none
+        })(veldinfo);
+      }
+      case "string": {
+        return ke.VeldInfo.matchWithFallback({
+          integer: () => option.fromPredicate<ValueType>(Number.isInteger)(Number.parseInt(value, 10)),
+          double: () => option.fromPredicate(not(Number.isNaN))(Number.parseFloat(value.replace(",", "."))),
+          string: () => option.some(value),
+          boolean: () => option.some(value !== ""),
+          date: () => parseDate(option.fromNullable(veldinfo.parseFormat))(value), // we zouden kunnen afronden
+          datetime: () => parseDate(option.fromNullable(veldinfo.parseFormat))(value),
+          fallback: () => option.none
+        })(veldinfo);
+      }
+      default:
+        return option.none;
+    }
+  };
 
   const nestedPropertyValue = (properties: Properties, path: string[], veldinfo: ke.VeldInfo): Option<ValueType> =>
     array.fold(path, option.none, (head, tail) =>

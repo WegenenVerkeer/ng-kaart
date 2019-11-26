@@ -83,6 +83,10 @@ export function succeed<T>(t: T): Interpreter<T> {
   return () => ok(t);
 }
 
+export function failed<T>(errMsg: string): Interpreter<T> {
+  return () => fail(errMsg);
+}
+
 function validateArray<T>(jsonArray: Array<T>, interpreter: Interpreter<T>): Validation<Array<T>> {
   return array.array.reduce(
     jsonArray as Array<Object>, //

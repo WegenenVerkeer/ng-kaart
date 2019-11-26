@@ -237,12 +237,13 @@ export namespace LaagModel {
       return formatNumber(value as number, "nl-BE", format);
     } catch {
       kaartLogger.warn(`Waarde ${value} kan niet als een getal geïnterpreteerd worden`);
-      return "<geen getal>";
+      return `${value} <i>*</i>`;
     }
   };
 
   const formatBoolean: Endomorphism<Field> = Field.modify(value => (value ? "JA" : "NEEN"));
-  const formatInteger: Endomorphism<Field> = Field.modify(formatNumberSafe("0.0-0"));
+  const formatInteger = (maybeFormat: option.Option<string>): Endomorphism<Field> =>
+    option.map(equalToString("#"))(maybeFormat) ? identity : Field.modify(formatNumberSafe("0.0-0"));
   const formatDouble: (maybeFormat: option.Option<string>) => Endomorphism<Field> = flow(
     safeDoubleFormat,
     formatNumberSafe,
@@ -253,7 +254,7 @@ export namespace LaagModel {
   const rowFormat: Function1<ke.VeldInfo, Option<Endomorphism<Field>>> = vi =>
     ke.VeldInfo.matchWithFallback({
       boolean: () => option.some(formatBoolean),
-      integer: () => option.some(formatInteger),
+      integer: () => option.some(formatInteger(option.fromNullable(vi.displayFormat))),
       double: () => option.some(formatDouble(option.fromNullable(vi.displayFormat))),
       date: () => option.some(formatDate(option.fromNullable(vi.displayFormat))),
       datetime: () => option.some(formatDateTime(option.fromNullable(vi.displayFormat))),

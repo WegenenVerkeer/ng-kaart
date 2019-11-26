@@ -7,8 +7,10 @@ import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { KaartComponent } from "../kaart/kaart.component";
 import { formateerDate } from "../util/date-time";
 
-type BinaryComparisonOperatorMapping = { [P in fltr.BinaryComparisonOperator]: string };
-type UnaryComparisonOperatorMapping = { [P in fltr.UnaryComparisonOperator]: string };
+import { formatRelativeDateRange } from "./date-range-helper";
+
+type BinaryComparisonOperatorMapping = Record<fltr.BinaryComparisonOperator, string>;
+type UnaryComparisonOperatorMapping = Record<fltr.UnaryComparisonOperator, string>;
 
 const binaryComparisonOperatorMapping: BinaryComparisonOperatorMapping = {
   equality: "is",
@@ -19,7 +21,21 @@ const binaryComparisonOperatorMapping: BinaryComparisonOperatorMapping = {
   smaller: "kleiner dan",
   smallerOrEqual: "kleiner of gelijk aan",
   larger: "groter dan",
-  largerOrEqual: "groter dan of gelijk aan"
+  largerOrEqual: "groter dan of gelijk aan",
+  within: "laatste"
+};
+
+const binaryDateComparisonOperatorMapping: BinaryComparisonOperatorMapping = {
+  equality: "is",
+  inequality: "is niet",
+  contains: "bevat",
+  starts: "start met",
+  ends: "eindigt met",
+  smaller: "tot",
+  smallerOrEqual: "tot en met",
+  larger: "na",
+  largerOrEqual: "vanaf",
+  within: "laatste"
 };
 
 const unaryComparisonOperatorMapping: UnaryComparisonOperatorMapping = {
@@ -55,18 +71,19 @@ export class FilterTermComponent extends KaartChildComponentBase {
           this.value = "";
           this.operator = booleanComparisonOperatorMapping[term.operator] || "???";
         } else {
+          this.operator = binaryComparisonOperatorMapping[term.operator] || "???";
           this.value = fltr.matchLiteral({
             boolean: literal => (literal.value ? "Waar" : "Niet waar"),
             integer: literal => literal.value.toString(),
             double: literal => literal.value.toString(),
             string: literal => literal.value.toString(),
-            date: literal => formateerDate(option.some("dd/MM/yyyy"))(literal.value as DateTime),
-            datetime: () => "-", // niet ondersteund
-            geometry: () => "-",
-            json: () => "-",
-            url: () => "-"
+            date: literal => {
+              this.operator = binaryDateComparisonOperatorMapping[term.operator];
+              return formateerDate(option.some("dd/MM/yyyy"))(literal.value as DateTime);
+            },
+            datetime: () => "-", // nog niet ondersteund
+            range: literal => formatRelativeDateRange(literal.value as fltr.RelativeDateRange)
           })(term.value);
-          this.operator = binaryComparisonOperatorMapping[term.operator] || "???";
         }
     }
   }

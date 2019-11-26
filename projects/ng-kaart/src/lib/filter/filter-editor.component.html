@@ -98,6 +98,19 @@
                 </mat-form-field>
               </ng-template>
             </ng-container>
+            <ng-container *ngSwitchCase="'range'">
+              <mat-form-field class="filter-waarde-editbox">
+                <input type="number" step="1" matInput placeholder="Getal" [formControl]="rangeMagnitudeWaardeControl"/>
+                <mat-error *ngIf="integerWaardeControl.invalid">{{errorIntegerWaarde()}}</mat-error>
+              </mat-form-field>
+              <mat-form-field class="filter-waarde-dropdown">
+                <mat-label>Kies een waarde</mat-label>
+                <mat-select [formControl]="rangeUnitWaardeControl"
+                            (focus)="onAction('inputFocus', 'waarde')">
+                  <mat-option *ngFor="let waarde of valueSelector.values" [value]="waarde.value">{{waarde.label}}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </ng-container>
             <ng-container *ngSwitchCase="'date'" [ngSwitch]="valueSelector.dateType">
                 <mat-form-field *ngSwitchCase="'date'" class="filter-waarde-datum">
                   <input matInput [matDatepicker]="picker" placeholder="Datum" [formControl]="datumWaardeControl">

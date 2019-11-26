@@ -52,3 +52,5 @@ const parseDateHeuristically: PartialFunction1<string, DateTime> = text => {
 
 export const parseDateTime: Curried2<Option<string>, string, Option<DateTime>> = maybeFormat => text =>
   maybeFormat.foldL(() => parseDateTimeHeuristically, parseDateTimeWithFormat)(text);
+
+export const fromTimestamp = (ts: number): Option<DateTime> => option.tryCatch(() => DateTime.fromMillis(ts));
