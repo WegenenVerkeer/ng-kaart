@@ -1229,10 +1229,10 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       const currentFeatures = model.geselecteerdeFeatures.getArray();
       const newFeatures = cmnd.features;
 
-      const featuresToAdd = array.difference(Feature.setoidFeaturePropertyId)(newFeatures, currentFeatures);
+      const featuresToAdd = array.difference(Feature.eqFeatureTechnicalId)(newFeatures, currentFeatures);
 
       if (!cmnd.incremental) {
-        const featuresToRemove = array.difference(Feature.setoidFeaturePropertyId)(currentFeatures, newFeatures);
+        const featuresToRemove = array.difference(Feature.eqFeatureTechnicalId)(currentFeatures, newFeatures);
         if (featuresToRemove.length === currentFeatures.length) {
           model.geselecteerdeFeatures.clear();
         } else {

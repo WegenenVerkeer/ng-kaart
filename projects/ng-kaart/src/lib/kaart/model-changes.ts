@@ -233,6 +233,8 @@ export const modelChanges = (model: KaartWithInfo, changer: ModelChanger, zone: 
   // We gaan hier wat valsspelen in de zin dat we een mutable Map gebruiken als
   // accumulator voor de scan. Maar alles voor performantie! (We hebben geen
   // persistente Map in Typescript)
+  // Let op: we voegen potentieel features van verschillende lagen toe aan de added en removed map
+  // dit zal enkel werken als de ids uniek zijn over de lagen heen. Op dit moment zorgt toOlFeature daar voor.
   const geselecteerdeFeatures$ = scan2(
     addedFeature$,
     removedFeature$,

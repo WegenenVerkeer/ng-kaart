@@ -9,6 +9,7 @@ import * as arrays from "../../util/arrays";
 import { fromTimestamp, parseDate } from "../../util/date-time";
 import { Feature, FeatureWithIdAndLaagnaam } from "../../util/feature";
 import { PartialFunction2 } from "../../util/function";
+import { Properties } from "../../util/geojson-types";
 import * as ke from "../kaart-elementen";
 
 export type ValueType = string | number | boolean | DateTime;
@@ -33,11 +34,6 @@ export type VeldenFormatter = Endomorphism<Fields>;
 // een FieldsFormatSpec wordt heel vroeg bij het interpreteren van de laag VeldInfo aangemaakt omdat die voor alle rijen
 // dezelfde is. Zoals altijd geldt dat een
 export type FieldsFormatSpec = Record<string, Endomorphism<Field>>;
-
-// Zou kunen new-type zijn. Afwachten of er nog properties nuttig zijn
-interface Properties {
-  readonly [key: string]: ValueType | Properties;
-}
 
 export namespace Field {
   export const create = (maybeValue: Option<ValueType>): Field => ({ maybeValue });
@@ -103,7 +99,7 @@ export namespace Row {
     nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo);
 
   export const featureToFields: Curried2<ke.VeldInfo[], FeatureWithIdAndLaagnaam, Fields> = veldInfos => feature => {
-    const propertiesWithId = Feature.propertiesWithId(feature);
+    const propertiesWithId = Feature.properties(feature.feature);
     const velden = veldInfos.reduce((veld, vi) => {
       veld[vi.naam] = extractField(propertiesWithId, vi);
       return veld;

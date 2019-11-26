@@ -531,6 +531,7 @@ export class FeatureDemoComponent {
   readonly verkeersbordenSelectieStyleFunction = verkeersbordenStyleFunction(true);
 
   readonly fietspadStyleMetOffset = offsetStyleFunction(this.fietspadStyle, "ident8", "zijderijbaan", 3, false);
+  readonly fietspadStyleMetOffset2 = offsetStyleFunction(this.fietspadStyle, "ident8", "zijderijbaan", 6, false);
 
   readonly fietspadSelectieStyleMetOffset = function(feature: ol.Feature, resolution: number): ol.style.Style | ol.style.Style[] {
     const applySelectionColor = function(s: ol.style.Style): ol.style.Style {
@@ -539,6 +540,21 @@ export class FeatureDemoComponent {
       return selectionStyle;
     };
     const offsetFunc = offsetStyleFunction(this!.fietspadStyle, "ident8", "zijderijbaan", 3, false);
+    const style = offsetFunc(feature, resolution);
+    if (style instanceof ol.style.Style) {
+      return applySelectionColor(style);
+    } else {
+      return style ? style.map(s => applySelectionColor(s)) : [];
+    }
+  }.bind(this);
+
+  readonly fietspadSelectieStyleMetOffset2 = function(feature: ol.Feature, resolution: number): ol.style.Style | ol.style.Style[] {
+    const applySelectionColor = function(s: ol.style.Style): ol.style.Style {
+      const selectionStyle = s.clone();
+      selectionStyle.getStroke().setColor([0, 153, 255, 1]);
+      return selectionStyle;
+    };
+    const offsetFunc = offsetStyleFunction(this!.fietspadStyle, "ident8", "zijderijbaan", 6, false);
     const style = offsetFunc(feature, resolution);
     if (style instanceof ol.style.Style) {
       return applySelectionColor(style);
@@ -666,6 +682,21 @@ export class FeatureDemoComponent {
     { isBasisVeld: false, label: "Bebouwde kom", naam: "bebouwdekom", type: "string" },
     { isBasisVeld: false, label: "Wegcategorie", naam: "wegcategorie", type: "string" },
     { isBasisVeld: false, label: "Gebruiker", naam: "gebruiker", type: "string" }
+  ];
+
+  readonly staatVanDeWegVeldInfos: VeldInfo[] = [
+    { isBasisVeld: false, label: "ID", naam: "id", type: "string" },
+    { isBasisVeld: true, label: "Ident8", naam: "ident8", type: "string" },
+    { isBasisVeld: true, label: "Van refpunt", naam: "locatie.begin.opschrift", type: "double" },
+    { isBasisVeld: true, label: "Van afst", naam: "locatie.begin.afstand", type: "integer" },
+    { isBasisVeld: true, label: "Van positie", naam: "locatie.begin.positie", type: "double" },
+    { isBasisVeld: true, label: "Tot refpunt", naam: "locatie.eind.opschrift", type: "double" },
+    { isBasisVeld: true, label: "Tot afst", naam: "locatie.eind.afstand", type: "integer" },
+    { isBasisVeld: true, label: "Tot Positie", naam: "locatie.eind.positie", type: "double" },
+    { isBasisVeld: true, label: "Lengte", naam: "locatie.lengte", type: "double", displayFormat: "1.0-0" }, // custom formaat
+    { isBasisVeld: false, label: "Werkelijke lengte", naam: "werkelijkelengte", type: "double" },
+    { isBasisVeld: false, label: "Bron Id", naam: "bronid", type: "string" },
+    { isBasisVeld: false, label: "Globale Index", naam: "globale_index.globaleIndex", type: "integer" }
   ];
 
   readonly verkeersbordenVeldinfos: VeldInfo[] = [

@@ -315,6 +315,12 @@
                                     [minZoom]="7"
                                     [veldinfos]="fietspadenVeldinfos"></awv-kaart-nosqlfs-laag>
 
+            <awv-kaart-nosqlfs-laag [titel]="'Fietspaden2'" [url]="'/geolatte-nosqlfs'"
+                                    [database]="'featureserver'" [collection]="'fietspaden'"
+                                    [styleFunction]="fietspadStyleMetOffset2" [selectieStyle]="fietspadSelectieStyleMetOffset2"
+                                    [minZoom]="7"
+                                    [veldinfos]="fietspadenVeldinfos"></awv-kaart-nosqlfs-laag>
+
             <awv-kaart-nosqlfs-laag [titel]="'Verkeersborden'" [url]="'/geolatte-nosqlfs'"
                                     [database]="'featureserver'" [collection]="'verkeersborden'"
                                     [styleFunction]="verkeersbordenStyleFunction"
@@ -323,6 +329,7 @@
                                     [view]="'aanzicht'"
                                     [gebruikCache]="true"
                                     [veldinfos]="verkeersbordenVeldinfos"></awv-kaart-nosqlfs-laag>
+
 
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
             <awv-kaart-schaal></awv-kaart-schaal>

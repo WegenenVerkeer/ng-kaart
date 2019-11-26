@@ -1,9 +1,9 @@
 import { array, option, setoid } from "fp-ts";
 import { array as arrayTraversable, foldLeft, mapOption } from "fp-ts/lib/Array";
-import { Curried2, Function1, Refinement } from "fp-ts/lib/function";
+import * as eq from "fp-ts/lib/Eq";
+import { Curried2, FunctionN, Refinement } from "fp-ts/lib/function";
 import { fromNullable, Option, option as optionApplcative, tryCatch } from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
-import { Setoid, setoidString } from "fp-ts/lib/Setoid";
 import * as traversable from "fp-ts/lib/Traversable";
 import * as ol from "openlayers";
 
@@ -17,13 +17,17 @@ import { GeoJsonCore, GeoJsonFeature, GeoJsonFeatureCollection, GeoJsonFeatures 
 const format = new ol.format.GeoJSON();
 
 export const toOlFeature: Curried2<string, GeoJsonCore, ol.Feature> = laagnaam => geojson => {
+  // id moet uniek zijn over lagen heen , anders krijg je problemen als deze gemengd worden in de selection layer
+  // de "echte" id van de geojson feature blijft staan in de properties van de feature
+  // Feature.id mag dus niet meer gebruikt worden door clients, maar alleen intern door ng-kaart en openlayers
   try {
+    const uniekId = geojson.id + "/" + laagnaam;
     const feature = new ol.Feature({
       id: geojson.id,
       properties: geojson.properties,
       geometry: format.readGeometry(geojson.geometry)
     });
-    feature.setId(geojson.id);
+    feature.setId(uniekId);
     return modifyWithLaagnaam(laagnaam)(feature);
   } catch (error) {
     const msg = `Kan geometry niet parsen: ${error}`;
@@ -37,10 +41,6 @@ export const modifyWithLaagnaam: Curried2<string, ol.Feature, ol.Feature> = laag
   feature.set("laagnaam", laagnaam); // Opgelet: side-effect!
   return feature;
 };
-
-export const getUnderlyingFeatures: Function1<ol.Feature[], ol.Feature[]> = array.chain(feature =>
-  feature.get("features") ? feature.get("features") : [feature]
-);
 
 const singleFeatureToGeoJson: PartialFunction1<ol.Feature, GeoJsonFeature> = feature =>
   tryCatch(() => ({
@@ -77,20 +77,15 @@ export interface FeatureWithIdAndLaagnaam {
 }
 
 export namespace Feature {
+  // geef de "echte" id van een Feature terug indien aanwezig, dus niet de technische sleutel die we hebben gezet in olToFeature
   export const propertyId: PartialFunction1<ol.Feature, string> = feature =>
-    option
-      .fromNullable(feature.get("id"))
-      .orElse(() => option.fromNullable(feature.getProperties()["id"]))
-      .map(id => id.toString());
+    option.fromNullable(feature.getProperties()["id"]).map(id => id.toString());
 
-  export const properties: Function1<ol.Feature, any> = feature => feature.getProperties().properties;
+  export const technicalId: PartialFunction1<ol.Feature, string> = feature => option.fromNullable(feature.getId()).map(id => id.toString());
 
-  export const propertiesWithId: Function1<FeatureWithIdAndLaagnaam, Record<string, any>> = feature => ({
-    id: feature.id,
-    ...properties(feature.feature) // id in properties heeft dus voorrang, maar is hetzelfde
-  });
+  export const properties: FunctionN<[ol.Feature], any> = feature => feature.getProperties().properties;
 
-  export const fieldKeyToPropertyPath: Function1<string, string> = fieldKey => `properties.${fieldKey}`;
+  export const fieldKeyToPropertyPath: FunctionN<[string], string> = fieldKey => `properties.${fieldKey}`;
 
   export const getLaagnaam: PartialFunction1<ol.Feature, string> = feature => {
     const singleFeature = fromNullable(feature.get("features"))
@@ -113,15 +108,15 @@ export namespace Feature {
       )
     );
 
-  export const setoidFeaturePropertyId: Setoid<ol.Feature> = setoid.contramap(propertyId, option.getSetoid(setoidString));
+  export const eqFeatureTechnicalId: eq.Eq<ol.Feature> = eq.contramap(technicalId)(option.getEq(eq.eqString));
 
-  export const notInExtent: Function1<ol.Extent, Refinement<ol.Feature, ol.Feature>> = extent => (feature): feature is ol.Feature => {
+  export const notInExtent: FunctionN<[ol.Extent], Refinement<ol.Feature, ol.Feature>> = extent => (feature): feature is ol.Feature => {
     const [featureMinX, featureMinY, featureMaxX, featureMaxY]: ol.Extent = feature.getGeometry().getExtent();
     const [extentMinX, extentMinY, extentMaxX, extentMaxY]: ol.Extent = extent;
     return extentMinX > featureMaxX || extentMaxX < featureMinX || extentMinY > featureMaxY || extentMaxY < featureMinY;
   };
 
-  export const overlapsExtent: Function1<ol.Extent, Refinement<ol.Feature, ol.Feature>> = extent => (feature): feature is ol.Feature => {
+  export const overlapsExtent: FunctionN<[ol.Extent], Refinement<ol.Feature, ol.Feature>> = extent => (feature): feature is ol.Feature => {
     const [featureMinX, featureMinY, featureMaxX, featureMaxY]: ol.Extent = feature.getGeometry().getExtent();
     const [extentMinX, extentMinY, extentMaxX, extentMaxY]: ol.Extent = extent;
     return (
