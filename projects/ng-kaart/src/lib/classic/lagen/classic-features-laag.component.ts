@@ -5,11 +5,11 @@ import { identity } from "fp-ts/lib/function";
 import { Setoid } from "fp-ts/lib/Setoid";
 import * as ol from "openlayers";
 
-import { kaartLogger } from "../../kaart";
 import { forChangedValue } from "../../kaart/kaart-component-base";
 import * as prt from "../../kaart/kaart-protocol";
 import * as arrays from "../../util/arrays";
-import { GeoJsonLike } from "../../util/geojson-types";
+import { toOlFeature } from "../../util/feature";
+import { GeoJsonCore } from "../../util/geojson-types";
 import { logOnlyWrapper } from "../messages";
 
 import { ClassicVectorLaagComponent } from "./classic-vector-laag.component";
@@ -25,20 +25,6 @@ const id = (feat: ol.Feature) => {
     } else {
       return undefined;
     }
-  }
-};
-
-const toOlFeatures = (features: GeoJsonLike[]) => {
-  try {
-    return features.map(feature =>
-      new ol.format.GeoJSON().readFeature(feature, {
-        dataProjection: "EPSG:31370",
-        featureProjection: "EPSG:31370"
-      })
-    );
-  } catch (e) {
-    kaartLogger.error("Ongeldige geosjon data: ", e, features);
-    return [];
   }
 };
 
@@ -79,14 +65,14 @@ export class ClassicFeaturesLaagComponent extends ClassicVectorLaagComponent imp
 
   @Input()
   set featuresGeojson(geojsons: string) {
-    this.features = toOlFeatures(JSON.parse(geojsons));
+    this.features = JSON.parse(geojsons).map(toOlFeature(this._titel));
     this.dispatchVervangFeatures(this.features);
   }
 
   @Input()
   set featuresUrl(url: string) {
-    this.http.get<GeoJsonLike[]>(url).subscribe(result => {
-      this.features = toOlFeatures(result);
+    this.http.get<GeoJsonCore[]>(url).subscribe(result => {
+      this.features = result.map(toOlFeature(this._titel));
       this.dispatchVervangFeatures(this.features);
     });
   }

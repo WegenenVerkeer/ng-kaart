@@ -22,6 +22,7 @@
       const kaartElement = document.getElementById("k1");
       kaartElement.addEventListener("extentChange", function(event) { console.log("***** extent", event.detail);});
       kaartElement.addEventListener("zoomChange", function(event) { console.log("***** zoom ", event.detail);});
+      kaartElement.addEventListener("geselecteerdeFeaturesChange", function(event) { console.log("Features geselecteerd", event.detail);});
       kaartElement.addEventListener("geselecteerdeFeatureGeoJson", function(event) {
         if (event.detail && Array.isArray(event.detail)) {
           var feature = event.detail[0]; // in geval van multiselect kunnen er ook meer features/clusters geselecteerd zijn
@@ -29,10 +30,10 @@
             var uri = "https://www.google.com/search?q=" + feature.properties.name;
             window.open(encodeURI(uri));
           } else if (feature.features) {
-            var afstanden = feature.features.map(f => f.properties.afstandrijbaan).join(", ")
+            var afstanden = feature.features.map(f => f.properties.afstandrijbaan).join(", ");
             window.alert("De afstanden zijn: "+ afstanden);
           }
-        }
+      }
       });
     };
   </script>
