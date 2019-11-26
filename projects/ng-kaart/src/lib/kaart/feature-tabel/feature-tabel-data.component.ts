@@ -25,13 +25,15 @@ import { Feature } from "../../util/feature";
 import { PartialFunction1 } from "../../util/function";
 import { join } from "../../util/string";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { kaartLogOnlyWrapper } from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
 import { Laagtabelinstellingen, Veldsortering } from "../kaart-protocol-subscriptions";
 import { KaartComponent } from "../kaart.component";
 
 import { Alignment } from "./alignment-model";
 import { Page } from "./data-provider";
-import { FeatureTabelOverzichtComponent } from "./feature-tabel-overzicht.component";
+import { FeatureTabelOpties, KnopConfiguratie } from "./feature-tabel-opties";
+import { FeatureTabelOverzichtComponent, FeatureTabelUiSelector } from "./feature-tabel-overzicht.component";
 import { FieldSelection } from "./field-selection-model";
 import { LaagModel } from "./laag-model";
 import { Row } from "./row-model";
@@ -82,6 +84,7 @@ interface TemplateData {
   readonly allFieldsSelected: boolean;
   readonly comfortableLayout: boolean;
   readonly alignments: Record<string, Alignment>;
+  readonly extraKnoppen: KnopConfiguratie[];
 }
 
 interface RowSelection {
@@ -109,6 +112,9 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
   constructor(kaart: KaartComponent, overzicht: FeatureTabelOverzichtComponent, ngZone: NgZone, private readonly cdr: ChangeDetectorRef) {
     super(kaart, ngZone);
 
+    this.dispatch(prt.InitUiElementOpties(FeatureTabelUiSelector, { dataHeaderMenuExtraKnoppen: [] }));
+    const options$ = this.accumulatedOpties$<FeatureTabelOpties>(FeatureTabelUiSelector);
+
     this.laag$ = this.viewReady$
       .pipe(
         // De input is pas beschikbaar nadat de view klaar is
@@ -134,11 +140,13 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
       )
     );
 
+    const extraKnoppen$ = options$.pipe(map(options => options.dataHeaderMenuExtraKnoppen));
+
     // Alle data voor de template wordt in 1 custom datastructuur gegoten. Dat heeft als voordeel dat er geen gezever is
     // met observables die binnen *ngIf staan. Het nadeel is frequentere updates omdat er geen distinctUntil is. Die zou
     // immers de rows array moeten meenemen.
-    this.templateData$ = rx.combineLatest(layoutMode$, this.laag$, numGeselecteerdeFeatures$).pipe(
-      map(([layoutMode, laagModel, numGeselecteerdeFeatures]) => {
+    this.templateData$ = rx.combineLatest([layoutMode$, this.laag$, numGeselecteerdeFeatures$, extraKnoppen$]).pipe(
+      map(([layoutMode, laagModel, numGeselecteerdeFeatures, extraKnoppen]) => {
         const fieldNameSelections = LaagModel.fieldSelectionsGetter.get(laagModel);
         const showOnlySelectedFeatures = LaagModel.selectionViewModeGetter.get(laagModel) === "SelectedOnly";
         const maybeRows = LaagModel.pageGetter.get(laagModel).map(Page.rowsLens.get);
@@ -166,7 +174,8 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
           allRowsSelected,
           allFieldsSelected,
           comfortableLayout: layoutMode === "Comfortable",
-          alignments: Alignment.createFromFieldSelection(fieldNameSelections)
+          alignments: Alignment.createFromFieldSelection(fieldNameSelections),
+          extraKnoppen
         };
       }),
       share()
@@ -366,5 +375,9 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
         )
         .pipe(tap(cmd => this.dispatch(cmd)))
     );
+  }
+
+  handleExtraKnopClick(extraKnop: KnopConfiguratie) {
+    this.dispatch(prt.LaagTabelExtraKnopCmd(this.laagTitel, extraKnop.actie, kaartLogOnlyWrapper));
   }
 }

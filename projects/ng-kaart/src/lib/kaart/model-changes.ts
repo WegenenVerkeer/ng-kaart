@@ -18,8 +18,7 @@ import {
   share,
   shareReplay,
   startWith,
-  switchMap,
-  tap
+  switchMap
 } from "rxjs/operators";
 
 import { roundCoordinate } from "../coordinaten";
@@ -38,7 +37,6 @@ import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
 import { envParams } from "./kaart-config";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
-import { Laagtabelinstellingen } from "./kaart-protocol";
 import { GeselecteerdeFeatures, Viewinstellingen } from "./kaart-protocol-subscriptions";
 import { KaartWithInfo } from "./kaart-with-info";
 import { HoverFeature } from "./kaart-with-info-model";
@@ -91,6 +89,7 @@ export interface ModelChanger {
   readonly lagenOpGroepSubj: ke.OpLaagGroep<rx.BehaviorSubject<ke.ToegevoegdeLaag[]>>;
   readonly laagVerwijderdSubj: rx.Subject<ke.ToegevoegdeLaag>;
   readonly mijnLocatieZoomDoelSubj: rx.Subject<Option<number>>;
+  readonly laagTabelExtaKnopKlikkenSubj: rx.Subject<prt.LaagTabelKnopKlik>;
   readonly actieveModusSubj: rx.Subject<Option<string>>;
   readonly zoekerServicesSubj: rx.Subject<ZoekerMetWeergaveopties[]>;
   readonly zoekopdrachtSubj: rx.Subject<Zoekopdracht>;
@@ -113,7 +112,7 @@ export interface ModelChanger {
   readonly forceProgressBarSubj: rx.BehaviorSubject<boolean>;
   readonly collapseUIRequestSubj: rx.Subject<null>; // Indien nodig uit te breiden met doen en/of bron
   readonly inErrorSubj: rx.BehaviorSubject<boolean>;
-  readonly tabelLaagInstellingenSubj: rx.Subject<Laagtabelinstellingen>;
+  readonly tabelLaagInstellingenSubj: rx.Subject<prt.Laagtabelinstellingen>;
 }
 
 // Hieronder wordt een paar keer BehaviourSubject gebruikt. Dat is equivalent met, maar beknopter dan, een startWith + shareReplay
@@ -129,6 +128,7 @@ export const ModelChanger: () => ModelChanger = () => ({
   },
   laagVerwijderdSubj: new rx.Subject<ke.ToegevoegdeLaag>(),
   mijnLocatieZoomDoelSubj: new rx.BehaviorSubject<Option<number>>(none),
+  laagTabelExtaKnopKlikkenSubj: new rx.Subject<prt.LaagTabelKnopKlik>(),
   actieveModusSubj: new rx.BehaviorSubject(none),
   zoekerServicesSubj: new rx.BehaviorSubject([]),
   zoekopdrachtSubj: new rx.Subject<Zoekopdracht>(),
@@ -151,14 +151,15 @@ export const ModelChanger: () => ModelChanger = () => ({
   forceProgressBarSubj: new rx.BehaviorSubject<boolean>(false),
   collapseUIRequestSubj: new rx.Subject<null>(),
   inErrorSubj: new rx.BehaviorSubject<boolean>(false),
-  tabelLaagInstellingenSubj: new rx.Subject<Laagtabelinstellingen>()
+  tabelLaagInstellingenSubj: new rx.Subject<prt.Laagtabelinstellingen>()
 });
 
 export interface ModelChanges {
   readonly uiElementSelectie$: rx.Observable<UiElementSelectie>;
   readonly optiesOpUiElement$: rx.Observable<OptiesOpUiElement>;
   readonly viewinstellingen$: rx.Observable<Viewinstellingen>;
-  readonly tabelLaagInstellingen$: rx.Observable<Laagtabelinstellingen>;
+  readonly laagTabelExtaKnopKlikken$: rx.Observable<prt.LaagTabelKnopKlik>;
+  readonly tabelLaagInstellingen$: rx.Observable<prt.Laagtabelinstellingen>;
   readonly lagenOpGroep: ke.OpLaagGroep<rx.Observable<ke.ToegevoegdeLaag[]>>;
   readonly laagVerwijderd$: rx.Observable<ke.ToegevoegdeLaag>;
   readonly geselecteerdeFeatures$: rx.Observable<GeselecteerdeFeatures>;
@@ -325,8 +326,6 @@ export const modelChanges = (model: KaartWithInfo, changer: ModelChanger, zone: 
     shareReplay(1)
   );
 
-  const tabelLaagInstellingen$ = changer.tabelLaagInstellingenSubj;
-
   const dragInfo$ = observableFromOlEvents<ol.MapBrowserEvent>(model.map, "pointerdrag").pipe(
     debounceTime(100),
     map(event => ({
@@ -426,6 +425,7 @@ export const modelChanges = (model: KaartWithInfo, changer: ModelChanger, zone: 
     optiesOpUiElement$: changer.optiesOpUiElementSubj.pipe(observeAsapOnAngular(zone)),
     laagVerwijderd$: changer.laagVerwijderdSubj.pipe(observeAsapOnAngular(zone)),
     viewinstellingen$: viewinstellingen$.pipe(observeAsapOnAngular(zone)),
+    laagTabelExtaKnopKlikken$: changer.laagTabelExtaKnopKlikkenSubj.pipe(observeAsapOnAngular(zone)),
     lagenOpGroep: lagenOpGroep$,
     geselecteerdeFeatures$: geselecteerdeFeatures$.pipe(observeAsapOnAngular(zone)),
     hoverFeatures$: hoverFeatures$.pipe(observeAsapOnAngular(zone)),

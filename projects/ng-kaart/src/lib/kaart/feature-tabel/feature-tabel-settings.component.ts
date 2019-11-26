@@ -12,8 +12,6 @@ import { FeatureTabelOverzichtComponent } from "./feature-tabel-overzicht.compon
 import { TableModel } from "./table-model";
 import { TableLayoutMode } from "./TableLayoutMode";
 
-export const FeatureTabelUiSelector = "FeatureTabel";
-
 interface TemplateData {
   readonly layout: string;
 }

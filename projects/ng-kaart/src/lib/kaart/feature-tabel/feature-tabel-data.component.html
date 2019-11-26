@@ -83,11 +83,11 @@
     </div>
   </div>
   <div
-    *ngIf="data.featureDataAvailable"
     class="feature-tabel-data-header-menu"
     [class.comfortable-table-layout]="data.comfortableLayout"
   >
     <button
+      *ngIf="data.featureDataAvailable"
       mat-icon-button
       [matMenuTriggerFor]="fieldChoiceMenu"
       (menuOpened)="onAction('showSelections')"
@@ -96,6 +96,17 @@
     >
       <mat-icon>view_column</mat-icon>
     </button>
+    <ng-container *ngFor="let extraKnop of data.extraKnoppen">
+      <button
+          mat-icon-button
+          (click)="handleExtraKnopClick(extraKnop)"
+          matTooltip="{{extraKnop.tooltip}}"
+          class="feature-table-select-columns"
+      >
+        <mat-icon>{{extraKnop.matIcon}}</mat-icon>
+      </button>
+    </ng-container>
+
     <mat-menu
       #fieldChoiceMenu="matMenu"
       xPosition="before"

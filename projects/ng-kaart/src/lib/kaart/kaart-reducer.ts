@@ -710,6 +710,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       return ModelWithResult(model);
     }
 
+    function laagTabelExtaKnopKlikkenCmd(cmnd: prt.LaagTabelExtraKnopCmd<Msg>): ModelWithResult<Msg> {
+      modelChanger.laagTabelExtaKnopKlikkenSubj.next(cmnd.laagTabelKnopKlik);
+      return ModelWithResult(model);
+    }
+
     function veranderExtentCmd(cmnd: prt.VeranderExtentCmd): ModelWithResult<Msg> {
       model.map.getView().fit(cmnd.extent);
       return ModelWithResult(model);
@@ -1662,6 +1667,13 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         );
       }
 
+      function subscribeToLaagTabelExtraKnop(sub: prt.LaagTabelExtaKnopSubscription<Msg>): ModelWithResult<Msg> {
+        return modelWithSubscriptionResult(
+          "LaagTabelExtaKnop",
+          modelChanges.laagTabelExtaKnopKlikken$.pipe(debounceTime(100)).subscribe(consumeMessage(sub))
+        );
+      }
+
       function subscribeToLaagtabelinstellingen(sub: prt.LaagtabelinstellingenSubscription<Msg>): ModelWithResult<Msg> {
         return modelWithSubscriptionResult(
           "Laagtabelinstellingen",
@@ -1846,6 +1858,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
 
       switch (cmnd.subscription.type) {
+        case "LaagTabelExtaKnop":
+          return subscribeToLaagTabelExtraKnop(cmnd.subscription);
         case "Viewinstellingen":
           return subscribeToViewinstellingen(cmnd.subscription);
         case "Laagtabelinstellingen":
@@ -1914,6 +1928,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     function unsafeHandleCommand(): ModelWithResult<Msg> {
       switch (cmd.type) {
+        case "LaagTabelExtraKnop":
+          return laagTabelExtaKnopKlikkenCmd(cmd);
         case "VoegLaagToe":
           return voegLaagToeCmd(cmd);
         case "VerwijderLaag":
