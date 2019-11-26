@@ -6,20 +6,10 @@ import { OptiesOpUiElement } from "../ui-element-opties";
 
 import { FeatureTabelUiSelector } from "./feature-tabel-overzicht.component";
 
-export function KnopActieParams(laagTitel: string): KnopActieParams {
-  return {
-    laagTitel: laagTitel
-  };
-}
-
-export interface KnopActieParams {
-  readonly laagTitel: string;
-}
-
 export interface KnopConfiguratie {
   readonly matIcon: string;
   readonly tooltip: string;
-  readonly actie: (params: KnopActieParams) => void;
+  readonly actie: string;
 }
 
 export interface FeatureTabelOpties {

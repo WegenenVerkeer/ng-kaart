@@ -96,7 +96,7 @@
     >
       <mat-icon>view_column</mat-icon>
     </button>
-    <ng-container *ngFor="let extraKnop of extraKnoppen$ | async">
+    <ng-container *ngFor="let extraKnop of data.extraKnoppen">
       <button
           mat-icon-button
           (click)="handleExtraKnopClick(extraKnop)"

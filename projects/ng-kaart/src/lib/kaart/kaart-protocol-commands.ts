@@ -7,7 +7,15 @@ import { Transparantie } from "../transparantieeditor/transparantie";
 import { TypedRecord } from "../util/typed-record";
 import { ZoekerMetWeergaveopties, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
 
-import { BareValidationWrapper, KaartLocaties, KaartMsg, Laagtabelinstellingen, Subscription, ValidationWrapper } from ".";
+import {
+  BareValidationWrapper,
+  KaartLocaties,
+  KaartMsg,
+  Laagtabelinstellingen,
+  LaagTabelKnopKlik,
+  Subscription,
+  ValidationWrapper
+} from ".";
 import { CachedFeatureLookup } from "./cache/lookup";
 import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
@@ -38,6 +46,7 @@ export type Command<Msg extends KaartMsg> =
   | KiesAchtergrondCmd<Msg>
   | MaakLaagOnzichtbaarCmd<Msg>
   | MaakLaagZichtbaarCmd<Msg>
+  | LaagTabelExtraKnopCmd<Msg>
   | MijnLocatieStateChangeCmd
   | PublishKaartLocatiesCmd
   | ReactiveerSelectieModusCmd
@@ -335,6 +344,12 @@ export interface KiesAchtergrondCmd<Msg extends KaartMsg> {
 export interface MaakLaagZichtbaarCmd<Msg extends KaartMsg> {
   readonly type: "MaakLaagZichtbaar";
   readonly titel: string;
+  readonly wrapper: BareValidationWrapper<Msg>;
+}
+
+export interface LaagTabelExtraKnopCmd<Msg extends KaartMsg> {
+  readonly type: "LaagTabelExtraKnop";
+  readonly laagTabelKnopKlik: LaagTabelKnopKlik;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -851,6 +866,14 @@ export function KiesAchtergrondCmd<Msg extends KaartMsg>(titel: string, wrapper:
 
 export function MaakLaagZichtbaarCmd<Msg extends KaartMsg>(titel: string, wrapper: BareValidationWrapper<Msg>): MaakLaagZichtbaarCmd<Msg> {
   return { type: "MaakLaagZichtbaar", titel, wrapper };
+}
+
+export function LaagTabelExtraKnopCmd<Msg extends KaartMsg>(
+  laagTitel: string,
+  actie: string,
+  wrapper: BareValidationWrapper<Msg>
+): LaagTabelExtraKnopCmd<Msg> {
+  return { type: "LaagTabelExtraKnop", laagTabelKnopKlik: { laagTitel, actie }, wrapper };
 }
 
 export function MaakLaagOnzichtbaarCmd<Msg extends KaartMsg>(

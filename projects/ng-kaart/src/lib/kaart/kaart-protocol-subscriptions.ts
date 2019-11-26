@@ -37,6 +37,7 @@ export type Subscription<Msg> =
   | PrecacheProgressSubscription<Msg>
   | PublishedKaartLocatiesSubscription<Msg>
   | LaagtabelinstellingenSubscription<Msg>
+  | LaagTabelExtaKnopSubscription<Msg>
   | TekenenSubscription<Msg>
   | ForceProgressBarSubscription<Msg>
   | ViewinstellingenSubscription<Msg>
@@ -71,6 +72,11 @@ export interface Laagtabelinstellingen {
   readonly laagnaam: string; // De laag voor welke de instellingen geldig zijn
   readonly zichtbareVelden: Set<string>; // De namen/keys van de velden die zichtbaar zijn
   readonly veldsorteringen: Veldsortering[];
+}
+
+export interface LaagTabelKnopKlik {
+  readonly laagTitel: string;
+  readonly actie: string;
 }
 
 export namespace Laagtabelinstellingen {
@@ -230,6 +236,11 @@ export interface MijnLocatieStateChangeSubscription<Msg> {
 export interface LaagtabelinstellingenSubscription<Msg> {
   readonly type: "Laagtabelinstellingen";
   readonly wrapper: MsgGen<Laagtabelinstellingen, Msg>;
+}
+
+export interface LaagTabelExtaKnopSubscription<Msg> {
+  readonly type: "LaagTabelExtaKnop";
+  readonly wrapper: MsgGen<LaagTabelKnopKlik, Msg>;
 }
 
 export interface BusySubscription<Msg> {
@@ -415,4 +426,10 @@ export function LaagtabelinstellingenSubscription<Msg>(
   wrapper: (tabelLaagInstellingen: Laagtabelinstellingen) => Msg
 ): LaagtabelinstellingenSubscription<Msg> {
   return { type: "Laagtabelinstellingen", wrapper };
+}
+
+export function LaagTabelExtaKnopSubscription<Msg>(
+  wrapper: (laagTabelKnopKlik: LaagTabelKnopKlik) => Msg
+): LaagTabelExtaKnopSubscription<Msg> {
+  return { type: "LaagTabelExtaKnop", wrapper };
 }
