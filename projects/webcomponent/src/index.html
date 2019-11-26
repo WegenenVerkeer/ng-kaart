@@ -95,6 +95,63 @@
       <awv-legende-bolletje-item beschrijving="Kolk" kleur="#0000FF"></awv-legende-bolletje-item>
     </awv-kaart-nosqlfs-laag>
 
+    <awv-kaart-features-laag titel="Meetpunten via URL" features-url="/ng-kaart/assets/points.json" min-zoom="1"></awv-kaart-features-laag>
+
+    <awv-kaart-features-laag titel="Meetpunten inline" features-geojson='
+               [ {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "Point",
+                    "crs": {
+                      "properties": {
+                        "name": "EPSG:31370"
+                      },
+                      "type": "name"
+                    },
+                    "bbox": [
+                      158684.855715,
+                      190751.046062,
+                      158684.855715,
+                      190751.046062
+                    ],
+                    "coordinates": [
+                      158684.855715,
+                      190751.046062
+                    ]
+                  },
+                  "id": "010153b8-94ac-452c-bbcc-cb2c943e65a2",
+                  "properties": {
+                    "opnamedatum": "01/01/2013"
+                  }
+                },
+                {
+                  "type": "Feature",
+                  "geometry": {
+                    "type": "Point",
+                    "crs": {
+                      "properties": {
+                        "name": "EPSG:31370"
+                      },
+                      "type": "name"
+                    },
+                    "bbox": [
+                      159090.16,
+                      190709.73,
+                      159090.16,
+                      190709.73
+                    ],
+                    "coordinates": [
+                      159090.16,
+                      190709.73
+                    ]
+                  },
+                  "id": "037d26b8-5361-4c15-b24d-5a1f91107cae",
+                  "properties": {
+                    "opnamedatum": "17/10/2014"
+                  }
+                }
+              ]' min-zoom="1"></awv-kaart-features-laag>
+
     <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
     <awv-kaart-streetview></awv-kaart-streetview>
     <awv-kaart-schaal></awv-kaart-schaal>
