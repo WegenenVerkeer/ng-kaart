@@ -37,7 +37,7 @@ export type Subscription<Msg> =
   | PrecacheProgressSubscription<Msg>
   | PublishedKaartLocatiesSubscription<Msg>
   | LaagtabelinstellingenSubscription<Msg>
-  | LaagTabelExtaKnopSubscription<Msg>
+  | LaagTabelExtraKnopSubscription<Msg>
   | TekenenSubscription<Msg>
   | ForceProgressBarSubscription<Msg>
   | ViewinstellingenSubscription<Msg>
@@ -238,8 +238,8 @@ export interface LaagtabelinstellingenSubscription<Msg> {
   readonly wrapper: MsgGen<Laagtabelinstellingen, Msg>;
 }
 
-export interface LaagTabelExtaKnopSubscription<Msg> {
-  readonly type: "LaagTabelExtaKnop";
+export interface LaagTabelExtraKnopSubscription<Msg> {
+  readonly type: "LaagTabelExtraKnop";
   readonly wrapper: MsgGen<LaagTabelKnopKlik, Msg>;
 }
 
@@ -428,8 +428,8 @@ export function LaagtabelinstellingenSubscription<Msg>(
   return { type: "Laagtabelinstellingen", wrapper };
 }
 
-export function LaagTabelExtaKnopSubscription<Msg>(
+export function LaagTabelExtraKnopSubscription<Msg>(
   wrapper: (laagTabelKnopKlik: LaagTabelKnopKlik) => Msg
-): LaagTabelExtaKnopSubscription<Msg> {
-  return { type: "LaagTabelExtaKnop", wrapper };
+): LaagTabelExtraKnopSubscription<Msg> {
+  return { type: "LaagTabelExtraKnop", wrapper };
 }

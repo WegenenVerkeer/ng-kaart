@@ -89,7 +89,7 @@ export interface ModelChanger {
   readonly lagenOpGroepSubj: ke.OpLaagGroep<rx.BehaviorSubject<ke.ToegevoegdeLaag[]>>;
   readonly laagVerwijderdSubj: rx.Subject<ke.ToegevoegdeLaag>;
   readonly mijnLocatieZoomDoelSubj: rx.Subject<Option<number>>;
-  readonly laagTabelExtaKnopKlikkenSubj: rx.Subject<prt.LaagTabelKnopKlik>;
+  readonly laagTabelExtraKnopKlikkenSubj: rx.Subject<prt.LaagTabelKnopKlik>;
   readonly actieveModusSubj: rx.Subject<Option<string>>;
   readonly zoekerServicesSubj: rx.Subject<ZoekerMetWeergaveopties[]>;
   readonly zoekopdrachtSubj: rx.Subject<Zoekopdracht>;
@@ -128,7 +128,7 @@ export const ModelChanger: () => ModelChanger = () => ({
   },
   laagVerwijderdSubj: new rx.Subject<ke.ToegevoegdeLaag>(),
   mijnLocatieZoomDoelSubj: new rx.BehaviorSubject<Option<number>>(none),
-  laagTabelExtaKnopKlikkenSubj: new rx.Subject<prt.LaagTabelKnopKlik>(),
+  laagTabelExtraKnopKlikkenSubj: new rx.Subject<prt.LaagTabelKnopKlik>(),
   actieveModusSubj: new rx.BehaviorSubject(none),
   zoekerServicesSubj: new rx.BehaviorSubject([]),
   zoekopdrachtSubj: new rx.Subject<Zoekopdracht>(),
@@ -158,7 +158,7 @@ export interface ModelChanges {
   readonly uiElementSelectie$: rx.Observable<UiElementSelectie>;
   readonly optiesOpUiElement$: rx.Observable<OptiesOpUiElement>;
   readonly viewinstellingen$: rx.Observable<Viewinstellingen>;
-  readonly laagTabelExtaKnopKlikken$: rx.Observable<prt.LaagTabelKnopKlik>;
+  readonly laagTabelExtraKnopKlikken$: rx.Observable<prt.LaagTabelKnopKlik>;
   readonly tabelLaagInstellingen$: rx.Observable<prt.Laagtabelinstellingen>;
   readonly lagenOpGroep: ke.OpLaagGroep<rx.Observable<ke.ToegevoegdeLaag[]>>;
   readonly laagVerwijderd$: rx.Observable<ke.ToegevoegdeLaag>;
@@ -425,7 +425,7 @@ export const modelChanges = (model: KaartWithInfo, changer: ModelChanger, zone: 
     optiesOpUiElement$: changer.optiesOpUiElementSubj.pipe(observeAsapOnAngular(zone)),
     laagVerwijderd$: changer.laagVerwijderdSubj.pipe(observeAsapOnAngular(zone)),
     viewinstellingen$: viewinstellingen$.pipe(observeAsapOnAngular(zone)),
-    laagTabelExtaKnopKlikken$: changer.laagTabelExtaKnopKlikkenSubj.pipe(observeAsapOnAngular(zone)),
+    laagTabelExtraKnopKlikken$: changer.laagTabelExtraKnopKlikkenSubj.pipe(observeAsapOnAngular(zone)),
     lagenOpGroep: lagenOpGroep$,
     geselecteerdeFeatures$: geselecteerdeFeatures$.pipe(observeAsapOnAngular(zone)),
     hoverFeatures$: hoverFeatures$.pipe(observeAsapOnAngular(zone)),
