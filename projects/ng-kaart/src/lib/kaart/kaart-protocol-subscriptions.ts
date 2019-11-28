@@ -294,11 +294,6 @@ export namespace FeatureSelection {
     const featuresInLaag = featureSelection.featuresPerLaag.get(laagnaam);
     return (featuresInLaag && [...featuresInLaag.values()].map(fil => fil.feature)) || [];
   };
-
-  export const getGeselecteerdeFeatureIdsInLaag: Curried2<string, GeselecteerdeFeatures, string[]> = laagnaam => featureSelection => {
-    const featuresInLaag = featureSelection.featuresPerLaag.get(laagnaam);
-    return (featuresInLaag && [...featuresInLaag.keys()]) || [];
-  };
 }
 
 export function HoverFeaturesSubscription<Msg>(wrapper: MsgGen<HoverFeature, Msg>): HoverFeaturesSubscription<Msg> {

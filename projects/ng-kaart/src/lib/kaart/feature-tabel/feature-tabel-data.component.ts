@@ -275,7 +275,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
       map(([_, geselecteerdeFeatures]) =>
         pipe(
           geselecteerdeFeatures,
-          prt.FeatureSelection.getGeselecteerdeFeatureIdsInLaag(this.laagTitel),
+          prt.FeatureSelection.getGeselecteerdeFeaturesInLaag(this.laagTitel),
           prt.DeselecteerFeatureCmd
         )
       )
@@ -286,7 +286,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
       map(rowSelection =>
         rowSelection.selected
           ? prt.SelecteerExtraFeaturesCmd([rowSelection.row.feature.feature])
-          : prt.DeselecteerFeatureCmd([rowSelection.row.feature.id])
+          : prt.DeselecteerFeatureCmd([rowSelection.row.feature.feature])
       )
     );
 
@@ -302,7 +302,7 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
             )
           : pipe(
               rows,
-              array.map(Row.idLens.get),
+              array.map(Row.olFeatureLens.get),
               prt.DeselecteerFeatureCmd
             )
       )

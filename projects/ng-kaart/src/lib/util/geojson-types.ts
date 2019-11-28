@@ -1,5 +1,7 @@
 import * as ol from "openlayers";
 
+import { ValueType } from "../kaart/feature-tabel/row-model";
+
 export interface Geometry {
   readonly bbox?: ol.Extent;
   readonly coordinates: number[];
@@ -17,10 +19,15 @@ export interface Metadata {
 
 export type GeoJsonKeyType = string | number;
 
+// Zou kunen new-type zijn. Afwachten of er nog properties nuttig zijn
+export interface Properties {
+  readonly [key: string]: ValueType | Properties;
+}
+
 // Een record zoals we dat krijgen over HTTP. Bevat enkel de essentiële GeoJson velden.
 export interface GeoJsonCore {
   readonly id: GeoJsonKeyType;
-  readonly properties: any;
+  readonly properties: Properties;
   readonly geometry: Geometry;
 }
 
