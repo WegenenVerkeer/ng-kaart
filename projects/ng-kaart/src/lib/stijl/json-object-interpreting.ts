@@ -544,7 +544,7 @@ export function mapFailureTo<T>(interpreter: Interpreter<T>, failureMsg: string)
 export function trace<T>(lbl: string, interpreter: Interpreter<T>): Interpreter<T> {
   return (json: Object) => {
     const result = interpreter(json);
-    console.log(lbl, result);
+    console.log(lbl, json, result);
     return result;
   };
 }
