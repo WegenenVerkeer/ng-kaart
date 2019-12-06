@@ -17,6 +17,7 @@ import {
   ValidationWrapper
 } from ".";
 import { CachedFeatureLookup } from "./cache/lookup";
+import { LaagModel } from "./feature-tabel/laag-model";
 import { LaagLocationInfoService } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { Legende } from "./kaart-legende";
@@ -869,11 +870,11 @@ export function MaakLaagZichtbaarCmd<Msg extends KaartMsg>(titel: string, wrappe
 }
 
 export function LaagTabelExtraKnopCmd<Msg extends KaartMsg>(
-  laagTitel: string,
+  laagModel: LaagModel,
   actie: string,
   wrapper: BareValidationWrapper<Msg>
 ): LaagTabelExtraKnopCmd<Msg> {
-  return { type: "LaagTabelExtraKnop", laagTabelKnopKlik: { laagTitel, actie }, wrapper };
+  return { type: "LaagTabelExtraKnop", laagTabelKnopKlik: { laagModel, actie }, wrapper };
 }
 
 export function MaakLaagOnzichtbaarCmd<Msg extends KaartMsg>(

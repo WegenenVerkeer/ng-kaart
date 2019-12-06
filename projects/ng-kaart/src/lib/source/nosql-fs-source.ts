@@ -476,6 +476,10 @@ export class NosqlFsSource extends ol.source.Vector {
     forEach(maybeCql, cql => this.filterSubj.next(cql));
   }
 
+  getUserFilter(): Option<string> {
+    return this.userFilter;
+  }
+
   dispatchLoadEvent(evt: le.DataLoadEvent) {
     this.loadEventSubj.next(evt);
   }

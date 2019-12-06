@@ -378,6 +378,6 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
   }
 
   handleExtraKnopClick(extraKnop: KnopConfiguratie) {
-    this.dispatch(prt.LaagTabelExtraKnopCmd(this.laagTitel, extraKnop.actie, kaartLogOnlyWrapper));
+    this.laag$.pipe(take(1)).forEach(laag => this.dispatch(prt.LaagTabelExtraKnopCmd(laag, extraKnop.actie, kaartLogOnlyWrapper)));
   }
 }

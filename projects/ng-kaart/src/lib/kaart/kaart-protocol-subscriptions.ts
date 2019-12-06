@@ -10,6 +10,7 @@ import { FeatureWithIdAndLaagnaam } from "../util/feature";
 import { arrayTraversal } from "../util/lenses";
 import { ZoekAntwoord, ZoekerMetWeergaveopties, ZoekResultaat } from "../zoeker/zoeker";
 
+import { LaagModel } from "./feature-tabel/laag-model";
 import { KaartLocaties } from "./kaart-bevragen/laaginfo.model";
 import * as ke from "./kaart-elementen";
 import { InfoBoodschap } from "./kaart-with-info-model";
@@ -75,7 +76,7 @@ export interface Laagtabelinstellingen {
 }
 
 export interface LaagTabelKnopKlik {
-  readonly laagTitel: string;
+  readonly laagModel: LaagModel;
   readonly actie: string;
 }
 

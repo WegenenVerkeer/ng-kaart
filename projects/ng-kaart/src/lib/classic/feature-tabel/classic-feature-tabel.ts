@@ -16,4 +16,16 @@ export class ClassicFeatureTabelComponent extends ClassicUIElementSelectorCompon
   constructor(injector: Injector) {
     super(FeatureTabelUiSelector, injector);
   }
+
+  protected opties(): object {
+    return {
+      dataHeaderMenuExtraKnoppen: [
+        {
+          matIcon: "file_download",
+          tooltip: "Exporteer data",
+          actie: "export"
+        }
+      ]
+    };
+  }
 }
