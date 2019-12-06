@@ -364,6 +364,27 @@ export class NosqlFsSource extends ol.source.Vector {
     return `${this.url}/api/databases/${this.database}/${this.collection}/query?${Params.toQueryString(params)}`;
   }
 
+  composeCsvExportUrl(
+    extent: Option<number[]>,
+    filename: string,
+    fields: string[],
+    sortFields: string[],
+    sortDirections: PagingSpec.SortDirection[]
+  ) {
+    const params = {
+      projection: fields.join(","),
+      fmt: "csv",
+      sep: "%3B",
+      filename: filename,
+      sort: sortFields.join(","),
+      "sort-direction": sortDirections.join(","),
+      ...extent.map(Extent.toQueryValue).fold<any>({}, bbox => ({ bbox })),
+      ...this.composedFilter(true).fold<any>({}, f => ({ query: encodeURIComponent(f) }))
+    };
+
+    return `${this.url}/api/databases/${this.database}/${this.collection}/query?${Params.toQueryString(params)}`;
+  }
+
   private composeFeatureCollectionUrl(params: Record<string, string | number>) {
     return `${this.url}/api/databases/${this.database}/${this.collection}/featurecollection?${Params.toQueryString(params)}`;
   }
