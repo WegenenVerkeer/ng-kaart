@@ -369,7 +369,8 @@ export class NosqlFsSource extends ol.source.Vector {
     filename: string,
     fields: string[],
     sortFields: string[],
-    sortDirections: PagingSpec.SortDirection[]
+    sortDirections: PagingSpec.SortDirection[],
+    overruleFilter: Option<string>
   ) {
     const params = {
       projection: fields.join(","),
@@ -379,7 +380,7 @@ export class NosqlFsSource extends ol.source.Vector {
       sort: sortFields.join(","),
       "sort-direction": sortDirections.join(","),
       ...extent.map(Extent.toQueryValue).fold<any>({}, bbox => ({ bbox })),
-      ...this.composedFilter(true).fold<any>({}, f => ({ query: encodeURIComponent(f) }))
+      ...overruleFilter.alt(this.composedFilter(true)).fold<any>({}, f => ({ query: encodeURIComponent(f) }))
     };
 
     return `${this.url}/api/databases/${this.database}/${this.collection}/query?${Params.toQueryString(params)}`;
