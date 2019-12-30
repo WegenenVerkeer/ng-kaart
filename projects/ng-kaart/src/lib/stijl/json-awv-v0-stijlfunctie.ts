@@ -2,8 +2,8 @@ import { array } from "fp-ts/lib/Array";
 import { Function1, Function2, pipe } from "fp-ts/lib/function";
 import * as option from "fp-ts/lib/Option";
 import { none, Option, some } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
 
+import * as ol from "../util/openlayers-compat";
 import { composeValidators2, validationChain as chain, Validator } from "../util/validation";
 
 import { AwvV0StaticStyleInterpreters, StaticStyleEncoders } from "./json-awv-v0-stijl";
@@ -96,7 +96,7 @@ export const jsonAwvV0RuleInterpreter: Interpreter<AwvV0DynamicStyle> = (json: O
 
   const rule: Interpreter<Rule> = oi.map2(
     Rule,
-    oi.map(maybeCondition => maybeCondition.getOrElse(alwaysTrue), oi.optField("condition", expression)),
+    oi.map(maybeCondition => maybeCondition.getOrElse(alwaysTrue), oi.optField<Expression>("condition", expression)),
     oi.field("style", oi.field("definition", AwvV0StaticStyleInterpreters.jsonAwvV0Definition))
   );
 
@@ -167,7 +167,7 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
 
   // Type check functies
   const typeIs = (targetType: TypeType) => (t1: TypeType) =>
-    t1 === targetType ? ok({}) : fail(`typecontrole: '${t1}' gevonden, maar '${targetType}' verwacht`);
+    t1 === targetType ? ok({} as any) : fail(`typecontrole: '${t1}' gevonden, maar '${targetType}' verwacht`);
   const allTypes2 = (targetType: TypeType) => (t1: TypeType, t2: TypeType) =>
     t1 === targetType && t2 === targetType
       ? ok({})
@@ -241,7 +241,7 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
   // Hulpfunctie voor minder codeduplicatie
   function leftRight(
     f: (a1: ValueType, a2: ValueType) => ValueType,
-    check: (t1: TypeType, t2: TypeType) => Validation<{}>,
+    check: (t1: TypeType, t2: TypeType) => Validation<unknown>,
     resultType: TypeType,
     expression: Comparison | Combination
   ) {
@@ -251,7 +251,7 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
   // Type checking en aaneenrijgen van de lagere boomknopen in een run-time functie
   function apply1(
     f: (a1: ValueType) => ValueType,
-    check: (t1: TypeType) => Validation<{}>,
+    check: (t1: TypeType) => Validation<unknown>,
     resultType: TypeType,
     validation1: ValidatedTypedEvaluator
   ): ValidatedTypedEvaluator {
@@ -260,7 +260,7 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
 
   function apply2(
     f: (a1: ValueType, a2: ValueType) => ValueType,
-    check: (t1: TypeType, t2: TypeType) => Validation<{}>,
+    check: (t1: TypeType, t2: TypeType) => Validation<unknown>,
     resultType: TypeType,
     validation1: ValidatedTypedEvaluator,
     validation2: ValidatedTypedEvaluator
@@ -274,7 +274,7 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
 
   function apply3(
     f: (a1: ValueType, a2: ValueType, a3: ValueType) => ValueType,
-    check: (t1: TypeType, t2: TypeType, t3: TypeType) => Validation<{}>,
+    check: (t1: TypeType, t2: TypeType, t3: TypeType) => Validation<unknown>,
     resultType: TypeType,
     validation1: ValidatedTypedEvaluator,
     validation2: ValidatedTypedEvaluator,

@@ -5,9 +5,8 @@ import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import * as array from "fp-ts/lib/Array";
 import { not, Predicate } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
-import { debounceTime, distinctUntilChanged, filter, map, scan, shareReplay, startWith } from "rxjs/operators";
+import { debounceTime, distinctUntilChanged, filter, map, shareReplay } from "rxjs/operators";
 
 import { Filter as fltr } from "../filter/filter-model";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
@@ -18,6 +17,7 @@ import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
 import { isAanpassingBezig } from "../kaart/stijleditor/state";
 import { TabelActiviteit } from "../kaart/tabel-state";
+import * as ol from "../util/openlayers-compat";
 
 export const LagenUiSelector = "Lagenkiezer";
 

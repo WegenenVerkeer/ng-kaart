@@ -8,6 +8,7 @@ import { map } from "rxjs/operators";
 
 import * as arrays from "../../util/arrays";
 import { selectiveArrayTraversal } from "../../util/lenses";
+import * as ol from "../../util/openlayers-compat";
 import { envParams, KaartConfig } from "../kaart-config";
 import * as ke from "../kaart-elementen";
 import { GeselecteerdeFeatures, Laagtabelinstellingen, Viewinstellingen } from "../kaart-protocol-subscriptions";

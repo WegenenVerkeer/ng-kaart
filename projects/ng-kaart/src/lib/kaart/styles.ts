@@ -1,4 +1,4 @@
-import * as ol from "openlayers";
+import * as ol from "../util/openlayers-compat";
 
 import { StaticStyle, StyleSelector } from "./stijl-selector";
 

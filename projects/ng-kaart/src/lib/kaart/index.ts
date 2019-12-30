@@ -15,7 +15,6 @@ import {
   MatTooltipModule
 } from "@angular/material";
 import { ClickOutsideModule } from "ng4-click-outside";
-import * as ol from "openlayers";
 
 import { AbbameldaModule } from "../abbamelda/index";
 import { KaartOpenLayersStyleComponent } from "../classic/openlayers-style/classic-openlayers-style.component";
@@ -23,6 +22,7 @@ import { KaartTekenComponent } from "../classic/tekenen/kaart-teken.component";
 import { FilterModule } from "../filter/index";
 import { LagenkiezerModule } from "../lagenkiezer/index";
 import { TransparantieeditorModule } from "../transparantieeditor/index";
+import * as ol from "../util/openlayers-compat";
 import { ZoekerModule } from "../zoeker/index";
 
 import { KaartAchtergrondSelectorComponent } from "./achtergrond-selector/kaart-achtergrond-selector.component";

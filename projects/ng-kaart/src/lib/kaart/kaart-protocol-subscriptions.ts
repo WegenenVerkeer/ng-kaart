@@ -4,10 +4,9 @@ import { Eq } from "fp-ts/lib/Eq";
 import { Curried2, Function1, Predicate } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import { Lens } from "monocle-ts";
-import * as ol from "openlayers";
 
 import { FeatureWithIdAndLaagnaam } from "../util/feature";
-import { arrayTraversal } from "../util/lenses";
+import * as ol from "../util/openlayers-compat";
 import { ZoekAntwoord, ZoekerMetWeergaveopties, ZoekResultaat } from "../zoeker/zoeker";
 
 import { LaagModel } from "./feature-tabel/laag-model";

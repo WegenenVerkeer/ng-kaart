@@ -1,6 +1,7 @@
 import { Function1, Function2 } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
+
+import * as ol from "../../util/openlayers-compat";
 
 ////////////////////////////////////////////////////////
 // WaypointsOps: operaties op het niveau van routepunten

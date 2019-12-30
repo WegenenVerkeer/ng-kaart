@@ -1,5 +1,6 @@
 import { none, Option, some } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
+
+import * as ol from "../util/openlayers-compat";
 
 import { Tekenresultaat, TekenSettings } from "./kaart-elementen";
 import * as prt from "./kaart-protocol";

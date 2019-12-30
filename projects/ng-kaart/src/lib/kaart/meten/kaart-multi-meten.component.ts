@@ -1,13 +1,13 @@
 import { Component, NgZone } from "@angular/core";
 import { Predicate } from "fp-ts/lib/function";
 import { fromPredicate, none, Option, some } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, filter, map, share, startWith, switchMap, tap } from "rxjs/operators";
 
 import * as clr from "../../stijl/colour";
 import * as arrays from "../../util/arrays";
 import { distance, geometryLength, matchGeometryType, toLineString } from "../../util/geometries";
+import * as ol from "../../util/openlayers-compat";
 import { ofType, select } from "../../util/operators";
 import { tekenInfoboodschapGeslotenMsgWrapper, VerwijderTekenFeatureMsg } from "../kaart-internal-messages";
 import { KaartModusComponent } from "../kaart-modus-component";

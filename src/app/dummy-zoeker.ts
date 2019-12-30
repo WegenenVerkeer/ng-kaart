@@ -1,9 +1,9 @@
 import { Function1 } from "fp-ts/lib/function";
 import { none, some } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { delay } from "rxjs/operators";
 
+import * as ol from "../../projects/ng-kaart/src/lib/util/openlayers-compat";
 import { rangeArray } from "../../projects/ng-kaart/src/lib/util/range";
 import {
   nietOndersteund,
@@ -24,8 +24,8 @@ const randomResultaat: Function1<string, ZoekKaartResultaat> = color => {
     style: new ol.style.Style({
       image: new ol.style.Icon({
         anchor: [0.5, 0.5],
-        anchorXUnits: "fraction",
-        anchorYUnits: "fraction",
+        anchorXUnits: ol.style.IconAnchorUnits.FRACTION,
+        anchorYUnits: ol.style.IconAnchorUnits.FRACTION,
         scale: 1,
         opacity: 0.75,
         src: require("material-design-icons/toggle/svg/production/ic_star_border_24px.svg")
@@ -41,8 +41,8 @@ const randomResultaat: Function1<string, ZoekKaartResultaat> = color => {
     highlightStyle: new ol.style.Style({
       image: new ol.style.Icon({
         anchor: [0.5, 0.5],
-        anchorXUnits: "fraction",
-        anchorYUnits: "fraction",
+        anchorXUnits: ol.style.IconAnchorUnits.FRACTION,
+        anchorYUnits: ol.style.IconAnchorUnits.FRACTION,
         scale: 1,
         opacity: 0.75,
         src: require("material-design-icons/toggle/svg/production/ic_star_24px.svg")

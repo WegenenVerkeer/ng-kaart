@@ -1,8 +1,8 @@
 import * as option from "fp-ts/lib/Option";
 import { Option } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
 
 import { kaartLogger } from "../kaart/log";
+import * as ol from "../util/openlayers-compat";
 
 type Direction = "up" | "down";
 
@@ -47,7 +47,7 @@ export function offsetStyleFunction(
         // Niet alle lijntypes hebben expliciet een offsetzijde. Indien geen zijderijbaan waarde gevonden,
         // veronderstellen we rechter zijde
         getValue(feature, zijderijbaanVeld).getOrElse("r"),
-        positie * s.getStroke().getWidth(),
+        positie * (s.getStroke().getWidth() || 1),
         resolution
       );
 

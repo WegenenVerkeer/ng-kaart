@@ -1,11 +1,10 @@
 import { NgZone } from "@angular/core";
 import { array } from "fp-ts";
 import { left, right } from "fp-ts/lib/Either";
-import { flow, Function1, Function2, Function3 } from "fp-ts/lib/function";
+import { flow, Function1, Function2 } from "fp-ts/lib/function";
 import { none, Option } from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
 import { setoidString } from "fp-ts/lib/Setoid";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 import {
   debounceTime,
@@ -29,6 +28,7 @@ import { Feature, FeatureWithIdAndLaagnaam } from "../util/feature";
 import * as tilecacheMetadataDb from "../util/indexeddb-tilecache-metadata";
 import { observeAsapOnAngular } from "../util/observe-asap-on-angular";
 import { observableFromOlEvents } from "../util/ol-observable";
+import * as ol from "../util/openlayers-compat";
 import { collectOption, scan2 } from "../util/operators";
 import { updateBehaviorSubject } from "../util/subject-update";
 import { ZoekAntwoord, ZoekerMetWeergaveopties, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
@@ -193,12 +193,12 @@ export interface ModelChanges {
 }
 
 const viewinstellingen: Function1<ol.Map, prt.Viewinstellingen> = olmap => ({
-  zoom: olmap.getView().getZoom(),
+  zoom: olmap.getView().getZoom()!,
   minZoom: olmap.getView().getMinZoom(),
   maxZoom: olmap.getView().getMaxZoom(),
-  resolution: olmap.getView().getResolution(),
+  resolution: olmap.getView().getResolution()!,
   extent: olmap.getView().calculateExtent(olmap.getSize()),
-  center: olmap.getView().getCenter(),
+  center: olmap.getView().getCenter()!,
   rotation: olmap.getView().getRotation()
 });
 
@@ -212,10 +212,11 @@ export const modelChanges = (model: KaartWithInfo, changer: ModelChanger, zone: 
   // adds en deletes.
   const featureSelectionUpdateInterval = 2;
   // Features zonder laagnaam en id negeren we gewoon
-  const selectionEventToFeature = (evt: ol.Collection.Event) => Feature.featureWithIdAndLaagnaam(evt.element as ol.Feature);
+  const selectionEventToFeature = (evt: ol.collection.Event<ol.Feature>) => Feature.featureWithIdAndLaagnaam(evt.element);
 
   const collectFeaturesFromOl$ = (operation: string) =>
-    observableFromOlEvents<ol.Collection.Event>(model.geselecteerdeFeatures, operation).pipe(collectOption(selectionEventToFeature));
+    observableFromOlEvents<ol.collection.Event<ol.Feature>>(model.geselecteerdeFeatures, operation) //
+      .pipe(collectOption(selectionEventToFeature));
   const addedFeature$ = collectFeaturesFromOl$("add");
   const removedFeature$ = collectFeaturesFromOl$("remove");
 
@@ -297,7 +298,7 @@ export const modelChanges = (model: KaartWithInfo, changer: ModelChanger, zone: 
     share()
   );
 
-  const hoverFeatures$ = observableFromOlEvents<ol.Collection.Event>(model.hoverFeatures, "add", "remove").pipe(
+  const hoverFeatures$ = observableFromOlEvents<ol.collection.Event<ol.Feature>>(model.hoverFeatures, "add", "remove").pipe(
     map(event => ({
       hover: event.type === "add" ? right<ol.Feature, ol.Feature>(event.element) : left<ol.Feature, ol.Feature>(event.element)
     }))

@@ -1,15 +1,14 @@
 import { Function1, Function2, identity } from "fp-ts/lib/function";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
 
 import * as ke from "../../kaart/kaart-elementen";
 import { kaartLogger } from "../../kaart/log";
 import * as ss from "../../kaart/stijl-selector";
-import * as json from "../../stijl/json-object-interpreting";
-import { validationChain } from "../../util/validation";
-
 import { AwvV0StaticStyleInterpreters } from "../../stijl/json-awv-v0-stijl";
 import { jsonAwvV0RuleInterpreter } from "../../stijl/json-awv-v0-stijlfunctie";
+import * as json from "../../stijl/json-object-interpreting";
+import * as ol from "../../util/openlayers-compat";
+import { validationChain } from "../../util/validation";
 
 /**
  * Deze hulpfuncties zijn nodig omdat de web components waarden van attributen altijd als een string doorsturen. We

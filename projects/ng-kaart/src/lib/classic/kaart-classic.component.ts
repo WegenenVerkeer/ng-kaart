@@ -14,7 +14,6 @@ import {
 import { Function1, pipe } from "fp-ts/lib/function";
 import * as option from "fp-ts/lib/Option";
 import { fromEither, none, Option, some } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { debounceTime, map, share, tap } from "rxjs/operators";
 
@@ -30,6 +29,7 @@ import * as arrays from "../util/arrays";
 import { clusterFeaturesToGeoJson } from "../util/feature";
 import { Feature } from "../util/feature";
 import { GeoJsonFeatures } from "../util/geojson-types";
+import * as ol from "../util/openlayers-compat";
 import { collectOption, ofType } from "../util/operators";
 import { forEach } from "../util/option";
 import * as progress from "../util/progress";

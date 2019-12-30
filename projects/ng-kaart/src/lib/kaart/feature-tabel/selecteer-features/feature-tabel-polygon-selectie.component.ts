@@ -2,20 +2,19 @@ import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { MatIconRegistry } from "@angular/material";
 import { DomSanitizer } from "@angular/platform-browser";
 import { default as booleanIntersects } from "@turf/boolean-intersects";
-import { geometry } from "@turf/helpers";
 import * as turf from "@turf/turf";
 import * as array from "fp-ts/lib/Array";
 import { Endomorphism, flow, Function1, Function2, identity } from "fp-ts/lib/function";
 import * as option from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { filter, map, sample, switchMap, switchMapTo } from "rxjs/operators";
 
-import { Coordinate } from "../../../coordinaten";
+import { Coordinates } from "../../../coordinaten";
 import * as clr from "../../../stijl/colour";
 import * as arrays from "../../../util/arrays";
 import { matchGeometryType, toLineString } from "../../../util/geometries";
+import * as ol from "../../../util/openlayers-compat";
 import { encodeAsSvgUrl } from "../../../util/url";
 import { KaartModusComponent } from "../../kaart-modus-component";
 import * as prt from "../../kaart-protocol";
@@ -93,7 +92,7 @@ const geometryToTurfPolygon: Function1<ol.geom.Geometry, option.Option<turf.Feat
   option.filter(arrays.hasAtLeastLength(3)),
   option.map(coordinates =>
     // Sluit de polygoon als dat nog niet het geval is. Turf staat daar op
-    Coordinate.equal(coordinates[0], coordinates[coordinates.length - 1]) ? coordinates : array.snoc(coordinates, coordinates[0])
+    Coordinates.equal(coordinates[0], coordinates[coordinates.length - 1]) ? coordinates : array.snoc(coordinates, coordinates[0])
   ),
   option.map(coordinates => turf.polygon([coordinates]))
 );
@@ -128,7 +127,7 @@ const geometryOverlapsPolygon = (polygon: ol.geom.Geometry) => (featureGeom: ol.
     )
   );
 const featureOverlapsPolygon = (polygon: ol.geom.Geometry) => (feature: ol.Feature): boolean =>
-  geometryOverlapsPolygon(polygon)(feature.getGeometry());
+  option.exists(geometryOverlapsPolygon(polygon))(option.fromNullable(feature.getGeometry()));
 
 const featuresOverlappingPolygon = (polygon: ol.geom.Geometry): Endomorphism<ol.Feature[]> => array.filter(featureOverlapsPolygon(polygon));
 

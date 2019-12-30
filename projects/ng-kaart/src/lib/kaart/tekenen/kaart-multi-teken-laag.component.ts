@@ -1,13 +1,12 @@
 import { HttpClient } from "@angular/common/http";
 import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
+import { option } from "fp-ts";
 import * as array from "fp-ts/lib/Array";
 import { Curried2, Endomorphism, flow, Function1, Function2, Function3, identity, Predicate, Refinement } from "fp-ts/lib/function";
 import { fromNullable, fromPredicate, none, Option, some } from "fp-ts/lib/Option";
-import * as option from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
 import { setoidNumber, setoidString } from "fp-ts/lib/Setoid";
 import { Lens, Optional } from "monocle-ts";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 import {
   debounceTime,
@@ -25,7 +24,7 @@ import {
   withLatestFrom
 } from "rxjs/operators";
 
-import { Coordinate } from "../../coordinaten";
+import { Coordinates } from "../../coordinaten";
 import * as clr from "../../stijl/colour";
 import { disc, solidLine } from "../../stijl/common-shapes";
 import { Transparantie } from "../../transparantieeditor/transparantie";
@@ -40,6 +39,7 @@ import {
   stringMapOptional,
   StringMapped
 } from "../../util/lenses";
+import * as ol from "../../util/openlayers-compat";
 import { forEach } from "../../util/option";
 import { BevraagKaartOpties, BevraagKaartUiSelector } from "../kaart-bevragen/kaart-bevragen-opties";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
@@ -80,7 +80,7 @@ interface DrawState {
   readonly pointFeatures: ol.Feature[];
   readonly nextId: number;
   readonly dragFeature: Option<ol.Feature>;
-  readonly listeners: ol.GlobalObject[];
+  readonly listeners: ol.events.EventsKey[];
 }
 
 interface PointProperties {
@@ -115,7 +115,7 @@ const pointFeaturesLens: DrawLens<ol.Feature[]> = Lens.fromProp("pointFeatures")
 const nextIdLens: DrawLens<number> = Lens.fromProp("nextId");
 const incrementNextId: Endomorphism<DrawState> = nextIdLens.modify(n => n + 1);
 const dragFeatureLens: DrawLens<Option<ol.Feature>> = Lens.fromProp("dragFeature");
-const listenersLens: DrawLens<ol.GlobalObject[]> = Lens.fromProp("listeners");
+const listenersLens: DrawLens<ol.events.EventsKey[]> = Lens.fromProp("listeners");
 const featureColourLens: DrawLens<clr.Kleur> = Lens.fromProp("featureColour");
 
 type PointFeaturePropertyLens<A> = Lens<PointProperties, A>;
@@ -156,7 +156,7 @@ const isTekenLayer: Predicate<ol.layer.Layer> = layer =>
     .chain(source => fromNullable(source.get("laagTitel")))
     .contains(setoidString, PuntLaagNaam);
 
-type FeaturePicker = PartialFunction1<[number, number], ol.Feature>;
+type FeaturePicker = PartialFunction1<ol.Pixel, ol.Feature>;
 const featurePicker: Function1<ol.Map, FeaturePicker> = map => pixel => {
   const featuresAtPixel = map.getFeaturesAtPixel(pixel, { layerFilter: isTekenLayer }) as ol.Feature[];
   return fromNullable(featuresAtPixel).chain(array.head);
@@ -168,7 +168,12 @@ const isWaypointProperties: Refinement<any, PointProperties> = (value): value is
   typeof value === "object" && fromNullable(value.type).exists(type => type === "Waypoint");
 
 const extractCoordinate: PartialFunction1<ol.Feature, ol.Coordinate> = feature =>
-  fromPredicate(isPoint)(feature.getGeometry()).map(point => point.getCoordinates());
+  pipe(
+    feature.getGeometry(),
+    option.fromNullable,
+    option.filter(isPoint),
+    option.map(point => point.getFirstCoordinate())
+  );
 
 const extractId: PartialFunction1<ol.Feature, number> = feature => fromNullable(feature.getId()).chain(fromPredicate(isNumber));
 
@@ -184,7 +189,7 @@ const findNextFeature: PartialFunction1<ol.Feature, ol.Feature> = feature => ext
 
 const findPreviousWaypoint: PartialFunction1<ol.Feature, Waypoint> = feature => findPreviousFeature(feature).chain(toWaypoint);
 
-const selectFilter: ol.SelectFilterFunction = feature => isWaypointProperties(feature.getProperties());
+const selectFilter: ol.interaction.SelectFilterFunction = feature => isWaypointProperties(feature.getProperties());
 
 const updatePointProperties: Function1<Endomorphism<PointProperties>, Consumer1<ol.Feature>> = f => feature =>
   forEach(extractPointProperties(feature), props => feature.setProperties(f(props)));
@@ -197,7 +202,7 @@ function drawStateTransformer(
   ops: DrawOps
 ): Endomorphism<DrawState> {
   const handleAdd: Consumer1<ol.events.Event> = event => {
-    const drawEvent = event as ol.interaction.Draw.Event;
+    const drawEvent = event as ol.interaction.DrawEvent;
     const maybeCurrentCoordinate = extractCoordinate(drawEvent.feature);
     forEach(maybeCurrentCoordinate, coordinate => dispatchDrawOps(AddPoint(coordinate)));
   };
@@ -218,7 +223,7 @@ function drawStateTransformer(
   const handleDoubleClick: Consumer1<ol.events.Event> = () => dispatchCmd(DrawOpsCmd(StopDrawing()));
 
   const handleSelect: Consumer1<ol.events.Event> = evt => {
-    const selectEvent = evt as ol.interaction.Select.Event;
+    const selectEvent = evt as ol.interaction.SelectEvent;
     forEach(
       array.head(selectEvent.selected),
       flow(
@@ -251,7 +256,7 @@ function drawStateTransformer(
       const modifySource = new ol.source.Vector();
       const puntStijl = disc.stylish(ops.featureColour, clr.transparant, 1, 5);
       const drawInteraction = new ol.interaction.Draw({
-        type: "Point",
+        type: ol.geom.GeometryType.POINT,
         freehandCondition: ol.events.condition.never,
         style: puntStijl,
         snapTolerance: 5
@@ -299,7 +304,7 @@ function drawStateTransformer(
       drawInteractions.forEach(inter => state.map.addInteraction(inter));
       state.map.addInteraction(selectInteraction);
       state.map.on("dblclick", handleDoubleClick);
-      const moveKey = state.map.on("pointermove", handlePointermove(featurePicker(state.map), modifySource)) as ol.GlobalObject;
+      const moveKey = state.map.on("pointermove", handlePointermove(featurePicker(state.map), modifySource));
       return applySequential([
         drawInteractionsLens.set(drawInteractions),
         selectInteractionLens.set(some(selectInteraction)),
@@ -313,14 +318,14 @@ function drawStateTransformer(
       dispatchCmd(VerwijderLaagCmd(SegmentLaagNaam, kaartLogOnlyWrapper));
       state.drawInteractions.forEach(inter => state.map.removeInteraction(inter));
       forEach(state.selectInteraction, inter => state.map.removeInteraction(inter));
-      state.listeners.forEach(key => ol.Observable.unByKey(key));
+      state.listeners.forEach(key => ol.observable.unByKey(key));
       return identity; // Hierna gooien we onze state toch weg -> mag corrupt zijn
     }
 
     case "StopDrawing": {
       state.drawInteractions.forEach(inter => state.map.removeInteraction(inter));
       forEach(state.selectInteraction, inter => state.map.removeInteraction(inter));
-      state.listeners.forEach(key => ol.Observable.unByKey(key));
+      state.listeners.forEach(key => ol.observable.unByKey(key));
       return applySequential([drawInteractionsLens.set([]), listenersLens.set([])]);
     }
 
@@ -538,7 +543,7 @@ const stichGeometries: Function2<WaypointId[], FeaturesByWaypointId, ol.geom.Geo
       ids.map(id =>
         numberMapOptional<ol.Feature>(id)
           .getOption(featuresById)
-          .map(f => f.getGeometry())
+          .chain(f => option.fromNullable(f.getGeometry()))
       )
     )
   );
@@ -610,7 +615,7 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
           prev.value.type === "AddWaypoint" &&
           curr.value.type === "RemoveWaypoint" &&
           prev.value.waypoint.id === curr.value.waypoint.id &&
-          Coordinate.equal(prev.value.waypoint.location, curr.value.waypoint.location)
+          Coordinates.equal(prev.value.waypoint.location, curr.value.waypoint.location)
         );
       }),
       tap(([prev]) => {

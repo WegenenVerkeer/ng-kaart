@@ -3,13 +3,12 @@ import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { left, right } from "fp-ts/lib/Either";
 import * as option from "fp-ts/lib/Option";
 import { none } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { catchError, debounceTime, filter, map, mergeAll, scan, startWith, switchMap, timeoutWith } from "rxjs/operators";
 
-import { subSpy } from "../../util";
 import * as arrays from "../../util/arrays";
 import { observeOnAngular } from "../../util/observe-on-angular";
+import * as ol from "../../util/openlayers-compat";
 import { Progress, Received, Requested, TimedOut } from "../../util/progress";
 import * as progress from "../../util/progress";
 import * as ke from "../kaart-elementen";

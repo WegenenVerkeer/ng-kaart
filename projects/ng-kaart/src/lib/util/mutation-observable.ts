@@ -1,7 +1,8 @@
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 
 import { kaartLogger } from "../kaart/log";
+
+import * as ol from "./openlayers-compat";
 
 export function observableFromDomMutations<A extends ol.events.Event>(
   cfg: MutationObserverInit,

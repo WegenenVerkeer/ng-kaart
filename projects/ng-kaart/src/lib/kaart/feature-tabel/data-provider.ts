@@ -7,7 +7,6 @@ import { Setoid } from "fp-ts/lib/Setoid";
 import { Getter, Iso, Lens, Prism } from "monocle-ts";
 import { iso, Newtype } from "newtype-ts";
 import { NonNegativeInteger, prismNonNegativeInteger } from "newtype-ts/lib/NonNegativeInteger";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { catchError, map } from "rxjs/operators";
 
@@ -16,6 +15,7 @@ import { Feature, toOlFeature } from "../../util/feature";
 import { PartialFunction1 } from "../../util/function";
 import { isOfKind } from "../../util/kinded";
 import * as matchers from "../../util/matchers";
+import * as ol from "../../util/openlayers-compat";
 import * as setoids from "../../util/setoid";
 import * as ke from "../kaart-elementen";
 

@@ -1,4 +1,4 @@
-import * as ol from "openlayers";
+import * as ol from "../util/openlayers-compat";
 
 import { ValueType } from "../kaart/feature-tabel/row-model";
 

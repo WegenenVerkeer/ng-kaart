@@ -49,7 +49,6 @@ export interface CircleStyle {
   radius: number;
   fill?: FillStyle;
   stroke?: StrokeStyle;
-  snapToPixel?: boolean;
 }
 
 export type IconOriginType = "bottom-left" | "bottom-right" | "top-left" | "top-right";
@@ -67,7 +66,6 @@ export interface IconStyle {
   offsetOrigin?: IconOriginType;
   opacity?: number;
   scale?: number;
-  snapToPixel?: boolean;
   rotateWithView?: boolean;
   rotation?: number;
   size?: SizeType;
@@ -82,7 +80,6 @@ export interface RegularShapeStyle {
   radius1?: number;
   radius2?: number;
   angle?: number;
-  snapToPixel?: boolean;
   stroke?: StrokeStyle;
 }
 

@@ -1,8 +1,8 @@
 import { constant, Function1, Function2, Function3, Lazy, Refinement } from "fp-ts/lib/function";
 import * as option from "fp-ts/lib/Option";
-import * as ol from "openlayers";
 
 import * as clr from "../../stijl/colour";
+import * as ol from "../../util/openlayers-compat";
 
 import { Waypoint } from "./waypoint.msg";
 

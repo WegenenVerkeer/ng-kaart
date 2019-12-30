@@ -1,6 +1,5 @@
-import * as ol from "openlayers";
-
 import { kaartLogger } from "../kaart/log";
+import * as ol from "../util/openlayers-compat";
 import { join } from "../util/string";
 
 import { definitieToStyle } from "./stijl-static";
@@ -65,7 +64,7 @@ export function verkeersbordenStyleFunction(geselecteerd: boolean): ol.StyleFunc
 function opstellingMetAanzichten(feature: ol.Feature, geselecteerd: boolean, klein: boolean): ol.style.Style[] {
   const opstelling: Opstelling = feature.getProperties()["properties"];
 
-  const opstellingPoint = feature.getGeometry() as ol.geom.Point;
+  const opstellingPoint: ol.geom.Point = feature.getGeometry() as ol.geom.Point;
 
   const aanzichtStyles: ol.style.Style[] = [];
 
@@ -75,7 +74,9 @@ function opstellingMetAanzichten(feature: ol.Feature, geselecteerd: boolean, kle
   }
 
   opstelling.aanzichten.forEach(aanzicht => {
-    const ankerGeometry = aanzicht.anker ? (format.readGeometry(aanzicht.anker) as ol.geom.Point) : opstellingPoint.clone();
+    const ankerGeometry: ol.geom.Point = aanzicht.anker
+      ? (format.readGeometry(aanzicht.anker) as ol.geom.Point)
+      : (opstellingPoint.clone() as ol.geom.Point);
     const image = imageAanzicht(aanzicht.binaireData, geselecteerd, klein);
     const rotation: number = transformeerHoek(aanzicht.hoek);
 

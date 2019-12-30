@@ -5,13 +5,13 @@ import { Curried2, FunctionN, Refinement } from "fp-ts/lib/function";
 import { fromNullable, Option, option as optionApplcative, tryCatch } from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
 import * as traversable from "fp-ts/lib/Traversable";
-import * as ol from "openlayers";
 
 import { kaartLogger } from "../kaart/log";
 
 import * as arrays from "./arrays";
 import { PartialFunction1 } from "./function";
 import { GeoJsonCore, GeoJsonFeature, GeoJsonFeatureCollection, GeoJsonFeatures } from "./geojson-types";
+import * as ol from "./openlayers-compat";
 
 // De GeoJSON ziet er thread safe uit (volgens de Openlayers source code)
 const format = new ol.format.GeoJSON();
@@ -43,26 +43,41 @@ export const modifyWithLaagnaam: Curried2<string, ol.Feature, ol.Feature> = laag
 };
 
 const singleFeatureToGeoJson: PartialFunction1<ol.Feature, GeoJsonFeature> = feature =>
-  tryCatch(() => ({
-    type: "Feature" as "Feature",
-    id: feature.getId(),
-    geometry: format.writeGeometryObject(feature.getGeometry()),
-    properties: feature.get("properties")
-  }));
+  pipe(
+    option.fromNullable(feature.getId()),
+    option.chain(id =>
+      pipe(
+        option.fromNullable(feature.getGeometry()),
+        option.chain(geometry =>
+          option.tryCatch(() => ({
+            type: "Feature" as "Feature",
+            id,
+            geometry: format.writeGeometryObject(geometry),
+            properties: feature.get("properties")
+          }))
+        )
+      )
+    )
+  );
 
-const multipleFeatureToGeoJson: Curried2<ol.geom.Geometry, ol.Feature[], Option<GeoJsonFeatureCollection>> = geometry => features => {
-  return tryCatch(() => ({
-    type: "FeatureCollection" as "FeatureCollection",
-    geometry: format.writeGeometryObject(geometry),
-    features: mapOption(features, singleFeatureToGeoJson)
-  }));
+const multipleFeatureToGeoJson: Curried2<ol.Feature, ol.Feature[], Option<GeoJsonFeatureCollection>> = feature => features => {
+  return pipe(
+    option.fromNullable(feature.getGeometry()),
+    option.chain(geometry =>
+      option.tryCatch(() => ({
+        type: "FeatureCollection" as "FeatureCollection",
+        geometry: format.writeGeometryObject(geometry),
+        features: mapOption(features, singleFeatureToGeoJson)
+      }))
+    )
+  );
 };
 
 export const featureToGeoJson: PartialFunction1<ol.Feature, GeoJsonFeatures> = feature => {
   const features = fromNullable(feature.get("features"));
   return features
     .filter(arrays.isArray)
-    .chain<GeoJsonFeatureCollection | GeoJsonFeature>(multipleFeatureToGeoJson(feature.getGeometry()))
+    .chain<GeoJsonFeatureCollection | GeoJsonFeature>(multipleFeatureToGeoJson(feature))
     .orElse(() => singleFeatureToGeoJson(feature));
 };
 
@@ -111,22 +126,32 @@ export namespace Feature {
   export const eqFeatureTechnicalId: eq.Eq<ol.Feature> = eq.contramap(technicalId)(option.getEq(eq.eqString));
 
   export const notInExtent: FunctionN<[ol.Extent], Refinement<ol.Feature, ol.Feature>> = extent => (feature): feature is ol.Feature => {
-    const [featureMinX, featureMinY, featureMaxX, featureMaxY]: ol.Extent = feature.getGeometry().getExtent();
-    const [extentMinX, extentMinY, extentMaxX, extentMaxY]: ol.Extent = extent;
-    return extentMinX > featureMaxX || extentMaxX < featureMinX || extentMinY > featureMaxY || extentMaxY < featureMinY;
+    const featureGeometry = feature.getGeometry();
+    if (featureGeometry) {
+      const [featureMinX, featureMinY, featureMaxX, featureMaxY]: ol.Extent = featureGeometry.getExtent();
+      const [extentMinX, extentMinY, extentMaxX, extentMaxY]: ol.Extent = extent;
+      return extentMinX > featureMaxX || extentMaxX < featureMinX || extentMinY > featureMaxY || extentMaxY < featureMinY;
+    } else {
+      return true;
+    }
   };
 
   export const overlapsExtent: FunctionN<[ol.Extent], Refinement<ol.Feature, ol.Feature>> = extent => (feature): feature is ol.Feature => {
-    const [featureMinX, featureMinY, featureMaxX, featureMaxY]: ol.Extent = feature.getGeometry().getExtent();
-    const [extentMinX, extentMinY, extentMaxX, extentMaxY]: ol.Extent = extent;
-    return (
-      ((extentMinX <= featureMaxX && extentMinX >= featureMinX) ||
-        (extentMaxX <= featureMaxX && extentMaxX >= featureMinX) ||
-        (extentMaxX >= featureMaxX && extentMinX <= featureMinX)) &&
-      ((extentMinY <= featureMaxY && extentMinY >= featureMinY) ||
-        (extentMaxY <= featureMaxY && extentMaxY >= featureMinY) ||
-        (extentMaxY >= featureMaxY && extentMinY <= featureMinY))
-    );
+    const featureGeometry = feature.getGeometry();
+    if (featureGeometry) {
+      const [featureMinX, featureMinY, featureMaxX, featureMaxY]: ol.Extent = featureGeometry.getExtent();
+      const [extentMinX, extentMinY, extentMaxX, extentMaxY]: ol.Extent = extent;
+      return (
+        ((extentMinX <= featureMaxX && extentMinX >= featureMinX) ||
+          (extentMaxX <= featureMaxX && extentMaxX >= featureMinX) ||
+          (extentMaxX >= featureMaxX && extentMinX <= featureMinX)) &&
+        ((extentMinY <= featureMaxY && extentMinY >= featureMinY) ||
+          (extentMaxY <= featureMaxY && extentMaxY >= featureMinY) ||
+          (extentMaxY >= featureMaxY && extentMinY <= featureMinY))
+      );
+    } else {
+      return false;
+    }
   };
 
   export const combineExtents: PartialFunction1<ol.Extent[], ol.Extent> = foldLeft(

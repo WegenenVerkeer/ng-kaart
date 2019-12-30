@@ -3,8 +3,8 @@ import { ChangeDetectorRef, Component, NgZone, ViewChild, ViewEncapsulation } fr
 import { array } from "fp-ts";
 import { Function1 } from "fp-ts/lib/function";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
 import { CachedFeatureLookup } from "projects/ng-kaart/src/lib/kaart/cache/lookup";
+import * as ol from "projects/ng-kaart/src/lib/util/openlayers-compat";
 import { urlWithParams } from "projects/ng-kaart/src/lib/util/url";
 import * as rx from "rxjs";
 import { reduce, scan, share, startWith, throttleTime } from "rxjs/operators";
@@ -280,8 +280,8 @@ export class FeatureDemoComponent {
   pinIcon = new ol.style.Style({
     image: new ol.style.Icon({
       anchor: [0.5, 1],
-      anchorXUnits: "fraction",
-      anchorYUnits: "fraction",
+      anchorXUnits: ol.style.IconAnchorUnits.FRACTION,
+      anchorYUnits: ol.style.IconAnchorUnits.FRACTION,
       scale: 1,
       opacity: 1,
       src: require("material-design-icons/maps/svg/production/ic_place_48px.svg")
@@ -301,8 +301,8 @@ export class FeatureDemoComponent {
   pinIconSelect = new ol.style.Style({
     image: new ol.style.Icon({
       anchor: [0.5, 1],
-      anchorXUnits: "fraction",
-      anchorYUnits: "fraction",
+      anchorXUnits: ol.style.IconAnchorUnits.FRACTION,
+      anchorYUnits: ol.style.IconAnchorUnits.FRACTION,
       scale: 1,
       opacity: 1,
       src: require("material-design-icons/maps/svg/production/ic_place_48px.svg")
@@ -322,8 +322,8 @@ export class FeatureDemoComponent {
   pinIcon2 = new ol.style.Style({
     image: new ol.style.Icon({
       anchor: [0.5, 1],
-      anchorXUnits: "fraction",
-      anchorYUnits: "fraction",
+      anchorXUnits: ol.style.IconAnchorUnits.FRACTION,
+      anchorYUnits: ol.style.IconAnchorUnits.FRACTION,
       scale: 1,
       opacity: 1,
       color: "#FA1",
@@ -792,8 +792,8 @@ export class FeatureDemoComponent {
     definition: {
       icon: {
         anchor: [0.5, 1],
-        anchorXUnits: "fraction",
-        anchorYUnits: "fraction",
+        anchorXUnits: ol.style.IconAnchorUnits.FRACTION,
+        anchorYUnits: ol.style.IconAnchorUnits.FRACTION,
         scale: 1,
         opacity: 1,
         src:
@@ -811,8 +811,8 @@ export class FeatureDemoComponent {
     definition: {
       icon: {
         anchor: [0.5, 0.5],
-        anchorXUnits: "fraction",
-        anchorYUnits: "fraction",
+        anchorXUnits: ol.style.IconAnchorUnits.FRACTION,
+        anchorYUnits: ol.style.IconAnchorUnits.FRACTION,
         scale: 1,
         opacity: 1,
         src: require("src/assets/images/icon.svg")
@@ -824,8 +824,8 @@ export class FeatureDemoComponent {
   readonly ster = new ol.style.Style({
     image: new ol.style.Icon({
       anchor: [0.5, 0.5],
-      anchorXUnits: "fraction",
-      anchorYUnits: "fraction",
+      anchorXUnits: ol.style.IconAnchorUnits.FRACTION,
+      anchorYUnits: ol.style.IconAnchorUnits.FRACTION,
       scale: 1,
       opacity: 1,
       src: require("src/assets/images/icon.svg")

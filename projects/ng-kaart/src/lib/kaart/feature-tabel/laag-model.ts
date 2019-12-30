@@ -7,7 +7,6 @@ import { pipe } from "fp-ts/lib/pipeable";
 import { getLastSemigroup } from "fp-ts/lib/Semigroup";
 import { Fold, Getter, Lens, Optional, Traversal } from "monocle-ts";
 import { indexArray } from "monocle-ts/lib/Index/Array";
-import * as ol from "openlayers";
 import { map } from "rxjs/operators";
 import { isNumber } from "util";
 
@@ -19,6 +18,7 @@ import { equalToString } from "../../util/equal";
 import { Feature } from "../../util/feature";
 import { PartialFunction2 } from "../../util/function";
 import { arrayTraversal, selectiveArrayTraversal } from "../../util/lenses";
+import * as ol from "../../util/openlayers-compat";
 import * as ke from "../kaart-elementen";
 import { Viewinstellingen } from "../kaart-protocol-subscriptions";
 import { kaartLogger } from "../log";

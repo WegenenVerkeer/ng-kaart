@@ -11,7 +11,6 @@ import { Ord } from "fp-ts/lib/Ord";
 import { setoidString } from "fp-ts/lib/Setoid";
 import { lookup } from "fp-ts/lib/StrMap";
 import { Tuple } from "fp-ts/lib/Tuple";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 import {
   catchError,
@@ -40,6 +39,7 @@ import { Transparantie } from "../../transparantieeditor/transparantie";
 import { isNotNullObject } from "../../util/function";
 import { matchGeometryType } from "../../util/geometries";
 import * as maps from "../../util/maps";
+import * as ol from "../../util/openlayers-compat";
 import { collect, Pipeable } from "../../util/operators";
 import { forEach } from "../../util/option";
 import * as sets from "../../util/sets";

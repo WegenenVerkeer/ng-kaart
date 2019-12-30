@@ -3,13 +3,13 @@ import { Curried2, Endomorphism, FunctionN, not } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
 import { DateTime } from "luxon";
 import { Lens } from "monocle-ts";
-import * as ol from "openlayers";
 
 import * as arrays from "../../util/arrays";
 import { fromTimestamp, parseDate } from "../../util/date-time";
 import { Feature, FeatureWithIdAndLaagnaam } from "../../util/feature";
 import { PartialFunction2 } from "../../util/function";
 import { Properties } from "../../util/geojson-types";
+import * as ol from "../../util/openlayers-compat";
 import * as ke from "../kaart-elementen";
 
 export type ValueType = string | number | boolean | DateTime;

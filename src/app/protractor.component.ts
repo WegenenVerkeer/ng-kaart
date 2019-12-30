@@ -1,5 +1,6 @@
-import { Component, OnInit, ViewEncapsulation } from "@angular/core";
-import * as ol from "openlayers";
+import { Component, ViewEncapsulation } from "@angular/core";
+
+import * as ol from "projects/ng-kaart/src/lib/util/openlayers-compat";
 
 @Component({
   selector: "awv-protractor",
@@ -10,8 +11,8 @@ export class ProtractorComponent {
   pinIcon = new ol.style.Style({
     image: new ol.style.Icon({
       anchor: [0.5, 1],
-      anchorXUnits: "fraction",
-      anchorYUnits: "fraction",
+      anchorXUnits: ol.style.IconAnchorUnits.FRACTION,
+      anchorYUnits: ol.style.IconAnchorUnits.FRACTION,
       scale: 1,
       opacity: 1,
       src: require("material-design-icons/maps/svg/production/ic_place_48px.svg")
@@ -31,8 +32,8 @@ export class ProtractorComponent {
   pinIcon2 = new ol.style.Style({
     image: new ol.style.Icon({
       anchor: [0.5, 1],
-      anchorXUnits: "fraction",
-      anchorYUnits: "fraction",
+      anchorXUnits: ol.style.IconAnchorUnits.FRACTION,
+      anchorYUnits: ol.style.IconAnchorUnits.FRACTION,
       scale: 1,
       opacity: 1,
       color: "#FA1",

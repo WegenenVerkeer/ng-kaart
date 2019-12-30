@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewEncapsulation } from "@angular/core";
-import * as ol from "openlayers";
+import * as ol from "projects/ng-kaart/src/lib/util/openlayers-compat";
 
 @Component({
   selector: "awv-pat-kaart",
@@ -16,7 +16,7 @@ export class PatKaartComponent implements OnInit {
     });
     return new ol.style.Style({
       fill: fill,
-      stroke: null
+      stroke: undefined
     });
   }
 
@@ -26,7 +26,7 @@ export class PatKaartComponent implements OnInit {
     });
     return new ol.style.Style({
       fill: fill,
-      stroke: null
+      stroke: undefined
     });
   }
 }

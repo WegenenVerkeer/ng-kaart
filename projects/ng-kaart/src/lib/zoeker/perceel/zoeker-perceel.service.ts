@@ -1,11 +1,11 @@
 import { HttpClient } from "@angular/common/http";
 import { Inject, Injectable } from "@angular/core";
 import { none, Option, some } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { map, shareReplay } from "rxjs/operators";
 
 import { kaartLogger } from "../../kaart/log";
+import * as ol from "../../util/openlayers-compat";
 import { ZOEKER_CFG, ZoekerConfigData } from "../config/zoeker-config";
 import { ZoekerConfigLocatorServicesConfig } from "../config/zoeker-config-locator-services.config";
 import {

@@ -1,5 +1,4 @@
 import { Function1, pipe } from "fp-ts/lib/function";
-import * as ol from "openlayers";
 
 import { CachedFeatureLookup } from "../kaart/cache/lookup";
 import { KaartLocaties } from "../kaart/kaart-bevragen/laaginfo.model";
@@ -9,6 +8,7 @@ import * as prt from "../kaart/kaart-protocol";
 import { HoverFeature } from "../kaart/kaart-with-info-model";
 import * as loc from "../kaart/mijn-locatie/kaart-mijn-locatie.component";
 import { LaatsteCacheRefresh, PrecacheLaagProgress } from "../kaart/model-changes";
+import * as ol from "../util/openlayers-compat";
 
 import { classicLogger } from "./log";
 

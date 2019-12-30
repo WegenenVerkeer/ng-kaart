@@ -1,13 +1,13 @@
 import { Function1, Function4, identity, pipe } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { Iso } from "monocle-ts";
-import * as ol from "openlayers";
 
 import { offsetStyleFunction } from "../stijl/offset-stijl-function";
 import { serialiseAwvV0DynamicStyle, validateAwvV0RuleDefintion } from "../stijl/stijl-function";
 import { RuleConfig } from "../stijl/stijl-function-types";
 import { serialiseAwvV0StaticStyle, validateAwvV0StaticStyle } from "../stijl/stijl-static";
 import { AwvV0StaticStyle } from "../stijl/stijl-static-types";
+import * as ol from "../util/openlayers-compat";
 import { Validator } from "../util/validation";
 
 // De Openlayers stijlen zijn goed genoeg (en nodig) om de features op de kaart in de browser te renderen,

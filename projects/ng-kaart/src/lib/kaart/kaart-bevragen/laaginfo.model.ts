@@ -1,9 +1,9 @@
 import { Either } from "fp-ts/lib/Either";
 import { Function1, Function2 } from "fp-ts/lib/function";
 import * as option from "fp-ts/lib/Option";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 
+import * as ol from "../../util/openlayers-compat";
 import { Progress } from "../../util/progress";
 import * as progress from "../../util/progress";
 import { VeldInfo } from "../kaart-elementen";

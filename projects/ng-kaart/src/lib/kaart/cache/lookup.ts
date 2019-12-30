@@ -1,10 +1,10 @@
 import { Function1, Function2, Lazy, Predicate } from "fp-ts/lib/function";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { filter, map } from "rxjs/operators";
 
 import { toOlFeature } from "../../util/feature";
 import * as geojsonStore from "../../util/indexeddb-geojson-store";
+import * as ol from "../../util/openlayers-compat";
 
 export interface CachedFeatureLookup {
   readonly all$: Lazy<rx.Observable<ol.Feature>>;

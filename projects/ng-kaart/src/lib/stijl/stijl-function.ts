@@ -1,6 +1,6 @@
 import { Function1 } from "fp-ts/lib/function";
-import * as ol from "openlayers";
 
+import * as ol from "../util/openlayers-compat";
 import { validationChain as chain, validationChain2, Validator } from "../util/validation";
 
 import { jsonAwvV0RuleCompiler, jsonAwvV0RuleInterpreter } from "./json-awv-v0-stijlfunctie";

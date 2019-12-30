@@ -1,6 +1,5 @@
 import { Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
 import { Subject } from "rxjs";
 import { distinctUntilChanged, map, skipWhile } from "rxjs/operators";
 import * as uuid from "uuid";
@@ -8,6 +7,7 @@ import * as uuid from "uuid";
 import { Transparantie } from "../../transparantieeditor/transparantie";
 import { dimensieBeschrijving } from "../../util/geometries";
 import { observeOnAngular } from "../../util/observe-on-angular";
+import * as ol from "../../util/openlayers-compat";
 import { ofType } from "../../util/operators";
 import { forEach } from "../../util/option";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
@@ -200,7 +200,7 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
     const measureTooltip = new ol.Overlay({
       element: measureTooltipElement,
       offset: [0, -15],
-      positioning: "bottom-center"
+      positioning: ol.overlay.Positioning.BOTTOM_CENTER
     });
 
     this.dispatch({
@@ -219,18 +219,15 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
     feature.set("volgnummer", volgnummer);
     feature.set("measuretooltip", measureTooltip);
     feature.setId(uuid.v4());
-    feature.getGeometry().on(
-      "change",
-      evt => {
-        const geometry = evt.target as ol.geom.Geometry;
-        this.changedGeometriesSubj.next(ke.TekenResultaat(geometry, volgnummer, feature.getId()));
-        const omschrijving = dimensieBeschrijving(geometry, false);
-        measureTooltipElement.innerHTML = meerdereGeometrieen ? volgnummer + ": " + omschrijving : omschrijving;
-        forEach(this.tooltipCoord(geometry), coord => measureTooltip.setPosition(coord));
-      },
-      this
-    );
-    feature.getGeometry().changed();
+    feature.getGeometry()!.on("change", evt => {
+      // TODO na OL upgrade -> is this pointer OK?
+      const geometry = evt.target as ol.geom.Geometry;
+      this.changedGeometriesSubj.next(ke.TekenResultaat(geometry, volgnummer, feature.getId()!));
+      const omschrijving = dimensieBeschrijving(geometry, false);
+      measureTooltipElement.innerHTML = meerdereGeometrieen ? volgnummer + ": " + omschrijving : omschrijving;
+      forEach(this.tooltipCoord(geometry), coord => measureTooltip.setPosition(coord));
+    });
+    feature.getGeometry()!.changed();
   }
 
   private createDrawInteraction(source: ol.source.Vector, tekenSettings: ke.TekenSettings): ol.interaction.Draw {
@@ -243,23 +240,23 @@ export class KaartTekenLaagComponent extends KaartChildComponentBase implements 
     source.forEachFeature(feature => this.initializeFeature(feature, tekenSettings.meerdereGeometrieen));
 
     draw.on(
+      // TODO na OL upgrade -> is this pointer OK?
       "drawstart",
-      (event: ol.interaction.Draw.Event) => {
-        const feature = (event as ol.interaction.Draw.Event).feature;
+      (event: ol.interaction.DrawEvent) => {
+        const feature = event.feature;
         this.initializeFeature(feature, tekenSettings.meerdereGeometrieen);
-      },
-      this
+      }
     );
 
     draw.on(
-      "drawend", //
+      // TODO na OL upgrade -> is this pointer OK?
+      "drawend",
       () => {
         if (!tekenSettings.meerdereGeometrieen) {
           // Als we maar 1 geometrie open mogen hebben, stoppen we direct met tekenen wanneer 1 geometrie afgesloten is.
           this.dispatch(prt.VerwijderInteractieCmd(this.drawInteraction));
         }
-      },
-      this
+      }
     );
 
     return draw;

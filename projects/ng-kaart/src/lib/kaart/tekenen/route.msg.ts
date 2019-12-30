@@ -1,6 +1,8 @@
 import { Option } from "fp-ts/lib/Option";
 import * as strmap from "fp-ts/lib/StrMap";
 
+import * as ol from "../../util/openlayers-compat";
+
 import { Versions } from "./waypoint-ops";
 import { Waypoint, WaypointId } from "./waypoint.msg";
 

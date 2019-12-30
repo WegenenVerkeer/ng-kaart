@@ -1,9 +1,9 @@
 import { Component, NgZone } from "@angular/core";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { tap } from "rxjs/operators";
 
 import { lambert72ToWgs84 } from "../../coordinaten/coordinaten.service";
+import * as ol from "../../util/openlayers-compat";
 import { KaartModusComponent } from "../kaart-modus-component";
 import * as prt from "../kaart-protocol-commands";
 import { KaartComponent } from "../kaart.component";

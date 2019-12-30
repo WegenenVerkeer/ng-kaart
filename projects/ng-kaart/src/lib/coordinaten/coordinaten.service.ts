@@ -1,11 +1,11 @@
-import { Curried2, Endomorphism, Function1, Function2, Predicate } from "fp-ts/lib/function";
+import { Endomorphism, Function1, Function2, Predicate } from "fp-ts/lib/function";
 import { fromPredicate, none, Option, some } from "fp-ts/lib/Option";
 import * as set from "fp-ts/lib/Set";
 import { getArraySetoid, Setoid, setoidNumber, setoidString } from "fp-ts/lib/Setoid";
-import * as ol from "openlayers";
 import proj4 from "proj4";
 
 import { Consumer1, PartialFunction1 } from "../util/function";
+import * as ol from "../util/openlayers-compat";
 
 export namespace Epsg {
   export const Lambert72 = "EPSG:31370";
@@ -103,7 +103,7 @@ updateExtent(Epsg.GoogleMercator);
 
 updateExtent(Epsg.Wgs84);
 
-export namespace Coordinate {
+export namespace Coordinates {
   export const setoid: Setoid<ol.Coordinate> = getArraySetoid(setoidNumber);
   export const equalTo: Function1<ol.Coordinate, Predicate<ol.Coordinate>> = coord1 => coord2 => setoid.equals(coord1, coord2);
   export const equal: Function2<ol.Coordinate, ol.Coordinate, boolean> = (coord1, coord2) => setoid.equals(coord1, coord2);

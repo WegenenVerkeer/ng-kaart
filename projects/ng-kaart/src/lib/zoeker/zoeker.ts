@@ -3,10 +3,11 @@ import { Function1, Function2, Function3 } from "fp-ts/lib/function";
 import { fromPredicate, Option } from "fp-ts/lib/Option";
 import { Ordering, sign } from "fp-ts/lib/Ordering";
 import { insert, remove, StrMap } from "fp-ts/lib/StrMap";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 
-export const geoJSONOptions = <ol.olx.format.GeoJSONOptions>{
+import * as ol from "../util/openlayers-compat";
+
+export const geoJSONOptions = <ol.format.GeoJSONOptions>{
   ignoreExtraDims: true,
   defaultDataProjection: undefined,
   featureProjection: undefined

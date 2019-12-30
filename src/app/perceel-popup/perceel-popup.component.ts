@@ -1,6 +1,7 @@
 import { Component, OnChanges } from "@angular/core";
+import { option } from "fp-ts";
 import { Option } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
+import * as ol from "projects/ng-kaart/src/lib/util/openlayers-compat";
 
 @Component({
   selector: "awv-pat-perceel-popup",
@@ -24,11 +25,7 @@ export class PerceelPopupComponent implements OnChanges {
   update(feature: Option<ol.Feature>) {
     this.feature = feature;
     this.toggleVisibility(this.feature.isSome());
-    if (this.feature.isNone()) {
-      this.text = "";
-    } else {
-      this.text = this.feature.toNullable().get("id");
-    }
+    this.text = this.feature.chain(f => option.fromNullable(f.get("id"))).getOrElse("");
   }
 
   private toggleVisibility(onOff) {
@@ -36,7 +33,7 @@ export class PerceelPopupComponent implements OnChanges {
   }
 
   move(evt: MouseEvent) {
-    if (evt.srcElement.className !== "perceel-popup") {
+    if (evt.srcElement!["className"] !== "perceel-popup") {
       this.left = evt.offsetX + this.offset;
       this.top = evt.offsetY;
     }
