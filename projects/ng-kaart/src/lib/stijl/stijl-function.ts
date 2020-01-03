@@ -16,7 +16,7 @@ import { properlyJsonDeclaredText, textToJson } from "./text-json";
 const Version = "awv-v0";
 
 // type StyleFunction = (feature: (ol.Feature | ol.render.Feature), resolution: number) => (ol.style.Style | ol.style.Style[]);
-export function definitieToStyleFunction(encoding: string, definitieText: string): Validation<ol.StyleFunction> {
+export function definitieToStyleFunction(encoding: string, definitieText: string): Validation<ol.style.StyleFunction> {
   return chain(validateAsDynamicStyle(encoding, definitieText), validateAwvV0RuleDefintion);
 }
 
@@ -35,7 +35,7 @@ function interpretJsonAsSpec(definitie: Object): Validation<AwvV0DynamicStyle> {
   });
 }
 
-export const validateAwvV0RuleDefintion: Validator<AwvV0DynamicStyle, ol.StyleFunction> = jsonAwvV0RuleCompiler;
+export const validateAwvV0RuleDefintion: Validator<AwvV0DynamicStyle, ol.style.StyleFunction> = jsonAwvV0RuleCompiler;
 
 export const serialiseAwvV0DynamicStyle: Function1<AwvV0DynamicStyle, string> = style =>
   JSON.stringify({ version: Version, definition: style });

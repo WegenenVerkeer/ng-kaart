@@ -451,15 +451,15 @@ export class FeatureDemoComponent {
     throw new Error(`slecht formaat ${join(",")(msg)}`);
   });
 
-  readonly fietspadStyle: ol.StyleFunction = validateAwvV0RuleDefintion(this.fietspadStijlDef).getOrElse(msg => {
+  readonly fietspadStyle: ol.style.StyleFunction = validateAwvV0RuleDefintion(this.fietspadStijlDef).getOrElse(msg => {
     throw new Error(`slecht formaat ${msg}`);
   });
 
-  readonly afgeleideSnelheidsRegimesStyle: ol.StyleFunction = validateAwvV0RuleDefintion(this.afgeleideSnelheidsRegimesStijlDef).getOrElse(
-    msg => {
-      throw new Error(`slecht formaat ${msg}`);
-    }
-  );
+  readonly afgeleideSnelheidsRegimesStyle: ol.style.StyleFunction = validateAwvV0RuleDefintion(
+    this.afgeleideSnelheidsRegimesStijlDef
+  ).getOrElse(msg => {
+    throw new Error(`slecht formaat ${msg}`);
+  });
 
   // resolutions: [1024.0, 512.0, 256.0, 128.0, 64.0, 32.0, 16.0, 8.0, 4.0, 2.0, 1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125],
   // minZoom 9 = resolutions[9] => 2.0

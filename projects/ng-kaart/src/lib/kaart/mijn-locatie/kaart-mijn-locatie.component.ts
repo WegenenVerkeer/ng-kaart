@@ -156,7 +156,7 @@ const moetKijkrichtingTonen: Predicate<State> = state =>
 
 const zetStijl: Function1<TrackingInfo, void> = info => info.feature.map(feature => feature.setStyle(locatieStijlFunctie(info)));
 
-const locatieStijlFunctie: Function1<TrackingInfo, ol.StyleFunction> = info => {
+const locatieStijlFunctie: Function1<TrackingInfo, ol.style.StyleFunction> = info => {
   const fillColor = "rgba(65, 105, 225, 0.15)";
   const fillColorDark = "rgba(65, 105, 225, 0.25)";
   const fillColorDarkTransparant = "rgba(65, 105, 225, 0.0)";

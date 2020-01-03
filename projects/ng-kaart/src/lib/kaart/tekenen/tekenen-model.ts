@@ -34,7 +34,7 @@ export interface StartDrawing {
   // readonly startGeometrie: Option<ol.geom.Geometry>;
   readonly featureColour: clr.Kleur;
   readonly useRouting: boolean;
-  readonly polygonStyleFunction: option.Option<ol.StyleFunction>;
+  readonly polygonStyleFunction: option.Option<ol.style.StyleFunction>;
 }
 
 // Hiermee beëindigen we de tekenmode
@@ -76,7 +76,7 @@ export interface SnapWaypoint {
   readonly waypoint: Waypoint;
 }
 
-export const StartDrawing: Function3<clr.Kleur, boolean, option.Option<ol.StyleFunction>, StartDrawing> = (
+export const StartDrawing: Function3<clr.Kleur, boolean, option.Option<ol.style.StyleFunction>, StartDrawing> = (
   featureColour,
   useRouting,
   polygonStyleFunction

@@ -2,26 +2,28 @@ import * as ol from "../util/openlayers-compat";
 
 import { StaticStyle, StyleSelector } from "./stijl-selector";
 
-export function getDefaultStyle(): ol.style.Style {
-  return new ol.style.Style({
+const defaultStyle = new ol.style.Style({
+  fill: new ol.style.Fill({
+    color: "#5555FF40"
+  }),
+  stroke: new ol.style.Stroke({
+    color: "darkslateblue ",
+    width: 4
+  }),
+  image: new ol.style.Circle({
     fill: new ol.style.Fill({
-      color: "#5555FF40"
+      color: "maroon"
     }),
     stroke: new ol.style.Stroke({
-      color: "darkslateblue ",
-      width: 4
+      color: "gray",
+      width: 1.25
     }),
-    image: new ol.style.Circle({
-      fill: new ol.style.Fill({
-        color: "maroon"
-      }),
-      stroke: new ol.style.Stroke({
-        color: "gray",
-        width: 1.25
-      }),
-      radius: 5
-    })
-  });
+    radius: 5
+  })
+});
+
+export function getDefaultStyle(): ol.style.Style {
+  return defaultStyle;
 }
 
 export function getDefaultStyleSelector(): StyleSelector {
@@ -32,26 +34,25 @@ export function getDefaultSelectionStyleSelector(): StyleSelector {
   return getDefaultStyleSelector();
 }
 
-export function getDefaultStyleFunction(): ol.StyleFunction {
+export function getDefaultStyleFunction(): ol.style.StyleFunction {
   return function(feature, resolution) {
     return getDefaultStyle();
   };
 }
 
-export function getDefaultSelectionStyleFunction(): ol.StyleFunction {
-  const styles = createEditingStyle();
-
-  return function(feature, resolution) {
-    return styles[feature.getGeometry().getType()];
+export function getDefaultSelectionStyleFunction(): ol.style.StyleFunction {
+  return function(feature) {
+    const geometry = feature.getGeometry();
+    if (!geometry) {
+      return getDefaultStyle();
+    } else {
+      return editingStyles[geometry.getType()];
+    }
   };
 }
 
-export function getDefaultHoverStyleFunction(): ol.StyleFunction {
-  const styles = createEditingStyle();
-
-  return function(feature, resolution) {
-    return styles[feature.getGeometry().getType()];
-  };
+export function getDefaultHoverStyleFunction(): ol.style.StyleFunction {
+  return getDefaultSelectionStyleFunction();
 }
 
 function createEditingStyle() {
@@ -101,3 +102,5 @@ function createEditingStyle() {
   styles["GeometryCollection"] = styles["Polygon"].concat(styles["Point"]);
   return styles;
 }
+
+const editingStyles = createEditingStyle();

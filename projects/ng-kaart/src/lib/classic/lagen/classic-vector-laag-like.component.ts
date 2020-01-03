@@ -21,9 +21,9 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
   @Input()
   style?: ol.style.Style = undefined; // heeft voorrang op styleFunction
   @Input()
-  styleFunction?: ol.StyleFunction = getDefaultStyleFunction(); // TODO combineren met style tot type Stylish
+  styleFunction?: ol.style.StyleFunction = getDefaultStyleFunction(); // TODO combineren met style tot type Stylish
   @Input()
-  clusterStyleFunction?: ol.StyleFunction = undefined;
+  clusterStyleFunction?: ol.style.StyleFunction = undefined;
   @Input()
   selectieStyle?: ss.Stylish = getDefaultSelectionStyleFunction();
   @Input()
@@ -155,7 +155,7 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
     );
   }
 
-  clusterStyle(defaultStyleSelector: ss.StyleSelector): ol.StyleFunction {
+  clusterStyle(defaultStyleSelector: ss.StyleSelector): ol.style.StyleFunction {
     return (feature, resolution) => {
       return fromNullable(feature.get("features"))
         .filter(arrays.isArray)

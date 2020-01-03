@@ -23,6 +23,7 @@ import * as arrays from "../../util/arrays";
 import { Feature } from "../../util/feature";
 import { PartialFunction1, PartialFunction2 } from "../../util/function";
 import * as ol from "../../util/openlayers-compat";
+import { collect } from "../../util/operators";
 import { join } from "../../util/string";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { kaartLogOnlyWrapper } from "../kaart-internal-messages";
@@ -236,7 +237,8 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
         pipe(
           selection,
           prt.FeatureSelection.getGeselecteerdeFeaturesInLaag(this.laagTitel),
-          array.map(feature => feature.getGeometry().getExtent()),
+          array.filterMap(feature => option.fromNullable(feature.getGeometry())),
+          array.map(geom => geom.getExtent()),
           Feature.combineExtents,
           option.getOrElse(() => [0, 0, 0, 0] as ol.Extent) // Er is de praktijk altijd een geselecteerde feature
         )
@@ -314,7 +316,8 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
 
     // zoom naar individuele rij
     const zoomToIndividualRowExtent$ = zoomToRow$.pipe(
-      map(flow(row => row.feature.feature.getGeometry().getExtent())),
+      collect(row => row.feature.feature.getGeometry()),
+      map(geom => geom.getExtent()),
       share()
     );
 

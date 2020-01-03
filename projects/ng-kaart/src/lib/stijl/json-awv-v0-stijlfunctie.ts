@@ -114,7 +114,7 @@ const jsonAwvV0RuleConfig: Function1<AwvV0DynamicStyle, RuleStyleConfig> = style
   }))
 });
 
-export const jsonAwvV0RuleCompiler: Validator<AwvV0DynamicStyle, ol.StyleFunction> = pipe(
+export const jsonAwvV0RuleCompiler: Validator<AwvV0DynamicStyle, ol.style.StyleFunction> = pipe(
   jsonAwvV0RuleConfig,
   compileRules
 );
@@ -123,7 +123,7 @@ export const jsonAwvV0RuleCompiler: Validator<AwvV0DynamicStyle, ol.StyleFunctio
 // Typechecking en compilatie van de regels tot een StyleFunction
 //
 
-function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
+function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.style.StyleFunction> {
   // Een abstractie van het tuple (feature, resolution). Laat toe om de functies hierna wat compacter te schrijven, minder gegevens op de
   // stack te moeten zetten en eventueel eenvoudig andere "environment"-variabelen toe te voegen.
   interface Context {
@@ -325,7 +325,7 @@ function compileRules(ruleCfg: RuleStyleConfig): Validation<ol.StyleFunction> {
     }
   );
 
-  const styleFunctionFromRuleExpression: Function1<RuleExpression, ol.StyleFunction> = ruleExpression => (
+  const styleFunctionFromRuleExpression: Function1<RuleExpression, ol.style.StyleFunction> = ruleExpression => (
     feature: ol.Feature,
     resolution: number
   ) => ruleExpression({ feature: feature, resolution: resolution }).getOrElse((undefined as any) as ol.style.Style);

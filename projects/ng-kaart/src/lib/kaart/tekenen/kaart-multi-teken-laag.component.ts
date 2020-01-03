@@ -455,7 +455,7 @@ const edgesToPolygon: Function1<ol.geom.LineString[], ol.geom.Polygon> = edges =
   return new ol.geom.Polygon([coordinates]);
 };
 
-const featuresIn: Curried2<Option<ol.StyleFunction>, RouteSegmentState, Array<ol.Feature>> = maybePolygonStylefunction => state => {
+const featuresIn: Curried2<Option<ol.style.StyleFunction>, RouteSegmentState, Array<ol.Feature>> = maybePolygonStylefunction => state => {
   const routes: Array<ol.Feature> = Object.values(state.featuresByRouteId);
 
   return maybePolygonStylefunction.fold(routes, polygonStyleFunction => {
@@ -632,7 +632,7 @@ export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implem
     interface DrawOptions {
       readonly useRouting: boolean;
       readonly featureColour: clr.Kleur;
-      readonly polygonStyleFunction: option.Option<ol.StyleFunction>;
+      readonly polygonStyleFunction: option.Option<ol.style.StyleFunction>;
     }
 
     // Dit (her)start de routing service wanneer een nieuwe serie punten gestart wordt of het type van routing herzet wordt

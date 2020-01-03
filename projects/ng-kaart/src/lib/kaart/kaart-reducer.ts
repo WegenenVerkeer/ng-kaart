@@ -991,7 +991,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     type StyleSelectorFn = Function2<ol.Map, LaagTitel, Option<StyleSelector>>;
 
-    const createSelectionStyleFn = function(styleSelectorFn: StyleSelectorFn): ol.StyleFunction {
+    const createSelectionStyleFn = function(styleSelectorFn: StyleSelectorFn): ol.style.StyleFunction {
       return function(feature: ol.Feature, resolution: number): FeatureStyle {
         const executeStyleSelector: (_: ss.StyleSelector) => FeatureStyle = ss.matchStyleSelector(
           (s: ss.StaticStyle) => s.style,

@@ -40,7 +40,7 @@ export function matchStyleSpec<A>(
 }
 
 // Het type dat OpenLayers gebruikt voor stylen, maar niet expliciet definieert
-export type Stylish = ol.StyleFunction | ol.style.Style | ol.style.Style[];
+export type Stylish = ol.style.StyleFunction | ol.style.Style | ol.style.Style[];
 
 // Onze type-safe versie van het Openlayers Stylish type (homomorf)
 export type StyleSelector = StaticStyle | DynamicStyle | Styles;
@@ -52,7 +52,7 @@ export interface StaticStyle {
 
 export interface DynamicStyle {
   readonly type: "DynamicStyle";
-  readonly styleFunction: ol.StyleFunction;
+  readonly styleFunction: ol.style.StyleFunction;
 }
 
 export interface Styles {
@@ -84,7 +84,7 @@ export function asStyleSelector(stp: Stylish): Option<StyleSelector> {
   if (stp instanceof ol.style.Style) {
     return some(StaticStyle(stp));
   } else if (typeof stp === "function") {
-    return some(DynamicStyle(stp as ol.StyleFunction));
+    return some(DynamicStyle(stp as ol.style.StyleFunction));
   } else if (Array.isArray(stp)) {
     return some(Styles(stp as ol.style.Style[]));
   } else {
@@ -99,7 +99,7 @@ export function StaticStyle(style: ol.style.Style): StyleSelector {
   };
 }
 
-export function DynamicStyle(styleFunction: ol.StyleFunction): StyleSelector {
+export function DynamicStyle(styleFunction: ol.style.StyleFunction): StyleSelector {
   return {
     type: "DynamicStyle",
     styleFunction: styleFunction

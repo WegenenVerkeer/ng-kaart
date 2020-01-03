@@ -6,7 +6,6 @@ import * as olEvents from "ol/events";
 import * as olEventsCondition from "ol/events/condition";
 import { default as olEventsEvent } from "ol/events/Event";
 import * as olExtent from "ol/extent";
-import { default as Feature } from "ol/Feature";
 import * as olFormat from "ol/format";
 import * as olFormatGeoJSON from "ol/format/GeoJSON";
 import * as olGeom from "ol/geom";
@@ -14,6 +13,7 @@ import { default as olGeomGeometryType } from "ol/geom/GeometryType";
 import * as olHas from "ol/has";
 import * as olInteraction from "ol/interaction";
 import * as olInteractionDraw from "ol/interaction/Draw";
+import { DrawEvent as olInteractionDrawDrawEvent } from "ol/interaction/Draw";
 import * as olInteractionSelect from "ol/interaction/Select";
 import * as olLayer from "ol/layer";
 import { default as olLayerBase } from "ol/layer/Base";
@@ -22,13 +22,13 @@ import * as olObservable from "ol/Observable";
 import { default as olOverlayPositioning } from "ol/OverlayPositioning";
 import * as olProj from "ol/proj";
 import * as olProjProj4 from "ol/proj/proj4";
-import { default as olProjProjectionProjection } from "ol/proj/Projection";
+import Projection, { default as olProjProjectionProjection } from "ol/proj/Projection";
 import * as olSource from "ol/source";
 import * as olSourceWMTS from "ol/source/WMTS";
 import * as olSphere from "ol/sphere";
-import * as olStyle from "ol/style";
 import { default as olStyleIconAnchorUnits } from "ol/style/IconAnchorUnits";
 import { default as olStyleIconOrigin } from "ol/style/IconOrigin";
+import * as olStyleStyle from "ol/style/Style";
 import * as olTilegrid from "ol/tilegrid";
 
 export { Color } from "ol/color";
@@ -48,7 +48,6 @@ export { EventsKey } from "ol/events";
 export { Extent } from "ol/extent";
 export { Overlay } from "ol";
 export { Pixel } from "ol/pixel";
-export { StyleFunction } from "ol/style/Style";
 
 import * as olHacks from "./olhack";
 
@@ -219,8 +218,7 @@ export namespace geom {
 
 export namespace has {
   export import DEVICE_PIXEL_RATIO = olHas.DEVICE_PIXEL_RATIO;
-  export import GEOLOCATION = olHas.GEOLOCATION;
-  export import TOUCH = olHas.TOUCH;
+  // GEOLOCATION en TOUCH zitten nog wel in @ol/types, maar niet meer in OL6
 }
 
 export namespace interaction {
@@ -245,7 +243,8 @@ export namespace interaction {
   export import Snap = olInteraction.Snap;
   export import Translate = olInteraction.Translate;
 
-  export import DrawEvent = olInteractionDraw.DrawEvent;
+  export type DrawEvent = olInteractionDrawDrawEvent;
+  export import t = olInteractionDraw.DrawEvent;
   export import SelectEvent = olInteractionSelect.SelectEvent;
   export import SelectFilterFunction = olInteractionSelect.FilterFunction;
   export import SelectOptions = olInteractionSelect.Options;
@@ -352,20 +351,26 @@ export namespace Sphere {
 }
 
 export namespace style {
-  export import Atlas = olStyle.Atlas;
-  export import AtlasManager = olStyle.AtlasManager;
-  export import Circle = olStyle.Circle;
-  export import Fill = olStyle.Fill;
-  export import Icon = olStyle.Icon;
-  export import IconImage = olStyle.IconImage;
-  export import Image = olStyle.Image;
-  export import RegularShape = olStyle.RegularShape;
-  export import Stroke = olStyle.Stroke;
-  export import Style = olStyle.Style;
-  export import Text = olStyle.Text;
+  export import Circle = olHacks.olStyleCircle;
+  export import Fill = olHacks.olStyleFill;
+  export import Icon = olHacks.olStyleIcon;
+  export import IconImage = olHacks.olStyleIconImage;
+  export import Image = olHacks.olStyleImage;
+  export import RegularShape = olHacks.olStyleRegularShape;
+  export import Stroke = olHacks.olStyleStroke;
+  export import Style = olHacks.olStyleStyle;
+  export import Text = olHacks.olStyleText;
 
   export import IconAnchorUnits = olStyleIconAnchorUnits;
   export import IconOrigin = olStyleIconOrigin;
+
+  export import GeometryFunction = olStyleStyle.GeometryFunction;
+  export import RenderFunction = olStyleStyle.RenderFunction;
+  export import StyleFunction = olStyleStyle.StyleFunction;
+  export import StyleLike = olStyleStyle.StyleLike;
+  export import createDefaultStyle = olStyleStyle.createDefaultStyle;
+  export import createEditingStyle = olStyleStyle.createEditingStyle;
+  export import toFunction = olStyleStyle.toFunction;
 }
 
 export namespace tilegrid {
@@ -382,5 +387,3 @@ export namespace tilegrid {
 
 // Te generiek in @types/ol
 export type Size = [number, number];
-// verdwenen in OL 6
-export type StyleGeometryFunction = (feature: Feature) => geom.Geometry;

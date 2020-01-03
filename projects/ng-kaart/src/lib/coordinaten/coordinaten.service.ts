@@ -62,45 +62,40 @@ export const supportedProjection: PartialFunction1<string[], string> = projectio
 // Onze dienstkaartextent
 const Lambert72Extent: ol.Extent = [18000.0, 152999.75, 280144.0, 415143.75];
 
-const updateExtent: Consumer1<string> = crs => ol.proj.get(crs).setExtent(ol.proj.transformExtent(Lambert72Extent, Epsg.Lambert72, crs));
-
-ol.proj.setProj4(proj4);
+const updateExtent = (crs: string) => ol.proj.get(crs).setExtent(ol.proj.transformExtent(Lambert72Extent, Epsg.Lambert72, crs));
 
 proj4.defs(
   Epsg.Lambert72,
   "+proj=lcc +lat_1=51.16666723333333 +lat_2=49.8333339 +lat_0=90 +lon_0=4.367486666666666 +x_0=150000.013 +y_0=5400088.438 " +
     "+ellps=intl +towgs84=-125.8,79.9,-100.5 +units=m +no_defs"
 );
-updateExtent(Epsg.Lambert72);
-
 proj4.defs(
   Epsg.Lambert2008,
   "+proj=lcc +lat_1=49.83333333333334 +lat_2=51.16666666666666 +lat_0=50.797815 +lon_0=4.359215833333333 +x_0=649328 +y_0=665262 " +
     "+ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"
 );
-updateExtent(Epsg.Lambert2008);
-
 proj4.defs(
   Epsg.WebMercator,
   "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs"
 );
-updateExtent(Epsg.WebMercator);
-
 proj4.defs(Epsg.Etrs89, "+proj=longlat +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +no_defs");
-updateExtent(Epsg.Etrs89);
-
 proj4.defs(
   Epsg.LaeaEurope,
   "+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"
 );
-updateExtent(Epsg.LaeaEurope);
-
 proj4.defs(
   Epsg.GoogleMercator,
   "+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 +lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m +nadgrids=@null +wktext  +no_defs"
 );
-updateExtent(Epsg.GoogleMercator);
 
+ol.proj.setProj4(proj4); // Moet na proj4.defs komen
+
+updateExtent(Epsg.Lambert72);
+updateExtent(Epsg.Lambert2008);
+updateExtent(Epsg.WebMercator);
+updateExtent(Epsg.Etrs89);
+updateExtent(Epsg.LaeaEurope);
+updateExtent(Epsg.GoogleMercator);
 updateExtent(Epsg.Wgs84);
 
 export namespace Coordinates {

@@ -63,7 +63,7 @@ const viaPolygonSVG = `<svg width="100%" height="100%" viewBox="0 0 24 24" style
 export interface SelecteerFeaturesViaPolygonOpties {
   readonly markColour: clr.Kleur;
   readonly useRouting: boolean;
-  readonly polygonStyleFunction: ol.StyleFunction;
+  readonly polygonStyleFunction: ol.style.StyleFunction;
 }
 
 const defaultPolygonStyleFunction: Function2<ol.Feature, number, ol.style.Style[]> = () => [
