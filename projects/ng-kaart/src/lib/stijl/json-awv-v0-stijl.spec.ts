@@ -84,7 +84,7 @@ describe("De json AWV V0 interpreter", () => {
               width: 3
             }),
             fill: new ol.style.Fill({
-              color: "green;"
+              color: "green"
             })
           })
         })
