@@ -1,4 +1,5 @@
 import { kaartLogger } from "../kaart/log";
+import { Feature } from "../util/feature";
 import * as ol from "../util/openlayers-compat";
 import { join } from "../util/string";
 
@@ -106,13 +107,20 @@ function opstellingMetHoek(feature: ol.Feature, geselecteerd: boolean): ol.style
   const image = imageOpstelling(opstelling.binaireData, geselecteerd);
   const rotation: number = transformeerHoek(opstelling.delta);
 
-  opstellingStyle.setGeometry(feature.getGeometry() as ol.geom.Point);
+  const geometry = feature.getGeometry();
+  if (geometry) {
+    opstellingStyle.setGeometry(geometry);
+  }
   opstellingStyle.setImage(
     createIcon(encodeAsSrc(image.mime, image.data), [image.properties.breedte, image.properties.hoogte], rotation, false)
   );
 
   if (geselecteerd) {
-    feature.changed(); // side-effect functie -- spijtig genoeg nodig om OL het sein te geven dat de image hertekend moet worden...
+    if (!Feature.isSelectedRendered(feature)) {
+      Feature.markSelectedRendered(feature).changed(); // side-effect -- nodig om OL sein te geven dat image hertekend moet worden
+    }
+  } else {
+    Feature.unmarkSelectedRendered(feature);
   }
 
   return opstellingStyle;

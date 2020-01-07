@@ -1026,7 +1026,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     };
 
     function activeerSelectieModus(cmnd: prt.ActiveerSelectieModusCmd): ModelWithResult<Msg> {
-      function getSelectInteraction(modus: prt.SelectieModus): Option<ol.interaction.SelectOptions> {
+      function getSelectInteractionOptions(modus: prt.SelectieModus): Option<ol.interaction.SelectOptions> {
         const hitTolerance = envParams(model.config).clickHitTolerance;
         switch (modus) {
           case "singleQuick":
@@ -1074,7 +1074,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
 
       const newSelectInteracties = arrays.fromOption(
-        getSelectInteraction(cmnd.selectieModus).map(selectOption => {
+        getSelectInteractionOptions(cmnd.selectieModus).map(selectOption => {
           const selectInteraction = new ol.interaction.Select(selectOption);
 
           if (cmnd.selectieModus === "single") {

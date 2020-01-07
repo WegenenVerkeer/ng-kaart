@@ -476,16 +476,20 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
       onderdruk => this.dispatch(BevraagKaartOpties.ZetOptiesCmd({ kaartBevragenOnderdrukt: onderdruk })),
       (value: boolean) => val.bool(value, this._onderdrukKaartBevragenBoodschappen)
     );
-    forChangedValue(
-      changes,
-      "selectieModus",
-      pipe(
-        prt.ActiveerSelectieModusCmd,
-        dispatch
-      ),
-      (param: string) => val.enu(param, this._selectieModus, "single", "singleQuick", "multipleKlik", "multipleShift", "none"),
-      value => value !== undefined && value != null
-    );
+
+    // TODO: deze code staat in commentaar vanwege https://github.com/openlayers/openlayers/issues/10486. Als gevolg
+    // daarvan kunnen we de selectieModus dus niet meer aanpassen nadat de component aangemaakt is.
+
+    // forChangedValue(
+    //   changes,
+    //   "selectieModus",
+    //   pipe(
+    //     prt.ActiveerSelectieModusCmd,
+    //     dispatch
+    //   ),
+    //   (param: string) => val.enu(param, this._selectieModus, "single", "singleQuick", "multipleKlik", "multipleShift", "none"),
+    //   value => value !== undefined && value != null
+    // );
     forChangedValue(
       changes,
       "hovermodus",

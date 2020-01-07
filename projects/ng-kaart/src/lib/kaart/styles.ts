@@ -27,7 +27,7 @@ export function getDefaultStyle(): ol.style.Style {
 }
 
 export function getDefaultStyleSelector(): StyleSelector {
-  return StaticStyle(getDefaultStyle());
+  return StaticStyle(defaultStyle);
 }
 
 export function getDefaultSelectionStyleSelector(): StyleSelector {
@@ -35,18 +35,18 @@ export function getDefaultSelectionStyleSelector(): StyleSelector {
 }
 
 export function getDefaultStyleFunction(): ol.style.StyleFunction {
-  return function(feature, resolution) {
-    return getDefaultStyle();
-  };
+  return () => defaultStyle;
 }
 
+const styles = createEditingStyles();
+
 export function getDefaultSelectionStyleFunction(): ol.style.StyleFunction {
-  return function(feature) {
+  return feature => {
     const geometry = feature.getGeometry();
     if (!geometry) {
       return getDefaultStyle();
     } else {
-      return editingStyles[geometry.getType()];
+      return styles[geometry.getType()];
     }
   };
 }
@@ -55,7 +55,7 @@ export function getDefaultHoverStyleFunction(): ol.style.StyleFunction {
   return getDefaultSelectionStyleFunction();
 }
 
-function createEditingStyle() {
+function createEditingStyles() {
   const white: ol.Color = [255, 255, 255, 1];
   const blue: ol.Color = [0, 153, 255, 1];
   const width = 3;
@@ -102,5 +102,3 @@ function createEditingStyle() {
   styles["GeometryCollection"] = styles["Polygon"].concat(styles["Point"]);
   return styles;
 }
-
-const editingStyles = createEditingStyle();
