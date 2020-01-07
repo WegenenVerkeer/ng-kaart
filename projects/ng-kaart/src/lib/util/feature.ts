@@ -1,8 +1,8 @@
-import { array, option, setoid } from "fp-ts";
+import { array, option } from "fp-ts";
 import { array as arrayTraversable, foldLeft, mapOption } from "fp-ts/lib/Array";
 import * as eq from "fp-ts/lib/Eq";
 import { Curried2, FunctionN, Refinement } from "fp-ts/lib/function";
-import { fromNullable, Option, option as optionApplcative, tryCatch } from "fp-ts/lib/Option";
+import { fromNullable, Option, option as optionApplcative } from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
 import * as traversable from "fp-ts/lib/Traversable";
 
