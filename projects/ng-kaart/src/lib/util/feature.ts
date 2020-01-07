@@ -87,6 +87,20 @@ export namespace Feature {
 
   export const fieldKeyToPropertyPath: FunctionN<[string], string> = fieldKey => `properties.${fieldKey}`;
 
+  const SelectionRenderedMarker = "selectionRendered";
+
+  export const markSelectedRendered = (feature: ol.Feature): ol.Feature => {
+    feature.set(SelectionRenderedMarker, true);
+    return feature;
+  };
+
+  export const unmarkSelectedRendered = (feature: ol.Feature): ol.Feature => {
+    feature.unset(SelectionRenderedMarker);
+    return feature;
+  };
+
+  export const isSelectedRendered = (feature: ol.Feature): boolean => feature.get(SelectionRenderedMarker) === true;
+
   export const getLaagnaam: PartialFunction1<ol.Feature, string> = feature => {
     const singleFeature = fromNullable(feature.get("features"))
       .filter(arrays.isArray)

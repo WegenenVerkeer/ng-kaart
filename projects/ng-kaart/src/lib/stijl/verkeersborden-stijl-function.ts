@@ -1,6 +1,7 @@
 import * as ol from "openlayers";
 
 import { kaartLogger } from "../kaart/log";
+import { Feature } from "../util/feature";
 import { join } from "../util/string";
 
 import { definitieToStyle } from "./stijl-static";
@@ -111,7 +112,11 @@ function opstellingMetHoek(feature: ol.Feature, geselecteerd: boolean): ol.style
   );
 
   if (geselecteerd) {
-    feature.changed(); // side-effect functie -- spijtig genoeg nodig om OL het sein te geven dat de image hertekend moet worden...
+    if (!Feature.isSelectedRendered(feature)) {
+      Feature.markSelectedRendered(feature).changed(); // side-effect -- nodig om OL sein te geven dat image hertekend moet worden
+    }
+  } else {
+    Feature.unmarkSelectedRendered(feature);
   }
 
   return opstellingStyle;
