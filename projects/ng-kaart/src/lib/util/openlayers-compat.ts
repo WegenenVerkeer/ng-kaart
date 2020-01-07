@@ -22,7 +22,7 @@ import * as olObservable from "ol/Observable";
 import { default as olOverlayPositioning } from "ol/OverlayPositioning";
 import * as olProj from "ol/proj";
 import * as olProjProj4 from "ol/proj/proj4";
-import Projection, { default as olProjProjectionProjection } from "ol/proj/Projection";
+import { default as olProjProjectionProjection } from "ol/proj/Projection";
 import * as olSource from "ol/source";
 import * as olSourceWMTS from "ol/source/WMTS";
 import * as olSphere from "ol/sphere";
@@ -98,13 +98,8 @@ export namespace control {
 export namespace events {
   export import EventsKey = olEvents.EventsKey;
   export import ListenerFunction = olEvents.ListenerFunction;
-  export import bindListener = olEvents.bindListener;
-  export import findListener = olEvents.findListener;
-  export import getListeners = olEvents.getListeners;
   export import listen = olEvents.listen;
   export import listenOnce = olEvents.listenOnce;
-  export import unlisten = olEvents.unlisten;
-  export import unlistenAll = olEvents.unlistenAll;
   export import unlistenByKey = olEvents.unlistenByKey;
 
   export type Event = olEventsEvent;
@@ -244,8 +239,7 @@ export namespace interaction {
   export import Translate = olInteraction.Translate;
 
   export type DrawEvent = olInteractionDrawDrawEvent;
-  export import t = olInteractionDraw.DrawEvent;
-  export import SelectEvent = olInteractionSelect.SelectEvent;
+  export type SelectEvent = olInteractionSelect.SelectEvent;
   export import SelectFilterFunction = olInteractionSelect.FilterFunction;
   export import SelectOptions = olInteractionSelect.Options;
 
