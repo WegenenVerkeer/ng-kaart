@@ -1,60 +1,61 @@
-import * as ol from "openlayers";
+import * as ol from "../util/openlayers-compat";
 
 import { StaticStyle, StyleSelector } from "./stijl-selector";
 
-export function getDefaultStyle(): ol.style.Style {
-  return new ol.style.Style({
+const defaultStyle = new ol.style.Style({
+  fill: new ol.style.Fill({
+    color: "#5555FF40"
+  }),
+  stroke: new ol.style.Stroke({
+    color: "darkslateblue ",
+    width: 4
+  }),
+  image: new ol.style.Circle({
     fill: new ol.style.Fill({
-      color: "#5555FF40"
+      color: "maroon"
     }),
     stroke: new ol.style.Stroke({
-      color: "darkslateblue ",
-      width: 4
+      color: "gray",
+      width: 1.25
     }),
-    image: new ol.style.Circle({
-      fill: new ol.style.Fill({
-        color: "maroon"
-      }),
-      stroke: new ol.style.Stroke({
-        color: "gray",
-        width: 1.25
-      }),
-      radius: 5
-    })
-  });
+    radius: 5
+  })
+});
+
+export function getDefaultStyle(): ol.style.Style {
+  return defaultStyle;
 }
 
 export function getDefaultStyleSelector(): StyleSelector {
-  return StaticStyle(getDefaultStyle());
+  return StaticStyle(defaultStyle);
 }
 
 export function getDefaultSelectionStyleSelector(): StyleSelector {
   return getDefaultStyleSelector();
 }
 
-export function getDefaultStyleFunction(): ol.StyleFunction {
-  return function(feature, resolution) {
-    return getDefaultStyle();
+export function getDefaultStyleFunction(): ol.style.StyleFunction {
+  return () => defaultStyle;
+}
+
+const styles = createEditingStyles();
+
+export function getDefaultSelectionStyleFunction(): ol.style.StyleFunction {
+  return feature => {
+    const geometry = feature.getGeometry();
+    if (!geometry) {
+      return getDefaultStyle();
+    } else {
+      return styles[geometry.getType()];
+    }
   };
 }
 
-export function getDefaultSelectionStyleFunction(): ol.StyleFunction {
-  const styles = createEditingStyle();
-
-  return function(feature, resolution) {
-    return styles[feature.getGeometry().getType()];
-  };
+export function getDefaultHoverStyleFunction(): ol.style.StyleFunction {
+  return getDefaultSelectionStyleFunction();
 }
 
-export function getDefaultHoverStyleFunction(): ol.StyleFunction {
-  const styles = createEditingStyle();
-
-  return function(feature, resolution) {
-    return styles[feature.getGeometry().getType()];
-  };
-}
-
-function createEditingStyle() {
+function createEditingStyles() {
   const white: ol.Color = [255, 255, 255, 1];
   const blue: ol.Color = [0, 153, 255, 1];
   const width = 3;

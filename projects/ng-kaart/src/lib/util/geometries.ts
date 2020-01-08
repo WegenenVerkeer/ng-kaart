@@ -4,7 +4,8 @@ import { fieldNumber } from "fp-ts/lib/Field";
 import { sum } from "fp-ts/lib/Foldable2v";
 import { constant, Function1, identity } from "fp-ts/lib/function";
 import { none, option, Option, some } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
+
+import * as ol from "./openlayers-compat";
 
 export interface GeometryMapper<T> {
   readonly point?: (_: ol.geom.Point) => T;
@@ -49,12 +50,12 @@ export function matchGeometryType<T>(geometry: ol.geom.Geometry, mapper: Geometr
 export function toLineString(geometry: ol.geom.Geometry): Option<ol.geom.LineString> {
   return matchGeometryType(geometry, {
     lineString: line => some(line),
-    multiLineString: line => some(new ol.geom.LineString(array.flatten(line.getCoordinates()))),
-    polygon: poly => some(new ol.geom.LineString(array.flatten(poly.getCoordinates()))),
+    multiLineString: line => some(new ol.geom.LineString(array.flatten(line.getCoordinates() as ol.Coordinate[][]))),
+    polygon: poly => some(new ol.geom.LineString(array.flatten(poly.getCoordinates() as ol.Coordinate[][]))),
     geometryCollection: collection =>
       array.array
         .traverse(option)(collection.getGeometries(), toLineString)
-        .map(lines => new ol.geom.LineString(array.flatten(lines.map(line => line.getCoordinates()))))
+        .map(lines => new ol.geom.LineString(array.flatten(lines.map(line => line.getCoordinates() as ol.Coordinate[]))))
   }).chain(identity);
 }
 

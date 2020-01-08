@@ -1,7 +1,8 @@
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 
 import { kaartLogger } from "../kaart/log";
+
+import * as ol from "./openlayers-compat";
 
 export function observableFromOlEvents<A extends ol.events.Event>(olObj: ol.Object, ...eventTypes: string[]): rx.Observable<A> {
   return rx.Observable.create((subscriber: rx.Subscriber<A>) => {
@@ -14,7 +15,7 @@ export function observableFromOlEvents<A extends ol.events.Event>(olObj: ol.Obje
     }
     return () => {
       kaartLogger.debug("release events ", eventTypes, eventsKeys);
-      ol.Observable.unByKey(eventsKeys);
+      ol.observable.unByKey(eventsKeys);
     };
   });
 }

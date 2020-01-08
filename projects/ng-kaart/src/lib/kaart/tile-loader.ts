@@ -1,5 +1,6 @@
 import { fromNullable } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
+
+import * as ol from "../util/openlayers-compat";
 
 /**
  * Indien OL een fout krijgt bij het ophalen van een tile (bvb 401 bij niet langer ingelogd zijn) dan zal OL niet opnieuw proberen om die

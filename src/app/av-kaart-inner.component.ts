@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, SimpleChanges, ViewEncapsulation } from "@angular/core";
 
 import { animate, style, transition, trigger } from "@angular/animations";
-import * as ol from "openlayers";
+import * as ol from "projects/ng-kaart/src/lib/util/openlayers-compat";
 
 const withId = (feature: ol.Feature) => {
   feature.setId(Math.random());
@@ -99,7 +99,7 @@ export class AvKaartInnerComponent implements OnChanges {
         .concat(this.adresFeatures)
         .concat(this.percelenFeatures)
         .concat(this.weglocatieFeatures);
-      const extents = this.features.map(feature => feature.getGeometry()).map(geometry => geometry.getExtent());
+      const extents = this.features.map(feature => feature.getGeometry()!.getExtent());
 
       this.extent = extents.reduceRight(
         (previousValue, currentValue) => ol.extent.extend(previousValue, currentValue),

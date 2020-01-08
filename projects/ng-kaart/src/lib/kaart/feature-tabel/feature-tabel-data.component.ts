@@ -1,8 +1,7 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, NgZone, ViewEncapsulation } from "@angular/core";
 import { array, option } from "fp-ts";
-import { flow, Function1, Function2, Refinement } from "fp-ts/lib/function";
+import { flow, Function1, Refinement } from "fp-ts/lib/function";
 import { pipe } from "fp-ts/lib/pipeable";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 import {
   debounceTime,
@@ -22,7 +21,9 @@ import { isBoolean, isString } from "util";
 
 import * as arrays from "../../util/arrays";
 import { Feature } from "../../util/feature";
-import { PartialFunction1 } from "../../util/function";
+import { PartialFunction1, PartialFunction2 } from "../../util/function";
+import * as ol from "../../util/openlayers-compat";
+import { collect } from "../../util/operators";
 import { join } from "../../util/string";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { kaartLogOnlyWrapper } from "../kaart-internal-messages";
@@ -62,8 +63,8 @@ namespace ColumnHeaders {
   );
 }
 
-const neededZoom: Function2<ol.Map, ol.Extent, number> = (map, extent) =>
-  map.getView().getZoomForResolution(map.getView().getResolutionForExtent(extent, map.getSize()));
+const neededZoom: PartialFunction2<ol.Map, ol.Extent, number> = (map, extent) =>
+  option.fromNullable(map.getView().getZoomForResolution(map.getView().getResolutionForExtent(extent, map.getSize())));
 
 const isFieldSelection: Refinement<any, FieldSelection> = (fieldSelection): fieldSelection is FieldSelection =>
   fieldSelection.hasOwnProperty("selected") && fieldSelection.hasOwnProperty("name");
@@ -236,7 +237,8 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
         pipe(
           selection,
           prt.FeatureSelection.getGeselecteerdeFeaturesInLaag(this.laagTitel),
-          array.map(feature => feature.getGeometry().getExtent()),
+          array.filterMap(feature => option.fromNullable(feature.getGeometry())),
+          array.map(geom => geom.getExtent()),
           Feature.combineExtents,
           option.getOrElse(() => [0, 0, 0, 0] as ol.Extent) // Er is de praktijk altijd een geselecteerde feature
         )
@@ -263,7 +265,11 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
 
     const warnZoomToSelectionCmd$ = zoomToSelectionExtent$.pipe(
       withLatestFrom(olMap$, this.laag$, numGeselecteerdeFeaturesInLaag$),
-      filter(([extent, map, laagModel, _]) => neededZoom(map, extent) < laagModel.minZoom || neededZoom(map, extent) > laagModel.maxZoom),
+      filter(
+        ([extent, map, laagModel, _]) =>
+          option.fold(() => true, (zoom: number) => zoom < laagModel.minZoom)(neededZoom(map, extent)) ||
+          option.fold(() => true, (zoom: number) => zoom > laagModel.maxZoom)(neededZoom(map, extent))
+      ),
       map(([_1, _2, _3, numGeselecteerdeFeaturesInLaag]) =>
         prt.ToonMeldingCmd([`${this.laagTitel} zijn niet zichtbaar op huidig zoom niveau`])
       )
@@ -310,7 +316,8 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
 
     // zoom naar individuele rij
     const zoomToIndividualRowExtent$ = zoomToRow$.pipe(
-      map(flow(row => row.feature.feature.getGeometry().getExtent())),
+      collect(row => row.feature.feature.getGeometry()),
+      map(geom => geom.getExtent()),
       share()
     );
 
@@ -318,7 +325,11 @@ export class FeatureTabelDataComponent extends KaartChildComponentBase {
 
     const warnZoomToIndividualRowCmd$ = zoomToIndividualRowExtent$.pipe(
       withLatestFrom(olMap$, this.laag$),
-      filter(([extent, map, laagModel]) => neededZoom(map, extent) < laagModel.minZoom || neededZoom(map, extent) > laagModel.maxZoom),
+      filter(
+        ([extent, map, laagModel]) =>
+          option.fold(() => true, (zoom: number) => zoom < laagModel.minZoom)(neededZoom(map, extent)) ||
+          option.fold(() => true, (zoom: number) => zoom > laagModel.maxZoom)(neededZoom(map, extent))
+      ),
       mapTo(prt.ToonMeldingCmd([`${this.laagTitel} zijn niet zichtbaar op huidig zoom niveau`]))
     );
 

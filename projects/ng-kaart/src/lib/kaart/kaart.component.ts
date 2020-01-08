@@ -1,5 +1,4 @@
 import { Component, ElementRef, Inject, Input, NgZone, ViewChild, ViewEncapsulation } from "@angular/core";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 import {
   debounceTime,
@@ -22,6 +21,7 @@ import { asap } from "../util/asap";
 import * as maps from "../util/maps";
 import { observeOnAngular } from "../util/observe-on-angular";
 import { observeOutsideAngular } from "../util/observer-outside-angular";
+import * as ol from "../util/openlayers-compat";
 import { catOptions, ofType } from "../util/operators";
 import { forEach } from "../util/option";
 import { resizeObservable } from "../util/resize-observable";
@@ -247,7 +247,6 @@ export class KaartComponent extends KaartComponentBase {
       layers: [],
       pixelRatio: 1, // dit moet op 1 staan anders zal OL 512x512 tiles ophalen op retina displays en die zitten niet in onze geowebcache
       target: this.mapElement.nativeElement,
-      logo: false,
       moveTolerance: envParams(this.config).moveTolerance,
       view: new ol.View({
         projection: dienstkaartProjectie,

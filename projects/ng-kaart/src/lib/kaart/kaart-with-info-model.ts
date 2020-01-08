@@ -1,8 +1,8 @@
 import { Either } from "fp-ts/lib/Either";
 import { Function1 } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
 
+import * as ol from "../util/openlayers-compat";
 import { Progress } from "../util/progress";
 import { TypedRecord } from "../util/typed-record";
 

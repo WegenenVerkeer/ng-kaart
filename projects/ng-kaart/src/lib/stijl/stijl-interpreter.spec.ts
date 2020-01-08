@@ -1,4 +1,4 @@
-import * as ol from "openlayers";
+import * as ol from "../util/openlayers-compat";
 
 import { ok } from "./json-object-interpreting";
 import { definitieToStyle } from "./stijl-static";

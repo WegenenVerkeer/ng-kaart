@@ -1,10 +1,10 @@
 import { Component, Input, NgZone } from "@angular/core";
 import { Function1 } from "fp-ts/lib/function";
 import { fromNullable } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
 import { isObject } from "util";
 
 import { matchGeometryType } from "../../util";
+import * as ol from "../../util/openlayers-compat";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { InfoBoodschapIdentify } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";

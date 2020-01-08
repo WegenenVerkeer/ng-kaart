@@ -1,13 +1,13 @@
 import { Function1, Function4, identity, pipe } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { Iso } from "monocle-ts";
-import * as ol from "openlayers";
 
 import { offsetStyleFunction } from "../stijl/offset-stijl-function";
 import { serialiseAwvV0DynamicStyle, validateAwvV0RuleDefintion } from "../stijl/stijl-function";
 import { RuleConfig } from "../stijl/stijl-function-types";
 import { serialiseAwvV0StaticStyle, validateAwvV0StaticStyle } from "../stijl/stijl-static";
 import { AwvV0StaticStyle } from "../stijl/stijl-static-types";
+import * as ol from "../util/openlayers-compat";
 import { Validator } from "../util/validation";
 
 // De Openlayers stijlen zijn goed genoeg (en nodig) om de features op de kaart in de browser te renderen,
@@ -40,7 +40,7 @@ export function matchStyleSpec<A>(
 }
 
 // Het type dat OpenLayers gebruikt voor stylen, maar niet expliciet definieert
-export type Stylish = ol.StyleFunction | ol.style.Style | ol.style.Style[];
+export type Stylish = ol.style.StyleFunction | ol.style.Style | ol.style.Style[];
 
 // Onze type-safe versie van het Openlayers Stylish type (homomorf)
 export type StyleSelector = StaticStyle | DynamicStyle | Styles;
@@ -52,7 +52,7 @@ export interface StaticStyle {
 
 export interface DynamicStyle {
   readonly type: "DynamicStyle";
-  readonly styleFunction: ol.StyleFunction;
+  readonly styleFunction: ol.style.StyleFunction;
 }
 
 export interface Styles {
@@ -84,7 +84,7 @@ export function asStyleSelector(stp: Stylish): Option<StyleSelector> {
   if (stp instanceof ol.style.Style) {
     return some(StaticStyle(stp));
   } else if (typeof stp === "function") {
-    return some(DynamicStyle(stp as ol.StyleFunction));
+    return some(DynamicStyle(stp as ol.style.StyleFunction));
   } else if (Array.isArray(stp)) {
     return some(Styles(stp as ol.style.Style[]));
   } else {
@@ -99,7 +99,7 @@ export function StaticStyle(style: ol.style.Style): StyleSelector {
   };
 }
 
-export function DynamicStyle(styleFunction: ol.StyleFunction): StyleSelector {
+export function DynamicStyle(styleFunction: ol.style.StyleFunction): StyleSelector {
   return {
     type: "DynamicStyle",
     styleFunction: styleFunction

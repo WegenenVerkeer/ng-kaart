@@ -1,4 +1,4 @@
-import * as ol from "openlayers";
+import * as ol from "../util/openlayers-compat";
 
 import { definitieToStyleFunction } from "./stijl-function";
 

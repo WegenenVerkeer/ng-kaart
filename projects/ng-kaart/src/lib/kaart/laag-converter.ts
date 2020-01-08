@@ -1,10 +1,9 @@
 import * as array from "fp-ts/lib/Array";
 import { Function1 } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
-import { olx } from "openlayers";
 
 import { supportedProjection } from "../coordinaten/coordinaten.service";
+import * as ol from "../util/openlayers-compat";
 
 import * as ke from "./kaart-elementen";
 import { KaartWithInfo } from "./kaart-with-info";
@@ -15,8 +14,8 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
   const projection: Function1<string[], string> = projections => supportedProjection(projections).getOrElse(kaart.config.srs);
 
   function createdTileWms(l: ke.WmsLaag) {
-    return new ol.layer.Tile(<olx.layer.TileOptions>{
-      title: l.titel,
+    return new ol.layer.Tile({
+      // title: l.titel, -> verdwenen in OL 6
       visible: true,
       extent: kaart.config.defaults.extent,
       source: new ol.source.TileWMS({
@@ -34,7 +33,7 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
           SRS: projection(l.beschikbareProjecties),
           VERSION: l.versie.getOrElse("1.3.0"),
           FORMAT: l.format.getOrElse("image/png"),
-          ...l.cqlFilter.fold({}, cqlFilter => ({ CQL_FILTER: cqlFilter }))
+          ...l.cqlFilter.fold({}, cqlFilter => ({ CQL_FILTER: cqlFilter } as object))
         }
       })
     });
@@ -53,7 +52,7 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
       source = new ol.source.WMTS({
         projection: kaart.config.srs,
         urls: config.urls,
-        tileGrid: new ol.tilegrid.WMTS({
+        tileGrid: new ol.tilegrid.WMTSTileGrid({
           origin: config.origin.getOrElseL(() => ol.extent.getTopLeft(extent)),
           resolutions: kaart.config.defaults.resolutions,
           matrixIds: config.matrixIds
@@ -65,8 +64,8 @@ export function toOlLayer(kaart: KaartWithInfo, laag: ke.Laag): Option<ol.layer.
         matrixSet: l.matrixSet
       });
     }
-    return new ol.layer.Tile(<ol.olx.layer.TileOptions>{
-      title: l.titel,
+    return new ol.layer.Tile({
+      // title: l.titel, --> verdwenen in OL 6
       visible: true,
       extent: extent,
       source: source

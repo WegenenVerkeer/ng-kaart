@@ -1,4 +1,4 @@
-import * as ol from "openlayers";
+import * as ol from "../util/openlayers-compat";
 
 import { jsonAwvV0Style } from "./json-awv-v0-stijl";
 import { ok } from "./json-object-interpreting";
@@ -84,7 +84,7 @@ describe("De json AWV V0 interpreter", () => {
               width: 3
             }),
             fill: new ol.style.Fill({
-              color: "green;"
+              color: "green"
             })
           })
         })
@@ -148,7 +148,6 @@ describe("De json AWV V0 interpreter", () => {
         radius1: 30,
         radius2: 10,
         angle: 0,
-        snapToPixel: true,
         fill: {
           color: "red"
         },
@@ -166,7 +165,6 @@ describe("De json AWV V0 interpreter", () => {
             radius1: 30,
             radius2: 10,
             angle: 0,
-            snapToPixel: true,
             fill: new ol.style.Fill({
               color: "red"
             }),

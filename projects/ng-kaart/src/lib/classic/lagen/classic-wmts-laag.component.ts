@@ -1,10 +1,10 @@
 import { HttpClient } from "@angular/common/http";
 import { Component, Injector, Input, OnInit, ViewEncapsulation } from "@angular/core";
 import { none, Option, some } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
 
 import * as ke from "../../kaart/kaart-elementen";
 import * as arrays from "../../util/arrays";
+import * as ol from "../../util/openlayers-compat";
 import { urlWithParams } from "../../util/url";
 import { classicLogger } from "../log";
 import { logOnlyWrapper } from "../messages";
@@ -202,7 +202,7 @@ export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements On
 
   private vervangLaagWithCapabilities(capUrl: string, capabilitiesText: string) {
     const capabilities = WmtsParser.read(capabilitiesText);
-    const wmtsOptions = ol.source.WMTS.optionsFromCapabilities(capabilities, {
+    const wmtsOptions = ol.source.wmts.optionsFromCapabilities(capabilities, {
       layer: this._laagNaam,
       matrixSet: this._matrixSet,
       projection: this._projection

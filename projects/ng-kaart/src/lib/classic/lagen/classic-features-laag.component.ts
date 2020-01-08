@@ -3,13 +3,13 @@ import { Component, EventEmitter, Injector, Input, OnChanges, Output, SimpleChan
 import { array } from "fp-ts";
 import { identity } from "fp-ts/lib/function";
 import { Setoid } from "fp-ts/lib/Setoid";
-import * as ol from "openlayers";
 
 import { forChangedValue } from "../../kaart/kaart-component-base";
 import * as prt from "../../kaart/kaart-protocol";
 import * as arrays from "../../util/arrays";
 import { toOlFeature } from "../../util/feature";
 import { GeoJsonCore } from "../../util/geojson-types";
+import * as ol from "../../util/openlayers-compat";
 import { logOnlyWrapper } from "../messages";
 
 import { ClassicVectorLaagComponent } from "./classic-vector-laag.component";

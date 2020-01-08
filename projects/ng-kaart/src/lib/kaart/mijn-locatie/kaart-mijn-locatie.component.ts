@@ -3,7 +3,6 @@ import { MatButton } from "@angular/material";
 import { Function1, Predicate } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { AbsoluteOrientationSensor } from "motion-sensors-polyfill";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 import {
   buffer,
@@ -22,6 +21,7 @@ import {
 } from "rxjs/operators";
 
 import { Transparantie } from "../../transparantieeditor/transparantie";
+import * as ol from "../../util/openlayers-compat";
 import { catOptions } from "../../util/operators";
 import * as ke from "../kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart-internal-messages";
@@ -156,7 +156,7 @@ const moetKijkrichtingTonen: Predicate<State> = state =>
 
 const zetStijl: Function1<TrackingInfo, void> = info => info.feature.map(feature => feature.setStyle(locatieStijlFunctie(info)));
 
-const locatieStijlFunctie: Function1<TrackingInfo, ol.FeatureStyleFunction> = info => {
+const locatieStijlFunctie: Function1<TrackingInfo, ol.style.StyleFunction> = info => {
   const fillColor = "rgba(65, 105, 225, 0.15)";
   const fillColorDark = "rgba(65, 105, 225, 0.25)";
   const fillColorDarkTransparant = "rgba(65, 105, 225, 0.0)";
@@ -234,7 +234,7 @@ const locatieStijlFunctie: Function1<TrackingInfo, ol.FeatureStyleFunction> = in
     return none;
   }
 
-  return resolution => {
+  return (_: ol.Feature, resolution: number) => {
     const accuracyInPixels = Math.min(info.accuracy, 500) / resolution; // max 500m cirkel, soms accuracy 86000 in chrome bvb...
     const radius = Math.max(accuracyInPixels, 12); // nauwkeurigheid cirkel toch nog tonen zelfs indien ver uitgezoomd
 

@@ -1,7 +1,7 @@
 import { none, Option } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
 import { BehaviorSubject, ReplaySubject, Subject } from "rxjs";
 
+import * as ol from "../util/openlayers-compat";
 import { ZoekerMetWeergaveopties } from "../zoeker/zoeker";
 
 import { KaartLocaties } from "./kaart-bevragen/laaginfo.model";

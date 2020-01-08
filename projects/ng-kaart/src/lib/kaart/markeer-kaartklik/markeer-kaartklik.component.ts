@@ -3,13 +3,13 @@ import { Function1, Function2 } from "fp-ts/lib/function";
 import * as maps from "fp-ts/lib/Map";
 import { none } from "fp-ts/lib/Option";
 import { setoidString } from "fp-ts/lib/Setoid";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, mapTo, pairwise, switchMap, tap } from "rxjs/operators";
 
 import * as ss from "../../kaart/stijl-selector";
 import { Transparantie } from "../../transparantieeditor/transparantie";
 import { ofType } from "../../util";
+import * as ol from "../../util/openlayers-compat";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import * as ke from "../kaart-elementen";
 import { InfoBoodschappenMsg, KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-messages";
@@ -36,8 +36,8 @@ const featureGen: Function2<ol.Coordinate, ss.Stylish, ol.Feature> = (location, 
 export const defaultMarkerStyle = new ol.style.Style({
   image: new ol.style.Icon({
     anchor: [0.5, 0.5],
-    anchorXUnits: "fraction",
-    anchorYUnits: "fraction",
+    anchorXUnits: ol.style.IconAnchorUnits.FRACTION,
+    anchorYUnits: ol.style.IconAnchorUnits.FRACTION,
     scale: 0.5,
     opacity: 1,
     src:

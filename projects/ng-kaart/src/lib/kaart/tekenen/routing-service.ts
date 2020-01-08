@@ -1,12 +1,12 @@
 import { HttpClient } from "@angular/common/http";
 import { Function1 } from "fp-ts/lib/function";
-import * as ol from "openlayers";
 import { Observable } from "rxjs";
 import * as rx from "rxjs";
 import { catchError, map } from "rxjs/operators";
 
 import { Interpreter } from "../../stijl/json-object-interpreting";
 import * as st from "../../stijl/json-object-interpreting";
+import * as ol from "../../util/openlayers-compat";
 import { kaartLogger } from "../log";
 
 import { GeometryRoute, ProtoRoute } from "./route.msg";

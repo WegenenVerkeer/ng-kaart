@@ -7,8 +7,9 @@ import { Tuple } from "fp-ts/lib/Tuple";
 import * as rx from "rxjs";
 import { map, mergeMap } from "rxjs/operators";
 
-import { Coordinate } from "../../coordinaten";
+import { Coordinates } from "../../coordinaten";
 import * as arrays from "../../util/arrays";
+import * as ol from "../../util/openlayers-compat";
 import { catOptions, Pipeable, scanState } from "../../util/operators";
 import { toArray } from "../../util/option";
 
@@ -124,7 +125,7 @@ export function routesViaRoutering(http: HttpClient): Pipeable<WaypointOperation
 }
 
 const ifDifferentLocation: Function2<ol.Coordinate, Waypoint, Option<Waypoint>> = (l, w) =>
-  Coordinate.equalTo(w.location)(l) ? none : some(Waypoint(w.id, l));
+  Coordinates.equalTo(w.location)(l) ? none : some(Waypoint(w.id, l));
 
 const waypointOpsToRouteOperation: Function1<RoutingService, Pipeable<WaypointOperation, RouteEvent>> = routingService => waypointOpss => {
   const routeChangesObs: rx.Observable<RouteChanges> = scanState(waypointOpss, nextRouteStateChanges, emptyRouteState, emptyRouteChanges);

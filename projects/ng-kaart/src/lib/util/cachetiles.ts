@@ -1,11 +1,11 @@
 import { Function1, Function2, Function6 } from "fp-ts/lib/function";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { mergeMap, tap } from "rxjs/operators";
 
 import { kaartLogger } from "../kaart/log";
 
 import { splitInChunks } from "./arrays";
+import * as ol from "./openlayers-compat";
 
 export interface Progress {
   readonly started: Date;
@@ -66,7 +66,7 @@ export const refreshTiles: Function6<string, ol.source.UrlTile, number, number, 
   const tileUrlFunction = source.getTileUrlFunction();
   const tileGrid = source.getTileGrid();
 
-  const calculateTileRange = function(extent, zoom) {
+  const calculateTileRange = function(extent: ol.Extent, zoom: number) {
     const minTileCoord = tileGrid.getTileCoordForCoordAndZ([extent[0], extent[1]], zoom);
     const maxTileCoord = tileGrid.getTileCoordForCoordAndZ([extent[2], extent[3]], zoom);
 
@@ -79,14 +79,12 @@ export const refreshTiles: Function6<string, ol.source.UrlTile, number, number, 
     return { tileRangeMinX, tileRangeMinY, tileRangeMaxX, tileRangeMaxY };
   };
 
-  const geometry: ol.geom.Geometry = new ol.format.WKT()
+  const geometry: ol.geom.Geometry | undefined = new ol.format.WKT()
     .readFeature(wkt, {
       dataProjection: sourceProjection,
       featureProjection: sourceProjection
     })
     .getGeometry();
-
-  const geometryExtent = geometry.getExtent();
 
   let queue: string[] = [];
   const ignoreExtents: ol.Extent[] = [];
@@ -107,55 +105,61 @@ export const refreshTiles: Function6<string, ol.source.UrlTile, number, number, 
     });
 
     const queueByZ: string[] = [];
-    const { tileRangeMinX, tileRangeMinY, tileRangeMaxX, tileRangeMaxY } = calculateTileRange(geometryExtent, z);
-    for (let x = tileRangeMinX; x <= tileRangeMaxX; x++) {
-      for (let y = tileRangeMinY; y <= tileRangeMaxY; y++) {
-        if (ignoreTileCoords[x] && ignoreTileCoords[x][y]) {
-          // deze tile valt buiten de geometrie
-        } else {
-          const tileCoord: [number, number, number] = [z, x, y];
-          // left,bottom,right,top
-          const coordinatesBbox = tileGrid.getTileCoordExtent(tileCoord);
+    if (geometry) {
+      const geometryExtent = geometry.getExtent();
 
-          const left = coordinatesBbox[0];
-          const bottom = coordinatesBbox[1];
-          const right = coordinatesBbox[2];
-          const top = coordinatesBbox[3];
-
-          const ltCoord: [number, number] = [left, top];
-          const lbCoord: [number, number] = [left, bottom];
-          const rtCoord: [number, number] = [right, top];
-          const rbCoord: [number, number] = [right, bottom];
-          const middenCoord: [number, number] = [left + (right - left) / 2, bottom + (top - bottom) / 2];
-          const middenBottom: [number, number] = [left + (right - left) / 2, bottom];
-          const middenTop: [number, number] = [left + (right - left) / 2, top];
-          const middenLeft: [number, number] = [left, bottom + (top - bottom) / 2];
-          const middenRight: [number, number] = [right, bottom + (top - bottom) / 2];
-
-          // snelle check of de geometrie overlapt met een aantal punten van de extent
-          // geeft false negative als de geometrie overlapt met de tile, maar met geen van de getestte punten
-          let intersects =
-            geometry.intersectsCoordinate(middenCoord) ||
-            geometry.intersectsCoordinate(ltCoord) ||
-            geometry.intersectsCoordinate(lbCoord) ||
-            geometry.intersectsCoordinate(rtCoord) ||
-            geometry.intersectsCoordinate(rbCoord) ||
-            geometry.intersectsCoordinate(middenBottom) ||
-            geometry.intersectsCoordinate(middenTop) ||
-            geometry.intersectsCoordinate(middenLeft) ||
-            geometry.intersectsCoordinate(middenRight);
-
-          // t.e.m. zoomniveau 12 gaan we voor zekerheid
-          if (!intersects && z <= 12) {
-            // correcter, maar (+-30x) trager
-            intersects = geometry["intersectsExtent"](coordinatesBbox);
-          }
-
-          if (intersects) {
-            const tileUrl = tileUrlFunction(tileCoord, ol.has.DEVICE_PIXEL_RATIO, source.getProjection());
-            queueByZ.push(tileUrl);
+      const { tileRangeMinX, tileRangeMinY, tileRangeMaxX, tileRangeMaxY } = calculateTileRange(geometryExtent, z);
+      for (let x = tileRangeMinX; x <= tileRangeMaxX; x++) {
+        for (let y = tileRangeMinY; y <= tileRangeMaxY; y++) {
+          if (ignoreTileCoords[x] && ignoreTileCoords[x][y]) {
+            // deze tile valt buiten de geometrie
           } else {
-            ignoreExtents.push(coordinatesBbox);
+            const tileCoord: [number, number, number] = [z, x, y];
+            // left,bottom,right,top
+            const coordinatesBbox = tileGrid.getTileCoordExtent(tileCoord);
+
+            const left = coordinatesBbox[0];
+            const bottom = coordinatesBbox[1];
+            const right = coordinatesBbox[2];
+            const top = coordinatesBbox[3];
+
+            const ltCoord: [number, number] = [left, top];
+            const lbCoord: [number, number] = [left, bottom];
+            const rtCoord: [number, number] = [right, top];
+            const rbCoord: [number, number] = [right, bottom];
+            const middenCoord: [number, number] = [left + (right - left) / 2, bottom + (top - bottom) / 2];
+            const middenBottom: [number, number] = [left + (right - left) / 2, bottom];
+            const middenTop: [number, number] = [left + (right - left) / 2, top];
+            const middenLeft: [number, number] = [left, bottom + (top - bottom) / 2];
+            const middenRight: [number, number] = [right, bottom + (top - bottom) / 2];
+
+            // snelle check of de geometrie overlapt met een aantal punten van de extent
+            // geeft false negative als de geometrie overlapt met de tile, maar met geen van de getestte punten
+            let intersects =
+              geometry.intersectsCoordinate(middenCoord) ||
+              geometry.intersectsCoordinate(ltCoord) ||
+              geometry.intersectsCoordinate(lbCoord) ||
+              geometry.intersectsCoordinate(rtCoord) ||
+              geometry.intersectsCoordinate(rbCoord) ||
+              geometry.intersectsCoordinate(middenBottom) ||
+              geometry.intersectsCoordinate(middenTop) ||
+              geometry.intersectsCoordinate(middenLeft) ||
+              geometry.intersectsCoordinate(middenRight);
+
+            // t.e.m. zoomniveau 12 gaan we voor zekerheid
+            if (!intersects && z <= 12) {
+              // correcter, maar (+-30x) trager
+              intersects = geometry["intersectsExtent"](coordinatesBbox);
+            }
+
+            if (intersects) {
+              const tileUrl = tileUrlFunction(tileCoord, ol.has.DEVICE_PIXEL_RATIO, source.getProjection());
+              if (tileUrl) {
+                queueByZ.push(tileUrl);
+              }
+            } else {
+              ignoreExtents.push(coordinatesBbox);
+            }
           }
         }
       }

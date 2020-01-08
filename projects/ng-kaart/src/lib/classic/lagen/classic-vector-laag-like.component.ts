@@ -1,6 +1,5 @@
 import { Injector, Input, OnChanges, SimpleChanges } from "@angular/core";
 import { fromNullable, none, Option } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 
 import { forChangedValue } from "../../kaart/kaart-component-base";
@@ -10,6 +9,7 @@ import * as ss from "../../kaart/stijl-selector";
 import { getDefaultHoverStyleFunction, getDefaultSelectionStyleFunction, getDefaultStyleFunction } from "../../kaart/styles";
 import * as arrays from "../../util/arrays";
 import { Consumer1 } from "../../util/function";
+import * as ol from "../../util/openlayers-compat";
 import { forEach, fromValidation } from "../../util/option";
 import { TypedRecord } from "../../util/typed-record";
 import { logOnlyWrapper } from "../messages";
@@ -21,9 +21,9 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
   @Input()
   style?: ol.style.Style = undefined; // heeft voorrang op styleFunction
   @Input()
-  styleFunction?: ol.StyleFunction = getDefaultStyleFunction(); // TODO combineren met style tot type Stylish
+  styleFunction?: ol.style.StyleFunction = getDefaultStyleFunction(); // TODO combineren met style tot type Stylish
   @Input()
-  clusterStyleFunction?: ol.StyleFunction = undefined;
+  clusterStyleFunction?: ol.style.StyleFunction = undefined;
   @Input()
   selectieStyle?: ss.Stylish = getDefaultSelectionStyleFunction();
   @Input()
@@ -155,7 +155,7 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
     );
   }
 
-  clusterStyle(defaultStyleSelector: ss.StyleSelector): ol.StyleFunction {
+  clusterStyle(defaultStyleSelector: ss.StyleSelector): ol.style.StyleFunction {
     return (feature, resolution) => {
       return fromNullable(feature.get("features"))
         .filter(arrays.isArray)

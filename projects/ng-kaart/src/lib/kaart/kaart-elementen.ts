@@ -5,7 +5,6 @@ import { Ord } from "fp-ts/lib/Ord";
 import * as setoid from "fp-ts/lib/Setoid";
 import { Setoid } from "fp-ts/lib/Setoid";
 import { Fold, Getter, Iso, Lens, Optional, Prism } from "monocle-ts";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { debounceTime, mapTo } from "rxjs/operators";
 
@@ -17,6 +16,7 @@ import { mapToOptionalByKey } from "../util/lenses";
 import * as maps from "../util/maps";
 import * as matchers from "../util/matchers";
 import { observableFromOlEvents } from "../util/ol-observable";
+import * as ol from "../util/openlayers-compat";
 
 import { Legende } from "./kaart-legende";
 import { Laagtabelinstellingen } from "./kaart-protocol-subscriptions";
@@ -59,7 +59,7 @@ export interface WmsLaag {
 export interface WmtsCapaConfig {
   readonly type: "Capa";
   readonly url: string;
-  readonly wmtsOptions: ol.olx.source.WMTSOptions;
+  readonly wmtsOptions: ol.source.WMTSOptions;
 }
 
 export interface WmtsManualConfig {

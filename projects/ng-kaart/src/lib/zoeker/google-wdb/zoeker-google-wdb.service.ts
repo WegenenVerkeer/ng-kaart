@@ -2,13 +2,13 @@
 import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Inject, Injectable } from "@angular/core";
 import { fromNullable, Option, some } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { combineLatest, Observable, Observer, timer } from "rxjs";
 import { catchError, concatMap, map, mergeMap, publishLast, reduce, refCount, retryWhen, switchMap, take, toArray } from "rxjs/operators";
 import LatLng = google.maps.LatLng;
 
 import { kaartLogger } from "../../kaart/log";
+import * as ol from "../../util/openlayers-compat";
 import { fromNullablePredicate } from "../../util/option";
 import { ZOEKER_CFG, ZoekerConfigData } from "../config/zoeker-config";
 import { GoogleWdbLocatieZoekerConfigData, ZoekerConfigGoogleWdbConfig } from "../config/zoeker-config-google-wdb.config";

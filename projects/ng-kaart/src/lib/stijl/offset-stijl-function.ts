@@ -1,8 +1,8 @@
 import * as option from "fp-ts/lib/Option";
 import { Option } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
 
 import { kaartLogger } from "../kaart/log";
+import * as ol from "../util/openlayers-compat";
 
 type Direction = "up" | "down";
 
@@ -12,22 +12,22 @@ const Down = "down" as Direction;
 /**
  * Gegeven een StyleFunction zonder offset rendering, geef er 1 terug waarbij de features op een offset gerendered worden.
  *
- * @param ol.StyleFunction styleFunction Oorspronkelijke stijl functie
+ * @param ol.style.StyleFunction styleFunction Oorspronkelijke stijl functie
  * @param string ident8Veld Plaats waar het ident8 veld te vinden is onder feature.properties
  * @param string zijderijbaanVeld Plaats waar de kant van de weg van het feature te vinden is onder feature.properties ('R', 'L', 'M'/'O')
  * @param number positie De index van de te stylen laag.
  *                       Positie 0 bevat geen offset, positie 1 bevat offset van 1 x strokeWidth van stijl, enz
- * @returns ol.StyleFunction
+ * @returns ol.style.StyleFunction
  */
 export function offsetStyleFunction(
-  styleFunction: ol.StyleFunction,
+  styleFunction: ol.style.StyleFunction,
   ident8Veld: string,
   zijderijbaanVeld: string,
   positie: number,
   rijrichtingIsDigitalisatieZin: boolean
-): ol.StyleFunction {
-  function offsetStyleFunc(feature: ol.Feature, resolution: number): ol.style.Style | ol.style.Style[] | null {
-    const style: ol.style.Style | ol.style.Style[] | null = styleFunction(feature, resolution);
+): ol.style.StyleFunction {
+  function offsetStyleFunc(feature: ol.Feature, resolution: number): ol.style.Style | ol.style.Style[] {
+    const style: ol.style.Style | ol.style.Style[] = styleFunction(feature, resolution);
 
     // indien er geen stijl gedefinieerd is of we geen rijrichting kunnen afleiden
     // (als er geen ident8 is en de rijrichting is niet de digitalisatie zin),
@@ -42,12 +42,11 @@ export function offsetStyleFunction(
 
     function setGeometryOnStyle(s: ol.style.Style) {
       const offsetGeometryFunc = offsetGeometryFunction(
-        feature,
         direction,
         // Niet alle lijntypes hebben expliciet een offsetzijde. Indien geen zijderijbaan waarde gevonden,
         // veronderstellen we rechter zijde
         getValue(feature, zijderijbaanVeld).getOrElse("r"),
-        positie * s.getStroke().getWidth(),
+        positie * (s.getStroke().getWidth() || 1),
         resolution
       );
 
@@ -82,16 +81,17 @@ function getValue(feature: ol.Feature, field: string): Option<string> {
  * @returns ol.StyleGeometryFunction
  */
 function offsetGeometryFunction(
-  feature: ol.Feature,
   direction: Direction,
   zijderijbaan: string,
   offsetPixels: number,
   resolution: number
-): ol.StyleGeometryFunction {
+): ol.style.GeometryFunction {
   const zijdeSpiegeling = getZijdeSpiegeling(zijderijbaan, direction);
 
-  function getOffsetGeometry(feat: ol.Feature): ol.geom.Geometry {
-    const geometry = feat.getGeometry();
+  function getOffsetGeometry(geometry: ol.geom.Geometry): ol.geom.Geometry {
+    if (offsetPixels <= 0) {
+      return geometry;
+    }
     if (!geometry || offsetPixels <= 0) {
       return geometry;
     }
@@ -118,7 +118,10 @@ function offsetGeometryFunction(
     }
   }
 
-  return getOffsetGeometry;
+  return (feature: ol.Feature) => {
+    const geometry = feature.getGeometry();
+    return geometry ? getOffsetGeometry(geometry) : undefined;
+  };
 }
 
 const HALF_PI = Math.PI / 2;

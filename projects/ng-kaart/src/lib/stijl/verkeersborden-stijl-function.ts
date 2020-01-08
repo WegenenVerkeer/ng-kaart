@@ -1,7 +1,6 @@
-import * as ol from "openlayers";
-
 import { kaartLogger } from "../kaart/log";
 import { Feature } from "../util/feature";
+import * as ol from "../util/openlayers-compat";
 import { join } from "../util/string";
 
 import { definitieToStyle } from "./stijl-static";
@@ -45,7 +44,7 @@ const basisVerbindingsLijnStyle: ol.style.Style = definitieToStyle(
 basisOpstellingStyle.setZIndex(0);
 basisVerbindingsLijnStyle.setZIndex(-1);
 
-export function verkeersbordenStyleFunction(geselecteerd: boolean): ol.StyleFunction {
+export function verkeersbordenStyleFunction(geselecteerd: boolean): ol.style.StyleFunction {
   function styleFunc(feature: ol.Feature, resolution: number): ol.style.Style | ol.style.Style[] {
     // [1024.0, 512.0, 256.0, 128.0, 64.0, 32.0, 16.0, 8.0, 4.0, 2.0, 1.0, 0.5, 0.25, 0.125, 0.0625, 0.03125]
 
@@ -66,7 +65,7 @@ export function verkeersbordenStyleFunction(geselecteerd: boolean): ol.StyleFunc
 function opstellingMetAanzichten(feature: ol.Feature, geselecteerd: boolean, klein: boolean): ol.style.Style[] {
   const opstelling: Opstelling = feature.getProperties()["properties"];
 
-  const opstellingPoint = feature.getGeometry() as ol.geom.Point;
+  const opstellingPoint: ol.geom.Point = feature.getGeometry() as ol.geom.Point;
 
   const aanzichtStyles: ol.style.Style[] = [];
 
@@ -76,7 +75,9 @@ function opstellingMetAanzichten(feature: ol.Feature, geselecteerd: boolean, kle
   }
 
   opstelling.aanzichten.forEach(aanzicht => {
-    const ankerGeometry = aanzicht.anker ? (format.readGeometry(aanzicht.anker) as ol.geom.Point) : opstellingPoint.clone();
+    const ankerGeometry: ol.geom.Point = aanzicht.anker
+      ? (format.readGeometry(aanzicht.anker) as ol.geom.Point)
+      : (opstellingPoint.clone() as ol.geom.Point);
     const image = imageAanzicht(aanzicht.binaireData, geselecteerd, klein);
     const rotation: number = transformeerHoek(aanzicht.hoek);
 
@@ -106,7 +107,10 @@ function opstellingMetHoek(feature: ol.Feature, geselecteerd: boolean): ol.style
   const image = imageOpstelling(opstelling.binaireData, geselecteerd);
   const rotation: number = transformeerHoek(opstelling.delta);
 
-  opstellingStyle.setGeometry(feature.getGeometry() as ol.geom.Point);
+  const geometry = feature.getGeometry();
+  if (geometry) {
+    opstellingStyle.setGeometry(geometry);
+  }
   opstellingStyle.setImage(
     createIcon(encodeAsSrc(image.mime, image.data), [image.properties.breedte, image.properties.hoogte], rotation, false)
   );

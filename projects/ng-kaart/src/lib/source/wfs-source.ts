@@ -1,9 +1,9 @@
 import { Option } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
 import { concatMap, filter, map } from "rxjs/operators";
 
 import { toOlFeature } from "../util/feature";
 import { fetchObs$ } from "../util/fetch-with-timeout";
+import * as ol from "../util/openlayers-compat";
 import { urlWithParams } from "../util/url";
 
 import { featureDelimiter, getWithCommonHeaders, mapToFeatureCollection, split } from "./nosql-fs-source";

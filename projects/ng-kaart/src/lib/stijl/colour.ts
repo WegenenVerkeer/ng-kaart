@@ -3,10 +3,10 @@ import { fromNullable, none, Option } from "fp-ts/lib/Option";
 import { contramap, Setoid, setoidString } from "fp-ts/lib/Setoid";
 import { Getter, Iso, Lens, Prism } from "monocle-ts";
 import { iso, Newtype, prism } from "newtype-ts";
-import * as ol from "openlayers";
 import { isNumber } from "util";
 
 import { hexByte } from "../util/hex";
+import * as ol from "../util/openlayers-compat";
 import { nonEmptyString, toLowerCaseString } from "../util/string";
 
 // Zie https://github.com/gcanti/newtype-ts, ook wat betreft performantieverlies (in 't kort: geen, is enkel syntactic sugar)

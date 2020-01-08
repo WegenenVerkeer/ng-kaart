@@ -5,12 +5,9 @@ import { Endomorphism, flow, Function1, Function2, identity, not } from "fp-ts/l
 import * as fptsmap from "fp-ts/lib/Map";
 import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
 import * as ord from "fp-ts/lib/Ord";
-import { pipe } from "fp-ts/lib/pipeable";
 import { setoidString } from "fp-ts/lib/Setoid";
 import * as validation from "fp-ts/lib/Validation";
 import { Lens } from "monocle-ts";
-import { olx } from "openlayers";
-import * as ol from "openlayers";
 import { Subscription } from "rxjs";
 import * as rx from "rxjs";
 import { bufferCount, debounceTime, distinctUntilChanged, map, switchMap, throttleTime } from "rxjs/operators";
@@ -27,6 +24,7 @@ import { Feature, modifyWithLaagnaam } from "../util/feature";
 import * as featureStore from "../util/indexeddb-geojson-store";
 import * as metaDataDb from "../util/indexeddb-tilecache-metadata";
 import * as maps from "../util/maps";
+import * as ol from "../util/openlayers-compat";
 import { forEach } from "../util/option";
 import * as serviceworker from "../util/serviceworker";
 import { updateBehaviorSubject, updateBehaviorSubjectIfChanged } from "../util/subject-update";
@@ -34,8 +32,6 @@ import { allOf, fromBoolean, fromOption, fromPredicate, success, validationChain
 import { zoekerMetNaam } from "../zoeker/zoeker";
 
 import { CachedFeatureLookup } from "./cache/lookup";
-import { BevraagKaartOpties } from "./kaart-bevragen/kaart-bevragen-opties";
-import { IdentifyOpties } from "./kaart-bevragen/kaart-identify-opties";
 import { envParams } from "./kaart-config";
 import * as ke from "./kaart-elementen";
 import * as prt from "./kaart-protocol";
@@ -607,7 +603,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
         cmnd.wrapper,
         fromPredicate(model.schaal, isNone, "De schaal is al toegevoegd").map(() => {
           const schaal = cmnd.target
-            .map(t => new ol.control.ScaleLine({ className: "awv-schaal", target: t, minWidth: 40 }))
+            .map(t => new ol.control.ScaleLine({ className: "awv-schaal", target: t as HTMLElement, minWidth: 40 }))
             .getOrElseL(() => new ol.control.ScaleLine({ className: "awv-schaal" }));
           model.map.addControl(schaal);
           return ModelAndEmptyResult({ ...model, schaal: some(schaal) });
@@ -954,8 +950,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             new ol.style.Circle({
               radius: circle.getRadius(),
               stroke: circle.getStroke(),
-              fill: circle.getFill(),
-              snapToPixel: circle.getSnapToPixel()
+              fill: circle.getFill()
             })
           );
         } else if (selectionStyle.getImage() instanceof ol.style.RegularShape) {
@@ -971,7 +966,6 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               radius1: shape.getRadius(),
               radius2: shape.getRadius2(),
               angle: shape.getAngle(),
-              snapToPixel: shape.getSnapToPixel(),
               stroke: shape.getStroke(),
               rotation: shape.getRotation()
             })
@@ -997,7 +991,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
 
     type StyleSelectorFn = Function2<ol.Map, LaagTitel, Option<StyleSelector>>;
 
-    const createSelectionStyleFn = function(styleSelectorFn: StyleSelectorFn): ol.StyleFunction {
+    const createSelectionStyleFn = function(styleSelectorFn: StyleSelectorFn): ol.style.StyleFunction {
       return function(feature: ol.Feature, resolution: number): FeatureStyle {
         const executeStyleSelector: (_: ss.StyleSelector) => FeatureStyle = ss.matchStyleSelector(
           (s: ss.StaticStyle) => s.style,
@@ -1032,7 +1026,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     };
 
     function activeerSelectieModus(cmnd: prt.ActiveerSelectieModusCmd): ModelWithResult<Msg> {
-      function getSelectInteraction(modus: prt.SelectieModus): Option<olx.interaction.SelectOptions> {
+      function getSelectInteractionOptions(modus: prt.SelectieModus): Option<ol.interaction.SelectOptions> {
         const hitTolerance = envParams(model.config).clickHitTolerance;
         switch (modus) {
           case "singleQuick":
@@ -1080,11 +1074,11 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       }
 
       const newSelectInteracties = arrays.fromOption(
-        getSelectInteraction(cmnd.selectieModus).map(selectOption => {
+        getSelectInteractionOptions(cmnd.selectieModus).map(selectOption => {
           const selectInteraction = new ol.interaction.Select(selectOption);
 
           if (cmnd.selectieModus === "single") {
-            selectInteraction.on("select", (s: ol.interaction.Select.Event) => {
+            selectInteraction.on("select", (s: ol.interaction.SelectEvent) => {
               const selectedFeaturesCollection = s.target.getFeatures();
               const selectedFeatures = selectedFeaturesCollection.getArray();
               if (arrays.isNonEmpty(selectedFeatures)) {
@@ -1098,7 +1092,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
           return [
             selectInteraction,
             new ol.interaction.DragBox({
-              condition: ol.events.condition.platformModifierKeyOnly
+              condition: ol.events.condition.platformModifierKeyOnly,
+              onBoxEnd: () => {}
             })
           ];
         })
@@ -1121,7 +1116,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function activeerHoverModus(cmnd: prt.ActiveerHoverModusCmd): ModelWithResult<Msg> {
-      function getHoverInteraction(modus: prt.HoverModus): Option<olx.interaction.SelectOptions> {
+      function getHoverInteraction(modus: prt.HoverModus): Option<ol.interaction.SelectOptions> {
         switch (modus) {
           case "on":
             return some({
@@ -1144,7 +1139,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     }
 
     function activeerHighlightModus(cmnd: prt.ActiveerHighlightModusCmd): ModelWithResult<Msg> {
-      function getHighlightInteraction(modus: prt.HighlightModus): Option<olx.interaction.SelectOptions> {
+      function getHighlightInteraction(modus: prt.HighlightModus): Option<ol.interaction.SelectOptions> {
         switch (modus) {
           case "on":
             return some({
@@ -1424,7 +1419,7 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
       const view = model.map.getView();
       const minZoom = Math.max(1, Math.min(15, cmnd.minZoom));
       const maxZoom = Math.max(minZoom, Math.min(15, cmnd.maxZoom));
-      const zoom = Math.max(minZoom, Math.min(maxZoom, view.getZoom()));
+      const zoom = Math.max(minZoom, Math.min(maxZoom, view.getZoom() || maxZoom));
       view.setMinZoom(minZoom);
       view.setMaxZoom(maxZoom);
       view.setZoom(zoom);

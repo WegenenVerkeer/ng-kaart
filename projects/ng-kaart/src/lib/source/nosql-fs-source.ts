@@ -2,7 +2,6 @@ import { array } from "fp-ts";
 import { concat, Function1, not, Refinement } from "fp-ts/lib/function";
 import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import { setoidNumber, setoidString } from "fp-ts/lib/Setoid";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 import {
   bufferCount,
@@ -39,6 +38,7 @@ import { fetchObs$, fetchWithTimeoutObs$ } from "../util/fetch-with-timeout";
 import { ReduceFunction } from "../util/function";
 import { CollectionSummary, FeatureCollection, GeoJsonLike } from "../util/geojson-types";
 import * as geojsonStore from "../util/indexeddb-geojson-store";
+import * as ol from "../util/openlayers-compat";
 import { Pipeable } from "../util/operators";
 import { forEach } from "../util/option";
 
@@ -276,7 +276,7 @@ export class NosqlFsSource extends ol.source.Vector {
   ) {
     super({
       loader: function(extent: Extent) {
-        const source: NosqlFsSource = this;
+        const source: NosqlFsSource = this as NosqlFsSource;
         source.busyCount += 1;
         source.outstandingRequestExtents = array.snoc(source.outstandingRequestExtents, extent);
         const queryUrlVoorExtent = source.composeQueryUrl(some(extent), none);
@@ -328,7 +328,7 @@ export class NosqlFsSource extends ol.source.Vector {
 
               kaartLogger.debug("Te verwijderen", featuresOutsideExtent.length);
               try {
-                featuresOutsideExtent.forEach(feature => this.removeFeature(feature));
+                featuresOutsideExtent.forEach(feature => source.removeFeature(feature));
               } catch (e) {
                 kaartLogger.error("Probleem tijdens verwijderen van features", e);
               }

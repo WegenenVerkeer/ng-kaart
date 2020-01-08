@@ -1,6 +1,6 @@
 import { HttpClient } from "@angular/common/http";
 import { Component, Inject, Injector, ViewEncapsulation } from "@angular/core";
-import { fromNullable, none } from "fp-ts/lib/Option";
+import { fromNullable } from "fp-ts/lib/Option";
 
 import { KAART_CFG, KaartConfig } from "../../kaart/kaart-config";
 import { TiledWmsType, WmsLaag } from "../../kaart/kaart-elementen";

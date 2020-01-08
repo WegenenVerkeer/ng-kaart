@@ -1,4 +1,4 @@
-import * as ol from "openlayers";
+import * as ol from "./openlayers-compat";
 
 function vervangKleur(pin: string, kleur: ol.Color): string {
   function vullFillIn(nodes: HTMLCollectionOf<SVGGraphicsElement>, fillKleur: string) {
@@ -32,8 +32,8 @@ function vervangKleur(pin: string, kleur: ol.Color): string {
 export function maakIconImage(kleur: [number, number, number, number], anchor: [0.5, 1.0], marker: string): ol.style.Icon {
   return new ol.style.Icon({
     anchor: anchor,
-    anchorXUnits: "fraction",
-    anchorYUnits: "fraction",
+    anchorXUnits: ol.style.IconAnchorUnits.FRACTION,
+    anchorYUnits: ol.style.IconAnchorUnits.FRACTION,
     scale: 1,
     opacity: 1,
     src: vervangKleur(marker, kleur)

@@ -3,13 +3,13 @@ import { either } from "fp-ts";
 import { left, right } from "fp-ts/lib/Either";
 import { Function1 } from "fp-ts/lib/function";
 import { fromNullable } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { catchError, map } from "rxjs/operators";
 
-import { Coordinate } from "../../coordinaten";
+import { Coordinates } from "../../coordinaten";
 import * as arrays from "../../util/arrays";
 import * as maps from "../../util/maps";
+import * as ol from "../../util/openlayers-compat";
 import { proceed, Progress, Received, Requested } from "../../util/progress";
 import { kaartLogger } from "../log";
 
@@ -103,7 +103,7 @@ export function toWegLocaties(lsWegLocaties: LsWegLocaties): Array<WegLocatie> {
   return lsWegLocaties.items.map(toWegLocatie);
 }
 
-const geoJSONOptions = <ol.olx.format.GeoJSONOptions>{
+const geoJSONOptions = <ol.format.GeoJSONOptions>{
   ignoreExtraDims: true,
   defaultDataProjection: undefined,
   featureProjection: undefined
@@ -170,7 +170,7 @@ export function fromWegLocaties(timestamp: number, coordinaat: ol.Coordinate, we
 
 export function merge(i1: LocatieInfo, i2: LocatieInfo): LocatieInfo {
   // Merge kan enkel als de 2 coordinaten en timestamps gelijk zijn.
-  return Coordinate.equal(i1.kaartLocatie, i2.kaartLocatie) && i1.timestamp === i2.timestamp
+  return Coordinates.equal(i1.kaartLocatie, i2.kaartLocatie) && i1.timestamp === i2.timestamp
     ? LocatieInfo(
         i2.timestamp,
         i2.kaartLocatie,

@@ -1,10 +1,11 @@
 import { Function1, identity } from "fp-ts/lib/function";
-import * as ol from "openlayers";
+
+import * as ol from "../util/openlayers-compat";
 
 import { Interpreter } from "./json-object-interpreting";
 import * as st from "./json-object-interpreting";
 import * as ss from "./stijl-static-types";
-import { ImageStyle } from "./stijl-static-types";
+import { ImageStyle, SizeType } from "./stijl-static-types";
 
 ///////////////////////////////
 // Openlayer types interpreters
@@ -39,8 +40,7 @@ export namespace AwvV0StaticStyleInterpreters {
   const circleStyle: Interpreter<ss.CircleStyle> = st.interpretUndefinedRecord({
     radius: st.field("radius", st.num),
     fill: st.undefField("fill", fillStyle),
-    stroke: st.undefField("stroke", strokeStyle),
-    snapToPixel: st.undefField("snapToPixel", st.bool)
+    stroke: st.undefField("stroke", strokeStyle)
   });
 
   const placement: Interpreter<ss.TextPlacementType> = st.enu<ss.TextPlacementType>("point", "line");
@@ -69,9 +69,17 @@ export namespace AwvV0StaticStyleInterpreters {
     stroke: st.undefField("stroke", strokeStyle)
   });
 
-  const iconOrigin: Interpreter<ol.style.IconOrigin> = st.enu<ol.style.IconOrigin>("bottom-left", "bottom-right", "top-left", "top-right");
-  const iconAnchorUnits: Interpreter<ol.style.IconAnchorUnits> = st.enu<ol.style.IconAnchorUnits>("fraction", "pixels");
-  const size: Interpreter<ol.Size> = st.arrSize(2, st.num) as Interpreter<[number, number]>;
+  const iconOrigin: Interpreter<ol.style.IconOrigin> = st.enu<ol.style.IconOrigin>(
+    ol.style.IconOrigin.BOTTOM_LEFT,
+    ol.style.IconOrigin.BOTTOM_RIGHT,
+    ol.style.IconOrigin.TOP_LEFT,
+    ol.style.IconOrigin.TOP_RIGHT
+  );
+  const iconAnchorUnits: Interpreter<ol.style.IconAnchorUnits> = st.enu<ol.style.IconAnchorUnits>(
+    ol.style.IconAnchorUnits.FRACTION,
+    ol.style.IconAnchorUnits.PIXELS
+  );
+  const size: Interpreter<SizeType> = st.arrSize(2, st.num) as Interpreter<[number, number]>;
 
   const iconStyle: Interpreter<ss.IconStyle> = st.interpretUndefinedRecord({
     anchor: st.undefField("anchor", st.arr(st.num)),
@@ -84,7 +92,6 @@ export namespace AwvV0StaticStyleInterpreters {
     offsetOrigin: st.undefField("offsetOrigin", iconOrigin),
     opacity: st.undefField("opacity", st.num),
     scale: st.undefField("scale", st.num),
-    snapToPixel: st.undefField("snapToPixel", st.bool),
     rotateWithView: st.undefField("rotateWithView", st.bool),
     rotation: st.undefField("rotation", st.num),
     size: st.undefField("size", size),
@@ -99,7 +106,6 @@ export namespace AwvV0StaticStyleInterpreters {
     radius1: st.undefField("radius1", st.num),
     radius2: st.undefField("radius2", st.num),
     angle: st.undefField("angle", st.num),
-    snapToPixel: st.undefField("snapToPixel", st.bool),
     stroke: st.undefField("stroke", strokeStyle)
   });
 
@@ -172,25 +178,52 @@ export namespace StaticStyleEncoders {
       new ol.style.Circle({
         radius: circle.radius,
         fill: circle.fill && Fill.encode(circle.fill),
-        stroke: circle.stroke && Stroke.encode(circle.stroke),
-        snapToPixel: circle.snapToPixel
+        stroke: circle.stroke && Stroke.encode(circle.stroke)
       })
+  };
+
+  // enum naar enum
+  const toIconOrigin = (iconOrigin: ss.IconOriginType | undefined): ol.style.IconOrigin | undefined => {
+    if (iconOrigin === undefined) {
+      return undefined;
+    }
+    switch (iconOrigin) {
+      case "bottom-left":
+        return ol.style.IconOrigin.BOTTOM_LEFT;
+      case "bottom-right":
+        return ol.style.IconOrigin.BOTTOM_RIGHT;
+      case "top-left":
+        return ol.style.IconOrigin.TOP_LEFT;
+      case "top-right":
+        return ol.style.IconOrigin.TOP_RIGHT;
+    }
+  };
+
+  const toIconAnchorUnits = (anchorUnits: ss.IconAnchorUnitsType | undefined): ol.style.IconAnchorUnits | undefined => {
+    if (anchorUnits === undefined) {
+      return undefined;
+    }
+    switch (anchorUnits) {
+      case "fraction":
+        return ol.style.IconAnchorUnits.FRACTION;
+      case "pixels":
+        return ol.style.IconAnchorUnits.PIXELS;
+    }
   };
 
   const Icon: Encoder<ss.IconStyle, ol.style.Icon> = {
     encode: icon =>
       new ol.style.Icon({
         anchor: icon.anchor,
-        anchorOrigin: icon.anchorOrigin,
-        anchorXUnits: icon.anchorXUnits,
-        anchorYUnits: icon.anchorYUnits,
+        anchorOrigin: toIconOrigin(icon.anchorOrigin),
+        anchorXUnits: toIconAnchorUnits(icon.anchorXUnits),
+        anchorYUnits: toIconAnchorUnits(icon.anchorYUnits),
         color: icon.color && Color.encode(icon.color),
         crossOrigin: icon.crossOrigin,
         offset: icon.offset,
-        offsetOrigin: icon.offsetOrigin,
+        offsetOrigin: toIconOrigin(icon.offsetOrigin),
         opacity: icon.opacity,
         scale: icon.scale,
-        snapToPixel: icon.snapToPixel,
         rotateWithView: icon.rotateWithView,
         rotation: icon.rotation,
         size: icon.size,
@@ -208,7 +241,6 @@ export namespace StaticStyleEncoders {
         radius1: regularShape.radius1,
         radius2: regularShape.radius2,
         angle: regularShape.angle,
-        snapToPixel: regularShape.snapToPixel,
         points: regularShape.points
       })
   };

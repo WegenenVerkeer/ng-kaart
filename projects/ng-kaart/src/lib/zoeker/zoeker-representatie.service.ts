@@ -1,8 +1,8 @@
 import { Inject, Injectable, InjectionToken } from "@angular/core";
 import { MatIconRegistry } from "@angular/material";
 import { DomSanitizer } from "@angular/platform-browser";
-import * as ol from "openlayers";
 
+import * as ol from "../util/openlayers-compat";
 import { encodeAsSvgUrl } from "../util/url";
 
 import { ZOEKER_CFG, ZoekerConfigData } from "./config/zoeker-config";

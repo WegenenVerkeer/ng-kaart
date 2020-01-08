@@ -1,12 +1,12 @@
 import { Component, EventEmitter, NgZone, OnDestroy, OnInit, Output } from "@angular/core";
 import { none, some } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { map, takeUntil, tap } from "rxjs/operators";
 
 import { dimensieBeschrijving } from "../../util/geometries";
 import * as maps from "../../util/maps";
 import { observeOnAngular } from "../../util/observe-on-angular";
+import * as ol from "../../util/openlayers-compat";
 import { ofType } from "../../util/operators";
 import * as sets from "../../util/sets";
 import { TekenSettings } from "../kaart-elementen";
@@ -86,7 +86,10 @@ export class KaartMetenComponent extends KaartModusComponent implements OnInit, 
       this.internalMessage$.lift(
         internalMsgSubscriptionCmdOperator(
           this.kaartComponent.internalCmdDispatcher,
-          prt.GeometryChangedSubscription(TekenSettings("Polygon", none, none, none, this.meerdereGeometrieen), tekenResultaatWrapper)
+          prt.GeometryChangedSubscription(
+            TekenSettings(ol.geom.GeometryType.POLYGON, none, none, none, this.meerdereGeometrieen),
+            tekenResultaatWrapper
+          )
         )
       )
     )

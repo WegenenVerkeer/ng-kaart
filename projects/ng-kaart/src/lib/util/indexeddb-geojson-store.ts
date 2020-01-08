@@ -1,11 +1,11 @@
 import { Predicate } from "fp-ts/lib/function";
 import * as idb from "idb";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { filter, mergeAll, switchMap } from "rxjs/operators";
 
 import { GeoJsonKeyType, GeoJsonLike } from "./geojson-types";
 import { deleteByIndexWithPredicate, unsafeGet, unsafeGetAll, unsafeGetAllByIndex, writeMany } from "./indexeddb";
+import * as ol from "./openlayers-compat";
 
 const dbNaam = "nosql-features";
 

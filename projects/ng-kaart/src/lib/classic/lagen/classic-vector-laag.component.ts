@@ -1,9 +1,9 @@
 import { Component, Injector, Input, ViewEncapsulation } from "@angular/core";
 import { fromNullable, none } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
 
 import * as ke from "../../kaart/kaart-elementen";
 import * as ss from "../../kaart/stijl-selector";
+import * as ol from "../../util/openlayers-compat";
 import * as val from "../webcomponent-support/params";
 
 import { ClassicVectorLaagLikeComponent } from "./classic-vector-laag-like.component";

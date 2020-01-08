@@ -5,7 +5,6 @@ import { Curried2, Function1, Function2, Function4, pipe } from "fp-ts/lib/funct
 import * as fpMap from "fp-ts/lib/Map";
 import { fromNullable, none, Option } from "fp-ts/lib/Option";
 import { getStructSetoid, Setoid, setoidNumber, setoidString } from "fp-ts/lib/Setoid";
-import * as ol from "openlayers";
 import { merge } from "rxjs";
 import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, tap } from "rxjs/operators";
@@ -25,6 +24,7 @@ import * as ke from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
 import { VoegLaagLocatieInformatieServiceToe } from "../../kaart/kaart-protocol";
 import { collectOption, forEach, ofType } from "../../util";
+import * as ol from "../../util/openlayers-compat";
 import * as progress from "../../util/progress";
 import { urlWithParams } from "../../util/url";
 import { classicMsgSubscriptionCmdOperator } from "../kaart-classic.component";

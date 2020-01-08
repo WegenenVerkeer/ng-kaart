@@ -1,9 +1,9 @@
 import { array } from "fp-ts";
 import { BinaryOperation, Function1 } from "fp-ts/lib/function";
 import { fromPredicate, none } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
 
 import { PartialFunction1 } from "../util/function";
+import * as ol from "../util/openlayers-compat";
 
 // We veronderstellen dat de extents altijd het linksbovenpunt eerst hebben gevolgd door het rechtsonderpunt. In
 // schermcoördinaten, maw _[0] <= _[2] && _[1] <= _[3].

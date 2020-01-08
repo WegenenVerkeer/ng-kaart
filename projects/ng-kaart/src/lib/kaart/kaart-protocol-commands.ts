@@ -1,9 +1,9 @@
 import { Option } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 
 import { Filter as fltr } from "../filter/filter-model";
 import { Transparantie } from "../transparantieeditor/transparantie";
+import * as ol from "../util/openlayers-compat";
 import { TypedRecord } from "../util/typed-record";
 import { ZoekerMetWeergaveopties, Zoekopdracht, ZoekResultaat } from "../zoeker/zoeker";
 
@@ -212,7 +212,7 @@ export interface VraagSchaalAanCmd<Msg extends KaartMsg> {
 
 export interface VoegSchaalToeCmd<Msg extends KaartMsg> {
   readonly type: "VoegSchaalToe";
-  readonly target: Option<Element>;
+  readonly target: Option<HTMLElement>;
   readonly wrapper: BareValidationWrapper<Msg>;
 }
 
@@ -746,7 +746,7 @@ export function HaalFilterTotaalOp<Msg extends KaartMsg>(titel: string, wrapper:
 }
 
 export function VoegSchaalToeCmd<Msg extends KaartMsg>(
-  target: Option<Element>,
+  target: Option<HTMLElement>,
   wrapper: BareValidationWrapper<Msg>
 ): VoegSchaalToeCmd<Msg> {
   return { type: "VoegSchaalToe", target, wrapper };

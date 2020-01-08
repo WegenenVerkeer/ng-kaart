@@ -1,6 +1,5 @@
 import { Component, EventEmitter, Injector, Input, OnInit, Output } from "@angular/core";
 import { none, Option } from "fp-ts/lib/Option";
-import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { identity, merge } from "rxjs";
 import { distinctUntilChanged, map, switchMap, takeUntil } from "rxjs/operators";
@@ -9,11 +8,11 @@ import { StartTekenen, StopTekenen, TekenenCommand, TekenSettings } from "../../
 import * as prt from "../../kaart/kaart-protocol";
 import * as ss from "../../kaart/stijl-selector";
 import { TekenenUiSelector } from "../../kaart/tekenen/kaart-teken-laag.component";
+import * as ol from "../../util/openlayers-compat";
 import { collect, ofType } from "../../util/operators";
 import { ClassicBaseComponent } from "../classic-base.component";
 import { classicMsgSubscriptionCmdOperator } from "../kaart-classic.component";
 import { KaartClassicMsg, TekenGeomAangepastMsg } from "../messages";
-
 import * as val from "../webcomponent-support/params";
 
 @Component({
@@ -31,7 +30,7 @@ export class KaartTekenComponent extends ClassicBaseComponent implements OnInit 
       this.tekenenCommandSubj.next(
         StartTekenen(
           TekenSettings(
-            this.geometryType,
+            this.geometryTypeValue,
             this.geometry,
             ss.asStyleSelector(this.laagStyle),
             ss.asStyleSelector(this.drawStyle),
@@ -49,8 +48,40 @@ export class KaartTekenComponent extends ClassicBaseComponent implements OnInit 
     this.tekenenCommandSubj.next(command);
   }
 
+  private geometryTypeValue: ol.geom.GeometryType = ol.geom.GeometryType.LINE_STRING;
+
   @Input()
-  private geometryType: ol.geom.GeometryType = "LineString";
+  set geometryType(geomType: string) {
+    switch (geomType) {
+      case "Point":
+        this.geometryTypeValue = ol.geom.GeometryType.POINT;
+        break;
+      case "LineString":
+        this.geometryTypeValue = ol.geom.GeometryType.LINE_STRING;
+        break;
+      case "LinearRing":
+        this.geometryTypeValue = ol.geom.GeometryType.LINEAR_RING;
+        break;
+      case "Polygon":
+        this.geometryTypeValue = ol.geom.GeometryType.POLYGON;
+        break;
+      case "MultiPoint":
+        this.geometryTypeValue = ol.geom.GeometryType.MULTI_POINT;
+        break;
+      case "MultiLineString":
+        this.geometryTypeValue = ol.geom.GeometryType.MULTI_LINE_STRING;
+        break;
+      case "MultiPolygon":
+        this.geometryTypeValue = ol.geom.GeometryType.MULTI_POLYGON;
+        break;
+      case "GeometryCollection":
+        this.geometryTypeValue = ol.geom.GeometryType.GEOMETRY_COLLECTION;
+        break;
+      case "Circle":
+        this.geometryTypeValue = ol.geom.GeometryType.CIRCLE;
+        break;
+    }
+  }
 
   @Input()
   private laagStyle;

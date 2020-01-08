@@ -1,6 +1,7 @@
 import { InjectionToken } from "@angular/core";
 import { Function1 } from "fp-ts/lib/function";
-import * as ol from "openlayers";
+
+import * as ol from "../util/openlayers-compat";
 
 export const KAART_CFG = new InjectionToken<KaartConfig>("kaartcfg");
 
