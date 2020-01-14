@@ -192,7 +192,8 @@ export class ZoekerGoogleWdbService implements Zoeker {
   private zoek$(zoekterm: ZoekInput, zoektype: Zoektype, maxResultaten: number): rx.Observable<ZoekAntwoord> {
     switch (zoekterm.type) {
       case "string":
-        if (!zoekterm.value || zoekterm.value.trim().length === 0) {
+        if (!zoekterm.value || zoekterm.value.trim().length < 3) {
+          // zoek pas vanaf 3 chars, das langer dan de default, maar google searches kosten geld
           return rx.of(new ZoekAntwoord(this.naam(), "Volledig", [], [], this.legende));
         }
         const body = new URLSearchParams();
