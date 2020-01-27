@@ -30,35 +30,37 @@
     <awv-kaart-teken-laag *ngIf="aanwezigeElementen.has('Kaarttekenen')"></awv-kaart-teken-laag>
     <awv-kaart-multi-teken-laag *ngIf="aanwezigeElementen.has('MultiKaarttekenen')"></awv-kaart-multi-teken-laag>
   </div>
-  <div class="overlay-container" *ngIf="aanwezigeElementen$ | async as aanwezigeElementen">
-    <div id="overlay">
-      <div class="kaart-rechts-onderaan">
-        <div class="kaart-interacties">
-          <awv-kaart-achtergrond-selector class="kaart-achtergrond-selector"
-            *ngIf="aanwezigeElementen.has('Achtergrondkeuze')"></awv-kaart-achtergrond-selector>
-          <div class="kaart-controls">
-            <awv-kaart-rotatie></awv-kaart-rotatie>
-            <awv-kaart-open-street-view *ngIf="aanwezigeElementen.has('Streetview')"></awv-kaart-open-street-view>
-            <awv-kaart-meten *ngIf="aanwezigeElementen.has('Meten')"></awv-kaart-meten>
-            <awv-kaart-multi-meten *ngIf="aanwezigeElementen.has('MultiMeten')"></awv-kaart-multi-meten>
-            <awv-kaart-mijn-locatie *ngIf="aanwezigeElementen.has('Mijnlocatie')"></awv-kaart-mijn-locatie>
-            <awv-kaart-mijn-mobiele-locatie *ngIf="aanwezigeElementen.has('MijnMobielelocatie')">
-            </awv-kaart-mijn-mobiele-locatie>
-            <awv-kaart-zoom *ngIf="aanwezigeElementen.has('Zoomknoppen')"></awv-kaart-zoom>
-            <awv-kaart-bevragen *ngIf="aanwezigeElementen.has('Bevraagkaart')"></awv-kaart-bevragen>
-            <awv-identify *ngIf="aanwezigeElementen.has('Identify')"></awv-identify>
-            <awv-markeer-kaartklik *ngIf="aanwezigeElementen.has('MarkeerKaartklik')"></awv-markeer-kaartklik>
+  <ng-container *ngIf="aanwezigeElementen$ | async as aanwezigeElementen">
+    <div class="overlay-container" *ngIf="aanwezigeElementen.size > 0">
+      <div id="overlay">
+        <div class="kaart-rechts-onderaan">
+          <div class="kaart-interacties">
+            <awv-kaart-achtergrond-selector class="kaart-achtergrond-selector"
+              *ngIf="aanwezigeElementen.has('Achtergrondkeuze')"></awv-kaart-achtergrond-selector>
+            <div class="kaart-controls">
+              <awv-kaart-rotatie></awv-kaart-rotatie>
+              <awv-kaart-open-street-view *ngIf="aanwezigeElementen.has('Streetview')"></awv-kaart-open-street-view>
+              <awv-kaart-meten *ngIf="aanwezigeElementen.has('Meten')"></awv-kaart-meten>
+              <awv-kaart-multi-meten *ngIf="aanwezigeElementen.has('MultiMeten')"></awv-kaart-multi-meten>
+              <awv-kaart-mijn-locatie *ngIf="aanwezigeElementen.has('Mijnlocatie')"></awv-kaart-mijn-locatie>
+              <awv-kaart-mijn-mobiele-locatie *ngIf="aanwezigeElementen.has('MijnMobielelocatie')">
+              </awv-kaart-mijn-mobiele-locatie>
+              <awv-kaart-zoom *ngIf="aanwezigeElementen.has('Zoomknoppen')"></awv-kaart-zoom>
+              <awv-kaart-bevragen *ngIf="aanwezigeElementen.has('Bevraagkaart')"></awv-kaart-bevragen>
+              <awv-identify *ngIf="aanwezigeElementen.has('Identify')"></awv-identify>
+              <awv-markeer-kaartklik *ngIf="aanwezigeElementen.has('MarkeerKaartklik')"></awv-markeer-kaartklik>
+            </div>
+          </div>
+          <div class="kaart-footer-info" [ngClass]="{ 'tabel-geopend': (tabelGeopend$ | async)}">
+            <awv-copyright *ngIf="aanwezigeElementen.has('Copyright')"></awv-copyright>
+            <awv-voorwaarden *ngIf="aanwezigeElementen.has('Voorwaarden')"></awv-voorwaarden>
+            <awv-schaal *ngIf="aanwezigeElementen.has('Schaal')"></awv-schaal>
           </div>
         </div>
-        <div class="kaart-footer-info" [ngClass]="{ 'tabel-geopend': (tabelGeopend$ | async)}">
-          <awv-copyright *ngIf="aanwezigeElementen.has('Copyright')"></awv-copyright>
-          <awv-voorwaarden *ngIf="aanwezigeElementen.has('Voorwaarden')"></awv-voorwaarden>
-          <awv-schaal *ngIf="aanwezigeElementen.has('Schaal')"></awv-schaal>
-        </div>
       </div>
+      <ng-container>
+        <awv-feature-tabel-inklap *ngIf="aanwezigeElementen.has('FeatureTabel')"></awv-feature-tabel-inklap>
+      </ng-container>
     </div>
-    <ng-container>
-      <awv-feature-tabel-inklap *ngIf="aanwezigeElementen.has('FeatureTabel')"></awv-feature-tabel-inklap>
-    </ng-container>
-  </div>
+  </ng-container>
 </div>
