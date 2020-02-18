@@ -1,12 +1,12 @@
 import { Option } from "fp-ts/lib/Option";
-import { concatMap, filter, map } from "rxjs/operators";
+import { filter, map } from "rxjs/operators";
 
 import { toOlFeature } from "../util/feature";
 import { fetchObs$ } from "../util/fetch-with-timeout";
 import * as ol from "../util/openlayers-compat";
 import { urlWithParams } from "../util/url";
 
-import { featureDelimiter, getWithCommonHeaders, mapToFeatureCollection, split } from "./nosql-fs-source";
+import { featureDelimiter, getWithCommonHeaders, getWithoutHeaders, mapToFeatureCollection, split } from "./nosql-fs-source";
 
 export function wfsSource(
   laagnaam: string,
@@ -15,7 +15,8 @@ export function wfsSource(
   typenames: string,
   baseUrl: string,
   geomField: string,
-  cqlFilter: Option<string>
+  cqlFilter: Option<string>,
+  cors: boolean
 ): ol.source.Vector {
   const maybeEncodedFilter = cqlFilter.map(f => ` AND (${f})`).map(encodeURIComponent);
   const precalculatedUrl = urlWithParams(baseUrl, {
@@ -29,14 +30,16 @@ export function wfsSource(
   function load(extent: ol.Extent) {
     const extentUrl = `${precalculatedUrl}&cql_filter=bbox(${geomField},${extent.join(",")})`;
     const composedQueryUrl = maybeEncodedFilter.fold(extentUrl, encodedFilter => extentUrl + encodedFilter);
-    const feature$ = fetchObs$(composedQueryUrl, getWithCommonHeaders()).pipe(
+    const features$ = fetchObs$(composedQueryUrl, cors ? getWithoutHeaders() : getWithCommonHeaders()).pipe(
       split(featureDelimiter),
       filter(lijn => lijn.trim().length > 0),
       mapToFeatureCollection,
-      concatMap(featureCollection => featureCollection.features),
-      map(toOlFeature(laagnaam))
+      map(featureCollection => featureCollection.features)
     );
-    feature$.subscribe(f => source.addFeature(f));
+    features$.subscribe(features => {
+      source.clear();
+      source.addFeatures(features.map(toOlFeature(laagnaam)));
+    });
   }
 
   const source = new ol.source.Vector({

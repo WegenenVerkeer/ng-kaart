@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8" />
+    <title>Webcomponent</title>
+    <base href="." />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+    <style>
+      html,
+      body {
+        margin: 0px;
+        font-size: 14px;
+        font-family: Roboto, "Helvetica Neue", sans-serif;
+        height: 100%;
+      }
+    </style>
+    <script>
+      window.onload = () => {
+        const kaartElement = document.getElementById("k1");
+        kaartElement.addEventListener("extentChange", function(event) { console.log("***** extent", event.detail);});
+        kaartElement.addEventListener("zoomChange", function(event) { console.log("***** zoom ", event.detail);});
+        kaartElement.addEventListener("geselecteerdeFeaturesChange", function(event) { console.log("Features geselecteerd", event.detail);});
+      };
+    </script>
+  </head>
+
+  <body>
+    <awv-kaart-classic id="k1" zoom="2" selectie-modus="single" produceer-geojson-output="true">
+      <awv-kaart-lagenkiezer verwijderbare-lagen="true" verplaatsbare-lagen="true" toon-legende="false"></awv-kaart-lagenkiezer>
+      <awv-kaart-tilecache-laag titel="Dienstkaart grijs" laag-naam="dienstkaart-grijs"></awv-kaart-tilecache-laag>
+      <awv-kaart-standaard-interacties focus-voor-zoom="false"></awv-kaart-standaard-interacties>
+      <awv-kaart-multi-meet-knop toon-info-boodschap="true"></awv-kaart-multi-meet-knop>
+
+      <awv-kaart-wfs-laag titel="Werven - clustering" type-names="awv:Werf_Innames_middelpunten" geom="geometry" zichtbaar="true" groep="Voorgrond.Hoog"
+                          url="https://opendata.apps.mow.vlaanderen.be/opendata-geoserver/awv/wfs"
+                          cors="true"
+                          min-zoom="0"
+                          max-zoom="4"
+                          cql-filter="Inname_tot_datum AFTER 2020-02-14T10:40:31 and Inname_van_datum BEFORE 2020-05-14T10:40:31"
+                          cluster-distance="50"
+                          cluster-text-color = "navy"
+                          cluster-circle-color = "dodgerblue"
+                          cluster-circle-stroke-color = "navy"
+                          cluster-size-factor = "0.1"
+                          stijl-spec='
+                            {
+                              "type": "StaticStyle",
+                              "definition": {
+                                        "circle": { "radius": 4, "fill": { "color": "dodgerblue" }, "stroke": { "color": "#171F8F", "width": 2 } },
+                                        "fill": { "color": "dodgerblue" },
+                                        "stroke": { "color": "#171F8F", "width": 2 }
+                                      },
+                              "version": "awv-v0"
+                            }'
+      ></awv-kaart-wfs-laag>
+
+      <awv-kaart-wfs-laag titel="Werven - details" type-names="awv:Werf_Innames" geom="geometry" zichtbaar="true" groep="Voorgrond.Hoog"
+                          cql-filter="Inname_tot_datum AFTER 2020-02-14T10:40:31 and Inname_van_datum BEFORE 2020-05-14T10:40:31"
+                          url="https://opendata.apps.mow.vlaanderen.be/opendata-geoserver/awv/wfs"
+                          cors="true"
+                          min-zoom="5"
+                          stijl-spec='
+                            {
+                              "type": "StaticStyle",
+                              "definition": {
+                                        "circle": { "radius": 4, "fill": { "color": "dodgerblue" }, "stroke": { "color": "#171F8F", "width": 2 } },
+                                        "fill": { "color": "dodgerblue" },
+                                        "stroke": { "color": "#171F8F", "width": 2 }
+                                      },
+                              "version": "awv-v0"
+                            }'
+      ></awv-kaart-wfs-laag>
+
+      <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+      <awv-kaart-streetview></awv-kaart-streetview>
+      <awv-kaart-schaal></awv-kaart-schaal>
+      <awv-kaart-voorwaarden titel="Hello"></awv-kaart-voorwaarden>
+      <awv-kaart-copyright copyright="BoeBoe"></awv-kaart-copyright>
+
+    </awv-kaart-classic>
+  </body>
+
+</html>

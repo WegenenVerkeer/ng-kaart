@@ -5,12 +5,16 @@
 * webcomponent: is de wrapper en de demo in angular context.
 * webcomponentdemo: is de puur html/js (dus zonder angular) demo van de webcomponent
 
-Builden via npm run build:elements
+Builden via npm run build:elements (om dist/webcomponent/ng-kaart-webcomponent.js aan te maken)
 
 Start via 
-```
+
 docker-compose -f docker-compose-tunnel.yml 
 npm run start-wc-apigateway
-```
 
-Om te testen, ga naar respectievelijk http://apigateway/ng-kaart/webcomponent/index.html en http://apigateway/ng-kaart/webcomponentdemo/index.html
+## Publishen naar npm
+
+npm run build:elements
+npm run publishToNpmjs
+cd dist/webcomponent/
+npm publish --public

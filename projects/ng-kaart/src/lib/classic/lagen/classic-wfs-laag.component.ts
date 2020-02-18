@@ -21,6 +21,7 @@ export class ClassicWfsLaagComponent extends ClassicVectorLaagLikeComponent {
   _geom = "the_geom";
   _typeNames: Option<string> = none;
   _cqlFilter: Option<string> = none;
+  _cors = false;
 
   constructor(injector: Injector) {
     super(injector);
@@ -61,6 +62,16 @@ export class ClassicWfsLaagComponent extends ClassicVectorLaagLikeComponent {
     this._geom = fromNullable(param).getOrElse(this._geom);
   }
 
+  /**
+   * If cors is set to true, we don't include the credentials: "include" header since this doesn't play well with
+   * Access-Control-Allow-Origin wildcard setting (CORS: Cannot use wildcard in Access-Control-Allow-Origin when credentials flag is true)
+   * @param cors
+   */
+  @Input()
+  set cors(cors: boolean) {
+    this._cors = fromNullable(cors).getOrElse(this._cors);
+  }
+
   createLayer(): ke.VectorLaag {
     return {
       type: ke.VectorType,
@@ -74,7 +85,8 @@ export class ClassicWfsLaagComponent extends ClassicVectorLaagLikeComponent {
         }),
         this._url,
         this._geom,
-        this._cqlFilter
+        this._cqlFilter,
+        this._cors
       ),
       clusterDistance: this._clusterDistance,
       styleSelector: this.getMaybeStyleSelector(),

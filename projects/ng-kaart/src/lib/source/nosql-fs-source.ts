@@ -102,6 +102,10 @@ const cacheCredentials: () => RequestInit = () => ({
   credentials: "include" // essentieel om ACM Authenticatie cookies mee te sturen
 });
 
+export const getWithoutHeaders: () => RequestInit = () => ({
+  method: "GET"
+});
+
 export const getWithCommonHeaders: () => RequestInit = () => ({
   ...cacheCredentials(),
   method: "GET"
