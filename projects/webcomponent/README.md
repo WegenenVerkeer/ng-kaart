@@ -14,7 +14,11 @@ npm run start-wc-apigateway
 
 ## Publishen naar npm
 
-npm run build:elements
-npm run publishToNpmjs
-cd dist/webcomponent/
-npm publish --public
+Eerst:  
+    npm adduser --registry=https://registry.npmjs.org/
+
+Dan:
+    npm run build:elements
+    npm run publishToNpmjs
+    cd dist/webcomponent/
+    npm publish --public
