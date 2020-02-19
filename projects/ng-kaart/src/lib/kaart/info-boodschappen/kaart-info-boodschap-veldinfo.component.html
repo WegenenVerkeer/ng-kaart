@@ -65,7 +65,7 @@
       <div class="veldwaarde">{{dateWaarde(veld)}} <span *ngIf="!validDateWaarde(veld)" class="badParse" matTooltip="waarde kan niet als datum geïnterpreteerd worden">{{waarde(veld)}}</span></div>
     </div>
   </div>
-  
+
   <div class="booleanwaarden" *ngFor="let veld of booleanEigenschappen()">
     <div class="veldnamen">
       <div class="veldnaam">
@@ -119,17 +119,6 @@
     </div>
     <div class="veldwaarden">
       <div class="veldwaarde">{{dateWaarde(veld)}} <span *ngIf="!validDateWaarde(veld)" class="badParse" matTooltip="waarde kan niet als datum geïnterpreteerd worden">{{waarde(veld)}}</span></div>
-    </div>
-  </div>
-
-  <div class="velden" *ngFor="let veld of geavanceerdeDateTimeEigenschappen()">
-    <div class="veldnamen">
-      <div class="veldnaam">
-        {{ label(veld) }}
-      </div>
-    </div>
-    <div class="veldwaarden">
-      <div class="veldwaarde">{{dateTimeWaarde(veld)}}<span *ngIf="!validDateTimeWaarde(veld)" class="badParse" matTooltip="waarde kan niet als datum/tijd geïnterpreteerd worden">{{waarde(veld)}}</span></div>
     </div>
   </div>
 
