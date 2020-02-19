@@ -85,7 +85,7 @@ export interface WmtsLaag {
   readonly verwijderd: boolean;
 }
 
-export type VeldType = "string" | "integer" | "double" | "geometry" | "date" | "datetime" | "boolean" | "json" | "url";
+export type VeldType = "string" | "integer" | "double" | "geometry" | "date" | "boolean" | "json" | "url";
 
 export interface VeldInfo {
   readonly naam: string; // naam zoals gekend in de feature
@@ -96,9 +96,9 @@ export interface VeldInfo {
   readonly template?: string;
   readonly html?: string;
   readonly uniekeWaarden?: string[];
-  readonly parseFormat?: string; // voor date en datetime. Alle formats zijn Luxon specs.
-  readonly displayFormat?: string; // voor date en datetime
-  readonly sqlFormat?: string; // voor date en datetime
+  readonly parseFormat?: string; // voor date. Alle formats zijn Luxon specs.
+  readonly displayFormat?: string; // voor date
+  readonly sqlFormat?: string; // voor date
   readonly isGeenLocatieVeld?: boolean; // beschouw veld niet als deel van de weglocatie informatie
 }
 

@@ -55,7 +55,6 @@ export namespace Row {
           string: () => option.some(value.toString()),
           boolean: () => option.some(value !== 0),
           date: () => fromTimestamp(value),
-          datetime: () => fromTimestamp(value),
           fallback: () => option.none
         })(veldinfo);
       }
@@ -74,7 +73,6 @@ export namespace Row {
           string: () => option.some(value),
           boolean: () => option.some(value !== ""),
           date: () => parseDate(option.fromNullable(veldinfo.parseFormat))(value), // we zouden kunnen afronden
-          datetime: () => parseDate(option.fromNullable(veldinfo.parseFormat))(value),
           fallback: () => option.none
         })(veldinfo);
       }

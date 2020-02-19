@@ -37,7 +37,6 @@ export namespace FieldSelection {
   const hasSupportedType: (vi: ke.VeldInfo) => boolean = ke.VeldInfo.matchWithFallback({
     boolean: () => true,
     date: () => true,
-    datetime: () => true,
     double: () => true,
     integer: () => true,
     string: () => true,

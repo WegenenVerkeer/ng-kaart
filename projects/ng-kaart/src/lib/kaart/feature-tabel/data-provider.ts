@@ -182,7 +182,7 @@ export namespace PageFetcher {
       integer: () => ord.ordNumber,
       double: () => ord.ordNumber,
       boolean: () => ord.getDualOrd(ord.ordBoolean), // Hack: omdat JA < NEEN, maar false < true
-      // TODO + date en datetime -> parse + ordNumber
+      // TODO + date -> parse + ordNumber
       fallback: () => ord.ordString
     })(sorting.veldinfo);
   const sortingToOrd: Function1<FieldSorting, Ord<ol.Feature>> = sorting =>

@@ -70,7 +70,6 @@ const isType: Function1<string, Function2<VeldinfoMap, string, boolean>> = type 
 
 const isBooleanVeld: Function2<VeldinfoMap, string, boolean> = isType("boolean");
 const isDateVeld: Function2<VeldinfoMap, string, boolean> = isType("date");
-const isDateTimeVeld: Function2<VeldinfoMap, string, boolean> = isType("datetime");
 
 // indien geen meta informatie functie, toon alle velden
 const isBasisVeld: Function2<VeldinfoMap, string, boolean> = hasVeldSatisfying(veldInfo => veldInfo.isBasisVeld);
@@ -261,7 +260,6 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
         !this.isLinkVeld(veldnaam) &&
         !isBooleanVeld(this.veldbeschrijvingen, veldnaam) &&
         !isDateVeld(this.veldbeschrijvingen, veldnaam) &&
-        !isDateTimeVeld(this.veldbeschrijvingen, veldnaam) &&
         (!this.teVerbergenProperties.includes(veldnaam) || this.isGeenLocatieVeld(veldnaam))
     );
   }
@@ -284,15 +282,6 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
     );
   }
 
-  dateTimeEigenschappen(): string[] {
-    return this.eigenschappen(
-      veldnaam =>
-        isBasisVeld(this.veldbeschrijvingen, veldnaam) &&
-        isDateTimeVeld(this.veldbeschrijvingen, veldnaam) &&
-        !this.teVerbergenProperties.includes(veldnaam)
-    );
-  }
-
   linkEigenschappen(): string[] {
     return this.eigenschappen(
       veldnaam =>
@@ -310,7 +299,6 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
         !isBasisVeld(this.veldbeschrijvingen, veldnaam) &&
         !isBooleanVeld(this.veldbeschrijvingen, veldnaam) &&
         !isDateVeld(this.veldbeschrijvingen, veldnaam) &&
-        !isDateTimeVeld(this.veldbeschrijvingen, veldnaam) &&
         !this.isLinkVeld(veldnaam) &&
         !this.teVerbergenProperties.includes(veldnaam)
     );
@@ -330,15 +318,6 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
       veldnaam =>
         !isBasisVeld(this.veldbeschrijvingen, veldnaam) &&
         isDateVeld(this.veldbeschrijvingen, veldnaam) &&
-        !this.teVerbergenProperties.includes(veldnaam)
-    );
-  }
-
-  geavanceerdeDateTimeEigenschappen(): string[] {
-    return this.eigenschappen(
-      veldnaam =>
-        !isBasisVeld(this.veldbeschrijvingen, veldnaam) &&
-        isDateTimeVeld(this.veldbeschrijvingen, veldnaam) &&
         !this.teVerbergenProperties.includes(veldnaam)
     );
   }
