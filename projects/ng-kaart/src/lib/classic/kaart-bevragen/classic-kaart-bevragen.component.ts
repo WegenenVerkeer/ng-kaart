@@ -20,6 +20,7 @@ export class ClassicKaartBevragenComponent extends ClassicUIElementSelectorCompo
   private _zoekAfstand = 25;
   private _infoServicesOnderdrukt = false;
   private _kaartBevragenOnderdrukt = false;
+  private _onderdrukInfoBoodschappen = false;
 
   /** De unit van de zoekAfstand: "Meter" of "Pixel", default is "Meter" */
   @Input()
@@ -43,6 +44,11 @@ export class ClassicKaartBevragenComponent extends ClassicUIElementSelectorCompo
     this._kaartBevragenOnderdrukt = val.bool(value, this._kaartBevragenOnderdrukt);
   }
 
+  @Input()
+  set onderdrukInfoBoodschappen(value: boolean) {
+    this._onderdrukInfoBoodschappen = val.bool(value, this._onderdrukInfoBoodschappen);
+  }
+
   constructor(injector: Injector) {
     super(BevraagKaartUiSelector, injector);
   }
@@ -51,7 +57,8 @@ export class ClassicKaartBevragenComponent extends ClassicUIElementSelectorCompo
     return {
       zoekAfstand: ZoekAfstand(this._unit, this._zoekAfstand),
       infoServiceOnderdrukt: this._infoServicesOnderdrukt,
-      kaartBevragenOnderdrukt: this._kaartBevragenOnderdrukt
+      kaartBevragenOnderdrukt: this._kaartBevragenOnderdrukt,
+      onderdrukInfoBoodschappen: this._onderdrukInfoBoodschappen
     };
   }
 }

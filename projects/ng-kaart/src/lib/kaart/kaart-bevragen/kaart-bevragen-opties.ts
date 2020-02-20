@@ -44,6 +44,7 @@ export interface BevraagKaartOpties {
   readonly zoekAfstand: ZoekAfstand;
   readonly kaartBevragenOnderdrukt: boolean;
   readonly infoServiceOnderdrukt: boolean;
+  readonly onderdrukInfoBoodschappen: boolean;
 }
 
 export namespace BevraagKaartOpties {

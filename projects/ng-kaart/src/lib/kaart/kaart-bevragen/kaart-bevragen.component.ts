@@ -3,6 +3,7 @@ import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
 import { left, right } from "fp-ts/lib/Either";
 import * as option from "fp-ts/lib/Option";
 import { none } from "fp-ts/lib/Option";
+import { Tuple } from "fp-ts/lib/Tuple";
 import * as ol from "openlayers";
 import * as rx from "rxjs";
 import { catchError, debounceTime, filter, map, mergeAll, scan, startWith, switchMap, timeoutWith } from "rxjs/operators";
@@ -35,7 +36,8 @@ const defaultOptions: BevraagKaartOpties = {
     waarde: 25
   },
   kaartBevragenOnderdrukt: false,
-  infoServiceOnderdrukt: false
+  infoServiceOnderdrukt: false,
+  onderdrukInfoBoodschappen: false
 };
 
 // Deze component zorgt voor het klikken op de kaart _naast_ een feature. Het is deze component die de service calls
@@ -142,7 +144,10 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
                       geklikteLocatie$.pipe(
                         switchMap(locatie =>
                           allSvcCalls(lgn, svcs, locatie.coordinate, zoekAfstand, options) //
-                            .pipe(scan(srv.merge))
+                            .pipe(
+                              scan(srv.merge),
+                              map(locatieInfo => new Tuple<srv.LocatieInfo, BevraagKaartOpties>(locatieInfo, options))
+                            )
                         )
                       )
                     )
@@ -154,10 +159,14 @@ export class KaartBevragenComponent extends KaartModusComponent implements OnIni
         ),
         observeOnAngular(this.zone)
       )
-    ).subscribe((msg: srv.LocatieInfo) => {
+    ).subscribe(tuple => {
+      const msg = tuple.fst;
+      const options = tuple.snd;
       const adres = msg.adres;
       const wegLocaties = msg.weglocaties;
-      this.toonInfoBoodschap(msg.kaartLocatie, adres, wegLocaties, msg.lagenLocatieInfo);
+      if (!options.onderdrukInfoBoodschappen) {
+        this.toonInfoBoodschap(msg.kaartLocatie, adres, wegLocaties, msg.lagenLocatieInfo);
+      }
       this.publiceerInfoBoodschap(msg.timestamp, msg.kaartLocatie, adres, wegLocaties, msg.lagenLocatieInfo);
     });
   }
