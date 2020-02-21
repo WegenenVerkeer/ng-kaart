@@ -155,6 +155,7 @@ export namespace LaagModel {
     const wegLabel = "Ident8";
     const lijnAfstandLabels = ["Van refpunt", "Van afst", "Tot refpunt", "Tot afst"];
     const puntAfstandLabels = ["Refpunt", "Afstand"];
+    const puntLabelsAlternatief = ["Positie"];
     const maybeWegKey = array.findFirst(veldinfos, vi => vi.label === wegLabel).map(ke.VeldInfo.veldnaamLens.get);
 
     const syntheticLocattionFieldKey = "syntheticLocation";
@@ -179,14 +180,18 @@ export namespace LaagModel {
       const lijnValueGen = (wegValue: string) => (distances: number[]): string =>
         `${wegValue} van ${distance(distances[0], distances[1])} tot ${distance(distances[2], distances[3])}`;
       const puntValueGen = (wegValue: string) => (distances: number[]): string => `${wegValue} ${distance(distances[0], distances[1])}`;
+      const puntAlternatiefValueGen = (wegValue: string) => (positie: number[]): string => `${wegValue} ${positie}`;
 
       const allLijnLabelsPresent = arrays.containsAll(ordString)(veldlabels, lijnAfstandLabels);
-      const allPuntLabelsPresent = arrays.containsAll(ordString)(veldlabels, puntAfstandLabels);
+      const allPuntAfstandLabelsPresent = arrays.containsAll(ordString)(veldlabels, puntAfstandLabels);
+      const allPuntLabelsPresent = arrays.containsAll(ordString)(veldlabels, puntLabelsAlternatief);
 
       const [locationLabels, locationValueGen]: [string[], Curried2<string, number[], string>] = allLijnLabelsPresent
         ? [lijnAfstandLabels, lijnValueGen]
-        : allPuntLabelsPresent
+        : allPuntAfstandLabelsPresent
         ? [puntAfstandLabels, puntValueGen]
+        : allPuntLabelsPresent
+        ? [puntLabelsAlternatief, puntAlternatiefValueGen]
         : [[], () => () => ""];
 
       const locationKeys = array.array.filterMap(locationLabels, label =>

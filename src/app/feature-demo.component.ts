@@ -608,6 +608,153 @@ export class FeatureDemoComponent {
 
   offlineGeselecteerdeFeatures: ol.Feature[] = [];
 
+  readonly referentiepuntenVeldinfos: VeldInfo[] = [
+    {
+      isBasisVeld: false,
+      label: "ID",
+      naam: "id",
+      type: "string"
+    },
+    {
+      isBasisVeld: false,
+      label: "Ident8",
+      naam: "locatie.ident8",
+      type: "string"
+    },
+    {
+      isBasisVeld: false,
+      label: "Opschrift",
+      naam: "locatie.opschrift",
+      type: "double"
+    },
+    {
+      isBasisVeld: true,
+      label: "Positie",
+      naam: "locatie.positie",
+      type: "double"
+    },
+    {
+      isBasisVeld: false,
+      label: "Opnamedatum",
+      naam: "opnamedatum",
+      sqlFormat: "DD/MM/YYYY",
+      type: "date"
+    },
+    {
+      isBasisVeld: false,
+      label: "Wijzigingsdatum",
+      naam: "wijzigingsdatum",
+      sqlFormat: "DD/MM/YYYY",
+      type: "date"
+    },
+    {
+      isBasisVeld: false,
+      label: "Materiaal",
+      naam: "materiaalpaal.naam",
+      type: "string",
+      uniekeWaarden: []
+    },
+    {
+      isBasisVeld: true,
+      label: "Geldig beide richtingen",
+      naam: "geldigBeideRichtingen",
+      type: "boolean"
+    },
+    {
+      isBasisVeld: false,
+      label: "Opmerking",
+      naam: "opmerking",
+      type: "string"
+    },
+    {
+      isBasisVeld: false,
+      label: "Begindatum",
+      naam: "begindatum",
+      sqlFormat: "DD/MM/YYYY",
+      type: "date"
+    },
+    {
+      isBasisVeld: false,
+      label: "Creatiedatum",
+      naam: "creatiedatum",
+      sqlFormat: "DD/MM/YYYY",
+      type: "date"
+    },
+    {
+      isBasisVeld: false,
+      label: "Gebruiker",
+      naam: "gebruiker",
+      type: "string"
+    },
+    {
+      isBasisVeld: false,
+      label: "Gebied",
+      naam: "gebied",
+      type: "string",
+      uniekeWaarden: []
+    },
+    {
+      isBasisVeld: false,
+      label: "Bebouwde kom",
+      naam: "bebouwdekom",
+      type: "string"
+    },
+    {
+      isBasisVeld: false,
+      label: "Wegcategorie",
+      naam: "wegcategorie",
+      type: "string",
+      uniekeWaarden: []
+    }
+  ];
+
+  readonly kunstwerkenVeldinfos: VeldInfo[] = [
+    {
+      isBasisVeld: false,
+      label: "UIDN",
+      naam: "UIDN",
+      type: "string"
+    },
+    {
+      isBasisVeld: false,
+      label: "OIDN",
+      naam: "OIDN",
+      type: "string"
+    },
+    {
+      isBasisVeld: true,
+      label: "Type",
+      naam: "LBLTYPE",
+      type: "string",
+      uniekeWaarden: []
+    },
+    {
+      isBasisVeld: true,
+      label: "Vorm",
+      naam: "LBLVORM",
+      type: "string",
+      uniekeWaarden: []
+    },
+    {
+      isBasisVeld: false,
+      label: "Lengte (m)",
+      naam: "LENGTE",
+      type: "double"
+    },
+    {
+      isBasisVeld: false,
+      label: "Opname datum",
+      naam: "OPNDATUM",
+      type: "string"
+    },
+    {
+      isBasisVeld: false,
+      label: "Oppervlakte (m^2)",
+      naam: "OPPERVL",
+      type: "double"
+    }
+  ];
+
   readonly fietspadenVeldinfos: VeldInfo[] = [
     { isBasisVeld: false, label: "ID", naam: "id", type: "string" },
     { isBasisVeld: true, label: "Ident8", naam: "ident8", type: "string" },
