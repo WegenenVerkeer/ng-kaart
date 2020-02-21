@@ -2,7 +2,7 @@ import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import * as ol from "projects/ng-kaart/src/lib/util/openlayers-compat";
 import * as rx from "rxjs";
-import { map, switchMap } from "rxjs/operators";
+import { catchError, map, switchMap } from "rxjs/operators";
 
 import { Point, PuntLocatieReferentie, Validation, Wegsegment, WegsegmentPuntLocatie } from "./locatieservices2-api-model";
 
@@ -62,7 +62,11 @@ export class LocatieServices2Service {
     return this.zoekPuntLocatieViaXY(x, y).pipe(
       switchMap(weglocatie =>
         this.zoekWegsegment(weglocatie.wegsegmentId.oidn).pipe(map(wegSegment => ({ wegsegment: wegSegment, locatie: weglocatie })))
-      )
+      ),
+      catchError(error => {
+        alert(error.statusText);
+        return rx.throwError(error);
+      })
     );
   }
 
@@ -74,7 +78,11 @@ export class LocatieServices2Service {
         this.zoekPuntLocatiesViaXYOpWegsegment(x, y, segmenten.map(segment => segment.wegsegmentId.oidn)).pipe(
           map(locaties => this.combineLocatiesMetWegsegmenten(locaties, segmenten))
         )
-      )
+      ),
+      catchError(error => {
+        alert(error.statusText);
+        return rx.throwError(error);
+      })
     );
   }
 }
