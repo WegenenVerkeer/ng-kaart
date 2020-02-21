@@ -13,7 +13,7 @@ import { isNumber } from "util";
 import { Filter, FilterTotaal, match as FilterTotaalMatch, TotaalOpgehaald } from "../../filter";
 import { NosqlFsSource } from "../../source";
 import * as arrays from "../../util/arrays";
-import { formateerDate, formateerDateTime } from "../../util/date-time";
+import { formateerDate } from "../../util/date-time";
 import { equalToString } from "../../util/equal";
 import { Feature } from "../../util/feature";
 import { PartialFunction2 } from "../../util/function";
@@ -250,14 +250,12 @@ export namespace LaagModel {
     Field.modify
   );
   const formatDate = (format: Option<string>): Endomorphism<Field> => Field.modify(formateerDate(format));
-  const formatDateTime = (format: Option<string>): Endomorphism<Field> => Field.modify(formateerDateTime(format));
   const rowFormat: Function1<ke.VeldInfo, Option<Endomorphism<Field>>> = vi =>
     ke.VeldInfo.matchWithFallback({
       boolean: () => option.some(formatBoolean),
       integer: () => option.some(formatInteger(option.fromNullable(vi.displayFormat))),
       double: () => option.some(formatDouble(option.fromNullable(vi.displayFormat))),
       date: () => option.some(formatDate(option.fromNullable(vi.displayFormat))),
-      datetime: () => option.some(formatDateTime(option.fromNullable(vi.displayFormat))),
       fallback: () => option.none
     })(vi);
   const rowFormatsFromVeldinfos: Function1<ke.VeldInfo[], FieldsFormatSpec> = veldinfos =>

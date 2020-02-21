@@ -779,21 +779,25 @@ export class FeatureDemoComponent {
       isBasisVeld: true,
       label: "Vanaf",
       naam: "vandatum",
-      type: "datetime",
+      type: "date",
+      parseFormat: "yyyy-LL-dd'T'hh:mm:ss",
       displayFormat: "dd/LL/yyyy hh:mm"
     },
     {
       isBasisVeld: true,
       label: "Tot",
       naam: "totdatum",
-      type: "datetime",
+      type: "date",
+      parseFormat: "yyyy-LL-dd'T'hh:mm:ss",
       displayFormat: "dd/LL/yyyy hh:mm"
     },
     {
       isBasisVeld: true,
       label: "Gewijzigd",
       naam: "gewijzigd_op",
-      type: "datetime"
+      type: "date",
+      parseFormat: "yyyy-LL-dd'T'hh:mm:ss",
+      displayFormat: "dd/LL/yyyy hh:mm"
     }
   ];
 

@@ -81,7 +81,6 @@ export class FilterTermComponent extends KaartChildComponentBase {
               this.operator = binaryDateComparisonOperatorMapping[term.operator];
               return formateerDate(option.some("dd/MM/yyyy"))(literal.value as DateTime);
             },
-            datetime: () => "-", // nog niet ondersteund
             range: literal => formatRelativeDateRange(literal.value as fltr.RelativeDateRange)
           })(term.value);
         }

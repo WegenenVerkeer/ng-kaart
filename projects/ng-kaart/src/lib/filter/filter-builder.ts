@@ -93,7 +93,7 @@ export namespace FilterEditor {
     readonly values: RangeValue[];
   }
 
-  export type DateType = "date" | "datetime";
+  export type DateType = "date";
 
   export interface DateValueSelector {
     readonly kind: "date";
@@ -228,7 +228,7 @@ export namespace FilterEditor {
 
   type SimplePropertyType = Exclude<fltr.TypeType, "range">;
   const isAcceptedVeldType: Refinement<ke.VeldType, SimplePropertyType> = (t): t is SimplePropertyType =>
-    array.elem(eq.eqString)(t, ["string", "boolean", "double", "integer", "date", "datetime"]);
+    array.elem(eq.eqString)(t, ["string", "boolean", "double", "integer", "date"]);
 
   const asAcceptedVeldType: PartialFunction1<ke.VeldType, fltr.TypeType> = option.fromRefinement(isAcceptedVeldType);
 
@@ -352,7 +352,6 @@ export namespace FilterEditor {
     fltr.matchTypeTypeWithFallback({
       string: () => typedComparisonOperator(stringOperatorMap, operator, literal.type),
       date: () => typedComparisonOperator(dateOperatorMap, operator, literal.type),
-      datetime: () => typedComparisonOperator(dateOperatorMap, operator, literal.type),
       integer: () => typedComparisonOperator(integerOperatorMap, operator, literal.type),
       double: () => typedComparisonOperator(doubleOperatorMap, operator, literal.type),
       boolean: () => typedComparisonOperator(booleanOperatorMap, operator, literal.type),
@@ -413,7 +412,6 @@ export namespace FilterEditor {
     fltr.matchTypeTypeWithFallback({
       string: () => OperatorsAndValueSelector(stringOperators, FreeInputValueSelector("string")),
       date: () => OperatorsAndValueSelector(dateOperators, DateValueSelector("date")),
-      datetime: () => OperatorsAndValueSelector(dateOperators, DateValueSelector("datetime")),
       double: () => OperatorsAndValueSelector(doubleOperators, FreeInputValueSelector("double")),
       integer: () => OperatorsAndValueSelector(integerOperators, FreeInputValueSelector("integer")),
       boolean: () => OperatorsAndValueSelector(booleanOperators, EmptyValueSelector),
@@ -424,7 +422,6 @@ export namespace FilterEditor {
     fltr.matchTypeTypeWithFallback({
       string: () => OperatorsAndValueSelector(stringOperators, bestStringValueSelector(property, operator)),
       date: () => OperatorsAndValueSelector(dateOperators, bestDateValueSelector(operator)),
-      datetime: () => OperatorsAndValueSelector(dateOperators, DateValueSelector("datetime")),
       double: () => OperatorsAndValueSelector(doubleOperators, FreeInputValueSelector("double")),
       integer: () => OperatorsAndValueSelector(integerOperators, FreeInputValueSelector("integer")),
       boolean: () => OperatorsAndValueSelector(booleanOperators, EmptyValueSelector),
@@ -491,7 +488,6 @@ export namespace FilterEditor {
         fltr.matchTypeTypeWithFallback<TermEditor>({
           string: () => toValueSelection(selection, binOp, bestStringValueSelector(selection.selectedProperty, binOp), caseSensitive),
           date: () => toValueSelection(selection, binOp, bestDateValueSelector(binOp), caseSensitive),
-          datetime: () => toValueSelection(selection, binOp, DateValueSelector("datetime"), caseSensitive),
           double: () => toValueSelection(selection, binOp, FreeInputValueSelector("double"), caseSensitive),
           integer: () => toValueSelection(selection, binOp, FreeInputValueSelector("integer"), caseSensitive),
           boolean: () => booleanCompleted(selection, binOp),
@@ -510,7 +506,7 @@ export namespace FilterEditor {
 
     // in theorie zouden we meer constraints kunnen hebben
     const validateText: SelectedValueChecker = option.fromPredicate(selectedValue =>
-      ["string", "datetime"].includes(selectedValue.valueType) ? selectedValue.value.toString().length > 0 : true
+      ["string"].includes(selectedValue.valueType) ? selectedValue.value.toString().length > 0 : true
     );
 
     // Wanneer de datum correct is, komt die binnen als een Literal met een type "date". Maar als dat niet zo is met

@@ -57,7 +57,6 @@ export namespace FilterCql {
     integer: integerGenerator,
     double: doubleGenerator,
     date: dateTimeGenerator,
-    datetime: dateTimeGenerator,
     range: () => none
   });
 
@@ -146,7 +145,6 @@ export namespace FilterCql {
       fltr.matchTypeTypeWithFallback({
         string: () => stringBinaryOperator(expr.property, expr.operator, expr.value, expr.caseSensitive),
         date: () => datetimeBinaryOperator(expr.property, expr.operator, expr.value),
-        datetime: () => datetimeBinaryOperator(expr.property, expr.operator, expr.value),
         double: () => numberBinaryOperator(expr.property, expr.operator, expr.value),
         integer: () => numberBinaryOperator(expr.property, expr.operator, expr.value),
         boolean: () => numberBinaryOperator(expr.property, expr.operator, expr.value),

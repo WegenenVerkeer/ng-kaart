@@ -104,7 +104,7 @@ export const optExtent: OptionalParamGetter<ol.Extent> = getOptionalParameter(ex
 export const stringArray: ParamGetter<string[]> = getParameter(json.arr(json.str));
 
 const veldInfoInter: json.Interpreter<ke.VeldInfo> = json.interpretUndefinedRecord({
-  type: json.field("type", json.enu("string", "integer", "double", "geometry", "date", "datetime", "boolean", "json", "url")),
+  type: json.field("type", json.enu("string", "integer", "double", "geometry", "date", "boolean", "json", "url")),
   naam: json.field("naam", json.str),
   label: json.field("label", json.str),
   isBasisVeld: json.field("isBasisVeld", json.bool),

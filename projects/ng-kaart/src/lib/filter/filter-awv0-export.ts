@@ -15,7 +15,6 @@ export namespace FilterText {
   const literalText: Generator<fltr.Literal> = fltr.matchLiteral({
     boolean: b => (b ? "waar" : "vals"),
     date: d => d.toString(),
-    datetime: d => d.toString(),
     range: r => {
       const range = r.value as fltr.Range;
       return `${range.magnitude} ${range.unit}`;

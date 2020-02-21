@@ -20,7 +20,6 @@ export namespace AwvV0FilterInterpreters {
     "double",
     "integer",
     "date",
-    "datetime",
     "boolean",
     "range"
   );
@@ -60,7 +59,6 @@ export namespace AwvV0FilterInterpreters {
             })
         )
       ),
-    datetime: lit => oi.succeed(lit), // TODO parse
     double: lit => oi.succeed(lit),
     integer: lit => oi.succeed(lit),
     string: lit => oi.succeed(lit),

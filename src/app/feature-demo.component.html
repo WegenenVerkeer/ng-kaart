@@ -266,7 +266,7 @@
         <awv-multi-meet-knop [toonInfoBoodschap]="isOptieActief('metenToon')" *ngIf="isOptieActief('meten')" [keuzemogelijkheidTonen]="isOptieActief('keuzemogelijkheidTonen')" [metRouting]="isOptieActief('metRouting')"></awv-multi-meet-knop>
         <awv-kaart-teken></awv-kaart-teken>
         <awv-kaart-zoomknoppen *ngIf="isOptieActief('zoomknoppen')"></awv-kaart-zoomknoppen>
-        <awv-bevraag-kaart *ngIf="isOptieActief('bevraagkaart')"></awv-bevraag-kaart>
+        <awv-bevraag-kaart [onderdrukInfoBoodschappen]="isOptieActief('onderdrukKaartBevragenBoodschappen')" *ngIf="isOptieActief('bevraagkaart')"></awv-bevraag-kaart>
         <!-- kaartinfo -->
         <awv-kaart-copyright *ngIf="isOptieActief('copyright')"></awv-kaart-copyright>
         <awv-kaart-voorwaarden *ngIf="isOptieActief('voorwaarden')" [titel]="voorwaarden"></awv-kaart-voorwaarden>

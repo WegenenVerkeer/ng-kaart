@@ -118,13 +118,6 @@
                   <mat-datepicker #picker></mat-datepicker>
                   <mat-error *ngIf="datumWaardeControl.invalid">{{errorDateWaarde()}}</mat-error>
                 </mat-form-field>
-
-                <mat-form-field *ngSwitchCase="'datetime'" class="filter-waarde-datum">
-                  <input matInput [matDatepicker]="picker" placeholder="Kies een tijdstip"  [formControl]="datumWaardeControl">
-                  <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
-                  <mat-datepicker #picker></mat-datepicker>
-                  <mat-error *ngIf="datumWaardeControl.invalid">{{errorDateWaarde()}}</mat-error>
-                </mat-form-field>
             </ng-container>
             <span *ngSwitchCase="'empty'" class="filter-waarde-editbox"></span>
           </ng-container>

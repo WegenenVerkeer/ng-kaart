@@ -408,7 +408,7 @@ export class NosqlFsSource extends ol.source.Vector {
     });
   }
 
-  private composedFilter(respectUserFilterActivity: boolean): Option<string> {
+  public composedFilter(respectUserFilterActivity: boolean): Option<string> {
     const userFilter = this.applicableUserFilter(respectUserFilterActivity);
     return this.baseFilter.foldL(
       () => userFilter, //

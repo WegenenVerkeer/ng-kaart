@@ -89,7 +89,7 @@ export namespace Filter {
   }
 
   // De ondersteunde propertytypes. Dit is niet helemaal gelijk aan de types in VeldInfo (+ range, - json, etc.)
-  export type TypeType = "string" | "integer" | "double" | "date" | "datetime" | "boolean" | "range";
+  export type TypeType = "string" | "integer" | "double" | "date" | "boolean" | "range";
 
   const propertyAndValueTypeEqual: Predicate<PropertyValueOperator> = pvo => pvo.property.type === pvo.value.type;
   const propertyAndValueNumericCompatible: Predicate<PropertyValueOperator> = pvo =>
