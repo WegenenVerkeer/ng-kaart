@@ -181,6 +181,7 @@ export namespace LaagModel {
         `${wegValue} van ${distance(distances[0], distances[1])} tot ${distance(distances[2], distances[3])}`;
       const puntValueGen = (wegValue: string) => (distances: number[]): string => `${wegValue} ${distance(distances[0], distances[1])}`;
       const puntAlternatiefValueGen = (wegValue: string) => (positie: number[]): string => `${wegValue} ${positie}`;
+      const enkelDeWegValueGen = (wegValue: string) => (): string => `${wegValue}`;
 
       const allLijnLabelsPresent = arrays.containsAll(ordString)(veldlabels, lijnAfstandLabels);
       const allPuntAfstandLabelsPresent = arrays.containsAll(ordString)(veldlabels, puntAfstandLabels);
@@ -192,6 +193,8 @@ export namespace LaagModel {
         ? [puntAfstandLabels, puntValueGen]
         : allPuntLabelsPresent
         ? [puntLabelsAlternatief, puntAlternatiefValueGen]
+        : maybeWegKey.isSome
+        ? [[], enkelDeWegValueGen]
         : [[], () => () => ""];
 
       const locationKeys = array.array.filterMap(locationLabels, label =>

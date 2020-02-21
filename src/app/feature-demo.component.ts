@@ -608,6 +608,63 @@ export class FeatureDemoComponent {
 
   offlineGeselecteerdeFeatures: ol.Feature[] = [];
 
+  readonly snelheidsregimesVeldinfos: VeldInfo[] = [
+    {
+      isBasisVeld: false,
+      label: "ID",
+      naam: "id",
+      type: "string"
+    },
+    {
+      isBasisVeld: false,
+      label: "Wegsegment ID",
+      naam: "wegsegmentId",
+      type: "string"
+    },
+    {
+      isBasisVeld: false,
+      label: "ID vorige wegsegment",
+      naam: "vorigeWegsegmentId",
+      type: "string"
+    },
+    {
+      isBasisVeld: true,
+      label: "Bepalende bord",
+      naam: "bepalendBordCode",
+      type: "string"
+    },
+    {
+      isBasisVeld: false,
+      label: "Gescheiden rijbaan geen autostrade?",
+      naam: "gescheidenrijbaan",
+      type: "boolean"
+    },
+    {
+      isBasisVeld: false,
+      label: "Wegcategorie autosnelweg?",
+      naam: "autosnelweg",
+      type: "boolean"
+    },
+    {
+      isBasisVeld: false,
+      label: "Zone",
+      naam: "zones",
+      type: "string"
+    },
+    {
+      isBasisVeld: true,
+      label: "Ident8",
+      naam: "ident8",
+      type: "string"
+    },
+    {
+      isBasisVeld: true,
+      label: "Snelheid",
+      naam: "snelheid",
+      type: "integer"
+    }
+  ];
+
   readonly referentiepuntenVeldinfos: VeldInfo[] = [
     {
       isBasisVeld: false,
