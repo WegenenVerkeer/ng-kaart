@@ -127,7 +127,25 @@
       <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !elisaSectie.sectieZichtbaar }">visibility</span>
     </div>
   </div>
+
+  <!-- locatieservices 2.0 -->
+  <div (click)="locatieservicesSectie.toggleSectieZichtbaar()" class="titel">
+    Locatieservices 2.0
+    <span class="material-icons" *ngIf="locatieservicesSectie.sectieZichtbaar">expand_less</span>
+    <span class="material-icons" *ngIf="!locatieservicesSectie.sectieZichtbaar">expand_more</span>
+  </div>
+  <div *ngIf="locatieservicesSectie.sectieZichtbaar" [@enterAnimation]>
+    <div (click)="weglocatieSectie.toggleSectieZichtbaar();scrollTo('weglocatie')" class="sub-titel">
+      Zoek nabije weglocatie
+      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !weglocatieSectie.sectieZichtbaar }">visibility</span>
+    </div>
+    <div (click)="wegenSectie.toggleSectieZichtbaar();scrollTo('wegen')" class="sub-titel">
+      Zoek nabije wegen
+      <span class="material-icons" [ngClass]="{ 'niet-zichtbaar': !wegenSectie.sectieZichtbaar }">visibility</span>
+    </div>
+  </div>
 </div>
+
 <div class="test-app-content">
   <div id="top" class="test-app-titel">
     AWV common kaart component (Angular)
@@ -1016,4 +1034,157 @@
     </div>
 
   </awv-test-sectie>
+
+  <!-- Locatie services 2.0 -->
+  <awv-test-sectie sectieId="locatieservices" sectieTitel="Locatieservices 2.0" [bevatSubSecties]="true" #locatieservicesSectie class="locatieservices">
+
+    <div [style.display]="locatieservicesSectie.sectieZichtbaar ? 'block' : 'none'">
+
+      <awv-test-sectie sectieId="weglocatie" sectieTitel="Zoek nabije weglocatie" [subSectie]="true" #weglocatieSectie
+                       [sectieZichtbaar]="locatieservicesSectie.sectieZichtbaar && weglocatieSectie.sectieZichtbaar">
+        <div *ngIf="weglocatieSectie.sectieZichtbaar" [@enterAnimation] style="height: 600px">
+          <awv-kaart-classic [naam]="'weglocatie'" [mijnLocatieZoom]="10" [zoom]="10" [middelpunt]="[105276.44958413398, 190557.14389873593]" (kaartClick)="onWegLocatieClick($event)">
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
+            <awv-kaart-blanco-laag [titel]="'Leeg'"></awv-kaart-blanco-laag>
+            <awv-kaart-zoeker></awv-kaart-zoeker>
+            <awv-kaart-knop-achtergrondlaag-kiezer></awv-kaart-knop-achtergrondlaag-kiezer>
+            <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
+            <awv-kaart-streetview></awv-kaart-streetview>
+            <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+            <awv-meet-knop [toonInfoBoodschap]="true"></awv-meet-knop>
+            <awv-kaart-copyright></awv-kaart-copyright>
+            <awv-kaart-voorwaarden [titel]="voorwaarden"></awv-kaart-voorwaarden>
+            <awv-kaart-schaal></awv-kaart-schaal>
+          </awv-kaart-classic>
+        </div>
+        <div class="parameters">
+          <mat-checkbox [(ngModel)]="enkelRelatievePosities">Enkel AWV wegen</mat-checkbox>
+        </div>
+        <div *ngIf="(wegLocatie$ | async) as wegLocatie else geenLocatie" class="resultaat">
+          <div *ngIf="wegLocatie.locatie.relatief">
+            <b>Puntlocatie op genummerde weg:</b>
+            <table>
+              <thead>
+                <tr>
+                  <th>Ws_oidn</th>
+                  <th>Wegnummmer</th>
+                  <th>Refpunt</th>
+                  <th>Afstand</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>{{wegLocatie.wegsegment.wegsegmentId.oidn}}</td>
+                  <td>{{wegLocatie.locatie.relatief.wegnummer.nummer}}</td>
+                  <td>{{wegLocatie.locatie.relatief.referentiepunt.opschrift}}</td>
+                  <td>{{wegLocatie.locatie.relatief.afstand}}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div *ngIf="!wegLocatie.locatie.relatief">
+            <div *ngIf="!enkelRelatievePosities else geenLocatie">
+              <b>Puntlocatie op niet-genummerde weg:</b>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Ws_oidn</th>
+                    <th>Straatnaam (links)</th>
+                    <th>Straatnaam (rechts)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>{{wegLocatie.wegsegment.wegsegmentId.oidn}}</td>
+                    <td>{{wegLocatie.wegsegment.linkerStraatnaam}}</td>
+                    <td>{{wegLocatie.wegsegment.rechterStraatnaam}}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </awv-test-sectie>
+
+      <awv-test-sectie sectieId="wegen" sectieTitel="Zoek nabije wegen" [subSectie]="true" #wegenSectie
+                       [sectieZichtbaar]="locatieservicesSectie.sectieZichtbaar && wegenSectie.sectieZichtbaar">
+        <div *ngIf="wegenSectie.sectieZichtbaar" [@enterAnimation] style="height: 600px">
+          <awv-kaart-classic [naam]="'wegen'" [mijnLocatieZoom]="10" [zoom]="10" [middelpunt]="[105276.44958413398, 190557.14389873593]" (kaartClick)="onWegenClick($event)">
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
+            <awv-kaart-tilecache-laag [titel]="'Dienstkaart kleur'" [laagNaam]="'dienstkaart-kleur'"></awv-kaart-tilecache-laag>
+            <awv-kaart-blanco-laag [titel]="'Leeg'"></awv-kaart-blanco-laag>
+            <awv-kaart-zoeker></awv-kaart-zoeker>
+            <awv-kaart-knop-achtergrondlaag-kiezer></awv-kaart-knop-achtergrondlaag-kiezer>
+            <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
+            <awv-kaart-streetview></awv-kaart-streetview>
+            <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
+            <awv-meet-knop [toonInfoBoodschap]="true"></awv-meet-knop>
+            <awv-kaart-copyright></awv-kaart-copyright>
+            <awv-kaart-voorwaarden [titel]="voorwaarden"></awv-kaart-voorwaarden>
+            <awv-kaart-schaal></awv-kaart-schaal>
+          </awv-kaart-classic>
+        </div>
+        <div class="parameters">
+          <mat-checkbox [(ngModel)]="enkelGenummerdeWegen">Enkel AWV wegen</mat-checkbox>
+          <mat-form-field>
+            <mat-label>Zoekafstand (m)</mat-label>
+            <input matInput type="number" [(ngModel)]="zoekAfstandWegen">
+          </mat-form-field>
+        </div>
+  
+        <div *ngIf="(wegen$ | async) as wegLocaties else geenLocatie" class="resultaat">
+          <div *ngIf="(genummerdeWegen$ | async) as genummerdeWegen">
+            <div *ngIf="genummerdeWegen && genummerdeWegen.length > 0">
+              <b>Nabije genummerde wegen:</b>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Ws_oidn</th>
+                    <th>Wegnummmer</th>
+                    <th>Morfologie</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let weg of genummerdeWegen">
+                    <td>{{weg.wegsegment.wegsegmentId.oidn}}</td>
+                    <td>{{weg.locatie.relatief.wegnummer.nummer}}</td>
+                    <td>{{weg.wegsegment.morfologie}}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div *ngIf="(nietGenummerdeWegen$ | async) as nietGenummerdeWegen" class="resultaat">
+            <div *ngIf="nietGenummerdeWegen && nietGenummerdeWegen.length > 0 && !enkelGenummerdeWegen">
+              <b>Nabije niet-genummerde wegen:</b>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Ws_oidn</th>
+                    <th>Straatnaam (links)</th>
+                    <th>Straatnaam (rechts)</th>
+                    <th>Morfologie</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let weg of nietGenummerdeWegen">
+                    <td>{{weg.wegsegment.wegsegmentId.oidn}}</td>
+                    <td>{{weg.wegsegment.linkerStraatnaam}}</td>
+                    <td>{{weg.wegsegment.rechterStraatnaam}}</td>
+                    <td>{{weg.wegsegment.morfologie}}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>  
+      </awv-test-sectie>
+    </div>
+    <ng-template #geenLocatie>
+      <div class="resultaat">
+        <i>Klik een locatie aan op de kaart.</i>
+      </div>
+    </ng-template>
+</awv-test-sectie>
 </div>
