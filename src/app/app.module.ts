@@ -2,14 +2,7 @@ import { registerLocaleData } from "@angular/common";
 import localeBe from "@angular/common/locales/nl-BE";
 import { NgModule } from "@angular/core";
 import { FormsModule } from "@angular/forms";
-import {
-  MatButtonToggleModule,
-  MatCheckboxModule,
-  MatDialogModule,
-  MatFormFieldModule,
-  MatInputModule,
-  MatSlideToggleModule
-} from "@angular/material";
+import { MatButtonToggleModule, MatDialogModule, MatSlideToggleModule } from "@angular/material";
 import { BrowserModule } from "@angular/platform-browser";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 import { RouterModule } from "@angular/router";
@@ -22,7 +15,6 @@ import { AppComponent, routes } from "./app.component";
 import { AvKaartInnerComponent } from "./av-kaart-inner.component";
 import { AvKaartComponent } from "./av-kaart.component";
 import { FeatureDemoComponent } from "./feature-demo.component";
-import { LocatieServices2Service } from "./locatieservices2.service";
 import { PatKaartComponent } from "./pat-kaart.component";
 import { PerceelPopupComponent } from "./perceel-popup/perceel-popup.component";
 import { ProtractorComponent } from "./protractor.component";
@@ -50,9 +42,6 @@ registerLocaleData(localeBe);
     ClassicModule,
     FormsModule,
     MatDialogModule,
-    MatCheckboxModule,
-    MatInputModule,
-    MatFormFieldModule,
     RouterModule.forRoot(routes),
     ZoekerModule.forRoot({
       googleWdb: {
@@ -68,7 +57,7 @@ registerLocaleData(localeBe);
     TransparantieeditorModule,
     ClickOutsideModule
   ],
-  providers: [LocatieServices2Service],
+  providers: [],
   entryComponents: [],
   bootstrap: [AppComponent]
 })

@@ -79,27 +79,3 @@
 .with-padding {
   padding: 4px 0 4px 0;
 }
-
-.locatieservices {
-  .parameters {
-    margin-top: 24px;
-
-    .mat-form-field {
-      margin-left: 16px;
-    }
-  }
-
-  .resultaat {
-    margin-top: 16px;
-
-    table {
-      border-collapse: collapse;
-      margin-top: 16px;
-    }
-    
-    table, th, td {
-      padding: 4px;
-      border: 1px solid black;
-    }
-  }
-}

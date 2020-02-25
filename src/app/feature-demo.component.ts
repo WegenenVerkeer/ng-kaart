@@ -7,7 +7,7 @@ import { CachedFeatureLookup } from "projects/ng-kaart/src/lib/kaart/cache/looku
 import * as ol from "projects/ng-kaart/src/lib/util/openlayers-compat";
 import { urlWithParams } from "projects/ng-kaart/src/lib/util/url";
 import * as rx from "rxjs";
-import { map, reduce, scan, share, shareReplay, startWith, throttleTime } from "rxjs/operators";
+import { reduce, scan, share, startWith, throttleTime } from "rxjs/operators";
 
 import {
   AwvV0DynamicStyle,
@@ -34,7 +34,6 @@ import {
 } from "../../projects/ng-kaart/src/public_api";
 
 import { DummyZoeker } from "./dummy-zoeker";
-import { LocatieServices2Service, WegsegmentEnLocatie } from "./locatieservices2.service";
 import { wkts } from "./wkts";
 
 export interface FietspadSelectie {
@@ -61,11 +60,7 @@ export interface FietspadSelectie {
   encapsulation: ViewEncapsulation.None
 })
 export class FeatureDemoComponent {
-  constructor(
-    private changeDetectorRef: ChangeDetectorRef,
-    private readonly zone: NgZone,
-    private readonly locatieservices2Service: LocatieServices2Service
-  ) {
+  constructor(private changeDetectorRef: ChangeDetectorRef, private readonly zone: NgZone) {
     this.addIcon();
   }
 
@@ -76,14 +71,6 @@ export class FeatureDemoComponent {
   private selectieKaart: KaartClassicComponent;
   @ViewChild("kaartInfoKaart")
   private kaartInfoKaart: KaartClassicComponent;
-
-  zoekAfstandWegen = 100;
-  wegLocatie$: rx.Observable<WegsegmentEnLocatie> = rx.empty();
-  wegen$: rx.Observable<WegsegmentEnLocatie[]> = rx.empty();
-  genummerdeWegen$: rx.Observable<WegsegmentEnLocatie[]> = rx.empty();
-  nietGenummerdeWegen$: rx.Observable<WegsegmentEnLocatie[]> = rx.empty();
-  enkelGenummerdeWegen = false;
-  enkelRelatievePosities = false;
 
   private readonly fietspadStijlDef: AwvV0DynamicStyle = {
     rules: [
@@ -1471,15 +1458,5 @@ export class FeatureDemoComponent {
 
   onPercelenBevragen(info: ClassicLaagKlikInfoEnStatus) {
     console.log("***Percelen info:", info);
-  }
-
-  onWegLocatieClick(coordinate: ol.Coordinate) {
-    this.wegLocatie$ = this.locatieservices2Service.zoekOpWegLocatie(coordinate);
-  }
-
-  onWegenClick(coordinate: ol.Coordinate) {
-    this.wegen$ = this.locatieservices2Service.zoekOpWegen(coordinate, this.zoekAfstandWegen).pipe(shareReplay(1));
-    this.genummerdeWegen$ = this.wegen$.pipe(map(locaties => locaties.filter(locatie => locatie.locatie.relatief)));
-    this.nietGenummerdeWegen$ = this.wegen$.pipe(map(locaties => locaties.filter(locatie => !locatie.locatie.relatief)));
   }
 }
