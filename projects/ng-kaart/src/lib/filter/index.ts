@@ -74,13 +74,14 @@ export class FilterModule {
   }
 }
 
-export * from "./filter-detail.component";
-export * from "./filter-editor.component";
-export * from "./filter-expression.component";
+export * from "./filter-cql";
+export * from "./filter-builder";
 export * from "./filter-model";
 export * from "./filter-persistence";
 export * from "./filter-totaal";
+export * from "./filter-detail.component";
 export * from "./filter-editor.component";
+export * from "./filter-expression.component";
 export * from "./filter-term.component";
 export * from "./querybuilder/filter-conjunction.component";
 export * from "./querybuilder/filter-chip.component";
