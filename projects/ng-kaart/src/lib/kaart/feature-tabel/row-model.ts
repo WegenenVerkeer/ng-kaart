@@ -1,6 +1,6 @@
 import { array, option } from "fp-ts";
 import { Curried2, Endomorphism, FunctionN, not } from "fp-ts/lib/function";
-import { none, Option, some } from "fp-ts/lib/Option";
+import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import { DateTime } from "luxon";
 import { Lens } from "monocle-ts";
 
@@ -106,8 +106,25 @@ export namespace Row {
         : option.none
     );
 
-  const extractField: FunctionN<[Properties, ke.VeldInfo], Field> = (properties, veldinfo) =>
-    Field.create(nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo), none);
+  const extractField: FunctionN<[Properties, ke.VeldInfo], Field> = (properties, veldinfo) => {
+    if (veldinfo.constante) {
+      // haal alle mogelijke tokens die in de constante kunnen zitten, bvb {werfId}
+      const waarde = fromNullable(veldinfo.constante.match(/{(.*?)}/g))
+        .map(tokens =>
+          tokens.reduce(
+            (result, token) =>
+              // token gevonden. eigenschap wordt 'werfId', vervang ze door de waarde van het veld
+              result.replace(token, `${properties[token.slice(1, token.length - 1)]}`),
+            veldinfo.constante!
+          )
+        )
+        .getOrElse(veldinfo.constante);
+
+      return Field.create(some(waarde), none);
+    } else {
+      return Field.create(nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo), none);
+    }
+  };
 
   export const extractFieldValue = (properties: Properties, veldinfo: ke.VeldInfo): Option<ValueType> =>
     nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo);

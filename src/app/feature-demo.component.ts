@@ -919,7 +919,8 @@ export class FeatureDemoComponent {
       isBasisVeld: true,
       label: "Bekijk in AV",
       naam: "link",
-      type: "url"
+      type: "url",
+      html: "Open"
     },
     {
       isBasisVeld: true,

@@ -159,9 +159,9 @@ export namespace LaagModel {
     const puntLabelsAlternatief = ["Positie"];
     const maybeWegKey = array.findFirst(veldinfos, vi => vi.label === wegLabel).map(ke.VeldInfo.veldnaamLens.get);
 
-    const syntheticLocattionFieldKey = "syntheticLocation";
+    const syntheticLocationFieldKey = "syntheticLocation";
     const syntheticFieldSelection = (contributingVeldinfos: ke.VeldInfo[]): FieldSelection => ({
-      name: syntheticLocattionFieldKey,
+      name: syntheticLocationFieldKey,
       label: "Locatie",
       selected: true,
       sortDirection: option.some("ASCENDING" as "ASCENDING"),
@@ -170,7 +170,7 @@ export namespace LaagModel {
     const geenWegLocatieValue = option.some("<Geen weglocatie>");
 
     const noLocationFieldsTransformer = (fs: FieldSelection[]): FieldSelection[] => array.cons(syntheticFieldSelection([]), fs);
-    const noLocationVeldTransformer = Row.addField(syntheticLocattionFieldKey, Field.create(geenWegLocatieValue, none));
+    const noLocationVeldTransformer = Row.addField(syntheticLocationFieldKey, Field.create(geenWegLocatieValue, none));
     const noLocationTransformers = [noLocationFieldsTransformer, noLocationVeldTransformer] as [
       Endomorphism<FieldSelection[]>,
       Endomorphism<Fields>
@@ -223,7 +223,7 @@ export namespace LaagModel {
             .orElse(() => geenWegLocatieValue),
           maybeLink: none
         };
-        return Row.addField(syntheticLocattionFieldKey, locatieField)(row);
+        return Row.addField(syntheticLocationFieldKey, locatieField)(row);
       };
       return [fieldsSelectionTrf, veldTrf] as [Endomorphism<FieldSelection[]>, Endomorphism<Fields>];
     });
