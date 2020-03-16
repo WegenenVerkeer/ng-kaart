@@ -925,9 +925,17 @@ export class FeatureDemoComponent {
     {
       isBasisVeld: true,
       label: "Bekijk",
-      naam: "te_openen",
+      naam: "bekijk",
       constante: "https://localhost/av/test/{nummer};werf=werf%2Fapi%2Fwerf%2F{nummer}",
       type: "url"
+    },
+    {
+      isBasisVeld: true,
+      label: "",
+      html: "{nummer}",
+      naam: "dynamisch",
+      type: "url",
+      constante: "https://localhost/av/test/{nummer};werf=werf%2Fapi%2Fwerf%2F{nummer}"
     }
   ];
 

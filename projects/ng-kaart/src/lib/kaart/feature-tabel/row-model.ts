@@ -106,25 +106,37 @@ export namespace Row {
         : option.none
     );
 
-  const extractField: FunctionN<[Properties, ke.VeldInfo], Field> = (properties, veldinfo) =>
-    fromNullable(veldinfo.constante).foldL<Field>(
-      () => Field.create(nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo), none),
-      constante => {
-        // haal alle mogelijke tokens die in de constante kunnen zitten, bvb {werfId}
-        const waarde = fromNullable(constante.match(/{(.*?)}/g))
-          .map(tokens =>
-            tokens.reduce(
-              (result, token) =>
-                // token gevonden. eigenschap wordt 'werfId', vervang ze door de waarde van het veld
-                result.replace(token, `${properties[token.slice(1, token.length - 1)]}`),
-              constante
-            )
-          )
-          .getOrElse(constante);
+  // haal alle mogelijke tokens die in de constante kunnen zitten, bvb {werfId}
+  const replaceTokens = (input: string, properties: Properties): string =>
+    fromNullable(input.match(/{(.*?)}/g))
+      .map(tokens =>
+        tokens.reduce(
+          (result, token) =>
+            // token gevonden. eigenschap wordt 'werfId', vervang ze door de waarde van het veld
+            result.replace(token, `${properties[token.slice(1, token.length - 1)]}`),
+          input
+        )
+      )
+      .getOrElse(input);
 
-        return Field.create(some(waarde), none);
-      }
+  const extractField: FunctionN<[Properties, ke.VeldInfo], Field> = (properties, veldinfo) => {
+    const veldWaarde = fromNullable(veldinfo.constante).foldL<Option<ValueType>>(
+      () => nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo),
+      html => some(replaceTokens(html, properties))
     );
+
+    return fromNullable(veldinfo.html).foldL<Field>(
+      () => Field.create(veldWaarde, none),
+      html =>
+        Field.create(
+          some(replaceTokens(html, properties)),
+          veldWaarde
+            .filter(isString)
+            .map(value => value as string)
+            .filter(isUrl)
+        )
+    );
+  };
 
   export const extractFieldValue = (properties: Properties, veldinfo: ke.VeldInfo): Option<ValueType> =>
     nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo);
