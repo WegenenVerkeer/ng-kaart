@@ -66,6 +66,11 @@ $footer-height: 48px;
           white-space: nowrap;
         }
 
+        a {
+          text-decoration: none;
+          color: rgba(247, 144, 45, 0.87);
+        }
+
         mat-checkbox + span {
           margin-left: 6px;
         }

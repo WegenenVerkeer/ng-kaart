@@ -1,6 +1,6 @@
 import { array, option } from "fp-ts";
 import { Curried2, Endomorphism, FunctionN, not } from "fp-ts/lib/function";
-import { Option } from "fp-ts/lib/Option";
+import { none, Option, some } from "fp-ts/lib/Option";
 import { DateTime } from "luxon";
 import { Lens } from "monocle-ts";
 
@@ -11,12 +11,14 @@ import { PartialFunction2 } from "../../util/function";
 import { Properties } from "../../util/geojson-types";
 import * as ol from "../../util/openlayers-compat";
 import * as ke from "../kaart-elementen";
+import { kaartLogger } from "../log";
 
 export type ValueType = string | number | boolean | DateTime;
 
-// Zou kunen new-type zijn. Afwachten of er nog properties nuttig zijn
+// Zou kunnen new-type zijn. Afwachten of er nog properties nuttig zijn
 export interface Field {
   readonly maybeValue: Option<ValueType>;
+  readonly maybeLink: Option<string>;
 }
 
 export type Fields = Record<string, Field>;
@@ -35,10 +37,23 @@ export type VeldenFormatter = Endomorphism<Fields>;
 // dezelfde is. Zoals altijd geldt dat een
 export type FieldsFormatSpec = Record<string, Endomorphism<Field>>;
 
-export namespace Field {
-  export const create = (maybeValue: Option<ValueType>): Field => ({ maybeValue });
+const isString = (value: ValueType): boolean => typeof value === "string";
+export const isUrl = (value: string): boolean => value.startsWith("http");
 
-  export const modify = (f: Endomorphism<ValueType>) => (field: Field): Field => Field.create(field.maybeValue.map(f));
+export namespace Field {
+  export const create = (maybeValue: Option<ValueType>, maybeLink: Option<string>): Field => {
+    return {
+      maybeValue: maybeValue,
+      maybeLink: maybeLink.alt(
+        maybeValue
+          .filter(isString)
+          .map(value => value as string)
+          .filter(isUrl)
+      )
+    };
+  };
+
+  export const modify = (f: Endomorphism<ValueType>) => (field: Field): Field => Field.create(field.maybeValue.map(f), field.maybeLink);
 }
 
 export namespace Row {
@@ -71,6 +86,7 @@ export namespace Row {
           integer: () => option.fromPredicate<ValueType>(Number.isInteger)(Number.parseInt(value, 10)),
           double: () => option.fromPredicate(not(Number.isNaN))(Number.parseFloat(value.replace(",", "."))),
           string: () => option.some(value),
+          url: () => option.some(value),
           boolean: () => option.some(value !== ""),
           date: () => parseDate(option.fromNullable(veldinfo.parseFormat))(value), // we zouden kunnen afronden
           fallback: () => option.none
@@ -91,7 +107,7 @@ export namespace Row {
     );
 
   const extractField: FunctionN<[Properties, ke.VeldInfo], Field> = (properties, veldinfo) =>
-    Field.create(nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo));
+    Field.create(nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo), none);
 
   export const extractFieldValue = (properties: Properties, veldinfo: ke.VeldInfo): Option<ValueType> =>
     nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo);

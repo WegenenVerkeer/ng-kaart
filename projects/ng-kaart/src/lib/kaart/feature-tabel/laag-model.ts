@@ -1,7 +1,7 @@
 import { formatNumber } from "@angular/common";
 import { array, option, ord, record, setoid, traversable } from "fp-ts";
 import { Curried2, Endomorphism, flow, Function1, Function2, identity, not, Predicate } from "fp-ts/lib/function";
-import { Option } from "fp-ts/lib/Option";
+import { fromNullable, none, Option } from "fp-ts/lib/Option";
 import { ordString } from "fp-ts/lib/Ord";
 import { pipe } from "fp-ts/lib/pipeable";
 import { getLastSemigroup } from "fp-ts/lib/Semigroup";
@@ -20,6 +20,7 @@ import { PartialFunction2 } from "../../util/function";
 import { arrayTraversal, selectiveArrayTraversal } from "../../util/lenses";
 import * as ol from "../../util/openlayers-compat";
 import * as ke from "../kaart-elementen";
+import { VeldInfo } from "../kaart-elementen";
 import { Viewinstellingen } from "../kaart-protocol-subscriptions";
 import { kaartLogger } from "../log";
 
@@ -35,7 +36,7 @@ import {
   SortDirection
 } from "./data-provider";
 import { FieldSelection } from "./field-selection-model";
-import { Field, Fields, FieldsFormatSpec, Row, ValueType, VeldenFormatter } from "./row-model";
+import { Field, Fields, FieldsFormatSpec, isUrl, Row, ValueType, VeldenFormatter } from "./row-model";
 import { AsyncUpdate, SyncUpdate, Update } from "./update";
 
 export type ViewSourceMode = "Map" | "AllFeatures";
@@ -169,7 +170,7 @@ export namespace LaagModel {
     const geenWegLocatieValue = option.some("<Geen weglocatie>");
 
     const noLocationFieldsTransformer = (fs: FieldSelection[]): FieldSelection[] => array.cons(syntheticFieldSelection([]), fs);
-    const noLocationVeldTransformer = Row.addField(syntheticLocattionFieldKey, Field.create(geenWegLocatieValue));
+    const noLocationVeldTransformer = Row.addField(syntheticLocattionFieldKey, Field.create(geenWegLocatieValue, none));
     const noLocationTransformers = [noLocationFieldsTransformer, noLocationVeldTransformer] as [
       Endomorphism<FieldSelection[]>,
       Endomorphism<Fields>
@@ -219,7 +220,8 @@ export namespace LaagModel {
         const locatieField: Field = {
           maybeValue: maybeWegValue.maybeValue
             .map(wegValue => maybeDistances.fold(`${wegValue}`, locationValueGen(wegValue.toString())))
-            .orElse(() => geenWegLocatieValue)
+            .orElse(() => geenWegLocatieValue),
+          maybeLink: none
         };
         return Row.addField(syntheticLocattionFieldKey, locatieField)(row);
       };
@@ -250,6 +252,24 @@ export namespace LaagModel {
   };
 
   const formatBoolean: Endomorphism<Field> = Field.modify(value => (value ? "JA" : "NEEN"));
+
+  const formatAsUrl = (veldInfo: VeldInfo) => (value: ValueType): string => {
+    try {
+      return isUrl(value as string)
+        ? fromNullable(veldInfo.label)
+            .alt(fromNullable(veldInfo.label))
+            .getOrElse("Open")
+        : (value as string);
+    } catch {
+      kaartLogger.warn(`Waarde ${value} kan niet als een string geïnterpreteerd worden`);
+      return `${value} <i>*</i>`;
+    }
+  };
+
+  const maybeFormatAsUrl = (veldInfo: VeldInfo): Endomorphism<Field> => {
+    return Field.modify(formatAsUrl(veldInfo));
+  };
+
   const formatInteger = (maybeFormat: option.Option<string>): Endomorphism<Field> =>
     option.map(equalToString("#"))(maybeFormat) ? identity : Field.modify(formatNumberSafe("0.0-0"));
   const formatDouble: (maybeFormat: option.Option<string>) => Endomorphism<Field> = flow(
@@ -264,6 +284,8 @@ export namespace LaagModel {
       integer: () => option.some(formatInteger(option.fromNullable(vi.displayFormat))),
       double: () => option.some(formatDouble(option.fromNullable(vi.displayFormat))),
       date: () => option.some(formatDate(option.fromNullable(vi.displayFormat))),
+      string: () => option.some(maybeFormatAsUrl(vi)),
+      url: () => option.some(maybeFormatAsUrl(vi)),
       fallback: () => option.none
     })(vi);
   const rowFormatsFromVeldinfos: Function1<ke.VeldInfo[], FieldsFormatSpec> = veldinfos =>
