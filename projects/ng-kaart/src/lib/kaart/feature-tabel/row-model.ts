@@ -106,25 +106,25 @@ export namespace Row {
         : option.none
     );
 
-  const extractField: FunctionN<[Properties, ke.VeldInfo], Field> = (properties, veldinfo) => {
-    if (veldinfo.constante) {
-      // haal alle mogelijke tokens die in de constante kunnen zitten, bvb {werfId}
-      const waarde = fromNullable(veldinfo.constante.match(/{(.*?)}/g))
-        .map(tokens =>
-          tokens.reduce(
-            (result, token) =>
-              // token gevonden. eigenschap wordt 'werfId', vervang ze door de waarde van het veld
-              result.replace(token, `${properties[token.slice(1, token.length - 1)]}`),
-            veldinfo.constante!
+  const extractField: FunctionN<[Properties, ke.VeldInfo], Field> = (properties, veldinfo) =>
+    fromNullable(veldinfo.constante).foldL<Field>(
+      () => Field.create(nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo), none),
+      constante => {
+        // haal alle mogelijke tokens die in de constante kunnen zitten, bvb {werfId}
+        const waarde = fromNullable(constante.match(/{(.*?)}/g))
+          .map(tokens =>
+            tokens.reduce(
+              (result, token) =>
+                // token gevonden. eigenschap wordt 'werfId', vervang ze door de waarde van het veld
+                result.replace(token, `${properties[token.slice(1, token.length - 1)]}`),
+              constante
+            )
           )
-        )
-        .getOrElse(veldinfo.constante);
+          .getOrElse(constante);
 
-      return Field.create(some(waarde), none);
-    } else {
-      return Field.create(nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo), none);
-    }
-  };
+        return Field.create(some(waarde), none);
+      }
+    );
 
   export const extractFieldValue = (properties: Properties, veldinfo: ke.VeldInfo): Option<ValueType> =>
     nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo);
