@@ -100,7 +100,9 @@ export namespace Row {
   const nestedPropertyValue = (properties: Properties, path: string[], veldinfo: ke.VeldInfo): Option<ValueType> =>
     array.fold(path, option.none, (head, tail) =>
       arrays.isEmpty(tail)
-        ? option.fromNullable(properties[head]).chain(value => matchingTypeValue(value, veldinfo))
+        ? option
+            .fromNullable(properties)
+            .chain(props => option.fromNullable(props[head]).chain(value => matchingTypeValue(value, veldinfo)))
         : typeof properties[head] === "object"
         ? nestedPropertyValue(properties[head] as Properties, tail, veldinfo)
         : option.none
