@@ -1,6 +1,6 @@
 import { array, option } from "fp-ts";
 import { Curried2, Endomorphism, FunctionN, not } from "fp-ts/lib/function";
-import { Option } from "fp-ts/lib/Option";
+import { fromNullable, none, Option, some } from "fp-ts/lib/Option";
 import { DateTime } from "luxon";
 import { Lens } from "monocle-ts";
 
@@ -11,12 +11,14 @@ import { PartialFunction2 } from "../../util/function";
 import { Properties } from "../../util/geojson-types";
 import * as ol from "../../util/openlayers-compat";
 import * as ke from "../kaart-elementen";
+import { kaartLogger } from "../log";
 
 export type ValueType = string | number | boolean | DateTime;
 
-// Zou kunen new-type zijn. Afwachten of er nog properties nuttig zijn
+// Zou kunnen new-type zijn. Afwachten of er nog properties nuttig zijn
 export interface Field {
   readonly maybeValue: Option<ValueType>;
+  readonly maybeLink: Option<string>;
 }
 
 export type Fields = Record<string, Field>;
@@ -35,10 +37,23 @@ export type VeldenFormatter = Endomorphism<Fields>;
 // dezelfde is. Zoals altijd geldt dat een
 export type FieldsFormatSpec = Record<string, Endomorphism<Field>>;
 
-export namespace Field {
-  export const create = (maybeValue: Option<ValueType>): Field => ({ maybeValue });
+const isString = (value: ValueType): boolean => typeof value === "string";
+export const isUrl = (value: string): boolean => value.startsWith("http");
 
-  export const modify = (f: Endomorphism<ValueType>) => (field: Field): Field => Field.create(field.maybeValue.map(f));
+export namespace Field {
+  export const create = (maybeValue: Option<ValueType>, maybeLink: Option<string>): Field => {
+    return {
+      maybeValue: maybeValue,
+      maybeLink: maybeLink.alt(
+        maybeValue
+          .filter(isString)
+          .map(value => value as string)
+          .filter(isUrl)
+      )
+    };
+  };
+
+  export const modify = (f: Endomorphism<ValueType>) => (field: Field): Field => Field.create(field.maybeValue.map(f), field.maybeLink);
 }
 
 export namespace Row {
@@ -71,6 +86,7 @@ export namespace Row {
           integer: () => option.fromPredicate<ValueType>(Number.isInteger)(Number.parseInt(value, 10)),
           double: () => option.fromPredicate(not(Number.isNaN))(Number.parseFloat(value.replace(",", "."))),
           string: () => option.some(value),
+          url: () => option.some(value),
           boolean: () => option.some(value !== ""),
           date: () => parseDate(option.fromNullable(veldinfo.parseFormat))(value), // we zouden kunnen afronden
           fallback: () => option.none
@@ -90,8 +106,43 @@ export namespace Row {
         : option.none
     );
 
-  const extractField: FunctionN<[Properties, ke.VeldInfo], Field> = (properties, veldinfo) =>
-    Field.create(nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo));
+  // haal alle mogelijke tokens die in de constante kunnen zitten
+  // bvb "constante": "http://localhost/werf/schermen/werf/{werfid};werf=werf%2Fapi%2Fwerf%2F{werfid}" naar
+  // "constante": "http://localhost/werf/schermen/werf/123123;werf=werf%2Fapi%2Fwerf%2F123123"
+  const replaceTokens = (input: string, properties: Properties): string =>
+    fromNullable(input.match(/{(.*?)}/g))
+      .map(tokens =>
+        tokens.reduce(
+          (result, token) =>
+            // token gevonden. eigenschap wordt 'werfId', vervang ze door de waarde van het veld
+            result.replace(token, `${properties[token.slice(1, token.length - 1)]}`),
+          input
+        )
+      )
+      .getOrElse(input);
+
+  const extractField: FunctionN<[Properties, ke.VeldInfo], Field> = (properties, veldinfo) => {
+    // extraheer veldwaarde, rekening houdend met 'constante' veld in veldinfo indien aanwezig, krijgt properiteit over veldwaarde zelf
+    // bij tonen in tabel
+    const veldWaarde = fromNullable(veldinfo.constante).foldL<Option<ValueType>>(
+      () => nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo),
+      html => some(replaceTokens(html, properties))
+    );
+
+    // als er een html veld aanwezig is in veldinfo wordt dit gebruikt om te tonen in de tabel. De waarde zelf wordt als link meegegeven
+    // indien dit een link is
+    return fromNullable(veldinfo.html).foldL<Field>(
+      () => Field.create(veldWaarde, none),
+      html =>
+        Field.create(
+          some(replaceTokens(html, properties)),
+          veldWaarde
+            .filter(isString)
+            .map(value => value as string)
+            .filter(isUrl)
+        )
+    );
+  };
 
   export const extractFieldValue = (properties: Properties, veldinfo: ke.VeldInfo): Option<ValueType> =>
     nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo);
