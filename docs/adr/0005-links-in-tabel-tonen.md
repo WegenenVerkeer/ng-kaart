@@ -1,4 +1,4 @@
-# 4. Webcomponent voor classic ng-kaartFeature caching zonder service worker
+# 5. Links in tabel tonen
 
 Date: 15/03/2020
 
