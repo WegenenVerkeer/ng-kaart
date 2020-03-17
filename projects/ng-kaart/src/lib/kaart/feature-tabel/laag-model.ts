@@ -255,11 +255,7 @@ export namespace LaagModel {
 
   const formatAsUrl = (veldInfo: VeldInfo) => (value: ValueType): string => {
     try {
-      return isUrl(value as string)
-        ? fromNullable(veldInfo.label)
-            .alt(fromNullable(veldInfo.label))
-            .getOrElse("Link")
-        : (value as string);
+      return isUrl(value as string) ? fromNullable(veldInfo.label).getOrElse("Link") : (value as string);
     } catch {
       kaartLogger.warn(`Waarde ${value} kan niet als een string geïnterpreteerd worden`);
       return `${value} <i>*</i>`;
