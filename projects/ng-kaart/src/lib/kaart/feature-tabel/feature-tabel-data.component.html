@@ -61,7 +61,7 @@
                   {{ row.velden[header.name].maybeValue.getOrElse("") }}
               </span>
               <span *ngIf="!first && row.velden[header.name].maybeLink.isSome()">
-                  <a href="{{ row.velden[header.name].maybeLink.getOrElse() }}" target="_blank">
+                  <a href="{{ row.velden[header.name].maybeLink.toNullable() }}" target="_blank">
                     {{ row.velden[header.name].maybeValue.getOrElse("") }}
                   </a>
                 </span>
