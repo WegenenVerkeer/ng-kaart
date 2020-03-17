@@ -258,7 +258,7 @@ export namespace LaagModel {
       return isUrl(value as string)
         ? fromNullable(veldInfo.label)
             .alt(fromNullable(veldInfo.label))
-            .getOrElse("Open")
+            .getOrElse("Link")
         : (value as string);
     } catch {
       kaartLogger.warn(`Waarde ${value} kan niet als een string geïnterpreteerd worden`);

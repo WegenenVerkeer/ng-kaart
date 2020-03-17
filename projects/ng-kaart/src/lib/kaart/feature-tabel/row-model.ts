@@ -106,7 +106,9 @@ export namespace Row {
         : option.none
     );
 
-  // haal alle mogelijke tokens die in de constante kunnen zitten, bvb {werfId}
+  // haal alle mogelijke tokens die in de constante kunnen zitten
+  // bvb "constante": "http://localhost/werf/schermen/werf/{werfid};werf=werf%2Fapi%2Fwerf%2F{werfid}" naar
+  // "constante": "http://localhost/werf/schermen/werf/123123;werf=werf%2Fapi%2Fwerf%2F123123"
   const replaceTokens = (input: string, properties: Properties): string =>
     fromNullable(input.match(/{(.*?)}/g))
       .map(tokens =>
@@ -120,11 +122,15 @@ export namespace Row {
       .getOrElse(input);
 
   const extractField: FunctionN<[Properties, ke.VeldInfo], Field> = (properties, veldinfo) => {
+    // extraheer veldwaarde, rekening houdend met 'constante' veld in veldinfo indien aanwezig, krijgt properiteit over veldwaarde zelf
+    // bij tonen in tabel
     const veldWaarde = fromNullable(veldinfo.constante).foldL<Option<ValueType>>(
       () => nestedPropertyValue(properties, veldinfo.naam.split("."), veldinfo),
       html => some(replaceTokens(html, properties))
     );
 
+    // als er een html veld aanwezig is in veldinfo wordt dit gebruikt om te tonen in de tabel. De waarde zelf wordt als link meegegeven
+    // indien dit een link is
     return fromNullable(veldinfo.html).foldL<Field>(
       () => Field.create(veldWaarde, none),
       html =>
