@@ -338,7 +338,7 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
           veldnamen(this.veldbeschrijvingen).reduce((result, eigenschap) => {
             const token = `{${eigenschap}}`;
             // vervang _alle_ tokens met de waarde uit het record
-            return result.includes(token) ? result.split(token).join(`${this.waarde(eigenschap)}`) : result;
+            return result.includes(token) ? result.split(token).join(`${nestedPropertyValue(eigenschap, this.properties)}`) : result;
           }, waarde)
         )
     );
