@@ -901,6 +901,21 @@ export class FeatureDemoComponent {
     { isBasisVeld: false, label: "Gebruiker", naam: "gebruiker", type: "string" }
   ];
 
+  readonly telpostenInfos: VeldInfo[] = [
+    {
+      isBasisVeld: true,
+      label: "Ident8",
+      naam: "ident8",
+      type: "string"
+    },
+    {
+      isBasisVeld: true,
+      label: "Datum recentste meting",
+      naam: "datum_einde_laatste_bestand",
+      type: "date"
+    }
+  ];
+
   readonly adviesInfos: VeldInfo[] = [
     {
       isBasisVeld: true,

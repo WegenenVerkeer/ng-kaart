@@ -81,7 +81,12 @@ export namespace FilterCql {
     operator: fltr.BinaryComparisonOperator,
     literal: fltr.Literal
   ): Option<string> => {
-    const format = property.sqlFormat.getOrElse(defaultSqlFormat);
+    const dateTerm = () =>
+      property.sqlFormat.foldL(
+        () => `${propertyRef(property)}`, // geen sqlFormat, we gaan er van uit dat veld al date is, mogelijk bij flat tables in nosqlfs
+        sqlFormat => `(to_date(${propertyRef(property)}, '${sqlFormat}')`
+      );
+
     return fltr.matchBinaryComparisonOperatorWithFallback({
       within: () =>
         pipe(
@@ -89,9 +94,7 @@ export namespace FilterCql {
           option.fromRefinement(fltr.Range.isRelativeDateRange),
           option.chain(fltr.Range.withinValueToDuration),
           option.map(formateerDateAsDefaultDate),
-          option.map(
-            formattedDate => `(to_date(${propertyRef(property)}, '${format}') >= to_date('${formattedDate}', '${defaultSqlFormat}'))`
-          )
+          option.map(formattedDate => `(${dateTerm()} >= to_date('${formattedDate}', '${defaultSqlFormat}'))`)
         ),
       fallback: () =>
         pipe(
@@ -100,10 +103,7 @@ export namespace FilterCql {
           option.chain(symbol =>
             pipe(
               literalCql(literal),
-              option.map(
-                formattedDate =>
-                  `(to_date(${propertyRef(property)}, '${format}') ${symbol} to_date('${formattedDate}', '${defaultSqlFormat}'))`
-              )
+              option.map(formattedDate => `(${dateTerm()} >= to_date('${formattedDate}', '${defaultSqlFormat}'))`)
             )
           )
         )

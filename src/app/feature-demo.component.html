@@ -356,6 +356,11 @@
                                     [minZoom]="7"
                                     [veldinfos]="adviesInfos"></awv-kaart-nosqlfs-laag>
 
+            <awv-kaart-nosqlfs-laag [titel]="'Enkele lussen SERVO'" [url]="'/geolatte-nosqlfs'"
+                                    [database]="'featureserver'" [collection]="'t_servo_telpost'"
+                                    [minZoom]="7" [view]="null"
+                                    [veldinfos]="telpostenInfos"></awv-kaart-nosqlfs-laag>
+
             <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
             <awv-kaart-schaal></awv-kaart-schaal>
             <awv-kaart-zoomknoppen></awv-kaart-zoomknoppen>
