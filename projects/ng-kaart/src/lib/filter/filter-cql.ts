@@ -103,7 +103,7 @@ export namespace FilterCql {
           option.chain(symbol =>
             pipe(
               literalCql(literal),
-              option.map(formattedDate => `(${dateTerm()} >= to_date('${formattedDate}', '${defaultSqlFormat}'))`)
+              option.map(formattedDate => `(${dateTerm()} ${symbol} to_date('${formattedDate}', '${defaultSqlFormat}'))`)
             )
           )
         )
