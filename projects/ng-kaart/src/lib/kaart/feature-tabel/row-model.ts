@@ -132,17 +132,23 @@ export namespace Row {
     );
 
     // als er een html veld aanwezig is in veldinfo wordt dit gebruikt om te tonen in de tabel. De waarde zelf wordt als link meegegeven
-    // indien dit een link is
+    // indien dit een link is. Voor velden als type url wordt er enkel een waarde getoond indien er een url is
     return fromNullable(veldinfo.html).foldL<Field>(
       () => Field.create(veldWaarde, none),
       html =>
-        Field.create(
-          some(replaceTokens(html, properties)),
-          veldWaarde
-            .filter(isString)
-            .map(value => value as string)
-            .filter(isUrl)
-        )
+        veldinfo.type === "url"
+          ? veldWaarde
+              .filter(isString)
+              .map(value => value as string)
+              .filter(isUrl)
+              .foldL(() => Field.create(none, none), url => Field.create(some(replaceTokens(html, properties)), some(url)))
+          : Field.create(
+              some(replaceTokens(html, properties)),
+              veldWaarde
+                .filter(isString)
+                .map(value => value as string)
+                .filter(isUrl)
+            )
     );
   };
 

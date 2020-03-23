@@ -913,6 +913,13 @@ export class FeatureDemoComponent {
       label: "Datum recentste meting",
       naam: "datum_einde_laatste_bestand",
       type: "date"
+    },
+    {
+      isBasisVeld: true,
+      label: "Rapport 2",
+      naam: "rapport_url_2",
+      type: "url",
+      html: "{telpost_code}-rapport 2"
     }
   ];
 
