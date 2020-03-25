@@ -84,7 +84,7 @@ export namespace FilterCql {
     const dateTerm = () =>
       property.sqlFormat.foldL(
         () => `${propertyRef(property)}`, // geen sqlFormat, we gaan er van uit dat veld al date is, mogelijk bij flat tables in nosqlfs
-        sqlFormat => `(to_date(${propertyRef(property)}, '${sqlFormat}')`
+        sqlFormat => `to_date(${propertyRef(property)}, '${sqlFormat}')`
       );
 
     return fltr.matchBinaryComparisonOperatorWithFallback({
