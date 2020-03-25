@@ -368,7 +368,7 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
     // indien er een 'constante' object in de definitie is, geef dat terug, anders geef de waarde in het veld terug
     return this.constante(veldnaam).getOrElseL(() => {
       const waarde = nestedPropertyValue(veldnaam, this.properties);
-      if (this.hasHtml(veldnaam) && waarde) {
+      if (this.hasHtml(veldnaam) && waarde && this.veldtype(veldnaam) !== "url") {
         return this.sanitizer.bypassSecurityTrustHtml(formateerJson(veldnaam, this.veldtype(veldnaam), waarde, this.html(veldnaam)));
       } else if (this.hasTemplate(veldnaam) && waarde) {
         return formateerJson(veldnaam, this.veldtype(veldnaam), waarde, this.template(veldnaam));
