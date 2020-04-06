@@ -338,7 +338,7 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
           veldnamen(this.veldbeschrijvingen).reduce((result, eigenschap) => {
             const token = `{${eigenschap}}`;
             // vervang _alle_ tokens met de waarde uit het record
-            return result.includes(token) ? result.split(token).join(`${this.waarde(eigenschap)}`) : result;
+            return result.includes(token) ? result.split(token).join(`${nestedPropertyValue(eigenschap, this.properties)}`) : result;
           }, waarde)
         )
     );
@@ -368,7 +368,7 @@ export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase
     // indien er een 'constante' object in de definitie is, geef dat terug, anders geef de waarde in het veld terug
     return this.constante(veldnaam).getOrElseL(() => {
       const waarde = nestedPropertyValue(veldnaam, this.properties);
-      if (this.hasHtml(veldnaam) && waarde) {
+      if (this.hasHtml(veldnaam) && waarde && this.veldtype(veldnaam) !== "url") {
         return this.sanitizer.bypassSecurityTrustHtml(formateerJson(veldnaam, this.veldtype(veldnaam), waarde, this.html(veldnaam)));
       } else if (this.hasTemplate(veldnaam) && waarde) {
         return formateerJson(veldnaam, this.veldtype(veldnaam), waarde, this.template(veldnaam));

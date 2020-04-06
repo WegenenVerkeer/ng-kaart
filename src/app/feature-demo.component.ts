@@ -888,6 +888,66 @@ export class FeatureDemoComponent {
     { isBasisVeld: false, label: "Gebruiker", naam: "gebruiker", type: "string" }
   ];
 
+  readonly telpostenInfos: VeldInfo[] = [
+    {
+      isBasisVeld: true,
+      label: "Ident8",
+      naam: "ident8",
+      type: "string"
+    },
+    {
+      isBasisVeld: true,
+      label: "Datum recentste meting",
+      naam: "datum_einde_laatste_bestand",
+      type: "date"
+    },
+    {
+      isBasisVeld: true,
+      label: "Rapport 2",
+      naam: "rapport_url_2",
+      type: "url",
+      html: "{telpost_code}-rapport 2"
+    }
+  ];
+
+  readonly adviesInfos: VeldInfo[] = [
+    {
+      isBasisVeld: true,
+      label: "Nummer",
+      naam: "nummer",
+      type: "string"
+    },
+    {
+      isBasisVeld: true,
+      label: "Datum advies verzonden",
+      naam: "datumVerzonden",
+      sqlFormat: "YYYY-MM-DD",
+      type: "date"
+    },
+    {
+      isBasisVeld: true,
+      label: "Bekijk in AV",
+      naam: "link",
+      type: "url",
+      html: "Open"
+    },
+    {
+      isBasisVeld: true,
+      label: "Bekijk",
+      naam: "bekijk",
+      constante: "https://localhost/av/test/{nummer};werf=werf%2Fapi%2Fwerf%2F{nummer}",
+      type: "url"
+    },
+    {
+      isBasisVeld: true,
+      label: "",
+      html: "{nummer}",
+      naam: "dynamisch",
+      type: "url",
+      constante: "https://localhost/av/test/{nummer};werf=werf%2Fapi%2Fwerf%2F{nummer}"
+    }
+  ];
+
   readonly staatVanDeWegVeldInfos: VeldInfo[] = [
     { isBasisVeld: false, label: "ID", naam: "id", type: "string" },
     { isBasisVeld: true, label: "Ident8", naam: "ident8", type: "string" },

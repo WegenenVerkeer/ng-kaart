@@ -32,9 +32,13 @@ export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponen
   @Input()
   set refreshTrigger(obs: rx.Observable<void>) {
     this.refreshTriggerSub.unsubscribe();
-    this.refreshTriggerSub = this.bindToLifeCycle(obs).subscribe(() =>
-      forEach(this.laag.chain(ke.asVectorLaag), laag => laag.source.clear())
-    );
+    this.refreshTriggerSub = this.bindToLifeCycle(obs).subscribe(() => {
+      forEach(this.laag.chain(ke.asVectorLaag), laag => {
+        forEach(ke.asNosqlSource(laag.source), source => source.clearPrevExtent());
+        laag.source.clear();
+        laag.source.refresh();
+      });
+    });
   }
 
   _stijlSpec: Option<ss.AwvV0StyleSpec> = none; // heeft voorrang op style

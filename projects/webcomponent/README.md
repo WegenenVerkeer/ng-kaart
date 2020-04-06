@@ -1,9 +1,9 @@
-# ng-kaart wegcomponent
+# ng-kaart webcomponent
 
 ## Algemeen
 
 * webcomponent: is de wrapper en de demo in angular context.
-* webcomponentdemo: is de puur html/js (dus zonder angular) demo van de webcomponent
+* webcomponentdemo: is de puur html/js (dus zonder angular) demo van de webcomponent. Zie readme in /webcomponentdemo om die te testen
 
 Builden via npm run build:elements (om dist/webcomponent/ng-kaart-webcomponent.js aan te maken)
 

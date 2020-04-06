@@ -8,7 +8,7 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, filter, map, shareReplay } from "rxjs/operators";
 
-import { Filter as fltr } from "../filter/filter-model";
+import { Filter } from "../filter/filter-model";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import { isToegevoegdeVectorLaag, ToegevoegdeLaag, ToegevoegdeVectorLaag } from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
@@ -133,7 +133,7 @@ export class LagenkiezerComponent extends KaartChildComponentBase implements OnI
     );
     this.lagenMetFilter$ = this.lagenHoog$.pipe(
       map(lagen => array.filter(lagen, isToegevoegdeVectorLaag)),
-      map(vlagen => array.filter(vlagen, vlaag => fltr.isDefined(vlaag.filterinstellingen.spec)))
+      map(vlagen => array.filter(vlagen, vlaag => Filter.isDefined(vlaag.filterinstellingen.spec)))
     );
 
     this.heeftFilters$ = this.lagenMetFilter$.pipe(

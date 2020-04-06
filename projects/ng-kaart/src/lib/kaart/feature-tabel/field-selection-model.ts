@@ -40,6 +40,7 @@ export namespace FieldSelection {
     double: () => true,
     integer: () => true,
     string: () => true,
+    url: () => true,
     fallback: () => false
   });
 

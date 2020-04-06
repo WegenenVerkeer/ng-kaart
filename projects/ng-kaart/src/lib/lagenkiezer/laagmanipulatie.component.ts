@@ -7,7 +7,7 @@ import { Option } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, sample, shareReplay, startWith, tap } from "rxjs/operators";
 
-import { Filter as fltr } from "../filter/filter-model";
+import { Filter } from "../filter/filter-model";
 import * as FilterTotaal from "../filter/filter-totaal";
 import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
 import * as ke from "../kaart/kaart-elementen";
@@ -148,7 +148,7 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase {
 
     this.heeftFilter$ = voorgrondlaag$.pipe(
       filter(laag => this.laag.titel === laag.titel),
-      map(laag => fltr.isDefined(laag.filterinstellingen.spec)),
+      map(laag => Filter.isDefined(laag.filterinstellingen.spec)),
       startWith(false), // Er moet iets uit de observable komen of hidden wordt nooit gezet
       shareReplay(1)
     );
@@ -245,7 +245,7 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase {
   }
 
   verwijderFilter() {
-    this.dispatch(cmd.ZetFilter(this.laag.titel, fltr.empty(), kaartLogOnlyWrapper));
+    this.dispatch(cmd.ZetFilter(this.laag.titel, Filter.empty(), kaartLogOnlyWrapper));
   }
 
   pasTransparantieAan() {

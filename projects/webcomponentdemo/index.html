@@ -4,7 +4,6 @@
 <head>
   <meta charset="utf-8" />
   <title>Ng-kaart Webcomponent demo</title>
-  <base href="/webcomponentdemo/" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
@@ -21,7 +20,7 @@
       height: 100%;
     }
   </style>
-  <script type="text/javascript" src="../../dist/webcomponent/ng-kaart-webcomponent.js"></script>
+  <script type="module" src="ng-kaart-webcomponent.js"></script>
   <script>
       window.onload = () => {
         const kaartElement = document.getElementById("k1");
@@ -32,6 +31,8 @@
   </head>
 
 <body class="mat-body">
+  TEST
+
   <awv-kaart-classic id="k1" zoom="2">
     <awv-kaart-lagenkiezer verwijderbare-lagen="true" verplaatsbare-lagen="true" toon-legende="true"></awv-kaart-lagenkiezer>
     <awv-kaart-tilecache-laag titel="Dienstkaart grijs" laag-naam="dienstkaart-grijs"></awv-kaart-tilecache-laag>
