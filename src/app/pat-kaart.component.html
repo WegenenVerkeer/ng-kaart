@@ -2,15 +2,15 @@
   <awv-kaart-classic [selectieModus]="'single'" [hoverModus]="'on'" (hoverFeature)="popup.update($event)">
     <awv-kaart-tilecache-laag [titel]="'Dienstkaart grijs'" [laagNaam]="'dienstkaart-grijs'"></awv-kaart-tilecache-laag>
     <awv-kaart-nosqlfs-laag [url]="'/patrimonium'"
-                            [database]="'todo'"
-                            [collection]="'VERHUURD'"
+                            [database]="'percelen'"
+                            [collection]="'BRAAKLIGGEND'"
                             [hover]="true"
                             [minZoom]="0"
-                            [titel]="'Verhuurd'"
-                            [hoverStyle]="patrimoniumHoverStyle()"
-                            [selectieStyle]="patrimoniumSelectStyle()"
-                            [stijlInLagenKiezer]="'verhuurd'"></awv-kaart-nosqlfs-laag>
-    <awv-kaart-features-laag [titel]="'Braakliggend'" [stijlInLagenKiezer]="'braakliggend'"></awv-kaart-features-laag>
+                            [titel]="'Braakliggend'"
+                            [hoverStyle]="patrimoniumHoverStyle"
+                            [selectieStyle]="patrimoniumSelectStyle"
+                            [stijlInLagenKiezer]="'braakliggend'"></awv-kaart-nosqlfs-laag>
+    <awv-kaart-features-laag [titel]="'Verhuurd'" [stijlInLagenKiezer]="'verhuurd'"></awv-kaart-features-laag>
     <awv-kaart-features-laag [titel]="'Onteigend'" [stijlInLagenKiezer]="'onteigend'"></awv-kaart-features-laag>
     <awv-kaart-features-laag [titel]="'Te Onteigenen'" [stijlInLagenKiezer]="'te-onteigenen'"></awv-kaart-features-laag>
     <awv-kaart-standaard-interacties [focusVoorZoom]="true"></awv-kaart-standaard-interacties>
