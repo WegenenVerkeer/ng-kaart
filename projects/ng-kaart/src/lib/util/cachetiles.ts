@@ -70,11 +70,17 @@ export const refreshTiles: Function6<string, ol.source.UrlTile, number, number, 
     const minTileCoord = tileGrid.getTileCoordForCoordAndZ([extent[0], extent[1]], zoom);
     const maxTileCoord = tileGrid.getTileCoordForCoordAndZ([extent[2], extent[3]], zoom);
 
+    // we switchen hier minY en maxY vanwege verandering in OL6:
+    // https://github.com/openlayers/openlayers/releases/tag/v6.0.0
+    // New internal tile coordinates
+    // Now, the internal tile coordinates used in the library have the same row order as standard (e.g. XYZ) tile coordinates.
+    // The origin is at the top left (as before), and rows or y values increase downward. So the top left tile of a tile grid is
+    // now 0, 0, whereas it was 0, -1 before
     const tileRangeMinX = minTileCoord[1];
-    const tileRangeMinY = minTileCoord[2];
+    const tileRangeMaxY = minTileCoord[2];
 
     const tileRangeMaxX = maxTileCoord[1];
-    const tileRangeMaxY = maxTileCoord[2];
+    const tileRangeMinY = maxTileCoord[2];
 
     return { tileRangeMinX, tileRangeMinY, tileRangeMaxX, tileRangeMaxY };
   };
