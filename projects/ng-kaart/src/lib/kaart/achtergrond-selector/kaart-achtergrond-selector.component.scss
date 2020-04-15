@@ -1,7 +1,106 @@
-.achtergrond-selector {
-  display: flex;
+@import "../../css/kaart.component-common";
 
-  > * {
-    margin-right: 8px;
+// dit zou over de gehele app gebruikt kunnen worden
+$gridunit: 8px;
+
+@mixin show($displayType: block) {
+  &--show {
+    @media screen and (max-width: $mobile-breakpoint-max) {
+      display: $displayType;
+      justify-content: space-between;
+    }
   }
+}
+
+.achtergrond-selector {
+
+  display: none;
+
+  @media screen and (min-width: $tablet-breakpoint) {
+    display: block;
+  }
+
+  @include show;
+
+  @media screen and (max-width: $mobile-breakpoint-max) {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 100;
+    background: white;
+    padding: $gridunit;
+    box-sizing: border-box;
+    box-shadow: 0 -3px 1px -2px rgba(0, 0, 0, .2), 0 -2px 2px 0 rgba(0, 0, 0, .14), 0 -1px 5px 0 rgba(0, 0, 0, .12);
+  }
+
+  &__title {
+    display: none;
+    margin: 0 0 $gridunit 0;
+    @include show(flex);
+
+    h3 {
+      margin: 0;
+    }
+  }
+
+  &__close {
+    $size: $gridunit*2;
+    line-height: $size;
+    height: $size;
+    width: $size;
+    margin-right: $gridunit*1.5;
+  }
+
+  &__list {
+
+    @include show;
+
+    > * {
+      margin-right: $gridunit;
+    }
+
+    display: none;
+
+    @media screen and (min-width: $tablet-breakpoint) {
+      display: flex;
+    }
+
+    @media screen and (max-width: $mobile-breakpoint-max) {
+      pointer-events: all;
+      white-space: nowrap;
+      overflow: scroll;
+      width: 100%;
+
+      & > * {
+        display: inline-block;
+
+        &:last-child {
+          margin-right: 0;
+        }
+      }
+    }
+  }
+
+  &__mobile {
+    $button-width: $gridunit*4;
+
+    margin: 0 $gridunit 0 0;
+    width: $button-width;
+
+    & > * {
+      width: $button-width;
+      height: $button-width;
+      line-height: $button-width;
+    }
+
+    &--actief {
+      color: $kaart-icon-button-active;
+    }
+
+    @media screen and (min-width: $tablet-breakpoint) {
+      display: none;
+    }
+  }
+
 }

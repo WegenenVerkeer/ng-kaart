@@ -1,7 +1,29 @@
-<div class="achtergrond-selector">
-  <awv-kaart-achtergrond-tile *ngFor="let laag of (backgroundTiles$ | async)"
-                              [laag]="laag"
-                              [isCurrent]="isCurrentlyBackground(laag)"
-                              [@visibility]="tileVisibility(laag)"
-                              (click)=kies(laag)></awv-kaart-achtergrond-tile>
+<div (clickOutside)="clickedOutside()" class="mat-typography">
+  <div class="achtergrond-selector"
+       [class.achtergrond-selector--show]="DisplayMode.SELECTING === displayMode">
+    <div class="achtergrond-selector__title"
+         [class.achtergrond-selector__title--show]="DisplayMode.SELECTING === displayMode">
+      <h3>Kies kaartachtergrond</h3>
+      <button mat-icon-button (click)="close()" class="achtergrond-selector__close">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    <div class="achtergrond-selector__list"
+         [class.achtergrond-selector__list--show]="DisplayMode.SELECTING === displayMode"
+    >
+      <awv-kaart-achtergrond-tile *ngFor="let laag of (backgroundTiles$ | async)"
+                                  [laag]="laag"
+                                  [isCurrent]="isCurrentlyBackground(laag)"
+                                  [@visibility]="tileVisibility(laag)"
+                                  (click)=kies(laag)></awv-kaart-achtergrond-tile>
+    </div>
+  </div>
+
+  <div class="kaart-widget achtergrond-selector__mobile"
+       [class.achtergrond-selector__mobile--actief]="DisplayMode.SELECTING === displayMode">
+    <button mat-icon-button
+            (click)="open()">
+      <mat-icon aria-label="Meten van lengte en oppervlakte">layers</mat-icon>
+    </button>
+  </div>
 </div>

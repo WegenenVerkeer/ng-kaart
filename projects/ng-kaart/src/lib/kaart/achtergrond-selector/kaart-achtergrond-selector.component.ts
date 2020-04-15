@@ -63,8 +63,9 @@ const Invisible = "invisible";
   changeDetection: ChangeDetectionStrategy.OnPush // Bij default is er een endless loop van updates
 })
 export class KaartAchtergrondSelectorComponent extends KaartChildComponentBase implements OnInit {
-  private displayMode: DisplayMode = DisplayMode.SHOWING_STATUS;
-  achtergrondTitel = "";
+  public readonly DisplayMode = DisplayMode;
+  public displayMode: DisplayMode = DisplayMode.SHOWING_STATUS;
+  public achtergrondTitel = "";
 
   readonly backgroundTiles$: rx.Observable<Array<ToegevoegdeLaag>> = rx.EMPTY;
 
@@ -93,8 +94,8 @@ export class KaartAchtergrondSelectorComponent extends KaartChildComponentBase i
     return [prt.AchtergrondTitelSubscription(achtergrondtitelGezetWrapper)];
   }
 
-  kies(laag: AchtergrondLaag): void {
-    if (this.displayMode === DisplayMode.SELECTING) {
+  kies(laag?: AchtergrondLaag): void {
+    if (this.displayMode === DisplayMode.SELECTING && laag) {
       // We wachten een beetje met de lijst te laten samen klappen zodat de tile met de nieuwe achtergrondlaag
       // van stijl kan aangepast worden (gebeurt automagisch door Angular change detection) vooraleer het inklapeffect
       // in werking treedt. Dat ziet er iets beter uit omdat in het andere geval de tile abrupt verspringt na het
@@ -123,5 +124,20 @@ export class KaartAchtergrondSelectorComponent extends KaartChildComponentBase i
         return Visible;
       }
     }
+  }
+
+  clickedOutside() {
+    this.displayMode = DisplayMode.SHOWING_STATUS;
+    this.cdr.detectChanges();
+  }
+
+  // De "close" en "open" methodes zijn enkel en alleen geintroduceerd voor de leesbaarheid in de HTML template.
+  // Achterliggend moet, zoals duidelijk, enkel "kies" opgeroepen worden, deze bevat reeds alle nodige functionaliteit.
+  close() {
+    this.kies();
+  }
+
+  open() {
+    this.kies();
   }
 }
