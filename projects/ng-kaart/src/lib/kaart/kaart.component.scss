@@ -1,5 +1,6 @@
 $kaart-links-breedte: 480px; //default breedte vanaf 1240px
 $animatie-timing: 0.35s cubic-bezier(.62, .28, .23, .99);
+@import "../css/kaart.component-common";
 
 .fullscreen-container {
 
@@ -210,6 +211,10 @@ awv-kaart-info-boodschappen {
   position: absolute;
   bottom: 0;
   right: 0;
+
+  @media screen and (max-width: $mobile-breakpoint-max) {
+    width:100%;
+  }
 
   .kaart-interacties {
     display: flex;
