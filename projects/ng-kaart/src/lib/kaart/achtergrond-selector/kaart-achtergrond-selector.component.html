@@ -19,9 +19,11 @@
     </div>
   </div>
 
-  <div class="kaart-widget achtergrond-selector__mobile"
+  <div [ngClass]="(mobileFriendly$ | async) && handsetPortrait ? 'achtergrond-selector__mobile-friendly' : 'kaart-widget achtergrond-selector__mobile'"
        [class.achtergrond-selector__mobile--actief]="DisplayMode.SELECTING === displayMode">
-    <button mat-icon-button
+    <button mat-button
+            [ngClass]="(mobileFriendly$ | async) && handsetPortrait ? 'mat-fab' : 'mat-icon-button'"
+            color=""
             (click)="open()">
       <mat-icon aria-label="Achtergrondkaart selecteren">layers</mat-icon>
     </button>

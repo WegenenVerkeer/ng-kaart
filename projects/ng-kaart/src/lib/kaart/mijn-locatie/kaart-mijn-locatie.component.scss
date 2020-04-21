@@ -10,7 +10,12 @@
     line-height: 32px;
   }
 
-  .actief {
+  &__mobile-friendly {
+    pointer-events: auto;
+    margin: 0 16px 16px 0;
+  }
+
+  .actief, &__mobile-friendly .actief {
     color: $awv-primary-3;
   }
 }
