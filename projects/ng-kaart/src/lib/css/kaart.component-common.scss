@@ -24,7 +24,7 @@ $tablet-breakpoint: 720px;
 }
 
 // De default kaart-widget componenten zijn te klein om gemakkelijk aanklikbaar te zijn op mobile dus verbergen we die
-.kaart-interacties.mobile-friendly .kaart-controls .kaart-widget {
+.kaart-interacties.handset-portrait .kaart-controls .kaart-widget {
   display: none;
 }
 

@@ -274,7 +274,6 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
   currentState$: rx.Observable<State> = rx.of("TrackingDisabled" as State);
   enabled$: rx.Observable<boolean> = rx.of(true);
 
-  mobileFriendly$: rx.Observable<boolean> = rx.of(true); // TODO: moet configureerbaar gemaakt worden!!!
   readonly onMobileDevice = mobile;
   handsetPortrait = false;
 

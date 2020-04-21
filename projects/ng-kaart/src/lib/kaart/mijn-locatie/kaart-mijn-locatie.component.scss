@@ -10,12 +10,12 @@
     line-height: 32px;
   }
 
-  &__mobile-friendly {
+  &__handset-portrait {
     pointer-events: auto;
     margin: 0 16px 16px 0;
   }
 
-  .actief, &__mobile-friendly .actief {
+  .actief, &__handset-portrait .actief {
     color: $awv-primary-3;
   }
 }

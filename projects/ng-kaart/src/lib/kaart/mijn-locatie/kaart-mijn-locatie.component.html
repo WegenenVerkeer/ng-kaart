@@ -1,7 +1,7 @@
 <div *ngIf="enabled$ | async"
-     [ngClass]="(mobileFriendly$ | async) && handsetPortrait ? 'mijn-locatie__mobile-friendly' : 'kaart-widget mijn-locatie'">
+     [ngClass]="handsetPortrait ? 'mijn-locatie__handset-portrait' : 'kaart-widget mijn-locatie'">
   <button #locateBtn mat-button *ngIf="currentState$ | async as currentState" (click)="click()"
-    [ngClass]="(mobileFriendly$ | async) && handsetPortrait ? 'mat-fab' : 'mat-icon-button'"
+    [ngClass]="handsetPortrait ? 'mat-fab' : 'mat-icon-button'"
     color=""
     [disabled]="currentState === 'TrackingDisabled'"
     [matTooltip]="isTrackingActief(currentState) ? 'Stop locatie tracking' : 'Start locatie tracking'"

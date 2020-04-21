@@ -61,7 +61,6 @@ export class KaartComponent extends KaartComponentBase {
   private readonly resizeCommand$: rx.Observable<prt.VeranderViewportCmd>;
   readonly containerResize$: rx.Observable<ol.Size>;
   tabelGeopend$: rx.Observable<boolean>;
-  mobileFriendly$: rx.Observable<boolean> = rx.of(true); // TODO: moet configureerbaar gemaakt worden!!!
   readonly onMobileDevice = mobile;
   handsetPortrait = false;
 

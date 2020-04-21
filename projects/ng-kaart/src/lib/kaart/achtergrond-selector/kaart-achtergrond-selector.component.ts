@@ -68,7 +68,6 @@ export class KaartAchtergrondSelectorComponent extends KaartChildComponentBase i
   public readonly DisplayMode = DisplayMode;
   public displayMode: DisplayMode = DisplayMode.SHOWING_STATUS;
   public achtergrondTitel = "";
-  mobileFriendly$: rx.Observable<boolean> = rx.of(true); // TODO: moet configureerbaar gemaakt worden!!!
   readonly onMobileDevice = mobile;
   handsetPortrait = false;
 

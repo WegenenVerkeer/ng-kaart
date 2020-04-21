@@ -221,7 +221,7 @@ awv-kaart-info-boodschappen {
     align-items: flex-end;
     justify-content: flex-end;
 
-    &.mobile-friendly {
+    &.handset-portrait {
       flex-direction: column-reverse;
     }
   }

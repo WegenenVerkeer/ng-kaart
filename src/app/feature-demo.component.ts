@@ -402,7 +402,6 @@ export class FeatureDemoComponent {
     meten: { value: true, label: "Meten" },
     mijnlocatie: { value: true, label: "Mijn huidige locatie" },
     zoomknoppen: { value: true, label: "Zoomknoppen" },
-    mobileFriendlyModus: { value: false, label: "Mobile Friendly Modus" },
 
     // --- Meten opties
     optieDivider3a: { divider: true, value: true, label: "Meten opties (teken modus op en afzetten na veranderingen)" },
