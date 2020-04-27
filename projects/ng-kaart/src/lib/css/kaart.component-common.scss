@@ -23,6 +23,11 @@ $tablet-breakpoint: 720px;
   border-radius: 2px;
 }
 
+// De default kaart-widget componenten zijn te klein om gemakkelijk aanklikbaar te zijn op mobile dus verbergen we die
+.kaart-interacties.handset-portrait .kaart-controls .kaart-widget {
+  display: none;
+}
+
 .divider {
   flex-grow: 1;
   margin-left: auto;

@@ -66,7 +66,7 @@ $gridunit: 8px;
     }
 
     @media screen and (max-width: $mobile-breakpoint-max) {
-      pointer-events: all;
+      pointer-events: initial;
       white-space: nowrap;
       overflow: scroll;
       width: 100%;
@@ -96,6 +96,15 @@ $gridunit: 8px;
     &--actief {
       color: $kaart-icon-button-active;
     }
+
+    @media screen and (min-width: $tablet-breakpoint) {
+      display: none;
+    }
+  }
+
+  &__handset-portrait {
+    pointer-events: auto;
+    margin: 0 16px 8px 0;
 
     @media screen and (min-width: $tablet-breakpoint) {
       display: none;

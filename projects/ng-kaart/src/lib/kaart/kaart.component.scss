@@ -220,6 +220,10 @@ awv-kaart-info-boodschappen {
     display: flex;
     align-items: flex-end;
     justify-content: flex-end;
+
+    &.handset-portrait {
+      flex-direction: column-reverse;
+    }
   }
 
   .kaart-achtergrond-selector {

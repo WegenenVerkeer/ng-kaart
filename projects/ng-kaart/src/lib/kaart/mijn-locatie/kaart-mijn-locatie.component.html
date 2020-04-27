@@ -1,5 +1,8 @@
-<div *ngIf="enabled$ | async" class="kaart-widget mijn-locatie">
-  <button #locateBtn mat-icon-button *ngIf="currentState$ | async as currentState" (click)="click()"
+<div *ngIf="enabled$ | async"
+     [ngClass]="handsetPortrait ? 'mijn-locatie__handset-portrait' : 'kaart-widget mijn-locatie'">
+  <button #locateBtn mat-button *ngIf="currentState$ | async as currentState" (click)="click()"
+    [ngClass]="handsetPortrait ? 'mat-fab' : 'mat-icon-button'"
+    color=""
     [disabled]="currentState === 'TrackingDisabled'"
     [matTooltip]="isTrackingActief(currentState) ? 'Stop locatie tracking' : 'Start locatie tracking'"
     matTooltipPosition="left">

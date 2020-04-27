@@ -33,7 +33,7 @@
   <div class="overlay-container" *ngIf="aanwezigeElementen$ | async as aanwezigeElementen">
     <div id="overlay">
       <div class="kaart-rechts-onderaan">
-        <div class="kaart-interacties">
+        <div class="kaart-interacties" [ngClass]="{ 'handset-portrait': handsetPortrait }">
           <awv-kaart-achtergrond-selector class="kaart-achtergrond-selector"
             *ngIf="aanwezigeElementen.has('Achtergrondkeuze')"></awv-kaart-achtergrond-selector>
           <div class="kaart-controls">

@@ -1,4 +1,5 @@
 import { animate, state, style, transition, trigger } from "@angular/animations";
+import { BreakpointObserver, Breakpoints } from "@angular/cdk/layout";
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnInit } from "@angular/core";
 import * as rx from "rxjs";
 import { map, switchMap, takeUntil } from "rxjs/operators";
@@ -6,6 +7,7 @@ import { map, switchMap, takeUntil } from "rxjs/operators";
 import { ofType } from "../../util/operators";
 
 import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { mobile } from "../kaart-config";
 import { AchtergrondLaag, ToegevoegdeLaag } from "../kaart-elementen";
 import { AchtergrondtitelGezetMsg, achtergrondtitelGezetWrapper, KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
@@ -66,10 +68,17 @@ export class KaartAchtergrondSelectorComponent extends KaartChildComponentBase i
   public readonly DisplayMode = DisplayMode;
   public displayMode: DisplayMode = DisplayMode.SHOWING_STATUS;
   public achtergrondTitel = "";
+  readonly onMobileDevice = mobile;
+  handsetPortrait = false;
 
   readonly backgroundTiles$: rx.Observable<Array<ToegevoegdeLaag>> = rx.EMPTY;
 
-  constructor(private readonly cdr: ChangeDetectorRef, kaartComponent: KaartComponent, zone: NgZone) {
+  constructor(
+    private readonly cdr: ChangeDetectorRef,
+    kaartComponent: KaartComponent,
+    zone: NgZone,
+    breakpointObserver: BreakpointObserver
+  ) {
     super(kaartComponent, zone);
 
     this.backgroundTiles$ = this.initialising$.pipe(switchMap(() => this.modelChanges.lagenOpGroep.Achtergrond.pipe(map(lgn => lgn))));
@@ -88,6 +97,12 @@ export class KaartAchtergrondSelectorComponent extends KaartChildComponentBase i
         this.achtergrondTitel = titel;
         this.cdr.detectChanges();
       });
+
+    breakpointObserver.observe([Breakpoints.HandsetPortrait]).subscribe(result => {
+      // Gebruik van built-in breakpoints uit de Material Design spec: https://material.angular.io/cdk/layout/overview
+      this.handsetPortrait = result.matches && this.onMobileDevice;
+      this.cdr.detectChanges();
+    });
   }
 
   protected kaartSubscriptions(): prt.Subscription<KaartInternalMsg>[] {
