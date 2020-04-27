@@ -4,9 +4,11 @@
     <div class="achtergrond-selector__title"
          [class.achtergrond-selector__title--show]="DisplayMode.SELECTING === displayMode">
       <h3>Kies kaartachtergrond</h3>
-      <button mat-icon-button (click)="close()" class="achtergrond-selector__close">
+      <!--
+      <button mat-icon-button (click)="close($event)" class="achtergrond-selector__close">
         <mat-icon>close</mat-icon>
       </button>
+      -->
     </div>
     <div class="achtergrond-selector__list"
          [class.achtergrond-selector__list--show]="DisplayMode.SELECTING === displayMode"

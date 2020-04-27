@@ -148,7 +148,9 @@ export class KaartAchtergrondSelectorComponent extends KaartChildComponentBase i
 
   // De "close" en "open" methodes zijn enkel en alleen geintroduceerd voor de leesbaarheid in de HTML template.
   // Achterliggend moet, zoals duidelijk, enkel "kies" opgeroepen worden, deze bevat reeds alle nodige functionaliteit.
-  close() {
+  close($event: Event) {
+    $event.preventDefault();
+    $event.stopPropagation();
     this.kies();
   }
 
