@@ -45,11 +45,10 @@ $gridunit: 8px;
   }
 
   &__close {
-    $size: $gridunit*2;
+    $size: $gridunit*4;
     line-height: $size;
     height: $size;
     width: $size;
-    margin-right: $gridunit*1.5;
   }
 
   &__list {
