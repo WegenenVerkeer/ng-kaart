@@ -1,3 +1,4 @@
+import { BreakpointObserver, Breakpoints } from "@angular/cdk/layout";
 import { AfterViewInit, Component, NgZone, OnInit, QueryList, ViewChildren } from "@angular/core";
 import { MatButton } from "@angular/material";
 import { Function1, Predicate } from "fp-ts/lib/function";
@@ -23,6 +24,7 @@ import {
 import { Transparantie } from "../../transparantieeditor/transparantie";
 import * as ol from "../../util/openlayers-compat";
 import { catOptions } from "../../util/operators";
+import { mobile } from "../kaart-config";
 import * as ke from "../kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart-internal-messages";
 import { KaartModusComponent } from "../kaart-modus-component";
@@ -254,8 +256,12 @@ const locatieStijlFunctie: Function1<TrackingInfo, ol.style.StyleFunction> = inf
   styleUrls: ["./kaart-mijn-locatie.component.scss"]
 })
 export class KaartMijnLocatieComponent extends KaartModusComponent implements OnInit, AfterViewInit {
-  constructor(zone: NgZone, private readonly parent: KaartComponent) {
+  constructor(zone: NgZone, private readonly parent: KaartComponent, breakpointObserver: BreakpointObserver) {
     super(parent, zone);
+    breakpointObserver.observe([Breakpoints.HandsetPortrait]).subscribe(result => {
+      // Gebruik van built-in breakpoints uit de Material Design spec: https://material.angular.io/cdk/layout/overview
+      this.handsetPortrait = result.matches && this.onMobileDevice;
+    });
   }
 
   private viewinstellingen$: rx.Observable<Viewinstellingen> = rx.EMPTY;
@@ -267,6 +273,9 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
 
   currentState$: rx.Observable<State> = rx.of("TrackingDisabled" as State);
   enabled$: rx.Observable<boolean> = rx.of(true);
+
+  readonly onMobileDevice = mobile;
+  handsetPortrait = false;
 
   @ViewChildren("locateBtn")
   locateBtnQry: QueryList<MatButton>;
