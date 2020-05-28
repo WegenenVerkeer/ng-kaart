@@ -7,6 +7,7 @@ import * as array from "fp-ts/lib/Array";
 import { Endomorphism, flow, Function1, Function2, identity } from "fp-ts/lib/function";
 import * as option from "fp-ts/lib/Option";
 import { pipe } from "fp-ts/lib/pipeable";
+import { LineString, Point, Polygon } from "ol/geom";
 import * as rx from "rxjs";
 import { filter, map, sample, switchMap, switchMapTo } from "rxjs/operators";
 
@@ -97,34 +98,43 @@ const geometryToTurfPolygon: Function1<ol.geom.Geometry, option.Option<turf.Feat
   option.map(coordinates => turf.polygon([coordinates]))
 );
 
+const pointIntersects = (p: Point, turfPolygon): boolean => turf.booleanPointInPolygon(turf.point(p.getCoordinates()), turfPolygon);
+
+const lineIntersects = (l: LineString, turfPolygon): boolean => {
+  const turfLineString = turf.lineString(l.getCoordinates());
+  return turf.booleanWithin(turfLineString, turfPolygon) || turf.booleanCrosses(turfLineString, turfPolygon);
+};
+
+const polygonIntersects = (p: Polygon, turfPolygon): boolean =>
+  flow(
+    geometryToTurfPolygon,
+    option.exists(featurePolygon => booleanIntersects(featurePolygon, turfPolygon))
+  )(p);
+
 const geometryOverlapsPolygon = (polygon: ol.geom.Geometry) => (featureGeom: ol.geom.Geometry): boolean =>
   pipe(
     polygon,
     geometryToTurfPolygon,
-    option.exists(turfPolygon =>
-      pipe(
+    option.exists(turfPolygon => {
+      return pipe(
         matchGeometryType(featureGeom, {
-          point: p => {
-            const turfPoint = turf.point(p.getCoordinates());
-            return turf.booleanPointInPolygon(turfPoint, turfPolygon);
-          },
-          lineString: l => {
-            const turfLine = turf.lineString(l.getCoordinates());
-            return turf.booleanWithin(turfLine, turfPolygon) || turf.booleanCrosses(turfLine, turfPolygon);
-          },
-          polygon: p =>
-            flow(
-              geometryToTurfPolygon,
-              option.exists(featurePolygon => booleanIntersects(featurePolygon, turfPolygon))
-            )(p),
+          point: p => pointIntersects(p, turfPolygon),
+          multiPoint: mp =>
+            mp.getPoints().reduce<boolean>((alreadyIntersects, p) => alreadyIntersects || pointIntersects(p, turfPolygon), false),
+          lineString: l => lineIntersects(l, turfPolygon),
+          multiLineString: ml =>
+            ml.getLineStrings().reduce<boolean>((alreadyIntersects, l) => alreadyIntersects || lineIntersects(l, turfPolygon), false),
+          polygon: p => polygonIntersects(p, turfPolygon),
+          multiPolygon: mp =>
+            mp.getPolygons().reduce<boolean>((alreadyIntersects, p) => alreadyIntersects || polygonIntersects(p, turfPolygon), false),
           geometryCollection: gc =>
             array.reduce<ol.geom.Geometry, boolean>(false, (overlaps, geom) => overlaps || geometryOverlapsPolygon(polygon)(geom))(
               gc.getGeometries()
             )
         }),
         option.exists(identity)
-      )
-    )
+      );
+    })
   );
 const featureOverlapsPolygon = (polygon: ol.geom.Geometry) => (feature: ol.Feature): boolean =>
   option.exists(geometryOverlapsPolygon(polygon))(option.fromNullable(feature.getGeometry()));
