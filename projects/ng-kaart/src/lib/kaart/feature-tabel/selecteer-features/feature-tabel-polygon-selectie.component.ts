@@ -119,14 +119,11 @@ const geometryOverlapsPolygon = (polygon: ol.geom.Geometry) => (featureGeom: ol.
       return pipe(
         matchGeometryType(featureGeom, {
           point: p => pointIntersects(p, turfPolygon),
-          multiPoint: mp =>
-            mp.getPoints().reduce<boolean>((alreadyIntersects, p) => alreadyIntersects || pointIntersects(p, turfPolygon), false),
+          multiPoint: mp => mp.getPoints().reduce<boolean>((overlaps, p) => overlaps || pointIntersects(p, turfPolygon), false),
           lineString: l => lineIntersects(l, turfPolygon),
-          multiLineString: ml =>
-            ml.getLineStrings().reduce<boolean>((alreadyIntersects, l) => alreadyIntersects || lineIntersects(l, turfPolygon), false),
+          multiLineString: ml => ml.getLineStrings().reduce<boolean>((overlaps, l) => overlaps || lineIntersects(l, turfPolygon), false),
           polygon: p => polygonIntersects(p, turfPolygon),
-          multiPolygon: mp =>
-            mp.getPolygons().reduce<boolean>((alreadyIntersects, p) => alreadyIntersects || polygonIntersects(p, turfPolygon), false),
+          multiPolygon: mp => mp.getPolygons().reduce<boolean>((overlaps, p) => overlaps || polygonIntersects(p, turfPolygon), false),
           geometryCollection: gc =>
             array.reduce<ol.geom.Geometry, boolean>(false, (overlaps, geom) => overlaps || geometryOverlapsPolygon(polygon)(geom))(
               gc.getGeometries()
