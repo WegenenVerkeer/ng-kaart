@@ -1,5 +1,5 @@
 // tslint:disable:max-line-length
-export const vrijAdres = `Voer het adres in in het zoekveld. 
+export const vrijAdres = `Voer het adres in in het zoekveld.
 
 De zoekmachine zoekt zowel via de <a target="_blank" href="https://overheid.vlaanderen.be/informatie-vlaanderen/producten-diensten/centraal-referentieadressenbestand-crab">CRAB</a> als Google diensten. `;
 
@@ -9,8 +9,8 @@ export const identPlusRefpunt = `Voer de ident2 of ident8 in in het zoekveld om 
   <li><i>R1</i>
       zoek de weg met ident8 R0010001
   </li>
-  <li><i>A0141911 12.0</i>
-      zoek op de A0141911 het referentiepunt 12.0
+  <li><i>A0141911 0.3</i>
+      zoek op de A0141911 het referentiepunt 0.3
   </li>
   <li><i>N8 12.0-8</i>
       zoek op de N8 het punt op afstand -8 van refpunt 12.0​​​​​​​
@@ -30,7 +30,7 @@ export const wegNummer = `Voer de wegnummer in in het zoekveld om de volledige w
 <ul>
   <li><i>E17</i>
       zoek de volledige E17
-  </li>    
+  </li>
   <li><i>N8</i>
       zoek de volledige N8
    </li>
@@ -50,7 +50,7 @@ export const eNummer = `Voer de Europese wegnummer in in het zoekveld om de voll
 export const poi = `Via het zoekveld kan ook gezocht worden op de locatie van een point of interest, zoals bijvoorbeeld een restaurant, ziekenhuis of café. De resultaten hiervan komen uit de Google Places services.`;
 
 export const emInstallatie = `In het vrij zoekveld kan gezocht worden op de locatie van een EM-installatie door (een deel van) het naampad in te voeren, voorafgegaand door "em".
-      
+
 De resultaten komen uit de applicatie EMInfra.
 <p class="voorbeelden">Voorbeeld:</p>
 <ul>
