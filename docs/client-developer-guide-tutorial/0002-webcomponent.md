@@ -9,7 +9,7 @@ Er zijn enkele regels om te volgen.
 ## Voorbeeld
 
 ```html
-  <awv-kaart-element id="k1" zoom="2">
+  <awv-kaart-classic id="k1" zoom="2">
     <awv-kaart-lagenkiezer verwijderbare-lagen="true" verplaatsbare-lagen="true" toon-legende="true"></awv-kaart-lagenkiezer>
     <awv-kaart-tilecache-laag titel="Dienstkaart grijs" laag-naam="dienstkaart-grijs"></awv-kaart-tilecache-laag>
     <awv-kaart-ortho-laag titel="Ortho" groep="Achtergrond"></awv-kaart-ortho-laag>
@@ -36,7 +36,7 @@ Er zijn enkele regels om te volgen.
     </awv-kaart-zoeker>
 
     <awv-kaart-knop-achtergrondlaag-kiezer></awv-kaart-knop-achtergrondlaag-kiezer>
-  </awv-kaart-element>
+  </awv-kaart-classic>
 ```
 
 ## Inputs
