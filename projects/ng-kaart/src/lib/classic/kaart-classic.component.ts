@@ -246,6 +246,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
     private kaartLocatorService: KaartClassicLocatorService<KaartClassicComponent>
   ) {
     super(zone);
+    this.kaartLocatorService.registerComponent(this, this.el);
 
     this.kaartMsgObservableConsumer = (msg$: rx.Observable<prt.KaartMsg>) => {
       // We zijn enkel geïnteresseerd in messages van ons eigen type
@@ -411,8 +412,6 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
     }
     this.dispatch(prt.ActiveerHoverModusCmd(this._hoverModus));
     this.dispatch(prt.ActiveerSelectieModusCmd(this._selectieModus));
-
-    this.kaartLocatorService.registerComponent(this, this.el);
   }
 
   /** @ignore */
