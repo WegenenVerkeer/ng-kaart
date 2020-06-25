@@ -35,6 +35,7 @@ export { Color } from "ol/color";
 export { Coordinate } from "ol/coordinate";
 export { default as Collection } from "ol/Collection";
 export { default as Feature } from "ol/Feature";
+export { default as FeatureLike } from "ol/Feature";
 export { default as ImageTile } from "ol/ImageTile";
 export { default as Map } from "ol/Map";
 export { default as MapBrowserEvent } from "ol/MapBrowserEvent";

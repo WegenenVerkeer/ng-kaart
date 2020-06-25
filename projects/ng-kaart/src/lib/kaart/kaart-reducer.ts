@@ -1,7 +1,7 @@
 import { option } from "fp-ts";
 import * as array from "fp-ts/lib/Array";
 import { eqString } from "fp-ts/lib/Eq";
-import { Endomorphism, flow, Function1, Function2, identity, not } from "fp-ts/lib/function";
+import { Endomorphism, flow, Function1, Function2, identity, not, Predicate } from "fp-ts/lib/function";
 import * as fptsmap from "fp-ts/lib/Map";
 import { fromNullable, isNone, none, Option, some } from "fp-ts/lib/Option";
 import * as ord from "fp-ts/lib/Ord";
@@ -1026,8 +1026,14 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
     };
 
     function activeerSelectieModus(cmnd: prt.ActiveerSelectieModusCmd): ModelWithResult<Msg> {
+      const hitTolerance = envParams(model.config).clickHitTolerance;
+      const filterClusters: Predicate<ol.FeatureLike> = (feature: ol.FeatureLike) => {
+        // Cluster elementen willen we niet selecteren, maar als er maar 1 element in zit weer wel....
+        const childFeatures = feature.get("features");
+        return !childFeatures || childFeatures.length === 1;
+      };
+
       function getSelectInteractionOptions(modus: prt.SelectieModus): Option<ol.interaction.SelectOptions> {
-        const hitTolerance = envParams(model.config).clickHitTolerance;
         switch (modus) {
           case "singleQuick":
             return some({
@@ -1036,7 +1042,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               multi: false,
               style: createSelectionStyleFn(getSelectionStyleSelector),
               hitTolerance: hitTolerance,
-              layers: layer => layer.get(ke.LayerProperties.Selecteerbaar)
+              layers: layer => layer.get(ke.LayerProperties.Selecteerbaar),
+              filter: filterClusters
             });
           case "single":
             return some({
@@ -1046,7 +1053,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               multi: true, // true voor single, maar event handler wat lager houdt enkel 1 feature over
               style: createSelectionStyleFn(getSelectionStyleSelector),
               hitTolerance: hitTolerance,
-              layers: layer => layer.get(ke.LayerProperties.Selecteerbaar)
+              layers: layer => layer.get(ke.LayerProperties.Selecteerbaar),
+              filter: filterClusters
             });
           case "multipleShift":
             return some({
@@ -1055,7 +1063,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               multi: true,
               style: createSelectionStyleFn(getSelectionStyleSelector),
               hitTolerance: hitTolerance,
-              layers: layer => layer.get(ke.LayerProperties.Selecteerbaar)
+              layers: layer => layer.get(ke.LayerProperties.Selecteerbaar),
+              filter: filterClusters
             });
           case "multipleKlik":
             return some({
@@ -1065,7 +1074,8 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
               multi: true,
               style: createSelectionStyleFn(getSelectionStyleSelector),
               hitTolerance: hitTolerance,
-              layers: layer => layer.get(ke.LayerProperties.Selecteerbaar)
+              layers: layer => layer.get(ke.LayerProperties.Selecteerbaar),
+              filter: filterClusters
             });
           case "none":
           default:
@@ -1089,8 +1099,33 @@ export function kaartCmdReducer<Msg extends prt.KaartMsg>(
             });
           }
 
+          // Voeg een extra selectie interactie toe om te klikken op een cluster om daar op in te zoomen.
+          const clusterSelect = new ol.interaction.Select({
+            condition: ol.events.condition.click,
+            multi: false,
+            hitTolerance: hitTolerance,
+            style: undefined,
+            layers: layer => layer.get(ke.LayerProperties.Selecteerbaar),
+            filter: not(filterClusters)
+          });
+          clusterSelect.addEventListener("select", (event: ol.interaction.SelectEvent) => {
+            if (event.selected && event.selected.length > 0) {
+              const cluster = event.selected[0];
+              // zet middelpunt en zoom 1 niveau in.
+              model.map.getView().animate({
+                zoom: fromNullable(model.map.getView().getZoom())
+                  .map(zoom => zoom + 1)
+                  .toUndefined(),
+                center: ol.extent.getCenter(cluster.getGeometry()!.getExtent()),
+                duration: 500
+              });
+            }
+            return true;
+          });
+
           return [
             selectInteraction,
+            clusterSelect,
             new ol.interaction.DragBox({
               condition: ol.events.condition.platformModifierKeyOnly,
               onBoxEnd: () => {}
