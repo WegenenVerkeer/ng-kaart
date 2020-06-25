@@ -11,4 +11,4 @@ Dan in deze directory:
   npm install express
   node index.js
    
-Ga naar http://localhost:3000/
+Ga naar http://localhost:4220/
