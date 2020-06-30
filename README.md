@@ -16,6 +16,23 @@ We gebruiken de library support van angular cli, zie ook [https://github.com/ang
 
 Deze component is enkel ontwikkeld om gebruikt te worden op Google Chrome. Om in Firefox te werken bijvoorbeeld zijn een aantal shims nodig. Zie ook de openlayers website.
 
+## Material fonts
+
+De component gaat ervan uit dat de materialfonts beschikbaar zijn.
+
+Dit kan door de fonts rechtstreeks te laden. Dit wordt door Google aangeraden, maar in sommige gevallen wordt dit blijbaar door een adblocker gestopt.
+
+```html
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+```
+
+Een andere manier is om op het "material-design-icons" npm package te dependen en dit ergens in een globale stijl te includen:
+
+```scss
+@import "~material-design-icons/iconfont/material-icons.css";
+```
+
+
 ## Development
 
 Deze component is gebaseerd op de source code van de kaartcomponent gebruikt door district center.
