@@ -1,5 +1,6 @@
-<div [hidden]="!(zichtbaar$ | async)" class="kaart-widget rotatie">
-  <button mat-icon-button (click)="roteerNaarNoord()">
+<div [hidden]="!(zichtbaar$ | async)" 
+[ngClass]="handsetPortrait ? 'rotatie__handset-portrait' : 'kaart-widget rotatie'">
+  <button [ngClass]="handsetPortrait ? 'mat-fab' : 'mat-icon-button'" mat-button (click)="roteerNaarNoord()">
     <mat-icon [ngStyle]="{'transform': 'rotate(' + (rotatie$ | async) + 'rad)'}" aria-label="Rotatie" svgIcon="compass"></mat-icon>
   </button>
 </div>

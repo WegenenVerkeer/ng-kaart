@@ -10,4 +10,12 @@
     line-height: 32px;
   }
 
+  &__handset-portrait {
+    pointer-events: auto;
+    margin: 0 16px 16px 0;
+  }
+
+  .actief, &__handset-portrait .actief {
+    color: $awv-primary-3;
+  }
 }

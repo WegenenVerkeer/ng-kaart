@@ -1,3 +1,4 @@
+import { BreakpointObserver, Breakpoints } from "@angular/cdk/layout";
 import { ChangeDetectorRef, Component, NgZone, OnInit } from "@angular/core";
 import { MatIconRegistry } from "@angular/material";
 import { DomSanitizer } from "@angular/platform-browser";
@@ -7,6 +8,7 @@ import { delay, distinctUntilChanged, map, tap } from "rxjs/operators";
 
 import { encodeAsSvgUrl } from "../../util/url";
 import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { mobile } from "../kaart-config";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 
@@ -25,14 +27,22 @@ export class KaartRotatieComponent extends KaartChildComponentBase implements On
   readonly zichtbaar$: rx.Observable<boolean>;
   readonly clickBtnSubj: rx.Subject<boolean> = new rx.Subject<boolean>();
 
+  readonly onMobileDevice = mobile;
+  handsetPortrait = false;
+
   constructor(
     private readonly parent: KaartComponent,
     zone: NgZone,
     matIconRegistry: MatIconRegistry,
     domSanitize: DomSanitizer,
-    changeDector: ChangeDetectorRef
+    changeDector: ChangeDetectorRef,
+    breakpointObserver: BreakpointObserver
   ) {
     super(parent, zone);
+    breakpointObserver.observe([Breakpoints.HandsetPortrait]).subscribe(result => {
+      // Gebruik van built-in breakpoints uit de Material Design spec: https://material.angular.io/cdk/layout/overview
+      this.handsetPortrait = result.matches && this.onMobileDevice;
+    });
 
     matIconRegistry.addSvgIcon("compass", domSanitize.bypassSecurityTrustResourceUrl(encodeAsSvgUrl(compassSVG)));
 
