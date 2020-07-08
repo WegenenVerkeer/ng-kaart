@@ -1,9 +1,8 @@
-import { Component, Injector, Input } from "@angular/core";
-
-import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
+import { Component, Injector } from "@angular/core";
 
 import { FeatureTabelUiSelector } from "../../kaart/feature-tabel";
-import * as val from "../webcomponent-support/params";
+import { OptiesRecord } from "../../kaart/ui-element-opties";
+import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
 
 /**
  * Gebruik deze component om een tabel met features beschikbaar te maken.
@@ -17,7 +16,7 @@ export class ClassicFeatureTabelComponent extends ClassicUIElementSelectorCompon
     super(FeatureTabelUiSelector, injector);
   }
 
-  protected opties(): object {
+  protected opties(): OptiesRecord {
     return {
       dataHeaderMenuExtraKnoppen: [
         {

@@ -4,7 +4,7 @@ import * as maps from "fp-ts/lib/Map";
 import { none } from "fp-ts/lib/Option";
 import { setoidString } from "fp-ts/lib/Setoid";
 import * as rx from "rxjs";
-import { distinctUntilChanged, filter, map, mapTo, pairwise, switchMap, tap } from "rxjs/operators";
+import { distinctUntilChanged, filter, map, mapTo, pairwise, switchMap } from "rxjs/operators";
 
 import * as ss from "../../kaart/stijl-selector";
 import { Transparantie } from "../../transparantieeditor/transparantie";
@@ -15,10 +15,11 @@ import * as ke from "../kaart-elementen";
 import { InfoBoodschappenMsg, KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
+import { OptiesRecord } from "../ui-element-opties";
 
 export const MarkeerKaartklikUiSelector = "MarkeerKaartklik";
 
-export interface MarkeerKaartklikOpties {
+export interface MarkeerKaartklikOpties extends OptiesRecord {
   readonly markerStyle: ss.Stylish;
   readonly disabled: boolean;
   readonly includeFeatureClick: boolean;

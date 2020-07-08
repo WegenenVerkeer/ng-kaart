@@ -5,10 +5,11 @@ import * as prt from "../kaart-protocol";
 
 import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { KaartComponent } from "../kaart.component";
+import { OptiesRecord } from "../ui-element-opties";
 
 export const VoorwaardenSelector = "Voorwaarden";
 
-export interface VoorwaardenOpties {
+export interface VoorwaardenOpties extends OptiesRecord {
   titel: string;
   href: string;
 }

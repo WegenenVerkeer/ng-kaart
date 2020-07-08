@@ -64,13 +64,13 @@ export class KaartComponent extends KaartComponentBase {
   readonly onMobileDevice = mobile;
   handsetPortrait = false;
 
-  @ViewChild("map")
+  @ViewChild("map", { static: true })
   mapElement: ElementRef;
-  @ViewChild("kaartLinks")
+  @ViewChild("kaartLinks", { static: false })
   kaartLinksElement: ElementRef;
-  @ViewChild("kaartFixedLinksBoven")
+  @ViewChild("kaartFixedLinksBoven", { static: false })
   kaartFixedLinksBovenElement: ElementRef;
-  @ViewChild("kaartLinksZichtbaarToggleKnop", { read: ElementRef })
+  @ViewChild("kaartLinksZichtbaarToggleKnop", { read: ElementRef, static: false })
   kaartLinksZichtbaarToggleKnopElement: ElementRef;
 
   /**

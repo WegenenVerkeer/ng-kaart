@@ -65,11 +65,11 @@ export class FeatureDemoComponent {
   }
 
   private static readonly zoekerKleurCodes = ["#626c7a", "#6b7d43", "#f8df98", "#e38d83", "#6e312f"];
-  @ViewChild("verplaats")
+  @ViewChild("verplaats", { static: false })
   private verplaatsKaart: KaartClassicComponent;
-  @ViewChild("selectie")
+  @ViewChild("selectie", { static: false })
   private selectieKaart: KaartClassicComponent;
-  @ViewChild("kaartInfoKaart")
+  @ViewChild("kaartInfoKaart", { static: false })
   private kaartInfoKaart: KaartClassicComponent;
 
   private readonly fietspadStijlDef: AwvV0DynamicStyle = {
