@@ -15,10 +15,11 @@ import * as prt from "../kaart-protocol";
 import { DrawOpsCmd } from "../kaart-protocol-commands";
 import { KaartComponent } from "../kaart.component";
 import { EndDrawing, RedrawRoute, StartDrawing } from "../tekenen/tekenen-model";
+import { OptiesRecord } from "../ui-element-opties";
 
 export const MultiMetenUiSelector = "MultiMeten";
 
-export interface MultiMetenOpties {
+export interface MultiMetenOpties extends OptiesRecord {
   readonly markColour: clr.Kleur;
   readonly useRouting: boolean;
   readonly showInfoMessage: boolean;

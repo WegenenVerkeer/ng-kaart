@@ -72,7 +72,7 @@ export class LaagmanipulatieComponent extends KaartChildComponentBase {
   dragTarget: boolean;
   @Input()
   dragUntargetable: boolean;
-  @ViewChild(MatMenuTrigger)
+  @ViewChild(MatMenuTrigger, { static: false })
   laagMenuTrigger: MatMenuTrigger;
 
   constructor(

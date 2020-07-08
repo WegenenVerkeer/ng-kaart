@@ -2,12 +2,10 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "outDir": "../out-tsc/app",
-    "module": "es2015",
     "moduleResolution": "node",
     "types": [
       "node"
     ],
-    "target": "es6",
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
     "inlineSources": true,

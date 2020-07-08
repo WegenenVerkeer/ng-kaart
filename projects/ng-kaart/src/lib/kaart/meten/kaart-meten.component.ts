@@ -16,10 +16,11 @@ import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 import { kaartLogger } from "../log";
 import { internalMsgSubscriptionCmdOperator } from "../subscription-helper";
+import { OptiesRecord } from "../ui-element-opties";
 
 export const MetenUiSelector = "Meten";
 
-export interface MetenOpties {
+export interface MetenOpties extends OptiesRecord {
   toonInfoBoodschap: boolean;
   meerdereGeometrieen: boolean;
 }

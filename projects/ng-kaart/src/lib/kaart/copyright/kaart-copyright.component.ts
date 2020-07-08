@@ -6,10 +6,11 @@ import { KaartChildComponentBase } from "../kaart-child-component-base";
 import { KaartComponent } from "../kaart.component";
 
 import * as prt from "../kaart-protocol";
+import { OptiesRecord } from "../ui-element-opties";
 
 export const CopyrightUISelector = "Copyright";
 
-export interface CopyrightOpties {
+export interface CopyrightOpties extends OptiesRecord {
   readonly copyright: string;
 }
 

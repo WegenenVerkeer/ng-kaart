@@ -17,11 +17,12 @@ import * as prt from "../kaart/kaart-protocol";
 import { KaartComponent } from "../kaart/kaart.component";
 import { isAanpassingBezig } from "../kaart/stijleditor/state";
 import { TabelActiviteit } from "../kaart/tabel-state";
+import { OptiesRecord } from "../kaart/ui-element-opties";
 import * as ol from "../util/openlayers-compat";
 
 export const LagenUiSelector = "Lagenkiezer";
 
-export interface LagenUiOpties {
+export interface LagenUiOpties extends OptiesRecord {
   readonly headerTitel: string;
   readonly initieelDichtgeklapt: boolean;
   readonly toonLegende: boolean;

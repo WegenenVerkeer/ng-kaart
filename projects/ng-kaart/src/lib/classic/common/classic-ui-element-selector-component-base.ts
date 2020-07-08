@@ -1,6 +1,7 @@
 import { Injector, OnChanges, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
 
 import * as prt from "../../kaart/kaart-protocol";
+import { OptiesRecord } from "../../kaart/ui-element-opties";
 import { ClassicBaseComponent } from "../classic-base.component";
 
 export abstract class ClassicUIElementSelectorComponentBase extends ClassicBaseComponent implements OnInit, OnDestroy, OnChanges {
@@ -34,7 +35,7 @@ export abstract class ClassicUIElementSelectorComponentBase extends ClassicBaseC
     this.kaart.dispatch(prt.ZetUiElementOpties(this.uiSelector, this.opties()));
   }
 
-  protected opties(): object {
+  protected opties(): OptiesRecord {
     return {};
   }
 }
