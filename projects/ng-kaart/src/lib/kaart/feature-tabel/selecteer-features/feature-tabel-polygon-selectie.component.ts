@@ -1,5 +1,5 @@
 import { Component, NgZone, OnDestroy, OnInit } from "@angular/core";
-import { MatIconRegistry } from "@angular/material";
+import { MatIconRegistry } from "@angular/material/icon";
 import { DomSanitizer } from "@angular/platform-browser";
 import { default as booleanIntersects } from "@turf/boolean-intersects";
 import * as turf from "@turf/turf";

@@ -1,6 +1,6 @@
 import { ChangeDetectorRef, Component, ElementRef, NgZone, ViewChild } from "@angular/core";
 import { FormControl, ValidationErrors, Validators } from "@angular/forms";
-import { MatAutocompleteTrigger } from "@angular/material";
+import { MatAutocompleteTrigger } from "@angular/material/autocomplete";
 import { apply } from "fp-ts";
 import * as array from "fp-ts/lib/Array";
 import { and, Endomorphism, Function1, Refinement } from "fp-ts/lib/function";

@@ -1,6 +1,6 @@
 import { BreakpointObserver, Breakpoints } from "@angular/cdk/layout";
 import { ChangeDetectorRef, Component, NgZone, OnInit } from "@angular/core";
-import { MatIconRegistry } from "@angular/material";
+import { MatIconRegistry } from "@angular/material/icon";
 import { DomSanitizer } from "@angular/platform-browser";
 import { some } from "fp-ts/lib/Option";
 import * as rx from "rxjs";

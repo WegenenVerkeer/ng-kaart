@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, NgZone, ViewEncapsulation } from "@angular/core";
-import { MatIconRegistry } from "@angular/material";
+import { MatIconRegistry } from "@angular/material/icon";
 import { DomSanitizer } from "@angular/platform-browser";
 import * as rx from "rxjs";
 import { distinctUntilChanged, map, mapTo, share, tap } from "rxjs/operators";
