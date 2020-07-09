@@ -1,3 +1,4 @@
+import { Injectable } from "@angular/core";
 import * as rx from "rxjs";
 
 import { asap } from "../util/asap";
@@ -13,6 +14,7 @@ export interface KaartEventSource {
   commands$: rx.Observable<prt.Command<any>>;
 }
 
+@Injectable()
 export class ReplaySubjectKaartCmdDispatcher<Msg extends TypedRecord> implements KaartCmdDispatcher<Msg>, KaartEventSource {
   // Er worden al events gegenereerd voordat de kaartcomponent actief is. Daarom tot 1000 events onthouden 500ms lang.
   private readonly eventSubj = new rx.ReplaySubject<prt.Command<Msg>>(1000, 500);

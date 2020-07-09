@@ -32,10 +32,10 @@ const components: any[] = [LagenkiezerComponent, LaagmanipulatieComponent];
   exports: [components]
 })
 export class LagenkiezerModule {
-  static withDefaults(): ModuleWithProviders {
+  static withDefaults(): ModuleWithProviders<LagenkiezerModule> {
     return LagenkiezerModule.forRoot({});
   }
-  static forRoot(config: LagenkiezerConfig): ModuleWithProviders {
+  static forRoot(config: LagenkiezerConfig): ModuleWithProviders<LagenkiezerModule> {
     return {
       ngModule: LagenkiezerModule,
       providers: [{ provide: LAGENKIEZER_CFG, useValue: config }]

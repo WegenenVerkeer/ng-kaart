@@ -155,14 +155,14 @@ export const myCustomTooltipDefaults: MatTooltipDefaultOptions = {
 export class KaartModule {
   static defaultConfig = defaultKaartConfig;
 
-  static forRoot(config: KaartConfig): ModuleWithProviders {
+  static forRoot(config: KaartConfig): ModuleWithProviders<KaartModule> {
     return {
       ngModule: KaartModule,
       providers: [{ provide: KAART_CFG, useValue: config }, ReplaySubjectKaartCmdDispatcher]
     };
   }
 
-  static withDefaults(): ModuleWithProviders {
+  static withDefaults(): ModuleWithProviders<KaartModule> {
     return KaartModule.forRoot(KaartModule.defaultConfig);
   }
 }

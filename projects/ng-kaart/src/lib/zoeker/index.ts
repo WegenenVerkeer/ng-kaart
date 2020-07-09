@@ -53,7 +53,7 @@ const components: any[] = [
   providers: [ZoekerGoogleWdbService, ZoekerCrabService, ZoekerPerceelService]
 })
 export class ZoekerModule {
-  static forRoot(config: ZoekerConfigData): ModuleWithProviders {
+  static forRoot(config: ZoekerConfigData): ModuleWithProviders<ZoekerModule> {
     return {
       ngModule: ZoekerModule,
       providers: [{ provide: ZOEKER_CFG, useValue: config }, { provide: ZOEKER_REPRESENTATIE, useClass: DefaultRepresentatieService }]

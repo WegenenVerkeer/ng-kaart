@@ -153,21 +153,21 @@ export class FilterEditorComponent extends KaartChildComponentBase {
 
   // in angular 8 kan de setter vervangen worden door {static: false}
   // we hebben dit nodig omdat de input velden er niet altijd zijn (afhankelijk van keyboardActive$)
-  @ViewChild("eigenschapAutocompleteTrigger", { static: false }) set setEigenschapAutocompleteTrigger(content: MatAutocompleteTrigger) {
+  @ViewChild("eigenschapAutocompleteTrigger") set setEigenschapAutocompleteTrigger(content: MatAutocompleteTrigger) {
     this.eigenschapAutocompleteTrigger = content;
   }
 
-  @ViewChild("waardeAutocompleteTrigger", { static: false }) set setWaardeAutocompleteTrigger(content: MatAutocompleteTrigger) {
+  @ViewChild("waardeAutocompleteTrigger") set setWaardeAutocompleteTrigger(content: MatAutocompleteTrigger) {
     this.waardeAutocompleteTrigger = content;
   }
 
-  @ViewChild("eigenschapAutocompleteInput", { static: false }) set setEigenschapAutocompleteInput(content: ElementRef) {
+  @ViewChild("eigenschapAutocompleteInput") set setEigenschapAutocompleteInput(content: ElementRef) {
     if (content) {
       this.eigenschapAutocompleteInput = content.nativeElement;
     }
   }
 
-  @ViewChild("waardeAutocompleteInput", { static: false }) set setWaardeAutocompleteInput(content: ElementRef) {
+  @ViewChild("waardeAutocompleteInput") set setWaardeAutocompleteInput(content: ElementRef) {
     if (content) {
       this.waardeAutocompleteInput = content.nativeElement;
     }

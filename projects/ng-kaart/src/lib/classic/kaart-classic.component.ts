@@ -237,7 +237,7 @@ export class KaartClassicComponent extends KaartComponentBase implements OnInit,
   inErrorChange: EventEmitter<boolean> = new EventEmitter();
 
   /** @ignore */
-  @ViewChild("kaart", { read: ElementRef, static: false })
+  @ViewChild("kaart", { read: ElementRef })
   mapElement: ElementRef;
 
   /** @ignore */

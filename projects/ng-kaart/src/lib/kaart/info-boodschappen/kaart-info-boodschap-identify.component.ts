@@ -20,7 +20,7 @@ const liftProperties: Function1<ol.Feature, Properties> = feature => {
   const geometryProperties = maybeOlProperties
     .map(obj => obj["geometry"])
     .filter(obj => obj instanceof ol.geom.Geometry)
-    .fold({}, obj => {
+    .fold<Properties>({}, obj => {
       const geometry = obj as ol.geom.Geometry;
       return {
         bbox: geometry.getExtent(),

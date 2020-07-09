@@ -32,7 +32,7 @@ const components = [LaagstijleditorComponent];
   providers: []
 })
 export class StijleditorModule {
-  static forRoot(): ModuleWithProviders {
+  static forRoot(): ModuleWithProviders<StijleditorModule> {
     return {
       ngModule: StijleditorModule,
       providers: []
