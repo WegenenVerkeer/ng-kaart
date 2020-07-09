@@ -15,6 +15,9 @@ import {
   Zoektype
 } from "../../projects/ng-kaart/src/lib/zoeker";
 
+require("material-design-icons/toggle/svg/production/ic_star_border_24px.svg");
+require("material-design-icons/toggle/svg/production/ic_star_24px.svg");
+
 const randomResultaat: Function1<string, ZoekKaartResultaat> = color => {
   const center = [100000 + Math.random() * 80000, 175000 + Math.random() * 30000] as [number, number];
   const radius = 2000 + Math.random() * 20000;
@@ -28,7 +31,7 @@ const randomResultaat: Function1<string, ZoekKaartResultaat> = color => {
         anchorYUnits: ol.style.IconAnchorUnits.FRACTION,
         scale: 1,
         opacity: 0.75,
-        src: require("material-design-icons/toggle/svg/production/ic_star_border_24px.svg")
+        src: "ic_star_border_24px.svg"
       }),
       stroke: new ol.style.Stroke({
         color: color,
@@ -45,7 +48,7 @@ const randomResultaat: Function1<string, ZoekKaartResultaat> = color => {
         anchorYUnits: ol.style.IconAnchorUnits.FRACTION,
         scale: 1,
         opacity: 0.75,
-        src: require("material-design-icons/toggle/svg/production/ic_star_24px.svg")
+        src: "ic_star_24px.svg"
       }),
       stroke: new ol.style.Stroke({
         color: "yellow",
