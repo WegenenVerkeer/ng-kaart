@@ -6,7 +6,7 @@ import { classicLogger } from "./log";
 @Injectable({
   providedIn: "root"
 })
-export class KaartClassicLocatorService<T = any> {
+export class KaartClassicLocatorService<T extends object = any> {
   private registry: Map<Element, T> = new Map();
   constructor() {}
 

@@ -1,7 +1,7 @@
 {
   "name": "@wegenenverkeer/ng-kaart-webcomponent",
   "author": "Team Blauw/Rood",
-  "version": "7.0.0-0",
+  "version": "8.0.0-0",
   "main": "./ng-kaart-webcomponent.js",
   "repository": {
     "type": "git",
