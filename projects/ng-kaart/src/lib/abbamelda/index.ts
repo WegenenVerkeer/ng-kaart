@@ -28,7 +28,7 @@ const components: any[] = [AbbameldaStuurmeldingComponent];
   providers: []
 })
 export class AbbameldaModule {
-  static forRoot(): ModuleWithProviders {
+  static forRoot(): ModuleWithProviders<AbbameldaModule> {
     return {
       ngModule: AbbameldaModule,
       providers: []

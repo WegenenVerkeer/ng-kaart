@@ -48,10 +48,10 @@ export class FeatureTabelInklapComponent extends KaartChildComponentBase {
   private startSleepHoogte: number;
   private startSleepY: number;
 
-  @ViewChild("datacontainer", { static: false })
+  @ViewChild("datacontainer")
   dataContainer: ElementRef;
 
-  @ViewChild("tabeloverzicht", { static: false })
+  @ViewChild("tabeloverzicht")
   tabelOverzicht: FeatureTabelOverzichtComponent;
 
   constructor(kaart: KaartComponent, ngZone: NgZone) {

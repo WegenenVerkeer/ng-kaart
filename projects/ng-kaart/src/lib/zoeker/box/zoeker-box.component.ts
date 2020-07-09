@@ -280,20 +280,20 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
 })
 export class ZoekerBoxComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
   zoekVeld = new FormControl();
-  @ViewChild("zoekVeldElement", { static: false })
+  @ViewChild("zoekVeldElement")
   zoekVeldElement: ElementRef;
 
-  @ViewChild("zoekerPerceelGetrapt", { static: false })
+  @ViewChild("zoekerPerceelGetrapt")
   set setZoekerPerceelGetraptComponent(zoekerPerceelGetrapt: GetraptZoekerComponent) {
     this.zoekerComponentSubj.next(new Tuple<ZoekerType, GetraptZoekerComponent>(PERCEEL, zoekerPerceelGetrapt));
   }
 
-  @ViewChild("zoekerCrabGetrapt", { static: false })
+  @ViewChild("zoekerCrabGetrapt")
   set setZoekerCrabGetraptComponent(zoekerCrabGetrapt: GetraptZoekerComponent) {
     this.zoekerComponentSubj.next(new Tuple<ZoekerType, GetraptZoekerComponent>(CRAB, zoekerCrabGetrapt));
   }
 
-  @ViewChild("zoekerAlleLagenGetrapt", { static: false })
+  @ViewChild("zoekerAlleLagenGetrapt")
   set setZoekerAlleLagenGetraptComponent(zoekerAlleLagenGetrapt: GetraptZoekerComponent) {
     this.zoekerComponentSubj.next(new Tuple<ZoekerType, GetraptZoekerComponent>(ALLE_LAGEN, zoekerAlleLagenGetrapt));
   }

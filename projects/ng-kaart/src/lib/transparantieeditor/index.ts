@@ -28,7 +28,7 @@ const components = [TransparantieeditorComponent];
   providers: []
 })
 export class TransparantieeditorModule {
-  static forRoot(): ModuleWithProviders {
+  static forRoot(): ModuleWithProviders<TransparantieeditorModule> {
     return {
       ngModule: TransparantieeditorModule,
       providers: []

@@ -66,11 +66,11 @@ export class KaartComponent extends KaartComponentBase {
 
   @ViewChild("map", { static: true })
   mapElement: ElementRef;
-  @ViewChild("kaartLinks", { static: false })
+  @ViewChild("kaartLinks")
   kaartLinksElement: ElementRef;
-  @ViewChild("kaartFixedLinksBoven", { static: false })
+  @ViewChild("kaartFixedLinksBoven")
   kaartFixedLinksBovenElement: ElementRef;
-  @ViewChild("kaartLinksZichtbaarToggleKnop", { read: ElementRef, static: false })
+  @ViewChild("kaartLinksZichtbaarToggleKnop", { read: ElementRef })
   kaartLinksZichtbaarToggleKnopElement: ElementRef;
 
   /**

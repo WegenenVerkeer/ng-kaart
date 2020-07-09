@@ -54,7 +54,7 @@ const components: any[] = [
   exports: [components]
 })
 export class FeatureTabelModule {
-  static forRoot(): ModuleWithProviders {
+  static forRoot(): ModuleWithProviders<FeatureTabelModule> {
     return {
       ngModule: FeatureTabelModule,
       providers: []

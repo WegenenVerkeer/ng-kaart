@@ -62,7 +62,7 @@ const components: any[] = [
   ]
 })
 export class FilterModule {
-  static forRoot(): ModuleWithProviders {
+  static forRoot(): ModuleWithProviders<FilterModule> {
     return {
       ngModule: FilterModule,
       providers: []
