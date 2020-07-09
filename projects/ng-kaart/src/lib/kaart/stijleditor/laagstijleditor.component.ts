@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, ElementRef, NgZone, QueryList, ViewChildren, ViewEncapsulation } from "@angular/core";
 import { FormControl } from "@angular/forms";
-import { MatTabChangeEvent } from "@angular/material";
+import { MatTabChangeEvent } from "@angular/material/tabs";
 import * as array from "fp-ts/lib/Array";
 import { Curried2, Function1, Function2, Predicate, Refinement, tuple } from "fp-ts/lib/function";
 import { Option } from "fp-ts/lib/Option";

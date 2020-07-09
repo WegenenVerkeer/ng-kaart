@@ -2,18 +2,14 @@ import { CommonModule } from "@angular/common";
 import { HttpClientModule } from "@angular/common/http";
 import { ModuleWithProviders, NgModule } from "@angular/core";
 import { FormsModule, ReactiveFormsModule } from "@angular/forms";
-import {
-  MAT_TOOLTIP_DEFAULT_OPTIONS,
-  MatButtonModule,
-  MatButtonToggleModule,
-  MatCardModule,
-  MatExpansionModule,
-  MatIconModule,
-  MatInputModule,
-  MatProgressSpinnerModule,
-  MatTooltipDefaultOptions,
-  MatTooltipModule
-} from "@angular/material";
+import { MatButtonModule } from "@angular/material/button";
+import { MatButtonToggleModule } from "@angular/material/button-toggle";
+import { MatCardModule } from "@angular/material/card";
+import { MatExpansionModule } from "@angular/material/expansion";
+import { MatIconModule } from "@angular/material/icon";
+import { MatInputModule } from "@angular/material/input";
+import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
+import { MAT_TOOLTIP_DEFAULT_OPTIONS, MatTooltipDefaultOptions, MatTooltipModule } from "@angular/material/tooltip";
 import { ClickOutsideModule } from "ng4-click-outside";
 
 import { AbbameldaModule } from "../abbamelda/index";

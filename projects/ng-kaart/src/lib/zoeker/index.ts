@@ -2,17 +2,15 @@ import { CommonModule } from "@angular/common";
 import { HttpClientModule } from "@angular/common/http";
 import { ModuleWithProviders, NgModule } from "@angular/core";
 import { ReactiveFormsModule } from "@angular/forms";
-import {
-  MatAutocompleteModule,
-  MatButtonModule,
-  MatFormFieldModule,
-  MatIconModule,
-  MatInputModule,
-  MatMenuModule,
-  MatProgressSpinnerModule,
-  MatSelectModule,
-  MatTooltipModule
-} from "@angular/material";
+import { MatAutocompleteModule } from "@angular/material/autocomplete";
+import { MatButtonModule } from "@angular/material/button";
+import { MatFormFieldModule } from "@angular/material/form-field";
+import { MatIconModule } from "@angular/material/icon";
+import { MatInputModule } from "@angular/material/input";
+import { MatMenuModule } from "@angular/material/menu";
+import { MatProgressSpinnerModule } from "@angular/material/progress-spinner";
+import { MatSelectModule } from "@angular/material/select";
+import { MatTooltipModule } from "@angular/material/tooltip";
 
 import { ZoekerAlleLagenGetraptComponent } from "./alle-lagen/zoeker-alle-lagen-getrapt.component";
 import { ZoekerBoxComponent } from "./box/zoeker-box.component";

@@ -1,6 +1,6 @@
 import { animate, style, transition, trigger } from "@angular/animations";
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, NgZone, OnDestroy, OnInit, ViewEncapsulation } from "@angular/core";
-import { MatTabChangeEvent } from "@angular/material";
+import { MatTabChangeEvent } from "@angular/material/tabs";
 import { DomSanitizer, SafeHtml } from "@angular/platform-browser";
 import * as array from "fp-ts/lib/Array";
 import { not, Predicate } from "fp-ts/lib/function";

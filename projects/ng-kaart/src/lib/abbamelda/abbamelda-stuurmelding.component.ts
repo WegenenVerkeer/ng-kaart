@@ -49,7 +49,7 @@ export class AbbameldaStuurmeldingComponent {
     const boodschap = this.abbameldaMeldingInputControl.value;
 
     this.http
-      .post<AbbameldaResultaat>("/geoloket2/rest/abbamelda/melding", {
+      .post<AbbameldaResultaat>("/geoloket/rest/abbamelda/melding", {
         melding: boodschap,
         onderdeel: this.abbamelda_onderdeel,
         pad: this.abbamelda_pad

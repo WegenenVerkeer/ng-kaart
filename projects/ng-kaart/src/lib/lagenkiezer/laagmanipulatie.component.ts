@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input, NgZone, ViewChild, ViewEncapsulation } from "@angular/core";
-import { MatIconRegistry, MatMenuTrigger } from "@angular/material";
+import { MatIconRegistry } from "@angular/material/icon";
+import { MatMenuTrigger } from "@angular/material/menu";
 import { DomSanitizer } from "@angular/platform-browser";
 import * as array from "fp-ts/lib/Array";
 import { Function2 } from "fp-ts/lib/function";

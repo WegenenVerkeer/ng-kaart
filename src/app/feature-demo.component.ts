@@ -1135,7 +1135,7 @@ export class FeatureDemoComponent {
       bbox: `${location[0] - 1},${location[1] - 1},${location[0] + 1},${location[1] + 1}`,
       bron: "Bestuurszaken Percelen"
     };
-    return urlWithParams("/geoloket2/rest/externewms/featureInfo", params);
+    return urlWithParams("/geoloket/rest/externewms/featureInfo", params);
     // const corsProxy = "http://localhost:9090/"; // TODO iets dat altijd bereikbaar is
     // const targetServer = "http://bzgis.vlaanderen.be/ArcGIS/services/DBZ/Vastgoed_Percelen_Vlaamse_overheid/MapServer/WMSServer";
     // return `${corsProxy}${targetServer}?${encodeParams(params)}`;

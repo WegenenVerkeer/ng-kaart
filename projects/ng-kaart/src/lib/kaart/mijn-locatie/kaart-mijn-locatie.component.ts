@@ -1,6 +1,6 @@
 import { BreakpointObserver, Breakpoints } from "@angular/cdk/layout";
 import { AfterViewInit, Component, NgZone, OnInit, QueryList, ViewChildren } from "@angular/core";
-import { MatButton } from "@angular/material";
+import { MatButton } from "@angular/material/button";
 import { Function1, Predicate } from "fp-ts/lib/function";
 import { none, Option, some } from "fp-ts/lib/Option";
 import { AbsoluteOrientationSensor } from "motion-sensors-polyfill";
