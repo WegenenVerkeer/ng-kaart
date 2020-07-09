@@ -15,7 +15,7 @@ export class ProtractorComponent {
       anchorYUnits: ol.style.IconAnchorUnits.FRACTION,
       scale: 1,
       opacity: 1,
-      src: require("material-design-icons/maps/svg/production/ic_place_48px.svg")
+      src: "ic_place_48px.svg"
     }),
     text: new ol.style.Text({
       font: "12px 'Helvetica Neue', sans-serif",
@@ -37,7 +37,7 @@ export class ProtractorComponent {
       scale: 1,
       opacity: 1,
       color: "#FA1",
-      src: require("material-design-icons/maps/svg/production/ic_local_airport_48px.svg")
+      src: "ic_local_airport_48px.svg"
     }),
     text: new ol.style.Text({
       font: "12px 'Helvetica Neue', sans-serif",
@@ -63,4 +63,13 @@ export class ProtractorComponent {
       geometry: new ol.geom.Point(this.installatieCoordinaat)
     })
   ];
+
+  constructor() {
+    // Voorheen werd require gebruikt als de waarde van het source attribuut.
+    // Dat werkt nu echter niet meer. Een side effet van require is wel dat de
+    // resource beschikbaar komt onder het root pad. Vandaar dat er er kunnen
+    // naar refereren in de img style.
+    require("material-design-icons/maps/svg/production/ic_place_48px.svg");
+    require("material-design-icons/maps/svg/production/ic_local_airport_48px.svg");
+  }
 }
