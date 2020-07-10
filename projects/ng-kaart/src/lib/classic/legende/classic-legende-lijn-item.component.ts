@@ -4,7 +4,7 @@ import { fromNullable, none, Option } from "fp-ts/lib/Option";
 import { LegendeItem } from "../../kaart/kaart-legende";
 import * as val from "../webcomponent-support/params";
 
-import { ClassicLegendeItemComponent } from "./classic-legende-item.component";
+import { ClassicLegendeItemDirective } from "./classic-legende-item.directive";
 
 /**
  * De component moet als child tag van een laag gebruikt worden, Wanneer de elementen op de laag zichtbaar zijn, wordt
@@ -16,7 +16,7 @@ import { ClassicLegendeItemComponent } from "./classic-legende-item.component";
   selector: "awv-legende-lijn-item",
   template: "<ng-content></ng-content>"
 })
-export class ClassicLegendeLijnItemComponent extends ClassicLegendeItemComponent {
+export class ClassicLegendeLijnItemComponent extends ClassicLegendeItemDirective {
   _achtergrondKleur: Option<string> = none;
   _kleur: string;
 

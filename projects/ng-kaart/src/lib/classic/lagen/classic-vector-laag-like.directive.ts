@@ -1,4 +1,4 @@
-import { Injector, Input, OnChanges, SimpleChanges } from "@angular/core";
+import { Directive, Injector, Input, OnChanges, SimpleChanges } from "@angular/core";
 import { fromNullable, none, Option } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 
@@ -15,9 +15,10 @@ import { TypedRecord } from "../../util/typed-record";
 import { logOnlyWrapper } from "../messages";
 import * as val from "../webcomponent-support/params";
 
-import { ClassicLaagComponent } from "./classic-laag.component";
+import { ClassicLaagDirective } from "./classic-laag.directive";
 
-export abstract class ClassicVectorLaagLikeComponent extends ClassicLaagComponent implements OnChanges {
+@Directive()
+export abstract class ClassicVectorLaagLikeDirective extends ClassicLaagDirective implements OnChanges {
   @Input()
   style?: ol.style.Style = undefined; // heeft voorrang op styleFunction
   @Input()

@@ -2,7 +2,7 @@ import { Component, Injector } from "@angular/core";
 
 import { ZoekerGoogleWdbService } from "../../zoeker/google-wdb/zoeker-google-wdb.service";
 
-import { ClassicSingleZoekerComponentBase } from "./classic-single-zoeker.component";
+import { ClassicSingleZoekerDirective } from "./classic-single-zoeker.directive";
 
 /**
  * Voegt een zoeker voor vrije-tekst-zoeken via Google toe.
@@ -13,7 +13,7 @@ import { ClassicSingleZoekerComponentBase } from "./classic-single-zoeker.compon
   selector: "awv-kaart-google-zoeker",
   template: ""
 })
-export class ClassicGoogleZoekerComponent extends ClassicSingleZoekerComponentBase {
+export class ClassicGoogleZoekerComponent extends ClassicSingleZoekerDirective {
   constructor(injector: Injector, googleZoeker: ZoekerGoogleWdbService) {
     super(injector, googleZoeker);
   }

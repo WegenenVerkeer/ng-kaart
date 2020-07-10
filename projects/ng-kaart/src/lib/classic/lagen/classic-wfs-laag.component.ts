@@ -6,14 +6,14 @@ import * as ss from "../../kaart/stijl-selector";
 import { wfsSource } from "../../source/wfs-source";
 import * as val from "../webcomponent-support/params";
 
-import { ClassicVectorLaagLikeComponent } from "./classic-vector-laag-like.component";
+import { ClassicVectorLaagLikeDirective } from "./classic-vector-laag-like.directive";
 
 @Component({
   selector: "awv-kaart-wfs-laag",
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class ClassicWfsLaagComponent extends ClassicVectorLaagLikeComponent {
+export class ClassicWfsLaagComponent extends ClassicVectorLaagLikeDirective {
   _url = "/geoserver/wfs";
   _veldInfos: ke.VeldInfo[] = [];
   _version = "2.0.0";

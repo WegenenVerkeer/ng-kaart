@@ -2,7 +2,7 @@ import { Component, Injector, Input, ViewEncapsulation } from "@angular/core";
 
 import { BlancoLaag, BlancoType, Laaggroep } from "../../kaart/kaart-elementen";
 
-import { ClassicLaagComponent } from "./classic-laag.component";
+import { ClassicLaagDirective } from "./classic-laag.directive";
 
 export const blancoLaag = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
 /**
@@ -13,7 +13,7 @@ export const blancoLaag = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAE
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class ClassicBlancoLaagComponent extends ClassicLaagComponent {
+export class ClassicBlancoLaagComponent extends ClassicLaagDirective {
   _titel = "Blanco";
 
   constructor(injector: Injector) {

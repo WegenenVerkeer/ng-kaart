@@ -31,7 +31,7 @@ import { classicMsgSubscriptionCmdOperator } from "../kaart-classic.component";
 import { KaartClassicMsg, LaatsteCacheRefreshMsg, logOnlyWrapper, PrecacheProgressMsg, PublishedKaartLocatiesMsg } from "../messages";
 import * as val from "../webcomponent-support/params";
 
-import { ClassicLaagComponent } from "./classic-laag.component";
+import { ClassicLaagDirective } from "./classic-laag.directive";
 
 const wmsFeatureInfo: Function2<HttpClient, Function1<ol.Coordinate, string>, Function1<ol.Coordinate, rx.Observable<string>>> = (
   httpClient,
@@ -96,7 +96,7 @@ const infoSetoid: Setoid<ClassicLaagKlikInfoEnStatus> = getStructSetoid({
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class ClassicWmsLaagComponent extends ClassicLaagComponent implements OnInit, AfterViewInit {
+export class ClassicWmsLaagComponent extends ClassicLaagDirective implements OnInit, AfterViewInit {
   // Een functie die de output van een WMS featureInfo of een WFS GetFeature request omzet naar een lijst van key-value paren.
   // De keys moeten een subset zijn van de titels van de veldinfos
   @Input()

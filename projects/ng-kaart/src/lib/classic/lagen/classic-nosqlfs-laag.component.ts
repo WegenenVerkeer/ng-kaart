@@ -16,7 +16,7 @@ import { Consumer1 } from "../../util/function";
 import { cachedFeaturesLookupReadyMsg, CachedFeaturesLookupReadyMsg, logOnlyWrapper } from "../messages";
 import * as val from "../webcomponent-support/params";
 
-import { ClassicVectorLaagLikeComponent } from "./classic-vector-laag-like.component";
+import { ClassicVectorLaagLikeDirective } from "./classic-vector-laag-like.directive";
 
 export interface PrecacheFeatures {
   readonly wkt: string;
@@ -28,7 +28,7 @@ export interface PrecacheFeatures {
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeComponent {
+export class ClassicNosqlfsLaagComponent extends ClassicVectorLaagLikeDirective {
   _url = "/geolatte-nosqlfs";
   _database: string;
   _view = "default";

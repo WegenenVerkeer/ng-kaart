@@ -1,15 +1,15 @@
-import { AfterContentInit, ElementRef, Injector, Input } from "@angular/core";
+import { AfterContentInit, Directive, ElementRef, Injector, Input } from "@angular/core";
 
 import { LegendeItem } from "../../kaart/kaart-legende";
 import { KaartClassicLocatorService } from "../kaart-classic-locator.service";
-import { ClassicLaagComponent } from "../lagen/classic-laag.component";
-
+import { ClassicLaagDirective } from "../lagen/classic-laag.directive";
 import * as val from "../webcomponent-support/params";
 
 /**
- * Basisklaasse voor de legende items.
+ * Basisklasse voor de legende items.
  */
-export abstract class ClassicLegendeItemComponent implements AfterContentInit {
+@Directive()
+export abstract class ClassicLegendeItemDirective implements AfterContentInit {
   _beschrijving: string;
 
   /**
@@ -23,9 +23,9 @@ export abstract class ClassicLegendeItemComponent implements AfterContentInit {
   constructor(private injector: Injector) {}
 
   ngAfterContentInit(): void {
-    const locatorService = this.injector.get(KaartClassicLocatorService) as KaartClassicLocatorService<ClassicLaagComponent>;
+    const locatorService = this.injector.get(KaartClassicLocatorService) as KaartClassicLocatorService<ClassicLaagDirective>;
     const el: ElementRef<Element> = this.injector.get(ElementRef);
-    const laag = locatorService.getComponent(this.injector, ClassicLaagComponent, el);
+    const laag = locatorService.getComponent(this.injector, ClassicLaagDirective, el);
     laag.addLegendeItem(this);
   }
 

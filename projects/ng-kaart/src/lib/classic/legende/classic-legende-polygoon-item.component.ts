@@ -3,7 +3,7 @@ import { Component, Injector, Input } from "@angular/core";
 import { LegendeItem } from "../../kaart/kaart-legende";
 import * as val from "../webcomponent-support/params";
 
-import { ClassicLegendeItemComponent } from "./classic-legende-item.component";
+import { ClassicLegendeItemDirective } from "./classic-legende-item.directive";
 
 /**
  * De component moet als child tag van een laag gebruikt worden, Wanneer de elementen op de laag zichtbaar zijn, wordt
@@ -15,7 +15,7 @@ import { ClassicLegendeItemComponent } from "./classic-legende-item.component";
   selector: "awv-legende-polygoon-item",
   template: "<ng-content></ng-content>"
 })
-export class ClassicLegendePolygoonItemComponent extends ClassicLegendeItemComponent {
+export class ClassicLegendePolygoonItemComponent extends ClassicLegendeItemDirective {
   _kleur: string;
 
   /**
