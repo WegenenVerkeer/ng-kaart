@@ -42,7 +42,7 @@ import {
 import * as ol from "../../util/openlayers-compat";
 import { forEach } from "../../util/option";
 import { BevraagKaartOpties, BevraagKaartUiSelector } from "../kaart-bevragen/kaart-bevragen-opties";
-import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { KaartChildDirective } from "../kaart-child.directive";
 import * as ke from "../kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
@@ -555,7 +555,7 @@ const stichGeometries: Function2<WaypointId[], FeaturesByWaypointId, ol.geom.Geo
   styleUrls: ["./kaart-teken-laag.component.scss"],
   encapsulation: ViewEncapsulation.None
 })
-export class KaartMultiTekenLaagComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
+export class KaartMultiTekenLaagComponent extends KaartChildDirective implements OnInit, OnDestroy {
   private readonly internalDrawOpsSubj: rx.Subject<DrawOps> = new rx.Subject();
 
   constructor(parent: KaartComponent, zone: NgZone, private readonly http: HttpClient) {

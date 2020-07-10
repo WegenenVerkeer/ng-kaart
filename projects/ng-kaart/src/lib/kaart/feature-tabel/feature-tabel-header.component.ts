@@ -3,7 +3,7 @@ import * as rx from "rxjs";
 import { distinctUntilChanged, map, mapTo, share, switchMap, tap } from "rxjs/operators";
 
 import { collectOption } from "../../util/operators";
-import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { KaartChildDirective } from "../kaart-child.directive";
 import { kaartLogOnlyWrapper } from "../kaart-internal-messages";
 import * as cmd from "../kaart-protocol-commands";
 import { KaartComponent } from "../kaart.component";
@@ -18,7 +18,7 @@ import { TableModel } from "./table-model";
   styleUrls: ["./feature-tabel-header.component.scss"],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class FeatureTabelHeaderComponent extends KaartChildComponentBase {
+export class FeatureTabelHeaderComponent extends KaartChildDirective {
   header$: rx.Observable<TableHeader>;
 
   @Input()

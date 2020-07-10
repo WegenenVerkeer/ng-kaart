@@ -1,4 +1,4 @@
-import { AfterViewInit, NgZone, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
+import { AfterViewInit, Directive, NgZone, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
 import { Lazy } from "fp-ts/es6/function";
 import { Function1, identity } from "fp-ts/lib/function";
 import { Refinement } from "fp-ts/lib/function";
@@ -16,7 +16,8 @@ interface ClickAction {
 /**
  * Algemene basisklasse die gebruikt kan worden voor zowel child components van de kaartcomponent als voor kaart classic helper components.
  */
-export abstract class KaartComponentBase implements AfterViewInit, OnInit, OnDestroy {
+@Directive()
+export abstract class KaartBaseDirective implements AfterViewInit, OnInit, OnDestroy {
   private readonly destroyingSubj: rx.Subject<void> = new rx.ReplaySubject<void>(1); // ReplaySubject => laatkomers krijgen toch nog event
   private readonly initialisingSubj: rx.Subject<void> = new rx.ReplaySubject<void>(1);
   private readonly viewReadySubj: rx.Subject<void> = new rx.ReplaySubject<void>(1);

@@ -1,7 +1,7 @@
 import { Component, Injector, OnDestroy, OnInit } from "@angular/core";
 
 import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
-import { ClassicBaseComponent } from "../classic-base.component";
+import { ClassicBaseDirective } from "../classic-base.directive";
 
 /**
  * Voegt een knop toe waarmee de kaart naar en van volledige-scherm-modus geschakeld kan worden.
@@ -10,7 +10,7 @@ import { ClassicBaseComponent } from "../classic-base.component";
   selector: "awv-kaart-knop-volledig-scherm",
   template: "<ng-content></ng-content>"
 })
-export class ClassicVolledigSchermComponent extends ClassicBaseComponent implements OnInit, OnDestroy {
+export class ClassicVolledigSchermComponent extends ClassicBaseDirective implements OnInit, OnDestroy {
   constructor(injector: Injector) {
     super(injector);
   }

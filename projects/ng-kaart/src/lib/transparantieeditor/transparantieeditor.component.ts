@@ -6,7 +6,7 @@ import * as rx from "rxjs";
 import { distinctUntilChanged, filter, map, sample, shareReplay, startWith, tap } from "rxjs/operators";
 import { isNumber } from "util";
 
-import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
+import { KaartChildDirective } from "../kaart/kaart-child.directive";
 import * as ke from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as prt from "../kaart/kaart-protocol";
@@ -23,7 +23,7 @@ import { Transparantie } from "./transparantie";
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class TransparantieeditorComponent extends KaartChildComponentBase {
+export class TransparantieeditorComponent extends KaartChildDirective {
   readonly zichtbaar$: rx.Observable<boolean>;
   readonly titel$: rx.Observable<string>;
   readonly nietToepassen$: rx.Observable<boolean>;

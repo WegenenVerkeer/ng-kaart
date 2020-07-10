@@ -11,7 +11,7 @@ import { copyToClipboard } from "../../util/clipboard";
 import * as maps from "../../util/maps";
 import { Progress, withProgress } from "../../util/progress";
 import { LaagLocationInfoResult, TextLaagLocationInfo, VeldinfoLaagLocationInfo, Veldwaarde } from "../kaart-bevragen/laaginfo.model";
-import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { KaartChildDirective } from "../kaart-child.directive";
 import { InfoBoodschapKaartBevragenProgress } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
 
@@ -68,7 +68,7 @@ const laagLocationInfoResultToLaagInfo: Function2<string, LaagLocationInfoResult
   styleUrls: ["./kaart-info-boodschap-kaart-bevragen.component.scss"],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildComponentBase {
+export class KaartInfoBoodschapKaartBevragenComponent extends KaartChildDirective {
   laagInfos: LaagInfo[];
   coordinaatInformatieLambert72: string;
   coordinaatInformatieWgs84: string;

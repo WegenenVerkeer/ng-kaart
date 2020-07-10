@@ -2,7 +2,7 @@ import { Component, Injector, OnDestroy, OnInit, ViewEncapsulation } from "@angu
 
 import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import * as prt from "../../kaart/kaart-protocol";
-import { ClassicBaseComponent } from "../classic-base.component";
+import { ClassicBaseDirective } from "../classic-base.directive";
 
 /**
  * Deze component zorgt voor een uitklapbare selector van achtergrondlagen. Welke lagen er in de selector staan hangt af
@@ -24,7 +24,7 @@ import { ClassicBaseComponent } from "../classic-base.component";
   template: "",
   encapsulation: ViewEncapsulation.None
 })
-export class ClassicAchtergrondSelectorComponent extends ClassicBaseComponent implements OnInit, OnDestroy {
+export class ClassicAchtergrondSelectorComponent extends ClassicBaseDirective implements OnInit, OnDestroy {
   constructor(injector: Injector) {
     super(injector);
   }

@@ -11,7 +11,7 @@ import { ZoekerCrabService } from "../../zoeker/crab/zoeker-crab.service";
 import { ZoekerGoogleWdbService } from "../../zoeker/google-wdb/zoeker-google-wdb.service";
 import { ZoekerPerceelService } from "../../zoeker/perceel/zoeker-perceel.service";
 import { Zoeker, zoekerMetPrioriteiten, ZoekerMetWeergaveopties } from "../../zoeker/zoeker";
-import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
+import { ClassicUIElementSelectorDirective } from "../common/classic-ui-element-selector.directive";
 import { KaartClassicLocatorService } from "../kaart-classic-locator.service";
 
 /**
@@ -36,7 +36,7 @@ import { KaartClassicLocatorService } from "../kaart-classic-locator.service";
   selector: "awv-kaart-zoeker",
   template: "<ng-content></ng-content>"
 })
-export class ClassicZoekerComponent extends ClassicUIElementSelectorComponentBase {
+export class ClassicZoekerComponent extends ClassicUIElementSelectorDirective {
   /**
    * Stel één enkele zoeker in.
    *

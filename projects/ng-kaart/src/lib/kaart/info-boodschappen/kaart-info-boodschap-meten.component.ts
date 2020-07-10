@@ -2,7 +2,7 @@ import { Component, Input, NgZone } from "@angular/core";
 import { Function1 } from "fp-ts/lib/function";
 
 import { copyToClipboard } from "../../util/clipboard";
-import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { KaartChildDirective } from "../kaart-child.directive";
 import { InfoBoodschapMeten } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
 
@@ -34,7 +34,7 @@ const formatLength: Function1<number, string> = length => {
   templateUrl: "./kaart-info-boodschap-meten.component.html",
   styleUrls: ["./kaart-info-boodschap-meten.component.scss"]
 })
-export class KaartInfoBoodschapMetenComponent extends KaartChildComponentBase {
+export class KaartInfoBoodschapMetenComponent extends KaartChildDirective {
   length?: string;
   area?: string;
   lengthCopyInfo?: string;

@@ -3,7 +3,7 @@ import { Component, Injector, Input } from "@angular/core";
 import * as clr from "../../stijl/colour";
 
 import { MultiMetenOpties, MultiMetenUiSelector } from "../../kaart/meten/kaart-multi-meten.component";
-import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
+import { ClassicUIElementSelectorDirective } from "../common/classic-ui-element-selector.directive";
 
 import * as val from "../webcomponent-support/params";
 
@@ -14,7 +14,7 @@ import * as val from "../webcomponent-support/params";
   selector: "awv-multi-meet-knop",
   template: ""
 })
-export class ClassicMultiMetenComponent extends ClassicUIElementSelectorComponentBase {
+export class ClassicMultiMetenComponent extends ClassicUIElementSelectorDirective {
   _tekenKleurCode = clr.kleurcodeValue(clr.zwartig);
   _toonInfoBoodschap = true;
   _metRouting = false;

@@ -9,7 +9,7 @@ import * as rx from "rxjs";
 import { debounceTime, distinctUntilChanged, filter, map, shareReplay } from "rxjs/operators";
 
 import { Filter } from "../filter/filter-model";
-import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
+import { KaartChildDirective } from "../kaart/kaart-child.directive";
 import { isToegevoegdeVectorLaag, ToegevoegdeLaag, ToegevoegdeVectorLaag } from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import { LegendeItem } from "../kaart/kaart-legende";
@@ -80,7 +80,7 @@ const isTarget = (laag: ToegevoegdeLaag) => (ds: DragState) => ds.currentDrop.ti
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush // Omdat angular anders veel te veel change detection uitvoert
 })
-export class LagenkiezerComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
+export class LagenkiezerComponent extends KaartChildDirective implements OnInit, OnDestroy {
   private dragState: Option<DragState> = none;
   private dichtgeklapt = false;
   public geselecteerdeTab = 0;

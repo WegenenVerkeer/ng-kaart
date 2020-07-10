@@ -2,7 +2,7 @@ import { Component, Injector } from "@angular/core";
 
 import { MijnMobieleLocatieUiSelector } from "../../kaart/mijn-locatie/kaart-mijn-mobiele-locatie.component";
 
-import { ClassicMijnLocatieBaseComponent } from "./classic-mijn-locatie-base.component";
+import { ClassicMijnLocatieDirective } from "./classic-mijn-locatie-base.component";
 
 /**
  * De mijn-locatie tag zorgt voor een locatie tracker.
@@ -11,7 +11,7 @@ import { ClassicMijnLocatieBaseComponent } from "./classic-mijn-locatie-base.com
   selector: "awv-mijn-mobiele-locatie",
   template: ""
 })
-export class ClassicMijnMobieleLocatieComponent extends ClassicMijnLocatieBaseComponent {
+export class ClassicMijnMobieleLocatieComponent extends ClassicMijnLocatieDirective {
   constructor(injector: Injector) {
     super(MijnMobieleLocatieUiSelector, injector);
   }

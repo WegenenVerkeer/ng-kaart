@@ -1,6 +1,6 @@
 import { Component, Input, NgZone } from "@angular/core";
 
-import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
+import { KaartChildDirective } from "../kaart/kaart-child.directive";
 import { KaartComponent } from "../kaart/kaart.component";
 
 import { Filter as fltr } from "./filter-model";
@@ -10,7 +10,7 @@ import { Filter as fltr } from "./filter-model";
   templateUrl: "./filter-expression.component.html",
   styleUrls: ["./filter-expression.component.scss"]
 })
-export class FilterExpressionComponent extends KaartChildComponentBase {
+export class FilterExpressionComponent extends KaartChildDirective {
   left?: fltr.Expression;
   right?: fltr.Expression;
   term?: fltr.Comparison;

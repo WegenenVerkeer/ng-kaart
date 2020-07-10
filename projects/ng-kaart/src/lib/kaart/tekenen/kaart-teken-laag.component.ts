@@ -10,7 +10,7 @@ import { observeOnAngular } from "../../util/observe-on-angular";
 import * as ol from "../../util/openlayers-compat";
 import { ofType } from "../../util/operators";
 import { forEach } from "../../util/option";
-import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { KaartChildDirective } from "../kaart-child.directive";
 import * as ke from "../kaart-elementen";
 import { VeldInfo } from "../kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper, tekenWrapper, VerwijderTekenFeatureMsg } from "../kaart-internal-messages";
@@ -60,7 +60,7 @@ const defaultDrawStyle = new ol.style.Style({
   styleUrls: ["./kaart-teken-laag.component.scss"],
   encapsulation: ViewEncapsulation.None
 })
-export class KaartTekenLaagComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
+export class KaartTekenLaagComponent extends KaartChildDirective implements OnInit, OnDestroy {
   private changedGeometriesSubj: Subject<ke.Tekenresultaat>;
 
   private tekenen = false;

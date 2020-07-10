@@ -9,7 +9,7 @@ import * as Mustache from "mustache";
 
 import * as arrays from "../../util/arrays";
 import { formateerDate, formateerDateTime, parseDate, parseDateTime } from "../../util/date-time";
-import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { KaartChildDirective } from "../kaart-child.directive";
 import { VeldInfo } from "../kaart-elementen";
 import { KaartComponent } from "../kaart.component";
 
@@ -79,7 +79,7 @@ const isBasisVeld: Function2<VeldinfoMap, string, boolean> = hasVeldSatisfying(v
   templateUrl: "./kaart-info-boodschap-veldinfo.component.html",
   styleUrls: ["./kaart-info-boodschap-veldinfo.component.scss"]
 })
-export class KaartInfoBoodschapVeldinfoComponent extends KaartChildComponentBase {
+export class KaartInfoBoodschapVeldinfoComponent extends KaartChildDirective {
   @Input()
   properties: Properties;
   @Input()

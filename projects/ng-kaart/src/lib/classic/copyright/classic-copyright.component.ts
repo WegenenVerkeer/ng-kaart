@@ -1,7 +1,7 @@
 import { Component, Injector, Input } from "@angular/core";
 
 import { CopyrightOpties, CopyrightUISelector } from "../../kaart/copyright/kaart-copyright.component";
-import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
+import { ClassicUIElementSelectorDirective } from "../common/classic-ui-element-selector.directive";
 import * as val from "../webcomponent-support/params";
 
 /**
@@ -11,7 +11,7 @@ import * as val from "../webcomponent-support/params";
   selector: "awv-kaart-copyright",
   template: ""
 })
-export class ClassicCopyrightComponent extends ClassicUIElementSelectorComponentBase {
+export class ClassicCopyrightComponent extends ClassicUIElementSelectorDirective {
   private _copyright = "\u00A9 Agentschap Wegen en Verkeer";
 
   /**

@@ -17,7 +17,7 @@ import * as arrays from "../../../util/arrays";
 import { matchGeometryType, toLineString } from "../../../util/geometries";
 import * as ol from "../../../util/openlayers-compat";
 import { encodeAsSvgUrl } from "../../../util/url";
-import { KaartModusComponent } from "../../kaart-modus-component";
+import { KaartModusDirective } from "../../kaart-modus.directive";
 import * as prt from "../../kaart-protocol";
 import { DrawOpsCmd } from "../../kaart-protocol-commands";
 import { KaartComponent } from "../../kaart.component";
@@ -147,7 +147,7 @@ interface TemplateData {
   templateUrl: "./feature-tabel-polygon-selectie.component.html",
   styleUrls: []
 })
-export class FeatureTabelSelectieViaPolygonComponent extends KaartModusComponent implements OnInit, OnDestroy {
+export class FeatureTabelSelectieViaPolygonComponent extends KaartModusDirective implements OnInit, OnDestroy {
   public templateData$: rx.Observable<TemplateData>;
   private opties: SelecteerFeaturesViaPolygonOpties = defaultOptions;
 

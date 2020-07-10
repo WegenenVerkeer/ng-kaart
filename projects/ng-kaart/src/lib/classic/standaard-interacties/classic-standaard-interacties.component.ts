@@ -3,7 +3,7 @@ import * as rx from "rxjs";
 
 import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import * as prt from "../../kaart/kaart-protocol";
-import { ClassicBaseComponent } from "../classic-base.component";
+import { ClassicBaseDirective } from "../classic-base.directive";
 import * as val from "../webcomponent-support/params";
 
 /**
@@ -16,7 +16,7 @@ import * as val from "../webcomponent-support/params";
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class ClassicStandaardInteractiesComponent extends ClassicBaseComponent implements OnDestroy, OnChanges, OnInit {
+export class ClassicStandaardInteractiesComponent extends ClassicBaseDirective implements OnDestroy, OnChanges, OnInit {
   private standaardInteractieToegevoegd = false;
   _focusVoorZoom = false;
   _rotatie = false;

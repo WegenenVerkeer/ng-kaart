@@ -4,7 +4,7 @@ import { Predicate } from "fp-ts/lib/function";
 import { VerwijderUiElement, VoegUiElementToe, ZetUiElementOpties } from "../../kaart/kaart-protocol-commands";
 import { defaultOpties, LagenUiOpties, LagenUiSelector } from "../../lagenkiezer/lagenkiezer.component";
 import { asap } from "../../util/asap";
-import { ClassicBaseComponent } from "../classic-base.component";
+import { ClassicBaseDirective } from "../classic-base.directive";
 import * as val from "../webcomponent-support/params";
 
 /**
@@ -16,7 +16,7 @@ import * as val from "../webcomponent-support/params";
   selector: "awv-kaart-lagenkiezer",
   template: ""
 })
-export class ClassicLagenkiezerComponent extends ClassicBaseComponent implements OnInit, OnDestroy, OnChanges {
+export class ClassicLagenkiezerComponent extends ClassicBaseDirective implements OnInit, OnDestroy, OnChanges {
   constructor(injector: Injector) {
     super(injector);
   }

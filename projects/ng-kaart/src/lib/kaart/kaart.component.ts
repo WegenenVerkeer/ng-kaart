@@ -28,7 +28,7 @@ import { forEach } from "../util/option";
 import { resizeObservable } from "../util/resize-observable";
 import * as sets from "../util/sets";
 
-import { KaartComponentBase } from "./kaart-component-base";
+import { KaartBaseDirective } from "./kaart-base.directive";
 import { envParams, KAART_CFG, KaartConfig, mobile } from "./kaart-config";
 import { ReplaySubjectKaartCmdDispatcher } from "./kaart-event-dispatcher";
 import { InfoBoodschappenMsg, KaartInternalMsg, KaartInternalSubMsg } from "./kaart-internal-messages";
@@ -50,7 +50,7 @@ export const KaartMobileFriendlyUISelector = "KaartMobileFriendlyUISelector";
   styleUrls: ["./kaart.component.scss"],
   encapsulation: ViewEncapsulation.Emulated // Omwille hiervan kunnen we geen globale CSS gebruiken, maar met Native werken animaties niet
 })
-export class KaartComponent extends KaartComponentBase {
+export class KaartComponent extends KaartBaseDirective {
   kaartLinksZichtbaar = true;
   kaartLinksToggleZichtbaar = false;
   kaartLinksScrollbarZichtbaar = false;

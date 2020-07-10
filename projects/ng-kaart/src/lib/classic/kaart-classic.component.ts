@@ -17,9 +17,9 @@ import { fromEither, none, Option, some } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { debounceTime, map, share, switchMap, tap } from "rxjs/operators";
 
+import { forChangedValue, KaartBaseDirective } from "../kaart/kaart-base.directive";
 import { BevraagKaartOpties } from "../kaart/kaart-bevragen/kaart-bevragen-opties";
 import { Adres, BevragenErrorReason, KaartLocaties, progressFailure, WegLocaties } from "../kaart/kaart-bevragen/laaginfo.model";
-import { forChangedValue, KaartComponentBase } from "../kaart/kaart-component-base";
 import { ToegevoegdeLaag } from "../kaart/kaart-elementen";
 import { KaartCmdDispatcher, ReplaySubjectKaartCmdDispatcher } from "../kaart/kaart-event-dispatcher";
 import * as prt from "../kaart/kaart-protocol";
@@ -96,7 +96,7 @@ const nop = () => {};
   selector: "awv-kaart-classic",
   templateUrl: "./kaart-classic.component.html"
 })
-export class KaartClassicComponent extends KaartComponentBase implements OnInit, OnDestroy, OnChanges, KaartCmdDispatcher<TypedRecord> {
+export class KaartClassicComponent extends KaartBaseDirective implements OnInit, OnDestroy, OnChanges, KaartCmdDispatcher<TypedRecord> {
   /** @ignore */
   private static counter = 1;
 

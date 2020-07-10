@@ -2,7 +2,7 @@ import { Component, Injector } from "@angular/core";
 
 import { FeatureTabelUiSelector } from "../../kaart/feature-tabel";
 import { OptiesRecord } from "../../kaart/ui-element-opties";
-import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
+import { ClassicUIElementSelectorDirective } from "../common/classic-ui-element-selector.directive";
 
 /**
  * Gebruik deze component om een tabel met features beschikbaar te maken.
@@ -11,7 +11,7 @@ import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-elem
   selector: "awv-feature-tabel",
   template: ""
 })
-export class ClassicFeatureTabelComponent extends ClassicUIElementSelectorComponentBase {
+export class ClassicFeatureTabelComponent extends ClassicUIElementSelectorDirective {
   constructor(injector: Injector) {
     super(FeatureTabelUiSelector, injector);
   }

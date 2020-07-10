@@ -2,7 +2,7 @@ import { Directive, ElementRef, Injector, Input, NgZone } from "@angular/core";
 import * as rx from "rxjs";
 import { tap } from "rxjs/operators";
 
-import { KaartComponentBase } from "../../kaart";
+import { KaartBaseDirective } from "../../kaart";
 import { Zoeker, zoekerMetPrioriteiten } from "../../zoeker/zoeker";
 import { KaartClassicLocatorService } from "../kaart-classic-locator.service";
 import * as val from "../webcomponent-support/params";
@@ -13,7 +13,7 @@ import { ClassicZoekerComponent } from "./classic-zoeker.component";
  * Basisklasse voor de specifieke zoeker child tags.
  */
 @Directive()
-export abstract class ClassicSingleZoekerDirective extends KaartComponentBase {
+export abstract class ClassicSingleZoekerDirective extends KaartBaseDirective {
   private static nextVolledigePrioriteit = 0;
   private static nextSuggestiesPrioriteit = 0;
 

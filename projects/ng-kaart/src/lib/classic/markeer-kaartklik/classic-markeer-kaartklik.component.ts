@@ -3,7 +3,7 @@ import { Component, Injector, Input } from "@angular/core";
 import { defaultMarkerStyle as defaultClickMarkerStyle, MarkeerKaartklikOpties, MarkeerKaartklikUiSelector } from "../../kaart";
 import * as ss from "../../kaart/stijl-selector";
 import { toOption } from "../../util";
-import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
+import { ClassicUIElementSelectorDirective } from "../common/classic-ui-element-selector.directive";
 import * as val from "../webcomponent-support/params";
 
 /**
@@ -14,7 +14,7 @@ import * as val from "../webcomponent-support/params";
   selector: "awv-kaart-markeer-kaartklik",
   template: ""
 })
-export class ClassicMarkeerKaartklikComponent extends ClassicUIElementSelectorComponentBase {
+export class ClassicMarkeerKaartklikComponent extends ClassicUIElementSelectorDirective {
   private _markerStyle: ss.Stylish = defaultClickMarkerStyle;
   private _disabled = false;
   private _includeFeatureClick = false;

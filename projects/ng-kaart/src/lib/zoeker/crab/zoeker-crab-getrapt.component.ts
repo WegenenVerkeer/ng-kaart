@@ -6,7 +6,7 @@ import { distinctUntilChanged, filter, map, startWith } from "rxjs/operators";
 import { KaartComponent } from "../../kaart/kaart.component";
 import { isNotNullObject } from "../../util/function";
 import {
-  GetraptZoekerComponent,
+  GetraptZoekerDirective,
   toNonEmptyDistinctLowercaseString,
   toTrimmedLowerCasedString,
   ZoekerBoxComponent
@@ -24,7 +24,7 @@ const NIVEAU_VANAFHUISNUMMER = 3;
   templateUrl: "./zoeker-crab-getrapt.component.html",
   styleUrls: ["./zoeker-crab-getrapt.component.scss"]
 })
-export class ZoekerCrabGetraptComponent extends GetraptZoekerComponent implements OnInit {
+export class ZoekerCrabGetraptComponent extends GetraptZoekerDirective implements OnInit {
   private alleGemeenten: CrabGemeente[] = [];
   gefilterdeGemeenten: CrabGemeente[] = [];
 

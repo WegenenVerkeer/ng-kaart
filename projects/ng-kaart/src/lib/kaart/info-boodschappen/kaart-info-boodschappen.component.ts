@@ -7,7 +7,7 @@ import { debounceTime, map, withLatestFrom } from "rxjs/operators";
 
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { ofType } from "../../util/operators";
-import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { KaartChildDirective } from "../kaart-child.directive";
 import { InfoBoodschappenMsg, infoBoodschappenMsgGen, KaartInternalMsg } from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
 import { InfoBoodschap } from "../kaart-with-info-model";
@@ -26,7 +26,7 @@ import { KaartComponent } from "../kaart.component";
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class KaartInfoBoodschappenComponent extends KaartChildComponentBase {
+export class KaartInfoBoodschappenComponent extends KaartChildDirective {
   infoBoodschappen$: rx.Observable<Array<InfoBoodschap>> = rx.EMPTY;
 
   constructor(parent: KaartComponent, zone: NgZone) {

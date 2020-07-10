@@ -10,7 +10,7 @@ import * as ss from "../../kaart/stijl-selector";
 import { TekenenUiSelector } from "../../kaart/tekenen/kaart-teken-laag.component";
 import * as ol from "../../util/openlayers-compat";
 import { collect, ofType } from "../../util/operators";
-import { ClassicBaseComponent } from "../classic-base.component";
+import { ClassicBaseDirective } from "../classic-base.directive";
 import { classicMsgSubscriptionCmdOperator } from "../kaart-classic.component";
 import { KaartClassicMsg, TekenGeomAangepastMsg } from "../messages";
 import * as val from "../webcomponent-support/params";
@@ -19,7 +19,7 @@ import * as val from "../webcomponent-support/params";
   selector: "awv-kaart-teken",
   template: "<ng-content></ng-content>"
 })
-export class KaartTekenComponent extends ClassicBaseComponent implements OnInit {
+export class KaartTekenComponent extends ClassicBaseDirective implements OnInit {
   private stopTekenenSubj: rx.Subject<void> = new rx.Subject<void>();
   private tekenenCommandSubj = new rx.Subject<TekenenCommand>();
 

@@ -1,11 +1,12 @@
-import { ElementRef, Injector, NgZone } from "@angular/core";
+import { Directive, ElementRef, Injector, NgZone } from "@angular/core";
 
-import { KaartComponentBase } from "../kaart/kaart-component-base";
+import { KaartBaseDirective } from "../kaart/kaart-base.directive";
 
 import { KaartClassicLocatorService } from "./kaart-classic-locator.service";
 import { KaartClassicComponent } from "./kaart-classic.component";
 
-export class ClassicBaseComponent extends KaartComponentBase {
+@Directive()
+export class ClassicBaseDirective extends KaartBaseDirective {
   protected readonly kaart: KaartClassicComponent;
 
   constructor(injector: Injector) {

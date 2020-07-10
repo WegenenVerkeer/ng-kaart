@@ -10,7 +10,7 @@ import { distance, geometryLength, matchGeometryType, toLineString } from "../..
 import * as ol from "../../util/openlayers-compat";
 import { ofType, select } from "../../util/operators";
 import { tekenInfoboodschapGeslotenMsgWrapper, VerwijderTekenFeatureMsg } from "../kaart-internal-messages";
-import { KaartModusComponent } from "../kaart-modus-component";
+import { KaartModusDirective } from "../kaart-modus.directive";
 import * as prt from "../kaart-protocol";
 import { DrawOpsCmd } from "../kaart-protocol-commands";
 import { KaartComponent } from "../kaart.component";
@@ -50,7 +50,7 @@ const hasAtleastTwoPoints: Predicate<ol.geom.Geometry> = geom =>
   templateUrl: "./kaart-multi-meten.component.html",
   styleUrls: ["./kaart-multi-meten.component.scss"]
 })
-export class KaartMultiMetenComponent extends KaartModusComponent {
+export class KaartMultiMetenComponent extends KaartModusDirective {
   private metenOpties: MultiMetenOpties = defaultOptions;
   private metingGestartSubj: rx.Subject<void> = new rx.Subject();
 

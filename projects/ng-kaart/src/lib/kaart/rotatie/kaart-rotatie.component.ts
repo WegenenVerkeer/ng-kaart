@@ -7,7 +7,7 @@ import * as rx from "rxjs";
 import { delay, distinctUntilChanged, map, tap } from "rxjs/operators";
 
 import { encodeAsSvgUrl } from "../../util/url";
-import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { KaartChildDirective } from "../kaart-child.directive";
 import { mobile } from "../kaart-config";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
@@ -22,7 +22,7 @@ const compassSVG =
   templateUrl: "./kaart-rotatie.component.html",
   styleUrls: ["./kaart-rotatie.component.scss"]
 })
-export class KaartRotatieComponent extends KaartChildComponentBase implements OnInit {
+export class KaartRotatieComponent extends KaartChildDirective implements OnInit {
   readonly rotatie$: rx.Observable<number>;
   readonly zichtbaar$: rx.Observable<boolean>;
   readonly clickBtnSubj: rx.Subject<boolean> = new rx.Subject<boolean>();

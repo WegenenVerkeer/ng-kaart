@@ -1,7 +1,7 @@
 import { Component, Injector } from "@angular/core";
 
 import { SchaalUiSelector } from "../../kaart/schaal/kaart-schaal.component";
-import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
+import { ClassicUIElementSelectorDirective } from "../common/classic-ui-element-selector.directive";
 
 /**
  * Toont een schaalaanduiding rechts onderaan de kaart.
@@ -10,7 +10,7 @@ import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-elem
   selector: "awv-kaart-schaal",
   template: ""
 })
-export class ClassicSchaalComponent extends ClassicUIElementSelectorComponentBase {
+export class ClassicSchaalComponent extends ClassicUIElementSelectorDirective {
   constructor(injector: Injector) {
     super(SchaalUiSelector, injector);
   }

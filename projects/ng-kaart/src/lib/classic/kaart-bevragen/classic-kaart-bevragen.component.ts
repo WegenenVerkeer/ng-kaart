@@ -1,7 +1,7 @@
 import { Component, Injector, Input, OnChanges } from "@angular/core";
 
 import { BevraagKaartOpties, BevraagKaartUiSelector, UnitType, ZoekAfstand } from "../../kaart/kaart-bevragen/kaart-bevragen-opties";
-import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
+import { ClassicUIElementSelectorDirective } from "../common/classic-ui-element-selector.directive";
 import * as val from "../webcomponent-support/params";
 
 /**
@@ -15,7 +15,7 @@ import * as val from "../webcomponent-support/params";
   selector: "awv-bevraag-kaart",
   template: ""
 })
-export class ClassicKaartBevragenComponent extends ClassicUIElementSelectorComponentBase implements OnChanges {
+export class ClassicKaartBevragenComponent extends ClassicUIElementSelectorDirective implements OnChanges {
   private _unit: UnitType = "Meter";
   private _zoekAfstand = 25;
   private _infoServicesOnderdrukt = false;

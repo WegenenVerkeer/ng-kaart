@@ -4,7 +4,7 @@ import { array } from "fp-ts";
 import { identity } from "fp-ts/lib/function";
 import { Setoid } from "fp-ts/lib/Setoid";
 
-import { forChangedValue } from "../../kaart/kaart-component-base";
+import { forChangedValue } from "../../kaart/kaart-base.directive";
 import * as prt from "../../kaart/kaart-protocol";
 import * as arrays from "../../util/arrays";
 import { toOlFeature } from "../../util/feature";

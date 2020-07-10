@@ -5,7 +5,7 @@ import { isObject } from "util";
 
 import { matchGeometryType } from "../../util";
 import * as ol from "../../util/openlayers-compat";
-import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { KaartChildDirective } from "../kaart-child.directive";
 import { InfoBoodschapIdentify } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
 
@@ -45,7 +45,7 @@ const liftProperties: Function1<ol.Feature, Properties> = feature => {
   selector: "awv-kaart-info-boodschap-identify",
   templateUrl: "./kaart-info-boodschap-identify.component.html"
 })
-export class KaartInfoBoodschapIdentifyComponent extends KaartChildComponentBase {
+export class KaartInfoBoodschapIdentifyComponent extends KaartChildDirective {
   properties: Properties;
   veldbeschrijvingen: VeldinfoMap = new Map();
 

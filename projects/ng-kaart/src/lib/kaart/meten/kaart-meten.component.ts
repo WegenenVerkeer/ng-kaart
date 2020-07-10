@@ -11,7 +11,7 @@ import { ofType } from "../../util/operators";
 import * as sets from "../../util/sets";
 import { TekenSettings } from "../kaart-elementen";
 import { GeometryChangedMsg, InfoBoodschappenMsg, tekenResultaatWrapper, verwijderTekenFeatureWrapper } from "../kaart-internal-messages";
-import { KaartModusComponent } from "../kaart-modus-component";
+import { KaartModusDirective } from "../kaart-modus.directive";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 import { kaartLogger } from "../log";
@@ -40,7 +40,7 @@ const defaultOpties: MetenOpties = {
   templateUrl: "./kaart-meten.component.html",
   styleUrls: ["./kaart-meten.component.scss"]
 })
-export class KaartMetenComponent extends KaartModusComponent implements OnInit, OnDestroy {
+export class KaartMetenComponent extends KaartModusDirective implements OnInit, OnDestroy {
   @Output()
   getekendeGeom: EventEmitter<ol.geom.Geometry> = new EventEmitter();
 

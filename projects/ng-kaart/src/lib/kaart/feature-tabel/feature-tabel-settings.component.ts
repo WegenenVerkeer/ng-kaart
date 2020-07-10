@@ -5,7 +5,7 @@ import * as rx from "rxjs";
 import { distinctUntilChanged, map, mapTo, share, tap } from "rxjs/operators";
 
 import { encodeAsSvgUrl } from "../../util/url";
-import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { KaartChildDirective } from "../kaart-child.directive";
 import { KaartComponent } from "../kaart.component";
 
 import { FeatureTabelOverzichtComponent } from "./feature-tabel-overzicht.component";
@@ -30,7 +30,7 @@ const settingsSvg =
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush // Omdat angular anders veel te veel change detection uitvoert
 })
-export class FeatureTabelSettingsComponent extends KaartChildComponentBase {
+export class FeatureTabelSettingsComponent extends KaartChildDirective {
   public readonly laagTitels$: rx.Observable<string[]>;
 
   // Voor de child components (Op DOM niveau. Access via Angular injection).

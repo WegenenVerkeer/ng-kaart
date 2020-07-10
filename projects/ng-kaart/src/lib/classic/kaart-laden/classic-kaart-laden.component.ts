@@ -5,14 +5,14 @@ import { distinctUntilChanged, distinctUntilKeyChanged, tap } from "rxjs/operato
 import * as prt from "../../kaart/kaart-protocol";
 import { KaartLoadingUISelector } from "../../kaart/loading/kaart-loading.component";
 import { ofType } from "../../util";
-import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
+import { ClassicUIElementSelectorDirective } from "../common/classic-ui-element-selector.directive";
 import { BusyMsg } from "../messages";
 
 @Component({
   selector: "awv-kaart-laden",
   template: ""
 })
-export class ClassicKaartLadenComponent extends ClassicUIElementSelectorComponentBase {
+export class ClassicKaartLadenComponent extends ClassicUIElementSelectorDirective {
   /**
    * Is de progressbar van ng-kaart bezig? True indien userBusy op true staat of indien er data geladen wordt.
    */

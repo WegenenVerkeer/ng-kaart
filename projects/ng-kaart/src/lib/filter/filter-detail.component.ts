@@ -5,7 +5,7 @@ import { Option } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { filter, map, share, shareReplay, switchMap } from "rxjs/operators";
 
-import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
+import { KaartChildDirective } from "../kaart/kaart-child.directive";
 import * as ke from "../kaart/kaart-elementen";
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as cmd from "../kaart/kaart-protocol-commands";
@@ -20,7 +20,7 @@ import * as FilterTotaal from "./filter-totaal";
   templateUrl: "./filter-detail.component.html",
   styleUrls: ["./filter-detail.component.scss"]
 })
-export class FilterDetailComponent extends KaartChildComponentBase {
+export class FilterDetailComponent extends KaartChildDirective {
   @Input()
   laag: ke.ToegevoegdeVectorLaag;
 

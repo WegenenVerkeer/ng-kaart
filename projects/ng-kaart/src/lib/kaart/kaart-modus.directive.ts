@@ -1,4 +1,4 @@
-import { NgZone } from "@angular/core";
+import { Directive, NgZone } from "@angular/core";
 import { identity } from "fp-ts/lib/function";
 import { none, some } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
@@ -6,11 +6,12 @@ import { debounceTime, distinctUntilChanged, filter, map, mapTo, sample, share, 
 
 import { scan2 } from "../util";
 
-import { KaartChildComponentBase } from "./kaart-child-component-base";
+import { KaartChildDirective } from "./kaart-child.directive";
 import * as prt from "./kaart-protocol";
 import { KaartComponent } from "./kaart.component";
 
-export abstract class KaartModusComponent extends KaartChildComponentBase {
+@Directive()
+export abstract class KaartModusDirective extends KaartChildDirective {
   private readonly zetActiefSubj: rx.Subject<boolean> = new rx.Subject<boolean>();
   private readonly toggleActiefSubj: rx.Subject<null> = new rx.Subject<null>();
   readonly isActief$: rx.Observable<boolean>;

@@ -5,14 +5,14 @@ import { Laag, Laaggroep } from "../../kaart/kaart-elementen";
 import { Legende } from "../../kaart/kaart-legende";
 import * as prt from "../../kaart/kaart-protocol";
 import { Opaciteit, Transparantie } from "../../transparantieeditor/transparantie";
-import { ClassicBaseComponent } from "../classic-base.component";
+import { ClassicBaseDirective } from "../classic-base.directive";
 import { KaartClassicLocatorService } from "../kaart-classic-locator.service";
 import { ClassicLegendeItemDirective } from "../legende/classic-legende-item.directive";
 import { KaartClassicMsg, logOnlyWrapper } from "../messages";
 import * as val from "../webcomponent-support/params";
 
 @Directive()
-export abstract class ClassicLaagDirective extends ClassicBaseComponent implements AfterContentInit, OnDestroy, OnInit {
+export abstract class ClassicLaagDirective extends ClassicBaseDirective implements AfterContentInit, OnDestroy, OnInit {
   legendeItems: ClassicLegendeItemDirective[] = [];
 
   protected laag: Option<Laag> = none;
