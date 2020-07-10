@@ -6,14 +6,14 @@ import * as ss from "../../kaart/stijl-selector";
 import * as ol from "../../util/openlayers-compat";
 import * as val from "../webcomponent-support/params";
 
-import { ClassicVectorLaagLikeComponent } from "./classic-vector-laag-like.component";
+import { ClassicVectorLaagLikeDirective } from "./classic-vector-laag-like.directive";
 
 @Component({
   selector: "awv-kaart-vector-laag",
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class ClassicVectorLaagComponent extends ClassicVectorLaagLikeComponent {
+export class ClassicVectorLaagComponent extends ClassicVectorLaagLikeDirective {
   @Input()
   source = new ol.source.Vector();
 

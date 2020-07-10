@@ -11,7 +11,7 @@ import { logOnlyWrapper } from "../messages";
 import * as val from "../webcomponent-support/params";
 
 import { blancoLaag } from "./classic-blanco-laag.component";
-import { ClassicLaagComponent } from "./classic-laag.component";
+import { ClassicLaagDirective } from "./classic-laag.directive";
 
 const WmtsParser = new ol.format.WMTSCapabilities();
 
@@ -20,7 +20,7 @@ const WmtsParser = new ol.format.WMTSCapabilities();
   template: "<ng-content></ng-content>",
   encapsulation: ViewEncapsulation.None
 })
-export class ClassicWmtsLaagComponent extends ClassicLaagComponent implements OnInit {
+export class ClassicWmtsLaagComponent extends ClassicLaagDirective implements OnInit {
   private _laagNaam: string;
   private _type: string;
   private _matrixSet: string;

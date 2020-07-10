@@ -1,4 +1,4 @@
-import { ElementRef, Injector, Input, NgZone } from "@angular/core";
+import { Directive, ElementRef, Injector, Input, NgZone } from "@angular/core";
 import * as rx from "rxjs";
 import { tap } from "rxjs/operators";
 
@@ -12,14 +12,15 @@ import { ClassicZoekerComponent } from "./classic-zoeker.component";
 /**
  * Basisklasse voor de specifieke zoeker child tags.
  */
-export abstract class ClassicSingleZoekerComponentBase extends KaartComponentBase {
+@Directive()
+export abstract class ClassicSingleZoekerDirective extends KaartComponentBase {
   private static nextVolledigePrioriteit = 0;
   private static nextSuggestiesPrioriteit = 0;
 
   private _toonIcoon = true;
   private _toonGeometrie = true;
-  private _suggestiesPrioriteit = ClassicSingleZoekerComponentBase.nextSuggestiesPrioriteit++;
-  private _volledigeZoekPrioriteit = ClassicSingleZoekerComponentBase.nextVolledigePrioriteit++;
+  private _suggestiesPrioriteit = ClassicSingleZoekerDirective.nextSuggestiesPrioriteit++;
+  private _volledigeZoekPrioriteit = ClassicSingleZoekerDirective.nextVolledigePrioriteit++;
 
   /**
    * Bepaalt of het icoontje dat in de stijl van de zoeker zit getoond wordt.

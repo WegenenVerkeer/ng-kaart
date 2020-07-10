@@ -1,6 +1,6 @@
 import { NgZone, OnDestroy, OnInit } from "@angular/core";
 import * as rx from "rxjs";
-import { distinctUntilChanged, share, shareReplay, tap } from "rxjs/operators";
+import { distinctUntilChanged, shareReplay, tap } from "rxjs/operators";
 
 import { collectOption } from "../util/operators";
 

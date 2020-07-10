@@ -1,19 +1,19 @@
-import { AfterContentInit, ElementRef, Injector, Input, OnDestroy, OnInit } from "@angular/core";
+import { AfterContentInit, Directive, ElementRef, Injector, Input, OnDestroy, OnInit } from "@angular/core";
 import { none, Option, some } from "fp-ts/lib/Option";
 
 import { Laag, Laaggroep } from "../../kaart/kaart-elementen";
 import { Legende } from "../../kaart/kaart-legende";
 import * as prt from "../../kaart/kaart-protocol";
-import * as val from "../webcomponent-support/params";
-
 import { Opaciteit, Transparantie } from "../../transparantieeditor/transparantie";
 import { ClassicBaseComponent } from "../classic-base.component";
 import { KaartClassicLocatorService } from "../kaart-classic-locator.service";
-import { ClassicLegendeItemComponent } from "../legende/classic-legende-item.component";
+import { ClassicLegendeItemDirective } from "../legende/classic-legende-item.directive";
 import { KaartClassicMsg, logOnlyWrapper } from "../messages";
+import * as val from "../webcomponent-support/params";
 
-export abstract class ClassicLaagComponent extends ClassicBaseComponent implements AfterContentInit, OnDestroy, OnInit {
-  legendeItems: ClassicLegendeItemComponent[] = [];
+@Directive()
+export abstract class ClassicLaagDirective extends ClassicBaseComponent implements AfterContentInit, OnDestroy, OnInit {
+  legendeItems: ClassicLegendeItemDirective[] = [];
 
   protected laag: Option<Laag> = none;
 
@@ -74,7 +74,7 @@ export abstract class ClassicLaagComponent extends ClassicBaseComponent implemen
 
   constructor(injector: Injector) {
     super(injector);
-    const locatorService = injector.get(KaartClassicLocatorService) as KaartClassicLocatorService<ClassicLaagComponent>;
+    const locatorService = injector.get(KaartClassicLocatorService) as KaartClassicLocatorService<ClassicLaagDirective>;
     const el: ElementRef<Element> = injector.get<ElementRef<Element>>(ElementRef);
     locatorService.registerComponent(this, el);
   }
@@ -93,7 +93,7 @@ export abstract class ClassicLaagComponent extends ClassicBaseComponent implemen
     super.ngOnDestroy();
   }
 
-  addLegendeItem(item: ClassicLegendeItemComponent) {
+  addLegendeItem(item: ClassicLegendeItemDirective) {
     this.legendeItems.push(item);
     this.voegLegendeToe();
   }

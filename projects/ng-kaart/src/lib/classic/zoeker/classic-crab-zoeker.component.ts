@@ -2,7 +2,7 @@ import { Component, Injector } from "@angular/core";
 
 import { ZoekerCrabService } from "../../zoeker/crab/zoeker-crab.service";
 
-import { ClassicSingleZoekerComponentBase } from "./classic-single-zoeker.component";
+import { ClassicSingleZoekerDirective } from "./classic-single-zoeker.directive";
 
 /**
  * Voegt een zoeker voor gestructureerd zoeken in CRAB toe. De gebruiker wordt gestuurd mbv een getrapte dialoog
@@ -14,7 +14,7 @@ import { ClassicSingleZoekerComponentBase } from "./classic-single-zoeker.compon
   selector: "awv-kaart-crab-zoeker",
   template: ""
 })
-export class ClassicCrabZoekerComponent extends ClassicSingleZoekerComponentBase {
+export class ClassicCrabZoekerComponent extends ClassicSingleZoekerDirective {
   constructor(injector: Injector, crabZoeker: ZoekerCrabService) {
     super(injector, crabZoeker);
   }

@@ -1,6 +1,6 @@
 import { AfterViewInit, NgZone, OnDestroy, OnInit, SimpleChanges } from "@angular/core";
 import { Lazy } from "fp-ts/es6/function";
-import { Function1, Function2, identity } from "fp-ts/lib/function";
+import { Function1, identity } from "fp-ts/lib/function";
 import { Refinement } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import { filter, map, mapTo, switchMap, takeUntil } from "rxjs/operators";

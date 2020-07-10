@@ -2,7 +2,7 @@ import { Component, Injector } from "@angular/core";
 
 import { ZoekerPerceelService } from "../../zoeker/perceel/zoeker-perceel.service";
 
-import { ClassicSingleZoekerComponentBase } from "./classic-single-zoeker.component";
+import { ClassicSingleZoekerDirective } from "./classic-single-zoeker.directive";
 
 /**
  * Voegt een zoeker voor gestructureerd zoeken van kadastrale perceelsinformatie. De gebruiker wordt gestuurd mbv een
@@ -14,7 +14,7 @@ import { ClassicSingleZoekerComponentBase } from "./classic-single-zoeker.compon
   selector: "awv-kaart-perceel-zoeker",
   template: ""
 })
-export class ClassicPerceelZoekerComponent extends ClassicSingleZoekerComponentBase {
+export class ClassicPerceelZoekerComponent extends ClassicSingleZoekerDirective {
   constructor(injector: Injector, perceelZoeker: ZoekerPerceelService) {
     super(injector, perceelZoeker);
   }
