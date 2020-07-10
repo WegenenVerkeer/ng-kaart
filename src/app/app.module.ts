@@ -60,7 +60,6 @@ registerLocaleData(localeBe);
     ClickOutsideModule
   ],
   providers: [],
-  entryComponents: [],
   bootstrap: [AppComponent]
 })
 export class AppModule {}

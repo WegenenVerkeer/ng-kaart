@@ -30,8 +30,7 @@ import { ZoekerModule } from "../../../ng-kaart/src/lib/zoeker";
     }),
     LagenkiezerModule.withDefaults(),
     ClickOutsideModule
-  ],
-  entryComponents: []
+  ]
 })
 export class AppModule {
   public constructor(injector: Injector) {
