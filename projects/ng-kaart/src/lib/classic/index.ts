@@ -124,8 +124,7 @@ const components = [
 @NgModule({
   imports: [CommonModule, KaartModule],
   declarations: [components],
-  exports: [components],
-  entryComponents: [components]
+  exports: [components]
 })
 export class ClassicModule {}
 
