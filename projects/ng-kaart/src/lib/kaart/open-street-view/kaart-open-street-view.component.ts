@@ -4,7 +4,7 @@ import { tap } from "rxjs/operators";
 
 import { lambert72ToWgs84 } from "../../coordinaten/coordinaten.service";
 import * as ol from "../../util/openlayers-compat";
-import { KaartModusComponent } from "../kaart-modus-component";
+import { KaartModusDirective } from "../kaart-modus.directive";
 import * as prt from "../kaart-protocol-commands";
 import { KaartComponent } from "../kaart.component";
 
@@ -15,7 +15,7 @@ export const StreetviewUiSelector = "Streetview";
   templateUrl: "./kaart-open-street-view.component.html",
   styleUrls: ["./kaart-open-street-view.component.scss"]
 })
-export class KaartOpenStreetViewComponent extends KaartModusComponent {
+export class KaartOpenStreetViewComponent extends KaartModusDirective {
   private clickSubscription: rx.Subscription = new rx.Subscription();
 
   constructor(kaartComponent: KaartComponent, zone: NgZone) {

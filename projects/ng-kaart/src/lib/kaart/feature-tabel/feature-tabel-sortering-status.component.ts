@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, Input, NgZone, ViewEncapsulation } 
 import { option } from "fp-ts";
 import { Option } from "fp-ts/lib/Option";
 
-import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { KaartChildDirective } from "../kaart-child.directive";
 import { KaartComponent } from "../kaart.component";
 
 import { SortDirection } from "./data-provider";
@@ -13,7 +13,7 @@ import { SortDirection } from "./data-provider";
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class FeatureTabelSorteringStatusComponent extends KaartChildComponentBase {
+export class FeatureTabelSorteringStatusComponent extends KaartChildDirective {
   public up: boolean;
   public down: boolean;
 

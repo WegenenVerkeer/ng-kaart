@@ -3,7 +3,7 @@ import * as rx from "rxjs";
 
 import * as prt from "../kaart-protocol";
 
-import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { KaartChildDirective } from "../kaart-child.directive";
 import { KaartComponent } from "../kaart.component";
 import { OptiesRecord } from "../ui-element-opties";
 
@@ -26,7 +26,7 @@ const defaultOpties: VoorwaardenOpties = {
   templateUrl: "./kaart-voorwaarden.component.html",
   styleUrls: ["./kaart-voorwaarden.component.scss"]
 })
-export class KaartVoorwaardenComponent extends KaartChildComponentBase {
+export class KaartVoorwaardenComponent extends KaartChildDirective {
   voorwaardenOpties$: rx.Observable<VoorwaardenOpties>;
 
   constructor(parent: KaartComponent, zone: NgZone) {

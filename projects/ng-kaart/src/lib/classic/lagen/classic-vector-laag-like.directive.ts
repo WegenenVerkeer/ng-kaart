@@ -2,7 +2,7 @@ import { Directive, Injector, Input, OnChanges, SimpleChanges } from "@angular/c
 import { fromNullable, none, Option } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 
-import { forChangedValue } from "../../kaart/kaart-component-base";
+import { forChangedValue } from "../../kaart/kaart-base.directive";
 import * as ke from "../../kaart/kaart-elementen";
 import * as prt from "../../kaart/kaart-protocol";
 import * as ss from "../../kaart/stijl-selector";

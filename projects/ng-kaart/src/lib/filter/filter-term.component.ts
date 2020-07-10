@@ -3,7 +3,7 @@ import { option } from "fp-ts";
 import { DateTime } from "luxon";
 
 import { Filter as fltr } from "../filter/filter-model";
-import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
+import { KaartChildDirective } from "../kaart/kaart-child.directive";
 import { KaartComponent } from "../kaart/kaart.component";
 import { formateerDate } from "../util/date-time";
 
@@ -53,7 +53,7 @@ const booleanComparisonOperatorMapping = {
   templateUrl: "./filter-term.component.html",
   styleUrls: ["./filter-term.component.scss"]
 })
-export class FilterTermComponent extends KaartChildComponentBase {
+export class FilterTermComponent extends KaartChildDirective {
   property: string;
   value: string | number;
   operator: string;

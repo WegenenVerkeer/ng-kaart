@@ -176,7 +176,7 @@ export * from "./kaart-bevragen/kaart-bevragen-opties";
 export * from "./kaart-bevragen/kaart-identify.component";
 export * from "./kaart-bevragen/kaart-identify-opties";
 export * from "./kaart-bevragen/laaginfo.model";
-export * from "./kaart-component-base";
+export * from "./kaart-base.directive";
 export * from "./kaart-elementen";
 export * from "./kaart-event-dispatcher";
 export * from "./kaart-legende";

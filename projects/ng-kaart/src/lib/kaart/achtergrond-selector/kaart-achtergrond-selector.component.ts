@@ -6,7 +6,7 @@ import { map, switchMap, takeUntil } from "rxjs/operators";
 
 import { ofType } from "../../util/operators";
 
-import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { KaartChildDirective } from "../kaart-child.directive";
 import { mobile } from "../kaart-config";
 import { AchtergrondLaag, ToegevoegdeLaag } from "../kaart-elementen";
 import { AchtergrondtitelGezetMsg, achtergrondtitelGezetWrapper, KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-messages";
@@ -64,7 +64,7 @@ const Invisible = "invisible";
   ],
   changeDetection: ChangeDetectionStrategy.OnPush // Bij default is er een endless loop van updates
 })
-export class KaartAchtergrondSelectorComponent extends KaartChildComponentBase implements OnInit {
+export class KaartAchtergrondSelectorComponent extends KaartChildDirective implements OnInit {
   public readonly DisplayMode = DisplayMode;
   public displayMode: DisplayMode = DisplayMode.SHOWING_STATUS;
   public achtergrondTitel = "";

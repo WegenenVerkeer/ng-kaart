@@ -6,7 +6,7 @@ import { distinctUntilChanged, filter, map, pairwise, sample, share } from "rxjs
 
 import { catOptions, collectOption, scan2 } from "../../util";
 import { IdentifyOpties } from "../kaart-bevragen/kaart-identify-opties";
-import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { KaartChildDirective } from "../kaart-child.directive";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 import * as TabelState from "../tabel-state";
@@ -38,7 +38,7 @@ import { FeatureTabelOverzichtComponent } from "./feature-tabel-overzicht.compon
     ])
   ]
 })
-export class FeatureTabelInklapComponent extends KaartChildComponentBase {
+export class FeatureTabelInklapComponent extends KaartChildDirective {
   public tabelZichtbaar = false;
   public magGetoondWorden$: rx.Observable<boolean>;
   public huidigeHoogte = 0;

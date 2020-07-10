@@ -10,7 +10,7 @@ import { distinctUntilChanged, filter, map, sample, shareReplay, startWith, tap 
 
 import { Filter } from "../filter/filter-model";
 import * as FilterTotaal from "../filter/filter-totaal";
-import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
+import { KaartChildDirective } from "../kaart/kaart-child.directive";
 import * as ke from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
 import * as cmd from "../kaart/kaart-protocol-commands";
@@ -46,7 +46,7 @@ export interface ZichtbaarheidsInfo {
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class LaagmanipulatieComponent extends KaartChildComponentBase {
+export class LaagmanipulatieComponent extends KaartChildDirective {
   private readonly zoom$: rx.Observable<number>;
   readonly onzichtbaar$: rx.Observable<boolean>;
   readonly kanVerwijderen$: rx.Observable<boolean>;

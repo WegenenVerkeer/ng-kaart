@@ -7,7 +7,7 @@ import { distinctUntilChanged, filter, map, share, shareReplay, switchMap } from
 
 import { KaartComponent } from "../../kaart/kaart.component";
 import { collectOption } from "../../util";
-import { GetraptZoekerComponent, ZoekerBoxComponent } from "../box/zoeker-box.component";
+import { GetraptZoekerDirective, ZoekerBoxComponent } from "../box/zoeker-box.component";
 import { zoekerMetNaam } from "../zoeker";
 
 import { AlleLagenZoekerService, CategorieObsProvider } from "./zoeker-alle-lagen.service";
@@ -25,7 +25,7 @@ const NIVEAU_VANAF_CATEGORIE = 2;
   templateUrl: "./zoeker-alle-lagen-getrapt.component.html",
   styleUrls: ["./zoeker-alle-lagen-getrapt.component.scss"]
 })
-export class ZoekerAlleLagenGetraptComponent extends GetraptZoekerComponent implements OnInit, OnDestroy {
+export class ZoekerAlleLagenGetraptComponent extends GetraptZoekerDirective implements OnInit, OnDestroy {
   readonly bronnen$: rx.Observable<string[]>;
   readonly hasCategorieen$: rx.Observable<boolean>;
   readonly categorieen$: rx.Observable<string[]>;

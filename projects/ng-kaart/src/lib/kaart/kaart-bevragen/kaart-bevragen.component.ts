@@ -13,7 +13,7 @@ import * as ol from "../../util/openlayers-compat";
 import { Progress, Received, Requested, TimedOut } from "../../util/progress";
 import * as progress from "../../util/progress";
 import * as ke from "../kaart-elementen";
-import { KaartModusComponent } from "../kaart-modus-component";
+import { KaartModusDirective } from "../kaart-modus.directive";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
 import { kaartLogger } from "../log";
@@ -46,7 +46,7 @@ const defaultOptions: BevraagKaartOpties = {
   selector: "awv-kaart-bevragen",
   template: ""
 })
-export class KaartBevragenComponent extends KaartModusComponent implements OnInit, OnDestroy {
+export class KaartBevragenComponent extends KaartModusDirective implements OnInit, OnDestroy {
   constructor(parent: KaartComponent, zone: NgZone, private http: HttpClient) {
     super(parent, zone);
   }

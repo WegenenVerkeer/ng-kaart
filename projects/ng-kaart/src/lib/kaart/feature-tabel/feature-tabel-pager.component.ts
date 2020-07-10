@@ -5,7 +5,7 @@ import * as rx from "rxjs";
 import { map, mapTo, share, switchMap, tap } from "rxjs/operators";
 import { isNumber } from "util";
 
-import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { KaartChildDirective } from "../kaart-child.directive";
 import { KaartComponent } from "../kaart.component";
 
 import { Page } from "./data-provider";
@@ -27,7 +27,7 @@ export interface PagerData {
   styleUrls: ["./feature-tabel-pager.component.scss"],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class FeatureTabelPagerComponent extends KaartChildComponentBase {
+export class FeatureTabelPagerComponent extends KaartChildDirective {
   public readonly pageData$: rx.Observable<PagerData | undefined>;
 
   constructor(

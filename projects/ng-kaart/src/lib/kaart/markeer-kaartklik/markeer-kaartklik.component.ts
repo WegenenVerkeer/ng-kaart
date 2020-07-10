@@ -10,7 +10,7 @@ import * as ss from "../../kaart/stijl-selector";
 import { Transparantie } from "../../transparantieeditor/transparantie";
 import { ofType } from "../../util";
 import * as ol from "../../util/openlayers-compat";
-import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { KaartChildDirective } from "../kaart-child.directive";
 import * as ke from "../kaart-elementen";
 import { InfoBoodschappenMsg, KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
@@ -90,7 +90,7 @@ export const ZetMaarkeerKaartklikOptiesCmd = (opties: Partial<MarkeerKaartklikOp
   selector: "awv-markeer-kaartklik",
   template: ""
 })
-export class MarkeerKaartklikComponent extends KaartChildComponentBase {
+export class MarkeerKaartklikComponent extends KaartChildDirective {
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
 

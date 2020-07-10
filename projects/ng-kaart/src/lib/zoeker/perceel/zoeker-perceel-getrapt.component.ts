@@ -7,7 +7,7 @@ import { KaartComponent } from "../../kaart/kaart.component";
 import { isNotNullObject } from "../../util/function";
 import { collectOption } from "../../util/operators";
 import {
-  GetraptZoekerComponent,
+  GetraptZoekerDirective,
   toNonEmptyDistinctLowercaseString,
   toTrimmedLowerCasedString,
   ZoekerBoxComponent
@@ -27,7 +27,7 @@ const NIVEAU_VANAFPERCEEL = 4;
   templateUrl: "./zoeker-perceel-getrapt.component.html",
   styleUrls: ["./zoeker-perceel-getrapt.component.scss"]
 })
-export class ZoekerPerceelGetraptComponent extends GetraptZoekerComponent implements OnInit {
+export class ZoekerPerceelGetraptComponent extends GetraptZoekerDirective implements OnInit {
   private alleGemeenten: Gemeente[] = [];
 
   gefilterdeGemeenten: Gemeente[] = [];

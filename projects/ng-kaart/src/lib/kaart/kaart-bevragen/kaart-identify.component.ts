@@ -6,7 +6,7 @@ import { map, switchMap } from "rxjs/operators";
 
 import { ofType } from "../../util";
 import { Feature } from "../../util/feature";
-import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { KaartChildDirective } from "../kaart-child.directive";
 import { IdentifyInfoBoodschapGeslotenMsg, identifyInfoBoodschapGeslotenMsgGen } from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
@@ -19,7 +19,7 @@ import { IdentifyOpties, IdentifyUiSelector } from "./kaart-identify-opties";
   selector: "awv-identify",
   template: ""
 })
-export class KaartIdentifyComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
+export class KaartIdentifyComponent extends KaartChildDirective implements OnInit, OnDestroy {
   constructor(parent: KaartComponent, zone: NgZone) {
     super(parent, zone);
 

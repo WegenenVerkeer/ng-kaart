@@ -1,6 +1,16 @@
 import { animate, style, transition, trigger } from "@angular/animations";
 import { HttpErrorResponse } from "@angular/common/http";
-import { ChangeDetectorRef, Component, ElementRef, NgZone, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from "@angular/core";
+import {
+  ChangeDetectorRef,
+  Component,
+  Directive,
+  ElementRef,
+  NgZone,
+  OnDestroy,
+  OnInit,
+  ViewChild,
+  ViewEncapsulation
+} from "@angular/core";
 import { FormControl } from "@angular/forms";
 import * as array from "fp-ts/lib/Array";
 import { concat, Function1, Function2, identity, Predicate } from "fp-ts/lib/function";
@@ -28,11 +38,10 @@ import {
   tap
 } from "rxjs/operators";
 
-import { KaartChildComponentBase } from "../../kaart/kaart-child-component-base";
+import { KaartChildDirective } from "../../kaart/kaart-child.directive";
 import * as ke from "../../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../../kaart/kaart-internal-messages";
 import * as prt from "../../kaart/kaart-protocol";
-import { Laagtabelinstellingen } from "../../kaart/kaart-protocol";
 import { KaartComponent } from "../../kaart/kaart.component";
 import { kaartLogger } from "../../kaart/log";
 import { Transparantie } from "../../transparantieeditor/transparantie";
@@ -126,7 +135,8 @@ export function toNonEmptyDistinctLowercaseString(): Pipeable<any, string> {
     );
 }
 
-export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
+@Directive()
+export abstract class GetraptZoekerDirective extends KaartChildDirective {
   protected constructor(kaartComponent: KaartComponent, private zoekerComponent: ZoekerBoxComponent, zone: NgZone) {
     super(kaartComponent, zone);
   }
@@ -278,24 +288,24 @@ export abstract class GetraptZoekerComponent extends KaartChildComponentBase {
   ],
   encapsulation: ViewEncapsulation.None
 })
-export class ZoekerBoxComponent extends KaartChildComponentBase implements OnInit, OnDestroy {
+export class ZoekerBoxComponent extends KaartChildDirective implements OnInit, OnDestroy {
   zoekVeld = new FormControl();
   @ViewChild("zoekVeldElement")
   zoekVeldElement: ElementRef;
 
   @ViewChild("zoekerPerceelGetrapt")
-  set setZoekerPerceelGetraptComponent(zoekerPerceelGetrapt: GetraptZoekerComponent) {
-    this.zoekerComponentSubj.next(new Tuple<ZoekerType, GetraptZoekerComponent>(PERCEEL, zoekerPerceelGetrapt));
+  set setZoekerPerceelGetraptComponent(zoekerPerceelGetrapt: GetraptZoekerDirective) {
+    this.zoekerComponentSubj.next(new Tuple<ZoekerType, GetraptZoekerDirective>(PERCEEL, zoekerPerceelGetrapt));
   }
 
   @ViewChild("zoekerCrabGetrapt")
-  set setZoekerCrabGetraptComponent(zoekerCrabGetrapt: GetraptZoekerComponent) {
-    this.zoekerComponentSubj.next(new Tuple<ZoekerType, GetraptZoekerComponent>(CRAB, zoekerCrabGetrapt));
+  set setZoekerCrabGetraptComponent(zoekerCrabGetrapt: GetraptZoekerDirective) {
+    this.zoekerComponentSubj.next(new Tuple<ZoekerType, GetraptZoekerDirective>(CRAB, zoekerCrabGetrapt));
   }
 
   @ViewChild("zoekerAlleLagenGetrapt")
-  set setZoekerAlleLagenGetraptComponent(zoekerAlleLagenGetrapt: GetraptZoekerComponent) {
-    this.zoekerComponentSubj.next(new Tuple<ZoekerType, GetraptZoekerComponent>(ALLE_LAGEN, zoekerAlleLagenGetrapt));
+  set setZoekerAlleLagenGetraptComponent(zoekerAlleLagenGetrapt: GetraptZoekerDirective) {
+    this.zoekerComponentSubj.next(new Tuple<ZoekerType, GetraptZoekerDirective>(ALLE_LAGEN, zoekerAlleLagenGetrapt));
   }
 
   // Gevaarlijk: de key ZoekResultaat is een record en er wordt op objectreferentie vergeleken. We moeten er dus steeds
@@ -317,8 +327,8 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
   perceelMaakLeegDisabled = true;
   crabMaakLeegDisabled = true;
   zoekerMaakLeegDisabled = new Set<ZoekerType>();
-  private readonly zoekerComponentSubj: rx.Subject<Tuple<ZoekerType, GetraptZoekerComponent>> = new rx.Subject();
-  private readonly zoekerComponentOpNaam$: rx.Observable<Map<ZoekerType, GetraptZoekerComponent>>;
+  private readonly zoekerComponentSubj: rx.Subject<Tuple<ZoekerType, GetraptZoekerDirective>> = new rx.Subject();
+  private readonly zoekerComponentOpNaam$: rx.Observable<Map<ZoekerType, GetraptZoekerDirective>>;
   private readonly maakVeldenLeegSubj: rx.Subject<ZoekerType> = new rx.Subject<ZoekerType>();
   private readonly zoekers$: rx.Observable<ZoekerMetWeergaveopties[]>;
   private readonly zoekerNamen$: rx.Observable<string[]>;
@@ -422,9 +432,9 @@ export class ZoekerBoxComponent extends KaartChildComponentBase implements OnIni
     );
     this.zoekerComponentOpNaam$ = this.zoekerComponentSubj.pipe(
       scan(
-        (zoekerComponentOpNaam: Map<ZoekerType, GetraptZoekerComponent>, nz: Tuple<ZoekerType, GetraptZoekerComponent>) =>
+        (zoekerComponentOpNaam: Map<ZoekerType, GetraptZoekerDirective>, nz: Tuple<ZoekerType, GetraptZoekerDirective>) =>
           zoekerComponentOpNaam.set(nz.fst, nz.snd),
-        new Map<ZoekerType, GetraptZoekerComponent>()
+        new Map<ZoekerType, GetraptZoekerDirective>()
       ),
       shareReplay(1)
     );

@@ -1,7 +1,7 @@
 import { Component, Injector, Input } from "@angular/core";
 
 import { VoorwaardenOpties, VoorwaardenSelector } from "../../kaart/voorwaarden/kaart-voorwaarden.component";
-import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
+import { ClassicUIElementSelectorDirective } from "../common/classic-ui-element-selector.directive";
 
 import * as val from "../webcomponent-support/params";
 
@@ -15,7 +15,7 @@ import * as val from "../webcomponent-support/params";
   selector: "awv-kaart-voorwaarden",
   template: ""
 })
-export class ClassicVoorwaardenComponent extends ClassicUIElementSelectorComponentBase {
+export class ClassicVoorwaardenComponent extends ClassicUIElementSelectorDirective {
   _href = "https://www.vlaanderen.be/nl/disclaimer";
   _titel = "Voorwaarden";
 

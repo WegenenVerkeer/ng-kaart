@@ -7,7 +7,7 @@ import { delay, distinctUntilChanged, map, observeOn, scan, share, shareReplay, 
 
 import { collectOption } from "../../util";
 import { Consumer1 } from "../../util/function";
-import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { KaartChildDirective } from "../kaart-child.directive";
 import * as ke from "../kaart-elementen";
 import { KaartComponent } from "../kaart.component";
 import { kaartLogger } from "../log";
@@ -46,7 +46,7 @@ interface TemplateData {
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush // Omdat angular anders veel te veel change detection uitvoert
 })
-export class FeatureTabelOverzichtComponent extends KaartChildComponentBase {
+export class FeatureTabelOverzichtComponent extends KaartChildDirective {
   public readonly templateData$: rx.Observable<TemplateData>;
 
   // Voor de child components (Op DOM niveau. Access via Angular injection).

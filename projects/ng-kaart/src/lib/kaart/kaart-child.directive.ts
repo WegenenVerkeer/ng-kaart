@@ -1,10 +1,10 @@
-import { NgZone, OnDestroy, OnInit } from "@angular/core";
+import { Directive, NgZone, OnDestroy, OnInit } from "@angular/core";
 import * as rx from "rxjs";
 import { distinctUntilChanged, shareReplay, tap } from "rxjs/operators";
 
 import { collectOption } from "../util/operators";
 
-import { KaartComponentBase } from "./kaart-component-base";
+import { KaartBaseDirective } from "./kaart-base.directive";
 import { KaartInternalMsg, KaartInternalSubMsg } from "./kaart-internal-messages";
 import * as prt from "./kaart-protocol";
 import { KaartWithInfo } from "./kaart-with-info";
@@ -17,7 +17,8 @@ import { OptiesOpUiElement } from "./ui-element-opties";
 /**
  * Voor classes die view children zijn van kaart.component
  */
-export abstract class KaartChildComponentBase extends KaartComponentBase implements OnInit, OnDestroy {
+@Directive()
+export abstract class KaartChildDirective extends KaartBaseDirective implements OnInit, OnDestroy {
   constructor(protected readonly kaartComponent: KaartComponent, zone: NgZone) {
     super(zone);
   }

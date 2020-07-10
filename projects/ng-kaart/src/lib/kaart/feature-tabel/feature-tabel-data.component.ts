@@ -25,7 +25,7 @@ import { PartialFunction1, PartialFunction2 } from "../../util/function";
 import * as ol from "../../util/openlayers-compat";
 import { collect } from "../../util/operators";
 import { join } from "../../util/string";
-import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { KaartChildDirective } from "../kaart-child.directive";
 import { kaartLogOnlyWrapper } from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
 import { Laagtabelinstellingen, Veldsortering } from "../kaart-protocol-subscriptions";
@@ -100,7 +100,7 @@ interface RowSelection {
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class FeatureTabelDataComponent extends KaartChildComponentBase {
+export class FeatureTabelDataComponent extends KaartChildDirective {
   // Voor de template
   public readonly templateData$: rx.Observable<TemplateData>;
   public readonly rows$: rx.Observable<Row[]>;

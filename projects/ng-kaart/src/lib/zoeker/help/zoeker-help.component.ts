@@ -4,7 +4,7 @@ import { none, Option, some } from "fp-ts/lib/Option";
 import * as rx from "rxjs";
 import { map } from "rxjs/operators";
 
-import { KaartChildComponentBase } from "../../kaart/kaart-child-component-base";
+import { KaartChildDirective } from "../../kaart/kaart-child.directive";
 import { KaartComponent } from "../../kaart/kaart.component";
 import { ZoekerHelpBoom, ZoekerMetWeergaveopties } from "../zoeker";
 
@@ -77,7 +77,7 @@ const selecteerUitBoom = (domSanitizer: DomSanitizer, node: ZoekHelpNode, subPat
   styleUrls: ["./zoeker-help.component.scss"],
   encapsulation: ViewEncapsulation.None
 })
-export class ZoekerHelpComponent extends KaartChildComponentBase {
+export class ZoekerHelpComponent extends KaartChildDirective {
   private pad: rx.BehaviorSubject<string[]> = new rx.BehaviorSubject(["Ik zoek"]);
   selectie$: rx.Observable<HelpContent[] | undefined>;
 

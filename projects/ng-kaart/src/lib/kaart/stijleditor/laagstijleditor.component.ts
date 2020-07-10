@@ -12,7 +12,7 @@ import * as clr from "../../stijl/colour";
 import { expand2 } from "../../util/function";
 import { collectOption, forEvery, scan2 } from "../../util/operators";
 import { negate } from "../../util/thruth";
-import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { KaartChildDirective } from "../kaart-child.directive";
 import * as ke from "../kaart-elementen";
 
 import { KaartInternalMsg, kaartLogOnlyWrapper } from "../kaart-internal-messages";
@@ -122,7 +122,7 @@ const isTerugvalkleurSelectie: Refinement<object, TerugvalClick> = (tc): tc is T
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class LaagstijleditorComponent extends KaartChildComponentBase {
+export class LaagstijleditorComponent extends KaartChildDirective {
   private readonly stijlModeSubj: rx.Subject<StijlMode> = new rx.BehaviorSubject(StijlMode.EnkeleKleur);
 
   readonly zichtbaar$: rx.Observable<boolean>;

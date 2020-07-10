@@ -30,7 +30,7 @@ import {
 } from "rxjs/operators";
 import { isString } from "util";
 
-import { KaartChildComponentBase } from "../kaart/kaart-child-component-base";
+import { KaartChildDirective } from "../kaart/kaart-child.directive";
 import { mobile } from "../kaart/kaart-config";
 import * as ke from "../kaart/kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart/kaart-internal-messages";
@@ -104,7 +104,7 @@ type InputFocus = "eigenschap" | "operator" | "waarde" | "plainTextWaarde";
   templateUrl: "./filter-editor.component.html",
   styleUrls: ["./filter-editor.component.scss"]
 })
-export class FilterEditorComponent extends KaartChildComponentBase {
+export class FilterEditorComponent extends KaartChildDirective {
   readonly onMobileDevice = mobile;
 
   readonly zichtbaar$: rx.Observable<boolean>;

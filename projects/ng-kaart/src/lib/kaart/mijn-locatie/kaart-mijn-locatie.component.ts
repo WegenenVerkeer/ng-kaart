@@ -22,14 +22,15 @@ import {
 } from "rxjs/operators";
 
 import { Transparantie } from "../../transparantieeditor/transparantie";
+import { forEach } from "../../util";
 import * as ol from "../../util/openlayers-compat";
 import { catOptions } from "../../util/operators";
 import { mobile } from "../kaart-config";
 import * as ke from "../kaart-elementen";
 import { kaartLogOnlyWrapper } from "../kaart-internal-messages";
-import { KaartModusComponent } from "../kaart-modus-component";
-import * as prt from "../kaart-protocol";
+import { KaartModusDirective } from "../kaart-modus.directive";
 import { Viewinstellingen } from "../kaart-protocol";
+import * as prt from "../kaart-protocol";
 import { MijnLocatieStateChangeCmd } from "../kaart-protocol-commands";
 import { KaartComponent } from "../kaart.component";
 import { kaartLogger } from "../log";
@@ -138,14 +139,12 @@ export const NoOpStateMachine: StateMachine = {
   }
 };
 
-const pasLocatieFeatureAan: Function1<TrackingInfo, Option<ol.Feature>> = info => {
-  return info.feature.map(feature => {
+const pasLocatieFeatureAan = (info: TrackingInfo): void =>
+  forEach(info.feature, feature => {
     feature.setGeometry(new ol.geom.Point(info.coordinate));
     zetStijl(info);
     feature.changed(); // force redraw meteen
-    return feature;
   });
-};
 
 const moetCentreren: Predicate<State> = state => state === "TrackingCenter" || state === "TrackingAutoRotate";
 
@@ -255,7 +254,7 @@ const locatieStijlFunctie: Function1<TrackingInfo, ol.style.StyleFunction> = inf
   templateUrl: "./kaart-mijn-locatie.component.html",
   styleUrls: ["./kaart-mijn-locatie.component.scss"]
 })
-export class KaartMijnLocatieComponent extends KaartModusComponent implements OnInit, AfterViewInit {
+export class KaartMijnLocatieComponent extends KaartModusDirective implements OnInit, AfterViewInit {
   constructor(zone: NgZone, private readonly parent: KaartComponent, breakpointObserver: BreakpointObserver) {
     super(parent, zone);
     breakpointObserver.observe([Breakpoints.HandsetPortrait]).subscribe(result => {
@@ -486,7 +485,7 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
 
   private maakNieuwFeature(info: TrackingInfo): Option<ol.Feature> {
     const feature = new ol.Feature(new ol.geom.Point(info.coordinate));
-    feature.setStyle(locatieStijlFunctie({ feature: some(feature), ...info }));
+    feature.setStyle(locatieStijlFunctie(info)); // Opgelet hier word de nieuwe feature niet gebruikt
     this.dispatch(prt.VervangFeaturesCmd(MijnLocatieLaagNaam, [feature], kaartLogOnlyWrapper));
     return some(feature);
   }
@@ -569,7 +568,16 @@ export class KaartMijnLocatieComponent extends KaartModusComponent implements On
   private zetMijnPositie(info: TrackingInfo) {
     if (moetLocatieTonen(info.state)) {
       this.mijnLocatie = this.mijnLocatie
-        .chain(feature => pasLocatieFeatureAan({ feature: some(feature), ...info }))
+        .chain(() => {
+          // TODO hier stond voorheen { feature: some(feature), ...info } wat
+          // wil zeggen dat we op de bestaande feature van info aan het werken
+          // waren. Als we daarentegen op de feature van mijnLocatie willen
+          // werken, moeten we onderstaande functie aanpassen om een feature te
+          // nemen (die van mijnLocatie). De return moet dan ook op die manier
+          // aangepast worden.
+          pasLocatieFeatureAan(info);
+          return info.feature;
+        })
         .orElse(() => {
           return this.maakNieuwFeature(info);
         })

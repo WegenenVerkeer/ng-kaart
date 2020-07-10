@@ -3,7 +3,7 @@ import { Predicate } from "fp-ts/lib/function";
 import * as rx from "rxjs";
 import { delay, distinctUntilChanged, map, mapTo } from "rxjs/operators";
 
-import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { KaartChildDirective } from "../kaart-child.directive";
 import { kaartLogOnlyWrapper } from "../kaart-internal-messages";
 import * as prt from "../kaart-protocol";
 import { KaartComponent } from "../kaart.component";
@@ -15,7 +15,7 @@ export const ZoomknoppenUiSelector = "Zoomknoppen";
   templateUrl: "./kaart-zoom.component.html",
   styleUrls: ["./kaart-zoom.component.scss"]
 })
-export class KaartZoomComponent extends KaartChildComponentBase implements OnInit {
+export class KaartZoomComponent extends KaartChildDirective implements OnInit {
   readonly zoomClickedSubj: rx.Subject<number> = new rx.Subject<number>();
   readonly canZoomIn$: rx.Observable<boolean>;
   readonly canZoomOut$: rx.Observable<boolean>;

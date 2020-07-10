@@ -129,7 +129,7 @@ const components = [
 export class ClassicModule {}
 
 export * from "./achtergrond-selector/classic-achtergrond-selector.component";
-export * from "./common/classic-ui-element-selector-component-base";
+export * from "./common/classic-ui-element-selector.directive";
 export * from "./copyright/classic-copyright.component";
 export * from "./feature-tabel/classic-feature-tabel";
 export * from "./kaart-classic.component";

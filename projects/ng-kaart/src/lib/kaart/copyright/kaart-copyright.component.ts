@@ -2,7 +2,7 @@ import { Component, NgZone } from "@angular/core";
 import * as rx from "rxjs";
 import { map } from "rxjs/operators";
 
-import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { KaartChildDirective } from "../kaart-child.directive";
 import { KaartComponent } from "../kaart.component";
 
 import * as prt from "../kaart-protocol";
@@ -25,7 +25,7 @@ const defaultOpties: CopyrightOpties = {
   templateUrl: "./kaart-copyright.component.html",
   styleUrls: ["./kaart-copyright.component.scss"]
 })
-export class KaartCopyrightComponent extends KaartChildComponentBase {
+export class KaartCopyrightComponent extends KaartChildDirective {
   copyright$: rx.Observable<string>;
 
   constructor(parent: KaartComponent, zone: NgZone) {

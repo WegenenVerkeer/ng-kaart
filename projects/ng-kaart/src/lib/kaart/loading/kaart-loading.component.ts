@@ -18,7 +18,7 @@ import {
 import { NosqlFsSource } from "../../source/nosql-fs-source";
 import { observeOnAngular } from "../../util/observe-on-angular";
 import { ofType } from "../../util/operators";
-import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { KaartChildDirective } from "../kaart-child.directive";
 import { isNoSqlFsLaag, ToegevoegdeLaag, VectorLaag } from "../kaart-elementen";
 import { DataLoadEvent, LoadComplete, LoadError } from "../kaart-load-events";
 import * as prt from "../kaart-protocol";
@@ -31,7 +31,7 @@ export const KaartLoadingUISelector = "KaartLoadingUISelector";
   templateUrl: "./kaart-loading.component.html",
   styleUrls: ["./kaart-loading.component.scss"]
 })
-export class KaartLoadingComponent extends KaartChildComponentBase {
+export class KaartLoadingComponent extends KaartChildDirective {
   readonly activityClass$: rx.Observable<string>;
   readonly progressStyle$: rx.Observable<object>;
   readonly enableProgressBar: rx.Observable<boolean>;

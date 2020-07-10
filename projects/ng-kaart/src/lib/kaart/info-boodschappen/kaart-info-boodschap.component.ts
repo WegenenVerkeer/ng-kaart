@@ -4,7 +4,7 @@ import { fromNullable } from "fp-ts/lib/Option";
 import scrollIntoView from "scroll-into-view-if-needed";
 
 import { forEach } from "../../util";
-import { KaartChildComponentBase } from "../kaart-child-component-base";
+import { KaartChildDirective } from "../kaart-child.directive";
 import { SluitInfoBoodschapCmd } from "../kaart-protocol-commands";
 import { foldInfoBoodschap, InfoBoodschap } from "../kaart-with-info-model";
 import { KaartComponent } from "../kaart.component";
@@ -22,7 +22,7 @@ import { KaartComponent } from "../kaart.component";
   ],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class KaartInfoBoodschapComponent extends KaartChildComponentBase implements OnInit {
+export class KaartInfoBoodschapComponent extends KaartChildDirective implements OnInit {
   private infoBoodschap: InfoBoodschap;
   titel: string;
   kind: string;

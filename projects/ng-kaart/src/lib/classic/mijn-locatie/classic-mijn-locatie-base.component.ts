@@ -1,10 +1,10 @@
-import { AfterViewInit, EventEmitter, Injector, Output } from "@angular/core";
+import { AfterViewInit, Directive, EventEmitter, Injector, Output } from "@angular/core";
 import { merge } from "rxjs";
 import { distinctUntilChanged, tap } from "rxjs/operators";
 
 import * as prt from "../../kaart/kaart-protocol";
 import { ofType } from "../../util/operators";
-import { ClassicUIElementSelectorComponentBase } from "../common/classic-ui-element-selector-component-base";
+import { ClassicUIElementSelectorDirective } from "../common/classic-ui-element-selector.directive";
 import { classicMsgSubscriptionCmdOperator } from "../kaart-classic.component";
 import { KaartClassicMsg, MijnLocatieStateChangeMsg } from "../messages";
 
@@ -14,7 +14,8 @@ interface StateChange {
   readonly event: string;
 }
 
-export class ClassicMijnLocatieBaseComponent extends ClassicUIElementSelectorComponentBase implements AfterViewInit {
+@Directive()
+export class ClassicMijnLocatieDirective extends ClassicUIElementSelectorDirective implements AfterViewInit {
   @Output()
   stateChange: EventEmitter<StateChange> = new EventEmitter<StateChange>();
 
